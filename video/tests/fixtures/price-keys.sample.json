@@ -1,0 +1,19 @@
+{
+  "generated": "2026-09-27",
+  "source": "テスト用の抜粋 (ExileDesk src/services/htc/price-keys.json)",
+  "currency": {
+    "transmute": { "en": "Orb of Transmutation", "ja": "変成のオーブ" },
+    "augment": { "en": "Orb of Augmentation", "ja": "増強のオーブ" },
+    "regal": { "en": "Regal Orb", "ja": "王者のオーブ" },
+    "exalt": { "en": "Exalted Orb", "ja": "高貴なオーブ" },
+    "exalt_greater": { "en": "Greater Exalted Orb", "ja": "高貴なオーブ (上級)" },
+    "chaos": { "en": "Chaos Orb", "ja": "カオスオーブ" },
+    "divine": { "en": "Divine Orb", "ja": "神のオーブ" }
+  },
+  "bones": {
+    "collarbone": { "en": "Preserved Collarbone", "ja": "保存された鎖骨" }
+  },
+  "omens": {
+    "OmenofDextralExaltation": { "en": "Omen of Dextral Exaltation", "ja": "右側の高貴なお告げ" }
+  }
+}

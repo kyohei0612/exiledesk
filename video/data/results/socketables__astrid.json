@@ -1,0 +1,1654 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-10-05T05:45:48.326Z",
+  "exiledesk_version": "0.1.377",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "アストリッドの創造性: パーフェクトエッセンスを 2 つ (2 つ目は結晶化のお告げで 1 つ目を守る)",
+    "base": "Glorious Plate",
+    "item_level": 80,
+    "start_rarity": "rare",
+    "seed": 25,
+    "start_unidentified": false,
+    "steps": [
+      {
+        "currency": "artificer",
+        "times": 1
+      },
+      {
+        "currency": "essence:perfect:Body_Armours_str/PerfectEssence_MaximumLifeIncreasePercent",
+        "times": 1,
+        "note": "クラフト MOD 1 個目"
+      },
+      {
+        "currency": "essence:perfect:Body_Armours_str/PerfectEssence_Thorns",
+        "times": 1,
+        "note": "2 個目は付かない (1 個まで)"
+      },
+      {
+        "currency": "rune:Astrid's Creativity",
+        "times": 1,
+        "note": "クラフト MOD +1"
+      },
+      {
+        "currency": "essence:perfect:Body_Armours_str/PerfectEssence_Thorns",
+        "omen": "OmenofDextralCrystallisation",
+        "times": 1,
+        "note": "2 個目。右側の結晶化のお告げでサフィックスだけ消す = 1 個目 (プレフィックス) を守る"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "artificer",
+      "currency_ja": "熟練工のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 26,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "855",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/LocalIncreasedArmourAndBase",
+            "family": "BaseLocalDefencesAndDefencePercent",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 78,
+            "text_ja": "アーマーが40%増加する / アーマー +77",
+            "text_en": "40% increased Armour\n+77 to Armour",
+            "values": [
+              40,
+              77
+            ],
+            "ranges": [
+              [
+                39,
+                42
+              ],
+              [
+                76,
+                95
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "Hardened"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "火耐性 +7%",
+            "text_en": "+7% to Fire Resistance",
+            "values": [
+              7
+            ],
+            "ranges": [
+              [
+                6,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Whelpling"
+          },
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 74,
+            "text_ja": "筋力 +33",
+            "text_en": "+33 to Strength",
+            "values": [
+              33
+            ],
+            "ranges": [
+              [
+                31,
+                33
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "of the Titan"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 32,
+            "text_ja": "要求能力値が20%減少する",
+            "text_en": "-20% reduced Attribute Requirements",
+            "values": [
+              -20
+            ],
+            "ranges": [
+              [
+                -20,
+                -20
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Apt"
+          }
+        ]
+      },
+      "after": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "855",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/LocalIncreasedArmourAndBase",
+            "family": "BaseLocalDefencesAndDefencePercent",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 78,
+            "text_ja": "アーマーが40%増加する / アーマー +77",
+            "text_en": "40% increased Armour\n+77 to Armour",
+            "values": [
+              40,
+              77
+            ],
+            "ranges": [
+              [
+                39,
+                42
+              ],
+              [
+                76,
+                95
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "Hardened"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "火耐性 +7%",
+            "text_en": "+7% to Fire Resistance",
+            "values": [
+              7
+            ],
+            "ranges": [
+              [
+                6,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Whelpling"
+          },
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 74,
+            "text_ja": "筋力 +33",
+            "text_en": "+33 to Strength",
+            "values": [
+              33
+            ],
+            "ranges": [
+              [
+                31,
+                33
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "of the Titan"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 32,
+            "text_ja": "要求能力値が20%減少する",
+            "text_en": "-20% reduced Attribute Requirements",
+            "values": [
+              -20
+            ],
+            "ranges": [
+              [
+                -20,
+                -20
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Apt"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 2,
+      "currency": "essence:perfect:Body_Armours_str/PerfectEssence_MaximumLifeIncreasePercent",
+      "currency_ja": "肉体のパーフェクトエッセンス",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 27,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "855",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/LocalIncreasedArmourAndBase",
+            "family": "BaseLocalDefencesAndDefencePercent",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 78,
+            "text_ja": "アーマーが40%増加する / アーマー +77",
+            "text_en": "40% increased Armour\n+77 to Armour",
+            "values": [
+              40,
+              77
+            ],
+            "ranges": [
+              [
+                39,
+                42
+              ],
+              [
+                76,
+                95
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "Hardened"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "火耐性 +7%",
+            "text_en": "+7% to Fire Resistance",
+            "values": [
+              7
+            ],
+            "ranges": [
+              [
+                6,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Whelpling"
+          },
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 74,
+            "text_ja": "筋力 +33",
+            "text_en": "+33 to Strength",
+            "values": [
+              33
+            ],
+            "ranges": [
+              [
+                31,
+                33
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "of the Titan"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 32,
+            "text_ja": "要求能力値が20%減少する",
+            "text_en": "-20% reduced Attribute Requirements",
+            "values": [
+              -20
+            ],
+            "ranges": [
+              [
+                -20,
+                -20
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Apt"
+          }
+        ]
+      },
+      "after": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "534",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/PerfectEssence_MaximumLifeIncreasePercent",
+            "family": "MaximumLifeIncreasePercent",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 72,
+            "text_ja": "最大ライフが9%増加する",
+            "text_en": "9% increased maximum Life",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                8,
+                10
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Body"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "火耐性 +7%",
+            "text_en": "+7% to Fire Resistance",
+            "values": [
+              7
+            ],
+            "ranges": [
+              [
+                6,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Whelpling"
+          },
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 74,
+            "text_ja": "筋力 +33",
+            "text_en": "+33 to Strength",
+            "values": [
+              33
+            ],
+            "ranges": [
+              [
+                31,
+                33
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "of the Titan"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 32,
+            "text_ja": "要求能力値が20%減少する",
+            "text_en": "-20% reduced Attribute Requirements",
+            "values": [
+              -20
+            ],
+            "ranges": [
+              [
+                -20,
+                -20
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Apt"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Body_Armours_str/PerfectEssence_MaximumLifeIncreasePercent",
+            "family": "MaximumLifeIncreasePercent",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 72,
+            "text_ja": "最大ライフが9%増加する",
+            "text_en": "9% increased maximum Life",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                8,
+                10
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Body"
+          }
+        ],
+        "removed": [
+          {
+            "mod_id": "Body_Armours_str/LocalIncreasedArmourAndBase",
+            "family": "BaseLocalDefencesAndDefencePercent",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 78,
+            "text_ja": "アーマーが40%増加する / アーマー +77",
+            "text_en": "40% increased Armour\n+77 to Armour",
+            "values": [
+              40,
+              77
+            ],
+            "ranges": [
+              [
+                39,
+                42
+              ],
+              [
+                76,
+                95
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "Hardened"
+          }
+        ],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 3,
+      "currency": "essence:perfect:Body_Armours_str/PerfectEssence_Thorns",
+      "currency_ja": "ヒステリーのエッセンス",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 28,
+      "applied": false,
+      "reason": "エッセンスの MOD はアイテムに 1 つまで (アストリッドの創造性で 2 つ)",
+      "before": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "534",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/PerfectEssence_MaximumLifeIncreasePercent",
+            "family": "MaximumLifeIncreasePercent",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 72,
+            "text_ja": "最大ライフが9%増加する",
+            "text_en": "9% increased maximum Life",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                8,
+                10
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Body"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "火耐性 +7%",
+            "text_en": "+7% to Fire Resistance",
+            "values": [
+              7
+            ],
+            "ranges": [
+              [
+                6,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Whelpling"
+          },
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 74,
+            "text_ja": "筋力 +33",
+            "text_en": "+33 to Strength",
+            "values": [
+              33
+            ],
+            "ranges": [
+              [
+                31,
+                33
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "of the Titan"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 32,
+            "text_ja": "要求能力値が20%減少する",
+            "text_en": "-20% reduced Attribute Requirements",
+            "values": [
+              -20
+            ],
+            "ranges": [
+              [
+                -20,
+                -20
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Apt"
+          }
+        ]
+      },
+      "after": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "534",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/PerfectEssence_MaximumLifeIncreasePercent",
+            "family": "MaximumLifeIncreasePercent",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 72,
+            "text_ja": "最大ライフが9%増加する",
+            "text_en": "9% increased maximum Life",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                8,
+                10
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Body"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "火耐性 +7%",
+            "text_en": "+7% to Fire Resistance",
+            "values": [
+              7
+            ],
+            "ranges": [
+              [
+                6,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Whelpling"
+          },
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 74,
+            "text_ja": "筋力 +33",
+            "text_en": "+33 to Strength",
+            "values": [
+              33
+            ],
+            "ranges": [
+              [
+                31,
+                33
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "of the Titan"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 32,
+            "text_ja": "要求能力値が20%減少する",
+            "text_en": "-20% reduced Attribute Requirements",
+            "values": [
+              -20
+            ],
+            "ranges": [
+              [
+                -20,
+                -20
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Apt"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 0,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 4,
+      "currency": "rune:Astrid's Creativity",
+      "currency_ja": "アストリッドの創造性",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 29,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "534",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/PerfectEssence_MaximumLifeIncreasePercent",
+            "family": "MaximumLifeIncreasePercent",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 72,
+            "text_ja": "最大ライフが9%増加する",
+            "text_en": "9% increased maximum Life",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                8,
+                10
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Body"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "火耐性 +7%",
+            "text_en": "+7% to Fire Resistance",
+            "values": [
+              7
+            ],
+            "ranges": [
+              [
+                6,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Whelpling"
+          },
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 74,
+            "text_ja": "筋力 +33",
+            "text_en": "+33 to Strength",
+            "values": [
+              33
+            ],
+            "ranges": [
+              [
+                31,
+                33
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "of the Titan"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 32,
+            "text_ja": "要求能力値が20%減少する",
+            "text_en": "-20% reduced Attribute Requirements",
+            "values": [
+              -20
+            ],
+            "ranges": [
+              [
+                -20,
+                -20
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Apt"
+          }
+        ]
+      },
+      "after": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "534",
+            "up": false
+          }
+        ],
+        "augments": [
+          {
+            "key": "rune:Astrid's Creativity",
+            "en": "Astrid's Creativity",
+            "ja": "アストリッドの創造性",
+            "category": "全ての装備品",
+            "text_ja": "クラフトモッドを追加で1個持つことができる",
+            "text_en": "Can have 1 additional Crafted Modifier",
+            "stats": [
+              {
+                "id": "local_can_have_additional_crafted_mods",
+                "value": 1
+              }
+            ]
+          }
+        ],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/PerfectEssence_MaximumLifeIncreasePercent",
+            "family": "MaximumLifeIncreasePercent",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 72,
+            "text_ja": "最大ライフが9%増加する",
+            "text_en": "9% increased maximum Life",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                8,
+                10
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Body"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "火耐性 +7%",
+            "text_en": "+7% to Fire Resistance",
+            "values": [
+              7
+            ],
+            "ranges": [
+              [
+                6,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Whelpling"
+          },
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 74,
+            "text_ja": "筋力 +33",
+            "text_en": "+33 to Strength",
+            "values": [
+              33
+            ],
+            "ranges": [
+              [
+                31,
+                33
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "of the Titan"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 32,
+            "text_ja": "要求能力値が20%減少する",
+            "text_en": "-20% reduced Attribute Requirements",
+            "values": [
+              -20
+            ],
+            "ranges": [
+              [
+                -20,
+                -20
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Apt"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      },
+      "augment_change": {
+        "socket": 1,
+        "put": {
+          "key": "rune:Astrid's Creativity",
+          "en": "Astrid's Creativity",
+          "ja": "アストリッドの創造性",
+          "category": "全ての装備品",
+          "text_ja": "クラフトモッドを追加で1個持つことができる",
+          "text_en": "Can have 1 additional Crafted Modifier",
+          "stats": [
+            {
+              "id": "local_can_have_additional_crafted_mods",
+              "value": 1
+            }
+          ]
+        },
+        "replaced": null,
+        "replaced_goes": null
+      }
+    },
+    {
+      "index": 5,
+      "currency": "essence:perfect:Body_Armours_str/PerfectEssence_Thorns",
+      "currency_ja": "ヒステリーのエッセンス",
+      "omen": "OmenofDextralCrystallisation",
+      "omen_ja": "右側の結晶化のお告げ",
+      "seed": 30,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "534",
+            "up": false
+          }
+        ],
+        "augments": [
+          {
+            "key": "rune:Astrid's Creativity",
+            "en": "Astrid's Creativity",
+            "ja": "アストリッドの創造性",
+            "category": "全ての装備品",
+            "text_ja": "クラフトモッドを追加で1個持つことができる",
+            "text_en": "Can have 1 additional Crafted Modifier",
+            "stats": [
+              {
+                "id": "local_can_have_additional_crafted_mods",
+                "value": 1
+              }
+            ]
+          }
+        ],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/PerfectEssence_MaximumLifeIncreasePercent",
+            "family": "MaximumLifeIncreasePercent",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 72,
+            "text_ja": "最大ライフが9%増加する",
+            "text_en": "9% increased maximum Life",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                8,
+                10
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Body"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "火耐性 +7%",
+            "text_en": "+7% to Fire Resistance",
+            "values": [
+              7
+            ],
+            "ranges": [
+              [
+                6,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Whelpling"
+          },
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 74,
+            "text_ja": "筋力 +33",
+            "text_en": "+33 to Strength",
+            "values": [
+              33
+            ],
+            "ranges": [
+              [
+                31,
+                33
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "of the Titan"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 32,
+            "text_ja": "要求能力値が20%減少する",
+            "text_en": "-20% reduced Attribute Requirements",
+            "values": [
+              -20
+            ],
+            "ranges": [
+              [
+                -20,
+                -20
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Apt"
+          }
+        ]
+      },
+      "after": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "534",
+            "up": false
+          }
+        ],
+        "augments": [
+          {
+            "key": "rune:Astrid's Creativity",
+            "en": "Astrid's Creativity",
+            "ja": "アストリッドの創造性",
+            "category": "全ての装備品",
+            "text_ja": "クラフトモッドを追加で1個持つことができる",
+            "text_en": "Can have 1 additional Crafted Modifier",
+            "stats": [
+              {
+                "id": "local_can_have_additional_crafted_mods",
+                "value": 1
+              }
+            ]
+          }
+        ],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/PerfectEssence_MaximumLifeIncreasePercent",
+            "family": "MaximumLifeIncreasePercent",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 72,
+            "text_ja": "最大ライフが9%増加する",
+            "text_en": "9% increased maximum Life",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                8,
+                10
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of the Body"
+          },
+          {
+            "mod_id": "Body_Armours_str/PerfectEssence_Thorns",
+            "family": "Thorns",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 63,
+            "text_ja": "93から139の物理棘ダメージ",
+            "text_en": "93 to 139 Physical Thorns damage",
+            "values": [
+              93,
+              139
+            ],
+            "ranges": [
+              [
+                64,
+                97
+              ],
+              [
+                98,
+                145
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of Hysteria"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "火耐性 +7%",
+            "text_en": "+7% to Fire Resistance",
+            "values": [
+              7
+            ],
+            "ranges": [
+              [
+                6,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Whelpling"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 32,
+            "text_ja": "要求能力値が20%減少する",
+            "text_en": "-20% reduced Attribute Requirements",
+            "values": [
+              -20
+            ],
+            "ranges": [
+              [
+                -20,
+                -20
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Apt"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Body_Armours_str/PerfectEssence_Thorns",
+            "family": "Thorns",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 63,
+            "text_ja": "93から139の物理棘ダメージ",
+            "text_en": "93 to 139 Physical Thorns damage",
+            "values": [
+              93,
+              139
+            ],
+            "ranges": [
+              [
+                64,
+                97
+              ],
+              [
+                98,
+                145
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 0,
+            "affix": "Perfect Essence of Hysteria"
+          }
+        ],
+        "removed": [
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 74,
+            "text_ja": "筋力 +33",
+            "text_en": "+33 to Strength",
+            "values": [
+              33
+            ],
+            "ranges": [
+              [
+                31,
+                33
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "of the Titan"
+          }
+        ],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 2,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    }
+  ],
+  "final": {
+    "name": "栄光のプレート",
+    "base": "Glorious Plate",
+    "base_ja": "栄光のプレート",
+    "item_level": 80,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "disposed": null,
+    "gained": null,
+    "requirements": {
+      "level": 65,
+      "str": 121
+    },
+    "properties": [
+      {
+        "key": "armour",
+        "label": "アーマー",
+        "value": "534",
+        "up": false
+      }
+    ],
+    "augments": [
+      {
+        "key": "rune:Astrid's Creativity",
+        "en": "Astrid's Creativity",
+        "ja": "アストリッドの創造性",
+        "category": "全ての装備品",
+        "text_ja": "クラフトモッドを追加で1個持つことができる",
+        "text_en": "Can have 1 additional Crafted Modifier",
+        "stats": [
+          {
+            "id": "local_can_have_additional_crafted_mods",
+            "value": 1
+          }
+        ]
+      }
+    ],
+    "quality_tag": null,
+    "sockets": 1,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [
+      {
+        "mod_id": "Body_Armours_str/PerfectEssence_MaximumLifeIncreasePercent",
+        "family": "MaximumLifeIncreasePercent",
+        "side": "prefix",
+        "tier_name": "T1",
+        "mod_level": 72,
+        "text_ja": "最大ライフが9%増加する",
+        "text_en": "9% increased maximum Life",
+        "values": [
+          9
+        ],
+        "ranges": [
+          [
+            8,
+            10
+          ]
+        ],
+        "crafted": true,
+        "tier_index": 0,
+        "affix": "Perfect Essence of the Body"
+      },
+      {
+        "mod_id": "Body_Armours_str/PerfectEssence_Thorns",
+        "family": "Thorns",
+        "side": "prefix",
+        "tier_name": "T1",
+        "mod_level": 63,
+        "text_ja": "93から139の物理棘ダメージ",
+        "text_en": "93 to 139 Physical Thorns damage",
+        "values": [
+          93,
+          139
+        ],
+        "ranges": [
+          [
+            64,
+            97
+          ],
+          [
+            98,
+            145
+          ]
+        ],
+        "crafted": true,
+        "tier_index": 0,
+        "affix": "Perfect Essence of Hysteria"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Body_Armours_str/FireResistance",
+        "family": "FireResistance",
+        "side": "suffix",
+        "tier_name": "T8",
+        "mod_level": 1,
+        "text_ja": "火耐性 +7%",
+        "text_en": "+7% to Fire Resistance",
+        "values": [
+          7
+        ],
+        "ranges": [
+          [
+            6,
+            10
+          ]
+        ],
+        "tier_index": 0,
+        "affix": "of the Whelpling"
+      },
+      {
+        "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+        "family": "LocalAttributeRequirements",
+        "side": "suffix",
+        "tier_name": "T4",
+        "mod_level": 32,
+        "text_ja": "要求能力値が20%減少する",
+        "text_en": "-20% reduced Attribute Requirements",
+        "values": [
+          -20
+        ],
+        "ranges": [
+          [
+            -20,
+            -20
+          ]
+        ],
+        "tier_index": 1,
+        "affix": "of the Apt"
+      }
+    ]
+  },
+  "total_cost": 0
+}

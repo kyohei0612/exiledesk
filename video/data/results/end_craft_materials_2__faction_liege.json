@@ -1,0 +1,837 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-10-04T06:07:16.218Z",
+  "exiledesk_version": "0.1.362",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "君主のお告げ + 保存された鎖骨 → 発現",
+    "base": "Amber Amulet",
+    "item_level": 82,
+    "start_rarity": "normal",
+    "seed": 20261012,
+    "start_unidentified": false,
+    "start": {
+      "rarity": "rare",
+      "mods": [
+        {
+          "mod": "Amulets/IncreasedLife",
+          "tier": "T2"
+        },
+        {
+          "mod": "Amulets/IncreasedMana",
+          "tier": "T3"
+        },
+        {
+          "mod": "Amulets/AllResistances",
+          "tier": "T2"
+        },
+        {
+          "mod": "Amulets/Strength",
+          "tier": "T3"
+        }
+      ]
+    },
+    "steps": [
+      {
+        "currency": "desecrate",
+        "omen": "OmenoftheLiege",
+        "times": 1
+      },
+      {
+        "currency": "reveal:1",
+        "times": 1
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "desecrate",
+      "currency_ja": "保存された鎖骨",
+      "omen": "OmenoftheLiege",
+      "omen_ja": "君主のお告げ",
+      "seed": 20261013,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T2",
+            "mod_level": 54,
+            "text_ja": "最大ライフ +106",
+            "text_en": "+106 to maximum Life",
+            "values": [
+              106
+            ],
+            "ranges": [
+              [
+                100,
+                119
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "Virile"
+          },
+          {
+            "mod_id": "Amulets/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 70,
+            "text_ja": "最大マナ +162",
+            "text_en": "+162 to maximum Mana",
+            "values": [
+              162
+            ],
+            "ranges": [
+              [
+                150,
+                164
+              ]
+            ],
+            "tier_index": 10,
+            "affix": "Blue"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 68,
+            "text_ja": "全ての元素耐性 +16%",
+            "text_en": "+16% to all Elemental Resistances",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                15,
+                16
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Rainbow"
+          },
+          {
+            "mod_id": "Amulets/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 55,
+            "text_ja": "筋力 +25",
+            "text_en": "+25 to Strength",
+            "values": [
+              25
+            ],
+            "ranges": [
+              [
+                25,
+                27
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Goliath"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T2",
+            "mod_level": 54,
+            "text_ja": "最大ライフ +106",
+            "text_en": "+106 to maximum Life",
+            "values": [
+              106
+            ],
+            "ranges": [
+              [
+                100,
+                119
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "Virile"
+          },
+          {
+            "mod_id": "Amulets/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 70,
+            "text_ja": "最大マナ +162",
+            "text_en": "+162 to maximum Mana",
+            "values": [
+              162
+            ],
+            "ranges": [
+              [
+                150,
+                164
+              ]
+            ],
+            "tier_index": 10,
+            "affix": "Blue"
+          },
+          {
+            "mod_id": "unrevealed",
+            "family": "unrevealed",
+            "side": "prefix",
+            "tier_name": "",
+            "mod_level": 0,
+            "text_ja": "未発現の冒涜 MOD (プレフィックス)",
+            "text_en": "Unrevealed Desecrated Prefix",
+            "values": [],
+            "ranges": [],
+            "desecrated": true,
+            "unrevealed": true,
+            "tier_index": 0,
+            "affix": ""
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 68,
+            "text_ja": "全ての元素耐性 +16%",
+            "text_en": "+16% to all Elemental Resistances",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                15,
+                16
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Rainbow"
+          },
+          {
+            "mod_id": "Amulets/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 55,
+            "text_ja": "筋力 +25",
+            "text_en": "+25 to Strength",
+            "values": [
+              25
+            ],
+            "ranges": [
+              [
+                25,
+                27
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Goliath"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "unrevealed",
+            "family": "unrevealed",
+            "side": "prefix",
+            "tier_name": "",
+            "mod_level": 0,
+            "text_ja": "未発現の冒涜 MOD (プレフィックス)",
+            "text_en": "Unrevealed Desecrated Prefix",
+            "values": [],
+            "ranges": [],
+            "desecrated": true,
+            "unrevealed": true,
+            "tier_index": 0,
+            "affix": ""
+          }
+        ],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 171.02800000000002,
+        "amount": 2,
+        "subtotal": 171.02800000000002,
+        "cumulative": 171.02800000000002
+      }
+    },
+    {
+      "index": 2,
+      "currency": "reveal:1",
+      "currency_ja": "発現 (1 番目)",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261014,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T2",
+            "mod_level": 54,
+            "text_ja": "最大ライフ +106",
+            "text_en": "+106 to maximum Life",
+            "values": [
+              106
+            ],
+            "ranges": [
+              [
+                100,
+                119
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "Virile"
+          },
+          {
+            "mod_id": "Amulets/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 70,
+            "text_ja": "最大マナ +162",
+            "text_en": "+162 to maximum Mana",
+            "values": [
+              162
+            ],
+            "ranges": [
+              [
+                150,
+                164
+              ]
+            ],
+            "tier_index": 10,
+            "affix": "Blue"
+          },
+          {
+            "mod_id": "unrevealed",
+            "family": "unrevealed",
+            "side": "prefix",
+            "tier_name": "",
+            "mod_level": 0,
+            "text_ja": "未発現の冒涜 MOD (プレフィックス)",
+            "text_en": "Unrevealed Desecrated Prefix",
+            "values": [],
+            "ranges": [],
+            "desecrated": true,
+            "unrevealed": true,
+            "tier_index": 0,
+            "affix": ""
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 68,
+            "text_ja": "全ての元素耐性 +16%",
+            "text_en": "+16% to all Elemental Resistances",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                15,
+                16
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Rainbow"
+          },
+          {
+            "mod_id": "Amulets/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 55,
+            "text_ja": "筋力 +25",
+            "text_en": "+25 to Strength",
+            "values": [
+              25
+            ],
+            "ranges": [
+              [
+                25,
+                27
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Goliath"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T2",
+            "mod_level": 54,
+            "text_ja": "最大ライフ +106",
+            "text_en": "+106 to maximum Life",
+            "values": [
+              106
+            ],
+            "ranges": [
+              [
+                100,
+                119
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "Virile"
+          },
+          {
+            "mod_id": "Amulets/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 70,
+            "text_ja": "最大マナ +162",
+            "text_en": "+162 to maximum Mana",
+            "values": [
+              162
+            ],
+            "ranges": [
+              [
+                150,
+                164
+              ]
+            ],
+            "tier_index": 10,
+            "affix": "Blue"
+          },
+          {
+            "mod_id": "Amulets/Desecrated_RemnantEffect",
+            "family": "RemnantEffect",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 65,
+            "text_ja": "プレイヤーが生成したレムナントは効果が8%増加する",
+            "text_en": "Remnants you create have 8% increased effect",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                8,
+                15
+              ]
+            ],
+            "desecrated": true,
+            "tier_index": 0,
+            "affix": "Amanamu's"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 68,
+            "text_ja": "全ての元素耐性 +16%",
+            "text_en": "+16% to all Elemental Resistances",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                15,
+                16
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Rainbow"
+          },
+          {
+            "mod_id": "Amulets/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 55,
+            "text_ja": "筋力 +25",
+            "text_en": "+25 to Strength",
+            "values": [
+              25
+            ],
+            "ranges": [
+              [
+                25,
+                27
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Goliath"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Amulets/Desecrated_RemnantEffect",
+            "family": "RemnantEffect",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 65,
+            "text_ja": "プレイヤーが生成したレムナントは効果が8%増加する",
+            "text_en": "Remnants you create have 8% increased effect",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                8,
+                15
+              ]
+            ],
+            "desecrated": true,
+            "tier_index": 0,
+            "affix": "Amanamu's"
+          }
+        ],
+        "removed": [
+          {
+            "mod_id": "unrevealed",
+            "family": "unrevealed",
+            "side": "prefix",
+            "tier_name": "",
+            "mod_level": 0,
+            "text_ja": "未発現の冒涜 MOD (プレフィックス)",
+            "text_en": "Unrevealed Desecrated Prefix",
+            "values": [],
+            "ranges": [],
+            "desecrated": true,
+            "unrevealed": true,
+            "tier_index": 0,
+            "affix": ""
+          }
+        ],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 171.02800000000002
+      },
+      "reveal_offers": {
+        "chosen": 1,
+        "rerolled": false,
+        "first": [
+          {
+            "mod_id": "Amulets/Desecrated_RemnantEffect",
+            "family": "RemnantEffect",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 65,
+            "text_ja": "プレイヤーが生成したレムナントは効果が8%増加する",
+            "text_en": "Remnants you create have 8% increased effect",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                8,
+                15
+              ]
+            ],
+            "desecrated": true,
+            "tier_index": 0,
+            "affix": "Amanamu's"
+          },
+          {
+            "mod_id": "Amulets/Desecrated_IncreasedMinionDamageIfYouHitEnemy",
+            "family": "IncreasedMinionDamageIfYouHitEnemy",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 65,
+            "text_ja": "直近プレイヤーがヒットを与えていればミニオンのダメージが18%増加する",
+            "text_en": "Minions deal 18% increased Damage if you've Hit Recently",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                15,
+                25
+              ]
+            ],
+            "desecrated": true,
+            "tier_index": 0,
+            "affix": "Amanamu's"
+          },
+          {
+            "mod_id": "Amulets/Desecrated_BodyArmourFromBodyArmour",
+            "family": "BodyArmourFromBodyArmour",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 65,
+            "text_ja": "装備中の鎧から得られるアーマーが39%増加する",
+            "text_en": "39% increased Armour from Equipped Body Armour",
+            "values": [
+              39
+            ],
+            "ranges": [
+              [
+                35,
+                50
+              ]
+            ],
+            "desecrated": true,
+            "tier_index": 0,
+            "affix": "Amanamu's"
+          }
+        ],
+        "after_reroll": null
+      }
+    }
+  ],
+  "final": {
+    "name": "琥珀のアミュレット",
+    "base": "Amber Amulet",
+    "base_ja": "琥珀のアミュレット",
+    "item_level": 82,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "disposed": null,
+    "gained": null,
+    "requirements": {
+      "level": 8
+    },
+    "properties": [],
+    "augments": [],
+    "quality_tag": null,
+    "sockets": 0,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [
+      {
+        "mod_id": "Amulets/IncreasedLife",
+        "family": "IncreasedLife",
+        "side": "prefix",
+        "tier_name": "T2",
+        "mod_level": 54,
+        "text_ja": "最大ライフ +106",
+        "text_en": "+106 to maximum Life",
+        "values": [
+          106
+        ],
+        "ranges": [
+          [
+            100,
+            119
+          ]
+        ],
+        "tier_index": 7,
+        "affix": "Virile"
+      },
+      {
+        "mod_id": "Amulets/IncreasedMana",
+        "family": "IncreasedMana",
+        "side": "prefix",
+        "tier_name": "T3",
+        "mod_level": 70,
+        "text_ja": "最大マナ +162",
+        "text_en": "+162 to maximum Mana",
+        "values": [
+          162
+        ],
+        "ranges": [
+          [
+            150,
+            164
+          ]
+        ],
+        "tier_index": 10,
+        "affix": "Blue"
+      },
+      {
+        "mod_id": "Amulets/Desecrated_RemnantEffect",
+        "family": "RemnantEffect",
+        "side": "prefix",
+        "tier_name": "T1",
+        "mod_level": 65,
+        "text_ja": "プレイヤーが生成したレムナントは効果が8%増加する",
+        "text_en": "Remnants you create have 8% increased effect",
+        "values": [
+          8
+        ],
+        "ranges": [
+          [
+            8,
+            15
+          ]
+        ],
+        "desecrated": true,
+        "tier_index": 0,
+        "affix": "Amanamu's"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Amulets/AllResistances",
+        "family": "AllResistances",
+        "side": "suffix",
+        "tier_name": "T2",
+        "mod_level": 68,
+        "text_ja": "全ての元素耐性 +16%",
+        "text_en": "+16% to all Elemental Resistances",
+        "values": [
+          16
+        ],
+        "ranges": [
+          [
+            15,
+            16
+          ]
+        ],
+        "tier_index": 4,
+        "affix": "of the Rainbow"
+      },
+      {
+        "mod_id": "Amulets/Strength",
+        "family": "Strength",
+        "side": "suffix",
+        "tier_name": "T3",
+        "mod_level": 55,
+        "text_ja": "筋力 +25",
+        "text_en": "+25 to Strength",
+        "values": [
+          25
+        ],
+        "ranges": [
+          [
+            25,
+            27
+          ]
+        ],
+        "tier_index": 5,
+        "affix": "of the Goliath"
+      }
+    ]
+  },
+  "total_cost": 171.02800000000002
+}

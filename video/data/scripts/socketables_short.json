@@ -1,0 +1,168 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "【PoE2】エッセンスのMODを2つ付ける方法 アストリッドの創造性 #Shorts",
+  "target_seconds": 45,
+  "result_file": "data/results/socketables.json",
+  "layout": "short",
+  "short_title": "エッセンス2つ！？",
+  "demos": {
+    "astrid": "data/results/socketables__astrid.json"
+  },
+  "sections": [
+    {
+      "name": "エッセンス2つ！？",
+      "target_seconds": 45,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "エッセンスのMODは1つまで……のはずが、2つ付けられるの。知ってた？",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "astrid",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "えっ、どうやるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "astrid",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "エッセンスのMODが付いたこの胴に、ヒステリーのエッセンスを使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "astrid",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "1つまでだから、使えない。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ここでアストリッドの創造性を差すわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "クラフトモッドを追加で1個持つことができる。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "これで2つ目が付くのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "1つ目が消えないように、右側の結晶化のお告げで守って使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "93から139の物理棘ダメージが付いて、エッセンスのMODが2つ並んだわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "本当に2つなのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ただ、コラプトした装備には差せないの。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "ほかの決まりを変えるルーンも、本編で解説してるのだ！",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "クラフトの決まりを変えるルーン",
+              "icons": [
+                "rune:Serle's Triumph",
+                "rune:Astrid's Creativity",
+                "rune:Kolr's Hunt",
+                "rune:Passion of Aldur",
+                "rune:Legacy of Blackbraid"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "サフィックスを4つにするルーンもあるから、関連動画から見てね。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "クラフトの決まりを変えるルーン",
+              "icons": [
+                "rune:Serle's Triumph",
+                "rune:Astrid's Creativity",
+                "rune:Kolr's Hunt",
+                "rune:Passion of Aldur",
+                "rune:Legacy of Blackbraid"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

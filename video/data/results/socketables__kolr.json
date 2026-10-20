@@ -1,0 +1,1024 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-10-05T05:45:50.137Z",
+  "exiledesk_version": "0.1.377",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "コルの狩り: 手袋にマークスマンの MOD",
+    "base": "Grand Mitts",
+    "item_level": 80,
+    "start_rarity": "magic",
+    "seed": 11,
+    "start_unidentified": false,
+    "steps": [
+      {
+        "currency": "regal",
+        "times": 1
+      },
+      {
+        "currency": "artificer",
+        "times": 1,
+        "note": "手袋は 1 個"
+      },
+      {
+        "currency": "rune:Kolr's Hunt",
+        "times": 1,
+        "note": "ソケットバウンド: もう替えられない"
+      },
+      {
+        "currency": "exalt",
+        "times": 1,
+        "note": "特殊 MOD (出やすさは非公開)",
+        "pick": {
+          "mod": "Rune_marksman_ProjectileDamage"
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "regal",
+      "currency_ja": "王者のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 12,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "大いなるミット",
+        "base": "Grand Mitts",
+        "base_ja": "大いなるミット",
+        "item_level": 80,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 80
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "122",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Gloves_str/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 74,
+            "text_ja": "器用さ +33",
+            "text_en": "+33 to Dexterity",
+            "values": [
+              33
+            ],
+            "ranges": [
+              [
+                31,
+                33
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "of the Phantom"
+          }
+        ]
+      },
+      "after": {
+        "name": "大いなるミット",
+        "base": "Grand Mitts",
+        "base_ja": "大いなるミット",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 80
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "122",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Gloves_str/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T9",
+            "mod_level": 1,
+            "text_ja": "2から3の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 3 Physical Damage to Attacks",
+            "values": [
+              2,
+              3
+            ],
+            "ranges": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                3
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Glinting"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Gloves_str/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 74,
+            "text_ja": "器用さ +33",
+            "text_en": "+33 to Dexterity",
+            "values": [
+              33
+            ],
+            "ranges": [
+              [
+                31,
+                33
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "of the Phantom"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Gloves_str/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T9",
+            "mod_level": 1,
+            "text_ja": "2から3の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 3 Physical Damage to Attacks",
+            "values": [
+              2,
+              3
+            ],
+            "ranges": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                3
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Glinting"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 2,
+      "currency": "artificer",
+      "currency_ja": "熟練工のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 13,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "大いなるミット",
+        "base": "Grand Mitts",
+        "base_ja": "大いなるミット",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 80
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "122",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Gloves_str/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T9",
+            "mod_level": 1,
+            "text_ja": "2から3の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 3 Physical Damage to Attacks",
+            "values": [
+              2,
+              3
+            ],
+            "ranges": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                3
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Glinting"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Gloves_str/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 74,
+            "text_ja": "器用さ +33",
+            "text_en": "+33 to Dexterity",
+            "values": [
+              33
+            ],
+            "ranges": [
+              [
+                31,
+                33
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "of the Phantom"
+          }
+        ]
+      },
+      "after": {
+        "name": "大いなるミット",
+        "base": "Grand Mitts",
+        "base_ja": "大いなるミット",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 80
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "122",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Gloves_str/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T9",
+            "mod_level": 1,
+            "text_ja": "2から3の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 3 Physical Damage to Attacks",
+            "values": [
+              2,
+              3
+            ],
+            "ranges": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                3
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Glinting"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Gloves_str/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 74,
+            "text_ja": "器用さ +33",
+            "text_en": "+33 to Dexterity",
+            "values": [
+              33
+            ],
+            "ranges": [
+              [
+                31,
+                33
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "of the Phantom"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 3,
+      "currency": "rune:Kolr's Hunt",
+      "currency_ja": "コルの狩り",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 14,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "大いなるミット",
+        "base": "Grand Mitts",
+        "base_ja": "大いなるミット",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 80
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "122",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Gloves_str/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T9",
+            "mod_level": 1,
+            "text_ja": "2から3の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 3 Physical Damage to Attacks",
+            "values": [
+              2,
+              3
+            ],
+            "ranges": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                3
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Glinting"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Gloves_str/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 74,
+            "text_ja": "器用さ +33",
+            "text_en": "+33 to Dexterity",
+            "values": [
+              33
+            ],
+            "ranges": [
+              [
+                31,
+                33
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "of the Phantom"
+          }
+        ]
+      },
+      "after": {
+        "name": "大いなるミット",
+        "base": "Grand Mitts",
+        "base_ja": "大いなるミット",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 80
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "122",
+            "up": false
+          }
+        ],
+        "augments": [
+          {
+            "key": "rune:Kolr's Hunt",
+            "en": "Kolr's Hunt",
+            "ja": "コルの狩り",
+            "category": "Gloves",
+            "text_ja": "マークスマンモッドをロールできるようになる",
+            "text_en": "Can roll Marksman modifiers",
+            "stats": [
+              {
+                "id": "warping_rune_add_item_tag_4",
+                "value": 1
+              }
+            ]
+          }
+        ],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Gloves_str/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T9",
+            "mod_level": 1,
+            "text_ja": "2から3の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 3 Physical Damage to Attacks",
+            "values": [
+              2,
+              3
+            ],
+            "ranges": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                3
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Glinting"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Gloves_str/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 74,
+            "text_ja": "器用さ +33",
+            "text_en": "+33 to Dexterity",
+            "values": [
+              33
+            ],
+            "ranges": [
+              [
+                31,
+                33
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "of the Phantom"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      },
+      "augment_change": {
+        "socket": 1,
+        "put": {
+          "key": "rune:Kolr's Hunt",
+          "en": "Kolr's Hunt",
+          "ja": "コルの狩り",
+          "category": "Gloves",
+          "text_ja": "マークスマンモッドをロールできるようになる",
+          "text_en": "Can roll Marksman modifiers",
+          "stats": [
+            {
+              "id": "warping_rune_add_item_tag_4",
+              "value": 1
+            }
+          ]
+        },
+        "replaced": null,
+        "replaced_goes": null
+      }
+    },
+    {
+      "index": 4,
+      "currency": "exalt",
+      "currency_ja": "高貴なオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 15,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "大いなるミット",
+        "base": "Grand Mitts",
+        "base_ja": "大いなるミット",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 80
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "122",
+            "up": false
+          }
+        ],
+        "augments": [
+          {
+            "key": "rune:Kolr's Hunt",
+            "en": "Kolr's Hunt",
+            "ja": "コルの狩り",
+            "category": "Gloves",
+            "text_ja": "マークスマンモッドをロールできるようになる",
+            "text_en": "Can roll Marksman modifiers",
+            "stats": [
+              {
+                "id": "warping_rune_add_item_tag_4",
+                "value": 1
+              }
+            ]
+          }
+        ],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Gloves_str/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T9",
+            "mod_level": 1,
+            "text_ja": "2から3の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 3 Physical Damage to Attacks",
+            "values": [
+              2,
+              3
+            ],
+            "ranges": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                3
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Glinting"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Gloves_str/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 74,
+            "text_ja": "器用さ +33",
+            "text_en": "+33 to Dexterity",
+            "values": [
+              33
+            ],
+            "ranges": [
+              [
+                31,
+                33
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "of the Phantom"
+          }
+        ]
+      },
+      "after": {
+        "name": "大いなるミット",
+        "base": "Grand Mitts",
+        "base_ja": "大いなるミット",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 80
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "122",
+            "up": false
+          }
+        ],
+        "augments": [
+          {
+            "key": "rune:Kolr's Hunt",
+            "en": "Kolr's Hunt",
+            "ja": "コルの狩り",
+            "category": "Gloves",
+            "text_ja": "マークスマンモッドをロールできるようになる",
+            "text_en": "Can roll Marksman modifiers",
+            "stats": [
+              {
+                "id": "warping_rune_add_item_tag_4",
+                "value": 1
+              }
+            ]
+          }
+        ],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Gloves_str/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T9",
+            "mod_level": 1,
+            "text_ja": "2から3の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 3 Physical Damage to Attacks",
+            "values": [
+              2,
+              3
+            ],
+            "ranges": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                3
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Glinting"
+          },
+          {
+            "mod_id": "Gloves_str/Rune_marksman_ProjectileDamage",
+            "family": "ProjectileDamage",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 45,
+            "text_ja": "投射物ダメージが15%増加する",
+            "text_en": "15% increased Projectile Damage",
+            "values": [
+              15
+            ],
+            "ranges": [
+              [
+                11,
+                20
+              ]
+            ],
+            "rune": "kolrs-hunt",
+            "assumed_weight": true,
+            "tier_index": 0,
+            "affix": "Kolr's"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Gloves_str/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 74,
+            "text_ja": "器用さ +33",
+            "text_en": "+33 to Dexterity",
+            "values": [
+              33
+            ],
+            "ranges": [
+              [
+                31,
+                33
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "of the Phantom"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Gloves_str/Rune_marksman_ProjectileDamage",
+            "family": "ProjectileDamage",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 45,
+            "text_ja": "投射物ダメージが15%増加する",
+            "text_en": "15% increased Projectile Damage",
+            "values": [
+              15
+            ],
+            "ranges": [
+              [
+                11,
+                20
+              ]
+            ],
+            "rune": "kolrs-hunt",
+            "assumed_weight": true,
+            "tier_index": 0,
+            "affix": "Kolr's"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 1.012,
+        "amount": 1,
+        "subtotal": 1.012,
+        "cumulative": 1.012
+      },
+      "picked": true,
+      "pick_chance": [
+        {
+          "mod_id": "Gloves_str/Rune_marksman_ProjectileDamage",
+          "tier_name": "T3",
+          "chance": 0.01921229586935639
+        }
+      ]
+    }
+  ],
+  "final": {
+    "name": "大いなるミット",
+    "base": "Grand Mitts",
+    "base_ja": "大いなるミット",
+    "item_level": 80,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "disposed": null,
+    "gained": null,
+    "requirements": {
+      "level": 65,
+      "str": 80
+    },
+    "properties": [
+      {
+        "key": "armour",
+        "label": "アーマー",
+        "value": "122",
+        "up": false
+      }
+    ],
+    "augments": [
+      {
+        "key": "rune:Kolr's Hunt",
+        "en": "Kolr's Hunt",
+        "ja": "コルの狩り",
+        "category": "Gloves",
+        "text_ja": "マークスマンモッドをロールできるようになる",
+        "text_en": "Can roll Marksman modifiers",
+        "stats": [
+          {
+            "id": "warping_rune_add_item_tag_4",
+            "value": 1
+          }
+        ]
+      }
+    ],
+    "quality_tag": null,
+    "sockets": 1,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [
+      {
+        "mod_id": "Gloves_str/PhysicalDamage",
+        "family": "PhysicalDamage",
+        "side": "prefix",
+        "tier_name": "T9",
+        "mod_level": 1,
+        "text_ja": "2から3の物理ダメージをアタックに追加する",
+        "text_en": "Adds 2 to 3 Physical Damage to Attacks",
+        "values": [
+          2,
+          3
+        ],
+        "ranges": [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            3
+          ]
+        ],
+        "tier_index": 0,
+        "affix": "Glinting"
+      },
+      {
+        "mod_id": "Gloves_str/Rune_marksman_ProjectileDamage",
+        "family": "ProjectileDamage",
+        "side": "prefix",
+        "tier_name": "T3",
+        "mod_level": 45,
+        "text_ja": "投射物ダメージが15%増加する",
+        "text_en": "15% increased Projectile Damage",
+        "values": [
+          15
+        ],
+        "ranges": [
+          [
+            11,
+            20
+          ]
+        ],
+        "rune": "kolrs-hunt",
+        "assumed_weight": true,
+        "tier_index": 0,
+        "affix": "Kolr's"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Gloves_str/Dexterity",
+        "family": "Dexterity",
+        "side": "suffix",
+        "tier_name": "T2",
+        "mod_level": 74,
+        "text_ja": "器用さ +33",
+        "text_en": "+33 to Dexterity",
+        "values": [
+          33
+        ],
+        "ranges": [
+          [
+            31,
+            33
+          ]
+        ],
+        "tier_index": 7,
+        "affix": "of the Phantom"
+      }
+    ]
+  },
+  "total_cost": 1.012
+}

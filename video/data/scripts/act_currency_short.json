@@ -1,0 +1,141 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "【PoE2】3秒クイズ：アクト中に使っていいオーブはどれ？ #Shorts",
+  "target_seconds": 30,
+  "result_file": "data/results/act_currency_8min.json",
+  "layout": "short",
+  "short_title": "アクト中に使っていいのはどれ？",
+  "sections": [
+    {
+      "name": "クイズ",
+      "target_seconds": 30,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "問題。アクト中に使っていいオーブはどれ？",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "alchemy",
+              "chaos",
+              "divine"
+            ]
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "錬金術、カオス、神のオーブ…全部使いたいのだ！",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "alchemy",
+              "chaos",
+              "divine"
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "3 秒で考えてね。",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "alchemy",
+              "chaos",
+              "divine"
+            ],
+            "countdown": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "正解は、錬金術のオーブ。",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "alchemy",
+              "chaos",
+              "divine"
+            ],
+            "answer": 0,
+            "badges": [
+              "使う",
+              "？",
+              "？"
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "白い装備に使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "一気に黄色のレアになったのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "カオスと神は、使っちゃダメなのだ？",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "alchemy",
+              "chaos",
+              "divine"
+            ],
+            "answer": 0,
+            "badges": [
+              "使う",
+              "？",
+              "？"
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "価値が高いから、アクト中は取っておくのがおすすめよ。",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "alchemy",
+              "chaos",
+              "divine"
+            ],
+            "answer": 0,
+            "badges": [
+              "使う",
+              "取っておく",
+              "取っておく"
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "他のカレンシーも全部仕分けたのは、本編で見てね。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "関連動画から飛べるのだ！",
+          "scene": {
+            "kind": "talk"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,204 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "ExileDesk アプリ版とチュートリアル",
+  "target_seconds": 40,
+  "result_file": "data/results/exiledesk_promo.json",
+  "layout": "wide",
+  "demos": {},
+  "sections": [
+    {
+      "name": "アプリ版とチュートリアル",
+      "target_seconds": 40,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "ExileDeskがアプリになったのだ？",
+          "scene": {
+            "kind": "footage",
+            "clip": "release",
+            "at": 0,
+            "hold": 2.4
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "本当よ。右上の「アプリ版はこちら」を見て。",
+          "scene": {
+            "kind": "footage",
+            "clip": "release",
+            "at": 2.4,
+            "hold": 2.4,
+            "zoom": "rel_app"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ここから、PCにアプリとして入れられるの。",
+          "scene": {
+            "kind": "footage",
+            "clip": "release",
+            "at": 2.4,
+            "hold": 2.4,
+            "zoom": "rel_app"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "中身はウェブ版と同じ。アプリ専用の窓で開くわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "release",
+            "at": 2.4,
+            "hold": 2.4,
+            "zoom": "rel_app"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "もう1つの新しいのは何なのだ？",
+          "scene": {
+            "kind": "footage",
+            "clip": "release",
+            "at": 2.4,
+            "hold": 4.2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "もう1つは、チュートリアルよ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "release",
+            "at": 4.2,
+            "hold": 5.8
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "最初のコースは、「基本のオーブを学ぶ」。",
+          "scene": {
+            "kind": "footage",
+            "clip": "release",
+            "at": 5.8,
+            "hold": 5.8,
+            "zoom": "rel_course"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "変成から神のオーブまで、19手で1つずつ覚えるの。",
+          "scene": {
+            "kind": "footage",
+            "clip": "release",
+            "at": 6.8,
+            "hold": 9.6
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "1手目は変成のオーブ。白いワンドに使うと……",
+          "scene": {
+            "kind": "footage",
+            "clip": "release",
+            "at": 9.6,
+            "hold": 11.3,
+            "zoom": "rel_step1"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "青になって、MODが1つ付いたわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "release",
+            "at": 11.3,
+            "hold": 13.0,
+            "zoom": "rel_step1"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "2手目は変成の上級よ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "release",
+            "at": 13.5,
+            "hold": 16.4,
+            "zoom": "rel_step2"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "上級だと何が違うのだ？",
+          "scene": {
+            "kind": "footage",
+            "clip": "release",
+            "at": 16.4,
+            "hold": 16.4,
+            "zoom": "rel_step2"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "MODレベルが44以上の物だけ付くわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "release",
+            "at": 16.4,
+            "hold": 16.4,
+            "zoom": "rel_step2"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "これなら覚えられるのだ！",
+          "scene": {
+            "kind": "footage",
+            "clip": "release",
+            "at": 16.4,
+            "hold": 16.4,
+            "zoom": "rel_step2"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "コースは随時追加予定よ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "release",
+            "at": 16.4,
+            "hold": 16.4,
+            "zoom": "rel_step2"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "サイトはexiledesk.com、無料で使えるわ。",
+          "scene": {
+            "kind": "footage",
+            "clip": "release",
+            "at": 16.4,
+            "hold": 16.4,
+            "zoom": "rel_step2"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1872 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "【PoE2】差すとクラフトの決まりが変わるルーン: セールの凱旋・アストリッド・特殊MOD・アルダー・遺産",
+  "target_seconds": 600,
+  "result_file": "data/results/socketables.json",
+  "final_step": 5,
+  "layout": "wide",
+  "planned_sections": 8,
+  "demos": {
+    "serle": "data/results/socketables__serle.json",
+    "astrid": "data/results/socketables__astrid.json",
+    "kolr": "data/results/socketables__kolr.json",
+    "aldur": "data/results/socketables__aldur.json",
+    "legacy": "data/results/socketables__legacy.json"
+  },
+  "sections": [
+    {
+      "name": "導入",
+      "target_seconds": 45,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "この胴、よく見るとサフィックスが4つ付いてるの。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "えっ、サフィックスは3つまでじゃないのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "普通はね。ソケットに差すルーンの中に、クラフトの決まりそのものを変える物があるの。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "ルーンって、耐性とかを足すだけじゃないのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "足すだけの物が多いけど、今日はそうじゃない物を集めたわ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "クラフトの決まりを変えるルーン",
+              "icons": [
+                "rune:Serle's Triumph",
+                "rune:Astrid's Creativity",
+                "rune:Kolr's Hunt",
+                "rune:Passion of Aldur",
+                "rune:Legacy of Blackbraid"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "サフィックスが増える物、エッセンスを2つ付けられる物、",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "クラフトの決まりを変えるルーン",
+              "icons": [
+                "rune:Serle's Triumph",
+                "rune:Astrid's Creativity",
+                "rune:Kolr's Hunt",
+                "rune:Passion of Aldur",
+                "rune:Legacy of Blackbraid"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "普段出ないMODが出るようになる物、属性を変える物、ユニークの力を持つ物。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "クラフトの決まりを変えるルーン",
+              "icons": [
+                "rune:Serle's Triumph",
+                "rune:Astrid's Creativity",
+                "rune:Kolr's Hunt",
+                "rune:Passion of Aldur",
+                "rune:Legacy of Blackbraid"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "全部差したら最強なのだ！",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "クラフトの決まりを変えるルーン",
+              "icons": [
+                "rune:Serle's Triumph",
+                "rune:Astrid's Creativity",
+                "rune:Kolr's Hunt",
+                "rune:Passion of Aldur",
+                "rune:Legacy of Blackbraid"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ただ、ほとんどは一度差したら外せないし、差し替えもできないの。だから差す前に知っておいてほしいわ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "クラフトの決まりを変えるルーン",
+              "icons": [
+                "rune:Serle's Triumph",
+                "rune:Astrid's Creativity",
+                "rune:Kolr's Hunt",
+                "rune:Passion of Aldur",
+                "rune:Legacy of Blackbraid"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "失敗できないのだ……ちゃんと覚えるのだ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "クラフトの決まりを変えるルーン",
+              "icons": [
+                "rune:Serle's Triumph",
+                "rune:Astrid's Creativity",
+                "rune:Kolr's Hunt",
+                "rune:Passion of Aldur",
+                "rune:Legacy of Blackbraid"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "ソケットの基本",
+      "target_seconds": 90,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "まずは普通のソケットの使い方から。この胴には、まだソケットが無いわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "熟練工のオーブを使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ソケットが1つ増えた。",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "もっと使ったら、どんどん増えるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "胴は2つまでよ。もう1回使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "これで2つ目。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "胴と両手武器は2つ、ほかの防具や片手武器は1つまでなの。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "指輪やアミュレットはどうなのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "指輪・アミュレット・ベルトには、ソケットが付かないわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "まずは砂漠のグレータールーンを差すわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "防具に差すと、火耐性+18%。",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "武器に差したら、どうなるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "武器なら火ダメージの追加になるの。同じルーンでも、差す場所で中身が変わるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次はシアクラトルのソウルコア。",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "全ての元素耐性+6%が付いたわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "ルーンとソウルコアって、何が違うのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ルーンはカルグール、ソウルコアはヴァールの物。差し方は同じで、アイドルも仲間よ。",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "気に入らなかったら、外せばいいのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "それができないの。一度差したら、外せないわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "代わりに、上から別の物を差して置き換えられる。ウサギのアイドルを差すわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ソウルコアはなくなって、見つかるアイテムのレアリティが12%増加する、になったわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 5
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "sad",
+          "text": "置き換えたら、元のは返ってこないのだ……。",
+          "scene": {
+            "kind": "stage",
+            "step": 5
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。だから、何を差すかは先によく考えてね。",
+          "scene": {
+            "kind": "stage",
+            "step": 5
+          }
+        }
+      ]
+    },
+    {
+      "name": "セールの凱旋",
+      "target_seconds": 75,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次はセールの凱旋。プレフィックス3つ、サフィックス3つで埋まった胴を用意したわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "もう何も付かないのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "試しに高貴なオーブを使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "足す枠が無くて、使えない。",
+          "scene": {
+            "kind": "stage",
+            "step": 6,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "やっぱり6つで満杯なのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 6,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ここで熟練工のオーブを使って、ソケットを作るわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 6,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ソケットができた。",
+          "scene": {
+            "kind": "stage",
+            "step": 7,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そこにセールの凱旋を差すわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 7,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "サフィックスモッド+1個。",
+          "scene": {
+            "kind": "stage",
+            "step": 8,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "サフィックスが4つまで付くようになったのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 8,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。プレフィックスは3つのまま、サフィックスだけ4つになるの。",
+          "scene": {
+            "kind": "stage",
+            "step": 8,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "もう一度、高貴なオーブを使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 8,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "スタン閾値+80が、4つ目のサフィックスに付いたわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "7つ目のMODなのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ただ、セールの凱旋はソケットバウンド。一度差したら、外すことも置き換えることもできないの。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "そのソケットは、ずっとセールの凱旋なのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。胴ならソケットは2つ作れるから、もう1つは普通のルーンに使えるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "それと、コラプトや聖別をしたアイテムには差せないの。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "差すなら、コラプトの前なのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle"
+          }
+        }
+      ]
+    },
+    {
+      "name": "アストリッドの創造性",
+      "target_seconds": 80,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次はアストリッドの創造性。エッセンスで付くMODは、クラフトMODと呼ばれるの。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "前編で、1つまでって言ってたやつなのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。1つのアイテムに1つまで。まず、ソケットを作っておくわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ソケットができた。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "肉体のパーフェクトエッセンスを使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "アーマーのMODが消えて、最大ライフが9%増加する、が付いた。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "ヒステリーのエッセンスも使うのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "使ってみるわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "エッセンスのMODは1つまでで、使えない。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "sad",
+          "text": "やっぱり1つまでなのだ……。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ここでアストリッドの創造性を差すわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "クラフトモッドを追加で1個持つことができる。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "これで2つ目が付けられるのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ただ、ヒステリーも、ランダムなMODを1つ消してから付けるエッセンスなの。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "1つ目のエッセンスのMODが消えることもあるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "あるわ。そこで右側の結晶化のお告げ。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次のパーフェクトかコラプトのエッセンスは、サフィックスだけを消すの。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "1つ目はプレフィックスだから、これで守れるわ。ヒステリーのエッセンスを使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "筋力が消えて、93から139の物理棘ダメージが付いた。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "エッセンスのMODが2つ並んだのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "アストリッドの創造性はソケットバウンドじゃないから、置き換えもできるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "astrid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ただ、コラプトや聖別をしたアイテムには差せないの。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "astrid"
+          }
+        }
+      ]
+    },
+    {
+      "name": "特殊MODのルーン",
+      "target_seconds": 75,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次は特殊MODのルーン。差すと、普段は出ないMODが出るようになる物よ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "普段出ないMODって、どういうことなのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ルーンごとに決まった種類のMODが、抽選に加わるの。全部で6つあるわ。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "特殊MODのルーン",
+              "rows": [
+                [
+                  "ルーン",
+                  "差す場所",
+                  "出るMOD"
+                ],
+                [
+                  "コルの狩り",
+                  "手袋",
+                  "マークスマン"
+                ],
+                [
+                  "カトラの陰鬱",
+                  "手袋",
+                  "腐敗"
+                ],
+                [
+                  "ヴォラナの虐殺",
+                  "兜",
+                  "バーサーク"
+                ],
+                [
+                  "ウートレドの星読み",
+                  "靴",
+                  "クロノマンシー"
+                ],
+                [
+                  "メドヴェッドの世話",
+                  "胴",
+                  "ソウル"
+                ],
+                [
+                  "スルードの力",
+                  "武器",
+                  "デストラクション"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "手袋に2つ、兜・靴・胴・武器に1つずつ。差せる場所が決まっているの。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "特殊MODのルーン",
+              "rows": [
+                [
+                  "ルーン",
+                  "差す場所",
+                  "出るMOD"
+                ],
+                [
+                  "コルの狩り",
+                  "手袋",
+                  "マークスマン"
+                ],
+                [
+                  "カトラの陰鬱",
+                  "手袋",
+                  "腐敗"
+                ],
+                [
+                  "ヴォラナの虐殺",
+                  "兜",
+                  "バーサーク"
+                ],
+                [
+                  "ウートレドの星読み",
+                  "靴",
+                  "クロノマンシー"
+                ],
+                [
+                  "メドヴェッドの世話",
+                  "胴",
+                  "ソウル"
+                ],
+                [
+                  "スルードの力",
+                  "武器",
+                  "デストラクション"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "どこにでも差せるわけじゃないのだ。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "特殊MODのルーン",
+              "rows": [
+                [
+                  "ルーン",
+                  "差す場所",
+                  "出るMOD"
+                ],
+                [
+                  "コルの狩り",
+                  "手袋",
+                  "マークスマン"
+                ],
+                [
+                  "カトラの陰鬱",
+                  "手袋",
+                  "腐敗"
+                ],
+                [
+                  "ヴォラナの虐殺",
+                  "兜",
+                  "バーサーク"
+                ],
+                [
+                  "ウートレドの星読み",
+                  "靴",
+                  "クロノマンシー"
+                ],
+                [
+                  "メドヴェッドの世話",
+                  "胴",
+                  "ソウル"
+                ],
+                [
+                  "スルードの力",
+                  "武器",
+                  "デストラクション"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "今回は手袋にコルの狩りを差して、マークスマンのMODを狙うわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "まず王者のオーブでレアにするわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "2から3の物理ダメージをアタックに追加する、が付いた。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次に熟練工のオーブ。手袋のソケットは1つだけよ。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ソケットができた。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "その1つに差すのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。コルの狩りを差すわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "マークスマンモッドをロールできるようになる。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "高貴なオーブを使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "投射物ダメージが15%増加する。これがマークスマンのMODよ。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "毎回、特殊MODが付くのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "普通のMODと一緒に抽選されるから、毎回じゃないわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "データサイトによると、特殊MODの中では完全にランダムな抽選よ。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "別のルーンに替えられるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "コルの狩りもソケットバウンド。手袋はソケットが1つだから、差したらもうそのままよ。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "kolr"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "差す前に、何を狙うか決めておくのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "kolr"
+          }
+        }
+      ]
+    },
+    {
+      "name": "アルダーの4種",
+      "target_seconds": 60,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次はアルダーの4種。差すと、武器の属性のMODを別の属性に変えるルーンよ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "aldur",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "属性を変えるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "aldur",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "4つあって、それぞれ変える先が決まっているの。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "アルダーの4種",
+              "rows": [
+                [
+                  "ルーン",
+                  "変えるMOD",
+                  "変わる先"
+                ],
+                [
+                  "アルダーの情熱",
+                  "冷気・雷",
+                  "火"
+                ],
+                [
+                  "アルダーの息吹",
+                  "火・雷",
+                  "冷気"
+                ],
+                [
+                  "アルダーの怒り",
+                  "火・冷気",
+                  "雷"
+                ],
+                [
+                  "アルダーの裏切り",
+                  "火・冷気・雷",
+                  "混沌"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "情熱は火、息吹は冷気、怒りは雷、裏切りは混沌に変えるわ。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "アルダーの4種",
+              "rows": [
+                [
+                  "ルーン",
+                  "変えるMOD",
+                  "変わる先"
+                ],
+                [
+                  "アルダーの情熱",
+                  "冷気・雷",
+                  "火"
+                ],
+                [
+                  "アルダーの息吹",
+                  "火・雷",
+                  "冷気"
+                ],
+                [
+                  "アルダーの怒り",
+                  "火・冷気",
+                  "雷"
+                ],
+                [
+                  "アルダーの裏切り",
+                  "火・冷気・雷",
+                  "混沌"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "差せるのは武器だけなのだ？",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "アルダーの4種",
+              "rows": [
+                [
+                  "ルーン",
+                  "変えるMOD",
+                  "変わる先"
+                ],
+                [
+                  "アルダーの情熱",
+                  "冷気・雷",
+                  "火"
+                ],
+                [
+                  "アルダーの息吹",
+                  "火・雷",
+                  "冷気"
+                ],
+                [
+                  "アルダーの怒り",
+                  "火・冷気",
+                  "雷"
+                ],
+                [
+                  "アルダーの裏切り",
+                  "火・冷気・雷",
+                  "混沌"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう、レアの武器だけよ。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "アルダーの4種",
+              "rows": [
+                [
+                  "ルーン",
+                  "変えるMOD",
+                  "変わる先"
+                ],
+                [
+                  "アルダーの情熱",
+                  "冷気・雷",
+                  "火"
+                ],
+                [
+                  "アルダーの息吹",
+                  "火・雷",
+                  "冷気"
+                ],
+                [
+                  "アルダーの怒り",
+                  "火・冷気",
+                  "雷"
+                ],
+                [
+                  "アルダーの裏切り",
+                  "火・冷気・雷",
+                  "混沌"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "この両手武器には、2から36の雷ダメージを追加する、が付いているわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "aldur",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "熟練工のオーブでソケットを作るわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "aldur",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ソケットができた。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "aldur"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "アルダーの情熱を差すわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "demo": "aldur"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "雷ダメージの追加が、14から23の火ダメージを追加する、に変わった。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "aldur"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "本当に火になったのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "aldur"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "変わるのは、差した時に付いているMODだけ。後から付けたMODは、そのままよ。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "aldur"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "火の武器を作りたい時に、まとめて火にできるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "aldur"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そういう使い方ね。ただ、変える物が付いていないと差せないわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "aldur"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "それと、アルダーの4種もソケットバウンド。一度差したら、外せないし置き換えもできないの。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "aldur"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "sad",
+          "text": "雷に戻したくなっても、無理なのだ……。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "aldur"
+          }
+        }
+      ]
+    },
+    {
+      "name": "遺産のルーン",
+      "target_seconds": 70,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "最後は遺産のルーン。ユニークの力の一部を持ったルーンよ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "遺産のルーン",
+              "icons": [
+                "rune:Legacy of Blackbraid",
+                "rune:Legacy of Bramblejack",
+                "rune:Legacy of Legionstride"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "ユニークの力なのだ？",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "遺産のルーン",
+              "icons": [
+                "rune:Legacy of Blackbraid",
+                "rune:Legacy of Bramblejack",
+                "rune:Legacy of Legionstride"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "アルダーの遺産を、カルグールかエゾマイトのユニークの空いたソケットに差すの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "遺産のルーン",
+              "icons": [
+                "rune:Legacy of Blackbraid",
+                "rune:Legacy of Bramblejack",
+                "rune:Legacy of Legionstride"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "すると、そのユニークが壊れて、遺産のルーンになるわ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "遺産のルーン",
+              "icons": [
+                "rune:Legacy of Blackbraid",
+                "rune:Legacy of Bramblejack",
+                "rune:Legacy of Legionstride"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "ユニークが壊れちゃうのだ！？",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "遺産のルーン",
+              "icons": [
+                "rune:Legacy of Blackbraid",
+                "rune:Legacy of Bramblejack",
+                "rune:Legacy of Legionstride"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。代わりに、元のユニークの効果の一部を持ったルーンができるの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "遺産のルーン",
+              "icons": [
+                "rune:Legacy of Blackbraid",
+                "rune:Legacy of Bramblejack",
+                "rune:Legacy of Legionstride"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "例えば黒い組紐の遺産。元はユニークの胴よ。このレアの胴に差してみるわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "legacy"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "まず熟練工のオーブでソケットを作るわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "legacy"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ソケットができた。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "legacy"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "黒い組紐の遺産を差すわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "legacy"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "アーマーの+50%が元素ダメージにも適用される。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "legacy"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "ユニークの効果が、レアの胴に付いたのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "legacy"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "元のユニークより、数字が下がる物もあるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "legacy"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "でも、レアの好きなMODと組み合わせられるのが強みね。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "legacy"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "これもソケットバウンドなのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "legacy"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "遺産のルーンは置き換えられるし、コラプトした装備にも差せるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "legacy"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ただ、1つのアイテムに1個までよ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "legacy"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "ほかには、どんな遺産があるのだ？",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "遺産のルーン",
+              "icons": [
+                "rune:Legacy of Blackbraid",
+                "rune:Legacy of Bramblejack",
+                "rune:Legacy of Legionstride"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ブランブルジャックの遺産は、受けた近接物理ダメージの250%を反射する胴のルーン。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "遺産のルーン",
+              "icons": [
+                "rune:Legacy of Blackbraid",
+                "rune:Legacy of Bramblejack",
+                "rune:Legacy of Legionstride"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "リージョンストライドの遺産は、靴にブロック率+10%を付けるわ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "遺産のルーン",
+              "icons": [
+                "rune:Legacy of Blackbraid",
+                "rune:Legacy of Bramblejack",
+                "rune:Legacy of Legionstride"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "元のユニークを知ってると、選ぶのが楽しそうなのだ！",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "遺産のルーン",
+              "icons": [
+                "rune:Legacy of Blackbraid",
+                "rune:Legacy of Bramblejack",
+                "rune:Legacy of Legionstride"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "クイズとまとめ",
+      "target_seconds": 50,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ここでクイズ。コラプトした装備にも差せるのは、どれ？",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "rune:Serle's Triumph",
+              "rune:Astrid's Creativity",
+              "rune:Legacy of Blackbraid"
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "3秒で考えてね。",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "rune:Serle's Triumph",
+              "rune:Astrid's Creativity",
+              "rune:Legacy of Blackbraid"
+            ],
+            "countdown": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "正解は黒い組紐の遺産。遺産のルーンは、コラプトした装備にも差せるの。",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "rune:Serle's Triumph",
+              "rune:Astrid's Creativity",
+              "rune:Legacy of Blackbraid"
+            ],
+            "answer": 2
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "セールとアストリッドは、コラプトの前に差すのだ！",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "rune:Serle's Triumph",
+              "rune:Astrid's Creativity",
+              "rune:Legacy of Blackbraid"
+            ],
+            "answer": 2
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "まとめると、ルーンは置き換えられるけど、外すことはできないのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "セールの凱旋でサフィックスが4つになるのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "アストリッドの創造性で、クラフトMODが2つになるのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "特殊MODのルーンで普段出ないMODが出て、アルダーで属性が変わるのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "遺産のルーンは、ユニークの力の一部を持っているのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ほとんどは一度差したら替えられないから、差す前に何を作るか決めておいてね。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "このチャンネルでは、PoE2の基礎を初心者向けにまとめていくわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "happy",
+          "text": "分からない所や知りたい事があったら、コメントで教えてね。チャンネル登録もよろしく！",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "よろしくなのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "serle",
+            "still": true
+          }
+        }
+      ]
+    }
+  ]
+}

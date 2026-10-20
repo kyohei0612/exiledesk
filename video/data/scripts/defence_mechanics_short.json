@@ -1,0 +1,201 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "【PoE2】ボスの赤く光る技、効く防御はどれ？ #Shorts",
+  "target_seconds": 32,
+  "result_file": "data/results/defence_mechanics.json",
+  "layout": "short",
+  "short_title": "赤く光る技に効く防御は？",
+  "practice": false,
+  "sections": [
+    {
+      "name": "クイズ",
+      "target_seconds": 32,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ボスの赤く光る技。効く防御はどれ？",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "回避力",
+              "受け流し",
+              "ブロック"
+            ]
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "避けるのが一番強そうなのだ！",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "回避力",
+              "受け流し",
+              "ブロック"
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "3 秒で考えてね。",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "回避力",
+              "受け流し",
+              "ブロック"
+            ],
+            "countdown": 3
+          },
+          "speech": "3秒で考えてね。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "proud",
+          "text": "正解は受け流し！",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "回避力",
+              "受け流し",
+              "ブロック"
+            ],
+            "answer": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "赤い技は、回避とブロックが飛ばされるの。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit",
+              "red": "1"
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "避ける系が効かないのだ！？",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit",
+              "red": "1"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "受け流しは効いて、ダメージを 40% 減らすわ。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit",
+              "red": "1"
+            }
+          },
+          "speech": "受け流しは効いて、ダメージを40パーセント減らすわ。"
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "その下のアーマーや ES も効くの。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit",
+              "red": "1"
+            }
+          },
+          "speech": "その下のアーマーやイーエスも効くの。"
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "ほかの防御の仕組みも知りたいのだ！",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit",
+              "red": "1"
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "アーマーや ES の仕組みは、本編で全部解説しているわ。",
+          "scene": {
+            "kind": "layers",
+            "def_params": {
+              "life": 500,
+              "es": 200,
+              "armour": 400,
+              "evasion": 600,
+              "deflect": 300,
+              "block": 20,
+              "lvl": 32,
+              "dmg": 300,
+              "kind": "physical",
+              "outcome": "hit",
+              "red": "1"
+            }
+          },
+          "speech": "アーマーやイーエスの仕組みは、本編で全部解説しているわ。"
+        }
+      ]
+    }
+  ]
+}

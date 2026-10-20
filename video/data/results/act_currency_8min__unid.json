@@ -1,0 +1,300 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-09-29T06:35:57.052Z",
+  "exiledesk_version": "0.1.328",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": null,
+    "base": "Sapphire Ring",
+    "item_level": 36,
+    "start_rarity": "magic",
+    "start_paste": null,
+    "seed": 20261102,
+    "start_unidentified": true,
+    "tray": null,
+    "steps": [
+      {
+        "currency": "wisdom",
+        "omen": null,
+        "times": 1,
+        "outcome": null,
+        "note": null
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "wisdom",
+      "currency_ja": "鑑定の巻物",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261103,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": false,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T9",
+            "mod_level": 1,
+            "text_ja": "2から3の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 3 Physical Damage to Attacks",
+            "values": [
+              2,
+              3
+            ],
+            "ranges": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                3
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Glinting"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 25,
+            "text_ja": "雷耐性 +19%",
+            "text_en": "+19% to Lightning Resistance",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Storm"
+          }
+        ]
+      },
+      "after": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T9",
+            "mod_level": 1,
+            "text_ja": "2から3の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 3 Physical Damage to Attacks",
+            "values": [
+              2,
+              3
+            ],
+            "ranges": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                3
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Glinting"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 25,
+            "text_ja": "雷耐性 +19%",
+            "text_en": "+19% to Lightning Resistance",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Storm"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T9",
+            "mod_level": 1,
+            "text_ja": "2から3の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 3 Physical Damage to Attacks",
+            "values": [
+              2,
+              3
+            ],
+            "ranges": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                3
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Glinting"
+          },
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 25,
+            "text_ja": "雷耐性 +19%",
+            "text_en": "+19% to Lightning Resistance",
+            "values": [
+              19
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Storm"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    }
+  ],
+  "final": {
+    "name": "サファイアの指輪",
+    "base": "Sapphire Ring",
+    "base_ja": "サファイアの指輪",
+    "item_level": 36,
+    "rarity": "magic",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "quality_tag": null,
+    "sockets": 0,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [
+      {
+        "mod_id": "Rings/PhysicalDamage",
+        "family": "PhysicalDamage",
+        "side": "prefix",
+        "tier_name": "T9",
+        "mod_level": 1,
+        "text_ja": "2から3の物理ダメージをアタックに追加する",
+        "text_en": "Adds 2 to 3 Physical Damage to Attacks",
+        "values": [
+          2,
+          3
+        ],
+        "ranges": [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            3
+          ]
+        ],
+        "tier_index": 0,
+        "affix": "Glinting"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Rings/LightningResistance",
+        "family": "LightningResistance",
+        "side": "suffix",
+        "tier_name": "T6",
+        "mod_level": 25,
+        "text_ja": "雷耐性 +19%",
+        "text_en": "+19% to Lightning Resistance",
+        "values": [
+          19
+        ],
+        "ranges": [
+          [
+            16,
+            20
+          ]
+        ],
+        "tier_index": 2,
+        "affix": "of the Storm"
+      }
+    ]
+  },
+  "total_cost": 0
+}

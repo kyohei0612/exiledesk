@@ -1,0 +1,151 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "【PoE2】上の3つは全く同じ武器、どっちが強い？ #Shorts",
+  "target_seconds": 28,
+  "result_file": "data/results/act_offense_defense_8min.json",
+  "layout": "short",
+  "short_title": "同じ武器なのに、どっちが強い？",
+  "demos": {
+    "zunda": "data/results/act_offense_defense_8min__zunda.json",
+    "recommend": "data/results/act_offense_defense_8min__recommend.json",
+    "armour": "data/results/act_offense_defense_8min__armour.json",
+    "ring": "data/results/act_offense_defense_8min__ring.json",
+    "junk": "data/results/act_offense_defense_8min__junk.json"
+  },
+  "resists": {
+    "gear": "data/results/act_offense_defense_8min__resists_gear.json"
+  },
+  "sections": [
+    {
+      "name": "クイズ",
+      "target_seconds": 28,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "問題。上の 3 つが全く同じ 2 本。どっちが早く倒せる？",
+          "speech": "問題。上の3つが全く同じ2本。どっちが早く倒せる？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "compare",
+            "step": 0,
+            "demo": "zunda",
+            "reveal": true,
+            "compare_with": "recommend",
+            "b_step": 0,
+            "show_dps": false
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "下の 3 つしか違わないのだ？ 同じくらいなのだ。",
+          "speech": "下の3つしか違わないのだ？ 同じくらいなのだ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "compare",
+            "step": 0,
+            "demo": "zunda",
+            "reveal": true,
+            "compare_with": "recommend",
+            "b_step": 0,
+            "show_dps": false
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "3 秒で考えてね。",
+          "speech": "3秒で考えてね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "ずんだもん",
+              "おすすめ"
+            ],
+            "reveal": true,
+            "countdown": 3,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "よーいドン！ ……正解は右よ。",
+          "emotion": "proud",
+          "scene": {
+            "kind": "ttk",
+            "step": 0,
+            "demo": "zunda",
+            "reveal": true,
+            "compare_with": "recommend",
+            "b_step": 0,
+            "show_dps": true,
+            "labels": [
+              "ずんだもん",
+              "おすすめ"
+            ]
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "165 と 201！ 2 割も違うのだ！",
+          "speech": "ひゃくろくじゅうごと、にひゃくいち！ 2割も違うのだ！",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "compare",
+            "step": 0,
+            "demo": "zunda",
+            "reveal": true,
+            "compare_with": "recommend",
+            "b_step": 0,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "違いは下の 3 つ、サフィックスだけ。アタックスピードと近接スキルのレベルよ。",
+          "speech": "違いは下の3つ、サフィックスだけ。アタックスピードと近接スキルのレベルよ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "compare",
+            "step": 0,
+            "demo": "zunda",
+            "reveal": true,
+            "compare_with": "recommend",
+            "b_step": 0,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "サフィックス、大事なのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "でもサフィックスは 7 割が外れ。当たりの見分け方は本編で見てね。",
+          "speech": "でもサフィックスは7割が外れ。当たりの見分け方は本編で見てね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "関連動画から飛べるのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        }
+      ]
+    }
+  ]
+}

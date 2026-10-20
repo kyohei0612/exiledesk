@@ -1,0 +1,510 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-09-27T12:50:19.108Z",
+  "exiledesk_version": "0.1.306",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "レア装備クラフト入門: 変成 → 増強 → 王者",
+    "base": "Mnemonic Ring",
+    "item_level": 80,
+    "start_rarity": "normal",
+    "start_paste": null,
+    "seed": 20260927,
+    "steps": [
+      {
+        "currency": "transmute",
+        "omen": null,
+        "times": 1,
+        "note": null
+      },
+      {
+        "currency": "augment",
+        "omen": null,
+        "times": 1,
+        "note": null
+      },
+      {
+        "currency": "regal",
+        "omen": null,
+        "times": 1,
+        "note": null
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "transmute",
+      "currency_ja": "変成のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20260928,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "normal",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "after": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Rings/ItemFoundRarityIncrease",
+            "family": "ItemFoundRarityIncrease",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 3,
+            "text_ja": "見つかるアイテムのレアリティが9%増加する",
+            "text_en": "9% increased Rarity of Items found",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                6,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Plunder"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/ItemFoundRarityIncrease",
+            "family": "ItemFoundRarityIncrease",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 3,
+            "text_ja": "見つかるアイテムのレアリティが9%増加する",
+            "text_en": "9% increased Rarity of Items found",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                6,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Plunder"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "normal",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 2,
+      "currency": "augment",
+      "currency_ja": "増強のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20260929,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Rings/ItemFoundRarityIncrease",
+            "family": "ItemFoundRarityIncrease",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 3,
+            "text_ja": "見つかるアイテムのレアリティが9%増加する",
+            "text_en": "9% increased Rarity of Items found",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                6,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Plunder"
+          }
+        ]
+      },
+      "after": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "prefixes": [
+          {
+            "mod_id": "Rings/EvasionRating",
+            "family": "IncreasedEvasionRating",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 54,
+            "text_ja": "回避力 +151",
+            "text_en": "+151 to Evasion Rating",
+            "values": [
+              151
+            ],
+            "ranges": [
+              [
+                142,
+                174
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "Vaporous"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/ItemFoundRarityIncrease",
+            "family": "ItemFoundRarityIncrease",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 3,
+            "text_ja": "見つかるアイテムのレアリティが9%増加する",
+            "text_en": "9% increased Rarity of Items found",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                6,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Plunder"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/EvasionRating",
+            "family": "IncreasedEvasionRating",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 54,
+            "text_ja": "回避力 +151",
+            "text_en": "+151 to Evasion Rating",
+            "values": [
+              151
+            ],
+            "ranges": [
+              [
+                142,
+                174
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "Vaporous"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 3,
+      "currency": "regal",
+      "currency_ja": "王者のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20260930,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "prefixes": [
+          {
+            "mod_id": "Rings/EvasionRating",
+            "family": "IncreasedEvasionRating",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 54,
+            "text_ja": "回避力 +151",
+            "text_en": "+151 to Evasion Rating",
+            "values": [
+              151
+            ],
+            "ranges": [
+              [
+                142,
+                174
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "Vaporous"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/ItemFoundRarityIncrease",
+            "family": "ItemFoundRarityIncrease",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 3,
+            "text_ja": "見つかるアイテムのレアリティが9%増加する",
+            "text_en": "9% increased Rarity of Items found",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                6,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Plunder"
+          }
+        ]
+      },
+      "after": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "prefixes": [
+          {
+            "mod_id": "Rings/EvasionRating",
+            "family": "IncreasedEvasionRating",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 54,
+            "text_ja": "回避力 +151",
+            "text_en": "+151 to Evasion Rating",
+            "values": [
+              151
+            ],
+            "ranges": [
+              [
+                142,
+                174
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "Vaporous"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/ItemFoundRarityIncrease",
+            "family": "ItemFoundRarityIncrease",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 3,
+            "text_ja": "見つかるアイテムのレアリティが9%増加する",
+            "text_en": "9% increased Rarity of Items found",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                6,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of Plunder"
+          },
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "雷耐性 +40%",
+            "text_en": "+40% to Lightning Resistance",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of the Lightning"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "雷耐性 +40%",
+            "text_en": "+40% to Lightning Resistance",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of the Lightning"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    }
+  ],
+  "final": {
+    "name": "ニーモニックリング",
+    "base": "Mnemonic Ring",
+    "base_ja": "ニーモニックリング",
+    "item_level": 80,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": false,
+    "quality_tag": null,
+    "sockets": 0,
+    "prefixes": [
+      {
+        "mod_id": "Rings/EvasionRating",
+        "family": "IncreasedEvasionRating",
+        "side": "prefix",
+        "tier_name": "T3",
+        "mod_level": 54,
+        "text_ja": "回避力 +151",
+        "text_en": "+151 to Evasion Rating",
+        "values": [
+          151
+        ],
+        "ranges": [
+          [
+            142,
+            174
+          ]
+        ],
+        "tier_index": 6,
+        "affix": "Vaporous"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Rings/ItemFoundRarityIncrease",
+        "family": "ItemFoundRarityIncrease",
+        "side": "suffix",
+        "tier_name": "T3",
+        "mod_level": 3,
+        "text_ja": "見つかるアイテムのレアリティが9%増加する",
+        "text_en": "9% increased Rarity of Items found",
+        "values": [
+          9
+        ],
+        "ranges": [
+          [
+            6,
+            10
+          ]
+        ],
+        "tier_index": 0,
+        "affix": "of Plunder"
+      },
+      {
+        "mod_id": "Rings/LightningResistance",
+        "family": "LightningResistance",
+        "side": "suffix",
+        "tier_name": "T2",
+        "mod_level": 71,
+        "text_ja": "雷耐性 +40%",
+        "text_en": "+40% to Lightning Resistance",
+        "values": [
+          40
+        ],
+        "ranges": [
+          [
+            36,
+            40
+          ]
+        ],
+        "tier_index": 6,
+        "affix": "of the Lightning"
+      }
+    ]
+  },
+  "total_cost": 0
+}

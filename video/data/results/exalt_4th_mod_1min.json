@@ -1,0 +1,749 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-09-27T13:02:55.196Z",
+  "exiledesk_version": "0.1.306",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "レアに4つ目: 変成 → 増強 → 王者 → 高貴",
+    "base": "Mnemonic Ring",
+    "item_level": 80,
+    "start_rarity": "normal",
+    "start_paste": null,
+    "seed": 20260928,
+    "steps": [
+      {
+        "currency": "transmute",
+        "omen": null,
+        "times": 1,
+        "note": "前回のおさらい。3手はテンポよく"
+      },
+      {
+        "currency": "augment",
+        "omen": null,
+        "times": 1,
+        "note": null
+      },
+      {
+        "currency": "regal",
+        "omen": null,
+        "times": 1,
+        "note": null
+      },
+      {
+        "currency": "exalt",
+        "omen": null,
+        "times": 1,
+        "note": "今回の主役。黄色にしか使えない、MODが1つ増える"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "transmute",
+      "currency_ja": "変成のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20260929,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "normal",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "after": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedAccuracy",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 48,
+            "text_ja": "命中力 +188",
+            "text_en": "+188 to Accuracy Rating",
+            "values": [
+              188
+            ],
+            "ranges": [
+              [
+                168,
+                236
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "Steady"
+          }
+        ],
+        "suffixes": []
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/IncreasedAccuracy",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 48,
+            "text_ja": "命中力 +188",
+            "text_en": "+188 to Accuracy Rating",
+            "values": [
+              188
+            ],
+            "ranges": [
+              [
+                168,
+                236
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "Steady"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "normal",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 2,
+      "currency": "augment",
+      "currency_ja": "増強のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20260930,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedAccuracy",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 48,
+            "text_ja": "命中力 +188",
+            "text_en": "+188 to Accuracy Rating",
+            "values": [
+              188
+            ],
+            "ranges": [
+              [
+                168,
+                236
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "Steady"
+          }
+        ],
+        "suffixes": []
+      },
+      "after": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedAccuracy",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 48,
+            "text_ja": "命中力 +188",
+            "text_en": "+188 to Accuracy Rating",
+            "values": [
+              188
+            ],
+            "ranges": [
+              [
+                168,
+                236
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "Steady"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/ManaRegeneration",
+            "family": "ManaRegeneration",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 79,
+            "text_ja": "マナ自動回復レートが68%増加する",
+            "text_en": "68% increased Mana Regeneration Rate",
+            "values": [
+              68
+            ],
+            "ranges": [
+              [
+                60,
+                69
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of Nirvana"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/ManaRegeneration",
+            "family": "ManaRegeneration",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 79,
+            "text_ja": "マナ自動回復レートが68%増加する",
+            "text_en": "68% increased Mana Regeneration Rate",
+            "values": [
+              68
+            ],
+            "ranges": [
+              [
+                60,
+                69
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of Nirvana"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 3,
+      "currency": "regal",
+      "currency_ja": "王者のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20260931,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedAccuracy",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 48,
+            "text_ja": "命中力 +188",
+            "text_en": "+188 to Accuracy Rating",
+            "values": [
+              188
+            ],
+            "ranges": [
+              [
+                168,
+                236
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "Steady"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/ManaRegeneration",
+            "family": "ManaRegeneration",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 79,
+            "text_ja": "マナ自動回復レートが68%増加する",
+            "text_en": "68% increased Mana Regeneration Rate",
+            "values": [
+              68
+            ],
+            "ranges": [
+              [
+                60,
+                69
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of Nirvana"
+          }
+        ]
+      },
+      "after": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedAccuracy",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 48,
+            "text_ja": "命中力 +188",
+            "text_en": "+188 to Accuracy Rating",
+            "values": [
+              188
+            ],
+            "ranges": [
+              [
+                168,
+                236
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "Steady"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/ManaRegeneration",
+            "family": "ManaRegeneration",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 79,
+            "text_ja": "マナ自動回復レートが68%増加する",
+            "text_en": "68% increased Mana Regeneration Rate",
+            "values": [
+              68
+            ],
+            "ranges": [
+              [
+                60,
+                69
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of Nirvana"
+          },
+          {
+            "mod_id": "Rings/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T7",
+            "mod_level": 11,
+            "text_ja": "器用さ +9",
+            "text_en": "+9 to Dexterity",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                9,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Lynx"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T7",
+            "mod_level": 11,
+            "text_ja": "器用さ +9",
+            "text_en": "+9 to Dexterity",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                9,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Lynx"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 4,
+      "currency": "exalt",
+      "currency_ja": "高貴なオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20260932,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedAccuracy",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 48,
+            "text_ja": "命中力 +188",
+            "text_en": "+188 to Accuracy Rating",
+            "values": [
+              188
+            ],
+            "ranges": [
+              [
+                168,
+                236
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "Steady"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/ManaRegeneration",
+            "family": "ManaRegeneration",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 79,
+            "text_ja": "マナ自動回復レートが68%増加する",
+            "text_en": "68% increased Mana Regeneration Rate",
+            "values": [
+              68
+            ],
+            "ranges": [
+              [
+                60,
+                69
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of Nirvana"
+          },
+          {
+            "mod_id": "Rings/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T7",
+            "mod_level": 11,
+            "text_ja": "器用さ +9",
+            "text_en": "+9 to Dexterity",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                9,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Lynx"
+          }
+        ]
+      },
+      "after": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedAccuracy",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 48,
+            "text_ja": "命中力 +188",
+            "text_en": "+188 to Accuracy Rating",
+            "values": [
+              188
+            ],
+            "ranges": [
+              [
+                168,
+                236
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "Steady"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/ManaRegeneration",
+            "family": "ManaRegeneration",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 79,
+            "text_ja": "マナ自動回復レートが68%増加する",
+            "text_en": "68% increased Mana Regeneration Rate",
+            "values": [
+              68
+            ],
+            "ranges": [
+              [
+                60,
+                69
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of Nirvana"
+          },
+          {
+            "mod_id": "Rings/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T7",
+            "mod_level": 11,
+            "text_ja": "器用さ +9",
+            "text_en": "+9 to Dexterity",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                9,
+                12
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "of the Lynx"
+          },
+          {
+            "mod_id": "Rings/LifeGainedFromEnemyDeath",
+            "family": "LifeGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 33,
+            "text_ja": "倒した敵1体ごとに28のライフを獲得する",
+            "text_en": "Gain 28 Life per enemy killed",
+            "values": [
+              28
+            ],
+            "ranges": [
+              [
+                19,
+                28
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Conquest"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/LifeGainedFromEnemyDeath",
+            "family": "LifeGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 33,
+            "text_ja": "倒した敵1体ごとに28のライフを獲得する",
+            "text_en": "Gain 28 Life per enemy killed",
+            "values": [
+              28
+            ],
+            "ranges": [
+              [
+                19,
+                28
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Conquest"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 1.012,
+        "amount": 1,
+        "subtotal": 1.012,
+        "cumulative": 1.012
+      }
+    }
+  ],
+  "final": {
+    "name": "ニーモニックリング",
+    "base": "Mnemonic Ring",
+    "base_ja": "ニーモニックリング",
+    "item_level": 80,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": false,
+    "quality_tag": null,
+    "sockets": 0,
+    "prefixes": [
+      {
+        "mod_id": "Rings/IncreasedAccuracy",
+        "family": "IncreasedAccuracy",
+        "side": "prefix",
+        "tier_name": "T3",
+        "mod_level": 48,
+        "text_ja": "命中力 +188",
+        "text_en": "+188 to Accuracy Rating",
+        "values": [
+          188
+        ],
+        "ranges": [
+          [
+            168,
+            236
+          ]
+        ],
+        "tier_index": 5,
+        "affix": "Steady"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Rings/ManaRegeneration",
+        "family": "ManaRegeneration",
+        "side": "suffix",
+        "tier_name": "T1",
+        "mod_level": 79,
+        "text_ja": "マナ自動回復レートが68%増加する",
+        "text_en": "68% increased Mana Regeneration Rate",
+        "values": [
+          68
+        ],
+        "ranges": [
+          [
+            60,
+            69
+          ]
+        ],
+        "tier_index": 5,
+        "affix": "of Nirvana"
+      },
+      {
+        "mod_id": "Rings/Dexterity",
+        "family": "Dexterity",
+        "side": "suffix",
+        "tier_name": "T7",
+        "mod_level": 11,
+        "text_ja": "器用さ +9",
+        "text_en": "+9 to Dexterity",
+        "values": [
+          9
+        ],
+        "ranges": [
+          [
+            9,
+            12
+          ]
+        ],
+        "tier_index": 1,
+        "affix": "of the Lynx"
+      },
+      {
+        "mod_id": "Rings/LifeGainedFromEnemyDeath",
+        "family": "LifeGainedFromEnemyDeath",
+        "side": "suffix",
+        "tier_name": "T3",
+        "mod_level": 33,
+        "text_ja": "倒した敵1体ごとに28のライフを獲得する",
+        "text_en": "Gain 28 Life per enemy killed",
+        "values": [
+          28
+        ],
+        "ranges": [
+          [
+            19,
+            28
+          ]
+        ],
+        "tier_index": 3,
+        "affix": "of Conquest"
+      }
+    ]
+  },
+  "total_cost": 1.012
+}

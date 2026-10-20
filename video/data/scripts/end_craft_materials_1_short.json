@@ -1,0 +1,243 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "【PoE2】消去のオーブを打ちまくっても消えない MOD はどれ？ #Shorts",
+  "target_seconds": 40,
+  "result_file": "data/results/end_craft_materials_1.json",
+  "layout": "short",
+  "short_title": "最後まで残る MOD は？",
+  "demos": {
+    "essence": "data/results/end_craft_materials_1__essence.json",
+    "annul": "data/results/end_craft_materials_1__annul.json",
+    "annul_essence": "data/results/end_craft_materials_1__annul_essence.json"
+  },
+  "sections": [
+    {
+      "name": "最後まで残る MOD は？",
+      "target_seconds": 40,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "消去のオーブを打ちまくっても、消えない MOD があるの。どれだと思う？",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "annul_essence",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "そんなのあるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "annul_essence",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "まずは、エッセンスで付けた MOD が入ったアミュレット。",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "annul_essence",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "proud",
+          "text": "確定で付けたんだから、残るのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "demo": "annul_essence",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "全ての能力値、",
+          "scene": {
+            "kind": "stage",
+            "step": 6,
+            "demo": "annul_essence"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "最大ライフ、",
+          "scene": {
+            "kind": "stage",
+            "step": 7,
+            "demo": "annul_essence"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "全ての元素耐性が消えた。",
+          "scene": {
+            "kind": "stage",
+            "step": 8,
+            "demo": "annul_essence"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "エッセンスのだけ残ってるのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 8,
+            "demo": "annul_essence"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "もう 1 回……消えたわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "annul_essence"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "えっ、消えちゃったのだ！？",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "annul_essence"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次は、フラクチャーオーブを使った物。",
+          "scene": {
+            "kind": "stage",
+            "step": 6,
+            "demo": "annul",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "最大ライフ、",
+          "scene": {
+            "kind": "stage",
+            "step": 7,
+            "demo": "annul"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "全ての元素耐性、",
+          "scene": {
+            "kind": "stage",
+            "step": 8,
+            "demo": "annul"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "品質の最大値が消えた。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "annul"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "もう 1 回……使えない。",
+          "scene": {
+            "kind": "stage",
+            "step": 10,
+            "demo": "annul"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "全ての能力値だけ、残ったのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 10,
+            "demo": "annul"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "proud",
+          "text": "フラクチャーで固定した MOD は、消去でも消えないの。",
+          "scene": {
+            "kind": "stage",
+            "step": 10,
+            "demo": "annul",
+            "focus": "AllAttributes"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "エンドのクラフト素材、本編でまとめて解説してるのだ！",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "エンドのクラフト素材",
+              "icons": [
+                "exalt_perfect",
+                "essence:greater:Amulets/Essence_IncreasedLife",
+                "fracture",
+                "catalyst_life"
+              ],
+              "names": [
+                "上位のオーブ",
+                "エッセンス",
+                "フラクチャー",
+                "カタリスト"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "上位のオーブやエッセンスも、関連動画から見てね。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "エンドのクラフト素材",
+              "icons": [
+                "exalt_perfect",
+                "essence:greater:Amulets/Essence_IncreasedLife",
+                "fracture",
+                "catalyst_life"
+              ],
+              "names": [
+                "上位のオーブ",
+                "エッセンス",
+                "フラクチャー",
+                "カタリスト"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "video": "output/act_offense_defense_8min.mp4",
+  "thumbnail": "output/act_offense_defense_8min_thumb.jpg",
+  "title": "【PoE2 初心者】武器はサフィックスを見る！アクト中の火力と耐性を自分で直す",
+  "description": "アクト中に「敵が硬い」「ボスですぐやられる」と感じたら、見直すのは武器と耐性の 2 つ。武器はプレフィックスよりサフィックスの当たりを見る、耐性はアクトが進むと下がるのでマイナスを作らない。Path of Building の計算で、同じ武器でもサフィックスだけで DPS が 2 割違うことを確かめます。\n\n▼チャプター\n0:00 導入\n1:11 プレフィックスは当たりが多い、問題はサフィックス\n2:32 実践: 白からサフィックスを埋める\n4:00 もう一押し: 熟練工のオーブとルーン\n4:54 防御は耐性\n6:14 資源: いらない装備を材料にする\n6:51 クイズ\n7:08 まとめ\n\n▼参考にした記事・サイト\n・Maxroll: League Start Leveling Guide (Path of Exile 2)\nhttps://maxroll.gg/poe2/getting-started/comprehensive-league-start-leveling-guide\n・Maxroll: Defence Guide (Path of Exile 2)\nhttps://maxroll.gg/poe2/getting-started/defence-guide\n・poe2db: ルーン\nhttps://poe2db.tw/jp/Runes\n・poe2db: 耐性\nhttps://poe2db.tw/jp/Resistances\n・Gamer Guides: Disenchanting and Salvaging Guide\nhttps://www.gamerguides.com/path-of-exile-2/guide/getting-started/gameplay/disenchanting-and-salvaging-guide\n・Gamerch PoE2 攻略 Wiki: 装備のおすすめの選び方\nhttps://gamerch.com/poe2/995755\n・Path of Building Community (PoE2) — DPS・耐性の計算\nhttps://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2\n\n▼クレジット\nVOICEVOX:ずんだもん\nVOICEVOX:四国めたん\n立ち絵：坂本アヒル 様\nBGM：DOVA-SYNDROME\nクラフト画面：ExileDesk（自作ツール）\n\n※ 本チャンネルは Grinding Gear Games とは関係のない、非公式のファン解説チャンネルです。\n※ ゲームの仕様や数値は動画を作った時点のものです。\n\n#PoE2 #PathofExile2 #ずんだもん",
+  "tags": [
+    "PoE2",
+    "Path of Exile 2",
+    "パスオブエグザイル2",
+    "PoE2 初心者",
+    "PoE2 クラフト",
+    "PoE2 解説",
+    "ずんだもん",
+    "四国めたん",
+    "VOICEVOX解説"
+  ],
+  "category_id": "20",
+  "default_language": "ja",
+  "privacy": "private",
+  "publish_at": null,
+  "playlist_key": "basics"
+}

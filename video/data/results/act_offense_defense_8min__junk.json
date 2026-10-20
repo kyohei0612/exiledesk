@@ -1,0 +1,292 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-09-29T16:21:47.154Z",
+  "exiledesk_version": "0.1.337",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "いらない青を解呪 → 変成のシャード",
+    "base": "Chain Mail",
+    "item_level": 33,
+    "start_rarity": "magic",
+    "seed": 20261205,
+    "start_unidentified": false,
+    "steps": [
+      {
+        "currency": "disenchant",
+        "times": 1
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "disenchant",
+      "currency_ja": "解呪",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261206,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "チェインメイル",
+        "base": "Chain Mail",
+        "base_ja": "チェインメイル",
+        "item_level": 33,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": null,
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "36",
+            "up": true
+          },
+          {
+            "key": "evasion",
+            "label": "回避力",
+            "value": "23",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str_dex/LocalArmourAndEvasion",
+            "family": "DefencesPercent",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 16,
+            "text_ja": "アーマーおよび回避力が42%増加する",
+            "text_en": "42% increased Armour and Evasion",
+            "values": [
+              42
+            ],
+            "ranges": [
+              [
+                27,
+                42
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Brawler's"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str_dex/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "器用さ +14",
+            "text_en": "+14 to Dexterity",
+            "values": [
+              14
+            ],
+            "ranges": [
+              [
+                13,
+                16
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Fox"
+          }
+        ]
+      },
+      "after": {
+        "name": "チェインメイル",
+        "base": "Chain Mail",
+        "base_ja": "チェインメイル",
+        "item_level": 33,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": {
+          "transmute_shard": 1
+        },
+        "disposed": "disenchant",
+        "gained": null,
+        "requirements": null,
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "36",
+            "up": true
+          },
+          {
+            "key": "evasion",
+            "label": "回避力",
+            "value": "23",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str_dex/LocalArmourAndEvasion",
+            "family": "DefencesPercent",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 16,
+            "text_ja": "アーマーおよび回避力が42%増加する",
+            "text_en": "42% increased Armour and Evasion",
+            "values": [
+              42
+            ],
+            "ranges": [
+              [
+                27,
+                42
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Brawler's"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str_dex/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "器用さ +14",
+            "text_en": "+14 to Dexterity",
+            "values": [
+              14
+            ],
+            "ranges": [
+              [
+                13,
+                16
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Fox"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    }
+  ],
+  "final": {
+    "name": "チェインメイル",
+    "base": "Chain Mail",
+    "base_ja": "チェインメイル",
+    "item_level": 33,
+    "rarity": "magic",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": {
+      "transmute_shard": 1
+    },
+    "disposed": "disenchant",
+    "gained": null,
+    "requirements": null,
+    "properties": [
+      {
+        "key": "armour",
+        "label": "アーマー",
+        "value": "36",
+        "up": true
+      },
+      {
+        "key": "evasion",
+        "label": "回避力",
+        "value": "23",
+        "up": true
+      }
+    ],
+    "augments": [],
+    "quality_tag": null,
+    "sockets": 0,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [
+      {
+        "mod_id": "Body_Armours_str_dex/LocalArmourAndEvasion",
+        "family": "DefencesPercent",
+        "side": "prefix",
+        "tier_name": "T7",
+        "mod_level": 16,
+        "text_ja": "アーマーおよび回避力が42%増加する",
+        "text_en": "42% increased Armour and Evasion",
+        "values": [
+          42
+        ],
+        "ranges": [
+          [
+            27,
+            42
+          ]
+        ],
+        "tier_index": 1,
+        "affix": "Brawler's"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Body_Armours_str_dex/Dexterity",
+        "family": "Dexterity",
+        "side": "suffix",
+        "tier_name": "T6",
+        "mod_level": 22,
+        "text_ja": "器用さ +14",
+        "text_en": "+14 to Dexterity",
+        "values": [
+          14
+        ],
+        "ranges": [
+          [
+            13,
+            16
+          ]
+        ],
+        "tier_index": 2,
+        "affix": "of the Fox"
+      }
+    ]
+  },
+  "total_cost": 0
+}

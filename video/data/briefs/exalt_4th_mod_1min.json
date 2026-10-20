@@ -1,0 +1,37 @@
+{
+  "name": "exalt_4th_mod_1min",
+  "player_stage": "endgame",
+  "title_hint": "レアに4つ目のMODを足す「高貴なオーブ」の使い方 (前回の続き)",
+  "goal": "黄色いレアに高貴なオーブを使うと MOD が 1 つ増えることと、接頭・接尾の枠 (3+3) を理解する",
+  "target_seconds": 60,
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "レアに4つ目: 変成 → 増強 → 王者 → 高貴",
+    "base": "Mnemonic Ring",
+    "item_level": 80,
+    "start_rarity": "normal",
+    "seed": 20260928,
+    "steps": [
+      {
+        "currency": "transmute",
+        "note": "前回のおさらい。3手はテンポよく"
+      },
+      {
+        "currency": "augment"
+      },
+      {
+        "currency": "regal"
+      },
+      {
+        "currency": "exalt",
+        "note": "今回の主役。黄色にしか使えない、MODが1つ増える"
+      }
+    ]
+  },
+  "notes": [
+    "前回 (変成→増強→王者で白がレアになる) の続きとして始める。3手のおさらいは短く",
+    "主役は高貴なオーブ。白や青には使えない (黄色いレア専用) ことをずんだもんの勘違いから引き出す",
+    "接頭と接尾はそれぞれ最大3つ、合計6つまで、を初出で1文で説明する",
+    "値段の話はしない"
+  ]
+}

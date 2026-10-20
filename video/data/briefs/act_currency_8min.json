@@ -1,0 +1,147 @@
+{
+  "name": "act_currency_8min",
+  "title_hint": "アクト中に拾うカレンシー、何に使う？使う物・取っておく物・集める物の全部まとめ",
+  "player_stage": "act",
+  "goal": "アクト中に拾うカレンシーを「使う」「取っておく」「集めるとオーブになる」に分けて、それぞれ何に使うか分かるようになる",
+  "target_seconds": 510,
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "base": "Sapphire Ring",
+    "item_level": 36,
+    "seed": 20261101,
+    "steps": [
+      {
+        "currency": "alchemy",
+        "note": "使う: 白を MOD 4 個のレアに"
+      },
+      {
+        "currency": "chaos",
+        "note": "実験: 取っておく物"
+      },
+      {
+        "currency": "annul",
+        "note": "実験: 取っておく物"
+      },
+      {
+        "currency": "vaal",
+        "note": "実験: 元に戻せない"
+      }
+    ]
+  },
+  "final_step": 1,
+  "demos": {
+    "unid": {
+      "schema": "craft-stage-plan/1",
+      "base": "Sapphire Ring",
+      "item_level": 36,
+      "seed": 20261102,
+      "steps": [
+        {
+          "currency": "wisdom"
+        }
+      ],
+      "start_rarity": "magic",
+      "start_unidentified": true
+    },
+    "ring_fail": {
+      "schema": "craft-stage-plan/1",
+      "base": "Sapphire Ring",
+      "item_level": 36,
+      "seed": 20261103,
+      "steps": [
+        {
+          "currency": "whetstone",
+          "note": "指輪には使えない (震える)"
+        }
+      ]
+    },
+    "weapon": {
+      "schema": "craft-stage-plan/1",
+      "base": "Wooden Club",
+      "item_level": 36,
+      "seed": 20261104,
+      "steps": [
+        {
+          "currency": "whetstone"
+        },
+        {
+          "currency": "artificer"
+        }
+      ]
+    },
+    "armour": {
+      "schema": "craft-stage-plan/1",
+      "base": "Chain Mail",
+      "item_level": 36,
+      "seed": 20261105,
+      "steps": [
+        {
+          "currency": "scrap"
+        },
+        {
+          "currency": "artificer"
+        }
+      ]
+    },
+    "flask": {
+      "schema": "craft-stage-plan/1",
+      "base": "Greater Life Flask",
+      "item_level": 36,
+      "seed": 20261106,
+      "steps": [
+        {
+          "currency": "bauble"
+        }
+      ]
+    },
+    "gem": {
+      "schema": "craft-stage-plan/1",
+      "base": "Spark",
+      "item_level": 36,
+      "seed": 20261107,
+      "steps": [
+        {
+          "currency": "gemcutter"
+        },
+        {
+          "currency": "jeweller_lesser"
+        }
+      ]
+    },
+    "chance_ok": {
+      "schema": "craft-stage-plan/1",
+      "base": "Wooden Club",
+      "item_level": 36,
+      "seed": 20261108,
+      "steps": [
+        {
+          "currency": "chance",
+          "outcome": "unique"
+        }
+      ]
+    },
+    "chance_ng": {
+      "schema": "craft-stage-plan/1",
+      "base": "Wooden Club",
+      "item_level": 36,
+      "seed": 20261109,
+      "steps": [
+        {
+          "currency": "chance",
+          "outcome": "destroyed"
+        }
+      ]
+    }
+  },
+  "notes": [
+    "シリーズ: PoE2 1.0 に向けた基礎知識まとめ。視聴者はアクト中の初心者",
+    "カレンシーを「使う」「取っておく」「集めるとオーブになる」の 3 つに分けて説明する",
+    "章: 導入 / 3 つに分ける / 使う①錬金術 / 使う②品質 (砥石・端材・飾り玉・プリズム、彫刻針は名前だけ、指輪に砥石は使えない所も見せる) / 使う③熟練工 (武器・防具) と宝飾職人 (ジェム) / 使う④鑑定の巻物と巻物の断片 / 取っておく (カオス・消去・ヴァールを打つとこうなる、神のオーブは会話だけ) / 運試し: 可能性のオーブ (ユニークになる回と壊れる回の両方) / 集める: シャード 10 個でオーブ 1 個 (会話だけ) / まとめ",
+    "数値 (品質の上がり幅・確率・枠の数など) は台本で言わない。画面の数値は乱数のまま",
+    "分からない事 (どこでどれくらい落ちるか、確率など) は「分からない」「決まっていない」と正直に言ってよい。推測で言い切らない",
+    "カオス・消去・神・ヴァールは価値が高い / 元に戻せないので、アクト中は使わず取っておくのがおすすめ (実演は仕組みを見せる実験と明言)",
+    "値段の話はしない",
+    "導入: ずんだもんの「鞄にカレンシーが溜まってて何に使うか分からない」から入る",
+    "避ける: PoE1 の仕様、略語、次回予告"
+  ]
+}

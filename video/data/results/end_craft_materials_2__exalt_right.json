@@ -1,0 +1,459 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-10-04T06:07:10.101Z",
+  "exiledesk_version": "0.1.362",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "右側の高貴なお告げ (本編と同じ始まり)",
+    "base": "Amber Amulet",
+    "item_level": 82,
+    "start_rarity": "normal",
+    "seed": 20261003,
+    "start_unidentified": false,
+    "start": {
+      "rarity": "rare",
+      "mods": [
+        {
+          "mod": "Amulets/IncreasedLife",
+          "tier": "T2"
+        },
+        {
+          "mod": "Amulets/IncreasedMana",
+          "tier": "T3"
+        },
+        {
+          "mod": "Amulets/AllResistances",
+          "tier": "T2"
+        },
+        {
+          "mod": "Amulets/Strength",
+          "tier": "T3"
+        }
+      ]
+    },
+    "steps": [
+      {
+        "currency": "exalt_perfect",
+        "omen": "OmenofDextralExaltation",
+        "times": 1,
+        "note": "右側の高貴: サフィックスだけ"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "exalt_perfect",
+      "currency_ja": "高貴なオーブ (完全)",
+      "omen": "OmenofDextralExaltation",
+      "omen_ja": "右側の高貴なお告げ",
+      "seed": 20261004,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T2",
+            "mod_level": 54,
+            "text_ja": "最大ライフ +101",
+            "text_en": "+101 to maximum Life",
+            "values": [
+              101
+            ],
+            "ranges": [
+              [
+                100,
+                119
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "Virile"
+          },
+          {
+            "mod_id": "Amulets/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 70,
+            "text_ja": "最大マナ +156",
+            "text_en": "+156 to maximum Mana",
+            "values": [
+              156
+            ],
+            "ranges": [
+              [
+                150,
+                164
+              ]
+            ],
+            "tier_index": 10,
+            "affix": "Blue"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 68,
+            "text_ja": "全ての元素耐性 +15%",
+            "text_en": "+15% to all Elemental Resistances",
+            "values": [
+              15
+            ],
+            "ranges": [
+              [
+                15,
+                16
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Rainbow"
+          },
+          {
+            "mod_id": "Amulets/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 55,
+            "text_ja": "筋力 +26",
+            "text_en": "+26 to Strength",
+            "values": [
+              26
+            ],
+            "ranges": [
+              [
+                25,
+                27
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Goliath"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T2",
+            "mod_level": 54,
+            "text_ja": "最大ライフ +101",
+            "text_en": "+101 to maximum Life",
+            "values": [
+              101
+            ],
+            "ranges": [
+              [
+                100,
+                119
+              ]
+            ],
+            "tier_index": 7,
+            "affix": "Virile"
+          },
+          {
+            "mod_id": "Amulets/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T3",
+            "mod_level": 70,
+            "text_ja": "最大マナ +156",
+            "text_en": "+156 to maximum Mana",
+            "values": [
+              156
+            ],
+            "ranges": [
+              [
+                150,
+                164
+              ]
+            ],
+            "tier_index": 10,
+            "affix": "Blue"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 68,
+            "text_ja": "全ての元素耐性 +15%",
+            "text_en": "+15% to all Elemental Resistances",
+            "values": [
+              15
+            ],
+            "ranges": [
+              [
+                15,
+                16
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Rainbow"
+          },
+          {
+            "mod_id": "Amulets/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 55,
+            "text_ja": "筋力 +26",
+            "text_en": "+26 to Strength",
+            "values": [
+              26
+            ],
+            "ranges": [
+              [
+                25,
+                27
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Goliath"
+          },
+          {
+            "mod_id": "Amulets/ManaRegeneration",
+            "family": "ManaRegeneration",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 79,
+            "text_ja": "マナ自動回復レートが69%増加する",
+            "text_en": "69% increased Mana Regeneration Rate",
+            "values": [
+              69
+            ],
+            "ranges": [
+              [
+                60,
+                69
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of Nirvana"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Amulets/ManaRegeneration",
+            "family": "ManaRegeneration",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 79,
+            "text_ja": "マナ自動回復レートが69%増加する",
+            "text_en": "69% increased Mana Regeneration Rate",
+            "values": [
+              69
+            ],
+            "ranges": [
+              [
+                60,
+                69
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of Nirvana"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 1496.748,
+        "amount": 2,
+        "subtotal": 1496.748,
+        "cumulative": 1496.748
+      }
+    }
+  ],
+  "final": {
+    "name": "琥珀のアミュレット",
+    "base": "Amber Amulet",
+    "base_ja": "琥珀のアミュレット",
+    "item_level": 82,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "disposed": null,
+    "gained": null,
+    "requirements": {
+      "level": 8
+    },
+    "properties": [],
+    "augments": [],
+    "quality_tag": null,
+    "sockets": 0,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [
+      {
+        "mod_id": "Amulets/IncreasedLife",
+        "family": "IncreasedLife",
+        "side": "prefix",
+        "tier_name": "T2",
+        "mod_level": 54,
+        "text_ja": "最大ライフ +101",
+        "text_en": "+101 to maximum Life",
+        "values": [
+          101
+        ],
+        "ranges": [
+          [
+            100,
+            119
+          ]
+        ],
+        "tier_index": 7,
+        "affix": "Virile"
+      },
+      {
+        "mod_id": "Amulets/IncreasedMana",
+        "family": "IncreasedMana",
+        "side": "prefix",
+        "tier_name": "T3",
+        "mod_level": 70,
+        "text_ja": "最大マナ +156",
+        "text_en": "+156 to maximum Mana",
+        "values": [
+          156
+        ],
+        "ranges": [
+          [
+            150,
+            164
+          ]
+        ],
+        "tier_index": 10,
+        "affix": "Blue"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Amulets/AllResistances",
+        "family": "AllResistances",
+        "side": "suffix",
+        "tier_name": "T2",
+        "mod_level": 68,
+        "text_ja": "全ての元素耐性 +15%",
+        "text_en": "+15% to all Elemental Resistances",
+        "values": [
+          15
+        ],
+        "ranges": [
+          [
+            15,
+            16
+          ]
+        ],
+        "tier_index": 4,
+        "affix": "of the Rainbow"
+      },
+      {
+        "mod_id": "Amulets/Strength",
+        "family": "Strength",
+        "side": "suffix",
+        "tier_name": "T3",
+        "mod_level": 55,
+        "text_ja": "筋力 +26",
+        "text_en": "+26 to Strength",
+        "values": [
+          26
+        ],
+        "ranges": [
+          [
+            25,
+            27
+          ]
+        ],
+        "tier_index": 5,
+        "affix": "of the Goliath"
+      },
+      {
+        "mod_id": "Amulets/ManaRegeneration",
+        "family": "ManaRegeneration",
+        "side": "suffix",
+        "tier_name": "T1",
+        "mod_level": 79,
+        "text_ja": "マナ自動回復レートが69%増加する",
+        "text_en": "69% increased Mana Regeneration Rate",
+        "values": [
+          69
+        ],
+        "ranges": [
+          [
+            60,
+            69
+          ]
+        ],
+        "tier_index": 5,
+        "affix": "of Nirvana"
+      }
+    ]
+  },
+  "total_cost": 1496.748
+}

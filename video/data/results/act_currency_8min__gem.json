@@ -1,0 +1,182 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-09-29T06:35:59.628Z",
+  "exiledesk_version": "0.1.328",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": null,
+    "base": "Spark",
+    "item_level": 36,
+    "start_rarity": "normal",
+    "start_paste": null,
+    "seed": 20261107,
+    "start_unidentified": false,
+    "tray": null,
+    "steps": [
+      {
+        "currency": "gemcutter",
+        "omen": null,
+        "times": 1,
+        "outcome": null,
+        "note": null
+      },
+      {
+        "currency": "jeweller_lesser",
+        "omen": null,
+        "times": 1,
+        "outcome": null,
+        "note": null
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "gemcutter",
+      "currency_ja": "宝石細工師のプリズム",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261108,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "スパーク",
+        "base": "Spark",
+        "base_ja": "スパーク",
+        "item_level": 36,
+        "rarity": "normal",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": 2,
+        "shards": null,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "after": {
+        "name": "スパーク",
+        "base": "Spark",
+        "base_ja": "スパーク",
+        "item_level": 36,
+        "rarity": "normal",
+        "quality": 5,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": 2,
+        "shards": null,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "normal",
+        "rarity_to": "normal"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 2,
+      "currency": "jeweller_lesser",
+      "currency_ja": "宝飾職人のオーブ (見習い)",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261109,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "スパーク",
+        "base": "Spark",
+        "base_ja": "スパーク",
+        "item_level": 36,
+        "rarity": "normal",
+        "quality": 5,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": 2,
+        "shards": null,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "after": {
+        "name": "スパーク",
+        "base": "Spark",
+        "base_ja": "スパーク",
+        "item_level": 36,
+        "rarity": "normal",
+        "quality": 5,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": 3,
+        "shards": null,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "normal",
+        "rarity_to": "normal"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    }
+  ],
+  "final": {
+    "name": "スパーク",
+    "base": "Spark",
+    "base_ja": "スパーク",
+    "item_level": 36,
+    "rarity": "normal",
+    "quality": 5,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": 3,
+    "shards": null,
+    "quality_tag": null,
+    "sockets": 0,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [],
+    "suffixes": []
+  },
+  "total_cost": 0
+}

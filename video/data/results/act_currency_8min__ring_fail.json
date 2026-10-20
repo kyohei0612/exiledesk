@@ -1,0 +1,113 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-09-29T06:35:57.554Z",
+  "exiledesk_version": "0.1.328",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": null,
+    "base": "Sapphire Ring",
+    "item_level": 36,
+    "start_rarity": "normal",
+    "start_paste": null,
+    "seed": 20261103,
+    "start_unidentified": false,
+    "tray": null,
+    "steps": [
+      {
+        "currency": "whetstone",
+        "omen": null,
+        "times": 1,
+        "outcome": null,
+        "note": "指輪には使えない (震える)"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "whetstone",
+      "currency_ja": "鍛冶屋の砥石",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261104,
+      "applied": false,
+      "reason": "マーシャル武器にだけ使える",
+      "before": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "normal",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "after": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "normal",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "normal",
+        "rarity_to": "normal"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 0,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    }
+  ],
+  "final": {
+    "name": "サファイアの指輪",
+    "base": "Sapphire Ring",
+    "base_ja": "サファイアの指輪",
+    "item_level": 36,
+    "rarity": "normal",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "quality_tag": null,
+    "sockets": 0,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [],
+    "suffixes": []
+  },
+  "total_cost": 0
+}

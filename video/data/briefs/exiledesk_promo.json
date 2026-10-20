@@ -1,0 +1,137 @@
+{
+  "name": "exiledesk_promo",
+  "title_hint": "【PoE2】無料のクラフトエミュレーター ExileDesk を作りました: 使い方とテスター募集",
+  "audience": "今までの動画を見てくれた人 (アクト中〜エンド)。PoE2 のクラフトを試してみたい人",
+  "player_stage": "endgame",
+  "goal": "無料のウェブ版 ExileDesk のエミュレーターでクラフトを試せると分かり、使い方を覚えて、使ってレビューをコメント欄に書きたくなる",
+  "target_seconds": 330,
+  "final_step": 6,
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "手で打つ: 白い指輪から 変成 → 増強 → 王者 → 高貴 ×3",
+    "base": "Sapphire Ring",
+    "item_level": 82,
+    "seed": 20261007,
+    "steps": [
+      {
+        "currency": "transmute"
+      },
+      {
+        "currency": "augment"
+      },
+      {
+        "currency": "regal"
+      },
+      {
+        "currency": "exalt"
+      },
+      {
+        "currency": "exalt"
+      },
+      {
+        "currency": "exalt"
+      }
+    ]
+  },
+  "demos": {
+    "reveal": {
+      "schema": "craft-stage-plan/1",
+      "title": "アビスの反響のお告げ: 発現をもう一度引き直す (2 手目まで本編と同じ)",
+      "base": "Amber Amulet",
+      "item_level": 82,
+      "seed": 20261003,
+      "start": {
+        "rarity": "rare",
+        "mods": [
+          {
+            "mod": "Amulets/IncreasedLife",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/IncreasedMana",
+            "tier": "T3"
+          },
+          {
+            "mod": "Amulets/AllResistances",
+            "tier": "T2"
+          },
+          {
+            "mod": "Amulets/Strength",
+            "tier": "T3"
+          }
+        ]
+      },
+      "steps": [
+        {
+          "currency": "exalt_perfect",
+          "omen": "OmenofSinistralExaltation",
+          "note": "左側の高貴: プレフィックスだけ"
+        },
+        {
+          "currency": "desecrate",
+          "omen": "OmenofDextralNecromancy",
+          "note": "右手のネクロマンシー + 保存された鎖骨: サフィックスに未発現"
+        },
+        {
+          "currency": "reveal:2:reroll",
+          "omen": "OmenofAbyssalEchoes",
+          "note": "引き直した 3 つの 2 番目 (キャストスピード)"
+        }
+      ]
+    },
+    "serle": {
+      "schema": "craft-stage-plan/1",
+      "title": "セールの凱旋: 6 MOD で埋まった胴に、サフィックスの 4 個目",
+      "base": "Glorious Plate",
+      "item_level": 80,
+      "start_rarity": "magic",
+      "seed": 12,
+      "steps": [
+        {
+          "currency": "regal"
+        },
+        {
+          "currency": "exalt"
+        },
+        {
+          "currency": "exalt"
+        },
+        {
+          "currency": "exalt"
+        },
+        {
+          "currency": "exalt",
+          "note": "6 個目"
+        },
+        {
+          "currency": "exalt",
+          "note": "埋まっていて打てない"
+        },
+        {
+          "currency": "artificer"
+        },
+        {
+          "currency": "rune:Serle's Triumph",
+          "note": "サフィックス +1、ソケットバウンド"
+        },
+        {
+          "currency": "exalt",
+          "note": "4 個目のサフィックス"
+        }
+      ]
+    }
+  },
+  "notes": [
+    "作り直し (kyohei 2026-10-10「死ぬほど変わった」): ExileDesk v0.1.445。「手で打つ / シミュレーション」は「エミュレーター / シミュレーター」に改名、見た目はゲームの UI の絵に",
+    "エミュレーターだけの紹介と使い方の動画 (kyohei 2026-10-10「シミュレーターはまだ人に見せれる代物じゃない」)。シミュレーターには触れない。導入も作り直す",
+    "宣伝の回 (kyohei 2026-10-07)。宣伝するのは無料のウェブ版だけ (誰でもブラウザで開けるサイト、URL は説明欄)。アプリ版・サブスクには触れない",
+    "主な内容: できること (クラフトステージ中心) と、テスターが圧倒的に足りないこと。締めは「使い倒して、気づいた事・欲しい機能をコメント欄に」。良い所も悪い所も歓迎",
+    "推し: ゲームの公式日本語、Craft of Exile と同じ操作、クラフトに使う物がほぼ全部打てる、ゲームのデータどおりの細かい決まり",
+    "一言添える: 確率は推定。重みが公開されていない所 (冒涜・異界・ルーンなど) は「コミュニティのデータから参照」(ExileDesk v0.1.443 の表示)、公開値の無い確率 (ヴァールなど) は仮",
+    "非公式・個人で作っている、と言う。GGG の公式ツールに見える言い方をしない。未リリースの機能は紹介しない",
+    "ウェブ版の URL は https://exiledesk.com (kyohei 2026-10-12。旧 web.exiledesk.workers.dev から移った)。説明欄の一番上 (data/publish/exiledesk_promo.json の summary) に「▼ExileDesk ウェブ版 (無料)」として貼る",
+    "操作の画面はアプリを録画モードで動かして録る (scripts/record_app*.py、サイドバーは隠す)。台詞は録画の <name>.json の結果に合わせる",
+    "7 章「好きな状態から・共有」は外した (kyohei 2026-10-12「共有は廃止したからこれでおｋ」)。7 章立て: 導入 / ベースを選んで打つ / 戻す / 付く確率を見る / 次の手で狙う / 骨・お告げ・ルーン / テスター募集"
+  ],
+  "sources": []
+}

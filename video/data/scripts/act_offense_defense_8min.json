@@ -1,0 +1,1511 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "【PoE2 初心者】武器はサフィックスを見る！アクト中の火力と耐性を自分で直す",
+  "target_seconds": 442,
+  "result_file": "data/results/act_offense_defense_8min.json",
+  "final_step": 4,
+  "layout": "wide",
+  "demos": {
+    "zunda": "data/results/act_offense_defense_8min__zunda.json",
+    "recommend": "data/results/act_offense_defense_8min__recommend.json",
+    "armour": "data/results/act_offense_defense_8min__armour.json",
+    "ring": "data/results/act_offense_defense_8min__ring.json",
+    "junk": "data/results/act_offense_defense_8min__junk.json"
+  },
+  "resists": {
+    "gear": "data/results/act_offense_defense_8min__resists_gear.json"
+  },
+  "sections": [
+    {
+      "name": "導入",
+      "target_seconds": 73,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "text": "アクトを進めてるけど、レベル 1 からずっと苦戦し続けてるのだ。",
+          "speech": "アクトを進めてるけど、レベル1からずっと苦戦し続けてるのだ。",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "あら、どうしたの？ 顔が暗いわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "アイスストライクで殴ってるのに、敵がなかなか倒れないのだ。",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "demo": "zunda",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "しかもボスだと、すぐにやられちゃうのだ……。",
+          "emotion": "sad",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "demo": "zunda",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "何回やり直したの？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "数えるのをやめたのだ。",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "それは大変ね。その武器、ちょっと見せてもらえる？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "demo": "zunda",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "高貴なオーブを打ちまくって作ったのだ！ 6 個も付いてるのだ。",
+          "speech": "高貴なオーブを打ちまくって作ったのだ！ 6個も付いてるのだ。",
+          "emotion": "proud",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "demo": "zunda",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "上の 3 つ、プレフィックスは悪くないわね。ダメージが付いてるわ。",
+          "speech": "上の3つ、プレフィックスは悪くないわね。ダメージが付いてるわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "やっぱり強いのだ？",
+          "emotion": "happy",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "問題は下の 3 つ、サフィックスよ。マナ、スタン、要求能力値。",
+          "speech": "問題は下の3つ、サフィックスよ。マナ、スタン、要求能力値。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "demo": "zunda",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "……それ、火力に関係あるのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "demo": "zunda",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ほとんど無いわね。サフィックスは外れが多いの。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "例えば、上の 3 つが全く同じで、下だけ違うこの武器。",
+          "speech": "例えば、上の3つが全く同じで、下だけ違うこの武器。",
+          "emotion": "proud",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "demo": "recommend",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "アタックスピードと、近接スキルのレベルなのだ？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "demo": "recommend",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "下の 3 つだけでどれくらい変わるかは、この後見せるわね。",
+          "speech": "下の3つだけでどれくらい変わるかは、この後見せるわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "オーブの使い方は前の動画で話したから、今日はその先よ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "硬い敵は火力、すぐやられるのは防御の話よ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "demo": "zunda",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "火力は武器、防御は耐性。どっちも自分で直せるわ。",
+          "emotion": "happy",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "demo": "recommend",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "ぼくの武器も強くできるのだ？",
+          "emotion": "happy",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "demo": "recommend",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ええ。拾った武器を替えるかも、自分で決められるようになるわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "まずは火力から見ていくわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "プレフィックスは当たりが多い、問題はサフィックス",
+      "target_seconds": 81,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "まず前提ね。火力は Path of Building っていう計算ツールで出すわ。",
+          "speech": "まず前提ね。火力はパスオブビルディングっていう計算ツールで出すわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "モンクのレベル 32、アイスストライク。相手はアーマー 237 の普通の敵よ。",
+          "speech": "モンクのレベルさんじゅうに、アイスストライク。相手はアーマーにひゃくさんじゅうななの普通の敵よ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "dps",
+            "step": 0,
+            "demo": "zunda",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "アーマーってなんなのだ？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "dps",
+            "step": 0,
+            "demo": "zunda",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "物理ダメージを軽くする防御よ。小さい一撃ほどよく削られるわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "ぼくの武器の数字は、いくつなのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "DPS、1 秒あたりのダメージで 165 よ。",
+          "speech": "ディーピーエス、1秒あたりのダメージでひゃくろくじゅうごよ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "dps",
+            "step": 0,
+            "demo": "zunda",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "何も付いていない白だと 76。プレフィックスだけで倍以上ね。",
+          "speech": "何も付いていない白だとななじゅうろく。プレフィックスだけで倍以上ね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "そんなに違うのだ！",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "アクト中の武器は、プレフィックスに付く物のほとんどがダメージなの。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "データの上では、9 割くらいがダメージの MOD よ。",
+          "speech": "データの上では、9割くらいがダメージのモッドよ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "tiers",
+            "mod": "LocalPhysicalDamagePercent",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "外れが少ないのだ？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ええ。しかもティアが高いほど数字も大きい。何が付いても当たりに近いわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "tiers",
+            "mod": "LocalPhysicalDamagePercent",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "じゃあ、プレフィックスは気にしなくていいのだ？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "付いた物はだいたい使える、くらいでいいわ。問題はサフィックスね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "上が同じで、下だけ違う 2 本を比べるわ。",
+          "speech": "上が同じで、下だけ違う2本を比べるわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "compare",
+            "step": 0,
+            "demo": "zunda",
+            "reveal": true,
+            "compare_with": "recommend",
+            "b_step": 0,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "どっちが早く倒せるのだ？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "ttk",
+            "step": 0,
+            "demo": "zunda",
+            "reveal": false,
+            "compare_with": "recommend",
+            "b_step": 0,
+            "show_dps": true,
+            "labels": [
+              "ずんだもん",
+              "おすすめ"
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "よーいドン。……サフィックスだけで、これだけ違うのよ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "ttk",
+            "step": 0,
+            "demo": "zunda",
+            "reveal": true,
+            "compare_with": "recommend",
+            "b_step": 0,
+            "show_dps": true,
+            "labels": [
+              "ずんだもん",
+              "おすすめ"
+            ]
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "下の 3 つだけで、こんなに変わるのだ！",
+          "speech": "下の3つだけで、こんなに変わるのだ！",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "compare",
+            "step": 0,
+            "demo": "zunda",
+            "reveal": true,
+            "compare_with": "recommend",
+            "b_step": 0,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "165 が 201。アタックスピードと近接スキルのレベルが効いてるわ。",
+          "speech": "ひゃくろくじゅうごが、にひゃくいち。アタックスピードと近接スキルのレベルが効いてるわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "compare",
+            "step": 0,
+            "demo": "zunda",
+            "reveal": true,
+            "compare_with": "recommend",
+            "b_step": 0,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ただ、サフィックスの当たりは 3 割くらい。外れの方が多いのよ。",
+          "speech": "ただ、サフィックスの当たりは3割くらい。外れの方が多いのよ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "じゃあ、サフィックスはどうやって当たりにするのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "実践: 白からサフィックスを埋める",
+      "target_seconds": 86,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "答えは、白から自分で作ることよ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "土台はスチールポイントクォータースタッフ。今のレベルで持てる一番上よ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "一番上だと何がいいのだ？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "元の物理ダメージが大きいの。物理ダメージ増加が、その分よく効くわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "まず変成のオーブを使うわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "物理ダメージが 104% 増加、なのだ！",
+          "speech": "物理ダメージがひゃくよんパーセント増加、なのだ！",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "プレフィックスの当たりね。DPS は 76 から 164。この段が付くのは 5% くらい、運が良かったわ。",
+          "speech": "プレフィックスの当たりね。ディーピーエスはななじゅうろくから、ひゃくろくじゅうよん。この段が付くのは5パーセントくらい、運が良かったわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "次は増強のオーブ。空いてるのはサフィックスの枠ね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "アタックスピードが 13% 増加なのだ！ 当たりなのだ？",
+          "speech": "アタックスピードが13パーセント増加なのだ！ 当たりなのだ？",
+          "emotion": "happy",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "当たりよ。185 まで上がったわ。",
+          "speech": "当たりよ。ひゃくはちじゅうごまで上がったわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "青の枠は埋まったから、王者のオーブで黄色にするわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "光半径と命中力……これは外れなのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "外れね。サフィックスは、こういうのが 7 割よ。",
+          "speech": "外れね。サフィックスは、こういうのが7割よ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "悔しいのだ……。",
+          "emotion": "sad",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "最後に、高貴なオーブを 1 つだけ使うわ。",
+          "speech": "最後に、高貴なオーブを1つだけ使うわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "クリティカルヒット率 +2.19% なのだ！",
+          "speech": "クリティカルヒット率プラス2.19パーセントなのだ！",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "小さい当たりね。MOD 4 つで 191。",
+          "speech": "小さい当たりね。モッド4つで、ひゃくきゅうじゅういち。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "ぼくの 6 個より強いのだ！",
+          "speech": "ぼくの6個より強いのだ！",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "compare",
+            "step": 0,
+            "demo": "zunda",
+            "reveal": true,
+            "compare_with": "main",
+            "b_step": 4,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "大事なのはサフィックスを見ること。外れが続いたら、次の白を探してね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "compare",
+            "step": 0,
+            "demo": "zunda",
+            "reveal": true,
+            "compare_with": "main",
+            "b_step": 4,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "アイテムレベルが高くても、いい MOD が必ず付くわけじゃないの。",
+          "speech": "アイテムレベルが高くても、いいモッドが必ず付くわけじゃないの。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "じゃあ、運なのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。だから質より量。火力が足りないと感じたら、積極的に試してみて。",
+          "emotion": "proud",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "これで完成なのだ？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ここで完成。でも、もう一押しできるわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "もう一押し: 熟練工のオーブとルーン",
+      "target_seconds": 52,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "熟練工のオーブを使うわね。武器にソケットを 1 つ足すわ。",
+          "speech": "熟練工のオーブを使うわね。武器にソケットを1つ足すわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "丸い穴が開いたのだ！",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ここにルーンをはめるの。今回は氷河のレッサールーンよ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "氷河のレッサールーンをはめるわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "3 から 5 の冷気ダメージを追加する、なのだ。",
+          "speech": "3から5の冷気ダメージを追加する、なのだ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 6,
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "DPS は 191 から 200。ちょっとだけど上がったわ。",
+          "speech": "ディーピーエスは、ひゃくきゅうじゅういちから、にひゃく。ちょっとだけど上がったわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 6,
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "ちょっとだけなのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "実は同じルーンでも、はめる物で効果が変わるの。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "胴のチェインメイルにはめると、冷気耐性 +10% になるわ。",
+          "speech": "胴のチェインメイルにはめると、冷気耐性プラス10パーセントになるわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 3,
+            "demo": "armour",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "武器だと冷気ダメージ、防具だと冷気耐性なのだ！",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "item",
+            "step": 3,
+            "demo": "armour",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。火力が欲しい時は武器、耐性が足りない時は防具にはめるの。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "一回はめたら、外せるのだ？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "外せないわ。上から別のルーンに替えることはできるけど。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 6,
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "じゃあ、はめる前によく考えるのだ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そうね。耐性の話は、この後の防御の所でするわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "防御は耐性",
+      "target_seconds": 77,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "text": "次は防御なのだ。ボスですぐやられる方なのだ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "防御で一番大事なのは、耐性よ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "resists",
+            "resists": "gear",
+            "act": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "耐性は火、冷気、雷、混沌の 4 つ。その攻撃をどれだけ軽くするかね。",
+          "speech": "耐性は火、冷気、雷、混沌の4つ。その攻撃をどれだけ軽くするかね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "resists",
+            "reveal": true,
+            "show_dps": true,
+            "resists": "gear",
+            "act": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "冷気だけ高いのだ？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "胴のルーンと、サファイアの指輪の分ね。アクト 1 のクエストでも冷気耐性が 10% もらえるわ。",
+          "speech": "胴のルーンと、サファイアの指輪の分ね。アクト1のクエストでも冷気耐性が10パーセントもらえるわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "上限は 75%。そこまで上げると、受けるダメージがぐっと減るわ。",
+          "speech": "上限は75パーセント。そこまで上げると、受けるダメージがぐっと減るわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "resists",
+            "reveal": true,
+            "show_dps": true,
+            "resists": "gear",
+            "act": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "じゃあ今の 45% で十分なのだ？",
+          "speech": "じゃあ今の45パーセントで十分なのだ？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "実は、アクトが進むと耐性が下がっていくの。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "アクト 3 だと、どうなるのだ？",
+          "speech": "アクト3だと、どうなるのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "resists",
+            "reveal": false,
+            "show_dps": true,
+            "resists": "gear",
+            "act": -20
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "アクトごとに 10% ずつ。アクト 3 だと、冷気は 25% まで下がるわ。",
+          "speech": "アクトごとに10パーセントずつ。アクト3だと、冷気は25パーセントまで下がるわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "resists",
+            "reveal": true,
+            "show_dps": true,
+            "resists": "gear",
+            "act": -20
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "火と雷はマイナスなのだ！",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "最後は −60%。上限の 75% までは、まだまだ遠いわね。",
+          "speech": "最後はマイナス60パーセント。上限の75パーセントまでは、まだまだ遠いわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "resists",
+            "reveal": true,
+            "show_dps": true,
+            "resists": "gear",
+            "act": -60
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "例えば 200 の火の一撃。耐性 −20% と 75% で比べるわ。",
+          "speech": "例えば200の火の一撃。耐性マイナス20パーセントと75パーセントで比べるわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "hit",
+            "step": 0,
+            "reveal": true,
+            "show_dps": true,
+            "elem": "fire",
+            "res": [
+              -20,
+              75
+            ],
+            "dmg": 200
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "全然違うのだ！",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "hit",
+            "step": 0,
+            "reveal": true,
+            "show_dps": true,
+            "elem": "fire",
+            "res": [
+              -20,
+              75
+            ],
+            "dmg": 200
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "マイナスだと逆に増えるの。−20% なら 240、75% なら 50 よ。",
+          "speech": "マイナスだと逆に増えるの。マイナス20パーセントならにひゃくよんじゅう、75パーセントなら50よ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "だからアクト中は、足りない属性を装備やルーンで埋めていくの。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "さっきの氷河のルーンも、ここで効くのだ？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 3,
+            "demo": "armour",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。火が足りないなら砂漠のルーン、雷なら嵐のルーンよ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 3,
+            "demo": "armour",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "自分で直せるのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ええ。耐性は「マイナスを作らない」から始めてね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "資源: いらない装備を材料にする",
+      "target_seconds": 33,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "text": "でもオーブって、そんなにたくさん持ってないのだ。",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "足りない時は、いらない装備を材料にするのよ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "demo": "junk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "例えば、使わない青いチェインメイル。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "demo": "junk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "これを解呪するわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "junk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "消えて、シャードになったのだ！",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "junk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "青を解呪すると、変成のシャード。10 個で変成のオーブ 1 個になるわ。",
+          "speech": "青を解呪すると、変成のシャード。10個で変成のオーブ1個になるわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "黄色はどうなるのだ？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "黄色なら王者のシャードよ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "junk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ソケット付きの装備はサルベージすると、熟練工のシャードになるわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "捨てずに、全部材料なのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "junk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。拾って、試して、材料にする。これがアクト中の回し方よ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "クイズ",
+      "target_seconds": 11,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "ここで今日のクイズ。アクト中の武器で、外れが多いのはどっち？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "プレ",
+              "サフィ"
+            ],
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "3 秒で考えてね。",
+          "speech": "3秒で考えてね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "プレ",
+              "サフィ"
+            ],
+            "reveal": true,
+            "countdown": 3,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "正解はサフィックス。当たりは 3 割くらいしかないのよ。",
+          "speech": "正解はサフィックス。当たりは3割くらいしかないのよ。",
+          "emotion": "proud",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "プレ",
+              "サフィ"
+            ],
+            "answer": 1,
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "当たったのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "まとめ",
+      "target_seconds": 31,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "text": "今日のまとめなのだ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "1 つ目、プレフィックスは当たりが多いから、サフィックスを見るのだ。",
+          "speech": "1つ目、プレフィックスは当たりが多いから、サフィックスを見るのだ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "demo": "recommend",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "2 つ目、耐性はアクトが進むと下がるから、マイナスを作らないのだ。",
+          "speech": "2つ目、耐性はアクトが進むと下がるから、マイナスを作らないのだ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "resists",
+            "reveal": true,
+            "show_dps": true,
+            "resists": "gear",
+            "act": -20
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "3 つ目、いらない装備は解呪して材料にするのだ。",
+          "speech": "3つ目、いらない装備は解呪して材料にするのだ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "junk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "よくできたわね。拾った武器を替えるかも、自分で決められるわね。",
+          "emotion": "happy",
+          "scene": {
+            "kind": "item",
+            "step": 4,
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "このチャンネルでは、アクト中から始められる PoE2 の基礎をまとめていくわ。",
+          "speech": "このチャンネルでは、アクト中から始められるポエツーの基礎をまとめていくわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "分からない所や知りたい事は、コメントで教えてほしいのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "talk",
+            "reveal": true,
+            "show_dps": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "チャンネル登録もよろしくね。",
+          "emotion": "happy",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "demo": "recommend",
+            "reveal": true,
+            "show_dps": true
+          }
+        }
+      ]
+    }
+  ]
+}

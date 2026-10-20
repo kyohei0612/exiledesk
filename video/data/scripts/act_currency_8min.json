@@ -1,0 +1,1354 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "【PoE2 初心者】鞄に溜まったカレンシー、何に使う？アクト中に拾う物ぜんぶまとめ",
+  "target_seconds": 510,
+  "result_file": "data/results/act_currency_8min.json",
+  "final_step": 1,
+  "demos": {
+    "unid": "data/results/act_currency_8min__unid.json",
+    "ring_fail": "data/results/act_currency_8min__ring_fail.json",
+    "weapon": "data/results/act_currency_8min__weapon.json",
+    "armour": "data/results/act_currency_8min__armour.json",
+    "flask": "data/results/act_currency_8min__flask.json",
+    "gem": "data/results/act_currency_8min__gem.json",
+    "chance_ok": "data/results/act_currency_8min__chance_ok.json",
+    "chance_ng": "data/results/act_currency_8min__chance_ng.json"
+  },
+  "sections": [
+    {
+      "name": "導入",
+      "target_seconds": 28,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "アクトを進めてたら、鞄がカレンシーでパンパンなのだ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "見た事ないのが多くて、何に使うか分からないのだ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "変成・増強・王者・高貴は、前の動画で使ったわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "今回はそれ以外の、アクト中に拾うカレンシーを全部見ていくわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "全部なのだ？覚えきれるか心配なのだ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "大丈夫。3 つに分ければ簡単よ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "今すぐ使う物、取っておく物、集めるとオーブになる物ね。",
+          "scene": {
+            "kind": "stage",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "分けて覚えれば、もう迷わないのだ！",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "1.0 が来る前に、ここを押さえておくと楽よ。まずは仕分けからね。",
+          "speech": "いってんゼロが来る前に、ここを押さえておくと楽よ。まずは仕分けからね。",
+          "scene": {
+            "kind": "talk"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 つに分ける",
+      "target_seconds": 38,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "仕分けって、どうやって分けるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "まず「使う箱」。持っていたら、迷わず打っていい物ね。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "錬金術のオーブは、白い装備を一気にレアにしてくれるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "品質を上げる物も使う箱。砥石、端材、飾り玉、プリズムね。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "weapon"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "名前がいっぱいで、覚えきれないのだ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "何に使うかは後で見せるわ。熟練工のオーブと、鑑定の巻物も使う箱よ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "armour"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "取っておく箱は、カオス・消去・神・ヴァールのオーブ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "全部使っちゃダメなのだ？",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "価値が高い物と、元に戻せない物ね。アクト中は取っておくのがおすすめよ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "集める箱はシャード。10 個でオーブ 1 個になるわ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "1 個じゃ使えないから、捨てちゃダメなのだ！",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "じゃあ使う箱の錬金術のオーブから、実際に打ってみるわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "使う① 錬金術のオーブ",
+      "target_seconds": 70,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "錬金術のオーブは、白か青の装備を MOD 4 個のレアにするオーブよ。",
+          "scene": {
+            "kind": "stage",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "変成・増強・王者を、順番に打たなくていいのだ？",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。1 個で一気に黄色まで行けるの。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "前の動画と同じサファイアの指輪に、錬金術のオーブを使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "一気に黄色になったのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "最大マナ +27、筋力 +7、命中力 +66、器用さ +6。4 つ付いたわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "troubled",
+          "text": "ただ、耐性もライフも付いていないわね。",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "4 つ付いても、良いとは限らないのだ？",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。何が付くかは運よ。ティアの見方は前の動画を見てね。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "欲しい MOD が付かなければ、次の白い装備で試せばいいわ。",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "白い装備を拾ったら、まず錬金術のオーブなのだ！",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "MOD を付ける以外にも、使う箱のオーブはあるわ。次は品質よ。",
+          "scene": {
+            "kind": "talk"
+          }
+        }
+      ]
+    },
+    {
+      "name": "使う② 品質を上げる 4 種",
+      "target_seconds": 72,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "text": "品質って何なのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "weapon"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "装備そのものの性能を、少し上げる物よ。部位ごとに使う物が違うの。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "まず失敗する例から。この指輪に鍛冶屋の砥石を使うわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "ring_fail"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "あれ、何も起きないのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "ring_fail"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "鍛冶屋の砥石はマーシャル武器にだけ使える物なの。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "ring_fail"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "使えないと壊れちゃうのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "壊れないわ。受け付けないだけよ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "マーシャル武器はメイスや弓、槍のこと。この棍棒に鍛冶屋の砥石を使うわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "weapon"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "品質が付いたわ。物理ダメージが少し上がったでしょ。",
+          "emotion": "proud",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "weapon"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "棍棒が強くなったのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "item",
+            "step": 1,
+            "demo": "weapon"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "防具には鎧鍛冶の端材。このチェインメイルに使うわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "armour"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "これも品質が付いたわね。守りが少し上がるわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "armour"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "名前で相手が決まってるのだ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。フラスコにはガラス吹きの飾り玉。特大のライフフラスコに使うわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "flask"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "付いたわね。フラスコも品質で少し良くなるの。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "flask"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "残りの 1 つは何に使うのだ？",
+          "speech": "残りのひとつは何に使うのだ？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "スキルジェムには宝石細工師のプリズム。スパークに使うわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "gem"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "品質が付いたわ。何が良くなるかは、ジェムごとに違うのよ。",
+          "emotion": "proud",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "gem"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "使う相手が 4 つとも違うのだ。覚えたのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "item",
+            "step": 1,
+            "demo": "gem"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ワンドやスタッフ、セプターには秘術師の彫刻針。名前だけ覚えておいて。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "同じく装備を良くする物で、もう 1 つ覚えておきたいのがあるわ。",
+          "speech": "同じく装備を良くする物で、もうひとつ覚えておきたいのがあるわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        }
+      ]
+    },
+    {
+      "name": "使う③ ソケットを足す (熟練工・宝飾職人)",
+      "target_seconds": 62,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "text": "さっき品質を上げた棍棒なのだ。まだ何かするのだ？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "weapon"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ええ。この棍棒に熟練工のオーブを使うわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "weapon"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ソケットが 1 個増えたわ。オーグメントソケットっていう枠よ。",
+          "speech": "ソケットがいっこ増えたわ。オーグメントソケットっていう枠よ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "weapon"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "棍棒に穴が開いたのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "item",
+            "step": 2,
+            "demo": "weapon"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "マーシャル武器とワンド、スタッフ、それと防具に足せるの。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 2,
+            "demo": "weapon"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "じゃあチェインメイルにも打ってみるのだ！",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "armour"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "このチェインメイルにも熟練工のオーブを使うわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "armour"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "こっちもソケットが 1 個増えたわね。",
+          "speech": "こっちもソケットがいっこ増えたわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "armour"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "じゃあ指輪にも打てば良いのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "指輪とアミュレットには使えないのよ。相手が決まっているの。",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "じゃあジェムに熟練工のオーブを打てばいいのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "item",
+            "step": 1,
+            "demo": "gem"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "それも違うわ。スキルジェムには宝飾職人のオーブよ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 1,
+            "demo": "gem"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "見習いと上級があるの。このスパークに見習いを使うわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "gem"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "サポートジェムの枠が増えたわ。見習いで 3 個、上級で 4 個ね。",
+          "speech": "サポートジェムの枠が増えたわ。見習いでさんこ、上級でよんこね。",
+          "emotion": "proud",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "gem"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "装備は熟練工のオーブ、ジェムは宝飾職人のオーブなのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "gem"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。ここまでは装備を良くする話。今度は拾った瞬間に要る物よ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        }
+      ]
+    },
+    {
+      "name": "使う④ 鑑定の巻物と巻物の断片",
+      "target_seconds": 45,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "text": "拾った瞬間に要る物って、何なのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "demo": "unid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "赤く「未鑑定」と出る装備を拾った事ない？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "demo": "unid"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "あるのだ！何が付いてるのか読めないのだ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "未鑑定だと MOD が隠れているの。中身が分からないままなのよ。",
+          "speech": "未鑑定だとモッドが隠れているの。中身が分からないままなのよ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "この未鑑定のサファイアの指輪に、鑑定の巻物を使うわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "unid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "見えたわ。2から3の物理ダメージをアタックに追加する、と雷耐性 +19%。",
+          "speech": "見えたわ。2から3の物理ダメージをアタックに追加する、と、雷耐性プラス19パーセント。",
+          "emotion": "happy",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "highlight": "added",
+            "demo": "unid"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "隠れてただけで、ちゃんと付いてたのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "item",
+            "step": 1,
+            "demo": "unid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "鑑定して初めて、入れ替えるか捨てるかが決められるのよ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 1,
+            "demo": "unid"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "じゃあ拾ったら、惜しまず使っていいのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そうよ。鞄に巻物の断片があったら、それも取っておいてね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "断片は 1 個じゃ使えないのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "item",
+            "step": 1,
+            "demo": "unid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "5 個で鑑定の巻物 1 個になるわ。集める箱ね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 1,
+            "demo": "unid"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ここからは、同じ拾い物でもアクト中は打たない方がいい物よ。",
+          "emotion": "proud",
+          "scene": {
+            "kind": "talk"
+          }
+        }
+      ]
+    },
+    {
+      "name": "取っておく (カオス・消去・神・ヴァール)",
+      "target_seconds": 92,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "text": "打たない方がいいって、使っちゃダメなのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ダメじゃないの。でも価値が高いから、アクト中は取っておいてね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "これから打つのは、仕組みを知るための実験だと思ってね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "さっき作った黄色い指輪で実験するのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。まずカオスオーブ。この指輪に使うわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "レアの MOD を 1 個消して、ランダムに 1 個足す物よ。",
+          "speech": "レアのモッドを1個消して、ランダムに1個足す物よ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "最大マナ +27 が消えて、火耐性 +23% が付いたわ。",
+          "speech": "さいだいマナ プラス27が消えて、かたいせい プラス23パーセントが付いたわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "1 個消えて、1 個増えたのだ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "消えるのは 1 個、足されるのも 1 個。全部は変わらないの。",
+          "speech": "消えるのは1個、足されるのも1個。全部は変わらないの。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "良くなったのか、悪くなったのか分からないのだ。",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "item",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "狙えないものね。次は消去のオーブを使うわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "器用さ +6 が消えたわ。今度は何も付かないの。",
+          "speech": "きようさ プラス6が消えたわ。今度は何も付かないの。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "減っただけなのだ…。",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。消す MOD も選べないのよ。",
+          "speech": "そう。消すモッドも選べないのよ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "神のオーブもあったのだ。あれは何なのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "付いている MOD の数値を振り直す物よ。種類は変わらないわ。",
+          "speech": "付いているモッドの数値を振り直す物よ。種類は変わらないわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "数字だけ変わるのだ。それも運任せなのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そうね。最後にヴァールオーブを使うわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "コラプトになったわ。もう手を加えられないの。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "見た目は何も変わってないのだ？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "今回は変化が無かった回ね。結果は運で、元に戻せないわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "どれも良くなる保証が無いのだ…",
+          "emotion": "sad",
+          "scene": {
+            "kind": "item",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "だからアクト中は、打たずに箱に入れておくのがおすすめよ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "同じ運任せでも、アクト中に回して楽しい物もあるわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        }
+      ]
+    },
+    {
+      "name": "運試し: 可能性のオーブ",
+      "target_seconds": 38,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "text": "楽しい運任せって、何なのだ？",
+          "emotion": "happy",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "demo": "chance_ok"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "可能性のオーブよ。白い装備をユニークにするか、壊してしまうオーブなの。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "demo": "chance_ok"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "ユニークなのだ！？大当たりじゃないのだ！",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "外れると、アイテムごと無くなってしまうのよ。",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "確率は分からないわ。この棍棒に可能性のオーブを使うわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "chance_ok"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "当たりね。ブリンハンドの印っていうユニークになったわ。",
+          "emotion": "happy",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "highlight": "rarity",
+            "demo": "chance_ok"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "棍棒が別物になったのだ！名前まで違うのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "item",
+            "step": 1,
+            "demo": "chance_ok"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "じゃあ、もう 1 本の白い棍棒にも使うわね。",
+          "speech": "じゃあ、もういっぽんの白い棍棒にも使うわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "chance_ng"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "壊れたわ。アイテムごと無くなってしまったわね。",
+          "emotion": "sad",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "chance_ng"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "さっきは当たったのに！消えちゃったのだ…",
+          "emotion": "sad",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "だから、壊れて惜しくない白にだけ打つのよ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 0,
+            "demo": "chance_ok"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "使っている装備には打っちゃダメなのだ！",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そうよ。最後は、1 個だと何も出来ない物ね。",
+          "speech": "そうよ。最後は、いっこだと何も出来ない物ね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        }
+      ]
+    },
+    {
+      "name": "集める: シャードと断片",
+      "target_seconds": 22,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "text": "1 個だと使えない物って何なのだ？",
+          "speech": "いっこだと使えない物って何なのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "シャードよ。10 個で同じ名前のオーブになるの。",
+          "speech": "シャードよ。じゅっこで同じ名前のオーブになるの。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "変成、王者、熟練工、可能性のシャードね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "変成のシャードなら、変成のオーブなのだ？",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。名前が同じオーブになるの。",
+          "emotion": "proud",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "さっきの巻物の断片も、同じ集める箱なのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。どれも 1 個じゃ使えないから、捨てないでね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "鞄で見かけても、もう捨てないのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そうよ。じゃあ鞄の中身、もう仕分けられるわね。",
+          "emotion": "happy",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "まとめ",
+      "target_seconds": 43,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "じゃあずんだもん、鞄の中身を 3 つで言えるかしら。",
+          "speech": "じゃあずんだもん、鞄の中身をみっつで言えるかしら。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "1 つ目なのだ！白い装備には錬金術のオーブなのだ。",
+          "speech": "ひとつめなのだ！白い装備には錬金術のオーブなのだ。",
+          "emotion": "proud",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "品質とソケットと鑑定の巻物も、ためらわず使うのだ。",
+          "emotion": "proud",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。拾ったその日に強くなれるのが使う箱よ。",
+          "emotion": "happy",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "2 つ目！カオスオーブ、消去のオーブ、神のオーブ、ヴァールオーブは取っておくのだ。",
+          "speech": "ふたつめ！カオスオーブ、消去のオーブ、神のオーブ、ヴァールオーブは取っておくのだ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "価値が高い物と、元に戻せない物ね。アクト中は箱の中よ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "3 つ目！シャードは 10 個集めてオーブにするのだ。",
+          "speech": "みっつめ！シャードはじゅっこ集めてオーブにするのだ。",
+          "emotion": "happy",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "巻物の断片は 5 個ね。ぜんぶ言えたわね。",
+          "speech": "巻物の断片はごこね。ぜんぶ言えたわね。",
+          "emotion": "happy",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "もう鞄を見ても困らないのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "このチャンネルでは、PoE2 の基礎を初心者向けにまとめていくわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "アクト中から始められる事を、1 つずつ見せていくわね。",
+          "speech": "アクト中から始められる事を、ひとつずつ見せていくわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "知りたい事はコメントで聞いてほしいのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "分からない所も教えてね。チャンネル登録もしてくれると嬉しいわ。",
+          "emotion": "happy",
+          "scene": {
+            "kind": "talk"
+          }
+        }
+      ]
+    }
+  ]
+}

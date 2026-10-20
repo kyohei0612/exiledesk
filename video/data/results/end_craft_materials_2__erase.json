@@ -1,0 +1,1633 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-10-04T06:07:11.850Z",
+  "exiledesk_version": "0.1.362",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "消すお告げ: 左側 / 右側の消去、削減、左側 / 右側の抹消",
+    "base": "Amber Amulet",
+    "item_level": 82,
+    "start_rarity": "normal",
+    "seed": 20261006,
+    "start_unidentified": false,
+    "start": {
+      "rarity": "rare",
+      "mods": [
+        {
+          "mod": "Amulets/IncreasedLife",
+          "tier": "T1"
+        },
+        {
+          "mod": "Amulets/IncreasedMana",
+          "tier": "T5"
+        },
+        {
+          "mod": "Amulets/GlobalEnergyShieldPercent",
+          "tier": "T2"
+        },
+        {
+          "mod": "Amulets/AllResistances",
+          "tier": "T1"
+        },
+        {
+          "mod": "Amulets/Strength",
+          "tier": "T8"
+        },
+        {
+          "mod": "Amulets/FireResistance",
+          "tier": "T2"
+        }
+      ]
+    },
+    "steps": [
+      {
+        "currency": "annul",
+        "omen": "OmenofSinistralAnnulment",
+        "times": 1
+      },
+      {
+        "currency": "annul",
+        "omen": "OmenofDextralAnnulment",
+        "times": 1
+      },
+      {
+        "currency": "chaos",
+        "omen": "OmenofWhittling",
+        "times": 1
+      },
+      {
+        "currency": "chaos",
+        "omen": "OmenofSinistralErasure",
+        "times": 1
+      },
+      {
+        "currency": "chaos",
+        "omen": "OmenofDextralErasure",
+        "times": 1
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "annul",
+      "currency_ja": "消去のオーブ",
+      "omen": "OmenofSinistralAnnulment",
+      "omen_ja": "左側の消去のお告げ",
+      "seed": 20261007,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +137",
+            "text_en": "+137 to maximum Life",
+            "values": [
+              137
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 60,
+            "text_ja": "最大マナ +110",
+            "text_en": "+110 to maximum Mana",
+            "values": [
+              110
+            ],
+            "ranges": [
+              [
+                105,
+                124
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Chalybeous"
+          },
+          {
+            "mod_id": "Amulets/GlobalEnergyShieldPercent",
+            "family": "EnergyShieldPercent",
+            "side": "prefix",
+            "tier_name": "T2",
+            "mod_level": 65,
+            "text_ja": "最大エナジーシールドが39%増加する",
+            "text_en": "39% increased maximum Energy Shield",
+            "values": [
+              39
+            ],
+            "ranges": [
+              [
+                39,
+                44
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "Indomitable"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "筋力 +8",
+            "text_en": "+8 to Strength",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Brute"
+          },
+          {
+            "mod_id": "Amulets/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "火耐性 +37%",
+            "text_en": "+37% to Fire Resistance",
+            "values": [
+              37
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of Magma"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +137",
+            "text_en": "+137 to maximum Life",
+            "values": [
+              137
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 60,
+            "text_ja": "最大マナ +110",
+            "text_en": "+110 to maximum Mana",
+            "values": [
+              110
+            ],
+            "ranges": [
+              [
+                105,
+                124
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Chalybeous"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "筋力 +8",
+            "text_en": "+8 to Strength",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Brute"
+          },
+          {
+            "mod_id": "Amulets/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "火耐性 +37%",
+            "text_en": "+37% to Fire Resistance",
+            "values": [
+              37
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of Magma"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [
+          {
+            "mod_id": "Amulets/GlobalEnergyShieldPercent",
+            "family": "EnergyShieldPercent",
+            "side": "prefix",
+            "tier_name": "T2",
+            "mod_level": 65,
+            "text_ja": "最大エナジーシールドが39%増加する",
+            "text_en": "39% increased maximum Energy Shield",
+            "values": [
+              39
+            ],
+            "ranges": [
+              [
+                39,
+                44
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "Indomitable"
+          }
+        ],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 369.38,
+        "amount": 2,
+        "subtotal": 369.38,
+        "cumulative": 369.38
+      }
+    },
+    {
+      "index": 2,
+      "currency": "annul",
+      "currency_ja": "消去のオーブ",
+      "omen": "OmenofDextralAnnulment",
+      "omen_ja": "右側の消去のお告げ",
+      "seed": 20261008,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +137",
+            "text_en": "+137 to maximum Life",
+            "values": [
+              137
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 60,
+            "text_ja": "最大マナ +110",
+            "text_en": "+110 to maximum Mana",
+            "values": [
+              110
+            ],
+            "ranges": [
+              [
+                105,
+                124
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Chalybeous"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "筋力 +8",
+            "text_en": "+8 to Strength",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Brute"
+          },
+          {
+            "mod_id": "Amulets/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "火耐性 +37%",
+            "text_en": "+37% to Fire Resistance",
+            "values": [
+              37
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of Magma"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +137",
+            "text_en": "+137 to maximum Life",
+            "values": [
+              137
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 60,
+            "text_ja": "最大マナ +110",
+            "text_en": "+110 to maximum Mana",
+            "values": [
+              110
+            ],
+            "ranges": [
+              [
+                105,
+                124
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Chalybeous"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "筋力 +8",
+            "text_en": "+8 to Strength",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Brute"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [
+          {
+            "mod_id": "Amulets/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "火耐性 +37%",
+            "text_en": "+37% to Fire Resistance",
+            "values": [
+              37
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of Magma"
+          }
+        ],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 369.38,
+        "amount": 2,
+        "subtotal": 369.38,
+        "cumulative": 738.76
+      }
+    },
+    {
+      "index": 3,
+      "currency": "chaos",
+      "currency_ja": "カオスオーブ",
+      "omen": "OmenofWhittling",
+      "omen_ja": "削減のお告げ",
+      "seed": 20261009,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +137",
+            "text_en": "+137 to maximum Life",
+            "values": [
+              137
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 60,
+            "text_ja": "最大マナ +110",
+            "text_en": "+110 to maximum Mana",
+            "values": [
+              110
+            ],
+            "ranges": [
+              [
+                105,
+                124
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Chalybeous"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "筋力 +8",
+            "text_en": "+8 to Strength",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Brute"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +137",
+            "text_en": "+137 to maximum Life",
+            "values": [
+              137
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 60,
+            "text_ja": "最大マナ +110",
+            "text_en": "+110 to maximum Mana",
+            "values": [
+              110
+            ],
+            "ranges": [
+              [
+                105,
+                124
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Chalybeous"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "器用さ +6",
+            "text_en": "+6 to Dexterity",
+            "values": [
+              6
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Mongoose"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Amulets/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "器用さ +6",
+            "text_en": "+6 to Dexterity",
+            "values": [
+              6
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Mongoose"
+          }
+        ],
+        "removed": [
+          {
+            "mod_id": "Amulets/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "筋力 +8",
+            "text_en": "+8 to Strength",
+            "values": [
+              8
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Brute"
+          }
+        ],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 64.768,
+        "amount": 2,
+        "subtotal": 64.768,
+        "cumulative": 803.528
+      }
+    },
+    {
+      "index": 4,
+      "currency": "chaos",
+      "currency_ja": "カオスオーブ",
+      "omen": "OmenofSinistralErasure",
+      "omen_ja": "左側の抹消のお告げ",
+      "seed": 20261010,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +137",
+            "text_en": "+137 to maximum Life",
+            "values": [
+              137
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          },
+          {
+            "mod_id": "Amulets/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 60,
+            "text_ja": "最大マナ +110",
+            "text_en": "+110 to maximum Mana",
+            "values": [
+              110
+            ],
+            "ranges": [
+              [
+                105,
+                124
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Chalybeous"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "器用さ +6",
+            "text_en": "+6 to Dexterity",
+            "values": [
+              6
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Mongoose"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +137",
+            "text_en": "+137 to maximum Life",
+            "values": [
+              137
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "器用さ +6",
+            "text_en": "+6 to Dexterity",
+            "values": [
+              6
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Mongoose"
+          },
+          {
+            "mod_id": "Amulets/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 38,
+            "text_ja": "冷気耐性 +21%",
+            "text_en": "+21% to Cold Resistance",
+            "values": [
+              21
+            ],
+            "ranges": [
+              [
+                21,
+                25
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of the Yeti"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Amulets/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 38,
+            "text_ja": "冷気耐性 +21%",
+            "text_en": "+21% to Cold Resistance",
+            "values": [
+              21
+            ],
+            "ranges": [
+              [
+                21,
+                25
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of the Yeti"
+          }
+        ],
+        "removed": [
+          {
+            "mod_id": "Amulets/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 60,
+            "text_ja": "最大マナ +110",
+            "text_en": "+110 to maximum Mana",
+            "values": [
+              110
+            ],
+            "ranges": [
+              [
+                105,
+                124
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Chalybeous"
+          }
+        ],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 64.768,
+        "amount": 2,
+        "subtotal": 64.768,
+        "cumulative": 868.296
+      }
+    },
+    {
+      "index": 5,
+      "currency": "chaos",
+      "currency_ja": "カオスオーブ",
+      "omen": "OmenofDextralErasure",
+      "omen_ja": "右側の抹消のお告げ",
+      "seed": 20261011,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +137",
+            "text_en": "+137 to maximum Life",
+            "values": [
+              137
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "器用さ +6",
+            "text_en": "+6 to Dexterity",
+            "values": [
+              6
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Mongoose"
+          },
+          {
+            "mod_id": "Amulets/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 38,
+            "text_ja": "冷気耐性 +21%",
+            "text_en": "+21% to Cold Resistance",
+            "values": [
+              21
+            ],
+            "ranges": [
+              [
+                21,
+                25
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of the Yeti"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 60,
+            "text_ja": "最大ライフ +137",
+            "text_en": "+137 to maximum Life",
+            "values": [
+              137
+            ],
+            "ranges": [
+              [
+                120,
+                149
+              ]
+            ],
+            "tier_index": 8,
+            "affix": "Athlete's"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/AllResistances",
+            "family": "AllResistances",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "全ての元素耐性 +18%",
+            "text_en": "+18% to all Elemental Resistances",
+            "values": [
+              18
+            ],
+            "ranges": [
+              [
+                17,
+                18
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Span"
+          },
+          {
+            "mod_id": "Amulets/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 38,
+            "text_ja": "冷気耐性 +21%",
+            "text_en": "+21% to Cold Resistance",
+            "values": [
+              21
+            ],
+            "ranges": [
+              [
+                21,
+                25
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of the Yeti"
+          },
+          {
+            "mod_id": "Amulets/LifeRegeneration",
+            "family": "LifeRegeneration",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 35,
+            "text_ja": "毎秒10.2のライフを自動回復する",
+            "text_en": "10.2 Life Regeneration per second",
+            "values": [
+              10.2
+            ],
+            "ranges": [
+              [
+                9.1,
+                13
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Troll"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Amulets/LifeRegeneration",
+            "family": "LifeRegeneration",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 35,
+            "text_ja": "毎秒10.2のライフを自動回復する",
+            "text_en": "10.2 Life Regeneration per second",
+            "values": [
+              10.2
+            ],
+            "ranges": [
+              [
+                9.1,
+                13
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of the Troll"
+          }
+        ],
+        "removed": [
+          {
+            "mod_id": "Amulets/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "器用さ +6",
+            "text_en": "+6 to Dexterity",
+            "values": [
+              6
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Mongoose"
+          }
+        ],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 64.768,
+        "amount": 2,
+        "subtotal": 64.768,
+        "cumulative": 933.0640000000001
+      }
+    }
+  ],
+  "final": {
+    "name": "琥珀のアミュレット",
+    "base": "Amber Amulet",
+    "base_ja": "琥珀のアミュレット",
+    "item_level": 82,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "disposed": null,
+    "gained": null,
+    "requirements": {
+      "level": 8
+    },
+    "properties": [],
+    "augments": [],
+    "quality_tag": null,
+    "sockets": 0,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [
+      {
+        "mod_id": "Amulets/IncreasedLife",
+        "family": "IncreasedLife",
+        "side": "prefix",
+        "tier_name": "T1",
+        "mod_level": 60,
+        "text_ja": "最大ライフ +137",
+        "text_en": "+137 to maximum Life",
+        "values": [
+          137
+        ],
+        "ranges": [
+          [
+            120,
+            149
+          ]
+        ],
+        "tier_index": 8,
+        "affix": "Athlete's"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Amulets/AllResistances",
+        "family": "AllResistances",
+        "side": "suffix",
+        "tier_name": "T1",
+        "mod_level": 80,
+        "text_ja": "全ての元素耐性 +18%",
+        "text_en": "+18% to all Elemental Resistances",
+        "values": [
+          18
+        ],
+        "ranges": [
+          [
+            17,
+            18
+          ]
+        ],
+        "tier_index": 5,
+        "affix": "of the Span"
+      },
+      {
+        "mod_id": "Amulets/ColdResistance",
+        "family": "ColdResistance",
+        "side": "suffix",
+        "tier_name": "T5",
+        "mod_level": 38,
+        "text_ja": "冷気耐性 +21%",
+        "text_en": "+21% to Cold Resistance",
+        "values": [
+          21
+        ],
+        "ranges": [
+          [
+            21,
+            25
+          ]
+        ],
+        "tier_index": 3,
+        "affix": "of the Yeti"
+      },
+      {
+        "mod_id": "Amulets/LifeRegeneration",
+        "family": "LifeRegeneration",
+        "side": "suffix",
+        "tier_name": "T5",
+        "mod_level": 35,
+        "text_ja": "毎秒10.2のライフを自動回復する",
+        "text_en": "10.2 Life Regeneration per second",
+        "values": [
+          10.2
+        ],
+        "ranges": [
+          [
+            9.1,
+            13
+          ]
+        ],
+        "tier_index": 5,
+        "affix": "of the Troll"
+      }
+    ]
+  },
+  "total_cost": 933.0640000000001
+}

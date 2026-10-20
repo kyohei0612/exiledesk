@@ -1,0 +1,1040 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-09-29T06:35:56.487Z",
+  "exiledesk_version": "0.1.328",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": null,
+    "base": "Sapphire Ring",
+    "item_level": 36,
+    "start_rarity": "normal",
+    "start_paste": null,
+    "seed": 20261101,
+    "start_unidentified": false,
+    "tray": null,
+    "steps": [
+      {
+        "currency": "alchemy",
+        "omen": null,
+        "times": 1,
+        "outcome": null,
+        "note": "使う: 白を MOD 4 個のレアに"
+      },
+      {
+        "currency": "chaos",
+        "omen": null,
+        "times": 1,
+        "outcome": null,
+        "note": "実験: 取っておく物"
+      },
+      {
+        "currency": "annul",
+        "omen": null,
+        "times": 1,
+        "outcome": null,
+        "note": "実験: 取っておく物"
+      },
+      {
+        "currency": "vaal",
+        "omen": null,
+        "times": 1,
+        "outcome": null,
+        "note": "実験: 元に戻せない"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "alchemy",
+      "currency_ja": "錬金術のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261102,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "normal",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "after": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 16,
+            "text_ja": "最大マナ +27",
+            "text_en": "+27 to maximum Mana",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                25,
+                34
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Azure"
+          },
+          {
+            "mod_id": "Rings/IncreasedAccuracy",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 18,
+            "text_ja": "命中力 +66",
+            "text_en": "+66 to Accuracy Rating",
+            "values": [
+              66
+            ],
+            "ranges": [
+              [
+                61,
+                84
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Focused"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "筋力 +7",
+            "text_en": "+7 to Strength",
+            "values": [
+              7
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Brute"
+          },
+          {
+            "mod_id": "Rings/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "器用さ +6",
+            "text_en": "+6 to Dexterity",
+            "values": [
+              6
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Mongoose"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 16,
+            "text_ja": "最大マナ +27",
+            "text_en": "+27 to maximum Mana",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                25,
+                34
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Azure"
+          },
+          {
+            "mod_id": "Rings/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "筋力 +7",
+            "text_en": "+7 to Strength",
+            "values": [
+              7
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Brute"
+          },
+          {
+            "mod_id": "Rings/IncreasedAccuracy",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 18,
+            "text_ja": "命中力 +66",
+            "text_en": "+66 to Accuracy Rating",
+            "values": [
+              66
+            ],
+            "ranges": [
+              [
+                61,
+                84
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Focused"
+          },
+          {
+            "mod_id": "Rings/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "器用さ +6",
+            "text_en": "+6 to Dexterity",
+            "values": [
+              6
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Mongoose"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "normal",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 2,
+      "currency": "chaos",
+      "currency_ja": "カオスオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261103,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 16,
+            "text_ja": "最大マナ +27",
+            "text_en": "+27 to maximum Mana",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                25,
+                34
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Azure"
+          },
+          {
+            "mod_id": "Rings/IncreasedAccuracy",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 18,
+            "text_ja": "命中力 +66",
+            "text_en": "+66 to Accuracy Rating",
+            "values": [
+              66
+            ],
+            "ranges": [
+              [
+                61,
+                84
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Focused"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "筋力 +7",
+            "text_en": "+7 to Strength",
+            "values": [
+              7
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Brute"
+          },
+          {
+            "mod_id": "Rings/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "器用さ +6",
+            "text_en": "+6 to Dexterity",
+            "values": [
+              6
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Mongoose"
+          }
+        ]
+      },
+      "after": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedAccuracy",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 18,
+            "text_ja": "命中力 +66",
+            "text_en": "+66 to Accuracy Rating",
+            "values": [
+              66
+            ],
+            "ranges": [
+              [
+                61,
+                84
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Focused"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "筋力 +7",
+            "text_en": "+7 to Strength",
+            "values": [
+              7
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Brute"
+          },
+          {
+            "mod_id": "Rings/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "器用さ +6",
+            "text_en": "+6 to Dexterity",
+            "values": [
+              6
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Mongoose"
+          },
+          {
+            "mod_id": "Rings/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 36,
+            "text_ja": "火耐性 +23%",
+            "text_en": "+23% to Fire Resistance",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                25
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of the Kiln"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 36,
+            "text_ja": "火耐性 +23%",
+            "text_en": "+23% to Fire Resistance",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                25
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of the Kiln"
+          }
+        ],
+        "removed": [
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T10",
+            "mod_level": 16,
+            "text_ja": "最大マナ +27",
+            "text_en": "+27 to maximum Mana",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                25,
+                34
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Azure"
+          }
+        ],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 64.768,
+        "amount": 1,
+        "subtotal": 64.768,
+        "cumulative": 64.768
+      }
+    },
+    {
+      "index": 3,
+      "currency": "annul",
+      "currency_ja": "消去のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261104,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedAccuracy",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 18,
+            "text_ja": "命中力 +66",
+            "text_en": "+66 to Accuracy Rating",
+            "values": [
+              66
+            ],
+            "ranges": [
+              [
+                61,
+                84
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Focused"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "筋力 +7",
+            "text_en": "+7 to Strength",
+            "values": [
+              7
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Brute"
+          },
+          {
+            "mod_id": "Rings/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "器用さ +6",
+            "text_en": "+6 to Dexterity",
+            "values": [
+              6
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Mongoose"
+          },
+          {
+            "mod_id": "Rings/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 36,
+            "text_ja": "火耐性 +23%",
+            "text_en": "+23% to Fire Resistance",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                25
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of the Kiln"
+          }
+        ]
+      },
+      "after": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedAccuracy",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 18,
+            "text_ja": "命中力 +66",
+            "text_en": "+66 to Accuracy Rating",
+            "values": [
+              66
+            ],
+            "ranges": [
+              [
+                61,
+                84
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Focused"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "筋力 +7",
+            "text_en": "+7 to Strength",
+            "values": [
+              7
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Brute"
+          },
+          {
+            "mod_id": "Rings/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 36,
+            "text_ja": "火耐性 +23%",
+            "text_en": "+23% to Fire Resistance",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                25
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of the Kiln"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [
+          {
+            "mod_id": "Rings/Dexterity",
+            "family": "Dexterity",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "器用さ +6",
+            "text_en": "+6 to Dexterity",
+            "values": [
+              6
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Mongoose"
+          }
+        ],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 369.38,
+        "amount": 1,
+        "subtotal": 369.38,
+        "cumulative": 434.148
+      }
+    },
+    {
+      "index": 4,
+      "currency": "vaal",
+      "currency_ja": "ヴァールオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261105,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedAccuracy",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 18,
+            "text_ja": "命中力 +66",
+            "text_en": "+66 to Accuracy Rating",
+            "values": [
+              66
+            ],
+            "ranges": [
+              [
+                61,
+                84
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Focused"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "筋力 +7",
+            "text_en": "+7 to Strength",
+            "values": [
+              7
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Brute"
+          },
+          {
+            "mod_id": "Rings/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 36,
+            "text_ja": "火耐性 +23%",
+            "text_en": "+23% to Fire Resistance",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                25
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of the Kiln"
+          }
+        ]
+      },
+      "after": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 36,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": true,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedAccuracy",
+            "family": "IncreasedAccuracy",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 18,
+            "text_ja": "命中力 +66",
+            "text_en": "+66 to Accuracy Rating",
+            "values": [
+              66
+            ],
+            "ranges": [
+              [
+                61,
+                84
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Focused"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "筋力 +7",
+            "text_en": "+7 to Strength",
+            "values": [
+              7
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Brute"
+          },
+          {
+            "mod_id": "Rings/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 36,
+            "text_ja": "火耐性 +23%",
+            "text_en": "+23% to Fire Resistance",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                25
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of the Kiln"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 434.148
+      }
+    }
+  ],
+  "final": {
+    "name": "サファイアの指輪",
+    "base": "Sapphire Ring",
+    "base_ja": "サファイアの指輪",
+    "item_level": 36,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": true,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "quality_tag": null,
+    "sockets": 0,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [
+      {
+        "mod_id": "Rings/IncreasedAccuracy",
+        "family": "IncreasedAccuracy",
+        "side": "prefix",
+        "tier_name": "T6",
+        "mod_level": 18,
+        "text_ja": "命中力 +66",
+        "text_en": "+66 to Accuracy Rating",
+        "values": [
+          66
+        ],
+        "ranges": [
+          [
+            61,
+            84
+          ]
+        ],
+        "tier_index": 2,
+        "affix": "Focused"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Rings/Strength",
+        "family": "Strength",
+        "side": "suffix",
+        "tier_name": "T8",
+        "mod_level": 1,
+        "text_ja": "筋力 +7",
+        "text_en": "+7 to Strength",
+        "values": [
+          7
+        ],
+        "ranges": [
+          [
+            5,
+            8
+          ]
+        ],
+        "tier_index": 0,
+        "affix": "of the Brute"
+      },
+      {
+        "mod_id": "Rings/FireResistance",
+        "family": "FireResistance",
+        "side": "suffix",
+        "tier_name": "T5",
+        "mod_level": 36,
+        "text_ja": "火耐性 +23%",
+        "text_en": "+23% to Fire Resistance",
+        "values": [
+          23
+        ],
+        "ranges": [
+          [
+            21,
+            25
+          ]
+        ],
+        "tier_index": 3,
+        "affix": "of the Kiln"
+      }
+    ]
+  },
+  "total_cost": 434.148
+}

@@ -1,0 +1,1455 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "【PoE2】エンドのクラフト素材を一気に解説 前編: 上位オーブ・エッセンス・フラクチャー・カタリスト",
+  "target_seconds": 420,
+  "result_file": "data/results/end_craft_materials_1.json",
+  "final_step": 33,
+  "layout": "wide",
+  "demos": {
+    "essence": "data/results/end_craft_materials_1__essence.json",
+    "annul": "data/results/end_craft_materials_1__annul.json"
+  },
+  "sections": [
+    {
+      "name": "導入",
+      "target_seconds": 30,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "マップを回ってたら、見たことない素材がどんどん溜まってきたのだ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "エンドで拾うクラフト素材",
+              "icons": [
+                "exalt_perfect",
+                "essence:greater:Amulets/Essence_IncreasedLife",
+                "fracture",
+                "catalyst_life",
+                "collarbone_ancient",
+                "OmenofSinistralExaltation"
+              ],
+              "names": [
+                "上位のオーブ",
+                "エッセンス",
+                "フラクチャー",
+                "カタリスト",
+                "骨",
+                "お告げ"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "エンドに入ると、クラフトの素材が一気に増えるものね。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "エンドで拾うクラフト素材",
+              "icons": [
+                "exalt_perfect",
+                "essence:greater:Amulets/Essence_IncreasedLife",
+                "fracture",
+                "catalyst_life",
+                "collarbone_ancient",
+                "OmenofSinistralExaltation"
+              ],
+              "names": [
+                "上位のオーブ",
+                "エッセンス",
+                "フラクチャー",
+                "カタリスト",
+                "骨",
+                "お告げ"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "名前は強そうなのに、何に使うのか全然分からないのだ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "エンドで拾うクラフト素材",
+              "icons": [
+                "exalt_perfect",
+                "essence:greater:Amulets/Essence_IncreasedLife",
+                "fracture",
+                "catalyst_life",
+                "collarbone_ancient",
+                "OmenofSinistralExaltation"
+              ],
+              "names": [
+                "上位のオーブ",
+                "エッセンス",
+                "フラクチャー",
+                "カタリスト",
+                "骨",
+                "お告げ"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "今回はその前編。そのうち 4 つを使って、アミュレットを 1 つ作っていくわ。",
+          "scene": {
+            "kind": "item",
+            "step": 33
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "これが完成品なのだ？",
+          "scene": {
+            "kind": "item",
+            "step": 33
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "上位のオーブ、エッセンス、フラクチャー、カタリスト。何をする物で、どこで使うのかを 1 つずつ見ていきましょう。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "今回使う 4 つ",
+              "icons": [
+                "exalt_perfect",
+                "essence:greater:Amulets/Essence_IncreasedLife",
+                "fracture",
+                "catalyst_life"
+              ],
+              "names": [
+                "上位のオーブ",
+                "エッセンス",
+                "フラクチャー",
+                "カタリスト"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "拾った素材、もう腐らせないのだ！",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "今回使う 4 つ",
+              "icons": [
+                "exalt_perfect",
+                "essence:greater:Amulets/Essence_IncreasedLife",
+                "fracture",
+                "catalyst_life"
+              ],
+              "names": [
+                "上位のオーブ",
+                "エッセンス",
+                "フラクチャー",
+                "カタリスト"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "上位のオーブ",
+      "target_seconds": 100,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "まずは上位のオーブ。名前に「上級」「完全」と付いたオーブよ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "上位のオーブ",
+              "icons": [
+                "transmute",
+                "transmute_greater",
+                "transmute_perfect",
+                "regal",
+                "regal_greater",
+                "regal_perfect",
+                "exalt",
+                "exalt_greater",
+                "exalt_perfect"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "普通のオーブと何が違うのだ？",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "上位のオーブ",
+              "icons": [
+                "transmute",
+                "transmute_greater",
+                "transmute_perfect",
+                "regal",
+                "regal_greater",
+                "regal_perfect",
+                "exalt",
+                "exalt_greater",
+                "exalt_perfect"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "やる事は同じ。変成はマジックにして 1 個、王者はレアにして 1 個、高貴はレアに 1 個足す。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "上位のオーブ",
+              "icons": [
+                "transmute",
+                "transmute_greater",
+                "transmute_perfect",
+                "regal",
+                "regal_greater",
+                "regal_perfect",
+                "exalt",
+                "exalt_greater",
+                "exalt_perfect"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "違うのは、弱い MOD が付かないこと。付く MOD のレベルに下限があるの。",
+          "scene": {
+            "kind": "tiers",
+            "mod": "IncreasedLife",
+            "floor": 50
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "下限って、何なのだ？",
+          "scene": {
+            "kind": "tiers",
+            "mod": "IncreasedLife",
+            "floor": 50
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "王者と高貴なら、上級は 35、完全は 50 より下のティアは付かない。",
+          "scene": {
+            "kind": "tiers",
+            "mod": "IncreasedLife",
+            "floor": 50
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "変成と増強はもっと高くて、上級 55、完全 70 よ。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "付く MOD のレベルの下限",
+              "rows": [
+                [
+                  "オーブ",
+                  "上級",
+                  "完全"
+                ],
+                [
+                  "王者・高貴",
+                  "35 以上",
+                  "50 以上"
+                ],
+                [
+                  "変成・増強",
+                  "55 以上",
+                  "70 以上"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "じゃあ、ハズレのティアを引かなくなるのだ！",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "付く MOD のレベルの下限",
+              "rows": [
+                [
+                  "オーブ",
+                  "上級",
+                  "完全"
+                ],
+                [
+                  "王者・高貴",
+                  "35 以上",
+                  "50 以上"
+                ],
+                [
+                  "変成・増強",
+                  "55 以上",
+                  "70 以上"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。ただ、どの MOD が付くかは運のまま。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "付く MOD のレベルの下限",
+              "rows": [
+                [
+                  "オーブ",
+                  "上級",
+                  "完全"
+                ],
+                [
+                  "王者・高貴",
+                  "35 以上",
+                  "50 以上"
+                ],
+                [
+                  "変成・増強",
+                  "55 以上",
+                  "70 以上"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "それに、アイテムレベルの低いベースだと、付けられる MOD が無いこともあるわ。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "付く MOD のレベルの下限",
+              "rows": [
+                [
+                  "オーブ",
+                  "上級",
+                  "完全"
+                ],
+                [
+                  "王者・高貴",
+                  "35 以上",
+                  "50 以上"
+                ],
+                [
+                  "変成・増強",
+                  "55 以上",
+                  "70 以上"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "だから、アイテムレベルの高いベースに使いましょう。完全の変成を使ってみるわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "全ての元素耐性 +18%、ティア 1 が付いたわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "いきなり一番強いティアなのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "次は完全の王者。レアにして、MOD を 1 個足すわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "最大ライフ +145。これもティア 1。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "続けて完全の高貴。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "全ての能力値 +19、ティア 3。",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "もう 1 回、完全の高貴。",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ライフの自動回復、これもティア 3 ね。",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "いつも一番上じゃないけど、弱いのは来ないのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        }
+      ]
+    },
+    {
+      "name": "エッセンス",
+      "target_seconds": 120,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "次はエッセンス！ いろんな種類を拾うのだ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "エッセンス",
+              "icons": [
+                "essence:lesser:Amulets/Essence_IncreasedLife",
+                "essence:normal:Amulets/Essence_IncreasedLife",
+                "essence:greater:Amulets/Essence_IncreasedLife",
+                "essence:perfect:Body_Armours_dex/PerfectEssence_MaximumLifeIncreasePercent",
+                "essence:perfect:Amulets/PerfectEssence_LocalMaximumQuality"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "エッセンスは、決まった MOD を確実に付ける素材よ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "エッセンス",
+              "icons": [
+                "essence:lesser:Amulets/Essence_IncreasedLife",
+                "essence:normal:Amulets/Essence_IncreasedLife",
+                "essence:greater:Amulets/Essence_IncreasedLife",
+                "essence:perfect:Body_Armours_dex/PerfectEssence_MaximumLifeIncreasePercent",
+                "essence:perfect:Amulets/PerfectEssence_LocalMaximumQuality"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "例えば肉体のエッセンスなら最大ライフ。使う部位で、付く MOD や数値が変わるわ。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "最大ライフ",
+              "rows": [
+                [
+                  "肉体の…",
+                  "アミュレット",
+                  "鎧"
+                ],
+                [
+                  "レッサー",
+                  "+20〜29",
+                  "+30〜39"
+                ],
+                [
+                  "(名前なし)",
+                  "+70〜84",
+                  "+85〜99"
+                ],
+                [
+                  "グレーター",
+                  "+85〜99",
+                  "+100〜119"
+                ],
+                [
+                  "パーフェクト",
+                  "付かない",
+                  "+8〜10%"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "レッサー、名前に何も付かない物、グレーター。この 3 つは、マジックをレアにして、その MOD を 1 個付けるの。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "最大ライフ",
+              "rows": [
+                [
+                  "肉体の…",
+                  "アミュレット",
+                  "鎧"
+                ],
+                [
+                  "レッサー",
+                  "+20〜29",
+                  "+30〜39"
+                ],
+                [
+                  "(名前なし)",
+                  "+70〜84",
+                  "+85〜99"
+                ],
+                [
+                  "グレーター",
+                  "+85〜99",
+                  "+100〜119"
+                ],
+                [
+                  "パーフェクト",
+                  "付かない",
+                  "+8〜10%"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "強いほど、付く数値が大きいわ。",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "最大ライフ",
+              "rows": [
+                [
+                  "肉体の…",
+                  "アミュレット",
+                  "鎧"
+                ],
+                [
+                  "レッサー",
+                  "+20〜29",
+                  "+30〜39"
+                ],
+                [
+                  "(名前なし)",
+                  "+70〜84",
+                  "+85〜99"
+                ],
+                [
+                  "グレーター",
+                  "+85〜99",
+                  "+100〜119"
+                ],
+                [
+                  "パーフェクト",
+                  "付かない",
+                  "+8〜10%"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "王者のオーブの、付く MOD が決まってる版なのだ！",
+          "scene": {
+            "kind": "table",
+            "panel": {
+              "title": "最大ライフ",
+              "rows": [
+                [
+                  "肉体の…",
+                  "アミュレット",
+                  "鎧"
+                ],
+                [
+                  "レッサー",
+                  "+20〜29",
+                  "+30〜39"
+                ],
+                [
+                  "(名前なし)",
+                  "+70〜84",
+                  "+85〜99"
+                ],
+                [
+                  "グレーター",
+                  "+85〜99",
+                  "+100〜119"
+                ],
+                [
+                  "パーフェクト",
+                  "付かない",
+                  "+8〜10%"
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そういうこと。別のアミュレットで見せるわね。まず変成でマジックに。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "essence"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "混沌耐性 +27% のマジックになったわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "essence"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ここに、肉体のグレーターエッセンスを使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "essence"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "レアになって、最大ライフ +93 が付いたわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "essence"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "本当にライフが付いたのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "essence"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "パーフェクトや、ブリーチのような特別なエッセンスは違う使い方。こっちはレアに使うの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "レアに使うエッセンス",
+              "icons": [
+                "essence:perfect:Body_Armours_dex/PerfectEssence_MaximumLifeIncreasePercent",
+                "essence:perfect:Amulets/PerfectEssence_LocalMaximumQuality"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ランダムに MOD を 1 個消して、決まった MOD を 1 個足す。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "レアに使うエッセンス",
+              "icons": [
+                "essence:perfect:Body_Armours_dex/PerfectEssence_MaximumLifeIncreasePercent",
+                "essence:perfect:Amulets/PerfectEssence_LocalMaximumQuality"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "消えるのはどれなのだ？",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "レアに使うエッセンス",
+              "icons": [
+                "essence:perfect:Body_Armours_dex/PerfectEssence_MaximumLifeIncreasePercent",
+                "essence:perfect:Amulets/PerfectEssence_LocalMaximumQuality"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "選べないわ。良い MOD が消えることもあるの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "レアに使うエッセンス",
+              "icons": [
+                "essence:perfect:Body_Armours_dex/PerfectEssence_MaximumLifeIncreasePercent",
+                "essence:perfect:Amulets/PerfectEssence_LocalMaximumQuality"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "それと、合金という素材も同じ動きよ。レアの MOD を 1 個消して、決まった MOD を足すの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "合金",
+              "icons": [
+                "essence:perfect:Amulets/PerfectEssence_EnchantmentHeistArmour",
+                "essence:perfect:Amulets/PerfectEssence_RunicWardPercent",
+                "essence:perfect:Rings/PerfectEssence_IncreasedCastSpeed"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "気をつけたいのは、エッセンスや合金で付いた MOD。クラフト MOD といって、",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "合金",
+              "icons": [
+                "essence:perfect:Amulets/PerfectEssence_EnchantmentHeistArmour",
+                "essence:perfect:Amulets/PerfectEssence_RunicWardPercent",
+                "essence:perfect:Rings/PerfectEssence_IncreasedCastSpeed"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "1 つのアイテムに 1 つまでなの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "合金",
+              "icons": [
+                "essence:perfect:Amulets/PerfectEssence_EnchantmentHeistArmour",
+                "essence:perfect:Amulets/PerfectEssence_RunicWardPercent",
+                "essence:perfect:Rings/PerfectEssence_IncreasedCastSpeed"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "じゃあ、さっきライフを付けたアミュレットには、もう使えないのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "essence"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。だから最初のアミュレットに、ブリーチのエッセンスを使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ライフの自動回復が消えて、品質の最大値 +20% が付いたわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 5
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "sad",
+          "text": "自動回復、消えちゃったのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 5
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "消えるのはランダムだから、こういう事もあるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 5
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "品質の最大値は、最後のカタリストで効いてくるわよ。",
+          "scene": {
+            "kind": "stage",
+            "step": 5
+          }
+        }
+      ]
+    },
+    {
+      "name": "フラクチャー",
+      "target_seconds": 100,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "次はフラクチャーオーブ。名前からして、何か壊しそうなのだ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "icons": [
+                "fracture"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "壊さないわ。MOD を 1 個、固定するオーブよ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "icons": [
+                "fracture"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "使えるのは、MOD が 4 個以上あるレアだけ。",
+          "scene": {
+            "kind": "stage",
+            "step": 5
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "固定された MOD は、その後どんなクラフトをしても変わらないし、消えないの。",
+          "scene": {
+            "kind": "stage",
+            "step": 5
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "さっきのエッセンスみたいに、良い MOD が消える心配がなくなるのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 5
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。ただし、どの MOD が固定されるかはランダム。",
+          "scene": {
+            "kind": "stage",
+            "step": 5
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "それに、もうフラクチャーがあるアイテムには使えないわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 5
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "4 個あるから、使ってみるわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 5
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "全ての能力値 +19 が固定されたわ。色が変わったのが固定の印よ。",
+          "scene": {
+            "kind": "stage",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "ライフか耐性が良かったのだ……。",
+          "scene": {
+            "kind": "stage",
+            "step": 6,
+            "focus": "AllAttributes"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "選べないから、こういう事もあるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "本当に消えないか、別のアミュレットで試してみるわね。ここまでは同じ状態よ。",
+          "scene": {
+            "kind": "stage",
+            "step": 6,
+            "demo": "annul",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "消去のオーブを使うわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 6,
+            "demo": "annul"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "最大ライフが消えた。",
+          "scene": {
+            "kind": "stage",
+            "step": 7,
+            "demo": "annul"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "もう 1 回。",
+          "scene": {
+            "kind": "stage",
+            "step": 7,
+            "demo": "annul"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "全ての元素耐性が消えた。",
+          "scene": {
+            "kind": "stage",
+            "step": 8,
+            "demo": "annul"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "もう 1 回。",
+          "scene": {
+            "kind": "stage",
+            "step": 8,
+            "demo": "annul"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "品質の最大値が消えた。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "annul"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "全ての能力値だけ残ってるのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "annul"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "もう 1 回使ってみるわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 9,
+            "demo": "annul"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "使えないわ。消せる MOD が、もう無いの。",
+          "scene": {
+            "kind": "stage",
+            "step": 10,
+            "demo": "annul"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "本当に、何をしても消えないのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 10,
+            "demo": "annul"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "欲しい MOD が固定されたら便利よ。それを残したまま、他の MOD を作り直せるの。",
+          "scene": {
+            "kind": "stage",
+            "step": 10,
+            "demo": "annul"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "当たりが固定されるかどうかは、運次第なのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 10,
+            "demo": "annul"
+          }
+        }
+      ]
+    },
+    {
+      "name": "カタリスト",
+      "target_seconds": 90,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "最後はカタリスト。これも種類がたくさんあるのだ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "カタリスト",
+              "icons": [
+                "catalyst_life",
+                "catalyst_fire",
+                "catalyst_cold",
+                "catalyst_lightning",
+                "catalyst_defences",
+                "catalyst_attack"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "カタリストは、指輪とアミュレットに品質を足す素材よ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "カタリスト",
+              "icons": [
+                "catalyst_life",
+                "catalyst_fire",
+                "catalyst_cold",
+                "catalyst_lightning",
+                "catalyst_defences",
+                "catalyst_attack"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "品質が上がると、種類に合う MOD の数値が伸びるの。肉体のカタリストなら、ライフの MOD。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "カタリスト",
+              "icons": [
+                "catalyst_life",
+                "catalyst_fire",
+                "catalyst_cold",
+                "catalyst_lightning",
+                "catalyst_defences",
+                "catalyst_attack"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "合うかどうかは、MOD に付いているタグで決まるの。",
+          "scene": {
+            "kind": "stage",
+            "step": 6,
+            "tags": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "タグは MOD の分類の札。最大ライフには「ライフ」のタグが付いているわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 6,
+            "tags": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "タグは、ゲームのどこで見られるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 6,
+            "tags": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ゲームの中では見えないの。MOD を調べられるデータサイトで確認してね。",
+          "scene": {
+            "kind": "stage",
+            "step": 6,
+            "tags": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "合わない MOD はどうなるのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 6,
+            "tags": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "伸びないわ。それに別の種類のカタリストを使うと、品質はそっちに置き換わるの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "カタリスト",
+              "icons": [
+                "catalyst_life",
+                "catalyst_fire",
+                "catalyst_cold",
+                "catalyst_lightning",
+                "catalyst_defences",
+                "catalyst_attack"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "品質の上限は、ふつう 20%。20% なら、合う MOD の数値が 1.2 倍になるわ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "カタリスト",
+              "icons": [
+                "catalyst_life",
+                "catalyst_fire",
+                "catalyst_cold",
+                "catalyst_lightning",
+                "catalyst_defences",
+                "catalyst_attack"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "ここで、さっきのブリーチのエッセンスなのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "そう。品質の最大値 +20% で、上限が 40% まで上がっているの。",
+          "scene": {
+            "kind": "stage",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "肉体のカタリストを、上限まで使っていくわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "品質 40%。最大ライフが 145 から 203 になったわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 33
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "ライフが 1.4 倍なのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 33
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "耐性や能力値はライフの MOD じゃないから、そのままね。",
+          "scene": {
+            "kind": "stage",
+            "step": 33
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "これで、最初に見たアミュレットの完成なのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 33
+          }
+        }
+      ]
+    },
+    {
+      "name": "クイズとまとめ",
+      "target_seconds": 60,
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ここでクイズ。MOD が 3 個のレアに、フラクチャーオーブは使える？",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "使える",
+              "使えない"
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "3 秒で考えてね。",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "使える",
+              "使えない"
+            ],
+            "countdown": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "正解は「使えない」。フラクチャーは、MOD が 4 個以上のレアだけよ。",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "使える",
+              "使えない"
+            ],
+            "answer": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "覚えてたのだ！",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "使える",
+              "使えない"
+            ],
+            "answer": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "まとめると、上位のオーブは弱いティアが付かないのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 33
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "エッセンスと合金は、決まった MOD を付ける。でもクラフト MOD は 1 つまでなのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 33
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "フラクチャーは MOD を固定。カタリストは、タグの合う MOD を伸ばすのだ。",
+          "scene": {
+            "kind": "stage",
+            "step": 33
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "どれも、欲しい MOD を狙って付けたり、残したり、伸ばしたりするための素材よ。",
+          "scene": {
+            "kind": "stage",
+            "step": 33
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "このチャンネルでは、PoE2 の基礎を初心者向けにまとめていくわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 33
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "happy",
+          "text": "分からない所や知りたい事があったら、コメントで教えてね。チャンネル登録もよろしく！",
+          "scene": {
+            "kind": "stage",
+            "step": 33
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "よろしくなのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 33
+          }
+        }
+      ]
+    }
+  ]
+}

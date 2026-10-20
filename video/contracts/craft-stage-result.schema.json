@@ -1,0 +1,1285 @@
+{
+  "$defs": {
+    "CraftStagePlan": {
+      "additionalProperties": false,
+      "description": "手順 JSON (POE2Tube → ExileDesk).",
+      "properties": {
+        "schema": {
+          "default": "craft-stage-plan/1",
+          "title": "Schema",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "動画の題材名 (表示用)",
+          "title": "Title"
+        },
+        "base": {
+          "description": "HTC の英語ベース名。ExileDesk 側は itemBaseFor(data, base) で引く",
+          "title": "Base",
+          "type": "string"
+        },
+        "item_level": {
+          "default": 80,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Item Level",
+          "type": "integer"
+        },
+        "start_rarity": {
+          "default": "normal",
+          "enum": [
+            "normal",
+            "magic",
+            "rare",
+            "unique"
+          ],
+          "title": "Start Rarity",
+          "type": "string"
+        },
+        "start_paste": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "途中から始める時のゲーム内アイテムテキスト (Ctrl+C 貼り付け)。無ければ白",
+          "title": "Start Paste"
+        },
+        "seed": {
+          "description": "mulberry32 の起点。1 手ごとの seed は ExileDesk が seed+index で派生させる",
+          "minimum": 0,
+          "title": "Seed",
+          "type": "integer"
+        },
+        "start_unidentified": {
+          "default": false,
+          "description": "未鑑定から始める (鑑定の巻物の実演、マジック / レアの時)",
+          "title": "Start Unidentified",
+          "type": "boolean"
+        },
+        "start": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StartState"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "始めの状態 (手を見せずに持っているレア)。start_rarity より優先"
+        },
+        "tray": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "動画の棚に並べる物 (カレンシーキー / お告げ id の順)。無ければ手順から自動",
+          "title": "Tray"
+        },
+        "pob": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PobSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "PoB でスキルの DPS を手ごとに計算する前提 (ExileDesk ⑰)"
+        },
+        "steps": {
+          "items": {
+            "$ref": "#/$defs/PlanStep"
+          },
+          "minItems": 1,
+          "title": "Steps",
+          "type": "array"
+        }
+      },
+      "required": [
+        "base",
+        "seed",
+        "steps"
+      ],
+      "title": "CraftStagePlan",
+      "type": "object"
+    },
+    "Pick": {
+      "additionalProperties": false,
+      "description": "付ける MOD 1 つ。``mod`` は系統 (ColdResistance) か id (Rings/ColdResistance).",
+      "properties": {
+        "mod": {
+          "minLength": 1,
+          "title": "Mod",
+          "type": "string"
+        },
+        "tier": {
+          "anyOf": [
+            {
+              "pattern": "^T\\d+$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "例 T6。無ければ乱数",
+          "title": "Tier"
+        },
+        "values": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "数値。無ければ段の中の乱数",
+          "title": "Values"
+        }
+      },
+      "required": [
+        "mod"
+      ],
+      "title": "Pick",
+      "type": "object"
+    },
+    "PlanStep": {
+      "additionalProperties": false,
+      "description": "手順 1 つ。``times`` で同じカレンシーの連打を表す (Chaos ×5 など).",
+      "properties": {
+        "currency": {
+          "title": "Currency",
+          "type": "string"
+        },
+        "omen": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "お告げ id (price-keys.json の omens キー、例 OmenofDextralExaltation)",
+          "title": "Omen"
+        },
+        "times": {
+          "default": 1,
+          "maximum": 200,
+          "minimum": 1,
+          "title": "Times",
+          "type": "integer"
+        },
+        "outcome": {
+          "anyOf": [
+            {
+              "enum": [
+                "unique",
+                "destroyed"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "可能性のオーブの結果を決め打ちする (動画で見せたい方)。無ければ乱数",
+          "title": "Outcome"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "台本用の覚え書き (ExileDesk は無視してよい)",
+          "title": "Note"
+        },
+        "pick": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Pick"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/Pick"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "付く MOD の指名 (錬金などは配列、足りない分は乱数。⑱)",
+          "title": "Pick"
+        },
+        "remove": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "カオス: 消える MOD の指名 (系統か id)",
+          "title": "Remove"
+        }
+      },
+      "required": [
+        "currency"
+      ],
+      "title": "PlanStep",
+      "type": "object"
+    },
+    "PobBlock": {
+      "additionalProperties": true,
+      "description": "結果 JSON の pob。台本で前提を言う時は ``config_ja`` と ``character`` を使う.",
+      "properties": {
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "character": {
+          "$ref": "#/$defs/PobCharacter"
+        },
+        "config": {
+          "additionalProperties": true,
+          "title": "Config",
+          "type": "object"
+        },
+        "config_ja": {
+          "description": "例「普通の敵・アクト 3 (-20%) のペナルティ」",
+          "title": "Config Ja",
+          "type": "string"
+        },
+        "enemy": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PobEnemy"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "steps": {
+          "description": "手 0 (白) … 最後",
+          "items": {
+            "$ref": "#/$defs/PobStats"
+          },
+          "minItems": 1,
+          "title": "Steps",
+          "type": "array"
+        }
+      },
+      "required": [
+        "version",
+        "character",
+        "config",
+        "config_ja",
+        "steps"
+      ],
+      "title": "PobBlock",
+      "type": "object"
+    },
+    "PobCharacter": {
+      "properties": {
+        "class": {
+          "title": "Class",
+          "type": "string"
+        },
+        "level": {
+          "title": "Level",
+          "type": "integer"
+        },
+        "skill": {
+          "title": "Skill",
+          "type": "string"
+        },
+        "skill_ja": {
+          "title": "Skill Ja",
+          "type": "string"
+        },
+        "gem_level": {
+          "title": "Gem Level",
+          "type": "integer"
+        },
+        "supports": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supports",
+          "type": "array"
+        },
+        "skill_part": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Skill Part"
+        }
+      },
+      "required": [
+        "class",
+        "level",
+        "skill",
+        "skill_ja",
+        "gem_level"
+      ],
+      "title": "PobCharacter",
+      "type": "object"
+    },
+    "PobConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "resistancePenalty": {
+          "default": -20,
+          "description": "元素耐性のペナルティ (0 = アクト 1 … -60 = エンド)",
+          "maximum": 0,
+          "minimum": -60,
+          "title": "Resistancepenalty",
+          "type": "integer"
+        },
+        "enemyIsBoss": {
+          "default": "None",
+          "description": "普通の敵 / ボス",
+          "enum": [
+            "None",
+            "Boss",
+            "Pinnacle",
+            "Uber"
+          ],
+          "title": "Enemyisboss",
+          "type": "string"
+        },
+        "enemyLevel": {
+          "anyOf": [
+            {
+              "maximum": 85,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "無ければキャラのレベル",
+          "title": "Enemylevel"
+        },
+        "enemyArmour": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "敵のアーマー。無ければ PoB の表 (敵のレベルの目安)",
+          "title": "Enemyarmour"
+        }
+      },
+      "title": "PobConfig",
+      "type": "object"
+    },
+    "PobEnemy": {
+      "properties": {
+        "level": {
+          "title": "Level",
+          "type": "integer"
+        },
+        "life": {
+          "title": "Life",
+          "type": "number"
+        },
+        "hit": {
+          "title": "Hit",
+          "type": "number"
+        },
+        "ja": {
+          "title": "Ja",
+          "type": "string"
+        },
+        "armour": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "PoB が使った敵のアーマー (⑲)",
+          "title": "Armour"
+        }
+      },
+      "required": [
+        "level",
+        "life",
+        "hit",
+        "ja"
+      ],
+      "title": "PobEnemy",
+      "type": "object"
+    },
+    "PobSpec": {
+      "additionalProperties": false,
+      "description": "手順 JSON の pob。クラス・スキルは PoB の英語名 (Gems.lua の name).",
+      "properties": {
+        "class": {
+          "description": "例 Monk / Ranger",
+          "title": "Class",
+          "type": "string"
+        },
+        "level": {
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Level",
+          "type": "integer"
+        },
+        "skill": {
+          "description": "例 Ice Strike",
+          "title": "Skill",
+          "type": "string"
+        },
+        "supports": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supports",
+          "type": "array"
+        },
+        "gem_level": {
+          "anyOf": [
+            {
+              "maximum": 40,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "無ければ使える一番高い物",
+          "title": "Gem Level"
+        },
+        "skill_part": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "スキルの段 (番号か名前、例 Third Strike)。無ければ PoB の既定",
+          "title": "Skill Part"
+        },
+        "quests_act": {
+          "anyOf": [
+            {
+              "maximum": 10,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "何アクトまでのクエスト報酬を入れるか。無ければ全部",
+          "title": "Quests Act"
+        },
+        "config": {
+          "$ref": "#/$defs/PobConfig"
+        }
+      },
+      "required": [
+        "class",
+        "level",
+        "skill"
+      ],
+      "title": "PobSpec",
+      "type": "object"
+    },
+    "PobStats": {
+      "description": "1 手ぶんの PoB の出力 (手 0 = 白).",
+      "properties": {
+        "dps": {
+          "minimum": 0,
+          "title": "Dps",
+          "type": "number"
+        },
+        "hit": {
+          "description": "1 発のダメージ",
+          "minimum": 0,
+          "title": "Hit",
+          "type": "number"
+        },
+        "aps": {
+          "minimum": 0,
+          "title": "Aps",
+          "type": "number"
+        },
+        "crit_chance": {
+          "default": 0,
+          "title": "Crit Chance",
+          "type": "number"
+        },
+        "breakdown": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "description": "physical / fire / …",
+          "title": "Breakdown",
+          "type": "object"
+        },
+        "layers": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "武器の手だけ: base (素) / mods (MOD まで) / full (ルーン込み)",
+          "title": "Layers"
+        },
+        "armour": {
+          "default": 0,
+          "title": "Armour",
+          "type": "number"
+        },
+        "evasion": {
+          "default": 0,
+          "title": "Evasion",
+          "type": "number"
+        },
+        "es": {
+          "default": 0,
+          "title": "Es",
+          "type": "number"
+        },
+        "life": {
+          "default": 0,
+          "title": "Life",
+          "type": "number"
+        },
+        "resists": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object"
+          },
+          "title": "Resists",
+          "type": "object"
+        }
+      },
+      "required": [
+        "dps",
+        "hit",
+        "aps"
+      ],
+      "title": "PobStats",
+      "type": "object"
+    },
+    "StageChange": {
+      "properties": {
+        "added": {
+          "items": {
+            "$ref": "#/$defs/StageMod"
+          },
+          "title": "Added",
+          "type": "array"
+        },
+        "removed": {
+          "items": {
+            "$ref": "#/$defs/StageMod"
+          },
+          "title": "Removed",
+          "type": "array"
+        },
+        "rarity_from": {
+          "enum": [
+            "normal",
+            "magic",
+            "rare",
+            "unique"
+          ],
+          "title": "Rarity From",
+          "type": "string"
+        },
+        "rarity_to": {
+          "enum": [
+            "normal",
+            "magic",
+            "rare",
+            "unique"
+          ],
+          "title": "Rarity To",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rarity_from",
+        "rarity_to"
+      ],
+      "title": "StageChange",
+      "type": "object"
+    },
+    "StageCost": {
+      "properties": {
+        "each": {
+          "description": "カレンシー 1 個の相場 (price_unit 建て)",
+          "minimum": 0,
+          "title": "Each",
+          "type": "number"
+        },
+        "amount": {
+          "description": "この手で使った個数 (お告げ込みなら 2)",
+          "minimum": 0,
+          "title": "Amount",
+          "type": "integer"
+        },
+        "subtotal": {
+          "minimum": 0,
+          "title": "Subtotal",
+          "type": "number"
+        },
+        "cumulative": {
+          "description": "ここまでの累計",
+          "minimum": 0,
+          "title": "Cumulative",
+          "type": "number"
+        }
+      },
+      "required": [
+        "each",
+        "amount",
+        "subtotal",
+        "cumulative"
+      ],
+      "title": "StageCost",
+      "type": "object"
+    },
+    "StageItem": {
+      "description": "ある時点のアイテム全体.",
+      "properties": {
+        "name": {
+          "description": "表示名 (レアなら生成名、それ以外はベース名)",
+          "title": "Name",
+          "type": "string"
+        },
+        "base": {
+          "title": "Base",
+          "type": "string"
+        },
+        "base_ja": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Base Ja"
+        },
+        "item_level": {
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Item Level",
+          "type": "integer"
+        },
+        "rarity": {
+          "enum": [
+            "normal",
+            "magic",
+            "rare",
+            "unique"
+          ],
+          "title": "Rarity",
+          "type": "string"
+        },
+        "quality": {
+          "default": 0,
+          "description": "カタリストで 1.5 刻みの小数もある。ブリーチのエッセンスで上限 40% (㉔)",
+          "maximum": 50,
+          "minimum": 0,
+          "title": "Quality",
+          "type": "number"
+        },
+        "corrupted": {
+          "default": false,
+          "title": "Corrupted",
+          "type": "boolean"
+        },
+        "identified": {
+          "default": true,
+          "description": "False = 未鑑定 (MOD を隠す)。鑑定の巻物で True",
+          "title": "Identified",
+          "type": "boolean"
+        },
+        "sockets": {
+          "default": 0,
+          "description": "熟練工のオーブで増える",
+          "maximum": 6,
+          "minimum": 0,
+          "title": "Sockets",
+          "type": "integer"
+        },
+        "destroyed": {
+          "default": false,
+          "description": "可能性のオーブ等でアイテムが壊れた",
+          "title": "Destroyed",
+          "type": "boolean"
+        },
+        "unique": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UniqueRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "ユニークになった時の名前"
+        },
+        "gem_sockets": {
+          "anyOf": [
+            {
+              "maximum": 6,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "スキルジェムのサポート枠 (宝飾職人のオーブ)",
+          "title": "Gem Sockets"
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "description": "上の数値 [{key,label,value,up}] (up = 青、⑰)",
+          "title": "Properties"
+        },
+        "augments": {
+          "description": "はめたルーン (⑰)",
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Augments",
+          "type": "array"
+        },
+        "disposed": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "disenchant / salvage で手放した",
+          "title": "Disposed"
+        },
+        "requirements": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "integer"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "要求 {level, str, dex, int} (要求レベル = ドロップレベル、⑱)",
+          "title": "Requirements"
+        },
+        "prefixes": {
+          "items": {
+            "$ref": "#/$defs/StageMod"
+          },
+          "maxItems": 3,
+          "title": "Prefixes",
+          "type": "array"
+        },
+        "suffixes": {
+          "items": {
+            "$ref": "#/$defs/StageMod"
+          },
+          "maxItems": 4,
+          "title": "Suffixes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "base",
+        "item_level",
+        "rarity"
+      ],
+      "title": "StageItem",
+      "type": "object"
+    },
+    "StageMod": {
+      "description": "アイテムに付いている MOD 1 行 (数値まで確定した本物).",
+      "properties": {
+        "mod_id": {
+          "title": "Mod Id",
+          "type": "string"
+        },
+        "family": {
+          "title": "Family",
+          "type": "string"
+        },
+        "side": {
+          "enum": [
+            "prefix",
+            "suffix"
+          ],
+          "title": "Side",
+          "type": "string"
+        },
+        "tier_name": {
+          "description": "HTC の Tier.name (例 'T3')",
+          "title": "Tier Name",
+          "type": "string"
+        },
+        "mod_level": {
+          "description": "その段の要求アイテムレベル (Tier.ilvl)",
+          "minimum": 0,
+          "title": "Mod Level",
+          "type": "integer"
+        },
+        "text_ja": {
+          "description": "公式日本語 1 行、数値埋め込み済 (jaOfMod + fillHashes)",
+          "title": "Text Ja",
+          "type": "string"
+        },
+        "text_en": {
+          "title": "Text En",
+          "type": "string"
+        },
+        "values": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Values",
+          "type": "array"
+        },
+        "ranges": {
+          "description": "[[min,max], ...] 段の幅",
+          "items": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "title": "Ranges",
+          "type": "array"
+        },
+        "fractured": {
+          "default": false,
+          "title": "Fractured",
+          "type": "boolean"
+        },
+        "desecrated": {
+          "default": false,
+          "title": "Desecrated",
+          "type": "boolean"
+        },
+        "crafted": {
+          "default": false,
+          "title": "Crafted",
+          "type": "boolean"
+        },
+        "quality_boosted": {
+          "default": false,
+          "description": "カタリストの品質で数値が伸びた (text_ja / values は伸びた後、㉔)",
+          "title": "Quality Boosted",
+          "type": "boolean"
+        },
+        "raw_text_ja": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "品質で伸びる前の文 (㉔)",
+          "title": "Raw Text Ja"
+        }
+      },
+      "required": [
+        "mod_id",
+        "family",
+        "side",
+        "tier_name",
+        "mod_level",
+        "text_ja",
+        "text_en"
+      ],
+      "title": "StageMod",
+      "type": "object"
+    },
+    "StageStep": {
+      "description": "1 手の記録。``applied=False`` はその状態では使えなかった手 (理由は ``reason``).",
+      "properties": {
+        "index": {
+          "minimum": 1,
+          "title": "Index",
+          "type": "integer"
+        },
+        "currency": {
+          "title": "Currency",
+          "type": "string"
+        },
+        "currency_ja": {
+          "title": "Currency Ja",
+          "type": "string"
+        },
+        "omen": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Omen"
+        },
+        "omen_ja": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Omen Ja"
+        },
+        "seed": {
+          "minimum": 0,
+          "title": "Seed",
+          "type": "integer"
+        },
+        "applied": {
+          "default": true,
+          "title": "Applied",
+          "type": "boolean"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "before": {
+          "$ref": "#/$defs/StageItem"
+        },
+        "after": {
+          "$ref": "#/$defs/StageItem"
+        },
+        "changed": {
+          "$ref": "#/$defs/StageChange"
+        },
+        "cost": {
+          "$ref": "#/$defs/StageCost"
+        },
+        "pob": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PobStats"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "picked": {
+          "default": false,
+          "description": "指名した手 (⑱)",
+          "title": "Picked",
+          "type": "boolean"
+        },
+        "pick_chance": {
+          "description": "指名しなかったら付く確率 [{mod_id, tier_name, chance}]",
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Pick Chance",
+          "type": "array"
+        }
+      },
+      "required": [
+        "index",
+        "currency",
+        "currency_ja",
+        "seed",
+        "before",
+        "after",
+        "changed",
+        "cost"
+      ],
+      "title": "StageStep",
+      "type": "object"
+    },
+    "StartState": {
+      "additionalProperties": false,
+      "description": "手を見せずに最初から持っているアイテム (拾ったレア・作ったレア).",
+      "properties": {
+        "rarity": {
+          "anyOf": [
+            {
+              "enum": [
+                "normal",
+                "magic",
+                "rare"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "無ければ MOD 3 つ以上でレア",
+          "title": "Rarity"
+        },
+        "mods": {
+          "items": {
+            "$ref": "#/$defs/Pick"
+          },
+          "maxItems": 6,
+          "title": "Mods",
+          "type": "array"
+        },
+        "quality": {
+          "anyOf": [
+            {
+              "maximum": 30,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quality"
+        },
+        "sockets": {
+          "anyOf": [
+            {
+              "maximum": 6,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sockets"
+        }
+      },
+      "title": "StartState",
+      "type": "object"
+    },
+    "UniqueRef": {
+      "description": "可能性のオーブ等でなったユニークの名前.",
+      "properties": {
+        "en": {
+          "title": "En",
+          "type": "string"
+        },
+        "ja": {
+          "title": "Ja",
+          "type": "string"
+        }
+      },
+      "required": [
+        "en",
+        "ja"
+      ],
+      "title": "UniqueRef",
+      "type": "object"
+    }
+  },
+  "description": "結果 JSON (ExileDesk → POE2Tube)。ExileDesk が将来足すキーは無視する (extra=ignore).",
+  "properties": {
+    "schema": {
+      "title": "Schema",
+      "type": "string"
+    },
+    "generated_at": {
+      "format": "date-time",
+      "title": "Generated At",
+      "type": "string"
+    },
+    "exiledesk_version": {
+      "title": "Exiledesk Version",
+      "type": "string"
+    },
+    "patch": {
+      "description": "HTC データのパッチ (例 '0.5.0')",
+      "title": "Patch",
+      "type": "string"
+    },
+    "league": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "League"
+    },
+    "price_unit": {
+      "enum": [
+        "exalted",
+        "divine",
+        "chaos"
+      ],
+      "title": "Price Unit",
+      "type": "string"
+    },
+    "plan": {
+      "$ref": "#/$defs/CraftStagePlan"
+    },
+    "steps": {
+      "items": {
+        "$ref": "#/$defs/StageStep"
+      },
+      "minItems": 1,
+      "title": "Steps",
+      "type": "array"
+    },
+    "final": {
+      "$ref": "#/$defs/StageItem"
+    },
+    "total_cost": {
+      "minimum": 0,
+      "title": "Total Cost",
+      "type": "number"
+    },
+    "pob": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PobBlock"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "手順に pob があった時 (⑰)"
+    }
+  },
+  "required": [
+    "schema",
+    "generated_at",
+    "exiledesk_version",
+    "patch",
+    "price_unit",
+    "plan",
+    "steps",
+    "final",
+    "total_cost"
+  ],
+  "title": "CraftStageResult",
+  "type": "object",
+  "$id": "https://github.com/kyohei0612/POE2Tube/contracts/craft-stage-result.schema.json"
+}

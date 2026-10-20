@@ -1,0 +1,1411 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "【PoE2 初心者】1.0 に向けて押さえる「クラフトの基礎」: アクトで拾ったオーブでサファイアの指輪を黄色くする",
+  "target_seconds": 480,
+  "result_file": "data/results/act_craft_8min.json",
+  "final_step": 6,
+  "sections": [
+    {
+      "name": "導入",
+      "target_seconds": 30,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "アクトを進めてるのに、指輪は拾ったままなのだ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "拾った白い指輪は、オーブで自分で強くできるわ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "例えばこれ。アクト中に拾えるオーブだけで作った指輪よ。",
+          "scene": {
+            "kind": "item",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "MOD がいっぱい付いてるのだ。これは強いのだ？",
+          "scene": {
+            "kind": "item",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "良いのと微妙なのが混ざってるわ。そこを見分けるのが大事なの。",
+          "scene": {
+            "kind": "item",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "見分けるって、どうやるのだ？",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "MOD のティアを見て、今の装備と替えるか決めるのよ。",
+          "scene": {
+            "kind": "item",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "作り方と、付いた後の見方が分かるのだ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "1.0 までに、この土台を押さえておくといいわ。",
+          "speech": "いってんゼロまでに、この土台を押さえておくといいわ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "まずはアイテムの色と枠から見ていくわね。",
+          "scene": {
+            "kind": "talk"
+          }
+        }
+      ]
+    },
+    {
+      "name": "仕組み: 色と枠 (白・青・黄とプレフィックス / サフィックス)",
+      "target_seconds": 70,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "拾ったままの指輪は白のノーマル。MOD は 0 個よ。",
+          "scene": {
+            "kind": "item",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "MOD って何なのだ？",
+          "scene": {
+            "kind": "item",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "アイテムに付く、追加の効果のことよ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "白は MOD が無いから、拾った時の性能だけなの。",
+          "scene": {
+            "kind": "item",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "青のマジックになると、MOD が最大 2 個入るわ。",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "プレフィックスが 1 つと、サフィックスが 1 つね。",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "プレフィックス？サフィックス？難しい言葉なのだ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "MOD が入る枠の名前よ。枠の種類が 2 つあるの。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "最大マナやダメージ系は、プレフィックスに多いわ。",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "耐性や能力値は、サフィックスに多いわね。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "黄のレアだと、何個入るのだ？",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "最大 6 個よ。プレフィックス 3 つと、サフィックス 3 つね。",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "白が 0 個、青が 2 個、黄が 6 個なのだ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。色が、入る枠の数を表しているの。",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "次はティア。MOD の強さの段階よ。",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "ティアは、数字が大きいほど強いのだ？",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "逆よ。T1 が一番強くて、数字が大きいほど弱いの。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "同じ MOD でも、ティアで数字の大きさが変わるわ。",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "じゃあ、装備はどうやって選べばいいのだ？",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "今の装備と同じ MOD があれば、ティアを比べるの。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "新しい方の数字が小さければ、入れ替えを考えていいわ。",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "同じ MOD が無い時はどうするのだ？",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "アクト中は、耐性が付いている方を優先するといいわ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "最後にアイテムレベル。拾った場所の強さで決まる数字よ。",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "それが高いと、何がいいのだ？",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "強いティアほど、出るのに高いアイテムレベルが要るの。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "今のデータだと、指輪の火耐性の T1 はアイテムレベル 82 からよ。",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "アクト中の指輪だと、T1 は出ないのだ？",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。アイテムレベル 36 なら、火耐性は T5 までね。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "だからアクト中は、出うる一番上に近ければ当たりなの。",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "数字だけ見て、ハズレと決めなくていいのだ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ええ。ティアは、アイテムレベルと一緒に見てね。",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "もっと詳しく知りたい時は、どうするのだ？",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "poe2db というサイトに、ティアとアイテムレベルが全部載ってるわ。",
+          "speech": "ポエツーディービーというサイトに、ティアとアイテムレベルが全部載ってるわ。",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "happy",
+          "text": "眺めるだけでも、けっこう面白いわよ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "見方は分かったのだ。何の指輪で試すのだ？",
+          "scene": {
+            "kind": "talk"
+          }
+        }
+      ]
+    },
+    {
+      "name": "仕組み: 素材選び (サファイアの指輪 ilvl 36)",
+      "target_seconds": 50,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "今回使うのは、この白いサファイアの指輪よ。",
+          "scene": {
+            "kind": "item",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "冷気耐性が最初から付いてる指輪なのだ。",
+          "scene": {
+            "kind": "item",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。指輪そのものが持っている効果ね。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "通常ドロップで、アクトの序盤から落ちるわ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "拾いやすいなら、練習台にぴったりなのだ。",
+          "scene": {
+            "kind": "item",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ええ。何本も落ちるから、失敗しても困らないの。",
+          "scene": {
+            "kind": "item",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "ぼく、拾った指輪は全部売ってたのだ…。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "白のまま鞄に置いてある一本で十分よ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "指輪は空いた枠を、耐性やマナで埋めやすいわ。",
+          "scene": {
+            "kind": "item",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "売らずに一本残しておくのだ。",
+          "scene": {
+            "kind": "item",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "この指輪のアイテムレベルは 36 よ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "さっきの話だと、どのティアまで出るのだ？",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "火耐性なら T5、最大ライフなら T4 までね。",
+          "scene": {
+            "kind": "item",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "アクト中なら、それで十分な当たりなのだ。",
+          "scene": {
+            "kind": "item",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ええ。この白い指輪で試すわね。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "使うオーブは、4 種類だけよ。",
+          "scene": {
+            "kind": "talk"
+          }
+        }
+      ]
+    },
+    {
+      "name": "仕組み: 使う 4 つのオーブ (変成 → 増強 → 王者 → 高貴)",
+      "target_seconds": 95,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "1 つ目は変成のオーブ。白に使うオーブね。",
+          "scene": {
+            "kind": "stack",
+            "step": 1,
+            "show_steps": [
+              1
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "白を青に変えて、MOD を 1 つ付けてくれるわ。",
+          "scene": {
+            "kind": "stack",
+            "step": 1,
+            "show_steps": [
+              1
+            ]
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "0 個だった枠に、1 個入るのだ！",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "青は、もう 1 個入るのだ？",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そこで 2 つ目、増強のオーブよ。",
+          "scene": {
+            "kind": "stack",
+            "step": 2,
+            "show_steps": [
+              1,
+              2
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "青に MOD を 1 つ足して、2 個にするの。",
+          "scene": {
+            "kind": "stack",
+            "step": 2,
+            "show_steps": [
+              1,
+              2
+            ]
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "満杯だと、もう増やせないのだ？",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そこで 3 つ目、王者のオーブよ。",
+          "scene": {
+            "kind": "stack",
+            "step": 3,
+            "show_steps": [
+              1,
+              2,
+              3
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "青を黄に変えて、MOD を 1 つ足すわ。",
+          "scene": {
+            "kind": "stack",
+            "step": 3,
+            "show_steps": [
+              1,
+              2,
+              3
+            ]
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "色が変わると、枠も増えるのだ！",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "4 つ目の高貴なオーブ。黄に MOD を 1 つ足すわ。",
+          "scene": {
+            "kind": "stack",
+            "step": 4,
+            "show_steps": [
+              1,
+              2,
+              3,
+              4
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "これを 3 回。6 個埋まったら、もう使えないの。",
+          "scene": {
+            "kind": "stack",
+            "step": 4,
+            "show_steps": [
+              1,
+              2,
+              3,
+              4
+            ]
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "順番を間違えたらどうなるのだ？",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "使えないわ。変成のオーブは白だけよ。",
+          "scene": {
+            "kind": "stack",
+            "step": 1,
+            "show_steps": [
+              1
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "王者のオーブは青だけ。色が合わないと使えないの。",
+          "scene": {
+            "kind": "stack",
+            "step": 3,
+            "show_steps": [
+              1,
+              2,
+              3
+            ]
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "色を見て、順番に打てばいいのだ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "でも拾った指輪全部にやったら、オーブが足りないのだ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。だから青の時点で、一度 MOD を見るの。",
+          "scene": {
+            "kind": "stack",
+            "step": 2,
+            "show_steps": [
+              1,
+              2
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "耐性やライフで、上の方のティアなら続ける価値ありよ。",
+          "scene": {
+            "kind": "stack",
+            "step": 2,
+            "show_steps": [
+              1,
+              2
+            ]
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "他の MOD は、良いか悪いか分からないのだ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "欲しい MOD はビルドで変わるの。参考にしてるビルドに合わせて決めてね。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "良い MOD があれば、王者と高貴で最後まで強くするの。",
+          "scene": {
+            "kind": "stack",
+            "step": 4,
+            "show_steps": [
+              1,
+              2,
+              3,
+              4
+            ]
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "微妙だったら、どうするのだ？",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そこでやめて、次の指輪に回せばいいわ。",
+          "scene": {
+            "kind": "stack",
+            "step": 2,
+            "show_steps": [
+              1,
+              2
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "拾ったレアも同じ。今の装備より弱ければ、強化しなくていいの。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "オーブは、良い物にだけ使うのだ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "並びは変成のオーブ、増強のオーブ、王者のオーブ、高貴なオーブを 3 回。",
+          "scene": {
+            "kind": "stack",
+            "step": 6,
+            "show_steps": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "happy",
+          "text": "言葉だけだと分からないから、実際に打つわね。",
+          "scene": {
+            "kind": "talk"
+          }
+        }
+      ]
+    },
+    {
+      "name": "実践 1: 白 → 青 → 黄 (変成・増強・王者)",
+      "target_seconds": 60,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "まずは変成のオーブを持って、この白い指輪に使うわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "白が青になったのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "プレフィックスに 最大マナ +27 が入ったわ。",
+          "speech": "プレフィックスに、最大マナ プラス27 が入ったわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ティアは T10。正直、強くはないけれど枠の確認には十分よ。",
+          "speech": "ティアは ティア10。正直、強くはないけれど枠の確認には十分よ。",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "せっかく付いたのに、ちょっと残念なのだ…。",
+          "emotion": "sad",
+          "scene": {
+            "kind": "item",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "次は増強のオーブを、この青い指輪に使うわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "サフィックスに、倒した敵1体ごとに8のマナを獲得する が付いたわ。",
+          "speech": "サフィックスに、倒した敵いったいごとに8のマナを獲得する、が付いたわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "空いてたサフィックスが埋まったのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ティアは T4。これで MOD が 2 個、青は満杯ね。",
+          "speech": "ティアは ティア4。これで モッドが 2 個、青は満杯ね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "青の時点で MOD を見るのだ。これは続けるのだ？",
+          "scene": {
+            "kind": "item",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "マナ系が 2 つで、決め手は無いわね。本当ならやめてもいい所よ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "今回は流れを見せるために、続けるわね。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ここで王者のオーブを使うわね。よく見ていて。",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "指輪が黄色になったのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "サフィックスに、毎秒12.8のライフを自動回復する が付いたわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "proud",
+          "text": "ティアは T2。アイテムレベル 36 で出うる一番上よ。",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "出うる一番上なら、大当たりなのだ！",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "良い MOD が付いたから、残り 3 枠を高貴なオーブで埋めにいくわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        }
+      ]
+    },
+    {
+      "name": "実践 2: 高貴なオーブ 3 回で 6 枠を埋める",
+      "target_seconds": 60,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "残りは 3 枠ね。高貴なオーブを持って、この黄色い指輪に使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "サフィックスに 1 個増えたのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 4,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "troubled",
+          "text": "知性 +9 よ。ティアは T7。ここだと T5 まで出るから、低めね。",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "知性は、要らない MOD なのだ？",
+          "scene": {
+            "kind": "item",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "知性が要るビルドなら使えるわ。ビルド次第ね。",
+          "scene": {
+            "kind": "item",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "欲しい MOD は選べないのだ？",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "選べないわ。何が来てもいいと思える装備に使うのがコツよ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "要らない MOD が付くなら、打たない方がいいのだ？",
+          "scene": {
+            "kind": "item",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。無理に 6 個にしなくていいわ。",
+          "scene": {
+            "kind": "item",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "高貴なオーブをためらうなら、今の数で使っても大丈夫よ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "今回は流れを見せるために、最後まで打つわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "高貴なオーブを、もう一度使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "今度はプレフィックスに付いたのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 5,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "火ダメージが5%増加する、T6。一番下のティアね。",
+          "scene": {
+            "kind": "item",
+            "step": 5
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "最後の 1 枠も、高貴なオーブで埋めるわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 5
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "プレフィックスに 混沌ダメージが8%増加する、T5 が付いたわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 6,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "プレフィックスもサフィックスも、3 つずつ埋まったのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "これで MOD が 6 個。ここが完成よ。",
+          "scene": {
+            "kind": "item",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "これは、今の指輪と替えるべきなのだ？",
+          "scene": {
+            "kind": "item",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "今の指輪と比べて、ビルドに要る MOD が多ければ替えどきよ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "ぼくのビルドだと、知性 +9 は要らないのだ。消せないのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 6
+          }
+        }
+      ]
+    },
+    {
+      "name": "実験: カオスオーブを打つとどうなるか",
+      "target_seconds": 30,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "完成した後だけれど、実験として一手だけ打ってみるわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "使うのはカオスオーブよ。MOD を 1 つランダムに消して、1 つ足すわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "消して足す、だから 6 個のままなのだ？",
+          "scene": {
+            "kind": "item",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そう。ただ、カオスオーブは価値が高いオーブなの。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "消去のオーブや神のオーブも同じ。アクト中は使わず取っておくのがおすすめよ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "じゃあ、なんで今打つのだ？",
+          "scene": {
+            "kind": "item",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "仕組みを見せるための実験よ。この指輪にカオスオーブを使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "サフィックスが入れ替わったのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 7
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "知性 +9 が消えて、雷耐性 +7% が付いたわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 7,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ティアは T8。一番下だけれど、アクト中は耐性があるだけ助かるわ。",
+          "scene": {
+            "kind": "item",
+            "step": 7
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "要らなかった MOD が、耐性に変わったのだ！",
+          "scene": {
+            "kind": "item",
+            "step": 7
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "今回は運が良かっただけ。気に入った MOD が消える事もあるわ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "消す MOD は選べないから、狙って打つ物ではないの。",
+          "scene": {
+            "kind": "item",
+            "step": 7
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "アクト中は、ここまで見た 4 種類のオーブで十分よ。",
+          "scene": {
+            "kind": "talk"
+          }
+        }
+      ]
+    },
+    {
+      "name": "まとめ",
+      "target_seconds": 45,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "text": "おさらいなのだ。1 つ目、色で入る MOD の数が決まるのだ。",
+          "scene": {
+            "kind": "item",
+            "step": 6
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "白は 0 個、青は 2 個、黄は 6 個。順番は変成、増強、王者、高貴ね。",
+          "scene": {
+            "kind": "stack",
+            "step": 6,
+            "show_steps": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "2 つ目、ティアはアイテムレベルと一緒に見るのだ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "出うる一番上に近ければ、アクト中は当たりよ。",
+          "scene": {
+            "kind": "item",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "3 つ目、青の時点でビルドに要る MOD か見て、続けるか決めるのだ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "微妙ならやめていいし、無理に 6 個にしなくていいわ。",
+          "scene": {
+            "kind": "stack",
+            "step": 2,
+            "show_steps": [
+              1,
+              2
+            ]
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "オーブは、良い物にだけ使うのだ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "アクト中に拾った指輪と、変成から高貴までのオーブで試してみて。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "ぼくも、売らずに残した指輪で試すのだ！",
+          "scene": {
+            "kind": "item",
+            "step": 7
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "1.0 が来ても、この見方を知っていれば困らないわ。",
+          "speech": "いってんゼロが来ても、この見方を知っていれば困らないわ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "proud",
+          "text": "これが、拾った白い指輪からここまで来た形よ。",
+          "scene": {
+            "kind": "item",
+            "step": 7
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "このチャンネルでは、1.0 に向けて基礎をまとめていくのだ。",
+          "speech": "このチャンネルでは、いってんゼロに向けて基礎をまとめていくのだ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "アクト中から始められる事を、一つずつ解説していくわ。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "チャンネル登録しておくと、見逃さないのだ！",
+          "scene": {
+            "kind": "item",
+            "step": 7
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "分からなかった所や知りたい事は、コメントで教えてね。",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "教えてもらった事は、ぼくも一緒に勉強するのだ！",
+          "scene": {
+            "kind": "talk"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,2035 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-09-27T14:44:32.096Z",
+  "exiledesk_version": "0.1.308",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "クラフト入門: 変成 → 増強 → 王者 → 高貴 ×3 (完成) → 消去 → カオスの実験",
+    "base": "Mnemonic Ring",
+    "item_level": 80,
+    "start_rarity": "normal",
+    "start_paste": null,
+    "seed": 20260929,
+    "steps": [
+      {
+        "currency": "transmute",
+        "omen": null,
+        "times": 1,
+        "note": "白→青、MOD 1つ"
+      },
+      {
+        "currency": "augment",
+        "omen": null,
+        "times": 1,
+        "note": "青のまま MOD 2つ目"
+      },
+      {
+        "currency": "regal",
+        "omen": null,
+        "times": 1,
+        "note": "青→黄、3つ目"
+      },
+      {
+        "currency": "exalt",
+        "omen": null,
+        "times": 1,
+        "note": "4つ目"
+      },
+      {
+        "currency": "exalt",
+        "omen": null,
+        "times": 1,
+        "note": "5つ目"
+      },
+      {
+        "currency": "exalt",
+        "omen": null,
+        "times": 1,
+        "note": "6つ目 = 完成 (枠が全部埋まる)"
+      },
+      {
+        "currency": "annul",
+        "omen": null,
+        "times": 1,
+        "note": "実験1: 消去のオーブ。MODを1つランダムに消す (要らないMODが付いた時の対処)"
+      },
+      {
+        "currency": "chaos",
+        "omen": null,
+        "times": 1,
+        "note": "実験2: カオスオーブ。レアのMODを全部振り直す (最後の手段)"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "transmute",
+      "currency_ja": "変成のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20260930,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "normal",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "after": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "雷耐性 +40%",
+            "text_en": "+40% to Lightning Resistance",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of the Lightning"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "雷耐性 +40%",
+            "text_en": "+40% to Lightning Resistance",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of the Lightning"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "normal",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 2,
+      "currency": "augment",
+      "currency_ja": "増強のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20260931,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "雷耐性 +40%",
+            "text_en": "+40% to Lightning Resistance",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of the Lightning"
+          }
+        ]
+      },
+      "after": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 8,
+            "text_ja": "2から5の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 5 Physical Damage to Attacks",
+            "values": [
+              2,
+              5
+            ],
+            "ranges": [
+              [
+                2,
+                3
+              ],
+              [
+                4,
+                6
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Burnished"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "雷耐性 +40%",
+            "text_en": "+40% to Lightning Resistance",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of the Lightning"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 8,
+            "text_ja": "2から5の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 5 Physical Damage to Attacks",
+            "values": [
+              2,
+              5
+            ],
+            "ranges": [
+              [
+                2,
+                3
+              ],
+              [
+                4,
+                6
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Burnished"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 3,
+      "currency": "regal",
+      "currency_ja": "王者のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20260932,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 8,
+            "text_ja": "2から5の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 5 Physical Damage to Attacks",
+            "values": [
+              2,
+              5
+            ],
+            "ranges": [
+              [
+                2,
+                3
+              ],
+              [
+                4,
+                6
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Burnished"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "雷耐性 +40%",
+            "text_en": "+40% to Lightning Resistance",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of the Lightning"
+          }
+        ]
+      },
+      "after": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 8,
+            "text_ja": "2から5の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 5 Physical Damage to Attacks",
+            "values": [
+              2,
+              5
+            ],
+            "ranges": [
+              [
+                2,
+                3
+              ],
+              [
+                4,
+                6
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Burnished"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "雷耐性 +40%",
+            "text_en": "+40% to Lightning Resistance",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of the Lightning"
+          },
+          {
+            "mod_id": "Rings/LifeGainedFromEnemyDeath",
+            "family": "LifeGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 33,
+            "text_ja": "倒した敵1体ごとに28のライフを獲得する",
+            "text_en": "Gain 28 Life per enemy killed",
+            "values": [
+              28
+            ],
+            "ranges": [
+              [
+                19,
+                28
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Conquest"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/LifeGainedFromEnemyDeath",
+            "family": "LifeGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 33,
+            "text_ja": "倒した敵1体ごとに28のライフを獲得する",
+            "text_en": "Gain 28 Life per enemy killed",
+            "values": [
+              28
+            ],
+            "ranges": [
+              [
+                19,
+                28
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Conquest"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 4,
+      "currency": "exalt",
+      "currency_ja": "高貴なオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20260933,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 8,
+            "text_ja": "2から5の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 5 Physical Damage to Attacks",
+            "values": [
+              2,
+              5
+            ],
+            "ranges": [
+              [
+                2,
+                3
+              ],
+              [
+                4,
+                6
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Burnished"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "雷耐性 +40%",
+            "text_en": "+40% to Lightning Resistance",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of the Lightning"
+          },
+          {
+            "mod_id": "Rings/LifeGainedFromEnemyDeath",
+            "family": "LifeGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 33,
+            "text_ja": "倒した敵1体ごとに28のライフを獲得する",
+            "text_en": "Gain 28 Life per enemy killed",
+            "values": [
+              28
+            ],
+            "ranges": [
+              [
+                19,
+                28
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Conquest"
+          }
+        ]
+      },
+      "after": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 8,
+            "text_ja": "2から5の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 5 Physical Damage to Attacks",
+            "values": [
+              2,
+              5
+            ],
+            "ranges": [
+              [
+                2,
+                3
+              ],
+              [
+                4,
+                6
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Burnished"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "雷耐性 +40%",
+            "text_en": "+40% to Lightning Resistance",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of the Lightning"
+          },
+          {
+            "mod_id": "Rings/LifeGainedFromEnemyDeath",
+            "family": "LifeGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 33,
+            "text_ja": "倒した敵1体ごとに28のライフを獲得する",
+            "text_en": "Gain 28 Life per enemy killed",
+            "values": [
+              28
+            ],
+            "ranges": [
+              [
+                19,
+                28
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Conquest"
+          },
+          {
+            "mod_id": "Rings/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "火耐性 +37%",
+            "text_en": "+37% to Fire Resistance",
+            "values": [
+              37
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of Magma"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "火耐性 +37%",
+            "text_en": "+37% to Fire Resistance",
+            "values": [
+              37
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of Magma"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 1.012,
+        "amount": 1,
+        "subtotal": 1.012,
+        "cumulative": 1.012
+      }
+    },
+    {
+      "index": 5,
+      "currency": "exalt",
+      "currency_ja": "高貴なオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20260934,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 8,
+            "text_ja": "2から5の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 5 Physical Damage to Attacks",
+            "values": [
+              2,
+              5
+            ],
+            "ranges": [
+              [
+                2,
+                3
+              ],
+              [
+                4,
+                6
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Burnished"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "雷耐性 +40%",
+            "text_en": "+40% to Lightning Resistance",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of the Lightning"
+          },
+          {
+            "mod_id": "Rings/LifeGainedFromEnemyDeath",
+            "family": "LifeGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 33,
+            "text_ja": "倒した敵1体ごとに28のライフを獲得する",
+            "text_en": "Gain 28 Life per enemy killed",
+            "values": [
+              28
+            ],
+            "ranges": [
+              [
+                19,
+                28
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Conquest"
+          },
+          {
+            "mod_id": "Rings/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "火耐性 +37%",
+            "text_en": "+37% to Fire Resistance",
+            "values": [
+              37
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of Magma"
+          }
+        ]
+      },
+      "after": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 8,
+            "text_ja": "2から5の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 5 Physical Damage to Attacks",
+            "values": [
+              2,
+              5
+            ],
+            "ranges": [
+              [
+                2,
+                3
+              ],
+              [
+                4,
+                6
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Burnished"
+          },
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T11",
+            "mod_level": 6,
+            "text_ja": "最大マナ +23",
+            "text_en": "+23 to maximum Mana",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                15,
+                24
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Cobalt"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "雷耐性 +40%",
+            "text_en": "+40% to Lightning Resistance",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of the Lightning"
+          },
+          {
+            "mod_id": "Rings/LifeGainedFromEnemyDeath",
+            "family": "LifeGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 33,
+            "text_ja": "倒した敵1体ごとに28のライフを獲得する",
+            "text_en": "Gain 28 Life per enemy killed",
+            "values": [
+              28
+            ],
+            "ranges": [
+              [
+                19,
+                28
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Conquest"
+          },
+          {
+            "mod_id": "Rings/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "火耐性 +37%",
+            "text_en": "+37% to Fire Resistance",
+            "values": [
+              37
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of Magma"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T11",
+            "mod_level": 6,
+            "text_ja": "最大マナ +23",
+            "text_en": "+23 to maximum Mana",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                15,
+                24
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Cobalt"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 1.012,
+        "amount": 1,
+        "subtotal": 1.012,
+        "cumulative": 2.024
+      }
+    },
+    {
+      "index": 6,
+      "currency": "exalt",
+      "currency_ja": "高貴なオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20260935,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 8,
+            "text_ja": "2から5の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 5 Physical Damage to Attacks",
+            "values": [
+              2,
+              5
+            ],
+            "ranges": [
+              [
+                2,
+                3
+              ],
+              [
+                4,
+                6
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Burnished"
+          },
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T11",
+            "mod_level": 6,
+            "text_ja": "最大マナ +23",
+            "text_en": "+23 to maximum Mana",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                15,
+                24
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Cobalt"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "雷耐性 +40%",
+            "text_en": "+40% to Lightning Resistance",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of the Lightning"
+          },
+          {
+            "mod_id": "Rings/LifeGainedFromEnemyDeath",
+            "family": "LifeGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 33,
+            "text_ja": "倒した敵1体ごとに28のライフを獲得する",
+            "text_en": "Gain 28 Life per enemy killed",
+            "values": [
+              28
+            ],
+            "ranges": [
+              [
+                19,
+                28
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Conquest"
+          },
+          {
+            "mod_id": "Rings/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "火耐性 +37%",
+            "text_en": "+37% to Fire Resistance",
+            "values": [
+              37
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of Magma"
+          }
+        ]
+      },
+      "after": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 8,
+            "text_ja": "2から5の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 5 Physical Damage to Attacks",
+            "values": [
+              2,
+              5
+            ],
+            "ranges": [
+              [
+                2,
+                3
+              ],
+              [
+                4,
+                6
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Burnished"
+          },
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T11",
+            "mod_level": 6,
+            "text_ja": "最大マナ +23",
+            "text_en": "+23 to maximum Mana",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                15,
+                24
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Cobalt"
+          },
+          {
+            "mod_id": "Rings/EvasionRating",
+            "family": "IncreasedEvasionRating",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 33,
+            "text_ja": "回避力 +98",
+            "text_en": "+98 to Evasion Rating",
+            "values": [
+              98
+            ],
+            "ranges": [
+              [
+                80,
+                107
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Blurred"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "雷耐性 +40%",
+            "text_en": "+40% to Lightning Resistance",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of the Lightning"
+          },
+          {
+            "mod_id": "Rings/LifeGainedFromEnemyDeath",
+            "family": "LifeGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 33,
+            "text_ja": "倒した敵1体ごとに28のライフを獲得する",
+            "text_en": "Gain 28 Life per enemy killed",
+            "values": [
+              28
+            ],
+            "ranges": [
+              [
+                19,
+                28
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Conquest"
+          },
+          {
+            "mod_id": "Rings/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "火耐性 +37%",
+            "text_en": "+37% to Fire Resistance",
+            "values": [
+              37
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of Magma"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/EvasionRating",
+            "family": "IncreasedEvasionRating",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 33,
+            "text_ja": "回避力 +98",
+            "text_en": "+98 to Evasion Rating",
+            "values": [
+              98
+            ],
+            "ranges": [
+              [
+                80,
+                107
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Blurred"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 1.012,
+        "amount": 1,
+        "subtotal": 1.012,
+        "cumulative": 3.036
+      }
+    },
+    {
+      "index": 7,
+      "currency": "annul",
+      "currency_ja": "消去のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20260936,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 8,
+            "text_ja": "2から5の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 5 Physical Damage to Attacks",
+            "values": [
+              2,
+              5
+            ],
+            "ranges": [
+              [
+                2,
+                3
+              ],
+              [
+                4,
+                6
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Burnished"
+          },
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T11",
+            "mod_level": 6,
+            "text_ja": "最大マナ +23",
+            "text_en": "+23 to maximum Mana",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                15,
+                24
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Cobalt"
+          },
+          {
+            "mod_id": "Rings/EvasionRating",
+            "family": "IncreasedEvasionRating",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 33,
+            "text_ja": "回避力 +98",
+            "text_en": "+98 to Evasion Rating",
+            "values": [
+              98
+            ],
+            "ranges": [
+              [
+                80,
+                107
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Blurred"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "雷耐性 +40%",
+            "text_en": "+40% to Lightning Resistance",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of the Lightning"
+          },
+          {
+            "mod_id": "Rings/LifeGainedFromEnemyDeath",
+            "family": "LifeGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 33,
+            "text_ja": "倒した敵1体ごとに28のライフを獲得する",
+            "text_en": "Gain 28 Life per enemy killed",
+            "values": [
+              28
+            ],
+            "ranges": [
+              [
+                19,
+                28
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Conquest"
+          },
+          {
+            "mod_id": "Rings/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "火耐性 +37%",
+            "text_en": "+37% to Fire Resistance",
+            "values": [
+              37
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of Magma"
+          }
+        ]
+      },
+      "after": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 8,
+            "text_ja": "2から5の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 5 Physical Damage to Attacks",
+            "values": [
+              2,
+              5
+            ],
+            "ranges": [
+              [
+                2,
+                3
+              ],
+              [
+                4,
+                6
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Burnished"
+          },
+          {
+            "mod_id": "Rings/EvasionRating",
+            "family": "IncreasedEvasionRating",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 33,
+            "text_ja": "回避力 +98",
+            "text_en": "+98 to Evasion Rating",
+            "values": [
+              98
+            ],
+            "ranges": [
+              [
+                80,
+                107
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Blurred"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "雷耐性 +40%",
+            "text_en": "+40% to Lightning Resistance",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of the Lightning"
+          },
+          {
+            "mod_id": "Rings/LifeGainedFromEnemyDeath",
+            "family": "LifeGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 33,
+            "text_ja": "倒した敵1体ごとに28のライフを獲得する",
+            "text_en": "Gain 28 Life per enemy killed",
+            "values": [
+              28
+            ],
+            "ranges": [
+              [
+                19,
+                28
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Conquest"
+          },
+          {
+            "mod_id": "Rings/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "火耐性 +37%",
+            "text_en": "+37% to Fire Resistance",
+            "values": [
+              37
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of Magma"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [
+          {
+            "mod_id": "Rings/IncreasedMana",
+            "family": "IncreasedMana",
+            "side": "prefix",
+            "tier_name": "T11",
+            "mod_level": 6,
+            "text_ja": "最大マナ +23",
+            "text_en": "+23 to maximum Mana",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                15,
+                24
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Cobalt"
+          }
+        ],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 369.38,
+        "amount": 1,
+        "subtotal": 369.38,
+        "cumulative": 372.416
+      }
+    },
+    {
+      "index": 8,
+      "currency": "chaos",
+      "currency_ja": "カオスオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20260937,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 8,
+            "text_ja": "2から5の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 5 Physical Damage to Attacks",
+            "values": [
+              2,
+              5
+            ],
+            "ranges": [
+              [
+                2,
+                3
+              ],
+              [
+                4,
+                6
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Burnished"
+          },
+          {
+            "mod_id": "Rings/EvasionRating",
+            "family": "IncreasedEvasionRating",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 33,
+            "text_ja": "回避力 +98",
+            "text_en": "+98 to Evasion Rating",
+            "values": [
+              98
+            ],
+            "ranges": [
+              [
+                80,
+                107
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Blurred"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "雷耐性 +40%",
+            "text_en": "+40% to Lightning Resistance",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of the Lightning"
+          },
+          {
+            "mod_id": "Rings/LifeGainedFromEnemyDeath",
+            "family": "LifeGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 33,
+            "text_ja": "倒した敵1体ごとに28のライフを獲得する",
+            "text_en": "Gain 28 Life per enemy killed",
+            "values": [
+              28
+            ],
+            "ranges": [
+              [
+                19,
+                28
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Conquest"
+          },
+          {
+            "mod_id": "Rings/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "火耐性 +37%",
+            "text_en": "+37% to Fire Resistance",
+            "values": [
+              37
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of Magma"
+          }
+        ]
+      },
+      "after": {
+        "name": "ニーモニックリング",
+        "base": "Mnemonic Ring",
+        "base_ja": "ニーモニックリング",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/PhysicalDamage",
+            "family": "PhysicalDamage",
+            "side": "prefix",
+            "tier_name": "T8",
+            "mod_level": 8,
+            "text_ja": "2から5の物理ダメージをアタックに追加する",
+            "text_en": "Adds 2 to 5 Physical Damage to Attacks",
+            "values": [
+              2,
+              5
+            ],
+            "ranges": [
+              [
+                2,
+                3
+              ],
+              [
+                4,
+                6
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Burnished"
+          },
+          {
+            "mod_id": "Rings/EvasionRating",
+            "family": "IncreasedEvasionRating",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 33,
+            "text_ja": "回避力 +98",
+            "text_en": "+98 to Evasion Rating",
+            "values": [
+              98
+            ],
+            "ranges": [
+              [
+                80,
+                107
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Blurred"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Rings/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "雷耐性 +40%",
+            "text_en": "+40% to Lightning Resistance",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of the Lightning"
+          },
+          {
+            "mod_id": "Rings/FireResistance",
+            "family": "FireResistance",
+            "side": "suffix",
+            "tier_name": "T2",
+            "mod_level": 71,
+            "text_ja": "火耐性 +37%",
+            "text_en": "+37% to Fire Resistance",
+            "values": [
+              37
+            ],
+            "ranges": [
+              [
+                36,
+                40
+              ]
+            ],
+            "tier_index": 6,
+            "affix": "of Magma"
+          },
+          {
+            "mod_id": "Rings/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "筋力 +13",
+            "text_en": "+13 to Strength",
+            "values": [
+              13
+            ],
+            "ranges": [
+              [
+                13,
+                16
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Bear"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 22,
+            "text_ja": "筋力 +13",
+            "text_en": "+13 to Strength",
+            "values": [
+              13
+            ],
+            "ranges": [
+              [
+                13,
+                16
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Bear"
+          }
+        ],
+        "removed": [
+          {
+            "mod_id": "Rings/LifeGainedFromEnemyDeath",
+            "family": "LifeGainedFromEnemyDeath",
+            "side": "suffix",
+            "tier_name": "T3",
+            "mod_level": 33,
+            "text_ja": "倒した敵1体ごとに28のライフを獲得する",
+            "text_en": "Gain 28 Life per enemy killed",
+            "values": [
+              28
+            ],
+            "ranges": [
+              [
+                19,
+                28
+              ]
+            ],
+            "tier_index": 3,
+            "affix": "of Conquest"
+          }
+        ],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 64.768,
+        "amount": 1,
+        "subtotal": 64.768,
+        "cumulative": 437.18399999999997
+      }
+    }
+  ],
+  "final": {
+    "name": "ニーモニックリング",
+    "base": "Mnemonic Ring",
+    "base_ja": "ニーモニックリング",
+    "item_level": 80,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": false,
+    "quality_tag": null,
+    "sockets": 0,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [
+      {
+        "mod_id": "Rings/PhysicalDamage",
+        "family": "PhysicalDamage",
+        "side": "prefix",
+        "tier_name": "T8",
+        "mod_level": 8,
+        "text_ja": "2から5の物理ダメージをアタックに追加する",
+        "text_en": "Adds 2 to 5 Physical Damage to Attacks",
+        "values": [
+          2,
+          5
+        ],
+        "ranges": [
+          [
+            2,
+            3
+          ],
+          [
+            4,
+            6
+          ]
+        ],
+        "tier_index": 1,
+        "affix": "Burnished"
+      },
+      {
+        "mod_id": "Rings/EvasionRating",
+        "family": "IncreasedEvasionRating",
+        "side": "prefix",
+        "tier_name": "T5",
+        "mod_level": 33,
+        "text_ja": "回避力 +98",
+        "text_en": "+98 to Evasion Rating",
+        "values": [
+          98
+        ],
+        "ranges": [
+          [
+            80,
+            107
+          ]
+        ],
+        "tier_index": 4,
+        "affix": "Blurred"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Rings/LightningResistance",
+        "family": "LightningResistance",
+        "side": "suffix",
+        "tier_name": "T2",
+        "mod_level": 71,
+        "text_ja": "雷耐性 +40%",
+        "text_en": "+40% to Lightning Resistance",
+        "values": [
+          40
+        ],
+        "ranges": [
+          [
+            36,
+            40
+          ]
+        ],
+        "tier_index": 6,
+        "affix": "of the Lightning"
+      },
+      {
+        "mod_id": "Rings/FireResistance",
+        "family": "FireResistance",
+        "side": "suffix",
+        "tier_name": "T2",
+        "mod_level": 71,
+        "text_ja": "火耐性 +37%",
+        "text_en": "+37% to Fire Resistance",
+        "values": [
+          37
+        ],
+        "ranges": [
+          [
+            36,
+            40
+          ]
+        ],
+        "tier_index": 6,
+        "affix": "of Magma"
+      },
+      {
+        "mod_id": "Rings/Strength",
+        "family": "Strength",
+        "side": "suffix",
+        "tier_name": "T6",
+        "mod_level": 22,
+        "text_ja": "筋力 +13",
+        "text_en": "+13 to Strength",
+        "values": [
+          13
+        ],
+        "ranges": [
+          [
+            13,
+            16
+          ]
+        ],
+        "tier_index": 2,
+        "affix": "of the Bear"
+      }
+    ]
+  },
+  "total_cost": 437.18399999999997
+}

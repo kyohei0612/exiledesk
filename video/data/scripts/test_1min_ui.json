@@ -1,0 +1,162 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "1分テスト: UI とずれの確認",
+  "target_seconds": 32,
+  "result_file": "data/results/act_currency_8min.json",
+  "demos": {
+    "weapon": "data/results/act_currency_8min__weapon.json",
+    "unid": "data/results/act_currency_8min__unid.json"
+  },
+  "sections": [
+    {
+      "name": "棍棒を強くする",
+      "target_seconds": 16,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "この棍棒、もっと強くならないのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "weapon"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "鍛冶屋の砥石を、この棍棒に使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 0,
+            "demo": "weapon"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "品質が付いたのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "weapon"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "次は熟練工のオーブを使うわね。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "demo": "weapon"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "ソケットが増えたのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "weapon"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "ここでクイズ。棍棒の品質を上げたのはどれ？",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "whetstone",
+              "artificer",
+              "alchemy"
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "3 秒で考えてね。",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "whetstone",
+              "artificer",
+              "alchemy"
+            ],
+            "countdown": 3
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "正解は鍛冶屋の砥石よ。",
+          "scene": {
+            "kind": "quiz",
+            "choices": [
+              "whetstone",
+              "artificer",
+              "alchemy"
+            ],
+            "answer": 0,
+            "badges": [
+              "品質",
+              "ソケット",
+              "MOD"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "指輪を見る",
+      "target_seconds": 16,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "錬金術の後の指輪。注目は最大マナ +27 よ。",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "focus": "IncreasedMana"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "火耐性は、どこまで強くなるのだ？",
+          "scene": {
+            "kind": "tiers",
+            "mod": "FireResistance",
+            "reveal": false
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "アイテムレベル 36 なら T5 までね。",
+          "scene": {
+            "kind": "tiers",
+            "mod": "FireResistance"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "拾った指輪と比べると、こうなるわ。",
+          "scene": {
+            "kind": "compare",
+            "step": 1,
+            "compare_with": "unid",
+            "b_step": 1
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "雷耐性が増えて、マナが減るのだ。",
+          "scene": {
+            "kind": "compare",
+            "step": 1,
+            "compare_with": "unid",
+            "b_step": 1
+          }
+        }
+      ]
+    }
+  ]
+}

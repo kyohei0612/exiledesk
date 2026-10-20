@@ -1,0 +1,3145 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-10-05T05:45:46.535Z",
+  "exiledesk_version": "0.1.377",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "セールの凱旋: 6 MOD で埋まった胴に、サフィックスの 4 個目",
+    "base": "Glorious Plate",
+    "item_level": 80,
+    "start_rarity": "magic",
+    "seed": 12,
+    "start_unidentified": false,
+    "steps": [
+      {
+        "currency": "regal",
+        "times": 1
+      },
+      {
+        "currency": "exalt",
+        "times": 1
+      },
+      {
+        "currency": "exalt",
+        "times": 1
+      },
+      {
+        "currency": "exalt",
+        "times": 1
+      },
+      {
+        "currency": "exalt",
+        "times": 1,
+        "note": "6 個目"
+      },
+      {
+        "currency": "exalt",
+        "times": 1,
+        "note": "埋まっていて打てない"
+      },
+      {
+        "currency": "artificer",
+        "times": 1
+      },
+      {
+        "currency": "rune:Serle's Triumph",
+        "times": 1,
+        "note": "サフィックス +1、ソケットバウンド"
+      },
+      {
+        "currency": "exalt",
+        "times": 1,
+        "note": "4 個目のサフィックス"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "regal",
+      "currency_ja": "王者のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 13,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "534",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 44,
+            "text_ja": "筋力 +23",
+            "text_en": "+23 to Strength",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                24
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Gorilla"
+          }
+        ]
+      },
+      "after": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "534",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 44,
+            "text_ja": "筋力 +23",
+            "text_en": "+23 to Strength",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                24
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Gorilla"
+          },
+          {
+            "mod_id": "Body_Armours_str/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "冷気耐性 +16%",
+            "text_en": "+16% to Cold Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Narwhal"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Body_Armours_str/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "冷気耐性 +16%",
+            "text_en": "+16% to Cold Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Narwhal"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 2,
+      "currency": "exalt",
+      "currency_ja": "高貴なオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 14,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "534",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 44,
+            "text_ja": "筋力 +23",
+            "text_en": "+23 to Strength",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                24
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Gorilla"
+          },
+          {
+            "mod_id": "Body_Armours_str/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "冷気耐性 +16%",
+            "text_en": "+16% to Cold Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Narwhal"
+          }
+        ]
+      },
+      "after": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "534",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/ThornsPhysicalDamage",
+            "family": "Thorns",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 19,
+            "text_ja": "14から19の物理棘ダメージ",
+            "text_en": "14 to 19 Physical Thorns damage",
+            "values": [
+              14,
+              19
+            ],
+            "ranges": [
+              [
+                11,
+                16
+              ],
+              [
+                17,
+                23
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Barbed"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 44,
+            "text_ja": "筋力 +23",
+            "text_en": "+23 to Strength",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                24
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Gorilla"
+          },
+          {
+            "mod_id": "Body_Armours_str/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "冷気耐性 +16%",
+            "text_en": "+16% to Cold Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Narwhal"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Body_Armours_str/ThornsPhysicalDamage",
+            "family": "Thorns",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 19,
+            "text_ja": "14から19の物理棘ダメージ",
+            "text_en": "14 to 19 Physical Thorns damage",
+            "values": [
+              14,
+              19
+            ],
+            "ranges": [
+              [
+                11,
+                16
+              ],
+              [
+                17,
+                23
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Barbed"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 1.012,
+        "amount": 1,
+        "subtotal": 1.012,
+        "cumulative": 1.012
+      }
+    },
+    {
+      "index": 3,
+      "currency": "exalt",
+      "currency_ja": "高貴なオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 15,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "534",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/ThornsPhysicalDamage",
+            "family": "Thorns",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 19,
+            "text_ja": "14から19の物理棘ダメージ",
+            "text_en": "14 to 19 Physical Thorns damage",
+            "values": [
+              14,
+              19
+            ],
+            "ranges": [
+              [
+                11,
+                16
+              ],
+              [
+                17,
+                23
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Barbed"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 44,
+            "text_ja": "筋力 +23",
+            "text_en": "+23 to Strength",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                24
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Gorilla"
+          },
+          {
+            "mod_id": "Body_Armours_str/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "冷気耐性 +16%",
+            "text_en": "+16% to Cold Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Narwhal"
+          }
+        ]
+      },
+      "after": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "644",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/ThornsPhysicalDamage",
+            "family": "Thorns",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 19,
+            "text_ja": "14から19の物理棘ダメージ",
+            "text_en": "14 to 19 Physical Thorns damage",
+            "values": [
+              14,
+              19
+            ],
+            "ranges": [
+              [
+                11,
+                16
+              ],
+              [
+                17,
+                23
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Barbed"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 33,
+            "text_ja": "アーマー +110",
+            "text_en": "+110 to Armour",
+            "values": [
+              110
+            ],
+            "ranges": [
+              [
+                99,
+                127
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Plated"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 44,
+            "text_ja": "筋力 +23",
+            "text_en": "+23 to Strength",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                24
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Gorilla"
+          },
+          {
+            "mod_id": "Body_Armours_str/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "冷気耐性 +16%",
+            "text_en": "+16% to Cold Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Narwhal"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 33,
+            "text_ja": "アーマー +110",
+            "text_en": "+110 to Armour",
+            "values": [
+              110
+            ],
+            "ranges": [
+              [
+                99,
+                127
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Plated"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 1.012,
+        "amount": 1,
+        "subtotal": 1.012,
+        "cumulative": 2.024
+      }
+    },
+    {
+      "index": 4,
+      "currency": "exalt",
+      "currency_ja": "高貴なオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 16,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "644",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/ThornsPhysicalDamage",
+            "family": "Thorns",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 19,
+            "text_ja": "14から19の物理棘ダメージ",
+            "text_en": "14 to 19 Physical Thorns damage",
+            "values": [
+              14,
+              19
+            ],
+            "ranges": [
+              [
+                11,
+                16
+              ],
+              [
+                17,
+                23
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Barbed"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 33,
+            "text_ja": "アーマー +110",
+            "text_en": "+110 to Armour",
+            "values": [
+              110
+            ],
+            "ranges": [
+              [
+                99,
+                127
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Plated"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 44,
+            "text_ja": "筋力 +23",
+            "text_en": "+23 to Strength",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                24
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Gorilla"
+          },
+          {
+            "mod_id": "Body_Armours_str/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "冷気耐性 +16%",
+            "text_en": "+16% to Cold Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Narwhal"
+          }
+        ]
+      },
+      "after": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "644",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/ThornsPhysicalDamage",
+            "family": "Thorns",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 19,
+            "text_ja": "14から19の物理棘ダメージ",
+            "text_en": "14 to 19 Physical Thorns damage",
+            "values": [
+              14,
+              19
+            ],
+            "ranges": [
+              [
+                11,
+                16
+              ],
+              [
+                17,
+                23
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Barbed"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 33,
+            "text_ja": "アーマー +110",
+            "text_en": "+110 to Armour",
+            "values": [
+              110
+            ],
+            "ranges": [
+              [
+                99,
+                127
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Plated"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 44,
+            "text_ja": "筋力 +23",
+            "text_en": "+23 to Strength",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                24
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Gorilla"
+          },
+          {
+            "mod_id": "Body_Armours_str/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "冷気耐性 +16%",
+            "text_en": "+16% to Cold Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Narwhal"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 24,
+            "text_ja": "要求能力値が15%減少する",
+            "text_en": "-15% reduced Attribute Requirements",
+            "values": [
+              -15
+            ],
+            "ranges": [
+              [
+                -15,
+                -15
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Worthy"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 24,
+            "text_ja": "要求能力値が15%減少する",
+            "text_en": "-15% reduced Attribute Requirements",
+            "values": [
+              -15
+            ],
+            "ranges": [
+              [
+                -15,
+                -15
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Worthy"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 1.012,
+        "amount": 1,
+        "subtotal": 1.012,
+        "cumulative": 3.036
+      }
+    },
+    {
+      "index": 5,
+      "currency": "exalt",
+      "currency_ja": "高貴なオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 17,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "644",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/ThornsPhysicalDamage",
+            "family": "Thorns",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 19,
+            "text_ja": "14から19の物理棘ダメージ",
+            "text_en": "14 to 19 Physical Thorns damage",
+            "values": [
+              14,
+              19
+            ],
+            "ranges": [
+              [
+                11,
+                16
+              ],
+              [
+                17,
+                23
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Barbed"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 33,
+            "text_ja": "アーマー +110",
+            "text_en": "+110 to Armour",
+            "values": [
+              110
+            ],
+            "ranges": [
+              [
+                99,
+                127
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Plated"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 44,
+            "text_ja": "筋力 +23",
+            "text_en": "+23 to Strength",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                24
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Gorilla"
+          },
+          {
+            "mod_id": "Body_Armours_str/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "冷気耐性 +16%",
+            "text_en": "+16% to Cold Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Narwhal"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 24,
+            "text_ja": "要求能力値が15%減少する",
+            "text_en": "-15% reduced Attribute Requirements",
+            "values": [
+              -15
+            ],
+            "ranges": [
+              [
+                -15,
+                -15
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Worthy"
+          }
+        ]
+      },
+      "after": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "753",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/ThornsPhysicalDamage",
+            "family": "Thorns",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 19,
+            "text_ja": "14から19の物理棘ダメージ",
+            "text_en": "14 to 19 Physical Thorns damage",
+            "values": [
+              14,
+              19
+            ],
+            "ranges": [
+              [
+                11,
+                16
+              ],
+              [
+                17,
+                23
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Barbed"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 33,
+            "text_ja": "アーマー +110",
+            "text_en": "+110 to Armour",
+            "values": [
+              110
+            ],
+            "ranges": [
+              [
+                99,
+                127
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Plated"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalIncreasedArmourAndLife",
+            "family": "BaseLocalDefencesAndLife",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 16,
+            "text_ja": "アーマーが17%増加する / 最大ライフ +12",
+            "text_en": "17% increased Armour\n+12 to maximum Life",
+            "values": [
+              17,
+              12
+            ],
+            "ranges": [
+              [
+                14,
+                20
+              ],
+              [
+                11,
+                19
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Lobster's"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 44,
+            "text_ja": "筋力 +23",
+            "text_en": "+23 to Strength",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                24
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Gorilla"
+          },
+          {
+            "mod_id": "Body_Armours_str/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "冷気耐性 +16%",
+            "text_en": "+16% to Cold Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Narwhal"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 24,
+            "text_ja": "要求能力値が15%減少する",
+            "text_en": "-15% reduced Attribute Requirements",
+            "values": [
+              -15
+            ],
+            "ranges": [
+              [
+                -15,
+                -15
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Worthy"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Body_Armours_str/LocalIncreasedArmourAndLife",
+            "family": "BaseLocalDefencesAndLife",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 16,
+            "text_ja": "アーマーが17%増加する / 最大ライフ +12",
+            "text_en": "17% increased Armour\n+12 to maximum Life",
+            "values": [
+              17,
+              12
+            ],
+            "ranges": [
+              [
+                14,
+                20
+              ],
+              [
+                11,
+                19
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Lobster's"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 1.012,
+        "amount": 1,
+        "subtotal": 1.012,
+        "cumulative": 4.048
+      }
+    },
+    {
+      "index": 6,
+      "currency": "exalt",
+      "currency_ja": "高貴なオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 18,
+      "applied": false,
+      "reason": "足す枠が無い",
+      "before": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "753",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/ThornsPhysicalDamage",
+            "family": "Thorns",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 19,
+            "text_ja": "14から19の物理棘ダメージ",
+            "text_en": "14 to 19 Physical Thorns damage",
+            "values": [
+              14,
+              19
+            ],
+            "ranges": [
+              [
+                11,
+                16
+              ],
+              [
+                17,
+                23
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Barbed"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 33,
+            "text_ja": "アーマー +110",
+            "text_en": "+110 to Armour",
+            "values": [
+              110
+            ],
+            "ranges": [
+              [
+                99,
+                127
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Plated"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalIncreasedArmourAndLife",
+            "family": "BaseLocalDefencesAndLife",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 16,
+            "text_ja": "アーマーが17%増加する / 最大ライフ +12",
+            "text_en": "17% increased Armour\n+12 to maximum Life",
+            "values": [
+              17,
+              12
+            ],
+            "ranges": [
+              [
+                14,
+                20
+              ],
+              [
+                11,
+                19
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Lobster's"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 44,
+            "text_ja": "筋力 +23",
+            "text_en": "+23 to Strength",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                24
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Gorilla"
+          },
+          {
+            "mod_id": "Body_Armours_str/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "冷気耐性 +16%",
+            "text_en": "+16% to Cold Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Narwhal"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 24,
+            "text_ja": "要求能力値が15%減少する",
+            "text_en": "-15% reduced Attribute Requirements",
+            "values": [
+              -15
+            ],
+            "ranges": [
+              [
+                -15,
+                -15
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Worthy"
+          }
+        ]
+      },
+      "after": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "753",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/ThornsPhysicalDamage",
+            "family": "Thorns",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 19,
+            "text_ja": "14から19の物理棘ダメージ",
+            "text_en": "14 to 19 Physical Thorns damage",
+            "values": [
+              14,
+              19
+            ],
+            "ranges": [
+              [
+                11,
+                16
+              ],
+              [
+                17,
+                23
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Barbed"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 33,
+            "text_ja": "アーマー +110",
+            "text_en": "+110 to Armour",
+            "values": [
+              110
+            ],
+            "ranges": [
+              [
+                99,
+                127
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Plated"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalIncreasedArmourAndLife",
+            "family": "BaseLocalDefencesAndLife",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 16,
+            "text_ja": "アーマーが17%増加する / 最大ライフ +12",
+            "text_en": "17% increased Armour\n+12 to maximum Life",
+            "values": [
+              17,
+              12
+            ],
+            "ranges": [
+              [
+                14,
+                20
+              ],
+              [
+                11,
+                19
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Lobster's"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 44,
+            "text_ja": "筋力 +23",
+            "text_en": "+23 to Strength",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                24
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Gorilla"
+          },
+          {
+            "mod_id": "Body_Armours_str/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "冷気耐性 +16%",
+            "text_en": "+16% to Cold Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Narwhal"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 24,
+            "text_ja": "要求能力値が15%減少する",
+            "text_en": "-15% reduced Attribute Requirements",
+            "values": [
+              -15
+            ],
+            "ranges": [
+              [
+                -15,
+                -15
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Worthy"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 1.012,
+        "amount": 0,
+        "subtotal": 0,
+        "cumulative": 4.048
+      }
+    },
+    {
+      "index": 7,
+      "currency": "artificer",
+      "currency_ja": "熟練工のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 19,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "753",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/ThornsPhysicalDamage",
+            "family": "Thorns",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 19,
+            "text_ja": "14から19の物理棘ダメージ",
+            "text_en": "14 to 19 Physical Thorns damage",
+            "values": [
+              14,
+              19
+            ],
+            "ranges": [
+              [
+                11,
+                16
+              ],
+              [
+                17,
+                23
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Barbed"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 33,
+            "text_ja": "アーマー +110",
+            "text_en": "+110 to Armour",
+            "values": [
+              110
+            ],
+            "ranges": [
+              [
+                99,
+                127
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Plated"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalIncreasedArmourAndLife",
+            "family": "BaseLocalDefencesAndLife",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 16,
+            "text_ja": "アーマーが17%増加する / 最大ライフ +12",
+            "text_en": "17% increased Armour\n+12 to maximum Life",
+            "values": [
+              17,
+              12
+            ],
+            "ranges": [
+              [
+                14,
+                20
+              ],
+              [
+                11,
+                19
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Lobster's"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 44,
+            "text_ja": "筋力 +23",
+            "text_en": "+23 to Strength",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                24
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Gorilla"
+          },
+          {
+            "mod_id": "Body_Armours_str/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "冷気耐性 +16%",
+            "text_en": "+16% to Cold Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Narwhal"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 24,
+            "text_ja": "要求能力値が15%減少する",
+            "text_en": "-15% reduced Attribute Requirements",
+            "values": [
+              -15
+            ],
+            "ranges": [
+              [
+                -15,
+                -15
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Worthy"
+          }
+        ]
+      },
+      "after": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "753",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/ThornsPhysicalDamage",
+            "family": "Thorns",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 19,
+            "text_ja": "14から19の物理棘ダメージ",
+            "text_en": "14 to 19 Physical Thorns damage",
+            "values": [
+              14,
+              19
+            ],
+            "ranges": [
+              [
+                11,
+                16
+              ],
+              [
+                17,
+                23
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Barbed"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 33,
+            "text_ja": "アーマー +110",
+            "text_en": "+110 to Armour",
+            "values": [
+              110
+            ],
+            "ranges": [
+              [
+                99,
+                127
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Plated"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalIncreasedArmourAndLife",
+            "family": "BaseLocalDefencesAndLife",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 16,
+            "text_ja": "アーマーが17%増加する / 最大ライフ +12",
+            "text_en": "17% increased Armour\n+12 to maximum Life",
+            "values": [
+              17,
+              12
+            ],
+            "ranges": [
+              [
+                14,
+                20
+              ],
+              [
+                11,
+                19
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Lobster's"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 44,
+            "text_ja": "筋力 +23",
+            "text_en": "+23 to Strength",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                24
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Gorilla"
+          },
+          {
+            "mod_id": "Body_Armours_str/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "冷気耐性 +16%",
+            "text_en": "+16% to Cold Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Narwhal"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 24,
+            "text_ja": "要求能力値が15%減少する",
+            "text_en": "-15% reduced Attribute Requirements",
+            "values": [
+              -15
+            ],
+            "ranges": [
+              [
+                -15,
+                -15
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Worthy"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 4.048
+      }
+    },
+    {
+      "index": 8,
+      "currency": "rune:Serle's Triumph",
+      "currency_ja": "セールの凱旋",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "753",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/ThornsPhysicalDamage",
+            "family": "Thorns",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 19,
+            "text_ja": "14から19の物理棘ダメージ",
+            "text_en": "14 to 19 Physical Thorns damage",
+            "values": [
+              14,
+              19
+            ],
+            "ranges": [
+              [
+                11,
+                16
+              ],
+              [
+                17,
+                23
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Barbed"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 33,
+            "text_ja": "アーマー +110",
+            "text_en": "+110 to Armour",
+            "values": [
+              110
+            ],
+            "ranges": [
+              [
+                99,
+                127
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Plated"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalIncreasedArmourAndLife",
+            "family": "BaseLocalDefencesAndLife",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 16,
+            "text_ja": "アーマーが17%増加する / 最大ライフ +12",
+            "text_en": "17% increased Armour\n+12 to maximum Life",
+            "values": [
+              17,
+              12
+            ],
+            "ranges": [
+              [
+                14,
+                20
+              ],
+              [
+                11,
+                19
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Lobster's"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 44,
+            "text_ja": "筋力 +23",
+            "text_en": "+23 to Strength",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                24
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Gorilla"
+          },
+          {
+            "mod_id": "Body_Armours_str/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "冷気耐性 +16%",
+            "text_en": "+16% to Cold Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Narwhal"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 24,
+            "text_ja": "要求能力値が15%減少する",
+            "text_en": "-15% reduced Attribute Requirements",
+            "values": [
+              -15
+            ],
+            "ranges": [
+              [
+                -15,
+                -15
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Worthy"
+          }
+        ]
+      },
+      "after": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "753",
+            "up": true
+          }
+        ],
+        "augments": [
+          {
+            "key": "rune:Serle's Triumph",
+            "en": "Serle's Triumph",
+            "ja": "セールの凱旋",
+            "category": "全ての装備品",
+            "text_ja": "サフィックスモッド +1個",
+            "text_en": "+1 Suffix Modifier allowed",
+            "stats": [
+              {
+                "id": "local_maximum_suffixes_allowed_+",
+                "value": 1
+              },
+              {
+                "id": "local_maximum_mods_allowed_+",
+                "value": 1
+              }
+            ]
+          }
+        ],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/ThornsPhysicalDamage",
+            "family": "Thorns",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 19,
+            "text_ja": "14から19の物理棘ダメージ",
+            "text_en": "14 to 19 Physical Thorns damage",
+            "values": [
+              14,
+              19
+            ],
+            "ranges": [
+              [
+                11,
+                16
+              ],
+              [
+                17,
+                23
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Barbed"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 33,
+            "text_ja": "アーマー +110",
+            "text_en": "+110 to Armour",
+            "values": [
+              110
+            ],
+            "ranges": [
+              [
+                99,
+                127
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Plated"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalIncreasedArmourAndLife",
+            "family": "BaseLocalDefencesAndLife",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 16,
+            "text_ja": "アーマーが17%増加する / 最大ライフ +12",
+            "text_en": "17% increased Armour\n+12 to maximum Life",
+            "values": [
+              17,
+              12
+            ],
+            "ranges": [
+              [
+                14,
+                20
+              ],
+              [
+                11,
+                19
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Lobster's"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 44,
+            "text_ja": "筋力 +23",
+            "text_en": "+23 to Strength",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                24
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Gorilla"
+          },
+          {
+            "mod_id": "Body_Armours_str/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "冷気耐性 +16%",
+            "text_en": "+16% to Cold Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Narwhal"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 24,
+            "text_ja": "要求能力値が15%減少する",
+            "text_en": "-15% reduced Attribute Requirements",
+            "values": [
+              -15
+            ],
+            "ranges": [
+              [
+                -15,
+                -15
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Worthy"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 4.048
+      },
+      "augment_change": {
+        "socket": 1,
+        "put": {
+          "key": "rune:Serle's Triumph",
+          "en": "Serle's Triumph",
+          "ja": "セールの凱旋",
+          "category": "全ての装備品",
+          "text_ja": "サフィックスモッド +1個",
+          "text_en": "+1 Suffix Modifier allowed",
+          "stats": [
+            {
+              "id": "local_maximum_suffixes_allowed_+",
+              "value": 1
+            },
+            {
+              "id": "local_maximum_mods_allowed_+",
+              "value": 1
+            }
+          ]
+        },
+        "replaced": null,
+        "replaced_goes": null
+      }
+    },
+    {
+      "index": 9,
+      "currency": "exalt",
+      "currency_ja": "高貴なオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 21,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "753",
+            "up": true
+          }
+        ],
+        "augments": [
+          {
+            "key": "rune:Serle's Triumph",
+            "en": "Serle's Triumph",
+            "ja": "セールの凱旋",
+            "category": "全ての装備品",
+            "text_ja": "サフィックスモッド +1個",
+            "text_en": "+1 Suffix Modifier allowed",
+            "stats": [
+              {
+                "id": "local_maximum_suffixes_allowed_+",
+                "value": 1
+              },
+              {
+                "id": "local_maximum_mods_allowed_+",
+                "value": 1
+              }
+            ]
+          }
+        ],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/ThornsPhysicalDamage",
+            "family": "Thorns",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 19,
+            "text_ja": "14から19の物理棘ダメージ",
+            "text_en": "14 to 19 Physical Thorns damage",
+            "values": [
+              14,
+              19
+            ],
+            "ranges": [
+              [
+                11,
+                16
+              ],
+              [
+                17,
+                23
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Barbed"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 33,
+            "text_ja": "アーマー +110",
+            "text_en": "+110 to Armour",
+            "values": [
+              110
+            ],
+            "ranges": [
+              [
+                99,
+                127
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Plated"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalIncreasedArmourAndLife",
+            "family": "BaseLocalDefencesAndLife",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 16,
+            "text_ja": "アーマーが17%増加する / 最大ライフ +12",
+            "text_en": "17% increased Armour\n+12 to maximum Life",
+            "values": [
+              17,
+              12
+            ],
+            "ranges": [
+              [
+                14,
+                20
+              ],
+              [
+                11,
+                19
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Lobster's"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 44,
+            "text_ja": "筋力 +23",
+            "text_en": "+23 to Strength",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                24
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Gorilla"
+          },
+          {
+            "mod_id": "Body_Armours_str/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "冷気耐性 +16%",
+            "text_en": "+16% to Cold Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Narwhal"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 24,
+            "text_ja": "要求能力値が15%減少する",
+            "text_en": "-15% reduced Attribute Requirements",
+            "values": [
+              -15
+            ],
+            "ranges": [
+              [
+                -15,
+                -15
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Worthy"
+          }
+        ]
+      },
+      "after": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "753",
+            "up": true
+          }
+        ],
+        "augments": [
+          {
+            "key": "rune:Serle's Triumph",
+            "en": "Serle's Triumph",
+            "ja": "セールの凱旋",
+            "category": "全ての装備品",
+            "text_ja": "サフィックスモッド +1個",
+            "text_en": "+1 Suffix Modifier allowed",
+            "stats": [
+              {
+                "id": "local_maximum_suffixes_allowed_+",
+                "value": 1
+              },
+              {
+                "id": "local_maximum_mods_allowed_+",
+                "value": 1
+              }
+            ]
+          }
+        ],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/ThornsPhysicalDamage",
+            "family": "Thorns",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 19,
+            "text_ja": "14から19の物理棘ダメージ",
+            "text_en": "14 to 19 Physical Thorns damage",
+            "values": [
+              14,
+              19
+            ],
+            "ranges": [
+              [
+                11,
+                16
+              ],
+              [
+                17,
+                23
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Barbed"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+            "family": "BaseLocalDefences",
+            "side": "prefix",
+            "tier_name": "T7",
+            "mod_level": 33,
+            "text_ja": "アーマー +110",
+            "text_en": "+110 to Armour",
+            "values": [
+              110
+            ],
+            "ranges": [
+              [
+                99,
+                127
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "Plated"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalIncreasedArmourAndLife",
+            "family": "BaseLocalDefencesAndLife",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 16,
+            "text_ja": "アーマーが17%増加する / 最大ライフ +12",
+            "text_en": "17% increased Armour\n+12 to maximum Life",
+            "values": [
+              17,
+              12
+            ],
+            "ranges": [
+              [
+                14,
+                20
+              ],
+              [
+                11,
+                19
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Lobster's"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T4",
+            "mod_level": 44,
+            "text_ja": "筋力 +23",
+            "text_en": "+23 to Strength",
+            "values": [
+              23
+            ],
+            "ranges": [
+              [
+                21,
+                24
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of the Gorilla"
+          },
+          {
+            "mod_id": "Body_Armours_str/ColdResistance",
+            "family": "ColdResistance",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 26,
+            "text_ja": "冷気耐性 +16%",
+            "text_en": "+16% to Cold Resistance",
+            "values": [
+              16
+            ],
+            "ranges": [
+              [
+                16,
+                20
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "of the Narwhal"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+            "family": "LocalAttributeRequirements",
+            "side": "suffix",
+            "tier_name": "T5",
+            "mod_level": 24,
+            "text_ja": "要求能力値が15%減少する",
+            "text_en": "-15% reduced Attribute Requirements",
+            "values": [
+              -15
+            ],
+            "ranges": [
+              [
+                -15,
+                -15
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Worthy"
+          },
+          {
+            "mod_id": "Body_Armours_str/StunThreshold",
+            "family": "StunThreshold",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 29,
+            "text_ja": "スタン閾値 +80",
+            "text_en": "+80 to Stun Threshold",
+            "values": [
+              80
+            ],
+            "ranges": [
+              [
+                73,
+                97
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of Steel Skin"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Body_Armours_str/StunThreshold",
+            "family": "StunThreshold",
+            "side": "suffix",
+            "tier_name": "T6",
+            "mod_level": 29,
+            "text_ja": "スタン閾値 +80",
+            "text_en": "+80 to Stun Threshold",
+            "values": [
+              80
+            ],
+            "ranges": [
+              [
+                73,
+                97
+              ]
+            ],
+            "tier_index": 4,
+            "affix": "of Steel Skin"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 1.012,
+        "amount": 1,
+        "subtotal": 1.012,
+        "cumulative": 5.0600000000000005
+      }
+    }
+  ],
+  "final": {
+    "name": "栄光のプレート",
+    "base": "Glorious Plate",
+    "base_ja": "栄光のプレート",
+    "item_level": 80,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "disposed": null,
+    "gained": null,
+    "requirements": {
+      "level": 65,
+      "str": 121
+    },
+    "properties": [
+      {
+        "key": "armour",
+        "label": "アーマー",
+        "value": "753",
+        "up": true
+      }
+    ],
+    "augments": [
+      {
+        "key": "rune:Serle's Triumph",
+        "en": "Serle's Triumph",
+        "ja": "セールの凱旋",
+        "category": "全ての装備品",
+        "text_ja": "サフィックスモッド +1個",
+        "text_en": "+1 Suffix Modifier allowed",
+        "stats": [
+          {
+            "id": "local_maximum_suffixes_allowed_+",
+            "value": 1
+          },
+          {
+            "id": "local_maximum_mods_allowed_+",
+            "value": 1
+          }
+        ]
+      }
+    ],
+    "quality_tag": null,
+    "sockets": 1,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [
+      {
+        "mod_id": "Body_Armours_str/ThornsPhysicalDamage",
+        "family": "Thorns",
+        "side": "prefix",
+        "tier_name": "T5",
+        "mod_level": 19,
+        "text_ja": "14から19の物理棘ダメージ",
+        "text_en": "14 to 19 Physical Thorns damage",
+        "values": [
+          14,
+          19
+        ],
+        "ranges": [
+          [
+            11,
+            16
+          ],
+          [
+            17,
+            23
+          ]
+        ],
+        "tier_index": 2,
+        "affix": "Barbed"
+      },
+      {
+        "mod_id": "Body_Armours_str/LocalPhysicalDamageReductionRating",
+        "family": "BaseLocalDefences",
+        "side": "prefix",
+        "tier_name": "T7",
+        "mod_level": 33,
+        "text_ja": "アーマー +110",
+        "text_en": "+110 to Armour",
+        "values": [
+          110
+        ],
+        "ranges": [
+          [
+            99,
+            127
+          ]
+        ],
+        "tier_index": 4,
+        "affix": "Plated"
+      },
+      {
+        "mod_id": "Body_Armours_str/LocalIncreasedArmourAndLife",
+        "family": "BaseLocalDefencesAndLife",
+        "side": "prefix",
+        "tier_name": "T5",
+        "mod_level": 16,
+        "text_ja": "アーマーが17%増加する / 最大ライフ +12",
+        "text_en": "17% increased Armour\n+12 to maximum Life",
+        "values": [
+          17,
+          12
+        ],
+        "ranges": [
+          [
+            14,
+            20
+          ],
+          [
+            11,
+            19
+          ]
+        ],
+        "tier_index": 1,
+        "affix": "Lobster's"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Body_Armours_str/Strength",
+        "family": "Strength",
+        "side": "suffix",
+        "tier_name": "T4",
+        "mod_level": 44,
+        "text_ja": "筋力 +23",
+        "text_en": "+23 to Strength",
+        "values": [
+          23
+        ],
+        "ranges": [
+          [
+            21,
+            24
+          ]
+        ],
+        "tier_index": 4,
+        "affix": "of the Gorilla"
+      },
+      {
+        "mod_id": "Body_Armours_str/ColdResistance",
+        "family": "ColdResistance",
+        "side": "suffix",
+        "tier_name": "T6",
+        "mod_level": 26,
+        "text_ja": "冷気耐性 +16%",
+        "text_en": "+16% to Cold Resistance",
+        "values": [
+          16
+        ],
+        "ranges": [
+          [
+            16,
+            20
+          ]
+        ],
+        "tier_index": 2,
+        "affix": "of the Narwhal"
+      },
+      {
+        "mod_id": "Body_Armours_str/LocalAttributeRequirements",
+        "family": "LocalAttributeRequirements",
+        "side": "suffix",
+        "tier_name": "T5",
+        "mod_level": 24,
+        "text_ja": "要求能力値が15%減少する",
+        "text_en": "-15% reduced Attribute Requirements",
+        "values": [
+          -15
+        ],
+        "ranges": [
+          [
+            -15,
+            -15
+          ]
+        ],
+        "tier_index": 0,
+        "affix": "of the Worthy"
+      },
+      {
+        "mod_id": "Body_Armours_str/StunThreshold",
+        "family": "StunThreshold",
+        "side": "suffix",
+        "tier_name": "T6",
+        "mod_level": 29,
+        "text_ja": "スタン閾値 +80",
+        "text_en": "+80 to Stun Threshold",
+        "values": [
+          80
+        ],
+        "ranges": [
+          [
+            73,
+            97
+          ]
+        ],
+        "tier_index": 4,
+        "affix": "of Steel Skin"
+      }
+    ]
+  },
+  "total_cost": 5.0600000000000005
+}

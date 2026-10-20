@@ -1,0 +1,734 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-10-05T05:45:53.789Z",
+  "exiledesk_version": "0.1.377",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "黒い組紐の遺産: 胴にユニークの効果の一部",
+    "base": "Glorious Plate",
+    "item_level": 80,
+    "start_rarity": "rare",
+    "seed": 15,
+    "start_unidentified": false,
+    "steps": [
+      {
+        "currency": "artificer",
+        "times": 1
+      },
+      {
+        "currency": "rune:Legacy of Blackbraid",
+        "times": 1,
+        "note": "アーマーの +50% が元素ダメージにも"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "artificer",
+      "currency_ja": "熟練工のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 16,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "646",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/BaseSpirit",
+            "family": "BaseSpirit",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 33,
+            "text_ja": "スピリット +40",
+            "text_en": "+40 to Spirit",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                38,
+                42
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Viscountess'"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalIncreasedArmourAndBase",
+            "family": "BaseLocalDefencesAndDefencePercent",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 16,
+            "text_ja": "アーマーが16%増加する / アーマー +23",
+            "text_en": "16% increased Armour\n+23 to Armour",
+            "values": [
+              16,
+              23
+            ],
+            "ranges": [
+              [
+                14,
+                20
+              ],
+              [
+                10,
+                29
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Snail's"
+          },
+          {
+            "mod_id": "Body_Armours_str/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "最大ライフ +213",
+            "text_en": "+213 to maximum Life",
+            "values": [
+              213
+            ],
+            "ranges": [
+              [
+                200,
+                214
+              ]
+            ],
+            "tier_index": 12,
+            "affix": "Prime"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "雷耐性 +9%",
+            "text_en": "+9% to Lightning Resistance",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                6,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Cloud"
+          }
+        ]
+      },
+      "after": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "646",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/BaseSpirit",
+            "family": "BaseSpirit",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 33,
+            "text_ja": "スピリット +40",
+            "text_en": "+40 to Spirit",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                38,
+                42
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Viscountess'"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalIncreasedArmourAndBase",
+            "family": "BaseLocalDefencesAndDefencePercent",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 16,
+            "text_ja": "アーマーが16%増加する / アーマー +23",
+            "text_en": "16% increased Armour\n+23 to Armour",
+            "values": [
+              16,
+              23
+            ],
+            "ranges": [
+              [
+                14,
+                20
+              ],
+              [
+                10,
+                29
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Snail's"
+          },
+          {
+            "mod_id": "Body_Armours_str/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "最大ライフ +213",
+            "text_en": "+213 to maximum Life",
+            "values": [
+              213
+            ],
+            "ranges": [
+              [
+                200,
+                214
+              ]
+            ],
+            "tier_index": 12,
+            "affix": "Prime"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "雷耐性 +9%",
+            "text_en": "+9% to Lightning Resistance",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                6,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Cloud"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 2,
+      "currency": "rune:Legacy of Blackbraid",
+      "currency_ja": "黒い組紐の遺産",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 17,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "646",
+            "up": true
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/BaseSpirit",
+            "family": "BaseSpirit",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 33,
+            "text_ja": "スピリット +40",
+            "text_en": "+40 to Spirit",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                38,
+                42
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Viscountess'"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalIncreasedArmourAndBase",
+            "family": "BaseLocalDefencesAndDefencePercent",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 16,
+            "text_ja": "アーマーが16%増加する / アーマー +23",
+            "text_en": "16% increased Armour\n+23 to Armour",
+            "values": [
+              16,
+              23
+            ],
+            "ranges": [
+              [
+                14,
+                20
+              ],
+              [
+                10,
+                29
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Snail's"
+          },
+          {
+            "mod_id": "Body_Armours_str/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "最大ライフ +213",
+            "text_en": "+213 to maximum Life",
+            "values": [
+              213
+            ],
+            "ranges": [
+              [
+                200,
+                214
+              ]
+            ],
+            "tier_index": 12,
+            "affix": "Prime"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "雷耐性 +9%",
+            "text_en": "+9% to Lightning Resistance",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                6,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Cloud"
+          }
+        ]
+      },
+      "after": {
+        "name": "栄光のプレート",
+        "base": "Glorious Plate",
+        "base_ja": "栄光のプレート",
+        "item_level": 80,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 65,
+          "str": 121
+        },
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "646",
+            "up": true
+          }
+        ],
+        "augments": [
+          {
+            "key": "rune:Legacy of Blackbraid",
+            "en": "Legacy of Blackbraid",
+            "ja": "黒い組紐の遺産",
+            "category": "Body Armour",
+            "text_ja": "アーマーの+50%が元素ダメージにも適用される",
+            "text_en": "+50% of Armour also applies to Elemental Damage",
+            "stats": [
+              {
+                "id": "armour_%_applies_to_fire_cold_lightning_damage",
+                "value": 50
+              }
+            ]
+          }
+        ],
+        "quality_tag": null,
+        "sockets": 1,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Body_Armours_str/BaseSpirit",
+            "family": "BaseSpirit",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 33,
+            "text_ja": "スピリット +40",
+            "text_en": "+40 to Spirit",
+            "values": [
+              40
+            ],
+            "ranges": [
+              [
+                38,
+                42
+              ]
+            ],
+            "tier_index": 2,
+            "affix": "Viscountess'"
+          },
+          {
+            "mod_id": "Body_Armours_str/LocalIncreasedArmourAndBase",
+            "family": "BaseLocalDefencesAndDefencePercent",
+            "side": "prefix",
+            "tier_name": "T5",
+            "mod_level": 16,
+            "text_ja": "アーマーが16%増加する / アーマー +23",
+            "text_en": "16% increased Armour\n+23 to Armour",
+            "values": [
+              16,
+              23
+            ],
+            "ranges": [
+              [
+                14,
+                20
+              ],
+              [
+                10,
+                29
+              ]
+            ],
+            "tier_index": 1,
+            "affix": "Snail's"
+          },
+          {
+            "mod_id": "Body_Armours_str/IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 80,
+            "text_ja": "最大ライフ +213",
+            "text_en": "+213 to maximum Life",
+            "values": [
+              213
+            ],
+            "ranges": [
+              [
+                200,
+                214
+              ]
+            ],
+            "tier_index": 12,
+            "affix": "Prime"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/LightningResistance",
+            "family": "LightningResistance",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "雷耐性 +9%",
+            "text_en": "+9% to Lightning Resistance",
+            "values": [
+              9
+            ],
+            "ranges": [
+              [
+                6,
+                10
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Cloud"
+          }
+        ]
+      },
+      "changed": {
+        "added": [],
+        "removed": [],
+        "rarity_from": "rare",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      },
+      "augment_change": {
+        "socket": 1,
+        "put": {
+          "key": "rune:Legacy of Blackbraid",
+          "en": "Legacy of Blackbraid",
+          "ja": "黒い組紐の遺産",
+          "category": "Body Armour",
+          "text_ja": "アーマーの+50%が元素ダメージにも適用される",
+          "text_en": "+50% of Armour also applies to Elemental Damage",
+          "stats": [
+            {
+              "id": "armour_%_applies_to_fire_cold_lightning_damage",
+              "value": 50
+            }
+          ]
+        },
+        "replaced": null,
+        "replaced_goes": null
+      }
+    }
+  ],
+  "final": {
+    "name": "栄光のプレート",
+    "base": "Glorious Plate",
+    "base_ja": "栄光のプレート",
+    "item_level": 80,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "disposed": null,
+    "gained": null,
+    "requirements": {
+      "level": 65,
+      "str": 121
+    },
+    "properties": [
+      {
+        "key": "armour",
+        "label": "アーマー",
+        "value": "646",
+        "up": true
+      }
+    ],
+    "augments": [
+      {
+        "key": "rune:Legacy of Blackbraid",
+        "en": "Legacy of Blackbraid",
+        "ja": "黒い組紐の遺産",
+        "category": "Body Armour",
+        "text_ja": "アーマーの+50%が元素ダメージにも適用される",
+        "text_en": "+50% of Armour also applies to Elemental Damage",
+        "stats": [
+          {
+            "id": "armour_%_applies_to_fire_cold_lightning_damage",
+            "value": 50
+          }
+        ]
+      }
+    ],
+    "quality_tag": null,
+    "sockets": 1,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [
+      {
+        "mod_id": "Body_Armours_str/BaseSpirit",
+        "family": "BaseSpirit",
+        "side": "prefix",
+        "tier_name": "T6",
+        "mod_level": 33,
+        "text_ja": "スピリット +40",
+        "text_en": "+40 to Spirit",
+        "values": [
+          40
+        ],
+        "ranges": [
+          [
+            38,
+            42
+          ]
+        ],
+        "tier_index": 2,
+        "affix": "Viscountess'"
+      },
+      {
+        "mod_id": "Body_Armours_str/LocalIncreasedArmourAndBase",
+        "family": "BaseLocalDefencesAndDefencePercent",
+        "side": "prefix",
+        "tier_name": "T5",
+        "mod_level": 16,
+        "text_ja": "アーマーが16%増加する / アーマー +23",
+        "text_en": "16% increased Armour\n+23 to Armour",
+        "values": [
+          16,
+          23
+        ],
+        "ranges": [
+          [
+            14,
+            20
+          ],
+          [
+            10,
+            29
+          ]
+        ],
+        "tier_index": 1,
+        "affix": "Snail's"
+      },
+      {
+        "mod_id": "Body_Armours_str/IncreasedLife",
+        "family": "IncreasedLife",
+        "side": "prefix",
+        "tier_name": "T1",
+        "mod_level": 80,
+        "text_ja": "最大ライフ +213",
+        "text_en": "+213 to maximum Life",
+        "values": [
+          213
+        ],
+        "ranges": [
+          [
+            200,
+            214
+          ]
+        ],
+        "tier_index": 12,
+        "affix": "Prime"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Body_Armours_str/LightningResistance",
+        "family": "LightningResistance",
+        "side": "suffix",
+        "tier_name": "T8",
+        "mod_level": 1,
+        "text_ja": "雷耐性 +9%",
+        "text_en": "+9% to Lightning Resistance",
+        "values": [
+          9
+        ],
+        "ranges": [
+          [
+            6,
+            10
+          ]
+        ],
+        "tier_index": 0,
+        "affix": "of the Cloud"
+      }
+    ]
+  },
+  "total_cost": 0
+}

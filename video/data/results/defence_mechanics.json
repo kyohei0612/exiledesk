@@ -1,0 +1,208 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-09-30T06:41:23.443Z",
+  "exiledesk_version": "0.1.341",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "防御の仕組みの回 (実演なし、画面の土台だけ)",
+    "base": "Rusted Cuirass",
+    "item_level": 33,
+    "start_rarity": "normal",
+    "seed": 20260930,
+    "start_unidentified": false,
+    "steps": [
+      {
+        "currency": "transmute",
+        "times": 1,
+        "note": "土台 (台本では使わない)"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "transmute",
+      "currency_ja": "変成のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20260931,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "錆びた胴鎧",
+        "base": "Rusted Cuirass",
+        "base_ja": "錆びた胴鎧",
+        "item_level": 33,
+        "rarity": "normal",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": null,
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "45",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "after": {
+        "name": "錆びた胴鎧",
+        "base": "Rusted Cuirass",
+        "base_ja": "錆びた胴鎧",
+        "item_level": 33,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": null,
+        "properties": [
+          {
+            "key": "armour",
+            "label": "アーマー",
+            "value": "45",
+            "up": false
+          }
+        ],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "筋力 +5",
+            "text_en": "+5 to Strength",
+            "values": [
+              5
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Brute"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Body_Armours_str/Strength",
+            "family": "Strength",
+            "side": "suffix",
+            "tier_name": "T8",
+            "mod_level": 1,
+            "text_ja": "筋力 +5",
+            "text_en": "+5 to Strength",
+            "values": [
+              5
+            ],
+            "ranges": [
+              [
+                5,
+                8
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "of the Brute"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "normal",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    }
+  ],
+  "final": {
+    "name": "錆びた胴鎧",
+    "base": "Rusted Cuirass",
+    "base_ja": "錆びた胴鎧",
+    "item_level": 33,
+    "rarity": "magic",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "disposed": null,
+    "gained": null,
+    "requirements": null,
+    "properties": [
+      {
+        "key": "armour",
+        "label": "アーマー",
+        "value": "45",
+        "up": false
+      }
+    ],
+    "augments": [],
+    "quality_tag": null,
+    "sockets": 0,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [],
+    "suffixes": [
+      {
+        "mod_id": "Body_Armours_str/Strength",
+        "family": "Strength",
+        "side": "suffix",
+        "tier_name": "T8",
+        "mod_level": 1,
+        "text_ja": "筋力 +5",
+        "text_en": "+5 to Strength",
+        "values": [
+          5
+        ],
+        "ranges": [
+          [
+            5,
+            8
+          ]
+        ],
+        "tier_index": 0,
+        "affix": "of the Brute"
+      }
+    ]
+  },
+  "total_cost": 0
+}

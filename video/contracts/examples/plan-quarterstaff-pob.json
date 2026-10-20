@@ -1,0 +1,3 @@
+{"schema":"craft-stage-plan/1","title":"qs","base":"Crescent Quarterstaff","item_level":22,"start_rarity":"normal","seed":20261003,
+ "pob":{"class":"Monk","level":20,"skill":"Ice Strike","config":{"resistancePenalty":-20,"enemyIsBoss":"None"}},
+ "steps":[{"currency":"transmute"},{"currency":"augment"},{"currency":"regal"},{"currency":"artificer"},{"currency":"rune:Lesser Iron Rune"}]}

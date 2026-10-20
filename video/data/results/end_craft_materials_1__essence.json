@@ -1,0 +1,382 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-10-02T07:58:41.738Z",
+  "exiledesk_version": "0.1.345",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "グレーターエッセンス: マジック → レア + ライフ確定",
+    "base": "Amber Amulet",
+    "item_level": 82,
+    "start_rarity": "normal",
+    "seed": 20261003,
+    "start_unidentified": false,
+    "steps": [
+      {
+        "currency": "transmute",
+        "times": 1,
+        "note": "マジックにする"
+      },
+      {
+        "currency": "essence:greater:Amulets/Essence_IncreasedLife",
+        "times": 1,
+        "note": "レアにしてライフを確定"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "transmute",
+      "currency_ja": "変成のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261004,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "normal",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/ChaosResistance",
+            "family": "ChaosResistance",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 81,
+            "text_ja": "混沌耐性 +27%",
+            "text_en": "+27% to Chaos Resistance",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                24,
+                27
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of Bameth"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Amulets/ChaosResistance",
+            "family": "ChaosResistance",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 81,
+            "text_ja": "混沌耐性 +27%",
+            "text_en": "+27% to Chaos Resistance",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                24,
+                27
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of Bameth"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "normal",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    },
+    {
+      "index": 2,
+      "currency": "essence:greater:Amulets/Essence_IncreasedLife",
+      "currency_ja": "肉体のグレーターエッセンス",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261005,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/ChaosResistance",
+            "family": "ChaosResistance",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 81,
+            "text_ja": "混沌耐性 +27%",
+            "text_en": "+27% to Chaos Resistance",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                24,
+                27
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of Bameth"
+          }
+        ]
+      },
+      "after": {
+        "name": "琥珀のアミュレット",
+        "base": "Amber Amulet",
+        "base_ja": "琥珀のアミュレット",
+        "item_level": 82,
+        "rarity": "rare",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 8
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Amulets/Essence_IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 46,
+            "text_ja": "最大ライフ +93",
+            "text_en": "+93 to maximum Life",
+            "values": [
+              93
+            ],
+            "ranges": [
+              [
+                85,
+                99
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 2,
+            "affix": "Greater Essence of the Body"
+          }
+        ],
+        "suffixes": [
+          {
+            "mod_id": "Amulets/ChaosResistance",
+            "family": "ChaosResistance",
+            "side": "suffix",
+            "tier_name": "T1",
+            "mod_level": 81,
+            "text_ja": "混沌耐性 +27%",
+            "text_en": "+27% to Chaos Resistance",
+            "values": [
+              27
+            ],
+            "ranges": [
+              [
+                24,
+                27
+              ]
+            ],
+            "tier_index": 5,
+            "affix": "of Bameth"
+          }
+        ]
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Amulets/Essence_IncreasedLife",
+            "family": "IncreasedLife",
+            "side": "prefix",
+            "tier_name": "T1",
+            "mod_level": 46,
+            "text_ja": "最大ライフ +93",
+            "text_en": "+93 to maximum Life",
+            "values": [
+              93
+            ],
+            "ranges": [
+              [
+                85,
+                99
+              ]
+            ],
+            "crafted": true,
+            "tier_index": 2,
+            "affix": "Greater Essence of the Body"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "magic",
+        "rarity_to": "rare"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    }
+  ],
+  "final": {
+    "name": "琥珀のアミュレット",
+    "base": "Amber Amulet",
+    "base_ja": "琥珀のアミュレット",
+    "item_level": 82,
+    "rarity": "rare",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "disposed": null,
+    "gained": null,
+    "requirements": {
+      "level": 8
+    },
+    "properties": [],
+    "augments": [],
+    "quality_tag": null,
+    "sockets": 0,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [
+      {
+        "mod_id": "Amulets/Essence_IncreasedLife",
+        "family": "IncreasedLife",
+        "side": "prefix",
+        "tier_name": "T1",
+        "mod_level": 46,
+        "text_ja": "最大ライフ +93",
+        "text_en": "+93 to maximum Life",
+        "values": [
+          93
+        ],
+        "ranges": [
+          [
+            85,
+            99
+          ]
+        ],
+        "crafted": true,
+        "tier_index": 2,
+        "affix": "Greater Essence of the Body"
+      }
+    ],
+    "suffixes": [
+      {
+        "mod_id": "Amulets/ChaosResistance",
+        "family": "ChaosResistance",
+        "side": "suffix",
+        "tier_name": "T1",
+        "mod_level": 81,
+        "text_ja": "混沌耐性 +27%",
+        "text_en": "+27% to Chaos Resistance",
+        "values": [
+          27
+        ],
+        "ranges": [
+          [
+            24,
+            27
+          ]
+        ],
+        "tier_index": 5,
+        "affix": "of Bameth"
+      }
+    ]
+  },
+  "total_cost": 0
+}

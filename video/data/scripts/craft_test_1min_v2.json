@@ -1,0 +1,271 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "【PoE2 初心者】白い指輪がオーブ3個でレアに、要らないMODは消して直す",
+  "target_seconds": 60,
+  "result_file": "data/results/craft_test_1min_v2.json",
+  "sections": [
+    {
+      "name": "導入",
+      "target_seconds": 10,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "text": "装備がずっと白いままなのだ。",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "オーブ3個で黄色いレアになるわよ。",
+          "emotion": "proud",
+          "scene": {
+            "kind": "item",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "たった3個なのだ！？",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "要らないMODは消去のオーブで消せるの。",
+          "speech": "要らないモッドは消去のオーブで消せるの。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 4
+          }
+        }
+      ]
+    },
+    {
+      "name": "仕組み",
+      "target_seconds": 20,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "変成のオーブ。白を青にしてMODを1つ付けるわ。",
+          "speech": "変成のオーブ。白を青にしてモッドを1つ付けるわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stack",
+            "step": 1,
+            "show_steps": [
+              1
+            ],
+            "highlight": "step"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "MODって何なのだ？",
+          "speech": "モッドって何なのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "stack",
+            "step": 1,
+            "show_steps": [
+              1
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "装備の能力のことよ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 1,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "増強のオーブ。青のままMODをもう1つ足すわ。",
+          "speech": "増強のオーブ。青のままモッドをもう1つ足すわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stack",
+            "step": 2,
+            "show_steps": [
+              1,
+              2
+            ],
+            "highlight": "step"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "王者のオーブ。青が黄色いレアになるの。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stack",
+            "step": 3,
+            "show_steps": [
+              1,
+              2,
+              3
+            ],
+            "highlight": "rarity"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "レアになったのだ！",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "item",
+            "step": 3,
+            "highlight": "rarity"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "消去のオーブは、MODを1つランダムに消すわ。",
+          "speech": "消去のオーブは、モッドを1つランダムに消すわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stack",
+            "step": 4,
+            "show_steps": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "highlight": "step"
+          }
+        }
+      ]
+    },
+    {
+      "name": "実践",
+      "target_seconds": 24,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "白いニーモニックリングに変成のオーブを使うわね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "器用さ+9が付いて青になったのだ。",
+          "speech": "器用さプラス9が付いて青になったのだ。",
+          "emotion": "happy",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "次は増強のオーブね。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 1
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "火ダメージ22%増加が付いたわ。",
+          "speech": "火ダメージ22パーセント増加が付いたわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "王者のオーブを使うわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 2
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "黄色くなって冷気耐性+37%が付いたのだ！",
+          "speech": "黄色くなって冷気耐性プラス37パーセントが付いたのだ！",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "highlight": "rarity"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "最後に消去のオーブ。何が消えるかは運よ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 3
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "火ダメージが消えたのだ。",
+          "emotion": "happy",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "器用さと冷気耐性が残ったわね。",
+          "emotion": "proud",
+          "scene": {
+            "kind": "stage",
+            "step": 4
+          }
+        }
+      ]
+    },
+    {
+      "name": "まとめ",
+      "target_seconds": 6,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "text": "変成、増強、王者でレアになって、消去で1つ消せるのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "stack",
+            "step": 4,
+            "show_steps": [
+              1,
+              2,
+              3,
+              4
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "次は高貴なオーブで枠を埋める回よ。",
+          "emotion": "proud",
+          "scene": {
+            "kind": "talk"
+          }
+        }
+      ]
+    }
+  ]
+}

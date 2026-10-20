@@ -1,0 +1,221 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "【PoE2 初心者】白い装備がオーブ3個でレアになる",
+  "target_seconds": 60,
+  "result_file": "data/results/craft_intro_1min.json",
+  "sections": [
+    {
+      "name": "導入",
+      "target_seconds": 8,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "text": "装備がずっと白いままなのだ。",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "オーブ3個で黄色いレアになるわよ。",
+          "emotion": "proud",
+          "scene": {
+            "kind": "talk"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "たった3個なのだ！？",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "talk"
+          }
+        }
+      ]
+    },
+    {
+      "name": "仕組み",
+      "target_seconds": 27,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "1個目、変成のオーブ。白が青になってMODが1つ付くわ。",
+          "speech": "1個目、変成のオーブ。白が青になってモッドが1つ付くわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stack",
+            "step": 1,
+            "show_steps": [
+              1
+            ],
+            "highlight": "step"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "MODって何なのだ？",
+          "speech": "モッドって何なのだ？",
+          "emotion": "troubled",
+          "scene": {
+            "kind": "stack",
+            "step": 1,
+            "show_steps": [
+              1
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "「レアリティ+9%」みたいな装備の能力よ。",
+          "speech": "「レアリティ、プラス9パーセント」みたいな装備の能力よ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "item",
+            "step": 1,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "2個目、増強のオーブ。青のままMODをもう1つ足すの。",
+          "speech": "2個目、増強のオーブ。青のままモッドをもう1つ足すの。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stack",
+            "step": 2,
+            "show_steps": [
+              1,
+              2
+            ],
+            "highlight": "step"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "回避力が付いたのだ。",
+          "emotion": "happy",
+          "scene": {
+            "kind": "stack",
+            "step": 2,
+            "show_steps": [
+              1,
+              2
+            ],
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "3個目、王者のオーブ。青が黄色いレアになって3つ目が付くわ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stack",
+            "step": 3,
+            "show_steps": [
+              1,
+              2,
+              3
+            ],
+            "highlight": "rarity"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "おお、3つ目が付いたのだ！",
+          "emotion": "surprised",
+          "scene": {
+            "kind": "item",
+            "step": 3,
+            "highlight": "rarity"
+          }
+        }
+      ]
+    },
+    {
+      "name": "実践",
+      "target_seconds": 17,
+      "lines": [
+        {
+          "speaker": "metan",
+          "text": "実際にやるわね。ニーモニックリング、アイテムレベル80。",
+          "speech": "実際にやるわね。ニーモニックリング、アイテムレベル80。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 0
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "まず変成のオーブ。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "text": "レアリティが付いたのだ。",
+          "emotion": "happy",
+          "scene": {
+            "kind": "stage",
+            "step": 1,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "増強のオーブで回避力。",
+          "emotion": "normal",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "highlight": "added"
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "そして王者のオーブ。黄色くなって雷耐性+40%よ。",
+          "speech": "そして王者のオーブ。黄色くなって雷耐性、プラス40パーセントよ。",
+          "emotion": "proud",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "highlight": "rarity"
+          }
+        }
+      ]
+    },
+    {
+      "name": "まとめ",
+      "target_seconds": 8,
+      "lines": [
+        {
+          "speaker": "zundamon",
+          "text": "変成、増強、王者。3個で白がレアになるのだ！",
+          "emotion": "happy",
+          "scene": {
+            "kind": "stack",
+            "step": 3,
+            "show_steps": [
+              1,
+              2,
+              3
+            ]
+          }
+        },
+        {
+          "speaker": "metan",
+          "text": "次は高貴なオーブで4つ目を足す回よ。",
+          "emotion": "proud",
+          "scene": {
+            "kind": "talk"
+          }
+        }
+      ]
+    }
+  ]
+}

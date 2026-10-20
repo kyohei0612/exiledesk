@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+output/
+cache/
+.env
+assets/characters/*.psd
+assets/characters/*.zip
+assets/characters/*/**/*.psd
+*.egg-info/

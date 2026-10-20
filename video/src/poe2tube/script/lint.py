@@ -1,0 +1,228 @@
+"""台本の機械チェック (docs/script_rules/_all.md の「自己チェック」をコードにした物).
+
+Claude が書いた台本を受け入れる前に通す。結果 JSON との噛み合いは
+``VideoScript.check_against`` が担当し、ここは文体・テンポ・画面の切り替えを見る。
+セクション単位 (``lint_section``) と全体 (``lint_script``) の 2 段。
+"""
+
+from __future__ import annotations
+
+import re
+
+from poe2tube.script.model import CHARS_PER_MINUTE, Line, Section, VideoScript
+
+MAX_SENTENCE = 40
+# 情報の画面は出したまま、止めて解説する。最低の表示時間は画面の情報量で 3 つ
+# (kyohei 2026-09-30「画像みて完全に理解するまでの時間」): 軽い 6 秒 / 表 10 秒 / 仕組みの図 12 秒
+LIGHT, TABLE, DIAGRAM = 6.0, 10.0, 12.0
+INFO_MIN_SECONDS = {
+    "quiz": LIGHT,
+    "icons": LIGHT,
+    "table": TABLE,
+    "ttk": LIGHT,
+    "hit": LIGHT,
+    "compare": TABLE,
+    "dps": TABLE,
+    "resists": TABLE,
+    "tiers": TABLE,
+    "layers": DIAGRAM,
+    "armour": DIAGRAM,
+    "evasion": DIAGRAM,
+    "es": DIAGRAM,
+    "bases": DIAGRAM,
+}
+INTRO_MAX_RATIO = 0.2
+SECTION_TOLERANCE = 0.35  # 章ごとの尺のずれ許容 (全体は ±25%)
+POLITE = re.compile(r"(です|ます|ました|でしょう)[。！？]")
+# ゲーム内表記に合わせる (kyohei 2026-09-27)。左は使わない、右に言い換える
+BANNED_TERMS = {"接頭": "プレフィックス", "接尾": "サフィックス"}
+# 「段」は使わない (ティアと紛らわしい、kyohei 2026-09-30)。辞書: 段 → ティア (ティアの意味の時)
+# それ以外は「つ」等に言い換える。段階・手段・値段などの別の言葉は除く
+TIER_AS_DAN = re.compile(r"(?<![手階値普格])段(?!階|落|取|差|ボール)")
+# 次回予告・次回の内容には触れない (kyohei 2026-09-28 確定)
+NEXT_TIME = re.compile(r"次回|次の動画|次は.{0,20}(回|動画)|お楽しみに")
+
+
+def lint_lines(lines: list[Line], offset: int = 0, n_steps: int | None = None) -> list[str]:
+    """行ごとの規則 (文体・用語・画面の連続・工程の参照)。``offset`` は通し番号の起点."""
+    problems: list[str] = []
+    for k, ln in enumerate(lines, start=1):
+        i = offset + k
+        for s in re.split(r"[。！？]", ln.text):
+            if len(s) > MAX_SENTENCE:
+                problems.append(f"line {i}: 一文が {len(s)} 字 (40 字以内): {s[:20]}…")
+        if ln.speaker == "zundamon" and "のだ" not in ln.text:
+            problems.append(f"line {i}: ずんだもんの語尾に「のだ」が無い: {ln.text}")
+        if POLITE.search(ln.text):
+            problems.append(f"line {i}: 敬語 (です/ます) は使わない: {ln.text}")
+        if NEXT_TIME.search(ln.text):
+            problems.append(f"line {i}: 次回予告・次回の内容には触れない: {ln.text}")
+        if TIER_AS_DAN.search(ln.text):
+            problems.append(
+                f"line {i}: 「段」は使わない (ティアなら「ティア」、他は言い換え): {ln.text}"
+            )
+        for ng, ok in BANNED_TERMS.items():
+            if ng in ln.text:
+                problems.append(f"line {i}: 「{ng}」は使わない → 「{ok}」: {ln.text}")
+        main = ln.scene.demo is None  # 追加の実演の手数は stage_coverage で見る
+        if main and n_steps is not None and ln.scene.step is not None and ln.scene.step > n_steps:
+            problems.append(f"line {i}: step {ln.scene.step} は結果 JSON に無い (最大 {n_steps})")
+    problems += info_screen_time(lines, offset)
+    # 同じ画面は何行続けてもよい (テロップが変わっても画像を置いたまま、kyohei 2026-09-30)
+    for k, ln in enumerate(lines, start=1):
+        if ln.scene.kind == "talk":
+            problems.append(
+                f"line {offset + k}: 何も出ない画面 (talk) は使わない → 話題の物 "
+                "(item / stage / compare 等) を出したまま話す"
+            )
+    return problems
+
+
+# 同じ画像のまま答えだけ出す引数 (防御の画面の数字を隠す hl)。続く間は下げずに 1 枚として数える
+_REVEAL_PARAMS = ("hl",)
+
+
+def _view_key(ln: Line) -> tuple[object, ...]:
+    """同じ画像を続けて使う間は 1 つの画面 (答えを隠す / 出す・クイズの秒読みと正解の違いは同じ)."""
+    sc = ln.scene
+    params = {k: v for k, v in (sc.def_params or {}).items() if k not in _REVEAL_PARAMS}
+    update: dict[str, object] = {"reveal": True, "show_dps": True, "def_params": params or None}
+    if sc.kind == "quiz":
+        update |= {"answer": None, "countdown": None}
+    return sc.model_copy(update=update).key()
+
+
+def info_screen_time(lines: list[Line], offset: int = 0) -> list[str]:
+    """情報の画面を出している時間 (声の見込み) が短すぎないか。続く行は 1 つの画面として足す."""
+    problems: list[str] = []
+    k = 0
+    while k < len(lines):
+        ln = lines[k]
+        need = INFO_MIN_SECONDS.get(ln.scene.kind)
+        j = k + 1
+        while j < len(lines) and _view_key(lines[j]) == _view_key(ln):
+            j += 1
+        if need is not None:
+            secs = sum(len(x.spoken) for x in lines[k:j]) / CHARS_PER_MINUTE * 60
+            if secs < need:
+                problems.append(
+                    f"line {offset + k + 1}: {ln.scene.kind} の画面が約 {secs:.0f} 秒で消える "
+                    f"({need:.0f} 秒以上、画面を出したままつなぎで話す)"
+                )
+        k = j
+    return problems
+
+
+def lint_section(section: Section, n_steps: int | None = None, offset: int = 0) -> list[str]:
+    """章 1 つの検査: 行の規則 + その章の尺 (±35%)."""
+    problems = lint_lines(section.lines, offset, n_steps)
+    chars = sum(len(ln.spoken) for ln in section.lines)
+    est = chars / CHARS_PER_MINUTE * 60
+    lo, hi = section.target_seconds * (1 - SECTION_TOLERANCE), section.target_seconds * (
+        1 + SECTION_TOLERANCE
+    )
+    if not lo <= est <= hi:
+        problems.append(
+            f"「{section.name}」の尺の見込み {est:.0f} 秒が"
+            f"目標 {section.target_seconds} 秒 ±35% の外"
+            f" (今 {chars} 字、目標 {int(section.target_seconds * CHARS_PER_MINUTE / 60)} 字)"
+        )
+    return problems
+
+
+def lint_script(
+    script: VideoScript,
+    n_steps: int | None = None,
+    demo_steps: dict[str, int] | None = None,
+    skippable: dict[str | None, set[int]] | None = None,
+) -> list[str]:
+    """全体の検査。``n_steps`` はメインの結果 JSON の手数、``demo_steps`` は追加の実演ごとの手数.
+
+    ``skippable`` は行が無くてよい手 (同じカレンシーの連打の途中・メインと同じ前半、writer.py).
+    """
+    lines = script.lines
+    problems = lint_lines(lines, 0, n_steps)
+    if script.layout == "short":
+        # ショートは導入・聞き役の比率・実践の手の抜けを見ない (ADR 005)。尺だけ見る
+        est = script.estimated_seconds()
+        if not script.target_seconds * 0.75 <= est <= script.target_seconds * 1.25:
+            problems.append(f"尺の見込み {est:.0f} 秒が目標 {script.target_seconds} 秒 ±25% の外")
+        return problems
+    zunda = sum(1 for ln in lines if ln.speaker == "zundamon")
+    ratio = zunda / len(lines) if lines else 0
+    if not 0.25 <= ratio <= 0.5:
+        problems.append(f"聞き役 (ずんだもん) の比率 {ratio:.0%} が 25〜50% の外")
+    if (script.planned_sections or 0) > len(script.sections):
+        # 1 章ずつ書いている途中: 導入の割合・全体の尺・実践の手の抜けは、全部そろってから見る
+        return problems + hidden_dps_on_hit(script)
+    if script.sections:
+        intro = script.sections[0]
+        intro_chars = sum(len(ln.spoken) for ln in intro.lines)
+        # 導入の章に長めの目標 (例 60 秒) を書いた回はそれを上限に (kyohei 2026-10-07)
+        intro_sec = max(30, intro.target_seconds)
+        limit = intro_sec * CHARS_PER_MINUTE / 60 * (1.1 if intro_sec > 30 else 1.0)
+        if intro_chars > script.char_count() * INTRO_MAX_RATIO and intro_chars > limit:
+            problems.append(
+                f"導入が長い ({intro_chars} 字、{intro_sec} 秒以内 = 約 {int(limit)} 字)"
+            )
+    lo, hi = script.target_seconds * 0.75, script.target_seconds * 1.25
+    est = script.estimated_seconds()
+    if not lo <= est <= hi:
+        problems.append(f"尺の見込み {est:.0f} 秒が目標 {script.target_seconds} 秒 ±25% の外")
+    problems += stage_coverage(script, n_steps, demo_steps, skippable)
+    problems += hidden_dps_on_hit(script)
+    return problems
+
+
+def hidden_dps_on_hit(script: VideoScript) -> list[str]:
+    """打つ行 (その手が初めて出る stage) では DPS を隠せない (打つ瞬間の録画に数字が出る、⑰)."""
+    seen: set[tuple[str | None, int]] = set()
+    problems: list[str] = []
+    for i, ln in enumerate(script.lines, start=1):
+        sc = ln.scene
+        if sc.kind != "stage" or sc.step is None:
+            continue
+        key = (sc.demo, sc.step)
+        if key not in seen and sc.step >= 1 and not sc.show_dps:
+            problems.append(f"line {i}: 打つ行では show_dps: false にできない (前の行で隠す)")
+        seen.add(key)
+    return problems
+
+
+def stage_coverage(
+    script: VideoScript,
+    n_steps: int | None,
+    demo_steps: dict[str, int] | None = None,
+    skippable: dict[str | None, set[int]] | None = None,
+) -> list[str]:
+    """実践は 1 手 1 行以上: 実演ごとに stage の step が 1..n を飛ばさず出る (2026-09-27).
+
+    ``skippable`` の手は飛ばしてよい (カタリスト ×27 の途中、消去を試す実演のメインと同じ前半)。
+    """
+    by_demo: dict[str | None, set[int]] = {}
+    for ln in script.lines:
+        if ln.scene.kind == "stage" and ln.scene.step:
+            by_demo.setdefault(ln.scene.demo, set()).add(ln.scene.step)
+    if not by_demo:
+        # アプリを操作した録画 (footage) で実践を見せる回は、録画が実践 (宣伝の回、2026-10-12)
+        filmed = any(ln.scene.kind == "footage" for ln in script.lines)
+        return [] if not script.practice or filmed else ["実践 (stage) の行が無い"]
+    wanted: dict[str | None, int | None] = {None: n_steps}
+    wanted.update((k, v) for k, v in (demo_steps or {}).items())
+    problems: list[str] = []
+    for key, n in wanted.items():
+        steps = by_demo.get(key)
+        if not steps:
+            # 追加の実演は姿だけ見せる (item / compare) こともある。手を見せる実演だけ全部の手を見る
+            if key is None:
+                problems.append("実践 (stage) の行が無い")
+            continue
+        last = n or max(steps)
+        ok = (skippable or {}).get(key, set())
+        missing = [s for s in range(1, last + 1) if s not in steps and s not in ok]
+        if missing:
+            name = "" if key is None else f"実演 {key!r} の"
+            problems.append(
+                f"実践で飛ばした手がある (1 手 1 行以上): {name}step {missing} の stage 行が無い"
+            )
+    return problems

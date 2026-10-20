@@ -1,0 +1,201 @@
+{
+  "schema": "poe2tube-script/1",
+  "title": "【PoE2】冒涜の MOD は引き直せる？ アビスの反響のお告げ #Shorts",
+  "target_seconds": 45,
+  "result_file": "data/results/end_craft_materials_2.json",
+  "layout": "short",
+  "short_title": "冒涜 MOD、引き直せる？",
+  "demos": {
+    "echo": "data/results/end_craft_materials_2__echo.json"
+  },
+  "sections": [
+    {
+      "name": "冒涜 MOD、引き直せる？",
+      "lines": [
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "冒涜で付けた MOD、候補を引き直せるって知ってた？",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "echo",
+            "still": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "surprised",
+          "text": "えっ、運だけじゃないのだ？",
+          "scene": {
+            "kind": "stage",
+            "step": 2,
+            "demo": "echo",
+            "still": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "発現の前に、アビスの反響のお告げを使っておくの。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "アビスの反響のお告げ",
+              "icons": [
+                "OmenofAbyssalEchoes"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "troubled",
+          "text": "候補を見てから使うのは、できないのだ？",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "アビスの反響のお告げ",
+              "icons": [
+                "OmenofAbyssalEchoes"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "できないわ。先に使っておく物よ。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "アビスの反響のお告げ",
+              "icons": [
+                "OmenofAbyssalEchoes"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "まず、お告げ無しで発現すると……候補はこの 3 つ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "offers": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "normal",
+          "text": "別の候補も見てみたいのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "offers": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "お告げがあると、引き直せる……キャストスピードが出たわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "echo",
+            "offers": true
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "キャストスピードが T1 なのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "echo",
+            "offers": true
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "キャストスピードが 26% 増加する、を選ぶわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "echo"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "付いたのだ！",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "echo"
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ただ、引き直しも運。引き直さなくても、お告げは発現した時点でなくなるわ。",
+          "scene": {
+            "kind": "stage",
+            "step": 3,
+            "demo": "echo"
+          }
+        },
+        {
+          "speaker": "zundamon",
+          "emotion": "happy",
+          "text": "お告げと骨の使い方、本編でまとめて解説してるのだ！",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "エンドのクラフト素材 後編",
+              "icons": [
+                "OmenofGreaterExaltation",
+                "OmenofAbyssalEchoes",
+                "collarbone",
+                "OmenofSanctification"
+              ],
+              "names": [
+                "お告げ",
+                "反響",
+                "骨",
+                "聖別"
+              ]
+            }
+          }
+        },
+        {
+          "speaker": "metan",
+          "emotion": "normal",
+          "text": "ほかのお告げも、関連動画から見てね。",
+          "scene": {
+            "kind": "icons",
+            "panel": {
+              "title": "エンドのクラフト素材 後編",
+              "icons": [
+                "OmenofGreaterExaltation",
+                "OmenofAbyssalEchoes",
+                "collarbone",
+                "OmenofSanctification"
+              ],
+              "names": [
+                "お告げ",
+                "反響",
+                "骨",
+                "聖別"
+              ]
+            }
+          }
+        }
+      ],
+      "target_seconds": 45
+    }
+  ]
+}

@@ -1,0 +1,192 @@
+{
+  "schema": "craft-stage-result/1",
+  "generated_at": "2026-09-29T16:21:46.563Z",
+  "exiledesk_version": "0.1.337",
+  "patch": "0.5.0",
+  "league": null,
+  "price_unit": "exalted",
+  "plan": {
+    "schema": "craft-stage-plan/1",
+    "title": "サファイアの指輪 (固有で冷気耐性)",
+    "base": "Sapphire Ring",
+    "item_level": 33,
+    "start_rarity": "normal",
+    "seed": 20261204,
+    "start_unidentified": false,
+    "steps": [
+      {
+        "currency": "transmute",
+        "times": 1
+      }
+    ]
+  },
+  "steps": [
+    {
+      "index": 1,
+      "currency": "transmute",
+      "currency_ja": "変成のオーブ",
+      "omen": null,
+      "omen_ja": null,
+      "seed": 20261205,
+      "applied": true,
+      "reason": null,
+      "before": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 33,
+        "rarity": "normal",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 12
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [],
+        "suffixes": []
+      },
+      "after": {
+        "name": "サファイアの指輪",
+        "base": "Sapphire Ring",
+        "base_ja": "サファイアの指輪",
+        "item_level": 33,
+        "rarity": "magic",
+        "quality": 0,
+        "corrupted": false,
+        "identified": true,
+        "destroyed": false,
+        "unique": null,
+        "gem_sockets": null,
+        "shards": null,
+        "disposed": null,
+        "gained": null,
+        "requirements": {
+          "level": 12
+        },
+        "properties": [],
+        "augments": [],
+        "quality_tag": null,
+        "sockets": 0,
+        "enchant": null,
+        "sanctified": false,
+        "prefixes": [
+          {
+            "mod_id": "Rings/IncreasedChaosDamage",
+            "family": "IncreasedChaosDamage",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "混沌ダメージが5%増加する",
+            "text_en": "5% increased Chaos Damage",
+            "values": [
+              5
+            ],
+            "ranges": [
+              [
+                3,
+                7
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Impure"
+          }
+        ],
+        "suffixes": []
+      },
+      "changed": {
+        "added": [
+          {
+            "mod_id": "Rings/IncreasedChaosDamage",
+            "family": "IncreasedChaosDamage",
+            "side": "prefix",
+            "tier_name": "T6",
+            "mod_level": 8,
+            "text_ja": "混沌ダメージが5%増加する",
+            "text_en": "5% increased Chaos Damage",
+            "values": [
+              5
+            ],
+            "ranges": [
+              [
+                3,
+                7
+              ]
+            ],
+            "tier_index": 0,
+            "affix": "Impure"
+          }
+        ],
+        "removed": [],
+        "rarity_from": "normal",
+        "rarity_to": "magic"
+      },
+      "cost": {
+        "each": 0,
+        "amount": 1,
+        "subtotal": 0,
+        "cumulative": 0
+      }
+    }
+  ],
+  "final": {
+    "name": "サファイアの指輪",
+    "base": "Sapphire Ring",
+    "base_ja": "サファイアの指輪",
+    "item_level": 33,
+    "rarity": "magic",
+    "quality": 0,
+    "corrupted": false,
+    "identified": true,
+    "destroyed": false,
+    "unique": null,
+    "gem_sockets": null,
+    "shards": null,
+    "disposed": null,
+    "gained": null,
+    "requirements": {
+      "level": 12
+    },
+    "properties": [],
+    "augments": [],
+    "quality_tag": null,
+    "sockets": 0,
+    "enchant": null,
+    "sanctified": false,
+    "prefixes": [
+      {
+        "mod_id": "Rings/IncreasedChaosDamage",
+        "family": "IncreasedChaosDamage",
+        "side": "prefix",
+        "tier_name": "T6",
+        "mod_level": 8,
+        "text_ja": "混沌ダメージが5%増加する",
+        "text_en": "5% increased Chaos Damage",
+        "values": [
+          5
+        ],
+        "ranges": [
+          [
+            3,
+            7
+          ]
+        ],
+        "tier_index": 0,
+        "affix": "Impure"
+      }
+    ],
+    "suffixes": []
+  },
+  "total_cost": 0
+}
