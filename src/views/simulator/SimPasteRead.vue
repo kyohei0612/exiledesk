@@ -28,12 +28,15 @@ watch(() => !!read.value?.item.base, (ok) => {
 });
 const SIDE = { prefix: ["P", "プレフィックス", "Prefix"], suffix: ["S", "サフィックス", "Suffix"] } as const;
 /** 暗黙の行の札。extra = 印の無い貼り付けでベースの暗黙より前にあった行 (ルーン・エンチャント・コラプトの暗黙のどれか) */
-const IMPLICIT: Record<ItemTextImplicit["from"], [string, string, string?, string?]> = {
+const IMPLICIT: Record<string, [string, string, string?, string?]> = {
   base: ["暗黙", "Implicit"],
   rune: ["ルーン", "Rune"],
   enchant: ["エンチャント", "Enchant"],
   extra: ["暗黙?", "Implicit?", "ルーン・エンチャント・コラプトの暗黙のどれか (文では見分けられない)", "A rune, enchant or corruption implicit (the text alone can't tell)"],
+  corruption: ["コラプト", "Corruption"],
 };
+/** 読みの側が新しい出どころを足しても落ちない (2026-10-20: 入口に corruption が増えた時、無い鍵で画面ごと止まった) */
+const imLabel = (from: ItemTextImplicit["from"]): [string, string, string?, string?] => IMPLICIT[from] ?? [from, from];
 </script>
 
 <template>
@@ -54,7 +57,7 @@ const IMPLICIT: Record<ItemTextImplicit["from"], [string, string, string?, strin
           <span class="tabular-nums text-[12px] opacity-60">P {{ it.count.prefix }}/{{ it.count.limit.prefix }} · S {{ it.count.suffix }}/{{ it.count.limit.suffix }}</span>
         </div>
         <ul v-if="it.implicits.length" class="grid min-w-0 gap-0.5 text-[12px] text-[var(--exile-color-text-secondary)]">
-          <li v-for="(im, i) in it.implicits" :key="i" class="min-w-0 break-words"><span class="mr-1.5 opacity-60" :title="IMPLICIT[im.from][2] ? tr(IMPLICIT[im.from][2]!, IMPLICIT[im.from][3]!) : undefined">{{ tr(IMPLICIT[im.from][0], IMPLICIT[im.from][1]) }}</span>{{ im.text }}</li>
+          <li v-for="(im, i) in it.implicits" :key="i" class="min-w-0 break-words"><span class="mr-1.5 opacity-60" :title="imLabel(im.from)[2] ? tr(imLabel(im.from)[2]!, imLabel(im.from)[3]!) : undefined">{{ tr(imLabel(im.from)[0], imLabel(im.from)[1]) }}</span>{{ im.text }}</li>
         </ul>
         <ul data-sim-paste-mods class="grid min-w-0 gap-0.5">
           <li v-for="(m, i) in it.mods" :key="i" class="flex min-w-0 flex-wrap items-baseline gap-x-1.5">
