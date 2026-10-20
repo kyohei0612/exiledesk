@@ -21,7 +21,6 @@ import { simStep } from "../../state/web-page";
 import { openBasePage } from "../../web/page";
 import SimTargetSort from "./SimTargetSort.vue";
 import { useSimStarts } from "./use-sim-starts";
-import { ARMED_CLASS } from "../../utils/use-armed";
 import { iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { simCurrency } from "../../state/display-currency";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
@@ -61,7 +60,7 @@ const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, start
   fourDivine, itemDivine, num, socketsOk, socketCount, ageOf, searchIlvl, searchFour, searchWhite, mixedSides, searchBought, doneDivine,
   doneAge, searchDone, searchPattern, calc, whiteCosts, busy, phase, progressBox, error, recipeOut, phone, resultOf, shownName, cheapestName,
   showResultByName, patternNote, togglePatternOff, hasSteps, quizBase, runnable, blocked, activePattern, run, stop, open, toggle,
-  help, modsDone, sortDone, orderDone, step3, startPrice, whiteDone, stepOrder, patternDone, stale, step4pre, step4, ilvlNote, resetArm, resetAll, reach, go, decideMods, sortDecided, decideOrder, edit2, panelEl, whiteDecide,
+  modsDone, sortDone, orderDone, step3, startPrice, whiteDone, stepOrder, patternDone, stale, step4pre, step4, ilvlNote, resetArm, resetAll, reach, go, decideMods, sortDecided, decideOrder, edit2, panelEl, whiteDecide,
   undoStack, undo, money, results, baseJa, pct, compare, hitName, split, moneyT, fmtCount, hitShort, cardOk, cardNote, saveCard, copyCard, luck,
   costGroups, summary, tooManySteps, nextMaxSteps } = { ...tg, ...sr, ...rn, ...rc, ...st, ...rs };
 /** 付与スキルが候補から 1 つのベースで、まだ選んでいない (選ぶまで始め方を出さない) */
@@ -114,13 +113,9 @@ const stepNotes = computed(() => {
     <Teleport defer to="#sim-tools" :disabled="s.mode.value !== 'sim' || !!s.replay.value">
       <CurrencyPicker sim />
       <!-- レシピ (今のレシピ・保存・別名で保存・共有。一覧はレシピのページ。2026-10-21) -->
-      <SimRecipeBar />
-      <!-- 2026-10-10 動きの揃え 6: 帯のボタンはエミュレーターの「白に戻す」「1 手戻す」と同じ g-btn sm (2 回押しの間は g-btn-red) -->
-      <button type="button" class="inline-flex items-center gap-1.5 max-md:min-h-10" :class="resetArm.is() ? ARMED_CLASS : 'g-btn sm'" title="最初 (ベースを選ぶ所) に戻す。選んだ MOD・工程・結果を消す (入れた値段は残る)" @click="resetAll"><Icon name="rotate" class="size-4" /><span :class="resetArm.is() ? '' : 'max-md:hidden'">{{ resetArm.is() ? "もう一度押すと消える" : "リセット" }}</span></button>
+      <SimRecipeBar :reset-armed="resetArm.is()" @reset="resetAll" />
       <button type="button" class="g-btn sm inline-flex items-center gap-1.5 max-md:min-h-10" :disabled="!undoStack.length" :title="undoStack.length ? '直前の操作を 1 つ取り消す (Ctrl+Z)' : '戻せる操作がまだ無い'" @click="undo"><Icon name="undo" class="size-4" /><span class="max-md:hidden">1 つ戻す</span></button>
-      <button type="button" class="grid size-8 place-items-center rounded-md transition max-md:size-10" :class="help ? 'bg-[var(--exile-color-bg-elevated)] text-[var(--exile-color-accent-focus)] ring-1 ring-[var(--exile-color-border-brass)]' : 'text-[var(--exile-color-text-tertiary)] hover:bg-white/5 hover:text-[var(--exile-color-text-secondary)]'" :title="help ? '説明を閉じる' : '説明を出す (各所の説明の文を開く)'" :aria-pressed="help" @click="toggle('help')"><Icon name="help" class="size-5" /></button>
     </Teleport>
-    <p v-if="help" class="mb-3 rounded-md bg-white/[0.03] px-3 py-2 text-[13px] text-[var(--exile-color-text-secondary)]">狙いは「このベースに付く MOD」の表の「T○ 以上」で選ぶ。打ち方 (パターン) を組んで「回す」と、何百人分も作った平均の費用が出る。各所の <Icon name="help" class="inline size-3.5 align-[-2px]" /> にも説明がある</p>
 
     <!-- 工程の帯 (2026-10-19 工程ごとのページ。決めた所は要約、押すとそのページ) -->
     <SimStepBar class="mb-3" :current="simStep" :reach="reach" :base="baseJa" :notes="stepNotes" :lead="!socketsOk ? tr('まず上でソケットの数を選ぶ (分からなければ 0)。選ぶと狙う MOD の一覧が出る', 'First choose the socket count above (0 if unsure). The mod list appears after that') : modsDone && !sortDone && simStep === 'mods' ? tr('2-b 付け方が同じ MOD をまとめる (全部 / この中のどれか)。枠に収まったら「次へ」', '2b: Group mods with the same method (all / any of these). When they fit the slots, press “Next”') : undefined" @go="go" @base="openBasePage" />

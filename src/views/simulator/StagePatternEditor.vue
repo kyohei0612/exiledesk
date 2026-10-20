@@ -40,24 +40,7 @@ const ready = (p: Pattern): boolean => answers(p) > 0;
 watch(active, (v) => emit("active", v), { immediate: true });
 // エミュレーターの「レシピで 1 手」は開いているパターンのクイズで打つ
 watch(() => pat.value?.name, (n) => { s.simQuizActive.value = n ?? null; }, { immediate: true });
-/**
- * 1 つ戻す (パターンの操作。2026-10-07 オーナー「1 つ戻すボタンがない、パターン①の横らへんに」)。
- * パターンが変わるたびに前の形を積み、押すと 1 つ前に戻す (戻した時は積まない)
- */
-const history = ref<string[]>([]);
-let undoing = false;
-watch(() => JSON.stringify(s.simPatterns.value), (_now, prev) => {
-  if (undoing) { undoing = false; return; }
-  if (prev) history.value = [...history.value.slice(-49), prev];
-});
-function undoPattern(): void {
-  const prev = history.value[history.value.length - 1];
-  if (!prev) return;
-  history.value = history.value.slice(0, -1);
-  undoing = true;
-  s.simPatterns.value = JSON.parse(prev) as Pattern[];
-  active.value = Math.min(active.value, s.simPatterns.value.length - 1);
-}
+// パターンの操作の 1 つ戻すは道具の帯の「1 つ戻す」(Ctrl+Z) にまとめた (2026-10-20 オーナー OK、棚卸しの 1。use-sim-steps の Snap にパターンを入れた)
 /** 付ける物の名前 */
 function modLabel(modId: string): string {
   const d = s.data.value;
@@ -128,8 +111,6 @@ function removePattern(): void {
         <button type="button" class="grid size-8 place-items-center rounded-md text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-text-primary)] max-md:min-h-10 max-md:min-w-10" :title="tr('このパターンを写して足す (少しだけ変えて比べる時に)', 'Duplicate this pattern (to compare small changes)')" @click="addPattern(true)"><Icon name="copy" class="size-4" /></button>
         <button type="button" class="grid size-8 place-items-center rounded-md text-[var(--exile-color-text-secondary)] hover:bg-white/5 hover:text-[var(--exile-color-signal-down)] disabled:opacity-30 max-md:min-h-10 max-md:min-w-10" :disabled="s.simPatterns.value.length <= 1" :title="s.simPatterns.value.length <= 1 ? tr('パターンが 1 つの時は消せない', 'Cannot remove the only pattern') : tr('このパターンを消す', 'Remove this pattern')" @click="removePattern"><Icon name="trash" class="size-4" /></button>
         <button type="button" class="ml-2 inline-flex h-8 items-center gap-1.5 rounded-md border border-[var(--exile-color-border-brass)] px-3 text-[var(--exile-color-text-primary)] transition hover:bg-[var(--exile-color-bg-elevated)] disabled:opacity-30 max-md:hidden" :disabled="busy || !ready(pat) || (s.simPlayLeft.value[pat.name] ?? 0) > 0" :title="(s.simPlayLeft.value[pat.name] ?? 0) > 0 ? tr(`クイズが ${s.simPlayLeft.value[pat.name]} 問残っている (全部答えると回せる)`, `${s.simPlayLeft.value[pat.name]} questions left (answer all to run)`) : ready(pat) ? 'このパターンで 500 人がそれぞれ完成まで作った場合を試す (下の「回す」と同じ人数。未完成でも組めている所まで)' : '手が無い'" @click="emit('run-one', Math.min(active, s.simPatterns.value.length - 1))"><Icon name="play" class="size-3.5" />{{ tr("このパターンを回す", "Run this pattern") }}</button>
-        <!-- 操作の取り消しは「1 つ戻す」、打った手の取り消しは「1 手戻す」(2026-10-10 動きの揃え 7) -->
-        <button type="button" class="g-btn sm inline-flex items-center gap-1.5 max-md:min-h-10" :disabled="!history.length" :title="history.length ? tr('パターンの直前の操作を 1 つ取り消す', 'Undo the last change to the pattern') : tr('戻せる操作がまだ無い', 'Nothing to undo yet')" @click="undoPattern"><Icon name="undo" class="size-4" />{{ tr("1 つ戻す", "Undo") }}</button>
       </template>
     </div>
 

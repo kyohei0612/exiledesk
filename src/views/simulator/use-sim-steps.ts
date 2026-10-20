@@ -252,7 +252,7 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
     startDone.value = true;
     simStep.value = "order";
   }
-  const snapNow = (): Snap => ({ targets: JSON.stringify(s.simTargets.value), whiteOk: whiteOk.value, modsDone: modsDone.value, fracDone: fracDone.value, startDone: startDone.value, orderDone: orderDone.value, sockets: sockets.value, white: whiteDivine.value, order: JSON.stringify(s.simOrder.value), auto: simAuto.value });
+  const snapNow = (): Snap => ({ targets: JSON.stringify(s.simTargets.value), whiteOk: whiteOk.value, modsDone: modsDone.value, fracDone: fracDone.value, startDone: startDone.value, orderDone: orderDone.value, sockets: sockets.value, white: whiteDivine.value, order: JSON.stringify(s.simOrder.value), auto: simAuto.value, patterns: JSON.stringify(s.simPatterns.value) });
   const undoStack = ref<Snap[]>([]);
   let lastSnap = snapNow();
   watch(() => JSON.stringify(snapNow()), () => {
