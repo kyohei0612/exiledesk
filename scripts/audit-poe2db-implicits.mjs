@@ -15,13 +15,14 @@
  * 直しの中身 (ベースごと): implicits = poe2db の暗黙 (英語は元の文の数字を差し替える / 型の表で作る)、variants = 同じ名前の別物 (poe2db に同じ名前のカードが
  * 2 つ以上ある時、それぞれの暗黙)、stats = 新しい並び → implicit-stats.json の元の並び (引き継げない物は null)
  */
-import { readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bundleEntry } from "./_bundle-ts.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const CACHE = resolve(ROOT, "data-cache/poe2db-pages");
+const CACHE_US = resolve(ROOT, "data-cache/poe2db-pages-us");
 const OUT = resolve(ROOT, "data-cache/poe2db-implicit-audit.json");
 const FIXES = resolve(ROOT, "src/services/htc/poe2db-implicit-fixes.json");
 const WRITE = process.argv.includes("--write");
@@ -58,18 +59,25 @@ const keyOf = (b) => (extra.baseInfo[nameOfHref(b.href)] ? nameOfHref(b.href) : 
 
 // poe2db のカードをベースごとに集める (同じ名前の別物は 2 枚以上)
 const cards = new Map();
+/** ベース + 日本語のカードの中身 → 英語版の同じカードの MOD (行) */
+const usOf = new Map();
 const pageOfKey = new Map();
 const onlyDb = {};
 const hiddenCount = { n: 0 };
 for (const f of readdirSync(CACHE).filter((x) => x.endsWith(".html")).sort()) {
   const page = f.replace(/\.html$/, "");
-  for (const b of basesOf(readFileSync(resolve(CACHE, f), "utf8"))) {
+  // 英語版の写し (data-cache/poe2db-pages-us、あれば) はカードの並びが同じ。英語の暗黙の文に使う
+  const usPath = resolve(CACHE_US, f);
+  const us = existsSync(usPath) ? basesOf(readFileSync(usPath, "utf8")) : [];
+  for (const [n, b] of basesOf(readFileSync(resolve(CACHE, f), "utf8")).entries()) {
     const key = keyOf(b);
     const mods = b.mods.map((lines) => { hiddenCount.n += lines.filter(hidden).length; return lines.filter((t) => !hidden(t) && !grantLine(t)); }).filter((l) => l.length);
     if (!key) { (onlyDb[page] ??= []).push(`${nameOfHref(b.href)} (${b.ja})${mods.length ? " | " + mods.map((m) => m.join(" / ")).join(" / ") : ""}`); continue; }
     if (!cards.has(key)) cards.set(key, []);
     // 同じページに同じカードが 2 度出ることがある (並びの表と一覧)。中身が同じなら 1 枚に
     if (!cards.get(key).some((c) => JSON.stringify(c) === JSON.stringify(mods))) cards.get(key).push(mods);
+    const u = us[n];
+    if (u && u.href === b.href) usOf.set(key + JSON.stringify(mods), u.mods.map((lines) => lines.filter((t) => !hidden(t) && !grantLine(t))).filter((l) => l.length));
     if (!pageOfKey.has(key)) pageOfKey.set(key, page);
   }
 }
@@ -100,7 +108,7 @@ function enOf(dbLines, old) {
 }
 
 /** poe2db の 1 枚 (MOD の並び) を baseInfo の暗黙と stat の並びに直す。元の MOD は 1 度ずつ (先に数字まで同じ物、次に形だけ同じ物) */
-function fromCard(mods, old) {
+function fromCard(mods, old, usMods) {
   const implicits = [], stats = [];
   const used = new Set();
   const find = (db, withNums) => old.findIndex((o, i) => !used.has(i) && sameShape(linesOf(o), db) && (!withNums || sameNums(linesOf(o), db)));
@@ -111,7 +119,10 @@ function fromCard(mods, old) {
     if (exact[n] >= 0) { implicits.push(old[exact[n]]); stats.push(exact[n]); return; }
     const k = loose[n];
     const o = k >= 0 ? old[k] : null;
-    implicits.push({ en: enOf(db, o && linesOf(o).length === db.length ? o : null), ja: db.join("\n").replace(/—/g, "-") });
+    // 英語は英語版のカードの同じ位置 (行の数が同じ時)、無ければ元の文の数字を差し替える / 型の表で作る
+    const usLines = usMods?.[n];
+    const en = usLines && usLines.length === db.length ? usLines.join("\n").replace(/—/g, "-") : enOf(db, o && linesOf(o).length === db.length ? o : null);
+    implicits.push({ en, ja: db.join("\n").replace(/—/g, "-") });
     stats.push(k >= 0 ? k : null);
   });
   return { implicits, stats };
@@ -126,7 +137,7 @@ for (const [key, list] of cards) {
   const okCard = (mods) => mods.length === old.length && mods.every((db, i) => sameShape(linesOf(old[i]), db) && sameNums(linesOf(old[i]), db));
   if (list.length > 1) {
     // 同じ名前の別物: どれか 1 枚と同じなら暗黙はそのまま、別物として全部を持つ
-    const vs = list.map((mods) => fromCard(mods, info.implicits ?? []));
+    const vs = list.map((mods) => fromCard(mods, info.implicits ?? [], usOf.get(key + JSON.stringify(mods))));
     const pick = list.findIndex(okCard);
     const cur = pick >= 0 ? null : vs[0];
     newFixes[key] = { ...(cur ? { implicits: cur.implicits, stats: cur.stats } : {}), variants: vs.map((v) => v.implicits) };
@@ -140,7 +151,7 @@ for (const [key, list] of cards) {
   if (mods.length !== old.length) result.count.push(line);
   else if (mods.some((db, i) => !sameShape(linesOf(old[i]), db))) result.text.push(line);
   else result.values.push(line);
-  newFixes[key] = fromCard(mods, info.implicits ?? []);
+  newFixes[key] = fromCard(mods, info.implicits ?? [], usOf.get(key + JSON.stringify(mods)));
 }
 const seen = new Set(cards.keys());
 const clsWithPage = new Set([...cards.keys()].map((k) => extra.baseInfo[k].cls));
