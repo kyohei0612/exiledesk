@@ -8,8 +8,9 @@
 2. 自動でやる打ち方の決まりは必ず画面に文で出す (メモ feedback-show-sim-rules)。
 3. 両側の「どれか」は側ごとに分ける (sim-split-by-side)。工程ごとに 1 ページ、初心者でも分かる形 (sim-step-pages)。
 4. 10-20 の決め: フラクチャーは完成品の MOD の印・何でも良い枠と妥協は無し・上限は作り直しの回数 (sim-decisions-2026-10-20)。
-5. 値段は手入力 + 検索を開くボタンだけ、取引所の自動取得は使わない (sim-no-trade-fetch)。
-6. 打つ処理・確率はエミュレーターの部品を使い、自分で書かない。最善手・期待値の数字は解析君に頼む (開発部長経由)。
+5. 自動で選べる段は T2 以上まで。② で T1 だけの狙いがあれば自動のチェックは押せず 1 行「T1 だけの狙いは自動では組めない。手動で」(日英)。フラクチャーで固定済みの MOD (買って始める物) は打たないので T1 でよい見込み、確かめ中 (オーナー 10-20)。
+6. 値段は手入力 + 検索を開くボタンだけ、取引所の自動取得は使わない (sim-no-trade-fetch)。
+7. 打つ処理・確率はエミュレーターの部品を使い、自分で書かない。最善手・期待値の数字は解析君に頼む (開発部長経由)。
 
 ## 地図
 - 画面 src/views/simulator/: StageSimPanel.vue (入口)、工程の帯 SimStepBar・SimStepHead・SimProgress、始め方 SimStartPick・SimBaseCalc、順番のおすすめ SimAutoOrder・use-sim-auto-order (④、押した時だけ計算)、狙う SimTargetSort・StageTargetSummary、貼り付け SimPasteRead (① のベースのページの「貼り付け」タイルの枠、BaseCatalog の #paste)、打ち方 SimMethodPop・StagePatternEditor、費用 SimCostTip、レシピ SimRecipeBar・StageRecipeStart・StageRecipesPage・recipe-share.ts、StageQuizEditor・quiz-text.ts、use-sim-*.ts。
