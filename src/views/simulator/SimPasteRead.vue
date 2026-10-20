@@ -33,10 +33,16 @@ const IMPLICIT: Record<string, [string, string, string?, string?]> = {
   rune: ["ルーン", "Rune"],
   enchant: ["エンチャント", "Enchant"],
   extra: ["暗黙?", "Implicit?", "ルーン・エンチャント・コラプトの暗黙のどれか (文では見分けられない)", "A rune, enchant or corruption implicit (the text alone can't tell)"],
-  corruption: ["コラプト", "Corruption"],
+  corruption: ["コラプト", "Corrupted"],
 };
 /** 読みの側が新しい出どころを足しても落ちない (2026-10-20: 入口に corruption が増えた時、無い鍵で画面ごと止まった) */
 const imLabel = (from: ItemTextImplicit["from"]): [string, string, string?, string?] => IMPLICIT[from] ?? [from, from];
+/** コラプトの行で poe2db の表に無い物 (unknown) は ? を付けて理由を出す (2026-10-20 J1b) */
+function imTag(im: ItemTextImplicit): { text: string; title?: string } {
+  const l = imLabel(im.from);
+  if (im.from === "corruption" && im.corruption?.status === "unknown") return { text: tr(`${l[0]}?`, `${l[1]}?`), title: tr("コラプトの行だが poe2db の表に無い (推し量らない)", "A corrupted line not in the poe2db table (not guessed)") };
+  return { text: tr(l[0], l[1]), title: l[2] ? tr(l[2], l[3]!) : undefined };
+}
 </script>
 
 <template>
@@ -57,7 +63,7 @@ const imLabel = (from: ItemTextImplicit["from"]): [string, string, string?, stri
           <span class="tabular-nums text-[12px] opacity-60">P {{ it.count.prefix }}/{{ it.count.limit.prefix }} · S {{ it.count.suffix }}/{{ it.count.limit.suffix }}</span>
         </div>
         <ul v-if="it.implicits.length" class="grid min-w-0 gap-0.5 text-[12px] text-[var(--exile-color-text-secondary)]">
-          <li v-for="(im, i) in it.implicits" :key="i" class="min-w-0 break-words"><span class="mr-1.5 opacity-60" :title="imLabel(im.from)[2] ? tr(imLabel(im.from)[2]!, imLabel(im.from)[3]!) : undefined">{{ tr(imLabel(im.from)[0], imLabel(im.from)[1]) }}</span>{{ im.text }}</li>
+          <li v-for="(im, i) in it.implicits" :key="i" class="min-w-0 break-words"><span class="mr-1.5 opacity-60" :title="imTag(im).title">{{ imTag(im).text }}</span>{{ im.text }}</li>
         </ul>
         <ul data-sim-paste-mods class="grid min-w-0 gap-0.5">
           <li v-for="(m, i) in it.mods" :key="i" class="flex min-w-0 flex-wrap items-baseline gap-x-1.5">
