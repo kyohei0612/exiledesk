@@ -197,6 +197,12 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
   /** この手だけの人数 (全体と同じ 500 人。上限は全体と同じ maxSteps) */
   const STEP_ONLY_RUNS = 500;
   const stepRun = ref<{ k: number; i: number; presses: number; cost: number; p80Presses: number; p80Cost: number; pDone: number; busy: boolean } | null>(null);
+  /**
+   * 自動の時 (S3): 回して答えの無い状況 (イレギュラー) が出たら、自動の方策で答えを足して、そのパターンをもう一度だけ回す
+   * (設計 auto-flow-design の 3-1 の穴埋め、解析君の answerFor)。StageSimPanel が use-sim-auto-order の autoAnswer を入れる。手動の時は null
+   */
+  let holeFiller: ((open: Array<{ route: string; situation: import("../../services/simulator/quiz-recipe").Situation }>) => Promise<number>) | null = null;
+  function setHoleFiller(f: typeof holeFiller): void { holeFiller = f; }
   async function run(only?: number, stepOnly?: number): Promise<void> {
     const it = s.item.value, d = s.data.value;
     if (!it || !d) return;
@@ -243,13 +249,27 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
           const qb = quizBase.value;
           if (!qb) continue;
           // 答えは見張り (Vue の reactive) の無い写しで渡す。見張りのまま 1 手ごとに読んでいて、回す時間の 1 割ほどがそれだった (2026-10-19 性能の記録)
-          const { recipe } = quizFromSim(qb, JSON.parse(JSON.stringify(p.quiz)) as typeof p.quiz);
-          const qruns: QuizRun[] = [];
-          for (let i = 0; i < spec.runs; i++) {
-            qruns.push(runQuizOnce(d, recipe, runSeed + i * 7919, { price, maxSteps: maxSteps.value }));
-            if (i % 10 === 9) { progress.value = [k * spec.runs + i + 1, total]; await new Promise((r) => setTimeout(r)); if (my !== gen) return; }
+          const runAll = async (quiz: NonNullable<typeof p.quiz>): Promise<{ recipe: ReturnType<typeof quizFromSim>["recipe"]; sum: QuizResult } | null> => {
+            const { recipe } = quizFromSim(qb, JSON.parse(JSON.stringify(quiz)) as typeof quiz);
+            const qruns: QuizRun[] = [];
+            for (let i = 0; i < spec.runs; i++) {
+              qruns.push(runQuizOnce(d, recipe, runSeed + i * 7919, { price, maxSteps: maxSteps.value }));
+              if (i % 10 === 9) { progress.value = [k * spec.runs + i + 1, total]; await new Promise((r) => setTimeout(r)); if (my !== gen) return null; }
+            }
+            return { recipe, sum: summarizeQuiz(qruns, price) };
+          };
+          let got = await runAll(p.quiz);
+          if (!got) return;
+          // 自動の時: 答えの無い状況に自動の方策で答えを足して、もう一度だけ回す
+          if (holeFiller && got.sum.open.length && only == null) {
+            phase.value = "答えの無い場面を埋めています";
+            const added = await holeFiller(got.sum.open.map((o) => ({ route: o.route, situation: o.situation })));
+            const fresh = s.simPatterns.value.find((x) => x.name === p.name)?.quiz;
+            if (added > 0 && fresh) { got = await runAll(fresh); if (!got) return; }
+            phase.value = "試しています";
           }
-          const r = quizToRecipe(summarizeQuiz(qruns, price), recipe.routes[0]);
+          const { recipe } = got;
+          const r = quizToRecipe(got.sum, recipe.routes[0]);
           out.push({ name: p.name, out: { r, spec }, rest: null, bases: r.bases, startPrice: recipe.start.price });
           continue;
         }
@@ -362,7 +382,7 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
   return { calc, whiteCosts, busy, phase, progress, progressBox, error, recipeOut, restCost, phone, onPhoneResize, restBases, startOnce,
     results, shown, resultOf, shownName, cheapestName, showResultByName, patternNote, togglePatternOff, showResult, ranFor, sig,
     hasSteps, quizBase, magicMods, quizToRecipe, patternChecks, runnable, blocked, ONE_RUNS, activePattern, STEP_ONLY_RUNS,
-    stepRun, run, stop, FOLD_KEY, open, toggle, help, whiteOk, modsDone, sortDone, fracDone, orderDone, startDone, step3, startPrice,
+    stepRun, run, stop, setHoleFiller, FOLD_KEY, open, toggle, help, whiteOk, modsDone, sortDone, fracDone, orderDone, startDone, step3, startPrice,
     whiteDone, stepStart, stepOrder, patternDone, sessionNow, stale, modShort };
 }
 export type SimRunCtx = ReturnType<typeof useSimRun>;

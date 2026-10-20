@@ -9,7 +9,7 @@ import { computed, ref } from "vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { tr } from "../../i18n/lang";
 import HelpTip from "../../components/ui/HelpTip.vue";
-import { quizFromSim, type QuizSimIn } from "../../services/simulator/quiz-build";
+import { quizFromSim, ROUTE_NAME, type QuizSimIn } from "../../services/simulator/quiz-build";
 import { fillModText, tierDisplayRanges } from "../../services/craft-stage/engine";
 import { actionText, whenText } from "./quiz-text";
 import type { AutoFilled } from "../../services/simulator/auto/auto-order";
@@ -31,11 +31,14 @@ function nameOfMod(modId: string): string {
   const tier = t ? m.tiers[t.minTierIndex] : undefined;
   return fillModText(m, tier ? tierDisplayRanges(tier) : []).replace(/\n/g, " / ") + (t ? ` T${m.tiers.length - t.minTierIndex}+` : "");
 }
-/** 答えの一覧 (開いた時だけ組む) */
+const routeName = (id: string): string => { const n = ROUTE_NAME[id]; return n?.[0] ? tr(n[0], n[1]) : ""; };
+/** 両側の「どれか」の時は route (付いた側) ごとの目安 (K6。並びは quizFromSim のまま、プレが先) */
+const perRoute = computed(() => (props.filled && props.filled.routes.length > 1 ? props.filled.routes.map((r) => `${routeName(r.id)} ${tr("約", "≈")} ${props.money(r.result.perFinish)}`).join(" · ") : ""));
+/** 答えの一覧 (開いた時だけ組む)。route ごとに見出し */
 const lines = computed(() => {
   if (!open.value || !props.filled || !props.quizBase) return [];
-  const goal = quizFromSim(props.quizBase, props.filled.rules).recipe.routes[0]?.goal ?? [];
-  return (props.filled.rules.rules.main ?? []).map((r) => ({ when: whenText(goal, r.when, nameOfMod), act: actionText(r.do) }));
+  const routes = quizFromSim(props.quizBase, props.filled.rules).recipe.routes;
+  return routes.flatMap((rt) => (props.filled!.rules.rules[rt.id] ?? []).map((r, i) => ({ head: i === 0 && routes.length > 1 ? routeName(rt.id) : "", when: whenText(rt.goal, r.when, nameOfMod), act: actionText(r.do) })));
 });
 </script>
 
@@ -46,6 +49,7 @@ const lines = computed(() => {
       <span v-if="busy || !filled" class="text-[var(--exile-color-text-secondary)]">{{ tr("最善手で埋めている…", "Filling with the best moves…") }}</span>
       <template v-else>
         <span data-sim-auto-summary class="tabular-nums">{{ tr(`自動で答えた ${filled.answers} 場面 · 目安 約 ${money(filled.result.perFinish)} · 完成 ${pct(filled.result.finish)}`, `${filled.answers} situations answered · est. ≈ ${money(filled.result.perFinish)} · ${pct(filled.result.finish)} finish`) }}</span>
+        <span v-if="perRoute" class="text-[12px] tabular-nums text-[var(--exile-color-text-secondary)]">{{ perRoute }}</span>
         <span v-if="filled.bad" class="text-[12px] text-amber-200" :title="tr('計算の方策がその形で打てなかった数 (0 が正しい)', 'Shapes where the planned move could not be played (should be 0)')">{{ tr(`打てない形 ${filled.bad}`, `${filled.bad} unplayable`) }}</span>
       </template>
       <HelpTip :width="320">
@@ -59,7 +63,7 @@ const lines = computed(() => {
     </div>
     <button v-if="filled" type="button" class="g-plain mt-1 text-[12px] text-[var(--exile-color-text-secondary)] hover:text-[var(--exile-color-text-primary)] max-md:min-h-10" :aria-expanded="open" @click="open = !open">{{ tr("答えた一覧", "Answers") }} {{ open ? "▴" : "▾" }}</button>
     <ol v-if="open" data-sim-auto-list class="mt-1 grid max-h-[50vh] min-w-0 gap-0.5 overflow-auto text-[12px]">
-      <li v-for="(l, i) in lines" :key="i" class="min-w-0 break-words"><span class="text-[var(--exile-color-text-tertiary)]">{{ l.when }}</span> → <b>{{ l.act }}</b></li>
+      <li v-for="(l, i) in lines" :key="i" class="min-w-0 break-words"><b v-if="l.head" class="mt-1 block text-[var(--exile-color-text-secondary)]">{{ l.head }}</b><span class="text-[var(--exile-color-text-tertiary)]">{{ l.when }}</span> → <b>{{ l.act }}</b></li>
     </ol>
   </div>
 </template>

@@ -186,7 +186,12 @@ export function useSimAutoOrder(tg: SimTargetsCtx, quizBase: () => QuizSimIn | n
     if (!autoOn() || !situations.length) return 0;
     const add = await client.answer(situations);
     if (!add.length) return 0;
-    s.simPatterns.value = s.simPatterns.value.map((p, i) => (i === 0 && p.quiz ? { ...p, quiz: { ...p.quiz, rules: { ...p.quiz.rules, main: [...(p.quiz.rules.main ?? []), ...add] } } } : p));
+    s.simPatterns.value = s.simPatterns.value.map((p, i) => {
+      if (i !== 0 || !p.quiz) return p;
+      const rules = { ...p.quiz.rules };
+      for (const { route, rule } of add) rules[route] = [...(rules[route] ?? []), rule];
+      return { ...p, quiz: { ...p.quiz, rules } };
+    });
     if (autoFilled.value) autoFilled.value = { ...autoFilled.value, answers: autoFilled.value.answers + add.length };
     return add.length;
   }

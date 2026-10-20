@@ -10,9 +10,9 @@
  * 止めるのは画面の側でワーカーごと捨てる (auto-order.ts の autoOrderClient)。1 つの順番の値は解析君の solveOrder (auto-solve.ts)
  */
 import { buildAutoModel } from "./auto-model";
-import { orderDetail, solveOrder } from "./auto-solve";
+import { solveOrder } from "./auto-solve";
 import type { AutoModel, OrderDetail, OrderResult } from "./auto-types";
-import { answerFor, methodsFromDetail, rulesFromDetail } from "./auto-rules";
+import { answerFor, methodsFromDetail, rulesForOrder } from "./auto-rules";
 import { quizFromSim, type QuizRules } from "../quiz-build";
 import type { QuizRecipe, QuizRule, Situation } from "../quiz-recipe";
 import { loadHtcPatch } from "../../craft-stage/engine";
@@ -26,9 +26,12 @@ export type AutoJob =
   | { kind: "prices"; id: number; prices: Record<string, number> }
   | { kind: "run"; cands: string[][]; current: string[]; top: number; mc: number }
   | { kind: "fill"; id: number; order: string[]; mc: number }
-  | { kind: "answer"; id: number; situations: Situation[] };
-/** fill の返事: ⑤ の答え・② の付け方 (札ごと)・その順番の値と、方策が打てなかった形の数 (0 が正しい) */
-export interface AutoFilled { rules: QuizRules; methods: ReturnType<typeof methodsFromDetail>; result: OrderResult; bad: number; stuck: number }
+  | { kind: "answer"; id: number; situations: Array<{ route: string; situation: Situation }> };
+/**
+ * fill の返事: ⑤ の答え (route ごと)・② の付け方 (札ごと)・route ごとの値と、方策が打てなかった形の数 (0 が正しい)。
+ * 両側の「どれか」(K6) は route が 2 つ (付いた側で分かれる)。routes の並びは quizFromSim のまま (プレが先)
+ */
+export interface AutoFilled { rules: QuizRules; methods: ReturnType<typeof methodsFromDetail>; routes: Array<{ id: string; result: OrderResult }>; result: OrderResult; bad: number; stuck: number }
 export type AutoMsg =
   | { kind: "need"; id: number; keys: string[] }
   | { kind: "built"; id: number; ok: true }
@@ -37,7 +40,7 @@ export type AutoMsg =
   | { kind: "row"; row: OrderResult & { order: string[]; current: boolean } }
   | { kind: "done" }
   | { kind: "filled"; id: number; out: AutoFilled }
-  | { kind: "answers"; id: number; rules: QuizRule[] }
+  | { kind: "answers"; id: number; rules: Array<{ route: string; rule: QuizRule }> }
   | { kind: "error"; message: string };
 
 const post = (m: AutoMsg): void => (self as unknown as Worker).postMessage(m);
@@ -52,7 +55,7 @@ let model: AutoModel | null = null;
 let latest = 0;
 /** 最後に組んだ時の狙いの入力 (データ込み。fill で ⑤ と同じ札の組み方 quizFromSim に使う) と、最後の fill の中身 (answer で使う) */
 let lastSim: Parameters<typeof quizFromSim>[0] | null = null;
-let lastFill: { det: OrderDetail; recipe: QuizRecipe } | null = null;
+let lastFill: { details: Record<string, { model: AutoModel; detail: OrderDetail }>; recipe: QuizRecipe } | null = null;
 /** need で聞いた値段の返事待ち (build の id ごと) */
 const waiting = new Map<number, (p: Record<string, number>) => void>();
 
@@ -106,15 +109,26 @@ function run(job: Extract<AutoJob, { kind: "run" }>): void {
 function fill(job: Extract<AutoJob, { kind: "fill" }>): void {
   const m = model, sim = lastSim;
   if (!m || !sim) { post({ kind: "error", message: "model not built" }); return; }
-  const det = orderDetail(m, job.order, { mc: job.mc });
   const recipe = quizFromSim({ ...sim, order: job.order }, null).recipe;
-  lastFill = { det, recipe };
-  post({ kind: "filled", id: job.id, out: { rules: rulesFromDetail(m, det, recipe), methods: methodsFromDetail(m, det), result: det.result, bad: det.bad, stuck: det.stuck } });
+  const { quiz, details } = rulesForOrder(m, job.order, recipe, { mc: job.mc });
+  lastFill = { details, recipe };
+  const ds = Object.entries(details);
+  post({ kind: "filled", id: job.id, out: {
+    rules: quiz, methods: ds.flatMap(([, d]) => methodsFromDetail(d.model, d.detail)),
+    routes: ds.map(([id, d]) => ({ id, result: d.detail.result })), result: ds[0]![1].detail.result,
+    bad: ds.reduce((a, [, d]) => a + d.detail.bad, 0), stuck: ds.reduce((a, [, d]) => a + d.detail.stuck, 0),
+  } });
 }
 function answer(job: Extract<AutoJob, { kind: "answer" }>): void {
-  const m = model, f = lastFill;
-  if (!m || !f) { post({ kind: "answers", id: job.id, rules: [] }); return; }
-  post({ kind: "answers", id: job.id, rules: job.situations.map((sit) => answerFor(m, f.det, f.recipe, sit)).filter((r): r is QuizRule => !!r) });
+  const f = lastFill;
+  if (!f) { post({ kind: "answers", id: job.id, rules: [] }); return; }
+  const out: Array<{ route: string; rule: QuizRule }> = [];
+  for (const { route, situation } of job.situations) {
+    const d = f.details[route];
+    const rule = d ? answerFor(d.model, d.detail, f.recipe, situation, route) : null;
+    if (rule) out.push({ route, rule });
+  }
+  post({ kind: "answers", id: job.id, rules: out });
 }
 
 self.addEventListener("message", (e: MessageEvent<AutoJob>) => {

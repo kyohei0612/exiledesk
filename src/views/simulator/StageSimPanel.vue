@@ -73,6 +73,8 @@ const { startKinds, startAge, startCost, keepText, costNote, keepName, whiteBudg
 /** 自動 / 手動 (2026-10-20 S2。use-sim-auto.ts) */
 const { t1Block, autoOn, ask: autoAsk, toggle: autoToggle, apply: autoApply } = useSimAuto({ modsDone, sortDone, orderDone, results, resetPatterns: st.resetPatterns });
 const ao = useSimAutoOrder(tg, () => quizBase.value, () => autoOn.value);
+// 自動の時は ⑥ の答えの無い場面を自動の方策で埋めてから回し直す (S3)
+watch(autoOn, (v) => rn.setHoleFiller(v ? ao.autoAnswer : null), { immediate: true });
 const orderLabel = (k: string): string => orderRow(k)?.text ?? restOfKey(k)?.text ?? runeJa(k);
 /** ④ のベースの計算の補足: グレーターの道・反対側の狙いの取り方 (白から自作) */
 const baseNotes = computed(() => {

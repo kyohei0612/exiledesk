@@ -116,3 +116,7 @@ quiz-recipe.ts (QuizRule = { when, do }、When の項目)、scripts/analysis/che
 - 手 1・2 (解析君) と 手 3・4 (シミュ部長) は並べて進められる (触るファイルが重ならない)。手 5 は手 1 の後。
 - 同時に別のシミュ部長が UI の点検をしている: StageSimPanel.vue・SimStepBar.vue・StageTargetSummary.vue を触るなら順番を決める (ブラックに)。
 - 全部で 6 手。手 3〜5 は合わせて 1〜2 日分の見込み。
+
+## 決めた事 (S3、2026-10-20 シミュ部長)
+- 両側の「どれか」(K6) の route の並びは quizFromSim のまま (プレが先)。付いた側は打つまで分からないので、安い側を先にはしない。⑤ の要約は route ごとの目安を並べる (「プレフィックスに付いた工程 約 X · サフィックスに付いた工程 約 Y」)。
+

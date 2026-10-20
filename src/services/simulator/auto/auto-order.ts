@@ -126,7 +126,7 @@ export function autoOrderClient() {
   let hooks: AutoRunHooks | null = null;
   /** fill・answer の返事待ち (null = 止めた・失敗) */
   const fills = new Map<number, (r: AutoFilled | null) => void>();
-  const answers = new Map<number, (r: QuizRule[]) => void>();
+  const answers = new Map<number, (r: Array<{ route: string; rule: QuizRule }>) => void>();
   const dropWaits = (): void => {
     for (const res of fills.values()) res(null);
     for (const res of answers.values()) res([]);
@@ -182,11 +182,11 @@ export function autoOrderClient() {
       });
     },
     /** ⑥ で答えの無かった状況に、最後の fill の方策で答える (当たらない物は入らない) */
-    answer(situations: Situation[]): Promise<QuizRule[]> {
+    answer(situations: Array<{ route: string; situation: Situation }>): Promise<Array<{ route: string; rule: QuizRule }>> {
       const id = ++seq;
       return new Promise((res) => {
         answers.set(id, res);
-        try { worker().postMessage({ kind: "answer", id, situations: JSON.parse(JSON.stringify(situations)) as Situation[] } satisfies AutoJob); } catch (e) { fail(e instanceof Error ? e.message : String(e)); }
+        try { worker().postMessage({ kind: "answer", id, situations: JSON.parse(JSON.stringify(situations)) as Array<{ route: string; situation: Situation }> } satisfies AutoJob); } catch (e) { fail(e instanceof Error ? e.message : String(e)); }
       });
     },
     /** 止める (ワーカーごと捨てる。待っている build は「止めた」で返る) */
