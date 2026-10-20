@@ -5,7 +5,7 @@
 |---|---|---|
 | ブラック | local_3b3c55ab-5df3-437a-855a-5e75e2c1fa64 | 司令塔 |
 | 開発部長 | (このセッション) | まとめ役 |
-| ジン部長 | local_3582faa0-ba38-498d-8f47-c6aa6fd767bf | flaskCharm の commit → J5a → J5b → J5c → J6 → J7 → J5d・J5e (表だけ)。J2 は裏 |
+| ジン部長 | local_3582faa0-ba38-498d-8f47-c6aa6fd767bf | flaskCharm の commit → J5a → J6 (+ poe.ninja の英語の見本 5) → J5b → J5c → J7 → J5d・J5e (表だけ)。J2 は裏 |
 | シミュ部長 | local_1e51d4a4-ec5b-459d-85ee-95d6da9c079f | S2b (今) → S2c (案だけ) → S1c → R2 → R3 → S3 → S4 |
 | 解析君 | local_2188a7ed-e2f7-4c08-a09c-72c1b5aef099 | K2c (今)。入口の 3 つの差し替え、R1b の後に auto-solve の再輸出を消す |
 | 分析君・動画部長・リサーチ長 | — | 仕事が来たらブラックが立てる |
@@ -62,7 +62,7 @@
 - J5a 暗黙の直し (ベルトのチャームスロット・幅の向き・同名別物・全能力値の文)。
 - J5b 値の幅 (ルーンの単位・冒涜 3・chronomancy など)。
 - J5c アビスのエッセンス 46 を置き場に。
-- J6 (J5a の後): 「全ての投射物スキルのレベル #」など + の無い MOD の文を poe2db の日本語で直す (本番の文が変わる → OK の後)。
+- J6 (J5a の後) + poe.ninja の英語の見本 5 個 (オーナー 10-20、共有メモ paste-samples-ninja-2026-10-20.md → notes/paste-samples/ に写す。行の後ろの印・Bonded・Chronomancy・Sockets・n5 の冒涜 6 つの枠。アプリの扱いは import せず写す): 「全ての投射物スキルのレベル #」など + の無い MOD の文を poe2db の日本語で直す (本番の文が変わる → OK の後)。
 - J7: ItemTextMod に品質で盛られた値の印 (optional、名前を先に開発部長へ)。
 - J5d 重みの違い 230 件ほか: 既知の直し (実測) と本当の食い違いを分けた表だけ → オーナーに聞く。
 - J5e Crossbows_cannon 18・エンジンにだけあるベース 105: 消さず、分けた表 → オーナーに聞く。
