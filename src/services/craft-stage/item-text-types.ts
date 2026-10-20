@@ -31,7 +31,7 @@ export interface ItemTextCorruption {
 }
 
 /** MOD の値に掛かっていた上乗せ (boosts.ts の ModBoost のうち貼り付けで分かる物)。pct = 足されていた % */
-export interface ItemTextBoost { kind: "quality" | "sideEffect"; pct: number }
+export interface ItemTextBoost { kind: "quality" | "sideEffect" | "magnitude"; pct: number }
 
 /** 暗黙側の 1 行 (MOD の数に入れない) */
 export interface ItemTextImplicit {

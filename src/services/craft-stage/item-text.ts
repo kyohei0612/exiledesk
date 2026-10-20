@@ -16,7 +16,7 @@ import { classOfBase, sideLimits } from "../htc/bridge";
 import { catalystTagFromLabel, rawValue } from "../htc/quality";
 import { matchKey } from "../htc/bridge-index";
 import { tierDisplayRanges } from "../mods/stat-scale";
-import { catalystBoosts } from "./stage-core";
+import { catalystBoosts, magnitudeTagOf } from "./stage-core";
 import { RUNES, runeCategoryOf, runeEffectFor } from "./stage-runes";
 import { matchCorruption } from "../mods/corruption";
 import { anointOfLine } from "../mods/anoint";
@@ -285,6 +285,12 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
     if (out.quality && out.quality.tag && catalystBoosts(stub, { modId: m.id, tags: m.tags }, out.quality.tag, data)) out2.push({ kind: "quality", pct: out.quality.value });
     const se = side ? sideEffect(side) : 0;
     if (se > 0) out2.push({ kind: "sideEffect", pct: se });
+    // ルーンの「明示 ○○ MOD の強さが N% 増加」(stage-core の magnitudePct と同じ決まり: その種類のタグを持つ明示 MOD に、自分自身には掛けない)
+    const mg = picked.filter((p) => p.mod !== m).reduce((a, p) => {
+      const tag = magnitudeTagOf((p.mod.tiers[0] as { stats?: string[] } | undefined)?.stats?.[0]);
+      return tag && (m.tags ?? []).includes(tag) ? a + (p.b.values[0] ?? 0) : a;
+    }, 0);
+    if (mg > 0) out2.push({ kind: "magnitude", pct: mg });
     return out2;
   };
   const pctOf = (bs: readonly ItemTextBoost[]): number => bs.reduce((a, x) => a + x.pct, 0);

@@ -224,14 +224,18 @@ function fillEn(text: string, values: readonly number[]): string {
  * (critical・speed・chaos・physical・fire・cold・lightning・mana・elemental_damage)。自分自身 (強さの MOD) には掛けない
  */
 const MAGNITUDE_TAG = /^(?:heist_enchantment_([a-z]+)_mod_effect|local_explicit_(elemental_damage)_mod_effect)_\+%$/;
+/** stat が「明示 ○○ MOD の強さ」ならその種類のタグ (fire・speed・elemental_damage …)、違えば null */
+export function magnitudeTagOf(stat: string | undefined): string | null {
+  const hit = stat ? MAGNITUDE_TAG.exec(stat) : null;
+  return hit ? hit[1] ?? hit[2] ?? null : null;
+}
 export function magnitudePct(item: StageItem, m: StageMod, data?: PatchData): number {
   const tags = data?.mods.get(m.modId)?.tags ?? m.tags ?? [];
   let pct = 0;
   for (const x of allMods(item)) {
     if (x === m || x.unrevealed || !x.values.length) continue;
     const stat = (x.stats ?? (data?.mods.get(x.modId)?.tiers[x.tierIndex] as { stats?: string[] } | undefined)?.stats ?? [])[0];
-    const hit = stat ? MAGNITUDE_TAG.exec(stat) : null;
-    const tag = hit ? hit[1] ?? hit[2] : null;
+    const tag = magnitudeTagOf(stat);
     if (tag && tags.includes(tag)) pct += x.values[0] ?? 0;
   }
   return pct;
