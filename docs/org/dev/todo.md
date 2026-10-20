@@ -5,9 +5,9 @@
 |---|---|---|
 | ブラック | local_3b3c55ab-5df3-437a-855a-5e75e2c1fa64 | 司令塔 |
 | 開発部長 | (このセッション) | まとめ役 |
-| ジン部長 | local_3582faa0-ba38-498d-8f47-c6aa6fd767bf | J2 (裏) → J3 spamCounts → J4 一覧の棚卸し |
-| シミュ部長 | local_1e51d4a4-ec5b-459d-85ee-95d6da9c079f | S1e → S2 → S1c (直し) |
-| 解析君 | local_2188a7ed-e2f7-4c08-a09c-72c1b5aef099 | K3 → K2b → K2c |
+| ジン部長 | local_3582faa0-ba38-498d-8f47-c6aa6fd767bf | J1b (コラプトの表、書きかけ) → J2 (裏) → J3 spamCounts → J4 一覧の棚卸し |
+| シミュ部長 | local_1e51d4a4-ec5b-459d-85ee-95d6da9c079f | S1e → R2 → R3 → S2 → S1c (直し)。S2 はもう書きかけあり (R3 は S2 の後でも可) |
+| 解析君 | local_2188a7ed-e2f7-4c08-a09c-72c1b5aef099 | K3 → R1 → K2b → K2c |
 | 分析君・動画部長・リサーチ長 | — | 仕事が来たらブラックが立てる |
 
 ## 触っている (同じファイルは順に。始める時に書き、commit したら消す)
@@ -54,11 +54,20 @@
 
 ### 開発部長
 - D1 済み (aa0d414a): `deploy:web-dev` は HEAD を ../ExileDesk-devbuild でビルド。HEAD 7660d25b を開発版に置いた (手 5 入り)。
+- D3 済み (手 8): scripts/check-engine-entry.mjs を CI に。HEAD で入口の外 A 139 行 (54 ファイル)・凍結 B 1 行 (use-sim-search → tree-buy) を控えに、ファイルごとに増えたら落ちる。
+- D4 済み: 持ち主の表 docs/org/owners.txt と scripts/owner-of.mjs (--status・--check)。
 - D2 点検 7 のヘッダー (広告・ヘッダー・為替の選択をスマホで詰める、src/web/)。S2 の後 (StageSimPanel とぶつからない時)。UI なのでオーナーの OK 待ち。
-- D3 エンジンの付け替え 手 8 (scripts/check-engine-entry.mjs + CI)。S5・K4 の後。
 
 - 点検 11・13 済み: 一時の係「シミュ部；チュートリアルの使いづらい所」が d1c97969。開発版 (HEAD 4b4e0818) を手元で開いて画面で確かめた (コース一覧は題と手数だけ・段 5 は次に押す物が光る)。本番の画面なので pending-release.md に OK 待ちで記載。
 
+
+### 割る仕事 (オーナー 10-20 OK、案は notes/2026-10-20-agent-friendly.md の 2。移動と中身の直しは別の commit、UI の見た目は変えない・変わる物は開発版まで)
+- R1 auto-types (解析君、K3 の後・S3 の前): auto/ の計算と呼ぶ側の間に型だけの auto-types.ts。
+- R2 SimBaseExtras (シミュ部長、S1e の後): StageBasePage.vue のシミュの物を views/simulator/SimBaseExtras.vue へ (ジン部長に知らせ済み)。
+- R3 StageTargetSummary を 3 つに (シミュ部長、S2 の前か後)。
+- R4 CraftStage の差し込み口 SimHost・CourseHost (ジン部長が口 → シミュ部長が中身、S4 の後)。
+- R5 state/craft-stage.ts を 500 行の内に (開発部長、R4 の後)。
+- R6 ページの表 web/pages/<部>.ts (開発部長、R5 の後)。
 
 ## OK 待ち
 - 開発版 HEAD 4b4e0818 (10-20 夜): 手 5・チュートリアル 11・13・エッセンスの family。UI の物は pending-release.md
