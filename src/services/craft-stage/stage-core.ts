@@ -10,7 +10,7 @@ import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types
 import { runeIdByName, withRunes } from "../../vendor/poe2htc/engine/runes";
 import RUNES_JSON from "./stage-runes.json";
 const RUNE_STATS = (RUNES_JSON as { runes: unknown }).runes;
-import { floorKeepIndex } from "../../vendor/poe2htc/engine/pool";
+import { modTierWeights } from "../../vendor/poe2htc/engine/pool";
 import { familyBlocked, occupiedKeysOf, rawFamiliesOf } from "../mods/mod-rules";
 import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
 import { jaOfModAlways } from "../htc/mod-text";
@@ -378,8 +378,7 @@ export function candidates(data: PatchData, item: StageItem, sides: readonly Sta
       const k = o.boost?.test(mod) ? o.boost.mult : 1;
       // 下限 (上級・完全・古代の骨) より上の段が 1 つも無い系統は、一番上の段だけ残す (用語集 BetterCurrencyMinimumLevel、要望 ㉝ の 2)
       const lv = o.anyLevel?.(mod) ? Infinity : item.itemLevel;
-      const keep = floorKeepIndex(mod, floor, lv);
-      const tiers = mod.tiers.flatMap((t, index) => (t.ilvl <= lv && (t.ilvl >= floor || index === keep) && t.weight > 0 ? [{ index, w: t.weight * k }] : []));
+      const tiers = modTierWeights(mod, floor, lv).map((t) => ({ index: t.index, w: t.w * k }));
       const w = tiers.reduce((a, t) => a + t.w, 0);
       if (w > 0) out.push({ mod, side, tiers, w });
     }

@@ -15,13 +15,23 @@ export function resolveMod(data: PatchData, id: string): Mod {
  * Mirrors ExaltAndRegalProbability.NormalCompute's weight accumulation.
  */
 export function modTierWeight(mod: Mod, floor: number, cap: number, minIndex = 0): number {
-  const keep = floorKeepIndex(mod, floor, cap);
   let w = 0;
-  for (let i = minIndex; i < mod.tiers.length; i++) {
-    const t: Tier = mod.tiers[i]!;
-    if ((t.ilvl >= floor || i === keep) && t.ilvl <= cap) w += t.weight;
-  }
+  for (const t of modTierWeights(mod, floor, cap)) if (t.index >= minIndex) w += t.w;
   return w;
+}
+
+/**
+ * The tiers that can roll within [floor, cap] ilvl, with their weights (weight > 0 only) — the one
+ * formula behind `modTierWeight` and the emulator's candidates (craft-stage/stage-core.ts).
+ */
+export function modTierWeights(mod: Mod, floor: number, cap: number): Array<{ index: number; w: number }> {
+  const keep = floorKeepIndex(mod, floor, cap);
+  const out: Array<{ index: number; w: number }> = [];
+  for (let i = 0; i < mod.tiers.length; i++) {
+    const t: Tier = mod.tiers[i]!;
+    if ((t.ilvl >= floor || i === keep) && t.ilvl <= cap && t.weight > 0) out.push({ index: i, w: t.weight });
+  }
+  return out;
 }
 
 /**
