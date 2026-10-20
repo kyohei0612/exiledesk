@@ -34,7 +34,7 @@ export function useSimResult(d: SimTargetsCtx & SimSearchCtx & SimRunCtx & SimRe
     const list = [
       { key: "self", name: "① 自作 (白から増強・消去スパム)", cost: c ? c.total : null },
       { key: "rare", name: "① 自作 · 適当なレアから (消去で 1 MOD → カオス)", cost: c ? c.rareTotal : null },
-      { key: "four", name: "② レアのフラクチャー無しベース (3 MOD + 狙い 1 MOD) を買う", cost: c && fourN != null ? (fourN + c.buyRest) * 3 + c.after : null },
+      { key: "four", name: "② レアのフラクチャー無しベース (3 MOD + 狙い 1 MOD) を買う", cost: c && fourN != null ? c.fourTotal : null },
       { key: "bought", name: "③ フラクチャー済みのベースを買う", cost: bN },
     ];
     const known = list.filter((x) => x.cost != null && Number.isFinite(x.cost));
@@ -65,7 +65,7 @@ export function useSimResult(d: SimTargetsCtx & SimSearchCtx & SimRunCtx & SimRe
     if (fractureRow.value) {
       const rest = restCost.value;
       const c = calc.value;
-      const four = c && c.buyOnce != null && rest != null ? (c.buyOnce * 3 + c.after) * nb + rest : null;
+      const four = c && c.fourTotal != null && rest != null ? c.fourTotal * nb + rest : null;
       const rare = c && c.rareTotal != null && rest != null ? c.rareTotal * nb + rest : null;
       list.push({ key: "rare", name: "適当なレアから作る (消去で 1 MOD → カオス、フラクチャーまでの手順込み)", cost: rare, note: num(rareDivine.value) == null ? "無し" : "回すと出ます" });
       list.push({ key: "four", name: "レアのフラクチャー無しベース (3 MOD + 狙い 1 MOD) を買う", cost: four, note: num(fourDivine.value) == null ? "無し" : "回すと出ます" });
@@ -222,7 +222,7 @@ export function useSimResult(d: SimTargetsCtx & SimSearchCtx & SimRunCtx & SimRe
       const name = s.simStart.value === "fractured" ? "1 で決めた: フラクチャー済みを買う" : s.simStart.value === "four" ? "1 で決めた: 4 MOD のレアを買う" : routes.value.list.find((x) => x.key === best)?.name.replace(/\s*\(.*$/, "") ?? "";
       let items: Array<{ name: string; n: number; cost: number }> = [];
       if (best === "self" && c) items = [...c.lines.map((l) => ({ name: l.name, n: l.n * 3, cost: l.n * l.each * 3 })), { name: `${nameOf("annul")} (固定の後)`, n: 2, cost: c.after }];
-      else if (best === "four" && c) items = [{ name: "レアのベース (3 MOD + 狙い 1)", n: 3, cost: (num(fourDivine.value) ?? 0) * 3 }, ...c.buyLines.map((l) => ({ name: l.name, n: l.n * 3, cost: l.n * l.each * 3 })), { name: `${nameOf("annul")} (固定の後)`, n: 2, cost: c.after }];
+      else if (best === "four" && c) items = [{ name: "レアのベース (3 MOD + 狙い 1)", n: 3, cost: (num(fourDivine.value) ?? 0) * 3 }, ...c.buyLines.map((l) => ({ name: l.name, n: l.n * 3, cost: l.n * l.each * 3 }))];
       else if (best === "bought") items = [{ name: "フラクチャー済みのベース", n: 1, cost: num(boughtDivine.value) ?? 0 }];
       // 内訳は 1 個分 × 使った数 (作り直し・買い直し込み)
       const nb = r.bases;

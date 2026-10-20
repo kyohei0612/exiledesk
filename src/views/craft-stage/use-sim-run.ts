@@ -58,11 +58,11 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
     const c = calc.value;
     // グレーターエッセンスを巻き込む道は自前のフラクチャーだけ (買う始め方は無い。2026-10-20 オーナー)
     if (c?.greater) return Number.isFinite(c.total) ? c.total : null;
-    // 始め方を 1 で決めた時はその 1 つ (固定済みを買う = 入れた値段 / 4 MOD を買う = (ベース + 壁 + フラクチャー) × 3 + 消去 × 2)
+    // 始め方を 1 で決めた時はその 1 つ (固定済みを買う = 入れた値段 / 4 MOD を買う = (ベース + フラクチャー) × 3)
     if (s.simStart.value === "fractured") return num(boughtDivine.value);
     if (s.simStart.value === "item") return num(itemDivine.value);
     if (s.simStart.value === "magic") return num(magicDivine.value);
-    if (s.simStart.value === "four") return c && c.buyOnce != null && Number.isFinite(c.buyOnce) ? c.buyOnce * 3 + c.after : null;
+    if (s.simStart.value === "four") return c && c.fourTotal != null && Number.isFinite(c.fourTotal) ? c.fourTotal : null;
     return startPick.value?.base ?? null;
   });
   /**
@@ -77,7 +77,7 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
     const xs: Array<{ kind: "white" | "four" | "rare" | "fractured"; cost: number; base: number; together: boolean }> = [];
     const wt = !!k && k.use === "together";
     xs.push({ kind: "white", cost: c.total + (k ? Math.min(k.together, k.chaos) : 0), base: c.total + (wt ? k!.together : 0), together: wt });
-    if (c.buyOnce != null) xs.push({ kind: "four", cost: c.buyOnce * 3 + c.after + chaos, base: c.buyOnce * 3 + c.after, together: false });
+    if (c.fourTotal != null) xs.push({ kind: "four", cost: c.fourTotal + chaos, base: c.fourTotal, together: false });
     if (c.rareTotal != null) xs.push({ kind: "rare", cost: c.rareTotal + chaos, base: c.rareTotal, together: false });
     const bN = num(boughtDivine.value);
     if (bN != null) xs.push({ kind: "fractured", cost: bN + chaos, base: bN, together: false });

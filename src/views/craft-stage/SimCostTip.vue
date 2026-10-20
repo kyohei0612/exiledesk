@@ -1,6 +1,6 @@
 <!--
   SimCostTip.vue — 3 の始め方の右の値段の「?」: フラクチャー済みのベースになるまでの費用の内訳 (2026-10-18 オーナー「白ベースの値段初見で? 多くね。? マーク押してカード出してあげた方が良い」)。
-  式は 4 の段の比べと同じ (use-sim-run.ts の calc)。白から = 1 回分 × 3 (骨の壁でフラクチャーが 1/3) + 消去 × 2、MOD 付きレア = (ベース + 壁 + フラクチャー) × 3 + 消去 × 2、フラクチャー済み = 入れた値段
+  式は 4 の段の比べと同じ (use-sim-run.ts の calc)。白から = 1 回分 × 3 (骨の壁でフラクチャーが 1/3) + 消去 × 2、MOD 付きレア = (ベース + フラクチャー) × 3 (2026-10-21)、フラクチャー済み = 入れた値段
 -->
 <script setup lang="ts">
 import { computed } from "vue";
@@ -37,7 +37,7 @@ const title = computed(() => (props.kind === "white" ? tr("白から作る費用
       <p>{{ tr("入れた値段がそのまま、フラクチャー済みのベース 1 個の費用", "The price you entered is the cost of one fractured base") }}</p>
     </template>
     <template v-else-if="calc">
-      <p class="mb-1 text-[var(--exile-color-text-secondary)]">{{ tr("フラクチャー済みのベースになるまでの平均。1 回分を作って骨の壁を足し、フラクチャーが狙いに当たるのは 1/3 なので 3 回分", "Average cost until you have a fractured base. Fracture hits the target 1 in 3 with the bone wall, so 3 attempts") }}</p>
+      <p class="mb-1 text-[var(--exile-color-text-secondary)]">{{ kind === "four" ? tr("フラクチャー済みのベースになるまでの平均。フラクチャーが狙いに当たるのは 1/3 なので、ベースとフラクチャーを 3 回分", "Average cost until you have a fractured base. Fracture hits the target 1 in 3, so 3 bases and 3 Fracturing Orbs") : tr("フラクチャー済みのベースになるまでの平均。1 回分を作って骨の壁を足し、フラクチャーが狙いに当たるのは 1/3 なので 3 回分", "Average cost until you have a fractured base. Fracture hits the target 1 in 3 with the bone wall, so 3 attempts") }}</p>
       <table class="w-full text-[11px] tabular-nums">
         <tbody>
           <tr v-for="(l, i) in rows" :key="i" class="border-b border-white/5">
@@ -48,9 +48,9 @@ const title = computed(() => (props.kind === "white" ? tr("白から作る費用
           <tr class="font-bold"><td class="pt-1">{{ tr("1 回分", "One attempt") }}</td><td></td><td class="pt-1 text-right">{{ money(once) }}</td></tr>
           <tr><td>{{ tr("× 3 (フラクチャーが 1/3)", "× 3 (fracture hits 1 in 3)") }}</td><td></td><td class="text-right">{{ money(once * 3) }}</td></tr>
           <!-- グレーターの道は固定の後に消さない (残す MOD を持ったまま進む。2026-10-20) -->
-          <tr v-if="calc.after"><td>{{ tr("+ 固定できた後の消去 × 2", "+ 2 annuls after fracturing") }}</td><td></td><td class="text-right">{{ money(calc.after) }}</td></tr>
+          <tr v-if="calc.after && kind !== 'four'"><td>{{ tr("+ 固定できた後の消去 × 2", "+ 2 annuls after fracturing") }}</td><td></td><td class="text-right">{{ money(calc.after) }}</td></tr>
           <tr v-if="calc.keep"><td>{{ kind === "white" && calc.keep.use === "together" ? tr("+ 反対側の狙い (マジックで一緒に揃える)", "+ Opposite-side target (landed together on magic)") : tr("+ 反対側の狙い (固定してから 2 MOD でカオス)", "+ Opposite-side target (Chaos on a 2-mod rare after fracturing)") }}</td><td></td><td class="text-right">{{ money(keepCost) }}</td></tr>
-          <tr class="font-bold text-emerald-300"><td class="pt-1">{{ tr("合計", "Total") }}</td><td></td><td class="pt-1 text-right">{{ money(once * 3 + calc.after + keepCost) }}</td></tr>
+          <tr class="font-bold text-emerald-300"><td class="pt-1">{{ tr("合計", "Total") }}</td><td></td><td class="pt-1 text-right">{{ money(once * 3 + (kind === "four" ? 0 : calc.after) + keepCost) }}</td></tr>
         </tbody>
       </table>
       <p v-if="kind === 'rare' && calc.rareChaos" class="mt-1 text-[10px] opacity-60">{{ tr(`消去で 1 MOD に削り、カオスで残りの 1 つを入れ替えて狙いが付くまで (付く物は両側の重みから 1 つ、平均 ${fmtN(calc.rareChaos.n)} 回)。カオスは${calc.rareChaos.grade} (1 個あたりが一番安い等級)。レアは満杯と見る`, `Annul down to 1 mod, then Chaos swaps it until the target lands (one mod from both sides' weights, avg ${fmtN(calc.rareChaos.n)}). Chaos grade: ${calc.rareChaos.grade} (cheapest per hit). Assumes a full Rare`) }}</p>

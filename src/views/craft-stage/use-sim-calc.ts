@@ -75,7 +75,6 @@ export function useSimCalc(d0: SimTargetsCtx, simIn: () => SimTargetIn[]) {
     const runeLines = fracRunes.map((en) => ({ name: nameOf(`rune:${en}`), n: 1, each: priceOf(`rune:${en}`) }));
     // 候補ごとの付きやすさと合計 (どれか 1 つで良い)
     const { each, pHit } = pAt(gr.floor);
-    const wall: "prefix" | "suffix" = m.type === "suffix" ? "prefix" : "suffix";
     const abyss = `essence:perfect:${it.cls.id}/PerfectEssence_EssenceAbyss`;
     const rerolls = pHit > 0 ? 1 / pHit : Infinity;
     const white = num(whiteDivine.value) ?? 0;
@@ -98,24 +97,20 @@ export function useSimCalc(d0: SimTargetsCtx, simIn: () => SimTargetIn[]) {
     const once = lines.reduce((a, l) => a + l.n * l.each, 0);
     /** 固定できた後に 1 度だけ: 消去 × 2 (固定した物と骨の壁のほかの外れ 2 つ) */
     const after = 2 * priceOf("annul");
-    // 4 MOD のベースを買う時は満杯なので、壁は 深淵のエッセンス (結晶化で消す側を選ぶ) → 骨 (ネクロマンシー) で印を置き換える
+    /**
+     * 4 MOD・当たり 1 のベースを買う時の 1 回分 = ベース代 + フラクチャー。× 3 (2026-10-21 オーナー「4MOD の方はフラクチャー 3 とベース代 3 で計算」。
+     * 前は壁 (深淵のエッセンス・結晶化・骨・ネクロマンシー) と固定後の消去 × 2 も足していた)
+     */
     const buyLines: Array<{ name: string; n: number; each: number }> = [
-      { name: nameOf(abyss), n: 1, each: priceOf(abyss) },
-      { name: nameOf(wall === "prefix" ? "OmenofSinistralCrystallisation" : "OmenofDextralCrystallisation"), n: 1, each: priceOf(wall === "prefix" ? "OmenofSinistralCrystallisation" : "OmenofDextralCrystallisation") },
-      { name: nameOf("desecrate"), n: 1, each: priceOf("desecrate") },
-      { name: nameOf(wall === "prefix" ? "OmenofSinistralNecromancy" : "OmenofDextralNecromancy"), n: 1, each: priceOf(wall === "prefix" ? "OmenofSinistralNecromancy" : "OmenofDextralNecromancy") },
       { name: nameOf("fracture"), n: 1, each: priceOf("fracture") },
     ];
-    /**
-     * 4 MOD・当たり 1 のベースを買う時の 1 回分 (2026-10-05 オーナー「ベース買うか自前でするかの指標は? 4 MOD で当たり 1 のベース買って、
-     * フラクチャーはどのみちかかるけど、消去が 2 個でいい、あとベース代」)。ベース代 + 消去 × 2 + 壁 (深淵のエッセンス・結晶化・骨・ネクロマンシー) + フラクチャー。
-     * 分かれ目 = 自前の 1 回分 − ベース代以外 (これより安いベースなら買う方が得)
-     */
     const buyRest = buyLines.reduce((a, l) => a + l.n * l.each, 0);
     const breakEven = once - buyRest;
     const fourN = num(fourDivine.value);
     const fourB = fourN;
     const buyOnce = fourB != null ? fourB + buyRest : null;
+    /** 4 MOD を買う道の 1 個 (フラクチャー済みになるまで) = (ベース代 + フラクチャー) × 3 */
+    const fourTotal = buyOnce != null ? buyOnce * 3 : null;
     /**
      * 適当なレアから (2026-10-18 オーナー「白と適当なレア → 消去でカオススパムルート、その費用の計算」): 満杯と見たレアを消去で 1 MOD まで削り、
      * 残った 1 つをカオスで入れ替えて狙いが付くまで (1 MOD なのでカオスは外して 1 つ付けるだけ、付く物は両側の重みから) → 高貴 × 2 で 3 MOD
@@ -148,7 +143,7 @@ export function useSimCalc(d0: SimTargetsCtx, simIn: () => SimTargetIn[]) {
     const g = greaterRouteCost({ data: d, targets: simIn(), fracSide: m.type === "suffix" ? "suffix" : "prefix", p: pHit, grade: gr, wAt, totalAt, white, runeLines, price: priceOf, name: nameOf });
     if (g) {
       // グレーターエッセンスを巻き込む道: 自前のフラクチャーだけ (買う始め方・適当なレアの道は無し)。固定の後に消さない (残す MOD を持ったまま進む)
-      return { pHit, each, rerolls: g.augment, lines: g.lines, buyLines, once: g.once, after: 0, total: g.once * 3, noAbyss: false, cantRoll: pHit === 0 || g.cantKeep, grade: gr.ja, buyRest, breakEven: 0, buyOnce: null,
+      return { pHit, each, rerolls: g.augment, lines: g.lines, buyLines, once: g.once, after: 0, total: g.once * 3, noAbyss: false, cantRoll: pHit === 0 || g.cantKeep, grade: gr.ja, buyRest, breakEven: 0, buyOnce: null, fourTotal: null as number | null,
         slots, rareLines: [], rareRest: Infinity, rareTotal: null, rareChaos: null, greater: g, keep: null as KeepPlan | null, augKey: gr.aug };
     }
     /**
@@ -159,7 +154,7 @@ export function useSimCalc(d0: SimTargetsCtx, simIn: () => SimTargetIn[]) {
     const kc = keepCompare({ data: d, item: it, itemLevel: s.itemLevel.value, targets: simIn(), price: priceOf }).filter((x) => x.chaos != null && Number.isFinite(x.together));
     const kBest = kc.length ? kc.reduce((a, x) => (x.chaos! - x.together > a.chaos! - a.together ? x : a)) : null;
     const keep = kBest ? { host: kBest.host, together: kBest.together, chaos: kBest.chaos!, chaosKey: kBest.chaosKey, chaosN: kBest.chaosN, use: kBest.together < kBest.chaos! ? "together" as const : "chaos" as const, detail: kBest.detail } : null;
-    return { pHit, each, rerolls, lines, buyLines, once, after, total: once * 3 + after, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, grade: gr.ja, buyRest, breakEven, buyOnce,
+    return { pHit, each, rerolls, lines, buyLines, once, after, total: once * 3 + after, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, grade: gr.ja, buyRest, breakEven, buyOnce, fourTotal,
       slots, rareLines, rareRest, rareTotal, rareChaos, greater: null as GreaterRoute | null, keep, augKey: gr.aug };
   });
   return { calc };
