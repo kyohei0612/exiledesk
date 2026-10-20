@@ -39,7 +39,7 @@
 |---|---|
 | 解析君 金の指輪 | scripts/analysis/gold-ring-suffix-ev.mjs、docs/org/math/notes/2026-10-21-gold-ring-suffix-ev.md (エンジンは読むだけ) |
 | (前の解析君の書きかけ、未 commit) | scripts/_flux-probe.test.ts・scripts/analysis/_yafu-ids.mjs |
-| ジン部長 お告げの設定 | (始める前にジン部長から 1 行で受けて書く) |
+| ジン部長 お告げの設定 | 新 src/services/craft-stage/stage-tuning.ts・spec/parts.ts・spec/outcomes.ts・spec/odds.ts・apply-vaal.ts・engine.ts (足すだけ)、新 src/state/emulator/stage-tuning.ts・新 views/craft-stage/StageOmenTune.vue・CraftStage.vue・CurrencyShelf.vue (既定はエンジンのまま、触媒 = CoE の 1+0.2×品質 → 解析君の数字は変わらない) |
 
 順番 (10-21): ファイルはぶつからない。ジン部長がエンジンの打つ結果 (カタリスト・お告げの確率) を変える直しは、commit の前にサムへ 1 行 → 解析君の数字が変わるので、解析君の区切りの後に入れるか解析君に知らせる。解析君がエンジンに無い手を見つけたら、足すのはジン部長 (この仕事の後ろに並べる)。
 
