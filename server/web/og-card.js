@@ -251,7 +251,9 @@ export async function ogCard(request, env, ctx) {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
     if (request.method !== "POST" || !env.LOGS) return new Response("no", { status: 405, headers: CORS });
     const code = (await request.text()).trim();
-    if (!/^[A-Za-z0-9_-]{8,1500}$/.test(code)) return new Response("bad", { status: 400, headers: CORS });
+    // 中身の長さは 8,000 まで (2026-10-21: スパムシミュレーターの運試しは 100 人の手数・道ごとの結果・カレンシーの絵のアドレスまで入り、1,500 を越えて
+    // 断られていた。置けないと /s/<id> がトップへ飛び、X には普通のカードが出て、開いても運試しにならなかった。10-19 の運試しから 1 行も増えていなかった)
+    if (!/^[A-Za-z0-9_-]{8,8000}$/.test(code)) return new Response("bad", { status: 400, headers: CORS });
     try { await unpack(code); } catch { return new Response("bad", { status: 400, headers: CORS }); }
     const id = await shortIdOf(code);
     await env.LOGS.prepare("INSERT OR IGNORE INTO shares (id, code, at) VALUES (?, ?, ?)").bind(id, code, Date.now()).run();
@@ -264,8 +266,8 @@ export async function ogCard(request, env, ctx) {
     })());
     return new Response(JSON.stringify({ id }), { headers: { "content-type": "application/json", ...CORS } });
   }
-  const page = /^\/s\/([A-Za-z0-9_-]{7,1500})$/.exec(url.pathname);
-  const pic = /^\/og\/([A-Za-z0-9_-]{7,1500})\.png$/.exec(url.pathname);
+  const page = /^\/s\/([A-Za-z0-9_-]{7,8000})$/.exec(url.pathname);
+  const pic = /^\/og\/([A-Za-z0-9_-]{7,8000})\.png$/.exec(url.pathname);
   if (url.pathname === "/s/spam") return sharePage(url, readCard((k) => url.searchParams.get(k)), `${url.origin}/og/spam.png${url.search}`);
   if (page) {
     let get, code;
