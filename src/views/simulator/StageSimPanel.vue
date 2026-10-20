@@ -283,7 +283,7 @@ const stepNotes = computed(() => {
         <SimStepHead class="mb-3" :n="5" title="打ち方" :current="true" :note="tr(`${s.simStart.value === 'item' ? 'エミュレーターの状態' : s.simStart.value === 'magic' ? '買ったマジック' : fractureRow && !wholeRoute ? 'フラクチャー済みのベース' : '白のベース'}から 1 手ずつ`, `Step by step from ${s.simStart.value === 'item' ? 'the Emulator item' : s.simStart.value === 'magic' ? 'the bought magic' : fractureRow && !wholeRoute ? 'the fractured base' : 'a white base'}`)" :help="tr('状況ごとに「この時はこの手」を答えた物 = パターン。いくつか作って、回して費用を比べられる', 'Answers to “in this situation, do this” = a pattern. Make several and run them to compare costs')" />
         <!-- 自動の時は答えを最善手で埋めて要約だけ (S3)。手で直すなら手動に (確かめの窓) -->
         <SimAutoPlay v-if="autoOn" :filled="ao.autoFilled.value" :busy="ao.autoBusy.value" :quiz-base="quizBase" :money="money" :pct="pct" @manual="autoToggle(false)" />
-        <StagePatternEditor v-else :busy="busy" :start="patternStart" :locked="patternDone" :quiz-base="quizBase" @run-one="(k: number) => run(k)" @active="(k: number) => (activePattern = k)" />
+        <StagePatternEditor v-else :busy="busy" :start="patternStart" :locked="patternDone" :quiz-base="quizBase" @active="(k: number) => (activePattern = k)" />
         <!--
           パターンの一覧はここ 1 つ (2026-10-07 オーナー「パターンの比べは何個もいらん、表示 1 個でいい」「回すパターンを選択できるように」)。
           チェックで全部まとめて回す時に入れるか、押すとその結果を下に。回していない物は「未実行」、組みかけは「未完成」
@@ -305,21 +305,25 @@ const stepNotes = computed(() => {
           <SimProgress v-if="busy" :box="progressBox" :phase="phase" />
           <button v-if="busy" type="button" class="g-btn-red sm" @click="stop">中止</button>
           <span v-if="error" class="text-rose-300">{{ error }}</span>
-          <!-- 開いているパターンの MOD 群を取引所 (JP) で探す (2026-10-07 オーナー「回すの横、相場ボタンじゃなくてこの MOD 群をそのまま検索にかけたい」) -->
-          <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[12px] text-[var(--exile-color-text-link)] hover:bg-white/5 hover:underline disabled:opacity-40" :class="busy ? '' : 'ml-auto'" :disabled="!s.simPatterns.value[activePattern] || !hasSteps(s.simPatterns.value[activePattern]!)" :title="`${s.simPatterns.value[activePattern]?.name ?? ''} の狙い (付ける MOD とフラクチャー) が付いた物を取引所 (JP) で探す。開くだけ`" @click="searchPattern(activePattern)">この狙いで取引所を見る<Icon name="external" class="size-3.5" /></button>
-          <!-- 1 人の上限 (手の数)。重い MOD を狙う時に上げる (2026-10-07) -->
-          <label class="flex items-center gap-1.5 text-[12px] text-[var(--exile-color-text-secondary)]" title="1 人が打てる手の上限。超えた人は完成しなかった扱い (カオスで重い MOD を狙う時は上げる。回るのは遅くなる)">1 人の上限
-            <select v-model.number="maxSteps" class="h-8 rounded-md border border-[var(--exile-color-border-subtle)] bg-black/40 px-1.5" :disabled="busy">
-              <option v-for="n in MAX_STEPS_CHOICES" :key="n" :value="n">{{ n.toLocaleString() }} 手</option>
-            </select>
-          </label>
-          <button type="button" class="inline-flex h-9 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-4 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:min-h-11" :disabled="busy || !!blocked" :title="blocked ?? `チェックの入ったパターンで、${runs.toLocaleString()} 人がそれぞれ完成まで作った場合を試す (1 人 ${maxSteps.toLocaleString()} 手まで。組みかけは組めている所まで)`" @click="run()"><Icon name="play" class="size-4" />回す<span v-if="runnable.length > 1" class="rounded-full bg-black/25 px-1.5 text-[11px] tabular-nums" :title="`チェックした ${runnable.length} つのパターンを回す`">{{ runnable.length }} つ</span></button>
+          <button type="button" class="ml-auto inline-flex h-9 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-4 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:min-h-11" :disabled="busy || !!blocked" :title="blocked ?? `チェックの入ったパターンで、${runs.toLocaleString()} 人がそれぞれ完成まで作った場合を試す (1 人 ${maxSteps.toLocaleString()} 手まで。組みかけは組めている所まで)`" @click="run()"><Icon name="play" class="size-4" />回す<span v-if="runnable.length > 1" class="rounded-full bg-black/25 px-1.5 text-[11px] tabular-nums" :title="`チェックした ${runnable.length} つのパターンを回す`">{{ runnable.length }} つ</span></button>
         </div>
       </div>
     <StageFracturePicker v-if="s.simAltFor.value" :alt-for="s.simAltFor.value" @close="s.simAltFor.value = null" />
 
     <template v-if="step4 && simStep === 'result'">
-    <SimStepHead class="mb-3" :n="6" :title="tr('回す・結果', 'Run & results')" :current="true"><template #side><button type="button" class="g-btn sm" @click="go('play')">{{ tr("打ち方を直す", "Edit the steps") }}</button></template></SimStepHead>
+    <SimStepHead class="mb-3" :n="6" :title="tr('回す・結果', 'Run & results')" :current="true"><template #side>
+      <!-- 取引所・1 人の上限は回した後の物なので ⑥ に (2026-10-20 オーナー OK、棚卸しの 3)。上限を変えたら「回し直す」 -->
+      <span class="flex flex-wrap items-center justify-end gap-2">
+        <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[12px] text-[var(--exile-color-text-link)] hover:bg-white/5 hover:underline disabled:opacity-40" :disabled="!s.simPatterns.value[activePattern] || !hasSteps(s.simPatterns.value[activePattern]!)" :title="tr(`${s.simPatterns.value[activePattern]?.name ?? ''} の狙い (付ける MOD とフラクチャー) が付いた物を取引所 (JP) で探す。開くだけ`, `Search trade (JP) for items with this pattern's targets. Opens only`)" @click="searchPattern(activePattern)">{{ tr("この狙いで取引所を見る", "Search trade for these targets") }}<Icon name="external" class="size-3.5" /></button>
+        <label class="flex items-center gap-1.5 text-[12px] text-[var(--exile-color-text-secondary)]" :title="tr('1 人が打てる手の上限。超えた人は完成しなかった扱い (カオスで重い MOD を狙う時は上げる。回るのは遅くなる)', 'Max uses per person. Anyone over it counts as unfinished (raise it for heavy Chaos targets; runs get slower)')">{{ tr("1 人の上限", "Max per person") }}
+          <select v-model.number="maxSteps" class="h-8 rounded-md border border-[var(--exile-color-border-subtle)] bg-black/40 px-1.5" :disabled="busy">
+            <option v-for="n in MAX_STEPS_CHOICES" :key="n" :value="n">{{ n.toLocaleString() }} {{ tr("手", "uses") }}</option>
+          </select>
+        </label>
+        <button type="button" class="g-btn sm" :disabled="busy || !!blocked" @click="run()">{{ tr("回し直す", "Run again") }}</button>
+        <button type="button" class="g-btn sm" @click="go('play')">{{ tr("打ち方を直す", "Edit the steps") }}</button>
+      </span>
+    </template></SimStepHead>
     <!-- パターンの比べ (2026-10-19 テスト走行: ⑥ には見ているパターンの結果しか無く、比べは ⑤ の「まとめて回す」の欄にしか無かった)。押すとそのパターンの結果を下に -->
     <div v-if="results.length > 1" data-sim-compare class="mb-3 flex flex-wrap gap-2"><button v-for="x in results" :key="x.name" type="button" class="g-tab !h-auto !flex-col !items-start !gap-0.5 !px-4 !py-1.5 text-left" :class="x.name === shownName ? 'on' : ''" @click="showResultByName(x.name)"><span class="text-[13px]">{{ x.name }}<span v-if="cheapestName === x.name" class="ml-1.5 rounded bg-emerald-500/25 px-1 text-[10px] text-emerald-200">{{ tr("一番安い", "Cheapest") }}</span></span><span class="text-[12px] tabular-nums">{{ tr("平均", "Avg") }} {{ money(x.out.r.perDone) }} · {{ tr("完成", "Done") }} {{ pct(x.out.r.pDone) }}</span></button></div>
     <!--
