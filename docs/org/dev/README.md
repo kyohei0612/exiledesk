@@ -8,7 +8,7 @@
 3. 数字は台本で出す (手で写さない)。報告の数字は出した台本の場所と一緒に。
 4. 直しは小さく 1 つずつ、そのたび型チェック。周りのコードに合わせる。
 5. リファクタと機能は別のコミット。整理は触った所の周りだけ、使わなくなった物はその場で消す。
-6. 他の部の持ち物は直さない。要る時はどの部のどのファイルかを書いて返す。MOD の置き場・重み・段・文、カレンシーとお告げの効果、確率、品質・聖別の式はエミュ部のエンジンの入口 (services/craft-stage/engine.ts) から取り、自前の表・式・重みの足し算を作らない (足りない物はエミュ部長に入口へ足してもらう)。
+6. 他の部の持ち物は直さない。要る時はどの部のどのファイルかを書いて返す。MOD の置き場・重み・段・文、カレンシーとお告げの効果、確率、品質・聖別の式はエンジン部のエンジンの入口 (services/craft-stage/engine.ts) から取り、自前の表・式・重みの足し算を作らない (足りない物はジン部長に入口へ足してもらう)。
 7. 境目 (下の地図) を変えたら、使っている部を報告に書く (ブラックが知らせる)。
 8. 報告は 3〜5 行: 変えた物・確かめた物 (見張り / 外の正解 / 画面)・残り。ターンを終える時は報告に加えて必ず SendMessage で立てたセッション (ブラック、部下なら部長) に「終わった / 待つ理由」を 1 行 (日本語)。報告だけでは止まっているブラックは起きない。黙って待たない (他セッションの commit 待ちも同じ)。部下を立てた部長は部長がブラックと同じ扱い (部下が止まったらその場でアーカイブ / 次の指示)。
 9. 仕事の終わりに自分の部の README.md の地図を直す (ファイルが増えた・消えた・動いた時)。仕事の記録 (設計・調べ) は自分の部の notes/ に、やる事・OK 待ちは todo.md に。
@@ -18,7 +18,7 @@
 - 動かし方・版上げ: CLAUDE.md の「動かし方」。設定 vite.web.config.ts、開発版 scripts/deploy-web-dev.mjs、読み物のページ scripts/build-seo-pages.mjs。
 - 更新内容: src/data/changelog-notes.json・-en.json・changelog-popup.json → scripts/build-changelog.mjs。OK 待ち docs/pending-release.md。テスト tests/ (vitest)。
 - 境目 (どの部も使う): src/state/craft-stage.ts (`SIM_LOCKED`)・web-page.ts・display-currency.ts、src/services/craft-stage/share.ts・trade-search.ts、src/services/htc/patch-types.ts・src/services/money.ts、src/style.css・src/styles/game-ui.css、src/components/・src/utils/、src/web/ (WebApp.vue・main.ts・page.ts・boot.ts・config.ts)。
-- エンジンの核 (types.ts・run-plan.ts・contract.ts・乱数 htc/rng.ts) は境目ではなくエミュ部の持ち物 (emulator/README.md の地図)。
+- エンジンの核 (types.ts・run-plan.ts・contract.ts・乱数 htc/rng.ts) は境目ではなくエンジン部の持ち物 (emulator/README.md の地図)。
 - 動画 (video/、旧 POE2Tube) との受け渡し (動画部長と): 録画モード src/utils/rec-mode.ts (`?rec=1`・seed・`__rec`)、撮影 URL・`data-rec` の目印、JSON の形 (正は video/contracts/、ExileDesk 側 contract.ts・scripts/craft-stage-run.mjs)。変える時は両方を同じ commit で、メモ poe2tube-handoff。video/ は CI (tests.yml の paths-ignore)・vite の watch・tailwind (@source not) から外してある。
 - 英語: src/i18n/lang.ts (`tr`・`modText`・`nameOf`)・GLOSSARY.md・*-client.json。
 - サーバー: server/web (og-card.js・dev-gate.js・move-gate.js・wrangler*.jsonc)、server/live (README.md・src/index.ts・market.ts・logs.ts・feedback.ts・monitor.ts・migrations/)。
