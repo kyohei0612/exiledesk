@@ -2,9 +2,5 @@
 
 ## やる事
 - エンジンの中の `family` の直の比べ (決まり 3): apply-essence.ts:31 (BREACH_FAMILY)・51 (normalTierOf)、spec/essence-specs.ts:103 (ABYSS_FAMILY) を mod-rules の hasRawFamily・sharesRawFamily に。打つ処理の数字に効くので currency-spec-golden を回して一緒に。名前で MOD を探す所 (stage-core:424・468、run-plan:265、StageItemCard:49 の `family === key`) は系統の決まりではなく指名の探し方なのでそのまま。
-- 【案・解析君の頼み事 2】1 手の行き先の確率を入口から (docs/org/math/notes/auto-order-2026-10-20.md)。
-  - 札の形 (札の状態 + 外れの数) からそのまま引く入口は作らない: 形は外れの MOD が何かを持たないので、系統の塞ぎ・置き場の重みがエンジンでは決まらない (決めると近似を入口に持ち込むことになる)。
-  - 案: `stepOutcomes(data, item, key, omens)` を spec/odds に足し、入口に出す。返す物 = この手の行き先の一覧 `{ removed?: modId, added?: { modId, side, tier }, reveal?: modId[], p }` (足す = addOddsBySpec の候補、消す = 消せる MOD から等しく・お告げの側、発現 = revealOffers の候補の引き方)。解析君は形ごとに代表のアイテムを 1 つ組み (startFrom で札の MOD を付け、外れは置き場から重みの一番大きい物で埋める)、その行き先を形に戻す。外れの中身で変わる分は近似として auto/ のコメントに残す。
-  - 決めてもらう事: 代表のアイテムで良いか (形の数 × 手の数だけ打つ処理を回すので、2 万人分の速さは解析君が測る)。OK が出たら作る。
 
 ## OK 待ち

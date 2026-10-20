@@ -108,7 +108,7 @@ export function factionCandidates(data: PatchData, item: StageItem, tag: string,
   return SIDES.flatMap((side) => pool(data, item, side, { pools: ["normal", "desecrated"], floor, exclusiveAnyLevel: true, tag }));
 }
 
-const unrevealedMod = (side: StageSide, u: NonNullable<StageMod["unrevealed"]>): StageMod => ({
+export const unrevealedMod = (side: StageSide, u: NonNullable<StageMod["unrevealed"]>): StageMod => ({
   modId: "unrevealed", family: "unrevealed", side, tierIndex: 0, tierName: "", affix: "", modLevel: 1,
   values: [], ranges: [], textJa: `未発現の冒涜 MOD (${side === "prefix" ? "プレフィックス" : "サフィックス"})`,
   textEn: `Unrevealed Desecrated ${side === "prefix" ? "Prefix" : "Suffix"}`,

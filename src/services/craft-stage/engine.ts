@@ -43,6 +43,9 @@ export { isRemovedBase, classLabel } from "../items/base-catalog";
 // 1 手の確率 (addHitOdds = 1 回で狙いが付く割合、fractureHit = フラクチャーの当たり)
 export type { AddOdds, AddHit, OddsTarget } from "./spec/odds";
 export { addOddsBySpec, addCands, addHitOdds, hitShare, fractureHit } from "./spec/odds";
+// 1 手の行き先の一覧 (消える・付く・未発現・フラクチャーの枝ごとの割合と打った後のアイテム)
+export type { StepOutcome } from "./spec/outcomes";
+export { stepOutcomes } from "./spec/outcomes";
 export type { HeldOdds } from "./held-odds";
 export { heldOdds, heldAnyOf, aimTierKey } from "./held-odds";
 export type { AimTarget, AimCombo, AimOdd } from "./aim-odds";
