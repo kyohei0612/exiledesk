@@ -1,4 +1,7 @@
 {
+  "0.1.589": [
+    "Omens now have settings under their name when applied: Omen of Catalysing Exaltation lets you set the multiplier per 1% quality (default 0.2 = 5x at 20%), and Omen of Sanctification lets you pick the multiplier (0.78–1.22x) with a checkbox"
+  ],
   "0.1.588": [
     "Removed the name search from the base list and moved “Plain art, no effects” to the bottom",
     "Price fields now also show the entered value in the most readable currency"

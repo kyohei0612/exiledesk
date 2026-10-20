@@ -7,8 +7,8 @@ import { ref } from "vue";
 import { setStageTuning } from "../../services/craft-stage/engine";
 import { craftStage } from "../craft-stage";
 
-/** 開発版と手元の dev だけ (本番はオーナーの OK の後) */
-export const TUNING_ON = import.meta.env.DEV || import.meta.env.VITE_DEV_PREVIEW === "1";
+/** 本番も出す (2026-10-21 オーナー OK「触媒はそのまま本番出して」) */
+export const TUNING_ON = true;
 
 const KEY = "stage-tuning";
 function load(): { catalysingPerPct: number | null; sanctifyK: number | null } {

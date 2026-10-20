@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.589",
+  "date": "2026-10-21",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "お告げを掛けた時に名前の下で設定できるようにしました: 触媒の高貴のお告げは品質 1% ごとの倍率 (既定 0.2 = 品質 20% で 5 倍)、聖別のお告げはチェックを入れると倍率 (0.78〜1.22 倍) を自分で決められます",
+    "en": "Omens now have settings under their name when applied: Omen of Catalysing Exaltation lets you set the multiplier per 1% quality (default 0.2 = 5x at 20%), and Omen of Sanctification lets you pick the multiplier (0.78–1.22x) with a checkbox"
+   }
+  ]
+ },
+ {
   "v": "0.1.588",
   "date": "2026-10-20",
   "items": [
@@ -618,18 +630,6 @@
     "area": "",
     "text": "MOD 一覧の「付ける」を押すと、付け方 (普通 / フラクチャー / 冒涜 / エッセンス) を選べるように。もうフラクチャー・冒涜がある時はその付け方を出しません",
     "en": "In the mod list, \"Add\" now lets you choose how to add (Normal / Fracture / Desecrated / Essence). Options already used on the item are hidden"
-   }
-  ]
- },
- {
-  "v": "0.1.549",
-  "date": "2026-10-17",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "X でシェアしたカオススパムの結果を開くと、同じアイテム・同じ狙いでカオススパム計算機がすぐ開いて計算が始まるように",
-    "en": "Opening a shared chaos spam result from X now opens the Chaos spam calculator right away with the same item and targets"
    }
   ]
  }
