@@ -5,8 +5,8 @@
  */
 import { craftStage } from "../../state/craft-stage";
 import { modText } from "../../i18n/lang";
-import { boostedMod, retext } from "../../services/craft-stage/stage-core";
-import type { StageItem, StageMod } from "../../services/craft-stage/types";
+import { boostedMod, retext, scaledAugment } from "../../services/craft-stage/stage-core";
+import type { StageAugment, StageItem, StageMod } from "../../services/craft-stage/types";
 
 export const BASE_VALUES_ON = import.meta.env.DEV || import.meta.env.VITE_DEV_PREVIEW === "1";
 
@@ -27,4 +27,13 @@ export function modLineOf(item: StageItem, m: StageMod): { text: string; shown: 
   const shown = b ? b.values : m.sanctify ? m.values : null;
   const base = m.sanctify ? m.sanctify.base : m.values;
   return { text: baseModText(m), shown: shown && valuesText(shown) !== valuesText(base) ? valuesText(shown) : null };
+}
+
+/**
+ * ルーン・ソウルコアの行 (J11 ③、オーナー「ルーン・ソウルコアの行は今の値のまま、ソケットの効果で盛った分だけ抜く」): 素の効果の文と、
+ * ソケットの効果 (アストリッドなど、scaledAugment) で盛った文 (違う時だけ、小さく添える用)
+ */
+export function augmentLineOf(item: StageItem, a: StageAugment): { text: string; shown: string | null } {
+  const base = modText(a), scaled = modText(scaledAugment(item, a));
+  return { text: base, shown: scaled !== base ? scaled : null };
 }

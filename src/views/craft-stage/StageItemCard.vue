@@ -20,7 +20,7 @@ import { implicitRows, propRows } from "../../services/craft-stage/stage-props";
 import { runeArt } from "../../services/craft-stage/rune-art";
 import { uniqueLines } from "../../services/craft-stage/stage-uniques";
 import { rollLines } from "../../services/craft-stage/roll-text";
-import { BASE_VALUES_ON, modLineOf } from "./base-values";
+import { BASE_VALUES_ON, augmentLineOf, modLineOf } from "./base-values";
 import { allMods, boostedMod, hasExtraCatalyst, scaledAugment, unfracturable } from "../../services/craft-stage/stage-core";
 import { shownTags, TAG_STYLE } from "../../services/craft-stage/mod-list";
 import { classLabel } from "../../services/items/base-catalog";
@@ -214,7 +214,7 @@ const rows = computed(() => {
         </span>
       </div>
       <!-- ルーンの効き目 (MOD とは別の行。ゲームと同じくプロパティの下) -->
-      <p v-for="(a, i) in item.augments ?? []" :key="'r' + i + a.key" class="stage-row-in text-[#8fa8ff]" :class="removable && !holding ? 'cursor-pointer hover:line-through' : ''" :title="removable && !holding ? tr(`${nameOf(a)} を外す`, `Remove ${nameOf(a)}`) : undefined" @click="!holding && onUnsocket($event, i + 1)" @contextmenu="onUnsocket($event, i + 1)">{{ modText(scaledAugment(item, a)) }}</p>
+      <p v-for="(a, i) in item.augments ?? []" :key="'r' + i + a.key" class="stage-row-in text-[#8fa8ff]" :class="removable && !holding ? 'cursor-pointer hover:line-through' : ''" :title="removable && !holding ? tr(`${nameOf(a)} を外す`, `Remove ${nameOf(a)}`) : undefined" @click="!holding && onUnsocket($event, i + 1)" @contextmenu="onUnsocket($event, i + 1)">{{ BASE_VALUES_ON ? augmentLineOf(item, a).text : modText(scaledAugment(item, a)) }}<span v-if="BASE_VALUES_ON && augmentLineOf(item, a).shown" data-boosted-value class="ml-1 text-[10px] text-[#7ee8ff]" :title="tr('ソケットの効果で盛った効果', 'Boosted by socket effect')">({{ augmentLineOf(item, a).shown }})</span></p>
       <!-- スキルジェムのサポート枠 (宝飾職人のオーブ) -->
       <div v-if="item.gemSockets" class="flex items-center justify-center gap-1.5 py-0.5 text-[12px] text-white/50">
         {{ tr("サポート枠", "Support Gem Sockets") }}
