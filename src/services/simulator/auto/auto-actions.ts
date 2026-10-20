@@ -171,13 +171,13 @@ function revealOuts(sh: Shape, s: State, echoes: boolean): { out: Outs; pEcho: n
           for (const c of picks) { const k = `${c.k}:${c.m}`; hit.set(k, (hit.get(k) ?? 0) + (pr * prob) / picks.length); }
           return;
         }
-        const ex = 3 - left < nx || totN <= 0;
+        const ex = sh.m.offers - left < nx || totN <= 0;
         const cs = ex ? cats[1] : cats[0], tot = ex ? totX : totN, j = ex ? junk[1]! : junk[0]!;
         if (!(tot > 0)) { walk(left - 1, prob, picks); return; }
         for (const c of cs) walk(left - 1, (prob * c.w) / tot, [...picks, c]);
         if (j > 0) walk(left - 1, (prob * j) / tot, picks);
       };
-      walk(3, 1, []);
+      walk(sh.m.offers, 1, []);
     }
     return { hit, none };
   };

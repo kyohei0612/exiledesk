@@ -2,14 +2,15 @@
  * auto-model.ts — シミュレーターの狙い (QuizSimIn) から動的計画法の材料を組み立てる (解析君、2026-10-20)。入口の型は auto-solve.ts
  *
  * 札 (狙いの枠) は ⑤ と同じ quizFromSim で組む (札の分け方・関門の打ち止め・始めの形を ⑤ と食い違わせない)。
- * 重みはエンジンの candidates (= modTierWeight と同じ段の数え方。下限は CURRENCY_FLOOR・古代の骨 40) を、MOD のない始めのアイテム
+ * 重みはエンジンの candidates (= modTierWeight と同じ段の数え方。下限は CURRENCY_FLOOR・ANCIENT_BONE_FLOOR) を、MOD のない始めのアイテム
  * (ルーンは差した状態) で引いて、札ごとの「当たり (狙いの段以上)」「段が低い」と外れの重みの素の表にする。
  * 近似 (中身は auto-actions.ts の頭): 外れの系統は置き場を減らさない・狙いと同じ系統の別の MOD は外れ (系統を塞がない)
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { CURRENCY_FLOOR } from "../../../vendor/poe2htc/engine/types";
 import { familiesOf, occupiedFamiliesOf } from "../../../vendor/poe2htc/engine/pool";
-import { DESECRATION_EXCLUSIVE_COUNT } from "../../../vendor/poe2htc/engine/probability";
+import { ANCIENT_BONE_FLOOR, DESECRATION_EXCLUSIVE_COUNT } from "../../../vendor/poe2htc/engine/probability";
+import { REVEAL_SPEC } from "../../craft-stage/spec/desecrate-specs";
 import { candidates, effectiveCls, limitOf } from "../../craft-stage/stage-core";
 import { startFrom } from "../../craft-stage/run-plan";
 import type { StageItem, StageSide } from "../../craft-stage/types";
@@ -47,8 +48,10 @@ export interface AutoModel {
   prices: Record<string, number>;
   /** 発現の冒涜専用 MOD の個数 1 / 2 / 3 の割合 (エンジンの DESECRATION_EXCLUSIVE_COUNT) */
   exRates: number[];
+  /** 発現の候補の数 (エンジンの REVEAL_SPEC) */
+  offers: number;
   /** 形の版 (中身を変えたら上げる。ワーカーの持つ写しの見分け) */
-  version: 1;
+  version: 2;
 }
 
 const PRICE_KEYS = [
@@ -57,7 +60,6 @@ const PRICE_KEYS = [
   "OmenofSinistralAnnulment", "OmenofDextralAnnulment", "OmenofSinistralCrystallisation", "OmenofDextralCrystallisation",
   "OmenofSinistralNecromancy", "OmenofDextralNecromancy", "OmenofAbyssalEchoes", "OmenofLight",
 ];
-const ANCIENT_FLOOR = 40;
 const no = (ja: string, en: string): AutoBuilt => ({ ok: false, reason: { ja, en } });
 
 /** 形と重みを組み立てる。対応していなければ ok: false と理由 */
@@ -130,7 +132,8 @@ export function buildAutoModel(input: AutoInput): AutoBuilt {
   // 置き場の重み (エンジンの candidates をそのまま。骨は普通 + 冒涜専用、冒涜専用はアイテムレベルを見ない)
   const desPool = (side: StageSide) => { const k = side === "prefix" ? "prefixes" : "suffixes"; return [...new Set([...effectiveCls(item).pools.normal[k], ...item.cls.pools.desecrated[k]])]; };
   const pools: AutoModel["pools"] = {};
-  const floors: Record<Grade, number> = { a0: CURRENCY_FLOOR.exalt.base, a1: CURRENCY_FLOOR.exalt.greater, a2: CURRENCY_FLOOR.exalt.perfect, b0: 0, b4: ANCIENT_FLOOR };
+  // 【仮・エミュ部への頼み事】カオスの段の下限はエンジンが出していない (spec/orb-specs.ts の CHAOS_FLOOR は外に出ていない)。値が同じ高貴の CURRENCY_FLOOR.exalt で代わりにしている
+  const floors: Record<Grade, number> = { a0: CURRENCY_FLOOR.exalt.base, a1: CURRENCY_FLOOR.exalt.greater, a2: CURRENCY_FLOOR.exalt.perfect, b0: 0, b4: ANCIENT_BONE_FLOOR };
   for (const g of GRADES) {
     if (x.itemLevel < floors[g]) continue;
     const bone = g[0] === "b";
@@ -157,7 +160,7 @@ export function buildAutoModel(input: AutoInput): AutoBuilt {
   const rare = { ...item, rarity: "rare" as const };
   const model: AutoModel = {
     keys, R: x.startPrice, runeCost, cap: [limitOf(rare, "prefix"), limitOf(rare, "suffix")], slots, keyIds, frac, pools, prices,
-    exRates: DESECRATION_EXCLUSIVE_COUNT.map((c) => c.rate), version: 1,
+    exRates: DESECRATION_EXCLUSIVE_COUNT.map((c) => c.rate), offers: REVEAL_SPEC.actions.flatMap((a) => ("reveal" in a ? [a.reveal.offers] : []))[0] ?? 3, version: 2,
   };
   return { ok: true, model };
 }

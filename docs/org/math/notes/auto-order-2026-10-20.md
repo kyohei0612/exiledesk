@@ -51,3 +51,14 @@ commit: 型 eec3c4d6、本体 dc2fb883 (src/services/simulator/auto/auto-model�
 - 靴の ±30% の原因 (どの近似か)。mc の完成の割合が 6〜11 ポイント高い原因 (前の試しから残っている)
 - n ≥ 6 の絞り方の確かめ (6 行以上の見本と redo)
 - 範囲外: 増強スパムの白から・グレーターの道・両側のどれか・エミュレーターのアイテムから (start: item)
+
+## 自前で持っている物 (10-20 ブラックの念押しで洗い出し)
+エンジンから取っている: 重み・段・系統 (stage-core の candidates・pool の familiesOf / occupiedFamiliesOf)、段の下限 (CURRENCY_FLOOR・ANCIENT_BONE_FLOOR)、発現の冒涜専用の数の割合 (DESECRATION_EXCLUSIVE_COUNT)・候補の数 (REVEAL_SPEC)、枠の数 (limitOf)、札・関門の打ち止め (quizFromSim・GATE_CAPS)、ルーンの名前 (runeEnForId)、置き場とルーン (startFrom・effectiveCls)。
+auto/ の中で自前に持っている物:
+1. **【仮】カオスの段の下限** = 高貴の CURRENCY_FLOOR.exalt (0 / 35 / 50) で代わり (auto-model.ts)。エンジンの CHAOS_FLOOR は spec/orb-specs.ts の中だけで外に出ていない
+2. 打ち方の効果の書き写し (auto-actions.ts): 消去・カオスは固定以外から等しく 1 つ、骨の側は空きのある側を半々、発現の選び方 (埋まっていない札の MOD を取る・反響で引き直し)、完璧なエッセンスは 1 つ外して付ける、光は冒涜だけ外す。どれも spec の説明文・quiz-recipe の revealKey に合わせて書いたが、エンジンの関数を呼んではいない
+3. カレンシー・お告げの鍵の名前の表 (exalt_greater・OmenofSinistralErasure・essence:perfect:<modId> など、auto-model の PRICE_KEYS・auto-actions の SIDE_OMEN / ADD_KEY)
+
+## エミュ部への頼み事
+- カオスの段の下限を外に出す (CURRENCY_FLOOR に chaos を足すか、orb-specs の floorOf を export)。出たら auto-model.ts の【仮】を差し替える
+- 1 手の行き先の確率 (足す・消す・発現の 3 つの候補) をエンジンの入口 (spec/odds の addHitOdds など) から札の形ごとに引けると、2 の書き写しが要らなくなる。今は形 (札の状態 + 外れの数) から確率を出す入口が無い
