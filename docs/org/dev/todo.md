@@ -5,8 +5,8 @@
 |---|---|---|
 | ブラック | local_3b3c55ab-5df3-437a-855a-5e75e2c1fa64 | 司令塔 |
 | 開発部長 | (このセッション) | まとめ役 |
-| ジン部長 | local_3582faa0-ba38-498d-8f47-c6aa6fd767bf | R4 の 2 手 (口を作る・隠す判定、今)。クラフト台の素の値はオーナーの返事待ち |
-| シミュ部長 | local_1e51d4a4-ec5b-459d-85ee-95d6da9c079f | 打ち止めのオーナーの返事待ち (A なら quiz-recipe.ts の 1 行) → S2e → S4 → R4 の中身 |
+| ジン部長 | local_3582faa0-ba38-498d-8f47-c6aa6fd767bf | 手空き。クラフト台の素の値はオーナーの返事待ち |
+| シミュ部長 | local_1e51d4a4-ec5b-459d-85ee-95d6da9c079f | 打ち止めのオーナーの返事待ち (A なら quiz-recipe.ts の 1 行) → S2e → S4 |
 | 解析君 | local_2188a7ed-e2f7-4c08-a09c-72c1b5aef099 | K8 範囲 C (今)。K6c はオーナーの返事待ち |
 | 分析君・動画部長・リサーチ長 | — | 仕事が来たらブラックが立てる |
 
@@ -16,7 +16,6 @@
 | 解析君 K8 | src/services/simulator/auto/auto-model.ts、scripts/analysis/check-auto-order.mjs、docs/org/math/ |
 | 解析君 (一時) | scripts/_flux-probe.test.ts (やふやふは ed2c9ba3 で commit 済み) |
 | シミュ部長 S1e | SimPasteRead.vue・paste-read.ts・StageBasePage.vue・StageTargetSummary.vue・use-stage-base.ts |
-| ジン部長 R4 | src/views/craft-stage/CraftStage.vue、新 src/views/simulator/SimHost.vue・src/views/tutorial/CourseHost.vue・src/state/tutorial/course-host.ts (口だけ。中身はシミュ部長が S4 の後に) |
 | ジン部長 J2 | tests/golden/ (探すのは別の worktree) |
 
 ## 順番 (2026-10-20 夜、オーナー OK 済みの物)
@@ -94,7 +93,7 @@
 - R1 済み (03b30a1c)・R1b 済み (d8cb4ec6)。解析君が auto-solve の buildAutoModel の再輸出を消す。
 - R2 済み (44bd4c77): views/simulator/SimBaseExtras.vue、ベースのページは 2 か所に 1 行ずつ。
 - R3 済み (930ca9e4): StageTargetSummary 127 行 + use-target-rows・use-target-plans・use-target-share。見張りは合計で落とす形に (移っただけで落ちたため)。
-- R4 の案 済み (193ef469、emulator/notes/2026-10-20-r4-craftstage-hosts.md): 口 SimHost・CourseHost、props は phone・guidePage だけ。手 4: ジン部長が口を作る・隠す判定 (今) → シミュ部長が SimHost・CourseHost の中身 (S4 の後、main → tools → header)。
+- R4 済み (193ef469 案・8bf52223 手 1・dd06d834 手 2、開発版): SimHost (header / tools / main)・CourseHost (header / main / under-item / above-shelf / overlay) に中身もジン部長が移した (CraftStage 495 → 470 行)。コースの判定は state/tutorial/course-host.ts 1 か所。直す前と後の DOM を窓なし Chrome で比べて同じ (エミュ・シミュ・使い方・コース、PC とスマホ)。シミュ部長の中身の 2 手は要らなくなった (これからは口の中だけ触る)。
 - R5 state/craft-stage.ts を 500 行の内に (開発部長、R4 の後)。
 - R6 ページの表 web/pages/<部>.ts (開発部長、R5 の後)。
 
