@@ -4,16 +4,16 @@
  * 上乗せはここに 1 か所。画面・シミュ・貼り付けの読みはここを呼ぶだけにする (自前で割り戻さない)。今エンジンが掛けている上乗せは 3 つ:
  *   quality    … カタリストの品質 (指輪・アミュレット・ジュエル・グラスピングメイルの catalystQuality)。その種類のタグを持つ MOD に掛かる (catalystBoosts)
  *   sideEffect … 反対側の「サフィックス / プレフィックスの効果が N% 増加する」(液化した感情の獰猛、sideEffectPct)
+ *   magnitude  … ルーンで付く「明示 ○○ MOD の強さが N% 増加する」(その種類のタグを持つ明示 MOD に、magnitudePct。2026-10-21 J11)
  *   sanctify   … 聖別の倍率 (0.78〜1.22)。MOD の values は掛けた後で、掛ける前の値は m.sanctify.base
- * 表示 = floor(素 × 聖別の倍率 × (1 + (品質 + 側の効果) / 100)) (displayedValue と同じ切り捨て)。
- * ルーンの「明示 MOD の強さが N% 増加する」は今エンジンが MOD の値に掛けていない (notes/2026-10-20-j8-boost-table.md の迷う物)。
+ * 表示 = floor(素 × 聖別の倍率 × (1 + (品質 + 側の効果 + 強さ) / 100)) (displayedValue と同じ切り捨て)。
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import { boostedMod, catalystBoosts, catalystOf, sideEffectPct, SIDES } from "./stage-core";
+import { boostedMod, catalystBoosts, catalystOf, magnitudePct, sideEffectPct, SIDES } from "./stage-core";
 import { rawValue } from "../htc/quality";
 import type { StageItem, StageMod, StageSide } from "./types";
 
-export type BoostKind = "quality" | "sideEffect" | "sanctify";
+export type BoostKind = "quality" | "sideEffect" | "magnitude" | "sanctify";
 /** MOD 1 つに掛かっている上乗せ。pct = 足される %(聖別は (倍率 - 1) × 100)、tag = 品質の種類 (attack・caster …) */
 export interface ModBoost { kind: BoostKind; pct: number; tag?: string }
 /** アイテム全体の上乗せ (どの MOD に掛かるかは modBoostsOf で) */
@@ -36,6 +36,8 @@ export function modBoostsOf(item: StageItem, m: StageMod, data?: PatchData): Mod
   if (tag && pct > 0 && catalystBoosts(item, m, tag, data)) out.push({ kind: "quality", pct, tag });
   const se = sideEffectPct(item, m.side);
   if (se > 0) out.push({ kind: "sideEffect", pct: se });
+  const mg = magnitudePct(item, m, data);
+  if (mg > 0) out.push({ kind: "magnitude", pct: mg });
   if (m.sanctify && m.sanctify.k !== 1) out.push({ kind: "sanctify", pct: Math.round((m.sanctify.k - 1) * 100) });
   return out;
 }

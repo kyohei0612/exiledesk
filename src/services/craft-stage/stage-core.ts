@@ -218,9 +218,27 @@ function fillEn(text: string, values: readonly number[]): string {
  * MOD 自身が持っていれば 素の値 × (1 + 品質) を切り捨て (2026-10-18)。防具・武器の MOD は品質で数値が動かない。
  * タグは MOD に持たせた物 (無い古い物は data から引く)
  */
+/**
+ * ルーンで付く「明示 ○○ MOD の強さが N% 増加する」(破壊のルーン、stat heist_enchantment_<種類>_mod_effect_+% / local_explicit_elemental_damage_mod_effect_+%) が
+ * その MOD に掛ける % (2026-10-21 J11 オーナー「書いてある効果どおりエンジンで掛ける」)。「明示 ○○ MOD」= その種類のタグを持つ明示 MOD
+ * (critical・speed・chaos・physical・fire・cold・lightning・mana・elemental_damage)。自分自身 (強さの MOD) には掛けない
+ */
+const MAGNITUDE_TAG = /^(?:heist_enchantment_([a-z]+)_mod_effect|local_explicit_(elemental_damage)_mod_effect)_\+%$/;
+export function magnitudePct(item: StageItem, m: StageMod, data?: PatchData): number {
+  const tags = data?.mods.get(m.modId)?.tags ?? m.tags ?? [];
+  let pct = 0;
+  for (const x of allMods(item)) {
+    if (x === m || x.unrevealed || !x.values.length) continue;
+    const stat = (x.stats ?? (data?.mods.get(x.modId)?.tiers[x.tierIndex] as { stats?: string[] } | undefined)?.stats ?? [])[0];
+    const hit = stat ? MAGNITUDE_TAG.exec(stat) : null;
+    const tag = hit ? hit[1] ?? hit[2] : null;
+    if (tag && tags.includes(tag)) pct += x.values[0] ?? 0;
+  }
+  return pct;
+}
 export function boostedMod(item: StageItem, m: StageMod, data?: PatchData): { values: number[]; textJa: string; textEn: string } | null {
   if (!m.values.length) return null;
-  const pct = qualityPctOf(item, m, data) + sideEffectPct(item, m.side);
+  const pct = qualityPctOf(item, m, data) + sideEffectPct(item, m.side) + magnitudePct(item, m, data);
   if (!(pct > 0)) return null;
   // 小数の値は 2 桁に丸める (6.45 × 1.2 = 7.739999… のような誤差を values に入れない。文と同じ丸め)。整数は displayedValue が四捨五入済み
   const values = m.values.map((v) => { const b = displayedValue(v, pct); return Number.isInteger(v) ? b : Math.round(b * 100) / 100; });
