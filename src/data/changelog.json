@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.588",
+  "date": "2026-10-20",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "ベースの一覧から名前で探す欄を外し、「装備・エフェクトオフ」を一番下に移しました",
+    "en": "Removed the name search from the base list and moved “Plain art, no effects” to the bottom"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "値段を入れる欄の横に、入れた値を見やすい単位でも出すようにしました",
+    "en": "Price fields now also show the entered value in the most readable currency"
+   }
+  ]
+ },
+ {
   "v": "0.1.587",
   "date": "2026-10-20",
   "items": [
@@ -612,18 +630,6 @@
     "area": "",
     "text": "X でシェアしたカオススパムの結果を開くと、同じアイテム・同じ狙いでカオススパム計算機がすぐ開いて計算が始まるように",
     "en": "Opening a shared chaos spam result from X now opens the Chaos spam calculator right away with the same item and targets"
-   }
-  ]
- },
- {
-  "v": "0.1.548",
-  "date": "2026-10-17",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "英語の画面: 更新内容を英語で出すように。ベースの読み物のページの英語版 (/en/bases/) を作りました",
-    "en": "English: release notes are now shown in English, and the base pages are available in English (/en/bases/)"
    }
   ]
  }

@@ -1,4 +1,8 @@
 {
+  "0.1.588": [
+    "Removed the name search from the base list and moved “Plain art, no effects” to the bottom",
+    "Price fields now also show the entered value in the most readable currency"
+  ],
   "0.1.587": [
     "Fixed Spam Simulator luck shares on X showing the generic site card and not opening the luck run (links shared Oct 19–21 can’t be recovered, please share again)"
   ],
