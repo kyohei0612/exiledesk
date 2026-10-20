@@ -64,8 +64,11 @@ export { isShard } from "./apply-act";
 export { isGem } from "./stage-bases";
 
 // 貼り付けたアイテムの文を読む (トレード・poe.ninja・ゲームの Ctrl+C / Ctrl+Alt+C、日英。形は item-text-types.ts)
-export type { ItemTextResult, ItemTextMod, ItemTextImplicit, ItemTextSkip, ItemTextSkipCode, ItemTextSource, ItemTextWords } from "./item-text-types";
+export type { ItemTextResult, ItemTextMod, ItemTextImplicit, ItemTextSkip, ItemTextSkipCode, ItemTextSource, ItemTextWords, ItemTextCorruption } from "./item-text-types";
 export { parseItemText } from "./item-text";
+// コラプト (ヴァールのオーブ) で付く MOD の表 (poe2db の部位のページ。enchant = エンチャント、upgrade = 強まったコラプトの行)
+export type { CorruptionRow } from "../mods/corruption";
+export { corruptionRowsFor, matchCorruption } from "../mods/corruption";
 
 // 文
 export { fillModText } from "../htc/mod-text";

@@ -16,6 +16,20 @@ export type ItemTextSource =
   | "trade"         // 区切り線無し・「W」「P」の行・値段の行
   | "unknown";
 
+/**
+ * コラプトの印 (2026-10-20 J1b)。表はエンジン部の services/mods/corruption.ts (poe2db の部位のページの corrupted / corruption_upgrade)。
+ * status: table = 表と一致、unknown = コラプトした物だが表に無い・値が段の幅に入らない (推し量らない)。
+ * kind: enchant = ヴァールのオーブで付くエンチャント、upgrade = 強まったコラプトの行 (CorruptionUpgrade…)。id は poe2db の名前。
+ * range は表の値の幅、fits は貼り付けの値がその幅に入るか (table の時だけ)
+ */
+export interface ItemTextCorruption {
+  status: "table" | "unknown";
+  kind?: "enchant" | "upgrade";
+  id?: string;
+  range?: Array<[number, number]>;
+  fits?: boolean;
+}
+
 /** 暗黙側の 1 行 (MOD の数に入れない) */
 export interface ItemTextImplicit {
   text: string;
@@ -23,12 +37,14 @@ export interface ItemTextImplicit {
    * base = ベースの暗黙 (エンジンのベースの行と照らした / 注記 `(implicit)`)。
    * rune = 差したルーン (`(rune)`)、enchant = エンチャント・アノイント (`(enchant)`)。
    * 印の無い貼り付け (トレード) でベースの暗黙より前にあった行は: 差したルーン・ソウルコアの効果と文が同じなら rune、
-   * コラプトした物なら enchant (コラプトの結果は Corrupted Enchantment)、どちらでもなければ extra (文では見分けられない)。
+   * コラプトした物なら corruption (corruption にコラプトの表との照らし)、どちらでもなければ extra (文では見分けられない)。
    */
-  from: "base" | "rune" | "enchant" | "extra";
+  from: "base" | "rune" | "enchant" | "corruption" | "extra";
   /** 当たった英語の型 (読めなければ null) と値 */
   template: string | null;
   values: number[];
+  /** from が corruption の時の照らし */
+  corruption?: ItemTextCorruption;
 }
 
 /** 明示の MOD 1 つ (未発現の枠も 1 つと数える) */
@@ -55,6 +71,8 @@ export interface ItemTextMod {
   crafted: boolean;
   /** 未発現 (冒涜で付いてまだ見ていない) の枠 */
   unrevealed: boolean;
+  /** コラプトした物で、値がどの段の幅にも入らない MOD は { status: "unknown" } (コラプトで値が変わったかは推し量らない) */
+  corruption?: ItemTextCorruption;
   /** Ctrl+Alt+C の見出しの段の名前 (`"Razor-sharp"`)。それ以外は無し */
   pasteTierName?: string;
 }
@@ -65,7 +83,8 @@ export type ItemTextSkipCode =
   | "unknownText" // MOD の文の型に当たらない
   | "notInPool"   // 文は読めたが、このベースの置き場に無い (コラプト・ユニーク・ドロップ限定の MOD など)
   | "dropOnly"    // 創生の樹など、クラフトでは付かない MOD (枠は使う)
-  | "hybridPart"; // 2 行で 1 つの MOD のもう 1 行 (MOD は 1 つに数えた)
+  | "hybridPart"  // 2 行で 1 つの MOD のもう 1 行 (MOD は 1 つに数えた)
+  | "corruptionUnknown"; // コラプトした物で、置き場にもコラプトの表にも無い行
 
 export interface ItemTextSkip { line: string; code: ItemTextSkipCode; reason: ItemTextWords }
 

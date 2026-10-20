@@ -18,9 +18,10 @@ import { matchKey } from "../htc/bridge-index";
 import { tierDisplayRanges } from "../mods/stat-scale";
 import { catalystBoosts } from "./stage-core";
 import { RUNES, runeCategoryOf, runeEffectFor } from "./stage-runes";
+import { matchCorruption } from "../mods/corruption";
 import type { StageItem } from "./types";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
-import type { ItemTextImplicit, ItemTextResult, ItemTextSkip, ItemTextSkipCode, ItemTextWords } from "./item-text-types";
+import type { ItemTextCorruption, ItemTextImplicit, ItemTextResult, ItemTextSkip, ItemTextSkipCode, ItemTextWords } from "./item-text-types";
 
 const REASON: Readonly<Record<ItemTextSkipCode, ItemTextWords>> = {
   noBase: { ja: "ベースが分からない (MOD の置き場が決まらない)", en: "Unknown base type (the mod pool cannot be chosen)" },
@@ -28,6 +29,7 @@ const REASON: Readonly<Record<ItemTextSkipCode, ItemTextWords>> = {
   notInPool: { ja: "このベースのクラフトの MOD に無い (コラプト・ユニーク・ドロップ限定など)", en: "Not a craftable modifier on this base (corruption, unique, drop-only…)" },
   dropOnly: { ja: "創生の樹などドロップ限定の MOD (クラフトでは付かない、枠は使う)", en: "Drop-only modifier (cannot be crafted, still takes an affix slot)" },
   hybridPart: { ja: "2 行で 1 つの MOD のもう 1 行 (1 つに数えた)", en: "Second line of a two-line modifier (counted once)" },
+  corruptionUnknown: { ja: "コラプトした物で、クラフトの MOD にも poe2db のコラプトの表にも無い (不明)", en: "Corrupted item: not a craftable modifier and not in poe2db's corruption list (unknown)" },
 };
 const skip = (line: string, code: ItemTextSkipCode): ItemTextSkip => ({ line, code, reason: REASON[code] });
 
@@ -154,7 +156,7 @@ export function parseItemText(data: PatchData, text: string): ItemTextResult {
 /** 暗黙側の行を out.implicits に移し、残り (明示の MOD の候補) を返す */
 function splitImplicits(data: PatchData, out: ItemTextResult, body: Body[]): Body[] {
   const implicit = (b: Body, from: ItemTextImplicit["from"]): void => {
-    out.implicits.push({ text: b.text, from, template: b.template, values: b.values });
+    out.implicits.push({ text: b.text, from, template: b.template, values: b.values, ...(from === "corruption" ? { corruption: corruptionOf(out, b) } : {}) });
     if (from === "rune") out.sockets.runes.push(b.text);
   };
   const rest: Body[] = [];
@@ -188,7 +190,7 @@ function splitImplicits(data: PatchData, out: ItemTextResult, body: Body[]): Bod
   const runeTexts = new Set(cat ? Object.values(RUNES).flatMap((r) => { const e = runeEffectFor(r, cat); return e ? [bare(e.en), bare(e.ja)] : []; }) : []);
   body.forEach((b, i) => {
     if (isBase[i]) implicit(b, "base");
-    else if (i < last) implicit(b, runeTexts.has(bare(b.text)) ? "rune" : out.corrupted > 0 ? "enchant" : "extra");
+    else if (i < last) implicit(b, runeTexts.has(bare(b.text)) ? "rune" : out.corrupted > 0 ? "corruption" : "extra");
     else rest.push(b);
   });
   return rest;
@@ -241,7 +243,12 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
     const k = matchKey(b.template!);
     const any = out.cls ? [...data.mods.values()].find((m) => m.id.startsWith(out.cls + "/") && matchKey(m.text ?? "") === k) : undefined;
     if (any) picked.push({ b, mod: any });
-    else out.skipped.push(skip(b.line, "notInPool"));
+    else if (out.corrupted > 0) {
+      // コラプトした物: コラプトの表にあれば暗黙側 (コラプトの行)、無ければ不明
+      const c = corruptionOf(out, b);
+      if (c.status === "table") out.implicits.push({ text: b.text, from: "corruption", template: b.template, values: b.values, corruption: c });
+      else out.skipped.push(skip(b.line, "corruptionUnknown"));
+    } else out.skipped.push(skip(b.line, "notInPool"));
   }
 
   const level = out.itemLevel ?? 100;
@@ -259,6 +266,7 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
       values: b.values,
       fractured: b.note === "fractured", desecrated: b.note === "desecrated" || mod.source === "desecrated", crafted: b.note === "crafted",
       unrevealed: false,
+      ...(out.corrupted > 0 && !fits ? { corruption: { status: "unknown" as const } } : {}),
       ...(b.tierName ? { pasteTierName: b.tierName } : {}),
     });
   }
@@ -286,4 +294,11 @@ function tierOf(mod: Mod, shown: readonly number[], pct: number, level: number):
   }
   for (let i = mod.tiers.length - 1; i >= 0; i--) if ((mod.tiers[i]?.ilvl ?? 0) <= level) return { index: i, fits: false };
   return { index: mod.tiers.length - 1, fits: false };
+}
+
+/** 1 行をそのクラスのコラプトの表 (エンジン部の mods/corruption.ts、poe2db) と照らす。無ければ unknown */
+function corruptionOf(out: ItemTextResult, b: Body): ItemTextCorruption {
+  const hit = out.cls ? matchCorruption(out.cls, b.text, b.template, b.values) : null;
+  if (!hit) return { status: "unknown" };
+  return { status: "table", kind: hit.row.kind, id: hit.row.id, range: hit.row.ranges, fits: hit.fits };
 }
