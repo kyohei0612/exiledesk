@@ -158,19 +158,31 @@ const columns = computed(() => (["P", "S"] as const).map((side) => {
     if (m) { m.hosts.push(g.host); m.need += 1; continue; }
     merged.push({ ...g, hosts: [g.host] });
   }
-  // 残りも要る時 (rest) は、組が候補の数だけ枠を使う
-  const used = merged.reduce((a, g) => a + (restable(g) && restOf(g) ? g.members.length : g.need), 0);
+  const used = merged.reduce((a, g) => a + slotsOf(g), 0);
   return { title: side === "P" ? "プレフィックス" : "サフィックス", groups: merged, used };
 }));
 /**
  * 行の番号: 上から並んでいる順に全部の行へ (プレ → サフィ → またがる組)。前は付ける順番の番号でフラクチャー予定の組だけ番号が無く、
  * 見出しの個数とずれて「特殊 MOD が数に入っていない」ように見えた (2026-10-21 オーナー「特殊 MOD は個数に含まれてないのなーぜー」)
  */
+/** 組が完成品で使う枠の数。残りも要る時 (どっちも・全部) は候補の数、どれか N つは N (見出しの個数と同じ数え方) */
+function slotsOf(g: { kind: Kind; host: string; need: number; members: Row[] }): number {
+  return restable(g) && restOf(g) ? g.members.length : g.need;
+}
+/**
+ * 2 つ以上の枠を使う組 (どっちも・どれか 2 つ…) は番号も枠の分だけ進める: 「1・2」「1〜3」、次の組は「3」
+ * (2026-10-20 オーナー「どっちもの行が 1 のままで次が 2 だと、完成品の MOD の合計が分からない」)
+ */
 const noOf = computed(() => {
-  const out = new Map<string, number>();
+  const out = new Map<string, string>();
   let n = 0;
-  for (const c of columns.value) for (const g of c.groups) out.set(`${c.title}:${g.key}`, ++n);
-  for (const g of mixed.value) out.set(`mixed:${g.key}`, ++n);
+  const take = (k: string, c: number): void => {
+    const a = n + 1;
+    n += Math.max(1, c);
+    out.set(k, n === a ? `${a}` : n === a + 1 ? tr(`${a}・${n}`, `${a}, ${n}`) : tr(`${a}〜${n}`, `${a}–${n}`));
+  };
+  for (const c of columns.value) for (const g of c.groups) take(`${c.title}:${g.key}`, slotsOf(g));
+  for (const g of mixed.value) take(`mixed:${g.key}`, 1);
   return out;
 });
 
@@ -292,7 +304,7 @@ function setRest(g: { kind: Kind; host: string }, p: RestPlan | null): void {
       </p>
       <p v-if="!col.groups.length" class="py-0.5 opacity-40">{{ props.editable ? "下の一覧で MOD を押し、開いた段の表の「T○ 以上」で足す" : "なし" }}</p>
       <div v-for="g in col.groups" :key="g.key" class="flex flex-wrap items-start gap-1.5 py-0.5">
-        <span class="w-4 shrink-0 pt-px text-right font-bold text-amber-200">{{ noOf.get(`${col.title}:${g.key}`) }}</span>
+        <span class="min-w-4 shrink-0 whitespace-nowrap pt-px text-right font-bold tabular-nums text-amber-200">{{ noOf.get(`${col.title}:${g.key}`) }}</span>
         <!-- 左は MOD の種類 (出どころ)、右は付け方の予定 (2026-10-05 オーナー「左はクラフト MOD とか冒涜 MOD とか付けるでしょ」) -->
         <span class="shrink-0 rounded border px-1 text-[11px]" :class="badgeOf(g.host).cls" :title="badgeOf(g.host).rune ? tr(`${badgeOf(g.host).rune}を差すと付く MOD。回す時はこのルーンを差した白から始める`, `Comes from socketing ${badgeOf(g.host).rune}. Runs start from a white base with that rune socketed`) : tr('MOD の種類 (出どころ)', 'Mod type (source)')">{{ badgeOf(g.host).label }}</span>
         <!--
@@ -355,7 +367,7 @@ function setRest(g: { kind: Kind; host: string }, p: RestPlan | null): void {
     <div v-for="g in mixed" :key="g.key" class="min-w-0">
       <p class="mb-0.5 border-b border-white/10 pb-0.5 text-[12px] font-bold opacity-70">プレフィックスかサフィックスのどれか <span class="font-normal">(付いた側で打ち方のルートが分かれる)</span></p>
       <div class="flex items-start gap-1.5 py-0.5 max-md:flex-wrap">
-        <span class="w-4 shrink-0 pt-px text-right font-bold text-amber-200">{{ noOf.get(`mixed:${g.key}`) }}</span>
+        <span class="min-w-4 shrink-0 whitespace-nowrap pt-px text-right font-bold tabular-nums text-amber-200">{{ noOf.get(`mixed:${g.key}`) }}</span>
         <!-- プレとサフィにまたがる組も同じ形 (縦線でくくる) -->
         <div class="min-w-0 flex-1 border-l-2 border-amber-400/60 pl-2">
           <div class="flex flex-col gap-0.5">
