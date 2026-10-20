@@ -10,8 +10,7 @@ import { craftStage as s } from "../../state/craft-stage";
 import { tr } from "../../i18n/lang";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import { quizFromSim, type QuizSimIn } from "../../services/simulator/quiz-build";
-import { fillModText } from "../../services/htc/mod-text";
-import { tierDisplayRanges } from "../../services/mods/stat-scale";
+import { fillModText, tierDisplayRanges } from "../../services/craft-stage/engine";
 import { actionText, whenText } from "./quiz-text";
 import type { AutoFilled } from "../../services/simulator/auto/auto-order";
 
