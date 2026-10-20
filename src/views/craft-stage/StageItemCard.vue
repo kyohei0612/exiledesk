@@ -233,7 +233,8 @@ const rows = computed(() => {
           <!-- 下に値の幅 (トレードサイトの「[6–9 から 11–15]」と同じ。暗黙はティアが無いので下限・上限が分かるように。2026-10-12 オーナー) -->
           <span class="shrink-0 text-left text-[11px] leading-tight text-white/45" :class="t.ranges.length ? 'min-w-7' : 'w-7'">{{ tr("暗黙", "Impl.") }}<span v-if="t.ranges.length" class="block whitespace-nowrap text-[10px] tabular-nums text-white/40">[{{ rangeLabel(t.ranges) }}]</span></span>
           <span class="min-w-0 flex-1 text-center text-rarity-magic">
-            <span :class="t.boosted ? 'text-[#7ee8ff]' : ''" :title="t.boosted ? tr('品質で伸びた数値', 'Boosted by quality') : undefined">{{ t.text }}</span>
+            <span v-if="BASE_VALUES_ON && t.boosted" :title="tr('素の値 (品質で盛る前)。小さい文は品質で盛った値', 'Base value (before quality). The small text is the boosted value')">{{ t.baseText }}<span data-boosted-value class="ml-1 text-[10px] text-[#7ee8ff]">({{ t.text }})</span></span>
+            <span v-else :class="t.boosted ? 'text-[#7ee8ff]' : ''" :title="t.boosted ? tr('品質で伸びた数値', 'Boosted by quality') : undefined">{{ t.text }}</span>
             <span v-for="g in t.tags" :key="g" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[g]!.cls">{{ tagLabel(g) }}</span>
           </span>
           <!-- 暗黙はティアが無いので、値を範囲の中で上下するボタン (MOD の行の ↓ の位置。2026-10-12 オーナー) -->
