@@ -4,3 +4,4 @@
 export * from "./_auto-order-entry";
 export { blankWith, fractureOdds, magicAugOdds } from "../../src/services/simulator/sim-odds";
 export { startFrom } from "../../src/services/craft-stage/run-plan";
+export { quizActionOf } from "../../src/services/simulator/auto/auto-actions";
