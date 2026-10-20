@@ -16,7 +16,7 @@ import type { OrderDetail } from "./auto-types";
 const SIDE_KEYS = ["p.junk", "s.junk", "p.hid", "s.hid", "p.bad", "s.bad", "des"] as const;
 
 /** 見えている形 → ⑤ の状況の条件。冒涜の印: 1・2 プレの未発現 / 3・4 サフィの未発現 / 5・6 外れの冒涜 / 7+k 札 k を冒涜で取った */
-function whenOf(m: AutoModel, fracId: string, aug: number, s: State): When {
+export function whenOf(m: AutoModel, fracId: string, aug: number, s: State): When {
   const K = m.slots.length, d = s[3 + K]!;
   const w: When = { aug, [fracId]: 3, "p.junk": s[1 + K]!, "s.junk": s[2 + K]!, "p.hid": d === 1 || d === 2 ? 1 : 0, "s.hid": d === 3 || d === 4 ? 1 : 0, "p.bad": d === 5 ? 1 : 0, "s.bad": d === 6 ? 1 : 0, des: d ? 1 : 0 };
   m.slots.forEach((sl, k) => { const x = s[1 + k]!; w[sl.id] = x > sl.members.length ? 2 : x > 0 ? 1 : 0; });
@@ -38,15 +38,16 @@ function tableOf(m: AutoModel, det: OrderDetail, recipe: QuizRecipe): Table {
     best.set(k, { when, act: v.act, visits: v.visits });
   }
   // 発現で段の足りない狙いの MOD が出た時、計算は「外れの冒涜」(p.bad / s.bad) に数えるが、⑤ は「札が段の足りない状態 (1)・冒涜あり」に見える。
-  // 外れの冒涜の形の答えを、その側の空いた札が 1 の見え方にも書く (同じ状況が既にあればそちら)
-  for (const { when, act } of [...best.values()]) {
+  // 外れの冒涜の形の答えを、その側の空いた札が 1 の見え方にも書く。同じ条件の形が既にあれば通った回数の多い方
+  // (「札を冒涜で取った + 別の札が普通に段の低い」形も同じ条件になる。めったに通らないその形の手 (消去) が勝ち、靴の発現の後に消去でドッジを失っていた。K2c)
+  for (const { when, act, visits } of [...best.values()]) {
     for (const [bad, side, junk] of [["p.bad", 0, "p.junk"], ["s.bad", 1, "s.junk"]] as const) {
       if (when[bad] !== 1) continue;
       m.slots.forEach((sl) => {
         if (sl.side !== side || when[sl.id] !== 0) return;
         const w = { ...when, [bad]: 0, [junk]: (when[junk] as number) - 1, [sl.id]: 1 };
-        const k = keyOf(w);
-        if (!best.has(k)) best.set(k, { when: w, act, visits: -1 });
+        const k = keyOf(w), e = best.get(k);
+        if (!e || e.visits < visits) best.set(k, { when: w, act, visits });
       });
     }
   }
