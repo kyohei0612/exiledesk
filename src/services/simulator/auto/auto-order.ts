@@ -9,7 +9,9 @@
  * 1 つの順番の値は解析君の solveOrder (auto-solve.ts)
  */
 import type { OrderResult } from "./auto-types";
-import type { AutoJob, AutoMsg, AutoSimIn } from "./auto-order.worker";
+import type { AutoFilled, AutoJob, AutoMsg, AutoSimIn } from "./auto-order.worker";
+import type { QuizRule, Situation } from "../quiz-recipe";
+export type { AutoFilled } from "./auto-order.worker";
 
 export interface OrderInput {
   /** 今の ④ の順番 (orderKeys) */
@@ -122,9 +124,17 @@ export function autoOrderClient() {
   let price: (k: string) => number = () => 0;
   const builds = new Map<number, (r: AutoBuildResult) => void>();
   let hooks: AutoRunHooks | null = null;
+  /** fill・answer の返事待ち (null = 止めた・失敗) */
+  const fills = new Map<number, (r: AutoFilled | null) => void>();
+  const answers = new Map<number, (r: QuizRule[]) => void>();
+  const dropWaits = (): void => {
+    for (const res of fills.values()) res(null);
+    for (const res of answers.values()) res([]);
+    fills.clear(); answers.clear();
+  };
   const fail = (m: string): void => {
     for (const res of builds.values()) res({ ok: false, reason: { ja: m, en: m } });
-    builds.clear();
+    builds.clear(); dropWaits();
     hooks?.error(m); hooks = null;
     w?.terminate(); w = null;
   };
@@ -138,6 +148,8 @@ export function autoOrderClient() {
       else if (m.kind === "step") hooks?.step(m.done, m.total);
       else if (m.kind === "row") hooks?.row(m.row);
       else if (m.kind === "done") { hooks?.done(); hooks = null; }
+      else if (m.kind === "filled") { fills.get(m.id)?.(m.out); fills.delete(m.id); }
+      else if (m.kind === "answers") { answers.get(m.id)?.(m.rules); answers.delete(m.id); }
       else fail(m.message);
     });
     nw.addEventListener("error", (e) => fail(e.message || "worker error"));
@@ -161,10 +173,26 @@ export function autoOrderClient() {
       hooks = on;
       try { worker().postMessage({ kind: "run", cands, current, top: MC_TOP, mc: MC_RUNS } satisfies AutoJob); } catch (e) { fail(e instanceof Error ? e.message : String(e)); }
     },
+    /** 最後に組んだ形と決めた順番で ⑤ の答え・② の付け方を作る (S3)。止めた・失敗は null */
+    fill(order: string[], mc = MC_RUNS): Promise<AutoFilled | null> {
+      const id = ++seq;
+      return new Promise((res) => {
+        fills.set(id, res);
+        try { worker().postMessage({ kind: "fill", id, order, mc } satisfies AutoJob); } catch (e) { fail(e instanceof Error ? e.message : String(e)); }
+      });
+    },
+    /** ⑥ で答えの無かった状況に、最後の fill の方策で答える (当たらない物は入らない) */
+    answer(situations: Situation[]): Promise<QuizRule[]> {
+      const id = ++seq;
+      return new Promise((res) => {
+        answers.set(id, res);
+        try { worker().postMessage({ kind: "answer", id, situations: JSON.parse(JSON.stringify(situations)) as Situation[] } satisfies AutoJob); } catch (e) { fail(e instanceof Error ? e.message : String(e)); }
+      });
+    },
     /** 止める (ワーカーごと捨てる。待っている build は「止めた」で返る) */
     stop(): void {
       for (const res of builds.values()) res({ ok: false, reason: { ja: "止めた", en: "Stopped" } });
-      builds.clear(); hooks = null;
+      builds.clear(); hooks = null; dropWaits();
       w?.terminate(); w = null;
     },
   };

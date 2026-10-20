@@ -48,6 +48,7 @@ import { useSimAuto } from "./use-sim-auto";
 import { simAuto } from "../../state/simulator/sim-state";
 import SimAutoToggle from "./SimAutoToggle.vue";
 import SimAutoConfirm from "./SimAutoConfirm.vue";
+import SimAutoPlay from "./SimAutoPlay.vue";
 
 const tg = useSimTargets();
 const sr = useSimSearch(tg);
@@ -281,7 +282,9 @@ const stepNotes = computed(() => {
       <!-- 6 パターン (2026-10-06): 1 手ずつ。回すのはこの手の通り -->
       <div v-if="step4pre && simStep === 'play'" :data-sim-cur="!patternDone || undefined" :class="!patternDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4 max-md:px-3">
         <SimStepHead class="mb-3" :n="5" title="打ち方" :current="true" :note="tr(`${s.simStart.value === 'item' ? 'エミュレーターの状態' : s.simStart.value === 'magic' ? '買ったマジック' : fractureRow && !wholeRoute ? 'フラクチャー済みのベース' : '白のベース'}から 1 手ずつ`, `Step by step from ${s.simStart.value === 'item' ? 'the Emulator item' : s.simStart.value === 'magic' ? 'the bought magic' : fractureRow && !wholeRoute ? 'the fractured base' : 'a white base'}`)" :help="tr('状況ごとに「この時はこの手」を答えた物 = パターン。いくつか作って、回して費用を比べられる', 'Answers to “in this situation, do this” = a pattern. Make several and run them to compare costs')" />
-        <StagePatternEditor :busy="busy" :start="patternStart" :locked="patternDone" :quiz-base="quizBase" @run-one="(k: number) => run(k)" @active="(k: number) => (activePattern = k)" />
+        <!-- 自動の時は答えを最善手で埋めて要約だけ (S3)。手で直すなら手動に (確かめの窓) -->
+        <SimAutoPlay v-if="autoOn" :filled="ao.autoFilled.value" :busy="ao.autoBusy.value" :quiz-base="quizBase" :money="money" :pct="pct" @manual="autoToggle(false)" />
+        <StagePatternEditor v-else :busy="busy" :start="patternStart" :locked="patternDone" :quiz-base="quizBase" @run-one="(k: number) => run(k)" @active="(k: number) => (activePattern = k)" />
         <!--
           パターンの一覧はここ 1 つ (2026-10-07 オーナー「パターンの比べは何個もいらん、表示 1 個でいい」「回すパターンを選択できるように」)。
           チェックで全部まとめて回す時に入れるか、押すとその結果を下に。回していない物は「未実行」、組みかけは「未完成」
