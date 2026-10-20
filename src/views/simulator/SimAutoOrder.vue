@@ -26,7 +26,9 @@ const line = (order: string[]): string => order.map(props.label).join(" → ");
         <b class="text-[12px] text-[var(--exile-color-text-title)]">{{ tr("おすすめの順番", "Suggested orders") }}</b>
         <span class="opacity-60">{{ tr("(最善の打ち方で打った時の目安)", "(estimate if every step is played optimally)") }}</span>
       </template>
-      <button v-else type="button" data-auto-order-start class="g-btn sm max-md:min-h-10" @click="ao.start">{{ tr("おすすめの順番を出す", "Suggest an order") }}</button>
+      <button v-else type="button" data-auto-order-start class="g-btn sm max-md:min-h-10" :disabled="!!ao.blocked.value" @click="ao.start">{{ tr("おすすめの順番を出す", "Suggest an order") }}</button>
+      <!-- 出せない時は押す前に灰色 + 理由を 1 行 (2026-10-20 点検 3) -->
+      <span v-if="!ao.rows.value.length && !ao.busy.value && ao.blocked.value" data-auto-order-blocked class="min-w-0 text-[var(--exile-color-text-secondary)]">{{ ao.blocked.value }}</span>
       <HelpTip :width="320">
         <ul class="list-disc space-y-1 pl-4">
           <li>{{ tr("各場面で一番安い手を打った時の平均。⑤ の打ち方は自分で決める (この数字より高くなる事が多い)", "Average when the cheapest move is played at every point. You still choose the moves in step 5; real costs are usually higher") }}</li>
@@ -43,7 +45,7 @@ const line = (order: string[]): string => order.map(props.label).join(" → ");
       </span>
       <button v-else-if="ao.rows.value.length" type="button" class="ml-auto inline-flex h-8 items-center rounded-md px-2 text-[var(--exile-color-text-secondary)] hover:bg-white/5 max-md:min-h-10" @click="ao.start">{{ tr("出し直す", "Recalculate") }}</button>
     </div>
-    <p v-if="ao.unsupported.value" class="mt-1 text-amber-200">{{ tr("この狙いの組み合わせはおすすめを出せない", "Can't suggest an order for this set of targets") }} ({{ ao.unsupported.value }})</p>
+    <p v-if="ao.unsupported.value && !ao.blocked.value" class="mt-1 text-amber-200">{{ tr("この狙いの組み合わせはおすすめを出せない", "Can't suggest an order for this set of targets") }} ({{ ao.unsupported.value }})</p>
     <p v-if="ao.error.value" class="mt-1 text-rose-300">{{ ao.error.value }}</p>
     <div v-if="ao.shown.value.length" class="mt-1.5 flex flex-col gap-1">
       <div v-for="(r, i) in ao.shown.value" :key="r.order.join('|')" data-auto-order-row class="flex min-h-8 min-w-0 items-center gap-2 rounded-md border px-2 py-1 max-md:flex-wrap" :class="r.now ? 'border-[var(--exile-color-border-brass)] bg-white/[0.04]' : 'border-white/10'">

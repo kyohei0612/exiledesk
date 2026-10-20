@@ -221,6 +221,8 @@ const stepNotes = computed(() => {
                 </td>
                 <td class="w-48 py-1 text-right text-[11px] tabular-nums max-md:w-auto">
                   <span v-if="redoOf.get(orderRow(k)!.modId)" :class="redoOf.get(orderRow(k)!.modId)!.safe ? 'opacity-70' : 'text-amber-200'" :title="`取り直す時の見込み (計算機と同じ見積もり): ${REDO_METHOD_JA[redoOf.get(orderRow(k)!.modId)!.method]}で 1 回 ${money(redoOf.get(orderRow(k)!.modId)!.perTry)}・当たり ${pct(redoOf.get(orderRow(k)!.modId)!.p)}・外れ 1 回のやり直し ${money(redoOf.get(orderRow(k)!.modId)!.perMiss)}${redoOf.get(orderRow(k)!.modId)!.safe ? '' : '。外れを消す時にほかの物を巻き込む'}`">約 {{ money(redoOf.get(orderRow(k)!.modId)!.expected) }}</span>
+                  <!-- 見込みを出せない MOD は空欄でなく「無し」(2026-10-20 点検 3) -->
+                  <span v-else-if="redoOf.size" class="opacity-50" :title="tr('この MOD は取り直しの見込みを出せない (計算機の見積もりに無い)', 'No redo estimate for this mod (not covered by the calculator estimate)')">{{ tr("無し", "None") }}</span>
                   <span data-drag-handle class="ml-1 inline-grid h-11 w-8 touch-none place-items-center rounded align-middle opacity-50 md:hidden"><Icon name="grip" class="size-4" /></span><!-- スマホは右にもつまみ (縦送りとかぶるので、左右どちらの指でも持てるように。2026-10-19 オーナー) -->
                 </td>
               </template>

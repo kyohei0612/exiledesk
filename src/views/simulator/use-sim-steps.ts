@@ -11,6 +11,9 @@ import { type Pattern, ANY_TARGET, isRest } from "../../services/simulator/patte
 import type { SimTargetsCtx } from "./use-sim-targets";
 import type { SimRunCtx } from "./use-sim-run";
 import { SIM_ILVL_MAX } from "../craft-stage/use-stage-base";
+import { simPasted } from "../../state/simulator/sim-state";
+/** ② の間のアイテムレベル: 一番上 (全部の段を選べる)。貼り付けから始めた時は貼ったアイテムのレベル (② の % をその物で。2026-10-20 点検 1・12) */
+const topIlvl = (): number => simPasted.value?.ilvl ?? SIM_ILVL_MAX;
 import { SIM_STEPS, simJumpOpen, simStep, type SimStep } from "../../state/web-page";
 import { sideLimits, sideUse, sortBuckets } from "../../services/simulator/sim-methods";
 
@@ -124,7 +127,7 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
   watch(() => rows.value.length, (n) => { if (n === 0) { resetPatterns(); modsDone.value = false; whiteOk.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false; } });
   // 2 狙う MOD に戻ったら、アイテムレベルは一番上に戻して全部の段を選べるように (3 に来るとまた狙いが全部付く一番低いレベルが入る、SimStartPick.vue)。
   // エミュレーターの状態からは、そのアイテムのレベルのまま
-  watch(modsDone, (v) => { if (!v && !restoring.v && s.simStart.value !== "item") s.itemLevel.value = SIM_ILVL_MAX; });
+  watch(modsDone, (v) => { if (!v && !restoring.v && s.simStart.value !== "item") s.itemLevel.value = topIlvl(); });
   watch(keptKey, () => { if (restoring.v) return; resetPatterns(); modsDone.value = false; fracDone.value = false; startDone.value = false; orderDone.value = false; whiteOk.value = false; s.simAltFor.value = null; });
   function goTo(st: Stage): void {
     resetPatterns();
@@ -223,7 +226,7 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
     if (from === "mods") resetStalePatterns();
     if (from === "start" && startAtEnter != null && startAtEnter !== s.simStart.value) resetPatterns();
     startAtEnter = to === "start" ? s.simStart.value : null;
-    if (to === "mods" && from !== "mods" && s.itemLevel.value !== SIM_ILVL_MAX) { ilvlBefore = s.itemLevel.value; s.itemLevel.value = SIM_ILVL_MAX; }
+    if (to === "mods" && from !== "mods" && s.itemLevel.value !== topIlvl()) { ilvlBefore = s.itemLevel.value; s.itemLevel.value = topIlvl(); }
     else if (from === "mods" && to !== "mods" && ilvlBefore != null) { s.itemLevel.value = Math.max(ilvlBefore, needIlvl()); ilvlBefore = null; }
   });
   /** まだ決めていない一番先の工程へ (レシピを呼び出した時) */

@@ -12,6 +12,7 @@ import { course } from "../../state/tutorial/craft-course";
 import { topic } from "../../state/tutorial/craft-topic";
 import { basePage, recipesPage, simStep } from "../../state/web-page";
 import { currentRecipeId } from "../../state/simulator/sim-recipe-store";
+import { simPasted } from "../../state/simulator/sim-state";
 
 function create() {
   const inApp = isTauriRuntime();
@@ -47,6 +48,7 @@ function create() {
     s.simPatterns.value = [{ name: "パターン 1", steps: [], quiz: { v: 3, rules: {} } }];
     s.simStart.value = "white";
     s.simStartItem.value = null;
+    simPasted.value = null;
     // レシピからでなく新しく選んだ時は、開いているレシピから外れる (保存は「新しいレシピ」になる)
     if (!s.simPendingRecipe.value) currentRecipeId.value = null;
     // シミュレーターのベースはシミュレーターで選んだ時だけ決まる (エミュレーターから切り替えたら、ベース選びから。2026-10-18 初めての 10 人の 2 人目)

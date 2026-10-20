@@ -10,7 +10,8 @@ import BaseCatalog from "../../components/items/BaseCatalog.vue";
 import { craftStage as s, SIM_LOCKED } from "../../state/craft-stage";
 import { basePage, baseUnpicked } from "../../state/web-page";
 import { tr } from "../../i18n/lang";
-import { useStageBase } from "./use-stage-base";
+import { useStageBase, SIM_ILVL_MAX } from "./use-stage-base";
+import { simPasted } from "../../state/simulator/sim-state";
 import { revealWhenReady } from "../../utils/keep-place";
 import StageRecipeStart from "../simulator/StageRecipeStart.vue";
 import SimPasteRead from "../simulator/SimPasteRead.vue";
@@ -41,6 +42,10 @@ function startFromPaste(r: PasteRead): void {
   basePage.value = false;
   pickSimBase(r.item.base.en);
   s.simTargets.value = r.targets;
+  // アイテムレベルは ② の % と ③ に使う (点検 1)。品質・コラプト・未発現は ③ に「持ち越さない」と出すだけ
+  const lv = r.item.itemLevel;
+  simPasted.value = { ilvl: lv != null ? Math.max(1, Math.min(SIM_ILVL_MAX, lv)) : null, quality: r.item.quality?.value ?? null, corrupted: r.item.corrupted, unrevealed: r.item.mods.filter((m) => m.unrevealed).length };
+  if (simPasted.value.ilvl != null) s.itemLevel.value = simPasted.value.ilvl;
   setTimeout(revealSimMods, 120);
 }
 /**

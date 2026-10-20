@@ -18,6 +18,7 @@ import { tierDisplayRanges } from "../../services/mods/stat-scale";
 import { CRAFTED_SOURCES } from "../../services/craft-stage/engine";
 import { essenceKindOf } from "../../services/mods/essence-kind";
 import { tr } from "../../i18n/lang";
+import { simPasted } from "../../state/simulator/sim-state";
 import { targetShare } from "../../services/simulator/target-share";
 import { runeJaOf, runeToneOf } from "../../services/craft-stage/mod-list";
 import SimMethodPop from "./SimMethodPop.vue";
@@ -63,6 +64,13 @@ function shareOf(modId: string, minTierIndex: number): number | null {
 }
 /** 確率の % (2026-10-10 動きの揃え 5: 書き方は utils/format-pct.ts の 1 つ) */
 const pct = (x: number): string => fmtPct(x);
+/** % の注記: 何の割合か・どのアイテムレベルの数か */
+const shareNote = computed(() => {
+  const lv = s.itemLevel.value;
+  const from = simPasted.value?.ilvl === lv ? tr("貼ったアイテムの", "the pasted item's ") : "";
+  const tail = props.editable && !from ? tr("。③ でレベルを決めると変わる", "; changes when you set the level in step 3") : "";
+  return tr(`% = 1 回付けた時に、その段以上が出る割合 (${from}アイテムレベル ${lv}${tail})`, `% = chance that one added mod is this tier or better (at ${from}item level ${lv}${tail})`);
+});
 
 /** 段のプルダウン (このアイテムレベルで届く段、良い順) */
 function tierOptions(modId: string): Array<{ i: number; label: string }> {
@@ -296,7 +304,8 @@ function setRest(g: { kind: Kind; host: string }, p: RestPlan | null): void {
 <template>
   <div class="grid min-w-0 gap-y-1 text-[13px]">
     <!-- % が何の割合か (2 は一番上のアイテムレベル、3 で決めたレベルで変わる。2026-10-18 初めての 10 人: 同じ MOD で 1.4% → 1.9% と変わって分からない) -->
-    <p v-if="rows.length" class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ `% = 1 回付く時に、その段以上が出る割合 (アイテムレベル ${s.itemLevel.value} の時${props.editable ? "。3 でレベルを決めると変わる" : ""})` }}</p>
+    <!-- 貼り付けから始めた時は貼った物のアイテムレベルで (2026-10-20 点検 1・12: 貼り付け後も 86 の数だった)。注記は少し読みやすく -->
+    <p v-if="rows.length" data-share-note class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ shareNote }}</p>
     <div v-for="col in columns" :key="col.title" class="min-w-0">
       <!-- 狙う MOD は何個でもいい (枠より多くても、次の段で整理する時にまとめる。2026-10-18 オーナー) -->
       <p class="mb-0.5 border-b border-white/10 pb-0.5 text-[12px] font-bold opacity-70">

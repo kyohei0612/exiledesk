@@ -26,6 +26,16 @@ export function useSimAutoOrder(tg: SimTargetsCtx, quizBase: () => QuizSimIn | n
   const error = ref<string | null>(null);
   /** 出せない時の理由 (押した後) */
   const unsupported = ref<string | null>(null);
+  /**
+   * 押す前に分かる出せない理由 (2026-10-20 点検 3: 押させてから断っていた)。形を組むだけ (計算はしない、0.1 秒かからない)。
+   * ④ でこの欄を出している間だけ計算される (computed)
+   */
+  const blocked = computed<string | null>(() => {
+    const sim = quizBase();
+    if (!sim) return null;
+    const built = buildAutoModel({ sim, price: priceOf });
+    return built.ok ? null : tr(built.reason.ja, built.reason.en);
+  });
   let job: { stop: () => void } | null = null;
 
   /** ④ の今の状態から候補を作る材料 */
@@ -97,5 +107,5 @@ export function useSimAutoOrder(tg: SimTargetsCtx, quizBase: () => QuizSimIn | n
   watch(() => [targetsSig(), s.simStart.value, s.base.value, quizBase()?.startPrice], clear);
   onBeforeUnmount(stop);
 
-  return { rows, shown, busy, step, error, unsupported, start, stop, use };
+  return { rows, shown, busy, step, error, unsupported, blocked, start, stop, use };
 }
