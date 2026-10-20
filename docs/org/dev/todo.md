@@ -5,7 +5,7 @@
 |---|---|---|
 | ブラック | local_3b3c55ab-5df3-437a-855a-5e75e2c1fa64 | 司令塔 |
 | 開発部長 | (このセッション) | まとめ役 |
-| ジン部長 | local_3582faa0-ba38-498d-8f47-c6aa6fd767bf | J1b (コラプトの表、書きかけ) → J2 (裏) → J3 spamCounts → J4 一覧の棚卸し |
+| ジン部長 | local_3582faa0-ba38-498d-8f47-c6aa6fd767bf | J3 spamCounts + 入口の 3 つ (今) → J4 一覧の棚卸し。J2 は裏で回し直し中 |
 | シミュ部長 | local_1e51d4a4-ec5b-459d-85ee-95d6da9c079f | S1e → R2 → R3 → S2 → S1c (直し)。S2 はもう書きかけあり (R3 は S2 の後でも可) |
 | 解析君 | local_2188a7ed-e2f7-4c08-a09c-72c1b5aef099 | K2b → K2c (R1b の後に auto-solve の再輸出を消す) |
 | 分析君・動画部長・リサーチ長 | — | 仕事が来たらブラックが立てる |
@@ -16,7 +16,7 @@
 | 解析君 K3 | src/services/simulator/auto/auto-model.ts |
 | 解析君 (一時) | scripts/_flux-probe.test.ts (やふやふは ed2c9ba3 で commit 済み) |
 | シミュ部長 S1e → S2 | (S1e は始める時に 1 行) → S2: sim-state・sim-recipes・use-sim-steps・use-sim-auto-order・StageSimPanel・StageTargetSummary・SimStepBar・SimTargetSort、新 use-sim-auto・SimAutoToggle・SimAutoConfirm |
-| ジン部長 J2 / J3 | tests/golden/ (J2、別の worktree) / engine.ts・route-race 周り (J3) |
+| ジン部長 J2 / J3 | tests/golden/ (J2、別の worktree) / 新 src/services/craft-stage/spam-counts.ts・engine.ts (J3、route-race.ts は触らない) |
 | ジン部長 J2 | tests/golden/ (探すのは別の worktree) |
 
 ## 順番 (2026-10-20 夜、オーナー OK 済みの物)
@@ -46,7 +46,7 @@
 ### ジン部長
 - J1 済み (70c53ff0・a94d7aaf): 点検 2 は今の読みで読めない行 0 (コード直し無し)、品質の最大値 +20% は poe2db でブリーチのエッセンスのプレ (正しい)、family の直の比べを mod-rules へ。残り: currency-spec-golden が 10-17 の控えからずれている元探し (emulator/todo.md)。元の中身: emulator/todo.md の family の直の比べ (golden を回す) + 点検 2 の読み (見本 3 の暗黙・「ダメージが56%増加する」「ゴールド 10%」) + 見本 3・8 の「品質の最大値 +20%」(エッセンスの MOD か読みか)。parseItemText の形を変える時は先に開発部長へ (S1 が読んでいる)。
 
-- J1b 済み (cf2bc7d6): ゴールド 10%・スピリット +30 はソウルコア (rune)、ダメージ 56% はコラプトのエンチャント (enchant)、冷気 36〜55 は品質で盛られた T1 (正しい)、グレネードの行は読めないで想定内。
+- J1b 済み (cf2bc7d6、コラプトの表は 98f50e67: 44 部位 1160 行、入口に corruptionRowsFor・matchCorruption。SimPasteRead の札が足りず HEAD の型が落ちた → シミュ部長が最優先で直す): ゴールド 10%・スピリット +30 はソウルコア (rune)、ダメージ 56% はコラプトのエンチャント (enchant)、冷気 36〜55 は品質で盛られた T1 (正しい)、グレネードの行は読めないで想定内。
 - J3 入口に spamCounts + 解析君の 3 つ (occupiedFamiliesOf・ANCIENT_BONE_FLOOR・REVEAL_SPEC、K4 で【入口に無い】) (道ごとの平均の使った物と着いた割合、start-routes.md の案)。S1c が待つ。
 - J4 一覧の棚卸し (オーナー 10-20): 全ベースの暗黙・コラプト・ルーン/ソウルコア・冒涜専用・エッセンス専用・エンチャント/注油が、エンジンにあるか無いかの表 → 足す順の案 → poe2db の全部位と 1 つずつ照らし、結果を emulator/notes/ に。コラプトの表は入口から引け、parseItemText が印を付ける。
 - J2 currency-spec-golden の控えのずれの元探し (tests/golden/)。
