@@ -37,9 +37,9 @@ function pick(en: string): void {
  * ベースを選び直した時と同じに先 (始め方・順番・打ち方) は空から
  */
 function startFromPaste(r: PasteRead): void {
-  if (!r.base) return;
+  if (!r.item.base) return;
   basePage.value = false;
-  pickSimBase(r.base);
+  pickSimBase(r.item.base.en);
   s.simTargets.value = r.targets;
   setTimeout(revealSimMods, 120);
 }

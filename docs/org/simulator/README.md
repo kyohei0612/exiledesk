@@ -14,7 +14,7 @@
 ## 地図
 - 画面 src/views/simulator/: StageSimPanel.vue (入口)、工程の帯 SimStepBar・SimStepHead・SimProgress、始め方 SimStartPick・SimBaseCalc、順番のおすすめ SimAutoOrder・use-sim-auto-order (④、押した時だけ計算)、狙う SimTargetSort・StageTargetSummary、貼り付け SimPasteRead (① のベースのページの「貼り付け」タイルの枠、BaseCatalog の #paste)、打ち方 SimMethodPop・StagePatternEditor、費用 SimCostTip、レシピ SimRecipeBar・StageRecipeStart・StageRecipesPage・recipe-share.ts、StageQuizEditor・quiz-text.ts、use-sim-*.ts。
 - 状態 src/state/simulator/: sim-state・sim-recipes・sim-recipe-store。
-- 仕組み src/services/simulator/: quiz-recipe.ts (`runQuizOnce`)・paste-read.ts (貼り付け → ① のベース + ② の狙い。【仮】読みは htc/paste、ジン部長の入口が来たら差し替え)・quiz-build.ts (`quizFromSim`)・quiz-samples・recipe-*.ts・pattern.ts・sim-greater・sim-methods・keep-compare・self-craft-dist・sim-odds (③ の式の 1 手の確率をエンジンの入口から取る部品、手 4)・auto-group。run-plan・contract・types はエンジンの核 (エンジン部の持ち物)、share・trade-search は services/craft-stage/ の境目 (dev/README.md)。
+- 仕組み src/services/simulator/: quiz-recipe.ts (`runQuizOnce`)・paste-read.ts (貼り付け → ① のベース + ② の狙い。読みはエンジンの入口の parseItemText)・quiz-build.ts (`quizFromSim`)・quiz-samples・recipe-*.ts・pattern.ts・sim-greater・sim-methods・keep-compare・self-craft-dist・sim-odds (③ の式の 1 手の確率をエンジンの入口から取る部品、手 4)・auto-group。run-plan・contract・types はエンジンの核 (エンジン部の持ち物)、share・trade-search は services/craft-stage/ の境目 (dev/README.md)。
 - 仕組み src/services/simulator/auto/ (順番だけ自動): auto-order.ts (候補・絞り・ワーカーの呼び出し)・auto-order.worker.ts はシミュ部長、auto-solve・auto-model・auto-actions (計算) は解析君。入口の形は共有メモ auto-order-api.md。
 - **src/services/simulator/htc/ はアプリの旧計算機専用・凍結。Web から import しない** (手 8 の見張りで確認予定)。
 - 決めた事 (2026-10-20): チュートリアル部の独り立ちは今はしない (シミュ部の中のまま)。クラフトチャレンジを始める時に再検討 (案: notes は emulator/notes/2026-10-20-engine-entry-plan.md の ④)。
