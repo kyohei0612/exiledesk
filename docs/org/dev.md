@@ -12,11 +12,12 @@
 7. 境目 (下の地図) を変えたら、使っている部を報告に書く (ブラックが知らせる)。
 8. 報告は 3〜5 行: 変えた物・確かめた物 (見張り / 外の正解 / 画面)・残り。
 9. 仕事の終わりに自分の md の地図を直す (ファイルが増えた・消えた・動いた時)。
+10. ファイルの管理が難しければ部下 (サブエージェント・下のセッション) を作ってよい。同じファイルを 2 人で触らせず、作った物は報告に書く。プラグインも要ればリサーチして入れてよい (公式・組織カタログ優先)。
 
 ## 地図
 - 動かし方・版上げ: CLAUDE.md の「動かし方」。設定 vite.web.config.ts、開発版 scripts/deploy-web-dev.mjs、読み物のページ scripts/build-seo-pages.mjs。
 - 更新内容: src/data/changelog-notes.json・-en.json・changelog-popup.json → scripts/build-changelog.mjs。OK 待ち docs/pending-release.md。テスト tests/ (vitest)。
-- 境目 (どの部も使う): src/state/craft-stage.ts (`SIM_LOCKED`)・web-page.ts・display-currency.ts、src/services/craft-stage/types.ts・htc/patch-types.ts・money.ts、src/style.css・src/styles/game-ui.css、src/components/・src/utils/、src/web/ (WebApp.vue・main.ts・page.ts・boot.ts・config.ts)。
+- 境目 (どの部も使う): src/state/craft-stage.ts (`SIM_LOCKED`)・web-page.ts・display-currency.ts、src/services/craft-stage/types.ts・run-plan.ts・contract.ts・share.ts・trade-search.ts、src/services/htc/patch-types.ts・src/services/money.ts、src/style.css・src/styles/game-ui.css、src/components/・src/utils/、src/web/ (WebApp.vue・main.ts・page.ts・boot.ts・config.ts)。
 - 英語: src/i18n/lang.ts (`tr`・`modText`・`nameOf`)・GLOSSARY.md・*-client.json。
 - サーバー: server/web (og-card.js・dev-gate.js・move-gate.js・wrangler*.jsonc)、server/live (README.md・src/index.ts・market.ts・logs.ts・feedback.ts・monitor.ts・migrations/)。
 - メモ: 出し方 feedback-backstage-release・feedback-changelog-popup・feedback-replies / UI の決まり MEMORY.md の「UI の決まり」/ 英語 web-english / 広告 ads-page-model・web-ads-domain-plan / 確かめ feedback-verify-by-code・feedback-test-strategy・stop-processes-by-pid / 外の API api-probing-policy。
