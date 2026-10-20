@@ -1,7 +1,7 @@
 # やふやふ手袋の「実際の完成品」で自動 (解析君、2026-10-20 夜)
 
 オーナー 10-20「段の妥協があったはず (ES% で妥協など)。実際の完成品 (妥協した段込み) を狙いにして、自動で完成までの平均費用を。リーク無しで」。
-台本 scripts/analysis/check-yafu-actual.mjs (`node scripts/analysis/check-yafu-actual.mjs v0,v1,v2 1000 3`、約 5 分)。入口 _yafu-entry.ts。
+台本 scripts/analysis/check-yafu-actual.mjs (`node scripts/analysis/check-yafu-actual.mjs v0,v1,v2 1000 3`、約 5 分)。入口 _yafu-entry.ts。④ の計算は手 5 (32e938d9) の commit 後に回し直して同じ数字。
 リーク無し = 自動の打ち方は動画の結果・手順を見ない。④ の順番 (関門)・⑤ の打ち方・③ の値段・打ち止め (GATE_CAPS) とエンジンの入口だけ (④ の solveOrder、src/services/simulator/auto/ は読むだけ)。② の付け方 (フラクチャー・高貴・冒涜・カオス・エッセンス) は動画の物を入力にした (前の見本と同じ扱い)。
 
 ## 1. 実際の完成品 (字幕 data-cache/subs/SJdAUeUMNBU.ja.txt から)
