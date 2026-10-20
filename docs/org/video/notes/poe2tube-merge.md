@@ -1,4 +1,4 @@
-# POE2Tube を ExileDesk に合併するか (開発部長、2026-10-20) → 今は合わせない
+# POE2Tube を ExileDesk に合併するか (開発部長、2026-10-20) → 今は合わせない → 同じ日にオーナーの決定で統合した (video/、メモ video-*)
 
 ## 理由 (3 行)
 1. 得が小さい: 受け渡しの形 (contracts/ と craft-stage-run.mjs) が変わるのは要望の時だけで、撮影も今止まっている。受け渡しはメモ poe2tube-handoff と video/README.md の決まり 2 (開発部長を通す・両方同時) で足りる。

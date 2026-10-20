@@ -26,6 +26,7 @@ PoE2 のクラフトのエミュレーター (Web が本番、アプリは当分
 | サーバー (server/live・server/web)・分析の記録 | server/live/README.md、メモ analytics-logs |
 | 広告・ドメイン・SEO のページ | メモ web-ads-domain-plan、scripts/build-seo-pages.mjs |
 | テストを足す・直す | メモ feedback-tests-need-external-truth・feedback-self-tests・feedback-test-strategy |
+| 動画・撮影・POE2Tube (video/) | docs/org/video/、メモ video-*・poe2tube-handoff |
 | アプリ・PoB・取引所・ヴァールの天秤 (当分触らない) | メモ memory-archive-index |
 
 ## 動かし方
