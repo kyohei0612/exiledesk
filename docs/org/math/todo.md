@@ -1,6 +1,7 @@
 # 解析君 のやる事
 
 ## やる事
+- K2c 靴の計算とエンジンのずれ ±13〜24% (エンジンだけ消去でドッジを 1 人 5.6 回失う。notes/yafu-actual-2026-10-20.md の「±30% のずれの原因」)
 - K4 の残り: 入口に無い occupiedFamiliesOf (vendor pool)・ANCIENT_BONE_FLOOR (vendor probability)・REVEAL_SPEC の候補の数 (spec/desecrate-specs) をジン部長に入口へ足してもらい、auto-model・auto-engine の【入口に無い】の import を差し替える
 - 範囲 C (グレーターエッセンスの道、essKey あり): 始めの形の道は K3 でできている。見本を作って確かめてから外す
 - 靴の ±20% の原因 (④ の計算とエンジン 1,000 人。耐性が先は計算が高い、ドッジ・スピリットが先は計算が安い)。mc の完成の割合がエンジンより高い原因 (notes/auto-order-2026-10-20.md の「残り」)
@@ -12,6 +13,8 @@
 - ③ の白から作る費用のリロールの回数 (式はエンジンの約半分)。magicLoopCounts にするか 1 ÷ (p × 側の割合) にするか → シミュ部長・オーナー (simulator/notes/2026-10-20-step4-formula-entry.md)
 
 ## 済み (10-20)
+- R1 auto-types.ts (03b30a1c)。シミュ側の import が直ったら auto-solve の buildAutoModel の再輸出を消す
+- K2b 靴 #2 の答え無し 422 人 → 0 (一時の台本 check-yafu-actual.mjs の古い rulesOf を src の rulesFromDetail に)
 - K4 auto/ の import を入口 (engine.ts) へ。入口にある物は全部付け替え (値は同じ)、無い 3 つは残り
 - K3 範囲 A: 始めの形を stepOutcomes で (model.starts)、白からマジックで一緒に揃える道に対応
 - K2 auto-rules.ts (rulesFromDetail・methodsFromDetail・answerFor)、手袋・靴で答え無し 0・イレギュラー 0。answerFor はまだ一度も使われていない

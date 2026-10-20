@@ -77,31 +77,15 @@ const perms = (xs) => (xs.length <= 1 ? [xs] : xs.flatMap((x, i) => perms([...xs
 const div = (v) => (v / DIV).toFixed(1);
 const pct = (a, b) => (b ? `${(((a - b) / b) * 100).toFixed(1)}%` : "-");
 
-/** 計算の最善手を ⑤ の答えに (check-auto-order.mjs の rulesOf と同じ。始めのルーンにアストリッドを足す) */
+/** 計算の最善手を ⑤ の答えに (src の auto-rules の rulesFromDetail。K2b: 前は古い rulesOf の写しで、発現で段の足りない狙いの見え方の答えが抜け、靴 #2 で答え無し 422 人)。
+ * アストリッド (計算の形に無いルーン) は要るルーンの後に差す答えを足し、ほかの答えの aug を 1 つ上げる */
 function rulesOf(model, det, sim, recipe0, astrid) {
-  const goal = recipe0.routes[0].goal;
-  const fracId = goal.find((s) => s.kind === "fractured").id;
-  const K = model.slots.length;
-  const have = new Set(recipe0.start.runes ?? []);
-  const runeAll = [...new Set(sim.targets.flatMap((t) => [t, ...(t.alts ?? [])]).map((t) => data.mods.get(t.modId)?.rune).filter(Boolean).map((r) => M.runeEnForId(r)).filter(Boolean)), ...(astrid ? [ASTRID] : [])];
-  const extra = runeAll.filter((en) => !have.has(en));
-  const rules = extra.map((en, i) => ({ when: { aug: have.size + i }, do: { use: `rune:${en}` } }));
-  const aug = have.size + extra.length;
-  const best = new Map();
-  for (const v of det.view) {
-    const s = v.s, d = s[3 + K];
-    const when = { aug, [fracId]: 3, "p.junk": s[1 + K], "s.junk": s[2 + K], "p.hid": d === 1 || d === 2 ? 1 : 0, "s.hid": d === 3 || d === 4 ? 1 : 0, "p.bad": d === 5 ? 1 : 0, "s.bad": d === 6 ? 1 : 0, des: d ? 1 : 0 };
-    model.slots.forEach((sl, k) => { const x = s[1 + k], Mk = sl.members.length; when[sl.id] = x > Mk ? 2 : x > 0 ? 1 : 0; });
-    const key = JSON.stringify(when);
-    const e = best.get(key);
-    if (e && e.visits >= v.visits) continue;
-    best.set(key, { when, act: v.act, visits: v.visits });
-  }
-  for (const { when, act } of best.values()) {
-    if (model.slots.every((sl) => when[sl.id] === 2)) continue;
-    rules.push({ when, do: act === "restart" ? { restart: true } : M.quizActionOf(model, act) });
-  }
-  return { v: 3, rules: { main: rules } };
+  const q = M.rulesFromDetail(model, det, recipe0);
+  if (!astrid || (recipe0.start.runes ?? []).includes(ASTRID)) return q;
+  const isRune = (r) => typeof r.do.use === "string" && r.do.use.startsWith("rune:");
+  const runes = q.rules.main.filter(isRune), rest = q.rules.main.filter((r) => !isRune(r));
+  const aug0 = (recipe0.start.runes?.length ?? 0) + runes.length;
+  return { v: 3, rules: { main: [...runes, { when: { aug: aug0 }, do: { use: `rune:${ASTRID}` } }, ...rest.map((r) => ({ ...r, when: { ...r.when, aug: aug0 + 1 } }))] } };
 }
 
 /** ⑥ と同じ回し方 (quizFromSim + runQuizOnce、関門・打ち止めあり)。1 人ずつの費用も返す (半分の人) */

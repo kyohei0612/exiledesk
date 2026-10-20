@@ -64,7 +64,7 @@ function boots() {
     { modId: DODGE, minTierIndex: 0, method: "desecrate" },
   ];
   const label = { [`mod:${RES[0]}`]: "耐性T1×2", [`mod:${SPIRIT}`]: "スピリット", [`mod:${DODGE}`]: "ドッジロール" };
-  return { name: "靴 (移動速度を固定)", sim: { data, base: "Vaal Greaves", itemLevel: 82, targets, start: "fractured", startPrice: 30 * DIV, sockets: 2, runePrice }, label };
+  return { name: "靴 (移動速度を固定)", sim: { data, base: "Vaal Greaves", itemLevel: 82, targets, start: "fractured", startPrice: Number(process.env.BOOTS_R ?? 30) * DIV, sockets: 2, runePrice }, label };
 }
 
 /** 白からマジックで反対側の狙い (会心倍率) と一緒に揃える道 (③ の keep が together の時に画面が渡す greater: { essKey: null, keep }、K3) */
