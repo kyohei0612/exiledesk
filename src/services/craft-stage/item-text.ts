@@ -30,6 +30,7 @@ const REASON: Readonly<Record<ItemTextSkipCode, ItemTextWords>> = {
   notInPool: { ja: "このベースのクラフトの MOD に無い (コラプト・ユニーク・ドロップ限定など)", en: "Not a craftable modifier on this base (corruption, unique, drop-only…)" },
   dropOnly: { ja: "創生の樹などドロップ限定の MOD (クラフトでは付かない、枠は使う)", en: "Drop-only modifier (cannot be crafted, still takes an affix slot)" },
   hybridPart: { ja: "2 行で 1 つの MOD のもう 1 行 (1 つに数えた)", en: "Second line of a two-line modifier (counted once)" },
+  flaskCharmUnsupported: { ja: "フラスコ・チャームは未対応", en: "Flasks and charms are not supported" },
   corruptionUnknown: { ja: "コラプトした物で、クラフトの MOD にも poe2db のコラプトの表にも無い (不明)", en: "Corrupted item: not a craftable modifier and not in poe2db's corruption list (unknown)" },
 };
 const skip = (line: string, code: ItemTextSkipCode): ItemTextSkip => ({ line, code, reason: REASON[code] });
@@ -49,6 +50,8 @@ const PROPERTY = /^([^:：]{1,40})[:：]\s*(.*)$/;
 
 /** Ctrl+Alt+C の `45(30-45)` は振った値の後に段の幅。値だけ残す */
 const stripRangeHint = (line: string): string => line.replace(/(\d+(?:\.\d+)?)\((?:-?\d+(?:\.\d+)?)(?:-(?:\d+(?:\.\d+)?))?\)/g, "$1");
+/** フラスコ・チャームの種類の名前・ベース名 */
+const FLASK_CHARM = /\b(?:Flasks?|Charms?)\b|フラスコ|チャーム$/i;
 const bare = (t: string): string => stripMarkers(t).replace(/[0-9.()+\-%\s]+/g, "");
 
 interface Body {
@@ -71,6 +74,8 @@ export function parseItemText(data: PatchData, text: string): ItemTextResult {
   };
   let separators = false, gameHead = false, tradeMarks = false, noted = false, advanced = false;
   const names: string[] = [];
+  /** 種類の名前 (Item Class: の値・トレードの「指輪」「Flask」の行) */
+  const kindWords: string[] = [];
   const body: Body[] = [];
   const unrevealed: { line: string; side: "prefix" | "suffix" }[] = [];
   let group: Pick<Body, "side" | "group" | "tierName"> | null = null;
@@ -101,7 +106,7 @@ export function parseItemText(data: PatchData, text: string): ItemTextResult {
     if (prop) {
       const [, label, value] = prop as unknown as [string, string, string];
       const l = label.trim();
-      if (/^(Item Class|アイテムクラス)$/i.test(l)) { gameHead = true; continue; }
+      if (/^(Item Class|アイテムクラス)$/i.test(l)) { gameHead = true; kindWords.push(value.trim()); continue; }
       if (/^(Rarity|レアリティ)$/i.test(l)) { gameHead = true; out.rarity = RARITY[value.trim().toLowerCase()] ?? RARITY[value.trim()] ?? null; continue; }
       if (/^(Item Level|アイテムレベル)$/i.test(l)) { out.itemLevel = Number(/\d+/.exec(value)?.[0] ?? NaN) || null; inBody = true; continue; }
       if (/^(Quality|品質)/i.test(l)) {
@@ -124,7 +129,7 @@ export function parseItemText(data: PatchData, text: string): ItemTextResult {
     if (n) noted = true;
     const hit = matchModLine(t);
     // ベースの後・属性の前の型に当たらない行は種類の名前 (「指輪」「Ring」)
-    if (!inBody && !hit && !kind) continue;
+    if (!inBody && !hit && !kind) { kindWords.push(t); continue; }
     inBody = true;
     body.push({ line, text: t, note: kind, template: hit?.template ?? null, values: hit?.values ?? [], ...(group ?? {}) });
   }
@@ -138,6 +143,13 @@ export function parseItemText(data: PatchData, text: string): ItemTextResult {
   out.name = names.length ? names[names.length - 1]! : null;
   if (!out.rarity && out.name) out.rarity = "rare";
 
+  // フラスコ・チャームはエンジンに無い (オーナー 10-20 決定)。種類の名前の行・ベース名で見分け、行は全部「未対応」で返す
+  // ベースが引けなかった時だけ名前の行も見る (レアの名前に「Charm」が付くことがあるため)
+  if ([...kindWords, ...(out.base ? [out.base.en] : names)].some((w) => FLASK_CHARM.test(w))) {
+    out.base = null;
+    out.skipped.push(...body.map((b) => skip(b.line, "flaskCharmUnsupported")));
+    return out;
+  }
   if (!out.base) {
     out.skipped.push(...body.map((b) => skip(b.line, "noBase")));
     return out;

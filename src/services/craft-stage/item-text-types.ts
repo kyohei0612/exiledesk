@@ -84,7 +84,8 @@ export type ItemTextSkipCode =
   | "notInPool"   // 文は読めたが、このベースの置き場に無い (コラプト・ユニーク・ドロップ限定の MOD など)
   | "dropOnly"    // 創生の樹など、クラフトでは付かない MOD (枠は使う)
   | "hybridPart"  // 2 行で 1 つの MOD のもう 1 行 (MOD は 1 つに数えた)
-  | "corruptionUnknown"; // コラプトした物で、置き場にもコラプトの表にも無い行
+  | "corruptionUnknown" // コラプトした物で、置き場にもコラプトの表にも無い行
+  | "flaskCharmUnsupported"; // フラスコ・チャーム (エンジンに無い、オーナー 10-20 決定。base は null)
 
 export interface ItemTextSkip { line: string; code: ItemTextSkipCode; reason: ItemTextWords }
 
