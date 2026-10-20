@@ -4,3 +4,4 @@
 export { loadPatchSync } from "./_htc-bridge-entry";
 export { baseCatalog } from "../src/services/items/base-catalog";
 export { jaOfMod } from "../src/services/htc/mod-text";
+export { tierDisplayRanges } from "../src/services/mods/stat-scale";

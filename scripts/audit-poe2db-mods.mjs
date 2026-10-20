@@ -21,7 +21,7 @@ import { RUNE_POOLS } from "./_htc-base-tags.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const CACHE = resolve(ROOT, "data-cache/poe2db-pages");
-const { loadPatchSync, jaOfMod } = await bundleEntry("scripts/_audit-poe2db-entry.ts");
+const { loadPatchSync, jaOfMod, tierDisplayRanges } = await bundleEntry("scripts/_audit-poe2db-entry.ts");
 const data = loadPatchSync();
 
 const pageOf = (cls) => cls.replace(/^(Wands|Staves|Crossbows)_.*$/, "$1").replace(/^OneHand_/, "One_Hand_").replace(/^TwoHand_/, "Two_Hand_");
@@ -44,12 +44,15 @@ const famKey = (fams) => [...fams].sort().join("+");
 const sideOf = (id) => (id === "1" ? "prefix" : id === "2" ? "suffix" : null);
 /** poe2db の文の数字 (タグを外した文から。絶対値で並べる。mod-value の中に ndash の span が入れ子なので文ごと読む) */
 const dbNums = (str) => [...plain(str).matchAll(/\d+(?:\.\d+)?/g)].map((x) => Number(x[0])).sort((a, b) => a - b);
-const ourNums = (t) => t.ranges.flatMap((r) => (r[0] === r[1] ? [r[0]] : [r[0], r[1]])).map((x) => Math.abs(x)).sort((a, b) => a - b);
+// 画面の単位 (stat-scale.ts の tierDisplayRanges: 万分率 → %、ms → 秒、0.1 m → m など) で比べる (2026-10-20 J5b。前は生の値に 1 つの倍率を掛けていて、単位の違う値を 2 つ持つ MOD を食い違いにしていた)
+const ourNums = (t) => tierDisplayRanges(t).flatMap((r) => (Number(r[0]) === Number(r[1]) ? [Number(r[0])] : [Number(r[0]), Number(r[1])])).map((x) => Math.abs(x)).sort((a, b) => a - b);
 /**
  * こちらの数字が poe2db の文の数字に全部入っていれば同じと見る (文には「1 体ごとに」「+1」の固定の数字も入る)。
  * 単位違い (毎分の自動回復 = 毎秒 × 60、リーチの万分率 = % × 100、ミリ秒、0.1 m) も同じと見る
  */
-const sameNums = (ours, db) => [1, 60, 100, 1000, 0.1].some((k) => { const left = [...db]; return ours.every((x) => { const i = left.findIndex((y) => Math.abs(x - y * k) < 0.011 * Math.max(k, 1)); if (i < 0) return false; left.splice(i, 1); return true; }); });
+/** 数字の無い文の MOD (盾スキルは完全アーマー破壊 など) は値 1 の印だけ持つ。poe2db の文にも数字が無ければ同じ */
+const flagOnly = (ours, db) => db.length === 0 && ours.every((x) => x === 1);
+const sameNums = (ours, db) => flagOnly(ours, db) || [1, 60, 100, 1000, 0.1].some((k) => { const left = [...db]; return ours.every((x) => { const i = left.findIndex((y) => Math.abs(x - y * k) < 0.011 * Math.max(k, 1)); if (i < 0) return false; left.splice(i, 1); return true; }); });
 const plain = (s) => String(s).replace(/<br\s*\/?>/g, " / ").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
 
 /** こちらの 1 部位・1 置き場の段 (side・系統・レベルで引けるように) */
