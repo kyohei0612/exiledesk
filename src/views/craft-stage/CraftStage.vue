@@ -32,6 +32,7 @@ import StageAimPanel from "./StageAimPanel.vue";
 import StageForesight from "./StageForesight.vue";
 import StageBasePage from "./StageBasePage.vue";
 import { PAGES_ON, basePage, baseUnpicked, openRoutes } from "../../state/web-page"; // Web のページ (ベース選び。web/page.ts)
+import { openBasePage } from "../../web/page";
 import StageAimPicker from "./StageAimPicker.vue";
 import CurrencyShelf from "./CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
@@ -256,6 +257,14 @@ watch(() => s.mode.value === "tutorial" || inLesson.value, (v) => { if (v) gemCo
 /** 本番には出さない (2026-10-16 オーナー「ジェムコラプトは内緒」)。開発版 (pnpm dev:web) だけタブを出す */
 const GEM_CORRUPT_SHOWN = import.meta.env.DEV;
 const gemCorrupt = computed(() => GEM_CORRUPT_SHOWN && !inApp && gemCorruptOn.value && !s.replay.value);
+/**
+ * モードのタブ。シミュレーターはいつも ① ベース選びのページから (2026-10-20 オーナー: 前の工程の続きから出ていた)。
+ * 作り途中の中身は消さない (同じベースを押す・「← クラフトへ戻る」で、前の工程のページに戻る)。まだベースが無い時はベース選びが自分で出る
+ */
+function pickMode(m: (typeof MODE_TABS)[number][0]): void {
+  s.hold(null); endLesson(); s.mode.value = m; setGemCorrupt(false);
+  if (m === "sim" && PAGES_ON && s.simPicked.value) openBasePage();
+}
 function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("mode:gem-corrupt"); gemCorruptOn.value = v; }
 </script>
 
@@ -294,7 +303,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
       <!-- Web の使い方・コツ・コースのページはタブではなく、ほかのページと同じ「← クラフトへ戻る」(2026-10-18 オーナー) -->
       <button v-if="!inApp && (guidePage || inLesson)" type="button" data-guide-back class="g-btn sm max-md:min-h-10" @click="s.hold(null); endLesson(); s.mode.value = 'hand'; setGemCorrupt(false)">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
       <div v-else class="inline-flex gap-1 max-md:flex max-md:w-full" role="tablist">
-        <button v-for="t in MODE_TABS" :key="t[0]" type="button" role="tab" :aria-selected="s.mode.value === t[0] && !gemCorrupt && !inLesson" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-3 disabled:cursor-not-allowed disabled:opacity-50 max-md:!px-1 max-md:!text-[12px]" :class="s.mode.value === t[0] && !gemCorrupt && !inLesson ? 'on' : ''" :disabled="t[0] === 'sim' && SIM_LOCKED" :title="t[0] === 'sim' && SIM_LOCKED ? tr('調整中です。しばらくお待ちください', 'Work in progress. Please check back later') : undefined" @click="s.hold(null); endLesson(); s.mode.value = t[0]; setGemCorrupt(false)">{{ tr(t[1], t[0] === 'hand' ? 'Emulator' : 'Simulator') }}<span v-if="t[0] === 'sim' && SIM_LOCKED" class="text-[11px] font-normal max-md:hidden">{{ tr("(調整中)", "(WIP)") }}</span><span v-else-if="t[0] === 'sim'" class="text-[10px] font-normal opacity-70" :title="tr('作り込み中の機能。数字は今の相場と確率の目安', 'Still in development. Numbers are rough estimates from current prices and chances')">β</span></button>
+        <button v-for="t in MODE_TABS" :key="t[0]" type="button" role="tab" :aria-selected="s.mode.value === t[0] && !gemCorrupt && !inLesson" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-3 disabled:cursor-not-allowed disabled:opacity-50 max-md:!px-1 max-md:!text-[12px]" :class="s.mode.value === t[0] && !gemCorrupt && !inLesson ? 'on' : ''" :disabled="t[0] === 'sim' && SIM_LOCKED" :title="t[0] === 'sim' && SIM_LOCKED ? tr('調整中です。しばらくお待ちください', 'Work in progress. Please check back later') : undefined" @click="pickMode(t[0])">{{ tr(t[1], t[0] === 'hand' ? 'Emulator' : 'Simulator') }}<span v-if="t[0] === 'sim' && SIM_LOCKED" class="text-[11px] font-normal max-md:hidden">{{ tr("(調整中)", "(WIP)") }}</span><span v-else-if="t[0] === 'sim'" class="text-[10px] font-normal opacity-70" :title="tr('作り込み中の機能。数字は今の相場と確率の目安', 'Still in development. Numbers are rough estimates from current prices and chances')">β</span></button>
         <!-- ジェムコラプト (Web 版だけ、2026-10-16) -->
         <button v-if="!inApp && GEM_CORRUPT_SHOWN" type="button" role="tab" :aria-selected="gemCorrupt" data-rec="tab-gem-corrupt" class="g-tab min-w-[170px] !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]" :class="gemCorrupt ? 'on' : ''" @click="s.hold(null); if (s.mode.value === 'tutorial' || inLesson) { endLesson(); s.mode.value = 'hand'; } setGemCorrupt(true)">{{ tr("ジェムコラプト", "Gem Corruption") }}</button>
         <!-- Web はタブに出さず、ヘッダーの「使い方・コツ」のページへ (2026-10-18 オーナー「1 回きりでしょこんなもん使うの、使い方にしまう」) -->

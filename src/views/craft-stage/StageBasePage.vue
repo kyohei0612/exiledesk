@@ -89,8 +89,9 @@ onBeforeUnmount(() => {
         <button type="button" role="tab" :aria-selected="s.mode.value === 'hand'" class="g-tab min-w-[170px] max-md:min-w-0 max-md:flex-1 max-md:!text-[12px]" :class="s.mode.value === 'hand' ? 'on' : ''" @click="setMode('hand')">{{ tr("エミュレーター", "Emulator") }}</button>
         <button type="button" role="tab" :aria-selected="s.mode.value === 'sim'" data-base-page-sim class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!text-[12px]" :class="s.mode.value === 'sim' ? 'on' : ''" @click="setMode('sim')">{{ tr("シミュレーター", "Simulator") }}<span class="text-[10px] font-normal opacity-70">β</span></button>
       </div>
-      <!-- シミュレーターは保存したレシピから始めるのも先に (前は設定の欄。2026-10-09 オーナー「ここの時点でレシピとかの選択させるような UI じゃないと」) -->
-      <StageRecipeStart v-if="s.mode.value === 'sim' && baseUnpicked" compact class="mb-3" @start="startFromRecipe" />
+      <!-- シミュレーターは保存したレシピから始めるのも先に (前は設定の欄。2026-10-09 オーナー「ここの時点でレシピとかの選択させるような UI じゃないと」)。
+           選び直しの時も出す (2026-10-20 オーナー。前は初めてだけで、選んだ後は右上の「レシピ」から、の作りだった) -->
+      <StageRecipeStart v-if="s.mode.value === 'sim'" compact class="mb-3" @start="startFromRecipe" />
       <!--
         初めて来た人へ: 一言と「すぐ試す」(2026-10-19 スマホ強化。来た人の半分がベースを選ばずに帰っていた。何のサイトか・何をすると何が起きるかが無かった)。
         ベースを選んでいない時 (初めて・白に戻した後) のエミュレーターだけ。押すと金の指輪 (人気の一番上) ですぐ打てる画面へ
