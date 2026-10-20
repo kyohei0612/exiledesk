@@ -2,12 +2,12 @@
  * auto-model.ts — シミュレーターの狙い (QuizSimIn) から動的計画法の材料を組み立てる (解析君、2026-10-20)。入口の型は auto-solve.ts
  *
  * 札 (狙いの枠) は ⑤ と同じ quizFromSim で組む (札の分け方・関門の打ち止め・始めの形を ⑤ と食い違わせない)。
- * 重みはエンジンの candidates (= modTierWeight と同じ段の数え方。下限は CURRENCY_FLOOR・ANCIENT_BONE_FLOOR) を、MOD のない始めのアイテム
+ * 重みはエンジンの candidates (= modTierWeight と同じ段の数え方。下限はエンジンの入口の orbFloor・ANCIENT_BONE_FLOOR) を、MOD のない始めのアイテム
  * (ルーンは差した状態) で引いて、札ごとの「当たり (狙いの段以上)」「段が低い」と外れの重みの素の表にする。
  * 近似 (中身は auto-actions.ts の頭): 外れの系統は置き場を減らさない・狙いと同じ系統の別の MOD は外れ (系統を塞がない)
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import { CURRENCY_FLOOR } from "../../../vendor/poe2htc/engine/types";
+import { orbFloor, type OrbStrength } from "../../craft-stage/engine";
 import { familiesOf, occupiedFamiliesOf } from "../../../vendor/poe2htc/engine/pool";
 import { ANCIENT_BONE_FLOOR, DESECRATION_EXCLUSIVE_COUNT } from "../../../vendor/poe2htc/engine/probability";
 import { REVEAL_SPEC } from "../../craft-stage/spec/desecrate-specs";
@@ -132,8 +132,12 @@ export function buildAutoModel(input: AutoInput): AutoBuilt {
   // 置き場の重み (エンジンの candidates をそのまま。骨は普通 + 冒涜専用、冒涜専用はアイテムレベルを見ない)
   const desPool = (side: StageSide) => { const k = side === "prefix" ? "prefixes" : "suffixes"; return [...new Set([...effectiveCls(item).pools.normal[k], ...item.cls.pools.desecrated[k]])]; };
   const pools: AutoModel["pools"] = {};
-  // 【仮・エミュ部への頼み事】カオスの段の下限はエンジンが出していない (spec/orb-specs.ts の CHAOS_FLOOR は外に出ていない)。値が同じ高貴の CURRENCY_FLOOR.exalt で代わりにしている
-  const floors: Record<Grade, number> = { a0: CURRENCY_FLOOR.exalt.base, a1: CURRENCY_FLOOR.exalt.greater, a2: CURRENCY_FLOOR.exalt.perfect, b0: 0, b4: ANCIENT_BONE_FLOOR };
+  // 段の下限はエンジンの入口 (orbFloor)。高貴とカオスは同じ置き場の表 (a0〜a2) を使うので、下限が食い違ったら対応外
+  const STR: Record<"a0" | "a1" | "a2", OrbStrength> = { a0: "base", a1: "greater", a2: "perfect" };
+  for (const g of ["a0", "a1", "a2"] as const) {
+    if (orbFloor("exalt", STR[g]) !== orbFloor("chaos", STR[g])) return no("高貴とカオスの段の下限が違うので自動の順番に未対応", "Exalted and Chaos tier floors differ; auto order is not supported");
+  }
+  const floors: Record<Grade, number> = { a0: orbFloor("exalt", "base"), a1: orbFloor("exalt", "greater"), a2: orbFloor("exalt", "perfect"), b0: 0, b4: ANCIENT_BONE_FLOOR };
   for (const g of GRADES) {
     if (x.itemLevel < floors[g]) continue;
     const bone = g[0] === "b";
