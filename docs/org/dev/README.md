@@ -15,7 +15,7 @@
 10. ファイルの管理が難しければ部下 (サブエージェント) を作ってよい。同じファイルを 2 人で触らせず、作った物は報告に書く。プラグインも要ればリサーチして入れてよい (公式・組織カタログ優先)。
 
 ## 地図
-- 動かし方・版上げ: CLAUDE.md の「動かし方」。設定 vite.web.config.ts、開発版 scripts/deploy-web-dev.mjs、読み物のページ scripts/build-seo-pages.mjs。
+- 動かし方・版上げ: CLAUDE.md の「動かし方」。設定 vite.web.config.ts、開発版 scripts/deploy-web-dev.mjs (commit 済みの HEAD を隣の ../ExileDesk-devbuild (git worktree) でビルド、書きかけは入らない。`-- --wip` で作業中の物)、読み物のページ scripts/build-seo-pages.mjs。
 - 更新内容: src/data/changelog-notes.json・-en.json・changelog-popup.json → scripts/build-changelog.mjs。OK 待ち docs/pending-release.md。テスト tests/ (vitest)。
 - 境目 (どの部も使う): src/state/craft-stage.ts (`SIM_LOCKED`)・web-page.ts・display-currency.ts、src/services/craft-stage/share.ts・trade-search.ts、src/services/htc/patch-types.ts・src/services/money.ts、src/style.css・src/styles/game-ui.css、src/components/・src/utils/、src/web/ (WebApp.vue・main.ts・page.ts・boot.ts・config.ts)。
 - エンジンの核 (types.ts・run-plan.ts・contract.ts・乱数 htc/rng.ts) は境目ではなくエンジン部の持ち物 (emulator/README.md の地図)。
