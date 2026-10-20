@@ -5,8 +5,8 @@
 |---|---|---|
 | ブラック | local_3b3c55ab-5df3-437a-855a-5e75e2c1fa64 | 司令塔 |
 | 開発部長 | (このセッション) | まとめ役 |
-| ジン部長 | local_3582faa0-ba38-498d-8f47-c6aa6fd767bf | J4 一覧の棚卸し (今)。J2 は裏で回し直し中 |
-| シミュ部長 | local_1e51d4a4-ec5b-459d-85ee-95d6da9c079f | R1b → S1e の残り → S1c → R2 → R3 → S3 → S4 |
+| ジン部長 | local_3582faa0-ba38-498d-8f47-c6aa6fd767bf | J5f → J5a → J5b → J5c → J5d・J5e (表だけ、オーナーに聞く) → 注油。J2 は裏 |
+| シミュ部長 | local_1e51d4a4-ec5b-459d-85ee-95d6da9c079f | S1e の残り (今) → S1c → R2 → R3 → S3 → S4 |
 | 解析君 | local_2188a7ed-e2f7-4c08-a09c-72c1b5aef099 | K2c (今)。入口の 3 つの差し替え、R1b の後に auto-solve の再輸出を消す |
 | 分析君・動画部長・リサーチ長 | — | 仕事が来たらブラックが立てる |
 
@@ -15,7 +15,7 @@
 |---|---|
 | 解析君 K3 | src/services/simulator/auto/auto-model.ts |
 | 解析君 (一時) | scripts/_flux-probe.test.ts (やふやふは ed2c9ba3 で commit 済み) |
-| シミュ部長 S1e → S2 | (S1e は始める時に 1 行) → S2: sim-state・sim-recipes・use-sim-steps・use-sim-auto-order・StageSimPanel・StageTargetSummary・SimStepBar・SimTargetSort、新 use-sim-auto・SimAutoToggle・SimAutoConfirm |
+| シミュ部長 S1e | SimPasteRead.vue・paste-read.ts・StageBasePage.vue・StageTargetSummary.vue・use-stage-base.ts |
 | ジン部長 J2 / J4 | tests/golden/ (J2、別の worktree) / J4 は始める時に 1 行 |
 | ジン部長 J2 | tests/golden/ (探すのは別の worktree) |
 
@@ -54,6 +54,15 @@
 - J2 currency-spec-golden の控えのずれの元探し (tests/golden/)。
 - J3 (S1c の表の後) ③ が呼ぶスパムの計算をエンジンの入口に出す。
 
+- J4 済み (67398dba): 照らしの記録 emulator/notes/2026-10-20-j4-poe2db-audit.md。暗黙は 1,569 のうち 1,508 が同じ、ルーン類 305 全部同じ。
+- J5f ジュエル・全能力値の 4 クラスが写しに無い元 → 足せるなら先に。
+- J5a 暗黙の直し (ベルトのチャームスロット・幅の向き・同名別物・全能力値の文)。
+- J5b 値の幅 (ルーンの単位・冒涜 3・chronomancy など)。
+- J5c アビスのエッセンス 46 を置き場に。
+- J5d 重みの違い 230 件ほか: 既知の直し (実測) と本当の食い違いを分けた表だけ → オーナーに聞く。
+- J5e Crossbows_cannon 18・エンジンにだけあるベース 105: 消さず、分けた表 → オーナーに聞く。
+- 打つ数字に効く直しは golden・held-odds-parity を回し、本番はオーナーの OK の後。
+
 ### 開発部長
 - D1 済み (aa0d414a): `deploy:web-dev` は HEAD を ../ExileDesk-devbuild でビルド。HEAD 7660d25b を開発版に置いた (手 5 入り)。
 - D3 済み (手 8): scripts/check-engine-entry.mjs を CI に。HEAD で入口の外 A 139 行 (54 ファイル)・凍結 B 1 行 (use-sim-search → tree-buy) を控えに、ファイルごとに増えたら落ちる。
@@ -64,7 +73,7 @@
 
 
 ### 割る仕事 (オーナー 10-20 OK、案は notes/2026-10-20-agent-friendly.md の 2。移動と中身の直しは別の commit、UI の見た目は変えない・変わる物は開発版まで)
-- R1 済み (03b30a1c): auto-types.ts。R1b = シミュ部長が auto-order.worker.ts・auto-order.ts の import を直す (今の仕事の区切りで、S3 より前) → 解析君が auto-solve の buildAutoModel の再輸出を消す。
+- R1 済み (03b30a1c)・R1b 済み (d8cb4ec6)。解析君が auto-solve の buildAutoModel の再輸出を消す。
 - R2 SimBaseExtras (シミュ部長、S1e の後): StageBasePage.vue のシミュの物を views/simulator/SimBaseExtras.vue へ (ジン部長に知らせ済み)。
 - R3 StageTargetSummary を 3 つに (シミュ部長、S2 の前か後)。
 - R4 CraftStage の差し込み口 SimHost・CourseHost (ジン部長が口 → シミュ部長が中身、S4 の後)。
