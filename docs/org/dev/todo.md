@@ -37,6 +37,7 @@
 ## 触っている (同じファイルは順に。始める時に書き、commit したら消す)
 | 誰 | ファイル |
 |---|---|
+| 解析君 金の指輪 A/B/C の比べ | scripts/analysis/gold-ring-suffix-ev.mjs、docs/org/math/notes/2026-10-21-gold-ring-suffix-ev.md |
 | (前の解析君の書きかけ、未 commit) | scripts/_flux-probe.test.ts・scripts/analysis/_yafu-ids.mjs |
 
 入口に無い物 (解析君 10-21、要る時だけジン部長へ): 重み 0 の MOD (創生の樹のスペルダメージ) を始めの形に置く手段 (startFrom が断る、解析君は makeStageMod を直に使った)。シミュで要るまで振らない。
