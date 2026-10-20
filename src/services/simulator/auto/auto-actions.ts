@@ -11,7 +11,7 @@
  *   - 付ける (高貴・カオスの付ける部分) = 置き場の重み (auto-model がエンジンの candidates から作った物)。大いなる高貴は 1 つずつ 2 回 (打つ処理の addCount 2 と同じ)
  *   - 発現 = ⑤ の選び方 (選択なので stepOutcomes の外)
  * 近似 (計算とエンジンのずれ 1 割くらい、メモ optimal-craft-dp):
- *   - 外れの系統は置き場を減らさない (外れが何かは持たない)。狙いと同じ系統の別の MOD は外れに数える (札の系統を塞がない)
+ *   - 外れが何かは持たない。付いている外れ 1 つごとに、その側の外れの重みから平均 (Σw² ÷ Σw) を引く (系統を塞ぐ分の近似)。狙いと同じ系統の別の MOD は外れに数える (札の系統を塞がない)
  *   - 発現の候補 3 つは置き場から重みで戻しありに引く (同じ系統が 2 つ出ない決まりは見ない)。冒涜専用の数の割合はエンジンと同じ
  *   - 表の代表のアイテムでは外れを代表の MOD で置く (auto-engine.ts)
  */
@@ -38,6 +38,18 @@ export class Shape {
   /** 表 (model.eng) に無い形を引いた数 (0 が正しい) */
   miss = 0;
   constructor(readonly m: AutoModel) { this.K = m.slots.length; this.M = m.slots.map((s) => s.members.length); }
+  private jwc = new Map<string, number>();
+  /** 付いている外れ 1 つが塞ぐ重みの平均 (外れは付きやすさで付いたので Σw² ÷ Σw、等級・側ごと。狙いの候補でない普通の MOD だけで数える) */
+  junkW(g: Grade, sd: 0 | 1): number {
+    const k = g + sd;
+    let v = this.jwc.get(k);
+    if (v == null) {
+      const cs = (this.m.pools[g]?.[sd] ?? []).filter((c) => !c.ex && !c.refs.length);
+      const a = cs.reduce((x, c) => x + c.w, 0), b = cs.reduce((x, c) => x + c.w * c.w, 0);
+      v = a > 0 ? b / a : 0; this.jwc.set(k, v);
+    }
+    return v;
+  }
   key = (s: State): string => String.fromCharCode(...s.map((v) => v + 48));
   jx = (side: 0 | 1): number => 1 + this.K + side;
   dx = (): number => 3 + this.K;
@@ -109,6 +121,7 @@ function addOuts(sh: Shape, s: State, g: Grade, side: 0 | 1 | null): Outs | null
   const put = (w: number, t: State) => { if (!(w > 0)) return; tot += w; const c = sh.canon(t), k = sh.key(c); const e = out.get(k); if (e) e[0] += w; else out.set(k, [w, c]); };
   for (const sd of [0, 1] as const) {
     if ((side != null && sd !== side) || !sh.room(s, sd)) continue;
+    let junk = 0;
     for (const c of pools[sd]) {
       if (c.ex || c.fams.some((f) => bl.has(f))) continue;
       const ref = c.refs.find((r) => s[1 + r.k] === 0);
@@ -116,8 +129,11 @@ function addOuts(sh: Shape, s: State, g: Grade, side: 0 | 1 | null): Outs | null
         const M = sh.M[ref.k]!;
         const h = [...s]; h[1 + ref.k] = 1 + M + ref.m; put(ref.hit, h);
         const l = [...s]; l[1 + ref.k] = 1 + ref.m; put(ref.low, l);
-      } else { const j = [...s]; j[sh.jx(sd)]!++; put(c.w, j); }
+      } else junk += c.w;
     }
+    // 付いている外れはその系統を塞ぐ (外れの中身は持たないので、1 つあたり平均の重み junkW を引く。K2c の残りの近似の直し)
+    junk = Math.max(0, junk - s[sh.jx(sd)]! * sh.junkW(g, sd));
+    const j = [...s]; j[sh.jx(sd)]!++; put(junk, j);
   }
   if (!(tot > 0)) return null;
   return [...out.values()].map(([w, t]) => [w / tot, t]);
