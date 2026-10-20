@@ -21,8 +21,7 @@
  *   - フラクチャー: 「作る」= 変成・増強ガチャ → 王者 → 骨の壁 → フラクチャー (1/3、外れたら白から作り直し)。固定した後の外れは
  *     消さずに残す (カオスは入れ替える、高貴・冒涜は要る時にその側を消す)。「付いた状態」= その MOD を固定済みにしたレアから (費用は手で入れたベースの値段)
  */
-import { modTierWeight } from "../../vendor/poe2htc/engine/pool";
-import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
+import { addOddsBySpec, hitShare } from "../craft-stage/engine";
 import { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
 import { applyCurrency } from "../craft-stage/apply-currency";
 import { revealOffers, unrevealedOf } from "../craft-stage/apply-desecrate";
@@ -87,28 +86,17 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
   /**
    * 等級 (無印 / 上級 / 完全) は「1 個の値段 ÷ 狙いが出る確率」が一番安い物 (2026-10-05)。下限 (高貴 35 / 50、変成・増強 44 / 70) が上がると低い段が
    * 出なくなるが、狙いの段も下限より下は出なくなる (ライフ T5 以上を完全で狙うと T1 しか出ず、変成・増強ガチャが回り続けた)。
-   * 確率は普通の置き場の重み (その側、変成は両側) で、同じ系統の除外は見ない目安
+   * 確率はエンジンの入口の 1 手の確率 (strengthOdds: 打つ処理と同じ候補・下限・差したルーン) で、MOD の無いアイテムに打った時の目安 (同じ系統の除外は見ない)
    */
   const gradeMemo = new Map<string, string>();
   const grade = (base: "exalt" | "transmute" | "augment", t: RecipeTarget): string => {
-    const key = `${base}|${membersOf(t).map((x) => `${x.modId}:${x.minTierIndex}`).join(",")}`;
+    const runeKey = (cur.item.augments ?? []).map((a) => a.key).join(",");
+    const key = `${base}|${runeKey}|${membersOf(t).map((x) => `${x.modId}:${x.minTierIndex}`).join(",")}`;
     const hit = gradeMemo.get(key);
     if (hit) return hit;
-    const cls = cur.item.cls;
-    const sides = base === "transmute" ? (["prefixes", "suffixes"] as const) : ([sideOf(t.modId) === "prefix" ? "prefixes" : "suffixes"] as const);
-    const ids = sides.flatMap((k) => cls.pools.normal[k]);
-    const w = (id: string, minIdx: number, floor: number): number => {
-      const m = data.mods.get(id);
-      return m ? modTierWeight(m, floor, spec.itemLevel, minIdx) : 0;
-    };
     let best = base as string, bestCost = Infinity;
-    // 下限はエンジンの表 (変成・増強 44 / 70、高貴 35 / 50。poe2db で確認)
-    const fl = CURRENCY_FLOOR[base];
-    for (const [k, floor] of [[base, fl.base], [`${base}_greater`, fl.greater], [`${base}_perfect`, fl.perfect]] as const) {
-      // アイテムレベルが下限に届かない強さは打てない (2026-10-10 点検: ilvl 60 で完全の変成を選んで 1 手目で止まっていた)
-      if (floor > spec.itemLevel) continue;
-      const total = ids.reduce((a, id) => a + w(id, 0, floor), 0);
-      const p = total > 0 ? membersOf(t).reduce((a, x) => a + w(x.modId, x.minTierIndex, floor), 0) / total : 0;
+    // アイテムレベルが下限に届かない強さは候補 0 で打てない (2026-10-10 点検: ilvl 60 で完全の変成を選んで 1 手目で止まっていた)
+    for (const { key: k, p } of strengthOdds(data, cur.item, base, sideOf(t.modId), membersOf(t))) {
       const c = p > 0 ? (spec.price(k) || 1e-9) / p : Infinity;
       if (c < bestCost) { bestCost = c; best = k; }
     }
@@ -468,4 +456,18 @@ export function recipePlan(spec: RecipeSpec, run: RecipeRun): CraftStagePlan {
       : sockets ? ({ start: { rarity: "normal", ...extra } } as object) : {}),
     steps: run.steps.slice(run.replayFrom).map((s) => ({ currency: s.currency, ...(s.omen ? { omen: s.omen } : {}) })) as CraftStagePlan["steps"],
   } as CraftStagePlan;
+}
+
+/**
+ * 変成・増強・高貴の強さ (無印・上級・完全) ごとに、MOD の無いアイテム (変成は白・増強はマジック・高貴はレア、差したルーンはそのまま) に 1 回打った時、
+ * 狙いのどれか (その段以上) が付く割合。変成は両側、増強・高貴は狙いの側の候補の中で (2026-10-20 手 3: 前は modTierWeight と CURRENCY_FLOOR を自分で組んでいた)
+ */
+export function strengthOdds(data: RecipeSpec["data"], item: StageItem, base: "exalt" | "transmute" | "augment", side: StageSide, targets: ReadonlyArray<{ modId: string; minTierIndex: number }>): Array<{ key: string; p: number }> {
+  const rarity: StageItem["rarity"] = base === "transmute" ? "normal" : base === "augment" ? "magic" : "rare";
+  const empty: StageItem = { ...item, rarity, prefixes: [], suffixes: [] };
+  return [base, `${base}_greater`, `${base}_perfect`].map((key) => {
+    const o = addOddsBySpec(data, empty, key, []);
+    const cands = (o?.cands ?? []).filter((c) => base === "transmute" || c.side === side);
+    return { key, p: hitShare(cands, targets) };
+  });
 }
