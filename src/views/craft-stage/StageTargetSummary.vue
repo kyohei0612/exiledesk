@@ -313,7 +313,7 @@ function setRest(g: { kind: Kind; host: string }, p: RestPlan | null): void {
         <div class="min-w-0 flex-1" :class="g.members.length > 1 ? 'border-l-2 border-amber-400/60 pl-2 max-md:order-last max-md:ml-[1.375rem] max-md:basis-full' : ''"><!-- スマホは組だけ次の行に回して幅いっぱい (番号・種類・付け方の札は 1 行目) -->
           <!-- 頭の 1 行。押すと開く / たたむ -->
           <button v-if="g.members.length > 1" type="button" data-any-toggle class="g-plain flex w-full flex-wrap items-center gap-1.5 text-left text-[12px]" :aria-expanded="openGroups.has(g.key)" :title="openGroups.has(g.key) ? 'たたむ' : '押すと候補を全部開く (段・外すはここで)'" @click="toggleGroup(g.key)">
-            <span class="rounded-sm bg-amber-500/20 px-1 font-bold text-amber-200" :title="`この中のどれか ${g.need} つ (どの順番でもいい。${g.need} つ付けば完成)`">どれか {{ g.need }}</span>
+            <span class="rounded-sm bg-amber-500/20 px-1 font-bold text-amber-200" data-any-tag :title="restable(g) && restOf(g) ? `完成品に全部要る (${g.kind === 'fracture' ? '1 つ固定、残りは下の付け方' : '1 つ増強、残りは下の付け方'})` : `この中のどれか ${g.need} つ (どの順番でもいい。${g.need} つ付けば完成)`">{{ restable(g) && restOf(g) ? (g.members.length === 2 ? "どっちも" : `全部 ${g.members.length}`) : `どれか ${g.need}` }}</span>
             <span class="text-[var(--exile-color-text-tertiary)]">{{ g.members.length }} 候補</span>
             <!-- たたんだ時は候補の名前も同じ行に (… で切らず折り返して全部。2026-10-21 オーナー「MOD は全て折り返しで全体表示」「間空いてるから 2 段にしなくてもいい」) -->
             <span v-if="!openGroups.has(g.key)" class="text-[13px]" :title="g.members.map((r) => `${r.text} ${r.rank}`).join('\n')">{{ g.members.map((r) => shortName(r.text)).join(" ／ ") }}</span>
@@ -350,11 +350,16 @@ function setRest(g: { kind: Kind; host: string }, p: RestPlan | null): void {
         <span v-else class="shrink-0 rounded border px-1 text-[11px]" :class="PLAN_CLS[planOf(g)]" :title="props.editable ? undefined : 'この MOD の付け方 (変えるなら 2 の段の「この段に戻る」)'">{{ PLAN_JA[planOf(g)] }}</span>
         <!-- 候補が 2 つ以上のフラクチャー予定・増強スパムの組: 残り (固定されなかった方 / マジックに入らなかった方) も要るか・その付け方 (無し = どれか 1 つで良い。2026-10-21 オーナー) -->
         <div v-if="restable(g) && props.editable" data-rest-row class="flex basis-full flex-wrap items-center gap-1 pl-[1.375rem] text-[12px]">
-          <span class="text-[var(--exile-color-text-tertiary)]" :title="g.kind === 'fracture' ? '固定されなかった候補も完成品に要るなら、後から付ける付け方を選ぶ。どれか 1 つで良いなら「要らない」' : 'マジックで付くのは側ごとに 1 つ。残りの候補も完成品に要るなら、後から付ける付け方を選ぶ'">└ {{ g.kind === "fracture" ? "固定されなかった方" : "残りの候補" }}</span>
-          <button type="button" data-rest-none class="rounded border px-1.5 py-px transition max-md:min-h-9 max-md:px-2.5" :class="!restOf(g) ? 'border-amber-400/70 bg-white/10 font-bold text-amber-100' : 'border-white/15 text-white/50 hover:bg-white/5 hover:text-white/80'" :aria-pressed="!restOf(g)" @click="setRest(g, null)">要らない (どれか 1 つ)</button>
-          <button v-for="p in REST_PLANS" :key="p" type="button" :data-rest-pick="p" class="rounded border px-1.5 py-px transition disabled:cursor-not-allowed disabled:opacity-40 max-md:min-h-9 max-md:px-2.5" :class="restOf(g) === p ? [PLAN_CLS[p], 'bg-white/10 font-bold'] : 'border-white/15 text-white/50 hover:bg-white/5 hover:text-white/80'" :aria-pressed="restOf(g) === p" :disabled="restOf(g) !== p && !!restOff(g)[p]" :title="restOff(g)[p]" @click="setRest(g, p)">{{ PLAN_JA[p] }}</button>
+          <!-- まず「どれか 1 つ / どっちも」、どっちもの時だけその右に残りの付け方 (2026-10-21 オーナー「要らないとかややこしい。どっちかもしくはどっちもで選ばせて、どっちもなら固定されなかった方の付け方」) -->
+          <span class="text-[var(--exile-color-text-tertiary)]">└ 完成品に</span>
+          <button type="button" data-rest-one class="rounded border px-1.5 py-px transition max-md:min-h-9 max-md:px-2.5" :class="!restOf(g) ? 'border-amber-300 bg-amber-500/35 font-bold text-amber-50 ring-1 ring-amber-300/60' : 'border-white/15 text-white/50 hover:bg-white/5 hover:text-white/80'" :aria-pressed="!restOf(g)" @click="setRest(g, null)">どれか 1 つ</button>
+          <button type="button" data-rest-all class="rounded border px-1.5 py-px transition max-md:min-h-9 max-md:px-2.5" :class="restOf(g) ? 'border-amber-300 bg-amber-500/35 font-bold text-amber-50 ring-1 ring-amber-300/60' : 'border-white/15 text-white/50 hover:bg-white/5 hover:text-white/80'" :aria-pressed="!!restOf(g)" @click="!restOf(g) && setRest(g, REST_PLANS.find((p) => !restOff(g)[p]) ?? null)">{{ g.members.length === 2 ? "どっちも" : `全部 (${g.members.length} つ)` }}</button>
+          <template v-if="restOf(g)">
+            <span class="ml-2 text-[var(--exile-color-text-tertiary)]">{{ g.kind === "fracture" ? "固定されなかった方の付け方" : "残りの付け方" }}</span>
+            <button v-for="p in REST_PLANS" :key="p" type="button" :data-rest-pick="p" class="rounded border px-1.5 py-px transition disabled:cursor-not-allowed disabled:opacity-40 max-md:min-h-9 max-md:px-2.5" :class="restOf(g) === p ? [PLAN_CLS[p], 'bg-white/10 font-bold'] : 'border-white/15 text-white/50 hover:bg-white/5 hover:text-white/80'" :aria-pressed="restOf(g) === p" :disabled="restOf(g) !== p && !!restOff(g)[p]" :title="restOff(g)[p]" @click="setRest(g, p)">{{ PLAN_JA[p] }}</button>
+          </template>
         </div>
-        <p v-else-if="restable(g) && restOf(g)" class="basis-full pl-[1.375rem] text-[12px] text-[var(--exile-color-text-secondary)]">└ {{ g.kind === "fracture" ? "固定されなかった方" : "残りの候補" }}: <span class="rounded border px-1 text-[11px]" :class="PLAN_CLS[restOf(g)!]">{{ PLAN_JA[restOf(g)!] }}</span></p>
+        <p v-else-if="restable(g) && restOf(g)" class="basis-full pl-[1.375rem] text-[12px] text-[var(--exile-color-text-secondary)]">└ 完成品に{{ g.members.length === 2 ? "どっちも" : "全部" }} · {{ g.kind === "fracture" ? "固定されなかった方" : "残り" }}は <span class="rounded border px-1 text-[11px]" :class="PLAN_CLS[restOf(g)!]">{{ PLAN_JA[restOf(g)!] }}</span></p>
       </div>
     </div>
     <!-- プレとサフィにまたがる「どれか」(カオススパム) -->
