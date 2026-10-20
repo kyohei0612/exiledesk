@@ -90,6 +90,12 @@ function treeTierOf(
 }
 
 function tierIndexFor(mod: Mod, lo: readonly number[], hi: readonly number[], level: number): number {
+  const i = tierMatch(mod, lo, hi, level);
+  return i >= 0 ? i : tierFallback(mod, level);
+}
+
+/** 値が収まる段 (無ければ -1) */
+function tierMatch(mod: Mod, lo: readonly number[], hi: readonly number[], level: number): number {
   for (let i = mod.tiers.length - 1; i >= 0; i--) {
     const t = mod.tiers[i];
     if (!t || t.ilvl > level) continue;
@@ -99,6 +105,10 @@ function tierIndexFor(mod: Mod, lo: readonly number[], hi: readonly number[], le
     // 範囲 [r0, r1] と幅 [lo, hi] が重なるか
     if (ranges.every((r, k) => hi[k]! >= Number(r[0]) && lo[k]! <= Number(r[1]))) return i;
   }
+  return -1;
+}
+
+function tierFallback(mod: Mod, level: number): number {
   // どの段にも合わない時は、その ilvl で出る一番上の段 (2026-09-26: ilvl 79 の指輪に混沌耐性 +33% (T1 は ilvl 81) を貼ると
   // 最上段のまま狙いになり、出る重みが 0 で自動の組み立てとシミュレーションが延々と回って画面が固まった)
   for (let i = mod.tiers.length - 1; i >= 0; i--) if ((mod.tiers[i]?.ilvl ?? 0) <= level) return i;
@@ -154,6 +164,8 @@ export function targetsFor(
   fracturedTargets: TierTarget[];
   /** アルダーで重ねた獲得の MOD があれば、その作り方 (最後に差すルーン)。無ければ null */
   aldur?: AldurPlan | null;
+  /** `targets` と同じ並び。値がどの段にも収まらず、段を推し量った (その ilvl の一番上) 物は false (2026-10-20 シミュレーター ② の貼り付け) */
+  fits?: boolean[];
 } {
   if (!item.baseType) {
     return {
@@ -241,6 +253,7 @@ export function targetsFor(
   const targets: TierTarget[] = [];
   /** `targets` と同じ並びの、貼り付けの文面。画面に日本語のまま出すため */
   const texts: string[] = [];
+  const fits: boolean[] = [];
   const skipped: string[] = [];
   let aldur: AldurPlan | null = null;
   bridged.mods.forEach((b, i) => {
@@ -264,12 +277,15 @@ export function targetsFor(
         const m = data.mods.get(t.modId)!;
         const tier = m.tiers[t.minTierIndex ?? 0];
         targets.push(t);
+        fits.push(true);
         texts.push(`${fillHashes(jaOfMod(m), tier ? tierDisplayRanges(tier) : [])} (アルダーで重ねる)`);
       }
       aldur = { rune: route.rune, priceKey: route.priceKey, element: route.element, text: line.text, count: route.targets.length };
       return;
     }
-    targets.push({ modId: b.mod.id, minTierIndex: tierIndexFor(b.mod, lo, hi, level) });
+    const hit = tierMatch(b.mod, lo, hi, level);
+    targets.push({ modId: b.mod.id, minTierIndex: hit >= 0 ? hit : tierFallback(b.mod, level) });
+    fits.push(hit >= 0);
     texts.push(line.text);
   });
   // 繋がらなかった行の側を、クライアント由来の表から引く ([[patch.ts]] の `htcModSides`)
@@ -297,7 +313,7 @@ export function targetsFor(
   }
   const fracturedSet = new Set(fractured);
   const fracturedTargets = targets.filter((_, i) => fracturedSet.has(texts[i] ?? ""));
-  return { targets, texts, skipped, implicits, fractured, fracturedTargets, dropOnly: dropOnlyRows, skippedSides, aldur };
+  return { targets, texts, skipped, implicits, fractured, fracturedTargets, dropOnly: dropOnlyRows, skippedSides, aldur, fits };
 }
 
 /** アルダーで重ねた獲得の MOD を作る道 (最後に差すルーンと、その値段のキー) */
