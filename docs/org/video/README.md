@@ -2,7 +2,7 @@
 
 YouTube「チョコバナナ」の解説動画を半自動で作る `video/` (旧 POE2Tube、Python。10-20 に統合) の持ち主。手順・場所の表は notes/guide.md、続きは video/docs/handoff.md、メモ video-*。
 
-docs/org/dev/README.md の決まりが先 (全部の部の決まり)。仕事が来た時にブラックが立てる。仕事は開発部長から、報告は開発部長へ SendMessage 1 行 + 中身は todo.md・notes/ (同じファイルは順に、dev の決まり 1・2・8)。
+docs/org/dev/README.md の決まりが先 (全部の部の決まり)。呼ばれたら常駐 (初めて仕事が来た時にブラックが立て、そのブラックの間は開きっぱなし)。仕事は開発部長から、報告は開発部長へ SendMessage 1 行 + 中身は todo.md・notes/ (同じファイルは順に、dev の決まり 1・2・8)。
 
 1. Python は video/ の中で閉じる (`cd video` → `uv sync`、.venv・output・cache は git に入れない)。直したら ruff・mypy strict・pytest (cov 70%) を通す。1 ファイル 300 行、print 禁止 (structlog)。
 2. 受け渡し (撮影 URL・`?rec=1`・`data-rec`・JSON の形 video/contracts/) を変える時は開発部長を通し、ExileDesk 側と同じ commit で。画面の直しは開発部長に頼み (ジン部長・シミュ部長へ振る)、メモ poe2tube-handoff に「要望 N」。
