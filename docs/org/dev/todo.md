@@ -5,7 +5,7 @@
 |---|---|---|
 | ブラック | local_3b3c55ab-5df3-437a-855a-5e75e2c1fa64 | 司令塔 |
 | 開発部長 | (このセッション) | まとめ役 |
-| ジン部長 | local_3582faa0-ba38-498d-8f47-c6aa6fd767bf | J10 (今)。クラフト台の素の値はオーナーの返事待ち |
+| ジン部長 | local_3582faa0-ba38-498d-8f47-c6aa6fd767bf | R4 の案だけ (CraftStage の差し込み口)。クラフト台の素の値はオーナーの返事待ち |
 | シミュ部長 | local_1e51d4a4-ec5b-459d-85ee-95d6da9c079f | S2f 棚卸しの 5 つ (オーナー OK) → S3 の続き (K6c の後) → S2e → S4 |
 | 解析君 | local_2188a7ed-e2f7-4c08-a09c-72c1b5aef099 | K7 → K8 (K6c はオーナーの返事待ち) |
 | 分析君・動画部長・リサーチ長 | — | 仕事が来たらブラックが立てる |
@@ -78,7 +78,7 @@
 - J6 元の中身 + poe.ninja の英語の見本 5 個 (オーナー 10-20、共有メモ paste-samples-ninja-2026-10-20.md → notes/paste-samples/ に写す。行の後ろの印・Bonded・Chronomancy・Sockets・n5 の冒涜 6 つの枠。アプリの扱いは import せず写す): 「全ての投射物スキルのレベル #」など + の無い MOD の文を poe2db の日本語で直す (本番の文が変わる → OK の後)。
 - J7: ItemTextMod に品質で盛られた値の印 (optional、名前を先に開発部長へ)。
 - J9 済み (d089eb51): spamCounts に anyOf。J5d・J5e 済み (d28ebafe、emulator/notes/2026-10-20-j5de-tables.md): 重みの本当の食い違いはタリスマンのアタックスピード 30 段目 1 件 (poe2db に合わせる)。
-- J10 (新しい決まりで poe2db に): 出どころの分からない重み 3 (ES リチャージ・リーチ・矢筒の矢) を探す → 無ければ poe2db に、実測の 825 などは変えない、エンジンにだけあるベース 102 は removed-bases.json で外す (戻せる)、Crossbows_cannon 18 は poe2db に無ければ置き場から外す。本番の一覧・確率が変わる → OK 待ち。
+- J10 済み (c3a915a8): 出どころの分からない重み 3 つは weight-overrides の借りの決まり (09-23・09-29 オーナー OK) で埋めた値 → 変えない。エンジンにだけあるベース 102 は 99 が poe2db にページあり (残す)、[DNT] 3 つだけ removed-bases へ。Crossbows_cannon 18 は Trarthan Cannon のページに全部ある (照らしの台本の誤り、外さない)。見張りは同じ。DNT の 3 つは pending-release.md に OK 待ち。
 - 打つ数字に効く直しは golden・held-odds-parity を回し、本番はオーナーの OK の後。
 
 ### 開発部長
