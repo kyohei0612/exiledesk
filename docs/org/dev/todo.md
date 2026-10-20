@@ -16,7 +16,7 @@
 | 解析君 K6 | src/services/simulator/auto/ の計算の側 (auto-model・auto-solve・auto-actions・auto-engine・auto-rules・auto-types)、scripts/analysis/check-auto-order.mjs、docs/org/math/ |
 | 解析君 (一時) | scripts/_flux-probe.test.ts (やふやふは ed2c9ba3 で commit 済み) |
 | シミュ部長 S1e | SimPasteRead.vue・paste-read.ts・StageBasePage.vue・StageTargetSummary.vue・use-stage-base.ts |
-| ジン部長 J6 | src/i18n/mod-text-ja.json・src/services/craft-stage/item-text.ts・docs/org/emulator/notes/paste-samples/・htc の poe2db の直しのファイル (憤怒 45 段目) |
+| ジン部長 J8 | 新 src/services/craft-stage/boosts.ts・engine.ts・item-text.ts・item-text-types.ts、docs/org/emulator/notes/2026-10-20-j8-boost-table.md |
 | ジン部長 J2 | tests/golden/ (探すのは別の worktree) |
 
 ## 順番 (2026-10-20 夜、オーナー OK 済みの物)
@@ -65,6 +65,7 @@
 - J5a 済み (288c3ba6): 35 ベースを直し poe2db のベース 1,516 が全部同じに。golden は orbs だけ変わり取り直し (Fine Belt に (1-3) の幅ができ神のオーブで振り直せる)、held-odds-parity は同じ。本番の挙動が変わる → pending-release.md に OK 待ち。英語の無い暗黙 11 行は J6 で。
 - J5b 済み (854fa6ac): 照らしの台本を画面の単位で比べ直し、データは poe2db と同じ。残るのは憤怒の 45 段目 (poe2db 1 秒 / エンジン 1〜2 秒) だけで、写しから決まらないので直さず notes に。
 - J5c 済み (5d585458): 深淵の王の印のサフィックスを置き場に (poe2db-abyss-fix.ts)。golden は控えにクラスの行が入るため 6 組とも取り直し (クラスの行を除いた打った結果は同じ)、held-odds-parity は通る。本番の挙動が変わる → pending-release.md に OK 待ち。
+- J8 の形 (ジン部長 10-20): ItemTextMod.values = 素の値、shownValues = 貼ったままの値、boosts = [{ kind: quality / sideEffect (+ rune?), pct }]。入口 boosts.ts に modBoostsOf・baseValueOf → { base, shown, boosts }。values を読む画面は無い (grep) ので型は落ちない。ルーン・ソウルコアが同じ stat に合わさるなら kind "rune" に、と聞き返し中。
 - J8 (オーナー 10-20) MOD の数字は上乗せ (品質・ルーン・ソウルコア・側の効果など) を全部抜いた素の値と段で出す: 上乗せの一覧と割り戻しを入口に 1 か所 → parseItemText の値を素の値に (返す形の名前は先に) → クラフト台 (本番) の盛った値を出す所の表 (直すのはオーナーに見せてから)。J7 もここに含める。
 - J6 済み: 5ff1007d (poe.ninja の英語の見本 5 個を読める、n5 の冒涜 6 つは数のまま、n1 のレアリティ 35% は「段に収まらない」のまま)・e82ef1a5 (レベルの型 26 行に +、golden は文の分だけ変わり打った結果は同じ)・384370cc (英語の無い暗黙 11 行を 0 に)。e82ef1a5・384370cc は本番の文が変わる → pending-release.md に OK 待ち。
 - J5g 済み (384370cc): 憤怒の 45 段目を poe2db の 1 秒に。照らしは暗黙・値とも違い 0。
