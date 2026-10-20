@@ -40,7 +40,7 @@ export const GUIDE_COURSES: TopicCourse[] = [
         ["素の +3 が 4 になるのは倍率 1.17 以上の時 (45 通り中 6 通り、約 13%)", "The base +3 becomes 4 only at 1.17× or more (6 of 45 rolls, about 13%)"],
         ["品質は素の値に掛かる: 素 4 × 1.4 = 5.6 で +5。素 3 なら +4、素 2 なら +2", "Quality applies to the base value: 4 × 1.4 = 5.6 → +5. Base 3 gives +4, base 2 gives +2"],
         ["このコースでは素 4 になる例 (+5) を見せる", "This course shows the base becoming 4 (+5)"],
-        ["+6 には品質 50% が要る (ゲームではヴァールカタリストのインフューザーの運次第)。ここでは品質の帯で上限を 50% にすれば +6 を試せる", "+6 needs 50% quality (in the game it depends on luck with a Vaal Catalysing Infuser). Here, set the max to 50% on the quality bar to try +6"],
+        ["+6 には品質 50% が要る (ゲームではヴァールカタリストのインフューザーの運次第)。ここでは品質の帯で上限を 50% にすれば +6 を試せる。聖別の数値も、品質の帯の下の「聖別」の帯で決められる (最大を選べば一番良い振れ方を試せる)", "+6 needs 50% quality (in the game it depends on luck with a Vaal Catalysing Infuser). Here, set the max to 50% on the quality bar to try +6. The Sanctified bar under it sets the multiplier too (pick Max for the best roll)"],
       ], [BREACH, "qset:40:caster"]), omens: ["OmenofSanctification"], startMods: AFTER_BREACH, cont: true, wantValue: { mod: SPELL, value: 4 } },
     ],
   },
