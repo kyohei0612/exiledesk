@@ -6,8 +6,8 @@
   ベースの所に出している表示を ① の MOD の所でするべきで、ベースには非表示でいい。そこに付きやすさの % も出そう、T2 以上なら確率が上がる」。
   クラフト計算機の MOD 解析 ([[ModBreakdown.vue]]) と同じく、左にプレ・右にサフィ、種類の札 + 文 + 段。番号は付ける順番。
   editable の時は ① で選んでいる間: 段のプルダウン・× (外す)・付け方の印 (押すと変える)。＋ (あるいは)・どれか N つの増減は 2 の後の整理 (SimTargetSort.vue) でやる (2026-10-18 オーナー「ここでプラスはいらん、その作業は次工程」)。
-  付きやすさ = その段以上の重み ÷ 同じ側の全部の重み (このアイテムレベルで出る段、普通の MOD は差したルーンの MOD 込み、冒涜は冒涜の置き場)。
-  同じ系統の除外は見ない目安。エッセンスは確定なので出さない
+  付きやすさ = その段以上が同じ側の 1 回の抽選で出る割合 (空のレアにその側の高貴を打った時。ルーンの MOD はそのルーンを差したレア、冒涜は冒涜の置き場)。
+  計算はエンジンの入口 (target-share.ts → addHitOdds、2026-10-20 手 3)。エッセンスは確定なので出さない
 -->
 <script setup lang="ts">
 import { fmtPct } from "../../utils/format-pct";
@@ -15,11 +15,10 @@ import { computed } from "vue";
 import { craftStage, nameOf } from "../../state/craft-stage";
 import { fillModText } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
-import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
+import { CRAFTED_SOURCES } from "../../services/craft-stage/engine";
 import { essenceKindOf } from "../../services/mods/essence-kind";
 import { tr } from "../../i18n/lang";
-import { effectiveCls } from "../../services/craft-stage/stage-core";
-import { withRunes } from "../../vendor/poe2htc/engine/runes";
+import { targetShare } from "../../services/simulator/target-share";
 import { runeJaOf, runeToneOf } from "../../services/craft-stage/mod-list";
 import SimMethodPop from "./SimMethodPop.vue";
 import SimPasteTargets from "./SimPasteTargets.vue";
@@ -58,20 +57,10 @@ function planOff(g: { kind: string; host: string; hosts?: string[] }): ReturnTyp
 type Kind = "fracture" | "normal" | "desecrated" | "essence" | "perfect_essence";
 
 
-/** 付きやすさ (その段以上が、同じ側の 1 回の抽選で出る割合) */
+/** 付きやすさ (その段以上が、同じ側の 1 回の抽選で出る割合。エンジンの入口の 1 手の確率から、services/simulator/target-share.ts) */
 function shareOf(modId: string, minTierIndex: number): number | null {
   const d = s.data.value, it = s.item.value;
-  const m = d?.mods.get(modId);
-  if (!d || !it || !m || CRAFTED_SOURCES.has(m.source)) return null;
-  // ルーンの MOD (コルの狩りなど) はそのルーンを差した時の置き場で割る (シミュレーションは差した白から始める)
-  const pools = (m.rune ? withRunes(effectiveCls(it), [m.rune]) : effectiveCls(it)).pools;
-  const pool = m.source === "desecrated" ? pools.desecrated : pools.normal;
-  const ids = m.type === "suffix" ? pool?.suffixes : pool?.prefixes;
-  if (!ids?.length) return null;
-  const lv = s.itemLevel.value;
-  const w = (id: string, min: number): number => (d.mods.get(id)?.tiers ?? []).reduce((a, t, i) => a + (i >= min && t.ilvl <= lv ? t.weight : 0), 0);
-  const total = ids.reduce((a, id) => a + w(id, 0), 0);
-  return total > 0 ? w(modId, minTierIndex) / total : null;
+  return d && it ? targetShare(d, it.base, s.itemLevel.value, modId, minTierIndex) : null;
 }
 /** 確率の % (2026-10-10 動きの揃え 5: 書き方は utils/format-pct.ts の 1 つ) */
 const pct = (x: number): string => fmtPct(x);
