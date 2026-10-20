@@ -50,7 +50,7 @@ interface ItemTextResult {
   skipped: { line; code: "noBase" | "unknownText" | "notInPool" | "dropOnly" | "hybridPart"; reason: { ja; en } }[];
 }
 ```
-- 暗黙: 注記 (`(implicit)` `(rune)` `(enchant)`)・Ctrl+Alt+C の見出しがあればそれ。無ければベースの暗黙 (`htcBaseInfo()[base].implicits` の en/ja) と数字を除いた文で照らし (暗黙 1 つにつき 1 行)、**最後に当たった暗黙より前の行は `extra`** (ルーン・エンチャント・コラプトの暗黙。文では見分けられない)。
+- 暗黙: 注記 (`(implicit)` `(rune)` `(enchant)`)・Ctrl+Alt+C の見出しがあればそれ。無ければベースの暗黙 (`htcBaseInfo()[base].implicits` の en/ja) と数字を除いた文で照らし (暗黙 1 つにつき 1 行)、**最後に当たった暗黙より前の行**は、差したルーン・ソウルコアの効果 (部位は runeCategoryOf、「手袋として得る」指輪は手袋) と文が同じなら `rune`、コラプトした物なら `enchant` (コラプトの結果は poe2db の Vaal Orb で Corrupted Enchantment)、どちらでもなければ `extra` (10-20 夜、見本 3 のゴールド 10% と見本 5 のスピリット +30 はアズカパのソウルコア = 手袋: ゴールド 10%、マーシャル武器: スピリット +15 × 2)。
 - コラプト / 二重コラプト (Corrupted / Twice Corrupted) は `corrupted` に読むだけ。MOD の数え方は変えない。
 - 「W」「P」の行・種類の名前の行 (「指輪」「Ring」) は読み飛ばす。`~b/o …` は `price`。`物理ダメージ: …` などの基本値は `properties`。`スキルを付与:` / `Grants Skill:` は `grants`。
 - MOD: 計算機と同じ繋ぎ方 (`targetsFor`) で modId。置き場の索引に無い物 (液化した感情の MOD など) は同じクラスの MOD を文で引く。**段は打つ処理の表示の式を割り戻して引く**: 表示 = floor(素 × (1 + (品質 + 反対側の「側の効果」) / 100))、品質が効くかは `catalystBoosts` (指輪・アミュレットは MOD のタグ、ジュエルは中身のタグ)。`fits: false` = どの段にも収まらず ilvl の一番上とした。

@@ -17,6 +17,7 @@ import { catalystTagFromLabel, rawValue } from "../htc/quality";
 import { matchKey } from "../htc/bridge-index";
 import { tierDisplayRanges } from "../mods/stat-scale";
 import { catalystBoosts } from "./stage-core";
+import { RUNES, runeCategoryOf, runeEffectFor } from "./stage-runes";
 import type { StageItem } from "./types";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import type { ItemTextImplicit, ItemTextResult, ItemTextSkip, ItemTextSkipCode, ItemTextWords } from "./item-text-types";
@@ -141,7 +142,7 @@ export function parseItemText(data: PatchData, text: string): ItemTextResult {
   out.cls = htcBaseInfo()[out.base.en]?.cls ?? classOfBase(data, out.base.en)?.id ?? null;
   out.count.limit = sideLimits(data, out.base.en);
 
-  const explicit = splitImplicits(out, body);
+  const explicit = splitImplicits(data, out, body);
   readMods(data, out, explicit);
   for (const u of unrevealed) {
     out.mods.push({ text: u.line, modId: null, source: "desecrated", side: u.side, sideFrom: "paste", tier: null, values: [], fractured: false, desecrated: true, crafted: false, unrevealed: true });
@@ -151,7 +152,7 @@ export function parseItemText(data: PatchData, text: string): ItemTextResult {
 }
 
 /** 暗黙側の行を out.implicits に移し、残り (明示の MOD の候補) を返す */
-function splitImplicits(out: ItemTextResult, body: Body[]): Body[] {
+function splitImplicits(data: PatchData, out: ItemTextResult, body: Body[]): Body[] {
   const implicit = (b: Body, from: ItemTextImplicit["from"]): void => {
     out.implicits.push({ text: b.text, from, template: b.template, values: b.values });
     if (from === "rune") out.sockets.runes.push(b.text);
@@ -180,9 +181,14 @@ function splitImplicits(out: ItemTextResult, body: Body[]): Body[] {
     return true;
   });
   const last = isBase.lastIndexOf(true);
+  // 暗黙より前の行: 差したルーン・ソウルコアの効果 (ソケットの数だけ値が足される) と文が同じなら rune。
+  // 残りはコラプトした物ならエンチャント (コラプトの結果は poe2db の Vaal Orb で Corrupted Enchantment)、それ以外は見分けられない (extra)
+  const cls = classOfBase(data, out.base!.en);
+  const cat = cls ? runeCategoryOf({ base: out.base!.en, cls }) : null;
+  const runeTexts = new Set(cat ? Object.values(RUNES).flatMap((r) => { const e = runeEffectFor(r, cat); return e ? [bare(e.en), bare(e.ja)] : []; }) : []);
   body.forEach((b, i) => {
     if (isBase[i]) implicit(b, "base");
-    else if (i < last) implicit(b, "extra");
+    else if (i < last) implicit(b, runeTexts.has(bare(b.text)) ? "rune" : out.corrupted > 0 ? "enchant" : "extra");
     else rest.push(b);
   });
   return rest;

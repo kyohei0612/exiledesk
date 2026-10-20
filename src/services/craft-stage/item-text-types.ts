@@ -22,7 +22,8 @@ export interface ItemTextImplicit {
   /**
    * base = ベースの暗黙 (エンジンのベースの行と照らした / 注記 `(implicit)`)。
    * rune = 差したルーン (`(rune)`)、enchant = エンチャント・アノイント (`(enchant)`)。
-   * extra = 印の無い貼り付けでベースの暗黙より前にあった行 (ルーン・エンチャント・コラプトの暗黙のどれか。文では見分けられない)。
+   * 印の無い貼り付け (トレード) でベースの暗黙より前にあった行は: 差したルーン・ソウルコアの効果と文が同じなら rune、
+   * コラプトした物なら enchant (コラプトの結果は Corrupted Enchantment)、どちらでもなければ extra (文では見分けられない)。
    */
   from: "base" | "rune" | "enchant" | "extra";
   /** 当たった英語の型 (読めなければ null) と値 */
