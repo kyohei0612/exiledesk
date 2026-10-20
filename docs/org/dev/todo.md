@@ -7,13 +7,13 @@
 | 開発部長 | (このセッション) | まとめ役 |
 | ジン部長 | local_3582faa0-ba38-498d-8f47-c6aa6fd767bf | R4 の 2 手 (口を作る・隠す判定、今)。クラフト台の素の値はオーナーの返事待ち |
 | シミュ部長 | local_1e51d4a4-ec5b-459d-85ee-95d6da9c079f | 打ち止めのオーナーの返事待ち (A なら quiz-recipe.ts の 1 行) → S2e → S4 → R4 の中身 |
-| 解析君 | local_2188a7ed-e2f7-4c08-a09c-72c1b5aef099 | K7 → K8 (K6c はオーナーの返事待ち) |
+| 解析君 | local_2188a7ed-e2f7-4c08-a09c-72c1b5aef099 | K8 範囲 C (今)。K6c はオーナーの返事待ち |
 | 分析君・動画部長・リサーチ長 | — | 仕事が来たらブラックが立てる |
 
 ## 触っている (同じファイルは順に。始める時に書き、commit したら消す)
 | 誰 | ファイル |
 |---|---|
-| 解析君 K6 | src/services/simulator/auto/ の計算の側 (auto-model・auto-solve・auto-actions・auto-engine・auto-rules・auto-types)、scripts/analysis/check-auto-order.mjs、docs/org/math/ |
+| 解析君 K8 | src/services/simulator/auto/auto-model.ts、scripts/analysis/check-auto-order.mjs、docs/org/math/ |
 | 解析君 (一時) | scripts/_flux-probe.test.ts (やふやふは ed2c9ba3 で commit 済み) |
 | シミュ部長 S1e | SimPasteRead.vue・paste-read.ts・StageBasePage.vue・StageTargetSummary.vue・use-stage-base.ts |
 | ジン部長 R4 | src/views/craft-stage/CraftStage.vue、新 src/views/simulator/SimHost.vue・src/views/tutorial/CourseHost.vue・src/state/tutorial/course-host.ts (口だけ。中身はシミュ部長が S4 の後に) |
@@ -38,7 +38,7 @@
 - K6 済み (c5ae36a3): 両側のどれかに対応、手袋 (ES か攻撃速度) で答え無し 0・イレギュラー 0、上位 3 は計算と +0.8〜+8.6%。auto-rules に rulesForOrder → S3 で使う。費用は prefix の道の値 (安い側を先にするかは quizFromSim、シミュ部長)。
 - K6c 元が分かった (シミュ部長): runQuizOnce が「買い直して最初から」で関門の回数 r.gates を戻さず、自動の 111 回の買い直しで 300 に届く。オーナーに A (ベースごと、戻す、おすすめ) / B (1 人の通し) を聞き中。A ならシミュ部長の 1 行、B なら解析君。
 - S3 の 2 つ目 済み (6015875b): rulesForOrder で route ごとの答え、⑥ の答えの無い場面を answerFor で埋めて回し直す、route の並びは prefix 先のまま (どちらの側に付くかは打つまで分からないため)。
-- K7 靴の計算が +5〜19% 高い近似の元。
+- K7 済み (20b96e5c、auto-actions.ts だけ): 外れの系統の近似を直し、手袋・靴・白から・両側の全部の見本で上位 3 がエンジン 1,000 人と 1 割以内 (靴 #1 +13.1% → +0.8%、残りは靴 #2 +14.7%)。
 - K8 自動の範囲 C (グレーターエッセンスの道) の見本 → no(...) から外す。
 - S1c 済み (6ddcfc57): ③ の白からの候補作りをスパムの増強の道に (候補 1 = spamCounts 300 人、2 以上は仮で magicLoopCounts)、鉄の指輪 + T3 雷で 186 → 157 神。数字は解析君 K5、「どれか」は ジン部長 J9。
 - S2 済み (545be53b・e607dcde、開発版 545be53b): ② の「自動で組む」(前回を覚える)・帯の札・付け方は「自動」・T1 だけは押せず 1 行・範囲外は理由 1 行・ポップアップは消す物がある時だけ・整理は 2-b で「次へ」。e607dcde で知らない暗黙の札も出す (corruption で中身が消えていた)。元の中身: 自動 / 手動 手 3・4 (simAuto・Snap・レシピの保存・リセット、② のチェック・帯の札・ポップアップ日英) + 点検 5 (② 次へ → 付け方の整理)。
