@@ -12,9 +12,10 @@
 7. 仕事の記録 (設計・調べ) は自分の部の notes/ に、やる事・OK 待ちは todo.md に。
 
 ## 地図
-- 画面 src/views/simulator/: StageSimPanel.vue (入口)、工程の帯 SimStepBar・SimStepHead・SimProgress、始め方 SimStartPick・SimBaseCalc、狙う SimTargetSort・StageTargetSummary・SimPasteTargets (貼り付けで写す)、打ち方 SimMethodPop・StagePatternEditor、費用 SimCostTip、レシピ SimRecipeBar・StageRecipeStart・StageRecipesPage・recipe-share.ts、StageQuizEditor・quiz-text.ts、use-sim-*.ts。
+- 画面 src/views/simulator/: StageSimPanel.vue (入口)、工程の帯 SimStepBar・SimStepHead・SimProgress、始め方 SimStartPick・SimBaseCalc、順番のおすすめ SimAutoOrder・use-sim-auto-order (④、押した時だけ計算)、狙う SimTargetSort・StageTargetSummary・SimPasteTargets (貼り付けで写す)、打ち方 SimMethodPop・StagePatternEditor、費用 SimCostTip、レシピ SimRecipeBar・StageRecipeStart・StageRecipesPage・recipe-share.ts、StageQuizEditor・quiz-text.ts、use-sim-*.ts。
 - 状態 src/state/simulator/: sim-state・sim-recipes・sim-recipe-store。
 - 仕組み src/services/simulator/: quiz-recipe.ts (`runQuizOnce`)・paste-target.ts (貼り付け → ② の狙い、読みは htc/paste)・quiz-build.ts (`quizFromSim`)・quiz-samples・recipe-*.ts・pattern.ts・sim-greater・sim-methods・keep-compare・self-craft-dist・auto-group。共通の run-plan・contract・share・trade-search は services/craft-stage/ (dev/README.md の境目)。
+- 仕組み src/services/simulator/auto/ (順番だけ自動): auto-order.ts (候補・絞り・ワーカーの呼び出し)・auto-order.worker.ts・auto-solve-stub.ts (解析君の計算ができるまでの仮) はシミュ部長、auto-solve・auto-model・auto-actions (計算) は解析君。入口の形は共有メモ auto-order-api.md。
 - 仕組み src/services/simulator/htc/: sim-route*.ts・tree-decide*.ts・tree-fracture-plan・tree-buy・base-choice・self-fracture・step-odds。src/services/htc/ に残る物: buy-or-craft・prices.ts・price-keys.json・paste*.ts。サーバー server/live/src/sim.ts・wrangler.sim.jsonc。
 - チュートリアル・コース: 画面 src/views/tutorial/ (StageCourses・StageTopicGuide・StageCourseGuide・GuideVideoCard・Video*.vue・use-anim・anim-clock・use-video-hand)、仕組み src/services/tutorial/ (topic-courses* (段 5 クラフト手順は topic-courses-guide)・course-*・craft-courses・quiz-tutorial*・compare)、状態 src/state/tutorial/ (craft-course・craft-topic・craft-lesson)。
 - 台本 scripts/: check-htc-sim-route・tree-decide・tree-auto・tree-buy・step-odds・start-kind・self-fracture (check-htc-*.mjs)・sim-telemetry.mjs。
