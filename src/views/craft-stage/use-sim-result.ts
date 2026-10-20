@@ -18,13 +18,12 @@ import type { SimRecipesCtx } from "./use-sim-recipes";
 
 
 export function useSimResult(d: SimTargetsCtx & SimSearchCtx & SimRunCtx & SimRecipesCtx) {
-  const { MAX_STEPS_CHOICES, baseJa, boughtDivine, rareDivine, calc, doneDivine, fmtDate, fourDivine, fractureRow, wholeRoute, itemDivine, maxSteps,
+  const { MAX_STEPS_CHOICES, baseJa, boughtDivine, calc, doneDivine, fmtDate, fourDivine, fractureRow, wholeRoute, itemDivine, maxSteps,
     modShort, num, quizBase, recipeOut, restBases, restCost, results, rows, shown, shownName, startOnce, whiteDivine } = d;
   const s = craftStage;
   /**
    * 4 最安値スタート: フラクチャー済みのベースを手に入れるまでの 3 ルート (回さずに計算。高貴建て)。流れが一緒になるのはフラクチャーの後
    *   self   … 自作 (白から増強・消去スパム → 王者 → 骨の壁 → フラクチャー)。1 回分 × 3 (1/3) + 固定後の消去 × 2
-   *   rare   … 自作 (適当なレアを消去で 1 MOD → カオスで狙いまで → 高貴 × 2 → 骨の壁 → フラクチャー)。1 回分 × 3 + 消去 × 2 (use-sim-run の calc)
    *   four   … レアのフラクチャー無しベース (3 MOD + 狙い 1 MOD、2026-10-05 オーナー「3 MOD + 1 MOD (狙い) で表示」) を買う → 壁 → フラクチャー。1 回分 × 3 + 消去 × 2
    *   bought … フラクチャー済みのベースを買う (× 1)
    */
@@ -33,7 +32,6 @@ export function useSimResult(d: SimTargetsCtx & SimSearchCtx & SimRunCtx & SimRe
     const fourN = num(fourDivine.value), bN = num(boughtDivine.value);
     const list = [
       { key: "self", name: "① 自作 (白から増強・消去スパム)", cost: c ? c.total : null },
-      { key: "rare", name: "① 自作 · 適当なレアから (消去で 1 MOD → カオス)", cost: c ? c.rareTotal : null },
       { key: "four", name: "② レアのフラクチャー無しベース (3 MOD + 狙い 1 MOD) を買う", cost: c && fourN != null ? c.fourTotal : null },
       { key: "bought", name: "③ フラクチャー済みのベースを買う", cost: bN },
     ];
@@ -66,8 +64,6 @@ export function useSimResult(d: SimTargetsCtx & SimSearchCtx & SimRunCtx & SimRe
       const rest = restCost.value;
       const c = calc.value;
       const four = c && c.fourTotal != null && rest != null ? c.fourTotal * nb + rest : null;
-      const rare = c && c.rareTotal != null && rest != null ? c.rareTotal * nb + rest : null;
-      list.push({ key: "rare", name: "適当なレアから作る (消去で 1 MOD → カオス、フラクチャーまでの手順込み)", cost: rare, note: num(rareDivine.value) == null ? "無し" : "回すと出ます" });
       list.push({ key: "four", name: "レアのフラクチャー無しベース (3 MOD + 狙い 1 MOD) を買う", cost: four, note: num(fourDivine.value) == null ? "無し" : "回すと出ます" });
       const bN = num(boughtDivine.value);
       const bought = bN != null && rest != null ? bN * dv * nb + rest : null;

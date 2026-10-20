@@ -1,12 +1,11 @@
 /**
- * use-sim-calc.ts — ③ ベースの値段の「白から作る」「MOD 付きレアを買う」「適当なレア」「グレーターの道」の費用 (calc) と、反対側の狙いの取り方 (keep)。
+ * use-sim-calc.ts — ③ ベースの値段の「白から作る」「MOD 付きレアを買う」「グレーターの道」の費用 (calc) と、反対側の狙いの取り方 (keep)。
  * use-sim-run.ts から分けた (2026-10-20、500 行の決まり)
  */
 import { computed } from "vue";
 import { craftStage, nameOf, priceOf } from "../../state/craft-stage";
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
-import { freshItem } from "../../services/craft-stage/run-plan";
-import { effectiveCls, limitOf } from "../../services/craft-stage/stage-core";
+import { effectiveCls } from "../../services/craft-stage/stage-core";
 import { withRunes } from "../../vendor/poe2htc/engine/runes";
 import { modTierWeight } from "../../vendor/poe2htc/engine/pool";
 import { runeEnForId } from "../../services/craft-stage/pattern";
@@ -19,7 +18,7 @@ import type { SimTargetsCtx } from "./use-sim-targets";
 export interface KeepPlan { host: string; together: number; chaos: number; chaosKey: string | null; chaosN: number | null; use: "together" | "chaos"; detail: { p: number; q: number; share: number; augKey: string } }
 
 export function useSimCalc(d0: SimTargetsCtx, simIn: () => SimTargetIn[]) {
-  const { fracMembers, fractureRow, wholeRoute, whiteDivine, fourDivine, rareDivine, num } = d0;
+  const { fracMembers, fractureRow, wholeRoute, whiteDivine, fourDivine, num } = d0;
   const s = craftStage;
   /**
    * 計算の費用 (2026-10-05 オーナー「3 個買って 1 個成功品と仮定して、最低完全変成 3、次の完全増強、消去はセットで使う、フラクチャー 3 つは
@@ -111,40 +110,12 @@ export function useSimCalc(d0: SimTargetsCtx, simIn: () => SimTargetIn[]) {
     const buyOnce = fourB != null ? fourB + buyRest : null;
     /** 4 MOD を買う道の 1 個 (フラクチャー済みになるまで) = (ベース代 + フラクチャー) × 3 */
     const fourTotal = buyOnce != null ? buyOnce * 3 : null;
-    /**
-     * 適当なレアから (2026-10-18 オーナー「白と適当なレア → 消去でカオススパムルート、その費用の計算」): 満杯と見たレアを消去で 1 MOD まで削り、
-     * 残った 1 つをカオスで入れ替えて狙いが付くまで (1 MOD なのでカオスは外して 1 つ付けるだけ、付く物は両側の重みから) → 高貴 × 2 で 3 MOD
-     * → 骨の壁 → フラクチャー。1 個 = (レア + これ) × 3 + 消去 × 2 (白からと同じ)。カオスの等級は 1 個あたりが一番安い物 (段の下限は高貴と同じ)
-     */
-    const slots = (() => {
-      try { const fi = { ...freshItem(d, s.base.value, s.itemLevel.value), rarity: "rare" as const }; return limitOf(fi, "prefix") + limitOf(fi, "suffix"); } catch { return 6; }
-    })();
-    const chaosGrades = [
-      { id: "chaos_perfect", floor: CURRENCY_FLOOR.exalt.perfect, ja: "完全" },
-      { id: "chaos_greater", floor: CURRENCY_FLOOR.exalt.greater, ja: "上級" },
-      { id: "chaos", floor: CURRENCY_FLOOR.exalt.base, ja: "無印" },
-    ].map((g) => {
-      const all = totalAt("prefixes", g.floor) + totalAt("suffixes", g.floor);
-      const p = all > 0 ? Math.min(1, fracMembers.value.reduce((a, r) => a + wAt(r.modId, r.minTierIndex, g.floor), 0) / all) : 0;
-      return { ...g, p };
-    }).filter((g) => g.p > 0);
-    const cg = chaosGrades.length ? chaosGrades.reduce((a, b) => (priceOf(b.id) / b.p < priceOf(a.id) / a.p ? b : a)) : null;
-    const rareLines: Array<{ name: string; n: number; each: number }> = cg ? [
-      { name: `${nameOf("annul")} (1 MOD まで)`, n: Math.max(0, slots - 1), each: priceOf("annul") },
-      { name: `${nameOf(cg.id)} (狙いが付くまで)`, n: 1 / cg.p, each: priceOf(cg.id) },
-      { name: `${nameOf("exalt")} (3 MOD に)`, n: 2, each: priceOf("exalt") },
-      { name: `${nameOf("desecrate")} (壁)`, n: 1, each: priceOf("desecrate") },
-      { name: nameOf("fracture"), n: 1, each: priceOf("fracture") },
-    ] : [];
-    const rareRest = cg ? rareLines.reduce((a, l) => a + l.n * l.each, 0) : Infinity;
-    const rareN = num(rareDivine.value);
-    const rareTotal = rareN != null && cg ? (rareN + rareRest) * 3 + after : null;
-    const rareChaos = cg ? { grade: cg.ja, p: cg.p, n: 1 / cg.p } : null;
+    // 適当なレアを消去で 1 MOD → カオスの道は 2026-10-21 に外した (オーナー「誤差やろもはや消してくれ」。白からは増強スパムの道だけ)
     const g = greaterRouteCost({ data: d, targets: simIn(), fracSide: m.type === "suffix" ? "suffix" : "prefix", p: pHit, grade: gr, wAt, totalAt, white, runeLines, price: priceOf, name: nameOf });
     if (g) {
       // グレーターエッセンスを巻き込む道: 自前のフラクチャーだけ (買う始め方・適当なレアの道は無し)。固定の後に消さない (残す MOD を持ったまま進む)
       return { pHit, each, rerolls: g.augment, lines: g.lines, buyLines, once: g.once, after: 0, total: g.once * 3, noAbyss: false, cantRoll: pHit === 0 || g.cantKeep, grade: gr.ja, buyRest, breakEven: 0, buyOnce: null, fourTotal: null as number | null,
-        slots, rareLines: [], rareRest: Infinity, rareTotal: null, rareChaos: null, greater: g, keep: null as KeepPlan | null, augKey: gr.aug };
+        greater: g, keep: null as KeepPlan | null, augKey: gr.aug };
     }
     /**
      * フラクチャーの反対側の狙い (1 つ) をどう取るか (keep-compare.ts、2026-10-20 オーナー「白から自作の費用に入れて、買う始め方と並べて一番安い始め方」)。
@@ -155,7 +126,7 @@ export function useSimCalc(d0: SimTargetsCtx, simIn: () => SimTargetIn[]) {
     const kBest = kc.length ? kc.reduce((a, x) => (x.chaos! - x.together > a.chaos! - a.together ? x : a)) : null;
     const keep = kBest ? { host: kBest.host, together: kBest.together, chaos: kBest.chaos!, chaosKey: kBest.chaosKey, chaosN: kBest.chaosN, use: kBest.together < kBest.chaos! ? "together" as const : "chaos" as const, detail: kBest.detail } : null;
     return { pHit, each, rerolls, lines, buyLines, once, after, total: once * 3 + after, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, grade: gr.ja, buyRest, breakEven, buyOnce, fourTotal,
-      slots, rareLines, rareRest, rareTotal, rareChaos, greater: null as GreaterRoute | null, keep, augKey: gr.aug };
+      greater: null as GreaterRoute | null, keep, augKey: gr.aug };
   });
   return { calc };
 }

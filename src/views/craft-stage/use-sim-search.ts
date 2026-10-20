@@ -65,13 +65,6 @@ export function useSimSearch(d: SimTargetsCtx) {
   async function searchWhite(): Promise<void> {
     await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "normal", ilvlMin: searchIlvl.value, stats: [], noSanctified: true, ...socketQuery() }));
   }
-  /**
-   * 3 の「適当なレアを消去で 1 MOD に」のレアを取引所で探す (2026-10-18 オーナー「適当なレアを 1 MOD にパターンも取引所に行かせないと」)。
-   * このベースのレア・アイテムレベル以上・フラクチャー無し (固定は消去で消せない)・コラプト無し・聖別無し。開くだけ
-   */
-  async function searchRare(): Promise<void> {
-    await openTradeQuery(buildSpecQuery({ baseType: s.base.value, rarity: "rare", ilvlMin: searchIlvl.value, stats: [], fracturedItem: false, noSanctified: true, ...socketQuery() }));
-  }
   /** フラクチャーの候補が違う側に分かれている (作り方が変わるので今は止める) */
   /** フラクチャーの候補が両側に分かれている (選べるが、同じ側を推奨する) */
   const mixedSides = computed(() => new Set(fractureRows.value.map((r) => r.side)).size > 1);
@@ -192,7 +185,7 @@ export function useSimSearch(d: SimTargetsCtx) {
     const n = (re: RegExp): number => (r?.usage ?? []).filter((u) => re.test(u.key)).reduce((a, u) => a + u.count, 0);
     makeCost.value = r ? { key, perDone: r.perDone, p50: r.p50, p90: r.p90, pDone: r.pDone, fractures: n(/^fracture$/), magic: n(/^(transmute|augment)/), chaos: n(/^(alchemy|chaos)/), bases: r.bases } : null;
   }, { immediate: true });
-  return { market, searchIlvl, searchFour, fracQuery, searchWhite, searchRare, mixedSides, makeSpec, searchBought, doneDivine, DONE_KEY,
+  return { market, searchIlvl, searchFour, fracQuery, searchWhite, mixedSides, makeSpec, searchBought, doneDivine, DONE_KEY,
     doneAll, doneKey, doneAge, searchDone, searchPattern, makeCost, makeBusy, makeKey };
 }
 export type SimSearchCtx = ReturnType<typeof useSimSearch>;

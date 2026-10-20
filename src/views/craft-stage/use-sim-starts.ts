@@ -58,8 +58,7 @@ const keepName = computed(() => { const r = rows.value.find((x) => x.modId === c
 /** 一番安い始め方 (値段の入った物から。③ の「次へ」の上に出し、次へでその始め方にする。2026-10-20 オーナー「計算画面で一番安い始め方を表示して次へ」) */
 const bestStart = computed(() => {
   if (!fracMembers.value.length || wholeRoute.value) return null;
-  const xs = [...startKinds.value.filter((k) => startCost(k.k) != null && !(k.k === "white" && whiteOver.value)).map((k) => ({ k: k.k as SimStartKind | "rare", label: tr(k.label, k.labelEn), c: startCost(k.k)! })),
-    ...(calc.value?.rareTotal != null ? [{ k: "rare" as const, label: tr("適当なレアを消去で 1 MOD に", "Annul a random rare to 1 mod"), c: calc.value.rareTotal + (calc.value.keep?.chaos ?? 0) }] : [])];
+  const xs = startKinds.value.filter((k) => startCost(k.k) != null && !(k.k === "white" && whiteOver.value)).map((k) => ({ k: k.k, label: tr(k.label, k.labelEn), c: startCost(k.k)! }));
   return xs.length ? xs.reduce((a, x) => (x.c < a.c ? x : a)) : null;
 });
 /** 白から自作を、一番高い買う値段 (比べの値段) まで回したら何割できるか (2026-10-20 オーナー「上限は一番高いベースに設定して、その金額まで回した結果」) */
@@ -69,10 +68,10 @@ const whiteBudget = computed(() => {
   if (budget == null || whiteOver.value || !whiteCosts.value) return null;
   return { budget, ...withinBudget(whiteCosts.value, budget) };
 });
-function decideStart(): void { const b = bestStart.value; if (b) s.simStart.value = b.k === "rare" ? "white" : b.k; whiteDecide(); }
-/** 値段が入った始め方が 2 つ以上ある時の一番安い物 (rare = 白の行の 2 段目、適当なレアを消去で 1 MOD → カオス。フラクチャー予定がある時だけ比べに入れる) */
-const cheapStart = computed((): SimStartKind | "rare" | null => {
-  const ok: Array<{ k: SimStartKind | "rare"; c: number }> = [...startKinds.value.filter((k) => !startOff(k) && startCost(k.k) != null && !(k.k === "white" && whiteOver.value)).map((k) => ({ k: k.k, c: startCost(k.k)! })), ...(fracMembers.value.length && calc.value?.rareTotal != null ? [{ k: "rare" as const, c: calc.value.rareTotal + (calc.value.keep?.chaos ?? 0) }] : [])];
+function decideStart(): void { const b = bestStart.value; if (b) s.simStart.value = b.k; whiteDecide(); }
+/** 値段が入った始め方が 2 つ以上ある時の一番安い物 (フラクチャー予定がある時だけ比べに入れる) */
+const cheapStart = computed((): SimStartKind | null => {
+  const ok = startKinds.value.filter((k) => !startOff(k) && startCost(k.k) != null && !(k.k === "white" && whiteOver.value)).map((k) => ({ k: k.k, c: startCost(k.k)! }));
   return ok.length > 1 ? ok.reduce((a, b) => (b.c < a.c ? b : a)).k : null;
 });
 /**
@@ -80,14 +79,13 @@ const cheapStart = computed((): SimStartKind | "rare" | null => {
  * ③ は値段を入れるだけ、費用・一番安い印・内訳はここ。base = 内訳の「?」に渡す入れた値段
  */
 const baseRows = computed(() => {
-  const rows: Array<{ k: SimStartKind | "rare"; label: string; cost: number | null; base: number | null; over?: number }> = startKinds.value.map((k) => ({
+  const rows: Array<{ k: SimStartKind; label: string; cost: number | null; base: number | null; over?: number }> = startKinds.value.map((k) => ({
     k: k.k, label: tr(k.label, k.labelEn), cost: startCost(k.k), ...(k.k === "white" && whiteOver.value ? { over: whiteCap.value! } : {}),
     base: num(k.k === "four" ? fourDivine.value : k.k === "fractured" ? boughtDivine.value : k.k === "white" ? whiteDivine.value : itemDivine.value),
   }));
-  if (fracMembers.value.length && !wholeRoute.value && calc.value?.rareTotal != null) rows.push({ k: "rare", label: tr("適当なレアを消去で 1 MOD に", "Annul a random Rare to 1 mod"), cost: calc.value.rareTotal + (calc.value.keep?.chaos ?? 0), base: num(c.rareDivine.value) });
   return rows;
 });
-/** ④ で始め方を選び直す (適当なレアは白からの 2 段目なので白)。変わったら打ち方のパターンはやり直し (use-sim-steps の始め方の見張り) */
-function chooseStart(k: SimStartKind | "rare"): void { s.simStart.value = k === "rare" ? "white" : k; }
+/** ④ で始め方を選び直す。変わったら打ち方のパターンはやり直し (use-sim-steps の始め方の見張り) */
+function chooseStart(k: SimStartKind): void { s.simStart.value = k; }
   return { startKinds, startOff, startAge, startCost, whiteCap, whiteOver, keepText, costNote, keepName, bestStart, whiteBudget, decideStart, cheapStart, baseRows, chooseStart };
 }

@@ -69,16 +69,15 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
    * 一番安い始め方 (白から自作の時): 比べは「フラクチャー済み + 反対側の狙いが付くまで」(keep)、⑤ に渡すベース代は ⑤ で打つカオスを除いた分。
    * 白から自作で「一緒に揃える」が安ければ、その分をベース代に入れて ⑤ は揃えた狙いが付いたまま固定されたレアから (quizBase の keep)
    */
-  const startPick = computed((): { kind: "white" | "four" | "rare" | "fractured"; cost: number; base: number; together: boolean } | null => {
+  const startPick = computed((): { kind: "white" | "four" | "fractured"; cost: number; base: number; together: boolean } | null => {
     const c = calc.value;
     if (!c) return null;
     const k = c.keep;
     const chaos = k ? k.chaos : 0;
-    const xs: Array<{ kind: "white" | "four" | "rare" | "fractured"; cost: number; base: number; together: boolean }> = [];
+    const xs: Array<{ kind: "white" | "four" | "fractured"; cost: number; base: number; together: boolean }> = [];
     const wt = !!k && k.use === "together";
     xs.push({ kind: "white", cost: c.total + (k ? Math.min(k.together, k.chaos) : 0), base: c.total + (wt ? k!.together : 0), together: wt });
     if (c.fourTotal != null) xs.push({ kind: "four", cost: c.fourTotal + chaos, base: c.fourTotal, together: false });
-    if (c.rareTotal != null) xs.push({ kind: "rare", cost: c.rareTotal + chaos, base: c.rareTotal, together: false });
     const bN = num(boughtDivine.value);
     if (bN != null) xs.push({ kind: "fractured", cost: bN + chaos, base: bN, together: false });
     const ys = xs.filter((x) => Number.isFinite(x.cost));
@@ -129,7 +128,7 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
     const d = s.data.value;
     if (!d || !s.base.value) return null;
     /**
-     * フラクチャー予定があれば、白・適当なレア・MOD 付きレア・フラクチャー済みを買う のどれから始めても、打ち方は「フラクチャー済みのベース (固定 MOD 1 つのレア)」から。
+     * フラクチャー予定があれば、白・MOD 付きレア・フラクチャー済みを買う のどれから始めても、打ち方は「フラクチャー済みのベース (固定 MOD 1 つのレア)」から。
      * ベース代は 3 の一番安い道の費用 (startOnce = フラクチャー済みになるまで、やり直しの買い直し込み)。前は白から始まり、3 の値段 (フラクチャー済みまで) と
      * 5 の見出し (フラクチャー済みのベースから) と食い違っていた (2026-10-19 オーナーと通した時。10-08 の決め [[sim-cost-model]])
      */

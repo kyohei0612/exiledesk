@@ -14,7 +14,6 @@ import { computed, nextTick, watch } from "vue";
 import { htcBaseInfo } from "../../services/htc/patch";
 import { revealBottom } from "../../utils/keep-place";
 import SimStartPick from "./SimStartPick.vue";
-import SimRareStrip from "./SimRareStrip.vue";
 import SimBaseCalc from "./SimBaseCalc.vue";
 import SimStepBar from "./SimStepBar.vue";
 import { useDragSort } from "../../utils/use-drag-sort";
@@ -52,7 +51,7 @@ const st = useSimSteps({ ...tg, ...rn });
 const rs = useSimResult({ ...tg, ...sr, ...rn, ...rc });
 const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, startRunes, orderKeys, reorder, removeRune, runeChoices, toggleRune,
   orderRow, runeJa, redoOf, REDO_METHOD_JA, patternStart, fracMembers, fractureRow, wholeRoute, boughtDivine, whiteDivine,
-  fourDivine, rareDivine, itemDivine, num, socketsOk, socketCount, ageOf, searchIlvl, searchFour, searchWhite, searchRare, mixedSides, searchBought, doneDivine,
+  fourDivine, itemDivine, num, socketsOk, socketCount, ageOf, searchIlvl, searchFour, searchWhite, mixedSides, searchBought, doneDivine,
   doneAge, searchDone, searchPattern, calc, whiteCosts, busy, phase, progressBox, error, recipeOut, phone, resultOf, shownName, cheapestName,
   showResultByName, patternNote, togglePatternOff, hasSteps, quizBase, runnable, blocked, activePattern, run, stop, open, toggle,
   help, modsDone, sortDone, orderDone, step3, startPrice, whiteDone, stepOrder, patternDone, stale, step4pre, step4, ilvlNote, resetArm, resetAll, reach, go, decideMods, sortDecided, decideOrder, edit2, panelEl, whiteDecide,
@@ -176,7 +175,6 @@ const stepNotes = computed(() => {
                 <span class="truncate" :class="startAge(k.k)?.old ? 'text-amber-300' : 'opacity-60'">{{ startAge(k.k)?.text ?? "" }}</span>
               </span>
             </div>
-            <SimRareStrip v-if="k.k === 'white' && !wholeRoute" class="!mt-1.5 border-t border-white/5 pt-1.5 md:pl-[calc(1rem+0.75rem)]" :white="num(whiteDivine)" v-model="rareDivine" @click.stop @search="searchRare" />
           </div>
         </div>
         <div class="mt-1 flex items-center gap-2">

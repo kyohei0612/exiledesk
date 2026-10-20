@@ -13,8 +13,8 @@ import type { useSimCalc } from "./use-sim-calc";
 type Calc = ReturnType<typeof useSimCalc>["calc"]["value"];
 defineProps<{
   /** over = 白から自作が上限 (買う方の高い値段) を越えた時のその上限 (この道は無し) */
-  rows: Array<{ k: SimStartKind | "rare"; label: string; cost: number | null; base: number | null; over?: number }>;
-  /** 選んでいる始め方 (適当なレアは白の中) */
+  rows: Array<{ k: SimStartKind; label: string; cost: number | null; base: number | null; over?: number }>;
+  /** 選んでいる始め方 */
   chosen: string;
   cheapest: string | null;
   note: string;
@@ -27,7 +27,7 @@ defineProps<{
   money: (x: number) => string;
   pct: (x: number) => string;
 }>();
-const emit = defineEmits<{ choose: [k: SimStartKind | "rare"] }>();
+const emit = defineEmits<{ choose: [k: SimStartKind] }>();
 </script>
 
 <template>
@@ -43,7 +43,7 @@ const emit = defineEmits<{ choose: [k: SimStartKind | "rare"] }>();
         <span class="ml-auto flex shrink-0 items-center gap-1.5 tabular-nums">
           <span v-if="r.cost != null" :class="r.over != null ? 'line-through' : cheapest === r.k ? 'font-bold text-emerald-300' : 'text-[var(--exile-color-text-primary)]'">{{ money(r.cost) }}</span>
           <span v-else class="opacity-45">{{ tr("③ で値段を入れる", "Enter a price in step 3") }}</span>
-          <SimCostTip v-if="calc && r.cost != null && r.k !== 'item' && r.k !== 'magic'" :kind="r.k === 'four' ? 'four' : r.k === 'fractured' ? 'fractured' : r.k === 'rare' ? 'rare' : 'white'" :calc="calc" :base="r.base" />
+          <SimCostTip v-if="calc && r.cost != null && r.k !== 'item' && r.k !== 'magic'" :kind="r.k === 'four' ? 'four' : r.k === 'fractured' ? 'fractured' : 'white'" :calc="calc" :base="r.base" />
         </span>
       </div>
     </div>
