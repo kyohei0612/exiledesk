@@ -1,4 +1,4 @@
-# 古い POE2Tube の引っ越しの残り (2026-10-21、動画部長)
+# 古い POE2Tube の引っ越しの残り (2026-10-21、CH運営長)
 
 ## 1. 立ち絵の元絵を写した
 - `C:\Users\kyohei\POE2Tube\assets\characters\` → `video/assets/characters/` (`cp -rn`、上書きなし)。

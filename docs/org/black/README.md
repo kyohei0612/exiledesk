@@ -21,7 +21,7 @@
 | シミュ部長 | シミュレーター ①〜⑥ の画面・費用・自動 / 手動の画面側、チュートリアル (使い方・コツ・コース) | src/views・services・state の simulator/ と tutorial/、tests/simulator・tutorial、scripts/_sim-*・sim-telemetry、server/live/src/sim.ts | 「シミュレーター」「チュートリアル・コース・クラフト手順」 | 呼ばれたら常駐 | 今のモデル | simulator/README.md |
 | 解析君 | 確率・期待値・重み・動的計画法、打ち方の比べ (N 人回す)、計算とエンジンの突き合わせ | src/services/simulator/auto/ (auto-order* はシミュ)、scripts/analysis/ | 「〜を回して」「どの打ち方が安い?」「何神かかる?」「確率は合ってる?」 | 呼ばれたら常駐 | 今のモデル | math/README.md |
 | 分析君 | Discord・要望・バグの受けと再現・日報・分析の記録、要望の返事、サーバー | server/ (sim.ts 以外)、tests/live-worker*・log-sender*、scripts/pull-logs・analyze-logs | 「要望が来た」「バグ」「記録・訪問者」「返事を置いて」「サーバー・Discord・相場の取得」 | 呼ばれたら常駐 | 調べ・棚卸しは Sonnet、サーバーの直しは今のモデル | analytics/README.md |
-| 動画部長 | YouTube「チョコバナナ」の台本・撮影・合成・投稿の準備 | video/ | 「動画」「台本」「撮影」「サムネ」 | 呼ばれたら常駐 | 今のモデル | video/README.md |
+| CH運営長 | YouTube「チョコバナナ」の台本・撮影・合成・投稿の準備 | video/ | 「動画」「台本」「撮影」「サムネ」 | 呼ばれたら常駐 | 今のモデル | video/README.md |
 | リサーチ長 | 外の調べもの (YouTube の字幕・クラフト動画の要点・poe2db/CoE の大きな調べ・似たサイト・AI の進め方)、コードは触らない | docs/org/research/ | 「poe2db で確かめて」「この動画の要点」「よそはどうしてる?」 | 呼ばれたら常駐 | Sonnet | research/README.md |
 | 最終チェック長 | 本番に上げる時の最後: 型チェック・ビルド・本番に出す物と OK 待ちの出し分け・デバッグ・版上げ・更新内容の日英・deploy:web・push | scripts/bump-version・build-changelog、src/data/changelog*.json、docs/pending-release.md、docs/org/dev/ (全部の部の決まり) | オーナーの「本番に出して」「リリース」 | 呼ぶ時だけ (上げ終わったら閉じる) | 今のモデル | dev/README.md |
 
@@ -30,7 +30,7 @@
 - 数字が正しいかの確かめ・打ち方の比べ → 解析君 (画面・コードの直しは持ち物の部)。解析君が「エンジンに無い手」を見つけた → ジン部長。
 - 要望・バグ → 分析君が受けて再現と部を特定 → ブラックがその部へ。要望の返事の文と置く (本番に出た後) → 分析君。
 - サーバー (server/live・server/web、Discord・記録・相場・dev-gate) → 分析君。server/live/src/sim.ts だけシミュ部長。
-- 撮影 URL・録画モード・受け渡しの JSON の形 → 動画部長とジン部長を同じ commit で (ブラックが順に並べる)。
+- 撮影 URL・録画モード・受け渡しの JSON の形 → CH運営長とジン部長を同じ commit で (ブラックが順に並べる)。
 - 開発版 (deploy:web-dev) と自分の commit の push → 仕事をした部長。本番 (版上げ・deploy:web) → 最終チェック長だけ (オーナーの OK の後)。
 - poe2db の大きな照らし・外の動画 → リサーチ長、エンジンの写しの直しはジン部長。アプリ (src-tauri・craft-v2・trade2・market) → 凍結、振らない。
 
