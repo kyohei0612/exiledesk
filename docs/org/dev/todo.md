@@ -6,7 +6,7 @@
 | ブラック | local_3b3c55ab-5df3-437a-855a-5e75e2c1fa64 | 司令塔 |
 | 開発部長 | (このセッション) | まとめ役 |
 | ジン部長 | local_3582faa0-ba38-498d-8f47-c6aa6fd767bf | flaskCharm の commit → J5a → J6 (+ poe.ninja の英語の見本 5) → J5b → J5c → J7 → J5d・J5e (表だけ)。J2 は裏 |
-| シミュ部長 | local_1e51d4a4-ec5b-459d-85ee-95d6da9c079f | S2b (今) → S2c (案だけ) → S1c → R2 → R3 → S3 → S4 |
+| シミュ部長 | local_1e51d4a4-ec5b-459d-85ee-95d6da9c079f | S2b → S2c (案だけ) → S1c → S3 → S4 |
 | 解析君 | local_2188a7ed-e2f7-4c08-a09c-72c1b5aef099 | K2c (今)。入口の 3 つの差し替え、R1b の後に auto-solve の再輸出を消す |
 | 分析君・動画部長・リサーチ長 | — | 仕事が来たらブラックが立てる |
 
@@ -79,8 +79,8 @@
 
 ### 割る仕事 (オーナー 10-20 OK、案は notes/2026-10-20-agent-friendly.md の 2。移動と中身の直しは別の commit、UI の見た目は変えない・変わる物は開発版まで)
 - R1 済み (03b30a1c)・R1b 済み (d8cb4ec6)。解析君が auto-solve の buildAutoModel の再輸出を消す。
-- R2 SimBaseExtras (シミュ部長、S1e の後): StageBasePage.vue のシミュの物を views/simulator/SimBaseExtras.vue へ (ジン部長に知らせ済み)。
-- R3 StageTargetSummary を 3 つに (シミュ部長、S2 の前か後)。
+- R2 済み (44bd4c77): views/simulator/SimBaseExtras.vue、ベースのページは 2 か所に 1 行ずつ。
+- R3 済み (930ca9e4): StageTargetSummary 127 行 + use-target-rows・use-target-plans・use-target-share。見張りは合計で落とす形に (移っただけで落ちたため)。
 - R4 CraftStage の差し込み口 SimHost・CourseHost (ジン部長が口 → シミュ部長が中身、S4 の後)。
 - R5 state/craft-stage.ts を 500 行の内に (開発部長、R4 の後)。
 - R6 ページの表 web/pages/<部>.ts (開発部長、R5 の後)。
