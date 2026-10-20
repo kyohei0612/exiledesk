@@ -1,7 +1,7 @@
 /**
  * craft-stage-help-text.ts — 棚の詳細カードの説明の表 (お告げ・apply-extra.ts の物)。craft-stage-help.ts から分けた (2026-10-16、500 行の決まり)
  */
-import { ARCHITECT_DESTROY_P, INFUSER_CORRUPT_P } from "../services/craft-stage/apply-extra";
+import { ARCHITECT_DESTROY_P, INFUSER_CORRUPT_P } from "../../services/craft-stage/apply-extra";
 
 
 /** 結晶化のお告げが効く物 (説明文の「コラプトのエッセンス」が何か分からない、2026-10-16 初心者の目での点検)。合金はオーナーがゲームで確認済み */

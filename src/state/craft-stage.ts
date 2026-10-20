@@ -21,13 +21,13 @@ import { recordHistory } from "../services/history";
 import { computed, ref, shallowRef, watch, type Ref, type WritableComputedRef } from "vue";
 import { htcBaseInfo, loadHtcPatch } from "../services/htc/patch";
 import { REC_START, recNext } from "../utils/rec-mode";
-import { extraFromUrl, videoFromUrl, type StageExtra } from "./stage-extra";
-export type { ResistsBlock, StageExtra } from "./stage-extra";
+import { extraFromUrl, videoFromUrl, type StageExtra } from "./emulator/stage-extra";
+export type { ResistsBlock, StageExtra } from "./emulator/stage-extra";
 import { simGrant, simPicked, simShowMods, simSockets, simStart, simStartItem, simPendingRecipe, simStartCost, simTargets, simAltFor, simOrder, simPatterns, simPlayLeft, simQuizActive } from "./simulator/sim-state";
 export type { SimStart, SimTargets } from "./simulator/sim-state";
-import { aims, aimPicker, modJump, modOverlay } from "./aim-state";
-export { AIM_MAX, type AimPick } from "./aim-state";
-import { fullSockets, planStepOf, type PlanStep } from "./stage-steps";
+import { aims, aimPicker, modJump, modOverlay } from "./emulator/aim-state";
+export { AIM_MAX, type AimPick } from "./emulator/aim-state";
+import { fullSockets, planStepOf, type PlanStep } from "./emulator/stage-steps";
 export * from "./simulator/sim-recipes";
 /** ?base=<英語名> (ベースの読み物のページから来た時)。録画モードの base= とは別 */
 export const URL_BASE: string | null = (() => { try { return new URLSearchParams(location.search).get("base"); } catch { return null; } })();
@@ -39,7 +39,7 @@ import type { Force } from "../services/craft-stage/stage-core";
 import { mulberry32 } from "../services/htc/rng";
 import { logRecord } from "../utils/log-record";
 import { marketStore } from "./market-store";
-import { BONES, CATALYSTS, iconOfKey, nameOfKey, OMEN_GROUPS, ORBS, priceOfKey } from "./craft-stage-shelf";
+import { BONES, CATALYSTS, iconOfKey, nameOfKey, OMEN_GROUPS, ORBS, priceOfKey } from "./emulator/craft-stage-shelf";
 import type { PatchData } from "../vendor/poe2htc/engine/types";
 import type { StageItem, StageMod } from "../services/craft-stage/types";
 import type { CraftStagePlan } from "../services/craft-stage/contract";
@@ -254,7 +254,7 @@ export const craftStage = {
         craftStage.reset();
         // 開いた後は URL から外す (読み直すたびに白に戻らないように)
         try { const u = new URL(location.href); u.searchParams.delete("base"); history.replaceState(null, "", u.pathname + u.search + u.hash); } catch { /* 外せなくても開く */ }
-        void import("./spam-share-open").then((m) => m.openSharedSpam()); // X のシェアから: スパムシミュレーターの運試しを開く (?spam=)
+        void import("./emulator/spam-share-open").then((m) => m.openSharedSpam()); // X のシェアから: スパムシミュレーターの運試しを開く (?spam=)
       }
       // 録画モードの最初の状態 (?rec=1&base=&ilvl=&hands=、POE2Tube 要望 ㊷): 準備の手まで URL で済ませる
       if (!raw && !shared && REC_START && data.value) {

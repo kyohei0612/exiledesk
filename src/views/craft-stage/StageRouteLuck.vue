@@ -21,7 +21,7 @@ import { logRecord } from "../../utils/log-record";
 import { isEn, tr } from "../../i18n/lang";
 import type { StageItem, StageMod } from "../../services/craft-stage/types";
 import StageItemCard from "./StageItemCard.vue";
-import { fullSockets } from "../../state/stage-steps";
+import { fullSockets } from "../../state/emulator/stage-steps";
 import { startFrom } from "../../services/craft-stage/run-plan";
 import type { Force } from "../../services/craft-stage/stage-core";
 import { routesLuck, routesOpen, routesTarget } from "../../state/web-page";

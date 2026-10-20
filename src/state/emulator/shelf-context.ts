@@ -5,9 +5,9 @@
  * (2026-10-09 オーナー「イメージは完全に手打ちの UI」「クラフトに使えるカレンシーは全部出さんとあかん」)
  */
 import { inject, provide, type InjectionKey, type Ref } from "vue";
-import type { PatchData } from "../vendor/poe2htc/engine/types";
-import type { StageItem } from "../services/craft-stage/types";
-import { craftStage } from "./craft-stage";
+import type { PatchData } from "../../vendor/poe2htc/engine/types";
+import type { StageItem } from "../../services/craft-stage/types";
+import { craftStage } from "../craft-stage";
 
 export interface ShelfCtx {
   data: Ref<PatchData | null>;

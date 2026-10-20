@@ -4,7 +4,7 @@ import { loadHtcPatch } from "../../src/services/htc/patch";
 import { freshItem, startFrom } from "../../src/services/craft-stage/run-plan";
 import { applyCurrency } from "../../src/services/craft-stage/apply-currency";
 import { mulberry32 } from "../../src/services/htc/rng";
-import { fullSockets } from "../../src/state/stage-steps";
+import { fullSockets } from "../../src/state/emulator/stage-steps";
 import { TOPIC_COURSES, topicKey } from "../../src/services/tutorial/topic-courses";
 import type { PatchData } from "../../src/vendor/poe2htc/engine/types";
 

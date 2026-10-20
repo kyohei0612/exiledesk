@@ -10,7 +10,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { scrollToTop } from "../../utils/keep-place";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
-import { provideShelf, simHidden } from "../../state/shelf-context";
+import { provideShelf, simHidden } from "../../state/emulator/shelf-context";
 import { tr } from "../../i18n/lang";
 import CurrencyShelf from "../craft-stage/CurrencyShelf.vue";
 import ShelfButton from "../craft-stage/ShelfButton.vue";

@@ -13,8 +13,8 @@ import { hoverStack } from "../../state/hover-stack";
 import { iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import { toCss } from "../../utils/zoom";
-import { shelfTag } from "../../state/craft-stage-help";
-import { useShelf } from "../../state/shelf-context";
+import { shelfTag } from "../../state/emulator/craft-stage-help";
+import { useShelf } from "../../state/emulator/shelf-context";
 import { omenNote } from "../../services/craft-stage/omens";
 import { tr } from "../../i18n/lang";
 

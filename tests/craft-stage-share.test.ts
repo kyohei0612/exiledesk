@@ -46,7 +46,7 @@ describe("URL に縮める (encodeShare / decodeShare)", () => {
     for (const k of ["regal", "exalt", "exalt"]) craftStage.use(k);
     craftStage.toggleOmen("OmenofWhittling");
     craftStage.use("chaos");
-    const { CATALYSTS } = await import("../src/state/craft-stage-shelf");
+    const { CATALYSTS } = await import("../src/state/emulator/craft-stage-shelf");
     const cat = CATALYSTS.find((k) => craftStage.usable(k) == null)!;
     craftStage.use(cat);
     expect(craftStage.log.value[craftStage.log.value.length - 1]!.after.quality ?? 0).toBeGreaterThan(0);

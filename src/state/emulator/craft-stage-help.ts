@@ -5,20 +5,20 @@
  * ゲームの公式の説明文 (currency-hover-ja.json、クライアント原本) とは別に、このステージ (= 計算機と同じ規則) で
  * **実際にどう動くか**を書く。規則の本体は services/craft-stage/apply-*.ts。ここを変えたら向こうも見る。
  */
-import { GNAWED_MAX_ILVL } from "../services/craft-stage/apply-currency";
-import { essenceTarget } from "../services/craft-stage/apply-essence";
-import { essenceLevelOf } from "../vendor/poe2htc/optimizer/cost";
-import { isRune, runeEffectFor, runeNameOf, runeOf, socketCapOf } from "../services/craft-stage/stage-runes";
-import { ruleLines } from "../services/augment-rules";
-import { maxQualityOf } from "../services/craft-stage/stage-core";
-import { desecrationBoneFor } from "../vendor/poe2htc/engine/probability";
-import { skillQualityOf } from "../services/craft-stage/skill-quality";
-import { isShard, JEWELLER_TO, QUALITY_MAX, QUALITY_STEP, QUALITY_TARGET, SHARD_TO_ORB, SHARDS_PER_ORB } from "../services/craft-stage/apply-act";
-import { CURRENCY_FLOOR, type PatchData } from "../vendor/poe2htc/engine/types";
-import type { StageItem } from "../services/craft-stage/types";
-import { lang, tr } from "../i18n/lang";
-import { emotionNameOf, isEmotion } from "../services/craft-stage/apply-emotion";
-import { jewelEmotionsOf } from "../services/htc/patch";
+import { GNAWED_MAX_ILVL } from "../../services/craft-stage/apply-currency";
+import { essenceTarget } from "../../services/craft-stage/apply-essence";
+import { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
+import { isRune, runeEffectFor, runeNameOf, runeOf, socketCapOf } from "../../services/craft-stage/stage-runes";
+import { ruleLines } from "../../services/augment-rules";
+import { maxQualityOf } from "../../services/craft-stage/stage-core";
+import { desecrationBoneFor } from "../../vendor/poe2htc/engine/probability";
+import { skillQualityOf } from "../../services/craft-stage/skill-quality";
+import { isShard, JEWELLER_TO, QUALITY_MAX, QUALITY_STEP, QUALITY_TARGET, SHARD_TO_ORB, SHARDS_PER_ORB } from "../../services/craft-stage/apply-act";
+import { CURRENCY_FLOOR, type PatchData } from "../../vendor/poe2htc/engine/types";
+import type { StageItem } from "../../services/craft-stage/types";
+import { lang, tr } from "../../i18n/lang";
+import { emotionNameOf, isEmotion } from "../../services/craft-stage/apply-emotion";
+import { jewelEmotionsOf } from "../../services/htc/patch";
 import { EXTRA_HELP, EXTRA_HELP_EN, OMEN, OMEN_EN } from "./craft-stage-help-text";
 import { specialEssence } from "./craft-stage-help-mods";
 export { shelfTag, shortMod, specialEssence, stageAdds } from "./craft-stage-help-mods";

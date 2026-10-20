@@ -17,8 +17,8 @@ import { GAP_X, GAP_Y } from "../../utils/anchor-place";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import ShelfButton from "./ShelfButton.vue";
 import Disclosure from "../../components/ui/Disclosure.vue";
-import { useShelf } from "../../state/shelf-context";
-import { bonesFor, CRAFT_RUNE_KEYS, essenceShelf, OMEN_GROUPS, ORBS, runesFor } from "../../state/craft-stage-shelf";
+import { useShelf } from "../../state/emulator/shelf-context";
+import { bonesFor, CRAFT_RUNE_KEYS, essenceShelf, OMEN_GROUPS, ORBS, runesFor } from "../../state/emulator/craft-stage-shelf";
 import { socketCapOf } from "../../services/craft-stage/stage-runes";
 import { tr } from "../../i18n/lang";
 

@@ -23,7 +23,7 @@ import { useStageFx } from "../craft-stage/use-stage-fx";
 import { useVideoHand } from "./use-video-hand";
 import { installAnimClock, type StageAnimInfo } from "./anim-clock";
 import { craftStage } from "../../state/craft-stage";
-import { iconOfKey, nameOfKey } from "../../state/craft-stage-shelf";
+import { iconOfKey, nameOfKey } from "../../state/emulator/craft-stage-shelf";
 import { displayCurrency } from "../../state/display-currency";
 
 const s = craftStage;

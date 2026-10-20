@@ -10,7 +10,7 @@ import type { JaEn } from "./quiz-tutorials";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import type { StageItem } from "../craft-stage/types";
 import type { Force } from "../craft-stage/stage-core";
-import { essenceShelf } from "../../state/craft-stage-shelf";
+import { essenceShelf } from "../../state/emulator/craft-stage-shelf";
 import { ADV_COURSES } from "./topic-courses-adv";
 
 /** how = 案内に出すやさしい箇条書き (2026-10-17 オーナー「赤ちゃんに説明するくらい簡単に」)。無い手はカードの公式の説明と決まりの文を出す */

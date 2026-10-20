@@ -1,18 +1,18 @@
 /**
  * craft-stage-help-mods.ts — 棚のカードの「付く MOD」・短い名前・特別なエッセンス。craft-stage-help.ts から分けた (2026-10-16、500 行の決まり)
  */
-import { fillModText } from "../services/htc/mod-text";
-import { tierDisplayRanges } from "../services/mods/stat-scale";
-import { essenceTarget } from "../services/craft-stage/apply-essence";
-import { essenceLevelOf } from "../vendor/poe2htc/optimizer/cost";
-import { isRune, runeEffectFor, runeOf } from "../services/craft-stage/stage-runes";
-import { type PatchData } from "../vendor/poe2htc/engine/types";
-import { CATALYSTS as HTC_CATALYSTS } from "../services/htc/quality";
+import { fillModText } from "../../services/htc/mod-text";
+import { tierDisplayRanges } from "../../services/mods/stat-scale";
+import { essenceTarget } from "../../services/craft-stage/apply-essence";
+import { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
+import { isRune, runeEffectFor, runeOf } from "../../services/craft-stage/stage-runes";
+import { type PatchData } from "../../vendor/poe2htc/engine/types";
+import { CATALYSTS as HTC_CATALYSTS } from "../../services/htc/quality";
 import { enOf } from "./craft-stage-shelf";
-import type { StageItem } from "../services/craft-stage/types";
-import { lang, tr } from "../i18n/lang";
-import { emotionNameOf, isEmotion } from "../services/craft-stage/apply-emotion";
-import { jewelEmotionsOf } from "../services/htc/patch";
+import type { StageItem } from "../../services/craft-stage/types";
+import { lang, tr } from "../../i18n/lang";
+import { emotionNameOf, isEmotion } from "../../services/craft-stage/apply-emotion";
+import { jewelEmotionsOf } from "../../services/htc/patch";
 
 /** 英語の画面か (2026-10-10 英語版) */
 const isEn = (): boolean => lang.value === "en";

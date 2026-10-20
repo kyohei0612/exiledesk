@@ -11,7 +11,7 @@ import { fmtPct } from "../../utils/format-pct";
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { AIM_MAX, craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
-import { bonesFor, essenceShelf, ORBS } from "../../state/craft-stage-shelf";
+import { bonesFor, essenceShelf, ORBS } from "../../state/emulator/craft-stage-shelf";
 import { OMEN_FOR } from "../../services/craft-stage/omens";
 import { kindOf } from "../../services/craft-stage/apply-currency";
 import { aimLabel } from "../../services/craft-stage/mod-list";

@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
 import { data } from "./helpers/spec-parity";
 import { applyCurrency } from "../src/services/craft-stage/apply-currency";
 import { freshItem } from "../src/services/craft-stage/run-plan";
-import { bonesFor } from "../src/state/craft-stage-shelf";
+import { bonesFor } from "../src/state/emulator/craft-stage-shelf";
 import { mulberry32 } from "../src/services/htc/rng";
 import { applyBySpec, resolveSpec } from "../src/services/craft-stage/spec/run-spec";
 import { BONE_SPECS, CURRENCY_SPECS, OMEN_SPECS } from "../src/services/craft-stage/spec/desecrate-specs";

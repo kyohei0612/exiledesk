@@ -1,9 +1,9 @@
 /**
  * stage-extra.ts — 動画用の別の画面 (URL の view=) の型。state/craft-stage.ts から分けた (2026-10-16、500 行の決まり)
  */
-import type { CraftStagePlan } from "../services/craft-stage/contract";
-import type { PobBlock, PobStat } from "../services/craft-stage/stage-pob";
-import { DEF, monsterAccuracy, type DamageKind, type Defender, type Outcome } from "../services/craft-stage/defence";
+import type { CraftStagePlan } from "../../services/craft-stage/contract";
+import type { PobBlock, PobStat } from "../../services/craft-stage/stage-pob";
+import { DEF, monsterAccuracy, type DamageKind, type Defender, type Outcome } from "../../services/craft-stage/defence";
 
 /**
  * 動画用の別の画面 (POE2Tube 要望 ⑪、2026-09-29)。URL の view= で開く (手順は要らない):

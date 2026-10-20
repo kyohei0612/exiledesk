@@ -1,7 +1,7 @@
 // 上級・完全のカレンシーのカードの頭に出す「MOD レベル ◯ 以上だけ付く」(2026-10-16 要望 9c8a5f99)。
 // 数はパッチノート (0.5.0: 上級の変成 / 増強 44、上級 / 完全の高貴・王者 35 / 50) と説明の行と同じ
 import { describe, expect, it } from "vitest";
-import { stageFloor } from "../src/state/craft-stage-help";
+import { stageFloor } from "../src/state/emulator/craft-stage-help";
 
 describe("stageFloor", () => {
   it("上級・完全だけ下限を返す", () => {
