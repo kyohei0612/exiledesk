@@ -16,7 +16,7 @@ import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { itemBaseFor } from "../htc/bridge";
 import { jaOfOmen, jaOfPriceKey } from "../htc/labels";
 import { mulberry32 } from "../htc/rng";
-import { jaTypeName } from "../trade2/localize";
+import { jaTypeName } from "../../i18n/item-names-ja";
 import { applyCurrency, type ApplyHint } from "./apply-currency";
 import { revealOffers } from "./apply-desecrate";
 import { addForced, boostedMod, effectiveCls, limitOf, replaced, unfracturable, type Force } from "./stage-core";

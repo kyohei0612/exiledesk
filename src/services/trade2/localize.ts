@@ -7,29 +7,11 @@
  *   → JP サイト設定のときは API も jp に投げ、type / name をクライアント由来の日本語名に置き換える。
  * stat の ID・カテゴリ・フィルタ名はサイト共通なので触らない。
  */
-import gemsRaw from "../../i18n/gems-client.json";
-import itemsJaClient from "../../i18n/items-ja-client.json";
-import itemsJa from "../../i18n/items-ja.json";
-import uniqueNamesJa from "../../i18n/unique-names-ja.json";
+import { jaTypeName, jaUniqueName } from "../../i18n/item-names-ja";
 import { trade2Site } from "./league";
 
-const GEM_JA: Map<string, string> = (() => {
-  const m = new Map<string, string>();
-  for (const g of gemsRaw as { en: string; ja: string }[]) m.set(g.en, g.ja);
-  return m;
-})();
-const ITEMS_JA = itemsJaClient as Record<string, string>;
-const ITEMS_JA2 = itemsJa as Record<string, string>;
-const UNIQUE_JA = uniqueNamesJa as Record<string, string>;
-
-/** ベース / ジェム名の英名 → 日本語名。辞書に無ければそのまま */
-export function jaTypeName(en: string): string {
-  return GEM_JA.get(en) ?? ITEMS_JA[en] ?? ITEMS_JA2[en] ?? en;
-}
-/** ユニーク名の英名 → 日本語名 */
-export function jaUniqueName(en: string): string {
-  return UNIQUE_JA[en] ?? en;
-}
+// 名前の辞書は i18n/item-names-ja.ts (エンジンも読むので 2026-10-20 手 2 で移した)。ここを読む画面のために並べ直す
+export { jaTypeName, jaUniqueName };
 
 interface QueryLike {
   query?: { type?: unknown; name?: unknown } & Record<string, unknown>;

@@ -10,7 +10,7 @@
 import { htcBaseInfo } from "../htc/patch";
 import { classOfBase } from "../htc/bridge";
 import { baseStatsOf, FLASK_BASES, GEM_BASES } from "../craft-stage/stage-bases";
-import { jaTypeName } from "../trade2/localize";
+import { jaTypeName } from "../../i18n/item-names-ja";
 import removedBases from "./removed-bases.json";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { tr } from "../../i18n/lang";

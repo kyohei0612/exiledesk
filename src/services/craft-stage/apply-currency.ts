@@ -58,7 +58,7 @@ export function qualityCapOf(item: StageItem): number {
 import { applyJeweller, applyWisdom, collectShard, isShard, shardReason } from "./apply-act";
 import { isFlask, isGem, uniqueBaseOf } from "./stage-bases";
 import { itemBaseFor } from "../htc/bridge";
-import { jaTypeName } from "../trade2/localize";
+import { jaTypeName } from "../../i18n/item-names-ja";
 import { OMEN_FOR, REMOVED_OMENS, UNMODELLED_OMENS } from "./omens";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 import { ANY_STATE, applyExtra, FOR_CORRUPTED, isExtra } from "./apply-extra";
