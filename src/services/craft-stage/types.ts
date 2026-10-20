@@ -151,7 +151,7 @@ export interface StageApply {
   pickError?: boolean;
   /**
    * オーグメント (ルーン) をはめた手 (2026-10-03): どのソケット (1 から) に何を、置き換えた時は外れた物と、その行き先
-   * ("destroyed" = 壊れて戻らない。src/services/augment-rules.ts の決まり)
+   * ("destroyed" = 壊れて戻らない。src/services/craft-stage/augment-rules.ts の決まり)
    */
   /** 耐性のフラックス (2026-10-04): 変えた MOD と変えた先の属性 (アルダーのルーンと同じ形) */
   converted?: { element: string; mods: Array<{ from: StageMod; to: StageMod }> };

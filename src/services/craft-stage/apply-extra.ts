@@ -13,7 +13,7 @@
  *   - 抽出のオーブ: 装備を壊して、差してあるオーグメントを取り戻す
  * 噛み切られた骨 (アイテムレベル 64 以下) は apply-desecrate、秘術師の彫刻針は apply-act の品質。
  */
-import { augmentRule } from "../augment-rules";
+import { augmentRule } from "./augment-rules";
 import type { StageApply, StageItem, StageMod } from "./types";
 import { allMods, maxQualityOf, skip, without } from "./stage-core";
 import { QUALITY_MAX, QUALITY_STEP } from "./apply-act";

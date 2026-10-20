@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { loadPatch } from "./helpers/patch";
-import { AUGMENT_RULES, AUGMENT_RULES_UNEXPECTED, augmentRule, limitBlock, SLOT_FITS, slotOk } from "../src/services/augment-rules";
+import { AUGMENT_RULES, AUGMENT_RULES_UNEXPECTED, augmentRule, limitBlock, SLOT_FITS, slotOk } from "../src/services/craft-stage/augment-rules";
 import { inAny } from "../src/services/mods/item-classes";
 /** 武器・防具の部位 (クライアントの表から。手で並べない) */
 // 部位の行の頭 (Body_Armours_ring = グラスピングメイルの行の MOD の id の頭) は部位ではないので除く (別の部位の名前 + _ で始まる物)

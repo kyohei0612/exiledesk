@@ -9,7 +9,7 @@ import { GNAWED_MAX_ILVL } from "../../services/craft-stage/apply-currency";
 import { essenceTarget } from "../../services/craft-stage/apply-essence";
 import { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
 import { isRune, runeEffectFor, runeNameOf, runeOf, socketCapOf } from "../../services/craft-stage/stage-runes";
-import { ruleLines } from "../../services/augment-rules";
+import { ruleLines } from "../../services/craft-stage/augment-rules";
 import { maxQualityOf } from "../../services/craft-stage/stage-core";
 import { desecrationBoneFor } from "../../vendor/poe2htc/engine/probability";
 import { skillQualityOf } from "../../services/craft-stage/skill-quality";

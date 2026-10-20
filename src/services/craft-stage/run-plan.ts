@@ -202,7 +202,7 @@ export function playStep(
     // 指名で付けた手 (要望 ⑱-1): picked と、指名しなかったら付く確率 (動画で「本当は○% の当たり」と言うため)
     ...(r.picked ? ({ picked: true, pick_chance: r.picked.map((p) => ({ mod_id: p.modId, tier_name: p.tierName, chance: p.chance })) } as object) : {}),
     // オーグメント (ルーン) をはめた手 (2026-10-03、足したキー): どのソケット (1 から) に何を。置き換えた時は外れた物と、その行き先
-    // (replaced_goes "destroyed" = 壊れて戻らない。src/services/augment-rules.ts)。POE2Tube は無視してよい
+    // (replaced_goes "destroyed" = 壊れて戻らない。src/services/craft-stage/augment-rules.ts)。POE2Tube は無視してよい
     // 発現の手 (要望 ㉕-2): 出た 3 つの候補と選んだ番号 (1 から)。:reroll (アビスの反響) は引き直す前 (first) と後 (rerolled) の両方。
     // applyReveal と同じ種で引くので、選んだ物は changed.added と同じ
     ...(revealOut(data, item, currency, o.seed, r.applied)),

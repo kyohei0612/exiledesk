@@ -5,7 +5,7 @@
  * 手順 JSON のキーは `rune:<英語名>` (例 `rune:Lesser Desert Rune`)。
  * 効き目は部位で違う (SoulCoreStatCategories: マーシャル武器 / ワンドまたはスタッフ / 防具 …)。1 つの部位に当てはまる行が複数ある時は、
  * 当てはまる部位が一番狭い行 (「弓」>「マーシャル武器」>「全ての装備品」) を使う。
- * はめる・置き換える・取り外すの決まりは src/services/augment-rules.ts (説明文から作った表 augment-rules.json) に通す (2026-10-03 オーナー
+ * はめる・置き換える・取り外すの決まりは src/services/craft-stage/augment-rules.ts (説明文から作った表 augment-rules.json) に通す (2026-10-03 オーナー
  *   「ソケットバウンド系と普通のルーンを確認しよう。アストリッドとか、ソケットバウンドじゃないのに付け替えできないとかある」)。
  *   2026-10-02 までは「はめたら外せない・空きが無ければ打てない」を全部に当てていて、普通のルーンもアストリッドも置き換えられなかった。
  *   - 空きがあれば空きにはめる。空きが無ければ、はまっている物を置き換える (置き換えた方は壊れて戻らない)
@@ -27,7 +27,7 @@ import type { StageApply, StageItem, StageAugment } from "./types";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { RUNE_BY_ID, runeIdByName } from "../../vendor/poe2htc/engine/runes";
 import { skip } from "./stage-core";
-import { augmentRule, limitBlock, placeBlock, replaceBlock } from "../augment-rules";
+import { augmentRule, limitBlock, placeBlock, replaceBlock } from "./augment-rules";
 import { tr } from "../../i18n/lang";
 import { convertByTable } from "./element-convert";
 

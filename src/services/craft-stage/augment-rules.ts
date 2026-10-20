@@ -12,9 +12,9 @@
  *   - ソケットバウンド (セールの凱旋・アトジリのソウルコア・アルダーの○○ など):「ソケットすると取り外すことも置き換えることもできない」
  *   - 置き換えで外れた物は手元に戻らない (取り外せないので) = 壊れる。戻す手は抽出のオーブ (装備を壊して、ソケットバウンドでない物を取り戻す) だけ
  */
-import rulesRaw from "../i18n/augment-rules.json";
-import { lang, tr } from "../i18n/lang";
-import { clientClassOf, handsOf, inAny, inGroup } from "./mods/item-classes";
+import rulesRaw from "../../i18n/augment-rules.json";
+import { lang, tr } from "../../i18n/lang";
+import { clientClassOf, handsOf, inAny, inGroup } from "../mods/item-classes";
 
 export interface AugmentRule {
   ja: string;

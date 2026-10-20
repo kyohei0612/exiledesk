@@ -6,7 +6,7 @@
  * ## ゲームの決まり
  *   - **アストリッドの創造性**: クラフト MOD (エッセンス / 合金 / ブリーチ) を 2 つまで持てる (普通は 1 つ)。
  *     **置き換えできる** (ソケットバウンドではない。説明文「一度ソケットすると取り外すことはできないが、他のオーグメントアイテムで
- *     置き換えることはできる」、src/services/augment-rules.ts): 差してクラフトした後に別の物で置き換えても、
+ *     置き換えることはできる」、src/services/craft-stage/augment-rules.ts): 差してクラフトした後に別の物で置き換えても、
  *     2 つ目のクラフト MOD は残る (オーナー:「入れ替え可能な奴は付けてから外してもクラフト MOD は消えないから便利」)。
  *     取り外して手元に戻すことはできない (置き換えると壊れる) ので、代は 1 回の作成につき 1 度
  *   - **セールの凱旋**: サフィックスの枠 +1 (3 / 4)。**ソケットバウンド** (取り外しも置き換えもできない。説明文から作った表 augment-rules.json)
@@ -40,7 +40,7 @@ import { RUNE_BY_ID, runePriceKey } from "../../vendor/poe2htc/engine/runes";
 import { jaOfPastedLine } from "./mod-text";
 import type { Prices } from "../../vendor/poe2htc/optimizer/cost";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import { augmentRule } from "../augment-rules";
+import { augmentRule } from "../craft-stage/augment-rules";
 import { socketCapOf } from "../craft-stage/stage-runes";
 
 /**
