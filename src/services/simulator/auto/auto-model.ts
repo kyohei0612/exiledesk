@@ -6,14 +6,11 @@
  * (ルーンは差した状態) で引いて、札ごとの「当たり (狙いの段以上)」「段が低い」と外れの重みの素の表にする。
  * 近似 (中身は auto-actions.ts の頭): 外れの系統は置き場を減らさない・狙いと同じ系統の別の MOD は外れ (系統を塞がない)
  */
-import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import { orbFloor, type OrbStrength } from "../../craft-stage/engine";
-import { familiesOf, occupiedFamiliesOf } from "../../../vendor/poe2htc/engine/pool";
-import { ANCIENT_BONE_FLOOR, DESECRATION_EXCLUSIVE_COUNT } from "../../../vendor/poe2htc/engine/probability";
+import { candidates, DESECRATION_EXCLUSIVE_COUNT, effectiveCls, familiesOf, limitOf, orbFloor, startFrom, type OrbStrength, type PatchData, type StageItem, type StageSide } from "../../craft-stage/engine";
+// 【入口に無い】occupiedFamiliesOf・ANCIENT_BONE_FLOOR・REVEAL_SPEC (発現の候補の数) はジン部長に入口へ足してもらう (K4、math/todo.md)
+import { occupiedFamiliesOf } from "../../../vendor/poe2htc/engine/pool";
+import { ANCIENT_BONE_FLOOR } from "../../../vendor/poe2htc/engine/probability";
 import { REVEAL_SPEC } from "../../craft-stage/spec/desecrate-specs";
-import { candidates, effectiveCls, limitOf } from "../../craft-stage/stage-core";
-import { startFrom } from "../../craft-stage/run-plan";
-import type { StageItem, StageSide } from "../../craft-stage/types";
 import { quizFromSim } from "../quiz-build";
 import type { QuizSlot } from "../quiz-recipe";
 import { runeEnForId } from "../pattern";

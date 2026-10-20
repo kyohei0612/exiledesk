@@ -11,9 +11,9 @@
  *   - 発現は選択なので stepOutcomes の外 (auto-actions の revealOuts のまま)
  * 近似: 外れの MOD は代表 (狙いとも互いとも系統が重ならない物) で置く。エッセンスの札が付いている時の代表は外れと同じ代わりの MOD
  */
-import type { PatchData } from "../../../vendor/poe2htc/engine/types";
+import { startFrom, stepOutcomes, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+// 【入口に無い】ANCIENT_BONE_FLOOR (K4、math/todo.md)
 import { ANCIENT_BONE_FLOOR } from "../../../vendor/poe2htc/engine/probability";
-import { startFrom, stepOutcomes, type StageItem, type StageMod } from "../../craft-stage/engine";
 import type { QuizStart } from "../quiz-recipe";
 import type { AutoModel } from "./auto-model";
 import { actionsOf, engActs, engKey, junkToView, Shape, type EngAct, type State } from "./auto-actions";
