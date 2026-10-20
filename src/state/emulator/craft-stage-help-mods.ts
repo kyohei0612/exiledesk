@@ -3,10 +3,11 @@
  */
 import { fillModText } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
-import { essenceTarget } from "../../services/craft-stage/apply-essence";
+import { ABYSS_FAMILY, essenceTarget } from "../../services/craft-stage/apply-essence";
+import { hasRawFamily, sharesRawFamily } from "../../services/mods/mod-rules";
 import { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
 import { isRune, runeEffectFor, runeOf } from "../../services/craft-stage/stage-runes";
-import { type PatchData } from "../../vendor/poe2htc/engine/types";
+import { type Mod, type PatchData } from "../../vendor/poe2htc/engine/types";
 import { CATALYSTS as HTC_CATALYSTS } from "../../services/htc/quality";
 import { enOf } from "./craft-stage-shelf";
 import type { StageItem } from "../../services/craft-stage/types";
@@ -25,14 +26,14 @@ const isEn = (): boolean => lang.value === "en";
  * エッセンスの値が普通の MOD (同じ系統・同じ側) のどのティアに当たるか (2026-10-05 オーナー「エッセンスはティアも一応欲しいな、
  * ここからここまでのティアみたいな、もしティア間で被るなら」)。1 つ目の値の範囲が重なるティアを全部。T1 が一番上
  */
-function essenceTierSpan(data: PatchData, item: StageItem, mod: { family: string; type: string }, range: readonly number[] | undefined): string | null {
+function essenceTierSpan(data: PatchData, item: StageItem, mod: Mod, range: readonly number[] | undefined): string | null {
   if (!range || range.length < 2) return null;
   const lo = Math.min(range[0]!, range[1]!), hi = Math.max(range[0]!, range[1]!);
   const pool = item.cls.pools.normal;
   const ids = mod.type === "prefix" ? pool.prefixes : pool.suffixes;
   for (const id of ids) {
     const m = data.mods.get(id);
-    if (!m || m.family !== mod.family || !m.tiers.length) continue;
+    if (!m || !sharesRawFamily(m, mod) || !m.tiers.length) continue;
     const n = m.tiers.length;
     const hit: number[] = [];
     m.tiers.forEach((t, i) => {
@@ -73,7 +74,7 @@ export function stageAdds(key: string, data: PatchData | null, item: StageItem |
   }
   if (key.startsWith("essence:") && data) {
     const t = essenceTarget(data, item, key);
-    if (!t || t.mod.family === "EssenceAbyss") return null;
+    if (!t || hasRawFamily(t.mod, ABYSS_FAMILY)) return null;
     const tier = t.level === "perfect" ? t.mod.tiers[0] : t.mod.tiers.find((x) => essenceLevelOf(String(x.name ?? "")) === t.level) ?? t.mod.tiers[0];
     let text = fillModText(t.mod, tier ? tierDisplayRanges(tier) : []);
     // 値の幅が無い固定の MOD (ブリーチの「+20% to Maximum Quality」等) は # が残るので、英語の文の数字で埋める

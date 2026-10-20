@@ -6,7 +6,8 @@
  * **実際にどう動くか**を書く。規則の本体は services/craft-stage/apply-*.ts。ここを変えたら向こうも見る。
  */
 import { GNAWED_MAX_ILVL } from "../../services/craft-stage/apply-currency";
-import { essenceTarget } from "../../services/craft-stage/apply-essence";
+import { ABYSS_FAMILY, essenceTarget } from "../../services/craft-stage/apply-essence";
+import { hasRawFamily } from "../../services/mods/mod-rules";
 import { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
 import { isRune, runeEffectFor, runeNameOf, runeOf, socketCapOf } from "../../services/craft-stage/stage-runes";
 import { ruleLines } from "../../services/craft-stage/augment-rules";
@@ -205,7 +206,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     if (!t) return [tr("このベースには使えないエッセンス", "This Essence can't be used on this base")];
     const tier = t.level === "perfect" ? t.mod.tiers[0] : t.mod.tiers.find((x) => essenceLevelOf(String(x.name ?? "")) === t.level) ?? t.mod.tiers[0];
     // 深淵のエッセンス (2026-10-03)
-    if (t.mod.family === "EssenceAbyss" && isEn()) {
+    if (hasRawFamily(t.mod, ABYSS_FAMILY) && isEn()) {
       return [
         "Removes 1 mod from a **Rare** and adds the **Mark of the Abyssal Lord** on that side",
         "The next Abyssal Bone (Desecration) always **replaces the Mark** with an Unrevealed Desecrated mod. Tier floor mod level = item level × 0.4 rounded down (the description only says \"higher tier\"; same as Craft of Exile)",
@@ -213,7 +214,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
         "Omens: Sinistral / Dextral Crystallisation (removed side = Mark side)",
       ];
     }
-    if (t.mod.family === "EssenceAbyss") {
+    if (hasRawFamily(t.mod, ABYSS_FAMILY)) {
       return [
         "**レア** の MOD を 1 つ消して、消した側に **深淵の王の印** を付ける",
         "次の骨 (冒涜) は必ず **印を置き換えて** 未発現の冒涜 MOD になる。段の下限 MOD レベル = アイテムレベル × 0.4 の切り捨て (説明文は「より高い段」だけ。Craft of Exile と同じ式)",

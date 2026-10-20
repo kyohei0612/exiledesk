@@ -33,6 +33,16 @@ export function rawFamiliesOf(mod: Mod): string[] {
   return mod.families?.length ? [...mod.families] : mod.family ? [mod.family] : [];
 }
 
+/** その系統を持つか (生の系統で。深淵のエッセンスの印 = apply-essence の ABYSS_FAMILY など、特定の系統の MOD を見分ける時) */
+export function hasRawFamily(mod: Mod, family: string): boolean {
+  return rawFamiliesOf(mod).includes(family);
+}
+/** 2 つの MOD が生の系統を 1 つでも同じくするか (エッセンスの MOD と同じ系統の普通の MOD を探す時。crafted: に分けない) */
+export function sharesRawFamily(a: Mod, b: Mod): boolean {
+  const fb = rawFamiliesOf(b);
+  return rawFamiliesOf(a).some((f) => fb.includes(f));
+}
+
 /**
  * エッセンスを打てないか: 付いている **エッセンス (クラフト) の** MOD に同じ系統がある。普通の MOD とは同じ系統でも一緒に付く
  * (2026-10-10 オーナー確認。poe.ninja の実物に作った MOD と同じ系統の普通の MOD が並んでいる。計算機の familiesOf の crafted: と同じ)。
