@@ -9,8 +9,9 @@
 3. 両側の「どれか」は側ごとに分ける (sim-split-by-side)。工程ごとに 1 ページ、初心者でも分かる形 (sim-step-pages)。
 4. 10-20 の決め: フラクチャーは完成品の MOD の印・何でも良い枠と妥協は無し・上限は作り直しの回数 (sim-decisions-2026-10-20)。
 5. 自動で組む段は T2 以上まで。② に T1 の狙いがあってもチェックは押せ、押すと警告のポップアップ「T1 の狙いがあります。自動は T2 以上として組みます (T1 は完成しにくく計算も長い)。」[T2 以上にして自動にする] [手動のまま] (日英)。前者で T1 の狙いを T2 以上に下げて自動に (Ctrl+Z で戻せる)。フラクチャー固定の T1 は打たないので下げない (オーナー 10-20)。
-6. 値段は手入力 + 検索を開くボタンだけ、取引所の自動取得は使わない (sim-no-trade-fetch)。
-7. 打つ処理・確率はエミュレーターの部品を使い、自分で書かない。最善手・期待値の数字は解析君に頼む (開発部長経由)。
+6. 関門の打ち止めはベース 1 個ごとに数え、買い直したら 0 に戻す。買い直しは N 回まで (N は解析君が見本で 99% の人が収まる回数を丸めて決める)、超えた人は未完成で費用は入る (オーナー 10-20)。
+7. 値段は手入力 + 検索を開くボタンだけ、取引所の自動取得は使わない (sim-no-trade-fetch)。
+8. 打つ処理・確率はエミュレーターの部品を使い、自分で書かない。最善手・期待値の数字は解析君に頼む (開発部長経由)。
 
 ## 地図
 - 画面 src/views/simulator/: SimHost.vue (CraftStage.vue の差し込み口: header / tools / main。シミュの画面はここから。CraftStage.vue は触らない、R4 2026-10-20)、StageSimPanel.vue (入口)、工程の帯 SimStepBar・SimStepHead・SimProgress、始め方 SimStartPick・SimBaseCalc、順番のおすすめ SimAutoOrder・use-sim-auto-order (④、押した時だけ計算)、自動 / 手動 use-sim-auto (切り替え・T1 の決まり・リセット)・SimAutoToggle (② の「自動で組む」)・SimAutoConfirm (確かめの窓)・SimStepBar の右端の札、狙う SimTargetSort・StageTargetSummary (並べるだけ。行 use-target-rows・付け方の ▾ use-target-plans・確率の % use-target-share、R3)、貼り付け SimPasteRead・SimBaseExtras (① のベースのページに差すシミュの物: レシピから始める・貼り付けの枠、R2)、打ち方 SimMethodPop・StagePatternEditor、費用 SimCostTip、レシピ SimRecipeBar・StageRecipeStart・StageRecipesPage・recipe-share.ts、StageQuizEditor・quiz-text.ts、use-sim-*.ts。
