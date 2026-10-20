@@ -6,13 +6,29 @@ import { computed } from "vue";
 import { craftStage, nameOf, priceOf } from "../../state/craft-stage";
 import { runeEnForId } from "../../services/simulator/pattern";
 import { blankWith, fractureOdds, magicAugOdds } from "../../services/simulator/sim-odds";
-import { greaterRouteCost, type GreaterRoute } from "../../services/simulator/sim-greater";
+import { greaterRouteCost, magicLoopCounts, type GreaterRoute } from "../../services/simulator/sim-greater";
+import { spamCounts, type RouteGrade, type SpamCounts } from "../../services/craft-stage/engine";
 import { keepCompare } from "../../services/simulator/keep-compare";
 import type { SimTargetIn } from "../../services/simulator/quiz-build";
 import type { SimTargetsCtx } from "./use-sim-targets";
 
 /** フラクチャーの反対側の狙い 1 つの取り方 (白から自作は安い方、買う始め方はカオス) */
 export interface KeepPlan { host: string; together: number; chaos: number; chaosKey: string | null; chaosN: number | null; use: "together" | "chaos"; detail: { p: number; q: number; share: number; augKey: string } }
+
+/**
+ * 候補を作るマジックのループの回数 (2026-10-20 S1c、表 docs/org/simulator/notes/2026-10-20-start-routes.md): スパムシミュレーターの増強の道
+ * (変成 → 狙いの側に MOD があれば消去、空なら増強) で狙いが付くまで。前の「(増強 + 消去 × 2) × 1 ÷ 当たり」はエンジンの半分だった (手袋 −48%・靴 −52%)。
+ *   - 候補が 1 つ: エンジンの入口の spamCounts (打って数える、300 人)。値段に関係ないので狙い・段・等級・ルーンごとに覚える (1 回 60〜190 ms)
+ *   - 候補が 2 つ以上 (どれか 1 つ): 【仮】spamCounts は「どれか」を受けないので、同じ打ち方の式 magicLoopCounts(当たりの和, null, 側の割合)。
+ *     解析君の突き合わせで、この式とエンジンは 3% 以内 (step4-formula-entry.md)。入口が「どれか」を受けたら差し替え
+ */
+const loopCache = new Map<string, SpamCounts>();
+function augmentLoop(d: Parameters<typeof spamCounts>[0], white: Parameters<typeof spamCounts>[1], grade: RouteGrade, cand: { modId: string; minTierIndex: number }): SpamCounts {
+  const key = `${white.base}|${white.itemLevel}|${(white.augments ?? []).join(",")}|${grade}|${cand.modId}:${cand.minTierIndex}`;
+  let r = loopCache.get(key);
+  if (!r) { r = spamCounts(d, white, "augment", grade, [cand], { seed: 20261020 }); loopCache.set(key, r); }
+  return r;
+}
 
 export function useSimCalc(d0: SimTargetsCtx, simIn: () => SimTargetIn[]) {
   const { fracMembers, fractureRow, wholeRoute, whiteDivine, fourDivine, num } = d0;
@@ -59,7 +75,13 @@ export function useSimCalc(d0: SimTargetsCtx, simIn: () => SimTargetIn[]) {
     // 候補ごとの付きやすさと合計 (どれか 1 つで良い)
     const { each, pHit } = pAt(gr.odds);
     const abyss = `essence:perfect:${it.cls.id}/PerfectEssence_EssenceAbyss`;
-    const rerolls = pHit > 0 ? 1 / pHit : Infinity;
+    // マジックのループの変成・増強・消去の平均 (上の augmentLoop の説明)
+    const fside = m.type === "suffix" ? "suffix" : "prefix";
+    const one = fracMembers.value.length === 1 ? augmentLoop(d, { ...blank, rarity: "normal" }, gr.g, { modId: fracMembers.value[0]!.modId, minTierIndex: fracMembers.value[0]!.minTierIndex }) : null;
+    const lc = one && !one.off && one.hitRate > 0
+      ? { transmute: one.uses[gr.tra] ?? 1, augment: (one.uses[gr.aug] ?? 0) / one.hitRate, annul: (one.uses.annul ?? 0) / one.hitRate }
+      : pHit > 0 ? { transmute: 1, ...magicLoopCounts(pHit, null, gr.odds.share[fside]) } : { transmute: 1, augment: Infinity, annul: Infinity };
+    const rerolls = lc.augment;
     const white = num(whiteDivine.value) ?? 0;
     // buy = 4 MOD のベースを買っても要る物 (壁とフラクチャー)
     // 1 から (自前): 壁は王者の後に骨 1 本だけ (側を選ばないのでお告げも深淵のエッセンスも要らない)。増強のリロールで狙いの 1 つだけ
@@ -68,9 +90,9 @@ export function useSimCalc(d0: SimTargetsCtx, simIn: () => SimTargetIn[]) {
     const lines: Array<{ name: string; n: number; each: number }> = [
       { name: "白のベース", n: 1, each: white },
       ...runeLines,
-      { name: nameOf(gr.tra), n: 1, each: priceOf(gr.tra) },
-      { name: `${nameOf(gr.aug)} (リロール)`, n: rerolls, each: priceOf(gr.aug) },
-      { name: `${nameOf("annul")} (リロールに 2 つ)`, n: rerolls * 2, each: priceOf("annul") },
+      { name: nameOf(gr.tra), n: lc.transmute, each: priceOf(gr.tra) },
+      { name: `${nameOf(gr.aug)} (リロール)`, n: lc.augment, each: priceOf(gr.aug) },
+      { name: `${nameOf("annul")} (リロール)`, n: lc.annul, each: priceOf("annul") },
       // マジック → レアにする王者 (等級は問わないので無印。2026-10-05 オーナー「適当な王者がいるのか、レア化に。チャレンジ品作る時だから 3 個か」)
       { name: nameOf("regal"), n: 1, each: priceOf("regal") },
       { name: `${nameOf("exalt")} (リロールで 1 つだけの時)`, n: Math.max(0, 1 - pHit), each: priceOf("exalt") },
@@ -98,7 +120,7 @@ export function useSimCalc(d0: SimTargetsCtx, simIn: () => SimTargetIn[]) {
     const g = greaterRouteCost({ data: d, targets: simIn(), fracSide: m.type === "suffix" ? "suffix" : "prefix", p: pHit, grade: gr, odds: gr.odds, white, runeLines, price: priceOf, name: nameOf });
     if (g) {
       // グレーターエッセンスを巻き込む道: 自前のフラクチャーだけ (買う始め方・適当なレアの道は無し)。固定の後に消さない (残す MOD を持ったまま進む)
-      return { pHit, each, rerolls: g.augment, lines: g.lines, buyLines, once: g.once, after: 0, total: fracP > 0 ? g.once / fracP : Infinity, fracP, noAbyss: false, cantRoll: pHit === 0 || g.cantKeep, grade: gr.ja, buyRest, breakEven: 0, buyOnce: null, fourTotal: null as number | null,
+      return { pHit, each, rerolls: g.augment, loop: null as { augment: number; annul: number; share: number } | null, lines: g.lines, buyLines, once: g.once, after: 0, total: fracP > 0 ? g.once / fracP : Infinity, fracP, noAbyss: false, cantRoll: pHit === 0 || g.cantKeep, grade: gr.ja, buyRest, breakEven: 0, buyOnce: null, fourTotal: null as number | null,
         greater: g, keep: null as KeepPlan | null, augKey: gr.aug };
     }
     /**
@@ -109,7 +131,7 @@ export function useSimCalc(d0: SimTargetsCtx, simIn: () => SimTargetIn[]) {
     const kc = keepCompare({ data: d, item: it, itemLevel: s.itemLevel.value, targets: simIn(), price: priceOf }).filter((x) => x.chaos != null && Number.isFinite(x.together));
     const kBest = kc.length ? kc.reduce((a, x) => (x.chaos! - x.together > a.chaos! - a.together ? x : a)) : null;
     const keep = kBest ? { host: kBest.host, together: kBest.together, chaos: kBest.chaos!, chaosKey: kBest.chaosKey, chaosN: kBest.chaosN, use: kBest.together < kBest.chaos! ? "together" as const : "chaos" as const, detail: kBest.detail } : null;
-    return { pHit, each, rerolls, lines, buyLines, once, after, total: fracP > 0 ? once / fracP + after : Infinity, fracP, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, grade: gr.ja, buyRest, breakEven, buyOnce, fourTotal,
+    return { pHit, each, rerolls, loop: { augment: lc.augment, annul: lc.annul, share: gr.odds.share[fside] }, lines, buyLines, once, after, total: fracP > 0 ? once / fracP + after : Infinity, fracP, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, grade: gr.ja, buyRest, breakEven, buyOnce, fourTotal,
       greater: null as GreaterRoute | null, keep, augKey: gr.aug };
   });
   return { calc };

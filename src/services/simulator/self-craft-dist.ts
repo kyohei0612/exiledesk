@@ -3,16 +3,14 @@
  * 平均だけでは運の悪い道を見落とすので、1 人分を確率どおりに引いて足し、「買う値段までに作れる割合」と 2 人に 1 人を出す。
  *
  * 1 人分 = (1 本分の決まった費用 + マジックのループ) × フラクチャーが当たるまでの本数 + 固定の後の消去 + 反対側の狙いのカオス。
- *   - ループ: 「候補だけ」は増強 1 回 + 消去 2 回を当たるまで (③ の白からの式と同じ形)。「2 つ揃える」はマジックの状態 (側ごとに空・当たり・外れ) を 1 手ずつ
+ *   - ループ: マジックの状態 (側ごとに空・当たり・外れ) を 1 手ずつ。「候補だけ」はスパムシミュレーターの増強の道と同じ (反対側は見ない)、「2 つ揃える」は両側 (2026-10-20 S1c)
  *   - フラクチャー: 1 本ごとに当たり fracP (③ の calc がエンジンの入口から出す物。壁つき 3 MOD で 1/3)
  *   - 反対側の狙いを固定の後にカオスで取る時は、当たるまでのカオスの回数
  * エンジンは回さない (式の部品だけで、2 万人分でも一瞬)
  */
 import { mulberry32 } from "../htc/rng";
 
-export type LoopModel =
-  | { kind: "reroll"; p: number; perReroll: number }
-  | { kind: "markov"; p: number; q: number | null; share: number; aug: number; annul: number };
+export type LoopModel = { kind: "markov"; p: number; q: number | null; share: number; aug: number; annul: number };
 
 export interface SelfCraftIn {
   /** 1 本分のうちループ以外の費用 (白・ルーン・変成・エッセンスか王者・壁・フラクチャーなど) */
@@ -35,7 +33,6 @@ export function selfCraftCosts(o: SelfCraftIn): number[] {
   const geo = (p: number): number => { if (!(p > 0)) return Infinity; let k = 1; while (g() >= p && k < 1e6) k++; return k; };
   const loopOnce = (): number => {
     const L = o.loop;
-    if (L.kind === "reroll") return geo(L.p) * L.perReroll;
     // マジック: 変成で 1 つ (側は重みの割合)、外れがあれば消去 (どちらが消えるかは半々)、空いた側に増強。両側が当たりで終わり (q = null なら候補の側だけ)
     const need = L.q != null, q = L.q ?? 0.5;
     let a = 0, b = 0, cost = 0;
@@ -76,6 +73,8 @@ export function withinBudget(costs: readonly number[], budget: number): { p: num
 /** ③ の計算 (use-sim-run の calc) から 1 人分の組み立てを作る */
 export function whiteCraftIn(c: {
   once: number; rerolls: number; pHit: number; after: number; augKey: string; fracP: number;
+  /** 候補のマジックのループの平均 (増強の道、2026-10-20 S1c)。share = 両側が空の時に候補の側に付く割合 */
+  loop?: { augment: number; annul: number; share: number } | null;
   greater: { augment: number; annul: number; p: number; q: number | null; share: number; augKey: string; once: number } | null;
   keep: { use: "together" | "chaos"; chaosKey: string | null; chaosN: number | null; detail: { p: number; q: number; share: number; augKey: string } } | null;
 }, price: (k: string) => number): SelfCraftIn {
@@ -84,10 +83,11 @@ export function whiteCraftIn(c: {
     const g = c.greater, aug = price(g.augKey);
     return { fixedPerAttempt: g.once - (g.augment * aug + g.annul * annul), loop: { kind: "markov", p: g.p, q: g.q, share: g.share, aug, annul }, hit: c.fracP, after: 0 };
   }
-  const perReroll = price(c.augKey) + 2 * annul;
-  const fixed = c.once - (Number.isFinite(c.rerolls) ? c.rerolls * perReroll : 0);
+  const aug = price(c.augKey);
+  // ループはスパムシミュレーターの増強の道と同じ打ち方 (2026-10-20 S1c: 前は「増強 1 回 + 消去 2 回を当たるまで」で、エンジンの半分だった)
+  const fixed = c.once - (c.loop && Number.isFinite(c.loop.augment) ? c.loop.augment * aug + c.loop.annul * annul : 0);
   const k = c.keep;
   if (k?.use === "together") return { fixedPerAttempt: fixed, loop: { kind: "markov", p: k.detail.p, q: k.detail.q, share: k.detail.share, aug: price(k.detail.augKey), annul }, hit: c.fracP, after: c.after };
-  return { fixedPerAttempt: fixed, loop: { kind: "reroll", p: c.pHit, perReroll }, hit: c.fracP, after: c.after,
+  return { fixedPerAttempt: fixed, loop: { kind: "markov", p: c.pHit, q: null, share: c.loop?.share ?? 0.5, aug, annul }, hit: c.fracP, after: c.after,
     ...(k && k.chaosN && k.chaosKey ? { chaosAfter: { p: 1 / k.chaosN, price: price(k.chaosKey) } } : {}) };
 }

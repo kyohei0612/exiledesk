@@ -55,7 +55,7 @@ const title = computed(() => (props.kind === "white" ? tr("白から作る費用
         </tbody>
       </table>
       <p v-if="kind === 'white' && calc.greater" class="mt-1 text-[10px] opacity-60">{{ tr(`ループ = マジックで両方の側が当たるまで、外れがあれば消去 (どちらが消えるかは半々)、空いた側に増強 (平均 増強 ${fmtN(calc.greater.augment)}・消去 ${fmtN(calc.greater.annul)} 回)。変成・増強は${calc.grade}。固定できるのは 3 つ (候補・揃えた MOD・エッセンスの MOD) のうち 1 つ`, `Loop = until both sides hit on magic: Annul a miss (either mod, 50/50), Augment the open side (avg ${fmtN(calc.greater.augment)} Augment, ${fmtN(calc.greater.annul)} Annul). Transmute / augment grade: ${calc.grade}. Fracture locks 1 of 3 (candidate, kept mod, essence mod)`) }}</p>
-      <p v-else-if="kind === 'white'" class="mt-1 text-[10px] opacity-60">{{ tr(`リロール = 増強 1 回で狙いが付く確率の逆数 (平均 ${fmtN(calc.rerolls)} 回)。変成・増強は${calc.grade}`, `Rerolls = 1 ÷ chance per augment (avg ${fmtN(calc.rerolls)}). Transmute / augment grade: ${calc.grade}`) }}</p>
+      <p v-else-if="kind === 'white'" class="mt-1 text-[10px] opacity-60">{{ tr(`リロール = 狙いが付くまでの平均 (増強 ${fmtN(calc.rerolls)} 回。狙いの側に MOD があれば消去、空なら増強 = スパムシミュレーターの増強の道)。変成・増強は${calc.grade}`, `Rerolls = average until the target lands (${fmtN(calc.rerolls)} augments; annul if the target side has a mod, augment if empty = the Spam simulator's Augmentation route). Transmute / augment grade: ${calc.grade}`) }}</p>
     </template>
   </HelpTip>
 </template>
