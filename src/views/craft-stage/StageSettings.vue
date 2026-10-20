@@ -148,6 +148,7 @@ function simFromHand(): void {
       <button v-for="n in simSocketCap + 1" :key="n" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="s.simSockets.value === n - 1 ? 'on' : ''" @click="s.simSockets.value = n - 1">{{ n - 1 }}<span v-if="n - 1 > simCraftCap" class="ml-1 text-[11px] text-[var(--exile-color-text-tertiary)]" :title="tr('熟練工のオーブの上限より多い (規格外の品だけ)', 'Above the Artificer’s Orb limit (Exceptional items only)')">{{ tr("規格外", "Exceptional") }}</span></button>
       <span v-if="s.simSockets.value == null" class="text-amber-200/80">{{ tr("ソケットの数を選ぶ", "Choose socket count") }}</span>
     </span>
+    <span v-if="s.mode.value === 'sim' && !simNoBase" id="sim-auto-slot" class="flex items-center"></span><!-- シミュの「自動で組む」の置き場 (StageSimPanel が Teleport で置く。2026-10-20 オーナー「規格外ソケットの右」) -->
     <!-- 始め方は狙う MOD を決めた後の段へ (SimStartPick.vue、2026-10-18) -->
     <template v-if="s.mode.value === 'hand' && !handNoBase">
     <!-- 白に戻すは 1 手戻すでは戻せないので 2 回押し (2026-10-08 完成判定: 9 手分が確認無しで消えた) -->

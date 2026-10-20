@@ -45,6 +45,7 @@ import { useSimResult } from "./use-sim-result";
 import SimAutoOrder from "./SimAutoOrder.vue";
 import { useSimAutoOrder } from "./use-sim-auto-order";
 import { useSimAuto } from "./use-sim-auto";
+import { simAuto } from "../../state/simulator/sim-state";
 import SimAutoToggle from "./SimAutoToggle.vue";
 import SimAutoConfirm from "./SimAutoConfirm.vue";
 
@@ -119,18 +120,20 @@ const stepNotes = computed(() => {
     <p v-if="help" class="mb-3 rounded-md bg-white/[0.03] px-3 py-2 text-[13px] text-[var(--exile-color-text-secondary)]">狙いは「このベースに付く MOD」の表の「T○ 以上」で選ぶ。打ち方 (パターン) を組んで「回す」と、何百人分も作った平均の費用が出る。各所の <Icon name="help" class="inline size-3.5 align-[-2px]" /> にも説明がある</p>
 
     <!-- 工程の帯 (2026-10-19 工程ごとのページ。決めた所は要約、押すとそのページ) -->
-    <SimStepBar class="mb-3" :current="simStep" :reach="reach" :base="baseJa" :notes="stepNotes" :lead="!socketsOk ? tr('まず上でソケットの数を選ぶ (分からなければ 0)。選ぶと狙う MOD の一覧が出る', 'First choose the socket count above (0 if unsure). The mod list appears after that') : modsDone && !sortDone && simStep === 'mods' ? tr('2-b 付け方が同じ MOD をまとめる (全部 / この中のどれか)。枠に収まったら「次へ」', '2b: Group mods with the same method (all / any of these). When they fit the slots, press “Next”') : undefined" :auto="autoOn" @go="go" @base="openBasePage" @auto="autoToggle()" />
+    <SimStepBar class="mb-3" :current="simStep" :reach="reach" :base="baseJa" :notes="stepNotes" :lead="!socketsOk ? tr('まず上でソケットの数を選ぶ (分からなければ 0)。選ぶと狙う MOD の一覧が出る', 'First choose the socket count above (0 if unsure). The mod list appears after that') : modsDone && !sortDone && simStep === 'mods' ? tr('2-b 付け方が同じ MOD をまとめる (全部 / この中のどれか)。枠に収まったら「次へ」', '2b: Group mods with the same method (all / any of these). When they fit the slots, press “Next”') : undefined" @go="go" @base="openBasePage" />
     <SimAutoConfirm :ask="autoAsk" @ok="autoApply" @cancel="autoAsk = null" />
+    <!-- 「自動で組む」は 1 ベースの枠の規格外ソケットの右 (StageSettings の #sim-auto-slot。2026-10-20 オーナー「見出しの右は分かりづらい」) -->
+    <Teleport defer to="#sim-auto-slot" :disabled="s.mode.value !== 'sim' || !!s.replay.value"><SimAutoToggle :auto="autoOn" :disabled="false" @toggle="autoToggle" /></Teleport>
     <!-- 2 狙う MOD → 3 白ベース設定 → 4 最安値スタート → 5 付ける順番と付け方 -->
     <template v-if="socketsOk">
       <!-- ① 狙う MOD (下の「このベースに付く MOD」の「T○ 以上」で足す。「＋」であるいは) -->
       <div v-if="simStep === 'mods'" :data-sim-cur="!modsDone || !sortDone || undefined" :class="!modsDone || !sortDone ? 'border-[var(--exile-color-border-brass)] bg-[rgba(201,162,90,0.04)]' : 'border-white/10 bg-white/[0.025]'" class="rounded-xl border px-5 py-4 max-md:px-3">
         <SimStepHead class="mb-3" :n="2" title="狙う MOD" :current="true" help="下の「このベースに付く MOD」で MOD を押すと段の表が開く。そこの「T○ 以上」で付け方を選んで足す。欲しい物は何個でもいい。まとめる (どれか N つ) のは「決めた」の後">
           <!-- MOD 一覧を重ねて開く (Tab でも。2026-10-18 オーナー「シミュレーターでも MOD 一覧見れるように、狙う MOD の横にボタン」) -->
-          <template #side><SimAutoToggle class="mr-1" :auto="autoOn" :disabled="t1Block" @toggle="autoToggle" /><button type="button" data-sim-mod-list class="g-btn sm max-md:hidden" :title="tr('このベースに付く MOD の一覧を重ねて開く (Tab でも開く)', 'Open the mod list for this base (Tab also opens it)')" @click="s.modOverlay.value = true">{{ tr("MOD 一覧", "Mod list") }}</button></template>
+          <template #side><button type="button" data-sim-mod-list class="g-btn sm max-md:hidden" :title="tr('このベースに付く MOD の一覧を重ねて開く (Tab でも開く)', 'Open the mod list for this base (Tab also opens it)')" @click="s.modOverlay.value = true">{{ tr("MOD 一覧", "Mod list") }}</button></template>
         </SimStepHead>
         <!-- 自動にできない時の 1 行 (T1 だけの狙い = オーナー 10-20 の決まり 5 / 自動の範囲外 = buildAutoModel の理由) -->
-        <p v-if="t1Block" data-sim-auto-t1 class="mb-1 text-[12px] text-amber-200">{{ tr("T1 だけの狙いは自動では組めない。手動で", "Targets that need T1 only can't be planned automatically. Use manual.") }}</p>
+        <p v-if="t1Block && simAuto" data-sim-auto-t1 class="mb-1 text-[12px] text-amber-200">{{ tr("T1 だけの狙いがあるので今は手動 (「自動で組む」を押すと T2 以上に下げて自動にできる)", "T1-only targets, so this is manual for now (press “Plan automatically” to set them to T2+ and switch to auto)") }}</p>
         <p v-else-if="autoOn && ao.blocked.value" data-sim-auto-off class="mb-1 text-[12px] text-amber-200">{{ tr(`自動に未対応: ${ao.blocked.value} · 手動で続ける`, `Auto not supported: ${ao.blocked.value} · continue manually`) }}</p>
         <p v-if="ilvlNote" class="mb-1 text-[11px] text-amber-200">{{ ilvlNote }}</p>
         <!-- 完成図 (ベースの横から移した。段・＋・×・どれか N つ・付きやすさ) -->
