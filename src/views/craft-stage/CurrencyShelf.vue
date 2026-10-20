@@ -16,6 +16,7 @@ import { toCss } from "../../utils/zoom";
 import { GAP_X, GAP_Y } from "../../utils/anchor-place";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import ShelfButton from "./ShelfButton.vue";
+import StageOmenTune from "./StageOmenTune.vue";
 import Disclosure from "../../components/ui/Disclosure.vue";
 import { useShelf } from "../../state/emulator/shelf-context";
 import { bonesFor, CRAFT_RUNE_KEYS, essenceShelf, OMEN_GROUPS, ORBS, runesFor } from "../../state/emulator/craft-stage-shelf";
@@ -362,7 +363,7 @@ const TABS = computed(() => (!props.full ? [] : [
       <div v-for="g in OMEN_GROUPS" :key="g.kind">
         <p class="mb-0.5 text-[10px] opacity-60">{{ g.label }}</p>
         <div class="flex flex-wrap gap-1.5 max-md:contents">
-          <ShelfButton v-for="k in g.keys" :key="k" :k="k" omen @pick="craftStage.toggleOmen($event)" />
+          <div v-for="k in g.keys" :key="k" class="flex flex-col items-center"><ShelfButton :k="k" omen @pick="craftStage.toggleOmen($event)" /><StageOmenTune :k="k" /></div>
         </div>
       </div>
       </div>

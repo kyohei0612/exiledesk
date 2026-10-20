@@ -84,6 +84,11 @@ export { corruptionRowsFor, matchCorruption } from "../mods/corruption";
 // 注油 (アミュレットにノータブルを割り当てる) の一覧と、貼り付けの 1 行が注油か
 export { anointNotables, anointOfLine } from "../mods/anoint";
 
+// 使う人が決める設定 (触媒の高貴の品質 1% ごとの倍率・聖別の倍率。null = 既定。打つ処理と確率の表が同じ値を読む)
+export type { StageTuning } from "./stage-tuning";
+export { stageTuning, setStageTuning, tunedCatalysingMultiplier, CATALYSING_PER_PCT } from "./stage-tuning";
+export { SANCTIFY_MIN, SANCTIFY_MAX } from "./apply-vaal";
+
 // 文
 export { fillModText } from "../htc/mod-text";
 export { jaUniqueText } from "../mods/unique-mod-ja";

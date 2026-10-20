@@ -17,6 +17,7 @@ import type { StageApply, StageItem, StageMod } from "./types";
 import { tagsOfEngineRow } from "../mods/item-class-tags";
 import { displayValue } from "../mods/stat-scale";
 import { tr } from "../../i18n/lang";
+import { stageTuning } from "./stage-tuning";
 
 interface Enchant { domain: string; group?: string; en: string; ja: string; stats: Array<{ id: string; min: number; max: number }>; spawn: Array<{ t: string; w: number }> }
 export const ENCHANTS = (vaal as unknown as { mods: Record<string, Enchant> }).mods;
@@ -100,7 +101,9 @@ export function applySanctify(data: PatchData, item: StageItem, rng: () => numbe
     // 神のオーブと同じく段の範囲で振り直してから倍率 (CoE と同じ順)
     const md = data.mods.get(m.modId);
     const rolled = md && m.ranges.length ? withValues(m, md, rng) : m;
-    const k = (SANCTIFY_MIN + Math.floor(rng() * (SANCTIFY_MAX - SANCTIFY_MIN + 1))) / 100;
+    // 倍率を決めた時 (お告げの下の設定、stage-tuning.ts) はその値。乱数は同じだけ引く (決めても決めなくても後ろの手の乱数がずれない)
+    const roll = SANCTIFY_MIN + Math.floor(rng() * (SANCTIFY_MAX - SANCTIFY_MIN + 1));
+    const k = (stageTuning().sanctifyK ?? roll) / 100;
     const values = scaled(rolled.values, k);
     // 掛ける前の値と倍率を持たせる (聖別の帯で倍率を後から決め直す)
     const next = { ...rolled, values, ...retext(rolled, values, data), sanctify: { base: [...rolled.values], k } };

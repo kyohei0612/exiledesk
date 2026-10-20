@@ -9,7 +9,7 @@ import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { DESECRATION_EXCLUSIVE_COUNT } from "../../../vendor/poe2htc/engine/probability";
 import { addForced, addOne, allMods, candidates, catalystBoosts, catalystOf, hasExtraCatalyst, removeForced, type Force, effectiveCls, makeStageMod, maxQualityOf, overLimit, pickWeighted, removeOne, replaced, room, SIDES, skip, skipRandom, unfracturable, withMod, withValues, without, type Candidate } from "../stage-core";
 import { whittleTargets } from "../apply-currency";
-import { catalysingMultiplier } from "../../htc/catalysing-multiplier";
+import { tunedCatalysingMultiplier } from "../stage-tuning";
 import { QUALITY_PER_CATALYST } from "../../htc/catalysing-setup";
 import { htcBaseInfo } from "../../htc/patch";
 import { hasImplicitRange } from "../roll-text";
@@ -367,7 +367,7 @@ type Add = Extract<Action, { add: unknown }>["add"];
 /**
  * 普通の MOD の置き場から n 個 (大いなる高貴のお告げで 2 個)。側はお告げの側か両側、空きの無い側には付かない。
  * 候補は付いている系統を除き、アイテムレベル以下・段の下限以上の段の重み (stage-core の addOne = 計算機と同じ)。
- * 触媒の高貴のお告げは品質の種類の MOD を重く引き (catalysingMultiplier)、品質を使い切る
+ * 触媒の高貴のお告げは品質の種類の MOD を重く引き (tunedCatalysingMultiplier、既定は catalysingMultiplier。stage-tuning.ts)、品質を使い切る
  */
 function add(ctx: PartCtx, item: StageItem, a: Add): StageApply {
   const ok = (it: StageItem): StageApply => ({ applied: true, item: it, added: [], removed: [] });
@@ -375,7 +375,7 @@ function add(ctx: PartCtx, item: StageItem, a: Add): StageApply {
   const n = ctx.mods.addCount ?? a.n;
   const sides = ctx.mods.side ? [ctx.mods.side] : SIDES;
   const { tag, pct } = catalystOf(item);
-  const boost = ctx.mods.catalysing && tag ? { test: (m: { id: string; tags?: readonly string[] }) => catalystBoosts(item, { modId: m.id, tags: m.tags }, tag, ctx.data), mult: catalysingMultiplier(pct) } : undefined;
+  const boost = ctx.mods.catalysing && tag ? { test: (m: { id: string; tags?: readonly string[] }) => catalystBoosts(item, { modId: m.id, tags: m.tags }, tag, ctx.data), mult: tunedCatalysingMultiplier(pct) } : undefined;
   const pick = ctx.pick?.slice(ctx.pickUsed ?? 0) ?? [];
   if (pick.length > n) return pickFail(item, tr(`この手で付く MOD は ${n} つまで`, `this adds at most ${n} mod${n === 1 ? "" : "s"}`));
   let cur = item;

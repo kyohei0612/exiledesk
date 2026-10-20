@@ -13,7 +13,7 @@ import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { allMods, candidates, catalystBoosts, catalystOf, hasExtraCatalyst, makeStageMod, overLimit, replaced, room, SIDES, unfracturable, withMod, without } from "../stage-core";
 import { whittleTargets } from "../apply-currency";
 import { isInfiniteEssence } from "../apply-essence";
-import { catalysingMultiplier } from "../../htc/catalysing-multiplier";
+import { tunedCatalysingMultiplier } from "../stage-tuning";
 import type { StageItem, StageMod, StageSide } from "../types";
 import { planSpec, type SpecPlan } from "./run-spec";
 import { runPart, unrevealedMod, unrevealedPlan, type PartCtx } from "./parts";
@@ -85,7 +85,7 @@ function addStep(ctx: PartCtx, item: StageItem, a: Add, last: boolean, merge?: (
   const n = ctx.mods.addCount ?? a.n;
   const omenSides = ctx.mods.side ? [ctx.mods.side] : SIDES;
   const { tag, pct } = catalystOf(item);
-  const boost = ctx.mods.catalysing && tag ? { test: (m: { id: string; tags?: readonly string[] }) => catalystBoosts(item, { modId: m.id, tags: m.tags }, tag, ctx.data), mult: catalysingMultiplier(pct) } : undefined;
+  const boost = ctx.mods.catalysing && tag ? { test: (m: { id: string; tags?: readonly string[] }) => catalystBoosts(item, { modId: m.id, tags: m.tags }, tag, ctx.data), mult: tunedCatalysingMultiplier(pct) } : undefined;
   const finish = (b: Branch): Branch => (ctx.mods.catalysing ? { ...b, item: hasExtraCatalyst(item.base) ? { ...b.item, catalystQuality: 0 } : { ...b.item, quality: 0 } } : b);
   let states: Branch[] = [{ p: 1, item, added: [], removed: [] }];
   const done: Branch[] = [];

@@ -10,7 +10,7 @@
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { allMods, candidates, catalystBoosts, catalystOf, overLimit, room, SIDES, unfracturable, without, type Candidate } from "../stage-core";
 import { whittleTargets } from "../apply-currency";
-import { catalysingMultiplier } from "../../htc/catalysing-multiplier";
+import { tunedCatalysingMultiplier } from "../stage-tuning";
 import type { StageItem, StageSide } from "../types";
 import { planSpec, type SpecPlan } from "./run-spec";
 import type { Mods } from "./parts";
@@ -27,7 +27,7 @@ export function addCands(data: PatchData, item: StageItem, a: Add, mods: Mods): 
   const sides = (mods.side ? [mods.side] : SIDES).filter((s) => room(item, s));
   if (a.emptyOk && !SIDES.some((s) => room(item, s))) return [];
   const { tag, pct } = catalystOf(item);
-  const boost = mods.catalysing && tag ? { test: (m: { id: string; tags?: readonly string[] }) => catalystBoosts(item, { modId: m.id, tags: m.tags }, tag, data), mult: catalysingMultiplier(pct) } : undefined;
+  const boost = mods.catalysing && tag ? { test: (m: { id: string; tags?: readonly string[] }) => catalystBoosts(item, { modId: m.id, tags: m.tags }, tag, data), mult: tunedCatalysingMultiplier(pct) } : undefined;
   return candidates(data, item, sides, a.floor, boost ? { boost } : {});
 }
 
