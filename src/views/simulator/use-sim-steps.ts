@@ -11,7 +11,7 @@ import { type Pattern, ANY_TARGET, isRest } from "../../services/simulator/patte
 import type { SimTargetsCtx } from "./use-sim-targets";
 import type { SimRunCtx } from "./use-sim-run";
 import { SIM_ILVL_MAX } from "../craft-stage/use-stage-base";
-import { simPasted } from "../../state/simulator/sim-state";
+import { simAuto, simPasted } from "../../state/simulator/sim-state";
 /** ② の間のアイテムレベル: 一番上 (全部の段を選べる)。貼り付けから始めた時は貼ったアイテムのレベル (② の % をその物で。2026-10-20 点検 1・12) */
 const topIlvl = (): number => simPasted.value?.ilvl ?? SIM_ILVL_MAX;
 import { SIM_STEPS, simJumpOpen, simStep, type SimStep } from "../../state/web-page";
@@ -27,7 +27,7 @@ export type Stage = "mods" | "white" | "start" | "order";
  * 狙い (MOD・段・あるいは・どれか N つ・フラクチャー・付け方・順番)・工程の決めた / 戻した・ソケット・白ベースの値段を、変わるたびに前の形を積む
  */
 /** patterns: やり直しで空にする前のパターン (空にした時だけ入れる。「1 つ戻す」でパターンも戻す) */
-export type Snap = { targets: string; whiteOk: boolean; modsDone: boolean; fracDone: boolean; startDone: boolean; orderDone: boolean; sockets: number | null; white: number | null; patterns?: string; order?: string };
+export type Snap = { targets: string; whiteOk: boolean; modsDone: boolean; fracDone: boolean; startDone: boolean; orderDone: boolean; sockets: number | null; white: number | null; patterns?: string; order?: string; auto?: boolean };
 
 export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
   const { fracDone, sortDone, hasSteps, itemDivine, keptKey, modsDone, num, orderDone, patternDone, recipeOut, restBases, restCost,
@@ -252,7 +252,7 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
     startDone.value = true;
     simStep.value = "order";
   }
-  const snapNow = (): Snap => ({ targets: JSON.stringify(s.simTargets.value), whiteOk: whiteOk.value, modsDone: modsDone.value, fracDone: fracDone.value, startDone: startDone.value, orderDone: orderDone.value, sockets: sockets.value, white: whiteDivine.value, order: JSON.stringify(s.simOrder.value) });
+  const snapNow = (): Snap => ({ targets: JSON.stringify(s.simTargets.value), whiteOk: whiteOk.value, modsDone: modsDone.value, fracDone: fracDone.value, startDone: startDone.value, orderDone: orderDone.value, sockets: sockets.value, white: whiteDivine.value, order: JSON.stringify(s.simOrder.value), auto: simAuto.value });
   const undoStack = ref<Snap[]>([]);
   let lastSnap = snapNow();
   watch(() => JSON.stringify(snapNow()), () => {
@@ -279,6 +279,7 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
     sockets.value = prev.sockets; whiteDivine.value = prev.white;
     if (prev.order) s.simOrder.value = JSON.parse(prev.order) as string[];
     if (prev.patterns) s.simPatterns.value = JSON.parse(prev.patterns) as Pattern[];
+    if (prev.auto != null) simAuto.value = prev.auto;
     void nextTick(() => { lastSnap = snapNow(); restoring.v = false; });
   }
   return { step4pre, stepNo, fold, step4, resetStalePatterns, resetPatterns, wantTier, ilvlNote, goTo, resetArm, resetAll, panelEl,

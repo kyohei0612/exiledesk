@@ -18,8 +18,10 @@ const props = defineProps<{
   notes: Partial<Record<SimStep, string>>;
   /** 「このページでやること」を差し替える (ソケットを選ぶ前など) */
   lead?: string;
+  /** 自動 / 手動の札 (右端、押すと切り替え。2026-10-20 S2)。undefined なら出さない */
+  auto?: boolean;
 }>();
-const emit = defineEmits<{ go: [s: SimStep]; base: [] }>();
+const emit = defineEmits<{ go: [s: SimStep]; base: []; auto: [] }>();
 
 const TITLE: Record<SimStep, [string, string]> = {
   mods: ["狙う MOD", "Target mods"], start: ["ベースの値段", "Base prices"], order: ["付ける順番", "Order"], play: ["打ち方", "Crafting steps"], result: ["回す・結果", "Run & results"],
@@ -60,6 +62,8 @@ onBeforeUnmount(() => window.removeEventListener("resize", centerOn));
         <span class="text-[14px] leading-tight">{{ i + 2 }} {{ tr(TITLE[st][0], TITLE[st][1]) }}<span v-if="i < reach && st !== current" class="ml-1 text-emerald-300">✓</span></span>
         <span class="max-w-[11rem] truncate text-[11px] leading-tight opacity-85">{{ notes[st] || (i > reach ? tr("まだ", "Not yet") : st === current ? tr("今ここ", "You are here") : "") }}</span>
       </button>
+      <!-- 自動 / 手動 (③〜⑥ のどこからでも今の形が分かる・押すと切り替え) -->
+      <button v-if="auto !== undefined" type="button" data-sim-auto-chip class="g-tab ml-auto shrink-0 !h-auto !min-w-0 !px-4 !py-1.5 !text-[13px]" :class="auto ? 'on' : ''" :title="auto ? tr('自動で組んでいる (押すと手動に)', 'Planned automatically (click for manual)') : tr('手動で組んでいる (押すと自動に)', 'Planned by hand (click for auto)')" @click="emit('auto')">{{ auto ? tr("自動", "Auto") : tr("手動", "Manual") }}</button>
     </nav>
     <p class="mt-1.5 text-[12px] text-[var(--exile-color-text-secondary)]">{{ lead ?? tr(LEAD[current][0], LEAD[current][1]) }}</p>
   </div>

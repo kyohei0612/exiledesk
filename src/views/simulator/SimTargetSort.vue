@@ -40,7 +40,8 @@ function anyOf(b: SortBucket): void {
 <template>
   <div data-sim-sort class="mt-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-[12px]">
     <p class="mb-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-      <b class="text-[var(--exile-color-text-primary)]">{{ tr("付け方が同じ MOD の整理", "Group mods with the same method") }}</b>
+      <!-- 2-b (2026-10-20 点検 5: 「次へ」で同じページの中身が変わったのに、帯は 2 のままで何の段か分からなかった。帯の下の 1 行も 2-b に変わる) -->
+      <b class="text-[var(--exile-color-text-primary)]">{{ tr("2-b 付け方が同じ MOD の整理", "2b. Group mods with the same method") }}</b>
       <span v-for="sd in SIDES" :key="sd[0]" class="tabular-nums" :class="use[sd[0]] > limits[sd[0]] ? 'font-bold text-rose-300' : 'text-[var(--exile-color-text-secondary)]'">{{ tr(sd[1], sd[2]) }} {{ use[sd[0]] }} / {{ tr(`枠 ${limits[sd[0]]}`, `${limits[sd[0]]} slots`) }}</span>
     </p>
     <p v-if="over" class="mb-1.5 text-rose-300">{{ tr("枠より多いので、下で「この中のどれか N つ」にまとめて枠に収める (収まるまで 3 に進めない)", "More targets than slots: group them below as “any N of these” until they fit (step 3 waits until then)") }}</p>
@@ -49,8 +50,8 @@ function anyOf(b: SortBucket): void {
       <span class="shrink-0 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ b.side === "prefix" ? tr("プレ", "Prefix") : tr("サフィ", "Suffix") }} · {{ tr(METHOD_JA[b.method], METHOD_EN[b.method]) }}</span>
       <span class="min-w-0 flex-1 truncate text-[#c8c8ff]" :title="b.members.map(nameOf).join('\n')">{{ b.members.map(nameOf).join(" / ") }}</span>
       <span class="flex shrink-0 items-center gap-1">
-        <button type="button" class="g-tab !min-h-[26px] !px-2 !text-[11px] max-md:!min-h-10" :class="all(b) ? 'on' : ''" @click="set(b, b.members.length)">{{ tr(`全部 (${b.members.length} つ)`, `All (${b.members.length})`) }}</button>
-        <button type="button" class="g-tab !min-h-[26px] !px-2 !text-[11px] max-md:!min-h-10" :class="all(b) ? '' : 'on'" @click="all(b) && anyOf(b)">{{ tr("この中のどれか", "Any of these:") }}</button>
+        <button type="button" class="g-tab !min-h-[30px] !px-3 !text-[12px] max-md:!min-h-10" :class="all(b) ? 'on' : ''" @click="set(b, b.members.length)">{{ tr(`全部 (${b.members.length} つ)`, `All (${b.members.length})`) }}</button>
+        <button type="button" class="g-tab !min-h-[30px] !px-3 !text-[12px] max-md:!min-h-10" :class="all(b) ? '' : 'on'" @click="all(b) && anyOf(b)">{{ tr("この中のどれか", "Any of these:") }}</button>
         <template v-if="!all(b)">
           <button type="button" class="g-plain grid size-6 place-items-center rounded border border-amber-400/50 bg-black/40 font-sans text-[15px] font-bold leading-none text-amber-100 hover:bg-amber-500/15 disabled:opacity-30 max-md:size-10" :disabled="b.need <= 1" :aria-label="tr('1 つ減らす', 'One fewer')" @click="set(b, b.need - 1)">−</button>
           <b class="w-4 text-center tabular-nums text-amber-100">{{ b.need }}</b>
@@ -62,7 +63,7 @@ function anyOf(b: SortBucket): void {
     <!-- 戻る / 決めた (2026-10-18 オーナー「決定とか戻るとかない」)。枠に収まるまで決められない -->
     <div class="mt-2 flex items-center gap-2 border-t border-white/5 pt-2">
       <button type="button" data-sim-sort-back class="g-btn sm max-md:min-h-10" @click="emit('back')">{{ tr("← 狙う MOD に戻る", "← Back to target mods") }}</button>
-      <button type="button" data-sim-sort-done class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:min-h-11" :class="over ? '!bg-white/10 !text-white/45 cursor-not-allowed' : ''" :disabled="over" :title="over ? tr('枠に収めると押せる', 'Fit the slots first') : undefined" @click="emit('done')">{{ over ? tr("枠に収めると決められる", "Fit the slots to continue") : tr("決めた", "Done") }}<Icon v-if="!over" name="arrow-right" class="size-4" /></button>
+      <button type="button" data-sim-sort-done class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md bg-[var(--exile-color-accent-focus)] px-3 text-[13px] font-semibold text-black transition hover:bg-[var(--exile-color-accent-focus-hover)] disabled:opacity-40 max-md:min-h-11" :class="over ? '!bg-white/10 !text-white/45 cursor-not-allowed' : ''" :disabled="over" :title="over ? tr('枠に収めると押せる', 'Fit the slots first') : undefined" @click="emit('done')">{{ over ? tr("枠に収めると進める", "Fit the slots to continue") : tr("次へ", "Next") }}<Icon v-if="!over" name="arrow-right" class="size-4" /></button>
     </div>
   </div>
 </template>

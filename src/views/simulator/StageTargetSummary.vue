@@ -35,7 +35,7 @@ const sameRank = (ms: ReadonlyArray<{ rank: string }>): string | null => (ms.eve
 /** たたんだ時の名前 (数値の幅は外して短く) */
 const shortName = (t: string): string => t.replace(/\s*\([^()]*\d[^()]*\)/g, "").replace(/\s+/g, " ").trim();
 
-const props = defineProps<{ /** ① で選んでいる間 (段・×・付け方の印を出す) */ editable?: boolean; /** 付け方を選べる (2 の「決めた」の後、3 を決めるまで。2026-10-18 オーナー「決めたボタンの後ここで設定する感じで」) */ plans?: boolean }>();
+const props = defineProps<{ /** ① で選んでいる間 (段・×・付け方の印を出す) */ editable?: boolean; /** 付け方を選べる (2 の「決めた」の後、3 を決めるまで。2026-10-18 オーナー「決めたボタンの後ここで設定する感じで」) */ plans?: boolean; /** 自動 (② の高貴 / カオスは自動が決める。2026-10-20 S2) */ auto?: boolean }>();
 const s = craftStage;
 const methodPop = ref<InstanceType<typeof SimMethodPop> | null>(null);
 /** カオススパムは片側だけ (反対側にあれば選べない) */
@@ -242,6 +242,26 @@ const PLAN_CLS: Record<Plan, string> = {
   desecrate: "border-green-700 text-green-500",
   essence: "border-sky-400/60 text-sky-200",
 };
+/**
+ * 自動の時: 高貴ガチャ / カオススパムは「自動」1 つにまとめる (どちらにするかは最善手で決まる。設計 auto-flow-design の 1)。
+ * フラクチャーの印・冒涜・エッセンスは今まで通り選ぶ。増強スパムは自動に未対応
+ */
+const autoPlan = (p: Plan | null | undefined): boolean => !!props.auto && (p === "exalt" || p === "chaos");
+const planLabel = (p: Plan): string => (autoPlan(p) ? tr("自動", "Auto") : PLAN_JA[p]);
+const samePlan = (a: Plan | null | undefined, b: Plan): boolean => a === b || (autoPlan(a) && autoPlan(b));
+function planList(host: string): Plan[] {
+  const ps = plansOf(host);
+  if (!props.auto) return ps;
+  const at = ps.findIndex((p) => autoPlan(p));
+  const out = ps.filter((p) => !autoPlan(p));
+  if (at >= 0) out.splice(at, 0, "exalt");
+  return out;
+}
+const restList = (): readonly RestPlan[] => (props.auto ? (["exalt", "desecrate"] as const) : REST_PLANS);
+function offOf(g: Parameters<typeof planOff>[0]): ReturnType<typeof planOff> {
+  return props.auto ? { ...planOff(g), augment: tr("自動は増強スパムに未対応", "Auto doesn't support Augmentation spam yet") } : planOff(g);
+}
+const AUTO_LABELS = { exalt: ["自動", "Auto"] } as const;
 function plansOf(host: string): Plan[] {
   const m = s.data.value?.mods.get(host);
   if (!m) return ["exalt"];
@@ -351,13 +371,13 @@ function setRest(g: { kind: Kind; host: string }, p: RestPlan | null): void {
              エミュレーターの状態から来た時 (item) のフラクチャー済みは、鍵を付けずほかの狙いと同じ「フラクチャー予定」として出す (付け方を変えられる。2026-10-19 オーナー「フラクチャー済みも手打ちで変更できないから、フラクチャー予定でいい、どうせ後で設定で使う」) -->
         <span v-if="g.kind === 'fracture' && s.simStart.value !== 'white' && s.simStart.value !== 'item'" class="shrink-0 rounded border px-1 text-[11px] max-md:ml-[1.375rem] max-md:basis-full" :class="PLAN_CLS.fracture" title="1 ベースの始め方で決めたフラクチャーの MOD">{{ s.simStart.value === "fractured" ? "🔒 フラクチャー (買った物)" : "🔒 フラクチャーする (買った 4 MOD から)" }}</span>
         <!-- 付け方は押して選ぶ札を MOD の行のすぐ下に (2026-10-18 オーナー「MOD 選んだら付け方選べるように、高貴ガチャかカオススパムか冒涜・フラクチャー等」。前は 10px のプルダウンで気付けなかった) -->
-        <span v-else-if="props.plans && plansOf(g.host).length > 1" data-plan-pick class="flex basis-full flex-wrap items-center gap-1 pl-[1.375rem]" title="この MOD の付け方。打ち方の手で狙う時の目安 (後で変えられる)">
+        <span v-else-if="props.plans && planList(g.host).length > 1" data-plan-pick class="flex basis-full flex-wrap items-center gap-1 pl-[1.375rem]" title="この MOD の付け方。打ち方の手で狙う時の目安 (後で変えられる)">
           <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">付け方</span>
-          <button v-for="p in plansOf(g.host)" :key="p" type="button" class="rounded border px-1.5 py-px text-[12px] transition disabled:cursor-not-allowed disabled:opacity-40 max-md:min-h-9 max-md:px-2.5" :class="planOf(g) === p ? [PLAN_CLS[p], 'bg-white/10 font-bold'] : 'border-white/15 text-white/50 hover:bg-white/5 hover:text-white/80'" :aria-pressed="planOf(g) === p" :disabled="planOf(g) !== p && !!planOff(g)[p]" :title="planOff(g)[p] ?? (p === 'fracture' && g.kind !== 'fracture' && !canFracture(g.host) ? 'ほかのフラクチャー予定と違う側 (非推奨)' : undefined)" @click="setPlan(g, p)">{{ PLAN_JA[p] }}<span v-if="p === 'fracture' && g.kind !== 'fracture' && !canFracture(g.host)" class="ml-0.5 opacity-70">*</span></button>
+          <button v-for="p in planList(g.host)" :key="p" type="button" class="rounded border px-1.5 py-px text-[12px] transition disabled:cursor-not-allowed disabled:opacity-40 max-md:min-h-9 max-md:px-2.5" :class="samePlan(planOf(g), p) ? [PLAN_CLS[p], 'bg-white/10 font-bold'] : 'border-white/15 text-white/50 hover:bg-white/5 hover:text-white/80'" :aria-pressed="samePlan(planOf(g), p)" :disabled="!samePlan(planOf(g), p) && !!offOf(g)[p]" :title="offOf(g)[p] ?? (p === 'fracture' && g.kind !== 'fracture' && !canFracture(g.host) ? 'ほかのフラクチャー予定と違う側 (非推奨)' : undefined)" @click="!samePlan(planOf(g), p) && setPlan(g, p)">{{ planLabel(p) }}<span v-if="p === 'fracture' && g.kind !== 'fracture' && !canFracture(g.host)" class="ml-0.5 opacity-70">*</span></button>
         </span>
         <!-- 選んでいる間は印を押すと付け方を変えられる (足した時と同じポップアップ。2026-10-18 オーナー「決めた奴でも途中で変えれるように」) -->
-        <button v-else-if="props.editable && plansOf(g.host).length > 1" type="button" data-plan-change class="shrink-0 rounded border px-1 text-[11px] hover:bg-white/10 max-md:min-h-9 max-md:px-2" :class="PLAN_CLS[planOf(g)]" title="押すと付け方を変える" @click="methodPop?.ask($event.currentTarget as Element, plansOf(g.host), (p) => setPlan(g, p), planOff(g))">{{ PLAN_JA[planOf(g)] }} ▾</button>
-        <span v-else class="shrink-0 rounded border px-1 text-[11px]" :class="PLAN_CLS[planOf(g)]" :title="props.editable ? undefined : 'この MOD の付け方 (変えるなら 2 の段の「この段に戻る」)'">{{ PLAN_JA[planOf(g)] }}</span>
+        <button v-else-if="props.editable && planList(g.host).length > 1" type="button" data-plan-change class="shrink-0 rounded border px-1 text-[11px] hover:bg-white/10 max-md:min-h-9 max-md:px-2" :class="PLAN_CLS[planOf(g)]" title="押すと付け方を変える" @click="methodPop?.ask($event.currentTarget as Element, planList(g.host), (p) => !samePlan(planOf(g), p) && setPlan(g, p), offOf(g), props.auto ? AUTO_LABELS : undefined)">{{ planLabel(planOf(g)) }} ▾</button>
+        <span v-else class="shrink-0 rounded border px-1 text-[11px]" :class="PLAN_CLS[planOf(g)]" :title="props.editable ? undefined : 'この MOD の付け方 (変えるなら 2 の段の「この段に戻る」)'">{{ planLabel(planOf(g)) }}</span>
         <!-- 候補が 2 つ以上のフラクチャー予定・増強スパムの組: 残り (固定されなかった方 / マジックに入らなかった方) も要るか・その付け方 (無し = どれか 1 つで良い。2026-10-21 オーナー) -->
         <div v-if="restable(g) && props.editable" data-rest-row class="flex basis-full flex-wrap items-center gap-1 pl-[1.375rem] text-[12px]">
           <!-- まず「どれか 1 つ / どっちも」、どっちもの時だけその右に残りの付け方 (2026-10-21 オーナー「要らないとかややこしい。どっちかもしくはどっちもで選ばせて、どっちもなら固定されなかった方の付け方」) -->
@@ -366,10 +386,10 @@ function setRest(g: { kind: Kind; host: string }, p: RestPlan | null): void {
           <button type="button" data-rest-all class="rounded border px-1.5 py-px transition max-md:min-h-9 max-md:px-2.5" :class="restOf(g) ? 'border-amber-300 bg-amber-500/35 font-bold text-amber-50 ring-1 ring-amber-300/60' : 'border-white/15 text-white/50 hover:bg-white/5 hover:text-white/80'" :aria-pressed="!!restOf(g)" @click="!restOf(g) && setRest(g, REST_PLANS.find((p) => !restOff(g)[p]) ?? null)">{{ g.members.length === 2 ? "どっちも" : `全部 (${g.members.length} つ)` }}</button>
           <template v-if="restOf(g)">
             <span class="ml-2 text-[var(--exile-color-text-tertiary)]">{{ g.kind === "fracture" ? "固定されなかった方の付け方" : "残りの付け方" }}</span>
-            <button v-for="p in REST_PLANS" :key="p" type="button" :data-rest-pick="p" class="rounded border px-1.5 py-px transition disabled:cursor-not-allowed disabled:opacity-40 max-md:min-h-9 max-md:px-2.5" :class="restOf(g) === p ? [PLAN_CLS[p], 'bg-white/10 font-bold'] : 'border-white/15 text-white/50 hover:bg-white/5 hover:text-white/80'" :aria-pressed="restOf(g) === p" :disabled="restOf(g) !== p && !!restOff(g)[p]" :title="restOff(g)[p]" @click="setRest(g, p)">{{ PLAN_JA[p] }}</button>
+            <button v-for="p in restList()" :key="p" type="button" :data-rest-pick="p" class="rounded border px-1.5 py-px transition disabled:cursor-not-allowed disabled:opacity-40 max-md:min-h-9 max-md:px-2.5" :class="samePlan(restOf(g), p) ? [PLAN_CLS[p], 'bg-white/10 font-bold'] : 'border-white/15 text-white/50 hover:bg-white/5 hover:text-white/80'" :aria-pressed="samePlan(restOf(g), p)" :disabled="!samePlan(restOf(g), p) && !!restOff(g)[p]" :title="restOff(g)[p]" @click="!samePlan(restOf(g), p) && setRest(g, p)">{{ planLabel(p) }}</button>
           </template>
         </div>
-        <p v-else-if="restable(g) && restOf(g)" class="basis-full pl-[1.375rem] text-[12px] text-[var(--exile-color-text-secondary)]">└ 完成品に{{ g.members.length === 2 ? "どっちも" : "全部" }} · {{ g.kind === "fracture" ? "固定されなかった方" : "残り" }}は <span class="rounded border px-1 text-[11px]" :class="PLAN_CLS[restOf(g)!]">{{ PLAN_JA[restOf(g)!] }}</span></p>
+        <p v-else-if="restable(g) && restOf(g)" class="basis-full pl-[1.375rem] text-[12px] text-[var(--exile-color-text-secondary)]">└ 完成品に{{ g.members.length === 2 ? "どっちも" : "全部" }} · {{ g.kind === "fracture" ? "固定されなかった方" : "残り" }}は <span class="rounded border px-1 text-[11px]" :class="PLAN_CLS[restOf(g)!]">{{ planLabel(restOf(g)!) }}</span></p>
       </div>
     </div>
     <!-- プレとサフィにまたがる「どれか」(カオススパム) -->

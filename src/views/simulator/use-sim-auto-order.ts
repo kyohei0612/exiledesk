@@ -21,7 +21,8 @@ const ASTRID = "rune:Astrid's Creativity";
 const NEAR = 0.05;
 
 /** quizBase = ⑤ に渡す物と同じ入力 (use-sim-run の quizBase) */
-export function useSimAutoOrder(tg: SimTargetsCtx, quizBase: () => QuizSimIn | null) {
+/** autoOn = 自動で組む時 (② でも範囲を組んで調べる。始め方は ③ で決まるので、② ではフラクチャー済みから始めるとして調べる) */
+export function useSimAutoOrder(tg: SimTargetsCtx, quizBase: () => QuizSimIn | null, autoOn: () => boolean = () => false) {
   const { s, orderKeys, restRows, runeNeeded, redoOf, targetsSig } = tg;
   const rows = ref<AutoRow[]>([]);
   const busy = ref(false);
@@ -41,12 +42,13 @@ export function useSimAutoOrder(tg: SimTargetsCtx, quizBase: () => QuizSimIn | n
     const sim = quizBase();
     if (!sim) return Promise.resolve({ ok: false, reason: { ja: "狙いが無い", en: "No targets" } });
     const { data: _d, runePrice: _r, ...rest } = sim;
+    if (simStep.value === "mods") rest.start = "fractured";
     const p = client.build(rest, Object.fromEntries([...known].map((k) => [k, priceOf(k)])), ask);
     built = p;
     void p.then((r) => { if (built === p) blocked.value = r.ok ? null : tr(r.reason.ja, r.reason.en); });
     return p;
   }
-  const onOrder = (): boolean => simStep.value === "order" && orderKeys.value.length > 1;
+  const onOrder = (): boolean => (simStep.value === "order" && orderKeys.value.length > 1) || (simStep.value === "mods" && autoOn() && s.simTargets.value.length > 0);
   let timer: ReturnType<typeof setTimeout> | null = null;
   function schedule(): void {
     built = null;
@@ -122,7 +124,7 @@ export function useSimAutoOrder(tg: SimTargetsCtx, quizBase: () => QuizSimIn | n
   // ② の狙い・始め方・ベース・始めの値段を直したら表を消す
   watch(() => [targetsSig(), s.simStart.value, s.base.value, quizBase()?.startPrice], clear);
   // ④ に入った時・狙いや始め方 (quizBase) が変わった時に組み直す
-  watch(() => [quizBase(), simStep.value, orderKeys.value.length], schedule, { immediate: true });
+  watch(() => [quizBase(), simStep.value, orderKeys.value.length, autoOn()], schedule, { immediate: true });
   onBeforeUnmount(() => { if (timer) clearTimeout(timer); client.stop(); });
 
   return { rows, shown, busy, step, error, unsupported, blocked, start, stop, use };

@@ -2,7 +2,7 @@
  * sim-state.ts — シミュレーターの状態 (ベース選び・始め方・狙う MOD・順番・パターン)。state/craft-stage.ts から分けた (2026-10-16、500 行の決まり)。
  * 画面からは今まで通り craftStage.simTargets などで触る
  */
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import type { StageItem } from "../../services/craft-stage/types";
 import type { Pattern } from "../../services/simulator/pattern";
 
@@ -56,3 +56,11 @@ export type SimTargets = typeof simTargets.value;
  * 品質・コラプト・未発現は始めのアイテムに持ち越さない (始めは白ベース) ので、③ に断り書きを出すためだけに持つ。ベースを選び直したら消す (use-stage-base の pickSimBase)
  */
 export const simPasted = ref<{ ilvl: number | null; quality: number | null; corrupted: 0 | 1 | 2; unrevealed: number } | null>(null);
+/**
+ * 自動 / 手動 (2026-10-20 オーナー、設計 docs/org/simulator/notes/2026-10-20-auto-flow-design.md)。自動 = ② の付け方・④ の順番・⑤ の答えを最善手で埋める。
+ * 既定は手動、前回の選び方をこのブラウザに覚える。1 つ戻す (Snap) とレシピの保存 (flags.auto) に入る
+ */
+const AUTO_KEY = "exiledesk.sim.auto";
+export const simAuto = ref((() => { try { return localStorage.getItem(AUTO_KEY) === "1"; } catch { return false; } })());
+watch(simAuto, (v) => { try { localStorage.setItem(AUTO_KEY, v ? "1" : "0"); } catch { /* 覚えられなくても動く */ } });
+

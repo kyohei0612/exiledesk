@@ -20,6 +20,7 @@ import type { SimTargetsCtx } from "./use-sim-targets";
 import { useSimCalc } from "./use-sim-calc";
 export type { KeepPlan } from "./use-sim-calc";
 import type { SimSearchCtx } from "./use-sim-search";
+import { simAuto } from "../../state/simulator/sim-state";
 
 
 export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
@@ -345,7 +346,7 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
   /** 途中を覚える (変わるたびに)。開き直した時は CraftStage がベース・狙い・パターンを、ここが「決めた」を戻す */
   const sessionNow = () => ({
     base: s.base.value, itemLevel: s.itemLevel.value, targets: s.simTargets.value, sockets: s.simSockets.value, start: s.simStart.value, startItem: s.simStartItem.value, startCost: s.simStartCost.value, prices: { white: whiteDivine.value, four: fourDivine.value, bought: boughtDivine.value, item: itemDivine.value, magic: magicDivine.value, rare: rareDivine.value }, order: s.simOrder.value, patterns: s.simPatterns.value,
-    flags: { whiteOk: whiteOk.value, modsDone: modsDone.value, fracDone: fracDone.value, startDone: startDone.value, orderDone: orderDone.value, patternDone: patternDone.value },
+    flags: { whiteOk: whiteOk.value, modsDone: modsDone.value, fracDone: fracDone.value, startDone: startDone.value, orderDone: orderDone.value, patternDone: patternDone.value, auto: simAuto.value },
   });
   watch(() => JSON.stringify(sessionNow()), () => { if (s.simPicked.value) writeSimSession(sessionNow()); });
   const stale = computed(() => ranFor.value !== sig.value);

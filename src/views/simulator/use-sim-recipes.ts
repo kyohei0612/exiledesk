@@ -10,6 +10,7 @@ import { currentRecipeId, reloadRecipes, simNow } from "../../state/simulator/si
 import type { SimTargetsCtx } from "./use-sim-targets";
 import type { SimRunCtx } from "./use-sim-run";
 import { simJumpOpen } from "../../state/web-page";
+import { simAuto } from "../../state/simulator/sim-state";
 
 export function useSimRecipes(d: SimTargetsCtx & SimRunCtx) {
   const { boughtDivine, fourDivine, rareDivine, fracDone, itemDivine, loadKept, magicDivine, modsDone, sortDone, num, orderDone, patternDone, recipeOut,
@@ -42,6 +43,7 @@ export function useSimRecipes(d: SimTargetsCtx & SimRunCtx) {
     s.reset();
     whiteOk.value = !!ses.flags.whiteOk; modsDone.value = !!ses.flags.modsDone; sortDone.value = !!ses.flags.modsDone; fracDone.value = !!ses.flags.fracDone;
     startDone.value = !!ses.flags.startDone; orderDone.value = !!ses.flags.orderDone;
+    if (ses.flags.auto != null) simAuto.value = !!ses.flags.auto;
     results.value = [];
     recipeOut.value = null;
     currentRecipeId.value = r.id;

@@ -10,7 +10,7 @@ import { toCss } from "../../utils/zoom";
 import { tr } from "../../i18n/lang";
 import { swallowNextClick } from "../../utils/swallow-click";
 
-const open = ref<{ left: number; top: number; above: boolean; opts: SimMethod[]; off: Partial<Record<SimMethod, string>>; done: (m: SimMethod) => void } | null>(null);
+const open = ref<{ left: number; top: number; above: boolean; opts: SimMethod[]; off: Partial<Record<SimMethod, string>>; done: (m: SimMethod) => void; labels?: Partial<Record<SimMethod, readonly [string, string]>> } | null>(null);
 const W = 150;
 /** 開いたボタンと時刻 (開いた直後の自動の送りでは閉じずに付いていく) */
 let anchor: { btn: Element; at: number } | null = null;
@@ -38,8 +38,9 @@ function placeOf(btn: Element, n: number): { left: number; top: number; above: b
 }
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape") { e.stopPropagation(); close(); } }
 /** off: 選べない付け方とその理由 (灰色にして理由を出す) */
-function ask(btn: Element, opts: SimMethod[], done: (m: SimMethod) => void, off: Partial<Record<SimMethod, string>> = {}): void {
-  open.value = { ...placeOf(btn, opts.length), opts, off, done };
+/** labels = 名前の差し替え (自動の時の高貴 →「自動」。2026-10-20 S2) */
+function ask(btn: Element, opts: SimMethod[], done: (m: SimMethod) => void, off: Partial<Record<SimMethod, string>> = {}, labels: Partial<Record<SimMethod, readonly [string, string]>> = {}): void {
+  open.value = { ...placeOf(btn, opts.length), opts, off, done, labels };
   anchor = { btn, at: Date.now() };
   void nextTick(() => {
     document.addEventListener("pointerdown", outside, true);
@@ -56,7 +57,7 @@ defineExpose({ ask });
   <Teleport to="body">
     <div v-if="open" data-sim-method-pop class="fixed z-[320] rounded-lg border border-[var(--exile-color-border-brass)] bg-[#14110d] p-1.5 text-[12px] shadow-[0_8px_24px_rgba(0,0,0,0.75)]" :style="{ left: `${open.left}px`, top: `${open.top}px`, width: `${W}px`, transform: open.above ? 'translateY(-100%)' : undefined }">
       <p class="mb-1 px-1 text-[10px] text-[var(--exile-color-text-tertiary)]">{{ tr("付け方を選ぶ", "Choose how to add it") }}</p>
-      <button v-for="m in open.opts" :key="m" type="button" :data-method="m" class="block w-full rounded px-2 py-1 text-left hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent max-md:min-h-10" :disabled="!!open.off[m]" :title="open.off[m]" @click="pick(m)">{{ tr(METHOD_JA[m], METHOD_EN[m]) }}<span v-if="open.off[m]" class="block text-[10px] leading-tight text-rose-300/90">{{ open.off[m] }}</span></button>
+      <button v-for="m in open.opts" :key="m" type="button" :data-method="m" class="block w-full rounded px-2 py-1 text-left hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent max-md:min-h-10" :disabled="!!open.off[m]" :title="open.off[m]" @click="pick(m)">{{ open.labels?.[m] ? tr(open.labels[m]![0], open.labels[m]![1]) : tr(METHOD_JA[m], METHOD_EN[m]) }}<span v-if="open.off[m]" class="block text-[10px] leading-tight text-rose-300/90">{{ open.off[m] }}</span></button>
     </div>
   </Teleport>
 </template>
