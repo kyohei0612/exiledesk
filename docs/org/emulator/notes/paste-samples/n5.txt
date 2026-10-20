@@ -1,0 +1,27 @@
+Rarity: Rare
+Eagle Pace
+Sandsworn Sandals
+--------
+Quality: +20% (augmented)
+Energy Shield: 364 (augmented)
+--------
+Requires: Level 75, 101 Int
+--------
+Sockets: S S
+--------
+Item Level: 80
+--------
+20% increased Armour, Evasion and Energy Shield (rune)
+Can roll Chronomancy modifiers (rune)
+Bonded: +20 to maximum Life (rune)
+Bonded: +20 to maximum Mana (rune)
+Bonded: 10% increased Cooldown Recovery Rate (rune)
+--------
++58 to maximum Energy Shield (desecrated)
+103% increased Energy Shield (desecrated)
++33 to Intelligence (desecrated)
++28% to Fire Resistance (desecrated)
++21% to Cold Resistance (desecrated)
++19 to Stun Threshold (desecrated)
+--------
+Corrupted

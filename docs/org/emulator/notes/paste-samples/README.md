@@ -14,3 +14,14 @@
 | 8 | Grasping Ring | 英 | 3 と同じ物 (答えが 3 と同じになること) |
 
 形の特徴: 区切り線が無い。名前 → ベース → 「W」「P」→ 種類。暗黙に印が無い。
+
+## poe.ninja の形 (英語、オーナー 2026-10-20 夜、n1〜n5)
+`Rarity:` で始まり区切り線あり、行の後ろに印 (implicit / rune / desecrated / crafted / fractured / enchant / augmented)、`Bonded:` の行、`Sockets: S S`、`Corrupted`。
+
+| # | 物 | 読みの答え (10-20 夜、使い捨ての台本) |
+|---|---|---|
+| n1 | Unset Ring | MOD 5。レアリティ 35% はどの段にも収まらない (プレ 16-19 + サフィ 15-18 の 2 つを足した 1 行に見える。分け方は推し量らず段に収まらないの印)。火耐性 34% (crafted) はエッセンスの MOD (T1、エッセンスの段はアイテムレベルの縛りが無い) |
+| n2 | Gold Ring | MOD 6 (P3/S3) |
+| n3 | Kamasan Tiara | ルーン 2 (Bonded の行もルーン)、フラクチャー 1、冒涜 1、MOD 6 |
+| n4 | Lapis Amulet | 注油 (Allocates Madness in the Bones) は enchant、暗黙 1、MOD 6 |
+| n5 | Sandsworn Sandals | 冒涜 6 (P2/S4、枠 3/3 を超える。推し量らず数のまま)、ES 103% は段に収まらない (コラプトした物なので不明の印)、ルーン・絆 5 行 |

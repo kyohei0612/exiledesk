@@ -1,0 +1,22 @@
+Rarity: Rare
+Hypnotic Peak
+Kamasan Tiara
+--------
+Quality: +20% (augmented)
+Energy Shield: 371 (augmented)
+--------
+Requires: Level 75, 107 Int
+--------
+Sockets: S S
+--------
+Item Level: 82
+--------
+20% increased Area of Effect (rune)
+Bonded: 24% increased Reservation Efficiency of Companion Skills (rune)
+--------
+15% increased Rarity of Items found (fractured)
+98% increased Energy Shield
++142 to maximum Life
++43% to Fire Resistance
++39% to Lightning Resistance
++53 to maximum Energy Shield (desecrated)

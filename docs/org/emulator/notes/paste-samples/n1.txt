@@ -1,0 +1,15 @@
+Rarity: Rare
+Entropy Coil
+Unset Ring
+--------
+Requires: Level 48
+--------
+Item Level: 56
+--------
+Grants 1 additional Skill Slot (implicit)
+--------
++115 to maximum Life
+35% increased Rarity of Items found
++28% to Lightning Resistance
+Adds 13 to 18 Cold damage to Attacks (desecrated)
++34% to Fire Resistance (crafted)

@@ -102,7 +102,8 @@ export function parseItemText(data: PatchData, text: string): ItemTextResult {
       };
       continue;
     }
-    const prop = PROPERTY.exec(line);
+    // 「Bonded: …」(アイドル・ルーンの絆の効果、poe.ninja は (rune) の印つき) はコロンがあっても属性ではなくルーンの行
+    const prop = /^Bonded:/i.test(line) ? null : PROPERTY.exec(line);
     if (prop) {
       const [, label, value] = prop as unknown as [string, string, string];
       const l = label.trim();
@@ -276,10 +277,26 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
   const sideEffect = (side: string): number => picked
     .filter((p) => p.mod.type !== side && p.mod.id.endsWith(side === "prefix" ? "PrefixEffect" : "SuffixEffect"))
     .reduce((a, p) => a + (p.b.values[0] ?? 0), 0);
-  for (const { b, mod, fixed } of picked) {
+  const tierWith = (m: Mod, b: Body): { index: number; fits: boolean } => {
+    const side = m.type === "prefix" || m.type === "suffix" ? m.type : (b.side ?? null);
+    const q = out.quality && out.quality.tag && catalystBoosts(stub, { modId: m.id, tags: m.tags }, out.quality.tag, data) ? out.quality.value : 0;
+    // エッセンスの段はエッセンスの強さで決まり、アイテムレベルの縛りは無い (パーフェクトのエッセンスの段も同じ)
+    return tierOf(m, b.values, q + (side ? sideEffect(side) : 0), /essence/.test(String(m.source)) ? Infinity : level);
+  };
+  for (const pk of picked) {
+    const { b, fixed } = pk;
+    let mod = pk.mod;
+    let t = fixed ?? tierWith(mod, b);
+    // 値が段に収まらない時は、同じクラスの同じ文の別の MOD (エッセンス・冒涜・反対側) を見る。印が (crafted) ならエッセンス、(desecrated) なら冒涜を先に
+    if (!fixed && !t.fits) {
+      const cls = mod.id.split("/")[0];
+      const want = b.note === "crafted" ? /essence/ : b.note === "desecrated" ? /desecrated/ : /^$/;
+      const twins = [...data.mods.values()].filter((x) => x.id !== mod.id && x.id.split("/")[0] === cls && x.text === mod.text)
+        .sort((x, y) => Number(want.test(String(y.source))) - Number(want.test(String(x.source))));
+      for (const x of twins) { const tx = tierWith(x, b); if (tx.fits) { mod = x; t = tx; break; } }
+    }
     const side = mod.type === "prefix" || mod.type === "suffix" ? mod.type : (b.side ?? null);
-    const q = out.quality && out.quality.tag && catalystBoosts(stub, { modId: mod.id, tags: mod.tags }, out.quality.tag, data) ? out.quality.value : 0;
-    const { index, fits } = fixed ?? tierOf(mod, b.values, q + (side ? sideEffect(side) : 0), level);
+    const { index, fits } = t;
     out.mods.push({
       text: b.text, modId: mod.id, source: String(mod.source ?? "normal"), side, sideFrom: b.side ? "paste" : "engine",
       tier: { index, of: mod.tiers.length, label: `T${mod.tiers.length - index}`, name: String(mod.tiers[index]?.name ?? ""), fits },

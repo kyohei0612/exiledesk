@@ -1,0 +1,18 @@
+Rarity: Rare
+Rune Idol
+Lapis Amulet
+--------
+Requires: Level 60
+--------
+Item Level: 82
+--------
+Allocates Madness in the Bones (enchant)
+--------
++15 to Intelligence (implicit)
+--------
+42% increased Evasion Rating
++76 to maximum Mana
++45 to Spirit
++3 to Level of all Melee Skills
++16 to all Attributes
++24 to Strength

@@ -1,0 +1,16 @@
+Rarity: Rare
+Golem Hold
+Gold Ring
+--------
+Requires: Level 56
+--------
+Item Level: 78
+--------
+12% increased Rarity of Items found (implicit)
+--------
++96 to maximum Life
++161 to maximum Mana
+18% increased Rarity of Items found
++24 to Strength
++40% to Cold Resistance
++22% to Chaos Resistance
