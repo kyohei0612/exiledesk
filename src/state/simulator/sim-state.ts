@@ -55,7 +55,7 @@ export type SimTargets = typeof simTargets.value;
  * ① の「貼り付け」から始めた時に読んだ物 (2026-10-20 点検 1)。ilvl は ② の % と ③ のアイテムレベルに使う。
  * 品質・コラプト・未発現は始めのアイテムに持ち越さない (始めは白ベース) ので、③ に断り書きを出すためだけに持つ。ベースを選び直したら消す (use-stage-base の pickSimBase)
  */
-export const simPasted = ref<{ ilvl: number | null; quality: number | null; corrupted: 0 | 1 | 2; unrevealed: number; /** 品質の種類つきの見出し (「品質 (アタックモッド)」)。種類がある時だけ。② で「貼った値は品質で盛られている」と出す */ qualityLabel?: string } | null>(null);
+export const simPasted = ref<{ ilvl: number | null; quality: number | null; corrupted: 0 | 1 | 2; unrevealed: number } | null>(null);
 /**
  * 自動 / 手動 (2026-10-20 オーナー、設計 docs/org/simulator/notes/2026-10-20-auto-flow-design.md)。自動 = ② の付け方・④ の順番・⑤ の答えを最善手で埋める。
  * 既定は手動、前回の選び方をこのブラウザに覚える。1 つ戻す (Snap) とレシピの保存 (flags.auto) に入る

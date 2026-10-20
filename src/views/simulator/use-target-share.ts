@@ -17,11 +17,6 @@ export function useTargetShare(editable: () => boolean) {
   }
   /** 確率の % (2026-10-10 動きの揃え 5: 書き方は utils/format-pct.ts の 1 つ) */
   const pct = (x: number): string => fmtPct(x);
-  /** 貼った物の品質で盛られた値の断り (品質の種類がある時だけ) */
-  const pastedQuality = computed(() => {
-    const p = simPasted.value;
-    return p?.qualityLabel && p.quality ? tr(`貼った値は ${p.qualityLabel} +${p.quality}% で盛られている。ここの段の幅は素の値`, `Pasted values were boosted by ${p.qualityLabel} +${p.quality}%. The tier ranges here are unboosted`) : "";
-  });
   /** % の注記: 何の割合か・どのアイテムレベルの数か */
   const shareNote = computed(() => {
     const lv = s.itemLevel.value;
@@ -31,5 +26,5 @@ export function useTargetShare(editable: () => boolean) {
   });
 
 
-  return { shareOf, pct, pastedQuality, shareNote };
+  return { shareOf, pct, shareNote };
 }

@@ -22,7 +22,7 @@ import { useTargetShare } from "./use-target-share";
 const props = defineProps<{ /** ① で選んでいる間 (段・×・付け方の印を出す) */ editable?: boolean; /** 付け方を選べる (2 の「決めた」の後、3 を決めるまで。2026-10-18 オーナー「決めたボタンの後ここで設定する感じで」) */ plans?: boolean; /** 自動 (② の高貴 / カオスは自動が決める。2026-10-20 S2) */ auto?: boolean }>();
 const s = craftStage;
 const methodPop = ref<InstanceType<typeof SimMethodPop> | null>(null);
-const { pct, pastedQuality, shareNote, shareOf } = useTargetShare(() => !!props.editable);
+const { pct, shareNote, shareOf } = useTargetShare(() => !!props.editable);
 const { planLabel, samePlan, planList, restList, offOf, AUTO_LABELS, planOf, canFracture, setPlan, restable, restOf, restOff, setRest } = useTargetPlans(() => !!props.auto);
 const { openGroups, toggleGroup, sameRank, shortName, tierOptions, rows, presentOnStart, drop, setTier, mixed, columns, noOf, essTitle, badgeOf } = useTargetRows({ shareOf, restable, restOf });
 </script>
@@ -32,8 +32,6 @@ const { openGroups, toggleGroup, sameRank, shortName, tierOptions, rows, present
     <!-- % が何の割合か (2 は一番上のアイテムレベル、3 で決めたレベルで変わる。2026-10-18 初めての 10 人: 同じ MOD で 1.4% → 1.9% と変わって分からない) -->
     <!-- 貼り付けから始めた時は貼った物のアイテムレベルで (2026-10-20 点検 1・12: 貼り付け後も 86 の数だった)。注記は少し読みやすく -->
     <p v-if="rows.length" data-share-note class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ shareNote }}</p>
-    <!-- 貼ったアイテムに品質の種類がある時: 貼った値は盛られていて、ここの段の幅は素の値 (2026-10-20 見本 3: 冷気 36〜55 と T1 の幅が合わないように見えた) -->
-    <p v-if="rows.length && pastedQuality" data-paste-quality-note class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ pastedQuality }}</p>
     <div v-for="col in columns" :key="col.title" class="min-w-0">
       <!-- 狙う MOD は何個でもいい (枠より多くても、次の段で整理する時にまとめる。2026-10-18 オーナー) -->
       <p class="mb-0.5 border-b border-white/10 pb-0.5 text-[12px] font-bold opacity-70">
