@@ -6,7 +6,8 @@
  *     入口 services/craft-stage/engine.ts を通さずに読む
  *   B 凍結: アプリ専用の services/simulator/htc/ を、その外の Web の物 (アプリの物以外) が読む
  * 付け替え (手 7) の前なので、今の違反の数をファイルごとに控え (check-engine-entry.baseline.json) に持ち、
- * 増えた・新しく出た時だけ落ちる (オーナー 10-20 OK)。減ったら `--write` で控えを取り直す。
+ * 決まり (A・B) ごとの合計が控えより増えた時だけ落ちる (オーナー 10-20 OK)。ファイルを割って import が移っただけの時は
+ * 合計が同じなので落とさず、ファイルごとの増えは知らせだけ (10-20 の R3 で、移っただけで落ちたため)。減ったら `--write` で控えを取り直す。
  *
  *   node scripts/check-engine-entry.mjs           … 作業ツリーで数えて控えと比べる (CI は checkout = HEAD)
  *   node scripts/check-engine-entry.mjs --head    … commit 済みの HEAD の中身で数える (書きかけを入れない)
@@ -70,7 +71,10 @@ if (args.has("--write")) {
 const base = existsSync(BASE) ? JSON.parse(readFileSync(BASE, "utf8")) : {};
 const worse = Object.entries(count).filter(([k, n]) => n > (base[k] ?? 0));
 const better = Object.entries(base).filter(([k, n]) => (count[k] ?? 0) < n);
-for (const [k, n] of worse) console.log(`増えた: ${k} … ${base[k] ?? 0} → ${n} (入口 engine.ts から取る。足りない物はジン部長に入口へ)`);
+const sumOf = (o, r) => Object.entries(o).filter(([k]) => k.startsWith(`${r} `)).reduce((a, [, n]) => a + n, 0);
+const over = ["A", "B"].filter((r) => sumOf(count, r) > sumOf(base, r));
+for (const [k, n] of worse) console.log(`${over.includes(k[0]) ? "増えた" : "移った? (合計は増えていない)"}: ${k} … ${base[k] ?? 0} → ${n}`);
+for (const r of over) console.log(`増えた: ${r} の合計 ${sumOf(base, r)} → ${sumOf(count, r)} (入口 engine.ts から取る。足りない物はジン部長に入口へ)`);
 if (better.length) console.log(`減った ${better.length} ファイル: 良い。\`node scripts/check-engine-entry.mjs --head --write\` で控えを取り直す`);
-if (worse.length) process.exit(1);
+if (over.length) process.exit(1);
 console.log("増えた所なし");
