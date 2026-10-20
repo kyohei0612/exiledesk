@@ -2,7 +2,9 @@
  * auto-linear.ts — 方策を決めた時の期待値の連立方程式 V_i − Σ p_ij V_j = b_i を解く (解析君、2026-10-20)。
  *
  * 値の繰り返しは 0.3% の当たりの輪 (カオスで狙いが消えて付け直す) があると何千回も掃くので、方策の繰り返しの評価はこれで解く。
- * 行列は疎 (1 行に行き先 数十) なので BiCGSTAB (対角で前処理)。収まらなければガウス・ザイデルで仕上げる
+ * 行列は疎 (1 行に行き先 数十) なので BiCGSTAB (対角で前処理)。収まらなければ (ほとんど抜けられない輪で値が 1e20 を超える時など)、
+ * 小さい行列は掃き出し (部分ピボット) で解き直し、大きい行列はガウス・ザイデルで仕上げる。
+ * 抜けられない輪 (特異) は false。false の時 x の中身は使わない (NaN・ごみが入っている事がある)
  */
 export interface LinRow { oi: ArrayLike<number>; op: ArrayLike<number>; b: number }
 
@@ -55,7 +57,8 @@ export function solveLinear(rows: readonly LinRow[], x: Float64Array, tol = 1e-1
     rho = rho1;
     if (omega === 0) break;
   }
-  if (ok) return true;
+  if (ok && finite(x)) return true;
+  if (n <= DENSE_MAX) return solveDense(n, rp, C, A, b, x);
   // 仕上げ: ガウス・ザイデル (対角で割る)
   for (let sw = 0; sw < 20000; sw++) {
     let diff = 0;
@@ -64,10 +67,43 @@ export function solveLinear(rows: readonly LinRow[], x: Float64Array, tol = 1e-1
       for (let k = rp[i]!; k < rp[i + 1]!; k++) { const j = C[k]!; if (j !== i) acc -= A[k]! * x[j]!; }
       const nv = acc / diag[i]!;
       const d = Math.abs(nv - x[i]!) / (1 + Math.abs(nv));
-      if (d > diff) diff = d;
+      if (!(d <= diff)) diff = d; // NaN も収まっていない扱い
       x[i] = nv;
     }
-    if (diff < 1e-10) return true;
+    if (diff < 1e-10) return finite(x);
   }
   return false;
+}
+
+/** 掃き出しで解く行の数の上限 (2,500 で 50MB・1 回 数秒。見本の形は数百) */
+const DENSE_MAX = 2500;
+const finite = (x: Float64Array): boolean => x.every(Number.isFinite);
+
+/** A x = b を掃き出し (部分ピボット) で。ピボットが 0 に近い (抜けられない輪) なら false */
+function solveDense(n: number, rp: Int32Array, C: Int32Array, A: Float64Array, b: Float64Array, x: Float64Array): boolean {
+  const M = new Float64Array(n * n), y = Float64Array.from(b);
+  for (let i = 0; i < n; i++) for (let k = rp[i]!; k < rp[i + 1]!; k++) M[i * n + C[k]!]! += A[k]!;
+  for (let c = 0; c < n; c++) {
+    let piv = c, best = Math.abs(M[c * n + c]!);
+    for (let i = c + 1; i < n; i++) { const v = Math.abs(M[i * n + c]!); if (v > best) { best = v; piv = i; } }
+    // 行の和は 1 (I − P の対角) 程度なので、1e-13 未満は抜けられない輪
+    if (!(best > 1e-13)) return false;
+    if (piv !== c) {
+      for (let k = c; k < n; k++) { const t = M[c * n + k]!; M[c * n + k] = M[piv * n + k]!; M[piv * n + k] = t; }
+      const t = y[c]!; y[c] = y[piv]!; y[piv] = t;
+    }
+    const d = M[c * n + c]!;
+    for (let i = c + 1; i < n; i++) {
+      const f = M[i * n + c]! / d;
+      if (f === 0) continue;
+      for (let k = c; k < n; k++) M[i * n + k]! -= f * M[c * n + k]!;
+      y[i]! -= f * y[c]!;
+    }
+  }
+  for (let i = n - 1; i >= 0; i--) {
+    let s = y[i]!;
+    for (let k = i + 1; k < n; k++) s -= M[i * n + k]! * x[k]!;
+    x[i] = s / M[i * n + i]!;
+  }
+  return finite(x);
 }

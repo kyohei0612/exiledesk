@@ -141,6 +141,8 @@ export function orderDetail(model: AutoModel, order: readonly string[], opts: So
   const pol = new Int32Array(nv).fill(-2); // -2 諦める、-1 作り直し、0.. = 手
   const V = new Float64Array(nv);
   let sweeps = 0;
+  // 前の方策と値 (解けない方策が来たらここに戻して止める)
+  const polPrev = new Int32Array(nv), VPrev = new Float64Array(nv);
   for (let it = 0; it < 200; it++) {
     const rows: LinRow[] = [];
     for (let q = 0; q < nv; q++) {
@@ -150,7 +152,10 @@ export function orderDetail(model: AutoModel, order: readonly string[], opts: So
       else if (a === -1) rows.push({ oi: vStart.map(([, x]) => x), op: vStart.map(([p]) => p), b: Rr });
       else { const r = vRows[q]![a]!; rows.push({ oi: r.oi, op: r.op, b: r.c }); }
     }
-    solveLinear(rows, V);
+    // ほとんど抜けられない輪の方策は解けない事がある (値が 1e20 超え・特異)。そのごみの値で次の方策を選ぶと
+    // 本当に抜けられない輪になって NaN が広がる (手袋の 120 通りで 2 つ) → 1 つ前の方策 (解けている) に戻して止める
+    if (!solveLinear(rows, V) && it > 0) { pol.set(polPrev); V.set(VPrev); break; }
+    polPrev.set(pol); VPrev.set(V);
     sweeps++;
     const rs = Rr + vStart.reduce((a, [p, q]) => a + p * V[q]!, 0);
     let ch = 0;
@@ -208,11 +213,11 @@ export function orderDetail(model: AutoModel, order: readonly string[], opts: So
     costRows.push({ oi: r.oi, op: r.op, b: r.c }); doneRows.push({ oi: r.oi, op: r.op, b: 0 });
   }
   const TV = Float64Array.from(tList, (j) => V[vPos.get(viewOf(j)) ?? 0] ?? 0), PD = new Float64Array(nt).fill(0.5);
-  solveLinear(costRows, TV);
-  solveLinear(doneRows, PD);
+  const okT = solveLinear(costRows, TV), okD = solveLinear(doneRows, PD);
   const sweepsT = 2;
-  let cost = model.runeCost + tStart.reduce((a, [p, q]) => a + p * TV[q]!, 0);
-  let finish = tStart.reduce((a, [p, q]) => a + p * PD[q]!, 0);
+  // 解けない (抜けられない輪) 時は、費用は Infinity・完成は 0 扱い。完成の割合の小さな負 (−6e-12 など) は 0 に
+  let cost = okT ? model.runeCost + tStart.reduce((a, [p, q]) => a + p * TV[q]!, 0) : Infinity;
+  let finish = okD ? Math.min(1, Math.max(0, tStart.reduce((a, [p, q]) => a + p * PD[q]!, 0))) : 0;
 
   // 3. 1 人ずつ (⑤ と同じ関門の累計の打ち止め、乱数は mulberry32)
   const visits = new Map<number, number>();
@@ -243,7 +248,8 @@ export function orderDetail(model: AutoModel, order: readonly string[], opts: So
     }
     cost = tot / nmc; finish = nDone / nmc;
   }
-  const perFinish = finish > 0 ? (model.R + cost) / finish - model.R : Infinity;
+  const pf = finish > 0 ? (model.R + cost) / finish - model.R : Infinity;
+  const perFinish = Number.isFinite(pf) ? pf : Infinity;
   const result: OrderResult = { cost, finish, R: model.R, perFinish, mc: nmc, ms: Date.now() - t0 };
   const view = vList.map((v, q) => ({ s: g.st[v]!, act: polName(v) ?? "restart", V: V[q]!, visits: visits.get(v) ?? 0 }));
   return { result, gates, view, bad, stuck, size: { view: nv, true: nt, sweeps: sweeps + sweepsT } };

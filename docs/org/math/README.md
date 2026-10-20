@@ -14,7 +14,7 @@
 - 確率の表: src/services/craft-stage/held-odds.ts・aim-odds.ts・route-race.ts・chaos-spam.ts・spec/odds.ts。
 - 重み・段: src/services/htc/patch.ts・weight-overrides.ts・poe2db-pool-fixes.json・rune-weights.json、src/services/mods/mod-rules.ts・tiers.ts。段の下限は src/vendor/poe2htc/engine/types.ts の `CURRENCY_FLOOR` (変成・増強は高貴と違う)。
 - 回し方: src/services/simulator/quiz-recipe.ts (`runQuizOnce`)・quiz-build.ts (`quizFromSim`)、src/services/simulator/htc/sim-route*.ts・tree-decide.ts・step-odds.ts。お金 src/services/money.ts、相場 server/live/src/market.ts (`/boot.json`)。
-- 順番だけ自動 (④): src/services/simulator/auto/auto-model.ts (狙い → 札・重みの素の表)・auto-actions.ts (形と手・近似)・auto-solve.ts (`solveOrder`・`orderDetail`、型はシミュ部長と共有)・auto-linear.ts。確かめ scripts/analysis/check-auto-order.mjs (見本の手袋・靴、計算 vs runQuizOnce 1,000 人)、結果 notes/auto-order-2026-10-20.md。
+- 順番だけ自動 (④): src/services/simulator/auto/auto-model.ts (狙い → 札・重みの素の表)・auto-actions.ts (形と手・近似)・auto-solve.ts (`solveOrder`・`orderDetail`、型はシミュ部長と共有)・auto-linear.ts。確かめ scripts/analysis/check-auto-order.mjs (見本の手袋・靴、計算 vs runQuizOnce 1,000 人)・check-auto-nan.mjs (手袋の 120 通りに NaN・Infinity が無いか、1 分)、結果 notes/auto-order-2026-10-20.md。
 - 台本 scripts/: check-htc-odds-vs-coe・step-odds・tree-decide・tree-auto・sim-route・catalysing・catalysing-mdp (check-htc-*.mjs)・propose-borrowed-weights.mjs。前の自動モードの試し (dp.mjs・plan*.mjs 等、手袋専用) は scratchpad にありリポジトリには無い。汎用版は上の auto/ (メモ optimal-craft-dp・handoff-2026-10-22)。
 - CoE の写し: data-cache/coe-beta-package_poe2.js。
 - テスト tests/: held-odds-parity・aim-odds・chaos-spam・engine-emulator-parity・desecrate-reveal-rates・mod-weights・catalysing-greater。
