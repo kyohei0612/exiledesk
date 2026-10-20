@@ -32,7 +32,7 @@
 - /black コマンドと Discord Bot は作らない。
 - POE2Tube は ExileDesk 側 (video/、docs/org/video/) で管理する。古い C:\Users\kyohei\POE2Tube の cache・output は消してよい (確かめ済み、消すのはオーナー: notes/2026-10-21-replies-and-poe2tube.md)。
 - やふやふ手袋の段の件は金の指輪の検討 (動画 kQROcbbeR1M) に置き換え。
-- 要望 93d00e7c・91832821 の返事は「回答おｋ」。どちらも本番待ち (文は notes/2026-10-21-replies-and-poe2tube.md、本番に出したら置く)。
+- お告げの下の設定は本番へ (v0.1.589、f1e1a612)。93d00e7c の返事は置いた (聖別の倍率 + クラフト手順のチュートリアルは時間がかかる + 宣伝、くだけた調子)。91832821 は今回は置かない (① は止めた、② はシミュと一緒に本番の時)。返事の文はくだけた柔らかい調子で、要望の言葉に合わせる (オーナー 10-21)。文は notes/2026-10-21-replies-and-poe2tube.md。
 
 ## 触っている (同じファイルは順に。始める時に書き、commit したら消す)
 | 誰 | ファイル |

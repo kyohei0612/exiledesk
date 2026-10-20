@@ -1,6 +1,13 @@
 # 要望の返事 2 件と POE2Tube の古いフォルダー (開発部長、2026-10-21)
 
-## 1. 要望の返事 → 本番待ち (置いていない)
+## 1b. 置いた返事 (10-21 夜、v0.1.589 = お告げの下の設定を本番に出した後)
+オーナーの決め: 93d00e7c だけ置く (聖別の倍率 + クラフト手順は時間がかかる + 宣伝)、91832821 は今回は置かない。言い方はくだけた柔らかい調子、要望の言葉に合わせる。置いた物 (fbr:93d00e7c、GET /feedback/replies?ids=93d00e7c で確かめ済み):
+```json
+{"text":"聖別のお告げに、倍率を自分で決めるチェックを付けました！完全な聖別 (1.22 倍) もこれで試せます。クラフト手順のチュートリアルはすみません…ちょっと時間がかかりそうですが、できるだけ頑張ります！よかったら周りの人にも広めてもらえると嬉しいです！","en":"You can now pick the Sanctify multiplier yourself — just tick the box under Omen of Sanctification, so you can try a perfect Sanctify (1.22x) right away! The step-by-step crafting guides are going to take us a little longer, sorry about that… we'll do our best! And if you feel like it, telling your friends about ExileDesk would help us a ton!","version":"0.1.589"}
+```
+本番の出し方: 隣の worktree (../ExileDesk-devbuild) で HEAD から pending-release.md の revert の物 7 つを抜き、聖別の帯 e61bb9ab は画面に出す 1 か所だけ隠し、J11 ① は stage-core の `+ magnitudePct` 1 か所だけ外してビルド → 本体の dist-web に写して server/web を deploy。
+
+## 1. 要望の返事 → 本番待ち (置いていない、下は最初の下書き)
 本番 v0.1.588 には出ていない: クラフト手順のコースは `src/services/tutorial/course-release.ts` の REVIEW のまま (RELEASED に無い)、シミュレーターは本番で `SIM_LOCKED`。どちらも docs/pending-release.md の OK 待ち。
 本番に出したら下の JSON を `fbr:<id>` に置く (やり方はメモ feedback-replies。version は出した版に直す)。画面が頭に「ご報告ありがとうございます！」を付けるので、置くのは後ろだけ。
 
