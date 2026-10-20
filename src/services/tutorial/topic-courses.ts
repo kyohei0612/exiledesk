@@ -43,9 +43,7 @@ export interface TopicStep { use: string; omens?: string[]; note: JaEn; how?: Ja
   /** この MOD が消える成功例にする (乱数を先に選ぶ。ジュエルの左の消去で「+1 個」を消す) */
   wantRemoved?: string;
   /** 打った後にこの MOD の素の値がこの数になる成功例にする (クラフト手順の聖別で全スペル +3 → 素 4。2026-10-20 要望 93d00e7c) */
-  wantValue?: { mod: string; value: number };
-  /** コラプトしない成功例にする (連打の手は 1 回ごとに選ぶ。クラフト手順のヴァールのインフューザー) */
-  safe?: boolean }
+  wantValue?: { mod: string; value: number } }
 export interface TopicCourse {
   id: string;
   /** 1 入門 / 2 初級 / 3 中級 / 4 上級 / 5 クラフト手順 (完成品までを 1 手ずつ。topic-courses-guide.ts) */
