@@ -2,7 +2,7 @@
  * es-gloves-ev.mjs — ES の手袋 (知性、ilvl 82) のプレフィックス 3 つを、金の指輪の打ち方 C を左右逆にした形でエンジンに打たせる (解析君、2026-10-21)。
  * 結果は docs/org/math/notes/2026-10-21-es-gloves-ev.md
  *
- *   [ORB=exalt|exalt_greater|exalt_perfect] [RUNE="Serle's Triumph"] [BUDGET=2000] node scripts/analysis/es-gloves-ev.mjs [N=300] [SEED=1]
+ *   [ORB=exalt|exalt_greater|exalt_perfect] [RUNE="Serle's Triumph,Kolr's Hunt"] [BUDGET=2000] node scripts/analysis/es-gloves-ev.mjs [N=300] [SEED=1]
  *
  * 打つのは全部エンジンの入口 (applyCurrency)。台本は次の手を決めるだけ (nextMove)。
  * ベース: サイレーンスケイルの手袋 (Sirenscale Gloves、ES 54・レベル 80、知性の手袋で ilvl 82 の一番上の ES)。
@@ -19,8 +19,12 @@ const N = Number(process.argv[2] ?? 300);
 const SEED = Number(process.argv[3] ?? 1);
 const ORB = process.env.ORB ?? "exalt_greater";
 const BUDGET = Number(process.env.BUDGET ?? 2000);
-/** RUNE="Serle's Triumph" など: 始めにソケット 1 つ + そのルーンを差す (サム 10-21「ルーンを差した形にも回せるように」)。ルーン代は費用に入れない (値段を別に書く) */
-const RUNE = process.env.RUNE ?? null;
+/**
+ * RUNE="Serle's Triumph,Kolr's Hunt" など (カンマ区切り): 始めにソケットをルーンの数だけ + ルーンを差す (サム 10-21)。ルーン代は費用に入れない (値段を別に書く)。
+ * コルの狩りを差すとマークスマン MOD が置き場に入るので、投射物 +2 は startFrom でフラクチャー済みに付けられる (無い時は makeStageMod で置く)
+ */
+const RUNES = process.env.RUNE ? process.env.RUNE.split(",") : [];
+const RUNE = RUNES.join(" + ") || null;
 const LIMIT = 20000;
 const data = M.loadPatch();
 
@@ -36,8 +40,9 @@ const isTarget = (m) => KEYS.some((k) => need(k, m));
 const has = (it, k) => it.prefixes.some((m) => need(k, m));
 
 function start(rng) {
-  let it = M.startFrom(data, BASE, 82, { rarity: "rare", ...(RUNE ? { sockets: 1, runes: [RUNE] } : {}) }, Math.floor(rng() * 2 ** 31));
-  it = M.withMod(it, { ...M.makeStageMod(PROJ, "suffix", 1, rng), fractured: true });
+  const kolr = RUNES.includes("Kolr's Hunt");
+  let it = M.startFrom(data, BASE, 82, { rarity: "rare", ...(RUNES.length ? { sockets: RUNES.length, runes: RUNES } : {}), ...(kolr ? { mods: [{ mod: PROJ.id, tier: "T1", fractured: true }] } : {}) }, Math.floor(rng() * 2 ** 31));
+  if (!kolr) it = M.withMod(it, { ...M.makeStageMod(PROJ, "suffix", 1, rng), fractured: true });
   return M.applyCurrency(data, it, "exalt_greater", rng).item;
 }
 
