@@ -16,8 +16,8 @@ export interface AutoInput {
   price: (key: string) => number;
 }
 
-/** 対応範囲 (autoSupport)。ok でない時の reason は画面に出さない (確かめ用の短い日本語) */
-export type AutoSupport = { ok: true } | { ok: false; reason: string };
+/** buildAutoModel の結果。対応外 (範囲外の組み合わせ) は reason を画面にそのまま出す (日本語・英語 1 行) */
+export type AutoBuilt = { ok: true; model: AutoModel } | { ok: false; reason: { ja: string; en: string } };
 
 /** 順番 1 つの計算結果。費用はどれも高貴建て */
 export interface OrderResult {
@@ -43,10 +43,11 @@ export interface SolveOpts {
 }
 
 export type { AutoModel } from "./auto-model";
-export { autoSupport, buildAutoModel, orderableKeys } from "./auto-model";
+/** 画面の側 (s.data がある所) で 1 回。model は構造化複製できる素の物 (ワーカーへ postMessage で渡す)。重みも値段も中に入れてある */
+export { buildAutoModel } from "./auto-model";
 
 /**
- * 順番 1 つの費用。order = ④ の simOrder のキー ("mod:<id>"・"rest:frac"・"rest:<id>"・"rune:<名前>")。
+ * 順番 1 つの費用 (ワーカーの中で何回も。model だけで閉じる、エンジンのデータは読まない)。order = ④ の simOrder のキー ("mod:<id>"・"rest:frac"・"rest:<id>"・"rune:<名前>")。
  * 並べない行 (ルーン・増強スパム・フラクチャー済み) は入っていても無視する。model に無いキーも無視
  */
 export function solveOrder(model: AutoModel, order: readonly string[], opts: SolveOpts = {}): OrderResult {
