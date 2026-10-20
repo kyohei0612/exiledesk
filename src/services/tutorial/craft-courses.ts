@@ -8,12 +8,12 @@
  *
  * 1 コース = 動画 (か見本) 1 本のクイズのレシピ (quiz-tutorials.ts / quiz-samples.ts)。始めは動画と同じ状態 (買ったベース) を置く。
  * 付ける順番 = 完成の形の札の並び。今やる手 = 今のアイテムの状況に当たるレシピの手 (ruleFor)。
- * レシピはどれも 200 人で完成 100% を確かめてある (tests/craft-courses.test.ts)
+ * レシピはどれも 200 人で完成 100% を確かめてある (tests/tutorial/craft-courses.test.ts)
  */
 import type { JaEn } from "./quiz-tutorials";
 import { amuletCourse, bootsCourse, glovesCourse, spearCourse, wandCourse, type CourseRecipe } from "./course-recipes";
 import { assignSlots, routeOf, ruleFor, situationOf, type QuizAction, type QuizRecipe, type QuizSlot } from "../simulator/quiz-recipe";
-import type { StageItem } from "./types";
+import type { StageItem } from "../craft-stage/types";
 
 export interface CraftCourse {
   id: string;

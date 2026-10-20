@@ -1,8 +1,8 @@
 // クラフトのコース (craft-courses.ts): 元のレシピの手 (今やる手) だけで最後まで完成する。難しさ順に並ぶ
 import { describe, expect, it } from "vitest";
-import { loadPatch } from "./helpers/patch";
-import { runQuiz, runQuizOnce } from "../src/services/simulator/quiz-recipe";
-import { CRAFT_COURSES, courseSlots } from "../src/services/craft-stage/craft-courses";
+import { loadPatch } from "../helpers/patch";
+import { runQuiz, runQuizOnce } from "../../src/services/simulator/quiz-recipe";
+import { CRAFT_COURSES, courseSlots } from "../../src/services/tutorial/craft-courses";
 
 const data = loadPatch();
 describe("クラフトのコース", () => {

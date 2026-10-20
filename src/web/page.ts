@@ -14,13 +14,13 @@
  */
 import { computed, watch } from "vue";
 import { craftStage as s } from "../state/craft-stage";
-import { topic } from "../state/craft-topic";
-import { course } from "../state/craft-course";
-import { endLesson, inLesson, startTopicAt } from "../state/craft-lesson";
+import { topic } from "../state/tutorial/craft-topic";
+import { course } from "../state/tutorial/craft-course";
+import { endLesson, inLesson, startTopicAt } from "../state/tutorial/craft-lesson";
 import { basePage, baseUnpicked, feedbackPage, recipesPage, routesOpen, routesTarget, SIM_STEPS, simStep, type SimStep } from "../state/web-page";
 import { SIM_LOCKED } from "../state/craft-stage";
-import { TOPIC_COURSES } from "../services/craft-stage/topic-courses";
-import { courseShown } from "../services/craft-stage/course-release";
+import { TOPIC_COURSES } from "../services/tutorial/topic-courses";
+import { courseShown } from "../services/tutorial/course-release";
 import { pageTick } from "../utils/ads";
 import { tr } from "../i18n/lang";
 import { track } from "./track";

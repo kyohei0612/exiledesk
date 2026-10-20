@@ -4,10 +4,10 @@
  * 名前・説明・打つ処理はエミュレーターの物をそのまま使う (2026-10-17 オーナー「エンジンや名前・説明は全部エミュレーターから」)
  */
 import { computed, ref, watch } from "vue";
-import { craftStage as s } from "./craft-stage";
-import { logRecord } from "../utils/log-record";
-import { splitOmens } from "../services/craft-stage/run-plan";
-import { topicKey, type TopicCourse } from "../services/craft-stage/topic-courses";
+import { craftStage as s } from "../craft-stage";
+import { logRecord } from "../../utils/log-record";
+import { splitOmens } from "../../services/craft-stage/run-plan";
+import { topicKey, type TopicCourse } from "../../services/tutorial/topic-courses";
 
 export const topic = ref<TopicCourse | null>(null);
 /** 今の手の番号 (steps.length で完成) */

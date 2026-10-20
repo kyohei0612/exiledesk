@@ -8,8 +8,8 @@ import { craftStage as s, URL_BASE, type SimRecipe } from "../../state/craft-sta
 export const SIM_ILVL_MAX = 86;
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { scrollToTop } from "../../utils/keep-place";
-import { course } from "../../state/craft-course";
-import { topic } from "../../state/craft-topic";
+import { course } from "../../state/tutorial/craft-course";
+import { topic } from "../../state/tutorial/craft-topic";
 import { basePage, recipesPage, simStep } from "../../state/web-page";
 import { currentRecipeId } from "../../state/simulator/sim-recipe-store";
 

@@ -4,13 +4,13 @@
  * 付ける順番のどこまで済んだか・今やる手 (今の状況に当たるレシピの手) を出す
  */
 import { computed, ref, watch } from "vue";
-import { craftStage as s } from "./craft-stage";
-import { fullSockets } from "./stage-steps";
-import { buyStart } from "../services/simulator/quiz-recipe";
-import { startFrom } from "../services/craft-stage/run-plan";
-import { mulberry32 } from "../services/htc/rng";
-import { courseMove, courseSlots, courseState, type CraftCourse } from "../services/craft-stage/craft-courses";
-import type { Force } from "../services/craft-stage/stage-core";
+import { craftStage as s } from "../craft-stage";
+import { fullSockets } from "../stage-steps";
+import { buyStart } from "../../services/simulator/quiz-recipe";
+import { startFrom } from "../../services/craft-stage/run-plan";
+import { mulberry32 } from "../../services/htc/rng";
+import { courseMove, courseSlots, courseState, type CraftCourse } from "../../services/tutorial/craft-courses";
+import type { Force } from "../../services/craft-stage/stage-core";
 import { endTopic } from "./craft-topic";
 
 export const course = ref<CraftCourse | null>(null);

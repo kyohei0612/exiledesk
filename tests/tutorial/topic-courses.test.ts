@@ -1,12 +1,12 @@
 // 動作を学ぶコース (topic-courses.ts): 並べた手を順に打つと、どの手も必ず打てる (200 回)
 import { beforeAll, describe, expect, it } from "vitest";
-import { loadHtcPatch } from "../src/services/htc/patch";
-import { freshItem, startFrom } from "../src/services/craft-stage/run-plan";
-import { applyCurrency } from "../src/services/craft-stage/apply-currency";
-import { mulberry32 } from "../src/services/htc/rng";
-import { fullSockets } from "../src/state/stage-steps";
-import { TOPIC_COURSES, topicKey } from "../src/services/craft-stage/topic-courses";
-import type { PatchData } from "../src/vendor/poe2htc/engine/types";
+import { loadHtcPatch } from "../../src/services/htc/patch";
+import { freshItem, startFrom } from "../../src/services/craft-stage/run-plan";
+import { applyCurrency } from "../../src/services/craft-stage/apply-currency";
+import { mulberry32 } from "../../src/services/htc/rng";
+import { fullSockets } from "../../src/state/stage-steps";
+import { TOPIC_COURSES, topicKey } from "../../src/services/tutorial/topic-courses";
+import type { PatchData } from "../../src/vendor/poe2htc/engine/types";
 
 let data: PatchData;
 beforeAll(async () => { data = await loadHtcPatch(); });

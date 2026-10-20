@@ -1,12 +1,12 @@
 // クイズのチュートリアル 4 本 (quiz-tutorials.ts): 答えの無い状況に来ずに最後まで回る・画面の進め方 (正解だけ選ぶ) で完成する
 // 名前はクライアントの表 (items-ja-client.json) と棚の名前 (nameOfKey) から引けること
 import { describe, expect, it } from "vitest";
-import { loadPatch } from "./helpers/patch";
-import { runQuiz } from "../src/services/simulator/quiz-recipe";
-import { QUIZ_TUTORIALS, type TutorialRule } from "../src/services/craft-stage/quiz-tutorials";
-import { autoAdvance, playChoice, questionOf, startTutorial } from "../src/services/craft-stage/quiz-tutorial-run";
-import { nameOfKey } from "../src/state/craft-stage-shelf";
-import itemsJa from "../src/i18n/items-ja-client.json";
+import { loadPatch } from "../helpers/patch";
+import { runQuiz } from "../../src/services/simulator/quiz-recipe";
+import { QUIZ_TUTORIALS, type TutorialRule } from "../../src/services/tutorial/quiz-tutorials";
+import { autoAdvance, playChoice, questionOf, startTutorial } from "../../src/services/tutorial/quiz-tutorial-run";
+import { nameOfKey } from "../../src/state/craft-stage-shelf";
+import itemsJa from "../../src/i18n/items-ja-client.json";
 
 const data = loadPatch();
 const price = (): number => 1;

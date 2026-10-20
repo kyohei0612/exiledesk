@@ -6,8 +6,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
-import { canRetry, lessonJump, quitLesson, prepareStep, prepared, restartCourse, retryStep, rigRare } from "../../state/craft-lesson";
-import { topic, topicAt, topicCur, topicSub, topicDone, topicNext, topicReset, topicStep, topicUsed } from "../../state/craft-topic";
+import { canRetry, lessonJump, quitLesson, prepareStep, prepared, restartCourse, retryStep, rigRare } from "../../state/tutorial/craft-lesson";
+import { topic, topicAt, topicCur, topicSub, topicDone, topicNext, topicReset, topicStep, topicUsed } from "../../state/tutorial/craft-topic";
 import { stageAdds, stageFloor, stageHelp } from "../../state/craft-stage-help";
 import { aimLabel, modListFor } from "../../services/craft-stage/mod-list";
 import { factionCandidates } from "../../services/craft-stage/spec/parts";
@@ -19,8 +19,8 @@ import { currencyHoverOf } from "../../services/currency/currency-hover";
 import { enOf } from "../../state/craft-stage-shelf";
 import { modText, tr } from "../../i18n/lang";
 import Icon from "../../components/ui/Icon.vue";
-import type { JaEn } from "../../services/craft-stage/quiz-tutorials";
-import { topicKey, type TopicStep } from "../../services/craft-stage/topic-courses";
+import type { JaEn } from "../../services/tutorial/quiz-tutorials";
+import { topicKey, type TopicStep } from "../../services/tutorial/topic-courses";
 import type { StageMod } from "../../services/craft-stage/types";
 
 /** now = 今の手の枠 (棚の上) / course = コースの枠 (アイテムの下、既定) */

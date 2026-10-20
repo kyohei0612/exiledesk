@@ -8,7 +8,7 @@ import { useFlash } from "../../utils/use-flash";
 import { ARMED_CLASS, useArmed } from "../../utils/use-armed";
 import { tr } from "../../i18n/lang";
 import { SIM_LOCKED } from "../../state/craft-stage";
-import { inLesson } from "../../state/craft-lesson";
+import { inLesson } from "../../state/tutorial/craft-lesson";
 import StageRecipeStart from "../simulator/StageRecipeStart.vue";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { computed, ref, watch } from "vue";

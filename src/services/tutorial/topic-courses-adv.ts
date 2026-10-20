@@ -4,8 +4,8 @@
  * 作りは topic-courses.ts と同じ (start / prep / startMods / omens / chain)。prep の force:… は作った MOD・冒涜の MOD を決まった形で置く手、rune:… ははめる手、qset:… は品質を決める手
  */
 import type { JaEn } from "./quiz-tutorials";
-import type { Force } from "./stage-core";
-import type { StageItem } from "./types";
+import type { Force } from "../craft-stage/stage-core";
+import type { StageItem } from "../craft-stage/types";
 import type { TopicCourse, TopicStep } from "./topic-courses";
 
 const S = (use: string, note: JaEn, omens?: string[]): TopicStep => ({ use, note, ...(omens ? { omens } : {}) });

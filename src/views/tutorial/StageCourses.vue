@@ -6,17 +6,17 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { craftStage as s } from "../../state/craft-stage";
-import { startCourse } from "../../state/craft-course";
-import { cleared, startTopicAt } from "../../state/craft-lesson";
+import { startCourse } from "../../state/tutorial/craft-course";
+import { cleared, startTopicAt } from "../../state/tutorial/craft-lesson";
 import { iconOf, nameOf } from "../../state/craft-stage";
 import { freshItem } from "../../services/craft-stage/run-plan";
-import { CRAFT_COURSES, courseSlots } from "../../services/craft-stage/craft-courses";
-import { TOPIC_COURSES, topicKey, type TopicCourse, type TopicStep } from "../../services/craft-stage/topic-courses";
+import { CRAFT_COURSES, courseSlots } from "../../services/tutorial/craft-courses";
+import { TOPIC_COURSES, topicKey, type TopicCourse, type TopicStep } from "../../services/tutorial/topic-courses";
 import { baseNameOf, tr } from "../../i18n/lang";
 import { jaTypeName } from "../../services/trade2/localize";
 import Icon from "../../components/ui/Icon.vue";
-import type { JaEn } from "../../services/craft-stage/quiz-tutorials";
-import { courseShown as shown } from "../../services/craft-stage/course-release";
+import type { JaEn } from "../../services/tutorial/quiz-tutorials";
+import { courseShown as shown } from "../../services/tutorial/course-release";
 const PRACTICE_OPEN = false;
 
 const t2 = (x: JaEn): string => tr(x[0], x[1]);

@@ -3,13 +3,13 @@
  * 冒涜を学ぶなら冒涜のカレンシー全部体験 + 解説。エッセンス・カタリスト・お告げ周り、関連を一気に立て続けに紹介」)。
  *
  * 1 コース = 1 つのアイテムに、並べた手を順に打つ。どの手も、前の手まで打った状態なら必ず打てる並びにしてある
- * (tests/topic-courses.test.ts で 200 回ずつ確かめる)。note は大きく出す要点 1 行 (2026-10-17 オーナー「入門は要点でっかく表示のみ」)、細かい説明はエミュレーターのカードの文を「詳しく」に。
+ * (tests/tutorial/topic-courses.test.ts で 200 回ずつ確かめる)。note は大きく出す要点 1 行 (2026-10-17 オーナー「入門は要点でっかく表示のみ」)、細かい説明はエミュレーターのカードの文を「詳しく」に。
  * use の特別なキー: reset = 白に戻す / reveal = 発現 (どれを選んでも良い) / ess:<名前>:<段> = そのアイテムのエッセンス (棚から引く)
  */
 import type { JaEn } from "./quiz-tutorials";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import type { StageItem } from "./types";
-import type { Force } from "./stage-core";
+import type { StageItem } from "../craft-stage/types";
+import type { Force } from "../craft-stage/stage-core";
 import { essenceShelf } from "../../state/craft-stage-shelf";
 import { ADV_COURSES } from "./topic-courses-adv";
 

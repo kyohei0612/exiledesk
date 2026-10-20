@@ -6,10 +6,10 @@
  * 打ち方はシミュレーターと同じ applyQuizAction・乱数も 1 本 (同じ種なら同じ結果)。画面の状態は持たない (StageTutorial.vue が持つ)
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import type { StageItem, StageMod } from "./types";
+import type { StageItem, StageMod } from "../craft-stage/types";
 import { applyQuizAction, buyStart, revealWanted, routeDone, routeOf, ruleFor, situationOf, type QuizAction, type Situation } from "../simulator/quiz-recipe";
-import { applyCurrency } from "./apply-currency";
-import { revealOffers } from "./apply-desecrate";
+import { applyCurrency } from "../craft-stage/apply-currency";
+import { revealOffers } from "../craft-stage/apply-desecrate";
 import type { JaEn, QuizTutorial, TutorialRule } from "./quiz-tutorials";
 import { mulberry32 } from "../htc/rng";
 

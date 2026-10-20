@@ -6,7 +6,7 @@ import mtxRaw from "../src/services/mtx/mtx.json";
 import { usableInPoe2, type MtxData } from "../src/services/mtx/mtx";
 import { loadPatch } from "./helpers/patch";
 import { playPlan } from "../src/services/craft-stage/run-plan";
-import { diffItems } from "../src/services/craft-stage/compare";
+import { diffItems } from "../src/services/tutorial/compare";
 import type { CraftStagePlan } from "../src/services/craft-stage/contract";
 
 const mtx = mtxRaw as unknown as MtxData;

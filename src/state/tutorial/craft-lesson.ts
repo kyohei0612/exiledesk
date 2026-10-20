@@ -8,19 +8,19 @@
  *   2026-10-17 オーナー「クリアしたのに…みたいなかんじになるから A 型の細かい連中は」)
  */
 import { computed, ref, watch } from "vue";
-import { logRecord } from "../utils/log-record";
-import { craftStage as s, seedOfRoll } from "./craft-stage";
+import { logRecord } from "../../utils/log-record";
+import { craftStage as s, seedOfRoll } from "../craft-stage";
 import { course, courseView, endCourse } from "./craft-course";
 import { endTopic, goTopic, keepGoing, loopRound, startTopic, topic, topicAt, topicDone, topicSub, topicUsed } from "./craft-topic";
-import { fullSockets } from "./stage-steps";
-import { topicKey, type TopicCourse } from "../services/craft-stage/topic-courses";
-import { freshItem, startFrom } from "../services/craft-stage/run-plan";
-import { applyCurrency, omensFor } from "../services/craft-stage/apply-currency";
-import { mulberry32 } from "../services/htc/rng";
-import type { StageItem } from "../services/craft-stage/types";
-import { isRareChance } from "../utils/format-pct";
-import { catalystBoosts } from "../services/craft-stage/stage-core";
-import { revealOffers, unrevealedOf } from "../services/craft-stage/apply-desecrate";
+import { fullSockets } from "../stage-steps";
+import { topicKey, type TopicCourse } from "../../services/tutorial/topic-courses";
+import { freshItem, startFrom } from "../../services/craft-stage/run-plan";
+import { applyCurrency, omensFor } from "../../services/craft-stage/apply-currency";
+import { mulberry32 } from "../../services/htc/rng";
+import type { StageItem } from "../../services/craft-stage/types";
+import { isRareChance } from "../../utils/format-pct";
+import { catalystBoosts } from "../../services/craft-stage/stage-core";
+import { revealOffers, unrevealedOf } from "../../services/craft-stage/apply-desecrate";
 
 export const inLesson = computed(() => !!topic.value || !!course.value);
 /** チュートリアルの間はお告げを打つと消す (ゲームと同じ)。エミュレーターの既定は掛けっぱなし (2026-10-18 オーナー「デフォではかけっぱなし、チュートリアルでは分離して」) */

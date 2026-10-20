@@ -8,15 +8,15 @@ import { computed } from "vue";
 // 一番外が 2 つ (トピックの案内・コースの案内) なので、呼ぶ側の class は受け取らない (今まで付いていなかった物。Vue の警告だけ消す。2026-10-19 モンキーテスト)
 defineOptions({ inheritAttrs: false });
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
-import { course, courseBases, courseView, restartCourse } from "../../state/craft-course";
+import { course, courseBases, courseView, restartCourse } from "../../state/tutorial/craft-course";
 import { aimLabel } from "../../services/craft-stage/mod-list";
 import { tr } from "../../i18n/lang";
 import { displayCurrency } from "../../state/display-currency";
 import Icon from "../../components/ui/Icon.vue";
 import StageTopicGuide from "./StageTopicGuide.vue";
-import { quitLesson } from "../../state/craft-lesson";
-import { topic } from "../../state/craft-topic";
-import type { JaEn } from "../../services/craft-stage/quiz-tutorials";
+import { quitLesson } from "../../state/tutorial/craft-lesson";
+import { topic } from "../../state/tutorial/craft-topic";
+import type { JaEn } from "../../services/tutorial/quiz-tutorials";
 import type { QuizSlot } from "../../services/simulator/quiz-recipe";
 
 const t2 = (x: JaEn): string => tr(x[0], x[1]);

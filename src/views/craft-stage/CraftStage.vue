@@ -34,17 +34,17 @@ import StageAimPicker from "./StageAimPicker.vue";
 import CurrencyShelf from "./CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
 import { previewUse } from "../../services/craft-stage/spec/preview";
-import { endLesson, inLesson, inTopic } from "../../state/craft-lesson"; // チュートリアルのコースの間 (2026-10-17)
+import { endLesson, inLesson, inTopic } from "../../state/tutorial/craft-lesson"; // チュートリアルのコースの間 (2026-10-17)
 import RevealPanel from "./RevealPanel.vue";
 import { useStageFx } from "./use-stage-fx";
-const VideoStage = defineAsyncComponent(() => import("./VideoStage.vue")); // 後から読む (2026-10-19 スマホ強化: 最初に読む JS を縮める。その画面・カードを出す時に初めて読む)
+const VideoStage = defineAsyncComponent(() => import("../tutorial/VideoStage.vue")); // 後から読む (2026-10-19 スマホ強化: 最初に読む JS を縮める。その画面・カードを出す時に初めて読む)
 import StageModList from "./StageModList.vue";
 const StageSimPanel = defineAsyncComponent(() => import("../simulator/StageSimPanel.vue"));
-const StageCourses = defineAsyncComponent(() => import("./StageCourses.vue"));
-import GuideVideoCard from "./GuideVideoCard.vue";
-import StageCourseGuide from "./StageCourseGuide.vue";
-const StageTopicGuide = defineAsyncComponent(() => import("./StageTopicGuide.vue"));
-import VideoExtra from "./VideoExtra.vue";
+const StageCourses = defineAsyncComponent(() => import("../tutorial/StageCourses.vue"));
+import GuideVideoCard from "../tutorial/GuideVideoCard.vue";
+import StageCourseGuide from "../tutorial/StageCourseGuide.vue";
+const StageTopicGuide = defineAsyncComponent(() => import("../tutorial/StageTopicGuide.vue"));
+import VideoExtra from "../tutorial/VideoExtra.vue";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";

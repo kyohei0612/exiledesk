@@ -16,7 +16,7 @@ import { reqOfItem } from "../../services/craft-stage/stage-bases";
 import type { StageMod } from "../../services/craft-stage/types";
 import Icon from "../../components/ui/Icon.vue";
 import { planSpec } from "../../services/craft-stage/spec/run-spec";
-import { topicCur, topicStep } from "../../state/craft-topic";
+import { topicCur, topicStep } from "../../state/tutorial/craft-topic";
 
 const rerolled = ref(false);
 /**
