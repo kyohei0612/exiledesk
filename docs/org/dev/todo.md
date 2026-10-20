@@ -16,7 +16,7 @@
 | 解析君 K3 | src/services/simulator/auto/auto-model.ts |
 | 解析君 (一時) | scripts/_flux-probe.test.ts (やふやふは ed2c9ba3 で commit 済み) |
 | シミュ部長 S1e | SimPasteRead.vue・paste-read.ts・StageBasePage.vue・StageTargetSummary.vue・use-stage-base.ts |
-| ジン部長 J2 / J4 | tests/golden/ (J2、別の worktree) / J4 は始める時に 1 行 |
+| ジン部長 J6 | src/i18n/mod-text-ja.json・src/services/craft-stage/item-text.ts・docs/org/emulator/notes/paste-samples/・htc の poe2db の直しのファイル (憤怒 45 段目) |
 | ジン部長 J2 | tests/golden/ (探すのは別の worktree) |
 
 ## 順番 (2026-10-20 夜、オーナー OK 済みの物)
