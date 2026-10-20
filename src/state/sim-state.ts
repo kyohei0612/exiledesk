@@ -32,7 +32,11 @@ export const simStartItem = ref<StageItem | null>(null);
 /** ベースを選ぶ前に選んだレシピ (StageSimPanel が開いたら読み込む。2026-10-08 完成判定: レシピはベースを選ぶまで出なかった) */
 export const simPendingRecipe = ref<string | null>(null);
 export const simStartCost = ref(0);
-export const simTargets = ref<Array<{ modId: string; minTierIndex: number; method?: "exalt" | "chaos" | "augment" | "desecrate" | "essence" | "fracture"; alts?: Array<{ modId: string; minTierIndex: number }>; need?: number }>>([]);
+/**
+ * ② の狙い。rest = フラクチャー予定の狙いだけ: 候補が 2 つ以上で、固定されなかった方も完成品に要る時のその付け方 (無ければ「どれか 1 つで良い」。
+ * 2026-10-21 オーナー「どっちも要る時は一段下に付け方で 1 MOD 群増やして、フラクチャー以外の付け方を選ばせる。どっちかなら要らん」)
+ */
+export const simTargets = ref<Array<{ modId: string; minTierIndex: number; method?: "exalt" | "chaos" | "augment" | "desecrate" | "essence" | "fracture"; alts?: Array<{ modId: string; minTierIndex: number }>; need?: number; rest?: "exalt" | "chaos" | "desecrate" }>>([]);
 /** ② のこの手順 (本体の modId) の「あるいは」を選ぶポップアップを開いている ([[StageFracturePicker.vue]] の altFor) */
 export const simAltFor = ref<string | null>(null);
 /**

@@ -16,7 +16,7 @@ import { sideLimits } from "./sim-methods";
 
 export interface QuizRules { v: 3; rules: Record<string, QuizRule[]> }
 export type SimMethod = "exalt" | "chaos" | "augment" | "desecrate" | "essence" | "fracture";
-export interface SimTargetIn { modId: string; minTierIndex: number; method: SimMethod; alts?: Array<{ modId: string; minTierIndex: number }>; need?: number }
+export interface SimTargetIn { modId: string; minTierIndex: number; method: SimMethod; alts?: Array<{ modId: string; minTierIndex: number }>; need?: number; /** フラクチャー予定の狙い: 固定されなかった方も要る時の付け方 */ rest?: "exalt" | "chaos" | "desecrate" }
 export interface QuizSimIn {
   data: PatchData;
   base: string;
@@ -122,17 +122,27 @@ export function quizFromSim(x: QuizSimIn, q: QuizRules | null | undefined): Quiz
     const ids: string[] = [];
     for (let i = 0; i < need; i++) { const id = LETTERS[n++] ?? `Z${n}`; ids.push(id); slots.push({ id, side, mods: members, kind }); caps[id] = capOf(t.method); }
     slotIds.set(t.modId, ids);
+    // 増強スパムの組で残りの候補も要る時 (rest): 候補の数 − 1 の札をその付け方で (② の「残りの候補」、④ の順番のキー rest:<modId>。2026-10-21)
+    if (t.method === "augment" && t.rest && members.length > 1) {
+      const rid: string[] = [];
+      for (let i = 1; i < members.length; i++) { const id = LETTERS[n++] ?? `Z${n}`; rid.push(id); slots.push({ id, side, mods: members, kind: KIND[t.rest] }); caps[id] = capOf(t.rest); }
+      slotIds.set(`rest:${t.modId}`, rid);
+    }
   }
   /**
-   * 固定されなかった候補: その側に空きがあれば、後から取る札にする (完成品の MOD の数で決まる。2026-10-20 オーナー「フラクチャーでどっちかでいいけど
-   * 他 5 MOD 指定ならどっちかが完成品、どっちもなら他 4 MOD」)。付け方は ⑤ の答えで決める (札は普通の MOD、冒涜で付いても埋まる)。順番に無いので最後の関門
+   * 固定されなかった候補: ② で「固定されなかった方」の付け方を選んだ時だけ、後から取る札にする (2026-10-21 オーナー「どっちも要る時は一段下に
+   * 付け方で 1 MOD 群増やす、どっちかなら要らん」。前は空き枠があれば札にしていて、② の「どれか 1」と食い違っていた)。札の付け方はその選んだ物、
+   * 付ける順番は ④ の「固定されなかった方」の行 (順番のキー rest:frac)
    */
-  if (frac.length > 1 && fracSide) {
+  const rest = x.targets.find((t) => t.method === "fracture" && t.rest)?.rest ?? null;
+  if (frac.length > 1 && fracSide && rest) {
     const room = sideLimits(x.data, x.base, x.itemLevel)[fracSide] - slots.filter((s) => s.side === fracSide).length - (split ? 1 : 0);
     // 候補と重なる「どれか」の狙い (例: 高貴で ES かマナのどちらか) の候補も入れる。高貴でマナが付いたら、残りの札は ES で埋まる
     const mods = [...frac];
     for (const s of slots) if (s.side === fracSide && s.kind !== "fractured" && s.mods.some((m) => frac.some((c) => c.modId === m.modId))) for (const m of s.mods) if (!mods.some((y) => y.modId === m.modId)) mods.push(m);
-    for (let i = 0; i < Math.min(frac.length - 1, Math.max(0, room)); i++) { const id = LETTERS[n++] ?? `Z${n}`; slots.push({ id, side: fracSide, mods, kind: "normal" }); caps[id] = capOf(null); }
+    const ids: string[] = [];
+    for (let i = 0; i < Math.min(frac.length - 1, Math.max(0, room)); i++) { const id = LETTERS[n++] ?? `Z${n}`; ids.push(id); slots.push({ id, side: fracSide, mods, kind: KIND[rest] }); caps[id] = capOf(rest); }
+    slotIds.set("rest:frac", ids);
   }
   // グレーターの道: 残す MOD とエッセンスの MOD は始めから付いている (フラクチャーの前に付けた) ので、関門の一番前に (後ろだと「先の狙い」で隠れた。2026-10-20 見本の靴)
   const pre = x.greater ? [x.greater.keep?.modId, magicEss(x)].flatMap((id) => (id ? slotIds.get(id) ?? [] : [])) : [];

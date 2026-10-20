@@ -49,7 +49,7 @@ const rn = useSimRun({ ...tg, ...sr });
 const rc = useSimRecipes({ ...tg, ...rn });
 const st = useSimSteps({ ...tg, ...rn });
 const rs = useSimResult({ ...tg, ...sr, ...rn, ...rc });
-const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, startRunes, orderKeys, reorder, removeRune, runeChoices, toggleRune,
+const { s, runs, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, rows, runeNeeded, startRunes, restOfKey, orderKeys, reorder, removeRune, runeChoices, toggleRune,
   orderRow, runeJa, redoOf, REDO_METHOD_JA, patternStart, fracMembers, fractureRow, wholeRoute, boughtDivine, whiteDivine,
   fourDivine, itemDivine, num, socketsOk, socketCount, ageOf, searchIlvl, searchFour, searchWhite, mixedSides, searchBought, doneDivine,
   doneAge, searchDone, searchPattern, calc, whiteCosts, busy, phase, progressBox, error, recipeOut, phone, resultOf, shownName, cheapestName,
@@ -217,6 +217,12 @@ const stepNotes = computed(() => {
                   <span v-if="redoOf.get(orderRow(k)!.modId)" :class="redoOf.get(orderRow(k)!.modId)!.safe ? 'opacity-70' : 'text-amber-200'" :title="`取り直す時の見込み (計算機と同じ見積もり): ${REDO_METHOD_JA[redoOf.get(orderRow(k)!.modId)!.method]}で 1 回 ${money(redoOf.get(orderRow(k)!.modId)!.perTry)}・当たり ${pct(redoOf.get(orderRow(k)!.modId)!.p)}・外れ 1 回のやり直し ${money(redoOf.get(orderRow(k)!.modId)!.perMiss)}${redoOf.get(orderRow(k)!.modId)!.safe ? '' : '。外れを消す時にほかの物を巻き込む'}`">約 {{ money(redoOf.get(orderRow(k)!.modId)!.expected) }}</span>
                   <span data-drag-handle class="ml-1 inline-grid h-11 w-8 touch-none place-items-center rounded align-middle opacity-50 md:hidden"><Icon name="grip" class="size-4" /></span><!-- スマホは右にもつまみ (縦送りとかぶるので、左右どちらの指でも持てるように。2026-10-19 オーナー) -->
                 </td>
+              </template>
+              <!-- 残りの候補 (② の「固定されなかった方 / 残りの候補」。2026-10-21) -->
+              <template v-else-if="restOfKey(k)">
+                <td class="w-20 whitespace-nowrap py-1 pr-2 text-[10px] opacity-60">{{ restOfKey(k)!.label.startsWith("固定") ? "フラクチャー" : "増強" }}</td>
+                <td class="py-1"><span class="text-[var(--exile-color-text-secondary)]">{{ restOfKey(k)!.label }}</span> <span class="text-[#c8c8ff]">{{ restOfKey(k)!.text }}</span> <span class="ml-1 text-[10px] opacity-60">{{ METHOD_JA[restOfKey(k)!.method] }}</span></td>
+                <td class="w-6 py-1 text-right"><span data-drag-handle class="ml-1 inline-grid h-11 w-8 touch-none place-items-center rounded align-middle opacity-50 md:hidden"><Icon name="grip" class="size-4" /></span></td>
               </template>
               <template v-else>
                 <td class="w-20 py-1 pr-2 text-[10px] opacity-60">ルーン</td>

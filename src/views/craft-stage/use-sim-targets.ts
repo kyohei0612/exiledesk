@@ -114,8 +114,24 @@ export function useSimTargets() {
     }
     return out;
   });
+  /**
+   * 残りの候補の行 (② の「固定されなかった方 / 残りの候補」で付け方を選んだ組。2026-10-21): フラクチャーは rest:frac、増強スパムは rest:<本体の modId>。
+   * ⑤ の札の順番もこのキー (quiz-build の slotIds)
+   */
+  const restKeys = computed(() => {
+    const ts = s.simTargets.value;
+    const out: Array<{ k: string; label: string; method: RecipeMethod; text: string }> = [];
+    const fr = ts.filter((t) => t.method === "fracture");
+    const frRest = fr.find((t) => t.rest)?.rest;
+    const nameOf = (id: string): string => rows.value.find((r) => r.modId === id)?.text ?? rows.value.flatMap((r) => r.alts).find((a) => a.modId === id)?.text ?? id;
+    const frCands = fr.flatMap((t) => [t.modId, ...(t.alts ?? []).map((a) => a.modId)]);
+    if (frRest && frCands.length > 1) out.push({ k: "rest:frac", label: "固定されなかった方", method: frRest, text: frCands.map(nameOf).join(" ／ ") });
+    for (const t of ts) if (t.rest && t.method !== "fracture" && methodOf(t) === "augment" && t.alts?.length) out.push({ k: `rest:${t.modId}`, label: "増強スパムの残りの候補", method: t.rest, text: [t.modId, ...t.alts.map((a) => a.modId)].map(nameOf).join(" ／ ") });
+    return out;
+  });
+  const restOfKey = (k: string) => restKeys.value.find((x) => x.k === k);
   const orderKeys = computed(() => {
-    const all = [...new Set([...restRows.value.map((r) => `mod:${r.modId}`), ...runeNeeded.value, ...s.simOrder.value.filter((k) => k.startsWith("rune:"))])].filter((k) => !startRunes.value.has(k));
+    const all = [...new Set([...restRows.value.map((r) => `mod:${r.modId}`), ...restKeys.value.map((x) => x.k), ...runeNeeded.value, ...s.simOrder.value.filter((k) => k.startsWith("rune:"))])].filter((k) => !startRunes.value.has(k));
     // 増強スパムの狙いはマジックの間に付ける物なので一番上 (⑤ でも 1 つの関門で一番前。2026-10-21)
     const aug = new Set(restRows.value.filter((r) => r.method === "augment").map((r) => `mod:${r.modId}`));
     const pos = (k: string): number => { const i = s.simOrder.value.indexOf(k); return (aug.has(k) ? -2e6 : 0) + (i < 0 ? 1e6 + all.indexOf(k) : i); };
@@ -322,7 +338,7 @@ export function useSimTargets() {
     return { text, old: min >= 1440 };
   }
   return { s, runs, MAX_STEPS_KEY, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, methodsFor, methodOf, rows, targetsSig, restRows,
-    runeNeeded, startRunes, orderKeys, moveOrder, reorder, addRune, removeRune, runeChoices, toggleRune, orderRow, runeJa, redoPlan, redoOf,
+    runeNeeded, startRunes, restKeys, restOfKey, orderKeys, moveOrder, reorder, addRune, removeRune, runeChoices, toggleRune, orderRow, runeJa, redoPlan, redoOf,
     REDO_METHOD_JA, patternStart, fractureRows, fracMembers, fractureRow, wholeRoute, makeRoute, blocker, boughtDivine, magicDivine,
     whiteDivine, fourDivine, rareDivine, itemDivine, exOf, toExalt, num, PRICE_KEY, keptAll, craftCap, socketCap, sockets, socketsOk,
     socketCount, socketQuery, keptKey, kept, loadKept, saveKept, restoring, ageOf };

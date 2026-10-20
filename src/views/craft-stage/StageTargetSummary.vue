@@ -169,7 +169,8 @@ const columns = computed(() => (["P", "S"] as const).map((side) => {
     if (m) { m.hosts.push(g.host); m.need += 1; continue; }
     merged.push({ ...g, hosts: [g.host] });
   }
-  const used = merged.reduce((a, g) => a + g.need, 0);
+  // 残りも要る時 (rest) は、組が候補の数だけ枠を使う
+  const used = merged.reduce((a, g) => a + (restable(g) && restOf(g) ? g.members.length : g.need), 0);
   return { title: side === "P" ? "プレフィックス" : "サフィックス", groups: merged, used };
 }));
 /**
@@ -256,8 +257,8 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
   if (p === "augment") { s.simTargets.value = toAugment(s.data.value, list, g.kind === "fracture" ? list.filter((t) => t.method === "fracture").map((t) => t.modId) : g.hosts ?? [g.host]); return; }
   if (g.kind === "fracture") {
     if (p === "fracture") return;
-    // フラクチャー予定のまとまりを全部その付け方に
-    list = list.map((t) => (t.method === "fracture" ? { ...t, method: p } : t));
+    // フラクチャー予定のまとまりを全部その付け方に (固定されなかった方の付け方 rest は外す)
+    list = list.map((t) => { if (t.method !== "fracture") return t; const { rest: _r, ...o } = t; return { ...o, method: p }; });
   } else {
     const hs = g.hosts ?? [g.host];
     list = list.map((t) => (hs.includes(t.modId) ? { ...t, method: p } : t));
@@ -265,6 +266,29 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
     if (p === "fracture") list = [...list.filter((t) => t.method === "fracture"), ...list.filter((t) => t.method !== "fracture")];
   }
   s.simTargets.value = list;
+}
+
+/**
+ * 残りの付け方 (2026-10-21 オーナー「どっちも要る時は一段下に付け方で 1 MOD 群増やして、フラクチャー以外の付け方を選ばせる。どっちかなら要らん」
+ * 「増強の場合とかでもどっちもの場合、後工程で付け方選ばせんとぐちゃる」)。候補が 2 つ以上のフラクチャー予定の組 (固定されなかった方) と
+ * 増強スパムの組 (マジックで付くのは側ごとに 1 つ、残り) だけ。無し = どれか 1 つで良い。カオススパムは何個でも狙えるので整理の段の「全部 / どれか N」で足りる
+ */
+const REST_PLANS = ["exalt", "chaos", "desecrate"] as const;
+type RestPlan = (typeof REST_PLANS)[number];
+const restable = (g: { kind: Kind; host: string; members: Row[] }): boolean => g.members.length > 1 && (g.kind === "fracture" || planOf(g) === "augment");
+const restOf = (g: { kind: Kind; host: string }): RestPlan | null =>
+  (g.kind === "fracture" ? s.simTargets.value.find((t) => t.method === "fracture" && t.rest)?.rest : s.simTargets.value.find((t) => t.modId === g.host)?.rest) ?? null;
+function restOff(g: { members: Row[] }): Partial<Record<RestPlan, string>> {
+  const side = (id: string): string => (s.data.value?.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
+  const fs = side(g.members[0]!.modId);
+  const out: Partial<Record<RestPlan, string>> = {};
+  if (s.simTargets.value.some((t) => t.method === "chaos" && side(t.modId) !== fs)) out.chaos = "カオススパムは反対側で選んでいる (片側だけ)";
+  if (g.members.some((m) => s.data.value?.mods.get(m.modId)?.source !== "normal")) out.exalt = out.chaos = "候補に普通の MOD 以外がある";
+  return out;
+}
+function setRest(g: { kind: Kind; host: string }, p: RestPlan | null): void {
+  const hit = (t: { modId: string; method?: string }): boolean => (g.kind === "fracture" ? t.method === "fracture" : t.modId === g.host);
+  s.simTargets.value = s.simTargets.value.map((t) => { if (!hit(t)) return t; const { rest: _r, ...o } = t; return p ? { ...o, rest: p } : o; });
 }
 </script>
 
@@ -324,6 +348,13 @@ function setPlan(g: { kind: Kind; host: string; hosts?: string[] }, p: Plan): vo
         <!-- 選んでいる間は印を押すと付け方を変えられる (足した時と同じポップアップ。2026-10-18 オーナー「決めた奴でも途中で変えれるように」) -->
         <button v-else-if="props.editable && plansOf(g.host).length > 1" type="button" data-plan-change class="shrink-0 rounded border px-1 text-[11px] hover:bg-white/10 max-md:min-h-9 max-md:px-2" :class="PLAN_CLS[planOf(g)]" title="押すと付け方を変える" @click="methodPop?.ask($event.currentTarget as Element, plansOf(g.host), (p) => setPlan(g, p), planOff(g))">{{ PLAN_JA[planOf(g)] }} ▾</button>
         <span v-else class="shrink-0 rounded border px-1 text-[11px]" :class="PLAN_CLS[planOf(g)]" :title="props.editable ? undefined : 'この MOD の付け方 (変えるなら 2 の段の「この段に戻る」)'">{{ PLAN_JA[planOf(g)] }}</span>
+        <!-- 候補が 2 つ以上のフラクチャー予定・増強スパムの組: 残り (固定されなかった方 / マジックに入らなかった方) も要るか・その付け方 (無し = どれか 1 つで良い。2026-10-21 オーナー) -->
+        <div v-if="restable(g) && props.editable" data-rest-row class="flex basis-full flex-wrap items-center gap-1 pl-[1.375rem] text-[12px]">
+          <span class="text-[var(--exile-color-text-tertiary)]" :title="g.kind === 'fracture' ? '固定されなかった候補も完成品に要るなら、後から付ける付け方を選ぶ。どれか 1 つで良いなら「要らない」' : 'マジックで付くのは側ごとに 1 つ。残りの候補も完成品に要るなら、後から付ける付け方を選ぶ'">└ {{ g.kind === "fracture" ? "固定されなかった方" : "残りの候補" }}</span>
+          <button type="button" data-rest-none class="rounded border px-1.5 py-px transition max-md:min-h-9 max-md:px-2.5" :class="!restOf(g) ? 'border-amber-400/70 bg-white/10 font-bold text-amber-100' : 'border-white/15 text-white/50 hover:bg-white/5 hover:text-white/80'" :aria-pressed="!restOf(g)" @click="setRest(g, null)">要らない (どれか 1 つ)</button>
+          <button v-for="p in REST_PLANS" :key="p" type="button" :data-rest-pick="p" class="rounded border px-1.5 py-px transition disabled:cursor-not-allowed disabled:opacity-40 max-md:min-h-9 max-md:px-2.5" :class="restOf(g) === p ? [PLAN_CLS[p], 'bg-white/10 font-bold'] : 'border-white/15 text-white/50 hover:bg-white/5 hover:text-white/80'" :aria-pressed="restOf(g) === p" :disabled="restOf(g) !== p && !!restOff(g)[p]" :title="restOff(g)[p]" @click="setRest(g, p)">{{ PLAN_JA[p] }}</button>
+        </div>
+        <p v-else-if="restable(g) && restOf(g)" class="basis-full pl-[1.375rem] text-[12px] text-[var(--exile-color-text-secondary)]">└ {{ g.kind === "fracture" ? "固定されなかった方" : "残りの候補" }}: <span class="rounded border px-1 text-[11px]" :class="PLAN_CLS[restOf(g)!]">{{ PLAN_JA[restOf(g)!] }}</span></p>
       </div>
     </div>
     <!-- プレとサフィにまたがる「どれか」(カオススパム) -->

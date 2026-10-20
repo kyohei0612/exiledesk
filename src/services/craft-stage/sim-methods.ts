@@ -20,7 +20,7 @@ export function methodsFor(d: PatchData | null, modId: string): SimMethod[] {
 }
 
 /** シミュレーターの狙い 1 つ (state/sim-state.ts の simTargets と同じ形) */
-export interface SimTargetLike { modId: string; minTierIndex: number; method?: SimMethod; alts?: Array<{ modId: string; minTierIndex: number }>; need?: number }
+export interface SimTargetLike { modId: string; minTierIndex: number; method?: SimMethod; alts?: Array<{ modId: string; minTierIndex: number }>; need?: number; rest?: "exalt" | "chaos" | "desecrate" }
 
 /**
  * 側ごとに使う枠の数 (2026-10-18 オーナー「狙う MOD は何個でもいい、後で整理した際にまとめる」→ 整理の段で枠に収める)。
@@ -35,6 +35,14 @@ export function sideUse(d: PatchData | null, targets: readonly SimTargetLike[]):
     else out[side(t.modId)]++;
   }
   for (const sd of fr) out[sd as "prefix" | "suffix"]++;
+  // 増強スパムの組で残りも要る時 (rest) は、その側に候補の数 − 1 の枠を足す (2026-10-21)
+  for (const t of targets) if (t.method === "augment" && t.rest) out[side(t.modId)] += [t, ...(t.alts ?? [])].filter((x) => side(x.modId) === side(t.modId)).length - 1;
+  // フラクチャーの固定されなかった方も要る時 (rest) も同じ
+  if (targets.some((t) => t.method === "fracture" && t.rest)) {
+    const cands = new Set(targets.filter((t) => t.method === "fracture").flatMap((t) => [t.modId, ...(t.alts ?? []).map((a) => a.modId)]));
+    const sd = side([...cands][0]!);
+    out[sd] += Math.max(0, [...cands].filter((id) => side(id) === sd).length - 1);
+  }
   return out;
 }
 

@@ -29,7 +29,7 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
   /** 反対側で揃える狙い (calc.keep の手順) */
   const keepTarget = () => { const h = calc.value?.keep?.host; return h ? simIn().find((t) => t.modId === h) ?? null : null; };
   /** 狙いをクイズのレシピの入力の形に (付け方は決めた物) */
-  const simIn = () => s.simTargets.value.map((t) => ({ modId: t.modId, minTierIndex: t.minTierIndex, method: methodOf(t), ...(t.alts?.length ? { alts: t.alts } : {}), ...(t.need ? { need: t.need } : {}) }));
+  const simIn = () => s.simTargets.value.map((t) => ({ modId: t.modId, minTierIndex: t.minTierIndex, method: methodOf(t), ...(t.alts?.length ? { alts: t.alts } : {}), ...(t.need ? { need: t.need } : {}), ...(t.rest && (t.method === "fracture" || methodOf(t) === "augment") ? { rest: t.rest } : {}) }));
   const { calc } = useSimCalc(d, simIn);
   /** 白から自作の費用の分かれ方 (2 万人分、小さい順。③ の「買う値段までに作れる割合」。2026-10-20) */
   const whiteCosts = computed(() => { const c = calc.value; return c && !c.cantRoll && Number.isFinite(c.total) ? selfCraftCosts(whiteCraftIn(c, priceOf)) : null; });
