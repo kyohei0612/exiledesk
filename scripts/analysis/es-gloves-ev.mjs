@@ -90,11 +90,14 @@ function runOne(rng) {
  * + 投射物 +2 (F)。X = クリティカルヒット率 T2+ (マークスマン) + クリティカルダメージボーナス T2+。Y = クリダメ T2+ + アーケインサージ (冒涜、保存された肋骨)。
  * ANNUL=plain: 外れはお告げ無しの消去 (プレフィックスに当たったら、消えた狙いを左側の高貴 + 上級で作り直す・外れのプレフィックスも消去)。
  * ANNUL=dextral: 外れのサフィックスは右側の消去のお告げ + 消去 (サフィックスだけ)。足すのは右側の高貴 + 上級。カオスは使わない。
+ * ANNUL=light: 外れが冒涜 MOD なら光のお告げ + 消去 (冒涜 MOD だけ消える)、それ以外の外れは右側の消去のお告げ + 消去。
+ * ECHO=1: 発現の 3 つにアーケインサージが無ければ、深淵の反響のお告げで 1 回だけ引き直す (エンジンの 2 組目の候補)
  * 冒涜: プレフィックスが 3 つ埋まった時だけ (未発現の枠はサフィックスに入る)。発現は 3 つの候補にアーケインサージがあればそれ、無ければ 1 番 (外れ → 消去)
  */
 if (process.env.SUF) {
   const SUFK = process.env.SUF, AN = process.env.ANNUL ?? "plain";
-  Object.assign(PRICES, { desecrate: 6.749, OmenofDextralExaltation: 35.576, OmenofDextralAnnulment: 9408.082 });
+  Object.assign(PRICES, { desecrate: 6.749, OmenofDextralExaltation: 35.576, OmenofDextralAnnulment: 9408.082, OmenofLight: 6730.815, OmenofAbyssalEchoes: 61.603 });
+  const ECHO = !!process.env.ECHO;
   const S = SUFK === "X"
     ? { CC: { id: "Gloves_int/Rune_marksman_CriticalStrikeChanceIncrease", down: 2 }, CD: { id: "Gloves_int/CriticalStrikeMultiplier", down: 2 } }
     : { CD: { id: "Gloves_int/CriticalStrikeMultiplier", down: 2 }, AS: { id: "Gloves_int/ArcaneSurgeOnCrit", down: 1, desecrated: true } };
@@ -132,8 +135,13 @@ if (process.env.SUF) {
         const seed = Math.floor(rng() * 2 ** 31);
         const offers = M.revealOffers(data, it, M.mulberry32(seed));
         const i = offers.first.findIndex((m) => m.modId === S.AS?.id);
-        r = use(`reveal:${i >= 0 ? i + 1 : 1}`, [], M.mulberry32(seed));
-      } else if (mv.kind === "annulS") r = use("annul", AN === "dextral" ? ["OmenofDextralAnnulment"] : []);
+        const j = offers.reroll.findIndex((m) => m.modId === S.AS?.id);
+        if (i >= 0 || !ECHO) r = use(`reveal:${i >= 0 ? i + 1 : 1}`, [], M.mulberry32(seed));
+        else r = use(`reveal:${j >= 0 ? j + 1 : 1}:reroll`, ["OmenofAbyssalEchoes"], M.mulberry32(seed));
+      } else if (mv.kind === "annulS") {
+        const junk = it.suffixes.filter((m) => !m.fractured && !okS(m));
+        r = use("annul", AN === "light" && junk.some((m) => m.desecrated) ? ["OmenofLight"] : AN === "plain" ? [] : ["OmenofDextralAnnulment"]);
+      }
       else if (mv.kind === "annulP") r = use("annul");
       else if (mv.kind === "exaltP") r = use("exalt_greater", ["OmenofSinistralExaltation"]);
       else if (mv.kind === "exaltS") r = use("exalt_greater", ["OmenofDextralExaltation"]);
@@ -149,9 +157,9 @@ if (process.env.SUF) {
   const costs = done.map((r) => costOf(r.n)).sort((a, b) => a - b);
   const spent = rs.reduce((a, r) => a + costOf(r.n), 0);
   const mm = avg(costs), se = Math.sqrt(avg(costs.map((c) => (c - mm) ** 2)) / (costs.length || 1));
-  console.log(`=== ES 手袋のサフィックス ${SUFK} / 消去 ${AN} (${N} 人, 打ち止め ${BUDGET} 神)`);
+  console.log(`=== ES 手袋のサフィックス ${SUFK} / 消去 ${AN}${ECHO ? " / 反響で引き直し" : ""} (${N} 人, 打ち止め ${BUDGET} 神)`);
   console.log(`完成 ${(100 * done.length / N).toFixed(1)}%  1 個あたり ${(spent / (done.length || NaN)).toFixed(2)} 神  完成した人の平均 ${mm.toFixed(2)} (±${(1.96 * se).toFixed(2)})  中央 ${costs[Math.floor(costs.length / 2)]?.toFixed(1)}  90% ${costs[Math.floor(costs.length * 0.9)]?.toFixed(1)}`);
-  for (const k of ["annul", "OmenofDextralAnnulment", "exalt_greater", "OmenofDextralExaltation", "OmenofSinistralExaltation", "desecrate", "reveal"]) {
+  for (const k of ["annul", "OmenofDextralAnnulment", "OmenofLight", "OmenofAbyssalEchoes", "exalt_greater", "OmenofDextralExaltation", "OmenofSinistralExaltation", "desecrate", "reveal"]) {
     const c = avg(done.map((r) => r.n[k] ?? 0));
     console.log(`  ${k.padEnd(28)} ${c.toFixed(2).padStart(9)} 個  ${(c * (PRICES[k] ?? 0) / DIV).toFixed(2).padStart(8)} 神`);
   }
