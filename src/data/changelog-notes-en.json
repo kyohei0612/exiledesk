@@ -1,4 +1,7 @@
 {
+  "0.1.587": [
+    "Fixed Spam Simulator luck shares on X showing the generic site card and not opening the luck run (links shared Oct 19–21 can’t be recovered, please share again)"
+  ],
   "0.1.586": [
     "Mod list tabs are now labeled “Regular” and “Desecrated-only” (were “Normal” and “Desecrated”)"
   ],

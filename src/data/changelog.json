@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.587",
+  "date": "2026-10-20",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "スパムシミュレーターの運試しを X でシェアした時に、結果のカードが出ず、開いても運試しにならなかったのを直しました (10/19〜10/21 のシェアのリンクは直らないので、もう一度シェアしてください)",
+    "en": "Fixed Spam Simulator luck shares on X showing the generic site card and not opening the luck run (links shared Oct 19–21 can’t be recovered, please share again)"
+   }
+  ]
+ },
+ {
   "v": "0.1.586",
   "date": "2026-10-20",
   "items": [
@@ -612,18 +624,6 @@
     "area": "",
     "text": "英語の画面: 更新内容を英語で出すように。ベースの読み物のページの英語版 (/en/bases/) を作りました",
     "en": "English: release notes are now shown in English, and the base pages are available in English (/en/bases/)"
-   }
-  ]
- },
- {
-  "v": "0.1.547",
-  "date": "2026-10-17",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "聖別のお告げ: 神のオーブと同じく数値を振り直してから 0.78〜1.22 倍に (前は今の数値に倍率を掛けるだけ)。段の上限を超えることもあります",
-    "en": "Omen of Sanctification: values are now rerolled like a Divine Orb before being multiplied by 0.78–1.22 (previously the multiplier was applied to the current values). Values can exceed the tier's range"
    }
   ]
  }
