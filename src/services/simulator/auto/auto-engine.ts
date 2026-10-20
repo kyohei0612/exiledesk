@@ -12,7 +12,9 @@
  * 近似: 外れの MOD は代表 (狙いとも互いとも系統が重ならない物) で置く。エッセンスの札が付いている時の代表は外れと同じ代わりの MOD
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
+import { ANCIENT_BONE_FLOOR } from "../../../vendor/poe2htc/engine/probability";
 import { startFrom, stepOutcomes, type StageItem, type StageMod } from "../../craft-stage/engine";
+import type { QuizStart } from "../quiz-recipe";
 import type { AutoModel } from "./auto-model";
 import { actionsOf, engActs, engKey, junkToView, Shape, type EngAct, type State } from "./auto-actions";
 
@@ -139,4 +141,83 @@ function repItem(sh: Shape, s: State, ctx: EngCtx): { item: StageItem; roles: Ma
     roles.set(modKey(o.added.find((y) => y.unrevealed)!), { r: "u" });
   }
   return { item, roles };
+}
+
+type Bought = Extract<QuizStart, { kind: "bought" }>;
+const SIDE_OMEN_EX = { prefix: "OmenofSinistralExaltation", suffix: "OmenofDextralExaltation" } as const;
+const sig = (x: StageItem): string => [...x.prefixes, ...x.suffixes].map((m) => `${m.modId}|${m.tierIndex}|${m.unrevealed ? "u" : ""}|${m.desecrated ? "d" : ""}|${m.fractured ? "f" : ""}`).sort().join(",");
+
+/**
+ * 始めの形の分かれ方 (⑤ の buildStart と同じ手順を stepOutcomes の枝で): 候補を重みで 1 つ → startFrom → 側のお告げの高貴で埋める (fill) →
+ * 作った後に打つ物 (steps: エッセンス・王者 → 壁) → 最後に固定 (fracture)。できたアイテムを形に振り分ける。組めなければ理由の文字列
+ */
+export function startStates(sh: Shape, ctx: EngCtx, st: Bought, minT: number[][]): Array<[number, State]> | string {
+  const picks = st.pick?.length ? st.pick : [{ mods: st.mods, runes: st.runes, w: 1, fracture: st.fracture }];
+  const wSum = picks.reduce((a, x) => a + Math.max(0, x.w), 0) || 1;
+  const out = new Map<string, [number, State]>();
+  for (const pk of picks) {
+    if (!(pk.w > 0)) continue;
+    let item: StageItem;
+    try { item = startFrom(ctx.data, ctx.base, ctx.itemLevel, { mods: pk.mods, ...(st.rarity ? { rarity: st.rarity } : st.fill ? { rarity: "rare" as const } : {}), ...(st.sockets ? { sockets: st.sockets } : {}), ...((pk.runes ?? st.runes)?.length ? { runes: pk.runes ?? st.runes } : {}) }, 1); } catch { return "始めの状態が組めない"; }
+    let br: Array<{ p: number; item: StageItem }> = [{ p: 1, item }];
+    const step = (key: string, omens: string[], need?: (x: StageItem) => boolean) => {
+      const m = new Map<string, { p: number; item: StageItem }>();
+      const put = (p: number, x: StageItem) => { const k = sig(x); const e = m.get(k); if (e) e.p += p; else m.set(k, { p, item: x }); };
+      for (const b of br) {
+        if (need && !need(b.item)) { put(b.p, b.item); continue; }
+        const r = stepOutcomes(ctx.data, b.item, key, omens);
+        // 打てない・不成立は打つ前のまま (buildStart は applyCurrency の item をそのまま使う)
+        if (!r || !r.length) { put(b.p, b.item); continue; }
+        for (const o of r) put(b.p * o.p, o.void ? b.item : o.item);
+      }
+      br = [...m.values()];
+    };
+    for (const side of SIDE) {
+      const want = st.fill?.[side] ?? 0;
+      for (let k = 0; k < 20 && br.some((b) => b.item[side === "prefix" ? "prefixes" : "suffixes"].length < want); k++) step("exalt", [SIDE_OMEN_EX[side]], (x) => x[side === "prefix" ? "prefixes" : "suffixes"].length < want);
+    }
+    for (const x of st.steps ?? []) step(x.use, x.omens ?? []);
+    const fracture = pk.fracture ?? st.fracture;
+    for (const b of br) {
+      const fx = (ms: StageMod[]): StageMod[] => ms.map((m) => (m.modId === fracture ? { ...m, fractured: true } : m));
+      const it = fracture ? { ...b.item, prefixes: fx(b.item.prefixes), suffixes: fx(b.item.suffixes) } : b.item;
+      const s = classify(sh, it, minT);
+      if (!s) return "始めの状態が形に入らない";
+      const k = sh.key(s), e = out.get(k);
+      if (e) e[0] += (pk.w / wSum) * b.p; else out.set(k, [(pk.w / wSum) * b.p, s]);
+    }
+  }
+  return [...out.values()];
+}
+
+/** アイテム → 形 (固定の候補・札・外れ・冒涜の印)。段が低い札は 1+m、冒涜で付いた段の低い狙いは外れの冒涜 (発現と同じ扱い) */
+function classify(sh: Shape, it: StageItem, minT: number[][]): State | null {
+  const m = sh.m;
+  const s: State = [-1, ...new Array<number>(sh.K).fill(0), 0, 0, 0];
+  for (const x of [...it.prefixes, ...it.suffixes]) {
+    const side: 0 | 1 = x.side === "prefix" ? 0 : 1;
+    if (x.fractured) {
+      const i = m.frac.picks.findIndex((p) => p.modId === x.modId);
+      if (i < 0 || s[0]! >= 0) return null;
+      s[0] = i; continue;
+    }
+    if (x.unrevealed) { s[sh.dx()] = 1 + 2 * side + ((x.unrevealed.floor ?? 0) >= ANCIENT_BONE_FLOOR ? 1 : 0); continue; }
+    let put = false;
+    for (let k = 0; k < sh.K && !put; k++) {
+      const sl = m.slots[k]!;
+      if (sl.side !== side || s[1 + k] !== 0) continue;
+      const mi = sl.members.findIndex((mb) => mb.modId === x.modId);
+      if (mi < 0) continue;
+      const hit = x.tierIndex >= minT[k]![mi]!;
+      if (x.desecrated && !hit) break;
+      s[1 + k] = hit ? 1 + sh.M[k]! + mi : 1 + mi;
+      if (x.desecrated) s[sh.dx()] = 7 + k;
+      put = true;
+    }
+    if (put) continue;
+    s[sh.jx(side)]!++;
+    if (x.desecrated) s[sh.dx()] = 5 + side;
+  }
+  if (s[0]! < 0) return null;
+  return sh.canon(s);
 }

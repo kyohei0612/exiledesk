@@ -1,7 +1,7 @@
 /**
  * check-auto-order.mjs — ④ の「順番だけ自動」の計算 (src/services/simulator/auto/) を、⑤ の回し方 (エンジン) と並べる (解析君、2026-10-20)
  *
- *   node scripts/analysis/check-auto-order.mjs [gloves|boots|all] [N=1000] [TOP=3]
+ *   node scripts/analysis/check-auto-order.mjs [gloves|boots|white|all] [N=1000] [TOP=3]
  *
  * 見本: やふやふ手袋 (マナ T1 固定、スピード・ES T3・投射物 +2・会心倍率 T3・攻撃速度 T3、前の試し plan5 の TIER=3 と同じ完成品)、
  *       靴 (移動速度を固定、耐性 T1 × 2・スピリット (完璧なエッセンス)・ドッジロール (冒涜))。
@@ -67,6 +67,13 @@ function boots() {
   return { name: "靴 (移動速度を固定)", sim: { data, base: "Vaal Greaves", itemLevel: 82, targets, start: "fractured", startPrice: 30 * DIV, sockets: 2, runePrice }, label };
 }
 
+/** 白からマジックで反対側の狙い (会心倍率) と一緒に揃える道 (③ の keep が together の時に画面が渡す greater: { essKey: null, keep }、K3) */
+function glovesWhite() {
+  const g = gloves();
+  const keep = g.sim.targets.find((t) => t.modId.endsWith("/CriticalStrikeMultiplier"));
+  return { ...g, name: "手袋 (白から・会心倍率をマジックで一緒に)", sim: { ...g.sim, greater: { essKey: null, keep } } };
+}
+
 const perms = (xs) => (xs.length <= 1 ? [xs] : xs.flatMap((x, i) => perms([...xs.slice(0, i), ...xs.slice(i + 1)]).map((r) => [x, ...r])));
 const div = (v) => (v / DIV).toFixed(1);
 const pct = (a, b) => (b ? `${(((a - b) / b) * 100).toFixed(1)}%` : "-");
@@ -89,11 +96,12 @@ function engine(sim, order, quiz, n) {
   return { open: [...open.values()], cost: m ? cost / m : NaN, finish: m ? done / m : NaN, unans, gate, blocked, why: Object.entries(why).sort((a, b) => b[1] - a[1]).slice(0, 3), sec: (Date.now() - t0) / 1000 };
 }
 
-for (const S of (which === "all" ? [gloves(), boots()] : which === "boots" ? [boots()] : [gloves()])) {
+for (const S of (which === "all" ? [gloves(), boots(), glovesWhite()] : which === "boots" ? [boots()] : which === "white" ? [glovesWhite()] : [gloves()])) {
   console.log(`\n== ${S.name}`);
   const b = M.buildAutoModel({ sim: S.sim, price });
   if (!b.ok) { console.log("  対応外:", b.reason.ja); continue; }
   const model = b.model;
+  if (process.env.SHOW_STARTS) console.log("  始めの形:", model.starts.map(([p, st]) => `${(p * 100).toFixed(1)}% [${st.join(",")}]`).join(" "), model.slots.map((sl) => sl.id + ":" + sl.members.map((m) => m.modId.split("/")[1]).join("/")).join(" "));
   console.log(`  札 ${model.slots.length} (${model.slots.map((s) => s.id + (s.side ? "S" : "P")).join(" ")})、並べる行 ${model.keys.length}、作り直し R ${div(model.R)} 神、ルーン代 ${div(model.runeCost)} 神`);
   const name = (o) => o.map((k) => S.label[k] ?? k).join(" → ");
   // 1. 値だけで全部

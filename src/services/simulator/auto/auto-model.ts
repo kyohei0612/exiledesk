@@ -17,7 +17,8 @@ import type { StageItem, StageSide } from "../../craft-stage/types";
 import { quizFromSim } from "../quiz-build";
 import type { QuizSlot } from "../quiz-recipe";
 import { runeEnForId } from "../pattern";
-import { fillEngine } from "./auto-engine";
+import { fillEngine, startStates } from "./auto-engine";
+import { Shape } from "./auto-actions";
 import type { AutoBuilt, AutoInput } from "./auto-solve";
 
 /** 重みの等級: 高貴・カオスの 普通 / 上級 / 完全 (a0〜a2)、骨の 保存 / 古代 (b0・b4) */
@@ -53,6 +54,8 @@ export interface AutoModel {
   exRates: number[];
   /** 発現の候補の数 (エンジンの REVEAL_SPEC) */
   offers: number;
+  /** 始めの形の分かれ方 [割合, 形] (⑤ の始めのアイテムの作り方を stepOutcomes でたどった物、auto-engine の startStates) */
+  starts: Array<[number, number[]]>;
   /** 消去・光・骨・完璧なエッセンスの行き先の表 (形の中身の鍵 → 手の名前 → [p, 差分…] の並び)。build の時に stepOutcomes で作る (auto-engine.ts) */
   eng: Record<string, Record<string, number[][]>>;
   /** 形の版 (中身を変えたら上げる。ワーカーの持つ写しの見分け) */
@@ -71,7 +74,8 @@ const no = (ja: string, en: string): AutoBuilt => ({ ok: false, reason: { ja, en
 export function buildAutoModel(input: AutoInput): AutoBuilt {
   const x = input.sim, d: PatchData = x.data;
   if (x.start !== "fractured") return no("自動の順番はフラクチャー済みから始める時だけ", "Auto order needs a fractured start");
-  if (x.greater) return no("グレーターエッセンスの道は自動の順番に未対応", "Greater Essence routes aren't supported yet");
+  // 白からマジックで反対側の狙いと一緒に揃える道 (greater の essKey が null) は始めの形が違うだけなので対応 (K3)。グレーターエッセンスを使う道はまだ
+  if (x.greater?.essKey) return no("グレーターエッセンスの道は自動の順番に未対応", "Greater Essence routes aren't supported yet");
   if (x.targets.some((t) => t.method === "augment")) return no("増強スパムの狙いは自動の順番に未対応", "Augmentation spam isn't supported yet");
   const { recipe, error } = quizFromSim({ ...x, order: undefined }, null);
   if (error) return no(error, "These targets can't be built");
@@ -178,9 +182,14 @@ export function buildAutoModel(input: AutoInput): AutoBuilt {
   }
   const model: AutoModel = {
     keys, R: x.startPrice, runeCost, runes: runeAll, cap: [limitOf(rare, "prefix"), limitOf(rare, "suffix")], slots, keyIds, frac, pools, prices,
-    exRates: DESECRATION_EXCLUSIVE_COUNT.map((c) => c.rate), offers: REVEAL_SPEC.actions.flatMap((a) => ("reveal" in a ? [a.reveal.offers] : []))[0] ?? 3, eng: {}, version: 3,
+    exRates: DESECRATION_EXCLUSIVE_COUNT.map((c) => c.rate), offers: REVEAL_SPEC.actions.flatMap((a) => ("reveal" in a ? [a.reveal.offers] : []))[0] ?? 3, starts: [], eng: {}, version: 3,
   };
-  const err = fillEngine(model, { data: d, base: x.base, itemLevel: x.itemLevel, ...(x.sockets ? { sockets: x.sockets } : {}), runes: runeAll, junk });
+  const ectx = { data: d, base: x.base, itemLevel: x.itemLevel, ...(x.sockets ? { sockets: x.sockets } : {}), runes: runeAll, junk };
+  if (st.kind !== "bought") return no("この始め方は自動の順番に未対応", "This start isn't supported yet");
+  const ss = startStates(new Shape(model), ectx, st, rest.map((r) => r.mods.map((mm) => mm.minTierIndex)));
+  if (typeof ss === "string") return no(ss, "The start item can't be modelled");
+  model.starts = ss;
+  const err = fillEngine(model, ectx);
   if (err) return no(err, "Too many shapes for auto order");
   return { ok: true, model };
 }

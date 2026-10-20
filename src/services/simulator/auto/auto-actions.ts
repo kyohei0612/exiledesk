@@ -43,8 +43,9 @@ export class Shape {
   dx = (): number => 3 + this.K;
   hit = (k: number, v: number): boolean => v > this.M[k]!;
   member = (k: number, v: number): number => (v - 1) % this.M[k]!;
+  /** 始めの形の分かれ方 (build の時に auto-engine の startStates で作った物) */
   starts(): Array<[number, State]> {
-    return this.m.frac.picks.map((p, i) => [p.p, [i, ...new Array(this.K).fill(0), 0, 0, D_NONE]]);
+    return this.m.starts.map(([p, s]) => [p, [...s]]);
   }
   goal = (s: State): boolean => { for (let k = 0; k < this.K; k++) if (!this.hit(k, s[1 + k]!)) return false; return true; };
   /** 側の MOD の数 (固定・札・外れ・未発現) */
