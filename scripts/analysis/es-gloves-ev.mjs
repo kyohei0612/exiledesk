@@ -93,16 +93,21 @@ function runOne(rng) {
  * ANNUL=light: 外れが冒涜 MOD なら光のお告げ + 消去 (冒涜 MOD だけ消える)、それ以外の外れは右側の消去のお告げ + 消去。
  * ANNUL=whittle (オーナー 10-21「削減とか、下限 T2 付いてる前提でカオスのサフィ試してな」): 外れのサフィックスは 削減のお告げ + CHAOS (chaos / chaos_greater / chaos_perfect)
  *   = 一番 MOD レベルの低い非固定の MOD を消して 1 つ足す。冒涜の外れは光のお告げ + 消去。消えたプレフィックスは左側の高貴 + 上級で作り直し、外れのプレフィックスは素の消去
+ * EXS=exalt_greater|exalt_perfect: サフィックスの狙い (クリダメ) を足す高貴 (既定 上級)。案 1 (オーナー 10-21) = ANNUL=light ECHO=1 EXS=... (クリダメが付いてから冒涜)
+ * ANNUL=bait (案 2): 外れのサフィックスは 削減 + CHAOS で入れ替え続ける。次の削減が狙い (プレ・クリダメ) を消す並び (一番レベルの低い非固定の MOD が狙い) の時は、
+ *   先に 右側の結晶化 + 拡張の合金 (サフィックス、MOD レベル 25) で外れのサフィックスを餌に替えてから削減する。冒涜の外れは光のお告げ + 消去
  * PTIER=T1: 始めのプレフィックス 3 つを T1 で置く (既定 T2。削減で消えるかは MOD レベルで決まるので、その感度を見る)
  * ECHO=1: 発現の 3 つにアーケインサージが無ければ、深淵の反響のお告げで 1 回だけ引き直す (エンジンの 2 組目の候補)
  * 冒涜: プレフィックスが 3 つ埋まった時だけ (未発現の枠はサフィックスに入る)。発現は 3 つの候補にアーケインサージがあればそれ、無ければ 1 番 (外れ → 消去)
  */
+const BAIT = "essence:perfect:Gloves_int/PerfectEssence_RemnantPickupRadius"; // 拡張の合金 (サフィックス、MOD レベル 25)
 if (process.env.SUF) {
   const SUFK = process.env.SUF, AN = process.env.ANNUL ?? "plain";
   Object.assign(PRICES, { desecrate: 6.749, OmenofDextralExaltation: 35.576, OmenofDextralAnnulment: 9408.082, OmenofLight: 6730.815, OmenofAbyssalEchoes: 61.603 });
   const ECHO = !!process.env.ECHO;
   const CHAOS = process.env.CHAOS ?? "chaos";
-  Object.assign(PRICES, { OmenofWhittling: 9469.0, chaos_greater: 215.419, chaos_perfect: 5299.748 });
+  Object.assign(PRICES, { OmenofWhittling: 8789.335, chaos_greater: 215.419, chaos_perfect: 5299.748, OmenofDextralCrystallisation: 274.322, [BAIT]: 116.499 });
+  const EXS = process.env.EXS ?? "exalt_greater";
   const S = SUFK === "X"
     ? { CC: { id: "Gloves_int/Rune_marksman_CriticalStrikeChanceIncrease", down: 2 }, CD: { id: "Gloves_int/CriticalStrikeMultiplier", down: 2 } }
     : { CD: { id: "Gloves_int/CriticalStrikeMultiplier", down: 2 }, AS: { id: "Gloves_int/ArcaneSurgeOnCrit", down: 1, desecrated: true } };
@@ -114,6 +119,15 @@ if (process.env.SUF) {
     if (it.suffixes.some((m) => m.unrevealed)) return { kind: "reveal" };
     const pMiss = KEYS.filter((k) => !has(it, k)), sMiss = Object.keys(S).filter((k) => !hasS(it, k));
     if (!pMiss.length && !sMiss.length) return null;
+    if (AN === "bait") {
+      const junkD = it.suffixes.some((m) => m.desecrated && !okS(m));
+      if (junkD) return { kind: "annulS" };
+      if (it.prefixes.some((m) => !isTarget(m))) return { kind: "annulP" };
+      if (pMiss.length) return { kind: "exaltP" };
+      if (it.suffixes.some((m) => !m.fractured && !okS(m))) return { kind: "wspam" };
+      if (sMiss.includes("CD")) return { kind: "exaltS" };
+      return { kind: "desecrate" };
+    }
     // 削減の時は外れのプレフィックスを先に (削減は一番レベルの低い物を消すので、外れのプレが残っているとそちらを消して堂々巡りになる)
     if (AN === "whittle" && it.prefixes.some((m) => !isTarget(m))) return { kind: "annulP" };
     if (it.suffixes.some((m) => !m.fractured && !okS(m))) return { kind: "annulS" };
@@ -126,6 +140,7 @@ if (process.env.SUF) {
     let it = startS(rng);
     const n = {};
     let steps = 0, pLost = 0, sLost = 0;
+    let bait = 0;
     const wh = { j: 0, s: 0, p: 0, pj: 0 }; // 削減で消えた物: 外れのサフィ / サフィの狙い / プレの狙い / 外れのプレ
     const use = (cur, omens = [], r2 = rng) => {
       const r = M.applyCurrency(data, it, cur, r2, omens);
@@ -137,7 +152,7 @@ if (process.env.SUF) {
       return r;
     };
     for (let mv = nextS(it); mv; mv = nextS(it)) {
-      if (++steps > LIMIT || (BUDGET > 0 && costOf(n) > BUDGET)) return { done: false, n, pLost, sLost, wh };
+      if (++steps > LIMIT || (BUDGET > 0 && costOf(n) > BUDGET)) return { done: false, n, pLost, sLost, wh, bait };
       let r;
       if (mv.kind === "reveal") {
         const seed = Math.floor(rng() * 2 ** 31);
@@ -152,15 +167,30 @@ if (process.env.SUF) {
           r = use(CHAOS, ["OmenofWhittling"]);
           const x = r.removed?.[0];
           wh[x && x.side === "prefix" ? (isTarget(x) ? "p" : "pj") : x && okS(x) ? "s" : "j"]++;
-        } else r = use("annul", AN === "light" && junk.some((m) => m.desecrated) ? ["OmenofLight"] : AN === "plain" ? [] : ["OmenofDextralAnnulment"]);
+        } else r = use("annul", (AN === "light" || AN === "bait") && junk.some((m) => m.desecrated) ? ["OmenofLight"] : AN === "plain" ? [] : ["OmenofDextralAnnulment"]);
       }
       else if (mv.kind === "annulP") r = use("annul");
       else if (mv.kind === "exaltP") r = use("exalt_greater", ["OmenofSinistralExaltation"]);
-      else if (mv.kind === "exaltS") r = use("exalt_greater", ["OmenofDextralExaltation"]);
+      else if (mv.kind === "exaltS") r = use(EXS, ["OmenofDextralExaltation"]);
+      else if (mv.kind === "wspam") {
+        // 削減が消すのは一番 MOD レベルの低い非固定の MOD (エンジンの whittleTargets と同じ数え方: 未発現は 1)
+        const free = [...it.prefixes, ...it.suffixes].filter((m) => !m.fractured);
+        const lv = (m) => (m.unrevealed ? 1 : m.modLevel);
+        const low = Math.min(...free.map(lv));
+        const lowest = free.filter((m) => lv(m) === low);
+        if (lowest.some((m) => isTarget(m) || okS(m))) {
+          r = use(BAIT, ["OmenofDextralCrystallisation"]);
+          bait++;
+        } else {
+          r = use(CHAOS, ["OmenofWhittling"]);
+          const x = r.removed?.[0];
+          wh[x && x.side === "prefix" ? (isTarget(x) ? "p" : "pj") : x && okS(x) ? "s" : "j"]++;
+        }
+      }
       else r = use("desecrate");
       for (const m of r.removed ?? []) { if (m.side === "prefix" && isTarget(m)) pLost++; if (m.side === "suffix" && okS(m)) sLost++; }
     }
-    return { done: true, n, pLost, sLost, wh };
+    return { done: true, n, pLost, sLost, wh, bait };
   };
   const rng = M.mulberry32(SEED);
   const rs = Array.from({ length: N }, () => runS(rng));
@@ -169,19 +199,20 @@ if (process.env.SUF) {
   const costs = done.map((r) => costOf(r.n)).sort((a, b) => a - b);
   const spent = rs.reduce((a, r) => a + costOf(r.n), 0);
   const mm = avg(costs), se = Math.sqrt(avg(costs.map((c) => (c - mm) ** 2)) / (costs.length || 1));
-  console.log(`=== ES 手袋のサフィックス ${SUFK} / 消去 ${AN}${AN === "whittle" ? ` + ${CHAOS}` : ""}${ECHO ? " / 反響で引き直し" : ""} (${N} 人, 打ち止め ${BUDGET} 神)`);
+  console.log(`=== ES 手袋のサフィックス ${SUFK} / 消去 ${AN}${AN === "whittle" || AN === "bait" ? ` + ${CHAOS}` : ""} / 高貴 ${EXS}${ECHO ? " / 反響で引き直し" : ""} (${N} 人, 打ち止め ${BUDGET} 神)`);
   console.log(`完成 ${(100 * done.length / N).toFixed(1)}%  1 個あたり ${(spent / (done.length || NaN)).toFixed(2)} 神  完成した人の平均 ${mm.toFixed(2)} (±${(1.96 * se).toFixed(2)})  中央 ${costs[Math.floor(costs.length / 2)]?.toFixed(1)}  90% ${costs[Math.floor(costs.length * 0.9)]?.toFixed(1)}`);
-  for (const k of ["annul", "OmenofWhittling", "chaos", "chaos_greater", "chaos_perfect", "OmenofDextralAnnulment", "OmenofLight", "OmenofAbyssalEchoes", "exalt_greater", "OmenofDextralExaltation", "OmenofSinistralExaltation", "desecrate", "reveal"]) {
+  for (const k of ["annul", "OmenofWhittling", "chaos", "chaos_greater", "chaos_perfect", "OmenofDextralAnnulment", "OmenofLight", "OmenofAbyssalEchoes", "OmenofDextralCrystallisation", BAIT, "exalt_greater", "exalt_perfect", "OmenofDextralExaltation", "OmenofSinistralExaltation", "desecrate", "reveal"]) {
     const c = avg(done.map((r) => r.n[k] ?? 0));
     console.log(`  ${k.padEnd(28)} ${c.toFixed(2).padStart(9)} 個  ${(c * (PRICES[k] ?? 0) / DIV).toFixed(2).padStart(8)} 神`);
   }
-  if (AN === "whittle") {
+  if (AN === "whittle" || AN === "bait") {
     const tot = { j: 0, s: 0, p: 0, pj: 0 };
     for (const r of rs) for (const k of Object.keys(tot)) tot[k] += r.wh[k];
     const all = Object.values(tot).reduce((x, y) => x + y, 0) || 1;
     console.log(`  削減が消した物 (全員 ${all} 回): 外れのサフィ ${(100 * tot.j / all).toFixed(1)}%・クリダメ ${(100 * tot.s / all).toFixed(1)}%・プレの狙い ${(100 * tot.p / all).toFixed(1)}%・外れのプレ ${(100 * tot.pj / all).toFixed(1)}%  1 人あたり削減 ${(all / N).toFixed(1)} 回`);
   }
-  if (AN === "whittle") console.log(`  削減で消えた物 (1 人平均): 外れのサフィ ${avg(done.map((r) => r.wh.j)).toFixed(2)}・クリダメ ${avg(done.map((r) => r.wh.s)).toFixed(2)}・プレの狙い ${avg(done.map((r) => r.wh.p)).toFixed(2)}・外れのプレ ${avg(done.map((r) => r.wh.pj)).toFixed(2)} 回 (全員 ${avg(rs.map((r) => r.wh.p)).toFixed(2)} 回プレの狙い)`);
+  if (AN === "bait") console.log(`  餌 (右側の結晶化 + 拡張の合金) 1 人 ${avg(done.map((r) => r.bait)).toFixed(2)} 回 (全員 ${avg(rs.map((r) => r.bait)).toFixed(2)} 回)`);
+  if (AN === "whittle" || AN === "bait") console.log(`  削減で消えた物 (1 人平均): 外れのサフィ ${avg(done.map((r) => r.wh.j)).toFixed(2)}・クリダメ ${avg(done.map((r) => r.wh.s)).toFixed(2)}・プレの狙い ${avg(done.map((r) => r.wh.p)).toFixed(2)}・外れのプレ ${avg(done.map((r) => r.wh.pj)).toFixed(2)} 回 (全員 ${avg(rs.map((r) => r.wh.p)).toFixed(2)} 回プレの狙い)`);
   console.log(`  消えた狙い (消去・削減): プレフィックス ${avg(done.map((r) => r.pLost)).toFixed(2)} 回・サフィックス ${avg(done.map((r) => r.sLost)).toFixed(2)} 回`);
   process.exit(0);
 }
