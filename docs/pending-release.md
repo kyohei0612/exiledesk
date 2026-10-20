@@ -8,6 +8,7 @@ OK が出ていない物を外して出す時は `git revert --no-edit --no-comm
 |---|---|---|---|
 | シミュレーター ② の「貼り付けで写す」(要望 91832821 の ②。シミュレーターは開発版だけなので、本番はシミュレーターを出す時に一緒。返事は本番の後にブラックが置く) | 1a0d6e53・63aafd86 | シミュレーター: 取引所のアイテムを貼り付けると、狙う MOD (完成品) に写せるように (写せない MOD は理由を表示) | Simulator: paste an item from trade to copy its mods as the targets (mods that can't be copied are listed with the reason) |
 | クラフト手順の段 (使い方・コツの段 5) と「不在のアミュレットで全スペル +5」(要望 93d00e7c。出す時は course-release.ts の REVIEW から RELEASED へ移す。返事は本番の後にブラックが置く) | 04ad4147・d1e7c664 | 使い方・コツ: 「クラフト手順」を追加。完成品までを 1 手ずつ作るコースで、最初は不在のアミュレットで全スペル +5 (品質 40% + 聖別) | Guide & Tips: new “Crafting guides” section — build a finished item step by step, starting with +5 to all Spell Skills on an Absent Amulet (40% quality + Sanctify) |
+| シミュレーター ④ の「おすすめの順番を出す」(順番だけ自動。計算は解析君の solveOrder、シミュレーターは開発版だけなので本番はシミュレーターを出す時に一緒) | 83fb3fbe・276bda26 | シミュレーター: ④ 付ける順番に「おすすめの順番を出す」。各場面で一番安い手を打った時の費用の目安で上位 3 つと今の順番を並べ、押した順にできる | Simulator: “Suggest an order” in step 4 — ranks the top 3 orders and yours by the estimated cost when the cheapest move is played at every point, and lets you apply one |
 | クラフト台の聖別の帯 (聖別した後に倍率 ×0.78〜1.22・最小・最大を手で決める。オーナー 10-20 の案、エミュ部長) | e61bb9ab | クラフト台: 聖別したアイテムの数値を手で決められるように (カードの上の聖別の帯で倍率・最小・最大) | Craft stage: set the values of a Sanctified item by hand (multiplier / Min / Max on the Sanctified bar above the card) |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。
