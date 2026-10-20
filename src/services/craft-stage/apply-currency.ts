@@ -68,6 +68,7 @@ import { tr } from "../../i18n/lang";
 
 export { GNAWED_MAX_ILVL } from "./stage-core";
 import { applyBySpec } from "./spec/run-spec";
+import { applySanctifySet, isSanctifySet } from "./apply-vaal";
 
 /** カレンシーのキー (price-keys.json) → 種類と強さ */
 function parseKey(key: string): { kind: string; strength: "base" | "greater" | "perfect" } {
@@ -187,6 +188,8 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
     const n = Math.max(0, Math.min(qualityCapOf(item), Number(num) || 0));
     return { applied: true, item: { ...item, quality: n, ...(tag ? { qualityTag: tag } : {}) }, added: [], removed: [] };
   }
+  // 聖別の数値を手で決める (聖別の帯。聖別の後に打つ手、費用 0)
+  if (isSanctifySet(currency)) return applySanctifySet(data, item, currency);
   if (item.sanctified && !ANY_STATE.includes(currency)) return skip(item, tr("聖別したアイテムには使えない", "Can't modify a Sanctified item"));
   if (item.corrupted && kindOf(currency) !== "reveal" && !FOR_CORRUPTED.includes(currency) && !ANY_STATE.includes(currency)) return skip(item, tr("コラプトしたアイテムには使えない", "Can't modify a Corrupted item"));
   // 今のゲームに無いお告げ (相場に値段が無い) を掛けていたら打てない (2026-09-29 オーナー「錬金術のお告げとかない、王者のお告げやら」)

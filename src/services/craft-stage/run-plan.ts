@@ -136,6 +136,7 @@ export function stepJa(currency: string, item: StageItem): string {
   if (currency.startsWith("qcap:")) return `品質の上限を ${currency.slice(5)}% に`;
   if (currency.startsWith("ilvl:")) return `アイテムレベルを ${currency.slice(5)} に`;
   if (currency.startsWith("iset:")) return `暗黙 MOD の値を ${currency.split(":")[2]} に`;
+  if (currency.startsWith("sset:")) { const k = currency.slice(5); return k === "max" ? "聖別の数値を最大に" : k === "min" ? "聖別の数値を最小に" : `聖別の倍率を ×${Number(k) / 100} に`; }
   if (isEmotion(currency)) return jewelEmotionJa(emotionNameOf(currency)) ?? emotionNameOf(currency);
   if (isRune(currency)) {
     // `rune:<名前>@<n>` は n 番目のソケットを指した手 (置き換え)
@@ -163,6 +164,7 @@ export function stepEn(currency: string): string | null {
   if (currency.startsWith("qcap:")) return `Set max quality to ${currency.slice(5)}%`;
   if (currency.startsWith("ilvl:")) return `Set item level to ${currency.slice(5)}`;
   if (currency.startsWith("iset:")) return `Set implicit value to ${currency.split(":")[2]}`;
+  if (currency.startsWith("sset:")) { const k = currency.slice(5); return k === "max" ? "Set Sanctified values to max" : k === "min" ? "Set Sanctified values to min" : `Set Sanctified multiplier to ×${Number(k) / 100}`; }
   const rk = isRune(currency) ? parseRuneKey(currency) : null;
   if (rk) return rk.socket ? `${rk.en} (socket ${rk.socket})` : rk.en;
   return null;

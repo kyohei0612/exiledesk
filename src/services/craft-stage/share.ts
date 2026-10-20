@@ -8,6 +8,7 @@
  */
 import { isForce } from "./apply-force";
 import { IMPLICIT_SET, isCatalystSet, isQualitySet, ITEM_LEVEL_SET, QUALITY_CAP } from "./apply-currency";
+import { isSanctifySet } from "./apply-vaal";
 import type { CraftStagePlan } from "./contract";
 import type { StartSpec } from "./run-plan";
 import { tr } from "../../i18n/lang";
@@ -21,7 +22,7 @@ export const SHARE_PREFIX = "#share=";
 export const SHARE_ENABLED = false;
 
 /** 品質を手で合わせる手は「打った」に数えない (始めのベースの側) */
-const isSetting = (key: string): boolean => isQualitySet(key) || isCatalystSet(key) || key.startsWith(QUALITY_CAP) || key.startsWith(IMPLICIT_SET) || key.startsWith(ITEM_LEVEL_SET);
+const isSetting = (key: string): boolean => isQualitySet(key) || isCatalystSet(key) || key.startsWith(QUALITY_CAP) || key.startsWith(IMPLICIT_SET) || key.startsWith(ITEM_LEVEL_SET) || isSanctifySet(key);
 
 /** 共有できない理由 (できるなら null)。steps = 打った手の currency と手の番号 */
 export function shareBlock(steps: ReadonlyArray<{ currency: string; index: number }>): string | null {

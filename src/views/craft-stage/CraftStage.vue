@@ -25,6 +25,8 @@ import StageSettings from "./StageSettings.vue";
 import { useStageBase } from "./use-stage-base";
 import StageItemCard from "./StageItemCard.vue";
 import StageQualityBar from "./StageQualityBar.vue";
+import StageSanctifyBar from "./StageSanctifyBar.vue";
+import { isSanctifySet, sanctifySetKey } from "../../services/craft-stage/apply-vaal";
 import StageItemMini from "./StageItemMini.vue";
 import StageAimPanel from "./StageAimPanel.vue";
 import StageForesight from "./StageForesight.vue";
@@ -209,6 +211,12 @@ function setImplicit(line: number, values: number[]): void {
   if (last && last.out.currency.startsWith(`${IMPLICIT_SET}${line}:`)) s.undo();
   s.use(implicitSetKey(line, values));
 }
+/** 聖別の数値 (聖別の帯)。続けて変えた分は 1 手にまとめる (品質と同じ) */
+function setSanctify(k: number | "max" | "min"): void {
+  const last = s.log.value[s.log.value.length - 1];
+  if (last && isSanctifySet(last.out.currency)) s.undo();
+  s.use(sanctifySetKey(k));
+}
 /** 品質の上限 (プルダウン)。続けて変えた分は 1 手にまとめる */
 function setQualityCap(n: number): void {
   const last = s.log.value[s.log.value.length - 1];
@@ -357,6 +365,8 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
           <button type="button" data-rec="mod-list-open" data-rec-part="mod-list-button" class="tbtn-top shrink-0" :title="tr('このベースに付く MOD の一覧へ (Tab でも開く)', 'Go to the mod list (Tab also opens it)')" @click="toModList">{{ tr("MOD 一覧", "Mod list") }}</button><!-- Tab の札は説明へ (品質の帯が 1 行に入らなかった。2026-10-18) -->
           <StageQualityBar v-if="s.item.value && !s.replay.value" data-rec-part="quality" :item="s.item.value" class="flex-1" @quality="setQuality" @cap="setQualityCap" @catalyst="setCatalyst" />
         </div>
+        <!-- 聖別の数値を決める帯 (聖別したアイテムだけ、品質の帯の下。2026-10-20) -->
+        <div v-if="!inLesson && s.item.value?.sanctified && !s.replay.value" class="-mb-6 w-full max-w-[480px]"><StageSanctifyBar data-rec-part="sanctify" :item="s.item.value" @set="setSanctify" /></div>
         <div ref="cardEl" class="relative" :class="[fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
         <StageItemCard
           :doomed="doomed" :open="preview?.open"

@@ -47,6 +47,8 @@ export interface StageMod {
    * 骨で付いたまだ発現していない冒涜 MOD (ゲームと同じく、発現の時に 3 つから選ぶ)。floor は古びた骨の段の下限、
    * altered は変質した鎖骨 (異界の MOD も出る)、faction は王 / 君主 / 黒血のお告げで絞った勢力のタグ
    */
+  /** 聖別で掛けた倍率と、掛ける前の値 (聖別の帯で倍率を後から決め直す。apply-vaal.ts の applySanctifySet) */
+  sanctify?: { base: number[]; k: number };
   unrevealed?: { floor: number; altered: boolean; faction: string | null; plain?: boolean; /** 噛み切られた骨で付けた (冒涜専用の MOD はアイテムレベルの決まりのまま) */ gnawed?: boolean };
 }
 
