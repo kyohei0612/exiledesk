@@ -14,10 +14,9 @@
 import { fmtPct } from "../../utils/format-pct";
 import { computed } from "vue";
 import { craftStage } from "../../state/craft-stage";
-import { freshItem } from "../../services/craft-stage/run-plan";
-import { modListFor, shownTags, TAG_STYLE } from "../../services/craft-stage/mod-list";
+import { freshItem, candidates, modListFor, familiesOf, CURRENCY_FLOOR } from "../../services/craft-stage/engine";
+import { shownTags, TAG_STYLE } from "../../services/craft-stage/mod-list";
 import { baseArt } from "../../services/craft-stage/base-art";
-import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 
 /** hl = false: 答えの金の段を出さない (POE2Tube 要望 ⑯ &hl=0。質問の行で表だけ見せ、答えの行で金の段を「パッ」と出す) */
 const props = withDefaults(defineProps<{ base: string; mod: string; ilvl: number | null; hl?: boolean; floor?: number | null }>(), { hl: true, floor: null });
@@ -42,23 +41,25 @@ const view = computed(() => {
     const item = freshItem(data, props.base, props.ilvl ?? 100);
     const rows = modListFor(data, item);
     const m = props.mod;
-    const row = rows.find((r) => r.id === m) ?? rows.find((r) => r.id.endsWith(`/${m}`)) ?? rows.find((r) => r.family === m && r.group === "normal") ?? rows.find((r) => r.family === m);
+    const inFamily = (id: string, fam: string): boolean => { const mod = data.mods.get(id); return !!mod && familiesOf(mod).includes(fam); };
+    const row = rows.find((r) => r.id === m) ?? rows.find((r) => r.id.endsWith(`/${m}`)) ?? rows.find((r) => r.group === "normal" && inFamily(r.id, m)) ?? rows.find((r) => inFamily(r.id, m));
     if (!row) return { error: `このベースに ${m} の MOD が無い`, item };
     // hl = false の時は全部の段を同じ見た目に (薄い段も付けない)。出やすさも全部の段の中で
     const lv = props.hl ? (props.ilvl ?? Infinity) : Infinity;
     const floor = props.floor ?? 0;
-    // 付かない = 下限より下 (これは答えではないので hl=0 でも出す)
-    const open = row.tiers.filter((t) => t.ilvl <= lv && t.ilvl >= floor);
-    const total = open.reduce((a, t) => a + t.weight, 0);
-    const top = props.hl ? (open[0]?.rank ?? null) : null;
-    // 下限で全部消えた時は金も出さない
+    // 段ごとの割合はエンジンの入口 (candidates: アイテムレベル・下限・重み) から。この MOD だけの置き場で引く
+    const mod = data.mods.get(row.id);
+    const cand = mod ? candidates(data, { ...item, itemLevel: Number.isFinite(lv) ? lv : 100 }, [row.side], floor, { pools: () => [row.id] })[0] : undefined;
+    const n = row.tiers.length;
+    const shareOf = (i: number): number => (cand && cand.w > 0 ? (cand.tiers.find((x) => x.index === n - 1 - i)?.w ?? 0) / cand.w : 0);
+    const shares = row.tiers.map((_, i) => shareOf(i));
+    const top = props.hl ? (shares.findIndex((x) => x > 0) >= 0 ? row.tiers[shares.findIndex((x) => x > 0)]!.rank : null) : null;
     const maxW = Math.max(1, ...row.tiers.map((t) => t.weight));
     return {
       item, row,
-      tiers: row.tiers.map((t) => {
-        const below = t.ilvl < floor;
-        const isOpen = t.ilvl <= lv && !below;
-        return { ...t, open: t.ilvl <= lv, below, top: t.rank === top, share: isOpen && total ? t.weight / total : 0, bar: t.weight / maxW };
+      tiers: row.tiers.map((t, i) => {
+        const below = t.ilvl < floor && !shares[i];
+        return { ...t, open: t.ilvl <= lv, below, top: t.rank === top, share: shares[i]!, bar: t.weight / maxW };
       }),
     };
   } catch (e) {
