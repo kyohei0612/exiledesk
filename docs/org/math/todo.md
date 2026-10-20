@@ -8,9 +8,9 @@
 
 ## OK 待ち
 - ④ の build が 1.7 秒増えて画面の側で止まる (手 5)。ワーカーで組むならエンジンのデータを渡す要 → シミュ部長の判断
-- ③ の白から作る費用のリロールの回数 (式はエンジンの約半分)。magicLoopCounts にするか 1 ÷ (p × 側の割合) にするか → シミュ部長・オーナー (simulator/notes/2026-10-20-step4-formula-entry.md)
 
 ## 済み (10-20)
+- K5 ③ の白から作る 1 個 (S1c の後) vs 字のとおり 1,000 人: 手袋 +0.1%・靴 +5.4% (check-sim-start.mjs、simulator/notes/2026-10-20-step4-formula-entry.md)
 - K2c 靴の ±20%: ⑤ の同じ条件に別の形の答え (消去) が勝ち、発現の後にドッジを失っていた。別名の答えを通った回数で比べる形に → 靴 #3・#4 のずれ −20〜−24% → +5〜+6%
 - R1 auto-types.ts (03b30a1c)。シミュの R1b の後に auto-solve の buildAutoModel の再輸出を消した。K4 の残り (入口の 3 つ) も差し替え
 - K2b 靴 #2 の答え無し 422 人 → 0 (一時の台本 check-yafu-actual.mjs の古い rulesOf を src の rulesFromDetail に)
