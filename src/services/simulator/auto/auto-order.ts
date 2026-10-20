@@ -95,6 +95,12 @@ export function orderCandidates(inp: OrderInput): string[][] {
   return picks.map((p) => assemble(inp, p));
 }
 
+/**
+ * 安い順の比べ方。完成 0 の順番などで perFinish が NaN・Infinity になる事があり、a - b だと並べ替えが壊れる
+ * (10-20 夜、手袋で NaN 1 つが値だけの上位 5 を高い順番に入れ替えていた)。NaN・Infinity は一番後ろ。ワーカーにも同じ物
+ */
+export const byCost = (a: number, b: number): number => { const x = Number.isFinite(a) ? a : Infinity, y = Number.isFinite(b) ? b : Infinity; return x < y ? -1 : x > y ? 1 : 0; };
+
 /** 1 行 (並べる値は perFinish = 完成 1 個あたり (R + 後半) ÷ 完成の割合 − R。optimal-craft-dp の並べ方、打ち止めの多い順番が上に来ないように) */
 export type AutoRow = OrderResult & { order: string[]; current: boolean };
 

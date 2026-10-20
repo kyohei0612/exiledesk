@@ -6,7 +6,7 @@
  */
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { runeEnForId } from "../../services/simulator/pattern";
-import { orderCandidates, runAutoOrder, type AutoRow, type OrderInput } from "../../services/simulator/auto/auto-order";
+import { byCost, orderCandidates, runAutoOrder, type AutoRow, type OrderInput } from "../../services/simulator/auto/auto-order";
 import { buildAutoModel } from "../../services/simulator/auto/auto-solve";
 import type { QuizSimIn } from "../../services/simulator/quiz-build";
 import { priceOf } from "../../state/craft-stage";
@@ -69,7 +69,7 @@ export function useSimAutoOrder(tg: SimTargetsCtx, quizBase: () => QuizSimIn | n
     busy.value = true;
     job = runAutoOrder(built.model, orderCandidates(inp), inp.keys, {
       step: (done, total) => { step.value = { done, total }; },
-      row: (r) => { rows.value = [...rows.value, r].sort((a, b) => a.perFinish - b.perFinish); },
+      row: (r) => { rows.value = [...rows.value, r].sort((a, b) => byCost(a.perFinish, b.perFinish)); },
       done: () => { busy.value = false; step.value = null; job = null; },
       error: (m) => { error.value = m; busy.value = false; step.value = null; job = null; },
     });

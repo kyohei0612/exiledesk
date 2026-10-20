@@ -13,6 +13,8 @@ export type AutoMsg =
   | { kind: "error"; message: string };
 
 const post = (m: AutoMsg): void => (self as unknown as Worker).postMessage(m);
+/** 安い順 (NaN・Infinity は一番後ろ。a - b だと NaN で並べ替えが壊れる。auto-order.ts の byCost と同じ) */
+const byCost = (a: number, b: number): number => { const x = Number.isFinite(a) ? a : Infinity, y = Number.isFinite(b) ? b : Infinity; return x < y ? -1 : x > y ? 1 : 0; };
 const same = (a: string[], b: string[]): boolean => a.length === b.length && a.every((k, i) => k === b[i]);
 
 self.addEventListener("message", (e: MessageEvent<AutoJob>) => {
@@ -26,7 +28,7 @@ self.addEventListener("message", (e: MessageEvent<AutoJob>) => {
       // 知らせるのは 0.1 秒に 1 回まで
       if (Date.now() - last > 100 || i === cands.length - 1) { last = Date.now(); post({ kind: "step", done: i + 1, total: cands.length + Math.min(top, cands.length) }); }
     });
-    vals.sort((a, b) => a.v - b.v);
+    vals.sort((a, b) => byCost(a.v, b.v));
     const picks = vals.slice(0, top).map((x) => x.order);
     if (!picks.some((o) => same(o, current))) picks.push(current);
     picks.forEach((order, j) => {
