@@ -16,8 +16,6 @@ import type { State } from "./auto-types";
 import { solveLinear, type LinRow } from "./auto-linear";
 
 export type { AutoModel, AutoInput, AutoBuilt, OrderResult, SolveOpts, OrderDetail } from "./auto-types";
-/** 【古い・R1】呼ぶ側は auto-model.ts の buildAutoModel を直に読む。シミュ側の import を直したら消す */
-export { buildAutoModel } from "./auto-model";
 
 // ── 行き先の表 (順番に関係ない本当の形の手と行き先。model ごとに 1 回作って順番の間で使い回す) ──
 interface Edge { name: string; cost: number; oi: Int32Array; op: Float64Array }
