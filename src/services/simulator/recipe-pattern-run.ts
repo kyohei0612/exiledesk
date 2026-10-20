@@ -4,6 +4,7 @@
  */
 import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 import { unrevealedOf } from "../craft-stage/apply-desecrate";
+import { familyBlocked, occupiedKeysOf } from "../craft-stage/engine";
 import { LOST_RESTART, ONCE_KINDS, type PatternKind } from "./pattern";
 import { allMods, limitOf, listOf, room } from "../craft-stage/stage-core";
 import type { StageItem, StageMod, StageSide } from "../craft-stage/types";
@@ -202,9 +203,10 @@ export interface RunCtx {
     // もう差さっているルーンは差し直さない (消えた物の手に戻った後。2026-10-07 戻るたびにアストリッドを買い直していた)
     if (p.kind === "rune" && p.rune && (cur.item.augments ?? []).some((x) => x.key === `rune:${p.rune}`)) { i++; continue; }
     if (p.kind === "rune") e = p.rune ? play(`rune:${p.rune}`) : "ルーンが選ばれていない";
-    else if (p.kind === "essence_perfect" && p.target && allMods(cur.item).some((m) => !m.fractured && !isGood(m) && m.family === mod(p.target!.modId).family)) {
-      // 狙いと同じ系統の外れ (埋めの高貴で付いた低い段など) があるとパーフェクトエッセンスが打てないので、先にその側を消す
-      // (2026-10-07 パターンで試すと、どのパターンも 2% ほどが「同じ系統の MOD が付いている」で止まっていた)
+    else if (p.kind === "essence_perfect" && p.target && allMods(cur.item).some((m) => !m.fractured && !isGood(m) && familyBlocked(mod(p.target!.modId), new Set(occupiedKeysOf(mod(m.modId)))))) {
+      // 狙いと系統がぶつかる外れがあるとパーフェクトエッセンスが打てないので、先にその側を消す
+      // (2026-10-07 パターンで試すと、どのパターンも 2% ほどが「同じ系統の MOD が付いている」で止まっていた)。
+      // 系統の判定はエンジンの入口 (familyBlocked・occupiedKeysOf、2026-10-20 手 3)。普通の MOD はエッセンスの MOD と同じ系統でも一緒に付く (10-10) ので、塞ぐのはエッセンスの外れだけ
       e = annulOn(sideOf(p.target.modId));
       if (e) return fail(`${i + 1} 手目の前の消去: ${e}`);
       continue;
