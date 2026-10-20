@@ -1,10 +1,19 @@
 # ファイル → 持ち主の部 (2026-10-20、オーナー OK)。各部の README の地図・docs/ARCHITECTURE.md の「部ごとの持ち場」と食い違ったら、ここが正。
 # 形: <glob> <部>。下の行ほど強い (CODEOWNERS と同じ)。* = / を越えない、** = どこまでも。
 # 引く: node scripts/owner-of.mjs <パス…>  /  書きかけを部ごとに: node scripts/owner-of.mjs --status
-# 部: 開発 (境目・土台) / ジン (エンジン部) / シミュ / チュートリアル (シミュ部長の持ち物) / 解析 / 分析 / 動画 / 組織 (docs/org の各部の md は各部) / アプリ (凍結、当分触らない)
+# 部: 共通 (境目・土台・共通の部品・英語、持ち主はジン部長。10-21 に開発部長から移した。見張り check-engine-entry が「ジン」の src/services を入口の外として数えるので名前は分ける) / ジン (エンジン部) / サーバー (持ち主は分析君、10-21 に移した) / 最終チェック (サム) / シミュ / チュートリアル (シミュ部長の持ち物) / 解析 / 分析 / 動画 / 組織 (docs/org の各部の md は各部) / アプリ (凍結、当分触らない)
 
-# 土台・境目 (開発部長)
-**                                   開発
+# 土台・境目・共通の部品・英語 (ジン部長、部の名前は「共通」)
+**                                   共通
+
+# サーバー (分析君)
+server/**                            分析
+
+# 本番に上げる物 (サム、最終チェック長)
+scripts/bump-version.mjs             最終チェック
+scripts/build-changelog.mjs          最終チェック
+src/data/changelog*.json             最終チェック
+docs/pending-release.md              最終チェック
 src/views/**                         アプリ
 src/components/craft-v2/**           アプリ
 src/services/craft-v2/**             アプリ
@@ -33,15 +42,15 @@ tests/golden/**                      ジン
 tests/live-worker*.test.ts           分析
 tests/log-sender*.test.ts           分析
 
-# エンジン部の中に残した境目 (開発部長)
-src/services/craft-stage/share.ts    開発
-src/services/craft-stage/trade-search.ts 開発
-src/services/htc/buy-or-craft.ts     開発
-src/services/htc/prices.ts           開発
-src/services/htc/price-keys.json     開発
-src/services/htc/paste*.ts           開発
-src/services/htc/patch-types.ts      開発
-src/services/money.ts                開発
+# エンジン部の中に残した境目 (共通、持ち主はジン部長)
+src/services/craft-stage/share.ts    共通
+src/services/craft-stage/trade-search.ts 共通
+src/services/htc/buy-or-craft.ts     共通
+src/services/htc/prices.ts           共通
+src/services/htc/price-keys.json     共通
+src/services/htc/paste*.ts           共通
+src/services/htc/patch-types.ts      共通
+src/services/money.ts                共通
 
 # シミュ部長
 src/views/simulator/**               シミュ
@@ -76,8 +85,9 @@ scripts/analyze-logs.py              分析
 # 動画部長
 video/**                             動画
 
-# 組織の md (各部の README・todo・notes は各部、全体の図と決まりは開発部長・ブラック)
-docs/org/**                          開発
+# 組織の md (各部の README・todo・notes は各部、全体の図はブラック、全部の部の決まり dev/ はサム。dev/todo.md の「触っている」は各部長が自分の行を書く)
+docs/org/**                          ブラック
+docs/org/dev/**                      最終チェック
 docs/org/black/**                    ブラック
 docs/org/emulator/**                 ジン
 docs/org/simulator/**                シミュ
