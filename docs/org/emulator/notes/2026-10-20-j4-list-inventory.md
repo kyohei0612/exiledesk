@@ -10,15 +10,15 @@
 | 異界の MOD (変質した鎖骨) | ある | pools.otherworldly | 3 クラス (装飾品) | 未 |
 | 創生の樹など買うしかない MOD | ある | pools.special・htcDropOnly | 52 クラス | 未 |
 | ルーンを差して初めて付く MOD | ある | pools.rune | 50 クラス | 済 (audit-poe2db-mods.mjs の RUNE_POOLS) |
-| ルーン・ソウルコア・タリスマンの効果 (ソケットの行) | ある | craft-stage/stage-runes.json (RUNES) | ルーン 209・ソウルコア 65・タリスマン 31 | 未 (poe2db の Augment のページ) |
-| ベースの暗黙 | ある | extra-bases.json の baseInfo.implicits (+ stat は htc/implicit-stats.json) | ベース 1,626、暗黙つき 279 | 未 |
-| 付与スキル | ある | baseInfo.grants | 275 ベース | 未 |
-| コラプト: ヴァールのエンチャント・強まったコラプトの行 | ある (10-20 J1b) | mods/corruption-mods.json | 44 部位・1,160 行 | 写した物そのもの (10-18) |
+| ルーン・ソウルコア・タリスマンの効果 (ソケットの行) | ある | craft-stage/stage-runes.json (RUNES) | ルーン 209・ソウルコア 65・タリスマン 31 | 済 (audit-poe2db-runes.mjs、305 全部同じ) |
+| ベースの暗黙 | ある | extra-bases.json の baseInfo.implicits (+ stat は htc/implicit-stats.json) | ベース 1,626、暗黙つき 279 | 済 (audit-poe2db-implicits.mjs、notes/2026-10-20-j4-poe2db-audit.md) |
+| 付与スキル | ある | baseInfo.grants | 275 ベース | 済 (暗黙の照らしで数を比べた、食い違い 0) |
+| コラプト: ヴァールのエンチャント・強まったコラプトの行 | ある (10-20 J1b) | mods/corruption-mods.json | 53 部位・1,338 行 (ジュエル・グラスピングメイルを足した) | 写した物そのもの |
 | コラプト: MOD の値の変化・暗黙の付け替え・二重コラプトの決まり | **無い** | — | — | poe2db の部位のページに表が無い (Vaal Orb のページは「unpredictably」だけ) |
 | エンチャント・注油 (アミュレットの「Allocates …」) | **無い** | — | — | 未 |
-| ジュエル (8 クラス) | クラスの行はある | Jewels_* | — | **poe2db の写しにページが無い** (照らし・コラプトの表とも空) |
-| 全能力値の 4 クラス (Body_Armours_ring_str_dex_int・Helmets/Gloves/Boots_str_dex_int) | クラスの行はある | — | — | 写しにページが無い (poe2db のページの名前の対応が要る) |
-| フラスコ・チャーム | **クラスの行が無い** | — | — | — |
+| ジュエル (8 クラス) | クラスの行はある | Jewels_* | — | 10-20 夜にベースのページを写しに足して照らした (置き場の食い違い 0、コラプトの表にも入った) |
+| 全能力値の 4 クラス (Body_Armours_ring_str_dex_int・Helmets/Gloves/Boots_str_dex_int) | クラスの行はある | — | — | グラスピングメイルは足して照らした。兜・手袋・靴 (Grand …) は poe2db に MOD の表が無い |
+| フラスコ・チャーム | **クラスの行が無い** | — | — | オーナー決定 (10-20): 足さない。貼り付けは読めない理由 flaskCharmUnsupported |
 | ユニークの MOD | エンジンの行には無い (画面用の stage-uniques・i18n/unique-mods-ja) | — | — | 貼り付けでは読まない (クラフトしない) |
 
 ## 足す順の案

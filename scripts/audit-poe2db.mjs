@@ -32,11 +32,21 @@ const data = loadPatchSync();
 /** こちらの部位 → poe2db のページ (属性違いのワンド・スタッフ・クロスボウは 1 ページ) */
 const pageOf = (cls) => cls.replace(/^(Wands|Staves|Crossbows)_.*$/, "$1").replace(/^OneHand_/, "One_Hand_").replace(/^TwoHand_/, "Two_Hand_");
 
+/**
+ * 部位のページが無いクラス (ジュエル・全能力値) は、ベースのページの ModsView を読む (2026-10-20 J4)。写しのファイル名はクラス名のまま
+ * (Jewels_int.html) にして、照らしの台本・コラプトの表 (mods/corruption.ts) は pageOf を変えずに読める。兜・手袋・靴の全能力値 (Grand …) のページは
+ * ModsView が無い (読んでも「ModsView が無い」になる)
+ */
+const URL_OF = {
+  Jewels_str: "Ruby", Jewels_dex: "Emerald", Jewels_int: "Sapphire", Jewels_diamond: "Diamond",
+  Jewels_radius_str: "Time-Lost_Ruby", Jewels_radius_dex: "Time-Lost_Emerald", Jewels_radius_int: "Time-Lost_Sapphire", Jewels_radius_diamond: "Time-Lost_Diamond",
+  Body_Armours_ring_str_dex_int: "Grasping_Mail", Helmets_str_dex_int: "Grand_Visage", Gloves_str_dex_int: "Grand_Manchettes", Boots_str_dex_int: "Grand_Cuisses",
+};
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function page(name) {
   const p = resolve(CACHE, `${name}.html`);
   if (!REFRESH && existsSync(p)) return readFileSync(p, "utf8");
-  const r = await fetch(`https://poe2db.tw/jp/${name}`, { headers: UA });
+  const r = await fetch(`https://poe2db.tw/jp/${URL_OF[name] ?? name}`, { headers: UA });
   if (!r.ok) throw new Error(`${name}: ${r.status}`);
   const html = await r.text();
   writeFileSync(p, html);

@@ -1,6 +1,6 @@
 {
  "generated": "2026-10-20",
- "source": "poe2db.tw の部位のページ (ModsView の corrupted / corruption_upgrade)、写しの日付 2026-10-18",
+ "source": "poe2db.tw の部位のページ (ModsView の corrupted / corruption_upgrade)、写しの日付 2026-10-18, 2026-10-20",
  "pages": {
   "Amulets": [
    {
@@ -2292,6 +2292,576 @@
     "ja": "要求能力値が(30—50)%減少する",
     "template": null,
     "ranges": []
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeThornsDamageIncrease1",
+    "gen": 3,
+    "family": [
+     "Thorns"
+    ],
+    "level": 1,
+    "ja": "棘ダメージが(100—150)%増加する",
+    "template": "#% increased Thorns damage",
+    "ranges": [
+     [
+      100,
+      150
+     ]
+    ]
+   }
+  ],
+  "Body_Armours_ring_str_dex_int": [
+   {
+    "kind": "enchant",
+    "id": "CorruptionReducedLocalAttributeRequirements1",
+    "gen": 5,
+    "family": [
+     "LocalAttributeRequirements"
+    ],
+    "level": 1,
+    "ja": "要求能力値が(10—20)%減少する",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionAdditionalPhysicalDamageReduction1",
+    "gen": 5,
+    "family": [
+     "ReducedPhysicalDamageTaken"
+    ],
+    "level": 1,
+    "ja": "物理ダメージ軽減率が(3—5)%される",
+    "template": "#% additional Physical Damage Reduction",
+    "ranges": [
+     [
+      3,
+      5
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionDamageTakenGainedAsLife1",
+    "gen": 5,
+    "family": [
+     "DamageTakenGainedAsLife"
+    ],
+    "level": 1,
+    "ja": "受けたダメージの(10—20)%をライフとして回収する",
+    "template": "#% of Damage taken Recouped as Life",
+    "ranges": [
+     [
+      10,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionDamageTakenGainedAsMana1",
+    "gen": 5,
+    "family": [
+     "PercentDamageGoesToMana"
+    ],
+    "level": 1,
+    "ja": "受けたダメージの(10—20)%をマナとして回収する",
+    "template": "#% of Damage taken Recouped as Mana",
+    "ranges": [
+     [
+      10,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionMaximumElementalResistance1",
+    "gen": 5,
+    "family": [
+     "MaximumResistances"
+    ],
+    "level": 1,
+    "ja": "全ての元素耐性の最大値 +1%",
+    "template": "#% to all Maximum Elemental Resistances",
+    "ranges": [
+     [
+      1,
+      1
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionIncreasedLife1",
+    "gen": 5,
+    "family": [
+     "IncreasedLife"
+    ],
+    "level": 1,
+    "ja": "最大ライフ +(30—40)",
+    "template": "# to maximum Life",
+    "ranges": [
+     [
+      30,
+      40
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionThornsDamageIncrease1",
+    "gen": 5,
+    "family": [
+     "Thorns"
+    ],
+    "level": 1,
+    "ja": "棘ダメージが(40—50)%増加する",
+    "template": "#% increased Thorns damage",
+    "ranges": [
+     [
+      40,
+      50
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionChaosResistance1",
+    "gen": 5,
+    "family": [
+     "ChaosResistance"
+    ],
+    "level": 1,
+    "ja": "混沌耐性 +(13—19)%",
+    "template": "#% to Chaos Resistance",
+    "ranges": [
+     [
+      13,
+      19
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeAdditionalPhysicalDamageReduction1",
+    "gen": 3,
+    "family": [
+     "ReducedPhysicalDamageTaken"
+    ],
+    "level": 1,
+    "ja": "物理ダメージ軽減率が(6—9)%される",
+    "template": "#% additional Physical Damage Reduction",
+    "ranges": [
+     [
+      6,
+      9
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeAllDamage1",
+    "gen": 3,
+    "family": [
+     "AllDamage"
+    ],
+    "level": 1,
+    "ja": "ダメージが(40—60)%増加する",
+    "template": "#% increased Damage",
+    "ranges": [
+     [
+      40,
+      60
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeAllResistances1",
+    "gen": 3,
+    "family": [
+     "AllResistances"
+    ],
+    "level": 1,
+    "ja": "全ての元素耐性 +(15—35)%",
+    "template": "#% to all Elemental Resistances",
+    "ranges": [
+     [
+      15,
+      35
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeChaosResistance1",
+    "gen": 3,
+    "family": [
+     "ChaosResistance"
+    ],
+    "level": 1,
+    "ja": "混沌耐性 +(31—47)%",
+    "template": "#% to Chaos Resistance",
+    "ranges": [
+     [
+      31,
+      47
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeCriticalStrikeMultiplier1",
+    "gen": 3,
+    "family": [
+     "CriticalStrikeMultiplier"
+    ],
+    "level": 1,
+    "ja": "クリティカルダメージボーナスが(30—50)%増加する",
+    "template": "#% increased Critical Damage Bonus",
+    "ranges": [
+     [
+      30,
+      50
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeDamageTakenGainedAsLife1",
+    "gen": 3,
+    "family": [
+     "DamageTakenGainedAsLife"
+    ],
+    "level": 1,
+    "ja": "受けたダメージの(25—35)%をライフとして回収する",
+    "template": "#% of Damage taken Recouped as Life",
+    "ranges": [
+     [
+      25,
+      35
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeDamageTakenGainedAsMana1",
+    "gen": 3,
+    "family": [
+     "PercentDamageGoesToMana"
+    ],
+    "level": 1,
+    "ja": "受けたダメージの(25—35)%をマナとして回収する",
+    "template": "#% of Damage taken Recouped as Mana",
+    "ranges": [
+     [
+      25,
+      35
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeDexterity1",
+    "gen": 3,
+    "family": [
+     "Dexterity"
+    ],
+    "level": 1,
+    "ja": "器用さ +(35—50)",
+    "template": "# to Dexterity",
+    "ranges": [
+     [
+      35,
+      50
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeIncreasedLife1",
+    "gen": 3,
+    "family": [
+     "IncreasedLife"
+    ],
+    "level": 1,
+    "ja": "最大ライフ +(120—160)",
+    "template": "# to maximum Life",
+    "ranges": [
+     [
+      120,
+      160
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeIncreasedMana1",
+    "gen": 3,
+    "family": [
+     "IncreasedMana"
+    ],
+    "level": 1,
+    "ja": "最大マナ +(80—100)",
+    "template": "# to maximum Mana",
+    "ranges": [
+     [
+      80,
+      100
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeIncreasedSkillSpeed1",
+    "gen": 3,
+    "family": [
+     "IncreasedSpeed"
+    ],
+    "level": 1,
+    "ja": "スキルスピードが(8—16)%増加する",
+    "template": "#% increased Skill Speed",
+    "ranges": [
+     [
+      8,
+      16
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeIntelligence1",
+    "gen": 3,
+    "family": [
+     "Intelligence"
+    ],
+    "level": 1,
+    "ja": "知性 +(35—50)",
+    "template": "# to Intelligence",
+    "ranges": [
+     [
+      35,
+      50
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeItemFoundRarityIncrease1",
+    "gen": 3,
+    "family": [
+     "ItemFoundRarityIncrease"
+    ],
+    "level": 1,
+    "ja": "見つかるアイテムのレアリティが(25—35)%増加する",
+    "template": "#% increased Rarity of Items found",
+    "ranges": [
+     [
+      25,
+      35
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelChaosResist1",
+    "gen": 3,
+    "family": [
+     "ChaosResistance"
+    ],
+    "level": 1,
+    "ja": "混沌耐性 +(10—13)%",
+    "template": "#% to Chaos Resistance",
+    "ranges": [
+     [
+      10,
+      13
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelColdResist1",
+    "gen": 3,
+    "family": [
+     "ColdResistance"
+    ],
+    "level": 1,
+    "ja": "冷気耐性 +(15—20)%",
+    "template": "#% to Cold Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelDexterity1",
+    "gen": 3,
+    "family": [
+     "Dexterity"
+    ],
+    "level": 1,
+    "ja": "器用さ +(14—16)",
+    "template": "# to Dexterity",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelFireResist1",
+    "gen": 3,
+    "family": [
+     "FireResistance"
+    ],
+    "level": 1,
+    "ja": "火耐性 +(15—20)%",
+    "template": "#% to Fire Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelIntelligence1",
+    "gen": 3,
+    "family": [
+     "Intelligence"
+    ],
+    "level": 1,
+    "ja": "知性 +(14—16)",
+    "template": "# to Intelligence",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelLightningResist1",
+    "gen": 3,
+    "family": [
+     "LightningResistance"
+    ],
+    "level": 1,
+    "ja": "雷耐性 +(15—20)%",
+    "template": "#% to Lightning Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelStrength1",
+    "gen": 3,
+    "family": [
+     "Strength"
+    ],
+    "level": 1,
+    "ja": "筋力 +(14—16)",
+    "template": "# to Strength",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeLifeRegenerationRate1",
+    "gen": 3,
+    "family": [
+     "LifeRegenerationRate"
+    ],
+    "level": 1,
+    "ja": "ライフ自動回復レートが(35—50)%増加する",
+    "template": "#% increased Life Regeneration rate",
+    "ranges": [
+     [
+      35,
+      50
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeManaRegeneration1",
+    "gen": 3,
+    "family": [
+     "ManaRegeneration"
+    ],
+    "level": 1,
+    "ja": "マナ自動回復レートが(35—50)%増加する",
+    "template": "#% increased Mana Regeneration Rate",
+    "ranges": [
+     [
+      35,
+      50
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeMaximumElementalResistance1",
+    "gen": 3,
+    "family": [
+     "MaximumResistances"
+    ],
+    "level": 1,
+    "ja": "全ての元素耐性の最大値 +2%",
+    "template": "#% to all Maximum Elemental Resistances",
+    "ranges": [
+     [
+      2,
+      2
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeReducedLocalAttributeRequirements1",
+    "gen": 3,
+    "family": [
+     "LocalAttributeRequirements"
+    ],
+    "level": 1,
+    "ja": "要求能力値が(30—50)%減少する",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeStrength1",
+    "gen": 3,
+    "family": [
+     "Strength"
+    ],
+    "level": 1,
+    "ja": "筋力 +(35—50)",
+    "template": "# to Strength",
+    "ranges": [
+     [
+      35,
+      50
+     ]
+    ]
    },
    {
     "kind": "upgrade",
@@ -13281,6 +13851,2310 @@
     "ja": "要求能力値が(30—50)%減少する",
     "template": null,
     "ranges": []
+   }
+  ],
+  "Jewels_dex": [
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelStrength1",
+    "gen": 5,
+    "family": [
+     "Strength"
+    ],
+    "level": 1,
+    "ja": "筋力 +(4—6)",
+    "template": "# to Strength",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelDexterity1",
+    "gen": 5,
+    "family": [
+     "Dexterity"
+    ],
+    "level": 1,
+    "ja": "器用さ +(4—6)",
+    "template": "# to Dexterity",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelIntelligence1",
+    "gen": 5,
+    "family": [
+     "Intelligence"
+    ],
+    "level": 1,
+    "ja": "知性 +(4—6)",
+    "template": "# to Intelligence",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelFireResist1",
+    "gen": 5,
+    "family": [
+     "FireResistance"
+    ],
+    "level": 1,
+    "ja": "火耐性 +(5—10)%",
+    "template": "#% to Fire Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelColdResist1",
+    "gen": 5,
+    "family": [
+     "ColdResistance"
+    ],
+    "level": 1,
+    "ja": "冷気耐性 +(5—10)%",
+    "template": "#% to Cold Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelLightningResist1",
+    "gen": 5,
+    "family": [
+     "LightningResistance"
+    ],
+    "level": 1,
+    "ja": "雷耐性 +(5—10)%",
+    "template": "#% to Lightning Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelChaosResist1",
+    "gen": 5,
+    "family": [
+     "ChaosResistance"
+    ],
+    "level": 1,
+    "ja": "混沌耐性 +(3—7)%",
+    "template": "#% to Chaos Resistance",
+    "ranges": [
+     [
+      3,
+      7
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelMaimImmunity1",
+    "gen": 5,
+    "family": [
+     "ImmuneToMaim"
+    ],
+    "level": 1,
+    "ja": "重傷に対する完全耐性を獲得する",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelHinderImmunity1",
+    "gen": 5,
+    "family": [
+     "YouCannotBeHindered"
+    ],
+    "level": 1,
+    "ja": "プレイヤーは阻害を受けることがない",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelCorruptedBloodImmunity1",
+    "gen": 5,
+    "family": [
+     "CorruptedBlood"
+    ],
+    "level": 1,
+    "ja": "穢れた血を付与されることがなくなる",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelBlindImmunity1",
+    "gen": 5,
+    "family": [
+     "ImmunityToBlind"
+    ],
+    "level": 1,
+    "ja": "盲目になることがない",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelChaosResist1",
+    "gen": 3,
+    "family": [
+     "ChaosResistance"
+    ],
+    "level": 1,
+    "ja": "混沌耐性 +(10—13)%",
+    "template": "#% to Chaos Resistance",
+    "ranges": [
+     [
+      10,
+      13
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelColdResist1",
+    "gen": 3,
+    "family": [
+     "ColdResistance"
+    ],
+    "level": 1,
+    "ja": "冷気耐性 +(15—20)%",
+    "template": "#% to Cold Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelDexterity1",
+    "gen": 3,
+    "family": [
+     "Dexterity"
+    ],
+    "level": 1,
+    "ja": "器用さ +(14—16)",
+    "template": "# to Dexterity",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelFireResist1",
+    "gen": 3,
+    "family": [
+     "FireResistance"
+    ],
+    "level": 1,
+    "ja": "火耐性 +(15—20)%",
+    "template": "#% to Fire Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelIntelligence1",
+    "gen": 3,
+    "family": [
+     "Intelligence"
+    ],
+    "level": 1,
+    "ja": "知性 +(14—16)",
+    "template": "# to Intelligence",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelLightningResist1",
+    "gen": 3,
+    "family": [
+     "LightningResistance"
+    ],
+    "level": 1,
+    "ja": "雷耐性 +(15—20)%",
+    "template": "#% to Lightning Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelStrength1",
+    "gen": 3,
+    "family": [
+     "Strength"
+    ],
+    "level": 1,
+    "ja": "筋力 +(14—16)",
+    "template": "# to Strength",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   }
+  ],
+  "Jewels_diamond": [
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelStrength1",
+    "gen": 5,
+    "family": [
+     "Strength"
+    ],
+    "level": 1,
+    "ja": "筋力 +(4—6)",
+    "template": "# to Strength",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelDexterity1",
+    "gen": 5,
+    "family": [
+     "Dexterity"
+    ],
+    "level": 1,
+    "ja": "器用さ +(4—6)",
+    "template": "# to Dexterity",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelIntelligence1",
+    "gen": 5,
+    "family": [
+     "Intelligence"
+    ],
+    "level": 1,
+    "ja": "知性 +(4—6)",
+    "template": "# to Intelligence",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelFireResist1",
+    "gen": 5,
+    "family": [
+     "FireResistance"
+    ],
+    "level": 1,
+    "ja": "火耐性 +(5—10)%",
+    "template": "#% to Fire Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelColdResist1",
+    "gen": 5,
+    "family": [
+     "ColdResistance"
+    ],
+    "level": 1,
+    "ja": "冷気耐性 +(5—10)%",
+    "template": "#% to Cold Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelLightningResist1",
+    "gen": 5,
+    "family": [
+     "LightningResistance"
+    ],
+    "level": 1,
+    "ja": "雷耐性 +(5—10)%",
+    "template": "#% to Lightning Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelChaosResist1",
+    "gen": 5,
+    "family": [
+     "ChaosResistance"
+    ],
+    "level": 1,
+    "ja": "混沌耐性 +(3—7)%",
+    "template": "#% to Chaos Resistance",
+    "ranges": [
+     [
+      3,
+      7
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelMaimImmunity1",
+    "gen": 5,
+    "family": [
+     "ImmuneToMaim"
+    ],
+    "level": 1,
+    "ja": "重傷に対する完全耐性を獲得する",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelHinderImmunity1",
+    "gen": 5,
+    "family": [
+     "YouCannotBeHindered"
+    ],
+    "level": 1,
+    "ja": "プレイヤーは阻害を受けることがない",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelCorruptedBloodImmunity1",
+    "gen": 5,
+    "family": [
+     "CorruptedBlood"
+    ],
+    "level": 1,
+    "ja": "穢れた血を付与されることがなくなる",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelBlindImmunity1",
+    "gen": 5,
+    "family": [
+     "ImmunityToBlind"
+    ],
+    "level": 1,
+    "ja": "盲目になることがない",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelChaosResist1",
+    "gen": 3,
+    "family": [
+     "ChaosResistance"
+    ],
+    "level": 1,
+    "ja": "混沌耐性 +(10—13)%",
+    "template": "#% to Chaos Resistance",
+    "ranges": [
+     [
+      10,
+      13
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelColdResist1",
+    "gen": 3,
+    "family": [
+     "ColdResistance"
+    ],
+    "level": 1,
+    "ja": "冷気耐性 +(15—20)%",
+    "template": "#% to Cold Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelDexterity1",
+    "gen": 3,
+    "family": [
+     "Dexterity"
+    ],
+    "level": 1,
+    "ja": "器用さ +(14—16)",
+    "template": "# to Dexterity",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelFireResist1",
+    "gen": 3,
+    "family": [
+     "FireResistance"
+    ],
+    "level": 1,
+    "ja": "火耐性 +(15—20)%",
+    "template": "#% to Fire Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelIntelligence1",
+    "gen": 3,
+    "family": [
+     "Intelligence"
+    ],
+    "level": 1,
+    "ja": "知性 +(14—16)",
+    "template": "# to Intelligence",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelLightningResist1",
+    "gen": 3,
+    "family": [
+     "LightningResistance"
+    ],
+    "level": 1,
+    "ja": "雷耐性 +(15—20)%",
+    "template": "#% to Lightning Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelStrength1",
+    "gen": 3,
+    "family": [
+     "Strength"
+    ],
+    "level": 1,
+    "ja": "筋力 +(14—16)",
+    "template": "# to Strength",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   }
+  ],
+  "Jewels_int": [
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelStrength1",
+    "gen": 5,
+    "family": [
+     "Strength"
+    ],
+    "level": 1,
+    "ja": "筋力 +(4—6)",
+    "template": "# to Strength",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelDexterity1",
+    "gen": 5,
+    "family": [
+     "Dexterity"
+    ],
+    "level": 1,
+    "ja": "器用さ +(4—6)",
+    "template": "# to Dexterity",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelIntelligence1",
+    "gen": 5,
+    "family": [
+     "Intelligence"
+    ],
+    "level": 1,
+    "ja": "知性 +(4—6)",
+    "template": "# to Intelligence",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelFireResist1",
+    "gen": 5,
+    "family": [
+     "FireResistance"
+    ],
+    "level": 1,
+    "ja": "火耐性 +(5—10)%",
+    "template": "#% to Fire Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelColdResist1",
+    "gen": 5,
+    "family": [
+     "ColdResistance"
+    ],
+    "level": 1,
+    "ja": "冷気耐性 +(5—10)%",
+    "template": "#% to Cold Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelLightningResist1",
+    "gen": 5,
+    "family": [
+     "LightningResistance"
+    ],
+    "level": 1,
+    "ja": "雷耐性 +(5—10)%",
+    "template": "#% to Lightning Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelChaosResist1",
+    "gen": 5,
+    "family": [
+     "ChaosResistance"
+    ],
+    "level": 1,
+    "ja": "混沌耐性 +(3—7)%",
+    "template": "#% to Chaos Resistance",
+    "ranges": [
+     [
+      3,
+      7
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelMaimImmunity1",
+    "gen": 5,
+    "family": [
+     "ImmuneToMaim"
+    ],
+    "level": 1,
+    "ja": "重傷に対する完全耐性を獲得する",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelHinderImmunity1",
+    "gen": 5,
+    "family": [
+     "YouCannotBeHindered"
+    ],
+    "level": 1,
+    "ja": "プレイヤーは阻害を受けることがない",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelCorruptedBloodImmunity1",
+    "gen": 5,
+    "family": [
+     "CorruptedBlood"
+    ],
+    "level": 1,
+    "ja": "穢れた血を付与されることがなくなる",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelBlindImmunity1",
+    "gen": 5,
+    "family": [
+     "ImmunityToBlind"
+    ],
+    "level": 1,
+    "ja": "盲目になることがない",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelChaosResist1",
+    "gen": 3,
+    "family": [
+     "ChaosResistance"
+    ],
+    "level": 1,
+    "ja": "混沌耐性 +(10—13)%",
+    "template": "#% to Chaos Resistance",
+    "ranges": [
+     [
+      10,
+      13
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelColdResist1",
+    "gen": 3,
+    "family": [
+     "ColdResistance"
+    ],
+    "level": 1,
+    "ja": "冷気耐性 +(15—20)%",
+    "template": "#% to Cold Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelDexterity1",
+    "gen": 3,
+    "family": [
+     "Dexterity"
+    ],
+    "level": 1,
+    "ja": "器用さ +(14—16)",
+    "template": "# to Dexterity",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelFireResist1",
+    "gen": 3,
+    "family": [
+     "FireResistance"
+    ],
+    "level": 1,
+    "ja": "火耐性 +(15—20)%",
+    "template": "#% to Fire Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelIntelligence1",
+    "gen": 3,
+    "family": [
+     "Intelligence"
+    ],
+    "level": 1,
+    "ja": "知性 +(14—16)",
+    "template": "# to Intelligence",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelLightningResist1",
+    "gen": 3,
+    "family": [
+     "LightningResistance"
+    ],
+    "level": 1,
+    "ja": "雷耐性 +(15—20)%",
+    "template": "#% to Lightning Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelStrength1",
+    "gen": 3,
+    "family": [
+     "Strength"
+    ],
+    "level": 1,
+    "ja": "筋力 +(14—16)",
+    "template": "# to Strength",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   }
+  ],
+  "Jewels_radius_dex": [
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelStrength1",
+    "gen": 5,
+    "family": [
+     "Strength"
+    ],
+    "level": 1,
+    "ja": "筋力 +(4—6)",
+    "template": "# to Strength",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelDexterity1",
+    "gen": 5,
+    "family": [
+     "Dexterity"
+    ],
+    "level": 1,
+    "ja": "器用さ +(4—6)",
+    "template": "# to Dexterity",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelIntelligence1",
+    "gen": 5,
+    "family": [
+     "Intelligence"
+    ],
+    "level": 1,
+    "ja": "知性 +(4—6)",
+    "template": "# to Intelligence",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelFireResist1",
+    "gen": 5,
+    "family": [
+     "FireResistance"
+    ],
+    "level": 1,
+    "ja": "火耐性 +(5—10)%",
+    "template": "#% to Fire Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelColdResist1",
+    "gen": 5,
+    "family": [
+     "ColdResistance"
+    ],
+    "level": 1,
+    "ja": "冷気耐性 +(5—10)%",
+    "template": "#% to Cold Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelLightningResist1",
+    "gen": 5,
+    "family": [
+     "LightningResistance"
+    ],
+    "level": 1,
+    "ja": "雷耐性 +(5—10)%",
+    "template": "#% to Lightning Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelChaosResist1",
+    "gen": 5,
+    "family": [
+     "ChaosResistance"
+    ],
+    "level": 1,
+    "ja": "混沌耐性 +(3—7)%",
+    "template": "#% to Chaos Resistance",
+    "ranges": [
+     [
+      3,
+      7
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelMaimImmunity1",
+    "gen": 5,
+    "family": [
+     "ImmuneToMaim"
+    ],
+    "level": 1,
+    "ja": "重傷に対する完全耐性を獲得する",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelHinderImmunity1",
+    "gen": 5,
+    "family": [
+     "YouCannotBeHindered"
+    ],
+    "level": 1,
+    "ja": "プレイヤーは阻害を受けることがない",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelCorruptedBloodImmunity1",
+    "gen": 5,
+    "family": [
+     "CorruptedBlood"
+    ],
+    "level": 1,
+    "ja": "穢れた血を付与されることがなくなる",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelBlindImmunity1",
+    "gen": 5,
+    "family": [
+     "ImmunityToBlind"
+    ],
+    "level": 1,
+    "ja": "盲目になることがない",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelChaosResist1",
+    "gen": 3,
+    "family": [
+     "ChaosResistance"
+    ],
+    "level": 1,
+    "ja": "混沌耐性 +(10—13)%",
+    "template": "#% to Chaos Resistance",
+    "ranges": [
+     [
+      10,
+      13
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelColdResist1",
+    "gen": 3,
+    "family": [
+     "ColdResistance"
+    ],
+    "level": 1,
+    "ja": "冷気耐性 +(15—20)%",
+    "template": "#% to Cold Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelDexterity1",
+    "gen": 3,
+    "family": [
+     "Dexterity"
+    ],
+    "level": 1,
+    "ja": "器用さ +(14—16)",
+    "template": "# to Dexterity",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelFireResist1",
+    "gen": 3,
+    "family": [
+     "FireResistance"
+    ],
+    "level": 1,
+    "ja": "火耐性 +(15—20)%",
+    "template": "#% to Fire Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelIntelligence1",
+    "gen": 3,
+    "family": [
+     "Intelligence"
+    ],
+    "level": 1,
+    "ja": "知性 +(14—16)",
+    "template": "# to Intelligence",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelLightningResist1",
+    "gen": 3,
+    "family": [
+     "LightningResistance"
+    ],
+    "level": 1,
+    "ja": "雷耐性 +(15—20)%",
+    "template": "#% to Lightning Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelStrength1",
+    "gen": 3,
+    "family": [
+     "Strength"
+    ],
+    "level": 1,
+    "ja": "筋力 +(14—16)",
+    "template": "# to Strength",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   }
+  ],
+  "Jewels_radius_diamond": [
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelStrength1",
+    "gen": 5,
+    "family": [
+     "Strength"
+    ],
+    "level": 1,
+    "ja": "筋力 +(4—6)",
+    "template": "# to Strength",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelDexterity1",
+    "gen": 5,
+    "family": [
+     "Dexterity"
+    ],
+    "level": 1,
+    "ja": "器用さ +(4—6)",
+    "template": "# to Dexterity",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelIntelligence1",
+    "gen": 5,
+    "family": [
+     "Intelligence"
+    ],
+    "level": 1,
+    "ja": "知性 +(4—6)",
+    "template": "# to Intelligence",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelFireResist1",
+    "gen": 5,
+    "family": [
+     "FireResistance"
+    ],
+    "level": 1,
+    "ja": "火耐性 +(5—10)%",
+    "template": "#% to Fire Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelColdResist1",
+    "gen": 5,
+    "family": [
+     "ColdResistance"
+    ],
+    "level": 1,
+    "ja": "冷気耐性 +(5—10)%",
+    "template": "#% to Cold Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelLightningResist1",
+    "gen": 5,
+    "family": [
+     "LightningResistance"
+    ],
+    "level": 1,
+    "ja": "雷耐性 +(5—10)%",
+    "template": "#% to Lightning Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelChaosResist1",
+    "gen": 5,
+    "family": [
+     "ChaosResistance"
+    ],
+    "level": 1,
+    "ja": "混沌耐性 +(3—7)%",
+    "template": "#% to Chaos Resistance",
+    "ranges": [
+     [
+      3,
+      7
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelMaimImmunity1",
+    "gen": 5,
+    "family": [
+     "ImmuneToMaim"
+    ],
+    "level": 1,
+    "ja": "重傷に対する完全耐性を獲得する",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelHinderImmunity1",
+    "gen": 5,
+    "family": [
+     "YouCannotBeHindered"
+    ],
+    "level": 1,
+    "ja": "プレイヤーは阻害を受けることがない",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelCorruptedBloodImmunity1",
+    "gen": 5,
+    "family": [
+     "CorruptedBlood"
+    ],
+    "level": 1,
+    "ja": "穢れた血を付与されることがなくなる",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelBlindImmunity1",
+    "gen": 5,
+    "family": [
+     "ImmunityToBlind"
+    ],
+    "level": 1,
+    "ja": "盲目になることがない",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelChaosResist1",
+    "gen": 3,
+    "family": [
+     "ChaosResistance"
+    ],
+    "level": 1,
+    "ja": "混沌耐性 +(10—13)%",
+    "template": "#% to Chaos Resistance",
+    "ranges": [
+     [
+      10,
+      13
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelColdResist1",
+    "gen": 3,
+    "family": [
+     "ColdResistance"
+    ],
+    "level": 1,
+    "ja": "冷気耐性 +(15—20)%",
+    "template": "#% to Cold Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelDexterity1",
+    "gen": 3,
+    "family": [
+     "Dexterity"
+    ],
+    "level": 1,
+    "ja": "器用さ +(14—16)",
+    "template": "# to Dexterity",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelFireResist1",
+    "gen": 3,
+    "family": [
+     "FireResistance"
+    ],
+    "level": 1,
+    "ja": "火耐性 +(15—20)%",
+    "template": "#% to Fire Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelIntelligence1",
+    "gen": 3,
+    "family": [
+     "Intelligence"
+    ],
+    "level": 1,
+    "ja": "知性 +(14—16)",
+    "template": "# to Intelligence",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelLightningResist1",
+    "gen": 3,
+    "family": [
+     "LightningResistance"
+    ],
+    "level": 1,
+    "ja": "雷耐性 +(15—20)%",
+    "template": "#% to Lightning Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelStrength1",
+    "gen": 3,
+    "family": [
+     "Strength"
+    ],
+    "level": 1,
+    "ja": "筋力 +(14—16)",
+    "template": "# to Strength",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   }
+  ],
+  "Jewels_radius_int": [
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelStrength1",
+    "gen": 5,
+    "family": [
+     "Strength"
+    ],
+    "level": 1,
+    "ja": "筋力 +(4—6)",
+    "template": "# to Strength",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelDexterity1",
+    "gen": 5,
+    "family": [
+     "Dexterity"
+    ],
+    "level": 1,
+    "ja": "器用さ +(4—6)",
+    "template": "# to Dexterity",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelIntelligence1",
+    "gen": 5,
+    "family": [
+     "Intelligence"
+    ],
+    "level": 1,
+    "ja": "知性 +(4—6)",
+    "template": "# to Intelligence",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelFireResist1",
+    "gen": 5,
+    "family": [
+     "FireResistance"
+    ],
+    "level": 1,
+    "ja": "火耐性 +(5—10)%",
+    "template": "#% to Fire Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelColdResist1",
+    "gen": 5,
+    "family": [
+     "ColdResistance"
+    ],
+    "level": 1,
+    "ja": "冷気耐性 +(5—10)%",
+    "template": "#% to Cold Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelLightningResist1",
+    "gen": 5,
+    "family": [
+     "LightningResistance"
+    ],
+    "level": 1,
+    "ja": "雷耐性 +(5—10)%",
+    "template": "#% to Lightning Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelChaosResist1",
+    "gen": 5,
+    "family": [
+     "ChaosResistance"
+    ],
+    "level": 1,
+    "ja": "混沌耐性 +(3—7)%",
+    "template": "#% to Chaos Resistance",
+    "ranges": [
+     [
+      3,
+      7
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelMaimImmunity1",
+    "gen": 5,
+    "family": [
+     "ImmuneToMaim"
+    ],
+    "level": 1,
+    "ja": "重傷に対する完全耐性を獲得する",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelHinderImmunity1",
+    "gen": 5,
+    "family": [
+     "YouCannotBeHindered"
+    ],
+    "level": 1,
+    "ja": "プレイヤーは阻害を受けることがない",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelCorruptedBloodImmunity1",
+    "gen": 5,
+    "family": [
+     "CorruptedBlood"
+    ],
+    "level": 1,
+    "ja": "穢れた血を付与されることがなくなる",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelBlindImmunity1",
+    "gen": 5,
+    "family": [
+     "ImmunityToBlind"
+    ],
+    "level": 1,
+    "ja": "盲目になることがない",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelChaosResist1",
+    "gen": 3,
+    "family": [
+     "ChaosResistance"
+    ],
+    "level": 1,
+    "ja": "混沌耐性 +(10—13)%",
+    "template": "#% to Chaos Resistance",
+    "ranges": [
+     [
+      10,
+      13
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelColdResist1",
+    "gen": 3,
+    "family": [
+     "ColdResistance"
+    ],
+    "level": 1,
+    "ja": "冷気耐性 +(15—20)%",
+    "template": "#% to Cold Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelDexterity1",
+    "gen": 3,
+    "family": [
+     "Dexterity"
+    ],
+    "level": 1,
+    "ja": "器用さ +(14—16)",
+    "template": "# to Dexterity",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelFireResist1",
+    "gen": 3,
+    "family": [
+     "FireResistance"
+    ],
+    "level": 1,
+    "ja": "火耐性 +(15—20)%",
+    "template": "#% to Fire Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelIntelligence1",
+    "gen": 3,
+    "family": [
+     "Intelligence"
+    ],
+    "level": 1,
+    "ja": "知性 +(14—16)",
+    "template": "# to Intelligence",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelLightningResist1",
+    "gen": 3,
+    "family": [
+     "LightningResistance"
+    ],
+    "level": 1,
+    "ja": "雷耐性 +(15—20)%",
+    "template": "#% to Lightning Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelStrength1",
+    "gen": 3,
+    "family": [
+     "Strength"
+    ],
+    "level": 1,
+    "ja": "筋力 +(14—16)",
+    "template": "# to Strength",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   }
+  ],
+  "Jewels_radius_str": [
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelStrength1",
+    "gen": 5,
+    "family": [
+     "Strength"
+    ],
+    "level": 1,
+    "ja": "筋力 +(4—6)",
+    "template": "# to Strength",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelDexterity1",
+    "gen": 5,
+    "family": [
+     "Dexterity"
+    ],
+    "level": 1,
+    "ja": "器用さ +(4—6)",
+    "template": "# to Dexterity",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelIntelligence1",
+    "gen": 5,
+    "family": [
+     "Intelligence"
+    ],
+    "level": 1,
+    "ja": "知性 +(4—6)",
+    "template": "# to Intelligence",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelFireResist1",
+    "gen": 5,
+    "family": [
+     "FireResistance"
+    ],
+    "level": 1,
+    "ja": "火耐性 +(5—10)%",
+    "template": "#% to Fire Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelColdResist1",
+    "gen": 5,
+    "family": [
+     "ColdResistance"
+    ],
+    "level": 1,
+    "ja": "冷気耐性 +(5—10)%",
+    "template": "#% to Cold Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelLightningResist1",
+    "gen": 5,
+    "family": [
+     "LightningResistance"
+    ],
+    "level": 1,
+    "ja": "雷耐性 +(5—10)%",
+    "template": "#% to Lightning Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelChaosResist1",
+    "gen": 5,
+    "family": [
+     "ChaosResistance"
+    ],
+    "level": 1,
+    "ja": "混沌耐性 +(3—7)%",
+    "template": "#% to Chaos Resistance",
+    "ranges": [
+     [
+      3,
+      7
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelMaimImmunity1",
+    "gen": 5,
+    "family": [
+     "ImmuneToMaim"
+    ],
+    "level": 1,
+    "ja": "重傷に対する完全耐性を獲得する",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelHinderImmunity1",
+    "gen": 5,
+    "family": [
+     "YouCannotBeHindered"
+    ],
+    "level": 1,
+    "ja": "プレイヤーは阻害を受けることがない",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelCorruptedBloodImmunity1",
+    "gen": 5,
+    "family": [
+     "CorruptedBlood"
+    ],
+    "level": 1,
+    "ja": "穢れた血を付与されることがなくなる",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelBlindImmunity1",
+    "gen": 5,
+    "family": [
+     "ImmunityToBlind"
+    ],
+    "level": 1,
+    "ja": "盲目になることがない",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelChaosResist1",
+    "gen": 3,
+    "family": [
+     "ChaosResistance"
+    ],
+    "level": 1,
+    "ja": "混沌耐性 +(10—13)%",
+    "template": "#% to Chaos Resistance",
+    "ranges": [
+     [
+      10,
+      13
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelColdResist1",
+    "gen": 3,
+    "family": [
+     "ColdResistance"
+    ],
+    "level": 1,
+    "ja": "冷気耐性 +(15—20)%",
+    "template": "#% to Cold Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelDexterity1",
+    "gen": 3,
+    "family": [
+     "Dexterity"
+    ],
+    "level": 1,
+    "ja": "器用さ +(14—16)",
+    "template": "# to Dexterity",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelFireResist1",
+    "gen": 3,
+    "family": [
+     "FireResistance"
+    ],
+    "level": 1,
+    "ja": "火耐性 +(15—20)%",
+    "template": "#% to Fire Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelIntelligence1",
+    "gen": 3,
+    "family": [
+     "Intelligence"
+    ],
+    "level": 1,
+    "ja": "知性 +(14—16)",
+    "template": "# to Intelligence",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelLightningResist1",
+    "gen": 3,
+    "family": [
+     "LightningResistance"
+    ],
+    "level": 1,
+    "ja": "雷耐性 +(15—20)%",
+    "template": "#% to Lightning Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelStrength1",
+    "gen": 3,
+    "family": [
+     "Strength"
+    ],
+    "level": 1,
+    "ja": "筋力 +(14—16)",
+    "template": "# to Strength",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   }
+  ],
+  "Jewels_str": [
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelStrength1",
+    "gen": 5,
+    "family": [
+     "Strength"
+    ],
+    "level": 1,
+    "ja": "筋力 +(4—6)",
+    "template": "# to Strength",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelDexterity1",
+    "gen": 5,
+    "family": [
+     "Dexterity"
+    ],
+    "level": 1,
+    "ja": "器用さ +(4—6)",
+    "template": "# to Dexterity",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelIntelligence1",
+    "gen": 5,
+    "family": [
+     "Intelligence"
+    ],
+    "level": 1,
+    "ja": "知性 +(4—6)",
+    "template": "# to Intelligence",
+    "ranges": [
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelFireResist1",
+    "gen": 5,
+    "family": [
+     "FireResistance"
+    ],
+    "level": 1,
+    "ja": "火耐性 +(5—10)%",
+    "template": "#% to Fire Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelColdResist1",
+    "gen": 5,
+    "family": [
+     "ColdResistance"
+    ],
+    "level": 1,
+    "ja": "冷気耐性 +(5—10)%",
+    "template": "#% to Cold Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelLightningResist1",
+    "gen": 5,
+    "family": [
+     "LightningResistance"
+    ],
+    "level": 1,
+    "ja": "雷耐性 +(5—10)%",
+    "template": "#% to Lightning Resistance",
+    "ranges": [
+     [
+      5,
+      10
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelChaosResist1",
+    "gen": 5,
+    "family": [
+     "ChaosResistance"
+    ],
+    "level": 1,
+    "ja": "混沌耐性 +(3—7)%",
+    "template": "#% to Chaos Resistance",
+    "ranges": [
+     [
+      3,
+      7
+     ]
+    ]
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelMaimImmunity1",
+    "gen": 5,
+    "family": [
+     "ImmuneToMaim"
+    ],
+    "level": 1,
+    "ja": "重傷に対する完全耐性を獲得する",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelHinderImmunity1",
+    "gen": 5,
+    "family": [
+     "YouCannotBeHindered"
+    ],
+    "level": 1,
+    "ja": "プレイヤーは阻害を受けることがない",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelCorruptedBloodImmunity1",
+    "gen": 5,
+    "family": [
+     "CorruptedBlood"
+    ],
+    "level": 1,
+    "ja": "穢れた血を付与されることがなくなる",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "enchant",
+    "id": "CorruptionJewelBlindImmunity1",
+    "gen": 5,
+    "family": [
+     "ImmunityToBlind"
+    ],
+    "level": 1,
+    "ja": "盲目になることがない",
+    "template": null,
+    "ranges": []
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelChaosResist1",
+    "gen": 3,
+    "family": [
+     "ChaosResistance"
+    ],
+    "level": 1,
+    "ja": "混沌耐性 +(10—13)%",
+    "template": "#% to Chaos Resistance",
+    "ranges": [
+     [
+      10,
+      13
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelColdResist1",
+    "gen": 3,
+    "family": [
+     "ColdResistance"
+    ],
+    "level": 1,
+    "ja": "冷気耐性 +(15—20)%",
+    "template": "#% to Cold Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelDexterity1",
+    "gen": 3,
+    "family": [
+     "Dexterity"
+    ],
+    "level": 1,
+    "ja": "器用さ +(14—16)",
+    "template": "# to Dexterity",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelFireResist1",
+    "gen": 3,
+    "family": [
+     "FireResistance"
+    ],
+    "level": 1,
+    "ja": "火耐性 +(15—20)%",
+    "template": "#% to Fire Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelIntelligence1",
+    "gen": 3,
+    "family": [
+     "Intelligence"
+    ],
+    "level": 1,
+    "ja": "知性 +(14—16)",
+    "template": "# to Intelligence",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelLightningResist1",
+    "gen": 3,
+    "family": [
+     "LightningResistance"
+    ],
+    "level": 1,
+    "ja": "雷耐性 +(15—20)%",
+    "template": "#% to Lightning Resistance",
+    "ranges": [
+     [
+      15,
+      20
+     ]
+    ]
+   },
+   {
+    "kind": "upgrade",
+    "id": "CorruptionUpgradeJewelStrength1",
+    "gen": 3,
+    "family": [
+     "Strength"
+    ],
+    "level": 1,
+    "ja": "筋力 +(14—16)",
+    "template": "# to Strength",
+    "ranges": [
+     [
+      14,
+      16
+     ]
+    ]
    }
   ],
   "One_Hand_Maces": [
