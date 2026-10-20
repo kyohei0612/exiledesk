@@ -15,6 +15,7 @@
 ## 地図
 - 画面 src/views/craft-stage/: CraftStage.vue (入口)、棚 CurrencyShelf・ShelfButton・StageCurrencyCard、アイテム StageItemCard・StageItemMini、MOD StageModList・ModAddPicker、工程 StageHistory、StageForesight・RevealPanel・StageFracturePicker・StageQualityBar・StageSanctifyBar (聖別の数値、sset の手は apply-vaal.ts)・StageBasePicker/Page・StageSettings・StagePhoneBar。狙う StageAimPanel・StageAimPicker。スパム StageRoutes*・StageRouteLuck・StageRouteRunes・use-spam-share.ts。
 - 状態 src/state/emulator/: craft-stage-shelf・shelf-context・aim-state・stage-steps・stage-extra・craft-stage-help*・spam-share-open。
+- 入口 src/services/craft-stage/engine.ts (外の部はここだけを読む、使い方 notes/engine-entry.md)。
 - 仕組み src/services/craft-stage/: spec/ (orb・essence・desecrate・other-specs、parts.ts、judge.ts、run-spec.ts、odds.ts)、apply-currency.ts と apply-*.ts・omens.ts、確率 held-odds・aim-odds・route-race・chaos-spam・route-runes、MOD の並べ mod-list.ts (`modListFor`)・roll-text.ts、ベース stage-bases.ts (+ .json)・stage-uniques・stage-runes・*-art.ts。
 - エンジンの核: src/services/craft-stage/ の types.ts・run-plan.ts・contract.ts (打つ処理の土台、旧「境目」から移した)、乱数 src/services/htc/rng.ts (`mulberry32`、どの部も同じ乱数)、入口 engine.ts (手 1 で作成中)。
 - エンジン・MOD: src/vendor/poe2htc、src/services/htc/ (patch.ts `loadHtcPatch()`・bridge.ts・weight-overrides.ts・poe2db-*-fixes.json・mod-stats.json・rune-weights.json)、src/services/mods/ (mod-rules・item-classes・tiers・engine-mods)、ベースの一覧 services/items/base-catalog.ts。

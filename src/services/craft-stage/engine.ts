@@ -1,0 +1,66 @@
+/**
+ * engine.ts — エミュ部のエンジンの入口 (2026-10-20 オーナー「エミュ部 = エンジンの核」。案は docs/org/emulator/notes/engine-entry.md)。
+ *
+ * シミュ・チュートリアル・解析君は、MOD の置き場・重み・段・文、カレンシーとお告げの効果、確率、品質・聖別の式をここから取る (自前の表・式・重みの足し算を作らない)。
+ * 足りない物はエミュ部長がここへ足す。ここは名前を並べるだけ (中身は元のファイル)。型は export type、関数は名前ごとに並べ、
+ * `export *` の束ねを作らない (ワーカーのバンドルに要らない物を引き込まないため)。
+ */
+
+// 形 (型)
+export type { StageItem, StageMod, StageSide, StageRarity, StageApply } from "./types";
+export type { PlayedStep, StartSpec } from "./run-plan";
+export type { CraftStagePlan } from "./contract";
+export type { PatchData, ItemBase, Mod } from "../../vendor/poe2htc/engine/types";
+export type { Force, Candidate, PoolOpts } from "./stage-core";
+export type { PobBlock } from "./stage-pob";
+
+// アイテムを作る・打つ
+export { freshItem, startFrom, startItem, playStep, playPlan, runPlan, splitOmens } from "./run-plan";
+export { applyCurrency, kindOf, omensFor } from "./apply-currency";
+export { revealOffers, unrevealedOf } from "./apply-desecrate";
+
+// アイテムの今を読む
+export { allMods, listOf, room, limitOf, effectiveCls, maxQualityOf, catalystOf, SIDES, unfracturable } from "./stage-core";
+export { socketCapOf } from "./stage-runes";
+export { dpsText } from "./stage-pob";
+export { DEF } from "./defence";
+
+// 置き場・重み・段
+export { loadHtcPatch, htcBaseInfo, htcBaseLimits } from "../htc/patch";
+export { classOfBase } from "../htc/bridge";
+export { candidates } from "./stage-core";
+export { modTierWeight, floorKeepIndex, CRAFTED_SOURCES, familiesOf } from "../../vendor/poe2htc/engine/pool";
+export { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
+export { familyBlocked, occupiedKeysOf } from "../mods/mod-rules";
+export { modListFor } from "./mod-list";
+export { tierDisplayRanges } from "../mods/stat-scale";
+export { inGroup } from "../mods/item-classes";
+export { isRemovedBase, classLabel } from "../items/base-catalog";
+
+// 1 手の確率 (addHitOdds = 1 回で狙いが付く割合、fractureHit = フラクチャーの当たり)
+export type { AddOdds, AddHit, OddsTarget } from "./spec/odds";
+export { addOddsBySpec, addCands, addHitOdds, hitShare, fractureHit } from "./spec/odds";
+export type { HeldOdds } from "./held-odds";
+export { heldOdds, heldAnyOf, aimTierKey } from "./held-odds";
+export type { AimTarget, AimCombo, AimOdd } from "./aim-odds";
+export { aimCombos, aimOdds, aimChain, aimDone } from "./aim-odds";
+export { DESECRATION_EXCLUSIVE_COUNT, bossOmenAllowed, desecrationOmenForMod } from "../../vendor/poe2htc/engine/probability";
+
+// 名簿
+export { OMEN_FOR } from "./omens";
+export { RUNES, runeOf, isRune, runeEffectFor } from "./stage-runes";
+export { withRunes, runeIdByName } from "../../vendor/poe2htc/engine/runes";
+export { ESSENCE_KEYS } from "../htc/essence-key-table";
+export { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
+export { CATALYSTS } from "../htc/quality";
+export { isEmotion } from "./apply-emotion";
+export { isShard } from "./apply-act";
+export { isGem } from "./stage-bases";
+
+// 文
+export { fillModText } from "../htc/mod-text";
+export { jaUniqueText } from "../mods/unique-mod-ja";
+export { tagLabel } from "../mods/tag-ja";
+
+// 乱数 (どの部も同じ乱数)
+export { mulberry32 } from "../htc/rng";
