@@ -442,7 +442,7 @@ const glowOf = (b: Box): boolean => {
               @note="popDo((id) => (panel = { kind: 'note', id }))" @spam="onSpam(doc.boxes[pop!]!)" @back-go="popDo((_, b) => goBack(b))" />
           </div>
         </div>
-        <TreeHoverCard v-if="cardBox && doc.boxes[cardBox]" :box-id="cardBox" :rect="v.rectOf(doc.boxes[cardBox]!)" />
+        <TreeHoverCard v-if="cardBox && doc.boxes[cardBox]" :box-id="cardBox" :rect="v.rectOf(doc.boxes[cardBox]!, sizeOf(pills, cardBox).w * (pills.has(cardBox) ? inv : 1), sizeOf(pills, cardBox).h * (pills.has(cardBox) ? inv : 1))" />
         <TreeCanvasTools v-model:hand="hand" :boxes="boxes" :view="v.view.value" :zoom="zoom" @center="v.centerOn" @fit="v.fit" @zoom-in="v.zoomIn" @zoom-out="v.zoomOut" @reset="v.resetZoom" />
         </div>
 

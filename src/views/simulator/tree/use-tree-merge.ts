@@ -23,11 +23,11 @@ export function useTreeMerge(o: {
   const KEY = "exiledesk.tree.lines-all";
   const linesAll = ref((() => { try { return localStorage.getItem(KEY) === "1"; } catch { return false; } })());
   watch(linesAll, (on) => { try { localStorage.setItem(KEY, on ? "1" : "0"); } catch { /* 覚えられなくても使える */ } });
-  /** 乗せている箱・札 (線を濃く) と、少し待ってから出すホバーのカード */
+  /** 乗せている箱・札 (線を濃く) と、少し待ってから出すホバーのカード (札・戻り先を選んでいる時の候補の箱も。オーナー 10-22「全てカードが出るように」) */
   const hoverBox = ref<string | null>(null);
   const cardBox = ref<string | null>(null);
   let t = 0;
-  watch(hoverBox, (id) => { clearTimeout(t); cardBox.value = null; if (id && !o.pills.value.has(id)) t = window.setTimeout(() => { if (hoverBox.value === id && !o.busy()) cardBox.value = id; }, 350); });
+  watch(hoverBox, (id) => { clearTimeout(t); cardBox.value = null; if (id) t = window.setTimeout(() => { if (hoverBox.value === id && !o.busy()) cardBox.value = id; }, 350); });
   watch(o.reset, () => { cardBox.value = null; });
   return { merged, linesAll, hoverBox, cardBox };
 }
