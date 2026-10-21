@@ -171,8 +171,8 @@ const noteText = computed(() => {
     </div>
 
     <!-- 棚 (クラフト台と同じ。お告げは持った物の下に) -->
-    <CurrencyShelf inline-held @hold="(k: string) => (held = k)">
-      <!-- 持った物に掛けられるお告げ = クラフト台と同じ部品 (HeldOmens.vue、棚の文脈 provideShelf から取る。お告げの下の設定も出る) -->
+    <CurrencyShelf @hold="(k: string) => (held = k)">
+      <!-- 持った物に掛けられるお告げ = クラフト台と同じ部品と置き場 (HeldOmens.vue を持ったアイコンのすぐ下に重ねる。inline-held だと棚の一番下で見切れた、10-21 本物のマウス) -->
       <template v-if="heldOmensOf(held).length" #held><HeldOmens /></template>
     </CurrencyShelf>
 
