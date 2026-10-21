@@ -1,54 +1,94 @@
 ---
-title: PoE2 Fracturing Orb and Desecrated Mods: 0 Fixed in 24 Tries
-description: In PoE2, a Fracturing Orb never picks a Desecrated mod to fracture. Desecrated mods count toward the four-mod requirement but are never chosen. We explain the rule from 24 in-game tries with zero hits and three rounds of fixes.
+title: PoE2 Fracturing Orb: Desecrated Mods Can't Be Fractured
+description: In PoE2, a Fracturing Orb never fractures a Desecrated mod. They count toward the four-mod requirement but are left out of the pick. We once built it wrong; 24 in-game tries with 0 hits set us straight.
 date: 2026-10-22
-tags: Fractured, Desecration, Fracturing Orb, bones, corrections
-tree: /?page=sim-tree&base=Gold%20Ring
-craft: /?base=Gold%20Ring
+tags: Fracturing Orb, Fractured, Desecration, bones, corrections
 draft: true
 ---
-In PoE2, a Fracturing Orb **never picks a Desecrated mod to fracture**. Desecrated mods count toward the "four or more mods" requirement, but they are never the one that gets fixed. The owner used Fracturing Orbs 24 times in game and a Desecrated mod was fractured zero times. ExileDesk rebuilt this rule three times before getting it right.
+In PoE2, a Fracturing Orb **can't fracture a Desecrated mod**. Desecrated mods count toward the "four or more mods" requirement, but they are never the one that gets fixed. The owner used a Fracturing Orb 24 times in game, and a Desecrated mod was fractured 0 times.
 
-Fracturing fixes one mod so Chaos Orbs and Orbs of Annulment can't remove it. Fracture one high-tier mod and you can retry the rest as often as you like without losing it. The Gold Ring video also fractured Spell Damage before starting chaos spam.
+Here's the embarrassing part: ExileDesk once let you fracture Desecrated mods. Locking in a strong mod you got from a bone sounds great, so we assumed it worked and put it into the emulator without checking.
 
-## The Fracturing Rules
+Then, while fixing it, we got it wrong a second time by allowing normal mods added by bones to be fractured again. In the end, counting in game settled it. This post is the record of both mistakes and how we fixed them.
 
-| Rule | Detail |
+:::summary What you'll learn
+- A Fracturing Orb works on a Rare with four or more mods and fixes one, picked evenly from the eligible mods
+- Desecrated mods (even once revealed) and Unrevealed slots count toward the four, but are not eligible
+- Normal mods added by a bone are not eligible either; Essence and crafted mods are
+- ExileDesk wrongly allowed it in v0.1.464 and reached the current rule through fixes in v0.1.466, 469 and 471
+:::
+
+## How Does the Fracturing Orb Pick a Mod?
+
+Here is the rule as ExileDesk has it now.
+
+| Item | Rule |
 |---|---|
-| Usable on | Rare items with 4 or more mods |
-| Mods fixed | one |
-| Which one | chosen evenly among eligible mods |
-| Not eligible | Unrevealed Desecrated slots, mods added by Desecration |
-| Eligible | normal mods, Essence and crafted mods |
+| Can be used on | A Rare with four or more mods |
+| Mods fixed | One |
+| How it picks | Evenly among eligible mods |
+| Counts toward the four | Every mod, including Desecrated mods and Unrevealed slots |
+| Not eligible | Unrevealed slots, Desecrated mods (even revealed), normal mods added by a bone |
+| Eligible | Normally rolled mods, Essence mods, crafted mods |
 
-The ExileDesk engine also picks "evenly among eligible mods." For example, with four mods where one came from Desecration, your target is fractured one time in three, not one in four.
+The key point: Desecrated mods count, but they are never in the draw. An item can have four mods and still have some of them sitting outside the pick from the start.
 
-## Three Rounds of Fixes
+## Why We First Built It Wrong
 
-ExileDesk changed this rule three times:
+The first mistake was v0.1.464. In the starting-item editor, we let you mark a Desecrated mod as Fractured too, so the mod carried both labels.
 
-1. **v0.1.464**: we let Desecrated mods be fractured from the starting state, assuming they could be.
-2. **v0.1.466**: Desecrated mods, even revealed, were no longer fractured. They counted toward four but were removed from the candidates. The previous version was wrong.
-3. **v0.1.469**: normal mods added by a bone (Reveal options include normal mods) were made fracturable again, on the theory that only Unrevealed slots and Desecrated-only mods were excluded.
-4. **v0.1.471**: after the owner tested 24 times in game, Desecrated mods were never chosen even when revealed, and **normal mods added by a bone weren't chosen either**. That is the current rule.
+That came from an assumption: Desecrated mods surely fracture like any other mod. We made it possible without testing it in game.
 
-The first two came from inferring rules from what is written; the last from counting in game. For fine details the descriptions don't cover, testing and counting beat inference.
+## Fix 1: Desecrated Mods Leave the Pick (v0.1.466)
 
-## Desecration as "Just Adding a Count"
+Two versions later, v0.1.466 stopped Desecrated mods from being fractured, revealed or not. The Fracturing Orb counts them toward the four but leaves them out of the pick.
 
-This rule can be used in a craft. Fracturing needs four mods. If you have three, Desecrating with a bone brings it to four, and since the Desecrated mod can't be fractured, **you add to the count without adding a candidate**.
+Manually fracturing a Desecrated mod was blocked too. The patch note said plainly that allowing it in the earlier version was a mistake.
 
-The Gold Ring video did exactly this. After rolling Spell Damage to 34 with a Divine Orb, it Desecrated to reach four mods, then used a Fracturing Orb (the moments of Desecration and fracturing aren't shown on screen; this is read from the captions). Adding a normal mod instead would make four candidates and drop your target's chance to one in four. Adding a Desecrated mod keeps it at one in three.
+### Fixes 2 and 3: What About Normal Mods from Bones?
 
-On the [crafting bench](/?base=Gold%20Ring), bring an item to four mods and use a Fracturing Orb to see the candidates and their chances.
+Then we second-guessed ourselves. Reveals from bones offer normal mods as well as Desecrated-only mods. In v0.1.469, we made **normal mods added by a bone fracturable again**, thinking only Unrevealed slots and Desecrated-only mods should be excluded.
+
+That was wrong too. The owner used a Fracturing Orb 24 times in game, and a mod added by Desecration was fractured 0 times. In v0.1.471, Desecrated mods stay out of the pick even once revealed, and normal mods added by a bone are excluded the same way.
+
+| Version | Desecrated-only mods | Normal mods from a bone | Result |
+|---|---|---|---|
+| v0.1.464 | Fracturable | Fracturable | Wrong |
+| v0.1.466 | Not fracturable | Not fracturable | Right |
+| v0.1.469 | Not fracturable | Fracturable | Wrong |
+| v0.1.471 | Not fracturable | Not fracturable | Current (checked in game) |
+
+Both mistakes came from guessing at things the item text doesn't spell out. For small rules like this, firing the orb and counting beats reasoning it out.
+
+:::note What we haven't verified
+- The item used for the 24 tries (base, mods, how many Desecrated mods it had) wasn't recorded.
+- 0 out of 24 is an in-game count, not a rule stated in the orb's text.
+- "Picked evenly among eligible mods" follows Craft of Exile's implementation (EmulatorManager.fracture). We haven't counted the split in game.
+:::
+
+## What This Means for Your Craft
+
+If you use a Fracturing Orb after Desecrating, the Desecrated mod stays on the item but never gets fixed. So "Desecrate a strong mod, then fracture it to protect it" doesn't work.
+
+If there's a mod you want to fracture, it has to be a normally rolled mod, an Essence mod or a crafted mod. The Desecrated mod still counts toward the four.
+
+:::tip Count before you fracture
+Before using a Fracturing Orb, count the eligible mods. Leave out Desecrated mods and Unrevealed slots; whatever is left is the pool picked from evenly.
+:::
 
 ## Where the Numbers Come From
 
-- 0 in 24: the owner's in-game count (around v0.1.471).
-- The rules table: the ExileDesk engine (fracture chance chosen evenly among eligible mods) and our record of confirmed rules.
-- The fixes: ExileDesk release notes (v0.1.464, 466, 469, 471).
+- 0 out of 24: the owner's in-game count (ExileDesk v0.1.471 patch note and our confirmed-rules record). **In game**
+- Version-by-version changes: ExileDesk patch notes v0.1.464, v0.1.466, v0.1.469, v0.1.471. **Engine**
+- "Rare with four or more mods, fixes one": checked in game by the owner (rule checklist, 2026-10-17). **In game**
+- "Picked evenly among eligible mods": matches Craft of Exile's implementation (rule checklist, 2026-10-17). **CoE**
+- "Essence and crafted mods can be fractured": our confirmed-rules record. **In game**
+
+## Try It Yourself
+
+On the [crafting bench](/), Desecrate a Rare and then use a Fracturing Orb to see the Desecrated mod left out of the pick.
 
 **Related posts**
 
-- [PoE2 Gold Ring craft, step by step](/en/blog/gold-ring-video-decoded/)
-- [PoE2 Desecration weights](/en/blog/desecration-weights/)
+- [PoE2 Gold Ring Craft: Decoding the Steps and the Breach Bait](/en/blog/gold-ring-video-decoded/)
+- [PoE2 Crafting Expected Cost: The Cheapest Move Skips Omens](/en/blog/optimal-move-vs-intuition/)
