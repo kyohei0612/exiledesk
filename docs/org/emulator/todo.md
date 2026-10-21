@@ -2,6 +2,7 @@
 
 ## やる事
 - 引き継ぎ (10-22 夜): notes/2026-10-22-handoff.md を先に読む (お告げの欄の部品・previewUse・聖別の後は何もできない)。
+- FAQ の入れ物 済み (9d3d8462、build-blog-pages.mjs)。元 src/data/faq/faq.<ja|en>.md (記事編集長が書く、1 問 = ## 質問)。本番は ready: true の時だけ出てリンク (記事のヘッダー・フッター・About のフッター・サイトマップ) も付く。残り: 原稿が入ったら開発版 (デプロイはブラックに一言)、本番はオーナーの OK の後。見本のスナップ 共有メモ faq/。
 - 済み (10-22、2 本目): 聖別済みは品質の帯とアイテムレベルの欄を灰色で押せなく (092c49bb、オーナーの決め)。9acbea38 と一緒に開発版 (HEAD 2a33d4eb)、本番は pending-release の OK 待ち。前後のスナップは共有メモ sanctified-bar/。確認の手順: vite の dev で `import('/src/state/craft-stage.ts')` の craftStage.use('alchemy') → omens=['OmenofSanctification'] → use('divine')。
 - クラフト画面 1440 幅で元からはみ出している 1 件 (DIV.flex flex-col、overflow-guard の判定で見つけた、10-22) を直す。
 - 済み (10-22): items-ja.json の残りの突き合わせ → 221 件を poe2db に合わせた (notes/2026-10-22-name-check-poe2db-jp.md、本番は OK 待ち)。poe2db の一覧に無い 2,420 件は比べていない。
