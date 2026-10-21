@@ -220,6 +220,15 @@ cpSync(resolve(ROOT, "scripts/_blog-client.js"), resolve(OUT, "blog", "blog.js")
 cpSync(resolve(SRC, "chars"), resolve(OUT, "blog", "chars"), { recursive: true });
 if (existsSync(resolve(SRC, "img"))) cpSync(resolve(SRC, "img"), resolve(OUT, "blog", "img"), { recursive: true, filter: (f) => !f.endsWith(".gitkeep") });
 
+// トップの初めの HTML (web.html → index.html) の印に新しい記事 3 本と一覧へのリンク (JS を動かさない読み手にも記事の入口を、2026-10-22)
+const top = resolve(OUT, "index.html");
+if (existsSync(top)) {
+  const html = readFileSync(top, "utf8");
+  const pick = index.ja.slice(0, 3);
+  const block = pick.length ? `<h2 style="font-size:17px;color:#f0cf86;margin:24px 0 6px">新しい記事</h2><ul>${pick.map((x) => `<li><a href="${x.href}" style="color:#f0c878">${esc(x.title)}</a> <span style="color:#8f856f;font-size:12px">${x.date}</span></li>`).join("")}</ul><p><a href="/blog/" style="color:#f0c878">ブログの記事をすべて見る</a> · <a href="/en/blog/" style="color:#f0c878">Blog (English)</a></p>` : "";
+  if (html.includes("<!--blog-latest-->")) writeFileSync(top, html.replace("<!--blog-latest-->", block));
+}
+
 // サイトマップ (出力先にあれば足す。下書きは入れない)
 const sm = resolve(OUT, "sitemap.xml");
 if (existsSync(sm)) {

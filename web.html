@@ -87,10 +87,47 @@
       <div id="boot-splash" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;background:#0b0a08;color:#d8cdb5;font-family:'Zen Kaku Gothic New','Hiragino Sans','Yu Gothic',sans-serif;text-align:center">
         <img src="/web/icon-192.png" alt="" width="72" height="72" style="width:72px;height:72px" />
         <div style="font-family:Georgia,serif;font-size:26px;letter-spacing:0.18em;color:#f0cf86">EXILEDESK</div>
-        <div data-ja="Path of Exile 2 のクラフトを、タダで 1 手ずつ試せるエミュレーター" data-en="Try Path of Exile 2 crafting one step at a time, for free" style="font-size:14px;max-width:22rem;line-height:1.6"></div>
-        <div data-ja="カレンシー・お告げ・エッセンス・冒涜をゲームと同じ決まりで" data-en="Currency, omens, essences and desecration with the same rules as the game" style="font-size:12px;color:#8f856f;max-width:22rem;line-height:1.6"></div>
-        <div data-ja="読み込み中…" data-en="Loading…" style="margin-top:10px;font-size:12px;color:#a99d86;letter-spacing:0.1em"></div>
+        <div data-ja="Path of Exile 2 のクラフトを、タダで 1 手ずつ試せるエミュレーター" data-en="Try Path of Exile 2 crafting one step at a time, for free" style="font-size:14px;max-width:22rem;line-height:1.6">Path of Exile 2 のクラフトを、タダで 1 手ずつ試せるエミュレーター</div>
+        <div data-ja="カレンシー・お告げ・エッセンス・冒涜をゲームと同じ決まりで" data-en="Currency, omens, essences and desecration with the same rules as the game" style="font-size:12px;color:#8f856f;max-width:22rem;line-height:1.6">カレンシー・お告げ・エッセンス・冒涜をゲームと同じ決まりで</div>
+        <div data-ja="読み込み中…" data-en="Loading…" style="margin-top:10px;font-size:12px;color:#a99d86;letter-spacing:0.1em">読み込み中…</div>
       </div>
+      <!--
+        JS を動かさない読み手 (検索・広告の審査) にも何のサイトか分かる説明 (2026-10-22、AdSense の再申請)。起動の絵の下に置き、Vue が動くと #app ごと差し替わる。
+        新しい記事の一覧は scripts/build-blog-pages.mjs がビルドの時に下の blog-latest の印へ書き込む (ブログを出していない時は空)
+      -->
+      <section id="boot-about" style="max-width:760px;margin:0 auto;padding:8px 20px 56px;background:#0b0a08;color:#d8cdb5;font:15px/1.9 'Zen Kaku Gothic New','Hiragino Sans','Yu Gothic',sans-serif">
+        <h1 style="font-size:22px;line-height:1.5;color:#f0cf86;margin:0 0 12px">ExileDesk — Path of Exile 2 のクラフトを試せる無料のエミュレーター</h1>
+        <p>ExileDesk は、Path of Exile 2 (PoE2) のクラフトを、実際のカレンシーを使う前にブラウザの中で 1 手ずつ試せる非公式のファンツールです。変成・増強・王者・高貴・カオス・消去・神のオーブ、お告げ、エッセンス、骨と発現 (冒涜)、液化した感情、ルーンを、ゲームと同じ決まりで打てます。打つたびに、付いた MOD・外れた MOD と、その時の確率が出ます。</p>
+        <h2 style="font-size:17px;color:#f0cf86;margin:24px 0 6px">できること</h2>
+        <ul>
+          <li>クラフト台 (エミュレーター): ベースを選び、カレンシーを持ってアイテムを押すと 1 回使います。1 手戻す・やり直しは何度でも。</li>
+          <li>MOD 一覧: そのベースに付く MOD と段 (ティア)、持っているカレンシーで次に付く確率を並べます。</li>
+          <li>次の手で狙う: 狙う MOD を選ぶと、今の状態から打ち方ごとに付く確率と、当たるまでの平均の費用を出します。</li>
+          <li>スパムシミュレーター: 1 つの MOD を狙って、増強・カオス・高貴のどのスパムが一番安く着くかを 100 人分回して比べます。</li>
+          <li>相場: カレンシーの値段 (poe2scout) を自動で入れ、打った手の費用を合計します。</li>
+        </ul>
+        <h2 style="font-size:17px;color:#f0cf86;margin:24px 0 6px">使い方の要点</h2>
+        <ol>
+          <li>上の帯の「ベースを変える」で、作りたいベース (指輪・兜・片手メイスなど) とアイテムレベルを選ぶ。</li>
+          <li>右の棚のカレンシーを押して持ち、アイテムのカードを押すと 1 回使う。持ったまま続けて押せる。</li>
+          <li>お告げは持っている物の下に出るので、押して掛けてから打つ。</li>
+          <li>MOD 一覧で狙いを決め、「次の手で狙う」で一番当たりやすい打ち方を見る。</li>
+        </ol>
+        <p>確率は、ゲームのデータと poe2db の重みを元にした推定です。公式の値ではないので、結果を保証するものではありません。</p>
+        <h2 style="font-size:17px;color:#f0cf86;margin:24px 0 6px">読み物</h2>
+        <ul>
+          <li><a href="/craft-basics" style="color:#f0c878">PoE2 クラフト入門</a> — 1.0 から始める人へ、オーブ・お告げ・エッセンスの基本</li>
+          <li><a href="/guide" style="color:#f0c878">使い方</a> — 画面ごとの説明とよくある質問</li>
+          <li><a href="/bases/" style="color:#f0c878">ベース一覧</a> — ベースごとの付く MOD と段</li>
+        </ul>
+        <!--blog-latest-->
+        <section lang="en" style="margin-top:32px;padding-top:12px;border-top:1px solid #3a3024">
+          <h2 style="font-size:17px;color:#f0cf86;margin:12px 0 6px">ExileDesk in English</h2>
+          <p>ExileDesk is a free, unofficial crafting emulator for Path of Exile 2. Pick a base, hold a currency and click the item to use it one step at a time with the same rules as the game: orbs, omens, essences, bones and desecration, Liquid Emotions and runes. Each step shows the mods added or removed and the chance at that moment. The mod list shows every mod and tier for the base, "Target next move" shows the chance and average cost to hit a mod from the current item, and the spam simulator compares augment, chaos and exalt spam over 100 runs. Chances are estimates from game data and poe2db weights, not official values.</p>
+          <p><a href="/en/craft-basics" style="color:#f0c878">Crafting basics</a> · <a href="/en/bases/" style="color:#f0c878">Bases</a> · <a href="/en/about" style="color:#f0c878">About</a></p>
+        </section>
+        <p style="margin-top:28px;font-size:12px;color:#8f856f"><a href="/about" style="color:#a99d86">ExileDesk について</a> · <a href="/privacy" style="color:#a99d86">プライバシーポリシー</a> · <a href="/contact" style="color:#a99d86">お問い合わせ</a> — ExileDesk は非公式のファンサイトです。Path of Exile 2 とゲーム内の画像・名称の権利は Grinding Gear Games に帰属します。</p>
+      </section>
       <script>
         (function () {
           var en = false;
