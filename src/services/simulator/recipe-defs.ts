@@ -18,7 +18,7 @@ export interface RecipeTarget {
   need?: number;
 }
 /** その手順で当たりになる MOD (本体 + alts) */
-export const membersOf = (t: RecipeTarget): Array<{ modId: string; minTierIndex: number }> => [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])];
+export const membersOf = (t: Pick<RecipeTarget, "modId" | "minTierIndex" | "alts">): Array<{ modId: string; minTierIndex: number }> => [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])];
 /**
  * 候補のうちいくつ付けば当たりか (どれか N つ)。冒涜の手順でも N はそのまま: 冒涜で付けるのは候補のどれか 1 つ (冒涜の MOD は
  * アイテムに 1 つまで)、残りの N − 1 つは高貴で付ける (2026-10-05 オーナー「3 つのうちどれかは 3 つのうちどれが当たりでも可能とする話、

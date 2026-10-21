@@ -14,6 +14,7 @@ import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
 import { runeEnForId } from "./pattern";
 import { sideLimits } from "./sim-methods";
 import { sideOfMod } from "../craft-stage/engine";
+import { membersOf } from "./recipe-defs";
 
 export interface QuizRules { v: 3; rules: Record<string, QuizRule[]> }
 export type SimMethod = "exalt" | "chaos" | "augment" | "desecrate" | "essence" | "fracture";
@@ -107,7 +108,7 @@ export function quizFromSim(x: QuizSimIn, q: QuizRules | null | undefined): Quiz
   if (frac.length && fracSide) slots.push({ id: LETTERS[n++] ?? `Z${n}`, side: fracSide, mods: frac, kind: "fractured" });
   for (const t of x.targets) {
     if (t.method === "fracture") continue;
-    const members = [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])];
+    const members = membersOf(t);
     const kind = KIND[t.method];
     const bySide = { prefix: members.filter((m) => sideOf(m.modId) === "prefix"), suffix: members.filter((m) => sideOf(m.modId) === "suffix") };
     const need = Math.max(1, Math.min(t.need ?? 1, members.length));

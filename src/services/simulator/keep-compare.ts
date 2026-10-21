@@ -12,6 +12,7 @@ import { methodOfTarget, type SimTargetIn } from "./quiz-build";
 import { magicEssenceTarget, magicLoopCounts } from "./sim-greater";
 import { blankWith, chaosAfterFix, fractureOdds, magicAugOdds } from "./sim-odds";
 import { sideOfMod } from "../craft-stage/engine";
+import { membersOf } from "./recipe-defs";
 
 export interface KeepCompare {
   /** 狙いの手順の本体の modId */
@@ -32,7 +33,7 @@ export interface KeepCompare {
 export function keepCompare(o: { data: PatchData; item: StageItem; itemLevel: number; targets: readonly SimTargetIn[]; price: (k: string) => number }): KeepCompare[] {
   const { data: d, item: it } = o;
   const side = (id: string): "prefix" | "suffix" => sideOfMod(d, id);
-  const frac = o.targets.filter((t) => methodOfTarget(d, t) === "fracture").flatMap((t) => [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])]);
+  const frac = o.targets.filter((t) => methodOfTarget(d, t) === "fracture").flatMap(membersOf);
   if (!frac.length) return [];
   const fracSide = side(frac[0]!.modId);
   const otherSide = fracSide === "prefix" ? "suffix" : "prefix";
@@ -53,7 +54,7 @@ export function keepCompare(o: { data: PatchData; item: StageItem; itemLevel: nu
   for (const t of o.targets) {
     const m = methodOfTarget(d, t);
     if (m !== "exalt" && m !== "chaos") continue;
-    const members = [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])];
+    const members = membersOf(t);
     if (members.some((x) => side(x.modId) === fracSide)) continue;
     const q = g.odds.hit(otherSide, members);
     const together = q > 0 && fracP > 0 ? (loopCost(q) - base) / fracP : Infinity;
