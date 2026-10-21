@@ -4,7 +4,7 @@
 - クラフト画面 1440 幅で元からはみ出している 1 件 (DIV.flex flex-col、overflow-guard の判定で見つけた、10-22) を直す。
 - 済み (10-22): 名前のずれ → notes/2026-10-22-name-check.md (2 件 + 紋章 + クルガル、本番は OK 待ち)。残り 3,266 件は poe2db の写しを取り直す時に。
 - 済み: お告げの下の設定 (触媒の高貴の品質 1% ごとの倍率・聖別の倍率) は本番 v0.1.589 (f1e1a612、オーナー 10-21 OK)。notes/2026-10-21-omen-tune.md
-- currency-spec-golden が 6 つとも控えとずれている (控えは 10-17 の 071a0af9 に取ったきり、その後のエンジンの commit が多い)。どの commit でずれたかを別の worktree で探し、わざとの変更なら GOLDEN_WRITE=1 で取り直す (J1 で見つけた、family の直しでは変わらない)
+- 済み: currency-spec-golden の控えのずれ → J2 (3f4e605d) で取り直し済み、10-22 に 6/6 通る (不在のアミュレットの理由の文で a2c4532b に orbs を取り直し)。
 
 - 貼り付けの読み取り parseItemText (item-text.ts) の残り: 日本語の Ctrl+Alt+C の見出し・日本語の注記の形 (見本が来たら notes/paste-samples/ に足して対応)。ジュエルの枠 2/2 はエンジンの値で poe2db では確かめていない。
 - J11 (オーナー 10-20 の答え、J8 の迷う物 4 つ。1 つずつ別の commit、クラフト台は開発版まで・本番は OK 待ち):
@@ -12,7 +12,7 @@
   - ② 防御・DPS の合計は盛ったまま (直さない)。
   - ③ ルーン・ソウルコアの行は今の値のまま、ソケットの効果 (アストリッドなど、scaledAugment) で盛った分だけ抜く。
   - ④ 聖別も抜いて素の値を出し、聖別後の値は小さく添える (baseValueOf の base = sanctify.base)。
-  - 残り (10-21 使用量で止めた): ③ ④ とクラフト台の直し (開発版だけに出す)。クラフト台の直しの場所は notes/2026-10-20-j8-boost-table.md の表 (アイテムカードの MOD・ソケット・暗黙の行、履歴・小さいカード・スマホの帯の聖別)。
+  - 済み (10-21): ③ 86b42bb4・④ afa0b266・2d301a1a・暗黙 ada62af7 (開発版だけ、BASE_VALUES_ON。本番は pending-release の OK 待ち)。
 
 ## OK 待ち
 - サイトの体裁 (1adfb648、開発版。docs/pending-release.md に OK 待ち、【要確認】5 か所はオーナーに)。ブログの部品 (d306fea0、README 4b)。
