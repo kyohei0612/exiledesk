@@ -6,7 +6,9 @@ import collections, glob, json, statistics, sys
 from datetime import datetime, timedelta, timezone
 
 sys.stdout.reconfigure(encoding="utf-8")
-paths = [p for a in (sys.argv[1:] or ["data-cache/logs/*.jsonl"]) for p in sorted(glob.glob(a))]
+AS_JSON = "--json" in sys.argv  # 数字だけを JSON で (scripts/daily-summary.mjs が日ごとに比べる、2026-10-21)
+if AS_JSON: print = lambda *a, **k: None
+paths = [p for a in ([a for a in sys.argv[1:] if a != "--json"] or ["data-cache/logs/*.jsonl"]) for p in sorted(glob.glob(a))]
 JST = timezone(timedelta(hours=9))
 rows = []
 for p in paths:
@@ -172,3 +174,13 @@ if tut:
     cl = collections.Counter(str(t["d"].get("c")).removeprefix("topic:") for t in tut if t["d"].get("e") == "clear")
     print("\n== チュートリアル (始めた / 終えた):", ", ".join(f"{c} {st[c]}/{cl.get(c, 0)}" for c, _ in st.most_common(12)))
 print(f"\nPWA の記録 {len(recs['pwa'])} / ジェムコラプト {len(recs['gem_corrupt'])} / シミュレーション (開発版だけ) {len(recs['sim_run'])}")
+
+if AS_JSON:
+    scr = collections.Counter("course" if t.startswith("course:") else t for s in sessions for t in s["screens"] if not t.startswith("blog:"))
+    sys.stdout.write(json.dumps({
+        "visits": len(sessions), "people": len({s["uid"] for s in sessions}),
+        "pv": sum(pv(s) for s in sessions), "pv_pc": sum(pv(s) for s in sessions if s["dev"] == "pc"), "pv_mobile": sum(pv(s) for s in sessions if s["dev"] == "mobile"),
+        "first": sum(1 for s in sessions if (s["visit"] or {}).get("first")), "ref": dict(collections.Counter(v.get("ref") for v in vis).most_common(8)),
+        "screens": dict(scr.most_common()), "blog": dict(collections.Counter(r["d"]["to"][5:] for r in blog).most_common()),
+        "uses": len(uses), "users": len({u["uid"] for u in uses}), "used_visits": sum(1 for s in sessions if s["uses"]),
+    }, ensure_ascii=False) + "\n")
