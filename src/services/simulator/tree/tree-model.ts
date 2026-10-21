@@ -318,9 +318,44 @@ export function setNote(d: TreeDoc, id: string | null, text: string): void {
 const OUT_ORDER: Record<TreeBox["out"], number> = { start: 0, hit: 0, any: 0, pass: 0, lost: 1, junkGone: 2, junk: 3 };
 /** 整列の兄弟の間 (横の＋が 14px はみ出す分 + 戻りの線の縦の通り道 4 本分、オーナー 10-22「整列で箱の間に通り道の分のすき間」) */
 const TIDY_GAP = 64;
+/** 親から 2 行以上下の子へ降りる縦の線の、輪郭に入れる幅 (箱の真ん中から左右) */
+const STEM = 20;
+/** 段の高さに収める物: "all" = 間の箱を全部 / "path" = 次の当たりへ続く道だけ (戻るだけの箱は次の段の高さまで下がってよい) */
+const BAND: "all" | "path" = "path";
+/**
+ * 箱の行 (y = 行 × GAP_Y。10-22 オーナー「2 つ目までしか完成していないのに、3 つ目まで完成している箱と同じ段にいる。整列させるなら MOD の段を合わせて。
+ * 当たりの場合だけ気にすればいい」): 当たりの箱は道で揃った狙いの数 n の段 (全部の枝で同じ高さ)、ほかの箱 (外れ・消えた・打った後・品質の後) は
+ * 直前の当たり (か始まり) の何手下かで、その段と次の段の間に置く。段 n の高さ = 1 + その段の間の箱の一番深い手数 (BAND)。
+ * 狙いが消えた後の当たりなど、揃った数が親の段以下の時は親の段の次 (高さは揃わない)
+ */
+function rowsOf(d: TreeDoc, kids: (id: string) => string[]): Map<string, number> {
+  const band = new Map<string, number>(), sub = new Map<string, number>(), held = new Map<string, Set<string>>();
+  const walk = (id: string, parent: string | null): void => {
+    const b = d.boxes[id]!;
+    const h = new Set(parent ? held.get(parent)! : []);
+    if (b.out === "hit" && b.aim) h.add(aimKey(b.aim));
+    held.set(id, h);
+    if (!parent) { band.set(id, 0); sub.set(id, 0); }
+    else if (b.out === "hit") { band.set(id, Math.max(h.size, band.get(parent)! + 1)); sub.set(id, 0); }
+    else { band.set(id, band.get(parent)!); sub.set(id, sub.get(parent)! + 1); }
+    for (const k of kids(id)) walk(k, id);
+  };
+  walk("start", null);
+  // 段ごとの高さ (BAND = "path" の時は、次の段の当たりの親だけ数える)
+  const deep = new Map<number, number>();
+  for (const [id, n] of band) {
+    const b = d.boxes[id]!;
+    if (BAND === "path" && !b.outs.some((k) => d.boxes[k]!.out === "hit")) continue;
+    deep.set(n, Math.max(deep.get(n) ?? 0, sub.get(id)!));
+  }
+  const top: number[] = [0];
+  const max = Math.max(...band.values());
+  for (let n = 1; n <= max; n++) top[n] = top[n - 1]! + 1 + (deep.get(n - 1) ?? 0);
+  return new Map([...band].map(([id, n]) => [id, top[n]! + sub.get(id)!]));
+}
 /**
  * 整列 (2026-10-22 オーナー「ごちゃっとなってるのを整列。2 段目を合わせる、矢印が重ならない」):
- * 段 (始まりからの深さ) ごとに横一列、兄弟は親の下に等間隔 (OUT_ORDER の順)。部分木の幅を先に測ってから並べるので箱は重ならない。
+ * 行 (rowsOf: 当たりの箱は揃った狙いの数の段) ごとに横一列、兄弟は親の下に OUT_ORDER の順。行ごとの輪郭で寄せるので箱は重ならない。
  * 始まりの箱は x = 0 のまま。線は直角の木の線、戻りの矢印は既定では引かない (画面の側、SimTreePage の edges・backLine。10-22 整列の定義)
  */
 export function tidy(d: TreeDoc): void {
@@ -329,28 +364,46 @@ export function tidy(d: TreeDoc): void {
     b.outs = b.outs.map((o, i) => ({ o, i })).sort((a, z) => OUT_ORDER[d.boxes[a.o]!.out] - OUT_ORDER[d.boxes[z.o]!.out] || a.i - z.i).map((x) => x.o);
     return b.outs;
   };
-  /** 子の並びの幅 */
-  const span = (ks: readonly string[]): number => ks.reduce((a, k, i) => a + width.get(k)! + (i ? TIDY_GAP : 0), 0);
-  const width = new Map<string, number>();
-  const measure = (id: string): number => {
-    const ks = kids(id);
-    ks.forEach(measure);
-    const w = Math.max(BOX_W, span(ks));
-    width.set(id, w);
-    return w;
+  const row = rowsOf(d, kids);
+  /**
+   * 部分木の輪郭 (行ごとの左端・右端、部分木の頭の箱の x からの差)。兄弟は左から、同じ行で TIDY_GAP 空く所まで寄せる
+   * (部分木の幅ごと足すと、深い枝の横の浅い枝の下が空いたまま木が広がった。10-22 見本で全体表示が 25%)。
+   * 親から 2 行以上下の子は、間の行に縦の線の幅 (STEM) も入れる (線が隣の箱を通らない)
+   */
+  type Contour = Map<number, [number, number]>;
+  const put = (c: Contour, r: number, l: number, rr: number): void => { const v = c.get(r); c.set(r, v ? [Math.min(v[0], l), Math.max(v[1], rr)] : [l, rr]); };
+  const rel = new Map<string, number>();
+  const layout = (id: string): Contour => {
+    const ks = kids(id), me = row.get(id)!;
+    const acc: Contour = new Map();
+    const offs: number[] = [];
+    for (const k of ks) {
+      const c = layout(k);
+      for (let r = me + 1; r < row.get(k)!; r++) put(c, r, BOX_W / 2 - STEM, BOX_W / 2 + STEM);
+      let off = 0;
+      if (offs.length) {
+        off = -Infinity;
+        for (const [r, [l]] of c) { const a = acc.get(r); if (a) off = Math.max(off, a[1] + TIDY_GAP - l); }
+        if (off === -Infinity) off = 0;
+      }
+      offs.push(off);
+      for (const [r, [l, rr]] of c) put(acc, r, l + off, rr + off);
+    }
+    // 親は一番左と一番右の子の真ん中 (兄弟の並びの中心が親とそろう、10-22 整列の定義)
+    const px = ks.length ? (offs[0]! + offs[offs.length - 1]!) / 2 : 0;
+    ks.forEach((k, i) => rel.set(k, offs[i]! - px));
+    const out: Contour = new Map([[me, [0, BOX_W]]]);
+    for (const [r, [l, rr]] of acc) put(out, r, l - px, rr - px);
+    return out;
   };
-  // 親は一番左と一番右の子の真ん中 (兄弟の並びの中心が親とそろう、10-22 整列の定義)。子の部分木の幅の中に収まるので隣とは重ならない
-  const mid = (id: string): number => d.boxes[id]!.x + BOX_W / 2;
-  const place = (id: string, left: number, depth: number): void => {
-    const b = d.boxes[id]!, w = width.get(id)!;
-    b.y = depth * GAP_Y;
-    const ks = b.outs;
-    let l = left + (w - span(ks)) / 2;
-    ks.forEach((k, i) => { place(k, l, depth + 1); l += width.get(k)! + (i + 1 < ks.length ? TIDY_GAP : 0); });
-    b.x = ks.length ? Math.round((mid(ks[0]!) + mid(ks[ks.length - 1]!)) / 2 - BOX_W / 2) : Math.round(left + w / 2 - BOX_W / 2);
+  const place = (id: string, x: number): void => {
+    const b = d.boxes[id]!;
+    b.x = Math.round(x);
+    b.y = row.get(id)! * GAP_Y;
+    for (const k of b.outs) place(k, x + rel.get(k)!);
   };
-  measure("start");
-  place("start", 0, 0);
+  layout("start");
+  place("start", 0);
   // 始まりの箱は x = 0 に戻す (木ごとずらす)
   const dx = -d.boxes.start!.x;
   for (const b of Object.values(d.boxes)) b.x += dx;
