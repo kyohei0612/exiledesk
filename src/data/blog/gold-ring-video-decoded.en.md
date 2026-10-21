@@ -40,7 +40,7 @@ The finished ring has six mods, and all six match the owner's screenshot of a fi
 | 7 | Omen of Sinistral Erasure + Perfect Chaos Orb | Turn the Evasion prefix into Rarity T1 |
 | 8 | Altered Collarbone | Desecrate and pick Tempest Rider's (cold) |
 
-The "Omen of Sinistral Crystallisation + Runic Alloy" step explained mid-video (step 6) was not used on this ring. We confirmed on screen that the finished ring has no Runic Ward mod.
+The "Omen of Sinistral Crystallisation + Runic Alloy" step explained mid-video (step 6) was not used on this ring. We confirmed on screen that the finished ring has no mod from the Runic Alloy.
 
 ## Why Add "+20% to Maximum Quality" Just to Remove It
 
