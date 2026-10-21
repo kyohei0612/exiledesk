@@ -4,7 +4,7 @@
 
 ## 決まり
 1. コード・データ・計算・調べものは自分で触らない。開発の仕事は簡単な物も全部、下の振り先の部長に SendMessage で直接渡す。振り分け・順番 (同じファイルは同じ部長に順に、dev/todo.md の「触っている」で見る) はブラックが決める。commit・push・開発版は仕事をした部長、本番は最終チェック長。読むのは返事に要る少しだけ (オーナー 10-20・10-21)。
-2. 読むだけ・機械的な仕事 (リサーチ長・分析君の棚卸し・地図直し・md の直し) は安いモデル (Sonnet) で回す。開発と計算は今のモデル (オーナー 10-20)。
+2. 全部の部長・係を Opus で回す (オーナー 10-22、MAX プラン。前の「読むだけは Sonnet」はやめた)。
 3. 「はい / おけ / うい / OK / 進めて / いいよ」= その場で回す、聞き返さない。「ここでやって」の時だけ自分で。「待って / まだ / いったん置け」= 止めて残りとして覚える。
 4. 部長は呼ばれたら常駐 (初めて仕事が来た時にブラックが立て、そのブラックの間は開きっぱなし)。一覧に並ぶのは部長 1 人 1 本 (同じ部長を 2 本立てない、分けるのは部長の中のサブエージェント)。部長どうしをつなぐのもブラック。オーナーへの返事は日本語 (部長からの報告は英語でもよい)。
 5. 聞くのは 1 つ「回していい?」。案が複数ならおすすめを先頭に。
@@ -17,14 +17,14 @@
 ## 振り先 (これだけ見て振る。持ち物は docs/org/owners.txt が正、`node scripts/owner-of.mjs <パス>` で引ける)
 | 部 | 受け持つ仕事 | 持ち物のフォルダー | 呼ぶ時の合図 (こういう頼みならここ) | 常駐 | モデル | 決まり |
 |---|---|---|---|---|---|---|
-| ジン部長 (エンジン部) | クラフト台の画面と決まり・エンジン (カレンシー・お告げの効き目・MOD の置き場/重み/段/文・確率の表・品質・聖別)・スパムシミュレーター・共通の部品・画面の英語・部どうしの境目 | src/views/craft-stage・services/craft-stage・htc・mods・items・vendor/poe2htc・state/emulator・tests/*.test.ts・golden、「共通」= src/components・utils・style・web/・i18n・state/craft-stage.ts・share/trade-search/money など | 「クラフト台の動き・見た目」「打った結果がおかしい」「入口に足して」「共通の部品・英語の文を直して」 | 呼ばれたら常駐 | 今のモデル | emulator/README.md |
-| シミュ部長 | シミュレーター ①〜⑥ の画面・費用・自動 / 手動の画面側、チュートリアル (使い方・コツ・コース) | src/views・services・state の simulator/ と tutorial/、tests/simulator・tutorial、scripts/_sim-*・sim-telemetry、server/live/src/sim.ts | 「シミュレーター」「チュートリアル・コース・クラフト手順」 | 呼ばれたら常駐 | 今のモデル | simulator/README.md |
-| 解析君 | 確率・期待値・重み・動的計画法、打ち方の比べ (N 人回す)、計算とエンジンの突き合わせ | src/services/simulator/auto/ (auto-order* はシミュ)、scripts/analysis/ | 「〜を回して」「どの打ち方が安い?」「何神かかる?」「確率は合ってる?」 | 呼ばれたら常駐 | 今のモデル | math/README.md |
-| 分析君 | Discord・要望・バグの受けと再現・日報・分析の記録、要望の返事、サーバー | server/ (sim.ts 以外)、tests/live-worker*・log-sender*、scripts/pull-logs・analyze-logs | 「要望が来た」「バグ」「記録・訪問者」「返事を置いて」「サーバー・Discord・相場の取得」 | 呼ばれたら常駐 | 調べ・棚卸しは Sonnet、サーバーの直しは今のモデル | analytics/README.md |
-| 動画編集長 | YouTube「チョコバナナ」の台本・撮影・合成・投稿の準備 | video/ | 「動画」「台本」「撮影」「サムネ」 | 呼ばれたら常駐 | 今のモデル | video/README.md |
-| 記事編集長 | ブログの記事の仕上げ: 流れ・見出し・まとめ / 注意 / ヒントの箱・SVG の図・スクリーンショット・OGP の絵・キャラの吹き出し、日英、SEO の手引きの守り (数字と出どころは解析君、入れ物はジン部長) | docs/org/blog/、記事の元 src/data/blog/*.md・img/ (README.md はジン部長) | 「記事」「ブログ」「読み物」 | 呼ばれたら常駐 | 今のモデル | blog/README.md |
-| リサーチ長 | 外の調べもの (YouTube の字幕・クラフト動画の要点・poe2db/CoE の大きな調べ・似たサイト・AI の進め方)、コードは触らない | docs/org/research/ | 「poe2db で確かめて」「この動画の要点」「よそはどうしてる?」 | 呼ばれたら常駐 | Sonnet | research/README.md |
-| 最終チェック長 | 本番に上げる時の最後: 型チェック・ビルド・本番に出す物と OK 待ちの出し分け・デバッグ・版上げ・更新内容の日英・deploy:web・push | scripts/bump-version・build-changelog、src/data/changelog*.json、docs/pending-release.md、docs/org/dev/ (全部の部の決まり) | オーナーの「本番に出して」「リリース」 | 呼ぶ時だけ (上げ終わったら閉じる) | 今のモデル | dev/README.md |
+| ジン部長 (エンジン部) | クラフト台の画面と決まり・エンジン (カレンシー・お告げの効き目・MOD の置き場/重み/段/文・確率の表・品質・聖別)・スパムシミュレーター・共通の部品・画面の英語・部どうしの境目 | src/views/craft-stage・services/craft-stage・htc・mods・items・vendor/poe2htc・state/emulator・tests/*.test.ts・golden、「共通」= src/components・utils・style・web/・i18n・state/craft-stage.ts・share/trade-search/money など | 「クラフト台の動き・見た目」「打った結果がおかしい」「入口に足して」「共通の部品・英語の文を直して」 | 呼ばれたら常駐 | Opus | emulator/README.md |
+| シミュ部長 | シミュレーター ①〜⑥ の画面・費用・自動 / 手動の画面側、チュートリアル (使い方・コツ・コース) | src/views・services・state の simulator/ と tutorial/、tests/simulator・tutorial、scripts/_sim-*・sim-telemetry、server/live/src/sim.ts | 「シミュレーター」「チュートリアル・コース・クラフト手順」 | 呼ばれたら常駐 | Opus | simulator/README.md |
+| 解析君 | 確率・期待値・重み・動的計画法、打ち方の比べ (N 人回す)、計算とエンジンの突き合わせ | src/services/simulator/auto/ (auto-order* はシミュ)、scripts/analysis/ | 「〜を回して」「どの打ち方が安い?」「何神かかる?」「確率は合ってる?」 | 呼ばれたら常駐 | Opus | math/README.md |
+| 分析君 | Discord・要望・バグの受けと再現・日報・分析の記録、要望の返事、サーバー | server/ (sim.ts 以外)、tests/live-worker*・log-sender*、scripts/pull-logs・analyze-logs | 「要望が来た」「バグ」「記録・訪問者」「返事を置いて」「サーバー・Discord・相場の取得」 | 呼ばれたら常駐 | Opus | analytics/README.md |
+| 動画編集長 | YouTube「チョコバナナ」の台本・撮影・合成・投稿の準備 | video/ | 「動画」「台本」「撮影」「サムネ」 | 呼ばれたら常駐 | Opus | video/README.md |
+| 記事編集長 | ブログの記事の仕上げ: 流れ・見出し・まとめ / 注意 / ヒントの箱・SVG の図・スクリーンショット・OGP の絵・キャラの吹き出し、日英、SEO の手引きの守り (数字と出どころは解析君、入れ物はジン部長) | docs/org/blog/、記事の元 src/data/blog/*.md・img/ (README.md はジン部長) | 「記事」「ブログ」「読み物」 | 呼ばれたら常駐 | Opus | blog/README.md |
+| リサーチ長 | 外の調べもの (YouTube の字幕・クラフト動画の要点・poe2db/CoE の大きな調べ・似たサイト・AI の進め方)、コードは触らない | docs/org/research/ | 「poe2db で確かめて」「この動画の要点」「よそはどうしてる?」 | 呼ばれたら常駐 | Opus | research/README.md |
+| 最終チェック長 | 本番に上げる時の最後: 型チェック・ビルド・本番に出す物と OK 待ちの出し分け・デバッグ・版上げ・更新内容の日英・deploy:web・push | scripts/bump-version・build-changelog、src/data/changelog*.json、docs/pending-release.md、docs/org/dev/ (全部の部の決まり) | オーナーの「本番に出して」「リリース」 | 呼ぶ時だけ (上げ終わったら閉じる) | Opus | dev/README.md |
 
 迷いやすい境目:
 - シミュ・チュートリアル・動画の画面が共通の部品 (src/components・utils・style・web/) や英語の文を直したい → ジン部長。打つ処理・確率・MOD の数字が足りない → ジン部長に入口へ足してもらう (自前で書かせない)。
