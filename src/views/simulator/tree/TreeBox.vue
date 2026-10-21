@@ -35,7 +35,8 @@ const neon = computed(() => {
   return { borderColor: `rgba(${rgb.value},${strong ? 0.95 : 0.55})`, boxShadow: `0 0 0 1px rgba(${rgb.value},${strong ? 0.5 : 0.18}), 0 0 ${strong ? 22 : 12}px rgba(${rgb.value},${strong ? 0.45 : 0.16})` };
 });
 const doneText = computed(() => (props.box.done ? tr("完成", "Done") : tr("完成にする", "Mark done")));
-const free = computed(() => !props.box.hand && !props.box.back && !props.box.done);
+/** 下の＋を出す (完成の箱からも伸ばせる。手を付けると完成の印は外れ、同じ形の完成の箱もそこへ戻る、tree-merge の joinSameShape) */
+const free = computed(() => !props.box.hand && !props.box.back);
 /** 押せる物を隠す時 (戻り先を選んでいる・一望) */
 const quiet = computed(() => props.picking || !!props.viewOnly);
 /** 箱の地を押した (ボタン以外) = 引っ張る用。押せない時 (戻り先を選ぶ・一望・手) は Vue Flow に任せる (画面が動く / 押した判定) */

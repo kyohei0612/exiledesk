@@ -9,7 +9,7 @@
  * 結果の見せ方は 10-22 オーナーが「全部普通の箱」を選んだ (前は箱を描かず小さな札にしていた。「何で表示が違うんですか」で札を消した)
  */
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { MATCH, matchTargets, RESTART } from "../../../services/simulator/tree/tree-run";
+import { heldSets, MATCH, matchTargets, RESTART } from "../../../services/simulator/tree/tree-run";
 import { handAnchor, type BackReq, type Pos } from "./tree-lines";
 
 /** 戻りの行き先の箱 (決めた箱 1 つ。前の版の形の合う箱へ = 行きうる形の箱を全部、作り直しは無し) */
@@ -18,6 +18,21 @@ export function backTargetsOf(doc: TreeDoc, id: string): string[] {
   if (!b?.back || b.back === RESTART) return [];
   const to = b.back === MATCH ? matchTargets(doc, id).flatMap((x) => (x.to ? [x.to] : [])) : [b.back];
   return [...new Set(to)].filter((x) => !!doc.boxes[x]);
+}
+
+/**
+ * 完成の箱に次の手を付けた時、同じ形 (付いている狙いの組。tree-run の heldSets が 1 通りに決まる物) の完成の箱はその箱へ戻す (完成の印は外す)。
+ * 10-22 オーナー「サフィに 3 MOD 付いた時点で、そこから先は全て同じルート…どれか 1 つから伸ばす時に自動でつながるように」。
+ * 見本の 3 つの完成の枝は、300 人で完成の時点のプレフィックス・空きが全員同じ (scripts/_tree-done-shape-probe)
+ */
+export function joinSameShape(doc: TreeDoc, id: string): void {
+  const b = doc.boxes[id];
+  if (!b?.hand) return;
+  const key = (x: string): string | null => { const s = heldSets(doc, x); return s.length === 1 ? s[0]!.join(",") : null; };
+  const k = key(id);
+  b.done = null;
+  if (!k) return;
+  for (const o of Object.values(doc.boxes)) if (o.id !== id && o.done && !o.hand && !o.back && key(o.id) === k) { o.back = id; o.done = null; }
 }
 
 /** 戻りの矢印だけの箱 (始まりは除く)。合流の線の出元 */

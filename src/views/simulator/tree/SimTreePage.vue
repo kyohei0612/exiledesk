@@ -42,7 +42,7 @@ import { useTreeTune } from "./use-tree-tune";
 import TreeHandChip from "./TreeHandChip.vue";
 import TreeMergeLayer from "./TreeMergeLayer.vue";
 import TreeHoverCard from "./TreeHoverCard.vue";
-import { backTargetsOf } from "./tree-merge";
+import { backTargetsOf, joinSameShape } from "./tree-merge";
 import { useTreeMerge } from "./use-tree-merge";
 
 const t = useTree();
@@ -164,10 +164,16 @@ function backLabel(b: Box): string {
 }
 
 // 組み替え
-function pickHand(h: Hand, kind: HandKind, aims: Aim[]): void {
+/** 手を決める。pre = 前に足す品質だけ上げる手のカタリスト (触媒のお告げ、10-22 オーナーの案 A)。完成の箱に手を付けたら同じ形の完成の箱もここへ (joinSameShape) */
+function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = null): void {
   const id = panel.value!.id;
   if (picking.value === id) picking.value = null;
-  t.edit((d) => setHand(d, id, h, kind, aims));
+  t.edit((d) => {
+    let at = id;
+    if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
+    setHand(d, at, h, kind, aims);
+    joinSameShape(d, id);
+  });
   panel.value = null;
 }
 /**
