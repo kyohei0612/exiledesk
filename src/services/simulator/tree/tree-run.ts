@@ -5,9 +5,9 @@
  * 打つのは全部エンジンの入口 (applyCurrency / fillCatalyst)。結果の分け方は tree-sample.ts の outcomeOf・aimsOf (見本と同じ分け方)。
  * 繰り返し (当たるまで) は tree-sample の playHand と同じ流れを、個数を数えるためにここでたどる (playHand を変える時はここも合わせる)。
  */
-import { applyCurrency, freshItem, mulberry32, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
-import { CATALYSING } from "./tree-hands";
-import { aimHeld, aimsOf, fillCatalyst, outcomeOf } from "./tree-sample";
+import { applyCurrency, mulberry32, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { CATALYSING, kindOfCurrency } from "./tree-hands";
+import { aimHeld, aimsOf, fillCatalyst, outcomeOf, startItemOf as startOf } from "./tree-sample";
 import { aimKey, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
 
 export interface TreeRunOpts {
@@ -70,11 +70,7 @@ const SPAM_CAP = 5000;
 type End = "done" | "capped" | "stuck";
 interface Person { end: End; cost: number; at: string; visits: { box: string; cost: number }[]; uses: Record<string, number>; restarts: number }
 
-function startItemOf(data: PatchData, doc: TreeDoc, rng: () => number): StageItem {
-  const it = freshItem(data, doc.base, doc.itemLevel, "rare");
-  if (!doc.fracture) return it;
-  return applyCurrency(data, it, `force:${doc.fracture.modId}|T${doc.fracture.tier}|f`, rng).item;
-}
+const startItemOf = (data: PatchData, doc: TreeDoc, rng: () => number): StageItem => startOf(data, doc, rng).item;
 
 /** 手を 1 回打つ (playHand と同じ流れ)。use で使った物を数える */
 function play(data: PatchData, item: StageItem, h: Hand, rng: () => number, aims: readonly Aim[], use: (key: string, n?: number) => void): StageApply {
@@ -146,27 +142,60 @@ function splitTo(data: PatchData, rules: readonly SplitRule[], item: StageItem, 
     && (["prefix", "suffix", "any"] as const).every((sd) => inRange(count(sd, true), w.junk?.[sd]) && inRange(count(sd, false), w.free?.[sd]));
   return rules.find((r) => ok(r.when))?.to ?? null;
 }
-type Shape = { key: string; box: string };
-function shapesOf(doc: TreeDoc): Shape[] {
+/**
+ * 形の合う箱の判定 (回す時・ルート精査・画面の線で同じ物を使う。シミュ部長 10-21 オーナー「↩ 形の合う箱へは自動で探して線を引いた状態に」)。
+ * 形の鍵 = 付いている狙いの組 + 外れがあるか (空きの数は、側の決まった狙いと外れの有無で決まる)
+ */
+export const shapeKey = (held: readonly string[], junk: boolean): string => `${[...new Set(held)].sort().join(",")}#${junk ? 1 : 0}`;
+export type Shape = { key: string; box: string };
+/** 箱の道の札 (始まりから親をたどった当たりの札、aimKey) */
+function pathHeld(doc: TreeDoc, id: string | null): string[] {
+  const held: string[] = [];
+  for (let x = id; x; x = doc.boxes[x]?.parent ?? null) {
+    const c = doc.boxes[x];
+    if (c?.out === "hit" && c.aim) held.push(aimKey(c.aim));
+  }
+  return [...new Set(held)];
+}
+/** 行き先になれる箱 (手のある当たり / 外れの箱) とその形 */
+export function shapesOf(doc: TreeDoc): Shape[] {
   const out: Shape[] = [];
   for (const b of Object.values(doc.boxes)) {
     if (!b.hand || (b.out !== "hit" && b.out !== "junk")) continue;
-    const held: string[] = [];
-    for (let x: string | null = b.out === "junk" ? b.parent : b.id; x; x = doc.boxes[x]?.parent ?? null) {
-      const c = doc.boxes[x];
-      if (c?.out === "hit" && c.aim) held.push(aimKey(c.aim));
-    }
-    out.push({ key: `${[...new Set(held)].sort().join(",")}#${b.out === "junk" ? 1 : 0}`, box: b.id });
+    out.push({ key: shapeKey(pathHeld(doc, b.out === "junk" ? b.parent : b.id), b.out === "junk"), box: b.id });
   }
   return out;
 }
+/** 形の鍵 → 行き先 (狙いが 0 なら始まり = 始まりの手が外れも扱う。無ければ null) */
+export function boxOfShape(shapes: readonly Shape[], key: string): string | null {
+  return key.startsWith("#") ? "start" : shapes.find((s) => s.key === key)?.box ?? null;
+}
 function matchBox(data: PatchData, shapes: readonly Shape[], item: StageItem, aims: readonly Aim[]): string | null {
   const held = aims.filter((a) => aimHeld(data, item, a)).map(aimKey);
-  if (!held.length) return "start";
   const isAim = (m: StageMod): boolean => aims.some((a) => aimHeld(data, { ...item, prefixes: [m], suffixes: [] }, a));
   const junk = [...item.prefixes, ...item.suffixes].some((m) => !m.fractured && !isAim(m));
-  const key = `${[...new Set(held)].sort().join(",")}#${junk ? 1 : 0}`;
-  return shapes.find((s) => s.key === key)?.box ?? null;
+  return boxOfShape(shapes, shapeKey(held, junk));
+}
+/** アイテムから行き先 (ルート精査が回す時と同じ道を辿る用) */
+export function matchItem(data: PatchData, doc: TreeDoc, item: StageItem, aims: readonly Aim[] = aimsOf(doc)): string | null {
+  return matchBox(data, shapesOf(doc), item, aims);
+}
+/**
+ * 「形の合う箱へ」の箱が、アイテムを見ずに行きうる形と行き先 (画面の線・ルート精査の「形の合う箱が無い」)。
+ * 当たり = 道の札・外れ無し / 外れ・打った後 = 道の札・外れあり / 外れが消えた = 道の札・外れ無し /
+ * 狙いが消えた = 親の道の札から 1 つ欠けた形 (どれが消えるかで候補が分かれる)、外れは親が外れの箱か、消す手でない時 (カオスの入れ替え) に残る
+ */
+export function matchTargets(doc: TreeDoc, id: string): { key: string; to: string | null }[] {
+  const b = doc.boxes[id];
+  if (!b) return [];
+  const shapes = shapesOf(doc);
+  const one = (held: string[], junk: boolean): { key: string; to: string | null } => { const key = shapeKey(held, junk); return { key, to: boxOfShape(shapes, key) }; };
+  if (b.out !== "lost") return [one(pathHeld(doc, b.id), b.out === "junk" || b.out === "any")];
+  const p = b.parent ? doc.boxes[b.parent] : undefined;
+  const held = pathHeld(doc, p?.id ?? null);
+  const junk = p?.out === "junk" || (!!p?.hand && kindOfCurrency(p.hand.currency) !== "remove");
+  const out = held.map((k) => one(held.filter((x) => x !== k), junk));
+  return out.length ? out.filter((x, i) => out.findIndex((y) => y.key === x.key) === i) : [one([], junk)];
 }
 
 function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: readonly Shape[], rng: () => number, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps">> & Pick<TreeRunOpts, "start">): Person {

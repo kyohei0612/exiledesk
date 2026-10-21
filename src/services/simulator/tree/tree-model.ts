@@ -56,6 +56,8 @@ export interface TreeDoc {
   itemLevel: number;
   /** 始まりのフラクチャー (選ぶまでは null) */
   fracture: Aim | null;
+  /** 始めの形でフラクチャーのほかに付いている乱数の MOD の数 (素の高貴をこの回数打って作る。見本の金の指輪 = 1、無ければ 0。カオスは外せる MOD が要る) */
+  startRandom?: number;
   boxes: Record<string, TreeBox>;
   seq: number;
   /** ツリー全体のメモ */

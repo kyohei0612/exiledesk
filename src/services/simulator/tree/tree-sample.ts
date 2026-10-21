@@ -91,16 +91,29 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
   return applyCurrency(data, it, h.currency, rng, h.omens);
 }
 
+/**
+ * 始めのアイテム = レア + フラクチャー (指名の手) + 乱数の MOD (素の高貴を startRandom 回)。見本・ルート精査・100 人回し (tree-run) で同じ物。
+ * note = 打てなかった理由 (無ければ null)
+ */
+export function startItemOf(data: PatchData, doc: TreeDoc, rng: () => number): Sample {
+  let item = freshItem(data, doc.base, doc.itemLevel, "rare");
+  if (!doc.fracture) return { item, note: null };
+  const r = applyCurrency(data, item, `force:${doc.fracture.modId}|T${doc.fracture.tier}|f`, rng);
+  if (!r.applied) return { item: r.item, note: r.reason ?? null };
+  item = r.item;
+  for (let i = 0; i < (doc.startRandom ?? 0); i++) {
+    const x = applyCurrency(data, item, "exalt", rng);
+    if (!x.applied) return { item, note: x.reason ?? null };
+    item = x.item;
+  }
+  return { item, note: null };
+}
+
 /** 箱の見本 (seed が同じなら同じ物) */
 export function sampleOf(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
   const b = doc.boxes[boxId];
   if (!b) return { item: freshItem(data, doc.base, doc.itemLevel, "rare"), note: null };
-  if (b.out === "start") {
-    const it = freshItem(data, doc.base, doc.itemLevel, "rare");
-    if (!doc.fracture) return { item: it, note: null };
-    const r = applyCurrency(data, it, `force:${doc.fracture.modId}|T${doc.fracture.tier}|f`, mulberry32(seed));
-    return { item: r.item, note: r.applied ? null : r.reason ?? null };
-  }
+  if (b.out === "start") return startItemOf(data, doc, mulberry32(seed));
   const p = doc.boxes[b.parent!]!;
   const base = sampleOf(data, doc, p.id, seed);
   if (!p.hand) return base;

@@ -15,10 +15,10 @@ export const TREE_SAMPLES = ["gold-ring-suffix"] as const;
 export type TreeSampleName = (typeof TREE_SAMPLES)[number];
 
 const hand = (currency: string, omens: string[] = [], extra: Partial<Hand> = {}): Hand => ({ currency, omens, catalyst: null, quality: 0, ...extra });
-function make(base: string, fracture: Aim | null, boxes: Record<string, Partial<TreeBox>>): TreeDoc {
+function make(base: string, fracture: Aim | null, startRandom: number, boxes: Record<string, Partial<TreeBox>>): TreeDoc {
   const b: Record<string, TreeBox> = {};
   for (const [id, x] of Object.entries(boxes)) b[id] = { id, x: 0, y: 0, out: "junk", aim: null, hand: null, outs: [], back: null, done: null, parent: null, ...x };
-  const d: TreeDoc = { schema: "exiledesk-tree/0", base, itemLevel: 82, fracture, boxes: b, seq: Object.keys(b).length };
+  const d: TreeDoc = { schema: "exiledesk-tree/0", base, itemLevel: 82, fracture, startRandom, boxes: b, seq: Object.keys(b).length };
   tidy(d);
   return d;
 }
@@ -27,9 +27,13 @@ function goldRingSuffix(): TreeDoc {
   const A = { R: { modId: "Rings/ItemFoundRarityIncrease", tier: 1 }, C: { modId: "Rings/IncreasedCastSpeed", tier: 2 }, A: { modId: "Rings/AllResistances", tier: 2 } };
   const PLAIN = hand("exalt_greater", ["OmenofDextralExaltation"]);
   const CAT = (cat: string): Hand => hand("exalt_perfect", ["OmenofCatalysingExaltation", "OmenofDextralExaltation"], { catalyst: cat, quality: 20 });
-  const J = (parent: string): Partial<TreeBox> => ({ out: "junk", parent, hand: hand("annul"), outs: [`${parent}_g`, `${parent}_l`] });
-  const back = (out: "junkGone" | "lost", parent: string): Partial<TreeBox> => ({ out, parent, back: MATCH });
-  return make("Gold Ring", { modId: "Rings/Special_genesis_tree_caster_SpellDamage", tier: 2 }, {
+  // 外れの箱 (id) は消去を打ち、結果の 2 箱 (id_g = 外れが消えた・id_l = 狙いが消えた) は形の合う箱へ
+  const J = (parent: string, id: string): Record<string, Partial<TreeBox>> => ({
+    [id]: { out: "junk", parent, hand: hand("annul"), outs: [`${id}_g`, `${id}_l`] },
+    [`${id}_g`]: { out: "junkGone", parent: id, back: MATCH },
+    [`${id}_l`]: { out: "lost", parent: id, back: MATCH },
+  });
+  return make("Gold Ring", { modId: "Rings/Special_genesis_tree_caster_SpellDamage", tier: 2 }, 1, {
     start: { out: "start", hand: hand("chaos", [], { repeat: { until: "hit", max: null } }), outs: ["sR", "sC", "sA"] },
     sR: { out: "hit", aim: A.R, parent: "start", hand: CAT("catalyst_speed"), outs: ["rc", "ra", "jR"] },
     sC: { out: "hit", aim: A.C, parent: "start", hand: PLAIN, outs: ["cr", "ca", "jC"] },
@@ -43,8 +47,7 @@ function goldRingSuffix(): TreeDoc {
     d1: { out: "hit", aim: A.A, parent: "rc", done: "main" },
     d2: { out: "hit", aim: A.C, parent: "ra", done: "main" },
     d3: { out: "hit", aim: A.R, parent: "ca", done: "main" },
-    jR: J("sR"), jC: J("sC"), jA: J("sA"), jRC: J("rc"), jRA: J("ra"), jCA: J("ca"),
-    ...Object.fromEntries(["sR", "sC", "sA", "rc", "ra", "ca"].flatMap((p) => [[`${p}_g`, back("junkGone", p)], [`${p}_l`, back("lost", p)]])),
+    ...J("sR", "jR"), ...J("sC", "jC"), ...J("sA", "jA"), ...J("rc", "jRC"), ...J("ra", "jRA"), ...J("ca", "jCA"),
   });
 }
 

@@ -10,9 +10,10 @@ import { allMods, modBoostsOf, mulberry32, type PatchData, type StageItem } from
 import { CATALYSING } from "./tree-hands";
 import { aimKey, type Aim, type TreeDoc } from "./tree-model";
 import { aimHeld, aimsOf, outcomeOf, playHand, sampleOf } from "./tree-sample";
+import { MATCH, matchItem, matchTargets, RESTART } from "./tree-run";
 import { tr } from "../../../i18n/lang";
 
-export type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted";
+export type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch";
 export interface CheckIssue { boxId: string; kind: CheckKind; text: string }
 
 const PEOPLE = 5;
@@ -24,12 +25,25 @@ export function checkTree(data: PatchData, doc: TreeDoc): CheckIssue[] {
   const add = (boxId: string, kind: CheckKind, text: string): void => { if (!out.some((x) => x.boxId === boxId && x.kind === kind)) out.push({ boxId, kind, text }); };
   const boxes = Object.values(doc.boxes);
   const aims = aimsOf(doc);
+  /** 戻りの矢印の行き先 (形の合う箱へ = 行きうる全部、作り直し = 始まり) */
+  const backTo = (id: string): string[] => {
+    const back = doc.boxes[id]?.back;
+    if (!back) return [];
+    if (back === MATCH) return matchTargets(doc, id).flatMap((x) => (x.to ? [x.to] : []));
+    return [back === RESTART ? "start" : back];
+  };
 
   // 1) 形だけで分かる穴: 決めていない芽・MOD を選んでいない当たり
   if (!doc.fracture) add("start", "noAim", tr("フラクチャーする MOD を選んでいない", "No fractured mod picked"));
   for (const b of boxes) {
     if (!b.hand && !b.back && !b.done) add(b.id, "open", b.out === "start" ? tr("最初の手を決めていない (ここで止まる)", "No first craft yet (stops here)") : tr("行き先を決めていない (ここで止まる)", "No next step yet (stops here)"));
     if (b.out === "hit" && !b.aim) add(b.id, "noAim", tr("付く MOD を選んでいない", "No mod picked for this hit"));
+  }
+
+  // 1b) 形の合う箱へ: 行きうる形の箱がツリーに無い (tree-run の matchTargets、回す時と同じ判定)
+  for (const b of boxes) if (b.back === MATCH) {
+    const miss = matchTargets(doc, b.id).filter((x) => !x.to);
+    if (miss.length) add(b.id, "noMatch", tr(`形の合う箱が無い (${miss.length} つの形。その形で手のある箱を作る)`, `No box matches (${miss.length} shape(s)); add a box with that shape and a craft`));
   }
 
   // 2) 完成に着かない道・抜けられない輪 (矢印を逆に辿って、完成の箱へ行ける箱を集める)
@@ -40,7 +54,7 @@ export function checkTree(data: PatchData, doc: TreeDoc): CheckIssue[] {
     changed = false;
     for (const b of boxes) {
       if (reach.has(b.id)) continue;
-      if (b.outs.some((o) => reach.has(o)) || (b.back && reach.has(b.back))) { reach.add(b.id); changed = true; }
+      if (b.outs.some((o) => reach.has(o)) || backTo(b.id).some((x) => reach.has(x))) { reach.add(b.id); changed = true; }
     }
   }
   if (done.length) for (const b of boxes) {
@@ -74,7 +88,13 @@ export function checkTree(data: PatchData, doc: TreeDoc): CheckIssue[] {
         if (b.done) for (let x: typeof b | undefined = b; x; x = x.parent ? doc.boxes[x.parent] : undefined) for (const m of x.unwanted ?? []) {
           if (aimHeld(data, item, { modId: m, tier: 99 })) add(id, "unwanted", tr("× (要らない) の印の MOD が残ったまま完成", "A mod marked × (unwanted) is still on the done item"));
         }
-        if (b.back && !viaBack) { walk(b.back, item, true); return; }
+        if (b.back && !viaBack) {
+          // 形の合う箱へ = 回す時と同じく今のアイテムの形で行き先を決める (tree-run の matchItem)。作り直し = 始めのアイテムで始まりへ
+          const to = b.back === MATCH ? matchItem(data, doc, item, aims) : b.back === RESTART ? "start" : b.back;
+          if (!to) { add(id, "noMatch", tr("この形の箱が無い (回すとここで止まる)", "No box has this shape (runs stop here)")); return; }
+          walk(to, b.back === RESTART ? start : item, true);
+          return;
+        }
         if (!b.hand) return;
         const first = playHand(data, item, b.hand, rng, aims);
         if (!first.applied) { const c = cant.get(id) ?? { n: 0, reason: first.reason ?? "" }; c.n++; cant.set(id, c); return; }
