@@ -11,7 +11,7 @@
 5. 残す台本は scratchpad に置きっぱなしにせず scripts/analysis/ に移すか、メモに場所を書く。
 
 ## 地図 (本体は読むだけ、直すのは各部)
-- ツリーの 100 人回し (解析君の物): src/services/simulator/tree/tree-run.ts、確かめ scripts/analysis/check-tree-run.mjs、CoE の突き合わせ scripts/analysis/check-coe-odds.mjs (_coe-load.cjs)。記録 notes/2026-10-23-tree-run.md・2026-10-23-coe-odds.md。
+- ツリーの 100 人回し (解析君の物): src/services/simulator/tree/tree-run.ts、確かめ scripts/analysis/check-tree-run.mjs、CoE の突き合わせ scripts/analysis/check-coe-odds.mjs (_coe-load.cjs)。記録 notes/2026-10-23-tree-run.md・2026-10-23-coe-odds.md・2026-10-23-boots-res.md (耐性の靴、台本 scripts/analysis/boots-res-ev.mjs)。
 - 確率の表: src/services/craft-stage/held-odds.ts・aim-odds.ts・route-race.ts・chaos-spam.ts・spec/odds.ts。
 - 重み・段: src/services/htc/patch.ts・weight-overrides.ts・poe2db-pool-fixes.json・rune-weights.json、src/services/mods/mod-rules.ts・tiers.ts。段の下限は src/vendor/poe2htc/engine/types.ts の `CURRENCY_FLOOR` (変成・増強は高貴と違う)。
 - 回し方: src/services/simulator/quiz-recipe.ts (`runQuizOnce`)・quiz-build.ts (`quizFromSim`)、src/services/simulator/htc/sim-route*.ts・tree-decide.ts・step-odds.ts。お金 src/services/money.ts、相場 server/live/src/market.ts (`/boot.json`)。

@@ -1,7 +1,7 @@
 /**
  * check-tree-run.mjs — tree-run.ts (ツリーの n 人回し) を、前の台本と同じ打ち方のツリーで回して数字を並べる (解析君、2026-10-23)
  *
- *   node scripts/analysis/check-tree-run.mjs [es|ring|all] [N=300] [SEED=1]
+ *   node scripts/analysis/check-tree-run.mjs [es|ring|restart|mana|boots|all] [N=300] [SEED=1]
  *
  * es   = ES 手袋のプレフィックス 3 つ (es-gloves-ev.mjs の ORB=exalt_greater、ルーン無し): 300 人で 1 個 105.14 神・完成 100%
  * ring = 金の指輪のサフィックス C (gold-ring-suffix-ev.mjs の POLICY=C perfect-greater): 300 人で 1 個 219.76 神・完成 100%
@@ -151,6 +151,51 @@ function manaStart(rng) {
   return M.applyCurrency(data, it, "exalt_greater", rng).item;
 }
 
+/**
+ * 靴 (移動速度 T1 フラクチャー) + 元素耐性 T1 × 2 (火・冷気・雷のどれか 2 つ)。カオス・消去・高貴だけ (靴はカタリスト不可)。
+ * boots-res-ev.mjs (POLICY=full) と同じ打ち方。2 通りで組む:
+ *   split = 分かれ目 1 つ (狙い 0 → カオス、外れのサフィ 2 → 消去、ほか → 右側の高貴 + 上級)
+ *   hit   = 当たり・外れの箱と矢印 (カオスは当たるまで、高貴の当たりで完成、外れと消去の後は分かれ目 j1)
+ */
+const BOOTS = ["Boots_dex/FireResistance", "Boots_dex/ColdResistance", "Boots_dex/LightningResistance"].map((modId) => ({ modId, tier: 1 }));
+function bootsSplitTree() {
+  const act = (h) => ({ out: "junk", hand: h, next: "start" });
+  return doc("Drakeskin Boots", {
+    start: { out: "start", split: [
+      { when: { heldCount: [2, 99] }, to: "fin" },
+      { when: { heldCount: [0, 0] }, to: "ch" },
+      { when: { junk: { suffix: [2, 99] } }, to: "an" },
+      { when: {}, to: "ex" },
+    ] },
+    fin: { out: "hit", done: "main" },
+    ch: act(hand("chaos")),
+    an: act(hand("annul")),
+    ex: act(hand("exalt_greater", ["OmenofDextralExaltation"])),
+  });
+}
+function bootsHitTree() {
+  const [F, C, L] = BOOTS;
+  const DX = hand("exalt_greater", ["OmenofDextralExaltation"]);
+  // 狙い 1 つの高貴の箱は 1 つ (どの耐性でも同じ手)。高貴で外れ → 分かれ目 j1 (外れのサフィ 2 つなら消去、狙い 0 ならカオス、ほかは高貴)
+  return doc("Drakeskin Boots", {
+    start: { out: "start", split: [{ when: { heldCount: [0, 0] }, to: "ch" }, { when: {}, to: "j1" }] },
+    // カオスで付いた時はサフィックスが埋まっている事があるので、分かれ目 (j1) へ戻して消去か高貴かを決める
+    ch: { out: "junk", hand: hand("chaos", [], SPAM), outs: ["hF", "hC", "hL"] },
+    hF: { out: "hit", aim: F, parent: "start", back: "j1" },
+    hC: { out: "hit", aim: C, parent: "start", back: "j1" },
+    hL: { out: "hit", aim: L, parent: "start", back: "j1" },
+    sF: { out: "hit", aim: F, parent: "start", hand: DX, outs: ["dF1", "dC1", "dL1", "j1"] },
+    dF1: { out: "hit", aim: F, parent: "sF", done: "main" }, dC1: { out: "hit", aim: C, parent: "sF", done: "main" }, dL1: { out: "hit", aim: L, parent: "sF", done: "main" },
+    j1: { out: "junk", parent: "sF", split: [{ when: { heldCount: [2, 99] }, to: "fin" }, { when: { heldCount: [0, 0] }, to: "ch" }, { when: { junk: { suffix: [2, 99] } }, to: "an" }, { when: {}, to: "sF" }] },
+    an: { out: "junk", parent: "sF", hand: hand("annul"), next: "j1" },
+    fin: { out: "hit", done: "main" },
+  });
+}
+function bootsStart(rng) {
+  const it = M.startFrom(data, "Drakeskin Boots", 82, { rarity: "rare", mods: [{ mod: "Boots_dex/MovementVelocity", tier: "T1", fractured: true }] }, Math.floor(rng() * 2 ** 31));
+  return M.applyCurrency(data, it, "exalt_greater", rng).item;
+}
+
 function show(name, want, r) {
   const d = (r.perItem / want - 1) * 100;
   console.log(`\n=== ${name}: ツリー ${r.n} 人`);
@@ -183,5 +228,10 @@ if (which === "mana" || which === "all") {
   const manaPrice = (k) => (k === ESS ? 26.5 : k === "catalyst_mana" ? 12.102 : EX[k] ?? 0) / 696.929;
   const r = M.runTree(data, manaTree(), { n: N, seed: SEED, price: manaPrice, start: manaStart, aims: Object.values(MANA) });
   show("マナ系の指輪 (エッセンス後、分かれ目の箱)", 1990.94, r);
+}
+if (which === "boots" || which === "all") {
+  const want = Number(process.env.BOOTS_WANT ?? 29.86); // boots-res-ev.mjs 10,000 人 seed 7 (POLICY=full)
+  show("靴 + 元素耐性 T1 × 2 (分かれ目 1 つ)", want, M.runTree(data, bootsSplitTree(), { n: N, seed: SEED, price, start: bootsStart, aims: BOOTS }));
+  show("靴 + 元素耐性 T1 × 2 (当たり・外れの箱)", want, M.runTree(data, bootsHitTree(), { n: N, seed: SEED, price, start: bootsStart, aims: BOOTS }));
 }
 console.log(`\n${((Date.now() - t0) / 1000).toFixed(1)} 秒`);
