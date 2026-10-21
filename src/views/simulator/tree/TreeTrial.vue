@@ -13,13 +13,13 @@ import CurrencyShelf from "../../craft-stage/CurrencyShelf.vue";
 import ShelfButton from "../../craft-stage/ShelfButton.vue";
 import StageItemCard from "../../craft-stage/StageItemCard.vue";
 import { applyCurrency, kindOf, mulberry32, OMEN_FOR, omensFor, revealOffers, unrevealedOf, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
-import { playHand, sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { aimsOf, playHand, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { handLabel } from "../../../services/simulator/tree/tree-hands";
 import { useTree } from "./use-tree";
 import { modText, tr } from "../../../i18n/lang";
 
 const props = defineProps<{ boxId: string }>();
-const emit = defineEmits<{ close: []; next: [] }>();
+const emit = defineEmits<{ close: []; next: []; note: [] }>();
 const t = useTree();
 
 const seed = ref(1);
@@ -82,7 +82,7 @@ function use(times = 1): void {
 /** この箱の次の手をそのまま 1 回 */
 function useHand(): void {
   const d = s.data.value, h = box.value?.hand;
-  if (d && h && item.value) push(playHand(d, item.value, h, rng()), handLabel(h));
+  if (d && h && item.value) push(playHand(d, item.value, h, rng(), aimsOf(t.doc.value)), handLabel(h));
 }
 // 冒涜の発現 (候補は同じ乱数で見せて、選んだ番号を打つ)
 const revealSeed = ref(0);
@@ -143,6 +143,7 @@ const noteText = computed(() => {
       <button type="button" class="g-btn sm" :disabled="trail.length < 2" @click="back">{{ tr("1 つ戻す", "Undo") }}</button>
       <button type="button" class="g-btn sm" @click="seed++">{{ tr("別の見本", "Another sample") }}</button>
       <button type="button" class="g-btn sm" :disabled="trail.length < 2" @click="resetSample">{{ tr("見本に戻す", "Reset") }}</button>
+      <button type="button" data-tree-trial-note class="g-btn sm" @click="emit('note')">{{ box?.note ? tr("メモを見る", "View note") : tr("メモ", "Note") }}</button>
       <button v-if="box && !box.hand && !box.back && !box.done" type="button" class="g-btn sm" @click="emit('next')">{{ tr("この箱の次の手を決める", "Set this box's next craft") }}</button>
     </div>
     <div v-if="offers.length" class="flex flex-col gap-1 rounded bg-rose-500/10 p-1.5">

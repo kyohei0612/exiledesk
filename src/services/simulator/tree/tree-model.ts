@@ -9,11 +9,18 @@
  */
 
 export type OutKind = "hit" | "junk" | "junkGone" | "lost";
-export type HandKind = "add" | "remove" | "swap";
+export type HandKind = "add" | "remove" | "swap" | "spam";
 /** 狙い: MOD と段 (tier = T 何以上、1 = T1 だけ)。フラクチャーの時は「その段」 */
 export interface Aim { modId: string; tier: number }
-/** 打つ手: カレンシー + お告げ + (触媒の時) カタリストで品質を上げてから */
-export interface Hand { currency: string; omens: string[]; catalyst: string | null; quality: number }
+/**
+ * 繰り返し (2026-10-22 オーナー「外れ・狙いが消えたの行き先に一番使うのがカオススパム」): 当たりのどれかが付くまで同じ手を打ち続ける。
+ * max = 打つ回数の上限 (null = 上限なし)。今はカオススパムだけ画面に出すが、高貴をもう一度・消去にも同じ形で付けられる
+ */
+export interface Repeat { until: "hit"; max: number | null }
+/** 札の鍵 (同じ MOD + 同じ段以上 = 同じ札) */
+export const aimKey = (a: Aim): string => `${a.modId}|${a.tier}`;
+/** 打つ手: カレンシー + お告げ + (触媒の時) カタリストで品質を上げてから。repeat があれば当たるまで繰り返す */
+export interface Hand { currency: string; omens: string[]; catalyst: string | null; quality: number; repeat?: Repeat | null }
 export interface TreeBox {
   id: string;
   x: number;
@@ -29,6 +36,8 @@ export interface TreeBox {
   back: string | null;
   done: "main" | "compromise" | null;
   parent: string | null;
+  /** 箱ごとの短いメモ (オーナー 10-22、既定は閉じる) */
+  note?: string;
 }
 export interface TreeDoc {
   schema: "exiledesk-tree/0";
@@ -38,6 +47,8 @@ export interface TreeDoc {
   fracture: Aim | null;
   boxes: Record<string, TreeBox>;
   seq: number;
+  /** ツリー全体のメモ */
+  note?: string;
 }
 
 export const BOX_W = 196;
@@ -57,6 +68,8 @@ export const OUTS_OF: Record<HandKind, OutKind[]> = {
   add: ["hit", "junk"],
   remove: ["junkGone", "lost"],
   swap: ["hit", "lost", "junk"],
+  // 繰り返し (カオススパム): 当たるまで打つので、結果は当たりだけ
+  spam: ["hit"],
 };
 
 function mk(d: TreeDoc, out: OutKind, parent: string): TreeBox {
@@ -98,18 +111,24 @@ export function shift(d: TreeDoc, id: string, dx: number, dy: number): void {
   for (const x of subtree(d, id)) { const b = d.boxes[x]!; b.x += dx; b.y += dy; }
 }
 
-/** 箱の次の手を決める。手の種類が同じなら結果の箱はそのまま、違えば作り直す */
-export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind): void {
+/** 手の種類 (繰り返しの手は spam) */
+export const kindOfHand = (h: Hand, base: HandKind): HandKind => (h.repeat ? "spam" : base);
+
+/**
+ * 箱の次の手を決める。手の種類が同じなら結果の箱はそのまま、違えば作り直す。
+ * aims を渡すと、当たりの箱をその札の数だけ作る (カオススパムの既定 = まだ付いていない狙いを全部)
+ */
+export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims: readonly Aim[] = []): void {
   const b = d.boxes[id];
   if (!b) return;
   const want = OUTS_OF[kind];
   const now = b.outs.map((o) => d.boxes[o]!.out);
   const same = b.hand && want.every((k) => now.includes(k)) && now.every((k) => k !== "start" && want.includes(k));
-  b.hand = { ...hand, omens: [...hand.omens] };
+  b.hand = { ...hand, omens: [...hand.omens], repeat: hand.repeat ? { ...hand.repeat } : null };
   b.back = null;
   if (same) return;
   for (const o of b.outs) drop(d, subtree(d, o));
-  b.outs = want.map((k) => mk(d, k, id).id);
+  b.outs = want.flatMap((k) => (k === "hit" && aims.length ? aims.map((a) => { const h = mk(d, "hit", id); h.aim = { ...a }; return h.id; }) : [mk(d, k, id).id]));
   spread(d, id);
 }
 
@@ -168,6 +187,31 @@ export function setDone(d: TreeDoc, id: string, v: TreeBox["done"]): void {
   const b = d.boxes[id];
   if (!b || b.out !== "hit" || b.hand || b.back) return;
   b.done = v;
+}
+
+/** 矢印の先の箱を、その並びの真ん中が (x, y) に来るよう動かす (＋を引っ張って置いた所) */
+export function placeOuts(d: TreeDoc, id: string, x: number, y: number): void {
+  const p = d.boxes[id];
+  if (!p?.outs.length) return;
+  const os = p.outs.map((o) => d.boxes[o]!);
+  const cx = (Math.min(...os.map((o) => o.x)) + Math.max(...os.map((o) => o.x)) + BOX_W) / 2, top = Math.min(...os.map((o) => o.y));
+  // 親の矢印の手の札 (親の下 46px) より下にだけ置く
+  const minY = p.y + BOX_H + 72;
+  for (const o of os) shift(d, o.id, Math.round(x - cx), Math.round(Math.max(y, minY) - top));
+  // 置いた所で他の箱と重なる時は、重ならない所まで下へずらす (結果の箱は横に並ぶので、空き所で離しても隣に掛かる事がある)
+  const mine = new Set(p.outs.flatMap((o) => subtree(d, o)));
+  const others = Object.values(d.boxes).filter((b) => !mine.has(b.id));
+  const hits = (): boolean => os.some((o) => others.some((b) => Math.abs(b.x - o.x) < BOX_W + 8 && Math.abs(b.y - o.y) < BOX_H + 8));
+  for (let i = 0; i < 40 && hits(); i++) for (const o of os) shift(d, o.id, 0, 40);
+}
+
+/** メモ (id = null はツリー全体)。空にすると消す */
+export function setNote(d: TreeDoc, id: string | null, text: string): void {
+  const v = text.trim() ? text : undefined;
+  if (id === null) { if (v) d.note = v; else delete d.note; return; }
+  const b = d.boxes[id];
+  if (!b) return;
+  if (v) b.note = v; else delete b.note;
 }
 
 export function moveBox(d: TreeDoc, id: string, x: number, y: number): void {
