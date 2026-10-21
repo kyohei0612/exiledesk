@@ -40,12 +40,23 @@ function edit(fn: (d: TreeDoc) => void): void {
   doc.value = d;
   save(d);
 }
+/** 1 つ戻す。ツリーのメモの文は戻さない (メモ欄の中の Ctrl+Z が受け持つ。ツリーの Ctrl+Z で書いた文がまとめて消えた、10-22) */
 function undo(): void {
   const prev = undoStack.pop();
   canUndo.value = undoStack.length > 0;
   if (!prev) return;
-  doc.value = JSON.parse(prev) as TreeDoc;
-  save(doc.value);
+  const d = JSON.parse(prev) as TreeDoc;
+  d.note = doc.value.note;
+  doc.value = d;
+  save(d);
+}
+/** ツリーのメモの文を書く (打つたびに覚える、1 つ戻すには入れない) */
+function setTreeNote(text: string): void {
+  if ((doc.value.note ?? "") === text) return;
+  const d: TreeDoc = { ...doc.value, note: text };
+  if (!text) delete d.note;
+  doc.value = d;
+  save(d);
 }
 /** 白紙に戻す (1 つ戻すで戻せる) */
 function reset(): void { edit((d) => { Object.assign(d, newTree(TREE_BASE, TREE_ILVL)); }); }
@@ -74,5 +85,5 @@ function fractureLabel(a: Aim | null): string {
 }
 
 export function useTree() {
-  return { doc, edit, undo, canUndo, reset, rows, aimLabel, fractureLabel };
+  return { doc, edit, undo, canUndo, reset, setTreeNote, rows, aimLabel, fractureLabel };
 }

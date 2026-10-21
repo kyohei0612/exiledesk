@@ -3,16 +3,19 @@
   当たり = 「この MOD の T 何以上」、フラクチャー = 「この MOD のこの段」。行はエンジンの MOD 一覧 (use-tree.ts の rows) そのまま
 -->
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useTree, type ModRow } from "./use-tree";
 import type { Aim } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 
-const props = defineProps<{ mode: "hit" | "fracture"; current: Aim | null }>();
+/** title: 見出しを替える (メモの窓では「欲しい MOD を足す」)。autofocus: 開いたら探す欄に入る */
+const props = defineProps<{ mode: "hit" | "fracture"; current: Aim | null; title?: string; autofocus?: boolean }>();
 const emit = defineEmits<{ pick: [aim: Aim]; close: [] }>();
 const t = useTree();
 
 const query = ref("");
+const search = ref<HTMLInputElement | null>(null);
+onMounted(() => { if (props.autofocus) search.value?.focus(); });
 const open = ref<string | null>(props.current?.modId ?? null);
 /** 当たりは一般の MOD、フラクチャーは創生の樹など (カレンシーでは付かない物) も */
 const groups = computed(() => (props.mode === "hit" ? ["normal"] : ["special", "normal"]));
@@ -33,11 +36,11 @@ const tierLabel = (tier: number): string => (props.mode === "fracture" || tier =
 <template>
   <div data-tree-mod-pick class="flex min-h-0 flex-col gap-2">
     <div class="flex items-center gap-2">
-      <b class="flex-1 text-[14px]">{{ mode === "hit" ? tr("付く MOD (当たり) を選ぶ", "Pick the mod to hit") : tr("フラクチャーする MOD を選ぶ", "Pick the mod to fracture") }}</b>
+      <b class="flex-1 text-[14px]">{{ title ?? (mode === "hit" ? tr("付く MOD (当たり) を選ぶ", "Pick the mod to hit") : tr("フラクチャーする MOD を選ぶ", "Pick the mod to fracture")) }}</b>
       <button type="button" class="g-btn sm" @click="emit('close')">{{ tr("閉じる", "Close") }}</button>
     </div>
     <p class="text-[12px] opacity-70">{{ tr("金の指輪 (アイテムレベル 82)", "Gold Ring (item level 82)") }}</p>
-    <input v-model="query" type="search" class="h-8 w-full rounded-lg border border-white/15 bg-black/40 px-2 text-[13px] outline-none focus:border-amber-400/60" :placeholder="tr('MOD を探す', 'Search mods')" />
+    <input ref="search" v-model="query" type="search" class="h-8 w-full rounded-lg border border-white/15 bg-black/40 px-2 text-[13px] outline-none focus:border-amber-400/60" :placeholder="tr('MOD を探す', 'Search mods')" />
     <div class="min-h-0 flex-1 overflow-y-auto pr-1">
       <section v-for="sec in sections" :key="sec.side" class="mb-3">
         <p class="mb-1 text-[12px] font-bold text-[var(--exile-color-text-secondary)]">{{ sec.title }}</p>

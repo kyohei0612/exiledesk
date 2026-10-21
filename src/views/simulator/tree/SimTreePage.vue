@@ -337,6 +337,6 @@ const glowOf = (b: Box): boolean => {
       </div>
     </div>
     <!-- 欲しい MOD とメモの浮かぶ窓 (ページの中で一番上、ツリーを押しても閉じない) -->
-    <TreeMemoFloat v-model:open="memoOpen" v-model:glow="glowAim" />
+    <TreeMemoFloat v-model:open="memoOpen" v-model:glow="glowAim" :avoid="panel ? `${panel.kind}:${panel.id}:${full}` : null" />
   </section>
 </template>

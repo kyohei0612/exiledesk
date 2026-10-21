@@ -1,10 +1,14 @@
 <!--
   TreeMemoFloat.vue — ツリーのメモの浮かぶ窓 (2026-10-22 オーナー「欲しい MOD 設定とかはメモの中に。メモはポップアップで、他のとこクリックしても後ろにいかない。
   見ながらツリーつくるから」「メモでは自由に MOD をメモに入れられる」「モッドとカレンシーもメモに出す、同じように使うカレンシーって枠組みでボタンとタグは」)。
-  ページの中だけの窓 (他のウィンドウの上には出ない)。ツリーを押しても閉じず、閉じるのは窓の × と帯の「メモ」だけ。
-  中身: 欲しい MOD / 使うカレンシー の 2 つの枠 (同じ作りの札)。ツリーから来た札 (当たりの箱の MOD・箱の手のカレンシー) は「ツリー」の印、メモで足した札は × で消せる。
-  札を押すとその札を使っている箱が光る。＋で足す: MOD はツリーと同じ金の指輪の MOD の一覧、カレンシーはクラフト台の棚 (メモ用なので灰色にしない) + カタリスト。
-  題の所をドラッグで動かせ、四辺と四隅を引っ張ると大きさが変わる (普通のウィンドウと同じ)。開いているか・場所・大きさはこのブラウザに覚える (無くても使える)
+  10-22 作り直し (オーナー「メモ帳の作りがお粗末」「動き完全に Windows のウィンドウの UIUX でおｋ」):
+  - 動き = Windows の窓: 題の帯で動かす・題のダブルクリックで最大化 / 元に戻す・最小化 (帯の「メモ」に戻る)・最大化・閉じる、
+    四辺と四隅 (枠の外へ少しはみ出した掴み所) で大きさ、画面の上の端へ引くと最大化・左右の端で半分 (離す前に行き先を薄く出す)、
+    最大化中に題を引くと元の大きさに戻ってカーソルに付いてくる。ページの中だけの窓 (他のウィンドウの上には出ない)。
+  - ツリーを押しても閉じず後ろに回らない。右の欄 (次の手・試し打ち) が開いて重なる時はその左へ避ける (自分で動かしたらそこに置く)。Esc でページを閉じない。
+  - 中身: 欲しい MOD / 使うカレンシー の札 (上、札が多ければここだけ送る) とメモ欄 (下、残りの高さいっぱい)。札を押すと使っている箱が光る、
+    メモで足した札は札の中の × で消す。＋ で開く選び窓は窓の中に重ねて出す (下に開いて見えない事が無いように)。
+  - メモの文は打つたびに覚える (読み込み直しでも消えない)、ツリーの 1 つ戻すには入れない。開いているか・場所・大きさはこのブラウザに覚える (無くても使える)
 -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
@@ -14,12 +18,14 @@ import ShelfButton from "../../craft-stage/ShelfButton.vue";
 import TreeModPick from "./TreeModPick.vue";
 import { craftStage as s, iconOf, nameOf } from "../../../state/craft-stage";
 import { provideShelf, simHidden } from "../../../state/emulator/shelf-context";
-import { aimKey, handKeysOf, handUses, setNote, toggleMemoAim, toggleMemoCurrency, type Aim, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { aimKey, handKeysOf, handUses, toggleMemoAim, toggleMemoCurrency, type Aim, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { useTree } from "./use-tree";
 import { tr } from "../../../i18n/lang";
 
+/** avoid: 右の欄が開いている (変わるたびに重なりを見直す。値は欄の種類と箱) */
+const props = defineProps<{ avoid?: string | null }>();
 const open = defineModel<boolean>("open", { default: false });
 /** 光らせる札 (MOD = aimKey、カレンシー = "cur:" + キー) */
 const glow = defineModel<string | null>("glow", { default: null });
@@ -36,145 +42,243 @@ const modChips = computed(() => {
   const done = Object.values(d.boxes).filter((b) => b.done);
   const main = new Set(done.filter((b) => b.done === "main").flatMap((b) => [...pathAims(d, b.id)]));
   const comp = new Set(done.filter((b) => b.done === "compromise").flatMap((b) => [...pathAims(d, b.id)]));
-  const by = new Map<string, { aim: Aim; n: number; tree: boolean; memo: boolean }>();
-  for (const b of Object.values(d.boxes)) if (b.out === "hit" && b.aim) { const k = aimKey(b.aim); const c = by.get(k); if (c) c.n++; else by.set(k, { aim: b.aim, n: 1, tree: true, memo: false }); }
-  for (const a of d.memoAims ?? []) { const k = aimKey(a); const c = by.get(k); if (c) c.memo = true; else by.set(k, { aim: a, n: 0, tree: false, memo: true }); }
-  return [...by.entries()].map(([k, v]) => ({ k, aim: v.aim, label: t.aimLabel(v.aim), n: v.n, tree: v.tree, memo: v.memo, main: main.has(k), comp: comp.has(k) }));
+  const by = new Map<string, { aim: Aim; n: number; memo: boolean }>();
+  for (const b of Object.values(d.boxes)) if (b.out === "hit" && b.aim) { const k = aimKey(b.aim); const c = by.get(k); if (c) c.n++; else by.set(k, { aim: b.aim, n: 1, memo: false }); }
+  for (const a of d.memoAims ?? []) { const k = aimKey(a); const c = by.get(k); if (c) c.memo = true; else by.set(k, { aim: a, n: 0, memo: true }); }
+  return [...by.entries()].map(([k, v]) => ({ k, glowKey: k, aim: v.aim, label: t.aimLabel(v.aim), icon: "", n: v.n, memo: v.memo, main: main.has(k), comp: comp.has(k) }));
 });
 const curChips = computed(() => {
   const d = t.doc.value, fromTree = handKeysOf(d), memo = d.memoCurrencies ?? [];
   const keys = [...fromTree, ...memo.filter((k) => !fromTree.includes(k))];
-  return keys.map((k) => ({ k, glowKey: `cur:${k}`, tree: fromTree.includes(k), memo: memo.includes(k), n: Object.values(d.boxes).filter((b) => handUses(b, k)).length }));
+  return keys.map((k) => ({ k, glowKey: `cur:${k}`, aim: undefined as Aim | undefined, label: nameOf(k), icon: iconOf(k) ?? "", memo: memo.includes(k), main: false, comp: false,
+    n: Object.values(d.boxes).filter((b) => handUses(b, k)).length }));
 });
+const memoCurs = computed(() => t.doc.value.memoCurrencies ?? []);
 
-// ＋で足す (MOD の一覧 / カレンシーの棚)
+// ＋で足す (MOD の一覧 / カレンシーの棚)。窓の中に重ねて出す
 const picker = ref<"mod" | "cur" | null>(null);
 function addAim(a: Aim): void { t.edit((d) => toggleMemoAim(d, a)); picker.value = null; }
 function toggleCur(k: string): void { t.edit((d) => toggleMemoCurrency(d, k)); }
+function removeChip(c: { k: string; aim?: Aim }): void { if (c.aim) t.edit((d) => toggleMemoAim(d, c.aim!)); else toggleCur(c.k); }
 // 棚はメモ用なので灰色にしない (どの手も足せる。並べ方のためにアイテムは始まりの見本を渡す)。押す = メモに足す / 消す
 const item = computed(() => (s.data.value ? sampleOf(s.data.value, t.doc.value, "start", 1).item : null));
 const held = ref<string | null>(null);
 const omens = ref<string[]>([]);
 provideShelf({ data: s.data, item, omens, held, usable: () => null, toggleOmen: (id) => toggleCur(id), hidden: simHidden });
 
+// メモの文: 打つたびに覚える (0.3 秒まとめる)。欄から出た時・閉じた時・ページを離れる時はすぐ
 const memo = ref(t.doc.value.note ?? "");
-watch(() => t.doc.value.note, (v) => { memo.value = v ?? ""; });
-function saveMemo(): void { if ((t.doc.value.note ?? "") !== memo.value) t.edit((d) => setNote(d, null, memo.value)); }
+watch(() => t.doc.value.note, (v) => { if ((v ?? "") !== memo.value) memo.value = v ?? ""; });
+let saveTimer = 0;
+function saveMemo(): void { clearTimeout(saveTimer); t.setTreeNote(memo.value); }
+function onInput(): void { clearTimeout(saveTimer); saveTimer = window.setTimeout(saveMemo, 300); }
+window.addEventListener("pagehide", saveMemo);
 
-// 場所と大きさ (普通のウィンドウと同じく、四辺と四隅のどこを引っ張っても大きさが変わり、中身はそのまま伸び縮みする。オーナー 10-22)。
-// 覚えるのはこのブラウザだけ (無くても使える)
+// ---- 窓 (Windows の窓と同じ動き) ----
 const RECT_KEY = "exiledesk.tree.memo-rect";
-const MIN_W = 300, MIN_H = 220;
+const MIN_W = 320, MIN_H = 260, SNAP = 6;
 interface Rect { x: number; y: number; w: number; h: number }
+type Snap = "max" | "left" | "right" | null;
 const fit = (r: Rect): Rect => {
   const w = Math.min(Math.max(MIN_W, r.w), innerWidth), h = Math.min(Math.max(MIN_H, r.h), innerHeight);
-  return { w, h, x: Math.min(Math.max(0, r.x), innerWidth - Math.min(w, 120)), y: Math.min(Math.max(0, r.y), innerHeight - 48) };
+  return { w, h, x: Math.min(Math.max(-w + 120, r.x), innerWidth - 120), y: Math.min(Math.max(0, r.y), innerHeight - 40) };
 };
-const rect = ref<Rect>((() => {
-  try { const v = JSON.parse(localStorage.getItem(RECT_KEY) ?? "null"); if (v && ["x", "y", "w", "h"].every((k) => typeof v[k] === "number")) return v as Rect; } catch { /* 無くてよい */ }
-  return { x: Math.max(16, innerWidth - 400 - 220), y: 180, w: 400, h: 520 };
-})());
-const remember = (): void => { try { localStorage.setItem(RECT_KEY, JSON.stringify(rect.value)); } catch { /* 覚えられなくても使える */ } };
+const saved = ((): { rect: Rect; snap: Snap } | null => {
+  try {
+    const v = JSON.parse(localStorage.getItem(RECT_KEY) ?? "null");
+    if (v && ["x", "y", "w", "h"].every((k) => typeof v[k] === "number")) return { rect: { x: v.x, y: v.y, w: v.w, h: v.h }, snap: ["max", "left", "right"].includes(v.snap) ? v.snap : null };
+  } catch { /* 無くてよい */ }
+  return null;
+})();
+/** 元の場所と大きさ (最大化・半分の間も覚えておき、戻す時に使う) */
+const rect = ref<Rect | null>(saved?.rect ?? null);
+const snap = ref<Snap>(saved?.snap ?? null);
+const remember = (): void => { try { if (rect.value) localStorage.setItem(RECT_KEY, JSON.stringify({ ...rect.value, snap: snap.value })); } catch { /* 覚えられなくても使える */ } };
+/** 初めて開いた時: ツリーの左下 (帯のボタンと右の欄を隠さない) */
+function defaultRect(): Rect {
+  const c = document.querySelector("[data-tree-canvas]")?.getBoundingClientRect();
+  if (!c) return fit({ x: 16, y: innerHeight - 440, w: 360, h: 420 });
+  const h = Math.min(420, Math.max(MIN_H, c.height - 24));
+  return fit({ x: c.left + 12, y: Math.min(c.bottom, innerHeight) - h - 12, w: 360, h });
+}
+const snapRect = (k: Exclude<Snap, null>): Rect => k === "max" ? { x: 0, y: 0, w: innerWidth, h: innerHeight }
+  : { x: k === "left" ? 0 : Math.ceil(innerWidth / 2), y: 0, w: Math.floor(innerWidth / 2), h: innerHeight };
+
+// 右の欄を避ける (重なる時だけその左へ。自分で動かした後は避けない)
+const avoidRect = ref<DOMRect | null>(null);
+const placedByUser = ref(false);
+function measureAvoid(): void { avoidRect.value = props.avoid ? document.querySelector("[data-tree-panel]")?.getBoundingClientRect() ?? null : null; }
+watch(() => props.avoid, async () => { placedByUser.value = false; await nextTick(); measureAvoid(); }, { immediate: true });
+
+const shown = computed((): Rect | null => {
+  if (snap.value) return snapRect(snap.value);
+  const r = rect.value, a = avoidRect.value;
+  if (!r || !a || placedByUser.value) return r;
+  const overlap = r.x < a.right && r.x + r.w > a.left && r.y < a.bottom && r.y + r.h > a.top;
+  return overlap ? { ...r, x: Math.max(0, a.left - r.w - 12) } : r;
+});
+
+const preview = ref<Snap>(null);
+const dragging = ref(false);
 let stop: (() => void) | null = null;
 /** 引っ張る (dir: 動かす = "move"、辺と角 = n / s / e / w の組み合わせ) */
 function grab(e: PointerEvent, dir: string): void {
+  if (e.button !== 0 || !shown.value) return;
   if (dir === "move" && (e.target as HTMLElement).closest("button")) return;
+  if (dir !== "move" && snap.value) return; // 最大化・半分の間は大きさを変えない (Windows と同じ)
   e.preventDefault();
-  const sx = e.clientX, sy = e.clientY, r0 = { ...rect.value };
+  const sx = e.clientX, sy = e.clientY;
+  let r0 = { ...shown.value }, started = false;
   const move = (m: PointerEvent): void => {
     const dx = m.clientX - sx, dy = m.clientY - sy;
-    if (dir === "move") { rect.value = fit({ ...r0, x: r0.x + dx, y: r0.y + dy }); return; }
+    if (!started) {
+      if (Math.abs(dx) + Math.abs(dy) < 3) return;
+      started = true; dragging.value = true; placedByUser.value = true;
+      // 最大化・半分の時に題を引くと、元の大きさに戻ってカーソルの所に付いてくる
+      if (dir === "move" && snap.value) {
+        const base = rect.value ?? defaultRect(), cur = shown.value!;
+        const fx = (sx - cur.x) / cur.w;
+        r0 = { ...base, x: sx - base.w * fx, y: Math.max(0, sy - 16) };
+        snap.value = null;
+      }
+    }
+    if (dir === "move") {
+      rect.value = fit({ ...r0, x: r0.x + dx, y: r0.y + dy });
+      preview.value = m.clientY <= SNAP ? "max" : m.clientX <= SNAP ? "left" : m.clientX >= innerWidth - SNAP ? "right" : null;
+      return;
+    }
     let { x, y, w, h } = r0;
-    if (dir.includes("e")) w = r0.w + dx;
-    if (dir.includes("s")) h = r0.h + dy;
+    if (dir.includes("e")) w = Math.min(r0.w + dx, innerWidth - r0.x);
+    if (dir.includes("s")) h = Math.min(r0.h + dy, innerHeight - r0.y);
     if (dir.includes("w")) { w = Math.max(MIN_W, r0.w - dx); x = r0.x + r0.w - w; }
     if (dir.includes("n")) { h = Math.max(MIN_H, r0.h - dy); y = r0.y + r0.h - h; }
     rect.value = fit({ x, y, w, h });
   };
-  const up = (): void => { window.removeEventListener("pointermove", move); stop = null; remember(); };
+  const up = (): void => {
+    window.removeEventListener("pointermove", move); stop = null; dragging.value = false;
+    if (preview.value) { snap.value = preview.value; preview.value = null; }
+    if (started) remember();
+  };
   window.addEventListener("pointermove", move);
   window.addEventListener("pointerup", up, { once: true });
-  stop = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+  stop = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); dragging.value = false; preview.value = null; };
 }
-/** 引っ張る所 (辺は 8px の帯、角は 14px) */
+function toggleMax(): void { snap.value = snap.value ? null : "max"; remember(); }
+/** 最小化 = 帯の「メモ」に戻す (中身は残る。Windows のタスクバーと同じ役) */
+function minimize(): void { open.value = false; }
+/** 掴み所 (枠の外へ 4px はみ出し、辺は 10px・角は 18px。Windows と同じく見えない帯) */
 const EDGES: Array<{ dir: string; cls: string }> = [
-  { dir: "n", cls: "inset-x-3 top-0 h-2 cursor-ns-resize" }, { dir: "s", cls: "inset-x-3 bottom-0 h-2 cursor-ns-resize" },
-  { dir: "w", cls: "inset-y-3 left-0 w-2 cursor-ew-resize" }, { dir: "e", cls: "inset-y-3 right-0 w-2 cursor-ew-resize" },
-  { dir: "nw", cls: "left-0 top-0 size-3.5 cursor-nwse-resize" }, { dir: "ne", cls: "right-0 top-0 size-3.5 cursor-nesw-resize" },
-  { dir: "sw", cls: "bottom-0 left-0 size-3.5 cursor-nesw-resize" }, { dir: "se", cls: "bottom-0 right-0 size-3.5 cursor-nwse-resize" },
+  { dir: "n", cls: "inset-x-4 -top-1 h-2.5 cursor-ns-resize" }, { dir: "s", cls: "inset-x-4 -bottom-1 h-2.5 cursor-ns-resize" },
+  { dir: "w", cls: "inset-y-4 -left-1 w-2.5 cursor-ew-resize" }, { dir: "e", cls: "inset-y-4 -right-1 w-2.5 cursor-ew-resize" },
+  { dir: "nw", cls: "-left-1 -top-1 size-[18px] cursor-nwse-resize" }, { dir: "ne", cls: "-right-1 -top-1 size-[18px] cursor-nesw-resize" },
+  { dir: "sw", cls: "-bottom-1 -left-1 size-[18px] cursor-nesw-resize" }, { dir: "se", cls: "-bottom-1 -right-1 size-[18px] cursor-nwse-resize" },
 ];
-const onWinResize = (): void => { rect.value = fit(rect.value); };
+const onWinResize = (): void => { if (rect.value) rect.value = fit(rect.value); measureAvoid(); };
 window.addEventListener("resize", onWinResize);
-onBeforeUnmount(() => { stop?.(); window.removeEventListener("resize", onWinResize); saveMemo(); });
-watch(open, (v) => { if (!v) { saveMemo(); picker.value = null; } else void nextTick(onWinResize); }, { immediate: true });
-const chipCls = (on: boolean): string => (on ? "border-amber-300 bg-amber-500/25 text-amber-50" : "border-amber-500/40 bg-white/[0.04] text-[#c8c8ff] hover:border-amber-300/80");
+window.addEventListener("scroll", measureAvoid, true);
+onBeforeUnmount(() => {
+  stop?.(); saveMemo();
+  window.removeEventListener("resize", onWinResize); window.removeEventListener("scroll", measureAvoid, true); window.removeEventListener("pagehide", saveMemo);
+});
+watch(open, async (v) => {
+  if (!v) { saveMemo(); picker.value = null; return; }
+  await nextTick();
+  if (!rect.value) { rect.value = defaultRect(); remember(); } else onWinResize();
+}, { immediate: true });
+
+/** Esc: 選び窓を閉じる。窓の中で押した Esc でページを閉じない */
+function onKey(e: KeyboardEvent): void {
+  if (e.key !== "Escape") return;
+  e.stopPropagation();
+  if (picker.value) { picker.value = null; e.preventDefault(); }
+}
+const chipCls = (on: boolean, used: boolean): string =>
+  on ? "border-amber-300 bg-amber-500/25 text-amber-50" : used ? "border-amber-500/45 bg-white/[0.04] text-[#c8c8ff]" : "border-white/20 bg-white/[0.02] text-[#c8c8ff]/80";
 </script>
 
 <template>
+  <!-- 端へ引いた時の行き先 (離すとこの形になる) -->
+  <div v-if="open && preview" class="pointer-events-none fixed z-[79] rounded-md border-2 border-amber-300/70 bg-amber-200/10 transition-all"
+    :style="{ left: `${snapRect(preview).x + 6}px`, top: `${snapRect(preview).y + 6}px`, width: `${snapRect(preview).w - 12}px`, height: `${snapRect(preview).h - 12}px` }" />
   <!-- ページの中で一番上 (全画面のツリーより上)。ツリーを押しても閉じない -->
-  <div v-if="open" data-tree-memo-float class="g-panel !fixed z-[80] flex flex-col overflow-hidden !bg-[#16120d] text-[13px] shadow-[0_10px_30px_rgba(0,0,0,0.6)]"
-    :style="{ left: `${rect.x}px`, top: `${rect.y}px`, width: `${rect.w}px`, height: `${rect.h}px` }">
-    <div class="mx-2 mt-2 flex shrink-0 cursor-move select-none items-center gap-2 rounded px-1 py-0.5 hover:bg-white/[0.04]" data-tree-memo-handle @pointerdown="grab($event, 'move')">
-      <Icon name="pencil" class="size-4 opacity-80" />
-      <b class="flex-1">{{ tr("メモ", "Notes") }}</b>
-      <button type="button" class="flex size-7 items-center justify-center rounded hover:bg-white/10" :title="tr('閉じる', 'Close')" @click="open = false"><Icon name="x" class="size-4" /></button>
+  <div v-if="open && shown" data-tree-memo-float role="dialog" :aria-label="tr('メモ', 'Notes')" class="g-panel !fixed z-[80] flex flex-col !bg-[#16120d] text-[13px]"
+    :class="[snap ? '' : 'shadow-[0_14px_40px_rgba(0,0,0,0.7)]', dragging ? 'select-none' : 'transition-[left,top,width,height] duration-150']"
+    :style="{ left: `${shown.x}px`, top: `${shown.y}px`, width: `${shown.w}px`, height: `${shown.h}px` }" @keydown="onKey">
+    <!-- 題の帯 (Windows の題と同じ: 引いて動かす・ダブルクリックで最大化 / 元に戻す) -->
+    <div data-tree-memo-handle class="g-tabbar !min-h-[38px] -mx-1 -mt-1 flex shrink-0 cursor-default select-none items-center gap-1 pl-5 pr-2"
+      @pointerdown="grab($event, 'move')" @dblclick="($event.target as HTMLElement).closest('button') || toggleMax()">
+      <Icon name="pencil" class="size-4 shrink-0 text-[var(--exile-color-text-title)] opacity-90" />
+      <b class="g-brush min-w-0 flex-1 truncate text-[16px] tracking-[0.14em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000]">{{ tr("メモ", "Notes") }}</b>
+      <button type="button" data-tree-memo-min class="flex size-7 items-center justify-center rounded text-[var(--exile-color-text-secondary)] hover:bg-white/10 hover:text-white" :title="tr('最小化 (帯の「メモ」で戻す)', 'Minimize (reopen from Notes)')" :aria-label="tr('最小化', 'Minimize')" @click="minimize">
+        <span class="mt-2 block h-0.5 w-3 bg-current" />
+      </button>
+      <button type="button" data-tree-memo-max class="flex size-7 items-center justify-center rounded text-[var(--exile-color-text-secondary)] hover:bg-white/10 hover:text-white" :title="snap ? tr('元に戻す', 'Restore') : tr('最大化', 'Maximize')" :aria-label="snap ? tr('元に戻す', 'Restore') : tr('最大化', 'Maximize')" @click="toggleMax">
+        <span v-if="!snap" class="block size-3 rounded-[2px] border-2 border-current" />
+        <span v-else class="relative block size-3"><span class="absolute right-0 top-0 size-2.5 rounded-[2px] border-2 border-current" /><span class="absolute bottom-0 left-0 size-2.5 rounded-[2px] border-2 border-current bg-[#16120d]" /></span>
+      </button>
+      <button type="button" data-tree-memo-close class="flex size-7 items-center justify-center rounded text-[var(--exile-color-text-secondary)] hover:bg-rose-600/80 hover:text-white" :title="tr('閉じる', 'Close')" :aria-label="tr('閉じる', 'Close')" @click="open = false"><Icon name="x" class="size-4" /></button>
     </div>
 
-    <!-- 中身 (窓の中で送る。メモ欄は残りの高さいっぱい) -->
-    <div class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 pb-3 pt-1">
-    <!-- 欲しい MOD -->
-    <section data-tree-aims>
-      <p class="mb-1 flex items-center gap-2 text-[12px] text-[var(--exile-color-text-secondary)]">
-        <span class="flex-1">{{ tr("欲しい MOD", "Wanted mods") }}</span>
-        <button type="button" data-tree-memo-add-mod class="g-btn sm" :aria-pressed="picker === 'mod'" @click="picker = picker === 'mod' ? null : 'mod'">＋ MOD</button>
-      </p>
-      <div class="flex flex-wrap gap-1">
-        <div v-for="c in modChips" :key="c.k" class="flex min-w-0 max-w-full items-center">
-          <button type="button" data-tree-aim-chip class="flex min-h-7 min-w-0 items-center gap-1 rounded-md border px-2 text-left text-[12px]" :class="chipCls(glow === c.k)"
-            :aria-pressed="glow === c.k" :title="c.n ? tr(`この札を使っている箱 ${c.n} 個を光らせる`, `Highlight the ${c.n} boxes using this`) : tr('ツリーではまだ使っていない', 'Not used in the tree yet')" @click="glow = glow === c.k ? null : c.k">
-            <span class="min-w-0 truncate">{{ c.label }}</span>
-            <span v-if="c.main" class="shrink-0 rounded-sm bg-amber-400/30 px-1 text-[10px] font-bold text-amber-100">{{ tr("本命", "Main") }}</span>
-            <span v-if="c.comp" class="shrink-0 rounded-sm bg-slate-400/30 px-1 text-[10px] font-bold text-slate-100">{{ tr("妥協", "Comp.") }}</span>
-            <span v-if="c.tree" class="shrink-0 rounded-sm bg-sky-500/25 px-1 text-[10px] text-sky-100">{{ tr("ツリー", "Tree") }}</span>
-          </button>
-          <button v-if="c.memo" type="button" class="flex size-7 shrink-0 items-center justify-center rounded hover:bg-white/10" :title="tr('メモから消す', 'Remove from notes')" @click="t.edit((d) => toggleMemoAim(d, c.aim))"><Icon name="x" class="size-3.5" /></button>
-        </div>
-        <span v-if="!modChips.length" class="text-[12px] opacity-50">{{ tr("＋ MOD で足す・当たりの箱で選ぶとここに並ぶ", "Add with + MOD, or pick mods in hit boxes") }}</span>
+    <!-- 中身: 札 (上、多ければここだけ送る) とメモ欄 (下、残りの高さいっぱい)。選び窓は中身の上に重ねる -->
+    <div class="relative flex min-h-0 flex-1 flex-col pt-2">
+      <div data-tree-memo-chips class="flex max-h-[45%] shrink-0 flex-col gap-2 overflow-y-auto px-1 pb-2" :inert="!!picker">
+        <section v-for="sec in [{ key: 'mod', title: tr('欲しい MOD', 'Wanted mods'), add: tr('＋ MOD', '+ Mod'), chips: modChips, empty: tr('当たりの箱で選んだ MOD がここに並ぶ', 'Mods picked in hit boxes appear here') },
+                                { key: 'cur', title: tr('使うカレンシー', 'Currency to use'), add: tr('＋ カレンシー', '+ Currency'), chips: curChips, empty: tr('箱の手で使う物がここに並ぶ', 'Crafts used in boxes appear here') }]"
+          :key="sec.key" :data-tree-aims="sec.key === 'mod' ? '' : undefined" :data-tree-currencies="sec.key === 'cur' ? '' : undefined">
+          <div class="mb-1 flex min-h-7 items-center gap-2">
+            <span class="flex-1 text-[12px] font-bold tracking-wide text-[var(--exile-color-text-secondary)]">{{ sec.title }}</span>
+            <button type="button" :data-tree-memo-add-mod="sec.key === 'mod' ? '' : undefined" :data-tree-memo-add-cur="sec.key === 'cur' ? '' : undefined"
+              class="g-btn sm" @click="picker = sec.key as 'mod' | 'cur'">{{ sec.add }}</button>
+          </div>
+          <div class="flex flex-wrap gap-1">
+            <span v-for="c in sec.chips" :key="c.k" class="inline-flex min-h-7 min-w-0 max-w-full items-center rounded-md border text-[12px]" :class="chipCls(glow === c.glowKey, c.n > 0)">
+              <button type="button" :data-tree-aim-chip="sec.key === 'mod' ? '' : undefined" :data-tree-cur-chip="sec.key === 'cur' ? '' : undefined"
+                class="flex min-h-7 min-w-0 items-center gap-1.5 pl-2 text-left" :class="c.memo ? 'pr-0.5' : 'pr-2'" :aria-pressed="glow === c.glowKey"
+                :title="c.n ? tr(`この札を使っている箱 ${c.n} 個を光らせる`, `Highlight the ${c.n} boxes using this`) : tr('ツリーではまだ使っていない', 'Not used in the tree yet')"
+                @click="glow = glow === c.glowKey ? null : c.glowKey">
+                <img v-if="c.icon" :src="c.icon" alt="" class="size-5 shrink-0 object-contain" />
+                <span class="min-w-0 truncate">{{ c.label }}</span>
+                <span v-if="c.main" class="shrink-0 rounded-sm bg-amber-400/30 px-1 text-[10px] font-bold text-amber-100">{{ tr("本命", "Main") }}</span>
+                <span v-if="c.comp" class="shrink-0 rounded-sm bg-slate-400/30 px-1 text-[10px] font-bold text-slate-100">{{ tr("妥協", "Comp.") }}</span>
+                <span v-if="c.n" class="shrink-0 tabular-nums text-[11px] text-sky-200/80">×{{ c.n }}</span>
+              </button>
+              <button v-if="c.memo" type="button" class="flex size-6 shrink-0 items-center justify-center rounded text-white/60 hover:bg-white/10 hover:text-white" :title="tr('メモから消す', 'Remove from notes')" :aria-label="tr('メモから消す', 'Remove from notes')" @click="removeChip(c)"><Icon name="x" class="size-3.5" /></button>
+            </span>
+            <span v-if="!sec.chips.length" class="text-[12px] opacity-50">{{ sec.empty }}</span>
+          </div>
+        </section>
       </div>
-      <div v-if="picker === 'mod'" class="mt-2 flex max-h-[45vh] min-h-0 flex-col rounded-md bg-black/30 p-2">
-        <TreeModPick mode="hit" :current="null" @pick="addAim" @close="picker = null" />
-      </div>
-    </section>
+      <div class="g-divider mx-1 shrink-0" />
+      <textarea v-model="memo" data-tree-memo-text :inert="!!picker" class="mt-2 min-h-[96px] w-full flex-1 resize-none rounded-md border border-white/15 bg-black/40 px-2.5 py-2 leading-relaxed outline-none focus:border-amber-400/60"
+        :placeholder="tr('このツリーのメモ (狙い・相場・決めた事など)', 'Notes for this tree (goals, prices, decisions…)')" @input="onInput" @blur="saveMemo" />
 
-    <!-- 使うカレンシー -->
-    <section data-tree-currencies>
-      <p class="mb-1 flex items-center gap-2 text-[12px] text-[var(--exile-color-text-secondary)]">
-        <span class="flex-1">{{ tr("使うカレンシー", "Currency to use") }}</span>
-        <button type="button" data-tree-memo-add-cur class="g-btn sm" :aria-pressed="picker === 'cur'" @click="picker = picker === 'cur' ? null : 'cur'">{{ tr("＋ カレンシー", "+ Currency") }}</button>
-      </p>
-      <div class="flex flex-wrap gap-1">
-        <div v-for="c in curChips" :key="c.k" class="flex min-w-0 max-w-full items-center">
-          <button type="button" data-tree-cur-chip class="flex min-h-7 min-w-0 items-center gap-1.5 rounded-md border px-2 text-left text-[12px]" :class="chipCls(glow === c.glowKey)"
-            :aria-pressed="glow === c.glowKey" :title="c.n ? tr(`この手を使っている箱 ${c.n} 個を光らせる`, `Highlight the ${c.n} boxes using this`) : tr('ツリーではまだ使っていない', 'Not used in the tree yet')" @click="glow = glow === c.glowKey ? null : c.glowKey">
-            <img v-if="iconOf(c.k)" :src="iconOf(c.k)" alt="" class="size-5 shrink-0 object-contain" />
-            <span class="min-w-0 truncate">{{ nameOf(c.k) }}</span>
-            <span v-if="c.tree" class="shrink-0 rounded-sm bg-sky-500/25 px-1 text-[10px] text-sky-100">{{ tr("ツリー", "Tree") }}</span>
-          </button>
-          <button v-if="c.memo" type="button" class="flex size-7 shrink-0 items-center justify-center rounded hover:bg-white/10" :title="tr('メモから消す', 'Remove from notes')" @click="toggleCur(c.k)"><Icon name="x" class="size-3.5" /></button>
-        </div>
-        <span v-if="!curChips.length" class="text-[12px] opacity-50">{{ tr("＋ カレンシーで足す・箱の手を決めるとここに並ぶ", "Add with + Currency, or set crafts in boxes") }}</span>
+      <!-- 選び窓 (中身の上に重ねる。閉じる・Esc で戻る) -->
+      <div v-if="picker" data-tree-memo-picker class="absolute inset-0 z-20 flex flex-col rounded-md bg-[#120e0a] p-2">
+        <TreeModPick v-if="picker === 'mod'" class="min-h-0 flex-1" mode="hit" :current="null" :title="tr('欲しい MOD を足す', 'Add a wanted mod')" autofocus @pick="addAim" @close="picker = null" />
+        <template v-else>
+          <div class="mb-1 flex items-center gap-2">
+            <b class="flex-1 text-[14px]">{{ tr("使うカレンシーを足す", "Add currency to use") }}</b>
+            <button type="button" class="g-btn sm" @click="picker = null">{{ tr("閉じる", "Close") }}</button>
+          </div>
+          <!-- メモにある物 (押すと消す)。棚の上では選んだ印が出ないのでここに並べる -->
+          <div class="mb-1 flex min-h-8 flex-wrap items-center gap-1 rounded bg-white/[0.04] px-1.5 py-1 text-[11px]">
+            <span class="opacity-70">{{ tr("メモにある:", "In notes:") }}</span>
+            <button v-for="k in memoCurs" :key="k" type="button" class="flex size-7 items-center justify-center rounded hover:bg-rose-600/40" :title="tr(`${nameOf(k)} を消す`, `Remove ${nameOf(k)}`)" @click="toggleCur(k)">
+              <img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="size-6 object-contain" /><span v-else class="truncate">{{ nameOf(k) }}</span>
+            </button>
+            <span v-if="!memoCurs.length" class="opacity-50">{{ tr("無し (棚を押すと足す)", "None (click the shelf to add)") }}</span>
+          </div>
+          <div data-tree-memo-shelf class="min-h-0 flex-1 overflow-y-auto pr-1">
+            <p class="mb-0.5 text-[11px] opacity-60">{{ tr("カタリスト", "Catalysts") }}</p>
+            <div class="mb-2 flex flex-wrap gap-1.5"><ShelfButton v-for="k in TREE_CATALYSTS" :key="k" :k="k" @pick="toggleCur" /></div>
+            <CurrencyShelf full @hold="toggleCur" />
+          </div>
+        </template>
       </div>
-      <div v-if="picker === 'cur'" data-tree-memo-shelf class="mt-2 max-h-[45vh] overflow-y-auto rounded-md bg-black/30 p-2">
-        <p class="mb-1 flex items-center text-[11px] opacity-70"><span class="flex-1">{{ tr("押すとメモに足す (もう一度で消す)", "Click to add (again to remove)") }}</span><button type="button" class="g-btn sm" @click="picker = null">{{ tr("閉じる", "Close") }}</button></p>
-        <p class="mb-0.5 text-[10px] opacity-60">{{ tr("カタリスト", "Catalysts") }}</p>
-        <div class="mb-2 flex flex-wrap gap-1.5"><ShelfButton v-for="k in TREE_CATALYSTS" :key="k" :k="k" @pick="toggleCur" /></div>
-        <CurrencyShelf full @hold="toggleCur" />
-      </div>
-    </section>
-
-    <textarea v-model="memo" data-tree-memo-text rows="4" class="min-h-24 w-full flex-1 resize-none rounded-md border border-white/15 bg-black/40 px-2 py-1 outline-none focus:border-amber-400/60" :placeholder="tr('このツリーのメモ (狙い・相場・決めた事など)', 'Notes for this tree (goals, prices, decisions…)')" @blur="saveMemo" />
     </div>
-    <!-- 四辺と四隅を引っ張ると大きさが変わる -->
-    <div v-for="g in EDGES" :key="g.dir" :data-tree-memo-resize="g.dir" class="absolute z-10 touch-none" :class="g.cls" @pointerdown="grab($event, g.dir)" />
+    <!-- 右下の掴みの印 (大きさを変えられる所) -->
+    <svg v-if="!snap" class="pointer-events-none absolute -bottom-2 -right-2 size-3 text-amber-200/50" viewBox="0 0 12 12"><path d="M11 3 L3 11 M11 7 L7 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+    <!-- 四辺と四隅を引っ張ると大きさが変わる (最大化・半分の間は無し) -->
+    <template v-if="!snap"><div v-for="g in EDGES" :key="g.dir" :data-tree-memo-resize="g.dir" class="absolute z-30 touch-none" :class="g.cls" @pointerdown="grab($event, g.dir)" /></template>
   </div>
 </template>
