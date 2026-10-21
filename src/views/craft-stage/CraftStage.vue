@@ -47,10 +47,9 @@ import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import { isRune, runeNameOf, RUNE_PREFIX } from "../../services/craft-stage/stage-runes";
-import { catalystSetKey, IMPLICIT_SET, implicitSetKey, isCatalystSet, isQualitySet, kindOf, QUALITY_CAP, qualityCapKey, qualitySetKey } from "../../services/craft-stage/apply-currency";
-import { OMEN_FOR } from "../../services/craft-stage/omens";
-import StageOmenTune from "./StageOmenTune.vue";
-import ShelfButton from "./ShelfButton.vue";
+import { catalystSetKey, IMPLICIT_SET, implicitSetKey, isCatalystSet, isQualitySet, QUALITY_CAP, qualityCapKey, qualitySetKey } from "../../services/craft-stage/apply-currency";
+import HeldOmens from "./HeldOmens.vue";
+import { heldOmensOf } from "./held-omens";
 import ModalShell from "../../components/ui/ModalShell.vue";
 import Icon from "../../components/ui/Icon.vue";
 import { encodeShare, SHARE_ENABLED, shareUrl, xIntentUrl } from "../../services/craft-stage/share";
@@ -105,19 +104,8 @@ function onKey(e: KeyboardEvent): void {
 onMounted(() => { window.addEventListener("mousemove", onMove); window.addEventListener("keydown", onKey); });
 onBeforeUnmount(() => { window.removeEventListener("mousemove", onMove); window.removeEventListener("keydown", onKey); s.hold(null); });
 function hold(k: string): void { s.hold(s.held.value === k ? null : k); }
-/**
- * 持っているカレンシーに掛けられるお告げ (オーナー 2026-10-04「オーブ使う時、下に使えるお告げを出して、持ったまま使えるように」)。
- * 押すと持ったまま掛ける / 外す (お告げのタブに切り替えなくてよい)
- */
-/**
- * 骨 (冒涜) を持った時は、後の発現で使うアビスの反響も並べる (2026-10-05 オーナー「アビス系だけど、骨持った瞬間に反響のお告げも
- * ON にできるように下に表示しないと」)。掛けるだけで、使われるのは発現の手 (OMEN_FOR の決まりは変えない)
- */
-const heldOmens = computed(() => {
-  if (!s.held.value) return [];
-  const kind = kindOf(s.held.value);
-  return [...(OMEN_FOR[kind] ?? []), ...(kind === "desecrate" ? OMEN_FOR.reveal ?? [] : [])];
-});
+/** 持っている物に掛けられるお告げ (欄は HeldOmens.vue。ここは slot を出すかだけ) */
+const heldOmens = computed(() => heldOmensOf(s.held.value));
 /** 持っている物を打つ前に光らせる: 変わる候補の MOD (オレンジの文字) と付く空き (緑の枠)。エンジンの previewUse から (2026-10-17 オーナー、前は削減のカオスだけ) */
 const preview = computed(() => (s.held.value && s.item.value && s.data.value && !s.replay.value ? previewUse(s.data.value, s.item.value, s.held.value, s.omens.value) : null));
 const doomed = computed(() => preview.value?.change ?? []);
@@ -413,13 +401,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
           <CurrencyShelf @hold="hold">
             <!-- 棚の中の「神〜ヴァールオーブ」の段の下に出る (置き場は CurrencyShelf が決める。上に出すと持っているカレンシーがずれる、オーナー 2026-10-04) -->
             <template v-if="heldOmens.length" #held>
-              <div class="rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2" data-held-omens>
-                <!-- 横に「MOD 一覧へ」(お告げを選びながら付く MOD を見に行ける。2026-10-11 オーナー「お告げの横にも MOD 一覧へ、楽だ」) -->
-                <p class="mb-1 flex items-center gap-2 text-[11px] text-violet-200/80">{{ tr(`${nameOf(s.held.value ?? "")} に掛けられるお告げ`, `Omens for ${nameOf(s.held.value ?? "")}`) }}<button type="button" data-rec="mod-list-open" data-rec-part="mod-list-button" class="tbtn-top ml-auto" :title="tr('このベースに付く MOD の一覧へ', 'Go to the mod list')" @click.stop="toModList">{{ tr("MOD 一覧", "Mod list") }}<kbd class="kbd max-md:hidden">Tab</kbd></button></p>
-                <div class="flex flex-wrap gap-1.5">
-                  <div v-for="k in heldOmens" :key="k" class="flex flex-col items-center"><ShelfButton :k="k" omen @pick="s.toggleOmen($event)" /><StageOmenTune :k="k" /></div>
-                </div>
-              </div>
+              <HeldOmens mod-list @mod-list="toModList" />
             </template>
           </CurrencyShelf>
         </section>

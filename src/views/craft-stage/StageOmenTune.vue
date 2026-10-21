@@ -7,16 +7,18 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { tr } from "../../i18n/lang";
-import { craftStage } from "../../state/craft-stage";
+import { useShelf } from "../../state/emulator/shelf-context";
 import { catalystOf, CATALYSING_PER_PCT, SANCTIFY_MAX, SANCTIFY_MIN, tunedCatalysingMultiplier } from "../../services/craft-stage/engine";
 import { catalysingPerPct, sanctifyK, setCatalysingPerPct, setSanctifyK, TUNING_ON } from "../../state/emulator/stage-tuning";
 
 const props = defineProps<{ k: string }>();
+/** お告げ・アイテムは棚の文脈から (クラフト台は craftStage、シミュは provideShelf の物。2026-10-22) */
+const shelf = useShelf();
 const CAT = "OmenofCatalysingExaltation";
 const SAN = "OmenofSanctification";
-const show = computed(() => TUNING_ON && (props.k === CAT || props.k === SAN) && craftStage.omens.value.includes(props.k));
+const show = computed(() => TUNING_ON && (props.k === CAT || props.k === SAN) && shelf.omens.value.includes(props.k));
 
-const pct = computed(() => (craftStage.item.value ? catalystOf(craftStage.item.value).pct : 0));
+const pct = computed(() => (shelf.item.value ? catalystOf(shelf.item.value).pct : 0));
 const mult = computed(() => { void catalysingPerPct.value; return tunedCatalysingMultiplier(pct.value); });
 function onRate(e: Event): void {
   const v = Number((e.target as HTMLInputElement).value);
