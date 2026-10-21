@@ -9,11 +9,22 @@ draft: true
 ---
 In PoE2, gloves roll "+2 to Level of all Projectile Skills" or Critical Hit Chance **only with the rune Kolr's Hunt socketed**. Kolr's Hunt reads "Can roll Marksman modifiers," and once socketed, Marksman mods join both the suffix and the prefix pool.
 
-While working backward from a finished ES glove, our notes said "gloves have no Critical Hit Chance mod," yet real gloves had +2 Projectile. The answer was the rune: these mods aren't in the normal pool; the rune adds them.
+We were working backward from a finished ES glove. Our notes said "gloves have no Critical Hit Chance mod." Yet real gloves had +2 Projectile.
 
-## What Kolr's Hunt Adds
+One of them has to be wrong, right? But both were true.
 
-On the ExileDesk engine, socketing Kolr's Hunt into Sirenscale Gloves (Intelligence, Item Level 82) opened the Marksman pool.
+The answer was the rune. These mods aren't in the normal pool; the rune adds them.
+
+:::summary What you'll learn
+- +2 Projectile and Critical Hit Chance on gloves are Marksman mods that appear **only with Kolr's Hunt socketed**
+- Marksman mods **also join the prefix pool** (projectile damage, projectile speed, curse effect)
+- Three ES prefixes with Greater Exalted Orbs go from 105 div to 194 div, **1.8 times** the cost
+- Greater is still cheapest. Catalysts don't work on gloves, so the extra misses go straight into the cost
+:::
+
+## Kolr's Hunt Adds Mods to the Prefixes Too
+
+On the ExileDesk engine, we socketed Kolr's Hunt into Sirenscale Gloves (Intelligence, Item Level 82). That opened the Marksman pool.
 
 | Side | Marksman mods |
 |---|---|
@@ -26,7 +37,16 @@ The key point: **they also join the prefix pool**. When aiming for ES prefixes, 
 
 ## Socketing It Makes ES Gloves 1.8 Times as Expensive
 
-We compared the cost of maximum Energy Shield, increased Energy Shield and maximum Mana (all T2+) on these gloves, with and without the runes. Method: Chaos Orbs while no target is present, annul a non-target prefix at once, add missing targets with Omen of Sinistral Exaltation + an Exalted Orb. 300 runs each.
+We compared the cost of maximum Energy Shield, increased Energy Shield and maximum Mana (all T2+) on these gloves, with and without the runes. 300 runs each.
+
+Method: Chaos Orbs while no target is present, annul a non-target prefix at once, add missing targets with Omen of Sinistral Exaltation + an Exalted Orb.
+
+:::chart bar Cost per item (div, 300 engine runs each)
+unit: div
+labels: Exalted Orb, Greater Exalted Orb, Perfect Exalted Orb
+No runes: 423, 105, 201
+Serle's Triumph + Kolr's Hunt: 598, 194, 307
+:::
 
 | Omen of Sinistral Exaltation + | No runes | Serle's Triumph + Kolr's Hunt |
 |---|---:|---:|
@@ -34,25 +54,37 @@ We compared the cost of maximum Energy Shield, increased Energy Shield and maxim
 | Greater Exalted Orb | 105 div | 194 div |
 | Perfect Exalted Orb | 201 div | 307 div |
 
-With Greater Exalted Orbs, Chaos Orbs rose from 654 to 1,275 and Greater Exalted Orbs from 65 to 107, because Marksman prefixes made targets harder to hit. Greater still came out cheapest.
+With Greater Exalted Orbs, Chaos Orbs rose from 654 to 1,275 and Greater Exalted Orbs from 65 to 107.
 
-Serle's Triumph adds a suffix slot and made no difference to the prefix-only stage (exactly 105 div either way).
+That is because Marksman prefixes made targets harder to hit. Greater still came out cheapest.
 
-On the [crafting bench](/?base=Sirenscale%20Gloves), socket the runes first and the Marksman mods appear in the mod list.
+:::tip Serle's Triumph doesn't matter for prefixes
+Serle's Triumph adds a suffix slot. It made no difference to the prefix-only stage (exactly 105 div either way).
+:::
 
-## Sockets and Rune Prices
+### Sockets and Rune Prices
 
-On the engine, Sirenscale Gloves took two sockets with two runes (Serle's Triumph and Kolr's Hunt). Rune prices from the ExileDesk server market: Kolr's Hunt 715.79 Exalted Orbs (about 1.0 div), Serle's Triumph 2,079.15 (about 3.0 div). The table above excludes rune costs.
+On the engine, Sirenscale Gloves took two sockets with two runes (Serle's Triumph and Kolr's Hunt). Rune prices from the ExileDesk server market: Kolr's Hunt 715.79 Exalted Orbs (about 1.0 div), Serle's Triumph 2,079.15 (about 3.0 div).
 
-## No Catalysts on Gloves Either
+:::note Rune costs and in-game checks are not included
+The table above excludes rune costs. The costs are engine results and have not been compared with Craft of Exile or in-game results.
+:::
 
-Gloves also miss out on a ring technique: Catalysts are for "a ring or amulet" only (poe2db's description), and the engine refuses them on gloves. So there is no Omen of Catalysing Exaltation to weight your target, and the extra misses from Marksman mods go straight into the cost.
+## Catalysts Can't Make Up for the Misses
+
+Gloves also miss out on a ring technique. Catalysts are for "a ring or amulet" only (poe2db's description), and the engine refuses them on gloves.
+
+So there is no Omen of Catalysing Exaltation to weight your target. The extra misses from Marksman mods go straight into the cost.
 
 ## Where the Numbers Come From
 
 - Kolr's Hunt enabling Marksman mods: poe2db (our research notes) and the ExileDesk engine's mod pools.
 - 2 to 5% and 2.48%: the engine, 3,000 and 20,000 tries.
 - Cost table: the engine, 300 runs each, capped at 2,000 div per run. Market 2026-10-20 16:00 UTC. Not compared with Craft of Exile or in-game results.
+
+## Try It Yourself
+
+On the [crafting bench](/?base=Sirenscale%20Gloves), socket the runes into Sirenscale Gloves first and the Marksman mods appear in the mod list. To compare Exalted Orb types, try the [Craft route tree](/?page=sim-tree&base=Sirenscale%20Gloves).
 
 **Related posts**
 
