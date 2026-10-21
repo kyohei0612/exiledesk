@@ -32,6 +32,7 @@ const KIND: Record<TreeBox["out"], { ja: string; en: string; c: string; icon: st
   junk: { ja: "外れ", en: "Miss", c: "224,112,122", icon: "x" },
   junkGone: { ja: "外れが消えた", en: "Miss removed", c: "154,167,184", icon: "check" },
   lost: { ja: "狙いが消えた", en: "Target lost", c: "165,139,224", icon: "rotate" },
+  any: { ja: "打った後", en: "After", c: "200,184,150", icon: "plus" },
 };
 const kind = computed(() => KIND[props.box.out]);
 /** 縁の色 (完成は明るい金) と光り方。選んだ・光らせた時は強く */
@@ -68,6 +69,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <span class="flex size-5 shrink-0 items-center justify-center rounded-md" :style="{ background: `rgba(${rgb},0.18)`, color: `rgb(${rgb})` }"><Icon :name="kind.icon" class="size-3.5" /></span>
       <span class="truncate text-[11px] font-bold tracking-wide" :style="{ color: `rgb(${rgb})` }">{{ tr(kind.ja, kind.en) }}</span>
       <span v-if="box.done" class="shrink-0 rounded-full bg-amber-300/25 px-1.5 text-[10px] font-bold text-amber-100">{{ doneText }}</span>
+      <span v-if="box.unwanted?.length" data-tree-unwanted class="shrink-0 rounded-sm bg-rose-400/20 px-1.5 text-[11px] font-bold text-rose-200" :title="tr(`× (要らない) の印 ${box.unwanted.length} 個 (箱を押すと試し打ちで見られる)`, `${box.unwanted.length} mod(s) marked × (unwanted). Click the box to see them`)">× {{ box.unwanted.length }}</span>
       <span v-if="issue" data-tree-issue class="rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white" :title="issue">!</span>
       <span class="flex-1" />
       <span class="flex items-center" :style="keep('right center')">
@@ -87,7 +89,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <button v-else-if="box.out === 'hit'" type="button" class="nodrag block w-[calc(100%-14px)] truncate text-left text-[13px] hover:underline" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :class="[box.aim ? 'text-[#c8c8ff]' : 'text-amber-300', quiet ? 'pointer-events-none' : '']" :title="t.aimLabel(box.aim)" @click.stop="!quiet && emit('aim')">
         {{ box.aim ? t.aimLabel(box.aim) : tr("＋ 付く MOD を選ぶ", "+ Pick the mod") }}
       </button>
-      <p v-else class="truncate leading-6 opacity-60">{{ box.out === "junk" ? tr("当たり以外が付いた", "Anything but a hit") : box.out === "junkGone" ? tr("外れの MOD が消えた", "A miss mod was removed") : tr("狙いの MOD が消えた", "A target mod was removed") }}</p>
+      <p v-else class="truncate leading-6 opacity-60">{{ box.out === "junk" ? tr("当たり以外が付いた", "Anything but a hit") : box.out === "junkGone" ? tr("外れの MOD が消えた", "A miss mod was removed") : box.out === "any" ? tr("何かが 1 つ付いた (狙い無し)", "Something was added (no target)") : tr("狙いの MOD が消えた", "A target mod was removed") }}</p>
     </div>
 
     <!-- 数字はまだ繋がない (100 人回すのは次の手) -->

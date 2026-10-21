@@ -45,15 +45,28 @@ function sanctified(): TreeDoc {
   });
 }
 
+/** 始まり → 高貴 (狙い無し) → 打った後 → 高貴 → 当たり (完成)。mark = 打った後の箱に × を付ける MOD */
+function free(mark?: string): TreeDoc {
+  return doc({
+    start: mk("start", "start", null, { hand: { ...H("exalt"), free: true }, outs: ["a1"] }),
+    a1: mk("a1", "any", "start", { hand: H("exalt"), outs: ["h1", "j1"], ...(mark ? { unwanted: [mark] } : {}) }),
+    h1: mk("h1", "hit", "a1", { aim: A("AllResistances", 3), done: "main" }),
+    j1: mk("j1", "junk", "a1", { back: "start" }),
+  });
+}
+
 it("ルート精査の品質", () => {
   console.log("カタリスト:", CATALYSTS.map((c) => c.tag).join(" "));
   const cases: Array<[string, TreeDoc]> = [
     ...CATALYSTS.map((c): [string, TreeDoc] => [`触媒 ${c.tag} → 全耐性`, catalysed(`catalyst_${c.tag}`)]),
     [`前に attack、後に ${CATALYSTS[1]!.tag}`, catalysed(`catalyst_${CATALYSTS[1]!.tag}`, `catalyst_${CATALYSTS[0]!.tag}`)],
     ["聖別の後に高貴", sanctified()],
+    ["狙い無しの高貴 → 打った後 → 高貴", free()],
+    ["狙い無しの後に × (全部の MOD に付けたつもりで、付いた物を全部印)", free("*")],
   ];
   for (const [name, d] of cases) {
     const t0 = performance.now();
+    if (d.boxes.a1?.unwanted?.[0] === "*") d.boxes.a1.unwanted = [...data.mods.keys()].filter((k) => k.startsWith("Rings/"));
     const out = checkTree(data, d);
     console.log(`\n■ ${name} (${(performance.now() - t0).toFixed(0)} ms)`);
     for (const x of out) console.log(`  [${x.boxId}] ${x.kind}: ${x.text}`);

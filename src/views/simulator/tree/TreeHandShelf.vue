@@ -29,6 +29,9 @@ const omens = ref<string[]>(props.current ? [...props.current.omens] : []);
 const catalyst = ref<string>(props.current?.catalyst ?? TREE_CATALYSTS[0]);
 const spam = ref(!!props.current?.repeat);
 const spamMax = ref<number | null>(props.current?.repeat?.max ?? null);
+/** 狙い無し (足す手だけ。カオススパムとは一緒にしない) */
+const free = ref(!!props.current?.free);
+const canFree = computed(() => !!held.value && kindOfCurrency(held.value) === "add");
 function toggleOmen(id: string): void { omens.value = omens.value.includes(id) ? omens.value.filter((o) => o !== id) : [...omens.value, id]; }
 provideShelf({
   data: s.data, item, omens, held,
@@ -50,6 +53,7 @@ const hand = computed((): Hand | null => {
     currency: held.value, omens: used.value,
     catalyst: catalysing.value ? catalyst.value : null, ...catFill.value,
     repeat: spam.value && canSpam(held.value) ? { until: "hit", max: spamMax.value && spamMax.value > 0 ? Math.round(spamMax.value) : null } : null,
+    ...(free.value && canFree.value ? { free: true } : {}),
   };
 });
 /** カタリストは今の品質の最大まで (1 押しと同じ)。その箱の見本で何個入って何 % になったかを持つ (計算を繋ぐ時の費用の目安) */
@@ -60,7 +64,7 @@ const catFill = computed((): { quality: number; catalystCount: number } => {
   return { quality: r.item.quality, catalystCount: r.count };
 });
 const RESULT: Record<HandKind, [string, string]> = {
-  add: ["当たり + 外れ", "Hit + Miss"], remove: ["外れが消えた + 狙いが消えた", "Miss removed + Target lost"], swap: ["当たり + 狙いが消えた + 外れ", "Hit + Target lost + Miss"], spam: ["当たりだけ (当たるまで打つ)", "Hits only (until a hit)"],
+  add: ["当たり + 外れ", "Hit + Miss"], remove: ["外れが消えた + 狙いが消えた", "Miss removed + Target lost"], swap: ["当たり + 狙いが消えた + 外れ", "Hit + Target lost + Miss"], spam: ["当たりだけ (当たるまで打つ)", "Hits only (until a hit)"], free: ["打った後 (何が付いても次へ。当たり / 外れに分けない)", "After (anything counts, no hit / miss split)"],
 };
 const kind = computed((): HandKind | null => (hand.value ? kindOfHand(hand.value, kindOfCurrency(hand.value.currency)) : null));
 function ok(): void {
@@ -96,6 +100,9 @@ function ok(): void {
       <label v-if="canSpam(held)" class="flex min-h-7 cursor-pointer flex-wrap items-center gap-2">
         <input v-model="spam" type="checkbox" />{{ tr("当たるまで繰り返す (カオススパム)", "Repeat until a hit (Chaos spam)") }}
         <span v-if="spam" class="flex items-center gap-1 text-[12px] opacity-80">{{ tr("上限", "Max") }}<input v-model.number="spamMax" type="number" min="1" class="h-7 w-16 rounded-md border border-white/15 bg-black/40 px-1 text-right" :placeholder="tr('なし', 'none')" />{{ tr("回", "") }}</span>
+      </label>
+      <label v-if="canFree" class="flex min-h-7 cursor-pointer items-center gap-2">
+        <input v-model="free" data-tree-hand-free type="checkbox" />{{ tr("狙い無し (空きを 1 つ埋めるだけ)", "No target (just fill an open slot)") }}
       </label>
       <p v-if="kind" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ tr(RESULT[kind][0], RESULT[kind][1]) }}</p>
       <div class="flex flex-wrap gap-1.5">

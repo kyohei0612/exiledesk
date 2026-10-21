@@ -97,7 +97,7 @@ const edges = computed(() => boxes.value.filter((b) => b.hand && b.outs.length).
     const cx = k.q.x + BOX_W / 2, cy = k.q.y - 3, dx = cx - px, r = Math.min(10, Math.abs(dx) / 2), s = Math.sign(dx);
     const d = !s ? `M ${px} ${busY - 10} L ${cx} ${cy}`
       : `M ${px} ${busY - 10} L ${px} ${busY - r} Q ${px} ${busY} ${px + s * r} ${busY} L ${cx - s * r} ${busY} Q ${cx} ${busY} ${cx} ${busY + r} L ${cx} ${cy}`;
-    const bad = k.c.out !== "hit";
+    const bad = k.c.out !== "hit" && k.c.out !== "any";
     return { id: k.id, color: bad ? LINE.bad : LINE.fwd, kind: bad ? "bad" : "fwd", d, bad };
   }).sort((a, z) => Number(z.bad) - Number(a.bad));
   return { id: b.id, hand: b.hand!, jx: px, jy, stem: `M ${px} ${py} L ${px} ${busY - 10}`, to };
@@ -125,7 +125,7 @@ function backLabel(b: Box): string {
   if (!to) return "";
   if (to.out === "start") return tr("始まり", "Start");
   if (to.out === "hit") return to.aim ? t.aimLabel(to.aim) : tr("当たり", "Hit");
-  return to.out === "junk" ? tr("外れ", "Miss") : to.out === "junkGone" ? tr("外れが消えた", "Miss removed") : tr("狙いが消えた", "Target lost");
+  return to.out === "junk" ? tr("外れ", "Miss") : to.out === "junkGone" ? tr("外れが消えた", "Miss removed") : to.out === "any" ? tr("打った後", "After") : tr("狙いが消えた", "Target lost");
 }
 
 // 組み替え
@@ -311,7 +311,7 @@ function boxName(id: string): string {
   const b = doc.value.boxes[id];
   if (!b) return id;
   if (b.out === "start") return tr("始まり", "Start");
-  const k = { hit: tr("当たり", "Hit"), junk: tr("外れ", "Miss"), junkGone: tr("外れが消えた", "Miss removed"), lost: tr("狙いが消えた", "Target lost") }[b.out];
+  const k = { hit: tr("当たり", "Hit"), junk: tr("外れ", "Miss"), junkGone: tr("外れが消えた", "Miss removed"), lost: tr("狙いが消えた", "Target lost"), any: tr("打った後", "After") }[b.out];
   return b.out === "hit" && b.aim ? `${k} ${t.aimLabel(b.aim)}` : k;
 }
 /** 縮めて組んでいる時 (75〜99%) の倍率の逆数: 押せる物だけ大きさを戻す */

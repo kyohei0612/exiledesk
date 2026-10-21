@@ -22,7 +22,7 @@ export const handName = (key: string): string => nameOfKey(key, baseItem.value);
 export function handLabel(h: Hand): string {
   const parts = [handName(h.currency), ...h.omens.map(handName)];
   if (h.catalyst && h.omens.includes(CATALYSING)) parts.push(h.catalystCount ? tr(`${handName(h.catalyst)} ${h.quality}% (${h.catalystCount} 個)`, `${handName(h.catalyst)} ${h.quality}% (×${h.catalystCount})`) : `${handName(h.catalyst)} ${tr("最大まで", "to max")}`);
-  const label = parts.join(" + ");
+  const label = parts.join(" + ") + (h.free ? tr(" (狙い無し)", " (no target)") : "");
   if (!h.repeat) return label;
   return h.repeat.max ? tr(`${label} (当たるまで、${h.repeat.max} 回まで)`, `${label} (until a hit, max ${h.repeat.max})`) : tr(`${label} (当たるまで)`, `${label} (until a hit)`);
 }

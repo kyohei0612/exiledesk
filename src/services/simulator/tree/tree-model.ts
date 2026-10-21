@@ -8,8 +8,9 @@
  * 計算 (100 人回す) はまだ繋がない。ここは形と組み替えだけ (関数は渡した doc を書き換える。1 つ戻すは use-tree.ts が写しで持つ)
  */
 
-export type OutKind = "hit" | "junk" | "junkGone" | "lost";
-export type HandKind = "add" | "remove" | "swap" | "spam";
+/** any = 狙い無しの手の結果 (何が付いても次へ進む「打った後」、オーナー 10-22 の適当打ち) */
+export type OutKind = "hit" | "junk" | "junkGone" | "lost" | "any";
+export type HandKind = "add" | "remove" | "swap" | "spam" | "free";
 /** 狙い: MOD と段 (tier = T 何以上、1 = T1 だけ)。フラクチャーの時は「その段」 */
 export interface Aim { modId: string; tier: number }
 /**
@@ -24,6 +25,8 @@ export interface Hand {
   currency: string; omens: string[];
   /** 触媒の高貴の前に入れるカタリスト。品質はいつも今の最大まで (1 押しで)。quality = その箱の見本で入った品質、catalystCount = その時の個数 (費用の目安) */
   catalyst: string | null; quality: number; catalystCount?: number;
+  /** 狙い無し (何が付いてもよい、空きを 1 つ埋めるだけ。結果は「打った後」の 1 つ、オーナー 10-22「適当打ちで MOD をただ追加する手」) */
+  free?: boolean;
   repeat?: Repeat | null;
 }
 export interface TreeBox {
@@ -44,6 +47,8 @@ export interface TreeBox {
   parent: string | null;
   /** 箱ごとの短いメモ (オーナー 10-22、既定は閉じる) */
   note?: string;
+  /** × = この箱で付いている MOD のうち要らない物の印 (modId、段は問わない。オーナー 10-22「一度付けた物をバツにする仕組み」) */
+  unwanted?: string[];
 }
 export interface TreeDoc {
   schema: "exiledesk-tree/0";
@@ -81,6 +86,8 @@ export const OUTS_OF: Record<HandKind, OutKind[]> = {
   swap: ["hit", "lost", "junk"],
   // 繰り返し (カオススパム): 当たるまで打つので、結果は当たりだけ
   spam: ["hit"],
+  // 狙い無し: 当たり / 外れに分けず、打ったら必ず次の箱へ
+  free: ["any"],
 };
 
 function mk(d: TreeDoc, out: OutKind, parent: string): TreeBox {
@@ -157,7 +164,7 @@ export function shift(d: TreeDoc, id: string, dx: number, dy: number): void {
 }
 
 /** 手の種類 (繰り返しの手は spam) */
-export const kindOfHand = (h: Hand, base: HandKind): HandKind => (h.repeat ? "spam" : base);
+export const kindOfHand = (h: Hand, base: HandKind): HandKind => (h.repeat ? "spam" : h.free ? "free" : base);
 
 /**
  * 箱の次の手を決める。手の種類が同じなら結果の箱はそのまま、違えば作り直す。
@@ -238,6 +245,15 @@ export function setDone(d: TreeDoc, id: string, v: TreeBox["done"]): void {
   b.done = v;
 }
 
+/** × の印を付ける / 外す */
+export function toggleUnwanted(d: TreeDoc, id: string, modId: string): void {
+  const b = d.boxes[id];
+  if (!b) return;
+  const list = b.unwanted ?? [];
+  const next = list.includes(modId) ? list.filter((x) => x !== modId) : [...list, modId];
+  if (next.length) b.unwanted = next; else delete b.unwanted;
+}
+
 /** メモの窓の札を足す / 消す (同じ物は 1 つ) */
 export function toggleMemoAim(d: TreeDoc, a: Aim): void {
   const list = d.memoAims ?? [];
@@ -270,7 +286,7 @@ export function setNote(d: TreeDoc, id: string | null, text: string): void {
 }
 
 /** 整列で兄弟を並べる順 (当たり → 狙いが消えた → 外れが消えた → 外れ。外れは一番右) */
-const OUT_ORDER: Record<TreeBox["out"], number> = { start: 0, hit: 0, lost: 1, junkGone: 2, junk: 3 };
+const OUT_ORDER: Record<TreeBox["out"], number> = { start: 0, hit: 0, any: 0, lost: 1, junkGone: 2, junk: 3 };
 /** 整列の兄弟の間 (横の＋が 14px はみ出すので、それより広く) */
 const TIDY_GAP = 28;
 /**

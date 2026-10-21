@@ -112,7 +112,7 @@ export function sampleOf(data: PatchData, doc: TreeDoc, boxId: string, seed: num
     if (!r.applied) { last = r; break; }
     last = r;
     const o = outcomeOf(data, base.item, r.item, aims);
-    if (o.out !== b.out) continue;
+    if (b.out !== "any" && o.out !== b.out) continue;
     if (b.out === "hit" && b.aim && !o.hits.some((a) => a.modId === b.aim!.modId && a.tier === b.aim!.tier)) continue;
     return { item: r.item, note: null };
   }

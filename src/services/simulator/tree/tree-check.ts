@@ -9,10 +9,10 @@
 import { allMods, modBoostsOf, mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { CATALYSING } from "./tree-hands";
 import { aimKey, type Aim, type TreeDoc } from "./tree-model";
-import { aimsOf, outcomeOf, playHand, sampleOf } from "./tree-sample";
+import { aimHeld, aimsOf, outcomeOf, playHand, sampleOf } from "./tree-sample";
 import { tr } from "../../../i18n/lang";
 
-export type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality";
+export type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted";
 export interface CheckIssue { boxId: string; kind: CheckKind; text: string }
 
 const PEOPLE = 5;
@@ -70,6 +70,10 @@ export function checkTree(data: PatchData, doc: TreeDoc): CheckIssue[] {
         const b = doc.boxes[id];
         if (!b || seen.has(id + (viaBack ? "<" : ""))) return;
         seen.add(id + (viaBack ? "<" : ""));
+        // × (要らない) の印の MOD が残ったまま完成 (印はこの箱と上の箱で付けた物、段は問わない)
+        if (b.done) for (let x: typeof b | undefined = b; x; x = x.parent ? doc.boxes[x.parent] : undefined) for (const m of x.unwanted ?? []) {
+          if (aimHeld(data, item, { modId: m, tier: 99 })) add(id, "unwanted", tr("× (要らない) の印の MOD が残ったまま完成", "A mod marked × (unwanted) is still on the done item"));
+        }
         if (b.back && !viaBack) { walk(b.back, item, true); return; }
         if (!b.hand) return;
         const first = playHand(data, item, b.hand, rng, aims);
@@ -86,7 +90,7 @@ export function checkTree(data: PatchData, doc: TreeDoc): CheckIssue[] {
             const r = i === 0 ? first : playHand(data, item, b.hand, rng, aims);
             if (!r.applied) break;
             const res = outcomeOf(data, item, r.item, aims);
-            if (res.out === ob.out && (ob.out !== "hit" || !ob.aim || res.hits.some((a: Aim) => aimKey(a) === aimKey(ob.aim!)))) got = r.item;
+            if ((res.out === ob.out || ob.out === "any") && (ob.out !== "hit" || !ob.aim || res.hits.some((a: Aim) => aimKey(a) === aimKey(ob.aim!)))) got = r.item;
           }
           if (got && tag && ob.out === "hit" && ob.aim) {
             // 触媒の品質がこの当たりの MOD に効くか (エンジンの modBoostsOf。触媒は打つと品質を使い切るので、その種類の品質が載った形で聞く)

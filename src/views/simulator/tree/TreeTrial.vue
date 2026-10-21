@@ -14,11 +14,12 @@ import ShelfButton from "../../craft-stage/ShelfButton.vue";
 import HeldOmens from "../../craft-stage/HeldOmens.vue";
 import { heldOmensOf } from "../../craft-stage/held-omens";
 import StageItemCard from "../../craft-stage/StageItemCard.vue";
-import { applyCurrency, kindOf, mulberry32, omensFor, previewUse, revealOffers, unrevealedOf, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { allMods, applyCurrency, kindOf, mulberry32, omensFor, previewUse, revealOffers, unrevealedOf, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { aimsOf, fillCatalyst, playHand, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handLabel } from "./tree-names";
 import { useTree } from "./use-tree";
+import { toggleUnwanted } from "../../../services/simulator/tree/tree-model";
 import { modText, tr } from "../../../i18n/lang";
 
 const props = defineProps<{ boxId: string }>();
@@ -110,6 +111,16 @@ function back(): void {
   last.value = { added: [], removed: [] };
   log.value.unshift({ text: tr("1 つ戻した", "Undid one"), ok: true });
 }
+/** × (要らない) の印: 持っていない時に MOD の行を押すと付ける / 外す (この箱の印。フラクチャーは消せないので付けない、オーナー 10-22) */
+function onMark(modId: string): void {
+  const m = item.value ? allMods(item.value).find((x) => x.modId === modId) : null;
+  if (!m || m.fractured) return;
+  t.edit((d) => toggleUnwanted(d, props.boxId, modId));
+}
+const marks = computed(() => (box.value?.unwanted ?? []).map((id) => {
+  const m = item.value ? allMods(item.value).find((x) => x.modId === id) : null;
+  return { id, text: m ? `${m.tierName} ${modText(m)}` : tr("(この見本には無い MOD)", "(not on this sample)") };
+}));
 function resetSample(): void { trail.value = trail.value.slice(0, 1); log.value = []; last.value = { added: [], removed: [] }; }
 
 const NOTE: Record<string, [string, string]> = {
@@ -135,11 +146,19 @@ const noteText = computed(() => {
 
     <!-- アイテム (クラフト台のカード。持っている時に押すと打つ) -->
     <div v-if="item" data-tree-trial-item class="flex justify-center" @contextmenu.prevent="release">
-      <StageItemCard :item="item" :doomed="preview?.change ?? []" :open="preview?.open" :added="last.added" :removed="last.removed" :holding="!!held" :flash-key="flash" :width="340" compact @use="use(1)" />
+      <StageItemCard :item="item" :doomed="preview?.change ?? []" :open="preview?.open" :added="last.added" :removed="last.removed" :holding="!!held" :flash-key="flash" :width="340" compact @use="use(1)" @jump="onMark" />
+    </div>
+    <!-- × (要らない) の印 -->
+    <div data-tree-unwanted-list class="mt-6 flex flex-col gap-1">
+      <p class="text-[11px] opacity-60">{{ tr("MOD の行を押すと × (要らない) の印。完成まで残るとルート精査で !", "Click a mod row to mark it × (unwanted). Route check flags it if it's still there when done") }}</p>
+      <div v-for="mk in marks" :key="mk.id" class="flex min-w-0 items-center gap-1.5 rounded bg-rose-500/10 px-1.5 text-[12px]">
+        <span class="shrink-0 font-bold text-rose-300">×</span><span class="min-w-0 flex-1 truncate" :title="mk.text">{{ mk.text }}</span>
+        <button type="button" class="g-btn sm" @click="t.edit((d) => toggleUnwanted(d, boxId, mk.id))">{{ tr("外す", "Unmark") }}</button>
+      </div>
     </div>
 
-    <!-- 持っている物 (カードの下の「押すと使う」の札と重ならないよう空ける) -->
-    <div class="mt-4 flex flex-wrap items-center gap-1.5">
+    <!-- 持っている物 (カードの下の「押すと使う」の札と重ならないよう、× の欄を mt-6 で空けてある) -->
+    <div class="flex flex-wrap items-center gap-1.5">
       <template v-if="held">
         <span class="flex items-center -space-x-1"><img v-for="ic in [held, ...omensFor(held, omens)].filter((x) => !!iconOf(x))" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
         <b class="min-w-0 flex-1 truncate">{{ [nameOf(held), ...omensFor(held, omens).map(nameOf)].join(" + ") }}</b>
