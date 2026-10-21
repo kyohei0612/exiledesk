@@ -7,11 +7,11 @@ import { tr } from "../../../i18n/lang";
 import type { Hand, HandKind } from "./tree-model";
 
 interface Name { ja: string; en: string }
-const K = keys as unknown as { currency: Record<string, Name>; omens: Record<string, Name> };
+const K = keys as unknown as { currency: Record<string, Name>; omens: Record<string, Name>; bones: Record<string, Name> };
 
-/** 値段のキー (カレンシー・お告げ) → 画面の言語の名前 */
+/** 値段のキー (カレンシー・お告げ・骨) → 画面の言語の名前 */
 export const nameOfKey = (key: string): string => {
-  const n = K.currency[key] ?? K.omens[key];
+  const n = K.currency[key] ?? K.omens[key] ?? K.bones[key];
   return n ? tr(n.ja, n.en) : key;
 };
 

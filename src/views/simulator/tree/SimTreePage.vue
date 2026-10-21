@@ -10,6 +10,7 @@ import Icon from "../../../components/ui/Icon.vue";
 import TreeBox from "./TreeBox.vue";
 import TreeHandPick from "./TreeHandPick.vue";
 import TreeModPick from "./TreeModPick.vue";
+import TreeTrial from "./TreeTrial.vue";
 import { useTree } from "./use-tree";
 import { addHit, BOX_H, BOX_W, boundsOf, canRemove, clearHand, moveBox, removeHit, setAim, setBack, setDone, setHand, type Aim, type Hand, type HandKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
 import { handLabel } from "../../../services/simulator/tree/tree-hands";
@@ -21,7 +22,7 @@ const doc = t.doc;
 const PAD = 80;
 
 /** 右の欄 (箱を選んだ時だけ) */
-const panel = ref<{ kind: "hand" | "aim" | "fracture"; id: string } | null>(null);
+const panel = ref<{ kind: "hand" | "aim" | "fracture" | "trial"; id: string } | null>(null);
 /** 戻りの矢印の先を選んでいる箱 */
 const picking = ref<string | null>(null);
 const full = ref(false);
@@ -116,6 +117,7 @@ function endDrag(): void {
   const g = drag.value;
   drag.value = null;
   if (g && (Math.abs(g.x - g.bx) > 2 || Math.abs(g.y - g.by) > 2)) t.edit((d) => moveBox(d, g.id, g.x, g.y));
+  else if (g) panel.value = { kind: "trial", id: g.id }; // 動かさずに離した = 箱を押した → 試し打ち
 }
 
 // 全体図: 広げる (全画面) / 一望 (縮める)。閉じたら元のスクロールの位置へ
@@ -199,6 +201,7 @@ const panelBox = computed(() => (panel.value ? doc.value.boxes[panel.value.id] ?
         <!-- 右の欄 -->
         <aside v-if="panel && panelBox" data-tree-panel class="flex w-[320px] shrink-0 flex-col overflow-y-auto rounded-md bg-white/[0.04] p-3">
           <TreeHandPick v-if="panel.kind === 'hand'" :key="`h-${panel.id}`" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="panel = null" />
+          <TreeTrial v-else-if="panel.kind === 'trial'" :key="`t-${panel.id}`" :box-id="panel.id" @close="panel = null" @next="panel = { kind: 'hand', id: panel.id }" />
           <TreeModPick v-else :key="`m-${panel.id}-${panel.kind}`" :mode="panel.kind === 'fracture' ? 'fracture' : 'hit'" :current="panel.kind === 'fracture' ? doc.fracture : panelBox.aim" @pick="pickAim" @close="panel = null" />
         </aside>
       </div>

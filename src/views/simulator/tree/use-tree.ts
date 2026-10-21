@@ -62,7 +62,8 @@ const rowOfMod = (modId: string): ModRow | undefined => rows.value.find((r) => r
 function aimLabel(a: Aim | null): string {
   if (!a) return "";
   const r = rowOfMod(a.modId);
-  return `${a.tier === 1 ? "T1" : tr(`T${a.tier} 以上`, `T${a.tier}+`)} ${r?.template ?? a.modId}`;
+  const side = r ? (r.side === "prefix" ? tr("プレ", "Prefix") : tr("サフィ", "Suffix")) : "";
+  return `${a.tier === 1 ? "T1" : tr(`T${a.tier} 以上`, `T${a.tier}+`)} ${side} ${r?.template ?? a.modId}`;
 }
 /** フラクチャーの文 (その段の数値で埋めた文 + 段) */
 function fractureLabel(a: Aim | null): string {
