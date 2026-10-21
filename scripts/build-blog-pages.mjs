@@ -26,7 +26,8 @@ const args = process.argv.slice(2);
 const DEV = args.includes("--drafts");
 const AS_PUBLISHED = args.includes("--as-published");
 const OUT = resolve(ROOT, args.find((a) => !a.startsWith("--")) ?? "dist-web");
-const SRC = resolve(ROOT, "src/data/blog");
+// 記事の元 (確かめの時だけ BLOG_SRC で写しを読める)
+const SRC = process.env.BLOG_SRC ? resolve(process.env.BLOG_SRC) : resolve(ROOT, "src/data/blog");
 const SITE = "https://exiledesk.com";
 const API = "https://exiledesk-live.exiledesk.workers.dev"; // 記録の受け口 (src/web/config.ts の WEB_API_BASE と同じ)
 const VERSION = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf8")).version;
@@ -35,9 +36,14 @@ const M = await bundleEntry(resolve(ROOT, "src/services/blog/blog-md.ts"));
 const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const posts = readdirSync(SRC).filter((f) => f.endsWith(".md")).map((f) => M.parseBlogFile(f, readFileSync(resolve(SRC, f), "utf8"))).filter(Boolean)
   .map((p) => (AS_PUBLISHED ? { ...p, meta: { ...p.meta, draft: false } } : p))
+  // 仕上がった印 (ready: true) が無い記事は出さない (ページも作らない)。部品の見本 (sample) だけは開発版で作る (一覧などには出ない)
+  .filter((p) => p.meta.ready || (DEV && p.meta.slug === "sample"))
   .filter((p) => DEV || !p.meta.draft)
   .sort((a, b) => b.meta.date.localeCompare(a.meta.date) || a.meta.slug.localeCompare(b.meta.slug));
 const has = (slug, lang) => posts.some((p) => p.meta.slug === slug && p.meta.lang === lang);
+/** 本文の中の、出していない記事へのリンクは文字だけにする (リンク切れを作らない) */
+const shownSlugs = new Set(posts.filter((p) => p.meta.slug !== "sample").map((p) => p.meta.slug));
+const unlinkHidden = (html) => html.replace(/<a href="(?:\/en)?\/blog\/([a-z0-9-]+)\/(?:#[^"]*)?"[^>]*>([\s\S]*?)<\/a>/g, (all, slug, text) => (shownSlugs.has(slug) ? all : text));
 /** 一覧・関連・右の列・サイトマップに出す記事 (見本 sample は出さない) */
 const listed = (p) => p.meta.slug !== "sample";
 
@@ -234,7 +240,7 @@ for (const lang of ["ja", "en"]) {
 <h1>${esc(m.title)}</h1>
 <p class="meta"><time datetime="${m.date}">${m.date}</time>${m.updated !== m.date ? `<span>${l.updated} <time datetime="${m.updated}">${m.updated}</time></span>` : ""}${m.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join("")}${m.draft ? `<span class="draft">${l.draft}</span>` : ""}</p>
 ${shareBar(lang, m.title, url)}
-${withMidAd(M.blogHtml(p.body, imgUrl, lang), lang)}
+${withMidAd(unlinkHidden(M.blogHtml(p.body, imgUrl, lang)), lang)}
 ${cta}
 ${adBanner(lang)}
 ${shareBar(lang, m.title, url)}

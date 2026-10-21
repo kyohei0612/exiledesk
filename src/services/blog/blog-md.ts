@@ -22,6 +22,8 @@ export interface BlogMeta {
   image: string | null;
   /** 下書き (開発版だけに出す) */
   draft: boolean;
+  /** 仕上がった印 (記事編集長が付ける)。無い記事は開発版でも本番でも出さない (2026-10-22 オーナー「まだ仕上げてない記事は表示しなくて OK」) */
+  ready: boolean;
 }
 
 const esc = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -45,6 +47,7 @@ export function parseBlogFile(name: string, raw: string): { meta: BlogMeta; body
       tags: (head.tags ?? "").replace(/^\[|\]$/g, "").split(/[,、]/).map((t) => t.trim()).filter(Boolean),
       tree: head.tree || null, craft: head.craft || null, image: head.image || null,
       draft: head.draft === "true",
+      ready: head.ready === "true",
     },
     body: fm ? raw.slice(fm[0].length) : raw,
   };
