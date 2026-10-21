@@ -50,7 +50,7 @@ export async function openSharedRecipe(): Promise<void> {
 }
 
 /** 貼った物からレシピの中身を取り出す (URL の全体でも、#recipe= の後ろだけでも。開発版・本番どちらの URL でも中身は同じ) */
-export const recipeCodeOf = (text: string): string | null => {
+const recipeCodeOf = (text: string): string | null => {
   const t = text.trim();
   const m = /#recipe=([A-Za-z0-9_-]+)/.exec(t) ?? /^([A-Za-z0-9_-]{20,})$/.exec(t);
   return m ? m[1]! : null;
@@ -60,7 +60,7 @@ export const recipeCodeOf = (text: string): string | null => {
  * レシピの中身 (縮めた物) を開く: 保存したレシピに足して (同じ中身があればそれを使う)、そのレシピでシミュレーターを始める。
  * 読めない時は false (ベースを選ぶページの「URL を貼る欄」から呼ぶ。2026-10-21 オーナー「ここはレシピ URL 入力もしくは保存されてるレシピをプルダウン」)
  */
-export async function openRecipeCode(code: string): Promise<boolean> {
+async function openRecipeCode(code: string): Promise<boolean> {
   if (SIM_LOCKED) return false;
   let r: SimRecipe | null = null;
   try {
