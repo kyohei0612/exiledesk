@@ -6,94 +6,217 @@ tags: expected cost, cost, luck, median, cap
 tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
 image: img/crafting-cost-variance-og.en.png
+ready: true
 draft: true
 ---
 Looking only at the average (expected) cost of a PoE2 craft is misleading. In five examples run on the ExileDesk engine, **half the runs finished at about 70% of the average, and one in ten paid more than twice the average**. A few unlucky runs pull the average up, so it sits above what most people actually experience.
 
-Our earlier articles quoted "N div per item," an average. But the same method can finish in 50 div for one person and 500 for another, right? You see it on streams and at home.
+:::zundamon normal
+If a post says "N div per item," does everyone craft it for that price?
+:::
 
-The average alone doesn't show that spread. So we lined it up from records where the engine ran hundreds of crafts.
+:::metan normal
+Not at all. With the same method, one person finishes in 50 div and another needs 500.
+:::
+
+:::zundamon surprised
+That big a gap?! You'd never see it from the average alone.
+:::
+
+:::metan happy
+So we took the engine's records of hundreds of runs and laid out the spread of luck.
+:::
 
 :::summary What you'll learn
-- In the three examples where every run finished, the median was 0.68 to 0.75 of the average, and the 90th percentile 2.0 to 2.4 times it
-- On the Gold Ring, one run in a hundred cost 980 div (4.5 times the average)
-- With a cap, the mana ring's finished-run average was 865 div, but the cost per item was 1,991 div (64% finished)
-- Annulling misses at once (C) cut not only the average but also the 90th percentile to less than half (955 div to 451 div)
+- In examples where every run finished, half the runs paid 0.68 to 0.75 of the average, and one in ten paid 2.0 to 2.4 times it
+- With a cap, look at "cost per item," not "average of finished runs" (865 div vs 1,991 div on the mana ring)
+- Annulling misses at once cuts not just the average but also the unlucky runs' cost to less than half
+:::
+
+:::tip New to this? Words used here
+- **Average (expected cost)**: everyone's cost added up, divided by the number of runs
+- **Half the runs (median)**: sort runs from cheapest; the cost of the run right in the middle
+- **One in ten (90th percentile)**: sort runs from cheapest; the cost at the 90% mark. A guide to the unlucky side
+- **Cap**: a limit you set in advance: "I give up once I've spent this much"
+- **Cost per item**: everything spent by every run, divided by the number finished
+- **div**: Divine Orb, the price unit in this post
 :::
 
 ## Half the Runs Finish at About 70% of the Average
 
 Here are the average, median and 90th percentile for five examples. The top three are examples where every run finished; the bottom two count finished runs only.
 
-:::chart bar Cost in five examples (div, ExileDesk engine)
-unit: div
-labels: Gold Ring suffixes, ES gloves prefixes, Stream gloves, ES gloves suffixes, Mana ring
-Average: 220, 105, 94, 747, 865
-Median: 166, 74, 64, 631, 794
-90th percentile: 451, 250, 223, 1533, 1634
+:::zundamon normal
+If the average is 220 div, I'll finish for about 220 div, right?
 :::
 
-| Example | Runs | Average | Half the runs (median) | One in ten (90th percentile) |
-|---|---:|---:|---:|---:|
-| Gold Ring, three suffixes (annul misses at once) | 300 | 220 div | 166 div | 451 div |
-| ES gloves, three prefixes (Sinistral + Greater) | 300 | 105 div | 74 div | 250 div |
-| Gloves from a stream (cheapest route) | 1,000 | 94 div | 64 div | 223 div |
-| ES gloves suffixes (finished runs only) | 300 | 747 div | 631 div | 1,533 div |
-| Mana ring (finished runs only) | 300 | 865 div | 794 div | 1,634 div |
+:::metan normal
+Look at the table. In every example, the middle run paid less than the average.
+:::
 
-(div = Divine Orbs.) In the first three, the median was 0.68 to 0.75 of the average and the 90th percentile 2.0 to 2.4 times it.
+| Example | Runs | Average | Half the runs (median) | One in ten (90th percentile) | What the numbers are |
+|---|---:|---:|---:|---:|---|
+| Gold Ring, three suffixes (annul misses at once) | 300 | 220 div | 166 div | 451 div | Every run finished |
+| ES gloves, three prefixes (Omen of Sinistral Exaltation + Greater Exalted Orb) | 300 | 105 div | 74 div | 250 div | Every run finished |
+| Other gloves (cheapest route) | 1,000 | 94 div | 64 div | 223 div | Every run finished |
+| ES gloves suffixes | 300 | 747 div | 631 div | 1,533 div | Finished runs only (looks cheap) |
+| Mana ring | 300 | 865 div | 794 div | 1,634 div | Finished runs only (looks cheap) |
 
-On the Gold Ring, one run in a hundred cost 980 div (4.5 times the average).
+In every example, the middle run paid less than the average, and one in ten paid about twice the average.
+
+:::zundamon surprised
+The middle run is cheaper than the average!
+:::
+
+:::metan normal
+In the top three, the middle run paid 0.68 to 0.75 of the average.
+:::
+
+:::metan troubled
+On the other hand, one in ten paid 2.0 to 2.4 times the average.
+:::
+
+:::zundamon troubled
+How much does the unluckiest person pay?
+:::
+
+:::metan troubled
+On the Gold Ring, one run in a hundred cost 980 div. That's 4.5 times the average.
+:::
+
+:::note The bottom two examples count finished runs only
+The ES gloves suffixes and the mana ring show only runs that finished within the 2,000 div cap. The spending of runs that never finished is left out, so they look cheap.
+:::
 
 ## A Few Unlucky Runs Push the Average Up
 
-Crafting is "keep going until it lands." So there is no ceiling for an unlucky run.
+Crafting cost works like "keep going until it lands." So there is no ceiling for an unlucky run.
 
-A few runs that miss over and over, losing every target and starting again, are enough to pull the average up. Most runs don't miss that much, so the median sits below the average.
+:::zundamon normal
+Why don't the middle run and the average line up?
+:::
 
-On the Gold Ring, every target was lost and restarted from Chaos Orbs 25 times per ring on average. Runs with more restarts balloon; runs with fewer come in well under the average.
+:::metan normal
+A few runs miss over and over, lose every target and have to start again.
+:::
+
+:::metan normal
+Those few runs drag the average up.
+:::
+
+:::zundamon happy
+Most runs don't miss that much, so the middle sits below the average.
+:::
+
+:::metan normal
+Exactly. On the Gold Ring, runs lost every target and restarted from Chaos Orbs 25 times on average.
+:::
+
+:::metan normal
+More restarts make the cost balloon. Fewer restarts come in well under the average.
+:::
+
+:::zundamon normal
+So how much should I budget?
+:::
+
+:::metan normal
+If you hear "220 div on average" and bring 220 div, more than half of you will have some left over.
+:::
+
+:::metan troubled
+But if you want to be nearly sure to finish, plan for twice that or more.
+:::
 
 :::tip Budget twice the average
-If you hear "220 div on average" and bring exactly 220, more than half of you will have some left over. If you want to be nearly sure to finish, budget twice that or more.
+Bring only the average, and more than half of you will have some left over. To be nearly sure to finish, plan for twice the average or more.
 :::
 
 ## With a Cap, Look at Cost per Item
 
-Be careful with numbers produced under a cap (for example, giving up at 2,000 div per run):
+One more thing to watch: the numbers you get when you set a cap (for example, giving up at 2,000 div per run).
 
-- **Average of finished runs**: only runs that finished within the cap. The spending of runs that gave up is left out, so it looks cheap.
-- **Cost per item**: everything spent by every run, divided by the number finished. Includes the runs that gave up.
+:::zundamon normal
+What changes when there's a cap?
+:::
 
-On the mana ring, the average of finished runs was 865 div, but only 64% finished, and the cost per item was 1,991 div.
+:::metan normal
+The number changes depending on whether the runs that never finished are counted.
+:::
 
-When the finish rate is low, the finished-run average alone can understate the cost by more than half. ExileDesk articles show both side by side.
+| Number | What it counts | Mana ring | How it reads |
+|---|---|---:|---|
+| Average of finished runs | Only runs that finished within the cap | 865 div | Leaves out runs that never finished, so it looks cheap |
+| Cost per item | Everything spent by every run, divided by the number finished | 1,991 div | Includes runs that never finished (everyone's spending spread over the finished items) |
+
+On the mana ring, 64% finished, and the cost per item was more than twice the finished-run average.
+
+:::zundamon surprised
+More than twice?!
+:::
+
+:::metan troubled
+When the finish rate is low, the finished-run average alone makes it look more than twice as cheap as it is.
+:::
+
+:::metan happy
+That's why ExileDesk articles show both side by side.
+:::
 
 ## Annulling Misses at Once Halves the Spread
 
-The method changes the spread too. For the Gold Ring suffixes, holding misses until three are full (B) versus annulling at once (C):
+The method changes the spread too. For the Gold Ring suffixes, we compared holding misses until three are filled (B) with annulling them at once (C).
 
-| Method | Average | Median | 90th percentile |
-|---|---:|---:|---:|
-| B fill to three | 394 div | 272 div | 955 div |
-| C annul at once | 220 div | 166 div | 451 div |
+:::zundamon normal
+Saving misses and annulling them together sounds like less hassle.
+:::
 
-C cut not only the average but also the 90th percentile to less than half. Fewer Annulments hitting targets means fewer "lost everything, start again" runs for the unlucky ([Don't Hoard Your Misses](/en/blog/dont-hoard-misses/)).
+:::metan normal
+It's the other way around. Look at the table.
+:::
+
+| Method | Average | Median | 90th percentile | Which is better |
+|---|---:|---:|---:|---|
+| B fill to three | 394 div | 272 div | 955 div | Worse (Annulments hit targets more often) |
+| C annul at once | 220 div | 166 div | 451 div | **Better** (cheaper on average and for the unlucky) |
+
+Annulling at once (C) cut not just the average but also the 90th percentile to less than half.
+
+:::zundamon surprised
+Even the unlucky runs dropped from 955 div to 451 div!
+:::
+
+:::metan normal
+Fewer Annulments hitting targets means fewer "lost everything, start again" runs.
+:::
+
+:::metan normal
+The details are in [Don't Hoard Your Misses](/en/blog/dont-hoard-misses/).
+:::
+
+:::note fold Not yet verified (2)
+- Every number comes from the ExileDesk engine. None were compared with Craft of Exile or in-game results.
+- Prices are from the ExileDesk server market (2026-10-20 to 21). If the market moves, the costs change too.
+:::
+
+Look at "half the runs" and "one in ten" alongside the average, and you won't misread crafting costs. When there's a cap, put the cost per item next to them too.
 
 ## Where the Numbers Come From
 
-- All from the ExileDesk engine, with the run counts in the tables, capped at 2,000 div per run (the stream's gloves used a different setup: 1,000 runs with a cap on the number of crafts instead of on div).
-- Market: ExileDesk server (2026-10-20 to 21). Not compared with Craft of Exile or in-game results.
-
-:::note The bottom two examples count finished runs only
-The ES gloves suffixes and the mana ring show only runs that finished within the 2,000 div cap. The spending of runs that gave up is left out, so they look cheap. With that spending included, the mana ring's cost per item was 1,991 div.
+:::fold Show sources (3)
+- Average, median, 90th percentile, one in a hundred, number of restarts, and methods B and C for the five examples: ExileDesk engine. Run counts as in the tables. Capped at 2,000 div per run (only the other gloves used a different setup: 1,000 runs with a cap on the number of crafts instead of on div)
+- Mana ring 64% finished, 1,991 div per item: ExileDesk engine, 2,000 div cap
+- Market: ExileDesk server market (2026-10-20 to 21)
 :::
 
 ## Try It Yourself
 
-Applying the same moves a few times on a [Gold Ring on the crafting bench](/?base=Gold%20Ring) makes the spread easy to feel. To compare methods, try the [Craft route tree](/?page=sim-tree&base=Gold%20Ring).
+Apply the same moves a few times on a [Gold Ring on the crafting bench](/?base=Gold%20Ring) and you'll feel the spread for yourself. To compare the cost of each method, try the [Craft route tree](/?page=sim-tree&base=Gold%20Ring).
 
 **Related posts**
 
 - [PoE2 ring suffix craft: annul misses early](/en/blog/dont-hoard-misses/)
 - [PoE2 crafting expected cost](/en/blog/optimal-move-vs-intuition/)
 - [PoE2 mana ring craft](/en/blog/mana-ring-craft/)
+
+VOICEVOX: Zundamon / Shikoku Metan
