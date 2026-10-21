@@ -83,12 +83,14 @@ const hoverBack = ref<string | null>(null);
 const backLine = computed(() => {
   const b = hoverBack.value ? doc.value.boxes[hoverBack.value] : null, to = b?.back ? doc.value.boxes[b.back] : null;
   if (!b || !to) return null;
-  // 札 (箱の下) から戻り先の上の辺へ 1 本の柔らかい曲線を、箱より前に描く (乗せている間だけ。ツリーの外側を大回りすると
-  // 線が画面の外へ出て戻り先が分からず、横の辺から入ると隣の箱の裏を横切った。10-22 開発版で触って見た)
+  // 箱の横の辺から戻り先の同じ側の横の辺へ、外へふくらむ 1 本の弧を箱より前に描く (乗せている間だけ。10-22 開発版で触って見て決めた:
+  // ツリーの外側を大回りすると画面の外へ出て戻り先が分からず、上の辺へ入れると自分の箱と戻り先の箱を突き抜けた)
   const p = posOf(b), q = posOf(to);
-  const sx = p.x + 40 + ox.value, sy = p.y + BOX_H + oy.value, tx = q.x + BOX_W / 2 + ox.value, ty = q.y + oy.value - 3;
-  const k = Math.max(60, Math.abs(ty - sy) / 2);
-  return `M ${sx} ${sy} C ${sx} ${sy + k} ${tx} ${ty - k} ${tx} ${ty}`;
+  const left = p.x + BOX_W / 2 <= q.x + BOX_W / 2;
+  const sx = (left ? p.x - 3 : p.x + BOX_W + 3) + ox.value, sy = p.y + BOX_H / 2 + oy.value;
+  const tx = (left ? q.x - 4 : q.x + BOX_W + 4) + ox.value, ty = q.y + BOX_H / 2 + oy.value;
+  const out = (left ? -1 : 1) * Math.max(70, Math.abs(sy - ty) / 3);
+  return `M ${sx} ${sy} C ${sx + out} ${sy} ${tx + out} ${ty} ${tx} ${ty}`;
 });
 function goBack(b: Box): void { hoverBack.value = null; if (b.back) v.reveal(b.back, true); }
 
