@@ -58,9 +58,19 @@ const LINE = { fwd: "#a39a88", bad: "#c96a72", back: "#5fd0e0" } as const;
  * 画面の高さ (拡大前の CSS ピクセル)。html の zoom (WebApp.vue の fitZoom) が 1 より大きいと 100vh が画面より高くなり、
  * 1920 幅でツリーの枠がはみ出してページごと下へ送られた (10-22 開発版で見た)。WebApp.vue の後で読む
  */
-const viewH = ref(innerHeight / pageZoom());
-const onResizeH = (): void => { requestAnimationFrame(() => { viewH.value = innerHeight / pageZoom(); }); };
-onMounted(() => window.addEventListener("resize", onResizeH));
+const row = ref<HTMLElement | null>(null);
+/** ツリーの段の高さ = 画面の下まで (段の上の位置を測って引く。決め打ちの 230px では 1920 幅で 24px はみ出した、10-22 開発版で測った) */
+const rowH = ref(480);
+/** 段の下にある物 (.g-panel の下の余白 8 + 枠 18 + ページの下の余白 16) と少しの余り */
+const ROW_BOTTOM = 46;
+function measureRow(): void {
+  const el = row.value;
+  if (!el) return;
+  const z = pageZoom();
+  rowH.value = Math.max(300, Math.floor(innerHeight / z - (el.getBoundingClientRect().top + window.scrollY) / z - ROW_BOTTOM));
+}
+const onResizeH = (): void => { requestAnimationFrame(measureRow); };
+onMounted(() => { window.addEventListener("resize", onResizeH); onResizeH(); });
 onBeforeUnmount(() => window.removeEventListener("resize", onResizeH));
 /** 手 (見るだけ): どこを引いても画面が動き、箱は押せない (ComfyUI の手、見本の 6) */
 const hand = ref(false);
@@ -292,7 +302,7 @@ const glowOf = (b: Box): boolean => {
         </span>
       </div>
 
-      <div class="flex min-h-0 gap-2" :class="full ? 'flex-1' : 'min-h-[480px]'" :style="full ? {} : { height: `${viewH - 230}px` }">
+      <div ref="row" class="flex min-h-0 gap-2" :class="full ? 'flex-1' : ''" :style="full ? {} : { height: `${rowH}px` }">
         <!-- ツリー (暗い地 + ドットの格子、見本の 1。右下に浮かぶ道具とミニマップ、左上に今の状態の札) -->
         <div class="relative min-w-0 flex-1 overflow-hidden rounded-lg border border-white/[0.06] bg-[#0c0a08]">
         <div ref="viewport" data-tree-canvas class="absolute inset-0 overflow-auto" :class="hand ? 'cursor-grab' : 'cursor-default'" @pointerdown="onCanvasDown">
