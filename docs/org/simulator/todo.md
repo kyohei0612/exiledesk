@@ -34,6 +34,17 @@
 - 直す案 4 (views/craft-stage の 5 本と web/page.ts・state/web-page.ts の持ち主) はブラックに 1 行で返した。
 - ツリーの UI/UX (10-22): オーナーが線は案 A・言葉は案 1 を選び、b7d43022・14213d7e で既定に (古い戻りの弧・案 B・印は消した)。試し打ちの欄も消した (メモは箱の鉛筆、× の印は付ける所が無い)。見本の狙いが消えた行き先をカオス (当たるまで) に (1e89ecd8、精査は heldSets)。その後 狙いが消えたら全部「始めに戻る」+ 形が違えば続きから (settle、497f2af2)・触媒はカタリストを選んで先に打つ形 (e67a172e・59ab4c9d)。開発版 59ab4c9d、記録は共有メモ local_ba9fc825…/tree-merge/README.md。点検の残り (planByRedoCost・recipe-share を xIntentUrl へ) は後回し。
 
+## 引き継ぎ (5 本目 → 6 本目、10-22 深夜。会話が 1000 件を超えブラックの頼みで入れ替え)
+- 済んだ物: 上の「5 本目」全部。開発版は 59ab4c9d (ツリーの新しい形が既定・試し打ち無し・始めに戻る + settle・触媒はカタリストを選ぶ)。全部 commit・push 済み、書きかけ無し。Chrome 9333 は止めて profile も消した、dev サーバーは立てていない。
+- 記録: 共有メモ local_ba9fc825…/tree-merge/README.md (前後の数・スナップ a1〜a4・b1〜b4・台本 shots2.mjs / shots3.mjs = 開発版を窓なし Chrome 9333 で撮る)。形の数は scripts/_tree-merge-probe、見本の回しと精査は scripts/_tree-sample-probe。
+- 次の手 (オーナー 10-22、上から順に。全部ツリーの UI/UX、開発版だけ):
+  1. 結果の見せ方を 1 通りに揃える: 同じ打つ手の結果なのに、戻りだけの箱は小さな札「→ T1 サフィ 見つ…」、ほかは箱「当たり / T2 以上 …」で見た目が違う (オーナー「何で表示が違うんですかって話もあるわな」)。案 = 札にするなら当たり / 外れの印と色を箱と同じに、箱にするなら続きからの線を箱の下から。どちらが良いかスナップで案を出してから入れる (tree-merge.ts・TreeMergeLayer.vue・tidy の pill)。
+  2. 倍率を決まった段だけにする: 自由な値をやめ、例 25・33・50・67・100・125・150% (段は 6 本目が決めてよい)。ホイール・＋−・全体表示もその段に吸い付く (全体表示は収まる一番大きい段、use-tree-flow.ts の clamp・fit・setZoom)。きっかけ = 76% で消去のオーブの下の札「↩ 狙いが消えた」と「外れが消えた」が横にくっついて重なった。確かめ = 開発版の本物の描画で、全部の段で見本の木の箱・札・打つ手の札の矩形の重なり 0 件と間の詰まりを台本で数える + 76% だった所の前後スナップ。
+  3. 品質だけ上げる手: カタリストを打つ手は当たり / 外れの箱に分けず、打つ手の札 1 枚 (アイコンの列 + 名前、例「軽快のカタリスト」) で表し、その下に＋で次の手をつなぐ (オーナー「品質だけ上げるくだりがあるでしょ、オーブを打つだけの表示でいいから下に＋」)。tree-model の HandKind / OUTS_OF に「結果の箱無し」の種類が要る (今の free は「打った後」の箱を 1 つ作る)。tree-run・tree-check・tree-sample の playHand も通す。
+  4. カタリスト専用ルート: 打つ手を選ぶ所 (TreeHandShelf) に「カタリストを品質の上限まで打つ」決まった道を 1 つ。触媒のお告げを選んだ時のカタリストの選び (今は同じ札の中で先に打つ、59ab4c9d) とつながるように (3 の手を前に足す形にするか、今の同じ札のままかを案に)。
+  5. 点検の残り (後回し): use-sim-targets の planByRedoCost (オーナーの A/B/C 待ち)、recipe-share の X の URL を share.ts の xIntentUrl(url, text) に寄せる (ジン部長 1adf9da6 で入った)。
+- 気付き: 精査 (tree-check) は 5 人を辿るだけなので、行き先が分かれる所の当たりは出たり出なかったりする (heldSets で「もう付いているかもしれない狙い」は数えない形にした)。シミュの台本は vitest の scripts/_*-probe.config.ts で回す (tests/ には入れない)。
+
 ## 台本 (共有メモ local_35782246-d80a-4c3f-9dff-36103418e719/tree-mouse/)
 - tree-mouse.mjs (8 条件の操作、10b はホイール = 拡大縮小に直した)・tree-shelf.mjs (棚とお告げ)・tree-recipe.mjs・tree-trial-wide.mjs・tree-sample-check.mjs (見本の木: 戻りの線の終わり・n か所・精査 0・縮めて押す → ポップアップ → 試し打ち・札の編集と Esc)。
 - Chrome は PowerShell の `Start-Process chrome.exe -WindowStyle Hidden -PassThru -ArgumentList --headless=new,--remote-debugging-port=9333,--user-data-dir=<scratchpad>/cdp-profile`、使う前にブラックに一言、終わったら PID で止めて profile を消して「返した」。
