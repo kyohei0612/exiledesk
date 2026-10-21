@@ -49,8 +49,6 @@
 | 誰 | ファイル |
 |---|---|
 | (前の解析君の書きかけ、未 commit) | scripts/_flux-probe.test.ts・scripts/analysis/_yafu-ids.mjs |
-| シミュ部長 (ツリーの表面 10-22) | src/views/simulator/tree/・src/services/simulator/tree/ (入口の web-page.ts・page.ts・WebApp.vue はジン部長が書いている。SimTreePage.vue はジン部長の仮置きをシミュ部長が上書き) |
-
 入口に無い物 (解析君 10-21、要る時だけジン部長へ): 重み 0 の MOD (創生の樹のスペルダメージ) を始めの形に置く手段 (startFrom が断る、解析君は makeStageMod を直に使った)。シミュで要るまで振らない。
 
 順番 (10-21): ジン部長がエンジンの打つ結果 (カタリスト・お告げの確率) を変える直しは、commit の前にブラックへ 1 行 → 解析君の数字が変わるので、ブラックが解析君の区切りに合わせる。解析君がエンジンに無い手を見つけたら、足すのはジン部長 (ブラックが並べる)。

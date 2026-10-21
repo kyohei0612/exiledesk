@@ -1,0 +1,60 @@
+<!--
+  TreeModPick.vue — ツリーの右の欄: 金の指輪の MOD から 1 つ選ぶ (2026-10-22 表面だけ)。
+  当たり = 「この MOD の T 何以上」、フラクチャー = 「この MOD のこの段」。行はエンジンの MOD 一覧 (use-tree.ts の rows) そのまま
+-->
+<script setup lang="ts">
+import { computed, ref } from "vue";
+import { useTree, type ModRow } from "./use-tree";
+import type { Aim } from "../../../services/simulator/tree/tree-model";
+import { tr } from "../../../i18n/lang";
+
+const props = defineProps<{ mode: "hit" | "fracture"; current: Aim | null }>();
+const emit = defineEmits<{ pick: [aim: Aim]; close: [] }>();
+const t = useTree();
+
+const query = ref("");
+const open = ref<string | null>(props.current?.modId ?? null);
+/** 当たりは一般の MOD、フラクチャーは創生の樹など (カレンシーでは付かない物) も */
+const groups = computed(() => (props.mode === "hit" ? ["normal"] : ["special", "normal"]));
+const sections = computed(() => {
+  const q = query.value.trim().toLowerCase();
+  const hit = (r: ModRow): boolean => !q || r.template.toLowerCase().includes(q) || r.text.toLowerCase().includes(q);
+  return (["prefix", "suffix"] as const).map((side) => ({
+    side,
+    title: side === "prefix" ? tr("プレフィックス", "Prefixes") : tr("サフィックス", "Suffixes"),
+    rows: t.rows.value.filter((r) => r.side === side && groups.value.includes(r.group) && hit(r))
+      .sort((a, b) => groups.value.indexOf(a.group) - groups.value.indexOf(b.group) || b.share - a.share),
+  }));
+});
+const isCurrent = (r: ModRow, tier: number): boolean => props.current?.modId === r.id && props.current.tier === tier;
+const tierLabel = (tier: number): string => (props.mode === "fracture" || tier === 1 ? `T${tier}` : tr(`T${tier} 以上`, `T${tier}+`));
+</script>
+
+<template>
+  <div data-tree-mod-pick class="flex min-h-0 flex-col gap-2">
+    <div class="flex items-center gap-2">
+      <b class="flex-1 text-[14px]">{{ mode === "hit" ? tr("付く MOD (当たり) を選ぶ", "Pick the mod to hit") : tr("フラクチャーする MOD を選ぶ", "Pick the mod to fracture") }}</b>
+      <button type="button" class="g-btn sm" @click="emit('close')">{{ tr("閉じる", "Close") }}</button>
+    </div>
+    <p class="text-[12px] opacity-70">{{ tr("金の指輪 (アイテムレベル 82)", "Gold Ring (item level 82)") }}</p>
+    <input v-model="query" type="search" class="h-8 w-full rounded-lg border border-white/15 bg-black/40 px-2 text-[13px] outline-none focus:border-amber-400/60" :placeholder="tr('MOD を探す', 'Search mods')" />
+    <div class="min-h-0 flex-1 overflow-y-auto pr-1">
+      <section v-for="sec in sections" :key="sec.side" class="mb-3">
+        <p class="mb-1 text-[12px] font-bold text-[var(--exile-color-text-secondary)]">{{ sec.title }}</p>
+        <div v-for="r in sec.rows" :key="r.id" class="mb-1 rounded-md bg-white/[0.04]">
+          <button type="button" class="flex w-full min-w-0 items-center gap-2 px-2 py-1.5 text-left" :aria-expanded="open === r.id" @click="open = open === r.id ? null : r.id">
+            <span class="min-w-0 flex-1 truncate text-[13px] text-[#c8c8ff]" :title="r.text">{{ r.template }}</span>
+            <span v-if="r.group === 'special'" class="shrink-0 rounded-sm bg-teal-500/25 px-1 text-[10px] text-teal-100">{{ tr("創生の樹など", "Genesis Tree etc.") }}</span>
+            <span class="shrink-0 rounded-sm bg-emerald-600/80 px-1 text-[11px] font-bold text-white">{{ r.tiers.length }}</span>
+          </button>
+          <div v-if="open === r.id" class="flex flex-wrap gap-1 px-2 pb-2">
+            <button v-for="(tt, i) in r.tiers" :key="tt.rank" type="button" class="rounded-md border px-2 py-1 text-[12px]"
+              :class="isCurrent(r, i + 1) ? 'border-amber-400/80 bg-amber-500/20 text-amber-100' : 'border-white/15 hover:border-amber-400/60'"
+              :title="`${tt.text} (Lv ${tt.ilvl})`" @click="emit('pick', { modId: r.id, tier: i + 1 })">{{ tierLabel(i + 1) }}</button>
+          </div>
+        </div>
+        <p v-if="!sec.rows.length" class="text-[12px] opacity-50">{{ tr("無し", "None") }}</p>
+      </section>
+    </div>
+  </div>
+</template>
