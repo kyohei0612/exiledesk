@@ -5,7 +5,7 @@
  * ここは「呼び出す (今の状態を置き換える)」と、今の状態をストアに見せる (simNow) だけ
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, watch } from "vue";
-import { craftStage, readSimRecipes, type SimRecipe, type SimSession } from "../../state/craft-stage";
+import { craftStage, freshPatterns, readSimRecipes, type SimRecipe, type SimSession } from "../../state/craft-stage";
 import { currentRecipeId, reloadRecipes, simNow } from "../../state/simulator/sim-recipe-store";
 import type { SimTargetsCtx } from "./use-sim-targets";
 import type { SimRunCtx } from "./use-sim-run";
@@ -39,7 +39,7 @@ export function useSimRecipes(d: SimTargetsCtx & SimRunCtx) {
     s.simOrder.value = ses.order;
     // 前の作り方 (木・流れ・打って作る) のパターンは読まない (2026-10-10 / 2026-10-12 オーナー「前の打って作るは外していい」。クイズだけ)
     const plays = ses.patterns.filter((p) => p.quiz);
-    s.simPatterns.value = plays.length ? plays : [{ name: "パターン 1", steps: [], quiz: { v: 3, rules: {} } }];
+    s.simPatterns.value = plays.length ? plays : freshPatterns();
     s.reset();
     whiteOk.value = !!ses.flags.whiteOk; modsDone.value = !!ses.flags.modsDone; sortDone.value = !!ses.flags.modsDone; fracDone.value = !!ses.flags.fracDone;
     startDone.value = !!ses.flags.startDone; orderDone.value = !!ses.flags.orderDone;

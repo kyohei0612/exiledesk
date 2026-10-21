@@ -6,7 +6,7 @@ import { currentRecipeId } from "../../state/simulator/sim-recipe-store";
 import { useArmed } from "../../utils/use-armed";
 import { scrollToTop } from "../../utils/keep-place";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { craftStage, writeSimSession } from "../../state/craft-stage";
+import { craftStage, freshPatterns, writeSimSession } from "../../state/craft-stage";
 import { type Pattern, ANY_TARGET, isRest } from "../../services/simulator/pattern";
 import type { SimTargetsCtx } from "./use-sim-targets";
 import type { SimRunCtx } from "./use-sim-run";
@@ -61,7 +61,7 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
   function resetPatterns(): void {
     if (!s.simPatterns.value.some(hasSteps)) return;
     lastSnap = { ...lastSnap, patterns: JSON.stringify(s.simPatterns.value) };
-    s.simPatterns.value = [{ name: "パターン 1", steps: [], quiz: { v: 3, rules: {} } }];
+    s.simPatterns.value = freshPatterns();
     results.value = [];
     // 結果のブロックも消す (残すとパターン名の無い「の 1 個あたり」と前の内訳が出て、ベース代がクラフトに化けて見えた。2026-10-08 使い倒しテスト 1)
     recipeOut.value = null;
@@ -151,7 +151,7 @@ export function useSimSteps(d: SimTargetsCtx & SimRunCtx) {
     restCost.value = null;
     results.value = [];
     s.simOrder.value = [];
-    s.simPatterns.value = [{ name: "パターン 1", steps: [], quiz: { v: 3, rules: {} } }];
+    s.simPatterns.value = freshPatterns();
     s.simSockets.value = null;
     s.simStart.value = "white";
     s.simStartItem.value = null;
