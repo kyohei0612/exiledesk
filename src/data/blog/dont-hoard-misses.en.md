@@ -142,5 +142,4 @@ You can [try the same Gold Ring on the crafting bench](/?base=Gold%20Ring). To c
 **Related posts**
 
 - [PoE2 crafting expected cost](/en/blog/optimal-move-vs-intuition/)
-- [PoE2 Gold Ring craft, step by step](/en/blog/gold-ring-video-decoded/)
 - [PoE2 Cast Speed weight on poe2db](/en/blog/poe2db-cast-speed-weight/)

@@ -9,9 +9,8 @@ const dry = args.includes("--dry");
 const [date, ...only] = args.filter((a) => a !== "--dry" && a !== "--include-held");
 if (!/^\d{4}-\d{2}-\d{2}$/.test(date ?? "")) throw new Error("使い方: publish.mjs <YYYY-MM-DD> [slug…] [--dry]");
 
-// 配信者・配信の中身が元の記事 (オーナー 10-22「配信者の話は無視、出すとまずい」)。決まるまで出さない (--include-held で入れる)。一覧は docs/org/blog/notes/2026-10-22-streamer-check.md
+// 配信者・配信が題材の記事 (オーナー 10-22: A は消した、B は配信の跡が無い形に書き直して照らし合わせが済むまで出さない) (--include-held で入れる)。一覧は docs/org/blog/notes/2026-10-22-streamer-check.md
 const HELD = new Set([
-  "crafting-questions-from-streams", "ai-crafting-odds-vs-feel", "gold-ring-video-decoded", "essence-of-the-abyss-mark",
   "poe2db-cast-speed-weight", "optimal-move-vs-intuition", "chaos-reroll-vs-restart", "crafting-order-cost", "are-omens-worth-it", "chaos-spam-odds", "crafting-calculator-mistakes", "crafting-cost-variance",
 ]);
 const withHeld = args.includes("--include-held");

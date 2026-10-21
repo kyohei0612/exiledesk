@@ -9,7 +9,7 @@ draft: true
 ---
 ExileDesk, a PoE2 crafting simulator, now lets you set custom weights for mods on the crafting bench. **This is an in-development feature, available only on our dev build for now.** On a Gold Ring with an Orb of Augmentation, lowering Cast Speed from the default weight of 1,000 to 200 drops its chance from **5.4% to 1.1%**.
 
-This started with ring Cast Speed, which we looked at in an earlier post. poe2db lists it at weight 1 on all five tiers (it looks like a placeholder), while Craft of Exile and ExileDesk use 1,000. On a stream, one crafter said it felt more like "about one in five".
+This started with ring Cast Speed, which we looked at in an earlier post. poe2db lists it at weight 1 on all five tiers (it looks like a placeholder), while Craft of Exile and ExileDesk use 1,000.
 
 Which one is right? Honestly, nobody knows. The game client doesn't ship PoE2 weights, so every tool borrows them from somewhere else.
 
@@ -28,7 +28,7 @@ When a mod is added, the weights of all eligible mods are summed and one is pick
 
 For ring Cast Speed, the sources split between 1 and 1,000. The details are in [PoE2 Cast Speed Weight: 1 on poe2db, 1,000 in CoE](/en/blog/poe2db-cast-speed-weight/). Since 2026-09-23, ExileDesk has treated poe2db's 1 as a placeholder and used Craft of Exile's 1,000.
 
-But there is no guarantee that 1,000 is correct, and someone could just as well read "one in five" as weight 200. So we decided: **we pick the default, you get the final say.**
+But there is no guarantee that 1,000 is correct. So we decided: **we pick the default, you get the final say.**
 
 ## How Much Does the Weight Change the Odds?
 

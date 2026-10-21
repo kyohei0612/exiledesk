@@ -91,5 +91,4 @@ On the [crafting bench](/), Desecrate a Rare and then use a Fracturing Orb to se
 
 **Related posts**
 
-- [PoE2 Gold Ring Craft: Decoding the Steps and the Breach Bait](/en/blog/gold-ring-video-decoded/)
 - [PoE2 Crafting Expected Cost: The Cheapest Move Skips Omens](/en/blog/optimal-move-vs-intuition/)

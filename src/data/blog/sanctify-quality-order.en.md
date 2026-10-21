@@ -30,7 +30,7 @@ Two boosts act on this number:
 - **Sanctification**: Using a Divine Orb with an Omen of Sanctification makes a Rare item Sanctified. Each mod's values are rerolled, then multiplied by 0.78 to 1.22. In the ExileDesk engine, the multiplier is drawn evenly in 0.01 steps, and the result is rounded and stored as the mod's value.
 - **Quality (Caster Modifiers)**: Quality from a Sibilant Catalyst raises the numbers of mods with the caster tag. At 50% Quality it is ×1.5. This one applies at display time and rounds down.
 
-50% Quality is the normal cap of 20% plus things like the "+20% to Maximum Quality" mod from an Essence of the Breach. Removing the Maximum Quality mod after adding Quality leaves the Quality in place (see [Decoding the Gold Ring Video](/en/blog/gold-ring-video-decoded/)).
+50% Quality is the normal cap of 20% plus things like the "+20% to Maximum Quality" mod from an Essence of the Breach. Removing the Maximum Quality mod after adding Quality leaves the Quality in place.
 
 ## The Order Changes the Answer
 
@@ -107,5 +107,4 @@ You can try Sanctification and Quality on an Absent Amulet on the [crafting benc
 
 **Related posts**
 
-- [PoE2 Gold Ring craft (why the Maximum Quality mod is removed)](/en/blog/gold-ring-video-decoded/)
 - [PoE2 crafting expected cost](/en/blog/optimal-move-vs-intuition/)

@@ -84,7 +84,6 @@ Since v0.1.567, ExileDesk's emulator displays quality-boosted values rounded dow
 - At 20% Quality (the normal cap), a +3 skill level doesn't move.
 - Sanctified items match the tables in [Sanctify vs Quality Order](/en/blog/sanctify-quality-order/), which assume rounding down.
 
-For pushing Maximum Quality to reach 40% or 50%, see [Decoding the Gold Ring Video](/en/blog/gold-ring-video-decoded/).
 
 ## Where the Numbers Come From
 
@@ -100,4 +99,3 @@ On the [crafting bench](/?base=Absent%20Amulet), set Caster Quality to 33% and t
 **Related posts**
 
 - [PoE2 Sanctify vs Quality order (why +6 but never +5)](/en/blog/sanctify-quality-order/)
-- [PoE2 Gold Ring craft (why the Maximum Quality mod is removed)](/en/blog/gold-ring-video-decoded/)

@@ -94,4 +94,3 @@ ExileDesk の [クラフト台](/?base=Gold%20Ring) では、重み 1,000 で付
 **関連する記事**
 
 - [PoE2 指輪クラフトのサフィックス (外れはすぐ消去)](/blog/dont-hoard-misses/)
-- [PoE2 金の指輪のクラフト手順](/blog/gold-ring-video-decoded/)

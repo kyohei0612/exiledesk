@@ -91,5 +91,4 @@ PoE2 のフラクチャーオーブでは、**冒涜で付いた MOD は固定�
 
 **関連する記事**
 
-- [PoE2 金の指輪のクラフト手順｜字幕の用語と品質の最大値を消す理由](/blog/gold-ring-video-decoded/)
 - [PoE2 クラフトの期待値は勘と違う｜最善手は高いお告げを使わない](/blog/optimal-move-vs-intuition/)

@@ -94,4 +94,3 @@ On ExileDesk's [crafting bench](/?base=Gold%20Ring) you can craft a Gold Ring wi
 **Related posts**
 
 - [PoE2 ring suffix craft: annul misses early](/en/blog/dont-hoard-misses/)
-- [PoE2 Gold Ring craft, step by step](/en/blog/gold-ring-video-decoded/)

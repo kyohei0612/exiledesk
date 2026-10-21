@@ -142,5 +142,4 @@ C の 300 人を、最初に付いた狙いごと、最後に揃った順番ご�
 **関連する記事**
 
 - [PoE2 クラフトの期待値は勘と違う](/blog/optimal-move-vs-intuition/)
-- [PoE2 金の指輪のクラフト手順](/blog/gold-ring-video-decoded/)
 - [PoE2 キャストスピードの重みは poe2db で 1](/blog/poe2db-cast-speed-weight/)
