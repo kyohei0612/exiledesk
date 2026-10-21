@@ -21,6 +21,12 @@
 | 2-4 | コメント欄 | 再申請の後。付ける時のコメントの決まり (書いてよい事・消す物) の文案 | 仕組みは分析君・ジン部長 |
 | 2-5 | 翻訳のページ | 英語は直訳しない、用語は poe2db の英語 | — |
 
+## 止めた物 (オーナー 10-22「まだ書き直さなくていい、他 29 記事」)
+- 初心者向けの直しは試作 1 本 (greater-perfect-orb-difference、日本語、df24d177) だけ。オーナーが開発版で 1 本ずつ見て OK が出たら次の 1 本へ (まとめて広げない、英語は OK の後)。
+- 配信の記事: A 4 本は消した・C 4 本は一文を消した (284809b3)。**B 8 本の書き直しは止めた**: 部下が配信の跡を消した版が作業ツリーに未 commit で残っている (poe2db-cast-speed-weight・optimal-move-vs-intuition・chaos-reroll-vs-restart・crafting-order-cost・are-omens-worth-it・chaos-spam-odds・crafting-calculator-mistakes・crafting-cost-variance の日英、増えた数字なし・配信の言葉 0 件まで確かめた)。照らし合わせは途中で止めた。B は publish.mjs の HELD のまま。
+- 英語版 greater-perfect-orb-difference の動画の一文も外したが未 commit。
+- 新しい記事はもう足さない (オーナー「30 本で十分」)。
+
 ## OK 待ち
 
 ## 記事ごとの進み (日英、全部 draft: true。開発版 abff29f1 に 15 本、残りは次のデプロイで)
