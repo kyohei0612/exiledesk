@@ -14,7 +14,7 @@
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { applyCurrency } from "./apply-currency";
 import { freshItem } from "./run-plan";
-import { limitOf } from "./stage-core";
+import { limitOf, sideOfMod } from "./stage-core";
 import { mulberry32 } from "../htc/rng";
 import type { StageItem } from "./types";
 
@@ -79,7 +79,7 @@ export interface RouteRun {
 export type RoutePrep = ((it: StageItem) => StageItem) | undefined;
 
 export function routeOff(data: PatchData, base: string, itemLevel: number, target: RaceTarget, route: RouteKind, prep?: RoutePrep): string | null {
-  const side: "prefix" | "suffix" = data.mods.get(target.modId)?.type === "suffix" ? "suffix" : "prefix";
+  const side = sideOfMod(data, target.modId);
   // 増強の道はマジックに狙いの側の枠が要る (不在のアミュレットなど、マジックで MOD が付かないベースは使えない)
   if (route === "augment" && limitOf({ ...(prep ? prep(freshItem(data, base, itemLevel)) : freshItem(data, base, itemLevel)), rarity: "magic" }, side) < 1) return "マジックに狙いの側の枠が無いベース";
   return null;
@@ -87,7 +87,7 @@ export function routeOff(data: PatchData, base: string, itemLevel: number, targe
 
 /** 始めの状態を置いた 1 人分 (作れなければ null) */
 export function routeRun(data: PatchData, base: string, itemLevel: number, target: RaceTarget, route: RouteKind, grade: Grade, rng: () => number, price: (key: string) => number, prep?: RoutePrep): RouteRun | null {
-  const side: "prefix" | "suffix" = data.mods.get(target.modId)?.type === "suffix" ? "suffix" : "prefix";
+  const side = sideOfMod(data, target.modId);
   const g = GRADE_KEY[grade];
   let it: StageItem = freshItem(data, base, itemLevel);
   if (prep) it = prep(it);

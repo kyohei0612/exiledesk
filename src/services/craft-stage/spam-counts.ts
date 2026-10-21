@@ -10,7 +10,7 @@
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { applyCurrency } from "./apply-currency";
-import { limitOf, listOf } from "./stage-core";
+import { limitOf, listOf, sideOfMod } from "./stage-core";
 import { mulberry32 } from "../htc/rng";
 import type { Grade, RouteKind } from "./route-race";
 import type { StageItem, StageMod } from "./types";
@@ -42,7 +42,7 @@ export function spamCounts(
 ): SpamCounts {
   const runs = opts.runs ?? 300, maxSteps = opts.maxSteps ?? 3000;
   const g = GRADE_KEY[grade];
-  const sideOf = (t: SpamTarget): "prefix" | "suffix" => (data.mods.get(t.modId)?.type === "suffix" ? "suffix" : "prefix");
+  const sideOf = (t: SpamTarget): "prefix" | "suffix" => sideOfMod(data, t.modId);
   const empty = (off: string): SpamCounts => ({ off, hitRate: 0, uses: {}, avgSteps: 0, runs });
   const anyOf = opts.anyOf ?? [];
   if (!targets.length && !anyOf.length) return empty("狙いが無い");

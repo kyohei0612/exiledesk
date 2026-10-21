@@ -15,6 +15,7 @@ import { fmtPct } from "../../utils/format-pct";
 import { computed, ref } from "vue";
 import { revealOpened } from "../../utils/keep-place"; // 段の表を開いたら全体が見える所まで (2026-10-19)
 import { craftStage } from "../../state/craft-stage";
+import { sideOfMod } from "../../services/craft-stage/engine";
 import { modListFor, shownTags, TAG_STYLE, type ListRow, type ListTier } from "../../services/craft-stage/mod-list";
 import { tagLabel } from "../../services/mods/tag-ja";
 import { baseNameOf, tr } from "../../i18n/lang";
@@ -63,7 +64,7 @@ const blocked = (r: ListRow): boolean => (!!lockedSide.value && lockedSide.value
  * (2026-10-09 オーナー「まだサフィも一緒に選べんぞ、どれかでカオススパムしたいのに」: 前は 2 の付け方を先にカオススパムにしないと反対の側が灰色だった)
  */
 const canChaos = computed(() => !!host.value && host.value.method !== "fracture" && s.data.value?.mods.get(host.value.modId)?.source === "normal");
-const hostSide = computed(() => (host.value && s.data.value?.mods.get(host.value.modId)?.type === "suffix" ? "suffix" : "prefix"));
+const hostSide = computed(() => (host.value ? sideOfMod(s.data.value, host.value.modId) : "prefix"));
 const lockedSide = computed(() => {
   // カオススパムの「どれか」はプレとサフィにまたげる (2026-10-10 オーナー「カオススパムでどれかって時にプレとサフィ選択できるように」。
   // 打ち方ではプレに付いた時・サフィに付いた時の 2 つのルートになる)
@@ -92,7 +93,7 @@ function setCandidate(modId: string, idx: number | null): void {
     const alts = (h.alts ?? []).filter((a) => a.modId !== modId);
     const at = idx;
     // 反対の側を足す時、両側にできない付け方 (冒涜) ならカオススパムに (同じ候補のまとまりのコピーも)。高貴ガチャ・カオススパムはそのまま
-    const side = s.data.value?.mods.get(modId)?.type === "suffix" ? "suffix" : "prefix";
+    const side = sideOfMod(s.data.value, modId);
     const toChaos = at != null && side !== hostSide.value && h.method === "desecrate";
     const sameGroup = (t: typeof h): boolean => t === h || !!t.alts?.some((a) => a.modId === h.modId);
     s.simTargets.value = s.simTargets.value.map((t) => (t === h ? { ...t, alts: at == null ? alts : [...alts, { modId, minTierIndex: at }], ...(toChaos ? { method: "chaos" as const } : {}) } : toChaos && sameGroup(t) ? { ...t, method: "chaos" as const } : t));

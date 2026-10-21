@@ -21,7 +21,7 @@ export { omenBlock } from "./omen-block";
 export { revealOffers, unrevealedOf } from "./apply-desecrate";
 
 // アイテムの今を読む
-export { allMods, listOf, room, limitOf, effectiveCls, maxQualityOf, catalystOf, SIDES, unfracturable } from "./stage-core";
+export { allMods, listOf, room, limitOf, effectiveCls, maxQualityOf, catalystOf, SIDES, sideOfMod, unfracturable } from "./stage-core";
 export { socketCapOf } from "./stage-runes";
 export { dpsText } from "./stage-pob";
 export { DEF } from "./defence";

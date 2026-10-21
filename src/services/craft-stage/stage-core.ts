@@ -26,6 +26,8 @@ export const SIDES: StageSide[] = ["prefix", "suffix"];
 export const GNAWED_MAX_ILVL = 64;
 const MAGIC_LIMIT = 1;
 export const SIDE_JA = { prefix: "プレフィックス", suffix: "サフィックス" } as const;
+/** MOD の id → 側 (サフィックスでなければプレフィックス。データに無い id もプレフィックス) */
+export const sideOfMod = (data: PatchData | null | undefined, modId: string): StageSide => (data?.mods.get(modId)?.type === "suffix" ? "suffix" : "prefix");
 
 /**
  * はまっているルーンのうち、クラフトの決まりを変える物 (計算機のエンジンの id: serles-triumph / kolrs-hunt …)。
