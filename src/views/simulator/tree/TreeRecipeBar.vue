@@ -16,6 +16,8 @@ import { jaTypeName } from "../../../services/trade2/localize";
 import { tr } from "../../../i18n/lang";
 
 const t = useTree();
+/** opened = 別の木を開いた (ツリーの側で全体に合わせる) */
+const emit = defineEmits<{ opened: [] }>();
 const dirty = computed(() => (currentTreeRecipe.value ? !sameTree(t.doc.value, currentTreeRecipe.value.tree) : Object.keys(t.doc.value.boxes).length > 1));
 const fmtDate = (n: number): string => { const d = new Date(n); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
 const defaultName = (): string => `${tr(jaTypeName(t.doc.value.base), t.doc.value.base)} ${fmtDate(Date.now())}`;
@@ -60,6 +62,7 @@ function open(r: TreeRecipe): void {
   setCurrentTreeRecipe(r.id);
   t.open(r.tree);
   pop.value = false;
+  emit("opened");
   track("tree-recipe:open");
 }
 const url = ref("");
@@ -69,7 +72,7 @@ async function openUrl(): Promise<void> {
   if (!code) { urlNote.value = url.value.trim() ? tr("レシピの URL ではありません", "Not a recipe URL") : ""; return; }
   const ok = await openRecipeCode(code);
   urlNote.value = ok ? "" : tr("このレシピは読めませんでした (前の工程式のレシピかもしれない)", "Couldn't read this recipe (it may be an old step-style one)");
-  if (ok) { url.value = ""; pop.value = false; }
+  if (ok) { url.value = ""; pop.value = false; emit("opened"); }
 }
 function onPaste(): void { void nextTick(() => { if (recipeCodeOf(url.value)) void openUrl(); }); }
 async function copyUrl(): Promise<void> {

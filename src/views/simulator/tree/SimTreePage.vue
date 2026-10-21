@@ -337,7 +337,7 @@ const glowOf = (b: Box): boolean => {
     <div class="g-panel flex flex-col gap-2 px-3 py-2" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
       <!-- 帯: 全体の数字 (まだ) ・1 つ戻す・拡大縮小・全画面 -->
       <div class="flex flex-wrap items-center gap-2 text-[13px]">
-        <TreeRecipeBar />
+        <TreeRecipeBar @opened="v.fit()" />
         <span class="opacity-70">{{ tr("100 人回した時: 1 個あたり — 神 · 完成 —%", "100 runs: — div per item · —% done") }}</span>
         <span class="rounded-sm bg-white/10 px-1.5 text-[11px] opacity-70">{{ tr("計算はまだ繋いでいない", "Not calculated yet") }}</span>
         <span class="ml-auto flex items-center gap-1">
