@@ -13,6 +13,14 @@
  * 1 手の中身は services/craft-stage (計算機と同じ規則)。棚・名前・値段は [[craft-stage-shelf.ts]]。
  */
 import { restoreStageSession } from "./stage-session";
+/** 写しがあれば相場を最大 2.5 秒待ってから戻す (待たずに再生すると工程の費用が 0 で積まれる)。写しが無ければ待たない */
+async function hasStageSession(market: Promise<unknown>): Promise<boolean> {
+  let has = false;
+  try { has = !!sessionStorage.getItem("exiledesk.stage.session.v1"); } catch { /* 無い扱い */ }
+  if (!has) return false;
+  await Promise.race([market.catch(() => null), new Promise((r) => setTimeout(r, 2500))]);
+  return restoreStageSession();
+}
 import { playSfx, playUseSfx } from "../utils/sfx";
 import { isRareChance } from "../utils/format-pct";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
@@ -252,7 +260,7 @@ export const craftStage = {
         } catch (e) {
           error.value = tr(`共有の手順が読めませんでした (${e instanceof Error ? e.message : String(e)})`, `Couldn't open the shared steps (${e instanceof Error ? e.message : String(e)})`);
         }
-      } else if (URL_BASE || REC_START || isTauriRuntime() || !restoreStageSession()) craftStage.reset(); // 記事などから戻った時は写しから (stage-session.ts)
+      } else if (URL_BASE || REC_START || isTauriRuntime() || !(await hasStageSession(market))) craftStage.reset(); // 記事などから戻った時は写しから (stage-session.ts。工程の費用のため相場を少し待つ)
       // ベースの読み物のページ (/bases/…) の「エミュレーターで試す」(?base=<英語名>、2026-10-13): そのベースの白から始める
       if (!raw && !shared && !REC_START && URL_BASE && data.value && htcBaseInfo()[URL_BASE]) {
         base.value = URL_BASE;
