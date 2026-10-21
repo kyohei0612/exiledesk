@@ -150,16 +150,16 @@ const noteText = computed(() => {
     <p class="text-[11px] opacity-65">{{ tr("この箱に着いた時のアイテムの見本 (エンジンで打って引いた 1 個)。棚で持ってアイテムを押すと打つ。ツリーは変わらない", "A sample item at this box (rolled with the engine). Pick from the shelf, then click the item. The tree doesn't change") }}</p>
     <p v-if="noteText" class="rounded bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200">{{ noteText }}</p>
 
-    <!-- 広い時はカードと棚を横に並べる (縦に送らずに 持つ → お告げ → カードを押す、10-21 1920×911 で上下に送っていた)。狭い時は縦で、カードは欄の上に留める (sticky、背景は欄の色) -->
+    <!-- 広い時はカードと棚を横に並べる (縦に送らずに 持つ → お告げ → カードを押す、10-21 1920×911 で上下に送っていた)。カードは grid の直下に置いて欄の上に留める (sticky、背景は欄の色。左の列の中だと列と一緒に流れた)。ページは zoom で大きくなるので 2 列の境は CSS の幅で 620px -->
     <div class="@container">
-      <div class="grid gap-3 @min-[700px]:grid-cols-[350px_minmax(0,1fr)]">
-        <div data-tree-trial-left class="flex min-w-0 flex-col gap-2">
-          <!-- アイテム (クラフト台のカード。持っている時に押すと打つ) -->
-          <div v-if="item" data-tree-trial-item class="sticky top-0 z-10 flex justify-center bg-[#151311] pb-1" @contextmenu.prevent="release">
-            <StageItemCard :item="item" :doomed="preview?.change ?? []" :open="preview?.open" :added="last.added" :removed="last.removed" :holding="!!held" :flash-key="flash" :width="340" compact @use="use(1)" @jump="onMark" />
-          </div>
+      <div class="grid gap-3 @min-[620px]:grid-cols-[350px_minmax(0,1fr)]">
+        <!-- アイテム (クラフト台のカード。持っている時に押すと打つ) -->
+        <div v-if="item" data-tree-trial-item class="sticky top-0 z-10 flex justify-center bg-[#151311] pb-7 @min-[620px]:col-start-1 @min-[620px]:row-start-1" @contextmenu.prevent="release">
+          <StageItemCard :item="item" :doomed="preview?.change ?? []" :open="preview?.open" :added="last.added" :removed="last.removed" :holding="!!held" :flash-key="flash" :width="340" compact @use="use(1)" @jump="onMark" />
+        </div>
+        <div data-tree-trial-left class="flex min-w-0 flex-col gap-2 @min-[620px]:col-start-1 @min-[620px]:row-start-2">
           <!-- × (要らない) の印 -->
-          <div data-tree-unwanted-list class="mt-6 flex flex-col gap-1">
+          <div data-tree-unwanted-list class="flex flex-col gap-1">
             <p class="text-[11px] opacity-60">{{ tr("MOD の行を押すと × (要らない) の印。完成まで残るとルート精査で !", "Click a mod row to mark it × (unwanted). Route check flags it if it's still there when done") }}</p>
             <div v-for="mk in marks" :key="mk.id" class="flex min-w-0 items-center gap-1.5 rounded bg-rose-500/10 px-1.5 text-[12px]">
               <span class="shrink-0 font-bold text-rose-300">×</span><span class="min-w-0 flex-1 truncate" :title="mk.text">{{ mk.text }}</span>
@@ -167,7 +167,7 @@ const noteText = computed(() => {
             </div>
           </div>
 
-          <!-- 持っている物 (カードの下の「押すと使う」の札と重ならないよう、× の欄を mt-6 で空けてある) -->
+          <!-- 持っている物 (カードの下の「押すと使う」の札はカードの枠の pb-7 の中) -->
           <div class="flex flex-wrap items-center gap-1.5">
             <template v-if="held">
               <span class="flex items-center -space-x-1"><img v-for="ic in [held, ...omensFor(held, omens)].filter((x) => !!iconOf(x))" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
@@ -197,7 +197,7 @@ const noteText = computed(() => {
             <p v-for="(l, i) in log" :key="log.length - i" class="py-0.5 text-[11px]" :class="l.ok ? 'opacity-85' : 'text-rose-300'">{{ l.text }}</p>
           </div>
         </div>
-        <div data-tree-trial-right class="flex min-w-0 flex-col gap-2">
+        <div data-tree-trial-right class="flex min-w-0 flex-col gap-2 @min-[620px]:col-start-2 @min-[620px]:row-span-2 @min-[620px]:row-start-1">
           <!-- カタリスト (1 押しで品質の最大まで。最大はエンジンの maxQualityOf) -->
           <div data-tree-trial-catalysts>
             <p class="mb-0.5 text-[10px] opacity-60">{{ tr("カタリスト (押すと品質の最大まで入れる)", "Catalysts (click to fill to max quality)") }}</p>
