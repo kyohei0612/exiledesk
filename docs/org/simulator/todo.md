@@ -45,6 +45,14 @@
   5. 点検の残り (後回し): use-sim-targets の planByRedoCost (オーナーの A/B/C 待ち)、recipe-share の X の URL を share.ts の xIntentUrl(url, text) に寄せる (ジン部長 1adf9da6 で入った)。
 - 気付き: 精査 (tree-check) は 5 人を辿るだけなので、行き先が分かれる所の当たりは出たり出なかったりする (heldSets で「もう付いているかもしれない狙い」は数えない形にした)。シミュの台本は vitest の scripts/_*-probe.config.ts で回す (tests/ には入れない)。
 
+## 6 本目 (10-22 深夜〜)
+- 済んだ物 (全部 push 済み、開発版 5ae1620d。記録と前後のスナップは共有メモ local_ba9fc825…/tree-merge/README.md の頭):
+  - 手 1 結果の見せ方: 2 案 (&res=a / b) をスナップで出し、オーナーが b を選んだ → 全部普通の箱に、札と印のコードは消した (73665b3e)。全部の箱で乗せた時のカード (8b590e1d)、戻り先を選ぶ時の候補の箱のカードは元から出ていた。名前・色・印の表は tree-names.ts の OUT_LOOK 1 つ (0d65541f)。
+  - 手 2 倍率の段: 25・33・50・67・75・100・125・150% だけ (7ba62095)、全体表示は収まる一番大きい段で右下を空けると段が下がる時は空けない (4e1a8ddb・5ae1620d)。台本 zoom-steps.mjs で 3 幅 × 8 段の重なり 0 件。
+  - 白紙に戻すの 2 回押し (310deb15、use-armed + 枠の外・Esc)。台本 clear2.mjs で 5 つとも決まりどおり。
+- 次の手: 引き継ぎの 3 (品質だけ上げる手は札 1 枚 + 下に＋)・4 (カタリスト専用ルート)・5 (点検の残り)。
+- 気付き: 1280 幅は 75%・100% でも箱の中の押せる物が 20px (ページの zoom の分、前から)。全体表示 33% で右端の箱がミニマップに近い (前から)。
+
 ## 台本 (共有メモ local_35782246-d80a-4c3f-9dff-36103418e719/tree-mouse/)
 - tree-mouse.mjs (8 条件の操作、10b はホイール = 拡大縮小に直した)・tree-shelf.mjs (棚とお告げ)・tree-recipe.mjs・tree-trial-wide.mjs・tree-sample-check.mjs (見本の木: 戻りの線の終わり・n か所・精査 0・縮めて押す → ポップアップ → 試し打ち・札の編集と Esc)。
 - Chrome は PowerShell の `Start-Process chrome.exe -WindowStyle Hidden -PassThru -ArgumentList --headless=new,--remote-debugging-port=9333,--user-data-dir=<scratchpad>/cdp-profile`、使う前にブラックに一言、終わったら PID で止めて profile を消して「返した」。
