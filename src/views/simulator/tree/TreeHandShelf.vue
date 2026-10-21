@@ -11,7 +11,8 @@ import CurrencyShelf from "../../craft-stage/CurrencyShelf.vue";
 import ShelfButton from "../../craft-stage/ShelfButton.vue";
 import { applyCurrency, kindOf, mulberry32, OMEN_FOR, omensFor } from "../../../services/craft-stage/engine";
 import { aimHeld, aimsOf, fillCatalyst, sampleOf } from "../../../services/simulator/tree/tree-sample";
-import { CATALYSING, canSpam, handLabel, kindOfCurrency, TREE_CATALYSTS, nameOfKey } from "../../../services/simulator/tree/tree-hands";
+import { CATALYSING, canSpam, kindOfCurrency, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
+import { handLabel, handName } from "./tree-names";
 import { kindOfHand, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { tr } from "../../../i18n/lang";
@@ -87,7 +88,7 @@ function ok(): void {
       </div>
       <div v-if="catalysing" class="flex flex-wrap items-center gap-2">
         <select v-model="catalyst" class="h-8 rounded-md border border-white/15 bg-black/40 px-1">
-          <option v-for="c in TREE_CATALYSTS" :key="c" :value="c">{{ nameOfKey(c) }}</option>
+          <option v-for="c in TREE_CATALYSTS" :key="c" :value="c">{{ handName(c) }}</option>
         </select>
         <span class="text-[12px] tabular-nums">{{ tr(`最大 ${catFill.quality}% まで (この箱で ${catFill.catalystCount} 個)`, `To max ${catFill.quality}% (×${catFill.catalystCount} here)`) }}</span>
         <span class="w-full text-[11px] opacity-60">{{ tr("打つたびに品質の最大まで入れ直す (触媒は 1 回で品質を使い切る)", "Refilled to max quality every time (Catalysing uses up the quality)") }}</span>

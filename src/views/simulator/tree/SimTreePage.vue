@@ -23,7 +23,7 @@ import { useTree } from "./use-tree";
 import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
 import { craftStage as s } from "../../../state/craft-stage";
 import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, removeHit, setAim, setBack, setDone, setHand, tidy, handUses, type Aim, type Hand, type HandKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
-import { handLabel } from "../../../services/simulator/tree/tree-hands";
+import { handLabel } from "./tree-names";
 import { aimHeld, aimsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { checkTree, type CheckIssue } from "../../../services/simulator/tree/tree-check";
 import { treeSample } from "../../../services/simulator/tree/tree-samples";

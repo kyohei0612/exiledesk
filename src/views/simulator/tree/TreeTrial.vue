@@ -14,7 +14,8 @@ import ShelfButton from "../../craft-stage/ShelfButton.vue";
 import StageItemCard from "../../craft-stage/StageItemCard.vue";
 import { applyCurrency, kindOf, mulberry32, OMEN_FOR, omensFor, revealOffers, unrevealedOf, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { aimsOf, fillCatalyst, playHand, sampleOf } from "../../../services/simulator/tree/tree-sample";
-import { handLabel, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
+import { TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
+import { handLabel } from "./tree-names";
 import { useTree } from "./use-tree";
 import { modText, tr } from "../../../i18n/lang";
 
