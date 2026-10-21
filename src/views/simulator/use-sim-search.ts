@@ -6,7 +6,7 @@ import { inGroup } from "../../services/mods/item-classes";
 import { htcBaseInfo } from "../../services/htc/patch";
 import { computed, onMounted, ref, watch } from "vue";
 import { craftStage, priceOf } from "../../state/craft-stage";
-import { runRecipe } from "../../services/simulator/recipe-sim";
+import { memoPrice, runRecipe } from "../../services/simulator/recipe-sim";
 import { tradeFiltersFor } from "../../services/htc/buy-or-craft";
 import { buildSpecQuery } from "../../services/trade2/query/spec";
 import { openTradeQuery } from "../../services/pob-check/trade-links";
@@ -14,7 +14,7 @@ import { marketStore, MARKET_MAX_AGE_MS } from "../../state/market-store";
 import { patternSets, setByKey, ANY_TARGET, isDouble, hasCands, isRest } from "../../services/simulator/pattern";
 import { searchModGroups, type ModGroup, type ModPick } from "../../services/craft-stage/trade-search";
 import type { SimTargetsCtx } from "./use-sim-targets";
-import type { Kept } from "./use-sim-targets";
+import { ageText, type Kept } from "./use-sim-targets";
 
 /** 取引所の「MOD の数」の疑似 stat (4 以下 = 空きのあるレアを探す) */
 const AFFIX_COUNT = "pseudo.pseudo_number_of_affix_mods";
@@ -102,10 +102,7 @@ export function useSimSearch(d: SimTargetsCtx) {
   });
   const doneAge = computed(() => {
     const k = doneAll.value[doneKey.value];
-    if (!k) return null;
-    const min = Math.floor((Date.now() - k.at) / 60000);
-    const text = min < 1 ? "今入れた" : min < 60 ? `${min} 分前に入れた` : min < 1440 ? `${Math.floor(min / 60)} 時間前に入れた` : `${Math.floor(min / 1440)} 日前に入れた`;
-    return { text, old: min >= 1440 };
+    return k ? ageText(k.at) : null;
   });
   /**
    * 完成品を取引所で探す (開くだけ)。一番ゆるく: どの MOD も 普通 / 固定済み / 冒涜 のどれでもいい。
@@ -173,8 +170,7 @@ export function useSimSearch(d: SimTargetsCtx) {
     if (my !== makeGen) return;
     if (makeCost.value?.key === key) return;
     makeBusy.value = true;
-    const memo = new Map<string, number>();
-    const price = (k: string): number => { let v = memo.get(k); if (v == null) { v = priceOf(k); memo.set(k, v); } return v; };
+    const price = memoPrice(priceOf);
     const r = await runRecipe({
       data: d, base: s.base.value, itemLevel: s.itemLevel.value, runs: 500, price, fractureStart: makeSpec.value,
       whiteBasePrice: num(whiteDivine.value) ?? 0, sockets: socketCount.value,

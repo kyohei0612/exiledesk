@@ -28,6 +28,13 @@ import { planByRedoCost, type RedoPlan } from "../htc-craft/redo-cost";
 export type OldUnit = "exalt" | "chaos" | "divine";
 export type Kept = { v: number; at: number; u?: OldUnit };
 
+/** いつ入れた値段か (「3 時間前に入れた」)。1 日以上前は old (入れた値段の札・完成品の値段で同じ) */
+export function ageText(at: number): { text: string; old: boolean } {
+  const min = Math.floor((Date.now() - at) / 60000);
+  const text = min < 1 ? "今入れた" : min < 60 ? `${min} 分前に入れた` : min < 1440 ? `${Math.floor(min / 60)} 時間前に入れた` : `${Math.floor(min / 1440)} 日前に入れた`;
+  return { text, old: min >= 1440 };
+}
+
 export function useSimTargets() {
   const s = craftStage;
   /** 回す人数は 500 で固定 (2026-10-07 オーナー「全体 500 人でデフォ固定、上限 (4,000 手) の方を設定できれば」。その前は 1500) */
@@ -332,10 +339,7 @@ export function useSimTargets() {
   /** いつ入れた値段か (「3 時間前」)。1 日以上前は old */
   function ageOf(which: "white" | "four" | "bought" | "magic"): { text: string; old: boolean } | null {
     const k = kept.value[which];
-    if (!k) return null;
-    const min = Math.floor((Date.now() - k.at) / 60000);
-    const text = min < 1 ? "今入れた" : min < 60 ? `${min} 分前に入れた` : min < 1440 ? `${Math.floor(min / 60)} 時間前に入れた` : `${Math.floor(min / 1440)} 日前に入れた`;
-    return { text, old: min >= 1440 };
+    return k ? ageText(k.at) : null;
   }
   return { s, runs, MAX_STEPS_KEY, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, methodsFor, methodOf, rows, targetsSig, restRows,
     runeNeeded, startRunes, restKeys, restOfKey, orderKeys, moveOrder, reorder, addRune, removeRune, runeChoices, toggleRune, orderRow, runeJa, redoPlan, redoOf,

@@ -8,7 +8,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { craftStage, priceOf, writeSimSession } from "../../state/craft-stage";
 import { fillModText } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
-import { type RecipeResult, type RecipeSpec } from "../../services/simulator/recipe-sim";
+import { memoPrice, type RecipeResult, type RecipeSpec } from "../../services/simulator/recipe-sim";
 import { track } from "../../utils/track";
 import { patternSets, setByKey, type Pattern } from "../../services/simulator/pattern";
 import { runQuizOnce, summarizeQuiz, type QuizResult, type QuizRoute, type QuizRun } from "../../services/simulator/quiz-recipe";
@@ -217,9 +217,7 @@ export function useSimRun(d: SimTargetsCtx & SimSearchCtx) {
     try {
       phase.value = "試しています";
       const divine = 1; // 手で入れた値段は高貴建て
-      // 値段は 1 回引いたら覚える (相場の一覧を毎手引くと、500 回で 46 秒かかっていた)
-      const memo = new Map<string, number>();
-      const price = (k: string): number => { let v = memo.get(k); if (v == null) { v = priceOf(k); memo.set(k, v); } return v; };
+      const price = memoPrice(priceOf);
       // 1 回の「回す」の中は全パターン同じ乱数の並び (同じ手なら同じ結果、比べは手の違いだけになる。2026-10-08 使い倒しテスト)
       const runSeed = Math.floor(Date.now() % 1_000_000) * 10_000;
       const spec: RecipeSpec = {
