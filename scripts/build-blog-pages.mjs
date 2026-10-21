@@ -205,7 +205,8 @@ ${others.length ? `<section class="more"><h2>${l.more}</h2><ul class="posts">${o
     writeFileSync(resolve(dir, m.slug, "index.html"), page(lang, { title: `${m.title} | ExileDesk`, desc: m.description, path, alt: has(m.slug, lang === "ja" ? "en" : "ja"), og: { type: "article", image, published: m.date, modified: m.updated }, ld, body, slug: m.slug }));
     if (!listed(p)) continue;
     if (!m.draft) urls.push(`${l.prefix}${path}`);
-    index[lang].push({ slug: m.slug, title: m.title, date: m.date, href: `${l.prefix}${path}`, draft: m.draft });
+    // 右の列 (src/web/SideReads.vue) が読む: 題・1 行の説明・タグ (関係する記事を選ぶ)・絵 (OGP の絵のパス)
+    index[lang].push({ slug: m.slug, title: m.title, date: m.date, href: `${l.prefix}${path}`, draft: m.draft, description: m.description, tags: m.tags, image: image.replace(SITE, "") });
   }
   const shown = mine.filter(listed);
   const list = shown.length ? `<ul class="posts">${shown.map((x) => `<li><a class="t" href="${l.prefix}/blog/${x.meta.slug}/">${esc(x.meta.title)}</a>${x.meta.draft ? ` <span class="draft">${l.draft}</span>` : ""}<p>${esc(x.meta.date)} · ${esc(x.meta.description)}</p></li>`).join("")}</ul>` : `<p>${l.none}</p>`;

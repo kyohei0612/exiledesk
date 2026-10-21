@@ -28,9 +28,9 @@ import LangSwitch from "../components/LangSwitch.vue";
 import { openFeedback, openGuide, page } from "./page";
 import AdSlot from "../components/ui/AdSlot.vue";
 import WebFooter from "./WebFooter.vue";
-import { AD_FRAMES, pageTick, sideAdW } from "../utils/ads";
+import { pageTick, sideAdW } from "../utils/ads";
 import { BLOG_ON, feedbackPage, recipesPage, routesOpen, treePage } from "../state/web-page";
-const BlogLatest = defineAsyncComponent(() => import("./BlogLatest.vue")); // 右の列の新しい記事 (/blog/index.json)
+const SideReads = defineAsyncComponent(() => import("./SideReads.vue")); // 右の列の読み物 (関係する記事・新しい記事・使い方、/blog/index.json)
 const StageRoutesPage = defineAsyncComponent(() => import("../views/craft-stage/StageRoutesPage.vue"));
 const SimTreePage = defineAsyncComponent(() => import("../views/simulator/tree/SimTreePage.vue")); // クラフトの道 (ツリー) のページ (2026-10-22、開発版だけ)
 const StageRecipesPage = defineAsyncComponent(() => import("../views/simulator/StageRecipesPage.vue")); // シミュレーターのレシピのページ (2026-10-21) // 後から読む (2026-10-19 スマホ強化: 最初に読む JS を縮める。その画面・カードを出す時に初めて読む)
@@ -55,6 +55,8 @@ watch(feedbackPage, (on) => {
  * 右の列を外して、両脇に縦長の枠 (2026-10-18 オーナー「固定スクロールがあるのはクラフト画面のみ、それ以外は全部別ページ扱い」。MOD 一覧だけ重ねる窓)
  */
 const craftPage = computed(() => page.value === "");
+/** 広告の枠を置くのは文章のあるページだけ (使い方・コツ、コース)。操作の画面 (クラフト台・ベース選び・スパムシミュレーター・要望) には置かない (2026-10-22 AdSense の再申請) */
+const textPage = computed(() => page.value === "page=guide" || page.value.startsWith("course="));
 /**
  * 45 分以上触らずに戻ってきた時 (タブを開き直した・何か押した時) は、相場とチャンネルだけ裏で取り直す。画面と作業中の物はそのまま
  * (2026-10-07 オーナー「45 分放置でリロードにしようかな」→ ページごと読み直すと手で打った手順などが消えるので、取り直しだけに)
@@ -159,11 +161,11 @@ window.visualViewport?.addEventListener("resize", fitZoom);
     <ChangelogDialog />
     <SupportDialog />
     <!-- スマホの広告の枠: 上の帯の下に 1 つ。棚・「ベースを変える」から指 1 本分離す (誤タップは規約違反。utils/ads.ts) -->
-    <div v-if="phone" class="mb-4 flex justify-center pt-2 empty:hidden"><AdSlot id="phone-top" :w="320" :h="100" :tick="pageTick" /></div>
+    <div v-if="phone && textPage" class="mb-4 flex justify-center pt-2 empty:hidden"><AdSlot id="phone-top" :w="320" :h="100" :tick="pageTick" /></div>
     <!-- スマホは縦に積む: ステージ → チャンネル (横スクロールは出さない) -->
     <div class="flex min-h-0 flex-1" :class="phone ? 'flex-col' : ''">
       <!-- クラフト画面以外のページ: 両脇に縦長の枠 (ページを移るたびに出し直す、60 秒に 1 回まで) -->
-      <div v-if="!craftPage && !phone" class="sticky top-3 shrink-0 self-start py-4 pl-4 empty:hidden"><AdSlot id="page-left" :w="sideAdW()" :h="600" :tick="pageTick" /></div>
+      <div v-if="textPage && !phone" class="sticky top-3 shrink-0 self-start py-4 pl-4 empty:hidden"><AdSlot id="page-left" :w="sideAdW()" :h="600" :tick="pageTick" /></div>
       <!-- 要望・バグを送るのページ (両脇の枠の間の真ん中にフォーム) -->
       <section v-if="feedbackPage" data-feedback-page class="flex min-w-0 flex-1 items-start justify-center gap-6 p-4">
         <div class="min-w-0 max-w-[48rem] flex-1">
@@ -184,16 +186,12 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       </CraftStage>
       <!-- PC のチャンネルは送っても画面に付いてくる (2026-10-11 オーナー「右のチャンネルは追従型」)。仕切りの線は下まで (aside は伸ばし、中だけ sticky) -->
       <!-- 右クリックは真ん中 (CraftStage.vue) と同じく「持っている物を手放す」。ブラウザのメニュー (コピーなど) は出さない (2026-10-13 オーナー) -->
-      <div v-if="!craftPage && !phone" class="sticky top-3 shrink-0 self-start py-4 pr-4 empty:hidden"><AdSlot id="page-right" :w="sideAdW()" :h="600" :tick="pageTick" /></div>
-      <aside v-show="phone || craftPage" data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : AD_FRAMES ? 'w-[324px] border-l' : 'w-[280px] border-l'" @contextmenu.prevent="craftStage.hold(null)">
+      <div v-if="textPage && !phone" class="sticky top-3 shrink-0 self-start py-4 pr-4 empty:hidden"><AdSlot id="page-right" :w="sideAdW()" :h="600" :tick="pageTick" /></div>
+      <aside v-show="phone || craftPage" data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : BLOG_ON ? 'w-[324px] border-l' : 'w-[280px] border-l'" @contextmenu.prevent="craftStage.hold(null)">
         <div :class="phone ? '' : 'sticky top-3'">
+          <!-- 読み物 (関係する記事・新しい記事・使い方) を上、チャンネルを下 (2026-10-22、開発版だけ。右の列の広告の枠は外した) -->
+          <SideReads v-if="BLOG_ON" class="mb-3" />
           <LivePanel />
-          <BlogLatest v-if="BLOG_ON" />
-          <!-- 広告の枠 (utils/ads.ts): チャンネルの下に 300×250 を 2 つ。ページを移った時だけ出し直す (60 秒に 1 回まで) -->
-          <div v-if="AD_FRAMES && !phone" class="mt-3 flex flex-col gap-3">
-            <AdSlot id="side-1" :w="300" :h="250" :tick="pageTick" />
-            <AdSlot id="side-2" :w="300" :h="250" :tick="pageTick" />
-          </div>
         </div>
       </aside>
     </div>
