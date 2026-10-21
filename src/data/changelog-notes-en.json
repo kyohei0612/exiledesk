@@ -1,4 +1,7 @@
 {
+  "0.1.592": [
+    "The Spam Simulator now runs and lists the routes in the order Regular → Greater → Perfect"
+  ],
   "0.1.591": [
     "New FAQ page (23 questions on odds, omens, how the numbers are calculated and more), linked from the blog and About pages. Also updated the About and Privacy Policy pages to match how the site works today"
   ],

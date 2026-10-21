@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.592",
+  "date": "2026-10-21",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "スパムシミュレーターで回す順と道のカードの並びを 無印 → 上級 → 完全 にしました",
+    "en": "The Spam Simulator now runs and lists the routes in the order Regular → Greater → Perfect"
+   }
+  ]
+ },
+ {
   "v": "0.1.591",
   "date": "2026-10-21",
   "items": [
@@ -655,18 +667,6 @@
     "area": "",
     "text": "チュートリアルの説明で、白・青・黄の色にレアリティ (ノーマル・マジック・レア) を添えました",
     "en": "Tutorial text now names the rarity next to each colour: white (Normal), blue (Magic), yellow (Rare)"
-   }
-  ]
- },
- {
-  "v": "0.1.552",
-  "date": "2026-10-17",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "PC の上の帯の「アプリ版はこちら」から、ExileDesk をアプリとしてデスクトップに置けるように (中身はウェブと同じ)。一度開いた画面はオフラインでも開けます",
-    "en": "“Get the app” in the top bar (PC) now installs ExileDesk as a desktop app (same as the web version). Pages you have opened once also work offline"
    }
   ]
  }
