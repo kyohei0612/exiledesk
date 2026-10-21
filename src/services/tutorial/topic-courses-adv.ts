@@ -3,15 +3,10 @@
  * 1 コース = 1 つの小技。始めの状態は動画やビルドで本当に狙う MOD (靴・サファイア・金のアミュレット)。運の手は本当の確率のまま (外れたら「もう一度」)。
  * 作りは topic-courses.ts と同じ (start / prep / startMods / omens / chain)。prep の force:… は作った MOD・冒涜の MOD を決まった形で置く手、rune:… ははめる手、qset:… は品質を決める手
  */
-import type { JaEn } from "./quiz-tutorials";
 import type { Force } from "../craft-stage/stage-core";
-import type { StageItem } from "../craft-stage/types";
-import type { TopicCourse, TopicStep } from "./topic-courses";
+import type { TopicCourse } from "./topic-courses";
+import { S, H, ALWAYS } from "./topic-steps";
 
-const S = (use: string, note: JaEn, omens?: string[]): TopicStep => ({ use, note, ...(omens ? { omens } : {}) });
-const H = (use: string, note: JaEn, how: JaEn[], prep?: string[] | StageItem["rarity"]): TopicStep =>
-  ({ use, note, how, ...(typeof prep === "string" ? { start: prep } : prep ? { prep } : {}) });
-const ALWAYS = (st: TopicStep): TopicStep => ({ ...st, prepAlways: true });
 const BT = (mod: string, tier: string, x: Partial<Force> = {}): Force => ({ mod: `Boots_str/${mod}`, tier, ...x });
 const JI = (mod: string): Force => ({ mod: `Jewels_int/${mod}`, tier: "T1" });
 const AM = (mod: string, tier: string, x: Partial<Force> = {}): Force => ({ mod: `Amulets/${mod}`, tier, ...x });

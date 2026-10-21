@@ -13,6 +13,7 @@ import type { Force } from "../craft-stage/stage-core";
 import { essenceShelf } from "../../state/emulator/craft-stage-shelf";
 import { ADV_COURSES } from "./topic-courses-adv";
 import { GUIDE_COURSES } from "./topic-courses-guide";
+import { S, H, ALWAYS } from "./topic-steps";
 
 /** how = 案内に出すやさしい箇条書き (2026-10-17 オーナー「赤ちゃんに説明するくらい簡単に」)。無い手はカードの公式の説明と決まりの文を出す */
 /** prep = 今のアイテムにこの手が打てない時、白 (start があればそのレア度の MOD 0 個) から打ってこの手が打てる状態を作る手 ([] = 白。craft-lesson.ts) */
@@ -57,11 +58,6 @@ export interface TopicCourse {
   icon?: string;
 }
 
-const S = (use: string, note: JaEn, omens?: string[]): TopicStep => ({ use, note, ...(omens ? { omens } : {}) });
-const H = (use: string, note: JaEn, how: JaEn[], prep?: string[] | StageItem["rarity"]): TopicStep =>
-  ({ use, note, how, ...(typeof prep === "string" ? { start: prep } : prep ? { prep } : {}) });
-/** 打てても毎回 prep から始める手 (消去・フラクチャーは MOD 4 つから) */
-const ALWAYS = (st: TopicStep): TopicStep => ({ ...st, prepAlways: true });
 /** MOD 1 つの黄から毎回 (カオスの入れ替えを見る。2026-10-17 オーナー「カオスは 1 MOD でおk」) */
 const ONE_MOD = (st: TopicStep): TopicStep => ({ ...st, prep: ["exalt"], prepAlways: true });
 /** MOD 6 つで満杯の黄 (レア)。抹消の入れ替えを見る (2026-10-18) */

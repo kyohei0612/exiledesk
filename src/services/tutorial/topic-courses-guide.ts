@@ -4,13 +4,10 @@
  * ヴァールのインフューザー (品質 50%・+6) の手は外した (2026-10-20 オーナー: 運の手で再現できない、no-vaal-chance と同じ線)。+6 は最後の文で品質の帯を案内する。
  * 聖別と品質の計算式はオーナーと決着済み (メモ poe2-craft-rules-confirmed の 10-21): 聖別は素の値 × 0.78〜1.22 を四捨五入、表示 = 切り捨て(素 × (1 + 品質))
  */
-import type { JaEn } from "./quiz-tutorials";
 import type { Force } from "../craft-stage/stage-core";
-import type { StageItem } from "../craft-stage/types";
-import type { TopicCourse, TopicStep } from "./topic-courses";
+import type { TopicCourse } from "./topic-courses";
+import { H } from "./topic-steps";
 
-const H = (use: string, note: JaEn, how: JaEn[], prep?: string[] | StageItem["rarity"]): TopicStep =>
-  ({ use, note, how, ...(typeof prep === "string" ? { start: prep } : prep ? { prep } : {}) });
 const AM = (mod: string, tier: string): Force => ({ mod: `Amulets/${mod}`, tier });
 const SPELL = "Amulets/GlobalIncreaseSpellSkillGemLevel";
 /** 不在のアミュレット: プレフィックスは外れ 1 つだけ、サフィックスに全スペル +3 (T1) とキャストスピード */
