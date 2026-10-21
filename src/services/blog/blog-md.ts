@@ -142,12 +142,24 @@ export function blogHtml(md: string, img: (src: string) => string, lang: "ja" | 
     // 部品 (:::種類 … :::)。箱・吹き出しの中は普通の本文の書き方、グラフの中は数字の行
     const blk = /^:::\s*([a-z]+)(?:\s+(.*))?$/.exec(l.trim());
     if (blk) {
-      const [kind, arg = ""] = [blk[1]!, blk[2]?.trim() ?? ""];
+      const [kind, rawArg = ""] = [blk[1]!, blk[2]?.trim() ?? ""];
       const body: string[] = [];
       i++;
-      while (i < lines.length && lines[i]!.trim() !== ":::") body.push(lines[i++]!);
+      // 入れ子 (畳む部品の中の箱など) に対応: 開く行で深く、":::" だけの行で浅く
+      for (let depth = 0; i < lines.length; i++) {
+        const t = lines[i]!.trim();
+        if (t === ":::" && depth === 0) break;
+        if (t === ":::") depth--;
+        else if (/^:::\s*[a-z]+/.test(t)) depth++;
+        body.push(lines[i]!);
+      }
       i++;
-      if (BOXES[kind]) out.push(`<aside class="box ${kind}"><p class="box-h">${esc(arg || BOXES[kind]![lang])}</p>${blogHtml(body.join("\n"), img, lang)}</aside>`);
+      // 畳む (2026-10-22 オーナー「数字の出どころ・確かめていない所は閉じて押すと開く形に」): :::fold <見出し>、箱は :::note fold <見出し> など。既定で閉じる、JS 無しで動く <details>
+      const fold = BOXES[kind] && /^fold(\s|$)/.test(rawArg);
+      const arg = fold ? rawArg.replace(/^fold\s*/, "") : rawArg;
+      if (kind === "fold") out.push(`<details class="fold"><summary>${esc(arg || (lang === "ja" ? "詳しく" : "Details"))}</summary>${blogHtml(body.join("\n"), img, lang)}</details>`);
+      else if (fold) out.push(`<details class="box ${kind} fold"><summary class="box-h">${esc(arg || BOXES[kind]![lang])}</summary>${blogHtml(body.join("\n"), img, lang)}</details>`);
+      else if (BOXES[kind]) out.push(`<aside class="box ${kind}"><p class="box-h">${esc(arg || BOXES[kind]![lang])}</p>${blogHtml(body.join("\n"), img, lang)}</aside>`);
       else if (CHARS[kind]) {
         const c = CHARS[kind]!;
         const face = FACES.includes(arg) ? arg : "normal";

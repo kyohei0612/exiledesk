@@ -7,6 +7,7 @@
 4b. 部品 (`:::種類` の行で始めて `:::` だけの行で閉じる。中は普通の書き方。見本は sample.ja.md に全部ある):
    - 箱: `:::summary` (まとめ、金)・`:::note` (注意、赤)・`:::tip` (ヒント、緑)。見出しを変える時は `:::tip 小技`。
    - グラフ (JS 無しの SVG): `:::chart bar 題` か `:::chart line 題`、中は `unit: %`・`labels: a, b, c`・`<系列の名前>: 1, 2, 3` (系列は何本でも、数字は台本の値)。自分で描いた SVG は `<svg …>` から `</svg>` までをそのまま置ける。表は文字のまま (グラフにしない)。
+   - 畳む (既定で閉じて、押すと開く。JS 無しで動く): `:::fold <見出し>` … `:::`。箱も畳める: `:::note fold <見出し>`・`:::tip fold`・`:::summary fold`。中は普通の書き方 (箇条書き・表・別の箱も入れられる)。数字の出どころ・確かめていない所はここに (オーナー 10-22)。
    - 引用の頭でも書ける (同じ部品): `> [!まとめ]`・`> [!ヒント]`・`> [!注意]`・`> [!めたん] happy`・`> [!ずんだもん]` (英語 `> [!SUMMARY]`・`> [!TIP]`・`> [!NOTE]`・`> [!METAN]`・`> [!ZUNDAMON]`)。2 行目からの `> ` の行が中身 (箇条書き可)。
    - キャラの吹き出し: `:::metan <表情>` (左)・`:::zundamon <表情>` (右)、表情は normal・happy・surprised・troubled。絵は video/assets/characters/ の立ち絵から書き出した顔 (src/data/blog/chars/、作り直しは `video/.venv/Scripts/python scripts/build-blog-chars.py`)。使った記事の下にクレジットが自動で付く。
 5. 数字は台本で出し、台本の場所と出どころ (poe2db・CoE・エンジンで何回) を本文に書く。用語は poe2db の名前 (英語は src/i18n/GLOSSARY.md)。
