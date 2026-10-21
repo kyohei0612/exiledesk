@@ -3,6 +3,7 @@ title: PoE2 Desecration Weights: Nobody Knows, So We Made Them Equal
 description: PoE2 desecration weights for Desecrated-only mods are all 1 on poe2db's crafting data and in Craft of Exile. Where the 85/14/1% reveal split comes from (563 ring reveals), and why ExileDesk now treats every mod as equal.
 date: 2026-10-22
 tags: Desecration, weight, Reveal, Craft of Exile, poe2db
+image: img/desecration-weights-og.en.png
 draft: true
 ---
 PoE2 desecration weights for Desecrated-only mods are **all 1 on poe2db's crafting data and in Craft of Exile** (CoE's data has all 247 at 1). Nobody has worked out the real numbers. So ExileDesk now makes every Desecrated-only mod **equally likely** (v0.1.528). The one measured figure we keep is how many Desecrated-only mods show up among the three reveal options: one 85%, two 14%, three 1%, from a community count of 563 ring reveals.

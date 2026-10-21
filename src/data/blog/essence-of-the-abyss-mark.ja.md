@@ -5,6 +5,7 @@ date: 2026-10-22
 tags: アビスのエッセンス, アビサルロードの紋章, 冒涜, 結晶化のお告げ, 金の指輪
 tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
+image: img/essence-of-the-abyss-mark-og.ja.png
 draft: true
 ---
 PoE2 の**アビスのエッセンス**は、ランダムな MOD を 1 つ取り除いて「**アビサルロードの紋章**」を確定で付けます。紋章のあるアイテムを冒涜すると、紋章は必ず消え、**よりティアが高い未発現の冒涜 MOD** に置き換わります。右側 / 左側の結晶化のお告げを合わせれば、消す MOD をサフィックスかプレフィックスに絞れます。

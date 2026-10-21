@@ -3,6 +3,7 @@ title: PoE2 Desecration and Omen of Necromancy: Which Side?
 description: Which side does a PoE2 desecration land on? We checked against Craft of Exile and fixed ExileDesk: 50/50 when both sides are open, and when both are full, one non-Fractured mod is removed at random. Plus Omen of Necromancy.
 date: 2026-10-22
 tags: Desecration, Bone, Omen of Necromancy, Craft of Exile, correction
+image: img/desecration-bone-sides-og.en.png
 draft: true
 ---
 In PoE2 desecration, without an Omen of Necromancy, **a bone lands on either side 50/50 when both sides are open. When both sides are full, one non-Fractured mod is removed at random and the new Unrevealed mod goes on that side.** To choose the side yourself, use Omen of Sinistral Necromancy or Omen of Dextral Necromancy. ExileDesk switched to this behavior in v0.1.525.

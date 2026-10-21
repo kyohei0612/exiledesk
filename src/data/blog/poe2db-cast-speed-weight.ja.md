@@ -5,6 +5,7 @@ date: 2026-10-22
 tags: poe2db, Craft of Exile, 重み, キャストスピード, 金の指輪
 tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
+image: img/poe2db-cast-speed-weight-og.ja.png
 draft: true
 ---
 PoE2 の指輪のキャストスピードの重みは、**poe2db では 5 段とも 1 (仮置き)、Craft of Exile と ExileDesk では 1,000** でした。重み 1,000 なら右側の高貴 + 上級で T2 以上が 4.37% 付きますが、poe2db の 1 をそのまま使うと 0.00% になり、キャストスピード入りの費用が桁違いに高く出ます。

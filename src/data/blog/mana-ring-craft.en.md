@@ -5,6 +5,7 @@ date: 2026-10-22
 tags: Gold Ring, maximum Mana, Perfect Essence, Neural Catalyst, expected cost
 tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
+image: img/mana-ring-craft-og.en.png
 draft: true
 ---
 A PoE2 mana ring craft with five targets (maximum Mana % and maximum Mana T1 as prefixes; Cast Speed T2+, all Elemental Resistances T1 and Mana Regeneration Rate T1 as suffixes) **costs about 1,991 Divine Orbs (div) per ring, and only 64% finish within a 2,000 div cap per run**. Loosening Resistances and Mana Regeneration to T2+ brings it down to 643 div with 95% finishing.

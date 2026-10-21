@@ -5,6 +5,7 @@ date: 2026-10-22
 tags: 触媒の高貴のお告げ, カタリスト, 品質, 高貴なオーブ, 金の指輪
 tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
+image: img/catalysing-exaltation-multiplier-og.ja.png
 draft: true
 ---
 PoE2 の触媒の高貴のお告げの倍率は、**ゲームの公式の数字が出ていません**。ExileDesk の既定は Craft of Exile の式「1 + 0.2 × 品質」(品質 20% で重み 5 倍) で、Reddit の実測 2 点とも矛盾はしません。ただしゲーム内の数字は未確認なので、倍率は使う人が自分で決められるようにしました。

@@ -5,6 +5,7 @@ date: 2026-10-22
 tags: 期待値, 費用, 運, 中央値, 打ち止め
 tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
+image: img/crafting-cost-variance-og.ja.png
 draft: true
 ---
 PoE2 のクラフトの費用は、平均 (期待値) だけを見ると読み違えます。ExileDesk のエンジンで回した 5 つの例では、**半分の人は平均の 7 割前後で完成し、10 人に 1 人は平均の 2 倍以上を払っていました**。平均は運の悪い少数に引っ張られて、多くの人の実感より高く出ます。

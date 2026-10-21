@@ -5,6 +5,7 @@ date: 2026-10-22
 tags: Chaos Orb, chaos spam, odds, expected cost, Gold Ring
 tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
+image: img/chaos-spam-odds-og.en.png
 draft: true
 ---
 In PoE2 chaos spam, the chance that one Chaos Orb lands a T1 target was **0.30 to 0.32%** in the glove example we studied. At 0.32% per try, it takes about 313 orbs on average, 216 or fewer for half of all runs, and 718 or more for one run in ten. A Chaos Orb is about 0.1 div, so that is about 32 Divine Orbs on average.

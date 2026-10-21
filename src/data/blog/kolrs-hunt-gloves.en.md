@@ -5,6 +5,7 @@ date: 2026-10-22
 tags: Kolr's Hunt, Rune, gloves, Marksman, Projectile
 tree: /?page=sim-tree&base=Sirenscale%20Gloves
 craft: /?base=Sirenscale%20Gloves
+image: img/kolrs-hunt-gloves-og.en.png
 draft: true
 ---
 In PoE2, gloves roll "+2 to Level of all Projectile Skills" or Critical Hit Chance **only with the rune Kolr's Hunt socketed**. Kolr's Hunt reads "Can roll Marksman modifiers," and once socketed, Marksman mods join both the suffix and the prefix pool.

@@ -5,6 +5,7 @@ date: 2026-10-22
 tags: コルの狩り, ルーン, 手袋, マークスマン, 投射物
 tree: /?page=sim-tree&base=Sirenscale%20Gloves
 craft: /?base=Sirenscale%20Gloves
+image: img/kolrs-hunt-gloves-og.ja.png
 draft: true
 ---
 PoE2 の手袋に「投射物スキルのレベル +2」や「クリティカルヒット率」が付くのは、**ルーン「コルの狩り」(Kolr's Hunt) を手袋のソケットに差した時だけ**です。コルの狩りの効果は「マークスマンモッドをロールできるようになる」で、差すとマークスマンの MOD がサフィックスとプレフィックスの両方の抽選に混ざります。

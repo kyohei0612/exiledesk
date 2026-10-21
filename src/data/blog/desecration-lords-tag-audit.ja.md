@@ -3,6 +3,7 @@ title: PoE2 冒涜の陣営を直した話｜93 MOD を poe2db に合わせた
 description: PoE2 の冒涜 MOD の陣営 (アマナム・ウラマン・クルガル) とタグを、poe2db の 9,455 段と全部照らし合わせました。メイスの余震・亀裂などの陣営が違っていて、陣営のお告げの結果に効いていた話と、v0.1.572 で直した 93 MOD の中身です。
 date: 2026-10-22
 tags: 冒涜, 陣営, poe2db, メイス, 直した話
+image: img/desecration-lords-tag-audit-og.ja.png
 draft: true
 ---
 PoE2 の冒涜 MOD には陣営 (アマナム・ウラマン・クルガル) がありますが、ExileDesk では**メイスの余震・亀裂など一部の MOD が違う陣営に入っていました**。poe2db の 9,455 段とタグを全部照らし合わせ、v0.1.572 で 93 MOD (部位ごとに数えた数) を poe2db に合わせています。

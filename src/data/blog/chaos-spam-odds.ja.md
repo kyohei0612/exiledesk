@@ -5,6 +5,7 @@ date: 2026-10-22
 tags: カオスオーブ, カオススパム, 確率, 期待値, 金の指輪
 tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
+image: img/chaos-spam-odds-og.ja.png
 draft: true
 ---
 PoE2 のカオススパムで、狙いの T1 が 1 回で付く確率は、ExileDesk で調べた手袋の例で **0.30〜0.32%** でした。1 回 0.32% なら、平均は約 313 個、半分の人は 216 個以内、10 人に 1 人は 718 個以上かかります。カオスオーブ 1 個は約 0.1 神なので、平均で約 32 神です。

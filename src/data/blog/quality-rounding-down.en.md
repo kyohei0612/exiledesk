@@ -3,6 +3,7 @@ title: PoE2 Quality Rounding: Round Down, Not Nearest
 description: PoE2 quality rounding goes down, not to the nearest number. We switched ExileDesk to rounding to match Craft of Exile, then saw +3 Spell Skills stay +3 at 33% quality and hit +4 at 34%, and switched back.
 date: 2026-10-22
 tags: Quality, Catalyst, rounding, Level of all Spell Skills, correction
+image: img/quality-rounding-down-og.en.png
 draft: true
 ---
 PoE2 quality rounding goes **down, not to the nearest whole number**. On real items, "+3 to Level of all Spell Skills" shows exactly +4 at 34% Quality and stays +3 at 33%. ExileDesk once switched this to normal rounding, found it didn't match the game, and switched back.

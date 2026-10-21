@@ -5,6 +5,7 @@ date: 2026-10-22
 tags: 冒涜, アーケインサージ, 手袋, 肋骨, クルガル
 tree: /?page=sim-tree&base=Sirenscale%20Gloves
 craft: /?base=Sirenscale%20Gloves
+image: img/arcane-surge-desecrated-gloves-og.ja.png
 draft: true
 ---
 PoE2 で冒涜のアーケインサージ (クルガルの、「プレイヤーがクリティカルヒットを与えた時に (10–15)% の確率でアーケインサージを獲得する」) が付くのは、**知性を含む手袋** (知性・筋力/知性・器用/知性) だけです。知性の手袋では冒涜で出る MOD 15 種の 1 つで、ExileDesk のエンジンでは発現の 3 候補に出る割合が 7.4% でした。

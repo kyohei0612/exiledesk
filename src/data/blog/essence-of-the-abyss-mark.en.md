@@ -5,6 +5,7 @@ date: 2026-10-22
 tags: Essence of the Abyss, Mark of the Abyssal Lord, Desecration, Crystallisation, Gold Ring
 tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
+image: img/essence-of-the-abyss-mark-og.en.png
 draft: true
 ---
 In PoE2, an **Essence of the Abyss** removes a random modifier and adds the **Mark of the Abyssal Lord**. When you desecrate an item with the Mark, the Mark is always removed and replaced by a **higher-tier Unrevealed Desecrated mod**. Add an Omen of Dextral or Sinistral Crystallisation and you choose whether a suffix or a prefix is removed.
