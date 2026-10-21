@@ -232,6 +232,8 @@ function boxName(id: string): string {
   const k = { hit: tr("当たり", "Hit"), junk: tr("外れ", "Miss"), junkGone: tr("外れが消えた", "Miss removed"), lost: tr("狙いが消えた", "Target lost") }[b.out];
   return b.out === "hit" && b.aim ? `${k} ${t.aimLabel(b.aim)}` : k;
 }
+/** 縮めて組んでいる時 (75〜99%) の倍率の逆数: 押せる物だけ大きさを戻す */
+const inv = computed(() => (viewOnly.value ? 1 : Math.max(1, 1 / zoom.value)));
 const glowOf = (b: Box): boolean => !!glowAim.value && b.out === "hit" && !!b.aim && aimKey(b.aim) === glowAim.value;
 </script>
 
@@ -295,9 +297,9 @@ const glowOf = (b: Box): boolean => !!glowAim.value && b.out === "hit" && !!b.ai
               </svg>
               <!-- 矢印の上の札 = 打つ手 (押すと替える・消す) -->
               <button v-for="e in edges" :key="`hand-${e.id}`" type="button" data-tree-hand class="absolute max-w-[300px] -translate-x-1/2 -translate-y-1/2 truncate rounded-full border-2 border-amber-500/70 bg-[#221a10] px-3 py-1 text-[12px] font-bold text-amber-100 hover:bg-amber-500/25"
-                :class="viewOnly ? 'pointer-events-none' : ''" :style="{ left: `${e.jx}px`, top: `${e.jy}px` }" :title="handLabel(e.hand)" @click="panel = { kind: 'hand', id: e.id }">{{ handLabel(e.hand) }}</button>
+                :class="viewOnly ? 'pointer-events-none' : ''" :style="{ left: `${e.jx}px`, top: `${e.jy}px`, scale: String(inv) }" :title="handLabel(e.hand)" @click="panel = { kind: 'hand', id: e.id }">{{ handLabel(e.hand) }}</button>
               <TreeBox v-for="b in boxes" :key="b.id" :box="b" :x="posOf(b).x + ox" :y="posOf(b).y + oy" :removable="canRemove(doc, b.id)" :picking="!!picking && picking !== b.id"
-                :selected="panel?.id === b.id || picking === b.id || plus?.target === b.id" :back-label="backLabel(b)" :view-only="viewOnly" :glow="glowOf(b)" :issue="issueOf(b)"
+                :selected="panel?.id === b.id || picking === b.id || plus?.target === b.id" :back-label="backLabel(b)" :view-only="viewOnly" :glow="glowOf(b)" :issue="issueOf(b)" :inv="inv"
                 @drag="startDrag(b, $event)" @aim="onAim(b)" @plus="(k, e) => onPlus(b, k, e)" @remove="t.edit((d) => removeHit(d, b.id))"
                 @back="picking = b.id" @clear-back="t.edit((d) => setBack(d, b.id, null))" @done="onDone(b)" @target="onTarget(b)" @focus="v.focusBox(b.id)"
                 @note="panel = { kind: 'note', id: b.id }" @spam="onSpam(b)" />
