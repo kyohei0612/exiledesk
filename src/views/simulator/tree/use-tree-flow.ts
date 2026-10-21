@@ -74,12 +74,15 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   async function fit(): Promise<void> {
     const b = bounds.value, w = f.dimensions.value.width, h = f.dimensions.value.height;
     if (!w || !h) return;
-    const PAD = 28, RIGHT_ROOM = 250;
-    const room = w - RIGHT_ROOM - PAD * 2 > b.w * minZoom.value ? RIGHT_ROOM : 0;
-    // 段を選ぶ時は余白を PAD_MIN まで詰めてよい (見本の木は 1920 幅で 32.6% → 余白を詰めて 33%、詰めないと 25% まで落ちた)
-    const PAD_MIN = 12;
-    const fitZ = Math.min((w - room - PAD_MIN * 2) / b.w, (h - PAD_MIN * 2) / b.h) / pageZ.value;
-    const z = ([...ZOOM_LEVELS].reverse().find((l) => l <= Math.min(1, fitZ) + 1e-6) ?? ZOOM_MIN) * pageZ.value;
+    const PAD = 28, PAD_MIN = 12, RIGHT_ROOM = 250;
+    /** 幅 avail に収まる一番大きい段 (段を選ぶ時は余白を PAD_MIN まで詰めてよい) */
+    const level = (avail: number): number => {
+      const fz = Math.min((avail - PAD_MIN * 2) / b.w, (h - PAD_MIN * 2) / b.h) / pageZ.value;
+      return [...ZOOM_LEVELS].reverse().find((l) => l <= Math.min(1, fz) + 1e-6) ?? ZOOM_MIN;
+    };
+    // 右下を空けると段が下がる時は空けない (見本の木は 1920 幅で空けると 25%、空けなければ 33%)
+    const room = level(w - RIGHT_ROOM) >= level(w) ? RIGHT_ROOM : 0;
+    const z = level(w - room) * pageZ.value;
     await f.setViewport({ x: (w - room) / 2 - (b.x + b.w / 2) * z, y: Math.max(PAD, h / 2 - (b.y + b.h / 2) * z), zoom: z });
   }
   /** 始まりの箱を上の真ん中へ、等倍で (開いた時と、一望から等倍に戻した時。真ん中を軸にすると枝の間の空き所に出た、10-22) */
