@@ -6,6 +6,8 @@
  * 出す物: /blog/<slug>/ と /en/blog/<slug>/ (JS 無しで読める HTML・OGP・構造化データ Article・hreflang)、一覧 /blog/・/en/blog/、
  * クラフト台の右の列が読む /blog/index.json (新しい順)、絵 /blog/img/、サイトマップへの追記。見た目は読み物のページ (build-seo-pages.mjs) に合わせる。
  * 両脇に縦長の広告の枠 (ads-page-model。--drafts = 開発版では場所だけ見せる)。
+ * シェア (X・Reddit・リンクのコピー・Discord 向けのコピー) と、記事を 1 ページとして数える小さな JS (scripts/_blog-client.js → /blog/blog.js)。
+ * OGP の絵は 記事の image → 本文の 1 枚目の図 → 題を描いた絵 (scripts/_blog-og.mjs、/blog/og/<言語>-<slug>.png) の順。記事の下にコメント欄の置き場 (#comments、中身はこれから)。
  *
  *   node scripts/build-blog-pages.mjs [出力先 (既定 dist-web)] [--drafts]
  * 今は開発版 (scripts/deploy-web-dev.mjs) の中でだけ回す (--drafts 付き)。本番の build:web にはまだ入れない (オーナーが記事を読んでから)
@@ -14,6 +16,7 @@ import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bundleEntry } from "./_bundle-ts.mjs";
+import { titleCard } from "./_blog-og.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
@@ -21,6 +24,8 @@ const DEV = args.includes("--drafts");
 const OUT = resolve(ROOT, args.find((a) => !a.startsWith("--")) ?? "dist-web");
 const SRC = resolve(ROOT, "src/data/blog");
 const SITE = "https://exiledesk.com";
+const API = "https://exiledesk-live.exiledesk.workers.dev"; // 記録の受け口 (src/web/config.ts の WEB_API_BASE と同じ)
+const VERSION = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf8")).version;
 const M = await bundleEntry(resolve(ROOT, "src/services/blog/blog-md.ts"));
 
 const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -48,7 +53,9 @@ th{color:var(--sub);font-weight:400}.n{text-align:right;white-space:nowrap;font-
 code{background:#211a12;border-radius:3px;padding:0 4px;font-size:.92em}blockquote{margin:12px 0;padding:2px 14px;border-left:3px solid #8a6a32;color:var(--sub)}
 figure{margin:16px 0}figure img,main img{max-width:100%;height:auto;border-radius:6px}figcaption{color:var(--sub);font-size:13px;margin-top:4px}
 ul.posts{list-style:none;padding:0;margin:12px 0}ul.posts li{padding:12px 0;border-bottom:1px solid var(--line)}ul.posts a.t{font-size:17px;font-weight:700;text-decoration:none}
-ul.posts p{margin:4px 0 0;color:var(--sub);font-size:14px}.crumb{font-size:12px;color:var(--sub);margin-bottom:8px}
+ul.posts p{margin:4px 0 0;color:var(--sub);font-size:14px}
+.share{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0;font-size:13px;color:var(--sub)}.share a,.share button{font:inherit;font-size:13px;padding:3px 10px;border:1px solid var(--line);border-radius:5px;background:#17130e;color:var(--fg);text-decoration:none;cursor:pointer}
+.share a:hover,.share button:hover{border-color:#8a6a32}.share [data-done]{color:var(--accent);border-color:#8a6a32}#comments{margin-top:32px}.crumb{font-size:12px;color:var(--sub);margin-bottom:8px}
 footer{border-top:1px solid var(--line);color:var(--sub);font-size:12px}footer .in{padding-top:14px;padding-bottom:20px}
 @media (max-width:1023px){.ad{display:none}}@media (max-width:767px){body{font-size:15px}h1{font-size:21px}}`;
 
@@ -60,6 +67,7 @@ const L = {
     listTitle: "ExileDesk のブログ — PoE2 のクラフトで分かった事", listDesc: "Path of Exile 2 のクラフトを ExileDesk のエンジンで回して分かった事のレポート。確率・重み・手の順番を、出どころと一緒に。",
     listIntro: "Path of Exile 2 のクラフトを、ExileDesk のエンジンで実際に回して分かった事を書いています。数字には台本と出どころ (poe2db・Craft of Exile) を添えています。",
     tree: "このツリーで試す", craft: "クラフト台で打つ", more: "ほかの記事", updated: "更新", draft: "下書き", none: "まだ記事はありません。", ad: "広告 (開発版だけ)",
+    share: "シェア", copyLink: "リンクをコピー", copyDiscord: "Discord 用にコピー", copied: "コピーしました",
   },
   en: {
     prefix: "/en", app: "/?lang=en", blog: "Blog",
@@ -68,12 +76,31 @@ const L = {
     listTitle: "ExileDesk blog — what we found crafting in PoE2", listDesc: "Reports on Path of Exile 2 crafting, run through the ExileDesk engine: chances, weights and step order, with sources.",
     listIntro: "Findings from running Path of Exile 2 crafts through the ExileDesk engine. Every number comes with its script and sources (poe2db, Craft of Exile).",
     tree: "Try it in the tree", craft: "Craft it on the Craft Stage", more: "More posts", updated: "Updated", draft: "Draft", none: "No posts yet.", ad: "Ad (dev only)",
+    share: "Share", copyLink: "Copy link", copyDiscord: "Copy for Discord", copied: "Copied",
   },
 };
 const adBox = (l) => (DEV ? `<aside class="ad dev">${L[l].ad}<br />160 × 600</aside>` : `<aside class="ad"></aside>`);
 const imgUrl = (src) => (/^(https?:|\/)/.test(src) ? src : `/blog/${src.replace(/^\.?\//, "")}`);
 
-function page(lang, { title, desc, path, alt, og, ld, body }) {
+/** シェアの帯 (X・Reddit はリンク、コピーの 2 つは JS がある時だけ出る) */
+function shareBar(lang, title, url) {
+  const l = L[lang];
+  const q = encodeURIComponent;
+  return `<p class="share"><span>${l.share}</span><a data-share="x" href="https://x.com/intent/post?text=${q(title)}&amp;url=${q(url)}" target="_blank" rel="noopener">X</a><a data-share="reddit" href="https://www.reddit.com/submit?url=${q(url)}&amp;title=${q(title)}" target="_blank" rel="noopener">Reddit</a><button type="button" data-share="copy" data-copy="${esc(url)}" hidden>${l.copyLink}</button><button type="button" data-share="discord" data-copy="${esc(`${title}\n${url}`)}" hidden>${l.copyDiscord}</button></p>`;
+}
+/** 記事の OGP の絵: 頭の image → 本文の 1 枚目の図 → 題を描いた絵 → サイトの既定 */
+function ogImageOf(p) {
+  const m = p.meta;
+  const first = /!\[[^\]]*\]\(([^)\s]+)\)/.exec(p.body)?.[1];
+  if (m.image || first) return `${SITE}${imgUrl(m.image || first)}`;
+  mkdirSync(resolve(OUT, "blog", "og"), { recursive: true });
+  const name = `${m.lang}-${m.slug}.png`;
+  return titleCard({ title: m.title, date: m.date, lang: m.lang, out: resolve(OUT, "blog", "og", name) }) ? `${SITE}/blog/og/${name}` : `${SITE}/web/og.png`;
+}
+/** 数える・コピーの JS (scripts/_blog-client.js)。slug が空 = 一覧 */
+const clientTag = (lang, slug) => `<script defer src="/blog/blog.js" data-slug="${esc(slug)}" data-lang="${lang}" data-api="${API}" data-v="${VERSION}" data-copied="${esc(L[lang].copied)}"${DEV ? ' data-dev="1"' : ""}></script>`;
+
+function page(lang, { title, desc, path, alt, og, ld, body, slug = "" }) {
   const l = L[lang];
   const other = lang === "ja" ? "en" : "ja";
   return `<!doctype html>
@@ -98,7 +125,8 @@ ${og.published ? `<meta property="article:published_time" content="${og.publishe
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet" />
 <style>${CSS}</style>
-${ld ? `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script>\n` : ""}<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1993030721214430" crossorigin="anonymous"></script>
+${ld ? `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script>\n` : ""}${clientTag(lang, slug)}
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1993030721214430" crossorigin="anonymous"></script>
 </head>
 <body>
 <header><div class="in"><a href="${l.app}">ExileDesk</a><nav>${l.nav}</nav></div></header>
@@ -121,7 +149,8 @@ for (const lang of ["ja", "en"]) {
   for (const p of mine) {
     const m = p.meta;
     const path = `/blog/${m.slug}/`;
-    const image = m.image ? `${SITE}${imgUrl(m.image)}` : `${SITE}/web/og.png`;
+    const image = ogImageOf(p);
+    const url = `${SITE}${l.prefix}${path}`;
     const cta = m.tree || m.craft ? `<p class="cta">${m.tree ? `<a href="${esc(m.tree)}">${l.tree}</a>` : ""}${m.craft ? `<a href="${esc(m.craft)}">${l.craft}</a>` : ""}</p>` : "";
     const others = mine.filter((x) => x.meta.slug !== m.slug).slice(0, 5);
     const ld = {
@@ -134,13 +163,17 @@ for (const lang of ["ja", "en"]) {
 <article>
 <h1>${esc(m.title)}</h1>
 <p class="meta"><time datetime="${m.date}">${m.date}</time>${m.updated !== m.date ? `<span>${l.updated} <time datetime="${m.updated}">${m.updated}</time></span>` : ""}${m.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join("")}${m.draft ? `<span class="draft">${l.draft}</span>` : ""}</p>
+${shareBar(lang, m.title, url)}
 ${cta}
 ${M.blogHtml(p.body, imgUrl)}
 ${cta}
+${shareBar(lang, m.title, url)}
 </article>
+<!-- コメント欄の置き場 (これから: Reddit 風、サーバーは分析君・画面はジン部長。前の掲示板 archive/board-2026-10-16 の作りを戻して使う) -->
+<section id="comments" data-slug="${esc(m.slug)}" data-lang="${lang}"></section>
 ${others.length ? `<h2>${l.more}</h2><ul class="posts">${others.map((x) => `<li><a class="t" href="${l.prefix}/blog/${x.meta.slug}/">${esc(x.meta.title)}</a><p>${esc(x.meta.date)} · ${esc(x.meta.description)}</p></li>`).join("")}</ul>` : ""}`;
     mkdirSync(resolve(dir, m.slug), { recursive: true });
-    writeFileSync(resolve(dir, m.slug, "index.html"), page(lang, { title: `${m.title} | ExileDesk`, desc: m.description, path, alt: has(m.slug, lang === "ja" ? "en" : "ja"), og: { type: "article", image, published: m.date, modified: m.updated }, ld, body }));
+    writeFileSync(resolve(dir, m.slug, "index.html"), page(lang, { title: `${m.title} | ExileDesk`, desc: m.description, path, alt: has(m.slug, lang === "ja" ? "en" : "ja"), og: { type: "article", image, published: m.date, modified: m.updated }, ld, body, slug: m.slug }));
     if (!m.draft) urls.push(`${l.prefix}${path}`);
     index[lang].push({ slug: m.slug, title: m.title, date: m.date, href: `${l.prefix}${path}`, draft: m.draft });
   }
@@ -152,6 +185,7 @@ ${others.length ? `<h2>${l.more}</h2><ul class="posts">${others.map((x) => `<li>
 }
 // クラフト台の右の列が読む (新しい順、日本語・英語)
 writeFileSync(resolve(OUT, "blog", "index.json"), JSON.stringify(index));
+cpSync(resolve(ROOT, "scripts/_blog-client.js"), resolve(OUT, "blog", "blog.js"));
 if (existsSync(resolve(SRC, "img"))) cpSync(resolve(SRC, "img"), resolve(OUT, "blog", "img"), { recursive: true, filter: (f) => !f.endsWith(".gitkeep") });
 
 // サイトマップ (出力先にあれば足す。下書きは入れない)

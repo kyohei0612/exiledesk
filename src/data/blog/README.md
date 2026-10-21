@@ -6,4 +6,4 @@
 4. 絵は `src/data/blog/img/` に置き、本文では `img/<名前>` と書く (/blog/img/ に写る)。
 5. 数字は台本で出し、台本の場所と出どころ (poe2db・CoE・エンジンで何回) を本文に書く。用語は poe2db の名前 (英語は src/i18n/GLOSSARY.md)。
 6. 置いたら `node scripts/build-blog-pages.mjs dist-web-dev --drafts` で dist-web-dev/blog/ に出て確かめられる。開発版には `pnpm deploy:web-dev` で入る (本番の build:web には入れていない、オーナーが記事を読んでから)。
-7. 一覧 (/blog/)・サイトマップ・OGP・記事の構造化データ (Article)・クラフト台の右の列の「新しい記事」(新しい順に 3 本) は台本が自動で作る。
+7. 一覧 (/blog/)・サイトマップ・OGP (絵は image → 本文の 1 枚目の図 → 題を描いた絵)・記事の構造化データ (Article)・シェア (X・Reddit・コピー)・開いた数とシェアの数の記録 (D1 の screen "blog:<slug>"・blog_share)・クラフト台の右の列の「新しい記事」(新しい順に 3 本) は台本が自動で作る。記事の下のコメント欄は置き場だけ (これから)。
