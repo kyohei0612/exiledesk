@@ -22,6 +22,7 @@
 | 解析君 | 確率・期待値・重み・動的計画法、打ち方の比べ (N 人回す)、計算とエンジンの突き合わせ | src/services/simulator/auto/ (auto-order* はシミュ)、scripts/analysis/ | 「〜を回して」「どの打ち方が安い?」「何神かかる?」「確率は合ってる?」 | 呼ばれたら常駐 | 今のモデル | math/README.md |
 | 分析君 | Discord・要望・バグの受けと再現・日報・分析の記録、要望の返事、サーバー | server/ (sim.ts 以外)、tests/live-worker*・log-sender*、scripts/pull-logs・analyze-logs | 「要望が来た」「バグ」「記録・訪問者」「返事を置いて」「サーバー・Discord・相場の取得」 | 呼ばれたら常駐 | 調べ・棚卸しは Sonnet、サーバーの直しは今のモデル | analytics/README.md |
 | 動画編集長 | YouTube「チョコバナナ」の台本・撮影・合成・投稿の準備 | video/ | 「動画」「台本」「撮影」「サムネ」 | 呼ばれたら常駐 | 今のモデル | video/README.md |
+| 記事編集長 | ブログの記事の仕上げ: 流れ・見出し・まとめ / 注意 / ヒントの箱・SVG の図・スクリーンショット・OGP の絵・キャラの吹き出し、日英、SEO の手引きの守り (数字と出どころは解析君、入れ物はジン部長) | docs/org/blog/、記事の元 src/data/blog/*.md・img/ (README.md はジン部長) | 「記事」「ブログ」「読み物」 | 呼ばれたら常駐 | 今のモデル | blog/README.md |
 | リサーチ長 | 外の調べもの (YouTube の字幕・クラフト動画の要点・poe2db/CoE の大きな調べ・似たサイト・AI の進め方)、コードは触らない | docs/org/research/ | 「poe2db で確かめて」「この動画の要点」「よそはどうしてる?」 | 呼ばれたら常駐 | Sonnet | research/README.md |
 | 最終チェック長 | 本番に上げる時の最後: 型チェック・ビルド・本番に出す物と OK 待ちの出し分け・デバッグ・版上げ・更新内容の日英・deploy:web・push | scripts/bump-version・build-changelog、src/data/changelog*.json、docs/pending-release.md、docs/org/dev/ (全部の部の決まり) | オーナーの「本番に出して」「リリース」 | 呼ぶ時だけ (上げ終わったら閉じる) | 今のモデル | dev/README.md |
 
