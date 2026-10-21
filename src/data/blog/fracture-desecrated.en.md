@@ -5,7 +5,6 @@ date: 2026-10-22
 tags: Fracturing Orb, Desecration, Bone, correction
 image: img/fracture-desecrated-og.en.png
 ready: true
-draft: true
 ---
 In PoE2, a Fracturing Orb **can't fracture a Desecrated mod**. Desecrated mods count toward the "four or more mods" requirement, but they are never the one that gets fixed. The owner used a Fracturing Orb 24 times in game, and a Desecrated mod was fractured 0 times.
 

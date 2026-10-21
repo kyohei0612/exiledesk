@@ -6,7 +6,6 @@ tags: Desecration, Arcane Surge, gloves, Rib, Kurgal
 craft: /?base=Sirenscale%20Gloves
 image: img/arcane-surge-desecrated-gloves-og.en.png
 ready: true
-draft: true
 ---
 In PoE2, the Desecrated Arcane Surge mod (of Kurgal: "(10–15)% chance to Gain Arcane Surge when you deal a Critical Hit") rolls only on **gloves with Intelligence** (Intelligence, Strength/Intelligence and Dexterity/Intelligence). On Intelligence gloves it is one of 15 Desecrated mods, and on the ExileDesk engine it appeared among the three reveal options 7.4% of the time.
 

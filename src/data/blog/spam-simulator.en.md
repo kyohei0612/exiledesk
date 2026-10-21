@@ -5,7 +5,6 @@ date: 2026-10-22
 tags: spam simulator, Orb of Augmentation, Chaos Orb, Exalted Orb, luck
 image: img/spam-simulator-og.en.png
 ready: true
-draft: true
 ---
 The ExileDesk **poe2 spam simulator** takes one target mod and **runs augment, chaos and exalt spam at all three grades (Perfect, Greater and Regular), 100 runs each, to see which gets there cheapest.** The cheapest route gets a "Cheapest" tag, and a luck test lets you spam that route yourself to see where you rank among the 100.
 

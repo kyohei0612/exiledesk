@@ -6,7 +6,6 @@ tags: Chaos Orb, chaos spam, restart, expected cost, gloves
 craft: /?base=Intricate%20Gloves
 image: img/chaos-reroll-vs-restart-og.en.png
 ready: true
-draft: true
 ---
 When a target mod gets wiped mid-craft in PoE2, **rerolling it with Chaos Orbs is far cheaper than starting over**. On one pair of gloves, putting "+2 to Level of all Projectile Skills" back with Chaos Orbs averaged about 31 div (div = Divine Orb), while restarting from a white base cost about 580 div. And each Chaos Orb lands it only 0.32% of the time (measured on the engine).
 

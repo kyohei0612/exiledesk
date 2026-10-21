@@ -6,7 +6,6 @@ tags: 重み, キャストスピード, 金の指輪, クラフトシミュレ�
 craft: /?base=Gold%20Ring
 image: img/custom-mod-weights-og.ja.png
 ready: true
-draft: true
 ---
 PoE2 の MOD の重みを、使う人が自分で変えられる機能を ExileDesk のクラフト台に作りました (**まだ公開していない機能で、公開の時期は未定**です)。金の指輪に増強のオーブを打つ時、キャストスピードの重みを既定の 1,000 から 200 に変えると、付く確率は **5.4% → 1.1%** に下がります。
 

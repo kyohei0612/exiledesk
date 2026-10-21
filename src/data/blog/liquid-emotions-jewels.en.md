@@ -5,7 +5,6 @@ date: 2026-10-22
 tags: Liquid Emotions, jewel, Delirium, Contempt, Ferocity
 image: img/liquid-emotions-jewels-og.en.png
 ready: true
-draft: true
 ---
 In PoE2, a Liquid Emotion (from Delirium) is a currency that **removes one random mod from a Rare jewel and adds one crafted mod set by that emotion**. Potent Liquid Contempt allows a third mod on one side, and Potent Liquid Ferocity boosts the numbers of the mods on the other side.
 

@@ -5,7 +5,6 @@ date: 2026-10-22
 tags: Desecration, desecration lords, poe2db, Mace, correction
 image: img/desecration-lords-tag-audit-og.en.png
 ready: true
-draft: true
 ---
 In PoE2, every Desecrated mod belongs to a lord: Amanamu, Ulaman or Kurgal. In ExileDesk, **some of them, including the mace Aftershock and Fissure mods, were filed under the wrong lord**. We checked lords and tags against 9,455 tiers on poe2db, and in v0.1.572 we matched 93 mods (counted per item class) to poe2db.
 

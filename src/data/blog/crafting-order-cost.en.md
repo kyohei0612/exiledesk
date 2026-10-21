@@ -5,7 +5,6 @@ date: 2026-10-22
 tags: crafting order, expected cost, gloves, Essence, Chaos Orb
 image: img/crafting-order-cost-og.en.png
 ready: true
-draft: true
 ---
 In PoE2, crafting order alone can change the cost a lot. Reordering the same four targets on one pair of gloves, **the cheapest order (+2 Projectile first, then both Essences, prefix last) cost 58.7 div per finished item**, while the most expensive of the recorded orders cost 249 div (div = Divine Orb). One order finished only about 20% of the time.
 

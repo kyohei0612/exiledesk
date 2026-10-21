@@ -6,7 +6,6 @@ tags: poe2db, Craft of Exile, weight, Cast Speed, Gold Ring
 craft: /?base=Gold%20Ring
 image: img/poe2db-cast-speed-weight-og.en.png
 ready: true
-draft: true
 ---
 PoE2 ring Cast Speed has a modifier weight of **1 on poe2db (all five tiers, a placeholder) but 1,000 in Craft of Exile and ExileDesk**. At 1,000, Omen of Dextral Exaltation + Greater Exalted Orb lands Cast Speed T2 or better 4.37% of the time. Use poe2db's 1 as-is and it drops to 0.00%, so any Cast Speed ring looks absurdly expensive.
 

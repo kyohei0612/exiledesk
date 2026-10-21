@@ -6,7 +6,6 @@ tags: 聖別, 品質, 不在のアミュレット, 神のオーブ, カタリス
 craft: /?base=Absent%20Amulet
 image: img/sanctify-quality-order-og.ja.png
 ready: true
-draft: true
 ---
 PoE2 の聖別と品質は、**素の値に聖別 (0.78〜1.22 倍して四捨五入) → 品質 (表示で掛けて切り捨て)** の順に掛かります。そのため品質 50% の不在のアミュレットでは「全てのスペルスキルのレベル」が +3・+4・+6 のどれかになり、+5 はどの倍率でも出ません。
 

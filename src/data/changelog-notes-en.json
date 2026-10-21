@@ -1,4 +1,14 @@
 {
+  "0.1.590": [
+    "New blog: 30 articles that check crafting odds, costs and steps with numbers (29 in English). Open it from “Blog” in the header or footer",
+    "Coming back from an article now returns you to the craft screen as you left it (also the “← Back to crafting” link at the top left of articles)",
+    "Removed “Articles about this craft” and “Quick tips” from the right column of the Craft Stage",
+    "Added English About, Privacy Policy and Contact pages, added how the site was made, where the numbers come from, how mistakes are fixed and the blog policy to About, and revised the Privacy Policy for advertising (Google AdSense) and how usage data is stored",
+    "Japanese names of bases, currencies and more now match the current game and poe2db (about 220 items; English unchanged)",
+    "As in the game, a Sanctified item can no longer take currency, runes, or quality / item level changes (the quality bar and item level field are grayed out)",
+    "Using an Orb of Augmentation on a magic Absent Amulet now explains why it can't be used (the base has 0 magic mod slots; use a Regal Orb to make it rare)",
+    "Fixed the page sticking out slightly sideways on wide PC screens"
+  ],
   "0.1.589": [
     "Omens now have settings under their name when applied: Omen of Catalysing Exaltation lets you set the multiplier per 1% quality (default 0.2 = 5x at 20%), and Omen of Sanctification lets you pick the multiplier (0.78–1.22x) with a checkbox"
   ],

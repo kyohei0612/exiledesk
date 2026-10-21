@@ -6,7 +6,6 @@ tags: Omen, Orb of Annulment, expected cost, gloves, prices
 craft: /?base=Intricate%20Gloves
 image: img/are-omens-worth-it-og.en.png
 ready: true
-draft: true
 ---
 Are PoE2 omens worth it, even when they're expensive? The optimal-play calculation says: **in most spots, skip them; a plain 0.44 div Orb of Annulment does the job** (div = Divine Orb). Expensive omens like the Omen of Sinistral Annulment (14.9 div) or the Omen of Sinistral Erasure (16 div, poe2db trade rates) only pay off **when a target sits on the side with no miss**.
 

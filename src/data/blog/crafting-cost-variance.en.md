@@ -6,7 +6,6 @@ tags: expected cost, cost, luck, median, cap
 craft: /?base=Gold%20Ring
 image: img/crafting-cost-variance-og.en.png
 ready: true
-draft: true
 ---
 Looking only at the average (expected) cost of a PoE2 craft is misleading. In five examples run on the ExileDesk engine, **half the runs finished at about 70% of the average, and one in ten paid more than twice the average**. A few unlucky runs pull the average up, so it sits above what most people actually experience.
 

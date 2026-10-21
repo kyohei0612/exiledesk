@@ -5,7 +5,6 @@ date: 2026-10-22
 tags: Exalted Orb, omens, Omen of Sinistral Exaltation, Omen of Dextral Exaltation, Omen of Greater Exaltation
 image: img/exaltation-omens-guide-og.en.png
 ready: true
-draft: true
 ---
 In PoE2, the **Omen of Sinistral Exaltation makes your next Exalted Orb add only a prefix, the Omen of Dextral Exaltation only a suffix, and the Omen of Greater Exaltation adds two mods in one use**. Greater stacks with either side omen, so you can aim for two mods on one side. But if only one slot is open, Greater adds only one mod.
 

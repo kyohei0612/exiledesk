@@ -5,7 +5,6 @@ date: 2026-10-22
 tags: 冒涜, 重み, 発現, Craft of Exile, poe2db
 image: img/desecration-weights-og.ja.png
 ready: true
-draft: true
 ---
 PoE2 の冒涜 MOD の重みは、**poe2db のクラフトでも Craft of Exile でも、冒涜専用の MOD は全部 1** です (CoE のデータでは 247 種が全部 1)。本当の重みは誰も割り出していません。そこで ExileDesk は、冒涜専用 MOD どうしの出やすさを**全部同じ**にしました (v0.1.528)。発現の 3 候補に冒涜専用 MOD が何個入るか (1 個 85%・2 個 14%・3 個 1%) だけは、有志が指輪で 563 回数えた実測を使っています。
 

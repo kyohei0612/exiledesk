@@ -5,7 +5,6 @@ date: 2026-10-22
 tags: 液化した感情, ジュエル, デリリウム, 軽蔑, 獰猛
 image: img/liquid-emotions-jewels-og.ja.png
 ready: true
-draft: true
 ---
 PoE2 の液化した感情 (デリリウム) は、レアのジュエルの MOD を**ランダムに 1 つ消して、その感情で決まったクラフト MOD を 1 つ付ける**カレンシーです。中でも強力な液化した軽蔑は片側に 3 つ目の MOD を許し、強力な液化した獰猛は反対側の MOD の数値を伸ばします。
 

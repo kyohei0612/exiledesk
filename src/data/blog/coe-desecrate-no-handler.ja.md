@@ -6,7 +6,6 @@ tags: 冒涜, Craft of Exile, 肋骨, 手袋, 重み
 craft: /?base=Sirenscale%20Gloves
 image: img/coe-desecrate-no-handler-og.ja.png
 ready: true
-draft: true
 ---
 PoE2 の冒涜の当たる割合は、**Craft of Exile の画面でも計算できません**。知性の手袋 (サイレーンスケイルの手袋、アイテムレベル 82) の冒涜の表には重みの列が無く (データ上は全部 1 の置き値)、「Desecrate」と骨を選ぶと「No handler for crafting this method」と出て、確率の計算が動きませんでした。分かるのは、出る MOD の一覧と骨の使える・使えないだけです。
 

@@ -5,7 +5,6 @@ date: 2026-10-22
 tags: Desecration, Bone, Necromancy omens, Craft of Exile, correction
 image: img/desecration-bone-sides-og.en.png
 ready: true
-draft: true
 ---
 In PoE2 desecration, **a bone lands on either side 50/50 when both sides are open. When both sides are full, one non-Fractured mod is removed at random and the new mod goes on that side.** To choose the side yourself, use Omen of Sinistral Necromancy or Omen of Dextral Necromancy. ExileDesk switched to this behavior in v0.1.525.
 

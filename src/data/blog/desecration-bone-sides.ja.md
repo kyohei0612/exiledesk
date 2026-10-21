@@ -5,7 +5,6 @@ date: 2026-10-22
 tags: 冒涜, 骨, ネクロマンシーのお告げ, Craft of Exile, 直した話
 image: img/desecration-bone-sides-og.ja.png
 ready: true
-draft: true
 ---
 PoE2 の冒涜で、骨の MOD が左右どちらに付くかの答えは、**両側が空いていれば半々 (50%)、両側が埋まっていれば固定 (フラクチャー) 以外の MOD から等しく 1 つ消えて、消えた側に付く**です。側を自分で決めたい時は、左手 / 右手のネクロマンシーのお告げを使います。ExileDesk は v0.1.525 でこの形に直しました。
 

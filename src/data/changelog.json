@@ -1,5 +1,60 @@
 [
  {
+  "v": "0.1.590",
+  "date": "2026-10-21",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "ブログを始めました: クラフトの確率・費用・手順を数字で確かめた記事 30 本 (英語 29 本)。ヘッダー・フッターの「ブログ」から読めます",
+    "en": "New blog: 30 articles that check crafting odds, costs and steps with numbers (29 in English). Open it from “Blog” in the header or footer"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "記事から戻った時に、前のクラフト画面の状態のまま戻るようにしました (記事の左上の「← クラフトに戻る」も同じ)",
+    "en": "Coming back from an article now returns you to the craft screen as you left it (also the “← Back to crafting” link at the top left of articles)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "クラフト台の右の列から「今のクラフトに関係する記事」と「使い方の要点」を外しました",
+    "en": "Removed “Articles about this craft” and “Quick tips” from the right column of the Craft Stage"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "サイトの案内 (About・プライバシーポリシー・お問い合わせ) に英語版を足し、About にできるまで・数字の出どころ・間違いの直し方・ブログの方針を足しました。プライバシーポリシーを広告 (Google AdSense) と記録の扱いに合わせて改定しました",
+    "en": "Added English About, Privacy Policy and Contact pages, added how the site was made, where the numbers come from, how mistakes are fixed and the blog policy to About, and revised the Privacy Policy for advertising (Google AdSense) and how usage data is stored"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "ベース・カレンシーなどの日本語名をゲーム・poe2db の今の名前に合わせました (アビスのエッセンス・狂犬病のタリスマンなど 220 件あまり)",
+    "en": "Japanese names of bases, currencies and more now match the current game and poe2db (about 220 items; English unchanged)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "聖別したアイテムには、ゲームと同じくカレンシー・ルーン・品質・アイテムレベルを変えられないようにしました (品質の帯とアイテムレベルの欄は灰色に)",
+    "en": "As in the game, a Sanctified item can no longer take currency, runes, or quality / item level changes (the quality bar and item level field are grayed out)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "不在のアミュレットのマジックに増強のオーブを打った時に、打てない理由 (マジックの枠が 0、王者のオーブでレアに) を出すようにしました",
+    "en": "Using an Orb of Augmentation on a magic Absent Amulet now explains why it can't be used (the base has 0 magic mod slots; use a Regal Orb to make it rare)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "PC の広い画面で、ページが横に少しはみ出していたのを直しました",
+    "en": "Fixed the page sticking out slightly sideways on wide PC screens"
+   }
+  ],
+  "pop": true
+ },
+ {
   "v": "0.1.589",
   "date": "2026-10-21",
   "items": [
@@ -618,18 +673,6 @@
     "area": "",
     "text": "ページの一番下の「使い方の記録」の案内と切り替えを、プライバシーポリシーの中に移しました",
     "en": "Moved the usage-logging note and its switch from the page footer into the Privacy Policy"
-   }
-  ]
- },
- {
-  "v": "0.1.550",
-  "date": "2026-10-17",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "MOD 一覧の「付ける」を押すと、付け方 (普通 / フラクチャー / 冒涜 / エッセンス) を選べるように。もうフラクチャー・冒涜がある時はその付け方を出しません",
-    "en": "In the mod list, \"Add\" now lets you choose how to add (Normal / Fracture / Desecrated / Essence). Options already used on the item are hidden"
    }
   ]
  }

@@ -5,7 +5,6 @@ date: 2026-10-22
 tags: expected cost, calculation, random numbers, minimum modifier level, correction
 image: img/crafting-calculator-mistakes-og.en.png
 ready: true
-draft: true
 ---
 When you work out PoE2 crafting costs by calculation, **a small slip in how the calculation is built turns straight into a wrong number**. In our ExileDesk test calculation, a biased random generator gave 68 div (div = Divine Orb), using the Exalted Orb's minimum modifier levels for Transmutation and Augmentation doubled the magic-item cost, and the way we tracked a desecration marker put us 24% off the engine.
 

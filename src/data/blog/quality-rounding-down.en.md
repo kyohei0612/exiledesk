@@ -5,7 +5,6 @@ date: 2026-10-22
 tags: Quality, Catalyst, rounding, Level of all Spell Skills, correction
 image: img/quality-rounding-down-og.en.png
 ready: true
-draft: true
 ---
 PoE2 quality rounding goes **down, not to the nearest whole number**. On real items, "+3 to Level of all Spell Skills" shows exactly +4 at 34% Quality and stays +3 at 33%. ExileDesk once switched this to normal rounding, found it didn't match the game, and switched back.
 

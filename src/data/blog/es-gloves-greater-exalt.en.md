@@ -6,7 +6,6 @@ tags: gloves, Energy Shield, Exalted Orb, Chaos Orb, expected cost
 craft: /?base=Sirenscale%20Gloves
 image: img/es-gloves-greater-exalt-og.en.png
 ready: true
-draft: true
 ---
 For a PoE2 Energy Shield gloves craft with maximum Energy Shield, ES% and maximum Mana (T2+) as prefixes, **Omen of Sinistral Exaltation + Greater Exalted Orb was the cheapest method at 105 div per item** (div = Divine Orb). Perfect cost 201 div and the plain Exalted Orb 423 div. Catalysts can't be used on gloves.
 

@@ -6,7 +6,6 @@ tags: Omen of Catalysing Exaltation, Catalyst, Quality, Exalted Orb, Gold Ring
 craft: /?base=Gold%20Ring
 image: img/catalysing-exaltation-multiplier-og.en.png
 ready: true
-draft: true
 ---
 The poe2 Catalysing Exaltation multiplier **has no official number from the game**. ExileDesk defaults to Craft of Exile's formula, 1 + 0.2 × quality (5x weight at 20% quality), which doesn't contradict the two measurements posted on Reddit. The in-game value is still unconfirmed, so ExileDesk lets you set the multiplier yourself.
 

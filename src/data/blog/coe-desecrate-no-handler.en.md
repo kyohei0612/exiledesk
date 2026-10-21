@@ -6,7 +6,6 @@ tags: Desecration, Craft of Exile, Rib, gloves, weight
 craft: /?base=Sirenscale%20Gloves
 image: img/coe-desecrate-no-handler-og.en.png
 ready: true
-draft: true
 ---
 PoE2 Desecration odds **can't be calculated in Craft of Exile either**. On Intelligence gloves (Sirenscale Gloves, Item Level 82), the Desecrated table has no Weight column (in the data, every weight is a placeholder 1). Choosing "Desecrate" and a bone shows "No handler for crafting this method", and no odds are calculated. All you get is the list of mods that can roll and which bones are allowed.
 

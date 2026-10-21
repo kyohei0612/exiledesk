@@ -6,7 +6,6 @@ tags: 手袋, エナジーシールド, 高貴なオーブ, カオスオーブ, 
 craft: /?base=Sirenscale%20Gloves
 image: img/es-gloves-greater-exalt-og.ja.png
 ready: true
-draft: true
 ---
 PoE2 の ES 手袋のクラフトで、プレフィックスに最大エナジーシールド・ES%・最大マナ (T2 以上) を揃えるなら、**左側の高貴なお告げ + 高貴なオーブ (上級) が 1 個 105 神で一番安い**打ち方でした (神 = 神のオーブ、ディバイン)。完全は 201 神、通常は 423 神です。手袋にはカタリストが使えません。
 

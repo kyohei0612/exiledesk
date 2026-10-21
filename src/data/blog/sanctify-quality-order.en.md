@@ -6,7 +6,6 @@ tags: Sanctify, Quality, Absent Amulet, Divine Orb, Catalyst
 craft: /?base=Absent%20Amulet
 image: img/sanctify-quality-order-og.en.png
 ready: true
-draft: true
 ---
 In PoE2, Sanctify and Quality apply in a fixed order: **Sanctification hits the base value (×0.78 to 1.22, rounded), then Quality applies at display (rounded down)**. So on a 50% Quality Absent Amulet, "+# to Level of all Spell Skills" shows +3, +4 or +6. No multiplier ever gives +5.
 

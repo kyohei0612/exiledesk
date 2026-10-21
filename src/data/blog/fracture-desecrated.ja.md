@@ -5,7 +5,6 @@ date: 2026-10-22
 tags: フラクチャーオーブ, 冒涜, 骨, 直した話
 image: img/fracture-desecrated-og.ja.png
 ready: true
-draft: true
 ---
 PoE2 のフラクチャーオーブでは、**冒涜で付いた MOD は固定できません**。フラクチャーに要る「MOD 4 つ以上」の数には入りますが、固定される 1 つには選ばれません。オーナーがゲームで 24 回打って、冒涜の MOD が固定されたのは 0 回でした。
 

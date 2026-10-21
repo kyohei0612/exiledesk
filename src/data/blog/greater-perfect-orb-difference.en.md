@@ -5,7 +5,6 @@ date: 2026-10-22
 tags: minimum modifier level, Exalted Orb, Chaos Orb, Orb of Transmutation, Orb of Augmentation
 image: img/greater-perfect-orb-difference-og.en.png
 ready: true
-draft: true
 ---
 The difference between PoE2 Greater and Perfect orbs is the **minimum modifier level**: tiers below that mod level can't roll. On poe2db, Regal, Exalted and Chaos Orbs are 35 (Greater) and 50 (Perfect); in the ExileDesk engine, Orbs of Transmutation and Augmentation are 44 and 70. A higher floor means fewer low-tier misses, but a higher price.
 
