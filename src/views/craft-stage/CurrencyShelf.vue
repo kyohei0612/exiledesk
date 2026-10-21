@@ -36,28 +36,37 @@ const props = withDefaults(defineProps<{ initialTab?: ShelfTab; full?: boolean; 
 const craftStage = useShelf();
 const tab = ref<ShelfTab>(props.initialTab);
 /**
- * 持った物に掛けられるお告げの欄 (呼ぶ側の slot "held") は、持ったアイコンを軸に重ねて出す (棚は押し下げない・送らない)。
- * 今のタブにアイコンが無い時だけ、タブの下に並べて出す
+ * 持った物に掛けられるお告げの欄 (呼ぶ側の slot "held") は、持ったアイコンの「見た目の行」のすぐ下に差し込み、下の行を押し下げる
+ * (2026-10-22 オーナー「ポップアップはダメ」: 前は棚の上に重ねて浮かせ、下のカオスなどの行を隠していた)。今のタブにアイコンが無い時だけ、タブの下に並べて出す
  */
 const root = ref<HTMLElement | null>(null);
 const scroller = ref<HTMLElement | null>(null);
 /** 中の一覧を送ったら、重ねた欄も付いて行く (お告げ) / 閉じる (エッセンスの段) */
 function onInnerScroll(): void { essOpen.value = null; placeAnchor(); }
 /**
- * お告げの欄の置き場: 持っているカレンシーのアイコン (data-key) のすぐ下。アイコンが右寄りなら右端をそろえる。
- * 今のタブにアイコンが無ければ null (今まで通りタブの下に出す)
+ * お告げの欄の入れ物: 持っているカレンシーのアイコン (data-key) と同じ見た目の行の最後の後ろに、全幅の箱を 1 つ差し込む (欄は Teleport でここへ)。
+ * 升目 (PC) でも折り返し (スマホ) でも、次の行から下へずれる。アイコンが今のタブに無ければ null (タブの下に出す)
  */
-const anchor = ref<{ style: Record<string, string> } | null>(null);
+const holder = ref<HTMLElement | null>(null);
+function dropHolder(): void { holder.value?.remove(); holder.value = null; }
 function placeAnchor(): void {
   const k = craftStage.held.value, r = root.value;
-  if (!k || !r || props.inlineHeld) { anchor.value = null; return; }
-  const btn = [...r.querySelectorAll<HTMLElement>(`[data-key="${CSS.escape(k)}"], [data-ess-keys~="${CSS.escape(k)}"]`)].find((b) => b.offsetParent && !b.closest("[data-held-box]") && !b.closest(".ess-anchor"));
-  if (!btn) { anchor.value = null; return; }
-  anchor.value = { style: popPlace(r, btn) };
-  void nextTick(() => {
-    const pop = r.querySelector<HTMLElement>(".held-anchor .held-pop-in");
-    if (pop && anchor.value) anchor.value = { style: popPlace(r, btn, pop) };
-  });
+  if (!k || !r || props.inlineHeld) { dropHolder(); return; }
+  let btn = [...r.querySelectorAll<HTMLElement>(`[data-key="${CSS.escape(k)}"], [data-ess-keys~="${CSS.escape(k)}"]`)].find((b) => b.offsetParent && !b.closest("[data-held-row]") && !b.closest(".ess-anchor"));
+  if (btn?.parentElement?.hasAttribute("data-ess-keys")) btn = btn.parentElement;
+  const grid = btn?.parentElement;
+  if (!btn || !grid) { dropHolder(); return; }
+  const kids = [...grid.children].filter((c): c is HTMLElement => c instanceof HTMLElement && !c.hasAttribute("data-held-row"));
+  const last = kids.filter((c) => Math.abs(c.offsetTop - btn!.offsetTop) < 4).pop() ?? btn;
+  let h = holder.value;
+  if (h && h.previousElementSibling === last) return; // 同じ所 (差し込んで大きさが変わった時の呼び直し)
+  if (!h) {
+    h = document.createElement("div");
+    h.setAttribute("data-held-row", "");
+    Object.assign(h.style, { gridColumn: "1 / -1", flexBasis: "100%", width: "100%", justifySelf: "stretch", margin: "2px 0 4px" });
+  }
+  last.after(h);
+  holder.value = h;
 }
 /**
  * アイコンを軸に重ねて出す欄 (お告げ・エッセンスの段) の位置。ふだんはアイコンのすぐ下、下で切れる (欄の高さが分かってから) ならすぐ上。
@@ -81,7 +90,7 @@ function popPlace(r: HTMLElement, btn: HTMLElement, pop?: HTMLElement): Record<s
 let anchorRo: ResizeObserver | null = null;
 watch([() => craftStage.held.value, () => tab.value, () => craftStage.item.value], () => void nextTick(placeAnchor), { immediate: true });
 onMounted(() => { if (root.value && typeof ResizeObserver === "function") { anchorRo = new ResizeObserver(() => placeAnchor()); anchorRo.observe(root.value); } });
-onBeforeUnmount(() => anchorRo?.disconnect());
+onBeforeUnmount(() => { anchorRo?.disconnect(); dropHolder(); });
 /**
  * オーブ・骨のタブ: 今のアイテムに使える (光っている) 物を前に、使えない物を後ろに (2026-10-05 オーナー「使える光ってるオーブを丸ごと前に
  * 持ってきちゃおうか。1 段目に入らなければ折り返して 2 段目に。その方がこれ使えるんだなってなる」)。まとまり (変成・増強…) の並びは保つ
@@ -293,7 +302,7 @@ const TABS = computed(() => (!props.full ? [] : [
         </div>
       </div>
       <p v-if="!usableAll.length" class="text-[12px] opacity-50">{{ tr("今のアイテムに使える物はありません", "Nothing usable on this item") }}</p>
-      <div v-if="$slots.held && !anchor" class="mt-2" data-held-box><slot name="held" /></div>
+      <div v-if="$slots.held && !holder" class="mt-2" data-held-box><slot name="held" /></div>
     </div>
 
     <!-- 使える物を前に、使えない物は線の下に (2026-10-05)。持っているカレンシーのお告げは使える物の直後 -->
@@ -306,7 +315,7 @@ const TABS = computed(() => (!props.full ? [] : [
         </template>
         <p v-if="!orbSplit.usable.length" class="text-[12px] opacity-50">{{ tr("今のアイテムに使える物はありません", "Nothing usable on this item") }}</p>
       </div>
-      <div v-if="$slots.held && !anchor" class="mt-2" data-held-box><slot name="held" /></div>
+      <div v-if="$slots.held && !holder" class="mt-2" data-held-box><slot name="held" /></div>
       <template v-if="orbSplit.unusable.length">
         <!-- 2026-10-10 動きの揃え 3: 開く / たたむ は Disclosure に -->
         <div class="mb-1 mt-3 border-t border-white/10 pt-2 max-md:flex max-md:min-h-10 max-md:items-center">
@@ -372,11 +381,10 @@ const TABS = computed(() => (!props.full ? [] : [
       </div>
     </div>
     <!-- オーブ以外のタブ (エッセンス等) で持った時は一番下 (お告げのタブは棚そのものがお告げなので出さない) -->
-    <div v-if="tab !== 'orb' && tab !== 'usable' && tab !== 'omen' && $slots.held && !anchor" class="mt-3" data-held-box><slot name="held" /></div>
+    <div v-if="tab !== 'orb' && tab !== 'usable' && tab !== 'omen' && $slots.held && !holder" class="mt-3" data-held-box><slot name="held" /></div>
     </div>
-    <!-- 持っている物のお告げは、そのアイコンのすぐ下に重ねて出す (棚は押し下げない。2026-10-10 オーナー「アイコンの下まで持ってきていい」) -->
-    <!-- エッセンスの段を選ぶ窓を開いている間は出さない (2 つが重なった。2026-10-13 ランダム操作の確かめ) -->
-    <div v-if="$slots.held && anchor && !essOpen" class="held-anchor" :style="anchor.style" data-held-box><div class="held-pop-in"><slot name="held" /></div></div>
+    <!-- 持っている物のお告げは、そのアイコンの行のすぐ下に差し込む (下の行を押し下げる。2026-10-22 オーナー「ポップアップはダメ」)。エッセンスの段を選ぶ窓を開いている間は出さない -->
+    <Teleport v-if="$slots.held && holder && !essOpen" :to="holder"><div data-held-box><slot name="held" /></div></Teleport>
     <!-- エッセンスの段: 種類のアイコンを押すと、お告げの欄と同じ形で出す。使えない段は灰色と理由 (2026-10-10 オーナー) -->
     <div v-if="essOpen && groupKeys(essOpen).length && essPos" class="ess-anchor held-anchor" :style="essPos" :data-ess-for="groupKeys(essOpen).join(' ')">
       <div class="held-pop-in p-2">
@@ -393,7 +401,7 @@ const TABS = computed(() => (!props.full ? [] : [
 </template>
 
 <style scoped>
-/* 持っている物のお告げの欄は、そのアイコンのすぐ下に重ねて出す (下の行を押し下げない)。2026-10-10 オーナー「毎回画面がめっちゃ動く」「アイコンの下まで持ってきていい」 */
+/* エッセンスの段の欄は、そのアイコンのすぐ下に重ねて出す (下の行を押し下げない)。2026-10-10 オーナー「毎回画面がめっちゃ動く」「アイコンの下まで持ってきていい」 */
 .held-anchor { position: absolute; z-index: 30; max-width: min(640px, 100%); }
 .held-pop-in {
   background: #0d0b10; border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(167, 139, 250, 0.35);

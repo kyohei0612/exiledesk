@@ -55,14 +55,17 @@ export const FACTION_TAG: Readonly<Record<string, string>> = {
  * 2026-10-10 オーナー「プレが埋まってる状態で左側は使えはするけど意味ないこと教えてあげた方がいい。サフィ冒涜したいけど、サフィ 1 以外全部
  * 埋まってたらお告げは付けれるけど意味ない (空きに勝手に入る)」。棚のお告げのアイコンの下に出す
  */
-export function omenNote(omen: string, item: StageItem | null, data?: PatchData | null): string | null {
+/** omenNote と同じ一言 + 掛けても意味が無い (掛けられない) 物か。block の物はお告げの欄で灰色・押せない (2026-10-22 オーナー「進行不能」) */
+export function omenNoteOf(omen: string, item: StageItem | null, data?: PatchData | null): { text: string; block: boolean } | null {
+  const no = (text: string): { text: string; block: boolean } => ({ text, block: true });
+  const say = (text: string): { text: string; block: boolean } => ({ text, block: false });
   if (!item) return null;
   // 勢力のお告げ: 部位に掛けられない / その勢力の MOD がこの部位に無い (セプターなど。骨は打てるが候補は普通の 3 つ。2026-10-11 オーナー)
   const fac = FACTION_TAG[omen];
   if (fac) {
-    if (!bossOmenAllowed(item.cls.category)) return tr("武器・宝飾品・矢筒だけ", "Weapons, jewellery & quivers only");
+    if (!bossOmenAllowed(item.cls.category)) return no(tr("武器・宝飾品・矢筒だけ", "Weapons, jewellery & quivers only"));
     const ids = [...item.cls.pools.desecrated.prefixes, ...item.cls.pools.desecrated.suffixes];
-    if (data && !ids.some((id) => data.mods.get(id)?.tags.includes(fac))) return tr("この部位に勢力の MOD が無い (意味なし)", "No such mods on this item class (no effect)");
+    if (data && !ids.some((id) => data.mods.get(id)?.tags.includes(fac))) return no(tr("この部位に勢力の MOD が無い (意味なし)", "No such mods on this item class (no effect)"));
   }
   const free = (s: StageSide): boolean => room(item, s);
   const removable = (s: StageSide): number => listOf(item, s).filter((m) => !m.fractured).length;
@@ -82,20 +85,23 @@ export function omenNote(omen: string, item: StageItem | null, data?: PatchData 
   if (item.rarity !== "rare") return null;
   const a = addSide[omen];
   if (a) {
-    if (!free(a)) return replacesWhenFull(omen) ? (a === "prefix" ? tr("プレフィックス満杯: プレフィックスを 1 つ置き換える", "Prefixes full: replaces a prefix") : tr("サフィックス満杯: サフィックスを 1 つ置き換える", "Suffixes full: replaces a suffix")) : a === "prefix" ? tr("プレフィックス満杯で打てない", "Prefixes full") : tr("サフィックス満杯で打てない", "Suffixes full");
-    if (!free(other(a))) return tr("今は意味なし", "No effect now");
+    if (!free(a)) return replacesWhenFull(omen) ? say(a === "prefix" ? tr("プレフィックス満杯: プレフィックスを 1 つ置き換える", "Prefixes full: replaces a prefix") : tr("サフィックス満杯: サフィックスを 1 つ置き換える", "Suffixes full: replaces a suffix")) : no(a === "prefix" ? tr("プレフィックス満杯で打てない", "Prefixes full") : tr("サフィックス満杯で打てない", "Suffixes full"));
+    if (!free(other(a))) return no(tr("今は意味なし", "No effect now"));
     return null;
   }
   const r = removeSide[omen];
   if (r) {
-    if (!removable(r)) return tr("消せる物が無い", "Nothing to remove");
-    if (!removable(other(r))) return tr("今は意味なし", "No effect now");
+    if (!removable(r)) return no(tr("消せる物が無い", "Nothing to remove"));
+    if (!removable(other(r))) return no(tr("今は意味なし", "No effect now"));
     return null;
   }
   if (omen === "OmenofGreaterExaltation") {
     const open = (["prefix", "suffix"] as const).reduce((n, sd) => n + Math.max(0, limitOf(item, sd) - listOf(item, sd).length), 0);
-    return open === 1 ? tr("1 つしか付かない", "Only 1 slot open") : null;
+    return open === 1 ? say(tr("1 つしか付かない", "Only 1 slot open")) : null;
   }
-  if (omen === "OmenofCatalysingExaltation") { const c = catalystOf(item); return c.pct > 0 && c.tag ? null : tr("品質が要る", "Needs quality"); }
+  if (omen === "OmenofCatalysingExaltation") { const c = catalystOf(item); return c.pct > 0 && c.tag ? null : no(tr("品質が要る", "Needs quality")); }
   return null;
+}
+export function omenNote(omen: string, item: StageItem | null, data?: PatchData | null): string | null {
+  return omenNoteOf(omen, item, data)?.text ?? null;
 }

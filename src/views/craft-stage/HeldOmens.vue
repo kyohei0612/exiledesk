@@ -5,7 +5,8 @@
   持った物に掛けられるお告げが無い時は何も出さない (slot を出すかは呼ぶ側が heldOmensOf で決める)。
 -->
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, watchEffect } from "vue";
+import { omenBlock } from "../../services/craft-stage/engine";
 import { tr } from "../../i18n/lang";
 import { nameOf } from "../../state/craft-stage";
 import { useShelf } from "../../state/emulator/shelf-context";
@@ -18,6 +19,10 @@ defineProps<{ modList?: boolean }>();
 const emit = defineEmits<{ modList: [] }>();
 const shelf = useShelf();
 const list = computed(() => heldOmensOf(shelf.held.value));
+// 掛かっているお告げが、持った物を打てなくする・意味が無い物になったら外す (ボタンは灰色で掛けられない。2026-10-22 オーナー「進行不能」、判定はエンジンの omenBlock)
+watchEffect(() => {
+  for (const o of list.value) if (shelf.omens.value.includes(o) && omenBlock(shelf.data.value, shelf.item.value, shelf.held.value, shelf.omens.value, o)) shelf.toggleOmen(o);
+});
 </script>
 
 <template>

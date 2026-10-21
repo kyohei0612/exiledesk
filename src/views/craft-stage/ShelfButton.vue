@@ -16,6 +16,7 @@ import { toCss } from "../../utils/zoom";
 import { shelfTag } from "../../state/emulator/craft-stage-help";
 import { useShelf } from "../../state/emulator/shelf-context";
 import { omenNote } from "../../services/craft-stage/omens";
+import { omenBlock } from "../../services/craft-stage/engine";
 import { tr } from "../../i18n/lang";
 
 /** label: 名前の上書き (エッセンスを種類でまとめたアイコン)。nobadge: 段の札を出さない */
@@ -61,7 +62,9 @@ const omenTag = computed(() => {
   return t ? tr(t[0], t[1]) : null;
 });
 /** 今のアイテムでは意味が無い / 掛けると打てない (2026-10-10 オーナー「空きに勝手に入るから意味ないこと教えてあげた方がいい」) */
-const omenWarn = computed(() => (props.omen ? omenNote(props.k, shelf.item.value, shelf.data.value) : null));
+/** 掛けると持った物が打てなくなる・掛けても意味が無い (エンジンの omenBlock)。灰色で押せない、理由は omenWarn の所に (2026-10-22 オーナー「進行不能」) */
+const omenNo = computed(() => (props.omen ? omenBlock(shelf.data.value, shelf.item.value, shelf.held.value, shelf.omens.value, props.k) : null));
+const omenWarn = computed(() => (props.omen ? omenNo.value ?? omenNote(props.k, shelf.item.value, shelf.data.value) : null));
 const on = computed(() => (props.omen ? shelf.omens.value.includes(props.k) : shelf.held.value === props.k));
 
 /**
@@ -98,12 +101,13 @@ onBeforeUnmount(leave);
   <button
     type="button"
     class="group relative flex w-[74px] md:w-[80px] flex-col items-center px-0.5 pb-1 text-[10px] md:text-[11px] transition max-md:w-[calc(25vw-1.6rem)] max-md:min-w-[60px] max-md:text-[11px]"
-    :class="[on && !omen ? 'text-[var(--exile-color-text-title)]' : '', reason && !omenBlocked ? 'opacity-35' : '']"
+    :class="[on && !omen ? 'text-[var(--exile-color-text-title)]' : '', (reason && !omenBlocked) || (omenNo && !on) ? 'opacity-35' : '', omenNo && !on ? 'cursor-not-allowed' : '']"
+    :aria-disabled="omenNo && !on ? 'true' : undefined"
     :aria-label="`${nameOf(k)}${reason ? ` — ${reason}` : ''}`"
     :data-key="k"
     :data-rec="`shelf:${k}`"
     data-shelf
-    @click="leave(); emit('pick', k)"
+    @click="leave(); if (!(omenNo && !on)) emit('pick', k)"
     @mouseenter="enter"
     @mouseleave="leave"
   >

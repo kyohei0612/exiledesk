@@ -17,6 +17,7 @@ export type { PobBlock } from "./stage-pob";
 // アイテムを作る・打つ
 export { freshItem, startFrom, startItem, playStep, playPlan, runPlan, splitOmens } from "./run-plan";
 export { applyCurrency, kindOf, omensFor } from "./apply-currency";
+export { omenBlock } from "./omen-block";
 export { revealOffers, unrevealedOf } from "./apply-desecrate";
 
 // アイテムの今を読む
