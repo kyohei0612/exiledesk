@@ -53,3 +53,40 @@
 - 完全カオスの最低レベル 50 と、動画で付いたレベル 47 の MOD の食い違い: 原因が分かっていない (未解決)。未確定の話として一言触れるなら可。
 - 「手袋の冒涜 MOD が 9 種」「手袋にクリティカルヒット率が無い」: 調べの途中の誤りで、訂正済み (#7・#8)。古い版を引用しない。
 - ブログの自動クラフトの話は、オーナーが 10-21 に「自動化はいらない」と決めた。「自動モードの 58.7 神」などの数字は、手動の記事に出す時は「計算の遊び」と断る。
+
+## 追記 (2026-10-22): 各記事の狙う言葉 (検索)
+書き方の手引き = notes/2026-10-22-blog-seo-guide.md。言葉は「競合の題・ゲーム内の名前」から選んだ物で、**検索量は未確認**。主 = 1 記事だけが持つ言葉 (共食いを避ける)、副 = 補助。英語は poe2db の英語名。
+| # | 主の言葉 (日本語) | 副の言葉 | 英語の主の言葉 |
+|---|---|---|---|
+| 1 | PoE2 クラフト 期待値 | 最善手 / 動的計画法 | poe2 crafting expected cost |
+| 2 | PoE2 聖別 品質 | スペルスキルのレベル +6 / 不在のアミュレット | poe2 sanctify quality order |
+| 3 | PoE2 金の指輪 クラフト 手順 | ゴールドリング / 字幕 用語 | poe2 gold ring craft |
+| 4 | 品質の最大値 ブリーチのエッセンス | 削減のお告げ / 品質 40% | poe2 essence of the breach quality |
+| 5 | PoE2 キャストスピード 重み | ウェイト / poe2db 重み 1 | poe2 modifier weights cast speed |
+| 6 | PoE2 手袋 クラフト ES | 高貴なオーブ 上級 完全 / サイレーンスケイル | poe2 energy shield gloves craft |
+| 7 | アーケインサージ 冒涜 手袋 | クルガル / 知性の手袋 | poe2 arcane surge desecrated gloves |
+| 8 | コルの狩り 手袋 ルーン | 投射物スキルのレベル / クリティカルヒット率 | poe2 Kolr's Hunt gloves |
+| 9 | PoE2 カタリスト 手袋 使えない | 触媒の高貴のお告げ | poe2 catalyst gloves |
+| 10 | PoE2 マナ 指輪 クラフト | 最大マナ % / パーフェクトエッセンス | poe2 mana ring craft |
+| 11 | PoE2 指輪 クラフト サフィックス | キャストスピード 全耐性 レアリティ | poe2 ring suffix craft |
+| 12 | 削減のお告げ 抹消のお告げ 違い | Omen of Whittling / Erasure | poe2 omen of whittling vs erasure |
+| 13 | PoE2 お告げ 高い 使うべきか | 消去のオーブ | poe2 omens worth it |
+| 14 | カオスオーブ 付け直し 作り直し | カオススパム | poe2 chaos orb reroll vs restart |
+| 15 | PoE2 クラフト 順番 費用 | 関門 / 狙う順 | poe2 crafting order cost |
+| 16 | PoE2 クラフト 費用 運 平均 | 中央値 / 外れ値 | poe2 crafting cost variance |
+| 17 | PoE2 カオススパム 確率 | 0.3% / 何個 | poe2 chaos spam odds |
+| 18 | PoE2 クラフト AI 期待値 | ChatGPT / 確率が合わない | poe2 crafting ai expected cost |
+| 19 | PoE2 冒涜 MOD 重み | 発現 確率 / 85 14 1 | poe2 desecration weights |
+| 20 | Craft of Exile 冒涜 計算 | craft of exile desecrate | craft of exile desecrate no handler |
+| 21 | PoE2 冒涜 骨 左右 | ネクロマンシーのお告げ | poe2 desecration omen of necromancy |
+| 22 | PoE2 フラクチャー 冒涜 固定できない | フラクチャーオーブ 4 MOD | poe2 fracturing orb desecrated |
+| 23 | PoE2 品質 切り捨て | スペルスキルのレベル 品質 34% | poe2 quality rounding |
+| 24 | 触媒の高貴のお告げ 倍率 | Omen of Catalysing Exaltation | poe2 catalysing exaltation multiplier |
+| 25 | PoE2 MOD 重み 変える | クラフト シミュレーター | poe2 crafting simulator custom weights |
+| 26 | PoE2 冒涜 陣営 アマナム ウラマン クルガル | poe2db タグ | poe2 desecration lords Amanamu Ulaman Kurgal |
+| 27 | PoE2 クラフト シミュレーター 作り方 | 説明文 例外 | poe2 crafting simulator design |
+| 28 | PoE2 クラフト 期待値 計算 間違い | 乱数 / 最低レベル | poe2 crafting calculator mistakes |
+| 29 | PoE2 スパムシミュレーター | 増強スパム / 運試し | poe2 spam simulator |
+| 30 | ExileDesk シェア 不具合 | (開発の記録。検索向けではない) | (英語記事は不要) |
+| 31 | アビスのエッセンス 紋章 | アビサルロード / 結晶化 冒涜 | poe2 essence of the abyss mark |
+| 32 | PoE2 クラフト シミュレーター 要望 | 期待値 計算 ツール / 通常骨 古代骨 比べ | poe2 crafting simulator wishes |
