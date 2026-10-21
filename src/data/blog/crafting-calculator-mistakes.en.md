@@ -2,7 +2,7 @@
 title: PoE2 Crafting Calculator Mistakes: 3 Bugs We Caught
 description: Three mistakes we found in our own PoE2 crafting cost calculation: a biased random generator (68 div), the wrong minimum modifier level for Transmutation and Augmentation (magic cost doubled), and a desecration marker that skewed results by 24%.
 date: 2026-10-22
-tags: expected cost, calculation, random numbers, minimum modifier level, Desecration
+tags: expected cost, calculation, random numbers, minimum modifier level, correction
 draft: true
 ---
 PoE2 crafting calculator mistakes are easy to make and hard to see: **a small slip in how the calculation is built turns straight into a wrong number**. In our own test calculation, a biased random generator gave 68 Divine Orbs (div), using the Exalted Orb's minimum modifier levels for Transmutation and Augmentation doubled the magic-item cost, and the way we tracked a desecration marker put us 24% off the engine.

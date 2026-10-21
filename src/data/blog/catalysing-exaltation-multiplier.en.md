@@ -2,7 +2,7 @@
 title: PoE2 Catalysing Exaltation Multiplier: No One Knows It
 description: The poe2 Catalysing Exaltation multiplier has no official number. ExileDesk defaults to Craft of Exile's 1 + 0.2 × quality (5x at 20%). Here is how that compares with two Reddit measurements, and why you can now set it yourself.
 date: 2026-10-22
-tags: Omen of Catalysing Exaltation, Catalyst, Quality, Exalted Orb, rings
+tags: Omen of Catalysing Exaltation, Catalyst, Quality, Exalted Orb, Gold Ring
 tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
 draft: true

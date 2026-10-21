@@ -2,7 +2,7 @@
 title: PoE2 Sanctify vs Quality Order: Why +6 but Never +5
 description: In PoE2, Sanctification applies to the base value before Quality. A 50% Quality Absent Amulet can show +6 to Level of all Spell Skills, but never +5. Here is why a trade search for +5 found nothing, multiplier by multiplier.
 date: 2026-10-22
-tags: Sanctified, Quality, Absent Amulet, Divine Orb, Catalyst
+tags: Sanctify, Quality, Absent Amulet, Divine Orb, Catalyst
 tree: /?page=sim-tree&base=Absent%20Amulet
 craft: /?base=Absent%20Amulet
 draft: true
