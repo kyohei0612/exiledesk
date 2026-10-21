@@ -6,34 +6,65 @@ tags: Gold Ring, Chaos Orb, Orb of Annulment, Omen of Catalysing Exaltation, exp
 tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
 image: img/dont-hoard-misses-og.en.png
+ready: true
 draft: true
 ---
-We had three groups of 300 crafters make the same Gold Ring. The only difference was one decision: what to do when a miss rolls. In this PoE2 ring suffix craft, the group that **annulled every miss on the spot** paid 220 Divine Orbs (div) per ring. The group that held misses until the suffixes were full paid 400.
+We had three groups of 300 crafters make the same Gold Ring. The only difference was one move: what to do when a miss rolls. In this PoE2 ring craft for three suffixes, the group that **annulled every miss on the spot** paid 220 div per ring. The group that held misses and annulled later paid 400 div (div = Divine Orb).
 
-That's almost half. From one decision.
+:::zundamon normal
+An Orb of Annulment can wipe out a target you already hit.
+:::
 
-An Orb of Annulment can take out a target you already have, right? So it feels smart to annul as rarely as possible: keep adding Exalted Orbs until the slots are full, then clean up in one go.
+:::zundamon normal
+So I'd rather keep adding Exalted Orbs until the slots are full, then annul it all at once.
+:::
 
-When we ran the craft hundreds of times on the ExileDesk engine, the opposite turned out to be true. Let's walk through why, one chart at a time.
+:::metan normal
+That's the natural instinct. But when we ran it hundreds of times on the engine, the opposite came out.
+:::
+
+:::zundamon surprised
+The opposite!? One move makes it almost half the price?
+:::
 
 :::summary What you'll learn
-- Annulling a non-target suffix **the moment it rolls** is the cheapest method: 220 div per ring, about half of holding misses (400 div)
-- The cost comes from how many Annulments you use, not how risky one Annulment is. Holding misses more than doubles the Annulments and adds restarts after losing every target
+- Annulling a non-target suffix **the moment it rolls** is the cheapest. 220 div per ring, about half of holding misses first (400 div)
+- The cost comes from how many Annulments you use, not how risky one Annulment is. Holding misses more than doubles the Annulments and adds restarts
 - Swapping the Rarity T1 target for a single resistance T1 brings the same method down to 111 div per ring
-- All numbers are averages of 300 ExileDesk engine runs each (about ±10%)
+- All numbers are averages of 300 engine runs each (about ±10%)
+:::
+
+:::tip New to this? Words used here
+- **Suffix**: one side of an item's mod slots. On rings, this is where resistances and the like go
+- **Orb of Annulment**: removes one mod that isn't Fractured
+- **Exalted Orb**: adds one mod to a Rare item
+- **Fractured**: a mod locked in place so it can't be removed
+- **Omen of Catalysing Exaltation**: uses up all Catalyst Quality to make the matching mods more likely
+- **div**: Divine Orb, the price unit in this post
 :::
 
 ## The Ring We Crafted
 
-This is a familiar caster ring:
+This is a common caster ring.
 
-- A Rare Gold Ring, Item Level 82.
-- A Fractured Spell Damage prefix (Glyphic, T2), plus one random mod. Chaos Orbs start from this two-mod item.
-- Suffix targets only: increased Rarity of Items found (of Archaeology) T1, Cast Speed T2 or better, and all Elemental Resistances T2 or better. Any prefix is fine.
+| Item | Details |
+|---|---|
+| Base | Rare Gold Ring, Item Level 82 |
+| Starting item | Spell Damage prefix (Glyphic, T2) Fractured, plus one random mod. Two mods total |
+| Targets (suffixes only) | increased Rarity of Items found (of Archaeology) T1, Cast Speed T2 or better, all Elemental Resistances T2 or better |
+| Prefixes | Anything is fine |
 
-Once one target is on the ring, the rest are added with Exalted Orbs.
+:::zundamon normal
+So how do you build it?
+:::
 
-Misses are removed with an Orb of Annulment (no Omen). If every target is gone, it's back to Chaos Orbs.
+:::metan normal
+Start with Chaos Orbs. Once one target lands, add the rest with Exalted Orbs.
+:::
+
+:::metan normal
+Misses get removed with an Orb of Annulment (no Omen). If every target is gone, it's back to Chaos Orbs.
+:::
 
 :::tip How the Exalted Orbs are used (same for all three groups)
 - Cast Speed: a Skittering Catalyst brings Quality to 20%, then Omen of Catalysing Exaltation + Omen of Dextral Exaltation + Perfect Exalted Orb
@@ -41,67 +72,112 @@ Misses are removed with an Orb of Annulment (no Omen). If every target is gone, 
 - Rarity: there is no Catalyst for it, so it is aimed plainly with Omen of Dextral Exaltation + Greater Exalted Orb
 :::
 
-### The One Decision We Changed
+### The One Move We Changed
 
-Up to here, all three methods are the same. The only difference is whether you annul a miss right away or wait until all three suffixes are full.
+Up to here, all three groups are the same. The only difference is whether you annul a miss right away or wait until all three suffixes are full.
 
-- **A**: Use only Chaos Orbs until Rarity T1 rolls. If Cast Speed or Resistances roll first, ignore them.
-- **B**: Keep adding Exalted Orbs through misses until the suffixes are full, then annul.
-- **C**: Annul as soon as any non-target suffix appears.
+| Method | What you do when a miss rolls |
+|---|---|
+| **A** | Use only Chaos Orbs until Rarity T1 rolls. If Cast Speed or Resistances roll first, ignore them |
+| **B** | Keep adding Exalted Orbs until all three suffixes are full, then annul |
+| **C** | Annul on the spot as soon as any non-target suffix appears |
 
-Which one would you bet on?
+:::metan normal
+Which one do you think is cheapest?
+:::
+
+:::zundamon happy
+A, since it never annuls, or B, since it annuls in one go!
+:::
 
 ## Result: Annulling at Once Costs 220 div per Ring
 
-![Cost per ring: A 441 div, B 400 div, C 220 div. Method C with a single resistance T1 target instead of Rarity: 111 div](img/dont-hoard-misses-cost.en.svg)
+Averages of 300 runs each. The noise is about ±10%.
 
-| Method | Finished | Cost per ring | Chaos Orb | Annulment | Perfect Exalted | Greater Exalted | Lost all targets |
-|---|---|---|---|---|---|---|---|
-| A Chaos for Rarity only | 99.0% | 441 div | 1,683 | 32 | 34 | 0 | 46 times |
-| B Fill to three | 99.7% | 400 div | 1,197 | 135 | 30 | 108 | 35 times |
-| **C Annul misses at once** | **100%** | **220 div** | 930 | 57 | 15 | 44 | 25 times |
-
-C costs about half of B.
-
-With 300 runs each, the average is within about ±10%. The gap between B and C is well outside the noise. A and B barely overlap.
+| Method | Cost per ring | Finished | How it went |
+|---|---:|---:|---|
+| A Chaos for Rarity only | 441 div | 99.0% | The most expensive. Keeps spamming Chaos Orbs |
+| B Fill to three | 400 div | 99.7% | A bit cheaper than A. The ranges just barely overlap |
+| **C Annul misses at once** | **220 div (cheapest)** | **100%** | About half of B. The gap is far larger than the noise |
 
 :::zundamon surprised
-Wait, C annuls all the time and it's the cheapest? Annulment can delete your targets, so I thought using fewer was always better!
+Wait, C annuls right away and it's the cheapest? I thought using fewer Annulments was always better.
 :::
 
 :::metan normal
-That's the trap. C annuls right away, but count the Annulments: A uses the fewest, then C. The one annulling the most is B, the method that waits.
+That's the trap. Here's what each run used.
+:::
+
+| Method | Chaos Orb | Annulment | Perfect Exalted | Greater Exalted | Lost all targets | What happens |
+|---|---:|---:|---:|---:|---:|---|
+| A Chaos for Rarity only | 1,683 | 32 | 34 | 0 | 46 times | No Greater Exalted Orbs, but Chaos Orbs pile up |
+| B Fill to three | 1,197 | 135 | 30 | 108 | 35 times | The most Annulments and many restarts |
+| **C Annul misses at once** | 930 | 57 | 15 | 44 | 25 times | Every line is smaller than B |
+
+:::zundamon surprised
+B is the one annulling the most!
+:::
+
+:::metan normal
+Right. A uses the fewest Annulments, then C. B, the one that waits, uses the most.
 :::
 
 ## Why Holding Misses Costs More
 
-It comes down to how the Orb of Annulment works.
+It comes down to how the Orb of Annulment works. Without an Omen, it removes one non-Fractured mod at random, each equally likely.
 
-Without an Omen, it removes one random non-Fractured mod. If the suffixes hold one target and two misses, there is a one-in-three chance of losing the target. With one target and one miss the chance is one in two, but you annul far less often.
+| Method | Suffixes when you annul | Chance one Annulment hits a target | Annulments used | Restarts |
+|---|---|---:|---:|---:|
+| B Hold, then annul | 1 target + 2 misses | 1 in 3 (lower) | 135 (more) | 35 |
+| C Annul at once | 1 target + 1 miss | 1 in 2 (higher) | 57 (fewer) | 25 |
 
-![With one target and two misses in the suffixes, an Annulment hits the target 1 in 3; with one target and one miss, 1 in 2. B used 135 Annulments and restarted 35 times; C used 57 and restarted 25 times](img/dont-hoard-misses-erase.en.svg)
+:::zundamon normal
+Per Annulment, annulling right away like C is riskier.
+:::
 
-Per Annulment, annulling early looks riskier.
-
-But what sets the cost is not how risky one Annulment is. It's **how many you use**.
+:::metan normal
+It looks that way. But what set the cost wasn't the risk of one Annulment. It was **how many you use**.
+:::
 
 ### What happens when you wait (B)
 
-B waits and then annuls, so it uses more Orbs of Annulment (135 per ring). Each one is another chance to hit a target you already have.
+B holds misses and annuls later, so it ends up annulling more often.
 
-Rarity T1 is also rare: Omen of Dextral Exaltation + Greater Exalted Orb lands it only 2.3% of the time. Adding Exalted Orbs while holding misses fills the slots with things you don't want.
+:::metan normal
+B used 135 Annulments per run. Each one is another chance to take out a target you already have.
+:::
 
-In the end, B lost every target and went back to Chaos Orbs 35 times per ring.
+:::zundamon normal
+But if you keep adding Exalted Orbs, a target shows up eventually, right?
+:::
+
+:::metan troubled
+Rarity T1 lands only 2.3% of the time with Omen of Dextral Exaltation + Greater Exalted Orb. Add while holding misses, and the slots fill with things you don't want.
+:::
+
+:::zundamon troubled
+So that's how the restarts from Chaos Orbs grew to 35 per run...
+:::
 
 ### What happens when you annul at once (C)
 
-C annuls the moment a miss appears, so two misses never sit side by side.
+C annuls the moment a miss appears, so two misses never sit in the suffixes together.
 
-It used 57 Orbs of Annulment, and lost every target only 25 times. Perfect Exalted Orbs fell from 30 to 15, and Chaos Orbs from 1,197 to 930. Not hoarding misses made every line of the bill smaller.
+:::metan normal
+It needed only 57 Annulments, and restarts dropped to 25.
+:::
 
-![Per run: Chaos Orb A 1,683, B 1,197, C 930; Orb of Annulment A 32, B 135, C 57; Greater Exalted Orb A 0, B 108, C 44; lost all targets A 46, B 35, C 25 times](img/dont-hoard-misses-uses.en.svg)
+:::metan normal
+Perfect Exalted Orbs went from B's 30 down to 15. Chaos Orbs went from 1,197 down to 930.
+:::
 
-A, by the way, uses almost no Exalted Orbs. Instead it keeps spamming Chaos Orbs until Rarity rolls, so Chaos Orbs rise 1.4 times to 1,683 and the total ends up slightly above B.
+:::zundamon normal
+A doesn't use any Greater Exalted Orbs. Why is it pricier than B?
+:::
+
+:::metan normal
+It keeps spamming Chaos Orbs until Rarity rolls. Chaos Orbs rise 1.4 times, to 1,683.
+:::
 
 :::tip When you craft it yourself
 If a non-target suffix rolls, annul it before your next Exalted Orb. Don't wait to "fill one more slot first."
@@ -109,30 +185,53 @@ If a non-target suffix rolls, annul it before your next Exalted Orb. Don't wait 
 
 ### The first roll doesn't matter
 
-We also wondered whether the first lucky roll matters.
+We split C's 300 runs by which target rolled first, and by the order the targets came together.
 
-Splitting C's 300 runs by which target rolled first, or by the order the targets came together, every group averaged 210 to 245 div, all within the noise. After so many trips back to Chaos Orbs, the first roll's luck washes out.
+:::zundamon normal
+If Rarity rolls first, does it end up cheaper?
+:::
+
+:::metan normal
+Every group averaged 210 to 245 div. The gaps were all within the noise.
+:::
+
+:::metan normal
+After so many trips back to Chaos Orbs, the luck of the first roll seems to wash out.
+:::
 
 ## Swap One Target, Halve It Again: 111 div
 
-Finally, we kept method C but replaced Rarity T1 with "any one of Fire, Cold or Lightning Resistance T1."
+We kept method C but replaced Rarity T1 with "any one of Fire, Cold or Lightning Resistance T1."
 
-Resistance T1 can also be weighted with a Tul's Catalyst and Omen of Catalysing Exaltation, and since any of the three elements will do, Chaos Orbs find it sooner.
+| Third target | Cost per ring | Chaos Orb | Why |
+|---|---:|---:|---|
+| Rarity T1 | 220 div | 930 | No Catalyst, hard to hit |
+| **Single resistance T1 (any of Fire, Cold, Lightning)** | **111 div (half)** | 160 | Heavily weighted with a Tul's Catalyst + Omen of Catalysing Exaltation, and any element will do |
 
-The result was 111 div per ring, exactly half of C. Almost all of the savings came from Chaos Orbs, down from 930 to 160.
+:::zundamon surprised
+Exactly half!
+:::
+
+:::metan normal
+Since any of the three elements works, Chaos Orbs find the first target sooner too. Almost all the savings are Chaos Orbs.
+:::
 
 :::metan happy
-So insisting on Rarity is what makes this ring expensive. Deciding what you really need from the ring is the biggest saving of all.
+Deciding up front what you need from the ring might be the biggest saving of all.
 :::
+
+:::note fold Not yet verified (1)
+- These expected costs themselves have not been compared against Craft of Exile or in-game results. They are engine results.
+:::
+
+Annulling a non-target suffix on the spot, instead of holding it, was the cheapest way to craft this ring. What sets the cost is not how risky one Annulment is, but how many you use.
 
 ## Where the Numbers Come From
 
+:::fold Show sources (3)
 - Every number comes from the ExileDesk engine (the same one the website uses), applied one craft at a time. 300 runs per method, with a 2,000 div cap per run.
 - Prices are the market prices collected by the ExileDesk server (2026-10-20 16:00 UTC, Forbidden Rites; 1 Divine Orb = 696.93 Exalted Orbs). The cost of fracturing is not included.
 - Mod names and tiers were checked on poe2db. The Omen of Catalysing Exaltation multiplier follows Craft of Exile's formula.
-
-:::note Not yet verified
-These expected costs themselves have not been compared against Craft of Exile or in-game results. They are engine results.
 :::
 
 ## Try It Yourself
@@ -143,3 +242,5 @@ You can [try the same Gold Ring on the crafting bench](/?base=Gold%20Ring). To c
 
 - [PoE2 crafting expected cost](/en/blog/optimal-move-vs-intuition/)
 - [PoE2 Cast Speed weight on poe2db](/en/blog/poe2db-cast-speed-weight/)
+
+VOICEVOX: Zundamon / Shikoku Metan
