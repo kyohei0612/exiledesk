@@ -1,7 +1,7 @@
 /**
  * sim-recipe-store.ts — シミュレーターのレシピの一覧を 1 か所で持つ (2026-10-21 オーナー「レシピ消したり上書きしたり色々できるようにしないと
  * そもそも作りがお粗末、シェアもない。しっかり作りこんでくれ」)。
- * 保存・上書き・名前替え・複製・消す (元に戻せる) はここだけを通す。レシピのページ (StageRecipesPage)・シミュレーターの右上 (SimRecipeBar)・
+ * 保存・上書きはここだけを通す (名前替え・複製・消すはレシピのページが木のレシピ tree-recipes.ts に移って使われなくなり、10-22 に消した)。レシピのページ (StageRecipesPage)・シミュレーターの右上 (SimRecipeBar)・
  * ベースを選ぶページの「レシピから始める」(StageRecipeStart) が同じ一覧を見る。保存先は今までどおり sim-recipes.ts (localStorage)
  */
 import { computed, ref, shallowRef } from "vue";
@@ -46,32 +46,3 @@ export function saveNewRecipe(name: string, baseJa: string, session: SimSession)
 export function overwriteRecipe(id: string, session: SimSession, baseJa?: string): void {
   put(recipeList.value.map((r) => (r.id === id ? { ...r, session: clone(session), ...(baseJa ? { baseJa } : {}), updatedAt: Date.now() } : r)));
 }
-export function renameRecipe(id: string, name: string): void {
-  const n = name.trim();
-  if (n) put(recipeList.value.map((r) => (r.id === id ? { ...r, name: n } : r)));
-}
-/** 複製: 元のすぐ後ろに「〜 のコピー」 */
-export function duplicateRecipe(id: string, suffix: string): SimRecipe | null {
-  const list = recipeList.value;
-  const at = list.findIndex((r) => r.id === id);
-  if (at < 0) return null;
-  const now = Date.now();
-  const r: SimRecipe = { ...clone(list[at]!), id: newId(), name: `${list[at]!.name}${suffix}`, savedAt: now, updatedAt: now };
-  put([...list.slice(0, at + 1), r, ...list.slice(at + 1)]);
-  return r;
-}
-/** 消す (元に戻す用に、消した物と場所を返す) */
-export function removeRecipe(id: string): { r: SimRecipe; at: number } | null {
-  const at = recipeList.value.findIndex((r) => r.id === id);
-  if (at < 0) return null;
-  const r = recipeList.value[at]!;
-  put(recipeList.value.filter((x) => x.id !== id));
-  if (currentRecipeId.value === id) currentRecipeId.value = null;
-  return { r, at };
-}
-export function restoreRecipe(x: { r: SimRecipe; at: number }): void {
-  const list = recipeList.value.filter((r) => r.id !== x.r.id);
-  put([...list.slice(0, x.at), x.r, ...list.slice(x.at)]);
-}
-/** ファイルから足した後など、一覧ごと入れ替える */
-export function replaceRecipes(v: SimRecipe[]): void { put(v); }

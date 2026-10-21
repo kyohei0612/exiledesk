@@ -12,7 +12,6 @@ import { tidy, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-mo
 import { MATCH } from "./tree-run";
 
 export const TREE_SAMPLES = ["gold-ring-suffix"] as const;
-export type TreeSampleName = (typeof TREE_SAMPLES)[number];
 
 const hand = (currency: string, omens: string[] = [], extra: Partial<Hand> = {}): Hand => ({ currency, omens, catalyst: null, quality: 0, ...extra });
 function make(base: string, fracture: Aim | null, startRandom: number, boxes: Record<string, Partial<TreeBox>>): TreeDoc {

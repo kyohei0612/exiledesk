@@ -76,4 +76,3 @@ export function useSimAuto(c: {
   }
   return { t1Block, autoOn, ask, toggle, apply };
 }
-export type SimAutoCtx = ReturnType<typeof useSimAuto>;
