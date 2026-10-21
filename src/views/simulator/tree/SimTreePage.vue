@@ -252,6 +252,9 @@ const plusLine = computed(() => {
 watch(() => panel.value?.id, (id) => { if (id) setTimeout(() => void v.reveal(id), 0); });
 /** Vue Flow に渡す箱 (位置は木の形のまま。動かせるのは組める時だけ = 手・一望・戻り先を選んでいる間は画面だけ動く) */
 const flowNodes = computed(() => boxes.value.map((b) => ({ id: b.id, type: "box", position: posOf(b), draggable: false, selectable: false, connectable: false })));
+// Vue Flow へは setNodes で直接入れる (:nodes で渡すと、Vue Flow が中の並びを書き戻している一瞬の変化を拾わず、
+// 見本を開いた時に始まりの箱しか出なかった。10-23 開発版で見た)
+watch(flowNodes, (n) => v.flow.setNodes(n), { immediate: true });
 /** ドットの格子 (Vue Flow の送りと倍率に合わせて動く) */
 const grid = computed(() => {
   const { x, y, zoom: z } = v.flow.viewport.value;
@@ -333,7 +336,7 @@ const glowOf = (b: Box): boolean => {
         <div class="relative min-w-0 flex-1 overflow-hidden rounded-lg border border-white/[0.06] bg-[#0c0a08]">
         <!-- ページの zoom を枠だけ打ち消す (中は実質 1 倍。Vue Flow の座標とマウスが揃う、use-tree-flow.ts)。格子は Vue Flow の送りと倍率に合わせる -->
         <div data-tree-canvas data-overflow-ok class="absolute left-0 top-0 h-full w-full" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid }">
-          <VueFlow :id="FLOW_ID" :nodes="flowNodes" :edges="[]" :default-viewport="{ x: 0, y: 0, zoom: pageZ }" :min-zoom="v.minZoom.value" :max-zoom="v.maxZoom.value"
+          <VueFlow :id="FLOW_ID" :default-viewport="{ x: 0, y: 0, zoom: pageZ }" :min-zoom="v.minZoom.value" :max-zoom="v.maxZoom.value"
             :nodes-draggable="false" :nodes-connectable="false" :elements-selectable="false"
             :pan-on-drag="true" :pan-on-scroll="true" :zoom-on-scroll="false" zoom-activation-key-code="Control" :zoom-on-double-click="false" :zoom-on-pinch="true"
             :delete-key-code="null" :selection-key-code="null" :multi-selection-key-code="null" :auto-pan-on-node-drag="true"
