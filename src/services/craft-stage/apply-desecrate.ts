@@ -10,7 +10,7 @@
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { allMods } from "./stage-core";
 import type { StageItem, StageMod } from "./types";
-import { drawOffers } from "./spec/parts";
+import { drawOffers } from "./spec/parts-unrevealed";
 import { REVEAL_SPEC } from "./spec/desecrate-specs";
 
 /** 発現の候補の数 (説明文の分解 REVEAL_SPEC の reveal の部品) */

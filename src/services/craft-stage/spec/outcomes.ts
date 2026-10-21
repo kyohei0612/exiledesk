@@ -16,7 +16,8 @@ import { isInfiniteEssence } from "../apply-essence";
 import { tunedCatalysingMultiplier } from "../stage-tuning";
 import type { StageItem, StageMod, StageSide } from "../types";
 import { planSpec, type SpecPlan } from "./run-spec";
-import { runPart, unrevealedMod, unrevealedPlan, type PartCtx } from "./parts";
+import { runPart, type PartCtx } from "./parts";
+import { unrevealedMod, unrevealedPlan } from "./parts-unrevealed";
 import { prepareEssence } from "./essence-specs";
 import type { Action } from "./types";
 

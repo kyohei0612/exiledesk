@@ -19,7 +19,7 @@ import { revealOffers } from "./apply-desecrate";
 import type { StageItem, StageMod, StageSide } from "./types";
 import { modsOf, omensOf, planSpec, type SpecPlan } from "./spec/run-spec";
 import { REVEAL_SPEC } from "./spec/desecrate-specs";
-import { unrevealedPlan, type AddUnrevealed } from "./spec/parts";
+import { unrevealedPlan, type AddUnrevealed } from "./spec/parts-unrevealed";
 import { addCands, addOddsBySpec } from "./spec/odds";
 
 export interface HeldOdds {

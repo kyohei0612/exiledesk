@@ -16,7 +16,7 @@ import { whittleTargets } from "../apply-currency";
 import type { StageItem, StageMod, StageSide } from "../types";
 import { planSpec } from "./run-spec";
 import { prepareEssence } from "./essence-specs";
-import { unrevealedPlan } from "./parts";
+import { unrevealedPlan } from "./parts-unrevealed";
 
 export interface UsePreview {
   /** 打つと消える・入れ替わる・数値が変わる・固定される候補の MOD (modId) */
