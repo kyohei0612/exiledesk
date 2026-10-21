@@ -55,7 +55,14 @@ figure{margin:16px 0}figure img,main img{max-width:100%;height:auto;border-radiu
 ul.posts{list-style:none;padding:0;margin:12px 0}ul.posts li{padding:12px 0;border-bottom:1px solid var(--line)}ul.posts a.t{font-size:17px;font-weight:700;text-decoration:none}
 ul.posts p{margin:4px 0 0;color:var(--sub);font-size:14px}
 .share{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0;font-size:13px;color:var(--sub)}.share a,.share button{font:inherit;font-size:13px;padding:3px 10px;border:1px solid var(--line);border-radius:5px;background:#17130e;color:var(--fg);text-decoration:none;cursor:pointer}
-.share a:hover,.share button:hover{border-color:#8a6a32}.share [data-done]{color:var(--accent);border-color:#8a6a32}#comments{margin-top:32px}.crumb{font-size:12px;color:var(--sub);margin-bottom:8px}
+.share a:hover,.share button:hover{border-color:#8a6a32}.share [data-done]{color:var(--accent);border-color:#8a6a32}#comments{margin-top:32px}
+.box{margin:16px 0;padding:10px 16px;border-radius:8px;border:1px solid;border-left-width:4px}.box>p.box-h{margin:0 0 4px;font-weight:700;font-size:14px;letter-spacing:.04em}.box>:last-child{margin-bottom:2px}
+.box.summary{background:#241b0e;border-color:#8a6a32}.box.summary>.box-h{color:#e0b062}.box.note{background:#2a1212;border-color:#8a3a32}.box.note>.box-h{color:#f08a7a}.box.tip{background:#122218;border-color:#3f7a4c}.box.tip>.box-h{color:#8fd18a}
+.chart svg{display:block;width:100%;height:auto;background:#120f0b;border:1px solid var(--line);border-radius:8px}
+.say{display:flex;gap:10px;align-items:flex-start;margin:14px 0}.say.right{flex-direction:row-reverse}.say img{flex:0 0 64px;width:64px;height:64px;border-radius:50%;border:2px solid var(--line);background:#1a150f;object-fit:cover}
+.bubble{position:relative;max-width:85%;padding:8px 14px;border-radius:12px;background:#1d1812;border:1px solid var(--line)}.bubble p{margin:4px 0}.bubble .who{margin:0;font-size:12px;font-weight:700}
+.say.metan .bubble{border-color:#8a4a78}.say.metan .who{color:#e58fb6}.say.zundamon .bubble{border-color:#4f7a3a}.say.zundamon .who{color:#8fd18a}
+.credit{color:var(--sub);font-size:12px;margin-top:20px}.crumb{font-size:12px;color:var(--sub);margin-bottom:8px}
 footer{border-top:1px solid var(--line);color:var(--sub);font-size:12px}footer .in{padding-top:14px;padding-bottom:20px}
 @media (max-width:1023px){.ad{display:none}}@media (max-width:767px){body{font-size:15px}h1{font-size:21px}}`;
 
@@ -165,9 +172,10 @@ for (const lang of ["ja", "en"]) {
 <p class="meta"><time datetime="${m.date}">${m.date}</time>${m.updated !== m.date ? `<span>${l.updated} <time datetime="${m.updated}">${m.updated}</time></span>` : ""}${m.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join("")}${m.draft ? `<span class="draft">${l.draft}</span>` : ""}</p>
 ${shareBar(lang, m.title, url)}
 ${cta}
-${M.blogHtml(p.body, imgUrl)}
+${M.blogHtml(p.body, imgUrl, lang)}
 ${cta}
 ${shareBar(lang, m.title, url)}
+${/^:::\s*(metan|zundamon)\b/m.test(p.body) ? `<p class="credit">${lang === "ja" ? "キャラの絵: 四国めたん・ずんだもん 立ち絵素材 (坂本アヒル)" : "Character art: Shikoku Metan / Zundamon standing art by Sakamoto Ahiru"}</p>` : ""}
 </article>
 <!-- コメント欄の置き場 (これから: Reddit 風、サーバーは分析君・画面はジン部長。前の掲示板 archive/board-2026-10-16 の作りを戻して使う) -->
 <section id="comments" data-slug="${esc(m.slug)}" data-lang="${lang}"></section>
@@ -186,6 +194,7 @@ ${others.length ? `<h2>${l.more}</h2><ul class="posts">${others.map((x) => `<li>
 // クラフト台の右の列が読む (新しい順、日本語・英語)
 writeFileSync(resolve(OUT, "blog", "index.json"), JSON.stringify(index));
 cpSync(resolve(ROOT, "scripts/_blog-client.js"), resolve(OUT, "blog", "blog.js"));
+cpSync(resolve(SRC, "chars"), resolve(OUT, "blog", "chars"), { recursive: true });
 if (existsSync(resolve(SRC, "img"))) cpSync(resolve(SRC, "img"), resolve(OUT, "blog", "img"), { recursive: true, filter: (f) => !f.endsWith(".gitkeep") });
 
 // サイトマップ (出力先にあれば足す。下書きは入れない)
