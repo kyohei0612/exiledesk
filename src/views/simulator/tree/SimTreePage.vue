@@ -32,6 +32,8 @@ import { treePage } from "../../../state/web-page";
 import { tr } from "../../../i18n/lang";
 import { pageZoom } from "../../../utils/zoom";
 import { backRoute, busLevels } from "./tree-lines";
+import TreeRecipeBar from "./TreeRecipeBar.vue";
+import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { gesture, HOLD_MS } from "./use-gesture";
 
 const t = useTree();
@@ -335,6 +337,7 @@ const glowOf = (b: Box): boolean => {
     <div class="g-panel flex flex-col gap-2 px-3 py-2" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
       <!-- 帯: 全体の数字 (まだ) ・1 つ戻す・拡大縮小・全画面 -->
       <div class="flex flex-wrap items-center gap-2 text-[13px]">
+        <TreeRecipeBar />
         <span class="opacity-70">{{ tr("100 人回した時: 1 個あたり — 神 · 完成 —%", "100 runs: — div per item · —% done") }}</span>
         <span class="rounded-sm bg-white/10 px-1.5 text-[11px] opacity-70">{{ tr("計算はまだ繋いでいない", "Not calculated yet") }}</span>
         <span class="ml-auto flex items-center gap-1">
@@ -343,7 +346,7 @@ const glowOf = (b: Box): boolean => {
           <button type="button" data-tree-check class="g-btn sm" :disabled="checking" :title="tr('5 人をエンジンで辿って、止まる所・打てない手・付かない当たり・完成に着かない道を探す (費用は出さない)', 'Walk 5 runs with the engine to find dead ends, unusable crafts, unreachable hits and paths that never finish (no costs)')" @click="onCheck">{{ checking ? tr("精査中…", "Checking…") : tr("ルート精査", "Check route") }}</button>
           <button type="button" data-tree-memo class="g-btn sm inline-flex items-center gap-1" :aria-pressed="memoOpen" :title="tr('欲しい MOD とメモの窓 (ツリーを押しても閉じない)', 'Wanted mods & notes window (stays open while you edit)')" @click="memoOpen = !memoOpen"><Icon name="pencil" class="size-4" />{{ tr("メモ", "Notes") }}<span v-if="doc.note" class="size-1.5 rounded-full bg-amber-400" /></button>
           <button type="button" data-tree-full class="g-btn sm" :aria-pressed="full" @click="v.toggleFull">{{ full ? tr("全画面を閉じる", "Exit full screen") : tr("全画面に広げる", "Full screen") }}</button>
-          <button type="button" class="g-btn sm" :title="tr('始まりの箱だけに戻す (1 つ戻すで戻せる)', 'Back to just the start box (undo restores it)')" @click="t.reset">{{ tr("白紙に戻す", "Clear") }}</button>
+          <button type="button" class="g-btn sm" :title="tr('始まりの箱だけに戻す (1 つ戻すで戻せる)', 'Back to just the start box (undo restores it)')" @click="t.reset(); setCurrentTreeRecipe(null)">{{ tr("白紙に戻す", "Clear") }}</button>
         </span>
       </div>
 

@@ -12,12 +12,25 @@ import { logRecord } from "../../utils/log-record";
 import { useStageBase } from "../craft-stage/use-stage-base";
 import { reloadRecipes } from "../../state/simulator/sim-recipe-store";
 import { sendShare } from "../craft-stage/use-spam-share";
+import { isTreeDoc, type TreeDoc } from "../../services/simulator/tree/tree-model";
+import { addTreeRecipe, setCurrentTreeRecipe } from "../../state/simulator/tree-recipes";
+import { useTree } from "./tree/use-tree";
+import { openTreePage } from "../../web/page";
 import { tr } from "../../i18n/lang";
 
 /** URL の # の頭 */
 export const RECIPE_SHARE_PREFIX = "#recipe=";
 /** 縮める形: v = 形の版、n = 名前、j = ベースの日本語名、s = 中身 (SimSession) */
 type Packed = { v: 1; n: string; j?: string; s: SimRecipe["session"] };
+/** ツリーのレシピ (2026-10-21、クラフトの道): v = 2、n = 名前、t = 木 (TreeDoc) */
+type PackedTree = { v: 2; n: string; t: TreeDoc };
+
+/** ツリーのレシピの URL (#recipe= の頭は同じ。開くと読む側が v で見分ける) */
+export async function treeShareUrl(r: { name: string; tree: TreeDoc }): Promise<string> {
+  const code = await packJson({ v: 2, n: r.name, t: r.tree } satisfies PackedTree);
+  const base = isTauriRuntime() ? "https://exiledesk.com/" : `${location.origin}${location.pathname}`;
+  return `${base}${RECIPE_SHARE_PREFIX}${code}`;
+}
 
 /** レシピの URL (アプリからは Web 版のアドレスで) */
 export async function recipeShareUrl(r: Pick<SimRecipe, "name" | "baseJa" | "session">): Promise<string> {
@@ -51,7 +64,18 @@ export async function openRecipeCode(code: string): Promise<boolean> {
   if (SIM_LOCKED) return false;
   let r: SimRecipe | null = null;
   try {
-    const p = (await unpackJson(code)) as Partial<Packed>;
+    const p = (await unpackJson(code)) as Partial<Packed> | Partial<PackedTree>;
+    // ツリーのレシピ: 保存したレシピに足して (同じ中身があればそれ)、クラフトの道で開く
+    if (p && p.v === 2) {
+      const t = (p as PackedTree).t;
+      if (!isTreeDoc(t)) return false;
+      const tr2 = addTreeRecipe(String((p as PackedTree).n ?? ""), t);
+      setCurrentTreeRecipe(tr2.id);
+      useTree().open(tr2.tree);
+      openTreePage();
+      logRecord("tree_recipe_shared", { boxes: Object.keys(t.boxes).length });
+      return true;
+    }
     r = p && p.v === 1 ? normalizeRecipe({ name: p.n, baseJa: p.j, savedAt: Date.now(), session: p.s }) : null;
   } catch { r = null; }
   if (!r) return false;

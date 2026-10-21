@@ -62,6 +62,8 @@ function setTreeNote(text: string): void {
   doc.value = d;
   save(d);
 }
+/** 別の木を開く (レシピ・共有の URL から。1 つ戻すで前の木へ戻せる) */
+function open(tree: TreeDoc): void { edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, JSON.parse(JSON.stringify(tree))); }); }
 /** 白紙に戻す (1 つ戻すで戻せる) */
 function reset(): void { edit((d) => { Object.assign(d, newTree(TREE_BASE, TREE_ILVL)); }); }
 
@@ -89,5 +91,5 @@ function fractureLabel(a: Aim | null): string {
 }
 
 export function useTree() {
-  return { doc, edit, undo, canUndo, reset, setTreeNote, rows, aimLabel, fractureLabel };
+  return { doc, edit, undo, canUndo, reset, open, setTreeNote, rows, aimLabel, fractureLabel };
 }
