@@ -17,7 +17,7 @@ import StageRouteRunes from "./StageRouteRunes.vue";
 import { routeRunesFor, runePrep } from "../../services/craft-stage/route-runes";
 import { stageRuneIds } from "../../services/craft-stage/stage-core";
 import StageRouteLuck from "./StageRouteLuck.vue";
-import { raceOne, unpackRace, type Grade, type RaceRow, type RouteKind } from "../../services/craft-stage/route-race";
+import { GRADE_KEY, raceOne, unpackRace, type Grade, type RaceRow, type RouteKind } from "../../services/craft-stage/route-race";
 import { fillModText } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
 import { displayCurrency } from "../../state/display-currency";
@@ -26,7 +26,6 @@ import { track } from "../../utils/track";
 import { logRecord } from "../../utils/log-record";
 import HelpTip from "../../components/ui/HelpTip.vue";
 
-const GRADE_KEY: Record<Grade, string> = { base: "", greater: "_greater", perfect: "_perfect" };
 const GRADE_JA: Record<Grade, [string, string]> = { perfect: ["完全", "Perfect"], greater: ["上級", "Greater"], base: ["無印", "Regular"] };
 /** 1 通りの人数。スマホは 10 人 (2026-10-19 スマホ相当で 100 人は 35 秒・画面が最長 9 秒固まった。オーナー「スマホだと 10 人だな規模感的に」) */
 const RUNS = typeof window !== "undefined" && window.innerWidth < 768 ? 10 : 100;

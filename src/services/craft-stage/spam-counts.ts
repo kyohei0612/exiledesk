@@ -12,7 +12,7 @@ import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { applyCurrency } from "./apply-currency";
 import { limitOf, listOf, sideOfMod } from "./stage-core";
 import { mulberry32 } from "../htc/rng";
-import type { Grade, RouteKind } from "./route-race";
+import { GRADE_KEY, routeSeed, type Grade, type RouteKind } from "./route-race";
 import type { StageItem, StageMod } from "./types";
 
 export interface SpamTarget { modId: string; minTierIndex: number }
@@ -28,7 +28,6 @@ export interface SpamCounts {
   runs: number;
 }
 
-const GRADE_KEY: Record<Grade, string> = { base: "", greater: "_greater", perfect: "_perfect" };
 const mods = (it: StageItem): StageMod[] => [...it.prefixes, ...it.suffixes];
 const hit = (m: StageMod, t: SpamTarget): boolean => !m.unrevealed && m.modId === t.modId && m.tierIndex >= t.minTierIndex;
 
@@ -65,7 +64,7 @@ export function spamCounts(
   const uses: Record<string, number> = {};
   const steps: number[] = [];
   for (let r = 0; r < runs; r++) {
-    const rng = mulberry32((opts.seed ?? 1) * 100003 + r * 7919 + route.length * 31 + grade.length);
+    const rng = mulberry32(routeSeed(opts.seed, r, route, grade));
     let it = start, n = 0;
     const use = (key: string, omens: string[] = []): boolean => {
       const res = applyCurrency(data, it, key, rng, omens);

@@ -53,7 +53,10 @@ export interface RaceRow {
   tries: number[]; people: number;
 }
 
-const GRADE_KEY: Record<Grade, string> = { base: "", greater: "_greater", perfect: "_perfect" };
+/** 等級 → カレンシーの鍵の後ろ (spam-counts.ts・StageRoutesPage.vue も使う) */
+export const GRADE_KEY: Record<Grade, string> = { base: "", greater: "_greater", perfect: "_perfect" };
+/** r 人目の乱数の種 (raceOne と spam-counts.ts で同じ式) */
+export const routeSeed = (seed: number | undefined, r: number, route: RouteKind, grade: Grade): number => (seed ?? 1) * 100003 + r * 7919 + route.length * 31 + grade.length;
 const allMods = (it: StageItem) => [...it.prefixes, ...it.suffixes];
 const sideList = (it: StageItem, side: "prefix" | "suffix") => (side === "prefix" ? it.prefixes : it.suffixes);
 export const routeHit = (it: StageItem, t: RaceTarget): boolean => allMods(it).some((m) => m.modId === t.modId && m.tierIndex >= t.minTierIndex);
@@ -145,7 +148,7 @@ export async function raceOne(data: PatchData, base: string, itemLevel: number, 
     return !opts.stop?.();
   };
   for (let r = 0; r < runs; r++) {
-    const rng = mulberry32((opts.seed ?? 1) * 100003 + r * 7919 + route.length * 31 + grade.length);
+    const rng = mulberry32(routeSeed(opts.seed, r, route, grade));
     const run = routeRun(data, base, itemLevel, target, route, grade, rng, price, opts.prep);
     if (!run) continue;
     while (run.n < maxSteps && !run.hit()) {
