@@ -64,6 +64,8 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     <div class="flex items-center gap-1.5" :style="{ height: `${24 * k}px` }">
       <span class="flex size-5 shrink-0 items-center justify-center rounded-md" :style="{ background: `rgba(${rgb},0.18)`, color: `rgb(${rgb})` }"><Icon :name="kind.icon" class="size-3.5" /></span>
       <span class="truncate text-[11px] font-bold tracking-wide" :style="{ color: `rgb(${rgb})` }">{{ tr(kind.ja, kind.en) }}</span>
+      <!-- 始まりのアイテムレベルは見出しに (ベースの名前が長いと下の行で切れて見えない、10-22 靴) -->
+      <span v-if="box.out === 'start'" class="shrink-0 text-[11px] opacity-70">{{ tr(`レベル ${t.doc.value.itemLevel}`, `ilvl ${t.doc.value.itemLevel}`) }}</span>
       <span v-if="box.done" class="shrink-0 rounded-full bg-amber-300/25 px-1.5 text-[10px] font-bold text-amber-100">{{ doneText }}</span>
       <span v-if="box.unwanted?.length" data-tree-unwanted class="shrink-0 rounded-sm bg-rose-400/20 px-1.5 text-[11px] font-bold text-rose-200" :title="tr(`× (要らない) の印 ${box.unwanted.length} 個 (前の試し打ちで付けた物)`, `${box.unwanted.length} mod(s) marked × (unwanted, set in the old try-out)`)">× {{ box.unwanted.length }}</span>
       <span v-if="issue" data-tree-issue class="rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white" :title="issue">!</span>
@@ -79,7 +81,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <template v-if="box.out === 'start'">
         <!-- ベースとアイテムレベル: 押すと右の欄で選ぶ (10-22、前は金の指輪 ilvl 82 に固定) -->
         <button type="button" data-tree-base class="nodrag block w-full truncate text-left text-[13px] font-bold hover:underline" :class="quiet ? 'pointer-events-none' : ''" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :title="tr('ベースとアイテムレベルを選ぶ', 'Choose the base and item level')" @click.stop="!quiet && emit('base')">
-          {{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }} <span class="font-normal opacity-70">{{ tr(`レベル ${t.doc.value.itemLevel}`, `ilvl ${t.doc.value.itemLevel}`) }}<template v-if="t.doc.value.startRandom"> · {{ tr(`ほかに MOD ${t.doc.value.startRandom} つ`, `+${t.doc.value.startRandom} other mod(s)`) }}</template></span>
+          {{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}<span v-if="t.doc.value.startRandom" class="font-normal opacity-70"> · {{ tr(`ほかに MOD ${t.doc.value.startRandom} つ`, `+${t.doc.value.startRandom} other mod(s)`) }}</span>
         </button>
         <button type="button" class="nodrag block w-full truncate text-left text-[#c8c8ff] hover:underline" :class="quiet ? 'pointer-events-none' : ''" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :title="t.fractureLabel(t.doc.value.fracture)" @click.stop="!quiet && emit('aim')">
           {{ t.doc.value.fracture ? `${tr("フラクチャー", "Fractured")}: ${t.fractureLabel(t.doc.value.fracture)}` : tr("＋ フラクチャーする MOD を選ぶ", "+ Pick the mod to fracture") }}
