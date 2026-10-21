@@ -9,7 +9,18 @@ draft: true
 ---
 For a PoE2 Energy Shield gloves craft with maximum Energy Shield, ES% and maximum Mana (T2+) as prefixes, **Omen of Sinistral Exaltation + Greater Exalted Orb was cheapest at 105 Divine Orbs (div) per item**. Perfect cost 201 div and the plain Exalted Orb 423 div. Catalysts can't be used on gloves.
 
-When aiming for high tiers, it's tempting to use the Perfect Exalted Orb, whose high minimum modifier level cuts out low-tier misses. But when we compared the cost of putting three ES prefixes on Intelligence gloves, the Greater Exalted Orb was cheapest. Perfect cost almost twice as much, and the plain Exalted Orb four times as much.
+When aiming for high tiers, it's tempting to reach for the best one, the Perfect Exalted Orb, right? Its high minimum modifier level cuts out low-tier misses.
+
+But when we compared the cost of putting three ES prefixes on Intelligence gloves, the **Greater** Exalted Orb was cheapest.
+
+Perfect cost almost twice as much, and the plain Exalted Orb four times as much.
+
+:::summary What you'll learn
+- For three ES glove prefixes (maximum ES, ES%, maximum Mana, T2+), **Omen of Sinistral Exaltation + Greater Exalted Orb** is cheapest at 105 div per item
+- Perfect costs 201 div (the orbs are too expensive); plain costs 423 div (low-tier misses lead to Annulments that hit your targets)
+- Catalysts can't be used on gloves, so prefixes are aimed with a plain Omen of Sinistral Exaltation
+- Socketing runes (Serle's Triumph + Kolr's Hunt) makes it 1.8 times (194 div). Greater is still cheapest
+:::
 
 ## The Gloves
 
@@ -23,11 +34,18 @@ The method mirrors the cheapest one from [Don't Hoard Your Misses](/en/blog/dont
 2. If a non-target prefix appears, use an Orb of Annulment (no Omen) right away.
 3. Add missing targets with Omen of Sinistral Exaltation + an Exalted Orb. We compared plain, Greater and Perfect.
 
-## Catalysts Don't Work on Gloves
-
+:::note Catalysts don't work on gloves
 On a ring, an Omen of Catalysing Exaltation with Catalyst Quality weights your target heavily. But Catalysts are for "a ring or amulet" only (poe2db's description). The ExileDesk engine also refuses: "Catalysts: Rings and Amulets only." Without Catalyst Quality, the Omen of Catalysing Exaltation can't be used either. Glove prefixes have to be aimed with a plain Omen of Sinistral Exaltation.
+:::
 
-## Results
+## Result: Greater Exalted Orb Is Cheapest at 105 div
+
+:::chart bar Cost per item (div, 300 engine runs each)
+unit: div
+labels: Exalted Orb, Greater Exalted Orb, Perfect Exalted Orb
+No runes: 423, 105, 201
+Serle's Triumph + Kolr's Hunt: 598, 194, 307
+:::
 
 | Omen of Sinistral Exaltation + | Finished | Cost per item | Chaos Orb | Annulment | Exalted | Lost all targets |
 |---|---:|---:|---:|---:|---:|---:|
@@ -35,15 +53,25 @@ On a ring, an Omen of Catalysing Exaltation with Catalyst Quality weights your t
 | **Greater Exalted Orb** | **100%** | **105 div** | 654 | 63 | 65 | 26 times |
 | Perfect Exalted Orb | 100% | 201 div | 423 | 43 | 45 | 17 times |
 
-300 runs each; Greater's average is within ±11 div. The gaps are well outside the noise. You can apply the same moves to Sirenscale Gloves on the [crafting bench](/?base=Sirenscale%20Gloves).
+300 runs each; Greater's average is within ±11 div. The gaps are well outside the noise.
 
 ## Why Greater
 
-**Perfect loses on price.** A Perfect Exalted Orb costs about 2.9 div (2,046 Exalted Orbs). Going Perfect cuts Exalted Orbs from 65 to 45 and Chaos Orbs from 654 to 423, but the Perfect Exalted Orbs alone cost 132 div per item, far more than what is saved. The hit rate rises, but not enough to pay for the price.
+### Perfect loses on price
 
-**The plain Exalted Orb loses on misses.** It has no minimum modifier level, so low tiers of the target families roll often. Anything below T2 is a miss and gets annulled at once, and those Annulments hit targets already in place. Losing every target and going back to Chaos Orbs balloons to 111 times per item, and Chaos Orbs alone cost 277 div.
+A Perfect Exalted Orb costs about 2.9 div (2,046 Exalted Orbs). Going Perfect cuts Exalted Orbs from 65 to 45 and Chaos Orbs from 654 to 423.
 
+But the Perfect Exalted Orbs alone cost 132 div per item, far more than what is saved. The hit rate rises, but not enough to pay for the price.
+
+### The plain Exalted Orb loses on misses
+
+It has no minimum modifier level, so low tiers of the target families roll often. Anything below T2 is a miss and gets annulled at once.
+
+Those Annulments hit targets already in place. Losing every target and going back to Chaos Orbs balloons to 111 times per item, and Chaos Orbs alone cost 277 div.
+
+:::tip Greater sits right in between
 The Greater Exalted Orb (minimum modifier level 35, about 13 Exalted Orbs each) cuts low tiers while staying cheap, landing right in between.
+:::
 
 ## Runes Make It 1.8 Times
 
@@ -65,7 +93,9 @@ For reference, finishing the suffixes afterward with Critical Damage Bonus and A
 - Prices are the ExileDesk server's market prices (2026-10-20 16:00 UTC; 1 Divine Orb = 696.93 Exalted Orbs). Rune costs (Serle's Triumph about 3.0 div, Kolr's Hunt about 1.0 div) are not included.
 - Mod names and tiers come from the engine's data. Not compared with Craft of Exile or in-game results.
 
-You can try the same gloves in the Craft route tree, switching the Exalted Orb type.
+## Try It Yourself
+
+You can apply the same moves to Sirenscale Gloves on the [crafting bench](/?base=Sirenscale%20Gloves). To compare Exalted Orb types, try the [Craft route tree](/?page=sim-tree&base=Sirenscale%20Gloves).
 
 **Related posts**
 
