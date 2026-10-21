@@ -31,7 +31,7 @@ import { MATCH, matchTargets, RESTART } from "../../../services/simulator/tree/t
 import { treePage } from "../../../state/web-page";
 import { tr } from "../../../i18n/lang";
 import { pageZoom } from "../../../utils/zoom";
-import { backRoute, busLevels, handAnchor, HAND_DY } from "./tree-lines";
+import { busLevels, handAnchor, HAND_DY, routeBacks, type BackReq, type Seg } from "./tree-lines";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
 import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { gesture, HOLD_MS } from "./use-gesture";
@@ -103,7 +103,9 @@ const edges = computed(() => boxes.value.filter((b) => b.hand && b.outs.length).
     const bad = k.c.out !== "hit" && k.c.out !== "any";
     return { id: k.id, color: bad ? LINE.bad : LINE.fwd, kind: bad ? "bad" : "fwd", d, bad };
   }).sort((a, z) => Number(z.bad) - Number(a.bad));
-  return { id: b.id, hand: b.hand!, jx: px, jy, stem: `M ${px} ${py} L ${px} ${busY - 10}`, to };
+  // 戻りの線が跨ぐ所を探す用の真っ直ぐな所 (縦の幹・横の棒・子へ下りる縦)
+  const segs: Seg[] = [{ x0: px, y0: py, x1: px, y1: busY }, ...kids.flatMap((k) => { const cx = k.q.x + BOX_W / 2; return [{ x0: px, y0: busY, x1: cx, y1: busY }, { x0: cx, y0: busY, x1: cx, y1: k.q.y }]; })];
+  return { id: b.id, hand: b.hand!, jx: px, jy, stem: `M ${px} ${py} L ${px} ${busY - 10}`, to, segs };
 }));
 /**
  * 戻りの矢印 = 箱の下から段のすき間・箱の無い縦の通り道を通って戻り先の上の辺の左寄りへ (tree-lines.ts)。いつも細く薄く出し (オーナー 10-22「線を繋げても、その線が出ない。出してくれ」)、
@@ -133,16 +135,23 @@ function measureChips(): void {
 }
 watch(() => edges.value.map((e) => `${e.id}:${handLabel(e.hand)}`).join("|"), measureChips, { flush: "post" });
 onMounted(() => { measureChips(); void document.fonts?.ready.then(measureChips); });
-function arcsOf(b: Box): { to: string; d: string }[] {
-  // 箱を横切らない道 (tree-lines.ts)。行き先は戻り先の打つ手の札の左の端 (手が無ければ下の＋)
-  return (backTargets.value.get(b.id) ?? []).map((id) => {
-    const to = doc.value.boxes[id]!, q = posOf(to);
+/**
+ * 戻りの線を全部まとめて引く (tree-lines.ts の routeBacks: 1 本ずつ専用の通り道・進む線と高さを分ける・交わりは跨ぐ、オーナー 10-22)。
+ * 行き先は戻り先の打つ手の札の左の端 (手が無ければ下の＋)
+ */
+const backPaths = computed(() => {
+  const pos = new Map(boxes.value.map((b) => [b.id, posOf(b)]));
+  const reqs: BackReq[] = [];
+  for (const [from, tos] of backTargets.value) for (const id of tos) {
+    const to = doc.value.boxes[id]!, q = pos.get(id)!;
     const w = to.hand && to.outs.length ? (chipW.value[id] ?? 120) * inv.value : null;
-    return { to: id, d: backRoute(posOf(b), handAnchor(q, w), boxes.value.filter((x) => x.id !== b.id && x.id !== id).map(posOf), q) };
-  });
-}
-const backArcs = computed(() => boxes.value.flatMap((b) => (b.id === hoverBack.value ? [] : arcsOf(b).map((a) => ({ id: `${b.id}>${a.to}`, from: b.id, d: a.d })))));
-const backLines = computed(() => { const b = hoverBack.value ? doc.value.boxes[hoverBack.value] : null; return b ? arcsOf(b).map((a) => a.d) : []; });
+    reqs.push({ id: `${from}>${id}`, from: pos.get(from)!, to: q, end: handAnchor(q, w) });
+  }
+  const d = routeBacks(reqs, [...pos.values()], edges.value.flatMap((e) => e.segs));
+  return reqs.map((r) => ({ id: r.id, from: r.id.split(">")[0]!, d: d.get(r.id)! }));
+});
+const backArcs = computed(() => backPaths.value.filter((a) => a.from !== hoverBack.value));
+const backLines = computed(() => backPaths.value.filter((a) => a.from === hoverBack.value).map((a) => a.d));
 function goBack(b: Box): void { hoverBack.value = null; const to = backTargets.value.get(b.id)?.[0]; if (to) void v.reveal(to, true); }
 
 function backLabel(b: Box): string {

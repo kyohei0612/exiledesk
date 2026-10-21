@@ -303,8 +303,8 @@ export function setNote(d: TreeDoc, id: string | null, text: string): void {
 
 /** 整列で兄弟を並べる順 (当たり → 狙いが消えた → 外れが消えた → 外れ。外れは一番右) */
 const OUT_ORDER: Record<TreeBox["out"], number> = { start: 0, hit: 0, any: 0, lost: 1, junkGone: 2, junk: 3 };
-/** 整列の兄弟の間 (横の＋が 14px はみ出すので、それより広く) */
-const TIDY_GAP = 28;
+/** 整列の兄弟の間 (横の＋が 14px はみ出す分 + 戻りの線の縦の通り道 4 本分、オーナー 10-22「整列で箱の間に通り道の分のすき間」) */
+const TIDY_GAP = 64;
 /**
  * 整列 (2026-10-22 オーナー「ごちゃっとなってるのを整列。2 段目を合わせる、矢印が重ならない」):
  * 段 (始まりからの深さ) ごとに横一列、兄弟は親の下に等間隔 (OUT_ORDER の順)。部分木の幅を先に測ってから並べるので箱は重ならない。
