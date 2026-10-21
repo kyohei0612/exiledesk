@@ -4,7 +4,7 @@
  * 一言は今の関数 (apply-desecrate.ts など) と同じ文にしている (手順の再生の突き合わせで同じ結果になるように)
  */
 import { inAny, inGroup } from "../../mods/item-classes";
-import { allMods, catalystOf, hasExtraCatalyst, maxQualityOf, room, SIDES } from "../stage-core";
+import { allMods, catalystOf, hasExtraCatalyst, limitOf, maxQualityOf, room, SIDES } from "../stage-core";
 import { craftedLimitOf } from "../apply-essence";
 import { socketCapOf } from "../stage-runes";
 import { canFracture } from "../../mods/item-classes";
@@ -56,6 +56,8 @@ export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string 
       const side = mods?.side;
       if ((side ? [side] : SIDES).some((s) => room(item, s))) return null;
       if (side) return tr("お告げの側に空きが無い", "No open slot on the Omen's side");
+      // ベースの暗黙で枠が 0 のマジック (不在のアミュレット = プレフィックス -1 / サフィックス -1。要望 752b6d80 で「見えない MOD が付いている」と思われた)
+      if (item.rarity === "magic" && SIDES.every((s) => limitOf(item, s) === 0)) return tr("このベースはマジックの枠が 0 (暗黙のプレフィックス -1 / サフィックス -1)。王者のオーブでレアにすると付けられる", "This base has no Magic affix slots (implicit -1 Prefix / -1 Suffix). Use a Regal Orb to make it Rare first");
       return l.reason ? tr(l.reason.ja, l.reason.en) : tr("足す枠が無い", "No open affix slot");
     }
     case "modsAtLeast":
