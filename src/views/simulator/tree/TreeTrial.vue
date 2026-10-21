@@ -21,6 +21,7 @@ import { handLabel } from "./tree-names";
 import { useTree } from "./use-tree";
 import { sampleKeyOf, toggleUnwanted, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { modText, tr } from "../../../i18n/lang";
+import { useDismiss } from "../../../utils/use-dismiss";
 
 const props = defineProps<{ boxId: string }>();
 const emit = defineEmits<{ close: []; next: []; note: [] }>();
@@ -65,6 +66,9 @@ function release(): void { held.value = null; omens.value = []; }
 const preview = computed(() => (held.value && item.value && s.data.value ? previewUse(s.data.value, item.value, held.value, omens.value) : null));
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && held.value) { release(); e.stopImmediatePropagation(); } }
 onMounted(() => window.addEventListener("keydown", onKey, true));
+/** 持った物は、棚・カード・持っている物の行・カタリストの外を押すと離す (クラフト台と同じ、共通の useDismiss。押した物には届ける) */
+const shelfEl = ref<HTMLElement | null>(null), cardEl = ref<HTMLElement | null>(null), heldEl = ref<HTMLElement | null>(null), catEl = ref<HTMLElement | null>(null);
+useDismiss(() => !!held.value, [shelfEl, cardEl, heldEl, catEl], release, { swallow: false, keep: "[role=dialog], [data-helptip-pop], [data-mod-list]" });
 onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
 function push(r: StageApply, label: string): void {
@@ -156,7 +160,7 @@ const noteText = computed(() => {
       <div class="grid gap-3 @min-[620px]:h-full @min-[620px]:grid-cols-[350px_minmax(0,1fr)]">
         <div data-tree-trial-left class="flex min-w-0 flex-col gap-2 @min-[620px]:min-h-0 @min-[620px]:overflow-y-auto">
           <!-- アイテム (クラフト台のカード。持っている時に押すと打つ) -->
-          <div v-if="item" data-tree-trial-item class="flex justify-center pb-7" @contextmenu.prevent="release">
+          <div v-if="item" ref="cardEl" data-tree-trial-item class="flex justify-center pb-7" @contextmenu.prevent="release">
             <StageItemCard :item="item" :doomed="preview?.change ?? []" :open="preview?.open" :added="last.added" :removed="last.removed" :holding="!!held" :flash-key="flash" :width="340" compact @use="use(1)" @jump="onMark" />
           </div>
           <!-- × (要らない) の印 -->
@@ -169,7 +173,7 @@ const noteText = computed(() => {
           </div>
 
           <!-- 持っている物 (カードの下の「押すと使う」の札はカードの枠の pb-7 の中) -->
-          <div class="flex flex-wrap items-center gap-1.5">
+          <div ref="heldEl" class="flex flex-wrap items-center gap-1.5">
             <template v-if="held">
               <span class="flex items-center -space-x-1"><img v-for="ic in [held, ...omensFor(held, omens)].filter((x) => !!iconOf(x))" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
               <b class="min-w-0 flex-1 basis-56 truncate" :title="[nameOf(held), ...omensFor(held, omens).map(nameOf)].join(' + ')">{{ [nameOf(held), ...omensFor(held, omens).map(nameOf)].join(" + ") }}</b>
@@ -200,14 +204,14 @@ const noteText = computed(() => {
         </div>
         <div data-tree-trial-right class="flex min-w-0 flex-col gap-2 @min-[620px]:min-h-0 @min-[620px]:overflow-y-auto @min-[620px]:pr-1">
           <!-- 棚 (クラフト台と同じ。お告げは持った物の下に) -->
-          <div data-tree-shelf @pointerdown="onShelfDown">
+          <div ref="shelfEl" data-tree-shelf @pointerdown="onShelfDown">
             <CurrencyShelf @hold="onHold">
               <!-- 持った物に掛けられるお告げ = クラフト台と同じ部品と置き場 (HeldOmens.vue を持ったアイコンのすぐ下に重ねる。inline-held だと棚の一番下で見切れた、10-21 本物のマウス) -->
               <template v-if="heldOmensOf(held).length" #held><HeldOmens /></template>
             </CurrencyShelf>
           </div>
           <!-- カタリスト (1 押しで品質の最大まで。最大はエンジンの maxQualityOf)。棚の下 = オーブの行が列の上に来て、お告げの欄が下に開ける -->
-          <div data-tree-trial-catalysts>
+          <div ref="catEl" data-tree-trial-catalysts>
             <p class="mb-0.5 text-[10px] opacity-60">{{ tr("カタリスト (押すと品質の最大まで入れる)", "Catalysts (click to fill to max quality)") }}</p>
             <div class="flex flex-wrap gap-1.5"><ShelfButton v-for="k in TREE_CATALYSTS" :key="k" :k="k" @pick="fill" /></div>
           </div>
