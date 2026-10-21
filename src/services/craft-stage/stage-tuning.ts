@@ -32,6 +32,25 @@ export function setStageTuning(t: Partial<StageTuning>): void {
   tuning = next;
 }
 
+/**
+ * 手順 JSON の 1 手に書く設定 (手の追加キー `tune`、2026-10-22 オーナー「再生・共有でも同じ設定に」)。
+ * その手で使ったお告げに効く物だけ・既定から変えた物だけ。無ければ null (= 既定で打った手)
+ */
+export interface StepTune { catalysing_per_pct?: number; sanctify_k?: number }
+export function tuneForStep(omensUsed: readonly string[]): StepTune | null {
+  const t: StepTune = {
+    ...(tuning.catalysingPerPct != null && omensUsed.includes("OmenofCatalysingExaltation") ? { catalysing_per_pct: tuning.catalysingPerPct } : {}),
+    ...(tuning.sanctifyK != null && omensUsed.includes("OmenofSanctification") ? { sanctify_k: tuning.sanctifyK } : {}),
+  };
+  return Object.keys(t).length ? t : null;
+}
+/** 手に書いた設定で 1 手打つ (書いていない手は既定)。打った後は元の設定に戻す (画面で決めている値は再生で変わらない) */
+export function withStepTune<T>(t: StepTune | null | undefined, run: () => T): T {
+  const keep = tuning;
+  setStageTuning({ catalysingPerPct: t?.catalysing_per_pct ?? null, sanctifyK: t?.sanctify_k ?? null });
+  try { return run(); } finally { tuning = keep; }
+}
+
 /** 品質 (%) → 対応する MOD の重みに掛かる倍率 (設定が無ければエンジンの既定 catalysingMultiplier) */
 export function tunedCatalysingMultiplier(qualityPct: number): number {
   const r = tuning.catalysingPerPct;

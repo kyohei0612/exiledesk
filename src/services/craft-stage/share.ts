@@ -6,6 +6,7 @@
  * 共有できる決まり: 最初のカレンシーを打った後に、手で MOD を足して (force: の手) いないこと。
  * 打つ前に手で足した MOD は「始めのベース」として手順に入れたまま渡す (再生でも同じ seed で同じ MOD・同じ値になる)
  */
+import type { StepTune } from "./stage-tuning";
 import { isForce } from "./apply-force";
 import { IMPLICIT_SET, isCatalystSet, isQualitySet, ITEM_LEVEL_SET, QUALITY_CAP } from "./apply-currency";
 import { isSanctifySet } from "./apply-vaal";
@@ -34,8 +35,8 @@ export function shareBlock(steps: ReadonlyArray<{ currency: string; index: numbe
   return null;
 }
 
-/** 縮めた形: [版, ベース, iLv, seed, 始め | 0, [[カレンシー, 手の seed (無ければ 0 = 前の手順 JSON の seed + 手の番号), お告げ?, 回数?], ...]] */
-type PackedStep = [string, number] | [string, number, string | 0] | [string, number, string | 0, number];
+/** 縮めた形: [版, ベース, iLv, seed, 始め | 0, [[カレンシー, 手の seed (無ければ 0 = 前の手順 JSON の seed + 手の番号), お告げ?, 回数?, 設定?], ...]] (設定 = 手の tune、お告げの下で決めた倍率。2026-10-22) */
+type PackedStep = [string, number] | [string, number, string | 0] | [string, number, string | 0, number] | [string, number, string | 0, number, StepTune];
 type Packed = [1, string, number, number, StartSpec | 0, PackedStep[]];
 
 function pack(plan: CraftStagePlan): Packed {
@@ -43,6 +44,8 @@ function pack(plan: CraftStagePlan): Packed {
   return [1, plan.base, plan.item_level ?? 80, plan.seed, start ?? 0, plan.steps.map((s): PackedStep => {
     const seed = (s as { seed?: number }).seed ?? 0;
     const times = s.times ?? 1;
+    const tune = (s as { tune?: StepTune }).tune;
+    if (tune) return [s.currency, seed, s.omen ?? 0, times, tune];
     if (times !== 1) return [s.currency, seed, s.omen ?? 0, times];
     return s.omen ? [s.currency, seed, s.omen] : [s.currency, seed];
   })];
@@ -58,7 +61,7 @@ function unpack(p: Packed): CraftStagePlan {
     start_paste: null,
     ...(p[4] ? { start: p[4] } : {}),
     seed: Number(p[3]),
-    steps: p[5].map((s) => ({ currency: String(s[0]), omen: s[2] ? String(s[2]) : null, times: s[3] ? Number(s[3]) : 1, note: null, ...(s[1] ? { seed: Number(s[1]) } : {}) })),
+    steps: p[5].map((s) => ({ currency: String(s[0]), omen: s[2] ? String(s[2]) : null, times: s[3] ? Number(s[3]) : 1, note: null, ...(s[1] ? { seed: Number(s[1]) } : {}), ...(s[4] && typeof s[4] === "object" ? { tune: s[4] } : {}) })),
   } as CraftStagePlan;
 }
 
