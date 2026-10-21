@@ -27,19 +27,26 @@
 - 英語版 greater-perfect-orb-difference の動画の一文も外したが未 commit。
 - 新しい記事はもう足さない (オーナー「30 本で十分」)。
 
+## 引き継ぎ (10-22 夜、記事編集長の入れ替え)
+- 日本語の合格 10 本 (下の 1〜10) と、その英語版 10 本は仕上げて開発版に出した (8a0ca427・b50207de、デプロイは HEAD 8d4f27fa)。/en/blog/ に 10 枚並ぶ。英語の頼みは notes/finish-en-brief.md、照らし合わせは notes/finish-en-checker-brief.md。
+- 聖別: オーナーがゲームで確かめた「聖別の後は何もできない」の形に、聖別と品質と品質の切り捨ての日英を直した。計算の順 (+6 になる理由) は残した。
+- 次: 英語版をオーナーに見てもらい、返事を待つ。ブラックには報告済み。11 番から先は、オーナーの OK が出てから 1 本ずつ (日本語は notes/finish-brief.md → 照らし合わせは notes/finish-checker-brief.md → 英語)。
+- 手順: commit は `-- <ファイル>` で自分の物だけ。push の前に `git pull -q --no-rebase`。デプロイとブラウザはブラックに一言伝えてから。
+- B 8 本は今も未 commit のまま (上の「止めた物」)。notes/finish-checker-brief.md・finish-en-checker-brief.md もまだ commit していない。
+
 ## 初心者向けに直す順 (オーナー 10-22、1 本ずつオーナーのチェック。合格の形 = greater-perfect-orb-difference)
 形: 頭に分かる事 3 行と言葉の説明・ずんだもん・めたんの掛け合いで進む短文・文の途中で改行しない・英語の添え書き無し・図は流れや差がひと目で分かる物だけ (数字は表)。合格したら英語版も同じ形 (Zundamon / Metan、用語は poe2db の英語)。
 1. ✅ greater-perfect-orb-difference (上級と完全の違い) 合格 10-22
-2. exaltation-omens-guide (高貴のお告げの使い分け) ← 次
-3. catalyst-types (カタリストの種類)
-4. desecration-bone-types (冒涜の骨の種類)
-5. es-gloves-greater-exalt (ES 手袋は上級)
-6. dont-hoard-misses (外れは溜めるな)
-7. spam-simulator (スパムシミュレーター)
-8. sanctify-quality-order (聖別と品質の順番)
-9. quality-rounding-down (品質の切り捨て)
-10. catalysing-exaltation-multiplier (触媒の倍率)
-11. desecration-weights (冒涜の重み)
+2. ✅ exaltation-omens-guide (高貴のお告げの使い分け)
+3. ✅ catalyst-types (カタリストの種類)
+4. ✅ desecration-bone-types (冒涜の骨の種類)
+5. ✅ es-gloves-greater-exalt (ES 手袋は上級)
+6. ✅ dont-hoard-misses (外れは溜めるな)
+7. ✅ spam-simulator (スパムシミュレーター)
+8. ✅ sanctify-quality-order (聖別と品質の順番)
+9. ✅ quality-rounding-down (品質の切り捨て)
+10. ✅ catalysing-exaltation-multiplier (触媒の倍率)
+11. desecration-weights (冒涜の重み) ← 次 (オーナーの OK の後)
 12. desecration-bone-sides (骨の左右)
 13. arcane-surge-desecrated-gloves (アーケインサージ)
 14. kolrs-hunt-gloves (コルの狩り)
