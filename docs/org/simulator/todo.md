@@ -58,6 +58,16 @@
 - 次の手: 3,000 人での止まり 2〜3 (rc_q・pX、1/3000) の原因 → 1280 幅で箱の中のボタンが 20px の直す案を 1 行 → 5 (点検の残り)。
 - 気付き: 1280 幅は 75%・100% でも箱の中の押せる物が 20px (ページの zoom の分、前から)。全体表示 33% で右端の箱がミニマップに近い (前から)。
 
+## 引き継ぎ (6 本目 → 7 本目、10-22 深夜。会話が 1100 件を超え送信も止まったのでブラックの頼みで入れ替え)
+- 済んだ物 (全部 commit・push 済み、書きかけ無し、開発版 bbc1431b): 上の「6 本目」全部。結果は全部普通の箱・戻り先は具体的な箱だけ (続きからは消した)・倍率の段 (20〜150%)・白紙の 2 回押し・品質だけ上げる手 (通り抜け pass)・手 4 案 A (触媒の前にカタリストの札を自動で)・完成の箱から伸ばすと同じ形の完成の箱が合流 (joinSameShape)・冒涜 → 発現で選ぶ (tree-sample の reveal、reveal:N は 1 から)・見本の木は完成品まで 1 本 (サフィックス → d1 に合流 → P2 案 3 = 素の高貴 / 餌 (アビスのエッセンス + 左側の結晶化) → 削減 + 完全のカオス → P3 = 保存された鎖骨 + 黒き血でクルガルのスペルダメージ)。
+- 記録: 共有メモ local_ba9fc825…/tree-merge/README.md (前後のスナップ・台本 shots4 / zoom-steps / clear2 / quality-shot / prefix-shot.mjs、全部窓なし Chrome 9333)。台本 scripts/_tree-sample-probe・_tree-quality-probe・_tree-done-shape-probe・_tree-prefix-cost-probe・_tree-merge-probe (vitest の -c で)。Chrome 9333 は止めて profile も消した、dev サーバーは立てていない。
+- 次の手 (ブラック 10-22、上から順に):
+  1. 3,000 人で止まり 2〜3 人 (seed 1: rc_q 1・pX 1) の原因。_tree-prefix-cost-probe が stuckAt を出す。rc_q = サフィックスの触媒の高貴の結果が outs に無い時、pX = 冒涜の外れ (光のお告げ + 消去) の後。100 人では出ない。
+  2. 全体表示が 25% に下がった件 (見本が広くなった。通り抜けの箱も箱の幅を取る・プレフィックスが左下へ深い)。20% の段は足した。tidy で通り抜けを細くする・幅を詰める案を。
+  3. 1280 幅で箱の中のボタンが 20px (ページの zoom 0.85 の分、24px を切る)。直す案を 1 行でブラックへ。
+  4. 点検の残り: use-sim-targets の planByRedoCost (オーナーの A/B/C 待ち)・recipe-share の X の URL を share.ts の xIntentUrl へ。
+- 気付き: 冒涜の外れの箱 (pX) は黒き血でクルガルが必ず候補に入るので、エンジンではほぼ着かない (足す手は外れの箱が必ず付く決まりで残した)。左側の高貴のお告げはサフィックス満杯でエンジンが「今は意味なし」で止める。既定のカタリストは狙いのタグで選ぶ (データの MOD の tags、品質の効きの計算ではない)。
+
 ## 台本 (共有メモ local_35782246-d80a-4c3f-9dff-36103418e719/tree-mouse/)
 - tree-mouse.mjs (8 条件の操作、10b はホイール = 拡大縮小に直した)・tree-shelf.mjs (棚とお告げ)・tree-recipe.mjs・tree-trial-wide.mjs・tree-sample-check.mjs (見本の木: 戻りの線の終わり・n か所・精査 0・縮めて押す → ポップアップ → 試し打ち・札の編集と Esc)。
 - Chrome は PowerShell の `Start-Process chrome.exe -WindowStyle Hidden -PassThru -ArgumentList --headless=new,--remote-debugging-port=9333,--user-data-dir=<scratchpad>/cdp-profile`、使う前にブラックに一言、終わったら PID で止めて profile を消して「返した」。
