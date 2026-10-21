@@ -14,9 +14,10 @@
  *   カオスで付いた箱の形と実物が違えば続きから (tree-run の settle。無いと 100 人中 23 人がサフィックス満杯で止まった)
  * サフィックスの完成 3 箱は同じ形 (300 人で完成の時点のプレフィックス・空きが全員同じ、scripts/_tree-done-shape-probe) なので d1 に合流し、その下にプレフィックス 1 本
  * (10-22 オーナー「サフィに 3 MOD 付いた時点で、そこから先は全て同じルート」):
- *   P2 = レアリティのプレフィックス T1: 上級の高貴 → 外れは左側の抹消のお告げ + 完全のカオスを当たるまで
- *   (解析君 docs/org/math/notes/2026-10-22-gold-ring-prefix.md の案 1 / 2b、1 個 567〜600 神・完成 97%。サフィックスが満杯なので左側の高貴のお告げは
- *   エンジンの omenBlock が「今は意味なし」で止める = 素の上級の高貴の 2b と同じ)。
+ *   P2 = レアリティのプレフィックス T1 (解析君 docs/org/math/notes/2026-10-22-gold-ring-prefix.md の案 3・追記 2、オーナー 10-22 OK、1 個 466〜472 神・完成 99%):
+ *   素の高貴 → 外れたら 左側の結晶化のお告げ + アビスのエッセンス で外れを深淵の王の印 (MOD レベル 1) の餌に替え →
+ *   削減のお告げ + 完全のカオス (削減は必ず餌を消す) → 当たり / 外れたらまた餌を付けてから削減。
+ *   解析君の台本は「新しい外れがサフィックスより低い MOD レベルならそのまま餌にする」が、ツリーは MOD レベルで分けられないので毎回餌を付け直す。
  *   P3 = 冒涜専用のクルガルの「エナジーシールドが満タンの間スペルダメージ (15–25)% 増加」(Kurgal's、MOD レベル 65、poe2db /us/Desecrated_Modifiers):
  *   保存された鎖骨 + 黒き血のお告げ (クルガルの MOD が必ず候補に) → 発現で選ぶ (tree-sample の reveal)。外れは光のお告げ + 消去で冒涜の MOD だけ消して打ち直す
  *   (10-22 オーナー「冒涜は冒涜で付与かな」)
@@ -66,13 +67,17 @@ function goldRingSuffix(): TreeDoc {
     ar: { out: "hit", aim: A.R, parent: "sA", back: "ra" },
     ac: { out: "hit", aim: A.C, parent: "sA", back: "ca" },
     // サフィックスの完成 = d1 に合流 (d2・d3 は同じ形)。d1 からプレフィックス
-    d1: { out: "hit", aim: A.A, parent: "rc_q", hand: hand("exalt_greater"), outs: ["pR", "pJ"] },
+    d1: { out: "hit", aim: A.A, parent: "rc_q", hand: hand("exalt"), outs: ["pR", "pJ"] },
     d2: { out: "hit", aim: A.C, parent: "ra_q", back: "d1" },
     d3: { out: "hit", aim: A.R, parent: "ca", back: "d1" },
     ...J("sR_q", "jR", "sR"), ...J("sC", "jC", "sC"), ...J("sA", "jA", "sA"), ...J("rc_q", "jRC", "rc"), ...J("ra_q", "jRA", "ra"), ...J("ca", "jCA", "ca"),
     pR: { out: "hit", aim: A.PR, parent: "d1", hand: hand("desecrate", ["OmenoftheBlackblooded"]), outs: ["pD", "pX"] },
-    pJ: { out: "junk", parent: "d1", hand: hand("chaos_perfect", ["OmenofSinistralErasure"], { repeat: { until: "hit", max: null } }), outs: ["pR2"] },
-    pR2: { out: "hit", aim: A.PR, parent: "pJ", back: "pR" },
+    // 外れ → 餌 (狙い無しの手: 外れを印に替えるだけ) → 削減 + 完全のカオス。外れたら餌の箱へ戻って付け直す
+    pJ: { out: "junk", parent: "d1", hand: hand("essence:perfect:Rings/PerfectEssence_EssenceAbyss", ["OmenofSinistralCrystallisation"], { free: true }), outs: ["pB"] },
+    pB: { out: "any", parent: "pJ", hand: hand("chaos_perfect", ["OmenofWhittling"]), outs: ["pR2", "pBl", "pBj"] },
+    pR2: { out: "hit", aim: A.PR, parent: "pB", back: "pR" },
+    pBl: { out: "lost", parent: "pB", back: "start" },
+    pBj: { out: "junk", parent: "pB", back: "pJ" },
     pD: { out: "hit", aim: A.PD, parent: "pR", done: "main" },
     ...J("pR", "pX", "pR", hand("annul", ["OmenofLight"])),
   });
