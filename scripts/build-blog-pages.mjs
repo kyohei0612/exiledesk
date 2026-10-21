@@ -9,6 +9,7 @@
  * 広告は note のように本文の下に横長のバナー 1 つ + 長い記事 (見出し 4 つ以上) は真ん中の見出しの前に 1 つ (--drafts = 開発版では見本の箱)。
  * 見本の記事 (slug sample) は一覧・関連・右の列・サイトマップに出さない (開発版で部品を見るためのページだけ作る)。
  * シェア (X・Reddit・リンクのコピー・Discord 向けのコピー) と、記事を 1 ページとして数える小さな JS (scripts/_blog-client.js → /blog/blog.js)。
+ * よくある質問 /faq・/en/faq も同じ作り (元は src/data/faq/faq.<ja|en>.md、FAQ_SRC で写しを読める。構造化データ FAQPage)。
  * OGP の絵は 記事の image → img/<slug>-og.<言語>.png → 本文の 1 枚目の (svg でない) 図 → 題を描いた絵 (scripts/_blog-og.mjs、/blog/og/<言語>-<slug>.png) の順。記事の下にコメント欄の置き場 (#comments、中身はこれから)。
  *
  *   node scripts/build-blog-pages.mjs [出力先 (既定 dist-web)] [--drafts] [--as-published]
@@ -98,6 +99,7 @@ ul.posts a.t{font-size:17px;font-weight:700;text-decoration:none;color:var(--ink
 @media (max-width:1023px){.cards{grid-template-columns:repeat(2,1fr);gap:32px 20px}}@media (max-width:767px){.cards{grid-template-columns:1fr;gap:32px}.cards .ct{font-size:17px}.tagf{margin-left:0}}
 ul.posts p{margin:6px 0 0;color:var(--sub);font-size:14px}
 #comments{margin-top:32px}
+.faq-toc{margin:0 0 2em;padding:16px 20px 16px 2.6em;background:var(--soft);border-radius:8px;font-size:16px;line-height:1.8}.faq-toc a{color:var(--ink);text-decoration:none}.faq-toc a:hover{color:var(--link)}h2[id^=q]{scroll-margin-top:16px}
 footer{border-top:1px solid var(--line);color:var(--sub);font-size:12px;line-height:1.7;background:#fafafa}footer .in{max-width:960px;margin:0 auto;padding:16px 20px 24px}footer .fnav{margin:0 0 6px}footer .fnav a{color:var(--sub)}
 @media (max-width:767px){body{font-size:16px;line-height:1.9}main{padding:28px 22px 48px}h1{font-size:24px}h2{font-size:21px;margin-top:44px}h3{font-size:18px}.say img{flex-basis:44px;width:44px;height:44px}}`;
 
@@ -121,6 +123,22 @@ const L = {
     author: "Testing Path of Exile 2 crafting by running it through the engine", backCraft: "← Back to Craft Stage", backSim: "← Back to Simulator", share: "Share", copyLink: "Copy link", copyDiscord: "Copy for Discord", copied: "Copied",
   },
 };
+// よくある質問 (/faq・/en/faq、2026-10-22 オーナー)。元は src/data/faq/faq.<ja|en>.md (中身は記事編集長)、1 問 = 「## 質問」の見出し + 下に答え。
+// 本番は頭に ready: true のある物だけ、開発版は全部。出す時だけ記事のヘッダー・フッターと About のフッターにリンクを足す (リンク切れを作らない)
+const FAQ_SRC = process.env.FAQ_SRC ? resolve(process.env.FAQ_SRC) : resolve(ROOT, "src/data/faq");
+const FAQ_NAME = { ja: "よくある質問", en: "FAQ" };
+const faqs = ["ja", "en"].map((lang) => {
+  const f = resolve(FAQ_SRC, `faq.${lang}.md`);
+  return existsSync(f) ? M.parseBlogFile(`faq.${lang}.md`, readFileSync(f, "utf8")) : null;
+}).filter((p) => p && (DEV || (p.meta.ready && !p.meta.draft)));
+const hasFaq = (lang) => faqs.some((p) => p.meta.lang === lang);
+for (const lang of ["ja", "en"]) {
+  if (!hasFaq(lang)) continue;
+  const a = `<a href="${L[lang].prefix}/faq">${FAQ_NAME[lang]}</a>`;
+  L[lang].nav += a;
+  L[lang].foot = L[lang].foot.replace(lang === "ja" ? "ExileDesk について</a>" : "About</a>", (s) => `${s} · ${a}`);
+}
+
 /** 横長のバナーの枠 (AdSense が通るまで本番は空、開発版は見本の箱)。ボタン・リンクから離す (上下 48px) */
 const adBanner = (l) => (DEV ? `<aside class="adbn dev">${L[l].ad} · 728 × 90 / 320 × 100</aside>` : `<aside class="adbn"></aside>`);
 /** 長い記事 (見出し 4 つ以上) は真ん中の見出しの前にもう 1 つ */
@@ -264,6 +282,27 @@ ${others.length ? `<section class="more"><h2>${l.more}</h2><ul class="posts">${o
   urls.push(`${l.prefix}/blog/`);
   console.log(`${lang}: 記事 ${shown.length} 本 + 一覧 (見本 ${mine.length - shown.length})`);
 }
+// よくある質問のページ: 質問 (h2) ごとにページ内リンク #q1… と目次、構造化データ FAQPage (答えは文字だけ)
+const plain = (html) => html.replace(/<\/?(?:p|li|ul|ol|div|h\d|br|table|tr|th|td|summary|details|aside|figure|figcaption)\b[^>]*>/g, " ").replace(/<[^>]+>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
+for (const p of faqs) {
+  const lang = p.meta.lang;
+  const l = L[lang];
+  let n = 0;
+  const html = M.blogHtml(p.body, imgUrl, lang).replace(/<h2>/g, () => `<h2 id="q${++n}">`);
+  const qs = [...html.matchAll(/<h2 id="(q\d+)">([\s\S]*?)<\/h2>([\s\S]*?)(?=<h2 id="q\d+">|$)/g)].map(([, id, q, a]) => ({ id, q, a }));
+  const ld = { "@context": "https://schema.org", "@type": "FAQPage", inLanguage: lang, mainEntity: qs.map((x) => ({ "@type": "Question", name: plain(x.q), acceptedAnswer: { "@type": "Answer", text: plain(x.a) } })) };
+  const toc = qs.length ? `<ol class="faq-toc">${qs.map((x) => `<li><a href="#${x.id}">${x.q}</a></li>`).join("")}</ol>` : "";
+  const body = `<h1>${esc(p.meta.title)}</h1>\n${p.meta.description ? `<p>${esc(p.meta.description)}</p>\n` : ""}${toc}\n${html}\n${adBanner(lang)}`;
+  const dir = resolve(OUT, l.prefix.slice(1));
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(resolve(dir, "faq.html"), page(lang, { title: `${p.meta.title} | ExileDesk`, desc: p.meta.description, path: "/faq", alt: hasFaq(lang === "ja" ? "en" : "ja"), og: { type: "website", image: `${SITE}/web/og.png` }, ld, body, slug: "faq" }));
+  if (p.meta.ready && !p.meta.draft) urls.push(`${l.prefix}/faq`);
+  // About (public/ の手書き) のフッターにもリンク
+  const about = resolve(dir, "about.html");
+  if (existsSync(about)) writeFileSync(about, readFileSync(about, "utf8").replace(/<p class="fnav">[\s\S]*?<\/p>/, (fnav) => fnav.replace(lang === "ja" ? ">ExileDesk について</a>" : ">About</a>", (s) => `${s} · <a href="${l.prefix}/faq">${FAQ_NAME[lang]}</a>`)));
+  console.log(`${lang}: よくある質問 ${qs.length} 問 → ${l.prefix}/faq`);
+}
+
 // クラフト台の右の列が読む (新しい順、日本語・英語)
 writeFileSync(resolve(OUT, "blog", "index.json"), JSON.stringify(index));
 cpSync(resolve(ROOT, "scripts/_blog-client.js"), resolve(OUT, "blog", "blog.js"));
