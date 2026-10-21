@@ -1,106 +1,270 @@
 ---
 title: PoE2 Chaos Orb Reroll vs Restart: 31 div vs 580 div
-description: When +2 Projectile is lost mid-craft in PoE2, should you reroll it with Chaos Orbs or restart? Rerolling averaged about 31 div, restarting about 580 div, and in a related 54-situation study restarting was never chosen.
+description: When +2 Projectile is lost mid-craft in PoE2, should you reroll it with Chaos Orbs or restart? Rerolling averaged about 31 div, restarting about 580 div, and in a separate 54-situation example restarting was never chosen.
 date: 2026-10-22
 tags: Chaos Orb, chaos spam, restart, expected cost, gloves
 tree: /?page=sim-tree&base=Intricate%20Gloves
 craft: /?base=Intricate%20Gloves
 image: img/chaos-reroll-vs-restart-og.en.png
+ready: true
 draft: true
 ---
-In PoE2, Chaos Orb reroll vs restart has a clear answer: when a key mod gets wiped mid-craft, **rerolling it with Chaos Orbs is far cheaper than starting over**. On one pair of gloves, putting "+2 to Level of all Projectile Skills" back with Chaos Orbs averaged about 31 Divine Orbs (div), while restarting from a white base cost about 580 div. And each Chaos Orb lands it only 0.32% of the time (measured on the engine).
+When a target mod gets wiped mid-craft in PoE2, **rerolling it with Chaos Orbs is far cheaper than starting over**. On one pair of gloves, putting "+2 to Level of all Projectile Skills" back with Chaos Orbs averaged about 31 div (div = Divine Orb), while restarting from a white base cost about 580 div. And each Chaos Orb lands it only 0.32% of the time (measured on the engine).
 
-You annul a miss, and the Annulment takes your best mod with it. Ever felt like throwing the item away and starting fresh?
+:::zundamon troubled
+My Orb of Annulment took my best mod with it. I'm throwing this away and starting over...
+:::
 
-At 0.32% per orb, rerolling sounds hopeless. But once you work out the expected cost to finish, restarting loses. In a separate example with different targets, split into 54 situations, restarting was the cheapest move in none of them.
+:::metan normal
+Wait. If you work out the expected cost to finish, restarting is the losing move.
+:::
+
+:::zundamon surprised
+Chaos lands it only 0.32% of the time, and rerolling is still cheaper!?
+:::
 
 :::summary What you'll learn
-- If +2 Projectile is lost, rerolling it with Chaos Orbs averages about 31 div, far below restarting (about 580 div)
-- A "restart when it's lost" rule costs 775 div at best by calculation (788 on the engine). The reroll route costs 105 div by calculation (94 over 1,000 engine runs)
-- In a separate 54-situation example, restarting was never the best move (always at least 67 div worse)
-- The 580 div figure later turned out too high, and this item's restart cost hasn't been recalculated yet
+- If +2 Projectile is lost, rerolling it with Chaos Orbs averages about 31 div, far below restarting (about 580 div). The 580 div later turned out too high and hasn't been recalculated yet
+- A "restart when it's lost" rule costs 775 div at best by calculation. The reroll route costs 105 div by calculation
+- In a separate example with different targets, restarting was chosen in none of its 54 situations
+:::
+
+:::tip New to this? Words used here
+- **Chaos Orb**: removes one mod from a Rare and adds a new one
+- **Orb of Annulment**: removes one mod from a Rare. It can hit a target mod
+- **Fractured**: a mod locked in place so it can't be removed
+- **Expected cost**: the average cost to finish if you made the item many times
+- **div**: Divine Orb, the price unit in this post
 :::
 
 ## Rerolling Costs About 31 div, Restarting About 580
 
-The item is a pair of Intelligence gloves from a stream. It starts as a Rare with one Fractured prefix and a Fractured "+2 to Level of all Projectile Skills" suffix. The remaining targets are maximum Energy Shield or maximum Mana at T1, the mods from the Essence of Hysteria and the Essence of Horror, and Astrid's Creativity.
+First, let's compare the two options when +2 Projectile is lost.
 
-Removing misses with a plain Orb of Annulment sometimes hits that +2 Projectile mod. When it does, you have two options.
-
-| When +2 Projectile is lost | Cost | Details |
-|---|---:|---|
-| Reroll it with Chaos Orbs | about 31 div on average | lands 0.32% per orb (engine) |
-| Restart from a white base | about 580 div | calculated: about 190 div per magic-to-Fractured attempt × 3, plus Astrid's Creativity |
-
-:::chart bar Cost to get +2 Projectile back (div)
-unit: div
-labels: Reroll with Chaos Orbs, Restart from white
-Cost: 31, 580
+:::zundamon normal
+What kind of gloves are we crafting?
 :::
 
-0.32% per orb is a low hit rate, yet the cost is an order of magnitude below a restart. Restarting means walking the whole long road again: building the magic item, making it Rare, then fracturing.
+:::metan normal
+A pair of Intelligence gloves. They start as a Rare with one Fractured prefix and "+2 to Level of all Projectile Skills" on the suffix side.
+:::
 
-Bad luck still happens. In the engine runs, the longest reroll took 2,500 Chaos Orbs in a row. The calculation treats rerolling as spam with a 3,000-orb cap.
+:::metan normal
+There's one more prefix on it too. We add the remaining targets from there.
+:::
+
+:::zundamon normal
+What are the remaining targets?
+:::
+
+:::metan normal
+Maximum Energy Shield or maximum Mana at T1, the mods from the Essence of Hysteria and the Essence of Horror, and Astrid's Creativity.
+:::
+
+:::zundamon troubled
+But the +2 Projectile can get wiped, right?
+:::
+
+:::metan troubled
+Removing misses with a plain Orb of Annulment sometimes hits it. When that happens, you have two options.
+:::
+
+| When it's lost | Cost | Details | Why that much |
+|---|---:|---|---|
+| Reroll it with Chaos Orbs | about 31 div on average | lands 0.32% per orb (engine) | low hit rate, but you only spam Chaos Orbs |
+| Restart from a white base | about 580 div | calculated: about 190 div per magic-to-Fractured attempt × 3, plus Astrid's Creativity | you walk the whole long road again |
+
+By calculation, rerolling is an order of magnitude cheaper.
+
+:::zundamon surprised
+Even at 0.32%, it's an order of magnitude cheaper than restarting!
+:::
+
+:::metan normal
+Because restarting means redoing everything: lining up targets on a magic item, making it Rare, then fracturing.
+:::
+
+:::zundamon troubled
+But with bad luck, the Chaos Orbs could go on forever?
+:::
+
+:::metan troubled
+In the engine runs, the longest streak was 2,500 orbs.
+:::
+
+:::metan normal
+The calculation treats rerolling as spam and stops it at a 3,000-orb cap.
+:::
 
 ## What Does a "Restart When Lost" Rule Cost?
 
-One reroll versus one restart isn't the whole story, because the same choice comes back every time the mod is lost. So we compared the expected cost to finish for the whole route.
+The same choice comes back every time the mod is lost, so we compared the expected cost to finish for the whole route.
 
-| Rule when +2 Projectile is lost | Calculated | Engine |
-|---|---:|---:|
-| Reroll with Chaos Orbs (cheapest route) | 105 div | 94 div (1,000 runs) |
-| Restart (cheapest route under that rule) | 775 div | 788 div |
+:::zundamon normal
+Doesn't comparing one reroll with one restart already settle it?
+:::
 
-Under the restart rule, no amount of smart play elsewhere gets below 775 div by calculation. In both rows the calculation lands close to the engine.
+:::metan normal
+Not yet. The choice keeps coming back, so we have to compare whole routes.
+:::
 
-The rest of the cheapest route (plain Annulments for misses, Omens almost never) is covered in [PoE2 crafting expected cost](/en/blog/optimal-move-vs-intuition/). Here we dig into one question only: continue or start over?
+| Rule when +2 Projectile is lost | Calculated | Engine | Which wins |
+|---|---:|---:|---|
+| Reroll with Chaos Orbs (cheapest route) | 105 div | 94 div (1,000 runs) | **wins** |
+| Restart (cheapest route under that rule) | 775 div | 788 div | loses (smart play elsewhere doesn't bring it down) |
+
+Under the restart rule, the cost never got below 775 div by calculation.
+
+:::zundamon normal
+Do the calculation and the engine agree?
+:::
+
+:::metan happy
+Both rows land close. 94 div against 105, and 788 div against 775.
+:::
+
+:::zundamon normal
+What does the cheapest route actually do?
+:::
+
+:::metan normal
+It clears misses with plain Annulments and almost never uses Omens. The details are in [PoE2 crafting expected cost](/en/blog/optimal-move-vs-intuition/).
+:::
+
+:::metan normal
+Here we only look at one question: keep going, or start over?
+:::
 
 ## In Another Example, Was Restarting Ever Right?
 
-This section is a **different example**. On the same glove setup, the finished suffixes were changed to +2 Projectile, Critical Damage Bonus and attack speed, and the craft was split into 54 situations by "targets present, prefix misses, suffix misses." Restarting in this example meant rebuilding the first half (up to the Fractured item) for 69 div.
+From here on is a **different example**. Same glove setup, but with different suffixes on the finished item.
 
-Still, restarting was the cheapest move in zero situations. It was always at least 67 div worse than the best move.
+:::zundamon normal
+A different example? What changed?
+:::
 
-| Targets present | Prefix misses | Suffix misses | Restart loss (T1 targets) | Restart loss (T3+ targets) |
-|---:|---:|---:|---:|---:|
-| 0 | 0 | 1 | +69 div | +69 div |
-| 1 | 0 | 1 | +85 div | +73 div |
-| 2 | 1 | 0 | +1,601 div | +361 div |
-| 3 | 1 | 0 | +5,037 div | +2,281 div |
-| 4 | 1 | 0 | +5,129 div | +2,429 div |
+:::metan normal
+The finished suffixes are +2 Projectile, Critical Damage Bonus and attack speed.
+:::
 
-Even with no targets on the item, restarting loses roughly its own price (69 div). You pay to land in almost the same "no targets yet" state you were already in.
+:::metan normal
+We split it into 54 situations by targets present, prefix misses and suffix misses.
+:::
 
-The more targets you hold, the worse it gets, by orders of magnitude. In this example, throwing away an item with three or four T1 targets throws away more than 5,000 div of progress. "Too many misses, I'll start over" discards the value of every target still on the item.
+:::zundamon normal
+How much does a restart cost in this one?
+:::
 
-:::tip When a mod is lost, keep going
-Even after losing a key mod, continuing from what you have was cheaper in every calculated case. Before you scrap an item, count how many targets are still on it.
+:::metan normal
+69 div, to rebuild the first half up to the Fractured item. Much cheaper than the first gloves.
+:::
+
+:::zundamon happy
+Then restarting has to win somewhere!
+:::
+
+:::metan normal
+It won zero times. It was always at least 67 div worse than the best move.
+:::
+
+| Targets present | Prefix misses | Suffix misses | Restart loss (T1 targets) | Restart loss (T3+ targets) | What you throw away |
+|---:|---:|---:|---:|---:|---|
+| 0 | 0 | 1 | +69 div | +69 div | the restart price only |
+| 1 | 0 | 1 | +85 div | +73 div | restart price + 1 target's value |
+| 2 | 1 | 0 | +1,601 div | +361 div | restart price + 2 targets' value |
+| 3 | 1 | 0 | +5,037 div | +2,281 div | restart price + 3 targets' value |
+| 4 | 1 | 0 | +5,129 div | +2,429 div | restart price + 4 targets' value |
+
+The more targets you hold, the bigger the loss, by orders of magnitude.
+
+:::zundamon normal
+With no targets on the item, restarting can't hurt, right?
+:::
+
+:::metan normal
+It still costs its price, 69 div. You'd land in almost the same "no targets yet" state you're already in.
+:::
+
+:::zundamon surprised
+And with three or four targets on it?
+:::
+
+:::metan troubled
+If they're all T1, you throw away over 5,000 div. You lose the value of every target you're holding.
+:::
+
+:::tip Lost a mod? Keep going from what you have
+Even after losing a key mod, continuing from the item with your remaining targets was cheaper by calculation. If you feel like restarting, count how many targets are still on the item you'd throw away.
 :::
 
 ## The 580 div Was Too High. Does the Answer Hold?
 
-To be honest, the first gloves' 580 div restart cost came from our first calculation, and it later turned out too high.
+The first gloves' restart cost of about 580 div came from our first calculation, and it later turned out too high.
 
-The Orbs of Transmutation and Augmentation used at the magic stage have their own tier floors (Greater 44, Perfect 70), different from Exalted Orbs. The first calculation used the Exalted Orb floors (35 and 50) and overestimated the magic stage by about 2 times, so the 580 div is inflated by that much. We haven't recalculated this item's restart cost with the corrected floors.
-
-We expect the answer to hold, but that is an **inference**. It rests on two things: in the other example, even a 69 div restart was never chosen, and the gap to the 31 div reroll is large. It was not checked on the first gloves.
-
-One more finding: +2 Projectile is also cheap to add with Chaos Orbs after the item is already Rare, cheaper than spamming Orbs of Augmentation on a magic item (178 div per attempt in the calculation). That suggests the very first step of the route could be rethought. The 178 div carries the same floor mistake.
-
-:::note What we haven't verified
-- The about 580 div restart cost is calculation only and too high by the floor mistake above. It hasn't been recalculated with corrected floors or checked on the engine.
-- The 54 situations and "always at least 67 div worse" come from a different example and are comparisons inside the calculation (a calculation experiment, not a site feature). Applying them to the first gloves is an inference, and nothing here was checked against in-game results.
-- 0.32% comes from the ExileDesk engine and was not compared with Craft of Exile or in-game results. The price of buying the base is not included.
+:::zundamon surprised
+The 580 div was wrong!?
 :::
+
+:::metan troubled
+Orbs of Transmutation and Augmentation used on magic items have their own tier floors, separate from Exalted Orbs: Greater 44, Perfect 70.
+:::
+
+:::metan troubled
+The first calculation used the Exalted Orb floors, 35 and 50. That doubled the estimated magic-stage cost.
+:::
+
+| Transmutation / Augmentation floor | Greater | Perfect | What happened |
+|---|---:|---:|---|
+| Correct value | 44 | 70 | not used in the first calculation |
+| Value used first (same as Exalted Orb) | 35 | 50 | magic stage estimated at 2 times, so the 580 div is too high |
+
+The 580 div is too high by the magic-stage overestimate.
+
+:::zundamon troubled
+So the answer might change too?
+:::
+
+:::metan normal
+We expect it to point the same way. But that's an **inference**.
+:::
+
+:::metan normal
+Two reasons. In the other example, even a 69 div restart was never chosen, and the gap to the 31 div reroll is large.
+:::
+
+:::metan troubled
+We haven't checked it on the first gloves.
+:::
+
+:::zundamon normal
+Did you notice anything else?
+:::
+
+:::metan normal
++2 Projectile is also cheap to add with Chaos Orbs after making the item Rare. Cheaper than Augmentation spam on the magic item, which is 178 div per attempt by calculation.
+:::
+
+:::metan troubled
+So the very first step of the route could be rethought. But the 178 div carries the same floor mistake.
+:::
+
+:::note fold Not yet verified (3)
+- The about 580 div restart cost is calculation only and too high by the floor mistake above. It hasn't been recalculated with corrected floors or checked on the engine.
+- The 54 situations and "always at least 67 div worse" come from a different example and are comparisons inside the calculation (a calculation experiment, not a site feature). Applying them to the first gloves is an inference, and they weren't checked against in-game results.
+- 0.32% comes from the ExileDesk engine and wasn't compared with Craft of Exile or in-game results. The price of buying the base isn't included.
+:::
+
+When a target mod is lost, rerolling from what you have is cheaper than restarting, by calculation. Before you scrap an item, count the targets still on it.
 
 ## Where the Numbers Come From
 
-- First gloves (analysis log optimal-craft-dp, 2026-10-21):
-  - Engine: 0.32% per Chaos Orb, longest reroll streak of 2,500, reroll route 94 div (1,000 runs), restart rule 788 div (run count not recorded).
-  - Calculation: reroll about 31 div on average, restart about 580 div (about 190 div × 3 + Astrid's Creativity), 105 div and 775 div, 3,000-orb reroll cap.
-  - Calculation (later notes in the same log): the 580 div overestimate (Transmutation / Augmentation floors Greater 44, Perfect 70) and 178 div per magic attempt.
+:::fold Show sources (5)
+- First gloves, engine values (analysis log optimal-craft-dp, 2026-10-21): 0.32% per Chaos Orb, longest reroll streak of 2,500, reroll route 94 div (1,000 runs), restart rule 788 div (run count not recorded).
+- First gloves, calculated values (same log): reroll about 31 div on average, restart about 580 div (about 190 div × 3 + Astrid's Creativity), 105 div and 775 div, 3,000-orb reroll cap.
+- The 580 div overestimate (later notes in the same log, calculation): Transmutation / Augmentation floors Greater 44, Perfect 70, and 178 div per magic attempt.
 - Different example (docs/org/math/notes/threshold-2026-10-20.md): the 54-situation table, the 69 div restart and "at least 67 div worse" are all calculation.
-- Prices are market prices from 2026-10-21 (1 Divine Orb = 718 Exalted Orbs).
+- Prices are market prices from 2026-10-21 (1 div = 718 Exalted Orbs).
+:::
 
 ## Try It Yourself
 
@@ -108,5 +272,8 @@ You can apply the moves one by one on the [crafting bench](/?base=Intricate%20Gl
 
 **Related posts**
 
-- [PoE2 crafting expected cost](/en/blog/optimal-move-vs-intuition/)
-- [PoE2 chaos spam odds](/en/blog/chaos-spam-odds/)
+- [PoE2 Crafting Expected Cost: The Cheapest Move Skips Omens](/en/blog/optimal-move-vs-intuition/)
+- [PoE2 Chaos Spam Odds: How Many Orbs at 0.3% per Try](/en/blog/chaos-spam-odds/)
+- [PoE2 Crafting Calculator Mistakes: 3 Bugs We Caught](/en/blog/crafting-calculator-mistakes/)
+
+VOICEVOX: Zundamon / Shikoku Metan
