@@ -21,16 +21,24 @@ const emit = defineEmits<{
 }>();
 const t = useTree();
 
-const TAG: Record<TreeBox["out"], [string, string, string]> = {
-  start: ["始まり", "Start", "bg-sky-500/25 text-sky-100"],
-  hit: ["当たり", "Hit", "bg-amber-500/25 text-amber-100"],
-  junk: ["外れ", "Miss", "bg-rose-500/25 text-rose-100"],
-  junkGone: ["外れが消えた", "Miss removed", "bg-slate-400/25 text-slate-100"],
-  lost: ["狙いが消えた", "Target lost", "bg-violet-500/25 text-violet-100"],
+/**
+ * 結果ごとの名前・色・印 (10-22 見た目の作り直し、research/notes/2026-10-22-tree-ui-references.md の 2: ネオンの縁 + 印 + 題 + 副題)。
+ * 色は線の色 (SimTreePage の LINE) と同じ系統: 進む = 金 / 外れ・消えた = 赤・紫・灰 / 始まり = 水色
+ */
+const KIND: Record<TreeBox["out"], { ja: string; en: string; c: string; icon: string }> = {
+  start: { ja: "始まり", en: "Start", c: "95,180,224", icon: "sparkles" },
+  hit: { ja: "当たり", en: "Hit", c: "224,176,96", icon: "target" },
+  junk: { ja: "外れ", en: "Miss", c: "224,112,122", icon: "x" },
+  junkGone: { ja: "外れが消えた", en: "Miss removed", c: "154,167,184", icon: "check" },
+  lost: { ja: "狙いが消えた", en: "Target lost", c: "165,139,224", icon: "rotate" },
 };
-const tag = computed(() => TAG[props.box.out]);
-const frame = computed(() => (props.box.done ? "border-amber-300 shadow-[0_0_14px_rgba(255,200,110,0.45)]"
-  : props.box.out === "hit" ? "border-amber-500/60" : props.box.out === "junk" ? "border-rose-500/50" : props.box.out === "start" ? "border-sky-400/60" : "border-white/25"));
+const kind = computed(() => KIND[props.box.out]);
+/** 縁の色 (完成は明るい金) と光り方。選んだ・光らせた時は強く */
+const rgb = computed(() => (props.box.done ? "242,210,122" : kind.value.c));
+const neon = computed(() => {
+  const strong = props.glow || props.selected || !!props.box.done;
+  return { borderColor: `rgba(${rgb.value},${strong ? 0.95 : 0.55})`, boxShadow: `0 0 0 1px rgba(${rgb.value},${strong ? 0.5 : 0.18}), 0 0 ${strong ? 22 : 12}px rgba(${rgb.value},${strong ? 0.45 : 0.16})` };
+});
 const doneText = computed(() => (props.box.done === "main" ? tr("完成 (本命)", "Done (main)") : props.box.done === "compromise" ? tr("完成 (妥協)", "Done (compromise)") : tr("完成にする", "Mark done")));
 const free = computed(() => !props.box.hand && !props.box.back && !props.box.done);
 /** 押せる物を隠す時 (戻り先を選んでいる・一望) */
@@ -49,14 +57,15 @@ function down(e: PointerEvent): void {
 
 <template>
   <!-- 押せる物は全部 24px 以上 (2026-10-22 押しにくい所の洗い出し、notes/2026-10-22-tree-ui-click-audit.md) -->
-  <div data-tree-box :data-box-id="box.id" class="absolute select-none rounded-lg border-2 bg-[#15120e]/95 px-2 py-1 text-[12px]"
-    :class="[frame, picking || viewOnly ? 'cursor-pointer' : 'cursor-grab', picking ? 'ring-2 ring-cyan-400/70 hover:ring-cyan-300' : '', selected ? 'outline outline-2 outline-offset-2 outline-amber-300/70' : '', glow ? 'ring-4 ring-amber-300/80 shadow-[0_0_18px_rgba(255,200,110,0.6)]' : '', issue ? '!border-rose-500 shadow-[0_0_16px_rgba(244,63,94,0.55)]' : '']"
-    :style="{ left: `${x}px`, top: `${y}px`, width: `${BOX_W}px`, height: `${BOX_H}px` }"
+  <div data-tree-box :data-box-id="box.id" class="absolute select-none rounded-xl border-[1.5px] bg-gradient-to-b from-[#1d1812] to-[#110e0a] px-2 py-1 text-[12px] transition-shadow"
+    :class="[picking || viewOnly ? 'cursor-pointer' : 'cursor-grab', picking ? 'ring-2 ring-cyan-400/70 hover:ring-cyan-300' : '', glow ? 'ring-2 ring-amber-200/70' : '', issue ? '!border-rose-500 !shadow-[0_0_16px_rgba(244,63,94,0.55)]' : '']"
+    :style="{ left: `${x}px`, top: `${y}px`, width: `${BOX_W}px`, height: `${BOX_H}px`, ...neon }"
     @pointerdown="down" @click="picking ? emit('target') : viewOnly && emit('focus')">
     <!-- 縮めている時 (k > 1) は押せる物の行を倍率分高くし、まだ「—」だけの数字の行は隠す (箱が小さくても押せる物どうしが重ならない) -->
-    <div class="flex items-center gap-1" :style="{ height: `${24 * k}px` }">
-      <span class="rounded-sm px-1.5 py-px text-[11px] font-bold" :class="tag[2]">{{ tr(tag[0], tag[1]) }}</span>
-      <span v-if="box.done" class="rounded-sm bg-amber-400/30 px-1 text-[10px] font-bold text-amber-100">{{ doneText }}</span>
+    <div class="flex items-center gap-1.5" :style="{ height: `${24 * k}px` }">
+      <span class="flex size-5 shrink-0 items-center justify-center rounded-md" :style="{ background: `rgba(${rgb},0.18)`, color: `rgb(${rgb})` }"><Icon :name="kind.icon" class="size-3.5" /></span>
+      <span class="truncate text-[11px] font-bold tracking-wide" :style="{ color: `rgb(${rgb})` }">{{ tr(kind.ja, kind.en) }}</span>
+      <span v-if="box.done" class="shrink-0 rounded-full bg-amber-300/25 px-1.5 text-[10px] font-bold text-amber-100">{{ doneText }}</span>
       <span v-if="issue" data-tree-issue class="rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white" :title="issue">!</span>
       <span class="flex-1" />
       <span class="flex items-center" :style="keep('right center')">
@@ -68,19 +77,19 @@ function down(e: PointerEvent): void {
     <!-- 中身: 始まり = ベースとフラクチャー / 当たり = 付く MOD (右の＋に掛からない幅) -->
     <div class="min-w-0">
       <template v-if="box.out === 'start'">
-        <p class="truncate font-bold leading-5">{{ tr(jaTypeName(TREE_BASE), TREE_BASE) }} <span class="font-normal opacity-70">{{ tr(`レベル ${TREE_ILVL}`, `ilvl ${TREE_ILVL}`) }}</span></p>
+        <p class="truncate text-[13px] font-bold leading-5">{{ tr(jaTypeName(TREE_BASE), TREE_BASE) }} <span class="font-normal opacity-70">{{ tr(`レベル ${TREE_ILVL}`, `ilvl ${TREE_ILVL}`) }}</span></p>
         <button type="button" class="block w-full truncate text-left text-[#c8c8ff] hover:underline" :class="quiet ? 'pointer-events-none' : ''" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :title="t.fractureLabel(t.doc.value.fracture)" @click.stop="!quiet && emit('aim')">
           {{ t.doc.value.fracture ? `${tr("フラクチャー", "Fractured")}: ${t.fractureLabel(t.doc.value.fracture)}` : tr("＋ フラクチャーする MOD を選ぶ", "+ Pick the mod to fracture") }}
         </button>
       </template>
-      <button v-else-if="box.out === 'hit'" type="button" class="block w-[calc(100%-14px)] truncate text-left hover:underline" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :class="[box.aim ? 'text-[#c8c8ff]' : 'text-amber-300', quiet ? 'pointer-events-none' : '']" :title="t.aimLabel(box.aim)" @click.stop="!quiet && emit('aim')">
+      <button v-else-if="box.out === 'hit'" type="button" class="block w-[calc(100%-14px)] truncate text-left text-[13px] hover:underline" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :class="[box.aim ? 'text-[#c8c8ff]' : 'text-amber-300', quiet ? 'pointer-events-none' : '']" :title="t.aimLabel(box.aim)" @click.stop="!quiet && emit('aim')">
         {{ box.aim ? t.aimLabel(box.aim) : tr("＋ 付く MOD を選ぶ", "+ Pick the mod") }}
       </button>
       <p v-else class="truncate leading-6 opacity-60">{{ box.out === "junk" ? tr("当たり以外が付いた", "Anything but a hit") : box.out === "junkGone" ? tr("外れの MOD が消えた", "A miss mod was removed") : tr("狙いの MOD が消えた", "A target mod was removed") }}</p>
     </div>
 
     <!-- 数字はまだ繋がない (100 人回すのは次の手) -->
-    <p v-if="k === 1" class="text-[11px] tabular-nums opacity-55">{{ tr("通った — 人 · ここまで — 神", "— people · — div so far") }}</p>
+    <p v-if="k === 1" class="text-[11px] tabular-nums text-[#a89c86]/70">{{ tr("通った — 人 · ここまで — 神", "— people · — div so far") }}</p>
 
     <!-- 下の行: 戻りの矢印・完成 (下の＋は箱の外なので重ならない) -->
     <div class="pointer-events-none absolute inset-x-2 bottom-1 flex h-6 items-center gap-1 text-[11px] *:pointer-events-auto" :style="k > 1 ? { right: 'auto', width: `${(BOX_W - 16 - (box.out === 'hit' ? 22 : 0)) / k}px`, ...keep('left bottom') } : {}">

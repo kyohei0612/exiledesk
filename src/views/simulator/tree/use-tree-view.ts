@@ -90,6 +90,23 @@ export function useTreeView(doc: Ref<TreeDoc>, panelOpen: () => boolean) {
       el.scrollBy({ left: toCss(dx), top: toCss(dy) });
     });
   }
+  /**
+   * 等倍に戻す。一望 (VIEW_ONLY 未満) からは始まりの箱を上の真ん中に置く (真ん中を軸にすると枝と枝の間の空き所に出て、
+   * どこを見ているか分からなかった。10-22)。75% 以上の時は今見ている真ん中を軸に
+   */
+  async function resetZoom(): Promise<void> {
+    const el = viewport.value;
+    if (!el || zoom.value >= VIEW_ONLY) { await setZoom(1); return; }
+    zoom.value = 1;
+    await nextTick();
+    measure();
+    goHome();
+  }
+  /** 始まりの箱を上の真ん中へ (開いた時と、一望から等倍に戻した時。左の枝が長いと始まりが右端で切れて出た) */
+  function goHome(): void {
+    const el = viewport.value, st = doc.value.boxes.start;
+    if (el && st) el.scrollTo({ left: (ox.value + st.x + BOX_W / 2) * zoom.value - el.clientWidth / 2, top: Math.max(0, (oy.value + st.y) * zoom.value - 40) });
+  }
   /** 縮めて見ている時に箱を押した = 等倍にしてその箱を真ん中へ */
   async function focusBox(id: string): Promise<void> {
     zoom.value = 1;
@@ -108,8 +125,8 @@ export function useTreeView(doc: Ref<TreeDoc>, panelOpen: () => boolean) {
     old?.removeEventListener("wheel", onWheel);
     el?.addEventListener("wheel", onWheel, { passive: false });
   });
-  onMounted(() => { if (viewport.value) ro.observe(viewport.value); measure(); });
+  onMounted(() => { if (viewport.value) ro.observe(viewport.value); measure(); void nextTick(goHome); });
   onBeforeUnmount(() => { viewport.value?.removeEventListener("wheel", onWheel); ro.disconnect(); });
 
-  return { viewport, zoom, full, bounds, ox, oy, area, viewOnly, measure, setZoom, zoomIn, zoomOut, fit, pan, toWorld, reveal, focusBox, toggleFull };
+  return { viewport, zoom, full, bounds, ox, oy, area, viewOnly, measure, setZoom, resetZoom, zoomIn, zoomOut, fit, pan, toWorld, reveal, focusBox, toggleFull };
 }

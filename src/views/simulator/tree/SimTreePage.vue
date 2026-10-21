@@ -10,6 +10,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
 import TreeMemoFloat from "./TreeMemoFloat.vue";
+import TreeCanvasTools from "./TreeCanvasTools.vue";
 import TreeBox from "./TreeBox.vue";
 import TreeHandShelf from "./TreeHandShelf.vue";
 import TreeModPick from "./TreeModPick.vue";
@@ -55,19 +56,24 @@ const boxes = computed(() => Object.values(doc.value.boxes));
  * 進む線 (2026-10-22 整列の定義、オーナー「クソ汚い」の後): 普通の木の図と同じ直角の線。親の下から 1 本下りて (途中に手の札)、
  * 子の段の上で横の棒、そこから子の上の辺へ下ろす。色は 進む = 灰 / 外れ・消えた = 赤系 の 2 つだけ
  */
-const LINE = { fwd: "#8f877a", bad: "#c96a72", back: "#5fd0e0" } as const;
+const LINE = { fwd: "#a39a88", bad: "#c96a72", back: "#5fd0e0" } as const;
+/** 手 (見るだけ): どこを引いても画面が動き、箱は押せない (ComfyUI の手、見本の 6) */
+const hand = ref(false);
 const edges = computed(() => boxes.value.filter((b) => b.hand && b.outs.length).map((b) => {
   const p = posOf(b);
   const px = p.x + BOX_W / 2 + ox.value, py = p.y + BOX_H + oy.value, jy = py + 46;
   const kids = b.outs.map((o) => ({ id: o, c: doc.value.boxes[o]!, q: posOf(doc.value.boxes[o]!) }));
   const busY = Math.min(...kids.map((k) => k.q.y)) + oy.value - 18;
-  const xs = kids.map((k) => k.q.x + BOX_W / 2 + ox.value);
-  return {
-    id: b.id, hand: b.hand!, jx: px, jy,
-    stem: `M ${px} ${py} L ${px} ${busY}`,
-    bus: `M ${Math.min(px, ...xs)} ${busY} L ${Math.max(px, ...xs)} ${busY}`,
-    to: kids.map((k, i) => ({ id: k.id, color: k.c.out === "hit" ? LINE.fwd : LINE.bad, kind: k.c.out === "hit" ? "fwd" : "bad", d: `M ${xs[i]} ${busY} L ${xs[i]} ${k.q.y + oy.value - 3}` })),
-  };
+  // 角丸の段付き (React Flow の smoothstep、見本の 3): 親の下から下りて、角を丸めて横へ、角を丸めて子の上の辺へ。
+  // 外れ (赤) を先に描き、進む (灰) を上に重ねる (同じ横の棒を通る所は灰に見える)
+  const to = kids.map((k) => {
+    const cx = k.q.x + BOX_W / 2 + ox.value, cy = k.q.y + oy.value - 3, dx = cx - px, r = Math.min(10, Math.abs(dx) / 2), s = Math.sign(dx);
+    const d = !s ? `M ${px} ${busY - 10} L ${cx} ${cy}`
+      : `M ${px} ${busY - 10} L ${px} ${busY - r} Q ${px} ${busY} ${px + s * r} ${busY} L ${cx - s * r} ${busY} Q ${cx} ${busY} ${cx} ${busY + r} L ${cx} ${cy}`;
+    const bad = k.c.out !== "hit";
+    return { id: k.id, color: bad ? LINE.bad : LINE.fwd, kind: bad ? "bad" : "fwd", d, bad };
+  }).sort((a, z) => Number(z.bad) - Number(a.bad));
+  return { id: b.id, hand: b.hand!, jx: px, jy, stem: `M ${px} ${py} L ${px} ${busY - 10}`, to };
 }));
 /**
  * 戻りの矢印は既定では引かない (外側を回る長い線でツリーが囲まれた、オーナー 10-22)。箱の下の札「↩ 戻り先」にマウスを乗せた時だけ、
@@ -235,6 +241,7 @@ function onKey(e: KeyboardEvent): void {
   const tag = (e.target as HTMLElement | null)?.tagName;
   if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); t.undo(); return; }
+  if (e.key === "1" && !e.ctrlKey && !e.metaKey && !e.altKey) { void v.fit(); return; }
   if (e.key === "Escape") {
     if (plus.value) { plus.value = null; window.removeEventListener("pointermove", plusMove); }
     else if (picking.value) picking.value = null;
@@ -281,12 +288,6 @@ const glowOf = (b: Box): boolean => {
         <span class="rounded-sm bg-white/10 px-1.5 text-[11px] opacity-70">{{ tr("計算はまだ繋いでいない", "Not calculated yet") }}</span>
         <span class="ml-auto flex items-center gap-1">
           <button type="button" data-tree-undo class="g-btn sm inline-flex items-center gap-1" :disabled="!t.canUndo.value" :title="tr('1 つ戻す (Ctrl+Z)', 'Undo (Ctrl+Z)')" @click="t.undo"><Icon name="undo" class="size-4" />{{ tr("1 つ戻す", "Undo") }}</button>
-          <span class="flex items-center gap-0.5" role="group" :aria-label="tr('拡大縮小 (Ctrl + ホイールでも)', 'Zoom (also Ctrl + wheel)')" :title="tr('拡大縮小 (Ctrl + ホイールでも)', 'Zoom (also Ctrl + wheel)')">
-            <button type="button" data-tree-zoom-out class="g-btn sm w-8" :aria-label="tr('縮める', 'Zoom out')" @click="v.zoomOut">−</button>
-            <button type="button" data-tree-zoom-reset class="g-btn sm w-14 tabular-nums" :title="tr('等倍に戻す', 'Reset to 100%')" @click="v.setZoom(1)">{{ Math.round(zoom * 100) }}%</button>
-            <button type="button" data-tree-zoom-in class="g-btn sm w-8" :aria-label="tr('広げる', 'Zoom in')" @click="v.zoomIn">＋</button>
-            <button type="button" data-tree-fit class="g-btn sm" @click="v.fit">{{ tr("全体に合わせる", "Fit all") }}</button>
-          </span>
           <button type="button" data-tree-tidy class="g-btn sm" :title="tr('段ごとに横一列・兄弟は親の下に等間隔・戻りの矢印は箱の外側 (1 つ戻すで元の並びへ)', 'Rows by depth, siblings evenly under the parent, return arrows outside the boxes (undo restores)')" @click="onTidy">{{ tr("整列", "Tidy") }}</button>
           <button type="button" data-tree-check class="g-btn sm" :disabled="checking" :title="tr('5 人をエンジンで辿って、止まる所・打てない手・付かない当たり・完成に着かない道を探す (費用は出さない)', 'Walk 5 runs with the engine to find dead ends, unusable crafts, unreachable hits and paths that never finish (no costs)')" @click="onCheck">{{ checking ? tr("精査中…", "Checking…") : tr("ルート精査", "Check route") }}</button>
           <button type="button" data-tree-memo class="g-btn sm inline-flex items-center gap-1" :aria-pressed="memoOpen" :title="tr('欲しい MOD とメモの窓 (ツリーを押しても閉じない)', 'Wanted mods & notes window (stays open while you edit)')" @click="memoOpen = !memoOpen"><Icon name="pencil" class="size-4" />{{ tr("メモ", "Notes") }}<span v-if="doc.note" class="size-1.5 rounded-full bg-amber-400" /></button>
@@ -306,27 +307,25 @@ const glowOf = (b: Box): boolean => {
           <span class="min-w-0 truncate" :title="x.text">{{ x.text }}</span>
         </button>
       </div>
-      <p v-if="picking" class="rounded-md bg-cyan-500/15 px-2 py-1 text-[12px] text-cyan-100">{{ tr("戻り先の箱を押す (Esc でやめる)", "Click the box to return to (Esc cancels)") }}</p>
-      <p v-else-if="viewOnly" class="rounded-md bg-white/[0.06] px-2 py-1 text-[12px] opacity-80">{{ tr("縮めて見ている間は箱を押すとそこへ寄る (組むのは 75% 以上で)", "While zoomed out, click a box to jump to it (edit at 75% or more)") }}</p>
 
       <div class="flex min-h-0 gap-2" :class="full ? 'flex-1' : 'h-[calc(100vh-230px)] min-h-[480px]'">
-        <!-- ツリー -->
-        <div ref="viewport" data-tree-canvas class="relative min-w-0 flex-1 cursor-move overflow-auto rounded-md bg-black/30" @pointerdown="onCanvasDown">
+        <!-- ツリー (暗い地 + ドットの格子、見本の 1。右下に浮かぶ道具とミニマップ、左上に今の状態の札) -->
+        <div class="relative min-w-0 flex-1 overflow-hidden rounded-lg border border-white/[0.06] bg-[#0c0a08]">
+        <div ref="viewport" data-tree-canvas class="absolute inset-0 overflow-auto" :class="hand ? 'cursor-grab' : 'cursor-default'" @pointerdown="onCanvasDown">
           <div class="relative" :style="{ width: `${area.w * zoom}px`, height: `${area.h * zoom}px` }">
-            <div class="absolute left-0 top-0 origin-top-left" :style="{ width: `${area.w}px`, height: `${area.h}px`, transform: `scale(${zoom})` }">
+            <div class="absolute left-0 top-0 origin-top-left" :style="{ width: `${area.w}px`, height: `${area.h}px`, transform: `scale(${zoom})`, backgroundImage: 'radial-gradient(rgba(214,180,120,0.16) 1.2px, transparent 1.7px)', backgroundSize: '22px 22px' }">
               <svg class="pointer-events-none absolute inset-0" :width="area.w" :height="area.h">
                 <defs>
                   <marker v-for="(c, k) in LINE" :id="`tree-arrow-${k}`" :key="k" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" :fill="c" /></marker>
                 </defs>
                 <g v-for="e in edges" :key="e.id" data-tree-edge>
-                  <path :d="e.stem" :stroke="LINE.fwd" stroke-width="2.5" fill="none" />
-                  <path :d="e.bus" :stroke="LINE.fwd" stroke-width="2.5" stroke-linecap="round" fill="none" />
-                  <path v-for="o in e.to" :key="o.id" :d="o.d" :stroke="o.color" stroke-width="2.5" fill="none" :marker-end="`url(#tree-arrow-${o.kind})`" />
+                  <path :d="e.stem" :stroke="LINE.fwd" stroke-width="2" fill="none" />
+                  <path v-for="o in e.to" :key="o.id" :d="o.d" :stroke="o.color" stroke-width="2" stroke-linejoin="round" fill="none" :marker-end="`url(#tree-arrow-${o.kind})`" />
                 </g>
                 <path v-if="backLine" data-tree-back :d="backLine" :stroke="LINE.back" stroke-width="2.5" stroke-linejoin="round" fill="none" marker-end="url(#tree-arrow-back)" />
               </svg>
               <!-- 矢印の上の札 = 打つ手 (押すと替える・消す) -->
-              <button v-for="e in edges" :key="`hand-${e.id}`" type="button" data-tree-hand class="absolute max-w-[300px] -translate-x-1/2 -translate-y-1/2 truncate rounded-full border-2 border-amber-500/70 bg-[#221a10] px-3 py-1 text-[12px] font-bold text-amber-100 hover:bg-amber-500/25"
+              <button v-for="e in edges" :key="`hand-${e.id}`" type="button" data-tree-hand class="absolute max-w-[300px] -translate-x-1/2 -translate-y-1/2 truncate rounded-full border border-amber-400/60 bg-[#1a140d] px-3 py-1 text-[12px] font-semibold text-amber-100 shadow-[0_2px_10px_rgba(0,0,0,0.6)] hover:border-amber-300 hover:bg-[#2a2014]"
                 :class="viewOnly ? 'pointer-events-none' : ''" :style="{ left: `${e.jx}px`, top: `${e.jy}px`, scale: String(inv) }" :title="handLabel(e.hand)" @click="panel = { kind: 'hand', id: e.id }">{{ handLabel(e.hand) }}</button>
               <TreeBox v-for="b in boxes" :key="b.id" :box="b" :x="posOf(b).x + ox" :y="posOf(b).y + oy" :removable="canRemove(doc, b.id)" :picking="!!picking && picking !== b.id"
                 :selected="panel?.id === b.id || picking === b.id || plus?.target === b.id" :back-label="backLabel(b)" :view-only="viewOnly" :glow="glowOf(b) || plus?.target === b.id || (!!hoverBack && doc.boxes[hoverBack]?.back === b.id)" :issue="issueOf(b)" :inv="inv"
@@ -338,8 +337,17 @@ const glowOf = (b: Box): boolean => {
                 <defs><marker id="tree-arrow-drag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" :fill="LINE.back" /></marker></defs>
                 <path data-tree-plus-line :d="plusLine" :stroke="LINE.back" stroke-width="3" stroke-linecap="round" fill="none" marker-end="url(#tree-arrow-drag)" />
               </svg>
+              <!-- 手の間は箱の上に透明な層 (押しても組み替えない、どこを引いても画面が動く) -->
+              <div v-if="hand" data-tree-hand-layer class="absolute inset-0 z-[15] cursor-grab active:cursor-grabbing" />
             </div>
           </div>
+        </div>
+        <!-- 今の状態の札 (左上に浮かべる。ツリーを押し下げない) -->
+        <p v-if="picking || hand || viewOnly" data-tree-mode-pill class="pointer-events-none absolute left-3 top-3 z-20 rounded-full border px-3 py-1 text-[12px] shadow-[0_4px_14px_rgba(0,0,0,0.6)]"
+          :class="picking ? 'border-cyan-400/50 bg-[#0d1a1c]/95 text-cyan-100' : 'border-white/10 bg-[#15110c]/95 text-[#d8ccb4]'">
+          {{ picking ? tr("戻り先の箱を押す (Esc でやめる)", "Click the box to return to (Esc cancels)") : hand ? tr("手: 見るだけ (選択に戻すと組める)", "Hand: view only (switch to Select to edit)") : tr("縮めて見ている間は箱を押すとそこへ寄る (組むのは 75% 以上で)", "Zoomed out: click a box to jump to it (edit at 75%+)") }}
+        </p>
+        <TreeCanvasTools v-model:hand="hand" :boxes="boxes" :ox="ox" :oy="oy" :zoom="zoom" :viewport="viewport" @fit="v.fit" @zoom-in="v.zoomIn" @zoom-out="v.zoomOut" @reset="v.resetZoom" />
         </div>
 
         <!-- 右の欄 -->
