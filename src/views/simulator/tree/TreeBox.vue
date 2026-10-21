@@ -40,7 +40,7 @@ const neon = computed(() => {
   const strong = props.glow || props.selected || !!props.box.done;
   return { borderColor: `rgba(${rgb.value},${strong ? 0.95 : 0.55})`, boxShadow: `0 0 0 1px rgba(${rgb.value},${strong ? 0.5 : 0.18}), 0 0 ${strong ? 22 : 12}px rgba(${rgb.value},${strong ? 0.45 : 0.16})` };
 });
-const doneText = computed(() => (props.box.done === "main" ? tr("完成 (本命)", "Done (main)") : props.box.done === "compromise" ? tr("完成 (妥協)", "Done (compromise)") : tr("完成にする", "Mark done")));
+const doneText = computed(() => (props.box.done ? tr("完成", "Done") : tr("完成にする", "Mark done")));
 const free = computed(() => !props.box.hand && !props.box.back && !props.box.done);
 /** 押せる物を隠す時 (戻り先を選んでいる・一望) */
 const quiet = computed(() => props.picking || !!props.viewOnly);

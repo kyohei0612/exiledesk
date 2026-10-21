@@ -16,7 +16,11 @@ const KEY = "exiledesk.tree.v0";
 const UNDO_MAX = 100;
 
 function load(): TreeDoc {
-  try { const v = JSON.parse(localStorage.getItem(KEY) ?? "null"); if (isTreeDoc(v)) return v; } catch { /* 無くてよい */ }
+  try {
+    const v = JSON.parse(localStorage.getItem(KEY) ?? "null");
+    // 前の版の妥協の完成 (done: "compromise") は普通の箱 = 未完成として読む (妥協は無し、オーナー 10-22)
+    if (isTreeDoc(v)) { for (const b of Object.values(v.boxes)) if (b.done !== "main") b.done = null; return v; }
+  } catch { /* 無くてよい */ }
   return newTree(TREE_BASE, TREE_ILVL);
 }
 function save(d: TreeDoc): void {

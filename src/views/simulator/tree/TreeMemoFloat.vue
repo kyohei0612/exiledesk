@@ -43,11 +43,10 @@ const modChips = computed(() => {
   const d = t.doc.value;
   const done = Object.values(d.boxes).filter((b) => b.done);
   const main = new Set(done.filter((b) => b.done === "main").flatMap((b) => [...pathAims(d, b.id)]));
-  const comp = new Set(done.filter((b) => b.done === "compromise").flatMap((b) => [...pathAims(d, b.id)]));
   const by = new Map<string, { aim: Aim; n: number; memo: boolean }>();
   for (const b of Object.values(d.boxes)) if (b.out === "hit" && b.aim) { const k = aimKey(b.aim); const c = by.get(k); if (c) c.n++; else by.set(k, { aim: b.aim, n: 1, memo: false }); }
   for (const a of d.memoAims ?? []) { const k = aimKey(a); const c = by.get(k); if (c) c.memo = true; else by.set(k, { aim: a, n: 0, memo: true }); }
-  return [...by.entries()].map(([k, v]) => ({ k, glowKey: k, aim: v.aim, label: t.aimLabel(v.aim), icon: "", n: v.n, memo: v.memo, main: main.has(k), comp: comp.has(k) }));
+  return [...by.entries()].map(([k, v]) => ({ k, glowKey: k, aim: v.aim, label: t.aimLabel(v.aim), icon: "", n: v.n, memo: v.memo, main: main.has(k) }));
 });
 const curChips = computed(() => {
   const d = t.doc.value, fromTree = handKeysOf(d), memo = d.memoCurrencies ?? [];
@@ -283,8 +282,7 @@ const chipCls = (on: boolean, used: boolean): string =>
                 @click="glow = glow === c.glowKey ? null : c.glowKey">
                 <img v-if="c.icon" :src="c.icon" alt="" class="size-5 shrink-0 object-contain" />
                 <span class="min-w-0 truncate">{{ c.label }}</span>
-                <span v-if="c.main" class="shrink-0 rounded-sm bg-amber-400/30 px-1 text-[10px] font-bold text-amber-100">{{ tr("本命", "Main") }}</span>
-                <span v-if="c.comp" class="shrink-0 rounded-sm bg-slate-400/30 px-1 text-[10px] font-bold text-slate-100">{{ tr("妥協", "Comp.") }}</span>
+                <span v-if="c.main" class="shrink-0 rounded-sm bg-amber-400/30 px-1 text-[10px] font-bold text-amber-100">{{ tr("完成", "Done") }}</span>
                 <span v-if="c.n" class="shrink-0 tabular-nums text-[11px] text-sky-200/80">×{{ c.n }}</span>
               </button>
               <button v-if="c.memo" type="button" class="flex size-6 shrink-0 items-center justify-center rounded text-white/60 hover:bg-white/10 hover:text-white" :title="tr('メモから消す', 'Remove from notes')" :aria-label="tr('メモから消す', 'Remove from notes')" @click="removeChip(c)"><Icon name="x" class="size-3.5" /></button>

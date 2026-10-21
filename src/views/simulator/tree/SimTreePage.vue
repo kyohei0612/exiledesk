@@ -97,22 +97,24 @@ const edges = computed(() => boxes.value.filter((b) => b.hand && b.outs.length).
   return { id: b.id, hand: b.hand!, jx: px, jy, stem: `M ${px} ${py} L ${px} ${busY - 10}`, to };
 }));
 /**
- * 戻りの矢印は既定では引かない (外側を回る長い線でツリーが囲まれた、オーナー 10-22)。箱の下の札「↩ 戻り先」にマウスを乗せた時だけ、
- * 箱の左から戻り先の左へ柔らかい線を一時的に出し、戻り先を光らせる (押すとそこへ寄る)
+ * 戻りの矢印 = 箱の横の辺から戻り先の同じ側の横の辺へ、外へふくらむ 1 本の弧。いつも細く薄く出し (オーナー 10-22「線を繋げても、その線が出ない。出してくれ」)、
+ * 箱の下の札「↩ 戻り先」に乗せた時はその弧を箱の前に明るく出して戻り先を光らせる (押すとそこへ寄る)。
+ * 行き先が決まらない札 (形の合う箱へ・作り直し) は弧を引かない。前は乗せた時だけだった (外側を回る長い線でツリーが囲まれた、10-22)
  */
 const hoverBack = ref<string | null>(null);
-const backLine = computed(() => {
-  const b = hoverBack.value ? doc.value.boxes[hoverBack.value] : null, to = b?.back ? doc.value.boxes[b.back] : null;
-  if (!b || !to) return null;
-  // 箱の横の辺から戻り先の同じ側の横の辺へ、外へふくらむ 1 本の弧を箱より前に描く (乗せている間だけ。10-22 開発版で触って見て決めた:
-  // ツリーの外側を大回りすると画面の外へ出て戻り先が分からず、上の辺へ入れると自分の箱と戻り先の箱を突き抜けた)
+function arcOf(b: Box): string | null {
+  const to = b.back ? doc.value.boxes[b.back] : null;
+  if (!to) return null;
+  // ツリーの外側を大回りすると画面の外へ出て戻り先が分からず、上の辺へ入れると自分の箱と戻り先の箱を突き抜けた (10-22 開発版)
   const p = posOf(b), q = posOf(to);
   const left = p.x + BOX_W / 2 <= q.x + BOX_W / 2;
   const sx = left ? p.x - 3 : p.x + BOX_W + 3, sy = p.y + BOX_H / 2;
   const tx = left ? q.x - 4 : q.x + BOX_W + 4, ty = q.y + BOX_H / 2;
   const out = (left ? -1 : 1) * Math.max(70, Math.abs(sy - ty) / 3);
   return `M ${sx} ${sy} C ${sx + out} ${sy} ${tx + out} ${ty} ${tx} ${ty}`;
-});
+}
+const backArcs = computed(() => boxes.value.flatMap((b) => { const d = arcOf(b); return d && b.id !== hoverBack.value ? [{ id: b.id, d }] : []; }));
+const backLine = computed(() => { const b = hoverBack.value ? doc.value.boxes[hoverBack.value] : null; return b ? arcOf(b) : null; });
 function goBack(b: Box): void { hoverBack.value = null; if (b.back) void v.reveal(b.back, true); }
 
 function backLabel(b: Box): string {
@@ -175,7 +177,7 @@ function onAddHit(b: Box, at?: { x: number; y: number }, link?: string): void {
   // 引っ張って既にある箱へつないだ時は欄を出さない (つなぐだけ。オーナー 10-22「つなげた時も…表示される。意味が分からないので出さなくて OK」)
   if (made && !link) panel.value = { kind: "aim", id: made };
 }
-function onDone(b: Box): void { t.edit((d) => setDone(d, b.id, b.done === null ? "main" : b.done === "main" ? "compromise" : null)); }
+function onDone(b: Box): void { t.edit((d) => setDone(d, b.id, b.done ? null : "main")); }
 function onTarget(b: Box): void {
   const from = picking.value;
   picking.value = null;
@@ -371,6 +373,8 @@ const glowOf = (b: Box): boolean => {
                   <path :d="e.stem" :stroke="LINE.fwd" stroke-width="2" fill="none" />
                   <path v-for="o in e.to" :key="o.id" :d="o.d" :stroke="o.color" stroke-width="2" stroke-linejoin="round" fill="none" :marker-end="`url(#tree-arrow-${o.kind})`" />
                 </g>
+                <!-- 戻りの弧 (いつも細く薄く。乗せた物は下の箱の前の層で明るく) -->
+                <path v-for="a in backArcs" :key="`back-${a.id}`" data-tree-back-arc :data-from="a.id" :d="a.d" :stroke="LINE.back" stroke-opacity="0.45" stroke-width="2" stroke-linecap="round" fill="none" marker-end="url(#tree-arrow-back)" />
               </svg>
               <!-- 矢印の上の札 = 打つ手 (押すと替える・消す) -->
               <button v-for="e in edges" :key="`hand-${e.id}`" type="button" data-tree-hand class="nodrag nopan pointer-events-auto absolute z-[5] max-w-[300px] -translate-x-1/2 -translate-y-1/2 truncate rounded-full border border-amber-400/60 bg-[#1a140d] px-3 py-1 text-[12px] font-semibold text-amber-100 shadow-[0_2px_10px_rgba(0,0,0,0.6)] hover:border-amber-300 hover:bg-[#2a2014]"

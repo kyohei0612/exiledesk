@@ -49,14 +49,14 @@ export function checkTree(data: PatchData, doc: TreeDoc): CheckIssue[] {
     else if (b.hand && b.outs.every((o) => !reach.has(o))) add(b.id, "noDone", tr("この先は完成の箱へ一度も着かない", "Nothing below this ever reaches a done box"));
   }
 
-  // 3) 完成の形の食い違い (本命の完成の箱どうしで、道の札がそろっていない)
+  // 3) 完成の形の食い違い (完成の箱どうしで、道の札がそろっていない)
   const pathAims = (id: string): string => {
     const ks = new Set<string>();
     for (let b: TreeDoc["boxes"][string] | undefined = doc.boxes[id]; b; b = b.parent ? doc.boxes[b.parent] : undefined) if (b.out === "hit" && b.aim) ks.add(aimKey(b.aim));
     return [...ks].sort().join(",");
   };
   const mains = done.filter((b) => b.done === "main");
-  if (mains.length > 1) { const first = pathAims(mains[0]!.id); for (const b of mains.slice(1)) if (pathAims(b.id) !== first) add(b.id, "doneShape", tr("ほかの本命の完成と、着くまでの札が違う (道ごとに完成の形が違う)", "Different set of mods than the other main done box")); }
+  if (mains.length > 1) { const first = pathAims(mains[0]!.id); for (const b of mains.slice(1)) if (pathAims(b.id) !== first) add(b.id, "doneShape", tr("ほかの完成の箱と、着くまでの札が違う (道ごとに完成の形が違う)", "Different set of mods than the other done box")); }
 
   // 4) エンジンで 5 人を辿る: 打てない手・付かない当たり
   if (doc.fracture) {
