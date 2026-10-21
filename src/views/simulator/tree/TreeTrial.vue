@@ -150,62 +150,69 @@ const noteText = computed(() => {
     <p class="text-[11px] opacity-65">{{ tr("この箱に着いた時のアイテムの見本 (エンジンで打って引いた 1 個)。棚で持ってアイテムを押すと打つ。ツリーは変わらない", "A sample item at this box (rolled with the engine). Pick from the shelf, then click the item. The tree doesn't change") }}</p>
     <p v-if="noteText" class="rounded bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200">{{ noteText }}</p>
 
-    <!-- アイテム (クラフト台のカード。持っている時に押すと打つ) -->
-    <div v-if="item" data-tree-trial-item class="flex justify-center" @contextmenu.prevent="release">
-      <StageItemCard :item="item" :doomed="preview?.change ?? []" :open="preview?.open" :added="last.added" :removed="last.removed" :holding="!!held" :flash-key="flash" :width="340" compact @use="use(1)" @jump="onMark" />
-    </div>
-    <!-- × (要らない) の印 -->
-    <div data-tree-unwanted-list class="mt-6 flex flex-col gap-1">
-      <p class="text-[11px] opacity-60">{{ tr("MOD の行を押すと × (要らない) の印。完成まで残るとルート精査で !", "Click a mod row to mark it × (unwanted). Route check flags it if it's still there when done") }}</p>
-      <div v-for="mk in marks" :key="mk.id" class="flex min-w-0 items-center gap-1.5 rounded bg-rose-500/10 px-1.5 text-[12px]">
-        <span class="shrink-0 font-bold text-rose-300">×</span><span class="min-w-0 flex-1 truncate" :title="mk.text">{{ mk.text }}</span>
-        <button type="button" class="g-btn sm" @click="t.edit((d) => toggleUnwanted(d, boxId, mk.id))">{{ tr("外す", "Unmark") }}</button>
+    <!-- 広い時はカードと棚を横に並べる (縦に送らずに 持つ → お告げ → カードを押す、10-21 1920×911 で上下に送っていた)。狭い時は縦 -->
+    <div class="@container">
+      <div class="grid gap-3 @[700px]:grid-cols-[350px_minmax(0,1fr)]">
+        <div data-tree-trial-left class="flex min-w-0 flex-col gap-2">
+          <!-- アイテム (クラフト台のカード。持っている時に押すと打つ) -->
+          <div v-if="item" data-tree-trial-item class="flex justify-center" @contextmenu.prevent="release">
+            <StageItemCard :item="item" :doomed="preview?.change ?? []" :open="preview?.open" :added="last.added" :removed="last.removed" :holding="!!held" :flash-key="flash" :width="340" compact @use="use(1)" @jump="onMark" />
+          </div>
+          <!-- × (要らない) の印 -->
+          <div data-tree-unwanted-list class="mt-6 flex flex-col gap-1">
+            <p class="text-[11px] opacity-60">{{ tr("MOD の行を押すと × (要らない) の印。完成まで残るとルート精査で !", "Click a mod row to mark it × (unwanted). Route check flags it if it's still there when done") }}</p>
+            <div v-for="mk in marks" :key="mk.id" class="flex min-w-0 items-center gap-1.5 rounded bg-rose-500/10 px-1.5 text-[12px]">
+              <span class="shrink-0 font-bold text-rose-300">×</span><span class="min-w-0 flex-1 truncate" :title="mk.text">{{ mk.text }}</span>
+              <button type="button" class="g-btn sm" @click="t.edit((d) => toggleUnwanted(d, boxId, mk.id))">{{ tr("外す", "Unmark") }}</button>
+            </div>
+          </div>
+
+          <!-- 持っている物 (カードの下の「押すと使う」の札と重ならないよう、× の欄を mt-6 で空けてある) -->
+          <div class="flex flex-wrap items-center gap-1.5">
+            <template v-if="held">
+              <span class="flex items-center -space-x-1"><img v-for="ic in [held, ...omensFor(held, omens)].filter((x) => !!iconOf(x))" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
+              <b class="min-w-0 flex-1 truncate">{{ [nameOf(held), ...omensFor(held, omens).map(nameOf)].join(" + ") }}</b>
+              <button type="button" data-tree-trial-use class="g-btn-red sm" @click="use(1)">{{ tr("打つ", "Use") }}</button>
+              <button type="button" class="g-btn sm" @click="use(10)">×10</button>
+              <button type="button" class="g-btn sm" @click="release">{{ tr("やめる", "Cancel") }}</button>
+            </template>
+            <template v-else>
+              <button v-if="box?.hand" type="button" data-tree-trial-hand class="g-btn sm min-w-0 max-w-full truncate" :title="handLabel(box.hand)" @click="useHand">{{ tr("この箱の手を打つ", "Use this box's craft") }}: {{ handLabel(box.hand) }}</button>
+              <span class="text-[12px] text-[var(--exile-color-text-tertiary)]">{{ tr("棚から打つ物を持つ", "Pick a currency below") }}</span>
+            </template>
+          </div>
+          <div class="flex flex-wrap gap-1">
+            <button type="button" class="g-btn sm" :disabled="trail.length < 2" @click="back">{{ tr("1 つ戻す", "Undo") }}</button>
+            <button type="button" class="g-btn sm" @click="seed++">{{ tr("別の見本", "Another sample") }}</button>
+            <button type="button" class="g-btn sm" :disabled="trail.length < 2" @click="resetSample">{{ tr("見本に戻す", "Reset") }}</button>
+            <button type="button" data-tree-trial-note class="g-btn sm" @click="emit('note')">{{ box?.note ? tr("メモを見る", "View note") : tr("メモ", "Note") }}</button>
+            <button v-if="box && !box.hand && !box.back && !box.done" type="button" class="g-btn sm" @click="emit('next')">{{ tr("この箱の次の手を決める", "Set this box's next craft") }}</button>
+          </div>
+          <div v-if="offers.length" class="flex flex-col gap-1 rounded bg-rose-500/10 p-1.5">
+            <p class="text-[11px] font-bold">{{ tr("発現: 候補から選ぶ", "Reveal: pick one") }}</p>
+            <button v-for="(m, i) in offers" :key="i" type="button" class="truncate rounded border border-white/15 px-1.5 py-0.5 text-left text-[12px] hover:border-rose-300" :title="modText(m)" @click="reveal(i + 1)">{{ m.tierName }} {{ modText(m) }}</button>
+          </div>
+          <!-- 打った結果 -->
+          <div v-if="log.length" class="max-h-40 overflow-y-auto">
+            <p v-for="(l, i) in log" :key="log.length - i" class="py-0.5 text-[11px]" :class="l.ok ? 'opacity-85' : 'text-rose-300'">{{ l.text }}</p>
+          </div>
+        </div>
+        <div data-tree-trial-right class="flex min-w-0 flex-col gap-2">
+          <!-- カタリスト (1 押しで品質の最大まで。最大はエンジンの maxQualityOf) -->
+          <div data-tree-trial-catalysts>
+            <p class="mb-0.5 text-[10px] opacity-60">{{ tr("カタリスト (押すと品質の最大まで入れる)", "Catalysts (click to fill to max quality)") }}</p>
+            <div class="flex flex-wrap gap-1.5"><ShelfButton v-for="k in TREE_CATALYSTS" :key="k" :k="k" @pick="fill" /></div>
+          </div>
+
+          <!-- 棚 (クラフト台と同じ。お告げは持った物の下に) -->
+          <div data-tree-shelf @pointerdown="onShelfDown">
+            <CurrencyShelf @hold="onHold">
+              <!-- 持った物に掛けられるお告げ = クラフト台と同じ部品と置き場 (HeldOmens.vue を持ったアイコンのすぐ下に重ねる。inline-held だと棚の一番下で見切れた、10-21 本物のマウス) -->
+              <template v-if="heldOmensOf(held).length" #held><HeldOmens /></template>
+            </CurrencyShelf>
+          </div>
+        </div>
       </div>
-    </div>
-
-    <!-- 持っている物 (カードの下の「押すと使う」の札と重ならないよう、× の欄を mt-6 で空けてある) -->
-    <div class="flex flex-wrap items-center gap-1.5">
-      <template v-if="held">
-        <span class="flex items-center -space-x-1"><img v-for="ic in [held, ...omensFor(held, omens)].filter((x) => !!iconOf(x))" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
-        <b class="min-w-0 flex-1 truncate">{{ [nameOf(held), ...omensFor(held, omens).map(nameOf)].join(" + ") }}</b>
-        <button type="button" data-tree-trial-use class="g-btn-red sm" @click="use(1)">{{ tr("打つ", "Use") }}</button>
-        <button type="button" class="g-btn sm" @click="use(10)">×10</button>
-        <button type="button" class="g-btn sm" @click="release">{{ tr("やめる", "Cancel") }}</button>
-      </template>
-      <template v-else>
-        <button v-if="box?.hand" type="button" data-tree-trial-hand class="g-btn sm min-w-0 max-w-full truncate" :title="handLabel(box.hand)" @click="useHand">{{ tr("この箱の手を打つ", "Use this box's craft") }}: {{ handLabel(box.hand) }}</button>
-        <span class="text-[12px] text-[var(--exile-color-text-tertiary)]">{{ tr("棚から打つ物を持つ", "Pick a currency below") }}</span>
-      </template>
-    </div>
-    <div class="flex flex-wrap gap-1">
-      <button type="button" class="g-btn sm" :disabled="trail.length < 2" @click="back">{{ tr("1 つ戻す", "Undo") }}</button>
-      <button type="button" class="g-btn sm" @click="seed++">{{ tr("別の見本", "Another sample") }}</button>
-      <button type="button" class="g-btn sm" :disabled="trail.length < 2" @click="resetSample">{{ tr("見本に戻す", "Reset") }}</button>
-      <button type="button" data-tree-trial-note class="g-btn sm" @click="emit('note')">{{ box?.note ? tr("メモを見る", "View note") : tr("メモ", "Note") }}</button>
-      <button v-if="box && !box.hand && !box.back && !box.done" type="button" class="g-btn sm" @click="emit('next')">{{ tr("この箱の次の手を決める", "Set this box's next craft") }}</button>
-    </div>
-    <div v-if="offers.length" class="flex flex-col gap-1 rounded bg-rose-500/10 p-1.5">
-      <p class="text-[11px] font-bold">{{ tr("発現: 候補から選ぶ", "Reveal: pick one") }}</p>
-      <button v-for="(m, i) in offers" :key="i" type="button" class="truncate rounded border border-white/15 px-1.5 py-0.5 text-left text-[12px] hover:border-rose-300" :title="modText(m)" @click="reveal(i + 1)">{{ m.tierName }} {{ modText(m) }}</button>
-    </div>
-
-    <!-- カタリスト (1 押しで品質の最大まで。最大はエンジンの maxQualityOf) -->
-    <div data-tree-trial-catalysts>
-      <p class="mb-0.5 text-[10px] opacity-60">{{ tr("カタリスト (押すと品質の最大まで入れる)", "Catalysts (click to fill to max quality)") }}</p>
-      <div class="flex flex-wrap gap-1.5"><ShelfButton v-for="k in TREE_CATALYSTS" :key="k" :k="k" @pick="fill" /></div>
-    </div>
-
-    <!-- 棚 (クラフト台と同じ。お告げは持った物の下に) -->
-    <div data-tree-shelf @pointerdown="onShelfDown">
-      <CurrencyShelf @hold="onHold">
-        <!-- 持った物に掛けられるお告げ = クラフト台と同じ部品と置き場 (HeldOmens.vue を持ったアイコンのすぐ下に重ねる。inline-held だと棚の一番下で見切れた、10-21 本物のマウス) -->
-        <template v-if="heldOmensOf(held).length" #held><HeldOmens /></template>
-      </CurrencyShelf>
-    </div>
-
-    <!-- 打った結果 -->
-    <div v-if="log.length" class="max-h-40 overflow-y-auto">
-      <p v-for="(l, i) in log" :key="log.length - i" class="py-0.5 text-[11px]" :class="l.ok ? 'opacity-85' : 'text-rose-300'">{{ l.text }}</p>
     </div>
   </div>
 </template>

@@ -414,7 +414,7 @@ const glowOf = (b: Box): boolean => {
         </div>
 
         <!-- 右の欄 -->
-        <aside v-if="panel && panelBox" data-tree-panel class="flex shrink-0 flex-col overflow-y-auto rounded-md bg-white/[0.04] p-3" :class="panel.kind === 'trial' || panel.kind === 'hand' ? 'w-[400px]' : 'w-[320px]'">
+        <aside v-if="panel && panelBox" data-tree-panel class="flex shrink-0 flex-col overflow-y-auto rounded-md bg-white/[0.04] p-3" :class="panel.kind === 'trial' ? 'w-[max(400px,min(780px,44%))]' : panel.kind === 'hand' ? 'w-[400px]' : 'w-[320px]'">
           <TreeHandShelf v-if="panel.kind === 'hand'" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" />
           <TreeTrial v-else-if="panel.kind === 'trial'" :key="`t-${panel.id}`" :box-id="panel.id" @close="panel = null" @next="panel = { kind: 'hand', id: panel.id }" @note="panel = { kind: 'note', id: panel.id }" />
           <TreeNote v-else-if="panel.kind === 'note'" :key="`n-${panel.id}`" :box-id="panel.id" @close="panel = null" />
