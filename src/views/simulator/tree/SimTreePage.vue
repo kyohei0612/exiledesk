@@ -4,10 +4,13 @@
   一番上がフラクチャーの箱 (始まり)。下の＋で打つ手 (クラフト台の棚から) → 矢印の先に結果の箱。横の＋で当たりを足す、↩ で既にある箱へ戻す。
   ＋は長押しで引っ張り、箱の上で離すとその箱へつなぐ (何も無い所ならやめる)。箱はドラッグで動かす、1 つ戻す / Ctrl+Z。
   線は普通の木の図の直角の線、戻りの矢印は箱の下の札に乗せた時だけ (10-22 整列の定義)。
-  見え方 (拡大縮小・全画面) は use-tree-view.ts、上の帯 (欲しい MOD・メモ) は TreeAimsBar.vue。100 人回す計算はまだ繋がない
+  土台は Vue Flow (10-22 オーナー): 画面の送り・拡大縮小・箱のドラッグ・押した判定は Vue Flow、見え方の決まりは use-tree-flow.ts。
+  線・打つ手の札・引っ張る線・戻りの弧は Vue Flow の zoom-pane (倍率と移動が掛かる層) に描く。100 人回す計算はまだ繋がない
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { VueFlow, type NodeMouseEvent } from "@vue-flow/core";
+import "@vue-flow/core/dist/style.css";
 import Icon from "../../../components/ui/Icon.vue";
 import TreeMemoFloat from "./TreeMemoFloat.vue";
 import TreeCanvasTools from "./TreeCanvasTools.vue";
@@ -17,7 +20,7 @@ import TreeModPick from "./TreeModPick.vue";
 import TreeNote from "./TreeNote.vue";
 import TreeTrial from "./TreeTrial.vue";
 import { useTree } from "./use-tree";
-import { useTreeView } from "./use-tree-view";
+import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
 import { craftStage as s } from "../../../state/craft-stage";
 import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, removeHit, setAim, setBack, setDone, setHand, tidy, handUses, type Aim, type Hand, type HandKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
 import { handLabel } from "../../../services/simulator/tree/tree-hands";
@@ -41,11 +44,12 @@ const memoOpen = ref((() => { try { return localStorage.getItem(MEMO_KEY) === "1
 watch(memoOpen, (v) => { try { localStorage.setItem(MEMO_KEY, v ? "1" : "0"); } catch { /* 覚えられなくても使える */ } });
 /** メモの窓の札で選んだ札 (その札を使っている箱が光る) */
 const glowAim = ref<string | null>(null);
-const v = useTreeView(doc, () => !!panel.value);
-const { viewport, zoom, full, ox, oy, area, viewOnly } = v;
+const v = useTreeFlow(doc);
+const { zoom, full, viewOnly, pageZ } = v;
+onBeforeUnmount(v.dispose);
 
-// ドラッグ中は画面の上だけで動かし、離した時に 1 回だけ組み替える (1 つ戻すが 1 手で済む)
-const drag = ref<{ id: string; bx: number; by: number; x: number; y: number } | null>(null);
+// ドラッグ中は Vue Flow の箱だけが動き、離した時に 1 回だけ組み替える (1 つ戻すが 1 手で済む)。線は引っ張っている位置に合わせる
+const drag = ref<{ id: string; x: number; y: number } | null>(null);
 const posOf = (b: Box): { x: number; y: number } => (drag.value?.id === b.id ? { x: drag.value.x, y: drag.value.y } : { x: b.x, y: b.y });
 const boxes = computed(() => Object.values(doc.value.boxes));
 
@@ -76,13 +80,13 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResizeH));
 const hand = ref(false);
 const edges = computed(() => boxes.value.filter((b) => b.hand && b.outs.length).map((b) => {
   const p = posOf(b);
-  const px = p.x + BOX_W / 2 + ox.value, py = p.y + BOX_H + oy.value, jy = py + 46;
+  const px = p.x + BOX_W / 2, py = p.y + BOX_H, jy = py + 46;
   const kids = b.outs.map((o) => ({ id: o, c: doc.value.boxes[o]!, q: posOf(doc.value.boxes[o]!) }));
-  const busY = Math.min(...kids.map((k) => k.q.y)) + oy.value - 18;
+  const busY = Math.min(...kids.map((k) => k.q.y)) - 18;
   // 角丸の段付き (React Flow の smoothstep、見本の 3): 親の下から下りて、角を丸めて横へ、角を丸めて子の上の辺へ。
   // 外れ (赤) を先に描き、進む (灰) を上に重ねる (同じ横の棒を通る所は灰に見える)
   const to = kids.map((k) => {
-    const cx = k.q.x + BOX_W / 2 + ox.value, cy = k.q.y + oy.value - 3, dx = cx - px, r = Math.min(10, Math.abs(dx) / 2), s = Math.sign(dx);
+    const cx = k.q.x + BOX_W / 2, cy = k.q.y - 3, dx = cx - px, r = Math.min(10, Math.abs(dx) / 2), s = Math.sign(dx);
     const d = !s ? `M ${px} ${busY - 10} L ${cx} ${cy}`
       : `M ${px} ${busY - 10} L ${px} ${busY - r} Q ${px} ${busY} ${px + s * r} ${busY} L ${cx - s * r} ${busY} Q ${cx} ${busY} ${cx} ${busY + r} L ${cx} ${cy}`;
     const bad = k.c.out !== "hit";
@@ -102,12 +106,12 @@ const backLine = computed(() => {
   // ツリーの外側を大回りすると画面の外へ出て戻り先が分からず、上の辺へ入れると自分の箱と戻り先の箱を突き抜けた)
   const p = posOf(b), q = posOf(to);
   const left = p.x + BOX_W / 2 <= q.x + BOX_W / 2;
-  const sx = (left ? p.x - 3 : p.x + BOX_W + 3) + ox.value, sy = p.y + BOX_H / 2 + oy.value;
-  const tx = (left ? q.x - 4 : q.x + BOX_W + 4) + ox.value, ty = q.y + BOX_H / 2 + oy.value;
+  const sx = left ? p.x - 3 : p.x + BOX_W + 3, sy = p.y + BOX_H / 2;
+  const tx = left ? q.x - 4 : q.x + BOX_W + 4, ty = q.y + BOX_H / 2;
   const out = (left ? -1 : 1) * Math.max(70, Math.abs(sy - ty) / 3);
   return `M ${sx} ${sy} C ${sx + out} ${sy} ${tx + out} ${ty} ${tx} ${ty}`;
 });
-function goBack(b: Box): void { hoverBack.value = null; if (b.back) v.reveal(b.back, true); }
+function goBack(b: Box): void { hoverBack.value = null; if (b.back) void v.reveal(b.back, true); }
 
 function backLabel(b: Box): string {
   const to = b.back ? doc.value.boxes[b.back] : null;
@@ -124,16 +128,29 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[]): void {
   panel.value = null;
 }
 /**
- * 空き所: 引っ張る = 画面を動かす、押す = 右の欄を閉じる (よくあるモーダルと同じ。オーナー 10-22)。手の間は箱の上の透明な層もここへ来る。
- * 押す / 引っ張るの判定は use-gesture.ts (遊び 5px・capture・座標は拡大前の CSS ピクセル)
+ * Vue Flow の出来事: 空き所を押す = 右の欄を閉じる (よくあるモーダルと同じ。オーナー 10-22。引っ張った時は Vue Flow が画面を動かすだけ)。
+ * 箱を押す = 戻り先を選んでいる時はそこへつなぐ / 縮めて見ている時はそこへ寄る / ふつうは試し打ちの欄 (手の間は何もしない)。
+ * 箱を引っ張る = 動かす (startDrag。Vue Flow の引っ張りは使わない)
  */
-function onCanvasDown(e: PointerEvent): void {
-  const el = viewport.value;
-  if (!el || picking.value || plus.value || (e.target as HTMLElement).closest("[data-tree-box],button")) return;
-  const l = el.scrollLeft, t0 = el.scrollTop;
+function onPaneClick(): void { if (panel.value) closeHand(); }
+/** 引っ張り終えた直後の click (押した所と離した所が同じ箱だと出る) は押した事にしない */
+let dragEndedAt = 0;
+function onNodeClick(e: NodeMouseEvent): void {
+  const b = doc.value.boxes[e.node.id];
+  if (!b || hand.value || performance.now() - dragEndedAt < 300) return;
+  if (picking.value) { if (picking.value !== b.id) onTarget(b); return; }
+  if (viewOnly.value) { void v.focusBox(b.id); return; }
+  hoverBack.value = null;
+  panel.value = { kind: "trial", id: b.id };
+}
+/** 箱を引っ張る (use-gesture.ts: 遊び 5px を超えた後も押した所からの差をそのまま使う。差はツリーの倍率で割る) */
+function startDrag(b: Box, e: PointerEvent): void {
+  hoverBack.value = null;
   gesture(e, {
-    onMove: (p) => { el.scrollLeft = l - p.dx; el.scrollTop = t0 - p.dy; },
-    onTap: () => { if (panel.value) closeHand(); },
+    onStart: () => { drag.value = { id: b.id, x: b.x, y: b.y }; },
+    onMove: (p) => { if (drag.value) { drag.value.x = b.x + p.dx / zoom.value; drag.value.y = b.y + p.dy / zoom.value; } },
+    onEnd: () => { const g = drag.value; drag.value = null; dragEndedAt = performance.now(); if (g) t.edit((d) => moveBox(d, g.id, g.x, g.y)); },
+    onCancel: () => { drag.value = null; },
   });
 }
 function closeHand(): void { panel.value = null; }
@@ -171,7 +188,7 @@ async function onCheck(): Promise<void> {
   try { issues.value = checkTree(d, doc.value); } finally { checking.value = false; }
 }
 const issueOf = (b: Box): string | null => issues.value?.filter((x) => x.boxId === b.id).map((x) => x.text).join(" / ") || null;
-function goIssue(id: string): void { v.reveal(id, true); }
+function goIssue(id: string): void { void v.reveal(id, true); }
 
 /** 整列して、全体に合わせる (1 つ戻すで元の並びへ) */
 async function onTidy(): Promise<void> {
@@ -185,19 +202,6 @@ function onSpam(b: Box): void {
   const it = d0 ? sampleOf(d0, doc.value, b.id, 1).item : null;
   const aims = d0 && it ? all.filter((a) => !aimHeld(d0, it, a)) : all;
   t.edit((d) => setHand(d, b.id, { currency: "chaos", omens: [], catalyst: null, quality: 0, repeat: { until: "hit", max: null } }, "spam", aims));
-}
-
-// 箱: 押す = 試し打ちの欄、引っ張る = 動かす (離した時に 1 回だけ組み替える。差はツリーの倍率で割る。判定は use-gesture.ts)
-function startDrag(b: Box, e: PointerEvent): void {
-  if (viewOnly.value) return;
-  hoverBack.value = null;
-  gesture(e, {
-    onStart: () => { drag.value = { id: b.id, bx: b.x, by: b.y, x: b.x, y: b.y }; },
-    onMove: (p) => { const g = drag.value; if (g) { g.x = g.bx + p.dx / zoom.value; g.y = g.by + p.dy / zoom.value; } },
-    onEnd: () => { const g = drag.value; drag.value = null; if (g) t.edit((d) => moveBox(d, g.id, g.x, g.y)); },
-    onTap: () => { panel.value = { kind: "trial", id: b.id }; },
-    onCancel: () => { drag.value = null; },
-  });
 }
 
 // ＋: 押すだけ = 足す (今まで通り)。長押し (か大きく動かす) で引っ張る → 箱の上で離す = その箱へつなぐ (重なった箱が光る) / 何も無い所 = やめる
@@ -234,14 +238,21 @@ const plusLine = computed(() => {
   const p = plus.value, b = p ? doc.value.boxes[p.id] : null;
   if (!p || !b) return null;
   const q = posOf(b), end = v.toWorld(p.cx, p.cy);
-  const x1 = (p.kind === "side" ? q.x + BOX_W + 2 : q.x + BOX_W / 2) + ox.value, y1 = (p.kind === "side" ? q.y + BOX_H / 2 : q.y + BOX_H + 20) + oy.value;
-  const ex = end.x + ox.value, ey = end.y + oy.value;
+  const x1 = p.kind === "side" ? q.x + BOX_W + 2 : q.x + BOX_W / 2, y1 = p.kind === "side" ? q.y + BOX_H / 2 : q.y + BOX_H + 20;
+  const ex = end.x, ey = end.y;
   const k = Math.max(40, Math.hypot(ex - x1, ey - y1) / 2.5);
   const c1 = p.kind === "side" ? `${x1 + k} ${y1}` : `${x1} ${y1 + k}`;
   return `M ${x1} ${y1} C ${c1} ${ex} ${ey + (ey < y1 ? k : -k)} ${ex} ${ey}`;
 });
 
-watch(() => panel.value?.id, (id) => { if (id) v.reveal(id); });
+watch(() => panel.value?.id, (id) => { if (id) setTimeout(() => void v.reveal(id), 0); });
+/** Vue Flow に渡す箱 (位置は木の形のまま。動かせるのは組める時だけ = 手・一望・戻り先を選んでいる間は画面だけ動く) */
+const flowNodes = computed(() => boxes.value.map((b) => ({ id: b.id, type: "box", position: posOf(b), draggable: false, selectable: false, connectable: false })));
+/** ドットの格子 (Vue Flow の送りと倍率に合わせて動く) */
+const grid = computed(() => {
+  const { x, y, zoom: z } = v.flow.viewport.value;
+  return { backgroundImage: "radial-gradient(rgba(214,180,120,0.16) 1.2px, transparent 1.7px)", backgroundSize: `${22 * z}px ${22 * z}px`, backgroundPosition: `${x}px ${y}px` };
+});
 
 function onKey(e: KeyboardEvent): void {
   const tag = (e.target as HTMLElement | null)?.tagName;
@@ -305,10 +316,23 @@ const glowOf = (b: Box): boolean => {
       <div ref="row" class="flex min-h-0 gap-2" :class="full ? 'flex-1' : ''" :style="full ? {} : { height: `${rowH}px` }">
         <!-- ツリー (暗い地 + ドットの格子、見本の 1。右下に浮かぶ道具とミニマップ、左上に今の状態の札) -->
         <div class="relative min-w-0 flex-1 overflow-hidden rounded-lg border border-white/[0.06] bg-[#0c0a08]">
-        <div ref="viewport" data-tree-canvas class="absolute inset-0 overflow-auto" :class="hand ? 'cursor-grab' : 'cursor-default'" @pointerdown="onCanvasDown">
-          <div class="relative" :style="{ width: `${area.w * zoom}px`, height: `${area.h * zoom}px` }">
-            <div class="absolute left-0 top-0 origin-top-left" :style="{ width: `${area.w}px`, height: `${area.h}px`, transform: `scale(${zoom})`, backgroundImage: 'radial-gradient(rgba(214,180,120,0.16) 1.2px, transparent 1.7px)', backgroundSize: '22px 22px' }">
-              <svg class="pointer-events-none absolute inset-0" :width="area.w" :height="area.h">
+        <!-- ページの zoom を枠だけ打ち消す (中は実質 1 倍。Vue Flow の座標とマウスが揃う、use-tree-flow.ts)。格子は Vue Flow の送りと倍率に合わせる -->
+        <div data-tree-canvas data-overflow-ok class="absolute left-0 top-0 h-full w-full" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid }">
+          <VueFlow :id="FLOW_ID" :nodes="flowNodes" :edges="[]" :default-viewport="{ x: 0, y: 0, zoom: pageZ }" :min-zoom="v.minZoom.value" :max-zoom="v.maxZoom.value"
+            :nodes-draggable="false" :nodes-connectable="false" :elements-selectable="false"
+            :pan-on-drag="true" :pan-on-scroll="true" :zoom-on-scroll="false" zoom-activation-key-code="Control" :zoom-on-double-click="false" :zoom-on-pinch="true"
+            :delete-key-code="null" :selection-key-code="null" :multi-selection-key-code="null" :auto-pan-on-node-drag="true"
+            @pane-click="onPaneClick" @node-click="onNodeClick">
+            <template #node-box="{ id }">
+              <TreeBox v-if="doc.boxes[id]" :box="doc.boxes[id]!" :removable="canRemove(doc, id)" :picking="!!picking && picking !== id"
+                :selected="panel?.id === id || picking === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand" :glow="glowOf(doc.boxes[id]!) || plus?.target === id || (!!hoverBack && doc.boxes[hoverBack]?.back === id)" :issue="issueOf(doc.boxes[id]!)" :inv="inv"
+                @drag="startDrag(doc.boxes[id]!, $event)" @aim="onAim(doc.boxes[id]!)" @plus="(k, e) => onPlus(doc.boxes[id]!, k, e)" @remove="t.edit((d) => removeHit(d, id))"
+                @back="picking = id" @clear-back="t.edit((d) => setBack(d, id, null))" @done="onDone(doc.boxes[id]!)"
+                @note="panel = { kind: 'note', id }" @spam="onSpam(doc.boxes[id]!)" @back-hover="(on) => (hoverBack = on ? id : null)" @back-go="goBack(doc.boxes[id]!)" />
+            </template>
+            <!-- Vue Flow の倍率と移動が掛かる層: 線は箱の後ろ (z-index -1)、打つ手の札・引っ張る線・戻りの弧は箱の前 -->
+            <template #zoom-pane>
+              <svg data-tree-lines class="pointer-events-none absolute left-0 top-0 overflow-visible" width="1" height="1" style="z-index: -1">
                 <defs>
                   <marker v-for="(c, k) in LINE" :id="`tree-arrow-${k}`" :key="k" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" :fill="c" /></marker>
                 </defs>
@@ -318,23 +342,16 @@ const glowOf = (b: Box): boolean => {
                 </g>
               </svg>
               <!-- 矢印の上の札 = 打つ手 (押すと替える・消す) -->
-              <button v-for="e in edges" :key="`hand-${e.id}`" type="button" data-tree-hand class="absolute max-w-[300px] -translate-x-1/2 -translate-y-1/2 truncate rounded-full border border-amber-400/60 bg-[#1a140d] px-3 py-1 text-[12px] font-semibold text-amber-100 shadow-[0_2px_10px_rgba(0,0,0,0.6)] hover:border-amber-300 hover:bg-[#2a2014]"
-                :class="viewOnly ? 'pointer-events-none' : ''" :style="{ left: `${e.jx}px`, top: `${e.jy}px`, scale: String(inv) }" :title="handLabel(e.hand)" @click="panel = { kind: 'hand', id: e.id }">{{ handLabel(e.hand) }}</button>
-              <TreeBox v-for="b in boxes" :key="b.id" :box="b" :x="posOf(b).x + ox" :y="posOf(b).y + oy" :removable="canRemove(doc, b.id)" :picking="!!picking && picking !== b.id"
-                :selected="panel?.id === b.id || picking === b.id || plus?.target === b.id" :back-label="backLabel(b)" :view-only="viewOnly || hand" :glow="glowOf(b) || plus?.target === b.id || (!!hoverBack && doc.boxes[hoverBack]?.back === b.id)" :issue="issueOf(b)" :inv="inv"
-                @drag="startDrag(b, $event)" @aim="onAim(b)" @plus="(k, e) => onPlus(b, k, e)" @remove="t.edit((d) => removeHit(d, b.id))"
-                @back="picking = b.id" @clear-back="t.edit((d) => setBack(d, b.id, null))" @done="onDone(b)" @target="onTarget(b)" @focus="v.focusBox(b.id)"
-                @note="panel = { kind: 'note', id: b.id }" @spam="onSpam(b)" @back-hover="(on) => (hoverBack = on ? b.id : null)" @back-go="goBack(b)" />
-                            <!-- 引っ張っている＋の線と、戻り先の札に乗せた時の線は箱より前 (相手の箱の上まで見える) -->
-              <svg v-if="plusLine || backLine" class="pointer-events-none absolute inset-0 z-10" :width="area.w" :height="area.h">
+              <button v-for="e in edges" :key="`hand-${e.id}`" type="button" data-tree-hand class="nodrag nopan pointer-events-auto absolute z-[5] max-w-[300px] -translate-x-1/2 -translate-y-1/2 truncate rounded-full border border-amber-400/60 bg-[#1a140d] px-3 py-1 text-[12px] font-semibold text-amber-100 shadow-[0_2px_10px_rgba(0,0,0,0.6)] hover:border-amber-300 hover:bg-[#2a2014]"
+                :class="viewOnly || hand ? '!pointer-events-none' : ''" :style="{ left: `${e.jx}px`, top: `${e.jy}px`, scale: String(inv) }" :title="handLabel(e.hand)" @click="panel = { kind: 'hand', id: e.id }">{{ handLabel(e.hand) }}</button>
+              <!-- 引っ張っている＋の線と、戻り先の札に乗せた時の線は箱の前 (相手の箱の上まで見える) -->
+              <svg v-if="plusLine || backLine" class="pointer-events-none absolute left-0 top-0 z-10 overflow-visible" width="1" height="1">
                 <defs><marker id="tree-arrow-drag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" :fill="LINE.back" /></marker></defs>
                 <path v-if="plusLine" data-tree-plus-line :d="plusLine" :stroke="LINE.back" stroke-width="3" stroke-linecap="round" fill="none" marker-end="url(#tree-arrow-drag)" />
                 <path v-if="backLine" data-tree-back :d="backLine" :stroke="LINE.back" stroke-width="2.5" stroke-linecap="round" fill="none" marker-end="url(#tree-arrow-drag)" />
               </svg>
-              <!-- 手の間は箱の上に透明な層 (押しても組み替えない、どこを引いても画面が動く) -->
-              <div v-if="hand" data-tree-hand-layer class="absolute inset-0 z-[15] cursor-grab active:cursor-grabbing" />
-            </div>
-          </div>
+            </template>
+          </VueFlow>
         </div>
         <!-- 今の状態の札 (左上に浮かべる。ツリーを押し下げない) -->
         <p v-if="picking || hand || viewOnly" data-tree-mode-pill class="pointer-events-none absolute left-3 top-3 z-20 rounded-full border px-3 py-1 text-[12px] shadow-[0_4px_14px_rgba(0,0,0,0.6)]"
@@ -354,7 +371,7 @@ const glowOf = (b: Box): boolean => {
             <span class="min-w-0 truncate" :title="x.text">{{ x.text }}</span>
           </button>
         </div>
-        <TreeCanvasTools v-model:hand="hand" :boxes="boxes" :ox="ox" :oy="oy" :zoom="zoom" :viewport="viewport" @fit="v.fit" @zoom-in="v.zoomIn" @zoom-out="v.zoomOut" @reset="v.resetZoom" />
+        <TreeCanvasTools v-model:hand="hand" :boxes="boxes" :view="v.view.value" :zoom="zoom" @center="v.centerOn" @fit="v.fit" @zoom-in="v.zoomIn" @zoom-out="v.zoomOut" @reset="v.resetZoom" />
         </div>
 
         <!-- 右の欄 -->

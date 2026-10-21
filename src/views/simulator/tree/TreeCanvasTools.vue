@@ -4,39 +4,22 @@
   (選択 / 手 = 見るだけで画面を動かす・全体表示・− 倍率 ＋・ミニマップの切り替え)。ミニマップを出すかはこのブラウザに覚える
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { BOX_H, BOX_W, type TreeBox } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { toCss } from "../../../utils/zoom";
 import { gesture } from "./use-gesture";
 
-const props = defineProps<{ boxes: TreeBox[]; ox: number; oy: number; zoom: number; viewport: HTMLElement | null }>();
+/** view = 今見ている所 (ツリーの座標。Vue Flow の viewport から use-tree-flow.ts で出す) */
+const props = defineProps<{ boxes: TreeBox[]; view: { x: number; y: number; w: number; h: number }; zoom: number }>();
 const hand = defineModel<boolean>("hand", { default: false });
-const emit = defineEmits<{ fit: []; zoomIn: []; zoomOut: []; reset: [] }>();
+const emit = defineEmits<{ fit: []; zoomIn: []; zoomOut: []; reset: []; center: [x: number, y: number] }>();
 
 const MAP_KEY = "exiledesk.tree.minimap";
 const showMap = ref((() => { try { return localStorage.getItem(MAP_KEY) !== "0"; } catch { return true; } })());
 watch(showMap, (v) => { try { localStorage.setItem(MAP_KEY, v ? "1" : "0"); } catch { /* 覚えられなくても使える */ } });
 
-// 今見ている所 (スクロールと枠の大きさ。倍率を掛ける前のツリーの座標)
-const view = ref({ x: 0, y: 0, w: 0, h: 0 });
-function read(): void {
-  const el = props.viewport;
-  if (!el) return;
-  view.value = { x: el.scrollLeft / props.zoom - props.ox, y: el.scrollTop / props.zoom - props.oy, w: el.clientWidth / props.zoom, h: el.clientHeight / props.zoom };
-}
-let ro: ResizeObserver | null = null;
-watch(() => props.viewport, (el, old) => {
-  old?.removeEventListener("scroll", read);
-  ro?.disconnect();
-  if (!el) return;
-  el.addEventListener("scroll", read, { passive: true });
-  ro = new ResizeObserver(read);
-  ro.observe(el);
-  read();
-}, { immediate: true });
-watch(() => [props.zoom, props.ox, props.oy, props.boxes.length], () => requestAnimationFrame(read));
-onBeforeUnmount(() => { props.viewport?.removeEventListener("scroll", read); ro?.disconnect(); });
+const view = computed(() => props.view);
 
 /** ミニマップの広さ (箱の並びと今見ている所の両方が入るように) */
 const MAP_W = 200, MAP_H = 128, MAP_PAD = 60;
@@ -58,9 +41,7 @@ function go(e: PointerEvent): void {
   const at = (clientX: number, clientY: number): void => {
     const r = svg.getBoundingClientRect();
     const px = toCss(clientX - r.left), py = toCss(clientY - r.top);
-    const wx = (px - box.value.dx) / box.value.k + box.value.x0, wy = (py - box.value.dy) / box.value.k + box.value.y0;
-    const el = props.viewport;
-    if (el) el.scrollTo({ left: (wx + props.ox) * props.zoom - el.clientWidth / 2, top: (wy + props.oy) * props.zoom - el.clientHeight / 2 });
+    emit("center", (px - box.value.dx) / box.value.k + box.value.x0, (py - box.value.dy) / box.value.k + box.value.y0);
   };
   at(e.clientX, e.clientY);
   gesture(e, { slop: 0, onMove: (p) => at(p.clientX, p.clientY) });
