@@ -4,7 +4,6 @@
  */
 import { inGroup } from "../../services/mods/item-classes";
 import { htcBaseInfo } from "../../services/htc/patch";
-import { AFFIX_COUNT } from "../../services/simulator/htc/tree-buy";
 import { computed, onMounted, ref, watch } from "vue";
 import { craftStage, priceOf } from "../../state/craft-stage";
 import { runRecipe } from "../../services/simulator/recipe-sim";
@@ -17,6 +16,8 @@ import { searchModGroups, type ModGroup, type ModPick } from "../../services/cra
 import type { SimTargetsCtx } from "./use-sim-targets";
 import type { Kept } from "./use-sim-targets";
 
+/** 取引所の「MOD の数」の疑似 stat (4 以下 = 空きのあるレアを探す) */
+const AFFIX_COUNT = "pseudo.pseudo_number_of_affix_mods";
 
 export function useSimSearch(d: SimTargetsCtx) {
   const { blocker, fracMembers, fractureRow, fractureRows, keptKey, makeRoute, methodOf, num, restRows, socketCount, socketQuery,
