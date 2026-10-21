@@ -6,12 +6,13 @@
  * (その結果が出るまで打ち直す。乱数任せにしない)。繰り返しの手 (カオススパム) は当たりの箱へ 1 発で行く前提 = 当たりが出るまで打ち直すだけ。
  * 戻りの矢印は 1 回だけ辿る (戻り先の手がその状態で打てるか)。
  */
-import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { allMods, modBoostsOf, mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { CATALYSING } from "./tree-hands";
 import { aimKey, type Aim, type TreeDoc } from "./tree-model";
 import { aimsOf, outcomeOf, playHand, sampleOf } from "./tree-sample";
 import { tr } from "../../../i18n/lang";
 
-export type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape";
+export type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality";
 export interface CheckIssue { boxId: string; kind: CheckKind; text: string }
 
 const PEOPLE = 5;
@@ -74,6 +75,10 @@ export function checkTree(data: PatchData, doc: TreeDoc): CheckIssue[] {
         const first = playHand(data, item, b.hand, rng, aims);
         if (!first.applied) { const c = cant.get(id) ?? { n: 0, reason: first.reason ?? "" }; c.n++; cant.set(id, c); return; }
         if (viaBack) return; // 戻りの矢印で着いた時は、戻り先の手がこの状態で打てるかだけ見る (先は通常の道で辿る)
+        // 品質 (オーナー 10-22「ルート精査の時の品質のチェック」): 触媒の品質が当たりの MOD に効くかは下で見る。
+        // 聖別・コラプトの後の手・カタリストが入らない手は、上の打てない手 (エンジンの理由) で出る。触媒は打つと品質を使い切るので、前の品質の入れ替えは起きない
+        const tag = b.hand.catalyst && b.hand.omens.includes(CATALYSING) ? b.hand.catalyst.slice("catalyst_".length) : null;
+        let boosted = false, hits = 0;
         for (const o of b.outs) {
           const ob = doc.boxes[o]!;
           let got: StageItem | null = null;
@@ -83,9 +88,15 @@ export function checkTree(data: PatchData, doc: TreeDoc): CheckIssue[] {
             const res = outcomeOf(data, item, r.item, aims);
             if (res.out === ob.out && (ob.out !== "hit" || !ob.aim || res.hits.some((a: Aim) => aimKey(a) === aimKey(ob.aim!)))) got = r.item;
           }
+          if (got && tag && ob.out === "hit" && ob.aim) {
+            // 触媒の品質がこの当たりの MOD に効くか (エンジンの modBoostsOf。触媒は打つと品質を使い切るので、その種類の品質が載った形で聞く)
+            const m = allMods(got).find((x) => x.modId === ob.aim!.modId);
+            if (m) { hits++; if (modBoostsOf({ ...got, quality: Math.max(got.quality, 1), catalystQuality: 1, qualityTag: tag }, m, data).some((k) => k.kind === "quality")) boosted = true; }
+          }
           if (got) walk(o, got, false);
           else if (ob.out === "hit" && ob.aim && !viaBack) never.add(o);
         }
+        if (tag && hits && !boosted) add(id, "quality", tr("触媒で入れる品質が、この手の当たりの MOD のどれにも効かない (カタリストの種類を確かめる)", "The catalysed quality boosts none of this craft's target mods (check the catalyst type)"));
       };
       walk("start", start, false);
     }

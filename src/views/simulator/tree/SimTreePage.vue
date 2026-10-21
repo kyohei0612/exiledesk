@@ -172,7 +172,8 @@ function onAddHit(b: Box, at?: { x: number; y: number }, link?: string): void {
     if (made && at) moveBox(d, made, at.x - BOX_W / 2, at.y);
     if (made && link) setBack(d, made, link);
   });
-  if (made) panel.value = { kind: "aim", id: made };
+  // 引っ張って既にある箱へつないだ時は欄を出さない (つなぐだけ。オーナー 10-22「つなげた時も…表示される。意味が分からないので出さなくて OK」)
+  if (made && !link) panel.value = { kind: "aim", id: made };
 }
 function onDone(b: Box): void { t.edit((d) => setDone(d, b.id, b.done === null ? "main" : b.done === "main" ? "compromise" : null)); }
 function onTarget(b: Box): void {
@@ -180,17 +181,29 @@ function onTarget(b: Box): void {
   picking.value = null;
   if (from && from !== b.id) t.edit((d) => setBack(d, from, b.id));
 }
-// ルート精査 (押した時だけ。組み替えたら消す)
+// ルート精査 (押した時に始める)。! は穴が解消した時だけ消える: 道を組み替えたら精査し直して、残った穴の ! は残す。
+// 一覧を閉じる・箱を押す・動かすでは消さない (オーナー 10-22「！マークは解消したら消していく感じで」)
 const issues = ref<CheckIssue[] | null>(null);
+const issuesOpen = ref(false);
 const checking = ref(false);
-watch(doc, () => { issues.value = null; });
-async function onCheck(): Promise<void> {
+/** 道の形 (箱の位置・メモは入れない)。位置を動かしただけでは精査し直さない */
+const routeKey = computed(() => JSON.stringify([doc.value.fracture, Object.values(doc.value.boxes).map(({ x: _x, y: _y, note: _n, ...r }) => r)]));
+let recheck = 0;
+/** 精査を押した時に見つけた穴 (箱と種類)。組み替えた後はこの中で今も残る物だけ出す (新しい穴は精査を押した時。1 つ戻すで穴が戻れば ! も戻る) */
+let found: CheckIssue[] = [];
+watch(routeKey, () => { if (!found.length) return; clearTimeout(recheck); recheck = window.setTimeout(() => void runCheck(true), 300); });
+async function runCheck(keep = false): Promise<void> {
   const d = s.data.value;
   if (!d || checking.value) return;
   checking.value = true;
   await new Promise((r) => setTimeout(r, 30)); // 「精査中」を先に出す
-  try { issues.value = checkTree(d, doc.value); } finally { checking.value = false; }
+  try {
+    const now = checkTree(d, doc.value);
+    if (!keep) found = now;
+    issues.value = keep ? now.filter((x) => found.some((y) => y.boxId === x.boxId && y.kind === x.kind)) : now;
+  } finally { checking.value = false; }
 }
+async function onCheck(): Promise<void> { issuesOpen.value = true; await runCheck(); }
 const issueOf = (b: Box): string | null => issues.value?.filter((x) => x.boxId === b.id).map((x) => x.text).join(" / ") || null;
 function goIssue(id: string): void { void v.reveal(id, true); }
 
@@ -377,11 +390,11 @@ const glowOf = (b: Box): boolean => {
           {{ picking ? tr("戻り先の箱を押す (Esc でやめる)", "Click the box to return to (Esc cancels)") : hand ? tr("手: 見るだけ (選択に戻すと組める)", "Hand: view only (switch to Select to edit)") : tr("縮めて見ている間は箱を押すとそこへ寄る (組むのは 75% 以上で)", "Zoomed out: click a box to jump to it (edit at 75%+)") }}
         </p>
         <!-- ルート精査の結果 (押した時だけ。ツリーの上に浮かべて、ツリーを押し下げない) -->
-        <div v-if="issues" data-tree-issues class="absolute left-3 z-20 flex max-h-[45%] w-[min(720px,calc(100%-24px))] flex-col gap-1 overflow-y-auto rounded-lg border px-2 py-1.5 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.6)]"
+        <div v-if="issues && issuesOpen" data-tree-issues class="absolute left-3 z-20 flex max-h-[45%] w-[min(720px,calc(100%-24px))] flex-col gap-1 overflow-y-auto rounded-lg border px-2 py-1.5 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.6)]"
           :class="[issues.length ? 'border-rose-500/40 bg-[#1c0f10]/95' : 'border-emerald-500/40 bg-[#0d1a12]/95', picking || hand || viewOnly ? 'top-12' : 'top-3']">
           <div class="flex items-center gap-2">
             <b :class="issues.length ? 'text-rose-200' : 'text-emerald-200'">{{ issues.length ? tr(`穴 ${issues.length} 件`, `${issues.length} issue(s)`) : tr("穴は見つからなかった (5 人で全部の枝を通した)", "No issues found (all branches walked by 5 runs)") }}</b>
-            <button type="button" class="g-btn sm ml-auto" @click="issues = null">{{ tr("閉じる", "Close") }}</button>
+            <button type="button" class="g-btn sm ml-auto" @click="issuesOpen = false">{{ tr("閉じる", "Close") }}</button>
           </div>
           <button v-for="(x, i) in issues" :key="i" type="button" data-tree-issue-row class="flex min-h-7 items-center gap-2 rounded px-1 text-left hover:bg-white/5" @click="goIssue(x.boxId)">
             <span class="shrink-0 rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white">!</span>
