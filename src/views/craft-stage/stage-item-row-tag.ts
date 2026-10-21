@@ -4,4 +4,6 @@ export interface RowTag {
   tone: "bad" | "warn" | "good" | "info";
   /** 乗せた時の説明 (無くてよい) */
   title?: string;
+  /** true なら MOD の文の代わりに text を行の名前として出す (札の印は出さない。シミュの外れ MOD の行) */
+  replace?: boolean;
 }

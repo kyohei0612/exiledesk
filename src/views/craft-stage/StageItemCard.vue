@@ -38,6 +38,8 @@ import type { RowTag } from "./stage-item-row-tag";
 const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[]; /** 付く空き (側ごとに光らせる枠の数。spec/preview.ts) */ open?: Record<"prefix" | "suffix", number> | null; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean; /** 付いた瞬間の確率 (無ければステージの工程から。スパムシミュレーターの運試しは自分の物を渡す) */ chances?: ReadonlyMap<string, number> | null; /** MOD の行ごとの札 (modId → 文と色。シミュの「外れ MOD」など。渡さなければ出ない) */ rowTags?: ReadonlyMap<string, RowTag> | null}>();
 /** 行の札の色 */
 const ROW_TAG_TONE: Record<RowTag["tone"], string> = { bad: "bg-rose-500/25 text-rose-200", warn: "bg-amber-500/25 text-amber-100", good: "bg-emerald-500/25 text-emerald-200", info: "bg-sky-500/20 text-sky-100" };
+/** replace の札を行の名前にする時の文字の色 */
+const ROW_TAG_TEXT: Record<RowTag["tone"], string> = { bad: "text-rose-300", warn: "text-amber-200", good: "text-emerald-300", info: "text-sky-200" };
 const isDoomed = (m: StageMod): boolean => !!props.doomed?.includes(m.modId);
 /** 行の左 (P / S) と右 (↓・確率・×) の枠は同じ幅。MOD の文がカードの真ん中に来る (2026-10-17 オーナー「全体的に左に寄ってる、MOD は真ん中、→ に %、← に P,S」) */
 const sideColW = computed(() => (props.removable ? "w-[4.5rem] max-md:w-[5.25rem]" : "w-[3rem] max-md:w-[3rem]")); // ↓ を外した分 (2026-10-17) 細く
@@ -271,12 +273,13 @@ const rows = computed(() => {
           <span class="min-w-0 flex-1 text-center">
             <!-- 消える候補は文字をオレンジに (フラクチャーのくすんだ金色と被らない色。2026-10-07 オーナー「光るの文字にしようか、フラクチャーの色被らんようにオレンジで」) -->
             <!-- 未発現はゲームと同じく緑の崩れた文字 (中身は分からない。ホバーで「未発現の冒涜 MOD (側)」。2026-10-17 オーナー「アイテムについた冒涜未発現はこの感じ、全体的に緑」) -->
-            <span v-if="r.m.unrevealed" data-unrevealed class="font-sans tracking-wider text-[#a6e05c] [text-shadow:0_0_6px_rgba(140,220,80,0.75)]" :title="r.text">{{ UNREVEALED_GLYPHS }}</span>
+            <span v-if="rowTags?.get(r.m.modId)?.replace" data-row-tag-name :class="ROW_TAG_TEXT[rowTags.get(r.m.modId)!.tone]" :title="rowTags.get(r.m.modId)!.title">{{ rowTags.get(r.m.modId)!.text }}</span>
+            <span v-else-if="r.m.unrevealed" data-unrevealed class="font-sans tracking-wider text-[#a6e05c] [text-shadow:0_0_6px_rgba(140,220,80,0.75)]" :title="r.text">{{ UNREVEALED_GLYPHS }}</span>
             <span v-else-if="r.shown" :class="isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : ''" :title="tr('素の値 (上乗せを抜いた値)。小さい数字は品質・効果・聖別で盛った値', 'Base value (without boosts). The small number is the boosted value')">{{ r.text }}<span data-boosted-value class="ml-1 text-[10px] tabular-nums text-[#7ee8ff]">({{ r.shown }})</span></span>
             <span v-else :class="[isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : r.boosted ? 'text-[#7ee8ff]' : '']" :title="r.boosted ? tr(`品質で伸びた数値 (素は ${modText(r.m)})`, `Boosted by quality (base: ${modText(r.m)})`) : undefined">{{ r.text }}</span>
             <span v-if="look(r.m).tag" class="ml-1.5 whitespace-nowrap align-middle text-[10px] opacity-80">{{ look(r.m).tag }}</span>
             <span v-for="t in r.tags" :key="t" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[t]!.cls">{{ tagLabel(t) }}</span>
-            <span v-if="rowTags?.get(r.m.modId)" data-row-tag class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] font-sans not-italic" :class="ROW_TAG_TONE[rowTags.get(r.m.modId)!.tone]" :title="rowTags.get(r.m.modId)!.title">{{ rowTags.get(r.m.modId)!.text }}</span>
+            <span v-if="rowTags?.get(r.m.modId) && !rowTags.get(r.m.modId)!.replace" data-row-tag class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] font-sans not-italic" :class="ROW_TAG_TONE[rowTags.get(r.m.modId)!.tone]" :title="rowTags.get(r.m.modId)!.title">{{ rowTags.get(r.m.modId)!.text }}</span>
           </span>
           <!-- 右端 (↓・確率・×) は行ごとに中身が違うので枠の幅を決めておき、真ん中の文字をどの行もそろえる (2026-10-17 オーナー「% が無いからずれた、枠幅決めて中央ぞろえ」) -->
           <span class="flex shrink-0 items-center justify-end gap-1" :class="sideColW">
