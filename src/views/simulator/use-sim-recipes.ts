@@ -11,13 +11,13 @@ import type { SimTargetsCtx } from "./use-sim-targets";
 import type { SimRunCtx } from "./use-sim-run";
 import { simJumpOpen } from "../../state/web-page";
 import { simAuto } from "../../state/simulator/sim-state";
+import { fmtDate } from "./recipe-share";
 
 export function useSimRecipes(d: SimTargetsCtx & SimRunCtx) {
   const { boughtDivine, fourDivine, rareDivine, fracDone, itemDivine, loadKept, magicDivine, modsDone, sortDone, num, orderDone, patternDone, recipeOut,
     restoring, results, sessionNow, startDone, whiteDivine, whiteOk } = d;
   const s = craftStage;
   const baseJa = computed(() => s.item.value?.baseJa ?? s.base.value);
-  const fmtDate = (t: number): string => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
   // 今の状態をストアに見せる (レシピのページの「今の状態で上書き」・右上の保存)
   const now = { session: () => JSON.parse(JSON.stringify(sessionNow())) as SimSession, baseJa: () => baseJa.value };
   onMounted(() => { simNow.value = now; });

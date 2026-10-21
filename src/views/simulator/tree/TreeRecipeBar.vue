@@ -8,7 +8,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
 import { currentTreeRecipe, overwriteTreeRecipe, renameTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
 import { openRecipesPage } from "../../../web/page";
-import { openRecipeCode, recipeCodeOf, treeShareUrl } from "../recipe-share";
+import { fmtDate, openRecipeCode, recipeCodeOf, treeShareUrl } from "../recipe-share";
 import { useTree } from "./use-tree";
 import { useArmed, ARMED_CLASS } from "../../../utils/use-armed";
 import { track } from "../../../utils/track";
@@ -19,7 +19,6 @@ const t = useTree();
 /** opened = 別の木を開いた (ツリーの側で全体に合わせる) */
 const emit = defineEmits<{ opened: [] }>();
 const dirty = computed(() => (currentTreeRecipe.value ? !sameTree(t.doc.value, currentTreeRecipe.value.tree) : Object.keys(t.doc.value.boxes).length > 1));
-const fmtDate = (n: number): string => { const d = new Date(n); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
 const defaultName = (): string => `${tr(jaTypeName(t.doc.value.base), t.doc.value.base)} ${fmtDate(Date.now())}`;
 
 const note = ref("");

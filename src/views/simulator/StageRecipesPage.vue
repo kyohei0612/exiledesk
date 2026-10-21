@@ -13,7 +13,7 @@ import Icon from "../../components/ui/Icon.vue";
 import { currentTreeRecipe, currentTreeRecipeId, duplicateTreeRecipe, oldRecipeCount, overwriteTreeRecipe, removeTreeRecipe, renameTreeRecipe, restoreTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../state/simulator/tree-recipes";
 import { openTreePage } from "../../web/page";
 import { baseArt } from "../../services/craft-stage/base-art";
-import { openRecipeCode, recipeCodeOf, treeShareUrl } from "./recipe-share";
+import { fmtDate, openRecipeCode, recipeCodeOf, treeShareUrl } from "./recipe-share";
 import { useTree } from "./tree/use-tree";
 import { useArmed, ARMED_CLASS } from "../../utils/use-armed";
 import { track } from "../../utils/track";
@@ -21,7 +21,6 @@ import { jaTypeName } from "../../services/trade2/localize";
 import { tr } from "../../i18n/lang";
 
 const t = useTree();
-const fmtDate = (n: number): string => { const d = new Date(n); return `${d.getFullYear() === new Date().getFullYear() ? "" : `${d.getFullYear()}/`}${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
 const baseName = (r: TreeRecipe): string => tr(jaTypeName(r.tree.base), r.tree.base);
 const countOf = (r: TreeRecipe): { boxes: number; aims: number; done: number } => {
   const bs = Object.values(r.tree.boxes);

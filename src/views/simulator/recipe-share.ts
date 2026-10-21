@@ -101,6 +101,8 @@ export function recipeShareText(r: Pick<SimRecipe, "name" | "baseJa" | "session"
     `PoE2 craft recipe "${r.name}" (${base}, ${n} target mods). Open it to run it in the simulator
 #PoE2 #ExileDesk`);
 }
+/** レシピの日時 (保存の既定の名前・一覧): 「月/日 時:分」、今年でなければ頭に年 */
+export const fmtDate = (t: number): string => { const d = new Date(t); return `${d.getFullYear() === new Date().getFullYear() ? "" : `${d.getFullYear()}/`}${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
 /**
  * X へ送る (スパムシミュレーターと同じ送り方: アプリは外のブラウザ、スマホは X のアプリ)。レシピは URL の # に全部乗っているので短い URL は作らない
  * (X が t.co に縮める)。<a :href="web" target="_blank" @click="shareRecipeX($event, …)"> で使う

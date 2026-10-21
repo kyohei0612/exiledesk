@@ -14,14 +14,13 @@ import { computed, nextTick, onBeforeUnmount, ref } from "vue";
 import Icon from "../../components/ui/Icon.vue";
 import { currentRecipe, overwriteRecipe, saveNewRecipe, sameContent, simNow } from "../../state/simulator/sim-recipe-store";
 import { openRecipesPage } from "../../web/page";
-import { recipeShareText, recipeShareUrl, recipeXUrl, shareRecipeX } from "./recipe-share";
+import { fmtDate, recipeShareText, recipeShareUrl, recipeXUrl, shareRecipeX } from "./recipe-share";
 import { craftStage as s } from "../../state/craft-stage";
 import { track } from "../../utils/track";
 import { tr } from "../../i18n/lang";
 
 const props = defineProps<{ /** 「最初から」を 1 回押して、もう一度押すと消える状態 */ resetArmed: boolean }>();
 const emit = defineEmits<{ reset: [] }>();
-const fmtDate = (t: number): string => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
 const now = computed(() => simNow.value);
 /** 保存していない変更がある (開いているレシピと中身が違う。無ければ狙いを 1 つでも選んだら) */
 const dirty = computed(() => {

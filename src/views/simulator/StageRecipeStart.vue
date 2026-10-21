@@ -12,7 +12,7 @@ import type { SimRecipe } from "../../state/craft-stage";
 import { recipeList, reloadRecipes, touchedAt } from "../../state/simulator/sim-recipe-store";
 import { openRecipesPage } from "../../web/page";
 import { baseArt } from "../../services/craft-stage/base-art";
-import { openRecipeCode, recipeCodeOf } from "./recipe-share";
+import { fmtDate, openRecipeCode, recipeCodeOf } from "./recipe-share";
 import { jaTypeName } from "../../services/trade2/localize";
 import { tr } from "../../i18n/lang";
 
@@ -50,7 +50,6 @@ async function openUrl(): Promise<void> {
   if (ok) url.value = "";
 }
 function onPaste(): void { void nextTick(() => { if (recipeCodeOf(url.value)) void openUrl(); }); }
-const fmtDate = (t: number): string => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`; };
 </script>
 
 <template>
