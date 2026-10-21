@@ -13,10 +13,10 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { KIND_COLOR, KIND_JA, layersOf, type DamageKind, type Defender, type Outcome } from "../../services/craft-stage/defence";
-import { easeOut, seg, useAnim } from "./use-anim";
+import { easeOut, seg, useAnim, urlOff } from "./use-anim";
 
 const props = defineProps<{ d: Defender; hit: number; kind: DamageKind; acc: number; outcome: Outcome; red: boolean; lvl: number | null }>();
-const hl = new URLSearchParams(location.search).get("hl") !== "0";
+const hl = !urlOff("hl");
 const layers = computed(() => layersOf(props.d, props.hit, props.kind, props.acc, props.outcome, props.red));
 const color = computed(() => KIND_COLOR[props.kind]);
 const N = 8;

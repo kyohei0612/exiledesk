@@ -11,12 +11,12 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { attackRow, DEF, deflectChance, evadeChance } from "../../services/craft-stage/defence";
-import { seg, useAnim } from "./use-anim";
+import { seg, useAnim, urlOff } from "./use-anim";
 
 const props = defineProps<{ ev: number; deflect: number; acc: number; lvl: number | null; n: number; red: boolean }>();
-const hl = new URLSearchParams(location.search).get("hl") !== "0";
+const hl = !urlOff("hl");
 /** 計算式を数字入りで出す (要望 ㉓、&formula=0 で式の行ごと消す) */
-const showFormula = new URLSearchParams(location.search).get("formula") !== "0";
+const showFormula = !urlOff("formula");
 const evPct = computed(() => evadeChance(props.ev, props.acc));
 const dfPct = computed(() => deflectChance(props.deflect, props.acc));
 const rows = computed(() => [

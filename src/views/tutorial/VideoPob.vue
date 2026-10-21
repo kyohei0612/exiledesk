@@ -14,9 +14,10 @@ import { computed, onBeforeUnmount, ref, watch } from "vue";
 import type { PobBlock } from "../../services/craft-stage/stage-pob";
 import { dpsText } from "../../services/craft-stage/stage-pob";
 import { skillIcon } from "../../services/craft-stage/skill-art";
+import { urlOff } from "./use-anim";
 
 const props = defineProps<{ pob: PobBlock; idx: number }>();
-const hideDps = typeof location !== "undefined" && new URLSearchParams(location.search).get("dps") === "0";
+const hideDps = urlOff("dps");
 const CLASS_JA: Record<string, string> = { Ranger: "レンジャー", Warrior: "ウォリアー", Sorceress: "ソーサレス", Witch: "ウィッチ", Monk: "モンク", Mercenary: "マーセナリー", Huntress: "ハントレス", Druid: "ドルイド" };
 const now = computed(() => props.pob.steps[Math.min(props.idx, props.pob.steps.length - 1)] ?? null);
 const prev = computed(() => (props.idx > 0 ? props.pob.steps[props.idx - 1] ?? null : null));

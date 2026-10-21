@@ -15,6 +15,9 @@ export const animFlags = (): { play: boolean; reveal: boolean } => {
   return { play: q.get("play") === "1", reveal: q.get("reveal") === "1" };
 };
 
+/** URL の &k=0 か (各画面の「隠す・消す」指定: hl・formula・dps) */
+export const urlOff = (k: string): boolean => typeof location !== "undefined" && new URLSearchParams(location.search).get(k) === "0";
+
 export function useAnim(ms: number, o: { revealAt?: number } = {}) {
   const f = animFlags();
   /** 0 → 1 の進み (止め絵は 1) */

@@ -11,12 +11,12 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { DEF, esTimeline } from "../../services/craft-stage/defence";
-import { useAnim } from "./use-anim";
+import { useAnim, urlOff } from "./use-anim";
 
 const props = defineProps<{ life: number; es: number; dmg: number; hits: number[]; kind: "phys" | "chaos" | "bleed"; until: number }>();
-const hl = new URLSearchParams(location.search).get("hl") !== "0";
+const hl = !urlOff("hl");
 /** 計算式を数字入りで出す (要望 ㉓、&formula=0 で消す) */
-const showFormula = new URLSearchParams(location.search).get("formula") !== "0";
+const showFormula = !urlOff("formula");
 const KIND = { phys: { ja: "普通の一撃", color: "#e8e0d0" }, chaos: { ja: "混沌の一撃 (ES を 2 倍削る)", color: "#c77dff" }, bleed: { ja: "出血・毒 (ES を素通り)", color: "#ff5a5a" } } as const;
 const pts = computed(() => esTimeline(props.life, props.es, props.dmg, props.hits, props.kind, props.until));
 const W = 1080;

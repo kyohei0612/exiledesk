@@ -13,10 +13,10 @@
 import { computed } from "vue";
 import type { PobBlock } from "../../services/craft-stage/stage-pob";
 import { dpsText } from "../../services/craft-stage/stage-pob";
-import { useAnim } from "./use-anim";
+import { useAnim, urlOff } from "./use-anim";
 
 const props = defineProps<{ a: PobBlock; aStep: number; aLabel: string; b: PobBlock | null; bStep: number; bLabel: string }>();
-const hl = new URLSearchParams(location.search).get("hl") !== "0";
+const hl = !urlOff("hl");
 const at = (p: PobBlock, step: number) => p.steps?.[Math.min(step, (p.steps?.length ?? 1) - 1)] ?? null;
 const sides = computed(() =>
   [

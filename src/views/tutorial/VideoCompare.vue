@@ -17,13 +17,13 @@ import { diffItems, splitLine, type DiffLine } from "../../services/tutorial/com
 import { NEGATIVE_WORDS } from "../../services/craft-stage/stage-core";
 import type { CraftStagePlan } from "../../services/craft-stage/contract";
 import { dpsText, type PobBlock } from "../../services/craft-stage/stage-pob";
-import { easeOut, seg, useAnim } from "./use-anim";
+import { easeOut, seg, useAnim, urlOff } from "./use-anim";
 
 const props = defineProps<{ a: CraftStagePlan; b: CraftStagePlan; aStep: number; bStep: number; aPob?: PobBlock | null; bPob?: PobBlock | null }>();
 /** その手の PoB の値 (step が手の数より大きい時は最後) */
 const pobAt = (p: PobBlock | null | undefined, step: number) => (p ? p.steps[Math.min(step, p.steps.length - 1)] ?? null : null);
 const anim = useAnim(2400, { revealAt: 0.45 });
-const hideDps = new URLSearchParams(location.search).get("dps") === "0";
+const hideDps = urlOff("dps");
 /** 動きの前半は 1 手前、0.35 から最後の手 */
 const after = computed(() => !anim.play || anim.t.value >= 0.35);
 /** DPS の棒の伸び (0 → 1) */

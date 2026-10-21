@@ -10,10 +10,10 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { DEF } from "../../services/craft-stage/defence";
-import { easeOut, useAnim } from "./use-anim";
+import { easeOut, useAnim, urlOff } from "./use-anim";
 
 const props = defineProps<{ slot: string; early: number; late: number }>();
-const hl = new URLSearchParams(location.search).get("hl") !== "0";
+const hl = !urlOff("hl");
 const SLOT_JA: Record<string, string> = { body: "胴", helmet: "兜", gloves: "手袋", boots: "靴", shield: "盾" };
 type B = (typeof DEF.bases)[number];
 const TYPES: Array<{ ja: string; test: (b: B) => boolean; stats: Array<"ar" | "ev" | "es"> }> = [

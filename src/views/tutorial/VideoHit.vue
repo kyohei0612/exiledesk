@@ -13,10 +13,10 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { PobBlock } from "../../services/craft-stage/stage-pob";
-import { easeOut, seg, useAnim } from "./use-anim";
+import { easeOut, seg, useAnim, urlOff } from "./use-anim";
 
 const props = defineProps<{ pob: PobBlock; step: number; elem: string; res: number[]; dmg: number | null }>();
-const hl = new URLSearchParams(location.search).get("hl") !== "0";
+const hl = !urlOff("hl");
 const ELEM: Record<string, { ja: string; color: string }> = {
   fire: { ja: "火", color: "#ff7a45" },
   cold: { ja: "冷気", color: "#6fc3ff" },

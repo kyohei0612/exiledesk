@@ -11,12 +11,12 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { armourReduction, DEF } from "../../services/craft-stage/defence";
-import { easeOut, useAnim } from "./use-anim";
+import { easeOut, useAnim, urlOff } from "./use-anim";
 
 const props = defineProps<{ ar: number[]; labels: string[]; max: number | null; hit: number | null }>();
-const hl = new URLSearchParams(location.search).get("hl") !== "0";
+const hl = !urlOff("hl");
 /** 計算式を数字入りで出す (要望 ㉓、&formula=0 で消す) */
-const showFormula = new URLSearchParams(location.search).get("formula") !== "0";
+const showFormula = !urlOff("formula");
 const R = DEF.constants.armourRatio;
 const COLORS = ["#f2c14e", "#6fc3ff", "#ff7a45", "#9be08a"];
 const W = 1060;
