@@ -71,7 +71,7 @@ const btn = "flex h-8 min-w-8 items-center justify-center rounded-md px-1.5 text
 
 <template>
   <div class="pointer-events-none absolute bottom-3 right-3 z-20 flex flex-col items-end gap-2" data-tree-tools>
-    <svg v-if="showMap" data-tree-minimap class="pointer-events-auto cursor-pointer rounded-lg border border-white/10 bg-[#0d0b08]/90 shadow-[0_6px_20px_rgba(0,0,0,0.6)]" :width="MAP_W" :height="MAP_H" :aria-label="tr('ミニマップ (押すとそこへ)', 'Minimap (click to jump)')" @pointerdown="go">
+    <svg v-if="showMap" data-tree-minimap class="pointer-events-auto cursor-pointer rounded-lg border border-white/10 bg-[#0d0b08] shadow-[0_6px_20px_rgba(0,0,0,0.6)]" :width="MAP_W" :height="MAP_H" :aria-label="tr('ミニマップ (押すとそこへ)', 'Minimap (click to jump)')" @pointerdown="go">
       <rect v-for="b in boxes" :key="b.id" :x="mx(b.x)" :y="my(b.y)" :width="Math.max(3, BOX_W * box.k)" :height="Math.max(2, BOX_H * box.k)" rx="2" :fill="fill(b)" fill-opacity="0.75" />
       <rect :x="mx(view.x)" :y="my(view.y)" :width="view.w * box.k" :height="view.h * box.k" rx="3" fill="rgba(255,236,190,0.06)" stroke="rgba(255,220,150,0.7)" stroke-width="2" />
     </svg>

@@ -45,7 +45,7 @@ watch(memoOpen, (v) => { try { localStorage.setItem(MEMO_KEY, v ? "1" : "0"); } 
 /** メモの窓の札で選んだ札 (その札を使っている箱が光る) */
 const glowAim = ref<string | null>(null);
 const v = useTreeView(doc, () => !!panel.value);
-const { viewport, zoom, full, bounds, ox, oy, area, viewOnly } = v;
+const { viewport, zoom, full, ox, oy, area, viewOnly } = v;
 
 // ドラッグ中は画面の上だけで動かし、離した時に 1 回だけ組み替える (1 つ戻すが 1 手で済む)
 const drag = ref<{ id: string; sx: number; sy: number; bx: number; by: number; x: number; y: number } | null>(null);
@@ -83,14 +83,12 @@ const hoverBack = ref<string | null>(null);
 const backLine = computed(() => {
   const b = hoverBack.value ? doc.value.boxes[hoverBack.value] : null, to = b?.back ? doc.value.boxes[b.back] : null;
   if (!b || !to) return null;
-  // 箱の下 → 下の隙間 → ツリーの外側 → 戻り先の横の辺 (箱の裏を通らない。出すのは乗せている間の 1 本だけ)
-  const p = posOf(b), q = posOf(to), bd = bounds.value;
-  const right = p.x >= q.x;
-  const sx = p.x + BOX_W / 2 + ox.value, sy = p.y + BOX_H + oy.value, gy = sy + 22;
-  const lane = (right ? bd.x + bd.w + 36 : bd.x - 36) + ox.value;
-  // 戻り先の段の上の隙間 (手の札と横の棒の間) を通って、戻り先の上の辺に入る (横の辺に入ると隣の箱の裏を横切った、10-22 開発版で見た)
-  const tx = q.x + BOX_W / 2 + (right ? 36 : -36) + ox.value, top = q.y + oy.value, gap = top - 30;
-  return `M ${sx} ${sy} L ${sx} ${gy} L ${lane} ${gy} L ${lane} ${gap} L ${tx} ${gap} L ${tx} ${top - 3}`;
+  // 札 (箱の下) から戻り先の上の辺へ 1 本の柔らかい曲線を、箱より前に描く (乗せている間だけ。ツリーの外側を大回りすると
+  // 線が画面の外へ出て戻り先が分からず、横の辺から入ると隣の箱の裏を横切った。10-22 開発版で触って見た)
+  const p = posOf(b), q = posOf(to);
+  const sx = p.x + 40 + ox.value, sy = p.y + BOX_H + oy.value, tx = q.x + BOX_W / 2 + ox.value, ty = q.y + oy.value - 3;
+  const k = Math.max(60, Math.abs(ty - sy) / 2);
+  return `M ${sx} ${sy} C ${sx} ${sy + k} ${tx} ${ty - k} ${tx} ${ty}`;
 });
 function goBack(b: Box): void { hoverBack.value = null; if (b.back) v.reveal(b.back, true); }
 
@@ -311,7 +309,6 @@ const glowOf = (b: Box): boolean => {
                   <path :d="e.stem" :stroke="LINE.fwd" stroke-width="2" fill="none" />
                   <path v-for="o in e.to" :key="o.id" :d="o.d" :stroke="o.color" stroke-width="2" stroke-linejoin="round" fill="none" :marker-end="`url(#tree-arrow-${o.kind})`" />
                 </g>
-                <path v-if="backLine" data-tree-back :d="backLine" :stroke="LINE.back" stroke-width="2.5" stroke-linejoin="round" fill="none" marker-end="url(#tree-arrow-back)" />
               </svg>
               <!-- 矢印の上の札 = 打つ手 (押すと替える・消す) -->
               <button v-for="e in edges" :key="`hand-${e.id}`" type="button" data-tree-hand class="absolute max-w-[300px] -translate-x-1/2 -translate-y-1/2 truncate rounded-full border border-amber-400/60 bg-[#1a140d] px-3 py-1 text-[12px] font-semibold text-amber-100 shadow-[0_2px_10px_rgba(0,0,0,0.6)] hover:border-amber-300 hover:bg-[#2a2014]"
@@ -321,10 +318,11 @@ const glowOf = (b: Box): boolean => {
                 @drag="startDrag(b, $event)" @aim="onAim(b)" @plus="(k, e) => onPlus(b, k, e)" @remove="t.edit((d) => removeHit(d, b.id))"
                 @back="picking = b.id" @clear-back="t.edit((d) => setBack(d, b.id, null))" @done="onDone(b)" @target="onTarget(b)" @focus="v.focusBox(b.id)"
                 @note="panel = { kind: 'note', id: b.id }" @spam="onSpam(b)" @back-hover="(on) => (hoverBack = on ? b.id : null)" @back-go="goBack(b)" />
-              <!-- 引っ張っている＋の線は箱より前 (つなぐ箱の上まで見える) -->
-              <svg v-if="plusLine" class="pointer-events-none absolute inset-0 z-10" :width="area.w" :height="area.h">
+                            <!-- 引っ張っている＋の線と、戻り先の札に乗せた時の線は箱より前 (相手の箱の上まで見える) -->
+              <svg v-if="plusLine || backLine" class="pointer-events-none absolute inset-0 z-10" :width="area.w" :height="area.h">
                 <defs><marker id="tree-arrow-drag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" :fill="LINE.back" /></marker></defs>
-                <path data-tree-plus-line :d="plusLine" :stroke="LINE.back" stroke-width="3" stroke-linecap="round" fill="none" marker-end="url(#tree-arrow-drag)" />
+                <path v-if="plusLine" data-tree-plus-line :d="plusLine" :stroke="LINE.back" stroke-width="3" stroke-linecap="round" fill="none" marker-end="url(#tree-arrow-drag)" />
+                <path v-if="backLine" data-tree-back :d="backLine" :stroke="LINE.back" stroke-width="2.5" stroke-linecap="round" fill="none" marker-end="url(#tree-arrow-drag)" />
               </svg>
               <!-- 手の間は箱の上に透明な層 (押しても組み替えない、どこを引いても画面が動く) -->
               <div v-if="hand" data-tree-hand-layer class="absolute inset-0 z-[15] cursor-grab active:cursor-grabbing" />
