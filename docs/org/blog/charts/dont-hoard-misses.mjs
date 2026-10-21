@@ -81,12 +81,12 @@ function erase(t) {
   const slot = (x, y, kind) => {
     const fill = kind === "t" ? C.hi : kind === "m" ? C.bad : C.line;
     const label = kind === "t" ? t.target : kind === "m" ? t.miss : "";
-    return `<rect x="${x}" y="${y}" width="84" height="34" rx="6" fill="${fill}"/>` + (label ? text(x + 42, y + 23, label, { size: 14, fill: C.bg, anchor: "middle", weight: 700 }) : "");
+    return `<rect x="${x}" y="${y}" width="84" height="34" rx="6" fill="${fill}"/>` + (label ? text(x + 42, y + 23, label, { size: 14, fill: kind === "t" ? C.onHi : C.onBad, anchor: "middle", weight: 700 }) : "");
   };
   const row = (y, name, slots, p, note) =>
     text(20, y + 22, name, { size: 15, weight: 700 })
     + slots.map((k, i) => slot(170 + i * 92, y, k)).join("")
-    + text(W - 24, y + 26, p, { size: 26, fill: C.hi, anchor: "end", weight: 700 })
+    + text(W - 24, y + 26, p, { size: 26, fill: C.hiText, anchor: "end", weight: 700 })
     + text(170, y + 56, note[0], { size: 13, fill: C.sub }) + text(170, y + 76, note[1], { size: 13, fill: C.fg });
   const body = text(20, 30, t.eraseTitle, { size: 17, weight: 700 })
     + row(52, t.rowB, ["t", "m", "m"], t.pB, t.noteB)
