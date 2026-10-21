@@ -17,5 +17,5 @@
 ## 地図
 - 記事の元: src/data/blog/<slug>.ja.md・.en.md、絵 src/data/blog/img/ (持ち物)。入れ物 src/data/blog/README.md・src/services/blog/blog-md.ts・scripts/build-blog-pages.mjs・_blog-og.mjs・_blog-client.js (ジン部長、記録 emulator/notes/2026-10-22-blog.md)。確かめ `node scripts/build-blog-pages.mjs dist-web-dev --drafts` → Chrome (headless 1 つ、終わったら閉じる)、開発版は commit の後 `pnpm deploy:web-dev`。
 - 決まりの元: research/notes/2026-10-22-blog-seo-guide.md (書き方 15 行)・blog-topics.md (種 32 本と狙う言葉)・adsense-policy-check.md (AdSense の要件と今の状態)。細かい決まり notes/2026-10-22-adsense-seo-rules.md。
-- 下書き: 解析君 (math/notes/blog-drafts/ → src/data/blog/)。図の部品の作りかけ (動画編集長): 共有メモ blog-charts-from-video/ (svg.mjs・dont-hoard-misses.mjs)。キャラの絵 video/assets/characters/ (git 外、顔は video/src/poe2tube/render/tachie.py)。色 src/styles/game-ui.css。
+- 下書き: 解析君 (math/notes/blog-drafts/ → src/data/blog/)。図の台本 docs/org/blog/charts/ (svg.mjs が部品・色、<slug>.mjs が記事の数字を写して img/<slug>-*.{ja,en}.svg を書く、`node docs/org/blog/charts/<slug>.mjs`)。キャラの絵 video/assets/characters/ (git 外、顔は video/src/poe2tube/render/tachie.py)。色 src/styles/game-ui.css。
 - やる事・記事ごとの進み: todo.md。仕上げの方針・決めた形: notes/。
