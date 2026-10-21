@@ -4,7 +4,7 @@
 
 ## やる事 (記事)
 - 1 本目「外れは溜めるな」(dont-hoard-misses): 仕上げ済み (03e82d6e、形 = 冒頭の掴み 2 段落・まとめの箱・図 3 枚・掛け合い・ヒント / 注意の箱・リンクは一番下)。OGP の絵 → 開発版 → スナップ 2〜3 枚をブラックへ → オーナーの OK
-- OK が出たら残り 5 本を同じ形で: optimal-move-vs-intuition・sanctify-quality-order・gold-ring-video-decoded・poe2db-cast-speed-weight・es-gloves-greater-exalt (各 図 2〜3・箱・吹き出し 0〜2・OGP、日英)
+- 残り 5 本は仕上げ済み (オーナー 10-22「記事はレポート、妥協しよう、AdSense が通る情報量が目的」: 掴み 2 段落・まとめ・図 0〜1 (入れ物の :::chart)・注意 / ヒントの箱・リンクは一番下)。OGP は入れ物の自動 (題を描いた絵) のまま
 - その後 15〜20 本まで: 種は research/notes/2026-10-22-blog-topics.md (解析君が数字を出した物から順に)
 
 ## やる事 (AdSense のチェック表 research/notes/2026-10-22-adsense-policy-check.md から、記事・文章の物を全部拾った)
@@ -26,9 +26,9 @@
 ## 記事ごとの進み
 | slug | 下書き (解析君) | 仕上げ | 開発版 | 本番 |
 |---|---|---|---|---|
-| dont-hoard-misses | 済み | 済み (03e82d6e) | これから | — |
-| optimal-move-vs-intuition | 済み | — | — | — |
-| sanctify-quality-order | 済み | — | — | — |
-| gold-ring-video-decoded | 済み | — | — | — |
-| poe2db-cast-speed-weight | 済み | — | — | — |
-| es-gloves-greater-exalt | 済み | — | — | — |
+| dont-hoard-misses | 済み | 済み (65ccc709、白い紙面・図 3・OGP) | デプロイ待ち (ブラックの順番) | — |
+| optimal-move-vs-intuition | 済み | 済み (59d8a098) | デプロイ待ち (ブラックの順番) | — |
+| sanctify-quality-order | 済み | 済み (008b1e58) | デプロイ待ち (ブラックの順番) | — |
+| gold-ring-video-decoded | 済み | 済み (81ef714a・8ec806e6、図なし・表で足りる) | デプロイ待ち (ブラックの順番) | — |
+| poe2db-cast-speed-weight | 済み | 済み (afa96b1c) | デプロイ待ち (ブラックの順番) | — |
+| es-gloves-greater-exalt | 済み | 済み (c8b76347) | デプロイ待ち (ブラックの順番) | — |
