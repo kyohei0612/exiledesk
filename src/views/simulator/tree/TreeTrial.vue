@@ -172,7 +172,7 @@ const noteText = computed(() => {
           <div class="flex flex-wrap items-center gap-1.5">
             <template v-if="held">
               <span class="flex items-center -space-x-1"><img v-for="ic in [held, ...omensFor(held, omens)].filter((x) => !!iconOf(x))" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
-              <b class="min-w-0 flex-1 truncate">{{ [nameOf(held), ...omensFor(held, omens).map(nameOf)].join(" + ") }}</b>
+              <b class="min-w-0 flex-1 basis-56 truncate" :title="[nameOf(held), ...omensFor(held, omens).map(nameOf)].join(' + ')">{{ [nameOf(held), ...omensFor(held, omens).map(nameOf)].join(" + ") }}</b>
               <button type="button" data-tree-trial-use class="g-btn-red sm" @click="use(1)">{{ tr("打つ", "Use") }}</button>
               <button type="button" class="g-btn sm" @click="use(10)">×10</button>
               <button type="button" class="g-btn sm" @click="release">{{ tr("やめる", "Cancel") }}</button>
