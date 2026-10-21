@@ -76,7 +76,9 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     if (!w || !h) return;
     const PAD = 28, RIGHT_ROOM = 250;
     const room = w - RIGHT_ROOM - PAD * 2 > b.w * minZoom.value ? RIGHT_ROOM : 0;
-    const fitZ = Math.min((w - room - PAD * 2) / b.w, (h - PAD * 2) / b.h) / pageZ.value;
+    // 段を選ぶ時は余白を PAD_MIN まで詰めてよい (見本の木は 1920 幅で 32.6% → 余白を詰めて 33%、詰めないと 25% まで落ちた)
+    const PAD_MIN = 12;
+    const fitZ = Math.min((w - room - PAD_MIN * 2) / b.w, (h - PAD_MIN * 2) / b.h) / pageZ.value;
     const z = ([...ZOOM_LEVELS].reverse().find((l) => l <= Math.min(1, fitZ) + 1e-6) ?? ZOOM_MIN) * pageZ.value;
     await f.setViewport({ x: (w - room) / 2 - (b.x + b.w / 2) * z, y: Math.max(PAD, h / 2 - (b.y + b.h / 2) * z), zoom: z });
   }
