@@ -20,7 +20,12 @@ export interface Repeat { until: "hit"; max: number | null }
 /** 札の鍵 (同じ MOD + 同じ段以上 = 同じ札) */
 export const aimKey = (a: Aim): string => `${a.modId}|${a.tier}`;
 /** 打つ手: カレンシー + お告げ + (触媒の時) カタリストで品質を上げてから。repeat があれば当たるまで繰り返す */
-export interface Hand { currency: string; omens: string[]; catalyst: string | null; quality: number; repeat?: Repeat | null }
+export interface Hand {
+  currency: string; omens: string[];
+  /** 触媒の高貴の前に入れるカタリスト。品質はいつも今の最大まで (1 押しで)。quality = その箱の見本で入った品質、catalystCount = その時の個数 (費用の目安) */
+  catalyst: string | null; quality: number; catalystCount?: number;
+  repeat?: Repeat | null;
+}
 export interface TreeBox {
   id: string;
   x: number;
@@ -212,6 +217,42 @@ export function setNote(d: TreeDoc, id: string | null, text: string): void {
   const b = d.boxes[id];
   if (!b) return;
   if (v) b.note = v; else delete b.note;
+}
+
+/** 整列で兄弟を並べる順 (当たり → 狙いが消えた → 外れが消えた → 外れ。外れは一番右) */
+const OUT_ORDER: Record<TreeBox["out"], number> = { start: 0, hit: 0, lost: 1, junkGone: 2, junk: 3 };
+/** 整列の兄弟の間 (横の＋が 14px はみ出すので、それより広く) */
+const TIDY_GAP = 28;
+/**
+ * 整列 (2026-10-22 オーナー「ごちゃっとなってるのを整列。2 段目を合わせる、矢印が重ならない」):
+ * 段 (始まりからの深さ) ごとに横一列、兄弟は親の下に等間隔 (OUT_ORDER の順)。部分木の幅を先に測ってから並べるので箱は重ならない。
+ * 始まりの箱は x = 0 のまま。戻りの矢印は箱の外側を回す (画面の側、SimTreePage の backs)
+ */
+export function tidy(d: TreeDoc): void {
+  const kids = (id: string): string[] => {
+    const b = d.boxes[id]!;
+    b.outs = b.outs.map((o, i) => ({ o, i })).sort((a, z) => OUT_ORDER[d.boxes[a.o]!.out] - OUT_ORDER[d.boxes[z.o]!.out] || a.i - z.i).map((x) => x.o);
+    return b.outs;
+  };
+  const width = new Map<string, number>();
+  const measure = (id: string): number => {
+    const ks = kids(id);
+    const inner = ks.reduce((a, k) => a + measure(k), 0) + TIDY_GAP * Math.max(0, ks.length - 1);
+    const w = Math.max(BOX_W, inner);
+    width.set(id, w);
+    return w;
+  };
+  const place = (id: string, left: number, depth: number): void => {
+    const b = d.boxes[id]!, w = width.get(id)!;
+    b.x = Math.round(left + w / 2 - BOX_W / 2);
+    b.y = depth * GAP_Y;
+    const ks = d.boxes[id]!.outs;
+    const inner = ks.reduce((a, k) => a + width.get(k)!, 0) + TIDY_GAP * Math.max(0, ks.length - 1);
+    let l = left + (w - inner) / 2;
+    for (const k of ks) { place(k, l, depth + 1); l += width.get(k)! + TIDY_GAP; }
+  };
+  const w = measure("start");
+  place("start", -(w / 2 - BOX_W / 2), 0);
 }
 
 export function moveBox(d: TreeDoc, id: string, x: number, y: number): void {

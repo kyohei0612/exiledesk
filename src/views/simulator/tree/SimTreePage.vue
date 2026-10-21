@@ -17,9 +17,10 @@ import TreeTrial from "./TreeTrial.vue";
 import { useTree } from "./use-tree";
 import { useTreeView } from "./use-tree-view";
 import { craftStage as s } from "../../../state/craft-stage";
-import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, placeOuts, removeHit, setAim, setBack, setDone, setHand, type Aim, type Hand, type HandKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
+import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, placeOuts, removeHit, setAim, setBack, setDone, setHand, tidy, type Aim, type Hand, type HandKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
 import { handLabel } from "../../../services/simulator/tree/tree-hands";
 import { aimHeld, aimsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { checkTree, type CheckIssue } from "../../../services/simulator/tree/tree-check";
 import { treePage } from "../../../state/web-page";
 import { tr } from "../../../i18n/lang";
 
@@ -58,17 +59,20 @@ const edges = computed(() => boxes.value.filter((b) => b.hand && b.outs.length).
     }),
   };
 }));
-/** 戻りの矢印 (箱の横 → 戻り先の箱の横)。木の真ん中より右の箱は右を、左の箱は左を回す (ほかの箱を横切りにくい) */
+/**
+ * 戻りの矢印 (2026-10-22 整列と一緒に): 箱の下の隙間 → ツリーの外側の通り道 → 戻り先の上の隙間 → 戻り先の上の辺に入る (オーナー「基本は相手の箱の上の辺」)。
+ * 箱の中を通らない (整列した後は段と段の間に箱が無い)。木の真ん中より右の箱は右の外側、左は左の外側。通り道は 1 本ずつ外へずらす
+ */
 const backs = computed(() => {
-  const mid = bounds.value.x + bounds.value.w / 2;
+  const mid = bounds.value.x + bounds.value.w / 2, minX = bounds.value.x, maxX = bounds.value.x + bounds.value.w;
+  let li = 0, ri = 0;
   return boxes.value.filter((b) => b.back && doc.value.boxes[b.back]).map((b) => {
     const p = posOf(b), q = posOf(doc.value.boxes[b.back!]!);
     const right = p.x + BOX_W / 2 >= mid;
-    const y1 = p.y + BOX_H / 2 + oy.value + 12, y2 = q.y + BOX_H / 2 + oy.value - 12;
-    const x1 = (right ? p.x + BOX_W : p.x) + ox.value, x2 = (right ? q.x + BOX_W + 6 : q.x - 6) + ox.value;
-    const reach = 70 + Math.abs(y1 - y2) * 0.08;
-    const bend = right ? Math.max(x1, x2) + reach : Math.min(x1, x2) - reach;
-    return { id: b.id, d: `M ${x1} ${y1} C ${bend} ${y1} ${bend} ${y2} ${x2} ${y2}` };
+    const lane = (right ? maxX + 28 + 12 * ri++ : minX - 28 - 12 * li++) + ox.value;
+    const sx = p.x + BOX_W / 2 + ox.value, sy = p.y + BOX_H + oy.value, gy1 = sy + 16;
+    const tx = q.x + BOX_W / 2 + (right ? 44 : -44) + ox.value, ty = q.y + oy.value, gy2 = ty - 18;
+    return { id: b.id, d: `M ${sx} ${sy} L ${sx} ${gy1} L ${lane} ${gy1} L ${lane} ${gy2} L ${tx} ${gy2} L ${tx} ${ty - 3}` };
   });
 });
 
@@ -111,6 +115,25 @@ function onTarget(b: Box): void {
   const from = picking.value;
   picking.value = null;
   if (from && from !== b.id) t.edit((d) => setBack(d, from, b.id));
+}
+// ルート精査 (押した時だけ。組み替えたら消す)
+const issues = ref<CheckIssue[] | null>(null);
+const checking = ref(false);
+watch(doc, () => { issues.value = null; });
+async function onCheck(): Promise<void> {
+  const d = s.data.value;
+  if (!d || checking.value) return;
+  checking.value = true;
+  await new Promise((r) => setTimeout(r, 30)); // 「精査中」を先に出す
+  try { issues.value = checkTree(d, doc.value); } finally { checking.value = false; }
+}
+const issueOf = (b: Box): string | null => issues.value?.filter((x) => x.boxId === b.id).map((x) => x.text).join(" / ") || null;
+function goIssue(id: string): void { v.reveal(id, true); }
+
+/** 整列して、全体に合わせる (1 つ戻すで元の並びへ) */
+async function onTidy(): Promise<void> {
+  t.edit((d) => tidy(d));
+  await v.fit();
 }
 /** カオススパムを 1 押しで (当たりの既定 = このツリーの狙いのうち、この箱でまだ付いていない物を全部) */
 function onSpam(b: Box): void {
@@ -201,6 +224,14 @@ onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); window.rem
 
 function close(): void { treePage.value = false; }
 const panelBox = computed(() => (panel.value ? doc.value.boxes[panel.value.id] ?? null : null));
+/** 一覧に出す箱の名前 (種類 + 当たりの札) */
+function boxName(id: string): string {
+  const b = doc.value.boxes[id];
+  if (!b) return id;
+  if (b.out === "start") return tr("始まり", "Start");
+  const k = { hit: tr("当たり", "Hit"), junk: tr("外れ", "Miss"), junkGone: tr("外れが消えた", "Miss removed"), lost: tr("狙いが消えた", "Target lost") }[b.out];
+  return b.out === "hit" && b.aim ? `${k} ${t.aimLabel(b.aim)}` : k;
+}
 const glowOf = (b: Box): boolean => !!glowAim.value && b.out === "hit" && !!b.aim && aimKey(b.aim) === glowAim.value;
 </script>
 
@@ -224,11 +255,25 @@ const glowOf = (b: Box): boolean => !!glowAim.value && b.out === "hit" && !!b.ai
             <button type="button" data-tree-zoom-in class="g-btn sm w-8" :aria-label="tr('広げる', 'Zoom in')" @click="v.zoomIn">＋</button>
             <button type="button" data-tree-fit class="g-btn sm" @click="v.fit">{{ tr("全体に合わせる", "Fit all") }}</button>
           </span>
+          <button type="button" data-tree-tidy class="g-btn sm" :title="tr('段ごとに横一列・兄弟は親の下に等間隔・戻りの矢印は箱の外側 (1 つ戻すで元の並びへ)', 'Rows by depth, siblings evenly under the parent, return arrows outside the boxes (undo restores)')" @click="onTidy">{{ tr("整列", "Tidy") }}</button>
+          <button type="button" data-tree-check class="g-btn sm" :disabled="checking" :title="tr('5 人をエンジンで辿って、止まる所・打てない手・付かない当たり・完成に着かない道を探す (費用は出さない)', 'Walk 5 runs with the engine to find dead ends, unusable crafts, unreachable hits and paths that never finish (no costs)')" @click="onCheck">{{ checking ? tr("精査中…", "Checking…") : tr("ルート精査", "Check route") }}</button>
           <button type="button" data-tree-full class="g-btn sm" :aria-pressed="full" @click="v.toggleFull">{{ full ? tr("全画面を閉じる", "Exit full screen") : tr("全画面に広げる", "Full screen") }}</button>
           <button type="button" class="g-btn sm" :title="tr('始まりの箱だけに戻す (1 つ戻すで戻せる)', 'Back to just the start box (undo restores it)')" @click="t.reset">{{ tr("白紙に戻す", "Clear") }}</button>
         </span>
       </div>
       <TreeAimsBar v-model:glow="glowAim" />
+      <!-- ルート精査の結果 (押した時だけ) -->
+      <div v-if="issues" data-tree-issues class="flex flex-col gap-1 rounded-md px-2 py-1.5 text-[12px]" :class="issues.length ? 'bg-rose-500/10' : 'bg-emerald-500/10'">
+        <div class="flex items-center gap-2">
+          <b :class="issues.length ? 'text-rose-200' : 'text-emerald-200'">{{ issues.length ? tr(`穴 ${issues.length} 件`, `${issues.length} issue(s)`) : tr("穴は見つからなかった (5 人で全部の枝を通した)", "No issues found (all branches walked by 5 runs)") }}</b>
+          <button type="button" class="g-btn sm ml-auto" @click="issues = null">{{ tr("閉じる", "Close") }}</button>
+        </div>
+        <button v-for="(x, i) in issues" :key="i" type="button" data-tree-issue-row class="flex min-h-7 items-center gap-2 rounded px-1 text-left hover:bg-white/5" @click="goIssue(x.boxId)">
+          <span class="shrink-0 rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white">!</span>
+          <span class="max-w-[40%] shrink-0 truncate opacity-70" :title="boxName(x.boxId)">{{ boxName(x.boxId) }}</span>
+          <span class="min-w-0 truncate" :title="x.text">{{ x.text }}</span>
+        </button>
+      </div>
       <p v-if="picking" class="rounded-md bg-cyan-500/15 px-2 py-1 text-[12px] text-cyan-100">{{ tr("戻り先の箱を押す (Esc でやめる)", "Click the box to return to (Esc cancels)") }}</p>
       <p v-else-if="viewOnly" class="rounded-md bg-white/[0.06] px-2 py-1 text-[12px] opacity-80">{{ tr("縮めて見ている間は箱を押すとそこへ寄る (組むのは 75% 以上で)", "While zoomed out, click a box to jump to it (edit at 75% or more)") }}</p>
 
@@ -245,14 +290,14 @@ const glowOf = (b: Box): boolean => !!glowAim.value && b.out === "hit" && !!b.ai
                   <path :d="e.stem" stroke="#e0b060" stroke-width="2.5" fill="none" />
                   <path v-for="o in e.to" :key="o.id" :d="o.d" :stroke="o.color" stroke-width="2.5" fill="none" :marker-end="`url(#tree-arrow-${doc.boxes[o.id]!.out})`" />
                 </g>
-                <path v-for="b in backs" :key="`back-${b.id}`" :d="b.d" stroke="#5fd0e0" stroke-width="2.5" fill="none" marker-end="url(#tree-arrow-back)" />
+                <path v-for="b in backs" :key="`back-${b.id}`" data-tree-back :d="b.d" stroke="#5fd0e0" stroke-width="2.5" stroke-linejoin="round" fill="none" marker-end="url(#tree-arrow-back)" />
                 <path v-if="plusLine" data-tree-plus-line :d="plusLine" stroke="#5fd0e0" stroke-width="3" fill="none" marker-end="url(#tree-arrow-back)" />
               </svg>
               <!-- 矢印の上の札 = 打つ手 (押すと替える・消す) -->
               <button v-for="e in edges" :key="`hand-${e.id}`" type="button" data-tree-hand class="absolute max-w-[300px] -translate-x-1/2 -translate-y-1/2 truncate rounded-full border-2 border-amber-500/70 bg-[#221a10] px-3 py-1 text-[12px] font-bold text-amber-100 hover:bg-amber-500/25"
                 :class="viewOnly ? 'pointer-events-none' : ''" :style="{ left: `${e.jx}px`, top: `${e.jy}px` }" :title="handLabel(e.hand)" @click="panel = { kind: 'hand', id: e.id }">{{ handLabel(e.hand) }}</button>
               <TreeBox v-for="b in boxes" :key="b.id" :box="b" :x="posOf(b).x + ox" :y="posOf(b).y + oy" :removable="canRemove(doc, b.id)" :picking="!!picking && picking !== b.id"
-                :selected="panel?.id === b.id || picking === b.id || plus?.target === b.id" :back-label="backLabel(b)" :view-only="viewOnly" :glow="glowOf(b)"
+                :selected="panel?.id === b.id || picking === b.id || plus?.target === b.id" :back-label="backLabel(b)" :view-only="viewOnly" :glow="glowOf(b)" :issue="issueOf(b)"
                 @drag="startDrag(b, $event)" @aim="onAim(b)" @plus="(k, e) => onPlus(b, k, e)" @remove="t.edit((d) => removeHit(d, b.id))"
                 @back="picking = b.id" @clear-back="t.edit((d) => setBack(d, b.id, null))" @done="onDone(b)" @target="onTarget(b)" @focus="v.focusBox(b.id)"
                 @note="panel = { kind: 'note', id: b.id }" @spam="onSpam(b)" />

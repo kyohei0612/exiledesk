@@ -10,7 +10,7 @@ import { provideShelf, simHidden } from "../../../state/emulator/shelf-context";
 import CurrencyShelf from "../../craft-stage/CurrencyShelf.vue";
 import ShelfButton from "../../craft-stage/ShelfButton.vue";
 import { applyCurrency, kindOf, mulberry32, OMEN_FOR, omensFor } from "../../../services/craft-stage/engine";
-import { aimHeld, aimsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { aimHeld, aimsOf, fillCatalyst, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, handLabel, kindOfCurrency, TREE_CATALYSTS, nameOfKey } from "../../../services/simulator/tree/tree-hands";
 import { kindOfHand, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
@@ -25,7 +25,6 @@ const item = computed(() => sample.value?.item ?? null);
 const held = ref<string | null>(props.current?.currency ?? null);
 const omens = ref<string[]>(props.current ? [...props.current.omens] : []);
 const catalyst = ref<string>(props.current?.catalyst ?? TREE_CATALYSTS[0]);
-const quality = ref(props.current?.quality || 20);
 const spam = ref(!!props.current?.repeat);
 const spamMax = ref<number | null>(props.current?.repeat?.max ?? null);
 function toggleOmen(id: string): void { omens.value = omens.value.includes(id) ? omens.value.filter((o) => o !== id) : [...omens.value, id]; }
@@ -48,9 +47,16 @@ const hand = computed((): Hand | null => {
   if (!held.value) return null;
   return {
     currency: held.value, omens: used.value,
-    catalyst: catalysing.value ? catalyst.value : null, quality: catalysing.value ? Math.max(1, Math.min(40, Math.round(quality.value) || 20)) : 0,
+    catalyst: catalysing.value ? catalyst.value : null, ...catFill.value,
     repeat: spam.value && canSpam(held.value) ? { until: "hit", max: spamMax.value && spamMax.value > 0 ? Math.round(spamMax.value) : null } : null,
   };
+});
+/** カタリストは今の品質の最大まで (1 押しと同じ)。その箱の見本で何個入って何 % になったかを持つ (計算を繋ぐ時の費用の目安) */
+const catFill = computed((): { quality: number; catalystCount: number } => {
+  const d = s.data.value, it = item.value;
+  if (!catalysing.value || !d || !it) return { quality: 0, catalystCount: 0 };
+  const r = fillCatalyst(d, it, catalyst.value, mulberry32(1));
+  return { quality: r.item.quality, catalystCount: r.count };
 });
 const RESULT: Record<HandKind, [string, string]> = {
   add: ["当たり + 外れ", "Hit + Miss"], remove: ["外れが消えた + 狙いが消えた", "Miss removed + Target lost"], swap: ["当たり + 狙いが消えた + 外れ", "Hit + Target lost + Miss"], spam: ["当たりだけ (当たるまで打つ)", "Hits only (until a hit)"],
@@ -83,8 +89,8 @@ function ok(): void {
         <select v-model="catalyst" class="h-8 rounded-md border border-white/15 bg-black/40 px-1">
           <option v-for="c in TREE_CATALYSTS" :key="c" :value="c">{{ nameOfKey(c) }}</option>
         </select>
-        <span class="flex items-center gap-1">{{ tr("品質", "Quality") }}<input v-model.number="quality" type="number" min="1" max="40" class="h-8 w-14 rounded-md border border-white/15 bg-black/40 px-1 text-right" />%</span>
-        <span class="w-full text-[11px] opacity-60">{{ tr("打つたびにこの品質まで上げ直す (触媒は 1 回で品質を使い切る)", "Re-raised to this quality every time (Catalysing uses up the quality)") }}</span>
+        <span class="text-[12px] tabular-nums">{{ tr(`最大 ${catFill.quality}% まで (この箱で ${catFill.catalystCount} 個)`, `To max ${catFill.quality}% (×${catFill.catalystCount} here)`) }}</span>
+        <span class="w-full text-[11px] opacity-60">{{ tr("打つたびに品質の最大まで入れ直す (触媒は 1 回で品質を使い切る)", "Refilled to max quality every time (Catalysing uses up the quality)") }}</span>
       </div>
       <label v-if="canSpam(held)" class="flex min-h-7 cursor-pointer flex-wrap items-center gap-2">
         <input v-model="spam" type="checkbox" />{{ tr("当たるまで繰り返す (カオススパム)", "Repeat until a hit (Chaos spam)") }}

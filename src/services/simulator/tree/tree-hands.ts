@@ -33,7 +33,7 @@ export const TREE_CATALYSTS = ["catalyst_speed", "catalyst_cold", "catalyst_fire
 /** 矢印に出す 1 行 (カレンシー + お告げ + カタリストの品質、繰り返しは「当たるまで」) */
 export function handLabel(h: Hand): string {
   const parts = [nameOfKey(h.currency), ...h.omens.map(nameOfKey)];
-  if (h.catalyst && h.omens.includes(CATALYSING)) parts.push(`${nameOfKey(h.catalyst)} ${h.quality}%`);
+  if (h.catalyst && h.omens.includes(CATALYSING)) parts.push(h.catalystCount ? tr(`${nameOfKey(h.catalyst)} ${h.quality}% (${h.catalystCount} 個)`, `${nameOfKey(h.catalyst)} ${h.quality}% (×${h.catalystCount})`) : `${nameOfKey(h.catalyst)} ${tr("最大まで", "to max")}`);
   const s = parts.join(" + ");
   if (!h.repeat) return s;
   return h.repeat.max ? tr(`${s} (当たるまで、${h.repeat.max} 回まで)`, `${s} (until a hit, max ${h.repeat.max})`) : tr(`${s} (当たるまで)`, `${s} (until a hit)`);

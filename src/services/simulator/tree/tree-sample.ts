@@ -6,13 +6,14 @@
  * その下の箱 = 親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
-import { applyCurrency, freshItem, mulberry32, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { applyCurrency, freshItem, maxQualityOf, mulberry32, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { CATALYSING } from "./tree-hands";
+import { tr } from "../../../i18n/lang";
 import type { Aim, Hand, OutKind, TreeDoc } from "./tree-model";
 
 const TRIES = 3000;
-/** カタリストを 1 個ずつ足す上限 (品質 40% + 余り) */
-const CAT_MAX = 60;
+/** カタリストを 1 個ずつ足す上限 (見張り) */
+const CAT_MAX = 200;
 
 export interface Sample { item: StageItem; note: string | null }
 
@@ -43,6 +44,23 @@ export function outcomeOf(data: PatchData, before: StageItem, after: StageItem, 
   return { out: "junk", hits: [] };
 }
 
+/**
+ * カタリストを 1 押しで、そのアイテムの今の品質の最大まで入れる (2026-10-22 オーナー「個数を数えて入れない」)。
+ * 最大はエンジンの maxQualityOf (普通 20%、品質の最大値 +20% の MOD があれば 40%。後で足すインフューザーもここに入る)。
+ * 別の種類のカタリストが入っていれば 0 から (エンジンどおり)。count = 入れた個数 (費用はこの分)
+ */
+export function fillCatalyst(data: PatchData, item: StageItem, key: string, rng: () => number): StageApply & { count: number } {
+  const tag = key.slice("catalyst_".length), max = maxQualityOf(item);
+  let it = item, count = 0, last: StageApply = { applied: false, item, added: [], removed: [] };
+  for (let i = 0; i < CAT_MAX && !(it.qualityTag === tag && it.quality >= max); i++) {
+    last = applyCurrency(data, it, key, rng, [], { oneCatalyst: true });
+    if (!last.applied) break;
+    it = last.item;
+    count++;
+  }
+  return count ? { ...last, applied: true, item: it, count } : { ...last, count: 0, ...(last.applied || last.reason ? {} : { reason: tr("品質はもう最大", "Quality is already at max") }) };
+}
+
 /** 繰り返し (カオススパム) の上限が無い時の見張り */
 const SPAM_CAP = 5000;
 
@@ -64,13 +82,11 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
     return { ...r, item: it };
   }
   let it = item;
+  // 触媒の高貴の前に、カタリストで品質を最大まで (箱の手も 1 押しと同じ)
   if (h.catalyst && h.omens.includes(CATALYSING)) {
-    const tag = h.catalyst.slice("catalyst_".length);
-    for (let i = 0; i < CAT_MAX && !(it.qualityTag === tag && it.quality >= h.quality); i++) {
-      const r = applyCurrency(data, it, h.catalyst, rng, [], { oneCatalyst: true });
-      if (!r.applied) return r;
-      it = r.item;
-    }
+    const r = fillCatalyst(data, it, h.catalyst, rng);
+    if (!r.applied && r.count === 0 && !(it.qualityTag === h.catalyst.slice("catalyst_".length))) return r;
+    it = r.item;
   }
   return applyCurrency(data, it, h.currency, rng, h.omens);
 }

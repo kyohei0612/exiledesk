@@ -13,8 +13,8 @@ import CurrencyShelf from "../../craft-stage/CurrencyShelf.vue";
 import ShelfButton from "../../craft-stage/ShelfButton.vue";
 import StageItemCard from "../../craft-stage/StageItemCard.vue";
 import { applyCurrency, kindOf, mulberry32, OMEN_FOR, omensFor, revealOffers, unrevealedOf, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
-import { aimsOf, playHand, sampleOf } from "../../../services/simulator/tree/tree-sample";
-import { handLabel } from "../../../services/simulator/tree/tree-hands";
+import { aimsOf, fillCatalyst, playHand, sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { handLabel, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { useTree } from "./use-tree";
 import { modText, tr } from "../../../i18n/lang";
 
@@ -72,12 +72,21 @@ function use(times = 1): void {
   if (!d || !k || !item.value) return;
   for (let i = 0; i < times; i++) {
     const om = omensFor(k, omens.value);
-    const r = applyCurrency(d, item.value!, k, rng(), om, kindOf(k) === "catalyst" ? { oneCatalyst: true } : {});
+    // カタリストは 1 押しで今の品質の最大まで (個数を数えて入れない、オーナー 10-22)
+    if (kindOf(k) === "catalyst") { const c = fillCatalyst(d, item.value!, k, rng()); push(c, tr(`${nameOf(k)} × ${c.count} (品質 ${c.item.quality}%)`, `${nameOf(k)} ×${c.count} (quality ${c.item.quality}%)`)); break; }
+    const r = applyCurrency(d, item.value!, k, rng(), om);
     push(r, [nameOf(k), ...om.map(nameOf)].join(" + "));
     if (!r.applied) break;
     const used = r.omensUsed ?? [];
     if (used.length) omens.value = omens.value.filter((o) => !used.includes(o));
   }
+}
+/** カタリスト: 1 押しで今の品質の最大まで (クラフト台の棚にはカタリストが無いので、同じボタンで段を 1 つ足す。オーナー 10-22「個数を数えて入れない」) */
+function fill(k: string): void {
+  const d = s.data.value;
+  if (!d || !item.value) return;
+  const c = fillCatalyst(d, item.value, k, rng());
+  push(c, tr(`${nameOf(k)} × ${c.count} (品質 ${c.item.quality}%)`, `${nameOf(k)} ×${c.count} (quality ${c.item.quality}%)`));
 }
 /** この箱の次の手をそのまま 1 回 */
 function useHand(): void {
@@ -149,6 +158,12 @@ const noteText = computed(() => {
     <div v-if="offers.length" class="flex flex-col gap-1 rounded bg-rose-500/10 p-1.5">
       <p class="text-[11px] font-bold">{{ tr("発現: 候補から選ぶ", "Reveal: pick one") }}</p>
       <button v-for="(m, i) in offers" :key="i" type="button" class="truncate rounded border border-white/15 px-1.5 py-0.5 text-left text-[12px] hover:border-rose-300" :title="modText(m)" @click="reveal(i + 1)">{{ m.tierName }} {{ modText(m) }}</button>
+    </div>
+
+    <!-- カタリスト (1 押しで品質の最大まで。最大はエンジンの maxQualityOf) -->
+    <div data-tree-trial-catalysts>
+      <p class="mb-0.5 text-[10px] opacity-60">{{ tr("カタリスト (押すと品質の最大まで入れる)", "Catalysts (click to fill to max quality)") }}</p>
+      <div class="flex flex-wrap gap-1.5"><ShelfButton v-for="k in TREE_CATALYSTS" :key="k" :k="k" @pick="fill" /></div>
     </div>
 
     <!-- 棚 (クラフト台と同じ。お告げは持った物の下に) -->

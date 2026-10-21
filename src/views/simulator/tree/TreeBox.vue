@@ -10,7 +10,7 @@ import { tr } from "../../../i18n/lang";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { TREE_BASE, TREE_ILVL, useTree } from "./use-tree";
 
-const props = defineProps<{ box: TreeBox; x: number; y: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean }>();
+const props = defineProps<{ box: TreeBox; x: number; y: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null }>();
 const emit = defineEmits<{
   drag: [e: PointerEvent]; aim: []; remove: []; back: []; clearBack: []; done: []; target: []; focus: []; note: []; spam: [];
   /** ＋を押した (押すだけ = 足す、長押しで引っ張る = 置く / つなぐ。決めるのはページ) */
@@ -44,12 +44,13 @@ function down(e: PointerEvent): void {
 <template>
   <!-- 押せる物は全部 24px 以上 (2026-10-22 押しにくい所の洗い出し、notes/2026-10-22-tree-ui-click-audit.md) -->
   <div data-tree-box :data-box-id="box.id" class="absolute select-none rounded-lg border-2 bg-[#15120e]/95 px-2 py-1 text-[12px]"
-    :class="[frame, picking || viewOnly ? 'cursor-pointer' : 'cursor-grab', picking ? 'ring-2 ring-cyan-400/70 hover:ring-cyan-300' : '', selected ? 'outline outline-2 outline-offset-2 outline-amber-300/70' : '', glow ? 'ring-4 ring-amber-300/80 shadow-[0_0_18px_rgba(255,200,110,0.6)]' : '']"
+    :class="[frame, picking || viewOnly ? 'cursor-pointer' : 'cursor-grab', picking ? 'ring-2 ring-cyan-400/70 hover:ring-cyan-300' : '', selected ? 'outline outline-2 outline-offset-2 outline-amber-300/70' : '', glow ? 'ring-4 ring-amber-300/80 shadow-[0_0_18px_rgba(255,200,110,0.6)]' : '', issue ? '!border-rose-500 shadow-[0_0_16px_rgba(244,63,94,0.55)]' : '']"
     :style="{ left: `${x}px`, top: `${y}px`, width: `${BOX_W}px`, height: `${BOX_H}px` }"
     @pointerdown="down" @click="picking ? emit('target') : viewOnly && emit('focus')">
     <div class="flex h-6 items-center gap-1">
       <span class="rounded-sm px-1.5 py-px text-[11px] font-bold" :class="tag[2]">{{ tr(tag[0], tag[1]) }}</span>
       <span v-if="box.done" class="rounded-sm bg-amber-400/30 px-1 text-[10px] font-bold text-amber-100">{{ doneText }}</span>
+      <span v-if="issue" data-tree-issue class="rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white" :title="issue">!</span>
       <span class="flex-1" />
       <button v-if="box.note && !quiet" type="button" data-tree-note-mark class="flex size-6 items-center justify-center rounded text-amber-300 hover:bg-white/10" :title="box.note" @click.stop="emit('note')"><Icon name="pencil" class="size-3.5" /></button>
       <button v-if="removable && !quiet" type="button" class="-mr-1 flex size-6 items-center justify-center rounded opacity-60 hover:bg-white/10 hover:opacity-100" :title="tr('この当たりを消す', 'Remove this hit')" @click.stop="emit('remove')"><Icon name="x" class="size-3.5" /></button>
