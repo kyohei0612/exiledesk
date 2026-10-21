@@ -29,7 +29,8 @@ import { openFeedback, openGuide, page } from "./page";
 import AdSlot from "../components/ui/AdSlot.vue";
 import WebFooter from "./WebFooter.vue";
 import { AD_FRAMES, pageTick, sideAdW } from "../utils/ads";
-import { feedbackPage, recipesPage, routesOpen, treePage } from "../state/web-page";
+import { BLOG_ON, feedbackPage, recipesPage, routesOpen, treePage } from "../state/web-page";
+const BlogLatest = defineAsyncComponent(() => import("./BlogLatest.vue")); // 右の列の新しい記事 (/blog/index.json)
 const StageRoutesPage = defineAsyncComponent(() => import("../views/craft-stage/StageRoutesPage.vue"));
 const SimTreePage = defineAsyncComponent(() => import("../views/simulator/tree/SimTreePage.vue")); // クラフトの道 (ツリー) のページ (2026-10-22、開発版だけ)
 const StageRecipesPage = defineAsyncComponent(() => import("../views/simulator/StageRecipesPage.vue")); // シミュレーターのレシピのページ (2026-10-21) // 後から読む (2026-10-19 スマホ強化: 最初に読む JS を縮める。その画面・カードを出す時に初めて読む)
@@ -187,6 +188,7 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       <aside v-show="phone || craftPage" data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : AD_FRAMES ? 'w-[324px] border-l' : 'w-[280px] border-l'" @contextmenu.prevent="craftStage.hold(null)">
         <div :class="phone ? '' : 'sticky top-3'">
           <LivePanel />
+          <BlogLatest v-if="BLOG_ON" />
           <!-- 広告の枠 (utils/ads.ts): チャンネルの下に 300×250 を 2 つ。ページを移った時だけ出し直す (60 秒に 1 回まで) -->
           <div v-if="AD_FRAMES && !phone" class="mt-3 flex flex-col gap-3">
             <AdSlot id="side-1" :w="300" :h="250" :tick="pageTick" />

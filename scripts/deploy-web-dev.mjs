@@ -44,6 +44,8 @@ console.log(`\nビルドする物: ${label}\n`);
 
 run("npx vue-tsc --noEmit", { cwd: src });
 run("npx vite build --config vite.web.config.ts", { cwd: src, env: { ...process.env, WEB_OUT: OUT, VITE_DEV_PREVIEW: "1" } });
+// ブログ (2026-10-22、開発版だけ。下書きも出す)。記事の元は src/data/blog/、作りは scripts/build-blog-pages.mjs
+run(`node scripts/build-blog-pages.mjs "${OUT}" --drafts`, { cwd: src });
 
 let key = existsSync(KEY_FILE) ? readFileSync(KEY_FILE, "utf8").trim() : "";
 const fresh = !key;
