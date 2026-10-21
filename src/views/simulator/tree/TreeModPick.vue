@@ -17,8 +17,8 @@ const query = ref("");
 const search = ref<HTMLInputElement | null>(null);
 onMounted(() => { if (props.autofocus) search.value?.focus(); });
 const open = ref<string | null>(props.current?.modId ?? null);
-/** 当たりは一般の MOD、フラクチャーは創生の樹など (カレンシーでは付かない物) も */
-const groups = computed(() => (props.mode === "hit" ? ["normal"] : ["special", "normal"]));
+/** 当たりは一般の MOD と冒涜専用 MOD (骨の手の当たり、10-22 オーナー「冒涜は冒涜で付与」)、フラクチャーは創生の樹など (カレンシーでは付かない物) も */
+const groups = computed(() => (props.mode === "hit" ? ["normal", "desecrated"] : ["special", "normal"]));
 const sections = computed(() => {
   const q = query.value.trim().toLowerCase();
   const hit = (r: ModRow): boolean => !q || r.template.toLowerCase().includes(q) || r.text.toLowerCase().includes(q);

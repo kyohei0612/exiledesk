@@ -9,7 +9,7 @@
 import { allMods, modBoostsOf, mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { CATALYSING, isCatalyst } from "./tree-hands";
 import { aimKey, type Aim, type TreeDoc } from "./tree-model";
-import { aimHeld, aimsOf, handProblem, outcomeOf, playHand, sampleOf } from "./tree-sample";
+import { aimHeld, aimsOf, handAims, handProblem, outcomeOf, playHand, sampleOf } from "./tree-sample";
 import { heldSets, MATCH, matchItem, matchTargets, RESTART, settle, shapesOf } from "./tree-run";
 import { withTreeTune } from "./tree-tune";
 import { tr } from "../../../i18n/lang";
@@ -109,7 +109,7 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
         if (!b.hand) return;
         // 打てない手 (効かない・消せる物が無いお告げも。tree-sample の handProblem、オーナー 10-22「進行不能」)
         const why = handProblem(data, item, b.hand);
-        const first = playHand(data, item, b.hand, rng, aims);
+        const first = playHand(data, item, b.hand, rng, handAims(doc, b.id, aims));
         if (why || !first.applied) { const c = cant.get(id) ?? { n: 0, reason: why ?? first.reason ?? "" }; c.n++; cant.set(id, c); return; }
         if (viaBack) return; // 戻りの矢印で着いた時は、戻り先の手がこの状態で打てるかだけ見る (先は通常の道で辿る)
         // 品質 (オーナー 10-22「ルート精査の時の品質のチェック」): 触媒の品質が当たりの MOD に効くかは下で見る。
@@ -120,7 +120,7 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
           const ob = doc.boxes[o]!;
           let got: StageItem | null = null;
           for (let i = 0; i < TRIES && !got; i++) {
-            const r = i === 0 ? first : playHand(data, item, b.hand, rng, aims);
+            const r = i === 0 ? first : playHand(data, item, b.hand, rng, handAims(doc, b.id, aims));
             if (!r.applied) break;
             const res = outcomeOf(data, item, r.item, aims);
             if ((res.out === ob.out || ob.out === "any" || ob.out === "pass") && (ob.out !== "hit" || !ob.aim || res.hits.some((a: Aim) => aimKey(a) === aimKey(ob.aim!)))) got = r.item;

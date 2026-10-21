@@ -6,7 +6,7 @@
  * その下の箱 = 親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
-import { applyCurrency, freshItem, maxQualityOf, mulberry32, omenBlock, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { applyCurrency, freshItem, maxQualityOf, mulberry32, omenBlock, revealOffers, unrevealedOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { CATALYSING, isCatalyst } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import type { Aim, Hand, OutKind, TreeDoc } from "./tree-model";
@@ -23,6 +23,16 @@ const tierNo = (m: StageMod): number => Number(/\d+/.exec(m.tierName)?.[0] ?? 99
 export function aimHeld(data: PatchData, item: StageItem, a: Aim): boolean {
   const fam = data.mods.get(a.modId)?.family;
   return [...item.prefixes, ...item.suffixes].some((m) => (m.modId === a.modId || (!!fam && m.family === fam)) && tierNo(m) <= a.tier);
+}
+/**
+ * その箱の手で「当たり」と数える札。繰り返し (当たるまで) は、その箱の結果の当たりの箱の札だけで止める
+ * (10-22 プレフィックスをつないだら、始まりのカオスがプレフィックスのレアリティで止まり、行き先が無く 87 人止まった)。ほかの手はツリー全部の札
+ */
+export function handAims(doc: TreeDoc, id: string, aims: readonly Aim[]): readonly Aim[] {
+  const b = doc.boxes[id];
+  if (!b?.hand?.repeat) return aims;
+  const own = b.outs.flatMap((o) => { const c = doc.boxes[o]; return c?.out === "hit" && c.aim ? [c.aim] : []; });
+  return own.length ? own : aims;
 }
 /** このツリーで使っている当たりの札 (重ならない物) */
 export function aimsOf(doc: TreeDoc): Aim[] {
@@ -102,7 +112,20 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
     use(h.currency);
     for (const o of r.omensUsed ?? []) use(o);
   }
-  return r;
+  return r.applied && unrevealedOf(r.item) ? reveal(data, r, rng, aims) : r;
+}
+
+/**
+ * 冒涜 (骨) の後は、そのまま魂の井戸で発現して選ぶ (2026-10-22 オーナー「冒涜は冒涜で付与かな」)。候補 3 つ (エンジンの revealOffers) のうち
+ * 当たりの札に合う物を選び、無ければ 1 つ目 (外れ)。候補と発現の結果が同じになるよう、同じ種の rng を 2 回作る (apply-desecrate.ts の決まり)
+ */
+function reveal(data: PatchData, r: StageApply, rng: () => number, aims: readonly Aim[]): StageApply {
+  const seed = Math.floor(rng() * 2 ** 31);
+  const offers = revealOffers(data, r.item, mulberry32(seed)).first;
+  const n = Math.max(0, offers.findIndex((m) => aims.some((a) => aimHeld(data, { ...r.item, prefixes: [m], suffixes: [] }, a))));
+  // reveal:N の N は 1 から (エンジンの run-plan と同じ。0 は「その番号の候補が無い」)
+  const x = applyCurrency(data, r.item, `reveal:${n + 1}`, mulberry32(seed));
+  return x.applied ? { ...x, added: [...r.added, ...x.added], removed: [...r.removed, ...x.removed] } : r;
 }
 
 /**
@@ -150,7 +173,7 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
   const rng = mulberry32(seed ^ 0x5eed ^ boxId.length * 7919);
   let last: StageApply | null = null;
   for (let i = 0; i < TRIES; i++) {
-    const r = playHand(data, base.item, p.hand, rng, aims);
+    const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims));
     if (!r.applied) { last = r; break; }
     last = r;
     const o = outcomeOf(data, base.item, r.item, aims);

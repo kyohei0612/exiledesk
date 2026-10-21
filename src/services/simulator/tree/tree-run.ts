@@ -7,7 +7,7 @@
  */
 import { mulberry32, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { kindOfCurrency } from "./tree-hands";
-import { aimHeld, aimsOf, outcomeOf, playHand, startItemOf as startOf } from "./tree-sample";
+import { aimHeld, aimsOf, handAims, outcomeOf, playHand, startItemOf as startOf } from "./tree-sample";
 import { withTreeTune } from "./tree-tune";
 import { aimKey, MATCH_BACK, type Aim, type TreeBox, type TreeDoc } from "./tree-model";
 
@@ -242,7 +242,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     if (++steps > o.capSteps || cost > o.capDiv) return { end: "capped", cost, at, visits, uses, restarts };
     hops = 0;
     const before = item;
-    const r = playHand(data, item, b.hand, rng, aims, use);
+    const r = playHand(data, item, b.hand, rng, handAims(doc, at, aims), use);
     if (!r.applied) return { end: "stuck", cost, at, visits, uses, restarts };
     if (sb.next) { item = r.item; at = sb.next; continue; }
     const oc = outcomeOf(data, before, r.item, aims);
