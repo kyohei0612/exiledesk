@@ -1,4 +1,7 @@
 {
+  "0.1.591": [
+    "New FAQ page (23 questions on odds, omens, how the numbers are calculated and more), linked from the blog and About pages. Also updated the About and Privacy Policy pages to match how the site works today"
+  ],
   "0.1.590": [
     "New blog: 30 articles that check crafting odds, costs and steps with numbers (29 in English). Open it from “Blog” in the header or footer",
     "Coming back from an article now returns you to the craft screen as you left it (also the “← Back to crafting” link at the top left of articles)",

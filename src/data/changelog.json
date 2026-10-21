@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.591",
+  "date": "2026-10-21",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "「よくある質問」のページを足しました (確率・お告げ・計算の仕方など 23 問)。ブログ・About の下のリンクから開けます。About とプライバシーポリシーの説明も今の中身に合わせました",
+    "en": "New FAQ page (23 questions on odds, omens, how the numbers are calculated and more), linked from the blog and About pages. Also updated the About and Privacy Policy pages to match how the site works today"
+   }
+  ]
+ },
+ {
   "v": "0.1.590",
   "date": "2026-10-21",
   "items": [
@@ -655,24 +667,6 @@
     "area": "",
     "text": "PC の上の帯の「アプリ版はこちら」から、ExileDesk をアプリとしてデスクトップに置けるように (中身はウェブと同じ)。一度開いた画面はオフラインでも開けます",
     "en": "“Get the app” in the top bar (PC) now installs ExileDesk as a desktop app (same as the web version). Pages you have opened once also work offline"
-   }
-  ]
- },
- {
-  "v": "0.1.551",
-  "date": "2026-10-17",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "チュートリアルを公開しました。まずは「基本のオーブを学ぶ」: 変成・増強・王者・錬金術・高貴・カオス・消去・フラクチャー・神のオーブ (上級・完全も) を 19 手で 1 つずつ使って、どう動くか・何レベルの MOD が付くかを覚えるコースです",
-    "en": "Tutorials are live, starting with \"Learn the basic orbs\": use Transmutation, Augmentation, Regal, Alchemy, Exalted, Chaos, Annulment, Fracturing and Divine Orbs (Greater / Perfect too) one at a time over 19 steps to see what each does and what mod levels can roll"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "ページの一番下の「使い方の記録」の案内と切り替えを、プライバシーポリシーの中に移しました",
-    "en": "Moved the usage-logging note and its switch from the page footer into the Privacy Policy"
    }
   ]
  }
