@@ -58,6 +58,12 @@
 - 次の手: 3,000 人での止まり 2〜3 (rc_q・pX、1/3000) の原因 → 1280 幅で箱の中のボタンが 20px の直す案を 1 行 → 5 (点検の残り)。
 - 気付き: 1280 幅は 75%・100% でも箱の中の押せる物が 20px (ページの zoom の分、前から)。全体表示 33% で右端の箱がミニマップに近い (前から)。
 
+## 7 本目 (10-22 深夜〜)
+- 済み (開発版 2f76b3c4、push 済み): 止まり 0 (ab16d9bb、戻り先の箱へ進む時も settle。3,000 人 × seed 1〜3 止まり 0)・結果が 1 通りの手は箱 1 つ (4f4d9b86、tree-sample の singleOutOf = エンジンの stepOutcomes、光 + 消去 → 外れが消えた)・段を揃えた整列 (12f82dca、当たり = 揃った狙いの数の段、行ごとの輪郭で横を詰める、BAND = path)・1280 のボタン 24px (2f76b3c4、inv にページの zoom)・X の URL を xIntentUrl へ (126b6035)。記録は共有メモ local_ba9fc825…/tree-merge/README.md の頭。
+- 返事待ち: 整列で行 9 → 11 になり全体表示が 1920 で 25 → 20%。案 = GAP_Y 210 → 180 (25% に戻る見込み)。段の左の「n つ揃った」目印の案もブラック経由でオーナーへ。
+- 残り: 本物のマウスで一手ずつ触る確かめ (整列の後の木)・planByRedoCost はオーナーの A/B/C 待ち (触っていない)。
+- 台本: scripts/_tree-stuck-probe (止まった人の手の履歴)・_tree-bounds-probe (外枠と全体表示の段の目安、枠の大きさは手で渡す目安なので画面で測る)・_tree-single-probe (1 通りの手の一覧)。共有メモ row-shot.mjs・btn-shot.mjs (Chrome 9333)。
+
 ## 引き継ぎ (6 本目 → 7 本目、10-22 深夜。会話が 1100 件を超え送信も止まったのでブラックの頼みで入れ替え)
 - 済んだ物 (全部 commit・push 済み、書きかけ無し、開発版 bbc1431b): 上の「6 本目」全部。結果は全部普通の箱・戻り先は具体的な箱だけ (続きからは消した)・倍率の段 (20〜150%)・白紙の 2 回押し・品質だけ上げる手 (通り抜け pass)・手 4 案 A (触媒の前にカタリストの札を自動で)・完成の箱から伸ばすと同じ形の完成の箱が合流 (joinSameShape)・冒涜 → 発現で選ぶ (tree-sample の reveal、reveal:N は 1 から)・見本の木は完成品まで 1 本 (サフィックス → d1 に合流 → P2 案 3 = 素の高貴 / 餌 (アビスのエッセンス + 左側の結晶化) → 削減 + 完全のカオス → P3 = 保存された鎖骨 + 黒き血でクルガルのスペルダメージ)。
 - 記録: 共有メモ local_ba9fc825…/tree-merge/README.md (前後のスナップ・台本 shots4 / zoom-steps / clear2 / quality-shot / prefix-shot.mjs、全部窓なし Chrome 9333)。台本 scripts/_tree-sample-probe・_tree-quality-probe・_tree-done-shape-probe・_tree-prefix-cost-probe・_tree-merge-probe (vitest の -c で)。Chrome 9333 は止めて profile も消した、dev サーバーは立てていない。
