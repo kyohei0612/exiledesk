@@ -6,13 +6,21 @@ import { resolve } from "node:path";
 const DIR = resolve(import.meta.dirname, "../../../../src/data/blog");
 const args = process.argv.slice(2);
 const dry = args.includes("--dry");
-const [date, ...only] = args.filter((a) => a !== "--dry");
+const [date, ...only] = args.filter((a) => a !== "--dry" && a !== "--include-held");
 if (!/^\d{4}-\d{2}-\d{2}$/.test(date ?? "")) throw new Error("使い方: publish.mjs <YYYY-MM-DD> [slug…] [--dry]");
+
+// 配信者・配信の中身が元の記事 (オーナー 10-22「配信者の話は無視、出すとまずい」)。決まるまで出さない (--include-held で入れる)。一覧は docs/org/blog/notes/2026-10-22-streamer-check.md
+const HELD = new Set([
+  "crafting-questions-from-streams", "ai-crafting-odds-vs-feel", "gold-ring-video-decoded", "essence-of-the-abyss-mark",
+  "poe2db-cast-speed-weight", "optimal-move-vs-intuition", "chaos-reroll-vs-restart", "crafting-order-cost", "are-omens-worth-it", "chaos-spam-odds", "crafting-calculator-mistakes", "crafting-cost-variance",
+]);
+const withHeld = args.includes("--include-held");
 
 let n = 0;
 for (const f of readdirSync(DIR).filter((f) => /\.(ja|en)\.md$/.test(f) && !f.startsWith("sample."))) {
   const slug = f.replace(/\.(ja|en)\.md$/, "");
   if (only.length && !only.includes(slug)) continue;
+  if (HELD.has(slug) && !withHeld) { console.log(`${f}: 止めてある (配信が元)`); continue; }
   const p = resolve(DIR, f);
   const s = readFileSync(p, "utf8");
   const end = s.indexOf("\n---", 4);
