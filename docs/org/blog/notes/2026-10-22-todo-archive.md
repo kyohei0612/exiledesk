@@ -1,0 +1,72 @@
+# 記事編集長の todo から移した物 (2026-10-22、終わった事・古い引き継ぎ。todo.md 8KB の物差しのため、中身はそのまま)
+
+オーナー 10-22「すぐ再申請できるように」→ 急ぐ。src/data/blog/ の 6 本の本文を触るのは記事編集長だけ (解析君は数字を直す時だけ 1 行で頼んでから。表の数字と「数字の出どころ」の節は変えない)。
+
+## やる事 (記事)
+- 1 本目「外れは溜めるな」(dont-hoard-misses): 仕上げ済み (03e82d6e、形 = 冒頭の掴み 2 段落・まとめの箱・図 3 枚・掛け合い・ヒント / 注意の箱・リンクは一番下)。OGP の絵 → 開発版 → スナップ 2〜3 枚をブラックへ → オーナーの OK
+- 残り 5 本は仕上げ済み (オーナー 10-22「記事はレポート、妥協しよう、AdSense が通る情報量が目的」: 掴み 2 段落・まとめ・図 0〜1 (入れ物の :::chart)・注意 / ヒントの箱・リンクは一番下)。OGP は入れ物の自動 (題を描いた絵) のまま
+- 記事は記事編集長が書く (オーナー 10-22)。新しい記事は部下に書かせ (notes/writer-brief.md)、別の部下に記録と照らし合わせさせ (notes/checker-brief.md)、直してから commit。種は research/notes/2026-10-22-blog-topics.md。使った種: #1〜#10・#16・#17・#19・#21〜#24・#26・#28・#31
+
+
+## 止めた物 (オーナー 10-22「まだ書き直さなくていい、他 29 記事」)
+- 初心者向けの直しは試作 1 本 (greater-perfect-orb-difference、日本語、df24d177) だけ。オーナーが開発版で 1 本ずつ見て OK が出たら次の 1 本へ (まとめて広げない、英語は OK の後)。
+- 配信の記事: A 4 本は消した・C 4 本は一文を消した (284809b3)。**B 8 本の書き直しは止めた**: 部下が配信の跡を消した版が作業ツリーに未 commit で残っている (poe2db-cast-speed-weight・optimal-move-vs-intuition・chaos-reroll-vs-restart・crafting-order-cost・are-omens-worth-it・chaos-spam-odds・crafting-calculator-mistakes・crafting-cost-variance の日英、増えた数字なし・配信の言葉 0 件まで確かめた)。照らし合わせは途中で止めた。B は publish.mjs の HELD のまま。
+- 英語版 greater-perfect-orb-difference の動画の一文も外したが未 commit。
+- 新しい記事はもう足さない (オーナー「30 本で十分」)。
+
+## 引き継ぎ (10-22 夜、記事編集長の入れ替え)
+- 日本語の合格 10 本 (下の 1〜10) と、その英語版 10 本は仕上げて開発版に出した (8a0ca427・b50207de、デプロイは HEAD 8d4f27fa)。/en/blog/ に 10 枚並ぶ。英語の頼みは notes/finish-en-brief.md、照らし合わせは notes/finish-en-checker-brief.md。
+- 聖別: オーナーがゲームで確かめた「聖別の後は何もできない」の形に、聖別と品質と品質の切り捨ての日英を直した。計算の順 (+6 になる理由) は残した。
+- 次: 英語版をオーナーに見てもらい、返事を待つ。ブラックには報告済み。11 番から先は、オーナーの OK が出てから 1 本ずつ (日本語は notes/finish-brief.md → 照らし合わせは notes/finish-checker-brief.md → 英語)。
+- 手順: commit は `-- <ファイル>` で自分の物だけ。push の前に `git pull -q --no-rebase`。デプロイとブラウザはブラックに一言伝えてから。
+- B 8 本は今も未 commit のまま (上の「止めた物」)。notes/finish-checker-brief.md・finish-en-checker-brief.md もまだ commit していない。
+
+## 初心者向けに直す順 (オーナー 10-22、1 本ずつオーナーのチェック。合格の形 = greater-perfect-orb-difference)
+形: 頭に分かる事 3 行と言葉の説明・ずんだもん・めたんの掛け合いで進む短文・文の途中で改行しない・英語の添え書き無し・図は流れや差がひと目で分かる物だけ (数字は表)。合格したら英語版も同じ形 (Zundamon / Metan、用語は poe2db の英語)。
+1. ✅ greater-perfect-orb-difference (上級と完全の違い) 合格 10-22
+2. ✅ exaltation-omens-guide (高貴のお告げの使い分け)
+3. ✅ catalyst-types (カタリストの種類)
+4. ✅ desecration-bone-types (冒涜の骨の種類)
+5. ✅ es-gloves-greater-exalt (ES 手袋は上級)
+6. ✅ dont-hoard-misses (外れは溜めるな)
+7. ✅ spam-simulator (スパムシミュレーター)
+8. ✅ sanctify-quality-order (聖別と品質の順番)
+9. ✅ quality-rounding-down (品質の切り捨て)
+10. ✅ catalysing-exaltation-multiplier (触媒の倍率)
+11. ✅ desecration-weights (冒涜の重み) (10-22 夜、日本語)
+12. ✅ desecration-bone-sides (骨の左右)
+13. ✅ arcane-surge-desecrated-gloves (アーケインサージ)
+14. ✅ kolrs-hunt-gloves (コルの狩り)
+15. ✅ mana-ring-craft (マナの指輪)
+16. ✅ fracture-desecrated (フラクチャー)
+17. ✅ liquid-emotions-jewels (液化した感情)
+18. ✅ coe-desecrate-no-handler (CoE で冒涜)
+19. ✅ desecration-lords-tag-audit (陣営のタグ)
+20. ✅ custom-mod-weights (重みを変える)
+21. ✅ crafting-simulator-no-exceptions (例外を書かない作り)
+22. ✅ x-share-bug (シェアの不具合、日本語だけ)
+- 11〜22 の日本語はブラックの頼み (オーナー 10-22「記事もその調子で」) で仕上げた (4b243a55〜2890e167)。英語 11 本 (153d5652〜2a33d4eb)。配信の B 8 本は配信の跡を消して日英とも合格の形に (8dbc7fe3〜f29b1ea8)、publish.mjs の HELD は空。全部、部下が書いて別の部下が照らし合わせ、指摘は全部直した。日本語 30 本・英語 29 本が ready。次: オーナーにまとめて見てもらう。
+- 手袋のフラクチャーの書き方: 記録 (メモ optimal-craft-dp) ではプレフィックスの 1 つがフラクチャー、投射物 +2 はサフィックス (付け直す狙い)。chaos-spam-odds は記録で決め切れず「ある知性の手袋」とだけ書いた。
+
+## 記事ごとの進み (日英、全部 draft: true。開発版 abff29f1 に 15 本、残りは次のデプロイで)
+| slug | 中身 | 本番 |
+|---|---|---|
+| dont-hoard-misses | 仕上げ (白い紙面・図 3・OGP) | — |
+| optimal-move-vs-intuition | 仕上げ | — |
+| sanctify-quality-order | 仕上げ | — |
+| gold-ring-video-decoded | 仕上げ | — |
+| poe2db-cast-speed-weight | 仕上げ | — |
+| es-gloves-greater-exalt | 仕上げ | — |
+| crafting-cost-variance | 解析君の下書きを仕上げ | — |
+| mana-ring-craft | 解析君の下書きを仕上げ | — |
+| arcane-surge-desecrated-gloves | 解析君の下書きを仕上げ | — |
+| kolrs-hunt-gloves | 解析君の下書きを仕上げ | — |
+| chaos-spam-odds | 解析君の下書きを仕上げ | — |
+| quality-rounding-down | 新しく書いた・照らし合わせ済み | — |
+| catalysing-exaltation-multiplier | 新しく書いた・照らし合わせ済み | — |
+| desecration-weights | 書き直し・照らし合わせ済み | — |
+| fracture-desecrated | 書き直し・照らし合わせ済み (解析君の版と 1 本に) | — |
+| desecration-bone-sides | 新しく書いた・照らし合わせ済み | — |
+| crafting-calculator-mistakes | 新しく書いた・照らし合わせ済み | — |
+| essence-of-the-abyss-mark | 新しく書いた・照らし合わせ済み | — |
+| desecration-lords-tag-audit | 新しく書いた・照らし合わせ済み | — |
