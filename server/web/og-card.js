@@ -23,7 +23,7 @@ const cut = (s, n) => { const t = String(s ?? "").slice(0, n); return t; };
 // 14 番目 (p) は比べた人数 (スマホは 10 人。2026-10-19)。無ければ 100
 // 15 番目 (q) は何位 (人数が少ない時。自分を入れて p + 1 人の中)。あれば % ではなく「何位」で出す (2026-10-19 オーナー「スマホは何位、% やなくて」)
 const PACK = ["l", "b", "bn", "m", "n", "a", "r", "md", "u", "c", null, "h", "o", "p", "q"];
-async function unpack(code) {
+export async function unpack(code) {
   const bin = atob(code.replace(/-/g, "+").replace(/_/g, "/"));
   const bytes = Uint8Array.from(bin, (ch) => ch.charCodeAt(0));
   const json = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();

@@ -20,8 +20,8 @@
 import { forgetUid, forgottenUids, UID_RE } from "./forget";
 import channelsJson from "../channels.json";
 import { buildState } from "./state";
-import { fetchTwitch, fetchTwitchAvatars, getAppToken } from "./twitch";
-import { fetchYoutube, fetchYoutubeAvatars, type Latest } from "./youtube";
+import { fetchTwitch, fetchTwitchAvatars, getAppToken, twitchChannels } from "./twitch";
+import { fetchYoutube, fetchYoutubeAvatars, type Latest, youtubeChannels } from "./youtube";
 import { getImage, MAX_IMAGES, notifyImagesDiscord, parseImages, pruneImages, saveImages } from "./feedback-images";
 import { allowIp, FEEDBACK_ID_RE, getFeedback, getReplies, listFeedback, notifyDiscord, parseFeedback, saveFeedback, saveReply, type Feedback } from "./feedback";
 import { DATASET, parseBatch, sql, usersBetween, writeEvents } from "./events";
@@ -45,12 +45,12 @@ async function avatarsOf(env: Env, channels: readonly ChannelDef[], fetchFn: Fet
   if (cached && now - cached.at < AVATAR_TTL) return new Map(Object.entries(cached.byId));
   const byId: Record<string, string> = { ...(cached?.byId ?? {}) };
   try {
-    const yt = channels.filter((c) => c.platform === "youtube" && c.youtubeChannelId);
+    const yt = youtubeChannels(channels);
     if (yt.length && env.YOUTUBE_API_KEY) {
       const m = await fetchYoutubeAvatars(yt.map((c) => c.youtubeChannelId!), env.YOUTUBE_API_KEY, fetchFn);
       for (const c of yt) { const u = m.get(c.youtubeChannelId!); if (u) byId[c.id] = u; }
     }
-    const tw = channels.filter((c) => c.platform === "twitch" && c.twitchLogin);
+    const tw = twitchChannels(channels);
     if (tw.length && env.TWITCH_CLIENT_ID && env.TWITCH_CLIENT_SECRET) {
       const token = await getAppToken(env.LIVE, env.TWITCH_CLIENT_ID, env.TWITCH_CLIENT_SECRET, fetchFn, now);
       const m = await fetchTwitchAvatars(tw.map((c) => c.twitchLogin!), env.TWITCH_CLIENT_ID, token, fetchFn);

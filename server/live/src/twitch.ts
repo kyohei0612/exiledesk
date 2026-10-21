@@ -47,8 +47,11 @@ export function pickStreams(rows: readonly StreamRow[], channels: readonly Chann
   return out;
 }
 
+/** Twitch のチャンネルだけ (ログイン名のある物) */
+export const twitchChannels = (channels: readonly ChannelDef[]) => channels.filter((c) => c.platform === "twitch" && c.twitchLogin);
+
 export async function fetchTwitch(channels: readonly ChannelDef[], env: { TWITCH_CLIENT_ID?: string; TWITCH_CLIENT_SECRET?: string }, kv: KVNamespace, fetchFn: Fetch, errors: string[]): Promise<Map<string, LiveEntry>> {
-  const tw = channels.filter((c) => c.platform === "twitch" && c.twitchLogin);
+  const tw = twitchChannels(channels);
   if (!tw.length) return new Map();
   if (!env.TWITCH_CLIENT_ID || !env.TWITCH_CLIENT_SECRET) { errors.push("twitch: TWITCH_CLIENT_ID / TWITCH_CLIENT_SECRET が無い"); return new Map(); }
   try {

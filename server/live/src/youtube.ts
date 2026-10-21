@@ -202,9 +202,12 @@ export async function listVideos(ids: readonly string[], apiKey: string, fetchFn
   return out;
 }
 
+/** YouTube のチャンネルだけ (チャンネル id のある物) */
+export const youtubeChannels = (channels: readonly ChannelDef[]) => channels.filter((c) => c.platform === "youtube" && c.youtubeChannelId);
+
 /** 全チャンネルの、今ライブ中・予定の配信 (チャンネル id → 1 本) */
 export async function fetchYoutube(channels: readonly ChannelDef[], apiKey: string | undefined, fetchFn: Fetch, errors: string[], latest?: Map<string, Latest>): Promise<Map<string, LiveEntry>> {
-  const yt = channels.filter((c) => c.platform === "youtube" && c.youtubeChannelId);
+  const yt = youtubeChannels(channels);
   if (!yt.length) return new Map();
   if (!apiKey) { errors.push("youtube: YOUTUBE_API_KEY が無い"); return new Map(); }
   const idLists = await Promise.all(yt.map((c) => candidateIds(c.youtubeChannelId!, fetchFn, errors, (l) => latest?.set(c.id, l), apiKey)));
