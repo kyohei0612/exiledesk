@@ -9,7 +9,8 @@
 import { it } from "vitest";
 import { addHit, BOX_H, BOX_W, setHand, tidy, type TreeBox, type TreeDoc } from "../src/services/simulator/tree/tree-model";
 import { treeSample } from "../src/services/simulator/tree/tree-samples";
-import { backRoute } from "../src/views/simulator/tree/tree-lines";
+import { backRoute, handAnchor } from "../src/views/simulator/tree/tree-lines";
+import { MATCH, matchTargets } from "../src/services/simulator/tree/tree-run";
 
 const A = (m: string, t: number) => ({ modId: `Rings/${m}`, tier: t });
 const mk = (id: string, out: TreeBox["out"], parent: string | null, extra: Partial<TreeBox> = {}): TreeBox => ({ id, x: 0, y: 0, out, aim: null, hand: null, outs: [], back: null, done: null, parent, ...extra });
@@ -45,12 +46,15 @@ function arcs(d: TreeDoc): { n: number; bad: string[] } {
   const bs = Object.values(d.boxes), bad: string[] = [];
   let n = 0;
   for (const b of bs) {
-    const to = b.back ? d.boxes[b.back] : null;
-    if (!to) continue;
-    n++;
-    const others = bs.filter((x) => x.id !== b.id && x.id !== to.id);
-    const path = backRoute(b, to, others);
-    for (const o of others) if (crosses(path, o)) bad.push(`${b.id}→${to.id} が ${o.id} を通る`);
+    // 形の合う箱へ は行きうる箱を全部 (画面と同じ)。札の幅は 200px で見る (画面は測った幅)
+    const tos = b.back === MATCH ? matchTargets(d, b.id).flatMap((x) => (x.to ? [d.boxes[x.to]!] : [])) : b.back && d.boxes[b.back] ? [d.boxes[b.back]!] : [];
+    for (const to of tos) {
+      n++;
+      const others = bs.filter((x) => x.id !== b.id && x.id !== to.id);
+      const path = backRoute(b, handAnchor(to, to.hand && to.outs.length ? 200 : null), others, to);
+      for (const o of others) if (crosses(path, o)) bad.push(`${b.id}→${to.id} が ${o.id} を通る`);
+      if (crosses(path, to)) bad.push(`${b.id}→${to.id} が戻り先を通る`);
+    }
   }
   return { n, bad };
 }

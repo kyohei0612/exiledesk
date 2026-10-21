@@ -81,6 +81,9 @@ export function newTree(base: string, itemLevel: number): TreeDoc {
   };
 }
 
+/** 戻りの矢印の「形の合う箱へ」(tree-run の MATCH と同じ文字。tree-run は形を読むので、ここは文字だけ持つ) */
+export const MATCH_BACK = "match";
+
 /** 結果の箱の並び (手の種類ごとに必ず付く物) */
 export const OUTS_OF: Record<HandKind, OutKind[]> = {
   add: ["hit", "junk"],
@@ -183,6 +186,8 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   if (same) return;
   for (const o of b.outs) drop(d, subtree(d, o));
   b.outs = want.flatMap((k) => (k === "hit" && aims.length ? aims.map((a) => { const h = mk(d, "hit", id); h.aim = { ...a }; return h.id; }) : [mk(d, k, id).id]));
+  // 消えた箱は初めから「形の合う箱へ」でつないでおく (オーナー 10-22「狙いが消えた (フラクチャーだけ = 始まりと同じ形) などは自動でつないでおく」。× で外せる)
+  for (const o of b.outs) { const c = d.boxes[o]!; if (c.out === "lost" || c.out === "junkGone") c.back = MATCH_BACK; }
   spread(d, id);
   makeRoom(d, id);
 }

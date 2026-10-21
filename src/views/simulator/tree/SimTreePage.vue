@@ -27,11 +27,11 @@ import { handLabel } from "./tree-names";
 import { aimHeld, aimsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { checkTree, type CheckIssue } from "../../../services/simulator/tree/tree-check";
 import { treeSample } from "../../../services/simulator/tree/tree-samples";
-import { MATCH, RESTART } from "../../../services/simulator/tree/tree-run";
+import { MATCH, matchTargets, RESTART } from "../../../services/simulator/tree/tree-run";
 import { treePage } from "../../../state/web-page";
 import { tr } from "../../../i18n/lang";
 import { pageZoom } from "../../../utils/zoom";
-import { backRoute, busLevels } from "./tree-lines";
+import { backRoute, busLevels, handAnchor, HAND_DY } from "./tree-lines";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
 import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { gesture, HOLD_MS } from "./use-gesture";
@@ -90,7 +90,7 @@ const busShift = computed(() => busLevels(boxes.value.filter((b) => b.hand && b.
 })));
 const edges = computed(() => boxes.value.filter((b) => b.hand && b.outs.length).map((b) => {
   const p = posOf(b);
-  const px = p.x + BOX_W / 2, py = p.y + BOX_H, jy = py + 46;
+  const px = p.x + BOX_W / 2, py = p.y + BOX_H, jy = py + HAND_DY;
   const kids = b.outs.map((o) => ({ id: o, c: doc.value.boxes[o]!, q: posOf(doc.value.boxes[o]!) }));
   const busY = Math.min(...kids.map((k) => k.q.y)) - 18 - (busShift.value.get(b.id) ?? 0);
   // 角丸の段付き (React Flow の smoothstep、見本の 3): 親の下から下りて、角を丸めて横へ、角を丸めて子の上の辺へ。
@@ -110,18 +110,45 @@ const edges = computed(() => boxes.value.filter((b) => b.hand && b.outs.length).
  * 行き先が決まらない札 (形の合う箱へ・作り直し) は弧を引かない。前は乗せた時だけだった (外側を回る長い線でツリーが囲まれた、10-22)
  */
 const hoverBack = ref<string | null>(null);
-function arcOf(b: Box): string | null {
-  const to = b.back ? doc.value.boxes[b.back] : null;
-  if (!to) return null;
-  // 箱を横切らない道 (tree-lines.ts)。前は横の辺から外へふくらむ弧で、いつも出すと箱と線を横切った (10-21 開発版のスナップ)
-  return backRoute(posOf(b), posOf(to), boxes.value.filter((x) => x.id !== b.id && x.id !== to.id).map(posOf));
+/**
+ * 戻りの行き先の箱 (オーナー 10-22「↩ 形の合う箱へは形が同じ箱を木の中から探して細い線を自動で引いた状態に」): 形の合う箱へ = 行きうる形の箱を全部
+ * (判定は回す時と同じ tree-run の matchTargets)。作り直しは線を引かない (始めのアイテムを買い直す)
+ */
+const backTargets = computed(() => {
+  const m = new Map<string, string[]>();
+  for (const b of boxes.value) {
+    if (!b.back || b.back === RESTART) continue;
+    const to = b.back === MATCH ? matchTargets(doc.value, b.id).flatMap((x) => (x.to ? [x.to] : [])) : [b.back];
+    m.set(b.id, [...new Set(to)].filter((id) => !!doc.value.boxes[id]));
+  }
+  return m;
+});
+/** 打つ手の札の幅 (画面で測る。戻りの線を札の左の端へ入れる、tree-lines.ts の handAnchor) */
+const chipW = ref<Record<string, number>>({});
+function measureChips(): void {
+  const w: Record<string, number> = {};
+  for (const el of document.querySelectorAll<HTMLElement>("[data-tree-hand]")) if (el.dataset.handOf) w[el.dataset.handOf] = el.offsetWidth;
+  if (JSON.stringify(w) !== JSON.stringify(chipW.value)) chipW.value = w;
 }
-const backArcs = computed(() => boxes.value.flatMap((b) => { const d = arcOf(b); return d && b.id !== hoverBack.value ? [{ id: b.id, d }] : []; }));
-const backLine = computed(() => { const b = hoverBack.value ? doc.value.boxes[hoverBack.value] : null; return b ? arcOf(b) : null; });
-function goBack(b: Box): void { hoverBack.value = null; if (b.back) void v.reveal(b.back, true); }
+watch(() => edges.value.map((e) => `${e.id}:${handLabel(e.hand)}`).join("|"), measureChips, { flush: "post" });
+onMounted(() => { measureChips(); void document.fonts?.ready.then(measureChips); });
+function arcsOf(b: Box): { to: string; d: string }[] {
+  // 箱を横切らない道 (tree-lines.ts)。行き先は戻り先の打つ手の札の左の端 (手が無ければ下の＋)
+  return (backTargets.value.get(b.id) ?? []).map((id) => {
+    const to = doc.value.boxes[id]!, q = posOf(to);
+    const w = to.hand && to.outs.length ? (chipW.value[id] ?? 120) * inv.value : null;
+    return { to: id, d: backRoute(posOf(b), handAnchor(q, w), boxes.value.filter((x) => x.id !== b.id && x.id !== id).map(posOf), q) };
+  });
+}
+const backArcs = computed(() => boxes.value.flatMap((b) => (b.id === hoverBack.value ? [] : arcsOf(b).map((a) => ({ id: `${b.id}>${a.to}`, from: b.id, d: a.d })))));
+const backLines = computed(() => { const b = hoverBack.value ? doc.value.boxes[hoverBack.value] : null; return b ? arcsOf(b).map((a) => a.d) : []; });
+function goBack(b: Box): void { hoverBack.value = null; const to = backTargets.value.get(b.id)?.[0]; if (to) void v.reveal(to, true); }
 
 function backLabel(b: Box): string {
-  if (b.back === MATCH) return tr("形の合う箱へ", "Matching box");
+  if (b.back === MATCH) {
+    const n = backTargets.value.get(b.id)?.length ?? 0;
+    return n > 1 ? tr(`形の合う箱へ (${n} か所)`, `Matching box (${n} places)`) : n ? tr("形の合う箱へ", "Matching box") : tr("形の合う箱へ (無し)", "Matching box (none)");
+  }
   if (b.back === RESTART) return tr("作り直し", "Start over");
   const to = b.back ? doc.value.boxes[b.back] : null;
   if (!to) return "";
@@ -362,7 +389,7 @@ const glowOf = (b: Box): boolean => {
             @pane-click="onPaneClick" @node-click="onNodeClick">
             <template #node-box="{ id }">
               <TreeBox v-if="doc.boxes[id]" :box="doc.boxes[id]!" :removable="canRemove(doc, id)" :picking="!!picking && picking !== id"
-                :selected="panel?.id === id || picking === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand" :glow="glowOf(doc.boxes[id]!) || plus?.target === id || (!!hoverBack && doc.boxes[hoverBack]?.back === id)" :issue="issueOf(doc.boxes[id]!)" :inv="inv"
+                :selected="panel?.id === id || picking === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand" :glow="glowOf(doc.boxes[id]!) || plus?.target === id || (!!hoverBack && !!backTargets.get(hoverBack)?.includes(id))" :issue="issueOf(doc.boxes[id]!)" :inv="inv"
                 @drag="startDrag(doc.boxes[id]!, $event)" @aim="onAim(doc.boxes[id]!)" @plus="(k, e) => onPlus(doc.boxes[id]!, k, e)" @remove="t.edit((d) => removeHit(d, id))"
                 @back="picking = id" @clear-back="t.edit((d) => setBack(d, id, null))" @done="onDone(doc.boxes[id]!)"
                 @note="panel = { kind: 'note', id }" @spam="onSpam(doc.boxes[id]!)" @back-hover="(on) => (hoverBack = on ? id : null)" @back-go="goBack(doc.boxes[id]!)" />
@@ -378,16 +405,16 @@ const glowOf = (b: Box): boolean => {
                   <path v-for="o in e.to" :key="o.id" :d="o.d" :stroke="o.color" stroke-width="2" stroke-linejoin="round" fill="none" :marker-end="`url(#tree-arrow-${o.kind})`" />
                 </g>
                 <!-- 戻りの弧 (いつも細く薄く。乗せた物は下の箱の前の層で明るく) -->
-                <path v-for="a in backArcs" :key="`back-${a.id}`" data-tree-back-arc :data-from="a.id" :d="a.d" :stroke="LINE.back" stroke-opacity="0.45" stroke-width="2" stroke-linecap="round" fill="none" marker-end="url(#tree-arrow-back)" />
+                <path v-for="a in backArcs" :key="`back-${a.id}`" data-tree-back-arc :data-from="a.from" :d="a.d" :stroke="LINE.back" stroke-opacity="0.45" stroke-width="2" stroke-linecap="round" fill="none" marker-end="url(#tree-arrow-back)" />
               </svg>
               <!-- 矢印の上の札 = 打つ手 (押すと替える・消す) -->
-              <button v-for="e in edges" :key="`hand-${e.id}`" type="button" data-tree-hand class="nodrag nopan pointer-events-auto absolute z-[5] max-w-[300px] -translate-x-1/2 -translate-y-1/2 truncate rounded-full border border-amber-400/60 bg-[#1a140d] px-3 py-1 text-[12px] font-semibold text-amber-100 shadow-[0_2px_10px_rgba(0,0,0,0.6)] hover:border-amber-300 hover:bg-[#2a2014]"
+              <button v-for="e in edges" :key="`hand-${e.id}`" type="button" data-tree-hand :data-hand-of="e.id" class="nodrag nopan pointer-events-auto absolute z-[5] max-w-[300px] -translate-x-1/2 -translate-y-1/2 truncate rounded-full border border-amber-400/60 bg-[#1a140d] px-3 py-1 text-[12px] font-semibold text-amber-100 shadow-[0_2px_10px_rgba(0,0,0,0.6)] hover:border-amber-300 hover:bg-[#2a2014]"
                 :class="viewOnly || hand ? '!pointer-events-none' : ''" :style="{ left: `${e.jx}px`, top: `${e.jy}px`, scale: String(inv) }" :title="handLabel(e.hand)" @click="panel = { kind: 'hand', id: e.id }">{{ handLabel(e.hand) }}</button>
               <!-- 引っ張っている＋の線と、戻り先の札に乗せた時の線は箱の前 (相手の箱の上まで見える) -->
-              <svg v-if="plusLine || backLine" class="pointer-events-none absolute left-0 top-0 z-10 overflow-visible" width="1" height="1">
+              <svg v-if="plusLine || backLines.length" class="pointer-events-none absolute left-0 top-0 z-10 overflow-visible" width="1" height="1">
                 <defs><marker id="tree-arrow-drag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" :fill="LINE.back" /></marker></defs>
                 <path v-if="plusLine" data-tree-plus-line :d="plusLine" :stroke="LINE.back" stroke-width="3" stroke-linecap="round" fill="none" marker-end="url(#tree-arrow-drag)" />
-                <path v-if="backLine" data-tree-back :d="backLine" :stroke="LINE.back" stroke-width="2.5" stroke-linecap="round" fill="none" marker-end="url(#tree-arrow-drag)" />
+                <path v-for="(d, i) in backLines" :key="i" data-tree-back :d="d" :stroke="LINE.back" stroke-width="2.5" stroke-linecap="round" fill="none" marker-end="url(#tree-arrow-drag)" />
               </svg>
             </template>
           </VueFlow>

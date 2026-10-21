@@ -8,7 +8,7 @@
 import { applyCurrency, mulberry32, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { CATALYSING, kindOfCurrency } from "./tree-hands";
 import { aimHeld, aimsOf, fillCatalyst, outcomeOf, startItemOf as startOf } from "./tree-sample";
-import { aimKey, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
+import { aimKey, MATCH_BACK, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
 
 export interface TreeRunOpts {
   /** 人数 (裏は 100、確かめは 300) */
@@ -105,7 +105,7 @@ function play(data: PatchData, item: StageItem, h: Hand, rng: () => number, aims
  * 形の合う箱へ (設計の「消去の後は 形の合う箱へ」、back: "match")。形 = 付いている狙いの組 + 外れがあるか。
  * 箱の形 = 始まりから親をたどった当たりの札の組 (+ 外れの箱なら外れあり)。狙いが 1 つも無ければ始まりへ (始まりの手が外れも扱う)
  */
-export const MATCH = "match";
+export const MATCH = MATCH_BACK;
 /** 作り直し (設計の「作り直し」、back: "restart"): 始めのアイテムに戻して、始めの費用をもう一度払う。数えた回数は TreeRunResult.restarts */
 export const RESTART = "restart";
 
