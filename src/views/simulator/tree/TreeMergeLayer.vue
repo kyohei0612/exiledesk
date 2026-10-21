@@ -1,12 +1,12 @@
 <!--
-  TreeMergeLayer.vue — まとめて見せる箱の札と、札から行き先へ流れ込む線 (tree-merge.ts、&ui=next。Vue Flow の zoom-pane の中)。
+  TreeMergeLayer.vue — まとめて見せる箱の札と、札から行き先へ流れ込む線 (tree-merge.ts。Vue Flow の zoom-pane の中)。
   札 = 戻りの矢印だけの箱 (結果の名前だけ。押すとその箱の編集のポップアップ)。線: 当たりの札 = 進む色でいつも出す。
-  外れ・消えたの札 = 戻りの色で、&lines=a は線無し (乗せた箱・札の線だけ出す、帯の「線を全部表示」で全部) / b はいつも淡く出して乗せた物だけ濃く (ブラック 10-22 の 2 案)
+  外れ・消えたの札 = 戻りの色で、既定は線無し (乗せた箱・札の線だけ濃く出す、帯の「線を全部表示」で全部。オーナー 10-22 の案 A)
 -->
 <script setup lang="ts">
 import { computed } from "vue";
 import { PILL_H, PILL_W, type TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { TREE_LINES, type MergeLine } from "./tree-merge";
+import type { MergeLine } from "./tree-merge";
 import { useTree } from "./use-tree";
 import { outName } from "./tree-names";
 import { tr } from "../../../i18n/lang";
@@ -20,8 +20,8 @@ const RGB: Record<string, string> = { hit: "224,176,96", any: "200,184,150", jun
 
 /** 乗せた箱・札に関わる線 (札そのもの・行き先・札の親) */
 const hot = (l: MergeLine): boolean => !!props.hover && (l.pill === props.hover || l.to === props.hover || l.parent === props.hover);
-const shown = computed(() => props.lines.filter((l) => l.kind === "fwd" || TREE_LINES === "b" || props.showAll || hot(l)));
-const opacity = (l: MergeLine): number => (hot(l) ? 1 : l.kind === "fwd" ? 0.85 : TREE_LINES === "b" ? 0.35 : 0.55);
+const shown = computed(() => props.lines.filter((l) => l.kind === "fwd" || props.showAll || hot(l)));
+const opacity = (l: MergeLine): number => (hot(l) ? 1 : l.kind === "fwd" ? 0.85 : 0.55);
 const label = (id: string): string => { const b = props.doc.boxes[id]!; return b.out === "hit" && b.aim ? t.aimLabel(b.aim) : outName(b.out); };
 /** 行き先の名前 (乗せた時の説明) */
 const dest = (id: string): string => props.lines.filter((l) => l.pill === id).map((l) => label(l.to)).join(" / ");

@@ -1,6 +1,6 @@
 <!--
   TreeBox.vue — ツリーの箱 1 つ (2026-10-22 表面だけ)。始まり (フラクチャー) / 当たり / 外れ / 外れが消えた / 狙いが消えた。
-  当たりは押すと MOD を選ぶ、横の＋で当たりを足す、下の＋で次の手。外れ・消えたの箱は消せない。数字 (通った人数・ここまでの費用) はまだ「—」
+  当たりは押すと MOD を選ぶ、横の＋で当たりを足す、下の＋で次の手。外れ・消えたの箱は消せない。見出しの鉛筆でメモ (10-22 試し打ちの欄を消したのでここから)。数字 (通った人数・ここまでの費用) は計算を繋ぐまで出さない
 -->
 <script setup lang="ts">
 import { computed } from "vue";
@@ -9,7 +9,6 @@ import { BOX_H, BOX_W, type TreeBox } from "../../../services/simulator/tree/tre
 import { tr } from "../../../i18n/lang";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { TREE_BASE, TREE_ILVL, useTree } from "./use-tree";
-import { TREE_NEXT } from "./tree-merge";
 
 const props = defineProps<{ box: TreeBox; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
   /** 縮めた時の倍率の逆数 (押せる物だけこれで大きさを戻し、画面の上で 24px 以上を保つ。オーナー 10-22「縮めても押せる物は小さくならない」) */ inv?: number;
@@ -17,7 +16,7 @@ const props = defineProps<{ box: TreeBox; /** 自分で置く時の位置 (Vue F
 const emit = defineEmits<{
   /** 箱を引っ張り始めた (押した所から。判定はページの use-gesture.ts) */
   drag: [e: PointerEvent]; aim: []; remove: []; back: []; clearBack: []; done: []; note: []; spam: [];
-  /** マウスを乗せた / 外した (&ui=next の線を濃く・ホバーのカード) */
+  /** マウスを乗せた / 外した (その箱の線を濃く・乗せた時のカード) */
   hover: [on: boolean];
   /** 戻り先の札に乗せた / 外した・押した */
   backHover: [on: boolean]; backGo: [];
@@ -73,11 +72,11 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <span class="flex size-5 shrink-0 items-center justify-center rounded-md" :style="{ background: `rgba(${rgb},0.18)`, color: `rgb(${rgb})` }"><Icon :name="kind.icon" class="size-3.5" /></span>
       <span class="truncate text-[11px] font-bold tracking-wide" :style="{ color: `rgb(${rgb})` }">{{ tr(kind.ja, kind.en) }}</span>
       <span v-if="box.done" class="shrink-0 rounded-full bg-amber-300/25 px-1.5 text-[10px] font-bold text-amber-100">{{ doneText }}</span>
-      <span v-if="box.unwanted?.length" data-tree-unwanted class="shrink-0 rounded-sm bg-rose-400/20 px-1.5 text-[11px] font-bold text-rose-200" :title="tr(`× (要らない) の印 ${box.unwanted.length} 個 (箱を押すと試し打ちで見られる)`, `${box.unwanted.length} mod(s) marked × (unwanted). Click the box to see them`)">× {{ box.unwanted.length }}</span>
+      <span v-if="box.unwanted?.length" data-tree-unwanted class="shrink-0 rounded-sm bg-rose-400/20 px-1.5 text-[11px] font-bold text-rose-200" :title="tr(`× (要らない) の印 ${box.unwanted.length} 個 (前の試し打ちで付けた物)`, `${box.unwanted.length} mod(s) marked × (unwanted, set in the old try-out)`)">× {{ box.unwanted.length }}</span>
       <span v-if="issue" data-tree-issue class="rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white" :title="issue">!</span>
       <span class="flex-1" />
       <span class="flex items-center" :style="keep('right center')">
-      <button v-if="box.note && !quiet" type="button" data-tree-note-mark class="nodrag flex size-6 items-center justify-center rounded text-amber-300 hover:bg-white/10" :title="box.note" @click.stop="emit('note')"><Icon name="pencil" class="size-3.5" /></button>
+      <button v-if="!quiet" type="button" data-tree-note-mark class="nodrag flex size-6 items-center justify-center rounded hover:bg-white/10" :class="box.note ? 'text-amber-300' : 'text-white/30 hover:text-white/70'" :title="box.note || tr('メモを書く', 'Write a note')" @click.stop="emit('note')"><Icon name="pencil" class="size-3.5" /></button>
       <button v-if="removable && !quiet" type="button" class="nodrag -mr-1 flex size-6 items-center justify-center rounded opacity-60 hover:bg-white/10 hover:opacity-100" :title="tr('この当たりを消す', 'Remove this hit')" @click.stop="emit('remove')"><Icon name="x" class="size-3.5" /></button>
       </span>
     </div>
@@ -96,8 +95,6 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <p v-else class="truncate leading-6 opacity-60">{{ box.out === "junk" ? tr("当たり以外が付いた", "Anything but a hit") : box.out === "junkGone" ? tr("外れの MOD が消えた", "A miss mod was removed") : box.out === "any" ? tr("何かが 1 つ付いた (狙い無し)", "Something was added (no target)") : tr("狙いの MOD が消えた", "A target mod was removed") }}</p>
     </div>
 
-    <!-- 数字はまだ繋がない (100 人回すのは次の手) -->
-    <p v-if="k === 1 && !TREE_NEXT" class="text-[11px] tabular-nums text-[#a89c86]/70">{{ tr("通った — 人 · ここまで — 神", "— people · — div so far") }}</p>
 
     <!-- 下の行: 戻りの矢印・完成 (下の＋は箱の外なので重ならない) -->
     <div class="pointer-events-none absolute inset-x-2 bottom-1 flex h-6 items-center gap-1 text-[11px] *:pointer-events-auto" :style="k > 1 ? { right: 'auto', width: `${(BOX_W - 16 - (box.out === 'hit' ? 22 : 0)) / k}px`, ...keep('left bottom') } : {}">

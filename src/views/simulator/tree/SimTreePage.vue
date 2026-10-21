@@ -3,9 +3,10 @@
   入口 (web-page.ts の treePage・web/page.ts・WebApp.vue) はジン部長、中身はシミュ部長。設計は docs/org/simulator/notes/2026-10-22-manual-sim-design.md の 11。
   一番上がフラクチャーの箱 (始まり)。下の＋で打つ手 (クラフト台の棚から) → 矢印の先に結果の箱。横の＋で当たりを足す、↩ で既にある箱へ戻す。
   ＋は長押しで引っ張り、箱の上で離すとその箱へつなぐ (何も無い所ならやめる)。箱はドラッグで動かす、1 つ戻す / Ctrl+Z。
-  線は普通の木の図の直角の線、戻りの矢印は箱の下の札に乗せた時だけ (10-22 整列の定義)。
+  線は普通の木の図の直角の線。戻りの矢印だけの箱は小さな札にまとめ、戻りの線は乗せた箱・札の分だけ (帯の「線を全部表示」で全部、10-22 オーナーの案 A)。
+  箱に乗せるとその時点のアイテムのカード。試し打ちの欄は 10-22 に消した (オーナー「試し打ちマジ意味わからんから消して」)。
   土台は Vue Flow (10-22 オーナー): 画面の送り・拡大縮小・箱のドラッグ・押した判定は Vue Flow、見え方の決まりは use-tree-flow.ts。
-  線・打つ手の札・引っ張る線・戻りの弧は Vue Flow の zoom-pane (倍率と移動が掛かる層) に描く。100 人回す計算はまだ繋がない
+  線・打つ手の札・引っ張る線・まとめた札と合流の線は Vue Flow の zoom-pane (倍率と移動が掛かる層) に描く。100 人回す計算はまだ繋がない
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -18,7 +19,6 @@ import TreeBox from "./TreeBox.vue";
 import TreeHandShelf from "./TreeHandShelf.vue";
 import TreeModPick from "./TreeModPick.vue";
 import TreeNote from "./TreeNote.vue";
-import TreeTrial from "./TreeTrial.vue";
 import { useTree } from "./use-tree";
 import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -26,11 +26,11 @@ import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, removeHit,
 import { handLabel, outName } from "./tree-names";
 import { aimHeld, aimsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { treeSample } from "../../../services/simulator/tree/tree-samples";
-import { MATCH, matchTargets, RESTART } from "../../../services/simulator/tree/tree-run";
+import { MATCH, RESTART } from "../../../services/simulator/tree/tree-run";
 import { treePage } from "../../../state/web-page";
 import { tr } from "../../../i18n/lang";
 import { pageZoom } from "../../../utils/zoom";
-import { busLevels, handAnchor, HAND_DY, routeBacks, type BackReq, type Seg } from "./tree-lines";
+import { busLevels, HAND_DY, type Seg } from "./tree-lines";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
 import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { gesture, HOLD_MS } from "./use-gesture";
@@ -41,7 +41,7 @@ import { useTreeTune } from "./use-tree-tune";
 import TreeHandChip from "./TreeHandChip.vue";
 import TreeMergeLayer from "./TreeMergeLayer.vue";
 import TreeHoverCard from "./TreeHoverCard.vue";
-import { pillIds, sizeOf, TREE_LINES, TREE_NEXT } from "./tree-merge";
+import { backTargetsOf, pillIds, sizeOf } from "./tree-merge";
 import { useTreeMerge } from "./use-tree-merge";
 
 const t = useTree();
@@ -50,7 +50,7 @@ const doc = t.doc;
 useTreeTune(doc, t.edit);
 
 /** 右の欄 (箱を選んだ時だけ) */
-const panel = ref<{ kind: "hand" | "aim" | "fracture" | "trial" | "note"; id: string } | null>(null);
+const panel = ref<{ kind: "hand" | "aim" | "fracture" | "note"; id: string } | null>(null);
 /** 戻りの矢印の先を選んでいる箱 */
 const picking = ref<string | null>(null);
 /** メモの窓を開いているか (このブラウザに覚える。無くても使える) */
@@ -69,8 +69,8 @@ onBeforeUnmount(v.dispose);
 const drag = ref<{ id: string; x: number; y: number } | null>(null);
 const posOf = (b: Box): { x: number; y: number } => (drag.value?.id === b.id ? { x: drag.value.x, y: drag.value.y } : { x: b.x, y: b.y });
 const boxes = computed(() => Object.values(doc.value.boxes));
-/** まとめて見せる箱 (&ui=next の時だけ。箱を描かず子の段の札にする、tree-merge.ts) と、箱か札の真ん中 */
-const pills = computed(() => (TREE_NEXT ? pillIds(doc.value) : new Set<string>()));
+/** まとめて見せる箱 (戻りの矢印だけの箱は描かず子の段の札にする、tree-merge.ts。オーナー 10-22 案 A) と、箱か札の真ん中 */
+const pills = computed(() => pillIds(doc.value));
 const midOf = (id: string): number => posOf(doc.value.boxes[id]!).x + sizeOf(pills.value, id).w / 2;
 
 /**
@@ -121,25 +121,6 @@ const edges = computed(() => boxes.value.filter((b) => b.hand && b.outs.length).
   const segs: Seg[] = [{ x0: px, y0: py, x1: px, y1: busY }, ...kids.flatMap((k) => { const cx = midOf(k.id); return [{ x0: px, y0: busY, x1: cx, y1: busY }, { x0: cx, y0: busY, x1: cx, y1: k.q.y }]; })];
   return { id: b.id, hand: b.hand!, jx: px, jy, stem: `M ${px} ${py} L ${px} ${busY - 10}`, to, segs };
 }));
-/**
- * 戻りの矢印 = 箱の下から段のすき間・箱の無い縦の通り道を通って戻り先の上の辺の左寄りへ (tree-lines.ts)。いつも細く薄く出し (オーナー 10-22「線を繋げても、その線が出ない。出してくれ」)、
- * 箱の下の札「↩ 戻り先」に乗せた時はその弧を箱の前に明るく出して戻り先を光らせる (押すとそこへ寄る)。
- * 行き先が決まらない札 (形の合う箱へ・作り直し) は弧を引かない。前は乗せた時だけだった (外側を回る長い線でツリーが囲まれた、10-22)
- */
-const hoverBack = ref<string | null>(null);
-/**
- * 戻りの行き先の箱 (オーナー 10-22「↩ 形の合う箱へは形が同じ箱を木の中から探して細い線を自動で引いた状態に」): 形の合う箱へ = 行きうる形の箱を全部
- * (判定は回す時と同じ tree-run の matchTargets)。作り直しは線を引かない (始めのアイテムを買い直す)
- */
-const backTargets = computed(() => {
-  const m = new Map<string, string[]>();
-  for (const b of boxes.value) {
-    if (!b.back || b.back === RESTART || pills.value.has(b.id)) continue;
-    const to = b.back === MATCH ? matchTargets(doc.value, b.id).flatMap((x) => (x.to ? [x.to] : [])) : [b.back];
-    m.set(b.id, [...new Set(to)].filter((id) => !!doc.value.boxes[id]));
-  }
-  return m;
-});
 /** 打つ手の札の幅 (画面で測る。戻りの線を札の左の端へ入れる、tree-lines.ts の handAnchor) */
 const chipW = ref<Record<string, number>>({});
 function measureChips(): void {
@@ -149,32 +130,15 @@ function measureChips(): void {
 }
 watch(() => edges.value.map((e) => `${e.id}:${handLabel(e.hand)}`).join("|"), measureChips, { flush: "post" });
 onMounted(() => { measureChips(); void document.fonts?.ready.then(measureChips); });
-/**
- * 戻りの線を全部まとめて引く (tree-lines.ts の routeBacks: 1 本ずつ専用の通り道・進む線と高さを分ける・交わりは跨ぐ、オーナー 10-22)。
- * 行き先は戻り先の打つ手の札の左の端 (手が無ければ下の＋)
- */
-const backPaths = computed(() => {
-  const pos = new Map(boxes.value.map((b) => [b.id, posOf(b)]));
-  const reqs: BackReq[] = [];
-  for (const [from, tos] of backTargets.value) for (const id of tos) {
-    const to = doc.value.boxes[id]!, q = pos.get(id)!;
-    const w = to.hand && to.outs.length ? (chipW.value[id] ?? 120) * inv.value : null;
-    reqs.push({ id: `${from}>${id}`, from: pos.get(from)!, to: q, end: handAnchor(q, w) });
-  }
-  const d = routeBacks(reqs, [...pos.values()], edges.value.flatMap((e) => e.segs));
-  return reqs.map((r) => ({ id: r.id, from: r.id.split(">")[0]!, d: d.get(r.id)! }));
-});
 const { merged, linesAll, hoverBox, cardBox } = useTreeMerge({ doc, pills, posOf, segs: () => edges.value.flatMap((e) => e.segs), chipW, inv, busy: () => !!drag.value || !!plus.value, reset: () => [v.flow.viewport.value, panel.value, drag.value] });
-const backArcs = computed(() => backPaths.value.filter((a) => a.from !== hoverBack.value));
-const backLines = computed(() => backPaths.value.filter((a) => a.from === hoverBack.value).map((a) => a.d));
-function goBack(b: Box): void { hoverBack.value = null; const to = backTargets.value.get(b.id)?.[0]; if (to) void v.reveal(to, true); }
+/** 戻り先へ寄る (編集のポップアップの札を押した時) */
+function goBack(b: Box): void { const to = backTargetsOf(doc.value, b.id)[0]; if (to) void v.reveal(to, true); }
 
 function backLabel(b: Box): string {
   if (b.back === MATCH) {
-    const n = backTargets.value.get(b.id)?.length ?? 0;
-    // &ui=next は本番の言い方 (クラフト台の「もう一度押すと続きから」) に寄せる。オーナー 10-22「本番は形の合う箱へって選択しない」
-    if (TREE_NEXT) return n > 1 ? tr(`続きから (${n} か所)`, `Continue (${n} places)`) : n ? tr("続きから", "Continue") : tr("続きの箱が無い", "No box to continue from");
-    return n > 1 ? tr(`形の合う箱へ (${n} か所)`, `Matching box (${n} places)`) : n ? tr("形の合う箱へ", "Matching box") : tr("形の合う箱へ (無し)", "Matching box (none)");
+    const n = backTargetsOf(doc.value, b.id).length;
+    // 本番の言い方 (クラフト台の「もう一度押すと続きから」)。オーナー 10-22「本番は形の合う箱へって選択しない」、言葉の案 1
+    return n > 1 ? tr(`続きから (${n} か所)`, `Continue (${n} places)`) : n ? tr("続きから", "Continue") : tr("続きの箱が無い", "No box to continue from");
   }
   if (b.back === RESTART) return tr("作り直し", "Start over");
   const to = b.back ? doc.value.boxes[b.back] : null;
@@ -191,7 +155,8 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[]): void {
 }
 /**
  * Vue Flow の出来事: 空き所を押す = 右の欄を閉じる (よくあるモーダルと同じ。オーナー 10-22。引っ張った時は Vue Flow が画面を動かすだけ)。
- * 箱を押す = 戻り先を選んでいる時はそこへつなぐ / 縮めて見ている時はそこへ寄る / ふつうは試し打ちの欄 (手の間は何もしない)。
+ * 箱を押す = 戻り先を選んでいる時はそこへつなぐ / 縮めて見ている時は編集のポップアップ / ふつうは開いている欄を閉じるだけ
+ * (試し打ちの欄は 10-22 に消した、オーナー「試し打ちマジ意味わからんから消して」。箱の時点のアイテムは乗せた時のカード)。
  * 箱を引っ張る = 動かす (startDrag。Vue Flow の引っ張りは使わない)
  */
 function onPaneClick(): void { if (panel.value) closeHand(); }
@@ -203,12 +168,10 @@ function onNodeClick(e: NodeMouseEvent): void {
   if (picking.value) { if (picking.value !== b.id) onTarget(b); return; }
   // 縮めて見ている時は、その箱の編集を等倍のポップアップで (オーナー 10-22「75% 未満の見るだけをやめる」)
   if (viewOnly.value) { pop.value = b.id; return; }
-  hoverBack.value = null;
-  panel.value = { kind: "trial", id: b.id };
+  if (panel.value) closeHand();
 }
 /** 箱を引っ張る (use-gesture.ts: 遊び 5px を超えた後も押した所からの差をそのまま使う。差はツリーの倍率で割る) */
 function startDrag(b: Box, e: PointerEvent): void {
-  hoverBack.value = null;
   gesture(e, {
     onStart: () => { drag.value = { id: b.id, x: b.x, y: b.y }; },
     onMove: (p) => { if (drag.value) { drag.value.x = b.x + p.dx / zoom.value; drag.value.y = b.y + p.dy / zoom.value; } },
@@ -274,7 +237,7 @@ const { issues, issuesOpen, checking, onCheck, issueOf } = useTreeCheck(doc);
 function goIssue(id: string): void { void v.reveal(id, true); }
 
 /** 整列して、全体に合わせる (1 つ戻すで元の並びへ) */
-const tidyOf = (d: typeof doc.value): void => { const p = TREE_NEXT ? pillIds(d) : null; tidy(d, { pill: (id) => !!p?.has(id) }); };
+const tidyOf = (d: typeof doc.value): void => { const p = pillIds(d); tidy(d, { pill: (id) => p.has(id) }); };
 async function onTidy(): Promise<void> {
   t.edit(tidyOf);
   await v.fit();
@@ -300,7 +263,6 @@ function plusAt(cx: number, cy: number): void {
 }
 function onPlus(b: Box, kind: "side" | "next", e: PointerEvent): void {
   if (viewOnly.value) return;
-  hoverBack.value = null;
   gesture(e, {
     holdMs: HOLD_MS,
     onStart: (q) => { plus.value = { id: b.id, kind, cx: q.clientX, cy: q.clientY, target: null }; plusAt(q.clientX, q.clientY); },
@@ -366,7 +328,7 @@ onMounted(() => {
   const sample = name ? treeSample(name) : null;
   if (!sample) return;
   try { localStorage.setItem("exiledesk.tree.v0.before-sample", JSON.stringify(doc.value)); } catch { /* 控えられなくても開く */ }
-  t.edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, sample); if (TREE_NEXT) tidyOf(d); });
+  t.edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, sample); tidyOf(d); });
 });
 onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); });
 
@@ -399,7 +361,7 @@ const glowOf = (b: Box): boolean => {
         <span class="ml-auto flex items-center gap-1">
           <button type="button" data-tree-undo class="g-btn sm inline-flex items-center gap-1" :disabled="!t.canUndo.value" :title="tr('1 つ戻す (Ctrl+Z)', 'Undo (Ctrl+Z)')" @click="t.undo"><Icon name="undo" class="size-4" />{{ tr("1 つ戻す", "Undo") }}</button>
           <button type="button" data-tree-tidy class="g-btn sm" :title="tr('段ごとに横一列・親は子の並びの真ん中・線は直角の木の線 (1 つ戻すで元の並びへ)', 'Rows by depth, each parent centered over its children, right-angle tree lines (undo restores)')" @click="onTidy">{{ tr("整列", "Tidy") }}</button>
-          <button v-if="TREE_NEXT && TREE_LINES === 'a'" type="button" data-tree-lines-all class="g-btn sm" :aria-pressed="linesAll" :title="tr('戻りの線を全部出す (もう一度押すと、乗せた箱の線だけ)', 'Show all return lines (click again to show only the hovered box’s lines)')" @click="linesAll = !linesAll">{{ linesAll ? tr("線を隠す", "Hide lines") : tr("線を全部表示", "Show all lines") }}</button>
+          <button type="button" data-tree-lines-all class="g-btn sm" :aria-pressed="linesAll" :title="tr('戻りの線を全部出す (もう一度押すと、乗せた箱の線だけ)', 'Show all return lines (click again to show only the hovered box’s lines)')" @click="linesAll = !linesAll">{{ linesAll ? tr("線を隠す", "Hide lines") : tr("線を全部表示", "Show all lines") }}</button>
           <button type="button" data-tree-check class="g-btn sm" :disabled="checking" :title="tr('5 人をエンジンで辿って、止まる所・打てない手・付かない当たり・完成に着かない道を探す (費用は出さない)', 'Walk 5 runs with the engine to find dead ends, unusable crafts, unreachable hits and paths that never finish (no costs)')" @click="onCheck">{{ checking ? tr("精査中…", "Checking…") : tr("ルート精査", "Check route") }}</button>
           <button type="button" data-tree-memo class="g-btn sm inline-flex items-center gap-1" :aria-pressed="memoOpen" :title="tr('欲しい MOD とメモの窓 (ツリーを押しても閉じない)', 'Wanted mods & notes window (stays open while you edit)')" @click="memoOpen = !memoOpen"><Icon name="pencil" class="size-4" />{{ tr("メモ", "Notes") }}<span v-if="doc.note" class="size-1.5 rounded-full bg-amber-400" /></button>
           <button type="button" data-tree-full class="g-btn sm" :aria-pressed="full" @click="v.toggleFull">{{ full ? tr("全画面を閉じる", "Exit full screen") : tr("全画面に広げる", "Full screen") }}</button>
@@ -419,10 +381,10 @@ const glowOf = (b: Box): boolean => {
             @pane-click="onPaneClick" @node-click="onNodeClick">
             <template #node-box="{ id }">
               <TreeBox v-if="doc.boxes[id]" :box="doc.boxes[id]!" :removable="canRemove(doc, id)" :picking="!!picking && picking !== id"
-                :selected="panel?.id === id || picking === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand" :glow="glowOf(doc.boxes[id]!) || plus?.target === id || (!!hoverBack && !!backTargets.get(hoverBack)?.includes(id))" :issue="issueOf(doc.boxes[id]!)" :inv="inv" :link-no="picking ? link.get(id) ?? null : null"
+                :selected="panel?.id === id || picking === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand" :glow="glowOf(doc.boxes[id]!) || plus?.target === id" :issue="issueOf(doc.boxes[id]!)" :inv="inv" :link-no="picking ? link.get(id) ?? null : null"
                 @drag="startDrag(doc.boxes[id]!, $event)" @aim="onAim(doc.boxes[id]!)" @plus="(k, e) => onPlus(doc.boxes[id]!, k, e)" @remove="t.edit((d) => removeHit(d, id))"
                 @back="picking = id" @clear-back="t.edit((d) => setBack(d, id, null))" @done="onDone(doc.boxes[id]!)"
-                @note="panel = { kind: 'note', id }" @spam="onSpam(doc.boxes[id]!)" @back-hover="(on) => (hoverBack = on ? id : null)" @back-go="goBack(doc.boxes[id]!)" @hover="(on) => (hoverBox = on ? id : hoverBox === id ? null : hoverBox)" />
+                @note="panel = { kind: 'note', id }" @spam="onSpam(doc.boxes[id]!)" @back-go="goBack(doc.boxes[id]!)" @hover="(on) => (hoverBox = on ? id : hoverBox === id ? null : hoverBox)" />
             </template>
             <!-- Vue Flow の倍率と移動が掛かる層: 線は箱の後ろ (z-index -1)、打つ手の札・引っ張る線・戻りの弧は箱の前 -->
             <template #zoom-pane>
@@ -434,17 +396,14 @@ const glowOf = (b: Box): boolean => {
                   <path :d="e.stem" :stroke="LINE.fwd" stroke-width="2" fill="none" />
                   <path v-for="o in e.to" :key="o.id" :d="o.d" :stroke="o.color" stroke-width="2" stroke-linejoin="round" fill="none" :marker-end="`url(#tree-arrow-${o.kind})`" />
                 </g>
-                <!-- 戻りの弧 (いつも細く薄く。乗せた物は下の箱の前の層で明るく) -->
-                <path v-for="a in backArcs" :key="`back-${a.id}`" data-tree-back-arc :data-from="a.from" :d="a.d" :stroke="LINE.back" stroke-opacity="0.45" stroke-width="2" stroke-linecap="round" fill="none" marker-end="url(#tree-arrow-back)" />
               </svg>
-              <!-- 矢印の上の札 = 打つ手 (押すと替える・消す)。札から流れ込む線と札 (&ui=next) -->
+              <!-- 矢印の上の札 = 打つ手 (押すと替える・消す)。札から流れ込む線と札 (まとめた箱) -->
               <TreeHandChip v-for="e in edges" :key="`hand-${e.id}`" :id="e.id" :hand="e.hand" :x="e.jx" :y="e.jy" :inv="inv" :off="hand" @open="panel = { kind: 'hand', id: e.id }" />
               <TreeMergeLayer v-if="merged" :doc="doc" :pills="[...pills]" :lines="merged.lines" :paths="merged.paths" :hover="hoverBox" :show-all="linesAll" :inv="inv" :off="hand" @open="(id) => (pop = id)" @hover="(id) => (hoverBox = id)" />
               <!-- 引っ張っている＋の線と、戻り先の札に乗せた時の線は箱の前 (相手の箱の上まで見える) -->
-              <svg v-if="plusLine || backLines.length" class="pointer-events-none absolute left-0 top-0 z-10 overflow-visible" width="1" height="1">
+              <svg v-if="plusLine" class="pointer-events-none absolute left-0 top-0 z-10 overflow-visible" width="1" height="1">
                 <defs><marker id="tree-arrow-drag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" :fill="LINE.back" /></marker></defs>
                 <path v-if="plusLine" data-tree-plus-line :d="plusLine" :stroke="LINE.back" stroke-width="3" stroke-linecap="round" fill="none" marker-end="url(#tree-arrow-drag)" />
-                <path v-for="(d, i) in backLines" :key="i" data-tree-back :d="d" :stroke="LINE.back" stroke-width="2.5" stroke-linecap="round" fill="none" marker-end="url(#tree-arrow-drag)" />
               </svg>
             </template>
           </VueFlow>
@@ -475,16 +434,14 @@ const glowOf = (b: Box): boolean => {
               @back="popDo((id) => (picking = id))" @clear-back="t.edit((d) => setBack(d, pop!, null))" @done="onDone(doc.boxes[pop!]!)"
               @note="popDo((id) => (panel = { kind: 'note', id }))" @spam="onSpam(doc.boxes[pop!]!)" @back-go="popDo((_, b) => goBack(b))" />
           </div>
-          <button type="button" data-tree-pop-trial class="g-btn sm absolute bottom-2 right-2" @click="popDo((id) => (panel = { kind: 'trial', id }))">{{ tr("試し打ち", "Try it") }}</button>
         </div>
         <TreeHoverCard v-if="cardBox && doc.boxes[cardBox]" :box-id="cardBox" :rect="v.rectOf(doc.boxes[cardBox]!)" />
         <TreeCanvasTools v-model:hand="hand" :boxes="boxes" :view="v.view.value" :zoom="zoom" @center="v.centerOn" @fit="v.fit" @zoom-in="v.zoomIn" @zoom-out="v.zoomOut" @reset="v.resetZoom" />
         </div>
 
         <!-- 右の欄 -->
-        <aside v-if="panel && panelBox" ref="aside" data-tree-panel class="flex shrink-0 flex-col overflow-y-auto rounded-md bg-white/[0.04] p-3" :class="panel.kind === 'trial' ? 'w-[max(400px,min(780px,44%))]' : panel.kind === 'hand' ? 'w-[400px]' : 'w-[320px]'">
+        <aside v-if="panel && panelBox" ref="aside" data-tree-panel class="flex shrink-0 flex-col overflow-y-auto rounded-md bg-white/[0.04] p-3" :class="panel.kind === 'hand' ? 'w-[400px]' : 'w-[320px]'">
           <TreeHandShelf v-if="panel.kind === 'hand'" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" />
-          <TreeTrial v-else-if="panel.kind === 'trial'" :key="`t-${panel.id}`" :box-id="panel.id" @close="panel = null" @next="panel = { kind: 'hand', id: panel.id }" @note="panel = { kind: 'note', id: panel.id }" />
           <TreeNote v-else-if="panel.kind === 'note'" :key="`n-${panel.id}`" :box-id="panel.id" @close="panel = null" />
           <TreeModPick v-else :key="`m-${panel.id}-${panel.kind}`" :mode="panel.kind === 'fracture' ? 'fracture' : 'hit'" :current="panel.kind === 'fracture' ? doc.fracture : panelBox.aim" @pick="pickAim" @close="panel = null" />
         </aside>

@@ -265,14 +265,6 @@ export function sampleKeyOf(d: TreeDoc): string {
   return JSON.stringify({ ...d, note: undefined, memoAims: undefined, memoCurrencies: undefined, boxes });
 }
 
-/** × の印を付ける / 外す */
-export function toggleUnwanted(d: TreeDoc, id: string, modId: string): void {
-  const b = d.boxes[id];
-  if (!b) return;
-  const list = b.unwanted ?? [];
-  const next = list.includes(modId) ? list.filter((x) => x !== modId) : [...list, modId];
-  if (next.length) b.unwanted = next; else delete b.unwanted;
-}
 
 /** メモの窓の札を足す / 消す (同じ物は 1 つ) */
 export function toggleMemoAim(d: TreeDoc, a: Aim): void {

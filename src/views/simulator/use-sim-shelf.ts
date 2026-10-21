@@ -1,6 +1,6 @@
 /**
  * use-sim-shelf.ts — シミュの画面で見本のアイテムにクラフト台の棚 (CurrencyShelf) を出す時の共通の部品 (2026-10-22 code-audit 2 節。
- * 木の手を選ぶ TreeHandShelf・試し打ち TreeTrial・シミュのクイズ StageQuizEditor の写しをまとめた)。
+ * 木の手を選ぶ TreeHandShelf・シミュのクイズ StageQuizEditor の写しをまとめた。ツリーの試し打ち TreeTrial は 10-22 に消した)。
  * provideShelf で見本を棚に渡し、打てるか (当たり所で弾かれるだけの物は打てる扱い、オーナーの方針 2026-10-12) とお告げの付け外しを決める。
  * 持つ / 離すはクラフト台と同じ: 同じ物をもう一度押す・棚の空いている所を押す = 離す (お告げも外す、オーナー 10-22)
  */

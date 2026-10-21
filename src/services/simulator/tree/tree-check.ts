@@ -48,7 +48,7 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
   // 1b) 形の合う箱へ: 行きうる形の箱がツリーに無い (tree-run の matchTargets、回す時と同じ判定)
   for (const b of boxes) if (b.back === MATCH) {
     const miss = matchTargets(doc, b.id).filter((x) => !x.to);
-    if (miss.length) add(b.id, "noMatch", tr(`形の合う箱が無い (${miss.length} つの形。その形で手のある箱を作る)`, `No box matches (${miss.length} shape(s)); add a box with that shape and a craft`));
+    if (miss.length) add(b.id, "noMatch", tr(`続きの箱が無い (${miss.length} つの形。その形で手のある箱を作る)`, `No box to continue from (${miss.length} shape(s)); add a box with that shape and a craft`));
   }
 
   // 2) 完成に着かない道・抜けられない輪 (矢印を逆に辿って、完成の箱へ行ける箱を集める)

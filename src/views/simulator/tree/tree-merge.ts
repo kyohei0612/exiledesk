@@ -5,16 +5,11 @@
  * まとめる箱 = 次の手が無く、戻りの矢印だけの箱 (↩ 続き・↩ 決めた箱)。その箱の先は「今のアイテムの形と同じ箱」= もうある箱なので、
  * 箱を描かず子の段の小さな札 (pill) にして、札から行き先の箱の打つ手の札へ線を流し込む。行き先が同じ線は途中で 1 本に束ねる (tree-lines の bundle)。
  * 行き先の判定は回す時と同じ tree-run の matchTargets (形 = 付いている狙いの組 + 外れがあるか)。
- * 開発版だけ・URL の印 &ui=next の時だけ (オーナーに今の形と比べて選んでもらう、ブラック 10-22)。&lines=a (既定は線無し + ホバー + 全部表示の切り替え) / b (いつも出す・淡く)
+ * 戻りの線は既定で出さず、乗せた箱・札の線だけ (帯の「線を全部表示」で全部)。オーナー 10-22 に案 A を選んだ (いつも淡く出す案 B は消した)
  */
 import { BOX_H, BOX_W, PILL_H, PILL_W, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { MATCH, matchTargets, RESTART } from "../../../services/simulator/tree/tree-run";
 import { handAnchor, type BackReq, type Pos } from "./tree-lines";
-
-const q = typeof location !== "undefined" ? new URLSearchParams(location.search) : new URLSearchParams();
-/** &ui=next = 案の見え方 (まとめる・言葉・外れ MOD の行・ホバーのカード・札・数字の行)。&lines=a | b = 戻りの線の出し方 */
-export const TREE_NEXT = q.get("ui") === "next";
-export const TREE_LINES: "a" | "b" = q.get("lines") === "b" ? "b" : "a";
 
 /** 戻りの行き先の箱 (↩ 続き = 行きうる形の箱を全部、↩ 作り直しは無し) */
 export function backTargetsOf(doc: TreeDoc, id: string): string[] {
