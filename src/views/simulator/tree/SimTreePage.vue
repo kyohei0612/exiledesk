@@ -93,6 +93,16 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[]): void {
   pendingDrop = null;
   panel.value = null;
 }
+/**
+ * ツリーの空いた所を押した = 右の欄を閉じる (よくあるモーダルと同じ。オーナー 10-22)。
+ * 空き所のドラッグは画面を動かすだけ (動かさずに離した時だけ閉じる)
+ */
+function onCanvasDown(e: PointerEvent): void {
+  v.pan(e, !!picking.value || !!plus.value);
+  if (!panel.value || picking.value || (e.target as HTMLElement).closest("[data-tree-box],button")) return;
+  const sx = e.clientX, sy = e.clientY;
+  window.addEventListener("pointerup", (u) => { if (Math.hypot(u.clientX - sx, u.clientY - sy) <= DRAG_SLOP) closeHand(); }, { once: true });
+}
 function closeHand(): void { pendingDrop = null; panel.value = null; }
 function clearHandOf(): void { const id = panel.value!.id; t.edit((d) => clearHand(d, id)); panel.value = null; }
 function pickAim(a: Aim): void {
@@ -281,7 +291,7 @@ const glowOf = (b: Box): boolean => !!glowAim.value && b.out === "hit" && !!b.ai
 
       <div class="flex min-h-0 gap-2" :class="full ? 'flex-1' : 'h-[calc(100vh-230px)] min-h-[480px]'">
         <!-- ツリー -->
-        <div ref="viewport" data-tree-canvas class="relative min-w-0 flex-1 cursor-move overflow-auto rounded-md bg-black/30" @pointerdown="v.pan($event, !!picking || !!plus)">
+        <div ref="viewport" data-tree-canvas class="relative min-w-0 flex-1 cursor-move overflow-auto rounded-md bg-black/30" @pointerdown="onCanvasDown">
           <div class="relative" :style="{ width: `${area.w * zoom}px`, height: `${area.h * zoom}px` }">
             <div class="absolute left-0 top-0 origin-top-left" :style="{ width: `${area.w}px`, height: `${area.h}px`, transform: `scale(${zoom})` }">
               <svg class="pointer-events-none absolute inset-0" :width="area.w" :height="area.h">
