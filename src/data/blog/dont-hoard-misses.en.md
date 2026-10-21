@@ -5,6 +5,7 @@ date: 2026-10-22
 tags: Gold Ring, Chaos Orb, Orb of Annulment, Omen of Catalysing Exaltation, expected cost
 tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
+draft: true
 ---
 For a PoE2 ring suffix craft with three targets, the cheapest method was to **annul a miss the moment it rolls**. Putting Rarity, Cast Speed and all Elemental Resistances on a Gold Ring cost 400 Divine Orbs (div) per ring when misses were held until the suffixes were full, and 220 div when they were annulled at once.
 

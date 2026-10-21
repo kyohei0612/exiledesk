@@ -5,6 +5,7 @@ date: 2026-10-22
 tags: Gold Ring, Essence of the Breach, Omen of Whittling, Quality, captions
 tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
+draft: true
 ---
 We decoded a PoE2 Gold Ring craft from a video, step by step, fixing misheard Japanese captions into poe2db names. The "+20% to Maximum Quality" added midway is **a ladder to 40% Quality and bait that an Omen of Whittling is sure to remove**.
 

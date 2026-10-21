@@ -5,6 +5,7 @@ date: 2026-10-22
 tags: expected cost, Orb of Annulment, Omen, Chaos Orb, gloves
 tree: /?page=sim-tree&base=Intricate%20Gloves
 craft: /?base=Intricate%20Gloves
+draft: true
 ---
 Working PoE2 crafting expected cost backward from the finished item, the cheapest route **barely used expensive Omens and removed misses with a plain Orb of Annulment**. On one pair of gloves, a route close to intuition cost about 3,400 Divine Orbs (div), while the best route cost 105 div, and 94 div over 1,000 engine runs.
 
