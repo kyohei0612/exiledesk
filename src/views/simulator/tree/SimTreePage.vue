@@ -5,7 +5,7 @@
   箱はドラッグで動かす、1 つ戻す / Ctrl+Z。全体図 = 全画面に広げる / 全体を縮めて一望 (閉じたら元の位置へ)。100 人回す計算はまだ繋がない
 -->
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
 import TreeBox from "./TreeBox.vue";
 import TreeHandPick from "./TreeHandPick.vue";
@@ -20,6 +20,8 @@ import { tr } from "../../../i18n/lang";
 const t = useTree();
 const doc = t.doc;
 const PAD = 80;
+/** これより動かしたらドラッグ、動かさずに離したら押した (手のぶれで箱が動かないよう 5px) */
+const DRAG_SLOP = 5;
 
 /** 右の欄 (箱を選んだ時だけ) */
 const panel = ref<{ kind: "hand" | "aim" | "fracture" | "trial"; id: string } | null>(null);
@@ -135,8 +137,30 @@ function endDrag(): void {
   window.removeEventListener("pointermove", onMove);
   const g = drag.value;
   drag.value = null;
-  if (g && (Math.abs(g.x - g.bx) > 2 || Math.abs(g.y - g.by) > 2)) t.edit((d) => moveBox(d, g.id, g.x, g.y));
+  if (g && (Math.abs(g.x - g.bx) > DRAG_SLOP || Math.abs(g.y - g.by) > DRAG_SLOP)) t.edit((d) => moveBox(d, g.id, g.x, g.y));
   else if (g) panel.value = { kind: "trial", id: g.id }; // 動かさずに離した = 箱を押した → 試し打ち
+}
+
+/** 箱を見える所へ送る (右の欄を開いた時・一望で押した時) */
+function reveal(id: string, center = false): void {
+  // ツリーの枠の中だけ送る (scrollIntoView はページごと送って題が隠れる)
+  void nextTick(() => {
+    const el = viewport.value, b = el?.querySelector<HTMLElement>(`[data-box-id="${id}"]`);
+    if (!el || !b) return;
+    const v = el.getBoundingClientRect(), r = b.getBoundingClientRect(), m = 24;
+    const dx = center ? r.left + r.width / 2 - (v.left + v.width / 2) : r.left < v.left + m ? r.left - v.left - m : r.right > v.right - m ? r.right - v.right + m : 0;
+    const dy = center ? r.top + r.height / 2 - (v.top + v.height / 2) : r.top < v.top + m ? r.top - v.top - m : r.bottom > v.bottom - m ? r.bottom - v.bottom + m : 0;
+    el.scrollBy({ left: dx, top: dy });
+  });
+}
+watch(() => panel.value?.id, (id) => { if (id) reveal(id); });
+/** 一望で箱を押した = 一望を閉じてその箱へ寄る */
+async function focusBox(id: string): Promise<void> {
+  saved = null;
+  overview.value = false;
+  await nextTick();
+  measure();
+  reveal(id, true);
 }
 
 // 全体図: 広げる (全画面) / 一望 (縮める)。閉じたら元のスクロールの位置へ
@@ -208,11 +232,11 @@ const panelBox = computed(() => (panel.value ? doc.value.boxes[panel.value.id] ?
                 <path v-for="b in backs" :key="`back-${b.id}`" :d="b.d" stroke="#5fd0e0" stroke-width="2.5" fill="none" marker-end="url(#tree-arrow-back)" />
               </svg>
               <!-- 矢印の上の札 = 打つ手 (押すと替える・消す) -->
-              <button v-for="e in edges" :key="`hand-${e.id}`" type="button" data-tree-hand class="absolute max-w-[300px] -translate-x-1/2 -translate-y-1/2 truncate rounded-full border-2 border-amber-500/70 bg-[#221a10] px-3 py-0.5 text-[12px] font-bold text-amber-100 hover:bg-amber-500/25"
-                :style="{ left: `${e.jx}px`, top: `${e.jy}px` }" :title="handLabel(e.hand)" @click="panel = { kind: 'hand', id: e.id }">{{ handLabel(e.hand) }}</button>
-              <TreeBox v-for="b in boxes" :key="b.id" :box="b" :x="posOf(b).x + ox" :y="posOf(b).y + oy" :removable="canRemove(doc, b.id)" :picking="!!picking && picking !== b.id" :selected="panel?.id === b.id || picking === b.id" :back-label="backLabel(b)"
+              <button v-for="e in edges" :key="`hand-${e.id}`" type="button" data-tree-hand class="absolute max-w-[300px] -translate-x-1/2 -translate-y-1/2 truncate rounded-full border-2 border-amber-500/70 bg-[#221a10] px-3 py-1 text-[12px] font-bold text-amber-100 hover:bg-amber-500/25"
+                :class="overview ? 'pointer-events-none' : ''" :style="{ left: `${e.jx}px`, top: `${e.jy}px` }" :title="handLabel(e.hand)" @click="panel = { kind: 'hand', id: e.id }">{{ handLabel(e.hand) }}</button>
+              <TreeBox v-for="b in boxes" :key="b.id" :box="b" :x="posOf(b).x + ox" :y="posOf(b).y + oy" :removable="canRemove(doc, b.id)" :picking="!!picking && picking !== b.id" :selected="panel?.id === b.id || picking === b.id" :back-label="backLabel(b)" :view-only="overview"
                 @drag="startDrag(b, $event)" @aim="onAim(b)" @next="panel = { kind: 'hand', id: b.id }" @add-hit="onAddHit(b)" @remove="t.edit((d) => removeHit(d, b.id))"
-                @back="picking = b.id" @clear-back="t.edit((d) => setBack(d, b.id, null))" @done="onDone(b)" @target="onTarget(b)" />
+                @back="picking = b.id" @clear-back="t.edit((d) => setBack(d, b.id, null))" @done="onDone(b)" @target="onTarget(b)" @focus="focusBox(b.id)" />
             </div>
           </div>
         </div>

@@ -41,7 +41,7 @@ export interface TreeDoc {
 }
 
 export const BOX_W = 196;
-export const BOX_H = 104;
+export const BOX_H = 112;
 const GAP_X = 220;
 const GAP_Y = 190;
 

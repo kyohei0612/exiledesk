@@ -64,7 +64,7 @@ function ok(): void { if (hand.value) emit("pick", hand.value, kind.value); }
         <button type="button" class="rounded-md border px-2 py-1 text-[12px]" :class="!side ? 'border-amber-400/80 bg-amber-500/20' : 'border-white/15'" @click="side = null">{{ tr("側なし", "No side") }}</button>
         <button v-for="o in sides" :key="o" type="button" class="rounded-md border px-2 py-1 text-[12px]" :class="side === o ? 'border-amber-400/80 bg-amber-500/20 text-amber-100' : 'border-white/15'" @click="side = o">{{ nameOfKey(o) }}</button>
       </div>
-      <label v-if="kind === 'add'" class="flex items-center gap-2"><input v-model="catalysing" type="checkbox" />{{ nameOfKey(CATALYSING) }}</label>
+      <label v-if="kind === 'add'" class="flex min-h-7 cursor-pointer items-center gap-2"><input v-model="catalysing" type="checkbox" />{{ nameOfKey(CATALYSING) }}</label>
       <div v-if="kind === 'add' && catalysing" class="flex flex-wrap items-center gap-2 pl-5">
         <select v-model="catalyst" class="h-8 rounded-md border border-white/15 bg-black/40 px-1">
           <option v-for="c in TREE_CATALYSTS" :key="c" :value="c">{{ nameOfKey(c) }}</option>
@@ -72,7 +72,7 @@ function ok(): void { if (hand.value) emit("pick", hand.value, kind.value); }
         <span class="flex items-center gap-1">{{ tr("品質", "Quality") }}<input v-model.number="quality" type="number" min="1" max="40" class="h-8 w-14 rounded-md border border-white/15 bg-black/40 px-1 text-right" />%</span>
         <span class="w-full text-[11px] opacity-60">{{ tr("打つたびにこの品質まで上げ直す (触媒は 1 回で品質を使い切る)", "Re-raised to this quality every time (Catalysing uses up the quality)") }}</span>
       </div>
-      <label v-if="kind === 'swap'" class="flex items-center gap-2"><input v-model="whittling" type="checkbox" />{{ nameOfKey(WHITTLING) }}</label>
+      <label v-if="kind === 'swap'" class="flex min-h-7 cursor-pointer items-center gap-2"><input v-model="whittling" type="checkbox" />{{ nameOfKey(WHITTLING) }}</label>
       <p v-if="kind === 'remove' && !sides" class="text-[12px] opacity-60">{{ tr("無し", "None") }}</p>
     </div>
 
