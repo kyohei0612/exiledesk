@@ -5,6 +5,7 @@ date: 2026-10-22
 tags: Gold Ring, Chaos Orb, Orb of Annulment, Omen of Catalysing Exaltation, expected cost
 tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
+image: img/dont-hoard-misses-og.en.png
 draft: true
 ---
 We had three groups of 300 crafters make the same Gold Ring. The only difference was one decision: what to do when a miss rolls. In this PoE2 ring suffix craft, the group that **annulled every miss on the spot** paid 220 Divine Orbs (div) per ring. The group that held misses until the suffixes were full paid 400.
