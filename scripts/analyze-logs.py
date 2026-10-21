@@ -1,7 +1,7 @@
 # 分析用の記録の動向 (2026-10-10、2026-10-19 に来た・PV・流れ・チュートリアル・スパムシミュレーターを足した)
 #   python scripts/analyze-logs.py data-cache/logs/2026-10-15.jsonl data-cache/logs/2026-10-16.jsonl ...   (data-cache/logs/*.jsonl でも可)
 # 記録の取り出し: node scripts/pull-logs.mjs <日付> ... (鍵が無ければ wrangler で D1 を読む)。1 行 = 届いた 1 まとまり {at, country, b: {app, v, uid, sid, dev, recs}}
-# 記録の中身はメモ analytics-logs (visit・screen・emu_use・aim_odds / aim_roll・emu_spam / emu_spam_share・routes_calc / routes_shared・tutorial・pwa・gem_corrupt)
+# 記録の中身はメモ analytics-logs (visit・screen・emu_use・aim_odds / aim_roll・emu_spam / emu_spam_share・routes_calc / routes_shared・tutorial・pwa・gem_corrupt・ブログの screen "blog:<slug>:<言語>"・blog_share)
 import collections, glob, json, statistics, sys
 from datetime import datetime, timedelta, timezone
 
@@ -32,12 +32,12 @@ for x in rows:
     if b.get("app") not in (None, "web"):
         continue
     sid = b.get("sid") or f"{b.get('uid')}:{x.get('at')}"
-    s = sess.setdefault(sid, {"uid": b.get("uid"), "dev": b.get("dev"), "v": b.get("v"), "country": x.get("country"), "visit": None, "screens": [], "uses": 0, "rare": False, "t0": None})
+    s = sess.setdefault(sid, {"uid": b.get("uid"), "dev": b.get("dev"), "v": b.get("v"), "country": x.get("country"), "visit": None, "visits": 0, "screens": [], "uses": 0, "rare": False, "t0": None})
     for r in b.get("recs", []):
         r = {**r, "uid": b.get("uid"), "sid": sid, "dev": b.get("dev"), "v": b.get("v")}
         recs[r["k"]].append(r)
         s["t0"] = min(s["t0"] or r["t"], r["t"])
-        if r["k"] == "visit": s["visit"] = r["d"]
+        if r["k"] == "visit": s["visit"] = r["d"]; s["visits"] += 1
         elif r["k"] == "screen": s["screens"].append(r["d"].get("to", ""))
         elif r["k"] == "emu_use":
             s["uses"] += 1
@@ -62,8 +62,11 @@ print(f"また来た (2 日以上来た人): {multi} / {len(uid_days)} ({pct(mul
 
 # ---- PV (広告の枠を出し直すページ。来た 1 回 + ページを移った回数) ----
 print("\n== PV (来た 1 回 + ページを移った回数)")
-PAGE = lambda to: to in ("picker", "guide", "feedback", "routes", "craft", "spam") or to.startswith("course:")
-def pv(s): return 1 + sum(1 for t in s["screens"] if PAGE(t))
+PAGE = lambda to: to in ("picker", "guide", "feedback", "routes", "craft", "spam") or to.startswith(("course:", "blog:"))
+# ブログは 1 ページ開くたびに visit + screen "blog:<slug>:<言語>" (scripts/_blog-client.js)、溜めて送るので 1 つの sid に何ページも入る。ブログの visit は screen の側で数える (2026-10-21)
+def pv(s):
+    blog = sum(1 for t in s["screens"] if t.startswith("blog:"))
+    return (1 if s["visits"] > blog or not blog else 0) + sum(1 for t in s["screens"] if PAGE(t))
 for name, lo, hi in (("〜0.1.572 (ページの作りの前。参考: 前はページを移っても広告を出し直さない)", 0, 573), ("0.1.573〜579 (クラフトへ戻るは数えていない)", 573, 580), ("0.1.580〜", 580, 10**6)):
     xs = [s for s in sessions if lo <= ver(s["v"]) < hi]
     if not xs: continue
@@ -71,7 +74,21 @@ for name, lo, hi in (("〜0.1.572 (ページの作りの前。参考: 前はペ�
     for s in xs: per_user[s["uid"]] += pv(s)
     print(f"{name}: 訪問 {len(xs)} / PV / 訪問 平均 {avg([pv(s) for s in xs])}・真ん中 {med([pv(s) for s in xs])} / PV / 人 {avg(list(per_user.values()))}"
           f" (PC {avg([pv(s) for s in xs if s['dev'] == 'pc'])}・スマホ {avg([pv(s) for s in xs if s['dev'] == 'mobile'])})")
-print("画面の切り替え:", top(collections.Counter("course" if t.startswith("course:") else t for s in sessions for t in s["screens"]), 15))
+print("画面の切り替え:", top(collections.Counter("course" if t.startswith("course:") else "blog" if t.startswith("blog:") else t for s in sessions for t in s["screens"]), 15))
+
+# ---- ブログ (2026-10-21〜。画面名 blog:<slug>:<言語>、一覧は blog:index:<言語>) ----
+blog = [r for r in recs["screen"] if str(r["d"].get("to", "")).startswith("blog:")]
+if blog:
+    print(f"\n== ブログ: PV {len(blog)} / 人 {len({r['uid'] for r in blog})} / 日本語 {sum(1 for r in blog if r['d']['to'].endswith(':ja'))}・英語 {sum(1 for r in blog if r['d']['to'].endswith(':en'))}")
+    arts = collections.defaultdict(lambda: collections.Counter())
+    for r in blog:
+        slug, _, lang = r["d"]["to"][5:].rpartition(":")
+        arts[slug][lang] += 1
+    for slug, c in sorted(arts.items(), key=lambda kv: -sum(kv[1].values())):
+        print(f"  {slug}: {sum(c.values())} (" + "・".join(f"{l} {n}" for l, n in sorted(c.items())) + ")")
+    bv = [r["d"] for r in recs["visit"] if str(r["d"].get("entry", "")).startswith("path:/") and "/blog" in str(r["d"].get("path", ""))]
+    print("ブログへどこから (ref):", top(collections.Counter(v.get("ref") for v in bv), 8))
+    print(f"シェアを押した: {len(recs['blog_share'])}", top(collections.Counter(r["d"].get("to") for r in recs["blog_share"]), 5))
 
 # ---- 流れ (訪問のうち、どこまで進んだか) ----
 print("\n== 流れ (訪問のうち。段はそれぞれ別に数える: 少ない手でレアになる人もいる)")
