@@ -11,7 +11,8 @@
  * シェア (X・Reddit・リンクのコピー・Discord 向けのコピー) と、記事を 1 ページとして数える小さな JS (scripts/_blog-client.js → /blog/blog.js)。
  * OGP の絵は 記事の image → img/<slug>-og.<言語>.png → 本文の 1 枚目の (svg でない) 図 → 題を描いた絵 (scripts/_blog-og.mjs、/blog/og/<言語>-<slug>.png) の順。記事の下にコメント欄の置き場 (#comments、中身はこれから)。
  *
- *   node scripts/build-blog-pages.mjs [出力先 (既定 dist-web)] [--drafts]
+ *   node scripts/build-blog-pages.mjs [出力先 (既定 dist-web)] [--drafts] [--as-published]
+ * --as-published: 下書きを外した時と同じに作る (本番で draft を一度に外す前に、サイトマップ・一覧に全部入るかを確かめる用)
  * 今は開発版 (scripts/deploy-web-dev.mjs) の中でだけ回す (--drafts 付き)。本番の build:web にはまだ入れない (オーナーが記事を読んでから)
  */
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -23,6 +24,7 @@ import { titleCard } from "./_blog-og.mjs";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
 const DEV = args.includes("--drafts");
+const AS_PUBLISHED = args.includes("--as-published");
 const OUT = resolve(ROOT, args.find((a) => !a.startsWith("--")) ?? "dist-web");
 const SRC = resolve(ROOT, "src/data/blog");
 const SITE = "https://exiledesk.com";
@@ -32,6 +34,7 @@ const M = await bundleEntry(resolve(ROOT, "src/services/blog/blog-md.ts"));
 
 const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const posts = readdirSync(SRC).filter((f) => f.endsWith(".md")).map((f) => M.parseBlogFile(f, readFileSync(resolve(SRC, f), "utf8"))).filter(Boolean)
+  .map((p) => (AS_PUBLISHED ? { ...p, meta: { ...p.meta, draft: false } } : p))
   .filter((p) => DEV || !p.meta.draft)
   .sort((a, b) => b.meta.date.localeCompare(a.meta.date) || a.meta.slug.localeCompare(b.meta.slug));
 const has = (slug, lang) => posts.some((p) => p.meta.slug === slug && p.meta.lang === lang);
