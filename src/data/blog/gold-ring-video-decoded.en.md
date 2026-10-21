@@ -16,7 +16,7 @@ So we rechecked every name, one step at a time, against video frames (the in-gam
 Once the names are right, it also becomes clear why the video adds "+20% to Maximum Quality" only to remove it again.
 
 :::summary What you'll learn
-- What 9 misheard captions really mean (for example, "Greater Exa" = Greater Exalted Orb)
+- What 9 misheard Japanese captions really mean (for example, 上級後期 = Greater Exalted Orb)
 - The 8 steps to the finished ring, with the correct item names
 - "+20% to Maximum Quality" is **a ladder to 40% Quality** and **bait an Omen of Whittling is sure to remove**
 - Why a Perfect Chaos Orb rolled a level-47 mod
