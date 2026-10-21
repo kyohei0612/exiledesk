@@ -6,7 +6,7 @@
  * その下の箱 = 親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
-import { applyCurrency, freshItem, maxQualityOf, mulberry32, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { applyCurrency, freshItem, maxQualityOf, mulberry32, omenBlock, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { CATALYSING } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import type { Aim, Hand, OutKind, TreeDoc } from "./tree-model";
@@ -107,6 +107,18 @@ export function startItemOf(data: PatchData, doc: TreeDoc, rng: () => number): S
     item = x.item;
   }
   return { item, note: null };
+}
+
+/**
+ * その手がこのアイテムに打てない理由 (打てるなら null。オーナー 10-22「進行不能」: 消せる物が無い側のお告げ・効かないお告げが掛かった手を確定させない)。
+ * お告げはエンジンの入口の omenBlock (触媒の時はカタリストで品質を入れた後のアイテムで聞く)、手そのものは playHand (繰り返しは 1 回分、乱数で決まる物は打てる扱い)
+ */
+export function handProblem(data: PatchData, item: StageItem, h: Hand): string | null {
+  let it = item;
+  if (h.catalyst && h.omens.includes(CATALYSING)) it = fillCatalyst(data, it, h.catalyst, mulberry32(1)).item;
+  for (const o of h.omens) { const why = omenBlock(data, it, h.currency, h.omens, o); if (why) return why; }
+  const r = playHand(data, item, { ...h, repeat: null }, mulberry32(1));
+  return r.applied || r.random ? null : r.reason ?? tr("打てない", "Can't use");
 }
 
 /** 箱の見本 (seed が同じなら同じ物) */

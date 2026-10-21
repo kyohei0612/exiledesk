@@ -29,6 +29,14 @@ it("見本の木", () => {
     console.log(`精査 ${Math.round(performance.now() - t0)}ms 穴 ${issues.length}`);
     for (const x of issues) console.log(`  ! ${x.boxId} ${x.kind} ${x.text}`);
     for (const b of Object.values(doc.boxes)) if (b.back === MATCH) console.log(`  ↩ ${b.id} → ${matchTargets(doc, b.id).map((x) => `${x.to ?? "無し"} (${x.key})`).join(" / ")}`);
+    // 打てない手の見張り (オーナー 10-22「進行不能」): 始まり (フラクチャーのプレフィックス + 乱数 1 つ) に、外せる物が無い側のお告げ付きの消去を置くと ! が出るか
+    for (const omen of ["OmenofDextralAnnulment", "OmenofSinistralAnnulment"]) {
+      const bad = structuredClone(doc);
+      bad.boxes.start!.hand = { currency: "annul", omens: [omen], catalyst: null, quality: 0, repeat: null };
+      const st = sampleOf(data, bad, "start", 1).item;
+      const x = checkTree(data, bad).filter((i) => i.boxId === "start" && i.kind === "cantUse");
+      console.log(`  消去 + ${omen} (始まりの見本 P${st.prefixes.length}/S${st.suffixes.length}): ${x.map((i) => i.text).join(" / ") || "! 無し"}`);
+    }
     const r = runTree(data, doc, { n: 100, seed: 1, price: () => 0 });
     console.log(`100 人: 完成 ${r.finished} · 打ち止め ${r.capped} · 止まり ${r.stuck} ${JSON.stringify(r.stuckAt)}`);
   }

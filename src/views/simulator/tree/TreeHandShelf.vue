@@ -11,7 +11,7 @@ import CurrencyShelf from "../../craft-stage/CurrencyShelf.vue";
 import HeldOmens from "../../craft-stage/HeldOmens.vue";
 import { heldOmensOf } from "../../craft-stage/held-omens";
 import { applyCurrency, mulberry32, omensFor } from "../../../services/craft-stage/engine";
-import { aimHeld, aimsOf, fillCatalyst, sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { aimHeld, aimsOf, fillCatalyst, handProblem, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, kindOfCurrency, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handLabel, handName } from "./tree-names";
 import { kindOfHand, setHand, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
@@ -95,9 +95,11 @@ const gone = computed((): number => {
   const kept = new Set(Object.keys(d.boxes));
   return before - Object.keys(t.doc.value.boxes).filter((id) => kept.has(id)).length;
 });
+/** この箱の見本に打てない手は確定させない (お告げが効かない・消せる物が無い等。オーナー 10-22「進行不能」、tree-sample の handProblem) */
+const problem = computed((): string | null => (hand.value && item.value && s.data.value ? handProblem(s.data.value, item.value, hand.value) : null));
 function ok(): void {
   const h = hand.value, k = kind.value;
-  if (h && k) emit("pick", h, k, spamAims.value);
+  if (h && k && !problem.value) emit("pick", h, k, spamAims.value);
 }
 </script>
 
@@ -129,8 +131,9 @@ function ok(): void {
       <p v-if="kind" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ tr(RESULT[kind][0], RESULT[kind][1]) }}</p>
       <!-- 替える時は、消える箱の数を先に小さく (オーナー 10-22。1 つ戻す / Ctrl+Z で戻せる)。持ち直しは棚で別の物を押すだけ (ボタンは無し) -->
       <div class="flex flex-wrap items-center gap-1.5">
-        <button type="button" data-tree-hand-ok class="g-btn-red sm" @click="ok">{{ current ? tr("この手に替える", "Use this craft") : tr("この手にする", "Use this craft") }}</button>
-        <span v-if="gone" data-tree-hand-gone class="text-[11px] text-rose-200/90">{{ tr(`替えると下の ${gone} 箱が消える (1 つ戻すで戻せる)`, `Replacing removes ${gone} box(es) below (Undo restores)`) }}</span>
+        <button type="button" data-tree-hand-ok class="g-btn-red sm" :disabled="!!problem" :title="problem ?? undefined" @click="ok">{{ current ? tr("この手に替える", "Use this craft") : tr("この手にする", "Use this craft") }}</button>
+        <span v-if="problem" data-tree-hand-problem class="text-[11px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</span>
+        <span v-else-if="gone" data-tree-hand-gone class="text-[11px] text-rose-200/90">{{ tr(`替えると下の ${gone} 箱が消える (1 つ戻すで戻せる)`, `Replacing removes ${gone} box(es) below (Undo restores)`) }}</span>
       </div>
     </div>
     <button v-if="current" type="button" class="g-btn sm self-start" @click="emit('clear')">{{ tr("この手を消す (下も消える)", "Remove this craft (and below)") }}</button>

@@ -9,7 +9,7 @@
 import { allMods, modBoostsOf, mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { CATALYSING } from "./tree-hands";
 import { aimKey, type Aim, type TreeDoc } from "./tree-model";
-import { aimHeld, aimsOf, outcomeOf, playHand, sampleOf } from "./tree-sample";
+import { aimHeld, aimsOf, handProblem, outcomeOf, playHand, sampleOf } from "./tree-sample";
 import { MATCH, matchItem, matchTargets, RESTART } from "./tree-run";
 import { tr } from "../../../i18n/lang";
 
@@ -96,8 +96,10 @@ export function checkTree(data: PatchData, doc: TreeDoc): CheckIssue[] {
           return;
         }
         if (!b.hand) return;
+        // 打てない手 (効かない・消せる物が無いお告げも。tree-sample の handProblem、オーナー 10-22「進行不能」)
+        const why = handProblem(data, item, b.hand);
         const first = playHand(data, item, b.hand, rng, aims);
-        if (!first.applied) { const c = cant.get(id) ?? { n: 0, reason: first.reason ?? "" }; c.n++; cant.set(id, c); return; }
+        if (why || !first.applied) { const c = cant.get(id) ?? { n: 0, reason: why ?? first.reason ?? "" }; c.n++; cant.set(id, c); return; }
         if (viaBack) return; // 戻りの矢印で着いた時は、戻り先の手がこの状態で打てるかだけ見る (先は通常の道で辿る)
         // 品質 (オーナー 10-22「ルート精査の時の品質のチェック」): 触媒の品質が当たりの MOD に効くかは下で見る。
         // 聖別・コラプトの後の手・カタリストが入らない手は、上の打てない手 (エンジンの理由) で出る。触媒は打つと品質を使い切るので、前の品質の入れ替えは起きない
