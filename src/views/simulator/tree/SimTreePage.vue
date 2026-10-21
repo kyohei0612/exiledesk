@@ -34,13 +34,32 @@ const posOf = (b: Box): { x: number; y: number } => (drag.value?.id === b.id ? {
 
 const boxes = computed(() => Object.values(doc.value.boxes));
 const bounds = computed(() => boundsOf(doc.value));
-const ox = computed(() => PAD - bounds.value.x);
-const oy = computed(() => PAD - bounds.value.y);
-const area = computed(() => ({ w: bounds.value.w + PAD * 2 + 120, h: bounds.value.h + PAD * 2 + 60 }));
-
 const viewport = ref<HTMLElement | null>(null);
 const vpSize = ref({ w: 1000, h: 600 });
-function measure(): void { const el = viewport.value; if (el) vpSize.value = { w: el.clientWidth, h: el.clientHeight }; }
+/** 始まりの箱 (x = 0) を真ん中に置く原点。右の欄を開いても動かさない (欄が閉じている時だけ測る) */
+const home = ref(400);
+function measure(): void {
+  const el = viewport.value;
+  if (!el) return;
+  vpSize.value = { w: el.clientWidth, h: el.clientHeight };
+  if (!panel.value) home.value = Math.max(PAD, Math.round(el.clientWidth / 2 - BOX_W / 2));
+}
+// 原点は決まった所 (箱を動かしても他の箱は動かない)。左・上へはみ出した時だけ広げる
+const ox = computed(() => Math.max(home.value, PAD - bounds.value.x));
+const oy = computed(() => Math.max(PAD, PAD - bounds.value.y));
+const area = computed(() => {
+  const w = ox.value + bounds.value.x + bounds.value.w + PAD + 120, h = oy.value + bounds.value.y + bounds.value.h + PAD + 60;
+  return overview.value ? { w, h } : { w: Math.max(w, vpSize.value.w), h: Math.max(h, vpSize.value.h) };
+});
+/** 空いた所をドラッグ = 画面を動かす (スクロール) */
+function pan(e: PointerEvent): void {
+  const el = viewport.value;
+  if (!el || picking.value || (e.target as HTMLElement).closest("[data-tree-box],button")) return;
+  const sx = e.clientX, sy = e.clientY, l = el.scrollLeft, t0 = el.scrollTop;
+  const move = (m: PointerEvent): void => { el.scrollLeft = l - (m.clientX - sx); el.scrollTop = t0 - (m.clientY - sy); };
+  window.addEventListener("pointermove", move);
+  window.addEventListener("pointerup", () => window.removeEventListener("pointermove", move), { once: true });
+}
 /** 一望の縮め方 (全部が入る大きさ、大きくはしない) */
 const scale = computed(() => (overview.value ? Math.min(1, (vpSize.value.w - 16) / area.value.w, (vpSize.value.h - 16) / area.value.h) : 1));
 
@@ -175,7 +194,7 @@ const panelBox = computed(() => (panel.value ? doc.value.boxes[panel.value.id] ?
 
       <div class="flex min-h-0 gap-2" :class="full ? 'flex-1' : 'h-[calc(100vh-190px)] min-h-[480px]'">
         <!-- ツリー -->
-        <div ref="viewport" data-tree-canvas class="relative min-w-0 flex-1 overflow-auto rounded-md bg-black/30">
+        <div ref="viewport" data-tree-canvas class="relative min-w-0 flex-1 cursor-move overflow-auto rounded-md bg-black/30" @pointerdown="pan">
           <div class="relative" :style="{ width: `${area.w * scale}px`, height: `${area.h * scale}px` }">
             <div class="absolute left-0 top-0 origin-top-left" :style="{ width: `${area.w}px`, height: `${area.h}px`, transform: `scale(${scale})` }">
               <svg class="pointer-events-none absolute inset-0" :width="area.w" :height="area.h">
