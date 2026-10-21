@@ -48,13 +48,16 @@ const listed = (p) => p.meta.slug !== "sample";
  *   図の系列: #c8922a #2f7fc1 #3c9a4e #c2507e #7b5cc4
  */
 const CSS = `:root{--bg:#fff;--ink:#2b2b2b;--sub:#6b6b6b;--line:#e6e6e6;--link:#b5651d;--accent:#c8922a;--soft:#f6f6f4}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:18px/2 "Zen Kaku Gothic New","Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;-webkit-text-size-adjust:100%}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:18px/2 "Yu Gothic Medium","YuGothic","Hiragino Sans","Hiragino Kaku Gothic ProN","Meiryo",sans-serif;-webkit-text-size-adjust:100%}
 header{border-bottom:1px solid var(--line);background:#fff}header .in{max-width:960px;margin:0 auto;padding:0 20px;display:flex;align-items:center;gap:12px;min-height:48px;flex-wrap:wrap}
 header a{color:var(--ink);text-decoration:none;font-weight:700;letter-spacing:.04em;font-size:15px}header nav{margin-left:auto;display:flex;gap:14px;font-size:12px;flex-wrap:wrap}header nav a{color:var(--sub);font-weight:400;font-size:12px}
-main{max-width:680px;margin:0 auto;padding:40px 20px 56px}
+main{max-width:640px;margin:0 auto;padding:40px 20px 56px}
 h1{font-size:30px;line-height:1.5;margin:0 0 14px;font-weight:700}h2{font-size:24px;line-height:1.6;margin:56px 0 18px;font-weight:700}
 h3{font-size:20px;line-height:1.6;margin:40px 0 12px;font-weight:700}h4{font-size:18px;margin:28px 0 8px;font-weight:700}
-a{color:var(--link)}p{margin:0 0 1.6em}ul,ol{margin:0 0 1.6em;padding-left:1.4em}li{margin:.2em 0}strong{font-weight:700}
+a{color:var(--link)}p{margin:0 0 2em}ul,ol{margin:0 0 2em;padding-left:1.4em}
+/* 折り返し (2026-10-22 オーナー「キモい」): 日本語は文節で折る・行頭に 、。」を置かない・最後の行を 1〜2 字にしない、見出しは行をそろえる。英語は長い語のはみ出しだけ止める */
+html[lang=ja] main :is(p,li,figcaption,.bubble){word-break:auto-phrase;line-break:strict;text-wrap:pretty}html[lang=ja] main :is(h1,h2,h3,h4){word-break:auto-phrase;line-break:strict;text-wrap:balance}
+html[lang=en] main{overflow-wrap:anywhere}html[lang=en] main :is(p,li){text-wrap:pretty}html[lang=en] main :is(h1,h2,h3,h4){text-wrap:balance}li{margin:.2em 0}strong{font-weight:700}
 .meta{color:var(--sub);font-size:14px;line-height:1.6;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin:0 0 14px}.tag{color:var(--sub);font-size:13px}.tag::before{content:"#"}
 .draft{background:#fff1e0;color:#a5521a;border-radius:4px;padding:0 6px;font-size:12px}
 .backlink{display:inline-block;margin:0 0 14px;font-size:14px;line-height:1.6;color:var(--ink);text-decoration:none;padding:4px 12px 4px 8px;border-radius:999px;background:var(--soft)}.backlink:hover{color:var(--link)}
@@ -87,7 +90,7 @@ ul.posts a.t{font-size:17px;font-weight:700;text-decoration:none;color:var(--ink
 ul.posts p{margin:6px 0 0;color:var(--sub);font-size:14px}
 #comments{margin-top:32px}
 footer{border-top:1px solid var(--line);color:var(--sub);font-size:12px;line-height:1.7;background:#fafafa}footer .in{max-width:960px;margin:0 auto;padding:16px 20px 24px}footer .fnav{margin:0 0 6px}footer .fnav a{color:var(--sub)}
-@media (max-width:767px){body{font-size:17px;line-height:1.95}main{padding:28px 22px 48px}h1{font-size:24px}h2{font-size:21px;margin-top:44px}h3{font-size:18px}.say img{flex-basis:44px;width:44px;height:44px}}`;
+@media (max-width:767px){body{font-size:16px;line-height:1.9}main{padding:28px 22px 48px}h1{font-size:24px}h2{font-size:21px;margin-top:44px}h3{font-size:18px}.say img{flex-basis:44px;width:44px;height:44px}}`;
 
 const L = {
   ja: {
@@ -162,9 +165,6 @@ ${alt ? `<link rel="alternate" hreflang="${other}" href="${SITE}${L[other].prefi
 <meta property="og:locale" content="${lang === "ja" ? "ja_JP" : "en_US"}" />
 <meta name="twitter:card" content="summary_large_image" />
 ${og.published ? `<meta property="article:published_time" content="${og.published}" />\n<meta property="article:modified_time" content="${og.modified}" />\n` : ""}<link rel="icon" href="/favicon.ico" sizes="any" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet" />
 <style>${CSS}</style>
 ${ld ? `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script>\n` : ""}${clientTag(lang, slug)}
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1993030721214430" crossorigin="anonymous"></script>
