@@ -5,7 +5,8 @@
   selected: 今のベース (金の枠。その種類から開く)。extras: フラスコ・スキルジェムも出す。note: カードの下に足す 1 行 (計算機の付与スキルなど)
 -->
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { usePhone } from "../../utils/use-phone";
 import BaseCardGrid from "./BaseCardGrid.vue";
 import { baseCatalog, CATALOG_ROWS, CATALOG_ROW_EN, classEn, VARIANT_EN, type CatalogRow as CatalogRowT } from "../../services/items/base-catalog";
 import { tr } from "../../i18n/lang";
@@ -67,10 +68,7 @@ const list = computed(() => {
  * 部位 (ゲームの絵のタイル) → 属性 / 元素 (日本語の札) → ベースの 3 段。スマホは 1 段ずつ (← 部位 で戻る)、
  * PC は部位のタイルを並べたまま下に属性とベースを出す (2026-10-09 オーナー「シミュレーターで装備のアイコンでスマホ版との齟齬あるよね」: PC だけ文字の札だった)
  */
-const phone = ref(typeof window !== "undefined" && window.innerWidth < 768);
-const onResize = (): void => { phone.value = window.innerWidth < 768; };
-onMounted(() => window.addEventListener("resize", onResize));
-onBeforeUnmount(() => window.removeEventListener("resize", onResize));
+const phone = usePhone();
 const ATTR_JA: Record<string, string> = { str: "筋力", dex: "器用", int: "知性", str_dex: "筋力・器用", str_int: "筋力・知性", dex_int: "器用・知性" };
 /**
  * 種類の札 (手袋(str) / ワンド(火)) を「部位」と「中の札」に分ける。name は日本語 (中の目印)、en は英語の画面の名前

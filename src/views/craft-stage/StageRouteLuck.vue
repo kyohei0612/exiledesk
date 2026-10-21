@@ -7,6 +7,7 @@
 -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
+import { usePhone } from "../../utils/use-phone";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { packRace, routeKey, routeRun, type RaceRow, type RaceTarget, type RoutePrep, type RouteRun } from "../../services/craft-stage/route-race";
 import { medianOf, rankOf, unluckyOf, type SpamStats } from "../../services/craft-stage/chaos-spam";
@@ -140,10 +141,7 @@ const fmt = (v: number | null): string => (v == null ? tr("付かない人が多
  * スマホは押すボタンを画面の下の帯に置く (旧カオススパム計算機と同じ)。札の下に置くと、打つたびに札の高さが変わってボタンが動いた
  * (2026-10-19 オーナー「スパム中スマホがスパムボタン動いちゃうな、アイテムの縦枠動くから」)
  */
-const phone = ref(typeof window !== "undefined" && window.innerWidth < 768);
-const onResize = (): void => { phone.value = window.innerWidth < 768; };
-window.addEventListener("resize", onResize);
-onBeforeUnmount(() => window.removeEventListener("resize", onResize));
+const phone = usePhone();
 const barShown = computed(() => phone.value && !(result.value?.hit && !spamming.value));
 const holdLabel = computed(() => (spamming.value ? tr("スパム中… (離すと止まる)", "Spamming… (release to stop)") : result.value && !result.value.hit ? tr("押して続ける", "Hold to continue") : tr("押している間スパム", "Hold to spam")));
 

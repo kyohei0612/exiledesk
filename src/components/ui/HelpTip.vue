@@ -8,6 +8,7 @@
 <script setup lang="ts">
 import { tr } from "../../i18n/lang";
 import { computed, nextTick, onBeforeUnmount, ref } from "vue";
+import { isTouchOnly } from "../../utils/use-phone";
 import { toCss } from "../../utils/zoom";
 import { swallowNextClick } from "../../utils/swallow-click";
 import Icon from "./Icon.vue";
@@ -27,7 +28,7 @@ const open = ref(false);
 const pinned = ref(false);
 const btn = ref<HTMLButtonElement | null>(null);
 const pos = ref<{ left: number; top: number; above: boolean }>({ left: 0, top: 0, above: false });
-const touchOnly = typeof matchMedia === "function" && matchMedia("(hover: none)").matches;
+const touchOnly = isTouchOnly();
 
 function place(): void {
   const el = btn.value;

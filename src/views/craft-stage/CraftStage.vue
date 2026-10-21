@@ -18,6 +18,7 @@ import { unsocketKey } from "../../services/craft-stage/stage-runes";
 import { LOG_KEEP, SIM_LOCKED, TUTORIAL_LOCKED } from "../../state/craft-stage";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { usePhone } from "../../utils/use-phone";
 import { useDismiss } from "../../utils/use-dismiss";
 import { toCss } from "../../utils/zoom";
 import StagePhoneBar from "./StagePhoneBar.vue";
@@ -163,8 +164,7 @@ const btn = "g-btn sm";
  * スマホ (幅 768 CSS px 未満): 棚からアイテムまで縦に遠いので、何か持っている間は画面の下に「持っている物 → アイテムに使う」の帯を出す
  * (2026-10-08 オーナー「タップして使う時はアイテムに再度付けるような動作で。押した瞬間付けるだとお告げが使えない」。お告げは掛けてから「アイテムに使う」)
  */
-const phone = ref(typeof window !== "undefined" && window.innerWidth < 768);
-const onResize = (): void => { phone.value = window.innerWidth < 768; };
+const phone = usePhone();
 /** アイテムのカードが画面に見えているか (スマホで外に出たら StageItemMini を上に貼る) */
 const cardEl = ref<HTMLElement | null>(null);
 const cardOnScreen = ref(true);
@@ -176,8 +176,6 @@ watch(cardEl, (el) => {
   cardIo.observe(el);
 });
 onBeforeUnmount(() => cardIo?.disconnect());
-onMounted(() => window.addEventListener("resize", onResize));
-onBeforeUnmount(() => window.removeEventListener("resize", onResize));
 /**
  * アイテムの MOD を右クリックでフラクチャー (今の段のまま固定。2026-10-09 オーナー「MOD 右クリックでフラクチャー化させてあげてもいいかも」)。
  * MOD 一覧の「フラクチャー」と同じ手 (レアだけ・1 つまで。打てない時は理由が出る)

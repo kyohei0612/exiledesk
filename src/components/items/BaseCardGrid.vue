@@ -5,6 +5,7 @@
 <script setup lang="ts">
 import { inGroup } from "../../services/mods/item-classes";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { isTouchOnly } from "../../utils/use-phone";
 import { classLabel, type CatalogRow } from "../../services/items/base-catalog";
 import { nameOf, tr } from "../../i18n/lang";
 import { hoverStack } from "../../state/hover-stack";
@@ -23,7 +24,7 @@ const artOf = (en: string): string | null => baseArt(en) ?? gemArt(en);
  * 乗せて少し待つとベースのカード (ジェムのカードと同じ仕組み = hover-stack + GameItemCard。待ち時間・ピン留め・重なりもそちらに合わせて変わる)。
  * 指の端末 (hover の無い画面) では出さない。押したら消す
  */
-const touchOnly = typeof matchMedia === "function" && matchMedia("(hover: none)").matches;
+const touchOnly = isTouchOnly();
 function enter(e: MouseEvent, b: CatalogRow): void {
   if (touchOnly) return;
   const r = (e.currentTarget as HTMLElement).getBoundingClientRect();

@@ -9,6 +9,7 @@
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount } from "vue";
+import { isTouchOnly } from "../../utils/use-phone";
 import { hoverStack } from "../../state/hover-stack";
 import { iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
@@ -73,7 +74,7 @@ const on = computed(() => (props.omen ? shelf.omens.value.includes(props.k) : sh
  * 指の端末 (hover の無い画面 = スマホ) では出さない。タップで mouseenter も飛んで来て、説明が被って押せなかった
  * (2026-10-08 オーナー iPhone「付けたいカレンシーをタップしたら説明が出て、付けたい時に押せなかったり説明が邪魔」)
  */
-const touchOnly = typeof matchMedia === "function" && matchMedia("(hover: none)").matches;
+const touchOnly = isTouchOnly();
 function enter(e: MouseEvent): void {
   if (touchOnly) return;
   let r: { left: number; right: number; top: number; bottom: number } = (e.currentTarget as HTMLElement).getBoundingClientRect();
