@@ -9,7 +9,18 @@ draft: true
 ---
 PoE2 ring Cast Speed has a modifier weight of **1 on poe2db (a placeholder, all five tiers) but 1,000 in Craft of Exile and ExileDesk**. At 1,000, Omen of Dextral Exaltation + Greater Exalted Orb lands Cast Speed T2+ 4.37% of the time; with poe2db's 1 it is 0.00%, and any Cast Speed ring looks absurdly expensive.
 
-On a crafting stream, someone said: "poe2db's Cast Speed weight is broken, it shows 1. In practice it rolls about one in five." If ring Cast Speed really had weight 1, it would roll a thousand times less often than other mods (which sit around 1,000). Is it really 1, and what does ExileDesk use? We compared poe2db, Craft of Exile and the ExileDesk engine.
+It started with one line on a crafting stream: "poe2db's Cast Speed weight is broken, it shows 1. In practice it rolls about one in five."
+
+If ring Cast Speed really had weight 1, it would roll a thousand times less often than other mods (which sit around 1,000). That can't be right, can it?
+
+Is it really 1, and what does ExileDesk use? We compared poe2db, Craft of Exile and the ExileDesk engine.
+
+:::summary What you'll learn
+- poe2db lists ring Cast Speed at weight **1 on all five tiers (it looks like a placeholder)**. The stream was right: it's broken
+- Craft of Exile and ExileDesk use **1,000**. Omen of Dextral Exaltation + Greater Exalted Orb lands T2+ 4.37% of the time
+- Using poe2db's 1 as-is gives 0.00%, and any Cast Speed ring looks absurdly expensive
+- "It took N tries" misleads by several times unless you know which tier was meant
+:::
 
 ## What a Weight Is
 
@@ -41,7 +52,15 @@ On a Gold Ring with Fractured Spell Damage and Rarity T1, we applied Omen of Dex
 | 1 (poe2db) | 0.00% | 0.01% |
 | 200 (reference: reading "one in five" as 1/5 of 1,000) | 0.97% | 1.48% |
 
-Using poe2db's 1 as-is means Cast Speed essentially never rolls from a plain Exalted Orb. On ExileDesk's [crafting bench](/?base=Gold%20Ring) you can craft with the odds at weight 1,000 shown. A cost tool using that value would make any Cast Speed ring look absurdly expensive.
+:::chart bar Cast Speed T2+ rate (Dextral Exaltation + Greater Exalted Orb, 20,000 engine runs each)
+unit: %
+labels: Weight 1,000, Weight 200 (reference), Weight 1 (poe2db)
+T2 or better: 4.37, 0.97, 0
+:::
+
+Using poe2db's 1 as-is means Cast Speed essentially never rolls from a plain Exalted Orb.
+
+A cost tool using that value would make any Cast Speed ring look absurdly expensive.
 
 What the stream's "one in five" refers to (the weight or the roll rate) can't be settled from the words alone. The 200 row is just one possible reading, for reference.
 
@@ -49,7 +68,11 @@ What the stream's "one in five" refers to (the weight or the roll rate) can't be
 
 ExileDesk itself once lowered Cast Speed's weight to 60. That came from a video where it took "about 500 Chaos Orbs," but those 500 were until Cast Speed **T1** rolled. In Craft of Exile's simulator, Chaos Orbs on a ring with one fixed mod and one miss landed T1 once every 152 on average (55 hits counted, worst 566). Weight 1,000 explains that, so we went back to Craft of Exile's value.
 
-The lesson: when a stream or video says "it took N tries," which tier they meant changes the implied weight enormously. Comparing counts without the tier misreads the weight by several times.
+The lesson: when a stream or video says "it took N tries," which tier they meant changes the implied weight enormously.
+
+:::tip Reading "it took N tries"
+Comparing counts without the tier misreads the weight by several times. Check first whether they meant T1 or any tier.
+:::
 
 ## Where the Numbers Come From
 
@@ -58,6 +81,14 @@ The lesson: when a stream or video says "it took N tries," which tier they meant
 - Roll rates: the ExileDesk engine, 20,000 tries each, with the weight changed only inside the script. Not compared with in-game results.
 
 All our Gold Ring cost articles, including [Don't Hoard Your Misses](/en/blog/dont-hoard-misses/), use weight 1,000.
+
+:::note Not yet verified
+The rates were counted on the engine and have not been compared against in-game results.
+:::
+
+## Try It Yourself
+
+On ExileDesk's [crafting bench](/?base=Gold%20Ring) you can craft a Gold Ring with the odds at weight 1,000 shown.
 
 **Related posts**
 
