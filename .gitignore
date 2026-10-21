@@ -45,3 +45,6 @@ server/web/.wrangler/
 dist-web-dev
 .dev-web-key
 shots/
+
+# ホワイトの記録 (git に入れない、docs/org/white/README.md の決まり 1)
+docs/org/white/notes/
