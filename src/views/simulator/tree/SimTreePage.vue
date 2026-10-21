@@ -392,7 +392,7 @@ const glowOf = (b: Box): boolean => {
         <div data-tree-canvas data-overflow-ok class="absolute left-0 top-0 h-full w-full" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid }">
           <VueFlow :id="FLOW_ID" :default-viewport="{ x: 0, y: 0, zoom: pageZ }" :min-zoom="v.minZoom.value" :max-zoom="v.maxZoom.value"
             :nodes-draggable="false" :nodes-connectable="false" :elements-selectable="false"
-            :pan-on-drag="true" :pan-on-scroll="true" :zoom-on-scroll="false" zoom-activation-key-code="Control" :zoom-on-double-click="false" :zoom-on-pinch="true"
+            :pan-on-drag="true" :pan-on-scroll="false" :zoom-on-scroll="true" :zoom-activation-key-code="null" :zoom-on-double-click="false" :zoom-on-pinch="true"
             :delete-key-code="null" :selection-key-code="null" :multi-selection-key-code="null" :auto-pan-on-node-drag="true"
             @pane-click="onPaneClick" @node-click="onNodeClick">
             <template #node-box="{ id }">

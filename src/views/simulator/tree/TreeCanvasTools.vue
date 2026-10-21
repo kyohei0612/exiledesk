@@ -66,9 +66,9 @@ const btn = "flex h-8 min-w-8 items-center justify-center rounded-md px-1.5 text
       <button type="button" data-tree-fit :class="btn" :title="tr('全体を表示 (1)', 'Fit all (1)')" :aria-label="tr('全体を表示', 'Fit all')" @click="emit('fit')">
         <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3" /></svg>
       </button>
-      <button type="button" data-tree-zoom-out :class="btn" :title="tr('縮める (Ctrl + ホイールでも)', 'Zoom out (also Ctrl + wheel)')" :aria-label="tr('縮める', 'Zoom out')" @click="emit('zoomOut')">−</button>
+      <button type="button" data-tree-zoom-out :class="btn" :title="tr('縮める (ホイールでも)', 'Zoom out (also mouse wheel)')" :aria-label="tr('縮める', 'Zoom out')" @click="emit('zoomOut')">−</button>
       <button type="button" data-tree-zoom-reset :class="[btn, 'w-12 tabular-nums']" :title="tr('等倍に戻す', 'Reset to 100%')" @click="emit('reset')">{{ Math.round(zoom * 100) }}%</button>
-      <button type="button" data-tree-zoom-in :class="btn" :title="tr('広げる (Ctrl + ホイールでも)', 'Zoom in (also Ctrl + wheel)')" :aria-label="tr('広げる', 'Zoom in')" @click="emit('zoomIn')">＋</button>
+      <button type="button" data-tree-zoom-in :class="btn" :title="tr('広げる (ホイールでも)', 'Zoom in (also mouse wheel)')" :aria-label="tr('広げる', 'Zoom in')" @click="emit('zoomIn')">＋</button>
       <span class="mx-1 h-5 w-0.5 rounded bg-white/10" />
       <button type="button" data-tree-tool-map :class="[btn, showMap ? 'bg-amber-400/20 text-amber-100' : '']" :aria-pressed="showMap" :title="tr('ミニマップ', 'Minimap')" :aria-label="tr('ミニマップ', 'Minimap')" @click="showMap = !showMap">
         <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z" /><path d="M9 3v15M15 6v15" /></svg>
