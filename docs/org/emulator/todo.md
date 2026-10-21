@@ -1,7 +1,8 @@
 # ジン部長 のやる事
 
 ## やる事
-- 引き継ぎ (10-22 夜): notes/2026-10-22-handoff.md を先に読む (お告げの欄の部品・previewUse・聖別の後は何もできない、品質の帯を隠すかは返事待ち)。
+- 引き継ぎ (10-22 夜): notes/2026-10-22-handoff.md を先に読む (お告げの欄の部品・previewUse・聖別の後は何もできない)。
+- 済み (10-22、2 本目): 聖別済みは品質の帯とアイテムレベルの欄を灰色で押せなく (092c49bb、オーナーの決め)。9acbea38 と一緒に開発版 (HEAD 2a33d4eb)、本番は pending-release の OK 待ち。前後のスナップは共有メモ sanctified-bar/。確認の手順: vite の dev で `import('/src/state/craft-stage.ts')` の craftStage.use('alchemy') → omens=['OmenofSanctification'] → use('divine')。
 - クラフト画面 1440 幅で元からはみ出している 1 件 (DIV.flex flex-col、overflow-guard の判定で見つけた、10-22) を直す。
 - 済み (10-22): items-ja.json の残りの突き合わせ → 221 件を poe2db に合わせた (notes/2026-10-22-name-check-poe2db-jp.md、本番は OK 待ち)。poe2db の一覧に無い 2,420 件は比べていない。
 - 済み (10-22): 名前のずれ → notes/2026-10-22-name-check.md (2 件 + 紋章 + クルガル、本番は OK 待ち)。残り 3,266 件は poe2db の写しを取り直す時に。
