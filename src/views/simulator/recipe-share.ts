@@ -5,7 +5,7 @@
  */
 import { nextTick, ref, watch } from "vue";
 import { craftStage as s, normalizeRecipe, readSimRecipes, SIM_LOCKED, writeSimRecipes, type SimRecipe } from "../../state/craft-stage";
-import { packJson, unpackJson } from "../../services/craft-stage/share";
+import { packJson, unpackJson, xIntentUrl } from "../../services/craft-stage/share";
 import { basePage } from "../../state/web-page";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { logRecord } from "../../utils/log-record";
@@ -125,7 +125,7 @@ export const fmtDate = (t: number): string => { const d = new Date(t); return `$
  * (X が t.co に縮める)。<a :href="web" target="_blank" @click="shareRecipeX($event, …)"> で使う
  */
 export function recipeXUrl(text: string, url: string): string {
-  return `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+  return xIntentUrl(url, text);
 }
 export function shareRecipeX(e: MouseEvent, text: string, url: string, base: string): void {
   sendShare(e, { code: "", web: recipeXUrl(text, url), text, url, log: { kind: "recipe", base } });
