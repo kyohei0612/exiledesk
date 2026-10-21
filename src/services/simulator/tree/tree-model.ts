@@ -301,46 +301,36 @@ export function setNote(d: TreeDoc, id: string | null, text: string): void {
 const OUT_ORDER: Record<TreeBox["out"], number> = { start: 0, hit: 0, any: 0, lost: 1, junkGone: 2, junk: 3 };
 /** 整列の兄弟の間 (横の＋が 14px はみ出す分 + 戻りの線の縦の通り道 4 本分、オーナー 10-22「整列で箱の間に通り道の分のすき間」) */
 const TIDY_GAP = 64;
-/** まとめて見せる箱の札 (tidy の pill。画面 TreeMergeLayer と同じ大きさ) */
-export const PILL_W = 140, PILL_H = 28;
-/** 隣り合う札どうしの間 (札は＋も線の通り道も持たないので、箱の間 TIDY_GAP より狭く) */
-const PILL_GAP = 16;
 /**
  * 整列 (2026-10-22 オーナー「ごちゃっとなってるのを整列。2 段目を合わせる、矢印が重ならない」):
  * 段 (始まりからの深さ) ごとに横一列、兄弟は親の下に等間隔 (OUT_ORDER の順)。部分木の幅を先に測ってから並べるので箱は重ならない。
  * 始まりの箱は x = 0 のまま。線は直角の木の線、戻りの矢印は既定では引かない (画面の側、SimTreePage の edges・backLine。10-22 整列の定義)
- * o.pill = まとめて見せる箱 (箱を出さず、子の段の小さな札にする。画面の見え方だけ、10-22 オーナー「やってる事が同じ枠は統合」)。
- * 札は箱より細い幅しか取らないので、段の幅が縮む (x・y は札の左上)
  */
-export function tidy(d: TreeDoc, o: { pill?: (id: string) => boolean } = {}): void {
-  const isPill = o.pill ?? ((): boolean => false);
+export function tidy(d: TreeDoc): void {
   const kids = (id: string): string[] => {
     const b = d.boxes[id]!;
     b.outs = b.outs.map((o, i) => ({ o, i })).sort((a, z) => OUT_ORDER[d.boxes[a.o]!.out] - OUT_ORDER[d.boxes[z.o]!.out] || a.i - z.i).map((x) => x.o);
     return b.outs;
   };
-  /** 箱 (か札) の幅 */
-  const own = (id: string): number => (isPill(id) ? PILL_W : BOX_W);
-  /** 子の並びの幅 (隣り合う札どうしは PILL_GAP) */
-  const span = (ks: readonly string[]): number => ks.reduce((a, k, i) => a + width.get(k)! + (i ? (isPill(k) && isPill(ks[i - 1]!) ? PILL_GAP : TIDY_GAP) : 0), 0);
+  /** 子の並びの幅 */
+  const span = (ks: readonly string[]): number => ks.reduce((a, k, i) => a + width.get(k)! + (i ? TIDY_GAP : 0), 0);
   const width = new Map<string, number>();
   const measure = (id: string): number => {
-    const ks = isPill(id) ? [] : kids(id);
+    const ks = kids(id);
     ks.forEach(measure);
-    const inner = span(ks);
-    const w = Math.max(own(id), inner);
+    const w = Math.max(BOX_W, span(ks));
     width.set(id, w);
     return w;
   };
   // 親は一番左と一番右の子の真ん中 (兄弟の並びの中心が親とそろう、10-22 整列の定義)。子の部分木の幅の中に収まるので隣とは重ならない
-  const mid = (id: string): number => d.boxes[id]!.x + own(id) / 2;
+  const mid = (id: string): number => d.boxes[id]!.x + BOX_W / 2;
   const place = (id: string, left: number, depth: number): void => {
     const b = d.boxes[id]!, w = width.get(id)!;
     b.y = depth * GAP_Y;
-    const ks = isPill(id) ? [] : b.outs;
+    const ks = b.outs;
     let l = left + (w - span(ks)) / 2;
-    ks.forEach((k, i) => { place(k, l, depth + 1); l += width.get(k)! + (i + 1 < ks.length ? (isPill(k) && isPill(ks[i + 1]!) ? PILL_GAP : TIDY_GAP) : 0); });
-    b.x = ks.length ? Math.round((mid(ks[0]!) + mid(ks[ks.length - 1]!)) / 2 - own(id) / 2) : Math.round(left + w / 2 - own(id) / 2);
+    ks.forEach((k, i) => { place(k, l, depth + 1); l += width.get(k)! + (i + 1 < ks.length ? TIDY_GAP : 0); });
+    b.x = ks.length ? Math.round((mid(ks[0]!) + mid(ks[ks.length - 1]!)) / 2 - BOX_W / 2) : Math.round(left + w / 2 - BOX_W / 2);
   };
   measure("start");
   place("start", 0, 0);

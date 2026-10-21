@@ -3,10 +3,10 @@
   入口 (web-page.ts の treePage・web/page.ts・WebApp.vue) はジン部長、中身はシミュ部長。設計は docs/org/simulator/notes/2026-10-22-manual-sim-design.md の 11。
   一番上がフラクチャーの箱 (始まり)。下の＋で打つ手 (クラフト台の棚から) → 矢印の先に結果の箱。横の＋で当たりを足す、↩ で既にある箱へ戻す。
   ＋は長押しで引っ張り、箱の上で離すとその箱へつなぐ (何も無い所ならやめる)。箱はドラッグで動かす、1 つ戻す / Ctrl+Z。
-  線は普通の木の図の直角の線。戻りの矢印だけの箱は小さな札にまとめ、戻りの線は乗せた箱・札の分だけ (帯の「線を全部表示」で全部、10-22 オーナーの案 A)。
+  線は普通の木の図の直角の線。戻りの矢印だけの箱も普通の箱 (10-22 オーナーの選び)、戻りの線は乗せた箱の分だけ (帯の「線を全部表示」で全部、10-22 オーナーの案 A)。
   箱に乗せるとその時点のアイテムのカード。試し打ちの欄は 10-22 に消した (オーナー「試し打ちマジ意味わからんから消して」)。
   土台は Vue Flow (10-22 オーナー): 画面の送り・拡大縮小・箱のドラッグ・押した判定は Vue Flow、見え方の決まりは use-tree-flow.ts。
-  線・打つ手の札・引っ張る線・まとめた札と合流の線は Vue Flow の zoom-pane (倍率と移動が掛かる層) に描く。100 人回す計算はまだ繋がない
+  線・打つ手の札・引っ張る線・合流の線は Vue Flow の zoom-pane (倍率と移動が掛かる層) に描く。100 人回す計算はまだ繋がない
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -42,7 +42,7 @@ import { useTreeTune } from "./use-tree-tune";
 import TreeHandChip from "./TreeHandChip.vue";
 import TreeMergeLayer from "./TreeMergeLayer.vue";
 import TreeHoverCard from "./TreeHoverCard.vue";
-import { backTargetsOf, pillIds, sizeOf } from "./tree-merge";
+import { backTargetsOf } from "./tree-merge";
 import { useTreeMerge } from "./use-tree-merge";
 
 const t = useTree();
@@ -70,9 +70,8 @@ onBeforeUnmount(v.dispose);
 const drag = ref<{ id: string; x: number; y: number } | null>(null);
 const posOf = (b: Box): { x: number; y: number } => (drag.value?.id === b.id ? { x: drag.value.x, y: drag.value.y } : { x: b.x, y: b.y });
 const boxes = computed(() => Object.values(doc.value.boxes));
-/** まとめて見せる箱 (戻りの矢印だけの箱は描かず子の段の札にする、tree-merge.ts。オーナー 10-22 案 A。&res=b は札にしない) と、箱か札の真ん中 */
-const pills = computed(() => pillIds(doc.value));
-const midOf = (id: string): number => posOf(doc.value.boxes[id]!).x + sizeOf(pills.value, id).w / 2;
+/** 箱の真ん中 */
+const midOf = (id: string): number => posOf(doc.value.boxes[id]!).x + BOX_W / 2;
 
 /**
  * 進む線 (2026-10-22 整列の定義、オーナー「クソ汚い」の後): 普通の木の図と同じ直角の線。親の下から 1 本下りて (途中に手の札)、
@@ -131,7 +130,7 @@ function measureChips(): void {
 }
 watch(() => edges.value.map((e) => `${e.id}:${handLabel(e.hand)}`).join("|"), measureChips, { flush: "post" });
 onMounted(() => { measureChips(); void document.fonts?.ready.then(measureChips); });
-const { merged, linesAll, hoverBox, cardBox } = useTreeMerge({ doc, pills, posOf, segs: () => edges.value.flatMap((e) => e.segs), chipW, inv, busy: () => !!drag.value || !!plus.value, reset: () => [v.flow.viewport.value, panel.value, drag.value] });
+const { merged, linesAll, hoverBox, cardBox } = useTreeMerge({ doc, posOf, segs: () => edges.value.flatMap((e) => e.segs), chipW, inv, busy: () => !!drag.value || !!plus.value, reset: () => [v.flow.viewport.value, panel.value, drag.value] });
 /** 白紙に戻す = 2 回押し (本番の「白に戻す」と同じ use-armed、3 秒で戻る)。枠の外・Esc でも戻す (オーナー 10-22「白紙に戻すもあれやな、2 回だな」) */
 const clearArm = useArmed();
 const clearBtn = ref<HTMLElement | null>(null);
@@ -246,7 +245,7 @@ const { issues, issuesOpen, checking, onCheck, issueOf } = useTreeCheck(doc);
 function goIssue(id: string): void { void v.reveal(id, true); }
 
 /** 整列して、全体に合わせる (1 つ戻すで元の並びへ) */
-const tidyOf = (d: typeof doc.value): void => { const p = pillIds(d); tidy(d, { pill: (id) => p.has(id) }); };
+const tidyOf = (d: typeof doc.value): void => tidy(d);
 async function onTidy(): Promise<void> {
   t.edit(tidyOf);
   await v.fit();
@@ -302,7 +301,7 @@ const plusLine = computed(() => {
 
 watch(() => panel.value?.id, (id) => { if (id) setTimeout(() => void v.reveal(id), 0); });
 /** Vue Flow に渡す箱 (位置は木の形のまま。動かせるのは組める時だけ = 手・一望・戻り先を選んでいる間は画面だけ動く) */
-const flowNodes = computed(() => boxes.value.filter((b) => !pills.value.has(b.id)).map((b) => ({ id: b.id, type: "box", position: posOf(b), draggable: false, selectable: false, connectable: false })));
+const flowNodes = computed(() => boxes.value.map((b) => ({ id: b.id, type: "box", position: posOf(b), draggable: false, selectable: false, connectable: false })));
 // Vue Flow へは setNodes で直接入れる (:nodes で渡すと、Vue Flow が中の並びを書き戻している一瞬の変化を拾わず、
 // 見本を開いた時に始まりの箱しか出なかった。10-23 開発版で見た)
 watch(flowNodes, (n) => v.flow.setNodes(n), { immediate: true });
@@ -406,9 +405,9 @@ const glowOf = (b: Box): boolean => {
                   <path v-for="o in e.to" :key="o.id" :d="o.d" :stroke="o.color" stroke-width="2" stroke-linejoin="round" fill="none" :marker-end="`url(#tree-arrow-${o.kind})`" />
                 </g>
               </svg>
-              <!-- 矢印の上の札 = 打つ手 (押すと替える・消す)。札から流れ込む線と札 (まとめた箱) -->
+              <!-- 矢印の上の札 = 打つ手 (押すと替える・消す)。戻りの矢印だけの箱から流れ込む線 -->
               <TreeHandChip v-for="e in edges" :key="`hand-${e.id}`" :id="e.id" :hand="e.hand" :x="e.jx" :y="e.jy" :inv="inv" :off="hand" @open="panel = { kind: 'hand', id: e.id }" />
-              <TreeMergeLayer v-if="merged" :doc="doc" :pills="[...pills]" :lines="merged.lines" :paths="merged.paths" :hover="hoverBox" :show-all="linesAll" :inv="inv" :off="hand" @open="(id) => (pop = id)" @hover="(id) => (hoverBox = id)" />
+              <TreeMergeLayer v-if="merged" :lines="merged.lines" :paths="merged.paths" :hover="hoverBox" :show-all="linesAll" />
               <!-- 引っ張っている＋の線と、戻り先の札に乗せた時の線は箱の前 (相手の箱の上まで見える) -->
               <svg v-if="plusLine" class="pointer-events-none absolute left-0 top-0 z-10 overflow-visible" width="1" height="1">
                 <defs><marker id="tree-arrow-drag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" :fill="LINE.back" /></marker></defs>
@@ -448,7 +447,7 @@ const glowOf = (b: Box): boolean => {
               @note="popDo((id) => (panel = { kind: 'note', id }))" @spam="onSpam(doc.boxes[pop!]!)" @back-go="popDo((_, b) => goBack(b))" />
           </div>
         </div>
-        <TreeHoverCard v-if="cardBox && doc.boxes[cardBox]" :box-id="cardBox" :rect="v.rectOf(doc.boxes[cardBox]!, sizeOf(pills, cardBox).w * (pills.has(cardBox) ? inv : 1), sizeOf(pills, cardBox).h * (pills.has(cardBox) ? inv : 1))" />
+        <TreeHoverCard v-if="cardBox && doc.boxes[cardBox]" :box-id="cardBox" :rect="v.rectOf(doc.boxes[cardBox]!)" />
         <TreeCanvasTools v-model:hand="hand" :boxes="boxes" :view="v.view.value" :zoom="zoom" @center="v.centerOn" @fit="v.fit" @zoom-in="v.zoomIn" @zoom-out="v.zoomOut" @reset="v.resetZoom" />
         </div>
 
