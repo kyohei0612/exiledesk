@@ -9,7 +9,7 @@
  * 広告は note のように本文の下に横長のバナー 1 つ + 長い記事 (見出し 4 つ以上) は真ん中の見出しの前に 1 つ (--drafts = 開発版では見本の箱)。
  * 見本の記事 (slug sample) は一覧・関連・右の列・サイトマップに出さない (開発版で部品を見るためのページだけ作る)。
  * シェア (X・Reddit・リンクのコピー・Discord 向けのコピー) と、記事を 1 ページとして数える小さな JS (scripts/_blog-client.js → /blog/blog.js)。
- * OGP の絵は 記事の image → 本文の 1 枚目の図 → 題を描いた絵 (scripts/_blog-og.mjs、/blog/og/<言語>-<slug>.png) の順。記事の下にコメント欄の置き場 (#comments、中身はこれから)。
+ * OGP の絵は 記事の image → img/<slug>-og.<言語>.png → 本文の 1 枚目の (svg でない) 図 → 題を描いた絵 (scripts/_blog-og.mjs、/blog/og/<言語>-<slug>.png) の順。記事の下にコメント欄の置き場 (#comments、中身はこれから)。
  *
  *   node scripts/build-blog-pages.mjs [出力先 (既定 dist-web)] [--drafts]
  * 今は開発版 (scripts/deploy-web-dev.mjs) の中でだけ回す (--drafts 付き)。本番の build:web にはまだ入れない (オーナーが記事を読んでから)
@@ -73,7 +73,14 @@ figure{margin:32px 0}figure img,main img{display:block;width:100%;height:auto}fi
 .author{display:flex;gap:14px;align-items:center;margin:32px 0;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);line-height:1.6}.author b{display:block;font-size:15px}.author span{color:var(--sub);font-size:13px}.author img{width:48px;height:48px;border-radius:50%}
 .credit{color:var(--sub);font-size:12px;line-height:1.6;margin:16px 0 0}
 .more h2{font-size:18px;margin:48px 0 8px}ul.posts{list-style:none;padding:0;margin:0}ul.posts li{padding:16px 0;border-bottom:1px solid var(--line);line-height:1.6}
-ul.posts a.t{font-size:17px;font-weight:700;text-decoration:none;color:var(--ink)}ul.posts a.t:hover{color:var(--link)}ul.posts p{margin:6px 0 0;color:var(--sub);font-size:14px}
+ul.posts a.t{font-size:17px;font-weight:700;text-decoration:none;color:var(--ink)}ul.posts a.t:hover{color:var(--link)}main.wide{max-width:1180px}
+.lhead{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin:8px 0 20px;line-height:1.6}.sort{display:flex;gap:8px}.sort span{padding:4px 14px;border-radius:999px;background:var(--ink);color:#fff;font-size:13px;font-weight:700}
+.tagf{margin-left:auto;display:flex;flex-wrap:wrap;gap:6px}.tagf a{padding:3px 12px;border-radius:999px;border:1px solid var(--line);color:var(--sub);font-size:13px;text-decoration:none}.tagf a.on,.tagf a:hover{border-color:var(--ink);color:var(--ink)}
+.cards{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:28px 20px}.cards li{margin:0;line-height:1.6}
+.cards a{display:block;text-decoration:none;color:var(--ink)}.cards img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;background:var(--soft);border:1px solid var(--line)}
+.cards .ct{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin:10px 0 6px;font-size:15px;font-weight:700;line-height:1.55}.cards a:hover .ct{color:var(--link)}.cards time{color:var(--sub);font-size:12px}
+@media (max-width:767px){.cards{grid-template-columns:repeat(2,1fr);gap:22px 12px}.cards .ct{font-size:14px}.tagf{margin-left:0}}
+ul.posts p{margin:6px 0 0;color:var(--sub);font-size:14px}
 #comments{margin-top:32px}
 footer{border-top:1px solid var(--line);color:var(--sub);font-size:12px;line-height:1.7;background:#fafafa}footer .in{max-width:960px;margin:0 auto;padding:16px 20px 24px}footer .fnav{margin:0 0 6px}footer .fnav a{color:var(--sub)}
 @media (max-width:767px){body{font-size:17px;line-height:1.95}main{padding:28px 22px 48px}h1{font-size:24px}h2{font-size:21px;margin-top:44px}h3{font-size:18px}.say img{flex-basis:44px;width:44px;height:44px}}`;
@@ -118,8 +125,11 @@ function shareBar(lang, title, url) {
 /** 記事の OGP の絵: 頭の image → 本文の 1 枚目の図 → 題を描いた絵 → サイトの既定 */
 function ogImageOf(p) {
   const m = p.meta;
-  const first = /!\[[^\]]*\]\(([^)\s]+)\)/.exec(p.body)?.[1];
-  if (m.image || first) return `${SITE}${imgUrl(m.image || first)}`;
+  // 記事編集長が作る目を引く絵 (img/<slug>-og.<言語>.png → img/<slug>-og.png)。X・Discord は SVG を出さないので、本文の図は svg 以外だけ
+  const own = [`${m.slug}-og.${m.lang}.png`, `${m.slug}-og.png`].find((n) => existsSync(resolve(SRC, "img", n)));
+  const first = [...p.body.matchAll(/!\[[^\]]*\]\(([^)\s]+)\)/g)].map((x) => x[1]).find((src) => !/\.svg$/i.test(src));
+  const pick = m.image || (own ? `img/${own}` : null) || first;
+  if (pick) return `${SITE}${imgUrl(pick)}`;
   mkdirSync(resolve(OUT, "blog", "og"), { recursive: true });
   const name = `${m.lang}-${m.slug}.png`;
   return titleCard({ title: m.title, date: m.date, lang: m.lang, out: resolve(OUT, "blog", "og", name) }) ? `${SITE}/blog/og/${name}` : `${SITE}/web/og.png`;
@@ -127,7 +137,7 @@ function ogImageOf(p) {
 /** 数える・コピーの JS (scripts/_blog-client.js)。slug が空 = 一覧 */
 const clientTag = (lang, slug) => `<script defer src="/blog/blog.js" data-slug="${esc(slug)}" data-lang="${lang}" data-api="${API}" data-v="${VERSION}" data-copied="${esc(L[lang].copied)}"${DEV ? ' data-dev="1"' : ""}></script>`;
 
-function page(lang, { title, desc, path, alt, og, ld, body, slug = "" }) {
+function page(lang, { title, desc, path, alt, og, ld, body, slug = "", wide = false }) {
   const l = L[lang];
   const other = lang === "ja" ? "en" : "ja";
   return `<!doctype html>
@@ -157,7 +167,7 @@ ${ld ? `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\
 </head>
 <body>
 <header><div class="in"><a href="${l.app}">ExileDesk</a><nav>${l.nav}</nav></div></header>
-<main>
+<main${wide ? ' class="wide"' : ""}>
 ${body}
 </main>
 <footer><div class="in">${l.foot}</div></footer>
@@ -178,6 +188,20 @@ function tagSections(lang, list) {
 
 const urls = [];
 const index = { ja: [], en: [] };
+/** 記事ごとのサムネ (OGP の絵のパス)。一覧のカードが使う */
+const thumbs = new Map();
+/** 一覧のカード (16:9 のサムネ・題 3 行・公開日)。data-tags は blog.js のタグの絞り込み用 (JS 無しでは全部出る) */
+function cards(lang, list) {
+  const l = L[lang];
+  return `<ul class="cards">${list.map((x) => `<li data-tags="${esc(x.meta.tags.join("|"))}"><a href="${l.prefix}/blog/${x.meta.slug}/"><img src="${esc(thumbs.get(`${lang}:${x.meta.slug}`) ?? "/web/og.png")}" alt="" width="400" height="225" loading="lazy" /><span class="ct">${esc(x.meta.title)}</span><time datetime="${x.meta.date}">${x.meta.date}</time>${x.meta.draft ? ` <span class="draft">${l.draft}</span>` : ""}</a></li>`).join("")}</ul>`;
+}
+/** 一覧の上の札: 並べ替えは「新着」だけ (人気・急上昇は数字が無い)、右にタグで絞る札 (3 本以上の記事が付いたタグ、多い順に 8 つ。JS 無しでは下のタグごとの節へ飛ぶ) */
+function listHead(lang, list) {
+  const by = new Map();
+  for (const p of list) for (const t of p.meta.tags) by.set(t, (by.get(t) ?? 0) + 1);
+  const tags = [...by].filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  return `<div class="lhead"><div class="sort"><span>${lang === "ja" ? "新着" : "Latest"}</span></div>${tags.length ? `<nav class="tagf" aria-label="tags"><a href="#" class="on" data-tagf="">${lang === "ja" ? "すべて" : "All"}</a>${tags.map(([t]) => `<a href="#tag-${encodeURIComponent(t)}" data-tagf="${esc(t)}">#${esc(t)}</a>`).join("")}</nav>` : ""}</div>`;
+}
 for (const lang of ["ja", "en"]) {
   const l = L[lang];
   const mine = posts.filter((p) => p.meta.lang === lang);
@@ -187,6 +211,7 @@ for (const lang of ["ja", "en"]) {
     const m = p.meta;
     const path = `/blog/${m.slug}/`;
     const image = ogImageOf(p);
+    thumbs.set(`${lang}:${m.slug}`, image.replace(SITE, ""));
     const url = `${SITE}${l.prefix}${path}`;
     const cta = m.tree || m.craft ? `<p class="cta">${m.tree ? `<a href="${esc(m.tree)}">${l.tree}</a>` : ""}${m.craft ? `<a href="${esc(m.craft)}">${l.craft}</a>` : ""}</p>` : "";
     const others = mine.filter((x) => x.meta.slug !== m.slug && listed(x)).slice(0, 5);
@@ -219,9 +244,9 @@ ${others.length ? `<section class="more"><h2>${l.more}</h2><ul class="posts">${o
     index[lang].push({ slug: m.slug, title: m.title, date: m.date, href: `${l.prefix}${path}`, draft: m.draft, description: m.description, tags: m.tags, image: image.replace(SITE, "") });
   }
   const shown = mine.filter(listed);
-  const list = shown.length ? `<ul class="posts">${shown.map((x) => `<li><a class="t" href="${l.prefix}/blog/${x.meta.slug}/">${esc(x.meta.title)}</a>${x.meta.draft ? ` <span class="draft">${l.draft}</span>` : ""}<p>${esc(x.meta.date)} · ${esc(x.meta.description)}</p></li>`).join("")}</ul>` : `<p>${l.none}</p>`;
+  const list = shown.length ? `${listHead(lang, shown)}${cards(lang, shown)}` : `<p>${l.none}</p>`;
   const ld = { "@context": "https://schema.org", "@type": "Blog", name: l.listTitle, url: `${SITE}${l.prefix}/blog/`, inLanguage: lang };
-  writeFileSync(resolve(dir, "index.html"), page(lang, { title: l.listTitle, desc: l.listDesc, path: "/blog/", alt: true, og: { type: "website", image: `${SITE}/web/og.png` }, ld, body: `<h1>${l.blog}</h1>\n<p>${l.listIntro}</p>\n${list}${tagSections(lang, shown)}` }));
+  writeFileSync(resolve(dir, "index.html"), page(lang, { title: l.listTitle, desc: l.listDesc, path: "/blog/", alt: true, og: { type: "website", image: `${SITE}/web/og.png` }, ld, body: `<h1>${l.blog}</h1>\n<p>${l.listIntro}</p>\n${list}${tagSections(lang, shown)}`, wide: true }));
   urls.push(`${l.prefix}/blog/`);
   console.log(`${lang}: 記事 ${shown.length} 本 + 一覧 (見本 ${mine.length - shown.length})`);
 }

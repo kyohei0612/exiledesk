@@ -42,6 +42,15 @@
   addEventListener("pagehide", flush);
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") flush(); });
 
+  // 一覧のタグの札: 押したタグのカードだけ出す (「すべて」で戻す)
+  document.querySelectorAll("[data-tagf]").forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      e.preventDefault();
+      var tag = a.getAttribute("data-tagf");
+      document.querySelectorAll("[data-tagf]").forEach(function (b) { b.classList.toggle("on", b === a); });
+      document.querySelectorAll(".cards li").forEach(function (li) { li.hidden = !!tag && (li.getAttribute("data-tags") || "").split("|").indexOf(tag) < 0; });
+    });
+  });
   // シェア: 押した数を数える。コピーのボタンは JS がある時だけ出す
   var copied = me.getAttribute("data-copied") || "Copied";
   document.querySelectorAll("[data-share][hidden]").forEach(function (b) { b.hidden = false; });
