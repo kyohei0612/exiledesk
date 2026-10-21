@@ -138,7 +138,7 @@ const query = ref("");
 /** 開いている段の表 (種類:系統) */
 const expanded = ref<string | null>(null);
 // 開いた段の表は行の外を押す・Esc で閉じる (押した物には届ける。行から出る小窓は中に数える。2026-10-22 オーナー「キャンセルは枠の外をクリックで」)
-useDismiss(() => !!expanded.value, [() => (expanded.value ? listEl.value?.querySelector<HTMLElement>(`[data-row-key="${CSS.escape(expanded.value)}"]`) : null), ...["[data-mod-add-menu]", "[data-sim-method-pop]", "[data-helptip-pop]"].map((q) => () => document.querySelector<HTMLElement>(q))], () => { expanded.value = null; }, { swallow: false });
+useDismiss(() => !!expanded.value, [() => (expanded.value ? listEl.value?.querySelector<HTMLElement>(`[data-row-key="${CSS.escape(expanded.value)}"]`) : null), ...["[data-mod-add-menu]", "[data-sim-method-pop]", "[data-helptip-pop]"].map((q) => () => document.querySelector<HTMLElement>(q))], () => { expanded.value = null; }, { swallow: false, keep: '[data-rec^="mod:"]' }); // 別の行の名前は toggleRow が切り替える (先に閉じると行がずれて押した行が開かない)
 /** カードから飛んで来た行 (少しの間だけ光らせる) */
 const flashKey = ref<string | null>(null);
 /** この一覧の根 (窓とページの下の 2 つが同時にあるので、行は自分の中から探す) */
