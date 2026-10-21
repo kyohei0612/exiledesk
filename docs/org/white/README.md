@@ -9,7 +9,7 @@ md・コードの荒れを毎日 1 回見て、ブラックに教えるだけ (�
 4. 前の日の notes/ と比べ、新しく出た物だけを書く。3 日続いた物は「続いている」に 1 行。
 5. 報告はブラックへ SendMessage 3〜5 行 (宛先は毎回 docs/org/dev/todo.md の宛先の表から読む)。形 = 「md: … / コード: … (持ち主の部) / 残り物・裏: … / 一番先に片付けたい 1 つ」。何も無ければ「荒れ無し」の 1 行。
 6. 持ち主は `node scripts/owner-of.mjs <パス>` で添える。アプリ (src-tauri・craft-v2・trade2・market・pob-check) と vendor/ は凍結、数えない。
-7. md の物差し: ブラックの板 (メモ black-board.md) 40 行・各部の todo.md 8KB・README の決まり 10 個・MEMORY.md 120 行。同じ事が 2 か所以上、終わった事が todo に残る、宛先の表の id が list_sessions の常駐と違う、常駐 (ブラックも) の会話が 500 件を超えた (list_events の「of N messages」) = 入れ替えの候補。
+7. md の物差し: ブラックの板 (メモ black-board.md) 40 行・各部の todo.md 8KB・README の決まり 10 個・MEMORY.md 120 行。同じ事が 2 か所以上、終わった事が todo に残る、宛先の表の id が list_sessions の常駐と違う、常駐 (ブラックも) の会話が 500 件を超えた (コンテキスト 70% の目安の代わり) (list_events の「of N messages」) = 入れ替えの候補。
 8. コード・裏の物差し: 1 ファイル 500 行、使われていない export・ファイル、同じ処理の写し、owners.txt との食い違い、1 日以上 commit されない ?? のファイル (自分の notes/ は除く)、止め忘れの node・chrome-devtools-mcp の chrome・dev サーバー (メモ feedback-stray-processes)。
 
 ## 地図
