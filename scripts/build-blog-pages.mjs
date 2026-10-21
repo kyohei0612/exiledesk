@@ -55,9 +55,10 @@ main{max-width:640px;margin:0 auto;padding:40px 20px 56px}
 h1{font-size:30px;line-height:1.5;margin:0 0 14px;font-weight:700}h2{font-size:24px;line-height:1.6;margin:56px 0 18px;font-weight:700}
 h3{font-size:20px;line-height:1.6;margin:40px 0 12px;font-weight:700}h4{font-size:18px;margin:28px 0 8px;font-weight:700}
 a{color:var(--link)}p{margin:0 0 2em}ul,ol{margin:0 0 2em;padding-left:1.4em}
-/* 折り返し (2026-10-22 オーナー「キモい」): 日本語は文節で折る・行頭に 、。」を置かない・最後の行を 1〜2 字にしない、見出しは行をそろえる。英語は長い語のはみ出しだけ止める */
-html[lang=ja] main :is(p,li,figcaption,.bubble){word-break:auto-phrase;line-break:strict;text-wrap:pretty}html[lang=ja] main :is(h1,h2,h3,h4){word-break:auto-phrase;line-break:strict;text-wrap:balance}
-html[lang=en] main{overflow-wrap:anywhere}html[lang=en] main :is(p,li){text-wrap:pretty}html[lang=en] main :is(h1,h2,h3,h4){text-wrap:balance}li{margin:.2em 0}strong{font-weight:700}
+/* 折り返し: 行頭に 、。」を置かない (行頭禁則)・見出しは行をそろえる。英語は長い語のはみ出しだけ止める。
+   本文の文節折り (auto-phrase)・最後の行の調整 (pretty) は 2026-10-22 オーナー「文の途中で折れると字が滑る」で外した (word-break は既定) */
+html[lang=ja] main :is(p,li,figcaption,.bubble){word-break:normal;line-break:strict}html[lang=ja] main :is(h1,h2,h3,h4){word-break:auto-phrase;line-break:strict;text-wrap:balance}
+html[lang=en] main{overflow-wrap:anywhere}html[lang=en] main :is(h1,h2,h3,h4){text-wrap:balance}li{margin:.2em 0}strong{font-weight:700}
 .meta{color:var(--sub);font-size:14px;line-height:1.6;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin:0 0 14px}.tag{color:var(--sub);font-size:13px}.tag::before{content:"#"}
 .draft{background:#fff1e0;color:#a5521a;border-radius:4px;padding:0 6px;font-size:12px}
 .backlink{display:inline-block;margin:0 0 14px;font-size:14px;line-height:1.6;color:var(--ink);text-decoration:none;padding:4px 12px 4px 8px;border-radius:999px;background:var(--soft)}.backlink:hover{color:var(--link)}
