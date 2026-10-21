@@ -15,7 +15,8 @@ import HeldOmens from "../../craft-stage/HeldOmens.vue";
 import { heldOmensOf } from "../../craft-stage/held-omens";
 import StageItemCard from "../../craft-stage/StageItemCard.vue";
 import { allMods, applyCurrency, kindOf, mulberry32, omensFor, previewUse, revealOffers, unrevealedOf, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
-import { aimsOf, fillCatalyst, playHand, sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { aimHeld, aimsOf, fillCatalyst, playHand, sampleOf } from "../../../services/simulator/tree/tree-sample";
+import type { RowTag } from "../../craft-stage/stage-item-row-tag";
 import { TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handLabel } from "./tree-names";
 import { useTree } from "./use-tree";
@@ -127,6 +128,22 @@ function onMark(modId: string): void {
   if (!m || m.fractured) return;
   t.edit((d) => toggleUnwanted(d, props.boxId, modId));
 }
+/**
+ * カードの MOD の行の札 (オーナー 10-22): このツリーの狙い (当たりの札) に当たらない MOD に「外れ MOD」(赤、外れの箱と同じ系統)。
+ * × の印の行は「× 要らない」が先、フラクチャーは付けない
+ */
+const rowTags = computed((): Map<string, RowTag> => {
+  const d = s.data.value, it = item.value, out = new Map<string, RowTag>();
+  if (!d || !it) return out;
+  const aims = aimsOf(t.doc.value), un = box.value?.unwanted ?? [];
+  for (const m of [...it.prefixes, ...it.suffixes]) {
+    if (m.fractured) continue;
+    const one = { ...it, prefixes: [m], suffixes: [] };
+    if (un.some((u) => aimHeld(d, one, { modId: u, tier: 99 }))) out.set(m.modId, { text: tr("× 要らない", "× Unwanted"), tone: "bad" });
+    else if (!aims.some((a) => aimHeld(d, one, a))) out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", title: tr("このツリーの狙い (当たりの札) に当たらない MOD", "Not one of this tree's target mods") });
+  }
+  return out;
+});
 const marks = computed(() => (box.value?.unwanted ?? []).map((id) => {
   const m = item.value ? allMods(item.value).find((x) => x.modId === id) : null;
   return { id, text: m ? `${m.tierName} ${modText(m)}` : tr("(この見本には無い MOD)", "(not on this sample)") };
@@ -161,7 +178,7 @@ const noteText = computed(() => {
         <div data-tree-trial-left class="flex min-w-0 flex-col gap-2 @min-[620px]:min-h-0 @min-[620px]:overflow-y-auto">
           <!-- アイテム (クラフト台のカード。持っている時に押すと打つ) -->
           <div v-if="item" ref="cardEl" data-tree-trial-item class="flex justify-center pb-7" @contextmenu.prevent="release">
-            <StageItemCard :item="item" :doomed="preview?.change ?? []" :open="preview?.open" :added="last.added" :removed="last.removed" :holding="!!held" :flash-key="flash" :width="340" compact @use="use(1)" @jump="onMark" />
+            <StageItemCard :item="item" :doomed="preview?.change ?? []" :open="preview?.open" :added="last.added" :removed="last.removed" :holding="!!held" :flash-key="flash" :width="340" compact :row-tags="rowTags" @use="use(1)" @jump="onMark" />
           </div>
           <!-- × (要らない) の印 -->
           <div data-tree-unwanted-list class="flex flex-col gap-1">
