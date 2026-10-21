@@ -29,7 +29,7 @@ function coeRun(hasKeys, floor, quality, qualityType, targetKeys) {
   return COE.run(`(() => {
     const emu = new GameEmulator(true); Emulator = emu;
     const item = new GameItem(2592, 82, ${quality || 0});
-    item.rarity = 3;
+    item.rarity = ItemRarity.RARE;
     ${qualityType ? `item._qualityType = ${JSON.stringify(qualityType)};` : ""}
     emu.setItem(item);
     emu.setModpool(ModsManager.categorizeModpool(ModsManager.getModpool(item._classId, true, true)));
