@@ -8,7 +8,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../../state/craft-stage";
-import { provideShelf, simHidden } from "../../../state/emulator/shelf-context";
 import CurrencyShelf from "../../craft-stage/CurrencyShelf.vue";
 import ShelfButton from "../../craft-stage/ShelfButton.vue";
 import HeldOmens from "../../craft-stage/HeldOmens.vue";
@@ -20,6 +19,7 @@ import type { RowTag } from "../../craft-stage/stage-item-row-tag";
 import { TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handLabel } from "./tree-names";
 import { useTree } from "./use-tree";
+import { useSimShelf } from "../use-sim-shelf";
 import { sampleKeyOf, toggleUnwanted, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { modText, tr } from "../../../i18n/lang";
 import { useDismiss } from "../../../utils/use-dismiss";
@@ -43,26 +43,8 @@ const item = computed(() => trail.value[trail.value.length - 1] ?? null);
 const box = computed(() => t.doc.value.boxes[props.boxId] ?? null);
 
 // 棚 (クラフト台と同じ部品)。持つ → アイテムを押すと打つ。お告げは持った物に掛けられる物だけ使い、使った分は外す (クラフト台と同じ)
-const held = ref<string | null>(null);
-const omens = ref<string[]>([]);
-/** 同じ物をもう一度押す = 離す (クラフト台と同じ、オーナー 10-22) */
-function onHold(k: string): void { if (held.value === k) release(); else held.value = k; }
-/** 棚の空いている所を押す = 離す (ボタン・入力・お告げの欄の中は除く) */
-function onShelfDown(e: PointerEvent): void { if (held.value && !(e.target as HTMLElement).closest("button,input,select,label,[data-held-box]")) release(); }
-function toggleOmen(id: string): void { omens.value = omens.value.includes(id) ? omens.value.filter((o) => o !== id) : [...omens.value, id]; }
-provideShelf({
-  data: s.data, item, omens, held,
-  usable: (k) => {
-    const d = s.data.value, it = item.value;
-    if (!d || !it) return tr("準備中", "Loading");
-    const r = applyCurrency(d, it, k, mulberry32(0), omens.value);
-    return r.applied || r.random ? null : (r.reason ?? tr("打てない", "Can't use"));
-  },
-  toggleOmen,
-  hidden: simHidden,
-});
-/** 手放す (カードの札どおり 右クリック / Esc。Esc は欄を閉じるより先) */
-function release(): void { held.value = null; omens.value = []; }
+/** 持つ / 離す・お告げ・打てるか (use-sim-shelf。同じ物をもう一度押す・棚の空いている所を押す = 離す) */
+const { held, omens, release, onHold, onShelfDown } = useSimShelf(item);
 /** 持っている物を打つ前に光らせる (クラフト台と同じ previewUse: 変わる候補の MOD はオレンジの文字、付く空きは緑の枠) */
 const preview = computed(() => (held.value && item.value && s.data.value ? previewUse(s.data.value, item.value, held.value, omens.value) : null));
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && held.value) { release(); e.stopImmediatePropagation(); } }

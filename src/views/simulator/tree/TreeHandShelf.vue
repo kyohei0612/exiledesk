@@ -6,16 +6,16 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, toRaw } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../../state/craft-stage";
-import { provideShelf, simHidden } from "../../../state/emulator/shelf-context";
 import CurrencyShelf from "../../craft-stage/CurrencyShelf.vue";
 import HeldOmens from "../../craft-stage/HeldOmens.vue";
 import { heldOmensOf } from "../../craft-stage/held-omens";
-import { applyCurrency, mulberry32, omensFor } from "../../../services/craft-stage/engine";
+import { mulberry32, omensFor } from "../../../services/craft-stage/engine";
 import { aimHeld, aimsOf, fillCatalyst, handProblem, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, kindOfCurrency, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handLabel, handName } from "./tree-names";
 import { kindOfHand, setHand, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
+import { useSimShelf } from "../use-sim-shelf";
 import { tr } from "../../../i18n/lang";
 
 const props = defineProps<{ boxId: string; current: Hand | null }>();
@@ -32,11 +32,6 @@ const spamMax = ref<number | null>(props.current?.repeat?.max ?? null);
 /** 狙い無し (足す手だけ。カオススパムとは一緒にしない) */
 const free = ref(!!props.current?.free);
 const canFree = computed(() => !!held.value && kindOfCurrency(held.value) === "add");
-/** 持つ / 離す (クラフト台と同じ: 同じ物をもう一度押す・右クリック・Esc = 離す。お告げの欄も閉じる、オーナー 10-22) */
-function release(): void { held.value = null; omens.value = []; }
-function onHold(k: string): void { if (held.value === k) release(); else held.value = k; }
-/** 棚の空いている所を押す = 離す (ボタン・入力・お告げの欄の中は除く) */
-function onShelfDown(e: PointerEvent): void { if (held.value && !(e.target as HTMLElement).closest("button,input,select,label,[data-held-box]")) release(); }
 /** Esc: 今の手を替えている時は欄ごと取り消す (何も替えない、オーナー 10-22「枠の外・Esc で取り消し」)。新しい手の時は持った物を離す */
 function onKey(e: KeyboardEvent): void {
   if (e.key !== "Escape") return;
@@ -45,18 +40,8 @@ function onKey(e: KeyboardEvent): void {
 }
 onMounted(() => window.addEventListener("keydown", onKey, true));
 onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
-function toggleOmen(id: string): void { omens.value = omens.value.includes(id) ? omens.value.filter((o) => o !== id) : [...omens.value, id]; }
-provideShelf({
-  data: s.data, item, omens, held,
-  usable: (k) => {
-    const d = s.data.value, it = item.value;
-    if (!d || !it) return tr("準備中", "Loading");
-    const r = applyCurrency(d, it, k, mulberry32(0), omens.value);
-    return r.applied || r.random ? null : (r.reason ?? tr("打てない", "Can't use"));
-  },
-  toggleOmen,
-  hidden: simHidden,
-});
+/** 持つ / 離す (クラフト台と同じ: 同じ物をもう一度押す・右クリック・Esc = 離す。お告げの欄も閉じる、オーナー 10-22) 棚・打てるかは use-sim-shelf */
+const { release, onHold, onShelfDown } = useSimShelf(item, held, omens);
 const used = computed(() => (held.value ? omensFor(held.value, omens.value) : []));
 const catalysing = computed(() => used.value.includes(CATALYSING));
 

@@ -10,7 +10,6 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { scrollToTop } from "../../utils/keep-place";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
-import { provideShelf, simHidden } from "../../state/emulator/shelf-context";
 import { tr } from "../../i18n/lang";
 import CurrencyShelf from "../craft-stage/CurrencyShelf.vue";
 import ShelfButton from "../craft-stage/ShelfButton.vue";
@@ -19,12 +18,12 @@ import Icon from "../../components/ui/Icon.vue";
 import Disclosure from "../../components/ui/Disclosure.vue";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import { OMEN_FOR } from "../../services/craft-stage/omens";
-import { applyCurrency, kindOf, omensFor } from "../../services/craft-stage/apply-currency";
-import { mulberry32 } from "../../services/htc/rng";
+import { kindOf, omensFor } from "../../services/craft-stage/apply-currency";
 import { ruleFor, runQuizOnce, summarizeQuiz, type QuizAction, type QuizRecipe, type QuizResult, type QuizRule, type QuizRun, type QuizSlot, type When } from "../../services/simulator/quiz-recipe";
 import { ROUTE_NAME } from "../../services/simulator/quiz-build";
 import { actionText, chipText as chipTextOf, whenText as whenTextOf } from "./quiz-text";
 import type { StageItem } from "../../services/craft-stage/types";
+import { useSimShelf } from "./use-sim-shelf";
 
 const props = defineProps<{
   recipe: QuizRecipe;
@@ -140,17 +139,9 @@ const whenNow = computed<When>(() => {
 
 // ── 答え: 棚 (手打ちと同じ) + 発現・買い直し ─────────────────────────
 const item = computed<StageItem | null>(() => q.value?.item ?? null);
-const omens = ref<string[]>([]);
-const held = ref<string | null>(null);
-provideShelf({
-  data: craftStage.data, item, omens, held,
-  // 当たり所で弾かれるだけの物は打てる扱い (棚は乱数に関係ない条件だけで出す。オーナーの方針 2026-10-12)
-  usable: (k) => { const d = craftStage.data.value, it = item.value; if (!d || !it) return tr("準備中", "Loading"); const r = applyCurrency(d, it, k, mulberry32(0), omens.value); return r.applied || r.random ? null : (r.reason ?? tr("打てない", "Can't use")); },
-  toggleOmen: (id) => toggleOmen(id),
-  hidden: simHidden,
-});
+// 棚 (当たり所で弾かれるだけの物は打てる扱い。棚は乱数に関係ない条件だけで出す。オーナーの方針 2026-10-12)
+const { held, omens, toggleOmen } = useSimShelf(item);
 const heldOmens = computed(() => { if (!held.value) return []; const k = kindOf(held.value); return [...(OMEN_FOR[k] ?? []), ...(k === "desecrate" ? OMEN_FOR.reveal ?? [] : [])]; });
-function toggleOmen(id: string): void { omens.value = omens.value.includes(id) ? omens.value.filter((o) => o !== id) : [...omens.value, id]; }
 const echoes = ref(true);
 const hasHidden = computed(() => (item.value ? [...item.value.prefixes, ...item.value.suffixes].some((m) => m.unrevealed) : false));
 
