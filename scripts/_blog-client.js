@@ -20,7 +20,9 @@
   var sid = rnd(), devc = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? "mobile" : "pc", t0 = Date.now();
   var recs = [];
   window.__blogLog = recs;
-  var put = function (k, d) { recs.push({ k: k, t: Date.now(), d: d }); };
+  // 「この端末は記録しない」の端末は溜めもしない (送りもしない)。開発版は確かめのために溜めるが送らない
+  var optedOut = function () { try { return localStorage.getItem("exiledesk.noLog") === "1"; } catch (e) { return true; } };
+  var put = function (k, d) { if (optedOut()) return; recs.push({ k: k, t: Date.now(), d: d }); };
   var ref = "direct";
   try { if (document.referrer) ref = new URL(document.referrer).hostname; } catch (e) { /* 無くてよい */ }
   put("visit", { ref: ref, entry: "path:" + location.pathname.slice(0, 40), path: location.pathname, dev: devc, first: first });
