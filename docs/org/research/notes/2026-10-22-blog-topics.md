@@ -101,6 +101,7 @@
 | 36 | **PoE2 液化した感情 (デリリウム) でジュエルを作る｜侮蔑・獰猛の仕組み** | ジュエルの MOD を 1 つ消して決まった MOD を付ける液化した感情。侮蔑・獰猛は**プレの版かサフィの版かがランダム** (説明文に決め方が無いので)、侮蔑の「+1 個まで」で 3 つ目が付く、獰猛は反対側の数値が伸びる | changelog v0.1.485・533・561 (チュートリアル「液化した感情を学ぶ」)・493 (作った MOD が付いている間は使えない)、メモ poe2-craft-rules-confirmed の液化した感情の項 (v0.1.533) | 中級 | ゲーム / CoE で確認した決めとエンジンの動き。**poe2db の文は今回未確認 (書く前に確認)** | ★★ |
 | 37 | **PoE2 カタリストの種類｜どの MOD にどのカタリストが効くか** | 13 種類のカタリストは「指輪・アミュレット専用」(手袋には使えない)。マナの MOD = 神経、キャスター = 歯擦音、スピード = 軽快、ES = 甲羅。品質は 1 個ずつ +1%・最大 20%、種類を変えると 0 から。値段 (神 1 個 = 神経 21.5 個・歯擦音 3.02 個・軽快 3.93 個) | poe2db の Quality・各カタリストのページ (2026-10-22)、research/notes/2026-10-21-mana-ring-mods.md・es-gloves-mods.md、changelog v0.1.529・540・509・508・561 | 初心者〜中級 | poe2db で確認 (効く MOD のタグ)。値段は poe2db のレート (向きは推定)。+1% 固定はオーナーの決め | ★★ |
 - **近い記事と重ならない理由**: #33 は公開済み es-gloves-greater-exalt・crafting-calculator-mistakes と別の主の言葉 (「上級 完全 違い」)。#34 は公開済み desecration-bone-sides (骨の左右) と別 (種類・レベル)。#35 は #13 (お告げは高いか) と別 (高貴のお告げの使い分け)。#36 はジュエル (公開済みに無い)。#37 は公開済み catalysing-exaltation-multiplier (倍率) ・quality-rounding-down (丸め) と別 (種類と効く MOD)。
+- 英語名は poe2db で確認 (Liquid Emotions = 液化した感情。Distilled は別の物)。
 - 書く前の確認: #35 の均質化の高貴 (今の版で入手できるか)、#36 の poe2db の文。
 
 ### 狙う言葉 (#33〜#37。検索量は未確認。競合の題とゲーム内の名前から)
@@ -109,5 +110,5 @@
 | 33 | PoE2 上級 完全 違い | 最低モッドレベル / 変成 増強 高貴 | poe2 greater perfect orb difference |
 | 34 | 冒涜 骨 種類 古代の骨 | 噛み切られた骨 / 保存された骨 | poe2 gnawed preserved ancient bone |
 | 35 | 高貴なオーブ お告げ 左右 偉大なる | 右側の高貴 / 左側の高貴 | poe2 omen of dextral sinistral exaltation |
-| 36 | 液化した感情 ジュエル | 侮蔑 獰猛 デリリウム | poe2 distilled emotion jewel |
+| 36 | 液化した感情 ジュエル | 侮蔑 獰猛 デリリウム | poe2 liquid emotions jewel |
 | 37 | PoE2 カタリスト 種類 | 神経のカタリスト 歯擦音 / 品質 指輪 | poe2 catalyst types which |
