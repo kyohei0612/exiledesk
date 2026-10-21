@@ -14,9 +14,17 @@ import { BOX_H, BOX_W, boundsOf, type TreeDoc } from "../../../services/simulato
 import { pageZoom } from "../../../utils/zoom";
 
 export const FLOW_ID = "sim-tree";
-export const ZOOM_MIN = 0.3;
-export const ZOOM_MAX = 1.6;
-const STEP = 1.2;
+/**
+ * 倍率は決まった段だけ (10-22 オーナー: 自由な値だと 76% で札がくっついて重なった)。ホイール・＋−・全体表示・幅が変わった時もこの段に吸い付く。
+ * 75% は縮めたまま組める一番下の段 (VIEW_ONLY)、それ未満は見るだけ
+ */
+export const ZOOM_LEVELS = [0.25, 0.33, 0.5, 0.67, 0.75, 1, 1.25, 1.5] as const;
+export const ZOOM_MIN = ZOOM_LEVELS[0];
+export const ZOOM_MAX = ZOOM_LEVELS[ZOOM_LEVELS.length - 1]!;
+/** 一番近い段 */
+export const snapZoom = (z: number): number => ZOOM_LEVELS.reduce((a, l) => (Math.abs(l - z) < Math.abs(a - z) ? l : a), ZOOM_LEVELS[0]);
+/** ホイールの量をためてから 1 段動かす (マウスの 1 目盛り ≒ 100、タッチパッドは細かく来る) */
+const WHEEL_STEP = 60;
 /** これ未満は箱の中の物を押させず、箱を押すと等倍の編集のポップアップ (ボタンが 24px の 3/4 = 18px を切る。10-22 オーナー「75% 未満の見るだけをやめる」) */
 export const VIEW_ONLY = 0.75;
 
@@ -31,14 +39,36 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   const maxZoom = computed(() => ZOOM_MAX * pageZ.value);
   const full = ref(false);
   const bounds = computed(() => boundsOf(doc.value));
-  const clamp = (z: number): number => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(z * 100) / 100));
 
-  /** 倍率を変える (画面の真ん中を軸に) */
-  async function setZoom(z: number): Promise<void> { await f.zoomTo(clamp(z) * pageZ.value); }
-  const zoomIn = (): Promise<void> => setZoom(zoom.value * STEP);
-  const zoomOut = (): Promise<void> => setZoom(zoom.value / STEP);
+  /** 倍率を変える (段に吸い付く。at = 軸にする画面の点 (clientX / clientY)、無ければ画面の真ん中) */
+  async function setZoom(z: number, at?: { x: number; y: number }): Promise<void> {
+    const to = snapZoom(z) * pageZ.value, vp = f.viewport.value;
+    if (!at) { await f.zoomTo(to); return; }
+    // 軸の点の下のツリーの座標が、倍率を変えた後も同じ画面の点に来るように
+    const w = f.screenToFlowCoordinate(at);
+    await f.setViewport({ x: w.x * vp.zoom + vp.x - w.x * to, y: w.y * vp.zoom + vp.y - w.y * to, zoom: to });
+  }
+  /** 今より 1 段上 / 下 (段の間にいる時は近い側の次) */
+  const stepZoom = (dir: 1 | -1, at?: { x: number; y: number }): Promise<void> => {
+    const z = zoom.value, next = dir > 0 ? ZOOM_LEVELS.find((l) => l > z + 1e-3) : [...ZOOM_LEVELS].reverse().find((l) => l < z - 1e-3);
+    return setZoom(next ?? (dir > 0 ? ZOOM_MAX : ZOOM_MIN), at);
+  };
+  const zoomIn = (): Promise<void> => stepZoom(1);
+  const zoomOut = (): Promise<void> => stepZoom(-1);
+  /** ホイール (タッチパッドのピンチ = ctrl + ホイールも) はマウスの所を軸に 1 段ずつ。Vue Flow のホイールの拡大縮小は切ってある (SimTreePage) */
+  let wheelAcc = 0, wheelT = 0;
+  function onWheel(e: WheelEvent): void {
+    e.preventDefault();
+    clearTimeout(wheelT);
+    wheelT = window.setTimeout(() => { wheelAcc = 0; }, 200);
+    wheelAcc += e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 800 : 1);
+    if (Math.abs(wheelAcc) < WHEEL_STEP) return;
+    const dir = wheelAcc < 0 ? 1 : -1;
+    wheelAcc = 0;
+    void stepZoom(dir, { x: e.clientX, y: e.clientY });
+  }
   /**
-   * 全体に合わせる (大きくはしない)。右下に浮かぶ道具とミニマップ (TreeCanvasTools、幅 RIGHT_ROOM) の所を空けて収める
+   * 全体に合わせる (大きくはしない。収まる一番大きい段)。右下に浮かぶ道具とミニマップ (TreeCanvasTools、幅 RIGHT_ROOM) の所を空けて収める
    * (Vue Flow の fitView は浮かぶ物を知らず、右下の箱がミニマップの下に隠れた。10-22 手元で見た)
    */
   async function fit(): Promise<void> {
@@ -46,7 +76,8 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     if (!w || !h) return;
     const PAD = 28, RIGHT_ROOM = 250;
     const room = w - RIGHT_ROOM - PAD * 2 > b.w * minZoom.value ? RIGHT_ROOM : 0;
-    const z = Math.min(pageZ.value, Math.max(minZoom.value, Math.min((w - room - PAD * 2) / b.w, (h - PAD * 2) / b.h)));
+    const fitZ = Math.min((w - room - PAD * 2) / b.w, (h - PAD * 2) / b.h) / pageZ.value;
+    const z = ([...ZOOM_LEVELS].reverse().find((l) => l <= Math.min(1, fitZ) + 1e-6) ?? ZOOM_MIN) * pageZ.value;
     await f.setViewport({ x: (w - room) / 2 - (b.x + b.w / 2) * z, y: Math.max(PAD, h / 2 - (b.y + b.h / 2) * z), zoom: z });
   }
   /** 始まりの箱を上の真ん中へ、等倍で (開いた時と、一望から等倍に戻した時。真ん中を軸にすると枝の間の空き所に出た、10-22) */
@@ -92,7 +123,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
       if (Math.abs(z - pageZ.value) < 1e-4) return;
       const keep = zoom.value;
       pageZ.value = z;
-      void f.zoomTo(clamp(keep) * z);
+      void f.zoomTo(snapZoom(keep) * z);
     });
   };
   window.addEventListener("resize", onResize);
@@ -104,5 +135,5 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     void f.setViewport({ x: vp.x + (w - old) / 2, y: vp.y, zoom: vp.zoom });
   });
 
-  return { flow: f, pageZ, zoom, viewOnly, minZoom, maxZoom, full, bounds, view, setZoom, zoomIn, zoomOut, fit, goHome, resetZoom, toWorld, reveal, toggleFull, centerOn, rectOf, dispose: () => window.removeEventListener("resize", onResize) };
+  return { flow: f, pageZ, zoom, viewOnly, minZoom, maxZoom, full, bounds, view, setZoom, zoomIn, zoomOut, onWheel, fit, goHome, resetZoom, toWorld, reveal, toggleFull, centerOn, rectOf, dispose: () => window.removeEventListener("resize", onResize) };
 }
