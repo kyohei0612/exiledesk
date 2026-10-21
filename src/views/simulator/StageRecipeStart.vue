@@ -12,7 +12,7 @@ import type { SimRecipe } from "../../state/craft-stage";
 import { recipeList, reloadRecipes, touchedAt } from "../../state/simulator/sim-recipe-store";
 import { openRecipesPage } from "../../web/page";
 import { baseArt } from "../../services/craft-stage/base-art";
-import { fmtDate, openRecipeCode, recipeCodeOf } from "./recipe-share";
+import { fmtDate, useRecipeUrl } from "./recipe-share";
 import { jaTypeName } from "../../services/trade2/localize";
 import { tr } from "../../i18n/lang";
 
@@ -40,16 +40,7 @@ onBeforeUnmount(close);
 function pick(r: SimRecipe): void { close(); emit("start", r); }
 
 /** レシピの URL を貼る欄: 貼ったら (か Enter・開く) 読み込んで、保存したレシピに足して始める */
-const url = ref("");
-const note = ref("");
-async function openUrl(): Promise<void> {
-  const code = recipeCodeOf(url.value);
-  if (!code) { note.value = url.value.trim() ? tr("レシピの URL ではありません (#recipe= の付いた URL を貼る)", "Not a recipe URL (paste one with #recipe=)") : ""; return; }
-  const ok = await openRecipeCode(code);
-  note.value = ok ? "" : tr("このレシピは読めませんでした", "Couldn't read this recipe");
-  if (ok) url.value = "";
-}
-function onPaste(): void { void nextTick(() => { if (recipeCodeOf(url.value)) void openUrl(); }); }
+const { url, urlNote, openUrl, onPaste } = useRecipeUrl();
 </script>
 
 <template>
@@ -80,6 +71,6 @@ function onPaste(): void { void nextTick(() => { if (recipeCodeOf(url.value)) vo
         <button type="button" class="h-8 shrink-0 rounded border border-white/15 px-2.5 text-[12px] hover:bg-white/10 disabled:opacity-40 max-md:h-11" :disabled="!url.trim()" @click="openUrl">{{ tr("開く", "Open") }}</button>
       </span>
     </div>
-    <p v-if="note" class="mt-1 text-[11px] text-amber-200">{{ note }}</p>
+    <p v-if="urlNote" class="mt-1 text-[11px] text-amber-200">{{ urlNote }}</p>
   </div>
 </template>

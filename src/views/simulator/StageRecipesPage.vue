@@ -13,7 +13,7 @@ import Icon from "../../components/ui/Icon.vue";
 import { currentTreeRecipe, currentTreeRecipeId, duplicateTreeRecipe, oldRecipeCount, overwriteTreeRecipe, removeTreeRecipe, renameTreeRecipe, restoreTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../state/simulator/tree-recipes";
 import { openTreePage } from "../../web/page";
 import { baseArt } from "../../services/craft-stage/base-art";
-import { fmtDate, openRecipeCode, recipeCodeOf, treeShareUrl } from "./recipe-share";
+import { fmtDate, treeShareUrl, useRecipeUrl } from "./recipe-share";
 import { useTree } from "./tree/use-tree";
 import { useArmed, ARMED_CLASS } from "../../utils/use-armed";
 import { track } from "../../utils/track";
@@ -93,16 +93,7 @@ async function copyUrl(r: TreeRecipe): Promise<void> {
 }
 
 // URL を貼って開く
-const url = ref("");
-const urlNote = ref("");
-async function openUrl(): Promise<void> {
-  const code = recipeCodeOf(url.value);
-  if (!code) { urlNote.value = url.value.trim() ? tr("レシピの URL ではありません (#recipe= の付いた URL を貼る)", "Not a recipe URL (paste one with #recipe=)") : ""; return; }
-  const ok = await openRecipeCode(code);
-  urlNote.value = ok ? "" : tr("このレシピは読めませんでした", "Couldn't read this recipe");
-  if (ok) url.value = "";
-}
-function onPaste(): void { void nextTick(() => { if (recipeCodeOf(url.value)) void openUrl(); }); }
+const { url, urlNote, openUrl, onPaste } = useRecipeUrl();
 
 function back(): void { openTreePage(); }
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && !renaming.value) { back(); } }

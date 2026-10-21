@@ -3,7 +3,7 @@
  * レシピ (名前・ベース・狙い・始め方・値段・順番・パターン) を縮めて URL の # に全部乗せる。# はサーバーに送られないので、
  * サーバーも KV も使わない (エミュレーターの共有 share.ts と同じ形)。開いた人は保存したレシピに足して、そのレシピでシミュレーターを始める
  */
-import { watch } from "vue";
+import { nextTick, ref, watch } from "vue";
 import { craftStage as s, normalizeRecipe, readSimRecipes, SIM_LOCKED, writeSimRecipes, type SimRecipe } from "../../state/craft-stage";
 import { packJson, unpackJson } from "../../services/craft-stage/share";
 import { basePage } from "../../state/web-page";
@@ -100,6 +100,23 @@ export function recipeShareText(r: Pick<SimRecipe, "name" | "baseJa" | "session"
 #PoE2 #ExileDesk`,
     `PoE2 craft recipe "${r.name}" (${base}, ${n} target mods). Open it to run it in the simulator
 #PoE2 #ExileDesk`);
+}
+/**
+ * レシピの URL を貼る欄 (レシピのページ・ベースを選ぶページの「レシピから始める」・ツリーの上の帯): 貼ったら (か Enter・開く) 読み込む。
+ * 文はページごとに替えられる。開けた時は欄を空にして onOpened
+ */
+export function useRecipeUrl(o: { notUrl?: [string, string]; unreadable?: [string, string]; onOpened?: () => void } = {}) {
+  const url = ref("");
+  const urlNote = ref("");
+  async function openUrl(): Promise<void> {
+    const code = recipeCodeOf(url.value);
+    if (!code) { urlNote.value = url.value.trim() ? tr(...(o.notUrl ?? ["レシピの URL ではありません (#recipe= の付いた URL を貼る)", "Not a recipe URL (paste one with #recipe=)"])) : ""; return; }
+    const ok = await openRecipeCode(code);
+    urlNote.value = ok ? "" : tr(...(o.unreadable ?? ["このレシピは読めませんでした", "Couldn't read this recipe"]));
+    if (ok) { url.value = ""; o.onOpened?.(); }
+  }
+  function onPaste(): void { void nextTick(() => { if (recipeCodeOf(url.value)) void openUrl(); }); }
+  return { url, urlNote, openUrl, onPaste };
 }
 /** レシピの日時 (保存の既定の名前・一覧): 「月/日 時:分」、今年でなければ頭に年 */
 export const fmtDate = (t: number): string => { const d = new Date(t); return `${d.getFullYear() === new Date().getFullYear() ? "" : `${d.getFullYear()}/`}${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };

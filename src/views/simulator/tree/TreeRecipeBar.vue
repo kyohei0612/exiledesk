@@ -8,7 +8,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
 import { currentTreeRecipe, overwriteTreeRecipe, renameTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
 import { openRecipesPage } from "../../../web/page";
-import { fmtDate, openRecipeCode, recipeCodeOf, treeShareUrl } from "../recipe-share";
+import { fmtDate, treeShareUrl, useRecipeUrl } from "../recipe-share";
 import { useTree } from "./use-tree";
 import { useArmed, ARMED_CLASS } from "../../../utils/use-armed";
 import { track } from "../../../utils/track";
@@ -64,16 +64,11 @@ function open(r: TreeRecipe): void {
   emit("opened");
   track("tree-recipe:open");
 }
-const url = ref("");
-const urlNote = ref("");
-async function openUrl(): Promise<void> {
-  const code = recipeCodeOf(url.value);
-  if (!code) { urlNote.value = url.value.trim() ? tr("レシピの URL ではありません", "Not a recipe URL") : ""; return; }
-  const ok = await openRecipeCode(code);
-  urlNote.value = ok ? "" : tr("このレシピは読めませんでした (前の工程式のレシピかもしれない)", "Couldn't read this recipe (it may be an old step-style one)");
-  if (ok) { url.value = ""; pop.value = false; emit("opened"); }
-}
-function onPaste(): void { void nextTick(() => { if (recipeCodeOf(url.value)) void openUrl(); }); }
+const { url, urlNote, openUrl, onPaste } = useRecipeUrl({
+  notUrl: ["レシピの URL ではありません", "Not a recipe URL"],
+  unreadable: ["このレシピは読めませんでした (前の工程式のレシピかもしれない)", "Couldn't read this recipe (it may be an old step-style one)"],
+  onOpened: () => { pop.value = false; emit("opened"); },
+});
 async function copyUrl(): Promise<void> {
   const name = currentTreeRecipe.value?.name ?? defaultName();
   const ok = await navigator.clipboard.writeText(await treeShareUrl({ name, tree: t.doc.value })).then(() => true, () => false);
