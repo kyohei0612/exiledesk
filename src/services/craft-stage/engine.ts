@@ -54,6 +54,9 @@ export { REVEAL_SPEC } from "./spec/desecrate-specs";
 // 1 手の行き先の一覧 (消える・付く・未発現・フラクチャーの枝ごとの割合と打った後のアイテム)
 export type { StepOutcome } from "./spec/outcomes";
 export { stepOutcomes } from "./spec/outcomes";
+// 持っている物を打つ前に光らせる物 (変わる候補の MOD と付く空き。クラフト台とシミュの試し打ち、2026-10-22)
+export type { UsePreview } from "./spec/preview";
+export { previewUse } from "./spec/preview";
 export type { HeldOdds } from "./held-odds";
 export { heldOdds, heldAnyOf, aimTierKey } from "./held-odds";
 export type { AimTarget, AimCombo, AimOdd } from "./aim-odds";

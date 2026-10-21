@@ -35,7 +35,7 @@ import { openBasePage } from "../../web/page";
 import StageAimPicker from "./StageAimPicker.vue";
 import CurrencyShelf from "./CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
-import { previewUse } from "../../services/craft-stage/spec/preview";
+import { previewUse } from "../../services/craft-stage/engine";
 import { courseActive as inLesson, courseHidesEmulator, courseHidesShelf, endLesson } from "../../state/tutorial/course-host"; // チュートリアルのコースの間 (2026-10-17)。隠す判定は course-host に 1 か所 (R4 手 2)
 import RevealPanel from "./RevealPanel.vue";
 import { useStageFx } from "./use-stage-fx";
