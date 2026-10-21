@@ -6,6 +6,7 @@ import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { openExternal } from "../../services/trade2/open-external";
 import { logRecord } from "../../utils/log-record";
 import { tr } from "../../i18n/lang";
+import { packJson } from "../../services/craft-stage/share";
 
 
 /** 運の言葉 (PC の欄とスマホの帯で同じ) */
@@ -19,10 +20,7 @@ const B62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
  * setup = スパムを始めた時のアイテム・狙い・カオスの種類 (開いた人に同じ計算機を出す、state/spam-share-open.ts。2026-10-17)
  */
 export async function packCard(v: Array<string | number | object | null>): Promise<string> {
-  const bytes = new Uint8Array(await new Response(new Blob([JSON.stringify(v)]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer());
-  let bin = "";
-  for (const x of bytes) bin += String.fromCharCode(x);
-  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return packJson(v);
 }
 /**
  * 短い URL (2026-10-18 オーナー「スマホからシェアの URL 長くて怖い」): code の SHA-256 から 7 文字の id (server/web/og-card.js の shortIdOf と同じ式)。

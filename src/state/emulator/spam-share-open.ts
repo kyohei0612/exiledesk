@@ -10,6 +10,7 @@
 import { craftStage as s } from "../craft-stage";
 import { fullSockets } from "./stage-steps";
 import { startFrom } from "../../services/craft-stage/run-plan";
+import { unpackJson } from "../../services/craft-stage/share";
 import type { Grade, RouteKind, SharedRace } from "../../services/craft-stage/route-race";
 import { routesLuck, routesOpen, routesRunes, routesShared, routesTarget } from "../web-page";
 
@@ -20,10 +21,7 @@ interface OldSpamSetup { i: number; a: Array<[string, number]> }
 
 async function unpack(code: string): Promise<unknown[] | null> {
   try {
-    const bin = atob(code.replace(/-/g, "+").replace(/_/g, "/"));
-    const bytes = Uint8Array.from(bin, (ch) => ch.charCodeAt(0));
-    const json = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();
-    const arr = JSON.parse(json);
+    const arr = await unpackJson(code);
     return Array.isArray(arr) ? arr : null;
   } catch { return null; }
 }
