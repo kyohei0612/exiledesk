@@ -14,6 +14,7 @@
  * 消去は E も巻き込む (非固定の MOD から等しく 1 つ)。E が消えたら、その時の決まりで E を入れ直す (after はサフィックスが揃ってから)。
  */
 import { bundleEntry } from "../_bundle-ts.mjs";
+import { costOf as costIn, counter, headLine, mean, PRICES as BOOT, summarize } from "./_ev-common.mjs";
 
 const M = await bundleEntry("scripts/analysis/_gold-ring-entry.ts");
 const N = Number(process.argv[2] ?? 300);
@@ -27,12 +28,8 @@ const LOOSE = !!process.env.LOOSE;
 const LIMIT = 20000;
 const data = M.loadPatch();
 
-// 自分のサーバーの /boot.json (2026-10-20 16:00Z、Forbidden Rites、高貴建て。神 = 696.93)
-const PRICES = {
-  chaos: 71.892, annul: 313.204, exalt: 1, exalt_greater: 13.383, exalt_perfect: 2045.741, divine: 696.929,
-  OmenofDextralExaltation: 35.576, OmenofSinistralExaltation: 85.830, OmenofCatalysingExaltation: 33.189, OmenofSinistralCrystallisation: 298.594,
-  catalyst_speed: 152.338, catalyst_cold: 13.655, catalyst_mana: 12.102, ESS: 26.500,
-};
+// 値段は _ev-common の /boot.json (2026-10-20) + 精神のパーフェクトエッセンス (ESS)
+const PRICES = { ...BOOT, ESS: 26.500 };
 const DIV = PRICES.divine;
 const ESS = "essence:perfect:Rings/PerfectEssence_MaximumManaIncreasePercent";
 const SMCE = data.mods.get("Rings/Special_genesis_tree_caster_SpellManaCostEfficiency");
@@ -74,15 +71,8 @@ function runOne(rng) {
   let it = start(rng);
   const n = {};
   let steps = 0, lostAll = 0, eLost = 0;
-  const use = (cur, omens = [], hint = {}) => {
-    const r = M.applyCurrency(data, it, cur, rng, omens, hint);
-    if (!r.applied) throw new Error(`${cur} が打てない: ${r.reason}`);
-    const key = cur === ESS ? "ESS" : cur;
-    n[key] = (n[key] ?? 0) + 1;
-    for (const o of r.omensUsed ?? []) n[o] = (n[o] ?? 0) + 1;
-    it = r.item;
-    return r;
-  };
+  const apply = counter(M, data, n, (cur) => (cur === ESS ? "ESS" : cur));
+  const use = (cur, omens = [], hint = {}) => { const r = apply(it, cur, rng, omens, hint); it = r.item; return r; };
   for (let mv = nextMove(it); mv; mv = nextMove(it)) {
     if (++steps > LIMIT || (BUDGET > 0 && costOf(n) > BUDGET)) return { done: false, n, lostAll, eLost };
     const before = KEYS.filter((k) => has(it, k)).length, hadE = has(it, "E");
@@ -113,11 +103,7 @@ function runOne(rng) {
   return { done: true, n, lostAll, eLost };
 }
 
-function costOf(n) {
-  return Object.entries(n).reduce((a, [k, v]) => a + (PRICES[k] ?? 0) * v, 0) / DIV;
-}
-const mean = (xs) => xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
-const q = (xs, p) => xs[Math.min(xs.length - 1, Math.floor(p * xs.length))];
+const costOf = (n) => costIn(n, PRICES);
 
 /** PROBE=1: 1 手の当たりの割合 (フラクチャー + 最大マナ % だけの状態から、カタリスト 20% + 触媒の高貴 + 側の高貴 + 完全の高貴を N 回) */
 if (process.env.PROBE) {
@@ -140,12 +126,9 @@ if (process.env.PROBE) {
 const t0 = Date.now();
 const rng = M.mulberry32(SEED);
 const rs = Array.from({ length: N }, () => runOne(rng));
-const done = rs.filter((r) => r.done);
-const costs = done.map((r) => costOf(r.n)).sort((a, b) => a - b);
-const spent = rs.reduce((a, r) => a + costOf(r.n), 0);
-const m = mean(costs), se = Math.sqrt(mean(costs.map((c) => (c - m) ** 2)) / (costs.length || 1));
+const s = summarize(rs, costOf), { done } = s;
 console.log(`=== ROUTE ${ROUTE} / ${ORB ? `カタリスト無し ${ORB}` : "カタリストあり 完全"}${LOOSE ? " / 全耐性・マナ回復 T2+" : ""} (${N} 人, ${((Date.now() - t0) / 1000).toFixed(0)} 秒, 打ち止め ${BUDGET} 神)`);
-console.log(`完成 ${(100 * done.length / N).toFixed(1)}%  1 個あたり ${(spent / (done.length || NaN)).toFixed(2)} 神  完成した人の平均 ${m.toFixed(2)} (±${(1.96 * se).toFixed(2)})  中央 ${q(costs, 0.5).toFixed(1)}  90% ${q(costs, 0.9).toFixed(1)}`);
+console.log(headLine(s, N));
 const keys = ["chaos", "annul", "exalt", "exalt_perfect", "exalt_greater", "ESS", "OmenofDextralExaltation", "OmenofSinistralExaltation", "OmenofCatalysingExaltation", "OmenofSinistralCrystallisation", "catalyst_speed", "catalyst_cold", "catalyst_mana"];
 for (const k of keys) {
   const c = mean(done.map((r) => r.n[k] ?? 0));

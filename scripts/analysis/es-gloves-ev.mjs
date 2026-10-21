@@ -13,6 +13,7 @@
  *   足りない狙い → 左側の高貴 + ORB (カタリストは指輪・アミュレットだけなので手袋では打てない。触媒の高貴も品質が無いので打てない)
  */
 import { bundleEntry } from "../_bundle-ts.mjs";
+import { costOf as costIn, counter, headLine, mean, PRICES as BOOT, summarize } from "./_ev-common.mjs";
 
 const M = await bundleEntry("scripts/analysis/_gold-ring-entry.ts");
 const N = Number(process.argv[2] ?? 300);
@@ -28,8 +29,8 @@ const RUNE = RUNES.join(" + ") || null;
 const LIMIT = 20000;
 const data = M.loadPatch();
 
-// 自分のサーバーの /boot.json (2026-10-20 16:00Z、Forbidden Rites、高貴建て。神 = 696.93)
-const PRICES = { chaos: 71.892, annul: 313.204, exalt: 1, exalt_greater: 13.383, exalt_perfect: 2045.741, divine: 696.929, OmenofSinistralExaltation: 85.830 };
+// 値段は _ev-common の /boot.json (2026-10-20)。サフィックスの形 (SUF) で使う物は下で足す
+const PRICES = { ...BOOT };
 const DIV = PRICES.divine;
 const BASE = "Sirenscale Gloves";
 const PROJ = data.mods.get("Gloves_int/Rune_marksman_IncreaseSocketedGemLevel__projectile_skill_gem_level");
@@ -54,22 +55,14 @@ function nextMove(it) {
   return { kind: "exalt" };
 }
 
-function costOf(n) {
-  return Object.entries(n).reduce((a, [k, v]) => a + (PRICES[k] ?? 0) * v, 0) / DIV;
-}
+const costOf = (n) => costIn(n, PRICES);
 
 function runOne(rng) {
   let it = start(rng);
   const n = {};
   let steps = 0, lostAll = 0, wasted = 0;
-  const use = (cur, omens = []) => {
-    const r = M.applyCurrency(data, it, cur, rng, omens);
-    if (!r.applied) throw new Error(`${cur} が打てない: ${r.reason}`);
-    n[cur] = (n[cur] ?? 0) + 1;
-    for (const o of r.omensUsed ?? []) n[o] = (n[o] ?? 0) + 1;
-    it = r.item;
-    return r;
-  };
+  const apply = counter(M, data, n);
+  const use = (cur, omens = []) => { const r = apply(it, cur, rng, omens); it = r.item; return r; };
   for (let mv = nextMove(it); mv; mv = nextMove(it)) {
     if (++steps > LIMIT || (BUDGET > 0 && costOf(n) > BUDGET)) return { done: false, n, lostAll, wasted };
     const before = KEYS.filter((k) => has(it, k)).length;
@@ -142,15 +135,8 @@ if (process.env.SUF) {
     let steps = 0, pLost = 0, sLost = 0;
     let bait = 0;
     const wh = { j: 0, s: 0, p: 0, pj: 0 }; // 削減で消えた物: 外れのサフィ / サフィの狙い / プレの狙い / 外れのプレ
-    const use = (cur, omens = [], r2 = rng) => {
-      const r = M.applyCurrency(data, it, cur, r2, omens);
-      if (!r.applied) throw new Error(`${cur} が打てない: ${r.reason}`);
-      const key = cur.startsWith("reveal") ? "reveal" : cur;
-      n[key] = (n[key] ?? 0) + 1;
-      for (const o of r.omensUsed ?? []) n[o] = (n[o] ?? 0) + 1;
-      it = r.item;
-      return r;
-    };
+    const apply = counter(M, data, n, (cur) => (cur.startsWith("reveal") ? "reveal" : cur));
+    const use = (cur, omens = [], r2 = rng) => { const r = apply(it, cur, r2, omens); it = r.item; return r; };
     for (let mv = nextS(it); mv; mv = nextS(it)) {
       if (++steps > LIMIT || (BUDGET > 0 && costOf(n) > BUDGET)) return { done: false, n, pLost, sLost, wh, bait };
       let r;
@@ -194,13 +180,10 @@ if (process.env.SUF) {
   };
   const rng = M.mulberry32(SEED);
   const rs = Array.from({ length: N }, () => runS(rng));
-  const done = rs.filter((r) => r.done);
-  const avg = (xs) => xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
-  const costs = done.map((r) => costOf(r.n)).sort((a, b) => a - b);
-  const spent = rs.reduce((a, r) => a + costOf(r.n), 0);
-  const mm = avg(costs), se = Math.sqrt(avg(costs.map((c) => (c - mm) ** 2)) / (costs.length || 1));
+  const sum = summarize(rs, costOf), { done } = sum;
+  const avg = mean;
   console.log(`=== ES 手袋のサフィックス ${SUFK} / 消去 ${AN}${AN === "whittle" || AN === "bait" ? ` + ${CHAOS}` : ""} / 高貴 ${EXS}${ECHO ? " / 反響で引き直し" : ""} (${N} 人, 打ち止め ${BUDGET} 神)`);
-  console.log(`完成 ${(100 * done.length / N).toFixed(1)}%  1 個あたり ${(spent / (done.length || NaN)).toFixed(2)} 神  完成した人の平均 ${mm.toFixed(2)} (±${(1.96 * se).toFixed(2)})  中央 ${costs[Math.floor(costs.length / 2)]?.toFixed(1)}  90% ${costs[Math.floor(costs.length * 0.9)]?.toFixed(1)}`);
+  console.log(headLine(sum, N));
   for (const k of ["annul", "OmenofWhittling", "chaos", "chaos_greater", "chaos_perfect", "OmenofDextralAnnulment", "OmenofLight", "OmenofAbyssalEchoes", "OmenofDextralCrystallisation", BAIT, "exalt_greater", "exalt_perfect", "OmenofDextralExaltation", "OmenofSinistralExaltation", "desecrate", "reveal"]) {
     const c = avg(done.map((r) => r.n[k] ?? 0));
     console.log(`  ${k.padEnd(28)} ${c.toFixed(2).padStart(9)} 個  ${(c * (PRICES[k] ?? 0) / DIV).toFixed(2).padStart(8)} 神`);
@@ -217,17 +200,12 @@ if (process.env.SUF) {
   process.exit(0);
 }
 
-const mean = (xs) => xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
-const q = (xs, p) => xs[Math.min(xs.length - 1, Math.floor(p * xs.length))];
 const t0 = Date.now();
 const rng = M.mulberry32(SEED);
 const rs = Array.from({ length: N }, () => runOne(rng));
-const done = rs.filter((r) => r.done);
-const costs = done.map((r) => costOf(r.n)).sort((a, b) => a - b);
-const spent = rs.reduce((a, r) => a + costOf(r.n), 0);
-const m = mean(costs), se = Math.sqrt(mean(costs.map((c) => (c - m) ** 2)) / (costs.length || 1));
+const s = summarize(rs, costOf), { done } = s;
 console.log(`=== ES の手袋 / 左側の高貴 + ${ORB}${RUNE ? ` / ルーン ${RUNE}` : ""} (${N} 人, ${((Date.now() - t0) / 1000).toFixed(0)} 秒, 打ち止め ${BUDGET} 神)`);
-console.log(`完成 ${(100 * done.length / N).toFixed(1)}%  1 個あたり ${(spent / (done.length || NaN)).toFixed(2)} 神  完成した人の平均 ${m.toFixed(2)} (±${(1.96 * se).toFixed(2)})  中央 ${q(costs, 0.5).toFixed(1)}  90% ${q(costs, 0.9).toFixed(1)}`);
+console.log(headLine(s, N));
 for (const k of ["chaos", "annul", ORB, "OmenofSinistralExaltation"]) {
   const c = mean(done.map((r) => r.n[k] ?? 0));
   console.log(`  ${k.padEnd(28)} ${c.toFixed(2).padStart(9)} 個  ${(c * PRICES[k] / DIV).toFixed(2).padStart(8)} 神`);

@@ -18,6 +18,7 @@
  * 値段: 自分のサーバーの /boot.json (2026-10-20 16:00Z、Forbidden Rites、高貴建て。神 = 696.93)。
  */
 import { bundleEntry } from "../_bundle-ts.mjs";
+import { costOf, counter, mean, PRICES, q } from "./_ev-common.mjs";
 
 const M = await bundleEntry("scripts/analysis/_gold-ring-entry.ts");
 const N = Number(process.argv[2] ?? 50);
@@ -27,11 +28,6 @@ const COMBOS = (process.argv[3] ?? "all") === "all"
 const SEED = Number(process.argv[4] ?? 1);
 const data = M.loadPatch();
 
-const PRICES = {
-  chaos: 71.892, annul: 313.204, exalt: 1, exalt_greater: 13.383, exalt_perfect: 2045.741, divine: 696.929,
-  OmenofDextralExaltation: 35.576, OmenofCatalysingExaltation: 33.189, catalyst_speed: 152.338, catalyst_cold: 13.655,
-  OmenofSinistralExaltation: 85.830, OmenofSinistralCrystallisation: 298.594, "essence:breach": 765.322,
-};
 const DIV = PRICES.divine;
 const CAT_FOR = { R: "catalyst_cold", C: "catalyst_speed", A: "catalyst_cold" };
 const LIMIT = 20000; // 1 人の手の上限 (堂々巡りの見張り)
@@ -91,13 +87,8 @@ function runOne(rng, catOrb, plainOrb) {
   const plainN = { n: 0 }, catN = { n: 0 };
   let branch = null, lostAll = 0, steps = 0;
   let order = []; // 今付いている狙いを付いた順に (消えたら抜き、付き直したら後ろへ) = 完成した時の「最後に揃った順番」
-  const use = (cur, omens = [], hint = {}) => {
-    const r = M.applyCurrency(data, it, cur, rng, omens, hint);
-    if (!r.applied) throw new Error(`${cur} が打てない: ${r.reason}`);
-    n[cur] = (n[cur] ?? 0) + 1;
-    for (const o of r.omensUsed ?? []) n[o] = (n[o] ?? 0) + 1;
-    it = r.item;
-  };
+  const apply = counter(M, data, n);
+  const use = (cur, omens = [], hint = {}) => { it = apply(it, cur, rng, omens, hint).item; };
   for (let mv = nextMove(it); mv; mv = nextMove(it)) {
     if (++steps > LIMIT || (BUDGET > 0 && costOf(n) > BUDGET)) return { done: false, n, branch, lostAll, plainN: plainN.n, catN: catN.n };
     const before = ["R", "C", "A"].filter((k) => has(it, k)).length;
@@ -124,9 +115,6 @@ function runOne(rng, catOrb, plainOrb) {
   return { done: true, n, branch, lostAll, plainN: plainN.n, catN: catN.n, order: order.join("") };
 }
 
-const costOf = (n) => Object.entries(n).reduce((a, [k, v]) => a + (PRICES[k] ?? 0) * v, 0) / DIV;
-const q = (xs, p) => xs[Math.min(xs.length - 1, Math.floor(p * xs.length))];
-const mean = (xs) => xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
 const BR = { R: "2 (レアリティ先)", C: "3 (キャストスピード先)", A: "4 (全耐性先)" };
 
 /** PROBE=1: 1 手の当たりの割合 (同じ状態から同じ手を K 回打つ)。R の狙いは SD(F) + キャストスピード T1、C・A の狙いは SD(F) + レアリティ T1 から */

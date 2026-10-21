@@ -197,4 +197,3 @@ export function autoOrderClient() {
     },
   };
 }
-export type AutoOrderClient = ReturnType<typeof autoOrderClient>;
