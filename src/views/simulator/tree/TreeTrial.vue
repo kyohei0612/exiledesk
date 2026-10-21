@@ -150,12 +150,12 @@ const noteText = computed(() => {
     <p class="text-[11px] opacity-65">{{ tr("この箱に着いた時のアイテムの見本 (エンジンで打って引いた 1 個)。棚で持ってアイテムを押すと打つ。ツリーは変わらない", "A sample item at this box (rolled with the engine). Pick from the shelf, then click the item. The tree doesn't change") }}</p>
     <p v-if="noteText" class="rounded bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200">{{ noteText }}</p>
 
-    <!-- 広い時はカードと棚を横に並べる (縦に送らずに 持つ → お告げ → カードを押す、10-21 1920×911 で上下に送っていた)。狭い時は縦 -->
+    <!-- 広い時はカードと棚を横に並べる (縦に送らずに 持つ → お告げ → カードを押す、10-21 1920×911 で上下に送っていた)。狭い時は縦で、カードは欄の上に留める (sticky、背景は欄の色) -->
     <div class="@container">
-      <div class="grid gap-3 @[700px]:grid-cols-[350px_minmax(0,1fr)]">
+      <div class="grid gap-3 @min-[700px]:grid-cols-[350px_minmax(0,1fr)]">
         <div data-tree-trial-left class="flex min-w-0 flex-col gap-2">
           <!-- アイテム (クラフト台のカード。持っている時に押すと打つ) -->
-          <div v-if="item" data-tree-trial-item class="flex justify-center" @contextmenu.prevent="release">
+          <div v-if="item" data-tree-trial-item class="sticky top-0 z-10 flex justify-center bg-[#151311] pb-1" @contextmenu.prevent="release">
             <StageItemCard :item="item" :doomed="preview?.change ?? []" :open="preview?.open" :added="last.added" :removed="last.removed" :holding="!!held" :flash-key="flash" :width="340" compact @use="use(1)" @jump="onMark" />
           </div>
           <!-- × (要らない) の印 -->
