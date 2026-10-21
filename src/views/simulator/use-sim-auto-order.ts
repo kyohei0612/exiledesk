@@ -27,7 +27,7 @@ const NEAR = 0.05;
 /** quizBase = ⑤ に渡す物と同じ入力 (use-sim-run の quizBase) */
 /** autoOn = 自動で組む時 (② でも範囲を組んで調べる。始め方は ③ で決まるので、② ではフラクチャー済みから始めるとして調べる) */
 export function useSimAutoOrder(tg: SimTargetsCtx, quizBase: () => QuizSimIn | null, autoOn: () => boolean = () => false) {
-  const { s, orderKeys, restRows, runeNeeded, redoOf, targetsSig } = tg;
+  const { s, orderKeys, restRows, runeNeeded, targetsSig } = tg;
   const rows = ref<AutoRow[]>([]);
   const busy = ref(false);
   const step = ref<{ done: number; total: number } | null>(null);
@@ -78,13 +78,12 @@ export function useSimAutoOrder(tg: SimTargetsCtx, quizBase: () => QuizSimIn | n
       if (before.length) runeAt[rk] = { before, nth: 1 };
       else if (rk === ASTRID) runeAt[rk] = { before: restRows.value.filter((r) => r.method === "essence").map((r) => `mod:${r.modId}`), nth: 2 };
     }
-    const redo: Record<string, number> = {}, side: Record<string, string> = {};
+    const side: Record<string, string> = {};
     for (const r of restRows.value) {
       const k = `mod:${r.modId}`;
-      redo[k] = redoOf.value.get(r.modId)?.expected ?? 0;
       side[k] = r.side.startsWith("プレ") ? "p" : "s";
     }
-    return { keys, aug, runeAt, redo, side };
+    return { keys, aug, runeAt, side };
   }
 
   /** 止める (ワーカーごと捨てるので組んだ形も消える。④ に居れば組み直す) */

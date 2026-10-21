@@ -20,8 +20,6 @@ export interface OrderInput {
   aug: string[];
   /** 要るルーン → それが要る行。行のうち nth 番目 (1 から) に来る物のすぐ前に置く */
   runeAt: Record<string, { before: string[]; nth: number }>;
-  /** 安い見積もり (④ の「外した時の取り直し」、キーごと) */
-  redo: Record<string, number>;
   /** 側 (プレ "p" / サフィ "s")。無ければ側の点は無し */
   side: Record<string, string>;
 }
@@ -63,14 +61,10 @@ function* perms<T>(xs: T[]): Generator<T[]> {
   }
 }
 
-/** 安い見積もり: 取り直しの高い物を後ろ・同じ側をまとめる (小さいほど良い。絞るだけに使う) */
+/** 安い見積もり: 同じ側をまとめる (側が替わる回数。小さいほど良い。絞るだけに使う。取り直しの見積もりは 10-22 オーナーの案 A で外した) */
 export function roughScore(inp: OrderInput, movable: string[]): number {
-  const n = movable.length;
-  const vals = movable.map((k) => inp.redo[k] ?? 0);
-  const mean = vals.reduce((a, b) => a + b, 0) / Math.max(1, n);
   let s = 0;
-  vals.forEach((v, i) => { s += v * (n - 1 - i); });
-  for (let i = 1; i < n; i++) if (inp.side[movable[i]!] && inp.side[movable[i - 1]!] && inp.side[movable[i]!] !== inp.side[movable[i - 1]!]) s += mean * 0.1;
+  for (let i = 1; i < movable.length; i++) if (inp.side[movable[i]!] && inp.side[movable[i - 1]!] && inp.side[movable[i]!] !== inp.side[movable[i - 1]!]) s++;
   return s;
 }
 
@@ -89,8 +83,8 @@ export function orderCandidates(inp: OrderInput): string[][] {
     all.sort((a, b) => a.v - b.v);
     picks = all.slice(0, KEEP).map((x) => x.p);
   } else {
-    // それより多い時: 見積もりの安い順に並べた物と、その隣どうしを入れ替えた物
-    const base = [...mv].sort((a, b) => (inp.redo[a] ?? 0) - (inp.redo[b] ?? 0));
+    // それより多い時: 今の順番と、その隣どうしを入れ替えた物
+    const base = [...mv];
     picks = [base];
     for (let i = 0; i + 1 < base.length && picks.length < KEEP; i++) { const q = [...base]; [q[i], q[i + 1]] = [q[i + 1]!, q[i]!]; picks.push(q); }
   }

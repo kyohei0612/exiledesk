@@ -12,7 +12,6 @@ import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
 import { RUNES, runeEffectFor, socketCapOf } from "../../services/craft-stage/stage-runes";
 import { runeEnForId, type CheckCtx } from "../../services/simulator/pattern";
 import { methodsFor as methodsForData } from "../../services/simulator/quiz-build";
-import { planByRedoCost, type RedoPlan } from "../htc-craft/redo-cost";
 
 /**
  * 値段の変わりに付いていく (2026-10-05 オーナー「価格変動に対応できる仕組みがいいね、カレンシーとベースの。結局 1 からでも白ベースは買う」)。
@@ -193,33 +192,6 @@ export function useSimTargets() {
   const orderRow = (k: string) => restRows.value.find((r) => `mod:${r.modId}` === k);
   const runeJa = (k: string): string => RUNES[k.slice(5)]?.ja ?? k.slice(5);
 
-  /**
-   * やり直しの費用 (計算機の redo-cost.ts をそのまま使う。2026-10-06 オーナー「消去で消す MOD はカオススパムがつらいほどアカン、
-   * 一回付いたらやり直せないみたいな基準によってリロール方法が変わる」)。狙いごとの取り方・1 回の値段・当たる確率・
-   * 外れ 1 回のやり直し費用・見込み (取り直すといくらか) と、側ごとの外れの消し方 (素の消去 / 側のお告げ)。値段は高貴建て
-   */
-  const redoPlan = computed<RedoPlan | null>(() => {
-    const d = s.data.value, it = s.item.value;
-    if (!d || !it || !rows.value.length) return null;
-    // 計算機の値段の表の形 (無い物は undefined = 使えない)。値段はステージと同じ相場 (高貴建て)
-    const px = new Proxy({} as Record<string, number>, { get: (_t, k) => { if (typeof k !== "string") return undefined; const v = priceOf(k); return v > 0 ? v : undefined; } });
-    const fixedIds = fractureRows.value.map((r) => r.modId);
-    const fside = fractureRow.value ? (fractureRow.value.side === "サフィックス" ? "suffix" : "prefix") : null;
-    try {
-      return planByRedoCost({
-        data: d, prices: { currency: px, omens: px, bones: px },
-        targets: s.simTargets.value.map((t) => ({ modId: t.modId, minTierIndex: t.minTierIndex })),
-        fixedIds, qualityTag: null, chaosOk: true,
-        limits: { prefix: it.cls.limits?.prefixes ?? 3, suffix: it.cls.limits?.suffixes ?? 3 },
-        fixedSides: fside ? [fside] : [],
-      }, it.cls, s.itemLevel.value);
-    } catch {
-      return null;
-    }
-  });
-  /** 狙いごとのやり直しの見積もり (5 順番計画・6 パターンに出す) */
-  const redoOf = computed(() => new Map((redoPlan.value?.rows ?? []).map((r) => [r.modId, r])));
-  const REDO_METHOD_JA: Record<string, string> = { chaos: "カオス", exalt: "高貴", desecrate: "冒涜", essence: "エッセンス" };
 
   /** 6 パターンの始めの状態 (フラクチャー済みのレアか白) */
   const patternStart = computed<CheckCtx["start"]>(() => {
@@ -342,8 +314,8 @@ export function useSimTargets() {
     return k ? ageText(k.at) : null;
   }
   return { s, runs, MAX_STEPS_KEY, MAX_STEPS_CHOICES, maxSteps, METHOD_JA, methodsFor, methodOf, rows, targetsSig, restRows,
-    runeNeeded, startRunes, restKeys, restOfKey, orderKeys, moveOrder, reorder, addRune, removeRune, runeChoices, toggleRune, orderRow, runeJa, redoPlan, redoOf,
-    REDO_METHOD_JA, patternStart, fractureRows, fracMembers, fractureRow, wholeRoute, makeRoute, blocker, boughtDivine, magicDivine,
+    runeNeeded, startRunes, restKeys, restOfKey, orderKeys, moveOrder, reorder, addRune, removeRune, runeChoices, toggleRune, orderRow, runeJa,
+    patternStart, fractureRows, fracMembers, fractureRow, wholeRoute, makeRoute, blocker, boughtDivine, magicDivine,
     whiteDivine, fourDivine, rareDivine, itemDivine, exOf, toExalt, num, PRICE_KEY, keptAll, craftCap, socketCap, sockets, socketsOk,
     socketCount, socketQuery, keptKey, kept, loadKept, saveKept, restoring, ageOf };
 }
