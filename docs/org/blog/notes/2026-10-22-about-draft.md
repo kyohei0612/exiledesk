@@ -2,7 +2,7 @@
 
 今の About (public/about.html 約 1,000 字・public/en/about.html) の「できること」「確率と決まりについて」「使い方のヒント」「運営」はそのまま残し、下の 4 節を「確率と決まりについて」の後ろに足す。足す分は日本語で約 1,000 字、合わせて約 2,000 字。
 事実の出どころ: 始めの commit 2026-05-08 (git log)、今の版 v0.1.589 と更新内容 141 版分 (src/data/changelog-notes.json)、確かさの区分 (docs/org/blog/README.md の決まり 5)、記事 19 本。
-【オーナーに決めてほしい 1 行】作り方に AI (Claude) を使っている事を書くか。書くなら ★ の行を入れる (AdSense の決まりで禁止ではない。書いた方が信頼の面で正直、書かなくても違反ではない)。
+AI を使っている事は書かない (オーナー 10-22)。
 
 ---
 
@@ -10,7 +10,6 @@
 
 ### ExileDesk ができるまで
 ExileDesk は 2026 年 5 月に、PoE2 のクラフトを試すための手元のツールとして作り始めました。カレンシーを 1 つ使うたびに「今の 1 手で何が起きたか」「次の 1 手で何が付くか」を確かめたい、というのが出発点です。その後、ブラウザだけで使える今の形 (Web 版) にし、遊んでくれる人の要望や不具合の報告を受けて直し続けています。更新内容はサイトの「更新履歴」にすべて残していて、v0.1.448 から今の v0.1.589 までで 141 回分あります。
-★ 作るのにも確かめるのにも、AI (Anthropic の Claude) を道具として使っています。何を作るか・どの数字を出すかは運営が決め、数字は下の方法で確かめてから出しています。
 
 ### 数字の出どころの考え方
 ExileDesk の数字には、どれも「どうやって確かめたか」の札を付けるようにしています。
@@ -32,7 +31,6 @@ ExileDesk の数字には、どれも「どうやって確かめたか」の札�
 
 ### How ExileDesk Started
 ExileDesk began in May 2026 as a small tool for testing PoE2 crafts. The starting point was simple: after each currency, we wanted to see what that step did and what the next step could add. It later became the browser version you are using now, and it keeps changing based on players' requests and bug reports. Every change is listed in the site's changelog — 141 releases so far, from v0.1.448 to the current v0.1.589.
-★ We use AI (Anthropic's Claude) as a tool for building and checking the site. The operator decides what to build and which numbers to publish, and numbers are checked as described below before they go out.
 
 ### Where Our Numbers Come From
 Every number on ExileDesk carries a label saying how it was checked:
