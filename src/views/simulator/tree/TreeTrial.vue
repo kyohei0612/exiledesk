@@ -41,6 +41,10 @@ const box = computed(() => t.doc.value.boxes[props.boxId] ?? null);
 // 棚 (クラフト台と同じ部品)。持つ → アイテムを押すと打つ。お告げは持った物に掛けられる物だけ使い、使った分は外す (クラフト台と同じ)
 const held = ref<string | null>(null);
 const omens = ref<string[]>([]);
+/** 同じ物をもう一度押す = 離す (クラフト台と同じ、オーナー 10-22) */
+function onHold(k: string): void { if (held.value === k) release(); else held.value = k; }
+/** 棚の空いている所を押す = 離す (ボタン・入力・お告げの欄の中は除く) */
+function onShelfDown(e: PointerEvent): void { if (held.value && !(e.target as HTMLElement).closest("button,input,select,label,[data-held-box]")) release(); }
 function toggleOmen(id: string): void { omens.value = omens.value.includes(id) ? omens.value.filter((o) => o !== id) : [...omens.value, id]; }
 provideShelf({
   data: s.data, item, omens, held,
@@ -190,10 +194,12 @@ const noteText = computed(() => {
     </div>
 
     <!-- 棚 (クラフト台と同じ。お告げは持った物の下に) -->
-    <CurrencyShelf @hold="(k: string) => (held = k)">
-      <!-- 持った物に掛けられるお告げ = クラフト台と同じ部品と置き場 (HeldOmens.vue を持ったアイコンのすぐ下に重ねる。inline-held だと棚の一番下で見切れた、10-21 本物のマウス) -->
-      <template v-if="heldOmensOf(held).length" #held><HeldOmens /></template>
-    </CurrencyShelf>
+    <div data-tree-shelf @pointerdown="onShelfDown">
+      <CurrencyShelf @hold="onHold">
+        <!-- 持った物に掛けられるお告げ = クラフト台と同じ部品と置き場 (HeldOmens.vue を持ったアイコンのすぐ下に重ねる。inline-held だと棚の一番下で見切れた、10-21 本物のマウス) -->
+        <template v-if="heldOmensOf(held).length" #held><HeldOmens /></template>
+      </CurrencyShelf>
+    </div>
 
     <!-- 打った結果 -->
     <div v-if="log.length" class="max-h-40 overflow-y-auto">

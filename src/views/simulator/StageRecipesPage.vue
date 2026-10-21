@@ -2,15 +2,15 @@
   StageRecipesPage.vue — レシピのページ (?page=recipes)。2026-10-21 オーナー 10-22「ツリー形式に変えてから無くなった物を足さないと」で、
   中身をクラフトの道 (ツリー) のレシピに替えた (前は工程ページ式のシミュレーターのレシピ、2026-10-21「しっかり作りこんでくれ」の作り)。
 
-  保存した木を 1 枚ずつ: 開く・今の木で上書き・名前を変える・複製・共有 (URL)・消す (2 回押し、消した後「元に戻す」)。
-  上に 探す・並べ替え・今の木を新しく保存・URL を貼って開く・ファイルの書き出し / 読み込み。一覧は state/simulator/tree-recipes.ts
+  保存した木を 1 枚ずつ: 開く・今の木で上書き・名前を変える・複製・URL をコピー・消す (2 回押し、消した後「元に戻す」)。
+  上に 探す・並べ替え・今の木を新しく保存・URL を貼って開く (共有・管理は URL だけ、ファイルは作らない、オーナー 10-22)。一覧は state/simulator/tree-recipes.ts
   (ツリーの上の帯 TreeRecipeBar と同じ物)。前の工程式のレシピは木に読み替えられないので、数だけ出して残してある。
   広告の決まりどおりページを移る形 ([[ads-page-model]])。両脇の縦長の枠は WebApp.vue
 -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import Icon from "../../components/ui/Icon.vue";
-import { currentTreeRecipe, currentTreeRecipeId, duplicateTreeRecipe, mergeTreeRecipesFromFile, oldRecipeCount, overwriteTreeRecipe, removeTreeRecipe, renameTreeRecipe, restoreTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, treeRecipesToFile, type TreeRecipe } from "../../state/simulator/tree-recipes";
+import { currentTreeRecipe, currentTreeRecipeId, duplicateTreeRecipe, oldRecipeCount, overwriteTreeRecipe, removeTreeRecipe, renameTreeRecipe, restoreTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../state/simulator/tree-recipes";
 import { openTreePage } from "../../web/page";
 import { baseArt } from "../../services/craft-stage/base-art";
 import { openRecipeCode, recipeCodeOf, treeShareUrl } from "./recipe-share";
@@ -86,20 +86,11 @@ const renaming = ref<string | null>(null);
 function startRename(r: TreeRecipe): void { renaming.value = r.id; void nextTick(() => (document.querySelector(`[data-recipe-rename="${r.id}"]`) as HTMLInputElement | null)?.select()); }
 function endRename(r: TreeRecipe, v: string): void { if (renaming.value !== r.id) return; renaming.value = null; renameTreeRecipe(r.id, v); }
 
-// 共有 (札ごとの吹き出し。X に投稿は計算を繋いだ後、オーナー 10-22)
-const sharing = ref<{ id: string; url: string } | null>(null);
-async function openShare(r: TreeRecipe): Promise<void> {
-  if (sharing.value?.id === r.id) { sharing.value = null; return; }
-  sharing.value = { id: r.id, url: "" };
-  const url = await treeShareUrl(r);
-  if (sharing.value?.id === r.id) sharing.value = { ...sharing.value, url };
-}
+// 共有 = URL をコピー (共有・管理は URL が主、オーナー 10-22「URL で基本、共有・管理だね」。X に投稿は計算を繋いだ後)
 async function copyUrl(r: TreeRecipe): Promise<void> {
-  const url = sharing.value?.id === r.id && sharing.value.url ? sharing.value.url : await treeShareUrl(r);
-  const ok = await navigator.clipboard.writeText(url).then(() => true, () => false);
+  const ok = await navigator.clipboard.writeText(await treeShareUrl(r)).then(() => true, () => false);
   track("tree-recipe:url");
-  sharing.value = null;
-  say(ok ? tr(`「${r.name}」の URL をコピーしました (開いた人はこの木で始まる)`, `Copied the URL for "${r.name}" (opening it starts this tree)`) : tr("コピーできませんでした", "Couldn't copy"));
+  say(ok ? tr(`「${r.name}」の URL をコピーしました (URL に木が全部入っている。開いた人はこの木で始まり、その人のレシピにも残る)`, `Copied the URL for "${r.name}" (the whole tree is in it; opening it starts this tree and saves it)`) : tr("コピーできませんでした", "Couldn't copy"));
 }
 
 // URL を貼って開く
@@ -114,27 +105,8 @@ async function openUrl(): Promise<void> {
 }
 function onPaste(): void { void nextTick(() => { if (recipeCodeOf(url.value)) void openUrl(); }); }
 
-// ファイル
-const file = ref<HTMLInputElement | null>(null);
-function exportAll(): void {
-  const name = `exiledesk-tree-recipes-${new Date().toISOString().slice(0, 10)}.json`;
-  const href = URL.createObjectURL(new Blob([treeRecipesToFile(treeRecipes.value)], { type: "application/json" }));
-  const a = document.createElement("a");
-  a.href = href; a.download = name;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(href), 5_000);
-  say(tr(`${treeRecipes.value.length} 件を ${name} に書き出しました`, `Exported ${treeRecipes.value.length} recipes to ${name}`));
-}
-async function importFile(ev: Event): Promise<void> {
-  const f = (ev.target as HTMLInputElement).files?.[0];
-  (ev.target as HTMLInputElement).value = "";
-  if (!f) return;
-  const r = mergeTreeRecipesFromFile(await f.text());
-  say(r.bad && !r.added && !r.skipped ? tr("ツリーのレシピのファイルではありません (前の工程式のファイルは読めない)", "Not a tree recipe file (old step-style files can't be read)") : tr(`${r.added} 件足しました${r.skipped ? ` (同じ物 ${r.skipped} 件は飛ばした)` : ""}${r.bad ? ` · 読めない物 ${r.bad} 件` : ""}`, `Added ${r.added}${r.skipped ? ` (skipped ${r.skipped} duplicates)` : ""}${r.bad ? ` · ${r.bad} unreadable` : ""}`));
-}
-
 function back(): void { openTreePage(); }
-function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && !renaming.value) { if (sharing.value) sharing.value = null; else back(); } }
+function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && !renaming.value) { back(); } }
 let before = 0;
 onMounted(() => { before = window.scrollY; window.scrollTo(0, 0); window.addEventListener("keydown", onKey); });
 onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); clearTimeout(noteT); const y = before; requestAnimationFrame(() => window.scrollTo(0, y)); });
@@ -175,9 +147,6 @@ onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); clearTimeo
           <input v-model="url" data-recipes-url type="text" inputmode="url" spellcheck="false" autocomplete="off" class="h-8 min-w-0 flex-1 rounded-lg border border-white/15 bg-black/40 px-2 outline-none placeholder:opacity-45 focus:border-amber-400/60 max-md:h-11" :placeholder="tr('共有されたレシピの URL を貼る (貼ると開く)', 'Paste a shared recipe URL (opens on paste)')" @paste="onPaste" @keydown.enter.prevent="openUrl" />
           <button type="button" class="g-btn sm max-md:min-h-10" :disabled="!url.trim()" @click="openUrl">{{ tr("開く", "Open") }}</button>
         </span>
-        <button type="button" data-recipes-export class="g-btn sm max-md:min-h-10" :disabled="!treeRecipes.length" :title="tr('全部のレシピを 1 つのファイルに (別の PC・ブラウザで読み込むと戻せる)', 'Export all recipes to one file (import it on another PC or browser)')" @click="exportAll">{{ tr("ファイルに書き出す", "Export file") }}</button>
-        <button type="button" data-recipes-import class="g-btn sm max-md:min-h-10" :title="tr('書き出したファイルからレシピを足す (今のレシピは消えない)', 'Add recipes from an exported file (existing ones stay)')" @click="file?.click()">{{ tr("ファイルから読み込む", "Import file") }}</button>
-        <input ref="file" type="file" accept=".json,application/json" class="hidden" @change="importFile" />
       </div>
       <p v-if="urlNote" class="mt-1 text-[12px] text-amber-200">{{ urlNote }}</p>
       <p v-if="olds" class="mt-1 text-[11px] opacity-55">{{ tr(`前の工程式のレシピ ${olds} 件はツリーに読み替えられないので、このブラウザに残してあります (消していない)`, `${olds} old step-style recipe(s) can't be read as trees; they are kept in this browser (not deleted)`) }}</p>
@@ -207,14 +176,8 @@ onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); clearTimeo
               <button type="button" data-recipe-open class="max-md:min-h-10" :class="arm.is(`open:${r.id}`) ? ARMED_CLASS : 'g-btn sm'" :title="tr('この木をクラフトの道で開く', 'Open this tree in the crafting path')" @click="open(r)">{{ arm.is(`open:${r.id}`) ? tr("保存していない変更が消えます。もう一度押すと開く", "Unsaved changes will be lost. Click again to open") : tr("開く", "Open") }}</button>
               <button v-if="dirty && r.id === currentTreeRecipeId" type="button" data-recipe-overwrite class="max-md:min-h-10" :class="arm.is(`over:${r.id}`) ? ARMED_CLASS : 'g-btn sm'" :title="tr('今の木でこのレシピを書き換える', 'Replace this recipe with the current tree')" @click="overwrite(r)">{{ arm.is(`over:${r.id}`) ? tr("もう一度押すと上書き", "Click again to overwrite") : tr("今の木で上書き", "Overwrite with current") }}</button>
               <button type="button" data-recipe-duplicate class="g-btn sm inline-flex items-center gap-1 max-md:min-h-10" @click="duplicate(r)"><Icon name="copy" class="size-3.5" />{{ tr("複製", "Duplicate") }}</button>
-              <button type="button" data-recipe-share-btn class="g-btn sm inline-flex items-center gap-1 max-md:min-h-10" :aria-expanded="sharing?.id === r.id" @click="openShare(r)"><Icon name="share" class="size-3.5" />{{ tr("共有", "Share") }}</button>
+              <button type="button" data-recipe-copy-url class="g-btn sm inline-flex items-center gap-1 max-md:min-h-10" :title="tr('この木の URL をコピー (URL に木が全部入っている)', 'Copy the URL of this tree (the whole tree is in it)')" @click="copyUrl(r)"><Icon name="link" class="size-3.5" />{{ tr("URL をコピー", "Copy URL") }}</button>
               <button type="button" data-recipe-delete class="ml-auto inline-flex items-center gap-1 max-md:min-h-10" :class="arm.is(`del:${r.id}`) ? ARMED_CLASS : 'g-btn sm hover:!text-rose-300'" :title="tr('このレシピを消す (2 回押す。消した後も「元に戻す」で戻せる)', 'Delete this recipe (click twice; Undo appears right after)')" @click="remove(r)"><Icon name="trash" class="size-3.5" />{{ arm.is(`del:${r.id}`) ? tr("もう一度押すと消す", "Click again to delete") : tr("消す", "Delete") }}</button>
-            </div>
-            <div v-if="sharing?.id === r.id" data-recipe-share-panel class="mt-2 rounded-md border border-[var(--exile-color-border-brass)]/60 bg-[#14110d] p-2.5">
-              <div class="flex flex-wrap gap-2">
-                <button type="button" data-recipe-copy-url class="g-btn sm inline-flex flex-1 items-center justify-center gap-1.5 max-md:min-h-11" @click="copyUrl(r)"><Icon name="link" class="size-4" />{{ tr("URL をコピー", "Copy URL") }}</button>
-              </div>
-              <p class="mt-1.5 text-[11px] opacity-50">{{ tr("URL に木が全部入っています。開いた人はこの木で始まり、その人のレシピにも残ります", "The whole tree is in the URL. Opening it starts with this tree and saves it to their recipes") }}</p>
             </div>
           </div>
         </li>

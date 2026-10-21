@@ -4,7 +4,7 @@
   結果の箱は手の種類で決める (カオス = 入れ替え、消去 = 消す、それ以外 = 足す、カオススパム = 当たりだけ)。入力は触媒のカタリストの品質とカオススパムだけ
 -->
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../../state/craft-stage";
 import { provideShelf, simHidden } from "../../../state/emulator/shelf-context";
 import CurrencyShelf from "../../craft-stage/CurrencyShelf.vue";
@@ -32,6 +32,14 @@ const spamMax = ref<number | null>(props.current?.repeat?.max ?? null);
 /** 狙い無し (足す手だけ。カオススパムとは一緒にしない) */
 const free = ref(!!props.current?.free);
 const canFree = computed(() => !!held.value && kindOfCurrency(held.value) === "add");
+/** 持つ / 離す (クラフト台と同じ: 同じ物をもう一度押す・右クリック・Esc = 離す。お告げの欄も閉じる、オーナー 10-22) */
+function release(): void { held.value = null; omens.value = []; }
+function onHold(k: string): void { if (held.value === k) release(); else held.value = k; }
+/** 棚の空いている所を押す = 離す (ボタン・入力・お告げの欄の中は除く) */
+function onShelfDown(e: PointerEvent): void { if (held.value && !(e.target as HTMLElement).closest("button,input,select,label,[data-held-box]")) release(); }
+function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && held.value) { release(); e.stopImmediatePropagation(); } }
+onMounted(() => window.addEventListener("keydown", onKey, true));
+onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 function toggleOmen(id: string): void { omens.value = omens.value.includes(id) ? omens.value.filter((o) => o !== id) : [...omens.value, id]; }
 provideShelf({
   data: s.data, item, omens, held,
@@ -77,7 +85,7 @@ function ok(): void {
 </script>
 
 <template>
-  <div data-tree-hand-pick class="flex min-h-0 flex-col gap-2 text-[13px]">
+  <div data-tree-hand-pick class="flex min-h-0 flex-col gap-2 text-[13px]" @contextmenu="held && ($event.preventDefault(), release())">
     <div class="flex items-center gap-2">
       <b class="flex-1 text-[14px]">{{ tr("次に打つ手", "Next craft") }}</b>
       <button type="button" class="g-btn sm" @click="emit('close')">{{ tr("閉じる", "Close") }}</button>
@@ -101,20 +109,22 @@ function ok(): void {
         <input v-model="spam" type="checkbox" />{{ tr("当たるまで繰り返す (カオススパム)", "Repeat until a hit (Chaos spam)") }}
         <span v-if="spam" class="flex items-center gap-1 text-[12px] opacity-80">{{ tr("上限", "Max") }}<input v-model.number="spamMax" type="number" min="1" class="h-7 w-16 rounded-md border border-white/15 bg-black/40 px-1 text-right" :placeholder="tr('なし', 'none')" />{{ tr("回", "") }}</span>
       </label>
-      <label v-if="canFree" class="flex min-h-7 cursor-pointer items-center gap-2">
-        <input v-model="free" data-tree-hand-free type="checkbox" />{{ tr("狙い無し (空きを 1 つ埋めるだけ)", "No target (just fill an open slot)") }}
-      </label>
       <p v-if="kind" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ tr(RESULT[kind][0], RESULT[kind][1]) }}</p>
       <div class="flex flex-wrap gap-1.5">
         <button type="button" data-tree-hand-ok class="g-btn-red sm" @click="ok">{{ current ? tr("この手に替える", "Use this craft") : tr("この手にする", "Use this craft") }}</button>
-        <button type="button" class="g-btn sm" @click="held = null; omens = []">{{ tr("持ち直す", "Pick again") }}</button>
+        <button type="button" class="g-btn sm" @click="release">{{ tr("持ち直す", "Pick again") }}</button>
       </div>
     </div>
     <button v-if="current" type="button" class="g-btn sm self-start" @click="emit('clear')">{{ tr("この手を消す (下も消える)", "Remove this craft (and below)") }}</button>
 
-    <CurrencyShelf @hold="(k: string) => (held = k)">
-      <!-- 持った物に掛けられるお告げ = クラフト台と同じ部品と置き場 (HeldOmens.vue を持ったアイコンのすぐ下に重ねる。inline-held だと棚の一番下で見切れた、10-21 本物のマウス) -->
-      <template v-if="heldOmensOf(held).length" #held><HeldOmens /></template>
-    </CurrencyShelf>
+    <div data-tree-shelf @pointerdown="onShelfDown">
+      <CurrencyShelf @hold="onHold">
+        <!-- 持った物に掛けられるお告げ = クラフト台と同じ部品と置き場 (HeldOmens.vue を持ったアイコンのすぐ下に重ねる。inline-held だと棚の一番下で見切れた、10-21 本物のマウス)。
+             足す手は同じ欄に「狙い無し」(適当打ち、オーナー 10-22「お告げの欄の中に適当打ちがまだ無い」) -->
+        <template v-if="heldOmensOf(held).length || canFree" #held><div class="flex flex-col gap-1.5"><HeldOmens /><label v-if="canFree" data-tree-hand-free-box class="flex min-h-8 cursor-pointer items-center gap-2 rounded-lg border border-amber-400/25 bg-amber-500/[0.06] px-2 text-[12px]">
+          <input v-model="free" data-tree-hand-free type="checkbox" />{{ tr("狙い無し (空きを 1 つ埋めるだけ)", "No target (just fill an open slot)") }}
+        </label></div></template>
+      </CurrencyShelf>
+    </div>
   </div>
 </template>

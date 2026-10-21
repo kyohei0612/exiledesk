@@ -1,6 +1,6 @@
 /**
  * tree-recipes.ts — クラフトの道 (ツリー) のレシピ = 名前を付けて残した木の一覧 (2026-10-21 オーナー 10-22「ツリー形式に変えてから無くなった物を足さないと」、
- * 工程ページ式の sim-recipe-store.ts と同じ作り: 保存・上書き・名前替え・複製・消す (元に戻せる)・控え・ファイル)。
+ * 工程ページ式の sim-recipe-store.ts と同じ作り: 保存・上書き・名前替え・複製・消す (元に戻せる)・控え。共有は URL だけ、ファイルは作らない (オーナー 10-22))。
  * 中身は TreeDoc をそのまま (名前・id・保存時刻で包む)。前の工程式のレシピ (exiledesk.craftStageSim.recipes) は木に読み替えられないので触らずに残す
  */
 import { computed, ref } from "vue";
@@ -120,30 +120,6 @@ export function addTreeRecipe(name: string, tree: TreeDoc): TreeRecipe {
   return r;
 }
 
-/** 書き出し (ファイル 1 つ。PC やブラウザを替える時に持っていく) */
-export const TREE_RECIPE_FILE_KIND = "exiledesk-tree-recipes";
-export function treeRecipesToFile(v: readonly TreeRecipe[]): string {
-  return JSON.stringify({ kind: TREE_RECIPE_FILE_KIND, v: TREE_RECIPE_FORMAT, exportedAt: new Date().toISOString(), recipes: v }, null, 1);
-}
-/** 読み込み: 今の一覧に無い物だけ足す (同じ id・同じ時刻は重ねない、id だけ同じなら新しい id で)。前の工程式のファイルは bad に数える */
-export function mergeTreeRecipesFromFile(text: string): { added: number; skipped: number; bad: number } {
-  let raw: unknown;
-  try { raw = JSON.parse(text); } catch { return { added: 0, skipped: 0, bad: 1 }; }
-  const arr = Array.isArray(raw) ? raw : raw && typeof raw === "object" && Array.isArray((raw as { recipes?: unknown }).recipes) ? (raw as { recipes: unknown[] }).recipes : [];
-  const list = [...treeRecipes.value];
-  let added = 0, skipped = 0, bad = 0;
-  for (const x of arr) {
-    const r = normalizeTreeRecipe(x);
-    if (!r) { bad++; continue; }
-    const same = list.find((y) => y.id === r.id);
-    if (same && same.savedAt === r.savedAt) { skipped++; continue; }
-    list.push(same ? { ...r, id: newId() } : r);
-    added++;
-  }
-  list.sort((a, b) => b.updatedAt - a.updatedAt);
-  put(list);
-  return { added, skipped, bad };
-}
 /** 前の工程式のレシピの数 (木には読めない。一覧に「残してある」と出すだけ) */
 export function oldRecipeCount(): number {
   try { return parseList(localStorage.getItem("exiledesk.craftStageSim.recipes"))?.length ?? 0; } catch { return 0; }
