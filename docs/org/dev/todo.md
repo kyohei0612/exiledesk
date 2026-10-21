@@ -50,7 +50,7 @@
 | 誰 | ファイル |
 |---|---|
 | 記事編集長 ブログの仕上げ (10-22〜) | src/data/blog/ の記事 6 本 (*.ja.md・*.en.md、README・sample・chars は触らない)・src/data/blog/img/・docs/org/blog/ |
-| 解析君 ツリーの 100 人回し | src/services/simulator/tree/tree-run.ts (新)・docs/org/math/notes/2026-10-23-tree-run.md (新)・scripts/analysis/check-tree-run.mjs (新) |
+| 分析君 毎朝の日報まとめ (10-21) | scripts/analyze-logs.py・scripts/daily-summary.mjs (新)・docs/org/analytics/ |
 | (前の解析君の書きかけ、未 commit) | scripts/_flux-probe.test.ts・scripts/analysis/_yafu-ids.mjs |
 入口に無い物 (解析君 10-21、要る時だけジン部長へ): 重み 0 の MOD (創生の樹のスペルダメージ) を始めの形に置く手段 (startFrom が断る、解析君は makeStageMod を直に使った)。シミュで要るまで振らない。
 
