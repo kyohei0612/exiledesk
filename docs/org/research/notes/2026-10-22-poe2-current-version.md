@@ -1,0 +1,3 @@
+# PoE2 の今の版 (2026-10-22 調べ)
+
+- **今の版 = 0.5 系。メインのリーグは「Return of the Ancients」(0.5、リーグの仕組みは Runes of Aldur)、イベントのリーグ「Forbidden Rites」(0.5.5、最新のパッチは 0.5.5e) が並行中。次は 1.0 (正式リリース、12 月 11 日予定と報道)**。出どころ: poe2db のトップ (https://poe2db.tw/us/・https://poe2db.tw/jp/ に「Return of the Ancients 0.5 / Running for」「Forbidden Rites 0.5.5 / Running for」「Version 0.5.5e」「Release 1.0 / Starts in」、2026-10-22 に読んだ)。0.5.0 の公開日 (2026-05-29)・0.5.5 の公開 (2026-09-04 前後、報道で日がずれる)・1.0 の 12 月 11 日は第三者の記事 (KeenGamer・PCGamesN・mobalytics・playnews.gg) で、**公式の発表ページは今回開いていない (未確認)**。日本語の公式のリーグ名も**未確認** (poe2db の日本語ページも英語の名前のまま)。記事の頭は「PoE2 0.5 (Return of the Ancients) / 0.5.5 (Forbidden Rites)」の形が安全。
