@@ -8,7 +8,8 @@
   値段は今の相場 (priceOf)、ベース代と始めの状態 (増強は白、カオスは MOD 1 つのレア、高貴は MOD 0 のレア。2026-10-19 オーナー) を作る費用は入れない。広告ありきの別のページ (WebApp.vue が両脇の枠を置く)
 -->
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
+import type { StageItem } from "../../services/craft-stage/types";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { routesLuck, routesOpen, routesRunes, routesShared, routesTarget } from "../../state/web-page";
 import { revealNext } from "../../utils/keep-place";
@@ -61,7 +62,32 @@ const runeIds = computed((): string[] => {
   return [...new Set([...runeNeed.value, ...base])];
 });
 function setRunes(ids: string[]): void { routesRunes.value = ids; }
-const prep = computed(() => (s.data.value ? runePrep(s.data.value, runeIds.value) : undefined));
+const prep = computed(() => (s.data.value && !fromItem.value ? runePrep(s.data.value, runeIds.value) : undefined));
+/**
+ * 始めの状態を今のクラフトのアイテムにする (2026-10-22 要望 51092b58、オーナー「現在のクラフトを参照した状態からカオススパムできるようにしたらええんやない」)。
+ * カオスの道だけ、フラクチャー・品質・ルーン込みでそのアイテムから打つ (route-race.ts の from)。開発版だけ (本番はオーナーの OK の後)。null = 決まりの形
+ */
+const FROM_ON = import.meta.env.DEV || import.meta.env.VITE_DEV_PREVIEW === "1";
+const fromItem = shallowRef<StageItem | null>(null);
+const canFrom = computed(() => FROM_ON && s.item.value?.rarity === "rare" && s.item.value.prefixes.length + s.item.value.suffixes.length > 0);
+function setFrom(on: boolean): void {
+  if (!!fromItem.value === on) return;
+  fromItem.value = on ? s.item.value : null;
+  resetRace();
+}
+/** 使えない理由の英語 (route-race.ts の文) */
+const OFF_EN: Record<string, string> = {
+  "マジックに狙いの側の枠が無いベース": "This base has no slot on the target side while magic",
+  "上限の手数までに付かなかった (この等級では付かない段かも)": "Didn't hit within the use cap (this grade may not roll that tier)",
+  "今のアイテムから始める時はカオスだけ": "Only Chaos when starting from the current item",
+  "今のアイテムがレアでない": "The current item isn't rare",
+  "今のアイテムにもう狙いが付いている": "The current item already has the target",
+  "フラクチャー以外の MOD が無い (カオスで消せる MOD が要る)": "No mods other than fractured ones (Chaos needs one it can remove)",
+};
+const offText = (x: string): string => tr(x, OFF_EN[x] ?? x);
+/** 道のカード (今のアイテムから始める時は、カオスの 1 番目の決まりを差し替える) */
+const FROM_STEP: Step = { k: null, ja: "今のクラフトのアイテムから始める (フラクチャー・品質・ルーンもそのまま。カオスで消えるのはフラクチャー以外)", en: "Start from the current craft item (fractures, quality and runes kept; Chaos only removes non-fractured mods)" };
+const shownRoutes = computed(() => (fromItem.value ? ROUTES.map((r) => (r.route === "chaos" ? { ...r, steps: [FROM_STEP, ...r.steps.slice(1)] } : r)) : ROUTES));
 const ORDER = ROUTES.flatMap((r) => r.grades.map((grade) => ({ route: r.route, grade })));
 
 const t = computed(() => routesTarget.value);
@@ -111,7 +137,7 @@ function stop(): void {
 function calcLog(done: boolean): void {
   const tt = t.value;
   track("routes:calc", done ? "done" : "stop");
-  logRecord("routes_calc", { base: s.base.value, mod: tt ? `${tt.modId}#${tt.minTierIndex}` : null, ilvl: ilvl.value, runes: runeIds.value, n: RUNS, done, k: rows.value.length, best: best.value ? `${best.value.route}:${best.value.grade}` : null });
+  logRecord("routes_calc", { base: s.base.value, mod: tt ? `${tt.modId}#${tt.minTierIndex}` : null, ilvl: ilvl.value, runes: runeIds.value, n: RUNS, done, k: rows.value.length, from: !!fromItem.value, best: best.value ? `${best.value.route}:${best.value.grade}` : null });
 }
 const recompute = start;
 /** 狙い・ルーンが変わったら、計算の前に戻す (計算はしない) */
@@ -147,7 +173,7 @@ async function run(): Promise<void> {
   for (const one of ORDER) {
     await new Promise((r) => setTimeout(r, 0));
     if (id !== runId) return;
-    const row = await raceOne(d, s.base.value, ilvl.value, tt, priceOf, one.route, one.grade, { runs: RUNS, seed: seed.value, prep: prep.value, stop: () => id !== runId });
+    const row = await raceOne(d, s.base.value, ilvl.value, tt, priceOf, one.route, one.grade, { runs: RUNS, seed: seed.value, prep: prep.value, from: fromItem.value ?? undefined, stop: () => id !== runId });
     if (!row || id !== runId) return;
     rows.value = [...rows.value, row];
   }
@@ -226,10 +252,17 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
           <p class="mt-1 text-[16px] font-bold leading-snug text-[var(--color-rarity-magic)] [text-shadow:0_1px_2px_#000]">{{ modText }}</p>
           <p class="mt-1"><span class="rounded-sm bg-amber-500/25 px-1.5 text-[11px] font-bold text-amber-100">{{ tr(`${rank} 以上で当たり`, `Hit at ${rank}+`) }}</span></p>
           <p class="mt-2 text-[12px] text-[var(--exile-color-text-secondary)]">{{ s.item.value?.baseJa ?? s.base.value }} · {{ tr(`アイテムレベル ${ilvl}`, `Item level ${ilvl}`) }}</p>
+          <!-- 始めの状態 (開発版だけ): 決まりの形 / 今のクラフトのアイテム (カオスだけ) -->
+          <span v-if="canFrom || fromItem" data-routes-from class="mt-2 flex flex-wrap items-center justify-center gap-1 text-[11px]">
+            <span class="text-[var(--exile-color-text-tertiary)]">{{ tr("始めの状態", "Start") }}</span>
+            <button type="button" data-routes-from-rule class="g-tab !min-h-[28px] !px-2 !text-[12px]" :class="!fromItem ? 'on' : ''" :disabled="busy" @click="setFrom(false)">{{ tr("決まりの形", "Listed start") }}</button>
+            <button type="button" data-routes-from-item class="g-tab !min-h-[28px] !px-2 !text-[12px]" :class="fromItem ? 'on' : ''" :disabled="busy || !canFrom" :title="tr('今のクラフトのアイテム (フラクチャー・付いている MOD・品質・ルーン込み) からカオススパム。クラフトのアイテムは変わらない', 'Chaos spam from the current craft item (fractures, mods, quality and runes included). The craft item itself is not changed')" @click="setFrom(true)">{{ tr("今のアイテムから (カオス)", "Current item (Chaos)") }}</button>
+          </span>
           <p class="mt-2"><button type="button" data-routes-pick class="g-btn sm" :disabled="busy" @click="pickMod">{{ tr("MOD を選び直す", "Change mod") }}</button></p>
           <!-- 計算開始 ⇔ 中止 (同じ場所のボタンが変わる) -->
           <p class="mt-2"><button type="button" data-routes-start class="min-h-11 w-full max-w-[16rem]" :class="busy ? 'g-btn' : 'g-btn-red'" @click="busy ? stop() : start()">{{ busy ? tr(`中止 (${rows.length} / ${ORDER.length})`, `Stop (${rows.length} / ${ORDER.length})`) : started ? tr(`別の ${RUNS} 人でもう一度計算`, `Again with another ${RUNS}`) : tr("計算開始", "Start") }}</button></p>
-          <StageRouteRunes class="mt-3 flex flex-col items-center" :picked="runeIds" :required="runeNeed" :disabled="busy" @change="setRunes" />
+          <p v-if="fromItem" class="mt-3 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("ルーンは今のアイテムに嵌めている物のまま", "Runes stay as socketed on the current item") }}</p>
+          <StageRouteRunes v-else class="mt-3 flex flex-col items-center" :picked="runeIds" :required="runeNeed" :disabled="busy" @change="setRunes" />
         </div>
         <div data-routes-best class="relative flex min-w-0 items-center gap-4 overflow-hidden rounded-md border border-emerald-400/30 bg-gradient-to-r from-emerald-500/[0.12] via-emerald-500/[0.04] to-transparent px-4 py-3 max-md:flex-wrap">
           <template v-if="best">
@@ -252,10 +285,10 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
       </div>
 
       <!-- 運試し (一番安い道で。StageRouteLuck.vue) -->
-      <StageRouteLuck v-if="luckRow && !busy" :row="luckRow" :target="t" :ilvl="ilvl" :label="`${modText} (${tr(`${rank} 以上`, `${rank}+`)})`" :route-name="routeName(luckRow)" :options="ok.filter((x) => x.route === luckRow!.route && x.tries.length)" :rows="ok" :prep="prep" :runes="runeIds" @close="luckRow = null" @pick="(x) => (luckRow = x)" />
+      <StageRouteLuck v-if="luckRow && !busy" :row="luckRow" :target="t" :ilvl="ilvl" :label="`${modText} (${tr(`${rank} 以上`, `${rank}+`)})`" :route-name="routeName(luckRow)" :options="ok.filter((x) => x.route === luckRow!.route && x.tries.length)" :rows="ok" :prep="prep" :from="fromItem" :runes="fromItem ? [] : runeIds" @close="luckRow = null" @pick="(x) => (luckRow = x)" />
       <!-- 下: 3 つの道 -->
       <div class="route-rule mt-4 grid gap-3 lg:grid-cols-3">
-        <article v-for="r in ROUTES" :key="r.route" :data-route="r.route" class="flex min-w-0 flex-col rounded-md border bg-white/[0.025] p-3" :class="[best && best.route === r.route ? 'border-emerald-400/35' : 'border-white/10', offRoute(r.route) ? 'opacity-50' : '']">
+        <article v-for="r in shownRoutes" :key="r.route" :data-route="r.route" class="flex min-w-0 flex-col rounded-md border bg-white/[0.025] p-3" :class="[best && best.route === r.route ? 'border-emerald-400/35' : 'border-white/10', offRoute(r.route) ? 'opacity-50' : '']">
           <header class="flex items-center gap-2">
             <img :src="iconOf(r.main)" alt="" class="size-10 object-contain" />
             <b class="g-sec-title !text-[18px]">{{ tr(r.ja, r.en) }}</b>
@@ -269,7 +302,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
               <span class="min-w-0">{{ tr(st.ja, st.en) }}</span>
             </li>
           </ol>
-          <p v-if="offRoute(r.route)" class="mt-4 py-4 text-center text-[12px]">{{ offRoute(r.route) }}</p>
+          <p v-if="offRoute(r.route)" class="mt-4 py-4 text-center text-[12px]">{{ offText(offRoute(r.route)!) }}</p>
           <ul v-else class="mt-3 flex flex-col gap-2">
             <li v-for="g in r.grades" :key="g" data-route-row class="rounded px-2 py-1.5" :class="[rowOf(r.route, g) && best === rowOf(r.route, g) ? 'bg-emerald-500/10 ring-1 ring-emerald-400/30' : 'bg-black/25', rowOf(r.route, g) && canLuck(rowOf(r.route, g)!) && !busy ? 'cursor-pointer hover:bg-white/[0.06]' : '', luckRow && luckRow === rowOf(r.route, g) ? 'outline outline-2 outline-amber-400/50' : '']" :title="rowOf(r.route, g) && canLuck(rowOf(r.route, g)!) && !busy ? tr('押すとこの等級で運試し', 'Click for a luck test at this grade') : undefined" @click="rowOf(r.route, g) && !busy && openLuck(rowOf(r.route, g)!)">
               <template v-if="rowOf(r.route, g)">
@@ -282,7 +315,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
                     <span v-if="best === rowOf(r.route, g)" class="ml-auto rounded bg-emerald-500/25 px-1 text-[10px] text-emerald-200">{{ tr("一番安い", "Cheapest") }}</span>
                     <span v-else-if="best" class="ml-auto text-[11px] tabular-nums text-[var(--exile-color-text-tertiary)]" :title="tr('一番安い道の何倍か', 'Times the cheapest')">× {{ (rowOf(r.route, g)!.avgCost / best.avgCost).toFixed(1) }}</span>
                   </template>
-                  <span v-else class="ml-auto text-[11px] opacity-60">{{ rowOf(r.route, g)!.off }}</span>
+                  <span v-else class="ml-auto text-[11px] opacity-60">{{ offText(rowOf(r.route, g)!.off!) }}</span>
                 </div>
                 <template v-if="!rowOf(r.route, g)!.off">
                   <!-- 運の幅: 濃い所 = 半分の人まで、薄い所 = 運が悪い 10 人に 1 人まで、白い線 = 平均 -->

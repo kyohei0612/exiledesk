@@ -10,6 +10,8 @@
  *   - 高貴スパム: MOD 0 のレアから、高貴 + 偉大な高貴のお告げで 2 つ付ける → 外れたら消去 2 回で 0 に戻して繰り返す
  *     (2026-10-19 オーナー「カオスは 1 MOD レアで開始、高貴は 0 MOD レアで開始。偉大打って消去で 2 MOD でスパム、ベースは同じで 0 MOD レア」)
  *   始めのレア (MOD 0 / 1 つ) を作る費用はどの道にも入れない (カオスの 1 つは高貴 1 回で作るが数えない。狙いそのものが付いたら作り直す)
+ *   from (始めのアイテム) を渡した時は、カオスの道だけをそのアイテムのまま (フラクチャー・品質・ルーン込み) 打つ (2026-10-22 要望 51092b58、
+ *   オーナー「現在のクラフトを参照した状態からカオススパムできるようにしたらええんやない」)。ルーンの下ごしらえ (prep) はしない
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { applyCurrency } from "./apply-currency";
@@ -81,20 +83,28 @@ export interface RouteRun {
 /** prep = 始めのアイテムの下ごしらえ (ルーンを嵌める。route-runes.ts の runePrep) */
 export type RoutePrep = ((it: StageItem) => StageItem) | undefined;
 
-export function routeOff(data: PatchData, base: string, itemLevel: number, target: RaceTarget, route: RouteKind, prep?: RoutePrep): string | null {
+export function routeOff(data: PatchData, base: string, itemLevel: number, target: RaceTarget, route: RouteKind, prep?: RoutePrep, from?: StageItem): string | null {
   const side = sideOfMod(data, target.modId);
+  if (from) {
+    if (route !== "chaos") return "今のアイテムから始める時はカオスだけ";
+    if (from.rarity !== "rare") return "今のアイテムがレアでない";
+    if (routeHit(from, target)) return "今のアイテムにもう狙いが付いている";
+    if (!allMods(from).some((m) => !m.fractured)) return "フラクチャー以外の MOD が無い (カオスで消せる MOD が要る)";
+    return null;
+  }
   // 増強の道はマジックに狙いの側の枠が要る (不在のアミュレットなど、マジックで MOD が付かないベースは使えない)
   if (route === "augment" && limitOf({ ...(prep ? prep(freshItem(data, base, itemLevel)) : freshItem(data, base, itemLevel)), rarity: "magic" }, side) < 1) return "マジックに狙いの側の枠が無いベース";
   return null;
 }
 
 /** 始めの状態を置いた 1 人分 (作れなければ null) */
-export function routeRun(data: PatchData, base: string, itemLevel: number, target: RaceTarget, route: RouteKind, grade: Grade, rng: () => number, price: (key: string) => number, prep?: RoutePrep): RouteRun | null {
+export function routeRun(data: PatchData, base: string, itemLevel: number, target: RaceTarget, route: RouteKind, grade: Grade, rng: () => number, price: (key: string) => number, prep?: RoutePrep, from?: StageItem): RouteRun | null {
   const side = sideOfMod(data, target.modId);
   const g = GRADE_KEY[grade];
-  let it: StageItem = freshItem(data, base, itemLevel);
-  if (prep) it = prep(it);
-  if (route === "chaos") {
+  let it: StageItem = from ?? freshItem(data, base, itemLevel);
+  if (from) { if (routeOff(data, base, itemLevel, target, route, undefined, from)) return null; }
+  else if (prep) it = prep(it);
+  if (route === "chaos" && !from) {
     // MOD 1 つのレア (作る高貴 1 回は数えない)。始めの 1 つが狙いそのものなら作り直す (始めは「狙いでない MOD が 1 つ」)
     const blank: StageItem = { ...it, rarity: "rare" };
     for (let k = 0; k < 50 && (k === 0 || routeHit(it, target)); k++) { const first = applyCurrency(data, blank, "exalt", rng, []); if (!first.applied) break; it = first.item; }
@@ -134,9 +144,9 @@ export function routeRun(data: PatchData, base: string, itemLevel: number, targe
  * (2026-10-19 スマホ相当 = CPU 4 倍遅くで、まとめて打つと画面が最長 8.9 秒固まった)。stop() が true になったら null で止める
  */
 export async function raceOne(data: PatchData, base: string, itemLevel: number, target: RaceTarget, price: (key: string) => number, route: RouteKind, grade: Grade,
-  opts: { runs: number; maxSteps?: number; seed?: number; prep?: RoutePrep; stop?: () => boolean; sliceMs?: number }): Promise<RaceRow | null> {
+  opts: { runs: number; maxSteps?: number; seed?: number; prep?: RoutePrep; from?: StageItem; stop?: () => boolean; sliceMs?: number }): Promise<RaceRow | null> {
   const runs = opts.runs, maxSteps = opts.maxSteps ?? 3000, sliceMs = opts.sliceMs ?? 25;
-  const off = routeOff(data, base, itemLevel, target, route, opts.prep);
+  const off = routeOff(data, base, itemLevel, target, route, opts.prep, opts.from);
   if (off) return { route, grade, off, hitRate: 0, avgCost: 0, avgSteps: 0, p50: 0, p90: 0, uses: {}, tries: [], people: runs };
   const costs: number[] = [], steps: number[] = [];
   const uses: Record<string, number> = {};
@@ -149,7 +159,7 @@ export async function raceOne(data: PatchData, base: string, itemLevel: number, 
   };
   for (let r = 0; r < runs; r++) {
     const rng = mulberry32(routeSeed(opts.seed, r, route, grade));
-    const run = routeRun(data, base, itemLevel, target, route, grade, rng, price, opts.prep);
+    const run = routeRun(data, base, itemLevel, target, route, grade, rng, price, opts.prep, opts.from);
     if (!run) continue;
     while (run.n < maxSteps && !run.hit()) {
       if (!run.step()) break;

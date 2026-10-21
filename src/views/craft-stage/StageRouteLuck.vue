@@ -29,7 +29,7 @@ import { routesLuck, routesOpen, routesTarget } from "../../state/web-page";
 import { revealNext } from "../../utils/keep-place";
 
 /** options = 同じ道の等級 (着いた物。タブと比べに出す。2026-10-19 オーナー「等級も選べるように、カオススパム計算機の形で」) */
-const props = defineProps<{ row: RaceRow; options: RaceRow[]; target: RaceTarget; ilvl: number; label: string; routeName: string; /** 嵌めるルーン (始めのアイテムの下ごしらえ) */ prep?: RoutePrep; runes: readonly string[]; /** 全部の道の結果 (シェアに入れる) */ rows: RaceRow[] }>();
+const props = defineProps<{ row: RaceRow; options: RaceRow[]; target: RaceTarget; ilvl: number; label: string; routeName: string; /** 嵌めるルーン (始めのアイテムの下ごしらえ) */ prep?: RoutePrep; runes: readonly string[]; /** 始めのアイテム (今のクラフトのアイテムから。route-race.ts の from。シェアは出さない) */ from?: StageItem | null; /** 全部の道の結果 (シェアに入れる) */ rows: RaceRow[] }>();
 /** 比べる人数 (スマホは 10 人) */
 const people = computed(() => props.row.people);
 /**
@@ -61,9 +61,9 @@ const result = ref<{ hit: boolean; n: number; cost: number; rank: number | null;
 function fresh(): void {
   stop();
   item.value = null;
-  run = routeRun(s.data.value!, s.base.value, props.ilvl, props.target, props.row.route, props.row.grade, mulberry32((Math.random() * 2 ** 31) | 0), priceOf, props.prep);
-  // 暗黙の値の種はエミュレーターと同じ (「ここから開始」で置いた時に暗黙の値がずれないように)
-  if (run) run.item = { ...run.item, rollSeed: s.seed.value - 1 };
+  run = routeRun(s.data.value!, s.base.value, props.ilvl, props.target, props.row.route, props.row.grade, mulberry32((Math.random() * 2 ** 31) | 0), priceOf, props.prep, props.from ?? undefined);
+  // 暗黙の値の種はエミュレーターと同じ (「ここから開始」で置いた時に暗黙の値がずれないように)。今のアイテムからの時は元の種のまま
+  if (run && !props.from) run.item = { ...run.item, rollSeed: s.seed.value - 1 };
   sync();
   result.value = null;
 }
@@ -81,7 +81,7 @@ function sync(): void {
   chanceMap.value = new Map(run?.chances ?? []);
   item.value = now; n.value = run?.n ?? 0; cost.value = run?.cost ?? 0; last.value = run?.last ?? null;
 }
-watch(() => [props.row, props.target, props.ilvl, props.prep], fresh, { immediate: true });
+watch(() => [props.row, props.target, props.ilvl, props.prep, props.from], fresh, { immediate: true });
 
 let raf = 0, t0 = 0, lastT = 0;
 const CAP = 20_000;
@@ -179,11 +179,13 @@ const shareText = computed(() => {
 function startHere(): void {
   const it = item.value, d = s.data.value;
   if (!it || !d) return;
-  const forces: Force[] = [...it.prefixes, ...it.suffixes].map((m) => ({ mod: m.modId, tier: m.tierName, values: m.values }));
+  const forces: Force[] = [...it.prefixes, ...it.suffixes].map((m) => ({ mod: m.modId, tier: m.tierName, values: m.values, ...(m.fractured ? { fractured: true } : {}), ...(m.desecrated ? { desecrated: true } : {}) }));
   s.hold(null);
   s.itemLevel.value = it.itemLevel;
   s.reset();
   s.startMods.value = forces;
+  // 今のアイテムから始めた時は、アイテムを丸ごと置く (フラクチャー・品質・ルーン・暗黙の値もそのまま)
+  if (props.from) { s.item.value = it; routesLuck.value = false; routesTarget.value = null; routesOpen.value = false; return; }
   // 嵌めたルーンもそのまま (ソケットの数とオーグメント)
   const placed = fullSockets(startFrom(d, s.base.value, it.itemLevel, { mods: forces, rarity: it.rarity }, s.seed.value - 1));
   s.item.value = { ...placed, rollSeed: s.seed.value - 1, ...(it.augments?.length ? { sockets: Math.max(placed.sockets ?? 0, it.sockets ?? 0), augments: it.augments } : {}) };
@@ -191,6 +193,8 @@ function startHere(): void {
   routesTarget.value = null;
   routesOpen.value = false;
 }
+/** ここから開始の説明 (クラフトの工程は 0 からになる) */
+const startTitle = computed(() => tr("このアイテムでエミュレーターを始める (クラフトの今の工程は消え、運試しの手も工程に入らない)", "Start the emulator with this item (the current craft steps are cleared; the luck-test uses are not in the steps)"));
 const xUrl = computed(() => `https://x.com/intent/post?text=${encodeURIComponent(shareText.value)}&url=${encodeURIComponent(shareUrl.value)}`);
 function shareX(e: MouseEvent): void {
   sendShare(e, { code: shareCode, web: xUrl.value, text: shareText.value, url: shareUrl.value, log: { base: s.base.value, rank: result.value?.rank ?? null, route: props.row.route } });
@@ -236,9 +240,9 @@ function shareX(e: MouseEvent): void {
         </template>
         <p class="mt-1 tabular-nums text-[var(--exile-color-text-secondary)]">{{ tr(`${result.n.toLocaleString()} 手`, `${result.n.toLocaleString()} uses`) }} · {{ money(result.cost) }}</p>
         <div class="mt-2 flex flex-wrap gap-2">
-          <a data-route-share :href="xUrl" target="_blank" rel="noopener" class="g-btn-red sm inline-flex items-center !no-underline" @click="shareX">{{ tr("X でシェア", "Share on X") }}</a>
+          <a v-if="!from" data-route-share :href="xUrl" target="_blank" rel="noopener" class="g-btn-red sm inline-flex items-center !no-underline" @click="shareX">{{ tr("X でシェア", "Share on X") }}</a>
           <button type="button" data-route-again class="g-btn sm" @click="fresh">{{ tr("もう一度 (始めの状態から)", "Again (from the start)") }}</button>
-          <button type="button" data-route-start class="g-btn sm" :title="tr('このアイテムでエミュレーターを始める (運試しの手は工程に入らない)', 'Start the emulator with this item (the luck-test uses are not in the steps)')" @click="startHere">{{ tr("ここから開始", "Continue from here") }}</button>
+          <button type="button" data-route-start class="g-btn sm" :title="startTitle" @click="startHere">{{ tr("ここから開始", "Continue from here") }}</button>
         </div>
       </template>
       <template v-else>
@@ -247,7 +251,7 @@ function shareX(e: MouseEvent): void {
         <p v-if="result && !spamming" class="mt-0.5 text-[var(--exile-color-text-secondary)]">{{ result.reason ?? tr("まだ付いていません。もう一度押すと続きから", "Not hit yet. Hold again to continue") }}</p>
         <span v-if="result && !spamming" class="mt-1 flex flex-wrap gap-2">
           <button type="button" class="g-btn sm" @click="fresh">{{ tr("始めの状態に戻す", "Back to the start") }}</button>
-          <button type="button" class="g-btn sm" @click="startHere">{{ tr("ここから開始", "Continue from here") }}</button>
+          <button type="button" class="g-btn sm" :title="startTitle" @click="startHere">{{ tr("ここから開始", "Continue from here") }}</button>
         </span>
       </template>
       <!-- 100 人の結果 (カオススパム計算機と同じ並び) -->
