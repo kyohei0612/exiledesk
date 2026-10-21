@@ -42,6 +42,18 @@ Only +3, +4 and +6 can be shown. **+5 never appears, whatever the multiplier.** 
 
 If the multiplier is drawn evenly, +6 comes up 6 times in 45, about 13%. The game doesn't publish whether the multiplier is really uniform, so that part is an engine assumption.
 
+## What If Quality Were 20% or 40%?
+
+With the same rules (Sanctification rounds, Quality rounds down at display), changing the amount of Quality gives:
+
+| Value after Sanctify | 20% Quality | 40% Quality | 50% Quality |
+|---:|---:|---:|---:|
+| 2 | +2 | +2 | +3 |
+| 3 | +3 | +4 | +4 |
+| 4 | +4 | **+5** | **+6** |
+
+At 20% Quality (the normal cap), Quality doesn't move this mod at all: 3 × 1.2 = 3.6 and 4 × 1.2 = 4.8 both round back down. At 40%, a Sanctified 4 shows +5. Only 50% reaches +6. So a "+6" item rolled the top 13% on Sanctification and also stacked Quality to 50%. Conversely, +5 is possible at 40% Quality, so a trade search for +5 might find items if you drop the Quality filter (this is a prediction from the calculation, not checked with a search).
+
 ## Things to Watch When Crafting
 
 - **Quality can go on before or after Sanctification.** Quality applies at display time, so re-adding Catalysts after Sanctifying keeps +6 at +6. What matters is that Sanctification applies to the base value.
