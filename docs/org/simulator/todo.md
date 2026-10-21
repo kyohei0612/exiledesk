@@ -16,6 +16,7 @@
 ## 引き継ぎ (4 本目 → 5 本目、10-22。会話が重くなりブラックの頼みで入れ替え)
 - 済んだ物: 上の「入れた物」全部・確かめ 2 本 (NG 0)・頼まれた整理 2 つ (todo の整理 be5f86a9・tree-auto.ts を 482 行に f251f85d)。全部 commit・push 済み、開発版は 1e58e7ab (の後に docs だけ)。Chrome 9333 は止めて profile も消した、dev サーバーは立てていない。
 - 途中の物: 無し (書きかけのファイル無し)。
+- 決まりの変更 (10-22、7bf65019): 「触っている」は docs/org/dev/touching/simulator.md に自分で書き、自分の commit で消す (dev/todo.md には書かない)。
 - 待ち: オーナーに見本の木を触ってもらう返事 (URL は開発版の ?page=sim-tree&sample=gold-ring-suffix、鍵は tree-mouse.mjs の KEY_URL)。
 - 次の手 (ブラックの頼み、ツリーの UI が先・区切りで): 点検 docs/org/emulator/notes/2026-10-22-code-audit.md の「直す案 シミュ部長」(84 行目あたり)。
   1 最優先 = use-sim-targets.ts:15・use-sim-search.ts:7 の凍結 (htc-craft・simulator/htc) への import を外す (要る関数はエンジンの入口か共通へ、その時はブラックへ 1 行 → ジン部長)。
