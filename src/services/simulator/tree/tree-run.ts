@@ -9,7 +9,7 @@ import { mulberry32, type PatchData, type StageItem, type StageMod } from "../..
 import { kindOfCurrency } from "./tree-hands";
 import { aimHeld, aimsOf, handAims, outcomeOf, playHand, startItemOf as startOf } from "./tree-sample";
 import { withTreeTune } from "./tree-tune";
-import { aimKey, MATCH_BACK, type Aim, type TreeBox, type TreeDoc } from "./tree-model";
+import { aimKey, MATCH_BACK, type Aim, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 
 export interface TreeRunOpts {
   /** 人数 (裏は 100、確かめは 300) */
@@ -53,6 +53,8 @@ export interface TreeRunResult {
   /** 組んでいない芽・打てない手で止まった人 */
   stuck: number;
   stuckAt: Record<string, number>;
+  /** 手の結果に合う結果の箱が無かった人数 (箱ごと。結果が 1 通りとして箱を 1 つにした手で別の結果が出た等。形の合う箱があればそこへ進み、無ければ止まり) */
+  unexpected: Record<string, number>;
   /** 全員の合計 ÷ 完成数 (完成 0 なら NaN) */
   perItem: number;
   meanFinished: number;
@@ -66,7 +68,7 @@ export interface TreeRunResult {
 }
 
 type End = "done" | "capped" | "stuck";
-interface Person { end: End; cost: number; at: string; visits: { box: string; cost: number }[]; uses: Record<string, number>; restarts: number }
+interface Person { end: End; cost: number; at: string; visits: { box: string; cost: number }[]; uses: Record<string, number>; restarts: number; odd: Set<string> }
 
 const startItemOf = (data: PatchData, doc: TreeDoc, rng: () => number): StageItem => startOf(data, doc, rng).item;
 
@@ -201,6 +203,15 @@ export function matchTargets(doc: TreeDoc, id: string): { key: string; to: strin
   return out.filter((x, i) => out.findIndex((y) => y.key === x.key) === i);
 }
 
+/** 手の結果 (outcomeOf) に合う結果の箱 (回す時と精査で同じ)。any = 狙い無しの手の「打った後」、pass = 品質だけ上げた後 */
+export function outBoxOf(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[] }): string | undefined {
+  return b.outs.find((id) => {
+    const c = doc.boxes[id];
+    if (!c || (c.out !== oc.out && c.out !== "any" && c.out !== "pass")) return false;
+    return oc.out !== "hit" || (!!c.aim && oc.hits.some((a) => a.modId === c.aim!.modId && a.tier === c.aim!.tier));
+  });
+}
+
 function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: readonly Shape[], rng: () => number, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps">> & Pick<TreeRunOpts, "start">): Person {
   let item = o.start ? o.start(rng) : startItemOf(data, doc, rng);
   let cost = o.startCost;
@@ -210,24 +221,25 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
   let at = "start";
   let steps = 0;
   let restarts = 0;
+  const odd = new Set<string>();
   // back だけで回り続ける形 (back の輪) の見張り
   let hops = 0;
   for (;;) {
     const b = doc.boxes[at];
-    if (!b) return { end: "stuck", cost, at, visits, uses, restarts };
+    if (!b) return { end: "stuck", cost, at, visits, uses, restarts, odd };
     visits.push({ box: at, cost });
     // 完成の印は "main" だけ (前の版の妥協 "compromise" は未完成 = 印の無い箱として先へ読む)
-    if (b.done === "main") return { end: "done", cost, at, visits, uses, restarts };
+    if (b.done === "main") return { end: "done", cost, at, visits, uses, restarts, odd };
     const sb = b as SplitBox;
     if (sb.split) {
-      if (++hops > 1000) return { end: "stuck", cost, at, visits, uses, restarts };
+      if (++hops > 1000) return { end: "stuck", cost, at, visits, uses, restarts, odd };
       const to = splitTo(data, sb.split, item, aims);
-      if (!to) return { end: "stuck", cost, at, visits, uses, restarts };
+      if (!to) return { end: "stuck", cost, at, visits, uses, restarts, odd };
       at = to;
       continue;
     }
     if (b.back) {
-      if (++hops > 1000) return { end: "stuck", cost, at, visits, uses, restarts };
+      if (++hops > 1000) return { end: "stuck", cost, at, visits, uses, restarts, odd };
       if (b.back === RESTART) {
         item = o.start ? o.start(rng) : startItemOf(data, doc, rng);
         cost += o.startCost;
@@ -236,24 +248,28 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
         continue;
       }
       const to = b.back === MATCH ? matchBox(data, shapes, item, aims) : settle(data, doc, shapes, b.back, item, aims);
-      if (!to) return { end: "stuck", cost, at, visits, uses, restarts };
+      if (!to) return { end: "stuck", cost, at, visits, uses, restarts, odd };
       at = to;
       continue;
     }
-    if (!b.hand) return { end: "stuck", cost, at, visits, uses, restarts };
-    if (++steps > o.capSteps || cost > o.capDiv) return { end: "capped", cost, at, visits, uses, restarts };
+    if (!b.hand) return { end: "stuck", cost, at, visits, uses, restarts, odd };
+    if (++steps > o.capSteps || cost > o.capDiv) return { end: "capped", cost, at, visits, uses, restarts, odd };
     hops = 0;
     const before = item;
     const r = playHand(data, item, b.hand, rng, handAims(doc, at, aims), use);
-    if (!r.applied) return { end: "stuck", cost, at, visits, uses, restarts };
+    if (!r.applied) return { end: "stuck", cost, at, visits, uses, restarts, odd };
     if (sb.next) { item = r.item; at = sb.next; continue; }
     const oc = outcomeOf(data, before, r.item, aims);
-    const next = b.outs.find((id) => {
-      const c = doc.boxes[id];
-      if (!c || (c.out !== oc.out && c.out !== "any" && c.out !== "pass")) return false; // any = 狙い無しの手の「打った後」(何が付いても)、pass = 品質だけ上げた後
-      return oc.out !== "hit" || (!!c.aim && oc.hits.some((a) => a.modId === c.aim!.modId && a.tier === c.aim!.tier));
-    });
-    if (!next) return { end: "stuck", cost, at, visits, uses, restarts };
+    const next = outBoxOf(doc, b, oc);
+    if (!next) {
+      // 合う結果の箱が無い (10-22 ブラック「1 箱にした手で別の結果が出た時に黙って止まらない」): 形の合う箱があればそこへ、無ければ止まり。どちらも想定外として数える
+      odd.add(at);
+      const to = matchBox(data, shapes, r.item, aims);
+      if (!to) return { end: "stuck", cost, at, visits, uses, restarts, odd };
+      item = r.item;
+      at = to;
+      continue;
+    }
     item = r.item;
     at = settle(data, doc, shapes, next, item, aims);
   }
@@ -270,6 +286,8 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
   for (const p of people) for (const [k, v] of Object.entries(p.uses)) uses[k] = (uses[k] ?? 0) + v / (n || 1);
   const stuckAt: Record<string, number> = {};
   for (const p of people) if (p.end === "stuck") stuckAt[p.at] = (stuckAt[p.at] ?? 0) + 1;
+  const unexpected: Record<string, number> = {};
+  for (const p of people) for (const id of p.odd) unexpected[id] = (unexpected[id] ?? 0) + 1;
   const acc: Record<string, { reach: number; visits: number; costIn: number; remain: number }> = {};
   for (const id of Object.keys(doc.boxes)) acc[id] = { reach: 0, visits: 0, costIn: 0, remain: 0 };
   for (const p of people) {
@@ -292,7 +310,7 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
     n, finished: fin.length,
     capped: people.filter((p) => p.end === "capped").length,
     stuck: people.filter((p) => p.end === "stuck").length,
-    stuckAt, perItem,
+    stuckAt, unexpected, perItem,
     meanFinished: costs.length ? costs.reduce((a, b) => a + b, 0) / costs.length : NaN,
     median: q(0.5), p90: q(0.9), uses, boxes,
     restarts: people.reduce((a, p) => a + p.restarts, 0) / (n || 1),
