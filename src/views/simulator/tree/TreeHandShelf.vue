@@ -8,8 +8,9 @@ import { computed, ref } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../../state/craft-stage";
 import { provideShelf, simHidden } from "../../../state/emulator/shelf-context";
 import CurrencyShelf from "../../craft-stage/CurrencyShelf.vue";
-import ShelfButton from "../../craft-stage/ShelfButton.vue";
-import { applyCurrency, kindOf, mulberry32, OMEN_FOR, omensFor } from "../../../services/craft-stage/engine";
+import HeldOmens from "../../craft-stage/HeldOmens.vue";
+import { heldOmensOf } from "../../craft-stage/held-omens";
+import { applyCurrency, mulberry32, omensFor } from "../../../services/craft-stage/engine";
 import { aimHeld, aimsOf, fillCatalyst, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, kindOfCurrency, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handLabel, handName } from "./tree-names";
@@ -40,7 +41,6 @@ provideShelf({
   toggleOmen,
   hidden: simHidden,
 });
-const heldOmens = computed(() => { if (!held.value) return []; const k = kindOf(held.value); return [...(OMEN_FOR[k] ?? []), ...(k === "desecrate" ? OMEN_FOR.reveal ?? [] : [])]; });
 const used = computed(() => (held.value ? omensFor(held.value, omens.value) : []));
 const catalysing = computed(() => used.value.includes(CATALYSING));
 
@@ -106,12 +106,8 @@ function ok(): void {
     <button v-if="current" type="button" class="g-btn sm self-start" @click="emit('clear')">{{ tr("この手を消す (下も消える)", "Remove this craft (and below)") }}</button>
 
     <CurrencyShelf inline-held @hold="(k: string) => (held = k)">
-      <template v-if="heldOmens.length" #held>
-        <div class="rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2">
-          <p class="mb-1 text-[11px] text-violet-200/80">{{ tr(`${nameOf(held ?? "")} に掛けられるお告げ`, `Omens for ${nameOf(held ?? "")}`) }}</p>
-          <div class="flex flex-wrap gap-1.5"><ShelfButton v-for="k in heldOmens" :key="k" :k="k" omen @pick="toggleOmen($event)" /></div>
-        </div>
-      </template>
+      <!-- 持った物に掛けられるお告げ = クラフト台と同じ部品 (HeldOmens.vue、棚の文脈 provideShelf から取る。お告げの下の設定も出る) -->
+      <template v-if="heldOmensOf(held).length" #held><HeldOmens /></template>
     </CurrencyShelf>
   </div>
 </template>
