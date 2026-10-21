@@ -107,8 +107,7 @@ export function shareUrl(code: string, inApp: boolean): string {
   const base = inApp ? "https://exiledesk.com/" : `${location.origin}${location.pathname}`;
   return `${base}${SHARE_PREFIX}${code}`;
 }
-/** X に投稿する画面 */
-export function xIntentUrl(url: string): string {
-  const text = tr("ExileDesk のクラフトステージで作った手順", "My crafting steps on ExileDesk Craft Stage");
+/** X に投稿する画面。text は投稿の文 (無ければクラフトステージの手順の文。シミュのレシピは自分の文を渡す) */
+export function xIntentUrl(url: string, text: string = tr("ExileDesk のクラフトステージで作った手順", "My crafting steps on ExileDesk Craft Stage")): string {
   return `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
 }
