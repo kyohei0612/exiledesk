@@ -25,7 +25,7 @@ import { aimHeld, aimsOf, sampleOf } from "../../../services/simulator/tree/tree
 import { checkTree, type CheckIssue } from "../../../services/simulator/tree/tree-check";
 import { treePage } from "../../../state/web-page";
 import { tr } from "../../../i18n/lang";
-import { toCss } from "../../../utils/zoom";
+import { pageZoom, toCss } from "../../../utils/zoom";
 
 const t = useTree();
 const doc = t.doc;
@@ -57,6 +57,14 @@ const boxes = computed(() => Object.values(doc.value.boxes));
  * 子の段の上で横の棒、そこから子の上の辺へ下ろす。色は 進む = 灰 / 外れ・消えた = 赤系 の 2 つだけ
  */
 const LINE = { fwd: "#a39a88", bad: "#c96a72", back: "#5fd0e0" } as const;
+/**
+ * 画面の高さ (拡大前の CSS ピクセル)。html の zoom (WebApp.vue の fitZoom) が 1 より大きいと 100vh が画面より高くなり、
+ * 1920 幅でツリーの枠がはみ出してページごと下へ送られた (10-22 開発版で見た)。WebApp.vue の後で読む
+ */
+const viewH = ref(innerHeight / pageZoom());
+const onResizeH = (): void => { requestAnimationFrame(() => { viewH.value = innerHeight / pageZoom(); }); };
+onMounted(() => window.addEventListener("resize", onResizeH));
+onBeforeUnmount(() => window.removeEventListener("resize", onResizeH));
 /** 手 (見るだけ): どこを引いても画面が動き、箱は押せない (ComfyUI の手、見本の 6) */
 const hand = ref(false);
 const edges = computed(() => boxes.value.filter((b) => b.hand && b.outs.length).map((b) => {
@@ -297,7 +305,7 @@ const glowOf = (b: Box): boolean => {
         </span>
       </div>
 
-      <div class="flex min-h-0 gap-2" :class="full ? 'flex-1' : 'h-[calc(100vh-230px)] min-h-[480px]'">
+      <div class="flex min-h-0 gap-2" :class="full ? 'flex-1' : 'min-h-[480px]'" :style="full ? {} : { height: `${viewH - 230}px` }">
         <!-- ツリー (暗い地 + ドットの格子、見本の 1。右下に浮かぶ道具とミニマップ、左上に今の状態の札) -->
         <div class="relative min-w-0 flex-1 overflow-hidden rounded-lg border border-white/[0.06] bg-[#0c0a08]">
         <div ref="viewport" data-tree-canvas class="absolute inset-0 overflow-auto" :class="hand ? 'cursor-grab' : 'cursor-default'" @pointerdown="onCanvasDown">
