@@ -17,7 +17,7 @@ import type { StageApply, StageItem, StageMod } from "./types";
 import { tagsOfEngineRow } from "../mods/item-class-tags";
 import { displayValue } from "../mods/stat-scale";
 import { tr } from "../../i18n/lang";
-import { stageTuning } from "./stage-tuning";
+import { SANCTIFY_MAX, SANCTIFY_MIN, stageTuning } from "./stage-tuning";
 
 interface Enchant { domain: string; group?: string; en: string; ja: string; stats: Array<{ id: string; min: number; max: number }>; spawn: Array<{ t: string; w: number }> }
 export const ENCHANTS = (vaal as unknown as { mods: Record<string, Enchant> }).mods;
@@ -53,9 +53,8 @@ export function rollText(text: string, vals: readonly number[]): string {
   });
 }
 
-/** 聖別の倍率の幅 (×100。聖別のお告げの 0.78〜1.22) */
-export const SANCTIFY_MIN = 78;
-export const SANCTIFY_MAX = 122;
+/** 聖別の倍率の幅 (×100。聖別のお告げの 0.78〜1.22。置き場は stage-tuning.ts) */
+export { SANCTIFY_MIN, SANCTIFY_MAX } from "./stage-tuning";
 /** 掛けて丸める (整数は整数、小数は 2 桁) */
 function scaled(vals: readonly number[], k: number): number[] {
   return vals.map((v) => { const d = Number.isInteger(v) ? 1 : 100; return Math.round(v * k * d) / d; });

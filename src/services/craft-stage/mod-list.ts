@@ -7,6 +7,7 @@
  *   - 種類: 普通 / エッセンス / 冒涜 / 異界 (変質した鎖骨)
  *   - 1 行 = 1 系統の MOD。重みは全段の合計、出やすさは同じ種類・同じ側の合計に対する割合
  */
+import { weightedMod } from "./stage-tuning";
 import { inGroup } from "../mods/item-classes";
 import { ESSENCE_KIND, essenceKindOf } from "../mods/essence-kind";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
@@ -107,7 +108,7 @@ export function modListFor(data: PatchData, item: StageItem): ListRow[] {
   const socketed = new Set(stageRuneIds(item));
   const out: ListRow[] = [];
   const rowOf = (raw: Mod, side: StageSide, group: ModGroup): ListRow => {
-    const m = oneOfMod(raw);
+    const m = weightedMod(oneOfMod(raw)); // 使う人が直した重み (stage-tuning.ts) を段に入れて出す
     const ja = jaOfMod(m);
     const n = m.tiers.length;
     // 数値は画面の単位に (1 万分率の 400 → 4%。決まりは services/mods/stat-scale.ts、2026-10-03 に生の値が出ていた)

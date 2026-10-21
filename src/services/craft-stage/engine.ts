@@ -86,7 +86,9 @@ export { anointNotables, anointOfLine } from "../mods/anoint";
 
 // 使う人が決める設定 (触媒の高貴の品質 1% ごとの倍率・聖別の倍率。null = 既定。打つ処理と確率の表が同じ値を読む)
 export type { StageTuning } from "./stage-tuning";
-export { stageTuning, setStageTuning, tunedCatalysingMultiplier, CATALYSING_PER_PCT } from "./stage-tuning";
+export { stageTuning, setStageTuning, tunedCatalysingMultiplier, CATALYSING_PER_PCT, defaultWeightOf } from "./stage-tuning";
+// 重みを直せる MOD の印 (重みを推定で埋めた MOD = 仮置き 1 を CoE・借用で埋めた物)
+export { OVERRIDDEN } from "../htc/weight-overrides";
 export { SANCTIFY_MIN, SANCTIFY_MAX } from "./apply-vaal";
 
 // 文

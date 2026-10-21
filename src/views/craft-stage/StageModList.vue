@@ -15,7 +15,7 @@
 import { fmtPct } from "../../utils/format-pct";
 import { baseNameOf, tr } from "../../i18n/lang";
 import { keepPlace, revealOpened, scrollToTop } from "../../utils/keep-place";
-import { OVERRIDDEN, weightOverrideNote } from "../../services/htc/weight-overrides";
+import StageWeightEdit from "./StageWeightEdit.vue"; // 重みの札 (推定・直した) と直す 1 行
 import { aimTierKey, heldAnyOf, heldOdds } from "../../services/craft-stage/held-odds";
 import { augmentHostOf, methodsFor, methodsOff } from "../../services/simulator/sim-methods";
 import type { SimMethod } from "../../services/simulator/quiz-build";
@@ -435,7 +435,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                   </span>
                   <span class="flex shrink-0 items-center gap-1 tabular-nums">
                     <!-- 重みを借りた MOD の印は文字の札で (前は「※」だけで意味が分からなかった。2026-10-18 オーナーの UI 点検) -->
-                    <span v-if="r.tiers.some((t) => OVERRIDDEN.has(t.modId ?? r.id))" class="whitespace-nowrap rounded-sm border border-white/20 px-1 py-px text-[10px] leading-none text-[var(--exile-color-text-tertiary)]" :title="weightOverrideNote()">{{ tr("重みは推定", "Est. weight") }}</span>
+                    <StageWeightEdit :row="r" badge />
                     <span class="w-14 text-right text-[13px] font-bold" :class="heldCands ? 'text-sky-200' : 'text-amber-100'" :title="heldCands ? ('bone' in heldCands ? tr(`持っている ${heldCands.name} の次の発現で、候補 3 つに出る確率 (専用 MOD 1〜3 個 + 残り普通。計算機と同じ)`, `Chance to appear among the 3 options on the next reveal with the held ${heldCands.name} (1-3 desecrated-only mods + the rest normal, same as the calculator)`) : tr(`持っている ${heldCands.name} で次に付く確率`, `Chance to roll next with the held ${heldCands.name}`)) : (r.group === 'desecrated' || r.group === 'otherworldly') ? tr('骨を使わないと付かない (骨を持つと候補に出る確率)', 'Only rolls via a Bone (hold a Bone to see the chance to be offered)') : tr('出やすさ (同じ側の重みの割合)', 'Chance (share of weight on the same side)')">{{ pct(shareOf(r)) }}</span>
                     <span class="w-6 text-right text-[12px] text-[var(--exile-color-text-secondary)]" :title="tr(`段の数 ${r.tiers.length}`, `Tiers: ${r.tiers.length}`)">{{ r.tiers.length }}</span>
                     <span class="w-7 text-right text-[12px] text-[var(--exile-color-text-tertiary)]" :title="tr(`T1 の MOD レベル ${r.topLevel}`, `T1 mod level: ${r.topLevel}`)">{{ r.topLevel }}</span>
@@ -443,7 +443,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                 </span>
               </button>
               </div>
-              <!-- 段の表 -->
+              <StageWeightEdit v-if="expanded === `${sec.sid}:${r.id}`" :row="r" /><!-- 段の表 (上に重みを直す 1 行) -->
               <table v-if="expanded === `${sec.sid}:${r.id}`" class="mt-1 w-full text-[11px]">
                 <caption v-if="s.mode.value === 'sim'" class="pb-1 text-left text-[10px] opacity-60">{{ tr("T1 が一番良い段。「T○ 以上」= その段か、それより良い段が付けば当たり", "T1 is the best tier. “T○+” = a hit if that tier or better rolls") }}</caption>
                 <tbody>

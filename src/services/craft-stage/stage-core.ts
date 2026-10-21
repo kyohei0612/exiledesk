@@ -11,6 +11,7 @@ import { runeIdByName, withRunes } from "../../vendor/poe2htc/engine/runes";
 import RUNES_JSON from "./stage-runes.json";
 const RUNE_STATS = (RUNES_JSON as { runes: unknown }).runes;
 import { modTierWeights } from "../../vendor/poe2htc/engine/pool";
+import { weightScaleOf } from "./stage-tuning";
 import { familyBlocked, occupiedKeysOf, rawFamiliesOf } from "../mods/mod-rules";
 import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
 import { jaOfModAlways } from "../htc/mod-text";
@@ -397,7 +398,8 @@ export function candidates(data: PatchData, item: StageItem, sides: readonly Sta
     for (const id of ids) {
       const mod = data.mods.get(id);
       if (!mod || familyBlocked(mod, taken)) continue;
-      const k = o.boost?.test(mod) ? o.boost.mult : 1;
+      // 使う人が直した重み (stage-tuning.ts、直していなければ 1) × 触媒の高貴
+      const k = (o.boost?.test(mod) ? o.boost.mult : 1) * weightScaleOf(mod);
       // 下限 (上級・完全・古代の骨) より上の段が 1 つも無い系統は、一番上の段だけ残す (用語集 BetterCurrencyMinimumLevel、要望 ㉝ の 2)
       const lv = o.anyLevel?.(mod) ? Infinity : item.itemLevel;
       const tiers = modTierWeights(mod, floor, lv).map((t) => ({ index: t.index, w: t.w * k }));
