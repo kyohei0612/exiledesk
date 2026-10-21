@@ -72,6 +72,11 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     if (center || out) await f.setCenter(b.x + BOX_W / 2, b.y + BOX_H / 2, { zoom: z });
   }
   async function toggleFull(): Promise<void> { full.value = !full.value; }
+  /** 箱の枠の上の位置 (ページの CSS ピクセル = 実ピクセル ÷ ページの zoom。ポップアップ・ホバーのカードの置き場)。W・H = 枠の大きさ */
+  function rectOf(b: { x: number; y: number }, w = BOX_W, h = BOX_H): { left: number; top: number; right: number; bottom: number; W: number; H: number } {
+    const { x, y, zoom: z } = f.viewport.value, Z = pageZ.value;
+    return { left: (b.x * z + x) / Z, top: (b.y * z + y) / Z, right: ((b.x + w) * z + x) / Z, bottom: ((b.y + h) * z + y) / Z, W: f.dimensions.value.width / Z, H: f.dimensions.value.height / Z };
+  }
   /** 今見ている所 (ツリーの座標。ミニマップの枠) */
   const view = computed(() => {
     const { x, y, zoom: z } = f.viewport.value;
@@ -99,5 +104,5 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     void f.setViewport({ x: vp.x + (w - old) / 2, y: vp.y, zoom: vp.zoom });
   });
 
-  return { flow: f, pageZ, zoom, viewOnly, minZoom, maxZoom, full, bounds, view, setZoom, zoomIn, zoomOut, fit, goHome, resetZoom, toWorld, reveal, toggleFull, centerOn, dispose: () => window.removeEventListener("resize", onResize) };
+  return { flow: f, pageZ, zoom, viewOnly, minZoom, maxZoom, full, bounds, view, setZoom, zoomIn, zoomOut, fit, goHome, resetZoom, toWorld, reveal, toggleFull, centerOn, rectOf, dispose: () => window.removeEventListener("resize", onResize) };
 }

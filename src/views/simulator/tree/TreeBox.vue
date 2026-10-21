@@ -9,6 +9,7 @@ import { BOX_H, BOX_W, type TreeBox } from "../../../services/simulator/tree/tre
 import { tr } from "../../../i18n/lang";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { TREE_BASE, TREE_ILVL, useTree } from "./use-tree";
+import { TREE_NEXT } from "./tree-merge";
 
 const props = defineProps<{ box: TreeBox; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
   /** 縮めた時の倍率の逆数 (押せる物だけこれで大きさを戻し、画面の上で 24px 以上を保つ。オーナー 10-22「縮めても押せる物は小さくならない」) */ inv?: number;
@@ -16,6 +17,8 @@ const props = defineProps<{ box: TreeBox; /** 自分で置く時の位置 (Vue F
 const emit = defineEmits<{
   /** 箱を引っ張り始めた (押した所から。判定はページの use-gesture.ts) */
   drag: [e: PointerEvent]; aim: []; remove: []; back: []; clearBack: []; done: []; note: []; spam: [];
+  /** マウスを乗せた / 外した (&ui=next の線を濃く・ホバーのカード) */
+  hover: [on: boolean];
   /** 戻り先の札に乗せた / 外した・押した */
   backHover: [on: boolean]; backGo: [];
   /** ＋を押した (押すだけ = 足す、長押しで引っ張る = 箱の上で離すとつなぐ。決めるのはページ) */
@@ -64,7 +67,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
        引っ張りは pointerdown の既定の動きを止めるので Vue Flow の画面の送りは始まらない。nopan は付けない (付けると箱の上のホイールで拡大縮小されなかった)、中のボタンは nodrag -->
   <div data-tree-box :data-box-id="box.id" class="select-none rounded-xl border-[1.5px] bg-gradient-to-b from-[#1d1812] to-[#110e0a] px-2 py-1 text-[12px] transition-shadow"
     :class="[x === undefined ? 'relative' : 'absolute', picking || viewOnly ? 'cursor-pointer' : 'cursor-grab', picking ? (linkNo ? 'cursor-not-allowed opacity-35 grayscale' : 'ring-2 ring-cyan-400/70 hover:ring-cyan-300') : '', glow ? 'ring-2 ring-amber-200/70' : '', issue ? '!border-rose-500 !shadow-[0_0_16px_rgba(244,63,94,0.55)]' : '']"
-    :style="{ ...(x === undefined ? {} : { left: `${x}px`, top: `${y}px` }), width: `${BOX_W}px`, height: `${BOX_H}px`, ...neon }" :title="picking && linkNo ? linkNo : undefined" @pointerdown="down">
+    :style="{ ...(x === undefined ? {} : { left: `${x}px`, top: `${y}px` }), width: `${BOX_W}px`, height: `${BOX_H}px`, ...neon }" :title="picking && linkNo ? linkNo : undefined" @pointerdown="down" @pointerenter="emit('hover', true)" @pointerleave="emit('hover', false)">
     <!-- 縮めている時 (k > 1) は押せる物の行を倍率分高くし、まだ「—」だけの数字の行は隠す (箱が小さくても押せる物どうしが重ならない) -->
     <div class="flex items-center gap-1.5" :style="{ height: `${24 * k}px` }">
       <span class="flex size-5 shrink-0 items-center justify-center rounded-md" :style="{ background: `rgba(${rgb},0.18)`, color: `rgb(${rgb})` }"><Icon :name="kind.icon" class="size-3.5" /></span>
@@ -94,7 +97,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     </div>
 
     <!-- 数字はまだ繋がない (100 人回すのは次の手) -->
-    <p v-if="k === 1" class="text-[11px] tabular-nums text-[#a89c86]/70">{{ tr("通った — 人 · ここまで — 神", "— people · — div so far") }}</p>
+    <p v-if="k === 1 && !TREE_NEXT" class="text-[11px] tabular-nums text-[#a89c86]/70">{{ tr("通った — 人 · ここまで — 神", "— people · — div so far") }}</p>
 
     <!-- 下の行: 戻りの矢印・完成 (下の＋は箱の外なので重ならない) -->
     <div class="pointer-events-none absolute inset-x-2 bottom-1 flex h-6 items-center gap-1 text-[11px] *:pointer-events-auto" :style="k > 1 ? { right: 'auto', width: `${(BOX_W - 16 - (box.out === 'hit' ? 22 : 0)) / k}px`, ...keep('left bottom') } : {}">

@@ -8,12 +8,15 @@ import { nameOfKey } from "../../../state/emulator/craft-stage-shelf";
 import { craftStage as s } from "../../../state/craft-stage";
 import { freshItem } from "../../../services/craft-stage/engine";
 import { CATALYSING } from "../../../services/simulator/tree/tree-hands";
-import type { Hand } from "../../../services/simulator/tree/tree-model";
+import type { Hand, TreeBox } from "../../../services/simulator/tree/tree-model";
 import { TREE_BASE, TREE_ILVL } from "./use-tree";
 import { tr } from "../../../i18n/lang";
 
 /** 名前を引く時のアイテム (ツリーのベース。骨・エッセンスの名前が部位で変わる) */
 const baseItem = computed(() => (s.data.value ? freshItem(s.data.value, TREE_BASE, TREE_ILVL, "rare") : null));
+
+/** 箱の種類の名前 (始まり・当たり・外れ…。一覧・戻り先の札・まとめた札で同じ) */
+export const outName = (out: TreeBox["out"]): string => ({ start: tr("始まり", "Start"), hit: tr("当たり", "Hit"), junk: tr("外れ", "Miss"), junkGone: tr("外れが消えた", "Miss removed"), lost: tr("狙いが消えた", "Target lost"), any: tr("打った後", "After") })[out];
 
 /** 値段のキー (カレンシー・お告げ・骨・エッセンス・カタリスト) → 画面の言語の名前 (クラフト台の棚と同じ) */
 export const handName = (key: string): string => nameOfKey(key, baseItem.value);

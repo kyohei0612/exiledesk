@@ -14,8 +14,9 @@ import HeldOmens from "../../craft-stage/HeldOmens.vue";
 import { heldOmensOf } from "../../craft-stage/held-omens";
 import StageItemCard from "../../craft-stage/StageItemCard.vue";
 import { allMods, applyCurrency, kindOf, mulberry32, omensFor, previewUse, revealOffers, unrevealedOf, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
-import { aimHeld, aimsOf, fillCatalyst, playHand, sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { aimsOf, fillCatalyst, playHand, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import type { RowTag } from "../../craft-stage/stage-item-row-tag";
+import { treeRowTags } from "./tree-row-tags";
 import { TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handLabel } from "./tree-names";
 import { useTree } from "./use-tree";
@@ -110,22 +111,8 @@ function onMark(modId: string): void {
   if (!m || m.fractured) return;
   t.edit((d) => toggleUnwanted(d, props.boxId, modId));
 }
-/**
- * カードの MOD の行の札 (オーナー 10-22): このツリーの狙い (当たりの札) に当たらない MOD に「外れ MOD」(赤、外れの箱と同じ系統)。
- * × の印の行は「× 要らない」が先、フラクチャーは付けない
- */
-const rowTags = computed((): Map<string, RowTag> => {
-  const d = s.data.value, it = item.value, out = new Map<string, RowTag>();
-  if (!d || !it) return out;
-  const aims = aimsOf(t.doc.value), un = box.value?.unwanted ?? [];
-  for (const m of [...it.prefixes, ...it.suffixes]) {
-    if (m.fractured) continue;
-    const one = { ...it, prefixes: [m], suffixes: [] };
-    if (un.some((u) => aimHeld(d, one, { modId: u, tier: 99 }))) out.set(m.modId, { text: tr("× 要らない", "× Unwanted"), tone: "bad" });
-    else if (!aims.some((a) => aimHeld(d, one, a))) out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", title: tr("このツリーの狙い (当たりの札) に当たらない MOD", "Not one of this tree's target mods") });
-  }
-  return out;
-});
+/** カードの MOD の行の札 (外れ MOD・× 要らない、tree-row-tags.ts) */
+const rowTags = computed((): Map<string, RowTag> => (s.data.value && item.value ? treeRowTags(s.data.value, t.doc.value, box.value?.unwanted ?? [], item.value) : new Map()));
 const marks = computed(() => (box.value?.unwanted ?? []).map((id) => {
   const m = item.value ? allMods(item.value).find((x) => x.modId === id) : null;
   return { id, text: m ? `${m.tierName} ${modText(m)}` : tr("(この見本には無い MOD)", "(not on this sample)") };
