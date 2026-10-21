@@ -2,7 +2,7 @@
 
 ## やる事
 - クラフト画面 1440 幅で元からはみ出している 1 件 (DIV.flex flex-col、overflow-guard の判定で見つけた、10-22) を直す。
-- その後: items-ja.json の残り 3,266 件を poe2db と突き合わせる (scripts/build-items-ja-poe2db.mjs で poe2db の一覧を読み直す。読む間隔を空けて一度に叩きすぎない。ブラック 10-22)。
+- 済み (10-22): items-ja.json の残りの突き合わせ → 221 件を poe2db に合わせた (notes/2026-10-22-name-check-poe2db-jp.md、本番は OK 待ち)。poe2db の一覧に無い 2,420 件は比べていない。
 - 済み (10-22): 名前のずれ → notes/2026-10-22-name-check.md (2 件 + 紋章 + クルガル、本番は OK 待ち)。残り 3,266 件は poe2db の写しを取り直す時に。
 - 済み: お告げの下の設定 (触媒の高貴の品質 1% ごとの倍率・聖別の倍率) は本番 v0.1.589 (f1e1a612、オーナー 10-21 OK)。notes/2026-10-21-omen-tune.md
 - 済み: currency-spec-golden の控えのずれ → J2 (3f4e605d) で取り直し済み、10-22 に 6/6 通る (不在のアミュレットの理由の文で a2c4532b に orbs を取り直し)。
