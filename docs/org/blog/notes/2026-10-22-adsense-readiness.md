@@ -8,7 +8,7 @@ AdSense のチェック表 (research/notes/2026-10-22-adsense-policy-check.md) �
 - 案 B: 19 本を一度に出す。手は軽いが「更新が見えない」(表の #2) が残る。
 - 先に出す 12 本 (検索の言葉が別々・中身の芯が強い順): dont-hoard-misses / optimal-move-vs-intuition / sanctify-quality-order / gold-ring-video-decoded / poe2db-cast-speed-weight / es-gloves-greater-exalt / crafting-cost-variance / chaos-spam-odds / desecration-weights / fracture-desecrated / quality-rounding-down / catalysing-exaltation-multiplier
 - 後から出す 7 本: mana-ring-craft / kolrs-hunt-gloves (ES 手袋と数字が重なるので間を空ける) / arcane-surge-desecrated-gloves / desecration-bone-sides / desecration-lords-tag-audit / essence-of-the-abyss-mark / crafting-calculator-mistakes
-- 出す時に `draft: true` を外し、`date` をその日に。数字を直したら `updated`。
+- 決まり (オーナー 10-22): 案 B = 19 本を一度に。出す時は `node docs/org/blog/charts/publish.mjs <その日>` で draft を外して date を揃える (`--dry` で先に見る)。数字を直したら `updated`。
 
 ## 2. PoE2 の版
 - 手引き 9・11 は「公開日・更新日・PoE2 の版 (patch 0.x)」を頭に出す。版の番号は記録に無い → リサーチ長に今の版の名前と番号を調べてもらう (ブラックへ頼んだ)。入れ物に版の欄 (`patch:`) が要るならジン部長。
