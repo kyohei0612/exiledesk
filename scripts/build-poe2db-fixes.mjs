@@ -20,6 +20,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bundleEntry } from "./_bundle-ts.mjs";
 import { RUNE_POOLS } from "./_htc-base-tags.mjs";
+import { pageOf, modsView, famKey, sameNumsScaled as sameNums } from "./_poe2db-common.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const CACHE = resolve(ROOT, "data-cache/poe2db-pages");
@@ -39,31 +40,16 @@ const { loadPatchSync, jaOfMod } = M;
 const data = loadPatchSync();
 const essenceKeys = JSON.parse(readFileSync(resolve(ROOT, "src/services/htc/essence-keys.json"), "utf8")).keys;
 
-const pageOf = (cls) => cls.replace(/^(Wands|Staves|Crossbows)_.*$/, "$1").replace(/^OneHand_/, "One_Hand_").replace(/^TwoHand_/, "Two_Hand_");
 const MERGED_PAGES = new Set(["Wands", "Staves", "Crossbows"]);
 const RUNE_GROUP = Object.fromEntries(RUNE_POOLS.map((r) => [r.id, r.tag]));
 const SKIP_FAMS = new Set(["EssenceAbyss"]);
 
-function modsView(html) {
-  const i = html.indexOf("new ModsView(");
-  if (i < 0) return null;
-  let j = i + 13, depth = 0, inStr = false, esc = false;
-  for (; j < html.length; j++) {
-    const ch = html[j];
-    if (inStr) { if (esc) esc = false; else if (ch === "\\") esc = true; else if (ch === '"') inStr = false; continue; }
-    if (ch === '"') inStr = true;
-    else if (ch === "{") depth++;
-    else if (ch === "}") { depth--; if (depth === 0) { j++; break; } }
-  }
-  return JSON.parse(html.slice(i + 13, j));
-}
-const famKey = (fams) => [...fams].sort().join("+");
+
 const sideOf = (id) => (id === "1" ? "prefix" : id === "2" ? "suffix" : null);
 const plain = (s) => String(s).replace(/<br\s*\/?>/g, " / ").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
 const dbNums = (str) => [...plain(str).matchAll(/\d+(?:\.\d+)?/g)].map((x) => Number(x[0]));
 const ourNums = (t) => t.ranges.flatMap((r) => (r[0] === r[1] ? [r[0]] : [r[0], r[1]])).map((x) => Math.abs(x));
 /** こちらの数字が poe2db の文の数字に全部入っている (単位違い: 毎分 = 毎秒 × 60、万分率 = % × 100、ミリ秒 = 秒 × 1000、0.1 m) */
-const sameNums = (ours, db) => [1, 60, 100, 1000, 0.1].some((k) => { const left = [...db]; return ours.every((x) => { const i = left.findIndex((y) => Math.abs(x - y * k) < 0.011 * Math.max(k, 1)); if (i < 0) return false; left.splice(i, 1); return true; }); });
 
 /** 部位の置き場 (group → { prefixes, suffixes }) */
 function poolsOf(b) {

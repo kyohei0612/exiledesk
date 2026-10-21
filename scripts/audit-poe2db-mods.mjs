@@ -18,29 +18,16 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bundleEntry } from "./_bundle-ts.mjs";
 import { RUNE_POOLS } from "./_htc-base-tags.mjs";
+import { pageOf, modsView, famKey, sameNumsScaled } from "./_poe2db-common.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const CACHE = resolve(ROOT, "data-cache/poe2db-pages");
 const { loadPatchSync, jaOfMod, tierDisplayRanges } = await bundleEntry("scripts/_audit-poe2db-entry.ts");
 const data = loadPatchSync();
 
-const pageOf = (cls) => cls.replace(/^(Wands|Staves|Crossbows)_.*$/, "$1").replace(/^OneHand_/, "One_Hand_").replace(/^TwoHand_/, "Two_Hand_");
 const RUNE_GROUP = Object.fromEntries(RUNE_POOLS.map((r) => [r.id, r.tag]));
 
-function modsView(html) {
-  const i = html.indexOf("new ModsView(");
-  if (i < 0) return null;
-  let j = i + 13, depth = 0, inStr = false, esc = false;
-  for (; j < html.length; j++) {
-    const ch = html[j];
-    if (inStr) { if (esc) esc = false; else if (ch === "\\") esc = true; else if (ch === '"') inStr = false; continue; }
-    if (ch === '"') inStr = true;
-    else if (ch === "{") depth++;
-    else if (ch === "}") { depth--; if (depth === 0) { j++; break; } }
-  }
-  return JSON.parse(html.slice(i + 13, j));
-}
-const famKey = (fams) => [...fams].sort().join("+");
+
 const sideOf = (id) => (id === "1" ? "prefix" : id === "2" ? "suffix" : null);
 /** poe2db の文の数字 (タグを外した文から。絶対値で並べる。mod-value の中に ndash の span が入れ子なので文ごと読む) */
 const dbNums = (str) => [...plain(str).matchAll(/\d+(?:\.\d+)?/g)].map((x) => Number(x[0])).sort((a, b) => a - b);
@@ -52,7 +39,7 @@ const ourNums = (t) => tierDisplayRanges(t).flatMap((r) => (Number(r[0]) === Num
  */
 /** 数字の無い文の MOD (盾スキルは完全アーマー破壊 など) は値 1 の印だけ持つ。poe2db の文にも数字が無ければ同じ */
 const flagOnly = (ours, db) => db.length === 0 && ours.every((x) => x === 1);
-const sameNums = (ours, db) => flagOnly(ours, db) || [1, 60, 100, 1000, 0.1].some((k) => { const left = [...db]; return ours.every((x) => { const i = left.findIndex((y) => Math.abs(x - y * k) < 0.011 * Math.max(k, 1)); if (i < 0) return false; left.splice(i, 1); return true; }); });
+const sameNums = (ours, db) => flagOnly(ours, db) || sameNumsScaled(ours, db);
 const plain = (s) => String(s).replace(/<br\s*\/?>/g, " / ").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
 
 /** こちらの 1 部位・1 置き場の段 (side・系統・レベルで引けるように) */

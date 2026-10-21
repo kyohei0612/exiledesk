@@ -18,6 +18,7 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bundleEntry } from "./_bundle-ts.mjs";
+import { pageOf, modsView, famKey } from "./_poe2db-common.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const CACHE = resolve(ROOT, "data-cache/poe2db-pages");
@@ -30,7 +31,6 @@ const { loadPatchSync, baseCatalog, jaOfMod } = await bundleEntry("scripts/_audi
 const data = loadPatchSync();
 
 /** こちらの部位 → poe2db のページ (属性違いのワンド・スタッフ・クロスボウは 1 ページ) */
-const pageOf = (cls) => cls.replace(/^(Wands|Staves|Crossbows)_.*$/, "$1").replace(/^OneHand_/, "One_Hand_").replace(/^TwoHand_/, "Two_Hand_");
 
 /**
  * 部位のページが無いクラス (ジュエル・全能力値) は、ベースのページの ModsView を読む (2026-10-20 J4)。写しのファイル名はクラス名のまま
@@ -53,20 +53,7 @@ async function page(name) {
   await sleep(1200);
   return html;
 }
-/** 埋め込み JSON (new ModsView({...})) */
-function modsView(html) {
-  const i = html.indexOf("new ModsView(");
-  if (i < 0) return null;
-  let j = i + 13, depth = 0, inStr = false, esc = false;
-  for (; j < html.length; j++) {
-    const ch = html[j];
-    if (inStr) { if (esc) esc = false; else if (ch === "\\") esc = true; else if (ch === '"') inStr = false; continue; }
-    if (ch === '"') inStr = true;
-    else if (ch === "{") depth++;
-    else if (ch === "}") { depth--; if (depth === 0) { j++; break; } }
-  }
-  return JSON.parse(html.slice(i + 13, j));
-}
+
 /** ページの文からベースの名前 (説明の後の「名前 装備条件 / スキルを付与」の行) */
 function baseNames(html) {
   const text = html.replace(/<script[\s\S]*?<\/script>/g, " ").replace(/<style[\s\S]*?<\/style>/g, " ").replace(/<br\s*\/?>/g, "\n").replace(/<\/(div|tr|li|h\d|p)>/g, "\n").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/[ \t]+/g, " ");
@@ -79,7 +66,6 @@ function baseNames(html) {
   }
   return names;
 }
-const famKey = (fams) => [...fams].sort().join("+");
 const ourFams = (m) => famKey(m.families ?? [m.family]);
 
 const catalog = baseCatalog(data, false);
