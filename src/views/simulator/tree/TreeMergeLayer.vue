@@ -1,6 +1,6 @@
 <!--
   TreeMergeLayer.vue — まとめて見せる箱の札と、札から行き先へ流れ込む線 (tree-merge.ts。Vue Flow の zoom-pane の中)。
-  札 = 戻りの矢印だけの箱 (結果の名前だけ。押すとその箱の編集のポップアップ)。線: 当たりの札 = 進む色でいつも出す。
+  札 = 戻りの矢印だけの箱 (結果の名前だけ。押すとその箱の編集のポップアップ)。線: 当たりの札 = 進む色 (行き先が 1 か所ならいつも出す)。
   外れ・消えたの札 = 戻りの色で、既定は線無し (乗せた箱・札の線だけ濃く出す、帯の「線を全部表示」で全部。オーナー 10-22 の案 A)
 -->
 <script setup lang="ts">
@@ -20,7 +20,9 @@ const RGB: Record<string, string> = { hit: "224,176,96", any: "200,184,150", jun
 
 /** 乗せた箱・札に関わる線 (札そのもの・行き先・札の親) */
 const hot = (l: MergeLine): boolean => !!props.hover && (l.pill === props.hover || l.to === props.hover || l.parent === props.hover);
-const shown = computed(() => props.lines.filter((l) => l.kind === "fwd" || props.showAll || hot(l)));
+/** 行き先が 1 か所に決まる当たりの札 (2 つ目の当たり → 同じ形の箱) の線はいつも出す。行き先が分かれる物 (狙いが消えた後の取り直し) は乗せた時・全部表示の時 */
+const single = computed(() => { const n = new Map<string, number>(); for (const l of props.lines) n.set(l.pill, (n.get(l.pill) ?? 0) + 1); return n; });
+const shown = computed(() => props.lines.filter((l) => (l.kind === "fwd" && single.value.get(l.pill) === 1) || props.showAll || hot(l)));
 const opacity = (l: MergeLine): number => (hot(l) ? 1 : l.kind === "fwd" ? 0.85 : 0.55);
 const label = (id: string): string => { const b = props.doc.boxes[id]!; return b.out === "hit" && b.aim ? t.aimLabel(b.aim) : outName(b.out); };
 /** 行き先の名前 (乗せた時の説明) */

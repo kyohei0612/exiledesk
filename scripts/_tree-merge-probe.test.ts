@@ -44,7 +44,9 @@ function measure(d: TreeDoc, merge: boolean): Record<string, number> {
   const minX = Math.min(...all.map((b) => b.x)), maxX = Math.max(...all.map((b) => b.x + (b.w ?? BOX_W)));
   let hops = 0, outer = 0, thru = 0;
   const seen = new Set<string>(), seenFwd = new Set<string>();
-  const fwdIds = new Set(merge ? mergeReqs(d, pills, pos, chip).lines.filter((l) => l.kind === "fwd").map((l) => l.id) : []);
+  // 案 A の既定で出る線 = 行き先が 1 か所の当たりの札 (TreeMergeLayer の single)
+  const ml = merge ? mergeReqs(d, pills, pos, chip).lines : [];
+  const fwdIds = new Set(ml.filter((l) => l.kind === "fwd" && ml.filter((x) => x.pill === l.pill).length === 1).map((l) => l.id));
   for (const r of reqs) {
     const p = paths.get(r.id)!;
     hops += p.match(/ A /g)?.length ?? 0;
