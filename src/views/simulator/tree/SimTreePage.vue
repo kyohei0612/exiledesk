@@ -16,6 +16,7 @@ import Icon from "../../../components/ui/Icon.vue";
 import TreeMemoFloat from "./TreeMemoFloat.vue";
 import TreeCanvasTools from "./TreeCanvasTools.vue";
 import TreeBox from "./TreeBox.vue";
+import TreeBasePick from "./TreeBasePick.vue";
 import TreeHandShelf from "./TreeHandShelf.vue";
 import TreeModPick from "./TreeModPick.vue";
 import TreeNote from "./TreeNote.vue";
@@ -52,7 +53,7 @@ const doc = t.doc;
 useTreeTune(doc, t.edit);
 
 /** 右の欄 (箱を選んだ時だけ) */
-const panel = ref<{ kind: "hand" | "aim" | "fracture" | "note"; id: string } | null>(null);
+const panel = ref<{ kind: "hand" | "aim" | "fracture" | "note" | "base"; id: string } | null>(null);
 /** 戻りの矢印の先を選んでいる箱 */
 const picking = ref<string | null>(null);
 /** メモの窓を開いているか (このブラウザに覚える。無くても使える) */
@@ -413,7 +414,7 @@ const glowOf = (b: Box): boolean => {
                 :selected="panel?.id === id || picking === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand" :glow="glowOf(doc.boxes[id]!) || plus?.target === id" :issue="issueOf(doc.boxes[id]!)" :inv="inv" :link-no="picking ? link.get(id) ?? null : null"
                 @drag="startDrag(doc.boxes[id]!, $event)" @aim="onAim(doc.boxes[id]!)" @plus="(k, e) => onPlus(doc.boxes[id]!, k, e)" @remove="t.edit((d) => removeHit(d, id))"
                 @back="picking = id" @clear-back="t.edit((d) => setBack(d, id, null))" @done="onDone(doc.boxes[id]!)"
-                @note="panel = { kind: 'note', id }" @spam="onSpam(doc.boxes[id]!)" @back-go="goBack(doc.boxes[id]!)" @hover="(on) => (hoverBox = on ? id : hoverBox === id ? null : hoverBox)" />
+                @note="panel = { kind: 'note', id }" @base="panel = { kind: 'base', id }" @spam="onSpam(doc.boxes[id]!)" @back-go="goBack(doc.boxes[id]!)" @hover="(on) => (hoverBox = on ? id : hoverBox === id ? null : hoverBox)" />
             </template>
             <!-- Vue Flow の倍率と移動が掛かる層: 線は箱の後ろ (z-index -1)、打つ手の札・引っ張る線・戻りの弧は箱の前 -->
             <template #zoom-pane>
@@ -469,7 +470,7 @@ const glowOf = (b: Box): boolean => {
             <TreeBox :box="doc.boxes[pop]!" :x="0" :y="0" :removable="canRemove(doc, pop)" :picking="false" :selected="true" :back-label="backLabel(doc.boxes[pop]!)" :issue="issueOf(doc.boxes[pop]!)"
               @drag="() => {}" @aim="popDo((_, b) => onAim(b))" @plus="(k) => popDo((_, b) => (k === 'side' ? onAddHit(b) : startLink(b)))" @remove="popDo((id) => t.edit((d) => removeHit(d, id)))"
               @back="popDo((id) => (picking = id))" @clear-back="t.edit((d) => setBack(d, pop!, null))" @done="onDone(doc.boxes[pop!]!)"
-              @note="popDo((id) => (panel = { kind: 'note', id }))" @spam="onSpam(doc.boxes[pop!]!)" @back-go="popDo((_, b) => goBack(b))" />
+              @note="popDo((id) => (panel = { kind: 'note', id }))" @base="popDo((id) => (panel = { kind: 'base', id }))" @spam="onSpam(doc.boxes[pop!]!)" @back-go="popDo((_, b) => goBack(b))" />
           </div>
         </div>
         <TreeHoverCard v-if="cardBox && doc.boxes[cardBox]" :box-id="cardBox" :rect="v.rectOf(doc.boxes[cardBox]!)" />
@@ -477,8 +478,9 @@ const glowOf = (b: Box): boolean => {
         </div>
 
         <!-- 右の欄 -->
-        <aside v-if="panel && panelBox" ref="aside" data-tree-panel class="flex shrink-0 flex-col overflow-y-auto rounded-md bg-white/[0.04] p-3" :class="panel.kind === 'hand' ? 'w-[400px]' : 'w-[320px]'">
+        <aside v-if="panel && panelBox" ref="aside" data-tree-panel class="flex shrink-0 flex-col overflow-y-auto rounded-md bg-white/[0.04] p-3" :class="panel.kind === 'hand' || panel.kind === 'base' ? 'w-[400px]' : 'w-[320px]'">
           <TreeHandShelf v-if="panel.kind === 'hand'" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" />
+          <TreeBasePick v-else-if="panel.kind === 'base'" @close="panel = null" />
           <TreeNote v-else-if="panel.kind === 'note'" :key="`n-${panel.id}`" :box-id="panel.id" @close="panel = null" />
           <TreeModPick v-else :key="`m-${panel.id}-${panel.kind}`" :mode="panel.kind === 'fracture' ? 'fracture' : 'hit'" :current="panel.kind === 'fracture' ? doc.fracture : panelBox.aim" @pick="pickAim" @close="panel = null" />
         </aside>

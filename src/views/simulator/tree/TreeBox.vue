@@ -8,7 +8,7 @@ import Icon from "../../../components/ui/Icon.vue";
 import { BOX_H, BOX_W, type TreeBox } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { jaTypeName } from "../../../i18n/item-names-ja";
-import { TREE_BASE, TREE_ILVL, useTree } from "./use-tree";
+import { useTree } from "./use-tree";
 import { OUT_LOOK } from "./tree-names";
 
 const props = defineProps<{ box: TreeBox; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
@@ -17,6 +17,8 @@ const props = defineProps<{ box: TreeBox; /** 自分で置く時の位置 (Vue F
 const emit = defineEmits<{
   /** 箱を引っ張り始めた (押した所から。判定はページの use-gesture.ts) */
   drag: [e: PointerEvent]; aim: []; remove: []; back: []; clearBack: []; done: []; note: []; spam: [];
+  /** 始まりの箱のベースを押した (ベースとアイテムレベルを選ぶ欄) */
+  base: [];
   /** マウスを乗せた / 外した (その箱の線を濃く・乗せた時のカード) */
   hover: [on: boolean];
   /** 戻り先の札に乗せた / 外した・押した */
@@ -75,7 +77,10 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     <!-- 中身: 始まり = ベースとフラクチャー / 当たり = 付く MOD (右の＋に掛からない幅) -->
     <div class="min-w-0">
       <template v-if="box.out === 'start'">
-        <p class="truncate text-[13px] font-bold leading-5">{{ tr(jaTypeName(TREE_BASE), TREE_BASE) }} <span class="font-normal opacity-70">{{ tr(`レベル ${TREE_ILVL}`, `ilvl ${TREE_ILVL}`) }}<template v-if="t.doc.value.startRandom"> · {{ tr(`ほかに MOD ${t.doc.value.startRandom} つ`, `+${t.doc.value.startRandom} other mod(s)`) }}</template></span></p>
+        <!-- ベースとアイテムレベル: 押すと右の欄で選ぶ (10-22、前は金の指輪 ilvl 82 に固定) -->
+        <button type="button" data-tree-base class="nodrag block w-full truncate text-left text-[13px] font-bold hover:underline" :class="quiet ? 'pointer-events-none' : ''" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :title="tr('ベースとアイテムレベルを選ぶ', 'Choose the base and item level')" @click.stop="!quiet && emit('base')">
+          {{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }} <span class="font-normal opacity-70">{{ tr(`レベル ${t.doc.value.itemLevel}`, `ilvl ${t.doc.value.itemLevel}`) }}<template v-if="t.doc.value.startRandom"> · {{ tr(`ほかに MOD ${t.doc.value.startRandom} つ`, `+${t.doc.value.startRandom} other mod(s)`) }}</template></span>
+        </button>
         <button type="button" class="nodrag block w-full truncate text-left text-[#c8c8ff] hover:underline" :class="quiet ? 'pointer-events-none' : ''" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :title="t.fractureLabel(t.doc.value.fracture)" @click.stop="!quiet && emit('aim')">
           {{ t.doc.value.fracture ? `${tr("フラクチャー", "Fractured")}: ${t.fractureLabel(t.doc.value.fracture)}` : tr("＋ フラクチャーする MOD を選ぶ", "+ Pick the mod to fracture") }}
         </button>

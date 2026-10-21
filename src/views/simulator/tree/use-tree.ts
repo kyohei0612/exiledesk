@@ -1,6 +1,6 @@
 /**
- * use-tree.ts — ツリーのページの状態 (2026-10-22 表面だけ): 今のツリー・1 つ戻す (Ctrl+Z)・ブラウザに覚える・金の指輪の MOD の一覧。
- * MOD の一覧はエンジンの入口の modListFor (クラフト台の MOD 一覧と同じ行。自前の表は作らない)。ベースは金の指輪 ilvl 82 だけ (オーナー 10-22)
+ * use-tree.ts — ツリーのページの状態 (2026-10-22 表面だけ): 今のツリー・1 つ戻す (Ctrl+Z)・ブラウザに覚える・木のベースの MOD の一覧。
+ * MOD の一覧はエンジンの入口の modListFor (クラフト台の MOD 一覧と同じ行。自前の表は作らない)。ベースとアイテムレベルは木の base・itemLevel (始まりの箱で選ぶ、10-22。前は金の指輪 ilvl 82 に固定)
  */
 import { computed, shallowRef } from "vue";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -10,8 +10,9 @@ import { tr } from "../../../i18n/lang";
 
 export type ModRow = ReturnType<typeof modListFor>[number];
 
-export const TREE_BASE = "Gold Ring";
-export const TREE_ILVL = 82;
+/** 初めて開いた時の木のベース (見本と同じ金の指輪 ilvl 82) */
+const FIRST_BASE = "Gold Ring";
+const FIRST_ILVL = 82;
 const KEY = "exiledesk.tree.v0";
 const UNDO_MAX = 100;
 
@@ -21,7 +22,7 @@ function load(): TreeDoc {
     // 前の版の妥協の完成 (done: "compromise") は普通の箱 = 未完成として読む (妥協は無し、オーナー 10-22)
     if (isTreeDoc(v)) { for (const b of Object.values(v.boxes)) if (b.done !== "main") b.done = null; return v; }
   } catch { /* 無くてよい */ }
-  return newTree(TREE_BASE, TREE_ILVL);
+  return newTree(FIRST_BASE, FIRST_ILVL);
 }
 function save(d: TreeDoc): void {
   try { localStorage.setItem(KEY, JSON.stringify(d)); } catch { /* 覚えられなくても使える */ }
@@ -64,14 +65,24 @@ function setTreeNote(text: string): void {
 }
 /** 別の木を開く (レシピ・共有の URL から。1 つ戻すで前の木へ戻せる) */
 function open(tree: TreeDoc): void { edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, JSON.parse(JSON.stringify(tree))); }); }
-/** 白紙に戻す (1 つ戻すで戻せる) */
-function reset(): void { edit((d) => { Object.assign(d, newTree(TREE_BASE, TREE_ILVL)); }); }
+/** 白紙に戻す (今のベースとアイテムレベルのまま。1 つ戻すで戻せる) */
+function reset(): void { edit((d) => { Object.assign(d, newTree(d.base, d.itemLevel)); }); }
+/** ベースを替える = そのベースの白紙から (狙い・手は前のベースの MOD なので残さない)。アイテムレベルだけなら木はそのまま。1 つ戻すで戻せる */
+function setBase(base: string, itemLevel: number): void {
+  edit((d) => {
+    if (d.base === base) { d.itemLevel = itemLevel; return; }
+    for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k];
+    Object.assign(d, newTree(base, itemLevel));
+  });
+}
+/** ベースを替えると消える物の数 (始まりの箱より下の箱・フラクチャー) */
+const lostOnBase = computed(() => Object.keys(doc.value.boxes).length - 1 + (doc.value.fracture ? 1 : 0));
 
-/** 金の指輪 (ilvl 82、レア) に付く MOD の行。データが読めるまでは空 */
+/** 木のベース (レア) に付く MOD の行。データが読めるまでは空 */
 const rows = computed((): ModRow[] => {
   const data = s.data.value;
   if (!data) return [];
-  return modListFor(data, freshItem(data, TREE_BASE, TREE_ILVL, "rare"));
+  return modListFor(data, freshItem(data, doc.value.base, doc.value.itemLevel, "rare"));
 });
 const rowOfMod = (modId: string): ModRow | undefined => rows.value.find((r) => r.id === modId || r.tiers.some((t) => t.modId === modId));
 
@@ -91,5 +102,5 @@ function fractureLabel(a: Aim | null): string {
 }
 
 export function useTree() {
-  return { doc, edit, undo, canUndo, reset, open, setTreeNote, rows, aimLabel, fractureLabel };
+  return { doc, edit, undo, canUndo, reset, setBase, lostOnBase, open, setTreeNote, rows, aimLabel, fractureLabel };
 }

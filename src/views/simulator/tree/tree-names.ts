@@ -9,11 +9,12 @@ import { craftStage as s } from "../../../state/craft-stage";
 import { freshItem } from "../../../services/craft-stage/engine";
 import { CATALYSING, isCatalyst } from "../../../services/simulator/tree/tree-hands";
 import type { Hand, TreeBox } from "../../../services/simulator/tree/tree-model";
-import { TREE_BASE, TREE_ILVL } from "./use-tree";
+import { useTree } from "./use-tree";
 import { tr } from "../../../i18n/lang";
 
 /** 名前を引く時のアイテム (ツリーのベース。骨・エッセンスの名前が部位で変わる) */
-const baseItem = computed(() => (s.data.value ? freshItem(s.data.value, TREE_BASE, TREE_ILVL, "rare") : null));
+const t = useTree();
+const baseItem = computed(() => (s.data.value ? freshItem(s.data.value, t.doc.value.base, t.doc.value.itemLevel, "rare") : null));
 
 /**
  * 結果ごとの名前・色・印 (10-22 見た目の作り直し、research/notes/2026-10-22-tree-ui-references.md の 2: ネオンの縁 + 印 + 題 + 副題)。
