@@ -13,6 +13,16 @@
 - 確かめ (開発版、本物のマウス = CDP の Input): tree-mouse.mjs 8 条件 312 件 NG 0 (4e51480b)、tree-sample-check.mjs 4 条件 44 件 NG 0 (1e58e7ab。途中で見つけて直した: 縮めた時のポップアップが横に広がり試し打ちが枠の外 6c6c553f・戻りの札が押下を止めてポップアップが出ない 09154c98 / 1e58e7ab)。等倍のスナップは目で見た。
 - 次: オーナーに触ってもらう (返事待ち)。残りの気付き: 「全体を表示」で横に広い木はミニマップが右下の箱に重なる (fit は空ける幅が足りない時に空けない)、跨ぐ所 49 は見て多ければ詰める、木の設定はページを閉じずにタブを閉じるとクラフトステージの覚えた値が木の値のまま。
 
+## 引き継ぎ (4 本目 → 5 本目、10-22。会話が重くなりブラックの頼みで入れ替え)
+- 済んだ物: 上の「入れた物」全部・確かめ 2 本 (NG 0)・頼まれた整理 2 つ (todo の整理 be5f86a9・tree-auto.ts を 482 行に f251f85d)。全部 commit・push 済み、開発版は 1e58e7ab (の後に docs だけ)。Chrome 9333 は止めて profile も消した、dev サーバーは立てていない。
+- 途中の物: 無し (書きかけのファイル無し)。
+- 待ち: オーナーに見本の木を触ってもらう返事 (URL は開発版の ?page=sim-tree&sample=gold-ring-suffix、鍵は tree-mouse.mjs の KEY_URL)。
+- 次の手 (ブラックの頼み、ツリーの UI が先・区切りで): 点検 docs/org/emulator/notes/2026-10-22-code-audit.md の「直す案 シミュ部長」(84 行目あたり)。
+  1 最優先 = use-sim-targets.ts:15・use-sim-search.ts:7 の凍結 (htc-craft・simulator/htc) への import を外す (要る関数はエンジンの入口か共通へ、その時はブラックへ 1 行 → ジン部長)。
+  2 重複 → 3 消す (テストだけの 3 本は残す) → 4 持ち主は今の owners.txt のまま。振る舞いは変えない、型チェック + org-lint で確かめる。
+  側の式 `mods.get(id)?.type === "suffix" ? …` をエンジンの入口の sideOfMod(data, modId) に替える (ジン部長 acdc1eca): auto-group.ts:16・quiz-build.ts:71,85・recipe-sim.ts:49・sim-odds.ts:33・keep-compare.ts:33・sim-methods.ts の 7 か所・sim-greater.ts:33・target-share.ts:27・use-sim-calc.ts・use-target-plans.ts:109・StageTopicGuide.vue:138。
+- 見つけた不具合・気付き: 上の「残りの気付き」(ミニマップが重なる・跨ぐ所 49・タブを閉じた時の設定)。消去 + 左側のお告げは、乱数の MOD が左にあってもエンジンの omenBlock が「今は意味なし」で止める (エンジンの判断、ジン部長の持ち物)。
+
 ## 台本 (共有メモ local_35782246-d80a-4c3f-9dff-36103418e719/tree-mouse/)
 - tree-mouse.mjs (8 条件の操作、10b はホイール = 拡大縮小に直した)・tree-shelf.mjs (棚とお告げ)・tree-recipe.mjs・tree-trial-wide.mjs・tree-sample-check.mjs (見本の木: 戻りの線の終わり・n か所・精査 0・縮めて押す → ポップアップ → 試し打ち・札の編集と Esc)。
 - Chrome は PowerShell の `Start-Process chrome.exe -WindowStyle Hidden -PassThru -ArgumentList --headless=new,--remote-debugging-port=9333,--user-data-dir=<scratchpad>/cdp-profile`、使う前にブラックに一言、終わったら PID で止めて profile を消して「返した」。
