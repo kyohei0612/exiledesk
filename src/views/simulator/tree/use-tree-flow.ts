@@ -16,9 +16,9 @@ import { pageZoom } from "../../../utils/zoom";
 export const FLOW_ID = "sim-tree";
 /**
  * 倍率は決まった段だけ (10-22 オーナー: 自由な値だと 76% で札がくっついて重なった)。ホイール・＋−・全体表示・幅が変わった時もこの段に吸い付く。
- * 75% は縮めたまま組める一番下の段 (VIEW_ONLY)、それ未満は見るだけ
+ * 75% は縮めたまま組める一番下の段 (VIEW_ONLY)、それ未満は見るだけ。20% は見本の木にプレフィックスをつないで 25% でも収まらなくなった分 (10-22)
  */
-export const ZOOM_LEVELS = [0.25, 0.33, 0.5, 0.67, 0.75, 1, 1.25, 1.5] as const;
+export const ZOOM_LEVELS = [0.2, 0.25, 0.33, 0.5, 0.67, 0.75, 1, 1.25, 1.5] as const;
 export const ZOOM_MIN = ZOOM_LEVELS[0];
 export const ZOOM_MAX = ZOOM_LEVELS[ZOOM_LEVELS.length - 1]!;
 /** 一番近い段 */
