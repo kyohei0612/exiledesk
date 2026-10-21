@@ -24,6 +24,8 @@ Form (both languages):
 6. `## 数字の出どころ` / `## Where the Numbers Come From`: bullets naming each source (file, version like v0.1.xxx, poe2db / Craft of Exile / engine N runs / owner's in-game check) and its certainty label (エンジン / poe2db・CoE / ゲーム / 推定).
 7. `## 自分で試してみる` / `## Try It Yourself`: 1-2 sentences with links to the tool (crafting bench `/?base=...` or the tree) — tool links only here, nowhere in the body.
 8. Last: `**関連する記事**` / `**Related posts**` with 2-3 links to existing posts given in your task (`/blog/<slug>/`, en `/en/blog/<slug>/`).
+PoE2 version: the current game is 0.5 "Return of the Ancients" with the event league 0.5.5 "Forbidden Rites" (docs/org/research/notes/2026-10-22-poe2-current-version.md). Mention a version/league ONLY if your source records tie the numbers to it (e.g. prices "Forbidden Rites"); write version numbers and English league names, never a guessed Japanese league name.
+Owner policy: automatic crafting is not a site feature (dropped 10-21); any "auto mode" result is a calculation experiment and must be called that.
 Length: substance over length; roughly 1,500-3,000 Japanese chars. No keyword stuffing.
 
 When done, reply in Japanese, 4-6 lines: slug, title (ja/en), h2 list, which source supports each number group, anything you left out because the sources did not support it.
