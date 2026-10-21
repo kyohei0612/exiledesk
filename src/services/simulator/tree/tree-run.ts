@@ -45,9 +45,8 @@ export interface BoxStat {
 }
 export interface TreeRunResult {
   n: number;
+  /** 完成した人 (終わり方は完成か未完成だけ。未完成 = 打ち止め・止まり、妥協は無し、オーナー 10-22) */
   finished: number;
-  main: number;
-  compromise: number;
   /** 打ち止め (神か手の上限) */
   capped: number;
   /** 組んでいない芽・打てない手で止まった人 */
@@ -68,7 +67,7 @@ export interface TreeRunResult {
 /** 繰り返しの上限が無い時の見張り (tree-sample の SPAM_CAP と同じ) */
 const SPAM_CAP = 5000;
 
-type End = "main" | "compromise" | "capped" | "stuck";
+type End = "done" | "capped" | "stuck";
 interface Person { end: End; cost: number; at: string; visits: { box: string; cost: number }[]; uses: Record<string, number>; restarts: number }
 
 function startItemOf(data: PatchData, doc: TreeDoc, rng: () => number): StageItem {
@@ -185,7 +184,8 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     const b = doc.boxes[at];
     if (!b) return { end: "stuck", cost, at, visits, uses, restarts };
     visits.push({ box: at, cost });
-    if (b.done) return { end: b.done, cost, at, visits, uses, restarts };
+    // 完成の印は "main" だけ (前の版の妥協 "compromise" は未完成 = 印の無い箱として先へ読む)
+    if (b.done === "main") return { end: "done", cost, at, visits, uses, restarts };
     const sb = b as SplitBox;
     if (sb.split) {
       if (++hops > 1000) return { end: "stuck", cost, at, visits, uses, restarts };
@@ -229,7 +229,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
 
 function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): TreeRunResult {
   const n = people.length;
-  const fin = people.filter((p) => p.end === "main" || p.end === "compromise");
+  const fin = people.filter((p) => p.end === "done");
   const total = people.reduce((a, p) => a + p.cost, 0);
   const perItem = fin.length ? total / fin.length : NaN;
   const costs = fin.map((p) => p.cost).sort((a, b) => a - b);
@@ -258,8 +258,6 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
   }
   return {
     n, finished: fin.length,
-    main: people.filter((p) => p.end === "main").length,
-    compromise: people.filter((p) => p.end === "compromise").length,
     capped: people.filter((p) => p.end === "capped").length,
     stuck: people.filter((p) => p.end === "stuck").length,
     stuckAt, perItem,
