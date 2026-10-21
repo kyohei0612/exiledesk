@@ -5,7 +5,7 @@
 ## やる事 (記事)
 - 1 本目「外れは溜めるな」(dont-hoard-misses): 仕上げ済み (03e82d6e、形 = 冒頭の掴み 2 段落・まとめの箱・図 3 枚・掛け合い・ヒント / 注意の箱・リンクは一番下)。OGP の絵 → 開発版 → スナップ 2〜3 枚をブラックへ → オーナーの OK
 - 残り 5 本は仕上げ済み (オーナー 10-22「記事はレポート、妥協しよう、AdSense が通る情報量が目的」: 掴み 2 段落・まとめ・図 0〜1 (入れ物の :::chart)・注意 / ヒントの箱・リンクは一番下)。OGP は入れ物の自動 (題を描いた絵) のまま
-- その後 15〜20 本まで: 種は research/notes/2026-10-22-blog-topics.md (解析君が数字を出した物から順に)
+- 記事は記事編集長が書く (オーナー 10-22)。新しい記事は部下に書かせ (notes/writer-brief.md)、別の部下に記録と照らし合わせさせ (notes/checker-brief.md)、直してから commit。種は research/notes/2026-10-22-blog-topics.md。使った種: #1〜#10・#16・#17・#19・#21〜#24・#26・#28・#31
 
 ## やる事 (AdSense のチェック表 research/notes/2026-10-22-adsense-policy-check.md から、記事・文章の物を全部拾った)
 | 表の # | 足りない物 | やる事 | 誰と |
@@ -23,12 +23,25 @@
 
 ## OK 待ち
 
-## 記事ごとの進み
-| slug | 下書き (解析君) | 仕上げ | 開発版 | 本番 |
-|---|---|---|---|---|
-| dont-hoard-misses | 済み | 済み (65ccc709、白い紙面・図 3・OGP) | デプロイ待ち (ブラックの順番) | — |
-| optimal-move-vs-intuition | 済み | 済み (59d8a098) | デプロイ待ち (ブラックの順番) | — |
-| sanctify-quality-order | 済み | 済み (008b1e58) | デプロイ待ち (ブラックの順番) | — |
-| gold-ring-video-decoded | 済み | 済み (81ef714a・8ec806e6、図なし・表で足りる) | デプロイ待ち (ブラックの順番) | — |
-| poe2db-cast-speed-weight | 済み | 済み (afa96b1c) | デプロイ待ち (ブラックの順番) | — |
-| es-gloves-greater-exalt | 済み | 済み (c8b76347) | デプロイ待ち (ブラックの順番) | — |
+## 記事ごとの進み (日英、全部 draft: true。開発版 abff29f1 に 15 本、残りは次のデプロイで)
+| slug | 中身 | 本番 |
+|---|---|---|
+| dont-hoard-misses | 仕上げ (白い紙面・図 3・OGP) | — |
+| optimal-move-vs-intuition | 仕上げ | — |
+| sanctify-quality-order | 仕上げ | — |
+| gold-ring-video-decoded | 仕上げ | — |
+| poe2db-cast-speed-weight | 仕上げ | — |
+| es-gloves-greater-exalt | 仕上げ | — |
+| crafting-cost-variance | 解析君の下書きを仕上げ | — |
+| mana-ring-craft | 解析君の下書きを仕上げ | — |
+| arcane-surge-desecrated-gloves | 解析君の下書きを仕上げ | — |
+| kolrs-hunt-gloves | 解析君の下書きを仕上げ | — |
+| chaos-spam-odds | 解析君の下書きを仕上げ | — |
+| quality-rounding-down | 新しく書いた・照らし合わせ済み | — |
+| catalysing-exaltation-multiplier | 新しく書いた・照らし合わせ済み | — |
+| desecration-weights | 書き直し・照らし合わせ済み | — |
+| fracture-desecrated | 書き直し・照らし合わせ済み (解析君の版と 1 本に) | — |
+| desecration-bone-sides | 新しく書いた・照らし合わせ済み | — |
+| crafting-calculator-mistakes | 新しく書いた・照らし合わせ済み | — |
+| essence-of-the-abyss-mark | 新しく書いた・照らし合わせ済み | — |
+| desecration-lords-tag-audit | 新しく書いた・照らし合わせ待ち | — |
