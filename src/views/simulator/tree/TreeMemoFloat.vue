@@ -85,8 +85,11 @@ type Snap = "max" | "left" | "right" | null;
  * innerWidth・マウスの座標・getBoundingClientRect (実ピクセル) は toCss で割る。割らずに最大化すると窓が 1.16 倍に広がり、
  * 閉じる・元に戻すが画面の右の外へ出た (オーナー 10-22「一度拡大したら閉じれない」)
  */
-const vw = (): number => toCss(document.documentElement.clientWidth || innerWidth);
-const vh = (): number => toCss(document.documentElement.clientHeight || innerHeight);
+const readView = (): { w: number; h: number } => ({ w: toCss(document.documentElement.clientWidth || innerWidth), h: toCss(document.documentElement.clientHeight || innerHeight) });
+/** 画面の広さは ref に持つ (最大化の大きさが computed に残り、画面の幅・zoom が変わっても前の広さのままだった) */
+const view = ref(readView());
+const vw = (): number => view.value.w;
+const vh = (): number => view.value.h;
 const cssRect = (r: DOMRect): { left: number; top: number; right: number; bottom: number; width: number; height: number } => {
   const z = pageZoom();
   return { left: r.left / z, top: r.top / z, right: r.right / z, bottom: r.bottom / z, width: r.width / z, height: r.height / z };
@@ -190,7 +193,8 @@ const EDGES: Array<{ dir: string; cls: string }> = [
   { dir: "nw", cls: "-left-1 -top-1 size-[18px] cursor-nwse-resize" }, { dir: "ne", cls: "-right-1 -top-1 size-[18px] cursor-nesw-resize" },
   { dir: "sw", cls: "-bottom-1 -left-1 size-[18px] cursor-nesw-resize" }, { dir: "se", cls: "-bottom-1 -right-1 size-[18px] cursor-nwse-resize" },
 ];
-const onWinResize = (): void => { if (rect.value) rect.value = fit(rect.value); measureAvoid(); };
+// 広さを読むのは WebApp.vue の fitZoom (同じ resize で zoom を掛け直す) の後
+const onWinResize = (): void => { requestAnimationFrame(() => { view.value = readView(); if (rect.value) rect.value = fit(rect.value); measureAvoid(); }); };
 window.addEventListener("resize", onWinResize);
 window.addEventListener("scroll", measureAvoid, true);
 onBeforeUnmount(() => {
