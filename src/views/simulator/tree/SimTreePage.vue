@@ -26,6 +26,8 @@ import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, removeHit,
 import { handLabel } from "../../../services/simulator/tree/tree-hands";
 import { aimHeld, aimsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { checkTree, type CheckIssue } from "../../../services/simulator/tree/tree-check";
+import { treeSample } from "../../../services/simulator/tree/tree-samples";
+import { MATCH, RESTART } from "../../../services/simulator/tree/tree-run";
 import { treePage } from "../../../state/web-page";
 import { tr } from "../../../i18n/lang";
 import { pageZoom } from "../../../utils/zoom";
@@ -114,6 +116,8 @@ const backLine = computed(() => {
 function goBack(b: Box): void { hoverBack.value = null; if (b.back) void v.reveal(b.back, true); }
 
 function backLabel(b: Box): string {
+  if (b.back === MATCH) return tr("形の合う箱へ", "Matching box");
+  if (b.back === RESTART) return tr("作り直し", "Start over");
   const to = b.back ? doc.value.boxes[b.back] : null;
   if (!to) return "";
   if (to.out === "start") return tr("始まり", "Start");
@@ -268,6 +272,17 @@ function onKey(e: KeyboardEvent): void {
   }
 }
 onMounted(() => window.addEventListener("keydown", onKey));
+/**
+ * 見本を開く (?page=sim-tree&sample=<名前>、tree-samples.ts。10-23 オーナー「サフィックスを全部付けるまでの手順で表示してみて」)。
+ * 今の木は置き換える前にこのブラウザに控える (exiledesk.tree.v0.before-sample)。1 つ戻すでも戻せる
+ */
+onMounted(() => {
+  const name = new URLSearchParams(location.search).get("sample");
+  const sample = name ? treeSample(name) : null;
+  if (!sample) return;
+  try { localStorage.setItem("exiledesk.tree.v0.before-sample", JSON.stringify(doc.value)); } catch { /* 控えられなくても開く */ }
+  t.edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, sample); });
+});
 onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); });
 
 function close(): void { treePage.value = false; }
