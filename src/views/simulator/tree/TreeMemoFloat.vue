@@ -97,8 +97,9 @@ const cssRect = (r: DOMRect): { left: number; top: number; right: number; bottom
 };
 const fit = (r: Rect): Rect => {
   const w = Math.min(Math.max(MIN_W, r.w), vw()), h = Math.min(Math.max(MIN_H, r.h), vh());
-  // 窓はいつも画面の中に収める (一部が画面の外へ出て、閉じる・最大化のボタンが届かなくなった。オーナーの Chrome で 10-22)
-  return { w, h, x: Math.min(Math.max(0, r.x), vw() - w), y: Math.min(Math.max(0, r.y), vh() - h) };
+  // 横は窓全体を画面の中に (右の外へ出て閉じる・最大化のボタンが届かなくなった。オーナーの Chrome で 10-22)。
+  // 縦は Windows と同じく題の帯が画面に残るまで (下ははみ出してよい。全部収めると最大化から引いた時に題がマウスから離れた)
+  return { w, h, x: Math.min(Math.max(0, r.x), vw() - w), y: Math.min(Math.max(0, r.y), vh() - 56) };
 };
 const saved = ((): { rect: Rect; snap: Snap } | null => {
   try {
