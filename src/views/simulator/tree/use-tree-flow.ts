@@ -10,7 +10,7 @@
  */
 import { computed, ref, watch, type Ref } from "vue";
 import { useVueFlow } from "@vue-flow/core";
-import { BOX_H, BOX_W, boundsOf, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { bandsOf, BOX_H, BOX_W, boundsOf, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { pageZoom } from "../../../utils/zoom";
 
 export const FLOW_ID = "sim-tree";
@@ -75,15 +75,17 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     const b = bounds.value, w = f.dimensions.value.width, h = f.dimensions.value.height;
     if (!w || !h) return;
     const PAD = 28, PAD_MIN = 12, RIGHT_ROOM = 250;
+    // 木の左の外の段の目印 (TreeBandLayer、画面の上で約 110px × ページの zoom) の分も左を空ける (1280 で目印が枠の外に切れた、10-22)
+    const left = bandsOf(doc.value).length ? Math.round(110 * pageZ.value) : 0;
     /** 幅 avail に収まる一番大きい段 (段を選ぶ時は余白を PAD_MIN まで詰めてよい) */
     const level = (avail: number): number => {
       const fz = Math.min((avail - PAD_MIN * 2) / b.w, (h - PAD_MIN * 2) / b.h) / pageZ.value;
       return [...ZOOM_LEVELS].reverse().find((l) => l <= Math.min(1, fz) + 1e-6) ?? ZOOM_MIN;
     };
     // 右下を空けると段が下がる時は空けない (見本の木は 1920 幅で空けると 25%、空けなければ 33%)
-    const room = level(w - RIGHT_ROOM) >= level(w) ? RIGHT_ROOM : 0;
-    const z = level(w - room) * pageZ.value;
-    await f.setViewport({ x: (w - room) / 2 - (b.x + b.w / 2) * z, y: Math.max(PAD, h / 2 - (b.y + b.h / 2) * z), zoom: z });
+    const room = level(w - left - RIGHT_ROOM) >= level(w - left) ? RIGHT_ROOM : 0;
+    const z = level(w - left - room) * pageZ.value;
+    await f.setViewport({ x: left + (w - left - room) / 2 - (b.x + b.w / 2) * z, y: Math.max(PAD, h / 2 - (b.y + b.h / 2) * z), zoom: z });
   }
   /** 始まりの箱を上の真ん中へ、等倍で (開いた時と、一望から等倍に戻した時。真ん中を軸にすると枝の間の空き所に出た、10-22) */
   async function goHome(): Promise<void> {
