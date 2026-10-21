@@ -17,4 +17,3 @@ export const FLUX: Record<string, { element: string; eats: string[] }> = {
   flux_lightning: { element: "lightning", eats: ["fire", "cold"] },
   flux_chaos: { element: "chaos", eats: ["fire", "cold", "lightning"] },
 };
-export const isFlux = (key: string): boolean => key in FLUX;

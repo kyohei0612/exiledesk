@@ -14,12 +14,8 @@ import { aimDone, type AimTarget } from "./aim-odds";
 import type { StageItem } from "./types";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 
-/** 選べるカオス (普通・上級・完全) */
-export const SPAM_KEYS = ["chaos", "chaos_greater", "chaos_perfect"] as const;
 /** 1 人が打つ上限 (これを超えたら「付かなかった」) */
 export const SPAM_CAP = 50_000;
-/** 比べる人数 */
-export const SPAM_PEOPLE = 100;
 
 /** 当たり: 狙いのどれか 1 つが (その段以上で) 付いている */
 export const spamHit = (item: StageItem, ts: readonly AimTarget[]): boolean => ts.some((t) => aimDone(item, [t]));
