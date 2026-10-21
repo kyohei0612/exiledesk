@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
-import TreeAimsBar from "./TreeAimsBar.vue";
+import TreeMemoFloat from "./TreeMemoFloat.vue";
 import TreeBox from "./TreeBox.vue";
 import TreeHandShelf from "./TreeHandShelf.vue";
 import TreeModPick from "./TreeModPick.vue";
@@ -35,7 +35,11 @@ const HOLD_MS = 300;
 const panel = ref<{ kind: "hand" | "aim" | "fracture" | "trial" | "note"; id: string } | null>(null);
 /** 戻りの矢印の先を選んでいる箱 */
 const picking = ref<string | null>(null);
-/** 上の札の一覧で選んだ札 (その札を使っている箱が光る) */
+/** メモの窓を開いているか (このブラウザに覚える。無くても使える) */
+const MEMO_KEY = "exiledesk.tree.memo-open";
+const memoOpen = ref((() => { try { return localStorage.getItem(MEMO_KEY) === "1"; } catch { return false; } })());
+watch(memoOpen, (v) => { try { localStorage.setItem(MEMO_KEY, v ? "1" : "0"); } catch { /* 覚えられなくても使える */ } });
+/** メモの窓の札で選んだ札 (その札を使っている箱が光る) */
 const glowAim = ref<string | null>(null);
 const v = useTreeView(doc, () => !!panel.value);
 const { viewport, zoom, full, bounds, ox, oy, area, viewOnly } = v;
@@ -269,11 +273,11 @@ const glowOf = (b: Box): boolean => !!glowAim.value && b.out === "hit" && !!b.ai
           </span>
           <button type="button" data-tree-tidy class="g-btn sm" :title="tr('段ごとに横一列・兄弟は親の下に等間隔・戻りの矢印は箱の外側 (1 つ戻すで元の並びへ)', 'Rows by depth, siblings evenly under the parent, return arrows outside the boxes (undo restores)')" @click="onTidy">{{ tr("整列", "Tidy") }}</button>
           <button type="button" data-tree-check class="g-btn sm" :disabled="checking" :title="tr('5 人をエンジンで辿って、止まる所・打てない手・付かない当たり・完成に着かない道を探す (費用は出さない)', 'Walk 5 runs with the engine to find dead ends, unusable crafts, unreachable hits and paths that never finish (no costs)')" @click="onCheck">{{ checking ? tr("精査中…", "Checking…") : tr("ルート精査", "Check route") }}</button>
+          <button type="button" data-tree-memo class="g-btn sm inline-flex items-center gap-1" :aria-pressed="memoOpen" :title="tr('欲しい MOD とメモの窓 (ツリーを押しても閉じない)', 'Wanted mods & notes window (stays open while you edit)')" @click="memoOpen = !memoOpen"><Icon name="pencil" class="size-4" />{{ tr("メモ", "Notes") }}<span v-if="doc.note" class="size-1.5 rounded-full bg-amber-400" /></button>
           <button type="button" data-tree-full class="g-btn sm" :aria-pressed="full" @click="v.toggleFull">{{ full ? tr("全画面を閉じる", "Exit full screen") : tr("全画面に広げる", "Full screen") }}</button>
           <button type="button" class="g-btn sm" :title="tr('始まりの箱だけに戻す (1 つ戻すで戻せる)', 'Back to just the start box (undo restores it)')" @click="t.reset">{{ tr("白紙に戻す", "Clear") }}</button>
         </span>
       </div>
-      <TreeAimsBar v-model:glow="glowAim" />
       <!-- ルート精査の結果 (押した時だけ) -->
       <div v-if="issues" data-tree-issues class="flex flex-col gap-1 rounded-md px-2 py-1.5 text-[12px]" :class="issues.length ? 'bg-rose-500/10' : 'bg-emerald-500/10'">
         <div class="flex items-center gap-2">
@@ -326,5 +330,7 @@ const glowOf = (b: Box): boolean => !!glowAim.value && b.out === "hit" && !!b.ai
         </aside>
       </div>
     </div>
+    <!-- 欲しい MOD とメモの浮かぶ窓 (ページの中で一番上、ツリーを押しても閉じない) -->
+    <TreeMemoFloat v-model:open="memoOpen" v-model:glow="glowAim" />
   </section>
 </template>
