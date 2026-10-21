@@ -50,5 +50,5 @@ for (const f of FILES) {
 }
 const out = resolve(ROOT, "public/ui-art");
 mkdirSync(out, { recursive: true });
-execFileSync("python", [resolve(ROOT, "scripts/ui-art-compose.py"), tmp, out], { stdio: "inherit" });
+execFileSync("python", [resolve(ROOT, "scripts/ui-art-compose.py"), tmp, out], { windowsHide: true, stdio: "inherit" });
 rmSync(tmp, { recursive: true, force: true });

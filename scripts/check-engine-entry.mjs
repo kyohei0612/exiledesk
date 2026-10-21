@@ -25,7 +25,7 @@ const BASE = resolve(ROOT, "scripts/check-engine-entry.baseline.json");
 const args = new Set(process.argv.slice(2));
 const head = args.has("--head");
 
-const sh = (cmd) => execSync(cmd, { cwd: ROOT, encoding: "utf8", maxBuffer: 64 << 20 });
+const sh = (cmd) => execSync(cmd, { windowsHide: true, cwd: ROOT, encoding: "utf8", maxBuffer: 64 << 20 });
 const files = sh(head ? "git ls-tree -r --name-only HEAD src" : "git ls-files src")
   .split("\n").filter((f) => /\.(ts|vue)$/.test(f) && !f.endsWith(".d.ts"));
 const all = new Set(head ? sh("git ls-tree -r --name-only HEAD src").split("\n") : sh("git ls-files -co --exclude-standard src").split("\n"));

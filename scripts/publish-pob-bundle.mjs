@@ -55,7 +55,7 @@ async function contentHash(meta) {
 }
 
 function sh(cmd, args, opts = {}) {
-  const r = spawnSync(cmd, args, { stdio: ["ignore", "pipe", "pipe"], encoding: "utf8", ...opts });
+  const r = spawnSync(cmd, args, { windowsHide: true, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8", ...opts });
   return { ok: r.status === 0, out: (r.stdout ?? "") + (r.stderr ?? "") };
 }
 

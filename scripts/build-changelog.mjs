@@ -23,7 +23,7 @@ const NOTES_EN = resolve(ROOT, "src/data/changelog-notes-en.json");
 const KEEP = 40;
 const next = process.argv[2] ?? null;
 
-const git = (...args) => execFileSync("git", args, { cwd: ROOT, encoding: "utf8" }).trim();
+const git = (...args) => execFileSync("git", args, { windowsHide: true, cwd: ROOT, encoding: "utf8" }).trim();
 const tags = git("tag", "--list", "v*", "--sort=-v:refname").split("\n").filter(Boolean);
 const notes = existsSync(NOTES) ? JSON.parse(readFileSync(NOTES, "utf8")) : {};
 const notesEn = existsSync(NOTES_EN) ? JSON.parse(readFileSync(NOTES_EN, "utf8")) : {};

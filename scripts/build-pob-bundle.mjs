@@ -153,7 +153,7 @@ function applyPob2Jp(pob2jpDir) {
   const r = spawnSync(
     "powershell.exe",
     ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ps1, "-PoBRoot", OUT, "-NoUpdate", "-Force"],
-    { stdio: ["ignore", "pipe", "pipe"], encoding: "utf-8" },
+    { windowsHide: true, stdio: ["ignore", "pipe", "pipe"], encoding: "utf-8" },
   );
   const out = (r.stdout || "") + (r.stderr || "");
   for (const line of out.split(/\r?\n/).filter((l) => l.trim())) console.log("  [PoB2-JP] " + line);
@@ -175,18 +175,18 @@ async function resolveRuntimeDir(withJp) {
   await mkdir(tmp, { recursive: true });
   const tar = join(tmp, "runtime.tar");
   // CI (actions/checkout) は submodule を shallow に取るので、基準コミットが無ければ SHA 指定で fetch する
-  const has = spawnSync("git", ["-C", VENDOR, "cat-file", "-e", `${JP_RUNTIME_BASE_COMMIT}^{commit}`], { encoding: "utf-8" });
+  const has = spawnSync("git", ["-C", VENDOR, "cat-file", "-e", `${JP_RUNTIME_BASE_COMMIT}^{commit}`], { windowsHide: true, encoding: "utf-8" });
   if (has.status !== 0) {
     log(`fetching runtime base commit ${JP_RUNTIME_BASE_COMMIT.slice(0, 9)} (shallow checkout)`);
-    const f = spawnSync("git", ["-C", VENDOR, "fetch", "--depth=1", "origin", JP_RUNTIME_BASE_COMMIT], { encoding: "utf-8" });
+    const f = spawnSync("git", ["-C", VENDOR, "fetch", "--depth=1", "origin", JP_RUNTIME_BASE_COMMIT], { windowsHide: true, encoding: "utf-8" });
     if (f.status !== 0) throw new Error(`git fetch ${JP_RUNTIME_BASE_COMMIT} failed: ${f.stderr}`);
   }
-  const a = spawnSync("git", ["-C", VENDOR, "archive", "--format=tar", "-o", tar, JP_RUNTIME_BASE_COMMIT, "runtime"], {
+  const a = spawnSync("git", ["-C", VENDOR, "archive", "--format=tar", "-o", tar, JP_RUNTIME_BASE_COMMIT, "runtime"], { windowsHide: true,
     encoding: "utf-8",
   });
   if (a.status !== 0) throw new Error(`git archive ${JP_RUNTIME_BASE_COMMIT} failed: ${a.stderr}`);
   // 絶対パス (C:\...) を渡すと Git Bash の GNU tar が「C はリモートホスト」と解釈して落ちるので、cwd 相対で展開する
-  const x = spawnSync("tar", ["-xf", "runtime.tar"], { cwd: tmp, encoding: "utf-8" });
+  const x = spawnSync("tar", ["-xf", "runtime.tar"], { windowsHide: true, cwd: tmp, encoding: "utf-8" });
   if (x.status !== 0) throw new Error(`tar extract failed: ${x.stderr}`);
   await unlink(tar);
   log(`exported official runtime @${JP_RUNTIME_BASE_COMMIT} → ${tmp}`);

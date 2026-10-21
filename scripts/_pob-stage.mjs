@@ -149,7 +149,7 @@ export function runStagePob(root, input) {
     const inPath = join(dir, "in.json");
     const outPath = join(dir, "out.json");
     writeFileSync(inPath, JSON.stringify(input));
-    const r = spawnSync("cargo", ["run", "-q", "--example", "stage_pob", "--", inPath, outPath], { cwd: resolve(root, "src-tauri"), encoding: "utf8" });
+    const r = spawnSync("cargo", ["run", "-q", "--example", "stage_pob", "--", inPath, outPath], { windowsHide: true, cwd: resolve(root, "src-tauri"), encoding: "utf8" });
     if (r.status !== 0) throw new Error(`stage_pob が失敗 (${r.status}): ${(r.stderr ?? "").split("\n").slice(-5).join(" ")}`);
     return JSON.parse(readFileSync(outPath, "utf8"));
   } finally {

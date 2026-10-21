@@ -101,7 +101,7 @@ async function exportTables(source) {
   const pkg = JSON.parse(await readFile(pkgPath, "utf8"));
   const binRel = typeof pkg.bin === "string" ? pkg.bin : Object.values(pkg.bin)[0];
   log(`source: ${source.patch ? "patch " + source.patch : source.steam}`);
-  const r = spawnSync(process.execPath, [resolve(dirname(pkgPath), binRel)], { cwd: EXPORT_DIR, stdio: "inherit" });
+  const r = spawnSync(process.execPath, [resolve(dirname(pkgPath), binRel)], { windowsHide: true, cwd: EXPORT_DIR, stdio: "inherit" });
   if (r.status !== 0) throw new Error(`pathofexile-dat exited with ${r.status}`);
 }
 

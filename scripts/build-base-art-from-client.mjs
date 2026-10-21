@@ -58,11 +58,11 @@ const formats = new Map();
 let fail = 0;
 /** フラスコ: 3 枚 (枠 / 暗いガラス / 液体) のうち、液体の上に枠を重ねて 1 枚にする (枠のガラスの所は透けている) */
 function flask(src, vf, out) {
-  const [w] = execFileSync("ffprobe", ["-loglevel", "error", "-show_entries", "stream=width", "-of", "csv=p=0", src]).toString().trim().split(",").map(Number);
+  const [w] = execFileSync("ffprobe", ["-loglevel", "error", "-show_entries", "stream=width", "-of", "csv=p=0", src], { windowsHide: true }).toString().trim().split(",").map(Number);
   const cw = Math.floor(w / 3);
   const pre = vf ? `${vf},` : "";
   const graph = `[0]${pre}split=2[x][z];[z]crop=${cw}:ih:${2 * cw}:0[liq];[x]crop=${cw}:ih:0:0[frame];[liq][frame]overlay=0:0,scale=-1:${HEIGHT}`;
-  execFileSync("ffmpeg", ["-loglevel", "error", "-y", "-i", src, "-filter_complex", graph, "-c:v", "libwebp", "-quality", "85", out]);
+  execFileSync("ffmpeg", ["-loglevel", "error", "-y", "-i", src, "-filter_complex", graph, "-c:v", "libwebp", "-quality", "85", out], { windowsHide: true });
 }
 for (const [name, file] of [...dds.entries()].sort()) {
   const id = file.replace(/^Art\/2DItems\//, "").replace(/\.dds$/, "").replace(/[^A-Za-z0-9]+/g, "_");
@@ -81,7 +81,7 @@ for (const [name, file] of [...dds.entries()].sort()) {
         map[name] = id;
         continue;
       }
-      execFileSync("ffmpeg", ["-loglevel", "error", "-y", "-i", src, "-vf", `${swap}scale=-1:${HEIGHT}`, "-c:v", "libwebp", "-quality", "85", join(OUT, `${id}.webp`)]);
+      execFileSync("ffmpeg", ["-loglevel", "error", "-y", "-i", src, "-vf", `${swap}scale=-1:${HEIGHT}`, "-c:v", "libwebp", "-quality", "85", join(OUT, `${id}.webp`)], { windowsHide: true });
       done.set(file, id);
     } catch (e) {
       fail++;

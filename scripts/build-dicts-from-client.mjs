@@ -172,7 +172,7 @@ async function exportTables(source) {
 
   log(`source: ${source.patch ? "patch " + source.patch : source.steam}`);
   log(`running pathofexile-dat ${pkg.version} in ${EXPORT_DIR}`);
-  const r = spawnSync(process.execPath, [bin], { cwd: EXPORT_DIR, stdio: "inherit" });
+  const r = spawnSync(process.execPath, [bin], { windowsHide: true, cwd: EXPORT_DIR, stdio: "inherit" });
   if (r.status !== 0) throw new Error(`pathofexile-dat exited with ${r.status}`);
 }
 

@@ -47,7 +47,7 @@ export function ownerOf(path, rows = loadOwners()) {
 }
 
 function statusPaths() {
-  const out = execSync("git status --porcelain=v1 -uall", { cwd: ROOT, encoding: "utf8" });
+  const out = execSync("git status --porcelain=v1 -uall", { windowsHide: true, cwd: ROOT, encoding: "utf8" });
   return out.split("\n").filter(Boolean).map((l) => ({ st: l.slice(0, 2), path: l.slice(3).replace(/^.* -> /, "").replace(/^"|"$/g, "") }));
 }
 

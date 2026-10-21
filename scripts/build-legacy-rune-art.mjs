@@ -46,7 +46,7 @@ for (const en of legacy) {
   // 128 × 128 のルーンの右下に、高さ 84 のユニーク (暗い影で縁取り)
   execFileSync("ffmpeg", ["-v", "error", "-y", "-i", src, "-i", uf, "-filter_complex",
     "[1:v]scale=-1:84,format=rgba,split[u][s];[s]colorchannelmixer=rr=0:gg=0:bb=0:aa=0.8,boxblur=3[sh];[0:v]format=rgba[b];[b][sh]overlay=W-w-2:H-h+2[t];[t][u]overlay=W-w-4:H-h",
-    "-frames:v", "1", "-c:v", "libwebp", "-lossless", "1", resolve(ROOT, `public/rune-art/${id}.webp`)]);
+    "-frames:v", "1", "-c:v", "libwebp", "-lossless", "1", resolve(ROOT, `public/rune-art/${id}.webp`)], { windowsHide: true });
   runeArt[en] = id;
   made++;
 }

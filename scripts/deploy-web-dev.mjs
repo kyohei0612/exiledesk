@@ -22,8 +22,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const KEY_FILE = resolve(ROOT, ".dev-web-key");
 const OUT = resolve(ROOT, "dist-web-dev");
-const run = (cmd, opts = {}) => execSync(cmd, { cwd: ROOT, stdio: "inherit", ...opts });
-const git = (args, cwd = ROOT) => execSync(`git ${args}`, { cwd, encoding: "utf8" }).trim();
+const run = (cmd, opts = {}) => execSync(cmd, { windowsHide: true, cwd: ROOT, stdio: "inherit", ...opts });
+const git = (args, cwd = ROOT) => execSync(`git ${args}`, { windowsHide: true, cwd, encoding: "utf8" }).trim();
 
 const wip = process.argv.includes("--wip");
 let src = ROOT;
@@ -54,7 +54,7 @@ const fresh = !key;
 if (fresh) key = randomBytes(18).toString("base64url");
 run("pnpm --dir server/web exec wrangler deploy -c wrangler.dev.jsonc");
 if (fresh) {
-  execSync("pnpm --dir server/web exec wrangler secret put DEV_KEY -c wrangler.dev.jsonc", { cwd: ROOT, input: key, stdio: ["pipe", "inherit", "inherit"] });
+  execSync("pnpm --dir server/web exec wrangler secret put DEV_KEY -c wrangler.dev.jsonc", { windowsHide: true, cwd: ROOT, input: key, stdio: ["pipe", "inherit", "inherit"] });
   writeFileSync(KEY_FILE, key + "\n");
 }
 console.log(`\n置いた物: ${label}`);

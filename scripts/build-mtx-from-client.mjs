@@ -106,7 +106,7 @@ if (!NO_ART) {
       const dxgi = buf.toString("latin1", 84, 88) === "DX10" ? buf.readUInt32LE(128) : 0;
       const swap = dxgi >= 27 && dxgi <= 29 ? "colorchannelmixer=rr=0:rb=1:bb=0:br=1," : "";
       writeFileSync(join(tmp, "in.dds"), buf);
-      execFileSync("ffmpeg", ["-loglevel", "error", "-y", "-i", join(tmp, "in.dds"), "-vf", `${swap}scale=128:128:force_original_aspect_ratio=decrease`, "-c:v", "libwebp", "-quality", "75", join(ART, `${it.i}.webp`)]);
+      execFileSync("ffmpeg", ["-loglevel", "error", "-y", "-i", join(tmp, "in.dds"), "-vf", `${swap}scale=128:128:force_original_aspect_ratio=decrease`, "-c:v", "libwebp", "-quality", "75", join(ART, `${it.i}.webp`)], { windowsHide: true });
       done.set(it.dds, it.i);
       it.a = it.i;
       made++;

@@ -30,7 +30,7 @@ const OUT_DIR = resolve(ROOT, "data-cache/asset-packs");
 const HASHES = resolve(ROOT, "src/services/assets/asset-packs.json");
 const PUBLISH = process.argv.includes("--publish");
 const log = (...a) => console.log("[asset-packs]", ...a);
-const sh = (cmd, args) => { const r = spawnSync(cmd, args, { stdio: ["ignore", "pipe", "pipe"], encoding: "utf8" }); return { ok: r.status === 0, out: (r.stdout ?? "") + (r.stderr ?? "") }; };
+const sh = (cmd, args) => { const r = spawnSync(cmd, args, { windowsHide: true, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8" }); return { ok: r.status === 0, out: (r.stdout ?? "") + (r.stderr ?? "") }; };
 
 /** ファイル 1 つのハッシュ (sha256 の先頭 16 桁。アプリ側 asset_packs.rs と同じ) */
 const fileHash = (buf) => createHash("sha256").update(buf).digest("hex").slice(0, 16);

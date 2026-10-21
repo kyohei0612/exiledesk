@@ -70,7 +70,7 @@ async function toWebp(file, dir, id) {
     const dx10 = buf.toString("latin1", 84, 88) === "DX10";
     const dxgi = dx10 ? buf.readUInt32LE(128) : 0;
     const swap = dxgi >= 27 && dxgi <= 29 ? "colorchannelmixer=rr=0:rb=1:bb=0:br=1," : "";
-    execFileSync("ffmpeg", ["-loglevel", "error", "-y", "-i", src, "-vf", `${swap}scale=-1:${HEIGHT}`, "-c:v", "libwebp", "-quality", "85", join(dir, `${id}.webp`)]);
+    execFileSync("ffmpeg", ["-loglevel", "error", "-y", "-i", src, "-vf", `${swap}scale=-1:${HEIGHT}`, "-c:v", "libwebp", "-quality", "85", join(dir, `${id}.webp`)], { windowsHide: true });
     done.set(`${dir}|${file}`, id);
     return id;
   } catch (e) {
@@ -165,6 +165,6 @@ for (const [en, r] of Object.entries(runes)) {
 }
 writeFileSync(resolve(ROOT, "src/services/craft-stage/rune-art.json"), JSON.stringify(runeMap, null, 1) + "\n");
 // 遺産のルーン (63 種とも同じ絵) に元のユニークの絵を重ねる (POE2Tube 要望 ㉛)
-execFileSync(process.execPath, [resolve(ROOT, "scripts/build-legacy-rune-art.mjs")], { stdio: "inherit" });
+execFileSync(process.execPath, [resolve(ROOT, "scripts/build-legacy-rune-art.mjs")], { windowsHide: true, stdio: "inherit" });
 rmSync(tmp, { recursive: true, force: true });
 console.log(`ジェム ${list.length} 件 (アイコン ${list.filter((x) => x.icon).length} / ジェムの絵 ${list.filter((x) => x.gem).length}) / ルーン ${Object.keys(runeMap).length} / ${Object.keys(runes).length} 件 (失敗 ${fail})`);

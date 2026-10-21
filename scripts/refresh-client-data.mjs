@@ -59,7 +59,7 @@ for (let i = FROM - 1; i < STEPS.length; i++) {
   const s0 = Date.now();
   console.log(`\n=== ${i + 1}/${STEPS.length} ${name} ===`);
   for (const [cwd, cmd, a] of cmds) {
-    const r = spawnSync(cmd, a, { cwd: resolve(ROOT, cwd), stdio: "inherit", shell: process.platform === "win32" });
+    const r = spawnSync(cmd, a, { windowsHide: true, cwd: resolve(ROOT, cwd), stdio: "inherit", shell: process.platform === "win32" });
     if (r.status !== 0) {
       console.error(`\n× ${i + 1} 段目「${name}」で止まった (${cwd} で ${cmd} ${a.join(" ")})。直したら --from ${i + 1} で続きから`);
       process.exit(1);

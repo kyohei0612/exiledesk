@@ -25,7 +25,7 @@ html,body{margin:0;width:1200px;height:630px;background:#0e0c09;color:#e8dfcf;fo
 .c{box-sizing:border-box;width:1200px;height:630px;padding:64px 80px;border:14px solid #3a3024;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(160deg,#17130e,#0a0907)}
 h1{font-size:${size}px;line-height:1.35;margin:0;color:#e0b062;font-weight:700}p{margin:0;font-size:28px;color:#a99b84}b{color:#e8dfcf;letter-spacing:.06em}
 </style></head><body><div class="c"><p><b>ExileDesk</b> ${lang === "ja" ? "ブログ · Path of Exile 2 のクラフト" : "Blog · Path of Exile 2 crafting"}</p><h1>${esc(title)}</h1><p>exiledesk.com · ${esc(date)}</p></div></body></html>`);
-    execFileSync(chrome, ["--headless=new", "--disable-gpu", "--hide-scrollbars", `--user-data-dir=${join(dir, "profile")}`, "--window-size=1200,630", `--screenshot=${out}`, pathToFileURL(html).href], { stdio: "ignore", timeout: 30_000 });
+    execFileSync(chrome, ["--headless=new", "--disable-gpu", "--hide-scrollbars", `--user-data-dir=${join(dir, "profile")}`, "--window-size=1200,630", `--screenshot=${out}`, pathToFileURL(html).href], { windowsHide: true, stdio: "ignore", timeout: 30_000 });
     return existsSync(out);
   } catch {
     return false;

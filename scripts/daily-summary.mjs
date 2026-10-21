@@ -22,16 +22,16 @@ const prev = shift(day, -1), week = shift(day, -7);
 const logFile = (d) => resolve(ROOT, `data-cache/logs/${d}.jsonl`);
 
 // 1. 記録を取る (3 日とも毎回取り直す。手元のファイルはその日の途中で取った物のことがある)
-execFileSync(process.execPath, [resolve(ROOT, "scripts/pull-logs.mjs"), day, prev, week], { cwd: ROOT, stdio: "inherit" });
+execFileSync(process.execPath, [resolve(ROOT, "scripts/pull-logs.mjs"), day, prev, week], { windowsHide: true, cwd: ROOT, stdio: "inherit" });
 
 // 2. 日ごとの数字 (analyze-logs.py --json) と、昨日の全文
-const py = (args) => execFileSync("python", [resolve(ROOT, "scripts/analyze-logs.py"), ...args], { cwd: ROOT, encoding: "utf8", maxBuffer: 1 << 28, env: { ...process.env, PYTHONIOENCODING: "utf-8" } });
+const py = (args) => execFileSync("python", [resolve(ROOT, "scripts/analyze-logs.py"), ...args], { windowsHide: true, cwd: ROOT, encoding: "utf8", maxBuffer: 1 << 28, env: { ...process.env, PYTHONIOENCODING: "utf-8" } });
 const stats = (d) => (existsSync(logFile(d)) ? JSON.parse(py([logFile(d), "--json"])) : null);
 const [cur, p1, p7] = [stats(day), stats(prev), stats(week)];
 const full = py([logFile(day)]);
 
 // 3. 要望 (KV fb:<逆順の時刻>:<id>)。昨日の 0 時から今まで (朝に来た物も 1 日早く拾う)。連絡先・uid は持ち出さない
-const wr = (args) => execFileSync(process.execPath, [WRANGLER, ...args], { cwd: LIVE, encoding: "utf8", maxBuffer: 1 << 26, stdio: ["ignore", "pipe", "ignore"] });
+const wr = (args) => execFileSync(process.execPath, [WRANGLER, ...args], { windowsHide: true, cwd: LIVE, encoding: "utf8", maxBuffer: 1 << 26, stdio: ["ignore", "pipe", "ignore"] });
 const since = Date.parse(`${day}T00:00:00+09:00`);
 let feedback = [], fbError = null;
 try {

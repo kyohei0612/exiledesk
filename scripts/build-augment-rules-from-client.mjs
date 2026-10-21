@@ -73,7 +73,7 @@ function exportTables() {
     `globalThis.fetch = async (u, ...a) => String(u).endsWith("schema.min.json") ? new Response(readFileSync(${JSON.stringify(SCHEMA)})) : orig(u, ...a);`,
   ].join("\n") + "\n");
   const cli = resolve(ROOT, "node_modules/pathofexile-dat/dist/cli/run.js");
-  const r = spawnSync(process.execPath, ["--import", pathToFileURL(hook).href, cli], { cwd: EXPORT_DIR, stdio: "inherit" });
+  const r = spawnSync(process.execPath, ["--import", pathToFileURL(hook).href, cli], { windowsHide: true, cwd: EXPORT_DIR, stdio: "inherit" });
   if (r.status !== 0) throw new Error(`pathofexile-dat exited with ${r.status}`);
 }
 

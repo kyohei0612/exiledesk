@@ -94,7 +94,7 @@ function run(input) {
     const cookies = process.env.YT_COOKIES ? ["--cookies-from-browser", process.env.YT_COOKIES] : [];
     const args = [...cookies, "--js-runtimes", "node", "--skip-download", manual ? "--write-subs" : "--write-auto-subs", "--sub-langs", (manual ? langs : langs.map((l) => `${l}-orig`)).join(","), "--sub-format", "json3", "-o", join(tmp, `${manual ? "m" : "a"}.%(ext)s`), url];
     try {
-      execFileSync("yt-dlp", args, { stdio: ["ignore", "ignore", "pipe"] });
+      execFileSync("yt-dlp", args, { windowsHide: true, stdio: ["ignore", "ignore", "pipe"] });
     } catch (e) {
       const msg = String(e.stderr ?? e.message ?? e);
       if (/ENOENT/.test(msg)) { console.error("yt-dlp が見つからない。`pip install -U yt-dlp` で入れてください"); process.exit(1); }
@@ -127,7 +127,7 @@ function run(input) {
 // 何本でも。続けて取ると 429 で断られやすいので 1 本ごとに 8 秒あける
 let ok = 0;
 for (const [i, v] of argv.entries()) {
-  if (i) execFileSync(process.execPath, ["-e", "setTimeout(() => {}, 8000)"]);
+  if (i) execFileSync(process.execPath, ["-e", "setTimeout(() => {}, 8000)"], { windowsHide: true });
   if (run(v)) ok++;
 }
 if (!ok) process.exit(1);

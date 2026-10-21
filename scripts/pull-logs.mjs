@@ -26,7 +26,7 @@ function viaWrangler(day) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Error(`日付の形が違う: ${day}`);
   // npx は Windows で shell 経由になり、SQL の引数が引用されずに崩れる。server/live の wrangler を node で直接動かす
   const bin = resolve(ROOT, "server/live/node_modules/wrangler/bin/wrangler.js");
-  const json = execFileSync(process.execPath, [bin, "d1", "execute", "exiledesk-logs", "--remote", "--json", "--command", `SELECT at, country, body FROM logs WHERE day = '${day}' ORDER BY id`], {
+  const json = execFileSync(process.execPath, [bin, "d1", "execute", "exiledesk-logs", "--remote", "--json", "--command", `SELECT at, country, body FROM logs WHERE day = '${day}' ORDER BY id`], { windowsHide: true,
     cwd: resolve(ROOT, "server/live"), encoding: "utf8", maxBuffer: 1 << 30, stdio: ["ignore", "pipe", "ignore"],
   });
   const rows = JSON.parse(json)[0].results;
