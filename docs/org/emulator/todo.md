@@ -1,7 +1,15 @@
 # ジン部長 のやる事
 
 ## やる事
-- 引き継ぎ (10-22 夜): notes/2026-10-22-handoff-2.md (2 本目の分、新しい方) → notes/2026-10-22-handoff.md の順に先に読む。
+- 引き継ぎ (10-22 夜、3 本目 → 4 本目): 下の「3 本目の分」→ notes/2026-10-22-handoff-2.md (2 本目の分) → notes/2026-10-22-handoff.md の順に先に読む。
+- 3 本目の分 (全部 push 済み、詳しくは notes/2026-10-22-code-audit.md の頭「直した物」):
+  - 済み: StageItemCard の行ごとの札 rowTags (15a5f73d、型 stage-item-row-tag.ts。シミュが試し打ちの外れ MOD に使った 4e51480b)。500 行超え 4 本を割った (parts-unrevealed・stage-draw・_htc-display-tags / _htc-base-info・_gem-csd)。コードの点検 notes/2026-10-22-code-audit.md。ホワイト用 scripts/org-lint.mjs (読むだけ、--json あり) と .gitignore の docs/org/white/notes/。code-audit の直す案のジンの分 (owners.txt・入口の sideOfMod・重複・消す・parity を 2 本・_poe2db-common)。xIntentUrl(url, text?) (1adf9da6)。
+  - 届いていない知らせ (送信の上限で止まった): シミュ部長 5 本目 (local_b0d5106d) に「xIntentUrl が文を引数で受ける (1adf9da6)。recipe-share.ts を寄せられる」。4 本目が 1 行送る。
+  - 残り (頼まれて済んでいない物なし)。他の部に投げた物: sideOfMod への置き換え (シミュ 5 本目が simulator/todo.md に、解析君の auto-model.ts:164)・simulator/htc と htc-craft への import を外す (シミュ。外れたら owners.txt はそのまま、org-lint の 2 フォルダーが消える)。
+  - 見送った物 (理由は code-audit.md): spam-counts と routeRun の打ち方をまとめる (決まりが違い乱数が変わる)、クライアントの作り直しの exists・loadTable・exportTables (写しでない)、StageModList (500 行ちょうど) の rows・tierIndexOf、style.css・pob-check (今回やらない)。
+  - オーナーに見せる物: 使わない台本 7 本の一覧 (code-audit.md 1 節の要確認、消していない)。
+  - 気付き: tests は tsconfig の include に入っておらず型チェックされない (割った parity は tsc を手で当てた)。stage-core は stage-draw を再輸出している (循環は関数だけなので動く)。Bash の `\` が 1 段消えるので正規表現の入る台本は Write で書く。今の作業ツリーで simulator/tree/tree-run.ts に使わない import 3 つ (シミュの書きかけ、型チェックが落ちる)。
+  - 立てた物 (Chrome・dev サーバー) は無し。
 - FAQ の入れ物 済み (9d3d8462、build-blog-pages.mjs)。元 src/data/faq/faq.<ja|en>.md (記事編集長が書く、1 問 = ## 質問)。本番は ready: true の時だけ出てリンク (記事のヘッダー・フッター・About のフッター・サイトマップ) も付く。残り: 原稿が入ったら開発版 (デプロイはブラックに一言)、本番はオーナーの OK の後。見本のスナップ 共有メモ faq/。
 - 済み (10-22、2 本目): 聖別済みは品質の帯とアイテムレベルの欄を灰色で押せなく (092c49bb、オーナーの決め)。9acbea38 と一緒に開発版 (HEAD 2a33d4eb)、本番は pending-release の OK 待ち。前後のスナップは共有メモ sanctified-bar/。確認の手順: vite の dev で `import('/src/state/craft-stage.ts')` の craftStage.use('alchemy') → omens=['OmenofSanctification'] → use('divine')。
 - クラフト画面 1440 幅で元からはみ出している 1 件 (DIV.flex flex-col、overflow-guard の判定で見つけた、10-22) を直す。
