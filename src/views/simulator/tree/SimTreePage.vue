@@ -218,7 +218,7 @@ const panelBox = computed(() => (panel.value ? doc.value.boxes[panel.value.id] ?
         </div>
 
         <!-- 右の欄 -->
-        <aside v-if="panel && panelBox" data-tree-panel class="flex w-[320px] shrink-0 flex-col overflow-y-auto rounded-md bg-white/[0.04] p-3">
+        <aside v-if="panel && panelBox" data-tree-panel class="flex shrink-0 flex-col overflow-y-auto rounded-md bg-white/[0.04] p-3" :class="panel.kind === 'trial' ? 'w-[400px]' : 'w-[320px]'">
           <TreeHandPick v-if="panel.kind === 'hand'" :key="`h-${panel.id}`" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="panel = null" />
           <TreeTrial v-else-if="panel.kind === 'trial'" :key="`t-${panel.id}`" :box-id="panel.id" @close="panel = null" @next="panel = { kind: 'hand', id: panel.id }" />
           <TreeModPick v-else :key="`m-${panel.id}-${panel.kind}`" :mode="panel.kind === 'fracture' ? 'fracture' : 'hit'" :current="panel.kind === 'fracture' ? doc.fracture : panelBox.aim" @pick="pickAim" @close="panel = null" />
