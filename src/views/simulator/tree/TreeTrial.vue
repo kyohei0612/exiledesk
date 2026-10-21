@@ -152,12 +152,12 @@ const noteText = computed(() => {
 
     <!-- 広い時はカードと棚を横に並べる (縦に送らずに 持つ → お告げ → カードを押す、10-21 1920×911 で上下に送っていた)。カードは grid の直下に置いて欄の上に留める (sticky、背景は欄の色。左の列の中だと列と一緒に流れた)。ページは zoom で大きくなるので 2 列の境は CSS の幅で 620px -->
     <div class="@container">
-      <div class="grid gap-3 @min-[620px]:grid-cols-[350px_minmax(0,1fr)]">
+      <div class="grid gap-3 @min-[620px]:grid-cols-[350px_minmax(0,1fr)] @min-[620px]:grid-rows-[auto_1fr]">
         <!-- アイテム (クラフト台のカード。持っている時に押すと打つ) -->
-        <div v-if="item" data-tree-trial-item class="sticky top-0 z-10 flex justify-center bg-[#151311] pb-7 @min-[620px]:col-start-1 @min-[620px]:row-start-1" @contextmenu.prevent="release">
+        <div v-if="item" data-tree-trial-item class="sticky top-0 z-10 flex items-start justify-center self-start bg-[#151311] pb-7 @min-[620px]:col-start-1 @min-[620px]:row-start-1" @contextmenu.prevent="release">
           <StageItemCard :item="item" :doomed="preview?.change ?? []" :open="preview?.open" :added="last.added" :removed="last.removed" :holding="!!held" :flash-key="flash" :width="340" compact @use="use(1)" @jump="onMark" />
         </div>
-        <div data-tree-trial-left class="flex min-w-0 flex-col gap-2 @min-[620px]:col-start-1 @min-[620px]:row-start-2">
+        <div data-tree-trial-left class="flex min-w-0 flex-col gap-2 self-start @min-[620px]:col-start-1 @min-[620px]:row-start-2">
           <!-- × (要らない) の印 -->
           <div data-tree-unwanted-list class="flex flex-col gap-1">
             <p class="text-[11px] opacity-60">{{ tr("MOD の行を押すと × (要らない) の印。完成まで残るとルート精査で !", "Click a mod row to mark it × (unwanted). Route check flags it if it's still there when done") }}</p>
