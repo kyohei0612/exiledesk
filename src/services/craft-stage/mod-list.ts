@@ -99,6 +99,12 @@ export function runeJaOf(id: string): string {
  * 普通 / エッセンス / 冒涜 / 異界 (このベースに有る物全部) に加えて、このベースに差せる特殊 MOD のルーンの MOD を全部
  * 「ルーンの特殊 MOD」に出す。差していないルーンの行は runeJa (「○○を差すと」) 付きで、出やすさはそのルーンを差した時の割合
  */
+/** 行の段 → その段の MOD とエンジンの段の番号 (同じ系統をまとめた行は段ごとに MOD が違う。見つからなければ idx -1) */
+export function tierIdOf(data: PatchData | null | undefined, r: ListRow, t: ListTier): { modId: string; idx: number } {
+  const modId = t.modId ?? r.id;
+  return { modId, idx: data?.mods.get(modId)?.tiers.findIndex((x) => x.name === t.name && x.ilvl === t.ilvl) ?? -1 };
+}
+
 export function modListFor(data: PatchData, item: StageItem): ListRow[] {
   // 普通の置き場は差した特殊 MOD のルーンの MOD 込み (要望 ㉙)。出やすさは普通と一緒に引くので一緒に割る
   const eff = effectiveCls(item);

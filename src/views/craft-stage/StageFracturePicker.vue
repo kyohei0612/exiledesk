@@ -16,7 +16,7 @@ import { computed, ref } from "vue";
 import { revealOpened } from "../../utils/keep-place"; // 段の表を開いたら全体が見える所まで (2026-10-19)
 import { craftStage } from "../../state/craft-stage";
 import { sideOfMod } from "../../services/craft-stage/engine";
-import { modListFor, shownTags, TAG_STYLE, type ListRow, type ListTier } from "../../services/craft-stage/mod-list";
+import { modListFor, shownTags, TAG_STYLE, tierIdOf, type ListRow, type ListTier } from "../../services/craft-stage/mod-list";
 import { tagLabel } from "../../services/mods/tag-ja";
 import { baseNameOf, tr } from "../../i18n/lang";
 import ModalShell from "../../components/ui/ModalShell.vue";
@@ -74,12 +74,7 @@ const lockedSide = computed(() => {
   return m ? (m.type === "suffix" ? "suffix" : "prefix") : null;
 });
 
-/** 行の段 → その段の MOD とエンジンの段の番号 (同じ系統をまとめた行は段ごとに MOD が違う) */
-function idOf(r: ListRow, t: ListTier): { modId: string; idx: number } {
-  const modId = t.modId ?? r.id;
-  const idx = s.data.value?.mods.get(modId)?.tiers.findIndex((x) => x.name === t.name && x.ilvl === t.ilvl) ?? -1;
-  return { modId, idx };
-}
+const idOf = (r: ListRow, t: ListTier): { modId: string; idx: number } => tierIdOf(s.data.value, r, t);
 /** 行の MOD のどれかが候補か */
 const pickedOf = (r: ListRow) => candidates.value.find((c) => r.tiers.some((t) => (t.modId ?? r.id) === c.modId));
 /** チェックした時の段: このアイテムレベルで届く一番上 */

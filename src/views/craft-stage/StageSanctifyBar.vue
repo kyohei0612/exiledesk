@@ -8,7 +8,7 @@
 import { computed } from "vue";
 import { tr } from "../../i18n/lang";
 import { allMods } from "../../services/craft-stage/stage-core";
-import { SANCTIFY_MAX, SANCTIFY_MIN } from "../../services/craft-stage/apply-vaal";
+import { SANCTIFY_SELECT, SANCTIFY_STEPS, sanctifyLabel } from "./sanctify-steps";
 import type { StageItem } from "../../services/craft-stage/types";
 
 const props = defineProps<{ item: StageItem }>();
@@ -20,11 +20,9 @@ const common = computed(() => {
   const ks = [...new Set(mods.value.map((m) => Math.round(m.sanctify!.k * 100)))];
   return ks.length === 1 ? ks[0]! : null;
 });
-const steps = Array.from({ length: SANCTIFY_MAX - SANCTIFY_MIN + 1 }, (_, i) => SANCTIFY_MAX - i);
-const label = (n: number): string => `×${(n / 100).toFixed(2)}`;
+const steps = SANCTIFY_STEPS, label = sanctifyLabel, sel = SANCTIFY_SELECT;
 // 品質の帯と同じ形 (24px の高さ)
 const wbtn = "g-plain h-6 rounded border border-white/15 px-1.5 text-white/70 hover:bg-white/10";
-const sel = "h-6 cursor-pointer rounded border border-white/15 bg-black/60 px-1 text-white/80 tabular-nums";
 </script>
 
 <template>

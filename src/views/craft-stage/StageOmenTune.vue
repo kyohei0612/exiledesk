@@ -8,7 +8,8 @@
 import { computed } from "vue";
 import { tr } from "../../i18n/lang";
 import { useShelf } from "../../state/emulator/shelf-context";
-import { catalystOf, CATALYSING_PER_PCT, SANCTIFY_MAX, SANCTIFY_MIN, tunedCatalysingMultiplier } from "../../services/craft-stage/engine";
+import { catalystOf, CATALYSING_PER_PCT, tunedCatalysingMultiplier } from "../../services/craft-stage/engine";
+import { SANCTIFY_SELECT, SANCTIFY_STEPS, sanctifyLabel } from "./sanctify-steps";
 import { catalysingPerPct, sanctifyK, setCatalysingPerPct, setSanctifyK, TUNING_ON } from "../../state/emulator/stage-tuning";
 
 const props = defineProps<{ k: string }>();
@@ -24,10 +25,8 @@ function onRate(e: Event): void {
   const v = Number((e.target as HTMLInputElement).value);
   setCatalysingPerPct(Number.isFinite(v) && v >= 0 ? v : null);
 }
-const steps = Array.from({ length: SANCTIFY_MAX - SANCTIFY_MIN + 1 }, (_, i) => SANCTIFY_MAX - i);
-const label = (n: number): string => `×${(n / 100).toFixed(2)}`;
-// 聖別の帯と同じ形 (24px の高さ)
-const sel = "h-6 cursor-pointer rounded border border-white/15 bg-black/60 px-1 text-white/80 tabular-nums";
+// 聖別の帯と同じ選び (sanctify-steps.ts)
+const steps = SANCTIFY_STEPS, label = sanctifyLabel, sel = SANCTIFY_SELECT;
 </script>
 
 <template>

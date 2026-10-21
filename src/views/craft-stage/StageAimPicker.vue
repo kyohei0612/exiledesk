@@ -11,7 +11,7 @@
 import { fmtPct } from "../../utils/format-pct";
 import { computed, ref } from "vue";
 import { AIM_MAX, craftStage as s, type AimPick } from "../../state/craft-stage";
-import { aimLabel, groupLabelOf, modListFor, type ListRow, type ListTier, type ModGroup } from "../../services/craft-stage/mod-list";
+import { aimLabel, groupLabelOf, modListFor, tierIdOf, type ListRow, type ListTier, type ModGroup } from "../../services/craft-stage/mod-list";
 import { revealOpened, scrollToTop } from "../../utils/keep-place";
 import { routesTarget } from "../../state/web-page";
 import { nextTick } from "vue";
@@ -43,11 +43,7 @@ const columns = computed(() => (["prefix", "suffix"] as const).map((side) => ({
   items: rows.value.filter((r) => inGroup(r, group.value) && r.side === side).sort((a, b) => b.share - a.share || b.topLevel - a.topLevel),
 })));
 
-/** 行の段 → その段の MOD とエンジンの段の番号 (同じ系統をまとめた行は段ごとに MOD が違う) */
-function idOf(r: ListRow, t: ListTier): { modId: string; idx: number } {
-  const modId = t.modId ?? r.id;
-  return { modId, idx: s.data.value?.mods.get(modId)?.tiers.findIndex((x) => x.name === t.name && x.ilvl === t.ilvl) ?? -1 };
-}
+const idOf = (r: ListRow, t: ListTier): { modId: string; idx: number } => tierIdOf(s.data.value, r, t);
 const pickedOf = (r: ListRow): AimPick | undefined => draft.value.find((a) => r.tiers.some((t) => (t.modId ?? r.id) === a.modId));
 const pickOf = (r: ListRow, t: ListTier): AimPick | null => {
   const { modId, idx } = idOf(r, t);
