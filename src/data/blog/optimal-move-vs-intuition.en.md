@@ -48,6 +48,17 @@ So when should you use the expensive Omens? Splitting another pair of gloves int
 
 As a rule of thumb: use the Omen when "(chance a plain Annulment hits a target − chance the side-specific one does) × cost to put the target back > the Omen's price." This matched the calculated choice in all 54 situations. It is a comparison inside the calculation, not checked against in-game results.
 
+On the same 54-situation gloves, we also measured what happens when moves are banned.
+
+| Restriction | Versus the cheapest route |
+|---|---:|
+| Ban side-picking Omens and Erasure (all targets T1) | about 36 times (about 190,000 div) |
+| Ban side-picking Omens and Erasure (targets T3 or better) | about 11 times |
+| Ban plain Annulment | +17 to 18% |
+| Starting over (69 div per base) | never chosen (always at least 67 div worse) |
+
+Always using Omens and never using them are both losing strategies; the cheapest route switches by situation. Starting over was never chosen either, which also runs against intuition. Even when misses pile up and you feel like throwing the item away, the calculation says continuing from what you have is cheaper.
+
 The Gold Ring in [Don't Hoard Your Misses](/en/blog/dont-hoard-misses/) follows the same logic: annulling while holding misses gives more chances to hit a target.
 
 ## Where the Numbers Come From
