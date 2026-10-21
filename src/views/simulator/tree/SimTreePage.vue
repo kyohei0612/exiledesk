@@ -67,7 +67,7 @@ function measureRow(): void {
   const el = row.value;
   if (!el) return;
   const z = pageZoom();
-  rowH.value = Math.max(300, Math.floor(innerHeight / z - (el.getBoundingClientRect().top + window.scrollY) / z - ROW_BOTTOM));
+  rowH.value = Math.max(200, Math.floor(innerHeight / z - (el.getBoundingClientRect().top + window.scrollY) / z - ROW_BOTTOM));
 }
 const onResizeH = (): void => { requestAnimationFrame(measureRow); };
 onMounted(() => { window.addEventListener("resize", onResizeH); onResizeH(); });
