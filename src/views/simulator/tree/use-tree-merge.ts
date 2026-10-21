@@ -5,7 +5,7 @@
 import { computed, ref, watch, type ComputedRef, type Ref } from "vue";
 import type { TreeBox, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { routeBacks, type Seg } from "./tree-lines";
-import { mergeReqs, sizeOf } from "./tree-merge";
+import { mergeIds, mergeReqs, sizeOf } from "./tree-merge";
 
 export function useTreeMerge(o: {
   doc: Ref<TreeDoc>; pills: ComputedRef<Set<string>>; posOf: (b: TreeBox) => { x: number; y: number }; segs: () => Seg[];
@@ -16,7 +16,7 @@ export function useTreeMerge(o: {
     const d = o.doc.value;
     const pos = (id: string) => ({ ...o.posOf(d.boxes[id]!), ...sizeOf(o.pills.value, id) });
     const chip = (id: string): number | null => { const b = d.boxes[id]!; return b.hand && b.outs.length ? (o.chipW.value[id] ?? 120) * o.inv.value : null; };
-    const { reqs, lines } = mergeReqs(d, o.pills.value, pos, chip);
+    const { reqs, lines } = mergeReqs(d, mergeIds(d), pos, chip);
     return { lines, paths: routeBacks(reqs, Object.keys(d.boxes).map(pos), o.segs(), { bundle: true }) };
   });
   /** 帯の「線を全部表示」(このブラウザに覚える) */

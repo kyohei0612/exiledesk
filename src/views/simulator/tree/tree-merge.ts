@@ -19,30 +19,40 @@ export function backTargetsOf(doc: TreeDoc, id: string): string[] {
   return [...new Set(to)].filter((x) => !!doc.boxes[x]);
 }
 
-/** 札にする箱 (戻りの矢印だけの箱。始まりは除く) */
-export function pillIds(doc: TreeDoc): Set<string> {
+/**
+ * 結果の見せ方の案 (10-22 オーナー「何で表示が違うんですかって話もあるわな」、選んでもらうまで URL の印で出し分け):
+ * a = 札のまま、当たり / 外れの印・色・地を箱と同じにした 2 行の小さな箱 / b = 札をやめて普通の箱、続きからの線は箱の下から / 無し = 今の札
+ */
+export const RES = typeof location === "undefined" ? null : new URLSearchParams(location.search).get("res");
+/** 案 a の札の高さ (印と名前の行 + 狙い・行き先の行) */
+const PILL_H_A = 48;
+
+/** 戻りの矢印だけの箱 (始まりは除く)。合流の線の出元 */
+export function mergeIds(doc: TreeDoc): Set<string> {
   return new Set(Object.values(doc.boxes).filter((b) => b.back && !b.hand && !b.outs.length && b.parent).map((b) => b.id));
 }
 
+/** 札にする箱 (案 b は札にせず箱のまま) */
+export const pillIds = (doc: TreeDoc): Set<string> => (RES === "b" ? new Set() : mergeIds(doc));
+
 /** 箱 (か札) の大きさ */
-export const sizeOf = (pills: ReadonlySet<string>, id: string): { w: number; h: number } => (pills.has(id) ? { w: PILL_W, h: PILL_H } : { w: BOX_W, h: BOX_H });
+export const sizeOf = (pills: ReadonlySet<string>, id: string): { w: number; h: number } => (pills.has(id) ? { w: PILL_W, h: RES === "a" ? PILL_H_A : PILL_H } : { w: BOX_W, h: BOX_H });
 
 /** 合流の線 1 本 (札 → 行き先)。fwd = 当たりの札 (進む色)、back = 外れ・消えたの札 (戻りの色) */
 export interface MergeLine { id: string; pill: string; to: string; parent: string; kind: "fwd" | "back" }
 
 /**
- * 合流の線の頼み (tree-lines の routeBacks へ)。札の下の真ん中から出て、行き先の打つ手の札の左の端へ (手が無ければ下の＋)。
- * pos = 箱の位置 (引っ張り中はその位置)、chipW = 打つ手の札の幅 (ツリーの座標)
+ * 合流の線の頼み (tree-lines の routeBacks へ)。札 (案 b は箱) の下の真ん中から出て、行き先の打つ手の札の左の端へ (手が無ければ下の＋)。
+ * from = 戻りの矢印だけの箱 (mergeIds)、pos = 箱か札の位置と大きさ (引っ張り中はその位置)、chipW = 打つ手の札の幅 (ツリーの座標)
  */
-export function mergeReqs(doc: TreeDoc, pills: ReadonlySet<string>, pos: (id: string) => Pos, chipW: (id: string) => number | null): { reqs: BackReq[]; lines: MergeLine[] } {
+export function mergeReqs(doc: TreeDoc, from: ReadonlySet<string>, pos: (id: string) => Required<Pos>, chipW: (id: string) => number | null): { reqs: BackReq[]; lines: MergeLine[] } {
   const reqs: BackReq[] = [], lines: MergeLine[] = [];
-  for (const id of pills) {
+  for (const id of from) {
     const b = doc.boxes[id]!, p = pos(id);
-    const from: Pos = { ...p, w: PILL_W, h: PILL_H };
     for (const t of backTargetsOf(doc, id)) {
       const to = pos(t);
       const lid = `${id}>${t}`;
-      reqs.push({ id: lid, from, to, end: handAnchor(to, chipW(t)), start: { x: p.x + PILL_W / 2, y: p.y + PILL_H } });
+      reqs.push({ id: lid, from: p, to, end: handAnchor(to, chipW(t)), start: { x: p.x + p.w / 2, y: p.y + p.h } });
       lines.push({ id: lid, pill: id, to: t, parent: b.parent!, kind: b.out === "hit" || b.out === "any" ? "fwd" : "back" });
     }
   }

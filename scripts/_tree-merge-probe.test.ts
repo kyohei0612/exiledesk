@@ -24,7 +24,7 @@ function through(d: string, b: Pos): boolean {
 function measure(d: TreeDoc, merge: boolean): Record<string, number> {
   const pills = merge ? pillIds(d) : new Set<string>();
   tidy(d, { pill: (id) => pills.has(id) });
-  const pos = (id: string): Pos => ({ x: d.boxes[id]!.x, y: d.boxes[id]!.y, ...sizeOf(pills, id) });
+  const pos = (id: string): Required<Pos> => ({ x: d.boxes[id]!.x, y: d.boxes[id]!.y, ...sizeOf(pills, id) });
   const all = Object.keys(d.boxes).map(pos);
   const chip = (id: string): number | null => (d.boxes[id]!.hand && d.boxes[id]!.outs.length ? 200 : null);
   const fwd: Seg[] = Object.values(d.boxes).filter((b) => b.hand && b.outs.length).flatMap((b) => {

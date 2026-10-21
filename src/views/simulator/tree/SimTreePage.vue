@@ -69,7 +69,7 @@ onBeforeUnmount(v.dispose);
 const drag = ref<{ id: string; x: number; y: number } | null>(null);
 const posOf = (b: Box): { x: number; y: number } => (drag.value?.id === b.id ? { x: drag.value.x, y: drag.value.y } : { x: b.x, y: b.y });
 const boxes = computed(() => Object.values(doc.value.boxes));
-/** まとめて見せる箱 (戻りの矢印だけの箱は描かず子の段の札にする、tree-merge.ts。オーナー 10-22 案 A) と、箱か札の真ん中 */
+/** まとめて見せる箱 (戻りの矢印だけの箱は描かず子の段の札にする、tree-merge.ts。オーナー 10-22 案 A。&res=b は札にしない) と、箱か札の真ん中 */
 const pills = computed(() => pillIds(doc.value));
 const midOf = (id: string): number => posOf(doc.value.boxes[id]!).x + sizeOf(pills.value, id).w / 2;
 
