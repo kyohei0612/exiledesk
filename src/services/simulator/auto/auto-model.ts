@@ -6,7 +6,7 @@
  * (ルーンは差した状態) で引いて、札ごとの「当たり (狙いの段以上)」「段が低い」と外れの重みの素の表にする。
  * 近似 (中身は auto-actions.ts の頭): 外れの系統は置き場を減らさない・狙いと同じ系統の別の MOD は外れ (系統を塞がない)
  */
-import { ANCIENT_BONE_FLOOR, candidates, DESECRATION_EXCLUSIVE_COUNT, effectiveCls, familiesOf, limitOf, occupiedFamiliesOf, orbFloor, REVEAL_SPEC, startFrom, type OrbStrength, type PatchData, type StageItem, type StageSide } from "../../craft-stage/engine";
+import { ANCIENT_BONE_FLOOR, candidates, DESECRATION_EXCLUSIVE_COUNT, effectiveCls, familiesOf, limitOf, occupiedFamiliesOf, orbFloor, REVEAL_SPEC, sideOfMod, startFrom, type OrbStrength, type PatchData, type StageItem, type StageSide } from "../../craft-stage/engine";
 import { quizFromSim } from "../quiz-build";
 import type { QuizSlot } from "../quiz-recipe";
 import { runeEnForId } from "../pattern";
@@ -161,7 +161,7 @@ export function buildAutoModel(input: AutoInput): AutoBuilt {
  */
 function buildSplit(input: AutoInput, routes: Array<{ id: string; ids: string }>): AutoBuilt {
   const x = input.sim, d = x.data;
-  const sideOf = (id: string): StageSide => (d.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
+  const sideOf = (id: string): StageSide => sideOfMod(d, id);
   const t = x.targets.find((y) => y.method !== "fracture" && new Set([y.modId, ...(y.alts ?? []).map((a) => a.modId)].map(sideOf)).size > 1);
   if (!t) return no("両側のどれかの札が見つからない", "Either-side target not found");
   const members = [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])];
