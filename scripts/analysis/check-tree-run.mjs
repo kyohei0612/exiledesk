@@ -112,6 +112,17 @@ if (which === "es" || which === "all") {
   const r = M.runTree(data, esTree(), { n: N, seed: SEED, price, start: esStart });
   show("ES 手袋のプレフィックス 3 つ (左側の高貴 + 上級)", 105.14, r);
 }
+// 作り直しの数え方: ES 手袋で「狙いが全部消えたら作り直し」(j1l → restart)。始めの費用 0 なら前と同じくらい、
+// 10 神なら 1 個あたりが「10 × (1 + 1 人あたりの作り直し) ÷ 完成の割合」だけ増えるはず
+if (which === "restart" || which === "all") {
+  for (const startCost of [0, 10]) {
+    const d = esTree();
+    d.boxes.j1l.back = "restart";
+    const r = M.runTree(data, d, { n: N, seed: SEED, price, start: esStart, startCost });
+    const expect = 105.14 + startCost * (1 + r.restarts) / (r.finished / r.n);
+    console.log(`\n=== 作り直し (始めの費用 ${startCost} 神): 1 個あたり ${r.perItem.toFixed(2)} 神・完成 ${(100 * r.finished / r.n).toFixed(1)}%・1 人の作り直し ${r.restarts.toFixed(2)} 回 (見込み ${expect.toFixed(2)} 神 = 105.14 + ${startCost} × (1 + ${r.restarts.toFixed(2)}))`);
+  }
+}
 if (which === "ring" || which === "all") {
   const r = M.runTree(data, ringTree(), { n: N, seed: SEED, price, start: ringStart });
   show("金の指輪のサフィックス C (外れはすぐ消去、触媒に完全・素の右側に上級)", 219.76, r);

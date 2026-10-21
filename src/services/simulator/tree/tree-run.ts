@@ -58,6 +58,8 @@ export interface TreeRunResult {
   p90: number;
   /** 1 人あたりの個数 (値段のキーごと) */
   uses: Record<string, number>;
+  /** 1 人あたりの作り直しの回数 */
+  restarts: number;
   boxes: Record<string, BoxStat>;
 }
 
@@ -65,7 +67,7 @@ export interface TreeRunResult {
 const SPAM_CAP = 5000;
 
 type End = "main" | "compromise" | "capped" | "stuck";
-interface Person { end: End; cost: number; at: string; visits: { box: string; cost: number }[]; uses: Record<string, number> }
+interface Person { end: End; cost: number; at: string; visits: { box: string; cost: number }[]; uses: Record<string, number>; restarts: number }
 
 function startItemOf(data: PatchData, doc: TreeDoc, rng: () => number): StageItem {
   const it = freshItem(data, doc.base, doc.itemLevel, "rare");
@@ -107,6 +109,8 @@ function play(data: PatchData, item: StageItem, h: Hand, rng: () => number, aims
  * 箱の形 = 始まりから親をたどった当たりの札の組 (+ 外れの箱なら外れあり)。狙いが 1 つも無ければ始まりへ (始まりの手が外れも扱う)
  */
 export const MATCH = "match";
+/** 作り直し (設計の「作り直し」、back: "restart"): 始めのアイテムに戻して、始めの費用をもう一度払う。数えた回数は TreeRunResult.restarts */
+export const RESTART = "restart";
 type Shape = { key: string; box: string };
 function shapesOf(doc: TreeDoc): Shape[] {
   const out: Shape[] = [];
@@ -138,33 +142,41 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
   const use = (key: string, n = 1): void => { uses[key] = (uses[key] ?? 0) + n; cost += o.price(key) * n; };
   let at = "start";
   let steps = 0;
+  let restarts = 0;
   // back だけで回り続ける形 (back の輪) の見張り
   let hops = 0;
   for (;;) {
     const b = doc.boxes[at];
-    if (!b) return { end: "stuck", cost, at, visits, uses };
+    if (!b) return { end: "stuck", cost, at, visits, uses, restarts };
     visits.push({ box: at, cost });
-    if (b.done) return { end: b.done, cost, at, visits, uses };
+    if (b.done) return { end: b.done, cost, at, visits, uses, restarts };
     if (b.back) {
-      if (++hops > 1000) return { end: "stuck", cost, at, visits, uses };
+      if (++hops > 1000) return { end: "stuck", cost, at, visits, uses, restarts };
+      if (b.back === RESTART) {
+        item = o.start ? o.start(rng) : startItemOf(data, doc, rng);
+        cost += o.startCost;
+        restarts++;
+        at = "start";
+        continue;
+      }
       const to = b.back === MATCH ? matchBox(data, shapes, item, aims) : b.back;
-      if (!to) return { end: "stuck", cost, at, visits, uses };
+      if (!to) return { end: "stuck", cost, at, visits, uses, restarts };
       at = to;
       continue;
     }
-    if (!b.hand) return { end: "stuck", cost, at, visits, uses };
-    if (++steps > o.capSteps || cost > o.capDiv) return { end: "capped", cost, at, visits, uses };
+    if (!b.hand) return { end: "stuck", cost, at, visits, uses, restarts };
+    if (++steps > o.capSteps || cost > o.capDiv) return { end: "capped", cost, at, visits, uses, restarts };
     hops = 0;
     const before = item;
     const r = play(data, item, b.hand, rng, aims, use);
-    if (!r.applied) return { end: "stuck", cost, at, visits, uses };
+    if (!r.applied) return { end: "stuck", cost, at, visits, uses, restarts };
     const oc = outcomeOf(data, before, r.item, aims);
     const next = b.outs.find((id) => {
       const c = doc.boxes[id];
       if (!c || c.out !== oc.out) return false;
       return oc.out !== "hit" || (!!c.aim && oc.hits.some((a) => a.modId === c.aim!.modId && a.tier === c.aim!.tier));
     });
-    if (!next) return { end: "stuck", cost, at, visits, uses };
+    if (!next) return { end: "stuck", cost, at, visits, uses, restarts };
     item = r.item;
     at = next;
   }
@@ -208,6 +220,7 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
     stuckAt, perItem,
     meanFinished: costs.length ? costs.reduce((a, b) => a + b, 0) / costs.length : NaN,
     median: q(0.5), p90: q(0.9), uses, boxes,
+    restarts: people.reduce((a, p) => a + p.restarts, 0) / (n || 1),
   };
 }
 
