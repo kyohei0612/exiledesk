@@ -12,6 +12,7 @@
 6. 関門の打ち止めはベース 1 個ごとに数え、買い直したら 0 に戻す。買い直しは N 回まで (N は解析君が見本で 99% の人が収まる回数を丸めて決める)、超えた人は未完成で費用は入る (オーナー 10-20)。
 7. 値段は手入力 + 検索を開くボタンだけ、取引所の自動取得は使わない (sim-no-trade-fetch)。
 8. 打つ処理・確率はエミュレーターの部品を使い、自分で書かない。最善手・期待値の数字は解析君に頼む (ブラック経由)。
+9. ツリーは「誰もがクラフトを試しやすい」ためのユーザー体験が芯で妥協しない (オーナー 10-22)。確かめは開発版にデプロイした物を本物のマウスの入力で一手ずつ触り、そのたびにスナップを見て普通の良いアプリと比べる (zoom が 1 でない 1280・1920・2560 幅も)。台本の数え (交差 0・24px 以上など) は足しで、数字が 0 でも見て汚ければ直す。報告には何で確かめたか (本物のマウス / 台本、開発版 / 手元) を書く。見た目はリサーチ長のノードエディターの見本 (research/notes/2026-10-22-tree-ui-references.md) に合わせて作り直す前提。
 
 ## 地図
 - 画面 src/views/simulator/: SimHost.vue (CraftStage.vue の差し込み口: header / tools / main。シミュの画面はここから。CraftStage.vue は触らない、R4 2026-10-20)、StageSimPanel.vue (入口)、工程の帯 SimStepBar・SimStepHead・SimProgress、始め方 SimStartPick・SimBaseCalc、順番のおすすめ SimAutoOrder・use-sim-auto-order (④、押した時だけ計算)、自動 / 手動 use-sim-auto (切り替え・T1 の決まり・リセット)・SimAutoToggle (② の「自動で組む」)・SimAutoConfirm (確かめの窓)・SimStepBar の右端の札、狙う SimTargetSort・StageTargetSummary (並べるだけ。行 use-target-rows・付け方の ▾ use-target-plans・確率の % use-target-share、R3)、貼り付け SimPasteRead・SimBaseExtras (① のベースのページに差すシミュの物: レシピから始める・貼り付けの枠、R2)、打ち方 SimMethodPop・StagePatternEditor、費用 SimCostTip、レシピ SimRecipeBar・StageRecipeStart・StageRecipesPage・recipe-share.ts、StageQuizEditor・quiz-text.ts、use-sim-*.ts。
