@@ -62,3 +62,14 @@
 - Google が不合格の理由として具体的にどのページを挙げたかは不明 (理由は「有用性の低いコンテンツ」だけ)。
 - SPA 本体の画面の見え方・ナビゲーション・実機のブラウザ表示は今回見ていない。
 - ベースのページの被リンク・Search Console のインデックス状況は見ていない。
+
+## 追記 (2026-10-22 夜、オーナー「今 Chrome 開いてるからそっちで確認してもいい」で、読み直しと実物の確認)
+Chrome 1 タブで 3 ページの本文を**全文**読み直し、実際のサイトを開いた。タブは閉じた。ログインが要る所 (AdSense・Search Console の管理画面) は開いていない。
+**確かめた事**
+1. **A (AdSense のコンテンツとユーザー体験) の全文**: 要約ツールの内容と合っていた。さらに**そのまま当てはまる 3 行**があった: 「many pages that are similar or have very similar content, consider expanding each page or consolidating the pages into one」(似たページが多い時は、各ページを厚くするか 1 つに統合する) / 「make sure that your pages have enough unique content so that we can determine what your site is about」(**何のサイトかを判断できるだけの独自の文章**) / 「minimize repeating long segments of text in different pages」。→ ベースの自動ページ 1,576 の「統合する」手はページ自身が勧めている手の 1 つ。
+2. **C (依頼の 3 番目 11035931) は本当に短いページ**: 「place Google-served ads on screens that violate the Spam policies for Google web search」と、用語集への案内だけ。詳細は検索のスパムの決まり (別ページ) にある。要約の通り。
+3. **B (Search Console の手動対策、thin content の節)** の文: 「Google has detected low-quality pages or shallow pages on your site」。例 = thin affiliate pages / content from other sources (scraped など) / doorways。AdSense の不合格の理由と同じ文言ではない (AdSense の判定は別)。
+4. **exiledesk.com の初めの HTML (JS を実行しない取得) は本文が 40 字しかない** (題だけ。noscript も無い)。トップは JS で描かれるツール。**文章を読まないクローラーには「何のサイトか」を判断する文章が無い**。title と meta description はある。→ 要件 1・3 の「足りない」を裏づける。ただし AdSense のクローラーが JS を実行するかは**分からない**。
+5. **旧ドメインは Googlebot の UA で 301 → https://exiledesk.com/** (curl で確認、2026-10-22)。要件の「重複」の 2-3 は、クローラーには効いている。noindex は付いていない (301 のため要らない見込み)。Search Console のアドレス変更の状態は未確認。
+6. **実際の画面** (PC): トップは最初から「ベースを選ぶ」の操作画面 (部位のタイルの並び)。上の帯に「使い方・コツ / 要望・バグを送る / アプリ版はこちら」。画面の下にも小さなリンク。**読み物 (記事) への入口は無い**。/bases/ は文章の導入 + 部位ごとのリンク一覧で、静的ページ (見える文字はある)。
+**表の判定の直し**: 要件 1「足りない」(確定に近い)、要件 3 は「トップが JS だけ」で更に重い、要件 7 のナビゲーションは「帯は静的ページにはあるが、トップのツール画面には記事への導線が無い」。足りない物 5 行の 3 (記事の導線) に **トップの初めの HTML に文章を入れる (サイトが何かを説明する文・記事への入口)** を足す (ジン部長)。
