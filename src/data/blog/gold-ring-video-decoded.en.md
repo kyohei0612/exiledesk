@@ -9,7 +9,18 @@ draft: true
 ---
 We decoded a PoE2 Gold Ring craft from a video, step by step, fixing misheard Japanese captions into poe2db names. The "+20% to Maximum Quality" added midway is **a ladder to 40% Quality and bait that an Omen of Whittling is sure to remove**.
 
-We worked through a video that crafts a caster Gold Ring loaded with Rarity, naming every step. The Japanese auto-captions mishear a lot, so the steps can't be copied as they are. We rechecked every name against video frames (the in-game text on screen) and poe2db. Once the names are right, it also becomes clear why the video adds "+20% to Maximum Quality" only to remove it again.
+We were watching a video that crafts a caster Gold Ring loaded with Rarity, and the Japanese auto-captions stopped us cold. They mishear a lot, so the steps can't be copied as they are.
+
+So we rechecked every name, one step at a time, against video frames (the in-game text on screen) and poe2db.
+
+Once the names are right, it also becomes clear why the video adds "+20% to Maximum Quality" only to remove it again.
+
+:::summary What you'll learn
+- What 9 misheard captions really mean (for example, "Greater Exa" = Greater Exalted Orb)
+- The 8 steps to the finished ring, with the correct item names
+- "+20% to Maximum Quality" is **a ladder to 40% Quality** and **bait an Omen of Whittling is sure to remove**
+- Why a Perfect Chaos Orb rolled a level-47 mod
+:::
 
 ## Fixing the Captions
 
@@ -53,7 +64,15 @@ Steps 4b to 5 look like a detour: a whole mod slot is spent on "+20% to Maximum 
 2. **The mod is modifier level 1.** The "+20% to Maximum Quality" from an Essence of the Breach has modifier level 1.
 3. **Omen of Whittling removes the lowest-level mod.** The next Chaos Orb removes the non-Fractured mod with the lowest modifier level. A level-1 mod is almost always the one chosen.
 
-So "+20% to Maximum Quality" is both a ladder to 40% Quality and bait for the Omen of Whittling. You can try the Essence of the Breach and the Omen of Whittling on a Gold Ring on the [crafting bench](/?base=Gold%20Ring). In the video, step 5 used Whittling + Chaos, the Maximum Quality mod disappeared, and Evasion T2 appeared in its place.
+So "+20% to Maximum Quality" is both a ladder to 40% Quality and bait for the Omen of Whittling.
+
+:::tip Thinking in bait mods
+Put down a mod you know will be removed first, and you get to choose where the Omen of Whittling lands. Modifier level 1 mods make good bait.
+:::
+
+In the video, step 5 used Whittling + Chaos, the Maximum Quality mod disappeared, and Evasion T2 appeared in its place.
+
+### Does 40% Quality Lower the Cost?
 
 We also ran on the engine whether 40% Quality makes the suffixes cheaper. In the calculation for the three suffixes (fill to three, then annul; Perfect Exalted Orb with the Catalysing Omen, Greater Exalted Orb otherwise), 20% Quality cost 528 div per ring and 40% Quality (bait, Crystallisation and Breach included) cost 492 div. With 50 runs each, the margin is ±25%, so the difference is within the noise. The value of 40% is in the finished numbers rather than the cost (another method from the same calculation is in [Don't Hoard Your Misses](/en/blog/dont-hoard-misses/)).
 
@@ -68,7 +87,13 @@ The game's keyword text for minimum modifier level explains it: added mods are a
 - Names, tiers and modifier levels: poe2db's ring pages (Japanese and English). The step order: video frames (in-game text) and captions. The moments of Desecration and fracturing are not shown on screen and remain unconfirmed.
 - The 20% versus 40% comparison: the ExileDesk engine, 50 runs each. Not compared with Craft of Exile.
 
-You can try the same route from a Gold Ring in the Craft route tree.
+:::note Not yet verified
+The moments of Desecration and fracturing are not shown on screen in the video, so those steps rely on the captions alone.
+:::
+
+## Try It Yourself
+
+You can try the Essence of the Breach and the Omen of Whittling on a Gold Ring on the [crafting bench](/?base=Gold%20Ring). To try the whole route, use the [Craft route tree](/?page=sim-tree&base=Gold%20Ring).
 
 **Related posts**
 
