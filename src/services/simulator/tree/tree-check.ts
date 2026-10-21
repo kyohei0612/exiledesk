@@ -14,7 +14,7 @@ import { heldSets, MATCH, matchItem, matchTargets, RESTART, settle, shapesOf } f
 import { withTreeTune } from "./tree-tune";
 import { tr } from "../../../i18n/lang";
 
-export type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch";
+export type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst";
 export interface CheckIssue { boxId: string; kind: CheckKind; text: string }
 
 const PEOPLE = 5;
@@ -43,6 +43,8 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
   for (const b of boxes) {
     if (!b.hand && !b.back && !b.done) add(b.id, "open", b.out === "start" ? tr("最初の手を決めていない (ここで止まる)", "No first craft yet (stops here)") : tr("行き先を決めていない (ここで止まる)", "No next step yet (stops here)"));
     if (b.out === "hit" && !b.aim) add(b.id, "noAim", tr("付く MOD を選んでいない", "No mod picked for this hit"));
+    // 触媒のお告げはカタリストで入れた品質にだけ効く。カタリストを打つ手が無ければ効きは乗らない (10-22 オーナー「ちゃんと打つルートが無いとあかん」)
+    if (b.hand?.omens.includes(CATALYSING) && !b.hand.catalyst) add(b.id, "noCatalyst", tr("触媒のお告げなのにカタリストを打つ手が無い (手の札でカタリストを選ぶ)", "Catalysing omen without a catalyst craft (pick a catalyst in the craft)"));
   }
 
   // 1b) 形の合う箱へ: 行きうる形の箱がツリーに無い (tree-run の matchTargets、回す時と同じ判定)

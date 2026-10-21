@@ -26,7 +26,8 @@ const sample = computed(() => (s.data.value ? sampleOf(s.data.value, t.doc.value
 const item = computed(() => sample.value?.item ?? null);
 const held = ref<string | null>(props.current?.currency ?? null);
 const omens = ref<string[]>(props.current ? [...props.current.omens] : []);
-const catalyst = ref<string>(props.current?.catalyst ?? TREE_CATALYSTS[0]);
+/** 触媒の時に先に打つカタリスト (選ぶまで空。前は 1 つ目に黙って決まっていた、10-22 オーナー「勝手にカタリスト有りに設定しただろ」) */
+const catalyst = ref<string>(props.current?.catalyst ?? "");
 const spam = ref(!!props.current?.repeat);
 const spamMax = ref<number | null>(props.current?.repeat?.max ?? null);
 /** 狙い無し (足す手だけ。カオススパムとは一緒にしない) */
@@ -49,7 +50,7 @@ const hand = computed((): Hand | null => {
   if (!held.value) return null;
   return {
     currency: held.value, omens: used.value,
-    catalyst: catalysing.value ? catalyst.value : null, ...catFill.value,
+    catalyst: catalysing.value && catalyst.value ? catalyst.value : null, ...catFill.value,
     repeat: spam.value && canSpam(held.value) ? { until: "hit", max: spamMax.value && spamMax.value > 0 ? Math.round(spamMax.value) : null } : null,
     ...(free.value && canFree.value ? { free: true } : {}),
   };
@@ -57,7 +58,7 @@ const hand = computed((): Hand | null => {
 /** カタリストは今の品質の最大まで (1 押しと同じ)。その箱の見本で何個入って何 % になったかを持つ (計算を繋ぐ時の費用の目安) */
 const catFill = computed((): { quality: number; catalystCount: number } => {
   const d = s.data.value, it = item.value;
-  if (!catalysing.value || !d || !it) return { quality: 0, catalystCount: 0 };
+  if (!catalysing.value || !catalyst.value || !d || !it) return { quality: 0, catalystCount: 0 };
   const r = fillCatalyst(d, it, catalyst.value, mulberry32(1));
   return { quality: r.item.quality, catalystCount: r.count };
 });
@@ -103,10 +104,12 @@ function ok(): void {
         <b class="min-w-0 truncate" :title="hand ? handLabel(hand) : ''">{{ [nameOf(held), ...used.map(nameOf)].join(" + ") }}</b>
       </div>
       <div v-if="catalysing" class="flex flex-wrap items-center gap-2">
-        <select v-model="catalyst" class="h-8 rounded-md border border-white/15 bg-black/40 px-1">
+        <span class="text-[12px]">{{ tr("先に打つカタリスト", "Catalyst to use first") }}</span>
+        <select v-model="catalyst" data-tree-hand-catalyst-pick class="h-8 rounded-md border bg-black/40 px-1" :class="catalyst ? 'border-white/15' : 'border-amber-400/70'">
+          <option value="" disabled>{{ tr("カタリストを選ぶ", "Pick a catalyst") }}</option>
           <option v-for="c in TREE_CATALYSTS" :key="c" :value="c">{{ handName(c) }}</option>
         </select>
-        <span class="text-[12px] tabular-nums">{{ tr(`最大 ${catFill.quality}% まで (この箱で ${catFill.catalystCount} 個)`, `To max ${catFill.quality}% (×${catFill.catalystCount} here)`) }}</span>
+        <span v-if="catalyst" class="text-[12px] tabular-nums">{{ tr(`最大 ${catFill.quality}% まで (この箱で ${catFill.catalystCount} 個)`, `To max ${catFill.quality}% (×${catFill.catalystCount} here)`) }}</span>
         <span class="w-full text-[11px] opacity-60">{{ tr("打つたびに品質の最大まで入れ直す (触媒は 1 回で品質を使い切る)", "Refilled to max quality every time (Catalysing uses up the quality)") }}</span>
       </div>
       <label v-if="canSpam(held)" class="flex min-h-7 cursor-pointer flex-wrap items-center gap-2">
@@ -116,7 +119,7 @@ function ok(): void {
       <p v-if="kind" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ tr(RESULT[kind][0], RESULT[kind][1]) }}</p>
       <!-- 替える時は、消える箱の数を先に小さく (オーナー 10-22。1 つ戻す / Ctrl+Z で戻せる)。持ち直しは棚で別の物を押すだけ (ボタンは無し) -->
       <div class="flex flex-wrap items-center gap-1.5">
-        <button type="button" data-tree-hand-ok class="g-btn-red sm" :disabled="!!problem" :title="problem ?? undefined" @click="ok">{{ current ? tr("この手に替える", "Use this craft") : tr("この手にする", "Use this craft") }}</button>
+        <button type="button" data-tree-hand-ok class="g-btn-red sm" :disabled="!!problem || (catalysing && !catalyst)" :title="problem ?? (catalysing && !catalyst ? tr('先に打つカタリストを選ぶ', 'Pick the catalyst to use first') : undefined)" @click="ok">{{ current ? tr("この手に替える", "Use this craft") : tr("この手にする", "Use this craft") }}</button>
         <span v-if="problem" data-tree-hand-problem class="text-[11px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</span>
         <span v-else-if="gone" data-tree-hand-gone class="text-[11px] text-rose-200/90">{{ tr(`替えると下の ${gone} 箱が消える (1 つ戻すで戻せる)`, `Replacing removes ${gone} box(es) below (Undo restores)`) }}</span>
       </div>
