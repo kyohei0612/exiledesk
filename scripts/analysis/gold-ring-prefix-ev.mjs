@@ -14,6 +14,10 @@
  *        削減は「一番 MOD レベルの低い非固定の MOD」を消すので、サフィックスの狙いを消したらそこで「壊れた」として止める (やり直しは数えない)
  *   2b = 素の高貴 → 左側の抹消のお告げ + 完全のカオス を当たるまで (2 の「左側」を抹消と読んだ物)
  *   2c = 素の高貴 → 左側の抹消 + 削減 + 完全のカオス を当たるまで (「左側で削減」をそのまま 2 枚と読んだ物)
+ *   3  = (オーナー 10-22 の訂正) 餌 = サフィックスのレアリティ T1 (MOD レベル 40) より低いプレフィックスを、左側の結晶化 + パーフェクトのエッセンスで付け、
+ *        削減 + 完全のカオスで一番低い = 餌を消して 1 つ足す。当たらなければまた餌から (結晶化はプレフィックスだけを入れ替える)。
+ *        BAIT=alloy (ルーンの合金 = ルーンの守り、MOD レベル 13、既定) | abyss (アビスのエッセンス、1) | breach (ブリーチのエッセンス = 品質の最大値、1)。
+ *        始めは外れのプレフィックスが無いので、素の高貴で 1 つ付けてから結晶化で入れ替える
  */
 import { bundleEntry } from "../_bundle-ts.mjs";
 import { costOf as costIn, counter, headLine, mean, summarize } from "./_ev-common.mjs";
@@ -29,7 +33,11 @@ const data = M.loadPatch();
 const PRICES = {
   divine: 807.074, exalt: 1, exalt_greater: 13.380, chaos_perfect: 5922.686,
   OmenofSinistralExaltation: 90.130, OmenofSinistralErasure: 16063.627, OmenofWhittling: 11035.036,
+  OmenofSinistralCrystallisation: 316.321,
+  "essence:perfect:Rings/PerfectEssence_BaseRunicWard": 184.540, "essence:perfect:Rings/PerfectEssence_EssenceAbyss": 221.412, "essence:breach": 867.716,
 };
+const BAITS = { alloy: "essence:perfect:Rings/PerfectEssence_BaseRunicWard", abyss: "essence:perfect:Rings/PerfectEssence_EssenceAbyss", breach: "essence:breach" };
+const BAIT = BAITS[process.env.BAIT ?? "alloy"];
 const costOf = (n) => costIn(n, PRICES);
 
 const SD = data.mods.get("Rings/Special_genesis_tree_caster_SpellDamage");
@@ -49,7 +57,10 @@ const ROUTES = {
   2: { first: ["exalt", []], spam: ["chaos_perfect", ["OmenofWhittling"]] },
   "2b": { first: ["exalt", []], spam: ["chaos_perfect", ["OmenofSinistralErasure"]] },
   "2c": { first: ["exalt", []], spam: ["chaos_perfect", ["OmenofSinistralErasure", "OmenofWhittling"]] },
+  3: { first: ["exalt", []], spam: ["chaos_perfect", ["OmenofWhittling"]], bait: [BAIT, ["OmenofSinistralCrystallisation"]] },
 };
+/** 餌 = 非固定のプレフィックスで、サフィックスのどれより MOD レベルが低い物 */
+const hasBait = (it) => it.prefixes.some((m) => !m.fractured && it.suffixes.every((s) => m.modLevel < s.modLevel));
 
 function runOne(rng, route) {
   let it = start(rng);
@@ -67,7 +78,8 @@ function runOne(rng, route) {
   while (!hit(it)) {
     if (!sufOk(it)) return { done: false, broke: true, n, removed };
     if (++steps > LIMIT || (BUDGET > 0 && costOf(n) > BUDGET)) return { done: false, n, removed };
-    use(route.spam);
+    if (route.bait && !hasBait(it)) use(route.bait);
+    else use(route.spam);
   }
   if (!sufOk(it)) return { done: false, broke: true, n, removed };
   return { done: true, n, removed };
@@ -79,9 +91,9 @@ for (const key of (process.env.ROUTES ?? "1,2,2b,2c").split(",")) {
   const rs = Array.from({ length: N }, () => runOne(rng, ROUTES[key]));
   const s = summarize(rs, costOf), { done } = s;
   const broke = rs.filter((r) => r.broke);
-  console.log(`\n=== 道 ${key}: ${ROUTES[key].first[0]}${ROUTES[key].first[1].length ? " + " + ROUTES[key].first[1].join(" + ") : ""} → ${ROUTES[key].spam[1].join(" + ")} + ${ROUTES[key].spam[0]} (${N} 人, 打ち止め ${BUDGET} 神)`);
+  console.log(`\n=== 道 ${key}${ROUTES[key].bait ? ` (餌 ${BAIT})` : ""}:${ROUTES[key].first[0]}${ROUTES[key].first[1].length ? " + " + ROUTES[key].first[1].join(" + ") : ""} → ${ROUTES[key].spam[1].join(" + ")} + ${ROUTES[key].spam[0]} (${N} 人, 打ち止め ${BUDGET} 神)`);
   console.log(headLine(s, N) + `  壊れた (サフィの狙いが消えた) ${(100 * broke.length / N).toFixed(1)}%  打ち止め ${N - done.length - broke.length} 人`);
-  for (const k of ["exalt", "exalt_greater", "OmenofSinistralExaltation", "chaos_perfect", "OmenofSinistralErasure", "OmenofWhittling"]) {
+  for (const k of ["exalt", "exalt_greater", "OmenofSinistralExaltation", "chaos_perfect", "OmenofSinistralErasure", "OmenofWhittling", "OmenofSinistralCrystallisation", BAIT]) {
     const c = mean(done.map((r) => r.n[k] ?? 0));
     if (c) console.log(`  ${k.padEnd(28)} ${c.toFixed(2).padStart(8)} 個  ${(c * PRICES[k] / PRICES.divine).toFixed(2).padStart(8)} 神 (完成した人)`);
   }
