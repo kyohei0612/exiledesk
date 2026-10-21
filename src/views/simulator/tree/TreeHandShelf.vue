@@ -94,8 +94,8 @@ const spamAims = computed((): Aim[] => {
   const d = s.data.value;
   return kind.value === "spam" && d && item.value ? aimsOf(t.doc.value).filter((a) => !aimHeld(d, item.value!, a)) : [];
 });
-/** 結果が 1 通りの手か (この箱の見本にエンジンで打った行き先を全部たどる。触媒の手は前のカタリストを入れた後の見本で) */
-const only = computed(() => (hand.value && shelfItem.value && s.data.value ? singleOutOf(s.data.value, preCat.value ? shelfItem.value : item.value!, hand.value, aimsOf(t.doc.value)) : null));
+/** 結果が 1 通りの手か (この箱の見本 8 つにエンジンで打った行き先を全部たどる。触媒の手は前のカタリストを入れた後で) */
+const only = computed(() => (hand.value && s.data.value ? singleOutOf(s.data.value, t.doc.value, props.boxId, hand.value, preCat.value) : null));
 /** この手に替えると消える箱の数 (結果の箱から先。手の種類が同じなら 0。写しに打って数える) */
 const gone = computed((): number => {
   const h = hand.value, k = kind.value;

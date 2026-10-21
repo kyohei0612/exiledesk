@@ -56,20 +56,35 @@ export function outcomeOf(data: PatchData, before: StageItem, after: StageItem, 
 }
 
 /**
- * 結果が 1 通りの手 (10-22 オーナー「光のお告げの場合ハズレとかないから、使った時点でその先には冒涜が消えた状態の枠しかない」):
- * エンジンの stepOutcomes でこの箱の見本に打った行き先を全部たどり、結果の分け方 (outcomeOf) が 1 つだけならそれを返す (当たりは付く札も)。
+ * 結果が 1 通りの手 (10-22 オーナー「光のお告げの場合ハズレとかないから、使った時点でその先には冒涜が消えた状態の枠しかない」
+ * 「サフィ 3 MOD・プレ 1 MOD で左側の消去の時は狙いの MOD が無いから 1 通り。そういう判断は自動で」): 手を置く時に、この箱の見本を
+ * SINGLE_SEEDS 個作り (同じ箱でも外れが左右どちらかなどで違う)、それぞれにエンジンの stepOutcomes で起こりうる行き先を全部たどる。
+ * 全部の見本で結果の分け方 (outcomeOf) が同じ 1 つの時だけそれを返す (当たりは付く札も)。箱に着かなかった見本は数えない。
+ * pre = 前に品質を最大まで入れるカタリスト (触媒の手の前の札)。
  * 繰り返し・狙い無し・品質だけの手・未発現が付く手と、エンジンが枝に分けられない手 (数値だけ変わる手など) は null (今までどおり手の種類の箱)
  */
-export function singleOutOf(data: PatchData, item: StageItem, h: Hand, aims: readonly Aim[]): { out: OutKind; aim: Aim | null } | null {
+export function singleOutOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, pre: string | null = null): { out: OutKind; aim: Aim | null } | null {
   if (h.repeat || h.free || isCatalyst(h.currency)) return null;
-  const outs = stepOutcomes(data, item, h.currency, h.omens)?.filter((o) => !o.void);
-  // 未発現が付く手 (冒涜の骨) は、発現で選ぶ候補で当たり / 外れが分かれる
-  if (!outs?.length || outs.some((o) => unrevealedOf(o.item))) return null;
-  const res = outs.map((o) => outcomeOf(data, item, o.item, aims));
+  const aims = aimsOf(doc);
+  let one: { out: OutKind; hits: Aim[] } | null = null;
   const key = (r: { out: OutKind; hits: Aim[] }): string => `${r.out}:${r.hits.map((a) => `${a.modId}/${a.tier}`).join(",")}`;
-  if (new Set(res.map(key)).size !== 1 || res[0]!.hits.length > 1) return null;
-  return { out: res[0]!.out, aim: res[0]!.hits[0] ?? null };
+  for (let seed = 1; seed <= SINGLE_SEEDS; seed++) {
+    const smp = sampleOf(data, doc, boxId, seed);
+    if (smp.note === "none" || smp.note?.startsWith("cant:")) continue;
+    const item = pre ? fillCatalyst(data, smp.item, pre, mulberry32(seed)).item : smp.item;
+    const outs = stepOutcomes(data, item, h.currency, h.omens)?.filter((o) => !o.void);
+    // 未発現が付く手 (冒涜の骨) は、発現で選ぶ候補で当たり / 外れが分かれる
+    if (!outs?.length || outs.some((o) => unrevealedOf(o.item))) return null;
+    for (const o of outs) {
+      const r = outcomeOf(data, item, o.item, aims);
+      if (r.hits.length > 1 || (one && key(one) !== key(r))) return null;
+      one = r;
+    }
+  }
+  return one ? { out: one.out, aim: one.hits[0] ?? null } : null;
 }
+/** 結果が 1 通りかを見る見本の数 */
+const SINGLE_SEEDS = 8;
 
 /**
  * カタリストを 1 押しで、そのアイテムの今の品質の最大まで入れる (2026-10-22 オーナー「個数を数えて入れない」)。
