@@ -33,6 +33,7 @@
 | 解析君 | local_5b608b79-ae73-4df0-941b-428ba3e9a932 | 手空き。10-21 の計算の一覧は下の「解析君の 10-21」 |
 | ジン部長 | local_21a41678-0e18-4415-9936-ae8e59d19213 | 手空き。共通の部品・英語も持ち物に (10-21) |
 | リサーチ長 | local_5d0c0f13-6825-4cae-b903-af5d2aa51010 | 常駐 |
+| 分析君 | local_aa0d7097-1d1a-416e-9114-6bddb683cf7c | 常駐 (10-22 夜に立てた、日報・要望・サーバー) |
 | ほかの部長 | — | 仕事が来たらブラックが立てる |
 
 ## 解析君の 10-21 (金の指輪・マナ系の指輪・ES の手袋)
@@ -49,6 +50,7 @@
 | 誰 | ファイル |
 |---|---|
 | 記事編集長 ブログの仕上げ (10-22〜) | src/data/blog/ の記事 6 本 (*.ja.md・*.en.md、README・sample・chars は触らない)・src/data/blog/img/・docs/org/blog/ |
+| 解析君 ツリーの 100 人回し | src/services/simulator/tree/tree-run.ts (新)・docs/org/math/notes/2026-10-23-tree-run.md (新)・scripts/analysis/check-tree-run.mjs (新) |
 | (前の解析君の書きかけ、未 commit) | scripts/_flux-probe.test.ts・scripts/analysis/_yafu-ids.mjs |
 入口に無い物 (解析君 10-21、要る時だけジン部長へ): 重み 0 の MOD (創生の樹のスペルダメージ) を始めの形に置く手段 (startFrom が断る、解析君は makeStageMod を直に使った)。シミュで要るまで振らない。
 
