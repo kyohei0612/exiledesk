@@ -18,6 +18,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# YouTube への投稿 (publish/)。前は venv に手で入れていた (10-22 に pyproject へ)
+youtube = [
+  "google-api-python-client>=2",
+  "google-auth>=2",
+  "google-auth-oauthlib>=1",
+  "httplib2",
+]
 dev = [
   "pytest>=7",
   "pytest-cov>=4",
