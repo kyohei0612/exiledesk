@@ -1,19 +1,20 @@
 /**
  * _tree-quality-probe.test.ts — 品質だけ上げる手 (カタリスト、結果の箱無しの通り抜け pass) を白紙から組んで、見本・精査・100 人回しを並べる台本 (2026-10-22 シミュ部長 6 本目)。
  *
- *   pnpm exec vitest run -c scripts/_tree-quality-probe.config.ts
+ *   pnpm exec vitest run -c scripts/_tree-quality-probe.config.ts   (DUMP=<パス> で組んだ木を整列して JSON に書く = 開発版の localStorage exiledesk.tree.v0 に入れて画面で見る用)
  *
  * 組む形 (画面で人が組むのと同じ setHand / setAim / setDone の順): 始まり (金の指輪、スペルダメージ T2 のフラクチャー + 乱数 1 つ) →
  * カオスを当たるまで (キャストスピード T2+ / 全耐性 T2+。全耐性が先なら始めに戻ってもう一度) → トゥルのカタリスト (品質を最大まで) → 通り抜け → 触媒 + 右側の高貴のお告げ + 完全の高貴 (全耐性 T2+) →
  * 当たり = 完成 / 外れ → 消去 → 外れが消えた (自動で通り抜けの上の箱へ) / 狙いが消えた (始めに戻る)。合否は付けない (並べるだけ。見張りではない)
  */
+import { writeFileSync } from "node:fs";
 import { it } from "vitest";
 import { loadPatch } from "../tests/helpers/patch";
 import { sampleOf } from "../src/services/simulator/tree/tree-sample";
 import { checkTree } from "../src/services/simulator/tree/tree-check";
 import { runTree } from "../src/services/simulator/tree/tree-run";
 import { kindOfCurrency } from "../src/services/simulator/tree/tree-hands";
-import { kindOfHand, newTree, setAim, setDone, setHand, type Aim, type Hand } from "../src/services/simulator/tree/tree-model";
+import { kindOfHand, newTree, setAim, setDone, setHand, tidy, type Aim, type Hand } from "../src/services/simulator/tree/tree-model";
 
 const data = loadPatch();
 const hand = (currency: string, omens: string[] = [], extra: Partial<Hand> = {}): Hand => ({ currency, omens, catalyst: null, quality: 0, ...extra });
@@ -43,4 +44,5 @@ it("品質だけ上げる手", () => {
   for (const x of issues) console.log(`  ! ${x.boxId} ${x.kind} ${x.text}`);
   const r = runTree(data, d, { n: 100, seed: 1, price: () => 0 });
   console.log(`100 人: 完成 ${r.finished} · 打ち止め ${r.capped} · 止まり ${r.stuck} ${JSON.stringify(r.stuckAt)}`);
+  if (process.env.DUMP) { tidy(d); writeFileSync(process.env.DUMP, JSON.stringify(d)); }
 });
