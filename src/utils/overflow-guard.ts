@@ -2,7 +2,7 @@
  * overflow-guard.ts — 開発版だけ: 画面の横幅からはみ出した物を見つけて赤い枠と console.warn で知らせる (2026-10-13)
  *
  * スマホの Web 版は横を overflow-x: clip で切っているので、はみ出した所は黙って見切れる (要望 ea383d1e の発現の候補)。
- * オーナー「崩れない設計にするべき」→ 作っている時に気付けるように。横に送る箱 (overflow-x: auto など) の中は数えない。
+ * オーナー「崩れない設計にするべき」→ 作っている時に気付けるように。横に送る箱 (overflow-x: auto など) の中と、印 [data-overflow-ok] を付けた所の中は数えない。
  * window.__overflow() でも呼べる (確かめの時の一覧)
  */
 const MARK = "data-overflow-guard";
@@ -26,6 +26,8 @@ export function findOverflow(): Element[] {
     if (cs.position === "fixed" && r.left >= w) continue; // 画面の外に置いた引き出し
     if (cs.pointerEvents === "none") continue; // 打った時の波紋・落ちる絵などの動き
     if (e.getAnimations().length) continue; // すべり込む行など、動きの途中
+    // わざと枠の外まで送って外側の枠で切る所 (Vue Flow のツリーの中の層など。2026-10-22 シミュ部長): 印 data-overflow-ok を付けた所の中だけ数えない
+    if (e.closest("[data-overflow-ok]")) continue;
     if (out.some((o) => o.contains(e)) || scrollerOf(e)) continue;
     out.push(e);
   }
