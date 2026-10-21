@@ -13,5 +13,6 @@
   - 残り (10-21 使用量で止めた): ③ ④ とクラフト台の直し (開発版だけに出す)。クラフト台の直しの場所は notes/2026-10-20-j8-boost-table.md の表 (アイテムカードの MOD・ソケット・暗黙の行、履歴・小さいカード・スマホの帯の聖別)。
 
 ## OK 待ち
+- サイトの体裁 (1adfb648、開発版。docs/pending-release.md に OK 待ち、【要確認】5 か所はオーナーに)。ブログの部品 (d306fea0、README 4b)。
 - ブログの入れ物 (開発版だけ、notes/2026-10-22-blog.md)。本番は記事を読んでもらってから (build:web に build-blog-pages.mjs を足し、BLOG_ON を外す)。日報の行は分析君、コメント欄はこれから。
 - MOD の重みを直せる (開発版だけ、WEIGHTS_ON。notes/2026-10-22-mod-weight-edit.md)。本番はオーナーの OK の後。
