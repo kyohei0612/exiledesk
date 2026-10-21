@@ -75,8 +75,8 @@ function setBase(base: string, itemLevel: number): void {
     Object.assign(d, newTree(base, itemLevel));
   });
 }
-/** ベースを替えると消える物の数 (始まりの箱より下の箱・フラクチャー) */
-const lostOnBase = computed(() => Object.keys(doc.value.boxes).length - 1 + (doc.value.fracture ? 1 : 0));
+/** ベースを替えると消える箱の数 (始まりより下の、画面に出る箱。品質を上げた後の通り抜けは数えない) */
+const lostOnBase = computed(() => Object.values(doc.value.boxes).filter((b) => b.out !== "start" && b.out !== "pass").length);
 
 /** 木のベース (レア) に付く MOD の行。データが読めるまでは空 */
 const rows = computed((): ModRow[] => {

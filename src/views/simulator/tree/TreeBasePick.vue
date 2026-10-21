@@ -3,7 +3,7 @@
   一覧はクラフト台と同じ共通の BaseCatalog。アイテムレベルだけ替えるなら木はそのまま、ベースを替えると白紙から (下の箱があれば 1 回確かめる。1 つ戻すで戻せる)
 -->
 <script setup lang="ts">
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import BaseCatalog from "../../../components/items/BaseCatalog.vue";
 import NumStep from "../../../components/NumStep.vue";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -13,6 +13,9 @@ import { useTree } from "./use-tree";
 
 const emit = defineEmits<{ close: [] }>();
 const t = useTree();
+/** 開いたら今のベースの部位の一覧まで送る (クラフト台のベースを変えると同じ。上の片手武器から送らずに済む) */
+const catalog = ref<InstanceType<typeof BaseCatalog> | null>(null);
+onMounted(() => catalog.value?.reveal());
 
 const ILVL_MIN = 1;
 const ILVL_MAX = 100;
@@ -27,7 +30,7 @@ function setIlvl(v: number | null): void {
 const asking = ref<string | null>(null);
 function pick(en: string): void {
   if (en === t.doc.value.base) return;
-  if (t.lostOnBase.value > 0) { asking.value = en; return; }
+  if (t.lostOnBase.value > 0 || t.doc.value.fracture) { asking.value = en; return; }
   apply(en);
 }
 function apply(en: string): void {
@@ -47,14 +50,14 @@ function apply(en: string): void {
       <span class="flex-1">{{ tr("アイテムレベル", "Item level") }}</span>
       <NumStep :model-value="ilvl" integer width="w-20" :placeholder-value="t.doc.value.itemLevel" @update:model-value="setIlvl" />
     </label>
-    <!-- ベースを替えると下の箱が消える時だけ、1 回確かめる (札の編集の「下の n 箱が消える」と同じ) -->
-    <div v-if="asking" data-tree-base-ask class="rounded-md border border-rose-400/40 bg-rose-500/10 p-2 text-[13px]">
-      <p>{{ tr(`${jaTypeName(asking)} の白紙から組み直します。今の木の ${t.lostOnBase.value} 個 (箱・フラクチャー) が消えます (1 つ戻すで戻せます)。`, `Start over from a blank ${asking}. ${t.lostOnBase.value} item(s) of this tree (boxes, fracture) will be removed (Undo brings them back).`) }}</p>
+    <!-- ベースを替えると下の箱が消える時だけ、1 回確かめる (札の編集の「下の n 箱が消える」と同じ)。一覧を下に送った後でも見えるよう欄の上に貼り付ける -->
+    <div v-if="asking" data-tree-base-ask class="sticky top-0 z-10 rounded-md border border-rose-400/60 bg-[#2a1416] p-2 text-[13px] shadow-[0_6px_16px_rgba(0,0,0,0.6)]">
+      <p>{{ tr(`${jaTypeName(asking)} の白紙から組み直します。今の木 (箱 ${t.lostOnBase.value} 個${t.doc.value.fracture ? "・フラクチャー" : ""}) が消えます (1 つ戻すで戻せます)。`, `Start over from a blank ${asking}. This tree (${t.lostOnBase.value} box(es)${t.doc.value.fracture ? ", fracture" : ""}) will be removed (Undo brings it back).`) }}</p>
       <div class="mt-2 flex justify-end gap-2">
         <button type="button" class="g-btn sm" @click="asking = null">{{ tr("やめる", "Cancel") }}</button>
         <button type="button" data-tree-base-ok class="g-btn sm" @click="apply(asking!)">{{ tr("替える", "Change") }}</button>
       </div>
     </div>
-    <BaseCatalog :data="s.data.value" :selected="t.doc.value.base" @pick="pick" />
+    <BaseCatalog ref="catalog" :data="s.data.value" :selected="t.doc.value.base" @pick="pick" />
   </div>
 </template>
