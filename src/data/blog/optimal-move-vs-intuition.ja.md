@@ -3,7 +3,6 @@ title: PoE2 クラフトの期待値は勘と違う｜最善手は高いお告�
 description: PoE2 のクラフトの期待値を、形ごとに完成から後ろへ計算しました。勘に近い打ち方は約 3,400 ディバイン、最善手は約 105 ディバイン。高いお告げを使わず普通の消去で外れを消す理由を、エンジン 1,000 本の結果と解説します。
 date: 2026-10-22
 tags: 期待値, 消去のオーブ, お告げ, カオスオーブ, 手袋
-tree: /?page=sim-tree&base=Intricate%20Gloves
 craft: /?base=Intricate%20Gloves
 image: img/optimal-move-vs-intuition-og.ja.png
 ready: true
@@ -257,7 +256,7 @@ PoE2 のクラフトの期待値を後ろから計算すると、一番安い打
 
 ## 自分で試してみる
 
-手袋に 1 手ずつ打つ様子は [クラフト台](/?base=Intricate%20Gloves) で試せます。外れた時の手を変えながら比べるなら、[クラフトの道 (ツリー)](/?page=sim-tree&base=Intricate%20Gloves) へ。
+手袋に 1 手ずつ打つ様子は [クラフト台](/?base=Intricate%20Gloves) で試せます。
 
 **関連する記事**
 

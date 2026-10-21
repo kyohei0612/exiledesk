@@ -249,7 +249,7 @@ Expected-cost calculations drift from small details like the random generator, t
 
 ## Try It Yourself
 
-Play a craft one step at a time on the [crafting bench](/), or compare Chaos, Augmentation and Exalted spam in the [spam simulator](/?page=routes).
+Play a craft one step at a time on the [crafting bench](/), or compare Chaos, Augmentation and Exalted spam in the spam simulator, opened from the button by the Currency heading on the crafting bench.
 
 **Related posts**
 

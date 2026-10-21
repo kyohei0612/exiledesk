@@ -3,7 +3,6 @@ title: PoE2 カオスオーブで付け直すか作り直すか｜31 神と 580 
 description: PoE2 のクラフトで投射物 +2 が消えた時、カオスオーブで付け直すか作り直すかを期待費用で比べました。付け直しは平均約 31 神、作り直しは約 580 神。別の例の 54 場面でも作り直しが選ばれなかった話も解説します。
 date: 2026-10-22
 tags: カオスオーブ, カオススパム, 作り直し, 期待値, 手袋
-tree: /?page=sim-tree&base=Intricate%20Gloves
 craft: /?base=Intricate%20Gloves
 image: img/chaos-reroll-vs-restart-og.ja.png
 ready: true
@@ -268,7 +267,7 @@ PoE2 のクラフトで狙いの MOD が消えた時、**作り直しより、�
 
 ## 自分で試してみる
 
-手袋に 1 手ずつ打つ様子は [クラフト台](/?base=Intricate%20Gloves) で試せます。消えた後に付け直すか、別の手を選ぶかを比べるなら [クラフトの道 (ツリー)](/?page=sim-tree&base=Intricate%20Gloves) へ。
+手袋に 1 手ずつ打つ様子は [クラフト台](/?base=Intricate%20Gloves) で試せます。
 
 **関連する記事**
 

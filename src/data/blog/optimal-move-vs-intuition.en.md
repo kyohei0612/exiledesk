@@ -3,7 +3,6 @@ title: PoE2 Crafting Expected Cost: The Cheapest Move Skips Omens
 description: We worked out PoE2 crafting expected cost backward from the finished item. A route close to intuition costs about 3,400 div; the best route about 105 div. Why plain Orbs of Annulment beat expensive Omens, with 1,000 engine runs.
 date: 2026-10-22
 tags: expected cost, Orb of Annulment, Omen, Chaos Orb, gloves
-tree: /?page=sim-tree&base=Intricate%20Gloves
 craft: /?base=Intricate%20Gloves
 image: img/optimal-move-vs-intuition-og.en.png
 ready: true
@@ -257,7 +256,7 @@ Remove misses with a plain Annulment, and use a side-picking Omen only when a ta
 
 ## Try It Yourself
 
-You can apply the moves one by one on the [crafting bench](/?base=Intricate%20Gloves). To compare what you do after a miss, try the [Craft route tree](/?page=sim-tree&base=Intricate%20Gloves).
+You can apply the moves one by one on the [crafting bench](/?base=Intricate%20Gloves).
 
 **Related posts**
 

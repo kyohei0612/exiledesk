@@ -3,7 +3,6 @@ title: PoE2 聖別と品質の順番｜+6 は出て +5 は出ない理由
 description: PoE2 の聖別と品質は、素の値に聖別 → 品質の順で掛かります。品質 50% の不在のアミュレットで「全てのスペルスキルのレベル +6」は出ても +5 は出ません。取引所で +5 が 0 件だった理由を、倍率ごとの表で解説します。
 date: 2026-10-22
 tags: 聖別, 品質, 不在のアミュレット, 神のオーブ, カタリスト
-tree: /?page=sim-tree&base=Absent%20Amulet
 craft: /?base=Absent%20Amulet
 image: img/sanctify-quality-order-og.ja.png
 ready: true

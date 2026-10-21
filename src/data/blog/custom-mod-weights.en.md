@@ -1,14 +1,14 @@
 ---
 title: PoE2 Crafting Simulator Custom Weights: Edit Mod Weights
-description: Custom mod weights are coming to the ExileDesk PoE2 crafting simulator (in development). Cast Speed at weight 200 instead of 1,000 drops from 5.4% to 1.1%.
+description: Custom mod weights are coming to the ExileDesk PoE2 crafting simulator (not released yet, no release date). Cast Speed at weight 200 instead of 1,000 drops from 5.4% to 1.1%.
 date: 2026-10-22
-tags: weight, Cast Speed, Gold Ring, crafting simulator, in development
+tags: weight, Cast Speed, Gold Ring, crafting simulator, not released yet
 craft: /?base=Gold%20Ring
 image: img/custom-mod-weights-og.en.png
 ready: true
 draft: true
 ---
-ExileDesk, a PoE2 crafting simulator, now lets you change mod weights yourself on the crafting bench (**an in-development feature, on our dev build only for now**). On a Gold Ring with an Orb of Augmentation, lowering Cast Speed from the default weight of 1,000 to 200 drops its chance from **5.4% to 1.1%**.
+ExileDesk, a PoE2 crafting simulator, has a feature that lets you change mod weights yourself on the crafting bench (**not released yet; no release date**). On a Gold Ring with an Orb of Augmentation, lowering Cast Speed from the default weight of 1,000 to 200 drops its chance from **5.4% to 1.1%**.
 
 :::zundamon normal
 So what's the right weight for Cast Speed on rings?
@@ -23,11 +23,11 @@ They don't even agree! Then which one should I trust?
 :::
 
 :::metan happy
-That's why we ship a default you can edit. The owner put it simply: "Put it at 1000, and make it editable."
+That's why we built it with a default you can edit. The owner put it simply: "Put it at 1000, and make it editable."
 :::
 
 :::summary What you'll learn
-- Weights nobody can confirm now get a default (1,000 for Cast Speed) that you can edit (in development)
+- Weights nobody can confirm get a default (1,000 for Cast Speed) that you can edit (not released yet)
 - Gold Ring + Orb of Augmentation: Cast Speed rolls 5.43% at weight 1,000, 1.14% at 200 and 22.30% at 5,000
 - An edited weight changes both the actual rolls and the odds table, and it is kept when a craft is replayed or shared
 :::
@@ -144,7 +144,7 @@ No, your browser remembers it.
 
 ### What Does It Look Like on Screen?
 
-Open a row in the mod list and a bar appears above its tier table: "Weight [1000] Default 1000 ↺ Reset all (n)".
+Open a row in the mod list and a bar appears above its tier table: "Weight [1000] Default 1000 ↺ Reset all (n)". (We checked this on the unreleased screen.)
 
 :::zundamon normal
 What happens if I type 200 there?
@@ -205,7 +205,7 @@ Right. When you share a craft, "this assumes weight 5,000" travels with it.
 :::note fold Not yet verified (3)
 - The numbers above come from ExileDesk's own consistency script (comparing values inside the engine) and from the screen. They have not been compared with in-game results or Craft of Exile.
 - The default of 1,000 for Cast Speed is borrowed from Craft of Exile; whether it is the game's real weight is unknown.
-- This feature is **dev build only** and is not on the live crafting bench yet. No release date is set.
+- This feature is **not released yet** and is not on the live crafting bench. No release date is set.
 :::
 
 :::zundamon normal
@@ -220,19 +220,19 @@ Check the odds once at each candidate weight. That shows how much the mod actual
 If you can't settle on one value, compare the odds once at each candidate weight (say 200 and 1,000). That shows how much the mod actually drives your cost. (This is for once the feature is live.)
 :::
 
-Weights nobody can confirm now get a default that you can edit. An edited weight applies the same way to rolls, the odds table and replays.
+Weights nobody can confirm get a default that you can edit (coming later). An edited weight applies the same way to rolls, the odds table and replays.
 
 ## Where the Numbers Come From
 
 :::fold Show sources (3)
 - Augmentation odds (odds table, mod list, 4,000 rolls): ExileDesk engine, a consistency script run on 2026-10-22 (emulator team note 2026-10-22-mod-weight-edit). Label: **engine** (not external truth).
-- 5.4% to 1.1% on screen, 0.2% per tier, and the label texts: checked on a local dev build at 1660×860 (same note). Label: **engine**.
+- 5.4% to 1.1% on screen, 0.2% per tier, and the label texts: checked on ExileDesk's internal build at 1660×860 (same note). Label: **engine**.
 - Weight sources (poe2db 1, Craft of Exile 1,000, ExileDesk 1,000 since 2026-09-23): the table in [our earlier post](/en/blog/poe2db-cast-speed-weight/). Label: **poe2db / CoE**. The game's real weight is an **estimate** (nobody knows it).
 :::
 
 ## Try It Yourself
 
-On the live [crafting bench](/?base=Gold%20Ring), you can craft a Gold Ring at weight 1,000 today. Weight editing is still in development; we'll update this post when it goes live.
+Open a Gold Ring on the live [crafting bench](/?base=Gold%20Ring) and look at the chance column in the mod list. It shows the odds at weight 1,000 today. Weight editing is not released yet (no release date); we'll update this post when it goes live.
 
 **Related posts**
 

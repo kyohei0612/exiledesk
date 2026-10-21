@@ -3,7 +3,6 @@ title: PoE2 キャストスピードの重み｜poe2db は 1、CoE は 1,000
 description: PoE2 の指輪のキャストスピードの重みは、poe2db では 1、Craft of Exile と ExileDesk では 1,000 です。どちらを使うかで右側の高貴 + 上級で T2 以上が付く確率は 4.37% と 0.00% に分かれます。表を並べて確かめました。
 date: 2026-10-22
 tags: poe2db, Craft of Exile, 重み, キャストスピード, 金の指輪
-tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
 image: img/poe2db-cast-speed-weight-og.ja.png
 ready: true

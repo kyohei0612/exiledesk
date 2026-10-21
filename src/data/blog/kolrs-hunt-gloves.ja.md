@@ -3,7 +3,6 @@ title: PoE2 コルの狩りを差した手袋に出る MOD｜投射物 +2 とク
 description: PoE2 の手袋で投射物スキルのレベル +2 やクリティカルヒット率が出るのは、ルーン「コルの狩り」を差した時だけです。差すと何が抽選に混ざるか、ES 手袋の費用がどれだけ変わるかをエンジンで確かめました。
 date: 2026-10-22
 tags: コルの狩り, ルーン, 手袋, マークスマン, 投射物
-tree: /?page=sim-tree&base=Sirenscale%20Gloves
 craft: /?base=Sirenscale%20Gloves
 image: img/kolrs-hunt-gloves-og.ja.png
 ready: true
@@ -190,7 +189,7 @@ T2 以上に限ると、プレフィックスが埋まった手袋で 1 回 2.48
 
 ## 自分で試してみる
 
-[クラフト台](/?base=Sirenscale%20Gloves) でサイレーンスケイルの手袋にルーンをはめてから打つと、マークスマンの MOD が一覧に出ます。高貴の種類を変えながら比べるなら [クラフトの道 (ツリー)](/?page=sim-tree&base=Sirenscale%20Gloves) へ。
+[クラフト台](/?base=Sirenscale%20Gloves) でサイレーンスケイルの手袋にルーンをはめてから打つと、マークスマンの MOD が一覧に出ます。
 
 **関連する記事**
 

@@ -3,7 +3,6 @@ title: PoE2 お告げは高い？使うべきか｜消去 0.44 神で足りる�
 description: PoE2 のお告げは高い物で 1 個 12.9〜19.4 神、消去のオーブは 0.44 神。手袋の最善手の計算で、お告げを使うべき場面と普通の消去で足りる場面を値段つきで分けました。境目の見当の式は 54 場面とも計算の答えと向きが合っています。
 date: 2026-10-22
 tags: お告げ, 消去のオーブ, 期待値, 手袋, 相場
-tree: /?page=sim-tree&base=Intricate%20Gloves
 craft: /?base=Intricate%20Gloves
 image: img/are-omens-worth-it-og.ja.png
 ready: true
@@ -235,7 +234,7 @@ poe2db の各ページにある取引レート (2026-10-21 に取得) を並べ�
 
 ## 自分で試してみる
 
-外れが付いた場面で普通の消去とお告げを打ち比べるなら、[クラフト台](/?base=Intricate%20Gloves) で手袋に 1 手ずつ打てます。手ごとの分かれ方は [クラフトの道 (ツリー)](/?page=sim-tree&base=Intricate%20Gloves) で見比べられます。
+外れが付いた場面で普通の消去とお告げを打ち比べるなら、[クラフト台](/?base=Intricate%20Gloves) で手袋に 1 手ずつ打てます。
 
 **関連する記事**
 

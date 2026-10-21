@@ -242,7 +242,7 @@ Bones split into three slots and three grades, and the grades differ only in lev
 
 ## Try It Yourself
 
-Try different bones on Sirenscale Gloves on the [crafting bench](/?base=Sirenscale%20Gloves) and compare the reveal options. To compare costs of routes that include desecration, use the [Craft route tree](/?page=sim-tree&base=Sirenscale%20Gloves).
+Try different bones on Sirenscale Gloves on the [crafting bench](/?base=Sirenscale%20Gloves) and compare the reveal options.
 
 **Related posts**
 

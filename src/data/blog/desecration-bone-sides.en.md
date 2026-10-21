@@ -227,7 +227,7 @@ A bone lands 50/50 when both sides are open, and on the side of the equally remo
 
 ## Try It Yourself
 
-Use a bone on gloves on the [crafting bench](/?base=Sirenscale%20Gloves) to see how the side changes with and without a Necromancy omen. To compare the costs of routes that include Desecration, try the [Craft route tree](/?page=sim-tree&base=Sirenscale%20Gloves).
+Use a bone on gloves on the [crafting bench](/?base=Sirenscale%20Gloves) to see how the side changes with and without a Necromancy omen.
 
 **Related posts**
 

@@ -3,7 +3,6 @@ title: PoE2 Mana Ring Craft: Five Targets Cost 1,991 div
 description: We ran a PoE2 mana Gold Ring (maximum Mana %, maximum Mana T1, Cast Speed, all Resistances T1, Mana Regeneration T1) on the engine, 300 runs per method. It costs 1,991 div per ring and finishes 64% of the time; loosening Resistances and Mana Regeneration to T2+ brings it to 643 div.
 date: 2026-10-22
 tags: Gold Ring, maximum Mana, Perfect Essence, Neural Catalyst, expected cost
-tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
 image: img/mana-ring-craft-og.en.png
 ready: true
@@ -238,7 +237,7 @@ In a five-target mana ring, Resistances T1 and Mana Regeneration T1 make up most
 
 ## Try It Yourself
 
-You can try the mana targets one craft at a time on a [Gold Ring on the crafting bench](/?base=Gold%20Ring). To compare the order of moves, try the [Craft route tree](/?page=sim-tree&base=Gold%20Ring).
+You can try the mana targets one craft at a time on a [Gold Ring on the crafting bench](/?base=Gold%20Ring).
 
 **Related posts**
 

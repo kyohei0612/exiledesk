@@ -3,7 +3,6 @@ title: PoE2 Chaos Orb Reroll vs Restart: 31 div vs 580 div
 description: When +2 Projectile is lost mid-craft in PoE2, should you reroll it with Chaos Orbs or restart? Rerolling averaged about 31 div, restarting about 580 div, and in a separate 54-situation example restarting was never chosen.
 date: 2026-10-22
 tags: Chaos Orb, chaos spam, restart, expected cost, gloves
-tree: /?page=sim-tree&base=Intricate%20Gloves
 craft: /?base=Intricate%20Gloves
 image: img/chaos-reroll-vs-restart-og.en.png
 ready: true
@@ -268,7 +267,7 @@ When a target mod is lost, rerolling from what you have is cheaper than restarti
 
 ## Try It Yourself
 
-You can apply the moves one by one on the [crafting bench](/?base=Intricate%20Gloves). To compare rerolling against other moves after a mod is lost, try the [Craft route tree](/?page=sim-tree&base=Intricate%20Gloves).
+You can apply the moves one by one on the [crafting bench](/?base=Intricate%20Gloves).
 
 **Related posts**
 

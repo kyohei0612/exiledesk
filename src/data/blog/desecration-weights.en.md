@@ -262,7 +262,7 @@ Right now, no real weights for Desecrated-only mods exist anywhere. ExileDesk tr
 
 ## Try It Yourself
 
-Put a bone on a Gold Ring on the [crafting bench](/?base=Gold%20Ring) and Reveal it to see the options. To compare the cost of routes that include Desecration, use the [Craft route tree](/?page=sim-tree&base=Gold%20Ring).
+Put a bone on a Gold Ring on the [crafting bench](/?base=Gold%20Ring) and Reveal it to see the options.
 
 **Related posts**
 

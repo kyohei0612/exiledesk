@@ -3,7 +3,6 @@ title: PoE2 Catalyst Types: Which Mods Each One Boosts
 description: All 13 PoE2 catalyst types in one table, by the mod tag each one enhances: Neural for Mana, Sibilant for Caster, Skittering for Speed. Rings and amulets only, and a new type restarts quality from 0. Plus how to pick for a mana Gold Ring, and rough prices.
 date: 2026-10-22
 tags: Catalyst, Quality, Gold Ring, Neural Catalyst, Sibilant Catalyst
-tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
 image: img/catalyst-types-og.en.png
 ready: true
@@ -256,7 +255,7 @@ The basic rule: look at your target mod's tags first, then pick one catalyst typ
 
 ## Try It Yourself
 
-To swap catalysts and compare which mods quality changes, try a Gold Ring on the [crafting bench](/?base=Gold%20Ring). To compare routes to your target mod, use the [Craft route tree](/?page=sim-tree&base=Gold%20Ring).
+To swap catalysts and compare which mods quality changes, try a Gold Ring on the [crafting bench](/?base=Gold%20Ring).
 
 **Related posts**
 

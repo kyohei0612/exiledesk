@@ -3,7 +3,6 @@ title: PoE2 Craft of Exile で冒涜は計算できない｜重みも無い
 description: PoE2 の知性の手袋 (アイテムレベル 82) で Craft of Exile の冒涜の計算を確かめました。15 種の表に重みの列は無く、Desecrate は「No handler」。骨 3 種の表示と計画の立て方をまとめます。
 date: 2026-10-22
 tags: 冒涜, Craft of Exile, 肋骨, 手袋, 重み
-tree: /?page=sim-tree&base=Sirenscale%20Gloves
 craft: /?base=Sirenscale%20Gloves
 image: img/coe-desecrate-no-handler-og.ja.png
 ready: true
@@ -265,7 +264,7 @@ Craft of Exile で分かるのは、冒涜で出る MOD の一覧と骨の使え
 
 ## 自分で試してみる
 
-サイレーンスケイルの手袋に肋骨を打って、冒涜の候補の出方を [クラフト台](/?base=Sirenscale%20Gloves) で確かめられます。冒涜を混ぜた手順の費用は [クラフトの道 (ツリー)](/?page=sim-tree&base=Sirenscale%20Gloves) で比べられます。
+サイレーンスケイルの手袋に肋骨を打って、冒涜の候補の出方を [クラフト台](/?base=Sirenscale%20Gloves) で確かめられます。
 
 **関連する記事**
 

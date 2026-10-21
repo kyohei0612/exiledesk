@@ -3,7 +3,6 @@ title: PoE2 Craft of Exile Desecrate: No Handler, No Weights
 description: We checked Desecration odds on PoE2 Intelligence gloves (Item Level 82) in Craft of Exile. The 15-mod table has no Weight column, and Desecrate shows "No handler". What the three Ribs show, and how to plan.
 date: 2026-10-22
 tags: Desecration, Craft of Exile, Rib, gloves, weight
-tree: /?page=sim-tree&base=Sirenscale%20Gloves
 craft: /?base=Sirenscale%20Gloves
 image: img/coe-desecrate-no-handler-og.en.png
 ready: true
@@ -265,7 +264,7 @@ Craft of Exile tells you which mods Desecration can roll and which bones are all
 
 ## Try It Yourself
 
-Use a Rib on Sirenscale Gloves on the [crafting bench](/?base=Sirenscale%20Gloves) to see how the Desecration options come up. To compare costs of routes that include Desecration, use the [Craft route tree](/?page=sim-tree&base=Sirenscale%20Gloves).
+Use a Rib on Sirenscale Gloves on the [crafting bench](/?base=Sirenscale%20Gloves) to see how the Desecration options come up.
 
 **Related posts**
 

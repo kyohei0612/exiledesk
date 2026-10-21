@@ -3,7 +3,6 @@ title: PoE2 アーケインサージの冒涜｜出る手袋と当たる割合
 description: PoE2 で冒涜のアーケインサージ (クルガルの) が付くのは知性を含む手袋で、知性の手袋では冒涜 MOD 15 種の 1 つです。発現の 3 候補に出る割合はエンジンで 7.4%。骨の選び方と、Craft of Exile でも計算できない理由をまとめます。
 date: 2026-10-22
 tags: 冒涜, アーケインサージ, 手袋, 肋骨, クルガル
-tree: /?page=sim-tree&base=Sirenscale%20Gloves
 craft: /?base=Sirenscale%20Gloves
 image: img/arcane-surge-desecrated-gloves-og.ja.png
 ready: true
@@ -266,7 +265,7 @@ Craft of Exile で計算すれば、正しい割合が分かるのだ。
 
 ## 自分で試してみる
 
-手袋への冒涜は [クラフト台](/?base=Sirenscale%20Gloves) で打って、候補の出方を確かめられます。打ち方を並べて比べるなら [クラフトの道 (ツリー)](/?page=sim-tree&base=Sirenscale%20Gloves) へ。
+手袋への冒涜は [クラフト台](/?base=Sirenscale%20Gloves) で打って、候補の出方を確かめられます。
 
 **関連する記事**
 

@@ -3,7 +3,6 @@ title: PoE2 Chaos Spam Odds: How Many Orbs at 0.3% per Try
 description: In PoE2 chaos spam, a T1 target landed 0.30 to 0.32% per Chaos Orb in our glove example. That means about 313 orbs on average, 216 for half of all runs, and 718 or more for one in ten. We also compare what annulling misses early saves.
 date: 2026-10-22
 tags: Chaos Orb, chaos spam, odds, expected cost, Gold Ring
-tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
 image: img/chaos-spam-odds-og.en.png
 ready: true
@@ -173,7 +172,7 @@ One chaos spam try hits only about 0.3% of the time, and using more than the ave
 
 ## Try It Yourself
 
-You can try the spam on a [Gold Ring on the crafting bench](/?base=Gold%20Ring). To compare methods side by side, try the [Craft route tree](/?page=sim-tree&base=Gold%20Ring).
+You can try the spam on a [Gold Ring on the crafting bench](/?base=Gold%20Ring). To compare methods side by side, open the spam simulator from the button by the Currency heading on the crafting bench.
 
 **Related posts**
 

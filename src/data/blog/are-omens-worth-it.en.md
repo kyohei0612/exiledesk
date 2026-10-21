@@ -3,7 +3,6 @@ title: PoE2 Omens Worth It? When a Plain Annul Is Enough
 description: Are PoE2 omens worth it? The expensive ones cost 12.9-19.4 div each; an Orb of Annulment costs 0.44 div. Using optimal-play calculations on gloves, we sort the spots where an omen pays from the ones where a plain Annul is enough. Our rule of thumb points the same way as the calculation in all 54 spots.
 date: 2026-10-22
 tags: Omen, Orb of Annulment, expected cost, gloves, prices
-tree: /?page=sim-tree&base=Intricate%20Gloves
 craft: /?base=Intricate%20Gloves
 image: img/are-omens-worth-it-og.en.png
 ready: true
@@ -235,7 +234,7 @@ Use an expensive omen only when there's a target to protect on the side with no 
 
 ## Try It Yourself
 
-To compare a plain Annul and an omen after a miss, apply moves one at a time to gloves on the [crafting bench](/?base=Intricate%20Gloves). The [Craft route tree](/?page=sim-tree&base=Intricate%20Gloves) shows how each move branches.
+To compare a plain Annul and an omen after a miss, apply moves one at a time to gloves on the [crafting bench](/?base=Intricate%20Gloves).
 
 **Related posts**
 

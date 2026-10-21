@@ -3,7 +3,6 @@ title: PoE2 Arcane Surge Desecrated Gloves: Where It Rolls and How Often
 description: In PoE2, the Desecrated Arcane Surge mod (of Kurgal) only rolls on gloves with Intelligence; on Intelligence gloves it is one of 15 Desecrated mods. It appears among the 3 reveal options 7.4% of the time on the ExileDesk engine. Which bone to use, and why Craft of Exile can't calculate it either.
 date: 2026-10-22
 tags: Desecration, Arcane Surge, gloves, Rib, Kurgal
-tree: /?page=sim-tree&base=Sirenscale%20Gloves
 craft: /?base=Sirenscale%20Gloves
 image: img/arcane-surge-desecrated-gloves-og.en.png
 ready: true
@@ -266,7 +265,7 @@ Arcane Surge rolls only on gloves with Intelligence, and it shows up among the t
 
 ## Try It Yourself
 
-You can Desecrate gloves on the [crafting bench](/?base=Sirenscale%20Gloves) to see how the options come up. To compare methods side by side, try the [Craft route tree](/?page=sim-tree&base=Sirenscale%20Gloves).
+You can Desecrate gloves on the [crafting bench](/?base=Sirenscale%20Gloves) to see how the options come up.
 
 **Related posts**
 

@@ -260,7 +260,7 @@ The spam simulator compares nine ways to chase one mod, 100 runs each. Put the a
 
 ## Try It Yourself
 
-Open the [spam simulator](/?page=routes), pick one target mod and press "Start" to see all nine costs. It's also reachable from the button by the Currency heading.
+On the [crafting bench](/?base=Gold%20Ring), open the spam simulator from the button by the Currency heading, pick one target mod and press "Start" to see all nine costs.
 
 **Related posts**
 

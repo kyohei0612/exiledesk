@@ -3,7 +3,6 @@ title: PoE2 Ring Suffix Craft: Annul Misses Early, 400 → 220 div
 description: We crafted Rarity, Cast Speed and all Elemental Resistances on a PoE2 Gold Ring's suffixes, 300 engine runs per method. Annulling misses at once cut the cost per ring from 400 to 220 Divine Orbs.
 date: 2026-10-22
 tags: Gold Ring, Chaos Orb, Orb of Annulment, Omen of Catalysing Exaltation, expected cost
-tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
 image: img/dont-hoard-misses-og.en.png
 ready: true
@@ -236,7 +235,7 @@ Annulling a non-target suffix on the spot, instead of holding it, was the cheape
 
 ## Try It Yourself
 
-You can [try the same Gold Ring on the crafting bench](/?base=Gold%20Ring). To compare costs while changing what you do after a miss, use ExileDesk's [Craft route tree](/?page=sim-tree&base=Gold%20Ring).
+You can [try the same Gold Ring on the crafting bench](/?base=Gold%20Ring).
 
 **Related posts**
 

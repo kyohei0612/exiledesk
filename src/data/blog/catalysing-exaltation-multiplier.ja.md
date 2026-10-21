@@ -3,7 +3,6 @@ title: PoE2 触媒の高貴のお告げの倍率｜公式の数字は誰も知�
 description: PoE2 の触媒の高貴のお告げの倍率は、公式の数字がありません。ExileDesk の既定は Craft of Exile の式 1 + 0.2 × 品質 (20% で 5 倍)。Reddit の実測 2 点との関係と、倍率を自分で決められるようにした理由を解説します。
 date: 2026-10-22
 tags: 触媒の高貴のお告げ, カタリスト, 品質, 高貴なオーブ, 金の指輪
-tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
 image: img/catalysing-exaltation-multiplier-og.ja.png
 ready: true
@@ -249,7 +248,7 @@ CoE の式の形のまま、傾きだけが変わるわ。
 
 ## 自分で試してみる
 
-金の指輪の [クラフト台](/?base=Gold%20Ring) で、触媒の高貴のお告げを掛けると名前の下で倍率を変えられます。打ち方ごとの費用を比べるなら [クラフトの道 (ツリー)](/?page=sim-tree&base=Gold%20Ring) へ。
+金の指輪の [クラフト台](/?base=Gold%20Ring) で、触媒の高貴のお告げを掛けると名前の下で倍率を変えられます。
 
 **関連する記事**
 

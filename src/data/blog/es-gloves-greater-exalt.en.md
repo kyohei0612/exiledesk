@@ -3,7 +3,6 @@ title: PoE2 Energy Shield Gloves Craft: Greater Exalt Beats Perfect
 description: For a PoE2 Energy Shield gloves craft, we compared Exalted Orb types for maximum ES, ES% and maximum Mana at T2+, 300 runs each. Greater was cheapest at 105 div; Perfect cost 201 and the plain Exalted Orb 423.
 date: 2026-10-22
 tags: gloves, Energy Shield, Exalted Orb, Chaos Orb, expected cost
-tree: /?page=sim-tree&base=Sirenscale%20Gloves
 craft: /?base=Sirenscale%20Gloves
 image: img/es-gloves-greater-exalt-og.en.png
 ready: true
@@ -253,7 +252,7 @@ For ES glove prefixes, the Greater Exalted Orb was the cheapest. Perfect isn't a
 
 ## Try It Yourself
 
-You can apply the same moves to Sirenscale Gloves on the [crafting bench](/?base=Sirenscale%20Gloves). To compare Exalted Orb types side by side, try the [Craft route tree](/?page=sim-tree&base=Sirenscale%20Gloves).
+You can apply the same moves to Sirenscale Gloves on the [crafting bench](/?base=Sirenscale%20Gloves).
 
 **Related posts**
 

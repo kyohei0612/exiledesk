@@ -3,7 +3,6 @@ title: PoE2 ES 手袋のクラフト｜高貴は完全より上級が安い
 description: PoE2 の ES 手袋のクラフトで、最大エナジーシールド・ES%・最大マナを T2 以上で揃える費用を高貴なオーブの種類ごとに 300 人ずつ比べました。上級が 105 ディバインで最安、完全は 201、通常は 423 ディバインです。
 date: 2026-10-22
 tags: 手袋, エナジーシールド, 高貴なオーブ, カオスオーブ, 期待値
-tree: /?page=sim-tree&base=Sirenscale%20Gloves
 craft: /?base=Sirenscale%20Gloves
 image: img/es-gloves-greater-exalt-og.ja.png
 ready: true
@@ -253,7 +252,7 @@ ES 手袋のプレフィックスは、上級の高貴が一番安く揃いま�
 
 ## 自分で試してみる
 
-サイレーンスケイルの手袋は [クラフト台](/?base=Sirenscale%20Gloves) で同じ手を打って試せます。高貴の種類を変えながら比べるなら [クラフトの道 (ツリー)](/?page=sim-tree&base=Sirenscale%20Gloves) へ。
+サイレーンスケイルの手袋は [クラフト台](/?base=Sirenscale%20Gloves) で同じ手を打って試せます。
 
 **関連する記事**
 

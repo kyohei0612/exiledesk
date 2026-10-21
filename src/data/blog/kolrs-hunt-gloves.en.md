@@ -3,7 +3,6 @@ title: PoE2 Kolr's Hunt Gloves: Where +2 Projectile and Crit Chance Come From
 description: In PoE2, +2 to Level of all Projectile Skills and Critical Hit Chance roll on gloves only with the rune Kolr's Hunt socketed. We checked on the engine what it adds to the mod pool and how much it changes an ES glove craft.
 date: 2026-10-22
 tags: Kolr's Hunt, Rune, gloves, Marksman, Projectile
-tree: /?page=sim-tree&base=Sirenscale%20Gloves
 craft: /?base=Sirenscale%20Gloves
 image: img/kolrs-hunt-gloves-og.en.png
 ready: true
@@ -190,7 +189,7 @@ Kolr's Hunt is the only way to get +2 Projectile or Critical Hit Chance on glove
 
 ## Try It Yourself
 
-On the [crafting bench](/?base=Sirenscale%20Gloves), socket the runes into Sirenscale Gloves before crafting and the Marksman mods appear in the list. To compare Exalted Orb types, go to the [Craft route tree](/?page=sim-tree&base=Sirenscale%20Gloves).
+On the [crafting bench](/?base=Sirenscale%20Gloves), socket the runes into Sirenscale Gloves before crafting and the Marksman mods appear in the list.
 
 **Related posts**
 

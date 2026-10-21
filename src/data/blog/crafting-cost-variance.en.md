@@ -3,7 +3,6 @@ title: PoE2 Crafting Cost Variance: Average, Median and Unlucky 10%
 description: Average cost alone misleads in PoE2 crafting. In five examples run on the ExileDesk engine, half the runs finished at about 70% of the average, and one in ten paid more than twice the average. Plus how to read "cost per item" with a cap.
 date: 2026-10-22
 tags: expected cost, cost, luck, median, cap
-tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
 image: img/crafting-cost-variance-og.en.png
 ready: true
@@ -211,7 +210,7 @@ Look at "half the runs" and "one in ten" alongside the average, and you won't mi
 
 ## Try It Yourself
 
-Apply the same moves a few times on a [Gold Ring on the crafting bench](/?base=Gold%20Ring) and you'll feel the spread for yourself. To compare the cost of each method, try the [Craft route tree](/?page=sim-tree&base=Gold%20Ring).
+Apply the same moves a few times on a [Gold Ring on the crafting bench](/?base=Gold%20Ring) and you'll feel the spread for yourself.
 
 **Related posts**
 
