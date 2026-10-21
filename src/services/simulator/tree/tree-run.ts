@@ -5,11 +5,11 @@
  * 打つのは全部エンジンの入口 (applyCurrency / fillCatalyst)。結果の分け方は tree-sample.ts の outcomeOf・aimsOf (見本と同じ分け方)。
  * 繰り返し (当たるまで) は tree-sample の playHand と同じ流れを、個数を数えるためにここでたどる (playHand を変える時はここも合わせる)。
  */
-import { applyCurrency, mulberry32, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
-import { CATALYSING, kindOfCurrency } from "./tree-hands";
-import { aimHeld, aimsOf, fillCatalyst, outcomeOf, startItemOf as startOf } from "./tree-sample";
+import { mulberry32, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { kindOfCurrency } from "./tree-hands";
+import { aimHeld, aimsOf, outcomeOf, playHand, startItemOf as startOf } from "./tree-sample";
 import { withTreeTune } from "./tree-tune";
-import { aimKey, MATCH_BACK, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
+import { aimKey, MATCH_BACK, type Aim, type TreeBox, type TreeDoc } from "./tree-model";
 
 export interface TreeRunOpts {
   /** 人数 (裏は 100、確かめは 300) */
@@ -65,42 +65,10 @@ export interface TreeRunResult {
   boxes: Record<string, BoxStat>;
 }
 
-/** 繰り返しの上限が無い時の見張り (tree-sample の SPAM_CAP と同じ) */
-const SPAM_CAP = 5000;
-
 type End = "done" | "capped" | "stuck";
 interface Person { end: End; cost: number; at: string; visits: { box: string; cost: number }[]; uses: Record<string, number>; restarts: number }
 
 const startItemOf = (data: PatchData, doc: TreeDoc, rng: () => number): StageItem => startOf(data, doc, rng).item;
-
-/** 手を 1 回打つ (playHand と同じ流れ)。use で使った物を数える */
-function play(data: PatchData, item: StageItem, h: Hand, rng: () => number, aims: readonly Aim[], use: (key: string, n?: number) => void): StageApply {
-  if (h.repeat) {
-    const cap = h.repeat.max ?? SPAM_CAP;
-    let r: StageApply = { applied: false, item, added: [], removed: [] };
-    let it = item;
-    for (let i = 0; i < cap; i++) {
-      r = play(data, it, { ...h, repeat: null }, rng, aims, use);
-      if (!r.applied) return i ? { ...r, applied: true, item: it } : r;
-      it = r.item;
-      if (outcomeOf(data, item, it, aims).out === "hit") break;
-    }
-    return { ...r, item: it };
-  }
-  let it = item;
-  if (h.catalyst && h.omens.includes(CATALYSING)) {
-    const r = fillCatalyst(data, it, h.catalyst, rng);
-    if (!r.applied && r.count === 0 && !(it.qualityTag === h.catalyst.slice("catalyst_".length))) return r;
-    if (r.count) use(h.catalyst, r.count);
-    it = r.item;
-  }
-  const r = applyCurrency(data, it, h.currency, rng, h.omens);
-  if (r.applied) {
-    use(h.currency);
-    for (const o of r.omensUsed ?? []) use(o);
-  }
-  return r;
-}
 
 /**
  * 形の合う箱へ (設計の「消去の後は 形の合う箱へ」、back: "match")。形 = 付いている狙いの組 + 外れがあるか。
@@ -242,7 +210,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     if (++steps > o.capSteps || cost > o.capDiv) return { end: "capped", cost, at, visits, uses, restarts };
     hops = 0;
     const before = item;
-    const r = play(data, item, b.hand, rng, aims, use);
+    const r = playHand(data, item, b.hand, rng, aims, use);
     if (!r.applied) return { end: "stuck", cost, at, visits, uses, restarts };
     if (sb.next) { item = r.item; at = sb.next; continue; }
     const oc = outcomeOf(data, before, r.item, aims);

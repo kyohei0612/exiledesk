@@ -67,15 +67,16 @@ const SPAM_CAP = 5000;
 
 /**
  * 箱の手を 1 回打つ (触媒の時はカタリストで品質を上げてから。台本の while と同じ)。
- * 繰り返しの手 (repeat) は、当たりの札 (aims) のどれかが新しく付くまで (か上限まで) 打ち続けた結果を 1 回分として返す
+ * 繰り返しの手 (repeat) は、当たりの札 (aims) のどれかが新しく付くまで (か上限まで) 打ち続けた結果を 1 回分として返す。
+ * use を渡すと使った物 (カタリストの数・カレンシー・お告げ) を数える (100 人回し tree-run)
  */
-export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => number, aims: readonly Aim[] = []): StageApply {
+export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => number, aims: readonly Aim[] = [], use?: (key: string, n?: number) => void): StageApply {
   if (h.repeat) {
     const cap = h.repeat.max ?? SPAM_CAP;
     let r: StageApply = { applied: false, item, added: [], removed: [] };
     let it = item;
     for (let i = 0; i < cap; i++) {
-      r = playHand(data, it, { ...h, repeat: null }, rng);
+      r = playHand(data, it, { ...h, repeat: null }, rng, aims, use);
       if (!r.applied) return i ? { ...r, applied: true, item: it } : r;
       it = r.item;
       if (outcomeOf(data, item, it, aims).out === "hit") break;
@@ -87,9 +88,15 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
   if (h.catalyst && h.omens.includes(CATALYSING)) {
     const r = fillCatalyst(data, it, h.catalyst, rng);
     if (!r.applied && r.count === 0 && !(it.qualityTag === h.catalyst.slice("catalyst_".length))) return r;
+    if (r.count) use?.(h.catalyst, r.count);
     it = r.item;
   }
-  return applyCurrency(data, it, h.currency, rng, h.omens);
+  const r = applyCurrency(data, it, h.currency, rng, h.omens);
+  if (r.applied && use) {
+    use(h.currency);
+    for (const o of r.omensUsed ?? []) use(o);
+  }
+  return r;
 }
 
 /**
