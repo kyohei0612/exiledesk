@@ -42,7 +42,14 @@ function onKey(e: KeyboardEvent): void {
 onMounted(() => window.addEventListener("keydown", onKey, true));
 onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 /** 持つ / 離す (クラフト台と同じ: 同じ物をもう一度押す・右クリック・Esc = 離す。お告げの欄も閉じる、オーナー 10-22) 棚・打てるかは use-sim-shelf */
-const { release, onHold, onShelfDown } = useSimShelf(item, held, omens);
+/**
+ * 棚に渡すアイテム = 選んだカタリストを品質の最大まで入れた後 (カタリスト無しでは触媒のお告げは「品質が要る」で掛けられない。
+ * 前は品質 0 の見本を渡していて、触媒の手を開き直すとお告げが外れていた、10-22)
+ */
+const shelfItem = computed(() => { const d = s.data.value, it = item.value; return d && it && catalyst.value ? fillCatalyst(d, it, catalyst.value, mulberry32(1)).item : it; });
+const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens);
+/** 持った物に触媒のお告げが掛けられるか (掛けられる時はカタリストの選びを先に出す) */
+const canCatalyse = computed(() => !!held.value && heldOmensOf(held.value).includes(CATALYSING));
 const used = computed(() => (held.value ? omensFor(held.value, omens.value) : []));
 const catalysing = computed(() => used.value.includes(CATALYSING));
 
@@ -103,13 +110,13 @@ function ok(): void {
         <span class="flex shrink-0 items-center -space-x-1"><img v-for="ic in [held, ...used].filter((x) => !!iconOf(x))" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
         <b class="min-w-0 truncate" :title="hand ? handLabel(hand) : ''">{{ [nameOf(held), ...used.map(nameOf)].join(" + ") }}</b>
       </div>
-      <div v-if="catalysing" class="flex flex-wrap items-center gap-2">
-        <span class="text-[12px]">{{ tr("先に打つカタリスト", "Catalyst to use first") }}</span>
+      <div v-if="canCatalyse" class="flex flex-wrap items-center gap-2">
+        <span class="text-[12px]">{{ tr("先に打つカタリスト (触媒のお告げに要る)", "Catalyst to use first (needed for the Catalysing omen)") }}</span>
         <select v-model="catalyst" data-tree-hand-catalyst-pick class="h-8 rounded-md border bg-black/40 px-1" :class="catalyst ? 'border-white/15' : 'border-amber-400/70'">
-          <option value="" disabled>{{ tr("カタリストを選ぶ", "Pick a catalyst") }}</option>
+          <option value="">{{ tr("カタリスト無し", "No catalyst") }}</option>
           <option v-for="c in TREE_CATALYSTS" :key="c" :value="c">{{ handName(c) }}</option>
         </select>
-        <span v-if="catalyst" class="text-[12px] tabular-nums">{{ tr(`最大 ${catFill.quality}% まで (この箱で ${catFill.catalystCount} 個)`, `To max ${catFill.quality}% (×${catFill.catalystCount} here)`) }}</span>
+        <span v-if="catalyst && catalysing" class="text-[12px] tabular-nums">{{ tr(`最大 ${catFill.quality}% まで (この箱で ${catFill.catalystCount} 個)`, `To max ${catFill.quality}% (×${catFill.catalystCount} here)`) }}</span>
         <span class="w-full text-[11px] opacity-60">{{ tr("打つたびに品質の最大まで入れ直す (触媒は 1 回で品質を使い切る)", "Refilled to max quality every time (Catalysing uses up the quality)") }}</span>
       </div>
       <label v-if="canSpam(held)" class="flex min-h-7 cursor-pointer flex-wrap items-center gap-2">

@@ -26,7 +26,7 @@ const shown = computed(() => props.lines.filter((l) => (l.kind === "fwd" && sing
 const opacity = (l: MergeLine): number => (hot(l) ? 1 : l.kind === "fwd" ? 0.85 : 0.55);
 const label = (id: string): string => { const b = props.doc.boxes[id]!; return b.out === "hit" && b.aim ? t.aimLabel(b.aim) : outName(b.out); };
 /** 行き先の名前 (乗せた時の説明) */
-const dest = (id: string): string => props.lines.filter((l) => l.pill === id).map((l) => label(l.to)).join(" / ");
+const dest = (id: string): string => props.lines.filter((l) => l.pill === id).map((l) => (l.to === "start" ? tr("始めに戻る", "Back to start") : label(l.to))).join(" / ");
 </script>
 
 <template>
