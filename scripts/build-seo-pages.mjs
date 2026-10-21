@@ -9,6 +9,8 @@
  * 日本語と英語は hreflang で結ぶ。英語のページからエミュレーターへは /?lang=en&base=…
  *
  *   node scripts/build-seo-pages.mjs [出力先 (既定 dist-web)]
+ * 2026-10-22 オーナー OK: 自動で作ったページは「有用性の低いコンテンツ」に数えられやすいので、全部 noindex (follow) にしてサイトマップから外す。
+ *   ページは残し、ツール・フッターからのリンクも残す (人が使う一覧として)。
  * pnpm build:web の最後に回す (public には置かない。生成物をリポジトリに入れない)。sitemap.xml も出力先の物を書き直す
  */
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -89,6 +91,7 @@ for (const [code, L] of Object.entries(LANGS)) {
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}" />
+<meta name="robots" content="noindex, follow" />
 <link rel="canonical" href="${SITE}${L.prefix}${path}" />
 <link rel="alternate" hreflang="${code}" href="${SITE}${L.prefix}${path}" />
 <link rel="alternate" hreflang="${other}" href="${SITE}${LANGS[other].prefix}${path}" />
@@ -182,7 +185,7 @@ M.setLang("ja");
 const fixed = ["/", "/craft-basics", "/en/craft-basics", "/guide", "/about", "/en/about", "/contact", "/en/contact", "/privacy", "/en/privacy"];
 writeFileSync(resolve(OUT, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${[...fixed, ...urls].map((u) => `  <url><loc>${SITE}${u}</loc></url>`).join("\n")}
+${fixed.map((u) => `  <url><loc>${SITE}${u}</loc></url>`).join("\n")}
 </urlset>
 `);
-console.log(`sitemap (${fixed.length + urls.length} URL) → ${OUT}`);
+console.log(`sitemap (${fixed.length} URL、ベースのページ ${urls.length} 枚は noindex で入れない) → ${OUT}`);
