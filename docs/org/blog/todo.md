@@ -44,4 +44,4 @@
 | desecration-bone-sides | 新しく書いた・照らし合わせ済み | — |
 | crafting-calculator-mistakes | 新しく書いた・照らし合わせ済み | — |
 | essence-of-the-abyss-mark | 新しく書いた・照らし合わせ済み | — |
-| desecration-lords-tag-audit | 新しく書いた・照らし合わせ待ち | — |
+| desecration-lords-tag-audit | 新しく書いた・照らし合わせ済み | — |
