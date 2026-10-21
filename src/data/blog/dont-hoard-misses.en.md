@@ -1,10 +1,11 @@
-# Don't Hoard Your Misses: The One Change That Took a Gold Ring from 400 to 220 Divine
-
-<!-- Alternative titles (up to 2):
-  1. Stop Filling to Three: Halving the Cost of a Three-Suffix Gold Ring
-  2. The More Misses You Hold, the More Targets You Lose: Timing Your Orbs of Annulment
--->
-
+---
+title: Don't Hoard Your Misses: The One Change That Took a Gold Ring from 400 to 220 Divine
+description: We compared three ways to handle misses when crafting Rarity, Cast Speed and all Elemental Resistances on a Gold Ring, 300 runs each. Annulling misses at once cut the cost from 400 to 220 div.
+date: 2026-10-22
+tags: Gold Ring, Chaos Orb, Orb of Annulment, Omen of Catalysing Exaltation, expected cost
+tree: /?page=sim-tree&base=Gold%20Ring
+craft: /?base=Gold%20Ring
+---
 Putting Rarity, Cast Speed and all Elemental Resistances in the suffixes of a Gold Ring is a familiar caster craft. We ran this craft hundreds of times on the ExileDesk engine and changed only one thing: what you do when a miss rolls. The difference looks small, but the cost per finished ring dropped from 400 Divine Orbs to 220.
 
 ## The Ring
