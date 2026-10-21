@@ -8,6 +8,7 @@
 import { applyCurrency, mulberry32, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { CATALYSING, kindOfCurrency } from "./tree-hands";
 import { aimHeld, aimsOf, fillCatalyst, outcomeOf, startItemOf as startOf } from "./tree-sample";
+import { withTreeTune } from "./tree-tune";
 import { aimKey, MATCH_BACK, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
 
 export interface TreeRunOpts {
@@ -296,8 +297,11 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
   };
 }
 
-/** ツリーどおりに n 人を 1 人ずつ打つ */
+/** ツリーどおりに n 人を 1 人ずつ打つ (木の設定 tune で打つ) */
 export function runTree(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): TreeRunResult {
+  return withTreeTune(doc, () => runIn(data, doc, opts));
+}
+function runIn(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): TreeRunResult {
   const o = { price: opts.price, startCost: opts.startCost ?? 0, capDiv: opts.capDiv ?? 2000, capSteps: opts.capSteps ?? 20000, start: opts.start };
   const aims = opts.aims ?? aimsOf(doc);
   const shapes = shapesOf(doc);

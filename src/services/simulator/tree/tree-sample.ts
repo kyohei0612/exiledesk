@@ -10,6 +10,7 @@ import { applyCurrency, freshItem, maxQualityOf, mulberry32, omenBlock, type Pat
 import { CATALYSING } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import type { Aim, Hand, OutKind, TreeDoc } from "./tree-model";
+import { withTreeTune } from "./tree-tune";
 
 const TRIES = 3000;
 /** カタリストを 1 個ずつ足す上限 (見張り) */
@@ -121,13 +122,16 @@ export function handProblem(data: PatchData, item: StageItem, h: Hand): string |
   return r.applied || r.random ? null : r.reason ?? tr("打てない", "Can't use");
 }
 
-/** 箱の見本 (seed が同じなら同じ物) */
+/** 箱の見本 (seed が同じなら同じ物。木の設定 tune で打つ) */
 export function sampleOf(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
+  return withTreeTune(doc, () => sampleIn(data, doc, boxId, seed));
+}
+function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
   const b = doc.boxes[boxId];
   if (!b) return { item: freshItem(data, doc.base, doc.itemLevel, "rare"), note: null };
   if (b.out === "start") return startItemOf(data, doc, mulberry32(seed));
   const p = doc.boxes[b.parent!]!;
-  const base = sampleOf(data, doc, p.id, seed);
+  const base = sampleIn(data, doc, p.id, seed);
   if (!p.hand) return base;
   const aims = aimsOf(doc);
   const rng = mulberry32(seed ^ 0x5eed ^ boxId.length * 7919);

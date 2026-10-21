@@ -37,9 +37,12 @@ import { gesture, HOLD_MS } from "./use-gesture";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { useTreeLink } from "./use-tree-link";
 import { useTreeCheck } from "./use-tree-check";
+import { useTreeTune } from "./use-tree-tune";
 
 const t = useTree();
 const doc = t.doc;
+// エンジンの設定 (触媒・聖別の倍率・MOD の重み) は開いている間この木の値 (use-tree-tune.ts)
+useTreeTune(doc, t.edit);
 
 /** 右の欄 (箱を選んだ時だけ) */
 const panel = ref<{ kind: "hand" | "aim" | "fracture" | "trial" | "note"; id: string } | null>(null);

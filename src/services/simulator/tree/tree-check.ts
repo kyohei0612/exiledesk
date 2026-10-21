@@ -11,6 +11,7 @@ import { CATALYSING } from "./tree-hands";
 import { aimKey, type Aim, type TreeDoc } from "./tree-model";
 import { aimHeld, aimsOf, handProblem, outcomeOf, playHand, sampleOf } from "./tree-sample";
 import { MATCH, matchItem, matchTargets, RESTART } from "./tree-run";
+import { withTreeTune } from "./tree-tune";
 import { tr } from "../../../i18n/lang";
 
 export type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch";
@@ -20,7 +21,11 @@ const PEOPLE = 5;
 /** 1 つの結果が出るまで打ち直す上限 (精査は数秒で終わるよう、見本の 3000 より少なく) */
 const TRIES = 1200;
 
+/** ルート精査 (木の設定 tune で打つ) */
 export function checkTree(data: PatchData, doc: TreeDoc): CheckIssue[] {
+  return withTreeTune(doc, () => checkIn(data, doc));
+}
+function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
   const out: CheckIssue[] = [];
   const add = (boxId: string, kind: CheckKind, text: string): void => { if (!out.some((x) => x.boxId === boxId && x.kind === kind)) out.push({ boxId, kind, text }); };
   const boxes = Object.values(doc.boxes);

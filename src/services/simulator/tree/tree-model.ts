@@ -8,6 +8,8 @@
  * 計算 (100 人回す) はまだ繋がない。ここは形と組み替えだけ (関数は渡した doc を書き換える。1 つ戻すは use-tree.ts が写しで持つ)
  */
 
+import type { TreeTune } from "./tree-tune";
+
 /** any = 狙い無しの手の結果 (何が付いても次へ進む「打った後」、オーナー 10-22 の適当打ち) */
 export type OutKind = "hit" | "junk" | "junkGone" | "lost" | "any";
 export type HandKind = "add" | "remove" | "swap" | "spam" | "free";
@@ -58,6 +60,8 @@ export interface TreeDoc {
   fracture: Aim | null;
   /** 始めの形でフラクチャーのほかに付いている乱数の MOD の数 (素の高貴をこの回数打って作る。見本の金の指輪 = 1、無ければ 0。カオスは外せる MOD が要る) */
   startRandom?: number;
+  /** エンジンの設定 (触媒の倍率・聖別の倍率・MOD の重み。無い物は既定、tree-tune.ts)。レシピ・共有の URL にも一緒に乗る */
+  tune?: TreeTune;
   boxes: Record<string, TreeBox>;
   seq: number;
   /** ツリー全体のメモ */
