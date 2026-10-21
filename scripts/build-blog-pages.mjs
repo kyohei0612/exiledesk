@@ -166,6 +166,16 @@ ${body}
 `;
 }
 
+/** 一覧の下のタグごとの節 (カテゴリ。2 本以上の記事が付いたタグだけ) */
+function tagSections(lang, list) {
+  const l = L[lang];
+  const by = new Map();
+  for (const p of list) for (const t of p.meta.tags) by.set(t, [...(by.get(t) ?? []), p]);
+  const tags = [...by].filter(([, ps]) => ps.length >= 2).sort((a, b) => b[1].length - a[1].length);
+  if (!tags.length) return "";
+  return `<h2>${lang === "ja" ? "タグごと" : "By tag"}</h2>` + tags.map(([t, ps]) => `<h3 id="tag-${encodeURIComponent(t)}">#${esc(t)} (${ps.length})</h3><ul>${ps.map((x) => `<li><a href="${l.prefix}/blog/${x.meta.slug}/">${esc(x.meta.title)}</a></li>`).join("")}</ul>`).join("");
+}
+
 const urls = [];
 const index = { ja: [], en: [] };
 for (const lang of ["ja", "en"]) {
@@ -211,7 +221,7 @@ ${others.length ? `<section class="more"><h2>${l.more}</h2><ul class="posts">${o
   const shown = mine.filter(listed);
   const list = shown.length ? `<ul class="posts">${shown.map((x) => `<li><a class="t" href="${l.prefix}/blog/${x.meta.slug}/">${esc(x.meta.title)}</a>${x.meta.draft ? ` <span class="draft">${l.draft}</span>` : ""}<p>${esc(x.meta.date)} · ${esc(x.meta.description)}</p></li>`).join("")}</ul>` : `<p>${l.none}</p>`;
   const ld = { "@context": "https://schema.org", "@type": "Blog", name: l.listTitle, url: `${SITE}${l.prefix}/blog/`, inLanguage: lang };
-  writeFileSync(resolve(dir, "index.html"), page(lang, { title: l.listTitle, desc: l.listDesc, path: "/blog/", alt: true, og: { type: "website", image: `${SITE}/web/og.png` }, ld, body: `<h1>${l.blog}</h1>\n<p>${l.listIntro}</p>\n${list}` }));
+  writeFileSync(resolve(dir, "index.html"), page(lang, { title: l.listTitle, desc: l.listDesc, path: "/blog/", alt: true, og: { type: "website", image: `${SITE}/web/og.png` }, ld, body: `<h1>${l.blog}</h1>\n<p>${l.listIntro}</p>\n${list}${tagSections(lang, shown)}` }));
   urls.push(`${l.prefix}/blog/`);
   console.log(`${lang}: 記事 ${shown.length} 本 + 一覧 (見本 ${mine.length - shown.length})`);
 }
