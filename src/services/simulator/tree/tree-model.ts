@@ -245,6 +245,15 @@ export function setDone(d: TreeDoc, id: string, v: TreeBox["done"]): void {
   b.done = v;
 }
 
+/**
+ * 見本を作るのに要る所だけの木 (箱の位置・メモ・× の印・メモの窓の札を除く)。JSON の文字なので、同じなら見本を作り直さない
+ * (× を押す・メモを書くたびに試し打ちが見本に戻っていた、10-21 本物のマウス)
+ */
+export function sampleKeyOf(d: TreeDoc): string {
+  const boxes = Object.fromEntries(Object.entries(d.boxes).map(([k, b]) => [k, { ...b, x: 0, y: 0, note: undefined, unwanted: undefined }]));
+  return JSON.stringify({ ...d, note: undefined, memoAims: undefined, memoCurrencies: undefined, boxes });
+}
+
 /** × の印を付ける / 外す */
 export function toggleUnwanted(d: TreeDoc, id: string, modId: string): void {
   const b = d.boxes[id];

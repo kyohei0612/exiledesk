@@ -19,7 +19,7 @@ import { aimsOf, fillCatalyst, playHand, sampleOf } from "../../../services/simu
 import { TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handLabel } from "./tree-names";
 import { useTree } from "./use-tree";
-import { toggleUnwanted } from "../../../services/simulator/tree/tree-model";
+import { sampleKeyOf, toggleUnwanted, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { modText, tr } from "../../../i18n/lang";
 
 const props = defineProps<{ boxId: string }>();
@@ -27,7 +27,9 @@ const emit = defineEmits<{ close: []; next: []; note: [] }>();
 const t = useTree();
 
 const seed = ref(1);
-const sample = computed(() => (s.data.value ? sampleOf(s.data.value, t.doc.value, props.boxId, seed.value) : null));
+/** 見本は道の形が変わった時だけ作り直す (× の印・メモ・箱の位置では作り直さない。sampleKeyOf) */
+const sampleDoc = computed(() => sampleKeyOf(t.doc.value));
+const sample = computed(() => (s.data.value ? sampleOf(s.data.value, JSON.parse(sampleDoc.value) as TreeDoc, props.boxId, seed.value) : null));
 /** 試し打ちのアイテムの並び (先頭 = 見本、1 つ戻すで前へ) */
 const trail = shallowRef<StageItem[]>([]);
 const log = ref<Array<{ text: string; ok: boolean }>>([]);
