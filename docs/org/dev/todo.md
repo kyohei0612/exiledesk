@@ -49,7 +49,7 @@
 | 誰 | ファイル |
 |---|---|
 | (前の解析君の書きかけ、未 commit) | scripts/_flux-probe.test.ts・scripts/analysis/_yafu-ids.mjs |
-| シミュ部長 (ツリーの表面 10-22) | src/views/simulator/tree/・src/services/simulator/tree/・src/state/web-page.ts・src/web/page.ts・src/web/WebApp.vue (共通の 3 つは数行、ブラックに連絡済み) |
+| シミュ部長 (ツリーの表面 10-22) | src/views/simulator/tree/・src/services/simulator/tree/ (入口の web-page.ts・page.ts・WebApp.vue はジン部長が書いている。SimTreePage.vue はジン部長の仮置きをシミュ部長が上書き) |
 
 入口に無い物 (解析君 10-21、要る時だけジン部長へ): 重み 0 の MOD (創生の樹のスペルダメージ) を始めの形に置く手段 (startFrom が断る、解析君は makeStageMod を直に使った)。シミュで要るまで振らない。
 
