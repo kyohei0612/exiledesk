@@ -22,7 +22,6 @@
 | 記事編集長 ブログの仕上げ (10-22〜) | src/data/blog/ の記事 (*.ja.md・*.en.md、残り 12 本 → B 8 本の仕上げ、README・sample・chars は触らない)・src/data/blog/img/・docs/org/blog/ |
 | ジン部長 3 本目 code-audit の直す案 (10-22) | docs/org/owners.txt・src/services/craft-stage/ (engine.ts・share.ts・route-race・spam-counts・apply-flux・chaos-spam)・src/views/craft-stage/ (use-spam-share・StageRoutesPage・StageRouteLuck・CraftStage・ShelfButton・StageOmenTune・StageSanctifyBar・StageAimPicker・StageFracturePicker・StageModList)・src/state/emulator/・src/state/market-store.ts・src/services/htc/prices.ts・src/services/mods/・src/services/telemetry/log-sender.ts・src/web/track.ts・src/utils/・src/components/items/・HelpTip.vue・tests/engine-emulator-parity*・scripts/audit-poe2db*・build-poe2db-fixes・クライアントからの作り直しの台本 |
 | 解析君 2 本目 code-audit の直す案 2・3 (10-22) | src/services/simulator/auto/auto-order.ts (AutoOrderClient を消すだけ)・scripts/analysis/ (boots-res-ev・es-gloves-ev・gold-ring-suffix-ev・mana-ring-ev と共通の部品 _ev-common.mjs (新)) |
-| 分析君 コードの整理 (10-22) | server/discord-wake/ (消す)・server/live/src/index.ts・youtube.ts・twitch.ts・tests/og-card-share.test.ts (新) |
 | シミュ部長 4 本目 見本の木の直し (10-21 夜〜) | src/views/simulator/tree/・src/services/simulator/tree/・scripts/_tree-sample-probe.* |
 入口に無い物 (解析君 10-21、要る時だけジン部長へ): 重み 0 の MOD (創生の樹のスペルダメージ) を始めの形に置く手段 (startFrom が断る、解析君は makeStageMod を直に使った)。シミュで要るまで振らない。
 
