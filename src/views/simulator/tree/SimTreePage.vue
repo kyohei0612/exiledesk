@@ -2,7 +2,8 @@
   SimTreePage.vue — クラフトの道 (ツリー) のページ (?page=sim-tree、2026-10-22 オーナー OK「UI の表面だけ」、開発版だけ・PC だけ)。
   入口 (web-page.ts の treePage・web/page.ts・WebApp.vue) はジン部長、中身はシミュ部長。設計は docs/org/simulator/notes/2026-10-22-manual-sim-design.md の 11。
   一番上がフラクチャーの箱 (始まり)。下の＋で打つ手 (クラフト台の棚から) → 矢印の先に結果の箱。横の＋で当たりを足す、↩ で既にある箱へ戻す。
-  ＋は長押しで引っ張ると置く所を選べ、箱の上で離すとその箱へつなぐ。箱はドラッグで動かす、1 つ戻す / Ctrl+Z。
+  ＋は長押しで引っ張り、箱の上で離すとその箱へつなぐ (何も無い所ならやめる)。箱はドラッグで動かす、1 つ戻す / Ctrl+Z。
+  線は普通の木の図の直角の線、戻りの矢印は箱の下の札に乗せた時だけ (10-22 整列の定義)。
   見え方 (拡大縮小・全画面) は use-tree-view.ts、上の帯 (欲しい MOD・メモ) は TreeAimsBar.vue。100 人回す計算はまだ繋がない
 -->
 <script setup lang="ts">
@@ -17,7 +18,7 @@ import TreeTrial from "./TreeTrial.vue";
 import { useTree } from "./use-tree";
 import { useTreeView } from "./use-tree-view";
 import { craftStage as s } from "../../../state/craft-stage";
-import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, placeOuts, removeHit, setAim, setBack, setDone, setHand, tidy, handUses, type Aim, type Hand, type HandKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
+import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, removeHit, setAim, setBack, setDone, setHand, tidy, handUses, type Aim, type Hand, type HandKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
 import { handLabel } from "../../../services/simulator/tree/tree-hands";
 import { aimHeld, aimsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { checkTree, type CheckIssue } from "../../../services/simulator/tree/tree-check";
@@ -49,36 +50,41 @@ const drag = ref<{ id: string; sx: number; sy: number; bx: number; by: number; x
 const posOf = (b: Box): { x: number; y: number } => (drag.value?.id === b.id ? { x: drag.value.x, y: drag.value.y } : { x: b.x, y: b.y });
 const boxes = computed(() => Object.values(doc.value.boxes));
 
-/** 矢印 (箱の下 → 手の札 → 結果の箱の上) */
-const COLOR: Record<string, string> = { hit: "#e0b060", junk: "#e0707a", junkGone: "#9aa7b8", lost: "#a58be0" };
+/**
+ * 進む線 (2026-10-22 整列の定義、オーナー「クソ汚い」の後): 普通の木の図と同じ直角の線。親の下から 1 本下りて (途中に手の札)、
+ * 子の段の上で横の棒、そこから子の上の辺へ下ろす。色は 進む = 灰 / 外れ・消えた = 赤系 の 2 つだけ
+ */
+const LINE = { fwd: "#8f877a", bad: "#c96a72", back: "#5fd0e0" } as const;
 const edges = computed(() => boxes.value.filter((b) => b.hand && b.outs.length).map((b) => {
   const p = posOf(b);
   const px = p.x + BOX_W / 2 + ox.value, py = p.y + BOX_H + oy.value, jy = py + 46;
+  const kids = b.outs.map((o) => ({ id: o, c: doc.value.boxes[o]!, q: posOf(doc.value.boxes[o]!) }));
+  const busY = Math.min(...kids.map((k) => k.q.y)) + oy.value - 18;
+  const xs = kids.map((k) => k.q.x + BOX_W / 2 + ox.value);
   return {
-    id: b.id, hand: b.hand!, jx: px, jy, stem: `M ${px} ${py} L ${px} ${jy}`,
-    to: b.outs.map((o) => {
-      const c = doc.value.boxes[o]!, q = posOf(c);
-      const cx = q.x + BOX_W / 2 + ox.value, cy = q.y + oy.value - 4;
-      return { id: o, color: COLOR[c.out] ?? "#ccc", d: `M ${px} ${jy} C ${px} ${jy + 40} ${cx} ${cy - 50} ${cx} ${cy}` };
-    }),
+    id: b.id, hand: b.hand!, jx: px, jy,
+    stem: `M ${px} ${py} L ${px} ${busY}`,
+    bus: `M ${Math.min(px, ...xs)} ${busY} L ${Math.max(px, ...xs)} ${busY}`,
+    to: kids.map((k, i) => ({ id: k.id, color: k.c.out === "hit" ? LINE.fwd : LINE.bad, kind: k.c.out === "hit" ? "fwd" : "bad", d: `M ${xs[i]} ${busY} L ${xs[i]} ${k.q.y + oy.value - 3}` })),
   };
 }));
 /**
- * 戻りの矢印 (2026-10-22 整列と一緒に): 箱の下の隙間 → ツリーの外側の通り道 → 戻り先の上の隙間 → 戻り先の上の辺に入る (オーナー「基本は相手の箱の上の辺」)。
- * 箱の中を通らない (整列した後は段と段の間に箱が無い)。木の真ん中より右の箱は右の外側、左は左の外側。通り道は 1 本ずつ外へずらす
+ * 戻りの矢印は既定では引かない (外側を回る長い線でツリーが囲まれた、オーナー 10-22)。箱の下の札「↩ 戻り先」にマウスを乗せた時だけ、
+ * 箱の左から戻り先の左へ柔らかい線を一時的に出し、戻り先を光らせる (押すとそこへ寄る)
  */
-const backs = computed(() => {
-  const mid = bounds.value.x + bounds.value.w / 2, minX = bounds.value.x, maxX = bounds.value.x + bounds.value.w;
-  let li = 0, ri = 0;
-  return boxes.value.filter((b) => b.back && doc.value.boxes[b.back]).map((b) => {
-    const p = posOf(b), q = posOf(doc.value.boxes[b.back!]!);
-    const right = p.x + BOX_W / 2 >= mid;
-    const lane = (right ? maxX + 28 + 12 * ri++ : minX - 28 - 12 * li++) + ox.value;
-    const sx = p.x + BOX_W / 2 + ox.value, sy = p.y + BOX_H + oy.value, gy1 = sy + 16;
-    const tx = q.x + BOX_W / 2 + (right ? 44 : -44) + ox.value, ty = q.y + oy.value, gy2 = ty - 18;
-    return { id: b.id, d: `M ${sx} ${sy} L ${sx} ${gy1} L ${lane} ${gy1} L ${lane} ${gy2} L ${tx} ${gy2} L ${tx} ${ty - 3}` };
-  });
+const hoverBack = ref<string | null>(null);
+const backLine = computed(() => {
+  const b = hoverBack.value ? doc.value.boxes[hoverBack.value] : null, to = b?.back ? doc.value.boxes[b.back] : null;
+  if (!b || !to) return null;
+  // 箱の下 → 下の隙間 → ツリーの外側 → 戻り先の横の辺 (箱の裏を通らない。出すのは乗せている間の 1 本だけ)
+  const p = posOf(b), q = posOf(to), bd = bounds.value;
+  const right = p.x >= q.x;
+  const sx = p.x + BOX_W / 2 + ox.value, sy = p.y + BOX_H + oy.value, gy = sy + 22;
+  const lane = (right ? bd.x + bd.w + 36 : bd.x - 36) + ox.value;
+  const tx = (right ? q.x + BOX_W + 3 : q.x - 3) + ox.value, ty = q.y + BOX_H / 2 + oy.value;
+  return `M ${sx} ${sy} L ${sx} ${gy} L ${lane} ${gy} L ${lane} ${ty} L ${tx} ${ty}`;
 });
+function goBack(b: Box): void { hoverBack.value = null; if (b.back) v.reveal(b.back, true); }
 
 function backLabel(b: Box): string {
   const to = b.back ? doc.value.boxes[b.back] : null;
@@ -89,12 +95,9 @@ function backLabel(b: Box): string {
 }
 
 // 組み替え
-/** ＋を引っ張って空き所で離した時の置き場所 (手を選んだら結果の箱をそこへ) */
-let pendingDrop: { id: string; x: number; y: number } | null = null;
 function pickHand(h: Hand, kind: HandKind, aims: Aim[]): void {
-  const id = panel.value!.id, drop = pendingDrop?.id === id ? pendingDrop : null;
-  t.edit((d) => { setHand(d, id, h, kind, aims); if (drop) placeOuts(d, id, drop.x, drop.y); });
-  pendingDrop = null;
+  const id = panel.value!.id;
+  t.edit((d) => setHand(d, id, h, kind, aims));
   panel.value = null;
 }
 /**
@@ -107,7 +110,7 @@ function onCanvasDown(e: PointerEvent): void {
   const sx = e.clientX, sy = e.clientY;
   window.addEventListener("pointerup", (u) => { if (Math.hypot(u.clientX - sx, u.clientY - sy) <= DRAG_SLOP) closeHand(); }, { once: true });
 }
-function closeHand(): void { pendingDrop = null; panel.value = null; }
+function closeHand(): void { panel.value = null; }
 function clearHandOf(): void { const id = panel.value!.id; t.edit((d) => clearHand(d, id)); panel.value = null; }
 function pickAim(a: Aim): void {
   const p = panel.value!;
@@ -161,6 +164,7 @@ function onSpam(b: Box): void {
 // 箱のドラッグ (画面の倍率で割る)
 function startDrag(b: Box, e: PointerEvent): void {
   if (viewOnly.value) return;
+  hoverBack.value = null;
   drag.value = { id: b.id, sx: e.clientX, sy: e.clientY, bx: b.x, by: b.y, x: b.x, y: b.y };
   window.addEventListener("pointermove", onMove);
   window.addEventListener("pointerup", endDrag, { once: true });
@@ -177,11 +181,12 @@ function endDrag(): void {
   else if (g) panel.value = { kind: "trial", id: g.id }; // 動かさずに離した = 箱を押した → 試し打ち
 }
 
-// ＋: 押すだけ = 足す (今まで通り)。長押し (か大きく動かす) で引っ張る → 空き所で離す = そこに置く / 箱の上で離す = その箱へつなぐ
+// ＋: 押すだけ = 足す (今まで通り)。長押し (か大きく動かす) で引っ張る → 箱の上で離す = その箱へつなぐ (重なった箱が光る) / 何も無い所 = やめる
 const plus = ref<{ id: string; kind: "side" | "next"; sx: number; sy: number; cx: number; cy: number; active: boolean; target: string | null } | null>(null);
 let plusTimer = 0;
 function onPlus(b: Box, kind: "side" | "next", e: PointerEvent): void {
   if (viewOnly.value) return;
+  hoverBack.value = null;
   plus.value = { id: b.id, kind, sx: e.clientX, sy: e.clientY, cx: e.clientX, cy: e.clientY, active: false, target: null };
   plusTimer = window.setTimeout(() => { if (plus.value) plus.value.active = true; }, HOLD_MS);
   window.addEventListener("pointermove", plusMove);
@@ -205,18 +210,21 @@ function plusUp(): void {
   const b = p ? doc.value.boxes[p.id] : null;
   if (!p || !b) return;
   if (!p.active) { if (p.kind === "side") onAddHit(b); else panel.value = { kind: "hand", id: b.id }; return; }
-  const at = v.toWorld(p.cx, p.cy);
-  if (p.kind === "side") onAddHit(b, p.target ? undefined : at, p.target ?? undefined);
-  else if (p.target) t.edit((d) => setBack(d, b.id, p.target!));
-  else { pendingDrop = { id: b.id, x: at.x, y: at.y }; panel.value = { kind: "hand", id: b.id }; }
+  // 引っ張った時 (オーナー 10-22): 箱の上で離した = その箱へつなぐ (打つ手の窓は出さない)、何も無い所で離した = やめる (元のまま)
+  if (!p.target) return;
+  if (p.kind === "side") onAddHit(b, undefined, p.target);
+  else t.edit((d) => setBack(d, b.id, p.target!));
 }
-/** 引っ張っている＋の線 (＋の所 → 指の所、ツリーの座標) */
+/** 引っ張っている＋の線 (＋の所 → マウス、ツリーの座標)。直線ではなく柔らかい曲線 (オーナー「直線すぎてキモい」) */
 const plusLine = computed(() => {
   const p = plus.value, b = p ? doc.value.boxes[p.id] : null;
   if (!p?.active || !b) return null;
   const q = posOf(b), end = v.toWorld(p.cx, p.cy);
   const x1 = (p.kind === "side" ? q.x + BOX_W + 2 : q.x + BOX_W / 2) + ox.value, y1 = (p.kind === "side" ? q.y + BOX_H / 2 : q.y + BOX_H + 20) + oy.value;
-  return `M ${x1} ${y1} L ${end.x + ox.value} ${end.y + oy.value}`;
+  const ex = end.x + ox.value, ey = end.y + oy.value;
+  const k = Math.max(40, Math.hypot(ex - x1, ey - y1) / 2.5);
+  const c1 = p.kind === "side" ? `${x1 + k} ${y1}` : `${x1} ${y1 + k}`;
+  return `M ${x1} ${y1} C ${c1} ${ex} ${ey + (ey < y1 ? k : -k)} ${ex} ${ey}`;
 });
 
 watch(() => panel.value?.id, (id) => { if (id) v.reveal(id); });
@@ -306,23 +314,28 @@ const glowOf = (b: Box): boolean => {
             <div class="absolute left-0 top-0 origin-top-left" :style="{ width: `${area.w}px`, height: `${area.h}px`, transform: `scale(${zoom})` }">
               <svg class="pointer-events-none absolute inset-0" :width="area.w" :height="area.h">
                 <defs>
-                  <marker v-for="(c, k) in { ...COLOR, back: '#5fd0e0' }" :id="`tree-arrow-${k}`" :key="k" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" :fill="c" /></marker>
+                  <marker v-for="(c, k) in LINE" :id="`tree-arrow-${k}`" :key="k" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" :fill="c" /></marker>
                 </defs>
-                <g v-for="e in edges" :key="e.id">
-                  <path :d="e.stem" stroke="#e0b060" stroke-width="2.5" fill="none" />
-                  <path v-for="o in e.to" :key="o.id" :d="o.d" :stroke="o.color" stroke-width="2.5" fill="none" :marker-end="`url(#tree-arrow-${doc.boxes[o.id]!.out})`" />
+                <g v-for="e in edges" :key="e.id" data-tree-edge>
+                  <path :d="e.stem" :stroke="LINE.fwd" stroke-width="2.5" fill="none" />
+                  <path :d="e.bus" :stroke="LINE.fwd" stroke-width="2.5" stroke-linecap="round" fill="none" />
+                  <path v-for="o in e.to" :key="o.id" :d="o.d" :stroke="o.color" stroke-width="2.5" fill="none" :marker-end="`url(#tree-arrow-${o.kind})`" />
                 </g>
-                <path v-for="b in backs" :key="`back-${b.id}`" data-tree-back :d="b.d" stroke="#5fd0e0" stroke-width="2.5" stroke-linejoin="round" fill="none" marker-end="url(#tree-arrow-back)" />
-                <path v-if="plusLine" data-tree-plus-line :d="plusLine" stroke="#5fd0e0" stroke-width="3" fill="none" marker-end="url(#tree-arrow-back)" />
+                <path v-if="backLine" data-tree-back :d="backLine" :stroke="LINE.back" stroke-width="2.5" stroke-linejoin="round" fill="none" marker-end="url(#tree-arrow-back)" />
               </svg>
               <!-- 矢印の上の札 = 打つ手 (押すと替える・消す) -->
               <button v-for="e in edges" :key="`hand-${e.id}`" type="button" data-tree-hand class="absolute max-w-[300px] -translate-x-1/2 -translate-y-1/2 truncate rounded-full border-2 border-amber-500/70 bg-[#221a10] px-3 py-1 text-[12px] font-bold text-amber-100 hover:bg-amber-500/25"
                 :class="viewOnly ? 'pointer-events-none' : ''" :style="{ left: `${e.jx}px`, top: `${e.jy}px`, scale: String(inv) }" :title="handLabel(e.hand)" @click="panel = { kind: 'hand', id: e.id }">{{ handLabel(e.hand) }}</button>
               <TreeBox v-for="b in boxes" :key="b.id" :box="b" :x="posOf(b).x + ox" :y="posOf(b).y + oy" :removable="canRemove(doc, b.id)" :picking="!!picking && picking !== b.id"
-                :selected="panel?.id === b.id || picking === b.id || plus?.target === b.id" :back-label="backLabel(b)" :view-only="viewOnly" :glow="glowOf(b)" :issue="issueOf(b)" :inv="inv"
+                :selected="panel?.id === b.id || picking === b.id || plus?.target === b.id" :back-label="backLabel(b)" :view-only="viewOnly" :glow="glowOf(b) || plus?.target === b.id || (!!hoverBack && doc.boxes[hoverBack]?.back === b.id)" :issue="issueOf(b)" :inv="inv"
                 @drag="startDrag(b, $event)" @aim="onAim(b)" @plus="(k, e) => onPlus(b, k, e)" @remove="t.edit((d) => removeHit(d, b.id))"
                 @back="picking = b.id" @clear-back="t.edit((d) => setBack(d, b.id, null))" @done="onDone(b)" @target="onTarget(b)" @focus="v.focusBox(b.id)"
-                @note="panel = { kind: 'note', id: b.id }" @spam="onSpam(b)" />
+                @note="panel = { kind: 'note', id: b.id }" @spam="onSpam(b)" @back-hover="(on) => (hoverBack = on ? b.id : null)" @back-go="goBack(b)" />
+              <!-- 引っ張っている＋の線は箱より前 (つなぐ箱の上まで見える) -->
+              <svg v-if="plusLine" class="pointer-events-none absolute inset-0 z-10" :width="area.w" :height="area.h">
+                <defs><marker id="tree-arrow-drag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" :fill="LINE.back" /></marker></defs>
+                <path data-tree-plus-line :d="plusLine" :stroke="LINE.back" stroke-width="3" stroke-linecap="round" fill="none" marker-end="url(#tree-arrow-drag)" />
+              </svg>
             </div>
           </div>
         </div>

@@ -14,7 +14,9 @@ const props = defineProps<{ box: TreeBox; x: number; y: number; removable: boole
   /** 縮めた時の倍率の逆数 (押せる物だけこれで大きさを戻し、画面の上で 24px 以上を保つ。オーナー 10-22「縮めても押せる物は小さくならない」) */ inv?: number }>();
 const emit = defineEmits<{
   drag: [e: PointerEvent]; aim: []; remove: []; back: []; clearBack: []; done: []; target: []; focus: []; note: []; spam: [];
-  /** ＋を押した (押すだけ = 足す、長押しで引っ張る = 置く / つなぐ。決めるのはページ) */
+  /** 戻り先の札に乗せた / 外した・押した */
+  backHover: [on: boolean]; backGo: [];
+  /** ＋を押した (押すだけ = 足す、長押しで引っ張る = 箱の上で離すとつなぐ。決めるのはページ) */
   plus: [kind: "side" | "next", e: PointerEvent];
 }>();
 const t = useTree();
@@ -83,7 +85,9 @@ function down(e: PointerEvent): void {
     <!-- 下の行: 戻りの矢印・完成 (下の＋は箱の外なので重ならない) -->
     <div class="pointer-events-none absolute inset-x-2 bottom-1 flex h-6 items-center gap-1 text-[11px] *:pointer-events-auto" :style="k > 1 ? { right: 'auto', width: `${(BOX_W - 16 - (box.out === 'hit' ? 22 : 0)) / k}px`, ...keep('left bottom') } : {}">
       <template v-if="box.back">
-        <span class="min-w-0 flex-1 truncate text-cyan-200">↩ {{ backLabel }}</span>
+        <!-- 戻り先の札: 乗せると戻りの線が出て戻り先が光る、押すとそこへ寄る (線は既定で引かない、10-22) -->
+        <button type="button" data-tree-back-tag class="flex h-6 min-w-0 flex-1 items-center truncate rounded px-1 text-left text-cyan-200 hover:bg-cyan-400/15" :title="tr(`戻り先: ${backLabel} (押すとそこへ寄る)`, `Returns to: ${backLabel} (click to go there)`)"
+          @pointerenter="emit('backHover', true)" @pointerleave="emit('backHover', false)" @focus="emit('backHover', true)" @blur="emit('backHover', false)" @click.stop="!quiet && emit('backGo')">↩ {{ backLabel }}</button>
         <button v-if="!quiet" type="button" class="-mr-1 flex size-6 items-center justify-center rounded opacity-60 hover:bg-white/10 hover:opacity-100" :title="tr('戻りの矢印を外す', 'Remove the return arrow')" @click.stop="emit('clearBack')"><Icon name="x" class="size-3" /></button>
       </template>
       <template v-else-if="!box.hand && box.out !== 'start' && !quiet">
@@ -96,9 +100,9 @@ function down(e: PointerEvent): void {
 
     <!-- 横の＋ = 当たりを足す (どれか 1 つが叶う) -->
     <button v-if="box.out === 'hit' && !quiet" type="button" data-tree-add-hit :style="k > 1 ? { ...keep('center'), top: 'calc(50% + 4px)' } : {}" class="absolute -right-4 top-1/2 flex size-7 -translate-y-1/2 touch-none items-center justify-center rounded-full border-2 border-amber-400/70 bg-[#1d1812] text-amber-200 hover:bg-amber-500/30"
-      :title="tr('当たりを横に足す (どれか 1 つが叶えば当たり)。長押しで引っ張ると置く所を選べる・箱の上で離すとその箱へつなぐ', 'Add another hit beside (any one counts). Hold and drag to place it, or drop on a box to link')" @pointerdown.stop="emit('plus', 'side', $event)"><Icon name="plus" class="size-4" /></button>
+      :title="tr('当たりを横に足す (どれか 1 つが叶えば当たり)。長押しで引っ張り箱の上で離すとその箱へつなぐ', 'Add another hit beside (any one counts). Hold and drag onto a box to link')" @pointerdown.stop="emit('plus', 'side', $event)"><Icon name="plus" class="size-4" /></button>
     <!-- 下の＋ = 次に打つ手 (箱の下の外。完成・戻るのボタンと重ならない) -->
     <button v-if="free && !quiet" type="button" data-tree-next :style="keep('center')" class="absolute -bottom-[34px] left-1/2 flex size-7 -translate-x-1/2 touch-none items-center justify-center rounded-full border-2 border-amber-400/70 bg-[#1d1812] text-amber-200 hover:bg-amber-500/30"
-      :title="tr('次に打つ手を足す。長押しで引っ張ると置く所を選べる・箱の上で離すとその箱へ戻る矢印', 'Add the next craft. Hold and drag to place it, or drop on a box to return there')" @pointerdown.stop="emit('plus', 'next', $event)"><Icon name="plus" class="size-4" /></button>
+      :title="tr('次に打つ手を足す。長押しで引っ張り箱の上で離すとその箱へ戻る', 'Add the next craft. Hold and drag onto a box to return there')" @pointerdown.stop="emit('plus', 'next', $event)"><Icon name="plus" class="size-4" /></button>
   </div>
 </template>

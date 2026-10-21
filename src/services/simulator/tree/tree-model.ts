@@ -63,7 +63,8 @@ export interface TreeDoc {
 export const BOX_W = 196;
 export const BOX_H = 112;
 const GAP_X = 220;
-const GAP_Y = 190;
+/** 段の間 (親の下 → 手の札 → 横の棒 → 子の上。直角の木の線が手の札と重ならない広さ、10-22) */
+const GAP_Y = 210;
 
 export function newTree(base: string, itemLevel: number): TreeDoc {
   return {
@@ -198,22 +199,6 @@ export function setDone(d: TreeDoc, id: string, v: TreeBox["done"]): void {
   b.done = v;
 }
 
-/** 矢印の先の箱を、その並びの真ん中が (x, y) に来るよう動かす (＋を引っ張って置いた所) */
-export function placeOuts(d: TreeDoc, id: string, x: number, y: number): void {
-  const p = d.boxes[id];
-  if (!p?.outs.length) return;
-  const os = p.outs.map((o) => d.boxes[o]!);
-  const cx = (Math.min(...os.map((o) => o.x)) + Math.max(...os.map((o) => o.x)) + BOX_W) / 2, top = Math.min(...os.map((o) => o.y));
-  // 親の矢印の手の札 (親の下 46px) より下にだけ置く
-  const minY = p.y + BOX_H + 72;
-  for (const o of os) shift(d, o.id, Math.round(x - cx), Math.round(Math.max(y, minY) - top));
-  // 置いた所で他の箱と重なる時は、重ならない所まで下へずらす (結果の箱は横に並ぶので、空き所で離しても隣に掛かる事がある)
-  const mine = new Set(p.outs.flatMap((o) => subtree(d, o)));
-  const others = Object.values(d.boxes).filter((b) => !mine.has(b.id));
-  const hits = (): boolean => os.some((o) => others.some((b) => Math.abs(b.x - o.x) < BOX_W + 8 && Math.abs(b.y - o.y) < BOX_H + 8));
-  for (let i = 0; i < 40 && hits(); i++) for (const o of os) shift(d, o.id, 0, 40);
-}
-
 /** メモの窓の札を足す / 消す (同じ物は 1 つ) */
 export function toggleMemoAim(d: TreeDoc, a: Aim): void {
   const list = d.memoAims ?? [];
@@ -252,7 +237,7 @@ const TIDY_GAP = 28;
 /**
  * 整列 (2026-10-22 オーナー「ごちゃっとなってるのを整列。2 段目を合わせる、矢印が重ならない」):
  * 段 (始まりからの深さ) ごとに横一列、兄弟は親の下に等間隔 (OUT_ORDER の順)。部分木の幅を先に測ってから並べるので箱は重ならない。
- * 始まりの箱は x = 0 のまま。戻りの矢印は箱の外側を回す (画面の側、SimTreePage の backs)
+ * 始まりの箱は x = 0 のまま。線は直角の木の線、戻りの矢印は既定では引かない (画面の側、SimTreePage の edges・backLine。10-22 整列の定義)
  */
 export function tidy(d: TreeDoc): void {
   const kids = (id: string): string[] => {
@@ -268,17 +253,21 @@ export function tidy(d: TreeDoc): void {
     width.set(id, w);
     return w;
   };
+  // 親は一番左と一番右の子の真ん中 (兄弟の並びの中心が親とそろう、10-22 整列の定義)。子の部分木の幅の中に収まるので隣とは重ならない
   const place = (id: string, left: number, depth: number): void => {
     const b = d.boxes[id]!, w = width.get(id)!;
-    b.x = Math.round(left + w / 2 - BOX_W / 2);
     b.y = depth * GAP_Y;
-    const ks = d.boxes[id]!.outs;
+    const ks = b.outs;
     const inner = ks.reduce((a, k) => a + width.get(k)!, 0) + TIDY_GAP * Math.max(0, ks.length - 1);
     let l = left + (w - inner) / 2;
     for (const k of ks) { place(k, l, depth + 1); l += width.get(k)! + TIDY_GAP; }
+    b.x = ks.length ? Math.round((d.boxes[ks[0]!]!.x + d.boxes[ks[ks.length - 1]!]!.x) / 2) : Math.round(left + w / 2 - BOX_W / 2);
   };
-  const w = measure("start");
-  place("start", -(w / 2 - BOX_W / 2), 0);
+  measure("start");
+  place("start", 0, 0);
+  // 始まりの箱は x = 0 に戻す (木ごとずらす)
+  const dx = -d.boxes.start!.x;
+  for (const b of Object.values(d.boxes)) b.x += dx;
 }
 
 export function moveBox(d: TreeDoc, id: string, x: number, y: number): void {
