@@ -27,6 +27,32 @@
 - 英語版 greater-perfect-orb-difference の動画の一文も外したが未 commit。
 - 新しい記事はもう足さない (オーナー「30 本で十分」)。
 
+## 初心者向けに直す順 (オーナー 10-22、1 本ずつオーナーのチェック。合格の形 = greater-perfect-orb-difference)
+形: 頭に分かる事 3 行と言葉の説明・ずんだもん・めたんの掛け合いで進む短文・文の途中で改行しない・英語の添え書き無し・図は流れや差がひと目で分かる物だけ (数字は表)。合格したら英語版も同じ形 (Zundamon / Metan、用語は poe2db の英語)。
+1. ✅ greater-perfect-orb-difference (上級と完全の違い) 合格 10-22
+2. exaltation-omens-guide (高貴のお告げの使い分け) ← 次
+3. catalyst-types (カタリストの種類)
+4. desecration-bone-types (冒涜の骨の種類)
+5. es-gloves-greater-exalt (ES 手袋は上級)
+6. dont-hoard-misses (外れは溜めるな)
+7. spam-simulator (スパムシミュレーター)
+8. sanctify-quality-order (聖別と品質の順番)
+9. quality-rounding-down (品質の切り捨て)
+10. catalysing-exaltation-multiplier (触媒の倍率)
+11. desecration-weights (冒涜の重み)
+12. desecration-bone-sides (骨の左右)
+13. arcane-surge-desecrated-gloves (アーケインサージ)
+14. kolrs-hunt-gloves (コルの狩り)
+15. mana-ring-craft (マナの指輪)
+16. fracture-desecrated (フラクチャー)
+17. liquid-emotions-jewels (液化した感情)
+18. coe-desecrate-no-handler (CoE で冒涜)
+19. desecration-lords-tag-audit (陣営のタグ)
+20. custom-mod-weights (重みを変える)
+21. crafting-simulator-no-exceptions (例外を書かない作り)
+22. x-share-bug (シェアの不具合、日本語だけ)
+- 配信の B 8 本 (書きかけ未 commit) はまだ触らない。決まったら最後に並べる。
+
 ## OK 待ち
 
 ## 記事ごとの進み (日英、全部 draft: true。開発版 abff29f1 に 15 本、残りは次のデプロイで)
