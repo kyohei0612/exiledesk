@@ -108,10 +108,12 @@ const phone = ref(false);
 function fitZoom(): void {
   phone.value = window.innerWidth < 768;
   // iPad など: 縮めると字が 7〜8 px になって読めないので、1280 未満は等倍、それより広くても 0.85 倍より小さくしない (並びは幅に合わせて折り返す。2026-10-10)
-  const z = phone.value || window.innerWidth < 1280 ? 1 : Math.min(1.6, Math.max(0.85, window.innerWidth / DESIGN_WIDTH));
+  // 幅は縦のスクロールバーを除いた幅 (clientWidth)。innerWidth はスクロールバーの分も入っていて、縮めた時 (1280 px 以上) も外枠が 10 px 横にはみ出した (2026-10-22 はみ出しの見張り)
+  const cw = document.documentElement.clientWidth || window.innerWidth;
+  const z = phone.value || window.innerWidth < 1280 ? 1 : Math.min(1.6, Math.max(0.85, cw / DESIGN_WIDTH));
   document.documentElement.style.zoom = String(z);
   // 等倍の時は幅を決め打ちしない (innerWidth は縦のスクロールバーの分も入っていて、768〜1279 px で 10 px 横にはみ出した。2026-10-13 ランダム操作の確かめ)
-  frame.value = { w: z === 1 ? 0 : window.innerWidth / z, h: window.innerHeight / z };
+  frame.value = { w: z === 1 ? 0 : cw / z, h: window.innerHeight / z };
 }
 fitZoom();
 window.addEventListener("resize", fitZoom);
