@@ -24,6 +24,15 @@
   側の式 `mods.get(id)?.type === "suffix" ? …` をエンジンの入口の sideOfMod(data, modId) に替える (ジン部長 acdc1eca): auto-group.ts:16・quiz-build.ts:71,85・recipe-sim.ts:49・sim-odds.ts:33・keep-compare.ts:33・sim-methods.ts の 7 か所・sim-greater.ts:33・target-share.ts:27・use-sim-calc.ts・use-target-plans.ts:109・StageTopicGuide.vue:138。
 - 見つけた不具合・気付き: 上の「残りの気付き」(ミニマップが重なる・跨ぐ所 49・タブを閉じた時の設定)。消去 + 左側のお告げは、乱数の MOD が左にあってもエンジンの omenBlock が「今は意味なし」で止める (エンジンの判断、ジン部長の持ち物)。
 
+## 5 本目 (10-22 深夜〜、点検の直す案)
+- 済んだ物 (全部 push 済み、振る舞いは同じ。確かめ = 型チェック 0・入口の見張り「増えた所なし」・org-lint、tree-run は check-tree-run all 300 人 種 1 の出力が直す前と同じ、コース 12・チュートリアル・コース・見本は JSON が直す前と同じ。画面は見ていない):
+  - sideOfMod へ 20 か所 (8a0768cd)、use-sim-search の AFFIX_COUNT を凍結から外す (6a14275e)、消す 7 つ (d971912e)。テストだけの 3 本 (auto-group・quiz-samples・quiz-tutorial-run) はテストの見本として残す。
+  - 重複: fmtDate (7b2c0923)・useRecipeUrl (7e6e2fca・77c883db)・use-sim-shelf (03008958)・membersOf (e1c59357)・recipe-store-util (29196678)・ageText と memoPrice (af7bbfe5)・tree-run の play → playHand (d9266ebf)・topic-steps (cd445aba)・quizSlot (e0b9e245)・urlOff (e4e5225e)。
+  - 見送り: 失敗の判定 (recipe-pattern-run と recipe-sim は既に共有の ctx の fixedHit・fail を使い、写しは 1 行の文だけ)。membersOf の auto-model.ts:167 は解析君の持ち物なので触っていない。
+- 待ち: use-sim-targets の planByRedoCost (凍結の htc-craft/redo-cost) を外すか → ブラック経由でオーナーに A 外す / B ジンに移す / C 旧工程ページを消すまで据え置き。
+- ジン部長の物 (ブラックへ回した): share.ts の xIntentUrl が投稿の文を引数で受ければ recipe-share の recipeXUrl を寄せられる。パターンの初期値 { name: "パターン 1", steps: [], quiz: { v: 3, rules: {} } } は StageSettings・use-stage-base (ジン) と use-sim-steps (シミュ) の 3 か所、置き場は state/craft-stage.ts が良い。
+- 直す案 4 (views/craft-stage の 5 本と web/page.ts・state/web-page.ts の持ち主) はブラックに 1 行で返した。
+
 ## 台本 (共有メモ local_35782246-d80a-4c3f-9dff-36103418e719/tree-mouse/)
 - tree-mouse.mjs (8 条件の操作、10b はホイール = 拡大縮小に直した)・tree-shelf.mjs (棚とお告げ)・tree-recipe.mjs・tree-trial-wide.mjs・tree-sample-check.mjs (見本の木: 戻りの線の終わり・n か所・精査 0・縮めて押す → ポップアップ → 試し打ち・札の編集と Esc)。
 - Chrome は PowerShell の `Start-Process chrome.exe -WindowStyle Hidden -PassThru -ArgumentList --headless=new,--remote-debugging-port=9333,--user-data-dir=<scratchpad>/cdp-profile`、使う前にブラックに一言、終わったら PID で止めて profile を消して「返した」。
