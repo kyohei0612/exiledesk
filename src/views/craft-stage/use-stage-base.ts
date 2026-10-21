@@ -13,6 +13,7 @@ import { topic } from "../../state/tutorial/craft-topic";
 import { basePage, recipesPage, simStep } from "../../state/web-page";
 import { currentRecipeId } from "../../state/simulator/sim-recipe-store";
 import { simPasted } from "../../state/simulator/sim-state";
+import { restoredFromSession } from "../../state/stage-session";
 
 function create() {
   const inApp = isTauriRuntime();
@@ -32,6 +33,8 @@ function create() {
   watch(() => s.replay.value?.shared, (v) => { if (v) handNoBase.value = false; }, { immediate: true });
   // 録画モードで URL の最初の状態を入れた時もベースは決まっている (POE2Tube 要望 ㊷)
   watch(() => s.recPreset.value, (v) => { if (v) handNoBase.value = false; }, { immediate: true });
+  // 記事などから戻って写しから戻した時もベースは決まっている (2026-10-22、state/stage-session.ts)
+  watch(() => restoredFromSession.value, (v) => { if (v) handNoBase.value = false; }, { immediate: true });
   // クラフトのコースを始めた時もベースは決まっている (2026-10-17)
   watch(() => course.value ?? topic.value, (c) => { if (c) handNoBase.value = false; }, { immediate: true });
   const simNoBase = computed(() => s.mode.value === "sim" && !s.replay.value && !s.simPicked.value);

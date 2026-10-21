@@ -3,6 +3,7 @@ import { createApp, watchEffect } from "vue";
 import "../style.css";
 import WebApp from "./WebApp.vue";
 import { startTracking } from "./track";
+import { startStageSession } from "../state/stage-session"; // 記事などから戻った時に前のクラフト画面で (2026-10-22)
 import { startLogSender } from "../services/telemetry/log-sender";
 import { startPwa } from "./pwa";
 import { applyNoLogParam, noLog } from "../utils/no-log";
@@ -18,6 +19,7 @@ applyNoLogParam();
 initRecParts();
 // 操作の印 (段階・滞在・エラー) を始めてから画面を出す (cookie なし)
 startTracking();
+startStageSession();
 // 相場はサーバーが 1 時間おきに取った物を /boot.json で受け取る (ブラウザから poe2scout を引かない。boot.ts)
 setMarketLoader(async () => {
   const b = await loadBoot();

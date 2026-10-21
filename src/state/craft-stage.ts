@@ -12,6 +12,7 @@
  *     layout=clip で撮影用のすっきりレイアウト)
  * 1 手の中身は services/craft-stage (計算機と同じ規則)。棚・名前・値段は [[craft-stage-shelf.ts]]。
  */
+import { restoreStageSession } from "./stage-session";
 import { playSfx, playUseSfx } from "../utils/sfx";
 import { isRareChance } from "../utils/format-pct";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
@@ -251,7 +252,7 @@ export const craftStage = {
         } catch (e) {
           error.value = tr(`共有の手順が読めませんでした (${e instanceof Error ? e.message : String(e)})`, `Couldn't open the shared steps (${e instanceof Error ? e.message : String(e)})`);
         }
-      } else craftStage.reset();
+      } else if (URL_BASE || REC_START || isTauriRuntime() || !restoreStageSession()) craftStage.reset(); // 記事などから戻った時は写しから (stage-session.ts)
       // ベースの読み物のページ (/bases/…) の「エミュレーターで試す」(?base=<英語名>、2026-10-13): そのベースの白から始める
       if (!raw && !shared && !REC_START && URL_BASE && data.value && htcBaseInfo()[URL_BASE]) {
         base.value = URL_BASE;
