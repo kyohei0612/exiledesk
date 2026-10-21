@@ -8,15 +8,15 @@ import { computed } from "vue";
 import { PILL_H, PILL_W, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import type { MergeLine } from "./tree-merge";
 import { useTree } from "./use-tree";
-import { outName } from "./tree-names";
+import { OUT_LOOK, outName } from "./tree-names";
 import { tr } from "../../../i18n/lang";
 
 const props = defineProps<{ doc: TreeDoc; pills: readonly string[]; lines: readonly MergeLine[]; paths: ReadonlyMap<string, string>; hover: string | null; showAll: boolean; inv: number; off: boolean }>();
 const emit = defineEmits<{ open: [id: string]; hover: [id: string | null] }>();
 const t = useTree();
 const COLOR = { fwd: "#a39a88", back: "#5fd0e0" } as const;
-/** 札の色 (箱の色と同じ系統、TreeBox の KIND) */
-const RGB: Record<string, string> = { hit: "224,176,96", any: "200,184,150", junk: "224,112,122", junkGone: "154,167,184", lost: "165,139,224" };
+/** 札の色 (箱と同じ、tree-names.ts の OUT_LOOK) */
+const rgb = (id: string): string => OUT_LOOK[props.doc.boxes[id]!.out].c;
 
 /** 乗せた箱・札に関わる線 (札そのもの・行き先・札の親) */
 const hot = (l: MergeLine): boolean => !!props.hover && (l.pill === props.hover || l.to === props.hover || l.parent === props.hover);
@@ -41,7 +41,7 @@ const dest = (id: string): string => props.lines.filter((l) => l.pill === id).ma
     <path v-for="l in shown.filter(hot)" :key="l.id" data-tree-merge-hot :d="paths.get(l.id)" :stroke="COLOR[l.kind]" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" :marker-end="`url(#tree-merge-${l.kind})`" />
   </svg>
   <button v-for="id in pills" :key="id" type="button" data-tree-pill :data-box-id="id" class="nodrag nopan pointer-events-auto absolute z-[4] flex items-center gap-1 truncate rounded-full border-[1.5px] bg-[#16120d] px-2.5 text-left text-[12px] font-semibold hover:bg-[#241c12]"
-    :class="off ? '!pointer-events-none' : ''" :style="{ left: `${doc.boxes[id]!.x}px`, top: `${doc.boxes[id]!.y}px`, width: `${PILL_W}px`, height: `${PILL_H}px`, borderColor: `rgba(${RGB[doc.boxes[id]!.out]},0.7)`, color: `rgb(${RGB[doc.boxes[id]!.out]})`, scale: String(inv), transformOrigin: 'center top' }"
+    :class="off ? '!pointer-events-none' : ''" :style="{ left: `${doc.boxes[id]!.x}px`, top: `${doc.boxes[id]!.y}px`, width: `${PILL_W}px`, height: `${PILL_H}px`, borderColor: `rgba(${rgb(id)},0.7)`, color: `rgb(${rgb(id)})`, scale: String(inv), transformOrigin: 'center top' }"
     :title="tr(`${label(id)} → ${dest(id)} (このアイテムで続ける箱。押すと編集)`, `${label(id)} → ${dest(id)} (the box this item continues from. Click to edit)`)"
     @pointerenter="emit('hover', id)" @pointerleave="emit('hover', null)" @click.stop="emit('open', id)">
     <span aria-hidden="true" class="shrink-0 opacity-80">{{ doc.boxes[id]!.out === "hit" ? "→" : "↩" }}</span><span class="min-w-0 truncate">{{ label(id) }}</span>

@@ -15,8 +15,21 @@ import { tr } from "../../../i18n/lang";
 /** 名前を引く時のアイテム (ツリーのベース。骨・エッセンスの名前が部位で変わる) */
 const baseItem = computed(() => (s.data.value ? freshItem(s.data.value, TREE_BASE, TREE_ILVL, "rare") : null));
 
+/**
+ * 結果ごとの名前・色・印 (10-22 見た目の作り直し、research/notes/2026-10-22-tree-ui-references.md の 2: ネオンの縁 + 印 + 題 + 副題)。
+ * 色は線の色 (SimTreePage の LINE) と同じ系統: 進む = 金 / 外れ・消えた = 赤・紫・灰 / 始まり = 水色。箱 (TreeBox) とまとめた札 (TreeMergeLayer) で同じ
+ */
+export const OUT_LOOK: Record<TreeBox["out"], { ja: string; en: string; c: string; icon: string }> = {
+  start: { ja: "始まり", en: "Start", c: "95,180,224", icon: "sparkles" },
+  hit: { ja: "当たり", en: "Hit", c: "224,176,96", icon: "target" },
+  junk: { ja: "外れ", en: "Miss", c: "224,112,122", icon: "x" },
+  junkGone: { ja: "外れが消えた", en: "Miss removed", c: "154,167,184", icon: "check" },
+  lost: { ja: "狙いが消えた", en: "Target lost", c: "165,139,224", icon: "rotate" },
+  any: { ja: "打った後", en: "After", c: "200,184,150", icon: "plus" },
+};
+
 /** 箱の種類の名前 (始まり・当たり・外れ…。一覧・戻り先の札・まとめた札で同じ) */
-export const outName = (out: TreeBox["out"]): string => ({ start: tr("始まり", "Start"), hit: tr("当たり", "Hit"), junk: tr("外れ", "Miss"), junkGone: tr("外れが消えた", "Miss removed"), lost: tr("狙いが消えた", "Target lost"), any: tr("打った後", "After") })[out];
+export const outName = (out: TreeBox["out"]): string => tr(OUT_LOOK[out].ja, OUT_LOOK[out].en);
 
 /** 値段のキー (カレンシー・お告げ・骨・エッセンス・カタリスト) → 画面の言語の名前 (クラフト台の棚と同じ) */
 export const handName = (key: string): string => nameOfKey(key, baseItem.value);
