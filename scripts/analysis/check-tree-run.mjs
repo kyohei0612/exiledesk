@@ -99,6 +99,58 @@ function ringStart(rng) {
   return M.applyCurrency(data, it, "exalt", rng).item;
 }
 
+/**
+ * マナ系の指輪 (エッセンス後): 分かれ目の箱 (start の split) が今の状態で次の手を選び、手の箱は結果に関わらず分かれ目へ戻る (next)。
+ * mana-ring-ev.mjs の nextMove と同じ順の条件。300 人で 1 個 1,990.94 神・完成 64.0% (打ち止め 2000 神)
+ */
+const MANA = {
+  E: { modId: "Rings/PerfectEssence_MaximumManaIncreasePercent", tier: 99 },
+  MT: { modId: "Rings/IncreasedMana", tier: 1 },
+  C: { modId: "Rings/IncreasedCastSpeed", tier: 2 },
+  A: { modId: "Rings/AllResistances", tier: 1 },
+  N: { modId: "Rings/ManaRegeneration", tier: 1 },
+};
+const ESS = "essence:perfect:Rings/PerfectEssence_MaximumManaIncreasePercent";
+function manaTree() {
+  const k = (a) => `${a.modId}|${a.tier}`;
+  const CAT = (cat, side) => hand("exalt_perfect", ["OmenofCatalysingExaltation", side], { catalyst: cat, quality: 20 });
+  const D = "OmenofDextralExaltation", S = "OmenofSinistralExaltation";
+  const ALL = 99;
+  const act = (h) => ({ out: "junk", hand: h, next: "start" });
+  const d = doc("Gold Ring", {
+    start: { out: "start", split: [
+      { when: { has: Object.values(MANA).map(k) }, to: "fin" },
+      { when: { heldCount: [0, 0] }, to: "ch" },
+      { when: { junk: { suffix: [1, ALL] } }, to: "an" },
+      { when: { lacks: [k(MANA.C)] }, to: "cc" },
+      { when: { lacks: [k(MANA.A)] }, to: "ca" },
+      { when: { lacks: [k(MANA.N)] }, to: "cn" },
+      { when: { lacks: [k(MANA.E)], free: { any: [1, 1] }, junk: { any: [1, 1] } }, to: "ep" },
+      { when: { lacks: [k(MANA.E)], junk: { prefix: [0, 0] } }, to: "bait" },
+      { when: { lacks: [k(MANA.E)] }, to: "ec" },
+      { when: { junk: { prefix: [1, ALL] } }, to: "an" },
+      { when: { lacks: [k(MANA.MT)] }, to: "cm" },
+    ] },
+    fin: { out: "hit", done: "main" },
+    ch: act(hand("chaos")),
+    an: act(hand("annul")),
+    cc: act(CAT("catalyst_speed", D)),
+    ca: act(CAT("catalyst_cold", D)),
+    cn: act(CAT("catalyst_mana", D)),
+    cm: act(CAT("catalyst_mana", S)),
+    ep: act(hand(ESS)),
+    ec: act(hand(ESS, ["OmenofSinistralCrystallisation"])),
+    bait: act(hand("exalt_greater", [S])),
+  });
+  return d;
+}
+function manaStart(rng) {
+  const SM = data.mods.get("Rings/Special_genesis_tree_caster_SpellManaCostEfficiency");
+  let it = M.startFrom(data, "Gold Ring", 82, { rarity: "rare" }, Math.floor(rng() * 2 ** 31));
+  it = M.withMod(it, { ...M.makeStageMod(SM, "prefix", SM.tiers.length - 1, rng), fractured: true });
+  return M.applyCurrency(data, it, "exalt_greater", rng).item;
+}
+
 function show(name, want, r) {
   const d = (r.perItem / want - 1) * 100;
   console.log(`\n=== ${name}: ツリー ${r.n} 人`);
@@ -126,5 +178,10 @@ if (which === "restart" || which === "all") {
 if (which === "ring" || which === "all") {
   const r = M.runTree(data, ringTree(), { n: N, seed: SEED, price, start: ringStart });
   show("金の指輪のサフィックス C (外れはすぐ消去、触媒に完全・素の右側に上級)", 219.76, r);
+}
+if (which === "mana" || which === "all") {
+  const manaPrice = (k) => (k === ESS ? 26.5 : k === "catalyst_mana" ? 12.102 : EX[k] ?? 0) / 696.929;
+  const r = M.runTree(data, manaTree(), { n: N, seed: SEED, price: manaPrice, start: manaStart, aims: Object.values(MANA) });
+  show("マナ系の指輪 (エッセンス後、分かれ目の箱)", 1990.94, r);
 }
 console.log(`\n${((Date.now() - t0) / 1000).toFixed(1)} 秒`);

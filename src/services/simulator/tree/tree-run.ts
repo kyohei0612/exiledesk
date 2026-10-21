@@ -8,7 +8,7 @@
 import { applyCurrency, freshItem, mulberry32, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { CATALYSING } from "./tree-hands";
 import { aimHeld, aimsOf, fillCatalyst, outcomeOf } from "./tree-sample";
-import { aimKey, type Aim, type Hand, type TreeDoc } from "./tree-model";
+import { aimKey, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
 
 export interface TreeRunOpts {
   /** 人数 (裏は 100、確かめは 300) */
@@ -23,6 +23,8 @@ export interface TreeRunOpts {
   capDiv?: number;
   /** 1 人の手の上限 (既定 20000) */
   capSteps?: number;
+  /** 狙いの札 (既定 = ツリーの当たりの箱の札、aimsOf)。分かれ目の箱だけで組んだツリーは当たりの箱が無いので渡す */
+  aims?: Aim[];
   /** 始めのアイテム (既定 = sampleOf の始まり: レア + フラクチャーの指名) */
   start?: (rng: () => number) => StageItem;
   /** every 人ごとに途中の結果 */
@@ -111,6 +113,40 @@ function play(data: PatchData, item: StageItem, h: Hand, rng: () => number, aims
 export const MATCH = "match";
 /** 作り直し (設計の「作り直し」、back: "restart"): 始めのアイテムに戻して、始めの費用をもう一度払う。数えた回数は TreeRunResult.restarts */
 export const RESTART = "restart";
+
+/**
+ * 分かれ目の箱 (設計 2 弾目「打たずに状態で分ける」): 手を打たずに、今のアイテムの状態の条件を上から順に見て、最初に合った行の箱へ進む。
+ * TreeDoc の型にはまだ無いので、箱に split / next を足した形 (SplitBox) をここだけで読む。どの行にも合わなければ止まる。
+ * next = 手の結果がどれでも、この箱へ進む (分かれ目に戻す時に結果の箱を並べなくてよい)
+ */
+type Range = [number, number];
+export interface SplitWhen {
+  /** 付いている狙いの数 */
+  heldCount?: Range;
+  /** 全部付いている狙い (aimKey) */
+  has?: string[];
+  /** どれも付いていない狙い (aimKey) */
+  lacks?: string[];
+  /** 外れ (固定でも狙いでもない MOD) の数 */
+  junk?: { prefix?: Range; suffix?: Range; any?: Range };
+  /** 固定でない MOD の数 */
+  free?: { prefix?: Range; suffix?: Range; any?: Range };
+}
+export interface SplitRule { when: SplitWhen; to: string }
+export type SplitBox = TreeBox & { split?: SplitRule[]; next?: string };
+const inRange = (n: number, r?: Range): boolean => !r || (n >= r[0] && n <= r[1]);
+function splitTo(data: PatchData, rules: readonly SplitRule[], item: StageItem, aims: readonly Aim[]): string | null {
+  const held = new Set(aims.filter((a) => aimHeld(data, item, a)).map(aimKey));
+  const isAim = (m: StageMod): boolean => aims.some((a) => aimHeld(data, { ...item, prefixes: [m], suffixes: [] }, a));
+  const count = (side: "prefix" | "suffix" | "any", junkOnly: boolean): number =>
+    [...(side !== "suffix" ? item.prefixes : []), ...(side !== "prefix" ? item.suffixes : [])].filter((m) => !m.fractured && (!junkOnly || !isAim(m))).length;
+  const ok = (w: SplitWhen): boolean =>
+    inRange(held.size, w.heldCount)
+    && (w.has ?? []).every((k) => held.has(k))
+    && (w.lacks ?? []).every((k) => !held.has(k))
+    && (["prefix", "suffix", "any"] as const).every((sd) => inRange(count(sd, true), w.junk?.[sd]) && inRange(count(sd, false), w.free?.[sd]));
+  return rules.find((r) => ok(r.when))?.to ?? null;
+}
 type Shape = { key: string; box: string };
 function shapesOf(doc: TreeDoc): Shape[] {
   const out: Shape[] = [];
@@ -150,6 +186,14 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     if (!b) return { end: "stuck", cost, at, visits, uses, restarts };
     visits.push({ box: at, cost });
     if (b.done) return { end: b.done, cost, at, visits, uses, restarts };
+    const sb = b as SplitBox;
+    if (sb.split) {
+      if (++hops > 1000) return { end: "stuck", cost, at, visits, uses, restarts };
+      const to = splitTo(data, sb.split, item, aims);
+      if (!to) return { end: "stuck", cost, at, visits, uses, restarts };
+      at = to;
+      continue;
+    }
     if (b.back) {
       if (++hops > 1000) return { end: "stuck", cost, at, visits, uses, restarts };
       if (b.back === RESTART) {
@@ -170,6 +214,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     const before = item;
     const r = play(data, item, b.hand, rng, aims, use);
     if (!r.applied) return { end: "stuck", cost, at, visits, uses, restarts };
+    if (sb.next) { item = r.item; at = sb.next; continue; }
     const oc = outcomeOf(data, before, r.item, aims);
     const next = b.outs.find((id) => {
       const c = doc.boxes[id];
@@ -227,7 +272,7 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
 /** ツリーどおりに n 人を 1 人ずつ打つ */
 export function runTree(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): TreeRunResult {
   const o = { price: opts.price, startCost: opts.startCost ?? 0, capDiv: opts.capDiv ?? 2000, capSteps: opts.capSteps ?? 20000, start: opts.start };
-  const aims = aimsOf(doc);
+  const aims = opts.aims ?? aimsOf(doc);
   const shapes = shapesOf(doc);
   const rng = mulberry32(opts.seed);
   const every = Math.max(1, opts.every ?? 10);
