@@ -2,7 +2,7 @@
   StageRoutesPage.vue — スパムシミュレーター (?page=routes、2026-10-18 オーナー「エミュレーターに簡易シミュレーターページ。1 MOD を対象にどのルートが一番早く着くか。
   要はスパム。冒涜スパムは無し。高貴・増強・カオスのスパム」)。カレンシーの見出しの「スパムシミュレーター」で開き、最初に MOD を 1 つ選ぶ (StageAimPicker の routes)。
   オーナー「全てのスパムで計測、100 人で。カオスは今まで通り」。カオスの完全は最初は外していたが入れる (2026-10-19 オーナー「流石に完全カオスも出してあげるか」)
-  計算は services/craft-stage/route-race.ts (エミュレーターと同じ applyCurrency で 1 通り 100 人分)。9 通り (3 つの道 × 完全 / 上級 / 無印) を 1 つずつ間を空けて回し、出た順に出す。
+  計算は services/craft-stage/route-race.ts (エミュレーターと同じ applyCurrency で 1 通り 100 人分)。9 通り (3 つの道 × 無印 / 上級 / 完全) を 1 つずつ間を空けて回し、出た順に出す (回す順も道のカードの並びも無印から。2026-10-22 オーナー「無印から実行してくれ」)。
   見た目 (2026-10-19 オーナー「UI ダサすぎる、シンプル過ぎる」「各工程で詳しいルールは書いた方が良い」): 上に狙いと一番安い道を大きく、
   下に 3 つの道をカード (カレンシーの絵・打ち方の決まりを番号で・等級ごとの棒と使った物)。1 つの枠 (.g-panel) の中。決まりは route-race.ts と同じ文 (メモ feedback-show-sim-rules)
   値段は今の相場 (priceOf)、ベース代と始めの状態 (増強は白、カオスは MOD 1 つのレア、高貴は MOD 0 のレア。2026-10-19 オーナー) を作る費用は入れない。広告ありきの別のページ (WebApp.vue が両脇の枠を置く)
@@ -33,17 +33,17 @@ const RUNS = typeof window !== "undefined" && window.innerWidth < 768 ? 10 : 100
 type Step = { k: string | null; ja: string; en: string };
 /** 道ごと: 名前・主のカレンシー・等級・打ち方の決まり (route-race.ts と同じ。絵と文) */
 const ROUTES: Array<{ route: RouteKind; ja: string; en: string; main: string; grades: Grade[]; steps: Step[] }> = [
-  { route: "augment", ja: "増強スパム", en: "Augment spam", main: "augment", grades: ["perfect", "greater", "base"], steps: [
+  { route: "augment", ja: "増強スパム", en: "Augment spam", main: "augment", grades: ["base", "greater", "perfect"], steps: [
     { k: "transmute", ja: "白のベースに変成 (等級は増強と同じ) でマジックにする", en: "Transmute the white base (same grade as the augment) to magic" },
     { k: "annul", ja: "狙いの側に MOD が付いていたら消去 (どれが消えるかは運。反対側が消えることもある。狙いの側が空くまで続ける)", en: "If the target side has a mod, annul (which mod goes is random, the other side may go instead; repeat until the target side is empty)" },
     { k: "augment", ja: "狙いの側が空いたら増強 (両側とも空いている時はどちらに付くかは運。反対側に付いたら次は増強で狙いの側へ)", en: "When the target side is empty, augment (if both sides are empty the side is random; if it lands on the other side, the next augment goes to the target side)" },
     { k: null, ja: "狙いが付くまで 2・3 を繰り返す。マジックで狙いの側に枠が無いベースは使えない", en: "Repeat 2–3 until the target rolls. Bases with no slot on that side while magic can't use this" },
   ] },
-  { route: "chaos", ja: "カオススパム", en: "Chaos spam", main: "chaos", grades: ["perfect", "greater", "base"], steps: [
+  { route: "chaos", ja: "カオススパム", en: "Chaos spam", main: "chaos", grades: ["base", "greater", "perfect"], steps: [
     { k: "exalt", ja: "MOD 1 つのレアから始める (狙いでない MOD が 1 つ。作る費用は入れない)", en: "Start from a rare with 1 mod (not the target; its cost is not included)" },
     { k: "chaos", ja: "狙いが付くまで同じカオスを打ち続ける (1 つ消えて 1 つ付くので、MOD はずっと 1 つ)", en: "Keep using the same Chaos Orb until the target rolls (one out, one in, so it stays at 1 mod)" },
   ] },
-  { route: "exalt", ja: "高貴スパム", en: "Exalt spam", main: "exalt", grades: ["perfect", "greater", "base"], steps: [
+  { route: "exalt", ja: "高貴スパム", en: "Exalt spam", main: "exalt", grades: ["base", "greater", "perfect"], steps: [
     { k: null, ja: "MOD 0 のレアから始める (作る費用は入れない)", en: "Start from a rare with 0 mods (its cost is not included)" },
     { k: "OmenofGreaterExaltation", ja: "高貴 + 偉大な高貴のお告げで 2 つ付ける (どちらの側に付くかは運)", en: "Exalt with Omen of Greater Exaltation to add 2 mods (sides are random)" },
     { k: "annul", ja: "外れたら消去 2 回で MOD 0 に戻して 2 から繰り返す", en: "On a miss, annul twice back to 0 mods and repeat from 2" },
