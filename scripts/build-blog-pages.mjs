@@ -57,6 +57,7 @@ h3{font-size:20px;line-height:1.6;margin:40px 0 12px;font-weight:700}h4{font-siz
 a{color:var(--link)}p{margin:0 0 1.6em}ul,ol{margin:0 0 1.6em;padding-left:1.4em}li{margin:.2em 0}strong{font-weight:700}
 .meta{color:var(--sub);font-size:14px;line-height:1.6;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin:0 0 14px}.tag{color:var(--sub);font-size:13px}.tag::before{content:"#"}
 .draft{background:#fff1e0;color:#a5521a;border-radius:4px;padding:0 6px;font-size:12px}
+.backlink{display:inline-block;margin:0 0 14px;font-size:14px;line-height:1.6;color:var(--ink);text-decoration:none;padding:4px 12px 4px 8px;border-radius:999px;background:var(--soft)}.backlink:hover{color:var(--link)}
 .crumb{font-size:13px;line-height:1.6;color:var(--sub);margin:0 0 10px}.crumb a{color:var(--sub)}
 .share{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 36px;font-size:13px;line-height:1.6;color:var(--sub)}
 .share a,.share button{font:inherit;font-size:13px;padding:4px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);text-decoration:none;cursor:pointer}
@@ -96,7 +97,7 @@ const L = {
     listTitle: "ExileDesk のブログ — PoE2 のクラフトで分かった事", listDesc: "Path of Exile 2 のクラフトを ExileDesk のエンジンで回して分かった事のレポート。確率・重み・手の順番を、出どころと一緒に。",
     listIntro: "Path of Exile 2 のクラフトを、ExileDesk のエンジンで実際に回して分かった事を書いています。数字には台本と出どころ (poe2db・Craft of Exile) を添えています。",
     tree: "このツリーで試す", craft: "クラフト台で打つ", more: "ほかの記事", updated: "更新", draft: "下書き", none: "まだ記事はありません。", ad: "広告 (開発版だけ)",
-    author: "Path of Exile 2 のクラフトをエンジンで回して確かめています", share: "シェア", copyLink: "リンクをコピー", copyDiscord: "Discord 用にコピー", copied: "コピーしました",
+    author: "Path of Exile 2 のクラフトをエンジンで回して確かめています", backCraft: "← クラフトに戻る", backSim: "← シミュレーターに戻る", share: "シェア", copyLink: "リンクをコピー", copyDiscord: "Discord 用にコピー", copied: "コピーしました",
   },
   en: {
     prefix: "/en", app: "/?lang=en", blog: "Blog",
@@ -105,7 +106,7 @@ const L = {
     listTitle: "ExileDesk blog — what we found crafting in PoE2", listDesc: "Reports on Path of Exile 2 crafting, run through the ExileDesk engine: chances, weights and step order, with sources.",
     listIntro: "Findings from running Path of Exile 2 crafts through the ExileDesk engine. Every number comes with its script and sources (poe2db, Craft of Exile).",
     tree: "Try it in the tree", craft: "Craft it on the Craft Stage", more: "More posts", updated: "Updated", draft: "Draft", none: "No posts yet.", ad: "Ad (dev only)",
-    author: "Testing Path of Exile 2 crafting by running it through the engine", share: "Share", copyLink: "Copy link", copyDiscord: "Copy for Discord", copied: "Copied",
+    author: "Testing Path of Exile 2 crafting by running it through the engine", backCraft: "← Back to Craft Stage", backSim: "← Back to Simulator", share: "Share", copyLink: "Copy link", copyDiscord: "Copy for Discord", copied: "Copied",
   },
 };
 /** 横長のバナーの枠 (AdSense が通るまで本番は空、開発版は見本の箱)。ボタン・リンクから離す (上下 48px) */
@@ -171,6 +172,7 @@ ${ld ? `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\
 <body>
 <header><div class="in"><a href="${l.app}">ExileDesk</a><nav>${l.nav}</nav></div></header>
 <main${wide ? ' class="wide"' : ""}>
+<a class="backlink" data-backlink hidden href="${l.app}" data-craft="${l.backCraft}" data-sim="${l.backSim}">${l.backCraft}</a>
 ${body}
 </main>
 <footer><div class="in">${l.foot}</div></footer>

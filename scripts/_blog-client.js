@@ -45,6 +45,15 @@
   addEventListener("pagehide", flush);
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") flush(); });
 
+  // 左上の「← クラフトに戻る」: サイトの中 (クラフト画面・シミュレーター) から来た時だけ出す。行く前の画面は sessionStorage の写し (src/state/stage-session.ts) から戻る
+  try {
+    var snap = JSON.parse(sessionStorage.getItem("exiledesk.stage.session.v1") || "null");
+    var back = document.querySelector("[data-backlink]");
+    if (snap && back) {
+      back.textContent = back.getAttribute(snap.mode === "sim" ? "data-sim" : "data-craft");
+      back.hidden = false;
+    }
+  } catch (e) { /* 出さないだけ */ }
   // 一覧のタグの札: 押したタグのカードだけ出す (「すべて」で戻す)
   document.querySelectorAll("[data-tagf]").forEach(function (a) {
     a.addEventListener("click", function (e) {
