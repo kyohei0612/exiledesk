@@ -25,14 +25,11 @@ import { aimHeld, aimsOf, sampleOf } from "../../../services/simulator/tree/tree
 import { checkTree, type CheckIssue } from "../../../services/simulator/tree/tree-check";
 import { treePage } from "../../../state/web-page";
 import { tr } from "../../../i18n/lang";
-import { pageZoom, toCss } from "../../../utils/zoom";
+import { pageZoom } from "../../../utils/zoom";
+import { gesture, HOLD_MS } from "./use-gesture";
 
 const t = useTree();
 const doc = t.doc;
-/** これより動かしたらドラッグ、動かさずに離したら押した (手のぶれで箱が動かないよう 5px) */
-const DRAG_SLOP = 5;
-/** ＋をこれだけ押し続けたら「引っ張る」 */
-const HOLD_MS = 300;
 
 /** 右の欄 (箱を選んだ時だけ) */
 const panel = ref<{ kind: "hand" | "aim" | "fracture" | "trial" | "note"; id: string } | null>(null);
@@ -48,7 +45,7 @@ const v = useTreeView(doc, () => !!panel.value);
 const { viewport, zoom, full, ox, oy, area, viewOnly } = v;
 
 // ドラッグ中は画面の上だけで動かし、離した時に 1 回だけ組み替える (1 つ戻すが 1 手で済む)
-const drag = ref<{ id: string; sx: number; sy: number; bx: number; by: number; x: number; y: number } | null>(null);
+const drag = ref<{ id: string; bx: number; by: number; x: number; y: number } | null>(null);
 const posOf = (b: Box): { x: number; y: number } => (drag.value?.id === b.id ? { x: drag.value.x, y: drag.value.y } : { x: b.x, y: b.y });
 const boxes = computed(() => Object.values(doc.value.boxes));
 
@@ -117,14 +114,17 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[]): void {
   panel.value = null;
 }
 /**
- * ツリーの空いた所を押した = 右の欄を閉じる (よくあるモーダルと同じ。オーナー 10-22)。
- * 空き所のドラッグは画面を動かすだけ (動かさずに離した時だけ閉じる)
+ * 空き所: 引っ張る = 画面を動かす、押す = 右の欄を閉じる (よくあるモーダルと同じ。オーナー 10-22)。手の間は箱の上の透明な層もここへ来る。
+ * 押す / 引っ張るの判定は use-gesture.ts (遊び 5px・capture・座標は拡大前の CSS ピクセル)
  */
 function onCanvasDown(e: PointerEvent): void {
-  v.pan(e, !!picking.value || !!plus.value);
-  if (!panel.value || picking.value || (e.target as HTMLElement).closest("[data-tree-box],button")) return;
-  const sx = e.clientX, sy = e.clientY;
-  window.addEventListener("pointerup", (u) => { if (Math.hypot(u.clientX - sx, u.clientY - sy) <= DRAG_SLOP) closeHand(); }, { once: true });
+  const el = viewport.value;
+  if (!el || picking.value || plus.value || (e.target as HTMLElement).closest("[data-tree-box],button")) return;
+  const l = el.scrollLeft, t0 = el.scrollTop;
+  gesture(e, {
+    onMove: (p) => { el.scrollLeft = l - p.dx; el.scrollTop = t0 - p.dy; },
+    onTap: () => { if (panel.value) closeHand(); },
+  });
 }
 function closeHand(): void { panel.value = null; }
 function clearHandOf(): void { const id = panel.value!.id; t.edit((d) => clearHand(d, id)); panel.value = null; }
@@ -177,65 +177,52 @@ function onSpam(b: Box): void {
   t.edit((d) => setHand(d, b.id, { currency: "chaos", omens: [], catalyst: null, quality: 0, repeat: { until: "hit", max: null } }, "spam", aims));
 }
 
-// 箱のドラッグ (画面の倍率で割る)
+// 箱: 押す = 試し打ちの欄、引っ張る = 動かす (離した時に 1 回だけ組み替える。差はツリーの倍率で割る。判定は use-gesture.ts)
 function startDrag(b: Box, e: PointerEvent): void {
   if (viewOnly.value) return;
   hoverBack.value = null;
-  drag.value = { id: b.id, sx: e.clientX, sy: e.clientY, bx: b.x, by: b.y, x: b.x, y: b.y };
-  window.addEventListener("pointermove", onMove);
-  window.addEventListener("pointerup", endDrag, { once: true });
-}
-function onMove(e: PointerEvent): void {
-  const g = drag.value;
-  // マウスの差は実ピクセル → html の zoom で割ってから、ツリーの倍率で割る (utils/zoom.ts)
-  if (g) { g.x = g.bx + toCss(e.clientX - g.sx) / zoom.value; g.y = g.by + toCss(e.clientY - g.sy) / zoom.value; }
-}
-function endDrag(): void {
-  window.removeEventListener("pointermove", onMove);
-  const g = drag.value;
-  drag.value = null;
-  if (g && (Math.abs(g.x - g.bx) > DRAG_SLOP || Math.abs(g.y - g.by) > DRAG_SLOP)) t.edit((d) => moveBox(d, g.id, g.x, g.y));
-  else if (g) panel.value = { kind: "trial", id: g.id }; // 動かさずに離した = 箱を押した → 試し打ち
+  gesture(e, {
+    onStart: () => { drag.value = { id: b.id, bx: b.x, by: b.y, x: b.x, y: b.y }; },
+    onMove: (p) => { const g = drag.value; if (g) { g.x = g.bx + p.dx / zoom.value; g.y = g.by + p.dy / zoom.value; } },
+    onEnd: () => { const g = drag.value; drag.value = null; if (g) t.edit((d) => moveBox(d, g.id, g.x, g.y)); },
+    onTap: () => { panel.value = { kind: "trial", id: b.id }; },
+    onCancel: () => { drag.value = null; },
+  });
 }
 
 // ＋: 押すだけ = 足す (今まで通り)。長押し (か大きく動かす) で引っ張る → 箱の上で離す = その箱へつなぐ (重なった箱が光る) / 何も無い所 = やめる
-const plus = ref<{ id: string; kind: "side" | "next"; sx: number; sy: number; cx: number; cy: number; active: boolean; target: string | null } | null>(null);
-let plusTimer = 0;
+/** 引っ張っている＋ (cx・cy はマウスの実ピクセル。ツリーの座標へは v.toWorld) */
+const plus = ref<{ id: string; kind: "side" | "next"; cx: number; cy: number; target: string | null } | null>(null);
+function plusAt(cx: number, cy: number): void {
+  const p = plus.value;
+  if (!p) return;
+  p.cx = cx; p.cy = cy;
+  const id = (document.elementFromPoint(cx, cy) as HTMLElement | null)?.closest<HTMLElement>("[data-tree-box]")?.dataset.boxId ?? null;
+  p.target = id && id !== p.id ? id : null;
+}
 function onPlus(b: Box, kind: "side" | "next", e: PointerEvent): void {
   if (viewOnly.value) return;
   hoverBack.value = null;
-  plus.value = { id: b.id, kind, sx: e.clientX, sy: e.clientY, cx: e.clientX, cy: e.clientY, active: false, target: null };
-  plusTimer = window.setTimeout(() => { if (plus.value) plus.value.active = true; }, HOLD_MS);
-  window.addEventListener("pointermove", plusMove);
-  window.addEventListener("pointerup", plusUp, { once: true });
-}
-function plusMove(e: PointerEvent): void {
-  const p = plus.value;
-  if (!p) return;
-  p.cx = e.clientX; p.cy = e.clientY;
-  if (!p.active && Math.hypot(p.cx - p.sx, p.cy - p.sy) > 8) p.active = true;
-  if (p.active) {
-    const id = (document.elementFromPoint(p.cx, p.cy) as HTMLElement | null)?.closest<HTMLElement>("[data-tree-box]")?.dataset.boxId ?? null;
-    p.target = id && id !== p.id ? id : null;
-  }
-}
-function plusUp(): void {
-  window.removeEventListener("pointermove", plusMove);
-  clearTimeout(plusTimer);
-  const p = plus.value;
-  plus.value = null;
-  const b = p ? doc.value.boxes[p.id] : null;
-  if (!p || !b) return;
-  if (!p.active) { if (p.kind === "side") onAddHit(b); else panel.value = { kind: "hand", id: b.id }; return; }
-  // 引っ張った時 (オーナー 10-22): 箱の上で離した = その箱へつなぐ (打つ手の窓は出さない)、何も無い所で離した = やめる (元のまま)
-  if (!p.target) return;
-  if (p.kind === "side") onAddHit(b, undefined, p.target);
-  else t.edit((d) => setBack(d, b.id, p.target!));
+  gesture(e, {
+    holdMs: HOLD_MS,
+    onStart: (q) => { plus.value = { id: b.id, kind, cx: q.clientX, cy: q.clientY, target: null }; plusAt(q.clientX, q.clientY); },
+    onMove: (q) => plusAt(q.clientX, q.clientY),
+    // 引っ張って離した (オーナー 10-22): 箱の上 = その箱へつなぐ (打つ手の窓は出さない)、何も無い所 = やめる (元のまま)
+    onEnd: () => {
+      const p = plus.value;
+      plus.value = null;
+      if (!p?.target) return;
+      if (kind === "side") onAddHit(b, undefined, p.target);
+      else t.edit((d) => setBack(d, b.id, p.target!));
+    },
+    onTap: () => { if (kind === "side") onAddHit(b); else panel.value = { kind: "hand", id: b.id }; },
+    onCancel: () => { plus.value = null; },
+  });
 }
 /** 引っ張っている＋の線 (＋の所 → マウス、ツリーの座標)。直線ではなく柔らかい曲線 (オーナー「直線すぎてキモい」) */
 const plusLine = computed(() => {
   const p = plus.value, b = p ? doc.value.boxes[p.id] : null;
-  if (!p?.active || !b) return null;
+  if (!p || !b) return null;
   const q = posOf(b), end = v.toWorld(p.cx, p.cy);
   const x1 = (p.kind === "side" ? q.x + BOX_W + 2 : q.x + BOX_W / 2) + ox.value, y1 = (p.kind === "side" ? q.y + BOX_H / 2 : q.y + BOX_H + 20) + oy.value;
   const ex = end.x + ox.value, ey = end.y + oy.value;
@@ -252,7 +239,7 @@ function onKey(e: KeyboardEvent): void {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); t.undo(); return; }
   if (e.key === "1" && !e.ctrlKey && !e.metaKey && !e.altKey) { void v.fit(); return; }
   if (e.key === "Escape") {
-    if (plus.value) { plus.value = null; window.removeEventListener("pointermove", plusMove); }
+    if (plus.value) plus.value = null;
     else if (picking.value) picking.value = null;
     else if (panel.value) panel.value = null;
     else if (full.value) void v.toggleFull();
@@ -260,7 +247,7 @@ function onKey(e: KeyboardEvent): void {
   }
 }
 onMounted(() => window.addEventListener("keydown", onKey));
-onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); window.removeEventListener("pointermove", onMove); window.removeEventListener("pointermove", plusMove); clearTimeout(plusTimer); });
+onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); });
 
 function close(): void { treePage.value = false; }
 const panelBox = computed(() => (panel.value ? doc.value.boxes[panel.value.id] ?? null : null));

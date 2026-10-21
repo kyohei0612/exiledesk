@@ -62,15 +62,6 @@ export function useTreeView(doc: Ref<TreeDoc>, panelOpen: () => boolean) {
     void setZoom(zoom.value * (e.deltaY < 0 ? STEP : 1 / STEP), toCss(e.clientX - r.left), toCss(e.clientY - r.top));
   }
 
-  /** 空いた所をドラッグ = 画面を動かす (スクロール) */
-  function pan(e: PointerEvent, blocked: boolean): void {
-    const el = viewport.value;
-    if (!el || blocked || (e.target as HTMLElement).closest("[data-tree-box],button")) return;
-    const sx = e.clientX, sy = e.clientY, l = el.scrollLeft, t0 = el.scrollTop;
-    const move = (m: PointerEvent): void => { el.scrollLeft = l - toCss(m.clientX - sx); el.scrollTop = t0 - toCss(m.clientY - sy); };
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", () => window.removeEventListener("pointermove", move), { once: true });
-  }
   /**
    * 画面の点 → ツリーの座標 (箱の x・y と同じ)。マウスの座標と getBoundingClientRect は html の zoom (WebApp.vue の fitZoom) が掛かった
    * 実ピクセル、スクロールと箱の位置は拡大前の CSS ピクセルなので、差を toCss で割る (10-22、割らないと 1920 幅でマウスより 1.16 倍ずれた)
@@ -128,5 +119,5 @@ export function useTreeView(doc: Ref<TreeDoc>, panelOpen: () => boolean) {
   onMounted(() => { if (viewport.value) ro.observe(viewport.value); measure(); void nextTick(goHome); });
   onBeforeUnmount(() => { viewport.value?.removeEventListener("wheel", onWheel); ro.disconnect(); });
 
-  return { viewport, zoom, full, bounds, ox, oy, area, viewOnly, measure, setZoom, resetZoom, zoomIn, zoomOut, fit, pan, toWorld, reveal, focusBox, toggleFull };
+  return { viewport, zoom, full, bounds, ox, oy, area, viewOnly, measure, setZoom, resetZoom, zoomIn, zoomOut, fit, toWorld, reveal, focusBox, toggleFull };
 }

@@ -8,6 +8,7 @@ import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { BOX_H, BOX_W, type TreeBox } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { toCss } from "../../../utils/zoom";
+import { gesture } from "./use-gesture";
 
 const props = defineProps<{ boxes: TreeBox[]; ox: number; oy: number; zoom: number; viewport: HTMLElement | null }>();
 const hand = defineModel<boolean>("hand", { default: false });
@@ -51,20 +52,18 @@ const my = (y: number): number => (y - box.value.y0) * box.value.k + box.value.d
 const COLOR: Record<TreeBox["out"], string> = { start: "#5fb4e0", hit: "#e0b060", junk: "#e0707a", junkGone: "#9aa7b8", lost: "#a58be0" };
 const fill = (b: TreeBox): string => (b.done ? "#f2d27a" : COLOR[b.out]);
 
-/** ミニマップを押す / 引っ張る = その点を真ん中に送る */
+/** ミニマップを押す / 引っ張る = その点を真ん中に送る (判定・capture・座標の換算は use-gesture.ts) */
 function go(e: PointerEvent): void {
   const svg = e.currentTarget as SVGSVGElement;
-  const at = (m: PointerEvent): void => {
+  const at = (clientX: number, clientY: number): void => {
     const r = svg.getBoundingClientRect();
-    const px = toCss(m.clientX - r.left), py = toCss(m.clientY - r.top);
+    const px = toCss(clientX - r.left), py = toCss(clientY - r.top);
     const wx = (px - box.value.dx) / box.value.k + box.value.x0, wy = (py - box.value.dy) / box.value.k + box.value.y0;
     const el = props.viewport;
     if (el) el.scrollTo({ left: (wx + props.ox) * props.zoom - el.clientWidth / 2, top: (wy + props.oy) * props.zoom - el.clientHeight / 2 });
   };
-  e.preventDefault();
-  at(e);
-  window.addEventListener("pointermove", at);
-  window.addEventListener("pointerup", () => window.removeEventListener("pointermove", at), { once: true });
+  at(e.clientX, e.clientY);
+  gesture(e, { slop: 0, onMove: (p) => at(p.clientX, p.clientY) });
 }
 const btn = "flex h-8 min-w-8 items-center justify-center rounded-md px-1.5 text-[#d8ccb4] hover:bg-white/10 hover:text-white";
 </script>

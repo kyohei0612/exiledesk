@@ -24,6 +24,7 @@ import { TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { useTree } from "./use-tree";
 import { tr } from "../../../i18n/lang";
 import { pageZoom, toCss } from "../../../utils/zoom";
+import { gesture } from "./use-gesture";
 
 /** avoid: 右の欄が開いている (変わるたびに重なりを見直す。値は欄の種類と箱) */
 const props = defineProps<{ avoid?: string | null }>();
@@ -96,7 +97,8 @@ const cssRect = (r: DOMRect): { left: number; top: number; right: number; bottom
 };
 const fit = (r: Rect): Rect => {
   const w = Math.min(Math.max(MIN_W, r.w), vw()), h = Math.min(Math.max(MIN_H, r.h), vh());
-  return { w, h, x: Math.min(Math.max(-w + 120, r.x), vw() - 120), y: Math.min(Math.max(0, r.y), vh() - 40) };
+  // 窓はいつも画面の中に収める (一部が画面の外へ出て、閉じる・最大化のボタンが届かなくなった。オーナーの Chrome で 10-22)
+  return { w, h, x: Math.min(Math.max(0, r.x), vw() - w), y: Math.min(Math.max(0, r.y), vh() - h) };
 };
 const saved = ((): { rect: Rect; snap: Snap } | null => {
   try {
@@ -141,59 +143,70 @@ const shown = computed((): Rect | null => {
 const preview = ref<Snap>(null);
 const dragging = ref(false);
 let stop: (() => void) | null = null;
-/** 引っ張る (dir: 動かす = "move"、辺と角 = n / s / e / w の組み合わせ) */
+/**
+ * 引っ張る (dir: 動かす = "move"、辺と角 = n / s / e / w の組み合わせ)。押す / 引っ張るの判定・capture・座標の換算は use-gesture.ts
+ * (遊びは 2px: 窓はつかんだらすぐ付いてくる方が Windows に近い)
+ */
 function grab(e: PointerEvent, dir: string): void {
-  if (e.button !== 0 || !shown.value) return;
+  if (!shown.value) return;
   if (dir === "move" && (e.target as HTMLElement).closest("button")) return;
   if (dir !== "move" && snap.value) return; // 最大化・半分の間は大きさを変えない (Windows と同じ)
-  e.preventDefault();
-  // マウスの座標は実ピクセル → 拡大前の CSS ピクセルに直して使う
-  const sx = toCss(e.clientX), sy = toCss(e.clientY);
-  let r0 = { ...shown.value }, started = false;
-  const move = (m: PointerEvent): void => {
-    const mx = toCss(m.clientX), my = toCss(m.clientY), dx = mx - sx, dy = my - sy;
-    if (!started) {
-      if (Math.abs(dx) + Math.abs(dy) < 3) return;
-      started = true; dragging.value = true; placedByUser.value = true;
+  let r0 = { ...shown.value };
+  stop = gesture(e, {
+    slop: 2,
+    onStart: (p) => {
+      dragging.value = true; placedByUser.value = true;
       // 最大化・半分の時に題を引くと、元の大きさに戻ってカーソルの所に付いてくる
       if (dir === "move" && snap.value) {
         const base = rect.value ?? defaultRect(), cur = shown.value!;
-        const fx = (sx - cur.x) / cur.w;
+        const sx = p.x - p.dx, sy = p.y - p.dy, fx = (sx - cur.x) / cur.w;
         r0 = { ...base, x: sx - base.w * fx, y: Math.max(0, sy - 16) };
         snap.value = null;
       }
-    }
-    if (dir === "move") {
-      rect.value = fit({ ...r0, x: r0.x + dx, y: r0.y + dy });
-      preview.value = my <= SNAP ? "max" : mx <= SNAP ? "left" : mx >= vw() - SNAP ? "right" : null;
-      return;
-    }
-    let { x, y, w, h } = r0;
-    if (dir.includes("e")) w = Math.min(r0.w + dx, vw() - r0.x);
-    if (dir.includes("s")) h = Math.min(r0.h + dy, vh() - r0.y);
-    if (dir.includes("w")) { w = Math.max(MIN_W, r0.w - dx); x = r0.x + r0.w - w; }
-    if (dir.includes("n")) { h = Math.max(MIN_H, r0.h - dy); y = r0.y + r0.h - h; }
-    rect.value = fit({ x, y, w, h });
-  };
-  const up = (): void => {
-    window.removeEventListener("pointermove", move); stop = null; dragging.value = false;
-    if (preview.value) { snap.value = preview.value; preview.value = null; }
-    if (started) remember();
-  };
-  window.addEventListener("pointermove", move);
-  window.addEventListener("pointerup", up, { once: true });
-  stop = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); dragging.value = false; preview.value = null; };
+    },
+    onMove: (p) => {
+      if (dir === "move") {
+        rect.value = fit({ ...r0, x: r0.x + p.dx, y: r0.y + p.dy });
+        preview.value = p.y <= SNAP ? "max" : p.x <= SNAP ? "left" : p.x >= vw() - SNAP ? "right" : null;
+        return;
+      }
+      let { x, y, w, h } = r0;
+      if (dir.includes("e")) w = Math.min(r0.w + p.dx, vw() - r0.x);
+      if (dir.includes("s")) h = Math.min(r0.h + p.dy, vh() - r0.y);
+      if (dir.includes("w")) { w = Math.max(MIN_W, r0.w - p.dx); x = r0.x + r0.w - w; }
+      if (dir.includes("n")) { h = Math.max(MIN_H, r0.h - p.dy); y = r0.y + r0.h - h; }
+      rect.value = fit({ x, y, w, h });
+    },
+    onEnd: () => {
+      stop = null; dragging.value = false;
+      if (preview.value) { snap.value = preview.value; preview.value = null; }
+      remember();
+    },
+    onCancel: () => { stop = null; dragging.value = false; preview.value = null; },
+  });
 }
 function toggleMax(): void { snap.value = snap.value ? null : "max"; remember(); }
 /** 最小化 = 帯の「メモ」に戻す (中身は残る。Windows のタスクバーと同じ役) */
 function minimize(): void { open.value = false; }
-/** 掴み所 (枠の外へ 4px はみ出し、辺は 10px・角は 18px。Windows と同じく見えない帯) */
-const EDGES: Array<{ dir: string; cls: string }> = [
-  { dir: "n", cls: "inset-x-4 -top-1 h-2.5 cursor-ns-resize" }, { dir: "s", cls: "inset-x-4 -bottom-1 h-2.5 cursor-ns-resize" },
-  { dir: "w", cls: "inset-y-4 -left-1 w-2.5 cursor-ew-resize" }, { dir: "e", cls: "inset-y-4 -right-1 w-2.5 cursor-ew-resize" },
-  { dir: "nw", cls: "-left-1 -top-1 size-[18px] cursor-nwse-resize" }, { dir: "ne", cls: "-right-1 -top-1 size-[18px] cursor-nesw-resize" },
-  { dir: "sw", cls: "-bottom-1 -left-1 size-[18px] cursor-nesw-resize" }, { dir: "se", cls: "-bottom-1 -right-1 size-[18px] cursor-nwse-resize" },
+/**
+ * 掴み所は見た目の窓の端に合わせる (Windows と同じく端の外 4px 〜 内 6px、角は 20px)。窓の枠 (.g-panel の 18px の絵の縁) の中から
+ * 測るので -22px から。前は枠の内側から測っていて、見た目の端・角を掴んでも何も起きず、掴み所は端より 14px 内側にあった
+ * (オーナー 10-22「メモが動かせない」、オーナーの Chrome で elementFromPoint で確かめた)
+ */
+const FRAME = 18;
+const E = -(FRAME + 4), L = 10, C = 20;
+const EDGES: Array<{ dir: string; style: Record<string, string>; cursor: string }> = [
+  { dir: "n", style: { top: `${E}px`, left: `${E + C}px`, right: `${E + C}px`, height: `${L}px` }, cursor: "cursor-ns-resize" },
+  { dir: "s", style: { bottom: `${E}px`, left: `${E + C}px`, right: `${E + C}px`, height: `${L}px` }, cursor: "cursor-ns-resize" },
+  { dir: "w", style: { left: `${E}px`, top: `${E + C}px`, bottom: `${E + C}px`, width: `${L}px` }, cursor: "cursor-ew-resize" },
+  { dir: "e", style: { right: `${E}px`, top: `${E + C}px`, bottom: `${E + C}px`, width: `${L}px` }, cursor: "cursor-ew-resize" },
+  { dir: "nw", style: { left: `${E}px`, top: `${E}px`, width: `${C}px`, height: `${C}px` }, cursor: "cursor-nwse-resize" },
+  { dir: "ne", style: { right: `${E}px`, top: `${E}px`, width: `${C}px`, height: `${C}px` }, cursor: "cursor-nesw-resize" },
+  { dir: "sw", style: { left: `${E}px`, bottom: `${E}px`, width: `${C}px`, height: `${C}px` }, cursor: "cursor-nesw-resize" },
+  { dir: "se", style: { right: `${E}px`, bottom: `${E}px`, width: `${C}px`, height: `${C}px` }, cursor: "cursor-nwse-resize" },
 ];
+/** 枠の上の帯 (大きさを変える 6px より下) も題の帯と同じく動かす所 (Windows の題の帯は窓の上の端まで) */
+const TOP_BAND = { top: `${E + L}px`, left: `${E + C}px`, right: `${E + C}px`, height: `${FRAME + 4 - L + 4}px` };
 // 広さを読むのは WebApp.vue の fitZoom (同じ resize で zoom を掛け直す) の後
 const onWinResize = (): void => { requestAnimationFrame(() => { view.value = readView(); if (rect.value) rect.value = fit(rect.value); measureAvoid(); }); };
 window.addEventListener("resize", onWinResize);
@@ -308,8 +321,10 @@ const chipCls = (on: boolean, used: boolean): string =>
       </div>
     </div>
     <!-- 右下の掴みの印 (大きさを変えられる所) -->
-    <svg v-if="!snap" class="pointer-events-none absolute -bottom-2 -right-2 size-3 text-amber-200/50" viewBox="0 0 12 12"><path d="M11 3 L3 11 M11 7 L7 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+    <svg v-if="!snap" class="pointer-events-none absolute -bottom-[14px] -right-[14px] size-3 text-amber-200/60" viewBox="0 0 12 12"><path d="M11 3 L3 11 M11 7 L7 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
     <!-- 四辺と四隅を引っ張ると大きさが変わる (最大化・半分の間は無し) -->
-    <template v-if="!snap"><div v-for="g in EDGES" :key="g.dir" :data-tree-memo-resize="g.dir" class="absolute z-30 touch-none" :class="g.cls" @pointerdown="grab($event, g.dir)" /></template>
+    <!-- 枠の上の帯 = 題の帯と同じ (引いて動かす・ダブルクリックで最大化 / 元に戻す) -->
+    <div data-tree-memo-topband class="absolute z-20 cursor-default touch-none" :style="TOP_BAND" @pointerdown="grab($event, 'move')" @dblclick="toggleMax" />
+    <template v-if="!snap"><div v-for="g in EDGES" :key="g.dir" :data-tree-memo-resize="g.dir" class="absolute z-30 touch-none" :class="g.cursor" :style="g.style" @pointerdown="grab($event, g.dir)" /></template>
   </div>
 </template>
