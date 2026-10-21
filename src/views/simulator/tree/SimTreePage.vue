@@ -35,6 +35,7 @@ import TreeRecipeBar from "./TreeRecipeBar.vue";
 import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { gesture, HOLD_MS } from "./use-gesture";
 import { useDismiss } from "../../../utils/use-dismiss";
+import { ARMED_CLASS, useArmed } from "../../../utils/use-armed";
 import { useTreeLink } from "./use-tree-link";
 import { useTreeCheck } from "./use-tree-check";
 import { useTreeTune } from "./use-tree-tune";
@@ -131,6 +132,11 @@ function measureChips(): void {
 watch(() => edges.value.map((e) => `${e.id}:${handLabel(e.hand)}`).join("|"), measureChips, { flush: "post" });
 onMounted(() => { measureChips(); void document.fonts?.ready.then(measureChips); });
 const { merged, linesAll, hoverBox, cardBox } = useTreeMerge({ doc, pills, posOf, segs: () => edges.value.flatMap((e) => e.segs), chipW, inv, busy: () => !!drag.value || !!plus.value, reset: () => [v.flow.viewport.value, panel.value, drag.value] });
+/** 白紙に戻す = 2 回押し (本番の「白に戻す」と同じ use-armed、3 秒で戻る)。枠の外・Esc でも戻す (オーナー 10-22「白紙に戻すもあれやな、2 回だな」) */
+const clearArm = useArmed();
+const clearBtn = ref<HTMLElement | null>(null);
+useDismiss(() => clearArm.is(), [clearBtn], clearArm.clear);
+function onClear(): void { if (clearArm.arm()) { t.reset(); setCurrentTreeRecipe(null); } }
 /** 戻り先へ寄る (編集のポップアップの札を押した時) */
 function goBack(b: Box): void { const to = backTargetsOf(doc.value, b.id)[0]; if (to) void v.reveal(to, true); }
 
@@ -368,7 +374,7 @@ const glowOf = (b: Box): boolean => {
           <button type="button" data-tree-check class="g-btn sm" :disabled="checking" :title="tr('5 人をエンジンで辿って、止まる所・打てない手・付かない当たり・完成に着かない道を探す (費用は出さない)', 'Walk 5 runs with the engine to find dead ends, unusable crafts, unreachable hits and paths that never finish (no costs)')" @click="onCheck">{{ checking ? tr("精査中…", "Checking…") : tr("ルート精査", "Check route") }}</button>
           <button type="button" data-tree-memo class="g-btn sm inline-flex items-center gap-1" :aria-pressed="memoOpen" :title="tr('欲しい MOD とメモの窓 (ツリーを押しても閉じない)', 'Wanted mods & notes window (stays open while you edit)')" @click="memoOpen = !memoOpen"><Icon name="pencil" class="size-4" />{{ tr("メモ", "Notes") }}<span v-if="doc.note" class="size-1.5 rounded-full bg-amber-400" /></button>
           <button type="button" data-tree-full class="g-btn sm" :aria-pressed="full" @click="v.toggleFull">{{ full ? tr("全画面を閉じる", "Exit full screen") : tr("全画面に広げる", "Full screen") }}</button>
-          <button type="button" class="g-btn sm" :title="tr('始まりの箱だけに戻す (1 つ戻すで戻せる)', 'Back to just the start box (undo restores it)')" @click="t.reset(); setCurrentTreeRecipe(null)">{{ tr("白紙に戻す", "Clear") }}</button>
+          <button ref="clearBtn" type="button" data-tree-clear :class="clearArm.is() ? ARMED_CLASS : 'g-btn sm'" :title="tr('始まりの箱だけに戻す (1 つ戻すで戻せる)', 'Back to just the start box (undo restores it)')" @click="onClear">{{ clearArm.is() ? tr("もう一度押すと白紙に戻す", "Click again to clear") : tr("白紙に戻す", "Clear") }}</button>
         </span>
       </div>
 
