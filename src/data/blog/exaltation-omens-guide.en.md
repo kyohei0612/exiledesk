@@ -3,6 +3,7 @@ title: PoE2 Omen of Dextral & Sinistral Exaltation (+ Greater)
 description: How the PoE2 Omen of Dextral and Sinistral Exaltation and the Omen of Greater Exaltation work, how they stack and what they cost. Greater adds only one mod when just one slot is open, and Sinistral + Greater Exalt made ES gloves for 105 div.
 date: 2026-10-22
 tags: Exalted Orb, omens, Omen of Sinistral Exaltation, Omen of Dextral Exaltation, Omen of Greater Exaltation
+image: img/exaltation-omens-guide-og.en.png
 draft: true
 ---
 In PoE2, the **Omen of Sinistral Exaltation makes your next Exalted Orb add only a prefix, the Omen of Dextral Exaltation only a suffix, and the Omen of Greater Exaltation adds two mods** instead of one. Greater stacks with either side omen to put two mods on one side, but it adds only one mod when only one slot is open.

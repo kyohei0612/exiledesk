@@ -5,6 +5,7 @@ date: 2026-10-22
 tags: カタリスト, 品質, 金の指輪, 神経のカタリスト, 歯擦音のカタリスト
 tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
+image: img/catalyst-types-og.ja.png
 draft: true
 ---
 PoE2 のカタリストの種類は 13 個で、**どれも「指輪またはアミュレット」専用**です。それぞれ強化する MOD のタグが決まっていて、マナの MOD なら神経のカタリスト、キャスターなら歯擦音のカタリスト、スピードなら軽快のカタリストが効きます。品質は 1 種類しか載らず、別の種類を入れると 0 からやり直しです。

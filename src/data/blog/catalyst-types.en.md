@@ -5,6 +5,7 @@ date: 2026-10-22
 tags: Catalyst, Quality, Gold Ring, Neural Catalyst, Sibilant Catalyst
 tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
+image: img/catalyst-types-og.en.png
 draft: true
 ---
 There are 13 PoE2 catalyst types, and **every one of them is for a ring or amulet only**. Each enhances mods with one tag: Neural Catalyst for Mana mods, Sibilant Catalyst for Caster mods, Skittering Catalyst for Speed mods, and so on. An item holds only one quality type, so switching catalysts restarts quality from 0.

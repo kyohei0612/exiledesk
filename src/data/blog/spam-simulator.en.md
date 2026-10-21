@@ -3,6 +3,7 @@ title: PoE2 Spam Simulator: Augment, Chaos or Exalt Spam?
 description: How the PoE2 spam simulator works: pick one target mod and it runs augment, chaos and exalt spam at Perfect, Greater and Regular grades, 100 runs each, to find the cheapest route. Plus how to read the results and the luck test.
 date: 2026-10-22
 tags: spam simulator, Orb of Augmentation, Chaos Orb, Exalted Orb, luck
+image: img/spam-simulator-og.en.png
 draft: true
 ---
 The ExileDesk **poe2 spam simulator** answers one question: for a single target mod, **which spam is cheapest: Orb of Augmentation, Chaos Orb or Exalted Orb, and at which grade (Perfect, Greater or Regular)?** It runs all nine combinations 100 times each, tags the cheapest as "Cheapest", and lets you take a luck test to see where you'd rank among those 100.

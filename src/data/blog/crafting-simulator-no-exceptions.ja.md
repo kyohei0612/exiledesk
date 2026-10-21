@@ -4,6 +4,7 @@ description: PoE2 のクラフトシミュレーターを作り直した記録�
 date: 2026-10-22
 tags: クラフト, シミュレーター, 説明文, 冒涜, 骨
 craft: /?base=Absent%20Amulet
+image: img/crafting-simulator-no-exceptions-og.ja.png
 draft: true
 ---
 PoE2 のクラフトシミュレーターの作り方として、ExileDesk は**カレンシーとお告げを「説明文を分解したデータ」で動かし、部位ごとの例外を書かない**形にしました。総点検すると、手書きの決まり約 130 個のうち約 40 個は根拠が無く、出ていた不具合もどれも人が書いた例外が原因だったからです。

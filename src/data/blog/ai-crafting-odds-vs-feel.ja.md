@@ -5,6 +5,7 @@ date: 2026-10-22
 tags: 期待値, AI, キャストスピード, 重み, 金の指輪
 tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
+image: img/ai-crafting-odds-vs-feel-og.ja.png
 draft: true
 ---
 PoE2 のクラフトで AI に出させた期待値は、**費用の合計 (金の指輪で 390 神) は配信者の実感と「大体」合い、1 つ 1 つの確率、特にキャストスピードは合いませんでした** (神 = 神のオーブ、ディバイン)。キャストスピードの重みは poe2db では 1 (仮置きに見える値)、ExileDesk と Craft of Exile では 1,000 で、どちらを読むかで確率が大きく変わります。

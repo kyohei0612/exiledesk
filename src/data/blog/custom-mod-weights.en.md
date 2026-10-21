@@ -4,6 +4,7 @@ description: Custom mod weights are coming to the ExileDesk PoE2 crafting simula
 date: 2026-10-22
 tags: weight, Cast Speed, Gold Ring, crafting simulator, in development
 craft: /?base=Gold%20Ring
+image: img/custom-mod-weights-og.en.png
 draft: true
 ---
 ExileDesk, a PoE2 crafting simulator, now lets you set custom weights for mods on the crafting bench. **This is an in-development feature, available only on our dev build for now.** On a Gold Ring with an Orb of Augmentation, lowering Cast Speed from the default weight of 1,000 to 200 drops its chance from **5.4% to 1.1%**.

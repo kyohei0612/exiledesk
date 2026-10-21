@@ -3,6 +3,7 @@ title: PoE2 Crafting Simulator Wishes: 3 Questions From a Stream
 description: Three PoE2 crafting simulator wishes from a Japanese stream: expected cost for your own route, regular vs Ancient bones, settle for T2 or chase T1. What our records answer, and what they don't. Loosening T1 cut one ring from 1,991 to 643 div.
 date: 2026-10-22
 tags: expected cost, simulator, Desecration, bones, stream
+image: img/crafting-questions-from-streams-og.en.png
 draft: true
 ---
 On one Japanese crafting stream, the PoE2 crafting simulator wishes boiled down to three questions: **"What's the expected cost of my own route?", "Are regular bones or Ancient bones cheaper?" and "Should I settle for T2, or chase T1?"** ExileDesk's records can answer the first one and part of the third. For the bones, we don't have an answer yet.

@@ -3,6 +3,7 @@ title: PoE2 Gnawed, Preserved, Ancient Bone: Which to Use
 description: We checked PoE2 desecration bones on poe2db and Craft of Exile. Bones split by slot (Jawbone, Rib, Collarbone); on Ribs, Gnawed works up to Item Level 64 and Ancient has Minimum Modifier Level 40. Prices and which bone is enough.
 date: 2026-10-22
 tags: Desecration, bones, Ancient Rib, Preserved Rib, Craft of Exile
+image: img/desecration-bone-types-og.en.png
 draft: true
 ---
 PoE2 desecration bones come in **three slots (Jawbone, Rib, Collarbone) and three grades (Gnawed, Preserved, Ancient)**. On Ribs, the ones we checked, a Gnawed Rib only works on items up to Item Level 64, a Preserved Rib has no restriction, and an Ancient Rib adds "Minimum Modifier Level 40".

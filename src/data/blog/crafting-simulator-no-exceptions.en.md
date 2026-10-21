@@ -4,6 +4,7 @@ description: Our PoE2 crafting simulator design: 40 of ~130 hand-written rules h
 date: 2026-10-22
 tags: crafting simulator, emulator, Desecration, Bone, Craft of Exile
 craft: /?base=Absent%20Amulet
+image: img/crafting-simulator-no-exceptions-og.en.png
 draft: true
 ---
 Our PoE2 crafting simulator design comes down to one rule: **every currency and Omen runs on a breakdown of its own description text, with no per-item exceptions**. When we audited ExileDesk, about 40 of our roughly 130 hand-written rules had no source, and every recent bug traced back to one of those exceptions.

@@ -5,6 +5,7 @@ date: 2026-10-22
 tags: expected cost, AI, Cast Speed, weight, Gold Ring
 tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
+image: img/ai-crafting-odds-vs-feel-og.en.png
 draft: true
 ---
 When a streamer asked an AI for a PoE2 crafting expected cost on a Gold Ring, **the total (390 div) matched their experience "roughly", but the individual odds, especially Cast Speed, did not**. Ring Cast Speed has weight 1 on poe2db (it looks like a placeholder) and 1,000 in ExileDesk and Craft of Exile, and which one gets read changes the odds a lot.

@@ -5,6 +5,7 @@ date: 2026-10-22
 tags: カオスオーブ, カオススパム, 作り直し, 期待値, 手袋
 tree: /?page=sim-tree&base=Intricate%20Gloves
 craft: /?base=Intricate%20Gloves
+image: img/chaos-reroll-vs-restart-og.ja.png
 draft: true
 ---
 PoE2 のクラフトで狙いの MOD が消えた時、**作り直しより、カオスオーブで付け直す方がずっと安い**、が答えでした。ある手袋で「全ての投射物スキルのレベル +2」が消えた場合、カオスで付け直すと平均約 31 神 (神 = 神のオーブ、ディバイン)、白から作り直すと約 580 神です。カオス 1 回で付く割合は 0.32% (エンジンで実測) しかありません。

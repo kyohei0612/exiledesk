@@ -3,6 +3,7 @@ title: PoE2 Liquid Emotions Jewel Crafting: Contempt and Ferocity
 description: PoE2 Liquid Emotions jewel crafting: each one removes a random mod and adds a set crafted mod. How Potent Liquid Contempt allows a third mod on one side, how Ferocity boosts the other side, and why ExileDesk picks their side at random (v0.1.533).
 date: 2026-10-22
 tags: Liquid Emotions, jewel, Delirium, Contempt, Ferocity
+image: img/liquid-emotions-jewels-og.en.png
 draft: true
 ---
 In PoE2, a Liquid Emotions jewel craft works like this: a Liquid Emotion (from Delirium) **removes one random mod from a Rare jewel and adds that emotion's set crafted mod**. Potent Liquid Contempt allows a third mod on one side, and Potent Liquid Ferocity boosts the numbers of the mods on the other side.

@@ -5,6 +5,7 @@ date: 2026-10-22
 tags: お告げ, 消去のオーブ, 期待値, 手袋, 相場
 tree: /?page=sim-tree&base=Intricate%20Gloves
 craft: /?base=Intricate%20Gloves
+image: img/are-omens-worth-it-og.ja.png
 draft: true
 ---
 PoE2 のお告げは高いけれど使うべきか。最善手の計算の答えは「**ほとんどの場面では使わず、0.44 神の普通の消去のオーブで足りる**」でした (神 = 神のオーブ、ディバイン)。左側の消去のお告げ 14.9 神・左側の抹消のお告げ 16 神 (poe2db の取引レート) のような高いお告げが得になるのは、**外れの無い側に狙いが付いている時だけ**です。
