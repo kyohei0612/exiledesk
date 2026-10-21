@@ -199,12 +199,6 @@ const noteText = computed(() => {
           </div>
         </div>
         <div data-tree-trial-right class="flex min-w-0 flex-col gap-2 @min-[620px]:min-h-0 @min-[620px]:overflow-y-auto @min-[620px]:pr-1">
-          <!-- カタリスト (1 押しで品質の最大まで。最大はエンジンの maxQualityOf) -->
-          <div data-tree-trial-catalysts>
-            <p class="mb-0.5 text-[10px] opacity-60">{{ tr("カタリスト (押すと品質の最大まで入れる)", "Catalysts (click to fill to max quality)") }}</p>
-            <div class="flex flex-wrap gap-1.5"><ShelfButton v-for="k in TREE_CATALYSTS" :key="k" :k="k" @pick="fill" /></div>
-          </div>
-
           <!-- 棚 (クラフト台と同じ。お告げは持った物の下に) -->
           <div data-tree-shelf @pointerdown="onShelfDown">
             <CurrencyShelf @hold="onHold">
@@ -212,6 +206,12 @@ const noteText = computed(() => {
               <template v-if="heldOmensOf(held).length" #held><HeldOmens /></template>
             </CurrencyShelf>
           </div>
+          <!-- カタリスト (1 押しで品質の最大まで。最大はエンジンの maxQualityOf)。棚の下 = オーブの行が列の上に来て、お告げの欄が下に開ける -->
+          <div data-tree-trial-catalysts>
+            <p class="mb-0.5 text-[10px] opacity-60">{{ tr("カタリスト (押すと品質の最大まで入れる)", "Catalysts (click to fill to max quality)") }}</p>
+            <div class="flex flex-wrap gap-1.5"><ShelfButton v-for="k in TREE_CATALYSTS" :key="k" :k="k" @pick="fill" /></div>
+          </div>
+
         </div>
       </div>
     </div>
