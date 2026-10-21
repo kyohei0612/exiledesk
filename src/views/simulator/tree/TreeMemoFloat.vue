@@ -23,6 +23,7 @@ import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { useTree } from "./use-tree";
 import { tr } from "../../../i18n/lang";
+import { pageZoom, toCss } from "../../../utils/zoom";
 
 /** avoid: 右の欄が開いている (変わるたびに重なりを見直す。値は欄の種類と箱) */
 const props = defineProps<{ avoid?: string | null }>();
@@ -79,9 +80,20 @@ const RECT_KEY = "exiledesk.tree.memo-rect";
 const MIN_W = 320, MIN_H = 260, SNAP = 6;
 interface Rect { x: number; y: number; w: number; h: number }
 type Snap = "max" | "left" | "right" | null;
+/**
+ * 画面の広さ (拡大前の CSS ピクセル)。html に zoom が掛かっている (WebApp.vue の fitZoom、1920 幅で 1.16) ので、
+ * innerWidth・マウスの座標・getBoundingClientRect (実ピクセル) は toCss で割る。割らずに最大化すると窓が 1.16 倍に広がり、
+ * 閉じる・元に戻すが画面の右の外へ出た (オーナー 10-22「一度拡大したら閉じれない」)
+ */
+const vw = (): number => toCss(document.documentElement.clientWidth || innerWidth);
+const vh = (): number => toCss(document.documentElement.clientHeight || innerHeight);
+const cssRect = (r: DOMRect): { left: number; top: number; right: number; bottom: number; width: number; height: number } => {
+  const z = pageZoom();
+  return { left: r.left / z, top: r.top / z, right: r.right / z, bottom: r.bottom / z, width: r.width / z, height: r.height / z };
+};
 const fit = (r: Rect): Rect => {
-  const w = Math.min(Math.max(MIN_W, r.w), innerWidth), h = Math.min(Math.max(MIN_H, r.h), innerHeight);
-  return { w, h, x: Math.min(Math.max(-w + 120, r.x), innerWidth - 120), y: Math.min(Math.max(0, r.y), innerHeight - 40) };
+  const w = Math.min(Math.max(MIN_W, r.w), vw()), h = Math.min(Math.max(MIN_H, r.h), vh());
+  return { w, h, x: Math.min(Math.max(-w + 120, r.x), vw() - 120), y: Math.min(Math.max(0, r.y), vh() - 40) };
 };
 const saved = ((): { rect: Rect; snap: Snap } | null => {
   try {
@@ -96,18 +108,22 @@ const snap = ref<Snap>(saved?.snap ?? null);
 const remember = (): void => { try { if (rect.value) localStorage.setItem(RECT_KEY, JSON.stringify({ ...rect.value, snap: snap.value })); } catch { /* 覚えられなくても使える */ } };
 /** 初めて開いた時: ツリーの左下 (帯のボタンと右の欄を隠さない) */
 function defaultRect(): Rect {
-  const c = document.querySelector("[data-tree-canvas]")?.getBoundingClientRect();
-  if (!c) return fit({ x: 16, y: innerHeight - 440, w: 360, h: 420 });
+  const el = document.querySelector("[data-tree-canvas]");
+  if (!el) return fit({ x: 16, y: vh() - 440, w: 360, h: 420 });
+  const c = cssRect(el.getBoundingClientRect());
   const h = Math.min(420, Math.max(MIN_H, c.height - 24));
-  return fit({ x: c.left + 12, y: Math.min(c.bottom, innerHeight) - h - 12, w: 360, h });
+  return fit({ x: c.left + 12, y: Math.min(c.bottom, vh()) - h - 12, w: 360, h });
 }
-const snapRect = (k: Exclude<Snap, null>): Rect => k === "max" ? { x: 0, y: 0, w: innerWidth, h: innerHeight }
-  : { x: k === "left" ? 0 : Math.ceil(innerWidth / 2), y: 0, w: Math.floor(innerWidth / 2), h: innerHeight };
+const snapRect = (k: Exclude<Snap, null>): Rect => k === "max" ? { x: 0, y: 0, w: vw(), h: vh() }
+  : { x: k === "left" ? 0 : Math.ceil(vw() / 2), y: 0, w: Math.floor(vw() / 2), h: vh() };
 
 // 右の欄を避ける (重なる時だけその左へ。自分で動かした後は避けない)
-const avoidRect = ref<DOMRect | null>(null);
+const avoidRect = ref<ReturnType<typeof cssRect> | null>(null);
 const placedByUser = ref(false);
-function measureAvoid(): void { avoidRect.value = props.avoid ? document.querySelector("[data-tree-panel]")?.getBoundingClientRect() ?? null : null; }
+function measureAvoid(): void {
+  const el = props.avoid ? document.querySelector("[data-tree-panel]") : null;
+  avoidRect.value = el ? cssRect(el.getBoundingClientRect()) : null;
+}
 watch(() => props.avoid, async () => { placedByUser.value = false; await nextTick(); measureAvoid(); }, { immediate: true });
 
 const shown = computed((): Rect | null => {
@@ -127,10 +143,11 @@ function grab(e: PointerEvent, dir: string): void {
   if (dir === "move" && (e.target as HTMLElement).closest("button")) return;
   if (dir !== "move" && snap.value) return; // 最大化・半分の間は大きさを変えない (Windows と同じ)
   e.preventDefault();
-  const sx = e.clientX, sy = e.clientY;
+  // マウスの座標は実ピクセル → 拡大前の CSS ピクセルに直して使う
+  const sx = toCss(e.clientX), sy = toCss(e.clientY);
   let r0 = { ...shown.value }, started = false;
   const move = (m: PointerEvent): void => {
-    const dx = m.clientX - sx, dy = m.clientY - sy;
+    const mx = toCss(m.clientX), my = toCss(m.clientY), dx = mx - sx, dy = my - sy;
     if (!started) {
       if (Math.abs(dx) + Math.abs(dy) < 3) return;
       started = true; dragging.value = true; placedByUser.value = true;
@@ -144,12 +161,12 @@ function grab(e: PointerEvent, dir: string): void {
     }
     if (dir === "move") {
       rect.value = fit({ ...r0, x: r0.x + dx, y: r0.y + dy });
-      preview.value = m.clientY <= SNAP ? "max" : m.clientX <= SNAP ? "left" : m.clientX >= innerWidth - SNAP ? "right" : null;
+      preview.value = my <= SNAP ? "max" : mx <= SNAP ? "left" : mx >= vw() - SNAP ? "right" : null;
       return;
     }
     let { x, y, w, h } = r0;
-    if (dir.includes("e")) w = Math.min(r0.w + dx, innerWidth - r0.x);
-    if (dir.includes("s")) h = Math.min(r0.h + dy, innerHeight - r0.y);
+    if (dir.includes("e")) w = Math.min(r0.w + dx, vw() - r0.x);
+    if (dir.includes("s")) h = Math.min(r0.h + dy, vh() - r0.y);
     if (dir.includes("w")) { w = Math.max(MIN_W, r0.w - dx); x = r0.x + r0.w - w; }
     if (dir.includes("n")) { h = Math.max(MIN_H, r0.h - dy); y = r0.y + r0.h - h; }
     rect.value = fit({ x, y, w, h });
@@ -177,20 +194,29 @@ const onWinResize = (): void => { if (rect.value) rect.value = fit(rect.value); 
 window.addEventListener("resize", onWinResize);
 window.addEventListener("scroll", measureAvoid, true);
 onBeforeUnmount(() => {
-  stop?.(); saveMemo();
+  stop?.(); saveMemo(); window.removeEventListener("keydown", onWinKey, true);
   window.removeEventListener("resize", onWinResize); window.removeEventListener("scroll", measureAvoid, true); window.removeEventListener("pagehide", saveMemo);
 });
+/** 最大化・半分の時の Esc は、どこを押していても先に窓を元に戻す (ページを閉じない) */
+function onWinKey(e: KeyboardEvent): void {
+  if (e.key !== "Escape" || !open.value || !snap.value || picker.value) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  snap.value = null; remember();
+}
+window.addEventListener("keydown", onWinKey, true);
 watch(open, async (v) => {
   if (!v) { saveMemo(); picker.value = null; return; }
   await nextTick();
   if (!rect.value) { rect.value = defaultRect(); remember(); } else onWinResize();
 }, { immediate: true });
 
-/** Esc: 選び窓を閉じる。窓の中で押した Esc でページを閉じない */
+/** Esc: 選び窓を閉じる → 最大化・半分を元に戻す。窓の中で押した Esc でページを閉じない */
 function onKey(e: KeyboardEvent): void {
   if (e.key !== "Escape") return;
   e.stopPropagation();
-  if (picker.value) { picker.value = null; e.preventDefault(); }
+  e.preventDefault();
+  if (picker.value) picker.value = null;
+  else if (snap.value) { snap.value = null; remember(); }
 }
 const chipCls = (on: boolean, used: boolean): string =>
   on ? "border-amber-300 bg-amber-500/25 text-amber-50" : used ? "border-amber-500/45 bg-white/[0.04] text-[#c8c8ff]" : "border-white/20 bg-white/[0.02] text-[#c8c8ff]/80";

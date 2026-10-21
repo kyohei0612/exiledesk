@@ -5,6 +5,7 @@
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type Ref } from "vue";
 import { BOX_W, boundsOf, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { toCss } from "../../../utils/zoom";
 
 const PAD = 80;
 export const ZOOM_MIN = 0.3;
@@ -58,7 +59,7 @@ export function useTreeView(doc: Ref<TreeDoc>, panelOpen: () => boolean) {
     if (!e.ctrlKey && !e.metaKey) return; // Ctrl なしはスクロールのまま
     e.preventDefault(); // ブラウザの拡大を止める
     const r = viewport.value!.getBoundingClientRect();
-    void setZoom(zoom.value * (e.deltaY < 0 ? STEP : 1 / STEP), e.clientX - r.left, e.clientY - r.top);
+    void setZoom(zoom.value * (e.deltaY < 0 ? STEP : 1 / STEP), toCss(e.clientX - r.left), toCss(e.clientY - r.top));
   }
 
   /** 空いた所をドラッグ = 画面を動かす (スクロール) */
@@ -66,14 +67,17 @@ export function useTreeView(doc: Ref<TreeDoc>, panelOpen: () => boolean) {
     const el = viewport.value;
     if (!el || blocked || (e.target as HTMLElement).closest("[data-tree-box],button")) return;
     const sx = e.clientX, sy = e.clientY, l = el.scrollLeft, t0 = el.scrollTop;
-    const move = (m: PointerEvent): void => { el.scrollLeft = l - (m.clientX - sx); el.scrollTop = t0 - (m.clientY - sy); };
+    const move = (m: PointerEvent): void => { el.scrollLeft = l - toCss(m.clientX - sx); el.scrollTop = t0 - toCss(m.clientY - sy); };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", () => window.removeEventListener("pointermove", move), { once: true });
   }
-  /** 画面の点 → ツリーの座標 (箱の x・y と同じ) */
+  /**
+   * 画面の点 → ツリーの座標 (箱の x・y と同じ)。マウスの座標と getBoundingClientRect は html の zoom (WebApp.vue の fitZoom) が掛かった
+   * 実ピクセル、スクロールと箱の位置は拡大前の CSS ピクセルなので、差を toCss で割る (10-22、割らないと 1920 幅でマウスより 1.16 倍ずれた)
+   */
   function toWorld(clientX: number, clientY: number): { x: number; y: number } {
     const el = viewport.value!, r = el.getBoundingClientRect();
-    return { x: (clientX - r.left + el.scrollLeft) / zoom.value - ox.value, y: (clientY - r.top + el.scrollTop) / zoom.value - oy.value };
+    return { x: (toCss(clientX - r.left) + el.scrollLeft) / zoom.value - ox.value, y: (toCss(clientY - r.top) + el.scrollTop) / zoom.value - oy.value };
   }
   /** 箱を見える所へ送る。ツリーの枠の中だけ (scrollIntoView はページごと送って題が隠れる) */
   function reveal(id: string, center = false): void {
@@ -83,7 +87,7 @@ export function useTreeView(doc: Ref<TreeDoc>, panelOpen: () => boolean) {
       const v = el.getBoundingClientRect(), r = b.getBoundingClientRect(), m = 24;
       const dx = center ? r.left + r.width / 2 - (v.left + v.width / 2) : r.left < v.left + m ? r.left - v.left - m : r.right > v.right - m ? r.right - v.right + m : 0;
       const dy = center ? r.top + r.height / 2 - (v.top + v.height / 2) : r.top < v.top + m ? r.top - v.top - m : r.bottom > v.bottom - m ? r.bottom - v.bottom + m : 0;
-      el.scrollBy({ left: dx, top: dy });
+      el.scrollBy({ left: toCss(dx), top: toCss(dy) });
     });
   }
   /** 縮めて見ている時に箱を押した = 等倍にしてその箱を真ん中へ */

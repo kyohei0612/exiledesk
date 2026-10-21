@@ -24,6 +24,7 @@ import { aimHeld, aimsOf, sampleOf } from "../../../services/simulator/tree/tree
 import { checkTree, type CheckIssue } from "../../../services/simulator/tree/tree-check";
 import { treePage } from "../../../state/web-page";
 import { tr } from "../../../i18n/lang";
+import { toCss } from "../../../utils/zoom";
 
 const t = useTree();
 const doc = t.doc;
@@ -171,7 +172,8 @@ function startDrag(b: Box, e: PointerEvent): void {
 }
 function onMove(e: PointerEvent): void {
   const g = drag.value;
-  if (g) { g.x = g.bx + (e.clientX - g.sx) / zoom.value; g.y = g.by + (e.clientY - g.sy) / zoom.value; }
+  // マウスの差は実ピクセル → html の zoom で割ってから、ツリーの倍率で割る (utils/zoom.ts)
+  if (g) { g.x = g.bx + toCss(e.clientX - g.sx) / zoom.value; g.y = g.by + toCss(e.clientY - g.sy) / zoom.value; }
 }
 function endDrag(): void {
   window.removeEventListener("pointermove", onMove);
