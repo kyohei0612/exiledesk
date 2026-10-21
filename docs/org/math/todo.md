@@ -26,7 +26,7 @@
 - K5 ③ の白から作る 1 個 (S1c の後) vs 字のとおり 1,000 人: 手袋 +0.1%・靴 +5.4% (check-sim-start.mjs、simulator/notes/2026-10-20-step4-formula-entry.md)
 - K2c 靴の ±20%: ⑤ の同じ条件に別の形の答え (消去) が勝ち、発現の後にドッジを失っていた。別名の答えを通った回数で比べる形に → 靴 #3・#4 のずれ −20〜−24% → +5〜+6%
 - R1 auto-types.ts (03b30a1c)。シミュの R1b の後に auto-solve の buildAutoModel の再輸出を消した。K4 の残り (入口の 3 つ) も差し替え
-- K2b 靴 #2 の答え無し 422 人 → 0 (一時の台本 check-yafu-actual.mjs の古い rulesOf を src の rulesFromDetail に)
+- K2b 靴 #2 の答え無し 422 人 → 0 (外の実測の見本の一時の台本の古い rulesOf を src の rulesFromDetail に)
 - K4 auto/ の import を入口 (engine.ts) へ。入口にある物は全部付け替え (値は同じ)、無い 3 つは残り
 - K3 範囲 A: 始めの形を stepOutcomes で (model.starts)、白からマジックで一緒に揃える道に対応
 - K2 auto-rules.ts (rulesFromDetail・methodsFromDetail・answerFor)、手袋・靴で答え無し 0・イレギュラー 0。answerFor はまだ一度も使われていない
