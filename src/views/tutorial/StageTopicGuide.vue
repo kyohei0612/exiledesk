@@ -22,6 +22,7 @@ import Icon from "../../components/ui/Icon.vue";
 import type { JaEn } from "../../services/tutorial/quiz-tutorials";
 import { topicKey, type TopicStep } from "../../services/tutorial/topic-courses";
 import type { StageMod } from "../../services/craft-stage/types";
+import { sideOfMod } from "../../services/craft-stage/engine";
 
 /** now = 今の手の枠 (棚の上) / course = コースの枠 (アイテムの下、既定) */
 defineProps<{ part?: "now" | "course" }>();
@@ -135,7 +136,7 @@ const example = computed(() => {
 const targetRow = computed(() => {
   const st = topicStep.value?.step, id = st?.target, it = s.item.value, d = s.data.value;
   if (!st || !id || !it || !d) return null;
-  const side = d.mods.get(id)?.type === "suffix" ? "suffix" : "prefix";
+  const side = sideOfMod(d, id);
   // 冒涜で狙う手 (wantReveal): 付いたら当たり。まだの間は狙いの文 (label) を出す (2026-10-18 オーナー「スピリット 50」)
   const want = st.wantReveal;
   if (want) {

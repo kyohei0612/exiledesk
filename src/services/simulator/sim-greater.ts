@@ -9,6 +9,7 @@
 import type { PatchData, StageSide } from "../craft-stage/engine";
 import { methodOfTarget, type SimTargetIn } from "./quiz-build";
 import type { magicAugOdds } from "./sim-odds";
+import { sideOfMod } from "../craft-stage/engine";
 
 /** マジックをレアにするエッセンスで付ける狙い (無ければ null) */
 export function magicEssenceTarget(data: PatchData, targets: readonly SimTargetIn[]): SimTargetIn | null {
@@ -30,8 +31,8 @@ export function keepTargetFor(data: PatchData, targets: readonly SimTargetIn[], 
   return targets.find((t) => {
     const m = methodOfTarget(data, t);
     if (m !== "exalt" && m !== "chaos") return false;
-    const side = data.mods.get(t.modId)?.type === "suffix" ? "suffix" : "prefix";
-    return side !== fracSide && (t.alts ?? []).every((a) => (data.mods.get(a.modId)?.type === "suffix" ? "suffix" : "prefix") === side);
+    const side = sideOfMod(data, t.modId);
+    return side !== fracSide && (t.alts ?? []).every((a) => sideOfMod(data, a.modId) === side);
   }) ?? null;
 }
 

@@ -7,7 +7,7 @@ import { craftStage, nameOf, priceOf } from "../../state/craft-stage";
 import { runeEnForId } from "../../services/simulator/pattern";
 import { blankWith, fractureOdds, magicAugOdds } from "../../services/simulator/sim-odds";
 import { greaterRouteCost, magicLoopCounts, type GreaterRoute } from "../../services/simulator/sim-greater";
-import { spamCounts, type RouteGrade, type SpamCounts } from "../../services/craft-stage/engine";
+import { sideOfMod, spamCounts, type RouteGrade, type SpamCounts } from "../../services/craft-stage/engine";
 import { keepCompare } from "../../services/simulator/keep-compare";
 import type { SimTargetIn } from "../../services/simulator/quiz-build";
 import type { SimTargetsCtx } from "./use-sim-targets";
@@ -58,7 +58,7 @@ export function useSimCalc(d0: SimTargetsCtx, simIn: () => SimTargetIn[]) {
     const blank = blankWith(d, it, s.itemLevel.value, "magic", s.simTargets.value.flatMap((t) => [t, ...(t.alts ?? [])]));
     const pAt = (odds: ReturnType<typeof magicAugOdds>) => {
       // 候補ごとに自分の側の候補の中で (候補は両側でも良い)
-      const each = fracMembers.value.map((r) => ({ modId: r.modId, name: `${r.text} (${r.rank} 以上)`, p: odds.hit(d.mods.get(r.modId)?.type === "suffix" ? "suffix" : "prefix", [r]) }));
+      const each = fracMembers.value.map((r) => ({ modId: r.modId, name: `${r.text} (${r.rank} 以上)`, p: odds.hit(sideOfMod(d, r.modId), [r]) }));
       return { each, pHit: Math.min(1, each.reduce((a, x) => a + x.p, 0)) };
     };
     const grades = ([

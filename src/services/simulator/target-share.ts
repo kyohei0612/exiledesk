@@ -7,7 +7,7 @@
  *   - 冒涜の MOD: 同じ空のレアの、その側の冒涜の置き場の候補 (入口の candidates) での割合 (発現の候補 3 つに出る確率ではなく、重みの割合)
  * エッセンスは確定なので出さない (null)
  */
-import { addHitOdds, candidates, CRAFTED_SOURCES, effectiveCls, freshItem, hitShare, RUNES, runeIdByName, startFrom, type PatchData, type StageItem, type StageSide } from "../craft-stage/engine";
+import { addHitOdds, candidates, CRAFTED_SOURCES, effectiveCls, freshItem, hitShare, RUNES, runeIdByName, sideOfMod, startFrom, type PatchData, type StageItem, type StageSide } from "../craft-stage/engine";
 import { SIDE_OMEN } from "./recipe-defs";
 
 /** 狙いの MOD を付ける前の空のレア (ルーンの MOD はそのルーンを差した物) */
@@ -24,7 +24,7 @@ export function targetShare(data: PatchData, base: string, itemLevel: number, mo
   if (!m || CRAFTED_SOURCES.has(m.source)) return null;
   const it = emptyRare(data, base, itemLevel, m.rune);
   if (!it) return null;
-  const side: StageSide = m.type === "suffix" ? "suffix" : "prefix";
+  const side: StageSide = sideOfMod(data, modId);
   const targets = [{ modId, minTierIndex }];
   if (m.source === "desecrated") {
     const pool = effectiveCls(it).pools.desecrated;

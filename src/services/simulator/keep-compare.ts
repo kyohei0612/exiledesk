@@ -11,6 +11,7 @@ import type { PatchData, StageItem } from "../craft-stage/engine";
 import { methodOfTarget, type SimTargetIn } from "./quiz-build";
 import { magicEssenceTarget, magicLoopCounts } from "./sim-greater";
 import { blankWith, chaosAfterFix, fractureOdds, magicAugOdds } from "./sim-odds";
+import { sideOfMod } from "../craft-stage/engine";
 
 export interface KeepCompare {
   /** 狙いの手順の本体の modId */
@@ -30,7 +31,7 @@ export interface KeepCompare {
 
 export function keepCompare(o: { data: PatchData; item: StageItem; itemLevel: number; targets: readonly SimTargetIn[]; price: (k: string) => number }): KeepCompare[] {
   const { data: d, item: it } = o;
-  const side = (id: string): "prefix" | "suffix" => (d.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
+  const side = (id: string): "prefix" | "suffix" => sideOfMod(d, id);
   const frac = o.targets.filter((t) => methodOfTarget(d, t) === "fracture").flatMap((t) => [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])]);
   if (!frac.length) return [];
   const fracSide = side(frac[0]!.modId);

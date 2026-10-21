@@ -13,6 +13,7 @@ import type { QuizRecipe, QuizRoute, QuizRule, QuizSlot, QuizStart, SlotKind } f
 import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
 import { runeEnForId } from "./pattern";
 import { sideLimits } from "./sim-methods";
+import { sideOfMod } from "../craft-stage/engine";
 
 export interface QuizRules { v: 3; rules: Record<string, QuizRule[]> }
 export type SimMethod = "exalt" | "chaos" | "augment" | "desecrate" | "essence" | "fracture";
@@ -68,7 +69,7 @@ export function magicStartMods(data: PatchData, targets: readonly SimTargetIn[])
   for (const t of targets) {
     if (t.method !== "exalt" && t.method !== "chaos") continue;
     const m = data.mods.get(t.modId);
-    const side: StageSide = m?.type === "suffix" ? "suffix" : "prefix";
+    const side: StageSide = sideOfMod(data, t.modId);
     if (!m || sides.has(side)) continue;
     sides.add(side);
     out.push({ mod: t.modId, tier: `T${m.tiers.length - t.minTierIndex}` });
@@ -82,7 +83,7 @@ const magicEss = (x: QuizSimIn): string | null => (x.greater?.essKey ? x.greater
 export interface QuizBuilt { recipe: QuizRecipe; error: string | null }
 
 export function quizFromSim(x: QuizSimIn, q: QuizRules | null | undefined): QuizBuilt {
-  const sideOf = (id: string): StageSide => (x.data.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
+  const sideOf = (id: string): StageSide => sideOfMod(x.data, id);
   const slots: QuizSlot[] = [];
   /** 両側の狙い (候補がプレとサフィに分かれる) の札 */
   let split: { prefix: QuizSlot; suffix: QuizSlot } | null = null;

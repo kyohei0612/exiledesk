@@ -2,6 +2,7 @@
  * auto-group.ts — シミュレーターの狙いを自動で「この中のどれか N つ」にまとめる (2026-10-09)
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
+import { sideOfMod } from "../craft-stage/engine";
 
 /** シミュレーターの狙い (state/craft-stage.ts の simTargets の 1 つ) */
 export interface SimTarget { modId: string; minTierIndex: number; method?: "exalt" | "chaos" | "augment" | "desecrate" | "essence" | "fracture"; alts?: Array<{ modId: string; minTierIndex: number }>; need?: number }
@@ -13,7 +14,7 @@ export interface SimTarget { modId: string; minTierIndex: number; method?: "exal
  * まとめるのは 単独の MOD と、全部付ける「どれか N つ」(N = 候補の数) だけ。「どれか 1 つ」などの選んだ組はそのまま
  */
 export function autoGroup<T extends SimTarget>(d: PatchData, list: T[], added: string): T[] {
-  const sideOf = (id: string): string => (d.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
+  const sideOf = (id: string): string => sideOfMod(d, id);
   const planOf = (t: T): string => t.method ?? "exalt"; // 普通の MOD の付け方の既定は高貴ガチャ (StageSimPanel の methodsFor)
   const normal = (id: string): boolean => d.mods.get(id)?.source === "normal" && !d.mods.get(id)?.rune;
   const me = list.find((t) => t.modId === added);

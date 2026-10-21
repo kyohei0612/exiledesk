@@ -7,6 +7,7 @@ import type { SimMethod } from "./quiz-build";
 import { freshItem } from "../craft-stage/run-plan";
 import { limitOf } from "../craft-stage/stage-core";
 import { tr } from "../../i18n/lang";
+import { sideOfMod } from "../craft-stage/engine";
 
 export const METHOD_JA: Record<SimMethod, string> = { exalt: "高貴ガチャ", chaos: "カオススパム", augment: "増強スパム", desecrate: "冒涜", fracture: "フラクチャー", essence: "エッセンス" };
 export const METHOD_EN: Record<SimMethod, string> = { exalt: "Exalt gamble", chaos: "Chaos spam", augment: "Augmentation spam", desecrate: "Desecrate", fracture: "Fracture", essence: "Essence" };
@@ -27,7 +28,7 @@ export interface SimTargetLike { modId: string; minTierIndex: number; method?: S
  * 手順 1 つ = 1 枠 (「どれか N つ」は手順が N 個なので N 枠)。フラクチャー予定は側ごとに 1 枠 (どれか 1 つが固定される)
  */
 export function sideUse(d: PatchData | null, targets: readonly SimTargetLike[]): { prefix: number; suffix: number } {
-  const side = (id: string): "prefix" | "suffix" => (d?.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
+  const side = (id: string): "prefix" | "suffix" => sideOfMod(d, id);
   const out = { prefix: 0, suffix: 0 };
   const fr = new Set<string>();
   for (const t of targets) {
@@ -49,7 +50,7 @@ export function sideUse(d: PatchData | null, targets: readonly SimTargetLike[]):
 /** 整理の組: 同じ側・同じ付け方 (高貴ガチャ / カオススパム / 冒涜) の MOD。2 つ以上ある時だけ「全部 / どれか N つ」を選ばせる */
 export interface SortBucket { side: "prefix" | "suffix"; method: SimMethod; members: Array<{ modId: string; minTierIndex: number }>; need: number }
 export function sortBuckets(d: PatchData | null, targets: readonly SimTargetLike[]): SortBucket[] {
-  const side = (id: string): "prefix" | "suffix" => (d?.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
+  const side = (id: string): "prefix" | "suffix" => sideOfMod(d, id);
   const out: SortBucket[] = [];
   for (const t of targets) {
     // 増強スパムは側ごとに 1 つ (2 つ目は足す時に候補へ。augmentHostOf) なので「どれか N つ」にまとめない
@@ -113,7 +114,7 @@ export const SIM_STARTS: Array<{ k: SimStartKind; label: string; hint: string; l
  * [[sim-split-by-side]] と同じ考え)。反対側にもうカオススパムの狙いがあれば、その理由 (無ければ null)
  */
 export function chaosBlocked(d: PatchData | null, targets: readonly SimTargetLike[], modId: string): string | null {
-  const side = (id: string): "prefix" | "suffix" => (d?.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
+  const side = (id: string): "prefix" | "suffix" => sideOfMod(d, id);
   const me = side(modId);
   const other = targets.find((t) => t.modId !== modId && t.method === "chaos" && side(t.modId) !== me);
   return other ? (me === "prefix" ? tr("カオススパムはサフィックスで選んでいる (片側だけ)", "Chaos spam is already on suffixes (one side only)") : tr("カオススパムはプレフィックスで選んでいる (片側だけ)", "Chaos spam is already on prefixes (one side only)")) : null;
@@ -124,7 +125,7 @@ export function chaosBlocked(d: PatchData | null, targets: readonly SimTargetLik
  * その側にもう増強スパムの狙い (かフラクチャーの候補。マジックで一緒に揃えるので同じ枠を取り合う) があれば、その理由 (無ければ null)
  */
 export function augmentBlocked(d: PatchData | null, targets: readonly SimTargetLike[], modId: string): string | null {
-  const side = (id: string): "prefix" | "suffix" => (d?.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
+  const side = (id: string): "prefix" | "suffix" => sideOfMod(d, id);
   const me = side(modId);
   if (targets.some((t) => t.modId !== modId && t.method === "fracture" && [t, ...(t.alts ?? [])].some((x) => side(x.modId) === me))) return tr("フラクチャー予定と同じ側 (マジックの枠は側ごとに 1 つ)", "Same side as the fracture mod (magic has one slot per side)");
   // 同じ側の 2 つ目の増強スパムは止めない: 足す時にその側の増強スパムの「どれか 1 つ」の候補に入る (augmentHostOf。2026-10-21 モンキーチェック:
@@ -133,7 +134,7 @@ export function augmentBlocked(d: PatchData | null, targets: readonly SimTargetL
 }
 /** その側に既にある増強スパムの狙い (2 つ目を選んだら、ここの候補 alts に足す)。無ければ null */
 export function augmentHostOf<T extends SimTargetLike>(d: PatchData | null, targets: readonly T[], modId: string): T | null {
-  const side = (id: string): "prefix" | "suffix" => (d?.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
+  const side = (id: string): "prefix" | "suffix" => sideOfMod(d, id);
   return targets.find((t) => t.modId !== modId && t.method === "augment" && side(t.modId) === side(modId)) ?? null;
 }
 /** 付け方のポップアップで選べない付け方と理由 (カオススパムは片側だけ・増強スパムは側ごとに 1 つ) */
@@ -146,7 +147,7 @@ export function methodsOff(d: PatchData | null, targets: readonly SimTargetLike[
  * 増強スパムが先にあるとフラクチャー予定を同じ側に足せた (2026-10-21 モンキーチェック 10 人中 5 人)
  */
 export function fractureBlocked(d: PatchData | null, targets: readonly SimTargetLike[], modId: string): string | null {
-  const side = (id: string): "prefix" | "suffix" => (d?.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
+  const side = (id: string): "prefix" | "suffix" => sideOfMod(d, id);
   const me = side(modId);
   return targets.some((t) => t.modId !== modId && t.method === "augment" && [t, ...(t.alts ?? [])].some((x) => side(x.modId) === me))
     ? tr("増強スパムと同じ側 (マジックの枠は側ごとに 1 つ)", "Same side as the augmentation spam mod (magic has one slot per side)") : null;
@@ -157,7 +158,7 @@ export function fractureBlocked(d: PatchData | null, targets: readonly SimTarget
  * (2026-10-21 モンキーチェック: 組を替えると 2 つとも増強スパムになった。オーナー「増強はプレサフィそれぞれいける、複数も選べる。プレに 2 MOD とも増強はできん」)
  */
 export function toAugment<T extends SimTargetLike>(d: PatchData | null, targets: readonly T[], ids: readonly string[]): T[] {
-  const side = (id: string): "prefix" | "suffix" => (d?.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
+  const side = (id: string): "prefix" | "suffix" => sideOfMod(d, id);
   const moving = targets.filter((t) => ids.includes(t.modId));
   if (!moving.length) return [...targets];
   const ms = moving.flatMap((t) => [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])]);

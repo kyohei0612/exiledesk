@@ -21,7 +21,7 @@
  *   - フラクチャー: 「作る」= 変成・増強ガチャ → 王者 → 骨の壁 → フラクチャー (1/3、外れたら白から作り直し)。固定した後の外れは
  *     消さずに残す (カオスは入れ替える、高貴・冒涜は要る時にその側を消す)。「付いた状態」= その MOD を固定済みにしたレアから (費用は手で入れたベースの値段)
  */
-import { addOddsBySpec, hitShare } from "../craft-stage/engine";
+import { addOddsBySpec, hitShare, sideOfMod } from "../craft-stage/engine";
 import { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
 import { applyCurrency } from "../craft-stage/apply-currency";
 import { revealOffers, unrevealedOf } from "../craft-stage/apply-desecrate";
@@ -46,7 +46,7 @@ export function runRecipeOnce(spec: RecipeSpec, seed: number): RecipeRun {
   cur.replayFrom = 0;
   cur.bases = 0;
   const mod = (id: string) => data.mods.get(id)!;
-  const sideOf = (id: string): StageSide => (mod(id).type === "suffix" ? "suffix" : "prefix");
+  const sideOf = (id: string): StageSide => sideOfMod(data, id);
   /**
    * まだ当たっていない一番上の手順。付いている MOD は 1 つの手順にしか数えない (同じ候補のグループをコピーして並べた時、1 つの MOD で
    * 両方を満たしたことにしない。2026-10-05 オーナー「その MOD 群は 1 MOD としての扱い」「コピーボタンでもう 1 個同じのができる」)。上から順に取る

@@ -4,7 +4,7 @@
  * ここは「どの状態のアイテムに何を打つか」を作るだけで、付く確率・側の割合・フラクチャーの当たりは入口 (addOddsBySpec・hitShare・addHitOdds・fractureHit) の物。
  * 式の組み方 (マジックのループ・× 本数) はそれぞれのファイルに残す
  */
-import { addHitOdds, addOddsBySpec, fractureHit, hitShare, type OddsTarget, type PatchData, type StageItem, type StageMod, type StageSide } from "../craft-stage/engine";
+import { addHitOdds, addOddsBySpec, fractureHit, hitShare, sideOfMod, type OddsTarget, type PatchData, type StageItem, type StageMod, type StageSide } from "../craft-stage/engine";
 import { runeEnForId } from "./pattern";
 
 /** 狙いのルーン (ルーンの MOD を狙う時) を差した、MOD の無いアイテム。アイテムレベルは ③ の入力の物 */
@@ -30,11 +30,10 @@ export function magicAugOdds(data: PatchData, blank: StageItem, key: string): { 
   };
 }
 
-const sideOf = (data: PatchData, id: string): StageSide => (data.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
 /** 確率を数えるための MOD (modId と段だけ本物。値・文は見ない) */
 function modFor(data: PatchData, modId: string, tierIndex: number, extra: Partial<StageMod> = {}): StageMod {
   const m = data.mods.get(modId);
-  return { modId, family: m?.family ?? modId, side: sideOf(data, modId), tierIndex, tierName: "", affix: "", modLevel: 0, values: [], ranges: [], textJa: "", textEn: "", ...extra };
+  return { modId, family: m?.family ?? modId, side: sideOfMod(data, modId), tierIndex, tierName: "", affix: "", modLevel: 0, values: [], ranges: [], textJa: "", textEn: "", ...extra };
 }
 
 /**

@@ -3,7 +3,7 @@
  * 中身は前のまま。auto = 自動の時 (高貴 / カオスは「自動」1 つに)
  */
 import { craftStage } from "../../state/craft-stage";
-import { CRAFTED_SOURCES } from "../../services/craft-stage/engine";
+import { CRAFTED_SOURCES, sideOfMod } from "../../services/craft-stage/engine";
 import { tr } from "../../i18n/lang";
 import { methodsOff, toAugment } from "../../services/simulator/sim-methods";
 
@@ -106,7 +106,7 @@ export function useTargetPlans(auto: () => boolean) {
   const restOf = (g: { kind: Kind; host: string }): RestPlan | null =>
     (g.kind === "fracture" ? s.simTargets.value.find((t) => t.method === "fracture" && t.rest)?.rest : s.simTargets.value.find((t) => t.modId === g.host)?.rest) ?? null;
   function restOff(g: { members: ReadonlyArray<{ modId: string }> }): Partial<Record<RestPlan, string>> {
-    const side = (id: string): string => (s.data.value?.mods.get(id)?.type === "suffix" ? "suffix" : "prefix");
+    const side = (id: string): string => sideOfMod(s.data.value, id);
     const fs = side(g.members[0]!.modId);
     const out: Partial<Record<RestPlan, string>> = {};
     if (s.simTargets.value.some((t) => t.method === "chaos" && side(t.modId) !== fs)) out.chaos = "カオススパムは反対側で選んでいる (片側だけ)";
