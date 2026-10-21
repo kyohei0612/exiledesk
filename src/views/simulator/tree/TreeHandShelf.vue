@@ -4,7 +4,7 @@
   結果の箱は手の種類で決める (カオス = 入れ替え、消去 = 消す、それ以外 = 足す、カオススパム = 当たりだけ)。入力は触媒のカタリストの品質とカオススパムだけ
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, toRaw } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../../state/craft-stage";
 import { provideShelf, simHidden } from "../../../state/emulator/shelf-context";
 import CurrencyShelf from "../../craft-stage/CurrencyShelf.vue";
@@ -14,7 +14,7 @@ import { applyCurrency, mulberry32, omensFor } from "../../../services/craft-sta
 import { aimHeld, aimsOf, fillCatalyst, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, kindOfCurrency, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handLabel, handName } from "./tree-names";
-import { kindOfHand, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
+import { kindOfHand, setHand, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { tr } from "../../../i18n/lang";
 
@@ -37,7 +37,12 @@ function release(): void { held.value = null; omens.value = []; }
 function onHold(k: string): void { if (held.value === k) release(); else held.value = k; }
 /** 棚の空いている所を押す = 離す (ボタン・入力・お告げの欄の中は除く) */
 function onShelfDown(e: PointerEvent): void { if (held.value && !(e.target as HTMLElement).closest("button,input,select,label,[data-held-box]")) release(); }
-function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && held.value) { release(); e.stopImmediatePropagation(); } }
+/** Esc: 今の手を替えている時は欄ごと取り消す (何も替えない、オーナー 10-22「枠の外・Esc で取り消し」)。新しい手の時は持った物を離す */
+function onKey(e: KeyboardEvent): void {
+  if (e.key !== "Escape") return;
+  if (props.current) { emit("close"); e.stopImmediatePropagation(); }
+  else if (held.value) { release(); e.stopImmediatePropagation(); }
+}
 onMounted(() => window.addEventListener("keydown", onKey, true));
 onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 function toggleOmen(id: string): void { omens.value = omens.value.includes(id) ? omens.value.filter((o) => o !== id) : [...omens.value, id]; }
@@ -75,12 +80,24 @@ const RESULT: Record<HandKind, [string, string]> = {
   add: ["当たり + 外れ", "Hit + Miss"], remove: ["外れが消えた + 狙いが消えた", "Miss removed + Target lost"], swap: ["当たり + 狙いが消えた + 外れ", "Hit + Target lost + Miss"], spam: ["当たりだけ (当たるまで打つ)", "Hits only (until a hit)"], free: ["打った後 (何が付いても次へ。当たり / 外れに分けない)", "After (anything counts, no hit / miss split)"],
 };
 const kind = computed((): HandKind | null => (hand.value ? kindOfHand(hand.value, kindOfCurrency(hand.value.currency)) : null));
+/** カオススパムの当たりの既定 = このツリーの狙いのうち、この箱でまだ付いていない物を全部 */
+const spamAims = computed((): Aim[] => {
+  const d = s.data.value;
+  return kind.value === "spam" && d && item.value ? aimsOf(t.doc.value).filter((a) => !aimHeld(d, item.value!, a)) : [];
+});
+/** この手に替えると消える箱の数 (結果の箱から先。手の種類が同じなら 0。写しに打って数える) */
+const gone = computed((): number => {
+  const h = hand.value, k = kind.value;
+  if (!props.current || !h || !k) return 0;
+  const d = structuredClone(toRaw(t.doc.value));
+  const before = Object.keys(d.boxes).length;
+  setHand(d, props.boxId, h, k, spamAims.value);
+  const kept = new Set(Object.keys(d.boxes));
+  return before - Object.keys(t.doc.value.boxes).filter((id) => kept.has(id)).length;
+});
 function ok(): void {
-  const h = hand.value, k = kind.value, d = s.data.value;
-  if (!h || !k) return;
-  // カオススパムの当たりの既定 = このツリーの狙いのうち、この箱でまだ付いていない物を全部
-  const aims = k === "spam" && d && item.value ? aimsOf(t.doc.value).filter((a) => !aimHeld(d, item.value!, a)) : [];
-  emit("pick", h, k, aims);
+  const h = hand.value, k = kind.value;
+  if (h && k) emit("pick", h, k, spamAims.value);
 }
 </script>
 
@@ -110,9 +127,10 @@ function ok(): void {
         <span v-if="spam" class="flex items-center gap-1 text-[12px] opacity-80">{{ tr("上限", "Max") }}<input v-model.number="spamMax" type="number" min="1" class="h-7 w-16 rounded-md border border-white/15 bg-black/40 px-1 text-right" :placeholder="tr('なし', 'none')" />{{ tr("回", "") }}</span>
       </label>
       <p v-if="kind" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ tr(RESULT[kind][0], RESULT[kind][1]) }}</p>
-      <div class="flex flex-wrap gap-1.5">
+      <!-- 替える時は、消える箱の数を先に小さく (オーナー 10-22。1 つ戻す / Ctrl+Z で戻せる)。持ち直しは棚で別の物を押すだけ (ボタンは無し) -->
+      <div class="flex flex-wrap items-center gap-1.5">
         <button type="button" data-tree-hand-ok class="g-btn-red sm" @click="ok">{{ current ? tr("この手に替える", "Use this craft") : tr("この手にする", "Use this craft") }}</button>
-        <button type="button" class="g-btn sm" @click="release">{{ tr("持ち直す", "Pick again") }}</button>
+        <span v-if="gone" data-tree-hand-gone class="text-[11px] text-rose-200/90">{{ tr(`替えると下の ${gone} 箱が消える (1 つ戻すで戻せる)`, `Replacing removes ${gone} box(es) below (Undo restores)`) }}</span>
       </div>
     </div>
     <button v-if="current" type="button" class="g-btn sm self-start" @click="emit('clear')">{{ tr("この手を消す (下も消える)", "Remove this craft (and below)") }}</button>
