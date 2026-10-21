@@ -28,6 +28,9 @@ export interface QuizSlot {
   /** 途中だけ付ける札 (侮蔑のような枠を増やす MOD)。完成には要らない */
   temp?: boolean;
 }
+/** 札を書く小物 (候補の MOD はどれも同じ段 minTierIndex 以上。途中だけの札は { ...quizSlot(…), temp: true })。見本・チュートリアル・コースで同じ */
+export const quizSlot = (id: string, side: QuizSlot["side"], mods: string[], kind: QuizSlot["kind"] = "normal", minTierIndex = 0): QuizSlot =>
+  ({ id, side, mods: mods.map((modId) => ({ modId, minTierIndex })), kind });
 /**
  * 状況の項目 (平らなキー → 値)。札は札の id → 0 無い / 1 段が低い / 2 付いている / 3 付いていて固定。
  * 側は "p." / "s." + junk (狙い以外、固定以外) / fx (狙い以外の固定) / bad (発現済みの冒涜で狙い以外) / hid (未発現) / free (空き。侮蔑などで増えた枠込み、超えたら負)。

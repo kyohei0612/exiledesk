@@ -13,7 +13,7 @@
  * 1 本 = クイズのレシピ (quiz-recipe.ts の型そのまま) + 答えごとの問い・理由・外れ。打ち方はシミュレーターと同じ applyQuizAction。
  * 資料で決まらない所は assumed (画面に「仮」) に書く。値段は使わない (費用は出さず、打った数だけ出す)。
  */
-import type { QuizAction, QuizRecipe, QuizRule, QuizSlot } from "../simulator/quiz-recipe";
+import { quizSlot, type QuizAction, type QuizRecipe, type QuizRule } from "../simulator/quiz-recipe";
 
 /** 日本語と英語の組 (画面の言葉。ゲームの言葉はキーからクライアントの名前で出す) */
 export type JaEn = readonly [string, string];
@@ -46,8 +46,7 @@ export interface QuizTutorial {
   seed: number;
 }
 
-const slot = (id: string, side: QuizSlot["side"], mods: string[], kind: QuizSlot["kind"] = "normal", minTierIndex = 0): QuizSlot =>
-  ({ id, side, mods: mods.map((modId) => ({ modId, minTierIndex })), kind });
+const slot = quizSlot;
 const d = (a: QuizAction, ja: string, en: string): TutorialDecoy => ({ do: a, why: [ja, en] });
 const rule = (when: TutorialRule["when"], a: QuizAction, ask: JaEn, why: JaEn, decoys: readonly [TutorialDecoy, TutorialDecoy], assumed?: JaEn): TutorialRule =>
   ({ when, do: a, ask, why, decoys, ...(assumed ? { assumed } : {}) });

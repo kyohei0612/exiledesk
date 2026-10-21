@@ -3,10 +3,9 @@
  * テスト (tests/simulator/quiz-recipes.test.ts) で、どれも答えの無い状況に来ずに最後まで回ることを確かめる。
  * 値段は仮 (画面で入れ直す)。
  */
-import type { QuizRecipe, QuizSlot } from "./quiz-recipe";
+import { quizSlot, type QuizRecipe } from "./quiz-recipe";
 
-const slot = (id: string, side: QuizSlot["side"], mods: string[], kind: QuizSlot["kind"] = "normal", temp = false, minTierIndex = 0): QuizSlot =>
-  ({ id, side, mods: mods.map((modId) => ({ modId, minTierIndex })), kind, ...(temp ? { temp } : {}) });
+const slot = quizSlot;
 
 const CONTEMPT = "emotion:Potent Liquid Contempt";
 const FEROCITY = "emotion:Potent Liquid Ferocity";
@@ -28,8 +27,8 @@ export function jewelJp(): QuizRecipe {
         slot("C", "suffix", ["JewelAttackSpeed", "JewelMovementSpeed", "JewelRadiusSpearCriticalDamage", "JewelRadiusSpearAttackSpeed", "JewelBowSpeed"].map((x) => J + x), "desecrated"),
         slot("D", "prefix", [J + "JewelAttackDamage"]),
         slot("E", "prefix", [J + "Emotion_CraftedJewelSuffixEffect"], "crafted"),
-        slot("T", "prefix", [J + "Emotion_CraftedJewelAdditionalSuffixAllowed"], "crafted", true),
-        slot("X", "suffix", [J + "Emotion_CraftedJewelAdditionalPrefixAllowed"], "crafted", true),
+        { ...slot("T", "prefix", [J + "Emotion_CraftedJewelAdditionalSuffixAllowed"], "crafted"), temp: true },
+        { ...slot("X", "suffix", [J + "Emotion_CraftedJewelAdditionalPrefixAllowed"], "crafted"), temp: true },
       ],
       rules: [
         // 土台: クリ率をフラクチャー。他が固定されたら次の土台
@@ -76,7 +75,7 @@ export function jewelEn(): QuizRecipe {
         slot("C", "suffix", [J + "JewelIncreasedDuration", J + "JewelManaRegeneration"], "desecrated"),
         slot("D", "prefix", [J + "JewelEnergyShield"]),
         slot("E", "prefix", [J + "Emotion_CraftedJewelSuffixEffect"], "crafted"),
-        slot("T", "prefix", [J + "Emotion_CraftedJewelAdditionalSuffixAllowed"], "crafted", true),
+        { ...slot("T", "prefix", [J + "Emotion_CraftedJewelAdditionalSuffixAllowed"], "crafted"), temp: true },
       ],
       rules: [
         // 買ったまま: 侮蔑。外れ (侮蔑がプレに付かない) は買い直し
@@ -106,8 +105,8 @@ export function spearBleed(): QuizRecipe {
     routes: [{
       id: "main",
       goal: [
-        slot("A", "prefix", [S + "LocalPhysicalDamagePercent"], "normal", false, 5),
-        slot("B", "suffix", [S + "GlobalIncreaseMeleeSkillGemLevel"], "normal", false, 2),
+        slot("A", "prefix", [S + "LocalPhysicalDamagePercent"], "normal", 5),
+        slot("B", "suffix", [S + "GlobalIncreaseMeleeSkillGemLevel"], "normal", 2),
         slot("E", "prefix", [S + "Essence_PhysicalDamage"], "essence"),
         slot("C", "prefix", [S + "LocalIncreasedPhysicalDamagePercentAndAccuracyRating"], "desecrated"),
         slot("F", "suffix", []),
@@ -139,10 +138,10 @@ export function bootsChrono(): QuizRecipe {
     routes: [{
       id: "main",
       goal: [
-        slot("A", "prefix", [B + "Rune_chronomancy_MovementVelocity"], "fractured", false, 2),
+        slot("A", "prefix", [B + "Rune_chronomancy_MovementVelocity"], "fractured", 2),
         slot("C", "prefix", [B + "Rune_chronomancy_DodgeRoll"], "desecrated"),
         slot("G", "prefix", []),
-        slot("R", "suffix", ["LightningResistance", "FireResistance", "ColdResistance"].map((x) => B + x), "normal", false, 7),
+        slot("R", "suffix", ["LightningResistance", "FireResistance", "ColdResistance"].map((x) => B + x), "normal", 7),
         slot("E", "suffix", [B + "Essence_ItemFoundRarityIncrease"], "essence"),
         slot("F", "suffix", [B + "PerfectEssence_BaseSpirit"], "essence"),
       ],
