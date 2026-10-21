@@ -60,7 +60,7 @@ The main design goal was **no mismatched numbers**.
 
 That single code path is why the "Odds table" and "Mod list" columns above match.
 
-## What Does It Look Like on Screen?
+### What Does It Look Like on Screen?
 
 Open a row in the mod list and a bar appears above its tier table: "Weight [1000] Default 1000 ↺ Reset all (n)". Type 200 and Cast Speed drops from 5.4% to 1.1%, with each tier at 0.2%.
 
