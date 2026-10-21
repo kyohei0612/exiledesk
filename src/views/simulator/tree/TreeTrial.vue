@@ -14,7 +14,7 @@ import ShelfButton from "../../craft-stage/ShelfButton.vue";
 import HeldOmens from "../../craft-stage/HeldOmens.vue";
 import { heldOmensOf } from "../../craft-stage/held-omens";
 import StageItemCard from "../../craft-stage/StageItemCard.vue";
-import { applyCurrency, kindOf, mulberry32, omensFor, revealOffers, unrevealedOf, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { applyCurrency, kindOf, mulberry32, omensFor, previewUse, revealOffers, unrevealedOf, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { aimsOf, fillCatalyst, playHand, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handLabel } from "./tree-names";
@@ -54,6 +54,8 @@ provideShelf({
 });
 /** 手放す (カードの札どおり 右クリック / Esc。Esc は欄を閉じるより先) */
 function release(): void { held.value = null; omens.value = []; }
+/** 持っている物を打つ前に光らせる (クラフト台と同じ previewUse: 変わる候補の MOD はオレンジの文字、付く空きは緑の枠) */
+const preview = computed(() => (held.value && item.value && s.data.value ? previewUse(s.data.value, item.value, held.value, omens.value) : null));
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && held.value) { release(); e.stopImmediatePropagation(); } }
 onMounted(() => window.addEventListener("keydown", onKey, true));
 onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
@@ -133,7 +135,7 @@ const noteText = computed(() => {
 
     <!-- アイテム (クラフト台のカード。持っている時に押すと打つ) -->
     <div v-if="item" data-tree-trial-item class="flex justify-center" @contextmenu.prevent="release">
-      <StageItemCard :item="item" :added="last.added" :removed="last.removed" :holding="!!held" :flash-key="flash" :width="340" compact @use="use(1)" />
+      <StageItemCard :item="item" :doomed="preview?.change ?? []" :open="preview?.open" :added="last.added" :removed="last.removed" :holding="!!held" :flash-key="flash" :width="340" compact @use="use(1)" />
     </div>
 
     <!-- 持っている物 (カードの下の「押すと使う」の札と重ならないよう空ける) -->
