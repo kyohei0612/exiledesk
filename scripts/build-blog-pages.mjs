@@ -77,13 +77,13 @@ figure{margin:32px 0}figure img,main img{display:block;width:100%;height:auto}fi
 .author{display:flex;gap:14px;align-items:center;margin:32px 0;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);line-height:1.6}.author b{display:block;font-size:15px}.author span{color:var(--sub);font-size:13px}.author img{width:48px;height:48px;border-radius:50%}
 .credit{color:var(--sub);font-size:12px;line-height:1.6;margin:16px 0 0}
 .more h2{font-size:18px;margin:48px 0 8px}ul.posts{list-style:none;padding:0;margin:0}ul.posts li{padding:16px 0;border-bottom:1px solid var(--line);line-height:1.6}
-ul.posts a.t{font-size:17px;font-weight:700;text-decoration:none;color:var(--ink)}ul.posts a.t:hover{color:var(--link)}main.wide{max-width:1180px}
+ul.posts a.t{font-size:17px;font-weight:700;text-decoration:none;color:var(--ink)}ul.posts a.t:hover{color:var(--link)}main.wide{max-width:1240px}
 .lhead{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin:8px 0 20px;line-height:1.6}.sort{display:flex;gap:8px}.sort span{padding:4px 14px;border-radius:999px;background:var(--ink);color:#fff;font-size:13px;font-weight:700}
 .tagf{margin-left:auto;display:flex;flex-wrap:wrap;gap:6px}.tagf a{padding:3px 12px;border-radius:999px;border:1px solid var(--line);color:var(--sub);font-size:13px;text-decoration:none}.tagf a.on,.tagf a:hover{border-color:var(--ink);color:var(--ink)}
-.cards{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:28px 20px}.cards li{margin:0;line-height:1.6}
-.cards a{display:block;text-decoration:none;color:var(--ink)}.cards img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:8px;background:var(--soft);border:1px solid var(--line)}
-.cards .ct{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin:10px 0 6px;font-size:15px;font-weight:700;line-height:1.55}.cards a:hover .ct{color:var(--link)}.cards time{color:var(--sub);font-size:12px}
-@media (max-width:767px){.cards{grid-template-columns:repeat(2,1fr);gap:22px 12px}.cards .ct{font-size:14px}.tagf{margin-left:0}}
+.cards{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(3,1fr);gap:40px 28px}.cards li{margin:0;line-height:1.6}
+.cards a{display:block;text-decoration:none;color:var(--ink)}.cards img{display:block;width:100%;height:auto;aspect-ratio:1200/630;object-fit:contain;image-rendering:auto;border-radius:10px;background:var(--soft);border:1px solid var(--line)}
+.cards .ct{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin:14px 0 8px;font-size:18px;font-weight:700;line-height:1.55}.cards a:hover .ct{color:var(--link)}.cards time{color:var(--sub);font-size:13px}
+@media (max-width:1023px){.cards{grid-template-columns:repeat(2,1fr);gap:32px 20px}}@media (max-width:767px){.cards{grid-template-columns:1fr;gap:32px}.cards .ct{font-size:17px}.tagf{margin-left:0}}
 ul.posts p{margin:6px 0 0;color:var(--sub);font-size:14px}
 #comments{margin-top:32px}
 footer{border-top:1px solid var(--line);color:var(--sub);font-size:12px;line-height:1.7;background:#fafafa}footer .in{max-width:960px;margin:0 auto;padding:16px 20px 24px}footer .fnav{margin:0 0 6px}footer .fnav a{color:var(--sub)}
@@ -198,7 +198,7 @@ const thumbs = new Map();
 /** 一覧のカード (16:9 のサムネ・題 3 行・公開日)。data-tags は blog.js のタグの絞り込み用 (JS 無しでは全部出る) */
 function cards(lang, list) {
   const l = L[lang];
-  return `<ul class="cards">${list.map((x) => `<li data-tags="${esc(x.meta.tags.join("|"))}"><a href="${l.prefix}/blog/${x.meta.slug}/"><img src="${esc(thumbs.get(`${lang}:${x.meta.slug}`) ?? "/web/og.png")}" alt="" width="400" height="225" loading="lazy" /><span class="ct">${esc(x.meta.title)}</span><time datetime="${x.meta.date}">${x.meta.date}</time>${x.meta.draft ? ` <span class="draft">${l.draft}</span>` : ""}</a></li>`).join("")}</ul>`;
+  return `<ul class="cards">${list.map((x) => `<li data-tags="${esc(x.meta.tags.join("|"))}"><a href="${l.prefix}/blog/${x.meta.slug}/"><img src="${esc(thumbs.get(`${lang}:${x.meta.slug}`) ?? "/web/og.png")}" alt="" width="1200" height="630" loading="lazy" decoding="async" /><span class="ct">${esc(x.meta.title)}</span><time datetime="${x.meta.date}">${x.meta.date}</time>${x.meta.draft ? ` <span class="draft">${l.draft}</span>` : ""}</a></li>`).join("")}</ul>`;
 }
 /** 一覧の上の札: 並べ替えは「新着」だけ (人気・急上昇は数字が無い)、右にタグで絞る札 (3 本以上の記事が付いたタグ、多い順に 8 つ。JS 無しでは下のタグごとの節へ飛ぶ) */
 function listHead(lang, list) {
