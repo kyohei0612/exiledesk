@@ -48,6 +48,7 @@
 ## 触っている (同じファイルは順に。各部長が始める時に自分で書き、自分の commit で消す。ぶつかる時はブラックが順番を決める)
 | 誰 | ファイル |
 |---|---|
+| ジン部長 MOD の重みを直せる (10-22) | src/services/craft-stage/stage-tuning.ts・apply-vaal.ts・stage-core.ts・mod-list.ts・engine.ts、src/state/emulator/stage-tuning.ts、src/views/craft-stage/StageModList.vue・新 StageWeightEdit.vue |
 | (前の解析君の書きかけ、未 commit) | scripts/_flux-probe.test.ts・scripts/analysis/_yafu-ids.mjs |
 
 入口に無い物 (解析君 10-21、要る時だけジン部長へ): 重み 0 の MOD (創生の樹のスペルダメージ) を始めの形に置く手段 (startFrom が断る、解析君は makeStageMod を直に使った)。シミュで要るまで振らない。
