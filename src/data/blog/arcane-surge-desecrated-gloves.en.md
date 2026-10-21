@@ -9,9 +9,20 @@ draft: true
 ---
 In PoE2, the Desecrated Arcane Surge mod (of Kurgal: "(10–15)% chance to gain Arcane Surge when you deal a Critical Hit") rolls only on **gloves with Intelligence** (Intelligence, Strength/Intelligence and Dexterity/Intelligence). On Intelligence gloves it is one of 15 Desecrated mods, and on the ExileDesk engine it appeared among the three reveal options 7.4% of the time.
 
-One common ES glove craft fills a suffix slot with a Desecrated Arcane Surge. While researching it, we found claims like "only on Intelligence gloves" and "nine Desecrated mods" mixed in, so we recounted on poe2db and Craft of Exile.
+One common ES glove craft fills a suffix slot with a Desecrated Arcane Surge, right?
 
-## Desecrated Mods by Glove Attribute
+But once we started researching it, we found claims like "only on Intelligence gloves" and "nine Desecrated mods" mixed in. They needed a recount.
+
+So we recounted on poe2db and Craft of Exile.
+
+:::summary What you'll learn
+- Arcane Surge rolls only on gloves with Intelligence (Intelligence, Strength/Intelligence, Dexterity/Intelligence). Intelligence gloves have 15 Desecrated mods
+- You pick one of three options on Reveal, so the odds are not 1/15 but "shows up among the options": **7.40%** on the engine
+- A Preserved Rib (6.75 Exalted Orbs) is enough. Even an Ancient Rib (4,702 Exalted Orbs) removes none of the Desecrated mods
+- Craft of Exile can't calculate Desecration weights either
+:::
+
+## Arcane Surge Rolls Only on Gloves with Intelligence
 
 Every Desecrated mod on gloves is a suffix with modifier level 65. The count depends on the glove's attributes.
 
@@ -24,21 +35,37 @@ Every Desecrated mod on gloves is a suffix with modifier level 65. The count dep
 | Dexterity + Intelligence | 17 | 5 / 5 / 7 | yes |
 | Strength + Dexterity | 13 | 5 / 3 / 5 | no |
 
-On Intelligence gloves, Kurgal's five are Arcane Surge, Cast Speed while on Full Life, Mana Cost Efficiency, Dexterity and Intelligence, and Cold and Chaos Resistance. Craft of Exile's "Desecrated Suffixes" for Intelligence gloves (Item Level 82) also lists 15, matching poe2db.
+On Intelligence gloves, Kurgal's five are Arcane Surge, Cast Speed while on Full Life, Mana Cost Efficiency, Dexterity and Intelligence, and Cold and Chaos Resistance.
 
-The Omen of the Blackblooded, which guarantees a Kurgal mod, says "weapon or jewellery" on poe2db, so it can't be used on gloves (armour). On gloves you draw from all 15.
+Craft of Exile's "Desecrated Suffixes" for Intelligence gloves (Item Level 82) also lists 15, matching poe2db.
 
-## The Odds: Not 1/15 but "Shows Up Among the Options"
+The Omen of the Blackblooded, which guarantees a Kurgal mod, says "weapon or jewellery" on poe2db. It can't be used on gloves (armour), so on gloves you draw from all 15.
 
-An Unrevealed mod from Desecration lets you **pick one of three options** when you Reveal it. So the odds are not "one of 15" but "how often Arcane Surge is among the three options."
+## The Odds Are Not 1/15 but 7.4% to Show Up Among the Options
 
-The ExileDesk engine draws 1, 2 or 3 Desecrated-only mods among the three options at 85% / 14% / 1% (a community count of 563 rings), and fills the rest from normal mods by weight. No two options share a mod group. Nobody has published weights between Desecrated-only mods, so they are all equal.
+An Unrevealed mod from Desecration lets you **pick one of three options** when you Reveal it. So the odds are not "one of 15." They are "how often Arcane Surge is among the three options."
 
-With that model, Desecrating Intelligence gloves (Sirenscale Gloves, Item Level 82, prefixes full) with a Preserved Rib and counting the options 5,000 times, Arcane Surge appeared **7.40%** of the time. If it doesn't, an Omen of Abyssal Echoes lets you draw one more set of options.
+The ExileDesk engine draws 1, 2 or 3 Desecrated-only mods among the three options at 85% / 14% / 1% (a community count of 563 rings). It fills the rest from normal mods by weight, and no two options share a mod group.
 
-When it misses, remove the unwanted Desecrated mod and Desecrate again. Omen of Light (your next Orb of Annulment removes only Desecrated mods) suits this. Removing it with Omen of Dextral Annulment can also take out a target sitting next to it, which changed the cost a lot in the [ES gloves article](/en/blog/es-gloves-greater-exalt/). You can Desecrate gloves on the [crafting bench](/?base=Sirenscale%20Gloves) to see how the options come up.
+With that model, we Desecrated Intelligence gloves (Sirenscale Gloves, Item Level 82, prefixes full) with a Preserved Rib. Counting the options 5,000 times, Arcane Surge appeared **7.40%** of the time.
 
-## Choosing a Bone
+:::note 7.40% assumes equal weights
+Nobody has published weights between Desecrated-only mods, so the engine treats them all as equal. It is not a measurement on gloves.
+:::
+
+If it doesn't show up, an Omen of Abyssal Echoes lets you draw one more set of options.
+
+### When It Misses, Remove It with Omen of Light
+
+When it misses, remove the unwanted Desecrated mod and Desecrate again.
+
+Removing it with Omen of Dextral Annulment can also take out a target sitting next to it. In the [ES gloves article](/en/blog/es-gloves-greater-exalt/), that changed the cost a lot.
+
+:::tip Use Omen of Light to remove it
+Omen of Light (your next Orb of Annulment removes only Desecrated mods) takes off just the unwanted Desecrated mod.
+:::
+
+## A Preserved Rib Is Enough
 
 Gloves (armour) are Desecrated with Ribs. Craft of Exile showed this for Item Level 82 Intelligence gloves:
 
@@ -48,19 +75,31 @@ Gloves (armour) are Desecrated with Ribs. Craft of Exile showed this for Item Le
 | Preserved Rib | usable | 6.75 |
 | Ancient Rib | usable (Minimum Modifier Level 40) | 4,702 |
 
-All Desecrated mods are level 65, so the Ancient Rib's minimum of 40 removes none of them. Whether the bone changes which options appear is not stated on poe2db or Craft of Exile. Given the price gap, a Preserved Rib is the natural pick for gloves at Item Level 65 or above.
+All Desecrated mods are level 65, so the Ancient Rib's minimum of 40 removes none of them. Whether the bone changes which options appear is not stated on poe2db or Craft of Exile.
 
-Which side a Desecrated mod goes to follows Craft of Exile: if both sides are open, half and half; if both are full, one non-Fractured mod is removed at random and the new one goes on that side. Glove Desecrated mods are suffixes only, so with full prefixes it lands in the suffixes.
+Given the price gap, a Preserved Rib is the natural pick for gloves at Item Level 65 or above.
 
-## Craft of Exile Can't Calculate It Either
+### Which Side It Lands On
 
-Craft of Exile's Desecrated table has no weight column, and choosing "Desecrate" with a bone shows "No handler for crafting this method," so no odds are calculated. Desecration weights are, for now, a blank everywhere.
+Which side a Desecrated mod goes to follows Craft of Exile on the engine too. If both sides are open, it's half and half; if both are full, one non-Fractured mod is removed at random and the new one goes on that side.
+
+Glove Desecrated mods are suffixes only, so with full prefixes it lands in the suffixes.
+
+## Craft of Exile Can't Calculate Desecration Weights Either
+
+Craft of Exile's Desecrated table has no weight column. Choosing "Desecrate" with a bone shows "No handler for crafting this method," so no odds are calculated.
+
+Desecration weights are, for now, a blank everywhere.
 
 ## Where the Numbers Come From
 
 - Counts and names: poe2db's six glove pages. The 15 on Intelligence gloves match Craft of Exile's screen.
 - 7.40%: the ExileDesk engine, 5,000 tries. It assumes equal weights for Desecrated-only mods; it is not a measurement on gloves.
 - Bones: Craft of Exile's screen. Prices: ExileDesk server market (2026-10-20 16:00 UTC).
+
+## Try It Yourself
+
+You can Desecrate gloves on the [crafting bench](/?base=Sirenscale%20Gloves) to see how the options come up. To compare methods side by side, try the [Craft route tree](/?page=sim-tree&base=Sirenscale%20Gloves).
 
 **Related posts**
 
