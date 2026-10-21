@@ -15,6 +15,7 @@ import { nameOf } from "../../state/craft-stage";
 import { toCss } from "../../utils/zoom";
 import { GAP_X, GAP_Y } from "../../utils/anchor-place";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useDismiss } from "../../utils/use-dismiss";
 import ShelfButton from "./ShelfButton.vue";
 import StageOmenTune from "./StageOmenTune.vue";
 import Disclosure from "../../components/ui/Disclosure.vue";
@@ -215,6 +216,8 @@ function openEss(kind: string, ev: MouseEvent): void {
 }
 function pickEss(k: string): void { essOpen.value = null; emit("hold", k); }
 watch(() => craftStage.item.value, () => (essOpen.value = null));
+// 段を選ぶ欄は枠の外を押す・Esc で閉じる (開けたボタンを押すのは今まで通り閉じる。2026-10-22 オーナー、全部の画面の決まり)
+useDismiss(() => !!essOpen.value, [() => root.value?.querySelector<HTMLElement>(".ess-anchor"), () => (essOpen.value ? root.value?.querySelector<HTMLElement>(`[data-ess-keys~="${CSS.escape(groupKeys(essOpen.value)[0] ?? "")}"]`) : null)], () => { essOpen.value = null; });
 const TABS = computed(() => (!props.full ? [] : [
   { id: "usable" as const, label: `${tr("使用可能", "Usable")} (${usableCount.value})` },
   { id: "orb" as const, label: tr("オーブ・骨", "Orbs & Abyssal Bones") },

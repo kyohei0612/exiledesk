@@ -18,6 +18,7 @@ import { unsocketKey } from "../../services/craft-stage/stage-runes";
 import { LOG_KEEP, SIM_LOCKED, TUTORIAL_LOCKED } from "../../state/craft-stage";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useDismiss } from "../../utils/use-dismiss";
 import { toCss } from "../../utils/zoom";
 import StagePhoneBar from "./StagePhoneBar.vue";
 import StageSettings from "./StageSettings.vue";
@@ -104,6 +105,9 @@ function onKey(e: KeyboardEvent): void {
 onMounted(() => { window.addEventListener("mousemove", onMove); window.addEventListener("keydown", onKey); });
 onBeforeUnmount(() => { window.removeEventListener("mousemove", onMove); window.removeEventListener("keydown", onKey); s.hold(null); });
 function hold(k: string): void { s.hold(s.held.value === k ? null : k); }
+/** カレンシーの枠 (棚)。持っている間に、棚・アイテムのカード・スマホの下の帯・窓・小窓の外を押したら離す (2026-10-22 オーナー「キャンセルは枠の外をクリックで」。押した物には届ける) */
+const shelfEl = ref<HTMLElement | null>(null);
+useDismiss(() => !!s.held.value && !s.replay.value, [shelfEl, () => cardEl.value], () => s.hold(null), { swallow: false, keep: "[data-bottom-bar], [role=dialog], [aria-modal=true], [data-mod-add-menu], [data-sim-method-pop], [data-helptip-pop], [data-mod-list]" });
 /** 持っている物に掛けられるお告げ (欄は HeldOmens.vue。ここは slot を出すかだけ) */
 const heldOmens = computed(() => heldOmensOf(s.held.value));
 /** 持っている物を打つ前に光らせる: 変わる候補の MOD (オレンジの文字) と付く空き (緑の枠)。エンジンの previewUse から (2026-10-17 オーナー、前は削減のカオスだけ) */
@@ -145,6 +149,9 @@ function postToX(e: MouseEvent, url: string): void {
   void openExternal(xIntentUrl(url));
 }
 watch(() => s.log.value, () => { shareOpen.value = null; });
+// 共有の欄は枠の外を押す・Esc で閉じる (2026-10-22 オーナー、全部の画面の決まり。前は閉じる手段が無かった)
+const shareEl = ref<HTMLElement | null>(null);
+useDismiss(() => !!shareOpen.value, [shareEl], () => { shareOpen.value = null; });
 /** シミュレーションでまだベースを選んでいない (ベース選びだけを出す) */
 /**
  * シミュレーションは開くたびにまっさら (ベースを選ぶ所) から。前回閉じた途中は戻さない
@@ -371,7 +378,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
             <span v-if="SHARE_ENABLED" :title="s.shareWhy.value ?? tr('この手順を URL で共有 (受け取った人は同じベースから同じ結果を再生できる)', 'Share these steps as a URL (others can replay them with the same results)')"><button type="button" class="g-btn sm inline-flex items-center gap-1 max-md:min-h-9" :disabled="!!s.shareWhy.value" :aria-expanded="!!shareOpen" @click="shareOpen ? (shareOpen = null) : openShare()"><Icon name="link" class="size-3.5" />{{ tr("共有", "Share") }}</button></span>
             <span class="ml-auto tabular-nums opacity-70" data-rec-part="history-cost">{{ tr("累計", "Total") }} {{ displayCurrency.money(s.total.value) }} · {{ tr(`${s.last.value?.out.index ?? 0} 手`, `${s.last.value?.out.index ?? 0} step${(s.last.value?.out.index ?? 0) === 1 ? "" : "s"}`) }}</span></p>
           <p v-if="SHARE_ENABLED && s.shareWhy.value && s.log.value.length && !shareOpen" class="-mt-1 mb-1 px-1 text-[11px] text-amber-200/80">{{ tr("共有できない", "Can't share") }}: {{ s.shareWhy.value }}</p>
-          <div v-if="SHARE_ENABLED && shareOpen" class="mb-2 rounded-lg border border-white/10 bg-black/30 p-2">
+          <div v-if="SHARE_ENABLED && shareOpen" ref="shareEl" class="mb-2 rounded-lg border border-white/10 bg-black/30 p-2">
             <p class="mb-1.5 flex items-center gap-2"><span :class="shareOpen.copied ? 'text-emerald-300' : 'text-amber-200'">{{ shareOpen.copied ? tr("URL をコピーしました", "URL copied") : tr("下の URL をコピーしてください", "Copy the URL below") }}</span><button type="button" class="g-plain ml-auto px-1 opacity-60 hover:opacity-100" :title="tr('閉じる', 'Close')" @click="shareOpen = null">×</button></p>
             <input :value="shareOpen.url" readonly class="mb-1.5 w-full truncate rounded border border-white/10 bg-black/40 px-2 py-1 text-[11px] text-[var(--exile-color-text-secondary)]" @focus="($event.target as HTMLInputElement).select()" />
             <span class="flex gap-1.5">
@@ -391,7 +398,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
         <CourseHost part="above-shelf" :phone="phone" /><!-- コースの今の手 (棚のすぐ上) -->
         <StageAimPanel v-if="!s.replay.value && !courseHidesEmulator" data-rec-part="aim-panel" />
         <StageAimPicker v-if="s.aimPicker.value && s.item.value" />
-        <section v-show="!courseHidesShelf" class="g-panel relative p-2">
+        <section v-show="!courseHidesShelf" ref="shelfEl" class="g-panel relative p-2">
           <p class="g-sec-head">
             <b class="g-sec-title">{{ tr("カレンシー", "Currency") }}</b>
             <span v-if="s.held.value" class="whitespace-nowrap rounded-full bg-amber-500/20 px-2 text-amber-200">{{ tr("持っている", "Holding") }}: {{ nameOf(s.held.value) }}</span>

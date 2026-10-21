@@ -9,6 +9,7 @@
 import { tr } from "../../i18n/lang";
 import { computed, nextTick, onBeforeUnmount, ref } from "vue";
 import { toCss } from "../../utils/zoom";
+import { swallowNextClick } from "../../utils/swallow-click";
 import Icon from "./Icon.vue";
 
 const props = withDefaults(defineProps<{
@@ -52,7 +53,11 @@ function hide(): void {
 function outside(e: PointerEvent): void {
   if (btn.value?.contains(e.target as Node)) return;
   if ((e.target as HTMLElement)?.closest?.("[data-helptip-pop]")) return;
+  const wasPinned = pinned.value;
   hide();
+  // 押して開いた説明を外で閉じた時は、その押下を下の物 (見出しの開け閉めなど) に届けない (2026-10-22 オーナー「キャンセルは枠の外をクリックで」)。
+  // 乗せて開いただけの時は止めない (ほかのボタンを押せなくなる)
+  if (wasPinned) swallowNextClick();
 }
 function toggle(): void { if (open.value && pinned.value) hide(); else show(true); }
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && open.value) hide(); }

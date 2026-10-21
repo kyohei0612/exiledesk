@@ -10,6 +10,7 @@
 <script setup lang="ts">
 import { modText, tr } from "../../i18n/lang";
 import { ref, watch } from "vue";
+import { useDismiss } from "../../utils/use-dismiss";
 import { craftStage } from "../../state/craft-stage";
 import { jaOfOmen } from "../../services/htc/game-names";
 import { reqOfItem } from "../../services/craft-stage/stage-bases";
@@ -27,6 +28,9 @@ const wave = ref(0);
 watch(() => craftStage.offers.value, () => { wave.value++; });
 /** 選んだ候補 (確認で発現する) */
 const chosen = ref<number | null>(null);
+const panel = ref<HTMLElement | null>(null);
+// 選びかけは枠の外を押す・Esc で選ぶ前に戻す (確定は「発現」のボタンだけ。2026-10-22 オーナー、全部の画面の決まり)
+useDismiss(() => chosen.value != null, [panel], () => { chosen.value = null; });
 // 打つたびに戻す。log の長さでは見ない (Web は 50 手で古い手を消すので長さが変わらず、一度引き直すと以後ずっと「引き直した候補」のまま
 // ボタンが出なかった。2026-10-16 要望 eb671189「反響を掛けていても引き直しができない時がある」)
 watch(() => craftStage.log.value[craftStage.log.value.length - 1]?.out.index ?? 0, () => { rerolled.value = false; chosen.value = null; });
@@ -87,7 +91,7 @@ function reroll(): void { rerolled.value = true; chosen.value = null; lessonErr.
 </script>
 
 <template>
-  <section v-if="craftStage.offers.value && !craftStage.replay.value" data-reveal-panel class="g-abyss mt-5 w-[380px] max-md:w-full px-2 pb-2 pt-4">
+  <section v-if="craftStage.offers.value && !craftStage.replay.value" ref="panel" data-reveal-panel class="g-abyss mt-5 w-[380px] max-md:w-full px-2 pb-2 pt-4">
     <!-- 題の上の緑の紋章 (アビスのお知らせの絵) -->
     <img src="/ui-art/abyss-emblem.webp" alt="" aria-hidden="true" class="pointer-events-none absolute -top-[38px] left-1/2 size-11 -translate-x-1/2 drop-shadow-[0_0_8px_rgba(120,190,60,0.5)]" />
     <!-- 出すたびに下から上へ黄緑の光が走る (ゲームはアイテムの枠が光る。ここには枠が無いので窓ごと) -->

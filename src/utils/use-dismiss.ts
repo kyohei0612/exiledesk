@@ -1,0 +1,36 @@
+/**
+ * use-dismiss.ts — 選びかけ・開きかけを、枠の外を押す / Esc で「選ぶ前」に戻す共通の仕組み (2026-10-22 オーナー、全部の画面の決まり
+ * 「枠の中の物を選んで、キャンセルは枠の外をクリックで、クリック前の状態に戻す」。確定はボタンの時だけ)。
+ * active が true の間だけ、document の pointerdown (捕まえる段) と keydown を見る。枠 (inside の要素のどれか) の外なら cancel を呼び、
+ * その押下に続く click は下の物に届けない (swallow-click.ts、外を押して閉じたら下のボタンまで押されていた 10-19 の件)。
+ * 枠は複数渡せる (持ち物の札と棚など、離れた 2 か所を 1 つの枠として扱う時)。data-dismiss-keep の付いた所の中も外に数えない (別の窓に出した選ぶ欄など)
+ *   useDismiss(() => open.value, [panelRef], () => { open.value = false; });
+ */
+import { onBeforeUnmount, watch, type Ref } from "vue";
+import { swallowNextClick } from "./swallow-click";
+
+type El = Ref<HTMLElement | null | undefined> | (() => HTMLElement | null | undefined);
+
+/** opts.swallow: false で押した物にも届ける (別の行を押したらそのまま開く時など)。opts.keep: 中に数える場所の CSS (窓・body に出した小窓など) */
+export function useDismiss(active: () => boolean, inside: El[], cancel: () => void, opts: { swallow?: boolean; keep?: string } = {}): void {
+  const keep = opts.keep ? `[data-dismiss-keep], ${opts.keep}` : "[data-dismiss-keep]";
+  const els = (): HTMLElement[] => inside.map((e) => (typeof e === "function" ? e() : e.value)).filter((e): e is HTMLElement => !!e);
+  const onDown = (e: PointerEvent): void => {
+    if (e.button !== 0 || !active()) return;
+    const t = e.target as Node | null;
+    if (!t || !t.isConnected) return;
+    if (els().some((el) => el.contains(t)) || (t instanceof Element && t.closest(keep))) return;
+    cancel();
+    if (opts.swallow !== false) swallowNextClick();
+  };
+  const onKey = (e: KeyboardEvent): void => {
+    if (e.key !== "Escape" || !active() || e.defaultPrevented) return;
+    e.preventDefault();
+    cancel();
+  };
+  const on = (): void => { document.addEventListener("pointerdown", onDown, true); document.addEventListener("keydown", onKey); };
+  const off = (): void => { document.removeEventListener("pointerdown", onDown, true); document.removeEventListener("keydown", onKey); };
+  // 開いた時だけ聞く (開いたその押下で閉じないよう、次の tick から)
+  watch(active, (v) => { off(); if (v) setTimeout(() => { if (active()) on(); }, 0); }, { immediate: true });
+  onBeforeUnmount(off);
+}

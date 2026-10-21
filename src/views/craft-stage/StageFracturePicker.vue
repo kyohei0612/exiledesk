@@ -23,6 +23,9 @@ import ModalShell from "../../components/ui/ModalShell.vue";
 const props = defineProps<{ /** ② の手順の本体の modId (あれば「あるいは」を選ぶ) */ altFor?: string | null }>();
 const emit = defineEmits<{ close: [] }>();
 const s = craftStage;
+/** 開いた時の狙い。決定せずに閉じた (枠の外・Esc・×・閉じる) 時はここへ戻す (2026-10-22 オーナー「キャンセルは枠の外をクリックで、クリック前の状態に戻す」。前は押すたびに書いて閉じても残った) */
+const before = s.simTargets.value;
+function cancel(): void { s.simTargets.value = before; emit("close"); }
 
 /** 「あるいは」を選ぶ手順 */
 const host = computed(() => (props.altFor ? s.simTargets.value.find((t) => t.modId === props.altFor) ?? null : null));
@@ -176,7 +179,7 @@ const pct = (x: number): string => fmtPct(x, { zero: "—" });
 
 <template>
   <!-- 窓の動きはエミュレーターの窓と同じ ModalShell (2026-10-10 オーナー「動きが統一されてない所」: 緑の枠 → .g-panel、Esc・× を足した) -->
-  <ModalShell :open="true" width="w-[1100px] max-w-full" full-on-phone @close="emit('close')">
+  <ModalShell :open="true" width="w-[1100px] max-w-full" full-on-phone @close="cancel">
     <template #title>{{ host ? tr(`「${hostName}」のあるいはを選ぶ`, `Choose alternatives to "${hostName}"`) : tr("① フラクチャーの候補を選ぶ", "① Choose fracture candidates") }}</template>
     <template #header>
       <span class="ml-auto rounded bg-emerald-500/20 px-2 py-0.5 text-emerald-100">{{ candidates.length }}{{ tr(" 個", "") }}</span>
@@ -219,7 +222,7 @@ const pct = (x: number): string => fmtPct(x, { zero: "—" });
       </div>
     </div>
     <template #footer>
-      <button type="button" class="g-btn" @click="emit('close')">{{ tr("閉じる", "Close") }}</button>
+      <button type="button" class="g-btn" @click="cancel">{{ tr("やめる", "Cancel") }}</button>
       <button type="button" class="g-btn-red ml-auto min-w-40" @click="decide">{{ tr("決定", "Done") }}</button>
     </template>
   </ModalShell>

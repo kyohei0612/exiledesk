@@ -22,6 +22,7 @@ import type { SimMethod } from "../../services/simulator/quiz-build";
 import SimMethodPop from "../simulator/SimMethodPop.vue";
 import { AIM_MAX } from "../../state/craft-stage";
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
+import { useDismiss } from "../../utils/use-dismiss";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import Disclosure from "../../components/ui/Disclosure.vue";
 import { craftStage, nameOf } from "../../state/craft-stage";
@@ -120,7 +121,6 @@ const cannow = (r: ListRow): boolean => !r.blocked && !(r.group === "rune" && !r
 const shareOf = (r: ListRow): number => (!cannow(r) ? 0 : heldCands.value ? heldShare(r) : r.share);
 /** 棒の長さの基準 (列で一番大きい値) */
 const colTop = (items: readonly ListRow[]): number => Math.max(0.0001, ...items.map(shareOf));
-
 /** 畳んだかどうか (見る人ごとの好み。保存できなくても動く) */
 const KEY = "exiledesk.craftStage.modListOpen";
 const open = ref(true);
@@ -128,17 +128,17 @@ try { open.value = localStorage.getItem(KEY) !== "0"; } catch { /* 無くてよ�
 watch(open, (v) => { try { localStorage.setItem(KEY, v ? "1" : "0"); } catch { /* 無くてよい */ } });
 // シミュレーションで狙いがまだ 1 つも無い時・エミュレーターの「この状態から」で来た時 (simStartItem が替わった) は開いておく (畳んだのを覚えていて、ベースを選んでも何をすればいいか分からなかった。2026-10-07 / 2026-10-19 オーナー「エミュからは MOD も開いた状態で、画面が違うぞってなる」)
 watch(() => [s.mode.value === "sim" && !s.simTargets.value.length && s.base.value, s.mode.value === "sim" && s.simStartItem.value] as const, ([v, it], old) => { if (v || (it && it !== old?.[1])) open.value = true; }, { immediate: true });
-
 // エッセンスはマジック用とレア用 (パーフェクト・合金) を 1 つの節に (2026-10-10 オーナー「エッセンスね、パーフェクトとかやなくて意味わからん」)
 // 並び: 普通・ルーン → 異界 (変質) → 創生の樹など → 冒涜 → エッセンス (2026-10-09 オーナー)
 /** 節の並び (既定)。普通 → ルーン → 冒涜 → 創生の樹など → 異界 → エッセンス (2026-10-11 オーナー) */
 const GROUPS: ModGroup[] = ["normal", "rune", "desecrated", "special", "otherworldly", "essence"];
 const inGroup = (r: { group: ModGroup }, g: ModGroup): boolean => r.group === g || (g === "essence" && r.group === "perfect_essence");
 const counts = computed(() => Object.fromEntries(GROUPS.map((g) => [g, rows.value.filter((r) => inGroup(r, g)).length])) as Record<ModGroup, number>);
-
 const query = ref("");
 /** 開いている段の表 (種類:系統) */
 const expanded = ref<string | null>(null);
+// 開いた段の表は行の外を押す・Esc で閉じる (押した物には届ける。行から出る小窓は中に数える。2026-10-22 オーナー「キャンセルは枠の外をクリックで」)
+useDismiss(() => !!expanded.value, [() => (expanded.value ? listEl.value?.querySelector<HTMLElement>(`[data-row-key="${CSS.escape(expanded.value)}"]`) : null), ...["[data-mod-add-menu]", "[data-sim-method-pop]", "[data-helptip-pop]"].map((q) => () => document.querySelector<HTMLElement>(q))], () => { expanded.value = null; }, { swallow: false });
 /** カードから飛んで来た行 (少しの間だけ光らせる) */
 const flashKey = ref<string | null>(null);
 /** この一覧の根 (窓とページの下の 2 つが同時にあるので、行は自分の中から探す) */
@@ -212,7 +212,6 @@ const sections = computed((): Section[] => {
     .sort((a, b) => Number(a.off) - Number(b.off) || a.i - b.i)
     .map((x) => x.sec);
 });
-
 /** 目次: タブを押すとその節へスクロール。スクロールに合わせて今見ている節のタブを光らせる */
 const sectionEls = new Map<string, HTMLElement>();
 const active = ref<string>("normal");
