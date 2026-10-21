@@ -1,7 +1,7 @@
 /**
  * use-tree-flow.ts — ツリーの見え方を Vue Flow の上で (2026-10-22 オーナー「Vue Flow を入れて、拡大縮小は中身を読んで合わせる」)。
  * 前の use-tree-view.ts (自前のスクロールと scale) と同じ形で外へ出す: 倍率 zoom・見るだけ viewOnly・全体 fit・等倍 resetZoom・
- * 寄る reveal / focusBox・画面の点 → ツリーの座標 toWorld・全画面 full。
+ * 寄る reveal・画面の点 → ツリーの座標 toWorld・全画面 full。
  *
  * ページの CSS zoom (WebApp.vue の fitZoom、Z = 0.85〜1.6) との合わせ方: ツリーの枠だけ zoom 1/Z を掛けて打ち消す (SimTreePage の枠)。
  * 枠の中は実質 1 倍なので、Vue Flow の座標 (clientX − getBoundingClientRect、d3-zoom の transform) がマウスと揃う。
@@ -17,7 +17,7 @@ export const FLOW_ID = "sim-tree";
 export const ZOOM_MIN = 0.3;
 export const ZOOM_MAX = 1.6;
 const STEP = 1.2;
-/** これ未満は見るだけ (ボタンが 24px の 3/4 = 18px を切る) */
+/** これ未満は箱の中の物を押させず、箱を押すと等倍の編集のポップアップ (ボタンが 24px の 3/4 = 18px を切る。10-22 オーナー「75% 未満の見るだけをやめる」) */
 export const VIEW_ONLY = 0.75;
 
 export function useTreeFlow(doc: Ref<TreeDoc>) {
@@ -71,11 +71,6 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     const out = sx < m || sy < m || sx + sw > w - m || sy + sh > h - m;
     if (center || out) await f.setCenter(b.x + BOX_W / 2, b.y + BOX_H / 2, { zoom: z });
   }
-  /** 縮めて見ている時に箱を押した = 等倍にしてその箱を真ん中へ */
-  async function focusBox(id: string): Promise<void> {
-    const b = doc.value.boxes[id];
-    if (b) await f.setCenter(b.x + BOX_W / 2, b.y + BOX_H / 2, { zoom: pageZ.value });
-  }
   async function toggleFull(): Promise<void> { full.value = !full.value; }
   /** 今見ている所 (ツリーの座標。ミニマップの枠) */
   const view = computed(() => {
@@ -104,5 +99,5 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     void f.setViewport({ x: vp.x + (w - old) / 2, y: vp.y, zoom: vp.zoom });
   });
 
-  return { flow: f, pageZ, zoom, viewOnly, minZoom, maxZoom, full, bounds, view, setZoom, zoomIn, zoomOut, fit, goHome, resetZoom, toWorld, reveal, focusBox, toggleFull, centerOn, dispose: () => window.removeEventListener("resize", onResize) };
+  return { flow: f, pageZ, zoom, viewOnly, minZoom, maxZoom, full, bounds, view, setZoom, zoomIn, zoomOut, fit, goHome, resetZoom, toWorld, reveal, toggleFull, centerOn, dispose: () => window.removeEventListener("resize", onResize) };
 }

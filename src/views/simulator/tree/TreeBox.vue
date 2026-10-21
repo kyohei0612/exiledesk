@@ -11,7 +11,8 @@ import { jaTypeName } from "../../../i18n/item-names-ja";
 import { TREE_BASE, TREE_ILVL, useTree } from "./use-tree";
 
 const props = defineProps<{ box: TreeBox; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
-  /** 縮めた時の倍率の逆数 (押せる物だけこれで大きさを戻し、画面の上で 24px 以上を保つ。オーナー 10-22「縮めても押せる物は小さくならない」) */ inv?: number }>();
+  /** 縮めた時の倍率の逆数 (押せる物だけこれで大きさを戻し、画面の上で 24px 以上を保つ。オーナー 10-22「縮めても押せる物は小さくならない」) */ inv?: number;
+  /** 戻り先を選んでいる間のつなげない理由 (灰色にする。use-tree-link.ts) */ linkNo?: string | null }>();
 const emit = defineEmits<{
   /** 箱を引っ張り始めた (押した所から。判定はページの use-gesture.ts) */
   drag: [e: PointerEvent]; aim: []; remove: []; back: []; clearBack: []; done: []; note: []; spam: [];
@@ -62,8 +63,8 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
   <!-- 押すは Vue Flow の箱の node-click、引っ張るは use-gesture.ts (Vue Flow の引っ張りは遊びの 5px 分が動きから抜けた)。
        引っ張りは pointerdown の既定の動きを止めるので Vue Flow の画面の送りは始まらない。nopan は付けない (付けると箱の上のホイールで拡大縮小されなかった)、中のボタンは nodrag -->
   <div data-tree-box :data-box-id="box.id" class="select-none rounded-xl border-[1.5px] bg-gradient-to-b from-[#1d1812] to-[#110e0a] px-2 py-1 text-[12px] transition-shadow"
-    :class="[x === undefined ? 'relative' : 'absolute', picking || viewOnly ? 'cursor-pointer' : 'cursor-grab', picking ? 'ring-2 ring-cyan-400/70 hover:ring-cyan-300' : '', glow ? 'ring-2 ring-amber-200/70' : '', issue ? '!border-rose-500 !shadow-[0_0_16px_rgba(244,63,94,0.55)]' : '']"
-    :style="{ ...(x === undefined ? {} : { left: `${x}px`, top: `${y}px` }), width: `${BOX_W}px`, height: `${BOX_H}px`, ...neon }" @pointerdown="down">
+    :class="[x === undefined ? 'relative' : 'absolute', picking || viewOnly ? 'cursor-pointer' : 'cursor-grab', picking ? (linkNo ? 'cursor-not-allowed opacity-35 grayscale' : 'ring-2 ring-cyan-400/70 hover:ring-cyan-300') : '', glow ? 'ring-2 ring-amber-200/70' : '', issue ? '!border-rose-500 !shadow-[0_0_16px_rgba(244,63,94,0.55)]' : '']"
+    :style="{ ...(x === undefined ? {} : { left: `${x}px`, top: `${y}px` }), width: `${BOX_W}px`, height: `${BOX_H}px`, ...neon }" :title="picking && linkNo ? linkNo : undefined" @pointerdown="down">
     <!-- 縮めている時 (k > 1) は押せる物の行を倍率分高くし、まだ「—」だけの数字の行は隠す (箱が小さくても押せる物どうしが重ならない) -->
     <div class="flex items-center gap-1.5" :style="{ height: `${24 * k}px` }">
       <span class="flex size-5 shrink-0 items-center justify-center rounded-md" :style="{ background: `rgba(${rgb},0.18)`, color: `rgb(${rgb})` }"><Icon :name="kind.icon" class="size-3.5" /></span>
