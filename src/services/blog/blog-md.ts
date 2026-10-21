@@ -69,8 +69,14 @@ const CHARS: Record<string, { ja: string; en: string; side: "left" | "right" }> 
   metan: { ja: "めたん", en: "Metan", side: "left" }, zundamon: { ja: "ずんだもん", en: "Zundamon", side: "right" },
 };
 const FACES = ["normal", "happy", "surprised", "troubled"];
-/** グラフの色 (暗い地に合う、系列の順) */
-const PALETTE = ["#e0b062", "#7cc4f0", "#8fd18a", "#e58fb6", "#b9a2f0"];
+/** 引用の頭の [!…] → 部品の名前 (日英どちらでも) */
+const CALLOUTS: Record<string, string> = {
+  まとめ: "summary", ヒント: "tip", 注意: "note", SUMMARY: "summary", TIP: "tip", NOTE: "note", WARNING: "note",
+  めたん: "metan", ずんだもん: "zundamon", METAN: "metan", ZUNDAMON: "zundamon",
+};
+/** グラフの色 (白い紙面に合う、系列の順。README の「色」と同じ) */
+const PALETTE = ["#c8922a", "#2f7fc1", "#3c9a4e", "#c2507e", "#7b5cc4"];
+const INK = "#2b2b2b", SUB = "#8a8a8a", GRID = "#ececec";
 const fmt = (v: number): string => (Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 10 ? v.toFixed(1).replace(/\.0$/, "") : String(Math.round(v * 100) / 100));
 
 /**
@@ -98,9 +104,9 @@ function chartSvg(kind: string, title: string, body: string[]): string {
   const parts: string[] = [];
   for (let k = 0; k <= 4; k++) {
     const v = (top * k) / 4;
-    parts.push(`<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#3a3024" stroke-width="1"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" fill="#a99b84" font-size="12">${fmt(v)}${esc(unit)}</text>`);
+    parts.push(`<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="${GRID}" stroke-width="1"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" fill="${SUB}" font-size="12">${fmt(v)}${esc(unit)}</text>`);
   }
-  labels.forEach((lb, i) => parts.push(`<text x="${L + step * (i + 0.5)}" y="${H - B + 18}" text-anchor="middle" fill="#e8dfcf" font-size="13">${esc(lb)}</text>`));
+  labels.forEach((lb, i) => parts.push(`<text x="${L + step * (i + 0.5)}" y="${H - B + 18}" text-anchor="middle" fill="${INK}" font-size="13">${esc(lb)}</text>`));
   if (kind === "line") {
     series.forEach((s, j) => {
       const c = PALETTE[j % PALETTE.length]!;
@@ -119,7 +125,7 @@ function chartSvg(kind: string, title: string, body: string[]): string {
       });
     });
   }
-  if (series.length > 1) series.forEach((s, j) => parts.push(`<rect x="${L + j * 150}" y="${H - 16}" width="12" height="12" rx="2" fill="${PALETTE[j % PALETTE.length]}"/><text x="${L + j * 150 + 18}" y="${H - 6}" fill="#e8dfcf" font-size="12">${esc(s.name)}</text>`));
+  if (series.length > 1) series.forEach((s, j) => parts.push(`<rect x="${L + j * 150}" y="${H - 16}" width="12" height="12" rx="2" fill="${PALETTE[j % PALETTE.length]}"/><text x="${L + j * 150 + 18}" y="${H - 6}" fill="${INK}" font-size="12">${esc(s.name)}</text>`));
   return `<figure class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(title)}" xmlns="http://www.w3.org/2000/svg" font-family="inherit"><title>${esc(title)}</title>${parts.join("")}</svg>${title ? `<figcaption>${esc(title)}</figcaption>` : ""}</figure>`;
 }
 
@@ -181,6 +187,13 @@ export function blogHtml(md: string, img: (src: string) => string, lang: "ja" | 
     if (/^>\s?/.test(l)) {
       const q: string[] = [];
       while (i < lines.length && /^>\s?/.test(lines[i]!)) { q.push(lines[i]!.replace(/^>\s?/, "")); i++; }
+      // 引用の頭の [!まとめ] などは部品の別名 (GitHub の書き方。記事編集長の案 10-22): 2 行目からが中身 (普通の書き方・箇条書き可)
+      const call = /^\[!([^\]]+)\]\s*(.*)$/.exec(q[0] ?? "");
+      const kind = call ? CALLOUTS[call[1]!.trim().toUpperCase()] ?? CALLOUTS[call[1]!.trim()] : undefined;
+      if (call && kind) {
+        out.push(blogHtml([`:::${kind} ${call[2]!.trim()}`, ...q.slice(1), ":::"].join("\n"), img, lang));
+        continue;
+      }
       out.push(`<blockquote><p>${inline(q.join(" "), img)}</p></blockquote>`);
       continue;
     }

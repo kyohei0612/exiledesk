@@ -5,7 +5,9 @@
  * 記事の元は src/data/blog/<slug>.<ja|en>.md (書き方は src/data/blog/README.md)。読み方と Markdown の変換は src/services/blog/blog-md.ts の 1 か所。
  * 出す物: /blog/<slug>/ と /en/blog/<slug>/ (JS 無しで読める HTML・OGP・構造化データ Article・hreflang)、一覧 /blog/・/en/blog/、
  * クラフト台の右の列が読む /blog/index.json (新しい順)、絵 /blog/img/、サイトマップへの追記。見た目は読み物のページ (build-seo-pages.mjs) に合わせる。
- * 両脇に縦長の広告の枠 (ads-page-model。--drafts = 開発版では場所だけ見せる)。
+ * 見た目は白い紙面 (2026-10-22 オーナー「記事は note 準拠、後ろが白い方が読みやすい」): 本文の幅 640px・18px・行間 2、本文の横には何も置かない。
+ * 広告は note のように本文の下に横長のバナー 1 つ + 長い記事 (見出し 4 つ以上) は真ん中の見出しの前に 1 つ (--drafts = 開発版では見本の箱)。
+ * 見本の記事 (slug sample) は一覧・関連・右の列・サイトマップに出さない (開発版で部品を見るためのページだけ作る)。
  * シェア (X・Reddit・リンクのコピー・Discord 向けのコピー) と、記事を 1 ページとして数える小さな JS (scripts/_blog-client.js → /blog/blog.js)。
  * OGP の絵は 記事の image → 本文の 1 枚目の図 → 題を描いた絵 (scripts/_blog-og.mjs、/blog/og/<言語>-<slug>.png) の順。記事の下にコメント欄の置き場 (#comments、中身はこれから)。
  *
@@ -33,38 +35,48 @@ const posts = readdirSync(SRC).filter((f) => f.endsWith(".md")).map((f) => M.par
   .filter((p) => DEV || !p.meta.draft)
   .sort((a, b) => b.meta.date.localeCompare(a.meta.date) || a.meta.slug.localeCompare(b.meta.slug));
 const has = (slug, lang) => posts.some((p) => p.meta.slug === slug && p.meta.lang === lang);
+/** 一覧・関連・右の列・サイトマップに出す記事 (見本 sample は出さない) */
+const listed = (p) => p.meta.slug !== "sample";
 
-const CSS = `:root{--bg:#0e0c09;--panel:#17130e;--line:#3a3024;--fg:#e8dfcf;--sub:#a99b84;--accent:#e0b062;--link:#f0c878;--mod:#c8c8ff}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.9 "Zen Kaku Gothic New","Hiragino Sans","Yu Gothic UI",system-ui,sans-serif}
-header{border-bottom:1px solid var(--line);background:#0a0907}header .in,footer .in{max-width:1280px;margin:0 auto;padding:0 16px}
-header .in{display:flex;align-items:center;gap:12px;min-height:52px;flex-wrap:wrap}header a{color:var(--fg);text-decoration:none;font-weight:700;letter-spacing:.04em}
-header nav{margin-left:auto;display:flex;gap:14px;font-size:13px;flex-wrap:wrap}header nav a{color:var(--sub);font-weight:400}
-.wrap{display:flex;justify-content:center;gap:24px;max-width:1280px;margin:0 auto;padding:0 16px}
-.ad{flex:0 0 160px;position:sticky;top:12px;align-self:flex-start;margin-top:24px;min-height:600px}
-.ad.dev{display:grid;place-items:center;border:1px dashed #5a4a34;color:var(--sub);font-size:12px;text-align:center}
-main{flex:1 1 auto;min-width:0;max-width:760px;padding:24px 0 48px}
-h1{font-size:26px;line-height:1.4;margin:0 0 8px;color:var(--accent)}h2{font-size:19px;margin:32px 0 10px;padding-bottom:4px;border-bottom:1px solid var(--line);color:var(--accent)}
-h3{font-size:16px;margin:22px 0 6px}h4{font-size:15px;margin:18px 0 4px;color:var(--sub)}a{color:var(--link)}p{margin:10px 0}
-.meta{color:var(--sub);font-size:13px;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}.tag{border:1px solid var(--line);border-radius:4px;padding:0 6px;font-size:12px}
-.draft{background:#5a2a12;color:#ffd7a8;border-radius:4px;padding:0 6px;font-size:12px}
-.cta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.cta a{display:inline-block;padding:8px 16px;border:1px solid #8a6a32;border-radius:6px;background:#2a1f12;color:var(--accent);text-decoration:none;font-weight:700}
-.tbl{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px;margin:8px 0 12px}th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
-th{color:var(--sub);font-weight:400}.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
-code{background:#211a12;border-radius:3px;padding:0 4px;font-size:.92em}blockquote{margin:12px 0;padding:2px 14px;border-left:3px solid #8a6a32;color:var(--sub)}
-figure{margin:16px 0}figure img,main img{max-width:100%;height:auto;border-radius:6px}figcaption{color:var(--sub);font-size:13px;margin-top:4px}
-ul.posts{list-style:none;padding:0;margin:12px 0}ul.posts li{padding:12px 0;border-bottom:1px solid var(--line)}ul.posts a.t{font-size:17px;font-weight:700;text-decoration:none}
-ul.posts p{margin:4px 0 0;color:var(--sub);font-size:14px}
-.share{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0;font-size:13px;color:var(--sub)}.share a,.share button{font:inherit;font-size:13px;padding:3px 10px;border:1px solid var(--line);border-radius:5px;background:#17130e;color:var(--fg);text-decoration:none;cursor:pointer}
-.share a:hover,.share button:hover{border-color:#8a6a32}.share [data-done]{color:var(--accent);border-color:#8a6a32}#comments{margin-top:32px}
-.box{margin:16px 0;padding:10px 16px;border-radius:8px;border:1px solid;border-left-width:4px}.box>p.box-h{margin:0 0 4px;font-weight:700;font-size:14px;letter-spacing:.04em}.box>:last-child{margin-bottom:2px}
-.box.summary{background:#241b0e;border-color:#8a6a32}.box.summary>.box-h{color:#e0b062}.box.note{background:#2a1212;border-color:#8a3a32}.box.note>.box-h{color:#f08a7a}.box.tip{background:#122218;border-color:#3f7a4c}.box.tip>.box-h{color:#8fd18a}
-.chart svg{display:block;width:100%;height:auto;background:#120f0b;border:1px solid var(--line);border-radius:8px}
-.say{display:flex;gap:10px;align-items:flex-start;margin:14px 0}.say.right{flex-direction:row-reverse}.say img{flex:0 0 64px;width:64px;height:64px;border-radius:50%;border:2px solid var(--line);background:#1a150f;object-fit:cover}
-.bubble{position:relative;max-width:85%;padding:8px 14px;border-radius:12px;background:#1d1812;border:1px solid var(--line)}.bubble p{margin:4px 0}.bubble .who{margin:0;font-size:12px;font-weight:700}
-.say.metan .bubble{border-color:#8a4a78}.say.metan .who{color:#e58fb6}.say.zundamon .bubble{border-color:#4f7a3a}.say.zundamon .who{color:#8fd18a}
-.credit{color:var(--sub);font-size:12px;margin-top:20px}.crumb{font-size:12px;color:var(--sub);margin-bottom:8px}
-footer{border-top:1px solid var(--line);color:var(--sub);font-size:12px}footer .fnav{margin:0 0 6px}footer .fnav a{color:var(--sub)}footer .in{padding-top:14px;padding-bottom:20px}
-@media (max-width:1023px){.ad{display:none}}@media (max-width:767px){body{font-size:15px}h1{font-size:21px}}`;
+/**
+ * 色の決め (白い紙面。記事の部品と図はこの色に合わせる。README の「色」に同じ表)
+ *   --ink 本文 #2b2b2b / --sub 補足 #6b6b6b / --line 線 #e6e6e6 / --link リンク #b5651d / --accent 見出しの印 #c8922a
+ *   箱: まとめ 地 #fbf5e6・縁 #c8922a、注意 地 #fdeeee・縁 #d9534f、ヒント 地 #ecf6ee・縁 #4e9a5e
+ *   図の系列: #c8922a #2f7fc1 #3c9a4e #c2507e #7b5cc4
+ */
+const CSS = `:root{--bg:#fff;--ink:#2b2b2b;--sub:#6b6b6b;--line:#e6e6e6;--link:#b5651d;--accent:#c8922a;--soft:#f6f6f4}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:18px/2 "Zen Kaku Gothic New","Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;-webkit-text-size-adjust:100%}
+header{border-bottom:1px solid var(--line);background:#fff}header .in{max-width:960px;margin:0 auto;padding:0 20px;display:flex;align-items:center;gap:12px;min-height:48px;flex-wrap:wrap}
+header a{color:var(--ink);text-decoration:none;font-weight:700;letter-spacing:.04em;font-size:15px}header nav{margin-left:auto;display:flex;gap:14px;font-size:12px;flex-wrap:wrap}header nav a{color:var(--sub);font-weight:400;font-size:12px}
+main{max-width:680px;margin:0 auto;padding:40px 20px 56px}
+h1{font-size:30px;line-height:1.5;margin:0 0 14px;font-weight:700}h2{font-size:24px;line-height:1.6;margin:56px 0 18px;font-weight:700}
+h3{font-size:20px;line-height:1.6;margin:40px 0 12px;font-weight:700}h4{font-size:18px;margin:28px 0 8px;font-weight:700}
+a{color:var(--link)}p{margin:0 0 1.6em}ul,ol{margin:0 0 1.6em;padding-left:1.4em}li{margin:.2em 0}strong{font-weight:700}
+.meta{color:var(--sub);font-size:14px;line-height:1.6;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin:0 0 14px}.tag{color:var(--sub);font-size:13px}.tag::before{content:"#"}
+.draft{background:#fff1e0;color:#a5521a;border-radius:4px;padding:0 6px;font-size:12px}
+.crumb{font-size:13px;line-height:1.6;color:var(--sub);margin:0 0 10px}.crumb a{color:var(--sub)}
+.share{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 36px;font-size:13px;line-height:1.6;color:var(--sub)}
+.share a,.share button{font:inherit;font-size:13px;padding:4px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);text-decoration:none;cursor:pointer}
+.share a:hover,.share button:hover{border-color:#bbb}.share [data-done]{color:var(--accent);border-color:var(--accent)}
+.cta{display:flex;flex-wrap:wrap;gap:10px;margin:40px 0 0;line-height:1.6}.cta a{display:inline-block;padding:12px 22px;border-radius:8px;background:#2b2b2b;color:#fff;text-decoration:none;font-weight:700;font-size:15px}.cta a+a{background:#fff;color:var(--ink);border:1px solid #cfcfcf}
+.tbl{overflow-x:auto;margin:0 0 1.6em}table{width:100%;border-collapse:collapse;font-size:15px;line-height:1.7}th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--sub);font-weight:700;font-size:13px}.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+code{background:var(--soft);border-radius:3px;padding:1px 5px;font-size:.88em}blockquote{margin:0 0 1.6em;padding:2px 0 2px 18px;border-left:3px solid var(--line);color:var(--sub)}
+figure{margin:32px 0}figure img,main img{display:block;width:100%;height:auto}figcaption{color:var(--sub);font-size:13px;line-height:1.6;margin-top:8px;text-align:center}
+.chart svg{display:block;width:100%;height:auto}
+.box{margin:0 0 1.6em;padding:16px 20px;border-radius:8px;border-left:4px solid;font-size:16px;line-height:1.9}.box>p.box-h{margin:0 0 6px;font-weight:700;font-size:14px;letter-spacing:.04em}.box>:last-child{margin-bottom:0}
+.box.summary{background:#fbf5e6;border-color:#c8922a}.box.summary>.box-h{color:#9a6b12}.box.note{background:#fdeeee;border-color:#d9534f}.box.note>.box-h{color:#b8322d}.box.tip{background:#ecf6ee;border-color:#4e9a5e}.box.tip>.box-h{color:#2f7a3f}
+.say{display:flex;gap:12px;align-items:flex-start;margin:0 0 1.6em}.say.right{flex-direction:row-reverse}.say img{flex:0 0 56px;width:56px;height:56px;border-radius:50%;background:var(--soft);object-fit:cover}
+.bubble{max-width:82%;padding:10px 16px;border-radius:14px;background:var(--soft);font-size:16px;line-height:1.8}.bubble p,.bubble ul{margin:4px 0}.bubble .who{margin:0;font-size:12px;font-weight:700;line-height:1.4}
+.say.metan .who{color:#b04a86}.say.zundamon .who{color:#3c8a2e}
+.adbn{margin:48px 0;line-height:1.6}.adbn.dev{display:grid;place-items:center;min-height:120px;background:#f3f3f1;color:#9a9a9a;font-size:12px;border-radius:6px}
+.author{display:flex;gap:14px;align-items:center;margin:32px 0;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);line-height:1.6}.author b{display:block;font-size:15px}.author span{color:var(--sub);font-size:13px}.author img{width:48px;height:48px;border-radius:50%}
+.credit{color:var(--sub);font-size:12px;line-height:1.6;margin:16px 0 0}
+.more h2{font-size:18px;margin:48px 0 8px}ul.posts{list-style:none;padding:0;margin:0}ul.posts li{padding:16px 0;border-bottom:1px solid var(--line);line-height:1.6}
+ul.posts a.t{font-size:17px;font-weight:700;text-decoration:none;color:var(--ink)}ul.posts a.t:hover{color:var(--link)}ul.posts p{margin:6px 0 0;color:var(--sub);font-size:14px}
+#comments{margin-top:32px}
+footer{border-top:1px solid var(--line);color:var(--sub);font-size:12px;line-height:1.7;background:#fafafa}footer .in{max-width:960px;margin:0 auto;padding:16px 20px 24px}footer .fnav{margin:0 0 6px}footer .fnav a{color:var(--sub)}
+@media (max-width:767px){body{font-size:17px;line-height:1.95}main{padding:28px 22px 48px}h1{font-size:24px}h2{font-size:21px;margin-top:44px}h3{font-size:18px}.say img{flex-basis:44px;width:44px;height:44px}}`;
 
 const L = {
   ja: {
@@ -74,7 +86,7 @@ const L = {
     listTitle: "ExileDesk のブログ — PoE2 のクラフトで分かった事", listDesc: "Path of Exile 2 のクラフトを ExileDesk のエンジンで回して分かった事のレポート。確率・重み・手の順番を、出どころと一緒に。",
     listIntro: "Path of Exile 2 のクラフトを、ExileDesk のエンジンで実際に回して分かった事を書いています。数字には台本と出どころ (poe2db・Craft of Exile) を添えています。",
     tree: "このツリーで試す", craft: "クラフト台で打つ", more: "ほかの記事", updated: "更新", draft: "下書き", none: "まだ記事はありません。", ad: "広告 (開発版だけ)",
-    share: "シェア", copyLink: "リンクをコピー", copyDiscord: "Discord 用にコピー", copied: "コピーしました",
+    author: "Path of Exile 2 のクラフトをエンジンで回して確かめています", share: "シェア", copyLink: "リンクをコピー", copyDiscord: "Discord 用にコピー", copied: "コピーしました",
   },
   en: {
     prefix: "/en", app: "/?lang=en", blog: "Blog",
@@ -83,10 +95,18 @@ const L = {
     listTitle: "ExileDesk blog — what we found crafting in PoE2", listDesc: "Reports on Path of Exile 2 crafting, run through the ExileDesk engine: chances, weights and step order, with sources.",
     listIntro: "Findings from running Path of Exile 2 crafts through the ExileDesk engine. Every number comes with its script and sources (poe2db, Craft of Exile).",
     tree: "Try it in the tree", craft: "Craft it on the Craft Stage", more: "More posts", updated: "Updated", draft: "Draft", none: "No posts yet.", ad: "Ad (dev only)",
-    share: "Share", copyLink: "Copy link", copyDiscord: "Copy for Discord", copied: "Copied",
+    author: "Testing Path of Exile 2 crafting by running it through the engine", share: "Share", copyLink: "Copy link", copyDiscord: "Copy for Discord", copied: "Copied",
   },
 };
-const adBox = (l) => (DEV ? `<aside class="ad dev">${L[l].ad}<br />160 × 600</aside>` : `<aside class="ad"></aside>`);
+/** 横長のバナーの枠 (AdSense が通るまで本番は空、開発版は見本の箱)。ボタン・リンクから離す (上下 48px) */
+const adBanner = (l) => (DEV ? `<aside class="adbn dev">${L[l].ad} · 728 × 90 / 320 × 100</aside>` : `<aside class="adbn"></aside>`);
+/** 長い記事 (見出し 4 つ以上) は真ん中の見出しの前にもう 1 つ */
+function withMidAd(html, lang) {
+  const at = [...html.matchAll(/<h2>/g)].map((m) => m.index);
+  if (at.length < 4) return html;
+  const i = at[Math.floor(at.length / 2)];
+  return html.slice(0, i) + adBanner(lang) + "\n" + html.slice(i);
+}
 const imgUrl = (src) => (/^(https?:|\/)/.test(src) ? src : `/blog/${src.replace(/^\.?\//, "")}`);
 
 /** シェアの帯 (X・Reddit はリンク、コピーの 2 つは JS がある時だけ出る) */
@@ -137,9 +157,9 @@ ${ld ? `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\
 </head>
 <body>
 <header><div class="in"><a href="${l.app}">ExileDesk</a><nav>${l.nav}</nav></div></header>
-<div class="wrap">${adBox(lang)}<main>
+<main>
 ${body}
-</main>${adBox(lang)}</div>
+</main>
 <footer><div class="in">${l.foot}</div></footer>
 </body>
 </html>
@@ -159,7 +179,7 @@ for (const lang of ["ja", "en"]) {
     const image = ogImageOf(p);
     const url = `${SITE}${l.prefix}${path}`;
     const cta = m.tree || m.craft ? `<p class="cta">${m.tree ? `<a href="${esc(m.tree)}">${l.tree}</a>` : ""}${m.craft ? `<a href="${esc(m.craft)}">${l.craft}</a>` : ""}</p>` : "";
-    const others = mine.filter((x) => x.meta.slug !== m.slug).slice(0, 5);
+    const others = mine.filter((x) => x.meta.slug !== m.slug && listed(x)).slice(0, 5);
     const ld = {
       "@context": "https://schema.org", "@type": "Article", headline: m.title, description: m.description, image: [image],
       datePublished: m.date, dateModified: m.updated, inLanguage: lang, mainEntityOfPage: `${SITE}${l.prefix}${path}`,
@@ -171,25 +191,28 @@ for (const lang of ["ja", "en"]) {
 <h1>${esc(m.title)}</h1>
 <p class="meta"><time datetime="${m.date}">${m.date}</time>${m.updated !== m.date ? `<span>${l.updated} <time datetime="${m.updated}">${m.updated}</time></span>` : ""}${m.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join("")}${m.draft ? `<span class="draft">${l.draft}</span>` : ""}</p>
 ${shareBar(lang, m.title, url)}
+${withMidAd(M.blogHtml(p.body, imgUrl, lang), lang)}
 ${cta}
-${M.blogHtml(p.body, imgUrl, lang)}
-${cta}
+${adBanner(lang)}
 ${shareBar(lang, m.title, url)}
+<div class="author"><img src="/favicon.png" alt="" width="48" height="48" /><div><b>ExileDesk</b><span>${l.author}</span></div></div>
 ${/^:::\s*(metan|zundamon)\b/m.test(p.body) ? `<p class="credit">${lang === "ja" ? "キャラの絵: 四国めたん・ずんだもん 立ち絵素材 (坂本アヒル)" : "Character art: Shikoku Metan / Zundamon standing art by Sakamoto Ahiru"}</p>` : ""}
 </article>
 <!-- コメント欄の置き場 (これから: Reddit 風、サーバーは分析君・画面はジン部長。前の掲示板 archive/board-2026-10-16 の作りを戻して使う) -->
 <section id="comments" data-slug="${esc(m.slug)}" data-lang="${lang}"></section>
-${others.length ? `<h2>${l.more}</h2><ul class="posts">${others.map((x) => `<li><a class="t" href="${l.prefix}/blog/${x.meta.slug}/">${esc(x.meta.title)}</a><p>${esc(x.meta.date)} · ${esc(x.meta.description)}</p></li>`).join("")}</ul>` : ""}`;
+${others.length ? `<section class="more"><h2>${l.more}</h2><ul class="posts">${others.map((x) => `<li><a class="t" href="${l.prefix}/blog/${x.meta.slug}/">${esc(x.meta.title)}</a><p>${esc(x.meta.date)} · ${esc(x.meta.description)}</p></li>`).join("")}</ul></section>` : ""}`;
     mkdirSync(resolve(dir, m.slug), { recursive: true });
     writeFileSync(resolve(dir, m.slug, "index.html"), page(lang, { title: `${m.title} | ExileDesk`, desc: m.description, path, alt: has(m.slug, lang === "ja" ? "en" : "ja"), og: { type: "article", image, published: m.date, modified: m.updated }, ld, body, slug: m.slug }));
+    if (!listed(p)) continue;
     if (!m.draft) urls.push(`${l.prefix}${path}`);
     index[lang].push({ slug: m.slug, title: m.title, date: m.date, href: `${l.prefix}${path}`, draft: m.draft });
   }
-  const list = mine.length ? `<ul class="posts">${mine.map((x) => `<li><a class="t" href="${l.prefix}/blog/${x.meta.slug}/">${esc(x.meta.title)}</a>${x.meta.draft ? ` <span class="draft">${l.draft}</span>` : ""}<p>${esc(x.meta.date)} · ${esc(x.meta.description)}</p></li>`).join("")}</ul>` : `<p>${l.none}</p>`;
+  const shown = mine.filter(listed);
+  const list = shown.length ? `<ul class="posts">${shown.map((x) => `<li><a class="t" href="${l.prefix}/blog/${x.meta.slug}/">${esc(x.meta.title)}</a>${x.meta.draft ? ` <span class="draft">${l.draft}</span>` : ""}<p>${esc(x.meta.date)} · ${esc(x.meta.description)}</p></li>`).join("")}</ul>` : `<p>${l.none}</p>`;
   const ld = { "@context": "https://schema.org", "@type": "Blog", name: l.listTitle, url: `${SITE}${l.prefix}/blog/`, inLanguage: lang };
   writeFileSync(resolve(dir, "index.html"), page(lang, { title: l.listTitle, desc: l.listDesc, path: "/blog/", alt: true, og: { type: "website", image: `${SITE}/web/og.png` }, ld, body: `<h1>${l.blog}</h1>\n<p>${l.listIntro}</p>\n${list}` }));
   urls.push(`${l.prefix}/blog/`);
-  console.log(`${lang}: 記事 ${mine.length} 本 + 一覧`);
+  console.log(`${lang}: 記事 ${shown.length} 本 + 一覧 (見本 ${mine.length - shown.length})`);
 }
 // クラフト台の右の列が読む (新しい順、日本語・英語)
 writeFileSync(resolve(OUT, "blog", "index.json"), JSON.stringify(index));
