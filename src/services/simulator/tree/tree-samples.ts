@@ -6,7 +6,9 @@
  *   解析君の docs/org/math/notes/2026-10-21-gold-ring-suffix-ev.md の打ち方 C (外れはすぐ消去) = scripts/analysis/check-tree-run.mjs の ringTree と同じ道。
  *   始まり = プレフィックスにスペルダメージ T2 のフラクチャー + 乱数の MOD 1 つ → 狙いのどれかが付くまでカオス →
  *   レアリティが無い間は右側の高貴のお告げ + 上級の高貴、ある時は無い方をカタリスト + 触媒の高貴のお告げ + 右側の高貴のお告げ + 完全の高貴。
- *   外れたらすぐ消去、消去の後は形の合う箱へ (match)
+ *   外れたらすぐ消去。外れが消えたら続きから (match = 外れの前の当たりの箱)。狙いが消えたらカオスを当たるまで (10-22 オーナー「狙いが消えたらカオススパムだろ」):
+ *   狙いが 1 つだった時はフラクチャー + 外れ = 始まりと同じ形なので始まりのカオスへ戻る。2 つだった時は狙い 1 つ + 外れ (始まりの枝の形と違う) なので、
+ *   その箱でカオスを当たるまで打ち、当たったら続きから (前は続きからで外れの箱 = もう一度消去へ行っていた。始まりへ戻すと狙い 2 つ + 外れで手が打てず 100 人中 23 人が止まった)
  */
 import { tidy, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
 import { MATCH } from "./tree-run";
@@ -26,14 +28,23 @@ function goldRingSuffix(): TreeDoc {
   const A = { R: { modId: "Rings/ItemFoundRarityIncrease", tier: 1 }, C: { modId: "Rings/IncreasedCastSpeed", tier: 2 }, A: { modId: "Rings/AllResistances", tier: 2 } };
   const PLAIN = hand("exalt_greater", ["OmenofDextralExaltation"]);
   const CAT = (cat: string): Hand => hand("exalt_perfect", ["OmenofCatalysingExaltation", "OmenofDextralExaltation"], { catalyst: cat, quality: 20 });
-  // 外れの箱 (id) は消去を打ち、結果の 2 箱 (id_g = 外れが消えた・id_l = 狙いが消えた) は形の合う箱へ
-  const J = (parent: string, id: string): Record<string, Partial<TreeBox>> => ({
+  const SPAM = hand("chaos", [], { repeat: { until: "hit", max: null } });
+  // 外れの箱 (id) は消去を打ち、結果の 2 箱: id_g = 外れが消えた → 続きから、id_l = 狙いが消えた → カオスを当たるまで
+  // (two = 狙いが 2 つ付いていた枝。1 つの枝は始まりへ戻る、上の説明)
+  const J = (parent: string, id: string, two = false): Record<string, Partial<TreeBox>> => ({
     [id]: { out: "junk", parent, hand: hand("annul"), outs: [`${id}_g`, `${id}_l`] },
     [`${id}_g`]: { out: "junkGone", parent: id, back: MATCH },
-    [`${id}_l`]: { out: "lost", parent: id, back: MATCH },
+    ...(two
+      ? {
+          [`${id}_l`]: { out: "lost", parent: id, hand: SPAM, outs: [`${id}_lR`, `${id}_lC`, `${id}_lA`] },
+          [`${id}_lR`]: { out: "hit", aim: A.R, parent: `${id}_l`, back: MATCH },
+          [`${id}_lC`]: { out: "hit", aim: A.C, parent: `${id}_l`, back: MATCH },
+          [`${id}_lA`]: { out: "hit", aim: A.A, parent: `${id}_l`, back: MATCH },
+        }
+      : { [`${id}_l`]: { out: "lost", parent: id, back: "start" } }),
   });
   return make("Gold Ring", { modId: "Rings/Special_genesis_tree_caster_SpellDamage", tier: 2 }, 1, {
-    start: { out: "start", hand: hand("chaos", [], { repeat: { until: "hit", max: null } }), outs: ["sR", "sC", "sA"] },
+    start: { out: "start", hand: SPAM, outs: ["sR", "sC", "sA"] },
     sR: { out: "hit", aim: A.R, parent: "start", hand: CAT("catalyst_speed"), outs: ["rc", "ra", "jR"] },
     sC: { out: "hit", aim: A.C, parent: "start", hand: PLAIN, outs: ["cr", "ca", "jC"] },
     sA: { out: "hit", aim: A.A, parent: "start", hand: PLAIN, outs: ["ar", "ac", "jA"] },
@@ -46,7 +57,7 @@ function goldRingSuffix(): TreeDoc {
     d1: { out: "hit", aim: A.A, parent: "rc", done: "main" },
     d2: { out: "hit", aim: A.C, parent: "ra", done: "main" },
     d3: { out: "hit", aim: A.R, parent: "ca", done: "main" },
-    ...J("sR", "jR"), ...J("sC", "jC"), ...J("sA", "jA"), ...J("rc", "jRC"), ...J("ra", "jRA"), ...J("ca", "jCA"),
+    ...J("sR", "jR"), ...J("sC", "jC"), ...J("sA", "jA"), ...J("rc", "jRC", true), ...J("ra", "jRA", true), ...J("ca", "jCA", true),
   });
 }
 

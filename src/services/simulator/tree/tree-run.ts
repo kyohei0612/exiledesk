@@ -126,6 +126,22 @@ function pathHeld(doc: TreeDoc, id: string | null): string[] {
   }
   return [...new Set(held)];
 }
+/**
+ * 箱の時点で付いていうる狙いの組 (始まりから親をたどる。狙いが消えた箱を通ると、その時の組から 1 つ欠けた組のどれか。10-22 見本の
+ * 「狙いが消えたらカオスを当たるまで」で、消えた後の当たりの行き先を木の上だけで決めるため)。組は並べ替えた鍵の順、多すぎる時は 64 で打ち切る
+ */
+export function heldSets(doc: TreeDoc, id: string | null): string[][] {
+  const path: TreeBox[] = [];
+  for (let x = id; x; x = doc.boxes[x]?.parent ?? null) { const c = doc.boxes[x]; if (c) path.unshift(c); }
+  let sets: string[][] = [[]];
+  for (const c of path) {
+    if (c.out === "hit" && c.aim) { const k = aimKey(c.aim); sets = sets.map((h) => (h.includes(k) ? h : [...h, k])); }
+    else if (c.out === "lost") sets = sets.flatMap((h) => (h.length ? h.map((k) => h.filter((x) => x !== k)) : [h]));
+    const seen = new Set<string>();
+    sets = sets.map((h) => [...h].sort()).filter((h) => { const k = h.join(","); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 64);
+  }
+  return sets;
+}
 /** 行き先になれる箱 (手のある当たり / 外れの箱) とその形 */
 export function shapesOf(doc: TreeDoc): Shape[] {
   const out: Shape[] = [];
@@ -152,19 +168,19 @@ export function matchItem(data: PatchData, doc: TreeDoc, item: StageItem, aims: 
 /**
  * 「形の合う箱へ」の箱が、アイテムを見ずに行きうる形と行き先 (画面の線・ルート精査の「形の合う箱が無い」)。
  * 当たり = 道の札・外れ無し / 外れ・打った後 = 道の札・外れあり / 外れが消えた = 道の札・外れ無し /
- * 狙いが消えた = 親の道の札から 1 つ欠けた形 (どれが消えるかで候補が分かれる)、外れは親が外れの箱か、消す手でない時 (カオスの入れ替え) に残る
+ * 狙いが消えた = 親の道の札から 1 つ欠けた形 (どれが消えるかで候補が分かれる)、外れは親が外れの箱か、消す手でない時 (カオスの入れ替え) に残る。
+ * 狙いが消えた箱の下は、消えた後の組ごとに行き先が分かれる (heldSets)
  */
 export function matchTargets(doc: TreeDoc, id: string): { key: string; to: string | null }[] {
   const b = doc.boxes[id];
   if (!b) return [];
   const shapes = shapesOf(doc);
   const one = (held: string[], junk: boolean): { key: string; to: string | null } => { const key = shapeKey(held, junk); return { key, to: boxOfShape(shapes, key) }; };
-  if (b.out !== "lost") return [one(pathHeld(doc, b.id), b.out === "junk" || b.out === "any")];
-  const p = b.parent ? doc.boxes[b.parent] : undefined;
-  const held = pathHeld(doc, p?.id ?? null);
-  const junk = p?.out === "junk" || (!!p?.hand && kindOfCurrency(p.hand.currency) !== "remove");
-  const out = held.map((k) => one(held.filter((x) => x !== k), junk));
-  return out.length ? out.filter((x, i) => out.findIndex((y) => y.key === x.key) === i) : [one([], junk)];
+  const p = b.out === "lost" && b.parent ? doc.boxes[b.parent] : undefined;
+  const junk = b.out === "lost" ? p?.out === "junk" || (!!p?.hand && kindOfCurrency(p.hand.currency) !== "remove") : b.out === "junk" || b.out === "any";
+  // 付いていうる組ごとに 1 つ (狙いが消えた箱はどれが消えたかで、その下の当たりは消えた後の組で分かれる、heldSets)
+  const out = heldSets(doc, b.id).map((h) => one(h, junk));
+  return out.filter((x, i) => out.findIndex((y) => y.key === x.key) === i);
 }
 
 function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: readonly Shape[], rng: () => number, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps">> & Pick<TreeRunOpts, "start">): Person {

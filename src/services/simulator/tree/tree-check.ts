@@ -10,7 +10,7 @@ import { allMods, modBoostsOf, mulberry32, type PatchData, type StageItem } from
 import { CATALYSING } from "./tree-hands";
 import { aimKey, type Aim, type TreeDoc } from "./tree-model";
 import { aimHeld, aimsOf, handProblem, outcomeOf, playHand, sampleOf } from "./tree-sample";
-import { MATCH, matchItem, matchTargets, RESTART } from "./tree-run";
+import { heldSets, MATCH, matchItem, matchTargets, RESTART } from "./tree-run";
 import { withTreeTune } from "./tree-tune";
 import { tr } from "../../../i18n/lang";
 
@@ -125,7 +125,8 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
             if (m) { hits++; if (modBoostsOf({ ...got, quality: Math.max(got.quality, 1), catalystQuality: 1, qualityTag: tag }, m, data).some((k) => k.kind === "quality")) boosted = true; }
           }
           if (got) walk(o, got, false);
-          else if (ob.out === "hit" && ob.aim && !viaBack) never.add(o);
+          // もう付いているかもしれない狙い (狙いが消えた後の取り直し、heldSets) は、付いていない人だけが着くので数えない
+          else if (ob.out === "hit" && ob.aim && !viaBack && !heldSets(doc, id).some((h) => h.includes(aimKey(ob.aim!)))) never.add(o);
         }
         if (tag && hits && !boosted) add(id, "quality", tr("触媒で入れる品質が、この手の当たりの MOD のどれにも効かない (カタリストの種類を確かめる)", "The catalysed quality boosts none of this craft's target mods (check the catalyst type)"));
       };
