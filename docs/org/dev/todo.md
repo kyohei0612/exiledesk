@@ -49,7 +49,6 @@
 | 誰 | ファイル |
 |---|---|
 | 記事編集長 ブログの仕上げ (10-22〜) | src/data/blog/ の記事 6 本 (*.ja.md・*.en.md、README・sample・chars は触らない)・src/data/blog/img/・docs/org/blog/ |
-| 解析君 ブログ 10 本 | src/data/blog/ の新しい記事 (新しい slug だけ、記事編集長の 6 本は触らない) |
 | (前の解析君の書きかけ、未 commit) | scripts/_flux-probe.test.ts・scripts/analysis/_yafu-ids.mjs |
 入口に無い物 (解析君 10-21、要る時だけジン部長へ): 重み 0 の MOD (創生の樹のスペルダメージ) を始めの形に置く手段 (startFrom が断る、解析君は makeStageMod を直に使った)。シミュで要るまで振らない。
 
