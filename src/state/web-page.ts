@@ -16,6 +16,10 @@ export const baseUnpicked = ref(false);
 export const feedbackPage = ref(false);
 /** シミュレーターのレシピのページ (?page=recipes。2026-10-21 オーナー「レシピ周りしっかり作りこんでくれ」、StageRecipesPage.vue) */
 export const recipesPage = ref(false);
+/** クラフトの道 (ツリー) のページ (?page=sim-tree。2026-10-22 オーナー OK、中身は views/simulator/tree/SimTreePage.vue) */
+export const treePage = ref(false);
+/** ツリーのページは開発版と手元の dev だけ (本番はオーナーの OK の後) */
+export const TREE_ON = import.meta.env.DEV || import.meta.env.VITE_DEV_PREVIEW === "1";
 /**
  * スパムシミュレーターのページ (?page=routes)。カレンシーの見出しの「スパムシミュレーター」で開く → MOD を 1 つ選ぶ → 増強・カオス・高貴のスパムを比べる
  * (2026-10-18 オーナー「1 MOD を対象にどのルートが一番早く着くか」「スパム計算機はここで全部管理」)

@@ -29,8 +29,9 @@ import { openFeedback, openGuide, page } from "./page";
 import AdSlot from "../components/ui/AdSlot.vue";
 import WebFooter from "./WebFooter.vue";
 import { AD_FRAMES, pageTick, sideAdW } from "../utils/ads";
-import { feedbackPage, recipesPage, routesOpen } from "../state/web-page";
+import { feedbackPage, recipesPage, routesOpen, treePage } from "../state/web-page";
 const StageRoutesPage = defineAsyncComponent(() => import("../views/craft-stage/StageRoutesPage.vue"));
+const SimTreePage = defineAsyncComponent(() => import("../views/simulator/tree/SimTreePage.vue")); // クラフトの道 (ツリー) のページ (2026-10-22、開発版だけ)
 const StageRecipesPage = defineAsyncComponent(() => import("../views/simulator/StageRecipesPage.vue")); // シミュレーターのレシピのページ (2026-10-21) // 後から読む (2026-10-19 スマホ強化: 最初に読む JS を縮める。その画面・カードを出す時に初めて読む)
 import { inLesson } from "../state/tutorial/craft-lesson";
 
@@ -174,7 +175,8 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       <StageRoutesPage v-if="routesOpen && craftStage.item.value" />
       <!-- シミュレーターのレシピのページ (2026-10-21) -->
       <StageRecipesPage v-if="recipesPage && !feedbackPage" />
-      <CraftStage v-show="!feedbackPage && !recipesPage && !(routesOpen && craftStage.item.value)" class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
+      <SimTreePage v-if="treePage && !feedbackPage && !recipesPage" /><!-- クラフトの道 (ツリー) のページ (2026-10-22、開発版だけ) -->
+      <CraftStage v-show="!feedbackPage && !recipesPage && !treePage && !(routesOpen && craftStage.item.value)" class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
         <template #footer>
           <WebFooter class="-mx-4" />
         </template>

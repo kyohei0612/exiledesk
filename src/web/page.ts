@@ -8,6 +8,7 @@
  *   - スパムシミュレーター: ?page=routes (カレンシーの見出しから・X のシェアから。旧カオススパム計算機 ?page=spam は 2026-10-19 に消した)
  *   - 要望・バグを送る: ?page=feedback
  *   - シミュレーターのレシピ (保存・上書き・共有): ?page=recipes (2026-10-21)
+ *   - クラフトの道 (ツリー): ?page=sim-tree (2026-10-22、開発版だけ。工程の sim-○○ より先に見分ける)
  *   - シミュレーターの工程: ?page=sim-mods / sim-start / sim-order / sim-play / sim-result (2026-10-19、1 工程 1 ページ)
  * 移るたびに履歴に積む (ブラウザの戻るで前のページへ)。URL から開いた時もそのページで始める (計算機は今のアイテムが要るので URL からは開かない)。
  * ページを移るたびに広告の枠を出し直す (utils/ads.ts の pageTick)。MOD 一覧は重ねる窓のまま、ページにしない (2026-10-12)
@@ -17,7 +18,7 @@ import { craftStage as s } from "../state/craft-stage";
 import { topic } from "../state/tutorial/craft-topic";
 import { course } from "../state/tutorial/craft-course";
 import { endLesson, inLesson, startTopicAt } from "../state/tutorial/craft-lesson";
-import { basePage, baseUnpicked, feedbackPage, recipesPage, routesOpen, routesTarget, SIM_STEPS, simStep, type SimStep } from "../state/web-page";
+import { basePage, baseUnpicked, feedbackPage, recipesPage, routesOpen, TREE_ON, treePage, routesTarget, SIM_STEPS, simStep, type SimStep } from "../state/web-page";
 import { SIM_LOCKED } from "../state/craft-stage";
 import { TOPIC_COURSES } from "../services/tutorial/topic-courses";
 import { courseShown } from "../services/tutorial/course-release";
@@ -29,6 +30,7 @@ import { track } from "./track";
 function leaveSubPages(): void {
   feedbackPage.value = false;
   recipesPage.value = false;
+  treePage.value = false;
   routesOpen.value = false;
   routesTarget.value = null;
   basePage.value = false;
@@ -46,6 +48,7 @@ export function openGuide(): void {
 export function openFeedback(): void {
   s.hold(null);
   recipesPage.value = false;
+  treePage.value = false;
   feedbackPage.value = true;
 }
 
@@ -54,13 +57,24 @@ export function openRecipesPage(): void {
   if (SIM_LOCKED) return;
   s.hold(null);
   feedbackPage.value = false;
+  treePage.value = false;
   recipesPage.value = true;
+}
+
+/** クラフトの道 (ツリー) のページを開く (開発版だけ) */
+export function openTreePage(): void {
+  if (!TREE_ON) return;
+  s.hold(null);
+  feedbackPage.value = false;
+  recipesPage.value = false;
+  treePage.value = true;
 }
 
 /** ベース選びのページを開く (「ベースを変える」) */
 export function openBasePage(): void {
   s.hold(null);
   recipesPage.value = false;
+  treePage.value = false;
   basePage.value = true;
 }
 
@@ -71,6 +85,7 @@ const autoBase = computed(() => baseUnpicked.value && !basePage.value);
 export const page = computed((): string => {
   if (feedbackPage.value) return "page=feedback";
   if (recipesPage.value) return "page=recipes";
+  if (treePage.value) return "page=sim-tree";
   if (routesOpen.value) return "page=routes";
   const id = topic.value?.id ?? course.value?.id;
   if (id) return `course=${id}`;
@@ -91,6 +106,7 @@ export const pageTitle = computed((): string => {
   if (p === "page=feedback") return tr("要望・バグを送る — ExileDesk", "Send feedback — ExileDesk");
   if (p === "page=routes") return tr("スパムシミュレーター — ExileDesk", "Spam simulator — ExileDesk");
   if (p === "page=recipes") return tr("レシピ — シミュレーター — ExileDesk", "Recipes — Simulator — ExileDesk");
+  if (p === "page=sim-tree") return tr("クラフトの道 (ツリー) — ExileDesk", "Craft route tree — ExileDesk");
   const t = topic.value?.title ?? course.value?.video.title;
   if (t) return `${tr(t[0], t[1])} — ExileDesk`;
   if (p === "page=guide") return tr("使い方・コツ — ExileDesk", "Guide & Tips — ExileDesk");
@@ -99,7 +115,7 @@ export const pageTitle = computed((): string => {
   return tr("ExileDesk — PoE2 クラフトシミュレーター", "ExileDesk — PoE2 Craft Simulator");
 });
 
-const PAGE_KEYS = ["guide", "base", "feedback", "routes", "recipes", ...SIM_STEPS.map((x) => `sim-${x}`)];
+const PAGE_KEYS = ["guide", "base", "feedback", "routes", "recipes", "sim-tree", ...SIM_STEPS.map((x) => `sim-${x}`)];
 function urlFor(p: string): string {
   const u = new URL(location.href);
   u.searchParams.delete("page");
@@ -128,6 +144,8 @@ function apply(p: string): void {
     feedbackPage.value = false;
     if (p === "page=recipes" && !SIM_LOCKED) { recipesPage.value = true; return; }
     recipesPage.value = false;
+    if (p === "page=sim-tree" && TREE_ON) { treePage.value = true; return; }
+    treePage.value = false;
     if (p.startsWith("course=")) {
       const c = TOPIC_COURSES.find((x) => x.id === p.slice(7) && courseShown(x));
       if (c) { if (topic.value?.id !== c.id) { leaveSubPages(); s.hold(null); endLesson(); startTopicAt(c, 0); } return; }
@@ -168,6 +186,7 @@ export function startPages(): void {
     else if (p === "page=base") track("page:base");
     else if (p === "page=feedback") track("page:feedback");
     else if (p === "page=recipes") track("page:recipes");
+    else if (p === "page=sim-tree") track("page:tree");
     else if (p === "page=routes") track("page:routes");
     else if (p.startsWith("page=sim-")) track("page:sim", p.slice(9));
     else if (p === "") track("page:craft");
