@@ -19,7 +19,7 @@ import { PAGES_ON, basePage, simStep } from "../../state/web-page";
 import { craftStage } from "../../state/craft-stage";
 import pkg from "../../../package.json";
 import { socketCapOf } from "../../services/craft-stage/stage-runes";
-import { ITEM_LEVEL_SET, itemLevelKey } from "../../services/craft-stage/apply-currency";
+import { ITEM_LEVEL_SET, itemLevelKey, SANCTIFIED_REASON } from "../../services/craft-stage/apply-currency";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import type { ModGroup } from "../../services/craft-stage/trade-search";
 
@@ -34,6 +34,8 @@ const btn = "g-btn sm";
  */
 const ILVLS = [45, 75, 82];
 const ILVL_LIST = Array.from({ length: 17 }, (_, i) => 70 + i);
+/** 手で打つ画面の聖別済みは、アイテムレベルを灰色で変えられない (2026-10-22 オーナー。エンジンも止める) */
+const ilvlLocked = computed(() => s.mode.value === "hand" && !!s.item.value?.sanctified);
 /** 今のアイテムレベル (エミュレーターは打った手で変わるのでアイテムの値) */
 const curIlvl = computed(() => (s.mode.value === "hand" ? s.item.value?.itemLevel : null) ?? s.itemLevel.value);
 /**
@@ -133,10 +135,10 @@ function simFromHand(): void {
     <!-- ベースを選ぶ前は、保存したレシピから始めるのを先に (2026-10-09 オーナー「ここの時点でレシピとかの選択させるような UI じゃないと」) -->
     <StageRecipeStart v-if="s.mode.value === 'sim' && simNoBase" class="mb-1 border-b border-white/10 pb-3" @start="startFromRecipe" />
     <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase || (s.mode.value === 'hand' && handNoBase)" :page="PAGES_ON" @pick="pickSimBase" @open-page="s.hold(null); basePage = true" />
-    <span v-if="s.mode.value !== 'sim' && !(s.mode.value === 'hand' && handNoBase) && !jewelBase" class="flex items-center gap-1"><!-- シミュレーターのアイテムレベルは 3 の始め方で (SimStartPick.vue) -->
+    <span v-if="s.mode.value !== 'sim' && !(s.mode.value === 'hand' && handNoBase) && !jewelBase" class="flex items-center gap-1" :class="ilvlLocked && 'cursor-not-allowed opacity-50 [&_*]:pointer-events-none'" :title="ilvlLocked ? SANCTIFIED_REASON() : undefined"><!-- シミュレーターのアイテムレベルは 3 の始め方で (SimStartPick.vue) -->
       <span class="mr-1 whitespace-nowrap text-[12px] text-[var(--exile-color-text-secondary)]">{{ phone ? "iLv" : tr("アイテムレベル", "Item Level") }}</span>
-      <button v-for="lv in ILVLS" :key="lv" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="curIlvl === lv ? 'on' : ''" @click="setIlvl(lv)">{{ lv }}</button>
-      <select data-ilvl-select class="h-[30px] cursor-pointer rounded border bg-black/60 px-1.5 tabular-nums max-md:h-10" :class="ILVLS.includes(curIlvl) ? 'border-white/15 text-white/60' : 'border-amber-300/70 text-amber-100'" :value="ILVLS.includes(curIlvl) ? '' : curIlvl" :aria-label="tr('アイテムレベル (70〜86)', 'Item level (70–86)')" @change="setIlvl(Number(($event.target as HTMLSelectElement).value))">
+      <button v-for="lv in ILVLS" :key="lv" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="curIlvl === lv ? 'on' : ''" :disabled="ilvlLocked" @click="setIlvl(lv)">{{ lv }}</button>
+      <select data-ilvl-select :disabled="ilvlLocked" class="h-[30px] cursor-pointer rounded border bg-black/60 px-1.5 tabular-nums max-md:h-10" :class="ILVLS.includes(curIlvl) ? 'border-white/15 text-white/60' : 'border-amber-300/70 text-amber-100'" :value="ILVLS.includes(curIlvl) ? '' : curIlvl" :aria-label="tr('アイテムレベル (70〜86)', 'Item level (70–86)')" @change="setIlvl(Number(($event.target as HTMLSelectElement).value))">
         <option value="" disabled>{{ tr("70〜86", "70–86") }}</option>
         <option v-if="!ILVLS.includes(curIlvl) && !ILVL_LIST.includes(curIlvl)" :value="curIlvl">{{ curIlvl }}</option>
         <option v-for="lv in ILVL_LIST" :key="lv" :value="lv">{{ lv }}</option>

@@ -10,7 +10,7 @@ import { computed, onBeforeUnmount } from "vue";
 import { tr } from "../../i18n/lang";
 import { CATALYSTS } from "../../services/htc/quality";
 import { inAny } from "../../services/mods/item-classes";
-import { qualityCapOf, qualityFieldMax } from "../../services/craft-stage/apply-currency";
+import { qualityCapOf, qualityFieldMax, SANCTIFIED_REASON } from "../../services/craft-stage/apply-currency";
 import { hasExtraCatalyst, maxQualityOf } from "../../services/craft-stage/stage-core";
 import { isGem } from "../../services/craft-stage/stage-bases";
 import type { StageItem } from "../../services/craft-stage/types";
@@ -30,6 +30,10 @@ const extraCat = computed(() => hasExtraCatalyst(props.item.base));
 const catMax = computed(() => maxQualityOf(props.item));
 const catQ = computed(() => props.item.catalystQuality ?? 0);
 // ワンド・スタッフ・セプターにも出す (品質は付与スキルに乗る。2026-10-17 オーナー「品質は等しく上げれるように、カレンシーでも設定でも」)
+/** 聖別済みは灰色で押せない (今の値は見せる。乗せると理由の文。2026-10-22 オーナー、エンジンも apply-currency の入口で止める) */
+const locked = computed(() => !!props.item.sanctified);
+/** 灰色にして、中のボタンには乗せない (乗せた時に帯の理由の文が出るように) */
+const LOCKED_CLS = "cursor-not-allowed opacity-50 [&_*]:pointer-events-none";
 const shown = computed(() => !isGem(props.item.cls.category));
 
 let rep: ReturnType<typeof setTimeout> | null = null;
@@ -54,26 +58,26 @@ const sel = "h-6 cursor-pointer rounded border border-white/15 bg-black/60 px-1 
 </script>
 
 <template>
-  <div v-if="shown" class="flex w-full flex-wrap items-center justify-end gap-1 text-[11px] leading-none text-white/60" @click.stop>
+  <div v-if="shown" class="flex w-full flex-wrap items-center justify-end gap-1 text-[11px] leading-none text-white/60" :class="locked && LOCKED_CLS" :title="locked ? SANCTIFIED_REASON() : undefined" @click.stop>
     {{ tr("品質", "Quality") }}
-    <button type="button" :class="wbtn" :disabled="item.quality <= 0" :title="tr('品質を 0% に', 'Set quality to 0%')" @click="emit('quality', 0)">{{ tr("最小", "Min") }}</button>
-    <button type="button" :class="btn" :disabled="item.quality <= 0" :title="tr('品質 −1% (長押しで続けて)', 'Quality −1% (hold to repeat)')" @pointerdown.prevent="hold(-1)" @pointerup="stop" @pointerleave="stop" @pointercancel="stop" @keydown.enter.prevent="step(-1)">−</button>
+    <button type="button" :class="wbtn" :disabled="locked || item.quality <= 0" :title="tr('品質を 0% に', 'Set quality to 0%')" @click="emit('quality', 0)">{{ tr("最小", "Min") }}</button>
+    <button type="button" :class="btn" :disabled="locked || item.quality <= 0" :title="tr('品質 −1% (長押しで続けて)', 'Quality −1% (hold to repeat)')" @pointerdown.prevent="hold(-1)" @pointerup="stop" @pointerleave="stop" @pointercancel="stop" @keydown.enter.prevent="step(-1)">−</button>
     <span class="w-10 text-center tabular-nums" :class="item.quality > 0 ? 'text-rarity-magic' : 'text-white/60'">+{{ item.quality }}%</span>
-    <button type="button" :class="btn" :disabled="item.quality >= maxQ" :title="tr(`品質 +1% (上限 ${maxQ}%、長押しで続けて)`, `Quality +1% (max ${maxQ}%, hold to repeat)`)" @pointerdown.prevent="hold(1)" @pointerup="stop" @pointerleave="stop" @pointercancel="stop" @keydown.enter.prevent="step(1)">+</button>
-    <button type="button" :class="wbtn" :disabled="item.quality >= maxQ" :title="tr(`品質を上限の ${maxQ}% に`, `Set quality to the max (${maxQ}%)`)" @click="emit('quality', maxQ)">{{ tr("最大", "Max") }}</button>
+    <button type="button" :class="btn" :disabled="locked || item.quality >= maxQ" :title="tr(`品質 +1% (上限 ${maxQ}%、長押しで続けて)`, `Quality +1% (max ${maxQ}%, hold to repeat)`)" @pointerdown.prevent="hold(1)" @pointerup="stop" @pointerleave="stop" @pointercancel="stop" @keydown.enter.prevent="step(1)">+</button>
+    <button type="button" :class="wbtn" :disabled="locked || item.quality >= maxQ" :title="tr(`品質を上限の ${maxQ}% に`, `Set quality to the max (${maxQ}%)`)" @click="emit('quality', maxQ)">{{ tr("最大", "Max") }}</button>
     <!-- 「上限」は選ぶ欄の中の字に (別の字にすると 1 行に入らず、種類の欄が 2 段目に落ちていた。2026-10-18) -->
-    <select :class="[sel, 'tabular-nums']" :value="maxQ" :title="tr(`品質の上限 (今付けられる最大 ${natural}% = ベース + 品質の最大値の MOD + インフューザー。エッセンスを打たずに広げて試すならここで)`, `Max quality (currently ${natural}% = base + max-quality mods + infuser; raise it here to skip the essence)`)" @change="emit('cap', Number(($event.target as HTMLSelectElement).value))">
+    <select :disabled="locked" :class="[sel, 'tabular-nums']" :value="maxQ" :title="tr(`品質の上限 (今付けられる最大 ${natural}% = ベース + 品質の最大値の MOD + インフューザー。エッセンスを打たずに広げて試すならここで)`, `Max quality (currently ${natural}% = base + max-quality mods + infuser; raise it here to skip the essence)`)" @change="emit('cap', Number(($event.target as HTMLSelectElement).value))">
       <option v-for="q in caps" :key="q" :value="q">{{ tr(`上限 ${q}%`, `Cap ${q}%`) }}</option>
     </select>
     <span v-if="extraCat" class="ml-1 inline-flex items-center gap-1 whitespace-nowrap">{{ tr("カタリスト", "Catalyst") }}
-      <select :class="[sel, 'w-[8.5rem]']" :value="item.qualityTag ?? ''" :title="tr('カタリストの種類 (この種類の MOD が伸びる。ベースの品質とは別)', 'Catalyst type (boosts mods of this type; separate from base quality)')" @change="emit('catalyst', catMax, ($event.target as HTMLSelectElement).value)">
+      <select :disabled="locked" :class="[sel, 'w-[8.5rem]']" :value="item.qualityTag ?? ''" :title="tr('カタリストの種類 (この種類の MOD が伸びる。ベースの品質とは別)', 'Catalyst type (boosts mods of this type; separate from base quality)')" @change="emit('catalyst', catMax, ($event.target as HTMLSelectElement).value)">
         <option value="" disabled>{{ tr("種類を選ぶ", "Choose type") }}</option>
         <option v-for="c in CATALYSTS" :key="c.tag" :value="c.tag">{{ tr(c.label.ja, c.label.en) }}</option>
       </select>
       <span v-if="item.qualityTag" class="w-10 text-center tabular-nums" :class="catQ > 0 ? 'text-rarity-magic' : 'text-white/60'">+{{ catQ }}%</span>
-      <button v-if="item.qualityTag" type="button" :class="wbtn" :disabled="catQ <= 0" :title="tr('カタリストの品質を 0% に', 'Set Catalyst quality to 0%')" @click="emit('catalyst', 0, item.qualityTag!)">{{ tr("最小", "Min") }}</button>
+      <button v-if="item.qualityTag" type="button" :class="wbtn" :disabled="locked || catQ <= 0" :title="tr('カタリストの品質を 0% に', 'Set Catalyst quality to 0%')" @click="emit('catalyst', 0, item.qualityTag!)">{{ tr("最小", "Min") }}</button>
     </span>
-    <select v-if="jewel" :class="[sel, 'w-[7rem]']" :value="item.qualityTag ?? ''" :title="tr('品質の種類 (この種類の MOD が品質で伸びる)', 'Quality type (mods of this type are boosted by quality)')" @change="emit('quality', maxQ, ($event.target as HTMLSelectElement).value)">
+    <select v-if="jewel" :disabled="locked" :class="[sel, 'w-[7rem]']" :value="item.qualityTag ?? ''" :title="tr('品質の種類 (この種類の MOD が品質で伸びる)', 'Quality type (mods of this type are boosted by quality)')" @change="emit('quality', maxQ, ($event.target as HTMLSelectElement).value)">
       <option value="" disabled>{{ tr("種類を選ぶ", "Choose type") }}</option>
       <option v-for="c in CATALYSTS" :key="c.tag" :value="c.tag">{{ tr(c.label.ja, c.label.en) }}</option>
     </select>
