@@ -1,6 +1,7 @@
 """サムネ: defence_mechanics (防御の仕組み).
 
-案 A (kyohei 2026-09-30): 右に大きなずんだもん (困った顔)、左に「アーマー / 回避 / 受け流し / ES / ブロック」
+案 A (kyohei 2026-09-30): 右に大きなずんだもん (困った顔)、
+左に「アーマー / 回避 / 受け流し / ES / ブロック」
 の札が散らばって周りに「？」。背景は白だと寂しいので、暗い PoE2 風の地にカレンシーと防具を
 ランダムに並べてからぼかす (ダークでもぼかしているので主役が立つ)。
 
@@ -104,7 +105,8 @@ def card(text: str, color: tuple[int, int, int]) -> Image.Image:
     ImageDraw.Draw(sh).rounded_rectangle((18, 20, w + 18, h + 20), 22, fill=(0, 0, 0, 170))
     im.alpha_composite(sh.filter(ImageFilter.GaussianBlur(8)))
     d = ImageDraw.Draw(im)
-    d.rounded_rectangle((10, 10, w + 10, h + 10), 22, fill=(28, 22, 18, 235), outline=color, width=7)
+    box = (10, 10, w + 10, h + 10)
+    d.rounded_rectangle(box, 22, fill=(28, 22, 18, 235), outline=color, width=7)
     d.text((10 + w // 2, 10 + h // 2), text, font=f, fill=color, anchor="mm")
     return im
 
@@ -113,8 +115,15 @@ def qmark(size: int) -> Image.Image:
     f = font(size)
     im = Image.new("RGBA", (size * 2, size * 2), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
-    d.text((size, size), "？", font=f, fill=(255, 255, 255), anchor="mm",
-           stroke_width=max(3, size // 12), stroke_fill=(30, 20, 15))
+    d.text(
+        (size, size),
+        "？",
+        font=f,
+        fill=(255, 255, 255),
+        anchor="mm",
+        stroke_width=max(3, size // 12),
+        stroke_fill=(30, 20, 15),
+    )
     return im
 
 
@@ -135,7 +144,7 @@ def main() -> None:
     z = z.crop((0, 0, z.width, int(z.height * 0.46)))  # 肩から上を大きく (kyohei 2026-09-30)
     z = fit(z, 780, 860)
     canvas.alpha_composite(z, (W - z.width + 320, H - z.height + 60))
-    for (text, color), (cx, cy, rot) in zip(CARDS, SLOTS):
+    for (text, color), (cx, cy, rot) in zip(CARDS, SLOTS, strict=False):
         paste_center(canvas, card(text, color), cx, cy, rot)
     for cx, cy, size, rot in QMARKS:
         paste_center(canvas, qmark(size), cx, cy, rot)
