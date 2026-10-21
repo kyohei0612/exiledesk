@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://exiledesk.com/</loc><changefreq>weekly</changefreq></url>
-  <url><loc>https://exiledesk.com/guide</loc><changefreq>monthly</changefreq></url>
-  <url><loc>https://exiledesk.com/bases/</loc><changefreq>weekly</changefreq></url>
-  <url><loc>https://exiledesk.com/contact</loc><changefreq>yearly</changefreq></url>
-  <url><loc>https://exiledesk.com/about</loc><changefreq>monthly</changefreq></url>
-  <url><loc>https://exiledesk.com/privacy</loc><changefreq>yearly</changefreq></url>
+  <url><loc>https://exiledesk.com/</loc></url>
+  <url><loc>https://exiledesk.com/guide</loc></url>
+  <url><loc>https://exiledesk.com/craft-basics</loc></url>
+  <url><loc>https://exiledesk.com/en/craft-basics</loc></url>
+  <url><loc>https://exiledesk.com/bases/</loc></url>
+  <url><loc>https://exiledesk.com/en/bases/</loc></url>
+  <url><loc>https://exiledesk.com/about</loc></url>
+  <url><loc>https://exiledesk.com/en/about</loc></url>
+  <url><loc>https://exiledesk.com/contact</loc></url>
+  <url><loc>https://exiledesk.com/en/contact</loc></url>
+  <url><loc>https://exiledesk.com/privacy</loc></url>
+  <url><loc>https://exiledesk.com/en/privacy</loc></url>
 </urlset>

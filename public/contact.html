@@ -6,6 +6,8 @@
 <title>お問い合わせ — ExileDesk</title>
 <meta name="description" content="ExileDesk (Path of Exile 2 のクラフトシミュレーター) へのお問い合わせ・要望・不具合の報告。" />
 <link rel="canonical" href="https://exiledesk.com/contact" />
+<link rel="alternate" hreflang="ja" href="https://exiledesk.com/contact" />
+<link rel="alternate" hreflang="en" href="https://exiledesk.com/en/contact" />
 <link rel="icon" href="/favicon.ico" sizes="any" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -35,6 +37,7 @@
   #msg { margin-top: 12px; }
   footer { border-top: 1px solid var(--line); color: var(--sub); font-size: 12px; }
   footer .in { padding-top: 14px; padding-bottom: 20px; }
+  footer .fnav { margin: 0 0 6px; } footer .fnav a { color: var(--sub); }
 </style>
 <!-- Google AdSense (2026-10-13、審査とサイトの紐付け。自動広告は AdSense の画面で切る) -->
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1993030721214430" crossorigin="anonymous"></script>
@@ -48,7 +51,9 @@
   <li>不具合の報告は、エミュレーターの右上の「要望・バグを送る」からお送りいただくと、その時の画面の状態 (ベース・打った手など) が一緒に届くので、早く直せます。</li>
   <li>返信が必要な場合は、連絡先 (メールアドレスや X のアカウント) をご記入ください。記入がない場合は返信できません。</li>
   <li>お送りいただいた内容の扱いは <a href="/privacy">プライバシーポリシー</a> をご覧ください。</li>
+  <li>Discord でも受け付けています: 【要確認: Discord の招待の URL を載せるか】</li>
 </ul>
+<noscript><p class="note">このフォームは JavaScript が必要です。JavaScript が使えない時は Discord か、サイトの右上の「要望・バグを送る」からお送りください。</p></noscript>
 
 <form id="f">
   <label for="kind">種類</label>
@@ -68,8 +73,9 @@
 
 <h2>運営者</h2>
 <p>ExileDesk は個人で運営している、Path of Exile 2 の非公式のファンサイトです。Grinding Gear Games とは関係ありません。</p>
+<p class="note">English: <a href="/en/contact" hreflang="en">Contact</a></p>
 </main>
-<footer><div class="in">ExileDesk は非公式のファンサイトです。Path of Exile 2 とゲーム内の画像・名称の権利は Grinding Gear Games に帰属します。 · <a href="/about">ExileDesk について</a> · <a href="/privacy">プライバシーポリシー</a></div></footer>
+<footer><div class="in"><p class="fnav"><a href="/">クラフトステージ</a> · <a href="/guide">使い方</a> · <a href="/craft-basics">クラフト入門</a> · <a href="/bases/">ベース一覧</a> · <a href="/about">ExileDesk について</a> · <a href="/privacy">プライバシーポリシー</a> · <a href="/contact">お問い合わせ</a> · <a href="/en/about" hreflang="en">English</a></p>ExileDesk は非公式のファンサイトです。Path of Exile 2 とゲーム内の画像・名称の権利は Grinding Gear Games に帰属します。</div></footer>
 <script>
   // 送り先はアプリの「要望・バグを送る」と同じ (server/live の POST /feedback)。返信先は contact に入る
   const API = "https://exiledesk-live.exiledesk.workers.dev/feedback";

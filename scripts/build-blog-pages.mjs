@@ -63,14 +63,14 @@ ul.posts p{margin:4px 0 0;color:var(--sub);font-size:14px}
 .bubble{position:relative;max-width:85%;padding:8px 14px;border-radius:12px;background:#1d1812;border:1px solid var(--line)}.bubble p{margin:4px 0}.bubble .who{margin:0;font-size:12px;font-weight:700}
 .say.metan .bubble{border-color:#8a4a78}.say.metan .who{color:#e58fb6}.say.zundamon .bubble{border-color:#4f7a3a}.say.zundamon .who{color:#8fd18a}
 .credit{color:var(--sub);font-size:12px;margin-top:20px}.crumb{font-size:12px;color:var(--sub);margin-bottom:8px}
-footer{border-top:1px solid var(--line);color:var(--sub);font-size:12px}footer .in{padding-top:14px;padding-bottom:20px}
+footer{border-top:1px solid var(--line);color:var(--sub);font-size:12px}footer .fnav{margin:0 0 6px}footer .fnav a{color:var(--sub)}footer .in{padding-top:14px;padding-bottom:20px}
 @media (max-width:1023px){.ad{display:none}}@media (max-width:767px){body{font-size:15px}h1{font-size:21px}}`;
 
 const L = {
   ja: {
     prefix: "", app: "/", blog: "ブログ",
     nav: `<a href="/">クラフトステージ</a><a href="/blog/">ブログ</a><a href="/craft-basics">クラフト入門</a><a href="/bases/">ベース一覧</a><a href="/about">ExileDesk について</a>`,
-    foot: `ExileDesk は非公式のファンサイトです。Path of Exile 2 とゲーム内の画像・名称の権利は Grinding Gear Games に帰属します。記事の数字はゲームのデータ・poe2db・Craft of Exile とエンジンの計算を元にした物で、結果を保証するものではありません。 · <a href="/privacy">プライバシーポリシー</a> · <a href="/contact">お問い合わせ</a>`,
+    foot: `<p class="fnav"><a href="/">クラフトステージ</a> · <a href="/guide">使い方</a> · <a href="/craft-basics">クラフト入門</a> · <a href="/bases/">ベース一覧</a> · <a href="/blog/">ブログ</a> · <a href="/about">ExileDesk について</a> · <a href="/privacy">プライバシーポリシー</a> · <a href="/contact">お問い合わせ</a> · <a href="/en/about" hreflang="en">English</a></p>ExileDesk は非公式のファンサイトです。Path of Exile 2 とゲーム内の画像・名称の権利は Grinding Gear Games に帰属します。記事の数字はゲームのデータ・poe2db・Craft of Exile とエンジンの計算を元にした物で、結果を保証するものではありません。`,
     listTitle: "ExileDesk のブログ — PoE2 のクラフトで分かった事", listDesc: "Path of Exile 2 のクラフトを ExileDesk のエンジンで回して分かった事のレポート。確率・重み・手の順番を、出どころと一緒に。",
     listIntro: "Path of Exile 2 のクラフトを、ExileDesk のエンジンで実際に回して分かった事を書いています。数字には台本と出どころ (poe2db・Craft of Exile) を添えています。",
     tree: "このツリーで試す", craft: "クラフト台で打つ", more: "ほかの記事", updated: "更新", draft: "下書き", none: "まだ記事はありません。", ad: "広告 (開発版だけ)",
@@ -79,7 +79,7 @@ const L = {
   en: {
     prefix: "/en", app: "/?lang=en", blog: "Blog",
     nav: `<a href="/?lang=en">Craft Stage</a><a href="/en/blog/">Blog</a><a href="/en/craft-basics">Crafting basics</a><a href="/en/bases/">Bases</a>`,
-    foot: `ExileDesk is an unofficial fan site. Path of Exile 2 and its images and names belong to Grinding Gear Games. Numbers in these posts come from game data, poe2db, Craft of Exile and the ExileDesk engine and are not guaranteed. · <a href="/privacy">Privacy policy (Japanese)</a>`,
+    foot: `<p class="fnav"><a href="/?lang=en">Craft Stage</a> · <a href="/en/craft-basics">Crafting basics</a> · <a href="/en/bases/">Bases</a> · <a href="/en/blog/">Blog</a> · <a href="/en/about">About</a> · <a href="/en/privacy">Privacy Policy</a> · <a href="/en/contact">Contact</a> · <a href="/blog/" hreflang="ja">日本語</a></p>ExileDesk is an unofficial fan site. Path of Exile 2 and its images and names belong to Grinding Gear Games. Numbers in these posts come from game data, poe2db, Craft of Exile and the ExileDesk engine and are not guaranteed.`,
     listTitle: "ExileDesk blog — what we found crafting in PoE2", listDesc: "Reports on Path of Exile 2 crafting, run through the ExileDesk engine: chances, weights and step order, with sources.",
     listIntro: "Findings from running Path of Exile 2 crafts through the ExileDesk engine. Every number comes with its script and sources (poe2db, Craft of Exile).",
     tree: "Try it in the tree", craft: "Craft it on the Craft Stage", more: "More posts", updated: "Updated", draft: "Draft", none: "No posts yet.", ad: "Ad (dev only)",
