@@ -116,6 +116,40 @@ export function spread(d: TreeDoc, parentId: string): void {
   });
 }
 
+/** 重なりとみなす箱の間 (横の＋が 14px はみ出すので、それより広く) */
+const ROOM = 24;
+/**
+ * 足した結果の箱 (親の下の並び) が既にある箱と重なる時は、足した側の並びだけを横にずらして空いた所へ置く (オーナー 10-22
+ * 「箱を追加した時に枠が他の箱とかぶったりするから、都度調整してあげて」)。既にある箱 (手で動かした物も) は動かさない
+ */
+export function makeRoom(d: TreeDoc, parentId: string): void {
+  const p = d.boxes[parentId];
+  if (!p?.outs.length) return;
+  const mine = new Set(p.outs.flatMap((o) => subtree(d, o)));
+  const others = Object.values(d.boxes).filter((b) => !mine.has(b.id));
+  const hit = (dx: number): boolean => [...mine].some((id) => {
+    const b = d.boxes[id]!;
+    return others.some((o) => Math.abs(b.x + dx - o.x) < BOX_W + ROOM && Math.abs(b.y - o.y) < BOX_H + ROOM);
+  });
+  if (!hit(0)) return;
+  for (let k = 1; k <= 200; k++) for (const dx of [k * 20, -k * 20]) if (!hit(dx)) { for (const id of p.outs) shift(d, id, dx, 0); return; }
+}
+
+/**
+ * 重なっている箱を右へ押す (押すのは重なった右側の箱とその下だけ、ほかは動かさない)。横に当たりを足した時 (オーナー 10-22「箱を追加した時に枠が他の箱とかぶる」)
+ */
+export function pushRight(d: TreeDoc): void {
+  for (let n = 0; n < 400; n++) {
+    const bs = Object.values(d.boxes);
+    let moved = false;
+    for (const a of bs) {
+      const b = bs.find((x) => x !== a && (x.x > a.x || (x.x === a.x && x.id > a.id)) && x.x - a.x < BOX_W + ROOM && Math.abs(x.y - a.y) < BOX_H + ROOM);
+      if (b) { shift(d, b.id, a.x + BOX_W + ROOM - b.x, 0); moved = true; break; }
+    }
+    if (!moved) return;
+  }
+}
+
 /** 箱とその下を一緒にずらす */
 export function shift(d: TreeDoc, id: string, dx: number, dy: number): void {
   if (!dx && !dy) return;
@@ -141,6 +175,7 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   for (const o of b.outs) drop(d, subtree(d, o));
   b.outs = want.flatMap((k) => (k === "hit" && aims.length ? aims.map((a) => { const h = mk(d, "hit", id); h.aim = { ...a }; return h.id; }) : [mk(d, k, id).id]));
   spread(d, id);
+  makeRoom(d, id);
 }
 
 /** 次の手を消す (結果の箱と、その下も全部) */
@@ -160,7 +195,10 @@ export function addHit(d: TreeDoc, parentId: string, after?: string): string | n
   const hits = p.outs.filter((o) => d.boxes[o]!.out === "hit");
   const at = after && p.outs.includes(after) ? p.outs.indexOf(after) + 1 : hits.length ? p.outs.indexOf(hits[hits.length - 1]!) + 1 : 0;
   p.outs.splice(at, 0, b.id);
-  spread(d, parentId);
+  // 左隣の箱のすぐ右に置き、重なる箱だけ右へ押す (前は兄弟を全部並べ直して、手で動かした箱も動き、下の箱どうしが重なった)
+  const left = at > 0 ? d.boxes[p.outs[at - 1]!]! : null;
+  if (left) { b.x = left.x + BOX_W + ROOM + 4; b.y = left.y; } else spread(d, parentId);
+  pushRight(d);
   return b.id;
 }
 

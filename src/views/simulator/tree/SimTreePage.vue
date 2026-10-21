@@ -31,6 +31,7 @@ import { MATCH, RESTART } from "../../../services/simulator/tree/tree-run";
 import { treePage } from "../../../state/web-page";
 import { tr } from "../../../i18n/lang";
 import { pageZoom } from "../../../utils/zoom";
+import { backRoute, busLevels } from "./tree-lines";
 import { gesture, HOLD_MS } from "./use-gesture";
 
 const t = useTree();
@@ -80,11 +81,16 @@ onMounted(() => { window.addEventListener("resize", onResizeH); onResizeH(); });
 onBeforeUnmount(() => window.removeEventListener("resize", onResizeH));
 /** 手 (見るだけ): どこを引いても画面が動き、箱は押せない (ComfyUI の手、見本の 6) */
 const hand = ref(false);
+/** 横の棒が同じ高さで横に重なる親どうしは段をずらす (tree-lines.ts の busLevels) */
+const busShift = computed(() => busLevels(boxes.value.filter((b) => b.hand && b.outs.length).map((b) => {
+  const xs = [posOf(b).x, ...b.outs.map((o) => posOf(doc.value.boxes[o]!).x)].map((x) => x + BOX_W / 2);
+  return { id: b.id, x0: Math.min(...xs), x1: Math.max(...xs), y: Math.min(...b.outs.map((o) => posOf(doc.value.boxes[o]!).y)) - 18 };
+})));
 const edges = computed(() => boxes.value.filter((b) => b.hand && b.outs.length).map((b) => {
   const p = posOf(b);
   const px = p.x + BOX_W / 2, py = p.y + BOX_H, jy = py + 46;
   const kids = b.outs.map((o) => ({ id: o, c: doc.value.boxes[o]!, q: posOf(doc.value.boxes[o]!) }));
-  const busY = Math.min(...kids.map((k) => k.q.y)) - 18;
+  const busY = Math.min(...kids.map((k) => k.q.y)) - 18 - (busShift.value.get(b.id) ?? 0);
   // 角丸の段付き (React Flow の smoothstep、見本の 3): 親の下から下りて、角を丸めて横へ、角を丸めて子の上の辺へ。
   // 外れ (赤) を先に描き、進む (灰) を上に重ねる (同じ横の棒を通る所は灰に見える)
   const to = kids.map((k) => {
@@ -97,7 +103,7 @@ const edges = computed(() => boxes.value.filter((b) => b.hand && b.outs.length).
   return { id: b.id, hand: b.hand!, jx: px, jy, stem: `M ${px} ${py} L ${px} ${busY - 10}`, to };
 }));
 /**
- * 戻りの矢印 = 箱の横の辺から戻り先の同じ側の横の辺へ、外へふくらむ 1 本の弧。いつも細く薄く出し (オーナー 10-22「線を繋げても、その線が出ない。出してくれ」)、
+ * 戻りの矢印 = 箱の下から段のすき間・箱の無い縦の通り道を通って戻り先の上の辺の左寄りへ (tree-lines.ts)。いつも細く薄く出し (オーナー 10-22「線を繋げても、その線が出ない。出してくれ」)、
  * 箱の下の札「↩ 戻り先」に乗せた時はその弧を箱の前に明るく出して戻り先を光らせる (押すとそこへ寄る)。
  * 行き先が決まらない札 (形の合う箱へ・作り直し) は弧を引かない。前は乗せた時だけだった (外側を回る長い線でツリーが囲まれた、10-22)
  */
@@ -105,13 +111,8 @@ const hoverBack = ref<string | null>(null);
 function arcOf(b: Box): string | null {
   const to = b.back ? doc.value.boxes[b.back] : null;
   if (!to) return null;
-  // ツリーの外側を大回りすると画面の外へ出て戻り先が分からず、上の辺へ入れると自分の箱と戻り先の箱を突き抜けた (10-22 開発版)
-  const p = posOf(b), q = posOf(to);
-  const left = p.x + BOX_W / 2 <= q.x + BOX_W / 2;
-  const sx = left ? p.x - 3 : p.x + BOX_W + 3, sy = p.y + BOX_H / 2;
-  const tx = left ? q.x - 4 : q.x + BOX_W + 4, ty = q.y + BOX_H / 2;
-  const out = (left ? -1 : 1) * Math.max(70, Math.abs(sy - ty) / 3);
-  return `M ${sx} ${sy} C ${sx + out} ${sy} ${tx + out} ${ty} ${tx} ${ty}`;
+  // 箱を横切らない道 (tree-lines.ts)。前は横の辺から外へふくらむ弧で、いつも出すと箱と線を横切った (10-21 開発版のスナップ)
+  return backRoute(posOf(b), posOf(to), boxes.value.filter((x) => x.id !== b.id && x.id !== to.id).map(posOf));
 }
 const backArcs = computed(() => boxes.value.flatMap((b) => { const d = arcOf(b); return d && b.id !== hoverBack.value ? [{ id: b.id, d }] : []; }));
 const backLine = computed(() => { const b = hoverBack.value ? doc.value.boxes[hoverBack.value] : null; return b ? arcOf(b) : null; });
