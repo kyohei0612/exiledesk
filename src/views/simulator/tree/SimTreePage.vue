@@ -17,7 +17,7 @@ import TreeTrial from "./TreeTrial.vue";
 import { useTree } from "./use-tree";
 import { useTreeView } from "./use-tree-view";
 import { craftStage as s } from "../../../state/craft-stage";
-import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, placeOuts, removeHit, setAim, setBack, setDone, setHand, tidy, type Aim, type Hand, type HandKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
+import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, placeOuts, removeHit, setAim, setBack, setDone, setHand, tidy, handUses, type Aim, type Hand, type HandKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
 import { handLabel } from "../../../services/simulator/tree/tree-hands";
 import { aimHeld, aimsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { checkTree, type CheckIssue } from "../../../services/simulator/tree/tree-check";
@@ -248,7 +248,13 @@ function boxName(id: string): string {
 }
 /** 縮めて組んでいる時 (75〜99%) の倍率の逆数: 押せる物だけ大きさを戻す */
 const inv = computed(() => (viewOnly.value ? 1 : Math.max(1, 1 / zoom.value)));
-const glowOf = (b: Box): boolean => !!glowAim.value && b.out === "hit" && !!b.aim && aimKey(b.aim) === glowAim.value;
+/** 光る箱: MOD の札 = その札の当たりの箱、カレンシーの札 ("cur:" + キー) = その手を使っている箱 */
+const glowOf = (b: Box): boolean => {
+  const g = glowAim.value;
+  if (!g) return false;
+  if (g.startsWith("cur:")) return handUses(b, g.slice(4));
+  return b.out === "hit" && !!b.aim && aimKey(b.aim) === g;
+};
 </script>
 
 <template>

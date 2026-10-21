@@ -54,6 +54,10 @@ export interface TreeDoc {
   seq: number;
   /** ツリー全体のメモ */
   note?: string;
+  /** メモの窓で自由に足した欲しい MOD (ツリーの当たりとは別。オーナー 10-22「メモでは自由に MOD をメモに入れられる」) */
+  memoAims?: Aim[];
+  /** メモの窓で自由に足した使うカレンシー (値段のキー: カレンシー・お告げ・カタリスト・骨・エッセンス) */
+  memoCurrencies?: string[];
 }
 
 export const BOX_W = 196;
@@ -209,6 +213,28 @@ export function placeOuts(d: TreeDoc, id: string, x: number, y: number): void {
   const hits = (): boolean => os.some((o) => others.some((b) => Math.abs(b.x - o.x) < BOX_W + 8 && Math.abs(b.y - o.y) < BOX_H + 8));
   for (let i = 0; i < 40 && hits(); i++) for (const o of os) shift(d, o.id, 0, 40);
 }
+
+/** メモの窓の札を足す / 消す (同じ物は 1 つ) */
+export function toggleMemoAim(d: TreeDoc, a: Aim): void {
+  const list = d.memoAims ?? [];
+  const has = list.some((x) => aimKey(x) === aimKey(a));
+  const next = has ? list.filter((x) => aimKey(x) !== aimKey(a)) : [...list, { ...a }];
+  if (next.length) d.memoAims = next; else delete d.memoAims;
+}
+export function toggleMemoCurrency(d: TreeDoc, key: string): void {
+  const list = d.memoCurrencies ?? [];
+  const next = list.includes(key) ? list.filter((x) => x !== key) : [...list, key];
+  if (next.length) d.memoCurrencies = next; else delete d.memoCurrencies;
+}
+/** ツリーの手で使っている物 (カレンシー・お告げ・カタリスト)。並びは初めて出た順 */
+export function handKeysOf(d: TreeDoc): string[] {
+  const out: string[] = [];
+  const add = (k: string | null | undefined): void => { if (k && !out.includes(k)) out.push(k); };
+  for (const b of Object.values(d.boxes)) if (b.hand) { add(b.hand.currency); b.hand.omens.forEach(add); add(b.hand.catalyst); }
+  return out;
+}
+/** その箱の手がこのキーを使っているか (札を押した時に光らせる) */
+export const handUses = (b: TreeBox, key: string): boolean => !!b.hand && (b.hand.currency === key || b.hand.omens.includes(key) || b.hand.catalyst === key);
 
 /** メモ (id = null はツリー全体)。空にすると消す */
 export function setNote(d: TreeDoc, id: string | null, text: string): void {
