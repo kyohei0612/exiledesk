@@ -19,7 +19,7 @@
  *   削減のお告げ + 完全のカオス (削減は必ず餌を消す) → 当たり / 外れたらまた餌を付けてから削減。
  *   解析君の台本は「新しい外れがサフィックスより低い MOD レベルならそのまま餌にする」が、ツリーは MOD レベルで分けられないので毎回餌を付け直す。
  *   P3 = 冒涜専用のクルガルの「エナジーシールドが満タンの間スペルダメージ (15–25)% 増加」(Kurgal's、MOD レベル 65、poe2db /us/Desecrated_Modifiers):
- *   保存された鎖骨 + 黒き血のお告げ (クルガルの MOD が必ず候補に) → 発現で選ぶ (tree-sample の reveal)。外れは光のお告げ + 消去で冒涜の MOD だけ消して打ち直す
+ *   保存された鎖骨 + 黒き血のお告げ (クルガルの MOD が必ず候補に) → 発現で選ぶ (tree-sample の reveal)。外れは光のお告げ + 消去で冒涜の MOD だけ消して打ち直す (結果は外れが消えた 1 通り)
  *   (10-22 オーナー「冒涜は冒涜で付与かな」)
  */
 import { tidy, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
@@ -79,7 +79,9 @@ function goldRingSuffix(): TreeDoc {
     pBl: { out: "lost", parent: "pB", back: "start" },
     pBj: { out: "junk", parent: "pB", back: "pJ" },
     pD: { out: "hit", aim: A.PD, parent: "pR", done: "main" },
-    ...J("pR", "pX", "pR", hand("annul", ["OmenofLight"])),
+    // 光のお告げ + 消去は冒涜の MOD だけを消すので結果は「外れが消えた」1 通り (10-22 オーナー、tree-sample の singleOutOf)
+    pX: { out: "junk", parent: "pR", hand: hand("annul", ["OmenofLight"]), outs: ["pX_g"] },
+    pX_g: { out: "junkGone", parent: "pX", back: "pR" },
   });
 }
 

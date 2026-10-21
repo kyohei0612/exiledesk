@@ -6,7 +6,7 @@
  * その下の箱 = 親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
-import { applyCurrency, freshItem, maxQualityOf, mulberry32, omenBlock, revealOffers, unrevealedOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { applyCurrency, freshItem, maxQualityOf, mulberry32, omenBlock, revealOffers, stepOutcomes, unrevealedOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { CATALYSING, isCatalyst } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import type { Aim, Hand, OutKind, TreeDoc } from "./tree-model";
@@ -56,6 +56,22 @@ export function outcomeOf(data: PatchData, before: StageItem, after: StageItem, 
 }
 
 /**
+ * 結果が 1 通りの手 (10-22 オーナー「光のお告げの場合ハズレとかないから、使った時点でその先には冒涜が消えた状態の枠しかない」):
+ * エンジンの stepOutcomes でこの箱の見本に打った行き先を全部たどり、結果の分け方 (outcomeOf) が 1 つだけならそれを返す (当たりは付く札も)。
+ * 繰り返し・狙い無し・品質だけの手・未発現が付く手と、エンジンが枝に分けられない手 (数値だけ変わる手など) は null (今までどおり手の種類の箱)
+ */
+export function singleOutOf(data: PatchData, item: StageItem, h: Hand, aims: readonly Aim[]): { out: OutKind; aim: Aim | null } | null {
+  if (h.repeat || h.free || isCatalyst(h.currency)) return null;
+  const outs = stepOutcomes(data, item, h.currency, h.omens)?.filter((o) => !o.void);
+  // 未発現が付く手 (冒涜の骨) は、発現で選ぶ候補で当たり / 外れが分かれる
+  if (!outs?.length || outs.some((o) => unrevealedOf(o.item))) return null;
+  const res = outs.map((o) => outcomeOf(data, item, o.item, aims));
+  const key = (r: { out: OutKind; hits: Aim[] }): string => `${r.out}:${r.hits.map((a) => `${a.modId}/${a.tier}`).join(",")}`;
+  if (new Set(res.map(key)).size !== 1 || res[0]!.hits.length > 1) return null;
+  return { out: res[0]!.out, aim: res[0]!.hits[0] ?? null };
+}
+
+/**
  * カタリストを 1 押しで、そのアイテムの今の品質の最大まで入れる (2026-10-22 オーナー「個数を数えて入れない」)。
  * 最大はエンジンの maxQualityOf (普通 20%、品質の最大値 +20% の MOD があれば 40%。後で足すインフューザーもここに入る)。
  * 別の種類のカタリストが入っていれば 0 から (エンジンどおり)。count = 入れた個数 (費用はこの分)
@@ -80,13 +96,13 @@ const SPAM_CAP = 5000;
  * 繰り返しの手 (repeat) は、当たりの札 (aims) のどれかが新しく付くまで (か上限まで) 打ち続けた結果を 1 回分として返す。
  * use を渡すと使った物 (カタリストの数・カレンシー・お告げ) を数える (100 人回し tree-run)
  */
-export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => number, aims: readonly Aim[] = [], use?: (key: string, n?: number) => void): StageApply {
+export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => number, aims: readonly Aim[] = [], use?: (key: string, n?: number) => void, miss = false): StageApply {
   if (h.repeat) {
     const cap = h.repeat.max ?? SPAM_CAP;
     let r: StageApply = { applied: false, item, added: [], removed: [] };
     let it = item;
     for (let i = 0; i < cap; i++) {
-      r = playHand(data, it, { ...h, repeat: null }, rng, aims, use);
+      r = playHand(data, it, { ...h, repeat: null }, rng, aims, use, miss);
       if (!r.applied) return i ? { ...r, applied: true, item: it } : r;
       it = r.item;
       if (outcomeOf(data, item, it, aims).out === "hit") break;
@@ -112,17 +128,19 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
     use(h.currency);
     for (const o of r.omensUsed ?? []) use(o);
   }
-  return r.applied && unrevealedOf(r.item) ? reveal(data, r, rng, aims) : r;
+  return r.applied && unrevealedOf(r.item) ? reveal(data, r, rng, aims, miss) : r;
 }
 
 /**
  * 冒涜 (骨) の後は、そのまま魂の井戸で発現して選ぶ (2026-10-22 オーナー「冒涜は冒涜で付与かな」)。候補 3 つ (エンジンの revealOffers) のうち
- * 当たりの札に合う物を選び、無ければ 1 つ目 (外れ)。候補と発現の結果が同じになるよう、同じ種の rng を 2 回作る (apply-desecrate.ts の決まり)
+ * 当たりの札に合う物を選び、無ければ 1 つ目 (外れ)。miss = 外れの箱の見本 (狙いでない候補を選ぶ。黒き血は狙いが必ず候補に入り、見本が外れの箱に着かなかった、10-22)。
+ * 候補と発現の結果が同じになるよう、同じ種の rng を 2 回作る (apply-desecrate.ts の決まり)
  */
-function reveal(data: PatchData, r: StageApply, rng: () => number, aims: readonly Aim[]): StageApply {
+function reveal(data: PatchData, r: StageApply, rng: () => number, aims: readonly Aim[], miss = false): StageApply {
   const seed = Math.floor(rng() * 2 ** 31);
   const offers = revealOffers(data, r.item, mulberry32(seed)).first;
-  const n = Math.max(0, offers.findIndex((m) => aims.some((a) => aimHeld(data, { ...r.item, prefixes: [m], suffixes: [] }, a))));
+  const isAim = (m: StageMod): boolean => aims.some((a) => aimHeld(data, { ...r.item, prefixes: [m], suffixes: [] }, a));
+  const n = Math.max(0, offers.findIndex((m) => isAim(m) !== miss));
   // reveal:N の N は 1 から (エンジンの run-plan と同じ。0 は「その番号の候補が無い」)
   const x = applyCurrency(data, r.item, `reveal:${n + 1}`, mulberry32(seed));
   return x.applied ? { ...x, added: [...r.added, ...x.added], removed: [...r.removed, ...x.removed] } : r;
@@ -173,7 +191,7 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
   const rng = mulberry32(seed ^ 0x5eed ^ boxId.length * 7919);
   let last: StageApply | null = null;
   for (let i = 0; i < TRIES; i++) {
-    const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims));
+    const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims), undefined, b.out === "junk" || b.out === "lost");
     if (!r.applied) { last = r; break; }
     last = r;
     const o = outcomeOf(data, base.item, r.item, aims);

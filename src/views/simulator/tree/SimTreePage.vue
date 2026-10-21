@@ -22,7 +22,7 @@ import TreeNote from "./TreeNote.vue";
 import { useTree } from "./use-tree";
 import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
 import { craftStage as s } from "../../../state/craft-stage";
-import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, removeHit, setAim, setBack, setDone, setHand, tidy, handUses, type Aim, type Hand, type HandKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
+import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, removeHit, setAim, setBack, setDone, setHand, tidy, handUses, type Aim, type Hand, type HandKind, type OutKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
 import { handLabel, outName } from "./tree-names";
 import { aimHeld, aimsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { treeSample } from "../../../services/simulator/tree/tree-samples";
@@ -165,13 +165,13 @@ function backLabel(b: Box): string {
 
 // 組み替え
 /** 手を決める。pre = 前に足す品質だけ上げる手のカタリスト (触媒のお告げ、10-22 オーナーの案 A)。完成の箱に手を付けたら同じ形の完成の箱もここへ (joinSameShape) */
-function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = null): void {
+function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = null, only: { out: OutKind; aim: Aim | null } | null = null): void {
   const id = panel.value!.id;
   if (picking.value === id) picking.value = null;
   t.edit((d) => {
     let at = id;
     if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
-    setHand(d, at, h, kind, aims);
+    setHand(d, at, h, kind, aims, only);
     joinSameShape(d, id);
   });
   panel.value = null;

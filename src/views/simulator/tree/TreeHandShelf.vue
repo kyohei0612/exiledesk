@@ -11,17 +11,18 @@ import CurrencyShelf from "../../craft-stage/CurrencyShelf.vue";
 import HeldOmens from "../../craft-stage/HeldOmens.vue";
 import { heldOmensOf } from "../../craft-stage/held-omens";
 import { mulberry32, omensFor } from "../../../services/craft-stage/engine";
-import { aimHeld, aimsOf, fillCatalyst, handProblem, sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { aimHeld, aimsOf, fillCatalyst, handProblem, sampleOf, singleOutOf } from "../../../services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, isCatalyst, kindOfCurrency, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
-import { handLabel, handName } from "./tree-names";
-import { kindOfHand, setHand, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
+import { handLabel, handName, outName } from "./tree-names";
+import { kindOfHand, setHand, type Aim, type Hand, type HandKind, type OutKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { useSimShelf } from "../use-sim-shelf";
 import { tr } from "../../../i18n/lang";
 
 const props = defineProps<{ boxId: string; current: Hand | null }>();
 /** pick の preCatalyst = 前に足す品質だけ上げる手のカタリスト (触媒のお告げで、まだ品質を上げる手の後でない時) */
-const emit = defineEmits<{ pick: [hand: Hand, kind: HandKind, aims: Aim[], preCatalyst: string | null]; clear: []; close: [] }>();
+/** only = 結果が 1 通りの手の結果 (tree-sample の singleOutOf、光のお告げ + 消去など) */
+const emit = defineEmits<{ pick: [hand: Hand, kind: HandKind, aims: Aim[], preCatalyst: string | null, only: { out: OutKind; aim: Aim | null } | null]; clear: []; close: [] }>();
 const t = useTree();
 
 const sample = computed(() => (s.data.value ? sampleOf(s.data.value, t.doc.value, props.boxId, 1) : null));
@@ -93,13 +94,15 @@ const spamAims = computed((): Aim[] => {
   const d = s.data.value;
   return kind.value === "spam" && d && item.value ? aimsOf(t.doc.value).filter((a) => !aimHeld(d, item.value!, a)) : [];
 });
+/** 結果が 1 通りの手か (この箱の見本にエンジンで打った行き先を全部たどる。触媒の手は前のカタリストを入れた後の見本で) */
+const only = computed(() => (hand.value && shelfItem.value && s.data.value ? singleOutOf(s.data.value, preCat.value ? shelfItem.value : item.value!, hand.value, aimsOf(t.doc.value)) : null));
 /** この手に替えると消える箱の数 (結果の箱から先。手の種類が同じなら 0。写しに打って数える) */
 const gone = computed((): number => {
   const h = hand.value, k = kind.value;
   if (!props.current || !h || !k) return 0;
   const d = structuredClone(toRaw(t.doc.value));
   const before = Object.keys(d.boxes).length;
-  setHand(d, props.boxId, h, k, spamAims.value);
+  setHand(d, props.boxId, h, k, spamAims.value, only.value);
   const kept = new Set(Object.keys(d.boxes));
   return before - Object.keys(t.doc.value.boxes).filter((id) => kept.has(id)).length;
 });
@@ -107,7 +110,7 @@ const gone = computed((): number => {
 const problem = computed((): string | null => (hand.value && shelfItem.value && s.data.value ? handProblem(s.data.value, preCat.value ? shelfItem.value : item.value!, hand.value) : null));
 function ok(): void {
   const h = hand.value, k = kind.value;
-  if (h && k && !problem.value) emit("pick", h, k, spamAims.value, preCat.value);
+  if (h && k && !problem.value) emit("pick", h, k, spamAims.value, preCat.value, only.value);
 }
 </script>
 
@@ -130,7 +133,7 @@ function ok(): void {
         <input v-model="spam" type="checkbox" />{{ tr("当たるまで繰り返す (カオススパム)", "Repeat until a hit (Chaos spam)") }}
         <span v-if="spam" class="flex items-center gap-1 text-[12px] opacity-80">{{ tr("上限", "Max") }}<input v-model.number="spamMax" type="number" min="1" class="h-7 w-16 rounded-md border border-white/15 bg-black/40 px-1 text-right" :placeholder="tr('なし', 'none')" />{{ tr("回", "") }}</span>
       </label>
-      <p v-if="kind" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ tr(RESULT[kind][0], RESULT[kind][1]) }}</p>
+      <p v-if="kind" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? tr(`${outName(only.out)}だけ (結果は 1 通り)`, `${outName(only.out)} only (one possible result)`) : tr(RESULT[kind][0], RESULT[kind][1]) }}</p>
       <!-- 替える時は、消える箱の数を先に小さく (オーナー 10-22。1 つ戻す / Ctrl+Z で戻せる)。持ち直しは棚で別の物を押すだけ (ボタンは無し) -->
       <div class="flex flex-wrap items-center gap-1.5">
         <button type="button" data-tree-hand-ok class="g-btn-red sm" :disabled="!!problem" :title="problem ?? undefined" @click="ok">{{ current ? tr("この手に替える", "Use this craft") : tr("この手にする", "Use this craft") }}</button>

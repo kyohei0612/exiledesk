@@ -183,12 +183,14 @@ export const kindOfHand = (h: Hand, base: HandKind): HandKind => (h.repeat ? "sp
 
 /**
  * 箱の次の手を決める。手の種類が同じなら結果の箱はそのまま、違えば作り直す。
- * aims を渡すと、当たりの箱をその札の数だけ作る (カオススパムの既定 = まだ付いていない狙いを全部)
+ * aims を渡すと、当たりの箱をその札の数だけ作る (カオススパムの既定 = まだ付いていない狙いを全部)。
+ * only = 結果が 1 通りの手 (tree-sample の singleOutOf。光のお告げ + 消去 = 外れが消えただけ など) の時はその箱 1 つだけ
  */
-export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims: readonly Aim[] = []): void {
+export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims: readonly Aim[] = [], only: { out: OutKind; aim: Aim | null } | null = null): void {
   const b = d.boxes[id];
   if (!b) return;
-  const want = OUTS_OF[kind];
+  const want = only ? [only.out] : OUTS_OF[kind];
+  if (only?.aim) aims = [only.aim];
   const now = b.outs.map((o) => d.boxes[o]!.out);
   const same = b.hand && want.every((k) => now.includes(k)) && now.every((k) => k !== "start" && want.includes(k));
   b.hand = { ...hand, omens: [...hand.omens], repeat: hand.repeat ? { ...hand.repeat } : null };
