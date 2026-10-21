@@ -10,9 +10,13 @@
 
 import type { TreeTune } from "./tree-tune";
 
-/** any = 狙い無しの手の結果 (何が付いても次へ進む「打った後」、オーナー 10-22 の適当打ち) */
-export type OutKind = "hit" | "junk" | "junkGone" | "lost" | "any";
-export type HandKind = "add" | "remove" | "swap" | "spam" | "free";
+/**
+ * any = 狙い無しの手の結果 (何が付いても次へ進む「打った後」、オーナー 10-22 の適当打ち)。
+ * pass = 品質だけ上げる手 (カタリスト) の後の通り抜け。画面には箱を描かず、打つ手の札の下に次の手の札 (か＋) をつなぐ
+ * (オーナー 10-22「品質だけ上げるくだりがあるでしょ、オーブを打つだけの表示でいいから下に＋」)
+ */
+export type OutKind = "hit" | "junk" | "junkGone" | "lost" | "any" | "pass";
+export type HandKind = "add" | "remove" | "swap" | "spam" | "free" | "quality";
 /** 狙い: MOD と段 (tier = T 何以上、1 = T1 だけ)。フラクチャーの時は「その段」 */
 export interface Aim { modId: string; tier: number }
 /**
@@ -97,6 +101,8 @@ export const OUTS_OF: Record<HandKind, OutKind[]> = {
   spam: ["hit"],
   // 狙い無し: 当たり / 外れに分けず、打ったら必ず次の箱へ
   free: ["any"],
+  // 品質だけ上げる (カタリストを最大まで): 結果の箱は無く、通り抜けの 1 つ
+  quality: ["pass"],
 };
 
 function mk(d: TreeDoc, out: OutKind, parent: string): TreeBox {
@@ -192,11 +198,14 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   b.outs = want.flatMap((k) => (k === "hit" && aims.length ? aims.map((a) => { const h = mk(d, "hit", id); h.aim = { ...a }; return h.id; }) : [mk(d, k, id).id]));
   // 消えた箱は初めからつないでおく (オーナー 10-22「狙いが消えた…などは自動でつないでおく」。× で外せる)。行き先は人が選ぶのと同じ具体的な箱
   // (10-22 オーナー「続きからって選択肢選べんでしょ」): 狙いが消えた = 始めに戻る (10-22「選択肢として初めに戻るでいいのでは」)、
-  // 外れが消えた = 外れの前の箱 (外れの箱の親。外れだけ消えたので、その箱と同じ形)。外れの箱の下でない時は形の合う箱へ
+  // 外れが消えた = 外れの前の箱 (外れの箱の親。外れだけ消えたので、その箱と同じ形)。外れの箱の下でない時は形の合う箱へ。
+  // 親が品質だけ上げた後の通り抜けなら、その上の箱 (カタリストを入れ直す所) まで上がる (通り抜けへ戻ると品質が空のまま触媒の手を打つ)
+  let before = b.out === "junk" ? b.parent : null;
+  while (before && d.boxes[before]?.out === "pass") before = d.boxes[before]!.parent;
   for (const o of b.outs) {
     const c = d.boxes[o]!;
     if (c.out === "lost") c.back = "start";
-    else if (c.out === "junkGone") c.back = b.out === "junk" && b.parent ? b.parent : MATCH_BACK;
+    else if (c.out === "junkGone") c.back = before ?? MATCH_BACK;
   }
   spread(d, id);
   makeRoom(d, id);
@@ -304,7 +313,7 @@ export function setNote(d: TreeDoc, id: string | null, text: string): void {
 }
 
 /** 整列で兄弟を並べる順 (当たり → 狙いが消えた → 外れが消えた → 外れ。外れは一番右) */
-const OUT_ORDER: Record<TreeBox["out"], number> = { start: 0, hit: 0, any: 0, lost: 1, junkGone: 2, junk: 3 };
+const OUT_ORDER: Record<TreeBox["out"], number> = { start: 0, hit: 0, any: 0, pass: 0, lost: 1, junkGone: 2, junk: 3 };
 /** 整列の兄弟の間 (横の＋が 14px はみ出す分 + 戻りの線の縦の通り道 4 本分、オーナー 10-22「整列で箱の間に通り道の分のすき間」) */
 const TIDY_GAP = 64;
 /**

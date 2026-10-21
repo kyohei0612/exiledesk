@@ -5,8 +5,11 @@
 import { CATALYSTS, kindOf } from "../../craft-stage/engine";
 import type { HandKind } from "./tree-model";
 
-/** 手の種類 (必ず付く結果の箱が決まる、tree-model の OUTS_OF): カオス = 入れ替え、消去 = 消す、それ以外 = 足す */
+/** カタリスト (値段のキー catalyst_<タグ>) = 品質だけ上げる手 */
+export const isCatalyst = (key: string): boolean => key.startsWith("catalyst_");
+/** 手の種類 (必ず付く結果の箱が決まる、tree-model の OUTS_OF): カオス = 入れ替え、消去 = 消す、カタリスト = 品質だけ、それ以外 = 足す */
 export function kindOfCurrency(key: string): HandKind {
+  if (isCatalyst(key)) return "quality";
   const k = kindOf(key);
   return k === "chaos" ? "swap" : k === "annul" ? "remove" : "add";
 }

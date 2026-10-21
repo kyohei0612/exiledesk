@@ -7,7 +7,7 @@
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
 import { applyCurrency, freshItem, maxQualityOf, mulberry32, omenBlock, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
-import { CATALYSING } from "./tree-hands";
+import { CATALYSING, isCatalyst } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import type { Aim, Hand, OutKind, TreeDoc } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
@@ -83,6 +83,12 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
     }
     return { ...r, item: it };
   }
+  // 品質だけ上げる手: カタリストを今の最大まで (もう最大なら何もせず通る。戻ってきてもう一度通る時)
+  if (isCatalyst(h.currency)) {
+    const r = fillCatalyst(data, item, h.currency, rng);
+    if (r.count) use?.(h.currency, r.count);
+    return r.count || (item.qualityTag === h.currency.slice("catalyst_".length) && item.quality >= maxQualityOf(item)) ? { ...r, applied: true } : r;
+  }
   let it = item;
   // 触媒の高貴の前に、カタリストで品質を最大まで (箱の手も 1 押しと同じ)
   if (h.catalyst && h.omens.includes(CATALYSING)) {
@@ -148,6 +154,7 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
     if (!r.applied) { last = r; break; }
     last = r;
     const o = outcomeOf(data, base.item, r.item, aims);
+    if (b.out === "pass") return { item: r.item, note: null };
     if (b.out !== "any" && o.out !== b.out) continue;
     if (b.out === "hit" && b.aim && !o.hits.some((a) => a.modId === b.aim!.modId && a.tier === b.aim!.tier)) continue;
     return { item: r.item, note: null };

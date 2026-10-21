@@ -71,6 +71,7 @@ const catFill = computed((): { quality: number; catalystCount: number } => {
 });
 const RESULT: Record<HandKind, [string, string]> = {
   add: ["当たり + 外れ", "Hit + Miss"], remove: ["外れが消えた + 狙いが消えた", "Miss removed + Target lost"], swap: ["当たり + 狙いが消えた + 外れ", "Hit + Target lost + Miss"], spam: ["当たりだけ (当たるまで打つ)", "Hits only (until a hit)"], free: ["打った後 (何が付いても次へ。当たり / 外れに分けない)", "After (anything counts, no hit / miss split)"],
+  quality: ["無し (品質を最大まで上げて、下の＋で次の手)", "None (raise quality to max, then add the next craft with + below)"],
 };
 const kind = computed((): HandKind | null => (hand.value ? kindOfHand(hand.value, kindOfCurrency(hand.value.currency)) : null));
 /** カオススパムの当たりの既定 = このツリーの狙いのうち、この箱でまだ付いていない物を全部 */

@@ -70,6 +70,9 @@ onBeforeUnmount(v.dispose);
 const drag = ref<{ id: string; x: number; y: number } | null>(null);
 const posOf = (b: Box): { x: number; y: number } => (drag.value?.id === b.id ? { x: drag.value.x, y: drag.value.y } : { x: b.x, y: b.y });
 const boxes = computed(() => Object.values(doc.value.boxes));
+/** 描く箱 (品質だけ上げた後の通り抜け pass は箱を描かず、打つ手の札の下に次の札か＋、tree-model の OutKind) */
+const shown = computed(() => boxes.value.filter((b) => b.out !== "pass"));
+const passes = computed(() => boxes.value.filter((b) => b.out === "pass"));
 /** 箱の真ん中 */
 const midOf = (id: string): number => posOf(doc.value.boxes[id]!).x + BOX_W / 2;
 
@@ -104,23 +107,26 @@ const busShift = computed(() => busLevels(boxes.value.filter((b) => b.hand && b.
   return { id: b.id, x0: Math.min(...xs), x1: Math.max(...xs), y: Math.min(...b.outs.map((o) => posOf(doc.value.boxes[o]!).y)) - 18 };
 })));
 const edges = computed(() => boxes.value.filter((b) => b.hand && b.outs.length).map((b) => {
-  const p = posOf(b);
-  const px = p.x + BOX_W / 2, py = p.y + BOX_H, jy = py + HAND_DY;
+  const p = posOf(b), pass = b.out === "pass";
+  // 通り抜けは箱が無いので、手の札を箱の上の端の所に置き、そこから下りる
+  const px = p.x + BOX_W / 2, py = pass ? p.y : p.y + BOX_H, jy = pass ? p.y : py + HAND_DY;
   const kids = b.outs.map((o) => ({ id: o, c: doc.value.boxes[o]!, q: posOf(doc.value.boxes[o]!) }));
   const busY = Math.min(...kids.map((k) => k.q.y)) - 18 - (busShift.value.get(b.id) ?? 0);
   // 角丸の段付き (React Flow の smoothstep、見本の 3): 親の下から下りて、角を丸めて横へ、角を丸めて子の上の辺へ。
   // 外れ (赤) を先に描き、進む (灰) を上に重ねる (同じ横の棒を通る所は灰に見える)
   const to = kids.map((k) => {
-    const cx = midOf(k.id), cy = k.q.y - 3, dx = cx - px, r = Math.min(10, Math.abs(dx) / 2), s = Math.sign(dx);
+    const cx = midOf(k.id), cy = k.q.y - (k.c.out === "pass" ? PASS_R : 3), dx = cx - px, r = Math.min(10, Math.abs(dx) / 2), s = Math.sign(dx);
     const d = !s ? `M ${px} ${busY - 10} L ${cx} ${cy}`
       : `M ${px} ${busY - 10} L ${px} ${busY - r} Q ${px} ${busY} ${px + s * r} ${busY} L ${cx - s * r} ${busY} Q ${cx} ${busY} ${cx} ${busY + r} L ${cx} ${cy}`;
-    const bad = k.c.out !== "hit" && k.c.out !== "any";
+    const bad = k.c.out !== "hit" && k.c.out !== "any" && k.c.out !== "pass";
     return { id: k.id, color: bad ? LINE.bad : LINE.fwd, kind: bad ? "bad" : "fwd", d, bad };
   }).sort((a, z) => Number(z.bad) - Number(a.bad));
   // 戻りの線が跨ぐ所を探す用の真っ直ぐな所 (縦の幹・横の棒・子へ下りる縦)
   const segs: Seg[] = [{ x0: px, y0: py, x1: px, y1: busY }, ...kids.flatMap((k) => { const cx = midOf(k.id); return [{ x0: px, y0: busY, x1: cx, y1: busY }, { x0: cx, y0: busY, x1: cx, y1: k.q.y }]; })];
   return { id: b.id, hand: b.hand!, jx: px, jy, stem: `M ${px} ${py} L ${px} ${busY - 10}`, to, segs };
 }));
+/** 通り抜けの所の札 / ＋の半分の高さ (上から来る矢印の先) */
+const PASS_R = 16;
 /** 打つ手の札の幅 (画面で測る。戻りの線を札の左の端へ入れる、tree-lines.ts の handAnchor) */
 const chipW = ref<Record<string, number>>({});
 function measureChips(): void {
@@ -306,7 +312,7 @@ const plusLine = computed(() => {
 
 watch(() => panel.value?.id, (id) => { if (id) setTimeout(() => void v.reveal(id), 0); });
 /** Vue Flow に渡す箱 (位置は木の形のまま。動かせるのは組める時だけ = 手・一望・戻り先を選んでいる間は画面だけ動く) */
-const flowNodes = computed(() => boxes.value.map((b) => ({ id: b.id, type: "box", position: posOf(b), draggable: false, selectable: false, connectable: false })));
+const flowNodes = computed(() => shown.value.map((b) => ({ id: b.id, type: "box", position: posOf(b), draggable: false, selectable: false, connectable: false })));
 // Vue Flow へは setNodes で直接入れる (:nodes で渡すと、Vue Flow が中の並びを書き戻している一瞬の変化を拾わず、
 // 見本を開いた時に始まりの箱しか出なかった。10-23 開発版で見た)
 watch(flowNodes, (n) => v.flow.setNodes(n), { immediate: true });
@@ -412,6 +418,9 @@ const glowOf = (b: Box): boolean => {
               </svg>
               <!-- 矢印の上の札 = 打つ手 (押すと替える・消す)。戻りの矢印だけの箱から流れ込む線 -->
               <TreeHandChip v-for="e in edges" :key="`hand-${e.id}`" :id="e.id" :hand="e.hand" :x="e.jx" :y="e.jy" :inv="inv" :off="hand" @open="panel = { kind: 'hand', id: e.id }" />
+              <!-- 品質だけ上げた後 (箱無し) で次の手がまだ無い所の＋ (押すと次の手の棚) -->
+              <button v-for="b in passes.filter((x) => !x.hand && !x.back)" :key="`pass-${b.id}`" type="button" data-tree-pass-next :data-box-id="b.id" class="nodrag nopan pointer-events-auto absolute z-[5] flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-amber-400/70 bg-[#1d1812] text-amber-200 hover:bg-amber-500/30"
+                :class="viewOnly || hand ? '!pointer-events-none opacity-60' : ''" :style="{ left: `${posOf(b).x + BOX_W / 2}px`, top: `${posOf(b).y}px`, scale: String(inv) }" :title="tr('次に打つ手を足す', 'Add the next craft')" @click="startLink(b)"><Icon name="plus" class="size-4" /></button>
               <TreeMergeLayer v-if="merged" :lines="merged.lines" :paths="merged.paths" :hover="hoverBox" :show-all="linesAll" />
               <!-- 引っ張っている＋の線と、戻り先の札に乗せた時の線は箱の前 (相手の箱の上まで見える) -->
               <svg v-if="plusLine" class="pointer-events-none absolute left-0 top-0 z-10 overflow-visible" width="1" height="1">
@@ -452,7 +461,7 @@ const glowOf = (b: Box): boolean => {
           </div>
         </div>
         <TreeHoverCard v-if="cardBox && doc.boxes[cardBox]" :box-id="cardBox" :rect="v.rectOf(doc.boxes[cardBox]!)" />
-        <TreeCanvasTools v-model:hand="hand" :boxes="boxes" :view="v.view.value" :zoom="zoom" @center="v.centerOn" @fit="v.fit" @zoom-in="v.zoomIn" @zoom-out="v.zoomOut" @reset="v.resetZoom" />
+        <TreeCanvasTools v-model:hand="hand" :boxes="shown" :view="v.view.value" :zoom="zoom" @center="v.centerOn" @fit="v.fit" @zoom-in="v.zoomIn" @zoom-out="v.zoomOut" @reset="v.resetZoom" />
         </div>
 
         <!-- 右の欄 -->

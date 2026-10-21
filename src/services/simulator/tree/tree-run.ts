@@ -248,7 +248,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     const oc = outcomeOf(data, before, r.item, aims);
     const next = b.outs.find((id) => {
       const c = doc.boxes[id];
-      if (!c || (c.out !== oc.out && c.out !== "any")) return false; // any = 狙い無しの手の「打った後」(何が付いても)
+      if (!c || (c.out !== oc.out && c.out !== "any" && c.out !== "pass")) return false; // any = 狙い無しの手の「打った後」(何が付いても)、pass = 品質だけ上げた後
       return oc.out !== "hit" || (!!c.aim && oc.hits.some((a) => a.modId === c.aim!.modId && a.tier === c.aim!.tier));
     });
     if (!next) return { end: "stuck", cost, at, visits, uses, restarts };

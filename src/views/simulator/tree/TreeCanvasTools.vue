@@ -32,7 +32,7 @@ const box = computed(() => {
 });
 const mx = (x: number): number => (x - box.value.x0) * box.value.k + box.value.dx;
 const my = (y: number): number => (y - box.value.y0) * box.value.k + box.value.dy;
-const COLOR: Record<TreeBox["out"], string> = { start: "#5fb4e0", hit: "#e0b060", junk: "#e0707a", junkGone: "#9aa7b8", lost: "#a58be0", any: "#c8b896" };
+const COLOR: Record<TreeBox["out"], string> = { start: "#5fb4e0", hit: "#e0b060", junk: "#e0707a", junkGone: "#9aa7b8", lost: "#a58be0", any: "#c8b896", pass: "#c8b896" };
 const fill = (b: TreeBox): string => (b.done ? "#f2d27a" : COLOR[b.out]);
 
 /** ミニマップを押す / 引っ張る = その点を真ん中に送る (判定・capture・座標の換算は use-gesture.ts) */

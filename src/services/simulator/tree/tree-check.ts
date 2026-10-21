@@ -7,7 +7,7 @@
  * 戻りの矢印は 1 回だけ辿る (戻り先の手がその状態で打てるか)。
  */
 import { allMods, modBoostsOf, mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
-import { CATALYSING } from "./tree-hands";
+import { CATALYSING, isCatalyst } from "./tree-hands";
 import { aimKey, type Aim, type TreeDoc } from "./tree-model";
 import { aimHeld, aimsOf, handProblem, outcomeOf, playHand, sampleOf } from "./tree-sample";
 import { heldSets, MATCH, matchItem, matchTargets, RESTART, settle, shapesOf } from "./tree-run";
@@ -43,8 +43,11 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
   for (const b of boxes) {
     if (!b.hand && !b.back && !b.done) add(b.id, "open", b.out === "start" ? tr("最初の手を決めていない (ここで止まる)", "No first craft yet (stops here)") : tr("行き先を決めていない (ここで止まる)", "No next step yet (stops here)"));
     if (b.out === "hit" && !b.aim) add(b.id, "noAim", tr("付く MOD を選んでいない", "No mod picked for this hit"));
-    // 触媒のお告げはカタリストで入れた品質にだけ効く。カタリストを打つ手が無ければ効きは乗らない (10-22 オーナー「ちゃんと打つルートが無いとあかん」)
-    if (b.hand?.omens.includes(CATALYSING) && !b.hand.catalyst) add(b.id, "noCatalyst", tr("触媒のお告げなのにカタリストを打つ手が無い (手の札でカタリストを選ぶ)", "Catalysing omen without a catalyst craft (pick a catalyst in the craft)"));
+    // 触媒のお告げはカタリストで入れた品質にだけ効く。カタリストを打つ手が無ければ効きは乗らない (10-22 オーナー「ちゃんと打つルートが無いとあかん」)。
+    // 品質だけ上げる手 (カタリスト) の後の通り抜けから打つ時は、その手がカタリストを打つ手
+    const before = b.out === "pass" && b.parent ? doc.boxes[b.parent]?.hand : null;
+    const afterCat = !!before && isCatalyst(before.currency);
+    if (b.hand?.omens.includes(CATALYSING) && !b.hand.catalyst && !afterCat) add(b.id, "noCatalyst", tr("触媒のお告げなのにカタリストを打つ手が無い (手の札でカタリストを選ぶ)", "Catalysing omen without a catalyst craft (pick a catalyst in the craft)"));
   }
 
   // 1b) 形の合う箱へ: 行きうる形の箱がツリーに無い (tree-run の matchTargets、回す時と同じ判定)
@@ -120,7 +123,7 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
             const r = i === 0 ? first : playHand(data, item, b.hand, rng, aims);
             if (!r.applied) break;
             const res = outcomeOf(data, item, r.item, aims);
-            if ((res.out === ob.out || ob.out === "any") && (ob.out !== "hit" || !ob.aim || res.hits.some((a: Aim) => aimKey(a) === aimKey(ob.aim!)))) got = r.item;
+            if ((res.out === ob.out || ob.out === "any" || ob.out === "pass") && (ob.out !== "hit" || !ob.aim || res.hits.some((a: Aim) => aimKey(a) === aimKey(ob.aim!)))) got = r.item;
           }
           if (got && tag && ob.out === "hit" && ob.aim) {
             // 触媒の品質がこの当たりの MOD に効くか (エンジンの modBoostsOf。触媒は打つと品質を使い切るので、その種類の品質が載った形で聞く)

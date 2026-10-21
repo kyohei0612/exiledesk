@@ -7,7 +7,7 @@ import { computed } from "vue";
 import { nameOfKey } from "../../../state/emulator/craft-stage-shelf";
 import { craftStage as s } from "../../../state/craft-stage";
 import { freshItem } from "../../../services/craft-stage/engine";
-import { CATALYSING } from "../../../services/simulator/tree/tree-hands";
+import { CATALYSING, isCatalyst } from "../../../services/simulator/tree/tree-hands";
 import type { Hand, TreeBox } from "../../../services/simulator/tree/tree-model";
 import { TREE_BASE, TREE_ILVL } from "./use-tree";
 import { tr } from "../../../i18n/lang";
@@ -26,6 +26,7 @@ export const OUT_LOOK: Record<TreeBox["out"], { ja: string; en: string; c: strin
   junkGone: { ja: "外れが消えた", en: "Miss removed", c: "154,167,184", icon: "check" },
   lost: { ja: "狙いが消えた", en: "Target lost", c: "165,139,224", icon: "rotate" },
   any: { ja: "打った後", en: "After", c: "200,184,150", icon: "plus" },
+  pass: { ja: "品質を上げた後", en: "Quality raised", c: "200,184,150", icon: "plus" },
 };
 
 /** 箱の種類の名前 (始まり・当たり・外れ…。一覧・戻り先の札・まとめた札で同じ) */
@@ -39,7 +40,7 @@ export function handLabel(h: Hand): string {
   const cat = h.catalyst && h.omens.includes(CATALYSING)
     ? `${h.catalystCount ? tr(`${handName(h.catalyst)} ${h.quality}% (${h.catalystCount} 個)`, `${handName(h.catalyst)} ${h.quality}% (×${h.catalystCount})`) : `${handName(h.catalyst)} ${tr("最大まで", "to max")}`} → `
     : "";
-  const label = cat + [handName(h.currency), ...h.omens.map(handName)].join(" + ") + (h.free ? tr(" (狙い無し)", " (no target)") : "");
+  const label = cat + [handName(h.currency), ...h.omens.map(handName)].join(" + ") + (h.free ? tr(" (狙い無し)", " (no target)") : "") + (isCatalyst(h.currency) ? tr(" (品質を最大まで)", " (to max quality)") : "");
   if (!h.repeat) return label;
   return h.repeat.max ? tr(`${label} (当たるまで、${h.repeat.max} 回まで)`, `${label} (until a hit, max ${h.repeat.max})`) : tr(`${label} (当たるまで)`, `${label} (until a hit)`);
 }
