@@ -143,6 +143,7 @@ function backLabel(b: Box): string {
   if (b.back === RESTART) return tr("作り直し", "Start over");
   const to = b.back ? doc.value.boxes[b.back] : null;
   if (!to) return "";
+  if (to.out === "start") return tr("始めに戻る", "Back to start");
   return to.out === "hit" && to.aim ? t.aimLabel(to.aim) : outName(to.out);
 }
 
@@ -205,7 +206,7 @@ function popDo(f: (id: string, b: Box) => void): void { const id = pop.value, b 
  * 押した物には届ける。ツリーの枠の中は数えない (空き所は押した時だけ閉じ、引っ張って画面を動かしても閉じない = onPaneClick、箱・札は開き直す)。メモの窓・欄から出した小窓も中に数える
  */
 const aside = ref<HTMLElement | null>(null);
-useDismiss(() => !!panel.value, [aside], closeHand, { swallow: false, keep: "[data-tree-canvas], [data-tree-memo-float], [role=dialog], [data-helptip-pop], [data-mod-list], [data-mod-add-menu]" });
+useDismiss(() => !!panel.value, [aside], closeHand, { swallow: false, keep: "[data-tree-canvas], [data-tree-mode-pill], [data-tree-memo-float], [role=dialog], [data-helptip-pop], [data-mod-list], [data-mod-add-menu]" });
 function clearHandOf(): void { const id = panel.value!.id; t.edit((d) => clearHand(d, id)); panel.value = null; }
 function pickAim(a: Aim): void {
   const p = panel.value!;
@@ -224,6 +225,8 @@ function onAddHit(b: Box, at?: { x: number; y: number }, link?: string): void {
   if (made && !link) panel.value = { kind: "aim", id: made };
 }
 function onDone(b: Box): void { t.edit((d) => setDone(d, b.id, b.done ? null : "main")); }
+/** 戻り先を選んでいる時の札のボタン: ↩ 続きから / ↩ 始めに戻る (10-22 オーナー「選択肢として初めに戻るでいいのでは」) */
+function pickBack(to: string): void { const from = picking.value; if (!from) return; picking.value = null; if (panel.value?.id === from) panel.value = null; t.edit((d) => setBack(d, from, to)); }
 function onTarget(b: Box): void {
   const from = picking.value;
   // つなげない箱 (灰色、use-tree-link.ts) は押しても何もしない (理由は箱に乗せると出る)
@@ -409,9 +412,13 @@ const glowOf = (b: Box): boolean => {
           </VueFlow>
         </div>
         <!-- 今の状態の札 (左上に浮かべる。ツリーを押し下げない) -->
-        <p v-if="picking || hand || viewOnly" data-tree-mode-pill class="pointer-events-none absolute left-3 top-3 z-20 rounded-full border px-3 py-1 text-[12px] shadow-[0_4px_14px_rgba(0,0,0,0.6)]"
+        <p v-if="picking || hand || viewOnly" data-tree-mode-pill class="pointer-events-none absolute left-3 top-3 z-20 flex items-center gap-2 rounded-full border px-3 py-1 text-[12px] shadow-[0_4px_14px_rgba(0,0,0,0.6)]"
           :class="picking ? 'border-cyan-400/50 bg-[#0d1a1c]/95 text-cyan-100' : 'border-white/10 bg-[#15110c]/95 text-[#d8ccb4]'">
           {{ picking ? tr("戻り先の箱を押す (Esc でやめる)", "Click the box to return to (Esc cancels)") : hand ? tr("手: 見るだけ (選択に戻すと組める)", "Hand: view only (switch to Select to edit)") : tr("縮めて見ている間は箱を押すとその箱の編集が開く", "Zoomed out: click a box to edit it") }}
+          <template v-if="picking && picking !== 'start'">
+            <button type="button" data-tree-pick-match class="g-btn sm pointer-events-auto" :title="tr('打った後のアイテムの形に合う箱から続ける', 'Continue from the box that matches the item')" @click="pickBack(MATCH)">{{ tr("↩ 続きから", "↩ Continue") }}</button>
+            <button type="button" data-tree-pick-start class="g-btn sm pointer-events-auto" :title="tr('始まりの箱の手から打ち直す', 'Craft again from the start box')" @click="pickBack('start')">{{ tr("↩ 始めに戻る", "↩ Back to start") }}</button>
+          </template>
         </p>
         <!-- ルート精査の結果 (押した時だけ。ツリーの上に浮かべて、ツリーを押し下げない) -->
         <div v-if="issues && issuesOpen" data-tree-issues class="absolute left-3 z-20 flex max-h-[45%] w-[min(720px,calc(100%-24px))] flex-col gap-1 overflow-y-auto rounded-lg border px-2 py-1.5 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.6)]"

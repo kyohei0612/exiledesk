@@ -10,7 +10,7 @@ import { allMods, modBoostsOf, mulberry32, type PatchData, type StageItem } from
 import { CATALYSING } from "./tree-hands";
 import { aimKey, type Aim, type TreeDoc } from "./tree-model";
 import { aimHeld, aimsOf, handProblem, outcomeOf, playHand, sampleOf } from "./tree-sample";
-import { heldSets, MATCH, matchItem, matchTargets, RESTART } from "./tree-run";
+import { heldSets, MATCH, matchItem, matchTargets, RESTART, settle, shapesOf } from "./tree-run";
 import { withTreeTune } from "./tree-tune";
 import { tr } from "../../../i18n/lang";
 
@@ -81,6 +81,7 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
   if (doc.fracture) {
     const cant = new Map<string, { n: number; reason: string }>();
     const never = new Set<string>();
+    const shapes = shapesOf(doc);
     for (let person = 1; person <= PEOPLE; person++) {
       const rng = mulberry32(7919 * person);
       const start = sampleOf(data, doc, "start", person).item;
@@ -124,7 +125,7 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
             const m = allMods(got).find((x) => x.modId === ob.aim!.modId);
             if (m) { hits++; if (modBoostsOf({ ...got, quality: Math.max(got.quality, 1), catalystQuality: 1, qualityTag: tag }, m, data).some((k) => k.kind === "quality")) boosted = true; }
           }
-          if (got) walk(o, got, false);
+          if (got) walk(settle(data, doc, shapes, o, got, aims), got, false);
           // もう付いているかもしれない狙い (狙いが消えた後の取り直し、heldSets) は、付いていない人だけが着くので数えない
           else if (ob.out === "hit" && ob.aim && !viaBack && !heldSets(doc, id).some((h) => h.includes(aimKey(ob.aim!)))) never.add(o);
         }

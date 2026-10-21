@@ -155,11 +155,27 @@ export function shapesOf(doc: TreeDoc): Shape[] {
 export function boxOfShape(shapes: readonly Shape[], key: string): string | null {
   return key.startsWith("#") ? "start" : shapes.find((s) => s.key === key)?.box ?? null;
 }
-function matchBox(data: PatchData, shapes: readonly Shape[], item: StageItem, aims: readonly Aim[]): string | null {
+/** アイテムの形の鍵 (付いている狙い + 外れがあるか) */
+function itemKey(data: PatchData, item: StageItem, aims: readonly Aim[]): string {
   const held = aims.filter((a) => aimHeld(data, item, a)).map(aimKey);
   const isAim = (m: StageMod): boolean => aims.some((a) => aimHeld(data, { ...item, prefixes: [m], suffixes: [] }, a));
-  const junk = [...item.prefixes, ...item.suffixes].some((m) => !m.fractured && !isAim(m));
-  return boxOfShape(shapes, shapeKey(held, junk));
+  return shapeKey(held, [...item.prefixes, ...item.suffixes].some((m) => !m.fractured && !isAim(m)));
+}
+function matchBox(data: PatchData, shapes: readonly Shape[], item: StageItem, aims: readonly Aim[]): string | null {
+  return boxOfShape(shapes, itemKey(data, item, aims));
+}
+/**
+ * 着いた箱の形と実物のアイテムの形が違う時は、続きから (形の合う箱) で進む (10-22。回す時と精査で同じ)。
+ * 例: 狙い 2 つ + 外れで狙いが 1 つ消え、始めに戻ってカオス (当たるまで) でキャストが付くと「当たり キャスト」の箱に着くが、
+ * 前から残った全耐性と外れも付いている。そのまま次の高貴を打つとサフィックスが満杯で止まった (100 人中 23 人)。実際のクラフトもアイテムを見て決める。
+ * 見るのは手のある当たり・外れの箱だけ。同じ形・合う箱が無い時はその箱のまま
+ */
+export function settle(data: PatchData, doc: TreeDoc, shapes: readonly Shape[], id: string, item: StageItem, aims: readonly Aim[]): string {
+  const b = doc.boxes[id];
+  if (!b?.hand || (b.out !== "hit" && b.out !== "junk")) return id;
+  const key = itemKey(data, item, aims);
+  if (heldSets(doc, b.out === "junk" ? b.parent : id).some((h) => shapeKey(h, b.out === "junk") === key)) return id;
+  return boxOfShape(shapes, key) ?? id;
 }
 /** アイテムから行き先 (ルート精査が回す時と同じ道を辿る用) */
 export function matchItem(data: PatchData, doc: TreeDoc, item: StageItem, aims: readonly Aim[] = aimsOf(doc)): string | null {
@@ -237,7 +253,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     });
     if (!next) return { end: "stuck", cost, at, visits, uses, restarts };
     item = r.item;
-    at = next;
+    at = settle(data, doc, shapes, next, item, aims);
   }
 }
 
