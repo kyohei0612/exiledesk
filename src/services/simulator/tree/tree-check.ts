@@ -101,7 +101,7 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
         }
         if (b.back && !viaBack) {
           // 形の合う箱へ = 回す時と同じく今のアイテムの形で行き先を決める (tree-run の matchItem)。作り直し = 始めのアイテムで始まりへ
-          const to = b.back === MATCH ? matchItem(data, doc, item, aims) : b.back === RESTART ? "start" : b.back;
+          const to = b.back === MATCH ? matchItem(data, doc, item, aims) : b.back === RESTART ? "start" : settle(data, doc, shapes, b.back, item, aims);
           if (!to) { add(id, "noMatch", tr("この形の箱が無い (回すとここで止まる)", "No box has this shape (runs stop here)")); return; }
           walk(to, b.back === RESTART ? start : item, true);
           return;

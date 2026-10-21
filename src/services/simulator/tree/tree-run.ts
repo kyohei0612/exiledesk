@@ -168,6 +168,8 @@ function matchBox(data: PatchData, shapes: readonly Shape[], item: StageItem, ai
  * 着いた箱の形と実物のアイテムの形が違う時は、続きから (形の合う箱) で進む (10-22。回す時と精査で同じ)。
  * 例: 狙い 2 つ + 外れで狙いが 1 つ消え、始めに戻ってカオス (当たるまで) でキャストが付くと「当たり キャスト」の箱に着くが、
  * 前から残った全耐性と外れも付いている。そのまま次の高貴を打つとサフィックスが満杯で止まった (100 人中 23 人)。実際のクラフトもアイテムを見て決める。
+ * 戻り先の箱 (back) へ進む時も同じ (10-22 7 本目。3,000 人で 2 人止まった: 外れ 2 つの消去で 1 つ残ったまま「外れの前の箱」へ戻り満杯で触媒の高貴、
+ * 始まりのカオスで P2 の狙いが先に付いたまま d1 へ戻り素の高貴の外れが冒涜の外れの箱へ)。
  * 見るのは手のある当たり・外れの箱だけ。同じ形・合う箱が無い時はその箱のまま
  */
 export function settle(data: PatchData, doc: TreeDoc, shapes: readonly Shape[], id: string, item: StageItem, aims: readonly Aim[]): string {
@@ -233,7 +235,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
         at = "start";
         continue;
       }
-      const to = b.back === MATCH ? matchBox(data, shapes, item, aims) : b.back;
+      const to = b.back === MATCH ? matchBox(data, shapes, item, aims) : settle(data, doc, shapes, b.back, item, aims);
       if (!to) return { end: "stuck", cost, at, visits, uses, restarts };
       at = to;
       continue;
