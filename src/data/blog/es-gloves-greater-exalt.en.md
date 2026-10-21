@@ -1,11 +1,13 @@
 ---
-title: Perfect Isn't Best for ES Gloves: Omen of Sinistral Exaltation + Greater Exalted Orb Gets Three Prefixes for 105 div
-description: We compared the cost of putting maximum Energy Shield, ES% and maximum Mana at T2 or better on Intelligence gloves, 300 runs per Exalted Orb type. Greater was cheapest at 105 div; Perfect cost 201 and the plain Exalted Orb 423.
+title: PoE2 Energy Shield Gloves Craft: Greater Exalt Beats Perfect
+description: For a PoE2 Energy Shield gloves craft, we compared Exalted Orb types for maximum ES, ES% and maximum Mana at T2+, 300 runs each. Greater was cheapest at 105 div; Perfect cost 201 and the plain Exalted Orb 423.
 date: 2026-10-22
 tags: gloves, Energy Shield, Exalted Orb, Chaos Orb, expected cost
 tree: /?page=sim-tree&base=Sirenscale%20Gloves
 craft: /?base=Sirenscale%20Gloves
 ---
+For a PoE2 Energy Shield gloves craft with maximum Energy Shield, ES% and maximum Mana (T2+) as prefixes, **Omen of Sinistral Exaltation + Greater Exalted Orb was cheapest at 105 Divine Orbs (div) per item**. Perfect cost 201 div and the plain Exalted Orb 423 div. Catalysts can't be used on gloves.
+
 When aiming for high tiers, it's tempting to use the Perfect Exalted Orb, whose high minimum modifier level cuts out low-tier misses. But when we compared the cost of putting three ES prefixes on Intelligence gloves, the Greater Exalted Orb was cheapest. Perfect cost almost twice as much, and the plain Exalted Orb four times as much.
 
 ## The Gloves
@@ -32,7 +34,7 @@ On a ring, an Omen of Catalysing Exaltation with Catalyst Quality weights your t
 | **Greater Exalted Orb** | **100%** | **105 div** | 654 | 63 | 65 | 26 times |
 | Perfect Exalted Orb | 100% | 201 div | 423 | 43 | 45 | 17 times |
 
-300 runs each; Greater's average is within ±11 div. The gaps are well outside the noise.
+300 runs each; Greater's average is within ±11 div. The gaps are well outside the noise. You can apply the same moves to Sirenscale Gloves on the [crafting bench](/?base=Sirenscale%20Gloves).
 
 ## Why Greater
 
@@ -63,3 +65,8 @@ For reference, finishing the suffixes afterward with Critical Damage Bonus and A
 - Mod names and tiers come from the engine's data. Not compared with Craft of Exile or in-game results.
 
 You can try the same gloves in the Craft route tree, switching the Exalted Orb type.
+
+**Related posts**
+
+- [PoE2 ring suffix craft: annul misses early](/en/blog/dont-hoard-misses/)
+- [PoE2 crafting expected cost](/en/blog/optimal-move-vs-intuition/)

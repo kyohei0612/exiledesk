@@ -1,11 +1,13 @@
 ---
-title: Sanctify and Quality Make +6 Only in One Order: Why There Is No +5 Absent Amulet
-description: A Sanctified Absent Amulet with 50% Quality showed +6 to Level of all Spell Skills. +6 only appears if Sanctification hits the base value before Quality, and +5 never appears. Here is why a trade search for +5 found nothing.
+title: PoE2 Sanctify vs Quality Order: Why +6 but Never +5
+description: In PoE2, Sanctification applies to the base value before Quality. A 50% Quality Absent Amulet can show +6 to Level of all Spell Skills, but never +5. Here is why a trade search for +5 found nothing, multiplier by multiplier.
 date: 2026-10-22
 tags: Sanctified, Quality, Absent Amulet, Divine Orb, Catalyst
 tree: /?page=sim-tree&base=Absent%20Amulet
 craft: /?base=Absent%20Amulet
 ---
+In PoE2, Sanctify and Quality apply in a fixed order: **Sanctification hits the base value (×0.78 to 1.22, rounded), then Quality applies at display (rounded down)**. So on a 50% Quality Absent Amulet, "+# to Level of all Spell Skills" shows +3, +4 or +6, and never +5.
+
 On the trade site there was an Absent Amulet with 50% Quality showing "+6 to Level of all Spell Skills." The top tier (T1) of this mod is a flat +3 with no range, yet the item showed +6. And a search for +5 under the same conditions found nothing at all. +4 and +6 exist, but +5 doesn't. The order in which Sanctification and Quality apply explains it.
 
 ## Two Boosts
@@ -26,7 +28,7 @@ The base value is +3. In each order:
 | Sanctify the base value → Quality | 3 × 1.22 = 3.66 → rounds to 4; 4 × 1.5 = 6 | **+6** |
 | Quality → Sanctify | 3 × 1.5 = 4.5; 4.5 × 1.22 = 5.49 | +5 |
 
-Applying Quality first caps out at +5 even with the best Sanctification roll. Since +6 exists, the game must sanctify the base value first and apply Quality afterward. The ExileDesk engine uses this order, and it matches the real item.
+Applying Quality first caps out at +5 even with the best Sanctification roll. Since +6 exists, the game must sanctify the base value first and apply Quality afterward. The ExileDesk engine uses this order, and it matches the real item. Sanctifying an Absent Amulet on the [crafting bench](/?base=Absent%20Amulet) shows the same values.
 
 ## What Each Multiplier Shows
 
@@ -67,3 +69,8 @@ At 20% Quality (the normal cap), Quality doesn't move this mod at all: 3 × 1.2 
 - The multiplier range (0.78 to 1.22), the order and the rounding come from the ExileDesk engine (apply-vaal.ts, quality.ts). The order matches the real +6 item. Whether the multiplier is uniform is unconfirmed.
 
 You can try Sanctification and Quality on an Absent Amulet in the crafting bench.
+
+**Related posts**
+
+- [PoE2 Gold Ring craft (why the Maximum Quality mod is removed)](/en/blog/gold-ring-video-decoded/)
+- [PoE2 crafting expected cost](/en/blog/optimal-move-vs-intuition/)

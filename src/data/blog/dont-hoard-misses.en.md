@@ -1,11 +1,13 @@
 ---
-title: Don't Hoard Your Misses: The One Change That Took a Gold Ring from 400 to 220 Divine
-description: We compared three ways to handle misses when crafting Rarity, Cast Speed and all Elemental Resistances on a Gold Ring, 300 runs each. Annulling misses at once cut the cost from 400 to 220 div.
+title: PoE2 Ring Suffix Craft: Annul Misses Early, 400 → 220 div
+description: We crafted Rarity, Cast Speed and all Elemental Resistances on a PoE2 Gold Ring's suffixes, 300 engine runs per method. Annulling misses at once cut the cost per ring from 400 to 220 Divine Orbs.
 date: 2026-10-22
 tags: Gold Ring, Chaos Orb, Orb of Annulment, Omen of Catalysing Exaltation, expected cost
 tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
 ---
+For a PoE2 ring suffix craft with three targets, the cheapest method was to **annul a miss the moment it rolls**. Putting Rarity, Cast Speed and all Elemental Resistances on a Gold Ring cost 400 Divine Orbs (div) per ring when misses were held until the suffixes were full, and 220 div when they were annulled at once.
+
 Putting Rarity, Cast Speed and all Elemental Resistances in the suffixes of a Gold Ring is a familiar caster craft. We ran this craft hundreds of times on the ExileDesk engine and changed only one thing: what you do when a miss rolls. The difference looks small, but the cost per finished ring dropped from 400 Divine Orbs to 220.
 
 ## The Ring
@@ -32,7 +34,7 @@ Up to here, all three methods are the same. The only difference is whether you a
 | B Fill to three | 99.7% | 400 div | 1,197 | 135 | 30 | 108 | 35 times |
 | **C Annul misses at once** | **100%** | **220 div** | 930 | 57 | 15 | 44 | 25 times |
 
-C costs about half of B. With 300 runs each, the average is within about ±10%, so the gap between B and C is well outside the noise. A and B barely overlap.
+C costs about half of B. You can [try the same Gold Ring on the crafting bench](/?base=Gold%20Ring). With 300 runs each, the average is within about ±10%, so the gap between B and C is well outside the noise. A and B barely overlap.
 
 ## Why Annulling Early Works
 
@@ -57,3 +59,9 @@ Finally, we kept method C but replaced Rarity T1 with "any one of Fire, Cold or 
 - Mod names and tiers were checked on poe2db. The Omen of Catalysing Exaltation multiplier follows Craft of Exile's formula. These expected costs themselves have not been compared against Craft of Exile or in-game results.
 
 You can try the same route, changing what you do after a miss, in ExileDesk's Craft route tree.
+
+**Related posts**
+
+- [PoE2 crafting expected cost](/en/blog/optimal-move-vs-intuition/)
+- [PoE2 Gold Ring craft, step by step](/en/blog/gold-ring-video-decoded/)
+- [PoE2 Cast Speed weight on poe2db](/en/blog/poe2db-cast-speed-weight/)

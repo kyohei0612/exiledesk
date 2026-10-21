@@ -1,11 +1,13 @@
 ---
-title: The Cheapest Move Isn't the One You'd Guess: Expected Cost Worked Backward
-description: Working the expected cost to finish backward from every item state, the cheapest way to craft a pair of gloves used plain Orbs of Annulment instead of expensive Omens. Here is the gap from the intuitive route, and where Omens pay off.
+title: PoE2 Crafting Expected Cost: The Cheapest Move Skips Omens
+description: We worked out PoE2 crafting expected cost backward from the finished item. A route close to the video costs about 3,400 div; the best route about 105 div. Why plain Orbs of Annulment beat expensive Omens, with 1,000 engine runs.
 date: 2026-10-22
 tags: expected cost, Orb of Annulment, Omen, Chaos Orb, gloves
 tree: /?page=sim-tree&base=Intricate%20Gloves
 craft: /?base=Intricate%20Gloves
 ---
+Working PoE2 crafting expected cost backward from the finished item, the cheapest route **barely used expensive Omens and removed misses with a plain Orb of Annulment**. On one pair of gloves, a route close to intuition cost about 3,400 Divine Orbs (div), while the best route cost 105 div, and 94 div over 1,000 engine runs.
+
 When a miss rolls mid-craft, it is tempting to reach for an expensive Omen, such as Omen of Sinistral Erasure, to remove only the side with the miss. You don't want to hit a target. But when we worked out the expected cost to finish from every item state, the cheapest route barely used such Omens. It removed misses with a plain Orb of Annulment, worth 0.44 div. This article explains the calculation and why the answer differs from intuition.
 
 ## What We Calculated
@@ -24,7 +26,7 @@ The average cost from any state to a finished item can be found by stepping back
 | Annul misses + Omen of Sinistral Annulment | about 3,900 div | calculation only |
 | Rule: "if +2 Projectile is lost, start over" | 775 div (engine 788) | calculation + engine |
 
-The cheapest route was 105 div by calculation and 94 div over 1,000 engine runs. On luck: half of the runs finished within 64 div, and one in ten took 223 div or more.
+The cheapest route was 105 div by calculation and 94 div over 1,000 engine runs. You can apply the moves one by one on the [crafting bench](/?base=Intricate%20Gloves). On luck: half of the runs finished within 64 div, and one in ten took 223 div or more.
 
 The intuitive routes come to about 3,400 to 3,900 div by calculation. Those were not checked on the engine, so treat them as an order of magnitude.
 
@@ -68,3 +70,8 @@ The Gold Ring in [Don't Hoard Your Misses](/en/blog/dont-hoard-misses/) follows 
 - The price of buying the base is not included. Nothing here has been compared with Craft of Exile.
 
 You can try the same gloves in the Craft route tree, changing what you do after a miss.
+
+**Related posts**
+
+- [PoE2 ring suffix craft: annul misses early](/en/blog/dont-hoard-misses/)
+- [PoE2 Energy Shield gloves craft](/en/blog/es-gloves-greater-exalt/)

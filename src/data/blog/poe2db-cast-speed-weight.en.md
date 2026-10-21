@@ -1,11 +1,13 @@
 ---
-title: poe2db Lists Ring Cast Speed at Weight 1: Three Sources Compared
-description: Ring Cast Speed has weight 1 on poe2db but 1,000 in Craft of Exile and ExileDesk. Depending on which you use, Omen of Dextral Exaltation + Greater Exalted Orb lands Cast Speed T2+ 4.37% or 0.00% of the time. We lined the tables up.
+title: PoE2 Cast Speed Weight: 1 on poe2db, 1,000 in CoE
+description: PoE2 ring Cast Speed has modifier weight 1 on poe2db but 1,000 in Craft of Exile and ExileDesk. That decides whether Omen of Dextral Exaltation + Greater Exalted Orb lands Cast Speed T2+ 4.37% or 0.00% of the time.
 date: 2026-10-22
 tags: poe2db, Craft of Exile, weight, Cast Speed, Gold Ring
 tree: /?page=sim-tree&base=Gold%20Ring
 craft: /?base=Gold%20Ring
 ---
+PoE2 ring Cast Speed has a modifier weight of **1 on poe2db (a placeholder, all five tiers) but 1,000 in Craft of Exile and ExileDesk**. At 1,000, Omen of Dextral Exaltation + Greater Exalted Orb lands Cast Speed T2+ 4.37% of the time; with poe2db's 1 it is 0.00%, and any Cast Speed ring looks absurdly expensive.
+
 On a crafting stream, someone said: "poe2db's Cast Speed weight is broken, it shows 1. In practice it rolls about one in five." If ring Cast Speed really had weight 1, it would roll a thousand times less often than other mods (which sit around 1,000). Is it really 1, and what does ExileDesk use? We compared poe2db, Craft of Exile and the ExileDesk engine.
 
 ## What a Weight Is
@@ -38,7 +40,7 @@ On a Gold Ring with Fractured Spell Damage and Rarity T1, we applied Omen of Dex
 | 1 (poe2db) | 0.00% | 0.01% |
 | 200 (reference: reading "one in five" as 1/5 of 1,000) | 0.97% | 1.48% |
 
-Using poe2db's 1 as-is means Cast Speed essentially never rolls from a plain Exalted Orb. A cost tool using that value would make any Cast Speed ring look absurdly expensive.
+Using poe2db's 1 as-is means Cast Speed essentially never rolls from a plain Exalted Orb. On ExileDesk's [crafting bench](/?base=Gold%20Ring) you can craft with the odds at weight 1,000 shown. A cost tool using that value would make any Cast Speed ring look absurdly expensive.
 
 What the stream's "one in five" refers to (the weight or the roll rate) can't be settled from the words alone. The 200 row is just one possible reading, for reference.
 
@@ -55,3 +57,8 @@ The lesson: when a stream or video says "it took N tries," which tier they meant
 - Roll rates: the ExileDesk engine, 20,000 tries each, with the weight changed only inside the script. Not compared with in-game results.
 
 All our Gold Ring cost articles, including [Don't Hoard Your Misses](/en/blog/dont-hoard-misses/), use weight 1,000.
+
+**Related posts**
+
+- [PoE2 ring suffix craft: annul misses early](/en/blog/dont-hoard-misses/)
+- [PoE2 Gold Ring craft, step by step](/en/blog/gold-ring-video-decoded/)
