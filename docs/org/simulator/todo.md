@@ -10,8 +10,8 @@
   - C1 枠の外・Esc (b366528f)、C2 ホイールで拡大縮小 (f58a2a80)、C3 外れ MOD の札 (4e51480b、ジン部長の rowTags)、C4 線の道の作り直し (cafc7253、tree-lines.ts の routeBacks、整列の兄弟の間 64px。台本 scripts/_tree-lines-probe: 見本 18 本で箱を通る 0・同じ所 0・棒と同じ高さ 0、跨ぐ 49)、C5 小さい倍率の編集のポップアップ・＋で棚と同時に箱を色分け (6b4cda86、use-tree-link.ts)。
   - 打てない手 (効かない・消せる物が無いお告げ) は確定させず、置かれていれば精査で ! (2b085e32、tree-sample の handProblem = エンジンの omenBlock + playHand)。
   - 木の設定 (触媒・聖別の倍率・MOD の重み) を木に持ち、レシピ・URL に乗せる (31160444、tree-tune.ts・use-tree-tune.ts)。
-- 確かめ (開発版 4e51480b、本物のマウス): tree-mouse.mjs 1 条件 39 件 NG 0、8 条件は回している途中。見本の木の台本 tree-sample-check.mjs (共有メモ local_35782246…/tree-mouse/) はこれから。
-- 次: 確かめの結果を見て直す → 開発版の URL と件数をブラックへ → オーナーに触ってもらう。跨ぐ所が多い (49) のは画面で見て詰める。src/views/htc-craft/tree-auto.ts (514 行) を 500 行以下に割る (ブラックの頼み、移動だけの commit と中身は別)。
+- 確かめ (開発版、本物のマウス = CDP の Input): tree-mouse.mjs 8 条件 312 件 NG 0 (4e51480b)、tree-sample-check.mjs 4 条件 44 件 NG 0 (1e58e7ab。途中で見つけて直した: 縮めた時のポップアップが横に広がり試し打ちが枠の外 6c6c553f・戻りの札が押下を止めてポップアップが出ない 09154c98 / 1e58e7ab)。等倍のスナップは目で見た。
+- 次: オーナーに触ってもらう (返事待ち)。残りの気付き: 「全体を表示」で横に広い木はミニマップが右下の箱に重なる (fit は空ける幅が足りない時に空けない)、跨ぐ所 49 は見て多ければ詰める、木の設定はページを閉じずにタブを閉じるとクラフトステージの覚えた値が木の値のまま。
 
 ## 台本 (共有メモ local_35782246-d80a-4c3f-9dff-36103418e719/tree-mouse/)
 - tree-mouse.mjs (8 条件の操作、10b はホイール = 拡大縮小に直した)・tree-shelf.mjs (棚とお告げ)・tree-recipe.mjs・tree-trial-wide.mjs・tree-sample-check.mjs (見本の木: 戻りの線の終わり・n か所・精査 0・縮めて押す → ポップアップ → 試し打ち・札の編集と Esc)。
