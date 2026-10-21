@@ -62,6 +62,21 @@
   <li>Where a rule is unclear, we check reports and videos from players who tested it before adding it. If something looks wrong, please tell us via "Send feedback".</li>
 </ul>
 
+<h2>How ExileDesk Started</h2>
+<p>ExileDesk began in May 2026 as a small tool for testing PoE2 crafts. The starting point was simple: after each currency, we wanted to see what that step did and what the next step could add. It later became the browser version you are using now, and it keeps changing based on players' requests and bug reports. Every change is listed in the site's changelog — 141 releases so far, from v0.1.448 to the current v0.1.589.</p>
+<h2>Where Our Numbers Come From</h2>
+<p>Every number on ExileDesk carries a label saying how it was checked:</p>
+<ul>
+  <li><b>Engine</b>: results of crafting hundreds or thousands of times on the ExileDesk emulator (the same one on this site). This is not an outside ground truth, and we say so.</li>
+  <li><b>poe2db / Craft of Exile</b>: mod names, tiers and weights are checked against poe2db, and odds formulas against Craft of Exile. When they disagree and nothing settles it, we follow poe2db.</li>
+  <li><b>In game</b>: things the operator confirmed on real items in game or on the trade site.</li>
+  <li><b>Estimate</b>: weakly supported values, clearly marked as estimates.</li>
+</ul>
+<p>Where the developer has not published a number (for example, Desecrated mod weights), we don't pretend to know it: we say nobody knows, provide a default, and let you change it.</p>
+<h2>When We Get Something Wrong</h2>
+<p>When we find a mistake, we don't quietly delete it. We record what was wrong, how we found out and what we changed. For example, we once let Fracturing Orbs fix Desecrated mods; 24 in-game tries hit 0 times, so we fixed it. We also switched quality rounding to round-to-nearest, found it didn't match real items, and went back to rounding down. These corrections are written up on the blog too.</p>
+<h2>Our Blog</h2>
+<p>The blog only covers what we actually found by running crafts on ExileDesk. No rewrites of other sites, no posts without numbers. Each post says what we examined and what we learned, where each number comes from and how certain it is, and what is still unverified, with a link to the tool so you can try it yourself. When a number changes, the post shows the update date and what changed.</p>
 <h2>About the site</h2>
 <ul>
   <li>ExileDesk is an unofficial fan site run by an individual. It is not affiliated with or endorsed by Grinding Gear Games.</li>
