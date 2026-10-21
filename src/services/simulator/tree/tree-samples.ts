@@ -6,12 +6,12 @@
  *   解析君の docs/org/math/notes/2026-10-21-gold-ring-suffix-ev.md の打ち方 C (外れはすぐ消去) = scripts/analysis/check-tree-run.mjs の ringTree と同じ道。
  *   始まり = プレフィックスにスペルダメージ T2 のフラクチャー + 乱数の MOD 1 つ → 狙いのどれかが付くまでカオス →
  *   レアリティが無い間は右側の高貴のお告げ + 上級の高貴、ある時は無い方をカタリスト + 触媒の高貴のお告げ + 右側の高貴のお告げ + 完全の高貴。
- *   外れたらすぐ消去。外れが消えたら続きから (match = 外れの前の当たりの箱)、狙いが消えたら始めに戻る (始まりのカオスを当たるまで。10-22 オーナー
+ *   外れたらすぐ消去。外れが消えたら外れの前の当たりの箱へ戻る (人が選ぶのと同じ具体的な箱。10-22 オーナー「続きからって選択肢選べんでしょ」)、
+ *   2 つ目の当たりは同じ組の箱へ (レアリティ → キャスト = rc など)。狙いが消えたら始めに戻る (始まりのカオスを当たるまで。10-22 オーナー
  *   「狙いが消えたらカオススパムだろ」「選択肢として初めに戻るでいいのでは」)。狙いが 2 つあった時は残った狙い + 外れで戻るので、
  *   カオスで付いた箱の形と実物が違えば続きから (tree-run の settle。無いと 100 人中 23 人がサフィックス満杯で止まった)
  */
 import { tidy, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
-import { MATCH } from "./tree-run";
 
 export const TREE_SAMPLES = ["gold-ring-suffix"] as const;
 
@@ -29,10 +29,10 @@ function goldRingSuffix(): TreeDoc {
   const PLAIN = hand("exalt_greater", ["OmenofDextralExaltation"]);
   const CAT = (cat: string): Hand => hand("exalt_perfect", ["OmenofCatalysingExaltation", "OmenofDextralExaltation"], { catalyst: cat, quality: 20 });
   const SPAM = hand("chaos", [], { repeat: { until: "hit", max: null } });
-  // 外れの箱 (id) は消去を打ち、結果の 2 箱: id_g = 外れが消えた → 続きから、id_l = 狙いが消えた → 始めに戻る
+  // 外れの箱 (id) は消去を打ち、結果の 2 箱: id_g = 外れが消えた → 外れの前の箱 (parent)、id_l = 狙いが消えた → 始めに戻る
   const J = (parent: string, id: string): Record<string, Partial<TreeBox>> => ({
     [id]: { out: "junk", parent, hand: hand("annul"), outs: [`${id}_g`, `${id}_l`] },
-    [`${id}_g`]: { out: "junkGone", parent: id, back: MATCH },
+    [`${id}_g`]: { out: "junkGone", parent: id, back: parent },
     [`${id}_l`]: { out: "lost", parent: id, back: "start" },
   });
   return make("Gold Ring", { modId: "Rings/Special_genesis_tree_caster_SpellDamage", tier: 2 }, 1, {
@@ -43,9 +43,9 @@ function goldRingSuffix(): TreeDoc {
     rc: { out: "hit", aim: A.C, parent: "sR", hand: CAT("catalyst_cold"), outs: ["d1", "jRC"] },
     ra: { out: "hit", aim: A.A, parent: "sR", hand: CAT("catalyst_speed"), outs: ["d2", "jRA"] },
     ca: { out: "hit", aim: A.A, parent: "sC", hand: PLAIN, outs: ["d3", "jCA"] },
-    cr: { out: "hit", aim: A.R, parent: "sC", back: MATCH },
-    ar: { out: "hit", aim: A.R, parent: "sA", back: MATCH },
-    ac: { out: "hit", aim: A.C, parent: "sA", back: MATCH },
+    cr: { out: "hit", aim: A.R, parent: "sC", back: "rc" },
+    ar: { out: "hit", aim: A.R, parent: "sA", back: "ra" },
+    ac: { out: "hit", aim: A.C, parent: "sA", back: "ca" },
     d1: { out: "hit", aim: A.A, parent: "rc", done: "main" },
     d2: { out: "hit", aim: A.C, parent: "ra", done: "main" },
     d3: { out: "hit", aim: A.R, parent: "ca", done: "main" },

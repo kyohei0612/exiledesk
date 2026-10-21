@@ -1,5 +1,5 @@
 /**
- * tree-merge.ts — 戻りの矢印だけの箱 (↩ 続きから・↩ 始めに戻る) から行き先へ流れ込む線 (2026-10-22 オーナー「やってる事が同じ枠ってあるじゃん、
+ * tree-merge.ts — 戻りの矢印だけの箱 (↩ 行き先の箱の名前・↩ 始めに戻る) から行き先へ流れ込む線 (2026-10-22 オーナー「やってる事が同じ枠ってあるじゃん、
  * 統合できないの? 枠も線も減るでしょ」)。中のデータ (木の形・精査・100 人回し・消した時に下が消える動き) は変えず、見え方だけ。
  *
  * 戻りの矢印だけの箱 = 次の手が無く、戻りの矢印だけの箱。その先は「今のアイテムの形と同じ箱」= もうある箱なので、箱の下の真ん中から
@@ -12,7 +12,7 @@ import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { MATCH, matchTargets, RESTART } from "../../../services/simulator/tree/tree-run";
 import { handAnchor, type BackReq, type Pos } from "./tree-lines";
 
-/** 戻りの行き先の箱 (↩ 続き = 行きうる形の箱を全部、↩ 作り直しは無し) */
+/** 戻りの行き先の箱 (決めた箱 1 つ。前の版の形の合う箱へ = 行きうる形の箱を全部、作り直しは無し) */
 export function backTargetsOf(doc: TreeDoc, id: string): string[] {
   const b = doc.boxes[id];
   if (!b?.back || b.back === RESTART) return [];

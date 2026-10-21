@@ -139,17 +139,22 @@ function onClear(): void { if (clearArm.arm()) { t.reset(); setCurrentTreeRecipe
 /** 戻り先へ寄る (編集のポップアップの札を押した時) */
 function goBack(b: Box): void { const to = backTargetsOf(doc.value, b.id)[0]; if (to) void v.reveal(to, true); }
 
-function backLabel(b: Box): string {
-  if (b.back === MATCH) {
-    const n = backTargetsOf(doc.value, b.id).length;
-    // 本番の言い方 (クラフト台の「もう一度押すと続きから」)。オーナー 10-22「本番は形の合う箱へって選択しない」、言葉の案 1
-    return n > 1 ? tr(`続きから (${n} か所)`, `Continue (${n} places)`) : n ? tr("続きから", "Continue") : tr("続きの箱が無い", "No box to continue from");
-  }
-  if (b.back === RESTART) return tr("作り直し", "Start over");
-  const to = b.back ? doc.value.boxes[b.back] : null;
+/** 戻り先の箱の名前 (始めに戻る・当たりは付く MOD・ほかは結果の名前) */
+function boxLabel(id: string): string {
+  const to = doc.value.boxes[id];
   if (!to) return "";
   if (to.out === "start") return tr("始めに戻る", "Back to start");
   return to.out === "hit" && to.aim ? t.aimLabel(to.aim) : outName(to.out);
+}
+/**
+ * 戻りの箱の下の行 = いつも行き先の箱の名前 (10-22 オーナー「続きからって選択肢選べんでしょ、そもそも白紙の状態からこうなるはず」)。
+ * 前の版の「形の合う箱へ」(MATCH) も行きうる箱の名前で出す (複数なら「○○ ほか n か所」)
+ */
+function backLabel(b: Box): string {
+  if (b.back === RESTART) return tr("作り直し", "Start over");
+  const to = backTargetsOf(doc.value, b.id);
+  if (!to.length) return b.back === MATCH ? tr("行き先の箱が無い", "No box to go to") : "";
+  return to.length > 1 ? tr(`${boxLabel(to[0]!)} ほか ${to.length - 1} か所`, `${boxLabel(to[0]!)} +${to.length - 1} more`) : boxLabel(to[0]!);
 }
 
 // 組み替え
@@ -230,7 +235,7 @@ function onAddHit(b: Box, at?: { x: number; y: number }, link?: string): void {
   if (made && !link) panel.value = { kind: "aim", id: made };
 }
 function onDone(b: Box): void { t.edit((d) => setDone(d, b.id, b.done ? null : "main")); }
-/** 戻り先を選んでいる時の札のボタン: ↩ 続きから / ↩ 始めに戻る (10-22 オーナー「選択肢として初めに戻るでいいのでは」) */
+/** 戻り先を選んでいる時の札のボタン: ↩ 始めに戻る (10-22 オーナー「選択肢として初めに戻るでいいのでは」。ほかは箱を押して選ぶ、「続きから」は 10-22 に消した) */
 function pickBack(to: string): void { const from = picking.value; if (!from) return; picking.value = null; if (panel.value?.id === from) panel.value = null; t.edit((d) => setBack(d, from, to)); }
 function onTarget(b: Box): void {
   const from = picking.value;
@@ -421,7 +426,6 @@ const glowOf = (b: Box): boolean => {
           :class="picking ? 'border-cyan-400/50 bg-[#0d1a1c]/95 text-cyan-100' : 'border-white/10 bg-[#15110c]/95 text-[#d8ccb4]'">
           {{ picking ? tr("戻り先の箱を押す (Esc でやめる)", "Click the box to return to (Esc cancels)") : hand ? tr("手: 見るだけ (選択に戻すと組める)", "Hand: view only (switch to Select to edit)") : tr("縮めて見ている間は箱を押すとその箱の編集が開く", "Zoomed out: click a box to edit it") }}
           <template v-if="picking && picking !== 'start'">
-            <button type="button" data-tree-pick-match class="g-btn sm pointer-events-auto" :title="tr('打った後のアイテムの形に合う箱から続ける', 'Continue from the box that matches the item')" @click="pickBack(MATCH)">{{ tr("↩ 続きから", "↩ Continue") }}</button>
             <button type="button" data-tree-pick-start class="g-btn sm pointer-events-auto" :title="tr('始まりの箱の手から打ち直す', 'Craft again from the start box')" @click="pickBack('start')">{{ tr("↩ 始めに戻る", "↩ Back to start") }}</button>
           </template>
         </p>

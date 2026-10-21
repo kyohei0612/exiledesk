@@ -190,8 +190,14 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   if (same) return;
   for (const o of b.outs) drop(d, subtree(d, o));
   b.outs = want.flatMap((k) => (k === "hit" && aims.length ? aims.map((a) => { const h = mk(d, "hit", id); h.aim = { ...a }; return h.id; }) : [mk(d, k, id).id]));
-  // 消えた箱は初めから「形の合う箱へ」でつないでおく (オーナー 10-22「狙いが消えた (フラクチャーだけ = 始まりと同じ形) などは自動でつないでおく」。× で外せる)
-  for (const o of b.outs) { const c = d.boxes[o]!; if (c.out === "lost" || c.out === "junkGone") c.back = MATCH_BACK; }
+  // 消えた箱は初めからつないでおく (オーナー 10-22「狙いが消えた…などは自動でつないでおく」。× で外せる)。行き先は人が選ぶのと同じ具体的な箱
+  // (10-22 オーナー「続きからって選択肢選べんでしょ」): 狙いが消えた = 始めに戻る (10-22「選択肢として初めに戻るでいいのでは」)、
+  // 外れが消えた = 外れの前の箱 (外れの箱の親。外れだけ消えたので、その箱と同じ形)。外れの箱の下でない時は形の合う箱へ
+  for (const o of b.outs) {
+    const c = d.boxes[o]!;
+    if (c.out === "lost") c.back = "start";
+    else if (c.out === "junkGone") c.back = b.out === "junk" && b.parent ? b.parent : MATCH_BACK;
+  }
   spread(d, id);
   makeRoom(d, id);
 }
