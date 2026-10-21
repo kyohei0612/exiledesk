@@ -120,21 +120,22 @@ function defaultRect(): Rect {
 const snapRect = (k: Exclude<Snap, null>): Rect => k === "max" ? { x: 0, y: 0, w: vw(), h: vh() }
   : { x: k === "left" ? 0 : Math.ceil(vw() / 2), y: 0, w: Math.floor(vw() / 2), h: vh() };
 
-// 右の欄を避ける (重なる時だけその左へ。自分で動かした後は避けない)
-const avoidRect = ref<ReturnType<typeof cssRect> | null>(null);
+// 右の欄と右下の道具 (ミニマップ・ツールバー) を避ける (重なる時だけその左へ。自分で動かした後は避けない)
+const avoidRects = ref<Array<ReturnType<typeof cssRect>>>([]);
 const placedByUser = ref(false);
 function measureAvoid(): void {
-  const el = props.avoid ? document.querySelector("[data-tree-panel]") : null;
-  avoidRect.value = el ? cssRect(el.getBoundingClientRect()) : null;
+  const els = props.avoid ? [document.querySelector("[data-tree-panel]"), document.querySelector("[data-tree-tools]")] : [];
+  avoidRects.value = els.filter((e): e is Element => !!e).map((e) => cssRect(e.getBoundingClientRect())).sort((a, z) => z.left - a.left);
 }
 watch(() => props.avoid, async () => { placedByUser.value = false; await nextTick(); measureAvoid(); }, { immediate: true });
 
 const shown = computed((): Rect | null => {
   if (snap.value) return snapRect(snap.value);
-  const r = rect.value, a = avoidRect.value;
-  if (!r || !a || placedByUser.value) return r;
-  const overlap = r.x < a.right && r.x + r.w > a.left && r.y < a.bottom && r.y + r.h > a.top;
-  return overlap ? { ...r, x: Math.max(0, a.left - r.w - 12) } : r;
+  const r = rect.value;
+  if (!r || placedByUser.value) return r;
+  let x = r.x;
+  for (const a of avoidRects.value) if (x < a.right && x + r.w > a.left && r.y < a.bottom && r.y + r.h > a.top) x = Math.max(0, a.left - r.w - 12);
+  return x === r.x ? r : { ...r, x };
 });
 
 const preview = ref<Snap>(null);

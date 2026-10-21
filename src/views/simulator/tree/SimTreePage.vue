@@ -88,8 +88,9 @@ const backLine = computed(() => {
   const right = p.x >= q.x;
   const sx = p.x + BOX_W / 2 + ox.value, sy = p.y + BOX_H + oy.value, gy = sy + 22;
   const lane = (right ? bd.x + bd.w + 36 : bd.x - 36) + ox.value;
-  const tx = (right ? q.x + BOX_W + 3 : q.x - 3) + ox.value, ty = q.y + BOX_H / 2 + oy.value;
-  return `M ${sx} ${sy} L ${sx} ${gy} L ${lane} ${gy} L ${lane} ${ty} L ${tx} ${ty}`;
+  // 戻り先の段の上の隙間 (手の札と横の棒の間) を通って、戻り先の上の辺に入る (横の辺に入ると隣の箱の裏を横切った、10-22 開発版で見た)
+  const tx = q.x + BOX_W / 2 + (right ? 36 : -36) + ox.value, top = q.y + oy.value, gap = top - 30;
+  return `M ${sx} ${sy} L ${sx} ${gy} L ${lane} ${gy} L ${lane} ${gap} L ${tx} ${gap} L ${tx} ${top - 3}`;
 });
 function goBack(b: Box): void { hoverBack.value = null; if (b.back) v.reveal(b.back, true); }
 
@@ -288,24 +289,12 @@ const glowOf = (b: Box): boolean => {
         <span class="rounded-sm bg-white/10 px-1.5 text-[11px] opacity-70">{{ tr("計算はまだ繋いでいない", "Not calculated yet") }}</span>
         <span class="ml-auto flex items-center gap-1">
           <button type="button" data-tree-undo class="g-btn sm inline-flex items-center gap-1" :disabled="!t.canUndo.value" :title="tr('1 つ戻す (Ctrl+Z)', 'Undo (Ctrl+Z)')" @click="t.undo"><Icon name="undo" class="size-4" />{{ tr("1 つ戻す", "Undo") }}</button>
-          <button type="button" data-tree-tidy class="g-btn sm" :title="tr('段ごとに横一列・兄弟は親の下に等間隔・戻りの矢印は箱の外側 (1 つ戻すで元の並びへ)', 'Rows by depth, siblings evenly under the parent, return arrows outside the boxes (undo restores)')" @click="onTidy">{{ tr("整列", "Tidy") }}</button>
+          <button type="button" data-tree-tidy class="g-btn sm" :title="tr('段ごとに横一列・親は子の並びの真ん中・線は直角の木の線 (1 つ戻すで元の並びへ)', 'Rows by depth, each parent centered over its children, right-angle tree lines (undo restores)')" @click="onTidy">{{ tr("整列", "Tidy") }}</button>
           <button type="button" data-tree-check class="g-btn sm" :disabled="checking" :title="tr('5 人をエンジンで辿って、止まる所・打てない手・付かない当たり・完成に着かない道を探す (費用は出さない)', 'Walk 5 runs with the engine to find dead ends, unusable crafts, unreachable hits and paths that never finish (no costs)')" @click="onCheck">{{ checking ? tr("精査中…", "Checking…") : tr("ルート精査", "Check route") }}</button>
           <button type="button" data-tree-memo class="g-btn sm inline-flex items-center gap-1" :aria-pressed="memoOpen" :title="tr('欲しい MOD とメモの窓 (ツリーを押しても閉じない)', 'Wanted mods & notes window (stays open while you edit)')" @click="memoOpen = !memoOpen"><Icon name="pencil" class="size-4" />{{ tr("メモ", "Notes") }}<span v-if="doc.note" class="size-1.5 rounded-full bg-amber-400" /></button>
           <button type="button" data-tree-full class="g-btn sm" :aria-pressed="full" @click="v.toggleFull">{{ full ? tr("全画面を閉じる", "Exit full screen") : tr("全画面に広げる", "Full screen") }}</button>
           <button type="button" class="g-btn sm" :title="tr('始まりの箱だけに戻す (1 つ戻すで戻せる)', 'Back to just the start box (undo restores it)')" @click="t.reset">{{ tr("白紙に戻す", "Clear") }}</button>
         </span>
-      </div>
-      <!-- ルート精査の結果 (押した時だけ) -->
-      <div v-if="issues" data-tree-issues class="flex flex-col gap-1 rounded-md px-2 py-1.5 text-[12px]" :class="issues.length ? 'bg-rose-500/10' : 'bg-emerald-500/10'">
-        <div class="flex items-center gap-2">
-          <b :class="issues.length ? 'text-rose-200' : 'text-emerald-200'">{{ issues.length ? tr(`穴 ${issues.length} 件`, `${issues.length} issue(s)`) : tr("穴は見つからなかった (5 人で全部の枝を通した)", "No issues found (all branches walked by 5 runs)") }}</b>
-          <button type="button" class="g-btn sm ml-auto" @click="issues = null">{{ tr("閉じる", "Close") }}</button>
-        </div>
-        <button v-for="(x, i) in issues" :key="i" type="button" data-tree-issue-row class="flex min-h-7 items-center gap-2 rounded px-1 text-left hover:bg-white/5" @click="goIssue(x.boxId)">
-          <span class="shrink-0 rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white">!</span>
-          <span class="max-w-[40%] shrink-0 truncate opacity-70" :title="boxName(x.boxId)">{{ boxName(x.boxId) }}</span>
-          <span class="min-w-0 truncate" :title="x.text">{{ x.text }}</span>
-        </button>
       </div>
 
       <div class="flex min-h-0 gap-2" :class="full ? 'flex-1' : 'h-[calc(100vh-230px)] min-h-[480px]'">
@@ -328,7 +317,7 @@ const glowOf = (b: Box): boolean => {
               <button v-for="e in edges" :key="`hand-${e.id}`" type="button" data-tree-hand class="absolute max-w-[300px] -translate-x-1/2 -translate-y-1/2 truncate rounded-full border border-amber-400/60 bg-[#1a140d] px-3 py-1 text-[12px] font-semibold text-amber-100 shadow-[0_2px_10px_rgba(0,0,0,0.6)] hover:border-amber-300 hover:bg-[#2a2014]"
                 :class="viewOnly ? 'pointer-events-none' : ''" :style="{ left: `${e.jx}px`, top: `${e.jy}px`, scale: String(inv) }" :title="handLabel(e.hand)" @click="panel = { kind: 'hand', id: e.id }">{{ handLabel(e.hand) }}</button>
               <TreeBox v-for="b in boxes" :key="b.id" :box="b" :x="posOf(b).x + ox" :y="posOf(b).y + oy" :removable="canRemove(doc, b.id)" :picking="!!picking && picking !== b.id"
-                :selected="panel?.id === b.id || picking === b.id || plus?.target === b.id" :back-label="backLabel(b)" :view-only="viewOnly" :glow="glowOf(b) || plus?.target === b.id || (!!hoverBack && doc.boxes[hoverBack]?.back === b.id)" :issue="issueOf(b)" :inv="inv"
+                :selected="panel?.id === b.id || picking === b.id || plus?.target === b.id" :back-label="backLabel(b)" :view-only="viewOnly || hand" :glow="glowOf(b) || plus?.target === b.id || (!!hoverBack && doc.boxes[hoverBack]?.back === b.id)" :issue="issueOf(b)" :inv="inv"
                 @drag="startDrag(b, $event)" @aim="onAim(b)" @plus="(k, e) => onPlus(b, k, e)" @remove="t.edit((d) => removeHit(d, b.id))"
                 @back="picking = b.id" @clear-back="t.edit((d) => setBack(d, b.id, null))" @done="onDone(b)" @target="onTarget(b)" @focus="v.focusBox(b.id)"
                 @note="panel = { kind: 'note', id: b.id }" @spam="onSpam(b)" @back-hover="(on) => (hoverBack = on ? b.id : null)" @back-go="goBack(b)" />
@@ -347,6 +336,19 @@ const glowOf = (b: Box): boolean => {
           :class="picking ? 'border-cyan-400/50 bg-[#0d1a1c]/95 text-cyan-100' : 'border-white/10 bg-[#15110c]/95 text-[#d8ccb4]'">
           {{ picking ? tr("戻り先の箱を押す (Esc でやめる)", "Click the box to return to (Esc cancels)") : hand ? tr("手: 見るだけ (選択に戻すと組める)", "Hand: view only (switch to Select to edit)") : tr("縮めて見ている間は箱を押すとそこへ寄る (組むのは 75% 以上で)", "Zoomed out: click a box to jump to it (edit at 75%+)") }}
         </p>
+        <!-- ルート精査の結果 (押した時だけ。ツリーの上に浮かべて、ツリーを押し下げない) -->
+        <div v-if="issues" data-tree-issues class="absolute left-3 z-20 flex max-h-[45%] w-[min(720px,calc(100%-24px))] flex-col gap-1 overflow-y-auto rounded-lg border px-2 py-1.5 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.6)]"
+          :class="[issues.length ? 'border-rose-500/40 bg-[#1c0f10]/95' : 'border-emerald-500/40 bg-[#0d1a12]/95', picking || hand || viewOnly ? 'top-12' : 'top-3']">
+          <div class="flex items-center gap-2">
+            <b :class="issues.length ? 'text-rose-200' : 'text-emerald-200'">{{ issues.length ? tr(`穴 ${issues.length} 件`, `${issues.length} issue(s)`) : tr("穴は見つからなかった (5 人で全部の枝を通した)", "No issues found (all branches walked by 5 runs)") }}</b>
+            <button type="button" class="g-btn sm ml-auto" @click="issues = null">{{ tr("閉じる", "Close") }}</button>
+          </div>
+          <button v-for="(x, i) in issues" :key="i" type="button" data-tree-issue-row class="flex min-h-7 items-center gap-2 rounded px-1 text-left hover:bg-white/5" @click="goIssue(x.boxId)">
+            <span class="shrink-0 rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white">!</span>
+            <span class="max-w-[40%] shrink-0 truncate opacity-70" :title="boxName(x.boxId)">{{ boxName(x.boxId) }}</span>
+            <span class="min-w-0 truncate" :title="x.text">{{ x.text }}</span>
+          </button>
+        </div>
         <TreeCanvasTools v-model:hand="hand" :boxes="boxes" :ox="ox" :oy="oy" :zoom="zoom" :viewport="viewport" @fit="v.fit" @zoom-in="v.zoomIn" @zoom-out="v.zoomOut" @reset="v.resetZoom" />
         </div>
 
