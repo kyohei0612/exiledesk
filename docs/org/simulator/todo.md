@@ -32,7 +32,7 @@
 - 待ち: use-sim-targets の planByRedoCost (凍結の htc-craft/redo-cost) を外すか → ブラック経由でオーナーに A 外す / B ジンに移す / C 旧工程ページを消すまで据え置き。
 - ジン部長の物 (ブラックへ回した): share.ts の xIntentUrl が投稿の文を引数で受ければ recipe-share の recipeXUrl を寄せられる。パターンの初期値 { name: "パターン 1", steps: [], quiz: { v: 3, rules: {} } } は StageSettings・use-stage-base (ジン) と use-sim-steps (シミュ) の 3 か所、置き場は state/craft-stage.ts が良い。
 - 直す案 4 (views/craft-stage の 5 本と web/page.ts・state/web-page.ts の持ち主) はブラックに 1 行で返した。
-- ツリーの UI/UX の案 (最優先に替わった、10-22): 29ade4af で URL の &ui=next (&lines=a|b) の裏に入れ、開発版に出した。中身・数・スナップは共有メモ local_ba9fc825…/tree-merge/README.md。オーナーの選び (線の案 A か B・言葉の案) 待ち。外れ MOD の行の名前ごとはジン部長の RowTag.replace 待ち。選びが来たら &ui=next を既定にして古い形 (戻りの弧・「形の合う箱へ」) を消す。点検の直す案の残り (planByRedoCost・recipe-share を xIntentUrl へ) は後回し。
+- ツリーの UI/UX (10-22): オーナーが線は案 A・言葉は案 1 を選び、b7d43022・14213d7e で既定に (古い戻りの弧・案 B・印は消した)。試し打ちの欄も消した (メモは箱の鉛筆、× の印は付ける所が無い)。見本の狙いが消えた行き先をカオス (当たるまで) に (1e89ecd8、精査は heldSets)。開発版 14213d7e、記録は共有メモ local_ba9fc825…/tree-merge/README.md。点検の残り (planByRedoCost・recipe-share を xIntentUrl へ) は後回し。
 
 ## 台本 (共有メモ local_35782246-d80a-4c3f-9dff-36103418e719/tree-mouse/)
 - tree-mouse.mjs (8 条件の操作、10b はホイール = 拡大縮小に直した)・tree-shelf.mjs (棚とお告げ)・tree-recipe.mjs・tree-trial-wide.mjs・tree-sample-check.mjs (見本の木: 戻りの線の終わり・n か所・精査 0・縮めて押す → ポップアップ → 試し打ち・札の編集と Esc)。
