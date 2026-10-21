@@ -6,6 +6,7 @@
 import pkg from "../../../package.json";
 import { WEB_API_BASE } from "../../web/config";
 import { noLog } from "../../utils/no-log";
+import { randId } from "../../utils/rand-id";
 
 const UID_KEY = "exiledesk.web.uid";
 /**
@@ -25,7 +26,7 @@ let started = false;
 export function startLogSender(app: "web" | "app"): void {
   if (started) return;
   started = true;
-  const rand = (): string => Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+  const rand = randId;
   let uid = "";
   try { uid = localStorage.getItem(UID_KEY) ?? ""; if (!uid) { uid = rand(); localStorage.setItem(UID_KEY, uid); } } catch { uid = rand(); }
   const sid = rand();

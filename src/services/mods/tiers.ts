@@ -15,7 +15,7 @@
 
 import modsBundle from "../../i18n/mods-bundle.json";
 import type { ModTierRow } from "./types";
-import { normalizeModTemplate, normalizeModTextKey, stripRichTextMarkers } from "./normalize";
+import { normalizeModTemplate, normalizeModTextKey, stripRichTextMarkers, textNumberRe } from "./normalize";
 import { displayValue } from "./stat-scale";
 
 interface BundleStat {
@@ -46,8 +46,7 @@ const EXCLUDED_KEY = /^(Corruption|Unique|Veiled|Historic|Tower|Grant)/;
 /** text_en の `(a-b)` / 裸数値を表示値の範囲として取り出す (裸数値は a=b) */
 function displayRanges(textEn: string): Array<[number, number]> {
   const out: Array<[number, number]> = [];
-  const re = /\((-?\d+(?:\.\d+)?)-(-?\d+(?:\.\d+)?)\)|(-?\d+(?:\.\d+)?)(?![\d.)-])/g;
-  // 前の文字が数字・.・(・- の裸の数は飛ばす (後ろ読み (?<!…) は古い Safari (iOS 16.3 まで) で読めずに画面ごと落ちるので使わない。2026-10-10)
+  const re = textNumberRe();
   let m: RegExpExecArray | null;
   while ((m = re.exec(textEn))) {
     if (m[1] !== undefined) out.push([Number(m[1]), Number(m[2])]);

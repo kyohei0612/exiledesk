@@ -98,9 +98,16 @@ export function itemIdOf(apiId: string): number | null {
   return hit ? hit.ItemId : null;
 }
 
+/** 見つけた行の相場 (無い / 0 以下は null) */
+const positivePrice = (hit: { CurrentPrice?: unknown } | undefined): number | null => (hit && typeof hit.CurrentPrice === "number" && hit.CurrentPrice > 0 ? hit.CurrentPrice : null);
+
 export function priceOf(apiId: string): number | null {
-  const hit = items.value.find((it) => it.ApiId === apiId);
-  return hit && typeof hit.CurrentPrice === "number" && hit.CurrentPrice > 0 ? hit.CurrentPrice : null;
+  return positivePrice(items.value.find((it) => it.ApiId === apiId));
+}
+
+/** 英語名そのままで相場を引く (services/htc/prices.ts のエンジンの価格表)。見つからない / 0 以下は null */
+export function priceByText(textEn: string): number | null {
+  return positivePrice(items.value.find((it) => it.Text === textEn));
 }
 
 /**

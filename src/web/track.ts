@@ -7,6 +7,7 @@
 import { watch } from "vue";
 import { craftStage, SIM_LOCKED } from "../state/craft-stage";
 import { noLog } from "../utils/no-log";
+import { randId } from "../utils/rand-id";
 import { lang } from "../i18n/lang";
 import { logRecord } from "../utils/log-record";
 
@@ -29,7 +30,7 @@ const baseTally = new Map<string, number>();
 let stepTally = 0;
 let lastActive = Date.now();
 
-const rand = (): string => Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+const rand = randId;
 function uidOf(): { uid: string; first: boolean } {
   try {
     const v = localStorage.getItem(UID_KEY);

@@ -32,7 +32,7 @@
  */
 import { runeIdByName } from "../../vendor/poe2htc/engine/runes";
 import type { PricesFile } from "../../vendor/poe2htc/optimizer/cost";
-import { marketStore } from "../../state/market-store";
+import { marketStore, priceByText } from "../../state/market-store";
 import keys from "./price-keys.json";
 import { ESSENCE_KEYS as ESSENCE_TABLE } from "./essence-key-table";
 
@@ -76,11 +76,6 @@ export interface HtcPriceCoverage {
   ready: boolean;
 }
 
-/** 英語名そのままで相場を引く。見つからない / 0 以下は null */
-function priceByText(textEn: string): number | null {
-  const hit = marketStore.items.value.find((it) => it.Text === textEn);
-  return hit && typeof hit.CurrentPrice === "number" && hit.CurrentPrice > 0 ? hit.CurrentPrice : null;
-}
 
 /**
  * 今の相場からエンジンの価格表を作る。

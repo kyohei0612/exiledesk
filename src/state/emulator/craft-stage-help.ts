@@ -8,7 +8,6 @@
 import { GNAWED_MAX_ILVL } from "../../services/craft-stage/apply-currency";
 import { ABYSS_FAMILY, essenceTarget } from "../../services/craft-stage/apply-essence";
 import { hasRawFamily } from "../../services/mods/mod-rules";
-import { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
 import { isRune, runeEffectFor, runeNameOf, runeOf, socketCapOf } from "../../services/craft-stage/stage-runes";
 import { ruleLines } from "../../services/craft-stage/augment-rules";
 import { maxQualityOf } from "../../services/craft-stage/stage-core";
@@ -21,7 +20,7 @@ import { lang, tr } from "../../i18n/lang";
 import { emotionNameOf, isEmotion } from "../../services/craft-stage/apply-emotion";
 import { jewelEmotionsOf } from "../../services/htc/patch";
 import { EXTRA_HELP, EXTRA_HELP_EN, OMEN, OMEN_EN } from "./craft-stage-help-text";
-import { specialEssence } from "./craft-stage-help-mods";
+import { essenceTierOf, specialEssence } from "./craft-stage-help-mods";
 export { shelfTag, shortMod, specialEssence, stageAdds } from "./craft-stage-help-mods";
 
 /** 英語の画面か (2026-10-10 英語版) */
@@ -204,7 +203,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
   if (key.startsWith("essence:") && data && item) {
     const t = essenceTarget(data, item, key);
     if (!t) return [tr("このベースには使えないエッセンス", "This Essence can't be used on this base")];
-    const tier = t.level === "perfect" ? t.mod.tiers[0] : t.mod.tiers.find((x) => essenceLevelOf(String(x.name ?? "")) === t.level) ?? t.mod.tiers[0];
+    const tier = essenceTierOf(t);
     // 深淵のエッセンス (2026-10-03)
     if (hasRawFamily(t.mod, ABYSS_FAMILY) && isEn()) {
       return [

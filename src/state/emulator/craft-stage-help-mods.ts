@@ -15,6 +15,10 @@ import { lang, tr } from "../../i18n/lang";
 import { emotionNameOf, isEmotion } from "../../services/craft-stage/apply-emotion";
 import { jewelEmotionsOf } from "../../services/htc/patch";
 
+/** エッセンスで付く段 (完全は一番上、ほかはエッセンスの等級の段。無ければ一番上)。craft-stage-help.ts も使う */
+export const essenceTierOf = (t: { level: string; mod: Mod }): Mod["tiers"][number] | undefined =>
+  t.level === "perfect" ? t.mod.tiers[0] : t.mod.tiers.find((x) => essenceLevelOf(String(x.name ?? "")) === t.level) ?? t.mod.tiers[0];
+
 /** 英語の画面か (2026-10-10 英語版) */
 const isEn = (): boolean => lang.value === "en";
 
@@ -75,7 +79,7 @@ export function stageAdds(key: string, data: PatchData | null, item: StageItem |
   if (key.startsWith("essence:") && data) {
     const t = essenceTarget(data, item, key);
     if (!t || hasRawFamily(t.mod, ABYSS_FAMILY)) return null;
-    const tier = t.level === "perfect" ? t.mod.tiers[0] : t.mod.tiers.find((x) => essenceLevelOf(String(x.name ?? "")) === t.level) ?? t.mod.tiers[0];
+    const tier = essenceTierOf(t);
     let text = fillModText(t.mod, tier ? tierDisplayRanges(tier) : []);
     // 値の幅が無い固定の MOD (ブリーチの「+20% to Maximum Quality」等) は # が残るので、英語の文の数字で埋める
     if (text.includes("#")) {

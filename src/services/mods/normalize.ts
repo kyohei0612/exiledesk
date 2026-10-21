@@ -94,3 +94,9 @@ export function fillTemplate(template: string, values: number[]): string {
 export function countPlaceholders(template: string): number {
   return (template.match(/#/g) || []).length;
 }
+
+/**
+ * text_en の数字: `(a-b)` の幅か裸の数 (tiers.ts と mod-values-check.ts)。/g なので使うたびに作る。
+ * 前の文字が数字・.・(・- の裸の数は飛ばす (後ろ読み (?<!…) は古い Safari (iOS 16.3 まで) で読めずに画面ごと落ちるので使わない。2026-10-10)
+ */
+export const textNumberRe = (): RegExp => /\((-?\d+(?:\.\d+)?)-(-?\d+(?:\.\d+)?)\)|(-?\d+(?:\.\d+)?)(?![\d.)-])/g;
