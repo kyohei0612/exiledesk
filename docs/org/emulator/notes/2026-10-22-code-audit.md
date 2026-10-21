@@ -5,6 +5,17 @@
 - 数: コード 967 ファイル。web から届く物 509、アプリから届く物 697。アプリからだけ届く src は 230 本・33,225 行。他のファイルに名前が出てこない export は 401 (うち自分のファイルの中でも使われていない物 19)。
 - 済み (この日): 500 行超え 4 本を割った。parts.ts → parts-unrevealed.ts (ce37a00e)、stage-core.ts → stage-draw.ts、build-htc-bases-from-client.mjs → _htc-display-tags・_htc-base-info (c820779f)、build-gem-hover-ja.mjs → _gem-csd (76ba9b43)。scripts/_flux-probe.test.ts (未追跡の使い捨て) は消した。
 
+## 直した物 (10-22、ジン部長 3 本目。ブラック 4 代目の順どおり、オーナー OK)
+- 1 owners.txt (c712943c): web が使うアプリの場所の物 35 本 → 共通、アプリからしか届かない共通 65 本 → アプリ、scripts/_tree-* → シミュ。3-C は今のまま。simulator/htc・htc-craft はシミュ部長が import を外す話なのでアプリのまま (org-lint に 2 フォルダー残る)
+- 4 sideOfMod を入口に (acdc1eca)。ジンの 3 か所を替えた。シミュの約 15 か所・解析の auto-model.ts:164 は知らせた (各部長が替える)
+- 2 share.ts の packJson / unpackJson を use-spam-share・spam-share-open で (3ddd64a1、前後で同じ文字を出すのを確かめた)。og-card.js は server なので触らない
+- 3 GRADE_KEY と乱数の種 routeSeed を route-race.ts に (e6a0fd96、前の写しと同じ種で 12 通り同じ)。打ち方そのものは狙いの数・フラクチャーの扱い・費用の数え方が違うのでまとめない (まとめると乱数の引き方が変わる)
+- 5 use-phone・isTouchOnly (e31fb31a)、priceByText・essenceTierOf・textNumberRe・randId (fe26584e)、sanctify-steps・tierIdOf (02a6fd08)。StageModList の rows・tierIndexOf は 500 行ちょうどなので触らない
+- 6 isFlux・SPAM_KEYS・SPAM_PEOPLE を消した (c1e0e61f)。vendor は残す
+- 7 engine-emulator-parity を -add・-essence + helpers/parity.ts に (117f0080、73 件同じ)。style.css・pob-check は今回やらない
+- 8 _poe2db-common.mjs (7a20490f、外に出ずに 4 本を回して出力・ログが同じ)。クライアントの作り直しの exists・loadTable・exportTables は見送り: exportTables 5 通り・loadTable 4 通りで中身が違う (写しではない)、exists は 7 行の決まり文句で、寄せるとクライアントと関係の無い台本までクライアントの設定を読む
+- 確かめ: 型 0、見張り 204 件 (currency-spec・held-odds-parity・engine-emulator-parity・chaos-spam・mod-*)、入口の見張り増えなし、org-lint の 500 行超え 0
+
 ## 1. 使われていない
 ### 確実 (どのファイルにも名前が無い。video/ も見た)
 - src/state/simulator/sim-recipe-store.ts:49,54,64,72,77 — renameRecipe・duplicateRecipe・removeRecipe・restoreRecipe・replaceRecipes (10-20 の移動から呼ばれていない) — 消す [シミュ]
