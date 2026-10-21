@@ -8,5 +8,6 @@
 - オーナーの方針 (10-22): 記事の中身はこのままで OK、心配は「足りないコンテンツの量」(ブラックに伝えた)。
 
 ## やる事
+- 本番前の最終点検は済み (notes/2026-10-22-adsense-final-check.md、見立て = ツリーへのリンクを決めてから)。**本番に出した直後**に同じ台本で: 記事・固定ページに noindex が無い・ベースにある (curl のヘッダーと meta)、sitemap 71 URL。台本は自分の scratchpad の pf/ (crawl.mjs の BASE を https://exiledesk.com に、クッキーは要らない)。
 
 ## OK 待ち
