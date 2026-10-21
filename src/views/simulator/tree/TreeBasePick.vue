@@ -41,7 +41,8 @@ function apply(en: string): void {
 </script>
 
 <template>
-  <div data-tree-base-pick class="flex min-h-0 flex-col gap-3">
+  <!-- 高さは中身なり (min-h-0 で欄の高さに縮めると、確かめの sticky が根の箱の外へ出られない) -->
+  <div data-tree-base-pick class="flex shrink-0 flex-col gap-3">
     <div class="flex items-center gap-2">
       <b class="flex-1 text-[14px]">{{ tr("ベースとアイテムレベル", "Base and item level") }}</b>
       <button type="button" class="g-btn sm" @click="emit('close')">{{ tr("閉じる", "Close") }}</button>
