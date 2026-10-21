@@ -103,7 +103,7 @@ export function stateBlock(spec: CurrencySpec, item: StageItem, omens: readonly 
   if (item.disposed) return tr(`${DISPOSE_JA[item.disposed]}したアイテムには何も使えない`, `Item was ${item.disposed === "disenchant" ? "disenchanted" : "salvaged"}`);
   if (item.mirrored && !ANY_STATE.includes(spec.stageKey)) return tr("ミラーしたアイテムには使えない", "Can't modify a Mirrored item");
   if (item.identified === false) return tr("未鑑定 (先に鑑定の巻物で鑑定する)", "Unidentified (identify it with a Scroll of Wisdom first)");
-  if (item.sanctified && !spec.allowSanctified) return tr("聖別したアイテムには使えない", "Can't modify a Sanctified item");
+  if (item.sanctified && !spec.allowSanctified) return tr("聖別済みのアイテムには手を加えられない", "Can't modify a Sanctified item") // apply-currency の SANCTIFIED_REASON と同じ文;
   if (item.corrupted && !spec.allowCorrupted) return tr("コラプトしたアイテムには使えない", "Can't modify a Corrupted item");
   if (omens.some((o) => REMOVED_OMENS.includes(o))) return tr("今のゲームに無いお告げ", "This Omen is no longer in the game");
   if (!spec.modless && (isFlask(item.cls.category) || isGem(item.cls.category))) return isGem(item.cls.category) ? tr("スキルジェムには使えない", "Can't be used on Skill Gems") : tr("フラスコには使えない (このステージでは MOD を扱わない)", "Can't be used on Flasks (flask mods aren't supported)");

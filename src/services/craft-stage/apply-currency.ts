@@ -141,6 +141,9 @@ function toUniqueBase(data: PatchData, r: StageApply): StageApply {
   return { ...r, item: { ...r.item, base: to, baseJa: jaTypeName(to), cls } };
 }
 
+/** 聖別済みのアイテムに打とうとした時の理由 (エンジンの入口と説明文の判定 spec/judge.ts で同じ文) */
+export const SANCTIFIED_REASON = (): string => tr("聖別済みのアイテムには手を加えられない", "Can't modify a Sanctified item");
+
 export function applyCurrency(data: PatchData, item: StageItem, currency: string, rng: () => number, omens: readonly string[] = [], hint: ApplyHint = {}): StageApply {
   // シャード: 手順では 1 個拾う (アイテムは変わらない)。アイテムに使おうとした時は打てない
   if (isShard(currency)) return hint.collect ? collectShard(item, currency) : skip(item, shardReason());
@@ -150,6 +153,9 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   // 未鑑定は先に鑑定の巻物 (MOD が見えないアイテムには打てない)
   // 解呪・サルベージ (要望 ⑰-5) は未鑑定・コラプトでもできる
   if (isDispose(currency)) return applyDispose(item, currency);
+  // 聖別の後は何もできない (2026-10-22 オーナーのゲームでの確認「聖別の後は本当に何もできない」): 品質・カタリスト・オーブ・お告げ・エッセンス・骨・ルーンの差し替え、
+  // 品質・アイテムレベルの欄も。通すのは聖別の数値の帯 (聖別そのものの値)・状態を問わない物 (鏡・抽出)・解呪・サルベージだけ
+  if (item.sanctified && !isSanctifySet(currency) && !ANY_STATE.includes(currency)) return skip(item, SANCTIFIED_REASON());
   if (item.identified === false && currency !== "wisdom") return skip(item, tr("未鑑定 (先に鑑定の巻物で鑑定する)", "Unidentified (identify it with a Scroll of Wisdom first)"));
   // ADR-004 (2026-10-16): 移し終えた手 (spec/run-spec.ts の specCovers) は説明文の分解で打つ。まだ移していない手 (聖別など) は下で
   const bySpec = applyBySpec(data, item, currency, rng, omens, { oneCatalyst: hint.oneCatalyst, ...(hint.pick ? { pick: hint.pick } : {}), ...(hint.remove ? { remove: hint.remove } : {}) });
@@ -190,7 +196,6 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   }
   // 聖別の数値を手で決める (聖別の帯。聖別の後に打つ手、費用 0)
   if (isSanctifySet(currency)) return applySanctifySet(data, item, currency);
-  if (item.sanctified && !ANY_STATE.includes(currency)) return skip(item, tr("聖別したアイテムには使えない", "Can't modify a Sanctified item"));
   if (item.corrupted && kindOf(currency) !== "reveal" && !FOR_CORRUPTED.includes(currency) && !ANY_STATE.includes(currency)) return skip(item, tr("コラプトしたアイテムには使えない", "Can't modify a Corrupted item"));
   // 今のゲームに無いお告げ (相場に値段が無い) を掛けていたら打てない (2026-09-29 オーナー「錬金術のお告げとかない、王者のお告げやら」)
   const gone = omens.find((o) => REMOVED_OMENS.includes(o));

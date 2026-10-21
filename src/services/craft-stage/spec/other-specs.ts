@@ -116,7 +116,7 @@ export const RUNE_SPEC: CurrencySpec = {
   actions: [{ socketAugment: true }],
   limits: [],
   allowCorrupted: true,
-  allowSanctified: true,
+  // 聖別の後ははめられない (2026-10-22 オーナーのゲームでの確認「聖別の後は本当に何もできない」。クライアントの CanSocketInCorruptedSanctified より優先)
   modless: true,
   source: { client: "用語集 Augment、SoulCores (Limit・CanSocketInCorruptedSanctified)・SoulCoreStats、augment-rules.json (説明文から作った表)" },
 };
