@@ -16,12 +16,9 @@
 | ホワイト (秘書) | — (常駐しない。予定のタスク exiledesk-white-daily が毎朝 9:45 に立てる) | md・コードの荒れをブラックに教えるだけ |
 | ほかの部長 | — | 仕事が来たらブラックが立てる |
 
-## 触っている (同じファイルは順に。各部長が始める時に自分で書き、自分の commit で消す。ぶつかる時はブラックが順番を決める)
-| 誰 | ファイル |
-|---|---|
-| 記事編集長 ブログの仕上げ (10-22〜) | src/data/blog/ の記事 (*.ja.md・*.en.md、残り 12 本 → B 8 本の仕上げ、README・sample・chars は触らない)・src/data/blog/img/・docs/org/blog/ |
-| ジン部長 3 本目 code-audit の直す案 (10-22) | docs/org/owners.txt・src/services/craft-stage/ (engine.ts・share.ts・route-race・spam-counts・apply-flux・chaos-spam)・src/views/craft-stage/ (use-spam-share・StageRoutesPage・StageRouteLuck・CraftStage・ShelfButton・StageOmenTune・StageSanctifyBar・StageAimPicker・StageFracturePicker・StageModList)・src/state/emulator/・src/state/market-store.ts・src/services/htc/prices.ts・src/services/mods/・src/services/telemetry/log-sender.ts・src/web/track.ts・src/utils/・src/components/items/・HelpTip.vue・tests/engine-emulator-parity*・scripts/audit-poe2db*・build-poe2db-fixes・クライアントからの作り直しの台本 |
-| 解析君 2 本目 code-audit の直す案 2・3 (10-22) | src/services/simulator/auto/auto-order.ts (AutoOrderClient を消すだけ)・scripts/analysis/ (boots-res-ev・es-gloves-ev・gold-ring-suffix-ev・mana-ring-ev と共通の部品 _ev-common.mjs (新)) |
+## 触っている (部長ごとのファイル docs/org/dev/touching/<部>.md、オーナー 10-22)
+各部長は自分のファイルだけを書き、自分の commit で消す (dev/todo.md に書かない。1 つの表だと他人の commit に混ざった)。全部を見る: `cat docs/org/dev/touching/*.md`。同じファイルは順に、ぶつかる時はブラックが順番を決める。
+
 入口に無い物 (解析君 10-21、要る時だけジン部長へ): 重み 0 の MOD (創生の樹のスペルダメージ) を始めの形に置く手段 (startFrom が断る、解析君は makeStageMod を直に使った)。シミュで要るまで振らない。
 
 順番 (10-21): ジン部長がエンジンの打つ結果 (カタリスト・お告げの確率) を変える直しは、commit の前にブラックへ 1 行 → 解析君の数字が変わるので、ブラックが解析君の区切りに合わせる。解析君がエンジンに無い手を見つけたら、足すのはジン部長 (ブラックが並べる)。
