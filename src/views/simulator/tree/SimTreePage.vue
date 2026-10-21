@@ -219,7 +219,10 @@ const popStyle = computed(() => {
   const b = pop.value ? doc.value.boxes[pop.value] : null;
   if (!b) return {};
   const { x, y, zoom: z } = v.flow.viewport.value, Z = pageZ.value;
-  return { left: `${Math.max(8, ((b.x + BOX_W / 2) * z + x) / Z - BOX_W / 2 - 12)}px`, top: `${Math.max(8, ((b.y + BOX_H / 2) * z + y) / Z - BOX_H / 2 - 12)}px` };
+  // 枠の中に収める (ポップアップの大きさ = 箱 + 余白 12・右 28・下 48)
+  const { width: W, height: H } = v.flow.dimensions.value;
+  const left = Math.min(W / Z - BOX_W - 48, ((b.x + BOX_W / 2) * z + x) / Z - BOX_W / 2 - 12), top = Math.min(H / Z - BOX_H - 68, ((b.y + BOX_H / 2) * z + y) / Z - BOX_H / 2 - 12);
+  return { left: `${Math.max(8, left)}px`, top: `${Math.max(8, top)}px` };
 });
 /** ポップアップの中で押した物は、閉じてからいつもの動きへ */
 function popDo(f: (id: string, b: Box) => void): void { const id = pop.value, b = id ? doc.value.boxes[id] : null; pop.value = null; if (id && b) f(id, b); }
@@ -459,7 +462,7 @@ const glowOf = (b: Box): boolean => {
           </button>
         </div>
         <!-- 縮めて見ている時の箱の編集 (等倍。枠の外・Esc で閉じる) -->
-        <div v-if="pop && doc.boxes[pop]" ref="popEl" data-tree-pop class="absolute z-30 rounded-2xl border border-white/10 bg-[#0c0a08]/95 p-3 pb-12 pr-7 shadow-[0_10px_30px_rgba(0,0,0,0.7)]" :style="popStyle">
+        <div v-if="pop && doc.boxes[pop]" ref="popEl" data-tree-pop class="absolute z-30 w-max rounded-2xl border border-white/10 bg-[#0c0a08]/95 p-3 pb-12 pr-7 shadow-[0_10px_30px_rgba(0,0,0,0.7)]" :style="popStyle">
           <div class="relative" :style="{ width: `${BOX_W}px`, height: `${BOX_H}px` }">
             <TreeBox :box="doc.boxes[pop]!" :x="0" :y="0" :removable="canRemove(doc, pop)" :picking="false" :selected="true" :back-label="backLabel(doc.boxes[pop]!)" :issue="issueOf(doc.boxes[pop]!)"
               @drag="() => {}" @aim="popDo((_, b) => onAim(b))" @plus="(k) => popDo((_, b) => (k === 'side' ? onAddHit(b) : startLink(b)))" @remove="popDo((id) => t.edit((d) => removeHit(d, id)))"
