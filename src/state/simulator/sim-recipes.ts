@@ -5,6 +5,7 @@ import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import type { Pattern } from "../../services/simulator/pattern";
 import type { StageItem } from "../../services/craft-stage/types";
 import type { SimStart, SimTargets } from "./sim-state";
+import { parseList } from "./recipe-store-util";
 
 /**
  * シミュレーションの途中 (ベース・狙う MOD・工程の「決めた」・順番計画・パターン) を覚えて、開き直した時にそのまま出す
@@ -70,10 +71,6 @@ export function normalizeRecipe(x: unknown): SimRecipe | null {
   };
 }
 
-function parseList(raw: string | null): unknown[] | null {
-  if (raw == null) return null;
-  try { const v = JSON.parse(raw) as unknown; return Array.isArray(v) ? v : null; } catch { return null; }
-}
 /** 読めない物は捨てずに控えに足す (同じ物は重ねない) */
 function keepUnread(xs: unknown[]): void {
   if (!xs.length) return;

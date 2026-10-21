@@ -5,6 +5,7 @@
  */
 import { computed, ref } from "vue";
 import { isTreeDoc, type TreeDoc } from "../../services/simulator/tree/tree-model";
+import { clone, newId, parseList } from "./recipe-store-util";
 
 export const TREE_RECIPES_KEY = "exiledesk.tree.recipes";
 /** 直前の一覧の控え (本体が読めなかった時はここから) */
@@ -17,12 +18,6 @@ const CURRENT = "exiledesk.tree.recipes.current";
 export const TREE_RECIPE_FORMAT = 1;
 export interface TreeRecipe { id: string; name: string; savedAt: number; updatedAt: number; v: number; tree: TreeDoc }
 
-const clone = <T>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
-const newId = (): string => `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-function parseList(raw: string | null): unknown[] | null {
-  if (raw == null) return null;
-  try { const v = JSON.parse(raw) as unknown; return Array.isArray(v) ? v : null; } catch { return null; }
-}
 export function normalizeTreeRecipe(x: unknown): TreeRecipe | null {
   const r = x as Partial<TreeRecipe> | null;
   if (!r || typeof r !== "object" || !isTreeDoc(r.tree)) return null;

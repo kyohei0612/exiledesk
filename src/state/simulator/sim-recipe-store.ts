@@ -6,6 +6,7 @@
  */
 import { computed, ref, shallowRef } from "vue";
 import { readSimRecipes, SIM_RECIPES_KEY, writeSimRecipes, type SimRecipe, type SimSession } from "./sim-recipes";
+import { clone, newId } from "./recipe-store-util";
 
 export const recipeList = ref<SimRecipe[]>(readSimRecipes());
 /** 読み直す (ほかのタブで変わった時・URL から足した時) */
@@ -22,8 +23,6 @@ export const currentRecipe = computed(() => recipeList.value.find((r) => r.id ==
  */
 export const simNow = shallowRef<{ session: () => SimSession; baseJa: () => string } | null>(null);
 
-const clone = <T>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
-const newId = (): string => `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 /** 一覧の並び・「更新」に出す時刻 */
 export const touchedAt = (r: SimRecipe): number => r.updatedAt ?? r.savedAt;
 
