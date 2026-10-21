@@ -3,7 +3,7 @@
  * 1 つの画面で 1 回だけ作る (最初に呼んだ所の物をあとの呼び出しでも返す)
  */
 import { computed, nextTick, ref, watch } from "vue";
-import { craftStage as s, URL_BASE, type SimRecipe } from "../../state/craft-stage";
+import { craftStage as s, URL_BASE, freshPatterns, type SimRecipe } from "../../state/craft-stage";
 /** シミュレーターで狙う MOD を選ぶ間のアイテムレベル (アイテムレベルの選び方の一番上) */
 export const SIM_ILVL_MAX = 86;
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
@@ -48,7 +48,7 @@ function create() {
     s.base.value = en;
     s.simTargets.value = [];
     s.simOrder.value = [];
-    s.simPatterns.value = [{ name: "パターン 1", steps: [], quiz: { v: 3, rules: {} } }];
+    s.simPatterns.value = freshPatterns();
     s.simStart.value = "white";
     s.simStartItem.value = null;
     simPasted.value = null;

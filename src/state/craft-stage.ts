@@ -152,6 +152,8 @@ watch(mode, (m) => { if ((SIM_LOCKED && m === "sim") || (TUTORIAL_LOCKED && m ==
 
 /** Web 版の工程を覚える手の数 */
 export const LOG_KEEP = 50;
+/** シミュのパターンの初期値 (空のパターン 1 つ)。書き換えて使うので呼ぶたびに新しい配列 */
+export const freshPatterns = (): Pattern[] => [{ name: "パターン 1", steps: [], quiz: { v: 3, rules: {} } }];
 /**
  * 50 手より前に消した手の、手順 JSON に書く分だけ (重い打つ前 / 後のアイテムは持たない)。
  * 消した手も手順に要る (無いと再生で始めの方の手が抜け、送った人のアイテムにならなかった。2026-10-16 要望 0ce15a82 の決闘のワンド)

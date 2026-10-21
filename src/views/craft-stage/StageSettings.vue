@@ -7,7 +7,7 @@ import { inGroup } from "../../services/mods/item-classes";
 import { useFlash } from "../../utils/use-flash";
 import { ARMED_CLASS, useArmed } from "../../utils/use-armed";
 import { tr } from "../../i18n/lang";
-import { SIM_LOCKED } from "../../state/craft-stage";
+import { SIM_LOCKED, freshPatterns } from "../../state/craft-stage";
 import { inLesson } from "../../state/tutorial/craft-lesson";
 import StageRecipeStart from "../simulator/StageRecipeStart.vue";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
@@ -109,7 +109,7 @@ function simFromHand(): void {
   // 付いている MOD は狙いに入れておく (その段以上。消えたら取り直す)。足したい MOD を 2 で足して決めたら、そのままツリー (3〜5 は飛ばす)
   s.simTargets.value = [...it.prefixes, ...it.suffixes].filter((m) => !m.unrevealed).map((m) => ({ modId: m.modId, minTierIndex: m.tierIndex, ...(m.fractured ? { method: "fracture" as const } : m.desecrated ? { method: "desecrate" as const } : {}) }));
   s.simOrder.value = [];
-  s.simPatterns.value = [{ name: "パターン 1", steps: [], quiz: { v: 3, rules: {} } }];
+  s.simPatterns.value = freshPatterns();
   s.simSockets.value = it.sockets ?? 0;
   s.simStart.value = "item";
   s.simPicked.value = true;
