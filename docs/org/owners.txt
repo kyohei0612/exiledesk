@@ -101,3 +101,4 @@ docs/org/analytics/**                分析
 docs/org/research/**                 リサーチ
 docs/org/video/**                    動画
 docs/org/blog/**                     記事
+docs/org/white/**                    ブラック
