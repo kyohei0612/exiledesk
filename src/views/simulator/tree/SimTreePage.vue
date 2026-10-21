@@ -63,8 +63,11 @@ watch(memoOpen, (v) => { try { localStorage.setItem(MEMO_KEY, v ? "1" : "0"); } 
 const glowAim = ref<string | null>(null);
 const v = useTreeFlow(doc);
 const { zoom, full, viewOnly, pageZ } = v;
-/** 縮めて組んでいる時 (75〜99%) の倍率の逆数: 押せる物だけ大きさを戻す。ページの zoom が 1 未満 (1280 幅で 0.85) の時はその分も戻す (箱の中の押せる物が 24px を切った、オーナー 10-22 OK。1920 以上は今のまま) */
-const inv = computed(() => (viewOnly.value ? 1 : Math.max(1, 1 / zoom.value) * Math.max(1, 1 / pageZ.value)));
+/**
+ * 縮めて組んでいる時 (75〜99%) の倍率の逆数: 押せる物だけ大きさを戻す。100% 以上でページの zoom が 1 未満 (1280 幅で 0.85) の時はその分も戻す
+ * (箱の中の押せる物が 24px を切った、オーナー 10-22 OK。1920 以上は今のまま)。75% でまで戻すと 1.57 倍になり箱の中で重なった (zoom-steps 29 件) ので 75% は前のまま
+ */
+const inv = computed(() => (viewOnly.value ? 1 : zoom.value < 1 ? 1 / zoom.value : Math.max(1, 1 / (zoom.value * pageZ.value))));
 onBeforeUnmount(v.dispose);
 
 // ドラッグ中は Vue Flow の箱だけが動き、離した時に 1 回だけ組み替える (1 つ戻すが 1 手で済む)。線は引っ張っている位置に合わせる
