@@ -2,7 +2,7 @@
  * poe2db-tag-fixes.ts — MOD のタグを poe2db (今のページ) に合わせる (2026-10-18 オーナー「db に全て合わせてくれ」)。
  *
  * 直しの中身は scripts/audit-poe2db-tags.mjs --write が作る poe2db-tag-fixes.json ({ MOD の id: poe2db の段のタグ })。
- * 置き換えるのは画面に札で出すタグ (tag-ja.ts の TAG_STYLE) と冒涜の陣営 (アマナム・ウラマン・カーガル) だけ。
+ * 置き換えるのは画面に札で出すタグ (tag-ja.ts の TAG_STYLE) と冒涜の陣営 (アマナム・ウラマン・クルガル) だけ。
  * 内部のタグ (elemental_damage・resource など、札にしない物) はそのまま残す。
  * tags (抽選: 陣営のお告げ・均質化、カタリスト) と displayTags (画面・ジュエルのカタリスト) の両方を直す。patch.ts の最後で当てる
  */

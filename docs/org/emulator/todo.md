@@ -2,7 +2,7 @@
 
 ## やる事
 - クラフト画面 1440 幅で元からはみ出している 1 件 (DIV.flex flex-col、overflow-guard の判定で見つけた、10-22) を直す。
-- 名前の食い違い (記事編集長 10-22、AdSense の後): items-ja.json の Essence of the Abyss「深淵のエッセンス」→ poe2db「アビスのエッセンス」(src/i18n/currencies-ja.ts は items-ja.json を先に引く)。エンジンの説明 (spec/essence-specs.ts・apply-essence.ts) の「深淵の王の印」→ poe2db「アビサルロードの紋章」。写しで決まらない物は poe2db に合わせる決まり。ついでに items-ja.json の名前と poe2db の日本語名を台本で突き合わせて、ずれの一覧を notes/ に (直すのは一覧を見てから、本番の文が変わるので pending-release に OK 待ち)。
+- 済み (10-22): 名前のずれ → notes/2026-10-22-name-check.md (2 件 + 紋章 + クルガル、本番は OK 待ち)。残り 3,266 件は poe2db の写しを取り直す時に。
 - 済み: お告げの下の設定 (触媒の高貴の品質 1% ごとの倍率・聖別の倍率) は本番 v0.1.589 (f1e1a612、オーナー 10-21 OK)。notes/2026-10-21-omen-tune.md
 - currency-spec-golden が 6 つとも控えとずれている (控えは 10-17 の 071a0af9 に取ったきり、その後のエンジンの commit が多い)。どの commit でずれたかを別の worktree で探し、わざとの変更なら GOLDEN_WRITE=1 で取り直す (J1 で見つけた、family の直しでは変わらない)
 

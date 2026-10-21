@@ -157,8 +157,8 @@ const SPECIAL_ESSENCE: Record<string, { short?: string; groups?: Array<{ h: stri
     notes: ["**レアの指輪・アミュレットだけ**", "プレフィックスに「品質の最大値 +20%」。カタリストで品質を 40% まで盛れる (触媒の MOD がその分強くなる)"],
   },
   "Essence of the Abyss": {
-    short: "深淵の王の印",
-    groups: [{ h: "防具・装飾品・ベルト など", l: ["アビサルロードの紋章 (深淵の王の印)。次の骨で冒涜 MOD に置き換わる"] }],
+    short: "アビサルロードの紋章",
+    groups: [{ h: "防具・装飾品・ベルト など", l: ["アビサルロードの紋章。次の骨で冒涜 MOD に置き換わる"] }],
     notes: [],
   },
 };

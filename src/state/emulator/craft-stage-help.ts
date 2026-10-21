@@ -179,7 +179,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
       ...(eff ? [] : item ? [tr("この部位には効き目が無い", "No effect on this item class")] : []),
       ...ruleLines(runeNameOf(key)),
       // アストリッドの「クラフトモッド」が何か (2026-10-16 初心者の目での点検: エッセンスが 2 つになると分からなかった)
-      ...(/Astrid/.test(runeNameOf(key)) ? [tr("クラフトモッド = **エッセンス・合金・深淵の印**などで付く MOD。普通は 1 つまでで、はめると **2 つ** 持てる", "Crafted mods = mods from **Essences, Alloys, the Abyssal Mark** and so on. Normally 1; with this rune you can have **2**")] : []),
+      ...(/Astrid/.test(runeNameOf(key)) ? [tr("クラフトモッド = **エッセンス・合金・アビサルロードの紋章**などで付く MOD。普通は 1 つまでで、はめると **2 つ** 持てる", "Crafted mods = mods from **Essences, Alloys, the Mark of the Abyssal Lord** and so on. Normally 1; with this rune you can have **2**")] : []),
       tr("空きソケットが無い時は、はまっている物と置き換える (ソケットの絵を押すとそのソケット、アイテムを押すと左から最初の置き換えられる物)", "With no empty socket it replaces a socketed one (click a socket to target it, or the item for the first replaceable one from the left)"),
     ];
   }
@@ -216,7 +216,7 @@ function stageHelpBase(key: string, data: PatchData | null, item: StageItem | nu
     }
     if (hasRawFamily(t.mod, ABYSS_FAMILY)) {
       return [
-        "**レア** の MOD を 1 つ消して、消した側に **深淵の王の印** を付ける",
+        "**レア** の MOD を 1 つ消して、消した側に **アビサルロードの紋章** を付ける",
         "次の骨 (冒涜) は必ず **印を置き換えて** 未発現の冒涜 MOD になる。段の下限 MOD レベル = アイテムレベル × 0.4 の切り捨て (説明文は「より高い段」だけ。Craft of Exile と同じ式)",
         "**未発現** の冒涜 MOD があれば打てて、印は **その未発現に入れ替わる**。発現済みの冒涜 MOD があると打てない。印もクラフト MOD (アストリッドの創造性で 2 つまで持てる)",
         "お告げ: 左右の結晶化 (消す側 = 印の付く側)",
