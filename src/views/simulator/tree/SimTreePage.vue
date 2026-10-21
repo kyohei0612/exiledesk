@@ -40,6 +40,7 @@ import { useTreeLink } from "./use-tree-link";
 import { useTreeCheck } from "./use-tree-check";
 import { useTreeTune } from "./use-tree-tune";
 import TreeHandChip from "./TreeHandChip.vue";
+import TreeBandLayer from "./TreeBandLayer.vue";
 import TreeMergeLayer from "./TreeMergeLayer.vue";
 import TreeHoverCard from "./TreeHoverCard.vue";
 import { backTargetsOf, joinSameShape } from "./tree-merge";
@@ -423,6 +424,8 @@ const glowOf = (b: Box): boolean => {
                 </g>
               </svg>
               <!-- 矢印の上の札 = 打つ手 (押すと替える・消す)。戻りの矢印だけの箱から流れ込む線 -->
+              <!-- 段の目印 (木の左の外、当たりの箱の揃った狙いの数) -->
+              <TreeBandLayer :doc="doc" :k="1 / zoom" />
               <TreeHandChip v-for="e in edges" :key="`hand-${e.id}`" :id="e.id" :hand="e.hand" :x="e.jx" :y="e.jy" :inv="inv" :off="hand" @open="panel = { kind: 'hand', id: e.id }" />
               <!-- 品質だけ上げた後 (箱無し) で次の手がまだ無い所の＋ (押すと次の手の棚) -->
               <button v-for="b in passes.filter((x) => !x.hand && !x.back)" :key="`pass-${b.id}`" type="button" data-tree-pass-next :data-box-id="b.id" class="nodrag nopan pointer-events-auto absolute z-[5] flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-amber-400/70 bg-[#1d1812] text-amber-200 hover:bg-amber-500/30"

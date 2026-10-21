@@ -79,8 +79,11 @@ export interface TreeDoc {
 export const BOX_W = 196;
 export const BOX_H = 112;
 const GAP_X = 220;
-/** 段の間 (親の下 → 手の札 → 横の棒 → 子の上。直角の木の線が手の札と重ならない広さ、10-22) */
-const GAP_Y = 210;
+/**
+ * 段の間 (親の下 → 手の札 → 横の棒 → 子の上。直角の木の線が手の札と重ならない広さ、10-22)。10-22 オーナー「少し詰める」で 210 → 200:
+ * 見本の木 (11 行) で 1920 の全体表示が 20 → 25% に乗る一番ゆとりのある値 (201 以下で 25%)。札の下と子の箱の間は 1920 で約 27px・1280 で約 24px
+ */
+export const GAP_Y = 200;
 
 export function newTree(base: string, itemLevel: number): TreeDoc {
   return {
@@ -407,6 +410,21 @@ export function tidy(d: TreeDoc): void {
   // 始まりの箱は x = 0 に戻す (木ごとずらす)
   const dx = -d.boxes.start!.x;
   for (const b of Object.values(d.boxes)) b.x += dx;
+}
+
+/**
+ * 段の目印 (10-22 オーナー「段ごとに 1 つ揃った / 2 つ揃った…」): 当たりの箱の揃った狙いの数 n → その段の y (箱の上の辺)。
+ * 手で動かして同じ数の当たりの箱の高さが揃っていない段は出さない (整列の後だけ出る)
+ */
+export function bandsOf(d: TreeDoc): { n: number; y: number }[] {
+  const ys = new Map<number, Set<number>>();
+  for (const b of Object.values(d.boxes)) {
+    if (b.out !== "hit") continue;
+    const held = new Set<string>();
+    for (let x: TreeBox | undefined = b; x; x = x.parent ? d.boxes[x.parent] : undefined) if (x.out === "hit" && x.aim) held.add(aimKey(x.aim));
+    ys.set(held.size, (ys.get(held.size) ?? new Set()).add(b.y));
+  }
+  return [...ys].filter(([, s]) => s.size === 1).map(([n, s]) => ({ n, y: [...s][0]! })).sort((a, z) => a.n - z.n);
 }
 
 export function moveBox(d: TreeDoc, id: string, x: number, y: number): void {
