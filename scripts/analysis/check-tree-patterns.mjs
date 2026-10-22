@@ -108,6 +108,8 @@ const P = {
 };
 P["body-essence-fixed"] = P["body-essence"];
 P["body-essence-path"] = P["body-essence"];
+// body-essence-split (c3e4774d、notes 追記 6 の (c)): サフィの外れ 1 つは置いたまま、サフィが埋まって狙いが揃わない時だけ素の消去、エッセンスの MOD が消えたら打ち直す
+P["body-essence-split"] = (s) => (!s.keepHeld() ? { cur: s.essKey } : 3 - s.count - s.junkN("suffix") < 2 - s.count ? { cur: "annul" } : { cur: "exalt_greater", omens: ["OmenofDextralExaltation"] });
 /**
  * 対案 (ALT=1、木と比べて安くなるかを見るだけ): amulet-catalyst = キャストを狙う所はキャスターのカタリスト、クリ率を狙う所は触媒を使わない (クリ率のタグ critical のカタリストは無い)。
  */
