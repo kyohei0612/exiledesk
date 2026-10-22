@@ -42,7 +42,9 @@ const ROW_TAG_TONE: Record<RowTag["tone"], string> = { bad: "bg-rose-500/25 text
 const ROW_TAG_TEXT: Record<RowTag["tone"], string> = { bad: "text-rose-300", warn: "text-amber-200", good: "text-emerald-300", info: "text-sky-200" };
 const isDoomed = (m: StageMod): boolean => !!props.doomed?.includes(m.modId);
 /** 行の左 (P / S) と右 (↓・確率・×) の枠は同じ幅。MOD の文がカードの真ん中に来る (2026-10-17 オーナー「全体的に左に寄ってる、MOD は真ん中、→ に %、← に P,S」) */
-const sideColW = computed(() => (props.kinds ? "w-[8rem] max-md:w-[5.75rem]" : props.removable ? "w-[4.5rem] max-md:w-[5.25rem]" : "w-[3rem] max-md:w-[3rem]")); // ↓ を外した分 (2026-10-17) 細く
+/** 左の P1 の欄。シミュレーターの入口 ① の切り替えがある時は右だけ広げる (スマホで左右とも広げると MOD の文が縦に潰れた) */
+const leftColW = computed(() => (props.kinds ? "w-[3rem]" : sideColW.value));
+const sideColW = computed(() => (props.kinds ? "w-[8rem] max-md:w-[7.25rem]" : props.removable ? "w-[4.5rem] max-md:w-[5.25rem]" : "w-[3rem] max-md:w-[3rem]")); // ↓ を外した分 (2026-10-17) 細く
 /** 未発現の行の崩れた文字。どの行も同じ並び・同じフォント (行ごとに変えると形がばらばらで気持ち悪い。2026-10-17 オーナー) */
 const UNREVEALED_GLYPHS = "ʘɿɕʞɞ ʖɷɦɕɷʞ";
 /** 付く空きの枠 (プレ → サフィ) */
@@ -269,7 +271,7 @@ const rows = computed(() => {
           <!-- 珍しい段が付いた瞬間の光の柱 (ドロップの光の柱のように、行から上へ伸びて消える) -->
           <span v-if="isRareNew(r.m)" aria-hidden="true" class="stage-rare-beam pointer-events-none absolute bottom-1/2 left-1/2 z-20 w-10" />
           <!-- トレードサイトと同じ: 左端に P1 / S5 (プレ / サフィと段)、真ん中に MOD の文 (長い物は折り返す)、右端に付いた瞬間の確率と × (2026-10-10 オーナーの見本) -->
-          <span class="shrink-0 text-left text-[12px] font-bold tabular-nums" :class="[sideColW, r.side === 'プレフィックス' ? 'text-[#e0846a]' : 'text-[#6aa8e8]']">{{ r.side === "プレフィックス" ? "P" : "S" }}{{ (r.m.tierName ?? "").replace(/^T/, "") }}</span>
+          <span class="shrink-0 text-left text-[12px] font-bold tabular-nums" :class="[leftColW, r.side === 'プレフィックス' ? 'text-[#e0846a]' : 'text-[#6aa8e8]']">{{ r.side === "プレフィックス" ? "P" : "S" }}{{ (r.m.tierName ?? "").replace(/^T/, "") }}</span>
           <span class="min-w-0 flex-1 text-center">
             <!-- 消える候補は文字をオレンジに (フラクチャーのくすんだ金色と被らない色。2026-10-07 オーナー「光るの文字にしようか、フラクチャーの色被らんようにオレンジで」) -->
             <!-- 未発現はゲームと同じく緑の崩れた文字 (中身は分からない。ホバーで「未発現の冒涜 MOD (側)」。2026-10-17 オーナー「アイテムについた冒涜未発現はこの感じ、全体的に緑」) -->
