@@ -30,7 +30,7 @@ const s = craftStage;
     <StageCourses v-if="s.ready.value && s.mode.value === 'tutorial' && !s.replay.value && !TUTORIAL_LOCKED" class="mb-4" /><!-- 動画のクラフトのコース (2026-10-17、白から自分で作る) -->
   </template>
   <!-- コースの案内はアイテムの下。スマホは今の手もアイテムのすぐ下 (2026-10-17 オーナー) -->
-  <template v-else-if="part === 'under-item'"><StageTopicGuide v-if="phone && !s.replay.value && s.mode.value === 'hand'" part="now" class="w-full" /><StageCourseGuide v-if="!s.replay.value && s.mode.value === 'hand'" class="mt-2 w-[480px] max-md:w-full" /></template>
+  <template v-else-if="part === 'under-item'"><StageTopicGuide v-if="phone && !s.replay.value && s.mode.value === 'hand'" part="now" /><StageCourseGuide v-if="!s.replay.value && s.mode.value === 'hand'" class="mt-2 w-[480px] max-md:w-full" /></template>
   <StageTopicGuide v-else-if="part === 'above-shelf' && !phone && !s.replay.value && s.mode.value === 'hand'" part="now" /><!-- コースの今の手 (棚のすぐ上) -->
   <template v-else-if="part === 'overlay'">
     <VideoStage v-if="s.video.value && s.ready.value" />
