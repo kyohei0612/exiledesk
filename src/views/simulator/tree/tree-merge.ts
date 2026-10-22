@@ -27,7 +27,8 @@ export function backTargetsOf(doc: TreeDoc, id: string): string[] {
  */
 export function joinSameShape(doc: TreeDoc, id: string): void {
   const b = doc.boxes[id];
-  if (!b?.hand) return;
+  // 完成だった当たりの箱から伸ばした時だけ (前はどの箱に手を付けても動き、消去を付けた外れの箱へ完成の箱が黙ってつながった、10-22 靴・手袋を白紙から組んで見つけた)
+  if (!b?.hand || !b.done || b.out !== "hit") return;
   const key = (x: string): string | null => { const s = heldSets(doc, x); return s.length === 1 ? s[0]!.join(",") : null; };
   const k = key(id);
   b.done = null;
