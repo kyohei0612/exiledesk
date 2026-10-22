@@ -4,3 +4,4 @@
 
 | 誰 | ファイル |
 |---|---|
+| シミュ部長 16 本目 | エンジンの直読みを窓口へ付け替え: src/services/simulator・src/services/tutorial・src/state/tutorial・src/views/tutorial・src/views/simulator/StageRecipesPage.vue の import |
