@@ -26,15 +26,6 @@ export function handOmens(key: string, omens: readonly string[]): { now: string[
   return { now: omens.filter((o) => !rv.includes(o)), reveal: omens.filter((o) => rv.includes(o)) };
 }
 
-/**
- * その手に付けられるお告げ (OMEN_FOR の手の種類の物)。骨 (冒涜) の手には、後の発現で使うアビスの反響も並べる
- * (2026-10-05 オーナー「骨持った瞬間に反響のお告げも ON にできるように」。掛けるだけで、使われるのは発現の手、handOmens)
- */
-export function omensAllowedFor(key: string | null | undefined): string[] {
-  if (!key) return [];
-  const kind = kindOf(key);
-  return [...(OMEN_FOR[kind] ?? []), ...(kind === "desecrate" ? OMEN_FOR.reveal ?? [] : [])];
-}
 /** カタリスト (品質だけ上げる手。catalyst_<タグ>・jcatalyst_<タグ>) か */
 export const isCatalystKey = (key: string): boolean => kindOf(key) === "catalyst";
 

@@ -107,6 +107,15 @@ export function omensFor(currency: string, held: readonly string[]): string[] {
   // (2026-10-05 オーナー「腐食は単体だよね、属さないはず」)
   return used.includes("OmenofPutrefaction") ? ["OmenofPutrefaction"] : used;
 }
+/**
+ * その手に付けられるお告げ (OMEN_FOR の手の種類の物)。骨 (冒涜) の手には、後の発現で使うアビスの反響も並べる
+ * (2026-10-05 オーナー「骨持った瞬間に反響のお告げも ON にできるように」。掛けるだけで、使われるのは発現の手、handOmens)
+ */
+export function omensAllowedFor(key: string | null | undefined): string[] {
+  if (!key) return [];
+  const kind = kindOf(key);
+  return [...(OMEN_FOR[kind] ?? []), ...(kind === "desecrate" ? OMEN_FOR.reveal ?? [] : [])];
+}
 
 
 /**

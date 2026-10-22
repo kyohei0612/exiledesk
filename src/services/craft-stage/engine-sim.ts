@@ -33,5 +33,3 @@ export { magicAddOdds, anyOfAddOdds, addGradeFor, ADD_GRADES } from "./for-sim/m
 export { modListForUse, MOD_USE_GROUPS } from "./for-sim/mod-list-use";
 // そのアイテムのベースに差せるルーン (今のゲームに有る物、効果つき)
 export { runesFor } from "./for-sim/rune-choice";
-// 貼り付けの MOD の素の値の文
-export { modRawText } from "./for-sim/raw-text";

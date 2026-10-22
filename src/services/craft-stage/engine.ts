@@ -1,8 +1,9 @@
 /**
- * engine.ts — エミュ部のエンジンの入口 (2026-10-20 オーナー「エミュ部 = エンジンの核」。案は docs/org/emulator/notes/engine-entry.md)。
+ * engine.ts — エンジンの核の入口 (2026-10-20 オーナー「エンジンの核」。案は docs/org/emulator/notes/engine-entry.md)。
  *
- * シミュ・チュートリアル・解析君は、MOD の置き場・重み・段・文、カレンシーとお告げの効果、確率、品質・聖別の式をここから取る (自前の表・式・重みの足し算を作らない)。
- * 足りない物はエミュ部長がここへ足す。ここは名前を並べるだけ (中身は元のファイル)。型は export type、関数は名前ごとに並べ、
+ * どの画面 (エミュ・シミュ・チュートリアル・解析君) も、MOD の置き場・重み・段・文、カレンシーとお告げの効果、確率、品質・聖別の式をここから取る (自前の表・式・重みの足し算を作らない)。
+ * 要望を出した側だけが使う物は engine-sim.ts (シミュ)・engine-emu.ts (エミュ) と中身の for-sim/・for-emu/ (2026-10-22 深夜 オーナー、
+ * docs/org/emulator/notes/2026-10-22-entry-split-plan.md)。核は for-sim / for-emu を読まない。足りない物はジン部長がここへ足す。ここは名前を並べるだけ (中身は元のファイル)。型は export type、関数は名前ごとに並べ、
  * `export *` の束ねを作らない (ワーカーのバンドルに要らない物を引き込まないため)。
  */
 
@@ -16,18 +17,9 @@ export type { PobBlock } from "./stage-pob";
 
 // アイテムを作る・打つ
 export { freshItem, startFrom, startItem, playStep, playPlan, runPlan, splitOmens } from "./run-plan";
-// 始めのアイテムを指名の MOD (段の名前の T)・ルーン・乱数の MOD の数で作る (断られたら理由を返す。2026-10-22 シミュの自前の式を入口へ)
-export type { StartMod, StartWith } from "./for-sim/start-with";
-export { startWith, START_FRACTURE_MAX } from "./for-sim/start-with";
-export { applyCurrency, kindOf, omensFor } from "./apply-currency";
-export { omenBlock } from "./omen-block";
+// omensAllowedFor = その手に付けられるお告げ (骨には後の発現の反響も)
+export { applyCurrency, kindOf, omensFor, omensAllowedFor } from "./apply-currency";
 export { revealOffers, unrevealedOf } from "./apply-desecrate";
-// その手が打てるか (お告げ・触媒の前のカタリスト込み)・手のお告げを今の手 / 続けて打つ発現に分ける・その手に付けられるお告げ (2026-10-22 シミュの自前の式を入口へ)
-export type { UseSpec } from "./for-sim/can-use";
-export { canUse, handOmens, omensAllowedFor, isCatalystKey, CATALYSING_OMEN } from "./for-sim/can-use";
-// 手を 1 回打つ (触媒の前のカタリスト・フラクチャーで固定する MOD・骨の後の発現込み) と、発現で候補を選んで打つ (2026-10-22 シミュの自前の式を入口へ)
-export type { HandSpec, HandResult } from "./for-sim/hand-use";
-export { applyHand, revealBy, ABYSSAL_ECHO_OMEN } from "./for-sim/hand-use";
 
 // アイテムの今を読む
 export { allMods, listOf, room, limitOf, effectiveCls, maxQualityOf, catalystOf, SIDES, sideOfMod, unfracturable } from "./stage-core";
@@ -45,10 +37,9 @@ export { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 export type { Strength as OrbStrength } from "./spec/orb-specs";
 export { orbFloor, CHAOS_FLOOR } from "./spec/orb-specs";
 export { familyBlocked, occupiedKeysOf } from "../mods/mod-rules";
-// MOD の一覧の行 (段に数の tier)。modListForUse = 使い方 (hit = カレンシーで付く当たり / start = 始まりに置ける) の群れだけを群れの順・出やすさの順に
+// MOD の一覧の行 (段に数の tier)
 export type { ListRow, ListTier, ModGroup } from "./mod-list";
 export { modListFor } from "./mod-list";
-export { modListForUse, MOD_USE_GROUPS } from "./for-sim/mod-list-use";
 export { tierDisplayRanges } from "../mods/stat-scale";
 export { inGroup } from "../mods/item-classes";
 export { isRemovedBase, classLabel } from "../items/base-catalog";
@@ -68,36 +59,20 @@ export { REVEAL_SPEC } from "./spec/desecrate-specs";
 export type { StepOutcome } from "./spec/outcomes";
 // 枝が STEP_OUTCOMES_MAX を超える手 (錬金など 3 つ以上足す) は数え上げない (stepOutcomes は null、OrTooMany は "tooMany")
 export { stepOutcomes, stepOutcomesOrTooMany, STEP_OUTCOMES_MAX } from "./spec/outcomes";
-// 1 手の前後で狙い (段の名前の T) がどう変わったか・行き先を狙いで分ける・この手で付きうる狙い (2026-10-22 シミュの自前の式を入口へ)
-export type { TierAim, AimDiff, AimDiffOpts } from "./for-sim/aim-reach";
-export { aimDiff, outcomesByAim, reachableAims } from "./for-sim/aim-reach";
 // 指名で付ける手の鍵 (force:<modId>|<段>|<印>。印 n = 普通・f = フラクチャー・e = エッセンス・d = 冒涜)
 export type { ForceFlag } from "./apply-force";
 export { forceKey } from "./apply-force";
-// 持っている物を打つ前に光らせる物 (変わる候補の MOD と付く空き。クラフト台とシミュの試し打ち、2026-10-22)
-export type { UsePreview } from "./for-emu/preview";
-export { previewUse } from "./for-emu/preview";
+// 持った瞬間の % (クラフト台の MOD 一覧と同じ) と狙う
 export type { HeldOdds } from "./held-odds";
 export { heldOdds, heldAnyOf, aimTierKey } from "./held-odds";
-export type { AimTarget, AimCombo, AimOdd, AimHitOpts } from "./aim-odds";
-export { aimCombos, aimOdds, aimChain, aimDone, hits as aimHits } from "./aim-odds";
-export { aimHeldOn, isAimMod, junkOf, heldSetOf } from "./for-sim/aim-held";
-// 段の換算 (段の番号 ↔ 段の名前の T・狙いが全部付く一番低いアイテムレベル・段の札の文字。2026-10-22 シミュの自前の式を入口へ)
-export { tierIndexOf, tierRankOf, tierNoOf, minIlvlFor, tierRankLabel } from "./tier-rank";
-// 手の働き (足す・入れ替え・消す…) とカタリストを最大まで入れる (2026-10-22 シミュの自前の式を入口へ)
-export type { CurrencyEffect } from "./for-sim/hand-effect";
-export { effectOf, catalystTagOf, catalystFull, fillCatalyst, catalystForMod } from "./for-sim/hand-effect";
-// MOD の無いマジックに 1 回足す時の候補の組 (どれか 1 つ) の付きやすさと等級の落とし方 (2026-10-22 シミュの start-cost の式を入口へ)
-export type { MagicAddOdds, AddGrade } from "./for-sim/magic-odds";
-export { magicAddOdds, anyOfAddOdds, addGradeFor, ADD_GRADES } from "./for-sim/magic-odds";
+export type { AimTarget, AimCombo, AimOdd } from "./aim-odds";
+export { aimCombos, aimOdds, aimChain, aimDone } from "./aim-odds";
 export { DESECRATION_EXCLUSIVE_COUNT, bossOmenAllowed, desecrationOmenForMod } from "../../vendor/poe2htc/engine/probability";
 
 // 名簿
 export { OMEN_FOR } from "./omens";
 export type { RuneRow, RuneEffect } from "./stage-runes";
 export { RUNES, runeOf, isRune, runeEffectFor } from "./stage-runes";
-// そのアイテムのベースに差せるルーン (今のゲームに有る物、効果つき。2026-10-22 シミュの自前の式を入口へ)
-export { runesFor } from "./for-sim/rune-choice";
 export { withRunes, runeIdByName } from "../../vendor/poe2htc/engine/runes";
 export { ESSENCE_KEYS } from "../htc/essence-key-table";
 export { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
@@ -113,7 +88,6 @@ export { boostsOf, modBoostsOf, baseValueOf, unboost } from "./boosts";
 // 貼り付けたアイテムの文を読む (トレード・poe.ninja・ゲームの Ctrl+C / Ctrl+Alt+C、日英。形は item-text-types.ts)
 export type { ItemTextResult, ItemTextMod, ItemTextImplicit, ItemTextSkip, ItemTextSkipCode, ItemTextSource, ItemTextWords, ItemTextCorruption, ItemTextBoost } from "./item-text-types";
 export { parseItemText } from "./item-text";
-export { modRawText } from "./for-sim/raw-text";
 // コラプト (ヴァールのオーブ) で付く MOD の表 (poe2db の部位のページ。enchant = エンチャント、upgrade = 強まったコラプトの行)
 export type { CorruptionRow } from "../mods/corruption";
 export { corruptionRowsFor, matchCorruption } from "../mods/corruption";
@@ -122,11 +96,7 @@ export { anointNotables, anointOfLine } from "../mods/anoint";
 
 // 使う人が決める設定 (触媒の高貴の品質 1% ごとの倍率・聖別の倍率。null = 既定。打つ処理と確率の表が同じ値を読む)
 export type { StageTuning } from "./stage-tuning";
-export { stageTuning, setStageTuning, tunedCatalysingMultiplier, CATALYSING_PER_PCT, defaultWeightOf } from "./stage-tuning";
-// 重みを直せる MOD の印 (重みを推定で埋めた MOD = 仮置き 1 を CoE・借用で埋めた物)
-export { OVERRIDDEN } from "../htc/weight-overrides";
-export { SANCTIFY_MIN, SANCTIFY_MAX } from "./apply-vaal";
-
+export { stageTuning, setStageTuning } from "./stage-tuning";
 // 文
 export { fillModText } from "../htc/mod-text";
 export { jaUniqueText } from "../mods/unique-mod-ja";
