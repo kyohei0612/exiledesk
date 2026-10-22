@@ -61,8 +61,8 @@ onBeforeUnmount(() => {
         <button type="button" role="tab" :aria-selected="s.mode.value === 'hand'" class="g-tab min-w-[170px] max-md:min-w-0 max-md:flex-1 max-md:!text-[12px]" :class="s.mode.value === 'hand' ? 'on' : ''" @click="setMode('hand')">{{ tr("エミュレーター", "Emulator") }}</button>
         <button type="button" role="tab" :aria-selected="s.mode.value === 'sim'" data-base-page-sim class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!text-[12px]" :class="s.mode.value === 'sim' ? 'on' : ''" @click="setMode('sim')">{{ tr("シミュレーター", "Simulator") }}<span class="text-[10px] font-normal opacity-70">β</span></button>
       </div>
-      <!-- シミュレーターの物 (レシピから始める・貼り付け) は SimBaseExtras.vue (シミュ部長) -->
-      <SimBaseExtras v-if="s.mode.value === 'sim'" part="recipe" class="mb-3" />
+      <!-- シミュレーターの物 (レシピから始める) は SimBaseExtras.vue (シミュ部長) -->
+      <SimBaseExtras v-if="s.mode.value === 'sim'" class="mb-3" />
       <!--
         初めて来た人へ: 一言と「すぐ試す」(2026-10-19 スマホ強化。来た人の半分がベースを選ばずに帰っていた。何のサイトか・何をすると何が起きるかが無かった)。
         ベースを選んでいない時 (初めて・白に戻した後) のエミュレーターだけ。押すと金の指輪 (人気の一番上) ですぐ打てる画面へ
@@ -75,9 +75,7 @@ onBeforeUnmount(() => {
         <button type="button" data-base-quick class="g-btn-red min-h-11 shrink-0 px-2 text-[14px] max-md:w-full" @click="pick('Gold Ring')">{{ tr("金の指輪ですぐ試す", "Try now with a Gold Ring") }}</button>
       </div>
       <!-- 未選択の時は前のベース・種類を選んだ状態にしない・人気のベースを上に (StageBasePicker.vue と同じ) -->
-      <div class="rounded-lg bg-black/30 p-4 max-md:p-2"><BaseCatalog ref="catalog" :data="s.data.value" :selected="baseUnpicked ? '' : s.base.value" :popular="baseUnpicked" :paste="!SIM_LOCKED && s.mode.value === 'sim'" @pick="pick">
-        <template #paste><SimBaseExtras part="paste" /></template>
-      </BaseCatalog></div>
+      <div class="rounded-lg bg-black/30 p-4 max-md:p-2"><BaseCatalog ref="catalog" :data="s.data.value" :selected="baseUnpicked ? '' : s.base.value" :popular="baseUnpicked" @pick="pick" /></div>
     </div>
   </section>
 </template>
