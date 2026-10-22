@@ -4,3 +4,4 @@
 
 | 誰 | ファイル |
 |---|---|
+| ジン部長 6 本目 | src/services/craft-stage/can-use.ts (新)・engine.ts (B6〜B16 を入口へ、10-22 深夜) |
