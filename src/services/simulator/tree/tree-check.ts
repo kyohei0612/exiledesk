@@ -197,6 +197,9 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
     let st = steps.next();
     while (!st.done) { yield { phase: "run", n: st.value, of: RUN_PEOPLE, partial: ranked(out) }; st = steps.next(); }
     const run = st.value;
+    // 完成 0 人で半分以上が打ち止め (手の上限) = 完成に着かない (10-22 13 通り組んだ #10: 100 人とも打ち止めの木で精査が何も言わなかった)。
+    // ここの回しは手の上限 300 なので、長いだけの木 (100 人回しでは完成 100%) は完成が 1 人でもいれば出さない
+    if (!run.finished && run.capped * 2 >= RUN_PEOPLE) add("start", "noDone", tr(`回すと ${RUN_PEOPLE} 人中 1 人も完成せず、${run.capped} 人が手の上限まで打っても着かない (輪から出られない・狙いが付きにくい道を確かめる)`, `None of ${RUN_PEOPLE} runs finished; ${run.capped} hit the craft limit (check for loops or hard-to-hit paths)`));
     for (const [id, n] of Object.entries(run.stuckAt)) {
       const w = run.stuckWhy[id];
       // 外れを持ったまま戻る「狙いが消えた」の戻り (作り直しでない)。カオスを当たるまでは 1 つしか入れ替えないので、持ち込んだ外れは消えずに先で満杯になる (10-22 靴 b14 → b1、100 人中 63 人)
