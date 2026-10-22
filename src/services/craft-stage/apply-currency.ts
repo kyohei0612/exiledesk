@@ -13,6 +13,7 @@ import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { inAny, inGroup, type ItemGroup } from "../mods/item-classes";
 import { allMods, hasExtraCatalyst, maxQualityOf, skip, type Force } from "./stage-core";
 import { applyForce, isForce } from "./apply-force";
+import { applySpam, isSpam } from "./apply-spam";
 /** 品質を手で決める手 (`qset:15` = 品質 15%、`qset:34:caster` = 宝飾品の品質の種類も) */
 export const QUALITY_SET = "qset:";
 export const qualitySetKey = (n: number, tag?: string | null): string => `${QUALITY_SET}${n}${tag ? `:${tag}` : ""}`;
@@ -157,6 +158,8 @@ export function applyCurrency(data: PatchData, item: StageItem, currency: string
   // 品質・アイテムレベルの欄も。通すのは聖別の数値の帯 (聖別そのものの値)・状態を問わない物 (鏡・抽出)・解呪・サルベージだけ
   if (item.sanctified && !isSanctifySet(currency) && !ANY_STATE.includes(currency)) return skip(item, SANCTIFIED_REASON());
   if (item.identified === false && currency !== "wisdom") return skip(item, tr("未鑑定 (先に鑑定の巻物で鑑定する)", "Unidentified (identify it with a Scroll of Wisdom first)"));
+  // スパムシミュの当たった形を置く 1 手 (apply-spam.ts。乱数を使わない)
+  if (isSpam(currency)) return applySpam(data, item, currency);
   // ADR-004 (2026-10-16): 移し終えた手 (spec/run-spec.ts の specCovers) は説明文の分解で打つ。まだ移していない手 (聖別など) は下で
   const bySpec = applyBySpec(data, item, currency, rng, omens, { oneCatalyst: hint.oneCatalyst, ...(hint.pick ? { pick: hint.pick } : {}), ...(hint.remove ? { remove: hint.remove } : {}) });
   if (bySpec) return bySpec;

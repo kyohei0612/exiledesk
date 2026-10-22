@@ -6,6 +6,7 @@
  * カタリスト (指輪・アミュレット)、お告げ。キーは計算機と同じ price-keys.json / essence-keys.json の物。
  * 値段とアイコンは相場 (market-store) の行を英語名で引く (計算機の buildHtcPrices と同じ引き方)。
  */
+import { isSpam, parseSpam } from "../../services/craft-stage/apply-spam";
 import { emotionNameOf, isEmotion } from "../../services/craft-stage/apply-emotion";
 import { baseArt } from "../../services/craft-stage/base-art";
 import { CRAFT_RUNES_EN } from "../../services/htc/sockets";
@@ -147,6 +148,9 @@ export function enOf(key: string, item: StageItem | null): string {
 const row = (key: string, item: StageItem | null) => marketStore.items.value.find((x) => x.Text === enOf(key, item));
 /** 1 個の値段 (高貴建て、相場。無ければ 0。発現は 0) */
 export function priceOfKey(key: string, item: StageItem | null): number {
+  // スパムシミュの 1 行は鍵に入れた費用 (100 人の平均 / 運試しの 1 人、高貴建て。apply-spam.ts)
+  const sp = parseSpam(key);
+  if (sp) return sp.cost;
   const it = row(key, item);
   const p = it && typeof it.CurrentPrice === "number" ? it.CurrentPrice : 0;
   // 遺産のルーンは相場に値段が無い → アルダーの遺産の値段 (legacy-rune.ts)
@@ -155,7 +159,9 @@ export function priceOfKey(key: string, item: StageItem | null): number {
 }
 /** アイコン: 相場の行の絵。ルーンは相場に無い物もあるのでクライアントから書き出した絵 (rune-art) を先に */
 /** アイコン: ルーンはルーンの絵、クライアントから取り出した 128px の絵があればそれ (頭蓋骨・液化した感情、2026-10-11)、無ければ相場の 64px */
-export const iconOfKey = (key: string, item: StageItem | null): string => (isRune(key) ? runeArt(runeNameOf(key)) : null) ?? baseArt(enOf(key, item)) ?? row(key, item)?.IconUrl ?? "";
+export const iconOfKey = (key: string, item: StageItem | null): string => (isSpam(key) ? iconOfKey(spamIconKey(key), item) : null) ?? (isRune(key) ? runeArt(runeNameOf(key)) : null) ?? baseArt(enOf(key, item)) ?? row(key, item)?.IconUrl ?? "";
+/** スパムの 1 行の絵 = その道の主のカレンシー (等級つき) */
+const spamIconKey = (key: string): string => { const sp = parseSpam(key); return sp ? `${sp.route}${sp.grade === "base" ? "" : `_${sp.grade}`}` : key; };
 /** 日本語名 (お告げ・発現も) */
 export function nameOfKey(key: string, item: StageItem | null): string {
   // 発現は棚に無い手 (チュートリアルの選択肢のカードの見出し。2026-10-16)

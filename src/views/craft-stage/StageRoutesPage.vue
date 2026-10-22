@@ -218,17 +218,16 @@ function next(sel: string): void { void nextTick(() => requestAnimationFrame(() 
 const canLuck = (r: RaceRow): boolean => !r.off && r.tries.length > 0;
 /**
  * 当たった形でクラフト台に戻る (道のカード・一番安い欄から。2026-10-22 オーナー「スパムしてクラフトに戻れるけど、付いた状態で戻れない」)。
- * その道・等級で 1 人を当たるまで打ち、その形を置く (route-place.ts)。付かなければ何もしない
+ * その道・等級で 1 人を当たるまで打ち、その形を置く。工程の 1 行の費用は 100 人の平均 (route-place.ts)。付かなければ何もしない
  */
 const placeMiss = ref(false);
-const placeTitle = computed(() => tr("この道の一番安い等級で 1 人を当たるまで打ち、その形をクラフト台に置く (1 つ戻す・Ctrl+Z で置く前の形に戻る。スパムの手と費用は工程に入らない)", "Spam once with this route's cheapest grade until it hits and put that item on the craft stage (Undo / Ctrl+Z goes back to the item before; the spam uses and cost are not in the steps)"));
+const placeTitle = computed(() => tr("この道の一番安い等級で 1 人を当たるまで打ち、その形をクラフト台に置く (工程に 1 行、費用は 100 人の平均。1 つ戻す・Ctrl+Z で消える)", "Spam once with this route's cheapest grade until it hits and put that item on the craft stage (one step, cost = average of 100; Undo / Ctrl+Z removes it)"));
 function placeHit(r: RaceRow | null): void {
   const tt = t.value;
   if (!r || !tt || !canLuck(r)) return;
-  const it = hitItemOf(r, tt, ilvl.value, prep.value, fromItem.value);
+  const hit = hitItemOf(r, tt, ilvl.value, prep.value, fromItem.value);
   track("routes:place", r.route);
-  if (it) placeOnStage(it, !!fromItem.value);
-  else placeMiss.value = true;
+  placeMiss.value = !hit || !placeOnStage(hit.item, r, { cost: r.avgCost, n: hit.n, avg: true });
 }
 /** 道の中で一番安い、運試しができる等級 */
 const bestIn = (route: RouteKind): RaceRow | null => { const xs = ok.value.filter((r) => r.route === route && canLuck(r)); return xs.length ? xs.reduce((a, b) => (b.avgCost < a.avgCost ? b : a)) : null; };

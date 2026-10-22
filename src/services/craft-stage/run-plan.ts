@@ -26,6 +26,7 @@ import { isShard } from "./apply-act";
 import { extraBaseFor, reqOfItem } from "./stage-bases";
 import { DISPOSE_JA } from "./apply-dispose";
 import { parseForce } from "./apply-force";
+import { parseSpam, spamName } from "./apply-spam";
 import { applyRune, isRune, parseRuneKey, runeOf } from "./stage-runes";
 import { propRows } from "./stage-props";
 import { tuneForStep, withStepTune, type StepTune } from "./stage-tuning";
@@ -126,6 +127,8 @@ export interface PlayedStep {
 export const splitOmens = (omen: string | null | undefined): string[] => (omen ? omen.split("+").filter(Boolean) : []);
 /** 手の日本語名 (発現は「発現 (2 番目)」) */
 export function stepJa(currency: string, item: StageItem): string {
+  const sp = parseSpam(currency);
+  if (sp) return spamName(sp, false);
   const fc = parseForce(currency);
   if (fc?.flag === "x") return "× で外す";
   if (fc?.flag === "u") return "フラクチャーを外す";
@@ -153,6 +156,8 @@ export function stepJa(currency: string, item: StageItem): string {
  * 手順の currency_ja は日本語のまま (stepJa)
  */
 export function stepEn(currency: string): string | null {
+  const sp = parseSpam(currency);
+  if (sp) return spamName(sp, true);
   const fc = parseForce(currency);
   if (fc?.flag === "x") return "Remove (×)";
   if (fc?.flag === "u") return "Unfracture";

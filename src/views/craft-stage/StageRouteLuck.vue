@@ -177,10 +177,10 @@ const shareText = computed(() => {
  * ここから開始 / 当たった形でクラフト台に戻る (2026-10-19 オーナー「ここから始めるボタンが無い」): この欄のアイテムをクラフト台に置いて、ページを閉じる (route-place.ts)
  */
 function startHere(): void {
-  if (item.value) placeOnStage(item.value, !!props.from);
+  if (item.value) placeOnStage(item.value, props.row, { cost: cost.value, n: n.value, avg: false });
 }
 /** ここから開始の説明 */
-const startTitle = computed(() => tr("このアイテムをクラフト台に置いて続きを打つ (1 つ戻す・Ctrl+Z で置く前の形に戻る。運試しの手と費用は工程に入らない)", "Put this item on the craft stage and keep crafting (Undo / Ctrl+Z goes back to the item before; the luck-test uses and cost are not in the steps)"));
+const startTitle = computed(() => tr("このアイテムをクラフト台に置いて続きを打つ (工程に 1 行、費用はこの運試しの分。1 つ戻す・Ctrl+Z で消える)", "Put this item on the craft stage and keep crafting (one step, cost = this luck test; Undo / Ctrl+Z removes it)"));
 const xUrl = computed(() => `https://x.com/intent/post?text=${encodeURIComponent(shareText.value)}&url=${encodeURIComponent(shareUrl.value)}`);
 function shareX(e: MouseEvent): void {
   sendShare(e, { code: shareCode, web: xUrl.value, text: shareText.value, url: shareUrl.value, log: { base: s.base.value, rank: result.value?.rank ?? null, route: props.row.route } });

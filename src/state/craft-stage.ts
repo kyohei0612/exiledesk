@@ -135,12 +135,6 @@ const pob = shallowRef<PobBlock | null>(null);
  */
 const startMods = dual(() => ref<Force[]>([]));
 /**
- * 外から置いたアイテム (スパムシミュの今のアイテムから → 当たった形でクラフト台に戻る、2026-10-22 オーナー) の前の形。
- * まだ 1 手も打っていない時の 1 つ戻す (Ctrl+Z) で、置く前の工程ごと戻す。白から始め直したら捨てる
- */
-type StageBack = { item: StageItem | null; log: PlayedStep[]; dropped: Array<{ step: PlanStep; index: number }>; startMods: Force[]; omens: string[]; seed: number; itemLevel: number };
-const back = dual(() => shallowRef<StageBack | null>(null));
-/**
  * シミュレーションのタブ (2026-10-05、実験): 画面の切り替えと、狙いの MOD (MOD の一覧の段の表の「狙う」で足す)。
  * minTierIndex はエンジンの段の番号 (0 = 一番下、T1 = tiers.length - 1)。[[stage-sim.ts]]
  */
@@ -313,7 +307,6 @@ export const craftStage = {
   reset(): void {
     if (!data.value) return;
     try {
-      back.value = null;
       startMods.value = [];
       log.value = [];
       dropped.value = [];
@@ -387,42 +380,9 @@ export const craftStage = {
     if (log.value[log.value.length - 1] === before) { omens.value = []; return { done: false, stop: true, text: miss.value?.reason ?? tr("打てない", "Can't use") }; }
     return { done: false, stop: false, text: [nameOf(mv.key), ...mv.omens.map((o) => nameOf(o))].join(" + ") };
   },
-  /**
-   * 外のアイテムを丸ごと置いて、工程は 0 から (始めの MOD = forces)。前の形は 1 つ戻す (Ctrl+Z) で戻せるように控える (back)。
-   * 外で打った手と費用は工程に入れない (手順 JSON・共有の再生が別物にならないように)
-   */
-  place(it: StageItem, forces: Force[]): void {
-    if (replay.value) return;
-    back.value = { item: item.value, log: log.value, dropped: dropped.value, startMods: startMods.value, omens: omens.value, seed: seed.value, itemLevel: itemLevel.value };
-    held.value = null;
-    itemLevel.value = it.itemLevel;
-    startMods.value = forces;
-    log.value = [];
-    dropped.value = [];
-    omens.value = [];
-    seed.value = newSeed();
-    item.value = it;
-    error.value = null;
-  },
-  /** 置く前の形がある (まだ 1 手も打っていない時の 1 つ戻すで戻る) */
-  canBack: computed(() => !!back.value && !log.value.length),
   /** 1 手戻す (その手で食ったお告げは掛け直す) */
   undo(): void {
     const l = log.value;
-    // 外から置いたアイテムでまだ打っていない時は、置く前の形 (工程ごと) に戻す
-    const b = back.value;
-    if (!l.length && b && !replay.value) {
-      back.value = null;
-      itemLevel.value = b.itemLevel;
-      startMods.value = b.startMods;
-      log.value = b.log;
-      dropped.value = b.dropped;
-      omens.value = b.omens;
-      seed.value = b.seed;
-      item.value = b.item;
-      rollSeed.value = freshSeed();
-      return;
-    }
     // まだ打っていない時は、始めの MOD を 1 つ外す。50 手より前に消した手 (dropped) が残っている時は打った後なので外さない
     // (外すとアイテムは白 + 始めの MOD に戻るのに、手順には消した手が残り、再生すると別物になった。2026-10-16 要望 0ce15a82 の調べ)
     if (!l.length && dropped.value.length) return;
