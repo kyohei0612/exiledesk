@@ -369,7 +369,7 @@ onMounted(() => window.addEventListener("keydown", onKey));
 onMounted(() => {
   const name = new URLSearchParams(location.search).get("sample");
   const sample = name ? treeSample(name) : null;
-  if (!sample) return;
+  if (!sample) { if (t.takeAskBase()) panel.value = { kind: "base", id: "start" }; return; } // 白紙ならまず始まりの箱でベースを選ぶ (案 1、10-22)
   try { localStorage.setItem("exiledesk.tree.v0.before-sample", JSON.stringify(doc.value)); } catch { /* 控えられなくても開く */ }
   t.edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, sample); tidyOf(d); });
 });

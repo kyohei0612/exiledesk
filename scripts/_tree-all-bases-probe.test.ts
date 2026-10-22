@@ -2,11 +2,13 @@
  * _tree-all-bases-probe.test.ts — ツリーが全部の部位で使えるかの試し (2026-10-22 シミュ部長 11 本目、オーナー「全部のベースで使える」)。
  *
  *   pnpm exec vitest run -c scripts/_tree-all-bases-probe.config.ts
+ *   OUT=<置き場> …  部位ごとの木の JSON を <置き場>/<部位>.json に書く (開発版で開いて回す用)
  *
  * 部位 (クラフト台のベース一覧の cls) ごとに一番高いベースで白紙の木を作り、画面と同じ部品で: 始まりの見本・棚 (オーブ・骨・エッセンス)・
  * 当たりの一覧 (modListFor)・始まりの箱の手 (カオスを当たるまで、狙い = 一覧の最初の普通の MOD の一番上の段) → 当たりを完成・精査・10 人回し。
  * 並べるだけ (見張りではない)。落ちた所・空の所が「全部のベースで使う」の直す所
  */
+import fs from "node:fs";
 import { it } from "vitest";
 import { loadPatch } from "../tests/helpers/patch";
 import { modListFor, freshItem } from "../src/services/craft-stage/engine";
@@ -45,6 +47,7 @@ it("全部の部位", () => {
       setHand(d, "start", hand, "spam", [aim]);
       const hit = d.boxes.start!.outs.find((o) => d.boxes[o]!.out === "hit");
       if (hit) { setAim(d, hit, aim); setDone(d, hit, "main"); } else notes.push("当たりの箱ができない");
+      if (process.env.OUT) fs.writeFileSync(`${process.env.OUT}/${cls}.json`, JSON.stringify(d));
       const issues = checkTree(data, d);
       const run = runTree(data, d, { n: 10, seed: 1, price: () => 0 });
       out.push(`${cls.padEnd(22)} ${r.ja.padEnd(14)} 棚 オーブ ${shelf.orb} 骨 ${shelf.bone} エッセンス ${shelf.ess} · 普通の MOD ${normal.length} · 精査 ${issues.length}${issues.length ? ` [${issues.map((x) => x.kind).join(",")}]` : ""} · 10 人 完成 ${run.finished} 止まり ${run.stuck} 打ち止め ${run.capped}${notes.length ? ` · ${notes.join(" / ")}` : ""}`);

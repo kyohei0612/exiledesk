@@ -79,6 +79,21 @@ function setBase(base: string, itemLevel: number): void {
     Object.assign(d, newTree(base, itemLevel));
   });
 }
+/**
+ * 白紙の木を開いた時に、まず始まりの箱のベース選び (TreeBasePick) を出すか (10-22 オーナー「全部のベースで使える」案 1)。
+ * クラフト台の「このベースでクラフトの道へ」から来た時はベースが決まっているので出さない (1 回だけ)
+ */
+const askBase = ref(true);
+/** blank = 始まりの箱に手が無い (白紙) */
+const isBlank = (d: TreeDoc): boolean => !d.boxes.start?.hand && !d.boxes.start?.split && Object.keys(d.boxes).length === 1;
+/** 白紙の木を開いた時にベースを選ばせるか (読んだら下ろす) */
+function takeAskBase(): boolean { const v = askBase.value && isBlank(doc.value); askBase.value = true; return v; }
+/** クラフト台のベースとアイテムレベルで白紙の木を開く (前の木は 1 つ戻すで戻せる)。ページを開くのは呼ぶ側 */
+function startTreeWith(base: string, itemLevel: number): void {
+  opened.value++;
+  edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, newTree(base, itemLevel)); });
+  askBase.value = false;
+}
 /** 始めのアイテムにフラクチャーのほか付いている乱数の MOD の数 (素の高貴を n 回、tree-sample の startItemOf。0 は消す。1 つ戻すで戻せる) */
 function setStartRandom(n: number): void { edit((d) => { if (n > 0) d.startRandom = n; else delete d.startRandom; }); }
 /** ベースを替えると消える箱の数 (始まりより下の、画面に出る箱。品質を上げた後の通り抜けは数えない) */
@@ -123,5 +138,5 @@ const baseCost = computed(() => {
 });
 
 export function useTree() {
-  return { doc, edit, undo, canUndo, reset, setBase, setStartRandom, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, treePrice };
+  return { doc, edit, undo, canUndo, reset, setBase, setStartRandom, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, treePrice, takeAskBase, startTreeWith };
 }
