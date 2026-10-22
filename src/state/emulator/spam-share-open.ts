@@ -12,10 +12,10 @@ import { fullSockets } from "./stage-steps";
 import { startFrom } from "../../services/craft-stage/run-plan";
 import { unpackJson } from "../../services/craft-stage/share";
 import type { Grade, RouteKind, SharedRace } from "../../services/craft-stage/route-race";
-import { routesLuck, routesOpen, routesRunes, routesShared, routesTarget } from "../web-page";
+import { ROUTES_MAX, routesLuck, routesOpen, routesRunes, routesShared, routesTarget } from "../web-page";
 
-/** スパムシミュレーターの運試しのシェア: r = 道、g = 等級、m = 狙いの MOD、t = 段の下限、i = アイテムレベル */
-export interface RouteSetup { route: { r: RouteKind; g: Grade; m: string; t: number; i: number; /** 嵌めたルーンの id */ u?: string[]; /** 計算済みの結果 (開いた人は計算しない) */ x?: SharedRace } }
+/** スパムシミュレーターの運試しのシェア: r = 道、g = 等級、m = 狙いの MOD、t = 段の下限、i = アイテムレベル、a = 当たりが 2 つ以上の時の全部 ([MOD の id, 段の下限]。m・t は 1 つ目) */
+export interface RouteSetup { route: { r: RouteKind; g: Grade; m: string; t: number; i: number; a?: Array<[string, number]>; /** 嵌めたルーンの id */ u?: string[]; /** 計算済みの結果 (開いた人は計算しない) */ x?: SharedRace } }
 /** 旧カオススパム計算機のシェア (読むだけ): i = アイテムレベル、a = [MOD の id, 段の下限] の並び */
 interface OldSpamSetup { i: number; a: Array<[string, number]> }
 
@@ -45,7 +45,8 @@ export async function openSharedSpam(): Promise<void> {
   s.reset();
   // 白のアイテムを置く (ページはアイテムがある時に開く。ベースは ?base= で先に置いてある)
   try { s.item.value = { ...fullSockets(startFrom(d, s.base.value, ilvl, { mods: [], rarity: "normal" }, s.seed.value - 1)), rollSeed: s.seed.value - 1 }; } catch { return; }
-  routesTarget.value = { modId: mod, minTierIndex: Math.max(0, Number(rt?.t ?? old?.[1]) || 0) };
+  const more = Array.isArray(rt?.a) ? rt!.a!.filter((x) => Array.isArray(x) && typeof x[0] === "string" && d.mods.has(x[0])).map((x) => ({ modId: x[0], minTierIndex: Math.max(0, Number(x[1]) || 0) })) : [];
+  routesTarget.value = more.length > 1 ? more.slice(0, ROUTES_MAX) : [{ modId: mod, minTierIndex: Math.max(0, Number(rt?.t ?? old?.[1]) || 0) }];
   routesRunes.value = Array.isArray(rt?.u) ? rt!.u!.filter((x) => typeof x === "string") : null;
   const x = rt?.x;
   routesShared.value = x && Array.isArray(x.r) && Array.isArray(x.l) && Array.isArray(x.t) && Number(x.n) > 0 ? x : null;

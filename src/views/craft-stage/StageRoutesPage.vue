@@ -11,7 +11,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
 import type { StageItem } from "../../services/craft-stage/types";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
-import { routesLuck, routesOpen, routesRunes, routesShared, routesTarget } from "../../state/web-page";
+import { ROUTES_MAX, ROUTES_MULTI_ON, routesLuck, routesOpen, routesRunes, routesShared, routesTarget } from "../../state/web-page";
 import { revealNext } from "../../utils/keep-place";
 import StageRoutesIntro from "./StageRoutesIntro.vue";
 import StageRouteRunes from "./StageRouteRunes.vue";
@@ -55,7 +55,7 @@ const INTRO = ROUTES.map((r) => ({ ...r, start: ({ augment: ["白のベース", 
  * 嵌めて打つルーン (StageRouteRunes.vue。2026-10-19 オーナー「ルーン嵌めた状態でスパムシミュレーターやらないと確率違うぞ」)。
  * 既定はエミュレーターのアイテムに嵌めている物 (この部位で確率が変わる物だけ)。狙いが特殊 MOD なら、そのルーンは必ず嵌める
  */
-const runeNeed = computed((): string[] => { const r = t.value ? s.data.value?.mods.get(t.value.modId)?.rune : undefined; return r ? [r] : []; });
+const runeNeed = computed((): string[] => [...new Set(aims.value.map((a) => a.m.rune).filter((r): r is string => !!r))]);
 const runeIds = computed((): string[] => {
   const ok = new Set(routeRunesFor(s.item.value).map((r) => r.id));
   const base = routesRunes.value ?? (s.item.value ? stageRuneIds(s.item.value).filter((id) => ok.has(id)) : []);
@@ -90,16 +90,29 @@ const FROM_STEP: Step = { k: null, ja: "今のクラフトのアイテムから�
 const shownRoutes = computed(() => (fromItem.value ? ROUTES.map((r) => (r.route === "chaos" ? { ...r, steps: [FROM_STEP, ...r.steps.slice(1)] } : r)) : ROUTES));
 const ORDER = ROUTES.flatMap((r) => r.grades.map((grade) => ({ route: r.route, grade })));
 
-const t = computed(() => routesTarget.value);
-const mod = computed(() => (t.value ? s.data.value?.mods.get(t.value.modId) ?? null : null));
-const modText = computed(() => {
-  const m = mod.value, tt = t.value;
-  if (!m || !tt) return "";
+/** 当たり (並べた物のどれか 1 つが付いたら止める。2 つ以上は開発版だけ ROUTES_MULTI_ON) */
+const t = computed(() => (routesTarget.value?.length ? routesTarget.value : null));
+/** 当たりごとの文・段・側 (狙いの札と内訳に出す) */
+const aims = computed(() => (t.value ?? []).flatMap((tt) => {
+  const m = s.data.value?.mods.get(tt.modId);
+  if (!m) return [];
   const tier = m.tiers[tt.minTierIndex];
-  return fillModText(m, tier ? tierDisplayRanges(tier) : []).replace(/\n/g, " / ");
-});
-const rank = computed(() => (mod.value && t.value ? `T${mod.value.tiers.length - t.value.minTierIndex}` : ""));
-const sideJa = computed(() => (mod.value?.type === "suffix" ? tr("サフィックス", "Suffix") : tr("プレフィックス", "Prefix")));
+  const text = fillModText(m, tier ? tierDisplayRanges(tier) : []).replace(/\n/g, " / ");
+  const rank = `T${m.tiers.length - tt.minTierIndex}`;
+  return [{ m, text, rank, side: m.type === "suffix" ? tr("サフィックス", "Suffix") : tr("プレフィックス", "Prefix"), label: `${text} (${tr(`${rank} 以上`, `${rank}+`)})` }];
+}));
+const aimKey = computed(() => (t.value ?? []).map((x) => `${x.modId}#${x.minTierIndex}`).join(","));
+/** 当たりを 1 つ外す (最後の 1 つは外さない、選び直しで変える) */
+function removeAim(i: number): void {
+  const xs = routesTarget.value ?? [];
+  if (xs.length > 1) routesTarget.value = xs.filter((_, k) => k !== i);
+}
+/** 道の行の「どの当たりで止まったか」(当たりが 2 つ以上の時だけ) */
+const hitsOf = (r: RaceRow): Array<{ label: string; n: number; pct: string }> => {
+  if (aims.value.length < 2 || r.hitsBy.length !== aims.value.length) return [];
+  const sum = r.hitsBy.reduce((a, b) => a + b, 0);
+  return sum ? aims.value.map((a, i) => ({ label: a.text, n: r.hitsBy[i]!, pct: `${Math.round((r.hitsBy[i]! / sum) * 100)}%` })) : [];
+};
 const ilvl = computed(() => s.item.value?.itemLevel ?? s.itemLevel.value);
 const rows = ref<RaceRow[]>([]);
 const busy = ref(false);
@@ -137,7 +150,7 @@ function stop(): void {
 function calcLog(done: boolean): void {
   const tt = t.value;
   track("routes:calc", done ? "done" : "stop");
-  logRecord("routes_calc", { base: s.base.value, mod: tt ? `${tt.modId}#${tt.minTierIndex}` : null, ilvl: ilvl.value, runes: runeIds.value, n: RUNS, done, k: rows.value.length, from: !!fromItem.value, best: best.value ? `${best.value.route}:${best.value.grade}` : null });
+  logRecord("routes_calc", { base: s.base.value, mod: tt ? aimKey.value : null, ilvl: ilvl.value, runes: runeIds.value, n: RUNS, done, k: rows.value.length, from: !!fromItem.value, best: best.value ? `${best.value.route}:${best.value.grade}` : null });
 }
 const recompute = start;
 /** 狙い・ルーンが変わったら、計算の前に戻す (計算はしない) */
@@ -165,7 +178,7 @@ async function run(): Promise<void> {
     routesLuck.value = false;
     openLuck(rows.value.find((r) => r.route === sh.l[0] && r.grade === sh.l[1]) ?? bestLuck.value);
     track("routes:shared", `${sh.l[0]}:${sh.l[1]}`);
-    logRecord("routes_shared", { base: s.base.value, mod: `${tt.modId}#${tt.minTierIndex}`, route: `${sh.l[0]}:${sh.l[1]}`, n: sh.n });
+    logRecord("routes_shared", { base: s.base.value, mod: aimKey.value, route: `${sh.l[0]}:${sh.l[1]}`, n: sh.n });
     return;
   }
   rows.value = [];
@@ -182,7 +195,7 @@ async function run(): Promise<void> {
   // 次に押すのは一番安い欄の「運試し」(2026-10-19 オーナー「次入力するとこまで自動スクロール」)
   next("[data-routes-best]");
 }
-watch(t, (v) => { resetRace(); if (v) next("[data-routes-target]"); }); // 狙いを選んだら次は「計算開始」(狙いの札の中。札ごと見せる)
+watch(aimKey, (v) => { resetRace(); if (v) next("[data-routes-target]"); }); // 狙いを選んだら次は「計算開始」(狙いの札の中。札ごと見せる)
 // 嵌めるルーンを変えたら、別の 100 人で計算し直す
 watch(() => runeIds.value.join(), () => { if (t.value) resetRace(); });
 /** 運試しの欄 (一番安い道で。2026-10-19 オーナー「一番安い欄に運試しボタン」)。シェアから来た時は計算が済んだら開く */
@@ -248,9 +261,23 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
       <!-- 上: 狙い (アイテムの札の見た目) と一番安い道 -->
       <div class="grid gap-4 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <div data-routes-target class="flex min-w-0 flex-col justify-center rounded-md border border-[var(--exile-color-border-brass)]/40 bg-black/40 px-4 py-3 text-center shadow-[inset_0_0_24px_rgba(0,0,0,0.7)]">
-          <p class="text-[11px] tracking-[0.2em] text-[var(--exile-color-text-tertiary)]">{{ tr("狙い", "TARGET") }} · {{ sideJa }}</p>
-          <p class="mt-1 text-[16px] font-bold leading-snug text-[var(--color-rarity-magic)] [text-shadow:0_1px_2px_#000]">{{ modText }}</p>
-          <p class="mt-1"><span class="rounded-sm bg-amber-500/25 px-1.5 text-[11px] font-bold text-amber-100">{{ tr(`${rank} 以上で当たり`, `Hit at ${rank}+`) }}</span></p>
+          <template v-if="aims.length === 1">
+            <p class="text-[11px] tracking-[0.2em] text-[var(--exile-color-text-tertiary)]">{{ tr("狙い", "TARGET") }} · {{ aims[0]!.side }}</p>
+            <p class="mt-1 text-[16px] font-bold leading-snug text-[var(--color-rarity-magic)] [text-shadow:0_1px_2px_#000]">{{ aims[0]!.text }}</p>
+            <p class="mt-1"><span class="rounded-sm bg-amber-500/25 px-1.5 text-[11px] font-bold text-amber-100">{{ tr(`${aims[0]!.rank} 以上で当たり`, `Hit at ${aims[0]!.rank}+`) }}</span></p>
+          </template>
+          <!-- 当たりが 2 つ以上 (開発版だけ): どれか 1 つが付いたら止める -->
+          <template v-else>
+            <p class="text-[11px] tracking-[0.2em] text-[var(--exile-color-text-tertiary)]">{{ tr("当たり (どれか 1 つ)", "TARGETS (ANY ONE)") }}</p>
+            <ul data-routes-aims class="mt-1 flex flex-col gap-1 text-left">
+              <li v-for="(a, i) in aims" :key="i" class="flex min-w-0 items-center gap-2 rounded bg-white/[0.04] px-2 py-1">
+                <span class="w-6 shrink-0 text-[10px] text-[var(--exile-color-text-tertiary)]">{{ a.m.type === "suffix" ? "S" : "P" }}</span>
+                <span class="min-w-0 flex-1 truncate text-[13px] font-bold text-[var(--color-rarity-magic)]" :title="a.text">{{ a.text }}</span>
+                <span class="shrink-0 rounded-sm bg-amber-500/25 px-1.5 text-[11px] font-bold text-amber-100">{{ tr(`${a.rank} 以上`, `${a.rank}+`) }}</span>
+                <button type="button" class="g-plain grid size-7 shrink-0 place-items-center opacity-60 hover:opacity-100 disabled:opacity-20" :disabled="busy" :title="tr('この当たりを外す', 'Remove this target')" @click="removeAim(i)">×</button>
+              </li>
+            </ul>
+          </template>
           <p class="mt-2 text-[12px] text-[var(--exile-color-text-secondary)]">{{ s.item.value?.baseJa ?? s.base.value }} · {{ tr(`アイテムレベル ${ilvl}`, `Item level ${ilvl}`) }}</p>
           <!-- 始めの状態 (開発版だけ): 決まりの形 / 今のクラフトのアイテム (カオスだけ) -->
           <span v-if="canFrom || fromItem" data-routes-from class="mt-2 flex flex-wrap items-center justify-center gap-1 text-[11px]">
@@ -258,7 +285,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
             <button type="button" data-routes-from-rule class="g-tab !min-h-[28px] !px-2 !text-[12px]" :class="!fromItem ? 'on' : ''" :disabled="busy" @click="setFrom(false)">{{ tr("決まりの形", "Listed start") }}</button>
             <button type="button" data-routes-from-item class="g-tab !min-h-[28px] !px-2 !text-[12px]" :class="fromItem ? 'on' : ''" :disabled="busy || !canFrom" :title="tr('今のクラフトのアイテム (フラクチャー・付いている MOD・品質・ルーン込み) からカオススパム。クラフトのアイテムは変わらない', 'Chaos spam from the current craft item (fractures, mods, quality and runes included). The craft item itself is not changed')" @click="setFrom(true)">{{ tr("今のアイテムから (カオス)", "Current item (Chaos)") }}</button>
           </span>
-          <p class="mt-2"><button type="button" data-routes-pick class="g-btn sm" :disabled="busy" @click="pickMod">{{ tr("MOD を選び直す", "Change mod") }}</button></p>
+          <p class="mt-2 flex flex-wrap justify-center gap-2"><button type="button" data-routes-pick class="g-btn sm" :disabled="busy" @click="pickMod">{{ tr("MOD を選び直す", "Change mod") }}</button><button v-if="ROUTES_MULTI_ON && aims.length < ROUTES_MAX" type="button" data-routes-add class="g-btn sm" :disabled="busy" :title="tr(`当たりを ${ROUTES_MAX} つまで並べられる (どれか 1 つが付いたら止める)`, `Up to ${ROUTES_MAX} targets (stops when any one rolls)`)" @click="pickMod">{{ tr("＋ 当たりを足す", "+ Add target") }}</button></p>
           <!-- 計算開始 ⇔ 中止 (同じ場所のボタンが変わる) -->
           <p class="mt-2"><button type="button" data-routes-start class="min-h-11 w-full max-w-[16rem]" :class="busy ? 'g-btn' : 'g-btn-red'" @click="busy ? stop() : start()">{{ busy ? tr(`中止 (${rows.length} / ${ORDER.length})`, `Stop (${rows.length} / ${ORDER.length})`) : started ? tr(`別の ${RUNS} 人でもう一度計算`, `Again with another ${RUNS}`) : tr("計算開始", "Start") }}</button></p>
           <p v-if="fromItem" class="mt-3 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("ルーンは今のアイテムに嵌めている物のまま", "Runes stay as socketed on the current item") }}</p>
@@ -285,7 +312,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
       </div>
 
       <!-- 運試し (一番安い道で。StageRouteLuck.vue) -->
-      <StageRouteLuck v-if="luckRow && !busy" :row="luckRow" :target="t" :ilvl="ilvl" :label="`${modText} (${tr(`${rank} 以上`, `${rank}+`)})`" :route-name="routeName(luckRow)" :options="ok.filter((x) => x.route === luckRow!.route && x.tries.length)" :rows="ok" :prep="prep" :from="fromItem" :runes="fromItem ? [] : runeIds" @close="luckRow = null" @pick="(x) => (luckRow = x)" />
+      <StageRouteLuck v-if="luckRow && !busy" :row="luckRow" :targets="t" :aim-labels="aims.map((a) => a.label)" :ilvl="ilvl" :label="aims.map((a) => a.label).join(' / ')" :route-name="routeName(luckRow)" :options="ok.filter((x) => x.route === luckRow!.route && x.tries.length)" :rows="ok" :prep="prep" :from="fromItem" :runes="fromItem ? [] : runeIds" @close="luckRow = null" @pick="(x) => (luckRow = x)" />
       <!-- 下: 3 つの道 -->
       <div class="route-rule mt-4 grid gap-3 lg:grid-cols-3">
         <article v-for="r in shownRoutes" :key="r.route" :data-route="r.route" class="flex min-w-0 flex-col rounded-md border bg-white/[0.025] p-3" :class="[best && best.route === r.route ? 'border-emerald-400/35' : 'border-white/10', offRoute(r.route) ? 'opacity-50' : '']">
@@ -327,6 +354,16 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
                   <!-- 1 人あたり平均で使った物 -->
                   <p class="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] tabular-nums text-[var(--exile-color-text-tertiary)]">
                     <span v-for="[k, n] in usesOf(rowOf(r.route, g)!)" :key="k" class="inline-flex items-center gap-0.5" :title="nameOf(k)"><img :src="iconOf(k)" alt="" class="size-4 object-contain" />× {{ fmtN(n) }}</span>
+                  </p>
+                  <!-- 増強で当たりがプレとサフィの両方にある時: 両方揃うまで (プレ 1 + サフィ 1、マジックで) -->
+                  <p v-if="rowOf(r.route, g)!.both" data-route-both class="mt-1 flex flex-wrap items-baseline gap-x-2 rounded bg-white/[0.04] px-1.5 py-0.5 text-[11px] tabular-nums" :title="tr('どれか 1 つではなく、プレとサフィの両方の当たりが揃うまで増強スパムした時の平均 (マジックで)', 'Average when Augment-spamming until both a prefix and a suffix target are on the magic item')">
+                    <span class="text-[var(--exile-color-text-secondary)]">{{ tr("両方揃うまで", "Until both") }}</span>
+                    <template v-if="rowOf(r.route, g)!.both!.hitRate > 0"><b class="text-[var(--exile-color-text-primary)]">{{ money(rowOf(r.route, g)!.both!.avgCost) }}</b><span class="text-[var(--exile-color-text-tertiary)]">{{ tr(`${fmtN(rowOf(r.route, g)!.both!.avgSteps)} 手`, `${fmtN(rowOf(r.route, g)!.both!.avgSteps)} uses`) }}<template v-if="rowOf(r.route, g)!.both!.hitRate < 1"> · {{ tr(`着いた人 ${Math.round(rowOf(r.route, g)!.both!.hitRate * 100)}%`, `${Math.round(rowOf(r.route, g)!.both!.hitRate * 100)}% reached`) }}</template></span></template>
+                    <span v-else class="text-[var(--exile-color-text-tertiary)]">{{ tr("上限の手数までに揃わなかった", "Not reached within the use cap") }}</span>
+                  </p>
+                  <!-- どの当たりで止まったか (当たりが 2 つ以上の時) -->
+                  <p v-if="hitsOf(rowOf(r.route, g)!).length" data-route-hits class="mt-0.5 flex flex-col text-[10px] tabular-nums text-[var(--exile-color-text-tertiary)]">
+                    <span v-for="(h, i) in hitsOf(rowOf(r.route, g)!)" :key="i" class="flex min-w-0 gap-1.5" :title="tr(`${h.n} 人がこの当たりで止まった`, `${h.n} stopped on this target`)"><span class="min-w-0 flex-1 truncate">{{ h.label }}</span><b class="shrink-0 text-[var(--exile-color-text-secondary)]">{{ h.pct }}</b></span>
                   </p>
                 </template>
               </template>

@@ -9,7 +9,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { usePhone } from "../../utils/use-phone";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
-import { packRace, routeKey, routeRun, type RaceRow, type RaceTarget, type RoutePrep, type RouteRun } from "../../services/craft-stage/route-race";
+import { packRace, routeHitIndex, routeKey, routeRun, type RaceRow, type RaceTarget, type RoutePrep, type RouteRun } from "../../services/craft-stage/route-race";
 import { medianOf, rankOf, unluckyOf, type SpamStats } from "../../services/craft-stage/chaos-spam";
 import { mulberry32 } from "../../services/htc/rng";
 import { baseArtFile } from "../../services/craft-stage/base-art";
@@ -29,7 +29,7 @@ import { routesLuck, routesOpen, routesTarget } from "../../state/web-page";
 import { revealNext } from "../../utils/keep-place";
 
 /** options = 同じ道の等級 (着いた物。タブと比べに出す。2026-10-19 オーナー「等級も選べるように、カオススパム計算機の形で」) */
-const props = defineProps<{ row: RaceRow; options: RaceRow[]; target: RaceTarget; ilvl: number; label: string; routeName: string; /** 嵌めるルーン (始めのアイテムの下ごしらえ) */ prep?: RoutePrep; runes: readonly string[]; /** 始めのアイテム (今のクラフトのアイテムから。route-race.ts の from。シェアは出さない) */ from?: StageItem | null; /** 全部の道の結果 (シェアに入れる) */ rows: RaceRow[] }>();
+const props = defineProps<{ row: RaceRow; options: RaceRow[]; /** 当たり (どれか 1 つが付いたら止める) と、その名前 (同じ順) */ targets: readonly RaceTarget[]; aimLabels: readonly string[]; ilvl: number; label: string; routeName: string; /** 嵌めるルーン (始めのアイテムの下ごしらえ) */ prep?: RoutePrep; runes: readonly string[]; /** 始めのアイテム (今のクラフトのアイテムから。route-race.ts の from。シェアは出さない) */ from?: StageItem | null; /** 全部の道の結果 (シェアに入れる) */ rows: RaceRow[] }>();
 /** 比べる人数 (スマホは 10 人) */
 const people = computed(() => props.row.people);
 /**
@@ -61,7 +61,7 @@ const result = ref<{ hit: boolean; n: number; cost: number; rank: number | null;
 function fresh(): void {
   stop();
   item.value = null;
-  run = routeRun(s.data.value!, s.base.value, props.ilvl, props.target, props.row.route, props.row.grade, mulberry32((Math.random() * 2 ** 31) | 0), priceOf, props.prep, props.from ?? undefined);
+  run = routeRun(s.data.value!, s.base.value, props.ilvl, props.targets, props.row.route, props.row.grade, mulberry32((Math.random() * 2 ** 31) | 0), priceOf, props.prep, props.from ?? undefined);
   // 暗黙の値の種はエミュレーターと同じ (「ここから開始」で置いた時に暗黙の値がずれないように)。今のアイテムからの時は元の種のまま
   if (run && !props.from) run.item = { ...run.item, rollSeed: s.seed.value - 1 };
   sync();
@@ -81,7 +81,10 @@ function sync(): void {
   chanceMap.value = new Map(run?.chances ?? []);
   item.value = now; n.value = run?.n ?? 0; cost.value = run?.cost ?? 0; last.value = run?.last ?? null;
 }
-watch(() => [props.row, props.target, props.ilvl, props.prep, props.from], fresh, { immediate: true });
+watch(() => [props.row, props.targets, props.ilvl, props.prep, props.from], fresh, { immediate: true });
+/** 止まった当たり (付いていなければ null)。札で光らせるのも、付いていなければ 1 つ目 */
+const hitAim = computed(() => { const i = item.value ? routeHitIndex(item.value, props.targets) : -1; return i >= 0 ? i : null; });
+const focusId = computed(() => props.targets[hitAim.value ?? 0]?.modId ?? null);
 
 let raf = 0, t0 = 0, lastT = 0;
 const CAP = 20_000;
@@ -122,11 +125,12 @@ function finish(reason: string | null): void {
   if (hit) void nextTick(() => requestAnimationFrame(() => revealNext(document.querySelector("[data-route-share]"))));
   // 付いた時の音 (押しっぱなしの間は鳴らさず、付いた 1 回だけ。2026-10-19 オーナー「付いた時の SE が無い」)。かなりの強運は下の watch が珍しい段の音を鳴らす
   // 狙いが珍しい段 (エミュレーターの神演出と同じ確率の線) で付いた時は珍しい段の音
-  const tc = run.chances.get(props.target.modId);
+  const hi = run.hitIndex();
+  const tc = hi >= 0 ? run.chances.get(props.targets[hi]!.modId) : undefined;
   if (hit && !(result.value.rank != null && result.value.rank <= 10) && run.last) playUseSfx(run.last.key, tc != null && isRareChance(tc));
   if (hit || reason) {
     track("spam:run", hit ? "hit" : "stop");
-    logRecord("emu_spam", { base: s.base.value, key: mainKey.value, route: props.row.route, aims: [`${props.target.modId}#${props.target.minTierIndex}`], uses: run.n, hit });
+    logRecord("emu_spam", { base: s.base.value, key: mainKey.value, route: props.row.route, aims: props.targets.map((x) => `${x.modId}#${x.minTierIndex}`), uses: run.n, hit });
   }
 }
 onBeforeUnmount(() => { cancelAnimationFrame(raf); document.documentElement.classList.remove("select-none"); });
@@ -154,7 +158,7 @@ watch([result, isEn], async () => {
   if (!r?.hit) { shareUrl.value = ""; return; }
   const code = await packCard([
     isEn.value ? "en" : "ja", s.base.value, baseName.value, props.label, r.n, baseArtFile(s.base.value), r.rank, median.value, unlucky.value, money(r.cost),
-    { route: { r: props.row.route, g: props.row.grade, m: props.target.modId, t: props.target.minTierIndex, i: props.ilvl, u: [...props.runes], x: packRace(props.rows, props.row) } },
+    { route: { r: props.row.route, g: props.row.grade, m: props.targets[0]!.modId, t: props.targets[0]!.minTierIndex, ...(props.targets.length > 1 ? { a: props.targets.map((x) => [x.modId, x.minTierIndex] as [string, number]) } : {}), i: props.ilvl, u: [...props.runes], x: packRace(props.rows, props.row) } },
     tr(`スパムシミュレーター · ${props.routeName}`, `Spam simulator · ${props.routeName}`),
     iconOf(mainKey.value) || null,
     people.value,
@@ -205,7 +209,7 @@ function shareX(e: MouseEvent): void {
   <div data-route-luck class="route-rule mt-4 grid gap-4 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
     <!-- 左: この欄のアイテム (始めの状態から、打つたびに変わる)。札はエミュレーターと同じ (StageItemCard)、狙いの MOD を光らせる -->
     <div class="flex min-w-0 flex-col items-center gap-1">
-      <StageItemCard v-if="item" :item="item" :added="added" :removed="removed" :holding="false" :flash-key="n" :focus="target.modId" :chances="chanceMap" class="max-w-full" />
+      <StageItemCard v-if="item" :item="item" :added="added" :removed="removed" :holding="false" :flash-key="n" :focus="focusId" :chances="chanceMap" class="max-w-full" />
       <p class="flex h-5 items-center justify-center gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]">
         <template v-if="last">{{ tr("今打った", "Last") }}: <img :src="iconOf(last.key)" alt="" class="size-4 object-contain" />{{ nameOf(last.key) }}<img v-for="o in last.omens" :key="o" :src="iconOf(o)" alt="" class="size-4 object-contain" /></template>
         <template v-else>{{ tr("始めの状態", "Start state") }}</template>
@@ -232,6 +236,8 @@ function shareX(e: MouseEvent): void {
           <span class="spam-lucky-line" aria-hidden="true" />
         </div>
         <p v-else class="mt-2 text-[16px] font-bold text-emerald-300">{{ tr(`${result.n.toLocaleString()} 手目で付きました！`, `Hit on use ${result.n.toLocaleString()}!`) }}</p>
+        <!-- どの当たりで止まったか (当たりが 2 つ以上の時) -->
+        <p v-if="targets.length > 1 && hitAim != null" data-route-hit-aim class="mt-0.5 truncate text-[12px] text-[var(--color-rarity-magic)]" :title="aimLabels[hitAim]">{{ tr("当たり", "Hit") }}: {{ aimLabels[hitAim] }}</p>
         <template v-if="result.rank != null">
           <p v-if="!isLucky" class="mt-0.5 text-[13px]">{{ byPlace ? tr(`${people + 1} 人中 ${placeOf(result.n)} 位 (あなたを入れて)`, `#${placeOf(result.n)} of ${people + 1} (including you)`) : tr(`${people} 人中 ${rankWord(result.rank)} の運`, `${rankWord(result.rank)} luck among ${people} people`) }} <b :class="result.rank <= 50 ? 'text-emerald-300' : 'text-rose-300'">{{ luck(result.rank) }}</b></p>
           <div class="relative mt-1.5 h-2 max-w-[320px] rounded-full bg-gradient-to-r from-emerald-500/60 via-amber-400/50 to-rose-500/60">

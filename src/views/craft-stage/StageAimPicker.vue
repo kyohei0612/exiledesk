@@ -13,7 +13,7 @@ import { computed, ref } from "vue";
 import { AIM_MAX, craftStage as s, type AimPick } from "../../state/craft-stage";
 import { aimLabel, groupLabelOf, modListFor, tierIdOf, type ListRow, type ListTier, type ModGroup } from "../../services/craft-stage/mod-list";
 import { revealOpened, scrollToTop } from "../../utils/keep-place";
-import { routesTarget } from "../../state/web-page";
+import { ROUTES_MAX, routesTarget } from "../../state/web-page";
 import { nextTick } from "vue";
 import Icon from "../../components/ui/Icon.vue";
 import ModalShell from "../../components/ui/ModalShell.vue";
@@ -21,11 +21,13 @@ import { tr } from "../../i18n/lang";
 
 const seed = s.aimPicker.value?.seed ?? null;
 /** 選んでいる物 (決めるまで手元だけ) */
-/** スパムシミュレーターの狙い (1 つだけ。web-page.ts の routesTarget) */
+/** スパムシミュレーターの当たり (web-page.ts の routesTarget。どれか 1 つが付いたら止める。2 つ以上は開発版だけ ROUTES_MAX) */
 const forRoutes = !!s.aimPicker.value?.routes;
-/** 選べる数: スパムシミュレーターは 1 つ、次の手で狙うは AIM_MAX まで */
-const MAX = forRoutes ? 1 : AIM_MAX;
-const draft = ref<AimPick[]>(forRoutes ? [] : [...s.aims.value].slice(0, MAX));
+/** 選べる数: スパムシミュレーターは ROUTES_MAX (本番は 1 つ)、次の手で狙うは AIM_MAX まで */
+const MAX = forRoutes ? ROUTES_MAX : AIM_MAX;
+/** 1 つだけの時は選び直しで入れ替える (今まで通り) */
+const single = MAX === 1;
+const draft = ref<AimPick[]>(forRoutes ? (single ? [] : (routesTarget.value ?? []).map((t) => ({ ...t, label: "" }))) : [...s.aims.value].slice(0, MAX));
 if (seed && !draft.value.some((a) => a.modId === seed.modId)) draft.value = [...draft.value, seed].slice(-MAX);
 else if (seed) draft.value = draft.value.map((a) => (a.modId === seed.modId ? seed : a));
 
@@ -54,7 +56,7 @@ const full = computed(() => draft.value.length >= MAX);
 function whyNot(r: ListRow): string | null {
   if (r.on) return tr("付いている", "On item");
   if (r.blocked) return tr("同じ系統が付いている", "Same group on item");
-  if (full.value && !pickedOf(r) && !forRoutes) return tr(`${MAX} つまで`, `Max ${MAX}`);
+  if (full.value && !pickedOf(r) && !single) return tr(`${MAX} つまで`, `Max ${MAX}`);
   return null;
 }
 /** チェック: どの段でも (付けば当たり) = このアイテムレベルで付く一番下の段以上 */
@@ -67,14 +69,14 @@ function toggle(r: ListRow, e?: Event): void {
   if (new Set(r.tiers.map((t) => t.modId ?? r.id)).size > 1) { expanded.value = r.id; if (e?.target instanceof HTMLInputElement) { e.target.checked = false; revealOpened(e.target.closest("[data-tier-row]")); } return; }
   const t = [...r.tiers].reverse().find((x) => x.ilvl <= s.itemLevel.value) ?? r.tiers[r.tiers.length - 1];
   const p = t ? pickOf(r, t) : null;
-  if (p) draft.value = forRoutes ? [p] : [...draft.value, p];
+  if (p) draft.value = single ? [p] : [...draft.value, p];
 }
 function pickTier(r: ListRow, t: ListTier): void {
   const cur = pickedOf(r);
   if (!cur && whyNot(r)) return;
   const p = pickOf(r, t);
   if (!p) return;
-  draft.value = cur ? draft.value.map((a) => (a === cur ? p : a)) : forRoutes ? [p] : [...draft.value, p];
+  draft.value = cur ? draft.value.map((a) => (a === cur ? p : a)) : single ? [p] : [...draft.value, p];
 }
 const isPickedTier = (r: ListRow, t: ListTier): boolean => { const c = pickedOf(r), { modId, idx } = idOf(r, t); return !!c && c.modId === modId && c.minTierIndex === idx; };
 const isCoveredTier = (r: ListRow, t: ListTier): boolean => { const c = pickedOf(r), { modId, idx } = idOf(r, t); return !!c && c.modId === modId && idx >= c.minTierIndex; };
@@ -87,7 +89,7 @@ const pct = (x: number): string => fmtPct(x, { zero: "" });
 function close(): void { s.aimPicker.value = null; }
 function decide(): void {
   if (!draft.value.length) return;
-  if (forRoutes) { const a = draft.value[0]!; routesTarget.value = { modId: a.modId, minTierIndex: a.minTierIndex }; close(); s.modOverlay.value = false; return; }
+  if (forRoutes) { routesTarget.value = draft.value.map((a) => ({ modId: a.modId, minTierIndex: a.minTierIndex })); close(); s.modOverlay.value = false; return; }
   s.aims.value = draft.value;
   close();
   // 決めたら後ろの MOD 一覧の窓も閉じて、確率の一覧を見せる (やめる時は残す。POE2Tube 要望 ㊴)
@@ -101,7 +103,7 @@ function decide(): void {
   <!-- 窓の動き (Esc・後ろを押す・×・後ろのページを止める) は ModalShell (2026-10-10 これが原点) -->
   <ModalShell :open="true" rec="aim-dialog" :title="forRoutes ? tr('スパムで狙う MOD', 'Mod to spam for') : tr('次の手で狙う', 'Target next move')" :close-title="tr('やめる', 'Cancel')" full-on-phone body-class="px-3 py-2" @close="close">
     <template #header>
-      <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ draft.length }} / {{ MAX }} · {{ forRoutes ? tr("1 つ選ぶ", "Pick one") : tr("全部付いて当たり", "Hit when all roll") }}</span>
+      <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ draft.length }} / {{ MAX }} · {{ forRoutes ? (single ? tr("1 つ選ぶ", "Pick one") : tr("どれか 1 つ付いたら当たり", "Hit when any one rolls")) : tr("全部付いて当たり", "Hit when all roll") }}</span>
     </template>
     <template #subheader>
       <p v-if="draft.length" class="mt-1 flex flex-wrap gap-1">

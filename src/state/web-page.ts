@@ -41,8 +41,12 @@ export const routesLuck = ref(false);
 export const routesRunes = ref<string[] | null>(null);
 /** シェアから来た時の計算済みの結果 (StageRoutesPage が計算の代わりに出す。route-race.ts の SharedRace) */
 export const routesShared = ref<import("../services/craft-stage/route-race").SharedRace | null>(null);
-/** その狙い (選ぶまでは null) */
-export const routesTarget = ref<{ modId: string; minTierIndex: number } | null>(null);
+/** その狙い = 当たり (選ぶまでは null)。並べた物のどれか 1 つが付いたら止める (OR。route-race.ts) */
+export const routesTarget = ref<Array<{ modId: string; minTierIndex: number }> | null>(null);
+/** 当たりを 2 つ以上並べられるのは開発版と手元の dev だけ (2026-10-22 オーナー、本番は OK の後)。本番は 1 つ */
+export const ROUTES_MULTI_ON = import.meta.env.DEV || import.meta.env.VITE_DEV_PREVIEW === "1";
+/** 当たりの数の上限 (旧カオススパム計算機と同じ 3 つ) */
+export const ROUTES_MAX = ROUTES_MULTI_ON ? 3 : 1;
 /** スパムシミュレーターのページを開く (カレンシーの見出しのボタン)。最初は「狙う MOD を選ぶ」の画面 (すぐ窓は出さない。2026-10-19 オーナー「こっちのがかわいい」) */
 export function openRoutes(): void {
   s.hold(null);
