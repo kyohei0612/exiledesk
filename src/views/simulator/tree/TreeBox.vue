@@ -81,11 +81,13 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <template v-if="box.out === 'start'">
         <!-- ベースとアイテムレベル: 押すと右の欄で選ぶ (10-22、前は金の指輪 ilvl 82 に固定) -->
         <button type="button" data-tree-base class="nodrag block w-full truncate text-left text-[13px] font-bold hover:underline" :class="quiet ? 'pointer-events-none' : ''" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :title="tr('ベースとアイテムレベルを選ぶ', 'Choose the base and item level')" @click.stop="!quiet && emit('base')">
-          {{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}<span v-if="t.doc.value.startRandom" class="font-normal opacity-70"> · {{ tr(`ほかに MOD ${t.doc.value.startRandom} つ`, `+${t.doc.value.startRandom} other mod(s)`) }}</span>
+          {{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}
         </button>
         <button type="button" class="nodrag block w-full truncate text-left text-[#c8c8ff] hover:underline" :class="quiet ? 'pointer-events-none' : ''" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :title="t.fractureLabel(t.doc.value.fracture)" @click.stop="!quiet && emit('aim')">
           {{ t.doc.value.fracture ? `${tr("フラクチャー", "Fractured")}: ${t.fractureLabel(t.doc.value.fracture)}` : tr("＋ フラクチャーする MOD を選ぶ", "+ Pick the mod to fracture") }}
         </button>
+        <!-- 始めの乱数の MOD (ベースの欄で決める。名前の後ろだと靴の長い名前で切れた、10-22) -->
+        <p v-if="t.doc.value.startRandom" data-tree-start-random-tag class="truncate text-[12px] opacity-70" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }">{{ tr(`＋ 乱数の MOD ${t.doc.value.startRandom} つ`, `+ ${t.doc.value.startRandom} random mod(s)`) }}</p>
       </template>
       <button v-else-if="box.out === 'hit'" type="button" class="nodrag block w-[calc(100%-14px)] truncate text-left text-[13px] hover:underline" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :class="[box.aim ? 'text-[#c8c8ff]' : 'text-amber-300', quiet ? 'pointer-events-none' : '']" :title="t.aimLabel(box.aim)" @click.stop="!quiet && emit('aim')">
         {{ box.aim ? t.aimLabel(box.aim) : tr("＋ 付く MOD を選ぶ", "+ Pick the mod") }}
