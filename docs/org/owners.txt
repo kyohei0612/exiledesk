@@ -8,7 +8,8 @@
 
 # 両方の画面の部品・見た目・画面の文 (デザイン部長、10-23 にジン部長から分けた。下のアプリの行が上書きする)
 src/components/**                    デザイン
-src/style/**                         デザイン
+src/styles/**                        デザイン
+src/style.css                        デザイン
 src/i18n/lang.ts                     デザイン
 src/i18n/GLOSSARY.md                 デザイン
 src/state/for-share/**               デザイン
