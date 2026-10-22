@@ -1,7 +1,7 @@
 /**
  * use-tree-link.ts — 戻り先を選んでいる間 (下の＋を押した・↩ 戻る)、ツリーの箱を「つなげる / つなげない」に色分けする (2026-10-22 オーナー
  * 「＋を押したら、打つ手の棚と同時にツリーの箱をつなげる / つなげない (灰色、理由はエンジンから) で色分けし、箱を押せばそこへつなぐ」)。
- * つなげる = その箱の手を、選んでいる箱の見本にエンジンで打てる (tree-sample の handProblem = お告げの omenBlock + playHand)。理由はエンジンの断りの文
+ * つなげる = その箱の手を、選んでいる箱の見本にエンジンで打てる (tree-sample の handProblem = エンジンの入口の canUse)。理由はエンジンの断りの文
  */
 import { computed, type Ref } from "vue";
 import { handProblem, sampleOf } from "../../../services/simulator/tree/tree-sample";

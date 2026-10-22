@@ -6,9 +6,8 @@
  * その下の箱 = 親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
-import { aimHeldOn, applyCurrency, catalystFull, catalystOf, catalystTagOf, effectOf, fillCatalyst, freshItem, isAimMod, junkOf, mulberry32, omenBlock, revealOffers, runeIdByName, stepOutcomes, tierIndexOf, unrevealedOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimHeldOn, applyCurrency, canUse, catalystFull, catalystOf, catalystTagOf, effectOf, fillCatalyst, freshItem, isAimMod, junkOf, mulberry32, revealOffers, runeIdByName, stepOutcomes, tierIndexOf, unrevealedOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { CATALYSING, ECHO, engineOmens, isCatalyst } from "./tree-hands";
-import { tr } from "../../../i18n/lang";
 import { startOf, type Aim, type Hand, type OutKind, type TreeDoc } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-run";
@@ -211,14 +210,10 @@ export function startItemOf(data: PatchData, doc: TreeDoc, rng: () => number): S
 
 /**
  * その手がこのアイテムに打てない理由 (打てるなら null。オーナー 10-22「進行不能」: 消せる物が無い側のお告げ・効かないお告げが掛かった手を確定させない)。
- * お告げはエンジンの入口の omenBlock (触媒の時はカタリストで品質を入れた後のアイテムで聞く)、手そのものは playHand (繰り返しは 1 回分、乱数で決まる物は打てる扱い)
+ * 判定はエンジンの入口の canUse (お告げ → 触媒の前のカタリスト → 手そのもの、繰り返しは 1 回分、乱数で決まる物は打てる扱い。B11 10-22)
  */
 export function handProblem(data: PatchData, item: StageItem, h: Hand): string | null {
-  let it = item;
-  if (h.catalyst && h.omens.includes(CATALYSING)) it = fillCatalyst(data, it, h.catalyst, mulberry32(1)).item;
-  for (const o of engineOmens(h)) { const why = omenBlock(data, it, h.currency, engineOmens(h), o); if (why) return why; }
-  const r = playHand(data, item, { ...h, repeat: null }, mulberry32(1));
-  return r.applied || r.random ? null : r.reason ?? tr("打てない", "Can't use");
+  return canUse(data, item, h.currency, { omens: h.omens, catalyst: h.catalyst });
 }
 
 /** 箱の見本 (seed が同じなら同じ物。木の設定 tune で打つ) */

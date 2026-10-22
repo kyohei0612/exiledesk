@@ -7,7 +7,7 @@
 import { ref, type Ref } from "vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { provideShelf, simHidden } from "../../state/emulator/shelf-context";
-import { applyCurrency, mulberry32, type StageItem } from "../../services/craft-stage/engine";
+import { canUse, type StageItem } from "../../services/craft-stage/engine";
 import { tr } from "../../i18n/lang";
 
 export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null> = ref(null), omens: Ref<string[]> = ref([])) {
@@ -16,14 +16,15 @@ export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null
   function onHold(k: string): void { if (held.value === k) release(); else held.value = k; }
   /** 棚の空いている所を押す = 離す (ボタン・入力・お告げの欄の中は除く) */
   function onShelfDown(e: PointerEvent): void { if (held.value && !(e.target as HTMLElement).closest("button,input,select,label,[data-held-box]")) release(); }
+  function usableWith(k: string, om: readonly string[]): string | null {
+    const d = s.data.value, it = item.value;
+    return d && it ? canUse(d, it, k, { omens: om }) : tr("準備中", "Loading");
+  }
   provideShelf({
     data: s.data, item, omens, held,
-    usable: (k) => {
-      const d = s.data.value, it = item.value;
-      if (!d || !it) return tr("準備中", "Loading");
-      const r = applyCurrency(d, it, k, mulberry32(0), omens.value);
-      return r.applied || r.random ? null : (r.reason ?? tr("打てない", "Can't use"));
-    },
+    // 打てるかはエンジンの入口の canUse (B11 10-22)。お告げを抜いた判定も渡す (掛けたお告げのせいで棚から消さない、クラフト台と同じ)
+    usable: (k) => usableWith(k, omens.value),
+    usableBare: (k) => usableWith(k, []),
     toggleOmen,
     hidden: simHidden,
   });
