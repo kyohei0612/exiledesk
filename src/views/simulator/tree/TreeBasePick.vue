@@ -13,9 +13,11 @@ import { useTree } from "./use-tree";
 
 const emit = defineEmits<{ close: [] }>();
 const t = useTree();
-/** 開いたら今のベースの部位の一覧まで送る (クラフト台のベースを変えると同じ。上の片手武器から送らずに済む) */
-const catalog = ref<InstanceType<typeof BaseCatalog> | null>(null);
-onMounted(() => catalog.value?.reveal());
+/** 開いたら今のベースのカードを欄の真ん中へ (一覧は片手武器から始まり、指輪まで送らないと見えない。上の題とアイテムレベルは貼り付けてある) */
+const root = ref<HTMLElement | null>(null);
+onMounted(() => requestAnimationFrame(() => requestAnimationFrame(() => {
+  root.value?.querySelector(`[data-rec="base:${CSS.escape(t.doc.value.base)}"]`)?.scrollIntoView({ block: "center" });
+})));
 
 const ILVL_MIN = 1;
 const ILVL_MAX = 100;
@@ -41,24 +43,27 @@ function apply(en: string): void {
 </script>
 
 <template>
-  <!-- 高さは中身なり (min-h-0 で欄の高さに縮めると、確かめの sticky が根の箱の外へ出られない) -->
-  <div data-tree-base-pick class="flex shrink-0 flex-col gap-3">
-    <div class="flex items-center gap-2">
-      <b class="flex-1 text-[14px]">{{ tr("ベースとアイテムレベル", "Base and item level") }}</b>
-      <button type="button" class="g-btn sm" @click="emit('close')">{{ tr("閉じる", "Close") }}</button>
-    </div>
-    <label class="flex items-center gap-2 text-[13px]">
-      <span class="flex-1">{{ tr("アイテムレベル", "Item level") }}</span>
-      <NumStep :model-value="ilvl" integer width="w-20" :placeholder-value="t.doc.value.itemLevel" @update:model-value="setIlvl" />
-    </label>
-    <!-- ベースを替えると下の箱が消える時だけ、1 回確かめる (札の編集の「下の n 箱が消える」と同じ)。一覧を下に送った後でも見えるよう欄の上に貼り付ける -->
-    <div v-if="asking" data-tree-base-ask class="sticky top-0 z-10 rounded-md border border-rose-400/60 bg-[#2a1416] p-2 text-[13px] shadow-[0_6px_16px_rgba(0,0,0,0.6)]">
-      <p>{{ tr(`${jaTypeName(asking)} の白紙から組み直します。今の木 (箱 ${t.lostOnBase.value} 個${t.doc.value.fracture ? "・フラクチャー" : ""}) が消えます (1 つ戻すで戻せます)。`, `Start over from a blank ${asking}. This tree (${t.lostOnBase.value} box(es)${t.doc.value.fracture ? ", fracture" : ""}) will be removed (Undo brings it back).`) }}</p>
-      <div class="mt-2 flex justify-end gap-2">
-        <button type="button" class="g-btn sm" @click="asking = null">{{ tr("やめる", "Cancel") }}</button>
-        <button type="button" data-tree-base-ok class="g-btn sm" @click="apply(asking!)">{{ tr("替える", "Change") }}</button>
+  <!-- 高さは中身なり (min-h-0 で欄の高さに縮めると、上の sticky が根の箱の外へ出られない) -->
+  <div ref="root" data-tree-base-pick class="flex shrink-0 flex-col gap-3">
+    <!-- 題・アイテムレベル・確かめは欄の上に貼り付ける (一覧を下に送っても見える。欄の余白 p-3 の分を覆う) -->
+    <div class="sticky -top-3 z-10 -mx-3 -mt-3 flex flex-col gap-3 bg-[#16130f] px-3 pb-2 pt-3 shadow-[0_6px_12px_rgba(0,0,0,0.5)]">
+      <div class="flex items-center gap-2">
+        <b class="flex-1 text-[14px]">{{ tr("ベースとアイテムレベル", "Base and item level") }}</b>
+        <button type="button" class="g-btn sm" @click="emit('close')">{{ tr("閉じる", "Close") }}</button>
+      </div>
+      <label class="flex items-center gap-2 text-[13px]">
+        <span class="flex-1">{{ tr("アイテムレベル", "Item level") }}</span>
+        <NumStep :model-value="ilvl" integer width="w-20" :placeholder-value="t.doc.value.itemLevel" @update:model-value="setIlvl" />
+      </label>
+      <!-- ベースを替えると下の箱が消える時だけ、1 回確かめる (札の編集の「下の n 箱が消える」と同じ) -->
+      <div v-if="asking" data-tree-base-ask class="rounded-md border border-rose-400/60 bg-[#2a1416] p-2 text-[13px] shadow-[0_6px_16px_rgba(0,0,0,0.6)]">
+        <p>{{ tr(`${jaTypeName(asking)} の白紙から組み直します。今の木 (箱 ${t.lostOnBase.value} 個${t.doc.value.fracture ? "・フラクチャー" : ""}) が消えます (1 つ戻すで戻せます)。`, `Start over from a blank ${asking}. This tree (${t.lostOnBase.value} box(es)${t.doc.value.fracture ? ", fracture" : ""}) will be removed (Undo brings it back).`) }}</p>
+        <div class="mt-2 flex justify-end gap-2">
+          <button type="button" class="g-btn sm" @click="asking = null">{{ tr("やめる", "Cancel") }}</button>
+          <button type="button" data-tree-base-ok class="g-btn sm" @click="apply(asking!)">{{ tr("替える", "Change") }}</button>
+        </div>
       </div>
     </div>
-    <BaseCatalog ref="catalog" :data="s.data.value" :selected="t.doc.value.base" @pick="pick" />
+    <BaseCatalog :data="s.data.value" :selected="t.doc.value.base" @pick="pick" />
   </div>
 </template>
