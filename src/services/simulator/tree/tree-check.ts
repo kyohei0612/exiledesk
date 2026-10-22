@@ -161,7 +161,10 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
         }
         // 品質 (オーナー 10-22「ルート精査の時の品質のチェック」): 触媒の品質が当たりの MOD に効くかは下で見る。
         // 聖別・コラプトの後の手・カタリストが入らない手は、上の打てない手 (エンジンの理由) で出る。触媒は打つと品質を使い切るので、前の品質の入れ替えは起きない
-        const tag = b.hand.catalyst && b.hand.omens.includes(CATALYSING) ? b.hand.catalyst.slice("catalyst_".length) : null;
+        // カタリストは手の札 (前の版) か、前の「カタリストの手」の箱 (品質だけ上げた後の通り抜けの親、今の画面。10-22 13 通り組んだ #6 で見ていなかった)
+        const preCat = b.out === "pass" && b.parent ? doc.boxes[b.parent]?.hand : null;
+        const cat = b.hand.catalyst ?? (preCat && isCatalyst(preCat.currency) ? preCat.currency : null);
+        const tag = cat && b.hand.omens.includes(CATALYSING) ? cat.slice("catalyst_".length) : null;
         let boosted = false, hits = 0;
         for (const o of b.outs) {
           const ob = doc.boxes[o]!;
