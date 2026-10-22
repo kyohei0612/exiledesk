@@ -295,12 +295,14 @@ function onSpam(b: Box): void {
 // ＋: 押すだけ = 足す (今まで通り)。長押し (か大きく動かす) で引っ張る → 箱の上で離す = その箱へつなぐ (重なった箱が光る) / 何も無い所 = やめる
 /** 引っ張っている＋ (cx・cy はマウスの実ピクセル。ツリーの座標へは v.toWorld) */
 const plus = ref<{ id: string; kind: "side" | "next"; cx: number; cy: number; target: string | null } | null>(null);
+/** 下の＋を引っ張って戻り先にする時も、押して選ぶ時と同じくつなげない箱 (灰色) には付けない (10-22 13 通り組んだ #15) */
+const plusLink = useTreeLink(doc, computed(() => (plus.value?.kind === "next" ? plus.value.id : null)));
 function plusAt(cx: number, cy: number): void {
   const p = plus.value;
   if (!p) return;
   p.cx = cx; p.cy = cy;
   const id = (document.elementFromPoint(cx, cy) as HTMLElement | null)?.closest<HTMLElement>("[data-tree-box]")?.dataset.boxId ?? null;
-  p.target = id && id !== p.id ? id : null;
+  p.target = id && id !== p.id && !(p.kind === "next" && plusLink.value.get(id)) ? id : null;
 }
 function onPlus(b: Box, kind: "side" | "next", e: PointerEvent): void {
   if (viewOnly.value) return;
