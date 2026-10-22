@@ -52,9 +52,11 @@ const k = computed(() => Math.max(1, props.inv ?? 1));
 /** 始まりの MOD (フラクチャーを先に)・残りの文・全部の文 (乗せた時) */
 const startMods = computed(() => [...startOf(t.doc.value).mods].sort((a, b) => Number(!!b.fractured) - Number(!!a.fractured)));
 const first = computed(() => startMods.value[0] ?? null);
+/** ノーマルのスタート (MOD 無しの白、10-22) */
+const normal = computed(() => startOf(t.doc.value).rarity === "normal");
 const startRest = computed(() => {
   const st = startOf(t.doc.value), n = startMods.value.length - 1, r = t.doc.value.startRandom ?? 0;
-  const parts = [n > 0 ? tr(`ほか ${n} つ`, `+${n} more`) : "", r ? tr(`乱数 ${r} つ`, `${r} random`) : "", st.runes?.length ? tr(`ルーン ${st.runes.length}`, `${st.runes.length} rune(s)`) : "", st.rarity !== "rare" && !first.value?.fractured ? rarityName(st.rarity) : ""].filter(Boolean);
+  const parts = [n > 0 ? tr(`ほか ${n} つ`, `+${n} more`) : "", r ? tr(`乱数 ${r} つ`, `${r} random`) : "", st.runes?.length ? tr(`ルーン ${st.runes.length}`, `${st.runes.length} rune(s)`) : "", st.rarity === "magic" && !first.value?.fractured ? rarityName(st.rarity) : ""].filter(Boolean);
   return [costLine.value, ...parts].filter(Boolean).join(" · ");
 });
 /** ベースの値段の 1 行 (始め方を比べた一番安い物、use-tree の baseCost。値段を入れていなければ出さない) */
@@ -103,7 +105,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
         </button>
         <!-- 始まりの MOD (押すと右の欄で選ぶ、10-22 オーナー「始まりの MOD を決めさせる」): 1 行目はフラクチャー (無ければ最初の MOD)、2 行目は残りの数・乱数・マジック -->
         <button type="button" data-tree-start-mods class="nodrag block w-full truncate text-left text-[#c8c8ff] hover:underline" :class="quiet ? 'pointer-events-none' : ''" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :title="startTitle" @click.stop="!quiet && emit('aim')">
-          {{ first ? `${first.fractured ? "✦ " : ""}${t.startModLabel(first)}` : tr("＋ 始まりの MOD を選ぶ", "+ Pick the starting mods") }}
+          {{ first ? `${first.fractured ? "✦ " : ""}${t.startModLabel(first)}` : normal ? tr("ノーマル (MOD 無し)", "Normal (no mods)") : tr("＋ 始まりの MOD を選ぶ", "+ Pick the starting mods") }}
         </button>
         <p v-if="startRest" data-tree-start-rest class="truncate text-[12px] opacity-70" :title="t.baseCost.value?.best ? `${tr('一番安い始め方', 'Cheapest start')}: ${t.baseCost.value.best.label} · ${startRest}` : startRest" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }">{{ startRest }}</p>
       </template>
