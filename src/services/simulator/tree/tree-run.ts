@@ -53,6 +53,8 @@ export interface TreeRunResult {
   /** 組んでいない芽・打てない手で止まった人 */
   stuck: number;
   stuckAt: Record<string, number>;
+  /** 手が打てずに止まった箱の、最初の 1 人の理由・着いた形・通った戻りの箱 (古い順、重ねない)。精査がどの外れ・どの戻りが元かを出す (10-22) */
+  stuckWhy: Record<string, { reason: string; item: StageItem; backs: string[] }>;
   /** 手の結果に合う結果の箱が無かった人数 (箱ごと。結果が 1 通りとして箱を 1 つにした手で別の結果が出た等。形の合う箱があればそこへ進み、無ければ止まり) */
   unexpected: Record<string, number>;
   /** 全員の合計 ÷ 完成数 (完成 0 なら NaN) */
@@ -68,7 +70,7 @@ export interface TreeRunResult {
 }
 
 type End = "done" | "capped" | "stuck";
-interface Person { end: End; cost: number; at: string; visits: { box: string; cost: number }[]; uses: Record<string, number>; restarts: number; odd: Set<string> }
+interface Person { end: End; cost: number; at: string; visits: { box: string; cost: number }[]; uses: Record<string, number>; restarts: number; odd: Set<string>; why?: { reason: string; item: StageItem } }
 
 const startItemOf = (data: PatchData, doc: TreeDoc, rng: () => number): StageItem => startOf(data, doc, rng).item;
 
@@ -277,7 +279,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     hops = 0;
     const before = item;
     const r = playHand(data, item, b.hand, rng, handAims(doc, at, aims), use);
-    if (!r.applied) return { end: "stuck", cost, at, visits, uses, restarts, odd };
+    if (!r.applied) return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: r.reason ?? "", item } };
     if (sb.next) { item = r.item; at = sb.next; continue; }
     const oc = outcomeOf(data, before, r.item, aims);
     const next = outBoxOf(doc, b, oc);
@@ -305,7 +307,8 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
   const uses: Record<string, number> = {};
   for (const p of people) for (const [k, v] of Object.entries(p.uses)) uses[k] = (uses[k] ?? 0) + v / (n || 1);
   const stuckAt: Record<string, number> = {};
-  for (const p of people) if (p.end === "stuck") stuckAt[p.at] = (stuckAt[p.at] ?? 0) + 1;
+  const stuckWhy: TreeRunResult["stuckWhy"] = {};
+  for (const p of people) if (p.end === "stuck") { stuckAt[p.at] = (stuckAt[p.at] ?? 0) + 1; if (p.why && !stuckWhy[p.at]) stuckWhy[p.at] = { ...p.why, backs: [...new Set(p.visits.map((v) => v.box).filter((id) => doc.boxes[id]?.back))] }; }
   const unexpected: Record<string, number> = {};
   for (const p of people) for (const id of p.odd) unexpected[id] = (unexpected[id] ?? 0) + 1;
   const acc: Record<string, { reach: number; visits: number; costIn: number; remain: number }> = {};
@@ -330,7 +333,7 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
     n, finished: fin.length,
     capped: people.filter((p) => p.end === "capped").length,
     stuck: people.filter((p) => p.end === "stuck").length,
-    stuckAt, unexpected, perItem,
+    stuckAt, stuckWhy, unexpected, perItem,
     meanFinished: costs.length ? costs.reduce((a, b) => a + b, 0) / costs.length : NaN,
     median: q(0.5), p90: q(0.9), uses, boxes,
     restarts: people.reduce((a, p) => a + p.restarts, 0) / (n || 1),

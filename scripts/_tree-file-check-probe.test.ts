@@ -24,4 +24,5 @@ it("保存した木の精査と回し", () => {
   for (const x of issues) console.log(`  ${x.kind.padEnd(10)} ${x.boxId.padEnd(5)} ${x.text}`);
   const r = runTree(data, doc, { n: 100, seed: 1, price: () => 0 });
   console.log(`100 人: 完成 ${r.finished} · 止まり ${r.stuck} ${JSON.stringify(r.stuckAt)}`);
+  for (const [id, w] of Object.entries(r.stuckWhy)) console.log(`  止まり ${id} (戻り ${w.backs.join(" → ")}): ${w.reason} / 前 ${w.item.prefixes.map((m) => m.modId).join(", ")} / 後 ${w.item.suffixes.map((m) => m.modId).join(", ")}`);
 });

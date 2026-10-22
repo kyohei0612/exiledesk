@@ -8,15 +8,15 @@
  * 10-22 靴を白紙から組んで: 狙いが消えて外れを持ったまま始めに戻り、カオスで当たるとサフィックスが満杯で次の高貴が打てず 100 人中 64 人止まるのに、
  * 前は戻った先の手が打てるかだけ見て先へ進まず、精査に出なかった
  */
-import { allMods, modBoostsOf, mulberry32, stepOutcomes, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { allMods, listOf, modBoostsOf, mulberry32, room, SIDES, stepOutcomes, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { CATALYSING, isCatalyst } from "./tree-hands";
 import { aimKey, type Aim, type OutKind, type TreeDoc } from "./tree-model";
 import { aimHeld, aimsOf, handAims, handProblem, outcomeOf, playHand, sampleOf } from "./tree-sample";
 import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, runTree, settle, shapesOf } from "./tree-run";
 import { withTreeTune } from "./tree-tune";
-import { tr } from "../../../i18n/lang";
+import { modText, tr } from "../../../i18n/lang";
 
-export type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck";
+export type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry";
 export interface CheckIssue { boxId: string; kind: CheckKind; text: string }
 
 const PEOPLE = 5;
@@ -158,10 +158,34 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
     for (const [id, c] of odd) add(id, "unexpected", tr(`結果の箱に無い結果も出る (${PEOPLE} 人中 ${c.who.size} 人): ${[...c.outs].join("・")}。回すと形の合う箱へ進み、無ければ止まる`, `Results with no box can happen (${c.who.size} of ${PEOPLE}): ${[...c.outs].join(", ")}. Runs go to a box of the same shape, or stop`));
     // 5) 回して止まる箱 (tree-run を 30 人、値段 0)。10-22 靴を白紙から組んで: 100 人中 64 人が止まる箱を上の辿り方では引かなかった
     const run = runTree(data, doc, { n: RUN_PEOPLE, seed: 1, price: () => 0 });
-    for (const [id, n] of Object.entries(run.stuckAt)) add(id, "stuck", tr(`回すと ${RUN_PEOPLE} 人中 ${n} 人がここで止まる (この箱の手が打てない形で着く。外れを消す手を前に置くか、形の合う箱へ戻す)`, `${n} of ${RUN_PEOPLE} runs stop here (they arrive in a shape this craft can't be used on; remove the miss first or return to a box of that shape)`));
+    for (const [id, n] of Object.entries(run.stuckAt)) {
+      const w = run.stuckWhy[id];
+      // 外れを持ったまま戻る「狙いが消えた」の戻り (作り直しでない)。カオスを当たるまでは 1 つしか入れ替えないので、持ち込んだ外れは消えずに先で満杯になる (10-22 靴 b14 → b1、100 人中 63 人)
+      const carry = (w?.backs ?? []).filter((x) => doc.boxes[x]?.out === "lost" && doc.boxes[x]?.back !== RESTART);
+      add(id, "stuck", stuckText(data, aims, n, w, carry.length > 0));
+      for (const x of carry) add(x, "carry", tr("ここで戻ると外れを持ったまま進み、先の箱で側が満杯になって止まる (直すのはこの戻り。分かれ目の箱「外れが 2 つなら消去」は次の段)", "Returning here keeps the misses, so a later box runs out of room and stops (fix this return; split boxes such as \"annul when 2 misses\" come later)"));
+    }
     for (const id of never) add(id, "neverHit", tr(`上の手を ${TRIES} 回打ってもこの札が付かなかった (側・段・手を確かめる)`, `This mod never hit in ${TRIES} tries of the craft above (check side, tier and craft)`));
   }
   // 止まる・打てない物を先に (10-22 精査で靴の止まりが完成の札の ! の下に埋もれた)
-  const RANK: Partial<Record<CheckKind, number>> = { stuck: 0, cantUse: 1, noMatch: 2, unexpected: 3, open: 4, loop: 5, noDone: 6 };
+  const RANK: Partial<Record<CheckKind, number>> = { stuck: 0, carry: 0, cantUse: 1, noMatch: 2, unexpected: 3, open: 4, loop: 5, noDone: 6 };
   return out.map((x, i) => ({ x, i })).sort((a, z) => (RANK[a.x.kind] ?? 9) - (RANK[z.x.kind] ?? 9) || a.i - z.i).map((v) => v.x);
+}
+
+/** 回して止まる箱の文: 何人・どの側が満杯か・外れの MOD (最初の 1 人の形)。理由が側の満杯でなければエンジンの理由をそのまま */
+function stuckText(data: PatchData, aims: readonly Aim[], n: number, w: { reason: string; item: StageItem } | undefined, carry: boolean): string {
+  const head = tr(`回すと ${RUN_PEOPLE} 人中 ${n} 人がここで止まる`, `${n} of ${RUN_PEOPLE} runs stop here`);
+  if (!w) return tr(`${head} (この箱に手が無い・戻り先が無い)`, `${head} (no craft or no return here)`);
+  const full = SIDES.filter((side) => !room(w.item, side));
+  if (!full.length) return `${head}: ${w.reason}`;
+  const isAim = (m: StageItem["prefixes"][number]): boolean => aims.some((a) => aimHeld(data, { ...w.item, prefixes: [m], suffixes: [] }, a));
+  const parts = full.map((side) => {
+    const junk = listOf(w.item, side).filter((m) => !m.fractured && !isAim(m));
+    const name = side === "prefix" ? tr("プレフィックス", "Prefixes") : tr("サフィックス", "Suffixes");
+    return junk.length ? tr(`${name}が満杯 (外れ ${junk.length}: ${junk.map((m) => `${modText(m)} (${m.tierName})`).join("・")})`, `${name} full (${junk.length} miss: ${junk.map((m) => `${modText(m)} (${m.tierName})`).join(", ")})`) : tr(`${name}が満杯`, `${name} full`);
+  });
+  const fix = carry
+    ? tr("。外れを持ったまま戻る「狙いが消えた」の戻りがある (! の付いた戻りの箱)", ". A \"target lost\" return keeps the misses (the return box marked !)")
+    : tr("。この手の前に外れを消す手 (消去 + 満杯の側のお告げ) が要る", ". Remove a miss first (annul + the omen for the full side)");
+  return tr(`${head}: ${parts.join("・")}で着き、この手が打てない${fix}`, `${head}: ${parts.join(", ")}, so this craft can't be used${fix}`);
 }
