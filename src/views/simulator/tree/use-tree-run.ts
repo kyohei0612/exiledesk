@@ -31,7 +31,9 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number) {
     const my = ++token;
     running.value = true; shown.value = true; n.value = 0; result.value = null;
     const d = doc.value;
-    const g = runTreeSteps(data, d, { n: RUN_N, seed: 1, price: priceOf, startCost: startCost(), every: EVERY, onProgress: (r) => { if (my === token) result.value = r; } });
+    // 相場は高貴建て → 神に直す (tree-base-cost と同じ。そのまま渡すと 2000 神の打ち止めに当たって完成 8% になった、10-22 開発版で見た)
+    const div = priceOf("divine") || 1;
+    const g = runTreeSteps(data, d, { n: RUN_N, seed: 1, price: (k) => priceOf(k) / div, startCost: startCost(), every: EVERY, onProgress: (r) => { if (my === token) result.value = r; } });
     try {
       let t0 = performance.now();
       for (;;) {
