@@ -369,7 +369,7 @@ onMounted(() => window.addEventListener("keydown", onKey));
 onMounted(() => {
   const name = new URLSearchParams(location.search).get("sample");
   const sample = name ? treeSample(name) : null;
-  if (!sample) { if (t.takeAskBase()) t.basePage.value = true; return; } // 白紙ならまずベースを選ぶ 1 画面 (TreeBasePage、10-22 オーナー「エミュと同じ 1 画面」)
+  if (!sample) { if (t.takeAskBase()) t.basePage.value = true; return; } // 白紙ならまずベースを選ぶ重ね窓 (TreeBasePage、10-22 オーナー)
   try { localStorage.setItem("exiledesk.tree.v0.before-sample", JSON.stringify(doc.value)); } catch { /* 控えられなくても開く */ }
   t.edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, sample); tidyOf(d); });
 });
@@ -390,12 +390,12 @@ const glowOf = (b: Box): boolean => {
 
 <template>
   <section data-tree-page class="min-w-0 flex-1 p-4">
-    <div v-show="!t.basePage.value" class="mb-3 flex flex-wrap items-center gap-3">
+    <div class="mb-3 flex flex-wrap items-center gap-3">
       <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center gap-3 px-8 text-[22px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)] max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-1 max-md:px-4 max-md:py-2 max-md:text-[17px] max-md:tracking-[0.08em]"><span class="whitespace-nowrap">{{ tr("クラフトの道 (ツリー)", "Craft route tree") }}</span><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" /></h1>
       <button type="button" class="g-btn sm" @click="close">{{ tr("← 戻る", "← Back") }}</button>
     </div>
     <TreeBasePage v-if="t.basePage.value" />
-    <div v-show="!t.basePage.value" class="g-panel flex flex-col gap-2 px-3 py-2" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
+    <div class="g-panel flex flex-col gap-2 px-3 py-2" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
       <!-- 帯: 全体の数字 (まだ) ・1 つ戻す・拡大縮小・全画面 -->
       <!-- 折り返さない (回した結果の文で 1 行と 2 行の境目になり、木の枠が上下して箱の × が押せなかった、10-22)。左は狭ければ … で切る。768px 未満は左と右を 2 段に (右が画面より広く左が潰れて「回す」が押せなかった、10-22) -->
       <div class="flex flex-wrap items-center gap-2 text-[13px] md:flex-nowrap">
