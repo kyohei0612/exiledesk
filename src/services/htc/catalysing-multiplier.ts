@@ -2,7 +2,7 @@
 import { ABSOLUTE_MAX_QUALITY } from "./quality";
 
 /** 実測 1 点。`quality` は %、`multiplier` はタグ付き MOD の重みに掛かる倍率。 */
-export interface CatalysingSample {
+interface CatalysingSample {
   readonly quality: number;
   readonly multiplier: number;
   /** 二項の 95% 区間 (n=100) を倍率に直したもの */

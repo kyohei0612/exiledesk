@@ -62,7 +62,7 @@ export type AddUnrevealed = Extract<Action, { addUnrevealed: unknown }>["addUnre
  *   - その側で出うる MOD が無い側は選ばない (重み 0)
  *   - 勢力の保証で、その勢力の MOD がどの空いた側にも無ければ、普通の MOD の重みで選ぶ (発現は普通の MOD 3 つ。フォーラム 3956293)
  */
-export interface UnrevealedPlan {
+interface UnrevealedPlan {
   mark: StageMod | undefined;
   floor: number;
   fixed: StageSide | null;

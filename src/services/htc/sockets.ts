@@ -53,7 +53,7 @@ export const CRAFT_RUNES_EN: readonly string[] = ["Astrid's Creativity", "Serle'
 export const SERLE_RUNE = "serles-triumph";
 
 /** 特別な MOD のルーンの選び方のキー (画面のトグル) */
-export type SpecialKey = "kolr" | "katla" | "vorana" | "medved" | "uhtred" | "thrud";
+type SpecialKey = "kolr" | "katla" | "vorana" | "medved" | "uhtred" | "thrud";
 export type SocketKey = "astrid" | "serle" | SpecialKey;
 
 /**
@@ -67,7 +67,7 @@ export interface SocketPick extends Partial<Record<SpecialKey, boolean>> {
   baseSockets: number;
 }
 /** 規格外のベースを既定にする (オーナー 2026-09-26)。装備ごとの規格外 (胴・両手 3 / ほか 2) に effectiveSocket が丸める */
-export const DEFAULT_BASE_SOCKETS = 3;
+const DEFAULT_BASE_SOCKETS = 3;
 export const NO_SOCKET: SocketPick = { astrid: false, serle: false, baseSockets: DEFAULT_BASE_SOCKETS };
 
 
@@ -93,7 +93,7 @@ const ruleOf = (en: string) => {
 const noteOf = (bound: boolean, replaceNote: string): string => (bound ? "ソケットバウンド (取り外しも置き換えもできない)" : replaceNote);
 
 /** 差せる物 1 行。categories = 差せる部位 (エンジンのルーンの表。空 = どの武器・防具にも)。pool = 特別な MOD を足すルーン */
-export interface SocketRune {
+interface SocketRune {
   key: SocketKey;
   id: string;
   ja: string;
@@ -139,7 +139,7 @@ const RUNE_BY_KEY = new Map(SOCKET_RUNES.map((r) => [r.key, r]));
 const KEY_BY_RUNE_ID = new Map(SOCKET_RUNES.map((r) => [r.id, r.key]));
 
 /** その部位に差せるか (部位の決まりはエンジンのルーンの表。空 = どこでも) */
-export const runeFits = (r: Pick<SocketRune, "categories">, category: string | null | undefined): boolean =>
+const runeFits = (r: Pick<SocketRune, "categories">, category: string | null | undefined): boolean =>
   !!category && (r.categories.length === 0 || r.categories.includes(category));
 
 /** 画面に出す差せる物 (アストリッド・セールはいつも。特別な MOD のルーンは差せる部位だけ) */

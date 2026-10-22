@@ -24,11 +24,11 @@ export interface BundleEntry {
 }
 export type Bundle = Record<string, BundleEntry>;
 
-export interface HtcTier { name?: string; ilvl: number; ranges: readonly (readonly (number | string)[])[]; stats?: readonly string[]; codes?: readonly string[] }
+interface HtcTier { name?: string; ilvl: number; ranges: readonly (readonly (number | string)[])[]; stats?: readonly string[]; codes?: readonly string[] }
 export interface HtcMod { id: string; family: string; type: string; text?: string; tiers: readonly HtcTier[] }
 export interface DropOnlyInfo { name: string; stats?: string[]; tiers?: Array<{ name: string; min: number; max: number; level: number }> }
 
-export interface Issue {
+interface Issue {
   /** どのデータ (bundle / htc / extra / dropOnly / tiers) */
   where: "bundle" | "htc" | "extra" | "dropOnly" | "tiers";
   /** MOD の id (エンジンの段は `id#段` ) */
@@ -45,7 +45,7 @@ export interface Issue {
  * (行ごとの [下限, 上限, 出る=1]、null は無制限。上から順に min が入る最初の行が選ばれる = クライアントの文の作り方と同じ)
  */
 export type Limit = [number | null, number | null] | ["!", number];
-export interface PartlyHidden {
+interface PartlyHidden {
   /** この stat の、文の雛形 (descriptor) の中の位置 */
   pos: number;
   /** 雛形の stat 全部 (位置順) */
@@ -73,7 +73,7 @@ export function isShown(h: HiddenStats, statId: string, min: number, others: Rea
   return (line?.shown ?? 1) === 1;
 }
 
-export interface CheckInput {
+interface CheckInput {
   bundle: Bundle;
   /** 文に値が出ない stat (stat-hidden.json)。照合から外す */
   hidden: HiddenStats;
@@ -84,7 +84,7 @@ export interface CheckInput {
   sourceRanges?: (entry: BundleEntry) => { mins: number[]; maxs: number[] } | null;
 }
 
-export interface CheckResult {
+interface CheckResult {
   issues: Issue[];
   counts: { bundleChecked: number; htcTiers: number; htcMatched: number; htcNoReference: number; dropOnlyTiers: number; tiersChecked: number };
   /** 原本に対応が見つからなかったエンジンの段 (不一致ではなく、照合できなかった物) */
@@ -111,7 +111,7 @@ export function textNumbers(textEn: string): Array<[number, number]> {
 }
 
 /** 原本 1 件の stat を画面の値にした幅 (hidden は除く)。数値の無い stat は飛ばす */
-export function bundleDisplayRanges(e: BundleEntry, hidden: HiddenStats): Array<{ id: string; lo: number; hi: number }> {
+function bundleDisplayRanges(e: BundleEntry, hidden: HiddenStats): Array<{ id: string; lo: number; hi: number }> {
   const out: Array<{ id: string; lo: number; hi: number }> = [];
   const mins = new Map((e.stats ?? []).filter((s) => typeof s.min === "number").map((s) => [s.id, s.min as number]));
   for (const s of e.stats ?? []) {

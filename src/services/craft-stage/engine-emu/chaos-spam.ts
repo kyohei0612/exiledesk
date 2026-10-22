@@ -18,7 +18,7 @@ import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 export const SPAM_CAP = 50_000;
 
 /** 当たり: 狙いのどれか 1 つが (その段以上で) 付いている */
-export const spamHit = (item: StageItem, ts: readonly AimTarget[]): boolean => ts.some((t) => aimDone(item, [t]));
+const spamHit = (item: StageItem, ts: readonly AimTarget[]): boolean => ts.some((t) => aimDone(item, [t]));
 /** 1 人分: 狙いのどれかが付くまでの回数 (付かなければ null) */
 export function spamOne(data: PatchData, start: StageItem, ts: readonly AimTarget[], key: string, rng: () => number, cap = SPAM_CAP): number | null {
   if (spamHit(start, ts)) return 0;

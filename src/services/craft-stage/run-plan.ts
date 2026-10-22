@@ -32,7 +32,7 @@ import { propRows } from "./stage-props";
 import { tuneForStep, withStepTune, type StepTune } from "./stage-tuning";
 
 /** スキルジェムのサポート枠の最初の数 (未確定。上の freshItem のコメント) */
-export const GEM_START_SOCKETS = 2;
+const GEM_START_SOCKETS = 2;
 import type { CraftStagePlan, CraftStageResult, StageItem as OutItem, StageMod as OutMod, StageStep as OutStep } from "./contract";
 import type { StageAugment, StageItem, StageMod, StageSide } from "./types";
 
@@ -48,7 +48,7 @@ export function freshItem(data: PatchData, base: string, itemLevel: number, rari
   return { base, baseJa, cls, itemLevel, rarity: gem ? "normal" : rarity, prefixes: [], suffixes: [], quality: 0, corrupted: false, ...(gem ? { gemSockets: GEM_START_SOCKETS } : {}) };
 }
 
-export function outMod(m: StageMod): OutMod {
+function outMod(m: StageMod): OutMod {
   return {
     mod_id: m.modId,
     family: m.family,
@@ -74,14 +74,14 @@ export function outMod(m: StageMod): OutMod {
  * そのアイテムの中の MOD として書き出す。カタリストの品質で伸びる MOD は text_ja / text_en / values を伸びた後に、
  * 元は raw_values / raw_text_ja / raw_text_en に残す (POE2Tube 要望 ㉔-4)
  */
-export function outModIn(it: StageItem, m: StageMod, data?: PatchData): OutMod {
+function outModIn(it: StageItem, m: StageMod, data?: PatchData): OutMod {
   const o = outMod(m);
   // data があれば伸びた後の文を雛形から作り直す (「#」の位置だけ変わる)。無ければ数字の差し替え (stage-core の retext)
   const b = boostedMod(it, m, data);
   if (!b) return o;
   return { ...o, text_ja: b.textJa, text_en: b.textEn, values: b.values, ...({ quality_boosted: true, raw_values: m.values, raw_text_ja: m.textJa, raw_text_en: m.textEn } as object) } as OutMod;
 }
-export function outItem(it: StageItem, data?: PatchData): OutItem {
+function outItem(it: StageItem, data?: PatchData): OutItem {
   return {
     name: it.baseJa,
     base: it.base,
@@ -245,7 +245,7 @@ function revealOut(data: PatchData, item: StageItem, currency: string, seed: num
   };
 }
 
-export interface RunMeta {
+interface RunMeta {
   /** カレンシー 1 個の値段 (高貴建て、price-keys のキー → 値)。無ければ 0 */
   prices: Readonly<Record<string, number>>;
   exiledeskVersion: string;

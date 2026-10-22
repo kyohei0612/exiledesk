@@ -16,7 +16,7 @@ import rulesRaw from "../../i18n/augment-rules.json";
 import { lang, tr } from "../../i18n/lang";
 import { clientClassOf, handsOf, inAny, inGroup } from "../mods/item-classes";
 
-export interface AugmentRule {
+interface AugmentRule {
   ja: string;
   /** SoulCoreTypes (Rune / SoulCore / Idol / AbyssalEye / CongealedMist) */
   type: string | null;

@@ -19,14 +19,14 @@ import { filledStatsOf, htcBaseInfo, implicitStatsOf } from "../htc/patch";
 import { rollImplicitLines } from "./roll-text";
 import { nameOf } from "../../i18n/lang";
 
-export interface PropRow { key: string; label: string; value: string; up: boolean }
+interface PropRow { key: string; label: string; value: string; up: boolean }
 
 /**
  * 暗黙の MOD の行: 振った文・中身のタグ・カタリストで伸びたか・stat の値 (画面の単位)。2026-10-12 オーナー「暗黙のタグは？」「カタリストで上がるよ、普通は」。
  * カタリストは MOD と同じく指輪・アミュレットで、品質の種類のタグを持つ行だけ (stage-core の qualityPctOf と同じ決まり)
  */
 /** baseText = カタリストの品質で盛る前の文 (素の値、J11 2026-10-21。同じ乱数で品質なしに振った物) */
-export interface ImplicitRow { text: string; baseText: string; tags: string[]; boosted: boolean; stats: Array<[string, number]>; raw: number[]; ranges: Array<[number, number, number]> }
+interface ImplicitRow { text: string; baseText: string; tags: string[]; boosted: boolean; stats: Array<[string, number]>; raw: number[]; ranges: Array<[number, number, number]> }
 export function implicitRows(item: StageItem, ja = false): ImplicitRow[] {
   const lines = htcBaseInfo()[item.base]?.implicits ?? [];
   if (!lines.length) return [];

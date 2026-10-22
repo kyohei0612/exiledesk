@@ -52,7 +52,7 @@ import { catalysingMultiplier } from "./catalysing-multiplier";
 export * from "./catalysing-multiplier";
 export * from "./catalysing-setup";
 
-export interface CatalysingOptions {
+interface CatalysingOptions {
   /** オーブの強さ (ilvl 下限)。既定 'base'。 */
   currencyTier?: CurrencyTier;
   /** 狙う段位以上だけ数える。既定 0 (どの段位でも)。 */
@@ -61,7 +61,7 @@ export interface CatalysingOptions {
   multiplier?: number;
 }
 
-export interface CatalysingOdds {
+interface CatalysingOdds {
   /** 素の高貴 1 回でその MOD が付く確率 */
   readonly plain: number;
   /** お告げ + 品質を乗せた高貴 1 回で付く確率 */

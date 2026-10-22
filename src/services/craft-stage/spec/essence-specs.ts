@@ -88,7 +88,7 @@ export function essenceLevelOfKey(key: string): string | null {
   return /^essence:(lesser|normal|greater|perfect):/.exec(key)?.[1] ?? null;
 }
 
-export interface EssenceResolved { spec: CurrencySpec; reason?: string }
+interface EssenceResolved { spec: CurrencySpec; reason?: string }
 /**
  * 手順の鍵 → どの説明文のエッセンスか。このベースに付く MOD が無い・段が無い時は reason (今の関数と同じ文)。
  * 深淵かどうかは付く MOD の系統で見る (説明文は同じ)

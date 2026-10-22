@@ -62,7 +62,7 @@ function scaled(vals: readonly number[], k: number): number[] {
 
 /** 聖別の数値を手で決める手 (聖別の帯、2026-10-20 オーナー「聖別の数値も手で決めて使えるといい」)。費用 0
  * `sset:122` = 全部の MOD を ×1.22 (掛ける前の値はそのまま)、`sset:max` = 段の最大 × 1.22、`sset:min` = 段の最小 × 0.78 */
-export const SANCTIFY_SET = "sset:";
+const SANCTIFY_SET = "sset:";
 export const sanctifySetKey = (k: number | "max" | "min"): string => `${SANCTIFY_SET}${k}`;
 export const isSanctifySet = (key: string): boolean => key.startsWith(SANCTIFY_SET);
 export function applySanctifySet(data: PatchData, item: StageItem, currency: string): StageApply {

@@ -63,7 +63,7 @@ const everyRow = (): ItemBase[] => (allRows ??= data ? [...data.bases.values()] 
 /**
  * 文面 → MOD (行ごとの索引で、MOD 全文の一致。`+` の有無のずれも見る)。lines = 複合 MOD の 1 行だけの一致も拾う
  */
-export function engineModsFor(template: string, rows: readonly ItemBase[] = everyRow(), o: { lines?: boolean; exactOnly?: boolean; side?: "prefix" | "suffix"; wholeOnly?: boolean; special?: boolean } = {}): Mod[] {
+function engineModsFor(template: string, rows: readonly ItemBase[] = everyRow(), o: { lines?: boolean; exactOnly?: boolean; side?: "prefix" | "suffix"; wholeOnly?: boolean; special?: boolean } = {}): Mod[] {
   const d = data;
   if (!d) return [];
   const keys = [matchKey(template), matchKey(template.startsWith("+") ? template.slice(1) : `+${template}`)];

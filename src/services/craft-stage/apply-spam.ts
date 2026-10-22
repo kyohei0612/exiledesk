@@ -12,7 +12,7 @@ import { tr } from "../../i18n/lang";
 export const SPAM = "spam:";
 export const isSpam = (key: string): boolean => key.startsWith(SPAM);
 /** 鍵の中身。avg = 道のカードから (費用は 100 人の平均) / 運試しから (その 1 人の費用) */
-export interface SpamStep { route: string; grade: string; cost: number; n: number; avg: boolean; rarity: StageItem["rarity"]; mods: Force[] }
+interface SpamStep { route: string; grade: string; cost: number; n: number; avg: boolean; rarity: StageItem["rarity"]; mods: Force[] }
 
 export function spamKey(s: SpamStep): string {
   return SPAM + JSON.stringify(s);

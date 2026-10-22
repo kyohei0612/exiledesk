@@ -16,7 +16,7 @@ import basesPob from "./stage-bases-pob.json";
 import gemsRaw from "../../i18n/gems-client.json";
 import vaal from "../../i18n/vaal-enchants.json";
 
-export interface BaseStats {
+interface BaseStats {
   cls: string;
   lvl?: number;
   armour?: number | [number, number];
@@ -38,9 +38,9 @@ const GEMS = (gemsRaw as Array<{ en: string; ja: string; kind: string }>).filter
  * 装備に必要なレベル・能力値 (要望 ⑱-3)。PoB の Data/Bases の req (scripts/build-stage-runes.mjs → stage-bases-pob.json)。
  * 要求レベルはドロップレベルと同じ値 (PoB で確認: 三日月のクォータースタッフ 20 / スパイククラブ 16)。要求の無いベースは null
  */
-export interface BaseReq { level?: number; str?: number; dex?: number; int?: number }
+interface BaseReq { level?: number; str?: number; dex?: number; int?: number }
 const REQS = (basesPob as unknown as { reqs: Record<string, BaseReq> }).reqs;
-export const reqOf = (base: string): BaseReq | null => REQS[base] ?? null;
+const reqOf = (base: string): BaseReq | null => REQS[base] ?? null;
 /**
  * アイテムの要求レベル = max(ベースの要求レベル、付いている各 MOD の floor(MOD レベル × 0.8)、差したルーン・ソウルコアの要求レベル)。
  * エッセンスでも普通の MOD でも同じ (PoB Classes/Item.lua の 0.8、公式フォーラム 3849633 の 8 → 36 = 46 × 0.8。POE2Tube の答え 2026-10-06、要望 ㉟-2)。
@@ -59,7 +59,7 @@ export function reqOfItem(item: StageItem): BaseReq | null {
 export const baseStatsOf = (base: string): BaseStats | null => BASES[base] ?? null;
 
 /** 仮のベースの種類 (計算機の category の代わり) */
-export type ExtraCategory = "LifeFlask" | "ManaFlask" | "SkillGem";
+type ExtraCategory = "LifeFlask" | "ManaFlask" | "SkillGem";
 const EMPTY = { prefixes: [] as string[], suffixes: [] as string[] };
 
 /** フラスコの一覧 (ライフ → マナ、ドロップレベル順) */

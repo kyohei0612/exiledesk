@@ -42,7 +42,7 @@ export function collectShard(item: StageItem, key: string): StageApply & { madeO
   const shards = { ...item.shards, [key]: made ? now - SHARDS_PER_ORB : now };
   return { applied: true, item: { ...item, shards }, added: [], removed: [], ...(made ? { madeOrb: SHARD_TO_ORB[key] } : {}) };
 }
-export const SHARD_REASON = `シャードは ${SHARDS_PER_ORB} 個集めるとオーブになる (アイテムには使えない)`;
+const SHARD_REASON = `シャードは ${SHARDS_PER_ORB} 個集めるとオーブになる (アイテムには使えない)`;
 /** SHARD_REASON の画面の言葉 (英語の画面では英語) */
 export const shardReason = (): string => tr(SHARD_REASON, `${SHARDS_PER_ORB} shards make an orb (can't be used on items)`);
 

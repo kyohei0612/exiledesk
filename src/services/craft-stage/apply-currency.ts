@@ -15,11 +15,11 @@ import { allMods, hasExtraCatalyst, maxQualityOf, skip, type Force } from "./sta
 import { applyForce, isForce } from "./apply-force";
 import { applySpam, isSpam } from "./apply-spam";
 /** 品質を手で決める手 (`qset:15` = 品質 15%、`qset:34:caster` = 宝飾品の品質の種類も) */
-export const QUALITY_SET = "qset:";
+const QUALITY_SET = "qset:";
 export const qualitySetKey = (n: number, tag?: string | null): string => `${QUALITY_SET}${n}${tag ? `:${tag}` : ""}`;
 export const isQualitySet = (key: string): boolean => key.startsWith(QUALITY_SET);
 /** カタリストの品質を手で決める手 (ベースの品質とは別に持つグラスピングメイル。指輪・アミュレットは qset のまま) */
-export const CATALYST_SET = "cqset:";
+const CATALYST_SET = "cqset:";
 export const catalystSetKey = (n: number, tag: string): string => `${CATALYST_SET}${n}:${tag}`;
 export const isCatalystSet = (key: string): boolean => key.startsWith(CATALYST_SET);
 /**
@@ -27,11 +27,11 @@ export const isCatalystSet = (key: string): boolean => key.startsWith(CATALYST_S
  * (指輪・アミュレット・防具・物理武器。クライアントの説明「上限を最大 10% 超えて」)。洗練されたブリーチの指輪 45 + 20 + 10 = 75 は取引所の上限と同じ。
  * 2026-10-10 オーナー「上限を固定値にせず合計で伸びるように、マックス値を設定できるだけで、これ以上つけれないってしないで」
  */
-export const INFUSER_OVER = 10;
+const INFUSER_OVER = 10;
 /** インフューザーがある部位 (指輪・アミュレット・防具・マーシャル武器・ワンド・スタッフ・セプター)。前の一覧はキャスターが漏れていた (2026-10-13 総点検) */
 const INFUSABLE: readonly ItemGroup[] = ["ringAmulet", "armour", "martial", "caster"];
 /** インフューザーを棚に出しているか (2026-10-09 にヴァールの道具と一緒に外した)。外している間は「今の最大」に +10 を足さない (2026-10-13 オーナー「インフューザー非表示じゃなかったっけ」) */
-export const INFUSERS_ON_SHELF = false;
+const INFUSERS_ON_SHELF = false;
 export function qualityFieldMax(item: StageItem): number {
   return maxQualityOf(item) + (INFUSERS_ON_SHELF && inAny(item.cls.category, INFUSABLE) ? INFUSER_OVER : 0);
 }

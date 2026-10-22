@@ -16,12 +16,12 @@ import type { StageItem } from "./types";
 import { htcBaseInfo } from "../htc/patch";
 
 /** PoB の既定 (ConfigOptions.lua の defaultIndex)。手順で指定が無い物はこれを明示して渡し、結果にも書き戻す */
-export const POB_DEFAULT_CONFIG = { resistancePenalty: -60, enemyIsBoss: "Pinnacle" } as const;
+const POB_DEFAULT_CONFIG = { resistancePenalty: -60, enemyIsBoss: "Pinnacle" } as const;
 /** 設定の言葉 (解説用。PoB の画面の言葉を日本語に) */
-export const PENALTY_JA: Record<number, string> = { 0: "アクト 1 (0%)", [-10]: "アクト 2 (-10%)", [-20]: "アクト 3 (-20%)", [-30]: "アクト 4 (-30%)", [-40]: "アクト 5 (-40%)", [-50]: "アクト 6 (-50%)", [-60]: "エンドゲーム (-60%)" };
-export const BOSS_JA: Record<string, string> = { None: "普通の敵", Boss: "ボス", Pinnacle: "ガーディアン・ピナクルボス", Uber: "ユーバーピナクルボス" };
+const PENALTY_JA: Record<number, string> = { 0: "アクト 1 (0%)", [-10]: "アクト 2 (-10%)", [-20]: "アクト 3 (-20%)", [-30]: "アクト 4 (-30%)", [-40]: "アクト 5 (-40%)", [-50]: "アクト 6 (-50%)", [-60]: "エンドゲーム (-60%)" };
+const BOSS_JA: Record<string, string> = { None: "普通の敵", Boss: "ボス", Pinnacle: "ガーディアン・ピナクルボス", Uber: "ユーバーピナクルボス" };
 
-export interface PobPlan {
+interface PobPlan {
   class: string;
   level: number;
   skill: string;

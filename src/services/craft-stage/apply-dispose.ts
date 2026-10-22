@@ -4,7 +4,7 @@
  * 名前はクライアントの文言表 (ClientStrings): SellWindowTitle「Disenchant / 解呪」、AdvancedCraftingBenchSalvageButton「Salvage / サルベージ」。
  * どちらもアイテムは無くなる (解呪の説明「これによりアイテムは破壊されます」)。
  *   - 解呪: 出る物は攻略の定番の説明 (マジック → 変成のシャード、レア → 王者のシャード)。ノーマル・ユニークは解呪できない扱い (可能性のシャードは 2026-10-16 に外した)。
- *     **個数の出典なし (未確定)**。クライアントに解呪の表は書き出していないので 1 個と置く (DISPOSE_COUNT_CONFIRMED = false)
+ *     **個数の出典なし (未確定)**。クライアントに解呪の表は書き出していないので 1 個と置く (DISPOSE_COUNT)
  *   - サルベージ: クライアントの説明文「品質またはソケットを持つ装備アイテムをサルベージし、品質カレンシーまたは熟練工のシャードにします」
  *     「アイテムは品質またはソケットを持っている必要があります」。ソケット → 熟練工のシャード、品質 → その装備の品質カレンシー
  *     (砥石 = マーシャル武器 / 彫刻針 = ワンド・スタッフ・セプター / 端材 = 防具)。**個数の出典なし (未確定)**、それぞれ 1 個と置く
@@ -17,12 +17,11 @@ import { inGroup } from "../mods/item-classes";
 import { isFlask, isGem } from "./stage-bases";
 import { tr } from "../../i18n/lang";
 
-export const DISPOSE_KEYS = ["disenchant", "salvage"] as const;
+const DISPOSE_KEYS = ["disenchant", "salvage"] as const;
 export const isDispose = (key: string): boolean => (DISPOSE_KEYS as readonly string[]).includes(key);
 export const DISPOSE_JA: Record<string, string> = { disenchant: "解呪", salvage: "サルベージ" };
 /** 1 回で出る数 (出典なし、仮に 1) */
-export const DISPOSE_COUNT = 1;
-export const DISPOSE_COUNT_CONFIRMED = false;
+const DISPOSE_COUNT = 1;
 
 /** 解呪で出るシャード (レアリティごと) */
 const DISENCHANT_TO: Record<string, string> = { magic: "transmute_shard", rare: "regal_shard" };

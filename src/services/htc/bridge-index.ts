@@ -22,7 +22,7 @@ export interface IndexHit {
   rune?: string;
 }
 
-export interface ClassIndex {
+interface ClassIndex {
   /** MOD 全文で引く */
   full: Map<string, IndexHit>;
   /** 複数の効果を持つ MOD を 1 行ずつでも引けるようにした物 */

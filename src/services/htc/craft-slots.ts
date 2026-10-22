@@ -20,7 +20,7 @@ import type { TierTarget } from "../../vendor/poe2htc/optimizer/optimize";
 import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 
 /** アストリッドの創造性が足すクラフト枠 */
-export const ASTRID_PLUS = 1;
+const ASTRID_PLUS = 1;
 /** そのルーンの id (`engine/runes.ts` の表と同じ) */
 export const ASTRID_RUNE = "astrids-creativity";
 

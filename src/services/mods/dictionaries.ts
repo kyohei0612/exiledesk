@@ -72,7 +72,7 @@ interface ModBundleEntry {
 }
 type ModBundleDict = Record<string, ModBundleEntry>;
 
-export interface ModBundleIndexEntry {
+interface ModBundleIndexEntry {
   affix: AffixKind;
   textJaTemplate: string | null;
   textEnTemplate: string;

@@ -66,7 +66,7 @@ export function runeEffectPct(item: StageItem): number {
   return p.runes + p.augments;
 }
 /** そのソケットの物に掛かる効果の増加 % (ルーンは両方、ソウルコア・アイドルはオーグメントの効果だけ) */
-export function augmentEffectPct(item: StageItem, a: StageAugment): number {
+function augmentEffectPct(item: StageItem, a: StageAugment): number {
   const p = effectPcts(item);
   return p.augments + (runeRow(a.en)?.kind === "rune" ? p.runes : 0);
 }
@@ -95,7 +95,7 @@ export function scaledAugment(item: StageItem, a: StageAugment): StageAugment {
  * ベースの暗黙の「プレ / サフィ ±N 個」(local_maximum_prefixes_allowed_+ など。不在のアミュレットは -1 / -1、黄昏の指輪は +1 / -1)。
  * htcBaseLimits はその暗黙があるベースだけ 3 ± N で持つ
  */
-export function baseAllowedDelta(item: StageItem, side: StageSide): number {
+function baseAllowedDelta(item: StageItem, side: StageSide): number {
   const l = htcBaseLimits()[item.base];
   return l ? (side === "prefix" ? l.prefixes : l.suffixes) - 3 : 0;
 }
@@ -113,7 +113,7 @@ export function limitOf(item: StageItem, side: StageSide): number {
  * 侮蔑 (液化した感情) の「プレフィックス / サフィックス +1 個まで」が付いている間は、その側の枠が 1 つ増える
  * (2026-10-11 オーナーの参考動画 2 本: 付けるとサフィ 3 つになり、外してもサフィ 3 つは残る = 上限を超えた状態。その側は付け直せない)
  */
-export function extraAllowed(item: StageItem, side: StageSide): number {
+function extraAllowed(item: StageItem, side: StageSide): number {
   const id = side === "prefix" ? "AdditionalPrefixAllowed" : "AdditionalSuffixAllowed";
   return allMods(item).filter((m) => m.modId.endsWith(id)).length;
 }

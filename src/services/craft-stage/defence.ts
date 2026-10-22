@@ -10,7 +10,7 @@
  */
 import raw from "./defence-data.json";
 
-export interface DefenceData {
+interface DefenceData {
   constants: {
     evadeCap: number; deflectPct: number; esDelay: number; esRatePct: number; shockPct: number;
     freezePlayer: number; chillPlayer: number; shockPlayer: number; wardRegenPct: number;
@@ -157,7 +157,7 @@ export function attackRow(n: number, evade: number, deflect: number, red: boolea
   return row;
 }
 
-export interface EsPoint { t: number; es: number; life: number; hit: boolean }
+interface EsPoint { t: number; es: number; life: number; hit: boolean }
 /**
  * ES とライフの時間の流れ (view=es)。hits = 当たる時刻 (秒)、dmg = 一撃、kind:
  *   phys (物理など普通の一撃) / chaos (ES を 2 倍削る) / bleed (出血・毒: ES を素通りしてライフへ)。

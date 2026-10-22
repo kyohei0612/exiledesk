@@ -25,7 +25,7 @@ import { tr } from "../../i18n/lang";
 
 const UPGRADES = upgradesRaw as Record<string, { id: string; en: string; ja: string; stats: Array<{ id: string; min: number; max: number }> }>;
 
-export const EXTRA_KEYS = [
+const EXTRA_KEYS = [
   "vaal_infuser_jewellery", "vaal_infuser_armour", "vaal_infuser_martial", "vaal_infuser_caster",
   "sacrifice_jewellery", "sacrifice_armour", "sacrifice_weapon",
   "architect", "cultivation", "siphoner", "mirror", "hinekora", "extraction",

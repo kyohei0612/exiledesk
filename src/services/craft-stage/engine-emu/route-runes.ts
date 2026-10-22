@@ -16,7 +16,7 @@ import { baseSocketsOf, isRune, RUNE_PREFIX } from "../stage-runes";
 import { mulberry32 } from "../../htc/rng";
 import type { StageItem } from "../types";
 
-export interface RouteRune { id: string; ja: string; /** 特殊 MOD を足すルーン (false = セールの凱旋) */ pool: boolean }
+interface RouteRune { id: string; ja: string; /** 特殊 MOD を足すルーン (false = セールの凱旋) */ pool: boolean }
 
 /** その部位で確率が変わるルーン (セールの凱旋 + 差せる特殊 MOD のルーン)。ソケットが付かない部位は無し */
 export function routeRunesFor(item: StageItem | null): RouteRune[] {

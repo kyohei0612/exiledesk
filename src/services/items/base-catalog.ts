@@ -38,7 +38,7 @@ export const CATALOG_ROWS: Array<{ ja: string; cls: Array<[string, string]> }> =
   { ja: "フラスコ", cls: [["LifeFlask", "ライフフラスコ"], ["ManaFlask", "マナフラスコ"]] },
   { ja: "ジェム", cls: [["SkillGem", "スキルジェム"]] },
 ];
-export const CATALOG_CLS_JA = new Map(CATALOG_ROWS.flatMap((r) => r.cls));
+const CATALOG_CLS_JA = new Map(CATALOG_ROWS.flatMap((r) => r.cls));
 /**
  * 英語の画面 (2026-10-10 動きの揃え): 段と種類はクライアントの英語のまま (手で訳さない)。
  * 種類 = ItemClasses の Name (日本語の表と同じ行)、段 = ClientStrings (EssenceCategory* / CosmeticsPanel…OffhandWeapon / TutorialPanelFlasks / SkillCraftingWindow)、
@@ -93,7 +93,7 @@ export const isRemovedBase = (en: string): boolean => REMOVED.has(en);
 
 const num = (v: number | [number, number] | undefined): string => (v === undefined ? "" : Array.isArray(v) ? `${v[0]}-${v[1]}` : String(v));
 /** 素の数値を 1 行に (範囲はそのまま) */
-export function baseStatLine(en: string): string {
+function baseStatLine(en: string): string {
   const b = baseStatsOf(en);
   if (!b) return "";
   const out: string[] = [];

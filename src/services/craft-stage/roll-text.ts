@@ -37,7 +37,7 @@ export function rollLines(item: StageItem, lines: readonly string[], salt: strin
  * 暗黙の MOD の行 (2026-10-12 オーナー「暗黙のタグは？」「カタリストで上がるよ、普通は」)。rollLines と同じ乱数で振り、
  * pct[行] (カタリストの品質 %) があれば素の値 × (1 + 品質) を切り捨て (MOD と同じ displayedValue、2026-10-18)。values は行の中の振った値 (伸びた後)
  */
-export interface ImplicitLine {
+interface ImplicitLine {
   text: string;
   /** 行の中の値 (カタリストで伸びた後) */
   values: number[];

@@ -8,7 +8,7 @@
 import essenceKeys from "./essence-keys.json";
 import poolFixes from "./poe2db-pool-fixes.json";
 
-export type EssenceName = { en: string; ja: string };
+type EssenceName = { en: string; ja: string };
 export const ESSENCE_KEYS: Readonly<Record<string, EssenceName>> = {
   ...(essenceKeys as unknown as { keys: Record<string, EssenceName> }).keys,
   ...((poolFixes as unknown as { essenceKeys?: Record<string, EssenceName> }).essenceKeys ?? {}),

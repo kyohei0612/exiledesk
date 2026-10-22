@@ -82,7 +82,7 @@ const isBig = (category: string): boolean => (inGroup(category, "weapon") && han
  * 名前は書かず、ベースの暗黙の文 (クライアント、htcBaseInfo) から読む。2026-10-13 オーナー「ソケット系はデフォで必ず 1 個以上あいてる」
  */
 const AS_THOUGH: Record<string, string> = { Helmet: "Helmets", Gloves: "Gloves", Boots: "Boots", "Body Armour": "Body_Armours", Shield: "Shields" };
-export function socketAsOf(base: string): string | null {
+function socketAsOf(base: string): string | null {
   for (const l of htcBaseInfo()[base]?.implicits ?? []) {
     const m = /gains bonuses from Socketed Items as though it was (?:an? )?(.+?)\s*$/i.exec(l.en);
     if (m && AS_THOUGH[m[1]!]) return AS_THOUGH[m[1]!]!;

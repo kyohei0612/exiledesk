@@ -8,8 +8,8 @@
 import list from "./skill-art.json";
 import { assetUrl } from "../assets/asset-packs";
 
-export interface SkillArt { id: string; en: string; ja: string; color: "red" | "green" | "blue" | "white"; support: boolean; tags: string[]; icon: string | null; gem: string | null }
-export const SKILL_ART = list as SkillArt[];
+interface SkillArt { id: string; en: string; ja: string; color: "red" | "green" | "blue" | "white"; support: boolean; tags: string[]; icon: string | null; gem: string | null }
+const SKILL_ART = list as SkillArt[];
 const BY_EN = new Map(SKILL_ART.map((s) => [s.en, s]));
 /** スキルのアイコン (無ければジェムの絵) */
 export function skillIcon(en: string): string | null {

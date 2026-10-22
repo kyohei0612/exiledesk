@@ -26,7 +26,7 @@ import { jaOfOmen, jaOfPriceKey } from "./game-names";
 export { jaOfOmen, jaOfPriceKey };
 
 /** 手 1 つの内訳 (画面でそのまま並べられる形) */
-export interface StepLabel {
+interface StepLabel {
   /** 使う通貨 / 骨 / エッセンスの日本語名。引けなければキーをそのまま */
   currency: string;
   /** 一緒に使うお告げの日本語名 (無ければ空) */

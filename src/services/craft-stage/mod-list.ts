@@ -27,7 +27,7 @@ export type ModGroup = "normal" | "rune" | "essence" | "perfect_essence" | "dese
  * special = 創生の樹・ハンドラップ専用の MOD (ベースの special の置き場、重み 0)。カレンシーでは付かないが MOD としてはあるので、手で付ける分だけ出す
  * (2026-10-09 オーナー「創生の樹産の奴がクラフトでは付かないけど MOD としては存在する。カレンシーで出ちゃだめだけど、手動で付ける分はいる。分かりやすいように置いといて」)
  */
-export const GROUP_JA: Record<ModGroup, string> = {
+const GROUP_JA: Record<ModGroup, string> = {
   // 英語の画面に切り替えた時も変わるように getter (2026-10-10 英語版)
   // 一般 / 冒涜専用 (2026-10-21 オーナー「普通の奴は一般 MOD で統一、冒涜 MOD は冒涜専用」。② の札と同じ言い方)
   get normal() { return tr("一般", "Regular"); },

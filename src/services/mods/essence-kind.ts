@@ -8,7 +8,7 @@
  */
 import type { Mod } from "../../vendor/poe2htc/engine/types";
 
-export type EssenceKind = "essence" | "perfect_essence";
+type EssenceKind = "essence" | "perfect_essence";
 export const ESSENCE_KIND: Record<EssenceKind, { label: string; short: string; how: string }> = {
   // 札は両方「エッセンス」(2026-10-10 オーナー「パーフェクトとかやなくて意味わからん」)。違いは how (乗せると出る) で
   essence: { label: "エッセンス", short: "エッセンス", how: "レッサー〜グレーター。マジックをレアにして、その MOD を 1 つ確定で付ける" },

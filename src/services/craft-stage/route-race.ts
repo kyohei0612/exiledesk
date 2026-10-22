@@ -35,7 +35,7 @@ const allMods = (it: StageItem) => [...it.prefixes, ...it.suffixes];
 const sideList = (it: StageItem, side: "prefix" | "suffix") => (side === "prefix" ? it.prefixes : it.suffixes);
 /** 付いている当たりの番号 (targets の何番目か。無ければ -1)。当たりはどれか 1 つ (OR) */
 export const routeHitIndex = (it: StageItem, targets: readonly RaceTarget[]): number => targets.findIndex((t) => allMods(it).some((m) => m.modId === t.modId && m.tierIndex >= t.minTierIndex));
-export const routeHit = (it: StageItem, targets: readonly RaceTarget[]): boolean => routeHitIndex(it, targets) >= 0;
+const routeHit = (it: StageItem, targets: readonly RaceTarget[]): boolean => routeHitIndex(it, targets) >= 0;
 /** 当たりの側 (プレ / サフィ)。2 つ以上なら増強の道は使えない */
 export const targetSides = (data: PatchData, targets: readonly RaceTarget[]) => [...new Set(targets.map((t) => sideOfMod(data, t.modId)))];
 /** 道の主のカレンシーの鍵 (augment_greater など) */

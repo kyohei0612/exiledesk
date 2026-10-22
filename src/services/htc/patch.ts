@@ -165,7 +165,7 @@ export function filledStatsOf(modId: string, tierIndex: number): { stats: string
  * 暗黙の MOD の stat ([id, 最小, 最大] の生の値) と中身のタグ。baseInfo.implicits と同じ並び (scripts/build-mod-stats-from-client.mjs、2026-10-12)。
  * カタリストの品質で伸びる相手と、上の数値に足す stat を決める
  */
-export type ImplicitStat = { stats: Array<[string, number, number]>; tags: string[] };
+type ImplicitStat = { stats: Array<[string, number, number]>; tags: string[] };
 export const implicitStatsOf = (base: string): ImplicitStat[] => {
   const raw = (implicitStats as unknown as Record<string, ImplicitStat[]>)[base] ?? [];
   // poe2db に合わせて暗黙の並びを変えたベースは、元の並びから引き直す (引き継げない行は stat 無し。poe2db-implicit-fixes.ts)

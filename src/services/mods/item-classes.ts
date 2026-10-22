@@ -7,7 +7,7 @@
  */
 import data from "./item-classes.json";
 
-export type ItemKind = "weapon" | "armour" | "jewellery" | "quiver" | "jewel" | "flask" | "charm" | "gem";
+type ItemKind = "weapon" | "armour" | "jewellery" | "quiver" | "jewel" | "flask" | "charm" | "gem";
 interface ClassRow { kind: ItemKind; hands?: number; crafting: string[]; essence: string[]; soulCore: string[]; chanceable: boolean; fracture: boolean; corrupt: boolean; rarity: boolean }
 const CLASSES = (data as unknown as { classes: Record<string, ClassRow> }).classes;
 const ENGINE = (data as unknown as { engine: Record<string, string> }).engine;
@@ -70,7 +70,7 @@ export const inAny = (category: string, gs: readonly ItemGroup[]): boolean => gs
 export const canFracture = (category: string): boolean => rowOf(category)?.fracture ?? false;
 /** 可能性のオーブが使えるか (Chanceableitemclasses) */
 export const chanceable = (category: string): boolean => rowOf(category)?.chanceable ?? false;
-export const soulCoreGroupsOf = (category: string): readonly string[] => rowOf(category)?.soulCore ?? [];
+const soulCoreGroupsOf = (category: string): readonly string[] => rowOf(category)?.soulCore ?? [];
 
 /**
  * ルーン・ソウルコアの効き目の部位 (SoulCoreStatCategories の Id: "Martial Weapon"・"Wand or Staff"・"Body Armour" など)。

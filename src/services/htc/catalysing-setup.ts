@@ -41,7 +41,7 @@ export function catalystPriceKey(tag: string): string {
   return `catalyst_${tag}`;
 }
 
-export interface CatalysingSetupOptions {
+interface CatalysingSetupOptions {
   /** 提示する品質の段 (%)。省略時はベースの最大品質 1 段だけ。 */
   qualities?: readonly number[];
 }

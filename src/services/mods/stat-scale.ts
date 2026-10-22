@@ -18,7 +18,7 @@
  */
 import table from "./stat-scale.json";
 
-export interface StatScale {
+interface StatScale {
   /** データの値をこれで割ると画面の値 (double の stat は 0.5) */
   div: number;
   /** 小数の桁 */
@@ -55,7 +55,7 @@ export function displayValue(statId: string | undefined | null, raw: number): nu
 }
 
 /** 段の幅 [下, 上] を画面の値に */
-export function displayRange(statId: string | undefined | null, range: readonly (number | string)[]): [number, number] {
+function displayRange(statId: string | undefined | null, range: readonly (number | string)[]): [number, number] {
   return [displayValue(statId, Number(range[0])), displayValue(statId, Number(range[1] ?? range[0]))];
 }
 
