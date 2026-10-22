@@ -15,7 +15,7 @@
 10. 1 ファイル 500 行まで。AdSense の再審査中は、読み物・AdSense のコード・ads.txt を壊さない。
 
 ## 地図
-- for-share: src/components/for-share/ (棚一式 shelf/・アイテムのカード item/・MOD 表の土台 mod-list/ModTable.vue (エミュの特化は views/craft-stage/StageModList.vue、シミュは TreeGoalPage の slot)・use-stage-fx、10-23 にジン部長が src/views/craft-stage から移した)・src/state/for-share/ (棚・説明・stage-steps など)。移しの記録 docs/org/emulator/notes/2026-10-22-entry-split-plan.md。
+- for-share: src/components/for-share/ (棚一式 shelf/・アイテムのカード item/・MOD 表の土台 mod-list/ModTable.vue (エミュの特化は views/craft-stage/StageModList.vue、シミュは TreeGoalPage の slot)・use-stage-fx、10-23 にジン部長が src/views/craft-stage から移した)・src/state/for-share/ (棚・説明・stage-steps など)。移しの記録 docs/org/emulator/notes/2026-10-22-entry-split-plan.md。ファイルごとの使う画面と ModTable の差し込み口 (props・slot 8 つ) は notes/2026-10-23-components-map.md。カードはエミュ・シミュ・チュートリアル、棚は CraftStage と TreeHandShelf・TreeMemoFloat、sim-links はエミュだけが使う。
 - ほかの共通の部品 src/components/ (アプリだけの物は owners.txt のアプリの行で凍結)。部品ごとの使う画面の表は notes/2026-10-23-components-map.md。Web で多く使う物: ui/ (Icon・ModalShell・Disclosure・HelpTip・BusyTag・AdSlot)・decor/ (RichText・GameItemCard・HoverStack)・items/BaseCatalog (エミュ・シミュのベース選び)・NumStep (シミュ)・vaal-scales/CurrencyPicker (エミュ)・ChangelogDialog・SupportDialog・LangSwitch (web 枠)。
 - 見た目 src/style.css → src/styles/game-ui.css (@import、全部の画面)、route-rule.css・spam-lucky.css (エミュのスパムシミュ、`<style src>`)、poe-card.css (アプリ)。owners.txt はどちらもデザイン (b27e7213)。言語の切り替え src/i18n/lang.ts、用語集 src/i18n/GLOSSARY.md。i18n のゲームのデータ (名前・MOD の文の JSON) と utils・web/ (ページの入口) はジン部長の「共通」のまま。
 - 見張り scripts/check-engine-entry.mjs (エミュ ⇄ シミュの直の import を落とす D、ジン部長の台本)。
