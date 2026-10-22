@@ -44,7 +44,6 @@ import RevealPanel from "./RevealPanel.vue";
 import { useStageFx } from "./use-stage-fx";
 import StageModList from "./StageModList.vue";
 // 部ごとの差し込み口 (2026-10-20 R4): シミュレーターと使い方・コースの中身は各部の部品が持つ
-import SimHost from "../simulator/SimHost.vue";
 import CourseHost from "../tutorial/CourseHost.vue";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
@@ -235,7 +234,8 @@ const { handNoBase, simNoBase } = useStageBase();
 watch(() => PAGES_ON && !s.replay.value && ((s.mode.value === "hand" && handNoBase.value) || simNoBase.value), (u) => { baseUnpicked.value = u; }, { immediate: true }); // シミュレーターも (2026-10-18 オーナー「開発版でもベースのとこは広告出す想定で」)
 const subPage = computed(() => PAGES_ON && !s.replay.value && (s.mode.value === "hand" || s.mode.value === "sim") && !inLesson.value && (basePage.value || baseUnpicked.value));
 /** モードのタブ。Web はシミュレーターを作っている途中なのでタブごと出さない (2026-10-16 オーナー「まだシミュレーター開発してないから出さなくておけ、エミュレーターと掲示板のみ」) */
-const MODE_TABS = SIM_LOCKED ? ([["hand", "エミュレーター"]] as const) : ([["hand", "エミュレーター"], ["sim", "シミュレーター"]] as const);
+// 旧シミュレーターのタブは 10-22 に消した (工程ページはクラフトの道 ?page=sim-tree に置き換え)
+const MODE_TABS: readonly (readonly [typeof s.mode.value, string])[] = [["hand", "エミュレーター"]];
 /**
  * ジェムコラプト (Web 版だけ、2026-10-16 ロードマップの土台)。エミュレーター・シミュレーターのタブの並びに置く。開いた時に読む。
  * 計算はアプリのヴァールの天秤と同じ関数 (views/gem-corrupt/model.ts)、入力は売値 3 つの手入力
@@ -268,7 +268,6 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
         <!-- 画面名は他の画面と同じ窓の題の帯 (TabBar の .g-tabbar) -->
         <h1 class="g-tabbar g-brush flex items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ guidePage ? tr("使い方・コツ", "Guide & Tips") : tr("クラフトステージ", "Craft Stage") }}</h1>
         <p v-if="gemCorrupt" class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("ジェムをコラプトして レベル 21 · 品質 23% を狙う時の収支。売値 3 つを入れるだけ (素材はカレンシーの相場)", "Profit of corrupting a gem for level 21 / 23% quality. Just enter 3 sell prices (materials use currency market prices)") }}</p>
-        <SimHost v-else-if="s.mode.value === 'sim' && !s.replay.value" part="header" />
         <CourseHost v-else-if="(s.mode.value === 'tutorial' || inLesson) && !s.replay.value && !TUTORIAL_LOCKED" part="header" :guide-page="guidePage" />
         <p v-else class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("カレンシー・骨・エッセンスを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。お告げは持っている物の下に出るので、押して掛けます。確率はクラフト計算機と同じ規則です。", "Click a currency, Abyssal Bone or essence to hold it, then click the item to use it once (keep clicking while holding). Omens for it appear below the held item; click to apply. Chances follow the craft calculator's rules.") }}</p>
       </div>
@@ -292,10 +291,6 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
         <button v-if="!inApp && GEM_CORRUPT_SHOWN" type="button" role="tab" :aria-selected="gemCorrupt" data-rec="tab-gem-corrupt" class="g-tab min-w-[170px] !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]" :class="gemCorrupt ? 'on' : ''" @click="s.hold(null); if (s.mode.value === 'tutorial' || inLesson) { endLesson(); s.mode.value = 'hand'; } setGemCorrupt(true)">{{ tr("ジェムコラプト", "Gem Corruption") }}</button>
         <!-- Web はタブに出さず、ヘッダーの「使い方・コツ」のページへ (2026-10-18 オーナー「1 回きりでしょこんなもん使うの、使い方にしまう」) -->
         <button v-if="!TUTORIAL_LOCKED && inApp" type="button" role="tab" :aria-selected="(s.mode.value === 'tutorial' || inLesson) && !gemCorrupt" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]" :class="(s.mode.value === 'tutorial' || inLesson) && !gemCorrupt ? 'on' : ''" @click="s.hold(null); endLesson(); s.mode.value = 'tutorial'; setGemCorrupt(false)">{{ tr("チュートリアル", "Tutorial") }}</button><!-- β は外した (入門〜中級の 6 コースを公開。2026-10-18 オーナーの UI 点検) -->
-      </div>
-      <!-- シミュレーションの「1 つ戻す」「説明」(StageSimPanel.vue が Teleport で置く) -->
-      <div v-show="!gemCorrupt" id="sim-tools" class="ml-auto flex items-center gap-1.5 text-[12px] max-md:w-full max-md:flex-wrap">
-        <SimHost part="tools" />
       </div>
     </div>
 
@@ -332,8 +327,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
     <p v-if="s.error.value" class="mb-3 flex items-center gap-3 rounded-lg bg-rose-500/10 px-3 py-2 text-rose-300"><span class="min-w-0 flex-1">{{ s.error.value }}</span><button v-if="!s.data.value" type="button" class="g-btn sm shrink-0" @click="retryInit">{{ tr("もう一度", "Retry") }}</button></p>
     <p v-if="!s.ready.value && !s.error.value" class="py-12 text-center"><BusyTag :text="tr('クラフトのデータを読み込み中', 'Loading craft data')" /></p>
 
-    <!-- シミュレーター・使い方とコースの本体 (各部の差し込み口、SimHost.vue・CourseHost.vue) -->
-    <SimHost part="main" />
+    <!-- 使い方とコースの本体 (差し込み口、CourseHost.vue。旧シミュレーターの工程ページは 10-22 にツリーへ置き換えて消した) -->
     <CourseHost part="main" :guide-page="guidePage" />
     <!-- ベースを選んだ後に出る中身はふわっと出す (2026-10-10 オーナー「切り替えがワープみたい」) -->
     <Transition name="stage-fade" appear>

@@ -199,8 +199,7 @@ function apply(p: string): void {
     if (s.mode.value === "tutorial" || inLesson.value) { s.hold(null); endLesson(); s.mode.value = "hand"; }
     if (p === "page=base") { openBasePage(); return; }
     leaveSubPages();
-    // シミュレーターの工程 (戻る / 進む・URL から)。まだ決めていない工程は StageSimPanel が最初の決めていない工程に合わせる。ベースが無ければベース選びから
-    if (p.startsWith("page=sim-") && !SIM_LOCKED) { s.mode.value = "sim"; if (s.simPicked.value) simStep.value = p.slice(9) as SimStep; return; }
+    // 旧シミュレーターの工程 (page=sim-<工程>) は 10-22 に消した。古い URL はクラフトのまま開く
   } finally {
     applying = false;
     syncUrl();
