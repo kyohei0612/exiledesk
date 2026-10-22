@@ -12,7 +12,7 @@
 6. ゲームの決まりの最終確認は poe2db、確率は CoE (メモ feedback-verify-with-poe2db)。動画と食い違ったら決めずに両方書く。決着済み (メモ poe2-craft-rules-confirmed) と違う話は「蒸し返しか」を添える。
 7. 外の API は叩かない・ログインしない (メモ api-probing-policy)。見るのは公開のページだけ。
 8. 長い字幕・ページの写しは notes に貼らない。要点と時刻 [分:秒] だけ。
-9. 動くのは Sonnet が基本 (読むだけの仕事。ブラックの決まり 2)。報告は 3〜5 行 (形は dev/README.md の決まり 8、宛先はブラック)。やる事・OK 待ちは todo.md に。
+9. 報告は 3〜5 行 (形は dev/README.md の決まり 8、宛先はブラック)。やる事・OK 待ちは todo.md に。
 
 ## 地図
 - 字幕: scripts の `pnpm subs` → data-cache/subs/<ID>.<言語>.txt (scripts/subs-annotate.mjs で日本語名つき)。メモ youtube-subtitles・saveq-craft-videos。
