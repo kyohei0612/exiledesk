@@ -253,6 +253,11 @@ const gemCorrupt = computed(() => GEM_CORRUPT_SHOWN && !inApp && gemCorruptOn.va
  * モードのタブ。シミュレーターはいつも ① ベース選びのページから (2026-10-20 オーナー: 前の工程の続きから出ていた)。
  * 作り途中の中身は消さない (同じベースを押す・「← クラフトへ戻る」で、前の工程のページに戻る)。まだベースが無い時はベース選びが自分で出る
  */
+/**
+ * 旧シミュレーターの mode "sim" (工程ページは 10-22 に消した) に入ったら、入口 ① 完成品を作るへ (開発版だけ、シミュ部長 10-22)。
+ * ベースのページの「シミュレーター」タブから入ると、消した工程の ① ベースの枠だけが出て止まっていた (オーナー 10-22)
+ */
+watch(() => s.mode.value, (m) => { if (m === "sim" && !SIM_LOCKED) { s.mode.value = "hand"; simBuild.value = true; } }, { immediate: true });
 function pickMode(m: (typeof MODE_TABS)[number][0]): void {
   s.hold(null); endLesson(); s.mode.value = m; setGemCorrupt(false); simBuild.value = false;
   if (m === "sim" && PAGES_ON && s.simPicked.value) openBasePage();
