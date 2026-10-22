@@ -16,7 +16,6 @@
  "A src/services/tutorial/topic-steps.ts": 1,
  "A src/state/emulator/spam-share-open.ts": 1,
  "A src/state/emulator/stage-extra.ts": 2,
- "A src/state/emulator/stage-steps.ts": 1,
  "A src/state/simulator/sim-recipes.ts": 1,
  "A src/state/simulator/sim-state.ts": 1,
  "A src/state/tutorial/craft-course.ts": 3,
@@ -39,7 +38,6 @@
  "A src/views/craft-stage/StageWeightEdit.vue": 1,
  "A src/views/craft-stage/route-place.ts": 2,
  "A src/views/craft-stage/stage-mod-list-look.ts": 3,
- "A src/views/craft-stage/use-stage-fx.ts": 1,
  "A src/views/simulator/StageRecipeStart.vue": 1,
  "A src/views/simulator/StageRecipesPage.vue": 1,
  "A src/views/tutorial/StageCourseGuide.vue": 1,
@@ -60,8 +58,6 @@
  "A src/views/tutorial/VideoTray.vue": 2,
  "A src/views/tutorial/VideoTtk.vue": 2,
  "A src/views/tutorial/use-video-hand.ts": 5,
- "D src/state/tutorial/craft-course.ts": 1,
- "D src/state/tutorial/craft-lesson.ts": 1,
  "D src/views/craft-stage/CraftStage.vue": 3,
  "D src/views/craft-stage/RevealPanel.vue": 1,
  "D src/views/craft-stage/StageBasePage.vue": 1,
@@ -69,6 +65,5 @@
  "D src/views/craft-stage/StageSettings.vue": 3,
  "D src/views/craft-stage/use-stage-base.ts": 3,
  "D src/views/simulator/SimBaseExtras.vue": 1,
- "D src/views/simulator/tree/TreeGoalPage.vue": 1,
- "D src/views/tutorial/VideoStage.vue": 1
+ "D src/views/simulator/tree/TreeGoalPage.vue": 1
 }
