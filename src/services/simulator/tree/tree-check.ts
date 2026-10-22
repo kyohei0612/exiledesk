@@ -204,7 +204,8 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
       add(id, "stuck", stuckText(data, aims, n, w, carry.length > 0));
       for (const x of carry) add(x, "carry", tr("ここで戻ると外れを持ったまま進み、先の箱で側が満杯になって止まる (直すのはこの戻り: 戻り先を分かれ目の箱 (打たずに分ける) にして「外れが 2 つ以上なら消去」の行を)", "Returning here keeps the misses, so a later box runs out of room and stops (fix this return: send it to a split box with an \"annul when 2+ misses\" row)"));
     }
-    for (const id of never) add(id, "neverHit", tr("上の手を打ち直してもこの札が付かなかった (側・段・手を確かめる)", "This mod never hit when the craft above was retried (check side, tier and craft)"));
+    // 回しで 1 人でも着いた箱は出さない (5 人の辿りは上限つきの当たるまで・始まりに同じ系統が付いている人で外れた、10-22 13 通り組んだ #9 の誤報 3 本)
+    for (const id of never) if (!run.boxes[id]?.reach) add(id, "neverHit", tr("上の手を打ち直してもこの札が付かなかった (側・段・手を確かめる)", "This mod never hit when the craft above was retried (check side, tier and craft)"));
   }
   // 3 の続き) 完成の形の食い違い (揃った狙いの数)
   // 一番多く揃う完成の数より少ない形で着く人がいる完成の箱に ! (前は 1 つ目の完成の箱と比べ、どちらが組み違いか分からなかった)
