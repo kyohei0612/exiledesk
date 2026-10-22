@@ -263,7 +263,7 @@ function onTarget(b: Box): void {
 const { issues, issuesOpen, issuesFold, checking, progress, onCheck, issueOf } = useTreeCheck(doc);
 /** 待たせている間の小さな札 (題の横。データの読み込み・箱を順に出している間、共通の BusyTag。精査の進みは精査の帯の上) */
 // 100 人回す (結果は木の上に重ねる層だけ、use-tree-run.ts・TreeRunLayer.vue。値段 = 始まりの箱の一番安い始め方 + 今の相場)
-const tr100 = useTreeRun(doc, () => t.baseCost.value?.best?.cost ?? 0, t.treePrice);
+const tr100 = useTreeRun(doc, () => t.baseCost.value?.best?.cost ?? 0, t.treePrice, (id) => goIssue(id));
 const busy = computed((): { text: string; n?: number; of?: number } | null => {
   if (!s.data.value) return { text: tr("読み込み中", "Loading") };
   if (tr100.running.value) return { text: tr("回している", "Running"), n: tr100.result.value?.n ?? 0, of: RUN_N };
@@ -401,7 +401,7 @@ const glowOf = (b: Box): boolean => {
       <div class="flex items-center gap-2 text-[13px]">
         <span class="flex min-w-0 flex-1 items-center gap-2">
         <TreeRecipeBar @opened="v.fit()" />
-        <TreeRunBar v-model:shown="tr100.shown.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value" :stuck="tr100.stuckBoxes.value" @run="tr100.run" @go="goIssue" />
+        <TreeRunBar v-model:shown="tr100.shown.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value" :stuck="tr100.stuckBoxes.value" @run="tr100.run" @go="goIssue" :halted="tr100.halted.value" />
         </span>
         <span class="ml-auto flex shrink-0 items-center gap-1">
           <button type="button" data-tree-undo class="g-btn sm inline-flex items-center gap-1" :disabled="!t.canUndo.value" :title="tr('1 つ戻す (Ctrl+Z)', 'Undo (Ctrl+Z)')" @click="t.undo"><Icon name="undo" class="size-4" />{{ tr("1 つ戻す", "Undo") }}</button>
