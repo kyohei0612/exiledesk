@@ -23,7 +23,8 @@
 | B11 | `canUse(data, item, key, { omens, catalyst })`・`handOmens`・`CATALYSING_OMEN` (can-use.ts) | 打てるか (お告げの omenBlock → 触媒の前のカタリスト → 手)、反響は骨に掛けず発現の側へ | handProblem と 42,804 通りで 0 |
 | B12 | `aimDiff`・`outcomesByAim`・`reachableAims`・`forceKey` (aim-reach.ts) | 前後の狙いの付いた・消えた・外れ減・新しい ✦ と、この手で付きうる狙い | outcomeOf と 17,451 通り (フラクチャー 1,701)、付きうる狙いと 1,152 通りで 0 |
 | B6〜B8 | `applyHand(data, item, key, rng, { omens, catalyst, fractureOf, reveal })`・`revealBy`・`ABYSSAL_ECHO_OMEN` (hand-use.ts) | playHand の 1 回分 (触媒の前のカタリスト・フラクチャーで固定・骨の後の発現、反響の引き直し) | playHand と 62,400 通り (フラクチャー指名 1,260・骨 6,948) で 0 |
-| 上限 | `STEP_OUTCOMES_MAX` (5 万)・`stepOutcomesOrTooMany`・`stepPool` (spec/outcomes.ts) | 1 部品の枝が上限を超えたら stepOutcomes は null ("tooMany")。reachableAims は数え上げずに最後の足す部品の候補の池で答える (ブラックの頼み) | 前の答えと 9,252 通り (何個も足す 1,476) で 0。錬金 ilvl 82 は 0.2 秒 |
+| 上限 | `STEP_OUTCOMES_MAX` (5 万)・`stepOutcomesOrTooMany` (spec/outcomes.ts) | 1 部品の枝が上限を超えたら stepOutcomes は null ("tooMany") | 錬金 ilvl 82 は 0.2 秒で返る |
+| B12 の作り直し (edf310a3、オーナー 10-22) | `reachableAims` = クラフト台の % (heldOdds) > 0 の段がある狙い | 数え上げない、錬金・大いなる高貴・骨も heldOdds のまま。打てない時は null | 1 つ足す手で前の答えと 180 通り 0。確かめは今後「クラフト台の同じ所の答えと同じか」を小さく (オーナー 10-22) |
 | B9 | `omensAllowedFor`・`isCatalystKey` (can-use.ts) | 持った物に掛けられるお告げ (views/craft-stage/held-omens の中身、held-omens は同じ名前で出すだけ) | 中身を移しただけ |
 | B10 | `startWith(data, base, ilvl, { rarity, mods (T), runes, random }, rng)`・`START_FRACTURE_MAX` (start-with.ts) | startItemOf と同じ組み方 (force の鍵)。フラクチャー 2 つ以上は断る (startFrom は今のまま) | startItemOf と 6,480 通りで 0 |
 | B13 | `modListForUse(data, item, "hit" \| "start")`・`MOD_USE_GROUPS`・ListTier.tier (mod-list.ts) | 当たり / 始まりの MOD の群れと並び | TreeModPick と 64 一覧・段 4,798 で 0 |
