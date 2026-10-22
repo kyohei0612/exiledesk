@@ -14,7 +14,7 @@ import { revealOffers, unrevealedOf } from "./apply-desecrate";
 import { mulberry32 } from "../htc/rng";
 import type { StageItem, StageMod } from "./types";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import { tierNoOf } from "./tier-rank";
+import { tierIndexOf, tierNoOf } from "./tier-rank";
 
 export interface AimTarget { modId: string; minTierIndex: number }
 /** 試す打ち方 (カレンシー + お告げ)。reveal = 付いている未発現の MOD を発現させる (反響込み) */
@@ -68,6 +68,15 @@ export const isAimMod = (m: StageMod, ts: readonly AimTarget[], o?: AimHitOpts):
 export function junkOf(item: StageItem, ts: readonly AimTarget[], o?: AimHitOpts): { prefix: StageMod[]; suffix: StageMod[] } {
   const junk = (ms: readonly StageMod[]): StageMod[] => ms.filter((m) => !m.fractured && !isAimMod(m, ts, o));
   return { prefix: junk(item.prefixes), suffix: junk(item.suffixes) };
+}
+/**
+ * アイテムに狙い (modId と段の名前の T) が付いているか (2026-10-22 シミュの aimHeld の橋渡しを入口へ)。アイテムの MOD を全部見て、T を段の番号に直して aimHits。
+ * sameText = 同じ系統で文も同じ別の modId も当たり (シミュの aimHeld と同じ)
+ */
+export function aimHeldOn(data: PatchData, item: StageItem, a: { modId: string; tier: number }, o?: { sameText?: boolean }): boolean {
+  const t: AimTarget = { modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) };
+  const opts = o?.sameText ? { data, sameText: true } : undefined;
+  return [...item.prefixes, ...item.suffixes].some((m) => hits(m, t, opts));
 }
 /** 付いている狙いの組 = 狙いのうちアイテムに付いている物 (並びは ts のまま。sim-own-logic.md の B3) */
 export const heldSetOf = (item: StageItem, ts: readonly AimTarget[], o?: AimHitOpts): AimTarget[] => ts.filter((t) => [...item.prefixes, ...item.suffixes].some((m) => hits(m, t, o)));
