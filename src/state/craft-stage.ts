@@ -36,7 +36,7 @@ import { simGrant, simPicked, simShowMods, simSockets, simStart, simStartItem, s
 export type { SimStart, SimTargets } from "./simulator/sim-state";
 import { aims, aimPicker, modJump, modOverlay } from "./emulator/aim-state";
 export { AIM_MAX, type AimPick } from "./emulator/aim-state";
-import { fullSockets, planStepOf, type PlanStep } from "./emulator/stage-steps";
+import { fullSockets, planStepOf, type PlanStep } from "./stage/stage-steps";
 export * from "./simulator/sim-recipes";
 /** ?base=<英語名> (ベースの読み物のページから来た時)。録画モードの base= とは別 */
 export const URL_BASE: string | null = (() => { try { return new URLSearchParams(location.search).get("base"); } catch { return null; } })();

@@ -12,7 +12,7 @@ import { logRecord } from "../../utils/log-record";
 import { craftStage as s, seedOfRoll } from "../craft-stage";
 import { course, courseView, endCourse } from "./craft-course";
 import { endTopic, goTopic, keepGoing, loopRound, startTopic, topic, topicAt, topicDone, topicSub, topicUsed } from "./craft-topic";
-import { fullSockets } from "../emulator/stage-steps";
+import { fullSockets } from "../stage/stage-steps";
 import { topicKey, type TopicCourse } from "../../services/tutorial/topic-courses";
 import { freshItem, startFrom } from "../../services/craft-stage/run-plan";
 import { applyCurrency, omensFor } from "../../services/craft-stage/apply-currency";

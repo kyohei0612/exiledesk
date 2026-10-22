@@ -9,7 +9,7 @@
  */
 import { startFrom, type RouteKind } from "../../services/craft-stage/engine";
 import { craftStage as s } from "../craft-stage";
-import { fullSockets } from "./stage-steps";
+import { fullSockets } from "../stage/stage-steps";
 import { unpackJson } from "../../services/craft-stage/share";
 import type { Grade, SharedRace } from "../../services/craft-stage/route-race";
 import { ROUTES_MAX, routesLuck, routesOpen, routesRunes, routesShared, routesTarget } from "../web-page";

@@ -19,7 +19,7 @@ import type { PlayedStep } from "../../services/craft-stage/run-plan";
 import StageItemCard from "../../components/stage/item/StageItemCard.vue";
 import VideoTray from "./VideoTray.vue";
 import VideoPob from "./VideoPob.vue";
-import { useStageFx } from "../craft-stage/use-stage-fx";
+import { useStageFx } from "../../components/stage/use-stage-fx";
 import { useVideoHand } from "./use-video-hand";
 import { installAnimClock, type StageAnimInfo } from "./anim-clock";
 import { craftStage } from "../../state/craft-stage";

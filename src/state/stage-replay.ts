@@ -12,7 +12,7 @@ import type { StageItem } from "../services/craft-stage/types";
 import type { CraftStagePlan } from "../services/craft-stage/contract";
 import { shareBlock } from "../services/craft-stage/share";
 import { marketStore } from "./market-store";
-import { fullSockets, planStepOf, type PlanStep } from "./emulator/stage-steps";
+import { fullSockets, planStepOf, type PlanStep } from "./stage/stage-steps";
 
 /** craft-stage.ts の状態と、ここから呼ぶ craft-stage.ts の関数 */
 export interface StageReplayCtx {
