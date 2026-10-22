@@ -347,16 +347,17 @@ const PATTERNS: { name: string; base: string; note: string; build: (u: Ui) => vo
       annul(u, u.o(at).junk);
     }
   } },
-  { name: "gloves-perfect", base: "Sirenscale Gloves", note: "手袋: ✦ES% T1 + 乱数 1、メモ → 触媒 + 右側 + 完全の高貴を試す (手袋は品質が入らず押せない) → 右側 + 完全の高貴でアタックスピード・クリダメ。外れは消去", build: (u) => {
+  { name: "gloves-perfect", base: "Sirenscale Gloves", note: "手袋: ✦ES% T1 + 乱数 1、メモ → 触媒 + 右側 + 完全の高貴を試す (手袋は品質が入らず押せない) → 右側 + 上級の高貴でアタックスピード・クリダメ。外れは消去", build: (u) => {
     const AS = A(`${GI}IncreasedAttackSpeed`, 2), CM = A(`${GI}CriticalStrikeMultiplier`, 2);
     u.startMod(`${GI}LocalEnergyShieldPercent`, 1, true);
     u.random(1);
     u.memo(AS); u.memo(CM);
-    const s = u.hand("start", "exalt_perfect", [CATALYSING, DEX]) ?? u.hand("start", "exalt_perfect", [DEX]);
+    // 解析君の B (10-22): 完全の高貴より上級の高貴が安い (12,007 → 369 神)。触媒は手袋に入らないので試すだけ (#16)
+    const s = u.hand("start", "exalt_perfect", [CATALYSING, DEX]) ?? u.hand("start", "exalt_greater", [DEX]);
     const h = u.hits(s, [AS, CM]);
     annul(u, u.o(s).junk);
     for (const [k, other] of [["IncreasedAttackSpeed", CM], ["CriticalStrikeMultiplier", AS]] as const) {
-      const at = u.hand(h[k], "exalt_perfect", [DEX]);
+      const at = u.hand(h[k], "exalt_greater", [DEX]);
       u.done(u.hits(at, [other])[other.modId.split("/")[1]!]);
       annul(u, u.o(at).junk);
     }
