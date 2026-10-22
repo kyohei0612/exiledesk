@@ -395,10 +395,13 @@ const glowOf = (b: Box): boolean => {
 
     <div class="g-panel flex flex-col gap-2 px-3 py-2" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
       <!-- 帯: 全体の数字 (まだ) ・1 つ戻す・拡大縮小・全画面 -->
-      <div class="flex flex-wrap items-center gap-2 text-[13px]">
+      <!-- 折り返さない (回した結果の文で 1 行と 2 行の境目になり、木の枠が上下して箱の × が押せなかった、10-22)。左は狭ければ … で切る -->
+      <div class="flex items-center gap-2 text-[13px]">
+        <span class="flex min-w-0 flex-1 items-center gap-2">
         <TreeRecipeBar @opened="v.fit()" />
         <TreeRunBar v-model:shown="tr100.shown.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value" :stuck="tr100.stuckBoxes.value" @run="tr100.run" @go="goIssue" />
-        <span class="ml-auto flex items-center gap-1">
+        </span>
+        <span class="ml-auto flex shrink-0 items-center gap-1">
           <button type="button" data-tree-undo class="g-btn sm inline-flex items-center gap-1" :disabled="!t.canUndo.value" :title="tr('1 つ戻す (Ctrl+Z)', 'Undo (Ctrl+Z)')" @click="t.undo"><Icon name="undo" class="size-4" />{{ tr("1 つ戻す", "Undo") }}</button>
           <button type="button" data-tree-tidy class="g-btn sm" :title="tr('段ごとに横一列・親は子の並びの真ん中・線は直角の木の線 (1 つ戻すで元の並びへ)', 'Rows by depth, each parent centered over its children, right-angle tree lines (undo restores)')" @click="onTidy">{{ tr("整列", "Tidy") }}</button>
           <button type="button" data-tree-lines-all class="g-btn sm" :aria-pressed="linesAll" :title="tr('戻りの線を全部出す (もう一度押すと、乗せた箱の線だけ)', 'Show all return lines (click again to show only the hovered box’s lines)')" @click="linesAll = !linesAll">{{ linesAll ? tr("線を隠す", "Hide lines") : tr("線を全部表示", "Show all lines") }}</button>
