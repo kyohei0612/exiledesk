@@ -11,3 +11,8 @@
 直す案 (まだ直さない、本番の挙動が変わる):
 1. (おすすめ) フォントの CSS を描きを止めない読み方にする (`<link rel="preload" as="style" onload="this.rel='stylesheet'">` + `<noscript>`、または media="print" で読んでから all に)。`display=swap` は付いているので、届くまでは端末の字で出る。見込み: 最初の絵はフォントを待たずに JS が届いた所 (この測りでは 0.5 秒くらい) まで縮む。
 2. フォントを自分のサーバーに置く (/fonts/ に同じ 3 書体の woff2 の要る分だけ)。Google への通信が無くなる。手間は 1 より大きい。
+
+## 測り直しと直し (10-22 夕、オーナー OK)
+- 測り直し (本番 v0.1.594、キャッシュ無し 6 回): 最初の絵 220〜560ms (真ん中 300)。11 秒は出なかった = 前の 1 回は Google の遅れ。ただし毎回フォントの CSS が届いた直後に絵が出る (描きがフォントを待っている)。
+- 直し 1bef14b9: `<link … rel="stylesheet" media="print" onload="this.media='all'" />` + `<noscript>` (web.html・index.html・build-seo-pages.mjs・public/*.html と en の 12 ファイル。ブログは Google Fonts を使っていない)。本番にはまだ。
+- 前後 (台本、cookie だけ残してキャッシュ・保存を消す、5 回の真ん中): ふつう 本番 224ms → 開発版 72ms。フォントの CSS を 3 秒わざと遅らせる (Fetch で止める) と 本番 3,260ms → 開発版 92ms。開発版でも同じ 5 書体が当たり、link の media は all に替わる (見た目は同じ、届くまでの一瞬は端末の字)。
