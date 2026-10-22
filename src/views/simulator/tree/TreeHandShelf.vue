@@ -10,7 +10,7 @@ import { craftStage as s, iconOf, nameOf } from "../../../state/craft-stage";
 import CurrencyShelf from "../../craft-stage/CurrencyShelf.vue";
 import HeldOmens from "../../craft-stage/HeldOmens.vue";
 import { heldOmensOf } from "../../craft-stage/held-omens";
-import { mulberry32, omensFor, stepOutcomes } from "../../../services/craft-stage/engine";
+import { maxQualityOf, mulberry32, omensFor, stepOutcomes } from "../../../services/craft-stage/engine";
 import { aimHeld, aimsOf, fillCatalyst, handProblem, sampleOf, singleOutOf } from "../../../services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, isCatalyst, kindOfCurrency, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handLabel, handName, outName } from "./tree-names";
@@ -68,7 +68,8 @@ const autoCat = computed((): string => {
  * 前は品質 0 の見本を渡していて、触媒の手を開き直すとお告げが外れていた、10-22)
  */
 const needPre = computed(() => canCatalyse.value && !afterQuality.value);
-const shelfItem = computed(() => { const d = s.data.value, it = item.value; return d && it && needPre.value ? fillCatalyst(d, it, autoCat.value, mulberry32(1)).item : it; });
+const preFill = computed(() => { const d = s.data.value, it = item.value; return d && it && needPre.value ? fillCatalyst(d, it, autoCat.value, mulberry32(1)) : null; });
+const shelfItem = computed(() => preFill.value?.item ?? item.value);
 const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens);
 const used = computed(() => (held.value ? omensFor(held.value, omens.value) : []));
 const catalysing = computed(() => used.value.includes(CATALYSING));
@@ -119,6 +120,10 @@ const gone = computed((): number => {
 const problem = computed((): string | null => {
   if (!hand.value || !shelfItem.value || !s.data.value) return null;
   // 当たるまで繰り返すのに狙いが 1 つも無い (まだ付いていない狙いが無い) 時は決めさせない
+  // 前に足すカタリストが入らないベース (装飾品だけに入る。前は触媒のお告げの「品質が要る」と出た、10-22 13 通り組んだ #16)
+  const pf = preFill.value, it0 = item.value;
+  const full = !!it0 && !!preCat.value && it0.qualityTag === preCat.value.slice("catalyst_".length) && it0.quality >= maxQualityOf(it0);
+  if (preCat.value && pf && !pf.applied && !full) return tr(`前に足すカタリストが入らない: ${pf.reason ?? ""}`, `The catalyst before this can't be used: ${pf.reason ?? ""}`);
   if (kind.value === "spam" && !hitAims.value.length) return tr("狙いが無い (欲しい MOD のメモに足すか、当たりの箱で MOD を選んでから)", "No target yet (add one to the wanted mods memo, or pick a mod in a hit box first)");
   return handProblem(s.data.value, preCat.value ? shelfItem.value : item.value!, hand.value);
 });
