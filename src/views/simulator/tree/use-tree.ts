@@ -3,7 +3,8 @@
  * MOD の一覧はエンジンの入口の modListFor (クラフト台の MOD 一覧と同じ行。自前の表は作らない)。ベースとアイテムレベルは木の base・itemLevel (始まりの箱で選ぶ、10-22。前は金の指輪 ilvl 82 に固定)
  */
 import { computed, ref, shallowRef } from "vue";
-import { craftStage as s, nameOf, priceOf } from "../../../state/craft-stage";
+import { craftStage as s, nameOf } from "../../../state/craft-stage";
+import { priceOfKey } from "../../../state/emulator/craft-stage-shelf";
 import { freshItem, modListFor } from "../../../services/craft-stage/engine";
 import { isTreeDoc, migrateStart, newTree, startOf, type Aim, type StartMod, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { treeBaseCost } from "../../../services/simulator/tree/tree-base-cost";
@@ -109,12 +110,18 @@ function startModLabel(a: Aim | StartMod | null): string {
   return `T${a.tier} ${t?.text ?? r?.text ?? a.modId}`;
 }
 
+/** ツリーのベースのアイテム (値段の鍵を引く。骨は部位で顎骨・肋骨・鎖骨が変わる) */
+const treeItem = computed(() => (s.data.value ? freshItem(s.data.value, doc.value.base, doc.value.itemLevel, "rare") : null));
+/**
+ * ツリーの値段 (高貴建て、相場)。エミュレーターの今のアイテムでなくツリーのベースで引く (10-22 分析君の調べ: 骨がツリーの部位と違う物になるか 0 になった)
+ */
+const treePrice = (key: string): number => priceOfKey(key, treeItem.value);
 /** 始まりの箱のベースの値段 (始め方を ③ の計算で比べた一番安い物、tree-base-cost.ts。カレンシーは今の相場) */
 const baseCost = computed(() => {
   const d = s.data.value;
-  return d ? treeBaseCost(d, doc.value, startOf(doc.value).prices ?? {}, priceOf, nameOf) : null;
+  return d ? treeBaseCost(d, doc.value, startOf(doc.value).prices ?? {}, treePrice, nameOf) : null;
 });
 
 export function useTree() {
-  return { doc, edit, undo, canUndo, reset, setBase, setStartRandom, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost };
+  return { doc, edit, undo, canUndo, reset, setBase, setStartRandom, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, treePrice };
 }

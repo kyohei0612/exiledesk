@@ -7,7 +7,7 @@ import { computed, ref, watch, type Ref } from "vue";
 import { runTreeSteps, type TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { withTreeTune } from "../../../services/simulator/tree/tree-tune";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { craftStage as s, priceOf } from "../../../state/craft-stage";
+import { craftStage as s } from "../../../state/craft-stage";
 import { routeKeyOf } from "./use-tree-check";
 
 /** 回す人数 (帯の「100 人回した時」と同じ)。seed は台本・解析君と同じ 1 */
@@ -16,7 +16,7 @@ export const RUN_N = 100;
 const EVERY = 2;
 const PACE_MS = 60;
 
-export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number) {
+export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: (key: string) => number) {
   const result = ref<TreeRunResult | null>(null);
   const running = ref(false);
   /** 層を出しているか (隠すと今の組む画面のまま) */
