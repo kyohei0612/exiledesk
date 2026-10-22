@@ -13,11 +13,11 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
-import CurrencyShelf from "../../../components/stage/shelf/CurrencyShelf.vue";
-import ShelfButton from "../../../components/stage/shelf/ShelfButton.vue";
+import CurrencyShelf from "../../../components/for-share/shelf/CurrencyShelf.vue";
+import ShelfButton from "../../../components/for-share/shelf/ShelfButton.vue";
 import TreeModPick from "./TreeModPick.vue";
 import { craftStage as s, iconOf, nameOf } from "../../../state/craft-stage";
-import { provideShelf, simHidden } from "../../../state/stage/shelf-context";
+import { provideShelf, simHidden } from "../../../state/for-share/shelf-context";
 import { aimKey, handKeysOf, handUses, toggleMemoAim, toggleMemoCurrency, type Aim, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";

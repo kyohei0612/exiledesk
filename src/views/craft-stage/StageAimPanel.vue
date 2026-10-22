@@ -12,7 +12,7 @@ import { fmtPct } from "../../utils/format-pct";
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { AIM_MAX, craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
-import { bonesFor, essenceShelf, ORBS } from "../../state/stage/craft-stage-shelf";
+import { bonesFor, essenceShelf, ORBS } from "../../state/for-share/craft-stage-shelf";
 import { aimLabel } from "../../services/craft-stage/mod-list";
 import { REVEAL } from "../../services/craft-stage/aim-odds";
 import Icon from "../../components/ui/Icon.vue";

@@ -20,8 +20,8 @@ import { useDismiss } from "../../../utils/use-dismiss";
 import ShelfButton from "./ShelfButton.vue";
 import StageOmenTune from "./StageOmenTune.vue";
 import Disclosure from "../../ui/Disclosure.vue";
-import { useShelf } from "../../../state/stage/shelf-context";
-import { bonesFor, CRAFT_RUNE_KEYS, essenceShelf, OMEN_GROUPS, ORBS, runesFor } from "../../../state/stage/craft-stage-shelf";
+import { useShelf } from "../../../state/for-share/shelf-context";
+import { bonesFor, CRAFT_RUNE_KEYS, essenceShelf, OMEN_GROUPS, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
 import { tr } from "../../../i18n/lang";
 
 const emit = defineEmits<{ hold: [key: string] }>();

@@ -8,7 +8,7 @@
 -->
 <script setup lang="ts">
 import { computed, type ComponentPublicInstance } from "vue";
-import { iconOfKey, nameOfKey } from "../../state/stage/craft-stage-shelf";
+import { iconOfKey, nameOfKey } from "../../state/for-share/craft-stage-shelf";
 import type { StageItem } from "../../services/craft-stage/types";
 import { isShard, SHARDS_PER_ORB } from "../../services/craft-stage/apply-act";
 

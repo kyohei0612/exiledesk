@@ -7,11 +7,11 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { tr } from "../../../i18n/lang";
-import { useShelf } from "../../../state/stage/shelf-context";
+import { useShelf } from "../../../state/for-share/shelf-context";
 import { catalystOf } from "../../../services/craft-stage/engine";
 import { CATALYSING_PER_PCT, tunedCatalysingMultiplier } from "../../../services/craft-stage/engine";
 import { SANCTIFY_SELECT, SANCTIFY_STEPS, sanctifyLabel } from "./sanctify-steps";
-import { catalysingPerPct, sanctifyK, setCatalysingPerPct, setSanctifyK, TUNING_ON } from "../../../state/stage/stage-tuning";
+import { catalysingPerPct, sanctifyK, setCatalysingPerPct, setSanctifyK, TUNING_ON } from "../../../state/for-share/stage-tuning";
 
 const props = defineProps<{ k: string }>();
 /** お告げ・アイテムは棚の文脈から (クラフト台は craftStage、シミュは provideShelf の物。2026-10-22) */

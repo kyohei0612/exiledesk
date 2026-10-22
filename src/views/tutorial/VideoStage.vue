@@ -16,14 +16,14 @@
 import { modText } from "../../i18n/lang";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type { PlayedStep } from "../../services/craft-stage/run-plan";
-import StageItemCard from "../../components/stage/item/StageItemCard.vue";
+import StageItemCard from "../../components/for-share/item/StageItemCard.vue";
 import VideoTray from "./VideoTray.vue";
 import VideoPob from "./VideoPob.vue";
-import { useStageFx } from "../../components/stage/use-stage-fx";
+import { useStageFx } from "../../components/for-share/use-stage-fx";
 import { useVideoHand } from "./use-video-hand";
 import { installAnimClock, type StageAnimInfo } from "./anim-clock";
 import { craftStage } from "../../state/craft-stage";
-import { iconOfKey, nameOfKey } from "../../state/stage/craft-stage-shelf";
+import { iconOfKey, nameOfKey } from "../../state/for-share/craft-stage-shelf";
 import { displayCurrency } from "../../state/display-currency";
 
 const s = craftStage;

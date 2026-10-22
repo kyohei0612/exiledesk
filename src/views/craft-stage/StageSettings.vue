@@ -13,7 +13,7 @@ import { computed, ref, watch } from "vue";
 import { useStageBase } from "./use-stage-base";
 import StageBasePicker from "./StageBasePicker.vue";
 import { PAGES_ON, TREE_ON, basePage } from "../../state/web-page";
-import { openTreeWith } from "../../state/stage/sim-links";
+import { openTreeWith } from "../../state/for-share/sim-links";
 import { craftStage } from "../../state/craft-stage";
 import pkg from "../../../package.json";
 import { ITEM_LEVEL_SET, itemLevelKey, SANCTIFIED_REASON } from "../../services/craft-stage/apply-currency";

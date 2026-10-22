@@ -86,7 +86,7 @@ describe("耐性のフラックス・合金 (2026-10-04 カレンシーフルチ
     expect(A(rare("Knightly Mitts"), "flux_fire").applied).toBe(false);
   });
   it("合金がエッセンスの棚に並び、打てる", async () => {
-    const { essenceShelf } = await import("../src/state/stage/craft-stage-shelf");
+    const { essenceShelf } = await import("../src/state/for-share/craft-stage-shelf");
     const keys = essenceShelf(data, rare("Knightly Mitts")).flatMap((x) => x.keys).filter((k) => data.mods.get(k.replace(/^essence:perfect:/, ""))?.alloy);
     expect(keys.length).toBeGreaterThan(0);
     let it0 = rare("Knightly Mitts");

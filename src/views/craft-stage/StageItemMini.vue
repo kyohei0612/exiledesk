@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import type { StageItem, StageMod } from "../../services/craft-stage/engine";
 import { nameOf, baseNameOf, tr } from "../../i18n/lang";
-import { stageModText } from "../../components/stage/item/base-values";
+import { stageModText } from "../../components/for-share/item/base-values";
 import { computed } from "vue";
 import { baseArt } from "../../services/craft-stage/base-art";
 

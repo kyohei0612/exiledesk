@@ -17,7 +17,7 @@ import { newTree, setHand, setAim, setDone, migrateStart, type Aim } from "../sr
 import { sampleOf, handProblem } from "../src/services/simulator/tree/tree-sample";
 import { runTree } from "../src/services/simulator/tree/tree-run";
 import { checkTree } from "../src/services/simulator/tree/tree-check";
-import { bonesFor, essenceShelf, ORBS } from "../src/state/stage/craft-stage-shelf";
+import { bonesFor, essenceShelf, ORBS } from "../src/state/for-share/craft-stage-shelf";
 
 it("全部の部位", () => {
   const data = loadPatch();

@@ -5,9 +5,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
-import { stageAdds, stageHelp } from "../../state/stage/craft-stage-help";
+import { stageAdds, stageHelp } from "../../state/for-share/craft-stage-help";
 import { tr } from "../../i18n/lang";
-import { stageModText } from "../../components/stage/item/base-values";
+import { stageModText } from "../../components/for-share/item/base-values";
 import Disclosure from "../../components/ui/Disclosure.vue";
 
 const emit = defineEmits<{ scrollToReveal: [] }>();

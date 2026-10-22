@@ -8,7 +8,7 @@ import { heldOdds } from "../../src/services/craft-stage/held-odds";
 import { freshItem } from "../../src/services/craft-stage/run-plan";
 import { OMEN_EXCLUSIVE, OMEN_FOR } from "../../src/services/craft-stage/omens";
 import { mulberry32 } from "../../src/services/htc/rng";
-import { BONES, CATALYSTS, CRAFT_RUNE_KEYS, ORBS, essenceShelf, runesFor } from "../../src/state/stage/craft-stage-shelf";
+import { BONES, CATALYSTS, CRAFT_RUNE_KEYS, ORBS, essenceShelf, runesFor } from "../../src/state/for-share/craft-stage-shelf";
 import type { StageItem } from "../../src/services/craft-stage/types";
 
 const data = loadPatch();

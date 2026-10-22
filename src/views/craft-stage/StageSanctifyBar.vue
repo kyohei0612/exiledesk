@@ -8,7 +8,7 @@
 import { allMods, type StageItem } from "../../services/craft-stage/engine";
 import { computed } from "vue";
 import { tr } from "../../i18n/lang";
-import { SANCTIFY_SELECT, SANCTIFY_STEPS, sanctifyLabel } from "../../components/stage/shelf/sanctify-steps";
+import { SANCTIFY_SELECT, SANCTIFY_STEPS, sanctifyLabel } from "../../components/for-share/shelf/sanctify-steps";
 
 const props = defineProps<{ item: StageItem }>();
 const emit = defineEmits<{ set: [k: number | "max" | "min"] }>();

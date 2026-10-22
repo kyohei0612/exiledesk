@@ -4,7 +4,7 @@
  * 前は price-keys.json を自前で引いていた (tree-hands.ts の nameOfKey、消した)
  */
 import { computed } from "vue";
-import { nameOfKey } from "../../../state/stage/craft-stage-shelf";
+import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { craftStage as s } from "../../../state/craft-stage";
 import { freshItem } from "../../../services/craft-stage/engine";
 import { CATALYSING, isCatalyst } from "../../../services/simulator/tree/tree-hands";

@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import ModalShell from "../../../components/ui/ModalShell.vue";
-import StageItemCard from "../../../components/stage/item/StageItemCard.vue";
+import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { mulberry32 } from "../../../services/craft-stage/engine";
 import { startItemOf } from "../../../services/simulator/tree/tree-sample";

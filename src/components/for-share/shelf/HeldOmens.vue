@@ -9,7 +9,7 @@ import { computed, watchEffect } from "vue";
 import { omenBlock } from "../../../services/craft-stage/engine";
 import { tr } from "../../../i18n/lang";
 import { nameOf } from "../../../state/craft-stage";
-import { useShelf } from "../../../state/stage/shelf-context";
+import { useShelf } from "../../../state/for-share/shelf-context";
 import ShelfButton from "./ShelfButton.vue";
 import StageOmenTune from "./StageOmenTune.vue";
 import { heldOmensOf } from "./held-omens";

@@ -7,7 +7,7 @@ import { type PatchData, type StageItem } from "../../../services/craft-stage/en
 import { isAimMod } from "../../../services/simulator/tree/tree-play";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { aimOpts, aimsOf, targetsOf } from "../../../services/simulator/tree/tree-sample";
-import type { RowTag } from "../../../components/stage/item/stage-item-row-tag";
+import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { modText, tr } from "../../../i18n/lang";
 
 export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly string[], it: StageItem): Map<string, RowTag> {

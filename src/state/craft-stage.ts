@@ -33,7 +33,7 @@ import { extraFromUrl, videoFromUrl, type StageExtra } from "./emulator/stage-ex
 export type { ResistsBlock, StageExtra } from "./emulator/stage-extra";
 import { aims, aimPicker, modJump, modOverlay } from "./emulator/aim-state";
 export { AIM_MAX, type AimPick } from "./emulator/aim-state";
-import { fullSockets, planStepOf, type PlanStep } from "./stage/stage-steps";
+import { fullSockets, planStepOf, type PlanStep } from "./for-share/stage-steps";
 /** ?base=<英語名> (ベースの読み物のページから来た時)。録画モードの base= とは別 */
 export const URL_BASE: string | null = (() => { try { return new URLSearchParams(location.search).get("base"); } catch { return null; } })();
 import { loadCurrencyHover } from "../services/currency/currency-hover";
@@ -44,7 +44,7 @@ import type { Force } from "../services/craft-stage/stage-core";
 import { mulberry32 } from "../services/htc/rng";
 import { logRecord } from "../utils/log-record";
 import { marketStore } from "./market-store";
-import { BONES, CATALYSTS, iconOfKey, nameOfKey, OMEN_GROUPS, ORBS, priceOfKey } from "./stage/craft-stage-shelf";
+import { BONES, CATALYSTS, iconOfKey, nameOfKey, OMEN_GROUPS, ORBS, priceOfKey } from "./for-share/craft-stage-shelf";
 import type { PatchData } from "../vendor/poe2htc/engine/types";
 import type { StageItem, StageMod } from "../services/craft-stage/types";
 import type { CraftStagePlan } from "../services/craft-stage/contract";

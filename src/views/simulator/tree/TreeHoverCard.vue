@@ -5,7 +5,7 @@
 -->
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import StageItemCard from "../../../components/stage/item/StageItemCard.vue";
+import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { treeRowTags } from "./tree-row-tags";

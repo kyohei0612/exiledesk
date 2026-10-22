@@ -9,9 +9,9 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, toRaw } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../../state/craft-stage";
-import StageItemCard from "../../../components/stage/item/StageItemCard.vue";
-import CurrencyShelf from "../../../components/stage/shelf/CurrencyShelf.vue";
-import HeldOmens from "../../../components/stage/shelf/HeldOmens.vue";
+import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
+import CurrencyShelf from "../../../components/for-share/shelf/CurrencyShelf.vue";
+import HeldOmens from "../../../components/for-share/shelf/HeldOmens.vue";
 import { omensAllowedFor } from "../../../services/craft-stage/engine";
 import { mulberry32, omensFor, stepOutcomes } from "../../../services/craft-stage/engine";
 import { catalystFull, fillCatalyst } from "../../../services/craft-stage/engine-sim";

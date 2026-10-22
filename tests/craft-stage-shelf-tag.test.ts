@@ -1,6 +1,6 @@
 // 棚のボタンの付く MOD の短い名前 (2026-10-05 オーナー「マナ自動回復ならマナ自動とかで、火耐性とかそういう系で」)
 import { describe, expect, it } from "vitest";
-import { shortMod } from "../src/state/stage/craft-stage-help";
+import { shortMod } from "../src/state/for-share/craft-stage-help";
 
 describe("shortMod", () => {
   it("数値と「増加する」を外す", () => {
@@ -19,7 +19,7 @@ describe("エッセンスのティア (普通の MOD の何段に当たるか)",
   it("耐性・ライフのエッセンスに段が出る", async () => {
     const { loadPatch } = await import("./helpers/patch");
     const { freshItem } = await import("../src/services/craft-stage/run-plan");
-    const { stageAdds } = await import("../src/state/stage/craft-stage-help");
+    const { stageAdds } = await import("../src/state/for-share/craft-stage-help");
     const data = await loadPatch();
     const ring = freshItem(data, "Gold Ring", 82, "magic");
     const out: string[] = [];
@@ -35,7 +35,7 @@ describe("値の幅が無いエッセンス", () => {
   it("ブリーチの品質の最大値に数字が入る", async () => {
     const { loadPatch } = await import("./helpers/patch");
     const { freshItem } = await import("../src/services/craft-stage/run-plan");
-    const { stageAdds } = await import("../src/state/stage/craft-stage-help");
+    const { stageAdds } = await import("../src/state/for-share/craft-stage-help");
     const data = await loadPatch();
     const a = stageAdds("essence:breach", data, freshItem(data, "Gold Ring", 82, "rare"));
     expect(a?.lines.join("")).not.toContain("#");
