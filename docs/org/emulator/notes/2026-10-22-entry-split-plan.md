@@ -22,3 +22,38 @@
 ## 決めてほしい事
 - 解析君の要望 (K4 の occupiedFamiliesOf・ANCIENT_BONE_FLOOR・REVEAL_SPEC など) は核のままでよいか、engine-sim.ts へ入れるか (案: 核のまま。解析は数字の確かめで両方の画面の答えを見るため)。
 - エミュの直読み 137 行を入口に出す順番 (案: エミュ部長の要望が来た所から。まとめて先にはやらない)。
+
+## 進み (10-22 深夜、オーナー OK)
+- ① d4f85275: engine-sim.ts・engine-emu.ts を engine.ts と並べた。② (各部長の付け替え) はブラックが回す、③ (engine.ts から消す + 見張り C) は ② の後。
+
+## 追記: しっかり分ける (オーナー 10-22 深夜「コードが混ざらないようにしっかり分けて、リファクタ含めて管理しやすいように」)
+
+### 1. エンジンの中も置き場で分ける (済み 3d… の次、下の commit)
+- `services/craft-stage/for-sim/` = シミュの要望で足した物: aim-reach・aim-held (aim-odds から分けた aimHeldOn・isAimMod・junkOf・heldSetOf)・hand-effect・can-use・hand-use・start-with・magic-odds・rune-choice・mod-list-use (mod-list から)・raw-text (item-text から、シミュの貼り付けが消えたら消す)。
+- `services/craft-stage/for-emu/` = エミュだけの物: preview (旧 spec/preview)。これからのエミュの要望もここ。
+- 核 = 今の services/craft-stage/ の残り。核が読む物は核に置く (tier-rank は aim-odds が、omen-block は for-sim/can-use も読むので核。stage-tuning は打つ処理が読むので核)。
+- 決まり: 核は for-sim / for-emu を読まない。for-sim と for-emu は互いを読まない (読んでよいのは核だけ)。窓口 engine.ts (核)・engine-sim.ts (for-sim)・engine-emu.ts (for-emu) は名前を並べるだけ。③ で engine.ts から for-sim / for-emu の名前を消す。見張りでこの向きも数える (③ で入れる C に足す)。
+- owners.txt は今の `src/services/craft-stage/** ジン` のままで足りる (行の追加は要らない)。
+
+### 2. 画面どうしの混ざり (見張り D、今 41 行。4a317823 で控えに入れた)
+シミュ→エミュ 27 行・エミュ→シミュ 14 行 (チュートリアルはシミュの側で数える)。移し先の案:
+| 今の物 (エミュ) | 読んでいるシミュ側 | 移し先 |
+|---|---|---|
+| 棚一式: CurrencyShelf・ShelfButton・HeldOmens (+ held-omens.ts)・StageOmenTune・sanctify-steps・state/emulator の shelf-context・craft-stage-shelf・craft-stage-help (+ -text・-mods)・stage-tuning | TreeHandShelf・TreeMemoFloat・use-sim-shelf・tree-names・use-tree・use-tree-tune・topic-courses・StageTopicGuide・VideoStage・VideoTray | 共通 `src/components/stage/shelf/`・`src/state/stage/` (棚はクラフト台とシミュの棚・チュートリアルで同じ部品。連れてくる物は全部この一式の中だけ) |
+| アイテムのカード: StageItemCard・base-values・stage-item-row-tag | TreeGoalPage・TreeHandShelf・TreeHoverCard・TreeStartPage・tree-row-tags・VideoCompare・VideoStage | 共通 `src/components/stage/item/` |
+| state/emulator/stage-steps | チュートリアル craft-course・craft-lesson | 共通 `src/state/stage/` |
+| use-spam-share・use-stage-base・use-stage-fx | recipe-share・SimBaseExtras・VideoStage | 共通 `src/components/stage/` (中身は小さい合成の関数) |
+| StageModList (エミュ→シミュ sim-methods・quiz-build・SimMethodPop も読む) | TreeGoalPage | 共通へ移し、シミュの「作り方」の窓は slot にしてシミュ側から差す (StageModList はシミュの物を読まなくなる) |
+
+| 今の物 (シミュ・チュートリアル) | 読んでいるエミュ側 | 移し先 |
+|---|---|---|
+| チュートリアル (CourseHost・course-host・craft-course・craft-lesson・craft-topic) | CraftStage・use-stage-base・StageSettings・RevealPanel | クラフト台の上でチュートリアルが動く形は残し、共通の差し込み口 (`src/state/stage/stage-hooks.ts`: 差す部品・手を打つ時の見張り・設定の行) を作ってチュートリアル側から登録。エミュは差し込み口だけを読む |
+| シミュへの入口のボタン: recipe-share・StageRecipeStart・use-tree・SimBaseExtras・sim-recipe-store | CraftStage・StageSettings・StageBasePage・use-stage-base | 同じ差し込み口にシミュ側から登録 (ページの移動は共通の web-page.ts) |
+
+### 3. 見張り
+- D (エミュ ⇄ シミュ・チュートリアル) は 4a317823 で入れた。控え 41 行から減らす (減ったら `--head --write`)。
+- ③ の時に C (よその窓口を読む・for-sim ⇄ for-emu・核が for-* を読む) を足す。
+
+### 4. 移し方 (画面のファイルはエミュ部長・シミュ部長の持ち物なので順番が要る)
+- .vue は元の場所に中継ぎを置けないので、移す物 1 組ずつ「ジン部長がファイルを移し、両側の import の行だけ同じ commit で直す」。その間その組のファイルを他の部長が触らないよう、ブラックが順番を決めて dev/touching に書く。中身の直し (slot・差し込み口への登録) は移した後に各部長。
+- 順番の案: ① 棚一式 → ② アイテムのカード → ③ 小さい物 (stage-steps・use-*) → ④ StageModList (slot) → ⑤ 差し込み口 (チュートリアル・シミュへの入口)。1 組ごとに型チェック・見張り D の控えを取り直す・開発版でクラフト台とシミュの棚を見る。
