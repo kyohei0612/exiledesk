@@ -10,8 +10,8 @@ import type { Aim } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { craftStage as s } from "../../../state/craft-stage";
-import { tierRankLabel } from "../../../services/craft-stage/engine";
-import { aimHeld, sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { aimHeldOn, tierRankLabel } from "../../../services/craft-stage/engine";
+import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { aimKey } from "../../../services/simulator/tree/tree-model";
 
 /** title: 見出しを替える (メモの窓では「欲しい MOD を足す」)。autofocus: 開いたら探す欄に入る */
@@ -52,7 +52,7 @@ const heldBefore = computed(() => {
   const d = s.data.value, p = props.boxId ? t.doc.value.boxes[props.boxId]?.parent : null;
   if (!fromGoals.value || !d || !p) return new Set<string>();
   const it = sampleOf(d, t.doc.value, p, 1).item;
-  return new Set(t.goals.value.filter((a) => aimHeld(d, it, a)).map(aimKey));
+  return new Set(t.goals.value.filter((a) => aimHeldOn(d, it, a, { sameText: true })).map(aimKey));
 });
 const tierLabel = (tier: number): string => tierRankLabel(tier, props.mode !== "start");
 </script>

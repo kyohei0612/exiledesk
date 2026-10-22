@@ -6,7 +6,7 @@
  * その下の箱 = 親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
-import { aimHits, applyCurrency, isAimMod, junkOf, catalystFull, catalystOf, catalystTagOf, effectOf, fillCatalyst, freshItem, mulberry32, omenBlock, revealOffers, runeIdByName, stepOutcomes, tierIndexOf, unrevealedOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimHeldOn, applyCurrency, catalystFull, catalystOf, catalystTagOf, effectOf, fillCatalyst, freshItem, isAimMod, junkOf, mulberry32, omenBlock, revealOffers, runeIdByName, stepOutcomes, tierIndexOf, unrevealedOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { CATALYSING, ECHO, engineOmens, isCatalyst } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import { startOf, type Aim, type Hand, type OutKind, type TreeDoc } from "./tree-model";
@@ -17,19 +17,10 @@ const TRIES = 3000;
 
 export interface Sample { item: StageItem; note: string | null }
 
-/**
- * 狙いが付いているか = エンジンの入口の aimHits の sameText (同じ MOD か、同じ系統で効果の文も同じ MOD (エッセンス版・まとめ行の別の modId) で、
- * 段が T 何以上。未発現は数えない)。木の狙いの段 T は minTierIndex = 段の数 − T に直して渡す (決まり 8、10-22 ブラック)。
- * 系統だけで合わせると「スペルスキルのレベル」にミニオン・近接・投射物のスキルレベルが当たった (10-22 白紙から 13 通り組んだ #3、系統 IncreaseSocketedGemLevel)
- */
-/** 木の狙い (段 T) → エンジンの入口の狙いの形 (段の位置) */
+/** 木の狙い (段 T) → エンジンの入口の狙いの形 (段の位置)。当たりの判定はエンジンの入口 (aimHeldOn・isAimMod・junkOf) に sameText で聞く (決まり 8) */
 export const targetsOf = (data: PatchData, aims: readonly Aim[]): AimTarget[] => aims.map((a) => ({ modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) }));
-/** 木の当たりの判定の設定 (同じ系統・同じ文も当たり) */
+/** 木の当たりの判定の設定 (同じ系統・同じ文も当たり。系統だけで合わせると「スペルスキルのレベル」にミニオン・近接・投射物のスキルレベルが当たった、10-22 #3) */
 export const aimOpts = (data: PatchData): AimHitOpts => ({ data, sameText: true });
-export function aimHeld(data: PatchData, item: StageItem, a: Aim): boolean {
-  const t = { modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) };
-  return [...item.prefixes, ...item.suffixes].some((m) => aimHits(m, t, { data, sameText: true }));
-}
 /**
  * その箱の手で「当たり」と数える札。繰り返し (当たるまで) は、その箱の結果の当たりの箱の札だけで止める
  * (10-22 プレフィックスをつないだら、始まりのカオスがプレフィックスのレアリティで止まり、行き先が無く 87 人止まった)。ほかの手はツリー全部の札
@@ -54,15 +45,15 @@ const junkCount = (data: PatchData, item: StageItem, aims: readonly Aim[]): numb
  * 付いた MOD は hits のまま、10-22 オーナー「エッセンスの道」)
  */
 export function outcomeOf(data: PatchData, before: StageItem, after: StageItem, aims: readonly Aim[], key?: string): { out: OutKind; hits: Aim[] } {
-  const had = aims.filter((a) => aimHeld(data, before, a));
-  const has = aims.filter((a) => aimHeld(data, after, a));
+  const had = aims.filter((a) => aimHeldOn(data, before, a, { sameText: true }));
+  const has = aims.filter((a) => aimHeldOn(data, after, a, { sameText: true }));
   const hits = has.filter((a) => !had.includes(a));
   if (key && effectOf(key) === "essence" && had.some((a) => !has.includes(a))) return { out: "lost", hits };
   // フラクチャー: 新しく ✦ になった MOD が狙いなら当たり (札 = その狙い)、ほかは外れ (MOD の数は変わらない)
   if (key && effectOf(key) === "fracture") {
     const was = new Set([...before.prefixes, ...before.suffixes].filter((m) => m.fractured).map((m) => m.modId));
     const fr = [...after.prefixes, ...after.suffixes].find((m) => m.fractured && !was.has(m.modId));
-    const got = fr ? aims.filter((a) => aimHeld(data, { ...after, prefixes: [fr], suffixes: [] }, a)) : [];
+    const got = fr ? aims.filter((a) => aimHeldOn(data, { ...after, prefixes: [fr], suffixes: [] }, a, { sameText: true })) : [];
     return got.length ? { out: "hit", hits: got.slice(0, 1) } : { out: "junk", hits: [] };
   }
   if (hits.length) return { out: "hit", hits };
@@ -93,7 +84,7 @@ export function singleOutOf(data: PatchData, doc: TreeDoc, boxId: string, h: Han
     const item = pre ? fillCatalyst(data, smp.item, pre, mulberry32(seed)).item : smp.item;
     // 消す手は、見本にまだ無い狙いを 1 つ足した形でも見る (見本は初めて着いた人の形。戻りで狙いを持って来た人は狙いが消えうる、10-22 #8 の後:
     // 分かれ目の行の見本が外れだけになり、素の消去が「外れが消えた」1 通りにまとまって 96 人止まった)
-    const forms = [item, ...(k === "remove" || k === "essence" ? aims.filter((a) => !aimHeld(data, item, a)).map((a) => applyCurrency(data, item, `force:${a.modId}|T${a.tier}|n`, mulberry32(seed))).filter((r) => r.applied).map((r) => r.item) : [])];
+    const forms = [item, ...(k === "remove" || k === "essence" ? aims.filter((a) => !aimHeldOn(data, item, a, { sameText: true })).map((a) => applyCurrency(data, item, `force:${a.modId}|T${a.tier}|n`, mulberry32(seed))).filter((r) => r.applied).map((r) => r.item) : [])];
     for (const it of forms) {
       const outs = stepOutcomes(data, it, h.currency, engineOmens(h))?.filter((o) => !o.void);
       // 未発現が付く手 (冒涜の骨) は、発現で選ぶ候補で当たり / 外れが分かれる

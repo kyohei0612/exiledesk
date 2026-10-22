@@ -5,8 +5,8 @@
  * 打つのは全部エンジンの入口 (applyCurrency / fillCatalyst)。結果の分け方は tree-sample.ts の outcomeOf・aimsOf (見本と同じ分け方)。
  * 繰り返し (当たるまで) は tree-sample の playHand と同じ流れを、個数を数えるためにここでたどる (playHand を変える時はここも合わせる)。
  */
-import { effectOf, isAimMod, junkOf, mulberry32, sideOfMod, type PatchData, type StageItem } from "../../craft-stage/engine";
-import { aimHeld, aimOpts, aimsOf, handAims, handProblem, outcomeOf, playHand, startItemOf as startOf, targetsOf } from "./tree-sample";
+import { aimHeldOn, effectOf, isAimMod, junkOf, mulberry32, sideOfMod, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { aimOpts, aimsOf, handAims, handProblem, outcomeOf, playHand, startItemOf as startOf, targetsOf } from "./tree-sample";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
 import { aimKey, MATCH_BACK, type Aim, type Hand, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc } from "./tree-model";
@@ -100,7 +100,7 @@ export type SplitBox = TreeBox & { next?: string };
 type Range = SplitRange;
 const inRange = (n: number, r?: Range): boolean => !r || (n >= r[0] && n <= r[1]);
 export function splitTo(data: PatchData, rules: readonly SplitRule[], item: StageItem, aims: readonly Aim[]): string | null {
-  const held = new Set(aims.filter((a) => aimHeld(data, item, a)).map(aimKey));
+  const held = new Set(aims.filter((a) => aimHeldOn(data, item, a, { sameText: true })).map(aimKey));
   const junk = junkOf(item, targetsOf(data, aims), aimOpts(data));
   const count = (side: "prefix" | "suffix" | "any", junkOnly: boolean): number =>
     (side !== "suffix" ? (junkOnly ? junk.prefix : item.prefixes.filter((m) => !m.fractured)).length : 0) + (side !== "prefix" ? (junkOnly ? junk.suffix : item.suffixes.filter((m) => !m.fractured)).length : 0);
@@ -189,7 +189,7 @@ const JUNK_ONLY = shapeKey([], true);
  * 10-22 解析君 body-essence-path: 始めの乱数のプレの外れでいつも「外れあり」になり、サフィの当たりが右側の消去の箱へ送られて当たりを消し、38 人が打ち止めの輪
  */
 function itemKey(data: PatchData, item: StageItem, aims: readonly Aim[]): string {
-  const held = aims.filter((a) => aimHeld(data, item, a));
+  const held = aims.filter((a) => aimHeldOn(data, item, a, { sameText: true }));
   const open = new Set(aims.filter((a) => !held.includes(a)).map((a) => sideOfMod(data, a.modId)));
   const junk = junkOf(item, targetsOf(data, aims), aimOpts(data));
   const junkOn = (side: "prefix" | "suffix"): boolean => (!open.size || open.has(side)) && junk[side].length > 0;
@@ -332,7 +332,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     if (!b.hand) {
       // 完成 = 完成の狙い (0 完成形の設定) が全部付いた時点。手の無い箱で揃っていれば完成 (狙いを全部付けたスタート、10-22 14 本目)
       const goals = doc.memoAims ?? [];
-      if (goals.length && goals.every((a) => aimHeld(data, item, a))) return { end: "done", cost, at, visits, uses, restarts, odd, why: { reason: tr("完成", "Done"), item } };
+      if (goals.length && goals.every((a) => aimHeldOn(data, item, a, { sameText: true }))) return { end: "done", cost, at, visits, uses, restarts, odd, why: { reason: tr("完成", "Done"), item } };
       return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("次の手・戻り先が無い", "No next craft or return"), item, noBox: true } };
     }
     // 打ち止めの時のアイテムも残す (台本で輪から抜けない理由を見る。止まりの集計 stuckWhy には入れない)
@@ -369,7 +369,7 @@ function outcomeText(data: PatchData, item: StageItem, oc: { out: OutKind; hits:
 /** 完成の箱で狙いが揃っているか (付いている木の狙いの数が、その箱の道の当たりの数の一番少ない組以上。分かれ目の先は行の条件で決まるので数で見る) */
 function doneOk(data: PatchData, doc: TreeDoc, id: string, item: StageItem, aims: readonly Aim[]): boolean {
   const need = Math.min(...heldSets(doc, id).map((h) => h.length));
-  return aims.filter((a) => aimHeld(data, item, a)).length >= need;
+  return aims.filter((a) => aimHeldOn(data, item, a, { sameText: true })).length >= need;
 }
 
 function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): TreeRunResult {

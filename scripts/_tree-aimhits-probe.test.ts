@@ -10,13 +10,13 @@
  */
 import { it } from "vitest";
 import { loadPatch } from "../tests/helpers/patch";
-import type { StageItem, StageMod } from "../src/services/craft-stage/engine";
-import { aimHeld, aimsOf, sampleOf } from "../src/services/simulator/tree/tree-sample";
+import { aimHeldOn, type StageItem, type StageMod } from "../src/services/craft-stage/engine";
+import { aimsOf, sampleOf } from "../src/services/simulator/tree/tree-sample";
 import { treeSample, TREE_SAMPLES } from "../src/services/simulator/tree/tree-samples";
 
 const tierNo = (m: StageMod): number => Number(/\d+/.exec(m.tierName)?.[0] ?? 99);
 
-it("aimHeld → aimHits の違い", () => {
+it("前の aimHeld の式 → 入口の aimHeldOn の違い", () => {
   const data = loadPatch();
   const groups = new Map<string, string[]>();
   for (const [id, m] of data.mods) if (m.family) groups.set(`${m.family}|${m.text}`, [...(groups.get(`${m.family}|${m.text}`) ?? []), id]);
@@ -37,7 +37,7 @@ it("aimHeld → aimHits の違い", () => {
     for (let i = 0; i < B.tiers.length; i++) {
       const m = { modId: bId, family: B.family, tierName: `T${B.tiers.length - i}`, tierIndex: i } as unknown as StageMod;
       const it = { prefixes: [m], suffixes: [] } as unknown as StageItem;
-      for (let tier = 1; tier <= A.tiers.length; tier++) { n3++; if (aimHeld(data, it, { modId: aId, tier }) !== exact(it, { modId: aId, tier })) { d3++; if (d3 <= 3) console.log(`   3) 食い違い ${aId} T${tier} ← ${bId} ${m.tierName}`); } }
+      for (let tier = 1; tier <= A.tiers.length; tier++) { n3++; if (aimHeldOn(data, it, { modId: aId, tier }, { sameText: true }) !== exact(it, { modId: aId, tier })) { d3++; if (d3 <= 3) console.log(`   3) 食い違い ${aId} T${tier} ← ${bId} ${m.tierName}`); } }
     }
   }
   console.log(`3) 組の総当たり: 判定 ${n3} 回中 食い違い ${d3}`);
@@ -52,7 +52,7 @@ it("aimHeld → aimHits の違い", () => {
         const it = sampleOf(data, doc, id, s).item;
         for (const a of aims) {
           n++;
-          if (aimHeld(data, it, a) !== exact(it, a)) { diff++; if (ex.length < 3) ex.push(`${id}#${s} ${a.modId} T${a.tier}: ${[...it.prefixes, ...it.suffixes].map((m) => m.modId + (m.unrevealed ? "(未発現)" : "")).join(",")}`); }
+          if (aimHeldOn(data, it, a, { sameText: true }) !== exact(it, a)) { diff++; if (ex.length < 3) ex.push(`${id}#${s} ${a.modId} T${a.tier}: ${[...it.prefixes, ...it.suffixes].map((m) => m.modId + (m.unrevealed ? "(未発現)" : "")).join(",")}`); }
         }
       }
     }

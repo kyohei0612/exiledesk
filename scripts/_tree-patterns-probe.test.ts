@@ -16,9 +16,9 @@
 import fs from "node:fs";
 import { afterAll, it } from "vitest";
 import { loadPatch } from "../tests/helpers/patch";
-import { applyCurrency, freshItem, modListFor, mulberry32, omensFor, RUNES, socketCapOf, stepOutcomes, type PatchData } from "../src/services/craft-stage/engine";
+import { aimHeldOn, applyCurrency, fillCatalyst, freshItem, modListFor, mulberry32, omensFor, RUNES, socketCapOf, stepOutcomes, type PatchData } from "../src/services/craft-stage/engine";
 import { addHit, addSplitRow, removeHit, aimKey, migrateStart, newTree, setAim, setBack, setDone, setHand, setSplit, setSplitWhen, tidy, toggleMemoAim, kindOfHand, type Aim, type Hand, type SplitWhen, type TreeDoc } from "../src/services/simulator/tree/tree-model";
-import { aimHeld, aimsOf, fillCatalyst, handAims, handProblem, outcomeOf, playHand, sampleOf, singleOutOf, startItemOf } from "../src/services/simulator/tree/tree-sample";
+import { aimsOf, handAims, handProblem, outcomeOf, playHand, sampleOf, singleOutOf, startItemOf } from "../src/services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, ECHO, engineOmens, isBone, isCatalyst, kindOfCurrency, TREE_CATALYSTS } from "../src/services/simulator/tree/tree-hands";
 import { linkSameShape, MATCH, matchItem, outBoxOf, RESTART, runTree, settle, shapesOf, splitTo } from "../src/services/simulator/tree/tree-run";
 import { joinSameShape } from "../src/views/simulator/tree/tree-merge";
@@ -91,7 +91,7 @@ class Ui {
     const afterQ = !!p?.hand && isCatalyst(p.hand.currency);
     let autoCat = TREE_CATALYSTS[0]!;
     if (o.cat && TREE_CATALYSTS.includes(o.cat)) autoCat = o.cat;
-    else for (const a of aimsOf(d).filter((x) => !aimHeld(data, item, x))) { const tags = data.mods.get(a.modId)?.tags ?? []; const c = TREE_CATALYSTS.find((k) => tags.includes(k.slice(9))); if (c) { autoCat = c; break; } }
+    else for (const a of aimsOf(d).filter((x) => !aimHeldOn(data, item, x, { sameText: true }))) { const tags = data.mods.get(a.modId)?.tags ?? []; const c = TREE_CATALYSTS.find((k) => tags.includes(k.slice(9))); if (c) { autoCat = c; break; } }
     const needPre = can.includes(CATALYSING) && !afterQ;
     const shelfItem = needPre ? fillCatalyst(data, item, autoCat, mulberry32(1)).item : item;
     const preCat = used.includes(CATALYSING) && !afterQ ? autoCat : null;
@@ -103,9 +103,9 @@ class Ui {
       if (got[0]) aims = [{ modId: got[0].modId, tier: Number(/\d+/.exec(got[0].tierName)?.[0] ?? 99) }];
     } else if (kind === "spam" || kind === "add" || kind === "swap") {
       const tree = aimsOf(d);
-      const open = (tree.length ? tree : d.memoAims ?? []).filter((a) => !aimHeld(data, item, a));
+      const open = (tree.length ? tree : d.memoAims ?? []).filter((a) => !aimHeldOn(data, item, a, { sameText: true }));
       const outs = [1, 2, 3, 4].flatMap((seed) => { const x = seed === 1 ? item : sampleOf(data, d, id, seed).item; return (stepOutcomes(data, x, h.currency, engineOmens(h)) ?? []).filter((o) => !o.void); });
-      aims = kind === "spam" || !outs.length ? open : open.filter((a) => outs.some((x) => aimHeld(data, x.item, a)));
+      aims = kind === "spam" || !outs.length ? open : open.filter((a) => outs.some((x) => aimHeldOn(data, x.item, a, { sameText: true })));
     }
     let only = singleOutOf(data, d, id, h, preCat, aims);
     // 木にまだ狙いが無いと、足す・入れ替える手の結果は全部「外れ」に分けられ、1 通り (外れだけ) になる。当たりの箱が出来ず横の＋も出ないので、台本では 1 通りを外して続ける
@@ -150,7 +150,7 @@ class Ui {
   /** カオススパムの札 (onSpam: linkSameShape は呼ばない) */
   spam(id: string): string {
     const it = sampleOf(this.data, this.d, id, 1).item;
-    const aims = aimsOf(this.d).filter((a) => !aimHeld(this.data, it, a));
+    const aims = aimsOf(this.d).filter((a) => !aimHeldOn(this.data, it, a, { sameText: true }));
     setHand(this.d, id, { currency: "chaos", omens: [], catalyst: null, quality: 0, repeat: { until: "hit", max: null } }, "spam", aims);
     this.log.push(`${id} カオススパムの札 → ${this.d.boxes[id]!.outs.join(" ")}`);
     return id;
@@ -196,7 +196,7 @@ function doneHeld(data: PatchData, doc: TreeDoc, n = 100, seed = 1): Record<numb
       for (;;) {
         const b = doc.boxes[at];
         if (!b) break;
-        if (b.done === "main") { const k = aims.filter((a) => aimHeld(data, item, a)).length; out[k] = (out[k] ?? 0) + 1; if (process.env.DONE_MISS && k < aims.length) console.log(`  足りない完成 ${at}: 無い ${aims.filter((a) => !aimHeld(data, item, a)).map((a) => a.modId).join(", ")} / 前 ${item.prefixes.map((m) => m.modId + m.tierName).join(", ")} / 後 ${item.suffixes.map((m) => m.modId + m.tierName).join(", ")}`); break; }
+        if (b.done === "main") { const k = aims.filter((a) => aimHeldOn(data, item, a, { sameText: true })).length; out[k] = (out[k] ?? 0) + 1; if (process.env.DONE_MISS && k < aims.length) console.log(`  足りない完成 ${at}: 無い ${aims.filter((a) => !aimHeldOn(data, item, a, { sameText: true })).map((a) => a.modId).join(", ")} / 前 ${item.prefixes.map((m) => m.modId + m.tierName).join(", ")} / 後 ${item.suffixes.map((m) => m.modId + m.tierName).join(", ")}`); break; }
         if (b.split) { const to = ++hops > 1000 ? null : splitTo(data, b.split, item, aims); if (!to) break; at = to; continue; }
         if (b.back) {
           if (++hops > 1000) break;

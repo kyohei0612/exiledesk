@@ -13,8 +13,8 @@ import StageItemCard from "../../craft-stage/StageItemCard.vue";
 import CurrencyShelf from "../../craft-stage/CurrencyShelf.vue";
 import HeldOmens from "../../craft-stage/HeldOmens.vue";
 import { heldOmensOf } from "../../craft-stage/held-omens";
-import { catalystForMod, catalystFull, effectOf, fillCatalyst, mulberry32, omensFor, stepOutcomes, tierNoOf } from "../../../services/craft-stage/engine";
-import { aimHeld, aimsOf, handProblem, sampleOf, singleOutOf } from "../../../services/simulator/tree/tree-sample";
+import { aimHeldOn, catalystForMod, catalystFull, effectOf, fillCatalyst, mulberry32, omensFor, stepOutcomes, tierNoOf } from "../../../services/craft-stage/engine";
+import { aimsOf, handProblem, sampleOf, singleOutOf } from "../../../services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, ECHO, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handLabel, handName, outName } from "./tree-names";
 import { kindOfHand, setHand, type Aim, type Hand, type HandKind, type OutKind } from "../../../services/simulator/tree/tree-model";
@@ -41,7 +41,7 @@ const free = ref(!!props.current?.free);
 const fracOf = ref<string | null>(props.current?.fractureOf ?? null);
 const isFracture = computed(() => !!held.value && effectOf(held.value) === "fracture");
 /** ✦ の候補 = 完成の狙い (この箱の見本に付いていない物はグレー) */
-const fracChoices = computed(() => { const d = s.data.value, it = item.value; return t.goals.value.map((a) => ({ a, on: !!d && !!it && aimHeld(d, it, a) })); });
+const fracChoices = computed(() => { const d = s.data.value, it = item.value; return t.goals.value.map((a) => ({ a, on: !!d && !!it && aimHeldOn(d, it, a, { sameText: true }) })); });
 /** 骨の手にアビスの反響 (発現の候補を 1 回引き直す)。既定で付ける (10-22 オーナー「お告げは必ず反響を使わんとやばいよ」)。前の手を開いた時はその手のまま */
 const echo = ref(props.current ? props.current.omens.includes(ECHO) : true);
 const canFree = computed(() => !!held.value && effectOf(held.value) === "add");
@@ -68,7 +68,7 @@ const canCatalyse = computed(() => !!held.value && heldOmensOf(held.value).inclu
  */
 const autoCat = computed((): string | null => {
   const d = s.data.value, it = item.value;
-  for (const a of d && it ? [...aimsOf(t.doc.value), ...(t.doc.value.memoAims ?? [])].filter((x) => !aimHeld(d, it, x)) : []) {
+  for (const a of d && it ? [...aimsOf(t.doc.value), ...(t.doc.value.memoAims ?? [])].filter((x) => !aimHeldOn(d, it, x, { sameText: true })) : []) {
     const c = catalystForMod(d!, it!, a.modId, TREE_CATALYSTS);
     if (c) return c;
   }
@@ -122,16 +122,16 @@ const hitAims = computed((): Aim[] => {
   }
   // フラクチャー: 当たりの札 = この箱で付いている狙い (✦ にする MOD を選んだらその 1 つ)
   if (kind.value === "fracture") {
-    const on = [...aimsOf(t.doc.value), ...t.goals.value].filter((a, i, l) => aimHeld(d, it, a) && l.findIndex((x) => x.modId === a.modId) === i);
+    const on = [...aimsOf(t.doc.value), ...t.goals.value].filter((a, i, l) => aimHeldOn(d, it, a, { sameText: true }) && l.findIndex((x) => x.modId === a.modId) === i);
     return fracOf.value ? on.filter((a) => a.modId === fracOf.value) : on;
   }
   if (kind.value !== "spam" && kind.value !== "add" && kind.value !== "swap") return [];
   const tree = aimsOf(t.doc.value);
-  const open = (tree.length ? tree : t.doc.value.memoAims ?? []).filter((a) => !aimHeld(d, it, a));
+  const open = (tree.length ? tree : t.doc.value.memoAims ?? []).filter((a) => !aimHeldOn(d, it, a, { sameText: true }));
   if (kind.value === "spam") return open;
   // 見本を数個見て、どれかで付く狙いは並べる (1 つだけだと見本に低い段が付いていて T2 が出なかった、10-22 13 通り組んだ #17)
   const outs = [1, 2, 3, 4].flatMap((seed) => { const x = seed === 1 ? it : sampleOf(d, t.doc.value, props.boxId, seed).item; return (stepOutcomes(d, x, h.currency, engineOmens(h)) ?? []).filter((o) => !o.void); });
-  return outs.length ? open.filter((a) => outs.some((o) => aimHeld(d, o.item, a))) : open;
+  return outs.length ? open.filter((a) => outs.some((o) => aimHeldOn(d, o.item, a, { sameText: true }))) : open;
 });
 /** 結果が 1 通りの手か (この箱の見本 8 つにエンジンで打った行き先を全部たどる。触媒の手は前のカタリストを入れた後で) */
 const only = computed(() => {

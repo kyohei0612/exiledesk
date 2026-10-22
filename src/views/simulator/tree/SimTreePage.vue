@@ -23,7 +23,8 @@ import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
 import { craftStage as s } from "../../../state/craft-stage";
 import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, removeHit, setAim, setBack, setDone, setHand, setSplit, tidy, handUses, type Aim, type Hand, type HandKind, type OutKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
 import { handLabel, outName } from "./tree-names";
-import { aimHeld, aimsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { aimsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { aimHeldOn } from "../../../services/craft-stage/engine";
 import { treeSample } from "../../../services/simulator/tree/tree-samples";
 import { linkSameShape, MATCH, RESTART } from "../../../services/simulator/tree/tree-run";
 import { treePage } from "../../../state/web-page";
@@ -285,7 +286,7 @@ function onSpam(b: Box): void {
   const d0 = s.data.value;
   const all = aimsOf(doc.value);
   const it = d0 ? sampleOf(d0, doc.value, b.id, 1).item : null;
-  const aims = d0 && it ? all.filter((a) => !aimHeld(d0, it, a)) : all;
+  const aims = d0 && it ? all.filter((a) => !aimHeldOn(d0, it, a, { sameText: true })) : all;
   t.edit((d) => setHand(d, b.id, { currency: "chaos", omens: [], catalyst: null, quality: 0, repeat: { until: "hit", max: null } }, "spam", aims));
 }
 
