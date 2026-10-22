@@ -57,7 +57,8 @@ const P = {
   // 右側の高貴 + 上級で 2 つ、外れは消去
   "ring-annul": (s) => (s.junk("suffix") ? { cur: "annul" } : { cur: "exalt_greater", omens: ["OmenofDextralExaltation"] }),
   "gloves-rune-start": (s) => (s.junk("prefix") ? { cur: "annul" } : { cur: "exalt_greater", omens: ["OmenofSinistralExaltation"] }),
-  "gloves-perfect": (s) => (s.junk("suffix") ? { cur: "annul" } : { cur: "exalt_perfect", omens: ["OmenofDextralExaltation"] }),
+  // 木は 58068e9b で完全 → 上級の高貴に組み替えた (名前は前のまま)
+  "gloves-perfect": (s) => (s.junk("suffix") ? { cur: "annul" } : { cur: "exalt_greater", omens: ["OmenofDextralExaltation"] }),
   // カタリストは木と同じ (始め・キャストが付いた後 = life、クリ率が付いた後 = caster) を最大まで → 触媒 + 右側 + 完全の高貴、外れは消去
   "amulet-catalyst": (s) => (s.junk("suffix") ? { cur: "annul" } : { cur: "exalt_perfect", omens: ["OmenofCatalysingExaltation", "OmenofDextralExaltation"], cat: s.heldIx(1) && !s.heldIx(0) ? "catalyst_caster" : "catalyst_life" }),
   // 3 耐性: サフィの外れ → 消去、ほかは右側の高貴 + 上級 (始めの 1 回は素の上級の高貴)
@@ -92,13 +93,12 @@ const P = {
   "body-essence": (s) => (!s.keepHeld() ? { cur: s.essKey } : s.junk("suffix") ? { cur: "annul", omens: ["OmenofDextralAnnulment"] } : { cur: "exalt_greater", omens: ["OmenofDextralExaltation"] }),
 };
 P["body-essence-fixed"] = P["body-essence"];
+P["body-essence-path"] = P["body-essence"];
 /**
  * 対案 (ALT=1、木と比べて安くなるかを見るだけ): amulet-catalyst = キャストを狙う所はキャスターのカタリスト、クリ率を狙う所は触媒を使わない (クリ率のタグ critical のカタリストは無い)。
- * gloves-perfect = 完全の高貴を上級に
  */
 if (process.env.ALT) {
   P["amulet-catalyst"] = (s) => (s.junk("suffix") ? { cur: "annul" } : s.heldIx(0) ? { cur: "exalt_perfect", omens: ["OmenofDextralExaltation"] } : { cur: "exalt_perfect", omens: ["OmenofCatalysingExaltation", "OmenofDextralExaltation"], cat: "catalyst_caster" });
-  P["gloves-perfect"] = (s) => (s.junk("suffix") ? { cur: "annul" } : { cur: "exalt_greater", omens: ["OmenofDextralExaltation"] });
 }
 /** 木の真似 (MIMIC=1): 狙い 0 の形は始まりの箱と同じなので、外れが残っていても高貴。直前の高貴で外れが付いた時だけ消去を 1 回 (start → b2 → b4 → start) */
 const mimic0 = (s, h) => (s.count === 0 ? (s.last?.cur.startsWith("exalt") && s.last.junkUp ? { cur: "annul" } : h) : null);
@@ -170,10 +170,12 @@ function literal(doc, rule, n, seed) {
 
 /** 木のとおり (tree-run) + 完成の中身: 完成に数えた人のうち狙いが全部付いていた割合は tree-run の結果に無いので、ここでは perItem・完成・打ち止め・止まりだけ */
 const files = fs.readdirSync(PAT_DIR).filter((f) => f.endsWith(".json")).sort();
+/** SAMPLES=1: 見本の木 (tree-samples) も木だけ回す (字のとおりの決まりは無い)。始めの費用 (ベース代) は入れない */
+const samples = process.env.SAMPLES ? M.TREE_SAMPLES.map((nm) => ({ pattern: `見本 ${nm}`, tree: M.treeSample(nm) })) : [];
 const pct = (x) => `${(100 * x).toFixed(0)}%`;
 console.log(`${N} 人・種 ${SEED}。1 個あたり (神) / 完成 / 打ち止め / 止まり`);
-for (const f of files) {
-  const j = JSON.parse(fs.readFileSync(path.join(PAT_DIR, f), "utf8"));
+for (const f of [...files, ...samples]) {
+  const j = typeof f === "string" ? JSON.parse(fs.readFileSync(path.join(PAT_DIR, f), "utf8")) : f;
   const name = j.pattern ?? f.replace(/\.json$/, "");
   if (ONLY && !ONLY.has(name)) continue;
   const doc = j.tree;
