@@ -36,7 +36,7 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 | エミュの画面 (エミュ部長) | `views/craft-stage/` | エンジンの入口から取る | `state/emulator/` | — |
 | シミュの画面 (シミュ部長) | `views/simulator/` | `services/simulator/` (`htc/` はアプリ専用・凍結) | `state/simulator/` | `tests/simulator/` |
 | チュートリアル (シミュ部長) | `views/tutorial/` (Video*・コース) | `services/tutorial/` | `state/tutorial/` | `tests/tutorial/` |
-| 両方の画面で一緒の部品・見た目 (デザイン部長) | `components/` (`for-share/` = 棚・カード・MOD 表の土台)・`i18n/lang.ts`・GLOSSARY.md | — | `state/for-share/` | — |
+| 両方の画面で一緒の部品・見た目 (デザイン部長) | `components/` (`for-share/` = 棚・カード・MOD 表の土台)・`style.css`・`styles/`・`i18n/lang.ts`・GLOSSARY.md | — | `state/for-share/` | — |
 | 共通 (境目・土台、ジン部長) | `web/`・`utils/` | `i18n/` のゲームのデータ・`services/money.ts`・`services/telemetry/` ほか | `state/` の直下 (`craft-stage.ts`・`web-page.ts`・`display-currency.ts` ほか) | — |
 
 エンジンの核 (ジン部長): `craft-stage/` の `types.ts`・`run-plan.ts`・`contract.ts`、乱数 `htc/rng.ts`。画面 (エミュ・シミュ・チュートリアル)・解析君は入口から取る (核は `engine.ts`、画面の要望の物は出した側だけが `engine-sim.ts` / `engine-emu.ts` から。分け方は org/emulator/notes/2026-10-22-entry-split-plan.md)。`services/simulator/htc/` はアプリ専用・凍結で Web から import しない。craft-stage/ に残した共通の境目: `share.ts`・`trade-search.ts`。htc/ の `buy-or-craft.ts`・`prices.ts`・`paste*.ts` もアプリ・各部がまたがって使うので htc/ に残した。scripts/ は今のまま 1 つのフォルダー。
