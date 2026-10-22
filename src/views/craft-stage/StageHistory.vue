@@ -8,7 +8,7 @@
 import { fmtChance, isRareChance } from "../../utils/format-pct";
 import { computed } from "vue";
 import { modText, tr } from "../../i18n/lang";
-import { stageModText } from "./base-values";
+import { stageModText } from "../../components/stage/item/base-values";
 import { craftStage, iconOf, stepNameOf, stepOmenOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 

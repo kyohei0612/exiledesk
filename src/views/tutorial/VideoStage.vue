@@ -16,7 +16,7 @@
 import { modText } from "../../i18n/lang";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type { PlayedStep } from "../../services/craft-stage/run-plan";
-import StageItemCard from "../craft-stage/StageItemCard.vue";
+import StageItemCard from "../../components/stage/item/StageItemCard.vue";
 import VideoTray from "./VideoTray.vue";
 import VideoPob from "./VideoPob.vue";
 import { useStageFx } from "../craft-stage/use-stage-fx";

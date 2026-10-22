@@ -9,7 +9,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, toRaw } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../../state/craft-stage";
-import StageItemCard from "../../craft-stage/StageItemCard.vue";
+import StageItemCard from "../../../components/stage/item/StageItemCard.vue";
 import CurrencyShelf from "../../../components/stage/shelf/CurrencyShelf.vue";
 import HeldOmens from "../../../components/stage/shelf/HeldOmens.vue";
 import { omensAllowedFor } from "../../../services/craft-stage/engine";

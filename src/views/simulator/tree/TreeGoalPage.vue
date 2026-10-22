@@ -9,7 +9,7 @@ import { computed, ref } from "vue";
 import BaseCatalog from "../../../components/items/BaseCatalog.vue";
 import ModalShell from "../../../components/ui/ModalShell.vue";
 import StageModList from "../../craft-stage/StageModList.vue";
-import StageItemCard from "../../craft-stage/StageItemCard.vue";
+import StageItemCard from "../../../components/stage/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { tr } from "../../../i18n/lang";

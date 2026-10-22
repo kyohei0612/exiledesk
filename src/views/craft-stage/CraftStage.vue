@@ -24,7 +24,7 @@ import StagePhoneBar from "./StagePhoneBar.vue";
 import BusyTag from "../../components/ui/BusyTag.vue";
 import StageSettings from "./StageSettings.vue";
 import { useStageBase } from "./use-stage-base";
-import StageItemCard from "./StageItemCard.vue";
+import StageItemCard from "../../components/stage/item/StageItemCard.vue";
 import StageQualityBar from "./StageQualityBar.vue";
 import StageSanctifyBar from "./StageSanctifyBar.vue";
 import { isSanctifySet, sanctifySetKey } from "../../services/craft-stage/apply-vaal";

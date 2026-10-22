@@ -20,7 +20,7 @@ import { isRareChance } from "../../utils/format-pct";
 import { track } from "../../utils/track";
 import { logRecord } from "../../utils/log-record";
 import { isEn, tr } from "../../i18n/lang";
-import StageItemCard from "./StageItemCard.vue";
+import StageItemCard from "../../components/stage/item/StageItemCard.vue";
 import { revealNext } from "../../utils/keep-place";
 import { placeOnStage } from "./route-place";
 

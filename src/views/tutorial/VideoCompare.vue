@@ -10,7 +10,7 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
-import StageItemCard from "../craft-stage/StageItemCard.vue";
+import StageItemCard from "../../components/stage/item/StageItemCard.vue";
 import { craftStage } from "../../state/craft-stage";
 import { playPlan } from "../../services/craft-stage/run-plan";
 import { diffItems, splitLine, type DiffLine } from "../../services/tutorial/compare";

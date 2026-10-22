@@ -3,11 +3,11 @@
  * 上乗せと割り戻しはエンジンの入口 (boosts.ts・stage-core の boostedMod・retext) から取り、ここは画面の文にするだけ。
  * 開発版 (pnpm dev:web・deploy:web-dev) だけ。本番はオーナーの OK の後に BASE_VALUES_ON を外す (docs/pending-release.md)。
  */
-import type { StageItem, StageMod } from "../../services/craft-stage/engine";
-import { craftStage } from "../../state/craft-stage";
-import { modText } from "../../i18n/lang";
-import { boostedMod, retext, scaledAugment } from "../../services/craft-stage/stage-core";
-import type { StageAugment } from "../../services/craft-stage/types";
+import type { StageItem, StageMod } from "../../../services/craft-stage/engine";
+import { craftStage } from "../../../state/craft-stage";
+import { modText } from "../../../i18n/lang";
+import { boostedMod, retext, scaledAugment } from "../../../services/craft-stage/stage-core";
+import type { StageAugment } from "../../../services/craft-stage/types";
 
 export const BASE_VALUES_ON = import.meta.env.DEV || import.meta.env.VITE_DEV_PREVIEW === "1";
 
