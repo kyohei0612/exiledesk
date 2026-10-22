@@ -13,12 +13,12 @@ import { loadPatch } from "../tests/helpers/patch";
 import { sampleOf } from "../src/services/simulator/tree/tree-sample";
 import { checkTree } from "../src/services/simulator/tree/tree-check";
 import { runTree } from "../src/services/simulator/tree/tree-run";
-import { kindOfCurrency } from "../src/services/simulator/tree/tree-hands";
+import { effectOf } from "../src/services/craft-stage/engine";
 import { kindOfHand, newTree, setAim, setDone, setHand, tidy, type Aim, type Hand } from "../src/services/simulator/tree/tree-model";
 
 const data = loadPatch();
 const hand = (currency: string, omens: string[] = [], extra: Partial<Hand> = {}): Hand => ({ currency, omens, catalyst: null, quality: 0, ...extra });
-const put = (d: ReturnType<typeof newTree>, id: string, h: Hand, aims: Aim[] = []): string[] => { setHand(d, id, h, kindOfHand(h, kindOfCurrency(h.currency)), aims); return d.boxes[id]!.outs; };
+const put = (d: ReturnType<typeof newTree>, id: string, h: Hand, aims: Aim[] = []): string[] => { setHand(d, id, h, kindOfHand(h, effectOf(h.currency)), aims); return d.boxes[id]!.outs; };
 
 it("品質だけ上げる手", () => {
   const C: Aim = { modId: "Rings/IncreasedCastSpeed", tier: 2 }, A: Aim = { modId: "Rings/AllResistances", tier: 2 };

@@ -6,8 +6,8 @@
  * その下の箱 = 親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
-import { aimDiff, aimHeldOn, applyCurrency, canUse, catalystFull, catalystOf, catalystTagOf, effectOf, fillCatalyst, forceKey, freshItem, isAimMod, mulberry32, revealOffers, runeIdByName, stepOutcomes, tierIndexOf, unrevealedOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
-import { CATALYSING, ECHO, engineOmens, isCatalyst } from "./tree-hands";
+import { aimDiff, aimHeldOn, applyCurrency, applyHand, canUse, effectOf, fillCatalyst, forceKey, freshItem, isAimMod, mulberry32, runeIdByName, stepOutcomes, tierIndexOf, unrevealedOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem } from "../../craft-stage/engine";
+import { ECHO, engineOmens, isCatalyst } from "./tree-hands";
 import { startOf, type Aim, type Hand, type OutKind, type TreeDoc } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-run";
@@ -117,52 +117,20 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
     }
     return { ...r, item: it };
   }
-  // 品質だけ上げる手: カタリストを今の最大まで (もう最大なら何もせず通る。戻ってきてもう一度通る時)
-  if (isCatalyst(h.currency)) {
-    const r = fillCatalyst(data, item, h.currency, rng);
-    if (r.count) use?.(h.currency, r.count);
-    return r.count || catalystFull(item, h.currency) ? { ...r, applied: true } : r;
+  // 1 回分はエンジンの入口の applyHand (B6〜B8 10-22): カタリストの手は品質を今の最大まで (もう最大なら通る)・触媒の前のカタリスト・
+  // フラクチャーで ✦ にする MOD・骨の後はそのまま発現 (反響は骨に掛けず発現で使う)。
+  // 発現は当たりの札に合う候補、無ければ 1 つ目 (2026-10-22 オーナー「冒涜は冒涜で付与かな」)。miss = 外れの箱の見本 (狙いでない候補を選ぶ。黒き血は狙いが必ず候補に入り、見本が外れの箱に着かなかった、10-22)
+  const ts = targetsOf(data, aims);
+  const r = applyHand(data, item, h.currency, rng, { omens: h.omens, catalyst: h.catalyst, fractureOf: h.fractureOf, reveal: (m) => isAimMod(m, ts, aimOpts(data)) !== miss });
+  if (use) {
+    if (r.catalystCount) use(isCatalyst(h.currency) ? h.currency : h.catalyst!, r.catalystCount);
+    if (r.applied && !isCatalyst(h.currency)) {
+      use(h.currency);
+      for (const o of r.handOmensUsed) use(o);
+      if (r.echoUsed) use(ECHO);
+    }
   }
-  let it = item;
-  // 触媒の高貴の前に、カタリストで品質を最大まで (箱の手も 1 押しと同じ)
-  if (h.catalyst && h.omens.includes(CATALYSING)) {
-    const r = fillCatalyst(data, it, h.catalyst, rng);
-    if (!r.applied && r.count === 0 && catalystOf(it).tag !== catalystTagOf(h.catalyst)) return r;
-    if (r.count) use?.(h.catalyst, r.count);
-    it = r.item;
-  }
-  // アビスの反響は骨には掛からず、続けて打つ発現で使う (骨に渡すとエンジンが弾く)
-  const echo = h.omens.includes(ECHO);
-  let r = applyCurrency(data, it, h.currency, rng, engineOmens(h));
-  // フラクチャーで ✦ にする MOD を選んだ時: オーブが打てる (4 MOD 以上のレア・✦ 無し、エンジンの判定) なら、選んだ MOD が付いていればそれを固定 (エンジンの force の f = 付いている MOD を固定)
-  if (r.applied && h.fractureOf && effectOf(h.currency) === "fracture" && [...it.prefixes, ...it.suffixes].some((m) => m.modId === h.fractureOf)) {
-    const f = applyCurrency(data, it, forceKey(h.fractureOf, "T1", "f"), rng);
-    if (f.applied) r = { ...r, item: f.item, added: f.added, removed: f.removed };
-  }
-  if (r.applied && use) {
-    use(h.currency);
-    for (const o of r.omensUsed ?? []) use(o);
-  }
-  if (!r.applied || !unrevealedOf(r.item)) return r;
-  if (echo) use?.(ECHO);
-  return reveal(data, r, rng, aims, miss, echo);
-}
-
-/**
- * 冒涜 (骨) の後は、そのまま魂の井戸で発現して選ぶ (2026-10-22 オーナー「冒涜は冒涜で付与かな」)。候補 3 つ (エンジンの revealOffers) のうち
- * 当たりの札に合う物を選び、無ければ 1 つ目 (外れ)。miss = 外れの箱の見本 (狙いでない候補を選ぶ。黒き血は狙いが必ず候補に入り、見本が外れの箱に着かなかった、10-22)。
- * 候補と発現の結果が同じになるよう、同じ種の rng を 2 回作る (apply-desecrate.ts の決まり)
- */
-function reveal(data: PatchData, r: StageApply, rng: () => number, aims: readonly Aim[], miss = false, echo = false): StageApply {
-  const seed = Math.floor(rng() * 2 ** 31);
-  const offers = revealOffers(data, r.item, mulberry32(seed));
-  const ts = targetsOf(data, aims), isAim = (m: StageMod): boolean => isAimMod(m, ts, aimOpts(data));
-  const n = offers.first.findIndex((m) => isAim(m) !== miss);
-  // アビスの反響: 最初の 3 つに無ければ 1 回引き直した 3 つから (同じ種で引くのでエンジンの reveal:N:reroll と同じ候補、apply-desecrate.ts)
-  const k = n < 0 && echo ? offers.reroll.findIndex((m) => isAim(m) !== miss) : -1;
-  // reveal:N の N は 1 から (エンジンの run-plan と同じ。0 は「その番号の候補が無い」)
-  const x = k >= 0 ? applyCurrency(data, r.item, `reveal:${k + 1}:reroll`, mulberry32(seed), [ECHO]) : applyCurrency(data, r.item, `reveal:${Math.max(0, n) + 1}`, mulberry32(seed));
-  return x.applied ? { ...x, added: [...r.added, ...x.added], removed: [...r.removed, ...x.removed] } : r;
+  return r;
 }
 
 /**

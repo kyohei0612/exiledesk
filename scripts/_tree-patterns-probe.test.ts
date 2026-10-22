@@ -16,10 +16,10 @@
 import fs from "node:fs";
 import { afterAll, it } from "vitest";
 import { loadPatch } from "../tests/helpers/patch";
-import { aimHeldOn, applyCurrency, fillCatalyst, freshItem, modListFor, mulberry32, omensFor, RUNES, socketCapOf, stepOutcomes, type PatchData } from "../src/services/craft-stage/engine";
+import { aimHeldOn, applyCurrency, effectOf, fillCatalyst, freshItem, modListFor, mulberry32, omensFor, RUNES, socketCapOf, stepOutcomes, type PatchData } from "../src/services/craft-stage/engine";
 import { addHit, addSplitRow, removeHit, aimKey, migrateStart, newTree, setAim, setBack, setDone, setHand, setSplit, setSplitWhen, tidy, toggleMemoAim, kindOfHand, type Aim, type Hand, type SplitWhen, type TreeDoc } from "../src/services/simulator/tree/tree-model";
 import { aimsOf, handAims, handProblem, outcomeOf, playHand, sampleOf, singleOutOf, startItemOf } from "../src/services/simulator/tree/tree-sample";
-import { CATALYSING, canSpam, ECHO, engineOmens, isBone, isCatalyst, kindOfCurrency, TREE_CATALYSTS } from "../src/services/simulator/tree/tree-hands";
+import { CATALYSING, canSpam, ECHO, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../src/services/simulator/tree/tree-hands";
 import { linkSameShape, MATCH, matchItem, outBoxOf, RESTART, runTree, settle, shapesOf, splitTo } from "../src/services/simulator/tree/tree-run";
 import { joinSameShape } from "../src/views/simulator/tree/tree-merge";
 import { checkTree } from "../src/services/simulator/tree/tree-check";
@@ -84,9 +84,9 @@ class Ui {
     // 骨の手はアビスの反響を既定で付ける (棚 TreeHandShelf と同じ、10-22 オーナー「お告げは必ず反響を使わんとやばいよ」)
     const used = [...omensFor(currency, omens.filter((x) => can.includes(x))), ...(isBone(currency) && o.echo !== false ? [ECHO] : [])];
     if (o.spam && !canSpam(currency)) this.find(`当たるまで (箱 ${id})`, `${currency} は当たるまでにできない`);
-    if (o.free && kindOfCurrency(currency) !== "add") this.find(`狙い無し (箱 ${id})`, `${currency} は狙い無しにできない`);
-    const h: Hand = { currency, omens: used, catalyst: null, quality: 0, repeat: o.spam && canSpam(currency) ? { until: "hit", max: o.max && o.max > 0 ? Math.round(o.max) : null } : null, ...(o.free && kindOfCurrency(currency) === "add" ? { free: true } : {}) };
-    const kind = kindOfHand(h, kindOfCurrency(currency));
+    if (o.free && effectOf(currency) !== "add") this.find(`狙い無し (箱 ${id})`, `${currency} は狙い無しにできない`);
+    const h: Hand = { currency, omens: used, catalyst: null, quality: 0, repeat: o.spam && canSpam(currency) ? { until: "hit", max: o.max && o.max > 0 ? Math.round(o.max) : null } : null, ...(o.free && effectOf(currency) === "add" ? { free: true } : {}) };
+    const kind = kindOfHand(h, effectOf(currency));
     const p = b.out === "pass" && b.parent ? d.boxes[b.parent] : null;
     const afterQ = !!p?.hand && isCatalyst(p.hand.currency);
     let autoCat = TREE_CATALYSTS[0]!;
