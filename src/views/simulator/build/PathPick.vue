@@ -55,12 +55,15 @@ const canMiss = computed(() => (pathGroups.value ?? []).some((g) => g.rows.some(
       <input v-if="(group?.rows.length ?? 0) > 8" v-model="query" type="search" class="h-7 w-40 rounded border border-white/15 bg-black/40 px-2 text-[12px] outline-none focus:border-amber-400/60" :placeholder="tr('MOD を探す', 'Search mods')" />
     </div>
     <div class="max-h-[300px] space-y-1 overflow-y-auto pr-1">
-      <div v-for="r in rows" :key="r.key" data-path-row class="flex items-center gap-2 rounded border px-2 py-1" :class="[r.hit ? 'border-[#c9a96a]/70 bg-[#c9a96a]/10' : 'border-white/5 bg-black/40', heldTarget(r) ? 'opacity-40' : '']">
+      <div v-for="r in rows" :key="r.key" data-path-row class="rounded border px-2 py-1" :class="[r.hit ? 'border-[#c9a96a]/70 bg-[#c9a96a]/10' : 'border-white/5 bg-black/40', heldTarget(r) ? 'opacity-40' : '']">
+        <p class="flex min-w-0 items-center gap-2">
         <span v-if="r.added.length" class="w-5 shrink-0 text-[12px] font-bold" :class="r.added[0]!.side === 'prefix' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ r.added[0]!.side === "prefix" ? "P" : "S" }}</span>
         <span class="min-w-0 flex-1 truncate text-[#c8c8ff]" :title="r.added.map((m) => modText(m)).join(' / ')">{{ r.added.length ? r.added.map((m) => modText(m)).join(" / ") : tr("何も付かない", "Nothing added") }}</span>
         <span v-if="r.hit" class="shrink-0 rounded-sm bg-[#c9a96a]/30 px-1 text-[10px] text-amber-100">{{ heldTarget(r) ? tr("付いた狙い", "Target (on)") : tr("狙い", "Target") }}</span>
         <span v-else-if="r.added.length" class="shrink-0 rounded-sm px-1 text-[10px]" :style="{ background: `rgba(${JUNK.c},0.22)`, color: `rgb(${JUNK.c})` }">{{ tr(`${JUNK.ja} MOD`, `${JUNK.en} mod`) }}</span>
-        <span class="flex shrink-0 flex-wrap justify-end gap-1">
+        </p>
+        <!-- 段の札は 2 行目 (1 行目の MOD の名前を潰さない) -->
+        <span class="mt-1 flex flex-wrap gap-1 pl-7">
           <button v-for="t in r.tiers" :key="t.tierIndex + t.tierName" type="button" data-path-tier class="g-btn sm !min-h-0 !px-1.5 !py-0.5 tabular-nums max-md:!min-h-9" :class="r.hit && !t.hit ? 'opacity-60' : ''" :disabled="!!pathSearch" :title="t.hit ? tr(`この結果で打つ (出る割合 ${pct(t.p)})`, `Use with this result (chance ${pct(t.p)})`) : tr(`外れ MOD として打つ (出る割合 ${pct(t.p)})`, `Use as a miss mod (chance ${pct(t.p)})`)" @click="pickOutcome(t.outcome)">{{ t.tierName || tr("これ", "This") }} <span class="opacity-60">{{ pct(t.p) }}</span></button>
         </span>
       </div>
