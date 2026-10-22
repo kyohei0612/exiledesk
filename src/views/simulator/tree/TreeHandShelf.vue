@@ -37,6 +37,11 @@ const spam = ref(!!props.current?.repeat);
 const spamMax = ref<number | null>(props.current?.repeat?.max ?? null);
 /** 狙い無し (足す手だけ。カオススパムとは一緒にしない) */
 const free = ref(!!props.current?.free);
+/** フラクチャーの手で ✦ にする狙い (modId。null = 乱数 = エンジンどおり、10-22 オーナー) */
+const fracOf = ref<string | null>(props.current?.fractureOf ?? null);
+const isFracture = computed(() => !!held.value && kindOfCurrency(held.value) === "fracture");
+/** ✦ の候補 = 完成の狙い (この箱の見本に付いていない物はグレー) */
+const fracChoices = computed(() => { const d = s.data.value, it = item.value; return t.goals.value.map((a) => ({ a, on: !!d && !!it && aimHeld(d, it, a) })); });
 /** 骨の手にアビスの反響 (発現の候補を 1 回引き直す)。既定で付ける (10-22 オーナー「お告げは必ず反響を使わんとやばいよ」)。前の手を開いた時はその手のまま */
 const echo = ref(props.current ? props.current.omens.includes(ECHO) : true);
 const canFree = computed(() => !!held.value && kindOfCurrency(held.value) === "add");
@@ -87,6 +92,7 @@ const hand = computed((): Hand | null => {
     catalyst: null, quality: 0,
     repeat: spam.value && canSpam(held.value) ? { until: "hit", max: spamMax.value && spamMax.value > 0 ? Math.round(spamMax.value) : null } : null,
     ...(free.value && canFree.value ? { free: true } : {}),
+    ...(isFracture.value && fracOf.value ? { fractureOf: fracOf.value } : {}),
   };
 });
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
@@ -95,6 +101,7 @@ const RESULT: Record<HandKind, [string, string]> = {
   add: ["当たり + 外れ", "Hit + Miss"], remove: ["外れが消えた + 狙いが消えた", "Miss removed + Target lost"], swap: ["当たり + 狙いが消えた + 外れ", "Hit + Target lost + Miss"], spam: ["当たりだけ (当たるまで打つ)", "Hits only (until a hit)"], free: ["打った後 (何が付いても次へ。当たり / 外れに分けない)", "After (anything counts, no hit / miss split)"],
   quality: ["無し (品質を最大まで上げて、下の＋で次の手)", "None (raise quality to max, then add the next craft with + below)"],
   essence: ["付いた + 狙いが消えた (付く MOD は必ず付く)", "Added + Target lost (the essence mod always lands)"],
+  fracture: ["狙いが ✦ になった + 外れが ✦ になった", "A target fractured + a miss fractured"],
 };
 const kind = computed((): HandKind | null => (hand.value ? kindOfHand(hand.value, kindOfCurrency(hand.value.currency)) : null));
 /**
@@ -113,6 +120,11 @@ const hitAims = computed((): Aim[] => {
     for (const m of got) if (!out.some((a) => a.modId === m.modId)) out.push({ modId: m.modId, tier: Number(/\d+/.exec(m.tierName)?.[0] ?? 99) });
     return out.slice(0, 1);
   }
+  // フラクチャー: 当たりの札 = この箱で付いている狙い (✦ にする MOD を選んだらその 1 つ)
+  if (kind.value === "fracture") {
+    const on = [...aimsOf(t.doc.value), ...t.goals.value].filter((a, i, l) => aimHeld(d, it, a) && l.findIndex((x) => x.modId === a.modId) === i);
+    return fracOf.value ? on.filter((a) => a.modId === fracOf.value) : on;
+  }
   if (kind.value !== "spam" && kind.value !== "add" && kind.value !== "swap") return [];
   const tree = aimsOf(t.doc.value);
   const open = (tree.length ? tree : t.doc.value.memoAims ?? []).filter((a) => !aimHeld(d, it, a));
@@ -122,7 +134,11 @@ const hitAims = computed((): Aim[] => {
   return outs.length ? open.filter((a) => outs.some((o) => aimHeld(d, o.item, a))) : open;
 });
 /** 結果が 1 通りの手か (この箱の見本 8 つにエンジンで打った行き先を全部たどる。触媒の手は前のカタリストを入れた後で) */
-const only = computed(() => (hand.value && s.data.value ? singleOutOf(s.data.value, t.doc.value, props.boxId, hand.value, preCat.value, hitAims.value) : null));
+const only = computed(() => {
+  // ✦ にする MOD を選んで、この箱の見本に付いている時は結果は「その狙いが ✦」の 1 通り
+  if (isFracture.value && fracOf.value && hitAims.value.length) return { out: "hit" as OutKind, aim: hitAims.value[0]! };
+  return hand.value && s.data.value ? singleOutOf(s.data.value, t.doc.value, props.boxId, hand.value, preCat.value, hitAims.value) : null;
+});
 /** この手に替えると消える箱の数 (結果の箱から先。手の種類が同じなら 0。写しに打って数える) */
 const gone = computed((): number => {
   const h = hand.value, k = kind.value;
@@ -177,6 +193,12 @@ function ok(): void {
         <button v-for="c in TREE_CATALYSTS" :key="c" type="button" data-tree-hand-cat :data-cat="c" class="min-h-7 rounded-md border px-2 text-[12px]" :class="c === held ? 'border-amber-300 bg-amber-500/20 text-amber-100' : 'border-white/10 hover:bg-white/10'" :title="nameOf(c)" :aria-pressed="c === held" @click="held = c">{{ nameOf(c).replace(/のカタリスト$| Catalyst$/, "") }}</button>
       </div>
       <p v-if="preCat" data-tree-hand-pre-cat class="text-[12px] text-sky-200/90">{{ tr(`前に「${handName(preCat)} (品質を最大まで)」の手を足す (札を押すとカタリストを替えられる)`, `Adds "${handName(preCat)} (to max quality)" before this (click its chip to change the catalyst)`) }}</p>
+      <!-- フラクチャー: ✦ にする MOD を狙いから選ぶ (選ばなければ乱数 = エンジンどおり、10-22 オーナー) -->
+      <div v-if="isFracture" data-tree-hand-frac class="flex flex-wrap items-center gap-1 text-[12px]">
+        <span class="opacity-80">{{ tr("✦ にする MOD", "Fracture") }}</span>
+        <button type="button" data-tree-hand-frac-pick data-frac="" class="min-h-7 rounded-md border px-2" :class="!fracOf ? 'border-amber-300 bg-amber-500/20 text-amber-100' : 'border-white/10 hover:bg-white/10'" @click="fracOf = null">{{ tr("乱数", "Random") }}</button>
+        <button v-for="c in fracChoices" :key="c.a.modId" type="button" data-tree-hand-frac-pick :data-frac="c.a.modId" class="min-h-7 max-w-[220px] truncate rounded-md border px-2" :class="[fracOf === c.a.modId ? 'border-amber-300 bg-amber-500/20 text-amber-100' : 'border-white/10 hover:bg-white/10', c.on ? '' : 'opacity-40']" :title="c.on ? t.startModLabel(c.a) : tr('この箱の時点では付いていない (付いていない時は乱数)', 'Not on the item at this box (random if missing)')" @click="fracOf = c.a.modId">✦ {{ t.startModLabel(c.a) }}</button>
+      </div>
       <label v-if="canSpam(held)" class="flex min-h-7 cursor-pointer flex-wrap items-center gap-2">
         <input v-model="spam" type="checkbox" />{{ tr("当たるまで繰り返す (カオススパム)", "Repeat until a hit (Chaos spam)") }}
         <span v-if="spam" class="flex items-center gap-1 text-[12px] opacity-80">{{ tr("上限", "Max") }}<input v-model.number="spamMax" type="number" min="1" class="h-7 w-16 rounded-md border border-white/15 bg-black/40 px-1 text-right" :placeholder="tr('なし', 'none')" />{{ tr("回", "") }}</span>

@@ -16,7 +16,8 @@ import type { TreeTune } from "./tree-tune";
  * (オーナー 10-22「品質だけ上げるくだりがあるでしょ、オーブを打つだけの表示でいいから下に＋」)
  */
 export type OutKind = "hit" | "junk" | "junkGone" | "lost" | "any" | "pass" | "branch";
-export type HandKind = "add" | "remove" | "swap" | "spam" | "free" | "quality" | "essence";
+/** fracture = フラクチャーのオーブ (10-22 オーナー「フラクチャーする所から回す」。結果 = 狙いが ✦ になった / 外れが ✦ になった) */
+export type HandKind = "add" | "remove" | "swap" | "spam" | "free" | "quality" | "essence" | "fracture";
 /** 狙い: MOD と段 (tier = T 何以上、1 = T1 だけ)。フラクチャーの時は「その段」 */
 export interface Aim { modId: string; tier: number }
 /**
@@ -34,6 +35,8 @@ export interface Hand {
   /** 狙い無し (何が付いてもよい、空きを 1 つ埋めるだけ。結果は「打った後」の 1 つ、オーナー 10-22「適当打ちで MOD をただ追加する手」) */
   free?: boolean;
   repeat?: Repeat | null;
+  /** フラクチャーの手で ✦ にする MOD (狙いの modId。10-22 オーナー「設定次第でどの MOD がフラクチャーされるか選べる」)。無ければ乱数 = エンジンどおり。その MOD が付いていない時も乱数 */
+  fractureOf?: string;
 }
 export interface TreeBox {
   id: string;
@@ -144,6 +147,8 @@ export const MATCH_BACK = "match";
 /** 結果の箱の並び (手の種類ごとに必ず付く物) */
 export const OUTS_OF: Record<HandKind, OutKind[]> = {
   add: ["hit", "junk"],
+  // フラクチャー: 狙いが ✦ になった (当たり、札 = その狙い) / 狙いでない MOD が ✦ になった (外れ)
+  fracture: ["hit", "junk"],
   remove: ["junkGone", "lost"],
   swap: ["hit", "lost", "junk"],
   // 繰り返し (カオススパム): 当たるまで打つので、結果は当たりだけ

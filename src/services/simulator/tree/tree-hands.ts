@@ -12,7 +12,7 @@ export function kindOfCurrency(key: string): HandKind {
   if (isCatalyst(key)) return "quality";
   const k = kindOf(key);
   if (k.startsWith("essence")) return "essence";
-  return k === "chaos" ? "swap" : k === "annul" ? "remove" : "add";
+  return k === "chaos" ? "swap" : k === "annul" ? "remove" : k === "fracture" ? "fracture" : "add";
 }
 /** カオススパムにできる手 (今はカオスだけ出す。同じ形で高貴・消去にも広げられる) */
 export const canSpam = (key: string): boolean => kindOf(key) === "chaos";

@@ -58,6 +58,13 @@ export function outcomeOf(data: PatchData, before: StageItem, after: StageItem, 
   const has = aims.filter((a) => aimHeld(data, after, a));
   const hits = has.filter((a) => !had.includes(a));
   if (key && kindOfCurrency(key) === "essence" && had.some((a) => !has.includes(a))) return { out: "lost", hits };
+  // フラクチャー: 新しく ✦ になった MOD が狙いなら当たり (札 = その狙い)、ほかは外れ (MOD の数は変わらない)
+  if (key && kindOfCurrency(key) === "fracture") {
+    const was = new Set([...before.prefixes, ...before.suffixes].filter((m) => m.fractured).map((m) => m.modId));
+    const fr = [...after.prefixes, ...after.suffixes].find((m) => m.fractured && !was.has(m.modId));
+    const got = fr ? aims.filter((a) => aimHeld(data, { ...after, prefixes: [fr], suffixes: [] }, a)) : [];
+    return got.length ? { out: "hit", hits: got.slice(0, 1) } : { out: "junk", hits: [] };
+  }
   if (hits.length) return { out: "hit", hits };
   if (had.some((a) => !has.includes(a))) return { out: "lost", hits: [] };
   if (junkCount(data, after, aims) < junkCount(data, before, aims)) return { out: "junkGone", hits: [] };
@@ -160,7 +167,12 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
   }
   // アビスの反響は骨には掛からず、続けて打つ発現で使う (骨に渡すとエンジンが弾く)
   const echo = h.omens.includes(ECHO);
-  const r = applyCurrency(data, it, h.currency, rng, engineOmens(h));
+  let r = applyCurrency(data, it, h.currency, rng, engineOmens(h));
+  // フラクチャーで ✦ にする MOD を選んだ時: オーブが打てる (4 MOD 以上のレア・✦ 無し、エンジンの判定) なら、選んだ MOD が付いていればそれを固定 (エンジンの force の f = 付いている MOD を固定)
+  if (r.applied && h.fractureOf && kindOfCurrency(h.currency) === "fracture" && [...it.prefixes, ...it.suffixes].some((m) => m.modId === h.fractureOf)) {
+    const f = applyCurrency(data, it, `force:${h.fractureOf}|T1|f`, rng);
+    if (f.applied) r = { ...r, item: f.item, added: f.added, removed: f.removed };
+  }
   if (r.applied && use) {
     use(h.currency);
     for (const o of r.omensUsed ?? []) use(o);
