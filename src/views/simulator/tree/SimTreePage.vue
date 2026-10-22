@@ -42,7 +42,7 @@ import { useTreeCheck } from "./use-tree-check";
 import TreeIssues from "./TreeIssues.vue";
 import TreeStartPick from "./TreeStartPick.vue";
 import TreeSplitPick from "./TreeSplitPick.vue";
-import TreeBusy from "./TreeBusy.vue";
+import BusyTag from "../../../components/ui/BusyTag.vue";
 import { useTreeTune } from "./use-tree-tune";
 import { useTreeReveal } from "./use-tree-reveal";
 import TreeHandChip from "./TreeHandChip.vue";
@@ -256,7 +256,7 @@ function onTarget(b: Box): void {
 }
 // ルート精査 (押した時に始める、use-tree-check.ts)
 const { issues, issuesOpen, issuesFold, checking, progress, onCheck, issueOf } = useTreeCheck(doc);
-/** 待たせている間の小さな札 (題の横。データの読み込み・箱を順に出している間、TreeBusy。精査の進みは精査の帯の上) */
+/** 待たせている間の小さな札 (題の横。データの読み込み・箱を順に出している間、共通の BusyTag。精査の進みは精査の帯の上) */
 const busy = computed((): { text: string; n?: number; of?: number } | null => {
   if (!s.data.value) return { text: tr("読み込み中", "Loading") };
   const r = rv.run.value;
@@ -381,7 +381,7 @@ const glowOf = (b: Box): boolean => {
 <template>
   <section data-tree-page class="min-w-0 flex-1 p-4">
     <div class="mb-3 flex flex-wrap items-center gap-3">
-      <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center gap-3 px-8 text-[22px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ tr("クラフトの道 (ツリー)", "Craft route tree") }}<TreeBusy v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" /></h1>
+      <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center gap-3 px-8 text-[22px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ tr("クラフトの道 (ツリー)", "Craft route tree") }}<BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" /></h1>
       <button type="button" class="g-btn sm" @click="close">{{ tr("← 戻る", "← Back") }}</button>
     </div>
 
