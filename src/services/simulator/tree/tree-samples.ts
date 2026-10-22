@@ -46,7 +46,9 @@ function goldRingSuffix(): TreeDoc {
   const SPAM = hand("chaos", [], { repeat: { until: "hit", max: null } });
   // 外れの箱 (id) は消去を打ち、結果の 2 箱: id_g = 外れが消えた → back (外れの前の箱)、id_l = 狙いが消えた → lost。
   // lost は狙いが全部消えた時だけ始めに戻る。狙い 2 つ + 外れで 1 つ消えたら、残った狙い 1 つ + 外れの箱 (もう一度消去) へ
-  // (残ったのが別の狙いなら tree-run の settle が形の合う箱へ。10-22 オーナー「2 MOD 狙い・1 外れの時、初めから戻ってる」、解析君の ringTree の match と同じ行き先)
+  // (残ったのが別の狙いなら tree-run の settle が形の合う箱へ。10-22 オーナー「2 MOD 狙い・1 外れの時、初めから戻ってる」、解析君の ringTree の match と同じ行き先)。
+  // 狙い 2 つ + 外れ (満杯) の手は素の消去が一番安いか同じ (解析君 10-22 scripts/analysis/gold-ring-midway-ev.mjs: 始めに戻るは +1〜5 神、右側の消去のお告げは +13 神。
+  // 外れの MOD レベルが 40 未満なら削減 + カオスが安い時もあるが、ツリーは MOD レベルで分けられない)
   const J = (parent: string, id: string, back: string, lost = "start", remove: Hand = hand("annul")): Record<string, Partial<TreeBox>> => ({
     [id]: { out: "junk", parent, hand: remove, outs: [`${id}_g`, `${id}_l`] },
     [`${id}_g`]: { out: "junkGone", parent: id, back },
