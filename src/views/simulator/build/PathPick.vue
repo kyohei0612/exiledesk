@@ -28,7 +28,8 @@ const rows = computed(() => {
 const pct = (p: number): string => (p >= 0.1 ? `${(p * 100).toFixed(0)}%` : p >= 0.001 ? `${(p * 100).toFixed(1)}%` : `${(p * 100).toFixed(2)}%`);
 const removedText = (ms: readonly StageMod[]): string => (ms.length ? ms.map((m) => modText(m)).join(" / ") : tr("消えない", "Nothing removed"));
 /** もう付いている狙い (候補の行でもグレー) */
-const heldTarget = (r: PickRow): boolean => !!s.item.value && r.added.some((m) => targets.value.some((t) => hitsTarget(m, t) && allMods(s.item.value!).some((x) => hitsTarget(x, t))));
+const fractures = (r: PickRow): boolean => r.added.some((m) => m.fractured);
+const heldTarget = (r: PickRow): boolean => !fractures(r) && !!s.item.value && r.added.some((m) => targets.value.some((t) => hitsTarget(m, t) && allMods(s.item.value!).some((x) => hitsTarget(x, t))));
 const JUNK = OUT_LOOK.junk;
 const canMiss = computed(() => (pathGroups.value ?? []).some((g) => g.rows.some((r) => r.tiers.some((t) => !t.hit))));
 </script>
@@ -59,6 +60,7 @@ const canMiss = computed(() => (pathGroups.value ?? []).some((g) => g.rows.some(
         <p class="flex min-w-0 items-center gap-2">
         <span v-if="r.added.length" class="w-5 shrink-0 text-[12px] font-bold" :class="r.added[0]!.side === 'prefix' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ r.added[0]!.side === "prefix" ? "P" : "S" }}</span>
         <span class="min-w-0 flex-1 truncate text-[#c8c8ff]" :title="r.added.map((m) => modText(m)).join(' / ')">{{ r.added.length ? r.added.map((m) => modText(m)).join(" / ") : tr("何も付かない", "Nothing added") }}</span>
+        <span v-if="fractures(r)" class="shrink-0 rounded-sm bg-amber-500/25 px-1 text-[10px] text-amber-100">✦ {{ tr("フラクチャー", "Fracture") }}</span>
         <span v-if="r.hit" class="shrink-0 rounded-sm bg-[#c9a96a]/30 px-1 text-[10px] text-amber-100">{{ heldTarget(r) ? tr("付いた狙い", "Target (on)") : tr("狙い", "Target") }}</span>
         <span v-else-if="r.added.length" class="shrink-0 rounded-sm px-1 text-[10px]" :style="{ background: `rgba(${JUNK.c},0.22)`, color: `rgb(${JUNK.c})` }">{{ tr(`${JUNK.ja} MOD`, `${JUNK.en} mod`) }}</span>
         </p>
