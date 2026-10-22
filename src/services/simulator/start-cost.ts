@@ -4,9 +4,9 @@
  * ツリーの始まりの箱のベースの値段にも使う)。値段は price (高貴建て)、ベースの値段は引数
  */
 import { runeEnForId } from "./pattern";
-import { blankWith, fractureOdds, magicAugOdds } from "./sim-odds";
-import { greaterRouteCost, magicLoopCounts, type GreaterRoute } from "./sim-greater";
-import { sideOfMod, spamCounts, type PatchData, type RouteGrade, type SpamCounts, type StageItem } from "../craft-stage/engine";
+import { blankWith, fractureOdds } from "./sim-odds";
+import { greaterRouteCost, type GreaterRoute } from "./sim-greater";
+import { addGradeFor, anyOfAddOdds, sideOfMod, spamCounts, type PatchData, type RouteGrade, type SpamCounts, type StageItem } from "../craft-stage/engine";
 import { keepCompare } from "./keep-compare";
 import type { SimTargetIn } from "./quiz-build";
 import type { SimStartKind, SimTargetLike } from "./sim-methods";
@@ -18,14 +18,13 @@ export interface KeepPlan { host: string; together: number; chaos: number; chaos
  * 候補を作るマジックのループの回数 (2026-10-20 S1c、表 docs/org/simulator/notes/2026-10-20-start-routes.md): スパムシミュレーターの増強の道
  * (変成 → 狙いの側に MOD があれば消去、空なら増強) で狙いが付くまで。前の「(増強 + 消去 × 2) × 1 ÷ 当たり」はエンジンの半分だった (手袋 −48%・靴 −52%)。
  *   - 候補が 1 つ: エンジンの入口の spamCounts (打って数える、300 人)。値段に関係ないので狙い・段・等級・ルーンごとに覚える (1 回 60〜190 ms)
- *   - 候補が 2 つ以上 (どれか 1 つ): 【仮】spamCounts は「どれか」を受けないので、同じ打ち方の式 magicLoopCounts(当たりの和, null, 側の割合)。
- *     解析君の突き合わせで、この式とエンジンは 3% 以内 (step4-formula-entry.md)。入口が「どれか」を受けたら差し替え
+ *   - 候補が 2 つ以上 (どれか 1 つ): 同じ spamCounts の anyOf (前の式 magicLoopCounts は 10-22 にやめた。解析君 math/notes/2026-10-22-magic-anyof.md でエンジン 25 通りと 2.5% 以内)
  */
 const loopCache = new Map<string, SpamCounts>();
-function augmentLoop(d: Parameters<typeof spamCounts>[0], white: Parameters<typeof spamCounts>[1], grade: RouteGrade, cand: { modId: string; minTierIndex: number }): SpamCounts {
-  const key = `${white.base}|${white.itemLevel}|${(white.augments ?? []).join(",")}|${grade}|${cand.modId}:${cand.minTierIndex}`;
+function augmentLoop(d: Parameters<typeof spamCounts>[0], white: Parameters<typeof spamCounts>[1], grade: RouteGrade, cands: ReadonlyArray<{ modId: string; minTierIndex: number }>): SpamCounts {
+  const key = `${white.base}|${white.itemLevel}|${(white.augments ?? []).join(",")}|${grade}|${cands.map((c) => `${c.modId}:${c.minTierIndex}`).join(",")}`;
   let r = loopCache.get(key);
-  if (!r) { r = spamCounts(d, white, "augment", grade, [cand], { seed: 20261020 }); loopCache.set(key, r); }
+  if (!r) { r = cands.length === 1 ? spamCounts(d, white, "augment", grade, cands, { seed: 20261020 }) : spamCounts(d, white, "augment", grade, [], { seed: 20261020, anyOf: cands }); loopCache.set(key, r); }
   return r;
 }
 
@@ -70,32 +69,24 @@ export function startCalc(o: StartCalcIn) {
   // 狙いのルーンを差した MOD の無いマジック (ウートレッドの時間術などルーンの MOD を狙う時、ルーンで増える MOD も割る方に入れる。前は差していない置き場で割り、
   // 靴の移動スピードが増強 1 回で 75% と出ていた。2026-10-20 見本の靴。2 の付きやすさ shareOf と同じ)。アイテムレベルは ③ の入力
   const blank = blankWith(d, it, o.itemLevel, "magic", o.allTargets.flatMap((t) => [t, ...(t.alts ?? [])]));
-  const pAt = (odds: ReturnType<typeof magicAugOdds>) => {
-    // 候補ごとに自分の側の候補の中で (候補は両側でも良い)
-    const each = o.fracMembers.map((r) => ({ modId: r.modId, name: `${r.text} (${r.rank} 以上)`, p: odds.hit(sideOfMod(d, r.modId), [r]) }));
-    return { each, pHit: Math.min(1, each.reduce((a, x) => a + x.p, 0)) };
-  };
-  const grades = ([
-    { g: "perfect", aug: "augment_perfect", tra: "transmute_perfect", ja: "完全" },
-    { g: "greater", aug: "augment_greater", tra: "transmute_greater", ja: "上級" },
-    { g: "base", aug: "augment", tra: "transmute", ja: "無印" },
-  ] as const).map((x) => ({ ...x, odds: magicAugOdds(d, blank, x.aug) }));
-  const gr = grades.find((x) => pAt(x.odds).pHit > 0) ?? grades[0]!;
+  const gr = addGradeFor(d, blank, o.fracMembers);
   // フラクチャーの当たり (狙い・反対側・王者 / 高貴の 3 MOD + 骨の壁。4 MOD を買う道も壁つき 4 MOD で同じ)
   const fracP = fractureOdds(d, blank, o.fracMembers.map((r) => ({ modId: r.modId, minTierIndex: r.minTierIndex })));
   // 狙いのルーン (ルーンの MOD をフラクチャーで狙う時は、作り直すたびに白へ差す。2026-10-20 見本の靴: ウートレッドの代金が入っていなかった)
   const fracRunes = [...new Set(o.fracMembers.map((r) => d.mods.get(r.modId)?.rune).filter((r): r is string => !!r))].map((id) => runeEnForId(id)).filter((r): r is string => !!r);
   const runeLines = fracRunes.map((en) => ({ name: nameOf(`rune:${en}`), n: 1, each: priceOf(`rune:${en}`) }));
   // 候補ごとの付きやすさと合計 (どれか 1 つで良い)
-  const { each, pHit } = pAt(gr.odds);
+  // 候補ごとに自分の側の候補の中で (候補は両側でも良い)。回数は pHit (側の割合込みの pAny を使うと側の割合を 2 回掛ける、解析君 10-22)
+  const any = anyOfAddOdds(d, gr.odds, o.fracMembers), pHit = any.pHit;
+  const each = any.each.map((x, i) => ({ ...x, name: `${o.fracMembers[i]!.text} (${o.fracMembers[i]!.rank} 以上)` }));
   const abyss = `essence:perfect:${it.cls.id}/PerfectEssence_EssenceAbyss`;
   // マジックのループの変成・増強・消去の平均 (上の augmentLoop の説明)
   const fside = sideOfMod(d, m.id);
   // 増強で付く確率が 0 の MOD (金の指輪の見本の特殊な MOD など) は回して数えない (打ち止めまで打ち続け 1 回 4 秒、ツリーを開くと真っ黒、10-22。結果は前も ∞)
-  const one = o.fracMembers.length === 1 && pHit > 0 ? augmentLoop(d, { ...blank, rarity: "normal" }, gr.g, { modId: o.fracMembers[0]!.modId, minTierIndex: o.fracMembers[0]!.minTierIndex }) : null;
-  const lc = one && !one.off && one.hitRate > 0
-    ? { transmute: one.uses[gr.tra] ?? 1, augment: (one.uses[gr.aug] ?? 0) / one.hitRate, annul: (one.uses.annul ?? 0) / one.hitRate }
-    : pHit > 0 ? { transmute: 1, ...magicLoopCounts(pHit, null, gr.odds.share[fside]) } : { transmute: 1, augment: Infinity, annul: Infinity };
+  const loop = pHit > 0 ? augmentLoop(d, { ...blank, rarity: "normal" }, gr.g, o.fracMembers.map((r) => ({ modId: r.modId, minTierIndex: r.minTierIndex }))) : null;
+  const lc = loop && !loop.off && loop.hitRate > 0
+    ? { transmute: loop.uses[gr.tra] ?? 1, augment: (loop.uses[gr.aug] ?? 0) / loop.hitRate, annul: (loop.uses.annul ?? 0) / loop.hitRate }
+    : { transmute: 1, augment: Infinity, annul: Infinity };
   const rerolls = lc.augment;
   const white = o.white ?? 0;
   // buy = 4 MOD のベースを買っても要る物 (壁とフラクチャー)
