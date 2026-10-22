@@ -330,7 +330,12 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
       at = to;
       continue;
     }
-    if (!b.hand) return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("次の手・戻り先が無い", "No next craft or return"), item, noBox: true } };
+    if (!b.hand) {
+      // 完成 = 完成の狙い (0 完成形の設定) が全部付いた時点。手の無い箱で揃っていれば完成 (狙いを全部付けたスタート、10-22 14 本目)
+      const goals = doc.memoAims ?? [];
+      if (goals.length && goals.every((a) => aimHeld(data, item, a))) return { end: "done", cost, at, visits, uses, restarts, odd, why: { reason: tr("完成", "Done"), item } };
+      return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("次の手・戻り先が無い", "No next craft or return"), item, noBox: true } };
+    }
     // 打ち止めの時のアイテムも残す (台本で輪から抜けない理由を見る。止まりの集計 stuckWhy には入れない)
     if (++steps > o.capSteps || cost > o.capDiv) return { end: "capped", cost, at, visits, uses, restarts, odd, why: { reason: tr("打ち止め", "Capped"), item } };
     hops = 0;
