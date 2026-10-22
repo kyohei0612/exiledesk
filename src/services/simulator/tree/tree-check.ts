@@ -4,20 +4,24 @@
  *
  * 辿り方: 5 人それぞれ、始まりから箱の手をエンジンで打ち、矢印の先の結果の箱を全部 (当たり・外れ・消えた) 順に 1 回ずつ通す
  * (その結果が出るまで打ち直す。乱数任せにしない)。繰り返しの手 (カオススパム) は当たりの箱へ 1 発で行く前提 = 当たりが出るまで打ち直すだけ。
- * 戻りの矢印は 1 回だけ辿る (戻り先の手がその状態で打てるか)。
+ * 戻りの矢印は 1 回だけ辿り、戻った状態のまま先も辿る (箱ごとに「ふつうに着いた」と「戻りで着いた」の 2 回まで、戻りの中の戻りでは止める)。
+ * 10-22 靴を白紙から組んで: 狙いが消えて外れを持ったまま始めに戻り、カオスで当たるとサフィックスが満杯で次の高貴が打てず 100 人中 64 人止まるのに、
+ * 前は戻った先の手が打てるかだけ見て先へ進まず、精査に出なかった
  */
 import { allMods, modBoostsOf, mulberry32, stepOutcomes, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { CATALYSING, isCatalyst } from "./tree-hands";
 import { aimKey, type Aim, type OutKind, type TreeDoc } from "./tree-model";
 import { aimHeld, aimsOf, handAims, handProblem, outcomeOf, playHand, sampleOf } from "./tree-sample";
-import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapesOf } from "./tree-run";
+import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, runTree, settle, shapesOf } from "./tree-run";
 import { withTreeTune } from "./tree-tune";
 import { tr } from "../../../i18n/lang";
 
-export type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected";
+export type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck";
 export interface CheckIssue { boxId: string; kind: CheckKind; text: string }
 
 const PEOPLE = 5;
+/** 回して止まる箱を数える人数 (5 人を辿るだけでは、止まる形 (例: 外れを持ったまま戻って満杯) を引かない事がある) */
+const RUN_PEOPLE = 30;
 /** 結果の名前 (画面の tree-names の OUT_LOOK と同じ言葉) */
 const OUT_NAME: Partial<Record<OutKind, [string, string]>> = { hit: ["当たり", "Hit"], junk: ["外れ", "Miss"], junkGone: ["外れが消えた", "Miss removed"], lost: ["狙いが消えた", "Target lost"] };
 const outName = (o: OutKind): string => { const n = OUT_NAME[o]; return n ? tr(n[0], n[1]) : o; };
@@ -87,7 +91,7 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
 
   // 4) エンジンで 5 人を辿る: 打てない手・付かない当たり
   if (doc.fracture) {
-    const cant = new Map<string, { n: number; reason: string }>();
+    const cant = new Map<string, { who: Set<number>; reason: string }>();
     const never = new Set<string>();
     /** 結果の箱に無い結果が出る箱 (箱 → 人数と出る結果)。結果が 1 通りとして箱を 1 つにした手で、想定外の形で着いた時など (10-22 ブラック) */
     const odd = new Map<string, { who: Set<number>; outs: Set<string> }>();
@@ -115,14 +119,13 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
         // 打てない手 (効かない・消せる物が無いお告げも。tree-sample の handProblem、オーナー 10-22「進行不能」)
         const why = handProblem(data, item, b.hand);
         const first = playHand(data, item, b.hand, rng, handAims(doc, b.id, aims));
-        if (why || !first.applied) { const c = cant.get(id) ?? { n: 0, reason: why ?? first.reason ?? "" }; c.n++; cant.set(id, c); return; }
+        if (why || !first.applied) { const c = cant.get(id) ?? { who: new Set<number>(), reason: why ?? first.reason ?? "" }; c.who.add(person); cant.set(id, c); return; }
         // 結果の箱に無い結果 (エンジンの stepOutcomes で起こりうる枝を全部。未発現が付く手・繰り返しの手は見ない)
         if (!b.hand.repeat) {
           const miss = (stepOutcomes(data, item, b.hand.currency, b.hand.omens) ?? []).filter((o) => !o.void && !unrevealedOf(o.item))
             .map((o) => outcomeOf(data, item, o.item, aims)).filter((oc) => !outBoxOf(doc, b, oc));
           if (miss.length) { const c = odd.get(id) ?? { who: new Set<number>(), outs: new Set<string>() }; c.who.add(person); for (const oc of miss) c.outs.add(outName(oc.out)); odd.set(id, c); }
         }
-        if (viaBack) return; // 戻りの矢印で着いた時は、戻り先の手がこの状態で打てるかだけ見る (先は通常の道で辿る)
         // 品質 (オーナー 10-22「ルート精査の時の品質のチェック」): 触媒の品質が当たりの MOD に効くかは下で見る。
         // 聖別・コラプトの後の手・カタリストが入らない手は、上の打てない手 (エンジンの理由) で出る。触媒は打つと品質を使い切るので、前の品質の入れ替えは起きない
         const tag = b.hand.catalyst && b.hand.omens.includes(CATALYSING) ? b.hand.catalyst.slice("catalyst_".length) : null;
@@ -141,7 +144,7 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
             const m = allMods(got).find((x) => x.modId === ob.aim!.modId);
             if (m) { hits++; if (modBoostsOf({ ...got, quality: Math.max(got.quality, 1), catalystQuality: 1, qualityTag: tag }, m, data).some((k) => k.kind === "quality")) boosted = true; }
           }
-          if (got) walk(settle(data, doc, shapes, o, got, aims), got, false);
+          if (got) walk(settle(data, doc, shapes, o, got, aims), got, viaBack);
           // もう付いているかもしれない狙い (狙いが消えた後の取り直し、heldSets) は、付いていない人だけが着くので数えない
           else if (ob.out === "hit" && ob.aim && !viaBack && !heldSets(doc, id).some((h) => h.includes(aimKey(ob.aim!)))) never.add(o);
         }
@@ -149,8 +152,11 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
       };
       walk("start", start, false);
     }
-    for (const [id, c] of cant) add(id, "cantUse", tr(`この箱に着いた状態では手が打てない (${PEOPLE} 人中 ${c.n} 人): ${c.reason}`, `The craft can't be used here (${c.n} of ${PEOPLE}): ${c.reason}`));
+    for (const [id, c] of cant) add(id, "cantUse", tr(`この箱に着いた状態では手が打てない (${PEOPLE} 人中 ${c.who.size} 人): ${c.reason}`, `The craft can't be used here (${c.who.size} of ${PEOPLE}): ${c.reason}`));
     for (const [id, c] of odd) add(id, "unexpected", tr(`結果の箱に無い結果も出る (${PEOPLE} 人中 ${c.who.size} 人): ${[...c.outs].join("・")}。回すと形の合う箱へ進み、無ければ止まる`, `Results with no box can happen (${c.who.size} of ${PEOPLE}): ${[...c.outs].join(", ")}. Runs go to a box of the same shape, or stop`));
+    // 5) 回して止まる箱 (tree-run を 30 人、値段 0)。10-22 靴を白紙から組んで: 100 人中 64 人が止まる箱を上の辿り方では引かなかった
+    const run = runTree(data, doc, { n: RUN_PEOPLE, seed: 1, price: () => 0 });
+    for (const [id, n] of Object.entries(run.stuckAt)) add(id, "stuck", tr(`回すと ${RUN_PEOPLE} 人中 ${n} 人がここで止まる (この箱の手が打てない形で着く。外れを消す手を前に置くか、形の合う箱へ戻す)`, `${n} of ${RUN_PEOPLE} runs stop here (they arrive in a shape this craft can't be used on; remove the miss first or return to a box of that shape)`));
     for (const id of never) add(id, "neverHit", tr(`上の手を ${TRIES} 回打ってもこの札が付かなかった (側・段・手を確かめる)`, `This mod never hit in ${TRIES} tries of the craft above (check side, tier and craft)`));
   }
   return out;
