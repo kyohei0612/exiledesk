@@ -23,14 +23,14 @@ export function modsOfItem(): BuildMod[] {
 export const aimsOf = (ms: readonly BuildMod[]): Aim[] => ms.map((m) => ({ modId: m.modId, tier: m.tier }));
 export const fracturedOf = (p: { mods: readonly BuildMod[] }): BuildMod | undefined => p.mods.find((m) => m.fractured);
 export const nameOfMod = (m: BuildMod): string => modText(m);
-/** タブの名前に使う MOD の文面 (数値は #。組み直すたびに数値が振り直されて名前が変わらないように。文面はエンジンの入口の modListFor) */
-const templates = computed(() => {
+/** タブの名前に使う段の文 (例「最大マナ (165-179)」。組み直すたびに数値が振り直されて名前が変わらないように。文はエンジンの入口の modListFor の段) */
+const tierTexts = computed(() => {
   const d = s.data.value, it = s.item.value;
   const m = new Map<string, string>();
-  if (d && it) for (const r of modListFor(d, it)) { m.set(r.id, r.template); for (const t of r.tiers) if (t.modId) m.set(t.modId, r.template); }
+  if (d && it) for (const r of modListFor(d, it)) for (const t of r.tiers) m.set(`${t.modId ?? r.id}|${t.rank}`, t.text);
   return m;
 });
-export const shortOfMod = (m: BuildMod): string => templates.value.get(m.modId) ?? modText(m);
+export const shortOfMod = (m: BuildMod): string => tierTexts.value.get(`${m.modId}|${m.tierName}`) ?? modText(m);
 
 let rebuilding = false;
 /** カードを白から組み直す (クラフト台の「白に戻す」+ 始めの MOD を足す。付けられない物は足さない) */
