@@ -62,3 +62,11 @@
 - ③ 済み: engine.ts から for-sim / for-emu の名前と modRawText を消した。両方が使う omensAllowedFor は核の apply-currency.ts へ。見張り C (控え 0) とエミュの A (控え 178) を足した (2d1e0ac4)。
 - 画面の移し ① 棚一式 91a5aff9 (棚が読む omenBlock・お告げの倍率・聖別の上下限は核へ上げた)・② アイテムのカード f81c2e4c・③ stage-steps・use-stage-fx 90827188。D 41 → 16。開発版 (31f9d083) でクラフト台 (棚・お告げの欄・カード・Tab の %) とツリー (完成の MOD・打つ手の棚) を窓なし Chrome で開き、本番と同じ形・エラー 0。
 - 残り 16 行の多くはクラフト台の中の「シミュの形」(craftStage.mode === "sim"、simTargets・StageModList の付け方の窓・StageRecipeStart・sim-recipe-store) から。今も使う機能か死蔵かをブラックに聞いている (死蔵なら消すだけ、使うなら差し込み口)。
+
+## 進み (10-23 朝、移し ④⑤ と for-sim の整理)
+- クラフト台の中の旧シミュの形 (mode "sim" の旧 ①〜⑥、死蔵 A2・A3・B・C のエミュ) を消した 37d1bdcf (ブラック: オーナーの決めで死蔵)。D 16 → 9。
+- ④ MOD 一覧一式を共通へ c6abc2f1 (重みの札の defaultWeightOf・OVERRIDDEN は核へ)。⑤ ツリーへの入口を共通の差し込み口 sim-links.ts に 1af90beb。D → 6 (残りはクラフト台の上で動くチュートリアル 6 行。CourseHost が差し込み口の作りなので今は残す)。
+- 共通の部品の置き場は オーナーの名前 for-share に e7c697ef (src/components/for-share・src/state/for-share)。
+- for-sim の今日の写し (核の関数の言い換え・包み) を外した 4b6f35c1: シミュの services/simulator/tree/tree-play.ts へ戻し、核の関数を直に呼ぶ。engine-sim.ts に残したのは核に無い物だけ (fillCatalyst 一式 = 最大まで何個、magic-odds = 候補の組の付きやすさ)。見本の木 4 本を前 (HEAD) と後で同じ種で回して同じ結果。
+- 気付き: `git rm` / `git mv` で先に index に積むと、他の人の引数なしの commit に混ざる (4f97fc8e に for-sim の削除が入った)。移す時は mv してすぐ `git commit -- <パス>` で。
+
