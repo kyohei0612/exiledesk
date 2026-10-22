@@ -14,7 +14,9 @@ import { modText, tr } from "../../../i18n/lang";
 import type { RowTag } from "../../craft-stage/stage-item-row-tag";
 import { openTreePage } from "../../../web/page";
 import { useTree } from "../tree/use-tree";
-import type { TreeStart } from "../../../services/simulator/tree/tree-model";
+import { tidy, type TreeStart } from "../../../services/simulator/tree/tree-model";
+import { linkSameShape } from "../../../services/simulator/tree/tree-run";
+import { buildSpine, type SpineStep } from "../../../services/simulator/build/path-spine";
 
 /** 今のカードの MOD (未発現は数えない) */
 export function modsOfItem(it: StageItem | null = s.item.value): BuildMod[] {
@@ -122,17 +124,27 @@ export function pickMiss(): void {
 }
 
 /**
- * ④ ツリーへ: 始まりの箱 = フラクチャーが付いた時のアイテム (狙いの MOD は段を指名、外れ MOD は乱数の数)、欲しい MOD = 狙い。
- * ③ の手を背骨の箱にするのは次 (今は始まりだけ)
+ * ④ ツリーへ: 始まりの箱 = フラクチャーが付いた時のアイテム (狙いの MOD は段を指名、外れ MOD は乱数の数)、欲しい MOD = 狙い、
+ * 背骨 = その後の手 (③) を木の箱の列に (path-spine.ts。外れの箱の行き先はツリーで決める)
  */
 export function toTree(): void {
   const it = s.item.value;
   if (!it) return;
-  const at = s.log.value.find((p) => allMods(p.after).some((m) => m.fractured))?.after ?? it;
+  const log = s.log.value.filter((p) => p.out.applied && !NOT_CURRENCY.test(p.out.currency));
+  const fi = log.findIndex((p) => allMods(p.after).some((m) => m.fractured));
+  const at = fi >= 0 ? log[fi]!.after : log[0]?.before ?? it;
   const ms = allMods(at).filter((m) => !m.unrevealed);
   const start: TreeStart = { rarity: "rare", mods: modsOfItem(at).filter((m) => m.fractured || targets.value.some((t) => t.modId === m.modId && m.tierIndex >= t.minTierIndex)).map((m) => ({ modId: m.modId, tier: m.tier, ...(m.fractured ? { fractured: true as const } : {}) })) };
   const startRandom = ms.length - start.mods.length;
-  useTree().startTreeWith(it.base, s.itemLevel.value, { aims: finished.value.map((m) => ({ modId: m.modId, tier: m.tier })), start, startRandom });
+  const steps: SpineStep[] = log.slice(fi + 1).map((p) => ({ currency: p.out.currency, omens: p.out.omen ? p.out.omen.split("+") : [], before: p.before, added: p.added, removed: p.removed }));
+  const tree = useTree();
+  tree.startTreeWith(it.base, s.itemLevel.value, { aims: finished.value.map((m) => ({ modId: m.modId, tier: m.tier })), start, startRandom });
+  tree.edit((d) => {
+    buildSpine(d, steps, finished.value.map((m) => ({ modId: m.modId, tier: m.tier, tierIndex: m.tierIndex })));
+    // 画面で手を置いた時と同じく、行き先の無い結果の箱は同じ形の箱へ自動でつなぎ、整列する
+    linkSameShape(d, Object.values(d.boxes).filter((b) => !b.hand && !b.back && !b.done).map((b) => b.id));
+    tidy(d);
+  });
   simBuild.value = false;
   buildStage.value = "build";
   openTreePage();
