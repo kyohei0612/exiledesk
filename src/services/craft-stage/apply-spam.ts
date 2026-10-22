@@ -33,9 +33,11 @@ export function applySpam(data: PatchData, item: StageItem, key: string): StageA
   let built: StageItem;
   try { built = startFrom(data, item.base, item.itemLevel, { mods: s.mods, rarity: s.rarity }, 0); }
   catch (e) { return { applied: false, item, added: [], removed: [], reason: e instanceof Error ? e.message : String(e) }; }
-  const before = [...item.prefixes, ...item.suffixes];
-  const after = [...built.prefixes, ...built.suffixes];
-  return { applied: true, item: { ...item, rarity: s.rarity, prefixes: built.prefixes, suffixes: built.suffixes }, added: after, removed: before };
+  // 付いた / 消えたは変わった MOD だけ (フラクチャーなど、そのまま残った物は数えない)
+  const sig = (m: StageItem["prefixes"][number]): string => `${m.modId}#${m.tierIndex}#${m.values.join(",")}#${m.fractured ? 1 : 0}`;
+  const before = [...item.prefixes, ...item.suffixes], after = [...built.prefixes, ...built.suffixes];
+  const was = new Set(before.map(sig)), now = new Set(after.map(sig));
+  return { applied: true, item: { ...item, rarity: s.rarity, prefixes: built.prefixes, suffixes: built.suffixes }, added: after.filter((m) => !was.has(sig(m))), removed: before.filter((m) => !now.has(sig(m))) };
 }
 
 const ROUTE_JA: Record<string, [string, string]> = { augment: ["増強スパム", "Augment spam"], chaos: ["カオススパム", "Chaos spam"], exalt: ["高貴スパム", "Exalt spam"] };
