@@ -1,13 +1,5 @@
 # ジン部長 のやる事
 
-## ブラックへの報告 (送信の上限で送れなかった分、10-22。宛先は 7 代目 local_ec583720)
-- ツリーで Tab → MOD 一覧が開く件、直した (b6a11b10、push 済み): クラフト台は WebApp.vue で v-show で隠しているだけなので、ツリーのほかスパムシミュ・デイリー・要望・レシピのページでも Tab (MOD 一覧) と R / Ctrl+Z (1 手戻す) が後ろで効いていた。CraftStage.vue の onKey で、自分が隠れている (getClientRects が 0) 時は抜ける形に (Esc で手放すのはそのまま)。型チェック通過、**画面では見ていない** (開発版・Chrome の許可待ち。古い塊の読み直しと一緒に確かめたい)。
-- aimHits の設定 済み (9abbd784、push 済み): 入口の `aimHits(m, t, { data, sameText: true })` = 同じ系統で効果の文も同じ別の modId も当たり、段は段の名前の T で比べる (狙いの T は minTierIndex = tiers.length - T)。既定 (設定なし) は今まで通り、未発現は数えない、型の AimHitOpts も入口から。aimHeld と突き合わせ (台本、自作): 見本の木 10,340 回で食い違い 0、系統 + 文が同じ組 800 組の総当たり 347 万回で食い違い 0。シミュ部長が aimHeld を置き換えられる。
-- 7 代目へ: 下の「古い塊で 1 回だけ読み直す」の開発版と画面での確かめのため、開発版 (deploy:web-dev) と確認用 Chrome (9333 はシミュ部長が使用中なので、別の番号でよければそれで) を使ってよいかください。送信は上限で止まっている (オーナーがこのセッションに打つまで)。
-- 古い塊で 1 回だけ読み直す (案 ①): 作った (95310568、push 済み、本番にはまだ)。src/web/pwa.ts の startStaleReload を main.ts から (開発中は呼ばない)。vite:preloadError で sessionStorage に印を書いて 1 回 location.reload、1 分以内の 2 回目・印を書けない端末は読み直さずに今までのエラー。確かめ: 型チェック通過、台本 (自作、偽の window) で 1 回目は読み直す・すぐの 2 回目はしない・1 分後はまた 1 回・保存を止めた端末はしない。**開発版と画面での確かめはまだ**: 送信の上限で開発版を使う前の 1 行が送れない・9333 はシミュ部長が使用中なので、「使ってよい」をもらったら deploy:web-dev → 古い版のタブを開いたまま新しい版を出し、後から読む画面 (スパムシミュなど) を開いて 1 回読み直すのを見る。pending-release.md に OK 待ちで 1 行。
-- SW の ERR_FAILED の調べ (記録 notes/2026-10-22-sw-err-failed.md、直していない、9333 は返した): 本番・開発版とも、新しい profile・再読み込み 2 回 (70 本以上が SW から)・cookie を消した後のどれでも ERR_FAILED は再現しなかった (cookie 無しは入口の 404 がそのまま出る)。sw.js で ERR_FAILED になるのは SW の中の通信が投げた時だけなので、シミュ部長の台本の通信の止め方 (CDP の Fetch・オフライン) の見込み。直す案: ① (おすすめ) 版が替わった後に開いたままのタブが消えた古い JS の塊を読むと壊れるので vite:preloadError で 1 回読み直す (「開発版で変わってなさそう」はこちらの見込みが高い) ② sw.js の cacheFirst に受け皿を足して VERSION を上げる。
-- 入口に aimHits を出した: services/craft-stage/engine.ts の `aimHits(m: StageMod, t: AimTarget): boolean` (aim-odds の hits そのまま = 未発現でなく、同じ modId で段が minTierIndex 以上。振る舞いは同じ)。0d11e79d、push 済み、型チェック通過。シミュ部長 12 本目へ。use() の seed・setUseHook (251a20b0) のお知らせも受けた。待機中。
-
 ## やる事
 - 引き継ぎ (10-22 深夜、4 本目 → 5 本目): 下の「4 本目の分」→「3 本目の分」の順に先に読む。宛先のブラックは 5 代目 (dev/todo.md の表)。
 - 4 本目の分 (全部 push 済み):
