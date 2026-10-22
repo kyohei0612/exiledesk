@@ -263,7 +263,7 @@ function onTarget(b: Box): void {
 const { issues, issuesOpen, issuesFold, checking, progress, onCheck, issueOf } = useTreeCheck(doc);
 /** 待たせている間の小さな札 (題の横。データの読み込み・箱を順に出している間、共通の BusyTag。精査の進みは精査の帯の上) */
 // 100 人回す (結果は木の上に重ねる層だけ、use-tree-run.ts・TreeRunLayer.vue。値段 = 始まりの箱の一番安い始め方 + 今の相場)
-const tr100 = useTreeRun(doc, () => t.baseCost.value?.best?.cost ?? 0, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit()));
+const tr100 = useTreeRun(doc, () => t.baseCost.value?.best?.cost ?? 0, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
 const busy = computed((): { text: string; n?: number; of?: number } | null => {
   if (!s.data.value) return { text: tr("読み込み中", "Loading") };
   if (tr100.running.value) return { text: tr("回している", "Running"), n: tr100.result.value?.n ?? 0, of: RUN_N };

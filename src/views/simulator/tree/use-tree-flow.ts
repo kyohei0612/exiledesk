@@ -73,7 +73,8 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
    * 全体に合わせる (大きくはしない。収まる一番大きい段)。右下に浮かぶ道具とミニマップ (TreeCanvasTools、幅 RIGHT_ROOM) の所を空けて収める
    * (Vue Flow の fitView は浮かぶ物を知らず、右下の箱がミニマップの下に隠れた。10-22 手元で見た)
    */
-  async function fit(): Promise<void> {
+  /** whole = スマホでも 50% の下限を使わず木の全体 (回すの 1 人目が歩く時。光る枠を画面の外へ出さない) */
+  async function fit(whole = false): Promise<void> {
     const b = bounds.value, w = f.dimensions.value.width, h = f.dimensions.value.height;
     if (!w || !h) return;
     const PAD = 28, PAD_MIN = 12, RIGHT_ROOM = 250;
@@ -88,7 +89,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     const room = level(w - left - RIGHT_ROOM) >= level(w - left) ? RIGHT_ROOM : 0;
     const lv = level(w - left - room);
     // スマホ (768px 未満) は 50% より小さくしない (20% で箱の字が読めなかった、10-22)。収まらない時は始まりの箱を上の真ん中に
-    if (innerWidth < 768 && lv < PHONE_MIN) {
+    if (!whole && innerWidth < 768 && lv < PHONE_MIN) {
       const z = PHONE_MIN * pageZ.value, st = doc.value.boxes.start;
       if (st) { await f.setViewport({ x: w / 2 - (st.x + BOX_W / 2) * z, y: PAD - st.y * z, zoom: z }); return; }
     }
