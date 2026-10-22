@@ -7,7 +7,7 @@ import { craftStage as s, nameOf } from "../../../state/craft-stage";
 import { priceOfKey } from "../../../state/emulator/craft-stage-shelf";
 import { freshItem, modListFor, mulberry32 } from "../../../services/craft-stage/engine";
 import { startItemOf } from "../../../services/simulator/tree/tree-sample";
-import { isTreeDoc, migrateStart, newTree, startOf, type Aim, type StartMod, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { isTreeDoc, migrateStart, newTree, startOf, type Aim, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { treeBaseCost } from "../../../services/simulator/tree/tree-base-cost";
 import { tr } from "../../../i18n/lang";
 
@@ -104,10 +104,13 @@ function toggleGoal(modId: string, tier: number): void {
 const goalItem = computed(() => {
   const data = s.data.value, d = doc.value;
   if (!data) return null;
-  return startItemOf(data, { ...d, start: { rarity: startOf(d).rarity, mods: goals.value.map((a) => ({ modId: a.modId, tier: a.tier })) }, startRandom: 0 }, mulberry32(1));
+  return startItemOf(data, { ...d, start: { rarity: goalRarity.value, mods: goalRarity.value === "normal" ? [] : goals.value.map((a) => ({ modId: a.modId, tier: a.tier })) }, startRandom: 0 }, mulberry32(1));
 });
-/** 完成形のレアリティ (スタートの箱の形と同じ start.rarity。1 つ戻すで戻せる) */
-function setRarity(r: "magic" | "rare"): void { edit((d) => { migrateStart(d); d.start!.rarity = r; }); }
+/** 完成形のレアリティ (0 の箱、TreeDoc.goal。無ければレア。1 つ戻すで戻せる) */
+const goalRarity = computed((): TreeRarity => doc.value.goal?.rarity ?? "rare");
+function setRarity(r: TreeRarity): void { edit((d) => { if (r === "rare") delete d.goal; else d.goal = { rarity: r }; }); }
+/** スタートのレアリティ (start.rarity)。ノーマルは MOD 無しの白なので、始まりの MOD と乱数の数を外す (1 つ戻すで戻せる) */
+function setStartRarity(r: TreeRarity): void { edit((d) => { migrateStart(d); d.start!.rarity = r; if (r === "normal") { d.start!.mods = []; delete d.startRandom; } }); }
 /** blank = 始まりの箱に手が無い (白紙) */
 const isBlank = (d: TreeDoc): boolean => !d.boxes.start?.hand && !d.boxes.start?.split && Object.keys(d.boxes).length === 1;
 /** 白紙の木を開いた時にベースを選ばせるか (読んだら下ろす) */
@@ -211,5 +214,5 @@ const baseCost = computed(() => {
 const baseCostBusy = computed(() => !!s.data.value && !costReady.value);
 
 export function useTree() {
-  return { goalPage, startPage, goals, hasGoal, toggleGoal, goalItem, setRarity, fitIlvl, setFit, doc, edit, undo, canUndo, reset, setBase, setStartRandom, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
+  return { goalPage, startPage, goals, hasGoal, toggleGoal, goalItem, goalRarity, setRarity, setStartRarity, fitIlvl, setFit, doc, edit, undo, canUndo, reset, setBase, setStartRandom, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
 }

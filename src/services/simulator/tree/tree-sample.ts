@@ -194,8 +194,8 @@ function reveal(data: PatchData, r: StageApply, rng: () => number, aims: readonl
  */
 export function startItemOf(data: PatchData, doc: TreeDoc, rng: () => number): Sample {
   const st = startOf(doc);
-  // マジックはノーマルから付ける (付けるとマジック、エンジンの force の決まり)。フラクチャーはレアにだけ付く (force がレアにする)
-  const magic = st.rarity === "magic" && !st.mods.some((m) => m.fractured);
+  // マジックはノーマルから付ける (付けるとマジック、エンジンの force の決まり)。ノーマルは MOD を付けない白 (画面で MOD と乱数を外す)。フラクチャーはレアにだけ付く (force がレアにする)
+  const magic = (st.rarity === "magic" || st.rarity === "normal") && !st.mods.some((m) => m.fractured);
   let item = freshItem(data, doc.base, doc.itemLevel, magic ? "normal" : "rare");
   // 選んだルーンを先に差す。ルーンの MOD はそのルーンを差して付く (force が差す)。差すソケットを要る数だけ開けておく (手袋の投射物 +2 = コルの狩り、10-22)
   const runes = st.runes ?? [];

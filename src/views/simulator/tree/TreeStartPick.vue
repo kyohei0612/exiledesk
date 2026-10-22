@@ -2,7 +2,7 @@
   TreeStartPick.vue — スタートの箱の重ね窓 (TreeStartPage.vue) の中身: 始まりの形 (2026-10-22 オーナー「始まりの MOD を決めさせる、ほかは自由」。前はフラクチャー 1 つだけ)。
   10-22 ツリー特化: 始まりに付いている MOD は 0 完成形の設定の狙いから選ぶ (全部の MOD の一覧は出さない)。ベースの値段は回し終わった後の結果のまとめへ移す (ここからは外した)。
   ツリーはフラクチャーの後だけを扱う (オーナー 10-22) ので、始まりはレア + 始まりに付いている MOD (段は指名、✦ = フラクチャー、1 つまで) + 差したルーン + 乱数の MOD の数。
-  マジックの始まりは画面から外した (形の rarity は別軸のために残す)。付けるのはエンジンの force (ルーンの MOD はそのルーンを差して付く)。作れない時は見本の理由を出す
+  レアリティはノーマル / マジック / レア (10-22 オーナー「ノーマルからも始められるように」、ノーマルは MOD と乱数を外す)。付けるのはエンジンの force (ルーンの MOD はそのルーンを差して付く)。作れない時は見本の理由を出す
 -->
 <script setup lang="ts">
 import { computed, ref } from "vue";
@@ -13,6 +13,7 @@ import { startItemOf } from "../../../services/simulator/tree/tree-sample";
 import { craftStage as s } from "../../../state/craft-stage";
 import { nameOf, tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
+import RarityTabs from "./TreeRarityTabs.vue";
 
 const t = useTree();
 const st = computed(() => startOf(t.doc.value));
@@ -59,6 +60,10 @@ const problem = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.v
 
 <template>
   <div data-tree-start-pick class="flex min-h-0 flex-1 flex-col gap-3">
+    <!-- スタートのレアリティ (ノーマル = MOD 無しの白いベースから、10-22 オーナー)。ノーマルの間は始まりの MOD と乱数の数を出さない -->
+    <span class="flex items-center gap-2 text-[13px]"><span>{{ tr("レアリティ", "Rarity") }}</span><RarityTabs :model-value="st.rarity" @update:model-value="t.setStartRarity" /></span>
+    <p v-if="st.rarity === 'normal'" data-tree-start-normal class="text-[12px] opacity-70">{{ tr("ノーマル = MOD の付いていない白いベースから始める", "Normal = start from a white base with no mods") }}</p>
+    <template v-else>
     <!-- 始まりに付いている MOD = 0 で決めた完成の狙いから (押すと付ける / 外す、✦ = フラクチャー 1 つまで) -->
     <p class="text-[13px]">{{ tr("始まりに付いている MOD (完成の狙いから)", "Mods already on the starting item (from the final targets)") }}</p>
     <ul class="flex flex-col gap-1">
@@ -75,6 +80,7 @@ const problem = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.v
       </li>
       <li v-if="!t.goals.value.length" class="flex flex-wrap items-center gap-2 text-[12px] opacity-80">{{ tr("完成の狙いがまだ無い", "No final targets yet") }}<button type="button" class="g-btn sm" @click="t.startPage.value = false; t.goalPage.value = 2">{{ tr("0 完成形の設定で決める →", "Set them in 0 Final item →") }}</button></li>
     </ul>
+    </template>
     <!-- ルーン (ソケットの上限まで。セールの凱旋のサフィックス +1・コルの狩りのマークスマン MOD など) -->
     <div v-if="cap" data-tree-start-runes class="flex flex-col gap-1 text-[13px]">
       <div class="flex items-center gap-2">
@@ -89,7 +95,7 @@ const problem = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.v
         <button type="button" class="shrink-0 px-1 opacity-60 hover:opacity-100" :title="tr('外す', 'Remove')" @click="removeRune(i)">×</button>
       </div>
     </div>
-    <label class="flex items-center gap-2 text-[13px]" :title="tr('始まりの MOD のほかに乱数で付いている MOD の数 (素の高貴を n 回打った形)', 'Random mods besides the ones above (as if exalts were used n times)')">
+    <label v-if="st.rarity !== 'normal'" class="flex items-center gap-2 text-[13px]" :title="tr('始まりの MOD のほかに乱数で付いている MOD の数 (素の高貴を n 回打った形)', 'Random mods besides the ones above (as if exalts were used n times)')">
       <span class="flex-1">{{ tr("ほかに乱数の MOD", "Other random mods") }}</span>
       <NumStep data-tree-start-random :model-value="rand" integer width="w-20" :placeholder-value="0" @update:model-value="setRand" />
     </label>

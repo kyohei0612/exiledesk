@@ -9,7 +9,7 @@ import { BOX_H, BOX_W, startOf, type TreeBox } from "../../../services/simulator
 import { tr } from "../../../i18n/lang";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { useTree } from "./use-tree";
-import { OUT_LOOK, splitWhenText } from "./tree-names";
+import { OUT_LOOK, rarityName, splitWhenText } from "./tree-names";
 
 const props = defineProps<{ box: TreeBox; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
   /** 縮めた時の倍率の逆数 (押せる物だけこれで大きさを戻し、画面の上で 24px 以上を保つ。オーナー 10-22「縮めても押せる物は小さくならない」) */ inv?: number;
@@ -54,7 +54,7 @@ const startMods = computed(() => [...startOf(t.doc.value).mods].sort((a, b) => N
 const first = computed(() => startMods.value[0] ?? null);
 const startRest = computed(() => {
   const st = startOf(t.doc.value), n = startMods.value.length - 1, r = t.doc.value.startRandom ?? 0;
-  const parts = [n > 0 ? tr(`ほか ${n} つ`, `+${n} more`) : "", r ? tr(`乱数 ${r} つ`, `${r} random`) : "", st.runes?.length ? tr(`ルーン ${st.runes.length}`, `${st.runes.length} rune(s)`) : "", st.rarity === "magic" && !first.value?.fractured ? tr("マジック", "Magic") : ""].filter(Boolean);
+  const parts = [n > 0 ? tr(`ほか ${n} つ`, `+${n} more`) : "", r ? tr(`乱数 ${r} つ`, `${r} random`) : "", st.runes?.length ? tr(`ルーン ${st.runes.length}`, `${st.runes.length} rune(s)`) : "", st.rarity !== "rare" && !first.value?.fractured ? rarityName(st.rarity) : ""].filter(Boolean);
   return [costLine.value, ...parts].filter(Boolean).join(" · ");
 });
 /** ベースの値段の 1 行 (始め方を比べた一番安い物、use-tree の baseCost。値段を入れていなければ出さない) */

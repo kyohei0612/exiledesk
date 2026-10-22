@@ -5,16 +5,17 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
-import { BOX_W, startOf } from "../../../services/simulator/tree/tree-model";
+import { BOX_W } from "../../../services/simulator/tree/tree-model";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { tr } from "../../../i18n/lang";
 import { GOAL_GAP, GOAL_H } from "./tree-goal";
 import { useTree } from "./use-tree";
+import { rarityName } from "./tree-names";
 
 defineProps<{ selected?: boolean }>();
 const t = useTree();
 const RGB = "242,210,122";
-const rarity = computed(() => (startOf(t.doc.value).rarity === "magic" ? tr("マジック", "Magic") : tr("レア", "Rare")));
+const rarity = computed(() => rarityName(t.goalRarity.value));
 const n = computed(() => t.goals.value.length);
 </script>
 

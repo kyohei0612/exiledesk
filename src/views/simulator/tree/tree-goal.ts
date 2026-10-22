@@ -1,7 +1,7 @@
 /**
  * tree-goal.ts — ツリーの一番上の「0 完成形の設定」の箱の置き場 (2026-10-22 オーナー「ツリー特化」)。
  * 0 の箱は木の形 (TreeDoc.boxes) の外: 回す・整列・精査・見本は今まで通りスタートの箱 (boxes.start) から。画面だけ Vue Flow に 1 つ足し、スタートの箱の真上に置く。
- * 中身は木のベース・アイテムレベル・レアリティ (start.rarity) と完成の狙い (memoAims)
+ * 中身は木のベース・アイテムレベル・完成形のレアリティ (TreeDoc.goal) と完成の狙い (memoAims)
  */
 import { BOX_W, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 
