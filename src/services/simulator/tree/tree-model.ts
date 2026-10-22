@@ -379,10 +379,11 @@ export function tidy(d: TreeDoc): void {
   const layout = (id: string): Contour => {
     const ks = kids(id), me = row.get(id)!;
     const acc: Contour = new Map();
-    const offs: number[] = [];
+    const offs: number[] = [], cs: Contour[] = [];
     for (const k of ks) {
       const c = layout(k);
       for (let r = me + 1; r < row.get(k)!; r++) put(c, r, BOX_W / 2 - STEM, BOX_W / 2 + STEM);
+      cs.push(c);
       let off = 0;
       if (offs.length) {
         off = -Infinity;
@@ -392,8 +393,17 @@ export function tidy(d: TreeDoc): void {
       offs.push(off);
       for (const [r, [l, rr]] of c) put(acc, r, l + off, rr + off);
     }
-    // 親は一番左と一番右の子の真ん中 (兄弟の並びの中心が親とそろう、10-22 整列の定義)
-    const px = ks.length ? (offs[0]! + offs[offs.length - 1]!) / 2 : 0;
+    // 親の軸 = 真ん中の子 (偶数は真ん中の 2 つの中点)。子が 1 つなら親・札・子が 1 本の縦の線、3 つなら真ん中の子へまっすぐ (オーナー 10-22「整列でずれるな」。
+    // 前は一番左と一番右の子の真ん中で、幅の違う兄弟だと真ん中の子が 163px までずれた)。端までの長さが左右で違えば、短い側の兄弟を組ごと外へ押して左右対称に (外へ押すだけなので重ならない、行はそのまま)
+    const n = ks.length, half = Math.floor(n / 2);
+    const px = !n ? 0 : n % 2 ? offs[half]! : (offs[half - 1]! + offs[half]!) / 2;
+    if (n > 1) {
+      const l = px - offs[0]!, r = offs[n - 1]! - px;
+      if (l < r) for (let i = 0; i < half; i++) offs[i]! -= r - l;
+      else if (r < l) for (let i = n - half; i < n; i++) offs[i]! += l - r;
+      acc.clear();
+      cs.forEach((c, i) => { for (const [rw, [cl, cr]] of c) put(acc, rw, cl + offs[i]!, cr + offs[i]!); });
+    }
     ks.forEach((k, i) => rel.set(k, offs[i]! - px));
     const out: Contour = new Map([[me, [0, BOX_W]]]);
     for (const [r, [l, rr]] of acc) put(out, r, l - px, rr - px);
