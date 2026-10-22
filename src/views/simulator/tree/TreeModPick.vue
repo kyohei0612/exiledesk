@@ -19,10 +19,12 @@ const search = ref<HTMLInputElement | null>(null);
 onMounted(() => { if (props.autofocus) search.value?.focus(); });
 const open = ref<string | null>(props.current?.modId ?? null);
 /** 当たりは一般の MOD と冒涜専用 MOD (骨の手の当たり、10-22 オーナー「冒涜は冒涜で付与」)、フラクチャーは創生の樹など (カレンシーでは付かない物) も */
-const groups = computed(() => (props.mode === "hit" ? ["normal", "desecrated"] : ["special", "normal"]));
+// フラクチャーは普通の MOD が先、創生の樹などは後 (10-22 靴・手袋を白紙から組んで、創生の樹が一番上に並び探しにくかった)
+const groups = computed(() => (props.mode === "hit" ? ["normal", "desecrated"] : ["normal", "special"]));
 const sections = computed(() => {
-  const q = query.value.trim().toLowerCase();
-  const hit = (r: ModRow): boolean => !q || r.template.toLowerCase().includes(q) || r.text.toLowerCase().includes(q);
+  // 「移動速度」でも「移動スピード」(MOD の文) に当たる (10-22 白紙から組んで 0 件だった)
+  const qs = [...new Set([query.value.trim().toLowerCase()].flatMap((q) => [q, q.replace(/速度/g, "スピード"), q.replace(/スピード/g, "速度")]))];
+  const hit = (r: ModRow): boolean => qs.some((q) => !q || r.template.toLowerCase().includes(q) || r.text.toLowerCase().includes(q));
   return (["prefix", "suffix"] as const).map((side) => ({
     side,
     title: side === "prefix" ? tr("プレフィックス", "Prefixes") : tr("サフィックス", "Suffixes"),

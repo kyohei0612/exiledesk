@@ -273,8 +273,8 @@ function onTarget(b: Box): void {
   if (from && from !== b.id) t.edit((d) => setBack(d, from, b.id));
 }
 // ルート精査 (押した時に始める、use-tree-check.ts)
-const { issues, issuesOpen, checking, onCheck, issueOf } = useTreeCheck(doc);
-function goIssue(id: string): void { void v.reveal(id, true); }
+const { issues, issuesOpen, issuesFold, checking, onCheck, issueOf } = useTreeCheck(doc);
+function goIssue(id: string): void { issuesFold.value = true; void v.reveal(id, true); }
 
 /** 整列して、全体に合わせる (1 つ戻すで元の並びへ) */
 const tidyOf = (d: typeof doc.value): void => tidy(d);
@@ -456,7 +456,7 @@ const glowOf = (b: Box): boolean => {
         <!-- 今の状態の札 (左上に浮かべる。ツリーを押し下げない) -->
         <p v-if="picking || hand || viewOnly" data-tree-mode-pill class="pointer-events-none absolute left-3 top-3 z-20 flex items-center gap-2 rounded-full border px-3 py-1 text-[12px] shadow-[0_4px_14px_rgba(0,0,0,0.6)]"
           :class="picking ? 'border-cyan-400/50 bg-[#0d1a1c]/95 text-cyan-100' : 'border-white/10 bg-[#15110c]/95 text-[#d8ccb4]'">
-          {{ picking ? tr("戻り先の箱を押す (Esc でやめる)", "Click the box to return to (Esc cancels)") : hand ? tr("手: 見るだけ (選択に戻すと組める)", "Hand: view only (switch to Select to edit)") : tr("縮めて見ている間は箱を押すとその箱の編集が開く", "Zoomed out: click a box to edit it") }}
+          {{ picking && panel?.kind === "hand" && panel.id === picking ? tr("右の棚で次に打つ手を選ぶ / 箱を押すとそこへ戻る (Esc でやめる)", "Pick the next craft on the right, or click a box to return to it (Esc cancels)") : picking ? tr("戻り先の箱を押す (Esc でやめる)", "Click the box to return to (Esc cancels)") : hand ? tr("手: 見るだけ (選択に戻すと組める)", "Hand: view only (switch to Select to edit)") : tr("縮めて見ている間は箱を押すとその箱の編集が開く", "Zoomed out: click a box to edit it") }}
           <template v-if="picking && picking !== 'start'">
             <button type="button" data-tree-pick-start class="g-btn sm pointer-events-auto" :title="tr('始まりの箱の手から打ち直す', 'Craft again from the start box')" @click="pickBack('start')">{{ tr("↩ 始めに戻る", "↩ Back to start") }}</button>
           </template>
@@ -466,12 +466,13 @@ const glowOf = (b: Box): boolean => {
           :class="[issues.length ? 'border-rose-500/40 bg-[#1c0f10]/95' : 'border-emerald-500/40 bg-[#0d1a12]/95', picking || hand || viewOnly ? 'top-12' : 'top-3']">
           <div class="flex items-center gap-2">
             <b :class="issues.length ? 'text-rose-200' : 'text-emerald-200'">{{ issues.length ? tr(`穴 ${issues.length} 件`, `${issues.length} issue(s)`) : tr("穴は見つからなかった (5 人で全部の枝を通した)", "No issues found (all branches walked by 5 runs)") }}</b>
-            <button type="button" class="g-btn sm ml-auto" @click="issuesOpen = false">{{ tr("閉じる", "Close") }}</button>
+            <button v-if="issues.length" type="button" data-tree-issues-fold class="g-btn sm ml-auto" @click="issuesFold = !issuesFold">{{ issuesFold ? tr("一覧を開く", "Show list") : tr("畳む", "Fold") }}</button>
+            <button type="button" class="g-btn sm" :class="{ 'ml-auto': !issues.length }" @click="issuesOpen = false">{{ tr("閉じる", "Close") }}</button>
           </div>
-          <button v-for="(x, i) in issues" :key="i" type="button" data-tree-issue-row class="flex min-h-7 items-center gap-2 rounded px-1 text-left hover:bg-white/5" @click="goIssue(x.boxId)">
+          <button v-for="(x, i) in issues" v-show="!issuesFold" :key="i" type="button" data-tree-issue-row class="flex min-h-7 items-center gap-2 rounded px-1 text-left hover:bg-white/5" @click="goIssue(x.boxId)">
             <span class="shrink-0 rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white">!</span>
             <span class="max-w-[40%] shrink-0 truncate opacity-70" :title="boxName(x.boxId)">{{ boxName(x.boxId) }}</span>
-            <span class="min-w-0 truncate" :title="x.text">{{ x.text }}</span>
+            <span class="line-clamp-2 min-w-0" :title="x.text">{{ x.text }}</span>
           </button>
         </div>
         <!-- 縮めて見ている時の箱の編集 (等倍。枠の外・Esc で閉じる) -->

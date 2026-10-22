@@ -11,6 +11,8 @@ export function useTreeCheck(doc: Ref<TreeDoc>) {
   // 一覧を閉じる・箱を押す・動かすでは消さない (オーナー 10-22「！マークは解消したら消していく感じで」)
   const issues = ref<CheckIssue[] | null>(null);
   const issuesOpen = ref(false);
+  /** 一覧を畳んで見出しだけ (行を押して箱へ寄った時。帯が箱を隠した、10-22 白紙から組んだ試し) */
+  const issuesFold = ref(false);
   const checking = ref(false);
   /** 道の形 (箱の位置・メモは入れない)。位置を動かしただけでは精査し直さない */
   const routeKey = computed(() => JSON.stringify([doc.value.fracture, Object.values(doc.value.boxes).map(({ x: _x, y: _y, note: _n, ...r }) => r)]));
@@ -29,7 +31,7 @@ export function useTreeCheck(doc: Ref<TreeDoc>) {
       issues.value = keep ? now.filter((x) => found.some((y) => y.boxId === x.boxId && y.kind === x.kind)) : now;
     } finally { checking.value = false; }
   }
-  async function onCheck(): Promise<void> { issuesOpen.value = true; await runCheck(); }
+  async function onCheck(): Promise<void> { issuesOpen.value = true; issuesFold.value = false; await runCheck(); }
   const issueOf = (b: TreeBox): string | null => issues.value?.filter((x) => x.boxId === b.id).map((x) => x.text).join(" / ") || null;
-  return { issues, issuesOpen, checking, runCheck, onCheck, issueOf };
+  return { issues, issuesOpen, issuesFold, checking, runCheck, onCheck, issueOf };
 }
