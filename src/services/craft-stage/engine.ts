@@ -22,6 +22,9 @@ export { revealOffers, unrevealedOf } from "./apply-desecrate";
 // その手が打てるか (お告げ・触媒の前のカタリスト込み) と、手のお告げを今の手 / 続けて打つ発現に分ける (2026-10-22 シミュの自前の式を入口へ)
 export type { UseSpec } from "./can-use";
 export { canUse, handOmens, CATALYSING_OMEN } from "./can-use";
+// 手を 1 回打つ (触媒の前のカタリスト・フラクチャーで固定する MOD・骨の後の発現込み) と、発現で候補を選んで打つ (2026-10-22 シミュの自前の式を入口へ)
+export type { HandSpec, HandResult } from "./hand-use";
+export { applyHand, revealBy, ABYSSAL_ECHO_OMEN } from "./hand-use";
 
 // アイテムの今を読む
 export { allMods, listOf, room, limitOf, effectiveCls, maxQualityOf, catalystOf, SIDES, sideOfMod, unfracturable } from "./stage-core";
