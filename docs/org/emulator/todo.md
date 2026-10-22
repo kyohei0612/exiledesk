@@ -1,6 +1,7 @@
 # ジン部長 のやる事
 
 ## ブラックへの報告 (送信の上限で送れなかった分、10-22)
+- SW の ERR_FAILED の調べ (記録 notes/2026-10-22-sw-err-failed.md、直していない、9333 は返した): 本番・開発版とも、新しい profile・再読み込み 2 回 (70 本以上が SW から)・cookie を消した後のどれでも ERR_FAILED は再現しなかった (cookie 無しは入口の 404 がそのまま出る)。sw.js で ERR_FAILED になるのは SW の中の通信が投げた時だけなので、シミュ部長の台本の通信の止め方 (CDP の Fetch・オフライン) の見込み。直す案: ① (おすすめ) 版が替わった後に開いたままのタブが消えた古い JS の塊を読むと壊れるので vite:preloadError で 1 回読み直す (「開発版で変わってなさそう」はこちらの見込みが高い) ② sw.js の cacheFirst に受け皿を足して VERSION を上げる。
 - 入口に aimHits を出した: services/craft-stage/engine.ts の `aimHits(m: StageMod, t: AimTarget): boolean` (aim-odds の hits そのまま = 未発現でなく、同じ modId で段が minTierIndex 以上。振る舞いは同じ)。0d11e79d、push 済み、型チェック通過。シミュ部長 12 本目へ。use() の seed・setUseHook (251a20b0) のお知らせも受けた。待機中。
 
 ## やる事
