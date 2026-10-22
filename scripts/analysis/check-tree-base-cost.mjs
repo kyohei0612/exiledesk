@@ -8,7 +8,7 @@
  *   白から自作・増強の道: 白 (+ ルーン) → 完全の変成 → 狙いの側に狙いでない MOD があれば消去、無ければ完全の増強 (狙いが付くまで) → 王者 → 3 MOD まで高貴 → 骨 → フラクチャー。
  *     狙いが固定されたら消去 × 2、違えば白からやり直し。反対側の狙いがあれば、その後にカオス (無印) で付くまで
  *   白から自作・グレーターの道: 変成 → 上と同じループ (フラクチャーの側だけ見る) → グレーターエッセンス → 3 MOD まで高貴 → 骨 + その側のネクロマンシー → フラクチャー。違えばやり直し (固定の後に消さない)
- *   4 MOD を買ってフラクチャー: 狙い + 3 つのレア (壁なし) にフラクチャー、違えば買い直し (ベース代 + フラクチャー)
+ *   4 MOD を買ってフラクチャー: 狙い + 2 つ + 骨の壁のレア (オーナーの決め、壁の費用は数えない) にフラクチャー、違えば買い直し (ベース代 + フラクチャー)
  *   フラクチャー済みを買う: ベース代だけ。反対側の狙いは「固定 + 外れ 1 つのレア」にカオス (式 chaosAfterFix の形) で付くまで
  */
 import { bundleEntry } from "../_bundle-ts.mjs";
@@ -114,7 +114,9 @@ for (const S of SAMPLES) {
         tries++;
         st.c += BASE.four * DIV;
         let x = M.startFrom(data, S.base, IL, { rarity: "rare", mods: [{ mod: ft.modId, tier: `T${S.frac[1]}` }], sockets: runes.length ? 2 : 0, runes }, seed());
-        for (let k = 0; all(x).length < 4 && k < 20; k++) x = M.applyCurrency(data, x, "exalt", rng).item;
+        // オーナーの決め (10-21・10-22): 4 MOD は壁つき (狙い + 2 つ + 骨の壁) で当たり 1/3、壁の費用は数えない
+        for (let k = 0; all(x).length < 3 && k < 20; k++) x = M.applyCurrency(data, x, "exalt", rng).item;
+        x = M.applyCurrency(data, x, "desecrate", rng).item;
         x = use(st, x, "fracture");
         if (all(x).some((m) => m.fractured && m.modId === ft.modId)) break;
       }
@@ -122,7 +124,7 @@ for (const S of SAMPLES) {
       costs.push(st.c / DIV);
     }
     res.four = costs;
-    extra.four = `フラクチャーの当たり ${(N / tries).toFixed(3)} (4 MOD・壁なし)`;
+    extra.four = `フラクチャーの当たり ${(N / tries).toFixed(3)} (狙い + 2 つ + 壁)`;
     // フラクチャー済みを買う
     const fc = [];
     for (let i = 0; i < N; i++) { const st = { c: BASE.fractured * DIV, n: {} }; if (kt) chaosKeep(st, null); fc.push(st.c / DIV); }
