@@ -18,6 +18,8 @@ export function useTreeLink(doc: Ref<TreeDoc>, from: Ref<string | null>) {
     const item = sampleOf(d, doc.value, id, 1).item;
     for (const b of Object.values(doc.value.boxes)) {
       if (b.id === id) { out.set(b.id, tr("自分の箱", "This box itself")); continue; }
+      // 分かれ目 (打たずに分ける) は手が無くてもつなげる (どの形でも行の箱へ分かれる、10-22)
+      if (b.split) { out.set(b.id, null); continue; }
       if (!b.hand) { out.set(b.id, tr("この箱にはまだ打つ手が無い", "This box has no craft yet")); continue; }
       const why = handProblem(d, item, b.hand);
       out.set(b.id, why ? tr(`この箱の手が打てない: ${why}`, `Its craft can't be used here: ${why}`) : null);

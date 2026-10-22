@@ -9,7 +9,7 @@ import { BOX_H, BOX_W, startOf, type TreeBox } from "../../../services/simulator
 import { tr } from "../../../i18n/lang";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { useTree } from "./use-tree";
-import { OUT_LOOK } from "./tree-names";
+import { OUT_LOOK, splitWhenText } from "./tree-names";
 
 const props = defineProps<{ box: TreeBox; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
   /** 縮めた時の倍率の逆数 (押せる物だけこれで大きさを戻し、画面の上で 24px 以上を保つ。オーナー 10-22「縮めても押せる物は小さくならない」) */ inv?: number;
@@ -38,7 +38,9 @@ const neon = computed(() => {
 });
 const doneText = computed(() => (props.box.done ? tr("完成", "Done") : tr("完成にする", "Mark done")));
 /** 下の＋を出す (完成の箱からも伸ばせる。手を付けると完成の印は外れ、同じ形の完成の箱もそこへ戻る、tree-merge の joinSameShape) */
-const free = computed(() => !props.box.hand && !props.box.back);
+const free = computed(() => !props.box.hand && !props.box.back && !props.box.split);
+/** 分かれ目の先の箱の文 = 親の分かれ目の行の条件 */
+const branchText = computed(() => { const r = props.box.parent ? t.doc.value.boxes[props.box.parent]?.split?.find((x) => x.to === props.box.id) : null; return r ? splitWhenText(r.when) : ""; });
 /** 押せる物を隠す時 (戻り先を選んでいる・一望) */
 const quiet = computed(() => props.picking || !!props.viewOnly);
 /** 箱の地を押した (ボタン以外) = 引っ張る用。押せない時 (戻り先を選ぶ・一望・手) は Vue Flow に任せる (画面が動く / 押した判定) */
@@ -108,6 +110,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <button v-else-if="box.out === 'hit'" type="button" class="nodrag block w-[calc(100%-14px)] truncate text-left text-[13px] hover:underline" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :class="[box.aim ? 'text-[#c8c8ff]' : 'text-amber-300', quiet ? 'pointer-events-none' : '']" :title="t.aimLabel(box.aim)" @click.stop="!quiet && emit('aim')">
         {{ box.aim ? t.aimLabel(box.aim) : tr("＋ 付く MOD を選ぶ", "+ Pick the mod") }}
       </button>
+      <p v-else-if="box.out === 'branch'" data-tree-branch-text class="truncate leading-6 text-teal-100" :title="branchText">{{ branchText }}</p>
       <p v-else class="truncate leading-6 opacity-60">{{ box.out === "junk" ? tr("当たり以外が付いた", "Anything but a hit") : box.out === "junkGone" ? tr("外れの MOD が消えた", "A miss mod was removed") : box.out === "any" ? tr("何かが 1 つ付いた (狙い無し)", "Something was added (no target)") : tr("狙いの MOD が消えた", "A target mod was removed") }}</p>
     </div>
 
@@ -120,9 +123,9 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
           @pointerenter="emit('backHover', true)" @pointerleave="emit('backHover', false)" @focus="emit('backHover', true)" @blur="emit('backHover', false)" @click.stop="!quiet && emit('backGo')"><span class="min-w-0 truncate">↩ {{ backLabel }}</span></button>
         <button v-if="!quiet" type="button" class="nodrag -mr-1 flex size-6 items-center justify-center rounded opacity-60 hover:bg-white/10 hover:opacity-100" :title="tr('戻りの矢印を外す', 'Remove the return arrow')" @click.stop="emit('clearBack')"><Icon name="x" class="size-3" /></button>
       </template>
-      <template v-else-if="!box.hand && box.out !== 'start' && !quiet">
+      <template v-else-if="!box.hand && !box.split && box.out !== 'start' && !quiet">
         <button v-if="!box.done" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-cyan-400/40 px-1.5 text-cyan-200 hover:border-cyan-300" :class="k > 1 ? 'min-w-6' : ''" :title="tr('↩ 戻る (既にある箱を指す)', '↩ Return (point to an existing box)')" @click.stop="emit('back')">{{ k > 1 ? "↩" : tr("↩ 戻る", "↩ Return") }}</button>
-        <button v-if="box.out === 'hit'" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" @click.stop="emit('done')" :title="doneText">{{ k > 1 && !box.done ? tr("完成", "Done") : doneText }}</button>
+        <button v-if="box.out === 'hit' || box.out === 'branch'" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" @click.stop="emit('done')" :title="doneText">{{ k > 1 && !box.done ? tr("完成", "Done") : doneText }}</button>
         <!-- 外れ・狙いが消えたの行き先に一番使う手 (オーナー 10-22): 当たりのどれかが付くまでカオス -->
         <button v-if="box.out === 'junk' || box.out === 'lost'" type="button" data-tree-spam class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" :title="tr('狙いのどれかが付くまでカオスを打ち続ける。付いたらその当たりの枝へ', 'Keep using Chaos Orbs until any target hits, then follow that hit')" @click.stop="emit('spam')">{{ tr("カオススパム", "Chaos spam") }}</button>
       </template>

@@ -23,7 +23,7 @@ import TreeNote from "./TreeNote.vue";
 import { useTree } from "./use-tree";
 import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
 import { craftStage as s } from "../../../state/craft-stage";
-import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, removeHit, setAim, setBack, setDone, setHand, tidy, handUses, type Aim, type Hand, type HandKind, type OutKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
+import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, removeHit, setAim, setBack, setDone, setHand, setSplit, tidy, handUses, type Aim, type Hand, type HandKind, type OutKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
 import { handLabel, outName } from "./tree-names";
 import { aimHeld, aimsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { treeSample } from "../../../services/simulator/tree/tree-samples";
@@ -31,7 +31,7 @@ import { linkSameShape, MATCH, RESTART } from "../../../services/simulator/tree/
 import { treePage } from "../../../state/web-page";
 import { tr } from "../../../i18n/lang";
 import { pageZoom } from "../../../utils/zoom";
-import { busLevels, HAND_DY, type Seg } from "./tree-lines";
+import { LINE, useTreeEdges } from "./use-tree-edges";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
 import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { gesture, HOLD_MS } from "./use-gesture";
@@ -41,6 +41,7 @@ import { useTreeLink } from "./use-tree-link";
 import { useTreeCheck } from "./use-tree-check";
 import TreeIssues from "./TreeIssues.vue";
 import TreeStartPick from "./TreeStartPick.vue";
+import TreeSplitPick from "./TreeSplitPick.vue";
 import { useTreeTune } from "./use-tree-tune";
 import TreeHandChip from "./TreeHandChip.vue";
 import TreeBandLayer from "./TreeBandLayer.vue";
@@ -55,7 +56,7 @@ const doc = t.doc;
 useTreeTune(doc, t.edit);
 
 /** 右の欄 (箱を選んだ時だけ) */
-const panel = ref<{ kind: "hand" | "aim" | "start" | "note" | "base"; id: string } | null>(null);
+const panel = ref<{ kind: "hand" | "aim" | "start" | "note" | "base" | "split"; id: string } | null>(null);
 /** 戻りの矢印の先を選んでいる箱 */
 const picking = ref<string | null>(null);
 /** メモの窓を開いているか (このブラウザに覚える。無くても使える) */
@@ -80,14 +81,7 @@ const boxes = computed(() => Object.values(doc.value.boxes));
 /** 描く箱 (品質だけ上げた後の通り抜け pass は箱を描かず、打つ手の札の下に次の札か＋、tree-model の OutKind) */
 const shown = computed(() => boxes.value.filter((b) => b.out !== "pass"));
 const passes = computed(() => boxes.value.filter((b) => b.out === "pass"));
-/** 箱の真ん中 */
-const midOf = (id: string): number => posOf(doc.value.boxes[id]!).x + BOX_W / 2;
 
-/**
- * 進む線 (2026-10-22 整列の定義、オーナー「クソ汚い」の後): 普通の木の図と同じ直角の線。親の下から 1 本下りて (途中に手の札)、
- * 子の段の上で横の棒、そこから子の上の辺へ下ろす。色は 進む = 灰 / 外れ・消えた = 赤系 の 2 つだけ
- */
-const LINE = { fwd: "#a39a88", bad: "#c96a72", back: "#5fd0e0" } as const;
 /**
  * 画面の高さ (拡大前の CSS ピクセル)。html の zoom (WebApp.vue の fitZoom) が 1 より大きいと 100vh が画面より高くなり、
  * 1920 幅でツリーの枠がはみ出してページごと下へ送られた (10-22 開発版で見た)。WebApp.vue の後で読む
@@ -108,40 +102,15 @@ onMounted(() => { window.addEventListener("resize", onResizeH); onResizeH(); });
 onBeforeUnmount(() => window.removeEventListener("resize", onResizeH));
 /** 手 (見るだけ): どこを引いても画面が動き、箱は押せない (ComfyUI の手、見本の 6) */
 const hand = ref(false);
-/** 横の棒が同じ高さで横に重なる親どうしは段をずらす (tree-lines.ts の busLevels) */
-const busShift = computed(() => busLevels(boxes.value.filter((b) => b.hand && b.outs.length).map((b) => {
-  const xs = [posOf(b).x + BOX_W / 2, ...b.outs.map(midOf)];
-  return { id: b.id, x0: Math.min(...xs), x1: Math.max(...xs), y: Math.min(...b.outs.map((o) => posOf(doc.value.boxes[o]!).y)) - 18 };
-})));
-const edges = computed(() => boxes.value.filter((b) => b.hand && b.outs.length).map((b) => {
-  const p = posOf(b), pass = b.out === "pass";
-  // 通り抜けは箱が無いので、手の札を箱の上の端の所に置き、そこから下りる
-  const px = p.x + BOX_W / 2, py = pass ? p.y : p.y + BOX_H, jy = pass ? p.y : py + HAND_DY;
-  const kids = b.outs.map((o) => ({ id: o, c: doc.value.boxes[o]!, q: posOf(doc.value.boxes[o]!) }));
-  const busY = Math.min(...kids.map((k) => k.q.y)) - 18 - (busShift.value.get(b.id) ?? 0);
-  // 角丸の段付き (React Flow の smoothstep、見本の 3): 親の下から下りて、角を丸めて横へ、角を丸めて子の上の辺へ。
-  // 外れ (赤) を先に描き、進む (灰) を上に重ねる (同じ横の棒を通る所は灰に見える)
-  const to = kids.map((k) => {
-    const cx = midOf(k.id), cy = k.q.y - (k.c.out === "pass" ? PASS_R : 3), dx = cx - px, r = Math.min(10, Math.abs(dx) / 2), s = Math.sign(dx);
-    const d = !s ? `M ${px} ${busY - 10} L ${cx} ${cy}`
-      : `M ${px} ${busY - 10} L ${px} ${busY - r} Q ${px} ${busY} ${px + s * r} ${busY} L ${cx - s * r} ${busY} Q ${cx} ${busY} ${cx} ${busY + r} L ${cx} ${cy}`;
-    const bad = k.c.out !== "hit" && k.c.out !== "any" && k.c.out !== "pass";
-    return { id: k.id, color: bad ? LINE.bad : LINE.fwd, kind: bad ? "bad" : "fwd", d, bad };
-  }).sort((a, z) => Number(z.bad) - Number(a.bad));
-  // 戻りの線が跨ぐ所を探す用の真っ直ぐな所 (縦の幹・横の棒・子へ下りる縦)
-  const segs: Seg[] = [{ x0: px, y0: py, x1: px, y1: busY }, ...kids.flatMap((k) => { const cx = midOf(k.id); return [{ x0: px, y0: busY, x1: cx, y1: busY }, { x0: cx, y0: busY, x1: cx, y1: k.q.y }]; })];
-  return { id: b.id, hand: b.hand!, jx: px, jy, stem: `M ${px} ${py} L ${px} ${busY - 10}`, to, segs };
-}));
-/** 通り抜けの所の札 / ＋の半分の高さ (上から来る矢印の先) */
-const PASS_R = 16;
+const { edges } = useTreeEdges(doc, boxes, posOf);
 /** 打つ手の札の幅 (画面で測る。戻りの線を札の左の端へ入れる、tree-lines.ts の handAnchor) */
 const chipW = ref<Record<string, number>>({});
 function measureChips(): void {
   const w: Record<string, number> = {};
-  for (const el of document.querySelectorAll<HTMLElement>("[data-tree-hand]")) if (el.dataset.handOf) w[el.dataset.handOf] = el.offsetWidth;
+  for (const el of document.querySelectorAll<HTMLElement>("[data-tree-hand], [data-tree-split-chip]")) if (el.dataset.handOf) w[el.dataset.handOf] = el.offsetWidth;
   if (JSON.stringify(w) !== JSON.stringify(chipW.value)) chipW.value = w;
 }
-watch(() => edges.value.map((e) => `${e.id}:${handLabel(e.hand)}`).join("|"), measureChips, { flush: "post" });
+watch(() => edges.value.map((e) => `${e.id}:${e.hand ? handLabel(e.hand) : `split${e.split}`}`).join("|"), measureChips, { flush: "post" });
 onMounted(() => { measureChips(); void document.fonts?.ready.then(measureChips); });
 const { merged, linesAll, hoverBox, cardBox } = useTreeMerge({ doc, posOf, segs: () => edges.value.flatMap((e) => e.segs), chipW, inv, busy: () => !!drag.value || !!plus.value, reset: () => [v.flow.viewport.value, panel.value, drag.value] });
 /** 白紙に戻す = 2 回押し (本番の「白に戻す」と同じ use-armed、3 秒で戻る)。枠の外・Esc でも戻す (オーナー 10-22「白紙に戻すもあれやな、2 回だな」) */
@@ -196,6 +165,8 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = nul
   const kids = doc.value.boxes[at]?.outs ?? [];
   if (kids.length) void v.reveal(kids[Math.floor(kids.length / 2)]!);
 }
+/** 打たずに分ける (分かれ目にして、行の欄を開く) */
+function onSplit(): void { const id = panel.value!.id; if (picking.value === id) picking.value = null; t.edit((d) => setSplit(d, id)); panel.value = { kind: "split", id }; }
 /**
  * Vue Flow の出来事: 空き所を押す = 右の欄を閉じる (よくあるモーダルと同じ。オーナー 10-22。引っ張った時は Vue Flow が画面を動かすだけ)。
  * 箱を押す = 戻り先を選んでいる時はそこへつなぐ / 縮めて見ている時は編集のポップアップ / ふつうは開いている欄を閉じるだけ
@@ -445,7 +416,7 @@ const glowOf = (b: Box): boolean => {
               <!-- 矢印の上の札 = 打つ手 (押すと替える・消す)。戻りの矢印だけの箱から流れ込む線 -->
               <!-- 段の目印 (木の左の外、当たりの箱の揃った狙いの数) -->
               <TreeBandLayer :doc="doc" :k="1 / zoom" />
-              <TreeHandChip v-for="e in edges" :key="`hand-${e.id}`" :id="e.id" :hand="e.hand" :x="e.jx" :y="e.jy" :inv="inv" :off="hand" @open="panel = { kind: 'hand', id: e.id }" />
+              <TreeHandChip v-for="e in edges" :key="`hand-${e.id}`" :id="e.id" :hand="e.hand" :split="e.split" :x="e.jx" :y="e.jy" :inv="inv" :off="hand" @open="panel = { kind: e.hand ? 'hand' : 'split', id: e.id }" />
               <!-- 品質だけ上げた後 (箱無し) で次の手がまだ無い所の＋ (押すと次の手の棚) -->
               <button v-for="b in passes.filter((x) => !x.hand && !x.back)" :key="`pass-${b.id}`" type="button" data-tree-pass-next :data-box-id="b.id" class="nodrag nopan pointer-events-auto absolute z-[5] flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-amber-400/70 bg-[#1d1812] text-amber-200 hover:bg-amber-500/30"
                 :class="viewOnly || hand ? '!pointer-events-none opacity-60' : ''" :style="{ left: `${posOf(b).x + BOX_W / 2}px`, top: `${posOf(b).y}px`, scale: String(inv) }" :title="tr('次に打つ手を足す', 'Add the next craft')" @click="startLink(b)"><Icon name="plus" class="size-4" /></button>
@@ -483,8 +454,9 @@ const glowOf = (b: Box): boolean => {
         </div>
 
         <!-- 右の欄 -->
-        <aside v-if="panel && panelBox" ref="aside" data-tree-panel class="flex shrink-0 flex-col overflow-y-auto rounded-md bg-white/[0.04] p-3" :class="panel.kind === 'hand' || panel.kind === 'base' || panel.kind === 'start' ? 'w-[400px]' : 'w-[320px]'">
-          <TreeHandShelf v-if="panel.kind === 'hand'" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" />
+        <aside v-if="panel && panelBox" ref="aside" data-tree-panel class="flex shrink-0 flex-col overflow-y-auto rounded-md bg-white/[0.04] p-3" :class="panel.kind === 'hand' || panel.kind === 'base' || panel.kind === 'start' || panel.kind === 'split' ? 'w-[400px]' : 'w-[320px]'">
+          <TreeHandShelf v-if="panel.kind === 'hand'" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" @split="onSplit" />
+          <TreeSplitPick v-else-if="panel.kind === 'split'" :key="`s-${panel.id}`" :box-id="panel.id" @close="panel = null" />
           <TreeBasePick v-else-if="panel.kind === 'base'" @close="panel = null" />
           <TreeNote v-else-if="panel.kind === 'note'" :key="`n-${panel.id}`" :box-id="panel.id" @close="panel = null" />
           <TreeStartPick v-else-if="panel.kind === 'start'" @close="panel = null" />

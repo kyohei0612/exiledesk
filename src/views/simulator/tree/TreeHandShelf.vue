@@ -22,7 +22,7 @@ import { tr } from "../../../i18n/lang";
 const props = defineProps<{ boxId: string; current: Hand | null }>();
 /** pick の preCatalyst = 前に足す品質だけ上げる手のカタリスト (触媒のお告げで、まだ品質を上げる手の後でない時) */
 /** only = 結果が 1 通りの手の結果 (tree-sample の singleOutOf、光のお告げ + 消去など) */
-const emit = defineEmits<{ pick: [hand: Hand, kind: HandKind, aims: Aim[], preCatalyst: string | null, only: { out: OutKind; aim: Aim | null } | null]; clear: []; close: [] }>();
+const emit = defineEmits<{ pick: [hand: Hand, kind: HandKind, aims: Aim[], preCatalyst: string | null, only: { out: OutKind; aim: Aim | null } | null]; clear: []; close: []; split: [] }>();
 const t = useTree();
 
 const sample = computed(() => (s.data.value ? sampleOf(s.data.value, t.doc.value, props.boxId, 1) : null));
@@ -134,6 +134,8 @@ function ok(): void {
       <b class="flex-1 text-[14px]">{{ tr("次に打つ手", "Next craft") }}</b>
       <button type="button" class="g-btn sm" @click="emit('close')">{{ tr("閉じる", "Close") }}</button>
     </div>
+    <!-- 打たずに分ける (分かれ目、10-22 オーナー OK): 今の形 (揃った狙い・外れの数) で行き先を分ける。始まりの箱では出さない -->
+    <button v-if="t.doc.value.boxes[boxId]?.out !== 'start'" type="button" data-tree-split class="g-btn sm self-start" :title="tr('手を打たずに、今の形 (揃った狙いの数・外れの数) で行き先を分ける', 'Do not craft; branch by the current shape (targets held, misses)')" @click="emit('split')">◇ {{ tr("打たずに分ける (分かれ目)", "Split without crafting") }}</button>
     <p class="text-[11px] opacity-65">{{ tr("棚から持って「この手にする」。この箱の見本に打てない手は押せない", "Pick from the shelf, then \"Use this\". Crafts that can't be used on this box's sample can't be picked") }}</p>
 
     <!-- 持っている物と、残した入力 (触媒のカタリストの品質・カオススパム) -->

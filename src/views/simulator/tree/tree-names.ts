@@ -8,7 +8,7 @@ import { nameOfKey } from "../../../state/emulator/craft-stage-shelf";
 import { craftStage as s } from "../../../state/craft-stage";
 import { freshItem } from "../../../services/craft-stage/engine";
 import { CATALYSING, isCatalyst } from "../../../services/simulator/tree/tree-hands";
-import type { Hand, TreeBox } from "../../../services/simulator/tree/tree-model";
+import type { Hand, SplitWhen, TreeBox } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { tr } from "../../../i18n/lang";
 
@@ -31,6 +31,16 @@ export const OUT_LOOK: Record<TreeBox["out"], { ja: string; en: string; c: strin
   // 分かれ目の行の箱 (打たずに分けた先。副題は行の条件、splitWhenText)
   branch: { ja: "分かれ目の先", en: "Branch", c: "120,200,190", icon: "arrow-right" },
 };
+
+/** 分かれ目の 1 行の条件の文 (画面で選べる 4 つ + 組み合わせ。空 = それ以外) */
+export function splitWhenText(w: SplitWhen): string {
+  const parts: string[] = [];
+  const h = w.heldCount;
+  if (h) parts.push(h[0] === 0 && h[1] === 0 ? tr("狙いが 1 つも無い", "No targets yet") : tr(`狙いが ${h[0]} つ以上`, `${h[0]}+ targets`));
+  const SIDE = { prefix: ["プレ", "prefix"], suffix: ["サフィ", "suffix"], any: ["どちらか", "any side"] } as const;
+  for (const sd of ["prefix", "suffix", "any"] as const) { const j = w.junk?.[sd]; if (j) parts.push(tr(`外れ (${SIDE[sd][0]}) が ${j[0]} つ以上`, `${j[0]}+ misses (${SIDE[sd][1]})`)); }
+  return parts.length ? parts.join(tr(" かつ ", " and ")) : tr("それ以外", "Otherwise");
+}
 
 /** 箱の種類の名前 (始まり・当たり・外れ…。一覧・戻り先の札・まとめた札で同じ) */
 export const outName = (out: TreeBox["out"]): string => tr(OUT_LOOK[out].ja, OUT_LOOK[out].en);
