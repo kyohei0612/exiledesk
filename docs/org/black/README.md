@@ -17,7 +17,8 @@
 ## 振り先 (これだけ見て振る。持ち物は docs/org/owners.txt が正、`node scripts/owner-of.mjs <パス>` で引ける)
 | 部 | 受け持つ仕事 | 持ち物のフォルダー | 呼ぶ時の合図 (こういう頼みならここ) | 常駐 | モデル | 決まり |
 |---|---|---|---|---|---|---|
-| ジン部長 (エンジンの管理者) | エンジン (カレンシー・お告げの効き目・MOD の置き場/重み/段/文・確率の表・品質・聖別・入口 engine.ts)・画面の部長からの追加の要望 (出した側だけが使える形で入口に)・共通の部品・画面の英語・部どうしの境目。画面は持たない | services/craft-stage・htc・mods・items・vendor/poe2htc・tests/*.test.ts・golden、「共通」= src/components・utils・style・web/・i18n・state/craft-stage.ts・share/trade-search/money など | 「打った結果がおかしい」「確率が変」「入口に足して (画面の部長の要望)」「共通の部品・英語の文を直して」 | 呼ばれたら常駐 | Opus | emulator/README.md |
+| ジン部長 (エンジンの管理者) | エンジン (カレンシー・お告げの効き目・MOD の置き場/重み/段/文・確率の表・品質・聖別・入口 engine.ts)・画面の部長からの追加の要望 (出した側だけが使える形で入口に)・境目の小物 (utils・web/・i18n のデータ)。画面と部品は持たない | services/craft-stage・htc・mods・items・vendor/poe2htc・tests/*.test.ts・golden、「共通」= src/components・utils・style・web/・i18n・state/craft-stage.ts・share/trade-search/money など | 「打った結果がおかしい」「確率が変」「入口に足して (画面の部長の要望)」 | 呼ばれたら常駐 | Opus | emulator/README.md |
+| デザイン部長 | 両方の画面で一緒の部品の核 (共通管理 for-share: 棚・カード・MOD 表の土台など)・ほかの共通の部品・見た目の決まり・言語の切り替えと用語集。エンジンには触れない (10-23) | src/components (for-share 含む)・src/state/for-share・src/style・i18n/lang.ts・GLOSSARY.md | 「両方の画面の部品・見た目を直して」「共通の部品」 | 呼ばれたら常駐 | Opus | design/README.md |
 | エミュ部長 | エミュの画面 (本番のエミュレーター: 棚から打つ画面・スパムシミュレーター) の UI/UX だけ、エンジンには触れない (10-22 深夜) | src/views/craft-stage・state/emulator | 「エミュの画面の見た目・操作」「スパムシミュの画面」 | 呼ばれたら常駐 | Opus | emu/README.md |
 | シミュ部長 | シミュレーター (ツリー) の画面の UI/UX だけ (エンジンには触れない、10-22 深夜)・費用の見せ方、チュートリアル (使い方・コツ・コース) | src/views・services・state の simulator/ と tutorial/、tests/simulator・tutorial、scripts/_sim-*・sim-telemetry、server/live/src/sim.ts | 「シミュレーター」「チュートリアル・コース・クラフト手順」 | 呼ばれたら常駐 | Opus | simulator/README.md |
 | 解析君 | 確率・期待値・重み・動的計画法、打ち方の比べ (N 人回す)、計算とエンジンの突き合わせ | src/services/simulator/auto/ (auto-order* はシミュ)、scripts/analysis/ | 「〜を回して」「どの打ち方が安い?」「何神かかる?」「確率は合ってる?」 | 呼ばれたら常駐 | Opus | math/README.md |
@@ -30,7 +31,7 @@
 | 最終チェック長 | 本番に上げる時の最後: 型チェック・ビルド・本番に出す物と OK 待ちの出し分け・デバッグ・版上げ・更新内容の日英・deploy:web・push | scripts/bump-version・build-changelog、src/data/changelog*.json、docs/pending-release.md、docs/org/dev/ (全部の部の決まり) | オーナーの「本番に出して」「リリース」 | 呼ぶ時だけ (上げ終わったら閉じる) | Opus | dev/README.md |
 
 迷いやすい境目:
-- 画面の見た目・操作 → エミュの画面ならエミュ部長、シミュならシミュ部長。決まり・確率・打てるかなど中身 → ジン部長 (画面の部長はエンジンに触れない。要望は出した側だけが使える形で入口に、オーナー 10-22 深夜)。
+- 画面の見た目・操作 → エミュの画面ならエミュ部長、シミュならシミュ部長、両方で一緒の部品ならデザイン部長。決まり・確率・打てるかなど中身 → ジン部長 (画面の部長はエンジンに触れない。要望は出した側だけが使える形で入口に、オーナー 10-22 深夜)。
 - シミュ・チュートリアル・動画の画面が共通の部品 (src/components・utils・style・web/) や英語の文を直したい → ジン部長。打つ処理・確率・MOD の数字が足りない → ジン部長に入口へ足してもらう (自前で書かせない)。
 - 数字が正しいかの確かめ・打ち方の比べ → 解析君 (画面・コードの直しは持ち物の部)。解析君が「エンジンに無い手」を見つけた → ジン部長。
 - 要望・バグ → 分析君が受けて再現と部を特定 → ブラックがその部へ。要望の返事の文と置く (本番に出た後) → 分析君。
