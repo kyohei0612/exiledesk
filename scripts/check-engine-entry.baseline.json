@@ -28,7 +28,6 @@
  "A src/views/craft-stage/StageAimPicker.vue": 1,
  "A src/views/craft-stage/StageBasePicker.vue": 2,
  "A src/views/craft-stage/StageFracturePicker.vue": 1,
- "A src/views/craft-stage/StageItemCard.vue": 9,
  "A src/views/craft-stage/StageItemMini.vue": 1,
  "A src/views/craft-stage/StageModList.vue": 1,
  "A src/views/craft-stage/StageQualityBar.vue": 3,
@@ -38,7 +37,6 @@
  "A src/views/craft-stage/StageRoutesPage.vue": 3,
  "A src/views/craft-stage/StageSettings.vue": 1,
  "A src/views/craft-stage/StageWeightEdit.vue": 1,
- "A src/views/craft-stage/base-values.ts": 2,
  "A src/views/craft-stage/route-place.ts": 2,
  "A src/views/craft-stage/stage-mod-list-look.ts": 3,
  "A src/views/craft-stage/use-stage-fx.ts": 1,
@@ -71,11 +69,6 @@
  "D src/views/craft-stage/StageSettings.vue": 3,
  "D src/views/craft-stage/use-stage-base.ts": 3,
  "D src/views/simulator/SimBaseExtras.vue": 1,
- "D src/views/simulator/tree/TreeGoalPage.vue": 2,
- "D src/views/simulator/tree/TreeHandShelf.vue": 1,
- "D src/views/simulator/tree/TreeHoverCard.vue": 1,
- "D src/views/simulator/tree/TreeStartPage.vue": 1,
- "D src/views/simulator/tree/tree-row-tags.ts": 1,
- "D src/views/tutorial/VideoCompare.vue": 1,
- "D src/views/tutorial/VideoStage.vue": 2
+ "D src/views/simulator/tree/TreeGoalPage.vue": 1,
+ "D src/views/tutorial/VideoStage.vue": 1
 }
