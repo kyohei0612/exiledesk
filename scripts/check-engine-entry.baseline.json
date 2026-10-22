@@ -1,7 +1,6 @@
 {
  "A src/services/simulator/auto-group.ts": 1,
  "A src/services/simulator/auto/auto-order.worker.ts": 1,
- "A src/services/simulator/paste-read.ts": 1,
  "A src/services/simulator/pattern.ts": 5,
  "A src/services/simulator/quiz-build.ts": 4,
  "A src/services/simulator/quiz-recipe.ts": 7,
