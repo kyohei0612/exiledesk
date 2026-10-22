@@ -14,9 +14,10 @@ import CurrencyShelf from "../../../components/for-share/shelf/CurrencyShelf.vue
 import HeldOmens from "../../../components/for-share/shelf/HeldOmens.vue";
 import { omensAllowedFor } from "../../../services/craft-stage/engine";
 import { mulberry32, omensFor, stepOutcomes } from "../../../services/craft-stage/engine";
-import { catalystFull, fillCatalyst } from "../../../services/craft-stage/engine-sim";
-import { tierNoOf } from "../../../services/craft-stage/engine";
-import { aimHeldOn, catalystForMod, effectOf, reachableAims } from "../../../services/simulator/tree/tree-play";
+import { catalystFull, catalystTagOf, fillCatalyst } from "../../../services/craft-stage/engine-sim";
+import { aimHits, catalystBoosts, heldOdds, makeStageMod, tierIndexOf, tierNoOf, type HeldOdds, type PatchData, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { aimHeldOn } from "../../../services/simulator/tree/tree-aim";
+import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, sampleOf, singleOutOf } from "../../../services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, ECHO, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handLabel, handName, outName } from "./tree-names";
@@ -170,6 +171,41 @@ const OMEN_ON = "!border-violet-300 bg-violet-500/30 text-violet-50";
 function ok(): void {
   const h = hand.value, k = kind.value;
   if (h && k && !problem.value) emit("pick", h, k, hitAims.value, preCat.value, only.value);
+}
+// 付きうる狙い・伸ばすカタリスト (2026-10-23 エンジンの for-sim から戻した。中身はエンジンの核の heldOdds・aimHits・catalystBoosts を呼ぶだけ)
+interface TierAim { modId: string; tier: number }
+interface AimDiffOpts { sameText?: boolean }
+const heldOn = (data: PatchData, mods: readonly StageMod[], a: TierAim, o: AimDiffOpts): boolean => {
+  const t = { modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) }, opts = o.sameText ? { data, sameText: true } : undefined;
+  return mods.some((m) => aimHits(m, t, opts));
+};
+
+/**
+ * この手で付きうる狙い = items (同じ箱の見本など) のどれかで、クラフト台でそのカレンシーを持った時に出る % (heldOdds。CoE と合わせ済み) が 0 より大きい段がある狙い
+ * (並びは aims のまま。オーナー 10-22: 行き先は数え上げず heldOdds の答えをそのまま、錬金・大いなる高貴・骨の候補も heldOdds の物)。
+ * もう付いている狙いは見ない (呼ぶ側が外して渡す)。どの見本でも heldOdds に % が 1 つも無い (打てない・確率の表が無い手) 時は null (呼ぶ側が決める)
+ */
+function reachableAims<A extends TierAim>(data: PatchData, items: readonly StageItem[], key: string, omens: readonly string[], aims: readonly A[], o: AimDiffOpts = {}): A[] | null {
+  const pools = items.flatMap((it) => { const h = heldOdds(data, it, key, omens), ms = h ? poolOf(data, h) : []; return ms.length ? [ms] : []; });
+  if (!pools.length) return null;
+  return aims.filter((a) => pools.some((ms) => heldOn(data, ms, a, o)));
+}
+/** heldOdds で % が 0 より大きい段の MOD (数値は段の真ん中、当たりの判定にだけ使う) */
+function poolOf(data: PatchData, h: HeldOdds): StageMod[] {
+  const out: StageMod[] = [];
+  for (const [id, x] of h.byMod) {
+    const mod = data.mods.get(id);
+    if (!mod) continue;
+    for (const t of x.tiers) if (t.w > 0) out.push(makeStageMod(mod, mod.type === "suffix" ? "suffix" : "prefix", t.index, () => 0.5));
+  }
+  return out;
+}
+
+/** その MOD を伸ばすカタリスト (keys の並びで最初の物、伸ばす物が無ければ null)。伸びるかはエンジンの catalystBoosts (指輪・アミュレットは MOD の tags、ジュエル・上のベースは中身のタグ) */
+function catalystForMod(data: PatchData, item: StageItem, modId: string, keys: readonly string[]): string | null {
+  const mod = data.mods.get(modId);
+  if (!mod) return null;
+  return keys.find((k) => catalystBoosts(item, { modId, tags: mod.tags }, catalystTagOf(k), data)) ?? null;
 }
 </script>
 

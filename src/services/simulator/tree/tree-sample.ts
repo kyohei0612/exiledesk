@@ -6,10 +6,11 @@
  * その下の箱 = 親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
-import { applyCurrency, forceKey, freshItem, mulberry32, stepOutcomes, tierIndexOf, unrevealedOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem } from "../../craft-stage/engine";
-import { fillCatalyst } from "../../craft-stage/engine-sim";
-import { aimDiff, aimHeldOn, applyHand, canUse, effectOf, isAimMod, startWith } from "./tree-play";
-import { ECHO, engineOmens, isCatalyst } from "./tree-hands";
+import { aimHits as hits, applyCurrency, catalystOf, forceKey, freshItem, kindOf, mulberry32, omenBlock, OMEN_FOR, revealOffers, runeIdByName, stepOutcomes, tierIndexOf, unrevealedOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { catalystFull, catalystTagOf, fillCatalyst } from "../../craft-stage/engine-sim";
+import { aimHeldOn, isAimMod, junkOf } from "./tree-aim";
+import { CATALYSING as CATALYSING_OMEN, ECHO, ECHO as ABYSSAL_ECHO_OMEN, effectOf, engineOmens, isCatalyst } from "./tree-hands";
+import { tr } from "../../../i18n/lang";
 import { startOf, type Aim, type Hand, type OutKind, type TreeDoc } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-run";
@@ -195,4 +196,195 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
     return { item: r.item, note: r.applied ? "forced" : r.reason ?? null };
   }
   return { item: base.item, note: "none" };
+}
+
+// ここから下は木の打ち方の組み合わせ (2026-10-23 エンジンの for-sim から戻した。中身はエンジンの核の関数を呼ぶだけ)
+
+/** 段の名前の T で言う狙い (T1 が一番上) */
+interface TierAim { modId: string; tier: number }
+interface AimDiffOpts { sameText?: boolean }
+
+const targetOf = (data: PatchData, a: TierAim): AimTarget => ({ modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) });
+const modsOf = (item: StageItem): StageMod[] => [...item.prefixes, ...item.suffixes];
+const heldOn = (data: PatchData, mods: readonly StageMod[], a: TierAim, o: AimDiffOpts): boolean => {
+  const t = targetOf(data, a), opts = o.sameText ? { data, sameText: true } : undefined;
+  return mods.some((m) => hits(m, t, opts));
+};
+
+interface AimDiff<A extends TierAim = TierAim> {
+  /** 前に無く後に付いている狙い (並びは aims のまま) */
+  hits: A[];
+  /** 前に付いていて後に無い狙い */
+  lost: A[];
+  /** 外れ (固定でも狙いでもない MOD) の数が減った */
+  junkGone: boolean;
+  /** 新しく ✦ (フラクチャー) になった MOD (無ければ null) と、それが当たる狙い */
+  fractured: StageMod | null;
+  fracturedHits: A[];
+}
+
+/** 1 手の前 (before) と後 (after) で狙いがどう変わったか */
+function aimDiff<A extends TierAim>(data: PatchData, before: StageItem, after: StageItem, aims: readonly A[], o: AimDiffOpts = {}): AimDiff<A> {
+  const bm = modsOf(before), am = modsOf(after);
+  const had = aims.filter((a) => heldOn(data, bm, a, o));
+  const has = aims.filter((a) => heldOn(data, am, a, o));
+  const ts = aims.map((a) => targetOf(data, a)), opts = o.sameText ? { data, sameText: true } : undefined;
+  const junk = (it: StageItem): number => { const j = junkOf(it, ts, opts); return j.prefix.length + j.suffix.length; };
+  const was = new Set(bm.filter((m) => m.fractured).map((m) => m.modId));
+  const fractured = am.find((m) => m.fractured && !was.has(m.modId)) ?? null;
+  return {
+    hits: has.filter((a) => !had.includes(a)),
+    lost: had.filter((a) => !has.includes(a)),
+    junkGone: junk(after) < junk(before),
+    fractured,
+    fracturedHits: fractured ? aims.filter((a) => heldOn(data, [fractured], a, o)) : [],
+  };
+}
+
+/**
+ * 手に付けたお告げを、その手に掛かる物 (now) と続けて打つ発現に掛かる物 (reveal = アビスの反響) に分ける。
+ * 骨 (冒涜) の手に付けた反響は骨には掛からず (渡すとエンジンが弾く)、その後の発現で使う。発現の手そのものなら now
+ */
+function handOmens(key: string, omens: readonly string[]): { now: string[]; reveal: string[] } {
+  if (kindOf(key) === "reveal") return { now: [...omens], reveal: [] };
+  const rv = OMEN_FOR.reveal ?? [];
+  return { now: omens.filter((o) => !rv.includes(o)), reveal: omens.filter((o) => rv.includes(o)) };
+}
+
+interface UseSpec {
+  /** 手に付けたお告げ (反響は handOmens で発現の側へ分ける) */
+  omens?: readonly string[];
+  /** 触媒の高貴の前に品質を最大まで入れるカタリスト (お告げに触媒の高貴がある時だけ使う) */
+  catalyst?: string | null;
+}
+
+/**
+ * その手 (key + お告げ + 触媒の前のカタリスト) がこのアイテムに打てない理由。打てるなら null。
+ * - お告げ: 1 枚ずつ omenBlock (触媒の時はカタリストで品質を入れた後のアイテムで聞く)。消せる物が無い側のお告げ・効かないお告げ (オーナー 10-22「進行不能」)
+ * - カタリストの手: 1 個でも入る・もう最大なら打てる
+ * - 触媒の高貴: カタリストが入らず、別の種類の品質しか無ければ打てない
+ * - 手そのもの: applyCurrency が打てる・乱数で決まる (random) なら打てる
+ */
+function canUse(data: PatchData, item: StageItem, key: string, spec: UseSpec = {}): string | null {
+  const now = handOmens(key, spec.omens ?? []).now;
+  const cat = spec.catalyst && now.includes(CATALYSING_OMEN) ? spec.catalyst : null;
+  const filled = cat ? fillCatalyst(data, item, cat, mulberry32(1)).item : item;
+  for (const o of now) { const why = omenBlock(data, filled, key, now, o); if (why) return why; }
+  const rng = mulberry32(1);
+  if (kindOf(key) === "catalyst") {
+    const r = fillCatalyst(data, item, key, rng);
+    return r.count || catalystFull(item, key) || r.random ? null : r.reason ?? tr("打てない", "Can't use");
+  }
+  let it = item;
+  if (cat) {
+    const r = fillCatalyst(data, it, cat, rng);
+    if (!r.applied && r.count === 0 && catalystOf(it).tag !== catalystTagOf(cat)) return r.random ? null : r.reason ?? tr("打てない", "Can't use");
+    it = r.item;
+  }
+  const r = applyCurrency(data, it, key, rng, now);
+  return r.applied || r.random ? null : r.reason ?? tr("打てない", "Can't use");
+}
+
+interface HandSpec {
+  /** 手に付けたお告げ (反響は handOmens で発現の側へ) */
+  omens?: readonly string[];
+  /** 触媒の高貴の前に品質を最大まで入れるカタリスト (お告げに触媒の高貴がある時だけ) */
+  catalyst?: string | null;
+  /** フラクチャーの手で ✦ にする MOD (付いていれば打った後にそれを固定。付いていない・打てない時はエンジンの乱数のまま) */
+  fractureOf?: string | null;
+  /** 未発現が付いた時、そのまま発現で選ぶ候補 (true の候補の最初の物、無ければ 1 つ目)。false = 発現しない。既定 = 1 つ目 */
+  reveal?: false | ((m: StageMod) => boolean);
+}
+interface HandResult extends StageApply {
+  /** 触媒の前 (かカタリストの手そのもの) で打ったカタリストの個数 */
+  catalystCount: number;
+  /** 手そのもので使ったお告げ (発現の前。発現の物は omensUsed) */
+  handOmensUsed: string[];
+  /** 反響を発現に使った */
+  echoUsed: boolean;
+}
+
+/**
+ * 発現 (魂の井戸) で候補を選んで打つ。候補 3 つ (revealOffers) のうち want に合う最初の物、無ければ 1 つ目。
+ * echo = アビスの反響があれば、最初の 3 つに無い時に 1 回引き直した 3 つから (同じ種で引くのでエンジンの reveal:N:reroll と同じ候補、apply-desecrate.ts)。
+ * r = 未発現が付いた手の結果 (付いた・消えた MOD は足し合わせる)。発現できなければ r のまま
+ */
+function revealBy(data: PatchData, r: StageApply, rng: () => number, want: (m: StageMod) => boolean, echo = false): StageApply {
+  const seed = Math.floor(rng() * 2 ** 31);
+  const offers = revealOffers(data, r.item, mulberry32(seed));
+  const n = offers.first.findIndex(want);
+  const k = n < 0 && echo ? offers.reroll.findIndex(want) : -1;
+  // reveal:N の N は 1 から (エンジンの run-plan と同じ。0 は「その番号の候補が無い」)
+  const x = k >= 0 ? applyCurrency(data, r.item, `reveal:${k + 1}:reroll`, mulberry32(seed), [ABYSSAL_ECHO_OMEN]) : applyCurrency(data, r.item, `reveal:${Math.max(0, n) + 1}`, mulberry32(seed));
+  return x.applied ? { ...x, added: [...r.added, ...x.added], removed: [...r.removed, ...x.removed] } : r;
+}
+
+/** 手を 1 回打つ (上の HandSpec の順)。カタリストの手は品質を今の最大まで (もう最大なら打てた扱いで何もしない) */
+function applyHand(data: PatchData, item: StageItem, key: string, rng: () => number, spec: HandSpec = {}): HandResult {
+  if (kindOf(key) === "catalyst") {
+    const r = fillCatalyst(data, item, key, rng);
+    return { ...r, applied: r.applied || r.count > 0 || catalystFull(item, key), catalystCount: r.count, handOmensUsed: [], echoUsed: false };
+  }
+  const { now, reveal } = handOmens(key, spec.omens ?? []);
+  let it = item, catalystCount = 0;
+  if (spec.catalyst && now.includes(CATALYSING_OMEN)) {
+    const c = fillCatalyst(data, it, spec.catalyst, rng);
+    if (!c.applied && c.count === 0 && catalystOf(it).tag !== catalystTagOf(spec.catalyst)) return { ...c, catalystCount: 0, handOmensUsed: [], echoUsed: false };
+    catalystCount = c.count;
+    it = c.item;
+  }
+  let r = applyCurrency(data, it, key, rng, now);
+  const fo = spec.fractureOf;
+  if (r.applied && fo && effectOf(key) === "fracture" && [...it.prefixes, ...it.suffixes].some((m) => m.modId === fo)) {
+    const f = applyCurrency(data, it, forceKey(fo, "T1", "f"), rng);
+    if (f.applied) r = { ...r, item: f.item, added: f.added, removed: f.removed };
+  }
+  const base = { catalystCount, handOmensUsed: r.omensUsed ?? [] };
+  if (!r.applied || !unrevealedOf(r.item) || spec.reveal === false) return { ...r, ...base, echoUsed: false };
+  const echo = reveal.includes(ABYSSAL_ECHO_OMEN);
+  return { ...revealBy(data, r, rng, spec.reveal ?? (() => false), echo), ...base, echoUsed: echo };
+}
+
+export interface StartMod { modId: string; tier: number; fractured?: boolean }
+interface StartWith {
+  /** 始まりのレアリティ。マジック・ノーマルはノーマルから付ける (付けるとマジック)。フラクチャーがあればレア (force がレアにする) */
+  rarity: StageItem["rarity"];
+  mods: readonly StartMod[];
+  /** 先に差すルーン (英語名)。指名の MOD のルーンの分もソケットを開ける */
+  runes?: readonly string[];
+  /** 指名の後に乱数で足す MOD の数 (レアは素の高貴、ほかは増強) */
+  random?: number;
+}
+
+/** フラクチャー (✦) は 1 つのアイテムに 1 つまで (ゲームのフラクチャーのオーブは 1 つだけ固定する) */
+const START_FRACTURE_MAX = 1;
+
+/** 始めのアイテム。note = 打てなかった理由 (無ければ null、その時の item は打てた所まで) */
+function startWith(data: PatchData, base: string, itemLevel: number, s: StartWith, rng: () => number): { item: StageItem; note: string | null } {
+  const magic = (s.rarity === "magic" || s.rarity === "normal") && !s.mods.some((m) => m.fractured);
+  let item = freshItem(data, base, itemLevel, magic ? "normal" : "rare");
+  if (s.mods.filter((m) => m.fractured).length > START_FRACTURE_MAX) return { item, note: tr("フラクチャーは 1 つまで", "Only one mod can be fractured") };
+  // 選んだルーンを先に差す。ルーンの MOD はそのルーンを差して付く (force が差す)。差すソケットを要る数だけ開けておく (手袋の投射物 +2 = コルの狩り、10-22)
+  const runes = s.runes ?? [];
+  const byMod = new Set(s.mods.flatMap((m) => { const r = data.mods.get(m.modId)?.rune; return r ? [r] : []; }));
+  const need = runes.length + [...byMod].filter((id) => !runes.some((en) => runeIdByName(en) === id)).length;
+  if (need) item = { ...item, sockets: Math.max(item.sockets ?? 0, need) };
+  for (const en of runes) {
+    const r = applyCurrency(data, item, `rune:${en}`, rng);
+    if (!r.applied) return { item: r.item, note: r.reason ?? null };
+    item = r.item;
+  }
+  for (const m of s.mods) {
+    // エッセンスの MOD (グレーターの道の始まり) はクラフト MOD の印で付ける
+    const src = data.mods.get(m.modId)?.source;
+    const r = applyCurrency(data, item, forceKey(m.modId, `T${m.tier}`, m.fractured ? "f" : src === "essence" || src === "perfect_essence" ? "e" : "n"), rng);
+    if (!r.applied) return { item: r.item, note: r.reason ?? null };
+    item = r.item;
+  }
+  for (let i = 0; i < (s.random ?? 0); i++) {
+    const x = applyCurrency(data, item, item.rarity === "rare" ? "exalt" : "augment", rng);
+    if (!x.applied) return { item, note: x.reason ?? null };
+    item = x.item;
+  }
+  return { item, note: null };
 }

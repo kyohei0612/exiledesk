@@ -66,6 +66,7 @@ import { ANY_STATE, applyExtra, FOR_CORRUPTED, isExtra } from "./apply-extra";
 import { applyDispose, DISPOSE_JA, isDispose } from "./apply-dispose";
 import { applyUnsocket, isUnsocket } from "./stage-runes";
 import { tr } from "../../i18n/lang";
+import { mulberry32 } from "../htc/rng";
 
 export { GNAWED_MAX_ILVL } from "./stage-core";
 import { applyBySpec } from "./spec/run-spec";
@@ -117,6 +118,15 @@ export function omensAllowedFor(key: string | null | undefined): string[] {
   return [...(OMEN_FOR[kind] ?? []), ...(kind === "desecrate" ? OMEN_FOR.reveal ?? [] : [])];
 }
 
+
+/**
+ * その手が今打てない理由 (打てるなら null)。打てるか = ゲームが右クリックを受け付けるか: 打つ前に分かる条件だけで決め、当たり所で弾かれる物 (random) は打てる扱い
+ * (2026-10-12 オーナーの方針「結果をリークしない、ゲームと同じく自由に」)。クラフト台の棚とシミュの棚が同じ判定を使う (2026-10-23 核へ 1 つに)
+ */
+export function useReason(data: PatchData, item: StageItem, key: string, omens: readonly string[] = []): string | null {
+  const r = applyCurrency(data, item, key, mulberry32(0), [...omens]);
+  return r.applied || r.random ? null : (r.reason ?? tr("打てない", "Can't use"));
+}
 
 /**
  * 1 個打つ。打てない状態なら applied:false と理由 (item はそのまま)。

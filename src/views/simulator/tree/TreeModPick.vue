@@ -10,9 +10,9 @@ import type { Aim } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { craftStage as s } from "../../../state/craft-stage";
-import { freshItem } from "../../../services/craft-stage/engine";
+import { freshItem, modListFor, type ModGroup } from "../../../services/craft-stage/engine";
 import { tierRankLabel } from "../../../services/craft-stage/engine";
-import { aimHeldOn, modListForUse } from "../../../services/simulator/tree/tree-play";
+import { aimHeldOn } from "../../../services/simulator/tree/tree-aim";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { aimKey } from "../../../services/simulator/tree/tree-model";
 
@@ -29,8 +29,12 @@ const open = ref<string | null>(props.current?.modId ?? null);
  * 当たりは一般の MOD と冒涜専用 MOD (骨の手の当たり、10-22 オーナー「冒涜は冒涜で付与」)、始まりの MOD は創生の樹など (カレンシーでは付かない物) と
  * ルーンの MOD (付けるとエンジンの force がそのルーンを差す) も。普通の MOD が先 (10-22 靴・手袋を白紙から組んで、創生の樹が一番上に並び探しにくかった)
  */
-// 群れと並び (群れの順 → 出やすさ) はエンジンの入口の modListForUse (B13 10-22)。木のベースのレアで
-const listed = computed(() => { const d = s.data.value; return d ? modListForUse(d, freshItem(d, t.doc.value.base, t.doc.value.itemLevel, "rare"), props.mode) : []; });
+/**
+ * 当たりは一般・冒涜専用 (骨の手の当たり)・エッセンス、始まりの MOD は一般・エッセンス・創生の樹など (カレンシーでは付かない物)・ルーンの MOD。
+ * 並びは群れの順 → 出やすさ (普通の MOD が先、10-22)。一覧はエンジンの modListFor、木のベースのレアで
+ */
+const GROUPS_OF: Record<"hit" | "start", readonly ModGroup[]> = { hit: ["normal", "desecrated", "essence"], start: ["normal", "essence", "special", "rune"] };
+const listed = computed(() => { const d = s.data.value; const gs = GROUPS_OF[props.mode]; return d ? modListFor(d, freshItem(d, t.doc.value.base, t.doc.value.itemLevel, "rare")).filter((r) => gs.includes(r.group)).sort((a, b) => gs.indexOf(a.group) - gs.indexOf(b.group) || b.share - a.share) : []; });
 const sections = computed(() => {
   // 「移動速度」でも「移動スピード」(MOD の文) に当たる (10-22 白紙から組んで 0 件だった)
   const qs = [...new Set([query.value.trim().toLowerCase()].flatMap((q) => [q, q.replace(/速度/g, "スピード"), q.replace(/スピード/g, "速度")]))];

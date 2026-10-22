@@ -7,8 +7,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import NumStep from "../../../components/NumStep.vue";
-import { freshItem, limitOf, mulberry32, socketCapOf } from "../../../services/craft-stage/engine";
-import { runesFor } from "../../../services/simulator/tree/tree-play";
+import { applyCurrency, freshItem, limitOf, mulberry32, RUNES, runeEffectFor, socketCapOf } from "../../../services/craft-stage/engine";
 import { migrateStart, startOf, type Aim, type TreeRarity, type TreeStart } from "../../../services/simulator/tree/tree-model";
 import { startItemOf } from "../../../services/simulator/tree/tree-sample";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -56,8 +55,9 @@ const cap = computed(() => (fresh.value ? socketCapOf(fresh.value.base, fresh.va
 const runeChoices = computed(() => {
   const d = s.data.value, it = fresh.value;
   if (!d || !it || !cap.value) return [];
-  // 差せるか・効果はエンジンの入口の runesFor (B14 10-22)
-  return runesFor(d, it).map(({ en, rune, effect }) => ({ en, name: nameOf({ en, ja: rune.ja }), effect: effect ? tr(effect.ja, effect.en) : "" }));
+  // 差せるかはエンジンの applyCurrency (ソケット 1 つの形で聞く)、効果は runeEffectFor
+  return Object.entries(RUNES).filter(([en, r]) => r.kind === "rune" && r.available !== false && applyCurrency(d, { ...it, sockets: 1 }, `rune:${en}`, mulberry32(1)).applied)
+    .map(([en, rune]) => { const e = runeEffectFor(rune, it.cls.category); return { en, name: nameOf({ en, ja: rune.ja }), effect: e ? tr(e.ja, e.en) : "" }; });
 });
 const runeName = (en: string): string => runeChoices.value.find((r) => r.en === en)?.name ?? en;
 const runes = computed(() => st.value.runes ?? []);

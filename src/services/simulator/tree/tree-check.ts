@@ -10,7 +10,7 @@
  */
 import { allMods, modBoostsOf, mulberry32, room, SIDES, stepOutcomes, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { catalystTagOf } from "../../craft-stage/engine-sim";
-import { aimHeldOn, junkOf } from "./tree-play";
+import { aimHeldOn, junkOf } from "./tree-aim";
 import { CATALYSING, engineOmens, isCatalyst } from "./tree-hands";
 import { aimKey, type Aim, type OutKind, type TreeDoc } from "./tree-model";
 import { aimOpts, aimsOf, handAims, handProblem, outcomeOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";

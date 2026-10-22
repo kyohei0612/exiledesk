@@ -7,8 +7,7 @@
 import { ref, type Ref } from "vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { provideShelf, simHidden } from "../../state/for-share/shelf-context";
-import { type StageItem } from "../../services/craft-stage/engine";
-import { canUse } from "../../services/simulator/tree/tree-play";
+import { useReason, type StageItem } from "../../services/craft-stage/engine";
 import { tr } from "../../i18n/lang";
 
 export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null> = ref(null), omens: Ref<string[]> = ref([])) {
@@ -19,11 +18,11 @@ export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null
   function onShelfDown(e: PointerEvent): void { if (held.value && !(e.target as HTMLElement).closest("button,input,select,label,[data-held-box]")) release(); }
   function usableWith(k: string, om: readonly string[]): string | null {
     const d = s.data.value, it = item.value;
-    return d && it ? canUse(d, it, k, { omens: om }) : tr("準備中", "Loading");
+    return d && it ? useReason(d, it, k, om) : tr("準備中", "Loading");
   }
   provideShelf({
     data: s.data, item, omens, held,
-    // 打てるかはエンジンの入口の canUse (B11 10-22)。お告げを抜いた判定も渡す (掛けたお告げのせいで棚から消さない、クラフト台と同じ)
+    // 打てるかはエンジンの useReason (クラフト台の棚と同じ判定、10-23)。お告げを抜いた判定も渡す (掛けたお告げのせいで棚から消さない、クラフト台と同じ)
     usable: (k) => usableWith(k, omens.value),
     usableBare: (k) => usableWith(k, []),
     toggleOmen,

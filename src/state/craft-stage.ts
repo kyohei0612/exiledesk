@@ -37,7 +37,7 @@ import { fullSockets, planStepOf, type PlanStep } from "./for-share/stage-steps"
 /** ?base=<英語名> (ベースの読み物のページから来た時)。録画モードの base= とは別 */
 export const URL_BASE: string | null = (() => { try { return new URLSearchParams(location.search).get("base"); } catch { return null; } })();
 import { loadCurrencyHover } from "../services/currency/currency-hover";
-import { applyCurrency, omensFor } from "../services/craft-stage/apply-currency";
+import { omensFor, useReason } from "../services/craft-stage/apply-currency";
 import { revealOffers, unrevealedOf } from "../services/craft-stage/apply-desecrate";
 import { freshItem, playStep, startFrom, type PlayedStep } from "../services/craft-stage/run-plan";
 import type { Force } from "../services/craft-stage/stage-core";
@@ -179,8 +179,7 @@ function priceKeysAll(): string[] {
  */
 function usableWith(key: string, om: readonly string[]): string | null {
   if (!data.value || !item.value) return tr("読み込み中…", "Loading…");
-  const r = applyCurrency(data.value, item.value, key, mulberry32(0), om);
-  return r.applied || r.random ? null : (r.reason ?? tr("打てない", "Can't use"));
+  return useReason(data.value, item.value, key, om);
 }
 const replayApi = stageReplay({
   data, item, log, dropped, replay, base, itemLevel, seed, startMods, omens, held, rollSeed, error,

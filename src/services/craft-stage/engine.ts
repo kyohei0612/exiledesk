@@ -18,7 +18,8 @@ export type { PobBlock } from "./stage-pob";
 // アイテムを作る・打つ
 export { freshItem, startFrom, startItem, playStep, playPlan, runPlan, splitOmens } from "./run-plan";
 // omensAllowedFor = その手に付けられるお告げ (骨には後の発現の反響も)
-export { applyCurrency, kindOf, omensFor, omensAllowedFor } from "./apply-currency";
+// useReason = その手が今打てない理由 (打てるなら null。乱数で決まる物は打てる扱い。クラフト台とシミュの棚の同じ判定)
+export { applyCurrency, kindOf, omensFor, omensAllowedFor, useReason } from "./apply-currency";
 export { revealOffers, unrevealedOf } from "./apply-desecrate";
 // そのお告げを今掛けられるか (掛けると打てない・意味が無いお告げの理由。棚のお告げの欄の灰色、棚は共通の部品なので核)
 export { omenBlock } from "./omen-block";

@@ -11,7 +11,7 @@
 import { it } from "vitest";
 import { loadPatch } from "../tests/helpers/patch";
 import { type StageItem, type StageMod } from "../src/services/craft-stage/engine";
-import { aimHeldOn } from "../src/services/simulator/tree/tree-play";
+import { aimHeldOn } from "../src/services/simulator/tree/tree-aim";
 import { aimsOf, sampleOf } from "../src/services/simulator/tree/tree-sample";
 import { treeSample, TREE_SAMPLES } from "../src/services/simulator/tree/tree-samples";
 
