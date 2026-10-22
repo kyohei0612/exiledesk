@@ -6,12 +6,12 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
-import { tr } from "../../../i18n/lang";
-import { craftStage } from "../../../state/craft-stage";
-import type { ListRow } from "../../../services/craft-stage/engine";
-import { defaultWeightOf, OVERRIDDEN } from "../../../services/craft-stage/engine";
-import { weightOverrideNote } from "../../../services/htc/weight-overrides";
-import { modWeights, resetModWeights, setModWeight, WEIGHTS_ON } from "../../../state/for-share/stage-tuning";
+import { tr } from "../../i18n/lang";
+import { craftStage } from "../../state/craft-stage";
+import type { ListRow } from "../../services/craft-stage/engine";
+import { defaultWeightOf, OVERRIDDEN } from "../../services/craft-stage/engine";
+import { weightOverrideNote } from "../../services/htc/weight-overrides";
+import { modWeights, resetModWeights, setModWeight, WEIGHTS_ON } from "../../state/for-share/stage-tuning";
 
 const props = defineProps<{ row: ListRow; badge?: boolean }>();
 const est = computed(() => props.row.tiers.some((t) => OVERRIDDEN.has(t.modId ?? props.row.id)));

@@ -1,14 +1,14 @@
 <!--
   TreeGoalPage.vue — 「0 完成形の設定」の重ね窓 (2026-10-22 オーナー「ツリー特化。箱を押す → 重ね窓で選ぶ → 閉じる で完結」)。枠は ModalShell (前の TreeBasePage と同じ)。
   1 = ベース・レアリティ・アイテムレベル (適正): 上の行が TreeBasePick、下はベースのページと同じ BaseCatalog。ベースを選ぶと 2 へ。
-  2 = 完成の MOD: エミュの「このベースに付く MOD」(StageModList) そのまま、段の行のボタンは「狙いにする」1 つ (もう一度押すと外す)。右に完成形のアイテムのカード (付き方を見ながら作る)。
+  2 = 完成の MOD: 共通の MOD 表 (for-share の ModTable、エミュの「このベースに付く MOD」と同じ土台)、段の行のボタンは「狙いにする」1 つ (もう一度押すと外す)。右に完成形のアイテムのカード (付き方を見ながら作る)。
   ベースを替えると白紙から (下の箱か始まりの MOD があれば 1 回確かめる、1 つ戻すで戻せる)。開いている印は use-tree の goalPage
 -->
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import BaseCatalog from "../../../components/items/BaseCatalog.vue";
 import ModalShell from "../../../components/ui/ModalShell.vue";
-import StageModList from "../../../components/for-share/mod-list/StageModList.vue";
+import ModTable from "../../../components/for-share/mod-list/ModTable.vue";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { jaTypeName } from "../../../i18n/item-names-ja";
@@ -57,7 +57,12 @@ const CARD_W = 340;
       <BaseCatalog :data="s.data.value" :selected="t.doc.value.base" @pick="pick" />
     </div>
     <div v-else data-tree-goal-mods class="flex min-h-0 min-w-0 items-start gap-4">
-      <div class="min-w-0 flex-1"><StageModList overlay :item="t.goalItem.value?.item ?? null" :pick="pickGoal" /></div>
+      <div class="min-w-0 flex-1"><ModTable overlay :data="s.data.value" :item="t.goalItem.value?.item ?? null">
+        <!-- 段の行のボタンは「狙いにする」1 つ (オーナー 10-22) -->
+        <template #tier-actions="{ row: r, tier: tt }">
+          <td class="w-24 py-0.5 text-right"><button type="button" data-mod-pick class="tbtn" :class="pickGoal.has(tt.modId ?? r.id, tt.tier) ? 'on' : ''" :title="pickGoal.has(tt.modId ?? r.id, tt.tier) ? tr('もう一度押すと狙いから外す', 'Click again to remove the target') : tr(`${tt.rank} 以上を完成の狙いにする`, `Make ${tt.rank}+ a final target`)" @click.stop="pickGoal.toggle(tt.modId ?? r.id, tt.tier)">{{ pickGoal.has(tt.modId ?? r.id, tt.tier) ? tr("✓ 狙い", "✓ Target") : tr("狙いにする", "Target") }}</button></td>
+        </template>
+      </ModTable></div>
       <!-- 完成形のカード (ページの送りでも見えるよう上に留める) -->
       <div data-tree-goal-card class="sticky top-0 flex shrink-0 flex-col gap-2" :style="{ width: `${CARD_W}px` }">
         <StageItemCard v-if="t.goalItem.value" :item="t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" />
