@@ -15,7 +15,7 @@ export function useTreeCheck(doc: Ref<TreeDoc>) {
   const issuesFold = ref(false);
   const checking = ref(false);
   /** 道の形 (箱の位置・メモは入れない)。位置を動かしただけでは精査し直さない */
-  const routeKey = computed(() => JSON.stringify([doc.value.fracture, Object.values(doc.value.boxes).map(({ x: _x, y: _y, note: _n, ...r }) => r)]));
+  const routeKey = computed(() => JSON.stringify([doc.value.fracture, doc.value.startRandom ?? 0, Object.values(doc.value.boxes).map(({ x: _x, y: _y, note: _n, ...r }) => r)]));
   let recheck = 0;
   /** 精査を押した時に見つけた穴 (箱と種類)。組み替えた後はこの中で今も残る物だけ出す (新しい穴は精査を押した時。1 つ戻すで穴が戻れば ! も戻る) */
   let found: CheckIssue[] = [];

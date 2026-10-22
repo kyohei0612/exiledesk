@@ -75,6 +75,8 @@ function setBase(base: string, itemLevel: number): void {
     Object.assign(d, newTree(base, itemLevel));
   });
 }
+/** 始めのアイテムにフラクチャーのほか付いている乱数の MOD の数 (素の高貴を n 回、tree-sample の startItemOf。0 は消す。1 つ戻すで戻せる) */
+function setStartRandom(n: number): void { edit((d) => { if (n > 0) d.startRandom = n; else delete d.startRandom; }); }
 /** ベースを替えると消える箱の数 (始まりより下の、画面に出る箱。品質を上げた後の通り抜けは数えない) */
 const lostOnBase = computed(() => Object.values(doc.value.boxes).filter((b) => b.out !== "start" && b.out !== "pass").length);
 
@@ -104,5 +106,5 @@ function fractureLabel(a: Aim | null): string {
 }
 
 export function useTree() {
-  return { doc, edit, undo, canUndo, reset, setBase, lostOnBase, open, setTreeNote, rows, aimLabel, aimShort, fractureLabel };
+  return { doc, edit, undo, canUndo, reset, setBase, setStartRandom, lostOnBase, open, setTreeNote, rows, aimLabel, aimShort, fractureLabel };
 }

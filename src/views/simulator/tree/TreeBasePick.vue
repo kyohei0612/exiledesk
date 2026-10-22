@@ -28,6 +28,13 @@ function setIlvl(v: number | null): void {
   if (v === null || v < ILVL_MIN || v > ILVL_MAX) return;
   t.setBase(t.doc.value.base, Math.round(v));
 }
+/** 始めの乱数の MOD の数 (フラクチャーのほか。レアは 6 つまでなので 0〜5、10-22 白紙から組んで画面で決められなかった) */
+const RANDOM_MAX = 5;
+const rand = ref<number | null>(t.doc.value.startRandom ?? 0);
+function setRand(v: number | null): void {
+  rand.value = v === null ? null : Math.max(0, Math.min(RANDOM_MAX, Math.round(v)));
+  if (rand.value !== null) t.setStartRandom(rand.value);
+}
 /** 替えると下の箱が消えるベース (確かめ待ち) */
 const asking = ref<string | null>(null);
 function pick(en: string): void {
@@ -54,6 +61,10 @@ function apply(en: string): void {
       <label class="flex items-center gap-2 text-[13px]">
         <span class="flex-1">{{ tr("アイテムレベル", "Item level") }}</span>
         <NumStep :model-value="ilvl" integer width="w-20" :placeholder-value="t.doc.value.itemLevel" @update:model-value="setIlvl" />
+      </label>
+      <label class="flex items-center gap-2 text-[13px]" :title="tr('始めのアイテムに、フラクチャーのほか乱数で付いている MOD の数 (素の高貴を n 回打った形)', 'Random mods on the starting item besides the fracture (as if plain exalts were used n times)')">
+        <span class="flex-1">{{ tr("ほかに付いている MOD (乱数)", "Other random mods") }}</span>
+        <NumStep data-tree-start-random :model-value="rand" integer width="w-20" :placeholder-value="0" @update:model-value="setRand" />
       </label>
       <!-- ベースを替えると下の箱が消える時だけ、1 回確かめる (札の編集の「下の n 箱が消える」と同じ) -->
       <div v-if="asking" data-tree-base-ask class="rounded-md border border-rose-400/60 bg-[#2a1416] p-2 text-[13px] shadow-[0_6px_16px_rgba(0,0,0,0.6)]">
