@@ -6,7 +6,8 @@
   かなりの強運 (上位 10%) は計算機と同じ銅色の演出と音 (styles/spam-lucky.css)。X のシェアは計算機と同じカード (/s/<id>) に、題と主のカレンシーの絵を足す
 -->
 <script setup lang="ts">
-import { mulberry32, type StageItem, type StageMod, medianOf, type SpamStats } from "../../services/craft-stage/engine";
+import { mulberry32, type StageItem, type StageMod } from "../../services/craft-stage/engine";
+import { medianOf, type SpamStats } from "../../services/craft-stage/engine-emu";
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { usePhone } from "../../utils/use-phone";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";

@@ -85,7 +85,7 @@ export async function essenceNameEn(name: string): Promise<string | null> {
   const n = name.trim();
   if (!n) return null;
   if (/^[\x20-\x7e]+$/.test(n)) return n;
-  const dict = (await import("../../i18n/currency-hover-ja.json")).default as unknown as Record<string, { n: string }>;
+  const dict = (await import("../../../i18n/currency-hover-ja.json")).default as unknown as Record<string, { n: string }>;
   const ja = n.replace(/の?(レッサー|グレーター|パーフェクト)?エッセンス$/, "");
   // 「レッサー / グレーター / パーフェクト」の付かない無印を優先し、無ければどれでも (ヒステリーなど無印しか無い物もある)
   const keys = Object.keys(dict).filter((k) => /^(lesser|greater|perfect)?essenceof/.test(k) && dict[k]!.n.startsWith(`${ja}の`));

@@ -16,7 +16,8 @@
 import fs from "node:fs";
 import { afterAll, it } from "vitest";
 import { loadPatch } from "../tests/helpers/patch";
-import { applyCurrency, freshItem, modListFor, mulberry32, omensFor, RUNES, socketCapOf, stepOutcomes, type PatchData } from "../src/services/craft-stage/engine";
+import { applyCurrency, freshItem, modListFor, mulberry32, omensFor, RUNES, socketCapOf, type PatchData } from "../src/services/craft-stage/engine";
+import { stepOutcomes } from "../src/services/craft-stage/engine-sim";
 import { fillCatalyst } from "../src/services/craft-stage/engine-sim";
 import { aimHeldOn } from "../src/services/simulator/tree/tree-aim";
 import { effectOf } from "../src/services/simulator/tree/tree-hands";

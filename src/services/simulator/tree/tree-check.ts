@@ -8,7 +8,8 @@
  * 10-22 靴を白紙から組んで: 狙いが消えて外れを持ったまま始めに戻り、カオスで当たるとサフィックスが満杯で次の高貴が打てず 100 人中 64 人止まるのに、
  * 前は戻った先の手が打てるかだけ見て先へ進まず、精査に出なかった
  */
-import { allMods, modBoostsOf, mulberry32, room, SIDES, stepOutcomes, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { allMods, modBoostsOf, mulberry32, room, SIDES, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { stepOutcomes } from "../../craft-stage/engine-sim";
 import { catalystTagOf } from "../../craft-stage/engine-sim";
 import { aimHeldOn, junkOf } from "./tree-aim";
 import { CATALYSING, engineOmens, isCatalyst } from "./tree-hands";

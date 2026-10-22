@@ -52,20 +52,13 @@ export { isRemovedBase, classLabel } from "../items/base-catalog";
 // 1 手の確率 (addHitOdds = 1 回で狙いが付く割合、fractureHit = フラクチャーの当たり)
 export type { AddOdds, AddHit, OddsTarget } from "./spec/odds";
 export { addOddsBySpec, addCands, addHitOdds, hitShare, fractureHit } from "./spec/odds";
-// スパムの道 (増強・カオス・高貴) で始めのアイテムから狙いに着くまでの平均の使った物と着いた割合 (route-race の routeRun と同じ打ち方)
-export type { SpamCounts, SpamTarget } from "./spam-counts";
 export type { RouteKind, Grade as RouteGrade, Grade } from "./route-race";
-// スパムの道の打ち手 (増強・カオス・高貴の 1 人分。spam-counts とスパムシミュが同じ打ち方)
+// スパムの道の打ち手 (増強・カオス・高貴の 1 人分。シミュの spam-counts とエミュのスパムシミュが同じ打ち方)
 export { routeRun, routeKey, GRADE_KEY } from "./route-race";
-export { spamCounts } from "./spam-counts";
 // 解析君の頼み (K4): 系統の塞ぎ・古の骨の段の下限・発現の手 (候補の数は REVEAL_SPEC.actions の reveal.offers)
 export { occupiedFamiliesOf } from "../../vendor/poe2htc/engine/pool";
 export { ANCIENT_BONE_FLOOR } from "../../vendor/poe2htc/engine/probability";
 export { REVEAL_SPEC } from "./spec/desecrate-specs";
-// 1 手の行き先の一覧 (消える・付く・未発現・フラクチャーの枝ごとの割合と打った後のアイテム)
-export type { StepOutcome } from "./spec/outcomes";
-// 枝が STEP_OUTCOMES_MAX を超える手 (錬金など 3 つ以上足す) は数え上げない (stepOutcomes は null、OrTooMany は "tooMany")
-export { stepOutcomes, stepOutcomesOrTooMany, STEP_OUTCOMES_MAX } from "./spec/outcomes";
 // 指名で付ける手の鍵 (force:<modId>|<段>|<印>。印 n = 普通・f = フラクチャー・e = エッセンス・d = 冒涜)
 export type { ForceFlag } from "./apply-force";
 export { forceKey } from "./apply-force";
@@ -130,9 +123,6 @@ export { reqOfItem } from "./stage-bases";
 export { planSpec } from "./spec/run-spec";
 export { aimLabel, groupLabelOf } from "./mod-list";
 export type { DamageKind, Defender, Outcome } from "./defence";
-export type { SpamStats } from "./chaos-spam";
-export { medianOf } from "./chaos-spam";
-export { runePrep } from "./route-runes";
 export { baseArt } from "./base-art";
 export { isSanctifySet } from "./apply-vaal";
 export { IMPLICIT_SET, isCatalystSet, isQualitySet, QUALITY_CAP, qualityFieldMax, SANCTIFIED_REASON, ITEM_LEVEL_SET } from "./apply-currency";

@@ -6,6 +6,7 @@ export { whenOf } from "../../src/services/simulator/auto/auto-rules";
 export { situationOf, ruleFor, applyQuizAction, routeDone } from "../../src/services/simulator/quiz-recipe";
 export { startFrom, mulberry32 } from "../../src/services/craft-stage/engine";
 export { Shape, actionsOf } from "../../src/services/simulator/auto/auto-actions";
-export { stepOutcomes, candidates } from "../../src/services/craft-stage/engine";
+export { candidates } from "../../src/services/craft-stage/engine";
+export { stepOutcomes } from "../../src/services/craft-stage/engine-sim";
 export { applyCurrency } from "../../src/services/craft-stage/engine";
 export { revealOffers } from "../../src/services/craft-stage/engine";

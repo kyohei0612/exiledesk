@@ -13,7 +13,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
 import { currencyHoverOf, loadCurrencyHover } from "../../services/currency/currency-hover";
-import { essenceNameEn, headingHits } from "../../services/craft-stage/essence-parts";
+import { essenceNameEn, headingHits } from "../../services/craft-stage/engine-sim";
 
 const props = defineProps<{ name: string; part: string | null }>();
 /** 辞書を読み終えたか (読む前は「読んでいます…」、読んだ後に無ければ「見つからない」) */

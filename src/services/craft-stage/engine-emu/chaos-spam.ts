@@ -9,10 +9,10 @@
  * 1 人 = 同じ状態から、狙いのどれか 1 つが付くまで同じカオスを打ち続ける (2026-10-16 オーナー「どれか付いたらでしょ、2 つ付いたらなんていう計算機じゃない」。前は全部揃うまで) (外れても、その結果に続けて打つ。今の MOD が消えても狙いが揃えば当たり)。
  * 打つ処理はステージと同じ applyCurrency (お告げ無し)。打てなくなった時・上限に届いた時は「付かなかった」(null)
  */
-import { applyCurrency } from "./apply-currency";
-import { aimDone, type AimTarget } from "./aim-odds";
-import type { StageItem } from "./types";
-import type { PatchData } from "../../vendor/poe2htc/engine/types";
+import { applyCurrency } from "../apply-currency";
+import { aimDone, type AimTarget } from "../aim-odds";
+import type { StageItem } from "../types";
+import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 
 /** 1 人が打つ上限 (これを超えたら「付かなかった」) */
 export const SPAM_CAP = 50_000;

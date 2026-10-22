@@ -7,7 +7,7 @@ import { freshItem } from "../src/services/craft-stage/run-plan";
 import { applyCurrency } from "../src/services/craft-stage/apply-currency";
 import { aimDone } from "../src/services/craft-stage/aim-odds";
 import { mulberry32 } from "../src/services/htc/rng";
-import { medianOf, rankOf, spamOne, unluckyOf } from "../src/services/craft-stage/chaos-spam";
+import { medianOf, rankOf, spamOne, unluckyOf } from "../src/services/craft-stage/engine-emu/chaos-spam";
 import type { PatchData } from "../src/vendor/poe2htc/engine/types";
 import type { StageItem } from "../src/services/craft-stage/types";
 

@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { swapNums } from "../src/services/craft-stage/text-nums";
-import { PART_WORDS, essenceNameEn, headingHits, headingParts } from "../src/services/craft-stage/essence-parts";
+import { PART_WORDS, essenceNameEn, headingHits, headingParts } from "../src/services/craft-stage/engine-sim/essence-parts";
 import { boostedMod, makeStageMod, retext } from "../src/services/craft-stage/stage-core";
 import { freshItem } from "../src/services/craft-stage/run-plan";
 import { loadPatch } from "./helpers/patch";

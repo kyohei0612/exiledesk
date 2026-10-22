@@ -13,7 +13,8 @@ import StageItemCard from "../../../components/for-share/item/StageItemCard.vue"
 import CurrencyShelf from "../../../components/for-share/shelf/CurrencyShelf.vue";
 import HeldOmens from "../../../components/for-share/shelf/HeldOmens.vue";
 import { omensAllowedFor } from "../../../services/craft-stage/engine";
-import { mulberry32, omensFor, stepOutcomes } from "../../../services/craft-stage/engine";
+import { mulberry32, omensFor } from "../../../services/craft-stage/engine";
+import { stepOutcomes } from "../../../services/craft-stage/engine-sim";
 import { catalystFull, catalystTagOf, fillCatalyst } from "../../../services/craft-stage/engine-sim";
 import { aimHits, catalystBoosts, heldOdds, makeStageMod, tierIndexOf, tierNoOf, type HeldOdds, type PatchData, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { aimHeldOn } from "../../../services/simulator/tree/tree-aim";

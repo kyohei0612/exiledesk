@@ -8,7 +8,8 @@
   値段は今の相場 (priceOf)、ベース代と始めの状態 (増強は白、カオスは MOD 1 つのレア、高貴は MOD 0 のレア。2026-10-19 オーナー) を作る費用は入れない。広告ありきの別のページ (WebApp.vue が両脇の枠を置く)
 -->
 <script setup lang="ts">
-import { type StageItem, type RouteKind, fillModText, tierDisplayRanges, runePrep, stageRuneIds } from "../../services/craft-stage/engine";
+import { type StageItem, type RouteKind, fillModText, tierDisplayRanges, stageRuneIds } from "../../services/craft-stage/engine";
+import { runePrep } from "../../services/craft-stage/engine-emu";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { ROUTES_MAX, ROUTES_MULTI_ON, routesLuck, routesOpen, routesRunes, routesShared, routesTarget } from "../../state/web-page";

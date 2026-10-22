@@ -7,7 +7,15 @@
  */
 
 // カタリストを品質が最大になるまで打つ (何個打ったかも。核の applyCurrency は 1 回 = 1 個で、最大まで数える手は無い)
-export { catalystTagOf, catalystFull, fillCatalyst } from "./for-sim/hand-effect";
+export { catalystTagOf, catalystFull, fillCatalyst } from "./engine-sim/hand-effect";
 // MOD の無いマジックに 1 回足す時の候補の組 (どれか 1 つ) の付きやすさと等級の落とし方 (start-cost の式。核の addHitOdds は 1 つの狙いだけ)
-export type { MagicAddOdds, AddGrade } from "./for-sim/magic-odds";
-export { magicAddOdds, anyOfAddOdds, addGradeFor, ADD_GRADES } from "./for-sim/magic-odds";
+export type { MagicAddOdds, AddGrade } from "./engine-sim/magic-odds";
+export { magicAddOdds, anyOfAddOdds, addGradeFor, ADD_GRADES } from "./engine-sim/magic-odds";
+// スパムの道 (増強・カオス・高貴) で始めのアイテムから狙いに着くまでの平均の使った物と着いた割合 (核の route-race の routeRun と同じ打ち方。シミュのツリーのベースの値段・解析君)
+export type { SpamCounts, SpamTarget } from "./engine-sim/spam-counts";
+export { spamCounts } from "./engine-sim/spam-counts";
+// 1 手の行き先の一覧 (消える・付く・未発現・フラクチャーの枝ごとの割合と打った後のアイテム)。枝が STEP_OUTCOMES_MAX を超える手 (錬金など 3 つ以上足す) は数え上げない
+export type { StepOutcome } from "./engine-sim/outcomes";
+export { stepOutcomes, stepOutcomesOrTooMany, STEP_OUTCOMES_MAX } from "./engine-sim/outcomes";
+// エッセンスの見出しの文 (チュートリアルの動画)
+export { essenceNameEn, headingHits } from "./engine-sim/essence-parts";

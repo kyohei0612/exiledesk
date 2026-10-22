@@ -6,7 +6,7 @@
  *     入口 services/craft-stage/engine.ts を通さずに読む
  *   B 凍結: アプリ専用の services/simulator/htc/ を、その外の Web の物 (アプリの物以外) が読む
  *   C よその窓口・置き場: シミュ・チュートリアル・解析が engine-emu.ts を、エミュが engine-sim.ts を読む。エンジンの中で、核 (services/craft-stage の
- *     for-sim・for-emu の外) が for-sim / for-emu を読む、for-sim と for-emu が互いを読む (2026-10-22 深夜、notes/2026-10-22-entry-split-plan.md)
+ *     engine-sim/・engine-emu/ の外) が engine-sim/ / engine-emu/ を読む、engine-sim/ と engine-emu/ が互いを読む (2026-10-22 深夜、notes/2026-10-22-entry-split-plan.md)
  *   D 画面の混ざり: エミュの物がシミュ・チュートリアルの物を読む、シミュ・チュートリアルの物がエミュの物を読む (2026-10-22 深夜 オーナー
  *     「コードが混ざらないように」。両方が使う画面の部品は共通 src/components へ、中身はエンジンの入口へ。控えから始めて減らす)
  * 付け替え (手 7) の前なので、今の違反の数をファイルごとに控え (check-engine-entry.baseline.json) に持ち、
@@ -54,8 +54,8 @@ const CS = "src/services/craft-stage/";
 function sideOfEngine(path, who) {
   if (path === `${CS}engine-sim.ts`) return "win-sim";
   if (path === `${CS}engine-emu.ts`) return "win-emu";
-  if (path.startsWith(`${CS}for-sim/`)) return "for-sim";
-  if (path.startsWith(`${CS}for-emu/`)) return "for-emu";
+  if (path.startsWith(`${CS}engine-sim/`)) return "for-sim";
+  if (path.startsWith(`${CS}engine-emu/`)) return "for-emu";
   if (path === `${CS}engine.ts`) return "core-win";
   if (who === "ジン" && path.startsWith(CS)) return "core";
   if (SIM_SIDE.has(who) || who === "解析") return "sim";
@@ -105,7 +105,7 @@ const better = Object.entries(base).filter(([k, n]) => (count[k] ?? 0) < n);
 const sumOf = (o, r) => Object.entries(o).filter(([k]) => k.startsWith(`${r} `)).reduce((a, [, n]) => a + n, 0);
 const over = ["A", "B", "C", "D"].filter((r) => sumOf(count, r) > sumOf(base, r));
 for (const [k, n] of worse) console.log(`${over.includes(k[0]) ? "増えた" : "移った? (合計は増えていない)"}: ${k} … ${base[k] ?? 0} → ${n}`);
-for (const r of over) console.log(`増えた: ${r} の合計 ${sumOf(base, r)} → ${sumOf(count, r)} (${r === "C" ? "シミュは engine.ts と engine-sim.ts、エミュは engine.ts と engine-emu.ts だけ。核は for-sim / for-emu を読まない" : r === "D" ? "エミュとシミュは互いの物を読まない。両方で使う部品は共通 src/components へ (ジン部長)" : "入口 engine.ts から取る。足りない物はジン部長に入口へ"})`);
+for (const r of over) console.log(`増えた: ${r} の合計 ${sumOf(base, r)} → ${sumOf(count, r)} (${r === "C" ? "シミュは engine.ts と engine-sim.ts、エミュは engine.ts と engine-emu.ts だけ。核は engine-sim/・engine-emu/ を読まない" : r === "D" ? "エミュとシミュは互いの物を読まない。両方で使う部品は共通 src/components へ (ジン部長)" : "入口 engine.ts から取る。足りない物はジン部長に入口へ"})`);
 if (better.length) console.log(`減った ${better.length} ファイル: 良い。\`node scripts/check-engine-entry.mjs --head --write\` で控えを取り直す`);
 if (over.length) process.exit(1);
 console.log("増えた所なし");

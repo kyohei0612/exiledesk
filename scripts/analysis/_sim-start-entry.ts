@@ -7,4 +7,4 @@ export { blankWith, fractureOdds, magicAugOdds } from "../../src/services/simula
 export { keepCompare } from "../../src/services/simulator/keep-compare";
 export { runeEnForId } from "../../src/services/simulator/pattern";
 export { magicLoopCounts } from "../../src/services/simulator/sim-greater";
-export { spamCounts } from "../../src/services/craft-stage/engine";
+export { spamCounts } from "../../src/services/craft-stage/engine-sim";
