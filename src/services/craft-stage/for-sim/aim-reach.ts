@@ -2,13 +2,14 @@
  * aim-reach.ts — 1 手の前と後で狙いがどう変わったか・この手で付きうる狙い (2026-10-22 シミュの自前の式を入口へ、sim-own-logic.md の B12)。
  * 狙いは段の名前の T ({ modId, tier })。当たりの判定は aim-odds の hits (sameText = 同じ系統で文も同じ別の modId も当たり)、行き先はエンジンの stepOutcomes
  */
-import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import { hits, junkOf, type AimTarget } from "./aim-odds";
-import { stepOutcomes, type StepOutcome } from "./spec/outcomes";
-import { heldOdds, type HeldOdds } from "./held-odds";
-import { makeStageMod } from "./stage-core";
-import { tierIndexOf } from "./tier-rank";
-import type { StageItem, StageMod } from "./types";
+import type { PatchData } from "../../../vendor/poe2htc/engine/types";
+import { hits, type AimTarget } from "../aim-odds";
+import { junkOf } from "./aim-held";
+import { stepOutcomes, type StepOutcome } from "../spec/outcomes";
+import { heldOdds, type HeldOdds } from "../held-odds";
+import { makeStageMod } from "../stage-core";
+import { tierIndexOf } from "../tier-rank";
+import type { StageItem, StageMod } from "../types";
 
 /** 段の名前の T で言う狙い (T1 が一番上) */
 export interface TierAim { modId: string; tier: number }

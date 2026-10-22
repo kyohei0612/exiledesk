@@ -2,10 +2,10 @@
  * magic-odds.ts — MOD の無いマジックに 1 回足す (増強) 時の、候補の組 (どれか 1 つで当たり) の付きやすさ (2026-10-22 シミュの start-cost.ts の式を入口へ、
  * sim-own-logic.md の C)。打つ処理と同じ候補 (addOddsBySpec) から出す。数字の正しさは解析君に確かめてもらう (下の pHit と pAny の違い)
  */
-import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import { addOddsBySpec, hitShare, type OddsTarget } from "./spec/odds";
-import { sideOfMod } from "./stage-core";
-import type { StageItem, StageSide } from "./types";
+import type { PatchData } from "../../../vendor/poe2htc/engine/types";
+import { addOddsBySpec, hitShare, type OddsTarget } from "../spec/odds";
+import { sideOfMod } from "../stage-core";
+import type { StageItem, StageSide } from "../types";
 
 export interface MagicAddOdds {
   /** その側に付いた時に、候補のどれかが当たる割合 (その側の候補の重みの中で) */

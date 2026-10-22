@@ -9,28 +9,29 @@
 export { tierIndexOf, tierRankOf, tierNoOf, minIlvlFor, tierRankLabel } from "./tier-rank";
 // 当たりの判定 (sameText = 同じ系統で文も同じ別の modId も当たり)・外れ・付いている狙いの組
 export type { AimHitOpts } from "./aim-odds";
-export { hits as aimHits, aimHeldOn, isAimMod, junkOf, heldSetOf } from "./aim-odds";
+export { hits as aimHits } from "./aim-odds";
+export { aimHeldOn, isAimMod, junkOf, heldSetOf } from "./for-sim/aim-held";
 // 1 手の前後で狙い (段の名前の T) がどう変わったか・行き先を狙いで分ける・この手で付きうる狙い (クラフト台の % = heldOdds の窓口)
-export type { TierAim, AimDiff, AimDiffOpts } from "./aim-reach";
-export { aimDiff, outcomesByAim, reachableAims } from "./aim-reach";
+export type { TierAim, AimDiff, AimDiffOpts } from "./for-sim/aim-reach";
+export { aimDiff, outcomesByAim, reachableAims } from "./for-sim/aim-reach";
 // 手の働き (足す・入れ替え・消す…) とカタリストを最大まで入れる
-export type { CurrencyEffect } from "./hand-effect";
-export { effectOf, catalystTagOf, catalystFull, fillCatalyst, catalystForMod } from "./hand-effect";
+export type { CurrencyEffect } from "./for-sim/hand-effect";
+export { effectOf, catalystTagOf, catalystFull, fillCatalyst, catalystForMod } from "./for-sim/hand-effect";
 // その手が打てるか (お告げ・触媒の前のカタリスト込み)・手のお告げを今の手 / 続けて打つ発現に分ける
-export type { UseSpec } from "./can-use";
-export { canUse, handOmens, isCatalystKey, CATALYSING_OMEN } from "./can-use";
+export type { UseSpec } from "./for-sim/can-use";
+export { canUse, handOmens, isCatalystKey, CATALYSING_OMEN } from "./for-sim/can-use";
 // 手を 1 回打つ (触媒の前のカタリスト・フラクチャーで固定する MOD・骨の後の発現込み) と、発現で候補を選んで打つ
-export type { HandSpec, HandResult } from "./hand-use";
-export { applyHand, revealBy, ABYSSAL_ECHO_OMEN } from "./hand-use";
+export type { HandSpec, HandResult } from "./for-sim/hand-use";
+export { applyHand, revealBy, ABYSSAL_ECHO_OMEN } from "./for-sim/hand-use";
 // 始めのアイテムを指名の MOD (段の名前の T)・ルーン・乱数の MOD の数で作る (断られたら理由を返す)
-export type { StartMod, StartWith } from "./start-with";
-export { startWith, START_FRACTURE_MAX } from "./start-with";
+export type { StartMod, StartWith } from "./for-sim/start-with";
+export { startWith, START_FRACTURE_MAX } from "./for-sim/start-with";
 // MOD の無いマジックに 1 回足す時の候補の組 (どれか 1 つ) の付きやすさと等級の落とし方 (start-cost の式)
-export type { MagicAddOdds, AddGrade } from "./magic-odds";
-export { magicAddOdds, anyOfAddOdds, addGradeFor, ADD_GRADES } from "./magic-odds";
+export type { MagicAddOdds, AddGrade } from "./for-sim/magic-odds";
+export { magicAddOdds, anyOfAddOdds, addGradeFor, ADD_GRADES } from "./for-sim/magic-odds";
 // 使い方 (hit = カレンシーで付く当たり / start = 始まりに置ける) の MOD の群れ
-export { modListForUse, MOD_USE_GROUPS } from "./mod-list";
+export { modListForUse, MOD_USE_GROUPS } from "./for-sim/mod-list-use";
 // そのアイテムのベースに差せるルーン (今のゲームに有る物、効果つき)
-export { runesFor } from "./rune-choice";
+export { runesFor } from "./for-sim/rune-choice";
 // 貼り付けの MOD の素の値の文
-export { modRawText } from "./item-text";
+export { modRawText } from "./for-sim/raw-text";

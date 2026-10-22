@@ -3,15 +3,15 @@
  * sim-own-logic.md の B6・B7・B8)。打つ処理はエンジンの applyCurrency・fillCatalyst・revealOffers のまま。ここは打つ順と選び方をまとめるだけ。
  * 乱数は 1 本の rng を カタリスト → 手 → フラクチャーの指名 → 発現 の順に使う (シミュの playHand と同じ)
  */
-import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import { applyCurrency, kindOf } from "./apply-currency";
-import { revealOffers, unrevealedOf } from "./apply-desecrate";
-import { forceKey } from "./apply-force";
+import type { PatchData } from "../../../vendor/poe2htc/engine/types";
+import { applyCurrency, kindOf } from "../apply-currency";
+import { revealOffers, unrevealedOf } from "../apply-desecrate";
+import { forceKey } from "../apply-force";
 import { CATALYSING_OMEN, handOmens } from "./can-use";
 import { catalystFull, catalystTagOf, effectOf, fillCatalyst } from "./hand-effect";
-import { catalystOf } from "./stage-core";
-import { mulberry32 } from "../htc/rng";
-import type { StageApply, StageItem, StageMod } from "./types";
+import { catalystOf } from "../stage-core";
+import { mulberry32 } from "../../htc/rng";
+import type { StageApply, StageItem, StageMod } from "../types";
 
 /** アビスの反響のお告げ (発現の候補を 1 回引き直せる。骨の手に付けると続けて打つ発現で使う) */
 export const ABYSSAL_ECHO_OMEN = "OmenofAbyssalEchoes";

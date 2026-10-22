@@ -17,17 +17,17 @@ export type { PobBlock } from "./stage-pob";
 // アイテムを作る・打つ
 export { freshItem, startFrom, startItem, playStep, playPlan, runPlan, splitOmens } from "./run-plan";
 // 始めのアイテムを指名の MOD (段の名前の T)・ルーン・乱数の MOD の数で作る (断られたら理由を返す。2026-10-22 シミュの自前の式を入口へ)
-export type { StartMod, StartWith } from "./start-with";
-export { startWith, START_FRACTURE_MAX } from "./start-with";
+export type { StartMod, StartWith } from "./for-sim/start-with";
+export { startWith, START_FRACTURE_MAX } from "./for-sim/start-with";
 export { applyCurrency, kindOf, omensFor } from "./apply-currency";
 export { omenBlock } from "./omen-block";
 export { revealOffers, unrevealedOf } from "./apply-desecrate";
 // その手が打てるか (お告げ・触媒の前のカタリスト込み)・手のお告げを今の手 / 続けて打つ発現に分ける・その手に付けられるお告げ (2026-10-22 シミュの自前の式を入口へ)
-export type { UseSpec } from "./can-use";
-export { canUse, handOmens, omensAllowedFor, isCatalystKey, CATALYSING_OMEN } from "./can-use";
+export type { UseSpec } from "./for-sim/can-use";
+export { canUse, handOmens, omensAllowedFor, isCatalystKey, CATALYSING_OMEN } from "./for-sim/can-use";
 // 手を 1 回打つ (触媒の前のカタリスト・フラクチャーで固定する MOD・骨の後の発現込み) と、発現で候補を選んで打つ (2026-10-22 シミュの自前の式を入口へ)
-export type { HandSpec, HandResult } from "./hand-use";
-export { applyHand, revealBy, ABYSSAL_ECHO_OMEN } from "./hand-use";
+export type { HandSpec, HandResult } from "./for-sim/hand-use";
+export { applyHand, revealBy, ABYSSAL_ECHO_OMEN } from "./for-sim/hand-use";
 
 // アイテムの今を読む
 export { allMods, listOf, room, limitOf, effectiveCls, maxQualityOf, catalystOf, SIDES, sideOfMod, unfracturable } from "./stage-core";
@@ -47,7 +47,8 @@ export { orbFloor, CHAOS_FLOOR } from "./spec/orb-specs";
 export { familyBlocked, occupiedKeysOf } from "../mods/mod-rules";
 // MOD の一覧の行 (段に数の tier)。modListForUse = 使い方 (hit = カレンシーで付く当たり / start = 始まりに置ける) の群れだけを群れの順・出やすさの順に
 export type { ListRow, ListTier, ModGroup } from "./mod-list";
-export { modListFor, modListForUse, MOD_USE_GROUPS } from "./mod-list";
+export { modListFor } from "./mod-list";
+export { modListForUse, MOD_USE_GROUPS } from "./for-sim/mod-list-use";
 export { tierDisplayRanges } from "../mods/stat-scale";
 export { inGroup } from "../mods/item-classes";
 export { isRemovedBase, classLabel } from "../items/base-catalog";
@@ -68,26 +69,27 @@ export type { StepOutcome } from "./spec/outcomes";
 // 枝が STEP_OUTCOMES_MAX を超える手 (錬金など 3 つ以上足す) は数え上げない (stepOutcomes は null、OrTooMany は "tooMany")
 export { stepOutcomes, stepOutcomesOrTooMany, STEP_OUTCOMES_MAX } from "./spec/outcomes";
 // 1 手の前後で狙い (段の名前の T) がどう変わったか・行き先を狙いで分ける・この手で付きうる狙い (2026-10-22 シミュの自前の式を入口へ)
-export type { TierAim, AimDiff, AimDiffOpts } from "./aim-reach";
-export { aimDiff, outcomesByAim, reachableAims } from "./aim-reach";
+export type { TierAim, AimDiff, AimDiffOpts } from "./for-sim/aim-reach";
+export { aimDiff, outcomesByAim, reachableAims } from "./for-sim/aim-reach";
 // 指名で付ける手の鍵 (force:<modId>|<段>|<印>。印 n = 普通・f = フラクチャー・e = エッセンス・d = 冒涜)
 export type { ForceFlag } from "./apply-force";
 export { forceKey } from "./apply-force";
 // 持っている物を打つ前に光らせる物 (変わる候補の MOD と付く空き。クラフト台とシミュの試し打ち、2026-10-22)
-export type { UsePreview } from "./spec/preview";
-export { previewUse } from "./spec/preview";
+export type { UsePreview } from "./for-emu/preview";
+export { previewUse } from "./for-emu/preview";
 export type { HeldOdds } from "./held-odds";
 export { heldOdds, heldAnyOf, aimTierKey } from "./held-odds";
 export type { AimTarget, AimCombo, AimOdd, AimHitOpts } from "./aim-odds";
-export { aimCombos, aimOdds, aimChain, aimDone, hits as aimHits, aimHeldOn, isAimMod, junkOf, heldSetOf } from "./aim-odds";
+export { aimCombos, aimOdds, aimChain, aimDone, hits as aimHits } from "./aim-odds";
+export { aimHeldOn, isAimMod, junkOf, heldSetOf } from "./for-sim/aim-held";
 // 段の換算 (段の番号 ↔ 段の名前の T・狙いが全部付く一番低いアイテムレベル・段の札の文字。2026-10-22 シミュの自前の式を入口へ)
 export { tierIndexOf, tierRankOf, tierNoOf, minIlvlFor, tierRankLabel } from "./tier-rank";
 // 手の働き (足す・入れ替え・消す…) とカタリストを最大まで入れる (2026-10-22 シミュの自前の式を入口へ)
-export type { CurrencyEffect } from "./hand-effect";
-export { effectOf, catalystTagOf, catalystFull, fillCatalyst, catalystForMod } from "./hand-effect";
+export type { CurrencyEffect } from "./for-sim/hand-effect";
+export { effectOf, catalystTagOf, catalystFull, fillCatalyst, catalystForMod } from "./for-sim/hand-effect";
 // MOD の無いマジックに 1 回足す時の候補の組 (どれか 1 つ) の付きやすさと等級の落とし方 (2026-10-22 シミュの start-cost の式を入口へ)
-export type { MagicAddOdds, AddGrade } from "./magic-odds";
-export { magicAddOdds, anyOfAddOdds, addGradeFor, ADD_GRADES } from "./magic-odds";
+export type { MagicAddOdds, AddGrade } from "./for-sim/magic-odds";
+export { magicAddOdds, anyOfAddOdds, addGradeFor, ADD_GRADES } from "./for-sim/magic-odds";
 export { DESECRATION_EXCLUSIVE_COUNT, bossOmenAllowed, desecrationOmenForMod } from "../../vendor/poe2htc/engine/probability";
 
 // 名簿
@@ -95,7 +97,7 @@ export { OMEN_FOR } from "./omens";
 export type { RuneRow, RuneEffect } from "./stage-runes";
 export { RUNES, runeOf, isRune, runeEffectFor } from "./stage-runes";
 // そのアイテムのベースに差せるルーン (今のゲームに有る物、効果つき。2026-10-22 シミュの自前の式を入口へ)
-export { runesFor } from "./rune-choice";
+export { runesFor } from "./for-sim/rune-choice";
 export { withRunes, runeIdByName } from "../../vendor/poe2htc/engine/runes";
 export { ESSENCE_KEYS } from "../htc/essence-key-table";
 export { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
@@ -110,7 +112,8 @@ export { boostsOf, modBoostsOf, baseValueOf, unboost } from "./boosts";
 
 // 貼り付けたアイテムの文を読む (トレード・poe.ninja・ゲームの Ctrl+C / Ctrl+Alt+C、日英。形は item-text-types.ts)
 export type { ItemTextResult, ItemTextMod, ItemTextImplicit, ItemTextSkip, ItemTextSkipCode, ItemTextSource, ItemTextWords, ItemTextCorruption, ItemTextBoost } from "./item-text-types";
-export { parseItemText, modRawText } from "./item-text";
+export { parseItemText } from "./item-text";
+export { modRawText } from "./for-sim/raw-text";
 // コラプト (ヴァールのオーブ) で付く MOD の表 (poe2db の部位のページ。enchant = エンチャント、upgrade = 強まったコラプトの行)
 export type { CorruptionRow } from "../mods/corruption";
 export { corruptionRowsFor, matchCorruption } from "../mods/corruption";

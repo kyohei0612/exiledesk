@@ -23,7 +23,7 @@ import { anointOfLine } from "../mods/anoint";
 import { unboost } from "./boosts";
 import type { StageItem } from "./types";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
-import type { ItemTextBoost, ItemTextCorruption, ItemTextImplicit, ItemTextMod, ItemTextResult, ItemTextSkip, ItemTextSkipCode, ItemTextWords } from "./item-text-types";
+import type { ItemTextBoost, ItemTextCorruption, ItemTextImplicit, ItemTextResult, ItemTextSkip, ItemTextSkipCode, ItemTextWords } from "./item-text-types";
 
 const REASON: Readonly<Record<ItemTextSkipCode, ItemTextWords>> = {
   noBase: { ja: "ベースが分からない (MOD の置き場が決まらない)", en: "Unknown base type (the mod pool cannot be chosen)" },
@@ -355,15 +355,3 @@ function corruptionOf(out: ItemTextResult, b: Body): ItemTextCorruption {
   return { status: "table", kind: hit.row.kind, id: hit.row.id, range: hit.row.ranges, fits: hit.fits };
 }
 
-/**
- * 貼った MOD の文の数字を、出てくる順に素の値 (values) へ差し替えた文 (J8、MOD の数字は素の値で出す。2026-10-22 シミュの SimPasteRead の式を入口へ、B16)。
- * 数字は貼ったままの値 (shownValues) と同じ順で並んでいる。上乗せが無い・数が合わない時は貼ったままの文
- */
-export function modRawText(m: ItemTextMod): string {
-  if (!m.boosts.length || m.values.length !== m.shownValues.length) return m.text;
-  let i = 0;
-  return m.text.replace(/\d+(?:\.\d+)?/g, (x) => {
-    if (i < m.shownValues.length && Number(x) === m.shownValues[i]) return String(m.values[i++]);
-    return x;
-  });
-}

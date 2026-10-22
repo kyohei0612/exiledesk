@@ -7,8 +7,8 @@
  */
 
 // 持っている物を打つ前に光らせる物 (変わる候補の MOD と付く空き)
-export type { UsePreview } from "./spec/preview";
-export { previewUse } from "./spec/preview";
+export type { UsePreview } from "./for-emu/preview";
+export { previewUse } from "./for-emu/preview";
 // そのお告げを今掛けられるか (掛けると打てない・意味が無いお告げの理由。お告げの欄の灰色)
 export { omenBlock } from "./omen-block";
 // お告げの下の設定 (触媒の高貴の品質 1% ごとの倍率) と、重みを直せる MOD の既定の重み・推定で埋めた印

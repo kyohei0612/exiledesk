@@ -2,11 +2,11 @@
  * hand-effect.ts — 手の働きとカタリストを最大まで入れる (2026-10-22 シミュの自前の式を入口へ、sim-own-logic.md の B4・B5)。
  * 打つ処理はエンジンの applyCurrency のまま。ここは「その手で何が起きる種類か」と「品質が最大になるまでカタリストを打つ」をまとめるだけ
  */
-import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import { applyCurrency, kindOf } from "./apply-currency";
-import { catalystBoosts, catalystOf, maxQualityOf } from "./stage-core";
-import type { StageApply, StageItem } from "./types";
-import { tr } from "../../i18n/lang";
+import type { PatchData } from "../../../vendor/poe2htc/engine/types";
+import { applyCurrency, kindOf } from "../apply-currency";
+import { catalystBoosts, catalystOf, maxQualityOf } from "../stage-core";
+import type { StageApply, StageItem } from "../types";
+import { tr } from "../../../i18n/lang";
 
 /** 手の働き: quality = カタリスト (品質だけ)、essence = エッセンス、swap = カオス (1 つ消して 1 つ付く)、remove = 消去、fracture = フラクチャー、add = それ以外 (足す) */
 export type CurrencyEffect = "quality" | "essence" | "swap" | "remove" | "fracture" | "add";

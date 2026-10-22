@@ -3,15 +3,15 @@
  * 打つ処理はエンジンの applyCurrency・omenBlock・fillCatalyst のまま。ここは「お告げ → 触媒の前のカタリスト → 手そのもの」の順に聞いて、
  * 最初に断られた理由を返すだけ (乱数で決まる物は打てる扱い。オーナーの方針 2026-10-12)
  */
-import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import { applyCurrency, kindOf } from "./apply-currency";
+import type { PatchData } from "../../../vendor/poe2htc/engine/types";
+import { applyCurrency, kindOf } from "../apply-currency";
 import { catalystFull, catalystTagOf, fillCatalyst } from "./hand-effect";
-import { omenBlock } from "./omen-block";
-import { OMEN_FOR } from "./omens";
-import { catalystOf } from "./stage-core";
-import { mulberry32 } from "../htc/rng";
-import type { StageItem } from "./types";
-import { tr } from "../../i18n/lang";
+import { omenBlock } from "../omen-block";
+import { OMEN_FOR } from "../omens";
+import { catalystOf } from "../stage-core";
+import { mulberry32 } from "../../htc/rng";
+import type { StageItem } from "../types";
+import { tr } from "../../../i18n/lang";
 
 /** 触媒の高貴のお告げ (掛けると、高貴の前にカタリストで品質を入れる手になる) */
 export const CATALYSING_OMEN = "OmenofCatalysingExaltation";
