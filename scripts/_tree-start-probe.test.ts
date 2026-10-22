@@ -42,4 +42,8 @@ it("始まりの形", () => {
   run("レア フラクチャー + 火 T2 + 乱数 2", { ...newTree("Drakeskin Boots", 82), start: { rarity: "rare", mods: [{ modId: "Boots_dex/MovementVelocity", tier: 1, fractured: true }, { modId: "Boots_dex/FireResistance", tier: 2 }] }, startRandom: 2 });
   // 5) ルーンの MOD (コルの狩りの投射物スキルのレベル、解析君の ES 手袋の始まり)
   run("手袋 投射物 +2 フラクチャー (ルーン)", { ...newTree("Sirenscale Gloves", 82), start: { rarity: "rare", mods: [{ modId: "Gloves_int/Rune_marksman_IncreaseSocketedGemLevel__projectile_skill_gem_level", tier: 2, fractured: true }] }, startRandom: 1 });
+  // 6) 選んだルーン (セールの凱旋 = サフィックス +1、手袋はソケット 1 つ) と、ルーンの MOD との兼ね合い
+  run("手袋 セールの凱旋 + 投射物 +2 (ソケット足りない)", { ...newTree("Sirenscale Gloves", 82), start: { rarity: "rare", mods: [{ modId: "Gloves_int/Rune_marksman_IncreaseSocketedGemLevel__projectile_skill_gem_level", tier: 2, fractured: true }], runes: ["Serle's Triumph"] } });
+  run("手袋 コルの狩りを選んで + 投射物 +2", { ...newTree("Sirenscale Gloves", 82), start: { rarity: "rare", mods: [{ modId: "Gloves_int/Rune_marksman_IncreaseSocketedGemLevel__projectile_skill_gem_level", tier: 2, fractured: true }], runes: ["Kolr's Hunt"] } });
+  run("靴 セールの凱旋 + フラクチャー + 乱数 4", { ...newTree("Drakeskin Boots", 82), start: { rarity: "rare", mods: [{ modId: "Boots_dex/MovementVelocity", tier: 1, fractured: true }], runes: ["Serle's Triumph"] }, startRandom: 4 });
 });

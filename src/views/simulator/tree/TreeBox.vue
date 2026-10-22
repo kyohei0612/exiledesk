@@ -52,7 +52,7 @@ const startMods = computed(() => [...startOf(t.doc.value).mods].sort((a, b) => N
 const first = computed(() => startMods.value[0] ?? null);
 const startRest = computed(() => {
   const st = startOf(t.doc.value), n = startMods.value.length - 1, r = t.doc.value.startRandom ?? 0;
-  const parts = [n > 0 ? tr(`ほか ${n} つ`, `+${n} more`) : "", r ? tr(`乱数 ${r} つ`, `${r} random`) : "", st.rarity === "magic" && !first.value?.fractured ? tr("マジック", "Magic") : ""].filter(Boolean);
+  const parts = [n > 0 ? tr(`ほか ${n} つ`, `+${n} more`) : "", r ? tr(`乱数 ${r} つ`, `${r} random`) : "", st.runes?.length ? tr(`ルーン ${st.runes.length}`, `${st.runes.length} rune(s)`) : "", st.rarity === "magic" && !first.value?.fractured ? tr("マジック", "Magic") : ""].filter(Boolean);
   return parts.join(" · ");
 });
 const startTitle = computed(() => startMods.value.map((m) => `${m.fractured ? `✦ ${tr("フラクチャー", "Fractured")} ` : ""}${t.startModLabel(m)}`).join("\n"));

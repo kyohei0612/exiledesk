@@ -60,8 +60,11 @@ export interface TreeBox {
 }
 /** 始まりの MOD 1 つ (段は指名。fractured = フラクチャー済み、1 つまで) */
 export interface StartMod { modId: string; tier: number; fractured?: true }
-/** 始まりの形。フラクチャーがあればレア (エンジンの決まり 10-06)。ルーンの MOD はエンジンの force がそのルーンを差して付ける */
-export interface TreeStart { rarity: "magic" | "rare"; mods: StartMod[] }
+/**
+ * 始まりの形。ツリーはフラクチャーの後だけを扱う (オーナー 10-22) ので画面はレアだけ。magic はフラクチャーが要らない別軸で使い回せるよう残す
+ * (フラクチャーがあればレア、エンジンの決まり 10-06)。runes = 先に差すルーン (英語名。セールの凱旋・コルの狩りなど)。ルーンの MOD は force がそのルーンも差す
+ */
+export interface TreeStart { rarity: "magic" | "rare"; mods: StartMod[]; runes?: string[] }
 export interface TreeDoc {
   schema: "exiledesk-tree/0";
   base: string;

@@ -6,7 +6,7 @@
  * その下の箱 = 親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
-import { applyCurrency, freshItem, maxQualityOf, mulberry32, omenBlock, revealOffers, stepOutcomes, unrevealedOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { applyCurrency, freshItem, maxQualityOf, mulberry32, omenBlock, revealOffers, runeIdByName, stepOutcomes, unrevealedOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { CATALYSING, isCatalyst } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import { startOf, type Aim, type Hand, type OutKind, type TreeDoc } from "./tree-model";
@@ -171,9 +171,16 @@ export function startItemOf(data: PatchData, doc: TreeDoc, rng: () => number): S
   // マジックはノーマルから付ける (付けるとマジック、エンジンの force の決まり)。フラクチャーはレアにだけ付く (force がレアにする)
   const magic = st.rarity === "magic" && !st.mods.some((m) => m.fractured);
   let item = freshItem(data, doc.base, doc.itemLevel, magic ? "normal" : "rare");
-  // ルーンの MOD はそのルーンを差して付く (force が差す)。差すソケットを要る数だけ開けておく (手袋の投射物 +2 = コルの狩り、10-22)
-  const runes = new Set(st.mods.flatMap((m) => { const r = data.mods.get(m.modId)?.rune; return r ? [r] : []; }));
-  if (runes.size) item = { ...item, sockets: Math.max(item.sockets ?? 0, runes.size) };
+  // 選んだルーンを先に差す。ルーンの MOD はそのルーンを差して付く (force が差す)。差すソケットを要る数だけ開けておく (手袋の投射物 +2 = コルの狩り、10-22)
+  const runes = st.runes ?? [];
+  const byMod = new Set(st.mods.flatMap((m) => { const r = data.mods.get(m.modId)?.rune; return r ? [r] : []; }));
+  const need = runes.length + [...byMod].filter((id) => !runes.some((en) => runeIdByName(en) === id)).length;
+  if (need) item = { ...item, sockets: Math.max(item.sockets ?? 0, need) };
+  for (const en of runes) {
+    const r = applyCurrency(data, item, `rune:${en}`, rng);
+    if (!r.applied) return { item: r.item, note: r.reason ?? null };
+    item = r.item;
+  }
   for (const m of st.mods) {
     const r = applyCurrency(data, item, `force:${m.modId}|T${m.tier}|${m.fractured ? "f" : "n"}`, rng);
     if (!r.applied) return { item: r.item, note: r.reason ?? null };
