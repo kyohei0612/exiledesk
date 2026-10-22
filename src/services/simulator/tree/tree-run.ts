@@ -9,6 +9,7 @@ import { mulberry32, type PatchData, type StageItem, type StageMod } from "../..
 import { kindOfCurrency } from "./tree-hands";
 import { aimHeld, aimsOf, handAims, outcomeOf, playHand, startItemOf as startOf } from "./tree-sample";
 import { withTreeTune } from "./tree-tune";
+import { tr } from "../../../i18n/lang";
 import { aimKey, MATCH_BACK, type Aim, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc } from "./tree-model";
 
 export interface TreeRunOpts {
@@ -240,8 +241,17 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     const b = doc.boxes[at];
     if (!b) return { end: "stuck", cost, at, visits, uses, restarts, odd };
     visits.push({ box: at, cost });
-    // 完成の印は "main" だけ (前の版の妥協 "compromise" は未完成 = 印の無い箱として先へ読む)
-    if (b.done === "main") return { end: "done", cost, at, visits, uses, restarts, odd };
+    // 完成の印は "main" だけ (前の版の妥協 "compromise" は未完成 = 印の無い箱として先へ読む)。
+    // 着いた時に狙いの数を見る: 道の当たりの数より少なければ完成にせず、形の合う箱へ (無ければ止まり)
+    // (10-22 白紙から 13 通り組んだ #4: 入れ替えのカオスで途中の狙いが消え、完成 100% と出たのに 96 人は狙い 1 つだった)
+    if (b.done === "main") {
+      if (doneOk(data, doc, at, item, aims)) return { end: "done", cost, at, visits, uses, restarts, odd };
+      odd.add(at);
+      const to = ++hops > 1000 ? null : matchBox(data, shapes, item, aims);
+      if (!to || to === at) return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("完成の箱に着いたが、狙いが揃っていない (形の合う箱も無い)", "Reached a done box without all its targets (and no box matches the shape)"), item } };
+      at = to;
+      continue;
+    }
     const sb = b as SplitBox;
     if (sb.split) {
       if (++hops > 1000) return { end: "stuck", cost, at, visits, uses, restarts, odd };
@@ -285,6 +295,12 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     item = r.item;
     at = settle(data, doc, shapes, next, item, aims);
   }
+}
+
+/** 完成の箱で狙いが揃っているか (付いている木の狙いの数が、その箱の道の当たりの数の一番少ない組以上。分かれ目の先は行の条件で決まるので数で見る) */
+function doneOk(data: PatchData, doc: TreeDoc, id: string, item: StageItem, aims: readonly Aim[]): boolean {
+  const need = Math.min(...heldSets(doc, id).map((h) => h.length));
+  return aims.filter((a) => aimHeld(data, item, a)).length >= need;
 }
 
 function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): TreeRunResult {
