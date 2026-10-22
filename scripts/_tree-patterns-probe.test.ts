@@ -288,7 +288,7 @@ const PATTERNS: { name: string; base: string; note: string; build: (u: Ui) => vo
     if (ex) { u.hits(ex, [C, S]); for (const x of u.d.boxes[ex]!.outs) { if (u.d.boxes[x]!.back) setBack(u.d, x, null); u.back(x, J); } }
     u.back(h.IncreasedCastSpeed!, J);
   } },
-  { name: "boots-chaos-onspam", base: "Drakeskin Boots", note: "靴: ✦移動 T1 + ルーン + 乱数 2、カオス 1 回 → 外れは「カオススパム」の札 → 高貴で残り", build: (u) => {
+  { name: "boots-chaos-onspam", base: "Drakeskin Boots", note: "靴: ✦移動 T1 + ルーン + 乱数 2、カオス 1 回 → 外れは「カオススパム」の札 → 高貴で残り (高貴の外れは、足りない側が満杯ならカオススパム、空きがあれば高貴へ戻る)", build: (u) => {
     const Lf = A(`${BD}IncreasedLife`, 2), F = A(`${BD}FireResistance`, 2);
     u.startMod(`${BD}MovementVelocity`, 1, true);
     u.rune("Iron Rune");
@@ -301,9 +301,17 @@ const PATTERNS: { name: string; base: string; note: string; build: (u: Ui) => vo
       const at = u.hand(h[k]!, "exalt_greater", [om]);
       if (!at) continue;
       u.done(u.hits(at, [other])[other.modId.split("/")[1]!]!);
-      // 高貴の外れ (k + 外れ) もカオススパムの札。付くのは残りの狙いだけなので完成
+      // 高貴の外れ (k + 外れ) は分かれ目: 足りない狙いの側が外れで満杯ならカオススパムの札 (付くのは残りの狙いだけなので完成)、空きがあれば側の高貴へ戻る
+      // (10-22 解析君 8dfeb707: 外れなら全部カオスにすると、狙いを消された人が 2 つのカオスの箱を 1 人 約 4.4 回行き来し 50 神。空きがあれば高貴で 27〜28 神)
       const j = u.o(at).junk;
-      if (j) { u.spam(j); for (const x of u.d.boxes[j]!.outs) u.done(x); }
+      if (j) {
+        const side = om === DEX ? "suffix" : "prefix";
+        const [full, room] = u.split(j, [{ kind: "junk", side, n: side === "suffix" ? 3 : 2 }]);
+        if (full) { u.spam(full); for (const x of u.d.boxes[full]!.outs) u.done(x); }
+        // 空きの行に側の高貴を直接置く (行から高貴の箱へ戻すと、外れのある形は分かれ目の箱と同じ形なので settle でここへ戻り輪になった)。外れは分かれ目へ
+        const ex2 = room ? u.hand(room, "exalt_greater", [om]) : null;
+        if (ex2) { u.done(u.hits(ex2, [other])[other.modId.split("/")[1]!]); const j2 = u.o(ex2).junk; if (j2) u.back(j2, j); }
+      }
       if (sh[k]) u.back(sh[k]!, h[k]!);
     }
   } },
