@@ -25,16 +25,13 @@
  "A src/views/craft-stage/StageAimPicker.vue": 1,
  "A src/views/craft-stage/StageBasePicker.vue": 2,
  "A src/views/craft-stage/StageItemMini.vue": 1,
- "A src/views/craft-stage/StageModList.vue": 1,
  "A src/views/craft-stage/StageQualityBar.vue": 3,
  "A src/views/craft-stage/StageRouteLuck.vue": 3,
  "A src/views/craft-stage/StageRouteRunes.vue": 2,
  "A src/views/craft-stage/StageRoutesIntro.vue": 1,
  "A src/views/craft-stage/StageRoutesPage.vue": 3,
  "A src/views/craft-stage/StageSettings.vue": 1,
- "A src/views/craft-stage/StageWeightEdit.vue": 1,
  "A src/views/craft-stage/route-place.ts": 2,
- "A src/views/craft-stage/stage-mod-list-look.ts": 3,
  "A src/views/simulator/StageRecipesPage.vue": 1,
  "A src/views/tutorial/StageCourseGuide.vue": 1,
  "A src/views/tutorial/StageCourses.vue": 1,
@@ -57,6 +54,5 @@
  "D src/views/craft-stage/CraftStage.vue": 3,
  "D src/views/craft-stage/RevealPanel.vue": 1,
  "D src/views/craft-stage/StageSettings.vue": 2,
- "D src/views/craft-stage/use-stage-base.ts": 2,
- "D src/views/simulator/tree/TreeGoalPage.vue": 1
+ "D src/views/craft-stage/use-stage-base.ts": 2
 }
