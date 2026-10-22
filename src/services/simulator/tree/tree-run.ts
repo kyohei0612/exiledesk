@@ -32,6 +32,8 @@ export interface TreeRunOpts {
   /** every 人ごとに途中の結果 */
   onProgress?: (r: TreeRunResult) => void;
   every?: number;
+  /** 1 人終わるごとに、その人の通った箱 (順に、着いた時の費用) と終わり方。画面の「1 人目が木を進む」が読む (10-22) */
+  onPerson?: (p: { end: End; at: string; cost: number; visits: readonly { box: string; cost: number }[] }, i: number) => void;
 }
 export interface BoxStat {
   /** 1 回でもここに来た人数 */
@@ -72,7 +74,7 @@ export interface TreeRunResult {
   edges: Record<string, number>;
 }
 
-type End = "done" | "capped" | "stuck";
+export type End = "done" | "capped" | "stuck";
 interface Person { end: End; cost: number; at: string; visits: { box: string; cost: number }[]; uses: Record<string, number>; restarts: number; odd: Set<string>; why?: { reason: string; item: StageItem; noBox?: boolean } }
 
 const startItemOf = (data: PatchData, doc: TreeDoc, rng: () => number): StageItem => startOf(data, doc, rng).item;
@@ -400,7 +402,9 @@ export function* runTreeSteps(data: PatchData, doc: TreeDoc, opts: TreeRunOpts):
   const people: Person[] = [];
   const every = Math.max(1, opts.every ?? 10);
   for (let i = 0; i < opts.n; i++) {
-    people.push(runOne(data, doc, aims, shapes, rng, o));
+    const p = runOne(data, doc, aims, shapes, rng, o);
+    people.push(p);
+    opts.onPerson?.(p, i);
     if (opts.onProgress && (i + 1) % every === 0 && i + 1 < opts.n) opts.onProgress(summarize(doc, people, o.startCost));
     yield i + 1;
   }
@@ -414,7 +418,9 @@ function runIn(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): TreeRunResult 
   const every = Math.max(1, opts.every ?? 10);
   const people: Person[] = [];
   for (let i = 0; i < opts.n; i++) {
-    people.push(runOne(data, doc, aims, shapes, rng, o));
+    const p = runOne(data, doc, aims, shapes, rng, o);
+    people.push(p);
+    opts.onPerson?.(p, i);
     if (opts.onProgress && (i + 1) % every === 0 && i + 1 < opts.n) opts.onProgress(summarize(doc, people, o.startCost));
   }
   return summarize(doc, people, o.startCost);
