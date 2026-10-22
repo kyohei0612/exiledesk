@@ -67,6 +67,9 @@ export { tierIndexOf, tierRankOf, tierNoOf, minIlvlFor, tierRankLabel } from "./
 // 手の働き (足す・入れ替え・消す…) とカタリストを最大まで入れる (2026-10-22 シミュの自前の式を入口へ)
 export type { CurrencyEffect } from "./hand-effect";
 export { effectOf, catalystTagOf, catalystFull, fillCatalyst, catalystForMod } from "./hand-effect";
+// MOD の無いマジックに 1 回足す時の候補の組 (どれか 1 つ) の付きやすさと等級の落とし方 (2026-10-22 シミュの start-cost の式を入口へ)
+export type { MagicAddOdds, AddGrade } from "./magic-odds";
+export { magicAddOdds, anyOfAddOdds, addGradeFor, ADD_GRADES } from "./magic-odds";
 export { DESECRATION_EXCLUSIVE_COUNT, bossOmenAllowed, desecrationOmenForMod } from "../../vendor/poe2htc/engine/probability";
 
 // 名簿
