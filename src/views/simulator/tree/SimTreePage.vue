@@ -141,7 +141,7 @@ function boxLabel(id: string): string {
   // 外れ・消えたの箱は、道で付いている狙いの MOD を添える (「↩ 外れ」だけではどの外れか分からなかった、10-22 靴・手袋を白紙から組んで)
   const held: string[] = [];
   for (let x: Box | undefined = to; x; x = x.parent ? doc.value.boxes[x.parent] : undefined) if (x.out === "hit" && x.aim) held.unshift(t.aimShort(x.aim));
-  return held.length ? `${outName(to.out)} (${[...new Set(held)].join("・")})` : tr(`${outName(to.out)} (狙い無し)`, `${outName(to.out)} (no target)`);
+  return held.length ? tr(`${outName(to.out)} (${[...new Set(held)].join("・")})`, `${outName(to.out)} (${[...new Set(held)].join(", ")})`) : tr(`${outName(to.out)} (狙い無し)`, `${outName(to.out)} (no target)`);
 }
 /**
  * 戻りの箱の下の行 = いつも行き先の箱の名前 (10-22 オーナー「続きからって選択肢選べんでしょ、そもそも白紙の状態からこうなるはず」)。
@@ -273,7 +273,7 @@ const busy = computed((): { text: string; n?: number; of?: number } | null => {
 const checkBusy = computed((): { text: string; n?: number; of?: number } | null => {
   if (!checking.value) return null;
   const p = progress.value;
-  return !p ? { text: tr("精査の準備中", "Preparing") } : p.phase === "walk" ? { text: tr("5 人を辿っている", "Walking runs"), n: p.n, of: p.of } : { text: tr("30 人を回している", "Playing runs"), n: p.n, of: p.of };
+  return !p ? { text: tr("精査の準備中", "Preparing") } : p.phase === "walk" ? { text: tr("5 人を辿っている", "Walking runs"), n: p.n, of: p.of } : { text: tr("30 人を回している", "Running"), n: p.n, of: p.of };
 });
 function goIssue(id: string): void { void v.reveal(id, true); }
 

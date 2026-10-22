@@ -74,7 +74,7 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
     // 品質だけ上げる手 (カタリスト) の後の通り抜けから打つ時は、その手がカタリストを打つ手
     const before = b.out === "pass" && b.parent ? doc.boxes[b.parent]?.hand : null;
     const afterCat = !!before && isCatalyst(before.currency);
-    if (b.hand?.omens.includes(CATALYSING) && !b.hand.catalyst && !afterCat) add(b.id, "noCatalyst", tr("触媒のお告げなのにカタリストを打つ手が無い (手の札でカタリストを選ぶ)", "Catalysing omen without a catalyst craft (pick a catalyst in the craft)"));
+    if (b.hand?.omens.includes(CATALYSING) && !b.hand.catalyst && !afterCat) add(b.id, "noCatalyst", tr("触媒のお告げなのにカタリストを打つ手が無い (手の札でカタリストを選ぶ)", "Omen of Catalysing Exaltation without a catalyst craft (pick a catalyst in the craft)"));
   }
 
   // 1b) 形の合う箱へ: 行きうる形の箱がツリーに無い (tree-run の matchTargets、回す時と同じ判定)

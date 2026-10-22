@@ -16,7 +16,7 @@ const div = (x: number): string => (Number.isFinite(x) ? (x >= 100 ? x.toFixed(0
 </script>
 
 <template>
-  <button type="button" data-tree-run class="g-btn sm shrink-0" :disabled="running || !ready" :title="tr(`${RUN_N} 人をエンジンで回し、通った道と人数を木の上に重ねて出す (値段は始まりの箱の値段と今の相場)`, `Play ${RUN_N} runs with the engine and overlay the paths taken (prices: start box + current market)`)" @click="emit('run')">{{ tr(`${RUN_N} 人回す`, `Run ${RUN_N}`) }}</button>
+  <button type="button" data-tree-run class="g-btn sm shrink-0" :disabled="running || !ready" :title="tr(`${RUN_N} 人をエンジンで回し、通った道と人数を木の上に重ねて出す (値段は始まりの箱の値段と今の相場)`, `Run ${RUN_N} times with the engine and overlay the paths taken (prices: start box + current market)`)" @click="emit('run')">{{ tr(`${RUN_N} 人回す`, `Run ${RUN_N}`) }}</button>
   <!-- 一番大事な数字なので切らない (縮めるのはレシピの名前、10-22 金の指輪の録画で完成 % が … で切れた) -->
   <span data-tree-run-sum class="shrink-0 whitespace-nowrap tabular-nums" :class="result && !running ? '' : 'opacity-70'">
     <template v-if="walk">{{ tr(`1 人目が進んでいる ${walk.step}/${walk.total} 箱 · ${div(walk.cost)} 神`, `Run 1 walking ${walk.step}/${walk.total} boxes · ${div(walk.cost)} div`) }}</template>
