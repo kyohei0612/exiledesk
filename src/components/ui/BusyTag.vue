@@ -11,6 +11,6 @@ defineProps<{ text: string; n?: number; of?: number }>();
 <template>
   <span data-busy-tag role="status" aria-live="polite" class="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-amber-400/30 bg-black/40 px-2 py-0.5 text-[12px] font-normal tracking-normal text-amber-100/90 [text-shadow:none]">
     <span class="size-3 shrink-0 animate-spin rounded-full border-2 border-amber-300/30 border-t-amber-300" aria-hidden="true" />
-    <span class="whitespace-nowrap tabular-nums">{{ text }}<template v-if="of"> {{ n ?? 0 }}/{{ of }}</template></span>
+    <span class="whitespace-nowrap tabular-nums">{{ of ? `${text} ${n ?? 0}/${of}` : text }}</span>
   </span>
 </template>

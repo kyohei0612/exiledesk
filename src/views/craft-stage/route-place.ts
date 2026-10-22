@@ -28,11 +28,13 @@ export function placeOnStage(it: StageItem, row: Pick<RaceRow, "route" | "grade"
 
 /**
  * その道・等級で 1 人を当たるまで打った形と手数 (上限の手数までに付かなければ null)。道のカードの「当たった形でクラフト台に戻る」。
- * 200 手ごとに画面へ手を返す (読み込み中の札が回るように)
+ * 始めと 200 手ごとに画面へ手を返す (読み込み中の札が出て回るように)
  */
 export async function hitItemOf(row: RaceRow, targets: readonly RaceTarget[], ilvl: number, prep: RoutePrep, from: StageItem | null, maxSteps = 3000): Promise<{ item: StageItem; n: number } | null> {
   const d = s.data.value;
   if (!d) return null;
+  // 先に 1 回画面を返す (押してすぐ読み込み中の札が出る。200 手より前に当たる時も)
+  await new Promise((r) => setTimeout(r, 0));
   for (let k = 0; k < 5; k++) {
     const run = routeRun(d, s.base.value, ilvl, targets, row.route, row.grade, mulberry32((Math.random() * 2 ** 31) | 0), priceOf, prep, from ?? undefined);
     if (!run) return null;
