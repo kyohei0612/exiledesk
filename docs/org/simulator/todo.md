@@ -2,6 +2,12 @@
 
 前の引き継ぎ (1〜3 本目、10-21〜23) と止めている物 (①〜⑥・自動・④ の物・OK 待ちの一覧) は notes/2026-10-22-todo-archive.md にそのまま移した。
 
+## 報告 28 (14 本目 → ブラック 7 代目、10-22 夜) B1 段の換算を入口に寄せた (ad3b8810)
+- ジン部長の 60d3da0d (tierIndexOf・tierRankOf・tierNoOf・minIlvlFor・tierRankLabel) に、適正のアイテムレベル fitIlvl・✦ の検索の段と ilvl・ベースの値段の段 (tree-base-cost)・aimHeld の段・当たりの札と MOD 選びの「T 何以上」・エッセンスの当たりの段 (tierName の正規表現) を置き換えた。aimLabel はシミュに残す (ブラック)。
+- 残した所: TreeModPick の段の札の文字 "T3" から数を取る所 (一覧の段に数を持たせる B13 で)。
+- 確かめ: 型 0・入口の見張り「増えた所なし」・台本 _tree-aimhits-probe 総当たり 3474072 回・見本 4 本で前の式と食い違い 0 (前後の並べ)。画面の文は同じ式なので開発版は出していない。
+- 次: aimHeldOn (アイテム + 段 T の当たり) が入ったら aimHeld を消して呼ぶ所を全部替える。B2 以降はジン部長の commit と emulator/todo.md の頭を見て、入ったら置き換える。
+
 ## 報告 27 (14 本目 → ブラック 7 代目、10-22 夜) A を寄せた・旧 ③ を消した
 - 72901200 (A): isCatalyst = エンジンの kindOf (jcatalyst_ も)・カタリストの品質の最大はエンジンの catalystOf (指輪などは別の欄) = 新しい catalystFull、種類は catalystTagOf (エンジンの run-spec と同じ取り方、入口に出たら置き換え)・始まりの乱数の上限はレアの枠 limitOf − 始まりの MOD・start-cost の側は sideOfMod。
 - startItemOf → startFrom は A から外した: startFrom は乱数の MOD の数・作れない理由 (今は例外)・乱数の渡し方が木と違うので B10 (入口に StartSpec.random と理由を返す形) で。TreeStartPick・use-tree のレアリティの決め (フラクチャー済みはレア・ノーマルは MOD 無し) は木の状態の決めなので残した。深淵のエッセンスの鍵は start-cost ごとジン部長へ。
