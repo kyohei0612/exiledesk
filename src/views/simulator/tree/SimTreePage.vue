@@ -268,7 +268,7 @@ const busy = computed((): { text: string; n?: number; of?: number } | null => {
   if (!s.data.value) return { text: tr("読み込み中", "Loading") };
   if (tr100.running.value) return { text: tr("回している", "Running"), n: tr100.result.value?.n ?? 0, of: RUN_N };
   const r = rv.run.value;
-  return r ? { text: tr("読み込み中", "Loading"), n: r.n, of: r.of } : null;
+  return r ? { text: tr("読み込み中", "Loading"), n: r.n, of: r.of } : t.baseCostBusy.value ? { text: tr("始まりの値段を計算中", "Pricing the start") } : null;
 });
 const checkBusy = computed((): { text: string; n?: number; of?: number } | null => {
   if (!checking.value) return null;
