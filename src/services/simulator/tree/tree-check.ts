@@ -16,7 +16,7 @@ import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, runTreeSte
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
 
-export type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry";
+export type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry" | "omenWaste";
 export interface CheckIssue { boxId: string; kind: CheckKind; text: string }
 
 const PEOPLE = 5;
@@ -118,6 +118,8 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
     const never = new Set<string>();
     /** 結果の箱に無い結果が出る箱 (箱 → 人数と出る結果)。結果が 1 通りとして箱を 1 つにした手で、想定外の形で着いた時など (10-22 ブラック) */
     const odd = new Map<string, { who: Set<number>; outs: Set<string> }>();
+    /** お告げが効かない (無駄になる) 人がいる箱 */
+    const waste = new Map<string, { who: Set<number>; reason: string }>();
     const shapes = shapesOf(doc);
     const cantIssues = (): CheckIssue[] => [...cant].map(([id, c]) => ({ boxId: id, kind: "cantUse" as const, text: tr(`この箱に着いた状態では手が打てない (${PEOPLE} 人中 ${c.who.size} 人): ${c.reason}`, `The craft can't be used here (${c.who.size} of ${PEOPLE}): ${c.reason}`) }));
     const oddIssues = (): CheckIssue[] => [...odd].map(([id, c]) => ({ boxId: id, kind: "unexpected" as const, text: tr(`結果の箱に無い結果も出る (${PEOPLE} 人中 ${c.who.size} 人): ${[...c.outs].join("・")}。回すと形の合う箱へ進み、無ければ止まる`, `Results with no box can happen (${c.who.size} of ${PEOPLE}): ${[...c.outs].join(", ")}. Runs go to a box of the same shape, or stop`) }));
@@ -152,7 +154,9 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
         // 打てない手 (効かない・消せる物が無いお告げも。tree-sample の handProblem、オーナー 10-22「進行不能」)
         const why = handProblem(data, item, b.hand);
         const first = playHand(data, item, b.hand, rng, handAims(doc, b.id, aims));
-        if (why || !first.applied) { const c = cant.get(id) ?? { who: new Set<number>(), reason: why ?? first.reason ?? "" }; c.who.add(person); cant.set(id, c); return; }
+        // お告げが効かないだけ (回すと打って進む) は止まりと分ける (10-22 13 通り組んだ #12: 「手が打てない」と出たのに 100 人とも進んだ)
+        if (why && first.applied) { const c = waste.get(id) ?? { who: new Set<number>(), reason: why }; c.who.add(person); waste.set(id, c); }
+        else if (why || !first.applied) { const c = cant.get(id) ?? { who: new Set<number>(), reason: why ?? first.reason ?? "" }; c.who.add(person); cant.set(id, c); return; }
         // 結果の箱に無い結果 (エンジンの stepOutcomes で起こりうる枝を全部。未発現が付く手・繰り返しの手は見ない)
         if (!b.hand.repeat) {
           const miss = (stepOutcomes(data, item, b.hand.currency, b.hand.omens) ?? []).filter((o) => !o.void && !unrevealedOf(o.item))
@@ -192,6 +196,7 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
       yield { phase: "walk", n: person, of: PEOPLE, partial: ranked([...out, ...cantIssues(), ...oddIssues()]) };
     }
     for (const x of [...cantIssues(), ...oddIssues()]) add(x.boxId, x.kind, x.text);
+    for (const [id, c] of waste) add(id, "omenWaste", tr(`お告げが効かない人がいる (${PEOPLE} 人中 ${c.who.size} 人、手は打てる): ${c.reason}`, `The omen is wasted for some runs (${c.who.size} of ${PEOPLE}; the craft still works): ${c.reason}`));
     // 5) 回して止まる箱 (tree-run を 30 人、値段 0)。10-22 靴を白紙から組んで: 100 人中 64 人が止まる箱を上の辿り方では引かなかった
     const steps = runTreeSteps(data, doc, { n: RUN_PEOPLE, seed: 1, price: () => 0, capSteps: 300 });
     let st = steps.next();
