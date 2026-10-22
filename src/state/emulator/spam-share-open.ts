@@ -11,7 +11,8 @@ import { startFrom, type RouteKind } from "../../services/craft-stage/engine";
 import { craftStage as s } from "../craft-stage";
 import { fullSockets } from "../for-share/stage-steps";
 import { unpackJson } from "../../services/craft-stage/share";
-import type { Grade, SharedRace } from "../../services/craft-stage/route-race";
+import type { Grade } from "../../services/craft-stage/engine";
+import type { SharedRace } from "../../services/craft-stage/engine-emu";
 import { ROUTES_MAX, routesLuck, routesOpen, routesRunes, routesShared, routesTarget } from "../web-page";
 
 /** スパムシミュレーターの運試しのシェア: r = 道、g = 等級、m = 狙いの MOD、t = 段の下限、i = アイテムレベル、a = 当たりが 2 つ以上の時の全部 ([MOD の id, 段の下限]。m・t は 1 つ目) */

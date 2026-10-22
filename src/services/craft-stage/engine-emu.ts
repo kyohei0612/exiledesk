@@ -11,3 +11,21 @@ export type { UsePreview } from "./for-emu/preview";
 export { previewUse } from "./for-emu/preview";
 // 重みを推定で埋めた MOD の出どころの一言 (MOD 一覧の重みの札、StageWeightEdit)
 export { weightOverrideNote } from "../htc/weight-overrides";
+// スパムシミュレーター: 100 人の競争・その行の形・シェアの包み (for-emu/spam-race)、道の打ち手の形と当たりの番号 (核の route-race)
+export type { RaceRow, RaceStats, SharedRace } from "./for-emu/spam-race";
+export { raceOne, packRace, unpackRace } from "./for-emu/spam-race";
+export type { RaceTarget, RoutePrep, RouteRun } from "./route-race";
+export { routeHitIndex } from "./route-race";
+
+// エミュの画面が読んでいた物 (2026-10-23 エンジンの仕分け、付け替えの対応表 docs/org/emulator/notes/2026-10-23-emu-import-map.md)
+export { unsocketKey } from "./stage-runes";
+export type { PobStat } from "./stage-pob";
+export { routeRunesFor, routeSocketsOf } from "./route-runes";
+export { tierIdOf } from "./mod-list";
+export { monsterAccuracy } from "./defence";
+export { rankOf, unluckyOf } from "./chaos-spam";
+export { baseArtFile } from "./base-art";
+export { sanctifySetKey } from "./apply-vaal";
+export { forcesOf, spamKey } from "./apply-spam";
+export { catalystSetKey, implicitSetKey, qualityCapKey, qualitySetKey, qualityCapOf, itemLevelKey } from "./apply-currency";
+export { REVEAL } from "./aim-odds";

@@ -53,7 +53,9 @@ export type { AddOdds, AddHit, OddsTarget } from "./spec/odds";
 export { addOddsBySpec, addCands, addHitOdds, hitShare, fractureHit } from "./spec/odds";
 // スパムの道 (増強・カオス・高貴) で始めのアイテムから狙いに着くまでの平均の使った物と着いた割合 (route-race の routeRun と同じ打ち方)
 export type { SpamCounts, SpamTarget } from "./spam-counts";
-export type { RouteKind, Grade as RouteGrade } from "./route-race";
+export type { RouteKind, Grade as RouteGrade, Grade } from "./route-race";
+// スパムの道の打ち手 (増強・カオス・高貴の 1 人分。spam-counts とスパムシミュが同じ打ち方)
+export { routeRun, routeKey, GRADE_KEY } from "./route-race";
 export { spamCounts } from "./spam-counts";
 // 解析君の頼み (K4): 系統の塞ぎ・古の骨の段の下限・発現の手 (候補の数は REVEAL_SPEC.actions の reveal.offers)
 export { occupiedFamiliesOf } from "../../vendor/poe2htc/engine/pool";
@@ -115,3 +117,21 @@ export { tagLabel } from "../mods/tag-ja";
 
 // 乱数 (どの部も同じ乱数)
 export { mulberry32 } from "../htc/rng";
+
+// エミュの画面が読んでいた物 (2026-10-23 エンジンの仕分け、付け替えの対応表 docs/org/emulator/notes/2026-10-23-emu-import-map.md)
+export { RUNE_BY_ID } from "../../vendor/poe2htc/engine/runes";
+export { inAny } from "../mods/item-classes";
+export { baseCatalog } from "../items/base-catalog";
+export { jaOfOmen } from "../htc/game-names";
+export { runeNameOf, RUNE_PREFIX } from "./stage-runes";
+export { hasExtraCatalyst, stageRuneIds } from "./stage-core";
+export { reqOfItem } from "./stage-bases";
+export { planSpec } from "./spec/run-spec";
+export { aimLabel, groupLabelOf } from "./mod-list";
+export type { DamageKind, Defender, Outcome } from "./defence";
+export type { SpamStats } from "./chaos-spam";
+export { medianOf } from "./chaos-spam";
+export { runePrep } from "./route-runes";
+export { baseArt } from "./base-art";
+export { isSanctifySet } from "./apply-vaal";
+export { IMPLICIT_SET, isCatalystSet, isQualitySet, QUALITY_CAP, qualityFieldMax, SANCTIFIED_REASON, ITEM_LEVEL_SET } from "./apply-currency";

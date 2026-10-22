@@ -19,7 +19,8 @@ import { routeRunesFor, runePrep } from "../../services/craft-stage/route-runes"
 import { stageRuneIds } from "../../services/craft-stage/stage-core";
 import StageRouteLuck from "./StageRouteLuck.vue";
 import { hitItemOf, placeOnStage } from "./route-place";
-import { GRADE_KEY, raceOne, unpackRace, type Grade, type RaceRow } from "../../services/craft-stage/route-race";
+import { GRADE_KEY, type Grade } from "../../services/craft-stage/engine";
+import { raceOne, unpackRace, type RaceRow } from "../../services/craft-stage/engine-emu";
 import { displayCurrency } from "../../state/display-currency";
 import { tr } from "../../i18n/lang";
 import { track } from "../../utils/track";

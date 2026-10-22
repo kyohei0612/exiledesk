@@ -10,7 +10,8 @@ import { mulberry32, type StageItem, type StageMod } from "../../services/craft-
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { usePhone } from "../../utils/use-phone";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
-import { packRace, routeHitIndex, routeKey, routeRun, type RaceRow, type RaceTarget, type RoutePrep, type RouteRun } from "../../services/craft-stage/route-race";
+import { routeKey, routeRun } from "../../services/craft-stage/engine";
+import { packRace, routeHitIndex, type RaceRow, type RaceTarget, type RoutePrep, type RouteRun } from "../../services/craft-stage/engine-emu";
 import { medianOf, rankOf, unluckyOf, type SpamStats } from "../../services/craft-stage/chaos-spam";
 import { baseArtFile } from "../../services/craft-stage/base-art";
 import { displayCurrency } from "../../state/display-currency";

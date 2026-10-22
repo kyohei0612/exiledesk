@@ -6,7 +6,8 @@
 import { mulberry32, type StageItem } from "../../services/craft-stage/engine";
 import { craftStage as s, priceOf } from "../../state/craft-stage";
 import { routesLuck, routesOpen, routesTarget } from "../../state/web-page";
-import { routeRun, type RaceRow, type RaceTarget, type RoutePrep } from "../../services/craft-stage/route-race";
+import { routeRun } from "../../services/craft-stage/engine";
+import type { RaceRow, RaceTarget, RoutePrep } from "../../services/craft-stage/engine-emu";
 import { forcesOf, spamKey } from "../../services/craft-stage/apply-spam";
 
 /**

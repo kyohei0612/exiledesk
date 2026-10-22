@@ -40,7 +40,7 @@ export const routesLuck = ref(false);
 /** 嵌めて打つルーンの id (null = エミュレーターのアイテムに嵌めている物。StageRouteRunes.vue) */
 export const routesRunes = ref<string[] | null>(null);
 /** シェアから来た時の計算済みの結果 (StageRoutesPage が計算の代わりに出す。route-race.ts の SharedRace) */
-export const routesShared = ref<import("../services/craft-stage/route-race").SharedRace | null>(null);
+export const routesShared = ref<import("../services/craft-stage/engine-emu").SharedRace | null>(null);
 /** その狙い = 当たり (選ぶまでは null)。並べた物のどれか 1 つが付いたら止める (OR。route-race.ts) */
 export const routesTarget = ref<Array<{ modId: string; minTierIndex: number }> | null>(null);
 /** 当たりを 2 つ以上並べられる (2026-10-22 オーナー OK で本番へ、v0.1.593) */
