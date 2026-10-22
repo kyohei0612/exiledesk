@@ -245,32 +245,6 @@ const PATTERNS: { name: string; base: string; note: string; build: (u: Ui) => vo
       annul(u, u.o(at).junk);
     }
   } },
-  { name: "body-essence", base: "Vile Robe", note: "胴: ✦ES T1 + 乱数 2、パーフェクトエッセンス (ライフ%) → 右側の高貴 + 上級で 冷気・雷。外れは右側の消去", build: (u) => {
-    const C = A(`${BA}ColdResistance`, 2), L = A(`${BA}LightningResistance`, 2);
-    u.startMod(`${BA}LocalEnergyShield`, 1, true);
-    u.random(2);
-    // 欲しいのはエッセンスのライフ%。当たりの一覧 (normal・desecrated) に無いので狙い無しで打つ
-    u.aim("start", A(`${BA}PerfectEssence_MaximumLifeIncreasePercent`, 1));
-    const e = u.hand("start", `essence:perfect:${BA}PerfectEssence_MaximumLifeIncreasePercent`, [], { free: true })!;
-    const any = u.o(e).any!;
-    const s = u.hand(any, "exalt_greater", [DEX])!;
-    const h = u.hits(s, [C, L]);
-    annul(u, u.o(s).junk, ["OmenofDextralAnnulment"]);
-    for (const [k, other] of [["ColdResistance", L], ["LightningResistance", C]] as const) {
-      const at = u.hand(h[k]!, "exalt_greater", [DEX]);
-      if (!at) continue;
-      u.done(u.hits(at, [other])[other.modId.split("/")[1]!]!);
-      annul(u, u.o(at).junk, ["OmenofDextralAnnulment"]);
-    }
-  }, fix: (u) => {
-    // 精査の「始まりで止まる」を見て、外れが消えたの戻りを外れの前の箱へ (linkSameShape が始めに替えた物)
-    const done: string[] = [];
-    const any = Object.values(u.d.boxes).find((b) => b.out === "any")!.id;
-    for (const b of Object.values(u.d.boxes)) if (b.out === "junkGone" && b.back === "start") { const before = u.d.boxes[b.parent!]!.parent!; if (before !== "start") { u.back(b.id, before); done.push(`${b.id}→${before}`); } }
-    // 狙いが消えた = 始めに戻る (既定) は、始まりのエッセンスがもう打てないので、エッセンスの後の箱 (高貴) へ
-    for (const b of Object.values(u.d.boxes)) if (b.out === "lost" && b.back === "start") { u.back(b.id, any); done.push(`${b.id}→${any}`); }
-    return `外れが消えた・狙いが消えたの戻りを替えた ${done.join(" ")}`;
-  } },
   { name: "body-essence-path", base: "Vile Robe", note: "胴 (エッセンスの道、10-22): ✦ES T1 + 乱数 2、パーフェクトエッセンス (ライフ%) の結果 = 付いた / 狙いが消えた → 右側の高貴 + 上級で 冷気・雷。外れは右側の消去", build: (u) => {
     const C = A(`${BA}ColdResistance`, 2), L = A(`${BA}LightningResistance`, 2);
     u.startMod(`${BA}LocalEnergyShield`, 1, true);
