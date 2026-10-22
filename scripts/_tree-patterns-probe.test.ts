@@ -97,7 +97,7 @@ class Ui {
     if (kind === "spam" || kind === "add" || kind === "swap") {
       const tree = aimsOf(d);
       const open = (tree.length ? tree : d.memoAims ?? []).filter((a) => !aimHeld(data, item, a));
-      const outs = (stepOutcomes(data, item, h.currency, h.omens) ?? []).filter((x) => !x.void);
+      const outs = [1, 2, 3, 4].flatMap((seed) => { const x = seed === 1 ? item : sampleOf(data, d, id, seed).item; return (stepOutcomes(data, x, h.currency, h.omens) ?? []).filter((o) => !o.void); });
       aims = kind === "spam" || !outs.length ? open : open.filter((a) => outs.some((x) => aimHeld(data, x.item, a)));
     }
     let only = singleOutOf(data, d, id, h, preCat, aims);
