@@ -13,7 +13,7 @@ import type { SimTargetIn } from "./quiz-build";
 import type { SimStartKind, SimTargetLike } from "./sim-methods";
 
 /** フラクチャーの反対側の狙い 1 つの取り方 (白から自作は安い方、買う始め方はカオス) */
-export interface KeepPlan { host: string; together: number; chaos: number; chaosKey: string | null; chaosN: number | null; use: "together" | "chaos"; detail: { p: number; q: number; share: number; augKey: string } }
+interface KeepPlan { host: string; together: number; chaos: number; chaosKey: string | null; chaosN: number | null; use: "together" | "chaos"; detail: { p: number; q: number; share: number; augKey: string } }
 
 /**
  * 候補を作るマジックのループの回数 (2026-10-20 S1c、表 docs/org/simulator/notes/2026-10-20-start-routes.md): スパムシミュレーターの増強の道
@@ -30,8 +30,8 @@ function augmentLoop(d: Parameters<typeof spamCounts>[0], white: Parameters<type
 }
 
 /** フラクチャーの候補 (どれか 1 つが固定されれば良い) */
-export interface FracMember { modId: string; minTierIndex: number; text: string; rank: string }
-export interface StartCalcIn {
+interface FracMember { modId: string; minTierIndex: number; text: string; rank: string }
+interface StartCalcIn {
   data: PatchData;
   /** ベースの白のアイテム (ルーンを差していればそれも) */
   item: StageItem;
@@ -141,7 +141,7 @@ export function startCalc(o: StartCalcIn) {
   return { pHit, each, rerolls, loop: { augment: lc.augment, annul: lc.annul, share: gr.odds.share[fside] }, lines, buyLines, once, after, total: fracP > 0 ? once / fracP + after : Infinity, fracP, noAbyss: !(priceOf(abyss) > 0), cantRoll: pHit === 0, grade: gr.ja, buyRest, breakEven, buyOnce, fourTotal,
     greater: null as GreaterRoute | null, keep, augKey: gr.aug };
 }
-export type StartCalc = NonNullable<ReturnType<typeof startCalc>>;
+type StartCalc = NonNullable<ReturnType<typeof startCalc>>;
 
 /**
  * 始め方の費用 (高貴建て。値段が無ければ null)。フラクチャー予定がある時 (fractured) は「フラクチャー済みのベースになるまで」の費用で比べる

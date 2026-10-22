@@ -14,7 +14,7 @@ import { blankWith, chaosAfterFix, fractureOdds, magicAugOdds } from "./sim-odds
 import { sideOfMod } from "../craft-stage/engine";
 import { membersOf } from "./recipe-defs";
 
-export interface KeepCompare {
+interface KeepCompare {
   /** 狙いの手順の本体の modId */
   host: string;
   /** マジックで一緒に揃える分の費用 (フラクチャー 3 本分) */

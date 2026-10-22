@@ -35,7 +35,7 @@ export interface TreeRunOpts {
   /** 1 人終わるごとに、その人の通った箱 (順に、着いた時の費用) と終わり方。画面の「1 人目が木を進む」が読む (10-22) */
   onPerson?: (p: { end: End; at: string; cost: number; visits: readonly { box: string; cost: number }[]; why?: { reason: string; item: StageItem } }, i: number) => void;
 }
-export interface BoxStat {
+interface BoxStat {
   /** 1 回でもここに来た人数 */
   reach: number;
   /** 来た回数の合計 */
@@ -97,7 +97,7 @@ export const RESTART = "restart";
  * next = 手の結果がどれでも、この箱へ進む (解析君の台本の木だけ。分かれ目に戻す時に結果の箱を並べなくてよい)
  */
 export type { SplitRule, SplitWhen } from "./tree-model";
-export type SplitBox = TreeBox & { next?: string };
+type SplitBox = TreeBox & { next?: string };
 type Range = SplitRange;
 const inRange = (n: number, r?: Range): boolean => !r || (n >= r[0] && n <= r[1]);
 export function splitTo(data: PatchData, rules: readonly SplitRule[], item: StageItem, aims: readonly Aim[]): string | null {
@@ -116,7 +116,7 @@ export function splitTo(data: PatchData, rules: readonly SplitRule[], item: Stag
  * 形の合う箱の判定 (回す時・ルート精査・画面の線で同じ物を使う。シミュ部長 10-21 オーナー「↩ 形の合う箱へは自動で探して線を引いた状態に」)。
  * 形の鍵 = 付いている狙いの組 + 外れがあるか (空きの数は、側の決まった狙いと外れの有無で決まる)
  */
-export const shapeKey = (held: readonly string[], junk: boolean): string => `${[...new Set(held)].sort().join(",")}#${junk ? 1 : 0}`;
+const shapeKey = (held: readonly string[], junk: boolean): string => `${[...new Set(held)].sort().join(",")}#${junk ? 1 : 0}`;
 export type Shape = { key: string; box: string; hand?: Hand | null };
 /** 箱の道の札 (始まりから親をたどった当たりの札、aimKey) */
 function pathHeld(doc: TreeDoc, id: string | null): string[] {
@@ -169,7 +169,7 @@ export function shapesOf(doc: TreeDoc): Shape[] {
  * (10-22 解析君の 13 本の突き合わせ: 外れを持ったまま始めの高貴へ戻り、外れを先に消す打ち方より 48〜81% 高かった)。
  * at = 今のアイテム (あればその箱の手が打てる時だけ。光 + 消去の箱は普通の MOD の外れを消せず、兜で 93 人止まった)
  */
-export function boxOfShape(shapes: readonly Shape[], key: string, at?: { data: PatchData; item: StageItem }): string | null {
+function boxOfShape(shapes: readonly Shape[], key: string, at?: { data: PatchData; item: StageItem }): string | null {
   const same = shapes.filter((s) => s.key === key);
   // 同じ形の箱が幾つかあれば、手が打てる箱を先に (光 + 消去の箱へ普通の MOD の外れを持って来ても打てない、10-22 金の指輪の見本)
   const playable = (s: Shape): boolean => !at || !s.hand || !handProblem(at.data, at.item, s.hand);

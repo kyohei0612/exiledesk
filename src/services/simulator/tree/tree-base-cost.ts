@@ -14,8 +14,8 @@ import { startCalc, startCostOf } from "../start-cost";
 import { startOf, type TreeBasePrices, type TreeDoc } from "./tree-model";
 import { tr } from "../../../i18n/lang";
 
-export type TreeStartKind = Extract<SimStartKind, "white" | "four" | "fractured">;
-export interface TreeBaseCost {
+type TreeStartKind = Extract<SimStartKind, "white" | "four" | "fractured">;
+interface TreeBaseCost {
   /** 始め方ごとの「フラクチャー済みの始まりになるまで」の費用 (神。値段が無い・着かない時は null) と、比べから外す理由 */
   kinds: Array<{ k: TreeStartKind; label: string; cost: number | null; why: string | null }>;
   /** short = 箱の 1 行に入る短い名前 (箱の幅で全文が切れた、10-22) */

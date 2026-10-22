@@ -17,7 +17,7 @@ export function magicEssenceTarget(data: PatchData, targets: readonly SimTargetI
 }
 
 /** その段のエッセンスの棚のキー (段の名前が Lesser / Greater / それ以外 = 無印) */
-export function essenceKeyFor(data: PatchData, modId: string, minTierIndex: number): string {
+function essenceKeyFor(data: PatchData, modId: string, minTierIndex: number): string {
   const name = data.mods.get(modId)?.tiers[minTierIndex]?.name ?? "";
   const grade = /^Lesser/.test(name) ? "lesser" : /^Greater/.test(name) ? "greater" : "normal";
   return `essence:${grade}:${modId}`;
@@ -27,7 +27,7 @@ export function essenceKeyFor(data: PatchData, modId: string, minTierIndex: numb
  * フラクチャーの候補の反対側に残す MOD: 反対側の普通の付け方 (高貴ガチャ・カオススパム) の狙いの 1 つ目 (「どれか」の候補ごと)。
  * マジックはプレ 1 つ・サフィ 1 つなので 1 つだけ
  */
-export function keepTargetFor(data: PatchData, targets: readonly SimTargetIn[], fracSide: "prefix" | "suffix"): SimTargetIn | null {
+function keepTargetFor(data: PatchData, targets: readonly SimTargetIn[], fracSide: "prefix" | "suffix"): SimTargetIn | null {
   return targets.find((t) => {
     const m = methodOfTarget(data, t);
     if (m !== "exalt" && m !== "chaos") return false;
@@ -81,7 +81,7 @@ export function magicLoopCounts(p: number, q: number | null, share: number): { a
   return { augment: first.reduce((s, [w, a, b]) => s + w * val(aug, a, b), 0), annul: first.reduce((s, [w, a, b]) => s + w * val(ann, a, b), 0) };
 }
 
-export interface GreaterLine { name: string; n: number; each: number }
+interface GreaterLine { name: string; n: number; each: number }
 export interface GreaterRoute {
   /** レアにするエッセンスの棚のキーと狙い */
   essKey: string; ess: SimTargetIn;

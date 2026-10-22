@@ -9,12 +9,12 @@
 import { toCss } from "../../../utils/zoom";
 
 /** 押したのか引っ張ったのかの遊び (CSS ピクセル。ツリーの倍率では割らない = 画面の上でいつも同じ) */
-export const SLOP = 5;
+const SLOP = 5;
 /** 長押しで引っ張り始めるまで */
 export const HOLD_MS = 350;
 
-export interface GesturePoint { x: number; y: number; dx: number; dy: number; clientX: number; clientY: number }
-export interface GestureOpts {
+interface GesturePoint { x: number; y: number; dx: number; dy: number; clientX: number; clientY: number }
+interface GestureOpts {
   slop?: number;
   /** 長押しで引っ張り始める (無ければ長押しは無し) */
   holdMs?: number;

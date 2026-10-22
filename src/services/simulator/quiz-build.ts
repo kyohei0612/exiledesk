@@ -64,7 +64,7 @@ const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
  * マジックを買う始め方で付いている MOD: 狙う MOD (普通の付け方) の最初のプレ 1 つ・サフィ 1 つ。段は狙いの下限 (2026-10-12 オーナー
  * 「マジックを買う始め方も足して」)。冒涜・エッセンス・フラクチャーの狙いはマジックに付いていないので入れない
  */
-export function magicStartMods(data: PatchData, targets: readonly SimTargetIn[]): Force[] {
+function magicStartMods(data: PatchData, targets: readonly SimTargetIn[]): Force[] {
   const out: Force[] = [];
   const sides = new Set<StageSide>();
   for (const t of targets) {
@@ -81,7 +81,7 @@ export function magicStartMods(data: PatchData, targets: readonly SimTargetIn[])
 /** グレーターの道のエッセンスの狙い (キー essence:<段>:<modId> の modId) */
 const magicEss = (x: QuizSimIn): string | null => (x.greater?.essKey ? x.greater.essKey.split(":").slice(2).join(":") : null);
 
-export interface QuizBuilt { recipe: QuizRecipe; error: string | null }
+interface QuizBuilt { recipe: QuizRecipe; error: string | null }
 
 export function quizFromSim(x: QuizSimIn, q: QuizRules | null | undefined): QuizBuilt {
   const sideOf = (id: string): StageSide => sideOfMod(x.data, id);

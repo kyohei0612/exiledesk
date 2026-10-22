@@ -193,7 +193,7 @@ export function situationOf(item: StageItem, goal: readonly QuizSlot[], order?: 
   sit.cat = c.tag && c.pct >= maxQualityOf(item) ? c.tag : "-";
   return sit;
 }
-export const situationKey = (s: Situation): string => Object.keys(s).sort().map((k) => `${k}=${s[k]}`).join(";");
+const situationKey = (s: Situation): string => Object.keys(s).sort().map((k) => `${k}=${s[k]}`).join(";");
 
 /** 状況に当たる答え (書いた項目が全部同じ物のうち、項目が一番多い物。同じ数なら先に書いた物) */
 /**
@@ -230,7 +230,7 @@ export function routeDone(route: QuizRoute, sit: Situation): boolean {
 
 // ── 回す ──────────────────────────────────────────────
 
-export interface QuizRun {
+interface QuizRun {
   done: boolean;
   cost: number;
   /** 打った物の数 (カレンシー・お告げのキー → 数) */
@@ -249,10 +249,10 @@ export interface QuizRun {
   gates: Record<string, number>;
   log: string[];
 }
-export interface QuizOpts { price: (key: string) => number; maxSteps?: number; log?: boolean }
+interface QuizOpts { price: (key: string) => number; maxSteps?: number; log?: boolean }
 
 /** 今の関門: 付ける順番 (並びに無い札は後ろ) で、まだ付いていない一番前の札。順番の無い工程・完成は null */
-export function gateOf(route: QuizRoute, sit: Situation): string | null {
+function gateOf(route: QuizRoute, sit: Situation): string | null {
   if (!route.order?.length) return null;
   return gatesOf(route.order, route.goal).find((g) => g.ids.some((id) => Number(sit[id] ?? 0) < 2))?.key ?? null;
 }
@@ -304,7 +304,7 @@ function revealKey(data: PatchData, item: StageItem, goal: readonly QuizSlot[], 
 }
 
 /** 1 手の結果: restart = 買い直す、blocked = 当たり所に関係なく打てない、random = 当たり所で弾かれた (減らずにもう一度)、それ以外は打った */
-export type QuizStepOut =
+type QuizStepOut =
   | { kind: "restart" }
   | { kind: "blocked"; reason?: string }
   | { kind: "random" }
@@ -364,7 +364,7 @@ export function runQuizOnce(data: PatchData, recipe: QuizRecipe, seed: number, o
 /** 始めのアイテムを買う (チュートリアルの「買い直す」も同じ) */
 export const buyStart = (data: PatchData, recipe: QuizRecipe, g: () => number): StageItem => buildStart(data, recipe, g);
 
-export interface QuizResult {
+interface QuizResult {
   runs: number;
   pDone: number;
   /** 1 個できるまでの平均 (全部の費用 ÷ 完成した数) */
@@ -386,7 +386,7 @@ export interface QuizResult {
   gates: Array<{ id: string; stopped: number; n: number; p50: number; p90: number; p99: number; max: number }>;
 }
 
-export function summarizeQuiz(all: readonly QuizRun[], price: (key: string) => number): QuizResult {
+function summarizeQuiz(all: readonly QuizRun[], price: (key: string) => number): QuizResult {
   // イレギュラーは費用・完成の割合・運の幅のどれにも入れない (2026-10-20 オーナー「その人は経費から除外で何にも計算に入らないように」)。
   // 答えの無い状況の一覧 (⑤ の問題) には出す
   const runs = all.filter((r) => r.stop?.kind !== "unanswered");

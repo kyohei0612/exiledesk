@@ -12,7 +12,7 @@ import { busLevels, HAND_DY, type Seg } from "./tree-lines";
  */
 export const LINE = { fwd: "#a39a88", bad: "#c96a72", back: "#5fd0e0" } as const;
 /** 通り抜けの所の札 / ＋の半分の高さ (上から来る矢印の先) */
-export const PASS_R = 16;
+const PASS_R = 16;
 
 export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, posOf: (b: TreeBox) => { x: number; y: number }) {
   /** 箱の真ん中 */

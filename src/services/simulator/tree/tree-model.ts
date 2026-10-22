@@ -145,7 +145,7 @@ export function newTree(base: string, itemLevel: number): TreeDoc {
 export const MATCH_BACK = "match";
 
 /** 結果の箱の並び (手の種類ごとに必ず付く物) */
-export const OUTS_OF: Record<HandKind, OutKind[]> = {
+const OUTS_OF: Record<HandKind, OutKind[]> = {
   add: ["hit", "junk"],
   // フラクチャー: 狙いが ✦ になった (当たり、札 = その狙い) / 狙いでない MOD が ✦ になった (外れ)
   fracture: ["hit", "junk"],
@@ -204,7 +204,7 @@ const ROOM = 24;
  * 足した結果の箱 (親の下の並び) が既にある箱と重なる時は、足した側の並びだけを横にずらして空いた所へ置く (オーナー 10-22
  * 「箱を追加した時に枠が他の箱とかぶったりするから、都度調整してあげて」)。既にある箱 (手で動かした物も) は動かさない
  */
-export function makeRoom(d: TreeDoc, parentId: string): void {
+function makeRoom(d: TreeDoc, parentId: string): void {
   const p = d.boxes[parentId];
   if (!p?.outs.length) return;
   const mine = new Set(p.outs.flatMap((o) => subtree(d, o)));
@@ -220,7 +220,7 @@ export function makeRoom(d: TreeDoc, parentId: string): void {
 /**
  * 重なっている箱を右へ押す (押すのは重なった右側の箱とその下だけ、ほかは動かさない)。横に当たりを足した時 (オーナー 10-22「箱を追加した時に枠が他の箱とかぶる」)
  */
-export function pushRight(d: TreeDoc): void {
+function pushRight(d: TreeDoc): void {
   for (let n = 0; n < 400; n++) {
     const bs = Object.values(d.boxes);
     let moved = false;

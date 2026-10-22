@@ -5,10 +5,9 @@
  */
 import { nextTick, ref } from "vue";
 import { SIM_LOCKED } from "../../state/craft-stage";
-import { packJson, unpackJson, xIntentUrl } from "../../services/craft-stage/share";
+import { packJson, unpackJson } from "../../services/craft-stage/share";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { logRecord } from "../../utils/log-record";
-import { sendShare } from "../craft-stage/use-spam-share";
 import { isTreeDoc, type TreeDoc } from "../../services/simulator/tree/tree-model";
 import { addTreeRecipe, setCurrentTreeRecipe } from "../../state/simulator/tree-recipes";
 import { useTree } from "./tree/use-tree";
@@ -16,7 +15,7 @@ import { openTreePage } from "../../web/page";
 import { tr } from "../../i18n/lang";
 
 /** URL の # の頭 */
-export const RECIPE_SHARE_PREFIX = "#recipe=";
+const RECIPE_SHARE_PREFIX = "#recipe=";
 /** ツリーのレシピ (2026-10-21、クラフトの道): v = 2、n = 名前、t = 木 (TreeDoc) */
 type PackedTree = { v: 2; n: string; t: TreeDoc };
 
@@ -87,13 +86,3 @@ export function useRecipeUrl(o: { notUrl?: [string, string]; unreadable?: [strin
 }
 /** レシピの日時 (保存の既定の名前・一覧): 「月/日 時:分」、今年でなければ頭に年 */
 export const fmtDate = (t: number): string => { const d = new Date(t); return `${d.getFullYear() === new Date().getFullYear() ? "" : `${d.getFullYear()}/`}${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
-/**
- * X へ送る (スパムシミュレーターと同じ送り方: アプリは外のブラウザ、スマホは X のアプリ)。レシピは URL の # に全部乗っているので短い URL は作らない
- * (X が t.co に縮める)。<a :href="web" target="_blank" @click="shareRecipeX($event, …)"> で使う
- */
-export function recipeXUrl(text: string, url: string): string {
-  return xIntentUrl(url, text);
-}
-export function shareRecipeX(e: MouseEvent, text: string, url: string, base: string): void {
-  sendShare(e, { code: "", web: recipeXUrl(text, url), text, url, log: { kind: "recipe", base } });
-}

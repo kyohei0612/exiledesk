@@ -7,7 +7,7 @@ import { computed, ref } from "vue";
 import { isTreeDoc, type TreeDoc } from "../../services/simulator/tree/tree-model";
 import { clone, newId, parseList } from "./recipe-store-util";
 
-export const TREE_RECIPES_KEY = "exiledesk.tree.recipes";
+const TREE_RECIPES_KEY = "exiledesk.tree.recipes";
 /** 直前の一覧の控え (本体が読めなかった時はここから) */
 const BAK = "exiledesk.tree.recipes.bak";
 /** 読めなかった物 (捨てずにここへ) */
@@ -15,10 +15,10 @@ const UNREAD = "exiledesk.tree.recipes.unread";
 /** 今ツリーで開いているレシピ (読み込み直しても続く) */
 const CURRENT = "exiledesk.tree.recipes.current";
 /** レシピの形の版 (形を変えたら上げて normalize で読み替える) */
-export const TREE_RECIPE_FORMAT = 1;
+const TREE_RECIPE_FORMAT = 1;
 export interface TreeRecipe { id: string; name: string; savedAt: number; updatedAt: number; v: number; tree: TreeDoc }
 
-export function normalizeTreeRecipe(x: unknown): TreeRecipe | null {
+function normalizeTreeRecipe(x: unknown): TreeRecipe | null {
   const r = x as Partial<TreeRecipe> | null;
   if (!r || typeof r !== "object" || !isTreeDoc(r.tree)) return null;
   const savedAt = typeof r.savedAt === "number" ? r.savedAt : Date.now();
@@ -52,7 +52,7 @@ function write(v: TreeRecipe[]): void {
 }
 
 export const treeRecipes = ref<TreeRecipe[]>(read());
-export function reloadTreeRecipes(): void { treeRecipes.value = read(); }
+function reloadTreeRecipes(): void { treeRecipes.value = read(); }
 try { window.addEventListener("storage", (e) => { if (e.key === TREE_RECIPES_KEY) reloadTreeRecipes(); }); } catch { /* 無くてよい */ }
 function put(v: TreeRecipe[]): void { treeRecipes.value = v; write(v); }
 

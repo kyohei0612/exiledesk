@@ -37,7 +37,7 @@ export function joinSameShape(doc: TreeDoc, id: string): void {
 }
 
 /** 戻りの矢印だけの箱 (始まりは除く)。合流の線の出元 */
-export function mergeIds(doc: TreeDoc): Set<string> {
+function mergeIds(doc: TreeDoc): Set<string> {
   return new Set(Object.values(doc.boxes).filter((b) => b.back && !b.hand && !b.outs.length && b.parent).map((b) => b.id));
 }
 
