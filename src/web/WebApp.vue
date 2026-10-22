@@ -5,7 +5,7 @@
  * アプリ版の App.vue にある起動の処理 (更新・PoB・画像パック・ログイン・見回り) は Web では要らないので載せない。
  * 画面は 1660 幅で組んだ絵を窓に合わせて拡大縮小する (アプリと同じ。狭い時は縮める)
  */
-import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch, type Component } from "vue";
 import { marketStore } from "../state/market-store";
 import CraftStage from "../views/craft-stage/CraftStage.vue";
 import { craftStage } from "../state/craft-stage";
@@ -25,14 +25,20 @@ import { tr } from "../i18n/lang";
 import { loadBoot, type Boot } from "./boot";
 import InstallButton from "./InstallButton.vue";
 import LangSwitch from "../components/LangSwitch.vue";
-import { openFeedback, openGuide, page } from "./page";
+import { closeDailyPage, openDailyPage, openFeedback, openGuide, page } from "./page";
 import AdSlot from "../components/ui/AdSlot.vue";
 import WebFooter from "./WebFooter.vue";
 import { pageTick, sideAdW } from "../utils/ads";
-import { BLOG_ON, feedbackPage, recipesPage, routesOpen, treePage } from "../state/web-page";
+import { BLOG_ON, DAILY_ON, dailyPage, feedbackPage, recipesPage, routesOpen, treePage } from "../state/web-page";
 const SideReads = defineAsyncComponent(() => import("./SideReads.vue")); // 右の列の読み物 (関係する記事・新しい記事・使い方、/blog/index.json)
 const StageRoutesPage = defineAsyncComponent(() => import("../views/craft-stage/StageRoutesPage.vue"));
 const SimTreePage = defineAsyncComponent(() => import("../views/simulator/tree/SimTreePage.vue")); // クラフトの道 (ツリー) のページ (2026-10-22、開発版だけ)
+/**
+ * デイリークラフトチャレンジのページ (2026-10-22、開発版だけ。中身 views/daily/DailyPage.vue はデイリー部長が作る)。
+ * まだ無い間は下の「準備中」の入れ物 (glob は無いファイルを空で返すので、ビルドは落ちない)
+ */
+const dailyFile = Object.values(import.meta.glob<{ default: Component }>("../views/daily/DailyPage.vue"))[0];
+const DailyPage = dailyFile ? defineAsyncComponent(dailyFile) : null;
 const StageRecipesPage = defineAsyncComponent(() => import("../views/simulator/StageRecipesPage.vue")); // シミュレーターのレシピのページ (2026-10-21) // 後から読む (2026-10-19 スマホ強化: 最初に読む JS を縮める。その画面・カードを出す時に初めて読む)
 import { inLesson } from "../state/tutorial/craft-lesson";
 
@@ -55,8 +61,8 @@ watch(feedbackPage, (on) => {
  * 右の列を外して、両脇に縦長の枠 (2026-10-18 オーナー「固定スクロールがあるのはクラフト画面のみ、それ以外は全部別ページ扱い」。MOD 一覧だけ重ねる窓)
  */
 const craftPage = computed(() => page.value === "");
-/** 広告の枠を置くのは文章のあるページだけ (使い方・コツ、コース)。操作の画面 (クラフト台・ベース選び・スパムシミュレーター・要望) には置かない (2026-10-22 AdSense の再申請) */
-const textPage = computed(() => page.value === "page=guide" || page.value.startsWith("course="));
+/** 広告の枠を置くのは文章のあるページだけ (使い方・コツ、コース、デイリー)。操作の画面 (クラフト台・ベース選び・スパムシミュレーター・要望) には置かない (2026-10-22 AdSense の再申請。デイリーはデイリー部長の頼みで両脇に置く) */
+const textPage = computed(() => page.value === "page=guide" || page.value.startsWith("course=") || !!dailyPage.value);
 /**
  * 45 分以上触らずに戻ってきた時 (タブを開き直した・何か押した時) は、相場とチャンネルだけ裏で取り直す。画面と作業中の物はそのまま
  * (2026-10-07 オーナー「45 分放置でリロードにしようかな」→ ページごと読み直すと手で打った手順などが消えるので、取り直しだけに)
@@ -145,6 +151,8 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       <span v-if="!phone" data-rec-part="header-lang" class="shrink-0 whitespace-nowrap"><LangSwitch /></span>
       <!-- 帯のボタンは窓と同じ g-btn sm (2026-10-10 動きの揃え 6) -->
       <!-- 使い方・コツのページ (動画へのリンク + チュートリアルのコース。2026-10-18 オーナー「チュートリアルは使い方にしまう」) -->
+      <!-- デイリークラフトチャレンジ (2026-10-22、開発版だけ。?page=daily) -->
+      <button v-if="DAILY_ON" type="button" data-rec-part="header-daily" class="g-btn sm" :class="[phone ? '!min-h-9 !px-0 text-[12px]' : '', dailyPage ? 'on' : '']" :aria-pressed="!!dailyPage" @click="openDailyPage()">{{ tr("デイリー", "Daily") }}</button>
       <!-- ブログ (読み物への入口、2026-10-22 AdSense の再申請。開発版だけ) -->
       <a v-if="BLOG_ON" data-rec-part="header-blog" :href="tr('/blog/', '/en/blog/')" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''">{{ tr("ブログ", "Blog") }}</a>
       <button type="button" data-rec-part="header-help" class="g-btn sm" :class="[phone ? '!min-h-9 !px-0 text-[12px]' : '', guideOn ? 'on' : '']" :aria-pressed="guideOn" @click="openGuide">{{ tr("使い方・コツ", "Guide & Tips") }}</button>
@@ -182,8 +190,19 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       <StageRoutesPage v-if="routesOpen && craftStage.item.value" />
       <!-- シミュレーターのレシピのページ (2026-10-21) -->
       <StageRecipesPage v-if="recipesPage && !feedbackPage" />
+      <template v-if="dailyPage && !feedbackPage && !recipesPage && !treePage">
+        <component :is="DailyPage" v-if="DailyPage" />
+        <!-- DailyPage.vue がまだ無い間の入れ物 -->
+        <section v-else data-daily-page class="min-w-0 flex-1 p-4">
+          <div class="mb-3 flex flex-wrap items-center gap-3">
+            <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[15px] tracking-[0.18em] max-md:tracking-[0.04em] text-[var(--exile-color-text-title)]">{{ tr("デイリー", "Daily") }}</h1>
+            <button type="button" data-daily-back class="g-btn sm max-md:min-h-10" @click="closeDailyPage">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
+          </div>
+          <div class="g-panel px-4 py-10 text-center text-[var(--exile-color-text-secondary)]">{{ tr("準備中", "Coming soon") }}</div>
+        </section>
+      </template>
       <SimTreePage v-if="treePage && !feedbackPage && !recipesPage" /><!-- クラフトの道 (ツリー) のページ (2026-10-22、開発版だけ) -->
-      <CraftStage v-show="!feedbackPage && !recipesPage && !treePage && !(routesOpen && craftStage.item.value)" class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
+      <CraftStage v-show="!feedbackPage && !recipesPage && !treePage && !dailyPage && !(routesOpen && craftStage.item.value)" class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
         <template #footer>
           <WebFooter class="-mx-4" />
         </template>

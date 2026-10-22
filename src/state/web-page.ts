@@ -20,6 +20,14 @@ export const recipesPage = ref(false);
 export const treePage = ref(false);
 /** ツリーのページは開発版と手元の dev だけ (本番はオーナーの OK の後) */
 export const TREE_ON = import.meta.env.DEV || import.meta.env.VITE_DEV_PREVIEW === "1";
+/**
+ * デイリークラフトチャレンジのページ (2026-10-22 オーナー、中身は views/daily/DailyPage.vue = デイリー部長)。null = 開いていない。
+ * list = お題の一覧 (?page=daily)、detail = 1 つのお題 (?page=daily&q=<id>)、start = 挑戦の始め (?page=daily-start&q=<id>)。URL と題は web/page.ts
+ */
+export type DailyView = { view: "list" | "detail" | "start"; q?: string };
+export const dailyPage = ref<DailyView | null>(null);
+/** デイリーのページは開発版と手元の dev だけ (本番はオーナーの OK の後) */
+export const DAILY_ON = import.meta.env.DEV || import.meta.env.VITE_DEV_PREVIEW === "1";
 /** ブログ (/blog/、ヘッダーのブログ・右の列の新しい記事) は本番でも出す (2026-10-22、ツリーとは切り離した。ページは build:web の build-blog-pages.mjs が作る) */
 export const BLOG_ON = true;
 /**

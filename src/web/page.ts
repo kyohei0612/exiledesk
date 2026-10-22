@@ -9,6 +9,7 @@
  *   - 要望・バグを送る: ?page=feedback
  *   - シミュレーターのレシピ (保存・上書き・共有): ?page=recipes (2026-10-21)
  *   - クラフトの道 (ツリー): ?page=sim-tree (2026-10-22、開発版だけ。工程の sim-○○ より先に見分ける)
+ *   - デイリークラフトチャレンジ: ?page=daily (一覧)・?page=daily&q=<id> (お題)・?page=daily-start&q=<id> (挑戦の始め) (2026-10-22、開発版だけ。ヘッダーの「デイリー」から)
  *   - シミュレーターの工程: ?page=sim-mods / sim-start / sim-order / sim-play / sim-result (2026-10-19、1 工程 1 ページ)
  * 移るたびに履歴に積む (ブラウザの戻るで前のページへ)。URL から開いた時もそのページで始める (計算機は今のアイテムが要るので URL からは開かない)。
  * ページを移るたびに広告の枠を出し直す (utils/ads.ts の pageTick)。MOD 一覧は重ねる窓のまま、ページにしない (2026-10-12)
@@ -18,7 +19,7 @@ import { craftStage as s } from "../state/craft-stage";
 import { topic } from "../state/tutorial/craft-topic";
 import { course } from "../state/tutorial/craft-course";
 import { endLesson, inLesson, startTopicAt } from "../state/tutorial/craft-lesson";
-import { basePage, baseUnpicked, feedbackPage, recipesPage, routesOpen, TREE_ON, treePage, routesTarget, SIM_STEPS, simStep, type SimStep } from "../state/web-page";
+import { basePage, baseUnpicked, dailyPage, DAILY_ON, type DailyView, feedbackPage, recipesPage, routesOpen, TREE_ON, treePage, routesTarget, SIM_STEPS, simStep, type SimStep } from "../state/web-page";
 import { SIM_LOCKED } from "../state/craft-stage";
 import { TOPIC_COURSES } from "../services/tutorial/topic-courses";
 import { courseShown } from "../services/tutorial/course-release";
@@ -31,6 +32,7 @@ function leaveSubPages(): void {
   feedbackPage.value = false;
   recipesPage.value = false;
   treePage.value = false;
+  dailyPage.value = null;
   routesOpen.value = false;
   routesTarget.value = null;
   basePage.value = false;
@@ -49,6 +51,7 @@ export function openFeedback(): void {
   s.hold(null);
   recipesPage.value = false;
   treePage.value = false;
+  dailyPage.value = null;
   feedbackPage.value = true;
 }
 
@@ -58,6 +61,7 @@ export function openRecipesPage(): void {
   s.hold(null);
   feedbackPage.value = false;
   treePage.value = false;
+  dailyPage.value = null;
   recipesPage.value = true;
 }
 
@@ -67,7 +71,36 @@ export function openTreePage(): void {
   s.hold(null);
   feedbackPage.value = false;
   recipesPage.value = false;
+  dailyPage.value = null;
   treePage.value = true;
+}
+
+/** デイリークラフトチャレンジのページを開く (ヘッダーの「デイリー」・ページの中の移動。開発版だけ)。既定は一覧 */
+export function openDailyPage(to: DailyView = { view: "list" }): void {
+  if (!DAILY_ON) return;
+  s.hold(null);
+  feedbackPage.value = false;
+  recipesPage.value = false;
+  treePage.value = false;
+  dailyPage.value = { ...to };
+}
+/** デイリーのページを閉じてクラフトへ戻る (クラフト画面は隠していただけなので、前の状態のまま) */
+export function closeDailyPage(): void {
+  dailyPage.value = null;
+}
+/** デイリーのページ → URL の query (page と q) */
+function dailyQuery(d: DailyView): string {
+  const q = new URLSearchParams({ page: d.view === "start" ? "daily-start" : "daily" });
+  if (d.view !== "list" && d.q) q.set("q", d.q);
+  return q.toString();
+}
+/** URL の query → デイリーのページ (デイリーでなければ null) */
+function dailyOf(p: string): DailyView | null {
+  const q = new URLSearchParams(p);
+  const k = q.get("page"), id = q.get("q") ?? undefined;
+  if (k === "daily-start" && id) return { view: "start", q: id };
+  if (k === "daily" || k === "daily-start") return id ? { view: "detail", q: id } : { view: "list" };
+  return null;
 }
 
 /** ベース選びのページを開く (「ベースを変える」) */
@@ -75,6 +108,7 @@ export function openBasePage(): void {
   s.hold(null);
   recipesPage.value = false;
   treePage.value = false;
+  dailyPage.value = null;
   basePage.value = true;
 }
 
@@ -86,6 +120,7 @@ export const page = computed((): string => {
   if (feedbackPage.value) return "page=feedback";
   if (recipesPage.value) return "page=recipes";
   if (treePage.value) return "page=sim-tree";
+  if (dailyPage.value) return dailyQuery(dailyPage.value);
   if (routesOpen.value) return "page=routes";
   const id = topic.value?.id ?? course.value?.id;
   if (id) return `course=${id}`;
@@ -107,6 +142,8 @@ export const pageTitle = computed((): string => {
   if (p === "page=routes") return tr("スパムシミュレーター — ExileDesk", "Spam simulator — ExileDesk");
   if (p === "page=recipes") return tr("レシピ — シミュレーター — ExileDesk", "Recipes — Simulator — ExileDesk");
   if (p === "page=sim-tree") return tr("クラフトの道 (ツリー) — ExileDesk", "Craft route tree — ExileDesk");
+  const d = dailyOf(p);
+  if (d) return d.view === "list" ? tr("デイリークラフトチャレンジ — ExileDesk", "Daily Craft Challenge — ExileDesk") : d.view === "detail" ? tr("お題 — デイリークラフトチャレンジ — ExileDesk", "Challenge — Daily Craft Challenge — ExileDesk") : tr("挑戦 — デイリークラフトチャレンジ — ExileDesk", "Attempt — Daily Craft Challenge — ExileDesk");
   const t = topic.value?.title ?? course.value?.video.title;
   if (t) return `${tr(t[0], t[1])} — ExileDesk`;
   if (p === "page=guide") return tr("使い方・コツ — ExileDesk", "Guide & Tips — ExileDesk");
@@ -115,12 +152,13 @@ export const pageTitle = computed((): string => {
   return tr("ExileDesk — PoE2 クラフトシミュレーター", "ExileDesk — PoE2 Craft Simulator");
 });
 
-const PAGE_KEYS = ["guide", "base", "feedback", "routes", "recipes", "sim-tree", ...SIM_STEPS.map((x) => `sim-${x}`)];
+const PAGE_KEYS = ["guide", "base", "feedback", "routes", "recipes", "sim-tree", "daily", "daily-start", ...SIM_STEPS.map((x) => `sim-${x}`)];
 function urlFor(p: string): string {
   const u = new URL(location.href);
   u.searchParams.delete("page");
   u.searchParams.delete("course");
-  if (p) { const [k, v] = p.split("="); u.searchParams.set(k, v); }
+  u.searchParams.delete("q");
+  for (const [k, v] of new URLSearchParams(p)) u.searchParams.set(k, v);
   return u.pathname + u.search + u.hash;
 }
 function pageOfUrl(): string {
@@ -128,6 +166,7 @@ function pageOfUrl(): string {
   const c = q.get("course");
   if (c) return `course=${c}`;
   const p = q.get("page");
+  if (p === "daily" || p === "daily-start") return dailyQuery(dailyOf(q.toString())!);
   return p && PAGE_KEYS.includes(p) ? `page=${p}` : "";
 }
 /** URL を今の画面に合わせる (出せなかったページ・自分で出たベース選び。履歴は積まない) */
@@ -146,6 +185,9 @@ function apply(p: string): void {
     recipesPage.value = false;
     if (p === "page=sim-tree" && TREE_ON) { treePage.value = true; return; }
     treePage.value = false;
+    const d = dailyOf(p);
+    if (d && DAILY_ON) { dailyPage.value = d; return; }
+    dailyPage.value = null;
     if (p.startsWith("course=")) {
       const c = TOPIC_COURSES.find((x) => x.id === p.slice(7) && courseShown(x));
       if (c) { if (topic.value?.id !== c.id) { leaveSubPages(); s.hold(null); endLesson(); startTopicAt(c, 0); } return; }
@@ -187,6 +229,7 @@ export function startPages(): void {
     else if (p === "page=feedback") track("page:feedback");
     else if (p === "page=recipes") track("page:recipes");
     else if (p === "page=sim-tree") track("page:tree");
+    else if (dailyOf(p)) track("page:daily", dailyOf(p)!.view);
     else if (p === "page=routes") track("page:routes");
     else if (p.startsWith("page=sim-")) track("page:sim", p.slice(9));
     else if (p === "") track("page:craft");

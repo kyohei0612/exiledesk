@@ -79,6 +79,7 @@ export function track(name: string, extra?: string): void {
   if (name === "page:base") screen("picker");
   if (name === "page:feedback") screen("feedback");
   if (name === "page:routes") screen("routes");
+  if (name === "page:daily") screen("daily"); // デイリークラフトチャレンジのページ (2026-10-22、開発版だけ)
   if (name === "page:recipes") screen("recipes"); // シミュレーターのレシピのページ (2026-10-21)
   if (name === "page:craft") screen("craft");
   if (name === "page:sim") screen(`sim:${extra ?? ""}`); // シミュレーターの工程のページ (2026-10-19、sim:mods / start / order / play / result)
