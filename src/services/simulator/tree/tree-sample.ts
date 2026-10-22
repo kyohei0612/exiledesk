@@ -6,7 +6,7 @@
  * その下の箱 = 親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
-import { aimHeldOn, applyCurrency, canUse, catalystFull, catalystOf, catalystTagOf, effectOf, fillCatalyst, freshItem, isAimMod, junkOf, mulberry32, revealOffers, runeIdByName, stepOutcomes, tierIndexOf, unrevealedOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimDiff, aimHeldOn, applyCurrency, canUse, catalystFull, catalystOf, catalystTagOf, effectOf, fillCatalyst, forceKey, freshItem, isAimMod, mulberry32, revealOffers, runeIdByName, stepOutcomes, tierIndexOf, unrevealedOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { CATALYSING, ECHO, engineOmens, isCatalyst } from "./tree-hands";
 import { startOf, type Aim, type Hand, type OutKind, type TreeDoc } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
@@ -36,28 +36,20 @@ export function aimsOf(doc: TreeDoc): Aim[] {
   for (const b of Object.values(doc.boxes)) if (b.out === "hit" && b.aim && !out.some((x) => x.modId === b.aim!.modId && x.tier === b.aim!.tier)) out.push(b.aim);
   return out;
 }
-/** 外れ = 固定でも狙いでもない MOD */
-const junkCount = (data: PatchData, item: StageItem, aims: readonly Aim[]): number => { const j = junkOf(item, targetsOf(data, aims), aimOpts(data)); return j.prefix.length + j.suffix.length; };
 
 /**
  * 打つ前と後を比べて、どの箱の結果か (付いた狙いは hits に)。key = 打った手 (エッセンスは付く MOD が必ず付くので、狙いが消えたかを先に見る。
  * 付いた MOD は hits のまま、10-22 オーナー「エッセンスの道」)
  */
 export function outcomeOf(data: PatchData, before: StageItem, after: StageItem, aims: readonly Aim[], key?: string): { out: OutKind; hits: Aim[] } {
-  const had = aims.filter((a) => aimHeldOn(data, before, a, { sameText: true }));
-  const has = aims.filter((a) => aimHeldOn(data, after, a, { sameText: true }));
-  const hits = has.filter((a) => !had.includes(a));
-  if (key && effectOf(key) === "essence" && had.some((a) => !has.includes(a))) return { out: "lost", hits };
+  // 狙いの付いた・消えた・外れが減った・新しく ✦ になった MOD はエンジンの入口の aimDiff (B12 10-22)。ここは箱の分け方だけ
+  const d = aimDiff(data, before, after, aims, { sameText: true });
+  if (key && effectOf(key) === "essence" && d.lost.length) return { out: "lost", hits: d.hits };
   // フラクチャー: 新しく ✦ になった MOD が狙いなら当たり (札 = その狙い)、ほかは外れ (MOD の数は変わらない)
-  if (key && effectOf(key) === "fracture") {
-    const was = new Set([...before.prefixes, ...before.suffixes].filter((m) => m.fractured).map((m) => m.modId));
-    const fr = [...after.prefixes, ...after.suffixes].find((m) => m.fractured && !was.has(m.modId));
-    const got = fr ? aims.filter((a) => aimHeldOn(data, { ...after, prefixes: [fr], suffixes: [] }, a, { sameText: true })) : [];
-    return got.length ? { out: "hit", hits: got.slice(0, 1) } : { out: "junk", hits: [] };
-  }
-  if (hits.length) return { out: "hit", hits };
-  if (had.some((a) => !has.includes(a))) return { out: "lost", hits: [] };
-  if (junkCount(data, after, aims) < junkCount(data, before, aims)) return { out: "junkGone", hits: [] };
+  if (key && effectOf(key) === "fracture") return d.fracturedHits.length ? { out: "hit", hits: d.fracturedHits.slice(0, 1) } : { out: "junk", hits: [] };
+  if (d.hits.length) return { out: "hit", hits: d.hits };
+  if (d.lost.length) return { out: "lost", hits: [] };
+  if (d.junkGone) return { out: "junkGone", hits: [] };
   return { out: "junk", hits: [] };
 }
 
@@ -83,7 +75,7 @@ export function singleOutOf(data: PatchData, doc: TreeDoc, boxId: string, h: Han
     const item = pre ? fillCatalyst(data, smp.item, pre, mulberry32(seed)).item : smp.item;
     // 消す手は、見本にまだ無い狙いを 1 つ足した形でも見る (見本は初めて着いた人の形。戻りで狙いを持って来た人は狙いが消えうる、10-22 #8 の後:
     // 分かれ目の行の見本が外れだけになり、素の消去が「外れが消えた」1 通りにまとまって 96 人止まった)
-    const forms = [item, ...(k === "remove" || k === "essence" ? aims.filter((a) => !aimHeldOn(data, item, a, { sameText: true })).map((a) => applyCurrency(data, item, `force:${a.modId}|T${a.tier}|n`, mulberry32(seed))).filter((r) => r.applied).map((r) => r.item) : [])];
+    const forms = [item, ...(k === "remove" || k === "essence" ? aims.filter((a) => !aimHeldOn(data, item, a, { sameText: true })).map((a) => applyCurrency(data, item, forceKey(a.modId, `T${a.tier}`, "n"), mulberry32(seed))).filter((r) => r.applied).map((r) => r.item) : [])];
     for (const it of forms) {
       const outs = stepOutcomes(data, it, h.currency, engineOmens(h))?.filter((o) => !o.void);
       // 未発現が付く手 (冒涜の骨) は、発現で選ぶ候補で当たり / 外れが分かれる
@@ -144,7 +136,7 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
   let r = applyCurrency(data, it, h.currency, rng, engineOmens(h));
   // フラクチャーで ✦ にする MOD を選んだ時: オーブが打てる (4 MOD 以上のレア・✦ 無し、エンジンの判定) なら、選んだ MOD が付いていればそれを固定 (エンジンの force の f = 付いている MOD を固定)
   if (r.applied && h.fractureOf && effectOf(h.currency) === "fracture" && [...it.prefixes, ...it.suffixes].some((m) => m.modId === h.fractureOf)) {
-    const f = applyCurrency(data, it, `force:${h.fractureOf}|T1|f`, rng);
+    const f = applyCurrency(data, it, forceKey(h.fractureOf, "T1", "f"), rng);
     if (f.applied) r = { ...r, item: f.item, added: f.added, removed: f.removed };
   }
   if (r.applied && use) {
@@ -196,7 +188,7 @@ export function startItemOf(data: PatchData, doc: TreeDoc, rng: () => number): S
   for (const m of st.mods) {
     // エッセンスの MOD (グレーターの道の始まり) はクラフト MOD の印で付ける
     const src = data.mods.get(m.modId)?.source;
-    const r = applyCurrency(data, item, `force:${m.modId}|T${m.tier}|${m.fractured ? "f" : src === "essence" || src === "perfect_essence" ? "e" : "n"}`, rng);
+    const r = applyCurrency(data, item, forceKey(m.modId, `T${m.tier}`, m.fractured ? "f" : src === "essence" || src === "perfect_essence" ? "e" : "n"), rng);
     if (!r.applied) return { item: r.item, note: r.reason ?? null };
     item = r.item;
   }
@@ -254,7 +246,7 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
   }
   if (last && !last.applied) return { item: base.item, note: `cant:${last.reason ?? ""}` };
   if (b.out === "hit" && b.aim) {
-    const r = applyCurrency(data, base.item, `force:${b.aim.modId}|T${b.aim.tier}|n`, rng);
+    const r = applyCurrency(data, base.item, forceKey(b.aim.modId, `T${b.aim.tier}`, "n"), rng);
     return { item: r.item, note: r.applied ? "forced" : r.reason ?? null };
   }
   return { item: base.item, note: "none" };

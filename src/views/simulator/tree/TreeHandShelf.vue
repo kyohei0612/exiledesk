@@ -13,7 +13,7 @@ import StageItemCard from "../../craft-stage/StageItemCard.vue";
 import CurrencyShelf from "../../craft-stage/CurrencyShelf.vue";
 import HeldOmens from "../../craft-stage/HeldOmens.vue";
 import { heldOmensOf } from "../../craft-stage/held-omens";
-import { aimHeldOn, catalystForMod, catalystFull, effectOf, fillCatalyst, mulberry32, omensFor, stepOutcomes, tierNoOf } from "../../../services/craft-stage/engine";
+import { aimHeldOn, catalystForMod, catalystFull, effectOf, fillCatalyst, mulberry32, omensFor, reachableAims, stepOutcomes, tierNoOf } from "../../../services/craft-stage/engine";
 import { aimsOf, handProblem, sampleOf, singleOutOf } from "../../../services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, ECHO, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handLabel, handName, outName } from "./tree-names";
@@ -130,8 +130,9 @@ const hitAims = computed((): Aim[] => {
   const open = (tree.length ? tree : t.doc.value.memoAims ?? []).filter((a) => !aimHeldOn(d, it, a, { sameText: true }));
   if (kind.value === "spam") return open;
   // 見本を数個見て、どれかで付く狙いは並べる (1 つだけだと見本に低い段が付いていて T2 が出なかった、10-22 13 通り組んだ #17)
-  const outs = [1, 2, 3, 4].flatMap((seed) => { const x = seed === 1 ? it : sampleOf(d, t.doc.value, props.boxId, seed).item; return (stepOutcomes(d, x, h.currency, engineOmens(h)) ?? []).filter((o) => !o.void); });
-  return outs.length ? open.filter((a) => outs.some((o) => aimHeldOn(d, o.item, a, { sameText: true }))) : open;
+  // 付きうるかはエンジンの入口の reachableAims (B12 10-22)。どの見本でも行き先が無ければ全部
+  const items = [1, 2, 3, 4].map((seed) => (seed === 1 ? it : sampleOf(d, t.doc.value, props.boxId, seed).item));
+  return reachableAims(d, items, h.currency, engineOmens(h), open, { sameText: true }) ?? open;
 });
 /** 結果が 1 通りの手か (この箱の見本 8 つにエンジンで打った行き先を全部たどる。触媒の手は前のカタリストを入れた後で) */
 const only = computed(() => {
