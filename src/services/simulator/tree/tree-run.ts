@@ -7,10 +7,10 @@
  */
 import { mulberry32, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { kindOfCurrency } from "./tree-hands";
-import { aimHeld, aimsOf, handAims, outcomeOf, playHand, startItemOf as startOf } from "./tree-sample";
+import { aimHeld, aimsOf, handAims, handProblem, outcomeOf, playHand, startItemOf as startOf } from "./tree-sample";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
-import { aimKey, MATCH_BACK, type Aim, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc } from "./tree-model";
+import { aimKey, MATCH_BACK, type Aim, type Hand, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc } from "./tree-model";
 
 export interface TreeRunOpts {
   /** 人数 (裏は 100、確かめは 300) */
@@ -111,7 +111,7 @@ export function splitTo(data: PatchData, rules: readonly SplitRule[], item: Stag
  * 形の鍵 = 付いている狙いの組 + 外れがあるか (空きの数は、側の決まった狙いと外れの有無で決まる)
  */
 export const shapeKey = (held: readonly string[], junk: boolean): string => `${[...new Set(held)].sort().join(",")}#${junk ? 1 : 0}`;
-export type Shape = { key: string; box: string };
+export type Shape = { key: string; box: string; hand?: Hand | null };
 /** 箱の道の札 (始まりから親をたどった当たりの札、aimKey) */
 function pathHeld(doc: TreeDoc, id: string | null): string[] {
   const held: string[] = [];
@@ -148,7 +148,7 @@ export function shapesOf(doc: TreeDoc): Shape[] {
   const out: Shape[] = [];
   for (const b of Object.values(doc.boxes)) {
     if (!b.hand || (b.out !== "hit" && b.out !== "junk")) continue;
-    out.push({ key: shapeKey(pathHeld(doc, b.out === "junk" ? b.parent : b.id), b.out === "junk"), box: b.id });
+    out.push({ key: shapeKey(pathHeld(doc, b.out === "junk" ? b.parent : b.id), b.out === "junk"), box: b.id, hand: b.hand });
   }
   // 分かれ目の箱も行き先に (外れの有無は行で分けるので両方の形を受ける。手のある箱が先、10-22 13 通り組んだ #14: 分かれ目の下の消去の「外れが消えた」に行き先が無かった)
   for (const b of Object.values(doc.boxes)) {
@@ -158,10 +158,17 @@ export function shapesOf(doc: TreeDoc): Shape[] {
   }
   return out;
 }
-/** 形の鍵 → 行き先 (狙いが 0 なら始まり = 始まりの手が外れも扱う。無ければ null) */
-export function boxOfShape(shapes: readonly Shape[], key: string): string | null {
+/**
+ * 形の鍵 → 行き先 (無ければ null)。狙いが 0 なら始まり = 始まりの手が外れも扱う。ただし狙い 0 + 外れありの形の箱 (始めの手の外れ → 消去など) があればそこへ
+ * (10-22 解析君の 13 本の突き合わせ: 外れを持ったまま始めの高貴へ戻り、外れを先に消す打ち方より 48〜81% 高かった)。
+ * at = 今のアイテム (あればその箱の手が打てる時だけ。光 + 消去の箱は普通の MOD の外れを消せず、兜で 93 人止まった)
+ */
+export function boxOfShape(shapes: readonly Shape[], key: string, at?: { data: PatchData; item: StageItem }): string | null {
+  if (key === JUNK_ONLY) return shapes.find((s) => s.key === key && (!at || !s.hand || !handProblem(at.data, at.item, s.hand)))?.box ?? "start";
   return key.startsWith("#") ? "start" : shapes.find((s) => s.key === key)?.box ?? null;
 }
+/** 狙い 0 + 外れあり の形の鍵 */
+const JUNK_ONLY = shapeKey([], true);
 /** アイテムの形の鍵 (付いている狙い + 外れがあるか) */
 function itemKey(data: PatchData, item: StageItem, aims: readonly Aim[]): string {
   const held = aims.filter((a) => aimHeld(data, item, a)).map(aimKey);
@@ -169,7 +176,7 @@ function itemKey(data: PatchData, item: StageItem, aims: readonly Aim[]): string
   return shapeKey(held, [...item.prefixes, ...item.suffixes].some((m) => !m.fractured && !isAim(m)));
 }
 function matchBox(data: PatchData, shapes: readonly Shape[], item: StageItem, aims: readonly Aim[]): string | null {
-  return boxOfShape(shapes, itemKey(data, item, aims));
+  return boxOfShape(shapes, itemKey(data, item, aims), { data, item });
 }
 /**
  * 着いた箱の形と実物のアイテムの形が違う時は、続きから (形の合う箱) で進む (10-22。回す時と精査で同じ)。
@@ -180,11 +187,13 @@ function matchBox(data: PatchData, shapes: readonly Shape[], item: StageItem, ai
  * 見るのは手のある当たり・外れの箱だけ。同じ形・合う箱が無い時はその箱のまま
  */
 export function settle(data: PatchData, doc: TreeDoc, shapes: readonly Shape[], id: string, item: StageItem, aims: readonly Aim[]): string {
+  // 始めに戻る時も、狙い 0 で外れを持っていれば、その形の外れの箱があればそこへ (上の boxOfShape と同じ)
+  if (id === "start") return itemKey(data, item, aims) === JUNK_ONLY ? boxOfShape(shapes, JUNK_ONLY, { data, item }) ?? id : id;
   const b = doc.boxes[id];
   if (!b?.hand || (b.out !== "hit" && b.out !== "junk")) return id;
   const key = itemKey(data, item, aims);
   if (heldSets(doc, b.out === "junk" ? b.parent : id).some((h) => shapeKey(h, b.out === "junk") === key)) return id;
-  return boxOfShape(shapes, key) ?? id;
+  return boxOfShape(shapes, key, { data, item }) ?? id;
 }
 /** アイテムから行き先 (ルート精査が回す時と同じ道を辿る用) */
 export function matchItem(data: PatchData, doc: TreeDoc, item: StageItem, aims: readonly Aim[] = aimsOf(doc)): string | null {
