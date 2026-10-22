@@ -1,6 +1,9 @@
 {
+  "0.1.594": [
+    "Spam simulator: a small progress indicator (a spinner with “Calculating 100 people each n/900” etc.) now shows while calculating or rolling for “Back to the craft stage with a hit”. The first load of the craft stage shows it too"
+  ],
   "0.1.593": [
-    "Spam simulator: you can now test Chaos spam starting from your current craft item (e.g. with a fractured mod). If it only has the fractured mod, one Regal Orb is used first",
+    "Spam simulator: you can now test Chaos spam starting from your current craft item (e.g. with a fractured mod). If it only has the fractured mod, one Exalted Orb is used first",
     "Spam simulator: set up to 3 targets and stop when any one rolls, with a breakdown of which target hit (Augment also shows the average until both a prefix and a suffix target are on)",
     "Spam simulator: “Back to the craft stage with a hit” (in the Luck test and the results) puts the hit item on the craft stage (one Spam step is added to the history; Undo takes it back)"
   ],
