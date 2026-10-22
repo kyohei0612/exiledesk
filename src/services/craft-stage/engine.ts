@@ -19,9 +19,9 @@ export { freshItem, startFrom, startItem, playStep, playPlan, runPlan, splitOmen
 export { applyCurrency, kindOf, omensFor } from "./apply-currency";
 export { omenBlock } from "./omen-block";
 export { revealOffers, unrevealedOf } from "./apply-desecrate";
-// その手が打てるか (お告げ・触媒の前のカタリスト込み) と、手のお告げを今の手 / 続けて打つ発現に分ける (2026-10-22 シミュの自前の式を入口へ)
+// その手が打てるか (お告げ・触媒の前のカタリスト込み)・手のお告げを今の手 / 続けて打つ発現に分ける・その手に付けられるお告げ (2026-10-22 シミュの自前の式を入口へ)
 export type { UseSpec } from "./can-use";
-export { canUse, handOmens, CATALYSING_OMEN } from "./can-use";
+export { canUse, handOmens, omensAllowedFor, isCatalystKey, CATALYSING_OMEN } from "./can-use";
 // 手を 1 回打つ (触媒の前のカタリスト・フラクチャーで固定する MOD・骨の後の発現込み) と、発現で候補を選んで打つ (2026-10-22 シミュの自前の式を入口へ)
 export type { HandSpec, HandResult } from "./hand-use";
 export { applyHand, revealBy, ABYSSAL_ECHO_OMEN } from "./hand-use";
