@@ -32,6 +32,7 @@
  *   完成 = 狙いが全部付いた時点 (枠を埋める手は打たない、外れが残っても完成。10-22 オーナー「無理やり 6 MOD にしなくても」)
  */
 import { tidy, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
+import { ECHO } from "./tree-hands";
 import robeEssence from "./samples/robe-essence-split.json";
 import amulet4aims from "./samples/amulet-4aims.json";
 
@@ -92,7 +93,7 @@ function goldRingSuffix(): TreeDoc {
     d3: { out: "hit", aim: A.R, parent: "ca", back: "d1" },
     ...J("sR_q", "jR", "sR"), ...J("sC", "jC", "sC"), ...J("sA", "jA", "sA"), ...J("rc_q", "jRC", "rc", "jR"), ...J("ra_q", "jRA", "ra", "jR"), ...J("ca", "jCA", "ca", "jC"),
     pW: { out: "junk", parent: "d1", hand: ESS, outs: ["pE"] },
-    pE: { out: "hit", aim: A.W, parent: "pW", hand: hand("desecrate"), outs: ["pD", "pX"] },
+    pE: { out: "hit", aim: A.W, parent: "pW", hand: hand("desecrate", [ECHO]), outs: ["pD", "pX"] },
     // 冒涜の発現は一般 MOD も候補に出る (オーナー 10-22「冒涜は一般モッドもでる」) → レアリティを選べたら完成。外れは光のお告げ + 消去で冒涜の MOD だけ消して打ち直す (結果は 1 通り)
     pD: { out: "hit", aim: A.PR, parent: "pE", done: "main" },
     pX: { out: "junk", parent: "pE", hand: hand("annul", ["OmenofLight"]), outs: ["pX_g"] },

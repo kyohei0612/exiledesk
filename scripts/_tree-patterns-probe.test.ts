@@ -19,7 +19,7 @@ import { loadPatch } from "../tests/helpers/patch";
 import { applyCurrency, freshItem, modListFor, mulberry32, omensFor, RUNES, socketCapOf, stepOutcomes, type PatchData } from "../src/services/craft-stage/engine";
 import { addHit, addSplitRow, removeHit, aimKey, migrateStart, newTree, setAim, setBack, setDone, setHand, setSplit, setSplitWhen, tidy, toggleMemoAim, kindOfHand, type Aim, type Hand, type SplitWhen, type TreeDoc } from "../src/services/simulator/tree/tree-model";
 import { aimHeld, aimsOf, fillCatalyst, handAims, handProblem, outcomeOf, playHand, sampleOf, singleOutOf, startItemOf } from "../src/services/simulator/tree/tree-sample";
-import { CATALYSING, canSpam, isCatalyst, kindOfCurrency, TREE_CATALYSTS } from "../src/services/simulator/tree/tree-hands";
+import { CATALYSING, canSpam, ECHO, engineOmens, isBone, isCatalyst, kindOfCurrency, TREE_CATALYSTS } from "../src/services/simulator/tree/tree-hands";
 import { linkSameShape, MATCH, matchItem, outBoxOf, RESTART, runTree, settle, shapesOf, splitTo } from "../src/services/simulator/tree/tree-run";
 import { joinSameShape } from "../src/views/simulator/tree/tree-merge";
 import { checkTree } from "../src/services/simulator/tree/tree-check";
@@ -36,7 +36,7 @@ type Row = { kind: "held"; n: number } | { kind: "none" } | { kind: "junk"; side
 /** TreeSplitPick の whenOf と同じ */
 const whenOf = (r: Row): SplitWhen => (r.kind === "none" ? { heldCount: [0, 0] } : r.kind === "junk" ? { junk: { [r.side]: [Math.max(1, r.n), 99] } } : { heldCount: [Math.max(1, r.n), 99] });
 interface Find { pat: string; where: string; what: string }
-interface HandOpt { spam?: boolean; max?: number; free?: boolean; /** 触媒の前のカタリスト (TreeHandShelf のカタリストの選び #7。既定は狙いのタグから) */ cat?: string }
+interface HandOpt { spam?: boolean; max?: number; free?: boolean; /** 骨の手のアビスの反響 (既定で付ける) */ echo?: boolean; /** 触媒の前のカタリスト (TreeHandShelf のカタリストの選び #7。既定は狙いのタグから) */ cat?: string }
 
 class Ui {
   d: TreeDoc;
@@ -81,7 +81,8 @@ class Ui {
     if (!shelf.includes(currency)) { this.find(`棚 (箱 ${id})`, `${currency} が棚に無い`); return null; }
     const can = heldOmensOf(currency);
     for (const x of omens) if (!can.includes(x)) this.find(`お告げの欄 (箱 ${id})`, `${currency} に ${x} を掛けられない`);
-    const used = omensFor(currency, omens.filter((x) => can.includes(x)));
+    // 骨の手はアビスの反響を既定で付ける (棚 TreeHandShelf と同じ、10-22 オーナー「お告げは必ず反響を使わんとやばいよ」)
+    const used = [...omensFor(currency, omens.filter((x) => can.includes(x))), ...(isBone(currency) && o.echo !== false ? [ECHO] : [])];
     if (o.spam && !canSpam(currency)) this.find(`当たるまで (箱 ${id})`, `${currency} は当たるまでにできない`);
     if (o.free && kindOfCurrency(currency) !== "add") this.find(`狙い無し (箱 ${id})`, `${currency} は狙い無しにできない`);
     const h: Hand = { currency, omens: used, catalyst: null, quality: 0, repeat: o.spam && canSpam(currency) ? { until: "hit", max: o.max && o.max > 0 ? Math.round(o.max) : null } : null, ...(o.free && kindOfCurrency(currency) === "add" ? { free: true } : {}) };
@@ -98,12 +99,12 @@ class Ui {
     if (kind === "essence") {
       // 棚 (TreeHandShelf の hitAims) と同じ: エンジンの結果で新しく付いた MOD を当たりの札に
       const before = new Set([...item.prefixes, ...item.suffixes].map((m) => m.modId));
-      const got = (stepOutcomes(data, item, h.currency, h.omens) ?? []).filter((x) => !x.void).flatMap((x) => [...x.item.prefixes, ...x.item.suffixes].filter((m) => !before.has(m.modId)));
+      const got = (stepOutcomes(data, item, h.currency, engineOmens(h)) ?? []).filter((x) => !x.void).flatMap((x) => [...x.item.prefixes, ...x.item.suffixes].filter((m) => !before.has(m.modId)));
       if (got[0]) aims = [{ modId: got[0].modId, tier: Number(/\d+/.exec(got[0].tierName)?.[0] ?? 99) }];
     } else if (kind === "spam" || kind === "add" || kind === "swap") {
       const tree = aimsOf(d);
       const open = (tree.length ? tree : d.memoAims ?? []).filter((a) => !aimHeld(data, item, a));
-      const outs = [1, 2, 3, 4].flatMap((seed) => { const x = seed === 1 ? item : sampleOf(data, d, id, seed).item; return (stepOutcomes(data, x, h.currency, h.omens) ?? []).filter((o) => !o.void); });
+      const outs = [1, 2, 3, 4].flatMap((seed) => { const x = seed === 1 ? item : sampleOf(data, d, id, seed).item; return (stepOutcomes(data, x, h.currency, engineOmens(h)) ?? []).filter((o) => !o.void); });
       aims = kind === "spam" || !outs.length ? open : open.filter((a) => outs.some((x) => aimHeld(data, x.item, a)));
     }
     let only = singleOutOf(data, d, id, h, preCat, aims);

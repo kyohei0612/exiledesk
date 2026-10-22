@@ -7,7 +7,7 @@
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
 import { applyCurrency, freshItem, maxQualityOf, mulberry32, omenBlock, revealOffers, runeIdByName, stepOutcomes, unrevealedOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
-import { CATALYSING, isCatalyst, kindOfCurrency } from "./tree-hands";
+import { CATALYSING, ECHO, engineOmens, isCatalyst, kindOfCurrency } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import { startOf, type Aim, type Hand, type OutKind, type TreeDoc } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
@@ -88,7 +88,7 @@ export function singleOutOf(data: PatchData, doc: TreeDoc, boxId: string, h: Han
     // 分かれ目の行の見本が外れだけになり、素の消去が「外れが消えた」1 通りにまとまって 96 人止まった)
     const forms = [item, ...(k === "remove" || k === "essence" ? aims.filter((a) => !aimHeld(data, item, a)).map((a) => applyCurrency(data, item, `force:${a.modId}|T${a.tier}|n`, mulberry32(seed))).filter((r) => r.applied).map((r) => r.item) : [])];
     for (const it of forms) {
-      const outs = stepOutcomes(data, it, h.currency, h.omens)?.filter((o) => !o.void);
+      const outs = stepOutcomes(data, it, h.currency, engineOmens(h))?.filter((o) => !o.void);
       // 未発現が付く手 (冒涜の骨) は、発現で選ぶ候補で当たり / 外れが分かれる
       if (!outs?.length || outs.some((o) => unrevealedOf(o.item))) return null;
       for (const o of outs) {
@@ -158,12 +158,16 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
     if (r.count) use?.(h.catalyst, r.count);
     it = r.item;
   }
-  const r = applyCurrency(data, it, h.currency, rng, h.omens);
+  // アビスの反響は骨には掛からず、続けて打つ発現で使う (骨に渡すとエンジンが弾く)
+  const echo = h.omens.includes(ECHO);
+  const r = applyCurrency(data, it, h.currency, rng, engineOmens(h));
   if (r.applied && use) {
     use(h.currency);
     for (const o of r.omensUsed ?? []) use(o);
   }
-  return r.applied && unrevealedOf(r.item) ? reveal(data, r, rng, aims, miss) : r;
+  if (!r.applied || !unrevealedOf(r.item)) return r;
+  if (echo) use?.(ECHO);
+  return reveal(data, r, rng, aims, miss, echo);
 }
 
 /**
@@ -171,13 +175,15 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
  * 当たりの札に合う物を選び、無ければ 1 つ目 (外れ)。miss = 外れの箱の見本 (狙いでない候補を選ぶ。黒き血は狙いが必ず候補に入り、見本が外れの箱に着かなかった、10-22)。
  * 候補と発現の結果が同じになるよう、同じ種の rng を 2 回作る (apply-desecrate.ts の決まり)
  */
-function reveal(data: PatchData, r: StageApply, rng: () => number, aims: readonly Aim[], miss = false): StageApply {
+function reveal(data: PatchData, r: StageApply, rng: () => number, aims: readonly Aim[], miss = false, echo = false): StageApply {
   const seed = Math.floor(rng() * 2 ** 31);
-  const offers = revealOffers(data, r.item, mulberry32(seed)).first;
+  const offers = revealOffers(data, r.item, mulberry32(seed));
   const isAim = (m: StageMod): boolean => aims.some((a) => aimHeld(data, { ...r.item, prefixes: [m], suffixes: [] }, a));
-  const n = Math.max(0, offers.findIndex((m) => isAim(m) !== miss));
+  const n = offers.first.findIndex((m) => isAim(m) !== miss);
+  // アビスの反響: 最初の 3 つに無ければ 1 回引き直した 3 つから (同じ種で引くのでエンジンの reveal:N:reroll と同じ候補、apply-desecrate.ts)
+  const k = n < 0 && echo ? offers.reroll.findIndex((m) => isAim(m) !== miss) : -1;
   // reveal:N の N は 1 から (エンジンの run-plan と同じ。0 は「その番号の候補が無い」)
-  const x = applyCurrency(data, r.item, `reveal:${n + 1}`, mulberry32(seed));
+  const x = k >= 0 ? applyCurrency(data, r.item, `reveal:${k + 1}:reroll`, mulberry32(seed), [ECHO]) : applyCurrency(data, r.item, `reveal:${Math.max(0, n) + 1}`, mulberry32(seed));
   return x.applied ? { ...x, added: [...r.added, ...x.added], removed: [...r.removed, ...x.removed] } : r;
 }
 
@@ -223,7 +229,7 @@ export function startItemOf(data: PatchData, doc: TreeDoc, rng: () => number): S
 export function handProblem(data: PatchData, item: StageItem, h: Hand): string | null {
   let it = item;
   if (h.catalyst && h.omens.includes(CATALYSING)) it = fillCatalyst(data, it, h.catalyst, mulberry32(1)).item;
-  for (const o of h.omens) { const why = omenBlock(data, it, h.currency, h.omens, o); if (why) return why; }
+  for (const o of engineOmens(h)) { const why = omenBlock(data, it, h.currency, engineOmens(h), o); if (why) return why; }
   const r = playHand(data, item, { ...h, repeat: null }, mulberry32(1));
   return r.applied || r.random ? null : r.reason ?? tr("打てない", "Can't use");
 }

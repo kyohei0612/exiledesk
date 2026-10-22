@@ -12,7 +12,7 @@ import HeldOmens from "../../craft-stage/HeldOmens.vue";
 import { heldOmensOf } from "../../craft-stage/held-omens";
 import { maxQualityOf, mulberry32, omensFor, stepOutcomes } from "../../../services/craft-stage/engine";
 import { aimHeld, aimsOf, fillCatalyst, handProblem, sampleOf, singleOutOf } from "../../../services/simulator/tree/tree-sample";
-import { CATALYSING, canSpam, isCatalyst, kindOfCurrency, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
+import { CATALYSING, canSpam, ECHO, engineOmens, isBone, isCatalyst, kindOfCurrency, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handLabel, handName, outName } from "./tree-names";
 import { kindOfHand, setHand, type Aim, type Hand, type HandKind, type OutKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
@@ -33,6 +33,8 @@ const spam = ref(!!props.current?.repeat);
 const spamMax = ref<number | null>(props.current?.repeat?.max ?? null);
 /** 狙い無し (足す手だけ。カオススパムとは一緒にしない) */
 const free = ref(!!props.current?.free);
+/** 骨の手にアビスの反響 (発現の候補を 1 回引き直す)。既定で付ける (10-22 オーナー「お告げは必ず反響を使わんとやばいよ」)。前の手を開いた時はその手のまま */
+const echo = ref(props.current ? props.current.omens.includes(ECHO) : true);
 const canFree = computed(() => !!held.value && kindOfCurrency(held.value) === "add");
 /** Esc: 今の手を替えている時は欄ごと取り消す (何も替えない、オーナー 10-22「枠の外・Esc で取り消し」)。新しい手の時は持った物を離す */
 function onKey(e: KeyboardEvent): void {
@@ -77,7 +79,7 @@ const catalysing = computed(() => used.value.includes(CATALYSING));
 const hand = computed((): Hand | null => {
   if (!held.value) return null;
   return {
-    currency: held.value, omens: used.value,
+    currency: held.value, omens: isBone(held.value) && echo.value ? [...used.value, ECHO] : used.value,
     catalyst: null, quality: 0,
     repeat: spam.value && canSpam(held.value) ? { until: "hit", max: spamMax.value && spamMax.value > 0 ? Math.round(spamMax.value) : null } : null,
     ...(free.value && canFree.value ? { free: true } : {}),
@@ -102,7 +104,7 @@ const hitAims = computed((): Aim[] => {
   // エッセンス = 付く MOD は決まっている。エンジンの結果で新しく付いた MOD を当たりの札に (10-22 オーナー「エッセンスの道」)
   if (kind.value === "essence") {
     const before = new Set([...it.prefixes, ...it.suffixes].map((m) => m.modId));
-    const got = (stepOutcomes(d, it, h.currency, h.omens) ?? []).filter((o) => !o.void).flatMap((o) => [...o.item.prefixes, ...o.item.suffixes].filter((m) => !before.has(m.modId)));
+    const got = (stepOutcomes(d, it, h.currency, engineOmens(h)) ?? []).filter((o) => !o.void).flatMap((o) => [...o.item.prefixes, ...o.item.suffixes].filter((m) => !before.has(m.modId)));
     const out: Aim[] = [];
     for (const m of got) if (!out.some((a) => a.modId === m.modId)) out.push({ modId: m.modId, tier: Number(/\d+/.exec(m.tierName)?.[0] ?? 99) });
     return out.slice(0, 1);
@@ -112,7 +114,7 @@ const hitAims = computed((): Aim[] => {
   const open = (tree.length ? tree : t.doc.value.memoAims ?? []).filter((a) => !aimHeld(d, it, a));
   if (kind.value === "spam") return open;
   // 見本を数個見て、どれかで付く狙いは並べる (1 つだけだと見本に低い段が付いていて T2 が出なかった、10-22 13 通り組んだ #17)
-  const outs = [1, 2, 3, 4].flatMap((seed) => { const x = seed === 1 ? it : sampleOf(d, t.doc.value, props.boxId, seed).item; return (stepOutcomes(d, x, h.currency, h.omens) ?? []).filter((o) => !o.void); });
+  const outs = [1, 2, 3, 4].flatMap((seed) => { const x = seed === 1 ? it : sampleOf(d, t.doc.value, props.boxId, seed).item; return (stepOutcomes(d, x, h.currency, engineOmens(h)) ?? []).filter((o) => !o.void); });
   return outs.length ? open.filter((a) => outs.some((o) => aimHeld(d, o.item, a))) : open;
 });
 /** 結果が 1 通りの手か (この箱の見本 8 つにエンジンで打った行き先を全部たどる。触媒の手は前のカタリストを入れた後で) */
@@ -184,7 +186,7 @@ function ok(): void {
       <CurrencyShelf @hold="onHold">
         <!-- 持った物に掛けられるお告げ = クラフト台と同じ部品と置き場 (HeldOmens.vue を持ったアイコンのすぐ下に重ねる。inline-held だと棚の一番下で見切れた、10-21 本物のマウス)。
              足す手は同じ欄に「狙い無し」(適当打ち、オーナー 10-22「お告げの欄の中に適当打ちがまだ無い」) -->
-        <template v-if="heldOmensOf(held).length || canFree" #held><div class="flex flex-col gap-1.5"><HeldOmens /><label v-if="canFree" data-tree-hand-free-box class="flex min-h-8 cursor-pointer items-center gap-2 rounded-lg border border-amber-400/25 bg-amber-500/[0.06] px-2 text-[12px]">
+        <template v-if="heldOmensOf(held).length || canFree || (!!held && isBone(held))" #held><div class="flex flex-col gap-1.5"><HeldOmens /><label v-if="held && isBone(held)" data-tree-hand-echo class="flex min-h-8 cursor-pointer items-center gap-2 rounded-lg border border-amber-400/25 bg-amber-500/[0.06] px-2.5 text-[12px] text-amber-100"><input v-model="echo" type="checkbox" class="accent-amber-400" />{{ tr("アビスの反響のお告げ (発現の候補を 1 回引き直す)", "Omen of Abyssal Echoes (reroll the reveal options once)") }}</label><label v-if="canFree" data-tree-hand-free-box class="flex min-h-8 cursor-pointer items-center gap-2 rounded-lg border border-amber-400/25 bg-amber-500/[0.06] px-2 text-[12px]">
           <input v-model="free" data-tree-hand-free type="checkbox" />{{ tr("狙い無し (空きを 1 つ埋めるだけ)", "No target (just fill an open slot)") }}
         </label></div></template>
       </CurrencyShelf>

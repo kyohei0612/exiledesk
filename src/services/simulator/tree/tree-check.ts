@@ -9,7 +9,7 @@
  * 前は戻った先の手が打てるかだけ見て先へ進まず、精査に出なかった
  */
 import { allMods, listOf, modBoostsOf, mulberry32, room, SIDES, stepOutcomes, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
-import { CATALYSING, isCatalyst } from "./tree-hands";
+import { CATALYSING, engineOmens, isCatalyst } from "./tree-hands";
 import { aimKey, type Aim, type OutKind, type TreeDoc } from "./tree-model";
 import { aimHeld, aimsOf, handAims, handProblem, outcomeOf, playHand, sampleOf, startItemOf } from "./tree-sample";
 import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, runTreeSteps, settle, shapesOf, splitTo } from "./tree-run";
@@ -159,7 +159,7 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
         else if (why || !first.applied) { const c = cant.get(id) ?? { who: new Set<number>(), reason: why ?? first.reason ?? "" }; c.who.add(person); cant.set(id, c); return; }
         // 結果の箱に無い結果 (エンジンの stepOutcomes で起こりうる枝を全部。未発現が付く手・繰り返しの手は見ない)
         if (!b.hand.repeat) {
-          const miss = (stepOutcomes(data, item, b.hand.currency, b.hand.omens) ?? []).filter((o) => !o.void && !unrevealedOf(o.item))
+          const miss = (stepOutcomes(data, item, b.hand.currency, engineOmens(b.hand)) ?? []).filter((o) => !o.void && !unrevealedOf(o.item))
             .map((o) => outcomeOf(data, item, o.item, aims, b.hand!.currency)).filter((oc) => !outBoxOf(doc, b, oc));
           if (miss.length) { const c = odd.get(id) ?? { who: new Set<number>(), outs: new Set<string>() }; c.who.add(person); for (const oc of miss) c.outs.add(outName(oc.out)); odd.set(id, c); }
         }
