@@ -87,7 +87,9 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
     return [...ks].sort().join(",");
   };
   const mains = done.filter((b) => b.done === "main");
-  if (mains.length > 1) { const first = pathAims(mains[0]!.id); for (const b of mains.slice(1)) if (pathAims(b.id) !== first) add(b.id, "doneShape", tr("ほかの完成の箱と、着くまでの札が違う (道ごとに完成の形が違う)", "Different set of mods than the other done box")); }
+  // 比べるのは揃った狙いの数 (「どれか 2 つ」の木は完成ごとに札が違うのが正しい。前は札の組で比べ、靴の完成の箱ほぼ全部に ! が付いた、10-22)
+  const nOf = (id: string): number => (pathAims(id) ? pathAims(id).split(",").length : 0);
+  if (mains.length > 1) { const first = nOf(mains[0]!.id); for (const b of mains.slice(1)) if (nOf(b.id) !== first) add(b.id, "doneShape", tr(`ほかの完成の箱と、揃った狙いの数が違う (${nOf(b.id)} つ / ${first} つ)`, `Different number of targets than the other done box (${nOf(b.id)} / ${first})`)); }
 
   // 4) エンジンで 5 人を辿る: 打てない手・付かない当たり
   if (doc.fracture) {
@@ -159,5 +161,7 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
     for (const [id, n] of Object.entries(run.stuckAt)) add(id, "stuck", tr(`回すと ${RUN_PEOPLE} 人中 ${n} 人がここで止まる (この箱の手が打てない形で着く。外れを消す手を前に置くか、形の合う箱へ戻す)`, `${n} of ${RUN_PEOPLE} runs stop here (they arrive in a shape this craft can't be used on; remove the miss first or return to a box of that shape)`));
     for (const id of never) add(id, "neverHit", tr(`上の手を ${TRIES} 回打ってもこの札が付かなかった (側・段・手を確かめる)`, `This mod never hit in ${TRIES} tries of the craft above (check side, tier and craft)`));
   }
-  return out;
+  // 止まる・打てない物を先に (10-22 精査で靴の止まりが完成の札の ! の下に埋もれた)
+  const RANK: Partial<Record<CheckKind, number>> = { stuck: 0, cantUse: 1, noMatch: 2, unexpected: 3, open: 4, loop: 5, noDone: 6 };
+  return out.map((x, i) => ({ x, i })).sort((a, z) => (RANK[a.x.kind] ?? 9) - (RANK[z.x.kind] ?? 9) || a.i - z.i).map((v) => v.x);
 }
