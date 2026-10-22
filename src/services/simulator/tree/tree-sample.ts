@@ -6,7 +6,7 @@
  * その下の箱 = 親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
-import { applyCurrency, freshItem, maxQualityOf, mulberry32, omenBlock, revealOffers, runeIdByName, stepOutcomes, unrevealedOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimHits, applyCurrency, freshItem, maxQualityOf, mulberry32, omenBlock, revealOffers, runeIdByName, stepOutcomes, unrevealedOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { CATALYSING, ECHO, engineOmens, isCatalyst, kindOfCurrency } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import { startOf, type Aim, type Hand, type OutKind, type TreeDoc } from "./tree-model";
@@ -19,16 +19,14 @@ const CAT_MAX = 200;
 
 export interface Sample { item: StageItem; note: string | null }
 
-const tierNo = (m: StageMod): number => Number(/\d+/.exec(m.tierName)?.[0] ?? 99);
 /**
- * 狙いが付いているか (同じ MOD か、同じ系統で効果の文も同じ MOD (エッセンス版・まとめ行の別の modId) で、段が T 何以上。未発現は数えない = エンジンの aimHits と同じ)。
- * aimHits (同じ modId だけ) に置き換えないのは、エッセンス版の同じ文も当たりにするため (10-22 ブラック、台本 scripts/_tree-aimhits-probe)。
+ * 狙いが付いているか = エンジンの入口の aimHits の sameText (同じ MOD か、同じ系統で効果の文も同じ MOD (エッセンス版・まとめ行の別の modId) で、
+ * 段が T 何以上。未発現は数えない)。木の狙いの段 T は minTierIndex = 段の数 − T に直して渡す (決まり 8、10-22 ブラック)。
  * 系統だけで合わせると「スペルスキルのレベル」にミニオン・近接・投射物のスキルレベルが当たった (10-22 白紙から 13 通り組んだ #3、系統 IncreaseSocketedGemLevel)
  */
 export function aimHeld(data: PatchData, item: StageItem, a: Aim): boolean {
-  const want = data.mods.get(a.modId);
-  const same = (m: StageMod): boolean => m.modId === a.modId || (!!want?.family && m.family === want.family && data.mods.get(m.modId)?.text === want.text);
-  return [...item.prefixes, ...item.suffixes].some((m) => !m.unrevealed && same(m) && tierNo(m) <= a.tier);
+  const t = { modId: a.modId, minTierIndex: (data.mods.get(a.modId)?.tiers.length ?? 0) - a.tier };
+  return [...item.prefixes, ...item.suffixes].some((m) => aimHits(m, t, { data, sameText: true }));
 }
 /**
  * その箱の手で「当たり」と数える札。繰り返し (当たるまで) は、その箱の結果の当たりの箱の札だけで止める

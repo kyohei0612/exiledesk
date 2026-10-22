@@ -24,8 +24,23 @@ it("aimHeld → aimHits の違い", () => {
   console.log(`1) 系統 + 文が同じ別の modId の組: ${wide.length} 組 (MOD ${wide.reduce((n, l) => n + l.length, 0)} 個)`);
   for (const l of wide.slice(0, 8)) console.log(`   ${l.join(" / ")}`);
 
-  const exact = (item: StageItem, a: { modId: string; tier: number }): boolean =>
-    [...item.prefixes, ...item.suffixes].some((m) => !m.unrevealed && m.modId === a.modId && tierNo(m) <= a.tier);
+  // 置き換えの前の aimHeld の式 (4ae96729)。今の aimHeld (入口の aimHits の sameText) と食い違わないかを見る (10-22 14 本目)
+  const exact = (item: StageItem, a: { modId: string; tier: number }): boolean => {
+    const want = data.mods.get(a.modId);
+    const same = (m: StageMod): boolean => m.modId === a.modId || (!!want?.family && m.family === want.family && data.mods.get(m.modId)?.text === want.text);
+    return [...item.prefixes, ...item.suffixes].some((m) => !m.unrevealed && same(m) && tierNo(m) <= a.tier);
+  };
+  // 3) 同じ系統・同じ文の組の全部で、別の modId の MOD を段ごとに作り、狙いの段 1〜段の数で前後の式を比べる
+  let n3 = 0, d3 = 0;
+  for (const l of wide) for (const aId of l) for (const bId of l) {
+    const A = data.mods.get(aId)!, B = data.mods.get(bId)!;
+    for (let i = 0; i < B.tiers.length; i++) {
+      const m = { modId: bId, family: B.family, tierName: `T${B.tiers.length - i}`, tierIndex: i } as unknown as StageMod;
+      const it = { prefixes: [m], suffixes: [] } as unknown as StageItem;
+      for (let tier = 1; tier <= A.tiers.length; tier++) { n3++; if (aimHeld(data, it, { modId: aId, tier }) !== exact(it, { modId: aId, tier })) { d3++; if (d3 <= 3) console.log(`   3) 食い違い ${aId} T${tier} ← ${bId} ${m.tierName}`); } }
+    }
+  }
+  console.log(`3) 組の総当たり: 判定 ${n3} 回中 食い違い ${d3}`);
   for (const key of TREE_SAMPLES) {
     const doc = treeSample(key);
     if (!doc) continue;
