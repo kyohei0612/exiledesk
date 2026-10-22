@@ -9,7 +9,7 @@
  *   - 要望・バグを送る: ?page=feedback
  *   - シミュレーターのレシピ (保存・上書き・共有): ?page=recipes (2026-10-21)
  *   - クラフトの道 (ツリー): ?page=sim-tree (2026-10-22、開発版だけ。工程の sim-○○ より先に見分ける)
- *   - デイリークラフトチャレンジ: ?page=daily (一覧)・?page=daily&q=<id> (お題)・?page=daily-start&q=<id> (挑戦の始め) (2026-10-22、開発版だけ。ヘッダーの「デイリー」から)
+ *   - デイリークラフトチャレンジ: ?page=daily (一覧)・?page=daily&q=<id> (お題)・?page=daily-start&q=<id> (フラクチャー選び) (2026-10-22、開発版だけ。ヘッダーの「デイリー」から)
  *   - シミュレーターの工程: ?page=sim-mods / sim-start / sim-order / sim-play / sim-result (2026-10-19、1 工程 1 ページ)
  * 移るたびに履歴に積む (ブラウザの戻るで前のページへ)。URL から開いた時もそのページで始める (計算機は今のアイテムが要るので URL からは開かない)。
  * ページを移るたびに広告の枠を出し直す (utils/ads.ts の pageTick)。MOD 一覧は重ねる窓のまま、ページにしない (2026-10-12)
@@ -143,7 +143,7 @@ export const pageTitle = computed((): string => {
   if (p === "page=recipes") return tr("レシピ — シミュレーター — ExileDesk", "Recipes — Simulator — ExileDesk");
   if (p === "page=sim-tree") return tr("クラフトの道 (ツリー) — ExileDesk", "Craft route tree — ExileDesk");
   const d = dailyOf(p);
-  if (d) return d.view === "list" ? tr("デイリークラフトチャレンジ — ExileDesk", "Daily Craft Challenge — ExileDesk") : d.view === "detail" ? tr("お題 — デイリークラフトチャレンジ — ExileDesk", "Challenge — Daily Craft Challenge — ExileDesk") : tr("挑戦 — デイリークラフトチャレンジ — ExileDesk", "Attempt — Daily Craft Challenge — ExileDesk");
+  if (d) return d.view === "list" ? tr("デイリークラフトチャレンジ — ExileDesk", "Daily Craft Challenge — ExileDesk") : d.view === "detail" ? tr("お題 — デイリークラフトチャレンジ — ExileDesk", "Challenge — Daily Craft Challenge — ExileDesk") : tr("フラクチャー選び — デイリークラフトチャレンジ — ExileDesk", "Pick a fracture — Daily Craft Challenge — ExileDesk");
   const t = topic.value?.title ?? course.value?.video.title;
   if (t) return `${tr(t[0], t[1])} — ExileDesk`;
   if (p === "page=guide") return tr("使い方・コツ — ExileDesk", "Guide & Tips — ExileDesk");
