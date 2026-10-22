@@ -9,7 +9,6 @@
 import { computed, nextTick, onBeforeUnmount, ref } from "vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { forceKey, type ForceFlag } from "../../services/craft-stage/apply-force";
-import { buildStage, simBuild } from "../../state/simulator/build-state";
 import { allMods } from "../../services/craft-stage/stage-core";
 import type { ModGroup } from "../../services/craft-stage/mod-list";
 import { tr } from "../../i18n/lang";
@@ -76,10 +75,7 @@ function outside(e: PointerEvent): void {
   swallowNextClick(); // 外を押したら閉じるだけ (下の行・見出しは押さない。utils/swallow-click.ts)
 }
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape") close(); }
-/** シミュレーターの入口 ① (開発版): 付け分けの小窓を出さずに「そのまま」で付ける。種類はカードの行で選ぶ (オーナー 10-22) */
-const quick = computed(() => simBuild.value && buildStage.value === "build");
 function toggle(): void {
-  if (quick.value) { const w = ways.value.find((x) => !x.why && x.flag !== "f" && x.flag !== "d") ?? ways.value.find((x) => !x.why); w?.run(); return; }
   if (open.value) { close(); return; }
   place();
   open.value = true;
@@ -96,7 +92,7 @@ const style = computed(() => ({ left: `${pos.value.left}px`, top: `${pos.value.t
 
 <template>
   <span class="inline-flex items-center" data-mod-add-picker>
-    <button ref="btn" type="button" class="tbtn" :data-rec="`mod-add:${modId}:${rank}`" :disabled="none" :aria-expanded="open" :title="why ?? tr(`${rank} を付ける (付け方を選ぶ)`, `Add ${rank} (choose how)`)" @click.stop="toggle">{{ tr("付ける", "Add") }}<Icon v-if="!quick" name="chevron-down" class="ml-0.5 size-3" /></button>
+    <button ref="btn" type="button" class="tbtn" :data-rec="`mod-add:${modId}:${rank}`" :disabled="none" :aria-expanded="open" :title="why ?? tr(`${rank} を付ける (付け方を選ぶ)`, `Add ${rank} (choose how)`)" @click.stop="toggle">{{ tr("付ける", "Add") }}<Icon name="chevron-down" class="ml-0.5 size-3" /></button>
     <Teleport to="body">
       <div v-if="open" data-mod-add-menu role="menu" class="fixed z-[320] overflow-hidden rounded-md border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)] py-1 shadow-[0_8px_24px_rgba(0,0,0,0.6)]" :style="style">
         <p class="px-3 pb-1 pt-0.5 text-[10px] text-[var(--exile-color-text-tertiary)]">{{ tr(`${rank} の付け方`, `How to add ${rank}`) }}</p>

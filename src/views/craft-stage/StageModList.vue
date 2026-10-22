@@ -26,7 +26,6 @@ import { useDismiss } from "../../utils/use-dismiss";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import Disclosure from "../../components/ui/Disclosure.vue";
 import { craftStage, nameOf } from "../../state/craft-stage";
-import { simBuild } from "../../state/simulator/build-state";
 import { jewelEmotionJa } from "../../services/htc/patch";
 import { factionOf, groupLabelOf, modListFor, runeEnOf, runeToneOf, shownTags, TAG_STYLE, type ListRow, type ModGroup } from "../../services/craft-stage/mod-list";
 import { tagLabel } from "../../services/mods/tag-ja";
@@ -464,7 +463,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
                       <div class="flex flex-nowrap items-center justify-end gap-1 transition-opacity max-md:flex-wrap md:group-hover:opacity-100 md:focus-within:opacity-100 md:has-[[aria-expanded=true]]:opacity-100" :class="isAim(t.modId ?? r.id, t) ? '' : 'md:opacity-0'">
                       <!-- 段の表のボタンは細い行に合う小さく平たい物 (tbtn、同じ高さ・1 行に右寄せ)。2026-10-10 オーナー「ここの UI きもい、並びが 3 つ合ってない、枠の細さに過剰」。狙い中は赤 -->
                       <!-- 次の手で狙う (いつでも): 今の状態から打った時にこの段以上が付く確率を、打ち方ごとに棚の上へ (2026-10-09 オーナー)。押すと選ぶ窓 -->
-                      <button v-if="!simBuild" type="button" :data-aim-at="`${t.modId ?? r.id}:${t.rank}`" :data-rec="`aim:${t.modId ?? r.id}:${t.rank}`" class="tbtn" :class="isAim(t.modId ?? r.id, t) ? 'on' : ''" :title="isAim(t.modId ?? r.id, t) ? tr('もう一度押すとやめる', 'Click again to stop') : tr(`次の 1 手で ${t.rank} 以上が付く確率を打ち方ごとに出す (ほかの MOD も ${AIM_MAX} つまで一緒に狙える)`, `Show the chance of ${t.rank}+ rolling on the next move for each method (target up to ${AIM_MAX} mods together)`)" @click.stop="aimAt(t.modId ?? r.id, t, $event.currentTarget as Element)">{{ isAim(t.modId ?? r.id, t) ? tr("狙い中", "Targeting") : tr("次の手で狙う", "Target next move") }}</button>
+                      <button type="button" :data-aim-at="`${t.modId ?? r.id}:${t.rank}`" :data-rec="`aim:${t.modId ?? r.id}:${t.rank}`" class="tbtn" :class="isAim(t.modId ?? r.id, t) ? 'on' : ''" :title="isAim(t.modId ?? r.id, t) ? tr('もう一度押すとやめる', 'Click again to stop') : tr(`次の 1 手で ${t.rank} 以上が付く確率を打ち方ごとに出す (ほかの MOD も ${AIM_MAX} つまで一緒に狙える)`, `Show the chance of ${t.rank}+ rolling on the next move for each method (target up to ${AIM_MAX} mods together)`)" @click.stop="aimAt(t.modId ?? r.id, t, $event.currentTarget as Element)">{{ isAim(t.modId ?? r.id, t) ? tr("狙い中", "Targeting") : tr("次の手で狙う", "Target next move") }}</button>
                       <!-- 付ける: 付け方 (普通 / フラクチャー / 冒涜 / エッセンス) を選ぶ (ModAddPicker.vue、2026-10-17) -->
                       <ModAddPicker :group="r.group" :mod-id="t.modId ?? r.id" :rank="t.rank" />
                       </div>

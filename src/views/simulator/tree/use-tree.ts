@@ -6,7 +6,7 @@ import { computed, ref, shallowRef } from "vue";
 import { craftStage as s, nameOf } from "../../../state/craft-stage";
 import { priceOfKey } from "../../../state/emulator/craft-stage-shelf";
 import { freshItem, modListFor } from "../../../services/craft-stage/engine";
-import { isTreeDoc, migrateStart, newTree, startOf, type Aim, type StartMod, type TreeDoc, type TreeStart } from "../../../services/simulator/tree/tree-model";
+import { isTreeDoc, migrateStart, newTree, startOf, type Aim, type StartMod, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { treeBaseCost } from "../../../services/simulator/tree/tree-base-cost";
 import { tr } from "../../../i18n/lang";
 
@@ -88,19 +88,10 @@ const askBase = ref(true);
 const isBlank = (d: TreeDoc): boolean => !d.boxes.start?.hand && !d.boxes.start?.split && Object.keys(d.boxes).length === 1;
 /** 白紙の木を開いた時にベースを選ばせるか (読んだら下ろす) */
 function takeAskBase(): boolean { const v = askBase.value && isBlank(doc.value); askBase.value = true; return v; }
-/**
- * クラフト台のベースとアイテムレベルで白紙の木を開く (前の木は 1 つ戻すで戻せる)。ページを開くのは呼ぶ側。
- * シミュレーターの入口 (10-22): aims = ① の完成品の MOD を欲しい MOD のメモに、start・startRandom = ② の始め方を始まりの箱に
- */
-function startTreeWith(base: string, itemLevel: number, o: { aims?: readonly Aim[]; start?: TreeStart; startRandom?: number } = {}): void {
+/** クラフト台のベースとアイテムレベルで白紙の木を開く (前の木は 1 つ戻すで戻せる)。ページを開くのは呼ぶ側 */
+function startTreeWith(base: string, itemLevel: number): void {
   opened.value++;
-  edit((d) => {
-    for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k];
-    Object.assign(d, newTree(base, itemLevel));
-    if (o.aims?.length) d.memoAims = o.aims.map((a) => ({ ...a }));
-    if (o.start) d.start = JSON.parse(JSON.stringify(o.start)) as TreeStart;
-    if (o.startRandom) d.startRandom = o.startRandom;
-  });
+  edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, newTree(base, itemLevel)); });
   askBase.value = false;
 }
 /** 始めのアイテムにフラクチャーのほか付いている乱数の MOD の数 (素の高貴を n 回、tree-sample の startItemOf。0 は消す。1 つ戻すで戻せる) */

@@ -34,7 +34,7 @@ import StageAimPanel from "./StageAimPanel.vue";
 import StageForesight from "./StageForesight.vue";
 import StageBasePage from "./StageBasePage.vue";
 import { PAGES_ON, basePage, baseUnpicked, openRoutes } from "../../state/web-page"; // Web のページ (ベース選び。web/page.ts)
-import { openBasePage } from "../../web/page";
+import { openBasePage, openTreePage } from "../../web/page";
 import StageAimPicker from "./StageAimPicker.vue";
 import CurrencyShelf from "./CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
@@ -58,12 +58,6 @@ import { encodeShare, SHARE_ENABLED, shareUrl, xIntentUrl } from "../../services
 import { openExternal } from "../../services/trade2/open-external";
 import { track } from "../../utils/track";
 import type { StageMod } from "../../services/craft-stage/types";
-import { buildStage, ilvlFit, pathAsk, simBuild } from "../../state/simulator/build-state";
-import { fitIlvl, junkTags, toggleDesecrate } from "../simulator/build/use-build"; // シミュレーター β では工程の欄を出さない (手の並びは木で見る、オーナー 10-22)
-// シミュレーターの入口 (開発版だけ、シミュ部長)。本番では開かないので後から読む
-const SimBuildPanel = defineAsyncComponent(() => import("../simulator/build/SimBuildPanel.vue"));
-const PathPick = defineAsyncComponent(() => import("../simulator/build/PathPick.vue"));
-const MissSwitch = defineAsyncComponent(() => import("../simulator/build/MissSwitch.vue"));
 
 const s = craftStage;
 /** ルーンを持ってルーンの入ったソケットを押した: そのソケットを置き換える手 (`rune:<名前>@<n>`)。ルーン以外はアイテムを押したのと同じ */
@@ -257,12 +251,12 @@ const gemCorrupt = computed(() => GEM_CORRUPT_SHOWN && !inApp && gemCorruptOn.va
  * 作り途中の中身は消さない (同じベースを押す・「← クラフトへ戻る」で、前の工程のページに戻る)。まだベースが無い時はベース選びが自分で出る
  */
 /**
- * 旧シミュレーターの mode "sim" (工程ページは 10-22 に消した) に入ったら、入口 ① 完成品を作るへ (開発版だけ、シミュ部長 10-22)。
+ * 旧シミュレーターの mode "sim" (工程ページは 10-22 に消した) に入ったら、クラフトの道 (ツリー) を開く (開発版だけ)。
  * ベースのページの「シミュレーター」タブから入ると、消した工程の ① ベースの枠だけが出て止まっていた (オーナー 10-22)
  */
-watch(() => s.mode.value, (m) => { if (m === "sim" && !SIM_LOCKED) { s.mode.value = "hand"; simBuild.value = true; } }, { immediate: true });
+watch(() => s.mode.value, (m) => { if (m === "sim" && !SIM_LOCKED) { s.mode.value = "hand"; openTreePage(); } }, { immediate: true });
 function pickMode(m: (typeof MODE_TABS)[number][0]): void {
-  s.hold(null); endLesson(); s.mode.value = m; setGemCorrupt(false); simBuild.value = false;
+  s.hold(null); endLesson(); s.mode.value = m; setGemCorrupt(false);
   if (m === "sim" && PAGES_ON && s.simPicked.value) openBasePage();
 }
 function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("mode:gem-corrupt"); gemCorruptOn.value = v; }
@@ -297,9 +291,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
       <!-- Web の使い方・コツ・コースのページはタブではなく、ほかのページと同じ「← クラフトへ戻る」(2026-10-18 オーナー) -->
       <button v-if="!inApp && (guidePage || inLesson)" type="button" data-guide-back class="g-btn sm max-md:min-h-10" @click="s.hold(null); endLesson(); s.mode.value = 'hand'; setGemCorrupt(false)">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
       <div v-else class="inline-flex gap-1 max-md:flex max-md:w-full" role="tablist">
-        <button v-for="t in MODE_TABS" :key="t[0]" type="button" role="tab" :aria-selected="s.mode.value === t[0] && !gemCorrupt && !inLesson && !simBuild" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-3 disabled:cursor-not-allowed disabled:opacity-50 max-md:!px-1 max-md:!text-[12px]" :class="s.mode.value === t[0] && !gemCorrupt && !inLesson && !simBuild ? 'on' : ''" :disabled="t[0] === 'sim' && SIM_LOCKED" :title="t[0] === 'sim' && SIM_LOCKED ? tr('調整中です。しばらくお待ちください', 'Work in progress. Please check back later') : undefined" @click="pickMode(t[0])">{{ tr(t[1], t[0] === 'hand' ? 'Emulator' : 'Simulator') }}<span v-if="t[0] === 'sim' && SIM_LOCKED" class="text-[11px] font-normal max-md:hidden">{{ tr("(調整中)", "(WIP)") }}</span><span v-else-if="t[0] === 'sim'" class="text-[10px] font-normal opacity-70" :title="tr('作り込み中の機能。数字は今の相場と確率の目安', 'Still in development. Numbers are rough estimates from current prices and chances')">β</span></button>
-        <!-- シミュレーターの入口 ① 完成品を作る (開発版だけ、シミュ部長 10-22。中身は views/simulator/build/SimBuildPanel.vue) -->
-        <button v-if="!SIM_LOCKED && !inApp" type="button" role="tab" :aria-selected="simBuild && !gemCorrupt && !inLesson" data-sim-build-tab class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]" :class="simBuild && !gemCorrupt && !inLesson ? 'on' : ''" @click="pickMode('hand'); simBuild = true">{{ tr("シミュレーター", "Simulator") }}<span class="text-[10px] font-normal opacity-70">β</span></button>
+        <button v-for="t in MODE_TABS" :key="t[0]" type="button" role="tab" :aria-selected="s.mode.value === t[0] && !gemCorrupt && !inLesson" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-3 disabled:cursor-not-allowed disabled:opacity-50 max-md:!px-1 max-md:!text-[12px]" :class="s.mode.value === t[0] && !gemCorrupt && !inLesson ? 'on' : ''" :disabled="t[0] === 'sim' && SIM_LOCKED" :title="t[0] === 'sim' && SIM_LOCKED ? tr('調整中です。しばらくお待ちください', 'Work in progress. Please check back later') : undefined" @click="pickMode(t[0])">{{ tr(t[1], t[0] === 'hand' ? 'Emulator' : 'Simulator') }}<span v-if="t[0] === 'sim' && SIM_LOCKED" class="text-[11px] font-normal max-md:hidden">{{ tr("(調整中)", "(WIP)") }}</span><span v-else-if="t[0] === 'sim'" class="text-[10px] font-normal opacity-70" :title="tr('作り込み中の機能。数字は今の相場と確率の目安', 'Still in development. Numbers are rough estimates from current prices and chances')">β</span></button>
         <!-- ジェムコラプト (Web 版だけ、2026-10-16) -->
         <button v-if="!inApp && GEM_CORRUPT_SHOWN" type="button" role="tab" :aria-selected="gemCorrupt" data-rec="tab-gem-corrupt" class="g-tab min-w-[170px] !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]" :class="gemCorrupt ? 'on' : ''" @click="s.hold(null); if (s.mode.value === 'tutorial' || inLesson) { endLesson(); s.mode.value = 'hand'; } setGemCorrupt(true)">{{ tr("ジェムコラプト", "Gem Corruption") }}</button>
         <!-- Web はタブに出さず、ヘッダーの「使い方・コツ」のページへ (2026-10-18 オーナー「1 回きりでしょこんなもん使うの、使い方にしまう」) -->
@@ -333,7 +325,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
     </div>
 
     <!-- 設定と操作 (StageSettings.vue) -->
-    <StageSettings :phone="phone" :fit-ilvl="simBuild ? fitIlvl : undefined" :fit-on="ilvlFit" @fit-on="(v: boolean) => (ilvlFit = v)" />
+    <StageSettings :phone="phone" />
     <!-- スマホ: アイテムのカードが画面の外に出たら上に要約を貼る (2026-10-09 オーナー「下にスクロールしても MOD 付いても見えん」) -->
     <StageItemMini v-if="phone && !cardOnScreen && s.item.value && (s.mode.value === 'hand' || s.replay.value)" :item="s.item.value" :added="s.last.value?.added ?? []" :removed="s.last.value?.removed ?? []" />
     <!-- 読めなかった時は「もう一度」(web/MarketNotice.vue と同じ。2026-10-10 動きの揃え 8) -->
@@ -363,9 +355,6 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
           :holding="!!s.held.value && !s.replay.value"
           :flash-key="flashKey"
           @use="s.use()"
-          :row-tags="simBuild ? junkTags : null"
-          :kinds="simBuild && buildStage === 'build'"
-          @desecrate="toggleDesecrate"
           :removable="!s.replay.value && !courseHidesEmulator"
           @remove="(id: string) => s.use(forceKey(id, null, 'x'))"
           @fracture="fractureMod"
@@ -381,7 +370,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
         <StageForesight /><!-- ヒネコラの髪束の予見 (StageForesight.vue) -->
         <!-- 工程 (累計と新しい手が上。2026-10-10 オーナー)。上の行との間はカードとの間と同じ mt-2、枠に近く p-1 (10-11)。コースの間は出さない (10-17) -->
         <CourseHost part="under-item" :phone="phone" /><!-- コースの案内はアイテムの下。スマホは今の手もアイテムのすぐ下 (2026-10-17 オーナー) -->
-        <div v-if="!courseHidesEmulator && !simBuild" data-rec-part="history" class="g-panel mt-2 w-[480px] max-md:w-full p-1 text-[12px]">
+        <div v-if="!courseHidesEmulator" data-rec-part="history" class="g-panel mt-2 w-[480px] max-md:w-full p-1 text-[12px]">
           <p class="g-sec-head"><b class="g-sec-title">{{ tr("工程", "Steps") }}</b><span class="g-sec-sub">{{ inApp || s.replay.value ? "" : tr(`最近 ${LOG_KEEP} 手まで`, `last ${LOG_KEEP} steps`) }}</span>
             <!-- 手順の共有 (2026-10-12)。押せない時は理由を title に (打ち始めた後の手で足した MOD は下にも 1 行) -->
             <span v-if="SHARE_ENABLED" :title="s.shareWhy.value ?? tr('この手順を URL で共有 (受け取った人は同じベースから同じ結果を再生できる)', 'Share these steps as a URL (others can replay them with the same results)')"><button type="button" class="g-btn sm inline-flex items-center gap-1 max-md:min-h-9" :disabled="!!s.shareWhy.value" :aria-expanded="!!shareOpen" @click="shareOpen ? (shareOpen = null) : openShare()"><Icon name="link" class="size-3.5" />{{ tr("共有", "Share") }}</button></span>
@@ -405,24 +394,19 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
       <div class="min-w-0 space-y-4 @5xl:pt-10">
         <!-- 狙う (MOD 一覧の「狙う」で出る。打ち方ごとの付く確率) -->
         <CourseHost part="above-shelf" :phone="phone" /><!-- コースの今の手 (棚のすぐ上) -->
-        <StageAimPanel v-if="!s.replay.value && !courseHidesEmulator && !simBuild" data-rec-part="aim-panel" />
-        <!-- シミュレーターの入口 ①② (開発版だけ): 棚の所に入口の欄。MOD 一覧はエミュと同じくページの下 (10-22 オーナー「配置もまんまエミュレーターと同じに」) -->
-        <SimBuildPanel v-if="simBuild && !s.replay.value" />
+        <StageAimPanel v-if="!s.replay.value && !courseHidesEmulator" data-rec-part="aim-panel" />
         <StageAimPicker v-if="s.aimPicker.value && s.item.value" />
-        <section v-show="!courseHidesShelf && !(simBuild && buildStage === 'build' && !s.replay.value)" ref="shelfEl" class="g-panel relative p-2">
+        <section v-show="!courseHidesShelf" ref="shelfEl" class="g-panel relative p-2">
           <p class="g-sec-head">
             <b class="g-sec-title">{{ tr("カレンシー", "Currency") }}</b>
             <span v-if="s.held.value" class="whitespace-nowrap rounded-full bg-amber-500/20 px-2 text-amber-200">{{ tr("持っている", "Holding") }}: {{ nameOf(s.held.value) }}</span>
             <span v-else class="g-sec-sub whitespace-nowrap">{{ tr("押して持つ → アイテムを押す", "Click to hold → click the item") }}</span>
-            <span v-for="o in s.omens.value" :key="o" class="cursor-pointer whitespace-nowrap rounded-full bg-violet-500/20 px-2 text-violet-200 max-md:px-3 max-md:py-1.5" :title="tr('押すと外す', 'Click to remove')" @click="s.toggleOmen(o)">{{ nameOf(o) }} ×</span><button v-if="PAGES_ON && s.mode.value === 'hand' && !courseHidesEmulator && s.item.value && !simBuild" type="button" data-routes-open class="g-btn sm ml-auto" :title="tr('MOD を 1 つ選んで、増強・カオス・高貴のどのスパムが一番安く着くかを比べる', 'Pick one mod and compare which spam (augment / chaos / exalt) gets there cheapest')" @click="openRoutes">{{ tr("スパムシミュレーター", "Spam simulator") }}</button>
+            <span v-for="o in s.omens.value" :key="o" class="cursor-pointer whitespace-nowrap rounded-full bg-violet-500/20 px-2 text-violet-200 max-md:px-3 max-md:py-1.5" :title="tr('押すと外す', 'Click to remove')" @click="s.toggleOmen(o)">{{ nameOf(o) }} ×</span><button v-if="PAGES_ON && s.mode.value === 'hand' && !courseHidesEmulator && s.item.value" type="button" data-routes-open class="g-btn sm ml-auto" :title="tr('MOD を 1 つ選んで、増強・カオス・高貴のどのスパムが一番安く着くかを比べる', 'Pick one mod and compare which spam (augment / chaos / exalt) gets there cheapest')" @click="openRoutes">{{ tr("スパムシミュレーター", "Spam simulator") }}</button>
           </p>
           <CurrencyShelf @hold="hold">
             <!-- 棚の中の「神〜ヴァールオーブ」の段の下に出る (置き場は CurrencyShelf が決める。上に出すと持っているカレンシーがずれる、オーナー 2026-10-04) -->
-            <template v-if="heldOmens.length || (simBuild && buildStage === 'play' && s.held.value)" #held>
-              <HeldOmens v-if="heldOmens.length" mod-list @mod-list="toModList" />
-              <!-- シミュレーターの入口 ②③ (開発版だけ): お告げと並ぶ「空打ち」のスイッチと、打つと乱数の代わりに付く MOD の候補 (お告げの欄の所) -->
-              <MissSwitch v-if="simBuild && buildStage === 'play'" />
-              <PathPick v-if="simBuild && pathAsk" />
+            <template v-if="heldOmens.length" #held>
+              <HeldOmens mod-list @mod-list="toModList" />
             </template>
           </CurrencyShelf>
         </section>

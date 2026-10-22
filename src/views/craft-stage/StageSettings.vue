@@ -24,11 +24,7 @@ import { ITEM_LEVEL_SET, itemLevelKey, SANCTIFIED_REASON } from "../../services/
 import HelpTip from "../../components/ui/HelpTip.vue";
 import type { ModGroup } from "../../services/craft-stage/trade-search";
 
-/** fitIlvl: シミュレーターの入口 (開発版) だけ、アイテムレベルの「適正」(選んだ段が全部付く一番低いレベル) を出す。fitOn = 適正を使っている間 */
-const props = defineProps<{ phone: boolean; fitIlvl?: number | null; fitOn?: boolean }>();
-const emit = defineEmits<{ fitOn: [on: boolean] }>();
-const fitShown = computed(() => props.fitIlvl !== undefined);
-const fitting = computed(() => fitShown.value && !!props.fitOn && props.fitIlvl != null);
+defineProps<{ phone: boolean }>();
 const s = craftStage;
 const inApp = isTauriRuntime();
 const { handNoBase, simNoBase, pickSimBase, startFromRecipe } = useStageBase();
@@ -48,7 +44,6 @@ const curIlvl = computed(() => (s.mode.value === "hand" ? s.item.value?.itemLeve
  * そのレベルで付かない段の MOD だけ消す (2026-10-18 オーナー「全部やり直しになるのもおかしい」。apply-currency の ilvl:)。続けて変えた分は 1 手にまとめる
  */
 function setIlvl(lv: number): void {
-  if (fitShown.value) emit("fitOn", false); // 手で決めたら適正から外れる (シミュレーターの入口)
   if (lv === curIlvl.value) return;
   if (s.mode.value !== "hand" || (!s.log.value.length && !s.startMods.value.length)) { s.itemLevel.value = lv; s.reset(); return; }
   const last = s.log.value[s.log.value.length - 1];
@@ -125,11 +120,9 @@ const simLaterPage = computed(() => s.mode.value === "sim" && s.simPicked.value 
     <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase || (s.mode.value === 'hand' && handNoBase)" :page="PAGES_ON" @pick="pickSimBase" @open-page="s.hold(null); basePage = true" />
     <span v-if="s.mode.value !== 'sim' && !(s.mode.value === 'hand' && handNoBase) && !jewelBase" class="flex items-center gap-1" :class="ilvlLocked && 'cursor-not-allowed opacity-50 [&_*]:pointer-events-none'" :title="ilvlLocked ? SANCTIFIED_REASON() : undefined"><!-- シミュレーターのアイテムレベルは 3 の始め方で (SimStartPick.vue) -->
       <span class="mr-1 whitespace-nowrap text-[12px] text-[var(--exile-color-text-secondary)]">{{ phone ? "iLv" : tr("アイテムレベル", "Item Level") }}</span>
-      <button v-if="fitShown" type="button" data-ilvl-fit class="g-tab !min-h-[30px] !px-3 max-md:!min-h-10" :class="fitting ? 'on' : ''" :disabled="ilvlLocked || fitIlvl == null" :title="tr('選んだ MOD の段が全部付く一番低いレベル (MOD を選ぶたびに変わる)', 'The lowest level where every chosen mod tier can roll (follows your mods)')" @click="emit('fitOn', true)">{{ tr("適正", "Fit") }}</button>
-      <button v-for="lv in ILVLS" :key="lv" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="curIlvl === lv && !fitting ? 'on' : ''" :disabled="ilvlLocked" @click="setIlvl(lv)">{{ lv }}</button>
-      <select data-ilvl-select :disabled="ilvlLocked" class="h-[30px] cursor-pointer rounded border bg-black/60 px-1.5 tabular-nums max-md:h-10" :class="fitting ? 'border-amber-300/70 text-amber-100' : ILVLS.includes(curIlvl) ? 'border-white/15 text-white/60' : 'border-amber-300/70 text-amber-100'" :value="fitting ? `fit:${fitIlvl}` : ILVLS.includes(curIlvl) ? '' : curIlvl" :aria-label="tr('アイテムレベル (70〜86)', 'Item level (70–86)')" @change="setIlvl(Number(($event.target as HTMLSelectElement).value))">
+      <button v-for="lv in ILVLS" :key="lv" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="curIlvl === lv ? 'on' : ''" :disabled="ilvlLocked" @click="setIlvl(lv)">{{ lv }}</button>
+      <select data-ilvl-select :disabled="ilvlLocked" class="h-[30px] cursor-pointer rounded border bg-black/60 px-1.5 tabular-nums max-md:h-10" :class="ILVLS.includes(curIlvl) ? 'border-white/15 text-white/60' : 'border-amber-300/70 text-amber-100'" :value="ILVLS.includes(curIlvl) ? '' : curIlvl" :aria-label="tr('アイテムレベル (70〜86)', 'Item level (70–86)')" @change="setIlvl(Number(($event.target as HTMLSelectElement).value))">
         <option value="" disabled>{{ tr("70〜86", "70–86") }}</option>
-        <option v-if="fitting" :value="`fit:${fitIlvl}`" disabled>{{ tr(`${fitIlvl} (適正)`, `${fitIlvl} (fit)`) }}</option>
         <option v-if="!ILVLS.includes(curIlvl) && !ILVL_LIST.includes(curIlvl)" :value="curIlvl">{{ curIlvl }}</option>
         <option v-for="lv in ILVL_LIST" :key="lv" :value="lv">{{ lv }}</option>
       </select>
