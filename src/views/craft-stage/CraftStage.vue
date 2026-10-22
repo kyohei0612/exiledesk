@@ -42,7 +42,7 @@ import { previewUse } from "../../services/craft-stage/engine-emu";
 import { courseActive as inLesson, courseHidesEmulator, courseHidesShelf, endLesson } from "../../state/tutorial/course-host"; // チュートリアルのコースの間 (2026-10-17)。隠す判定は course-host に 1 か所 (R4 手 2)
 import RevealPanel from "./RevealPanel.vue";
 import { useStageFx } from "../../components/stage/use-stage-fx";
-import StageModList from "./StageModList.vue";
+import StageModList from "../../components/stage/mod-list/StageModList.vue";
 // 部ごとの差し込み口 (2026-10-20 R4): シミュレーターと使い方・コースの中身は各部の部品が持つ
 import CourseHost from "../tutorial/CourseHost.vue";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";

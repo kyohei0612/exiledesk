@@ -12,18 +12,18 @@
   段の表の「付ける」で始めの状態にその MOD・段を足せる (付きうる物だけ。手順 JSON の start.mods に入る)。「1 手戻す」で 1 つずつ外す。
 -->
 <script setup lang="ts">
-import { aimTierKey, heldAnyOf, heldOdds, type StageItem, modListFor, type ListRow, type ModGroup, tagLabel } from "../../services/craft-stage/engine";
-import { fmtPct } from "../../utils/format-pct";
-import { baseNameOf, tr } from "../../i18n/lang";
-import { keepPlace, revealOpened, scrollToTop } from "../../utils/keep-place";
+import { aimTierKey, heldAnyOf, heldOdds, type StageItem, modListFor, type ListRow, type ModGroup, tagLabel } from "../../../services/craft-stage/engine";
+import { fmtPct } from "../../../utils/format-pct";
+import { baseNameOf, tr } from "../../../i18n/lang";
+import { keepPlace, revealOpened, scrollToTop } from "../../../utils/keep-place";
 import StageWeightEdit from "./StageWeightEdit.vue"; // 重みの札 (推定・直した) と直す 1 行
-import { AIM_MAX } from "../../state/craft-stage";
+import { AIM_MAX } from "../../../state/craft-stage";
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
-import { useDismiss } from "../../utils/use-dismiss";
-import HelpTip from "../../components/ui/HelpTip.vue";
-import Disclosure from "../../components/ui/Disclosure.vue";
-import { craftStage, nameOf } from "../../state/craft-stage";
-import { factionOf, groupLabelOf, runeEnOf, shownTags, TAG_STYLE } from "../../services/craft-stage/mod-list";
+import { useDismiss } from "../../../utils/use-dismiss";
+import HelpTip from "../../ui/HelpTip.vue";
+import Disclosure from "../../ui/Disclosure.vue";
+import { craftStage, nameOf } from "../../../state/craft-stage";
+import { factionOf, groupLabelOf, runeEnOf, shownTags, TAG_STYLE } from "../../../services/craft-stage/mod-list";
 import { essName, tierName, toneOf, weightNote } from "./stage-mod-list-look";
 import ModAddPicker from "./ModAddPicker.vue";
 

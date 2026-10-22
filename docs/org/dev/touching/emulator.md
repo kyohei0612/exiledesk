@@ -9,3 +9,4 @@
 | ジン部長 6 本目 | 画面の移し ② アイテムのカード: src/views/craft-stage/StageItemCard.vue・base-values.ts・stage-item-row-tag.ts → src/components/stage/item/、読む側の import の行、10-22 深夜 |
 | ジン部長 6 本目 | 画面の移し ③: src/state/emulator/stage-steps.ts → src/state/stage/、src/views/craft-stage/use-stage-fx.ts → src/components/stage/、読む側の import の行、10-22 深夜 |
 | ジン部長 6 本目 | クラフト台の中のシミュの形 (死蔵 A2・A3・B・C のエミュ) を消す: src/state/craft-stage.ts・stage-session.ts・web-page.ts・src/web/page.ts・track.ts・FeedbackDialog.vue・feedback-summary.ts・src/views/craft-stage/ (CraftStage・StageSettings・StageModList・StageBasePage・use-stage-base・StageFracturePicker)・src/views/simulator/ (SimBaseExtras・StageRecipeStart・SimMethodPop)・src/state/simulator/ (sim-state・sim-recipes・sim-recipe-store)・使い手 0 の services/simulator、10-23 |
+| ジン部長 6 本目 | 画面の移し ④ MOD 一覧: src/views/craft-stage/{StageModList,StageWeightEdit,ModAddPicker}.vue・stage-mod-list-look.ts → src/components/stage/mod-list/、読む側の import、10-23 |

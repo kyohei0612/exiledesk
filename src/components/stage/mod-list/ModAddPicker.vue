@@ -6,13 +6,13 @@
   打ち始める前 (始めの状態を組む時) は addStartMod、打ち始めた後は指名の手 (force:…、費用 0・1 手戻すで外せる)
 -->
 <script setup lang="ts">
-import { forceKey, type ForceFlag, allMods, type ModGroup } from "../../services/craft-stage/engine";
+import { forceKey, type ForceFlag, allMods, type ModGroup } from "../../../services/craft-stage/engine";
 import { computed, nextTick, onBeforeUnmount, ref } from "vue";
-import { craftStage as s } from "../../state/craft-stage";
-import { tr } from "../../i18n/lang";
-import { toCss } from "../../utils/zoom";
-import Icon from "../../components/ui/Icon.vue";
-import { swallowNextClick } from "../../utils/swallow-click";
+import { craftStage as s } from "../../../state/craft-stage";
+import { tr } from "../../../i18n/lang";
+import { toCss } from "../../../utils/zoom";
+import Icon from "../../ui/Icon.vue";
+import { swallowNextClick } from "../../../utils/swallow-click";
 
 const props = defineProps<{ group: ModGroup; modId: string; rank: string }>();
 /** 始めの状態を組める (まだ打っていない・再生でない) */
