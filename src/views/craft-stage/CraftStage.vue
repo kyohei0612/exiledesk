@@ -58,9 +58,11 @@ import { encodeShare, SHARE_ENABLED, shareUrl, xIntentUrl } from "../../services
 import { openExternal } from "../../services/trade2/open-external";
 import { track } from "../../utils/track";
 import type { StageMod } from "../../services/craft-stage/types";
-import { simBuild } from "../../state/simulator/build-state";
-// シミュレーターの入口 ① (開発版だけ、シミュ部長)。本番では開かないので後から読む
+import { buildStage, ilvlFit, pathAsk, simBuild } from "../../state/simulator/build-state";
+import { fitIlvl } from "../simulator/build/use-build";
+// シミュレーターの入口 (開発版だけ、シミュ部長)。本番では開かないので後から読む
 const SimBuildPanel = defineAsyncComponent(() => import("../simulator/build/SimBuildPanel.vue"));
+const PathPick = defineAsyncComponent(() => import("../simulator/build/PathPick.vue"));
 
 const s = craftStage;
 /** ルーンを持ってルーンの入ったソケットを押した: そのソケットを置き換える手 (`rune:<名前>@<n>`)。ルーン以外はアイテムを押したのと同じ */
@@ -330,7 +332,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
     </div>
 
     <!-- 設定と操作 (StageSettings.vue) -->
-    <StageSettings :phone="phone" />
+    <StageSettings :phone="phone" :fit-ilvl="simBuild ? fitIlvl : undefined" :fit-on="ilvlFit" @fit-on="(v: boolean) => (ilvlFit = v)" />
     <!-- スマホ: アイテムのカードが画面の外に出たら上に要約を貼る (2026-10-09 オーナー「下にスクロールしても MOD 付いても見えん」) -->
     <StageItemMini v-if="phone && !cardOnScreen && s.item.value && (s.mode.value === 'hand' || s.replay.value)" :item="s.item.value" :added="s.last.value?.added ?? []" :removed="s.last.value?.removed ?? []" />
     <!-- 読めなかった時は「もう一度」(web/MarketNotice.vue と同じ。2026-10-10 動きの揃え 8) -->
@@ -400,10 +402,10 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
         <!-- 狙う (MOD 一覧の「狙う」で出る。打ち方ごとの付く確率) -->
         <CourseHost part="above-shelf" :phone="phone" /><!-- コースの今の手 (棚のすぐ上) -->
         <StageAimPanel v-if="!s.replay.value && !courseHidesEmulator && !simBuild" data-rec-part="aim-panel" />
-        <!-- シミュレーターの入口 ① 完成品を作る: 棚の代わりに完成品の欄と MOD 一覧 (開発版だけ) -->
-        <template v-if="simBuild && !s.replay.value"><SimBuildPanel /><StageModList embedded /></template>
+        <!-- シミュレーターの入口 ①② (開発版だけ): 棚の所に入口の欄。MOD 一覧はエミュと同じくページの下 (10-22 オーナー「配置もまんまエミュレーターと同じに」) -->
+        <SimBuildPanel v-if="simBuild && !s.replay.value" />
         <StageAimPicker v-if="s.aimPicker.value && s.item.value" />
-        <section v-show="!courseHidesShelf && !(simBuild && !s.replay.value)" ref="shelfEl" class="g-panel relative p-2">
+        <section v-show="!courseHidesShelf && !(simBuild && buildStage === 'build' && !s.replay.value)" ref="shelfEl" class="g-panel relative p-2">
           <p class="g-sec-head">
             <b class="g-sec-title">{{ tr("カレンシー", "Currency") }}</b>
             <span v-if="s.held.value" class="whitespace-nowrap rounded-full bg-amber-500/20 px-2 text-amber-200">{{ tr("持っている", "Holding") }}: {{ nameOf(s.held.value) }}</span>
@@ -412,8 +414,10 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
           </p>
           <CurrencyShelf @hold="hold">
             <!-- 棚の中の「神〜ヴァールオーブ」の段の下に出る (置き場は CurrencyShelf が決める。上に出すと持っているカレンシーがずれる、オーナー 2026-10-04) -->
-            <template v-if="heldOmens.length" #held>
-              <HeldOmens mod-list @mod-list="toModList" />
+            <template v-if="heldOmens.length || (simBuild && pathAsk)" #held>
+              <HeldOmens v-if="heldOmens.length" mod-list @mod-list="toModList" />
+              <!-- シミュレーターの入口 ②③ (開発版だけ): 打つと乱数の代わりに付く MOD の候補 (お告げの欄の所) -->
+              <PathPick v-if="simBuild && pathAsk" />
             </template>
           </CurrencyShelf>
         </section>
@@ -426,7 +430,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
     <!-- 手で打つ画面は重ね (後ろを暗く) で出す。枠の外を押す・閉じる・Esc・Tab で閉じる。持っている物はそのまま (2026-10-11 オーナー) -->
     <!-- 大きさは後ろの画面の 75% (縦横とも。2026-10-11 オーナー「MOD 枠は後ろのウィンドウの大きさで決まる、75%」) -->
     <!-- ページの下にも同じ一覧 (同じ部品 = 同じエンジン。窓はすぐ見るための便利機能。2026-10-11 オーナー「スクロールした下に配置してていい」) -->
-    <Transition name="stage-fade" appear><StageModList v-if="s.ready.value && s.item.value && ((s.mode.value === 'hand' && !handNoBase && !courseHidesEmulator && !simBuild) || s.replay.value)" data-rec-part="mod-list-bottom" /></Transition>
+    <Transition name="stage-fade" appear><StageModList v-if="s.ready.value && s.item.value && ((s.mode.value === 'hand' && !handNoBase && !courseHidesEmulator) || s.replay.value)" data-rec-part="mod-list-bottom" /></Transition>
     </div>
     </div>
     <StageBasePage v-if="subPage" :phone="phone" />

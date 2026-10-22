@@ -1,19 +1,19 @@
 /**
  * シミュレーターの入口 (2026-10-22 オーナー、設計 docs/org/simulator/notes/2026-10-22-entry-design.md)。
- * ① 完成品を作る: 開いている間はクラフト台の棚の代わりに MOD 一覧と完成品の欄 (SimBuildPanel.vue) を出す。アイテム・エンジンはクラフト台のまま。
- * ② 始め方を決める: ① の完成品から、フラクチャーの MOD ごとのパターン (タブ「<MOD> スタート」) に、始めのアイテムの MOD と何でもよい MOD の数を持つ
+ * ① MOD 決め (build): クラフト台の MOD 一覧の「付ける」で完成品を組む。6 MOD で自動で次へ。
+ * ②③ 打つ (play): 同じクラフト台・同じ棚で、カレンシーを打つと乱数の代わりにお告げの欄の所で付く MOD を選ぶ。フラクチャーまでが ②、その後が ③。
+ * アイテム・エンジン・工程はクラフト台のまま。ここは入口の段と狙い (① の完成品) だけ
  */
 import { ref } from "vue";
 
 export const simBuild = ref(false);
-/** 今の段 (① 完成品 / ② 始め方) */
-export const buildStage = ref<"build" | "start">("build");
+/** 今の段 (① MOD 決め / ②③ カレンシーを打つ) */
+export const buildStage = ref<"build" | "play">("build");
 
-/** 付いている MOD 1 つ (クラフト台の addStartMod で組み直せる形。tier = T の数、1 が一番良い) */
-export interface BuildMod { modId: string; tierName: string; tier: number; side: "prefix" | "suffix"; textJa: string; textEn: string; fractured?: true; desecrated?: true }
-/** ① で作った完成品 (② へ進んだ時に写す。← で戻る時はこれで組み直す) */
+/** 狙い 1 つ (① の完成品の MOD。tierIndex は大きいほど良い段、tier = T の数で 1 が一番良い) */
+export interface BuildMod { modId: string; tierName: string; tierIndex: number; tier: number; side: "prefix" | "suffix"; textJa: string; textEn: string; fractured?: true; desecrated?: true }
 export const finished = ref<BuildMod[]>([]);
-/** ② のパターン 1 つ: 始めのアイテムの MOD (✦ を 1 つ含む) と何でもよい MOD の数 */
-export interface StartPattern { mods: BuildMod[]; random: number }
-export const patterns = ref<StartPattern[]>([]);
-export const activePattern = ref(0);
+/** アイテムレベルの「適正」(選んだ段が全部付く一番低いレベル) を使うか。手で変えたら外れる (オーナー 10-22) */
+export const ilvlFit = ref(true);
+/** ②③ の候補の欄に出している手 (打つ前の手の番号で、打った・戻した時に消す) */
+export const pathAsk = ref<{ key: string; omens: string[]; at: number } | null>(null);

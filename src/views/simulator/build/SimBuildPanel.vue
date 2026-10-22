@@ -1,41 +1,46 @@
 <!--
-  SimBuildPanel.vue — シミュレーターの入口 ① 完成品を作る (2026-10-22 オーナー「完成形をまず作る。エミュのエンジンをフル稼働で、まんま移植だけど、
-  カレンシーで付けずに MOD を選んでもらう。これでエミュからシミュにさっと行けるようになる」。設計 docs/org/simulator/notes/2026-10-22-entry-design.md)。
-  クラフト台の棚の所に出す。付ける = 下の MOD 一覧 (クラフト台と同じ StageModList) の段の表の「付ける」、外す = アイテムのカードの ×。
-  付けられる / 付けられないの判定はエンジンのまま。できたら「次: 始め方を決める」で ② (SimStartPanel.vue) へ
+  SimBuildPanel.vue — シミュレーターの入口の小さな帯 (2026-10-22 オーナー、設計 docs/org/simulator/notes/2026-10-22-entry-design.md)。
+  置き場はクラフト台の棚の上。配置はエミュレーターとまんま同じで、カード・MOD 一覧 (ページの下)・棚はクラフト台の部品のまま (オーナー「独自の UI を表示させなくていい」)。
+  ① MOD 決め: MOD 一覧の「付ける」/ カードの × で完成品を組む。6 MOD で自動で次へ (6 未満は「次へ」)。
+  ②③ 打つ: 棚のカレンシーを持ってアイテムを押すと、お告げの欄の所に付く MOD の候補 (PathPick.vue)。帯には狙いの一覧 (付いた物はグレー)
 -->
 <script setup lang="ts">
-import { computed } from "vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { modText, tr } from "../../../i18n/lang";
-import type { StageMod } from "../../../services/craft-stage/engine";
-import { buildStage } from "../../../state/simulator/build-state";
-import { toStart } from "./use-build";
-import SimStartPanel from "./SimStartPanel.vue";
-
-const mods = computed<StageMod[]>(() => (s.item.value ? [...s.item.value.prefixes, ...s.item.value.suffixes] : []));
-const mark = (m: StageMod): string => [m.fractured ? tr("フラクチャー", "Fractured") : "", m.desecrated ? tr("冒涜", "Desecrated") : "", m.unrevealed ? tr("未発現", "Unrevealed") : ""].filter(Boolean).join(" · ");
+import { buildStage, finished } from "../../../state/simulator/build-state";
+import { allHeld, backToBuild, buildCount, held, phase, toPlay, toTree } from "./use-build";
 </script>
 
 <template>
-  <SimStartPanel v-if="buildStage === 'start'" />
-  <section v-else data-sim-build class="g-panel relative p-2 text-[13px]">
+  <section v-if="buildStage === 'build'" data-sim-build class="g-panel relative p-2 text-[13px]">
     <p class="g-sec-head">
-      <b class="g-sec-title">{{ tr("完成品を作る", "Build the finished item") }}</b>
-      <span class="g-sec-sub">{{ tr("MOD を選んで付ける (カレンシーは使わない)", "Pick mods to add (no currency)") }}</span>
+      <b class="g-sec-title">{{ tr("① 完成品の MOD を決める", "① Choose the finished mods") }}</b>
+      <span class="ml-auto tabular-nums opacity-80" data-sim-build-count>{{ buildCount }} / 6</span>
     </p>
-    <p class="mb-2 text-[12px] leading-snug text-[var(--exile-color-text-secondary)]">{{ tr("下の MOD 一覧で MOD を押して段の表を開き「付ける」(普通・フラクチャー・冒涜・エッセンス)。外すのはアイテムの MOD の ×。付けられるかはクラフト台と同じ決まり", "Open a mod's tier table in the list below and press “Add” (normal / fractured / desecrated / essence). Remove with the × on the item's mod. Same rules as the craft stage") }}</p>
-    <div class="space-y-1">
-      <div v-for="m in mods" :key="m.modId + m.tierIndex" data-sim-build-mod class="flex min-w-0 items-center gap-2 rounded bg-black/40 px-2 py-1">
-        <span class="w-9 shrink-0 text-[12px] font-bold tabular-nums" :class="m.side === 'prefix' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ m.side === "prefix" ? "P" : "S" }}{{ (m.tierName ?? "").replace(/^T/, "") }}</span>
-        <span class="min-w-0 flex-1 truncate text-[#c8c8ff]" :title="modText(m)">{{ modText(m) }}</span>
-        <span v-if="mark(m)" class="shrink-0 rounded-sm bg-white/10 px-1 text-[10px] opacity-80">{{ mark(m) }}</span>
-      </div>
-      <p v-if="!mods.length" class="py-1 text-[12px] opacity-60">{{ tr("まだ MOD が無い", "No mods yet") }}</p>
+    <p class="mb-2 text-[12px] leading-snug text-[var(--exile-color-text-secondary)]">{{ tr("下の MOD 一覧で MOD を押して段の表を開き「付ける」(カレンシーは使わない)。外すのはアイテムの MOD の ×。6 つ付くと次へ進む", "Open a mod's tier table in the list below and press “Add” (no currency). Remove with the × on the item's mod. Moves on when 6 mods are on") }}</p>
+    <div class="flex flex-wrap items-center gap-1.5">
+      <button type="button" class="g-btn sm max-md:min-h-10" :disabled="!buildCount && !s.log.value.length" @click="s.reset()">{{ tr("白に戻す", "Reset to white") }}</button>
+      <button type="button" data-sim-build-go class="g-btn-red ml-auto min-h-10 px-3 text-[14px] max-md:w-full" :disabled="!buildCount" :title="tr('この MOD を狙いにして、カレンシーで道を打つ所へ', 'Use these mods as targets and go on to craft the route with currency')" @click="toPlay">{{ tr("次へ: カレンシーで道を打つ →", "Next: craft the route →") }}</button>
     </div>
+  </section>
+  <section v-else data-sim-play class="g-panel relative p-2 text-[13px]">
+    <p class="g-sec-head">
+      <b class="g-sec-title">{{ phase === 2 ? tr("② フラクチャーまでの道", "② Route to the fracture") : tr("③ 完成までの最速の手", "③ Fastest route to done") }}</b>
+      <span class="g-sec-sub max-md:hidden">{{ tr("カレンシーを持ってアイテムを押すと、付く MOD を選べる (空打ちも)", "Hold a currency and click the item to choose the mod it adds (or a miss)") }}</span>
+      <span class="ml-auto tabular-nums opacity-80">{{ tr(`狙い ${held.filter(Boolean).length}/${finished.length} · ${s.log.value.length} 手`, `targets ${held.filter(Boolean).length}/${finished.length} · ${s.log.value.length} steps`) }}</span>
+    </p>
+    <div class="flex flex-wrap gap-1.5">
+      <span v-for="(m, i) in finished" :key="m.modId" data-sim-target class="inline-flex min-w-0 max-w-full items-center gap-1 rounded border px-1.5 py-0.5 text-[12px]" :class="held[i] ? 'border-white/5 bg-black/20 opacity-40' : 'border-[#c9a96a]/50 bg-[#c9a96a]/10 text-[#c8c8ff]'" :title="held[i] ? tr('付いた', 'On the item') : tr('まだ付いていない', 'Not on yet')">
+        <span class="shrink-0 font-bold" :class="m.side === 'prefix' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ m.side === "prefix" ? "P" : "S" }}{{ m.tier }}</span>
+        <span class="min-w-0 truncate">{{ modText(m) }}</span>
+        <span v-if="held[i]" class="shrink-0">✓</span>
+      </span>
+    </div>
+    <p v-if="allHeld" data-sim-play-done class="mt-1.5 text-[12px] font-bold text-emerald-200">{{ tr("狙いが全部付いた。この道をツリーへ", "All targets are on. Take this route to the tree") }}</p>
     <div class="mt-2 flex flex-wrap items-center gap-1.5">
-      <button type="button" class="g-btn sm max-md:min-h-10" :disabled="!mods.length && !s.log.value.length" @click="s.reset()">{{ tr("白に戻す", "Reset to white") }}</button>
-      <button type="button" data-sim-build-go class="g-btn-red ml-auto min-h-10 px-3 text-[14px] max-md:w-full" :disabled="!mods.some((m) => !m.unrevealed)" :title="tr('この完成品から、フラクチャーまでの始め方を決める', 'Decide how to start (up to the fracture) from this finished item')" @click="toStart">{{ tr("次: 始め方を決める →", "Next: how to start →") }}</button>
+      <button type="button" data-sim-play-back class="g-btn sm max-md:min-h-10" @click="backToBuild">{{ tr("← ① MOD 決めに戻る", "← Back to ① mods") }}</button>
+      <button type="button" class="g-btn sm max-md:min-h-10" :disabled="!s.log.value.length" @click="s.reset()">{{ tr("白から打ち直す", "Start over from white") }}</button>
+      <button type="button" data-sim-play-tree class="g-btn-red ml-auto min-h-10 px-3 text-[14px] max-md:w-full" :disabled="!allHeld" @click="toTree">{{ tr("④ ツリーへ →", "④ To the tree →") }}</button>
     </div>
   </section>
 </template>
