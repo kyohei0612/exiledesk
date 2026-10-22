@@ -89,10 +89,15 @@ const RESULT: Record<HandKind, [string, string]> = {
   quality: ["無し (品質を最大まで上げて、下の＋で次の手)", "None (raise quality to max, then add the next craft with + below)"],
 };
 const kind = computed((): HandKind | null => (hand.value ? kindOfHand(hand.value, kindOfCurrency(hand.value.currency)) : null));
-/** カオススパムの当たりの既定 = このツリーの狙いのうち、この箱でまだ付いていない物を全部 */
+/**
+ * カオススパムの当たりの既定 = このツリーの狙いのうち、この箱でまだ付いていない物を全部。木にまだ狙いが無ければ欲しい MOD のメモ
+ * (10-22 白紙から組んだ手袋: 狙い 0 で当たるまでにすると MOD の空の当たりの箱を見本で引き直し続け、ページが 5 分固まった)
+ */
 const spamAims = computed((): Aim[] => {
   const d = s.data.value;
-  return kind.value === "spam" && d && item.value ? aimsOf(t.doc.value).filter((a) => !aimHeld(d, item.value!, a)) : [];
+  if (kind.value !== "spam" || !d || !item.value) return [];
+  const tree = aimsOf(t.doc.value);
+  return (tree.length ? tree : t.doc.value.memoAims ?? []).filter((a) => !aimHeld(d, item.value!, a));
 });
 /** 結果が 1 通りの手か (この箱の見本 8 つにエンジンで打った行き先を全部たどる。触媒の手は前のカタリストを入れた後で) */
 const only = computed(() => (hand.value && s.data.value ? singleOutOf(s.data.value, t.doc.value, props.boxId, hand.value, preCat.value) : null));
@@ -107,7 +112,12 @@ const gone = computed((): number => {
   return before - Object.keys(t.doc.value.boxes).filter((id) => kept.has(id)).length;
 });
 /** この箱の見本に打てない手は確定させない (お告げが効かない・消せる物が無い等。オーナー 10-22「進行不能」、tree-sample の handProblem) */
-const problem = computed((): string | null => (hand.value && shelfItem.value && s.data.value ? handProblem(s.data.value, preCat.value ? shelfItem.value : item.value!, hand.value) : null));
+const problem = computed((): string | null => {
+  if (!hand.value || !shelfItem.value || !s.data.value) return null;
+  // 当たるまで繰り返すのに狙いが 1 つも無い (まだ付いていない狙いが無い) 時は決めさせない
+  if (kind.value === "spam" && !spamAims.value.length) return tr("狙いが無い (欲しい MOD のメモに足すか、当たりの箱で MOD を選んでから)", "No target yet (add one to the wanted mods memo, or pick a mod in a hit box first)");
+  return handProblem(s.data.value, preCat.value ? shelfItem.value : item.value!, hand.value);
+});
 function ok(): void {
   const h = hand.value, k = kind.value;
   if (h && k && !problem.value) emit("pick", h, k, spamAims.value, preCat.value, only.value);
