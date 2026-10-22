@@ -4,4 +4,3 @@
 
 | 誰 | ファイル |
 |---|---|
-| ジン部長 6 本目 | エンジンの分け切り: src/services/craft-stage/ (engine*.ts・apply-currency・for-emu → engine-emu/・for-sim → engine-sim/)・src/state/craft-stage.ts・シミュの tree-play・tree-sample・tree-hands・TreeHandShelf・TreeModPick・TreeStartPick・use-sim-shelf・use-tree-link・scripts/check-engine-entry.mjs、10-23 |
