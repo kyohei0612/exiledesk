@@ -203,6 +203,24 @@ export function matchTargets(doc: TreeDoc, id: string): { key: string; to: strin
   return out.filter((x, i) => out.findIndex((y) => y.key === x.key) === i);
 }
 
+/**
+ * 手を付けて新しくできた結果の箱 (ids) のうち、形 (matchTargets = 回す時の settle と同じ鍵) が木の中の手のある箱と同じ物は、そこへ自動でつなぐ
+ * (10-22 オーナー「消去で打った結果が同じ狙い MOD 群や外れ MOD の形になったら自動で案内…同じ形だから自分で付ける必要ない」)。印は autoBack (乗せた時のカード)。
+ * 形が複数ありうる箱 (狙いが消えた = どれが消えたかで分かれる) と、同じ形の箱が複数ある時は先に作った箱 (残りは回す時の settle が形の合う箱へ)。
+ * 狙い 0 の形は始まりへ。同じ形の箱が無い箱は setHand の既定のまま
+ */
+export function linkSameShape(doc: TreeDoc, ids: readonly string[]): void {
+  for (const id of ids) {
+    const c = doc.boxes[id];
+    if (!c || c.hand || c.out === "pass" || c.out === "any") continue;
+    const to = matchTargets(doc, id).map((m) => m.to).find((x): x is string => !!x && x !== id);
+    if (!to) continue;
+    c.back = to;
+    c.autoBack = true;
+    c.done = null;
+  }
+}
+
 /** 手の結果 (outcomeOf) に合う結果の箱 (回す時と精査で同じ)。any = 狙い無しの手の「打った後」、pass = 品質だけ上げた後 */
 export function outBoxOf(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[] }): string | undefined {
   return b.outs.find((id) => {

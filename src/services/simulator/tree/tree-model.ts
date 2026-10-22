@@ -55,6 +55,8 @@ export interface TreeBox {
   note?: string;
   /** × = この箱で付いている MOD のうち要らない物の印 (modId、段は問わない。オーナー 10-22「一度付けた物をバツにする仕組み」) */
   unwanted?: string[];
+  /** 戻りの矢印を同じ形の箱へ自動でつないだ (tree-run の linkSameShape。手で替えると外す) */
+  autoBack?: true;
 }
 export interface TreeDoc {
   schema: "exiledesk-tree/0";
@@ -198,6 +200,7 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   const same = b.hand && want.every((k) => now.includes(k)) && now.every((k) => k !== "start" && want.includes(k));
   b.hand = { ...hand, omens: [...hand.omens], repeat: hand.repeat ? { ...hand.repeat } : null };
   b.back = null;
+  delete b.autoBack;
   if (same) return;
   for (const o of b.outs) drop(d, subtree(d, o));
   b.outs = want.flatMap((k) => (k === "hit" && aims.length ? aims.map((a) => { const h = mk(d, "hit", id); h.aim = { ...a }; return h.id; }) : [mk(d, k, id).id]));
@@ -266,6 +269,7 @@ export function setBack(d: TreeDoc, id: string, to: string | null): void {
   if (!b || b.out === "start" || b.hand) return;
   if (to && (to === id || !d.boxes[to])) return;
   b.back = to;
+  delete b.autoBack;
   if (to) b.done = null;
 }
 

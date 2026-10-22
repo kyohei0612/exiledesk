@@ -27,7 +27,7 @@ import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, removeHit,
 import { handLabel, outName } from "./tree-names";
 import { aimHeld, aimsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { treeSample } from "../../../services/simulator/tree/tree-samples";
-import { MATCH, RESTART } from "../../../services/simulator/tree/tree-run";
+import { linkSameShape, MATCH, RESTART } from "../../../services/simulator/tree/tree-run";
 import { treePage } from "../../../state/web-page";
 import { tr } from "../../../i18n/lang";
 import { pageZoom } from "../../../utils/zoom";
@@ -169,15 +169,21 @@ function backLabel(b: Box): string {
 }
 
 // 組み替え
-/** 手を決める。pre = 前に足す品質だけ上げる手のカタリスト (触媒のお告げ、10-22 オーナーの案 A)。完成の箱に手を付けたら同じ形の完成の箱もここへ (joinSameShape) */
+/**
+ * 手を決める。pre = 前に足す品質だけ上げる手のカタリスト (触媒のお告げ、10-22 オーナーの案 A)。完成の箱に手を付けたら同じ形の完成の箱もここへ (joinSameShape)。
+ * 新しくできた結果の箱は、同じ形の箱があればそこへ自動でつなぐ (linkSameShape。手の種類が同じで箱を作り直さない時は人が選んだ戻り先のまま)
+ */
 function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = null, only: { out: OutKind; aim: Aim | null } | null = null): void {
   const id = panel.value!.id;
   if (picking.value === id) picking.value = null;
   t.edit((d) => {
+    const had = new Set(Object.keys(d.boxes));
     let at = id;
     if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
     setHand(d, at, h, kind, aims, only);
     joinSameShape(d, id);
+    // 前に作ってまだ行き先も手も無い箱も、今手を付けた箱と同じ形ならつなぐ (先に作った当たりの箱は、同じ形の箱に手が付いた時につながる)
+    linkSameShape(d, Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id));
   });
   panel.value = null;
 }
