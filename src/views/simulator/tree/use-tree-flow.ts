@@ -27,6 +27,8 @@ export const snapZoom = (z: number): number => ZOOM_LEVELS.reduce((a, l) => (Mat
 const WHEEL_STEP = 60;
 /** これ未満は箱の中の物を押させず、箱を押すと等倍の編集のポップアップ (ボタンが 24px の 3/4 = 18px を切る。10-22 オーナー「75% 未満の見るだけをやめる」) */
 export const VIEW_ONLY = 0.75;
+/** スマホの全体表示の一番小さい段 */
+const PHONE_MIN = 0.5;
 
 export function useTreeFlow(doc: Ref<TreeDoc>) {
   const f = useVueFlow(FLOW_ID);
@@ -84,7 +86,13 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     };
     // 右下を空けると段が下がる時は空けない (見本の木は 1920 幅で空けると 25%、空けなければ 33%)
     const room = level(w - left - RIGHT_ROOM) >= level(w - left) ? RIGHT_ROOM : 0;
-    const z = level(w - left - room) * pageZ.value;
+    const lv = level(w - left - room);
+    // スマホ (768px 未満) は 50% より小さくしない (20% で箱の字が読めなかった、10-22)。収まらない時は始まりの箱を上の真ん中に
+    if (innerWidth < 768 && lv < PHONE_MIN) {
+      const z = PHONE_MIN * pageZ.value, st = doc.value.boxes.start;
+      if (st) { await f.setViewport({ x: w / 2 - (st.x + BOX_W / 2) * z, y: PAD - st.y * z, zoom: z }); return; }
+    }
+    const z = lv * pageZ.value;
     await f.setViewport({ x: left + (w - left - room) / 2 - (b.x + b.w / 2) * z, y: Math.max(PAD, h / 2 - (b.y + b.h / 2) * z), zoom: z });
   }
   /** 始まりの箱を上の真ん中へ、等倍で (開いた時と、一望から等倍に戻した時。真ん中を軸にすると枝の間の空き所に出た、10-22) */

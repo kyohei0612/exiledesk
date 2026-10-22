@@ -391,7 +391,7 @@ const glowOf = (b: Box): boolean => {
 <template>
   <section data-tree-page class="min-w-0 flex-1 p-4">
     <div class="mb-3 flex flex-wrap items-center gap-3">
-      <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center gap-3 px-8 text-[22px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ tr("クラフトの道 (ツリー)", "Craft route tree") }}<BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" /></h1>
+      <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center gap-3 px-8 text-[22px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)] max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-1 max-md:px-4 max-md:py-2 max-md:text-[17px] max-md:tracking-[0.08em]"><span class="whitespace-nowrap">{{ tr("クラフトの道 (ツリー)", "Craft route tree") }}</span><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" /></h1>
       <button type="button" class="g-btn sm" @click="close">{{ tr("← 戻る", "← Back") }}</button>
     </div>
 
@@ -399,11 +399,11 @@ const glowOf = (b: Box): boolean => {
       <!-- 帯: 全体の数字 (まだ) ・1 つ戻す・拡大縮小・全画面 -->
       <!-- 折り返さない (回した結果の文で 1 行と 2 行の境目になり、木の枠が上下して箱の × が押せなかった、10-22)。左は狭ければ … で切る。768px 未満は左と右を 2 段に (右が画面より広く左が潰れて「回す」が押せなかった、10-22) -->
       <div class="flex flex-wrap items-center gap-2 text-[13px] md:flex-nowrap">
-        <span class="flex min-w-0 flex-1 basis-full items-center gap-2 md:basis-auto">
+        <span class="flex min-w-0 flex-1 basis-full items-center gap-2 max-md:flex-wrap md:basis-auto">
         <TreeRecipeBar @opened="v.fit()" />
         <TreeRunBar v-model:shown="tr100.shown.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value" :stuck="tr100.stuckBoxes.value" @run="tr100.run" @go="goIssue" :halted="tr100.halted.value" :walk="tr100.walk.value" @skip="tr100.skipWalk" />
         </span>
-        <span class="ml-auto flex shrink-0 flex-wrap items-center gap-1 md:flex-nowrap">
+        <span class="ml-auto flex shrink-0 flex-wrap items-center gap-1 max-md:ml-0 max-md:shrink max-md:basis-full md:flex-nowrap">
           <button type="button" data-tree-undo class="g-btn sm inline-flex items-center gap-1" :disabled="!t.canUndo.value" :title="tr('1 つ戻す (Ctrl+Z)', 'Undo (Ctrl+Z)')" @click="t.undo"><Icon name="undo" class="size-4" />{{ tr("1 つ戻す", "Undo") }}</button>
           <button type="button" data-tree-tidy class="g-btn sm" :title="tr('段ごとに横一列・親は子の並びの真ん中・線は直角の木の線 (1 つ戻すで元の並びへ)', 'Rows by depth, each parent centered over its children, right-angle tree lines (undo restores)')" @click="onTidy">{{ tr("整列", "Tidy") }}</button>
           <button type="button" data-tree-lines-all class="g-btn sm" :aria-pressed="linesAll" :title="tr('戻りの線を全部出す (もう一度押すと、乗せた箱の線だけ)', 'Show all return lines (click again to show only the hovered box’s lines)')" @click="linesAll = !linesAll">{{ linesAll ? tr("線を隠す", "Hide lines") : tr("線を全部表示", "Show all lines") }}</button>
@@ -461,7 +461,7 @@ const glowOf = (b: Box): boolean => {
         </div>
         <!-- 今の状態の札 (左上に浮かべる。ツリーを押し下げない) -->
         <p v-if="picking || hand || viewOnly" data-tree-mode-pill class="pointer-events-none absolute left-3 top-3 z-20 flex items-center gap-2 rounded-full border px-3 py-1 text-[12px] shadow-[0_4px_14px_rgba(0,0,0,0.6)]"
-          :class="picking ? 'border-cyan-400/50 bg-[#0d1a1c]/95 text-cyan-100' : 'border-white/10 bg-[#15110c]/95 text-[#d8ccb4]'">
+          :class="[picking ? 'border-cyan-400/50 bg-[#0d1a1c]/95 text-cyan-100' : 'border-white/10 bg-[#15110c]/95 text-[#d8ccb4]', picking || hand ? '' : 'max-md:hidden']">
           {{ picking && panel?.kind === "hand" && panel.id === picking ? tr("右の棚で次に打つ手を選ぶ / 箱を押すとそこへ戻る (Esc でやめる)", "Pick the next craft on the right, or click a box to return to it (Esc cancels)") : picking ? tr("戻り先の箱を押す (Esc でやめる)", "Click the box to return to (Esc cancels)") : hand ? tr("手: 見るだけ (選択に戻すと組める)", "Hand: view only (switch to Select to edit)") : tr("縮めて見ている間は箱を押すとその箱の編集が開く", "Zoomed out: click a box to edit it") }}
           <!-- 完成の箱からつなぐと完成の印は外れる (黙って外れていた、10-22 白紙から組んだ試し #19) -->
           <b v-if="picking && doc.boxes[picking]?.done" data-tree-pick-undone class="text-amber-200">{{ tr("(この箱の完成の印は外れる)", "(this box's done mark will be removed)") }}</b>

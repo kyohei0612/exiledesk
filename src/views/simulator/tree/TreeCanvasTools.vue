@@ -16,7 +16,8 @@ const hand = defineModel<boolean>("hand", { default: false });
 const emit = defineEmits<{ fit: []; zoomIn: []; zoomOut: []; reset: []; center: [x: number, y: number] }>();
 
 const MAP_KEY = "exiledesk.tree.minimap";
-const showMap = ref((() => { try { return localStorage.getItem(MAP_KEY) !== "0"; } catch { return true; } })());
+// 既定はスマホ (768px 未満) では閉じる (375 幅で枠の大半を覆った、10-22)。押して開けば覚える
+const showMap = ref((() => { try { const v = localStorage.getItem(MAP_KEY); return v ? v !== "0" : innerWidth >= 768; } catch { return innerWidth >= 768; } })());
 watch(showMap, (v) => { try { localStorage.setItem(MAP_KEY, v ? "1" : "0"); } catch { /* 覚えられなくても使える */ } });
 
 const view = computed(() => props.view);
