@@ -13,14 +13,10 @@
  *   当たるまで。10-22 オーナー「狙いが消えたらカオススパムだろ」「選択肢として初めに戻るでいいのでは」)。狙いが 2 つあった時は残った狙い + 外れで戻るので、
  *   カオスで付いた箱の形と実物が違えば続きから (tree-run の settle。無いと 100 人中 23 人がサフィックス満杯で止まった)
  * サフィックスの完成 3 箱は同じ形 (300 人で完成の時点のプレフィックス・空きが全員同じ、scripts/_tree-done-shape-probe) なので d1 に合流し、その下にプレフィックス 1 本
- * (10-22 オーナー「サフィに 3 MOD 付いた時点で、そこから先は全て同じルート」):
- *   P2 = レアリティのプレフィックス T1 (解析君 docs/org/math/notes/2026-10-22-gold-ring-prefix.md の案 3・追記 2、オーナー 10-22 OK、1 個 466〜472 神・完成 99%):
- *   素の高貴 → 外れたら 左側の結晶化のお告げ + アビスのエッセンス で外れを深淵の王の印 (MOD レベル 1) の餌に替え →
- *   削減のお告げ + 完全のカオス (削減は必ず餌を消す) → 当たり / 外れたらまた餌を付けてから削減。
- *   解析君の台本は「新しい外れがサフィックスより低い MOD レベルならそのまま餌にする」が、ツリーは MOD レベルで分けられないので毎回餌を付け直す。
- *   P3 = 冒涜専用のクルガルの「エナジーシールドが満タンの間スペルダメージ (15–25)% 増加」(Kurgal's、MOD レベル 65、poe2db /us/Desecrated_Modifiers):
- *   保存された鎖骨 + 黒き血のお告げ (クルガルの MOD が必ず候補に) → 発現で選ぶ (tree-sample の reveal)。外れは光のお告げ + 消去で冒涜の MOD だけ消して打ち直す (結果は外れが消えた 1 通り)
- *   (10-22 オーナー「冒涜は冒涜で付与かな」)
+ * (10-22 オーナー「サフィに 3 MOD 付いた時点で、そこから先は全て同じルート」)。プレフィックス (10-22 オーナー「先無駄高貴後エッセンス」「冒涜でレアリティ」):
+ *   素の高貴 (無駄高貴、サフィは満杯なのでプレに付く) → 外れのプレならパーフェクトエッセンス (ルーンの守り) + 左側の結晶化 = 消せるプレは外れだけなので確定で入れ替わり、箱 1 つ →
+ *   骨で冒涜 → 発現 (一般 MOD も候補に出る) でレアリティ (プレ T1) を選べたら完成。外れは光のお告げ + 消去で冒涜の MOD だけ消して打ち直す (結果は 1 通り)。
+ *   無駄高貴でレアリティが付いた時は、もう一度無駄高貴 → エッセンスで外れが消えたら完成、レアリティが消えたら左側の消去で外れを消してルーンの守りの箱へ
  *
  * boots-res-split: ドレイクスキンブーツ ilvl 82、移動スピード T1 のフラクチャー済みから耐性 T1 × 2 (サフィックス) まで (10-22 オーナー OK「見本の靴を足す」)。
  *   解析君 scripts/analysis/boots-res-ev.mjs・docs/org/math/notes/2026-10-23-boots-res.md の道 (100 人 29.87 神) を白紙から組み直した木
@@ -43,8 +39,10 @@ function make(base: string, fracture: Aim | null, startRandom: number, boxes: Re
 function goldRingSuffix(): TreeDoc {
   const A = {
     R: { modId: "Rings/ItemFoundRarityIncrease", tier: 1 }, C: { modId: "Rings/IncreasedCastSpeed", tier: 2 }, A: { modId: "Rings/AllResistances", tier: 2 },
-    PR: { modId: "Rings/ItemFoundRarityIncreasePrefix", tier: 1 }, PD: { modId: "Rings/Desecrated_IncreasedSpellDamageOnFullEnergyShield", tier: 1 },
+    PR: { modId: "Rings/ItemFoundRarityIncreasePrefix", tier: 1 }, W: { modId: "Rings/PerfectEssence_BaseRunicWard", tier: 1 },
   };
+  /** パーフェクトエッセンス (ルーンの守り) + 左側の結晶化 (プレだけ消す) */
+  const ESS = hand("essence:perfect:Rings/PerfectEssence_BaseRunicWard", ["OmenofSinistralCrystallisation"]);
   const PLAIN = hand("exalt_greater", ["OmenofDextralExaltation"]);
   /** 触媒の高貴 (前のカタリストの手で入れた品質を使う) */
   const CAT = hand("exalt_perfect", ["OmenofCatalysingExaltation", "OmenofDextralExaltation"]);
@@ -75,23 +73,26 @@ function goldRingSuffix(): TreeDoc {
     cr: { out: "hit", aim: A.R, parent: "sC", back: "rc" },
     ar: { out: "hit", aim: A.R, parent: "sA", back: "ra" },
     ac: { out: "hit", aim: A.C, parent: "sA", back: "ca" },
-    // サフィックスの完成 = d1 に合流 (d2・d3 は同じ形)。d1 からプレフィックス
-    d1: { out: "hit", aim: A.A, parent: "rc_q", hand: hand("exalt"), outs: ["pR", "pJ"] },
+    // サフィックスの完成 = d1 に合流 (d2・d3 は同じ形)。d1 からプレフィックス (10-22 オーナー「先無駄高貴後エッセンス」「冒涜でレアリティ」)。サフィは満杯なので高貴・骨はお告げ無しでプレに付く:
+    // 素の高貴 (無駄高貴) → 外れのプレならパーフェクトエッセンス (ルーンの守り) + 左側の結晶化 = 消せるプレは外れだけなので確定で入れ替わり、箱 1 つ (pE)
+    d1: { out: "hit", aim: A.A, parent: "rc_q", hand: hand("exalt"), outs: ["pW", "pRx"] },
     d2: { out: "hit", aim: A.C, parent: "ra_q", back: "d1" },
     d3: { out: "hit", aim: A.R, parent: "ca", back: "d1" },
     ...J("sR_q", "jR", "sR"), ...J("sC", "jC", "sC"), ...J("sA", "jA", "sA"), ...J("rc_q", "jRC", "rc", "jR"), ...J("ra_q", "jRA", "ra", "jR"), ...J("ca", "jCA", "ca", "jC"),
-    pR: { out: "hit", aim: A.PR, parent: "d1", hand: hand("desecrate", ["OmenoftheBlackblooded"]), outs: ["pD", "pX"] },
-    // 外れ → 餌 (狙い無しの手: 外れを印に替えるだけ) → 削減 + 完全のカオス。外れたら餌の箱へ戻って付け直す
-    pJ: { out: "junk", parent: "d1", hand: hand("essence:perfect:Rings/PerfectEssence_EssenceAbyss", ["OmenofSinistralCrystallisation"], { free: true }), outs: ["pB"] },
-    pB: { out: "any", parent: "pJ", hand: hand("chaos_perfect", ["OmenofWhittling"]), outs: ["pR2", "pBl", "pBj"] },
-    pR2: { out: "hit", aim: A.PR, parent: "pB", back: "pR" },
-    // 削減は必ず餌を消すので狙いは消えない (見本は引けない)。もし消えたらサフィックスの狙い 2 つ + 外れの箱へ (settle が形の合う箱へ)
-    pBl: { out: "lost", parent: "pB", back: "jRC" },
-    pBj: { out: "junk", parent: "pB", back: "pJ" },
-    pD: { out: "hit", aim: A.PD, parent: "pR", done: "main" },
-    // 光のお告げ + 消去は冒涜の MOD だけを消すので結果は「外れが消えた」1 通り (10-22 オーナー、tree-sample の singleOutOf)
-    pX: { out: "junk", parent: "pR", hand: hand("annul", ["OmenofLight"]), outs: ["pX_g"] },
-    pX_g: { out: "junkGone", parent: "pX", back: "pR" },
+    pW: { out: "junk", parent: "d1", hand: ESS, outs: ["pE"] },
+    pE: { out: "hit", aim: A.W, parent: "pW", hand: hand("desecrate"), outs: ["pD", "pX"] },
+    // 冒涜の発現は一般 MOD も候補に出る (オーナー 10-22「冒涜は一般モッドもでる」) → レアリティを選べたら完成。外れは光のお告げ + 消去で冒涜の MOD だけ消して打ち直す (結果は 1 通り)
+    pD: { out: "hit", aim: A.PR, parent: "pE", done: "main" },
+    pX: { out: "junk", parent: "pE", hand: hand("annul", ["OmenofLight"]), outs: ["pX_g"] },
+    pX_g: { out: "junkGone", parent: "pX", back: "pE" },
+    // 無駄高貴でレアリティが付いた時: もう一度無駄高貴 (空きは 1 つで外れが確定) → エッセンスは外れかレアリティのどちらかを消す
+    pRx: { out: "hit", aim: A.PR, parent: "d1", hand: hand("exalt"), outs: ["pRxJ"] },
+    pRxJ: { out: "junk", parent: "pRx", hand: ESS, outs: ["pRxW", "pRxL"] },
+    pRxW: { out: "hit", aim: A.W, parent: "pRxJ", done: "main" },
+    // レアリティが消えた = 無駄高貴の外れが残る → 左側の消去で外れを消してルーンの守りの箱へ (ルーンの守りが消えたらサフィ完成の d1 へ)
+    pRxL: { out: "lost", parent: "pRxJ", hand: hand("annul", ["OmenofSinistralAnnulment"]), outs: ["pRxL_g", "pRxL_l"] },
+    pRxL_g: { out: "junkGone", parent: "pRxL", back: "pE" },
+    pRxL_l: { out: "lost", parent: "pRxL", back: "d1" },
   });
 }
 

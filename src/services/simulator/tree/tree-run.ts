@@ -164,8 +164,11 @@ export function shapesOf(doc: TreeDoc): Shape[] {
  * at = 今のアイテム (あればその箱の手が打てる時だけ。光 + 消去の箱は普通の MOD の外れを消せず、兜で 93 人止まった)
  */
 export function boxOfShape(shapes: readonly Shape[], key: string, at?: { data: PatchData; item: StageItem }): string | null {
-  if (key === JUNK_ONLY) return shapes.find((s) => s.key === key && (!at || !s.hand || !handProblem(at.data, at.item, s.hand)))?.box ?? "start";
-  return key.startsWith("#") ? "start" : shapes.find((s) => s.key === key)?.box ?? null;
+  const same = shapes.filter((s) => s.key === key);
+  // 同じ形の箱が幾つかあれば、手が打てる箱を先に (光 + 消去の箱へ普通の MOD の外れを持って来ても打てない、10-22 金の指輪の見本)
+  const ok = at ? same.find((s) => !s.hand || !handProblem(at.data, at.item, s.hand)) : same[0];
+  if (key === JUNK_ONLY) return ok?.box ?? "start";
+  return key.startsWith("#") ? "start" : (ok ?? same[0])?.box ?? null;
 }
 /** 狙い 0 + 外れあり の形の鍵 */
 const JUNK_ONLY = shapeKey([], true);
