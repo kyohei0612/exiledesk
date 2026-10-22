@@ -58,6 +58,21 @@
 - 次の手: 3,000 人での止まり 2〜3 (rc_q・pX、1/3000) の原因 → 1280 幅で箱の中のボタンが 20px の直す案を 1 行 → 5 (点検の残り)。
 - 気付き: 1280 幅は 75%・100% でも箱の中の押せる物が 20px (ページの zoom の分、前から)。全体表示 33% で右端の箱がミニマップに近い (前から)。
 
+## 引き継ぎ (10 本目 → 11 本目、10-22 夕。会話が重くなったので)
+- 済んだ物 (全部 commit・push 済み、書きかけ無し、開発版 ba0c5daa の後に Chrome 9333 は止めて返した、dev サーバーは立てていない、touching/simulator.md の自分の行は消した): 下の「10 本目」全部。② b3 (90f5af4f) と B gloves-perfect (58068e9b) は台本で済み。
+- 残り:
+  1. amulet-4aims-split (台本 scripts/_tree-patterns-probe のパターン) の安い打ち方を解析君 (local_80b3ce83-140f-4606-8edf-d9d1a37e45bc) に聞いて返事待ち。分かれ目の組み直し (プレの外れ → 左側の消去 / サフィの外れ 2 → 右側の消去 / それ以外 → 上級の高貴) では完成 9% で直らず戻した。側の消去のお告げは見本の形で「今は意味なし」で押せない (エンジンの決まり)。答えが来たら台本の木を組む。
+  2. #15 (下の＋の引っ張りで灰色の箱につながない)・#16 (カタリストが入らないベースの文)・#17 (当たりの既定は見本 4 つ) は台本だけ、画面 (本物のマウス) で未確かめ。#7 (カタリストの種類の選び) は画面で確かめ済み。
+  3. 解析君が今の HEAD で 13 本 + body-essence-path + 見本の回し直し中 (math/notes/2026-10-22-tree-patterns-check.md)。結果で 1 割超えが残ればブラック経由で。
+- 触っていた所: src/services/simulator/tree/ (tree-run・tree-sample・tree-check・tree-model・tree-hands・tree-samples)、src/views/simulator/tree/ (SimTreePage・TreeHandShelf・TreeModPick・TreeRunBar・TreeRunLayer・use-tree-run・use-tree-reveal・use-tree・use-tree-check・TreeIssues)、scripts/_tree-patterns-probe・_tree-file-check-probe。
+- 注意:
+  - SimTreePage.vue はちょうど 500 行。足すなら先に分ける。
+  - tree-run.ts は解析君の持ち物。直したら check-tree-run.mjs で見てもらう (今までの直しは解析君が 110 行差なしを確かめ済み、#4 以降は回し直し中)。
+  - 確かめの台本: 直すたびに `pnpm exec vitest run -c scripts/_tree-patterns-probe.config.ts` (約 90 秒) の前後の差と、`SAMPLE=gold-ring-suffix` / `SAMPLE=boots-res-split` の _tree-file-check-probe (どちらも精査 0・100 人完成 100 のはず)。
+  - 開発版の Chrome は新しく立てると鍵 (KEY_URL) を先に開かないとページが出ない。台本の雛形は共有メモ tree-merge/ の run-check・rec-ring・cat-check・halt.mjs。
+  - Python で書く時は newline='' (改行の形が変わる)。Bash の \ は 1 段消える。
+  - 見本の金の指輪のプレ: 左側のお告げはエッセンスだけ (オーナー「エッセンスだけいる、結晶化」)。冒涜の発現は一般 MOD も出る (オーナー)。指輪の冒涜専用 MOD にレアリティは無い。
+
 ## 10 本目 (10-22〜)
 - 読み込みを徐々に出す (オーナー 10-22「読み込みながら徐々に出す」「1 列目から徐々に表示していけばいい」、28bb12f9・e90eb321・c35caac4・be29b232、開発版 be29b232、push はブラックの OK 待ち): 箱はデータが来てから 1 段目から段ごとに出す (use-tree-reveal.ts、手で足した 3 個までは即、別の木を開くと出し直し = use-tree の opened)。札は共通の BusyTag (ジン部長) で題の横「読み込み中 n/m (段の数)」、精査は帯の見出し「5 人を辿っている n/5」「30 人を回している n/30」。精査の穴は辿った人から順に足す (9 本目の書きかけ tree-check の partial を引き継いだ)。仮の TreeBusy.vue は消した。
 - 確かめ: 開発版を窓なし Chrome 9333 で CPU 8 倍遅く、screencast の絵で (共有メモ tree-merge/busy-cast.mjs)。精査のボタンは本物のマウスの入力。靴の木で 1/5→5/5 と段ごと、精査 1/5→30/30 で札が消える。ミニマップに先の段が出ていた・穴 0 件の帯が始まりの箱にかかっていたのは直した。
