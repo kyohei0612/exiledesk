@@ -4,3 +4,4 @@
 
 | 誰 | ファイル |
 |---|---|
+| ジン部長 6 本目 | MOD 表の土台: src/components/for-share/mod-list/ (ModTable.vue 新・StageModList を分ける・StageWeightEdit・ModAddPicker はエミュへ)・src/views/craft-stage/StageModList.vue (新)・CraftStage.vue・src/views/simulator/tree/TreeGoalPage.vue、10-23 |
