@@ -33,6 +33,7 @@
 迷いやすい境目:
 - 画面の見た目・操作 → エミュの画面ならエミュ部長、シミュならシミュ部長、両方で一緒の部品ならデザイン部長。決まり・確率・打てるかなど中身 → ジン部長 (画面の部長はエンジンに触れない。要望は出した側だけが使える形で入口に、オーナー 10-22 深夜)。
 - どの画面からでも、共通の部品 (src/components・for-share)・言語の切り替えと用語集を直したい → デザイン部長。utils・web/ (ページの入口・タブ)・ゲームの名前・MOD の文のデータ → ジン部長。打つ処理・確率・MOD の数字が足りない → ジン部長に入口へ足してもらう (自前で書かせない)。
+- 入口の置き分け (オーナー 10-23): 結果が変わる物 (付き方・確率・固定・打てるか) はエンジン、見え方と操作は画面。エンジンの中は 核 (engine.ts) / エミュだけ (engine-emu.ts) / シミュだけ (engine-sim.ts)、両方が欲しい物はブラックが決めて核へ。シミュ由来の写しは作らせない (元からエンジンにある物はそのまま呼ぶ、確かめは「エミュの画面の同じ所と同じ答えか」を小さく。メモ feedback-sim-no-own-logic)。
 - 数字が正しいかの確かめ・打ち方の比べ → 解析君 (画面・コードの直しは持ち物の部)。解析君が「エンジンに無い手」を見つけた → ジン部長。
 - 要望・バグ → 分析君が受けて再現と部を特定 → ブラックがその部へ。要望の返事の文と置く (本番に出た後) → 分析君。
 - サーバー (server/live・server/web、Discord・記録・相場・dev-gate) → 分析君。server/live/src/sim.ts だけシミュ部長。
@@ -41,6 +42,7 @@
 - poe2db の大きな照らし・外の動画 → リサーチ長、エンジンの写しの直しはジン部長。アプリ (src-tauri・craft-v2・trade2・market) → 凍結、振らない。
 
 ## 地図
+- 今の様子: メモ black-board (ブラックの板、新しいブラックは最初に読む)。宛先・使用表は dev/todo.md、触っている物は dev/touching/*.md、持ち物は owners.txt (`node scripts/owner-of.mjs`)、エンジンと画面の分け方は ARCHITECTURE.md の「部ごとの持ち場」。
 - 決まりの元: メモ feedback-commander-style・feedback-no-delegate-wait・workflow-preferences・user-profile。
 - 外に出す物: メモ ui-try-before-release・feedback-backstage-release・feedback-replies、docs/pending-release.md。
 - 計画 docs/roadmap-2026-10.md、引き継ぎ MEMORY.md の「次のセッションへ」、迷ったら docs/ARCHITECTURE.md。
