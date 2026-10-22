@@ -46,6 +46,8 @@ export interface BoxStat {
   remain: number;
   /** remain > startCost + perItem (作り直しの方が安い) */
   warn: boolean;
+  /** この箱の手で使ったお金の 1 人あたり (神。次の箱に着いた時の費用 − 着いた時の費用、結果のレポートの「一番お金を使った箱」10-22) */
+  spend: number;
 }
 export interface TreeRunResult {
   n: number;
@@ -65,6 +67,8 @@ export interface TreeRunResult {
   meanFinished: number;
   median: number;
   p90: number;
+  /** 完成した人の費用の下位 10% (安い方、結果のレポート 10-22) */
+  p10: number;
   /** 1 人あたりの個数 (値段のキーごと) */
   uses: Record<string, number>;
   /** 1 人あたりの作り直しの回数 */
@@ -378,25 +382,26 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
   for (const p of people) if (p.end === "stuck") { stuckAt[p.at] = (stuckAt[p.at] ?? 0) + 1; if (p.why && !stuckWhy[p.at]) stuckWhy[p.at] = { ...p.why, backs: [...new Set(p.visits.map((v) => v.box).filter((id) => doc.boxes[id]?.back))] }; }
   const unexpected: Record<string, number> = {};
   for (const p of people) for (const id of p.odd) unexpected[id] = (unexpected[id] ?? 0) + 1;
-  const acc: Record<string, { reach: number; visits: number; costIn: number; remain: number }> = {};
-  for (const id of Object.keys(doc.boxes)) acc[id] = { reach: 0, visits: 0, costIn: 0, remain: 0 };
+  const acc: Record<string, { reach: number; visits: number; costIn: number; remain: number; spend: number }> = {};
+  for (const id of Object.keys(doc.boxes)) acc[id] = { reach: 0, visits: 0, costIn: 0, remain: 0, spend: 0 };
   for (const p of people) {
     const seen = new Set<string>();
-    for (const v of p.visits) {
+    p.visits.forEach((v, i) => {
       const a = acc[v.box];
-      if (!a) continue;
+      if (!a) return;
+      a.spend += (p.visits[i + 1]?.cost ?? p.cost) - v.cost;
       if (!seen.has(v.box)) { seen.add(v.box); a.reach++; }
       a.visits++;
       a.costIn += v.cost;
       a.remain += p.cost - v.cost;
-    }
+    });
   }
   const edges: Record<string, number> = {};
   for (const p of people) for (let i = 1; i < p.visits.length; i++) { const k = `${p.visits[i - 1]!.box}>${p.visits[i]!.box}`; edges[k] = (edges[k] ?? 0) + 1; }
   const boxes: Record<string, BoxStat> = {};
   for (const [id, a] of Object.entries(acc)) {
     const costIn = a.visits ? a.costIn / a.visits : 0, remain = a.visits ? a.remain / a.visits : 0;
-    boxes[id] = { reach: a.reach, visits: a.visits, costIn, remain, warn: a.visits > 0 && Number.isFinite(perItem) && remain > startCost + perItem };
+    boxes[id] = { reach: a.reach, visits: a.visits, costIn, remain, warn: a.visits > 0 && Number.isFinite(perItem) && remain > startCost + perItem, spend: a.spend / (n || 1) };
   }
   return {
     n, finished: fin.length,
@@ -404,7 +409,7 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
     stuck: people.filter((p) => p.end === "stuck").length,
     stuckAt, stuckWhy, unexpected, perItem,
     meanFinished: costs.length ? costs.reduce((a, b) => a + b, 0) / costs.length : NaN,
-    median: q(0.5), p90: q(0.9), uses, boxes, edges,
+    median: q(0.5), p90: q(0.9), p10: q(0.1), uses, boxes, edges,
     restarts: people.reduce((a, p) => a + p.restarts, 0) / (n || 1),
   };
 }
