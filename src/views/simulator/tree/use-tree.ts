@@ -93,6 +93,8 @@ function aimLabel(a: Aim | null): string {
   const side = r ? (r.side === "prefix" ? tr("プレ", "Prefix") : tr("サフィ", "Suffix")) : "";
   return `${a.tier === 1 ? "T1" : tr(`T${a.tier} 以上`, `T${a.tier}+`)} ${side} ${r?.template ?? a.modId}`;
 }
+/** 狙いの MOD の短い名前 (戻り先の札で、どの狙いの所の箱かを添える) */
+const aimShort = (a: Aim): string => rowOfMod(a.modId)?.template ?? a.modId;
 /** フラクチャーの文 (その段の数値で埋めた文 + 段) */
 function fractureLabel(a: Aim | null): string {
   if (!a) return "";
@@ -102,5 +104,5 @@ function fractureLabel(a: Aim | null): string {
 }
 
 export function useTree() {
-  return { doc, edit, undo, canUndo, reset, setBase, lostOnBase, open, setTreeNote, rows, aimLabel, fractureLabel };
+  return { doc, edit, undo, canUndo, reset, setBase, lostOnBase, open, setTreeNote, rows, aimLabel, aimShort, fractureLabel };
 }

@@ -155,7 +155,11 @@ function boxLabel(id: string): string {
   const to = doc.value.boxes[id];
   if (!to) return "";
   if (to.out === "start") return tr("始めに戻る", "Back to start");
-  return to.out === "hit" && to.aim ? t.aimLabel(to.aim) : outName(to.out);
+  if (to.out === "hit" && to.aim) return t.aimLabel(to.aim);
+  // 外れ・消えたの箱は、道で付いている狙いの MOD を添える (「↩ 外れ」だけではどの外れか分からなかった、10-22 靴・手袋を白紙から組んで)
+  const held: string[] = [];
+  for (let x: Box | undefined = to; x; x = x.parent ? doc.value.boxes[x.parent] : undefined) if (x.out === "hit" && x.aim) held.unshift(t.aimShort(x.aim));
+  return held.length ? `${outName(to.out)} (${[...new Set(held)].join("・")})` : tr(`${outName(to.out)} (狙い無し)`, `${outName(to.out)} (no target)`);
 }
 /**
  * 戻りの箱の下の行 = いつも行き先の箱の名前 (10-22 オーナー「続きからって選択肢選べんでしょ、そもそも白紙の状態からこうなるはず」)。
