@@ -12,7 +12,7 @@ import { allMods, listOf, modBoostsOf, mulberry32, room, SIDES, stepOutcomes, un
 import { CATALYSING, isCatalyst } from "./tree-hands";
 import { aimKey, type Aim, type OutKind, type TreeDoc } from "./tree-model";
 import { aimHeld, aimsOf, handAims, handProblem, outcomeOf, playHand, sampleOf, startItemOf } from "./tree-sample";
-import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, runTree, settle, shapesOf } from "./tree-run";
+import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, runTree, settle, shapesOf, splitTo } from "./tree-run";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
 
@@ -39,6 +39,8 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
   const aims = aimsOf(doc);
   /** 戻りの矢印の行き先 (形の合う箱へ = 行きうる全部、作り直し = 始まり) */
   const backTo = (id: string): string[] => {
+    const split = doc.boxes[id]?.split;
+    if (split) return split.flatMap((r) => (r.to ? [r.to] : []));
     const back = doc.boxes[id]?.back;
     if (!back) return [];
     if (back === MATCH) return matchTargets(doc, id).flatMap((x) => (x.to ? [x.to] : []));
@@ -49,7 +51,8 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
   // 始まりの MOD は自由 (無くてよい、10-22 オーナー)。付けられない時は見本の理由を出す
   { const note = startItemOf(data, doc, mulberry32(1)).note; if (note) add("start", "cantUse", tr(`始まりの形が作れない: ${note}`, `Can't make the starting item: ${note}`)); }
   for (const b of boxes) {
-    if (!b.hand && !b.back && !b.done) add(b.id, "open", b.out === "start" ? tr("最初の手を決めていない (ここで止まる)", "No first craft yet (stops here)") : tr("行き先を決めていない (ここで止まる)", "No next step yet (stops here)"));
+    if (b.split?.some((r) => !r.to)) add(b.id, "open", tr("分かれ目の行き先を決めていない行がある (その形で来た人はここで止まる)", "A split row has no destination (runs of that shape stop here)"));
+    if (!b.hand && !b.back && !b.done && !b.split) add(b.id, "open", b.out === "start" ? tr("最初の手を決めていない (ここで止まる)", "No first craft yet (stops here)") : tr("行き先を決めていない (ここで止まる)", "No next step yet (stops here)"));
     if (b.out === "hit" && !b.aim) add(b.id, "noAim", tr("付く MOD を選んでいない", "No mod picked for this hit"));
     // 触媒のお告げはカタリストで入れた品質にだけ効く。カタリストを打つ手が無ければ効きは乗らない (10-22 オーナー「ちゃんと打つルートが無いとあかん」)。
     // 品質だけ上げる手 (カタリスト) の後の通り抜けから打つ時は、その手がカタリストを打つ手
@@ -76,8 +79,8 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
     }
   }
   if (done.length) for (const b of boxes) {
-    if (reach.has(b.id) || (!b.hand && !b.back && !b.done)) continue; // 決めていない芽は 1) で出している
-    if (b.back) add(b.id, "loop", tr("戻りの輪から抜けられない (完成の箱へ着く道が無い)", "Stuck in a return loop (no way to a done box)"));
+    if (reach.has(b.id) || (!b.hand && !b.back && !b.done && !b.split)) continue; // 決めていない芽は 1) で出している
+    if (b.back || b.split) add(b.id, "loop", tr("戻りの輪から抜けられない (完成の箱へ着く道が無い)", "Stuck in a return loop (no way to a done box)"));
     else if (b.hand && b.outs.every((o) => !reach.has(o))) add(b.id, "noDone", tr("この先は完成の箱へ一度も着かない", "Nothing below this ever reaches a done box"));
   }
 
@@ -112,6 +115,13 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
         if (b.done === "main") { const n = aims.filter((a) => aimHeld(data, item, a)).length; heldAtDone.set(id, Math.min(heldAtDone.get(id) ?? n, n)); }
         if (b.done) for (let x: typeof b | undefined = b; x; x = x.parent ? doc.boxes[x.parent] : undefined) for (const m of x.unwanted ?? []) {
           if (aimHeld(data, item, { modId: m, tier: 99 })) add(id, "unwanted", tr("× (要らない) の印の MOD が残ったまま完成", "A mod marked × (unwanted) is still on the done item"));
+        }
+        // 分かれ目: 今のアイテムの形で合う行の箱へ (回す時と同じ splitTo)。合う行が無い・行き先が無い時は止まる
+        if (b.split) {
+          const to = splitTo(data, b.split, item, aims);
+          if (!to) { add(id, "noMatch", tr("分かれ目のどの行にも合わない形で着く (回すとここで止まる)", "Arrives in a shape no split row matches (runs stop here)")); return; }
+          walk(to, item, viaBack);
+          return;
         }
         if (b.back && !viaBack) {
           // 形の合う箱へ = 回す時と同じく今のアイテムの形で行き先を決める (tree-run の matchItem)。作り直し = 始めのアイテムで始まりへ
@@ -168,7 +178,7 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
       // 外れを持ったまま戻る「狙いが消えた」の戻り (作り直しでない)。カオスを当たるまでは 1 つしか入れ替えないので、持ち込んだ外れは消えずに先で満杯になる (10-22 靴 b14 → b1、100 人中 63 人)
       const carry = (w?.backs ?? []).filter((x) => doc.boxes[x]?.out === "lost" && doc.boxes[x]?.back !== RESTART);
       add(id, "stuck", stuckText(data, aims, n, w, carry.length > 0));
-      for (const x of carry) add(x, "carry", tr("ここで戻ると外れを持ったまま進み、先の箱で側が満杯になって止まる (直すのはこの戻り。分かれ目の箱「外れが 2 つなら消去」は次の段)", "Returning here keeps the misses, so a later box runs out of room and stops (fix this return; split boxes such as \"annul when 2 misses\" come later)"));
+      for (const x of carry) add(x, "carry", tr("ここで戻ると外れを持ったまま進み、先の箱で側が満杯になって止まる (直すのはこの戻り: 戻り先を分かれ目の箱 (打たずに分ける) にして「外れが 2 つ以上なら消去」の行を)", "Returning here keeps the misses, so a later box runs out of room and stops (fix this return: send it to a split box with an \"annul when 2+ misses\" row)"));
     }
     for (const id of never) add(id, "neverHit", tr("上の手を打ち直してもこの札が付かなかった (側・段・手を確かめる)", "This mod never hit when the craft above was retried (check side, tier and craft)"));
   }
@@ -187,7 +197,7 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
 /** 回して止まる箱の文: 何人・どの側が満杯か・外れの MOD (最初の 1 人の形)。理由が側の満杯でなければエンジンの理由をそのまま */
 function stuckText(data: PatchData, aims: readonly Aim[], n: number, w: { reason: string; item: StageItem } | undefined, carry: boolean): string {
   const head = tr(`回すと ${RUN_PEOPLE} 人中 ${n} 人がここで止まる`, `${n} of ${RUN_PEOPLE} runs stop here`);
-  if (!w) return tr(`${head} (この箱に手が無い・戻り先が無い)`, `${head} (no craft or no return here)`);
+  if (!w) return tr(`${head} (手・戻り先が無い、または分かれ目のどの行にも合わない)`, `${head} (no craft or return, or no split row matches)`);
   const full = SIDES.filter((side) => !room(w.item, side));
   if (!full.length) return `${head}: ${w.reason}`;
   const isAim = (m: StageItem["prefixes"][number]): boolean => aims.some((a) => aimHeld(data, { ...w.item, prefixes: [m], suffixes: [] }, a));

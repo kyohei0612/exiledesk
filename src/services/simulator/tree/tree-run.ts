@@ -9,7 +9,7 @@ import { mulberry32, type PatchData, type StageItem, type StageMod } from "../..
 import { kindOfCurrency } from "./tree-hands";
 import { aimHeld, aimsOf, handAims, outcomeOf, playHand, startItemOf as startOf } from "./tree-sample";
 import { withTreeTune } from "./tree-tune";
-import { aimKey, MATCH_BACK, type Aim, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
+import { aimKey, MATCH_BACK, type Aim, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc } from "./tree-model";
 
 export interface TreeRunOpts {
   /** 人数 (裏は 100、確かめは 300) */
@@ -83,27 +83,15 @@ export const MATCH = MATCH_BACK;
 export const RESTART = "restart";
 
 /**
- * 分かれ目の箱 (設計 2 弾目「打たずに状態で分ける」): 手を打たずに、今のアイテムの状態の条件を上から順に見て、最初に合った行の箱へ進む。
- * TreeDoc の型にはまだ無いので、箱に split / next を足した形 (SplitBox) をここだけで読む。どの行にも合わなければ止まる。
- * next = 手の結果がどれでも、この箱へ進む (分かれ目に戻す時に結果の箱を並べなくてよい)
+ * 分かれ目の箱 (設計 2 弾目「打たずに状態で分ける」、10-22 画面にも): 手を打たずに、今のアイテムの状態の条件を上から順に見て、最初に合った行の箱へ進む。
+ * 形 (split) は tree-model の TreeBox。どの行にも合わない・行き先を決めていない行に合ったら止まる。
+ * next = 手の結果がどれでも、この箱へ進む (解析君の台本の木だけ。分かれ目に戻す時に結果の箱を並べなくてよい)
  */
-type Range = [number, number];
-export interface SplitWhen {
-  /** 付いている狙いの数 */
-  heldCount?: Range;
-  /** 全部付いている狙い (aimKey) */
-  has?: string[];
-  /** どれも付いていない狙い (aimKey) */
-  lacks?: string[];
-  /** 外れ (固定でも狙いでもない MOD) の数 */
-  junk?: { prefix?: Range; suffix?: Range; any?: Range };
-  /** 固定でない MOD の数 */
-  free?: { prefix?: Range; suffix?: Range; any?: Range };
-}
-export interface SplitRule { when: SplitWhen; to: string }
-export type SplitBox = TreeBox & { split?: SplitRule[]; next?: string };
+export type { SplitRule, SplitWhen } from "./tree-model";
+export type SplitBox = TreeBox & { next?: string };
+type Range = SplitRange;
 const inRange = (n: number, r?: Range): boolean => !r || (n >= r[0] && n <= r[1]);
-function splitTo(data: PatchData, rules: readonly SplitRule[], item: StageItem, aims: readonly Aim[]): string | null {
+export function splitTo(data: PatchData, rules: readonly SplitRule[], item: StageItem, aims: readonly Aim[]): string | null {
   const held = new Set(aims.filter((a) => aimHeld(data, item, a)).map(aimKey));
   const isAim = (m: StageMod): boolean => aims.some((a) => aimHeld(data, { ...item, prefixes: [m], suffixes: [] }, a));
   const count = (side: "prefix" | "suffix" | "any", junkOnly: boolean): number =>

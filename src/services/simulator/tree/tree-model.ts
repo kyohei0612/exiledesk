@@ -15,7 +15,7 @@ import type { TreeTune } from "./tree-tune";
  * pass = 品質だけ上げる手 (カタリスト) の後の通り抜け。画面には箱を描かず、打つ手の札の下に次の手の札 (か＋) をつなぐ
  * (オーナー 10-22「品質だけ上げるくだりがあるでしょ、オーブを打つだけの表示でいいから下に＋」)
  */
-export type OutKind = "hit" | "junk" | "junkGone" | "lost" | "any" | "pass";
+export type OutKind = "hit" | "junk" | "junkGone" | "lost" | "any" | "pass" | "branch";
 export type HandKind = "add" | "remove" | "swap" | "spam" | "free" | "quality";
 /** 狙い: MOD と段 (tier = T 何以上、1 = T1 だけ)。フラクチャーの時は「その段」 */
 export interface Aim { modId: string; tier: number }
@@ -57,7 +57,26 @@ export interface TreeBox {
   unwanted?: string[];
   /** 戻りの矢印を同じ形の箱へ自動でつないだ (tree-run の linkSameShape。手で替えると外す) */
   autoBack?: true;
+  /** 分かれ目 (打たずに分ける、10-22 オーナー OK): 行を上から見て最初に合った行の箱へ進む。hand・back・done・outs とは一緒に持たない。最後の行は「それ以外」(when が空) */
+  split?: SplitRule[];
 }
+/** 分かれ目の条件の範囲 [下, 上] (上は 99 で「以上」) */
+export type SplitRange = [number, number];
+/** 分かれ目の 1 行の条件 (tree-run の splitTo が読む。全部満たした時に合う。空 = それ以外) */
+export interface SplitWhen {
+  /** 付いている狙いの数 */
+  heldCount?: SplitRange;
+  /** 全部付いている狙い (aimKey) */
+  has?: string[];
+  /** どれも付いていない狙い (aimKey) */
+  lacks?: string[];
+  /** 外れ (固定でも狙いでもない MOD) の数 */
+  junk?: { prefix?: SplitRange; suffix?: SplitRange; any?: SplitRange };
+  /** 固定でない MOD の数 */
+  free?: { prefix?: SplitRange; suffix?: SplitRange; any?: SplitRange };
+}
+/** 分かれ目の 1 行 (to = 行き先の箱。画面で選ぶまでは null = そこへ来た人は止まる) */
+export interface SplitRule { when: SplitWhen; to: string | null }
 /** 始まりの MOD 1 つ (段は指名。fractured = フラクチャー済み、1 つまで) */
 export interface StartMod { modId: string; tier: number; fractured?: true }
 /**
@@ -146,7 +165,10 @@ function subtree(d: TreeDoc, id: string): string[] {
 function drop(d: TreeDoc, ids: readonly string[]): void {
   const gone = new Set(ids);
   for (const id of ids) delete d.boxes[id];
-  for (const b of Object.values(d.boxes)) if (b.back && gone.has(b.back)) b.back = null;
+  for (const b of Object.values(d.boxes)) {
+    if (b.back && gone.has(b.back)) b.back = null;
+    for (const r of b.split ?? []) if (r.to && gone.has(r.to)) r.to = null;
+  }
 }
 
 /** 矢印の先の箱を親の下に並べ直す (子の下の箱も一緒に動かす) */
@@ -218,6 +240,7 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   const same = b.hand && want.every((k) => now.includes(k)) && now.every((k) => k !== "start" && want.includes(k));
   b.hand = { ...hand, omens: [...hand.omens], repeat: hand.repeat ? { ...hand.repeat } : null };
   b.back = null;
+  delete b.split;
   delete b.autoBack;
   if (same) return;
   for (const o of b.outs) drop(d, subtree(d, o));
@@ -288,14 +311,66 @@ export function setBack(d: TreeDoc, id: string, to: string | null): void {
   if (to && (to === id || !d.boxes[to])) return;
   b.back = to;
   delete b.autoBack;
-  if (to) b.done = null;
+  if (to) { b.done = null; delete b.split; }
 }
 
 /** 完成の印 (当たりの箱だけ。次の手・戻りの矢印とは一緒に持たない) */
 export function setDone(d: TreeDoc, id: string, v: TreeBox["done"]): void {
   const b = d.boxes[id];
-  if (!b || b.out !== "hit" || b.hand || b.back) return;
+  // 分かれ目の行の箱 (branch) も完成にできる (「狙いが 2 つ以上 → 完成」)
+  if (!b || (b.out !== "hit" && b.out !== "branch") || b.hand || b.back || b.split) return;
   b.done = v;
+}
+
+/**
+ * 分かれ目にする (打たずに分ける、10-22 オーナー OK)。次の手・戻り・完成は外し、下の箱は消す。行ごとに下の箱 (branch) を 1 つ持ち、
+ * その箱に次の手か戻りの矢印を付ける (既にある箱へ行くのは、その箱の「↩ 戻り先」で)。行は「それ以外」の 1 行から。始まりの箱は分かれ目にしない
+ */
+export function setSplit(d: TreeDoc, id: string): void {
+  const b = d.boxes[id];
+  if (!b || b.out === "start" || b.split) return;
+  for (const o of b.outs) drop(d, subtree(d, o));
+  b.hand = null;
+  b.back = null;
+  delete b.autoBack;
+  b.done = null;
+  const c = mk(d, "branch", id);
+  b.outs = [c.id];
+  b.split = [{ when: {}, to: c.id }];
+  spread(d, id);
+  makeRoom(d, id);
+}
+/** 分かれ目をやめる (行の箱とその下を消して、ふつうの箱に戻す) */
+export function clearSplit(d: TreeDoc, id: string): void {
+  const b = d.boxes[id];
+  if (!b?.split) return;
+  for (const o of b.outs) drop(d, subtree(d, o));
+  b.outs = [];
+  delete b.split;
+}
+/** 分かれ目に行を足す (「それ以外」の前。行の箱も 1 つ作る) */
+export function addSplitRow(d: TreeDoc, id: string, when: SplitWhen): void {
+  const b = d.boxes[id];
+  if (!b?.split) return;
+  const c = mk(d, "branch", id);
+  b.split.splice(b.split.length - 1, 0, { when: JSON.parse(JSON.stringify(when)) as SplitWhen, to: c.id });
+  b.outs = b.split.map((r) => r.to!).filter((x) => !!d.boxes[x]);
+  spread(d, id);
+  makeRoom(d, id);
+}
+/** 分かれ目の i 行目の条件を替える (「それ以外」の行は替えない) */
+export function setSplitWhen(d: TreeDoc, id: string, i: number, when: SplitWhen): void {
+  const b = d.boxes[id];
+  if (!b?.split || i >= b.split.length - 1) return;
+  b.split[i]!.when = JSON.parse(JSON.stringify(when)) as SplitWhen;
+}
+/** 分かれ目の i 行目を消す (行の箱とその下も。「それ以外」の行は消さない) */
+export function removeSplitRow(d: TreeDoc, id: string, i: number): void {
+  const b = d.boxes[id];
+  if (!b?.split || i >= b.split.length - 1) return;
+  const [r] = b.split.splice(i, 1);
+  if (r?.to && b.outs.includes(r.to)) drop(d, subtree(d, r.to));
+  b.outs = b.outs.filter((o) => o !== r?.to);
 }
 
 /**
@@ -340,7 +415,7 @@ export function setNote(d: TreeDoc, id: string | null, text: string): void {
 }
 
 /** 整列で兄弟を並べる順 (当たり → 狙いが消えた → 外れが消えた → 外れ。外れは一番右) */
-const OUT_ORDER: Record<TreeBox["out"], number> = { start: 0, hit: 0, any: 0, pass: 0, lost: 1, junkGone: 2, junk: 3 };
+const OUT_ORDER: Record<TreeBox["out"], number> = { start: 0, hit: 0, any: 0, pass: 0, branch: 0, lost: 1, junkGone: 2, junk: 3 };
 /** 整列の兄弟の間 (横の＋が 14px はみ出す分 + 戻りの線の縦の通り道 4 本分、オーナー 10-22「整列で箱の間に通り道の分のすき間」) */
 const TIDY_GAP = 64;
 /** 親から 2 行以上下の子へ降りる縦の線の、輪郭に入れる幅 (箱の真ん中から左右) */

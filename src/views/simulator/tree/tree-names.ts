@@ -28,6 +28,8 @@ export const OUT_LOOK: Record<TreeBox["out"], { ja: string; en: string; c: strin
   lost: { ja: "狙いが消えた", en: "Target lost", c: "165,139,224", icon: "rotate" },
   any: { ja: "打った後", en: "After", c: "200,184,150", icon: "plus" },
   pass: { ja: "品質を上げた後", en: "Quality raised", c: "200,184,150", icon: "plus" },
+  // 分かれ目の行の箱 (打たずに分けた先。副題は行の条件、splitWhenText)
+  branch: { ja: "分かれ目の先", en: "Branch", c: "120,200,190", icon: "arrow-right" },
 };
 
 /** 箱の種類の名前 (始まり・当たり・外れ…。一覧・戻り先の札・まとめた札で同じ) */
