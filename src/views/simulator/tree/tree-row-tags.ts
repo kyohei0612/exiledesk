@@ -4,7 +4,7 @@
  * × の印 (前の試し打ちで付けた物) の行は「× 要らない」が先、フラクチャーは付けない
  */
 import { type PatchData, type StageItem } from "../../../services/craft-stage/engine";
-import { isAimMod } from "../../../services/craft-stage/engine-sim";
+import { isAimMod } from "../../../services/simulator/tree/tree-play";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { aimOpts, aimsOf, targetsOf } from "../../../services/simulator/tree/tree-sample";
 import type { RowTag } from "../../../components/stage/item/stage-item-row-tag";

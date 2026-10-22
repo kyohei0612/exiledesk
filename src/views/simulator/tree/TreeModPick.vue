@@ -11,7 +11,8 @@ import { tr } from "../../../i18n/lang";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { craftStage as s } from "../../../state/craft-stage";
 import { freshItem } from "../../../services/craft-stage/engine";
-import { aimHeldOn, modListForUse, tierRankLabel } from "../../../services/craft-stage/engine-sim";
+import { tierRankLabel } from "../../../services/craft-stage/engine";
+import { aimHeldOn, modListForUse } from "../../../services/simulator/tree/tree-play";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { aimKey } from "../../../services/simulator/tree/tree-model";
 

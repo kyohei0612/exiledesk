@@ -6,8 +6,9 @@
  * その下の箱 = 親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
-import { applyCurrency, forceKey, freshItem, mulberry32, stepOutcomes, unrevealedOf, type AimTarget, type PatchData, type StageApply, type StageItem } from "../../craft-stage/engine";
-import { aimDiff, aimHeldOn, applyHand, canUse, effectOf, fillCatalyst, isAimMod, startWith, tierIndexOf, type AimHitOpts } from "../../craft-stage/engine-sim";
+import { applyCurrency, forceKey, freshItem, mulberry32, stepOutcomes, tierIndexOf, unrevealedOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem } from "../../craft-stage/engine";
+import { fillCatalyst } from "../../craft-stage/engine-sim";
+import { aimDiff, aimHeldOn, applyHand, canUse, effectOf, isAimMod, startWith } from "./tree-play";
 import { ECHO, engineOmens, isCatalyst } from "./tree-hands";
 import { startOf, type Aim, type Hand, type OutKind, type TreeDoc } from "./tree-model";
 import { withTreeTune } from "./tree-tune";

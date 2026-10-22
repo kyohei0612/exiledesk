@@ -3,7 +3,7 @@
  * 名前は画面の側 (views/simulator/tree/tree-names.ts、クラフト台の棚と同じ nameOfKey)。手の効果はエンジン (applyCurrency)、ここは種類と並びだけ
  */
 import { CATALYSTS, kindOf } from "../../craft-stage/engine";
-import { ABYSSAL_ECHO_OMEN, CATALYSING_OMEN, isCatalystKey } from "../../craft-stage/engine-sim";
+import { ABYSSAL_ECHO_OMEN, CATALYSING_OMEN, isCatalystKey } from "./tree-play";
 
 /** カタリスト = 品質だけ上げる手 (エンジンの入口の isCatalystKey。catalyst_<タグ>・jcatalyst_<タグ>) */
 export const isCatalyst = isCatalystKey;

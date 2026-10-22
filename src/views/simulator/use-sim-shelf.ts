@@ -8,7 +8,7 @@ import { ref, type Ref } from "vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { provideShelf, simHidden } from "../../state/stage/shelf-context";
 import { type StageItem } from "../../services/craft-stage/engine";
-import { canUse } from "../../services/craft-stage/engine-sim";
+import { canUse } from "../../services/simulator/tree/tree-play";
 import { tr } from "../../i18n/lang";
 
 export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null> = ref(null), omens: Ref<string[]> = ref([])) {

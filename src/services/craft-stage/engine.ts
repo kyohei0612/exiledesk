@@ -25,6 +25,8 @@ export { omenBlock } from "./omen-block";
 
 // アイテムの今を読む
 export { allMods, listOf, room, limitOf, effectiveCls, maxQualityOf, catalystOf, SIDES, sideOfMod, unfracturable } from "./stage-core";
+// MOD を段から作る (数値の決め方は rng)・そのカタリストがその MOD を伸ばすか
+export { makeStageMod, catalystBoosts } from "./stage-core";
 export { socketCapOf } from "./stage-runes";
 export { dpsText } from "./stage-pob";
 export { DEF } from "./defence";
@@ -67,8 +69,11 @@ export { forceKey } from "./apply-force";
 // 持った瞬間の % (クラフト台の MOD 一覧と同じ) と狙う
 export type { HeldOdds } from "./held-odds";
 export { heldOdds, heldAnyOf, aimTierKey } from "./held-odds";
-export type { AimTarget, AimCombo, AimOdd } from "./aim-odds";
-export { aimCombos, aimOdds, aimChain, aimDone } from "./aim-odds";
+export type { AimTarget, AimCombo, AimOdd, AimHitOpts } from "./aim-odds";
+// aimHits = その MOD が狙い (段の番号以上) に当たるか (sameText = 同じ系統で文も同じ別の modId も当たり)
+export { aimCombos, aimOdds, aimChain, aimDone, hits as aimHits } from "./aim-odds";
+// 段の換算 (段の番号 ↔ 段の名前の T・狙いが全部付く一番低いアイテムレベル・段の札の文字)
+export { tierIndexOf, tierRankOf, tierNoOf, minIlvlFor, tierRankLabel } from "./tier-rank";
 export { DESECRATION_EXCLUSIVE_COUNT, bossOmenAllowed, desecrationOmenForMod } from "../../vendor/poe2htc/engine/probability";
 
 // 名簿

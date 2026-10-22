@@ -6,7 +6,7 @@
  * 繰り返し (当たるまで) は tree-sample の playHand と同じ流れを、個数を数えるためにここでたどる (playHand を変える時はここも合わせる)。
  */
 import { mulberry32, sideOfMod, type PatchData, type StageItem } from "../../craft-stage/engine";
-import { aimHeldOn, effectOf, isAimMod, junkOf } from "../../craft-stage/engine-sim";
+import { aimHeldOn, effectOf, isAimMod, junkOf } from "./tree-play";
 import { aimOpts, aimsOf, handAims, handProblem, outcomeOf, playHand, startItemOf as startOf, targetsOf } from "./tree-sample";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";

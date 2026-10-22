@@ -7,7 +7,7 @@
  * ベースの値段 (白・4 MOD・フラクチャー済み) は手入力の神、カレンシーは今の相場 (price、高貴建て)。結果は神
  */
 import { freshItem, sideOfMod, type PatchData } from "../../craft-stage/engine";
-import { tierIndexOf } from "../../craft-stage/engine-sim";
+import { tierIndexOf } from "../../craft-stage/engine";
 import { methodsFor, type SimStartKind } from "../sim-methods";
 import type { SimTargetIn } from "../quiz-build";
 import { startCalc, startCostOf } from "../start-cost";
