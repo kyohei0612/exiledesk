@@ -9,7 +9,7 @@
  * 前は戻った先の手が打てるかだけ見て先へ進まず、精査に出なかった
  */
 import { allMods, listOf, modBoostsOf, mulberry32, room, SIDES, stepOutcomes, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
-import { CATALYSING, engineOmens, isCatalyst } from "./tree-hands";
+import { CATALYSING, catalystTagOf, engineOmens, isCatalyst } from "./tree-hands";
 import { aimKey, type Aim, type OutKind, type TreeDoc } from "./tree-model";
 import { aimHeld, aimsOf, handAims, handProblem, outcomeOf, playHand, sampleOf, startItemOf } from "./tree-sample";
 import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, runTreeSteps, settle, shapesOf, splitTo } from "./tree-run";
@@ -168,7 +168,7 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
         // カタリストは手の札 (前の版) か、前の「カタリストの手」の箱 (品質だけ上げた後の通り抜けの親、今の画面。10-22 13 通り組んだ #6 で見ていなかった)
         const preCat = b.out === "pass" && b.parent ? doc.boxes[b.parent]?.hand : null;
         const cat = b.hand.catalyst ?? (preCat && isCatalyst(preCat.currency) ? preCat.currency : null);
-        const tag = cat && b.hand.omens.includes(CATALYSING) ? cat.slice("catalyst_".length) : null;
+        const tag = cat && b.hand.omens.includes(CATALYSING) ? catalystTagOf(cat) : null;
         let boosted = false, hits = 0;
         for (const o of b.outs) {
           const ob = doc.boxes[o]!;

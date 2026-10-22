@@ -6,8 +6,8 @@
  * その下の箱 = 親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
-import { aimHits, applyCurrency, freshItem, maxQualityOf, mulberry32, omenBlock, revealOffers, runeIdByName, stepOutcomes, unrevealedOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
-import { CATALYSING, ECHO, engineOmens, isCatalyst, kindOfCurrency } from "./tree-hands";
+import { aimHits, applyCurrency, catalystOf, freshItem, maxQualityOf, mulberry32, omenBlock, revealOffers, runeIdByName, stepOutcomes, unrevealedOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { CATALYSING, catalystTagOf, ECHO, engineOmens, isCatalyst, kindOfCurrency } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import { startOf, type Aim, type Hand, type OutKind, type TreeDoc } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
@@ -117,10 +117,14 @@ const SINGLE_SEEDS = 8;
  * 最大はエンジンの maxQualityOf (普通 20%、品質の最大値 +20% の MOD があれば 40%。後で足すインフューザーもここに入る)。
  * 別の種類のカタリストが入っていれば 0 から (エンジンどおり)。count = 入れた個数 (費用はこの分)
  */
+/** そのカタリストの種類で品質が最大か (エンジンの catalystOf = 指輪・アミュレットなどは別の欄のカタリストの品質) */
+export function catalystFull(item: StageItem, key: string): boolean {
+  const c = catalystOf(item);
+  return c.tag === catalystTagOf(key) && c.pct >= maxQualityOf(item);
+}
 export function fillCatalyst(data: PatchData, item: StageItem, key: string, rng: () => number): StageApply & { count: number } {
-  const tag = key.slice("catalyst_".length), max = maxQualityOf(item);
   let it = item, count = 0, last: StageApply = { applied: false, item, added: [], removed: [] };
-  for (let i = 0; i < CAT_MAX && !(it.qualityTag === tag && it.quality >= max); i++) {
+  for (let i = 0; i < CAT_MAX && !catalystFull(it, key); i++) {
     last = applyCurrency(data, it, key, rng, [], { oneCatalyst: true });
     if (!last.applied) break;
     it = last.item;
@@ -154,13 +158,13 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
   if (isCatalyst(h.currency)) {
     const r = fillCatalyst(data, item, h.currency, rng);
     if (r.count) use?.(h.currency, r.count);
-    return r.count || (item.qualityTag === h.currency.slice("catalyst_".length) && item.quality >= maxQualityOf(item)) ? { ...r, applied: true } : r;
+    return r.count || catalystFull(item, h.currency) ? { ...r, applied: true } : r;
   }
   let it = item;
   // 触媒の高貴の前に、カタリストで品質を最大まで (箱の手も 1 押しと同じ)
   if (h.catalyst && h.omens.includes(CATALYSING)) {
     const r = fillCatalyst(data, it, h.catalyst, rng);
-    if (!r.applied && r.count === 0 && !(it.qualityTag === h.catalyst.slice("catalyst_".length))) return r;
+    if (!r.applied && r.count === 0 && catalystOf(it).tag !== catalystTagOf(h.catalyst)) return r;
     if (r.count) use?.(h.catalyst, r.count);
     it = r.item;
   }

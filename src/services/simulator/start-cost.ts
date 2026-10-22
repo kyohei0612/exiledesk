@@ -90,7 +90,7 @@ export function startCalc(o: StartCalcIn) {
   const { each, pHit } = pAt(gr.odds);
   const abyss = `essence:perfect:${it.cls.id}/PerfectEssence_EssenceAbyss`;
   // マジックのループの変成・増強・消去の平均 (上の augmentLoop の説明)
-  const fside = m.type === "suffix" ? "suffix" : "prefix";
+  const fside = sideOfMod(d, m.id);
   // 増強で付く確率が 0 の MOD (金の指輪の見本の特殊な MOD など) は回して数えない (打ち止めまで打ち続け 1 回 4 秒、ツリーを開くと真っ黒、10-22。結果は前も ∞)
   const one = o.fracMembers.length === 1 && pHit > 0 ? augmentLoop(d, { ...blank, rarity: "normal" }, gr.g, { modId: o.fracMembers[0]!.modId, minTierIndex: o.fracMembers[0]!.minTierIndex }) : null;
   const lc = one && !one.off && one.hitRate > 0
@@ -132,7 +132,7 @@ export function startCalc(o: StartCalcIn) {
   /** 4 MOD を買う道の 1 個 (フラクチャー済みになるまで) = (ベース代 + フラクチャー) ÷ フラクチャーの当たり */
   const fourTotal = buyOnce != null && fracP > 0 ? buyOnce / fracP : null;
   // 適当なレアを消去で 1 MOD → カオスの道は 2026-10-21 に外した (オーナー「誤差やろもはや消してくれ」。白からは増強スパムの道だけ)
-  const g = greaterRouteCost({ data: d, targets: o.targets, fracSide: m.type === "suffix" ? "suffix" : "prefix", p: pHit, grade: gr, odds: gr.odds, white, runeLines, price: priceOf, name: nameOf });
+  const g = greaterRouteCost({ data: d, targets: o.targets, fracSide: sideOfMod(d, m.id), p: pHit, grade: gr, odds: gr.odds, white, runeLines, price: priceOf, name: nameOf });
   if (g) {
     // グレーターエッセンスを巻き込む道: 自前のフラクチャーだけ (買う始め方・適当なレアの道は無し)。固定の後に消さない (残す MOD を持ったまま進む)
     return { pHit, each, rerolls: g.augment, loop: null as { augment: number; annul: number; share: number } | null, lines: g.lines, buyLines, once: g.once, after: 0, total: fracP > 0 ? g.once / fracP : Infinity, fracP, noAbyss: false, cantRoll: pHit === 0 || g.cantKeep, grade: gr.ja, buyRest, breakEven: 0, buyOnce: null, fourTotal: null as number | null,

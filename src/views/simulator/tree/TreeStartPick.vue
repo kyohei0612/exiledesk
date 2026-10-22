@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import NumStep from "../../../components/NumStep.vue";
-import { applyCurrency, freshItem, mulberry32, RUNES, runeEffectFor, socketCapOf } from "../../../services/craft-stage/engine";
+import { applyCurrency, freshItem, limitOf, mulberry32, RUNES, runeEffectFor, socketCapOf } from "../../../services/craft-stage/engine";
 import { migrateStart, startOf, type Aim, type TreeRarity, type TreeStart } from "../../../services/simulator/tree/tree-model";
 import { startItemOf } from "../../../services/simulator/tree/tree-sample";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -63,11 +63,11 @@ const runes = computed(() => st.value.runes ?? []);
 const addRune = (en: string): void => { if (en) change((x) => { x.runes = [...(x.runes ?? []), en]; }); };
 const removeRune = (i: number): void => change((x) => { x.runes = (x.runes ?? []).filter((_, j) => j !== i); if (!x.runes.length) delete x.runes; });
 
-/** 乱数の MOD の数 (素の高貴を n 回。レアは 6 つまでなので 0〜5) */
-const RANDOM_MAX = 5;
+/** 乱数の MOD の数 (素の高貴を n 回)。上限 = このベースのレアの枠 (エンジンの limitOf) − 始まりの MOD */
+const randomMax = computed(() => { const d = s.data.value; if (!d) return 5; const it = freshItem(d, t.doc.value.base, t.doc.value.itemLevel, "rare"); return Math.max(0, limitOf(it, "prefix") + limitOf(it, "suffix") - st.value.mods.length); });
 const rand = ref<number | null>(t.doc.value.startRandom ?? 0);
 function setRand(v: number | null): void {
-  rand.value = v === null ? null : Math.max(0, Math.min(RANDOM_MAX, Math.round(v)));
+  rand.value = v === null ? null : Math.max(0, Math.min(randomMax.value, Math.round(v)));
   if (rand.value !== null) t.setStartRandom(rand.value);
 }
 /** 作れない時の理由 (エンジンの force・ルーンの理由。枠が足りない・同じ系統・ソケットが足りないなど) */
