@@ -5,7 +5,7 @@ import WebApp from "./WebApp.vue";
 import { startTracking } from "./track";
 import { startStageSession } from "../state/stage-session"; // 記事などから戻った時に前のクラフト画面で (2026-10-22)
 import { startLogSender } from "../services/telemetry/log-sender";
-import { startPwa } from "./pwa";
+import { startPwa, startStaleReload } from "./pwa";
 import { applyNoLogParam, noLog } from "../utils/no-log";
 import { initRecParts } from "../utils/rec-mode";
 import { setMarketLoader } from "../state/market-store";
@@ -17,6 +17,8 @@ import type { CurrencyItem, League } from "../api/poe2scout";
 applyNoLogParam();
 // 録画モード (?rec=1) の部分ごとの見せる / 隠す (POE2Tube 要望 ㊸)
 initRecParts();
+// 版が替わった後に開いたままのタブが古い塊を読んで壊れたら、1 回だけ読み直す (pwa.ts。開発中は塊の名前が変わらないので要らない)
+if (!import.meta.env.DEV) startStaleReload();
 // 操作の印 (段階・滞在・エラー) を始めてから画面を出す (cookie なし)
 startTracking();
 startStageSession();

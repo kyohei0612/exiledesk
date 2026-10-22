@@ -31,6 +31,27 @@ export function startPwa(): void {
   }
 }
 
+/** 古い塊で読み直した時刻 (sessionStorage)。この間にもう一度起きたら読み直さない (無限に読み直さない印) */
+const STALE_KEY = "exiledesk-stale-reload";
+const STALE_GAP_MS = 60_000;
+/**
+ * 版が替わった後の古い塊 (2026-10-22 オーナー OK、notes/2026-10-22-sw-err-failed.md の案 ①): 開いたままのタブが、次のデプロイで消えた
+ * 前の版の JS の塊を後から読むと失敗して画面が壊れる。vite が出す vite:preloadError で 1 回だけ読み直して新しい版にする。
+ * 1 分以内に 2 回目が起きた時・印を書けない時 (保存を止めた端末) は読み直さず、今までどおりのエラーにする
+ */
+export function startStaleReload(): void {
+  if (typeof window === "undefined") return;
+  window.addEventListener("vite:preloadError", (e) => {
+    let last = 0;
+    try { last = Number(sessionStorage.getItem(STALE_KEY)) || 0; } catch { return; }
+    if (Date.now() - last < STALE_GAP_MS) return;
+    try { sessionStorage.setItem(STALE_KEY, String(Date.now())); } catch { return; }
+    e.preventDefault();
+    logRecord("stale_reload", { msg: String((e as Event & { payload?: unknown }).payload ?? "").slice(0, 120) });
+    location.reload();
+  });
+}
+
 /** 追加の窓を出す (Chrome・Edge・Android)。出せなければ false */
 export async function install(): Promise<boolean> {
   if (!deferred) return false;
