@@ -144,6 +144,12 @@ export function shapesOf(doc: TreeDoc): Shape[] {
     if (!b.hand || (b.out !== "hit" && b.out !== "junk")) continue;
     out.push({ key: shapeKey(pathHeld(doc, b.out === "junk" ? b.parent : b.id), b.out === "junk"), box: b.id });
   }
+  // 分かれ目の箱も行き先に (外れの有無は行で分けるので両方の形を受ける。手のある箱が先、10-22 13 通り組んだ #14: 分かれ目の下の消去の「外れが消えた」に行き先が無かった)
+  for (const b of Object.values(doc.boxes)) {
+    if (!b.split || b.hand) continue;
+    const held = pathHeld(doc, b.id);
+    for (const junk of [false, true]) out.push({ key: shapeKey(held, junk), box: b.id });
+  }
   return out;
 }
 /** 形の鍵 → 行き先 (狙いが 0 なら始まり = 始まりの手が外れも扱う。無ければ null) */
@@ -207,7 +213,8 @@ export function matchTargets(doc: TreeDoc, id: string): { key: string; to: strin
 export function linkSameShape(doc: TreeDoc, ids: readonly string[]): void {
   for (const id of ids) {
     const c = doc.boxes[id];
-    if (!c || c.hand || c.out === "pass" || c.out === "any") continue;
+    // 分かれ目の行の箱 (branch) は人が手を決める所 (分かれ目の箱も行き先になったので、つなぐと自分の分かれ目へ戻る輪になる)
+    if (!c || c.hand || c.out === "pass" || c.out === "any" || c.out === "branch") continue;
     if ((c.out === "hit" && !c.aim) || (c.back && c.back !== MATCH && !(c.out === "lost" && c.back === "start"))) continue;
     const to = matchTargets(doc, id).map((m) => m.to).find((x): x is string => !!x && x !== id && (x !== "start" || c.out === "lost"));
     if (!to) continue;
