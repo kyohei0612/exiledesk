@@ -7,8 +7,7 @@ import { mulberry32, type StageItem } from "../../services/craft-stage/engine";
 import { craftStage as s, priceOf } from "../../state/craft-stage";
 import { routesLuck, routesOpen, routesTarget } from "../../state/web-page";
 import { routeRun } from "../../services/craft-stage/engine";
-import type { RaceRow, RaceTarget, RoutePrep } from "../../services/craft-stage/engine-emu";
-import { forcesOf, spamKey } from "../../services/craft-stage/apply-spam";
+import { type RaceRow, type RaceTarget, type RoutePrep, forcesOf, spamKey } from "../../services/craft-stage/engine-emu";
 
 /**
  * 置いてページを閉じる: 今のクラフト台の工程の後ろに「スパム」の 1 手を打つ (費用 = cost、高貴建て)。MOD を当たった形に置き換え、

@@ -22,7 +22,7 @@ for (const f of files) {
     const tg = res(f, m[2] ?? m[3]);
     if (!tg || !/^src\/(services|vendor)\//.test(tg)) continue;
     const tw = ownerOf(tg, rows);
-    if (tg === "src/services/craft-stage/engine.ts") continue;
+    if (tg === "src/services/craft-stage/engine.ts" || tg === "src/services/craft-stage/engine-emu.ts") continue;
     const names = (m[1] ?? "dynamic import()").replace(/\s+/g, " ").trim();
     out.push({ f, tg, tw, names, type: /^type\s/.test(names) });
   }

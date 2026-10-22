@@ -7,7 +7,9 @@
 - 数えるのは import / export from / import() の先が src/services・src/vendor で engine.ts 以外の物。持ち主は scripts/owner-of.mjs。
 - 見張り scripts/check-engine-entry.mjs は「シミュ・チュートリアル・解析」だけを数える (WEB_SIDE)。エミュは入っていないので、寄せ終わったらエミュも WEB_SIDE に足す (ジン部長の台本)。
 
-## 今 (10-23、ジン部長が棚・カード・MOD 一覧を for-share へ移した後)
+## 済み (10-23 後半): ジン部長の対応表で残りを全部入口へ付け替え、エミュの直読みは 0 (共通 8 行だけ)。下は付け替える前の記録。
+
+## 10-23 前半 (ジン部長が棚・カード・MOD 一覧を for-share へ移した後)
 - エミュの画面は 27 ファイル (10-23 に MOD 一覧 StageModList・ModAddPicker・StageWeightEdit が戻った、9f46ef0b)、入口を通らない import は 41 行 (ジン 33・共通 8)。シミュへの import は 0。ジンの名前 61 個は全部、入口にまだ無い (下の表が今の形)。
 - 寄せ方: 結果が変わる物はジン部長が engine.ts か for-emu/ (engine-emu.ts) に、見え方の物 (名前・絵・文) はジン部長が共通か入口に。要望はブラック経由。
 

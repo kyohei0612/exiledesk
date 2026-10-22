@@ -8,11 +8,11 @@
   決めるまでは s.aims を触らない (やめるで元のまま)。
 -->
 <script setup lang="ts">
-import { modListFor, type ListRow, type ListTier, type ModGroup } from "../../services/craft-stage/engine";
+import { tierIdOf } from "../../services/craft-stage/engine-emu";
+import { modListFor, type ListRow, type ListTier, type ModGroup, aimLabel, groupLabelOf } from "../../services/craft-stage/engine";
 import { fmtPct } from "../../utils/format-pct";
 import { computed, ref } from "vue";
 import { AIM_MAX, craftStage as s, type AimPick } from "../../state/craft-stage";
-import { aimLabel, groupLabelOf, tierIdOf } from "../../services/craft-stage/mod-list";
 import { revealOpened, scrollToTop } from "../../utils/keep-place";
 import { ROUTES_MAX, routesTarget } from "../../state/web-page";
 import { nextTick } from "vue";

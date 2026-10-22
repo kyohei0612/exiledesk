@@ -5,7 +5,8 @@
 - 入口を通らずに読んでいる所の一覧: notes/2026-10-22-engine-direct-imports.md (147 行、入口にもうある名前 46・まだ無い 108。ジン部長が入口に足した後に寄せる)。
 
 ## やる事
-- 入口だけに寄せる (上の notes)。10-22 深夜に入口にある 46 個を付け替え・エミュの要望の物を engine-emu.ts に (7595cea4・9ba6f47a)。10-23 にジン部長が棚・カード・MOD 一覧を for-share へ移し、9f46ef0b で MOD 一覧がエミュに戻り、残りは 41 行 (ジン 33・共通 8、シミュ 0)。入口にまだ無い名前 61 個はブラック経由でジン部長に入口・for-emu/ への追加を頼んでから付け替える。寄せ終わったら check-engine-entry の WEB_SIDE に「エミュ」を足す (ジン部長の台本)。
+- 済み (10-23): 入口だけに寄せた。ジン部長の対応表 (emulator/notes/2026-10-23-emu-import-map.md) で 51 個・14 ファイルを engine.ts / engine-emu.ts に付け替え、見張りの A (入口の外) はエミュ 0 行。残りは入口でない共通 8 行 (share・trade2・market・currency など、決まりの外)。
+- エミュの画面がチュートリアル (シミュ部長の持ち物) を読んでいる 6 行 (見張りの D): CraftStage.vue → state/tutorial/course-host・views/tutorial/CourseHost.vue、RevealPanel.vue → state/tutorial/craft-topic、StageSettings.vue → state/tutorial/craft-lesson、use-stage-base.ts → state/tutorial/craft-course・craft-topic。クラフト台の中でコースを動かす差し込み口なので、分け方はブラック経由でジン部長・シミュ部長と決める。
 - クラフト画面 1440 幅で元からはみ出している 1 件 (DIV.flex flex-col、overflow-guard の判定で見つけた、10-22 ジン部長の記録) を直す。
 - 返事待ち (オーナー、スパムシミュ。FROM_ON・ROUTES_MULTI_ON は v0.1.593 で本番に出て、どちらも今は true): 今のアイテムからの時に高貴の道も灰色 (増強だけでよいか)・この形の X のシェア (開いた人は同じアイテムを持っていないので今は出さない)・既定の始めの状態を今のアイテムにするか。複数の当たりのシェアは a に全部入る、両方揃うまでの数字はシェアに入れていない。スナップ 共有メモ routes-from/・multi-aim/。
 

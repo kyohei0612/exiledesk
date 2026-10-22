@@ -6,14 +6,12 @@
   かなりの強運 (上位 10%) は計算機と同じ銅色の演出と音 (styles/spam-lucky.css)。X のシェアは計算機と同じカード (/s/<id>) に、題と主のカレンシーの絵を足す
 -->
 <script setup lang="ts">
-import { mulberry32, type StageItem, type StageMod } from "../../services/craft-stage/engine";
+import { mulberry32, type StageItem, type StageMod, medianOf, type SpamStats } from "../../services/craft-stage/engine";
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { usePhone } from "../../utils/use-phone";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { routeKey, routeRun } from "../../services/craft-stage/engine";
-import { packRace, routeHitIndex, type RaceRow, type RaceTarget, type RoutePrep, type RouteRun } from "../../services/craft-stage/engine-emu";
-import { medianOf, rankOf, unluckyOf, type SpamStats } from "../../services/craft-stage/chaos-spam";
-import { baseArtFile } from "../../services/craft-stage/base-art";
+import { packRace, routeHitIndex, type RaceRow, type RaceTarget, type RoutePrep, type RouteRun, rankOf, unluckyOf, baseArtFile } from "../../services/craft-stage/engine-emu";
 import { displayCurrency } from "../../state/display-currency";
 import { luck, packCard, rankWord, sendShare, shareOrigin, shortIdOf } from "./use-spam-share";
 import { playSfx, playUseSfx } from "../../utils/sfx";

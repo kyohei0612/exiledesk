@@ -4,10 +4,10 @@
   既定はエミュレーターのアイテムに嵌めている物。嵌められる数はソケットの数まで。狙いが特殊 MOD ならそのルーンは外せない。中身は services/craft-stage/route-runes.ts
 -->
 <script setup lang="ts">
+import { routeRunesFor, routeSocketsOf } from "../../services/craft-stage/engine-emu";
+import { RUNE_BY_ID } from "../../services/craft-stage/engine";
 import { computed } from "vue";
 import { craftStage as s, iconOf } from "../../state/craft-stage";
-import { routeRunesFor, routeSocketsOf } from "../../services/craft-stage/route-runes";
-import { RUNE_BY_ID } from "../../vendor/poe2htc/engine/runes";
 import { tr } from "../../i18n/lang";
 
 const props = defineProps<{ picked: readonly string[]; required: readonly string[]; disabled?: boolean }>();
