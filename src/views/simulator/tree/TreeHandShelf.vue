@@ -10,7 +10,7 @@ import { craftStage as s, iconOf, nameOf } from "../../../state/craft-stage";
 import CurrencyShelf from "../../craft-stage/CurrencyShelf.vue";
 import HeldOmens from "../../craft-stage/HeldOmens.vue";
 import { heldOmensOf } from "../../craft-stage/held-omens";
-import { mulberry32, omensFor } from "../../../services/craft-stage/engine";
+import { mulberry32, omensFor, stepOutcomes } from "../../../services/craft-stage/engine";
 import { aimHeld, aimsOf, fillCatalyst, handProblem, sampleOf, singleOutOf } from "../../../services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, isCatalyst, kindOfCurrency, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handLabel, handName, outName } from "./tree-names";
@@ -90,14 +90,18 @@ const RESULT: Record<HandKind, [string, string]> = {
 };
 const kind = computed((): HandKind | null => (hand.value ? kindOfHand(hand.value, kindOfCurrency(hand.value.currency)) : null));
 /**
- * カオススパムの当たりの既定 = このツリーの狙いのうち、この箱でまだ付いていない物を全部。木にまだ狙いが無ければ欲しい MOD のメモ
- * (10-22 白紙から組んだ手袋: 狙い 0 で当たるまでにすると MOD の空の当たりの箱を見本で引き直し続け、ページが 5 分固まった)
+ * 当たりの箱の既定 = このツリーの狙いのうち、この箱でまだ付いていない物。木にまだ狙いが無ければ欲しい MOD のメモ
+ * (10-22 白紙から組んだ手袋: 狙い 0 で当たるまでにすると MOD の空の当たりの箱を見本で引き直し続け、ページが 5 分固まった)。
+ * カオススパムはその全部、足す・入れ替える手はこの手で付きうる物だけ (エンジンの stepOutcomes。10-22 靴・手袋で、当たりの箱が空のまま 1 箱ずつ MOD・行・段を選ぶのが手間だった)
  */
-const spamAims = computed((): Aim[] => {
-  const d = s.data.value;
-  if (kind.value !== "spam" || !d || !item.value) return [];
+const hitAims = computed((): Aim[] => {
+  const d = s.data.value, it = item.value, h = hand.value;
+  if (!d || !it || !h || (kind.value !== "spam" && kind.value !== "add" && kind.value !== "swap")) return [];
   const tree = aimsOf(t.doc.value);
-  return (tree.length ? tree : t.doc.value.memoAims ?? []).filter((a) => !aimHeld(d, item.value!, a));
+  const open = (tree.length ? tree : t.doc.value.memoAims ?? []).filter((a) => !aimHeld(d, it, a));
+  if (kind.value === "spam") return open;
+  const outs = (stepOutcomes(d, it, h.currency, h.omens) ?? []).filter((o) => !o.void);
+  return outs.length ? open.filter((a) => outs.some((o) => aimHeld(d, o.item, a))) : open;
 });
 /** 結果が 1 通りの手か (この箱の見本 8 つにエンジンで打った行き先を全部たどる。触媒の手は前のカタリストを入れた後で) */
 const only = computed(() => (hand.value && s.data.value ? singleOutOf(s.data.value, t.doc.value, props.boxId, hand.value, preCat.value) : null));
@@ -107,7 +111,7 @@ const gone = computed((): number => {
   if (!props.current || !h || !k) return 0;
   const d = structuredClone(toRaw(t.doc.value));
   const before = Object.keys(d.boxes).length;
-  setHand(d, props.boxId, h, k, spamAims.value, only.value);
+  setHand(d, props.boxId, h, k, hitAims.value, only.value);
   const kept = new Set(Object.keys(d.boxes));
   return before - Object.keys(t.doc.value.boxes).filter((id) => kept.has(id)).length;
 });
@@ -115,12 +119,12 @@ const gone = computed((): number => {
 const problem = computed((): string | null => {
   if (!hand.value || !shelfItem.value || !s.data.value) return null;
   // 当たるまで繰り返すのに狙いが 1 つも無い (まだ付いていない狙いが無い) 時は決めさせない
-  if (kind.value === "spam" && !spamAims.value.length) return tr("狙いが無い (欲しい MOD のメモに足すか、当たりの箱で MOD を選んでから)", "No target yet (add one to the wanted mods memo, or pick a mod in a hit box first)");
+  if (kind.value === "spam" && !hitAims.value.length) return tr("狙いが無い (欲しい MOD のメモに足すか、当たりの箱で MOD を選んでから)", "No target yet (add one to the wanted mods memo, or pick a mod in a hit box first)");
   return handProblem(s.data.value, preCat.value ? shelfItem.value : item.value!, hand.value);
 });
 function ok(): void {
   const h = hand.value, k = kind.value;
-  if (h && k && !problem.value) emit("pick", h, k, spamAims.value, preCat.value, only.value);
+  if (h && k && !problem.value) emit("pick", h, k, hitAims.value, preCat.value, only.value);
 }
 </script>
 
