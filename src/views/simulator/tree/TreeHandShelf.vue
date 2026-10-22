@@ -51,12 +51,12 @@ const afterQuality = computed(() => {
 /** 持った物に触媒のお告げが掛けられるか */
 const canCatalyse = computed(() => !!held.value && heldOmensOf(held.value).includes(CATALYSING));
 /**
- * 前に足すカタリストの既定 = この箱でまだ付いていない狙いのタグに合う物 (無ければ並びの 1 つ目)。後から札を押して替えられる。
- * 品質の効きの計算ではなく、選びの初めの値だけ (タグはデータの MOD の tags)
+ * 前に足すカタリストの既定 = この箱でまだ付いていない狙い (木の狙い、次に欲しい MOD のメモ) のタグに合う物 (無ければ並びの 1 つ目)。後から札を押して替えられる。
+ * 品質の効きの計算ではなく、選びの初めの値だけ (タグはデータの MOD の tags)。メモも見るのは 10-22 13 通り組んだ #7 (白紙ではいつもライフになった)
  */
 const autoCat = computed((): string => {
   const d = s.data.value, it = item.value;
-  for (const a of d && it ? aimsOf(t.doc.value).filter((x) => !aimHeld(d, it, x)) : []) {
+  for (const a of d && it ? [...aimsOf(t.doc.value), ...(t.doc.value.memoAims ?? [])].filter((x) => !aimHeld(d, it, x)) : []) {
     const tags = d!.mods.get(a.modId)?.tags ?? [];
     const c = TREE_CATALYSTS.find((k) => tags.includes(k.slice("catalyst_".length)));
     if (c) return c;
@@ -143,6 +143,12 @@ function ok(): void {
       <div class="flex min-w-0 items-center gap-1.5">
         <span class="flex shrink-0 items-center -space-x-1"><img v-for="ic in [held, ...used].filter((x) => !!iconOf(x))" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
         <b class="min-w-0 truncate" :title="hand ? handLabel(hand) : ''">{{ [nameOf(held), ...used.map(nameOf)].join(" + ") }}</b>
+      </div>
+      <!-- カタリストの手はここで種類を替える (棚にカタリストが無い、10-22 13 通り組んだ #7) -->
+      <div v-if="isCatalyst(held)" data-tree-hand-cats class="flex flex-wrap gap-1">
+        <button v-for="c in TREE_CATALYSTS" :key="c" type="button" data-tree-hand-cat :data-cat="c" class="flex size-8 items-center justify-center rounded-md border" :class="c === held ? 'border-amber-300 bg-amber-500/20' : 'border-white/10 hover:bg-white/10'" :title="nameOf(c)" :aria-pressed="c === held" @click="held = c">
+          <img v-if="iconOf(c)" :src="iconOf(c)" alt="" class="size-6 object-contain" /><span v-else class="text-[10px]">{{ nameOf(c).slice(0, 2) }}</span>
+        </button>
       </div>
       <p v-if="preCat" data-tree-hand-pre-cat class="text-[12px] text-sky-200/90">{{ tr(`前に「${handName(preCat)} (品質を最大まで)」の手を足す (札を押すとカタリストを替えられる)`, `Adds "${handName(preCat)} (to max quality)" before this (click its chip to change the catalyst)`) }}</p>
       <label v-if="canSpam(held)" class="flex min-h-7 cursor-pointer flex-wrap items-center gap-2">
