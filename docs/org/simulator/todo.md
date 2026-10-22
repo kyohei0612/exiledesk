@@ -2,6 +2,11 @@
 
 前の引き継ぎ (1〜3 本目、10-21〜23) と止めている物 (①〜⑥・自動・④ の物・OK 待ちの一覧) は notes/2026-10-22-todo-archive.md にそのまま移した。
 
+## 引き継ぎ (14 本目 → 15 本目、10-22 深夜。ブラックが入れ替え)
+- 14 本目でやった事は報告 25〜30 (重ね窓・まとめの直し 2 つ・自前の中身の洗い出し notes/2026-10-22-sim-own-logic.md・A・B1〜B5・aimHeld → aimHeldOn)。書きかけ無し、触っている行無し、開発版の最後は 85bef90f (その後はどれも画面の変わらない置き換え)、9333 は閉じた。開発版は使用表で 14 本目の名前になっているが使っていない (返した)。
+- 残り (順に): (1) start-cost の置き換え (C、ジン部長の 2feac81f magicAddOdds・anyOfAddOdds・addGradeFor へ)。解析君の答えが 2b5148a3 (docs/org/math、同じ側は pHit が正しい・両側は (1−pAny)/pAny、spamCounts(anyOf) は全形 2.5% 以内) に出ているので、ブラックに進めてよいか聞いてから (2) B6 以降 (触媒の前のカタリスト・フラクチャーで固定する MOD・発現の選び・お告げの許し・StartSpec.random ほか、一覧は notes の B6〜B16)。ジン部長 (6 本目) の commit と emulator/todo.md の頭を見て、入った物から置き換える (3) autoCat が null の時 (靴・鎧) に触媒のお告げが押せないのを開発版の画面で (ブラックに使用を聞く) (4) TreeModPick の段の札 "T3" から数を取る所は B13 で。
+- 確かめの台本: scripts/_tree-aimhits-probe (前の aimHeld の式と aimHeldOn の総当たり)。置き換えの前後は HEAD の木のサービスを src/services/simulator/tree-old/ に写して 100 人回し・精査・見本を並べた (一時の台本、済んだら写しと一緒に消す。作り方は 484ffda4 の commit 文)。画面の確かめは共有メモ sim-14-panels-report.mjs (新しい profile の窓なし Chrome 9333)。
+
 ## 報告 30 (14 本目 → ブラック 7 代目、10-22 夜) aimHeld を消して aimHeldOn に
 - aimHeld を消し、呼ぶ所 26 (木 18・台本 8) を入口の aimHeldOn(data, item, { modId, tier }, { sameText: true }) に。台本 _tree-patterns-probe が 484ffda4 で消した tree-sample の fillCatalyst を読んでいたので入口からに直した。
 - 確かめ: 型 0・入口の見張り「増えた所なし」・_tree-aimhits-probe (前の aimHeld の式と aimHeldOn) 総当たり 3474072 回・見本の木 4 本で食い違い 0 (前後の並べ)。_tree-patterns-probe は読み込めることだけ確かめた (14 本は回していない)。
