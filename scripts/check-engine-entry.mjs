@@ -5,6 +5,8 @@
  *   A 入口の外: シミュ・チュートリアル・解析の物が、エンジン部の仕組み (src/services/・src/vendor/ のジンの物) を
  *     入口 services/craft-stage/engine.ts を通さずに読む
  *   B 凍結: アプリ専用の services/simulator/htc/ を、その外の Web の物 (アプリの物以外) が読む
+ *   D 画面の混ざり: エミュの物がシミュ・チュートリアルの物を読む、シミュ・チュートリアルの物がエミュの物を読む (2026-10-22 深夜 オーナー
+ *     「コードが混ざらないように」。両方が使う画面の部品は共通 src/components へ、中身はエンジンの入口へ。控えから始めて減らす)
  * 付け替え (手 7) の前なので、今の違反の数をファイルごとに控え (check-engine-entry.baseline.json) に持ち、
  * 決まり (A・B) ごとの合計が控えより増えた時だけ落ちる (オーナー 10-20 OK)。ファイルを割って import が移っただけの時は
  * 合計が同じなので落とさず、ファイルごとの増えは知らせだけ (10-20 の R3 で、移っただけで落ちたため)。減ったら `--write` で控えを取り直す。
@@ -41,6 +43,8 @@ function resolveSpec(from, spec) {
 
 const rows = loadOwners();
 const WEB_SIDE = new Set(["シミュ", "チュートリアル", "解析"]);
+/** 画面の混ざり (D) で数えるシミュの側 (チュートリアルはシミュ部長の持ち物) */
+const SIM_SIDE = new Set(["シミュ", "チュートリアル"]);
 /** 入口 (核 engine.ts と、出した側だけの engine-sim.ts・engine-emu.ts。2026-10-22 深夜、notes/2026-10-22-entry-split-plan.md) */
 const ENTRIES = new Set(["src/services/craft-stage/engine.ts", "src/services/craft-stage/engine-sim.ts", "src/services/craft-stage/engine-emu.ts"]);
 const IMPORT_RE = /(?:^|[\s;])(?:import|export)\s[^"'`;]*?from\s*["']([^"']+)["']|import\s*\(\s*["']([^"']+)["']\s*\)|^\s*import\s*["']([^"']+)["']/gm;
@@ -54,6 +58,7 @@ for (const f of files) {
     if (!t) continue;
     const tw = ownerOf(t, rows);
     if (WEB_SIDE.has(who) && tw === "ジン" && /^src\/(services|vendor)\//.test(t) && !ENTRIES.has(t)) hits.push({ rule: "A", file: f, target: t });
+    if ((who === "エミュ" && SIM_SIDE.has(tw)) || (SIM_SIDE.has(who) && tw === "エミュ")) hits.push({ rule: "D", file: f, target: t });
     if (t.startsWith("src/services/simulator/htc/") && !f.startsWith("src/services/simulator/htc/") && who !== "アプリ") hits.push({ rule: "B", file: f, target: t });
   }
 }
@@ -61,7 +66,7 @@ for (const f of files) {
 const count = {};
 for (const h of hits) count[`${h.rule} ${h.file}`] = (count[`${h.rule} ${h.file}`] ?? 0) + 1;
 const total = (r) => hits.filter((h) => h.rule === r).length;
-console.log(`見張り: A 入口の外 ${total("A")} 行 (${new Set(hits.filter((h) => h.rule === "A").map((h) => h.file)).size} ファイル)・B 凍結の htc/ ${total("B")} 行 (${head ? "HEAD" : "作業ツリー"})`);
+console.log(`見張り: A 入口の外 ${total("A")} 行 (${new Set(hits.filter((h) => h.rule === "A").map((h) => h.file)).size} ファイル)・B 凍結の htc/ ${total("B")} 行・D エミュ ⇄ シミュ ${total("D")} 行 (${head ? "HEAD" : "作業ツリー"})`);
 if (args.has("--list")) for (const h of hits) console.log(`${h.rule}\t${h.file}\t→ ${h.target}`);
 
 if (args.has("--write")) {
@@ -73,9 +78,9 @@ const base = existsSync(BASE) ? JSON.parse(readFileSync(BASE, "utf8")) : {};
 const worse = Object.entries(count).filter(([k, n]) => n > (base[k] ?? 0));
 const better = Object.entries(base).filter(([k, n]) => (count[k] ?? 0) < n);
 const sumOf = (o, r) => Object.entries(o).filter(([k]) => k.startsWith(`${r} `)).reduce((a, [, n]) => a + n, 0);
-const over = ["A", "B"].filter((r) => sumOf(count, r) > sumOf(base, r));
+const over = ["A", "B", "D"].filter((r) => sumOf(count, r) > sumOf(base, r));
 for (const [k, n] of worse) console.log(`${over.includes(k[0]) ? "増えた" : "移った? (合計は増えていない)"}: ${k} … ${base[k] ?? 0} → ${n}`);
-for (const r of over) console.log(`増えた: ${r} の合計 ${sumOf(base, r)} → ${sumOf(count, r)} (入口 engine.ts から取る。足りない物はジン部長に入口へ)`);
+for (const r of over) console.log(`増えた: ${r} の合計 ${sumOf(base, r)} → ${sumOf(count, r)} (${r === "D" ? "エミュとシミュは互いの物を読まない。両方で使う部品は共通 src/components へ (ジン部長)" : "入口 engine.ts から取る。足りない物はジン部長に入口へ"})`);
 if (better.length) console.log(`減った ${better.length} ファイル: 良い。\`node scripts/check-engine-entry.mjs --head --write\` で控えを取り直す`);
 if (over.length) process.exit(1);
 console.log("増えた所なし");
