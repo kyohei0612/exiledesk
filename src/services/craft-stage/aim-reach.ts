@@ -4,7 +4,7 @@
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { hits, junkOf, type AimTarget } from "./aim-odds";
-import { stepOutcomes, type StepOutcome } from "./spec/outcomes";
+import { stepOutcomes, stepPool, type StepOutcome } from "./spec/outcomes";
 import { tierIndexOf } from "./tier-rank";
 import type { StageItem, StageMod } from "./types";
 
@@ -58,10 +58,11 @@ export function outcomesByAim<A extends TierAim>(data: PatchData, item: StageIte
 
 /**
  * この手で付きうる狙い = items (同じ箱の見本など) のどれかに打った行き先のどれかに付いている狙い (並びは aims のまま)。
- * どの見本でも行き先が 1 つも無い (エンジンが枝に分けられない・打てない) 時は null (呼ぶ側が決める)
+ * 行き先は数え上げず、エンジンの stepPool (足す前の枝のアイテム + 最後に足す部品の候補の池。側・段・アイテムレベル・お告げ込み) で答えるので、
+ * 錬金など何個も足す手でも固まらない。どの見本でも行き先が 1 つも無い (エンジンが枝に分けられない・打てない・多すぎる) 時は null (呼ぶ側が決める)
  */
 export function reachableAims<A extends TierAim>(data: PatchData, items: readonly StageItem[], key: string, omens: readonly string[], aims: readonly A[], o: AimDiffOpts = {}): A[] | null {
-  const outs = items.flatMap((it) => (stepOutcomes(data, it, key, omens) ?? []).filter((x) => !x.void));
-  if (!outs.length) return null;
-  return aims.filter((a) => outs.some((x) => heldOn(data, modsOf(x.item), a, o)));
+  const ps = items.flatMap((it) => { const r = stepPool(data, it, key, omens); return r && r !== "tooMany" && r.items.length ? [r] : []; });
+  if (!ps.length) return null;
+  return aims.filter((a) => ps.some((r) => heldOn(data, r.pool, a, o) || r.items.some((it) => heldOn(data, modsOf(it), a, o))));
 }

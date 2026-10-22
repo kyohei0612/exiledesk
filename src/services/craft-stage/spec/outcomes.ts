@@ -34,6 +34,11 @@ type Add = Extract<Action, { add: unknown }>["add"];
 type AddUnrevealed = Extract<Action, { addUnrevealed: unknown }>["addUnrevealed"];
 
 const MID = (): number => 0.5;
+/** 1 つの部品で分かれる枝の上限 (大いなる高貴の 2 つ足すで 2〜3 万。錬金などの 3 つ以上足す手は掛け算で増えて固まるので、超えたら「多すぎ」) */
+export const STEP_OUTCOMES_MAX = 50_000;
+/** 枝が上限を超えた (中だけで使い、外へは投げない) */
+const TOO_MANY = Symbol("tooMany");
+const capped = <T>(xs: T[]): T[] => { if (xs.length > STEP_OUTCOMES_MAX) throw TOO_MANY; return xs; };
 const SUPPORTED = (a: Action): boolean => "remove" in a || "add" in a || "fracture" in a || "addUnrevealed" in a || "setRarity" in a || "addEssence" in a || "corrupt" in a;
 const ok = (item: StageItem, added: StageMod[] = [], removed: StageMod[] = []): Step => [{ p: 1, item, added, removed }];
 const equally = (item: StageItem, xs: readonly StageMod[]): Step => xs.map((m) => ({ p: 1 / xs.length, item: without(item, m), added: [], removed: [m] }));
@@ -71,7 +76,7 @@ function removeStep(ctx: PartCtx, item: StageItem, a: Remove): Step {
         else next.push({ p, item: without(s.item, m), added: [], removed: [...s.removed, m] });
       }
     }
-    states = next;
+    states = capped(next);
   }
   for (const s of states) {
     if (s.removed.length || a.optional) out.push(s);
@@ -101,6 +106,7 @@ function addStep(ctx: PartCtx, item: StageItem, a: Add, last: boolean, merge?: (
         const sm = makeStageMod(c.mod, c.side, t.index, MID);
         next.push({ p: (s.p * t.w) / total, item: withMod(s.item, sm), added: [...s.added, sm], removed: [] });
       }
+      capped(next);
     }
     // 最後の部品の最後の 1 つは、行き先の区別 (merge) でまとめてから次へ (大いなる高貴で枝が掛け算で増えるのを抑える)
     states = last && i === n - 1 && merge ? mergeBranches(next, merge) : next;
@@ -161,43 +167,91 @@ function mergeBranches(xs: readonly Branch[], key: (b: Branch) => string): Branc
  * merge: 行き先の区別の鍵 (同じ鍵の行き先は p を足して 1 つにし、最初のアイテムを代表に残す)。大いなる高貴のお告げなど 2 つ付ける手は渡すと軽い。
  */
 export function stepOutcomes(data: PatchData, item: StageItem, key: string, omens: readonly string[] = [], o: { merge?: (r: StepOutcome) => string } = {}): StepOutcome[] | null {
+  const r = stepOutcomesOrTooMany(data, item, key, omens, o);
+  return r === "tooMany" ? null : r;
+}
+/** stepOutcomes と同じ。枝が上限 (STEP_OUTCOMES_MAX) を超える手 (錬金など 3 つ以上足す) は数え上げずに "tooMany" (stepOutcomes は null) */
+export function stepOutcomesOrTooMany(data: PatchData, item: StageItem, key: string, omens: readonly string[] = [], o: { merge?: (r: StepOutcome) => string } = {}): StepOutcome[] | null | "tooMany" {
+  const w = walk(data, item, key, omens, o, false);
+  if (w === null || w === "tooMany" || w === "block") return w === "block" ? [] : w;
+  // 全部の枝が弾かれた = 打てない
+  if (!w.states.length) return [];
+  let out: StepOutcome[] = w.states.map((s) => ({ p: s.p, item: s.item, added: s.added, removed: s.removed }));
+  if (o.merge) out = mergeBranches(out, o.merge);
+  if (w.vp > 0) out.push({ p: w.vp, item, added: [], removed: [], void: true });
+  return out;
+}
+
+/**
+ * この手で付きうる MOD の池 (行き先を数え上げずに答える。付きうる狙い aim-reach の reachableAims)。最後の部品が足す物なら、その部品は枝に分けず、
+ * 足す前の枝ごとの候補 (側・段・お告げ・触媒の重みの付き方は addStep と同じ candidates) を 1 つ目に付く MOD として返す。2 つ目以降に付く MOD は
+ * 1 つ目の候補の中にある (系統が塞がり空きが減るだけ) ので、何個足す手でも池は同じ。items = 足す前の枝のアイテム (前に付いている MOD は残る)。
+ * 打てない ([] と同じ) は items も pool も空。行き先で表せない手は null、足す前の部品で枝が上限を超えたら "tooMany"
+ */
+export function stepPool(data: PatchData, item: StageItem, key: string, omens: readonly string[] = []): { items: StageItem[]; pool: StageMod[] } | null | "tooMany" {
+  const w = walk(data, item, key, omens, {}, true);
+  if (w === null || w === "tooMany") return w;
+  if (w === "block") return { items: [], pool: [] };
+  return { items: w.states.map((s) => s.item), pool: w.pool };
+}
+
+type State = Branch & { removedSoFar: StageMod[] };
+/** 手の部品を順にたどる (poolLast = 最後の足す部品を枝に分けず候補の池に) */
+function walk(data: PatchData, item: StageItem, key: string, omens: readonly string[], o: { merge?: (r: StepOutcome) => string }, poolLast: boolean): { states: State[]; vp: number; pool: StageMod[] } | null | "tooMany" | "block" {
   const plan: SpecPlan | null = planSpec(data, item, key, omens);
   if (!plan) return null;
   if (!plan.actions.every(SUPPORTED) || isInfiniteEssence(key)) return null;
-  if (plan.block) return [];
+  if (plan.block) return "block";
   const needsEssence = plan.spec.actions.some((a) => "addEssence" in a);
   const essence = needsEssence ? prepareEssence(data, item, key, MID) : null;
-  if (needsEssence && !essence) return [];
+  if (needsEssence && !essence) return "block";
   const altered = plan.spec.actions.some((a) => "addUnrevealed" in a && a.addUnrevealed.pools.includes("otherworldly"));
-  type State = Branch & { removedSoFar: StageMod[] };
   let states: State[] = [{ p: 1, item, added: [], removed: [], removedSoFar: [] }];
   const voids: number[] = [];
-  plan.actions.forEach((a, i) => {
-    const last = i === plan.actions.length - 1;
-    const next: State[] = [];
-    for (const s of states) {
-      const ctx: PartCtx = { data, rng: MID, mods: plan.mods, reveal: plan.reveal, removedSoFar: s.removedSoFar, essence, catalystTag: plan.catalystTag, altered };
-      const r: Step = "remove" in a ? removeStep(ctx, s.item, a.remove)
-        : "add" in a ? addStep(ctx, s.item, a.add, last, o.merge ? (b) => o.merge!({ ...b, added: [...s.added, ...b.added], removed: [...s.removed, ...b.removed] }) : undefined)
-        : "fracture" in a ? fractureStep(data, s.item)
-        : "addUnrevealed" in a ? unrevealedStep(ctx, s.item, a.addUnrevealed)
-        : runOnce(ctx, s.item, a);
-      // 弾かれた枝は打つ前のまま (打つ処理は途中で弾かれたら手ごと不成立)。決まって弾かれる部品なら、その枝は不成立として数える
-      if (r === "skip") { voids.push(s.p); continue; }
-      for (const b of r) {
-        if ("void" in b) voids.push(s.p * b.p);
-        else next.push({ p: s.p * b.p, item: b.item, added: [...s.added, ...b.added], removed: [...s.removed, ...b.removed], removedSoFar: [...s.removedSoFar, ...b.removed] });
+  const pool: StageMod[] = [];
+  try {
+    plan.actions.forEach((a, i) => {
+      const last = i === plan.actions.length - 1;
+      const next: State[] = [];
+      for (const s of states) {
+        const ctx: PartCtx = { data, rng: MID, mods: plan.mods, reveal: plan.reveal, removedSoFar: s.removedSoFar, essence, catalystTag: plan.catalystTag, altered };
+        if (poolLast && last && "add" in a) {
+          const cs = addPool(ctx, s.item, a.add);
+          if (cs === "skip") voids.push(s.p);
+          else { pool.push(...cs); next.push(s); }
+          continue;
+        }
+        const r: Step = "remove" in a ? removeStep(ctx, s.item, a.remove)
+          : "add" in a ? addStep(ctx, s.item, a.add, last, o.merge ? (b) => o.merge!({ ...b, added: [...s.added, ...b.added], removed: [...s.removed, ...b.removed] }) : undefined)
+          : "fracture" in a ? fractureStep(data, s.item)
+          : "addUnrevealed" in a ? unrevealedStep(ctx, s.item, a.addUnrevealed)
+          : runOnce(ctx, s.item, a);
+        // 弾かれた枝は打つ前のまま (打つ処理は途中で弾かれたら手ごと不成立)。決まって弾かれる部品なら、その枝は不成立として数える
+        if (r === "skip") { voids.push(s.p); continue; }
+        for (const b of r) {
+          if ("void" in b) voids.push(s.p * b.p);
+          else next.push({ p: s.p * b.p, item: b.item, added: [...s.added, ...b.added], removed: [...s.removed, ...b.removed], removedSoFar: [...s.removedSoFar, ...b.removed] });
+        }
       }
-    }
-    states = next;
-  });
-  const vp = voids.reduce((x, y) => x + y, 0);
-  // 全部の枝が弾かれた = 打てない
-  if (!states.length) return [];
-  let out: StepOutcome[] = states.map((s) => ({ p: s.p, item: s.item, added: s.added, removed: s.removed }));
-  if (o.merge) out = mergeBranches(out, o.merge);
-  if (vp > 0) out.push({ p: vp, item, added: [], removed: [], void: true });
-  return out;
+      states = capped(next);
+    });
+  } catch (e) {
+    if (e === TOO_MANY) return "tooMany";
+    throw e;
+  }
+  return { states, vp: voids.reduce((x, y) => x + y, 0), pool };
+}
+
+/** addStep の 1 つ目に付く候補 (枝に分けない)。付けられない時は addStep と同じく、optional・emptyOk なら付かずに通る ([])、ほかは "skip" */
+function addPool(ctx: PartCtx, item: StageItem, a: Add): StageMod[] | "skip" {
+  if (a.emptyOk && !SIDES.some((s) => room(item, s))) return [];
+  if ((ctx.mods.addCount ?? a.n) < 1) return a.optional ? [] : "skip";
+  const omenSides = ctx.mods.side ? [ctx.mods.side] : SIDES;
+  const { tag, pct } = catalystOf(item);
+  const boost = ctx.mods.catalysing && tag ? { test: (m: { id: string; tags?: readonly string[] }) => catalystBoosts(item, { modId: m.id, tags: m.tags }, tag, ctx.data), mult: tunedCatalysingMultiplier(pct) } : undefined;
+  const cs = candidates(ctx.data, item, omenSides.filter((x) => room(item, x)), a.floor, boost ? { boost } : {});
+  if (!(cs.reduce((x, c) => x + c.w, 0) > 0)) return a.optional ? [] : "skip";
+  return cs.flatMap((c) => c.tiers.map((t) => makeStageMod(c.mod, c.side, t.index, MID)));
 }
 
 function fractureStep(data: PatchData, item: StageItem): Step {
