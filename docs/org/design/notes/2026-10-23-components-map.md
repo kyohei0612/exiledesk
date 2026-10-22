@@ -57,4 +57,5 @@ App.vue からの物 (AssetPackToast・CenterContent・ConfirmDialog・FetchBusy
 - slot: toc-extra (目次の帯の右)・notes (目次の下)・col-lead (列の見出しの頭)・row-lead (行の頭)・row-badge (% の前の札)・row-open (段の表の上)・tier-lead (段の行の頭)・tier-actions (段の行の後ろ)。
 - エミュ (StageModList): props 全部 + toc-extra (どれかが付く確率)・notes (冒涜の節が無い注意)・col-lead/row-lead/tier-lead (狙いのチェック)・row-badge/row-open (重みの札と直す 1 行)・tier-actions (次の手で狙う・付ける)。
 - シミュ (TreeGoalPage): data・item・overlay と tier-actions (狙いにする) だけ。% は既定の「出やすさ」(同じ側の重みの割合) が出る。
-- 見立て: 両方とも今の口で作れている。足りないかもしれない所は 2 つ (要望が来たら足す、見た目の変更なのでオーナーの OK の後): ① % の列を消す口が無い (シミュが「% 無し」にしたい時は `showShare` のような props が要る)。② 列の見出しの「出やすさ・段・Lv」に差し込み口が無く、row-badge で幅が増えても見出しは揃わない (今のエミュの札は幅が小さく崩れていない、画面は未確認)。
+- 見立て: 両方とも今の口で作れている。足りないかもしれない所は 1 つ (要望が来たら足す、見た目の変更なのでオーナーの OK の後): 列の見出しの「出やすさ・段・Lv」に差し込み口が無く、row-badge で幅が増えても見出しは揃わない (今のエミュの札は幅が小さく崩れていない、画面は未確認)。
+- 「シミュ = % 無し」(10-23 オーナー、ブラック経由) = エミュ専用の「次の手で狙う」ボタンがシミュに要らない事。% の列はシミュにも出す。「狙う」はエミュの tier-actions の差し込みに置き、土台に入れない。
