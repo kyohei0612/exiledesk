@@ -6,6 +6,9 @@ import { checkTreeAsync, type CheckIssue, type CheckProgress } from "../../../se
 import { startOf, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { craftStage as s } from "../../../state/craft-stage";
 
+/** 道の形 (箱の位置・メモは入れない)。位置を動かしただけでは精査し直さない・回した結果を消さない */
+export const routeKeyOf = (d: TreeDoc): string => JSON.stringify([startOf(d), d.startRandom ?? 0, Object.values(d.boxes).map(({ x: _x, y: _y, note: _n, ...r }) => r)]);
+
 export function useTreeCheck(doc: Ref<TreeDoc>) {
   // ルート精査 (押した時に始める)。! は穴が解消した時だけ消える: 道を組み替えたら精査し直して、残った穴の ! は残す。
   // 一覧を閉じる・箱を押す・動かすでは消さない (オーナー 10-22「！マークは解消したら消していく感じで」)
@@ -16,8 +19,7 @@ export function useTreeCheck(doc: Ref<TreeDoc>) {
   const checking = ref(false);
   /** 精査の進み (くるくるの一言「精査中 12/30」、10-22 オーナー「ローディング画面を出さないとバグってるのか分からない」) */
   const progress = ref<CheckProgress | null>(null);
-  /** 道の形 (箱の位置・メモは入れない)。位置を動かしただけでは精査し直さない */
-  const routeKey = computed(() => JSON.stringify([startOf(doc.value), doc.value.startRandom ?? 0, Object.values(doc.value.boxes).map(({ x: _x, y: _y, note: _n, ...r }) => r)]));
+  const routeKey = computed(() => routeKeyOf(doc.value));
   let recheck = 0;
   /** 精査を押した時に見つけた穴 (箱と種類)。組み替えた後はこの中で今も残る物だけ出す (新しい穴は精査を押した時。1 つ戻すで穴が戻れば ! も戻る) */
   let found: CheckIssue[] = [];

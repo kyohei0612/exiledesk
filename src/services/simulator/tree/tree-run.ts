@@ -67,6 +67,8 @@ export interface TreeRunResult {
   /** 1 人あたりの作り直しの回数 */
   restarts: number;
   boxes: Record<string, BoxStat>;
+  /** 箱から箱へ移った回数の合計 ("<元>><先>"、進む線も戻りの弧も。回した時の層の線の太さ、10-22 オーナー) */
+  edges: Record<string, number>;
 }
 
 type End = "done" | "capped" | "stuck";
@@ -312,6 +314,8 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
       a.remain += p.cost - v.cost;
     }
   }
+  const edges: Record<string, number> = {};
+  for (const p of people) for (let i = 1; i < p.visits.length; i++) { const k = `${p.visits[i - 1]!.box}>${p.visits[i]!.box}`; edges[k] = (edges[k] ?? 0) + 1; }
   const boxes: Record<string, BoxStat> = {};
   for (const [id, a] of Object.entries(acc)) {
     const costIn = a.visits ? a.costIn / a.visits : 0, remain = a.visits ? a.remain / a.visits : 0;
@@ -323,7 +327,7 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
     stuck: people.filter((p) => p.end === "stuck").length,
     stuckAt, stuckWhy, unexpected, perItem,
     meanFinished: costs.length ? costs.reduce((a, b) => a + b, 0) / costs.length : NaN,
-    median: q(0.5), p90: q(0.9), uses, boxes,
+    median: q(0.5), p90: q(0.9), uses, boxes, edges,
     restarts: people.reduce((a, p) => a + p.restarts, 0) / (n || 1),
   };
 }
@@ -342,8 +346,10 @@ export function* runTreeSteps(data: PatchData, doc: TreeDoc, opts: TreeRunOpts):
   const shapes = shapesOf(doc);
   const rng = mulberry32(opts.seed);
   const people: Person[] = [];
+  const every = Math.max(1, opts.every ?? 10);
   for (let i = 0; i < opts.n; i++) {
     people.push(runOne(data, doc, aims, shapes, rng, o));
+    if (opts.onProgress && (i + 1) % every === 0 && i + 1 < opts.n) opts.onProgress(summarize(doc, people, o.startCost));
     yield i + 1;
   }
   return summarize(doc, people, o.startCost);
