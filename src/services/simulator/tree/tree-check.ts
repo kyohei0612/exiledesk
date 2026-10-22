@@ -88,9 +88,10 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
     return [...ks].sort().join(",");
   };
   const mains = done.filter((b) => b.done === "main");
-  // 比べるのは揃った狙いの数 (「どれか 2 つ」の木は完成ごとに札が違うのが正しい。前は札の組で比べ、靴の完成の箱ほぼ全部に ! が付いた、10-22)
-  const nOf = (id: string): number => (pathAims(id) ? pathAims(id).split(",").length : 0);
-  if (mains.length > 1) { const first = nOf(mains[0]!.id); for (const b of mains.slice(1)) if (nOf(b.id) !== first) add(b.id, "doneShape", tr(`ほかの完成の箱と、揃った狙いの数が違う (${nOf(b.id)} つ / ${first} つ)`, `Different number of targets than the other done box (${nOf(b.id)} / ${first})`)); }
+  // 比べるのは揃った狙いの数 (「どれか 2 つ」の木は完成ごとに札が違うのが正しい。前は札の組で比べ、靴の完成の箱ほぼ全部に ! が付いた、10-22)。
+  // 数は下の 4) でエンジンが辿った時に完成の箱で付いていた狙いの数の一番少ない物 (戻りの矢印で合流すると親をたどった札と違う、靴 b8、10-22)。着かなかった箱は親をたどった札の数
+  const nOfPath = (id: string): number => (pathAims(id) ? pathAims(id).split(",").length : 0);
+  const heldAtDone = new Map<string, number>();
 
   // 4) エンジンで 5 人を辿る: 打てない手・付かない当たり
   {
@@ -108,6 +109,7 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
         if (!b || seen.has(id + (viaBack ? "<" : ""))) return;
         seen.add(id + (viaBack ? "<" : ""));
         // × (要らない) の印の MOD が残ったまま完成 (印はこの箱と上の箱で付けた物、段は問わない)
+        if (b.done === "main") { const n = aims.filter((a) => aimHeld(data, item, a)).length; heldAtDone.set(id, Math.min(heldAtDone.get(id) ?? n, n)); }
         if (b.done) for (let x: typeof b | undefined = b; x; x = x.parent ? doc.boxes[x.parent] : undefined) for (const m of x.unwanted ?? []) {
           if (aimHeld(data, item, { modId: m, tier: 99 })) add(id, "unwanted", tr("× (要らない) の印の MOD が残ったまま完成", "A mod marked × (unwanted) is still on the done item"));
         }
@@ -169,6 +171,13 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
       for (const x of carry) add(x, "carry", tr("ここで戻ると外れを持ったまま進み、先の箱で側が満杯になって止まる (直すのはこの戻り。分かれ目の箱「外れが 2 つなら消去」は次の段)", "Returning here keeps the misses, so a later box runs out of room and stops (fix this return; split boxes such as \"annul when 2 misses\" come later)"));
     }
     for (const id of never) add(id, "neverHit", tr("上の手を打ち直してもこの札が付かなかった (側・段・手を確かめる)", "This mod never hit when the craft above was retried (check side, tier and craft)"));
+  }
+  // 3 の続き) 完成の形の食い違い (揃った狙いの数)
+  // 一番多く揃う完成の数より少ない形で着く人がいる完成の箱に ! (前は 1 つ目の完成の箱と比べ、どちらが組み違いか分からなかった)
+  if (mains.length > 1) {
+    const nOf = (id: string): number => heldAtDone.get(id) ?? nOfPath(id);
+    const most = Math.max(...mains.map((b) => nOf(b.id)));
+    for (const b of mains) if (nOf(b.id) < most) add(b.id, "doneShape", tr(`狙いが ${nOf(b.id)} つしか揃っていない形で着く人がいる (ほかの完成は ${most} つ)`, `Some runs arrive here with only ${nOf(b.id)} target(s) (other done boxes have ${most})`));
   }
   // 止まる・打てない物を先に (10-22 精査で靴の止まりが完成の札の ! の下に埋もれた)
   const RANK: Partial<Record<CheckKind, number>> = { stuck: 0, carry: 0, cantUse: 1, noMatch: 2, unexpected: 3, open: 4, loop: 5, noDone: 6 };
