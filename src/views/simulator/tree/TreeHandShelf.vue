@@ -104,7 +104,7 @@ const hitAims = computed((): Aim[] => {
   return outs.length ? open.filter((a) => outs.some((o) => aimHeld(d, o.item, a))) : open;
 });
 /** 結果が 1 通りの手か (この箱の見本 8 つにエンジンで打った行き先を全部たどる。触媒の手は前のカタリストを入れた後で) */
-const only = computed(() => (hand.value && s.data.value ? singleOutOf(s.data.value, t.doc.value, props.boxId, hand.value, preCat.value) : null));
+const only = computed(() => (hand.value && s.data.value ? singleOutOf(s.data.value, t.doc.value, props.boxId, hand.value, preCat.value, hitAims.value) : null));
 /** この手に替えると消える箱の数 (結果の箱から先。手の種類が同じなら 0。写しに打って数える) */
 const gone = computed((): number => {
   const h = hand.value, k = kind.value;

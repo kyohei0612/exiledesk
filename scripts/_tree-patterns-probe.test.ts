@@ -100,7 +100,7 @@ class Ui {
       const outs = (stepOutcomes(data, item, h.currency, h.omens) ?? []).filter((x) => !x.void);
       aims = kind === "spam" || !outs.length ? open : open.filter((a) => outs.some((x) => aimHeld(data, x.item, a)));
     }
-    let only = singleOutOf(data, d, id, h, preCat);
+    let only = singleOutOf(data, d, id, h, preCat, aims);
     // 木にまだ狙いが無いと、足す・入れ替える手の結果は全部「外れ」に分けられ、1 通り (外れだけ) になる。当たりの箱が出来ず横の＋も出ないので、台本では 1 通りを外して続ける
     if (only?.out === "junk" && (kind === "add" || kind === "swap") && !aimsOf(d).length) {
       this.find(`この手にする (箱 ${id})`, `木に狙いがまだ無いので「${[currency, ...used].join("+")}」の結果が「外れだけ (1 通り)」になり、当たりの箱が出来ない${d.memoAims?.length ? " (欲しい MOD のメモがあっても同じ)" : ""}。台本は 1 通りを外して続けた`);

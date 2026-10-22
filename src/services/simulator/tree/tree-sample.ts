@@ -7,7 +7,7 @@
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
 import { applyCurrency, freshItem, maxQualityOf, mulberry32, omenBlock, revealOffers, runeIdByName, stepOutcomes, unrevealedOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
-import { CATALYSING, isCatalyst } from "./tree-hands";
+import { CATALYSING, isCatalyst, kindOfCurrency } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import { startOf, type Aim, type Hand, type OutKind, type TreeDoc } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
@@ -61,11 +61,13 @@ export function outcomeOf(data: PatchData, before: StageItem, after: StageItem, 
  * SINGLE_SEEDS 個作り (同じ箱でも外れが左右どちらかなどで違う)、それぞれにエンジンの stepOutcomes で起こりうる行き先を全部たどる。
  * 全部の見本で結果の分け方 (outcomeOf) が同じ 1 つの時だけそれを返す (当たりは付く札も)。箱に着かなかった見本は数えない。
  * pre = 前に品質を最大まで入れるカタリスト (触媒の手の前の札)。
- * 繰り返し・狙い無し・品質だけの手・未発現が付く手と、エンジンが枝に分けられない手 (数値だけ変わる手など) は null (今までどおり手の種類の箱)
+ * 繰り返し・狙い無し・品質だけの手・未発現が付く手と、エンジンが枝に分けられない手 (数値だけ変わる手など) は null (今までどおり手の種類の箱)。
+ * extra = 棚の当たりの候補 (欲しい MOD のメモなど、木にまだ無い狙い)。足す・入れ替える手が「外れだけ」の 1 通りになる時も null
+ * (10-22 白紙から 13 通り組んだ #1: 木にまだ無い狙いを足す手で当たりの箱が作れず、横の＋も出なかった。外れだけなら当たりの箱を作って MOD を選ばせる)
  */
-export function singleOutOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, pre: string | null = null): { out: OutKind; aim: Aim | null } | null {
+export function singleOutOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, pre: string | null = null, extra: readonly Aim[] = []): { out: OutKind; aim: Aim | null } | null {
   if (h.repeat || h.free || isCatalyst(h.currency)) return null;
-  const aims = aimsOf(doc);
+  const aims = [...aimsOf(doc), ...extra.filter((a) => !aimsOf(doc).some((x) => x.modId === a.modId && x.tier === a.tier))];
   let one: { out: OutKind; hits: Aim[] } | null = null;
   const key = (r: { out: OutKind; hits: Aim[] }): string => `${r.out}:${r.hits.map((a) => `${a.modId}/${a.tier}`).join(",")}`;
   for (let seed = 1; seed <= SINGLE_SEEDS; seed++) {
@@ -81,6 +83,8 @@ export function singleOutOf(data: PatchData, doc: TreeDoc, boxId: string, h: Han
       one = r;
     }
   }
+  const k = kindOfCurrency(h.currency);
+  if (one?.out === "junk" && (k === "add" || k === "swap")) return null;
   return one ? { out: one.out, aim: one.hits[0] ?? null } : null;
 }
 /** 結果が 1 通りかを見る見本の数 */
