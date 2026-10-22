@@ -29,7 +29,7 @@ const outName = (o: OutKind): string => { const n = OUT_NAME[o]; return n ? tr(n
 const TRIES = 1200;
 
 /** 精査の進み (walk = 5 人を辿る、run = 30 人回す) */
-export interface CheckProgress { phase: "walk" | "run"; n: number; of: number }
+export interface CheckProgress { phase: "walk" | "run"; n: number; of: number; /** ここまでに見つかった穴 (辿った人から順に足す、10-22 オーナー「読み込みながら徐々に出す」) */ partial: CheckIssue[] }
 /** ルート精査 (木の設定 tune で打つ。一気に回す、台本・テスト用) */
 export function checkTree(data: PatchData, doc: TreeDoc): CheckIssue[] {
   const g = checkSteps(data, doc);
@@ -119,6 +119,8 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
     /** 結果の箱に無い結果が出る箱 (箱 → 人数と出る結果)。結果が 1 通りとして箱を 1 つにした手で、想定外の形で着いた時など (10-22 ブラック) */
     const odd = new Map<string, { who: Set<number>; outs: Set<string> }>();
     const shapes = shapesOf(doc);
+    const cantIssues = (): CheckIssue[] => [...cant].map(([id, c]) => ({ boxId: id, kind: "cantUse" as const, text: tr(`この箱に着いた状態では手が打てない (${PEOPLE} 人中 ${c.who.size} 人): ${c.reason}`, `The craft can't be used here (${c.who.size} of ${PEOPLE}): ${c.reason}`) }));
+    const oddIssues = (): CheckIssue[] => [...odd].map(([id, c]) => ({ boxId: id, kind: "unexpected" as const, text: tr(`結果の箱に無い結果も出る (${PEOPLE} 人中 ${c.who.size} 人): ${[...c.outs].join("・")}。回すと形の合う箱へ進み、無ければ止まる`, `Results with no box can happen (${c.who.size} of ${PEOPLE}): ${[...c.outs].join(", ")}. Runs go to a box of the same shape, or stop`) }));
     for (let person = 1; person <= PEOPLE; person++) {
       const rng = mulberry32(7919 * person);
       const start = sampleOf(data, doc, "start", person).item;
@@ -184,14 +186,13 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
         if (tag && hits && !boosted) add(id, "quality", tr("触媒で入れる品質が、この手の当たりの MOD のどれにも効かない (カタリストの種類を確かめる)", "The catalysed quality boosts none of this craft's target mods (check the catalyst type)"));
       };
       walk("start", start, false);
-      yield { phase: "walk", n: person, of: PEOPLE };
+      yield { phase: "walk", n: person, of: PEOPLE, partial: ranked([...out, ...cantIssues(), ...oddIssues()]) };
     }
-    for (const [id, c] of cant) add(id, "cantUse", tr(`この箱に着いた状態では手が打てない (${PEOPLE} 人中 ${c.who.size} 人): ${c.reason}`, `The craft can't be used here (${c.who.size} of ${PEOPLE}): ${c.reason}`));
-    for (const [id, c] of odd) add(id, "unexpected", tr(`結果の箱に無い結果も出る (${PEOPLE} 人中 ${c.who.size} 人): ${[...c.outs].join("・")}。回すと形の合う箱へ進み、無ければ止まる`, `Results with no box can happen (${c.who.size} of ${PEOPLE}): ${[...c.outs].join(", ")}. Runs go to a box of the same shape, or stop`));
+    for (const x of [...cantIssues(), ...oddIssues()]) add(x.boxId, x.kind, x.text);
     // 5) 回して止まる箱 (tree-run を 30 人、値段 0)。10-22 靴を白紙から組んで: 100 人中 64 人が止まる箱を上の辿り方では引かなかった
     const steps = runTreeSteps(data, doc, { n: RUN_PEOPLE, seed: 1, price: () => 0, capSteps: 300 });
     let st = steps.next();
-    while (!st.done) { yield { phase: "run", n: st.value, of: RUN_PEOPLE }; st = steps.next(); }
+    while (!st.done) { yield { phase: "run", n: st.value, of: RUN_PEOPLE, partial: ranked(out) }; st = steps.next(); }
     const run = st.value;
     for (const [id, n] of Object.entries(run.stuckAt)) {
       const w = run.stuckWhy[id];
@@ -209,9 +210,7 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
     const most = Math.max(...mains.map((b) => nOf(b.id)));
     for (const b of mains) if (nOf(b.id) < most) add(b.id, "doneShape", tr(`狙いが ${nOf(b.id)} つしか揃っていない形で着く人がいる (ほかの完成は ${most} つ)`, `Some runs arrive here with only ${nOf(b.id)} target(s) (other done boxes have ${most})`));
   }
-  // 止まる・打てない物を先に (10-22 精査で靴の止まりが完成の札の ! の下に埋もれた)
-  const RANK: Partial<Record<CheckKind, number>> = { stuck: 0, carry: 0, cantUse: 1, noMatch: 2, unexpected: 3, open: 4, loop: 5, noDone: 6 };
-  return out.map((x, i) => ({ x, i })).sort((a, z) => (RANK[a.x.kind] ?? 9) - (RANK[z.x.kind] ?? 9) || a.i - z.i).map((v) => v.x);
+  return ranked(out);
 }
 
 /** 回して止まる箱の文: 何人・どの側が満杯か・外れの MOD (最初の 1 人の形)。理由が側の満杯でなければエンジンの理由をそのまま */
@@ -230,4 +229,10 @@ function stuckText(data: PatchData, aims: readonly Aim[], n: number, w: { reason
     ? tr("。外れを持ったまま戻る「狙いが消えた」の戻りがある (! の付いた戻りの箱)", ". A \"target lost\" return keeps the misses (the return box marked !)")
     : tr("。この手の前に外れを消す手 (消去 + 満杯の側のお告げ) が要る", ". Remove a miss first (annul + the omen for the full side)");
   return tr(`${head}: ${parts.join("・")}で着き、この手が打てない${fix}`, `${head}: ${parts.join(", ")}, so this craft can't be used${fix}`);
+}
+
+/** 止まる・打てない物を先に (10-22 精査で靴の止まりが完成の札の ! の下に埋もれた) */
+const RANK: Partial<Record<CheckKind, number>> = { stuck: 0, carry: 0, cantUse: 1, noMatch: 2, unexpected: 3, open: 4, loop: 5, noDone: 6 };
+function ranked(list: readonly CheckIssue[]): CheckIssue[] {
+  return list.map((x, i) => ({ x, i })).sort((a, z) => (RANK[a.x.kind] ?? 9) - (RANK[z.x.kind] ?? 9) || a.i - z.i).map((v) => v.x);
 }

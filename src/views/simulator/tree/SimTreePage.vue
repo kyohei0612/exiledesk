@@ -44,6 +44,7 @@ import TreeStartPick from "./TreeStartPick.vue";
 import TreeSplitPick from "./TreeSplitPick.vue";
 import TreeBusy from "./TreeBusy.vue";
 import { useTreeTune } from "./use-tree-tune";
+import { useTreeReveal } from "./use-tree-reveal";
 import TreeHandChip from "./TreeHandChip.vue";
 import TreeBandLayer from "./TreeBandLayer.vue";
 import TreeMergeLayer from "./TreeMergeLayer.vue";
@@ -82,6 +83,10 @@ const boxes = computed(() => Object.values(doc.value.boxes));
 /** 描く箱 (品質だけ上げた後の通り抜け pass は箱を描かず、打つ手の札の下に次の札か＋、tree-model の OutKind) */
 const shown = computed(() => boxes.value.filter((b) => b.out !== "pass"));
 const passes = computed(() => boxes.value.filter((b) => b.out === "pass"));
+/** 開いた時は箱を上の段から順に出す (データが来てから。use-tree-reveal.ts) */
+const rv = useTreeReveal(shown, () => !!s.data.value, t.opened);
+/** 出ている箱どうしの線と札だけ描く (通り抜けは箱が無いので数えない) */
+const shownEdges = computed(() => edges.value.filter((e) => [e.id, ...e.to.map((o) => o.id)].every((id) => doc.value.boxes[id]?.out === "pass" || rv.isShown(id))));
 
 /**
  * 画面の高さ (拡大前の CSS ピクセル)。html の zoom (WebApp.vue の fitZoom) が 1 より大きいと 100vh が画面より高くなり、
@@ -251,12 +256,16 @@ function onTarget(b: Box): void {
 }
 // ルート精査 (押した時に始める、use-tree-check.ts)
 const { issues, issuesOpen, issuesFold, checking, progress, onCheck, issueOf } = useTreeCheck(doc);
-/** 待たせている間の一言 (データの読み込み・精査の進み。TreeBusy) */
+/** 待たせている間の小さな札 (題の横。データの読み込み・箱を順に出している間、TreeBusy。精査の進みは精査の帯の上) */
 const busy = computed((): { text: string; n?: number; of?: number } | null => {
-  if (!s.data.value) return { text: tr("木を読み込み中…", "Loading the tree…") };
+  if (!s.data.value) return { text: tr("読み込み中", "Loading") };
+  const r = rv.run.value;
+  return r ? { text: tr("読み込み中", "Loading"), n: r.n, of: r.of } : null;
+});
+const checkBusy = computed((): { text: string; n?: number; of?: number } | null => {
   if (!checking.value) return null;
   const p = progress.value;
-  return !p ? { text: tr("精査の準備中…", "Preparing the check…") } : p.phase === "walk" ? { text: tr("精査中: 5 人を辿っている", "Checking: walking runs"), n: p.n, of: p.of } : { text: tr("精査中: 30 人を回している", "Checking: playing runs"), n: p.n, of: p.of };
+  return !p ? { text: tr("精査の準備中", "Preparing") } : p.phase === "walk" ? { text: tr("5 人を辿っている", "Walking runs"), n: p.n, of: p.of } : { text: tr("30 人を回している", "Playing runs"), n: p.n, of: p.of };
 });
 function goIssue(id: string): void { void v.reveal(id, true); }
 
@@ -317,7 +326,7 @@ const plusLine = computed(() => {
 
 watch(() => panel.value?.id, (id) => { if (id) setTimeout(() => void v.reveal(id), 0); });
 /** Vue Flow に渡す箱 (位置は木の形のまま。動かせるのは組める時だけ = 手・一望・戻り先を選んでいる間は画面だけ動く) */
-const flowNodes = computed(() => shown.value.map((b) => ({ id: b.id, type: "box", position: posOf(b), draggable: false, selectable: false, connectable: false })));
+const flowNodes = computed(() => rv.visible.value.map((b) => ({ id: b.id, type: "box", position: posOf(b), draggable: false, selectable: false, connectable: false })));
 // Vue Flow へは setNodes で直接入れる (:nodes で渡すと、Vue Flow が中の並びを書き戻している一瞬の変化を拾わず、
 // 見本を開いた時に始まりの箱しか出なかった。10-23 開発版で見た)
 watch(flowNodes, (n) => v.flow.setNodes(n), { immediate: true });
@@ -372,7 +381,7 @@ const glowOf = (b: Box): boolean => {
 <template>
   <section data-tree-page class="min-w-0 flex-1 p-4">
     <div class="mb-3 flex flex-wrap items-center gap-3">
-      <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center px-8 text-[22px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ tr("クラフトの道 (ツリー)", "Craft route tree") }}</h1>
+      <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center gap-3 px-8 text-[22px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ tr("クラフトの道 (ツリー)", "Craft route tree") }}<TreeBusy v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" /></h1>
       <button type="button" class="g-btn sm" @click="close">{{ tr("← 戻る", "← Back") }}</button>
     </div>
 
@@ -416,7 +425,7 @@ const glowOf = (b: Box): boolean => {
                 <defs>
                   <marker v-for="(c, k) in LINE" :id="`tree-arrow-${k}`" :key="k" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" :fill="c" /></marker>
                 </defs>
-                <g v-for="e in edges" :key="e.id" data-tree-edge>
+                <g v-for="e in shownEdges" :key="e.id" data-tree-edge>
                   <path :d="e.stem" :stroke="LINE.fwd" stroke-width="2" fill="none" />
                   <path v-for="o in e.to" :key="o.id" :d="o.d" :stroke="o.color" stroke-width="2" stroke-linejoin="round" fill="none" :marker-end="`url(#tree-arrow-${o.kind})`" />
                 </g>
@@ -424,11 +433,11 @@ const glowOf = (b: Box): boolean => {
               <!-- 矢印の上の札 = 打つ手 (押すと替える・消す)。戻りの矢印だけの箱から流れ込む線 -->
               <!-- 段の目印 (木の左の外、当たりの箱の揃った狙いの数) -->
               <TreeBandLayer :doc="doc" :k="1 / zoom" />
-              <TreeHandChip v-for="e in edges" :key="`hand-${e.id}`" :id="e.id" :hand="e.hand" :split="e.split" :x="e.jx" :y="e.jy" :inv="inv" :off="hand" @open="panel = { kind: e.hand ? 'hand' : 'split', id: e.id }" />
+              <TreeHandChip v-for="e in shownEdges" :key="`hand-${e.id}`" :id="e.id" :hand="e.hand" :split="e.split" :x="e.jx" :y="e.jy" :inv="inv" :off="hand" @open="panel = { kind: e.hand ? 'hand' : 'split', id: e.id }" />
               <!-- 品質だけ上げた後 (箱無し) で次の手がまだ無い所の＋ (押すと次の手の棚) -->
-              <button v-for="b in passes.filter((x) => !x.hand && !x.back)" :key="`pass-${b.id}`" type="button" data-tree-pass-next :data-box-id="b.id" class="nodrag nopan pointer-events-auto absolute z-[5] flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-amber-400/70 bg-[#1d1812] text-amber-200 hover:bg-amber-500/30"
+              <button v-for="b in rv.done.value ? passes.filter((x) => !x.hand && !x.back) : []" :key="`pass-${b.id}`" type="button" data-tree-pass-next :data-box-id="b.id" class="nodrag nopan pointer-events-auto absolute z-[5] flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-amber-400/70 bg-[#1d1812] text-amber-200 hover:bg-amber-500/30"
                 :class="viewOnly || hand ? '!pointer-events-none opacity-60' : ''" :style="{ left: `${posOf(b).x + BOX_W / 2}px`, top: `${posOf(b).y}px`, scale: String(inv) }" :title="tr('次に打つ手を足す', 'Add the next craft')" @click="startLink(b)"><Icon name="plus" class="size-4" /></button>
-              <TreeMergeLayer v-if="merged" :lines="merged.lines" :paths="merged.paths" :hover="hoverBox" :show-all="linesAll" />
+              <TreeMergeLayer v-if="merged && rv.done.value" :lines="merged.lines" :paths="merged.paths" :hover="hoverBox" :show-all="linesAll" />
               <!-- 引っ張っている＋の線と、戻り先の札に乗せた時の線は箱の前 (相手の箱の上まで見える) -->
               <svg v-if="plusLine" class="pointer-events-none absolute left-0 top-0 z-10 overflow-visible" width="1" height="1">
                 <defs><marker id="tree-arrow-drag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" :fill="LINE.back" /></marker></defs>
@@ -447,8 +456,7 @@ const glowOf = (b: Box): boolean => {
             <button type="button" data-tree-pick-start class="g-btn sm pointer-events-auto" :title="tr('始まりの箱の手から打ち直す', 'Craft again from the start box')" @click="pickBack('start')">{{ tr("↩ 始めに戻る", "↩ Back to start") }}</button>
           </template>
         </p>
-        <TreeBusy v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" />
-        <TreeIssues v-if="issues && issuesOpen" v-model:fold="issuesFold" :issues="issues" :lower="!!(picking || hand || viewOnly)" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" />
+        <TreeIssues v-if="issues && issuesOpen" v-model:fold="issuesFold" :issues="issues" :busy="checkBusy" :lower="!!(picking || hand || viewOnly)" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" />
         <!-- 縮めて見ている時の箱の編集 (等倍。枠の外・Esc で閉じる) -->
         <div v-if="pop && doc.boxes[pop]" ref="popEl" data-tree-pop class="absolute z-30 w-max rounded-2xl border border-white/10 bg-[#0c0a08]/95 p-3 pb-12 pr-7 shadow-[0_10px_30px_rgba(0,0,0,0.7)]" :style="popStyle">
           <div class="relative" :style="{ width: `${BOX_W}px`, height: `${BOX_H}px` }">

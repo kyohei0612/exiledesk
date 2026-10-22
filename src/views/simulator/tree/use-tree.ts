@@ -2,7 +2,7 @@
  * use-tree.ts — ツリーのページの状態 (2026-10-22 表面だけ): 今のツリー・1 つ戻す (Ctrl+Z)・ブラウザに覚える・木のベースの MOD の一覧。
  * MOD の一覧はエンジンの入口の modListFor (クラフト台の MOD 一覧と同じ行。自前の表は作らない)。ベースとアイテムレベルは木の base・itemLevel (始まりの箱で選ぶ、10-22。前は金の指輪 ilvl 82 に固定)
  */
-import { computed, shallowRef } from "vue";
+import { computed, ref, shallowRef } from "vue";
 import { craftStage as s, nameOf, priceOf } from "../../../state/craft-stage";
 import { freshItem, modListFor } from "../../../services/craft-stage/engine";
 import { isTreeDoc, migrateStart, newTree, startOf, type Aim, type StartMod, type TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -64,8 +64,10 @@ function setTreeNote(text: string): void {
   doc.value = d;
   save(d);
 }
+/** 別の木を開いた回数 (開いた木の箱を上から順に出し直す、use-tree-reveal.ts) */
+const opened = ref(0);
 /** 別の木を開く (レシピ・共有の URL から。1 つ戻すで前の木へ戻せる) */
-function open(tree: TreeDoc): void { edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, JSON.parse(JSON.stringify(tree))); migrateStart(d); }); }
+function open(tree: TreeDoc): void { opened.value++; edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, JSON.parse(JSON.stringify(tree))); migrateStart(d); }); }
 /** 白紙に戻す (今のベースとアイテムレベルのまま。1 つ戻すで戻せる) */
 function reset(): void { edit((d) => { Object.assign(d, newTree(d.base, d.itemLevel)); }); }
 /** ベースを替える = そのベースの白紙から (狙い・手は前のベースの MOD なので残さない)。アイテムレベルだけなら木はそのまま。1 つ戻すで戻せる */
@@ -114,5 +116,5 @@ const baseCost = computed(() => {
 });
 
 export function useTree() {
-  return { doc, edit, undo, canUndo, reset, setBase, setStartRandom, lostOnBase, open, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost };
+  return { doc, edit, undo, canUndo, reset, setBase, setStartRandom, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost };
 }

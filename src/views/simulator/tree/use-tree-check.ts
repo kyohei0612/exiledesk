@@ -26,9 +26,12 @@ export function useTreeCheck(doc: Ref<TreeDoc>) {
     const d = s.data.value;
     if (!d || checking.value) return;
     checking.value = true;
+    // 押して始めた精査は見つけた穴を辿った人から順に足す (10-22 オーナー「読み込みながら徐々に出す」)。
+    // 組み替えた後の精査し直しは途中で ! が消えて戻るので、終わってから入れ替える
+    if (!keep) issues.value = [];
     await new Promise((r) => setTimeout(r, 30)); // 「精査中」を先に出す
     try {
-      const now = await checkTreeAsync(d, doc.value, (p) => { progress.value = p; });
+      const now = await checkTreeAsync(d, doc.value, (p) => { progress.value = p; if (!keep) issues.value = p.partial; });
       if (!keep) found = now;
       issues.value = keep ? now.filter((x) => found.some((y) => y.boxId === x.boxId && y.kind === x.kind)) : now;
     } finally { checking.value = false; progress.value = null; }
