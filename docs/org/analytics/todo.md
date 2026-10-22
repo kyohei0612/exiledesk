@@ -1,5 +1,11 @@
 # 分析君 のやる事
 
+## 最新の報告 (10-22、ブラックへ)
+- /craft-basics の「クロール済み未登録」の調べ (notes/2026-10-22-craft-basics-not-indexed.md、何も変えていない)。頭の情報 (title・description・canonical・hreflang) は揃っていて noindex も無く、sitemap にも入り、39 ページから張られている。
+- 理由の見立ては 3 つ: (1) 10-17 にできたばかり (サイトも 10-09 に引っ越し)、(2) 9 つの話題を 2,334 字で 1 つ 260 字ほどと薄い (ブログの記事は 6,000 字前後)、(3) お告げ・骨・カタリストなどブログに詳しい記事があるのに、入門からは一覧 /blog/ にしかリンクが無い。
+- 案 (審査の後、ジン部長の public/craft-basics.html): 各節から詳しい記事へリンクを張る、エミュレーターの具体の数字を足して 4,000〜5,000 字に、日付を出す。急がず、次の書き出しでもう一度見る。
+
+
 ## やる事
 - Discord の日報は手元から読めない (webhook は書くだけ・Bot 無し・REFRESH_KEY 無し、notes/bunseki-wake-design.md)。中身は D1 から `pull-logs.mjs` + `analyze-logs.py` で作り直す。
 
