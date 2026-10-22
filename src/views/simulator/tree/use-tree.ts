@@ -84,6 +84,8 @@ function setBase(base: string, itemLevel: number): void {
  * クラフト台の「このベースでクラフトの道へ」から来た時はベースが決まっているので出さない (1 回だけ)
  */
 const askBase = ref(true);
+/** ベースを選ぶ 1 画面 (TreeBasePage.vue) を開いている (オーナー 10-22「エミュと同じくベースを選ぶ 1 画面」) */
+const basePage = ref(false);
 /** blank = 始まりの箱に手が無い (白紙) */
 const isBlank = (d: TreeDoc): boolean => !d.boxes.start?.hand && !d.boxes.start?.split && Object.keys(d.boxes).length === 1;
 /** 白紙の木を開いた時にベースを選ばせるか (読んだら下ろす) */
@@ -187,5 +189,5 @@ const baseCost = computed(() => {
 const baseCostBusy = computed(() => !!s.data.value && !costReady.value);
 
 export function useTree() {
-  return { fitIlvl, setFit, doc, edit, undo, canUndo, reset, setBase, setStartRandom, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
+  return { basePage, fitIlvl, setFit, doc, edit, undo, canUndo, reset, setBase, setStartRandom, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
 }
