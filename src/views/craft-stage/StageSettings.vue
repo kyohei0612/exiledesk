@@ -13,8 +13,7 @@ import { computed, ref, watch } from "vue";
 import { useStageBase } from "./use-stage-base";
 import StageBasePicker from "./StageBasePicker.vue";
 import { PAGES_ON, TREE_ON, basePage } from "../../state/web-page";
-import { openTreePage } from "../../web/page";
-import { useTree } from "../simulator/tree/use-tree";
+import { openTreeWith } from "../../state/stage/sim-links";
 import { craftStage } from "../../state/craft-stage";
 import pkg from "../../../package.json";
 import { ITEM_LEVEL_SET, itemLevelKey, SANCTIFIED_REASON } from "../../services/craft-stage/apply-currency";
@@ -108,7 +107,7 @@ function armReset(): void {
     <button type="button" data-rec="reset" :class="resetArm.is() ? ARMED_CLASS : btn" :disabled="!s.log.value.length && !s.startMods.value.length" @click="armReset">{{ resetArm.is() ? tr("もう一度押すと白に戻す", "Click again to reset") : tr("白に戻す", "Reset") }}</button>
     <button type="button" data-rec="undo" :class="btn" :disabled="!s.log.value.length && !s.startMods.value.length" :title="tr('R / Ctrl+Z (まだ打っていない時は始めの MOD を 1 つ外す)', 'R / Ctrl+Z (before any use, removes one starting mod)')" @click="s.undo()">{{ tr("1 手戻す", "Undo") }}</button>
     <!-- 今のベースとアイテムレベルで白紙のクラフトの道 (ツリー) へ (開発版だけ、10-22 オーナー「全部のベースで使える」案 1) -->
-    <button v-if="TREE_ON && s.mode.value === 'hand' && s.item.value" type="button" data-tree-from-stage :class="btn" :title="tr('このベースとアイテムレベルで白紙のクラフトの道 (ツリー) を開く (前の木は 1 つ戻すで戻せる)', 'Open a blank craft route tree with this base and item level (undo restores the previous tree)')" @click="useTree().startTreeWith(s.item.value.base, curIlvl ?? 82); openTreePage()">{{ tr("このベースでクラフトの道へ →", "Craft route tree with this base →") }}</button>
+    <button v-if="TREE_ON && s.mode.value === 'hand' && s.item.value" type="button" data-tree-from-stage :class="btn" :title="tr('このベースとアイテムレベルで白紙のクラフトの道 (ツリー) を開く (前の木は 1 つ戻すで戻せる)', 'Open a blank craft route tree with this base and item level (undo restores the previous tree)')" @click="void openTreeWith(s.item.value.base, curIlvl ?? 82)">{{ tr("このベースでクラフトの道へ →", "Craft route tree with this base →") }}</button>
     <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" :title="tr('打った手を 16:9 の撮影用画面で 1 手ずつ再生 (Space 再生 / ← → 1 手 / Esc 閉じる)', 'Replay each step on a 16:9 recording screen (Space play / ← → step / Esc close)')" @click="s.hold(null); s.video.value = { from: 0, autoplay: false, controls: true }">{{ tr("動画モード", "Video mode") }}</button>
     <span class="ml-auto flex flex-wrap items-center gap-1.5">
       <span v-if="copied" class="text-emerald-300">{{ copied }}</span>
