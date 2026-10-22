@@ -5,11 +5,10 @@
   最大 = 段の最大 × 1.22、最小 = 段の最小 × 0.78。運の結果のように MOD ごとに倍率が違う時はプルダウンが「MOD ごと」
 -->
 <script setup lang="ts">
+import { allMods, type StageItem } from "../../services/craft-stage/engine";
 import { computed } from "vue";
 import { tr } from "../../i18n/lang";
-import { allMods } from "../../services/craft-stage/stage-core";
 import { SANCTIFY_SELECT, SANCTIFY_STEPS, sanctifyLabel } from "./sanctify-steps";
-import type { StageItem } from "../../services/craft-stage/types";
 
 const props = defineProps<{ item: StageItem }>();
 const emit = defineEmits<{ set: [k: number | "max" | "min"] }>();

@@ -7,11 +7,11 @@
  *   - 旧カオススパム計算機 (2026-10-16〜19、計算機は 2026-10-19 オーナー「カオススパム計算機削除でこっちに統一」で消した): { i, r, s, a, k }。
  *     狙いの最初の 1 つ (a[0]) とアイテムレベルで、同じようにスパムシミュレーターを開く
  */
+import { startFrom, type RouteKind } from "../../services/craft-stage/engine";
 import { craftStage as s } from "../craft-stage";
 import { fullSockets } from "./stage-steps";
-import { startFrom } from "../../services/craft-stage/run-plan";
 import { unpackJson } from "../../services/craft-stage/share";
-import type { Grade, RouteKind, SharedRace } from "../../services/craft-stage/route-race";
+import type { Grade, SharedRace } from "../../services/craft-stage/route-race";
 import { ROUTES_MAX, routesLuck, routesOpen, routesRunes, routesShared, routesTarget } from "../web-page";
 
 /** スパムシミュレーターの運試しのシェア: r = 道、g = 等級、m = 狙いの MOD、t = 段の下限、i = アイテムレベル、a = 当たりが 2 つ以上の時の全部 ([MOD の id, 段の下限]。m・t は 1 つ目) */

@@ -5,11 +5,11 @@
   名前 (レアリティの色) と MOD を小さく。直前の手で付いた MOD は緑、消えた MOD は取り消し線で 1 手分だけ出す。
 -->
 <script setup lang="ts">
+import type { StageItem, StageMod } from "../../services/craft-stage/engine";
 import { nameOf, baseNameOf, tr } from "../../i18n/lang";
 import { stageModText } from "./base-values";
 import { computed } from "vue";
 import { baseArt } from "../../services/craft-stage/base-art";
-import type { StageItem, StageMod } from "../../services/craft-stage/types";
 
 const props = defineProps<{ item: StageItem; added: StageMod[]; removed: StageMod[] }>();
 const NAME = { normal: "text-rarity-normal", magic: "text-rarity-magic", rare: "text-rarity-rare", unique: "text-rarity-unique" } as const;

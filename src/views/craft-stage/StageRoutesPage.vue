@@ -8,8 +8,8 @@
   値段は今の相場 (priceOf)、ベース代と始めの状態 (増強は白、カオスは MOD 1 つのレア、高貴は MOD 0 のレア。2026-10-19 オーナー) を作る費用は入れない。広告ありきの別のページ (WebApp.vue が両脇の枠を置く)
 -->
 <script setup lang="ts">
+import { type StageItem, type RouteKind, fillModText, tierDisplayRanges } from "../../services/craft-stage/engine";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
-import type { StageItem } from "../../services/craft-stage/types";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { ROUTES_MAX, ROUTES_MULTI_ON, routesLuck, routesOpen, routesRunes, routesShared, routesTarget } from "../../state/web-page";
 import { revealNext } from "../../utils/keep-place";
@@ -19,9 +19,7 @@ import { routeRunesFor, runePrep } from "../../services/craft-stage/route-runes"
 import { stageRuneIds } from "../../services/craft-stage/stage-core";
 import StageRouteLuck from "./StageRouteLuck.vue";
 import { hitItemOf, placeOnStage } from "./route-place";
-import { GRADE_KEY, raceOne, unpackRace, type Grade, type RaceRow, type RouteKind } from "../../services/craft-stage/route-race";
-import { fillModText } from "../../services/htc/mod-text";
-import { tierDisplayRanges } from "../../services/mods/stat-scale";
+import { GRADE_KEY, raceOne, unpackRace, type Grade, type RaceRow } from "../../services/craft-stage/route-race";
 import { displayCurrency } from "../../state/display-currency";
 import { tr } from "../../i18n/lang";
 import { track } from "../../utils/track";

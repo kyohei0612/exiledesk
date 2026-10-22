@@ -4,9 +4,8 @@
  * 手打ちと同じ棚 (今のアイテムに打てる物を前に、使えない物は畳む) をそのまま使う
  * (2026-10-09 オーナー「イメージは完全に手打ちの UI」「クラフトに使えるカレンシーは全部出さんとあかん」)
  */
+import type { PatchData, StageItem } from "../../services/craft-stage/engine";
 import { inject, provide, type InjectionKey, type Ref } from "vue";
-import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import type { StageItem } from "../../services/craft-stage/types";
 import { craftStage } from "../craft-stage";
 
 export interface ShelfCtx {

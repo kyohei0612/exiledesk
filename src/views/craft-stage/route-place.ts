@@ -3,11 +3,10 @@
  * 運試しの欄 (StageRouteLuck.vue) と道のカード (StageRoutesPage.vue) が使う。クラフト台の形が変わるのはこれだけ (「← クラフトへ戻る」は開いた時のまま)。
  * 起点 = スパムシミュを開いた時のクラフト台 (開いている間は変わらない) の後ろに 1 行 (2026-10-22 オーナー)
  */
+import { mulberry32, type StageItem } from "../../services/craft-stage/engine";
 import { craftStage as s, priceOf } from "../../state/craft-stage";
 import { routesLuck, routesOpen, routesTarget } from "../../state/web-page";
 import { routeRun, type RaceRow, type RaceTarget, type RoutePrep } from "../../services/craft-stage/route-race";
-import { mulberry32 } from "../../services/htc/rng";
-import type { StageItem } from "../../services/craft-stage/types";
 import { forcesOf, spamKey } from "../../services/craft-stage/apply-spam";
 
 /**

@@ -6,15 +6,15 @@
   種類は poe2db どおり STR / DEX / INT ごと、素の数値つき、ルーンフォージ等は出さない。フラスコ・スキルジェムは 2026-10-09 から出さない。選ぶと閉じる。
 -->
 <script setup lang="ts">
+import { classLabel, type PatchData } from "../../services/craft-stage/engine";
 import { computed, ref, watch } from "vue";
 import BaseCatalog from "../../components/items/BaseCatalog.vue";
-import { baseCatalog, classLabel } from "../../services/items/base-catalog";
+import { baseCatalog } from "../../services/items/base-catalog";
 import { baseArt } from "../../services/craft-stage/base-art";
 import Icon from "../../components/ui/Icon.vue";
 import { tr } from "../../i18n/lang";
 import { logRecord } from "../../utils/log-record";
 import { glideBy, scrollBoxOf } from "../../utils/keep-place";
-import type { PatchData } from "../../vendor/poe2htc/engine/types";
 
 const props = defineProps<{ base: string; data: PatchData | null; /** まだ選んでいない (開いた状態で始まり、今のベースは出さない) */ unpicked?: boolean; /** Web: 「ベースを変える」は下に開かず、ベース選びのページへ (openPage、StageBasePage.vue。2026-10-18) */ page?: boolean }>();
 const emit = defineEmits<{ pick: [en: string]; openPage: [] }>();

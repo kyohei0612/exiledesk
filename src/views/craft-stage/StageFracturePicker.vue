@@ -15,9 +15,8 @@ import { fmtPct } from "../../utils/format-pct";
 import { computed, ref } from "vue";
 import { revealOpened } from "../../utils/keep-place"; // 段の表を開いたら全体が見える所まで (2026-10-19)
 import { craftStage } from "../../state/craft-stage";
-import { sideOfMod } from "../../services/craft-stage/engine";
-import { modListFor, shownTags, TAG_STYLE, tierIdOf, type ListRow, type ListTier } from "../../services/craft-stage/mod-list";
-import { tagLabel } from "../../services/mods/tag-ja";
+import { sideOfMod, modListFor, type ListRow, type ListTier, tagLabel } from "../../services/craft-stage/engine";
+import { shownTags, TAG_STYLE, tierIdOf } from "../../services/craft-stage/mod-list";
 import { baseNameOf, tr } from "../../i18n/lang";
 import ModalShell from "../../components/ui/ModalShell.vue";
 

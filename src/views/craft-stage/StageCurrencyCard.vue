@@ -7,6 +7,7 @@
   2026-10-10 ジェム・ベースと同じカード (GameItemCard + hover-stack) に載せ替え: 枠・位置・ピン留め・カードに入る・中の言葉 (RichText) から次のカード
 -->
 <script setup lang="ts">
+import type { StageItem } from "../../services/craft-stage/engine";
 import { computed } from "vue";
 import GameItemCard from "../../components/decor/GameItemCard.vue";
 import RichText from "../../components/decor/RichText.vue";
@@ -16,7 +17,6 @@ import { specialEssence, stageAdds, stageFloor, stageHelp } from "../../state/em
 import { currencyHoverOf } from "../../services/currency/currency-hover";
 import { displayCurrency } from "../../state/display-currency";
 import { tr } from "../../i18n/lang";
-import type { StageItem } from "../../services/craft-stage/types";
 
 const props = defineProps<{ k: string; reason: string | null; omen?: boolean; item?: StageItem | null; x: number; y: number; layerKey: number; pinned: boolean; z: number }>();
 /** ゲームの書式記号 ([Corrupted|コラプト] → コラプト、[Hit] → Hit) を外す */

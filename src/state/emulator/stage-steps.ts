@@ -1,9 +1,7 @@
 /**
  * stage-steps.ts — エミュレーターの小さな決まり (新品のソケット・打った手を手順 JSON の 1 手に)。state/craft-stage.ts から分けた (2026-10-16、500 行の決まり)
  */
-import type { StageItem } from "../../services/craft-stage/types";
-import type { CraftStagePlan } from "../../services/craft-stage/contract";
-import type { PlayedStep } from "../../services/craft-stage/run-plan";
+import type { StageItem, CraftStagePlan, PlayedStep } from "../../services/craft-stage/engine";
 import { baseSocketsOf } from "../../services/craft-stage/stage-runes";
 
 /** 手順 JSON の 1 手 (plan の steps の 1 つ) */

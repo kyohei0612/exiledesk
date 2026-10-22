@@ -2,10 +2,11 @@
  * stage-mod-list-look.ts — StageModList.vue の見た目の表と名前の小物 (2026-10-22 StageModList が 500 行に届いたので分けた。中身は前のまま)。
  * 節の色 (TONE)・重みの出どころの文 (weightNote)・エッセンスの名前 (essName・tierName)
  */
+import type { ListRow, ModGroup } from "../../services/craft-stage/engine";
 import { tr } from "../../i18n/lang";
 import { nameOf } from "../../state/craft-stage";
 import { jewelEmotionJa } from "../../services/htc/patch";
-import { runeToneOf, type ListRow, type ModGroup } from "../../services/craft-stage/mod-list";
+import { runeToneOf } from "../../services/craft-stage/mod-list";
 import essenceKeys from "../../services/htc/essence-keys.json";
 
 /** エッセンスの段の名前 (英語) → 日本語 */

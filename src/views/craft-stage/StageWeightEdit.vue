@@ -8,9 +8,8 @@
 import { computed } from "vue";
 import { tr } from "../../i18n/lang";
 import { craftStage } from "../../state/craft-stage";
-import { defaultWeightOf, OVERRIDDEN } from "../../services/craft-stage/engine";
+import { defaultWeightOf, OVERRIDDEN, type ListRow } from "../../services/craft-stage/engine";
 import { weightOverrideNote } from "../../services/htc/weight-overrides";
-import type { ListRow } from "../../services/craft-stage/mod-list";
 import { modWeights, resetModWeights, setModWeight, WEIGHTS_ON } from "../../state/emulator/stage-tuning";
 
 const props = defineProps<{ row: ListRow; badge?: boolean }>();

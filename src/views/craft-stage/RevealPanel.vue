@@ -8,13 +8,13 @@
   候補は縦に 3 つ・文は真ん中、押すと金の枠で選んだ状態、下の「発現」で発現、引き直しは右下の回る矢印。プレ / サフィ・ティアはホバーで
 -->
 <script setup lang="ts">
+import type { StageMod } from "../../services/craft-stage/engine";
 import { modText, tr } from "../../i18n/lang";
 import { ref, watch } from "vue";
 import { useDismiss } from "../../utils/use-dismiss";
 import { craftStage } from "../../state/craft-stage";
 import { jaOfOmen } from "../../services/htc/game-names";
 import { reqOfItem } from "../../services/craft-stage/stage-bases";
-import type { StageMod } from "../../services/craft-stage/types";
 import Icon from "../../components/ui/Icon.vue";
 import { planSpec } from "../../services/craft-stage/spec/run-spec";
 import { topicCur, topicStep } from "../../state/tutorial/craft-topic";

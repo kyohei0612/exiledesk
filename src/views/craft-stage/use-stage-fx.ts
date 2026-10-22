@@ -10,11 +10,10 @@
  *     何も出ていなかった手 (高貴・カオス・消去・神・カタリスト等) にも「T3 がついた!」「T4 が消えた」「数値を振り直し!」などを出す
  * 手が増えた時と、打てなかった時 (craftStage.miss。工程には積まない) だけ動く (1 手戻す・再生では動かない)。色と文字は style.css の stage-* と --fx。
  */
+import type { StageItem, PlayedStep } from "../../services/craft-stage/engine";
 import { EL_JA } from "../../services/craft-stage/stage-runes";
 import { ref, watch, type Ref } from "vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
-import type { StageItem } from "../../services/craft-stage/types";
-import type { PlayedStep } from "../../services/craft-stage/run-plan";
 import { tr } from "../../i18n/lang";
 
 export interface StageFx {

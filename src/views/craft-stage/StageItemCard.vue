@@ -9,22 +9,20 @@
   poe2db の Quality)。ユニーク (名前と色)・未鑑定 (MOD を隠す)・壊れた・ソケットの絵・スキルジェムのサポート枠。
 -->
 <script setup lang="ts">
+import { type StageItem, type StageMod, isGem, allMods, unfracturable, classLabel, tagLabel } from "../../services/craft-stage/engine";
 import STAT_ORDER from "../../data/stat-order.json";
 import { fmtChance, isRareChance } from "../../utils/format-pct";
 import { modText, nameOf, baseNameOf, tr } from "../../i18n/lang";
 import { computed, ref } from "vue";
 import { qualityLabelOf } from "../../services/htc/quality";
-import type { StageItem, StageMod } from "../../services/craft-stage/types";
-import { isFlask, isGem } from "../../services/craft-stage/stage-bases";
+import { isFlask } from "../../services/craft-stage/stage-bases";
 import { implicitRows, propRows } from "../../services/craft-stage/stage-props";
 import { runeArt } from "../../services/craft-stage/rune-art";
 import { uniqueLines } from "../../services/craft-stage/stage-uniques";
 import { rollLines } from "../../services/craft-stage/roll-text";
 import { BASE_VALUES_ON, augmentLineOf, modLineOf } from "./base-values";
-import { allMods, boostedMod, hasExtraCatalyst, scaledAugment, unfracturable } from "../../services/craft-stage/stage-core";
+import { boostedMod, hasExtraCatalyst, scaledAugment } from "../../services/craft-stage/stage-core";
 import { shownTags, TAG_STYLE } from "../../services/craft-stage/mod-list";
-import { classLabel } from "../../services/items/base-catalog";
-import { tagLabel } from "../../services/mods/tag-ja";
 import { craftStage } from "../../state/craft-stage";
 import { skillQualityOf } from "../../services/craft-stage/skill-quality";
 import RichText from "../../components/decor/RichText.vue";

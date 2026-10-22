@@ -6,14 +6,12 @@
   宝飾品は品質の種類 (触媒と同じ。選んだ種類のタグの MOD が伸びる)。スキルジェムには出さない (ワンド・スタッフ・セプターは 10-17 から出す)
 -->
 <script setup lang="ts">
+import { CATALYSTS, maxQualityOf, isGem, type StageItem } from "../../services/craft-stage/engine";
 import { computed, onBeforeUnmount } from "vue";
 import { tr } from "../../i18n/lang";
-import { CATALYSTS } from "../../services/htc/quality";
 import { inAny } from "../../services/mods/item-classes";
 import { qualityCapOf, qualityFieldMax, SANCTIFIED_REASON } from "../../services/craft-stage/apply-currency";
-import { hasExtraCatalyst, maxQualityOf } from "../../services/craft-stage/stage-core";
-import { isGem } from "../../services/craft-stage/stage-bases";
-import type { StageItem } from "../../services/craft-stage/types";
+import { hasExtraCatalyst } from "../../services/craft-stage/stage-core";
 
 const props = defineProps<{ item: StageItem }>();
 const emit = defineEmits<{ quality: [n: number, tag?: string]; cap: [n: number]; catalyst: [n: number, tag: string] }>();

@@ -6,16 +6,15 @@
   計算は aim-odds.ts (ステージで打つのと同じ処理を何百回も試す)。行を押すとそのカレンシーを持ってお告げを掛ける。打ったら今の状態で出し直す。
 -->
 <script setup lang="ts">
+import { OMEN_FOR, kindOf, aimChain, aimCombos, aimDone, type AimCombo, type AimOdd } from "../../services/craft-stage/engine";
 import { recNext } from "../../utils/rec-mode";
 import { fmtPct } from "../../utils/format-pct";
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { AIM_MAX, craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import { bonesFor, essenceShelf, ORBS } from "../../state/emulator/craft-stage-shelf";
-import { OMEN_FOR } from "../../services/craft-stage/omens";
-import { kindOf } from "../../services/craft-stage/apply-currency";
 import { aimLabel } from "../../services/craft-stage/mod-list";
-import { aimChain, aimCombos, aimDone, REVEAL, type AimCombo, type AimOdd } from "../../services/craft-stage/aim-odds";
+import { REVEAL } from "../../services/craft-stage/aim-odds";
 import Icon from "../../components/ui/Icon.vue";
 import Disclosure from "../../components/ui/Disclosure.vue";
 import HelpTip from "../../components/ui/HelpTip.vue";

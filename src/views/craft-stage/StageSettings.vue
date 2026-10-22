@@ -3,7 +3,7 @@
   CraftStage.vue から分けた (2026-10-16、500 行の決まり)
 -->
 <script setup lang="ts">
-import { inGroup } from "../../services/mods/item-classes";
+import { inGroup, socketCapOf } from "../../services/craft-stage/engine";
 import { useFlash } from "../../utils/use-flash";
 import { ARMED_CLASS, useArmed } from "../../utils/use-armed";
 import { tr } from "../../i18n/lang";
@@ -19,7 +19,6 @@ import { openTreePage } from "../../web/page";
 import { useTree } from "../simulator/tree/use-tree";
 import { craftStage } from "../../state/craft-stage";
 import pkg from "../../../package.json";
-import { socketCapOf } from "../../services/craft-stage/stage-runes";
 import { ITEM_LEVEL_SET, itemLevelKey, SANCTIFIED_REASON } from "../../services/craft-stage/apply-currency";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import type { ModGroup } from "../../services/craft-stage/trade-search";

@@ -13,7 +13,6 @@ import { useFlash } from "../../utils/use-flash";
 import { preloadSfx, setSfxOff, sfxOff } from "../../utils/sfx";
 import { scrollToTop } from "../../utils/keep-place";
 import { baseNameOf, tr } from "../../i18n/lang";
-import { forceKey } from "../../services/craft-stage/apply-force";
 import { unsocketKey } from "../../services/craft-stage/stage-runes";
 import { LOG_KEEP, SIM_LOCKED, TUTORIAL_LOCKED } from "../../state/craft-stage";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
@@ -38,7 +37,7 @@ import { openBasePage, openTreePage } from "../../web/page";
 import StageAimPicker from "./StageAimPicker.vue";
 import CurrencyShelf from "./CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
-import { previewUse } from "../../services/craft-stage/engine";
+import { previewUse, forceKey, isRune, type StageMod } from "../../services/craft-stage/engine";
 import { courseActive as inLesson, courseHidesEmulator, courseHidesShelf, endLesson } from "../../state/tutorial/course-host"; // チュートリアルのコースの間 (2026-10-17)。隠す判定は course-host に 1 か所 (R4 手 2)
 import RevealPanel from "./RevealPanel.vue";
 import { useStageFx } from "./use-stage-fx";
@@ -48,7 +47,7 @@ import CourseHost from "../tutorial/CourseHost.vue";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
-import { isRune, runeNameOf, RUNE_PREFIX } from "../../services/craft-stage/stage-runes";
+import { runeNameOf, RUNE_PREFIX } from "../../services/craft-stage/stage-runes";
 import { catalystSetKey, IMPLICIT_SET, implicitSetKey, isCatalystSet, isQualitySet, QUALITY_CAP, qualityCapKey, qualitySetKey } from "../../services/craft-stage/apply-currency";
 import HeldOmens from "./HeldOmens.vue";
 import { heldOmensOf } from "./held-omens";
@@ -57,7 +56,6 @@ import Icon from "../../components/ui/Icon.vue";
 import { encodeShare, SHARE_ENABLED, shareUrl, xIntentUrl } from "../../services/craft-stage/share";
 import { openExternal } from "../../services/trade2/open-external";
 import { track } from "../../utils/track";
-import type { StageMod } from "../../services/craft-stage/types";
 
 const s = craftStage;
 /** ルーンを持ってルーンの入ったソケットを押した: そのソケットを置き換える手 (`rune:<名前>@<n>`)。ルーン以外はアイテムを押したのと同じ */
