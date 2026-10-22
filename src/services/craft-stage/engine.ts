@@ -58,6 +58,12 @@ export { REVEAL_SPEC } from "./spec/desecrate-specs";
 // 1 手の行き先の一覧 (消える・付く・未発現・フラクチャーの枝ごとの割合と打った後のアイテム)
 export type { StepOutcome } from "./spec/outcomes";
 export { stepOutcomes } from "./spec/outcomes";
+// 1 手の前後で狙い (段の名前の T) がどう変わったか・行き先を狙いで分ける・この手で付きうる狙い (2026-10-22 シミュの自前の式を入口へ)
+export type { TierAim, AimDiff, AimDiffOpts } from "./aim-reach";
+export { aimDiff, outcomesByAim, reachableAims } from "./aim-reach";
+// 指名で付ける手の鍵 (force:<modId>|<段>|<印>。印 n = 普通・f = フラクチャー・e = エッセンス・d = 冒涜)
+export type { ForceFlag } from "./apply-force";
+export { forceKey } from "./apply-force";
 // 持っている物を打つ前に光らせる物 (変わる候補の MOD と付く空き。クラフト台とシミュの試し打ち、2026-10-22)
 export type { UsePreview } from "./spec/preview";
 export { previewUse } from "./spec/preview";
