@@ -155,7 +155,7 @@ function simFromHand(): void {
     <template v-if="s.mode.value === 'hand' && !handNoBase">
     <!-- 白に戻すは 1 手戻すでは戻せないので 2 回押し (2026-10-08 完成判定: 9 手分が確認無しで消えた) -->
     <button type="button" data-rec="reset" :class="resetArm.is() ? ARMED_CLASS : btn" :disabled="!s.log.value.length && !s.startMods.value.length" @click="armReset">{{ resetArm.is() ? tr("もう一度押すと白に戻す", "Click again to reset") : tr("白に戻す", "Reset") }}</button>
-    <button type="button" data-rec="undo" :class="btn" :disabled="!s.log.value.length && !s.startMods.value.length" :title="tr('R / Ctrl+Z (まだ打っていない時は始めの MOD を 1 つ外す)', 'R / Ctrl+Z (before any use, removes one starting mod)')" @click="s.undo()">{{ tr("1 手戻す", "Undo") }}</button>
+    <button type="button" data-rec="undo" :class="btn" :disabled="!s.log.value.length && !s.startMods.value.length && !s.canBack.value" :title="tr('R / Ctrl+Z (まだ打っていない時は始めの MOD を 1 つ外す)', 'R / Ctrl+Z (before any use, removes one starting mod)')" @click="s.undo()">{{ tr("1 手戻す", "Undo") }}</button>
     <!-- クイズのレシピを 1 手ずつ / 最後まで再生 (ADR-003)。打ち方はシミュレーターと同じ答え -->
     <template v-if="s.handQuiz.value && !SIM_LOCKED">
       <button type="button" :class="btn" :title="tr('シミュレーターのクイズの答えで、今のアイテムに 1 手打つ', 'Use one step from the Simulator quiz answers on the current item')" @click="quizStep(1)">{{ tr("レシピで 1 手", "Recipe: 1 step") }}</button>

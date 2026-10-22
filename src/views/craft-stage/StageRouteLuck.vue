@@ -184,12 +184,12 @@ function startHere(): void {
   const it = item.value, d = s.data.value;
   if (!it || !d) return;
   const forces: Force[] = [...it.prefixes, ...it.suffixes].map((m) => ({ mod: m.modId, tier: m.tierName, values: m.values, ...(m.fractured ? { fractured: true } : {}), ...(m.desecrated ? { desecrated: true } : {}) }));
+  // 今のアイテムから始めた時は、アイテムを丸ごと置く (フラクチャー・品質・ルーン・暗黙の値もそのまま)。前の形は 1 つ戻す (Ctrl+Z) で戻る (2026-10-22 オーナー)
+  if (props.from) { s.place(it, forces); routesLuck.value = false; routesTarget.value = null; routesOpen.value = false; return; }
   s.hold(null);
   s.itemLevel.value = it.itemLevel;
   s.reset();
   s.startMods.value = forces;
-  // 今のアイテムから始めた時は、アイテムを丸ごと置く (フラクチャー・品質・ルーン・暗黙の値もそのまま)
-  if (props.from) { s.item.value = it; routesLuck.value = false; routesTarget.value = null; routesOpen.value = false; return; }
   // 嵌めたルーンもそのまま (ソケットの数とオーグメント)
   const placed = fullSockets(startFrom(d, s.base.value, it.itemLevel, { mods: forces, rarity: it.rarity }, s.seed.value - 1));
   s.item.value = { ...placed, rollSeed: s.seed.value - 1, ...(it.augments?.length ? { sockets: Math.max(placed.sockets ?? 0, it.sockets ?? 0), augments: it.augments } : {}) };
@@ -198,7 +198,9 @@ function startHere(): void {
   routesOpen.value = false;
 }
 /** ここから開始の説明 (クラフトの工程は 0 からになる) */
-const startTitle = computed(() => tr("このアイテムでエミュレーターを始める (クラフトの今の工程は消え、運試しの手も工程に入らない)", "Start the emulator with this item (the current craft steps are cleared; the luck-test uses are not in the steps)"));
+const startTitle = computed(() => props.from
+  ? tr("このアイテムをクラフト台に置いて続きを打つ (1 つ戻す・Ctrl+Z で置く前の形に戻る。運試しの手と費用は工程に入らない)", "Put this item on the craft stage and keep crafting (Undo / Ctrl+Z goes back to the item before; the luck-test uses and cost are not in the steps)")
+  : tr("このアイテムでエミュレーターを始める (クラフトの今の工程は消え、運試しの手も工程に入らない)", "Start the emulator with this item (the current craft steps are cleared; the luck-test uses are not in the steps)"));
 const xUrl = computed(() => `https://x.com/intent/post?text=${encodeURIComponent(shareText.value)}&url=${encodeURIComponent(shareUrl.value)}`);
 function shareX(e: MouseEvent): void {
   sendShare(e, { code: shareCode, web: xUrl.value, text: shareText.value, url: shareUrl.value, log: { base: s.base.value, rank: result.value?.rank ?? null, route: props.row.route } });
@@ -248,7 +250,7 @@ function shareX(e: MouseEvent): void {
         <div class="mt-2 flex flex-wrap gap-2">
           <a v-if="!from" data-route-share :href="xUrl" target="_blank" rel="noopener" class="g-btn-red sm inline-flex items-center !no-underline" @click="shareX">{{ tr("X でシェア", "Share on X") }}</a>
           <button type="button" data-route-again class="g-btn sm" @click="fresh">{{ tr("もう一度 (始めの状態から)", "Again (from the start)") }}</button>
-          <button type="button" data-route-start class="g-btn sm" :title="startTitle" @click="startHere">{{ tr("ここから開始", "Continue from here") }}</button>
+          <button type="button" data-route-start class="g-btn sm" :title="startTitle" @click="startHere">{{ from ? tr("当たった形でクラフト台に戻る", "Back to the craft stage with this item") : tr("ここから開始", "Continue from here") }}</button>
         </div>
       </template>
       <template v-else>
