@@ -9,3 +9,5 @@
 // 持っている物を打つ前に光らせる物 (変わる候補の MOD と付く空き)
 export type { UsePreview } from "./for-emu/preview";
 export { previewUse } from "./for-emu/preview";
+// 重みを推定で埋めた MOD の出どころの一言 (MOD 一覧の重みの札、StageWeightEdit)
+export { weightOverrideNote } from "../htc/weight-overrides";
