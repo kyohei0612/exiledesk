@@ -152,9 +152,8 @@ function ok(): void {
       </div>
       <!-- カタリストの手はここで種類を替える (棚にカタリストが無い、10-22 13 通り組んだ #7) -->
       <div v-if="isCatalyst(held)" data-tree-hand-cats class="flex flex-wrap gap-1">
-        <button v-for="c in TREE_CATALYSTS" :key="c" type="button" data-tree-hand-cat :data-cat="c" class="flex size-8 items-center justify-center rounded-md border" :class="c === held ? 'border-amber-300 bg-amber-500/20' : 'border-white/10 hover:bg-white/10'" :title="nameOf(c)" :aria-pressed="c === held" @click="held = c">
-          <img v-if="iconOf(c)" :src="iconOf(c)" alt="" class="size-6 object-contain" /><span v-else class="text-[10px]">{{ nameOf(c).slice(0, 2) }}</span>
-        </button>
+        <!-- 絵は相場に無く出ないので名前 (「のカタリスト」を省く、10-22 開発版で空の四角が並んだ) -->
+        <button v-for="c in TREE_CATALYSTS" :key="c" type="button" data-tree-hand-cat :data-cat="c" class="min-h-7 rounded-md border px-2 text-[12px]" :class="c === held ? 'border-amber-300 bg-amber-500/20 text-amber-100' : 'border-white/10 hover:bg-white/10'" :title="nameOf(c)" :aria-pressed="c === held" @click="held = c">{{ nameOf(c).replace(/のカタリスト$| Catalyst$/, "") }}</button>
       </div>
       <p v-if="preCat" data-tree-hand-pre-cat class="text-[12px] text-sky-200/90">{{ tr(`前に「${handName(preCat)} (品質を最大まで)」の手を足す (札を押すとカタリストを替えられる)`, `Adds "${handName(preCat)} (to max quality)" before this (click its chip to change the catalyst)`) }}</p>
       <label v-if="canSpam(held)" class="flex min-h-7 cursor-pointer flex-wrap items-center gap-2">
