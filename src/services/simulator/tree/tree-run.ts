@@ -9,7 +9,7 @@ import { mulberry32, type PatchData, type StageItem, type StageMod } from "../..
 import { kindOfCurrency } from "./tree-hands";
 import { aimHeld, aimsOf, handAims, outcomeOf, playHand, startItemOf as startOf } from "./tree-sample";
 import { withTreeTune } from "./tree-tune";
-import { tr } from "../../../i18n/lang";
+import { modText, tr } from "../../../i18n/lang";
 import { aimKey, MATCH_BACK, type Aim, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc } from "./tree-model";
 
 export interface TreeRunOpts {
@@ -55,7 +55,7 @@ export interface TreeRunResult {
   stuck: number;
   stuckAt: Record<string, number>;
   /** 手が打てずに止まった箱の、最初の 1 人の理由・着いた形・通った戻りの箱 (古い順、重ねない)。精査がどの外れ・どの戻りが元かを出す (10-22) */
-  stuckWhy: Record<string, { reason: string; item: StageItem; backs: string[] }>;
+  stuckWhy: Record<string, { reason: string; item: StageItem; backs: string[]; noBox?: boolean }>;
   /** 手の結果に合う結果の箱が無かった人数 (箱ごと。結果が 1 通りとして箱を 1 つにした手で別の結果が出た等。形の合う箱があればそこへ進み、無ければ止まり) */
   unexpected: Record<string, number>;
   /** 全員の合計 ÷ 完成数 (完成 0 なら NaN) */
@@ -73,7 +73,7 @@ export interface TreeRunResult {
 }
 
 type End = "done" | "capped" | "stuck";
-interface Person { end: End; cost: number; at: string; visits: { box: string; cost: number }[]; uses: Record<string, number>; restarts: number; odd: Set<string>; why?: { reason: string; item: StageItem } }
+interface Person { end: End; cost: number; at: string; visits: { box: string; cost: number }[]; uses: Record<string, number>; restarts: number; odd: Set<string>; why?: { reason: string; item: StageItem; noBox?: boolean } }
 
 const startItemOf = (data: PatchData, doc: TreeDoc, rng: () => number): StageItem => startOf(data, doc, rng).item;
 
@@ -273,11 +273,11 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
         continue;
       }
       const to = b.back === MATCH ? matchBox(data, shapes, item, aims) : settle(data, doc, shapes, b.back, item, aims);
-      if (!to) return { end: "stuck", cost, at, visits, uses, restarts, odd };
+      if (!to) return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("戻り先の「形の合う箱」が無い", "No box matches the shape to return to"), item, noBox: true } };
       at = to;
       continue;
     }
-    if (!b.hand) return { end: "stuck", cost, at, visits, uses, restarts, odd };
+    if (!b.hand) return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("次の手・戻り先が無い", "No next craft or return"), item, noBox: true } };
     if (++steps > o.capSteps || cost > o.capDiv) return { end: "capped", cost, at, visits, uses, restarts, odd };
     hops = 0;
     const before = item;
@@ -290,7 +290,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
       // 合う結果の箱が無い (10-22 ブラック「1 箱にした手で別の結果が出た時に黙って止まらない」): 形の合う箱があればそこへ、無ければ止まり。どちらも想定外として数える
       odd.add(at);
       const to = matchBox(data, shapes, r.item, aims);
-      if (!to) return { end: "stuck", cost, at, visits, uses, restarts, odd };
+      if (!to) return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`この手の結果「${outcomeText(data, r.item, oc)}」の箱が無く、形の合う箱も無い`, `No box for this craft's result "${outcomeText(data, r.item, oc)}", and no box matches the shape`), item: r.item, noBox: true } };
       item = r.item;
       at = to;
       continue;
@@ -300,6 +300,14 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
   }
 }
 
+/** 手の結果の名前 (止まりの文。当たりは付いた MOD の文) */
+const OUT_TEXT: Partial<Record<OutKind, [string, string]>> = { junk: ["外れ", "Miss"], junkGone: ["外れが消えた", "Miss removed"], lost: ["狙いが消えた", "Target lost"] };
+function outcomeText(data: PatchData, item: StageItem, oc: { out: OutKind; hits: Aim[] }): string {
+  if (oc.out !== "hit") { const n = OUT_TEXT[oc.out]; return n ? tr(n[0], n[1]) : oc.out; }
+  const mods = [...item.prefixes, ...item.suffixes];
+  const names = oc.hits.map((a) => { const m = mods.find((x) => aimHeld(data, { ...item, prefixes: [x], suffixes: [] }, a)); return m ? modText(m) : a.modId; });
+  return tr(`当たり ${names.join("・")}`, `Hit ${names.join(", ")}`);
+}
 /** 完成の箱で狙いが揃っているか (付いている木の狙いの数が、その箱の道の当たりの数の一番少ない組以上。分かれ目の先は行の条件で決まるので数で見る) */
 function doneOk(data: PatchData, doc: TreeDoc, id: string, item: StageItem, aims: readonly Aim[]): boolean {
   const need = Math.min(...heldSets(doc, id).map((h) => h.length));

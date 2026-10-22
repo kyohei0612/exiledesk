@@ -221,8 +221,10 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
 }
 
 /** 回して止まる箱の文: 何人・どの側が満杯か・外れの MOD (最初の 1 人の形)。理由が側の満杯でなければエンジンの理由をそのまま */
-function stuckText(data: PatchData, aims: readonly Aim[], n: number, w: { reason: string; item: StageItem } | undefined, carry: boolean): string {
+function stuckText(data: PatchData, aims: readonly Aim[], n: number, w: { reason: string; item: StageItem; noBox?: boolean } | undefined, carry: boolean): string {
   const head = tr(`回すと ${RUN_PEOPLE} 人中 ${n} 人がここで止まる`, `${n} of ${RUN_PEOPLE} runs stop here`);
+  // 行き先の箱が無くて止まった (10-22 13 通り組んだ #11: 「手・戻り先が無い」だけでどの結果の箱が無いか分からなかった)
+  if (w?.noBox) return `${head}: ${w.reason}`;
   if (!w) return tr(`${head} (手・戻り先が無い、または分かれ目のどの行にも合わない)`, `${head} (no craft or return, or no split row matches)`);
   const full = SIDES.filter((side) => !room(w.item, side));
   if (!full.length) return `${head}: ${w.reason}`;
