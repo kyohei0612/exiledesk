@@ -32,30 +32,31 @@ function doc(base, boxes) {
 const hand = (currency, omens = [], extra = {}) => ({ currency, omens, catalyst: null, quality: 0, ...extra });
 const SPAM = { repeat: { until: "hit", max: null } };
 
-/** ES 手袋: 狙い F/P/M (T2 以上)。始まり = カオスを当たるまで → 1 つ → 左側の高貴 + 上級 → 外れは消去 */
+/**
+ * ES 手袋: 狙い F/P/M (T2 以上)。始まり = カオスを当たるまで → 1 つ → 左側の高貴 + 上級 → 外れは消去。
+ * 狙いの組み合わせごとに手の箱を持つ (h<組>)。前は「狙い 1 つは s_F に寄せる」形だったが、戻り先でアイテムの形を見る settle (ab16d9bb) と噛み合わず
+ * 完成 34% に落ちた (10-22)。外れが消えた → 同じ組の箱、狙いが消えた → 形の合う箱へ。1 つの組で狙いが消えた時 (jh?l) が「狙いが全部消えた」
+ */
 function esTree() {
   const A = { F: { modId: "Gloves_int/LocalEnergyShield", tier: 2 }, P: { modId: "Gloves_int/LocalEnergyShieldPercent", tier: 2 }, M: { modId: "Gloves_int/IncreasedMana", tier: 2 } };
   const SG = hand("exalt_greater", ["OmenofSinistralExaltation"]);
-  return doc("Sirenscale Gloves", {
-    start: { out: "start", hand: hand("chaos", [], SPAM), outs: ["s_F", "s_P", "s_M"] },
-    // 狙い 1 つ (どれでも同じ手なので s_F に寄せる)
-    s_F: { out: "hit", aim: A.F, hand: SG, outs: ["k_F", "k_P", "k_M", "j1"] },
-    s_P: { out: "hit", aim: A.P, back: "s_F" },
-    s_M: { out: "hit", aim: A.M, back: "s_F" },
-    j1: { out: "junk", hand: hand("annul"), outs: ["j1g", "j1l"] },
-    j1g: { out: "junkGone", back: "s_F" },
-    j1l: { out: "lost", back: "start" },
-    // 狙い 2 つ
-    k_P: { out: "hit", aim: A.P, hand: SG, outs: ["d_F", "d_P", "d_M", "j2"] },
-    k_F: { out: "hit", aim: A.F, back: "k_P" },
-    k_M: { out: "hit", aim: A.M, back: "k_P" },
-    j2: { out: "junk", hand: hand("annul"), outs: ["j2g", "j2l"] },
-    j2g: { out: "junkGone", back: "k_P" },
-    j2l: { out: "lost", back: "j1" },
-    d_F: { out: "hit", aim: A.F, done: "main" },
-    d_P: { out: "hit", aim: A.P, done: "main" },
-    d_M: { out: "hit", aim: A.M, done: "main" },
-  });
+  const K = ["F", "P", "M"], b = {};
+  const id = (set) => "h" + [...set].sort().join("");
+  b.start = { out: "start", hand: hand("chaos", [], SPAM), outs: K.map((k) => id([k])) };
+  for (const k of K) b[id([k])] = { out: "hit", aim: A[k], parent: "start" };
+  for (const s of [["F"], ["P"], ["M"], ["F", "P"], ["F", "M"], ["M", "P"]]) {
+    const me = id(s), j = `j${me}`;
+    const outs = K.filter((k) => !s.includes(k)).map((k) => {
+      const to = s.length === 2 ? `d${me}${k}` : id([...s, k]);
+      b[to] ??= { out: "hit", aim: A[k], parent: me, ...(s.length === 2 ? { done: "main" } : {}) };
+      return to;
+    });
+    b[me] = { ...b[me], hand: SG, outs: [...outs, j] };
+    b[j] = { out: "junk", parent: me, hand: hand("annul"), outs: [`${j}g`, `${j}l`] };
+    b[`${j}g`] = { out: "junkGone", parent: j, back: me };
+    b[`${j}l`] = { out: "lost", parent: j, back: "match" };
+  }
+  return doc("Sirenscale Gloves", b);
 }
 function esStart(rng) {
   const P = data.mods.get("Gloves_int/Rune_marksman_IncreaseSocketedGemLevel__projectile_skill_gem_level");
@@ -209,12 +210,12 @@ if (which === "es" || which === "all") {
   const r = M.runTree(data, esTree(), { n: N, seed: SEED, price, start: esStart });
   show("ES 手袋のプレフィックス 3 つ (左側の高貴 + 上級)", 105.14, r);
 }
-// 作り直しの数え方: ES 手袋で「狙いが全部消えたら作り直し」(j1l → restart)。始めの費用 0 なら前と同じくらい、
+// 作り直しの数え方: ES 手袋で「狙いが全部消えたら作り直し」(jhFl・jhPl・jhMl → restart)。始めの費用 0 なら前と同じくらい、
 // 10 神なら 1 個あたりが「10 × (1 + 1 人あたりの作り直し) ÷ 完成の割合」だけ増えるはず
 if (which === "restart" || which === "all") {
   for (const startCost of [0, 10]) {
     const d = esTree();
-    d.boxes.j1l.back = "restart";
+    for (const x of ["jhFl", "jhPl", "jhMl"]) d.boxes[x].back = "restart";
     const r = M.runTree(data, d, { n: N, seed: SEED, price, start: esStart, startCost });
     const expect = 105.14 + startCost * (1 + r.restarts) / (r.finished / r.n);
     console.log(`\n=== 作り直し (始めの費用 ${startCost} 神): 1 個あたり ${r.perItem.toFixed(2)} 神・完成 ${(100 * r.finished / r.n).toFixed(1)}%・1 人の作り直し ${r.restarts.toFixed(2)} 回 (見込み ${expect.toFixed(2)} 神 = 105.14 + ${startCost} × (1 + ${r.restarts.toFixed(2)}))`);
