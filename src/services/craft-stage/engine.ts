@@ -92,7 +92,10 @@ export { DESECRATION_EXCLUSIVE_COUNT, bossOmenAllowed, desecrationOmenForMod } f
 
 // 名簿
 export { OMEN_FOR } from "./omens";
+export type { RuneRow, RuneEffect } from "./stage-runes";
 export { RUNES, runeOf, isRune, runeEffectFor } from "./stage-runes";
+// そのアイテムのベースに差せるルーン (今のゲームに有る物、効果つき。2026-10-22 シミュの自前の式を入口へ)
+export { runesFor } from "./rune-choice";
 export { withRunes, runeIdByName } from "../../vendor/poe2htc/engine/runes";
 export { ESSENCE_KEYS } from "../htc/essence-key-table";
 export { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
@@ -107,7 +110,7 @@ export { boostsOf, modBoostsOf, baseValueOf, unboost } from "./boosts";
 
 // 貼り付けたアイテムの文を読む (トレード・poe.ninja・ゲームの Ctrl+C / Ctrl+Alt+C、日英。形は item-text-types.ts)
 export type { ItemTextResult, ItemTextMod, ItemTextImplicit, ItemTextSkip, ItemTextSkipCode, ItemTextSource, ItemTextWords, ItemTextCorruption, ItemTextBoost } from "./item-text-types";
-export { parseItemText } from "./item-text";
+export { parseItemText, modRawText } from "./item-text";
 // コラプト (ヴァールのオーブ) で付く MOD の表 (poe2db の部位のページ。enchant = エンチャント、upgrade = 強まったコラプトの行)
 export type { CorruptionRow } from "../mods/corruption";
 export { corruptionRowsFor, matchCorruption } from "../mods/corruption";
