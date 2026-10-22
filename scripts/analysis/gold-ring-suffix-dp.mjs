@@ -112,6 +112,36 @@ const TREE = (k) => {
 };
 
 /**
+ * PROBE="形" [HANDS="手,手"]: その形のアイテムから 1 回だけ打ち、手ごとに 1 回の費用 (使った物の内訳) と行き先の形の割合を N 回で並べる。
+ * 既定の手は木の手と全部の触媒の手。「なぜその手が安いか」の中身を見る用
+ */
+if (process.env.PROBE) {
+  const want = process.env.PROBE;
+  const r2 = M.mulberry32(SEED);
+  const pool = [];
+  for (let i = 0; pool.length < 200 && i < 2e6; i++) { const it = fresh(r2); if (keyOf(it) === want) pool.push(it); }
+  if (!pool.length) { console.log(`${want} の形が作れない`); process.exit(1); }
+  const hands = process.env.HANDS ? process.env.HANDS.split(",") : [TREE(want), ...ACTIONS.filter((a) => a.cat).map((a) => a.id)];
+  for (const aid of [...new Set(hands)]) {
+    const a = ACTIONS.find((x) => x.id === aid);
+    const next = new Map(), used = {};
+    let ok = 0, tot = 0;
+    for (let i = 0; i < N; i++) {
+      const n = {};
+      const out = play(pool[i % pool.length], a, r2, n);
+      if (!out) continue;
+      ok++; tot += costOf(n);
+      for (const [k, v] of Object.entries(n)) used[k] = (used[k] ?? 0) + v;
+      const nk = keyOf(out).replace(/\|q.*$/, "");
+      next.set(nk, (next.get(nk) ?? 0) + 1);
+    }
+    const top = [...next.entries()].sort((x, y) => y[1] - x[1]).map(([k, c]) => `${k} ${((100 * c) / ok).toFixed(1)}%`).join("・");
+    console.log(`${aid}: 打てた ${ok}/${N}、1 回 ${(tot / ok).toFixed(3)} 神 (${Object.entries(used).map(([k, v]) => `${k} ${(v / ok).toFixed(2)}`).join(" ")})\n  行き先 ${top}`);
+  }
+  process.exit(0);
+}
+
+/**
  * OVR="形=手;形=手" (例 "+--|j0|p0=catalyst_cold+触媒+右側+exalt_greater"): 計算は飛ばし、木の手のうち書いた形だけ替えてエンジンで N 人 (同じ種 = 同じ乱数の並び)。
  * 木の手そのまま (OVR=none) と並べて、1 か所替えた差を直に測る
  */
