@@ -4,7 +4,7 @@
  * 付きうる = heldOdds (クラフト台の % と同じ)、MOD の一覧 = modListFor、ルーン = RUNES。カタリストを最大まで入れる fillCatalyst は engine-sim.ts (核に無い物)。
  * 決まりや確率の式はここに書かない (足りない物はブラック経由でジン部長に頼む)
  */
-import { aimHits as hits, applyCurrency, catalystBoosts, catalystOf, forceKey, freshItem, heldOdds, kindOf, makeStageMod, modListFor, mulberry32, omenBlock, OMEN_FOR, revealOffers, runeEffectFor, runeIdByName, RUNES, stepOutcomes, tierIndexOf, unrevealedOf, type AimHitOpts, type AimTarget, type HeldOdds, type ListRow, type ModGroup, type PatchData, type RuneEffect, type RuneRow, type StageApply, type StageItem, type StageMod, type StepOutcome } from "../../craft-stage/engine";
+import { aimHits as hits, applyCurrency, catalystBoosts, catalystOf, forceKey, freshItem, heldOdds, kindOf, makeStageMod, modListFor, mulberry32, omenBlock, OMEN_FOR, revealOffers, runeEffectFor, runeIdByName, RUNES, tierIndexOf, unrevealedOf, type AimHitOpts, type AimTarget, type HeldOdds, type ListRow, type ModGroup, type PatchData, type RuneEffect, type RuneRow, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { catalystFull, catalystTagOf, fillCatalyst } from "../../craft-stage/engine-sim";
 import { tr } from "../../../i18n/lang";
 
@@ -27,8 +27,6 @@ export function aimHeldOn(data: PatchData, item: StageItem, a: { modId: string; 
   const opts = o?.sameText ? { data, sameText: true } : undefined;
   return [...item.prefixes, ...item.suffixes].some((m) => hits(m, t, opts));
 }
-/** 付いている狙いの組 = 狙いのうちアイテムに付いている物 (並びは ts のまま。sim-own-logic.md の B3) */
-export const heldSetOf = (item: StageItem, ts: readonly AimTarget[], o?: AimHitOpts): AimTarget[] => ts.filter((t) => [...item.prefixes, ...item.suffixes].some((m) => hits(m, t, o)));
 
 /** 段の名前の T で言う狙い (T1 が一番上) */
 export interface TierAim { modId: string; tier: number }
@@ -69,13 +67,6 @@ export function aimDiff<A extends TierAim>(data: PatchData, before: StageItem, a
     fractured,
     fracturedHits: fractured ? aims.filter((a) => heldOn(data, [fractured], a, o)) : [],
   };
-}
-
-/** 1 手の行き先 (stepOutcomes、消える枝 void は除く) を、狙いの変わり方と一緒に。エンジンが枝に分けられない手は null */
-export function outcomesByAim<A extends TierAim>(data: PatchData, item: StageItem, key: string, omens: readonly string[], aims: readonly A[], o: AimDiffOpts = {}): Array<StepOutcome & { diff: AimDiff<A> }> | null {
-  const outs = stepOutcomes(data, item, key, omens);
-  if (!outs) return null;
-  return outs.filter((x) => !x.void).map((x) => ({ ...x, diff: aimDiff(data, item, x.item, aims, o) }));
 }
 
 /**
