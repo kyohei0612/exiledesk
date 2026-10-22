@@ -36,8 +36,8 @@
  "A src/views/tutorial/VideoTray.vue": 2,
  "A src/views/tutorial/VideoTtk.vue": 2,
  "A src/views/tutorial/use-video-hand.ts": 5,
- "D src/views/craft-stage/CraftStage.vue": 2,
+ "D src/views/craft-stage/CraftStage.vue": 1,
  "D src/views/craft-stage/RevealPanel.vue": 1,
  "D src/views/craft-stage/StageSettings.vue": 1,
- "D src/views/craft-stage/use-stage-base.ts": 2
+ "D src/views/craft-stage/use-stage-base.ts": 1
 }
