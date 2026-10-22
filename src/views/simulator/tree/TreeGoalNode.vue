@@ -29,7 +29,7 @@ const n = computed(() => t.goals.value.length);
     </div>
     <p class="truncate text-[13px] font-bold leading-6">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }} <span class="text-[11px] font-normal opacity-70">{{ rarity }}</span></p>
     <p class="truncate leading-6" :class="n ? 'text-[#c8c8ff]' : 'text-amber-300'" :title="t.goals.value.map((a) => t.aimLabel(a)).join('\n')">
-      {{ n ? tr(`狙い ${n} つ · ${t.aimShort(t.goals.value[0]!)}`, `${n} target(s) · ${t.aimShort(t.goals.value[0]!)}`) : tr("＋ 完成の MOD を決める", "+ Set the final mods") }}
+      {{ n ? tr(`狙い ${n} つ · ${t.startModLabel(t.goals.value[0]!)}`, `${n} target(s) · ${t.startModLabel(t.goals.value[0]!)}`) : tr("＋ 完成の MOD を決める", "+ Set the final mods") }}
     </p>
     <!-- スタートの箱への線と矢印 (木の線と同じ色) -->
     <svg class="pointer-events-none absolute left-1/2 top-full -translate-x-1/2 overflow-visible" width="12" :height="GOAL_GAP">

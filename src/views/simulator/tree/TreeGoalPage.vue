@@ -1,7 +1,7 @@
 <!--
   TreeGoalPage.vue — 「0 完成形の設定」の重ね窓 (2026-10-22 オーナー「ツリー特化。箱を押す → 重ね窓で選ぶ → 閉じる で完結」)。枠は ModalShell (前の TreeBasePage と同じ)。
   1 = ベース・レアリティ・アイテムレベル (適正): 上の行が TreeBasePick、下はベースのページと同じ BaseCatalog。ベースを選ぶと 2 へ。
-  2 = 完成の MOD: エミュの「このベースに付く MOD」(StageModList) そのまま、段の行のボタンは「狙いにする」1 つ。右に完成形のアイテムのカード (付き方を見ながら作る、× で外す)。
+  2 = 完成の MOD: エミュの「このベースに付く MOD」(StageModList) そのまま、段の行のボタンは「狙いにする」1 つ (もう一度押すと外す)。右に完成形のアイテムのカード (付き方を見ながら作る)。
   ベースを替えると白紙から (下の箱か始まりの MOD があれば 1 回確かめる、1 つ戻すで戻せる)。開いている印は use-tree の goalPage
 -->
 <script setup lang="ts">
@@ -33,8 +33,6 @@ function apply(en: string): void {
   t.goalPage.value = 2;
 }
 const pickGoal = { has: t.hasGoal, toggle: t.toggleGoal };
-/** カードの × = その狙いを外す */
-function removeGoal(modId: string): void { const a = t.goals.value.find((x) => x.modId === modId); if (a) t.toggleGoal(a.modId, a.tier); }
 const CARD_W = 340;
 </script>
 
@@ -62,9 +60,9 @@ const CARD_W = 340;
       <div class="min-w-0 flex-1"><StageModList overlay :item="t.goalItem.value?.item ?? null" :pick="pickGoal" /></div>
       <!-- 完成形のカード (ページの送りでも見えるよう上に留める) -->
       <div data-tree-goal-card class="sticky top-0 flex shrink-0 flex-col gap-2" :style="{ width: `${CARD_W}px` }">
-        <StageItemCard v-if="t.goalItem.value" :item="t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" removable @remove="removeGoal" />
+        <StageItemCard v-if="t.goalItem.value" :item="t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" />
         <p v-if="t.goalItem.value?.note" data-tree-goal-problem class="rounded-md border border-rose-400/50 bg-[#2a1416] px-2 py-1 text-[12px] text-rose-100">{{ tr(`付けられない狙いがある: ${t.goalItem.value.note}`, `A target can't be added: ${t.goalItem.value.note}`) }}</p>
-        <p class="text-[12px] opacity-70">{{ tr("段の表の「狙いにする」= その段以上が付けば当たり。後の箱の当たりはこの狙いから選ぶ (狙い以外は外れ MOD)", "“Target” in the tier table = a hit if that tier or better rolls. Later hit boxes pick from these targets (anything else is a miss mod)") }}</p>
+        <p class="text-[12px] opacity-70">{{ tr("「狙いにする」= その段以上が付けば当たり。後の箱の当たりはこの狙いから選ぶ", "“Target” = a hit if that tier or better rolls. Later hit boxes pick from these targets") }}</p>
       </div>
     </div>
     <template #footer>
