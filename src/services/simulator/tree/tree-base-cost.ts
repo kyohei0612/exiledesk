@@ -44,7 +44,7 @@ export function treeBaseCost(data: PatchData, doc: TreeDoc, prices: TreeBasePric
   // 反対側でない MOD (フラクチャーと同じ側) は ③ でも費用に入らない
   const sameSide = !c.greater && others.some((o) => sideOfMod(data, o.modId) === sideOfMod(data, fr.modId));
   const label = (k: TreeStartKind): string => k === "fractured" ? tr("フラクチャー済みを買う", "Buy fractured")
-    : k === "four" ? tr("4 MOD を買ってフラクチャー", "Buy a 4-mod rare and fracture")
+    : k === "four" ? tr("4 MOD を買ってフラクチャー (壁を作ってから 1/3)", "Buy a 4-mod rare and fracture (after a blocker, 1/3)")
     : c.greater ? tr("白から自作・グレーターの道", "Craft from white (Greater Essence route)") : tr("白から自作・増強の道", "Craft from white (Augmentation route)");
   const base = (k: TreeStartKind): number | null => ex(k === "white" ? prices.white : k === "four" ? prices.four : prices.fractured);
   // グレーターの道はフラクチャーを自前でするだけ (買う始め方は無し、③ と同じ 10-20)
