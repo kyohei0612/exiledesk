@@ -41,7 +41,8 @@ function resolveSpec(from, spec) {
 
 const rows = loadOwners();
 const WEB_SIDE = new Set(["シミュ", "チュートリアル", "解析"]);
-const ENTRY = "src/services/craft-stage/engine.ts";
+/** 入口 (核 engine.ts と、出した側だけの engine-sim.ts・engine-emu.ts。2026-10-22 深夜、notes/2026-10-22-entry-split-plan.md) */
+const ENTRIES = new Set(["src/services/craft-stage/engine.ts", "src/services/craft-stage/engine-sim.ts", "src/services/craft-stage/engine-emu.ts"]);
 const IMPORT_RE = /(?:^|[\s;])(?:import|export)\s[^"'`;]*?from\s*["']([^"']+)["']|import\s*\(\s*["']([^"']+)["']\s*\)|^\s*import\s*["']([^"']+)["']/gm;
 
 const hits = []; // { rule, file, target }
@@ -52,7 +53,7 @@ for (const f of files) {
     const t = resolveSpec(f, m[1] ?? m[2] ?? m[3]);
     if (!t) continue;
     const tw = ownerOf(t, rows);
-    if (WEB_SIDE.has(who) && tw === "ジン" && /^src\/(services|vendor)\//.test(t) && t !== ENTRY) hits.push({ rule: "A", file: f, target: t });
+    if (WEB_SIDE.has(who) && tw === "ジン" && /^src\/(services|vendor)\//.test(t) && !ENTRIES.has(t)) hits.push({ rule: "A", file: f, target: t });
     if (t.startsWith("src/services/simulator/htc/") && !f.startsWith("src/services/simulator/htc/") && who !== "アプリ") hits.push({ rule: "B", file: f, target: t });
   }
 }
