@@ -26,8 +26,8 @@ export { omenBlock } from "./omen-block";
 
 // アイテムの今を読む
 export { allMods, listOf, room, limitOf, effectiveCls, maxQualityOf, catalystOf, SIDES, sideOfMod, unfracturable } from "./stage-core";
-// MOD を段から作る (数値の決め方は rng)・そのカタリストがその MOD を伸ばすか
-export { makeStageMod, catalystBoosts } from "./stage-core";
+// MOD を段から作る (数値の決め方は rng)・アイテムに MOD を足した形 (withMod)・そのカタリストがその MOD を伸ばすか
+export { makeStageMod, withMod, catalystBoosts } from "./stage-core";
 export { socketCapOf } from "./stage-runes";
 export { dpsText } from "./stage-pob";
 export { DEF } from "./defence";
