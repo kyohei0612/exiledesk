@@ -135,20 +135,22 @@ const treePrice = (key: string): number => priceOfKey(key, treeItem.value);
  * 始まりの箱のベースの値段 (始め方を ③ の計算で比べた一番安い物、tree-base-cost.ts。カレンシーは今の相場)。
  * 計算は 1 回 3〜4 秒かかる (③ の式)。10-22 オーナー「この画面にならないように」: 開いた時にこれを先に計算して、ページが真っ黒のまま 3 秒待たされた。
  * なので (1) 値段に関わる物 (ベース・アイテムレベル・始まりの形と値段) だけを鍵にし、箱を足しても計算し直さない (前は木を替えるたびに計算した)
- * (2) 最初の計算は描いた後に回す (costReady、計算中は題の横の札) (3) 同じ鍵と相場の答えは覚える
+ * (2) 最初の計算は箱を全部出し終えて描いた後に回す (allowCost、計算中は題の横の札) (3) 同じ鍵と相場の答えは覚える
  */
 const costKey = computed(() => JSON.stringify({ b: doc.value.base, l: doc.value.itemLevel, s: startOf(doc.value) }));
 const costReady = ref(false);
 let costAsked = false;
+/** 始まりの値段の計算を始めてよい (ツリーのページが箱を全部出し終えた時、use-tree-reveal)。描いてから (2 フレーム待って) 計算する */
+export function allowCost(): void {
+  if (costReady.value || costAsked) return;
+  costAsked = true;
+  requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => { costReady.value = true; }, 0)));
+}
 const costMemo = new Map<string, ReturnType<typeof treeBaseCost>>();
 const baseCost = computed(() => {
   const d = s.data.value;
   if (!d) return null;
-  if (!costReady.value) {
-    // 描いてから計算する (2 フレーム待ってから)
-    if (!costAsked) { costAsked = true; requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => { costReady.value = true; }, 0))); }
-    return null;
-  }
+  if (!costReady.value) return null;
   const key = costKey.value;
   const { b, l, s: st } = JSON.parse(key) as { b: string; l: number; s: ReturnType<typeof startOf> };
   // 相場 (神の値段と骨・オーブの値段) も鍵に。ここで読むので相場が変われば計算し直す

@@ -4,6 +4,7 @@
  */
 import { computed, onBeforeUnmount, ref, watch, type ComputedRef, type Ref } from "vue";
 import { BOX_H, type TreeBox } from "../../../services/simulator/tree/tree-model";
+import { allowCost } from "./use-tree";
 
 /** これより多く一度に増えた時だけ順に出す (見本・レシピを開いた時。手で足した箱は待たせない) */
 const AT_ONCE = 3;
@@ -48,5 +49,7 @@ export function useTreeReveal(list: ComputedRef<TreeBox[]>, ready: () => boolean
   const visible = computed(() => list.value.filter((b) => seen.value.has(b.id)));
   /** 全部出し終わったか (合流の線など、全部の箱の位置が要る物はそれから) */
   const done = computed(() => !run.value && visible.value.length === list.value.length);
+  // 箱を全部出し終えたら、重い始まりの値段の計算を始めてよい (途中で 3 秒止まって残りの箱が出なかった、10-22。use-tree の allowCost)
+  watch(done, (d) => { if (d) allowCost(); }, { immediate: true });
   return { isShown, visible, done, run };
 }
