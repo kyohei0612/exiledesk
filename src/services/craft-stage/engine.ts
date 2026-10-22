@@ -64,6 +64,9 @@ export type { AimTarget, AimCombo, AimOdd, AimHitOpts } from "./aim-odds";
 export { aimCombos, aimOdds, aimChain, aimDone, hits as aimHits, isAimMod, junkOf, heldSetOf } from "./aim-odds";
 // 段の換算 (段の番号 ↔ 段の名前の T・狙いが全部付く一番低いアイテムレベル・段の札の文字。2026-10-22 シミュの自前の式を入口へ)
 export { tierIndexOf, tierRankOf, tierNoOf, minIlvlFor, tierRankLabel } from "./tier-rank";
+// 手の働き (足す・入れ替え・消す…) とカタリストを最大まで入れる (2026-10-22 シミュの自前の式を入口へ)
+export type { CurrencyEffect } from "./hand-effect";
+export { effectOf, catalystTagOf, catalystFull, fillCatalyst, catalystForMod } from "./hand-effect";
 export { DESECRATION_EXCLUSIVE_COUNT, bossOmenAllowed, desecrationOmenForMod } from "../../vendor/poe2htc/engine/probability";
 
 // 名簿
