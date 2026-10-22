@@ -7,6 +7,7 @@ import { craftStage } from "../../state/craft-stage";
 import { tr } from "../../i18n/lang";
 import { SIM_STARTS, type SimStartKind } from "../../services/simulator/sim-methods";
 import { withinBudget } from "../../services/simulator/self-craft-dist";
+import { startCostOf } from "../../services/simulator/start-cost";
 import type { SimTargetsCtx } from "./use-sim-targets";
 import type { SimRunCtx } from "./use-sim-run";
 
@@ -29,14 +30,7 @@ const startAge = (k: SimStartKind): ReturnType<typeof ageOf> | null => (k === "i
  */
 function startCost(k: SimStartKind): number | null {
   const base = num(k === "white" ? whiteDivine.value : k === "fractured" ? boughtDivine.value : k === "magic" ? magicDivine.value : k === "four" ? fourDivine.value : itemDivine.value);
-  if (!fracMembers.value.length || wholeRoute.value || k === "item" || base == null) return base;
-  if (k === "fractured") return base + (calc.value?.keep?.chaos ?? 0);
-  const c = calc.value;
-  if (!c || c.cantRoll) return null;
-  // 反対側の狙いが付くまで (白から自作は「一緒に揃える」と「固定してからカオス」の安い方、買う始め方はカオス。2026-10-20)
-  const kp = c.keep ? (k === "white" ? Math.min(c.keep.together, c.keep.chaos) : c.keep.chaos) : 0;
-  if (k === "four") return c.fourTotal != null ? c.fourTotal + kp : null;
-  return (k === "white" ? c.total : (c.fracP > 0 ? (base + c.buyRest) / c.fracP : Infinity) + c.after) + kp;
+  return startCostOf(k, base, calc.value, { fractured: fracMembers.value.length > 0 && !wholeRoute.value });
 }
 /**
  * 白から自作の上限 (2026-10-21 オーナー「フラクチャー済み、4MOD レアの高い方のベース値段を試算上限としたら、越したらもうその白ベースから
