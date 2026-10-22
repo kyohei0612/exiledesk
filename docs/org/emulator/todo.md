@@ -1,5 +1,8 @@
 # ジン部長 のやる事
 
+## ブラックへの報告 (送信の上限で送れなかった分、10-22)
+- 入口に aimHits を出した: services/craft-stage/engine.ts の `aimHits(m: StageMod, t: AimTarget): boolean` (aim-odds の hits そのまま = 未発現でなく、同じ modId で段が minTierIndex 以上。振る舞いは同じ)。0d11e79d、push 済み、型チェック通過。シミュ部長 12 本目へ。use() の seed・setUseHook (251a20b0) のお知らせも受けた。待機中。
+
 ## やる事
 - 引き継ぎ (10-22 深夜、4 本目 → 5 本目): 下の「4 本目の分」→「3 本目の分」の順に先に読む。宛先のブラックは 5 代目 (dev/todo.md の表)。
 - 4 本目の分 (全部 push 済み):
