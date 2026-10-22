@@ -17,7 +17,7 @@ import { toCss } from "../../utils/zoom";
 import { shelfTag } from "../../state/emulator/craft-stage-help";
 import { useShelf } from "../../state/emulator/shelf-context";
 import { omenNote } from "../../services/craft-stage/omens";
-import { omenBlock } from "../../services/craft-stage/engine";
+import { omenBlock } from "../../services/craft-stage/engine-emu";
 import { tr } from "../../i18n/lang";
 
 /** label: 名前の上書き (エッセンスを種類でまとめたアイコン)。nobadge: 段の札を出さない */

@@ -8,7 +8,8 @@
 import { computed } from "vue";
 import { tr } from "../../i18n/lang";
 import { craftStage } from "../../state/craft-stage";
-import { defaultWeightOf, OVERRIDDEN, type ListRow } from "../../services/craft-stage/engine";
+import type { ListRow } from "../../services/craft-stage/engine";
+import { defaultWeightOf, OVERRIDDEN } from "../../services/craft-stage/engine-emu";
 import { weightOverrideNote } from "../../services/htc/weight-overrides";
 import { modWeights, resetModWeights, setModWeight, WEIGHTS_ON } from "../../state/emulator/stage-tuning";
 

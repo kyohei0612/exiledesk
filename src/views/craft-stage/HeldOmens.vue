@@ -6,7 +6,7 @@
 -->
 <script setup lang="ts">
 import { computed, watchEffect } from "vue";
-import { omenBlock } from "../../services/craft-stage/engine";
+import { omenBlock } from "../../services/craft-stage/engine-emu";
 import { tr } from "../../i18n/lang";
 import { nameOf } from "../../state/craft-stage";
 import { useShelf } from "../../state/emulator/shelf-context";

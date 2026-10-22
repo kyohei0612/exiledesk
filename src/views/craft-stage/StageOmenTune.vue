@@ -8,7 +8,8 @@
 import { computed } from "vue";
 import { tr } from "../../i18n/lang";
 import { useShelf } from "../../state/emulator/shelf-context";
-import { catalystOf, CATALYSING_PER_PCT, tunedCatalysingMultiplier } from "../../services/craft-stage/engine";
+import { catalystOf } from "../../services/craft-stage/engine";
+import { CATALYSING_PER_PCT, tunedCatalysingMultiplier } from "../../services/craft-stage/engine-emu";
 import { SANCTIFY_SELECT, SANCTIFY_STEPS, sanctifyLabel } from "./sanctify-steps";
 import { catalysingPerPct, sanctifyK, setCatalysingPerPct, setSanctifyK, TUNING_ON } from "../../state/emulator/stage-tuning";
 
