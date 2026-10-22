@@ -3,7 +3,7 @@
   組む画面 (箱・線・欄) には手を入れず、Vue Flow の zoom-pane の中に重ねる: 通った線は回数で太く明るく (実線だけ、点線・1px は使わない)、
   箱の右上に来た人数「n 人」、線の先に通った回数「n 回」、戻りの弧は箱の下に「↩ n 回」、誰も来ない箱は暗く、止まった箱に赤い札。
   数字は前の値から 0.3 秒で数え上げる (回している間に 2 人ごとに増える)。
-  回す前の 1 人目が進む間は result が無く、今いる箱 (walk) を光らせるだけ (光は次の箱へ滑って動く)
+  回す前の 1 人目が進む間は result が無く、今いる箱 (walk) を光らせるだけ (光は 1 箱の間の半分で次の箱へ滑る。長いと滑っている途中ばかりで箱からずれて見えた)
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
@@ -14,7 +14,7 @@ import { tr } from "../../../i18n/lang";
 
 interface Edge { id: string; stem: string; to: { id: string; d: string }[] }
 const props = defineProps<{
-  result: TreeRunResult | null; walk?: string | null; boxes: readonly TreeBox[]; posOf: (b: TreeBox) => { x: number; y: number };
+  result: TreeRunResult | null; walk?: string | null; walkMs?: number; boxes: readonly TreeBox[]; posOf: (b: TreeBox) => { x: number; y: number };
   edges: readonly Edge[]; lines: readonly MergeLine[]; paths: ReadonlyMap<string, string>;
 }>();
 const emit = defineEmits<{ go: [id: string] }>();
@@ -37,7 +37,8 @@ watch(target, (to) => {
   cancelAnimationFrame(raf);
   const from = { ...disp.value }, t0 = performance.now(), MS = 300;
   const tick = (now: number): void => {
-    const k = Math.min(1, (now - t0) / MS), e = 1 - (1 - k) ** 3, next: Record<string, number> = {};
+    // rAF の時刻は始めより前のことがある (負の割合で -17 万回と出た、10-22 金の指輪)
+    const k = Math.max(0, Math.min(1, (now - t0) / MS)), e = 1 - (1 - k) ** 3, next: Record<string, number> = {};
     for (const key of Object.keys(to)) next[key] = (from[key] ?? 0) + (to[key]! - (from[key] ?? 0)) * e;
     disp.value = next;
     if (k < 1) raf = requestAnimationFrame(tick);
@@ -80,8 +81,8 @@ const div = (x: number): string => (x >= 100 ? x.toFixed(0) : x.toFixed(1));
     <path v-for="l in back" :key="l.key" :d="l.d" :stroke="ON.back" :stroke-opacity="alpha(l.n)" :stroke-width="width(l.n)" stroke-linecap="round" stroke-linejoin="round" fill="none" />
   </svg>
   <!-- 1 人目が今いる箱 (光る枠。次の箱へ滑る) -->
-  <div v-if="lit" data-tree-run-walk :data-box-id="walk" class="pointer-events-none absolute z-[9] rounded-xl border-[3px] border-amber-300 shadow-[0_0_18px_6px_rgba(243,194,107,0.75)] transition-[left,top] duration-150 ease-out"
-    :style="{ left: `${lit.x - 4}px`, top: `${lit.y - 4}px`, width: `${BOX_W + 8}px`, height: `${BOX_H + 8}px` }" />
+  <div v-if="lit" data-tree-run-walk :data-box-id="walk" class="pointer-events-none absolute z-[9] rounded-xl border-[3px] border-amber-300 shadow-[0_0_18px_6px_rgba(243,194,107,0.75)] transition-[left,top] ease-out"
+    :style="{ transitionDuration: `${Math.round((walkMs ?? 250) * 0.5)}ms`, left: `${lit.x - 4}px`, top: `${lit.y - 4}px`, width: `${BOX_W + 8}px`, height: `${BOX_H + 8}px` }" />
   <template v-for="m in marks" :key="m.b.id">
     <!-- 誰も来ない箱は暗く -->
     <div v-if="!m.reach" data-tree-run-veil class="pointer-events-none absolute z-[8] rounded-xl bg-black/55" :style="{ left: `${m.x}px`, top: `${m.y}px`, width: `${BOX_W}px`, height: `${BOX_H}px` }" />

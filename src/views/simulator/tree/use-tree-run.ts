@@ -18,8 +18,8 @@ export const RUN_N = 100;
 const EVERY = 2;
 const PACE_MS = 60;
 type Person1 = Parameters<NonNullable<TreeRunOpts["onPerson"]>>[0];
-/** 1 人目の 1 箱の間 (ms)。長い道 (始めに戻るが多い) は全体で 12 秒ほどに縮める、最低 90ms */
-const walkMs = (len: number): number => Math.max(90, Math.min(450, Math.round(12000 / Math.max(1, len))));
+/** 1 人目の 1 箱の間 (ms)。長い道 (始めに戻るが多い) は全体で 20 秒ほどに縮める、最低 40ms (金の指輪は 540 箱、90ms で 49 秒かかった) */
+const walkMs = (len: number): number => Math.max(40, Math.min(450, Math.round(20000 / Math.max(1, len))));
 
 /** onHalt = 止まった人が出て止めた時 (その箱へ寄る)。onWalk = 1 人目が箱に着いた時 (見える所へ) */
 export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: (key: string) => number, onHalt: (box: string) => void, onWalk: (box: string) => void) {
@@ -30,7 +30,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
   /** 止まった人が出て途中で止めた時の箱と人数 (10-22 オーナー「止まった瞬間 100 人回すの止めて修正しなよ」) */
   const halted = ref<{ box: string; n: number } | null>(null);
   /** 1 人目が進んでいる所 (今いる箱・何手目 / 全部・着いた時の費用 神) */
-  const walk = ref<{ box: string; step: number; total: number; cost: number } | null>(null);
+  const walk = ref<{ box: string; step: number; total: number; cost: number; ms: number } | null>(null);
   /** 1 人目を飛ばす (帯の「飛ばす」) */
   let skip = false;
   let token = 0;
@@ -59,7 +59,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
       const path = p1.visits.filter((v) => d.boxes[v.box] && d.boxes[v.box]!.out !== "pass");
       const ms = walkMs(path.length);
       for (let i = 0; i < path.length && !skip; i++) {
-        walk.value = { box: path[i]!.box, step: i + 1, total: path.length, cost: path[i]!.cost };
+        walk.value = { box: path[i]!.box, step: i + 1, total: path.length, cost: path[i]!.cost, ms };
         onWalk(path[i]!.box);
         await new Promise((res) => setTimeout(res, ms));
         if (my !== token) return;
