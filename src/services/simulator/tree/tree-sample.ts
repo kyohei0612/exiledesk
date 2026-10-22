@@ -210,6 +210,8 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
     if (!r.applied) { last = r; break; }
     last = r;
     const o = outcomeOf(data, base.item, r.item, aims);
+    // 当たるまでの手が上限まで打っても当たらない = 付かない狙いだけ。引き直しても同じなのでやめる (1 回 5000 回 × 3000 で画面が固まった、10-22)
+    if (p.hand.repeat && o.out !== "hit") break;
     if (b.out === "pass") return { item: r.item, note: null };
     if (b.out !== "any" && o.out !== b.out) continue;
     if (b.out === "hit" && b.aim && !o.hits.some((a) => a.modId === b.aim!.modId && a.tier === b.aim!.tier)) continue;
