@@ -10,7 +10,8 @@ import { craftStage as s, setUseHook } from "../../../state/craft-stage";
 import { allMods, omensFor, type StageItem, type StageMod, type StepOutcome } from "../../../services/craft-stage/engine";
 import { heldTargets, hitsTarget, missOutcome, pickGroups, seedFor, type PathTarget } from "../../../services/simulator/build/path-pick";
 import { buildStage, finished, ilvlFit, pathAsk, simBuild, type BuildMod } from "../../../state/simulator/build-state";
-import { tr } from "../../../i18n/lang";
+import { modText, tr } from "../../../i18n/lang";
+import type { RowTag } from "../../craft-stage/stage-item-row-tag";
 import { openTreePage } from "../../../web/page";
 import { useTree } from "../tree/use-tree";
 import type { TreeStart } from "../../../services/simulator/tree/tree-model";
@@ -64,6 +65,13 @@ export const allHeld = computed(() => held.value.length > 0 && held.value.every(
 export const phase = computed<2 | 3>(() => (s.item.value && allMods(s.item.value).some((m) => m.fractured) ? 3 : 2));
 /** 狙いでも、付いた狙いでもない MOD = 外れ MOD (オーナー 10-22) */
 export const isJunk = (m: StageMod): boolean => !targets.value.some((t) => hitsTarget(m, t));
+/** カードの外れ MOD の札 (ツリーの tree-row-tags と同じ: 行の名前ごと「外れ MOD」、MOD の文は乗せた時。フラクチャーは付けない) */
+export const junkTags = computed(() => {
+  const out = new Map<string, RowTag>();
+  if (buildStage.value !== "play" || !s.item.value) return out;
+  for (const m of allMods(s.item.value)) if (!m.fractured && !m.unrevealed && isJunk(m)) out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`狙いに当たらない MOD: ${modText(m)}`, `Not one of the target mods: ${modText(m)}`) });
+  return out;
+});
 
 const lastIndex = (): number => s.log.value[s.log.value.length - 1]?.out.index ?? 0;
 /** カレンシー以外の鍵 (スパムシミュの戻り・MOD を付ける・品質やレベルを決める・発現・ルーン) は差し込まない (ジン部長 10-22) */
