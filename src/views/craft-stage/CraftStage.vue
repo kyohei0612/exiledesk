@@ -17,7 +17,7 @@ import { forceKey } from "../../services/craft-stage/apply-force";
 import { unsocketKey } from "../../services/craft-stage/stage-runes";
 import { LOG_KEEP, SIM_LOCKED, TUTORIAL_LOCKED } from "../../state/craft-stage";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
-import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, defineAsyncComponent, getCurrentInstance, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { usePhone } from "../../utils/use-phone";
 import { useDismiss } from "../../utils/use-dismiss";
 import { toCss } from "../../utils/zoom";
@@ -87,10 +87,14 @@ const mouse = ref({ x: 0, y: 0 });
 // マウスの位置は拡大前の CSS ピクセルに直して持つ (fixed の left/top に入れるため)。1660 幅より広い窓 (全画面 1920 で zoom 1.157) で
 // カーソルに付く絵と波紋が右下にずれていた (2026-10-08 POE2Tube 要望 ㊳。clientX は実ピクセル、fixed の left は CSS ピクセル)
 const onMove = (e: MouseEvent) => (mouse.value = { x: toCss(e.clientX), y: toCss(e.clientY) });
+const self = getCurrentInstance();
 function onKey(e: KeyboardEvent): void {
   if (e.key === "Escape") s.hold(null);
   // ジェムコラプトを開いている時は、隠れているエミュレーターの手 (R で 1 手戻す・Tab で MOD 一覧) を動かさない
   if (gemCorrupt.value) return;
+  // ほかのページ (ツリー・スパムシミュ・デイリー・要望・レシピ) の後ろで隠れている時も動かさない (WebApp.vue の v-show。2026-10-22 ツリーで Tab を押すと MOD 一覧が開いた)
+  const root = self?.proxy?.$el as HTMLElement | undefined;
+  if (root instanceof HTMLElement && root.getClientRects().length === 0) return;
   // シミュレーションの時は StageSimPanel.vue が「1 つ戻す」に使う
   // 入力欄の中 (MOD 一覧・ベースの検索) と窓を開いている時は、文字の取り消しや窓の物に任せる (2026-10-10 点検: 文字ではなく 1 手戻っていた)
   const t = e.target as HTMLElement | null;
