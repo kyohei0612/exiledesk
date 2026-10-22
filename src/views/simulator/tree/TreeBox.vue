@@ -83,7 +83,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <span class="flex size-5 shrink-0 items-center justify-center rounded-md" :style="{ background: `rgba(${rgb},0.18)`, color: `rgb(${rgb})` }"><Icon :name="kind.icon" class="size-3.5" /></span>
       <span class="truncate text-[11px] font-bold tracking-wide" :style="{ color: `rgb(${rgb})` }">{{ tr(kind.ja, kind.en) }}</span>
       <!-- 始まりのアイテムレベルは見出しに (ベースの名前が長いと下の行で切れて見えない、10-22 靴) -->
-      <span v-if="box.out === 'start'" class="shrink-0 text-[11px] opacity-70">{{ tr(`レベル ${t.doc.value.itemLevel}`, `ilvl ${t.doc.value.itemLevel}`) }}</span>
+      <span v-if="box.out === 'start'" class="shrink-0 text-[11px] opacity-70">{{ tr(`レベル ${t.doc.value.itemLevel}${t.doc.value.ilvlFit ? " (適正)" : ""}`, `ilvl ${t.doc.value.itemLevel}${t.doc.value.ilvlFit ? " (fit)" : ""}`) }}</span>
       <span v-if="box.done" class="shrink-0 rounded-full bg-amber-300/25 px-1.5 text-[10px] font-bold text-amber-100">{{ doneText }}</span>
       <span v-if="box.unwanted?.length" data-tree-unwanted class="shrink-0 rounded-sm bg-rose-400/20 px-1.5 text-[11px] font-bold text-rose-200" :title="tr(`× (要らない) の印 ${box.unwanted.length} 個 (前の試し打ちで付けた物)`, `${box.unwanted.length} mod(s) marked × (unwanted, set in the old try-out)`)">× {{ box.unwanted.length }}</span>
       <span v-if="issue" data-tree-issue class="rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white" :title="issue">!</span>

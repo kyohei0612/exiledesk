@@ -2,7 +2,7 @@
  * use-tree.ts — ツリーのページの状態 (2026-10-22 表面だけ): 今のツリー・1 つ戻す (Ctrl+Z)・ブラウザに覚える・木のベースの MOD の一覧。
  * MOD の一覧はエンジンの入口の modListFor (クラフト台の MOD 一覧と同じ行。自前の表は作らない)。ベースとアイテムレベルは木の base・itemLevel (始まりの箱で選ぶ、10-22。前は金の指輪 ilvl 82 に固定)
  */
-import { computed, ref, shallowRef } from "vue";
+import { computed, ref, shallowRef, watch } from "vue";
 import { craftStage as s, nameOf } from "../../../state/craft-stage";
 import { priceOfKey } from "../../../state/emulator/craft-stage-shelf";
 import { freshItem, modListFor } from "../../../services/craft-stage/engine";
@@ -94,6 +94,28 @@ function startTreeWith(base: string, itemLevel: number): void {
   edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, newTree(base, itemLevel)); });
   askBase.value = false;
 }
+/**
+ * アイテムレベルの「適正」(オーナー 10-22「ベース → アイテムレベル適正 → ツリー」): 狙い (当たりの箱・始まりの MOD・欲しい MOD のメモ) の段が全部付く一番低いレベル
+ * = 段の MOD レベルの一番高い物。狙いが無ければ null (今のレベルのまま)
+ */
+const fitIlvl = computed<number | null>(() => {
+  const data = s.data.value, d = doc.value;
+  if (!data) return null;
+  const aims: Aim[] = [...Object.values(d.boxes).flatMap((b) => (b.out === "hit" && b.aim ? [b.aim] : [])), ...startOf(d).mods, ...(d.memoAims ?? [])];
+  const lv = aims.map((a) => { const ts = data.mods.get(a.modId)?.tiers; return ts?.[ts.length - a.tier]?.ilvl ?? 0; }).filter((x) => x > 0);
+  return lv.length ? Math.max(...lv) : null;
+});
+/** 適正を使う / 外す (使う時はすぐ合わせる。1 つ戻すで戻せる) */
+function setFit(on: boolean): void {
+  edit((d) => { if (on) { d.ilvlFit = true; if (fitIlvl.value) d.itemLevel = fitIlvl.value; } else delete d.ilvlFit; });
+}
+// 適正の間は狙いが変わるたびに合わせる (組み替えの 1 手と一緒なので 1 つ戻すには入れない)
+watch(fitIlvl, (lv) => {
+  const d = doc.value;
+  if (!d.ilvlFit || !lv || lv === d.itemLevel) return;
+  doc.value = { ...d, itemLevel: lv };
+  save(doc.value);
+});
 /** 始めのアイテムにフラクチャーのほか付いている乱数の MOD の数 (素の高貴を n 回、tree-sample の startItemOf。0 は消す。1 つ戻すで戻せる) */
 function setStartRandom(n: number): void { edit((d) => { if (n > 0) d.startRandom = n; else delete d.startRandom; }); }
 /** ベースを替えると消える箱の数 (始まりより下の、画面に出る箱。品質を上げた後の通り抜けは数えない) */
@@ -165,5 +187,5 @@ const baseCost = computed(() => {
 const baseCostBusy = computed(() => !!s.data.value && !costReady.value);
 
 export function useTree() {
-  return { doc, edit, undo, canUndo, reset, setBase, setStartRandom, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
+  return { fitIlvl, setFit, doc, edit, undo, canUndo, reset, setBase, setStartRandom, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
 }

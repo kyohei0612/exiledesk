@@ -90,6 +90,8 @@ export interface TreeDoc {
   schema: "exiledesk-tree/0";
   base: string;
   itemLevel: number;
+  /** アイテムレベルの「適正」(狙いの段が全部付く一番低いレベルに自動で合わせる、オーナー 10-22)。手で数を入れたら外れる。新しい木は既定で入り */
+  ilvlFit?: boolean;
   /** 前の版の始まりのフラクチャー (読み込みで start へ移す。startOf は両方読む) */
   fracture?: Aim | null;
   /** 始まりの形 (レアリティと付いている MOD。10-22 オーナー「始まりの MOD を決めさせる、ほかは自由」)。無ければ fracture から (startOf) */
@@ -126,7 +128,7 @@ export function migrateStart(d: TreeDoc): void {
 }
 export function newTree(base: string, itemLevel: number): TreeDoc {
   return {
-    schema: "exiledesk-tree/0", base, itemLevel, start: { rarity: "rare", mods: [] }, seq: 0,
+    schema: "exiledesk-tree/0", base, itemLevel, ilvlFit: true, start: { rarity: "rare", mods: [] }, seq: 0,
     boxes: { start: { id: "start", x: 0, y: 0, out: "start", aim: null, hand: null, outs: [], back: null, done: null, parent: null } },
   };
 }

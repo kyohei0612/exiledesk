@@ -29,8 +29,11 @@ const ilvl = ref<number | null>(t.doc.value.itemLevel);
 function setIlvl(v: number | null): void {
   ilvl.value = v;
   if (v === null || v < ILVL_MIN || v > ILVL_MAX) return;
+  if (t.doc.value.ilvlFit) t.setFit(false); // 手で入れたら適正から外れる
   t.setBase(t.doc.value.base, Math.round(v));
 }
+/** 適正に戻す (狙いの段が全部付く一番低いレベルに自動で合わせる) */
+function useFit(): void { t.setFit(true); ilvl.value = t.doc.value.itemLevel; }
 /** 替えると下の箱が消えるベース (確かめ待ち) */
 const asking = ref<string | null>(null);
 function pick(en: string): void {
@@ -55,8 +58,9 @@ function apply(en: string): void {
         <button type="button" class="g-btn sm" @click="emit('close')">{{ tr("閉じる", "Close") }}</button>
       </div>
       <label class="flex items-center gap-2 text-[13px]">
-        <span class="flex-1">{{ tr("アイテムレベル", "Item level") }}</span>
-        <NumStep :model-value="ilvl" integer width="w-20" :placeholder-value="t.doc.value.itemLevel" @update:model-value="setIlvl" />
+        <span class="flex-1">{{ tr("アイテムレベル", "Item level") }}<span v-if="t.doc.value.ilvlFit" class="ml-1 text-[12px] text-amber-200">{{ tr(`${t.doc.value.itemLevel} (適正)`, `${t.doc.value.itemLevel} (fit)`) }}</span></span>
+        <button type="button" data-tree-ilvl-fit class="g-tab !min-h-[28px] !px-2.5 !text-[12px]" :class="t.doc.value.ilvlFit ? 'on' : ''" :title="tr('狙いの MOD の段が全部付く一番低いレベルに自動で合わせる (狙いを足すたびに変わる)', 'Follow the lowest level where every target tier can roll (updates as you add targets)')" @click="useFit">{{ tr("適正", "Fit") }}</button>
+        <NumStep :model-value="t.doc.value.ilvlFit ? t.doc.value.itemLevel : ilvl" integer width="w-20" :placeholder-value="t.doc.value.itemLevel" @update:model-value="setIlvl" />
       </label>
       <!-- ベースを替えると下の箱が消える時だけ、1 回確かめる (札の編集の「下の n 箱が消える」と同じ) -->
       <div v-if="asking" data-tree-base-ask class="rounded-md border border-rose-400/60 bg-[#2a1416] p-2 text-[13px] shadow-[0_6px_16px_rgba(0,0,0,0.6)]">
