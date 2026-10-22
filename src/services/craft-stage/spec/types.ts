@@ -171,7 +171,7 @@ export interface CurrencySpec {
  *   pick: 消す物を絞る (光のお告げ = 冒涜の MOD だけ)
  *   replace: 動作をまるごと置き換える (腐食のお告げ「replace all modifiers」)。plain = 発現は普通の MOD だけ
  */
-type OmenEffect =
+export type OmenEffect =
   | { side: StageSide }
   | { guaranteeTag: string }
   | { rerolls: number }
