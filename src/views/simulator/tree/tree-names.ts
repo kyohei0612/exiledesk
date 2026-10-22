@@ -21,7 +21,7 @@ const baseItem = computed(() => (s.data.value ? freshItem(s.data.value, t.doc.va
  * 色は線の色 (SimTreePage の LINE) と同じ系統: 進む = 金 / 外れ・消えた = 赤・紫・灰 / 始まり = 水色。箱 (TreeBox) とまとめた札 (TreeMergeLayer) で同じ
  */
 export const OUT_LOOK: Record<TreeBox["out"], { ja: string; en: string; c: string; icon: string }> = {
-  start: { ja: "始まり", en: "Start", c: "95,180,224", icon: "sparkles" },
+  start: { ja: "スタート", en: "Start", c: "95,180,224", icon: "sparkles" },
   hit: { ja: "当たり", en: "Hit", c: "224,176,96", icon: "target" },
   junk: { ja: "外れ", en: "Miss", c: "224,112,122", icon: "x" },
   junkGone: { ja: "外れが消えた", en: "Miss removed", c: "154,167,184", icon: "check" },

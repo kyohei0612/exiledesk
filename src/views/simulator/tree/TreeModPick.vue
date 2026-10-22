@@ -1,6 +1,7 @@
 <!--
   TreeModPick.vue — ツリーの右の欄: 木のベースの MOD から 1 つ選ぶ (2026-10-22 表面だけ)。
-  当たり = 「この MOD の T 何以上」、フラクチャー = 「この MOD のこの段」。行はエンジンの MOD 一覧 (use-tree.ts の rows) そのまま
+  当たり = 「この MOD の T 何以上」、フラクチャー = 「この MOD のこの段」。行はエンジンの MOD 一覧 (use-tree.ts の rows) そのまま。
+  10-22 ツリー特化: 0 完成形の設定に狙いがあれば、当たりはその狙いの一覧から選ぶ (全部の MOD の一覧は出さない、狙い以外は外れ MOD。この箱の前でもう付いている狙いはグレー)
 -->
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
@@ -8,9 +9,12 @@ import { useTree, type ModRow } from "./use-tree";
 import type { Aim } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { jaTypeName } from "../../../i18n/item-names-ja";
+import { craftStage as s } from "../../../state/craft-stage";
+import { aimHeld, sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { aimKey } from "../../../services/simulator/tree/tree-model";
 
 /** title: 見出しを替える (メモの窓では「欲しい MOD を足す」)。autofocus: 開いたら探す欄に入る */
-const props = defineProps<{ mode: "hit" | "start"; current: Aim | null; title?: string; autofocus?: boolean; embedded?: boolean }>();
+const props = defineProps<{ mode: "hit" | "start"; current: Aim | null; title?: string; autofocus?: boolean; embedded?: boolean; /** 当たりの箱 (前の箱で付いている狙いをグレーに) */ boxId?: string }>();
 const emit = defineEmits<{ pick: [aim: Aim]; close: [] }>();
 const t = useTree();
 
@@ -40,6 +44,15 @@ const sections = computed(() => {
  */
 const aimOf = (r: ModRow, tt: ModRow["tiers"][number]): Aim => ({ modId: tt.modId ?? r.id, tier: Number(tt.rank.slice(1)) });
 const isCurrent = (r: ModRow, tt: ModRow["tiers"][number]): boolean => { const a = aimOf(r, tt); return props.current?.modId === a.modId && props.current.tier === a.tier; };
+/** 完成の狙いから選ぶ (当たりで、狙いがある時) */
+const fromGoals = computed(() => props.mode === "hit" && t.goals.value.length > 0);
+/** この箱の前 (親の箱) で付いている狙い */
+const heldBefore = computed(() => {
+  const d = s.data.value, p = props.boxId ? t.doc.value.boxes[props.boxId]?.parent : null;
+  if (!fromGoals.value || !d || !p) return new Set<string>();
+  const it = sampleOf(d, t.doc.value, p, 1).item;
+  return new Set(t.goals.value.filter((a) => aimHeld(d, it, a)).map(aimKey));
+});
 const tierLabel = (tier: number): string => (props.mode === "start" || tier === 1 ? `T${tier}` : tr(`T${tier} 以上`, `T${tier}+`));
 </script>
 
@@ -50,6 +63,13 @@ const tierLabel = (tier: number): string => (props.mode === "start" || tier === 
       <button v-if="!embedded" type="button" class="g-btn sm" @click="emit('close')">{{ tr("閉じる", "Close") }}</button>
     </div>
     <p class="text-[12px] opacity-70">{{ tr(`${jaTypeName(t.doc.value.base)} (アイテムレベル ${t.doc.value.itemLevel})`, `${t.doc.value.base} (item level ${t.doc.value.itemLevel})`) }}</p>
+    <ul v-if="fromGoals" data-tree-goal-aims class="flex flex-col gap-1">
+      <li v-for="a in t.goals.value" :key="aimKey(a)"><button type="button" data-tree-goal-aim class="flex w-full min-w-0 items-center gap-2 rounded-md border px-2 py-1.5 text-left text-[13px]"
+        :class="[current && aimKey(current) === aimKey(a) ? 'border-amber-400/80 bg-amber-500/20 text-amber-100' : 'border-white/10 bg-white/[0.04] text-[#c8c8ff] hover:border-amber-400/60', heldBefore.has(aimKey(a)) ? 'opacity-40' : '']"
+        :title="heldBefore.has(aimKey(a)) ? tr('この箱の前でもう付いている', 'Already on the item before this box') : t.aimLabel(a)" @click="emit('pick', a)"><span class="min-w-0 flex-1 truncate">{{ t.aimLabel(a) }}</span><span v-if="heldBefore.has(aimKey(a))" class="shrink-0 text-[11px]">{{ tr("付いている", "On item") }}</span></button></li>
+      <li class="pt-1 text-[12px] opacity-60">{{ tr("狙いは 0 完成形の設定で決める。狙い以外は外れ MOD", "Targets are set in 0 Final item. Anything else is a miss mod") }}</li>
+    </ul>
+    <template v-else>
     <input ref="search" v-model="query" type="search" class="h-8 w-full rounded-lg border border-white/15 bg-black/40 px-2 text-[13px] outline-none focus:border-amber-400/60" :placeholder="tr('MOD を探す', 'Search mods')" />
     <div class="min-h-0 flex-1 overflow-y-auto pr-1">
       <section v-for="sec in sections" :key="sec.side" class="mb-3">
@@ -71,5 +91,6 @@ const tierLabel = (tier: number): string => (props.mode === "start" || tier === 
         <p v-if="!sec.rows.length" class="text-[12px] opacity-50">{{ tr("無し", "None") }}</p>
       </section>
     </div>
+    </template>
   </div>
 </template>

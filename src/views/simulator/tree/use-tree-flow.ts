@@ -12,6 +12,7 @@ import { computed, ref, watch, type Ref } from "vue";
 import { useVueFlow } from "@vue-flow/core";
 import { bandsOf, BOX_H, BOX_W, boundsOf, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { pageZoom } from "../../../utils/zoom";
+import { goalPos, withGoal } from "./tree-goal";
 
 export const FLOW_ID = "sim-tree";
 /**
@@ -40,7 +41,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   const minZoom = computed(() => ZOOM_MIN * pageZ.value);
   const maxZoom = computed(() => ZOOM_MAX * pageZ.value);
   const full = ref(false);
-  const bounds = computed(() => boundsOf(doc.value));
+  const bounds = computed(() => withGoal(boundsOf(doc.value), doc.value));
 
   /** 倍率を変える (段に吸い付く。at = 軸にする画面の点 (clientX / clientY)、無ければ画面の真ん中) */
   async function setZoom(z: number, at?: { x: number; y: number }): Promise<void> {
@@ -101,7 +102,8 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     const st = doc.value.boxes.start;
     if (!st) return;
     const z = pageZ.value, w = f.dimensions.value.width;
-    await f.setViewport({ x: w / 2 - (st.x + BOX_W / 2) * z, y: 40 - st.y * z, zoom: z });
+    // 一番上は 0 完成形の設定の箱 (tree-goal.ts)
+    await f.setViewport({ x: w / 2 - (st.x + BOX_W / 2) * z, y: 40 - goalPos(doc.value).y * z, zoom: z });
   }
   /** 等倍に戻す。一望 (VIEW_ONLY 未満) からは始まりへ、75% 以上の時は今見ている真ん中を軸に */
   async function resetZoom(): Promise<void> {

@@ -1,7 +1,7 @@
 <!--
   SimTreePage.vue — クラフトの道 (ツリー) のページ (?page=sim-tree、2026-10-22 オーナー OK「UI の表面だけ」、開発版だけ・PC だけ)。
   入口 (web-page.ts の treePage・web/page.ts・WebApp.vue) はジン部長、中身はシミュ部長。設計は docs/org/simulator/notes/2026-10-22-manual-sim-design.md の 11。
-  一番上がフラクチャーの箱 (始まり)。下の＋で打つ手 (クラフト台の棚から) → 矢印の先に結果の箱。横の＋で当たりを足す、↩ で既にある箱へ戻す。
+  一番上が 0 完成形の設定の箱 (TreeGoalNode、木の形の外)、その下がスタートの箱。箱を押すと重ね窓 (TreeOverlays)。下の＋で打つ手 (クラフト台の棚から) → 矢印の先に結果の箱。横の＋で当たりを足す、↩ で既にある箱へ戻す。
   ＋は長押しで引っ張り、箱の上で離すとその箱へつなぐ (何も無い所ならやめる)。箱はドラッグで動かす、1 つ戻す / Ctrl+Z。
   線は普通の木の図の直角の線。戻りの矢印だけの箱も普通の箱 (10-22 オーナーの選び)、戻りの線は乗せた箱の分だけ (帯の「線を全部表示」で全部、10-22 オーナーの案 A)。
   箱に乗せるとその時点のアイテムのカード。試し打ちの欄は 10-22 に消した (オーナー「試し打ちマジ意味わからんから消して」)。
@@ -16,7 +16,7 @@ import Icon from "../../../components/ui/Icon.vue";
 import TreeMemoFloat from "./TreeMemoFloat.vue";
 import TreeCanvasTools from "./TreeCanvasTools.vue";
 import TreeBox from "./TreeBox.vue";
-import TreeBasePick from "./TreeBasePick.vue"; import TreeBasePage from "./TreeBasePage.vue";
+import TreeOverlays from "./TreeOverlays.vue"; import TreeGoalNode from "./TreeGoalNode.vue";
 import TreeHandShelf from "./TreeHandShelf.vue";
 import TreeModPick from "./TreeModPick.vue";
 import TreeNote from "./TreeNote.vue";
@@ -40,7 +40,7 @@ import { ARMED_CLASS, useArmed } from "../../../utils/use-armed";
 import { useTreeLink } from "./use-tree-link";
 import { useTreeCheck } from "./use-tree-check";
 import TreeIssues from "./TreeIssues.vue";
-import TreeStartPick from "./TreeStartPick.vue";
+import { GOAL_ID, goalPos } from "./tree-goal";
 import TreeSplitPick from "./TreeSplitPick.vue";
 import BusyTag from "../../../components/ui/BusyTag.vue";
 import { useTreeTune } from "./use-tree-tune";
@@ -188,6 +188,7 @@ function onPaneClick(): void { if (panel.value) closeHand(); }
 /** 引っ張り終えた直後の click (押した所と離した所が同じ箱だと出る) は押した事にしない */
 let dragEndedAt = 0;
 function onNodeClick(e: NodeMouseEvent): void {
+  if (e.node.id === GOAL_ID && !hand.value && !picking.value) { panel.value = null; t.goalPage.value = 1; return; } // 0 完成形の設定の重ね窓
   const b = doc.value.boxes[e.node.id];
   if (!b || hand.value || performance.now() - dragEndedAt < 300) return;
   if (picking.value) { if (picking.value !== b.id) onTarget(b); return; }
@@ -237,7 +238,7 @@ function pickAim(a: Aim): void {
   t.edit((d) => setAim(d, p.id, a));
   panel.value = null;
 }
-function onAim(b: Box): void { panel.value = { kind: b.out === "start" ? "start" : "aim", id: b.id }; }
+function onAim(b: Box): void { if (b.out === "start") t.startPage.value = true; else panel.value = { kind: "aim", id: b.id }; }
 function onAddHit(b: Box, at?: { x: number; y: number }, link?: string): void {
   let made: string | null = null;
   t.edit((d) => {
@@ -336,7 +337,7 @@ const plusLine = computed(() => {
 
 watch(() => panel.value?.id, (id) => { if (id) setTimeout(() => void v.reveal(id), 0); });
 /** Vue Flow に渡す箱 (位置は木の形のまま。動かせるのは組める時だけ = 手・一望・戻り先を選んでいる間は画面だけ動く) */
-const flowNodes = computed(() => rv.visible.value.map((b) => ({ id: b.id, type: "box", position: posOf(b), draggable: false, selectable: false, connectable: false })));
+const flowNodes = computed(() => [...(rv.isShown("start") ? [{ id: GOAL_ID, type: "goal", position: goalPos(doc.value), draggable: false, selectable: false, connectable: false }] : []), ...rv.visible.value.map((b) => ({ id: b.id, type: "box", position: posOf(b), draggable: false, selectable: false, connectable: false }))]);
 // Vue Flow へは setNodes で直接入れる (:nodes で渡すと、Vue Flow が中の並びを書き戻している一瞬の変化を拾わず、
 // 見本を開いた時に始まりの箱しか出なかった。10-23 開発版で見た)
 watch(flowNodes, (n) => v.flow.setNodes(n), { immediate: true });
@@ -369,7 +370,7 @@ onMounted(() => window.addEventListener("keydown", onKey));
 onMounted(() => {
   const name = new URLSearchParams(location.search).get("sample");
   const sample = name ? treeSample(name) : null;
-  if (!sample) { if (t.takeAskBase()) t.basePage.value = true; return; } // 白紙ならまずベースを選ぶ重ね窓 (TreeBasePage、10-22 オーナー)
+  if (!sample) { if (t.takeAskBase()) t.goalPage.value = 1; return; } // 白紙ならまず 0 完成形の設定の重ね窓 (10-22 オーナー)
   try { localStorage.setItem("exiledesk.tree.v0.before-sample", JSON.stringify(doc.value)); } catch { /* 控えられなくても開く */ }
   t.edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, sample); tidyOf(d); });
 });
@@ -394,7 +395,7 @@ const glowOf = (b: Box): boolean => {
       <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center gap-3 px-8 text-[22px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)] max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-1 max-md:px-4 max-md:py-2 max-md:text-[17px] max-md:tracking-[0.08em]"><span class="whitespace-nowrap">{{ tr("クラフトの道 (ツリー)", "Craft route tree") }}</span><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" /></h1>
       <button type="button" class="g-btn sm" @click="close">{{ tr("← 戻る", "← Back") }}</button>
     </div>
-    <TreeBasePage v-if="t.basePage.value" />
+    <TreeOverlays />
     <div class="g-panel flex flex-col gap-2 px-3 py-2" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
       <!-- 帯: 全体の数字 (まだ) ・1 つ戻す・拡大縮小・全画面 -->
       <!-- 折り返さない (回した結果の文で 1 行と 2 行の境目になり、木の枠が上下して箱の × が押せなかった、10-22)。左は狭ければ … で切る。768px 未満は左と右を 2 段に (右が画面より広く左が潰れて「回す」が押せなかった、10-22) -->
@@ -424,12 +425,13 @@ const glowOf = (b: Box): boolean => {
             :pan-on-drag="true" :pan-on-scroll="false" :zoom-on-scroll="false" :zoom-activation-key-code="null" :zoom-on-double-click="false" :zoom-on-pinch="false"
             :delete-key-code="null" :selection-key-code="null" :multi-selection-key-code="null" :auto-pan-on-node-drag="true"
             @pane-click="onPaneClick" @node-click="onNodeClick">
+            <template #node-goal><TreeGoalNode :selected="!!t.goalPage.value" /></template>
             <template #node-box="{ id }">
               <TreeBox v-if="doc.boxes[id]" :box="doc.boxes[id]!" :removable="canRemove(doc, id)" :picking="!!picking && picking !== id"
                 :selected="panel?.id === id || picking === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand" :glow="glowOf(doc.boxes[id]!) || plus?.target === id" :issue="issueOf(doc.boxes[id]!)" :inv="inv" :link-no="picking ? link.get(id) ?? null : null"
                 @drag="startDrag(doc.boxes[id]!, $event)" @aim="onAim(doc.boxes[id]!)" @plus="(k, e) => onPlus(doc.boxes[id]!, k, e)" @remove="t.edit((d) => removeHit(d, id))"
                 @back="picking = id" @clear-back="t.edit((d) => setBack(d, id, null))" @done="onDone(doc.boxes[id]!)"
-                @note="panel = { kind: 'note', id }" @base="panel = { kind: 'base', id }" @spam="onSpam(doc.boxes[id]!)" @back-go="goBack(doc.boxes[id]!)" @hover="(on) => (hoverBox = on ? id : hoverBox === id ? null : hoverBox)" />
+                @note="panel = { kind: 'note', id }" @base="t.goalPage.value = 1" @spam="onSpam(doc.boxes[id]!)" @back-go="goBack(doc.boxes[id]!)" @hover="(on) => (hoverBox = on ? id : hoverBox === id ? null : hoverBox)" />
             </template>
             <!-- Vue Flow の倍率と移動が掛かる層: 線は箱の後ろ (z-index -1)、打つ手の札・引っ張る線・戻りの弧は箱の前 -->
             <template #zoom-pane>
@@ -476,7 +478,7 @@ const glowOf = (b: Box): boolean => {
             <TreeBox :box="doc.boxes[pop]!" :x="0" :y="0" :removable="canRemove(doc, pop)" :picking="false" :selected="true" :back-label="backLabel(doc.boxes[pop]!)" :issue="issueOf(doc.boxes[pop]!)"
               @drag="() => {}" @aim="popDo((_, b) => onAim(b))" @plus="(k) => popDo((_, b) => (k === 'side' ? onAddHit(b) : startLink(b)))" @remove="popDo((id) => t.edit((d) => removeHit(d, id)))"
               @back="popDo((id) => (picking = id))" @clear-back="t.edit((d) => setBack(d, pop!, null))" @done="onDone(doc.boxes[pop!]!)"
-              @note="popDo((id) => (panel = { kind: 'note', id }))" @base="popDo((id) => (panel = { kind: 'base', id }))" @spam="onSpam(doc.boxes[pop!]!)" @back-go="popDo((_, b) => goBack(b))" />
+              @note="popDo((id) => (panel = { kind: 'note', id }))" @base="popDo(() => (t.goalPage.value = 1))" @spam="onSpam(doc.boxes[pop!]!)" @back-go="popDo((_, b) => goBack(b))" />
           </div>
         </div>
         <TreeHoverCard v-if="cardBox && doc.boxes[cardBox]" :box-id="cardBox" :rect="v.rectOf(doc.boxes[cardBox]!)" />
@@ -487,10 +489,8 @@ const glowOf = (b: Box): boolean => {
         <aside v-if="panel && panelBox" ref="aside" data-tree-panel class="flex shrink-0 flex-col overflow-y-auto rounded-md bg-white/[0.04] p-3" :class="panel.kind === 'hand' || panel.kind === 'base' || panel.kind === 'start' || panel.kind === 'split' ? 'w-[400px]' : 'w-[320px]'">
           <TreeHandShelf v-if="panel.kind === 'hand'" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" @split="onSplit" />
           <TreeSplitPick v-else-if="panel.kind === 'split'" :key="`s-${panel.id}`" :box-id="panel.id" @close="panel = null" />
-          <TreeBasePick v-else-if="panel.kind === 'base'" @close="panel = null" />
           <TreeNote v-else-if="panel.kind === 'note'" :key="`n-${panel.id}`" :box-id="panel.id" @close="panel = null" />
-          <TreeStartPick v-else-if="panel.kind === 'start'" @close="panel = null" />
-          <TreeModPick v-else :key="`m-${panel.id}`" mode="hit" :current="panelBox.aim" @pick="pickAim" @close="panel = null" />
+          <TreeModPick v-else :key="`m-${panel.id}`" mode="hit" :box-id="panel.id" :current="panelBox.aim" @pick="pickAim" @close="panel = null" />
         </aside>
       </div>
     </div>

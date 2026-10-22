@@ -5,7 +5,8 @@
 import { computed, ref, shallowRef, watch } from "vue";
 import { craftStage as s, nameOf } from "../../../state/craft-stage";
 import { priceOfKey } from "../../../state/emulator/craft-stage-shelf";
-import { freshItem, modListFor } from "../../../services/craft-stage/engine";
+import { freshItem, modListFor, mulberry32 } from "../../../services/craft-stage/engine";
+import { startItemOf } from "../../../services/simulator/tree/tree-sample";
 import { isTreeDoc, migrateStart, newTree, startOf, type Aim, type StartMod, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { treeBaseCost } from "../../../services/simulator/tree/tree-base-cost";
 import { tr } from "../../../i18n/lang";
@@ -80,12 +81,33 @@ function setBase(base: string, itemLevel: number): void {
   });
 }
 /**
- * 白紙の木を開いた時に、まず始まりの箱のベース選び (TreeBasePick) を出すか (10-22 オーナー「全部のベースで使える」案 1)。
+ * 白紙の木を開いた時に、まず 0 完成形の設定の重ね窓 (TreeGoalPage) を出すか (10-22 オーナー「ツリー特化」)。
  * クラフト台の「このベースでクラフトの道へ」から来た時はベースが決まっているので出さない (1 回だけ)
  */
 const askBase = ref(true);
-/** ベースを選ぶ 1 画面 (TreeBasePage.vue) を開いている (オーナー 10-22「エミュと同じくベースを選ぶ 1 画面」) */
-const basePage = ref(false);
+/** 0 完成形の設定の重ね窓 (TreeGoalPage.vue): 0 = 閉じている、1 = ベース・レアリティ・アイテムレベル、2 = 完成の MOD (オーナー 10-22) */
+const goalPage = ref<0 | 1 | 2>(0);
+/** スタートの箱の重ね窓 (TreeStartPage.vue。始まりに付いている MOD・✦・乱数の数) */
+const startPage = ref(false);
+/** 完成の狙い (0 の箱で決める。前の「欲しい MOD のメモ」memoAims を使い回す。後の箱の当たりはこの一覧から選ぶ、オーナー 10-22) */
+const goals = computed((): Aim[] => doc.value.memoAims ?? []);
+const hasGoal = (modId: string, tier: number): boolean => goals.value.some((a) => a.modId === modId && a.tier === tier);
+/** 狙いにする / 外す (同じ MOD は段だけ替える。1 つ戻すで戻せる) */
+function toggleGoal(modId: string, tier: number): void {
+  edit((d) => {
+    const list = d.memoAims ?? [], same = list.find((a) => a.modId === modId);
+    const next = same?.tier === tier ? list.filter((a) => a.modId !== modId) : same ? list.map((a) => (a.modId === modId ? { modId, tier } : a)) : [...list, { modId, tier }];
+    if (next.length) d.memoAims = next; else delete d.memoAims;
+  });
+}
+/** 完成形のアイテム (木のベースに狙いを全部その段で付けた物。付け方はエンジンの force = スタートの箱と同じ startItemOf)。付けられない狙いは note */
+const goalItem = computed(() => {
+  const data = s.data.value, d = doc.value;
+  if (!data) return null;
+  return startItemOf(data, { ...d, start: { rarity: startOf(d).rarity, mods: goals.value.map((a) => ({ modId: a.modId, tier: a.tier })) }, startRandom: 0 }, mulberry32(1));
+});
+/** 完成形のレアリティ (スタートの箱の形と同じ start.rarity。1 つ戻すで戻せる) */
+function setRarity(r: "magic" | "rare"): void { edit((d) => { migrateStart(d); d.start!.rarity = r; }); }
 /** blank = 始まりの箱に手が無い (白紙) */
 const isBlank = (d: TreeDoc): boolean => !d.boxes.start?.hand && !d.boxes.start?.split && Object.keys(d.boxes).length === 1;
 /** 白紙の木を開いた時にベースを選ばせるか (読んだら下ろす) */
@@ -189,5 +211,5 @@ const baseCost = computed(() => {
 const baseCostBusy = computed(() => !!s.data.value && !costReady.value);
 
 export function useTree() {
-  return { basePage, fitIlvl, setFit, doc, edit, undo, canUndo, reset, setBase, setStartRandom, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
+  return { goalPage, startPage, goals, hasGoal, toggleGoal, goalItem, setRarity, fitIlvl, setFit, doc, edit, undo, canUndo, reset, setBase, setStartRandom, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
 }

@@ -19,6 +19,7 @@ import StageWeightEdit from "./StageWeightEdit.vue"; // 重みの札 (推定・�
 import { aimTierKey, heldAnyOf, heldOdds } from "../../services/craft-stage/held-odds";
 import { augmentHostOf, methodsFor, methodsOff } from "../../services/simulator/sim-methods";
 import type { SimMethod } from "../../services/simulator/quiz-build";
+import type { StageItem } from "../../services/craft-stage/types";
 import SimMethodPop from "../simulator/SimMethodPop.vue";
 import { AIM_MAX } from "../../state/craft-stage";
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
@@ -33,18 +34,22 @@ import ModAddPicker from "./ModAddPicker.vue";
 
 /** シミュレーションの ① の枠の中に置く時 (外の枠を付けない) */
 /** overlay: 手で打つ画面の重ね (MOD 一覧のボタン・Tab) の中。枠は重ねの側、見出しの右に閉じる */
-const props = defineProps<{ embedded?: boolean; overlay?: boolean }>();
+/** item: クラフト台の今のアイテムの代わりに見るアイテム (ツリーの完成形)。pick: 段の行のボタンを「狙いにする」1 つにする (has = 狙いに入っているか、toggle = 足す / 外す。段は T の番号)。省略時は今と同じ */
+const props = defineProps<{ embedded?: boolean; overlay?: boolean; item?: StageItem | null; pick?: { has: (modId: string, tier: number) => boolean; toggle: (modId: string, tier: number) => void } }>();
 const s = craftStage;
+const item = computed(() => (props.item !== undefined ? props.item : s.item.value));
+/** シミュレーターの旧工程の段の表 (狙いにするの時は使わない) */
+const sim = computed(() => !props.pick && s.mode.value === "sim");
 /** 始めの状態を組める (まだ打っていない・再生でない) */
 const canStart = computed(() => !s.log.value.length && !s.replay.value);
-const rows = computed(() => (s.data.value && s.item.value ? modListFor(s.data.value, s.item.value) : []));
+const rows = computed(() => (s.data.value && item.value ? modListFor(s.data.value, item.value) : []));
 /**
  * 持っているカレンシーで次に付く確率 (エミュレーターでカレンシーを持っている時だけ。2026-10-09 オーナー「持った時の挙動が UI 的に全然足りてない」)。
  * 候補は打つ処理と同じ説明文の分解 (spec/odds.ts の addOddsBySpec: 側・強さの下限・お告げ・触媒・同じ系統)。null = 持っていない / MOD を足さない物
  */
 const heldCands = computed(() => {
-  const k = s.held.value, d = s.data.value, it = s.item.value;
-  if (!k || !d || !it || s.mode.value !== "hand" || s.replay.value) return null;
+  const k = s.held.value, d = s.data.value, it = item.value;
+  if (props.pick || !k || !d || !it || s.mode.value !== "hand" || s.replay.value) return null;
   // 計算は services/craft-stage/held-odds.ts (打つ処理・計算機と同じ決まり。tests/held-odds-parity.test.ts で突き合わせ)
   const h = heldOdds(d, it, k, s.omens.value);
   return h ? { ...h, name: nameOf(k) } : null;
@@ -86,7 +91,7 @@ const aimRows = computed(() => {
   return n;
 });
 const aimAny = computed(() => {
-  const h = heldCands.value, d = s.data.value, it = s.item.value, k = s.held.value;
+  const h = heldCands.value, d = s.data.value, it = item.value, k = s.held.value;
   if (!h || !d || !it || !k || !aimSel.value.size) return null;
   return heldAnyOf(d, it, k, s.omens.value, aimSel.value, h);
 });
@@ -148,7 +153,7 @@ const jumped = ref<{ key: string; modId: string; rank: string | null } | null>(n
 const isJumpTier = (key: string, modId: string, rank: string): boolean => !!jumped.value && jumped.value.key === key && jumped.value.modId === modId && jumped.value.rank === rank;
 /** カードの MOD を押した: その MOD の行のある節・行を探して開き、一気に送る (ワープ。2026-10-10 オーナー「MOD をクリックしたらその MOD のあるとこまでスクロール」) */
 watch(() => s.modJump.value, (j) => {
-  if (!j || (!props.overlay && !props.embedded)) return;
+  if (!j || props.pick || (!props.overlay && !props.embedded)) return;
   open.value = true;
   query.value = "";
   void nextTick(() => {
@@ -189,10 +194,10 @@ function toggleRow(key: string, ev: MouseEvent): void {
 interface Section { g: ModGroup; sid: string; label: string; rune: string | null; socketed: boolean; count: number; columns: Array<{ side: "prefix" | "suffix"; title: string; items: ListRow[]; top: number }> }
 const sections = computed((): Section[] => {
   const q = query.value.trim();
-  const parts: Array<{ g: ModGroup; sid: string; label: string; rune: string | null }> = GROUPS.filter((g) => counts.value[g] && !(g === "special" && s.mode.value === "sim")).flatMap((g): Array<{ g: ModGroup; sid: string; label: string; rune: string | null }> =>
+  const parts: Array<{ g: ModGroup; sid: string; label: string; rune: string | null }> = GROUPS.filter((g) => counts.value[g] && !(g === "special" && sim.value)).flatMap((g): Array<{ g: ModGroup; sid: string; label: string; rune: string | null }> =>
     g === "rune"
       ? [...new Set(rows.value.filter((r) => r.group === "rune").map((r) => r.runeJa ?? ""))].map((ja) => ({ g, sid: `rune:${ja}`, label: tr(ja, runeEnOf(ja)), rune: ja }))
-      : [{ g, sid: g as string, label: groupLabelOf(g, s.item.value), rune: null as string | null }],
+      : [{ g, sid: g as string, label: groupLabelOf(g, item.value), rune: null as string | null }],
   );
   return parts.map(({ g, sid, label, rune }): Section => {
     const all = rows.value.filter((r) => inGroup(r, g) && (rune == null || r.runeJa === rune));
@@ -319,7 +324,7 @@ const pct = (x: number): string => fmtPct(x);
     <!-- 見出し (押すと畳む) -->
     <div v-if="!props.overlay" role="button" tabindex="0" :aria-expanded="open" class="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left" @click="open = !open" @keydown.enter="open = !open">
       <b class="g-sec-title">{{ tr("このベースに付く MOD", "Mods for this base") }}</b>
-      <span class="g-sec-sub max-md:hidden">{{ s.item.value ? baseNameOf(s.item.value) : "" }}</span>
+      <span class="g-sec-sub max-md:hidden">{{ item ? baseNameOf(item) : "" }}</span>
       <HelpTip :text="s.mode.value === 'sim' ? tr('出やすさ = 同じ側の重みの割合。段 = 段の数、Lv = T1 の MOD レベル。MOD を押すと段の表が開く', 'Chance = share of weight on the same side. T = number of tiers, Lv = mod level of T1. Click a mod to open its tier table') : tr(`出やすさ = 同じ側の重みの割合 (アイテムレベルは見ない)。段 = 段の数、Lv = T1 の MOD レベル${canStart ? '。段の表の「付ける」で始めの状態を組める' : ''}`, `Chance = share of weight on the same side (ignores item level). T = number of tiers, Lv = mod level of T1${canStart ? '. Use “Add” in the tier table to build the starting item' : ''}`)" @click.stop />
       <Disclosure tag="span" kind="section" :open="open" class="ml-auto" />
     </div>
@@ -407,7 +412,7 @@ const pct = (x: number): string => fmtPct(x);
               </div>
               <StageWeightEdit v-if="expanded === `${sec.sid}:${r.id}`" :row="r" /><!-- 段の表 (上に重みを直す 1 行) -->
               <table v-if="expanded === `${sec.sid}:${r.id}`" class="mt-1 w-full text-[11px]">
-                <caption v-if="s.mode.value === 'sim'" class="pb-1 text-left text-[10px] opacity-60">{{ tr("T1 が一番良い段。「T○ 以上」= その段か、それより良い段が付けば当たり", "T1 is the best tier. “T○+” = a hit if that tier or better rolls") }}</caption>
+                <caption v-if="sim" class="pb-1 text-left text-[10px] opacity-60">{{ tr("T1 が一番良い段。「T○ 以上」= その段か、それより良い段が付けば当たり", "T1 is the best tier. “T○+” = a hit if that tier or better rolls") }}</caption>
                 <tbody>
                   <tr v-for="t in r.tiers" :key="t.rank" class="group border-b border-white/5" :class="[heldCands && !heldTierShare(r, t) ? 'opacity-35' : '', isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank) ? 'bg-amber-400/15 outline outline-2 outline-amber-300/80' : '']" :title="heldCands && !heldTierShare(r, t) ? tr(`持っている ${heldCands.name} では付かない段 (強さの下限・アイテムレベル・同じ系統)`, `This tier cannot roll with the held ${heldCands.name} (minimum tier, item level, or same group)`) : undefined">
                     <!-- 段のチェック: その段以上を狙いに (外す時はその段だけ) -->
@@ -418,10 +423,12 @@ const pct = (x: number): string => fmtPct(x);
                     <td v-if="r.group === 'essence' || r.group === 'perfect_essence'" class="py-0.5 pl-2 opacity-60 max-md:hidden">{{ tierName(r, t.name) }}</td>
                     <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
                     <td class="w-16 py-0.5 text-right tabular-nums opacity-70 max-md:hidden" :class="heldCands ? 'text-sky-200' : ''" :title="t.weight ? tr(`重み ${t.weight}`, `Weight ${t.weight}`) : undefined">{{ !cannow(r) ? "0%" : heldCands ? pct(heldTierShare(r, t)) : t.weight && r.weight ? pct((r.share * t.weight) / r.weight) : "" }}</td>
-                    <td v-if="s.mode.value === 'sim' && (sec.g === 'normal' || sec.g === 'rune' || sec.g === 'desecrated' || sec.g === 'essence' || sec.g === 'perfect_essence')" class="w-20 py-0.5 text-right">
+                    <!-- ツリーの完成形: 段の行のボタンは「狙いにする」1 つ (オーナー 10-22) -->
+                    <td v-if="props.pick" class="w-24 py-0.5 text-right"><button type="button" data-mod-pick class="tbtn" :class="props.pick.has(t.modId ?? r.id, rankNum(t.rank)) ? 'on' : ''" :title="props.pick.has(t.modId ?? r.id, rankNum(t.rank)) ? tr('もう一度押すと狙いから外す', 'Click again to remove the target') : tr(`${t.rank} 以上を完成の狙いにする`, `Make ${t.rank}+ a final target`)" @click.stop="props.pick.toggle(t.modId ?? r.id, rankNum(t.rank))">{{ props.pick.has(t.modId ?? r.id, rankNum(t.rank)) ? tr("✓ 狙い", "✓ Target") : tr("狙いにする", "Target") }}</button></td>
+                    <td v-else-if="sim && (sec.g === 'normal' || sec.g === 'rune' || sec.g === 'desecrated' || sec.g === 'essence' || sec.g === 'perfect_essence')" class="w-20 py-0.5 text-right">
                       <button type="button" class="whitespace-nowrap rounded border px-1.5 text-[10px] max-md:min-h-10 max-md:px-3 max-md:text-[12px]" :class="isTarget(t.modId ?? r.id, t) ? 'border-amber-400 bg-amber-500/40 font-bold text-amber-50' : isCovered(t.modId ?? r.id, t) ? 'border-amber-400/70 bg-amber-500/20 text-amber-100' : 'border-amber-400/50 text-amber-200 hover:bg-amber-500/15'" :title="isTarget(t.modId ?? r.id, t) ? tr('もう一度押すと外す', 'Click again to remove') : sec.rune ? tr(`② に足す (${t.rank} 以上)。回す時は ${sec.label} を差した白から始める`, `Add to ② (${t.rank}+). Runs start from a Normal item with ${sec.label} socketed`) : tr(`② に足す (${t.rank} 以上)`, `Add to ② (${t.rank}+)`)" @click.stop="pickTier($event, t.modId ?? r.id, t)">{{ isCovered(t.modId ?? r.id, t) ? "✓ " : "" }}{{ tr(`${t.rank} 以上`, `${t.rank}+`) }}</button>
                     </td>
-                    <td v-else-if="s.mode.value !== 'sim' && !s.replay.value" class="py-0.5 pl-2">
+                    <td v-else-if="!sim && !s.replay.value" class="py-0.5 pl-2">
                       <!-- ボタンは乗せた段だけ (12 段全部に並ぶとボタンの壁だった。2026-10-18 オーナーの UI 点検)。狙い中・プルダウンを開いている段とスマホは出したまま -->
                       <div class="flex flex-nowrap items-center justify-end gap-1 transition-opacity max-md:flex-wrap md:group-hover:opacity-100 md:focus-within:opacity-100 md:has-[[aria-expanded=true]]:opacity-100" :class="isAim(t.modId ?? r.id, t) ? '' : 'md:opacity-0'">
                       <!-- 段の表のボタンは細い行に合う小さく平たい物 (tbtn、同じ高さ・1 行に右寄せ)。2026-10-10 オーナー「ここの UI きもい、並びが 3 つ合ってない、枠の細さに過剰」。狙い中は赤 -->
