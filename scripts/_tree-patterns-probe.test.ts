@@ -17,7 +17,7 @@ import fs from "node:fs";
 import { afterAll, it } from "vitest";
 import { loadPatch } from "../tests/helpers/patch";
 import { applyCurrency, freshItem, modListFor, mulberry32, omensFor, RUNES, socketCapOf, stepOutcomes, type PatchData } from "../src/services/craft-stage/engine";
-import { addHit, addSplitRow, aimKey, migrateStart, newTree, setAim, setBack, setDone, setHand, setSplit, setSplitWhen, tidy, toggleMemoAim, kindOfHand, type Aim, type Hand, type SplitWhen, type TreeDoc } from "../src/services/simulator/tree/tree-model";
+import { addHit, addSplitRow, removeHit, aimKey, migrateStart, newTree, setAim, setBack, setDone, setHand, setSplit, setSplitWhen, tidy, toggleMemoAim, kindOfHand, type Aim, type Hand, type SplitWhen, type TreeDoc } from "../src/services/simulator/tree/tree-model";
 import { aimHeld, aimsOf, fillCatalyst, handAims, handProblem, outcomeOf, playHand, sampleOf, singleOutOf, startItemOf } from "../src/services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, isCatalyst, kindOfCurrency, TREE_CATALYSTS } from "../src/services/simulator/tree/tree-hands";
 import { linkSameShape, MATCH, matchItem, outBoxOf, RESTART, runTree, settle, shapesOf, splitTo } from "../src/services/simulator/tree/tree-run";
@@ -36,7 +36,7 @@ type Row = { kind: "held"; n: number } | { kind: "none" } | { kind: "junk"; side
 /** TreeSplitPick の whenOf と同じ */
 const whenOf = (r: Row): SplitWhen => (r.kind === "none" ? { heldCount: [0, 0] } : r.kind === "junk" ? { junk: { [r.side]: [Math.max(1, r.n), 99] } } : { heldCount: [Math.max(1, r.n), 99] });
 interface Find { pat: string; where: string; what: string }
-interface HandOpt { spam?: boolean; max?: number; free?: boolean }
+interface HandOpt { spam?: boolean; max?: number; free?: boolean; /** 触媒の前のカタリスト (TreeHandShelf のカタリストの選び #7。既定は狙いのタグから) */ cat?: string }
 
 class Ui {
   d: TreeDoc;
@@ -89,7 +89,8 @@ class Ui {
     const p = b.out === "pass" && b.parent ? d.boxes[b.parent] : null;
     const afterQ = !!p?.hand && isCatalyst(p.hand.currency);
     let autoCat = TREE_CATALYSTS[0]!;
-    for (const a of aimsOf(d).filter((x) => !aimHeld(data, item, x))) { const tags = data.mods.get(a.modId)?.tags ?? []; const c = TREE_CATALYSTS.find((k) => tags.includes(k.slice(9))); if (c) { autoCat = c; break; } }
+    if (o.cat && TREE_CATALYSTS.includes(o.cat)) autoCat = o.cat;
+    else for (const a of aimsOf(d).filter((x) => !aimHeld(data, item, x))) { const tags = data.mods.get(a.modId)?.tags ?? []; const c = TREE_CATALYSTS.find((k) => tags.includes(k.slice(9))); if (c) { autoCat = c; break; } }
     const needPre = can.includes(CATALYSING) && !afterQ;
     const shelfItem = needPre ? fillCatalyst(data, item, autoCat, mulberry32(1)).item : item;
     const preCat = used.includes(CATALYSING) && !afterQ ? autoCat : null;
@@ -194,7 +195,7 @@ function doneHeld(data: PatchData, doc: TreeDoc, n = 100, seed = 1): Record<numb
       for (;;) {
         const b = doc.boxes[at];
         if (!b) break;
-        if (b.done === "main") { const k = aims.filter((a) => aimHeld(data, item, a)).length; out[k] = (out[k] ?? 0) + 1; break; }
+        if (b.done === "main") { const k = aims.filter((a) => aimHeld(data, item, a)).length; out[k] = (out[k] ?? 0) + 1; if (process.env.DONE_MISS && k < aims.length) console.log(`  足りない完成 ${at}: 無い ${aims.filter((a) => !aimHeld(data, item, a)).map((a) => a.modId).join(", ")} / 前 ${item.prefixes.map((m) => m.modId + m.tierName).join(", ")} / 後 ${item.suffixes.map((m) => m.modId + m.tierName).join(", ")}`); break; }
         if (b.split) { const to = ++hops > 1000 ? null : splitTo(data, b.split, item, aims); if (!to) break; at = to; continue; }
         if (b.back) {
           if (++hops > 1000) break;
@@ -370,18 +371,57 @@ const PATTERNS: { name: string; base: string; note: string; build: (u: Ui) => vo
     const s = u.hand("start", "chaos_perfect", ["OmenofDextralErasure"], { spam: true, max: 30 })!;
     u.done(u.hits(s, [C]).IncreasedAttackSpeed!);
   } },
-  { name: "amulet-4aims-split", base: "Stellar Amulet", note: "アミュ: ✦スペルダメージ T1、上級の高貴 狙い無し → 分かれ目 (4 つ = 完成 / 外れ 1 = 消去 / それ以外 = 上級の高貴) で ES・スピリット・スペルレベル・キャスト", build: (u) => {
-    const W = [A(`${AM}EnergyShield`, 3), A(`${AM}BaseSpirit`, 2), A(`${AM}GlobalIncreaseSpellSkillGemLevel`, 3), A(`${AM}IncreasedCastSpeed`, 3)];
+  { name: "amulet-4aims-split", base: "Stellar Amulet", note: "アミュ (解析君 v5b、10-22): ✦スペルダメージ T1。右側の高貴 (狙い無し) → 分かれ目 (狙い 2 つ = ES へ / サフィの外れ 2 = 素の消去 / それ以外 = 右側の高貴) でスペルレベル・キャスト → 触媒 + 左側の高貴で ES (外れは左側の消去) → 古代の骨 + 左側の死霊術でスピリット (外れは光 + 消去)", build: (u) => {
+    const S = A(`${AM}GlobalIncreaseSpellSkillGemLevel`, 3), C = A(`${AM}IncreasedCastSpeed`, 3), E = A(`${AM}EnergyShield`, 3), SP = A(`${AM}BaseSpirit`, 2);
     u.startMod(`${AM}SpellDamage`, 1, true);
-    const s = u.hand("start", "exalt_greater", [], { free: true })!;
+    for (const a of [S, C, E, SP]) u.memo(a);
+    // 消去の結果: 外れが消えた = 同じ手の箱へ、狙いが消えた = 分かれ目 b1 へ (前は全部同じ箱へ戻し、スピリットが消えたまま ES で完成した人が 3 人いた)
+    const back2 = (an: string, to: string): void => { for (const x of u.d.boxes[an]!.outs) u.back(x, u.d.boxes[x]!.out === "lost" ? b1Ref.id : to); };
+    const b1Ref = { id: "" }, ejRef = { id: "" };
+    // 1. サフィ 2 つ: 右側の高貴。外れ 1 つは置いたまま、サフィの外れ 2 つで素の消去 (プレは ✦ だけなのでサフィの物だけ消える)
+    const s = u.hand("start", "exalt_greater", [DEX], { free: true })!;
     const b1 = u.o(s).any!;
-    const [done, junk, other] = u.split(b1, [{ kind: "held", n: 4 }, { kind: "junk", side: "any", n: 1 }]);
-    u.done(done!);
-    const ex = u.hand(other!, "exalt_greater")!;
-    u.hits(ex, W);
+    b1Ref.id = b1;
+    const [es, junk, other] = u.split(b1, [{ kind: "held", n: 2 }, { kind: "junk", side: "suffix", n: 2 }]);
+    const ex = u.hand(other!, "exalt_greater", [DEX])!;
+    u.hits(ex, [S, C]);
     u.allBack(ex, b1);
     const an = u.hand(junk!, "annul");
     if (an) u.allBack(an, b1);
+    // 2. ES: 防御のカタリスト (自動で前に) + 触媒 + 左側の高貴。プレの外れは左側の消去 → 2 へ
+    const e = u.hand(es!, "exalt_greater", [CATALYSING, SIN], { cat: "catalyst_defences" });
+    if (!e) return;
+    ejRef.id = u.o(e).junk ?? "";
+    // 当たりの箱は見本の形で候補が全部入るので、1 つを ES に選び直し、残りは × で消す (TreeModPick・当たりの ×)
+    const [first, ...rest] = u.o(e).hit;
+    if (first) u.aim(first, E);
+    for (const x of rest) removeHit(u.d, x);
+    const eh = first;
+    const ea = annul(u, u.o(e).junk, ["OmenofSinistralAnnulment"]);
+    if (ea) back2(ea, es!);
+    // 左側の高貴でスピリット (T2 以上) が先に付く人 (100 人中 3 人、結果の箱が無く止まった) → もう一度 触媒 + 左側の高貴で ES → 完成
+    if (first) {
+      const sp1 = u.addHit(first, SP);
+      const e2 = u.hand(sp1, "exalt_greater", [CATALYSING, SIN], { cat: "catalyst_defences" });
+      if (e2) {
+        const [h2, ...r2] = u.o(e2).hit;
+        if (h2) { u.aim(h2, E); u.done(h2); }
+        for (const x of r2) removeHit(u.d, x);
+        // 左側の消去でスピリットが消えるとプレの外れが残る → ES の外れの箱 (左側の消去) で外れを消してから ES の段へ (b1 へ戻すとプレの外れのまま ES を付け、骨で ES が入れ替わって止まった)
+        const a2 = annul(u, u.o(e2).junk, ["OmenofSinistralAnnulment"]);
+        if (a2) for (const x of u.d.boxes[a2]!.outs) u.back(x, u.d.boxes[x]!.out === "lost" ? ejRef.id || b1Ref.id : sp1);
+      }
+    }
+    if (!eh) return;
+    // 3. スピリット: 古代の骨 + 左側の死霊術 → 発現で選ぶ。冒涜の外れは光 + 消去 → 3 へ
+    const d3 = u.hand(eh, "desecrate_ancient", ["OmenofSinistralNecromancy"]);
+    if (!d3) return;
+    const [sp, ...spRest] = u.o(d3).hit;
+    if (sp) u.aim(sp, SP);
+    for (const x of spRest) removeHit(u.d, x);
+    u.done(sp);
+    const la = annul(u, u.o(d3).junk, ["OmenofLight"]);
+    if (la) back2(la, eh);
   } },
   { name: "body-sinistral-desecrate", base: "Vile Robe", note: "胴: ✦ES T1、左側の高貴 + 上級で ライフ・ES% → 古代の骨 + 右側の死霊術で スピリット効率 (冒涜)。外れは左側の消去 / 光 + 消去", build: (u) => {
     const Lf = A(`${BA}IncreasedLife`, 2), E = A(`${BA}LocalEnergyShieldPercent`, 3), SP = A(`${BA}Desecrated_SpiritReservationEfficiency`, 1);

@@ -27,7 +27,7 @@ it("保存した木の精査と回し", () => {
   console.log(`精査 ${Date.now() - t0}ms 穴 ${issues.length}`);
   for (const x of issues) console.log(`  ${x.kind.padEnd(10)} ${x.boxId.padEnd(5)} ${x.text}`);
   let shown = Number(process.env.PATHS ?? 0);
-  const r = runTree(data, doc, { n: 100, seed: 1, price: () => 0, onPerson: (p, i) => { if (p.end !== "done" && shown-- > 0) console.log(`  ${i + 1} 人目 ${p.end} ${p.at} ${p.visits.length} 箱: ${p.visits.slice(-12).map((v) => v.box).join(" → ")}${p.why ? ` / 前 ${p.why.item.prefixes.map((m) => m.modId + (m.fractured ? "✦" : "")).join(", ")} / 後 ${p.why.item.suffixes.map((m) => m.modId).join(", ")}` : ""}`); } });
+  const r = runTree(data, doc, { n: 100, seed: 1, price: () => 0, onPerson: (p, i) => { if ((p.end !== "done" || p.at === process.env.DONE_AT) && shown-- > 0) console.log(`  ${i + 1} 人目 ${p.end} ${p.at} ${p.visits.length} 箱: ${p.visits.slice(-12).map((v) => v.box).join(" → ")}${p.why ? ` / 前 ${p.why.item.prefixes.map((m) => m.modId + (m.fractured ? "✦" : "")).join(", ")} / 後 ${p.why.item.suffixes.map((m) => m.modId).join(", ")}` : ""}`); } });
   console.log(`100 人: 完成 ${r.finished} · 打ち止め ${r.capped} · 止まり ${r.stuck} ${JSON.stringify(r.stuckAt)}`);
   for (const [id, w] of Object.entries(r.stuckWhy)) console.log(`  止まり ${id} (戻り ${w.backs.join(" → ")}): ${w.reason} / 前 ${w.item.prefixes.map((m) => m.modId).join(", ")} / 後 ${w.item.suffixes.map((m) => m.modId).join(", ")}`);
 });
