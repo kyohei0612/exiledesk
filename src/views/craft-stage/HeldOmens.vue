@@ -2,7 +2,7 @@
   HeldOmens.vue — 「○○に掛けられるお告げ」の欄 (2026-10-22 クラフト台から切り出し、オーナー「シミュの表示は全部エンジン軸で、クラフト台を参照させて」)。
   持った物・掛けたお告げ・アイテムは棚の文脈 (useShelf) から取る: クラフト台は既定 (craftStage)、シミュは provideShelf で自分の物を渡すと同じ物が出る。
   お告げのボタン (ShelfButton omen、押すと toggleOmen) + 名前の下の設定 (StageOmenTune) + 横の「MOD 一覧」(mod-list を付けた時だけ、押すと emit modList)。
-  持った物に掛けられるお告げが無い時は何も出さない (slot を出すかは呼ぶ側が heldOmensOf で決める)。
+  持った物に掛けられるお告げが無い時は何も出さない (slot を出すかは呼ぶ側が heldOmensOf で決める)。既定の slot = お告げと同じ並びに足す物 (ツリーの「狙い無し」など、10-22。無ければ今と同じ)。
 -->
 <script setup lang="ts">
 import { computed, watchEffect } from "vue";
@@ -26,11 +26,12 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div v-if="list.length" class="rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2" data-held-omens>
+  <div v-if="list.length || $slots.default" class="rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2" data-held-omens>
     <!-- 横に「MOD 一覧へ」(お告げを選びながら付く MOD を見に行ける。2026-10-11 オーナー「お告げの横にも MOD 一覧へ、楽だ」) -->
     <p class="mb-1 flex items-center gap-2 text-[11px] text-violet-200/80">{{ tr(`${nameOf(shelf.held.value ?? "")} に掛けられるお告げ`, `Omens for ${nameOf(shelf.held.value ?? "")}`) }}<button v-if="modList" type="button" data-rec="mod-list-open" data-rec-part="mod-list-button" class="tbtn-top ml-auto" :title="tr('このベースに付く MOD の一覧へ', 'Go to the mod list')" @click.stop="emit('modList')">{{ tr("MOD 一覧", "Mod list") }}<kbd class="kbd max-md:hidden">Tab</kbd></button></p>
     <div class="flex flex-wrap gap-1.5">
       <div v-for="k in list" :key="k" class="flex flex-col items-center"><ShelfButton :k="k" omen @pick="shelf.toggleOmen($event)" /><StageOmenTune :k="k" /></div>
+      <slot />
     </div>
   </div>
 </template>

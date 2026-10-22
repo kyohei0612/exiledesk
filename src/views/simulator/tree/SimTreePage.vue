@@ -17,7 +17,7 @@ import TreeMemoFloat from "./TreeMemoFloat.vue";
 import TreeCanvasTools from "./TreeCanvasTools.vue";
 import TreeBox from "./TreeBox.vue";
 import TreeOverlays from "./TreeOverlays.vue"; import TreeGoalNode from "./TreeGoalNode.vue";
-import TreeHandShelf from "./TreeHandShelf.vue";
+import TreeHandPage from "./TreeHandPage.vue";
 import TreeModPick from "./TreeModPick.vue";
 import TreeNote from "./TreeNote.vue";
 import { useTree } from "./use-tree";
@@ -206,7 +206,7 @@ function startDrag(b: Box, e: PointerEvent): void {
 }
 function closeHand(): void { if (picking.value && picking.value === panel.value?.id) picking.value = null; panel.value = null; }
 /** 下の＋を押した = 打つ手の棚を開き、同時にツリーの箱をつなげる / つなげないで色分けする (箱を押せばそこへつなぐ、棚で選べば新しい箱) */
-function startLink(b: Box): void { panel.value = { kind: "hand", id: b.id }; picking.value = b.id; }
+function startLink(b: Box): void { panel.value = { kind: "hand", id: b.id }; } // 打つ手の重ね窓 (戻り先へは窓の「既にある箱へ戻す」か＋の引っ張り)
 const link = useTreeLink(doc, picking);
 /** 縮めて見ている時に押した箱の編集のポップアップ (等倍、箱でできる事が全部) */
 const pop = ref<string | null>(null);
@@ -394,7 +394,7 @@ const glowOf = (b: Box): boolean => {
       <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center gap-3 px-8 text-[22px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)] max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-1 max-md:px-4 max-md:py-2 max-md:text-[17px] max-md:tracking-[0.08em]"><span class="whitespace-nowrap">{{ tr("クラフトの道 (ツリー)", "Craft route tree") }}</span><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" /></h1>
       <button type="button" class="g-btn sm" @click="close">{{ tr("← 戻る", "← Back") }}</button>
     </div>
-    <TreeOverlays />
+    <TreeOverlays /><TreeHandPage v-if="panel?.kind === 'hand' && panelBox" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" @split="onSplit" @back="picking = panel!.id; panel = null" />
     <div class="g-panel flex flex-col gap-2 px-3 py-2" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
       <!-- 帯: 全体の数字 (まだ) ・1 つ戻す・拡大縮小・全画面 -->
       <!-- 折り返さない (回した結果の文で 1 行と 2 行の境目になり、木の枠が上下して箱の × が押せなかった、10-22)。左は狭ければ … で切る。768px 未満は左と右を 2 段に (右が画面より広く左が潰れて「回す」が押せなかった、10-22) -->
@@ -486,9 +486,8 @@ const glowOf = (b: Box): boolean => {
         </div>
 
         <!-- 右の欄 -->
-        <aside v-if="panel && panelBox" ref="aside" data-tree-panel class="flex shrink-0 flex-col overflow-y-auto rounded-md bg-white/[0.04] p-3" :class="panel.kind === 'hand' || panel.kind === 'base' || panel.kind === 'start' || panel.kind === 'split' ? 'w-[400px]' : 'w-[320px]'">
-          <TreeHandShelf v-if="panel.kind === 'hand'" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" @split="onSplit" />
-          <TreeSplitPick v-else-if="panel.kind === 'split'" :key="`s-${panel.id}`" :box-id="panel.id" @close="panel = null" />
+        <aside v-if="panel && panelBox && panel.kind !== 'hand'" ref="aside" data-tree-panel class="flex shrink-0 flex-col overflow-y-auto rounded-md bg-white/[0.04] p-3" :class="panel.kind === 'split' ? 'w-[400px]' : 'w-[320px]'">
+          <TreeSplitPick v-if="panel.kind === 'split'" :key="`s-${panel.id}`" :box-id="panel.id" @close="panel = null" />
           <TreeNote v-else-if="panel.kind === 'note'" :key="`n-${panel.id}`" :box-id="panel.id" @close="panel = null" />
           <TreeModPick v-else :key="`m-${panel.id}`" mode="hit" :box-id="panel.id" :current="panelBox.aim" @pick="pickAim" @close="panel = null" />
         </aside>
