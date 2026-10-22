@@ -12,7 +12,7 @@ import { craftStage as s, iconOf, nameOf } from "../../../state/craft-stage";
 import StageItemCard from "../../craft-stage/StageItemCard.vue";
 import CurrencyShelf from "../../craft-stage/CurrencyShelf.vue";
 import HeldOmens from "../../craft-stage/HeldOmens.vue";
-import { heldOmensOf } from "../../craft-stage/held-omens";
+import { omensAllowedFor } from "../../../services/craft-stage/engine";
 import { aimHeldOn, catalystForMod, catalystFull, effectOf, fillCatalyst, mulberry32, omensFor, reachableAims, stepOutcomes, tierNoOf } from "../../../services/craft-stage/engine";
 import { aimsOf, handProblem, sampleOf, singleOutOf } from "../../../services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, ECHO, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
@@ -60,7 +60,7 @@ const afterQuality = computed(() => {
   return !!p?.hand && isCatalyst(p.hand.currency);
 });
 /** 持った物に触媒のお告げが掛けられるか */
-const canCatalyse = computed(() => !!held.value && heldOmensOf(held.value).includes(CATALYSING));
+const canCatalyse = computed(() => !!held.value && omensAllowedFor(held.value).includes(CATALYSING));
 /**
  * 前に足すカタリストの既定 = この箱でまだ付いていない狙い (木の狙い、次に欲しい MOD のメモ) を伸ばす物 (エンジンの catalystForMod)。後から札を押して替えられる。
  * どの狙いも伸ばせない (靴・鎧など品質が乗らない装備) なら null = 前のカタリストは足さない (触媒のお告げはエンジンの omenBlock で掛けられない、10-22 ブラック)。
@@ -218,7 +218,7 @@ function ok(): void {
       <CurrencyShelf @hold="onHold">
         <!-- 持った物に掛けられるお告げ = クラフト台と同じ部品と置き場 (HeldOmens.vue を持ったアイコンのすぐ下に重ねる。inline-held だと棚の一番下で見切れた、10-21 本物のマウス)。
              足す手は同じ欄に「狙い無し」(適当打ち、オーナー 10-22「お告げの欄の中に適当打ちがまだ無い」) -->
-        <template v-if="heldOmensOf(held).length || canFree || (!!held && isBone(held))" #held><HeldOmens>
+        <template v-if="omensAllowedFor(held).length || canFree || (!!held && isBone(held))" #held><HeldOmens>
           <!-- お告げと同じ並びの札 (10-22 オーナー「狙い無しはお告げの枠の中に」): アビスの反響 (骨) と狙い無し (足す手) -->
           <button v-if="held && isBone(held)" type="button" data-tree-hand-echo :aria-pressed="echo" :class="[OMEN_CHIP, echo ? OMEN_ON : '']" :title="tr('アビスの反響のお告げ (発現の候補を 1 回引き直す)', 'Omen of Abyssal Echoes (reroll the reveal options once)')" @click="echo = !echo">{{ tr("アビスの反響", "Abyssal Echoes") }}</button>
           <button v-if="canFree" type="button" data-tree-hand-free :aria-pressed="free" :class="[OMEN_CHIP, free ? OMEN_ON : '']" :title="tr('狙い無し (空きを 1 つ埋めるだけ。当たり / 外れに分けない)', 'No target (just fill an open slot; no hit / miss split)')" @click="free = !free">{{ tr("狙い無し", "No target") }}</button>
