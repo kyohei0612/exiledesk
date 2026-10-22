@@ -16,7 +16,8 @@
  * (10-22 オーナー「サフィに 3 MOD 付いた時点で、そこから先は全て同じルート」)。プレフィックス (10-22 オーナー「先無駄高貴後エッセンス」「冒涜でレアリティ」):
  *   素の高貴 (無駄高貴、サフィは満杯なのでプレに付く) → 外れのプレならパーフェクトエッセンス (ルーンの守り) + 左側の結晶化 = 消せるプレは外れだけなので確定で入れ替わり、箱 1 つ →
  *   骨で冒涜 → 発現 (一般 MOD も候補に出る) でレアリティ (プレ T1) を選べたら完成。外れは光のお告げ + 消去で冒涜の MOD だけ消して打ち直す (結果は 1 通り)。
- *   無駄高貴でレアリティが付いた時は、もう一度無駄高貴 → エッセンスで外れが消えたら完成、レアリティが消えたら左側の消去で外れを消してルーンの守りの箱へ
+ *   無駄高貴でレアリティが付いた時は、もう一度無駄高貴 → エッセンスで外れが消えたら完成、レアリティが消えたら消去で外れを消してルーンの守りの箱へ。
+ *   左側のお告げはエッセンスの結晶化だけ (10-22 オーナー「エッセンスだけいる、結晶化」)
  *
  * boots-res-split: ドレイクスキンブーツ ilvl 82、移動スピード T1 のフラクチャー済みから耐性 T1 × 2 (サフィックス) まで (10-22 オーナー OK「見本の靴を足す」)。
  *   解析君 scripts/analysis/boots-res-ev.mjs・docs/org/math/notes/2026-10-23-boots-res.md の道 (100 人 29.87 神) を白紙から組み直した木
@@ -89,10 +90,11 @@ function goldRingSuffix(): TreeDoc {
     pRx: { out: "hit", aim: A.PR, parent: "d1", hand: hand("exalt"), outs: ["pRxJ"] },
     pRxJ: { out: "junk", parent: "pRx", hand: ESS, outs: ["pRxW", "pRxL"] },
     pRxW: { out: "hit", aim: A.W, parent: "pRxJ", done: "main" },
-    // レアリティが消えた = 無駄高貴の外れが残る → 左側の消去で外れを消してルーンの守りの箱へ (ルーンの守りが消えたらサフィ完成の d1 へ)
-    pRxL: { out: "lost", parent: "pRxJ", hand: hand("annul", ["OmenofSinistralAnnulment"]), outs: ["pRxL_g", "pRxL_l"] },
+    // レアリティが消えた = 無駄高貴の外れが残る → 消去で外れを消してルーンの守りの箱へ (狙いが消えたらほかと同じく始めに戻る)。
+    // 左側のお告げはエッセンス (結晶化) だけ (10-22 オーナー「エッセンスだけいる、結晶化」)
+    pRxL: { out: "lost", parent: "pRxJ", hand: hand("annul"), outs: ["pRxL_g", "pRxL_l"] },
     pRxL_g: { out: "junkGone", parent: "pRxL", back: "pE" },
-    pRxL_l: { out: "lost", parent: "pRxL", back: "d1" },
+    pRxL_l: { out: "lost", parent: "pRxL", back: "start" },
   });
 }
 

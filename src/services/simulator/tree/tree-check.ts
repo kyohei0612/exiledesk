@@ -172,6 +172,8 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
         let boosted = false, hits = 0;
         for (const o of b.outs) {
           const ob = doc.boxes[o]!;
+          // もう付いている狙いの当たりの箱には着かない (打ち直しても付かないので飛ばす。始めに戻った人で当たるまでを 1200 回打ち直し、精査が 13 秒かかった、10-22 金の指輪)
+          if (ob.out === "hit" && ob.aim && aimHeld(data, item, ob.aim)) continue;
           let got: StageItem | null = null;
           for (let i = 0; i < TRIES && !got; i++) {
             const r = i === 0 ? first : playHand(data, item, b.hand, rng, handAims(doc, b.id, aims));
