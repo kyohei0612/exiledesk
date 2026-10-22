@@ -275,7 +275,7 @@ const PATTERNS: { name: string; base: string; note: string; build: (u: Ui) => vo
     u.startMod(`${BA}LocalEnergyShield`, 1, true);
     u.random(2);
     const e = u.hand("start", `essence:perfect:${BA}PerfectEssence_MaximumLifeIncreasePercent`, [])!;
-    const got = u.o(e).hit;
+    const got = u.o(e).hit[0];
     if (!got) return;
     const s = u.hand(got, "exalt_greater", [DEX])!;
     const h = u.hits(s, [C, L]);
@@ -499,7 +499,7 @@ for (const p of pats) {
     const auto = Object.values(d.boxes).filter((b) => b.autoBack).map((b) => `${b.id}(${b.out})→${b.back}`);
     if (auto.length) console.log(`  自動でつながった: ${auto.join(" ")}`);
     console.log(`  精査 穴 ${issues.length}`);
-    for (const x of issues) console.log(`    ${x.kind.padEnd(10)} ${x.boxId.padEnd(5)} 来た ${String(r.boxes[x.boxId]?.reach ?? "-").padStart(3)} 止まり ${String(r.stuckAt[x.boxId] ?? 0).padStart(3)} | ${x.text}`);
+    for (const x of issues) console.log(`    ${x.kind.padEnd(10)} ${String(x.boxId).padEnd(5)} 来た ${String(r.boxes[x.boxId]?.reach ?? "-").padStart(3)} 止まり ${String(r.stuckAt[x.boxId] ?? 0).padStart(3)} | ${x.text}${typeof x.boxId === "string" ? "" : ` [boxId ${typeof x.boxId} ${JSON.stringify(x.boxId)}]`}`);
     const flagged = new Set(issues.map((x) => x.boxId));
     const miss = [...Object.keys(r.stuckAt), ...Object.keys(r.unexpected)].filter((id, i, a) => a.indexOf(id) === i && !flagged.has(id));
     if (miss.length) console.log(`  精査が言わない止まり・想定外: ${miss.map((id) => `${id} (止まり ${r.stuckAt[id] ?? 0} · 想定外 ${r.unexpected[id] ?? 0})`).join(" / ")}`);

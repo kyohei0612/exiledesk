@@ -5,7 +5,7 @@
  * 打つのは全部エンジンの入口 (applyCurrency / fillCatalyst)。結果の分け方は tree-sample.ts の outcomeOf・aimsOf (見本と同じ分け方)。
  * 繰り返し (当たるまで) は tree-sample の playHand と同じ流れを、個数を数えるためにここでたどる (playHand を変える時はここも合わせる)。
  */
-import { mulberry32, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { mulberry32, sideOfMod, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { kindOfCurrency } from "./tree-hands";
 import { aimHeld, aimsOf, handAims, handProblem, outcomeOf, playHand, startItemOf as startOf } from "./tree-sample";
 import { withTreeTune } from "./tree-tune";
@@ -33,7 +33,7 @@ export interface TreeRunOpts {
   onProgress?: (r: TreeRunResult) => void;
   every?: number;
   /** 1 人終わるごとに、その人の通った箱 (順に、着いた時の費用) と終わり方。画面の「1 人目が木を進む」が読む (10-22) */
-  onPerson?: (p: { end: End; at: string; cost: number; visits: readonly { box: string; cost: number }[] }, i: number) => void;
+  onPerson?: (p: { end: End; at: string; cost: number; visits: readonly { box: string; cost: number }[]; why?: { reason: string; item: StageItem } }, i: number) => void;
 }
 export interface BoxStat {
   /** 1 回でもここに来た人数 */
@@ -168,17 +168,29 @@ export function shapesOf(doc: TreeDoc): Shape[] {
 export function boxOfShape(shapes: readonly Shape[], key: string, at?: { data: PatchData; item: StageItem }): string | null {
   const same = shapes.filter((s) => s.key === key);
   // 同じ形の箱が幾つかあれば、手が打てる箱を先に (光 + 消去の箱へ普通の MOD の外れを持って来ても打てない、10-22 金の指輪の見本)
-  const ok = at ? same.find((s) => !s.hand || !handProblem(at.data, at.item, s.hand)) : same[0];
+  const playable = (s: Shape): boolean => !at || !s.hand || !handProblem(at.data, at.item, s.hand);
+  const ok = at ? same.find(playable) : same[0];
   if (key === JUNK_ONLY) return ok?.box ?? "start";
+  // 外れの箱の手が打てない (外れが手の届かない側にある) 時は、同じ狙いの外れ無しの箱の手で進む (10-22 解析君 body-essence-path:
+  // 始めの乱数のプレの外れで右側の消去の箱へ送られ 367 人止まった。手の届かない側の外れは狙いの邪魔をしない)
+  // 打てるかは回す時と同じ playHand で見る (お告げの「今は意味なし」は回す時は止めない。プレが満杯の右側の高貴は素の高貴と同じに打てる)
+  if (at && !ok && key.endsWith("#1")) { const clean = shapes.find((s) => s.key === `${key.slice(0, -1)}0` && (!s.hand || canPlay(at.data, at.item, s.hand))); if (clean) return clean.box; }
   return key.startsWith("#") ? "start" : (ok ?? same[0])?.box ?? null;
 }
+/** 回す時に手が打てるか (playHand。乱数の当たり所で弾かれる物は打てる扱い) */
+const canPlay = (data: PatchData, item: StageItem, h: Hand): boolean => { const r = playHand(data, item, { ...h, repeat: null }, mulberry32(1)); return r.applied || !!r.random; };
 /** 狙い 0 + 外れあり の形の鍵 */
 const JUNK_ONLY = shapeKey([], true);
-/** アイテムの形の鍵 (付いている狙い + 外れがあるか) */
+/**
+ * アイテムの形の鍵 (付いている狙い + 外れがあるか)。外れは、まだ付いていない狙いの側にある物だけ数える (狙いが全部付いていれば全部)。
+ * 10-22 解析君 body-essence-path: 始めの乱数のプレの外れでいつも「外れあり」になり、サフィの当たりが右側の消去の箱へ送られて当たりを消し、38 人が打ち止めの輪
+ */
 function itemKey(data: PatchData, item: StageItem, aims: readonly Aim[]): string {
-  const held = aims.filter((a) => aimHeld(data, item, a)).map(aimKey);
+  const held = aims.filter((a) => aimHeld(data, item, a));
+  const open = new Set(aims.filter((a) => !held.includes(a)).map((a) => sideOfMod(data, a.modId)));
   const isAim = (m: StageMod): boolean => aims.some((a) => aimHeld(data, { ...item, prefixes: [m], suffixes: [] }, a));
-  return shapeKey(held, [...item.prefixes, ...item.suffixes].some((m) => !m.fractured && !isAim(m)));
+  const junkOn = (mods: readonly StageMod[], side: "prefix" | "suffix"): boolean => (!open.size || open.has(side)) && mods.some((m) => !m.fractured && !isAim(m));
+  return shapeKey(held.map(aimKey), junkOn(item.prefixes, "prefix") || junkOn(item.suffixes, "suffix"));
 }
 function matchBox(data: PatchData, shapes: readonly Shape[], item: StageItem, aims: readonly Aim[]): string | null {
   return boxOfShape(shapes, itemKey(data, item, aims), { data, item });
@@ -193,11 +205,20 @@ function matchBox(data: PatchData, shapes: readonly Shape[], item: StageItem, ai
  */
 export function settle(data: PatchData, doc: TreeDoc, shapes: readonly Shape[], id: string, item: StageItem, aims: readonly Aim[]): string {
   // 始めに戻る時も、狙い 0 で外れを持っていれば、その形の外れの箱があればそこへ (上の boxOfShape と同じ)
-  if (id === "start") return itemKey(data, item, aims) === JUNK_ONLY ? boxOfShape(shapes, JUNK_ONLY, { data, item }) ?? id : id;
+  if (id === "start") {
+    if (itemKey(data, item, aims) === JUNK_ONLY) return boxOfShape(shapes, JUNK_ONLY, { data, item }) ?? id;
+    // 始まりの手が打てない (エッセンスの MOD が既に付いている等) 時は、形の合う打てる箱へ (10-22 解析君 body-essence-path: 狙いが消えて始めに戻り 49 人止まった)
+    const h = doc.boxes.start?.hand;
+    if (!h || !handProblem(data, item, h)) return id;
+    const to = boxOfShape(shapes, itemKey(data, item, aims), { data, item });
+    const th = to ? doc.boxes[to]?.hand : null;
+    return to && (!th || canPlay(data, item, th)) ? to : id;
+  }
   const b = doc.boxes[id];
   if (!b?.hand || (b.out !== "hit" && b.out !== "junk")) return id;
   const key = itemKey(data, item, aims);
-  if (heldSets(doc, b.out === "junk" ? b.parent : id).some((h) => shapeKey(h, b.out === "junk") === key)) return id;
+  // 形が合っても手が打てない (外れが消去の届かない側にある等) 時は、形の合う打てる箱へ (10-22 解析君 body-essence-path、狙いが消えた → 外れの箱の戻り)
+  if (heldSets(doc, b.out === "junk" ? b.parent : id).some((h) => shapeKey(h, b.out === "junk") === key) && canPlay(data, item, b.hand)) return id;
   return boxOfShape(shapes, key, { data, item }) ?? id;
 }
 /** アイテムから行き先 (ルート精査が回す時と同じ道を辿る用) */
@@ -305,7 +326,8 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
       continue;
     }
     if (!b.hand) return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("次の手・戻り先が無い", "No next craft or return"), item, noBox: true } };
-    if (++steps > o.capSteps || cost > o.capDiv) return { end: "capped", cost, at, visits, uses, restarts, odd };
+    // 打ち止めの時のアイテムも残す (台本で輪から抜けない理由を見る。止まりの集計 stuckWhy には入れない)
+    if (++steps > o.capSteps || cost > o.capDiv) return { end: "capped", cost, at, visits, uses, restarts, odd, why: { reason: tr("打ち止め", "Capped"), item } };
     hops = 0;
     const before = item;
     const r = playHand(data, item, b.hand, rng, handAims(doc, at, aims), use);
