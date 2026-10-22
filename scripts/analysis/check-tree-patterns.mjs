@@ -8,7 +8,9 @@
  *
  * 共通: 狙い = 木の当たりの箱の札 (MOD と段、段は「その段以上」)。当たりの判定は MOD の id (系統では合わせない、tree-patterns の #3)。
  * 外れ = フラクチャーでも狙いでもない MOD (残す MOD = エッセンスで付けた物は外さない)。完成 = 狙いが全部付いている (木の完成の箱ではなく中身で見る、#4)。
- * 始めのアイテムは木と同じ startItemOf (始まりの形 + 乱数の MOD)。値段はシミュ部長の台本と同じ EX 表 (表に無い物は 0)。打ち止め 2,000 神・20,000 手 (tree-run の既定と同じ)
+ * 始めのアイテムは木と同じ startItemOf (始まりの形 + 乱数の MOD)。打ち止め 2,000 神・20,000 手 (tree-run の既定と同じ)。
+ * 値段 = 本番の /boot.json の相場 (BOOT= の写し、既定 data-cache/boot/boot-2026-10-22.json = 2026-10-22T04:00Z) を画面と同じ enOf (キー → 英語名、骨は木のベースの部位で
+ * 顎骨・肋骨・鎖骨) で引く。相場に無いキーは 0 にして名前を出す。OLD=1 で前のシミュ部長の EX 表 (7 品目、ほかは 0)
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -20,9 +22,25 @@ const SEED = Number(process.argv[3] ?? 1);
 const ONLY = process.argv[4] ? new Set(process.argv[4].split(",")) : null;
 const PAT_DIR = process.env.DIR ?? "C:/Users/kyohei/AppData/Roaming/Claude/side-session-notes/local_ba9fc825-1ab5-43f4-bb22-7d1f6e3bc4f6/tree-merge/patterns";
 const data = M.loadPatch();
-const DIV = 696.929;
 const EX = { chaos: 71.892, annul: 313.204, exalt: 1, exalt_greater: 13.383, exalt_perfect: 2045.741, OmenofDextralExaltation: 35.576, OmenofSinistralExaltation: 85.83 };
-const price = (k) => (EX[k] ?? 0) / DIV;
+const BOOT = JSON.parse(fs.readFileSync(process.env.BOOT ?? "data-cache/boot/boot-2026-10-22.json", "utf8")).market;
+const ROW = new Map(BOOT.items.map((x) => [x.Text, x.CurrentPrice]));
+const DIV = process.env.OLD ? 696.929 : ROW.get("Divine Orb");
+const missing = new Set();
+/** 木ごとの値段 (神)。骨はベースの部位で決まるので、木のベースの白いアイテムで英語名を引く */
+function priceFor(doc) {
+  const item = M.freshItem(data, doc.base, doc.itemLevel ?? 82, "rare");
+  const memo = new Map();
+  return (k) => {
+    if (memo.has(k)) return memo.get(k);
+    let v;
+    if (process.env.OLD) v = (EX[k] ?? 0) / DIV;
+    else { const p = ROW.get(M.enOf(k, item)); if (!(typeof p === "number" && p > 0)) missing.add(`${k} (${M.enOf(k, item)})`); v = (typeof p === "number" && p > 0 ? p : 0) / DIV; }
+    memo.set(k, v);
+    return v;
+  };
+}
+let price = () => 0;
 const CAP_DIV = 2000, CAP_STEPS = 20000;
 
 const all = (it) => [...it.prefixes, ...it.suffixes];
@@ -159,6 +177,7 @@ for (const f of files) {
   const name = j.pattern ?? f.replace(/\.json$/, "");
   if (ONLY && !ONLY.has(name)) continue;
   const doc = j.tree;
+  price = priceFor(doc);
   // FIX=lost: 狙いが消えた・外れが消えた (lost・junkGone) の戻りが「始め」の所を「形の合う箱へ」に替えた木も回す (戻り先の違いだけで差が出るかを見る)
   if (process.env.FIX === "lost") for (const b of Object.values(doc.boxes)) if ((b.out === "lost" || b.out === "junkGone") && b.back === "start") b.back = "match";
   const t = M.runTree(data, doc, { n: N, seed: SEED, price });
@@ -171,3 +190,4 @@ for (const f of files) {
   if (process.env.USES) console.log(`    木の 1 人 ${JSON.stringify(Object.fromEntries(Object.entries(t.uses).map(([k, v]) => [k, +v.toFixed(2)])))}
     字の 1 人 ${JSON.stringify(l?.uses)}`);
 }
+if (missing.size) console.log(`相場に無く 0 にしたキー: ${[...missing].join("、")}`);

@@ -4,4 +4,5 @@
 export { loadPatch } from "../../tests/helpers/patch";
 export { runTree } from "../../src/services/simulator/tree/tree-run";
 export { startItemOf } from "../../src/services/simulator/tree/tree-sample";
-export { applyCurrency, mulberry32, revealOffers, unrevealedOf } from "../../src/services/craft-stage/engine";
+export { applyCurrency, freshItem, mulberry32, revealOffers, unrevealedOf } from "../../src/services/craft-stage/engine";
+export { enOf } from "../../src/state/emulator/craft-stage-shelf";
