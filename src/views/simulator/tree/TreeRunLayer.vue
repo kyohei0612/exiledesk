@@ -48,8 +48,9 @@ const int = (key: string): number => Math.round(v(key));
 
 /** 一番多く通った線 (太さ・明るさの基準) */
 const top = computed(() => Math.max(1, ...Object.values(props.result.edges)));
-const width = (n: number): number => 2 + 6 * Math.sqrt(Math.min(1, n / top.value));
-const alpha = (n: number): number => 0.35 + 0.65 * Math.min(1, n / top.value);
+// 回数に比例 (平方根だと多くの線が 8px 近くに揃って差が見えなかった、10-22 開発版の靴)
+const width = (n: number): number => 2 + 6 * Math.min(1, n / top.value);
+const alpha = (n: number): number => 0.3 + 0.7 * Math.min(1, n / top.value);
 
 /** 進む線 (親 → 子)。親の幹は子へ行った回数の合計 */
 const fwd = computed(() => props.edges.flatMap((e) => {
