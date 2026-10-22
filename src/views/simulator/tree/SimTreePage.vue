@@ -132,6 +132,8 @@ function boxLabel(id: string): string {
   const to = doc.value.boxes[id];
   if (!to) return "";
   if (to.out === "start") return tr("始めに戻る", "Back to start");
+  // 分かれ目の箱へ戻る札は分かれ目の札と同じ ◇ を添える (当たりの箱の名前だけでは分かれ目と分からなかった、10-22 オーナー OK)
+  if (to.split) return `◇ ${to.out === "hit" && to.aim ? t.aimLabel(to.aim) : outName(to.out)}`;
   if (to.out === "hit" && to.aim) return t.aimLabel(to.aim);
   // 外れ・消えたの箱は、道で付いている狙いの MOD を添える (「↩ 外れ」だけではどの外れか分からなかった、10-22 靴・手袋を白紙から組んで)
   const held: string[] = [];

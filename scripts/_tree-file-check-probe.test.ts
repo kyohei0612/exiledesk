@@ -2,6 +2,7 @@
  * _tree-file-check-probe.test.ts — 保存した木 (JSON) にルート精査と 100 人回しを掛けて並べる台本 (2026-10-22 シミュ部長 8 本目、白紙から組んだ靴・手袋の止まりと精査の突き合わせ)。
  *
  *   TREE=<木の JSON のパス> pnpm exec vitest run -c scripts/_tree-file-check-probe.config.ts
+ *   SAMPLE=<見本の名前> …  (tree-samples.ts の見本、10-22 10 本目)
  *
  * 精査の穴 (種類・箱・文) と、100 人 (seed 1・値段 0) の完成・止まりの箱。並べるだけ (見張りではない)
  */
@@ -11,12 +12,14 @@ import { loadPatch } from "../tests/helpers/patch";
 import { checkTree } from "../src/services/simulator/tree/tree-check";
 import { runTree } from "../src/services/simulator/tree/tree-run";
 import type { TreeDoc } from "../src/services/simulator/tree/tree-model";
+import { treeSample } from "../src/services/simulator/tree/tree-samples";
 
 it("保存した木の精査と回し", () => {
-  const path = process.env.TREE;
-  if (!path) throw new Error("TREE=<木の JSON> を渡す");
-  const raw = JSON.parse(fs.readFileSync(path, "utf8"));
-  const doc: TreeDoc = raw.tree ?? raw;
+  const path = process.env.TREE, name = process.env.SAMPLE;
+  if (!path && !name) throw new Error("TREE=<木の JSON> か SAMPLE=<見本の名前> を渡す");
+  const raw = path ? JSON.parse(fs.readFileSync(path, "utf8")) : null;
+  const doc: TreeDoc | null = raw ? raw.tree ?? raw : treeSample(name!);
+  if (!doc) throw new Error(`見本が無い: ${name}`);
   const data = loadPatch();
   const t0 = Date.now();
   const issues = checkTree(data, doc);

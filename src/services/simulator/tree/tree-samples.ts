@@ -21,10 +21,15 @@
  *   P3 = 冒涜専用のクルガルの「エナジーシールドが満タンの間スペルダメージ (15–25)% 増加」(Kurgal's、MOD レベル 65、poe2db /us/Desecrated_Modifiers):
  *   保存された鎖骨 + 黒き血のお告げ (クルガルの MOD が必ず候補に) → 発現で選ぶ (tree-sample の reveal)。外れは光のお告げ + 消去で冒涜の MOD だけ消して打ち直す (結果は外れが消えた 1 通り)
  *   (10-22 オーナー「冒涜は冒涜で付与かな」)
+ *
+ * boots-res-split: ドレイクスキンブーツ ilvl 82、移動スピード T1 のフラクチャー済みから耐性 T1 × 2 (サフィックス) まで (10-22 オーナー OK「見本の靴を足す」)。
+ *   解析君 scripts/analysis/boots-res-ev.mjs・docs/org/math/notes/2026-10-23-boots-res.md の道 (100 人 29.87 神) を白紙から組み直した木
+ *   (シミュ部長 9 本目、100 人 seed 1 で完成 100%・30.51 神・止まり 0、台本 scripts/_tree-split-probe)。
+ *   上級の高貴 → 耐性のどれかが付くまでカオス → 分かれ目: 狙い 2 つ = 完成 / 狙い 0 = カオスへ / サフィックスの外れ 2 つ以上 = 消去 / それ以外 = 右側の高貴のお告げ + 上級の高貴
  */
 import { tidy, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
 
-export const TREE_SAMPLES = ["gold-ring-suffix"] as const;
+export const TREE_SAMPLES = ["gold-ring-suffix", "boots-res-split"] as const;
 
 const hand = (currency: string, omens: string[] = [], extra: Partial<Hand> = {}): Hand => ({ currency, omens, catalyst: null, quality: 0, ...extra });
 function make(base: string, fracture: Aim | null, startRandom: number, boxes: Record<string, Partial<TreeBox>>): TreeDoc {
@@ -90,6 +95,29 @@ function goldRingSuffix(): TreeDoc {
   });
 }
 
+function bootsResSplit(): TreeDoc {
+  const F = { modId: "Boots_dex/FireResistance", tier: 1 }, C = { modId: "Boots_dex/ColdResistance", tier: 1 }, L = { modId: "Boots_dex/LightningResistance", tier: 1 };
+  return make("Drakeskin Boots", { modId: "Boots_dex/MovementVelocity", tier: 1 }, 0, {
+    start: { out: "start", hand: hand("exalt_greater", [], { free: true }), outs: ["b1"] },
+    b1: { out: "any", parent: "start", hand: hand("chaos", [], { repeat: { until: "hit", max: null } }), outs: ["b2", "b3", "b4"] },
+    // 耐性のどれが付いても同じ組の箱 (b2) へ。b2 は打たずに分ける
+    b2: { out: "hit", aim: F, parent: "b1", outs: ["b16", "b17", "b18", "b15"],
+      split: [{ when: { heldCount: [2, 99] }, to: "b16" }, { when: { heldCount: [0, 0] }, to: "b17" }, { when: { junk: { suffix: [2, 99] } }, to: "b18" }, { when: {}, to: "b15" }] },
+    b3: { out: "hit", aim: C, parent: "b1", back: "b2" },
+    b4: { out: "hit", aim: L, parent: "b1", back: "b2" },
+    b16: { out: "branch", parent: "b2", done: "main" },
+    b17: { out: "branch", parent: "b2", back: "b1" },
+    b18: { out: "branch", parent: "b2", hand: hand("annul"), outs: ["b19", "b20"] },
+    b19: { out: "junkGone", parent: "b18", back: "b2" },
+    b20: { out: "lost", parent: "b18", back: "b2" },
+    b15: { out: "branch", parent: "b2", hand: hand("exalt_greater", ["OmenofDextralExaltation"]), outs: ["b21", "b22", "b23", "b24"] },
+    b21: { out: "hit", aim: F, parent: "b15", back: "b2" },
+    b22: { out: "hit", aim: C, parent: "b15", back: "b2" },
+    b23: { out: "hit", aim: L, parent: "b15", back: "b2" },
+    b24: { out: "junk", parent: "b15", back: "b2" },
+  });
+}
+
 export function treeSample(name: string): TreeDoc | null {
-  return name === "gold-ring-suffix" ? goldRingSuffix() : null;
+  return name === "gold-ring-suffix" ? goldRingSuffix() : name === "boots-res-split" ? bootsResSplit() : null;
 }
