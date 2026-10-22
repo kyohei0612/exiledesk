@@ -296,7 +296,8 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     // 着いた時に狙いの数を見る: 道の当たりの数より少なければ完成にせず、形の合う箱へ (無ければ止まり)
     // (10-22 白紙から 13 通り組んだ #4: 入れ替えのカオスで途中の狙いが消え、完成 100% と出たのに 96 人は狙い 1 つだった)
     if (b.done === "main") {
-      if (doneOk(data, doc, at, item, aims)) return { end: "done", cost, at, visits, uses, restarts, odd };
+      // 完成のアイテムも残す (台本で完成図を出す。止まりの集計 stuckWhy には入れない)
+      if (doneOk(data, doc, at, item, aims)) return { end: "done", cost, at, visits, uses, restarts, odd, why: { reason: tr("完成", "Done"), item } };
       odd.add(at);
       const to = ++hops > 1000 ? null : matchBox(data, shapes, item, aims);
       if (!to || to === at) return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("完成の箱に着いたが、狙いが揃っていない (形の合う箱も無い)", "Reached a done box without all its targets (and no box matches the shape)"), item } };
