@@ -4,4 +4,3 @@
 
 | 誰 | ファイル |
 |---|---|
-| シミュ部長 13 本目 (始め方・木のタブ) | src/views/simulator/tree/ (use-tree・SimTreePage・TreeStartPick・TreeRunReport・新 TreeTabs・TreeStartKind)、src/services/simulator/tree/tree-model.ts |
