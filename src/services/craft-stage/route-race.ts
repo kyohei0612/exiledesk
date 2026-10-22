@@ -11,7 +11,8 @@
  *     (2026-10-19 オーナー「カオスは 1 MOD レアで開始、高貴は 0 MOD レアで開始。偉大打って消去で 2 MOD でスパム、ベースは同じで 0 MOD レア」)
  *   始めのレア (MOD 0 / 1 つ) を作る費用はどの道にも入れない (カオスの 1 つは高貴 1 回で作るが数えない。狙いそのものが付いたら作り直す)
  *   from (始めのアイテム) を渡した時は、カオスの道だけをそのアイテムのまま (フラクチャー・品質・ルーン込み) 打つ (2026-10-22 要望 51092b58、
- *   オーナー「現在のクラフトを参照した状態からカオススパムできるようにしたらええんやない」)。ルーンの下ごしらえ (prep) はしない
+ *   オーナー「現在のクラフトを参照した状態からカオススパムできるようにしたらええんやない」)。ルーンの下ごしらえ (prep) はしない。
+ *   そのアイテムがフラクチャーだけ (カオスで消せる MOD が無い) なら、頭で高貴 1 回を打って 1 つ足し、その値段も費用に入れる (2026-10-22 オーナー)
  *   当たりは複数並べられる (どれか 1 つが付いたら止める = OR。2026-10-22 オーナー)。結果には当たりごとの人数 (hitsBy) も持つ。
  *   増強の道はプレとサフィが独立に動く (マジックはプレ 1・サフィ 1。メモ sim-decisions-2026-10-20 の 10-21): 当たりのある側に外れが付いていたら消去、
  *   無ければ増強。当たりがプレとサフィの両方にある時は、どれか 1 つの数字に加えて「両方揃うまで (プレ 1 + サフィ 1)」の平均も出す (RaceRow.both。2026-10-22 オーナー)
@@ -104,7 +105,6 @@ export function routeOff(data: PatchData, base: string, itemLevel: number, targe
     if (route !== "chaos") return "今のアイテムから始める時はカオスだけ";
     if (from.rarity !== "rare") return "今のアイテムがレアでない";
     if (routeHit(from, targets)) return "今のアイテムにもう狙いが付いている";
-    if (!allMods(from).some((m) => !m.fractured)) return "フラクチャー以外の MOD が無い (カオスで消せる MOD が要る)";
     return null;
   }
   // 増強の道はマジックに狙いの側の枠が要る (不在のアミュレットなど、マジックで MOD が付かないベースは使えない)。当たりが両側にあれば両側とも
@@ -155,7 +155,8 @@ export function routeRun(data: PatchData, base: string, itemLevel: number, targe
         // 当たりのある側に外れが付いていたら消去 (どれが消えるかは運)、無ければ増強 (空いた側に付く)
         return sides.some((sd) => sideList(cur, sd).length > 0 && !sideHit(cur, sd)) ? use("annul") : use(`augment${g}`);
       }
-      if (route === "chaos") return use(`chaos${g}`);
+      // カオス: 消せる MOD (フラクチャー以外) が無ければ、先に高貴 1 回で 1 つ足す (今のアイテムがフラクチャーだけの時。費用に入れる、オーナー 10-22)
+      if (route === "chaos") return allMods(cur).some((m) => !m.fractured) ? use(`chaos${g}`) : use("exalt");
       // 高貴: MOD があれば消去で 0 に戻す、0 なら偉大な高貴のお告げで 2 つ
       return allMods(cur).length ? use("annul") : use(`exalt${g}`, ["OmenofGreaterExaltation"]);
     },

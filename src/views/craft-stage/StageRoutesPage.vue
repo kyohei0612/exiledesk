@@ -81,12 +81,10 @@ const OFF_EN: Record<string, string> = {
   "上限の手数までに付かなかった (この等級では付かない段かも)": "Didn't hit within the use cap (this grade may not roll that tier)",
   "今のアイテムから始める時はカオスだけ": "Only Chaos when starting from the current item",
   "今のアイテムがレアでない": "The current item isn't rare",
-  "今のアイテムにもう狙いが付いている": "The current item already has the target",
-  "フラクチャー以外の MOD が無い (カオスで消せる MOD が要る)": "No mods other than fractured ones (Chaos needs one it can remove)",
-};
+  "今のアイテムにもう狙いが付いている": "The current item already has the target",};
 const offText = (x: string): string => tr(x, OFF_EN[x] ?? x);
 /** 道のカード (今のアイテムから始める時は、カオスの 1 番目の決まりを差し替える) */
-const FROM_STEP: Step = { k: null, ja: "今のクラフトのアイテムから始める (フラクチャー・品質・ルーンもそのまま。カオスで消えるのはフラクチャー以外)", en: "Start from the current craft item (fractures, quality and runes kept; Chaos only removes non-fractured mods)" };
+const FROM_STEP: Step = { k: null, ja: "今のクラフトのアイテムから始める (フラクチャー・品質・ルーンもそのまま。カオスで消えるのはフラクチャー以外。フラクチャーだけなら先に高貴 1 回で 1 つ足す)", en: "Start from the current craft item (fractures, quality and runes kept; Chaos only removes non-fractured mods. If only fractured mods, one Exalted Orb adds a mod first)" };
 const shownRoutes = computed(() => (fromItem.value ? ROUTES.map((r) => (r.route === "chaos" ? { ...r, steps: [FROM_STEP, ...r.steps.slice(1)] } : r)) : ROUTES));
 const ORDER = ROUTES.flatMap((r) => r.grades.map((grade) => ({ route: r.route, grade })));
 
