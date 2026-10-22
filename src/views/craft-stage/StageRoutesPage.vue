@@ -27,6 +27,7 @@ import { tr } from "../../i18n/lang";
 import { track } from "../../utils/track";
 import { logRecord } from "../../utils/log-record";
 import HelpTip from "../../components/ui/HelpTip.vue";
+import BusyTag from "../../components/ui/BusyTag.vue";
 
 const GRADE_JA: Record<Grade, [string, string]> = { perfect: ["完全", "Perfect"], greater: ["上級", "Greater"], base: ["無印", "Regular"] };
 /** 1 通りの人数。スマホは 10 人 (2026-10-19 スマホ相当で 100 人は 35 秒・画面が最長 9 秒固まった。オーナー「スマホだと 10 人だな規模感的に」) */
@@ -66,9 +67,9 @@ function setRunes(ids: string[]): void { routesRunes.value = ids; }
 const prep = computed(() => (s.data.value && !fromItem.value ? runePrep(s.data.value, runeIds.value) : undefined));
 /**
  * 始めの状態を今のクラフトのアイテムにする (2026-10-22 要望 51092b58、オーナー「現在のクラフトを参照した状態からカオススパムできるようにしたらええんやない」)。
- * カオスの道だけ、フラクチャー・品質・ルーン込みでそのアイテムから打つ (route-race.ts の from)。開発版だけ (本番はオーナーの OK の後)。null = 決まりの形
+ * カオスの道だけ、フラクチャー・品質・ルーン込みでそのアイテムから打つ (route-race.ts の from)。2026-10-22 オーナー OK で本番へ (v0.1.593)。null = 決まりの形
  */
-const FROM_ON = import.meta.env.DEV || import.meta.env.VITE_DEV_PREVIEW === "1";
+const FROM_ON = true;
 const fromItem = shallowRef<StageItem | null>(null);
 const canFrom = computed(() => FROM_ON && s.item.value?.rarity === "rare" && s.item.value.prefixes.length + s.item.value.suffixes.length > 0);
 function setFrom(on: boolean): void {
@@ -182,10 +183,11 @@ async function run(): Promise<void> {
   }
   rows.value = [];
   busy.value = true;
-  for (const one of ORDER) {
+  peopleDone.value = 0;
+  for (const [i, one] of ORDER.entries()) {
     await new Promise((r) => setTimeout(r, 0));
     if (id !== runId) return;
-    const row = await raceOne(d, s.base.value, ilvl.value, tt, priceOf, one.route, one.grade, { runs: RUNS, seed: seed.value, prep: prep.value, from: fromItem.value ?? undefined, stop: () => id !== runId });
+    const row = await raceOne(d, s.base.value, ilvl.value, tt, priceOf, one.route, one.grade, { runs: RUNS, seed: seed.value, prep: prep.value, from: fromItem.value ?? undefined, stop: () => id !== runId, onPerson: (k) => { peopleDone.value = i * RUNS + k; } });
     if (!row || id !== runId) return;
     rows.value = [...rows.value, row];
   }
@@ -221,11 +223,17 @@ const canLuck = (r: RaceRow): boolean => !r.off && r.tries.length > 0;
  * その道・等級で 1 人を当たるまで打ち、その形を置く。工程の 1 行の費用は 100 人の平均 (route-place.ts)。付かなければ何もしない
  */
 const placeMiss = ref(false);
+/** 裏で 1 人回している (読み込み中の札) */
+const placing = ref(false);
+/** 計算の進み: 終わった人数 (全部の道 × 等級を通して。読み込み中の n/m) */
+const peopleDone = ref(0);
 const placeTitle = computed(() => tr("この道の一番安い等級で 1 人を当たるまで打ち、その形をクラフト台に置く (工程に 1 行、費用は 100 人の平均。1 つ戻す・Ctrl+Z で消える)", "Spam once with this route's cheapest grade until it hits and put that item on the craft stage (one step, cost = average of 100; Undo / Ctrl+Z removes it)"));
-function placeHit(r: RaceRow | null): void {
+async function placeHit(r: RaceRow | null): Promise<void> {
   const tt = t.value;
-  if (!r || !tt || !canLuck(r)) return;
-  const hit = hitItemOf(r, tt, ilvl.value, prep.value, fromItem.value);
+  if (!r || !tt || !canLuck(r) || placing.value) return;
+  placing.value = true;
+  const hit = await hitItemOf(r, tt, ilvl.value, prep.value, fromItem.value);
+  placing.value = false;
   track("routes:place", r.route);
   placeMiss.value = !hit || !placeOnStage(hit.item, r, { cost: r.avgCost, n: hit.n, avg: true });
 }
@@ -300,6 +308,8 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
           <p class="mt-2 flex flex-wrap justify-center gap-2"><button type="button" data-routes-pick class="g-btn sm" :disabled="busy" @click="pickMod">{{ tr("MOD を選び直す", "Change mod") }}</button><button v-if="ROUTES_MULTI_ON && aims.length < ROUTES_MAX" type="button" data-routes-add class="g-btn sm" :disabled="busy" :title="tr(`当たりを ${ROUTES_MAX} つまで並べられる (どれか 1 つが付いたら止める)`, `Up to ${ROUTES_MAX} targets (stops when any one rolls)`)" @click="pickMod">{{ tr("＋ 当たりを足す", "+ Add target") }}</button></p>
           <!-- 計算開始 ⇔ 中止 (同じ場所のボタンが変わる) -->
           <p class="mt-2"><button type="button" data-routes-start class="min-h-11 w-full max-w-[16rem]" :class="busy ? 'g-btn' : 'g-btn-red'" @click="busy ? stop() : start()">{{ busy ? tr(`中止 (${rows.length} / ${ORDER.length})`, `Stop (${rows.length} / ${ORDER.length})`) : started ? tr(`別の ${RUNS} 人でもう一度計算`, `Again with another ${RUNS}`) : tr("計算開始", "Start") }}</button></p>
+          <!-- 読み込み中 (計算の 100 人 × 道・等級 / 裏で 1 人回す)。2026-10-22 オーナー「待ち時間の表示が無いとバグってるのか分からない」 -->
+          <p v-if="busy || placing" class="mt-1.5"><BusyTag :text="placing ? tr('当たるまで回し中', 'Rolling until it hits') : tr(`${RUNS} 人ずつ計算中`, `Calculating ${RUNS} people each`)" :n="placing ? undefined : peopleDone" :of="placing ? undefined : ORDER.length * RUNS" /></p>
           <p v-if="fromItem" class="mt-3 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("ルーンは今のアイテムに嵌めている物のまま", "Runes stay as socketed on the current item") }}</p>
           <StageRouteRunes v-else class="mt-3 flex flex-col items-center" :picked="runeIds" :required="runeNeed" :disabled="busy" @change="setRunes" />
         </div>
@@ -314,7 +324,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
             </div>
             <span class="flex shrink-0 flex-col items-stretch gap-1.5 max-md:w-full max-md:flex-row max-md:items-center max-md:[&>button]:flex-1">
             <button v-if="!busy && !luckOpen && bestLuck" type="button" data-route-luck-open class="g-btn-red" :title="tr(`この道の決まりで、${RUNS} 人と同じ始めの状態から自分でスパムして運を比べる`, `Spam it yourself with this route from the same start and compare your luck with the ${RUNS} people`)" @click="openLuck(bestLuck)">{{ tr("運試し", "Luck test") }}</button>
-            <button v-if="!busy && bestLuck" type="button" data-route-place class="g-btn sm" :title="placeTitle" @click="placeHit(bestLuck)">{{ tr("当たった形でクラフト台に戻る", "Back to the craft stage with a hit") }}</button>
+            <button v-if="!busy && bestLuck" type="button" data-route-place class="g-btn sm" :disabled="placing" :title="placeTitle" @click="placeHit(bestLuck)">{{ tr("当たった形でクラフト台に戻る", "Back to the craft stage with a hit") }}</button>
             <button v-if="!busy" type="button" data-route-recompute class="g-btn sm" :title="tr(`別の ${RUNS} 人でもう一度全部の道を計算する (乱数を変える)`, `Run all routes again with a different ${RUNS} people (new random seed)`)" @click="recompute">{{ tr("再計算", "Recompute") }}</button>
             <span v-if="!busy && round > 1" class="text-center text-[10px] tabular-nums text-[var(--exile-color-text-tertiary)]">{{ tr(`${round} 回目の ${RUNS} 人`, `${RUNS} people, run ${round}`) }}</span>
             </span>
@@ -391,7 +401,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
           <!-- この道で運試し (道の中で一番安い等級。運試しの欄は一番安い欄の下に出す) -->
           <p v-if="!offRoute(r.route) && !busy && bestIn(r.route)" class="mt-auto pt-3 text-center">
             <button type="button" :data-route-luck-card="r.route" class="g-btn sm" :class="luckRow === bestIn(r.route) ? 'on' : ''" :title="tr(`${tr(r.ja, r.en)}の一番安い等級 (${tr(...GRADE_JA[bestIn(r.route)!.grade])}) で運試し`, `Luck test with ${r.en} at its cheapest grade (${GRADE_JA[bestIn(r.route)!.grade][1]})`)" @click="openLuck(bestIn(r.route))">{{ tr("運試し", "Luck test") }}</button>
-            <button type="button" :data-route-place-card="r.route" class="g-btn sm ml-2" :title="placeTitle" @click="placeHit(bestIn(r.route))">{{ tr("当たった形でクラフト台に戻る", "Back to the craft stage with a hit") }}</button>
+            <button type="button" :data-route-place-card="r.route" class="g-btn sm ml-2" :disabled="placing" :title="placeTitle" @click="placeHit(bestIn(r.route))">{{ tr("当たった形でクラフト台に戻る", "Back to the craft stage with a hit") }}</button>
           </p>
           <p v-if="placeMiss && !busy && bestIn(r.route)" class="mt-1 text-center text-[11px] text-rose-300">{{ tr("上限の手数までに付かなかった。もう一度押して", "Didn't hit within the use cap. Press again") }}</p>
         </article>

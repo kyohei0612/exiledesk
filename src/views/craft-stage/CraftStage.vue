@@ -22,6 +22,7 @@ import { usePhone } from "../../utils/use-phone";
 import { useDismiss } from "../../utils/use-dismiss";
 import { toCss } from "../../utils/zoom";
 import StagePhoneBar from "./StagePhoneBar.vue";
+import BusyTag from "../../components/ui/BusyTag.vue";
 import StageSettings from "./StageSettings.vue";
 import { useStageBase } from "./use-stage-base";
 import StageItemCard from "./StageItemCard.vue";
@@ -329,7 +330,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
     <StageItemMini v-if="phone && !cardOnScreen && s.item.value && (s.mode.value === 'hand' || s.replay.value)" :item="s.item.value" :added="s.last.value?.added ?? []" :removed="s.last.value?.removed ?? []" />
     <!-- 読めなかった時は「もう一度」(web/MarketNotice.vue と同じ。2026-10-10 動きの揃え 8) -->
     <p v-if="s.error.value" class="mb-3 flex items-center gap-3 rounded-lg bg-rose-500/10 px-3 py-2 text-rose-300"><span class="min-w-0 flex-1">{{ s.error.value }}</span><button v-if="!s.data.value" type="button" class="g-btn sm shrink-0" @click="retryInit">{{ tr("もう一度", "Retry") }}</button></p>
-    <p v-if="!s.ready.value && !s.error.value" class="py-12 text-center opacity-50">{{ tr("読み込み中…", "Loading…") }}</p>
+    <p v-if="!s.ready.value && !s.error.value" class="py-12 text-center"><BusyTag :text="tr('クラフトのデータを読み込み中', 'Loading craft data')" /></p>
 
     <!-- シミュレーター・使い方とコースの本体 (各部の差し込み口、SimHost.vue・CourseHost.vue) -->
     <SimHost part="main" />

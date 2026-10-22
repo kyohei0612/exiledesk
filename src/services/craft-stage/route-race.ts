@@ -169,7 +169,7 @@ export function routeRun(data: PatchData, base: string, itemLevel: number, targe
  * (2026-10-19 スマホ相当 = CPU 4 倍遅くで、まとめて打つと画面が最長 8.9 秒固まった)。stop() が true になったら null で止める
  */
 export async function raceOne(data: PatchData, base: string, itemLevel: number, targets: readonly RaceTarget[], price: (key: string) => number, route: RouteKind, grade: Grade,
-  opts: { runs: number; maxSteps?: number; seed?: number; prep?: RoutePrep; from?: StageItem; stop?: () => boolean; sliceMs?: number }): Promise<RaceRow | null> {
+  opts: { runs: number; maxSteps?: number; seed?: number; prep?: RoutePrep; from?: StageItem; stop?: () => boolean; sliceMs?: number; /** 1 人終わるごと (読み込み中の n/m) */ onPerson?: (done: number) => void }): Promise<RaceRow | null> {
   const runs = opts.runs, maxSteps = opts.maxSteps ?? 3000, sliceMs = opts.sliceMs ?? 25;
   const off = routeOff(data, base, itemLevel, targets, route, opts.prep, opts.from);
   if (off) return { route, grade, off, hitRate: 0, avgCost: 0, avgSteps: 0, p50: 0, p90: 0, uses: {}, tries: [], people: runs, hitsBy: targets.map(() => 0) };
@@ -195,6 +195,7 @@ export async function raceOne(data: PatchData, base: string, itemLevel: number, 
       }
       for (const [k, v] of Object.entries(run.uses)) uses[k] = (uses[k] ?? 0) + v;
       if (run.hit()) { costs.push(run.cost); steps.push(run.n); const hi = run.hitIndex(); if (hi >= 0) hitsBy[hi]!++; }
+      if (need === "any") opts.onPerson?.(r + 1);
       if (!(await breathe())) return null;
     }
     costs.sort((a, b) => a - b);

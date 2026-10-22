@@ -26,14 +26,20 @@ export function placeOnStage(it: StageItem, row: Pick<RaceRow, "route" | "grade"
   return true;
 }
 
-/** その道・等級で 1 人を当たるまで打った形と手数 (上限の手数までに付かなければ null)。道のカードの「当たった形でクラフト台に戻る」 */
-export function hitItemOf(row: RaceRow, targets: readonly RaceTarget[], ilvl: number, prep: RoutePrep, from: StageItem | null, maxSteps = 3000): { item: StageItem; n: number } | null {
+/**
+ * その道・等級で 1 人を当たるまで打った形と手数 (上限の手数までに付かなければ null)。道のカードの「当たった形でクラフト台に戻る」。
+ * 200 手ごとに画面へ手を返す (読み込み中の札が回るように)
+ */
+export async function hitItemOf(row: RaceRow, targets: readonly RaceTarget[], ilvl: number, prep: RoutePrep, from: StageItem | null, maxSteps = 3000): Promise<{ item: StageItem; n: number } | null> {
   const d = s.data.value;
   if (!d) return null;
   for (let k = 0; k < 5; k++) {
     const run = routeRun(d, s.base.value, ilvl, targets, row.route, row.grade, mulberry32((Math.random() * 2 ** 31) | 0), priceOf, prep, from ?? undefined);
     if (!run) return null;
-    while (run.n < maxSteps && !run.hit()) if (!run.step()) break;
+    while (run.n < maxSteps && !run.hit()) {
+      if (!run.step()) break;
+      if (run.n % 200 === 0) await new Promise((r) => setTimeout(r, 0));
+    }
     if (run.hit()) return { item: run.item, n: run.n };
   }
   return null;
