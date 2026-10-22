@@ -5,13 +5,9 @@
  * 一度正解した答えと同じ答えになる状況は聞かずに自動で打つ (カオスや消去の繰り返しを何十回も聞かない)。
  * 打ち方はシミュレーターと同じ applyQuizAction・乱数も 1 本 (同じ種なら同じ結果)。画面の状態は持たない (StageTutorial.vue が持つ)
  */
-import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import type { StageItem, StageMod } from "../craft-stage/types";
+import { type PatchData, type StageItem, type StageMod, applyCurrency, revealOffers, mulberry32 } from "../craft-stage/engine";
 import { applyQuizAction, buyStart, revealWanted, routeDone, routeOf, ruleFor, situationOf, type QuizAction, type Situation } from "../simulator/quiz-recipe";
-import { applyCurrency } from "../craft-stage/apply-currency";
-import { revealOffers } from "../craft-stage/apply-desecrate";
 import type { JaEn, QuizTutorial, TutorialRule } from "./quiz-tutorials";
-import { mulberry32 } from "../htc/rng";
 
 export interface TutorialEntry {
   /** 打った答え (チュートリアルの答えの番号) */

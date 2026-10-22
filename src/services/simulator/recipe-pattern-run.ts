@@ -2,12 +2,8 @@
  * recipe-pattern-run.ts — パターンの通りに打つ (recipe-sim.ts の runRecipeOnce から分けた。2026-10-16、500 行の決まり)。
  * 1 回の挑戦の状態 (cur) と手の打ち方は runRecipeOnce から受け取る
  */
-import { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
-import { unrevealedOf } from "../craft-stage/apply-desecrate";
-import { familyBlocked, occupiedKeysOf } from "../craft-stage/engine";
+import { familyBlocked, occupiedKeysOf, CURRENCY_FLOOR, unrevealedOf, allMods, limitOf, listOf, room, type StageItem, type StageMod, type StageSide } from "../craft-stage/engine";
 import { LOST_RESTART, ONCE_KINDS, type PatternKind } from "./pattern";
-import { allMods, limitOf, listOf, room } from "../craft-stage/stage-core";
-import type { StageItem, StageMod, StageSide } from "../craft-stage/types";
 import { ESS, SIDE_OMEN, crystalSides, hits, membersOf, needOf, type CompiledStep, type RecipeRun, type RecipeSpec, type RecipeTarget } from "./recipe-defs";
 
 /** 1 回の挑戦の書き換わる物 (アイテム・かかった費用・再生の始め・使ったベースの数・手ごとの費用の数え) */

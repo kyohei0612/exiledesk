@@ -11,8 +11,7 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
-import type { PobBlock } from "../../services/craft-stage/stage-pob";
-import { dpsText } from "../../services/craft-stage/stage-pob";
+import { type PobBlock, dpsText } from "../../services/craft-stage/engine";
 import { useAnim, urlOff } from "./use-anim";
 
 const props = defineProps<{ a: PobBlock; aStep: number; aLabel: string; b: PobBlock | null; bStep: number; bLabel: string }>();

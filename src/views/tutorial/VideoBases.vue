@@ -9,7 +9,7 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
-import { DEF } from "../../services/craft-stage/defence";
+import { DEF } from "../../services/craft-stage/engine";
 import { easeOut, useAnim, urlOff } from "./use-anim";
 
 const props = defineProps<{ slot: string; early: number; late: number }>();

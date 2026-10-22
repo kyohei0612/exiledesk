@@ -10,7 +10,8 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
-import { DEF, esTimeline } from "../../services/craft-stage/defence";
+import { DEF } from "../../services/craft-stage/engine";
+import { esTimeline } from "../../services/craft-stage/engine-sim";
 import { useAnim, urlOff } from "./use-anim";
 
 const props = defineProps<{ life: number; es: number; dmg: number; hits: number[]; kind: "phys" | "chaos" | "bleed"; until: number }>();

@@ -6,7 +6,7 @@
 import { computed, ref, watch } from "vue";
 import { craftStage as s } from "../craft-stage";
 import { logRecord } from "../../utils/log-record";
-import { splitOmens } from "../../services/craft-stage/run-plan";
+import { splitOmens } from "../../services/craft-stage/engine";
 import { topicKey, type TopicCourse } from "../../services/tutorial/topic-courses";
 
 export const topic = ref<TopicCourse | null>(null);

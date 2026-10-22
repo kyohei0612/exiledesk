@@ -11,12 +11,8 @@
  * 座標は 1280×720 の枠の中 (拡大しても合う)。skip() で残りを 0 秒にして一気に終わらせる (→ の連打)。
  */
 import { reactive, ref, type Ref } from "vue";
-import { revealOffers } from "../../services/craft-stage/apply-desecrate";
-import { mulberry32 } from "../../services/htc/rng";
+import { revealOffers, mulberry32, isShard, type PlayedStep, type StageMod } from "../../services/craft-stage/engine";
 import { craftStage } from "../../state/craft-stage";
-import { isShard } from "../../services/craft-stage/apply-act";
-import type { PlayedStep } from "../../services/craft-stage/run-plan";
-import type { StageMod } from "../../services/craft-stage/types";
 
 export interface Hand { x: number; y: number; dur: number; held: string; press: number; visible: boolean; hint: string }
 

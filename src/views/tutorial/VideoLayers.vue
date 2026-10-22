@@ -12,7 +12,8 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
-import { KIND_COLOR, KIND_JA, layersOf, type DamageKind, type Defender, type Outcome } from "../../services/craft-stage/defence";
+import { type DamageKind, type Defender, type Outcome } from "../../services/craft-stage/engine";
+import { KIND_COLOR, KIND_JA, layersOf } from "../../services/craft-stage/engine-sim";
 import { easeOut, seg, useAnim, urlOff } from "./use-anim";
 
 const props = defineProps<{ d: Defender; hit: number; kind: DamageKind; acc: number; outcome: Outcome; red: boolean; lvl: number | null }>();

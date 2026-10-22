@@ -7,9 +7,7 @@
  * use の特別なキー: reset = 白に戻す / reveal = 発現 (どれを選んでも良い) / ess:<名前>:<段> = そのアイテムのエッセンス (棚から引く)
  */
 import type { JaEn } from "./quiz-tutorials";
-import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import type { StageItem } from "../craft-stage/types";
-import type { Force } from "../craft-stage/stage-core";
+import { type PatchData, type StageItem, type Force } from "../craft-stage/engine";
 import { essenceShelf } from "../../state/for-share/craft-stage-shelf";
 import { ADV_COURSES } from "./topic-courses-adv";
 import { GUIDE_COURSES } from "./topic-courses-guide";

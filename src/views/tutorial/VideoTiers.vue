@@ -14,9 +14,7 @@
 import { fmtPct } from "../../utils/format-pct";
 import { computed } from "vue";
 import { craftStage } from "../../state/craft-stage";
-import { freshItem, candidates, modListFor, familiesOf, CURRENCY_FLOOR } from "../../services/craft-stage/engine";
-import { shownTags, TAG_STYLE } from "../../services/craft-stage/mod-list";
-import { baseArt } from "../../services/craft-stage/base-art";
+import { freshItem, candidates, modListFor, familiesOf, CURRENCY_FLOOR, shownTags, TAG_STYLE, baseArt } from "../../services/craft-stage/engine";
 
 /** hl = false: 答えの金の段を出さない (POE2Tube 要望 ⑯ &hl=0。質問の行で表だけ見せ、答えの行で金の段を「パッ」と出す) */
 const props = withDefaults(defineProps<{ base: string; mod: string; ilvl: number | null; hl?: boolean; floor?: number | null }>(), { hl: true, floor: null });

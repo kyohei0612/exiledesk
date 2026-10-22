@@ -15,7 +15,7 @@
 <script setup lang="ts">
 import { modText } from "../../i18n/lang";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import type { PlayedStep } from "../../services/craft-stage/run-plan";
+import { type PlayedStep } from "../../services/craft-stage/engine";
 import StageItemCard from "../../components/for-share/item/StageItemCard.vue";
 import VideoTray from "./VideoTray.vue";
 import VideoPob from "./VideoPob.vue";

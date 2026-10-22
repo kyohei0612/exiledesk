@@ -6,14 +6,10 @@
  * 両側の「どれか」(プレとサフィの候補を混ぜた狙い) は、プレの工程とサフィの工程に分ける (オーナー 2026-10-12
  * 「プレ狙いでサフィ狙いも兼ねてる、サフィに付いたらサフィの工程へ」)。両側の狙いは 1 つまで
  */
-import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import type { StageItem, StageSide } from "../craft-stage/types";
-import type { Force } from "../craft-stage/stage-core";
 import type { QuizRecipe, QuizRoute, QuizRule, QuizSlot, QuizStart, SlotKind } from "./quiz-recipe";
-import { CRAFTED_SOURCES } from "../../vendor/poe2htc/engine/pool";
 import { runeEnForId } from "./pattern";
 import { sideLimits } from "./sim-methods";
-import { sideOfMod } from "../craft-stage/engine";
+import { sideOfMod, type PatchData, type StageItem, type StageSide, type Force, CRAFTED_SOURCES } from "../craft-stage/engine";
 import { membersOf } from "./recipe-defs";
 
 export interface QuizRules { v: 3; rules: Record<string, QuizRule[]> }

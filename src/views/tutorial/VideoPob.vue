@@ -11,9 +11,7 @@
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
-import type { PobBlock } from "../../services/craft-stage/stage-pob";
-import { dpsText } from "../../services/craft-stage/stage-pob";
-import { skillIcon } from "../../services/craft-stage/skill-art";
+import { type PobBlock, dpsText, skillIcon } from "../../services/craft-stage/engine";
 import { urlOff } from "./use-anim";
 
 const props = defineProps<{ pob: PobBlock; idx: number }>();

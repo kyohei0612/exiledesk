@@ -13,7 +13,7 @@
 import type { JaEn } from "./quiz-tutorials";
 import { amuletCourse, bootsCourse, glovesCourse, spearCourse, wandCourse, type CourseRecipe } from "./course-recipes";
 import { assignSlots, routeOf, ruleFor, situationOf, type QuizAction, type QuizRecipe, type QuizSlot } from "../simulator/quiz-recipe";
-import type { StageItem } from "../craft-stage/types";
+import { type StageItem } from "../craft-stage/engine";
 
 export interface CraftCourse {
   id: string;

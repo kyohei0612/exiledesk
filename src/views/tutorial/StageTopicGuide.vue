@@ -9,20 +9,14 @@ import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
 import { canRetry, lessonJump, quitLesson, prepareStep, prepared, restartCourse, retryStep, rigRare } from "../../state/tutorial/craft-lesson";
 import { topic, topicAt, topicCur, topicSub, topicDone, topicNext, topicReset, topicStep, topicUsed } from "../../state/tutorial/craft-topic";
 import { stageAdds, stageFloor, stageHelp } from "../../state/for-share/craft-stage-help";
-import { aimLabel, modListFor } from "../../services/craft-stage/mod-list";
-import { factionCandidates } from "../../services/craft-stage/spec/parts";
-import { allMods, boostedMod, catalystOf } from "../../services/craft-stage/stage-core";
-import { qualityLabelOf } from "../../services/htc/quality";
-import { ALL_OMEN_SPECS } from "../../services/craft-stage/spec/run-spec";
-import { freshItem } from "../../services/craft-stage/run-plan";
+import { factionCandidates, ALL_OMEN_SPECS } from "../../services/craft-stage/engine-sim";
 import { currencyHoverOf } from "../../services/currency/currency-hover";
 import { enOf } from "../../state/for-share/craft-stage-shelf";
 import { modText, tr } from "../../i18n/lang";
 import Icon from "../../components/ui/Icon.vue";
 import type { JaEn } from "../../services/tutorial/quiz-tutorials";
 import { topicKey, type TopicStep } from "../../services/tutorial/topic-courses";
-import type { StageMod } from "../../services/craft-stage/types";
-import { sideOfMod } from "../../services/craft-stage/engine";
+import { sideOfMod, aimLabel, modListFor, allMods, boostedMod, catalystOf, qualityLabelOf, freshItem, type StageMod } from "../../services/craft-stage/engine";
 
 /** now = 今の手の枠 (棚の上) / course = コースの枠 (アイテムの下、既定) */
 defineProps<{ part?: "now" | "course" }>();

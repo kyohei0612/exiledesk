@@ -15,9 +15,8 @@ import type { AutoModel, OrderDetail, OrderResult } from "./auto-types";
 import { answerFor, methodsFromDetail, rulesForOrder } from "./auto-rules";
 import { quizFromSim, type QuizRules } from "../quiz-build";
 import type { QuizRecipe, QuizRule, Situation } from "../quiz-recipe";
-import { loadHtcPatch } from "../../craft-stage/engine";
+import { loadHtcPatch, type PatchData } from "../../craft-stage/engine";
 import type { QuizSimIn } from "../quiz-build";
-import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 
 /** 画面から送る狙いの入力 (データと関数は送れないので外す。ルーンの値段は表の `rune:<英語名>`) */
 export type AutoSimIn = Omit<QuizSimIn, "data" | "runePrice">;

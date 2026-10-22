@@ -9,7 +9,7 @@ import { craftStage as s } from "../../state/craft-stage";
 import { startCourse } from "../../state/tutorial/craft-course";
 import { cleared, startTopicAt } from "../../state/tutorial/craft-lesson";
 import { iconOf, nameOf } from "../../state/craft-stage";
-import { freshItem } from "../../services/craft-stage/run-plan";
+import { freshItem } from "../../services/craft-stage/engine";
 import { CRAFT_COURSES, courseSlots } from "../../services/tutorial/craft-courses";
 import { TOPIC_COURSES, topicKey, type TopicCourse, type TopicStep } from "../../services/tutorial/topic-courses";
 import { baseNameOf, tr } from "../../i18n/lang";

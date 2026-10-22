@@ -12,7 +12,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import Icon from "../../components/ui/Icon.vue";
 import { currentTreeRecipe, currentTreeRecipeId, duplicateTreeRecipe, oldRecipeCount, overwriteTreeRecipe, removeTreeRecipe, renameTreeRecipe, restoreTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../state/simulator/tree-recipes";
 import { openTreePage } from "../../web/page";
-import { baseArt } from "../../services/craft-stage/base-art";
+import { baseArt } from "../../services/craft-stage/engine";
 import { fmtDate, treeShareUrl, useRecipeUrl } from "./recipe-share";
 import { useTree } from "./tree/use-tree";
 import { useArmed, ARMED_CLASS } from "../../utils/use-armed";

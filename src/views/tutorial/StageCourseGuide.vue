@@ -9,7 +9,7 @@ import { computed } from "vue";
 defineOptions({ inheritAttrs: false });
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
 import { course, courseBases, courseView, restartCourse } from "../../state/tutorial/craft-course";
-import { aimLabel } from "../../services/craft-stage/mod-list";
+import { aimLabel } from "../../services/craft-stage/engine";
 import { tr } from "../../i18n/lang";
 import { displayCurrency } from "../../state/display-currency";
 import Icon from "../../components/ui/Icon.vue";

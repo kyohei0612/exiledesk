@@ -7,8 +7,7 @@
  * 要望 ㉑ (2026-09-30、撮った本編で読みにくかった): 消えた MOD の数字にマイナスを付けない (元の数字のまま「−」の印)、
  * 差が 0 の行は出さない、並びは 増えた → 変わった → 消えた。数値の書き方は画面 (VideoCompare) の lineText。
  */
-import type { StageItem } from "../craft-stage/types";
-import { allMods } from "../craft-stage/stage-core";
+import { type StageItem, allMods } from "../craft-stage/engine";
 
 export interface DiffLine {
   /** 日本語の文面 (数値は #) */

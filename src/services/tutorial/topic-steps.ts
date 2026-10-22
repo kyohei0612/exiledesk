@@ -3,7 +3,7 @@
  * topic-courses が -adv・-guide を import するので、ここは型だけを topic-courses から読む (値を読むと読み込みの輪で落ちる)
  */
 import type { JaEn } from "./quiz-tutorials";
-import type { StageItem } from "../craft-stage/types";
+import { type StageItem } from "../craft-stage/engine";
 import type { TopicStep } from "./topic-courses";
 
 /** 打つだけの手 */

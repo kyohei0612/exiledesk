@@ -2,10 +2,8 @@
  * recipe-defs.ts — 決めた順番で作るシミュレーションの型と小さな決まり (recipe-sim.ts から分けた。2026-10-16、500 行の決まり)。
  * 呼ぶ側は今まで通り recipe-sim.ts から読める
  */
-import type { PatchData } from "../../vendor/poe2htc/engine/types";
+import { type PatchData, type StageItem, type StageMod, type StageSide, ESSENCE_KEYS } from "../craft-stage/engine";
 import type { MissRule, PatternKind } from "./pattern";
-import type { StageItem, StageMod, StageSide } from "../craft-stage/types";
-import { ESSENCE_KEYS } from "../htc/essence-key-table";
 
 export type RecipeMethod = "exalt" | "chaos" | "augment" | "desecrate" | "essence" | "fracture";
 /**

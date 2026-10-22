@@ -10,13 +10,7 @@
  *   - 工程は入口の札 (entry) が付いたら切り替わる。どの入口も付いていなければ 1 つ目の工程
  * 打ち方はエミュレーターと同じ applyCurrency。当たり所で弾かれた手 (random) は数えずにもう一度 (書いてある効果どおり)。
  */
-import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import type { StageItem, StageMod, StageSide } from "../craft-stage/types";
-import { applyCurrency } from "../craft-stage/apply-currency";
-import { revealOffers } from "../craft-stage/apply-desecrate";
-import { catalystOf, limitOf, listOf, maxQualityOf, SIDES, type Force } from "../craft-stage/stage-core";
-import { freshItem, startFrom } from "../craft-stage/run-plan";
-import { mulberry32 } from "../htc/rng";
+import { type PatchData, type StageItem, type StageMod, type StageSide, applyCurrency, revealOffers, catalystOf, limitOf, listOf, maxQualityOf, SIDES, type Force, freshItem, startFrom, mulberry32 } from "../craft-stage/engine";
 
 export type SlotKind = "normal" | "desecrated" | "fractured" | "essence" | "crafted";
 /** 完成の札 1 つ。mods のどれか 1 つ (段は minTierIndex 以上) で埋まる。mods が空ならその側のどの MOD でも */

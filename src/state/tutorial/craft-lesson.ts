@@ -14,13 +14,8 @@ import { course, courseView, endCourse } from "./craft-course";
 import { endTopic, goTopic, keepGoing, loopRound, startTopic, topic, topicAt, topicDone, topicSub, topicUsed } from "./craft-topic";
 import { fullSockets } from "../for-share/stage-steps";
 import { topicKey, type TopicCourse } from "../../services/tutorial/topic-courses";
-import { freshItem, startFrom } from "../../services/craft-stage/run-plan";
-import { applyCurrency, omensFor } from "../../services/craft-stage/apply-currency";
-import { mulberry32 } from "../../services/htc/rng";
-import type { StageItem } from "../../services/craft-stage/types";
+import { freshItem, startFrom, applyCurrency, omensFor, mulberry32, type StageItem, catalystBoosts, revealOffers, unrevealedOf } from "../../services/craft-stage/engine";
 import { isRareChance } from "../../utils/format-pct";
-import { catalystBoosts } from "../../services/craft-stage/stage-core";
-import { revealOffers, unrevealedOf } from "../../services/craft-stage/apply-desecrate";
 
 export const inLesson = computed(() => !!topic.value || !!course.value);
 /** チュートリアルの間はお告げを打つと消す (ゲームと同じ)。エミュレーターの既定は掛けっぱなし (2026-10-18 オーナー「デフォではかけっぱなし、チュートリアルでは分離して」) */

@@ -3,10 +3,8 @@
  * 普通の MOD は 高貴ガチャ / カオススパム / 増強スパム / 冒涜 / フラクチャー から選ぶ。冒涜の MOD は冒涜、エッセンス・合金の MOD はエッセンスに決まっている (選ばせない)。
  * 付け方のポップアップ (SimMethodPop・methodsOff) は 2026-10-23 にクラフト台の中の旧シミュと一緒に消えた
  */
-import type { PatchData } from "../../vendor/poe2htc/engine/types";
+import { type PatchData, freshItem, limitOf } from "../craft-stage/engine";
 import type { SimMethod } from "./quiz-build";
-import { freshItem } from "../craft-stage/run-plan";
-import { limitOf } from "../craft-stage/stage-core";
 
 /** その MOD で選べる付け方 (1 つなら選ばせずにそれで足す) */
 export function methodsFor(d: PatchData | null, modId: string): SimMethod[] {

@@ -12,11 +12,9 @@
 import { computed } from "vue";
 import StageItemCard from "../../components/for-share/item/StageItemCard.vue";
 import { craftStage } from "../../state/craft-stage";
-import { playPlan } from "../../services/craft-stage/run-plan";
+import { playPlan, type CraftStagePlan, dpsText, type PobBlock } from "../../services/craft-stage/engine";
+import { NEGATIVE_WORDS } from "../../services/craft-stage/engine-sim";
 import { diffItems, splitLine, type DiffLine } from "../../services/tutorial/compare";
-import { NEGATIVE_WORDS } from "../../services/craft-stage/stage-core";
-import type { CraftStagePlan } from "../../services/craft-stage/contract";
-import { dpsText, type PobBlock } from "../../services/craft-stage/stage-pob";
 import { easeOut, seg, useAnim, urlOff } from "./use-anim";
 
 const props = defineProps<{ a: CraftStagePlan; b: CraftStagePlan; aStep: number; bStep: number; aPob?: PobBlock | null; bPob?: PobBlock | null }>();

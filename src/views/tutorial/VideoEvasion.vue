@@ -10,7 +10,8 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
-import { attackRow, DEF, deflectChance, evadeChance } from "../../services/craft-stage/defence";
+import { DEF } from "../../services/craft-stage/engine";
+import { attackRow, deflectChance, evadeChance } from "../../services/craft-stage/engine-sim";
 import { seg, useAnim, urlOff } from "./use-anim";
 
 const props = defineProps<{ ev: number; deflect: number; acc: number; lvl: number | null; n: number; red: boolean }>();

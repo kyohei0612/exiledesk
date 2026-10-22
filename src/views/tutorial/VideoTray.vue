@@ -9,8 +9,7 @@
 <script setup lang="ts">
 import { computed, type ComponentPublicInstance } from "vue";
 import { iconOfKey, nameOfKey } from "../../state/for-share/craft-stage-shelf";
-import type { StageItem } from "../../services/craft-stage/types";
-import { isShard, SHARDS_PER_ORB } from "../../services/craft-stage/apply-act";
+import { type StageItem, isShard, SHARDS_PER_ORB } from "../../services/craft-stage/engine";
 
 /** height: 撮影用 (inline) で合わせるアイテム枠の高さ (px)。棚の上端・下端をこの中に収める (POE2Tube 要望 ⑥) */
 /** glow: 撮影用。拾われた物を薄くせず光らせる (要望 ⑦) */

@@ -12,7 +12,7 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
-import type { PobBlock } from "../../services/craft-stage/stage-pob";
+import { type PobBlock } from "../../services/craft-stage/engine";
 import { easeOut, seg, useAnim, urlOff } from "./use-anim";
 
 const props = defineProps<{ pob: PobBlock; step: number; elem: string; res: number[]; dmg: number | null }>();
