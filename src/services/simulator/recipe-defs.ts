@@ -17,11 +17,6 @@ export interface RecipeTarget {
   /** 候補 (本体 + alts) のうちいくつ付けば当たりか (既定 1。2026-10-05 オーナー「どれか 2 つとかも選ばせたい」)。その数だけ枠を使う */
   need?: number;
 }
-/** 値段を 1 回引いたら覚える (相場の一覧を毎手引くと、500 回で 46 秒かかっていた)。1 回の「回す」ごとに作る */
-export function memoPrice(f: (k: string) => number): (k: string) => number {
-  const memo = new Map<string, number>();
-  return (k) => { let v = memo.get(k); if (v == null) { v = f(k); memo.set(k, v); } return v; };
-}
 /** その手順で当たりになる MOD (本体 + alts) */
 export const membersOf = (t: Pick<RecipeTarget, "modId" | "minTierIndex" | "alts">): Array<{ modId: string; minTierIndex: number }> => [{ modId: t.modId, minTierIndex: t.minTierIndex }, ...(t.alts ?? [])];
 /**

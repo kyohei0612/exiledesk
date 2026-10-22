@@ -203,6 +203,3 @@ export function quizFromSim(x: QuizSimIn, q: QuizRules | null | undefined): Quiz
   }
   return { recipe: { v: 3, base: x.base, itemLevel: x.itemLevel, start, routes }, error };
 }
-
-/** 工程の名前 */
-export const ROUTE_NAME: Record<string, [string, string]> = { main: ["", ""], prefix: ["プレフィックスに付いた工程", "Prefix route"], suffix: ["サフィックスに付いた工程", "Suffix route"] };

@@ -388,15 +388,6 @@ export function removeSplitRow(d: TreeDoc, id: string, i: number): void {
   b.outs = b.outs.filter((o) => o !== r?.to);
 }
 
-/**
- * 見本を作るのに要る所だけの木 (箱の位置・メモ・× の印・メモの窓の札を除く)。JSON の文字なので、同じなら見本を作り直さない
- * (× を押す・メモを書くたびに試し打ちが見本に戻っていた、10-21 本物のマウス)
- */
-export function sampleKeyOf(d: TreeDoc): string {
-  const boxes = Object.fromEntries(Object.entries(d.boxes).map(([k, b]) => [k, { ...b, x: 0, y: 0, note: undefined, unwanted: undefined }]));
-  return JSON.stringify({ ...d, note: undefined, memoAims: undefined, memoCurrencies: undefined, boxes });
-}
-
 
 /** メモの窓の札を足す / 消す (同じ物は 1 つ) */
 export function toggleMemoAim(d: TreeDoc, a: Aim): void {
