@@ -7,12 +7,11 @@ import { inGroup } from "../../services/mods/item-classes";
 import { useFlash } from "../../utils/use-flash";
 import { ARMED_CLASS, useArmed } from "../../utils/use-armed";
 import { tr } from "../../i18n/lang";
-import { SIM_LOCKED, freshPatterns } from "../../state/craft-stage";
+import { SIM_LOCKED } from "../../state/craft-stage";
 import { inLesson } from "../../state/tutorial/craft-lesson";
 import StageRecipeStart from "../simulator/StageRecipeStart.vue";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { computed, ref, watch } from "vue";
-import { revealWhenReady } from "../../utils/keep-place";
 import { useStageBase } from "./use-stage-base";
 import StageBasePicker from "./StageBasePicker.vue";
 import { PAGES_ON, basePage, simStep } from "../../state/web-page";
@@ -101,24 +100,6 @@ function quizStep(n: number): void {
 }
 /** シミュレーターで ② 狙う MOD より先の工程のページにいる (ソケットは選び済み) */
 const simLaterPage = computed(() => s.mode.value === "sim" && s.simPicked.value && simStep.value !== "mods" && (simSocketCap.value === 0 || s.simSockets.value != null));
-function simFromHand(): void {
-  const it = s.item.value;
-  if (!it) return;
-  s.simStartItem.value = { ...it, prefixes: it.prefixes.map((m) => ({ ...m })), suffixes: it.suffixes.map((m) => ({ ...m })) };
-  s.simStartCost.value = s.total.value;
-  // 付いている MOD は狙いに入れておく (その段以上。消えたら取り直す)。足したい MOD を 2 で足して決めたら、そのままツリー (3〜5 は飛ばす)
-  s.simTargets.value = [...it.prefixes, ...it.suffixes].filter((m) => !m.unrevealed).map((m) => ({ modId: m.modId, minTierIndex: m.tierIndex, ...(m.fractured ? { method: "fracture" as const } : m.desecrated ? { method: "desecrate" as const } : {}) }));
-  s.simOrder.value = [];
-  s.simPatterns.value = freshPatterns();
-  s.simSockets.value = it.sockets ?? 0;
-  s.simStart.value = "item";
-  s.simPicked.value = true;
-  simStep.value = "mods";
-  s.mode.value = "sim";
-  // 2 (狙う MOD) の頭から見せる: エミュレーターの MOD はもう入っているので、まず付け方を決める所 (2026-10-19 オーナー「2 の最初ね、MOD とか付け方決めれるところから開始」。
-  // 前は枠の下の線まで送っていて、付け方の所が上に隠れた)
-  revealWhenReady("[data-sim-cur]", 3000, "top");
-}
 </script>
 
 <template>
@@ -162,8 +143,6 @@ function simFromHand(): void {
       <button type="button" :class="btn" :title="tr('完成か、答えの無い状態まで打つ (500 手まで)', 'Use steps until done or no answer (up to 500)')" @click="quizStep(500)">{{ tr("最後まで", "To the end") }}</button>
       <span v-if="quizNote" class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ quizNote }}</span>
     </template>
-    <!-- 今のアイテムをそのままシミュレーションの始めの状態に (2026-10-08) -->
-    <button v-if="!SIM_LOCKED" type="button" :class="btn" :title="tr('今のアイテム (付いている MOD・固定・ソケット) を始めの状態にしてシミュレーターへ。ベース代は エミュレーターの累計 + 白ベース代', 'Send the current item (mods, fractured, sockets) to the Simulator as the start. Base cost = Emulator total + white base cost')" @click="simFromHand">{{ tr("この状態からシミュレーター →", "Simulate from here →") }}</button>
     <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" :title="tr('打った手を 16:9 の撮影用画面で 1 手ずつ再生 (Space 再生 / ← → 1 手 / Esc 閉じる)', 'Replay each step on a 16:9 recording screen (Space play / ← → step / Esc close)')" @click="s.hold(null); s.video.value = { from: 0, autoplay: false, controls: true }">{{ tr("動画モード", "Video mode") }}</button>
     <span class="ml-auto flex flex-wrap items-center gap-1.5">
       <span v-if="copied" class="text-emerald-300">{{ copied }}</span>
