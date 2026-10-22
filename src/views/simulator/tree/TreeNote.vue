@@ -8,7 +8,7 @@ import { setNote } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { tr } from "../../../i18n/lang";
 
-const props = defineProps<{ boxId: string }>();
+const props = defineProps<{ boxId: string; /** 重ね窓の中 (題の行は枠の物) */ embedded?: boolean }>();
 const emit = defineEmits<{ close: [] }>();
 const t = useTree();
 const text = ref(t.doc.value.boxes[props.boxId]?.note ?? "");
@@ -18,7 +18,7 @@ onBeforeUnmount(save);
 
 <template>
   <div data-tree-note class="flex flex-col gap-2 text-[13px]">
-    <div class="flex items-center gap-2">
+    <div v-if="!embedded" class="flex items-center gap-2">
       <b class="flex-1 text-[14px]">{{ tr("この箱のメモ", "Note for this box") }}</b>
       <button type="button" class="g-btn sm" @click="save(); emit('close')">{{ tr("閉じる", "Close") }}</button>
     </div>

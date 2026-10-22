@@ -10,7 +10,7 @@ import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
 import { splitWhenText } from "./tree-names";
 
-const props = defineProps<{ boxId: string }>();
+const props = defineProps<{ boxId: string; /** 重ね窓の中 (題の行は枠の物) */ embedded?: boolean }>();
 const emit = defineEmits<{ close: [] }>();
 const t = useTree();
 const rules = computed(() => t.doc.value.boxes[props.boxId]?.split ?? []);
@@ -42,7 +42,7 @@ const SIDES: Array<[Side, string, string]> = [["suffix", "サフィ", "Suffix"],
 
 <template>
   <div data-tree-split-pick class="flex min-h-0 flex-1 flex-col gap-3 text-[13px]">
-    <div class="flex items-center gap-2">
+    <div v-if="!embedded" class="flex items-center gap-2">
       <b class="flex-1 text-[14px]">◇ {{ tr("分かれ目 (打たずに分ける)", "Split (no craft)") }}</b>
       <button type="button" class="g-btn sm" @click="emit('close')">{{ tr("閉じる", "Close") }}</button>
     </div>

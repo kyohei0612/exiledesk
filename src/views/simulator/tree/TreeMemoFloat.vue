@@ -122,11 +122,11 @@ function defaultRect(): Rect {
 const snapRect = (k: Exclude<Snap, null>): Rect => k === "max" ? { x: 0, y: 0, w: vw(), h: vh() }
   : { x: k === "left" ? 0 : Math.ceil(vw() / 2), y: 0, w: Math.floor(vw() / 2), h: vh() };
 
-// 右の欄と右下の道具 (ミニマップ・ツールバー) を避ける (重なる時だけその左へ。自分で動かした後は避けない)
+// 右下の道具 (ミニマップ・ツールバー) を避ける (重なる時だけその左へ。自分で動かした後は避けない)
 const avoidRects = ref<Array<ReturnType<typeof cssRect>>>([]);
 const placedByUser = ref(false);
 function measureAvoid(): void {
-  const els = props.avoid ? [document.querySelector("[data-tree-panel]"), document.querySelector("[data-tree-tools]")] : [];
+  const els = props.avoid ? [document.querySelector("[data-tree-tools]")] : [];
   avoidRects.value = els.filter((e): e is Element => !!e).map((e) => cssRect(e.getBoundingClientRect())).sort((a, z) => z.left - a.left);
 }
 watch(() => props.avoid, async () => { placedByUser.value = false; await nextTick(); measureAvoid(); }, { immediate: true });

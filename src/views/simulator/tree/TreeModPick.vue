@@ -58,9 +58,9 @@ const tierLabel = (tier: number): string => (props.mode === "start" || tier === 
 
 <template>
   <div data-tree-mod-pick class="flex min-h-0 flex-col gap-2">
-    <div class="flex items-center gap-2">
+    <div v-if="!embedded" class="flex items-center gap-2">
       <b class="flex-1 text-[14px]">{{ title ?? (mode === "hit" ? tr("付く MOD (当たり) を選ぶ", "Pick the mod to hit") : tr("始まりの MOD を足す", "Add a starting mod")) }}</b>
-      <button v-if="!embedded" type="button" class="g-btn sm" @click="emit('close')">{{ tr("閉じる", "Close") }}</button>
+      <button type="button" class="g-btn sm" @click="emit('close')">{{ tr("閉じる", "Close") }}</button>
     </div>
     <p class="text-[12px] opacity-70">{{ tr(`${jaTypeName(t.doc.value.base)} (アイテムレベル ${t.doc.value.itemLevel})`, `${t.doc.value.base} (item level ${t.doc.value.itemLevel})`) }}</p>
     <ul v-if="fromGoals" data-tree-goal-aims class="flex flex-col gap-1">

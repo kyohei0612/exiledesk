@@ -18,8 +18,6 @@ import TreeCanvasTools from "./TreeCanvasTools.vue";
 import TreeBox from "./TreeBox.vue";
 import TreeOverlays from "./TreeOverlays.vue"; import TreeGoalNode from "./TreeGoalNode.vue";
 import TreeHandPage from "./TreeHandPage.vue";
-import TreeModPick from "./TreeModPick.vue";
-import TreeNote from "./TreeNote.vue";
 import { useTree } from "./use-tree";
 import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -41,7 +39,7 @@ import { useTreeLink } from "./use-tree-link";
 import { useTreeCheck } from "./use-tree-check";
 import TreeIssues from "./TreeIssues.vue";
 import { GOAL_ID, goalPos } from "./tree-goal";
-import TreeSplitPick from "./TreeSplitPick.vue";
+import TreePanelPage from "./TreePanelPage.vue";
 import BusyTag from "../../../components/ui/BusyTag.vue";
 import { useTreeTune } from "./use-tree-tune";
 import { useTreeReveal } from "./use-tree-reveal";
@@ -226,11 +224,10 @@ const popStyle = computed(() => {
 /** ポップアップの中で押した物は、閉じてからいつもの動きへ */
 function popDo(f: (id: string, b: Box) => void): void { const id = pop.value, b = id ? doc.value.boxes[id] : null; pop.value = null; if (id && b) f(id, b); }
 /**
- * 右の欄 (打つ手・試し打ち・MOD を選ぶ・メモ) は、欄の外を押す / Esc で何も変えずに閉じる (オーナー 10-22「枠の外・Esc で選ぶ前に戻す」、共通の useDismiss)。
- * 押した物には届ける。ツリーの枠の中は数えない (空き所は押した時だけ閉じ、引っ張って画面を動かしても閉じない = onPaneClick、箱・札は開き直す)。メモの窓・欄から出した小窓も中に数える
+ * 箱の重ね窓 (打つ手・分かれ目・MOD を選ぶ・メモ) は、窓の外を押す / Esc で何も変えずに閉じる (オーナー 10-22「枠の外・Esc で選ぶ前に戻す」、共通の useDismiss)。
+ * 押した物には届ける。ツリーの枠の中は数えない (空き所は押した時だけ閉じ、引っ張って画面を動かしても閉じない = onPaneClick、箱・札は開き直す)。メモの窓・窓から出した小窓も中に数える
  */
-const aside = ref<HTMLElement | null>(null);
-useDismiss(() => !!panel.value, [aside], closeHand, { swallow: false, keep: "[data-tree-canvas], [data-tree-mode-pill], [data-tree-memo-float], [role=dialog], [data-helptip-pop], [data-mod-list], [data-mod-add-menu]" });
+useDismiss(() => !!panel.value, [], closeHand, { swallow: false, keep: "[data-tree-canvas], [data-tree-mode-pill], [data-tree-memo-float], [role=dialog], [data-helptip-pop], [data-mod-list], [data-mod-add-menu]" });
 function clearHandOf(): void { const id = panel.value!.id; t.edit((d) => clearHand(d, id)); panel.value = null; }
 function pickAim(a: Aim): void {
   const p = panel.value!;
@@ -351,7 +348,7 @@ function onKey(e: KeyboardEvent): void {
   if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); t.undo(); return; }
   if (e.key === "1" && !e.ctrlKey && !e.metaKey && !e.altKey) { void v.fit(); return; }
-  // 右の欄は useDismiss が先に閉じる (defaultPrevented)。同じ Esc でページまで閉じない
+  // 箱の重ね窓は useDismiss が先に閉じる (defaultPrevented)。同じ Esc でページまで閉じない
   if (e.key === "Escape" && !e.defaultPrevented) {
     if (cardBox.value) { cardBox.value = null; hoverBox.value = null; }
     else if (plus.value) plus.value = null;
@@ -395,6 +392,7 @@ const glowOf = (b: Box): boolean => {
       <button type="button" class="g-btn sm" @click="close">{{ tr("← 戻る", "← Back") }}</button>
     </div>
     <TreeOverlays /><TreeHandPage v-if="panel?.kind === 'hand' && panelBox" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" @split="onSplit" @back="picking = panel!.id; panel = null" />
+    <TreePanelPage v-else-if="panel && panelBox" :key="`${panel.kind}-${panel.id}`" :kind="panel.kind === 'split' || panel.kind === 'note' ? panel.kind : 'aim'" :box-id="panel.id" :current="panelBox.aim" @pick="pickAim" @close="panel = null" />
     <div class="g-panel flex flex-col gap-2 px-3 py-2" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
       <!-- 帯: 全体の数字 (まだ) ・1 つ戻す・拡大縮小・全画面 -->
       <!-- 折り返さない (回した結果の文で 1 行と 2 行の境目になり、木の枠が上下して箱の × が押せなかった、10-22)。左は狭ければ … で切る。768px 未満は左と右を 2 段に (右が画面より広く左が潰れて「回す」が押せなかった、10-22) -->
@@ -484,13 +482,6 @@ const glowOf = (b: Box): boolean => {
         <TreeHoverCard v-if="cardBox && doc.boxes[cardBox]" :box-id="cardBox" :rect="v.rectOf(doc.boxes[cardBox]!)" />
         <TreeCanvasTools v-model:hand="hand" :boxes="rv.visible.value" :view="v.view.value" :zoom="zoom" @center="v.centerOn" @fit="v.fit" @zoom-in="v.zoomIn" @zoom-out="v.zoomOut" @reset="v.resetZoom" />
         </div>
-
-        <!-- 右の欄 -->
-        <aside v-if="panel && panelBox && panel.kind !== 'hand'" ref="aside" data-tree-panel class="flex shrink-0 flex-col overflow-y-auto rounded-md bg-white/[0.04] p-3" :class="panel.kind === 'split' ? 'w-[400px]' : 'w-[320px]'">
-          <TreeSplitPick v-if="panel.kind === 'split'" :key="`s-${panel.id}`" :box-id="panel.id" @close="panel = null" />
-          <TreeNote v-else-if="panel.kind === 'note'" :key="`n-${panel.id}`" :box-id="panel.id" @close="panel = null" />
-          <TreeModPick v-else :key="`m-${panel.id}`" mode="hit" :box-id="panel.id" :current="panelBox.aim" @pick="pickAim" @close="panel = null" />
-        </aside>
       </div>
     </div>
     <!-- 欲しい MOD とメモの浮かぶ窓 (ページの中で一番上、ツリーを押しても閉じない) -->
