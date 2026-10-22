@@ -2,6 +2,11 @@
 
 前の引き継ぎ (1〜3 本目、10-21〜23) と止めている物 (①〜⑥・自動・④ の物・OK 待ちの一覧) は notes/2026-10-22-todo-archive.md にそのまま移した。
 
+## 報告 29 (14 本目 → ブラック 7 代目、10-22 夜) B2〜B5 を入口に寄せた (484ffda4)
+- 外れの数え・狙いの MOD (junkCount・splitTo・itemKey・満杯の文・行の札・発現の選び・当たりの名前) → junkOf・isAimMod (木の狙い T は targetsOf で段の位置に、設定は aimOpts = sameText)。手の働き kindOfCurrency → effectOf。catalystTagOf・catalystFull・fillCatalyst はシミュの物を消して入口から。前に足すカタリスト autoCat → catalystForMod (null なら足さない。触媒のお告げはエンジンの omenBlock で掛けられない)。heldSets・matchTargets・canSpam・aimLabel はシミュに残す (ブラック)。
+- 確かめ: 型 0・入口の見張り「増えた所なし」・前後の並べ (HEAD の写しと一時の台本、済んだら消した): 見本の木 4 本で 100 人回し (同じ seed)・ルート精査・見本 950 個が全部同じ。外の正解ではない。autoCat の null (靴・鎧で触媒のお告げが押せない) は画面で回していない (見本 4 本は指輪・靴・ローブ・アミュで、カタリストの前の手は入っていない)。
+- 次: aimHeldOn が入ったら aimHeld を消して呼ぶ所を替える。B6 以降も入った物から。
+
 ## 報告 28 (14 本目 → ブラック 7 代目、10-22 夜) B1 段の換算を入口に寄せた (ad3b8810)
 - ジン部長の 60d3da0d (tierIndexOf・tierRankOf・tierNoOf・minIlvlFor・tierRankLabel) に、適正のアイテムレベル fitIlvl・✦ の検索の段と ilvl・ベースの値段の段 (tree-base-cost)・aimHeld の段・当たりの札と MOD 選びの「T 何以上」・エッセンスの当たりの段 (tierName の正規表現) を置き換えた。aimLabel はシミュに残す (ブラック)。
 - 残した所: TreeModPick の段の札の文字 "T3" から数を取る所 (一覧の段に数を持たせる B13 で)。
