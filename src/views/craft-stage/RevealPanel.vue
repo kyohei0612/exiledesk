@@ -14,7 +14,7 @@ import { ref, watch } from "vue";
 import { useDismiss } from "../../utils/use-dismiss";
 import { craftStage } from "../../state/craft-stage";
 import Icon from "../../components/ui/Icon.vue";
-import { topicCur, topicStep } from "../../state/tutorial/craft-topic";
+import { topicCur, topicStep } from "../tutorial/course-entry";
 
 const rerolled = ref(false);
 /**

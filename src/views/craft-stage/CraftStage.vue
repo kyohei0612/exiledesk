@@ -38,12 +38,11 @@ import CurrencyShelf from "../../components/for-share/shelf/CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
 import { forceKey, isRune, type StageMod, isSanctifySet, runeNameOf, RUNE_PREFIX, IMPLICIT_SET, isCatalystSet, isQualitySet, QUALITY_CAP } from "../../services/craft-stage/engine";
 import { previewUse, unsocketKey, sanctifySetKey, catalystSetKey, implicitSetKey, qualityCapKey, qualitySetKey } from "../../services/craft-stage/engine-emu";
-import { courseActive as inLesson, courseHidesEmulator, courseHidesShelf, endLesson } from "../../state/tutorial/course-host"; // チュートリアルのコースの間 (2026-10-17)。隠す判定は course-host に 1 か所 (R4 手 2)
+import { courseActive as inLesson, courseHidesEmulator, courseHidesShelf, endLesson, CourseHost } from "../tutorial/course-entry"; // チュートリアルのコースの間 (2026-10-17)。隠す判定は course-host に 1 か所 (R4 手 2)
 import RevealPanel from "./RevealPanel.vue";
 import { useStageFx } from "../../components/for-share/use-stage-fx";
 import StageModList from "./StageModList.vue";
 // 部ごとの差し込み口 (2026-10-20 R4): シミュレーターと使い方・コースの中身は各部の部品が持つ
-import CourseHost from "../tutorial/CourseHost.vue";
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";

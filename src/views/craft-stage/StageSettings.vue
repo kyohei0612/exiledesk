@@ -8,7 +8,7 @@ import { inGroup, ITEM_LEVEL_SET, SANCTIFIED_REASON } from "../../services/craft
 import { useFlash } from "../../utils/use-flash";
 import { ARMED_CLASS, useArmed } from "../../utils/use-armed";
 import { tr } from "../../i18n/lang";
-import { inLesson } from "../../state/tutorial/craft-lesson";
+import { inLesson } from "../tutorial/course-entry";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { computed, ref, watch } from "vue";
 import { useStageBase } from "./use-stage-base";

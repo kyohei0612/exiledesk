@@ -6,8 +6,7 @@ import { nextTick, ref, watch } from "vue";
 import { craftStage as s, URL_BASE } from "../../state/craft-stage";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { scrollToTop } from "../../utils/keep-place";
-import { course } from "../../state/tutorial/craft-course";
-import { topic } from "../../state/tutorial/craft-topic";
+import { course, topic } from "../tutorial/course-entry";
 import { restoredFromSession } from "../../state/stage-session";
 
 function create() {
