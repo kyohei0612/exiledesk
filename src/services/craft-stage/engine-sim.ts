@@ -19,3 +19,9 @@ export type { StepOutcome } from "./engine-sim/outcomes";
 export { stepOutcomes, stepOutcomesOrTooMany, STEP_OUTCOMES_MAX } from "./engine-sim/outcomes";
 // エッセンスの見出しの文 (チュートリアルの動画)
 export { essenceNameEn, headingHits } from "./engine-sim/essence-parts";
+
+// シミュ・チュートリアル・解析が読んでいた物 (2026-10-23 エンジンの仕分け、付け替えの対応表 docs/org/emulator/notes/2026-10-23-sim-import-map.md)
+export { NEGATIVE_WORDS } from "./stage-core";
+export { ALL_OMEN_SPECS } from "./spec/run-spec";
+export { factionCandidates } from "./spec/parts";
+export { armourReduction, esTimeline, attackRow, deflectChance, evadeChance, KIND_COLOR, KIND_JA, layersOf } from "./defence";

@@ -126,3 +126,10 @@ export type { DamageKind, Defender, Outcome } from "./defence";
 export { baseArt } from "./base-art";
 export { isSanctifySet } from "./apply-vaal";
 export { IMPLICIT_SET, isCatalystSet, isQualitySet, QUALITY_CAP, qualityFieldMax, SANCTIFIED_REASON, ITEM_LEVEL_SET } from "./apply-currency";
+
+// シミュ・チュートリアル・解析が読んでいた物 (2026-10-23 エンジンの仕分け、付け替えの対応表 docs/org/emulator/notes/2026-10-23-sim-import-map.md)
+export { qualityLabelOf } from "../htc/quality";
+export { boostedMod } from "./stage-core";
+export { skillIcon } from "./skill-art";
+export { shownTags, TAG_STYLE } from "./mod-list";
+export { SHARDS_PER_ORB } from "./apply-act";
