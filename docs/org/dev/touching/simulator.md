@@ -4,4 +4,4 @@
 
 | 誰 | ファイル |
 |---|---|
-| シミュ部長 16 本目 | 貼り付けを消す: src/views/simulator/SimPasteRead.vue・SimBaseExtras.vue、src/services/simulator/paste-read.ts、src/state/simulator/sim-state.ts、(消す所の使い手だけ) src/views/craft-stage/StageBasePage.vue・use-stage-base.ts、src/components/items/BaseCatalog.vue、scripts/analysis/_auto-order-entry.ts、scripts/check-engine-entry.baseline.json |
+| シミュ部長 16 本目 | engine-sim.ts への付け替え: src/views/simulator・src/services/simulator・scripts/_tree-*-probe の import (17 ファイル) |
