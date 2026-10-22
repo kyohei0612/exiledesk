@@ -11,6 +11,7 @@ import { CATALYSING, isCatalyst, kindOfCurrency } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import { startOf, type Aim, type Hand, type OutKind, type TreeDoc } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
+import { splitTo } from "./tree-run";
 
 const TRIES = 3000;
 /** カタリストを 1 個ずつ足す上限 (見張り) */
@@ -72,25 +73,32 @@ export function outcomeOf(data: PatchData, before: StageItem, after: StageItem, 
 export function singleOutOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, pre: string | null = null, extra: readonly Aim[] = []): { out: OutKind; aim: Aim | null } | null {
   if (h.repeat || h.free || isCatalyst(h.currency)) return null;
   const aims = [...aimsOf(doc), ...extra.filter((a) => !aimsOf(doc).some((x) => x.modId === a.modId && x.tier === a.tier))];
+  const k = kindOfCurrency(h.currency);
   let one: { out: OutKind; hits: Aim[] } | null = null;
   const key = (r: { out: OutKind; hits: Aim[] }): string => `${r.out}:${r.hits.map((a) => `${a.modId}/${a.tier}`).join(",")}`;
   for (let seed = 1; seed <= SINGLE_SEEDS; seed++) {
     const smp = sampleOf(data, doc, boxId, seed);
     if (smp.note === "none" || smp.note?.startsWith("cant:")) continue;
     const item = pre ? fillCatalyst(data, smp.item, pre, mulberry32(seed)).item : smp.item;
-    const outs = stepOutcomes(data, item, h.currency, h.omens)?.filter((o) => !o.void);
-    // 未発現が付く手 (冒涜の骨) は、発現で選ぶ候補で当たり / 外れが分かれる
-    if (!outs?.length || outs.some((o) => unrevealedOf(o.item))) return null;
-    for (const o of outs) {
-      const r = outcomeOf(data, item, o.item, aims);
-      if (r.hits.length > 1 || (one && key(one) !== key(r))) return null;
-      one = r;
+    // 消す手は、見本にまだ無い狙いを 1 つ足した形でも見る (見本は初めて着いた人の形。戻りで狙いを持って来た人は狙いが消えうる、10-22 #8 の後:
+    // 分かれ目の行の見本が外れだけになり、素の消去が「外れが消えた」1 通りにまとまって 96 人止まった)
+    const forms = [item, ...(k === "remove" ? aims.filter((a) => !aimHeld(data, item, a)).map((a) => applyCurrency(data, item, `force:${a.modId}|T${a.tier}|n`, mulberry32(seed))).filter((r) => r.applied).map((r) => r.item) : [])];
+    for (const it of forms) {
+      const outs = stepOutcomes(data, it, h.currency, h.omens)?.filter((o) => !o.void);
+      // 未発現が付く手 (冒涜の骨) は、発現で選ぶ候補で当たり / 外れが分かれる
+      if (!outs?.length || outs.some((o) => unrevealedOf(o.item))) return null;
+      for (const o of outs) {
+        const r = outcomeOf(data, it, o.item, aims);
+        if (r.hits.length > 1 || (one && key(one) !== key(r))) return null;
+        one = r;
+      }
     }
   }
-  const k = kindOfCurrency(h.currency);
   if (one?.out === "junk" && (k === "add" || k === "swap")) return null;
   return one ? { out: one.out, aim: one.hits[0] ?? null } : null;
 }
+/** 分かれ目の行の箱の見本を引き直す回数 */
+const SPLIT_TRIES = 40;
 /** 結果が 1 通りかを見る見本の数 */
 const SINGLE_SEEDS = 8;
 
@@ -226,6 +234,16 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
   if (b.out === "start") return startItemOf(data, doc, mulberry32(seed));
   const p = doc.boxes[b.parent!]!;
   const base = sampleIn(data, doc, p.id, seed);
+  // 分かれ目の行の箱: その行に合う形が出るまで親の見本を別の種で引き直す (10-22 13 通り組んだ #8: 「サフィの外れ 1 つ以上」の行の見本がプレに外れの形で、
+  // 効くお告げが「今は意味なし」で押せなかった)。合う形が出なければ親の見本のまま
+  if (p.split) {
+    const aims = aimsOf(doc);
+    for (let k = 0; k < SPLIT_TRIES; k++) {
+      const smp = k ? sampleIn(data, doc, p.id, seed + 7919 * k) : base;
+      if (splitTo(data, p.split, smp.item, aims) === boxId) return smp;
+    }
+    return base;
+  }
   if (!p.hand) return base;
   const aims = aimsOf(doc);
   const rng = mulberry32(seed ^ 0x5eed ^ boxId.length * 7919);
