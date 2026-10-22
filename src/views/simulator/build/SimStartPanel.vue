@@ -8,7 +8,7 @@
 import NumStep from "../../../components/NumStep.vue";
 import { tr } from "../../../i18n/lang";
 import { activePattern, finished, patterns } from "../../../state/simulator/build-state";
-import { addPattern, backToBuild, current, fractureChoices, fracturedOf, nameOfMod, patternToTree, removePattern, selectPattern, setRandom } from "./use-build";
+import { addPattern, backToBuild, current, fractureChoices, fracturedOf, nameOfMod, patternToTree, randomMax, removePattern, selectPattern, setRandom, shortOfMod } from "./use-build";
 
 const sideCls = (side: string): string => (side === "prefix" ? "text-[#e0846a]" : "text-[#6aa8e8]");
 </script>
@@ -23,7 +23,7 @@ const sideCls = (side: string): string => (side === "prefix" ? "text-[#e0846a]" 
     <!-- パターン (フラクチャーする MOD ごと) -->
     <div v-if="patterns.length" class="mb-2 flex flex-wrap gap-1" role="tablist">
       <span v-for="(p, i) in patterns" :key="i" class="inline-flex min-w-0 max-w-full items-center">
-        <button type="button" role="tab" data-sim-start-tab :aria-selected="activePattern === i" class="g-tab !min-h-9 min-w-0 max-w-[260px] !px-3 !text-[12px]" :class="activePattern === i ? 'on' : ''" @click="selectPattern(i)"><span class="truncate">✦ {{ fracturedOf(p) ? nameOfMod(fracturedOf(p)!) : "?" }} {{ tr("スタート", "start") }}</span></button>
+        <button type="button" role="tab" data-sim-start-tab :aria-selected="activePattern === i" class="g-tab !min-h-9 min-w-0 max-w-[260px] !px-3 !text-[12px]" :class="activePattern === i ? 'on' : ''" @click="selectPattern(i)"><span class="truncate">✦ {{ fracturedOf(p) ? shortOfMod(fracturedOf(p)!) : "?" }} {{ tr("スタート", "start") }}</span></button>
         <button type="button" class="g-plain shrink-0 px-1 opacity-50 hover:opacity-100" :title="tr('このパターンを消す', 'Delete this pattern')" @click="removePattern(i)">×</button>
       </span>
     </div>
@@ -52,7 +52,7 @@ const sideCls = (side: string): string => (side === "prefix" ? "text-[#e0846a]" 
       <div class="mt-2 flex items-center gap-2">
         <span class="text-[12px] opacity-80">{{ tr("何でもよい MOD", "Don't-care mods") }}</span>
         <NumStep data-sim-start-random :model-value="current.random" integer width="w-20" :placeholder-value="0" @update:model-value="(v) => setRandom(Number(v ?? 0))" />
-        <span class="text-[11px] opacity-60">{{ tr("個", "") }}</span>
+        <span class="text-[11px] opacity-60">{{ tr(`個 (${randomMax} まで)`, `(up to ${randomMax})`) }}</span>
       </div>
       <p v-if="!fracturedOf(current)" class="mt-1.5 text-[12px] text-amber-200">{{ tr("✦ (フラクチャー) の MOD が無い。カードの MOD を外した時は、上の「✦ で始める」で足し直す", "No ✦ (fractured) mod. If you removed it from the item, add it again with “✦ start” above") }}</p>
       <div class="mt-2 flex flex-wrap items-center gap-1.5">

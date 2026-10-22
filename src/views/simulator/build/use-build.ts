@@ -7,7 +7,7 @@ import { craftStage as s } from "../../../state/craft-stage";
 import { modText } from "../../../i18n/lang";
 import { openTreePage } from "../../../web/page";
 import { useTree } from "../tree/use-tree";
-import type { StageMod } from "../../../services/craft-stage/engine";
+import { modListFor, type StageMod } from "../../../services/craft-stage/engine";
 import type { Aim, TreeStart } from "../../../services/simulator/tree/tree-model";
 import { activePattern, buildStage, finished, patterns, simBuild, type BuildMod } from "../../../state/simulator/build-state";
 
@@ -23,6 +23,14 @@ export function modsOfItem(): BuildMod[] {
 export const aimsOf = (ms: readonly BuildMod[]): Aim[] => ms.map((m) => ({ modId: m.modId, tier: m.tier }));
 export const fracturedOf = (p: { mods: readonly BuildMod[] }): BuildMod | undefined => p.mods.find((m) => m.fractured);
 export const nameOfMod = (m: BuildMod): string => modText(m);
+/** タブの名前に使う MOD の文面 (数値は #。組み直すたびに数値が振り直されて名前が変わらないように。文面はエンジンの入口の modListFor) */
+const templates = computed(() => {
+  const d = s.data.value, it = s.item.value;
+  const m = new Map<string, string>();
+  if (d && it) for (const r of modListFor(d, it)) { m.set(r.id, r.template); for (const t of r.tiers) if (t.modId) m.set(t.modId, r.template); }
+  return m;
+});
+export const shortOfMod = (m: BuildMod): string => templates.value.get(m.modId) ?? modText(m);
 
 let rebuilding = false;
 /** カードを白から組み直す (クラフト台の「白に戻す」+ 始めの MOD を足す。付けられない物は足さない) */
@@ -38,7 +46,7 @@ function rebuild(ms: readonly BuildMod[]): void {
 watch(() => s.item.value, () => {
   if (rebuilding || !simBuild.value || buildStage.value !== "start") return;
   const p = patterns.value[activePattern.value];
-  if (p) patterns.value = patterns.value.map((x, i) => (i === activePattern.value ? { ...x, mods: modsOfItem() } : x));
+  if (p) { const mods = modsOfItem(); patterns.value = patterns.value.map((x, i) => (i === activePattern.value ? { mods, random: Math.min(x.random, Math.max(0, 6 - mods.length)) } : x)); }
 });
 
 /** ① → ②: 完成品を写す。完成品に ✦ があればそれでパターンを 1 つ */
@@ -72,8 +80,11 @@ export function removePattern(i: number): void {
   patterns.value = patterns.value.filter((_, k) => k !== i);
   selectPattern(Math.min(activePattern.value, patterns.value.length - 1));
 }
+/** 何でもよい MOD の数は、始めの MOD と合わせてレアの枠 (6) まで */
+export const randomMax = computed(() => Math.max(0, 6 - (patterns.value[activePattern.value]?.mods.length ?? 0)));
 export function setRandom(n: number): void {
-  patterns.value = patterns.value.map((x, i) => (i === activePattern.value ? { ...x, random: Math.max(0, n) } : x));
+  const v = Math.max(0, Math.min(randomMax.value, Math.floor(Number.isFinite(n) ? n : 0)));
+  patterns.value = patterns.value.map((x, i) => (i === activePattern.value ? { ...x, random: v } : x));
 }
 export const current = computed(() => patterns.value[activePattern.value] ?? null);
 /** 完成品のうち、まだパターンの ✦ にしていない物 (「✦ で始める」の候補。冒涜の MOD は固定できない) */
