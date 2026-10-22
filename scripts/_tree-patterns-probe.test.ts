@@ -309,7 +309,8 @@ const PATTERNS: { name: string; base: string; note: string; build: (u: Ui) => vo
     const an = u.hand(junk!, "annul");
     if (an) { u.log.push(`消去の結果の既定の戻り: ${u.d.boxes[an]!.outs.map((x) => `${x}↩${u.d.boxes[x]!.back}`).join(" ")}`); for (const x of u.d.boxes[an]!.outs) { setBack(u.d, x, null); u.back(x, J); } }
     const ex = u.hand(other!, "exalt_greater", [DEX]);
-    if (ex) { u.hits(ex, [C]); for (const x of u.d.boxes[ex]!.outs) { if (u.d.boxes[x]!.back) setBack(u.d, x, null); u.back(x, J); } }
+    // 「それ以外」の行はキャストかスペルレベルのどちらかが無い → 右側の高貴の当たりは両方 (②: スペルレベルの箱が無く 290 人止まった)
+    if (ex) { u.hits(ex, [C, S]); for (const x of u.d.boxes[ex]!.outs) { if (u.d.boxes[x]!.back) setBack(u.d, x, null); u.back(x, J); } }
     u.back(h.IncreasedCastSpeed!, J);
   } },
   { name: "boots-chaos-onspam", base: "Drakeskin Boots", note: "靴: ✦移動 T1 + ルーン + 乱数 2、カオス 1 回 → 外れは「カオススパム」の札 → 高貴で残り", build: (u) => {
