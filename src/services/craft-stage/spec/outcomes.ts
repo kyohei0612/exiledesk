@@ -172,7 +172,7 @@ export function stepOutcomes(data: PatchData, item: StageItem, key: string, omen
 }
 /** stepOutcomes と同じ。枝が上限 (STEP_OUTCOMES_MAX) を超える手 (錬金など 3 つ以上足す) は数え上げずに "tooMany" (stepOutcomes は null) */
 export function stepOutcomesOrTooMany(data: PatchData, item: StageItem, key: string, omens: readonly string[] = [], o: { merge?: (r: StepOutcome) => string } = {}): StepOutcome[] | null | "tooMany" {
-  const w = walk(data, item, key, omens, o, false);
+  const w = walk(data, item, key, omens, o);
   if (w === null || w === "tooMany" || w === "block") return w === "block" ? [] : w;
   // 全部の枝が弾かれた = 打てない
   if (!w.states.length) return [];
@@ -182,22 +182,9 @@ export function stepOutcomesOrTooMany(data: PatchData, item: StageItem, key: str
   return out;
 }
 
-/**
- * この手で付きうる MOD の池 (行き先を数え上げずに答える。付きうる狙い aim-reach の reachableAims)。最後の部品が足す物なら、その部品は枝に分けず、
- * 足す前の枝ごとの候補 (側・段・お告げ・触媒の重みの付き方は addStep と同じ candidates) を 1 つ目に付く MOD として返す。2 つ目以降に付く MOD は
- * 1 つ目の候補の中にある (系統が塞がり空きが減るだけ) ので、何個足す手でも池は同じ。items = 足す前の枝のアイテム (前に付いている MOD は残る)。
- * 打てない ([] と同じ) は items も pool も空。行き先で表せない手は null、足す前の部品で枝が上限を超えたら "tooMany"
- */
-export function stepPool(data: PatchData, item: StageItem, key: string, omens: readonly string[] = []): { items: StageItem[]; pool: StageMod[] } | null | "tooMany" {
-  const w = walk(data, item, key, omens, {}, true);
-  if (w === null || w === "tooMany") return w;
-  if (w === "block") return { items: [], pool: [] };
-  return { items: w.states.map((s) => s.item), pool: w.pool };
-}
-
 type State = Branch & { removedSoFar: StageMod[] };
-/** 手の部品を順にたどる (poolLast = 最後の足す部品を枝に分けず候補の池に) */
-function walk(data: PatchData, item: StageItem, key: string, omens: readonly string[], o: { merge?: (r: StepOutcome) => string }, poolLast: boolean): { states: State[]; vp: number; pool: StageMod[] } | null | "tooMany" | "block" {
+/** 手の部品を順にたどる */
+function walk(data: PatchData, item: StageItem, key: string, omens: readonly string[], o: { merge?: (r: StepOutcome) => string }): { states: State[]; vp: number } | null | "tooMany" | "block" {
   const plan: SpecPlan | null = planSpec(data, item, key, omens);
   if (!plan) return null;
   if (!plan.actions.every(SUPPORTED) || isInfiniteEssence(key)) return null;
@@ -208,19 +195,12 @@ function walk(data: PatchData, item: StageItem, key: string, omens: readonly str
   const altered = plan.spec.actions.some((a) => "addUnrevealed" in a && a.addUnrevealed.pools.includes("otherworldly"));
   let states: State[] = [{ p: 1, item, added: [], removed: [], removedSoFar: [] }];
   const voids: number[] = [];
-  const pool: StageMod[] = [];
   try {
     plan.actions.forEach((a, i) => {
       const last = i === plan.actions.length - 1;
       const next: State[] = [];
       for (const s of states) {
         const ctx: PartCtx = { data, rng: MID, mods: plan.mods, reveal: plan.reveal, removedSoFar: s.removedSoFar, essence, catalystTag: plan.catalystTag, altered };
-        if (poolLast && last && "add" in a) {
-          const cs = addPool(ctx, s.item, a.add);
-          if (cs === "skip") voids.push(s.p);
-          else { pool.push(...cs); next.push(s); }
-          continue;
-        }
         const r: Step = "remove" in a ? removeStep(ctx, s.item, a.remove)
           : "add" in a ? addStep(ctx, s.item, a.add, last, o.merge ? (b) => o.merge!({ ...b, added: [...s.added, ...b.added], removed: [...s.removed, ...b.removed] }) : undefined)
           : "fracture" in a ? fractureStep(data, s.item)
@@ -239,19 +219,7 @@ function walk(data: PatchData, item: StageItem, key: string, omens: readonly str
     if (e === TOO_MANY) return "tooMany";
     throw e;
   }
-  return { states, vp: voids.reduce((x, y) => x + y, 0), pool };
-}
-
-/** addStep の 1 つ目に付く候補 (枝に分けない)。付けられない時は addStep と同じく、optional・emptyOk なら付かずに通る ([])、ほかは "skip" */
-function addPool(ctx: PartCtx, item: StageItem, a: Add): StageMod[] | "skip" {
-  if (a.emptyOk && !SIDES.some((s) => room(item, s))) return [];
-  if ((ctx.mods.addCount ?? a.n) < 1) return a.optional ? [] : "skip";
-  const omenSides = ctx.mods.side ? [ctx.mods.side] : SIDES;
-  const { tag, pct } = catalystOf(item);
-  const boost = ctx.mods.catalysing && tag ? { test: (m: { id: string; tags?: readonly string[] }) => catalystBoosts(item, { modId: m.id, tags: m.tags }, tag, ctx.data), mult: tunedCatalysingMultiplier(pct) } : undefined;
-  const cs = candidates(ctx.data, item, omenSides.filter((x) => room(item, x)), a.floor, boost ? { boost } : {});
-  if (!(cs.reduce((x, c) => x + c.w, 0) > 0)) return a.optional ? [] : "skip";
-  return cs.flatMap((c) => c.tiers.map((t) => makeStageMod(c.mod, c.side, t.index, MID)));
+  return { states, vp: voids.reduce((x, y) => x + y, 0) };
 }
 
 function fractureStep(data: PatchData, item: StageItem): Step {

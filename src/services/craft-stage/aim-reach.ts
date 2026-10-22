@@ -4,7 +4,9 @@
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { hits, junkOf, type AimTarget } from "./aim-odds";
-import { stepOutcomes, stepPool, type StepOutcome } from "./spec/outcomes";
+import { stepOutcomes, type StepOutcome } from "./spec/outcomes";
+import { heldOdds, type HeldOdds } from "./held-odds";
+import { makeStageMod } from "./stage-core";
 import { tierIndexOf } from "./tier-rank";
 import type { StageItem, StageMod } from "./types";
 
@@ -57,12 +59,22 @@ export function outcomesByAim<A extends TierAim>(data: PatchData, item: StageIte
 }
 
 /**
- * この手で付きうる狙い = items (同じ箱の見本など) のどれかに打った行き先のどれかに付いている狙い (並びは aims のまま)。
- * 行き先は数え上げず、エンジンの stepPool (足す前の枝のアイテム + 最後に足す部品の候補の池。側・段・アイテムレベル・お告げ込み) で答えるので、
- * 錬金など何個も足す手でも固まらない。どの見本でも行き先が 1 つも無い (エンジンが枝に分けられない・打てない・多すぎる) 時は null (呼ぶ側が決める)
+ * この手で付きうる狙い = items (同じ箱の見本など) のどれかで、クラフト台でそのカレンシーを持った時に出る % (heldOdds。CoE と合わせ済み) が 0 より大きい段がある狙い
+ * (並びは aims のまま。オーナー 10-22: 行き先は数え上げず heldOdds の答えをそのまま、錬金・大いなる高貴・骨の候補も heldOdds の物)。
+ * もう付いている狙いは見ない (呼ぶ側が外して渡す)。どの見本でも heldOdds に % が 1 つも無い (打てない・確率の表が無い手) 時は null (呼ぶ側が決める)
  */
 export function reachableAims<A extends TierAim>(data: PatchData, items: readonly StageItem[], key: string, omens: readonly string[], aims: readonly A[], o: AimDiffOpts = {}): A[] | null {
-  const ps = items.flatMap((it) => { const r = stepPool(data, it, key, omens); return r && r !== "tooMany" && r.items.length ? [r] : []; });
-  if (!ps.length) return null;
-  return aims.filter((a) => ps.some((r) => heldOn(data, r.pool, a, o) || r.items.some((it) => heldOn(data, modsOf(it), a, o))));
+  const pools = items.flatMap((it) => { const h = heldOdds(data, it, key, omens), ms = h ? poolOf(data, h) : []; return ms.length ? [ms] : []; });
+  if (!pools.length) return null;
+  return aims.filter((a) => pools.some((ms) => heldOn(data, ms, a, o)));
+}
+/** heldOdds で % が 0 より大きい段の MOD (数値は段の真ん中、当たりの判定にだけ使う) */
+function poolOf(data: PatchData, h: HeldOdds): StageMod[] {
+  const out: StageMod[] = [];
+  for (const [id, x] of h.byMod) {
+    const mod = data.mods.get(id);
+    if (!mod) continue;
+    for (const t of x.tiers) if (t.w > 0) out.push(makeStageMod(mod, mod.type === "suffix" ? "suffix" : "prefix", t.index, () => 0.5));
+  }
+  return out;
 }

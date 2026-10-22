@@ -65,8 +65,8 @@ export { ANCIENT_BONE_FLOOR } from "../../vendor/poe2htc/engine/probability";
 export { REVEAL_SPEC } from "./spec/desecrate-specs";
 // 1 手の行き先の一覧 (消える・付く・未発現・フラクチャーの枝ごとの割合と打った後のアイテム)
 export type { StepOutcome } from "./spec/outcomes";
-// 枝が STEP_OUTCOMES_MAX を超える手 (錬金など 3 つ以上足す) は数え上げない (stepOutcomes は null、OrTooMany は "tooMany")。stepPool = 数え上げずに付きうる MOD の池
-export { stepOutcomes, stepOutcomesOrTooMany, stepPool, STEP_OUTCOMES_MAX } from "./spec/outcomes";
+// 枝が STEP_OUTCOMES_MAX を超える手 (錬金など 3 つ以上足す) は数え上げない (stepOutcomes は null、OrTooMany は "tooMany")
+export { stepOutcomes, stepOutcomesOrTooMany, STEP_OUTCOMES_MAX } from "./spec/outcomes";
 // 1 手の前後で狙い (段の名前の T) がどう変わったか・行き先を狙いで分ける・この手で付きうる狙い (2026-10-22 シミュの自前の式を入口へ)
 export type { TierAim, AimDiff, AimDiffOpts } from "./aim-reach";
 export { aimDiff, outcomesByAim, reachableAims } from "./aim-reach";
