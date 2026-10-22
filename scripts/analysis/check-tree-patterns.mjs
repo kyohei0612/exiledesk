@@ -111,7 +111,12 @@ P["body-essence-path"] = P["body-essence"];
 /**
  * 対案 (ALT=1、木と比べて安くなるかを見るだけ): amulet-catalyst = キャストを狙う所はキャスターのカタリスト、クリ率を狙う所は触媒を使わない (クリ率のタグ critical のカタリストは無い)。
  */
-if (process.env.ALT) {
+// ALT=plain: body-essence-path の外れを素の消去で (エッセンスの MOD が消えたら打ち直す)。ALT=plain1: それに外れ 1 つを置く形
+if (process.env.ALT === "plain") P["body-essence-path"] = (s) => (!s.keepHeld() ? { cur: s.essKey } : s.junk("suffix") ? { cur: "annul" } : { cur: "exalt_greater", omens: ["OmenofDextralExaltation"] });
+if (process.env.ALT === "plain1") P["body-essence-path"] = (s) => (!s.keepHeld() ? { cur: s.essKey } : 3 - s.count - s.junkN("suffix") < 2 - s.count ? { cur: "annul" } : { cur: "exalt_greater", omens: ["OmenofDextralExaltation"] });
+if (process.env.ALT === "1") {
+  // body-essence-path: サフィは空き 3 つに狙い 2 つなので外れ 1 つは置いたまま、サフィが埋まって狙いが揃わない時だけ右側の消去
+  P["body-essence-path"] = (s) => (!s.keepHeld() ? { cur: s.essKey } : 3 - s.count - s.junkN("suffix") < 2 - s.count ? { cur: "annul", omens: ["OmenofDextralAnnulment"] } : { cur: "exalt_greater", omens: ["OmenofDextralExaltation"] });
   P["amulet-catalyst"] = (s) => (s.junk("suffix") ? { cur: "annul" } : s.heldIx(0) ? { cur: "exalt_perfect", omens: ["OmenofDextralExaltation"] } : { cur: "exalt_perfect", omens: ["OmenofCatalysingExaltation", "OmenofDextralExaltation"], cat: "catalyst_caster" });
 }
 /** 木の真似 (MIMIC=1): 狙い 0 の形は始まりの箱と同じなので、外れが残っていても高貴。直前の高貴で外れが付いた時だけ消去を 1 回 (start → b2 → b4 → start) */
@@ -139,7 +144,7 @@ function literal(doc, rule, n, seed) {
   const essKey = Object.values(doc.boxes).map((b) => b.hand?.currency).find((c) => c?.startsWith("essence:"));
   const keepId = essKey ? `${essKey.split(":")[2]}` : null;
   const rng = M.mulberry32(seed);
-  let tot = 0, fin = 0, capped = 0, stuck = 0;
+  let tot = 0, fin = 0, capped = 0, stuck = 0, capDiv = 0;
   const U = {};
   const costs = [];
   for (let i = 0; i < n; i++) {
@@ -149,7 +154,7 @@ function literal(doc, rule, n, seed) {
     const use = (k, x = 1) => { c += price(k) * x; U[k] = (U[k] ?? 0) + x; };
     for (;;) {
       if (aims.every((a) => held(it, a))) { ok = true; break; }
-      if (c > CAP_DIV || steps > CAP_STEPS) { capped++; break; }
+      if (c > CAP_DIV || steps > CAP_STEPS) { capped++; if (c > CAP_DIV) capDiv++; break; }
       const isKeep = (m) => keepId && m.modId === keepId;
       const junkMods = (side) => (side === "any" ? all(it) : side === "prefix" ? it.prefixes : it.suffixes).filter((m) => !m.fractured && !aims.some((a) => isAimMod(m, a)) && !isKeep(m));
       const s = {
@@ -190,7 +195,7 @@ function literal(doc, rule, n, seed) {
     if (ok) { fin++; costs.push(c); }
   }
   costs.sort((a, b) => a - b);
-  return { uses: Object.fromEntries(Object.entries(U).map(([k, v]) => [k, +(v / n).toFixed(2)])), perItem: fin ? tot / fin : NaN, fin: fin / n, capped: capped / n, stuck: stuck / n, med: costs[Math.floor(costs.length / 2)] ?? NaN };
+  return { capDiv: capDiv / n, uses: Object.fromEntries(Object.entries(U).map(([k, v]) => [k, +(v / n).toFixed(2)])), perItem: fin ? tot / fin : NaN, fin: fin / n, capped: capped / n, stuck: stuck / n, med: costs[Math.floor(costs.length / 2)] ?? NaN };
 }
 
 /** 木のとおり (tree-run) + 完成の中身: 完成に数えた人のうち狙いが全部付いていた割合は tree-run の結果に無いので、ここでは perItem・完成・打ち止め・止まりだけ */
@@ -215,6 +220,6 @@ for (const f of [...files, ...samples]) {
     + `   字のとおり ${l ? `${Number.isFinite(l.perItem) ? l.perItem.toFixed(2) : "—"} / ${pct(l.fin)} / ${pct(l.capped)} / ${pct(l.stuck)}` : "(決まり無し)"}`
     + `   ずれ ${Number.isFinite(d) ? `${d.toFixed(1)}%${Math.abs(d) > 10 ? " ★" : ""}` : "—"}`);
   if (process.env.USES) console.log(`    木の 1 人 ${JSON.stringify(Object.fromEntries(Object.entries(t.uses).map(([k, v]) => [k, +v.toFixed(2)])))}
-    字の 1 人 ${JSON.stringify(l?.uses)}`);
+    字の 1 人 ${JSON.stringify(l?.uses)}  (字の打ち止めのうちお金の上限 ${pct(l?.capDiv ?? 0)})`);
 }
 if (missing.size) console.log(`相場に無く 0 にしたキー: ${[...missing].join("、")}`);
