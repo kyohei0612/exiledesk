@@ -226,6 +226,8 @@ export function outBoxOf(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim
   return b.outs.find((id) => {
     const c = doc.boxes[id];
     if (!c || (c.out !== oc.out && c.out !== "any" && c.out !== "pass")) return false;
+    // 打った後・品質の後の箱はどの結果も受ける (狙い無しの手で狙いが付いても。前は当たりだと狙いを見て外れ、精査の「結果の箱に無い結果」・回しの止まりになった、10-22 靴・手袋)
+    if (c.out === "any" || c.out === "pass") return true;
     return oc.out !== "hit" || (!!c.aim && oc.hits.some((a) => a.modId === c.aim!.modId && a.tier === c.aim!.tier));
   });
 }
