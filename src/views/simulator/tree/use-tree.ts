@@ -101,7 +101,8 @@ const aimShort = (a: Aim): string => rowOfMod(a.modId)?.template ?? a.modId;
 function startModLabel(a: Aim | StartMod | null): string {
   if (!a) return "";
   const r = rowOfMod(a.modId);
-  const t = r?.tiers[a.tier - 1];
+  // まとめ行 (同じ系統の別の MOD) は段ごとに modId がある。その MOD の段だけで数える
+  const t = r?.tiers.filter((x) => (x.modId ?? r.id) === a.modId)[a.tier - 1];
   return `T${a.tier} ${t?.text ?? r?.text ?? a.modId}`;
 }
 

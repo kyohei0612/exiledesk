@@ -34,7 +34,12 @@ const sections = computed(() => {
       .sort((a, b) => groups.value.indexOf(a.group) - groups.value.indexOf(b.group) || b.share - a.share),
   }));
 });
-const isCurrent = (r: ModRow, tier: number): boolean => props.current?.modId === r.id && props.current.tier === tier;
+/**
+ * 段の MOD と段の番号。同じ系統のまとめ行 (例「呪印スキルのレベル / 投射物スキルのレベル」) は段ごとに別の MOD なので、その段の modId と rank から
+ * (前は並びの何番目を段にしていて、投射物の T2 を押すと呪印が付いた、10-22)
+ */
+const aimOf = (r: ModRow, tt: ModRow["tiers"][number]): Aim => ({ modId: tt.modId ?? r.id, tier: Number(tt.rank.slice(1)) });
+const isCurrent = (r: ModRow, tt: ModRow["tiers"][number]): boolean => { const a = aimOf(r, tt); return props.current?.modId === a.modId && props.current.tier === a.tier; };
 const tierLabel = (tier: number): string => (props.mode === "start" || tier === 1 ? `T${tier}` : tr(`T${tier} 以上`, `T${tier}+`));
 </script>
 
@@ -57,9 +62,9 @@ const tierLabel = (tier: number): string => (props.mode === "start" || tier === 
             <span class="shrink-0 rounded-sm bg-emerald-600/80 px-1 text-[11px] font-bold text-white">{{ r.tiers.length }}</span>
           </button>
           <div v-if="open === r.id" class="flex flex-wrap gap-1 px-2 pb-2">
-            <button v-for="(tt, i) in r.tiers" :key="tt.rank" type="button" class="rounded-md border px-2 py-1 text-[12px]"
-              :class="isCurrent(r, i + 1) ? 'border-amber-400/80 bg-amber-500/20 text-amber-100' : 'border-white/15 hover:border-amber-400/60'"
-              :title="`${tt.text} (Lv ${tt.ilvl})`" @click="emit('pick', { modId: r.id, tier: i + 1 })">{{ tierLabel(i + 1) }}</button>
+            <button v-for="tt in r.tiers" :key="`${tt.modId ?? r.id}|${tt.rank}`" type="button" class="max-w-full truncate rounded-md border px-2 py-1 text-[12px]"
+              :class="isCurrent(r, tt) ? 'border-amber-400/80 bg-amber-500/20 text-amber-100' : 'border-white/15 hover:border-amber-400/60'"
+              :title="`${tt.text} (Lv ${tt.ilvl})`" @click="emit('pick', aimOf(r, tt))">{{ tierLabel(aimOf(r, tt).tier) }}{{ tt.modId ? ` ${tt.text}` : "" }}</button>
           </div>
         </div>
         <p v-if="!sec.rows.length" class="text-[12px] opacity-50">{{ tr("無し", "None") }}</p>
