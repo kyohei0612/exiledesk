@@ -19,6 +19,9 @@ export { freshItem, startFrom, startItem, playStep, playPlan, runPlan, splitOmen
 export { applyCurrency, kindOf, omensFor } from "./apply-currency";
 export { omenBlock } from "./omen-block";
 export { revealOffers, unrevealedOf } from "./apply-desecrate";
+// その手が打てるか (お告げ・触媒の前のカタリスト込み) と、手のお告げを今の手 / 続けて打つ発現に分ける (2026-10-22 シミュの自前の式を入口へ)
+export type { UseSpec } from "./can-use";
+export { canUse, handOmens, CATALYSING_OMEN } from "./can-use";
 
 // アイテムの今を読む
 export { allMods, listOf, room, limitOf, effectiveCls, maxQualityOf, catalystOf, SIDES, sideOfMod, unfracturable } from "./stage-core";
