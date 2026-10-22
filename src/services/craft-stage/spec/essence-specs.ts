@@ -6,7 +6,7 @@
  *   - パーフェクト・特別な物 (ヒステリー・ブリーチ・深淵 …)「Removes a random modifier and augments a Rare item with a new guaranteed modifier」
  *     = 消す + 保証の MOD (ADR-004 の決めたこと 2: 付ける側が埋まっている時はその側から消す、2026-10-14 オーナーがゲームで確認)
  * 付く MOD (どの部位に何が付くか) はエンジンのエッセンスの置き場 (item.cls.pools.essence = クライアントの EssenceMods) から引く。
- * 深淵のエッセンスだけ、付くのが「深淵の王の印」(消した側に付く、次の骨が置き換える)。説明文は同じ。
+ * 深淵のエッセンスだけ、付くのが「アビサルロードの紋章」(消した側に付く、次の骨が置き換える)。説明文は同じ。
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { essenceLevelOf } from "../../../vendor/poe2htc/optimizer/cost";
@@ -56,7 +56,7 @@ export const PERFECT_ESSENCE_SPEC: CurrencySpec = {
   limits: [{ kind: "craftedSlot" }],
   source: { ...ESSENCE_SOURCE, coe: "付ける側が埋まっている時はその側から消す (package.js の poe2_perfect_essence)" },
 };
-/** 深淵のエッセンス: 消した側に深淵の王の印。消せる物が無ければお告げの側か空いている側 (2026-10-03 SaVeQ 0.5.5 / poe2fun) */
+/** 深淵のエッセンス: 消した側にアビサルロードの紋章。消せる物が無ければお告げの側か空いている側 (2026-10-03 SaVeQ 0.5.5 / poe2fun) */
 export const ABYSS_ESSENCE_SPEC: CurrencySpec = {
   key: "essenceoftheabyss",
   stageKey: "essence:perfect:",

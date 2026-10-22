@@ -64,7 +64,7 @@ export type Limit =
   /** 固定 (フラクチャー) した MOD がまだ無い (固定は 1 つ。2026-10-08 オーナー確認) */
   | { kind: "noFractured" }
   /** 冒涜の MOD が無い (深淵のエッセンス。計算機と同じ決まり、外の正解は無い) */
-  /** 深淵の王の印がまだ無い (深淵のエッセンス) */
+  /** アビサルロードの紋章がまだ無い (深淵のエッセンス) */
   | { kind: "noAbyssMark" }
   /** 発現済みの冒涜 MOD があると使えない (未発現なら使える。深淵のエッセンス、2026-10-16 オーナーがゲームで確認) */
   | { kind: "noRevealedDesecrated" }
@@ -118,7 +118,7 @@ export type Action =
   | { reroll: "values" }
   /** 固定以外の 1 つを固定する (フラクチャー「Fracture a random modifier」)。冒涜の MOD は選ばれない (2026-10-10 オーナーが実測) */
   | { fracture: true }
-  /** エッセンスの MOD を付ける (保証された MOD)。side: ofMod = MOD の側 / removedSide = 消した側 (深淵の王の印) */
+  /** エッセンスの MOD を付ける (保証された MOD)。side: ofMod = MOD の側 / removedSide = 消した側 (アビサルロードの紋章) */
   | { addEssence: { side: "ofMod" | "removedSide" } }
   /** 品質を上げる (品質のカレンシー)。step: 1 回で上がる量の候補 (等分で引く) */
   | { quality: { steps: number[]; max: number } }

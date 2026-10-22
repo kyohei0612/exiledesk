@@ -70,7 +70,7 @@ export function pickInfinite(data: PatchData, item: StageItem, key: string, rng:
 }
 
 
-/** 深淵のエッセンスの MOD の系統 (深淵の王の印) */
+/** 深淵のエッセンスの MOD の系統 (アビサルロードの紋章) */
 export const ABYSS_FAMILY = "EssenceAbyss";
 /** 持てるクラフト MOD の数 (アストリッドの創造性で +1) */
 /** クラフト MOD の上限: 1 + アストリッドの創造性 (ソケットの効果 100% 以上で +2。stage-core の runeEffectPct・engine の boostedPlus) */

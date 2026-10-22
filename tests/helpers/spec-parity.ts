@@ -89,7 +89,7 @@ export function statesOf(base: string, ilvl: number): Array<[string, StageItem]>
   out.push(["満杯から未発現", hiddenFull]);
   out.push(["発現済み", step(hidden, "reveal:1")]);
   const mark = step(rare4, `essence:perfect:${rare4.cls.id}/PerfectEssence_EssenceAbyss`);
-  out.push(["深淵の王の印", mark]);
+  out.push(["アビサルロードの紋章", mark]);
   out.push(["腐食", step(rare4, "desecrate", ["OmenofPutrefaction"])]);
   out.push(["コラプト", { ...rare4, corrupted: true }]);
   out.push(["ミラー", { ...rare4, mirrored: true }]);

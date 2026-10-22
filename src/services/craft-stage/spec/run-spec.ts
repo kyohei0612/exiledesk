@@ -123,7 +123,7 @@ export function planSpec(data: PatchData, item: StageItem, key: string, omens: r
   const { spec } = r;
   // 移していないお告げ (聖別) が掛かる手は今の関数で
   if (omens.some((o) => UNPORTED_OMENS.includes(o) && OMEN_FOR_KIND(spec.kind, o))) return null;
-  // 深淵の王の印がある時の骨は必ず印と入れ替わるので、左右のネクロマンシーのお告げは使えない (効かず、減らない。2026-10-17 オーナー「使えない」)
+  // アビサルロードの紋章がある時の骨は必ず印と入れ替わるので、左右のネクロマンシーのお告げは使えない (効かず、減らない。2026-10-17 オーナー「使えない」)
   const mark = spec.kind === "desecrate" && allMods(item).some((m) => m.abyssMark && !m.fractured);
   const used = omensOf(spec, omens).filter((o) => !mark || (o.key !== "OmenofSinistralNecromancy" && o.key !== "OmenofDextralNecromancy"));
   const mods = modsOf(used);

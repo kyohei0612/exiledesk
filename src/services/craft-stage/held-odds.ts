@@ -148,7 +148,7 @@ function boneOdds(data: PatchData, item: StageItem, plan: SpecPlan, a: AddUnreve
   const byMod: HeldOdds["byMod"] = new Map();
   // 対象で打てない時は表を出さない、それ以外 (冒涜の MOD は 1 つまで・アイテムレベル・コラプト) で打てない時は全部 0%
   if (plan.block) return plan.offTarget ? null : { byMod, total: 1, bone: true };
-  // 側は打つ処理と同じ unrevealedPlan: 深淵の王の印は必ず置き換える (印は消える物として数えない)、お告げの側、空きがあればその中から、
+  // 側は打つ処理と同じ unrevealedPlan: アビサルロードの紋章は必ず置き換える (印は消える物として数えない)、お告げの側、空きがあればその中から、
   // 両側が埋まっていれば固定していない MOD を全部から等しく 1 つ消して、その側に付く
   const sp = unrevealedPlan(data, item, a, plan.mods);
   const runs: Array<{ p: number; it: StageItem; side?: StageSide }> = [];

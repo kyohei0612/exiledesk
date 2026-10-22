@@ -31,7 +31,7 @@ const quiverRare = A(A(freshItem(data, "Broadhead Quiver", 82), "transmute", 71)
 /** 両側が埋まった指輪 (高貴で 6 つまで) */
 let ringFull = ringRare;
 for (let i = 0; i < 6 && ringFull.prefixes.length + ringFull.suffixes.length < 6; i++) ringFull = A(ringFull, "exalt", 80 + i);
-/** 深淵の王の印が付いた指輪 (深淵のエッセンス) */
+/** アビサルロードの紋章が付いた指輪 (深淵のエッセンス) */
 const ringMark = A(ringRare, "essence:perfect:Rings/PerfectEssence_EssenceAbyss", 90);
 
 type Case = { name: string; item: StageItem; key: string; omens?: string[] };
@@ -78,7 +78,7 @@ const BONE: Case[] = [
   { name: "アミュレット 変質した鎖骨", item: amuRare, key: "desecrate_altered" },
   { name: "アミュレット 骨 + ブラックブラッド + 右のネクロマンシー", item: amuRare, key: "desecrate", omens: ["OmenoftheBlackblooded", "OmenofDextralNecromancy"] },
   { name: "矢筒 骨", item: quiverRare, key: "desecrate" },
-  { name: "指輪 深淵の王の印 + 骨", item: ringMark, key: "desecrate" },
+  { name: "指輪 アビサルロードの紋章 + 骨", item: ringMark, key: "desecrate" },
 ];
 
 /** 表と実際の差。表の確率 p に対して許す差 (二項の 4 σ と 1.5 ポイントの大きい方) */

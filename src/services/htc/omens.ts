@@ -26,7 +26,7 @@ export const FACTION_OMEN = { blackblooded: "OmenoftheBlackblooded", liege: "Ome
 export const FACTION_TAG = { blackblooded: "kurgal_mod", liege: "amanamu_mod", sovereign: "ulaman_mod" } as const;
 
 /**
- * 深淵の王の印から冒涜した時の段の下限 (MOD レベル)。**仮**: 説明文は「より高い段」だけで数字が無い。poe2fun の実測
+ * アビサルロードの紋章から冒涜した時の段の下限 (MOD レベル)。**仮**: 説明文は「より高い段」だけで数字が無い。poe2fun の実測
  * 「33 未満は出ない、33 は出る」1 件と、公式フォーラムの 50 / 65 の例に合う値 (2026-10-03 調べ)。古代の骨 (40) とは重ならない
  */
 export const ABYSS_MARK_FLOOR = 33;

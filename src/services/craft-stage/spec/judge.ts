@@ -67,7 +67,7 @@ export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string 
     case "noRevealedDesecrated":
       return allMods(item).some((m) => m.desecrated && !m.unrevealed) ? tr("発現済みの冒涜 MOD があると使えない (未発現なら使える)", "Can't be used while a revealed Desecrated mod is present (unrevealed is fine)") : null;
     case "noAbyssMark":
-      return allMods(item).some((m) => m.abyssMark) ? tr("印はもう付いている", "Already has a Mark") : null;
+      return allMods(item).some((m) => m.abyssMark) ? tr("アビサルロードの紋章がもう付いている", "Already has a Mark of the Abyssal Lord") : null;
     case "craftedSlot": {
       const limit = craftedLimitOf(item);
       if (allMods(item).filter((m) => m.crafted).length < limit) return null;

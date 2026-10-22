@@ -63,10 +63,10 @@ function states(base: string): Array<[string, StageItem]> {
   out.push(["両側が埋まった", full]);
   const frac = A(full, "fracture", 15);
   if (frac) out.push(["両側が埋まった + フラクチャー", frac]);
-  // 深淵の王の印 (深淵のエッセンス)
+  // アビサルロードの紋章 (深淵のエッセンス)
   const abyss = essenceShelf(data, rare).flatMap((g) => g.keys).find((k) => /EssenceAbyss/.test(k));
   const mark = abyss ? A(rare, abyss, 16) : null;
-  if (mark) out.push(["深淵の王の印", mark]);
+  if (mark) out.push(["アビサルロードの紋章", mark]);
   const low = A(A(freshItem(data, base, 60), "transmute", 51) ?? normal, "regal", 52);
   if (low) out.push(["アイテムレベル 60 レア", low]);
   return out;

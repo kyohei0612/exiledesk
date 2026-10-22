@@ -63,7 +63,7 @@ export interface PartCtx {
   oneCatalyst?: boolean;
   /** 手の鍵そのもの (ルーン rune:<英語名>@n・感情 emotion:<英語名>・フラックス flux_<属性>) */
   runeKey?: string;
-  /** この手で前の部品が消した MOD (深淵の王の印は消した側に付く) */
+  /** この手で前の部品が消した MOD (アビサルロードの紋章は消した側に付く) */
   removedSoFar: StageMod[];
   /** 付く MOD の指名 (手順の再生、要望 ⑱-1)。足す順。足りない分は乱数。使った数は pickUsed */
   pick?: readonly Force[];
@@ -217,7 +217,7 @@ function fracture(ctx: PartCtx, item: StageItem): StageApply {
 type AddEssence = Extract<Action, { addEssence: unknown }>["addEssence"];
 /**
  * エッセンスの MOD を付ける。ofMod: その MOD の側 (空きが無ければ弾く、クラフト MOD どうしの系統がぶつかれば弾く)。
- * removedSide: 深淵の王の印 = 消した側、消していなければお告げの側か空いている側 (2026-10-03 SaVeQ 0.5.5 / poe2fun)
+ * removedSide: アビサルロードの紋章 = 消した側、消していなければお告げの側か空いている側 (2026-10-03 SaVeQ 0.5.5 / poe2fun)
  */
 function addEssence(ctx: PartCtx, item: StageItem, a: AddEssence): StageApply {
   const e = ctx.essence!;

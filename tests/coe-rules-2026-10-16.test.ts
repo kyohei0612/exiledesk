@@ -72,7 +72,7 @@ describe("Craft of Exile に合わせた決まり (2026-10-16)", () => {
     expect(left.omensUsed).toEqual(["OmenofLight"]);
   });
 
-  it("4. 深淵の王の印がある時の骨は印と入れ替わり、左右のネクロマンシーのお告げは使わない (減らない。2026-10-17 オーナー)", async () => {
+  it("4. アビサルロードの紋章がある時の骨は印と入れ替わり、左右のネクロマンシーのお告げは使わない (減らない。2026-10-17 オーナー)", async () => {
     const { essenceShelf } = await import("../src/state/emulator/craft-stage-shelf");
     const it = rareWhere((x) => room(x, "prefix") && room(x, "suffix"));
     const key = essenceShelf(data, it).find((g) => g.kind === "the Abyss")!.keys.find((k) => k.startsWith("essence:perfect:"))!;

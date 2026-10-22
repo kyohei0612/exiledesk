@@ -54,7 +54,7 @@ describe("バグ: 確率表 (held-odds) と打つ処理の食い違い", () => {
     expect(Math.abs(tablePrefix - samePrefix / N), `表のプレ ${tablePrefix.toFixed(3)} / 実際 ${(samePrefix / N).toFixed(3)}`).toBeLessThan(0.04);
   });
 
-  it("深淵の王の印がある時の骨: 骨は必ず印の側に付くのに、表は反対側の MOD にも確率を出す", () => {
+  it("アビサルロードの紋章がある時の骨: 骨は必ず印の側に付くのに、表は反対側の MOD にも確率を出す", () => {
     // 2 MOD のレア → 深淵のエッセンス (1 つ消して消した側に印)
     let ring = A(A(freshItem(data, "Gold Ring", 82), "transmute", 11), "regal", 12);
     ring = A(ring, "essence:perfect:Rings/PerfectEssence_EssenceAbyss", 13);
@@ -106,7 +106,7 @@ describe("バグ: 手順 JSON の再生 (1 手戻す・再生) が手で打っ�
 });
 
 describe("バグ: フラクチャー・印の引き継ぎ", () => {
-  it("フラクチャーした深淵の王の印を、次の骨が消してしまう (固定済みは消えないはず)", () => {
+  it("フラクチャーしたアビサルロードの紋章を、次の骨が消してしまう (固定済みは消えないはず)", () => {
     // 4 MOD のレア → 深淵のエッセンス (1 消して印で 4 のまま) → フラクチャーで印が固定されるまで種を探す
     let ring = A(A(freshItem(data, "Gold Ring", 82), "transmute", 21), "regal", 22);
     ring = A(ring, "exalt", 23);

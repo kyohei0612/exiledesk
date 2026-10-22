@@ -56,7 +56,7 @@ export const unrevealedMod = (side: StageSide, u: NonNullable<StageMod["unreveal
 export type AddUnrevealed = Extract<Action, { addUnrevealed: unknown }>["addUnrevealed"];
 /**
  * 未発現の冒涜 MOD をどの側に付けるか (打つ処理と確率表 held-odds.ts の骨が同じ物を使う)。
- *   - 深淵の王の印 (固定していない物) があれば、必ず印を置き換える。側は印の側、段の下限はアイテムレベル × 0.4 の切り捨て (markFloorOf、用語集 MarkofAbyssalLord)
+ *   - アビサルロードの紋章 (固定していない物) があれば、必ず印を置き換える。側は印の側、段の下限はアイテムレベル × 0.4 の切り捨て (markFloorOf、用語集 MarkofAbyssalLord)
  *   - 側: お告げ → それ (fixed)。無ければ両側が空いていれば半々 (空きが 1 つなら抽選しない)。両側が埋まっていれば、固定以外の MOD を全部から等しく 1 つ消して、
  *     その側 (= 側ごとの重みは消せる MOD の数)。2026-10-16 Craft of Exile の poe2_desecrate に合わせる (オーナー「書いていない所はランダム」)
  *   - その側で出うる MOD が無い側は選ばない (重み 0)
