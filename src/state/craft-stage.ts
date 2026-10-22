@@ -92,6 +92,9 @@ function freshSeed(): number {
   try { return crypto.getRandomValues(new Uint32Array(1))[0]! % 2_147_483_647; } catch { return Math.floor(Math.random() * 2_147_483_647); }
 }
 /** その手の乱数 (カレンシーのキーを混ぜる。発現は混ぜない = 出した候補のまま) */
+/** use の差し込み (シミュレーターの入口だけが置く。true を返した手は打たない)。置いていない時は今まで通り */
+let useHook: ((key: string) => boolean) | null = null;
+export function setUseHook(fn: ((key: string) => boolean) | null): void { useHook = fn; }
 function stepSeedFor(key: string): number {
   return seedOfRoll(rollSeed.value, key);
 }
@@ -328,18 +331,20 @@ export const craftStage = {
     return usableWith(key, []);
   },
   /** 持っている物を 1 回打つ (Craft of Exile と同じ: 持ったままなら何度でも) */
-  use(key: string | null = held.value, opts: { quiet?: boolean } = {}): void {
+  use(key: string | null = held.value, opts: { quiet?: boolean; seed?: number } = {}): void {
     if (!key || !data.value || !item.value || replay.value) return;
     const why = craftStage.usable(key);
     if (why) {
       miss.value = { n: (miss.value?.n ?? 0) + 1, reason: why };
       return;
     }
+    // シミュレーターの入口 (開発版、シミュ部長 10-22): 差し込みが受けた手は打たない (乱数の代わりに行き先を選ぶ欄を出す)。seed = 選んだ行き先になる手の種
+    if (opts.seed == null && useHook?.(key)) return;
     // 手の番号は前の手の続き (Web は 50 手より前を消すので、log の長さで数えると 51 手目から止まり、毎回同じ乱数になっていた)
     const index = (log.value[log.value.length - 1]?.out.index ?? 0) + 1;
     const want = omensFor(key, omens.value);
     const p = playStep(data.value, item.value, key, {
-      index, seed: stepSeedFor(key), price: priceOf, cumulative: craftStage.total.value, omen: want.length ? want.join("+") : null,
+      index, seed: opts.seed ?? stepSeedFor(key), price: priceOf, cumulative: craftStage.total.value, omen: want.length ? want.join("+") : null,
     });
     rollSeed.value = freshSeed();
     // Web 版は工程を 50 手まで覚え、それより前は消す (データが長くなりすぎる。2026-10-08 オーナー「50 手まで保存でそれ以降は消そうか」)。
