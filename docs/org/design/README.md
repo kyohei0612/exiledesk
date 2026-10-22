@@ -4,19 +4,19 @@
 
 ## 決まり (docs/org/dev/README.md の決まりが先)
 1. **エンジンには触れない** (src/services/craft-stage・htc・mods・items・vendor/poe2htc)。部品が見せる中身はエンジンの入口 `engine.ts` から取る。結果が変わる物 (付き方・確率・固定・打てるか) はエンジン、見え方と操作は画面 (線引き、オーナー 10-23)。
-2. 各画面で違う UI は各画面の物のまま。MOD 表示など部品を揃えたい時だけデザイン部に相談し、揃えた核は for-share、その上の特化部品 (エミュの %・シミュの狙いにする など) は各画面が持つ (核が変わっても特化側は包んでいるだけなので付いていける。オーナー 10-23)。 for-share (src/components/for-share・src/state/for-share) に入れるのは、エミュとシミュで**同じ所だけ**。画面ごとに違う所 (エミュの持った時の %・シミュの「狙いにする」など) は入れず、各画面の側で包む / slot で足せる形にする (オーナー 10-23)。
+2. for-share (src/components/for-share・src/state/for-share) に入れるのは、エミュとシミュで**同じ所だけ** (揃えたい時だけ各画面の部長がブラック経由で相談に来る)。画面ごとに違う所 (エミュの持った時の %・シミュの「狙いにする」など) は各画面の特化部品のまま、核を包む / slot で足せる形にする (核が変わっても付いていける。オーナー 10-23)。
 3. for-share を直すのはデザイン部長だけ。エミュ部長・シミュ部長からの直しはブラック経由の要望で受ける。直す時は両方の画面が落ちない・見た目が崩れないことを確かめる。
 4. 本番に出るエミュの画面にも効くので、見た目・操作の変更はオーナーの OK の後 (メモ ui-try-before-release)。
 5. UI の決まりはメモの「UI の決まり」の節 (1 つの枠・崩れない UI・文字は最低限・枠の外で取り消す・チカチカする線を並べない・ゲームの絵で UI・スマホの並び)。部品の要望は共通の部品へ (メモ feedback-global-requests)。
 6. 用語は src/i18n/GLOSSARY.md、推測で訳さない (メモ feedback-no-guessed-terms)。出す物は英語もセット。
 7. 呼ばれたら常駐、仕事はブラックから直接、報告もブラックへ直接 SendMessage 2〜5 行 + 中身は todo.md・notes/。触るファイルは始める前に dev/touching/design.md に書き、自分の commit で消す。
-8. 自分の commit の push と開発版 (deploy:web-dev) は自分で、使う前に dev/todo.md の使用表を書く。本番は最終チェック長。
+8. 自分の commit の push と開発版 (deploy:web-dev) は自分で、使う前にブラックに聞く (使用表 dev/todo.md、書くのはブラック)。本番は最終チェック長。
 9. 確かめは開発版を本物のマウスで、エミュとシミュの両方の画面で (PC 1660×860・スマホは mobile preset)。報告には何で確かめたか書く。
 10. 1 ファイル 500 行まで。AdSense の再審査中は、読み物・AdSense のコード・ads.txt を壊さない。
 
 ## 地図
-- for-share: src/components/for-share/ (棚一式 shelf/・アイテムのカード item/・MOD 表の土台 など、10-23 にジン部長が src/views/craft-stage から移した)・src/state/for-share/ (棚・説明・stage-steps など)。移しの記録 docs/org/emulator/notes/2026-10-22-entry-split-plan.md。
+- for-share: src/components/for-share/ (棚一式 shelf/・アイテムのカード item/・MOD 表の土台 mod-list/ModTable.vue (エミュの特化は views/craft-stage/StageModList.vue、シミュは TreeGoalPage の slot)・use-stage-fx、10-23 にジン部長が src/views/craft-stage から移した)・src/state/for-share/ (棚・説明・stage-steps など)。移しの記録 docs/org/emulator/notes/2026-10-22-entry-split-plan.md。
 - ほかの共通の部品 src/components/ (アプリだけの物は owners.txt のアプリの行で凍結)。部品ごとの使う画面の表は notes/2026-10-23-components-map.md。Web で多く使う物: ui/ (Icon・ModalShell・Disclosure・HelpTip・BusyTag・AdSlot)・decor/ (RichText・GameItemCard・HoverStack)・items/BaseCatalog (エミュ・シミュのベース選び)・NumStep (シミュ)・vaal-scales/CurrencyPicker (エミュ)・ChangelogDialog・SupportDialog・LangSwitch (web 枠)。
-- 見た目 src/styles.css → src/styles/game-ui.css (@import、全部の画面)、route-rule.css・spam-lucky.css (エミュのスパムシミュ、`<style src>`)、poe-card.css (アプリ)。owners.txt の行は `src/styles/**` で実際の `src/styles/`・`src/styles.css` と合わず今は「共通」(ブラックに聞いた)。言語の切り替え src/i18n/lang.ts、用語集 src/i18n/GLOSSARY.md。i18n のゲームのデータ (名前・MOD の文の JSON) と utils・web/ (ページの入口) はジン部長の「共通」のまま。
+- 見た目 src/style.css → src/styles/game-ui.css (@import、全部の画面)、route-rule.css・spam-lucky.css (エミュのスパムシミュ、`<style src>`)、poe-card.css (アプリ)。owners.txt はどちらもデザイン (b27e7213)。言語の切り替え src/i18n/lang.ts、用語集 src/i18n/GLOSSARY.md。i18n のゲームのデータ (名前・MOD の文の JSON) と utils・web/ (ページの入口) はジン部長の「共通」のまま。
 - 見張り scripts/check-engine-entry.mjs (エミュ ⇄ シミュの直の import を落とす D、ジン部長の台本)。
 - 決めた事: メモ game-ui-art-direction・ui-one-frame-rule・ui-no-break-rules・feedback-minimal-text-ui・feedback-no-flicker-lines・web-phone-layout。
