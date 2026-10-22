@@ -26,16 +26,20 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 
 開発版だけの物は `state/craft-stage.ts` の `SIM_LOCKED` で本番から隠す (非公開の開発版 `pnpm deploy:web-dev` では開く)。
 
-## 部ごとの持ち場 (2026-10-20 に分けた。部の決まりは docs/org/<部>/README.md)
+## 部ごとの持ち場 (2026-10-20 に分け、10-22〜23 に組み替えた。持ち物の正は docs/org/owners.txt (`node scripts/owner-of.mjs <パス>`)、部の決まりは docs/org/<部>/README.md)
 
-| 部 | 画面 | 仕組み | 状態 | テスト |
+線引き: 結果が変わる物 (付き方・確率・固定される MOD・打てるか) はエンジン、見え方と操作は画面。画面の部長はエンジンにも相手の画面のコードにも触れない。
+
+| 部 (部長) | 画面 | 仕組み | 状態 | テスト |
 |---|---|---|---|---|
-| エミュレーター | `views/craft-stage/` | `services/craft-stage/` (spec/ も)・`services/htc/`・`services/mods/`・`vendor/poe2htc/` | `state/emulator/` | `tests/` の直下 |
-| シミュレーター | `views/simulator/` | `services/simulator/` (`htc/` = 自動モードの木 sim-route・tree-decide・step-odds) | `state/simulator/` | `tests/simulator/` |
-| チュートリアル (シミュレーター部) | `views/tutorial/` (Video*・コース) | `services/tutorial/` | `state/tutorial/` | `tests/tutorial/` |
-| 開発 (共通) | `web/`・`components/`・`utils/` | `i18n/`・`services/money.ts`・`services/telemetry/` ほか | `state/` の直下 (`craft-stage.ts`・`web-page.ts`・`display-currency.ts` ほか) | — |
+| エンジン (ジン部長、画面と部品は持たない) | — | `services/craft-stage/` (spec/・入口 `engine.ts` 核 / `engine-sim.ts` / `engine-emu.ts`)・`services/htc/`・`services/mods/`・`services/items/`・`vendor/poe2htc/` | — | `tests/` の直下 |
+| エミュの画面 (エミュ部長) | `views/craft-stage/` | エンジンの入口から取る | `state/emulator/` | — |
+| シミュの画面 (シミュ部長) | `views/simulator/` | `services/simulator/` (`htc/` はアプリ専用・凍結) | `state/simulator/` | `tests/simulator/` |
+| チュートリアル (シミュ部長) | `views/tutorial/` (Video*・コース) | `services/tutorial/` | `state/tutorial/` | `tests/tutorial/` |
+| 両方の画面で一緒の部品・見た目 (デザイン部長) | `components/` (`for-share/` = 棚・カード・MOD 表の土台)・`i18n/lang.ts`・GLOSSARY.md | — | `state/for-share/` | — |
+| 共通 (境目・土台、ジン部長) | `web/`・`utils/` | `i18n/` のゲームのデータ・`services/money.ts`・`services/telemetry/` ほか | `state/` の直下 (`craft-stage.ts`・`web-page.ts`・`display-currency.ts` ほか) | — |
 
-エンジンの核 (エミュ部の持ち物): `craft-stage/` の `types.ts`・`run-plan.ts`・`contract.ts`、乱数 `htc/rng.ts`。外 (シミュ・チュートリアル・解析君) は入口 `craft-stage/engine.ts` から取る決まり (2026-10-20、案は org/emulator/notes/2026-10-20-engine-entry-plan.md)。`services/simulator/htc/` はアプリ専用・凍結で Web から import しない。craft-stage/ に残した共通の境目: `share.ts`・`trade-search.ts`。htc/ の `buy-or-craft.ts`・`prices.ts`・`paste*.ts` もアプリ・各部がまたがって使うので htc/ に残した。scripts/ は今のまま 1 つのフォルダー。
+エンジンの核 (ジン部長): `craft-stage/` の `types.ts`・`run-plan.ts`・`contract.ts`、乱数 `htc/rng.ts`。画面 (エミュ・シミュ・チュートリアル)・解析君は入口から取る (核は `engine.ts`、画面の要望の物は出した側だけが `engine-sim.ts` / `engine-emu.ts` から。分け方は org/emulator/notes/2026-10-22-entry-split-plan.md)。`services/simulator/htc/` はアプリ専用・凍結で Web から import しない。craft-stage/ に残した共通の境目: `share.ts`・`trade-search.ts`。htc/ の `buy-or-craft.ts`・`prices.ts`・`paste*.ts` もアプリ・各部がまたがって使うので htc/ に残した。scripts/ は今のまま 1 つのフォルダー。
 
 ## 何を正とするか (同じ事を 2 か所でやらない)
 
