@@ -25,19 +25,15 @@ import { playSfx, playUseSfx } from "../utils/sfx";
 import { isRareChance } from "../utils/format-pct";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
 import { OMEN_EXCLUSIVE } from "../services/craft-stage/omens";
-import type { Pattern } from "../services/simulator/pattern";
 import { recordHistory } from "../services/history";
 import { computed, ref, shallowRef, watch, type Ref, type WritableComputedRef } from "vue";
 import { htcBaseInfo, loadHtcPatch } from "../services/htc/patch";
 import { REC_START, recNext } from "../utils/rec-mode";
 import { extraFromUrl, videoFromUrl, type StageExtra } from "./emulator/stage-extra";
 export type { ResistsBlock, StageExtra } from "./emulator/stage-extra";
-import { simGrant, simPicked, simShowMods, simSockets, simStart, simStartItem, simPendingRecipe, simStartCost, simTargets, simAltFor, simOrder, simPatterns, simPlayLeft, simQuizActive } from "./simulator/sim-state";
-export type { SimStart, SimTargets } from "./simulator/sim-state";
 import { aims, aimPicker, modJump, modOverlay } from "./emulator/aim-state";
 export { AIM_MAX, type AimPick } from "./emulator/aim-state";
 import { fullSockets, planStepOf, type PlanStep } from "./stage/stage-steps";
-export * from "./simulator/sim-recipes";
 /** ?base=<英語名> (ベースの読み物のページから来た時)。録画モードの base= とは別 */
 export const URL_BASE: string | null = (() => { try { return new URLSearchParams(location.search).get("base"); } catch { return null; } })();
 import { loadCurrencyHover } from "../services/currency/currency-hover";
@@ -57,8 +53,6 @@ import { tr, lang } from "../i18n/lang";
 import { decodeShare, SHARE_ENABLED, shareCodeOf } from "../services/craft-stage/share";
 import { stageReplay } from "./stage-replay";
 import { trackOnce } from "../utils/track";
-import { methodOfTarget, quizFromSim } from "../services/simulator/quiz-build";
-import { nextMove, type QuizRecipe } from "../services/simulator/quiz-recipe";
 
 const data = shallowRef<PatchData | null>(null);
 /**
@@ -152,23 +146,11 @@ watch(mode, (m) => { if ((SIM_LOCKED && m === "sim") || (TUTORIAL_LOCKED && m ==
 
 /** Web 版の工程を覚える手の数 */
 export const LOG_KEEP = 50;
-/** シミュのパターンの初期値 (空のパターン 1 つ)。書き換えて使うので呼ぶたびに新しい配列 */
-export const freshPatterns = (): Pattern[] => [{ name: "パターン 1", steps: [], quiz: { v: 3, rules: {} } }];
 /**
  * 50 手より前に消した手の、手順 JSON に書く分だけ (重い打つ前 / 後のアイテムは持たない)。
  * 消した手も手順に要る (無いと再生で始めの方の手が抜け、送った人のアイテムにならなかった。2026-10-16 要望 0ce15a82 の決闘のワンド)
  */
 const dropped = dual(() => shallowRef<Array<{ step: PlanStep; index: number }>>([]));
-/** エミュレーターで再生するクイズのレシピ (開いているパターン、無ければ答えのある最初のパターン)。今のベースと狙う MOD で組む */
-const handQuiz = computed<QuizRecipe | null>(() => {
-  const d = data.value;
-  if (!d || !simTargets.value.length) return null;
-  const has = (p: Pattern): boolean => !!p.quiz && Object.values(p.quiz.rules).some((r) => r.length > 0);
-  const p = simPatterns.value.find((x) => x.name === simQuizActive.value && has(x)) ?? simPatterns.value.find(has);
-  if (!p?.quiz) return null;
-  return quizFromSim({ data: d, base: base.value, itemLevel: itemLevel.value, start: "white", startPrice: 0, targets: simTargets.value.map((t) => ({ ...t, method: methodOfTarget(d, t) })) }, p.quiz).recipe;
-});
-
 /** 手で打って打てなかった時の知らせ (工程には積まない。画面は震えて理由を出す) */
 const miss = dual(() => ref<{ n: number; reason: string } | null>(null));
 
@@ -205,7 +187,7 @@ const replayApi = stageReplay({
   priceOf, priceKeysAll, freshSeed, reset: (): void => craftStage.reset(),
 });
 export const craftStage = {
-  play, data, item, log, held, omens, omenKeep, seed, rollSeed, error, replay, recPreset, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, simTargets, simPicked, simGrant, simShowMods, simAltFor, simSockets, simStart, simStartItem, simStartCost, simPendingRecipe, simOrder, simPatterns, simPlayLeft, simQuizActive, handQuiz, aims, aimPicker, modJump, modOverlay,
+  play, data, item, log, held, omens, omenKeep, seed, rollSeed, error, replay, recPreset, base, itemLevel, miss, video, extra, focus, showTags, pob, startMods, mode, aims, aimPicker, modJump, modOverlay,
   ready: computed(() => !!data.value && !!item.value),
   /** 累計の費用 (高貴) */
   total: computed(() => { const l = log.value; return l.length ? l[l.length - 1]!.out.cost.cumulative : 0; }),
@@ -361,24 +343,6 @@ export const craftStage = {
     // 食ったお告げは外す
     const ate = p.out.omen ? p.out.omen.split("+") : [];
     if (ate.length && !omenKeep.value) omens.value = omens.value.filter((o) => !ate.includes(o));
-  },
-  /**
-   * クイズのレシピで 1 手 (ADR-003): 今のアイテムに当たる答えを打つ (お告げは答えの物に掛け替える)。
-   * 返り値 = 画面に出す一言 (完成 / 答えが無い / 打った答え)。null = 打った
-   */
-  recipeStep(): { done: boolean; stop: boolean; text: string } {
-    const d = data.value, it = item.value, recipe = handQuiz.value;
-    if (!d || !it || !recipe || replay.value) return { done: false, stop: true, text: tr("レシピが無い", "No recipe") };
-    const mv = nextMove(d, recipe, it, stepSeedFor("reveal"));
-    if (mv.done) return { done: true, stop: true, text: tr("完成", "Done") };
-    if (!mv.key) return { done: false, stop: true, text: tr("この状態の答えが無い (シミュレーターのクイズで答える)", "No answer for this state (answer it in the Simulator quiz)") };
-    if (mv.key === "restart") { craftStage.reset(); return { done: false, stop: false, text: tr("買い直して最初から", "Started over with a new base") }; }
-    // Web は工程を 50 手で切るので、数ではなく最後の手が変わったかで見る
-    const before = log.value[log.value.length - 1];
-    omens.value = [...mv.omens];
-    craftStage.use(mv.key);
-    if (log.value[log.value.length - 1] === before) { omens.value = []; return { done: false, stop: true, text: miss.value?.reason ?? tr("打てない", "Can't use") }; }
-    return { done: false, stop: false, text: [nameOf(mv.key), ...mv.omens.map((o) => nameOf(o))].join(" + ") };
   },
   /** 1 手戻す (その手で食ったお告げは掛け直す) */
   undo(): void {

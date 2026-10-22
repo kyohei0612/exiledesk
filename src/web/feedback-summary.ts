@@ -3,7 +3,7 @@
  * 「計算機の内容を日本語で報告して欲しい。何を作っててどこで止まってるのか知りたい」)。
  * Discord の知らせの本文に出す (server/live の notifyDiscord)。コードの id は添付の JSON に残る。画面の言語にかかわらず日本語
  */
-import { craftStage, nameOf, readSimSession } from "../state/craft-stage";
+import { craftStage, nameOf } from "../state/craft-stage";
 import { classJa } from "../services/items/base-catalog";
 import type { PlayedStep } from "../services/craft-stage/run-plan";
 import type { StageItem, StageMod } from "../services/craft-stage/types";
@@ -46,12 +46,6 @@ export function feedbackSummaryJa(): string[] {
   const s = craftStage;
   const it = s.item.value;
   const out: string[] = [];
-  if (s.mode.value === "sim") {
-    const ses = readSimSession();
-    out.push(`シミュレーター: ${it ? itemHead(it) : s.base.value}`);
-    if (ses) out.push(`狙い ${ses.targets.length} 個 · パターン ${ses.patterns.length} つ`);
-    return out;
-  }
   if (!it) return out;
   out.push(`作っている物: ${itemHead(it)}`);
   const mods = [...it.prefixes, ...it.suffixes];

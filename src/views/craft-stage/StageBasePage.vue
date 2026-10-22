@@ -11,7 +11,6 @@ import { craftStage as s, SIM_LOCKED } from "../../state/craft-stage";
 import { basePage, baseUnpicked } from "../../state/web-page";
 import { tr } from "../../i18n/lang";
 import { useStageBase } from "./use-stage-base";
-import SimBaseExtras, { revealSimMods } from "../simulator/SimBaseExtras.vue";
 
 defineProps<{ phone: boolean }>();
 const { pickSimBase } = useStageBase();
@@ -27,7 +26,6 @@ function pick(en: string): void {
   const first = baseUnpicked.value;
   basePage.value = false;
   if (first || en !== s.base.value) pickSimBase(en);
-  if (s.mode.value === "sim") setTimeout(revealSimMods, 120);
 }
 // 開いたら一番上から、戻ったら前の位置へ (ページを移ったのと同じに。2026-10-12 広告のお試しと同じ)
 let before = 0;
@@ -61,8 +59,6 @@ onBeforeUnmount(() => {
         <button type="button" role="tab" :aria-selected="s.mode.value === 'hand'" class="g-tab min-w-[170px] max-md:min-w-0 max-md:flex-1 max-md:!text-[12px]" :class="s.mode.value === 'hand' ? 'on' : ''" @click="setMode('hand')">{{ tr("エミュレーター", "Emulator") }}</button>
         <button type="button" role="tab" :aria-selected="s.mode.value === 'sim'" data-base-page-sim class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!text-[12px]" :class="s.mode.value === 'sim' ? 'on' : ''" @click="setMode('sim')">{{ tr("シミュレーター", "Simulator") }}<span class="text-[10px] font-normal opacity-70">β</span></button>
       </div>
-      <!-- シミュレーターの物 (レシピから始める) は SimBaseExtras.vue (シミュ部長) -->
-      <SimBaseExtras v-if="s.mode.value === 'sim'" class="mb-3" />
       <!--
         初めて来た人へ: 一言と「すぐ試す」(2026-10-19 スマホ強化。来た人の半分がベースを選ばずに帰っていた。何のサイトか・何をすると何が起きるかが無かった)。
         ベースを選んでいない時 (初めて・白に戻した後) のエミュレーターだけ。押すと金の指輪 (人気の一番上) ですぐ打てる画面へ

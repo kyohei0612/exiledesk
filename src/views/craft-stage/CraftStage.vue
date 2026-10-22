@@ -33,7 +33,7 @@ import StageAimPanel from "./StageAimPanel.vue";
 import StageForesight from "./StageForesight.vue";
 import StageBasePage from "./StageBasePage.vue";
 import { PAGES_ON, basePage, baseUnpicked, openRoutes } from "../../state/web-page"; // Web のページ (ベース選び。web/page.ts)
-import { openBasePage, openTreePage } from "../../web/page";
+import { openTreePage } from "../../web/page";
 import StageAimPicker from "./StageAimPicker.vue";
 import CurrencyShelf from "../../components/stage/shelf/CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
@@ -101,7 +101,7 @@ function onKey(e: KeyboardEvent): void {
   const dialog = !!document.querySelector("[role=dialog], [aria-modal=true]");
   // MOD 一覧の窓: Tab でいつでも開け閉め (2026-10-11 オーナー)。Esc は ModalShell が窓だけ閉じる (持っている物は離さない)
   const otherDialog = document.querySelectorAll("[role=dialog], [aria-modal=true]").length > (s.modOverlay.value ? 1 : 0);
-  if (e.key === "Tab" && !e.ctrlKey && !e.altKey && !e.metaKey && !typing && !otherDialog && s.item.value && (s.mode.value === "hand" || s.replay.value || (s.mode.value === "sim" && !simNoBase.value)) && !phone.value) { e.preventDefault(); s.modOverlay.value = !s.modOverlay.value; return; } // シミュレーターでも (2026-10-18)
+  if (e.key === "Tab" && !e.ctrlKey && !e.altKey && !e.metaKey && !typing && !otherDialog && s.item.value && (s.mode.value === "hand" || s.replay.value) && !phone.value) { e.preventDefault(); s.modOverlay.value = !s.modOverlay.value; return; }
   // 1 手戻す: R (2026-10-11 オーナー「Ctrl+Z はデフォルトみたいな存在だから R でいい」)。Ctrl+Z も残す
   const undoKey = (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === "r") || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z");
   if (undoKey && !e.repeat && !typing && !dialog && (s.mode.value === "hand" || s.replay.value)) { e.preventDefault(); if (!inLesson.value) s.undo(); } // コースの間は戻さない (もう一度で)
@@ -111,7 +111,7 @@ onBeforeUnmount(() => { window.removeEventListener("mousemove", onMove); window.
 function hold(k: string): void { s.hold(s.held.value === k ? null : k); }
 /** カレンシーの枠 (棚)。持っている間に、棚・アイテムのカード・スマホの下の帯・窓・小窓の外を押したら離す (2026-10-22 オーナー「キャンセルは枠の外をクリックで」。押した物には届ける) */
 const shelfEl = ref<HTMLElement | null>(null);
-useDismiss(() => !!s.held.value && !s.replay.value, [shelfEl, () => cardEl.value], () => s.hold(null), { swallow: false, keep: "[data-bottom-bar], [role=dialog], [aria-modal=true], [data-mod-add-menu], [data-sim-method-pop], [data-helptip-pop], [data-mod-list]" });
+useDismiss(() => !!s.held.value && !s.replay.value, [shelfEl, () => cardEl.value], () => s.hold(null), { swallow: false, keep: "[data-bottom-bar], [role=dialog], [aria-modal=true], [data-mod-add-menu], [data-helptip-pop], [data-mod-list]" });
 /** 持っている物に掛けられるお告げ (欄は HeldOmens.vue。ここは slot を出すかだけ) */
 const heldOmens = computed(() => heldOmensOf(s.held.value));
 /** 持っている物を打つ前に光らせる: 変わる候補の MOD (オレンジの文字) と付く空き (緑の枠)。エンジンの previewUse から (2026-10-17 オーナー、前は削減のカオスだけ) */
@@ -232,9 +232,9 @@ function scrollToReveal(): void { scrollToTop(document.querySelector("[data-reve
 const inApp = isTauriRuntime();
 const guidePage = computed(() => !inApp && s.mode.value === "tutorial" && !inLesson.value && !s.replay.value); // Web の使い方・コツのページ (コース一覧)
 // ベースを選んだか・選ぶ (設定の欄と共通、use-stage-base.ts)
-const { handNoBase, simNoBase } = useStageBase();
+const { handNoBase } = useStageBase();
 // Web はベース選びを別のページに (?page=base、StageBasePage.vue)。まだ選んでいない時もそのページ (エミュレーターだけ。シミュレーターは今まで通り)
-watch(() => PAGES_ON && !s.replay.value && ((s.mode.value === "hand" && handNoBase.value) || simNoBase.value), (u) => { baseUnpicked.value = u; }, { immediate: true }); // シミュレーターも (2026-10-18 オーナー「開発版でもベースのとこは広告出す想定で」)
+watch(() => PAGES_ON && !s.replay.value && s.mode.value === "hand" && handNoBase.value, (u) => { baseUnpicked.value = u; }, { immediate: true });
 const subPage = computed(() => PAGES_ON && !s.replay.value && (s.mode.value === "hand" || s.mode.value === "sim") && !inLesson.value && (basePage.value || baseUnpicked.value));
 /** モードのタブ。Web はシミュレーターを作っている途中なのでタブごと出さない (2026-10-16 オーナー「まだシミュレーター開発してないから出さなくておけ、エミュレーターと掲示板のみ」) */
 // 旧シミュレーターのタブは 10-22 に消した (工程ページはクラフトの道 ?page=sim-tree に置き換え)
@@ -260,7 +260,6 @@ const gemCorrupt = computed(() => GEM_CORRUPT_SHOWN && !inApp && gemCorruptOn.va
 watch(() => s.mode.value, (m) => { if (m === "sim" && !SIM_LOCKED) { s.mode.value = "hand"; openTreePage(); } }, { immediate: true });
 function pickMode(m: (typeof MODE_TABS)[number][0]): void {
   s.hold(null); endLesson(); s.mode.value = m; setGemCorrupt(false);
-  if (m === "sim" && PAGES_ON && s.simPicked.value) openBasePage();
 }
 function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("mode:gem-corrupt"); gemCorruptOn.value = v; }
 </script>
@@ -288,7 +287,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
     </div>
 
     <!-- 手で打つ / シミュレーション (2026-10-05、実験。オーナー「ステージにもう 1 個タブ作ってやってみるか」) -->
-    <!-- 再生中も消さずに隠す (シミュレーションの「1 つ戻す」の置き場 #sim-tools を残す) -->
+    <!-- 再生中も消さずに隠す -->
     <div v-show="!s.replay.value" data-rec-part="tabs" class="mb-4 flex flex-wrap items-center gap-1.5">
       <!-- スマホは 2 つで横幅を分ける (170px ずつだと 375px の画面からはみ出した。2026-10-13) -->
       <!-- Web の使い方・コツ・コースのページはタブではなく、ほかのページと同じ「← クラフトへ戻る」(2026-10-18 オーナー) -->
@@ -427,7 +426,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
     </div>
     <StageBasePage v-if="subPage" :phone="phone" />
     <!-- 窓の動きは ModalShell (Esc・後ろを押す・× で閉じる、後ろのページは止める)。Tab でも開け閉め -->
-    <ModalShell :open="s.modOverlay.value && s.ready.value && !!s.item.value && ((s.mode.value === 'hand' && !handNoBase) || !!s.replay.value || (s.mode.value === 'sim' && !simNoBase))" rec="mod-list" :title="tr('このベースに付く MOD', 'Mods for this base')" :close-title="tr('閉じる (Esc / Tab / 枠の外を押す)', 'Close (Esc / Tab / click outside)')" width="w-[75%] h-[75%] max-md:h-auto" full-on-phone body-class="px-3 pb-3" @close="s.modOverlay.value = false">
+    <ModalShell :open="s.modOverlay.value && s.ready.value && !!s.item.value && ((s.mode.value === 'hand' && !handNoBase) || !!s.replay.value)" rec="mod-list" :title="tr('このベースに付く MOD', 'Mods for this base')" :close-title="tr('閉じる (Esc / Tab / 枠の外を押す)', 'Close (Esc / Tab / click outside)')" width="w-[75%] h-[75%] max-md:h-auto" full-on-phone body-class="px-3 pb-3" @close="s.modOverlay.value = false">
       <template #header><span class="g-sec-sub max-md:hidden">{{ s.item.value ? baseNameOf(s.item.value) : "" }}</span></template>
       <StageModList overlay />
     </ModalShell>

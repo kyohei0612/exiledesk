@@ -6,7 +6,7 @@ import { rememberSent } from "../state/feedback-replies";
  */
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { MAX_IMAGES, imagesFromClipboard, shrinkImage, type PickedImage } from "./feedback-images";
-import { craftStage, readSimSession } from "../state/craft-stage";
+import { craftStage } from "../state/craft-stage";
 import { WEB_API_BASE } from "./config";
 import { diagNow, track, trailNow } from "./track";
 import { feedbackSummaryJa } from "./feedback-summary";
@@ -55,10 +55,9 @@ watch(() => props.open, (v) => { if (v) { state.value = "idle"; errorText.value 
 /**
  * 今の画面の状態 (本文が「使いづらい」「バグっぽい」だけでも、受けた側がすぐ再現・解析できる分を自動で付ける。2026-10-07 オーナー):
  * 版・URL・手で打つ / シミュレーション・ベース・直前の流れ・手で打った手順 (同じ seed で再生できる plan)・今のアイテム・
- * シミュレーションの途中 (レシピとして読み込める形)・直近の JS エラーと console・相場の状態。名前やログインの情報は入らない
+ * 直近の JS エラーと console・相場の状態。名前やログインの情報は入らない
  */
 function contextNow(): unknown {
-  const ses = readSimSession();
   const s = craftStage;
   const it = s.item.value;
   const hand = s.log.value.length ? { plan: s.plan(), steps: s.log.value.length } : null;
@@ -82,7 +81,6 @@ function contextNow(): unknown {
     errors: d.errors,
     console: d.console,
     hand,
-    sim: ses ? { base: ses.base, itemLevel: ses.itemLevel, targets: ses.targets, sockets: ses.sockets, order: ses.order, patterns: ses.patterns, flags: ses.flags } : null,
   };
 }
 

@@ -172,14 +172,9 @@ export function startTracking(): void {
     baseTally.set(b, (baseTally.get(b) ?? 0) + 1);
     useTally.set(p.out.currency_ja, (useTally.get(p.out.currency_ja) ?? 0) + 1);
   });
-  // ベースを選ぶと手で打つ方でも simPicked が立つので、シミュレーターの時だけ (2026-10-11 日報でシミュレーション: ベースを選んだ 227 になっていた)
-  watch(s.simPicked, (v) => { if (v && s.mode.value === "sim") trackOnce("sim:base"); });
   watch(s.base, () => { if (s.mode.value === "hand") trackOnce("hand:base"); screen("base"); });
   watch(s.mode, (m) => screen(`mode:${m}`));
   watch(s.modOverlay, (v) => { if (v) screen("mod-list"); });
-  watch(() => s.simTargets.value.length, (n) => { if (n > 0) trackOnce("sim:targets"); });
-  watch(() => s.simOrder.value.length, (n) => { if (n > 0) trackOnce("sim:order"); });
-  watch(() => s.simPatterns.value.some((p) => p.steps.length > 0), (v) => { if (v) trackOnce("sim:pattern"); });
   // ResizeObserver の「loop completed」はブラウザの害のない警告 (画面を伸び縮みさせると大量に出る) なので数えない (2026-10-08 日報で 770 件になっていた)
   window.addEventListener("error", (e) => { if (/ResizeObserver loop/.test(String(e.message ?? ""))) return;
     // よそのファイル (アプリ内ブラウザ・ウォレットなどが足したスクリプト) のエラーは頭に ext: を付けて、日報で直す対象から外す (2026-10-10)

@@ -3,18 +3,16 @@
   CraftStage.vue から分けた (2026-10-16、500 行の決まり)
 -->
 <script setup lang="ts">
-import { inGroup, socketCapOf } from "../../services/craft-stage/engine";
+import { inGroup } from "../../services/craft-stage/engine";
 import { useFlash } from "../../utils/use-flash";
 import { ARMED_CLASS, useArmed } from "../../utils/use-armed";
 import { tr } from "../../i18n/lang";
-import { SIM_LOCKED } from "../../state/craft-stage";
 import { inLesson } from "../../state/tutorial/craft-lesson";
-import StageRecipeStart from "../simulator/StageRecipeStart.vue";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { computed, ref, watch } from "vue";
 import { useStageBase } from "./use-stage-base";
 import StageBasePicker from "./StageBasePicker.vue";
-import { PAGES_ON, TREE_ON, basePage, simStep } from "../../state/web-page";
+import { PAGES_ON, TREE_ON, basePage } from "../../state/web-page";
 import { openTreePage } from "../../web/page";
 import { useTree } from "../simulator/tree/use-tree";
 import { craftStage } from "../../state/craft-stage";
@@ -26,7 +24,7 @@ import type { ModGroup } from "../../services/craft-stage/trade-search";
 defineProps<{ phone: boolean }>();
 const s = craftStage;
 const inApp = isTauriRuntime();
-const { handNoBase, simNoBase, pickSimBase, startFromRecipe } = useStageBase();
+const { handNoBase, pickSimBase } = useStageBase();
 /** 道具の帯のボタン (ゲームの 3 枚ボタン、src/styles/game-ui.css) */
 const btn = "g-btn sm";
 /**
@@ -83,41 +81,20 @@ async function searchStageMods(): Promise<void> {
   const { searchModGroups } = await import("../../services/craft-stage/trade-search");
   await searchModGroups(d, { groups: stageModGroups.value, minValues: true, ...(tradeWithBase.value ? { exact: { baseType: it.base, ...(jewelBase.value ? {} : { ilvlMin: it.itemLevel }), socketsMin: it.sockets ?? 0 } } : {}) });
 }
-/** シミュレーションのソケットの上限 (熟練工の上限と、その + 1 = 規格外) */
-const simCraftCap = computed(() => (s.item.value ? socketCapOf(s.base.value, s.item.value.cls.category) : 0));
-const simSocketCap = computed(() => (simCraftCap.value > 0 ? simCraftCap.value + 1 : 0));
 /** 白に戻す (2 回押し。2026-10-10 動きの揃え 7: utils/use-armed.ts) */
 const resetArm = useArmed();
 function armReset(): void {
   if (resetArm.arm()) s.reset();
 }
-/** クイズのレシピの再生 (n 手まで。完成・答え無し・打てない手で止まる) */
-const quizNote = ref("");
-function quizStep(n: number): void {
-  s.hold(null);
-  let r = { done: false, stop: false, text: "" }, k = 0;
-  for (; k < n && !r.stop; k++) r = s.recipeStep();
-  quizNote.value = n > 1 && !r.done ? `${r.text} (${tr(`${k} 手`, `${k} steps`)})` : r.text;
-}
-/** シミュレーターで ② 狙う MOD より先の工程のページにいる (ソケットは選び済み) */
-const simLaterPage = computed(() => s.mode.value === "sim" && s.simPicked.value && simStep.value !== "mods" && (simSocketCap.value === 0 || s.simSockets.value != null));
 </script>
 
 <template>
   <!-- 設定と操作 -->
   <!-- data-craft-top: クラフトの位置 (「クラフトへ」とベースを選んだ後はここの外枠の少し上。2026-10-10 オーナー「ベースの上枠の外枠から少し上空けた位置が心地いい」) -->
-  <!-- シミュレーターの工程のページ (③ 始め方から先) では出さない (ベースは工程の帯の 1 の札。ソケットを選ぶまでは出す。2026-10-19) -->
-  <section v-if="!s.replay.value && s.mode.value !== 'tutorial' && !inLesson && !simLaterPage" data-stage-settings data-craft-top data-rec-part="settings" class="g-panel mb-4 scroll-mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 px-2 py-1 text-[12px]">
+  <section v-if="!s.replay.value && s.mode.value !== 'tutorial' && !inLesson" data-stage-settings data-craft-top data-rec-part="settings" class="g-panel mb-4 scroll-mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 px-2 py-1 text-[12px]">
     <!-- ベース (押すと種類 → ベースのカードが開く。StageBasePicker.vue) -->
-    <span v-if="s.mode.value === 'sim'" class="flex items-center gap-2.5">
-      <span class="grid size-6 place-items-center rounded-full text-[12px] font-bold" :class="simNoBase ? 'bg-[var(--exile-color-accent-focus)] text-black' : 'bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/40'">{{ simNoBase ? 1 : "✓" }}</span>
-      <h3 class="text-[15px] font-bold text-[var(--exile-color-text-primary)]">{{ tr("ベース", "Base") }}</h3>
-      <HelpTip :text="tr('作るアイテムの種類 (ベース) とソケット。アイテムレベルと始め方は、狙う MOD を決めた後の 3 で (狙いが全部付く一番低いレベルが最初から入る)', 'The item type (base) and sockets. Item level and how to start are set in step 3, after the target mods (the lowest level where every target can roll is filled in)')" />
-    </span>
-    <!-- ベースを選ぶ前は、保存したレシピから始めるのを先に (2026-10-09 オーナー「ここの時点でレシピとかの選択させるような UI じゃないと」) -->
-    <StageRecipeStart v-if="s.mode.value === 'sim' && simNoBase" class="mb-1 border-b border-white/10 pb-3" @start="startFromRecipe" />
-    <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="simNoBase || (s.mode.value === 'hand' && handNoBase)" :page="PAGES_ON" @pick="pickSimBase" @open-page="s.hold(null); basePage = true" />
-    <span v-if="s.mode.value !== 'sim' && !(s.mode.value === 'hand' && handNoBase) && !jewelBase" class="flex items-center gap-1" :class="ilvlLocked && 'cursor-not-allowed opacity-50 [&_*]:pointer-events-none'" :title="ilvlLocked ? SANCTIFIED_REASON() : undefined"><!-- シミュレーターのアイテムレベルは 3 の始め方で (SimStartPick.vue) -->
+    <StageBasePicker :base="s.base.value" :data="s.data.value" :unpicked="s.mode.value === 'hand' && handNoBase" :page="PAGES_ON" @pick="pickSimBase" @open-page="s.hold(null); basePage = true" />
+    <span v-if="s.mode.value !== 'sim' && !(s.mode.value === 'hand' && handNoBase) && !jewelBase" class="flex items-center gap-1" :class="ilvlLocked && 'cursor-not-allowed opacity-50 [&_*]:pointer-events-none'" :title="ilvlLocked ? SANCTIFIED_REASON() : undefined">
       <span class="mr-1 whitespace-nowrap text-[12px] text-[var(--exile-color-text-secondary)]">{{ phone ? "iLv" : tr("アイテムレベル", "Item Level") }}</span>
       <button v-for="lv in ILVLS" :key="lv" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="curIlvl === lv ? 'on' : ''" :disabled="ilvlLocked" @click="setIlvl(lv)">{{ lv }}</button>
       <select data-ilvl-select :disabled="ilvlLocked" class="h-[30px] cursor-pointer rounded border bg-black/60 px-1.5 tabular-nums max-md:h-10" :class="ILVLS.includes(curIlvl) ? 'border-white/15 text-white/60' : 'border-amber-300/70 text-amber-100'" :value="ILVLS.includes(curIlvl) ? '' : curIlvl" :aria-label="tr('アイテムレベル (70〜86)', 'Item level (70–86)')" @change="setIlvl(Number(($event.target as HTMLSelectElement).value))">
@@ -126,26 +103,12 @@ const simLaterPage = computed(() => s.mode.value === "sim" && s.simPicked.value 
         <option v-for="lv in ILVL_LIST" :key="lv" :value="lv">{{ lv }}</option>
       </select>
     </span>
-    <!-- シミュレーション: 白のベースのソケットの数 (規格外 = 熟練工の上限 + 1 まで) -->
-    <span v-if="s.mode.value === 'sim' && !simNoBase && simSocketCap > 0" class="flex items-center gap-1">
-      <span class="mr-1 text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr("ソケット", "Sockets") }}</span>
-      <button v-for="n in simSocketCap + 1" :key="n" type="button" class="g-tab !min-h-[30px] !px-3 tabular-nums max-md:!min-h-10" :class="s.simSockets.value === n - 1 ? 'on' : ''" @click="s.simSockets.value = n - 1">{{ n - 1 }}<span v-if="n - 1 > simCraftCap" class="ml-1 text-[11px] text-[var(--exile-color-text-tertiary)]" :title="tr('熟練工のオーブの上限より多い (規格外の品だけ)', 'Above the Artificer’s Orb limit (Exceptional items only)')">{{ tr("規格外", "Exceptional") }}</span></button>
-      <span v-if="s.simSockets.value == null" class="text-amber-200/80">{{ tr("ソケットの数を選ぶ", "Choose socket count") }}</span>
-    </span>
-    <span v-if="s.mode.value === 'sim' && !simNoBase" id="sim-auto-slot" class="flex items-center"></span><!-- シミュの「自動で組む」の置き場 (StageSimPanel が Teleport で置く。2026-10-20 オーナー「規格外ソケットの右」) -->
-    <!-- 始め方は狙う MOD を決めた後の段へ (SimStartPick.vue、2026-10-18) -->
     <template v-if="s.mode.value === 'hand' && !handNoBase">
     <!-- 白に戻すは 1 手戻すでは戻せないので 2 回押し (2026-10-08 完成判定: 9 手分が確認無しで消えた) -->
     <button type="button" data-rec="reset" :class="resetArm.is() ? ARMED_CLASS : btn" :disabled="!s.log.value.length && !s.startMods.value.length" @click="armReset">{{ resetArm.is() ? tr("もう一度押すと白に戻す", "Click again to reset") : tr("白に戻す", "Reset") }}</button>
     <button type="button" data-rec="undo" :class="btn" :disabled="!s.log.value.length && !s.startMods.value.length" :title="tr('R / Ctrl+Z (まだ打っていない時は始めの MOD を 1 つ外す)', 'R / Ctrl+Z (before any use, removes one starting mod)')" @click="s.undo()">{{ tr("1 手戻す", "Undo") }}</button>
     <!-- 今のベースとアイテムレベルで白紙のクラフトの道 (ツリー) へ (開発版だけ、10-22 オーナー「全部のベースで使える」案 1) -->
     <button v-if="TREE_ON && s.mode.value === 'hand' && s.item.value" type="button" data-tree-from-stage :class="btn" :title="tr('このベースとアイテムレベルで白紙のクラフトの道 (ツリー) を開く (前の木は 1 つ戻すで戻せる)', 'Open a blank craft route tree with this base and item level (undo restores the previous tree)')" @click="useTree().startTreeWith(s.item.value.base, curIlvl ?? 82); openTreePage()">{{ tr("このベースでクラフトの道へ →", "Craft route tree with this base →") }}</button>
-    <!-- クイズのレシピを 1 手ずつ / 最後まで再生 (ADR-003)。打ち方はシミュレーターと同じ答え -->
-    <template v-if="s.handQuiz.value && !SIM_LOCKED">
-      <button type="button" :class="btn" :title="tr('シミュレーターのクイズの答えで、今のアイテムに 1 手打つ', 'Use one step from the Simulator quiz answers on the current item')" @click="quizStep(1)">{{ tr("レシピで 1 手", "Recipe: 1 step") }}</button>
-      <button type="button" :class="btn" :title="tr('完成か、答えの無い状態まで打つ (500 手まで)', 'Use steps until done or no answer (up to 500)')" @click="quizStep(500)">{{ tr("最後まで", "To the end") }}</button>
-      <span v-if="quizNote" class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ quizNote }}</span>
-    </template>
     <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" :title="tr('打った手を 16:9 の撮影用画面で 1 手ずつ再生 (Space 再生 / ← → 1 手 / Esc 閉じる)', 'Replay each step on a 16:9 recording screen (Space play / ← → step / Esc close)')" @click="s.hold(null); s.video.value = { from: 0, autoplay: false, controls: true }">{{ tr("動画モード", "Video mode") }}</button>
     <span class="ml-auto flex flex-wrap items-center gap-1.5">
       <span v-if="copied" class="text-emerald-300">{{ copied }}</span>

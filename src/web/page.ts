@@ -10,7 +10,7 @@
  *   - シミュレーターのレシピ (保存・上書き・共有): ?page=recipes (2026-10-21)
  *   - クラフトの道 (ツリー): ?page=sim-tree (2026-10-22、開発版だけ。工程の sim-○○ より先に見分ける)
  *   - デイリークラフトチャレンジ: ?page=daily (一覧)・?page=daily&q=<id> (お題)・?page=daily-start&q=<id> (フラクチャー選び) (2026-10-22、開発版だけ。ヘッダーの「デイリー」から)
- *   - シミュレーターの工程: ?page=sim-mods / sim-start / sim-order / sim-play / sim-result (2026-10-19、1 工程 1 ページ)
+ *   - 旧シミュレーターの工程 (?page=sim-mods など) は 10-22 に消した。古い URL はクラフトのまま開く
  * 移るたびに履歴に積む (ブラウザの戻るで前のページへ)。URL から開いた時もそのページで始める (計算機は今のアイテムが要るので URL からは開かない)。
  * ページを移るたびに広告の枠を出し直す (utils/ads.ts の pageTick)。MOD 一覧は重ねる窓のまま、ページにしない (2026-10-12)
  */
@@ -19,7 +19,7 @@ import { craftStage as s } from "../state/craft-stage";
 import { topic } from "../state/tutorial/craft-topic";
 import { course } from "../state/tutorial/craft-course";
 import { endLesson, inLesson, startTopicAt } from "../state/tutorial/craft-lesson";
-import { basePage, baseUnpicked, dailyPage, DAILY_ON, type DailyView, feedbackPage, recipesPage, routesOpen, TREE_ON, treePage, routesTarget, SIM_STEPS, simStep, type SimStep } from "../state/web-page";
+import { basePage, baseUnpicked, dailyPage, DAILY_ON, type DailyView, feedbackPage, recipesPage, routesOpen, TREE_ON, treePage, routesTarget } from "../state/web-page";
 import { SIM_LOCKED } from "../state/craft-stage";
 import { TOPIC_COURSES } from "../services/tutorial/topic-courses";
 import { courseShown } from "../services/tutorial/course-release";
@@ -127,13 +127,8 @@ export const page = computed((): string => {
   if (s.mode.value === "tutorial") return "page=guide";
   if (s.replay.value) return "";
   if (basePage.value || baseUnpicked.value) return "page=base";
-  if (s.mode.value === "sim" && s.simPicked.value) return `page=sim-${simStep.value}`;
   return "";
 });
-/** シミュレーターの工程の題 */
-const SIM_TITLE: Record<SimStep, [string, string]> = {
-  mods: ["狙う MOD", "Target mods"], start: ["ベースの値段", "Base prices"], order: ["付ける順番", "Order"], play: ["打ち方", "Crafting steps"], result: ["回す・結果", "Run & results"],
-};
 
 /** タブの題 */
 export const pageTitle = computed((): string => {
@@ -148,11 +143,10 @@ export const pageTitle = computed((): string => {
   if (t) return `${tr(t[0], t[1])} — ExileDesk`;
   if (p === "page=guide") return tr("使い方・コツ — ExileDesk", "Guide & Tips — ExileDesk");
   if (p === "page=base") return tr("ベースを選ぶ — ExileDesk", "Choose a base — ExileDesk");
-  if (p.startsWith("page=sim-")) { const t = SIM_TITLE[p.slice(9) as SimStep]; if (t) return tr(`${t[0]} — シミュレーター — ExileDesk`, `${t[1]} — Simulator — ExileDesk`); }
   return tr("ExileDesk — PoE2 クラフトシミュレーター", "ExileDesk — PoE2 Craft Simulator");
 });
 
-const PAGE_KEYS = ["guide", "base", "feedback", "routes", "recipes", "sim-tree", "daily", "daily-start", ...SIM_STEPS.map((x) => `sim-${x}`)];
+const PAGE_KEYS = ["guide", "base", "feedback", "routes", "recipes", "sim-tree", "daily", "daily-start"];
 function urlFor(p: string): string {
   const u = new URL(location.href);
   u.searchParams.delete("page");
