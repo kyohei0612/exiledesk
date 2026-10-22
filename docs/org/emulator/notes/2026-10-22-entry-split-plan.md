@@ -28,7 +28,7 @@
 
 ## 追記: しっかり分ける (オーナー 10-22 深夜「コードが混ざらないようにしっかり分けて、リファクタ含めて管理しやすいように」)
 
-### 1. エンジンの中も置き場で分ける (済み 3d… の次、下の commit)
+### 1. エンジンの中も置き場で分ける (済み 7971b974)
 - `services/craft-stage/for-sim/` = シミュの要望で足した物: aim-reach・aim-held (aim-odds から分けた aimHeldOn・isAimMod・junkOf・heldSetOf)・hand-effect・can-use・hand-use・start-with・magic-odds・rune-choice・mod-list-use (mod-list から)・raw-text (item-text から、シミュの貼り付けが消えたら消す)。
 - `services/craft-stage/for-emu/` = エミュだけの物: preview (旧 spec/preview)。これからのエミュの要望もここ。
 - 核 = 今の services/craft-stage/ の残り。核が読む物は核に置く (tier-rank は aim-odds が、omen-block は for-sim/can-use も読むので核。stage-tuning は打つ処理が読むので核)。
