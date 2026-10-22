@@ -2,6 +2,13 @@
 
 前の引き継ぎ (1〜3 本目、10-21〜23) と止めている物 (①〜⑥・自動・④ の物・OK 待ちの一覧) は notes/2026-10-22-todo-archive.md にそのまま移した。
 
+## 報告 27 (14 本目 → ブラック 7 代目、10-22 夜) A を寄せた・旧 ③ を消した
+- 72901200 (A): isCatalyst = エンジンの kindOf (jcatalyst_ も)・カタリストの品質の最大はエンジンの catalystOf (指輪などは別の欄) = 新しい catalystFull、種類は catalystTagOf (エンジンの run-spec と同じ取り方、入口に出たら置き換え)・始まりの乱数の上限はレアの枠 limitOf − 始まりの MOD・start-cost の側は sideOfMod。
+- startItemOf → startFrom は A から外した: startFrom は乱数の MOD の数・作れない理由 (今は例外)・乱数の渡し方が木と違うので B10 (入口に StartSpec.random と理由を返す形) で。TreeStartPick・use-tree のレアリティの決め (フラクチャー済みはレア・ノーマルは MOD 無し) は木の状態の決めなので残した。深淵のエッセンスの鍵は start-cost ごとジン部長へ。
+- 665bfe7b: 旧 ③ の use-sim-targets・use-sim-calc・台本 _start-cost-probe を消した (import は台本だけ)。入口の見張りの控えを取り直した (A 入口の外 105 行 42 ファイル)。
+- 確かめ: 型 0・入口の見張り「増えた所なし」・台本 _tree-quality-probe (品質だけ上げる手の木) 100 人完成 / 止まり 0 (前後の並べ)。画面は変わらない所なので開発版は出していない。
+- 次: ジン部長が B1 (段の換算 tierIndexOf ほか、60d3da0d) をもう足しているので、ブラックの知らせを待って置き換える。
+
 ## 報告 26 (14 本目 → ブラック 7 代目、10-22 夜) 自前の中身の洗い出し・aimHeld を入口へ
 - 洗い出し (読むだけ): notes/2026-10-22-sim-own-logic.md。A = 入口にもう有る物へ寄せるだけ 9 件 (startFrom・sideOfMod・kindOf・limitOf など)、B = ジン部長に入口へ足してもらう 16 件 (一番効くのは B1 段の換算・B2 外れの数え・B3 狙いの組)、C = tree-run・tree-check・start-cost を入口へ移すかの決め。気付き 2 つ (自分で確かめた): isCatalyst は jcatalyst_ を数えない (エンジンの kindOf は数える)・fillCatalyst は quality だけ見て止める (指輪などはエンジンでは catalystQuality)。
 - 3 の aimHeld: ジン部長の 9abbd784 (aimHits の { data, sameText }) が入っていたので、aimHeld の中身を aimHits に寄せた (名前と呼ぶ所はそのまま)。台本 scripts/_tree-aimhits-probe: 同じ系統・同じ文の組の総当たり 3474072 回・見本の木 4 本で前の式と食い違い 0 (エンジンの外の正解ではなく前後の並べ)。型 0。画面は変わらないので開発版は出していない。
