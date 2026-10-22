@@ -2,6 +2,10 @@
 
 前の引き継ぎ (1〜3 本目、10-21〜23) と止めている物 (①〜⑥・自動・④ の物・OK 待ちの一覧) は notes/2026-10-22-todo-archive.md にそのまま移した。
 
+## 報告 16 (12 本目 → ブラック、10-22 夜) ツリー特化の始まり方 (開発版 f39f3f74)
+- cf65aae6: ベースのページの「シミュレーター」はツリーを開くだけ (CraftStage.vue の mode sim の見張り、開発版だけ。クラフト台側は 46275b4d と比べてこの 6 行だけ違う)。白紙のツリーは始まりの箱のベースの欄 (TreeBasePick) が開いた状態で始まる。アイテムレベルの欄は左端に「適正」、数字は常に出す (適正の間は自動の値)、数字を触ったら適正が外れる、「?」で説明 (適正 = 狙いの段が全部付く一番低いレベル…)。f39f3f74: 箱の表記を「Lv 82 適正」に短く (題が切れていた)。
+- 外した / 残した物は報告 15 のとおり (外した = クラフト台の中の入口全部・craft-stage.ts の差し込み・path-spine も。残した = ツリーのベース選び・欲しい MOD のメモ・木の ilvlFit)。
+- 確かめ (開発版・新しい profile の 9333・本物のマウス PC 1660×860、台本 ブラックの共有メモ sim-12-entry-tree.mjs): ?page=base →「シミュレーター」→ ?page=sim-tree でベースの欄が開いている → 箱「始まり Lv 82 適正 金の指輪」→ 欄の ? と適正 → 始まりの MOD 最大マナ T5 で「Lv 54 適正」。スナップ 共有メモ flow-01〜04-*.png (01 = ツリーでベースの欄が開いた所)。
 ## 報告 15 (12 本目 → ブラック、10-22 夜) 「ツリー特化」の頼みへの答え (送信の上限で止まったままなのでここに)
 - ブラックの「廃止で外す物と残す物」は、オーナーが直接このセッションに出した指示 (報告 14) でもう済んでいる。外した物 (f5aa9aaa): CraftStage.vue のタブと差し込み・StageSettings の適正の引数・ModAddPicker の quick・StageItemCard の kinds・StageModList の β の分・state/craft-stage.ts の seed / setUseHook (251a20b0)・views/simulator/build/・services/simulator/build/ (path-pick・path-spine)・state/simulator/build-state.ts。path/ の書きかけは前から repo の外 (共有メモ sim-12-path-draft/)。
 - エミュが元に戻った確かめ: クラフト台側 7 ファイル (CraftStage・StageSettings・StageItemCard・ModAddPicker・StageModList・state/craft-stage.ts・use-tree) は 46275b4d と同じ中身 (git diff 46275b4d で違うのは CraftStage.vue の 6 行 = 旧 mode sim に入ったらベースを選ばせてツリーを開く見張り、開発版だけ)。型チェック 0・入口の見張り「増えた所なし」。エミュで打つ画面の確かめは、中身が同じなので今回は回していない。
