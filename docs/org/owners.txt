@@ -207,3 +207,7 @@ docs/org/research/**                 リサーチ
 docs/org/video/**                    動画
 docs/org/blog/**                     記事
 docs/org/white/**                    ブラック
+
+# デイリークラフトチャレンジ (デイリー部長、10-22)
+src/views/daily/**                   デイリー
+docs/org/daily/**                    デイリー
