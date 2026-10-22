@@ -45,6 +45,8 @@ function resolveSpec(from, spec) {
 
 const rows = loadOwners();
 const WEB_SIDE = new Set(["シミュ", "チュートリアル", "解析", "エミュ"]);
+/** D の例外: エミュの画面がチュートリアルのコースを動かす差し込み口はこの 1 ファイルだけを通す (ブラック 10-23、シミュ部長 bfe9d291) */
+const D_ALLOW = new Set(["src/views/tutorial/course-entry.ts"]);
 /** 画面の混ざり (D) で数えるシミュの側 (チュートリアルはシミュ部長の持ち物) */
 const SIM_SIDE = new Set(["シミュ", "チュートリアル"]);
 /** 入口 (核 engine.ts と、出した側だけの engine-sim.ts・engine-emu.ts。2026-10-22 深夜、notes/2026-10-22-entry-split-plan.md) */
@@ -83,7 +85,7 @@ for (const f of files) {
     const tw = ownerOf(t, rows);
     if (WEB_SIDE.has(who) && tw === "ジン" && /^src\/(services|vendor)\//.test(t) && !ENTRIES.has(t)) hits.push({ rule: "A", file: f, target: t });
     if (sideOfEngine(f, who) && sideOfEngine(t, tw) && crosses(sideOfEngine(f, who), sideOfEngine(t, tw))) hits.push({ rule: "C", file: f, target: t });
-    if ((who === "エミュ" && SIM_SIDE.has(tw)) || (SIM_SIDE.has(who) && tw === "エミュ")) hits.push({ rule: "D", file: f, target: t });
+    if (((who === "エミュ" && SIM_SIDE.has(tw)) || (SIM_SIDE.has(who) && tw === "エミュ")) && !D_ALLOW.has(t)) hits.push({ rule: "D", file: f, target: t });
     if (t.startsWith("src/services/simulator/htc/") && !f.startsWith("src/services/simulator/htc/") && who !== "アプリ") hits.push({ rule: "B", file: f, target: t });
   }
 }
