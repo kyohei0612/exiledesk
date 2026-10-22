@@ -60,7 +60,7 @@ const costLine = computed(() => {
   const b = t.baseCost.value?.best;
   if (!b) return "";
   const n = b.cost >= 100 ? b.cost.toFixed(0) : b.cost >= 10 ? b.cost.toFixed(1) : b.cost.toFixed(2);
-  return tr(`ベース ${n} 神 (一番安い: ${b.label})`, `Base ${n} div (cheapest: ${b.label})`);
+  return tr(`ベース ${n} 神 · ${b.short}`, `Base ${n} div · ${b.short}`);
 });
 const startTitle = computed(() => startMods.value.map((m) => `${m.fractured ? `✦ ${tr("フラクチャー", "Fractured")} ` : ""}${t.startModLabel(m)}`).join("\n"));
 /** 押せる物を倍率の逆数で戻す (origin = 大きくする軸。まとまりごとに端を軸にして、隣と重ならないように) */
@@ -103,7 +103,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
         <button type="button" data-tree-start-mods class="nodrag block w-full truncate text-left text-[#c8c8ff] hover:underline" :class="quiet ? 'pointer-events-none' : ''" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :title="startTitle" @click.stop="!quiet && emit('aim')">
           {{ first ? `${first.fractured ? "✦ " : ""}${t.startModLabel(first)}` : tr("＋ 始まりの MOD を選ぶ", "+ Pick the starting mods") }}
         </button>
-        <p v-if="startRest" data-tree-start-rest class="truncate text-[12px] opacity-70" :title="startRest" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }">{{ startRest }}</p>
+        <p v-if="startRest" data-tree-start-rest class="truncate text-[12px] opacity-70" :title="t.baseCost.value?.best ? `${tr('一番安い始め方', 'Cheapest start')}: ${t.baseCost.value.best.label} · ${startRest}` : startRest" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }">{{ startRest }}</p>
       </template>
       <button v-else-if="box.out === 'hit'" type="button" class="nodrag block w-[calc(100%-14px)] truncate text-left text-[13px] hover:underline" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :class="[box.aim ? 'text-[#c8c8ff]' : 'text-amber-300', quiet ? 'pointer-events-none' : '']" :title="t.aimLabel(box.aim)" @click.stop="!quiet && emit('aim')">
         {{ box.aim ? t.aimLabel(box.aim) : tr("＋ 付く MOD を選ぶ", "+ Pick the mod") }}

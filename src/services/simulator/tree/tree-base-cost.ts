@@ -17,7 +17,8 @@ export type TreeStartKind = Extract<SimStartKind, "white" | "four" | "fractured"
 export interface TreeBaseCost {
   /** 始め方ごとの「フラクチャー済みの始まりになるまで」の費用 (神。値段が無い・着かない時は null) と、比べから外す理由 */
   kinds: Array<{ k: TreeStartKind; label: string; cost: number | null; why: string | null }>;
-  best: { k: TreeStartKind; label: string; cost: number } | null;
+  /** short = 箱の 1 行に入る短い名前 (箱の幅で全文が切れた、10-22) */
+  best: { k: TreeStartKind; label: string; short: string; cost: number } | null;
   /** 比べられない時の理由 (✦ が無い・反対側が 2 つ以上) */
   note: string | null;
 }
@@ -61,5 +62,6 @@ export function treeBaseCost(data: PatchData, doc: TreeDoc, prices: TreeBasePric
   });
   const ok = kinds.filter((x): x is typeof x & { cost: number } => x.cost != null && !x.why);
   const best = ok.length ? ok.reduce((a, x) => (x.cost < a.cost ? x : a)) : null;
-  return { kinds, best: best ? { k: best.k, label: best.label, cost: best.cost } : null, note: sameSide ? tr("フラクチャーと同じ側の MOD は費用に入らない (③ と同じ)", "A mod on the fractured side isn't costed (as in step 3)") : null };
+  const short = (k: TreeStartKind): string => k === "fractured" ? tr("済みを買う", "buy fractured") : k === "four" ? tr("4 MOD 買い", "4-mod buy") : c.greater ? tr("白からグレーター", "white, Greater") : tr("白から増強", "white, Augment");
+  return { kinds, best: best ? { k: best.k, label: best.label, short: short(best.k), cost: best.cost } : null, note: sameSide ? tr("フラクチャーと同じ側の MOD は費用に入らない (③ と同じ)", "A mod on the fractured side isn't costed (as in step 3)") : null };
 }
