@@ -19,10 +19,14 @@ const CAT_MAX = 200;
 export interface Sample { item: StageItem; note: string | null }
 
 const tierNo = (m: StageMod): number => Number(/\d+/.exec(m.tierName)?.[0] ?? 99);
-/** 狙いが付いているか (同じ系統の MOD で、段が T 何以上) */
+/**
+ * 狙いが付いているか (同じ MOD か、同じ系統で効果の文も同じ MOD (エッセンス版・まとめ行の別の modId) で、段が T 何以上)。
+ * 系統だけで合わせると「スペルスキルのレベル」にミニオン・近接・投射物のスキルレベルが当たった (10-22 白紙から 13 通り組んだ #3、系統 IncreaseSocketedGemLevel)
+ */
 export function aimHeld(data: PatchData, item: StageItem, a: Aim): boolean {
-  const fam = data.mods.get(a.modId)?.family;
-  return [...item.prefixes, ...item.suffixes].some((m) => (m.modId === a.modId || (!!fam && m.family === fam)) && tierNo(m) <= a.tier);
+  const want = data.mods.get(a.modId);
+  const same = (m: StageMod): boolean => m.modId === a.modId || (!!want?.family && m.family === want.family && data.mods.get(m.modId)?.text === want.text);
+  return [...item.prefixes, ...item.suffixes].some((m) => same(m) && tierNo(m) <= a.tier);
 }
 /**
  * その箱の手で「当たり」と数える札。繰り返し (当たるまで) は、その箱の結果の当たりの箱の札だけで止める
