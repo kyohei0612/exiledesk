@@ -18,6 +18,7 @@ import StageRouteRunes from "./StageRouteRunes.vue";
 import { routeRunesFor, runePrep } from "../../services/craft-stage/route-runes";
 import { stageRuneIds } from "../../services/craft-stage/stage-core";
 import StageRouteLuck from "./StageRouteLuck.vue";
+import { hitItemOf, placeOnStage } from "./route-place";
 import { GRADE_KEY, raceOne, unpackRace, type Grade, type RaceRow, type RouteKind } from "../../services/craft-stage/route-race";
 import { fillModText } from "../../services/htc/mod-text";
 import { tierDisplayRanges } from "../../services/mods/stat-scale";
@@ -215,6 +216,20 @@ function next(sel: string): void { void nextTick(() => requestAnimationFrame(() 
  * (2026-10-19 点検: 手数の無い道で運試しを開けて、順位がいつも上位 1% になっていた)
  */
 const canLuck = (r: RaceRow): boolean => !r.off && r.tries.length > 0;
+/**
+ * 当たった形でクラフト台に戻る (道のカード・一番安い欄から。2026-10-22 オーナー「スパムしてクラフトに戻れるけど、付いた状態で戻れない」)。
+ * その道・等級で 1 人を当たるまで打ち、その形を置く (route-place.ts)。付かなければ何もしない
+ */
+const placeMiss = ref(false);
+const placeTitle = computed(() => tr("この道の一番安い等級で 1 人を当たるまで打ち、その形をクラフト台に置く (1 つ戻す・Ctrl+Z で置く前の形に戻る。スパムの手と費用は工程に入らない)", "Spam once with this route's cheapest grade until it hits and put that item on the craft stage (Undo / Ctrl+Z goes back to the item before; the spam uses and cost are not in the steps)"));
+function placeHit(r: RaceRow | null): void {
+  const tt = t.value;
+  if (!r || !tt || !canLuck(r)) return;
+  const it = hitItemOf(r, tt, ilvl.value, prep.value, fromItem.value);
+  track("routes:place", r.route);
+  if (it) placeOnStage(it, !!fromItem.value);
+  else placeMiss.value = true;
+}
 /** 道の中で一番安い、運試しができる等級 */
 const bestIn = (route: RouteKind): RaceRow | null => { const xs = ok.value.filter((r) => r.route === route && canLuck(r)); return xs.length ? xs.reduce((a, b) => (b.avgCost < a.avgCost ? b : a)) : null; };
 /** 運試しができる中で一番安い (一番安い欄の「運試し」) */
@@ -300,6 +315,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
             </div>
             <span class="flex shrink-0 flex-col items-stretch gap-1.5 max-md:w-full max-md:flex-row max-md:items-center max-md:[&>button]:flex-1">
             <button v-if="!busy && !luckOpen && bestLuck" type="button" data-route-luck-open class="g-btn-red" :title="tr(`この道の決まりで、${RUNS} 人と同じ始めの状態から自分でスパムして運を比べる`, `Spam it yourself with this route from the same start and compare your luck with the ${RUNS} people`)" @click="openLuck(bestLuck)">{{ tr("運試し", "Luck test") }}</button>
+            <button v-if="!busy && bestLuck" type="button" data-route-place class="g-btn sm" :title="placeTitle" @click="placeHit(bestLuck)">{{ tr("当たった形でクラフト台に戻る", "Back to the craft stage with a hit") }}</button>
             <button v-if="!busy" type="button" data-route-recompute class="g-btn sm" :title="tr(`別の ${RUNS} 人でもう一度全部の道を計算する (乱数を変える)`, `Run all routes again with a different ${RUNS} people (new random seed)`)" @click="recompute">{{ tr("再計算", "Recompute") }}</button>
             <span v-if="!busy && round > 1" class="text-center text-[10px] tabular-nums text-[var(--exile-color-text-tertiary)]">{{ tr(`${round} 回目の ${RUNS} 人`, `${RUNS} people, run ${round}`) }}</span>
             </span>
@@ -376,7 +392,9 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
           <!-- この道で運試し (道の中で一番安い等級。運試しの欄は一番安い欄の下に出す) -->
           <p v-if="!offRoute(r.route) && !busy && bestIn(r.route)" class="mt-auto pt-3 text-center">
             <button type="button" :data-route-luck-card="r.route" class="g-btn sm" :class="luckRow === bestIn(r.route) ? 'on' : ''" :title="tr(`${tr(r.ja, r.en)}の一番安い等級 (${tr(...GRADE_JA[bestIn(r.route)!.grade])}) で運試し`, `Luck test with ${r.en} at its cheapest grade (${GRADE_JA[bestIn(r.route)!.grade][1]})`)" @click="openLuck(bestIn(r.route))">{{ tr("運試し", "Luck test") }}</button>
+            <button type="button" :data-route-place-card="r.route" class="g-btn sm ml-2" :title="placeTitle" @click="placeHit(bestIn(r.route))">{{ tr("当たった形でクラフト台に戻る", "Back to the craft stage with a hit") }}</button>
           </p>
+          <p v-if="placeMiss && !busy && bestIn(r.route)" class="mt-1 text-center text-[11px] text-rose-300">{{ tr("上限の手数までに付かなかった。もう一度押して", "Didn't hit within the use cap. Press again") }}</p>
         </article>
       </div>
 

@@ -22,11 +22,8 @@ import { logRecord } from "../../utils/log-record";
 import { isEn, tr } from "../../i18n/lang";
 import type { StageItem, StageMod } from "../../services/craft-stage/types";
 import StageItemCard from "./StageItemCard.vue";
-import { fullSockets } from "../../state/emulator/stage-steps";
-import { startFrom } from "../../services/craft-stage/run-plan";
-import type { Force } from "../../services/craft-stage/stage-core";
-import { routesLuck, routesOpen, routesTarget } from "../../state/web-page";
 import { revealNext } from "../../utils/keep-place";
+import { placeOnStage } from "./route-place";
 
 /** options = 同じ道の等級 (着いた物。タブと比べに出す。2026-10-19 オーナー「等級も選べるように、カオススパム計算機の形で」) */
 const props = defineProps<{ row: RaceRow; options: RaceRow[]; /** 当たり (どれか 1 つが付いたら止める) と、その名前 (同じ順) */ targets: readonly RaceTarget[]; aimLabels: readonly string[]; ilvl: number; label: string; routeName: string; /** 嵌めるルーン (始めのアイテムの下ごしらえ) */ prep?: RoutePrep; runes: readonly string[]; /** 始めのアイテム (今のクラフトのアイテムから。route-race.ts の from。シェアは出さない) */ from?: StageItem | null; /** 全部の道の結果 (シェアに入れる) */ rows: RaceRow[] }>();
@@ -177,24 +174,10 @@ const shareText = computed(() => {
   );
 });
 /**
- * ここから開始 / 当たった形でクラフト台に戻る (2026-10-19 オーナー「ここから始めるボタンが無い」): この欄のアイテムをクラフト台に置いて、ページを閉じる。
- * クラフト台の形が変わるのはこのボタンだけ (「← クラフトへ戻る」は開いた時のまま。2026-10-22 オーナー)。前の形は 1 つ戻す (Ctrl+Z) で工程ごと戻る (craftStage.place)。
- * 運試しの手はクラフト台の工程に入れないので、工程・費用は 0 から (始めの MOD として置く)
+ * ここから開始 / 当たった形でクラフト台に戻る (2026-10-19 オーナー「ここから始めるボタンが無い」): この欄のアイテムをクラフト台に置いて、ページを閉じる (route-place.ts)
  */
 function startHere(): void {
-  const it = item.value, d = s.data.value;
-  if (!it || !d) return;
-  const forces: Force[] = [...it.prefixes, ...it.suffixes].map((m) => ({ mod: m.modId, tier: m.tierName, values: m.values, ...(m.fractured ? { fractured: true } : {}), ...(m.desecrated ? { desecrated: true } : {}) }));
-  // 今のアイテムから始めた時は、アイテムを丸ごと置く (フラクチャー・品質・ルーン・暗黙の値もそのまま)
-  s.place(it, forces);
-  if (!props.from) {
-    // 決まりの形からの時は始めの MOD から組み直す (値を振る種は再生と同じ seed − 1)。嵌めたルーンもそのまま (ソケットの数とオーグメント)
-    const placed = fullSockets(startFrom(d, s.base.value, it.itemLevel, { mods: forces, rarity: it.rarity }, s.seed.value - 1));
-    s.item.value = { ...placed, rollSeed: s.seed.value - 1, ...(it.augments?.length ? { sockets: Math.max(placed.sockets ?? 0, it.sockets ?? 0), augments: it.augments } : {}) };
-  }
-  routesLuck.value = false;
-  routesTarget.value = null;
-  routesOpen.value = false;
+  if (item.value) placeOnStage(item.value, !!props.from);
 }
 /** ここから開始の説明 */
 const startTitle = computed(() => tr("このアイテムをクラフト台に置いて続きを打つ (1 つ戻す・Ctrl+Z で置く前の形に戻る。運試しの手と費用は工程に入らない)", "Put this item on the craft stage and keep crafting (Undo / Ctrl+Z goes back to the item before; the luck-test uses and cost are not in the steps)"));
