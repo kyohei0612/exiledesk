@@ -38,3 +38,8 @@ const got = await fetch(`${LIVE}/tree/${id}`).then((x) => (x.ok ? x.json() : nul
 
 ## X のカード (案)
 - 画面は 1 枚の HTML (SPA) なので、?page=sim-tree&r= のままでは木の名前をカードに出せない。案: 共有の URL を `exiledesk.com/t/<id>` にし、server/web (分析君) が `/t/*` で木の name を og:title にした小さな HTML を返して `/?page=sim-tree&r=<id>` へ移す (スパムの /s/<id> と同じ形、run_worker_first に `/t/*` を足す)。
+
+## 開発版 (web-dev) から本番に触らずに使う形 (案、10-22。オーナー「シミュレーターはまだ開発版」で本番には出さない。作るのは指示の後)
+- 今: 開発用の別の worker は無い (wrangler.sim.jsonc も name は本番と同じ exiledesk-live)。開発版の Web も本番のサーバー (src/web/config.ts の WEB_API_BASE、VITE_WEB_API で替えられる) を見ている。
+1. **おすすめ**: 開発用の別の worker (仮 exiledesk-live-dev、workers.dev だけ・cron なし) + 別の D1 (仮 exiledesk-dev、tree_shares だけ) を作る。開発版のビルドはツリーの保存・取り出しだけその住所を見る (ほかの /boot.json・/log は本番のまま)。オーナーが開発版で共有を試せ、本番の worker・D1 は触らない。作るのは分析君 (Cloudflare に worker と D1 を 1 つずつ足すので OK が要る)、画面の住所の切り替えはシミュ部長。
+2. 手元の wrangler dev (手元の D1) だけで、シミュ部長が手元の画面 (1440) から作る。何も作らないが、開発版 (web-dev) からは届かないのでオーナーは開発版で試せない。
