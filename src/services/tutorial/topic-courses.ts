@@ -10,7 +10,7 @@ import type { JaEn } from "./quiz-tutorials";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import type { StageItem } from "../craft-stage/types";
 import type { Force } from "../craft-stage/stage-core";
-import { essenceShelf } from "../../state/emulator/craft-stage-shelf";
+import { essenceShelf } from "../../state/stage/craft-stage-shelf";
 import { ADV_COURSES } from "./topic-courses-adv";
 import { GUIDE_COURSES } from "./topic-courses-guide";
 import { S, H, ALWAYS } from "./topic-steps";

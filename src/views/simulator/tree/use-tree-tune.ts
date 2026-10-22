@@ -8,7 +8,7 @@ import { onBeforeUnmount, watch, type Ref } from "vue";
 import { setStageTuning } from "../../../services/craft-stage/engine";
 import { tuneOf, tuningOf, type TreeTune } from "../../../services/simulator/tree/tree-tune";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { catalysingPerPct, modWeights, resetModWeights, sanctifyK, setCatalysingPerPct, setModWeight, setSanctifyK } from "../../../state/emulator/stage-tuning";
+import { catalysingPerPct, modWeights, resetModWeights, sanctifyK, setCatalysingPerPct, setModWeight, setSanctifyK } from "../../../state/stage/stage-tuning";
 
 export function useTreeTune(doc: Ref<TreeDoc>, edit: (f: (d: TreeDoc) => void) => void): void {
   const keep = { cat: catalysingPerPct.value, san: sanctifyK.value, w: { ...modWeights.value } };

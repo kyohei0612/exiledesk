@@ -16,7 +16,7 @@ import { ALL_OMEN_SPECS } from "../src/services/craft-stage/spec/run-spec";
 import { ORB_SPECS } from "../src/services/craft-stage/spec/orb-specs";
 import { BONE_SPECS, ANNUL_SPEC } from "../src/services/craft-stage/spec/desecrate-specs";
 import { ARTIFICER_SPEC, CATALYST_SPECS, QUALITY_SPECS } from "../src/services/craft-stage/spec/other-specs";
-import { essenceShelf } from "../src/state/emulator/craft-stage-shelf";
+import { essenceShelf } from "../src/state/stage/craft-stage-shelf";
 import { runeKeys } from "../src/services/craft-stage/stage-runes";
 import type { StageItem } from "../src/services/craft-stage/types";
 

@@ -6,7 +6,7 @@
  */
 import { ref, type Ref } from "vue";
 import { craftStage as s } from "../../state/craft-stage";
-import { provideShelf, simHidden } from "../../state/emulator/shelf-context";
+import { provideShelf, simHidden } from "../../state/stage/shelf-context";
 import { type StageItem } from "../../services/craft-stage/engine";
 import { canUse } from "../../services/craft-stage/engine-sim";
 import { tr } from "../../i18n/lang";

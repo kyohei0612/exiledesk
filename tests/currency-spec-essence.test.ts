@@ -10,7 +10,7 @@ import { mulberry32 } from "../src/services/htc/rng";
 import { applyBySpec, ALL_OMEN_SPECS } from "../src/services/craft-stage/spec/run-spec";
 import { ALLOY_SPEC, ESSENCE_OMEN_SPECS, ESSENCE_SPEC, essenceLevelOfKey, isAlloyKey, PERFECT_ESSENCE_SPEC } from "../src/services/craft-stage/spec/essence-specs";
 import { ESSENCE_KEYS } from "../src/services/htc/essence-key-table";
-import { essenceShelf } from "../src/state/emulator/craft-stage-shelf";
+import { essenceShelf } from "../src/state/stage/craft-stage-shelf";
 import { OMEN_FOR } from "../src/services/craft-stage/omens";
 import HOVER_EN from "../src/i18n/currency-hover-en.json";
 import HOVER_JA from "../src/i18n/currency-hover-ja.json";

@@ -8,7 +8,7 @@ import { revealOffers } from "../../src/services/craft-stage/apply-desecrate";
 import { heldOdds } from "../../src/services/craft-stage/held-odds";
 import { freshItem } from "../../src/services/craft-stage/run-plan";
 import { allMods } from "../../src/services/craft-stage/stage-core";
-import { essenceShelf } from "../../src/state/emulator/craft-stage-shelf";
+import { essenceShelf } from "../../src/state/stage/craft-stage-shelf";
 import { mulberry32 } from "../../src/services/htc/rng";
 import type { StageItem } from "../../src/services/craft-stage/types";
 

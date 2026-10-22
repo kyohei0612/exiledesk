@@ -9,16 +9,16 @@
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount } from "vue";
-import { isTouchOnly } from "../../utils/use-phone";
-import { hoverStack } from "../../state/hover-stack";
-import { iconOf, nameOf, priceOf } from "../../state/craft-stage";
-import { displayCurrency } from "../../state/display-currency";
-import { toCss } from "../../utils/zoom";
-import { shelfTag } from "../../state/emulator/craft-stage-help";
-import { useShelf } from "../../state/emulator/shelf-context";
-import { omenNote } from "../../services/craft-stage/omens";
-import { omenBlock } from "../../services/craft-stage/engine-emu";
-import { tr } from "../../i18n/lang";
+import { isTouchOnly } from "../../../utils/use-phone";
+import { hoverStack } from "../../../state/hover-stack";
+import { iconOf, nameOf, priceOf } from "../../../state/craft-stage";
+import { displayCurrency } from "../../../state/display-currency";
+import { toCss } from "../../../utils/zoom";
+import { shelfTag } from "../../../state/stage/craft-stage-help";
+import { useShelf } from "../../../state/stage/shelf-context";
+import { omenNote } from "../../../services/craft-stage/omens";
+import { omenBlock } from "../../../services/craft-stage/engine";
+import { tr } from "../../../i18n/lang";
 
 /** label: 名前の上書き (エッセンスを種類でまとめたアイコン)。nobadge: 段の札を出さない */
 const props = defineProps<{ k: string; omen?: boolean; label?: string; nobadge?: boolean; corner?: string }>();

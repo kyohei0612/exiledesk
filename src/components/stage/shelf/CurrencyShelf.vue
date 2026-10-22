@@ -8,21 +8,21 @@
   並べる物・名前・値段は [[craft-stage-shelf.ts]]、1 つの見た目は [[ShelfButton.vue]]。
 -->
 <script setup lang="ts">
-import { socketCapOf } from "../../services/craft-stage/engine";
-import { emotionKeysFor } from "../../services/craft-stage/apply-emotion";
-import { scrollBoxOf } from "../../utils/keep-place";
-import { hoverStack } from "../../state/hover-stack";
-import { nameOf } from "../../state/craft-stage";
-import { toCss } from "../../utils/zoom";
-import { GAP_X, GAP_Y } from "../../utils/anchor-place";
+import { socketCapOf } from "../../../services/craft-stage/engine";
+import { emotionKeysFor } from "../../../services/craft-stage/apply-emotion";
+import { scrollBoxOf } from "../../../utils/keep-place";
+import { hoverStack } from "../../../state/hover-stack";
+import { nameOf } from "../../../state/craft-stage";
+import { toCss } from "../../../utils/zoom";
+import { GAP_X, GAP_Y } from "../../../utils/anchor-place";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { useDismiss } from "../../utils/use-dismiss";
+import { useDismiss } from "../../../utils/use-dismiss";
 import ShelfButton from "./ShelfButton.vue";
 import StageOmenTune from "./StageOmenTune.vue";
-import Disclosure from "../../components/ui/Disclosure.vue";
-import { useShelf } from "../../state/emulator/shelf-context";
-import { bonesFor, CRAFT_RUNE_KEYS, essenceShelf, OMEN_GROUPS, ORBS, runesFor } from "../../state/emulator/craft-stage-shelf";
-import { tr } from "../../i18n/lang";
+import Disclosure from "../../ui/Disclosure.vue";
+import { useShelf } from "../../../state/stage/shelf-context";
+import { bonesFor, CRAFT_RUNE_KEYS, essenceShelf, OMEN_GROUPS, ORBS, runesFor } from "../../../state/stage/craft-stage-shelf";
+import { tr } from "../../../i18n/lang";
 
 const emit = defineEmits<{ hold: [key: string] }>();
 type ShelfTab = "usable" | "orb" | "essence" | "rune" | "omen";

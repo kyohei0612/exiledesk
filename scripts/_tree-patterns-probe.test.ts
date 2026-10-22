@@ -25,9 +25,9 @@ import { linkSameShape, MATCH, matchItem, outBoxOf, RESTART, runTree, settle, sh
 import { joinSameShape } from "../src/views/simulator/tree/tree-merge";
 import { checkTree } from "../src/services/simulator/tree/tree-check";
 import { withTreeTune } from "../src/services/simulator/tree/tree-tune";
-import { bonesFor, essenceShelf, ORBS } from "../src/state/emulator/craft-stage-shelf";
-import { simHidden } from "../src/state/emulator/shelf-context";
-import { heldOmensOf } from "../src/views/craft-stage/held-omens";
+import { bonesFor, essenceShelf, ORBS } from "../src/state/stage/craft-stage-shelf";
+import { simHidden } from "../src/state/stage/shelf-context";
+import { heldOmensOf } from "../src/components/stage/shelf/held-omens";
 
 const EX: Record<string, number> = { chaos: 71.892, annul: 313.204, exalt: 1, exalt_greater: 13.383, exalt_perfect: 2045.741, OmenofDextralExaltation: 35.576, OmenofSinistralExaltation: 85.83 };
 const zero = new Set<string>();

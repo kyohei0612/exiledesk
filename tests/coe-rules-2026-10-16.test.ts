@@ -73,7 +73,7 @@ describe("Craft of Exile に合わせた決まり (2026-10-16)", () => {
   });
 
   it("4. アビサルロードの紋章がある時の骨は印と入れ替わり、左右のネクロマンシーのお告げは使わない (減らない。2026-10-17 オーナー)", async () => {
-    const { essenceShelf } = await import("../src/state/emulator/craft-stage-shelf");
+    const { essenceShelf } = await import("../src/state/stage/craft-stage-shelf");
     const it = rareWhere((x) => room(x, "prefix") && room(x, "suffix"));
     const key = essenceShelf(data, it).find((g) => g.kind === "the Abyss")!.keys.find((k) => k.startsWith("essence:perfect:"))!;
     const marked = applyCurrency(data, it, key, mulberry32(3));
@@ -136,7 +136,7 @@ describe("Craft of Exile に合わせた決まり (2026-10-16)", () => {
   });
 
   it("15. 深淵のエッセンスは未発現の冒涜 MOD があれば打てて印に入れ替わり、発現済みだと打てない (2026-10-16 オーナーがゲームで確認)", async () => {
-    const { essenceShelf } = await import("../src/state/emulator/craft-stage-shelf");
+    const { essenceShelf } = await import("../src/state/stage/craft-stage-shelf");
     const { resolveEssence, ABYSS_ESSENCE_SPEC } = await import("../src/services/craft-stage/spec/essence-specs");
     const it = rareWhere((x) => room(x, "suffix"));
     const key = essenceShelf(data, it).flatMap((g) => g.keys).find((k) => resolveEssence(data, it, k)?.spec === ABYSS_ESSENCE_SPEC);

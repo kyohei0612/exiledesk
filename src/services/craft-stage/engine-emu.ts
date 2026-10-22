@@ -9,10 +9,6 @@
 // 持っている物を打つ前に光らせる物 (変わる候補の MOD と付く空き)
 export type { UsePreview } from "./for-emu/preview";
 export { previewUse } from "./for-emu/preview";
-// そのお告げを今掛けられるか (掛けると打てない・意味が無いお告げの理由。お告げの欄の灰色)
-export { omenBlock } from "./omen-block";
-// お告げの下の設定 (触媒の高貴の品質 1% ごとの倍率) と、重みを直せる MOD の既定の重み・推定で埋めた印
-export { tunedCatalysingMultiplier, CATALYSING_PER_PCT, defaultWeightOf } from "./stage-tuning";
+// 重みを直せる MOD の既定の重み・推定で埋めた印 (MOD 一覧の重みの札)
+export { defaultWeightOf } from "./stage-tuning";
 export { OVERRIDDEN } from "../htc/weight-overrides";
-// 聖別の数値の下限・上限 (聖別の帯)
-export { SANCTIFY_MIN, SANCTIFY_MAX } from "./apply-vaal";

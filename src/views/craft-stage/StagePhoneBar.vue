@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
-import { stageAdds, stageHelp } from "../../state/emulator/craft-stage-help";
+import { stageAdds, stageHelp } from "../../state/stage/craft-stage-help";
 import { tr } from "../../i18n/lang";
 import { stageModText } from "./base-values";
 import Disclosure from "../../components/ui/Disclosure.vue";

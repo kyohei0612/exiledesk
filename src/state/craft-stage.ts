@@ -48,7 +48,7 @@ import type { Force } from "../services/craft-stage/stage-core";
 import { mulberry32 } from "../services/htc/rng";
 import { logRecord } from "../utils/log-record";
 import { marketStore } from "./market-store";
-import { BONES, CATALYSTS, iconOfKey, nameOfKey, OMEN_GROUPS, ORBS, priceOfKey } from "./emulator/craft-stage-shelf";
+import { BONES, CATALYSTS, iconOfKey, nameOfKey, OMEN_GROUPS, ORBS, priceOfKey } from "./stage/craft-stage-shelf";
 import type { PatchData } from "../vendor/poe2htc/engine/types";
 import type { StageItem, StageMod } from "../services/craft-stage/types";
 import type { CraftStagePlan } from "../services/craft-stage/contract";

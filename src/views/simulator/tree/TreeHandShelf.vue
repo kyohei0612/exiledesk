@@ -10,8 +10,8 @@
 import { computed, onBeforeUnmount, onMounted, ref, toRaw } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../../state/craft-stage";
 import StageItemCard from "../../craft-stage/StageItemCard.vue";
-import CurrencyShelf from "../../craft-stage/CurrencyShelf.vue";
-import HeldOmens from "../../craft-stage/HeldOmens.vue";
+import CurrencyShelf from "../../../components/stage/shelf/CurrencyShelf.vue";
+import HeldOmens from "../../../components/stage/shelf/HeldOmens.vue";
 import { omensAllowedFor } from "../../../services/craft-stage/engine";
 import { mulberry32, omensFor, stepOutcomes } from "../../../services/craft-stage/engine";
 import { aimHeldOn, catalystForMod, catalystFull, effectOf, fillCatalyst, reachableAims, tierNoOf } from "../../../services/craft-stage/engine-sim";

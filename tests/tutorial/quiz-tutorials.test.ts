@@ -5,7 +5,7 @@ import { loadPatch } from "../helpers/patch";
 import { runQuiz } from "../../src/services/simulator/quiz-recipe";
 import { QUIZ_TUTORIALS, type TutorialRule } from "../../src/services/tutorial/quiz-tutorials";
 import { autoAdvance, playChoice, questionOf, startTutorial } from "../../src/services/tutorial/quiz-tutorial-run";
-import { nameOfKey } from "../../src/state/emulator/craft-stage-shelf";
+import { nameOfKey } from "../../src/state/stage/craft-stage-shelf";
 import itemsJa from "../../src/i18n/items-ja-client.json";
 
 const data = loadPatch();

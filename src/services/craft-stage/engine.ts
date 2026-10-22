@@ -20,6 +20,8 @@ export { freshItem, startFrom, startItem, playStep, playPlan, runPlan, splitOmen
 // omensAllowedFor = その手に付けられるお告げ (骨には後の発現の反響も)
 export { applyCurrency, kindOf, omensFor, omensAllowedFor } from "./apply-currency";
 export { revealOffers, unrevealedOf } from "./apply-desecrate";
+// そのお告げを今掛けられるか (掛けると打てない・意味が無いお告げの理由。棚のお告げの欄の灰色、棚は共通の部品なので核)
+export { omenBlock } from "./omen-block";
 
 // アイテムの今を読む
 export { allMods, listOf, room, limitOf, effectiveCls, maxQualityOf, catalystOf, SIDES, sideOfMod, unfracturable } from "./stage-core";
@@ -96,7 +98,9 @@ export { anointNotables, anointOfLine } from "../mods/anoint";
 
 // 使う人が決める設定 (触媒の高貴の品質 1% ごとの倍率・聖別の倍率。null = 既定。打つ処理と確率の表が同じ値を読む)
 export type { StageTuning } from "./stage-tuning";
-export { stageTuning, setStageTuning } from "./stage-tuning";
+export { stageTuning, setStageTuning, tunedCatalysingMultiplier, CATALYSING_PER_PCT } from "./stage-tuning";
+// 聖別の数値の下限・上限 (棚のお告げの下の設定・聖別の帯)
+export { SANCTIFY_MIN, SANCTIFY_MAX } from "./apply-vaal";
 // 文
 export { fillModText } from "../htc/mod-text";
 export { jaUniqueText } from "../mods/unique-mod-ja";
