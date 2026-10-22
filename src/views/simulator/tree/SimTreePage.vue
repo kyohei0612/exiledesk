@@ -266,7 +266,7 @@ const { issues, issuesOpen, issuesFold, checking, progress, onCheck, issueOf } =
 const tr100 = useTreeRun(doc, () => t.baseCost.value?.best?.cost ?? 0);
 const busy = computed((): { text: string; n?: number; of?: number } | null => {
   if (!s.data.value) return { text: tr("読み込み中", "Loading") };
-  if (tr100.running.value) return { text: tr("回している", "Running"), n: tr100.n.value, of: RUN_N };
+  if (tr100.running.value) return { text: tr("回している", "Running"), n: tr100.result.value?.n ?? 0, of: RUN_N };
   const r = rv.run.value;
   return r ? { text: tr("読み込み中", "Loading"), n: r.n, of: r.of } : null;
 });

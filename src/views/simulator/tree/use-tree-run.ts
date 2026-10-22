@@ -19,17 +19,16 @@ const PACE_MS = 60;
 export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number) {
   const result = ref<TreeRunResult | null>(null);
   const running = ref(false);
-  const n = ref(0);
   /** 層を出しているか (隠すと今の組む画面のまま) */
   const shown = ref(true);
   let token = 0;
   // 組み替えたら結果を消す (回している途中なら止める)
-  watch(() => routeKeyOf(doc.value), () => { token++; result.value = null; running.value = false; n.value = 0; });
+  watch(() => routeKeyOf(doc.value), () => { token++; result.value = null; running.value = false; });
   async function run(): Promise<void> {
     const data = s.data.value;
     if (!data || running.value) return;
     const my = ++token;
-    running.value = true; shown.value = true; n.value = 0; result.value = null;
+    running.value = true; shown.value = true; result.value = null;
     const d = doc.value;
     // 相場は高貴建て → 神に直す (tree-base-cost と同じ。そのまま渡すと 2000 神の打ち止めに当たって完成 8% になった、10-22 開発版で見た)
     const div = priceOf("divine") || 1;
@@ -40,7 +39,6 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number) {
         const r = withTreeTune(d, () => g.next());
         if (my !== token) return;
         if (r.done) { result.value = r.value; break; }
-        n.value = r.value;
         const wait = r.value % EVERY ? 0 : Math.max(0, PACE_MS - (performance.now() - t0));
         await new Promise((res) => setTimeout(res, wait));
         if (!(r.value % EVERY)) t0 = performance.now();
@@ -49,5 +47,5 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number) {
   }
   /** 止まり・打ち止めの箱 (多い順) */
   const stuckBoxes = computed(() => Object.entries(result.value?.stuckAt ?? {}).sort((a, z) => z[1] - a[1]));
-  return { result, running, n, shown, run, stuckBoxes };
+  return { result, running, shown, run, stuckBoxes };
 }

@@ -16,9 +16,10 @@ const div = (x: number): string => (Number.isFinite(x) ? (x >= 100 ? x.toFixed(0
 
 <template>
   <button type="button" data-tree-run class="g-btn sm shrink-0" :disabled="running || !ready" :title="tr(`${RUN_N} 人をエンジンで回し、通った道と人数を木の上に重ねて出す (値段は始まりの箱の値段と今の相場)`, `Play ${RUN_N} runs with the engine and overlay the paths taken (prices: start box + current market)`)" @click="emit('run')">{{ tr(`${RUN_N} 人回す`, `Run ${RUN_N}`) }}</button>
-  <span data-tree-run-sum class="min-w-0 truncate tabular-nums" :class="result && !running ? '' : 'opacity-70'">
-    <template v-if="result">{{ tr(`${result.n} 人回した時: 1 個あたり ${div(result.perItem)} 神 · 完成 ${pct(result)}%`, `${result.n} runs: ${div(result.perItem)} div per item · ${pct(result)}% done`) }}</template>
-    <template v-else>{{ tr(`${RUN_N} 人回した時: 1 個あたり — 神 · 完成 —%`, `${RUN_N} runs: — div per item · —% done`) }}</template>
+  <!-- 一番大事な数字なので切らない (縮めるのはレシピの名前、10-22 金の指輪の録画で完成 % が … で切れた) -->
+  <span data-tree-run-sum class="shrink-0 whitespace-nowrap tabular-nums" :class="result && !running ? '' : 'opacity-70'">
+    <template v-if="result">{{ tr(`${result.n} 人: 1 個 ${div(result.perItem)} 神 · 完成 ${pct(result)}%`, `${result.n} runs: ${div(result.perItem)} div/item · ${pct(result)}% done`) }}</template>
+    <template v-else>{{ tr(`${RUN_N} 人: 1 個 — 神 · 完成 —%`, `${RUN_N} runs: — div/item · —% done`) }}</template>
   </span>
   <button v-for="[id, n] in running ? [] : stuck.slice(0, 1)" :key="id" type="button" data-tree-run-stuck-sum class="shrink-0 rounded-full bg-rose-700/90 px-2 text-[12px] font-bold text-white hover:bg-rose-600" :title="tr('止まった箱へ寄る', 'Go to the stuck box')" @click="emit('go', id)">{{ tr(`止まり ${result?.stuck ?? n} 人`, `${result?.stuck ?? n} stuck`) }}</button>
   <span v-if="result && !running && result.capped" class="shrink-0 rounded-full bg-rose-900/80 px-2 text-[12px] text-rose-100">{{ tr(`打ち止め ${result.capped} 人`, `${result.capped} capped`) }}</span>
