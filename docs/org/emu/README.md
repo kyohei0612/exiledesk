@@ -15,8 +15,9 @@
 10. 1 ファイル 500 行まで。
 
 ## 地図
-- 画面 src/views/craft-stage/: CraftStage.vue (入口)、棚 CurrencyShelf・ShelfButton・StageCurrencyCard・HeldOmens (お告げの枠、許しはエンジンの omensAllowedFor)、アイテム StageItemCard・StageItemMini、MOD StageModList・ModAddPicker、工程 StageHistory、StageForesight・RevealPanel・StageFracturePicker・StageQualityBar・StageSanctifyBar・StageOmenTune・StageWeightEdit・StageBasePicker/Page・StageSettings・StagePhoneBar。狙う StageAimPanel・StageAimPicker。スパム StageRoutes*・StageRouteLuck・StageRouteRunes・use-spam-share.ts。
-- 状態 src/state/emulator/: craft-stage-shelf・shelf-context・aim-state・stage-steps・stage-extra・craft-stage-help*・spam-share-open。
-- シミュの画面もこの棚・MOD 一覧の部品を使っている (use-sim-shelf・TreeHandShelf など)。形を変える時はブラックに 1 行 (シミュ部長に知らせる)。
+- 画面 src/views/craft-stage/: CraftStage.vue (入口)、アイテム StageItemMini・StageCurrencyCard、工程 StageHistory、StageForesight・RevealPanel・StageQualityBar・StageSanctifyBar・StageBasePicker/Page・use-stage-base・StageSettings・StagePhoneBar。狙う StageAimPanel・StageAimPicker。スパム StageRoutes*・StageRouteLuck・StageRouteRunes・route-place・use-spam-share。
+- 状態 src/state/emulator/: aim-state・stage-extra・spam-share-open。
+- 共通管理 for-share (ジン部長だけが直す、10-23 に移した): 棚 src/components/for-share/shelf (CurrencyShelf・ShelfButton・HeldOmens・StageOmenTune)、アイテムのカード item (StageItemCard・base-values)、MOD 一覧 mod-list (StageModList・ModAddPicker・StageWeightEdit)、use-stage-fx、状態 src/state/for-share (craft-stage-shelf・shelf-context・stage-steps・stage-tuning・craft-stage-help*)。シミュの画面も使う。直したい時はブラック経由でジン部長に。
+- 入口: 核 engine.ts、エミュの要望の物 engine-emu.ts (今は previewUse だけ、中身は services/craft-stage/for-emu/)。
 - 前の記録 (ジン部長の時代の画面の仕事) は docs/org/emulator/todo.md・notes/。画面の残りはここの todo.md に移す。
 - 決めた事: docs/decisions/001-craft-stage.md、メモ craft-stage-feature・ui-one-frame-rule・ui-no-break-rules・feedback-basic-flow・feedback-minimal-text-ui・game-ui-art-direction・web-phone-layout・chaos-spam-and-sfx。
