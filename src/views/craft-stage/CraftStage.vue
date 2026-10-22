@@ -35,7 +35,6 @@ import StageForesight from "./StageForesight.vue";
 import StageBasePage from "./StageBasePage.vue";
 import { PAGES_ON, basePage, baseUnpicked, openRoutes } from "../../state/web-page"; // Web のページ (ベース選び。web/page.ts)
 import { openBasePage, openTreePage } from "../../web/page";
-import { useTree } from "../simulator/tree/use-tree";
 import StageAimPicker from "./StageAimPicker.vue";
 import CurrencyShelf from "./CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
@@ -252,16 +251,10 @@ const gemCorrupt = computed(() => GEM_CORRUPT_SHOWN && !inApp && gemCorruptOn.va
  * 作り途中の中身は消さない (同じベースを押す・「← クラフトへ戻る」で、前の工程のページに戻る)。まだベースが無い時はベース選びが自分で出る
  */
 /**
- * シミュレーターの入口 (開発版だけ、オーナー 10-22「ベース → アイテムレベル (適正) → ツリー」): ベースのページの「シミュレーター」で入ったら、
- * まずベースを選ばせ (simPicked を下ろすとベースのページが出る)、選んだらそのベースの白紙のクラフトの道 (ツリー) を開く。アイテムレベルの適正はツリーの始まりの箱
+ * シミュレーターはツリーのページだけ (開発版だけ、オーナー 10-22「ツリー特化」): 旧シミュレーターの mode "sim" (ベースのページの「シミュレーター」タブ) に入ったら、
+ * クラフトの道 (ツリー) を開く。白紙のツリーなら始まりの箱でまずベースを選ぶ (use-tree の takeAskBase)、アイテムレベルの適正もそこ
  */
-watch(() => s.mode.value, (m) => { if (m === "sim" && !SIM_LOCKED) s.simPicked.value = false; }, { immediate: true });
-watch(() => s.mode.value === "sim" && s.simPicked.value, (go) => {
-  if (!go || SIM_LOCKED) return;
-  s.mode.value = "hand";
-  useTree().startTreeWith(s.base.value, s.itemLevel.value);
-  openTreePage();
-});
+watch(() => s.mode.value, (m) => { if (m === "sim" && !SIM_LOCKED) { s.mode.value = "hand"; openTreePage(); } }, { immediate: true });
 function pickMode(m: (typeof MODE_TABS)[number][0]): void {
   s.hold(null); endLesson(); s.mode.value = m; setGemCorrupt(false);
   if (m === "sim" && PAGES_ON && s.simPicked.value) openBasePage();

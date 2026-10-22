@@ -6,6 +6,7 @@
 import { computed, onMounted, ref } from "vue";
 import BaseCatalog from "../../../components/items/BaseCatalog.vue";
 import NumStep from "../../../components/NumStep.vue";
+import HelpTip from "../../../components/ui/HelpTip.vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { tr } from "../../../i18n/lang";
@@ -58,7 +59,8 @@ function apply(en: string): void {
         <button type="button" class="g-btn sm" @click="emit('close')">{{ tr("閉じる", "Close") }}</button>
       </div>
       <label class="flex items-center gap-2 text-[13px]">
-        <span class="flex-1">{{ tr("アイテムレベル", "Item level") }}<span v-if="t.doc.value.ilvlFit" class="ml-1 text-[12px] text-amber-200">{{ tr(`${t.doc.value.itemLevel} (適正)`, `${t.doc.value.itemLevel} (fit)`) }}</span></span>
+        <span class="flex flex-1 items-center gap-1">{{ tr("アイテムレベル", "Item level") }}<HelpTip :text="tr('適正 = このツリーの狙い (当たりの箱・始まりの MOD・欲しい MOD のメモ) の段が全部付く一番低いアイテムレベル。狙いを足す・替えるたびに自動で変わる (新しいツリーは適正から)。数字を入れるとその数で決まり、適正は外れる。もう一度「適正」を押すと自動に戻る', 'Fit = the lowest item level where every target tier in this tree (hit boxes, starting mods, wanted-mod notes) can roll. It updates as you add or change targets (new trees start on Fit). Typing a number sets it and turns Fit off; press “Fit” again to go back to automatic')" /></span>
+        <!-- 左端に適正、数字は常に出す (適正の間は自動の値)。数字を触ったらその数で決まり、適正は外れる (オーナー 10-22) -->
         <button type="button" data-tree-ilvl-fit class="g-tab !min-h-[28px] !px-2.5 !text-[12px]" :class="t.doc.value.ilvlFit ? 'on' : ''" :title="tr('狙いの MOD の段が全部付く一番低いレベルに自動で合わせる (狙いを足すたびに変わる)', 'Follow the lowest level where every target tier can roll (updates as you add targets)')" @click="useFit">{{ tr("適正", "Fit") }}</button>
         <NumStep :model-value="t.doc.value.ilvlFit ? t.doc.value.itemLevel : ilvl" integer width="w-20" :placeholder-value="t.doc.value.itemLevel" @update:model-value="setIlvl" />
       </label>
