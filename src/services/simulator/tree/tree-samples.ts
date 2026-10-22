@@ -23,10 +23,21 @@
  *   解析君 scripts/analysis/boots-res-ev.mjs・docs/org/math/notes/2026-10-23-boots-res.md の道 (100 人 29.87 神) を白紙から組み直した木
  *   (シミュ部長 9 本目、100 人 seed 1 で完成 100%・30.51 神・止まり 0、台本 scripts/_tree-split-probe)。
  *   上級の高貴 → 耐性のどれかが付くまでカオス → 分かれ目: 狙い 2 つ = 完成 / 狙い 0 = カオスへ / サフィックスの外れ 2 つ以上 = 消去 / それ以外 = 右側の高貴のお告げ + 上級の高貴
+ *
+ * robe-essence-split: 悪辣のローブ ilvl 82、✦ES T1 + 乱数 2 → パーフェクトエッセンス (ライフ%) → 分かれ目 (狙い 3 = 完成 / サフィの外れ 2 = 素の消去 /
+ *   それ以外 = 右側の高貴)。解析君の案 c (本番の相場で 38〜40 神・完成 100%、math/notes/2026-10-22-tree-patterns-check.md 追記 6・7)。
+ * amulet-4aims: 星のアミュレット ilvl 82、✦スペルダメージ T1 → サフィ 2 つ (右側の高貴・分かれ目) → 防御のカタリスト + 触媒 + 左側の高貴で ES →
+ *   古代の骨 + 左側の死霊術でスピリット。解析君の v5b (本番の相場で 約 704 神・完成 99%、追記 5)。
+ *   この 2 つは台本 scripts/_tree-patterns-probe の body-essence-split・amulet-4aims-split で組んだ木の JSON (samples/)。
+ *   完成 = 狙いが全部付いた時点 (枠を埋める手は打たない、外れが残っても完成。10-22 オーナー「無理やり 6 MOD にしなくても」)
  */
 import { tidy, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
+import robeEssence from "./samples/robe-essence-split.json";
+import amulet4aims from "./samples/amulet-4aims.json";
 
-export const TREE_SAMPLES = ["gold-ring-suffix", "boots-res-split"] as const;
+export const TREE_SAMPLES = ["gold-ring-suffix", "boots-res-split", "robe-essence-split", "amulet-4aims"] as const;
+/** JSON で置いた見本 (台本で組んだ木。開くたびに写しを渡す) */
+const fromJson = (j: unknown): TreeDoc => { const d = JSON.parse(JSON.stringify(j)) as TreeDoc; tidy(d); return d; };
 
 const hand = (currency: string, omens: string[] = [], extra: Partial<Hand> = {}): Hand => ({ currency, omens, catalyst: null, quality: 0, ...extra });
 function make(base: string, fracture: Aim | null, startRandom: number, boxes: Record<string, Partial<TreeBox>>): TreeDoc {
@@ -122,5 +133,6 @@ function bootsResSplit(): TreeDoc {
 }
 
 export function treeSample(name: string): TreeDoc | null {
-  return name === "gold-ring-suffix" ? goldRingSuffix() : name === "boots-res-split" ? bootsResSplit() : null;
+  return name === "gold-ring-suffix" ? goldRingSuffix() : name === "boots-res-split" ? bootsResSplit()
+    : name === "robe-essence-split" ? fromJson(robeEssence) : name === "amulet-4aims" ? fromJson(amulet4aims) : null;
 }
