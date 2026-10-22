@@ -27,6 +27,7 @@ import { allowIp, FEEDBACK_ID_RE, getFeedback, getReplies, listFeedback, notifyD
 import { DATASET, parseBatch, sql, usersBetween, writeEvents } from "./events";
 import { dayLogs, jstDay, saveLog, sendDayLogs } from "./logs";
 import { alert, dailyReport, lastPosted, reqLog, yesterdayJst } from "./monitor";
+import { treeShare } from "./tree-share";
 import { MARKET_KEY, refreshMarket } from "./market";
 import { compare, exportSessions } from "./sim";
 import type { ChannelDef, Env, Fetch, LiveState } from "./types";
@@ -141,6 +142,9 @@ const keyOk = (env: Env, req: Request): boolean => {
 
 async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): Promise<Response> {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
+  // シミュレーターのツリーのレシピの短い URL (POST /tree/new・GET /tree/<id>、tree-share.ts)
+  const tree = await treeShare(req, env, url, json);
+  if (tree) return tree;
   // 操作の印 (Web 版の track.ts が sendBeacon でまとめて送る)
   if (url.pathname === "/event" && req.method === "POST") {
     let body: unknown;
