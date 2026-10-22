@@ -74,10 +74,12 @@ const P = {
     if (!fc) return s.junk("suffix") ? { cur: "annul" } : { cur: "exalt_greater", omens: ["OmenofDextralExaltation"] };
     return s.junk("prefix") ? { cur: "annul", omens: ["OmenofSinistralAnnulment"] } : { cur: "exalt_greater", omens: ["OmenofSinistralExaltation"] };
   },
-  // ✦移動 + ルーン: カオス → 狙い 1 つなら反対側の高貴 + 上級、外れがあればカオス (入れ替えで狙いが消えても続ける)、2 つで完成
+  // ✦移動 + ルーン: カオス → 狙い 1 つなら、足りない狙いの側に空きがあればその側の高貴 + 上級、空きが無ければカオス (2ee37d14 の木と同じく、届かない側の外れは見ない)、2 つで完成
   "boots-chaos-onspam": (s) => {
-    if (s.count === 0 || s.junk("any")) return { cur: "chaos" };
-    return { cur: "exalt_greater", omens: [sideOf(s.missing()[0].modId) === "prefix" ? "OmenofSinistralExaltation" : "OmenofDextralExaltation"] };
+    if (s.count === 0) return { cur: "chaos" };
+    const side = sideOf(s.missing()[0].modId);
+    if ((side === "prefix" ? s.it.prefixes : s.it.suffixes).length >= 3) return { cur: "chaos" };
+    return { cur: "exalt_greater", omens: [side === "prefix" ? "OmenofSinistralExaltation" : "OmenofDextralExaltation"] };
   },
   // 完全のカオス + 右側の抹消 を当たるまで (木の上限 30 回は 1 本の手の区切りなので、字のとおりは当たるまで続ける)
   "gloves-whittle-spam": () => ({ cur: "chaos_perfect", omens: ["OmenofDextralErasure"] }),
@@ -102,6 +104,16 @@ if (process.env.ALT) {
 }
 /** 木の真似 (MIMIC=1): 狙い 0 の形は始まりの箱と同じなので、外れが残っていても高貴。直前の高貴で外れが付いた時だけ消去を 1 回 (start → b2 → b4 → start) */
 const mimic0 = (s, h) => (s.count === 0 ? (s.last?.cur.startsWith("exalt") && s.last.junkUp ? { cur: "annul" } : h) : null);
+/** boots-chaos-onspam の木の真似: 狙い 1 つで側の高貴が外れたら、持っている狙いの組が変わるまでカオスを当たるまで (b8・b11 のカオススパム) */
+if (process.env.MIMIC) {
+  const base = P["boots-chaos-onspam"];
+  P["boots-chaos-onspam"] = (s) => {
+    const key = s.aims.map((a, k) => (s.heldIx(k) ? 1 : 0)).join("");
+    if (s.mem.key !== key) { s.mem.key = key; s.mem.spam = false; }
+    if (s.count === 1 && s.last?.cur === "exalt_greater" && s.last.junkUp) s.mem.spam = true;
+    return s.count === 1 && s.mem.spam ? { cur: "chaos" } : base(s);
+  };
+}
 if (process.env.MIMIC) for (const [nm, h] of [["ring-annul", { cur: "exalt_greater", omens: ["OmenofDextralExaltation"] }], ["gloves-rune-start", { cur: "exalt_greater", omens: ["OmenofSinistralExaltation"] }], ["body-sinistral-desecrate", { cur: "exalt_greater", omens: ["OmenofSinistralExaltation"] }], ["gloves-perfect", { cur: "exalt_perfect", omens: ["OmenofDextralExaltation"] }], ["amulet-catalyst", { cur: "exalt_perfect", omens: ["OmenofCatalysingExaltation", "OmenofDextralExaltation"], cat: "catalyst_life" }]]) { const base = P[nm]; P[nm] = (s) => mimic0(s, h) ?? base(s); }
 
 function aimsOfDoc(doc) {
@@ -121,6 +133,7 @@ function literal(doc, rule, n, seed) {
   for (let i = 0; i < n; i++) {
     let it = M.startItemOf(data, doc, rng).item;
     let c = 0, steps = 0, ok = false, last = null;
+    const mem = {};
     const use = (k, x = 1) => { c += price(k) * x; U[k] = (U[k] ?? 0) + x; };
     for (;;) {
       if (aims.every((a) => held(it, a))) { ok = true; break; }
@@ -128,7 +141,7 @@ function literal(doc, rule, n, seed) {
       const isKeep = (m) => keepId && m.modId === keepId;
       const junkMods = (side) => (side === "any" ? all(it) : side === "prefix" ? it.prefixes : it.suffixes).filter((m) => !m.fractured && !aims.some((a) => isAimMod(m, a)) && !isKeep(m));
       const s = {
-        it, aims, steps, essKey, last,
+        it, aims, steps, essKey, last, mem,
         count: aims.filter((a) => held(it, a)).length,
         heldIx: (k) => held(it, aims[k]),
         missing: () => aims.filter((a) => !held(it, a)),
