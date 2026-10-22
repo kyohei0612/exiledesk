@@ -1,7 +1,7 @@
 # ファイル → 持ち主の部 (2026-10-20、オーナー OK)。各部の README の地図・docs/ARCHITECTURE.md の「部ごとの持ち場」と食い違ったら、ここが正。
 # 形: <glob> <部>。下の行ほど強い (CODEOWNERS と同じ)。* = / を越えない、** = どこまでも。
 # 引く: node scripts/owner-of.mjs <パス…>  /  書きかけを部ごとに: node scripts/owner-of.mjs --status
-# 部: 共通 (境目・土台・共通の部品・英語、持ち主はジン部長。10-21 に開発部長から移した。見張り check-engine-entry が「ジン」の src/services を入口の外として数えるので名前は分ける) / ジン (エンジン部) / サーバー (持ち主は分析君、10-21 に移した) / 最終チェック (最終チェック長) / シミュ / チュートリアル (シミュ部長の持ち物) / 解析 / 分析 / 動画 (動画編集長) / 記事 (記事編集長、10-22) / 組織 (docs/org の各部の md は各部) / アプリ (凍結、当分触らない)
+# 部: エミュ (エミュ部長 = エミュの画面の UI/UX だけ、10-22 深夜にジン部長から分けた。中身はエンジンの入口) / 共通 (境目・土台・共通の部品・英語、持ち主はジン部長。10-21 に開発部長から移した。見張り check-engine-entry が「ジン」の src/services を入口の外として数えるので名前は分ける) / ジン (エンジン部) / サーバー (持ち主は分析君、10-21 に移した) / 最終チェック (最終チェック長) / シミュ / チュートリアル (シミュ部長の持ち物) / 解析 / 分析 / 動画 (動画編集長) / 記事 (記事編集長、10-22) / 組織 (docs/org の各部の md は各部) / アプリ (凍結、当分触らない)
 
 # 土台・境目・共通の部品・英語 (ジン部長、部の名前は「共通」)
 **                                   共通
@@ -125,14 +125,14 @@ src/utils/format-time.ts             アプリ
 src/utils/trade-error.ts             アプリ
 src/utils/wait-text.ts               アプリ
 
-# エンジン部 (ジン部長)
-src/views/craft-stage/**             ジン
+# エンジン部 (ジン部長 = エンジンの管理者。画面はエミュ部長・シミュ部長、10-22 深夜)
+src/views/craft-stage/**             エミュ
 src/services/craft-stage/**          ジン
 src/services/htc/**                  ジン
 src/services/mods/**                 ジン
 src/services/items/**                ジン
 src/vendor/poe2htc/**                ジン
-src/state/emulator/**                ジン
+src/state/emulator/**                エミュ
 scripts/build-poe2db-*.mjs           ジン
 scripts/audit-poe2db*.mjs            ジン
 scripts/build-desecrated-weights*.mjs ジン
@@ -200,6 +200,7 @@ docs/org/**                          ブラック
 docs/org/dev/**                      最終チェック
 docs/org/black/**                    ブラック
 docs/org/emulator/**                 ジン
+docs/org/emu/**                      エミュ
 docs/org/simulator/**                シミュ
 docs/org/math/**                     解析
 docs/org/analytics/**                分析

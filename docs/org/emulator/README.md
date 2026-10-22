@@ -2,7 +2,7 @@
 
 フォルダー名は emulator のまま (2026-10-20 に呼び名をエミュ部長 → ジン部長、エミュ部 → エンジン部に)。
 
-クラフト台 (クラフトの決まり・エンジン・MOD の置き場/重み・棚・確率の表・スパムシミュレーター) の持ち主。
+エンジンの管理者 (クラフトの決まり・エンジン・MOD の置き場/重み/段・確率の表・入口 engine.ts) と、共通の部品・英語の持ち主。**画面は持たない**: エミュの画面はエミュ部長 (docs/org/emu/)、シミュの画面はシミュ部長 (10-22 深夜、オーナー)。両方の画面の部長はエンジンに触れず、欲しい機能はブラック経由でジン部長に追加の要望を出す。ジン部長が入口に足した物は、出した側の画面だけが使える (シミュの要望はシミュだけ、エミュの要望はエミュだけ。入口の分け方と見張りはジン部長が決める)。
 
 ## 決まり (docs/org/dev/README.md の決まりが先)
 - 呼ばれたら常駐 (初めて仕事が来た時にブラックが立て、そのブラックの間は開きっぱなし)。仕事はブラックから直接来て、結果の報告もブラックへ直接 SendMessage 2〜5 行 + 中身は todo.md・notes/ (オーナー 10-21)。同じファイルの仕事は順に、触るファイルは始める前に dev/todo.md の「触っている」に自分で書く。自分の commit の push と開発版 (deploy:web-dev) は自分で、本番は最終チェック長 (dev/README.md の決まり 1・2・5・8)。共通の部品・英語・部どうしの境目 (src/components・utils・style・web/・i18n など、owners.txt の「共通」) もジン部長の持ち物 (10-21 に開発部長から移した、地図は dev/README.md)。
@@ -15,8 +15,7 @@
 6. 結果の見張り (currency-spec-golden) をわざと変えた時だけ `GOLDEN_WRITE=1`。
 
 ## 地図
-- 画面 src/views/craft-stage/: CraftStage.vue (入口)、棚 CurrencyShelf・ShelfButton・StageCurrencyCard、アイテム StageItemCard・StageItemMini、MOD StageModList・ModAddPicker、工程 StageHistory、StageForesight・RevealPanel・StageFracturePicker・StageQualityBar・StageSanctifyBar (聖別の数値、sset の手は apply-vaal.ts)・StageOmenTune (お告げの下の設定、状態 state/emulator/stage-tuning.ts → エンジン stage-tuning.ts)・StageWeightEdit (MOD 一覧の重みの札と直す 1 行、同じ stage-tuning.ts の modWeights)・StageBasePicker/Page・StageSettings・StagePhoneBar。狙う StageAimPanel・StageAimPicker。スパム StageRoutes*・StageRouteLuck・StageRouteRunes・use-spam-share.ts。
-- 状態 src/state/emulator/: craft-stage-shelf・shelf-context・aim-state・stage-steps・stage-extra・craft-stage-help*・spam-share-open。
+- 画面 src/views/craft-stage/・状態 src/state/emulator/ は 10-22 深夜からエミュ部長の物 (地図は docs/org/emu/README.md)。
 - 入口 src/services/craft-stage/engine.ts (外の部はここだけを読む、使い方 notes/engine-entry.md)。
 - 仕組み src/services/craft-stage/: spec/ (orb・essence・desecrate・other-specs、parts.ts (未発現・発現は parts-unrevealed.ts)、judge.ts、run-spec.ts、odds.ts、1 手の行き先 outcomes.ts)、貼り付けの読み取り item-text.ts (+ item-text-types.ts、見本 notes/paste-samples/)、apply-currency.ts と apply-*.ts・omens.ts、共通の土台 stage-core.ts (候補・重みの抽選・足す / 消すは stage-draw.ts、stage-core が再輸出)、シミュの自前の式を寄せた物 tier-rank・aim-odds の junkOf など・aim-reach (狙いの前後・付きうる狙い)・hand-effect・can-use (打てるか・お告げ)・hand-use (手を 1 回)・start-with (始めのアイテム)・rune-choice・magic-odds (notes/2026-10-22-sim-logic-to-engine.md)、確率 held-odds・aim-odds・route-race・spam-counts (始めのアイテムからの平均)・chaos-spam・route-runes、MOD の並べ mod-list.ts (`modListFor`)・roll-text.ts、ベース stage-bases.ts (+ .json)・stage-uniques・stage-runes・*-art.ts。
 - エンジンの核: src/services/craft-stage/ の types.ts・run-plan.ts・contract.ts (打つ処理の土台、旧「境目」から移した)、乱数 src/services/htc/rng.ts (`mulberry32`、どの部も同じ乱数)、入口 engine.ts (手 1 で作成中)。
