@@ -26,10 +26,9 @@ import { useDismiss } from "../../utils/use-dismiss";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import Disclosure from "../../components/ui/Disclosure.vue";
 import { craftStage, nameOf } from "../../state/craft-stage";
-import { jewelEmotionJa } from "../../services/htc/patch";
-import { factionOf, groupLabelOf, modListFor, runeEnOf, runeToneOf, shownTags, TAG_STYLE, type ListRow, type ModGroup } from "../../services/craft-stage/mod-list";
+import { factionOf, groupLabelOf, modListFor, runeEnOf, shownTags, TAG_STYLE, type ListRow, type ModGroup } from "../../services/craft-stage/mod-list";
 import { tagLabel } from "../../services/mods/tag-ja";
-import essenceKeys from "../../services/htc/essence-keys.json";
+import { essName, tierName, toneOf, weightNote } from "./stage-mod-list-look";
 import ModAddPicker from "./ModAddPicker.vue";
 
 /** シミュレーションの ① の枠の中に置く時 (外の枠を付けない) */
@@ -309,46 +308,10 @@ function pickTier(ev: MouseEvent, modId: string, t: { name: string; ilvl: number
   else done(adding ? opts[0] : undefined);
 }
 
-/** エッセンスの段の名前 (英語) → 日本語 */
-const ESS_JA = new Map(Object.values((essenceKeys as unknown as { keys: Record<string, { en: string; ja: string }> }).keys).map((k) => [k.en, k.ja]));
-/**
- * そのエッセンス / 合金の MOD を付ける物の名前 (2026-10-05 オーナー「エッセンスと合金は使うエッセンスを表示、タグの後ろに簡易的に名前」)。
- * 名前はカレンシーの棚と同じ引き方 (パーフェクトの深淵・ヒステリーなど essence-keys に無い物も出る)
- */
-function essName(r: ListRow): string | null {
-  if (r.group !== "essence" && r.group !== "perfect_essence") return null;
-  const key = `essence:${r.group === "perfect_essence" ? "perfect" : "normal"}:${r.id}`;
-  const n = nameOf(key);
-  if (n && n !== key) return n;
-  const top = r.tiers[0]?.name;
-  return top ? tr(ESS_JA.get(top) ?? jewelEmotionJa(top) ?? top, top) : null;
-}
 /** まとめた行 (同じ系統の別の MOD を 1 行に) の段は MOD ごとにタグが違うので、段の表の行にその段の MOD のタグを出す (2026-10-18 オーナー「ティア表にタグがない」) */
 const tierTags = (r: ListRow, t: ListRow["tiers"][number]): string[] => { if (!t.modId || t.modId === r.id && r.tiers.every((u) => u.modId === t.modId)) return []; const m = s.data.value?.mods.get(t.modId); return m ? shownTags(m.displayTags ?? m.tags) : []; };
-const tierName = (r: ListRow, name: string): string => (r.group === "essence" || r.group === "perfect_essence" ? tr(ESS_JA.get(name) ?? jewelEmotionJa(name) ?? name, name) : name);
 /** 確率の % (2026-10-10 動きの揃え 5: 書き方は utils/format-pct.ts の 1 つ) */
 const pct = (x: number): string => fmtPct(x);
-/** 節の色 (ルーンの節はルーンのアイコンの色) */
-/** 重みの出どころ (乗せた時に出す)。ゲームは公開していないので、こちらが入れた重み */
-const WEIGHT_NOTE = computed((): Partial<Record<string, string>> => ({
-  rune: tr("ルーンの特殊 MOD の重みは Craft of Exile (beta) が載せている実測 (Krakenbul / Prohibited Library、2026-09 更新)。ゲームは公開していない", "Rune special mod weights are community measurements published by Craft of Exile (beta) (Krakenbul / Prohibited Library, updated 2026-09). The game does not publish them"),
-  desecrated: tr("冒涜専用 MOD どうしの重みは公開されていないので、全部等しく (均一) で引いている。候補 3 つのうち専用が 1 個 85% / 2 個 14% / 3 個 1% は Reddit の実測 (u/Civil-Bee-f、指輪 563 回の発現)", "Weights among desecrated-only mods are not published, so they are all rolled equally (uniform). The share of desecrated-only mods among the 3 options (1: 85% / 2: 14% / 3: 1%) is measured on Reddit (u/Civil-Bee-f, 563 ring reveals)"),
-  otherworldly: tr("異界の MOD の重みは公開されていない。冒涜専用 MOD と同じ扱い (同じ重み) で引いている", "Otherworldly mod weights are not published. They are rolled the same way (same weights) as desecrated-only mods"),
-}));
-const toneOf = (sec: { g: ModGroup; rune: string | null }): { tab: string; bar: string } => runeToneOf(sec.rune) ?? TONE[sec.g];
-/**
- * 種類の色 (普通 = 青、エッセンス = 水色、冒涜 = 淀んだ深緑のグラデーション、異界 = 緑がかった青。
- * 2026-10-05 オーナー「エッセンスは水色で普通は青、冒涜は深緑、冒涜の緑はよどんでる感じでふよふよってグラデーション」)
- */
-const TONE: Record<ModGroup, { tab: string; bar: string }> = {
-  normal: { tab: "bg-rarity-magic/25 text-[#c8c8ff] ring-1 ring-rarity-magic/60", bar: "bg-rarity-magic/10" },
-  rune: { tab: "bg-amber-500/20 text-amber-100 ring-1 ring-amber-400/60", bar: "bg-amber-500/[0.08]" },
-  essence: { tab: "bg-sky-400/20 text-sky-100 ring-1 ring-sky-300/60", bar: "bg-sky-400/[0.08]" },
-  perfect_essence: { tab: "bg-cyan-400/20 text-cyan-100 ring-1 ring-cyan-300/60", bar: "bg-cyan-400/[0.08]" },
-  desecrated: { tab: "bg-gradient-to-r from-green-900/70 via-emerald-800/40 to-lime-900/60 text-lime-100/90 ring-1 ring-green-700/70", bar: "bg-gradient-to-r from-green-950/40 via-emerald-900/25 to-lime-900/20" },
-  otherworldly: { tab: "bg-teal-500/20 text-teal-100 ring-1 ring-teal-400/60", bar: "bg-teal-500/[0.08]" },
-  special: { tab: "bg-white/10 text-[var(--exile-color-text-secondary)] ring-1 ring-white/25", bar: "bg-white/[0.04]" },
-};
 </script>
 
 <template>
@@ -391,7 +354,7 @@ const TONE: Record<ModGroup, { tab: string; bar: string }> = {
           <span class="font-normal opacity-50">{{ sec.count }} {{ tr("系統", "groups") }}</span>
           <span v-if="sec.rune" class="font-normal opacity-60">{{ sec.socketed ? tr("はめている", "Socketed") : tr("差していないので 0% (付ければルーンも差す)", "Not socketed, so 0% (adding one also sockets the rune)") }}</span>
           <!-- 重みが公開されていない欄は、こちらが入れた重みの出どころを短く (2026-10-09 オーナー「不明の奴全てに、コミュニティのデータから参照していますって書いとこう」) -->
-          <span v-if="WEIGHT_NOTE[sec.rune ? 'rune' : sec.g]" class="g-hover-name font-normal opacity-60" :title="WEIGHT_NOTE[sec.rune ? 'rune' : sec.g]">{{ tr("· 重みはコミュニティのデータから参照", "· Weights from community data") }}</span>
+          <span v-if="weightNote()[sec.rune ? 'rune' : sec.g]" class="g-hover-name font-normal opacity-60" :title="weightNote()[sec.rune ? 'rune' : sec.g]">{{ tr("· 重みはコミュニティのデータから参照", "· Weights from community data") }}</span>
           <span v-else-if="sec.g === 'special'" class="font-normal opacity-60">{{ tr("創生の樹・ハンドラップ専用の MOD · カレンシーでは付かない · 段の表の「付ける」で手で付けるだけ", "Mods exclusive to the Genesis Tree and Wraps · Cannot roll from currency · Add them manually with “Add” in the tier table") }}</span>
           <Disclosure tag="span" kind="section" :open="secShown(sec.sid)" class="ml-auto font-normal md:hidden" />
         </h3>
