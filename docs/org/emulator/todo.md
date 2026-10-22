@@ -1,6 +1,14 @@
 # ジン部長 のやる事
 
 ## やる事
+- 引き継ぎ (10-22 深夜、4 本目 → 5 本目): 下の「4 本目の分」→「3 本目の分」の順に先に読む。宛先のブラックは 5 代目 (dev/todo.md の表)。
+- 4 本目の分 (全部 push 済み):
+  - RowTag.replace (3fcae561、シミュのツリーの外れ MOD の行)。パターンの初期値 freshPatterns() (96e6050d、シミュも使用済み)。docs/craft-challenge.md の整理 (50e7a433)。
+  - スパムシミュ「今のアイテムから (カオス)」(cc238c44、要望 51092b58、FROM_ON) と「複数の当たり」(9620bea6、ROUTES_MULTI_ON、当たり 3 つまで OR・内訳 hitsBy・増強は側ごとに独立で両側なら「両方揃うまで」RaceRow.both)。どちらも開発版だけ、pending-release.md に行あり (印を外して出す)。開発版に出したのは cc238c44 まで (af82aa4d)、9620bea6 はまだ開発版に出していない (デプロイはブラックに聞く)。スナップ 共有メモ routes-from/・multi-aim/。
+  - 返事待ち (オーナー): 今のアイテムからの時に高貴の道も灰色 (増強だけでよいか)・この形の X のシェア・既定の始めの状態。複数の当たりのシェアは a に全部入る、両方揃うまでの数字はシェアに入れていない。
+  - デイリーの入口 (2506d232・bb0f90e2、DAILY_ON、dailyPage {view, q}・?page=daily / daily&q / daily-start&q・ヘッダーの「デイリー」・textPage に足して両脇の枠)。中身 DailyPage.vue はデイリー部長。
+  - CourseHost の class の警告 (a57b9625、チュートリアルの持ち物・ブラックの OK)。StageCourseGuide の class は効く物なので残した。
+  - 確かめの小技: 窓なし Chrome は Bash から立て、閉じる時は CDP の Browser.close (PowerShell を呼ぶと窓が出る)。vite は他のセッションの書き換えでページを丸ごと読み直すので、スパムシミュの台本は読み直されたらやり直す形で。src に一時のファイルを置いて消しても読み直しが起きる。
 - 引き継ぎ (10-22 夜、3 本目 → 4 本目): 下の「3 本目の分」→ notes/2026-10-22-handoff-2.md (2 本目の分) → notes/2026-10-22-handoff.md の順に先に読む。
 - 3 本目の分 (全部 push 済み、詳しくは notes/2026-10-22-code-audit.md の頭「直した物」):
   - 済み: StageItemCard の行ごとの札 rowTags (15a5f73d、型 stage-item-row-tag.ts。シミュが試し打ちの外れ MOD に使った 4e51480b)。500 行超え 4 本を割った (parts-unrevealed・stage-draw・_htc-display-tags / _htc-base-info・_gem-csd)。コードの点検 notes/2026-10-22-code-audit.md。ホワイト用 scripts/org-lint.mjs (読むだけ、--json あり) と .gitignore の docs/org/white/notes/。code-audit の直す案のジンの分 (owners.txt・入口の sideOfMod・重複・消す・parity を 2 本・_poe2db-common)。xIntentUrl(url, text?) (1adf9da6)。
@@ -27,7 +35,7 @@
   - 済み (10-21): ③ 86b42bb4・④ afa0b266・2d301a1a・暗黙 ada62af7 (開発版だけ、BASE_VALUES_ON。本番は pending-release の OK 待ち)。
 
 ## OK 待ち
-- スパムシミュの「今のアイテムから (カオス)」(要望 51092b58、cc238c44、開発版だけ FROM_ON)。開発版のデプロイはブラックの順番待ち。本番はオーナーの OK の後 (FROM_ON を外す)。残り: この形の X のシェア (開いた人は同じアイテムを持っていないので今は出さない)・既定を今のアイテムにするか、をオーナーに。運試しそのものは作業中のアイテムを触らない (書き換えるのは「ここから開始」だけ、押すと工程は 0 から。説明の文に足した = 本番にも出る)。スナップ 共有メモ routes-from/。
+- スパムシミュの「今のアイテムから (カオス)」(要望 51092b58、cc238c44、開発版だけ FROM_ON、開発版に出した)。本番はオーナーの OK の後 (FROM_ON を外す)。残り: この形の X のシェア (開いた人は同じアイテムを持っていないので今は出さない)・既定を今のアイテムにするか、をオーナーに。運試しそのものは作業中のアイテムを触らない (書き換えるのは「ここから開始」だけ、押すと工程は 0 から。説明の文に足した = 本番にも出る)。スナップ 共有メモ routes-from/。
 - サイトの体裁 (1adfb648、開発版。docs/pending-release.md に OK 待ち、【要確認】5 か所はオーナーに)。ブログの部品 (d306fea0、README 4b)。
 - ブログの入れ物 (開発版だけ、notes/2026-10-22-blog.md)。本番は記事を読んでもらってから (build:web に build-blog-pages.mjs を足し、BLOG_ON を外す)。日報の行は分析君、コメント欄はこれから。
 - MOD の重みを直せる (開発版だけ、WEIGHTS_ON。notes/2026-10-22-mod-weight-edit.md)。本番はオーナーの OK の後。
