@@ -1,7 +1,7 @@
 # 解析君 のやる事
 
 ## 引き継ぎ (2026-10-22 夜、3 本目 → 4 本目、会話が長くなったので入れ替え)
-- 宛先: ブラック 7 代目 local_ec583720-946a-486d-bfad-d7fe083898b3、シミュ部長 11 本目 local_8f126afa-0164-425f-b1ff-0e342ab4c791 (送信の上限で送れない時はブラック経由)。送れない時は報告をこの頭に書いて commit、ターンの最後の文にも同じ 2〜5 行 (dev/README 決まり 8)。
+- 宛先: ブラック 7 代目 local_ec583720-946a-486d-bfad-d7fe083898b3、シミュ部長 14 本目 local_82fcd4e9-a5a0-4c84-b843-b0d701fef84a (送信の上限で送れない時はブラック経由)。送れない時は報告をこの頭に書いて commit、ターンの最後の文にも同じ 2〜5 行 (dev/README 決まり 8)。
 - 3 本目でやった事 (全部 push 済み): 金の指輪サフィの替え案の確かめ (上の 3 本目の行)・ツリーのベースの値段の突き合わせ (notes/2026-10-22-tree-base-cost.md、4 MOD は壁つき 1/3 で決着)・金の指輪の全体 約 643〜672 神 (prefix の追記 3)・**白紙のツリー 13 本の突き合わせ** (notes/2026-10-22-tree-patterns-check.md 追記 1〜8)・amulet-4aims の安い打ち方 v5b (notes/2026-10-22-amulet-4aims.md)・body-essence の安い形 (追記 6・7)。
 - 回し直しの手順 (シミュ部長が木を直すたびに頼まれる): `git pull` → 台本から組み直し `OUT=<scratchpad>/pat PAT=<名前> pnpm -s exec vitest run -c scripts/_tree-patterns-probe.config.ts` (PAT 無しで全部、前の形の body-essence は組む途中で落ちる) → `DIR=<その置き場> SAMPLES=1 USES=1 node scripts/analysis/check-tree-patterns.mjs 1000 <種 1・2>` (値段 = data-cache/boot/boot-2026-10-22.json を画面と同じ enOf で、MIMIC= 木の真似・ALT= 対案) → `node scripts/analysis/check-tree-run.mjs all 300 1` を前の数字と行ごとに比べる (控えは scratchpad にしか無いので、新しい解析君は最初に 1 回取る)。
 - 今の数字 (de6ddf96、反響のお告げの後): 13 本 + 見本 4 本とも字のとおりと 1 割以内、1 割超えは boots-chaos-onspam だけ (木の手順がカオスの 2 箱を行き来、空きがあれば側の高貴に戻す形で 27〜28 神)。見本 金の指輪 375〜383 神・アミュ 540〜554・靴 28〜31・robe 38〜40。
