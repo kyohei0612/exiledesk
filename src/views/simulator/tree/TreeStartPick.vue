@@ -13,9 +13,12 @@ import { craftStage as s } from "../../../state/craft-stage";
 import { nameOf, tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
 import TreeModPick from "./TreeModPick.vue";
+import { useTreeSearch } from "./use-tree-search";
 
 const emit = defineEmits<{ close: [] }>();
 const t = useTree();
+/** 値段の横の「探す」= 取引所を開くだけ (値段は手で入れる) */
+const ts = useTreeSearch();
 const st = computed(() => startOf(t.doc.value));
 
 /** 始まりの形を書き換える (前の版の fracture は先に start へ移す。画面で決めるのはレアだけ。1 つ戻すで戻せる) */
@@ -99,6 +102,8 @@ const problem = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.v
       <label v-for="r in PRICE_ROWS" :key="r.k" class="flex items-center gap-2" :data-tree-start-price="r.k">
         <span class="flex-1 text-[12px] opacity-80">{{ tr(r.ja, r.en) }}</span>
         <NumStep :model-value="priceIn(r.k)" width="w-24" placeholder-text="—" @update:model-value="(v) => setPrice(r.k, v)" />
+        <button type="button" class="g-btn sm shrink-0" :data-tree-start-search="r.k" :disabled="!ts.can(r.k)"
+          :title="ts.can(r.k) ? tr('取引所で探す (開くだけ。値段は手で入れる)', 'Search the trade site (opens it; type the price yourself)') : tr('✦ (フラクチャー) の MOD を選ぶと探せる', 'Pick a ✦ (fractured) mod to search')" @click="ts.search(r.k)">{{ tr("探す", "Search") }}</button>
       </label>
       <p v-if="t.baseCost.value?.note" class="text-[12px] opacity-70">{{ t.baseCost.value.note }}</p>
       <ul v-if="t.baseCost.value?.kinds.length" class="flex flex-col gap-0.5 text-[12px]">
