@@ -22,7 +22,7 @@ const open = ref<string | null>(props.current?.modId ?? null);
  * 当たりは一般の MOD と冒涜専用 MOD (骨の手の当たり、10-22 オーナー「冒涜は冒涜で付与」)、始まりの MOD は創生の樹など (カレンシーでは付かない物) と
  * ルーンの MOD (付けるとエンジンの force がそのルーンを差す) も。普通の MOD が先 (10-22 靴・手袋を白紙から組んで、創生の樹が一番上に並び探しにくかった)
  */
-const groups = computed(() => (props.mode === "hit" ? ["normal", "desecrated"] : ["normal", "essence", "special", "rune"]));
+const groups = computed(() => (props.mode === "hit" ? ["normal", "desecrated", "essence"] : ["normal", "essence", "special", "rune"]));
 const sections = computed(() => {
   // 「移動速度」でも「移動スピード」(MOD の文) に当たる (10-22 白紙から組んで 0 件だった)
   const qs = [...new Set([query.value.trim().toLowerCase()].flatMap((q) => [q, q.replace(/速度/g, "スピード"), q.replace(/スピード/g, "速度")]))];

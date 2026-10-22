@@ -94,7 +94,12 @@ class Ui {
     const shelfItem = needPre ? fillCatalyst(data, item, autoCat, mulberry32(1)).item : item;
     const preCat = used.includes(CATALYSING) && !afterQ ? autoCat : null;
     let aims: Aim[] = [];
-    if (kind === "spam" || kind === "add" || kind === "swap") {
+    if (kind === "essence") {
+      // 棚 (TreeHandShelf の hitAims) と同じ: エンジンの結果で新しく付いた MOD を当たりの札に
+      const before = new Set([...item.prefixes, ...item.suffixes].map((m) => m.modId));
+      const got = (stepOutcomes(data, item, h.currency, h.omens) ?? []).filter((x) => !x.void).flatMap((x) => [...x.item.prefixes, ...x.item.suffixes].filter((m) => !before.has(m.modId)));
+      if (got[0]) aims = [{ modId: got[0].modId, tier: Number(/\d+/.exec(got[0].tierName)?.[0] ?? 99) }];
+    } else if (kind === "spam" || kind === "add" || kind === "swap") {
       const tree = aimsOf(d);
       const open = (tree.length ? tree : d.memoAims ?? []).filter((a) => !aimHeld(data, item, a));
       const outs = [1, 2, 3, 4].flatMap((seed) => { const x = seed === 1 ? item : sampleOf(data, d, id, seed).item; return (stepOutcomes(data, x, h.currency, h.omens) ?? []).filter((o) => !o.void); });
@@ -264,6 +269,23 @@ const PATTERNS: { name: string; base: string; note: string; build: (u: Ui) => vo
     // 狙いが消えた = 始めに戻る (既定) は、始まりのエッセンスがもう打てないので、エッセンスの後の箱 (高貴) へ
     for (const b of Object.values(u.d.boxes)) if (b.out === "lost" && b.back === "start") { u.back(b.id, any); done.push(`${b.id}→${any}`); }
     return `外れが消えた・狙いが消えたの戻りを替えた ${done.join(" ")}`;
+  } },
+  { name: "body-essence-path", base: "Vile Robe", note: "胴 (エッセンスの道、10-22): ✦ES T1 + 乱数 2、パーフェクトエッセンス (ライフ%) の結果 = 付いた / 狙いが消えた → 右側の高貴 + 上級で 冷気・雷。外れは右側の消去", build: (u) => {
+    const C = A(`${BA}ColdResistance`, 2), L = A(`${BA}LightningResistance`, 2);
+    u.startMod(`${BA}LocalEnergyShield`, 1, true);
+    u.random(2);
+    const e = u.hand("start", `essence:perfect:${BA}PerfectEssence_MaximumLifeIncreasePercent`, [])!;
+    const got = u.o(e).hit;
+    if (!got) return;
+    const s = u.hand(got, "exalt_greater", [DEX])!;
+    const h = u.hits(s, [C, L]);
+    annul(u, u.o(s).junk, ["OmenofDextralAnnulment"]);
+    for (const [k, other] of [["ColdResistance", L], ["LightningResistance", C]] as const) {
+      const at = u.hand(h[k]!, "exalt_greater", [DEX]);
+      if (!at) continue;
+      u.done(u.hits(at, [other])[other.modId.split("/")[1]!]!);
+      annul(u, u.o(at).junk, ["OmenofDextralAnnulment"]);
+    }
   } },
   { name: "helmet-desecrate", base: "Kamasan Tiara", note: "兜: ✦ES% T1 + 乱数 2、骨 + 右側の死霊術で冒涜 → 発現で 雷混沌耐性。外れは光 + 消去", build: (u) => {
     u.startMod(`${HI}LocalEnergyShieldPercent`, 1, true);

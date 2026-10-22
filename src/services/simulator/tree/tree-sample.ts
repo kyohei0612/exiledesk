@@ -49,11 +49,15 @@ export function aimsOf(doc: TreeDoc): Aim[] {
 const junkCount = (data: PatchData, item: StageItem, aims: readonly Aim[]): number =>
   [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured && !aims.some((a) => aimHeld(data, { ...item, prefixes: [m], suffixes: [] }, a))).length;
 
-/** 打つ前と後を比べて、どの箱の結果か (付いた狙いは hits に) */
-export function outcomeOf(data: PatchData, before: StageItem, after: StageItem, aims: readonly Aim[]): { out: OutKind; hits: Aim[] } {
+/**
+ * 打つ前と後を比べて、どの箱の結果か (付いた狙いは hits に)。key = 打った手 (エッセンスは付く MOD が必ず付くので、狙いが消えたかを先に見る。
+ * 付いた MOD は hits のまま、10-22 オーナー「エッセンスの道」)
+ */
+export function outcomeOf(data: PatchData, before: StageItem, after: StageItem, aims: readonly Aim[], key?: string): { out: OutKind; hits: Aim[] } {
   const had = aims.filter((a) => aimHeld(data, before, a));
   const has = aims.filter((a) => aimHeld(data, after, a));
   const hits = has.filter((a) => !had.includes(a));
+  if (key && kindOfCurrency(key) === "essence" && had.some((a) => !has.includes(a))) return { out: "lost", hits };
   if (hits.length) return { out: "hit", hits };
   if (had.some((a) => !has.includes(a))) return { out: "lost", hits: [] };
   if (junkCount(data, after, aims) < junkCount(data, before, aims)) return { out: "junkGone", hits: [] };
@@ -82,13 +86,13 @@ export function singleOutOf(data: PatchData, doc: TreeDoc, boxId: string, h: Han
     const item = pre ? fillCatalyst(data, smp.item, pre, mulberry32(seed)).item : smp.item;
     // 消す手は、見本にまだ無い狙いを 1 つ足した形でも見る (見本は初めて着いた人の形。戻りで狙いを持って来た人は狙いが消えうる、10-22 #8 の後:
     // 分かれ目の行の見本が外れだけになり、素の消去が「外れが消えた」1 通りにまとまって 96 人止まった)
-    const forms = [item, ...(k === "remove" ? aims.filter((a) => !aimHeld(data, item, a)).map((a) => applyCurrency(data, item, `force:${a.modId}|T${a.tier}|n`, mulberry32(seed))).filter((r) => r.applied).map((r) => r.item) : [])];
+    const forms = [item, ...(k === "remove" || k === "essence" ? aims.filter((a) => !aimHeld(data, item, a)).map((a) => applyCurrency(data, item, `force:${a.modId}|T${a.tier}|n`, mulberry32(seed))).filter((r) => r.applied).map((r) => r.item) : [])];
     for (const it of forms) {
       const outs = stepOutcomes(data, it, h.currency, h.omens)?.filter((o) => !o.void);
       // 未発現が付く手 (冒涜の骨) は、発現で選ぶ候補で当たり / 外れが分かれる
       if (!outs?.length || outs.some((o) => unrevealedOf(o.item))) return null;
       for (const o of outs) {
-        const r = outcomeOf(data, it, o.item, aims);
+        const r = outcomeOf(data, it, o.item, aims, h.currency);
         if (r.hits.length > 1 || (one && key(one) !== key(r))) return null;
         one = r;
       }
@@ -136,7 +140,7 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
       r = playHand(data, it, { ...h, repeat: null }, rng, aims, use, miss);
       if (!r.applied) return i ? { ...r, applied: true, item: it } : r;
       it = r.item;
-      if (outcomeOf(data, item, it, aims).out === "hit") break;
+      if (outcomeOf(data, item, it, aims, h.currency).out === "hit") break;
     }
     return { ...r, item: it };
   }
@@ -252,7 +256,7 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
     const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims), undefined, b.out === "junk" || b.out === "lost");
     if (!r.applied) { last = r; break; }
     last = r;
-    const o = outcomeOf(data, base.item, r.item, aims);
+    const o = outcomeOf(data, base.item, r.item, aims, p.hand.currency);
     // 当たるまでの手が上限まで打っても当たらない = 付かない狙いだけ。引き直しても同じなのでやめる (1 回 5000 回 × 3000 で画面が固まった、10-22)
     if (p.hand.repeat && o.out !== "hit") break;
     if (b.out === "pass") return { item: r.item, note: null };

@@ -131,7 +131,13 @@ export function heldSets(doc: TreeDoc, id: string | null): string[][] {
   let sets: string[][] = [[]];
   for (const c of path) {
     if (c.out === "hit" && c.aim) { const k = aimKey(c.aim); sets = sets.map((h) => (h.includes(k) ? h : [...h, k])); }
-    else if (c.out === "lost") sets = sets.flatMap((h) => (h.length ? h.map((k) => h.filter((x) => x !== k)) : [h]));
+    else if (c.out === "lost") {
+      sets = sets.flatMap((h) => (h.length ? h.map((k) => h.filter((x) => x !== k)) : [h]));
+      // エッセンスの「狙いが消えた」は、エッセンスで付いた MOD (同じ手の当たりの箱の札) は付いている
+      const p = c.parent ? doc.boxes[c.parent] : undefined;
+      const ess = p?.hand && kindOfCurrency(p.hand.currency) === "essence" ? p.outs.map((o) => doc.boxes[o]).find((x) => x?.out === "hit" && x.aim)?.aim : undefined;
+      if (ess) { const k = aimKey(ess); sets = sets.map((h) => (h.includes(k) ? h : [...h, k])); }
+    }
     const seen = new Set<string>();
     sets = sets.map((h) => [...h].sort()).filter((h) => { const k = h.join(","); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 64);
   }
@@ -291,7 +297,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     const r = playHand(data, item, b.hand, rng, handAims(doc, at, aims), use);
     if (!r.applied) return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: r.reason ?? "", item } };
     if (sb.next) { item = r.item; at = sb.next; continue; }
-    const oc = outcomeOf(data, before, r.item, aims);
+    const oc = outcomeOf(data, before, r.item, aims, b.hand.currency);
     const next = outBoxOf(doc, b, oc);
     if (!next) {
       // 合う結果の箱が無い (10-22 ブラック「1 箱にした手で別の結果が出た時に黙って止まらない」): 形の合う箱があればそこへ、無ければ止まり。どちらも想定外として数える

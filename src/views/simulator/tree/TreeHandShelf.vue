@@ -88,6 +88,7 @@ const preCat = computed((): string | null => (catalysing.value && !afterQuality.
 const RESULT: Record<HandKind, [string, string]> = {
   add: ["当たり + 外れ", "Hit + Miss"], remove: ["外れが消えた + 狙いが消えた", "Miss removed + Target lost"], swap: ["当たり + 狙いが消えた + 外れ", "Hit + Target lost + Miss"], spam: ["当たりだけ (当たるまで打つ)", "Hits only (until a hit)"], free: ["打った後 (何が付いても次へ。当たり / 外れに分けない)", "After (anything counts, no hit / miss split)"],
   quality: ["無し (品質を最大まで上げて、下の＋で次の手)", "None (raise quality to max, then add the next craft with + below)"],
+  essence: ["付いた + 狙いが消えた (付く MOD は必ず付く)", "Added + Target lost (the essence mod always lands)"],
 };
 const kind = computed((): HandKind | null => (hand.value ? kindOfHand(hand.value, kindOfCurrency(hand.value.currency)) : null));
 /**
@@ -97,7 +98,16 @@ const kind = computed((): HandKind | null => (hand.value ? kindOfHand(hand.value
  */
 const hitAims = computed((): Aim[] => {
   const d = s.data.value, it = item.value, h = hand.value;
-  if (!d || !it || !h || (kind.value !== "spam" && kind.value !== "add" && kind.value !== "swap")) return [];
+  if (!d || !it || !h) return [];
+  // エッセンス = 付く MOD は決まっている。エンジンの結果で新しく付いた MOD を当たりの札に (10-22 オーナー「エッセンスの道」)
+  if (kind.value === "essence") {
+    const before = new Set([...it.prefixes, ...it.suffixes].map((m) => m.modId));
+    const got = (stepOutcomes(d, it, h.currency, h.omens) ?? []).filter((o) => !o.void).flatMap((o) => [...o.item.prefixes, ...o.item.suffixes].filter((m) => !before.has(m.modId)));
+    const out: Aim[] = [];
+    for (const m of got) if (!out.some((a) => a.modId === m.modId)) out.push({ modId: m.modId, tier: Number(/\d+/.exec(m.tierName)?.[0] ?? 99) });
+    return out.slice(0, 1);
+  }
+  if (kind.value !== "spam" && kind.value !== "add" && kind.value !== "swap") return [];
   const tree = aimsOf(t.doc.value);
   const open = (tree.length ? tree : t.doc.value.memoAims ?? []).filter((a) => !aimHeld(d, it, a));
   if (kind.value === "spam") return open;

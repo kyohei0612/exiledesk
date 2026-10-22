@@ -11,6 +11,7 @@ export const isCatalyst = (key: string): boolean => key.startsWith("catalyst_");
 export function kindOfCurrency(key: string): HandKind {
   if (isCatalyst(key)) return "quality";
   const k = kindOf(key);
+  if (k.startsWith("essence")) return "essence";
   return k === "chaos" ? "swap" : k === "annul" ? "remove" : "add";
 }
 /** カオススパムにできる手 (今はカオスだけ出す。同じ形で高貴・消去にも広げられる) */

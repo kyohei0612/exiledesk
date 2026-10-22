@@ -16,7 +16,7 @@ import type { TreeTune } from "./tree-tune";
  * (オーナー 10-22「品質だけ上げるくだりがあるでしょ、オーブを打つだけの表示でいいから下に＋」)
  */
 export type OutKind = "hit" | "junk" | "junkGone" | "lost" | "any" | "pass" | "branch";
-export type HandKind = "add" | "remove" | "swap" | "spam" | "free" | "quality";
+export type HandKind = "add" | "remove" | "swap" | "spam" | "free" | "quality" | "essence";
 /** 狙い: MOD と段 (tier = T 何以上、1 = T1 だけ)。フラクチャーの時は「その段」 */
 export interface Aim { modId: string; tier: number }
 /**
@@ -145,6 +145,9 @@ export const OUTS_OF: Record<HandKind, OutKind[]> = {
   free: ["any"],
   // 品質だけ上げる (カタリストを最大まで): 結果の箱は無く、通り抜けの 1 つ
   quality: ["pass"],
+  // エッセンス (10-22 オーナー「エッセンスの道」): 付く MOD は必ず付く (当たりの箱の札 = その MOD)。分けるのは何が消えたか =
+  // 付いた (何も消えない・外れが消えた) / 狙いが消えた (付いた MOD はある)。消えない種類は 1 通りの判定で箱 1 つ
+  essence: ["hit", "lost"],
 };
 
 function mk(d: TreeDoc, out: OutKind, parent: string): TreeBox {

@@ -160,7 +160,7 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
         // 結果の箱に無い結果 (エンジンの stepOutcomes で起こりうる枝を全部。未発現が付く手・繰り返しの手は見ない)
         if (!b.hand.repeat) {
           const miss = (stepOutcomes(data, item, b.hand.currency, b.hand.omens) ?? []).filter((o) => !o.void && !unrevealedOf(o.item))
-            .map((o) => outcomeOf(data, item, o.item, aims)).filter((oc) => !outBoxOf(doc, b, oc));
+            .map((o) => outcomeOf(data, item, o.item, aims, b.hand!.currency)).filter((oc) => !outBoxOf(doc, b, oc));
           if (miss.length) { const c = odd.get(id) ?? { who: new Set<number>(), outs: new Set<string>() }; c.who.add(person); for (const oc of miss) c.outs.add(outName(oc.out)); odd.set(id, c); }
         }
         // 品質 (オーナー 10-22「ルート精査の時の品質のチェック」): 触媒の品質が当たりの MOD に効くかは下で見る。
@@ -176,7 +176,7 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
           for (let i = 0; i < TRIES && !got; i++) {
             const r = i === 0 ? first : playHand(data, item, b.hand, rng, handAims(doc, b.id, aims));
             if (!r.applied) break;
-            const res = outcomeOf(data, item, r.item, aims);
+            const res = outcomeOf(data, item, r.item, aims, b.hand.currency);
             // 当たるまでの手が上限まで打っても当たらない = 付かない狙いだけ。打ち直しても同じなのでやめる (1 回 5000 回 × 1200 で固まった、10-22)
             if (b.hand.repeat && res.out !== "hit") break;
             if ((res.out === ob.out || ob.out === "any" || ob.out === "pass") && (ob.out !== "hit" || !ob.aim || res.hits.some((a: Aim) => aimKey(a) === aimKey(ob.aim!)))) got = r.item;
