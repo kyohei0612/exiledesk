@@ -91,7 +91,8 @@ export function startCalc(o: StartCalcIn) {
   const abyss = `essence:perfect:${it.cls.id}/PerfectEssence_EssenceAbyss`;
   // マジックのループの変成・増強・消去の平均 (上の augmentLoop の説明)
   const fside = m.type === "suffix" ? "suffix" : "prefix";
-  const one = o.fracMembers.length === 1 ? augmentLoop(d, { ...blank, rarity: "normal" }, gr.g, { modId: o.fracMembers[0]!.modId, minTierIndex: o.fracMembers[0]!.minTierIndex }) : null;
+  // 増強で付く確率が 0 の MOD (金の指輪の見本の特殊な MOD など) は回して数えない (打ち止めまで打ち続け 1 回 4 秒、ツリーを開くと真っ黒、10-22。結果は前も ∞)
+  const one = o.fracMembers.length === 1 && pHit > 0 ? augmentLoop(d, { ...blank, rarity: "normal" }, gr.g, { modId: o.fracMembers[0]!.modId, minTierIndex: o.fracMembers[0]!.minTierIndex }) : null;
   const lc = one && !one.off && one.hitRate > 0
     ? { transmute: one.uses[gr.tra] ?? 1, augment: (one.uses[gr.aug] ?? 0) / one.hitRate, annul: (one.uses.annul ?? 0) / one.hitRate }
     : pHit > 0 ? { transmute: 1, ...magicLoopCounts(pHit, null, gr.odds.share[fside]) } : { transmute: 1, augment: Infinity, annul: Infinity };
