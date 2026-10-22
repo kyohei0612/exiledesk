@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import NumStep from "../../../components/NumStep.vue";
-import { applyCurrency, freshItem, limitOf, mulberry32, RUNES, runeEffectFor, socketCapOf } from "../../../services/craft-stage/engine";
+import { freshItem, limitOf, mulberry32, runesFor, socketCapOf } from "../../../services/craft-stage/engine";
 import { migrateStart, startOf, type Aim, type TreeRarity, type TreeStart } from "../../../services/simulator/tree/tree-model";
 import { startItemOf } from "../../../services/simulator/tree/tree-sample";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -55,8 +55,8 @@ const cap = computed(() => (fresh.value ? socketCapOf(fresh.value.base, fresh.va
 const runeChoices = computed(() => {
   const d = s.data.value, it = fresh.value;
   if (!d || !it || !cap.value) return [];
-  return Object.entries(RUNES).filter(([en, r]) => r.kind === "rune" && r.available !== false && applyCurrency(d, { ...it, sockets: 1 }, `rune:${en}`, mulberry32(1)).applied)
-    .map(([en, r]) => ({ en, name: nameOf({ en, ja: r.ja }), effect: (() => { const e = runeEffectFor(r, it.cls.category); return e ? tr(e.ja, e.en) : ""; })() }));
+  // 差せるか・効果はエンジンの入口の runesFor (B14 10-22)
+  return runesFor(d, it).map(({ en, rune, effect }) => ({ en, name: nameOf({ en, ja: rune.ja }), effect: effect ? tr(effect.ja, effect.en) : "" }));
 });
 const runeName = (en: string): string => runeChoices.value.find((r) => r.en === en)?.name ?? en;
 const runes = computed(() => st.value.runes ?? []);

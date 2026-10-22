@@ -17,7 +17,7 @@ import { computed, nextTick, ref, watch } from "vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { tr } from "../../i18n/lang";
 import { readPaste, type PasteRead } from "../../services/simulator/paste-read";
-import type { ItemTextBoost, ItemTextImplicit, ItemTextMod } from "../../services/craft-stage/engine";
+import { modRawText, type ItemTextBoost, type ItemTextImplicit, type ItemTextMod } from "../../services/craft-stage/engine";
 
 const emit = defineEmits<{ start: [r: PasteRead] }>();
 const text = pasted;
@@ -35,18 +35,6 @@ watch(() => !!read.value?.item.base, (ok) => {
   why.value = new Set();
   if (ok) void nextTick(() => startEl.value?.scrollIntoView({ block: "nearest", behavior: "smooth" }));
 });
-/**
- * 貼った文の数字を、出てくる順に素の値 (values) へ差し替える。数字は貼ったままの値 (shownValues) と同じ順で並んでいる (J8)。
- * 割り戻しはしない (入口の値をそのまま入れるだけ)
- */
-function rawText(m: ItemTextMod): string {
-  if (!m.boosts.length || m.values.length !== m.shownValues.length) return m.text;
-  let i = 0;
-  return m.text.replace(/\d+(?:\.\d+)?/g, (x) => {
-    if (i < m.shownValues.length && Number(x) === m.shownValues[i]) return String(m.values[i++]);
-    return x;
-  });
-}
 const BOOST: Record<ItemTextBoost["kind"], [string, string]> = { quality: ["品質", "quality"], sideEffect: ["側の効果", "affix effect"], magnitude: ["効果の増加", "magnitude"] };
 const boostText = (m: ItemTextMod): string => m.boosts.map((b) => tr(`${BOOST[b.kind][0]} +${b.pct}%`, `${BOOST[b.kind][1]} +${b.pct}%`)).join(" · ");
 const SIDE = { prefix: ["P", "プレフィックス", "Prefix"], suffix: ["S", "サフィックス", "Suffix"] } as const;
@@ -96,7 +84,7 @@ function imTag(im: ItemTextImplicit): { text: string; title?: string } {
               <span v-if="m.tier" class="shrink-0 tabular-nums text-amber-200" :title="m.tier.name">{{ m.tier.label }}</span>
               <button v-if="m.tier && !m.tier.fits" type="button" data-paste-why class="-ml-1 shrink-0 rounded px-1 text-[12px] font-bold text-amber-200 hover:bg-white/10 max-md:min-h-8 max-md:min-w-8" :aria-expanded="why.has(i)" :title="tr('段を推し量った理由', 'Why this tier is a guess')" @click="toggleWhy(i)">?</button>
               <!-- 文は素の値で、盛られていた時だけ貼ったままの値と何で盛られたかを小さく (2026-10-21 オーナー「上乗せを全部抜いた素の値と段で出す、盛った値は要る所でだけ小さく」、S2e。割り戻しはエンジンの入口 J8) -->
-              <span class="min-w-0 break-words">{{ rawText(m) }}<span v-if="m.boosts.length" data-paste-boosted class="ml-1.5 text-[11px] text-[var(--exile-color-text-tertiary)]" :title="tr('貼ったままの値 (上乗せ込み)', 'Value as pasted (with boosts)')">({{ m.shownValues.join("〜") }} · {{ boostText(m) }})</span></span>
+              <span class="min-w-0 break-words">{{ modRawText(m) }}<span v-if="m.boosts.length" data-paste-boosted class="ml-1.5 text-[11px] text-[var(--exile-color-text-tertiary)]" :title="tr('貼ったままの値 (上乗せ込み)', 'Value as pasted (with boosts)')">({{ m.shownValues.join("〜") }} · {{ boostText(m) }})</span></span>
               <span v-if="m.fractured" class="shrink-0 text-[11px] text-sky-200">{{ tr("フラクチャー", "Fractured") }}</span>
               <span v-if="m.desecrated" class="shrink-0 text-[11px] text-fuchsia-200">{{ tr("冒涜", "Desecrated") }}</span>
               <span v-if="m.crafted" class="shrink-0 text-[11px] text-sky-100/80">{{ tr("クラフト", "Crafted") }}</span>
