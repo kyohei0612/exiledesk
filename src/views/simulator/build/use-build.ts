@@ -9,7 +9,7 @@ import { computed, ref, watch } from "vue";
 import { craftStage as s, setUseHook } from "../../../state/craft-stage";
 import { allMods, omensFor, type StageItem, type StageMod, type StepOutcome } from "../../../services/craft-stage/engine";
 import { heldTargets, hitsTarget, missOutcome, pickGroups, seedFor, type PathTarget } from "../../../services/simulator/build/path-pick";
-import { buildStage, finished, ilvlFit, pathAsk, simBuild, type BuildMod } from "../../../state/simulator/build-state";
+import { buildStage, finished, ilvlFit, missOn, pathAsk, simBuild, type BuildMod } from "../../../state/simulator/build-state";
 import { modText, tr } from "../../../i18n/lang";
 import type { RowTag } from "../../craft-stage/stage-item-row-tag";
 import { openTreePage } from "../../../web/page";
@@ -47,12 +47,24 @@ export function toPlay(): void {
   s.reset();
   buildStage.value = "play";
 }
-/** ②③ → ①: 狙いの MOD でカードを組み直す (付けられない物は足さない) */
-export function backToBuild(): void {
-  buildStage.value = "build";
+/** カードを白から MOD の並びで組み直す (付けられない物は足さない) */
+function rebuild(ms: readonly BuildMod[]): void {
   s.hold(null);
   s.reset();
-  for (const m of finished.value) s.addStartMod({ mod: m.modId, tier: m.tierName, ...(m.fractured ? { fractured: true } : {}), ...(m.desecrated ? { desecrated: true } : {}) });
+  for (const m of ms) s.addStartMod({ mod: m.modId, tier: m.tierName, ...(m.fractured ? { fractured: true } : {}), ...(m.desecrated ? { desecrated: true } : {}) });
+}
+/** ②③ → ①: 狙いの MOD でカードを組み直す */
+export function backToBuild(): void {
+  buildStage.value = "build";
+  rebuild(finished.value);
+}
+/** ① のカードの行の「冒涜」: その MOD を冒涜の MOD にする / 戻す (冒涜は 1 つまでなので、ほかの冒涜は戻す。オーナー 10-22「付けた後の種類はアイテムの欄で選ぶ」) */
+export function toggleDesecrate(m: StageMod): void {
+  const on = !m.desecrated;
+  rebuild(modsOfItem().map((x) => {
+    const { desecrated: _, ...plain } = x;
+    return x.modId === m.modId && on ? { ...plain, desecrated: true as const } : plain;
+  }));
 }
 // ②③ で「適正」を押し直した時: まだ打っていなければ適正のレベルの白から (打った後は手で決めたレベルのまま)
 watch(ilvlFit, (on) => { if (on && buildStage.value === "play" && !s.log.value.length && fitIlvl.value && s.itemLevel.value !== fitIlvl.value) { s.itemLevel.value = fitIlvl.value; s.reset(); } });
@@ -84,7 +96,9 @@ setUseHook((key) => {
   const omens = omensFor(key, s.omens.value);
   // 行き先が 1 通り・行き先で表せない手 (品質など) は普通に打つ
   if (!pickGroups(d, it, key, omens, targets.value)) return false;
-  pathAsk.value = { key, omens, at: lastIndex() };
+  pathAsk.value = { key, omens, at: lastIndex(), ...(missOn.value ? { auto: true as const } : {}) };
+  // 空打ちのスイッチが入っていれば候補を出さずに外れの 1 手
+  if (missOn.value) pickMiss();
   return true;
 });
 // 打った・戻した・持ち替えた・お告げを替えた・段を移った時は欄を閉じる (出した時の手と違う)
@@ -121,6 +135,7 @@ export function pickOutcome(o: StepOutcome): void {
 export function pickMiss(): void {
   const o = pathGroups.value ? missOutcome(pathGroups.value, Math.random()) : null;
   if (o) pickOutcome(o);
+  else { pathMiss.value = tr("この手には外れの行き先が無い (空打ちを切って選ぶ)", "This use has no miss outcome (turn Miss off and pick)"); pathAsk.value = null; }
 }
 
 /**

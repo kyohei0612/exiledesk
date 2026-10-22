@@ -11,7 +11,7 @@ import { allMods, type StageMod } from "../../../services/craft-stage/engine";
 import { pathAsk } from "../../../state/simulator/build-state";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { OUT_LOOK } from "../tree/tree-names";
-import { pathGroups, pathMiss, pathSearch, pickMiss, pickOutcome, targets } from "./use-build";
+import { pathGroups, pathMiss, pathSearch, pickOutcome, targets } from "./use-build";
 import { hitsTarget, type PickRow } from "../../../services/simulator/build/path-pick";
 
 const panel = ref<HTMLElement | null>(null);
@@ -31,11 +31,10 @@ const removedText = (ms: readonly StageMod[]): string => (ms.length ? ms.map((m)
 const fractures = (r: PickRow): boolean => r.added.some((m) => m.fractured);
 const heldTarget = (r: PickRow): boolean => !fractures(r) && !!s.item.value && r.added.some((m) => targets.value.some((t) => hitsTarget(m, t) && allMods(s.item.value!).some((x) => hitsTarget(x, t))));
 const JUNK = OUT_LOOK.junk;
-const canMiss = computed(() => (pathGroups.value ?? []).some((g) => g.rows.some((r) => r.tiers.some((t) => !t.hit))));
 </script>
 
 <template>
-  <div v-if="pathAsk && pathGroups" ref="panel" data-path-pick class="mt-2 rounded-lg border border-[var(--exile-color-border-brass)]/50 bg-black/50 p-2 text-[13px]">
+  <div v-if="pathAsk && pathGroups && !pathAsk.auto" ref="panel" data-path-pick class="mt-2 rounded-lg border border-[var(--exile-color-border-brass)]/50 bg-black/50 p-2 text-[13px]">
     <p class="mb-1.5 flex items-center gap-2">
       <b class="text-[var(--exile-color-text-title)]">{{ tr("付く MOD を選ぶ", "Choose the mod it adds") }}</b>
       <span class="min-w-0 flex-1 truncate text-[11px] opacity-60">{{ tr("乱数で引かずに、選んだ結果で打つ", "Uses the result you pick instead of a random roll") }}</span>
@@ -70,9 +69,8 @@ const canMiss = computed(() => (pathGroups.value ?? []).some((g) => g.rows.some(
         </span>
       </div>
     </div>
-    <div class="mt-2 flex items-center gap-2">
-      <button type="button" data-path-miss class="g-btn sm max-md:min-h-10" :disabled="!canMiss || !!pathSearch" :title="tr('打ったが狙いは付かなかった 1 手 (外れ MOD が出る割合どおりに 1 つ付く)', 'A use that hits no target (one miss mod rolls at its normal chance)')" @click="pickMiss">{{ tr("空打ち (外れ)", "Miss (no target)") }}</button>
-      <span v-if="pathSearch" class="text-[12px] opacity-80">{{ tr(`この結果になる手を探している… ${pathSearch.n.toLocaleString()}`, `Finding a roll with this result… ${pathSearch.n.toLocaleString()}`) }}</span>
+    <div v-if="pathSearch" class="mt-2 flex items-center gap-2">
+      <span class="text-[12px] opacity-80">{{ tr(`この結果になる手を探している… ${pathSearch.n.toLocaleString()}`, `Finding a roll with this result… ${pathSearch.n.toLocaleString()}`) }}</span>
     </div>
     <p v-if="pathMiss" class="mt-1.5 rounded border border-rose-400/50 bg-rose-500/15 px-2 py-1 text-center text-[12px] text-rose-200">{{ pathMiss }}</p>
   </div>

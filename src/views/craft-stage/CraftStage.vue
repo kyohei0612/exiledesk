@@ -59,10 +59,11 @@ import { openExternal } from "../../services/trade2/open-external";
 import { track } from "../../utils/track";
 import type { StageMod } from "../../services/craft-stage/types";
 import { buildStage, ilvlFit, pathAsk, simBuild } from "../../state/simulator/build-state";
-import { fitIlvl, junkTags } from "../simulator/build/use-build"; // シミュレーター β では工程の欄を出さない (手の並びは木で見る、オーナー 10-22)
+import { fitIlvl, junkTags, toggleDesecrate } from "../simulator/build/use-build"; // シミュレーター β では工程の欄を出さない (手の並びは木で見る、オーナー 10-22)
 // シミュレーターの入口 (開発版だけ、シミュ部長)。本番では開かないので後から読む
 const SimBuildPanel = defineAsyncComponent(() => import("../simulator/build/SimBuildPanel.vue"));
 const PathPick = defineAsyncComponent(() => import("../simulator/build/PathPick.vue"));
+const MissSwitch = defineAsyncComponent(() => import("../simulator/build/MissSwitch.vue"));
 
 const s = craftStage;
 /** ルーンを持ってルーンの入ったソケットを押した: そのソケットを置き換える手 (`rune:<名前>@<n>`)。ルーン以外はアイテムを押したのと同じ */
@@ -363,6 +364,8 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
           :flash-key="flashKey"
           @use="s.use()"
           :row-tags="simBuild ? junkTags : null"
+          :kinds="simBuild && buildStage === 'build'"
+          @desecrate="toggleDesecrate"
           :removable="!s.replay.value && !courseHidesEmulator"
           @remove="(id: string) => s.use(forceKey(id, null, 'x'))"
           @fracture="fractureMod"
@@ -415,9 +418,10 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
           </p>
           <CurrencyShelf @hold="hold">
             <!-- 棚の中の「神〜ヴァールオーブ」の段の下に出る (置き場は CurrencyShelf が決める。上に出すと持っているカレンシーがずれる、オーナー 2026-10-04) -->
-            <template v-if="heldOmens.length || (simBuild && pathAsk)" #held>
+            <template v-if="heldOmens.length || (simBuild && buildStage === 'play' && s.held.value)" #held>
               <HeldOmens v-if="heldOmens.length" mod-list @mod-list="toModList" />
-              <!-- シミュレーターの入口 ②③ (開発版だけ): 打つと乱数の代わりに付く MOD の候補 (お告げの欄の所) -->
+              <!-- シミュレーターの入口 ②③ (開発版だけ): お告げと並ぶ「空打ち」のスイッチと、打つと乱数の代わりに付く MOD の候補 (お告げの欄の所) -->
+              <MissSwitch v-if="simBuild && buildStage === 'play'" />
               <PathPick v-if="simBuild && pathAsk" />
             </template>
           </CurrencyShelf>

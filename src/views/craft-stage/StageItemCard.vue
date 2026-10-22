@@ -35,14 +35,14 @@ import type { RowTag } from "./stage-item-row-tag";
  * compact: 撮影用。英語のベース名を出さず、区切りの余白を詰める (詰めた分だけ拡大できる。MOD の文字を 1080p で 32px 以上に)
  */
 /** doomed: 今持っている物を打つと消える・入れ替わる・数値が変わる・固定される候補 (ゲームと同じく打つ前に色を付ける。2026-10-04 削減、2026-10-17 全部の手に) */
-const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[]; /** 付く空き (側ごとに光らせる枠の数。spec/preview.ts) */ open?: Record<"prefix" | "suffix", number> | null; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean; /** 付いた瞬間の確率 (無ければステージの工程から。スパムシミュレーターの運試しは自分の物を渡す) */ chances?: ReadonlyMap<string, number> | null; /** MOD の行ごとの札 (modId → 文と色。シミュの「外れ MOD」など。渡さなければ出ない) */ rowTags?: ReadonlyMap<string, RowTag> | null}>();
+const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[]; /** 付く空き (側ごとに光らせる枠の数。spec/preview.ts) */ open?: Record<"prefix" | "suffix", number> | null; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean; /** 付いた瞬間の確率 (無ければステージの工程から。スパムシミュレーターの運試しは自分の物を渡す) */ chances?: ReadonlyMap<string, number> | null; /** MOD の行ごとの札 (modId → 文と色。シミュの「外れ MOD」など。渡さなければ出ない) */ rowTags?: ReadonlyMap<string, RowTag> | null; /** シミュレーターの入口 ① (開発版): 行ごとに「冒涜」「フラクチャー」の切り替え */ kinds?: boolean}>();
 /** 行の札の色 */
 const ROW_TAG_TONE: Record<RowTag["tone"], string> = { bad: "bg-rose-500/25 text-rose-200", warn: "bg-amber-500/25 text-amber-100", good: "bg-emerald-500/25 text-emerald-200", info: "bg-sky-500/20 text-sky-100" };
 /** replace の札を行の名前にする時の文字の色 */
 const ROW_TAG_TEXT: Record<RowTag["tone"], string> = { bad: "text-rose-300", warn: "text-amber-200", good: "text-emerald-300", info: "text-sky-200" };
 const isDoomed = (m: StageMod): boolean => !!props.doomed?.includes(m.modId);
 /** 行の左 (P / S) と右 (↓・確率・×) の枠は同じ幅。MOD の文がカードの真ん中に来る (2026-10-17 オーナー「全体的に左に寄ってる、MOD は真ん中、→ に %、← に P,S」) */
-const sideColW = computed(() => (props.removable ? "w-[4.5rem] max-md:w-[5.25rem]" : "w-[3rem] max-md:w-[3rem]")); // ↓ を外した分 (2026-10-17) 細く
+const sideColW = computed(() => (props.kinds ? "w-[8rem] max-md:w-[9.5rem]" : props.removable ? "w-[4.5rem] max-md:w-[5.25rem]" : "w-[3rem] max-md:w-[3rem]")); // ↓ を外した分 (2026-10-17) 細く
 /** 未発現の行の崩れた文字。どの行も同じ並び・同じフォント (行ごとに変えると形がばらばらで気持ち悪い。2026-10-17 オーナー) */
 const UNREVEALED_GLYPHS = "ʘɿɕʞɞ ʖɷɦɕɷʞ";
 /** 付く空きの枠 (プレ → サフィ) */
@@ -54,7 +54,7 @@ const openTitle = computed(() => ((props.open?.prefix ?? 0) && (props.open?.suff
  */
 const isFocus = (m: StageMod): boolean => !!props.focus && (m.modId === props.focus || m.modId.endsWith(`/${props.focus}`) || m.family === props.focus);
 const anyFocus = computed(() => !!props.focus && [...props.item.prefixes, ...props.item.suffixes].some(isFocus));
-const emit = defineEmits<{ use: []; socket: [n: number]; unsocket: [n: number]; remove: [modId: string]; fracture: [m: StageMod]; jump: [modId: string]; implicit: [line: number, values: number[]] }>();
+const emit = defineEmits<{ use: []; socket: [n: number]; unsocket: [n: number]; remove: [modId: string]; fracture: [m: StageMod]; desecrate: [m: StageMod]; jump: [modId: string]; implicit: [line: number, values: number[]] }>();
 /** 暗黙の値の幅 (「6–9 から 11–15」、英語は「6–9 to 11–15」) */
 const rangeLabel = (rs: Array<[number, number, number]>): string => rs.map(([lo, hi, d]) => (lo === hi ? lo.toFixed(d) : `${lo.toFixed(d)}–${hi.toFixed(d)}`)).join(tr(" から ", " to "));
 /** 暗黙の値を 1 刻み上下した値 (範囲の中だけ。範囲が 2 つ以上なら全部を同じ向きに)。動かせなければ null */
@@ -285,6 +285,11 @@ const rows = computed(() => {
           <span class="flex shrink-0 items-center justify-end gap-1" :class="sideColW">
             <!-- ↓ (MOD 一覧のこの行へ) は外した。行を押すと MOD 一覧のその行を枠で囲んで見せる (2026-10-17 オーナー「この矢印めっちゃ気になる、MOD クリックでその挙動に」) -->
             <span v-if="chanceOf(r.m) != null" data-rec-part="odds" class="w-11 text-right text-[11px] tabular-nums" :class="isRareChance(chanceOf(r.m)!) ? 'font-bold text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'" :title="tr('付いた瞬間に、この段が付く確率 (その段の重み ÷ この手で付きうる全部の重み)', 'Chance this tier rolled when it was added (tier weight ÷ total weight of everything that step could add)')">{{ fmtChance(chanceOf(r.m)!) }}</span>
+            <!-- シミュレーターの入口 ①: 付けた後の種類をここで選ぶ (押すと切り替わる。フラクチャーは右クリックでも) -->
+            <template v-if="kinds && !r.m.unrevealed">
+              <button type="button" data-kind-desecrate class="whitespace-nowrap rounded border px-1 text-[10px] leading-4 max-md:px-2 max-md:py-1" :class="r.m.desecrated ? 'border-[#6a8a3a] bg-[#2e3a1e] text-[#c9e59a]' : 'border-white/10 text-white/45 hover:border-[#6a8a3a]/70'" :aria-pressed="!!r.m.desecrated" :title="tr('冒涜の MOD にする / 戻す (1 つまで)', 'Make it a desecrated mod / undo (1 max)')" @click.stop="emit('desecrate', r.m)">{{ tr("冒涜", "Desecrated") }}</button>
+              <button type="button" data-kind-fracture class="whitespace-nowrap rounded border px-1 text-[10px] leading-4 max-md:px-2 max-md:py-1" :class="r.m.fractured ? 'border-amber-300/70 bg-amber-500/25 text-amber-100' : 'border-white/10 text-white/45 hover:border-amber-300/60'" :aria-pressed="!!r.m.fractured" :title="tr('フラクチャーにする / 外す (1 つまで。右クリックでも)', 'Fracture / unfracture (1 max; right-click too)')" @click.stop="emit('fracture', r.m)">✦</button>
+            </template>
             <button v-if="removable && !r.m.unrevealed" type="button" class="rounded px-1 text-[12px] leading-none text-rose-300/70 hover:bg-rose-500/20 hover:text-rose-200 max-md:px-2 max-md:py-1 max-md:text-[16px]" :title="tr('この MOD を外す (費用 0、1 手戻すで戻る)', 'Remove this mod (free, Undo brings it back)')" @click.stop="emit('remove', r.m.modId)">×</button>
           </span>
         </p>
