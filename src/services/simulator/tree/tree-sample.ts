@@ -6,7 +6,7 @@
  * その下の箱 = 親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
-import { aimHits, applyCurrency, catalystOf, freshItem, maxQualityOf, mulberry32, omenBlock, revealOffers, runeIdByName, stepOutcomes, unrevealedOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimHits, applyCurrency, catalystOf, freshItem, maxQualityOf, mulberry32, omenBlock, revealOffers, runeIdByName, stepOutcomes, tierIndexOf, unrevealedOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { CATALYSING, catalystTagOf, ECHO, engineOmens, isCatalyst, kindOfCurrency } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import { startOf, type Aim, type Hand, type OutKind, type TreeDoc } from "./tree-model";
@@ -25,7 +25,7 @@ export interface Sample { item: StageItem; note: string | null }
  * 系統だけで合わせると「スペルスキルのレベル」にミニオン・近接・投射物のスキルレベルが当たった (10-22 白紙から 13 通り組んだ #3、系統 IncreaseSocketedGemLevel)
  */
 export function aimHeld(data: PatchData, item: StageItem, a: Aim): boolean {
-  const t = { modId: a.modId, minTierIndex: (data.mods.get(a.modId)?.tiers.length ?? 0) - a.tier };
+  const t = { modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) };
   return [...item.prefixes, ...item.suffixes].some((m) => aimHits(m, t, { data, sameText: true }));
 }
 /**

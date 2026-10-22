@@ -6,7 +6,7 @@
  * 始め方 = フラクチャー済みを買う・4 MOD を買ってフラクチャー・白から自作 (増強の道 / グレーターの道)。白から自作は買う 2 つの高い方を超えたら道無し (③ と同じ、10-21)。
  * ベースの値段 (白・4 MOD・フラクチャー済み) は手入力の神、カレンシーは今の相場 (price、高貴建て)。結果は神
  */
-import { freshItem, sideOfMod, type PatchData } from "../../craft-stage/engine";
+import { freshItem, sideOfMod, tierIndexOf, type PatchData } from "../../craft-stage/engine";
 import { methodsFor, type SimStartKind } from "../sim-methods";
 import type { SimTargetIn } from "../quiz-build";
 import { startCalc, startCostOf } from "../start-cost";
@@ -32,7 +32,7 @@ export function treeBaseCost(data: PatchData, doc: TreeDoc, prices: TreeBasePric
   if (others.length > 1) return none(tr("反対側の狙いが 2 つ以上は比べられない (前の ③ と同じく 1 つまで)", "Can't compare with 2+ other mods (one at most, as in step 3)"));
   const div = price("divine") || 1;
   const ex = (v: number | undefined): number | null => (v != null && Number.isFinite(v) && v >= 0 ? v * div : null);
-  const ixOf = (modId: string, tier: number): number => (data.mods.get(modId)?.tiers.length ?? 1) - tier;
+  const ixOf = (modId: string, tier: number): number => tierIndexOf(data, modId, tier);
   const item = freshItem(data, doc.base, doc.itemLevel, "normal");
   const fracMembers = [{ modId: fr.modId, minTierIndex: ixOf(fr.modId, fr.tier), text: fr.modId, rank: `T${fr.tier}` }];
   const targets: SimTargetIn[] = [

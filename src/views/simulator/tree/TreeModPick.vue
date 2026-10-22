@@ -10,6 +10,7 @@ import type { Aim } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { craftStage as s } from "../../../state/craft-stage";
+import { tierRankLabel } from "../../../services/craft-stage/engine";
 import { aimHeld, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { aimKey } from "../../../services/simulator/tree/tree-model";
 
@@ -53,7 +54,7 @@ const heldBefore = computed(() => {
   const it = sampleOf(d, t.doc.value, p, 1).item;
   return new Set(t.goals.value.filter((a) => aimHeld(d, it, a)).map(aimKey));
 });
-const tierLabel = (tier: number): string => (props.mode === "start" || tier === 1 ? `T${tier}` : tr(`T${tier} 以上`, `T${tier}+`));
+const tierLabel = (tier: number): string => tierRankLabel(tier, props.mode !== "start");
 </script>
 
 <template>

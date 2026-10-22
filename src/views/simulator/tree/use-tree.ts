@@ -5,7 +5,7 @@
 import { computed, ref, shallowRef, watch } from "vue";
 import { craftStage as s, nameOf } from "../../../state/craft-stage";
 import { priceOfKey } from "../../../state/emulator/craft-stage-shelf";
-import { freshItem, modListFor, mulberry32 } from "../../../services/craft-stage/engine";
+import { freshItem, minIlvlFor, modListFor, mulberry32, tierRankLabel } from "../../../services/craft-stage/engine";
 import { startItemOf } from "../../../services/simulator/tree/tree-sample";
 import { isTreeDoc, migrateStart, newTree, startOf, type Aim, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { treeBaseCost } from "../../../services/simulator/tree/tree-base-cost";
@@ -195,8 +195,7 @@ const fitIlvl = computed<number | null>(() => {
   const data = s.data.value, d = doc.value;
   if (!data) return null;
   const aims: Aim[] = [...Object.values(d.boxes).flatMap((b) => (b.out === "hit" && b.aim ? [b.aim] : [])), ...startOf(d).mods, ...(d.memoAims ?? [])];
-  const lv = aims.map((a) => { const ts = data.mods.get(a.modId)?.tiers; return ts?.[ts.length - a.tier]?.ilvl ?? 0; }).filter((x) => x > 0);
-  return lv.length ? Math.max(...lv) : null;
+  return minIlvlFor(data, aims);
 });
 /** 適正を使う / 外す (使う時はすぐ合わせる。1 つ戻すで戻せる) */
 function setFit(on: boolean): void {
@@ -227,7 +226,7 @@ function aimLabel(a: Aim | null): string {
   if (!a) return "";
   const r = rowOfMod(a.modId);
   const side = r ? (r.side === "prefix" ? tr("プレ", "Prefix") : tr("サフィ", "Suffix")) : "";
-  return `${a.tier === 1 ? "T1" : tr(`T${a.tier} 以上`, `T${a.tier}+`)} ${side} ${r?.template ?? a.modId}`;
+  return `${tierRankLabel(a.tier)} ${side} ${r?.template ?? a.modId}`;
 }
 /** 狙いの MOD の短い名前 (戻り先の札で、どの狙いの所の箱かを添える) */
 const aimShort = (a: Aim): string => rowOfMod(a.modId)?.template ?? a.modId;

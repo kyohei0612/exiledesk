@@ -13,7 +13,7 @@ import StageItemCard from "../../craft-stage/StageItemCard.vue";
 import CurrencyShelf from "../../craft-stage/CurrencyShelf.vue";
 import HeldOmens from "../../craft-stage/HeldOmens.vue";
 import { heldOmensOf } from "../../craft-stage/held-omens";
-import { mulberry32, omensFor, stepOutcomes } from "../../../services/craft-stage/engine";
+import { mulberry32, omensFor, stepOutcomes, tierNoOf } from "../../../services/craft-stage/engine";
 import { aimHeld, aimsOf, catalystFull, fillCatalyst, handProblem, sampleOf, singleOutOf } from "../../../services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, catalystTagOf, ECHO, engineOmens, isBone, isCatalyst, kindOfCurrency, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handLabel, handName, outName } from "./tree-names";
@@ -117,7 +117,7 @@ const hitAims = computed((): Aim[] => {
     const before = new Set([...it.prefixes, ...it.suffixes].map((m) => m.modId));
     const got = (stepOutcomes(d, it, h.currency, engineOmens(h)) ?? []).filter((o) => !o.void).flatMap((o) => [...o.item.prefixes, ...o.item.suffixes].filter((m) => !before.has(m.modId)));
     const out: Aim[] = [];
-    for (const m of got) if (!out.some((a) => a.modId === m.modId)) out.push({ modId: m.modId, tier: Number(/\d+/.exec(m.tierName)?.[0] ?? 99) });
+    for (const m of got) if (!out.some((a) => a.modId === m.modId)) out.push({ modId: m.modId, tier: tierNoOf(m) });
     return out.slice(0, 1);
   }
   // フラクチャー: 当たりの札 = この箱で付いている狙い (✦ にする MOD を選んだらその 1 つ)

@@ -5,6 +5,7 @@
  */
 import { computed } from "vue";
 import { craftStage as s } from "../../../state/craft-stage";
+import { minIlvlFor, tierIndexOf } from "../../../services/craft-stage/engine";
 import { tradeFiltersFor } from "../../../services/htc/buy-or-craft";
 import { buildSpecQuery } from "../../../services/trade2/query/spec";
 import { openTradeQuery } from "../../../services/pob-check/trade-links";
@@ -20,8 +21,7 @@ export function useTreeSearch() {
   /** ✦ の MOD (段の下限つき) */
   const frac = computed(() => {
     const d = s.data.value, m = startOf(t.doc.value).mods.find((x) => x.fractured);
-    const mod = m ? d?.mods.get(m.modId) : null;
-    return d && m && mod ? { d, modId: m.modId, minTierIndex: mod.tiers.length - m.tier, ilvl: mod.tiers[mod.tiers.length - m.tier]?.ilvl ?? 0 } : null;
+    return d && m && d.mods.get(m.modId) ? { d, modId: m.modId, minTierIndex: tierIndexOf(d, m.modId, m.tier), ilvl: minIlvlFor(d, [m]) ?? 0 } : null;
   });
   const ilvlMin = computed(() => Math.min(Math.max(1, frac.value?.ilvl ?? 0), t.doc.value.itemLevel));
   /** ✦ の MOD の条件 (kind: 普通 explicit / 固定済み fractured) */
