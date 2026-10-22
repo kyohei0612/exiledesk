@@ -2,6 +2,10 @@
 
 前の引き継ぎ (1〜3 本目、10-21〜23) と止めている物 (①〜⑥・自動・④ の物・OK 待ちの一覧) は notes/2026-10-22-todo-archive.md にそのまま移した。
 
+## 報告 34 (15 本目 → ブラック 7 代目、10-22 深夜) B13・B14・B16 を寄せた、B は全部済み
+- d23eee96 (B14・B16): TreeStartPick の差せるルーン = 入口の runesFor、SimPasteRead の素の値の文 = 入口の modRawText (どちらも同じ式だった)。7f796e29 (B13): TreeModPick の群れと並び = modListForUse、段の番号 = ListTier.tier ("T3" の文字から取るのをやめた。突き合わせはジン部長の fdc75c0d、64 一覧・段 4,798 で 0)。B15 は use-sim-targets が消えて要らない。型 0・入口の見張り「増えた所なし」。README の地図に入口に寄せた物の 1 行。
+- 画面で変わりうる物は B11 の棚の 2 種類 (効かないお告げを掛けたままの通貨が灰色・品質が最大のカタリストが打てる側) だけ。ほかは前後の数字が全部同じ。開発版で棚を触って確かめるかはブラックの判断待ち。
+
 ## 報告 33 (15 本目 → ブラック 7 代目、10-22 深夜) B6〜B10 を入口に寄せた
 - fa97ad04 (B6〜B8): playHand の 1 回分 = 入口の applyHand (触媒の前のカタリスト・フラクチャーの指名・骨の後の発現と反響)。自前の reveal を消した。発現で選ぶのは木の当たりの札 (miss は狙いでない候補) を渡すだけ。台本 _tree-quality-probe・_tree-patterns-probe が 484ffda4 で消えた kindOfCurrency を読んで落ちていたので effectOf に直した。
 - 7283798c (B9): isCatalyst = 入口の isCatalystKey、TreeHandShelf のお告げの並びは入口の omensAllowedFor から直に。5a040a5e (B10): startItemOf = 入口の startWith を呼ぶだけ。
