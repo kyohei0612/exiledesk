@@ -63,8 +63,20 @@ const P = {
   "amulet-catalyst": (s) => (s.junk("suffix") ? { cur: "annul" } : { cur: "exalt_perfect", omens: ["OmenofCatalysingExaltation", "OmenofDextralExaltation"], cat: s.heldIx(1) && !s.heldIx(0) ? "catalyst_caster" : "catalyst_life" }),
   // 3 耐性: サフィの外れ → 消去、ほかは右側の高貴 + 上級 (始めの 1 回は素の上級の高貴)
   "boots-3res-split": (s) => (s.steps === 0 ? { cur: "exalt_greater" } : s.junk("suffix") ? { cur: "annul" } : { cur: "exalt_greater", omens: ["OmenofDextralExaltation"] }),
-  // 4 つ: 外れが 1 つでもあれば消去、ほかは上級の高貴
-  "amulet-4aims-split": (s) => (s.junk("any") ? { cur: "annul" } : { cur: "exalt_greater" }),
+  // 4 つ (f1c0cbb2 で v5b に組み直した木、notes/2026-10-22-amulet-4aims.md): サフィ 2 つ = 右側の高貴 + 上級 (サフィの外れ 2 つ以上で、プレが空なら素の消去・あれば右側の消去)
+  // → ES = 防御のカタリスト + 触媒 + 左側の高貴 + 上級 (プレの外れは左側の消去) → スピリット = 古代の骨 + 左側の死霊術で発現 (冒涜の外れは光 + 消去)
+  "amulet-4aims-split": (s) => {
+    // 狙いの並びは木によって違うので、側と MOD で引く
+    const it = s.it, has = (id) => s.aims.some((a) => a.modId === id && held(it, a));
+    const side = (sd) => s.aims.filter((a) => sideOf(a.modId) === sd && held(it, a)).length;
+    const sa = side("suffix"), sj = s.junkN("suffix"), pa = side("prefix"), pj = s.junkN("prefix");
+    if (sa < 2) return 3 - sa - sj < 2 - sa ? (pa + pj ? { cur: "annul", omens: ["OmenofDextralAnnulment"] } : { cur: "annul" }) : { cur: "exalt_greater", omens: ["OmenofDextralExaltation"] };
+    if (s.desJunk()) return { cur: "annul", omens: ["OmenofLight"] };
+    if (pj) return sa + sj ? { cur: "annul", omens: ["OmenofSinistralAnnulment"] } : { cur: "annul" };
+    if (!has("Amulets/EnergyShield")) return { cur: "exalt_greater", omens: ["OmenofCatalysingExaltation", "OmenofSinistralExaltation"], cat: "catalyst_defences" };
+    if (!all(it).some((m) => m.desecrated)) return { cur: "desecrate_ancient", omens: ["OmenofSinistralNecromancy"], reveal: true };
+    return { cur: "exalt_greater", omens: ["OmenofSinistralExaltation"] };
+  },
   // カオス当たるまで (どちらか) → 2 つで完成・0 ならカオスに戻る・サフィの外れ 2 つ以上は消去・ほかは右側の高貴 + 上級
   "amulet-spam-split": (s) => (s.count === 0 ? { cur: "chaos" } : s.junkN("suffix") >= 2 ? { cur: "annul" } : { cur: "exalt_greater", omens: ["OmenofDextralExaltation"] }),
   // ✦レアリティ: 火・冷気をカオス当たるまで → 右側の高貴で残り (外れは消去) → 左側の高貴 + 上級でライフ (外れは消去 + 左側の消去のお告げ)
