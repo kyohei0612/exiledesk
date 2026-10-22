@@ -45,7 +45,9 @@ export { CURRENCY_FLOOR } from "../../vendor/poe2htc/engine/types";
 export type { Strength as OrbStrength } from "./spec/orb-specs";
 export { orbFloor, CHAOS_FLOOR } from "./spec/orb-specs";
 export { familyBlocked, occupiedKeysOf } from "../mods/mod-rules";
-export { modListFor } from "./mod-list";
+// MOD の一覧の行 (段に数の tier)。modListForUse = 使い方 (hit = カレンシーで付く当たり / start = 始まりに置ける) の群れだけを群れの順・出やすさの順に
+export type { ListRow, ListTier, ModGroup } from "./mod-list";
+export { modListFor, modListForUse, MOD_USE_GROUPS } from "./mod-list";
 export { tierDisplayRanges } from "../mods/stat-scale";
 export { inGroup } from "../mods/item-classes";
 export { isRemovedBase, classLabel } from "../items/base-catalog";

@@ -43,8 +43,8 @@ export const GROUP_JA: Record<ModGroup, string> = {
 export const groupLabelOf = (g: ModGroup, item: StageItem | null | undefined): string =>
   (g === "essence" || g === "perfect_essence") && !!item && inGroup(item.cls.category, "jewel") ? tr("デリリウム", "Delirium") : GROUP_JA[g];
 
-/** modId = その段の MOD (同じ系統をまとめた行では段ごとに違う、2026-10-05) */
-export interface ListTier { rank: string; name: string; ilvl: number; weight: number; text: string; modId?: string }
+/** modId = その段の MOD (同じ系統をまとめた行では段ごとに違う、2026-10-05)。tier = rank の数 (T2 → 2、その段の MOD の中で数える) */
+export interface ListTier { rank: string; tier: number; name: string; ilvl: number; weight: number; text: string; modId?: string }
 export interface ListRow {
   id: string;
   /** 系統 (URL の mod= で id の代わりに使える) */
@@ -105,6 +105,17 @@ export function tierIdOf(data: PatchData | null | undefined, r: ListRow, t: List
   return { modId, idx: data?.mods.get(modId)?.tiers.findIndex((x) => x.name === t.name && x.ilvl === t.ilvl) ?? -1 };
 }
 
+/**
+ * 使い方ごとの MOD の群れ (並びもこの順。2026-10-22 シミュの自前の式を入口へ、B13): hit = カレンシーで付く当たり (一般・冒涜専用・エッセンス。骨の手の当たりは冒涜で付与、10-22 オーナー)、
+ * start = 始まりに置ける MOD (一般・エッセンス・創生の樹などカレンシーで付かない物・ルーンの MOD (付けると force がそのルーンを差す))
+ */
+export const MOD_USE_GROUPS: Readonly<Record<"hit" | "start", readonly ModGroup[]>> = { hit: ["normal", "desecrated", "essence"], start: ["normal", "essence", "special", "rune"] };
+/** その使い方の行だけを、群れの順 → 出やすさ (share) の大きい順に (普通の MOD が先。10-22 靴・手袋を白紙から組んで、創生の樹が一番上に並び探しにくかった) */
+export function modListForUse(data: PatchData, item: StageItem, use: "hit" | "start"): ListRow[] {
+  const gs = MOD_USE_GROUPS[use];
+  return modListFor(data, item).filter((r) => gs.includes(r.group)).sort((a, b) => gs.indexOf(a.group) - gs.indexOf(b.group) || b.share - a.share);
+}
+
 export function modListFor(data: PatchData, item: StageItem): ListRow[] {
   // 普通の置き場は差した特殊 MOD のルーンの MOD 込み (要望 ㉙)。出やすさは普通と一緒に引くので一緒に割る
   const eff = effectiveCls(item);
@@ -118,7 +129,7 @@ export function modListFor(data: PatchData, item: StageItem): ListRow[] {
     const ja = jaOfMod(m);
     const n = m.tiers.length;
     // 数値は画面の単位に (1 万分率の 400 → 4%。決まりは services/mods/stat-scale.ts、2026-10-03 に生の値が出ていた)
-    const tiers = [...m.tiers].reverse().map((t, i): ListTier => ({ rank: `T${i + 1}`, name: t.name, ilvl: t.ilvl, weight: t.weight, text: fillModText(m, tierDisplayRanges(t)) }));
+    const tiers = [...m.tiers].reverse().map((t, i): ListTier => ({ rank: `T${i + 1}`, tier: i + 1, name: t.name, ilvl: t.ilvl, weight: t.weight, text: fillModText(m, tierDisplayRanges(t)) }));
     const weight = tierWeight(m, 0, Infinity); // アイテムレベルは見ない (全部の段)
     const on = onIds.has(m.id);
     return {
