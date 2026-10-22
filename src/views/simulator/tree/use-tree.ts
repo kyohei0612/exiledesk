@@ -5,7 +5,8 @@
 import { computed, ref, shallowRef, watch } from "vue";
 import { craftStage as s, nameOf } from "../../../state/craft-stage";
 import { priceOfKey } from "../../../state/emulator/craft-stage-shelf";
-import { freshItem, minIlvlFor, modListFor, mulberry32, tierRankLabel } from "../../../services/craft-stage/engine";
+import { freshItem, modListFor, mulberry32 } from "../../../services/craft-stage/engine";
+import { minIlvlFor, tierRankLabel } from "../../../services/craft-stage/engine-sim";
 import { startItemOf } from "../../../services/simulator/tree/tree-sample";
 import { isTreeDoc, migrateStart, newTree, startOf, type Aim, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { treeBaseCost } from "../../../services/simulator/tree/tree-base-cost";

@@ -5,7 +5,7 @@
  */
 import { computed } from "vue";
 import { craftStage as s } from "../../../state/craft-stage";
-import { minIlvlFor, tierIndexOf } from "../../../services/craft-stage/engine";
+import { minIlvlFor, tierIndexOf } from "../../../services/craft-stage/engine-sim";
 import { tradeFiltersFor } from "../../../services/htc/buy-or-craft";
 import { buildSpecQuery } from "../../../services/trade2/query/spec";
 import { openTradeQuery } from "../../../services/pob-check/trade-links";

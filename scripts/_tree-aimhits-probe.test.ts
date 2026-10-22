@@ -10,7 +10,8 @@
  */
 import { it } from "vitest";
 import { loadPatch } from "../tests/helpers/patch";
-import { aimHeldOn, type StageItem, type StageMod } from "../src/services/craft-stage/engine";
+import { type StageItem, type StageMod } from "../src/services/craft-stage/engine";
+import { aimHeldOn } from "../src/services/craft-stage/engine-sim";
 import { aimsOf, sampleOf } from "../src/services/simulator/tree/tree-sample";
 import { treeSample, TREE_SAMPLES } from "../src/services/simulator/tree/tree-samples";
 

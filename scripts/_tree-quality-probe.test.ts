@@ -13,7 +13,7 @@ import { loadPatch } from "../tests/helpers/patch";
 import { sampleOf } from "../src/services/simulator/tree/tree-sample";
 import { checkTree } from "../src/services/simulator/tree/tree-check";
 import { runTree } from "../src/services/simulator/tree/tree-run";
-import { effectOf } from "../src/services/craft-stage/engine";
+import { effectOf } from "../src/services/craft-stage/engine-sim";
 import { kindOfHand, newTree, setAim, setDone, setHand, tidy, type Aim, type Hand } from "../src/services/simulator/tree/tree-model";
 
 const data = loadPatch();

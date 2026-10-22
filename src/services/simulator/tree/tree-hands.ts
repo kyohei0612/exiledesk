@@ -2,7 +2,8 @@
  * tree-hands.ts — ツリーの打つ手の名前と種類 (2026-10-22)。手はクラフト台の棚から選ぶ (TreeHandShelf.vue、オーナー「下の＋も同じ感じにしてええよ」)。
  * 名前は画面の側 (views/simulator/tree/tree-names.ts、クラフト台の棚と同じ nameOfKey)。手の効果はエンジン (applyCurrency)、ここは種類と並びだけ
  */
-import { ABYSSAL_ECHO_OMEN, CATALYSING_OMEN, CATALYSTS, isCatalystKey, kindOf } from "../../craft-stage/engine";
+import { CATALYSTS, kindOf } from "../../craft-stage/engine";
+import { ABYSSAL_ECHO_OMEN, CATALYSING_OMEN, isCatalystKey } from "../../craft-stage/engine-sim";
 
 /** カタリスト = 品質だけ上げる手 (エンジンの入口の isCatalystKey。catalyst_<タグ>・jcatalyst_<タグ>) */
 export const isCatalyst = isCatalystKey;

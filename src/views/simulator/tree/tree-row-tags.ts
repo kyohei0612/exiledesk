@@ -3,7 +3,8 @@
  * このツリーの狙い (当たりの札) に当たらない MOD は行の名前ごと「外れ MOD」(赤、MOD の文は乗せた時の説明。オーナー「もはや MOD の名前を外れ MOD でおk」)。
  * × の印 (前の試し打ちで付けた物) の行は「× 要らない」が先、フラクチャーは付けない
  */
-import { isAimMod, type PatchData, type StageItem } from "../../../services/craft-stage/engine";
+import { type PatchData, type StageItem } from "../../../services/craft-stage/engine";
+import { isAimMod } from "../../../services/craft-stage/engine-sim";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { aimOpts, aimsOf, targetsOf } from "../../../services/simulator/tree/tree-sample";
 import type { RowTag } from "../../craft-stage/stage-item-row-tag";

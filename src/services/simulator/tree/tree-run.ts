@@ -5,7 +5,8 @@
  * 打つのは全部エンジンの入口 (applyCurrency / fillCatalyst)。結果の分け方は tree-sample.ts の outcomeOf・aimsOf (見本と同じ分け方)。
  * 繰り返し (当たるまで) は tree-sample の playHand と同じ流れを、個数を数えるためにここでたどる (playHand を変える時はここも合わせる)。
  */
-import { aimHeldOn, effectOf, isAimMod, junkOf, mulberry32, sideOfMod, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { mulberry32, sideOfMod, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { aimHeldOn, effectOf, isAimMod, junkOf } from "../../craft-stage/engine-sim";
 import { aimOpts, aimsOf, handAims, handProblem, outcomeOf, playHand, startItemOf as startOf, targetsOf } from "./tree-sample";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";

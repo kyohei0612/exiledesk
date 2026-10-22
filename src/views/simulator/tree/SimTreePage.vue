@@ -24,7 +24,7 @@ import { craftStage as s } from "../../../state/craft-stage";
 import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, removeHit, setAim, setBack, setDone, setHand, setSplit, tidy, handUses, type Aim, type Hand, type HandKind, type OutKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
 import { handLabel, outName } from "./tree-names";
 import { aimsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
-import { aimHeldOn } from "../../../services/craft-stage/engine";
+import { aimHeldOn } from "../../../services/craft-stage/engine-sim";
 import { treeSample } from "../../../services/simulator/tree/tree-samples";
 import { linkSameShape, MATCH, RESTART } from "../../../services/simulator/tree/tree-run";
 import { treePage } from "../../../state/web-page";

@@ -7,7 +7,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import NumStep from "../../../components/NumStep.vue";
-import { freshItem, limitOf, mulberry32, runesFor, socketCapOf } from "../../../services/craft-stage/engine";
+import { freshItem, limitOf, mulberry32, socketCapOf } from "../../../services/craft-stage/engine";
+import { runesFor } from "../../../services/craft-stage/engine-sim";
 import { migrateStart, startOf, type Aim, type TreeRarity, type TreeStart } from "../../../services/simulator/tree/tree-model";
 import { startItemOf } from "../../../services/simulator/tree/tree-sample";
 import { craftStage as s } from "../../../state/craft-stage";

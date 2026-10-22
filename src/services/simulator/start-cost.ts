@@ -6,7 +6,8 @@
 import { runeEnForId } from "./pattern";
 import { blankWith, fractureOdds } from "./sim-odds";
 import { greaterRouteCost, type GreaterRoute } from "./sim-greater";
-import { addGradeFor, anyOfAddOdds, sideOfMod, spamCounts, type PatchData, type RouteGrade, type SpamCounts, type StageItem } from "../craft-stage/engine";
+import { sideOfMod, spamCounts, type PatchData, type RouteGrade, type SpamCounts, type StageItem } from "../craft-stage/engine";
+import { addGradeFor, anyOfAddOdds } from "../craft-stage/engine-sim";
 import { keepCompare } from "./keep-compare";
 import type { SimTargetIn } from "./quiz-build";
 import type { SimStartKind, SimTargetLike } from "./sim-methods";

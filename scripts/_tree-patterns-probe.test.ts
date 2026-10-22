@@ -16,7 +16,8 @@
 import fs from "node:fs";
 import { afterAll, it } from "vitest";
 import { loadPatch } from "../tests/helpers/patch";
-import { aimHeldOn, applyCurrency, effectOf, fillCatalyst, freshItem, modListFor, mulberry32, omensFor, RUNES, socketCapOf, stepOutcomes, type PatchData } from "../src/services/craft-stage/engine";
+import { applyCurrency, freshItem, modListFor, mulberry32, omensFor, RUNES, socketCapOf, stepOutcomes, type PatchData } from "../src/services/craft-stage/engine";
+import { aimHeldOn, effectOf, fillCatalyst } from "../src/services/craft-stage/engine-sim";
 import { addHit, addSplitRow, removeHit, aimKey, migrateStart, newTree, setAim, setBack, setDone, setHand, setSplit, setSplitWhen, tidy, toggleMemoAim, kindOfHand, type Aim, type Hand, type SplitWhen, type TreeDoc } from "../src/services/simulator/tree/tree-model";
 import { aimsOf, handAims, handProblem, outcomeOf, playHand, sampleOf, singleOutOf, startItemOf } from "../src/services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, ECHO, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../src/services/simulator/tree/tree-hands";
