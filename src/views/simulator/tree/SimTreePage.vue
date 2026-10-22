@@ -182,9 +182,9 @@ function backLabel(b: Box): string {
 function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = null, only: { out: OutKind; aim: Aim | null } | null = null): void {
   const id = panel.value!.id;
   if (picking.value === id) picking.value = null;
+  let at = id;
   t.edit((d) => {
     const had = new Set(Object.keys(d.boxes));
-    let at = id;
     if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
     setHand(d, at, h, kind, aims, only);
     joinSameShape(d, id);
@@ -192,6 +192,9 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = nul
     linkSameShape(d, Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id));
   });
   panel.value = null;
+  // 出来た結果の箱が枠の外なら寄る (真ん中の箱。10-22 白紙から組んで、出来た箱が下に出て自分で動かさないと見えなかった)
+  const kids = doc.value.boxes[at]?.outs ?? [];
+  if (kids.length) void v.reveal(kids[Math.floor(kids.length / 2)]!);
 }
 /**
  * Vue Flow の出来事: 空き所を押す = 右の欄を閉じる (よくあるモーダルと同じ。オーナー 10-22。引っ張った時は Vue Flow が画面を動かすだけ)。

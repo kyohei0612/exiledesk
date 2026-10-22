@@ -134,7 +134,7 @@ function ok(): void {
       <b class="flex-1 text-[14px]">{{ tr("次に打つ手", "Next craft") }}</b>
       <button type="button" class="g-btn sm" @click="emit('close')">{{ tr("閉じる", "Close") }}</button>
     </div>
-    <p class="text-[11px] opacity-65">{{ tr("棚から持って「この手にする」。灰色はこの箱の見本に打てない手", "Pick from the shelf, then \"Use this\". Grey = can't be used on this box's sample") }}</p>
+    <p class="text-[11px] opacity-65">{{ tr("棚から持って「この手にする」。この箱の見本に打てない手は押せない", "Pick from the shelf, then \"Use this\". Crafts that can't be used on this box's sample can't be picked") }}</p>
 
     <!-- 持っている物と、残した入力 (触媒のカタリストの品質・カオススパム) -->
     <div v-if="held" class="flex flex-col gap-1.5 rounded-md bg-white/[0.04] p-2">

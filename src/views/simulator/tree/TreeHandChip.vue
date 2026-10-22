@@ -26,5 +26,7 @@ const icons = computed(() => [props.hand.currency, ...props.hand.omens].filter((
     <span class="flex shrink-0 items-center -space-x-1"><img v-for="k in icons" :key="k" :src="iconOf(k)" alt="" class="size-6 object-contain" /></span>
     <span class="min-w-0 truncate">{{ handName(hand.currency) }}</span>
     <span v-if="hand.repeat" class="shrink-0 rounded-sm bg-amber-400/20 px-1 text-[10px]">{{ tr("当たるまで", "until a hit") }}</span>
+    <!-- 狙い無しの手 (結果は「打った後」の箱 1 つ。札が高貴だけで狙い無しと分からなかった、10-22 白紙から組んだ試し) -->
+    <span v-if="hand.free" class="shrink-0 rounded-sm bg-white/15 px-1 text-[10px]">{{ tr("狙い無し", "no target") }}</span>
   </button>
 </template>
