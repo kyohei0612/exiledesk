@@ -1,4 +1,9 @@
 {
+  "0.1.593": [
+    "Spam simulator: you can now test Chaos spam starting from your current craft item (e.g. with a fractured mod). If it only has the fractured mod, one Regal Orb is used first",
+    "Spam simulator: set up to 3 targets and stop when any one rolls, with a breakdown of which target hit (Augment also shows the average until both a prefix and a suffix target are on)",
+    "Spam simulator: “Back to the craft stage with a hit” (in the Luck test and the results) puts the hit item on the craft stage (one Spam step is added to the history; Undo takes it back)"
+  ],
   "0.1.592": [
     "The Spam Simulator now runs and lists the routes in the order Regular → Greater → Perfect"
   ],

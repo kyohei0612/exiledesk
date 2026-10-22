@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.593",
+  "date": "2026-10-22",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "スパムシミュレーター: 今のクラフトのアイテム (フラクチャー済みなど) からカオススパムを試せるようにしました。フラクチャーの MOD だけの時は、最初に高貴のオーブを 1 回打ってから回します",
+    "en": "Spam simulator: you can now test Chaos spam starting from your current craft item (e.g. with a fractured mod). If it only has the fractured mod, one Regal Orb is used first"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "スパムシミュレーター: 当たりを 3 つまで並べて「どれか 1 つ付いたら止める」で比べられるようにしました (どの当たりで止まったかの内訳、増強はプレ・サフィ両方揃うまでの平均も)",
+    "en": "Spam simulator: set up to 3 targets and stop when any one rolls, with a breakdown of which target hit (Augment also shows the average until both a prefix and a suffix target are on)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "スパムシミュレーター: 運試しや計算の結果から「当たった形でクラフト台に戻る」で、当たったアイテムをクラフト台に置けるようにしました (工程に「スパム」の 1 行が付き、1 つ戻すで戻せます)",
+    "en": "Spam simulator: “Back to the craft stage with a hit” (in the Luck test and the results) puts the hit item on the craft stage (one Spam step is added to the history; Undo takes it back)"
+   }
+  ]
+ },
+ {
   "v": "0.1.592",
   "date": "2026-10-21",
   "items": [
@@ -637,36 +661,6 @@
     "area": "",
     "text": "アイテムの MOD の行をそろえました: MOD の文は真ん中、左に P / S とティア、右に確率",
     "en": "Item mod rows are now aligned: mod text in the centre, P / S and tier on the left, chances on the right"
-   }
-  ]
- },
- {
-  "v": "0.1.553",
-  "date": "2026-10-17",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "チュートリアルに「エッセンスを学ぶ」を追加: グレーター・パーフェクト・結晶化のお告げ・合金と、特殊なエッセンス (戦慄・ヒステリー・アビス・錯乱・狂気・ブリーチ) を 12 手で。アビスは骨 → 発現まで続けて試せます",
-    "en": "New tutorial “Learn essences”: Greater, Perfect, crystallisation omens, alloys and the special essences (Horror, Hysteria, Abyss, Delirium, Insanity, Breach) in 12 steps. The Abyss step continues through a Bone and the reveal"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "お告げを掛けてカレンシーを持つと、打った時に消える・入れ替わる・数値が変わる候補の MOD をオレンジの文字で、新しい MOD が付く空きを緑の枠で光らせるように (偉大なる高貴なら最大 4 枠)",
-    "en": "With an omen applied, holding a currency now highlights the mods it may remove, replace or reroll (orange text) and the open slots a new mod can roll into (green; up to 4 with Greater Exaltation)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "錯乱のエッセンスで付く MOD が「○○を割り当てる」とノータブルの名前で出るように (前は「ランダムなノータブル…」のままでした)",
-    "en": "Essence of Delirium now shows the allocated notable by name (“Allocates …”) instead of “a random Notable Passive Skill”"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "チュートリアルの説明で、白・青・黄の色にレアリティ (ノーマル・マジック・レア) を添えました",
-    "en": "Tutorial text now names the rarity next to each colour: white (Normal), blue (Magic), yellow (Rare)"
    }
   ]
  }
