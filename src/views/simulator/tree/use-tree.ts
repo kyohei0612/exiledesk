@@ -6,7 +6,7 @@ import { computed, ref, shallowRef } from "vue";
 import { craftStage as s, nameOf } from "../../../state/craft-stage";
 import { priceOfKey } from "../../../state/emulator/craft-stage-shelf";
 import { freshItem, modListFor } from "../../../services/craft-stage/engine";
-import { isTreeDoc, migrateStart, newTree, startOf, type Aim, type StartMod, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { isTreeDoc, migrateStart, newTree, startOf, type Aim, type StartMod, type TreeDoc, type TreeStart } from "../../../services/simulator/tree/tree-model";
 import { treeBaseCost } from "../../../services/simulator/tree/tree-base-cost";
 import { tr } from "../../../i18n/lang";
 
@@ -90,14 +90,16 @@ const isBlank = (d: TreeDoc): boolean => !d.boxes.start?.hand && !d.boxes.start?
 function takeAskBase(): boolean { const v = askBase.value && isBlank(doc.value); askBase.value = true; return v; }
 /**
  * クラフト台のベースとアイテムレベルで白紙の木を開く (前の木は 1 つ戻すで戻せる)。ページを開くのは呼ぶ側。
- * aims: 完成品の MOD (シミュレーターの入口 ① で作った物、10-22) を欲しい MOD のメモに
+ * シミュレーターの入口 (10-22): aims = ① の完成品の MOD を欲しい MOD のメモに、start・startRandom = ② の始め方を始まりの箱に
  */
-function startTreeWith(base: string, itemLevel: number, aims: readonly Aim[] = []): void {
+function startTreeWith(base: string, itemLevel: number, o: { aims?: readonly Aim[]; start?: TreeStart; startRandom?: number } = {}): void {
   opened.value++;
   edit((d) => {
     for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k];
     Object.assign(d, newTree(base, itemLevel));
-    if (aims.length) d.memoAims = aims.map((a) => ({ ...a }));
+    if (o.aims?.length) d.memoAims = o.aims.map((a) => ({ ...a }));
+    if (o.start) d.start = JSON.parse(JSON.stringify(o.start)) as TreeStart;
+    if (o.startRandom) d.startRandom = o.startRandom;
   });
   askBase.value = false;
 }

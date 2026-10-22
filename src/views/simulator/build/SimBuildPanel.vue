@@ -2,37 +2,24 @@
   SimBuildPanel.vue — シミュレーターの入口 ① 完成品を作る (2026-10-22 オーナー「完成形をまず作る。エミュのエンジンをフル稼働で、まんま移植だけど、
   カレンシーで付けずに MOD を選んでもらう。これでエミュからシミュにさっと行けるようになる」。設計 docs/org/simulator/notes/2026-10-22-entry-design.md)。
   クラフト台の棚の所に出す。付ける = 下の MOD 一覧 (クラフト台と同じ StageModList) の段の表の「付ける」、外す = アイテムのカードの ×。
-  付けられる / 付けられないの判定はエンジンのまま。できた完成品の MOD を欲しい MOD にしてクラフトの道 (ツリー) へ
+  付けられる / 付けられないの判定はエンジンのまま。できたら「次: 始め方を決める」で ② (SimStartPanel.vue) へ
 -->
 <script setup lang="ts">
 import { computed } from "vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { modText, tr } from "../../../i18n/lang";
-import { openTreePage } from "../../../web/page";
-import { useTree } from "../tree/use-tree";
-import type { Aim } from "../../../services/simulator/tree/tree-model";
 import type { StageMod } from "../../../services/craft-stage/engine";
-import { simBuild } from "../../../state/simulator/build-state";
+import { buildStage } from "../../../state/simulator/build-state";
+import { toStart } from "./use-build";
+import SimStartPanel from "./SimStartPanel.vue";
 
 const mods = computed<StageMod[]>(() => (s.item.value ? [...s.item.value.prefixes, ...s.item.value.suffixes] : []));
-/** 完成品の MOD → 欲しい MOD (段は T1 が一番良い数え方。未発現は数えない) */
-const aims = computed<Aim[]>(() => {
-  const d = s.data.value;
-  if (!d) return [];
-  return mods.value.filter((m) => !m.unrevealed).map((m) => ({ modId: m.modId, tier: (d.mods.get(m.modId)?.tiers.length ?? m.tierIndex + 1) - m.tierIndex }));
-});
-function toTree(): void {
-  const it = s.item.value;
-  if (!it) return;
-  useTree().startTreeWith(it.base, s.itemLevel.value, aims.value);
-  simBuild.value = false;
-  openTreePage();
-}
 const mark = (m: StageMod): string => [m.fractured ? tr("フラクチャー", "Fractured") : "", m.desecrated ? tr("冒涜", "Desecrated") : "", m.unrevealed ? tr("未発現", "Unrevealed") : ""].filter(Boolean).join(" · ");
 </script>
 
 <template>
-  <section data-sim-build class="g-panel relative p-2 text-[13px]">
+  <SimStartPanel v-if="buildStage === 'start'" />
+  <section v-else data-sim-build class="g-panel relative p-2 text-[13px]">
     <p class="g-sec-head">
       <b class="g-sec-title">{{ tr("完成品を作る", "Build the finished item") }}</b>
       <span class="g-sec-sub">{{ tr("MOD を選んで付ける (カレンシーは使わない)", "Pick mods to add (no currency)") }}</span>
@@ -48,7 +35,7 @@ const mark = (m: StageMod): string => [m.fractured ? tr("フラクチャー", "F
     </div>
     <div class="mt-2 flex flex-wrap items-center gap-1.5">
       <button type="button" class="g-btn sm max-md:min-h-10" :disabled="!mods.length && !s.log.value.length" @click="s.reset()">{{ tr("白に戻す", "Reset to white") }}</button>
-      <button type="button" data-sim-build-go class="g-btn-red ml-auto min-h-10 px-3 text-[14px] max-md:w-full" :disabled="!aims.length" :title="tr('この MOD を欲しい MOD にして、このベースのクラフトの道 (ツリー) を開く', 'Open the craft route tree for this base with these mods as wanted mods')" @click="toTree">{{ tr("この完成品でシミュレーターへ →", "Simulate this item →") }}</button>
+      <button type="button" data-sim-build-go class="g-btn-red ml-auto min-h-10 px-3 text-[14px] max-md:w-full" :disabled="!mods.some((m) => !m.unrevealed)" :title="tr('この完成品から、フラクチャーまでの始め方を決める', 'Decide how to start (up to the fracture) from this finished item')" @click="toStart">{{ tr("次: 始め方を決める →", "Next: how to start →") }}</button>
     </div>
   </section>
 </template>
