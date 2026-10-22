@@ -60,7 +60,7 @@ export type { UsePreview } from "./spec/preview";
 export { previewUse } from "./spec/preview";
 export type { HeldOdds } from "./held-odds";
 export { heldOdds, heldAnyOf, aimTierKey } from "./held-odds";
-export type { AimTarget, AimCombo, AimOdd } from "./aim-odds";
+export type { AimTarget, AimCombo, AimOdd, AimHitOpts } from "./aim-odds";
 export { aimCombos, aimOdds, aimChain, aimDone, hits as aimHits } from "./aim-odds";
 export { DESECRATION_EXCLUSIVE_COUNT, bossOmenAllowed, desecrationOmenForMod } from "../../vendor/poe2htc/engine/probability";
 

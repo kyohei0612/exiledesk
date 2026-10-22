@@ -44,7 +44,21 @@ function omenSets(kind: string): string[][] {
   }
 }
 
-export const hits = (m: StageMod, t: AimTarget): boolean => !m.unrevealed && m.modId === t.modId && m.tierIndex >= t.minTierIndex;
+/**
+ * 当たりの判定の設定 (入口の aimHits)。sameText = 同じ系統で効果の文も同じ別の modId も当たり (Rings/ColdResistance と Rings/Essence_ColdResistance など。
+ * 2026-10-22 オーナー「シミュ用の違いはエンジンの入口の設定で切り替える」)。その時の段は段の名前の T の数字で比べる (エッセンスの MOD の段の名前は
+ * ふつうの MOD の段に合わせてある、apply-essence の normalTierOf)。省略 = 同じ modId だけ・段の番号で比べる (今まで通り)
+ */
+export interface AimHitOpts { data: PatchData; sameText?: boolean }
+const tierNo = (m: StageMod): number => Number(/\d+/.exec(m.tierName)?.[0] ?? 99);
+/** 当たり = その狙いの MOD が付いている (未発現は数えない) */
+export const hits = (m: StageMod, t: AimTarget, o?: AimHitOpts): boolean => {
+  if (m.unrevealed) return false;
+  const want = o?.sameText ? o.data.mods.get(t.modId) : undefined;
+  if (!want) return m.modId === t.modId && m.tierIndex >= t.minTierIndex;
+  const same = m.modId === t.modId || (!!want.family && m.family === want.family && o!.data.mods.get(m.modId)?.text === want.text);
+  return same && tierNo(m) <= want.tiers.length - t.minTierIndex;
+};
 const has = (item: StageItem, t: AimTarget): boolean => [...item.prefixes, ...item.suffixes].some((m) => hits(m, t));
 
 /** お告げが効いているかを見る種の数 (同じ種でお告げ無しと全部同じ結果なら、そのお告げは効いていない) */
