@@ -1,6 +1,13 @@
 # ジン部長 のやる事
 
 ## やる事
+- 引き継ぎ (10-22 深夜、5 本目 → 6 本目): 下の「5 本目の分」→「4 本目の分」の順に先に読む。宛先: ブラック 7 代目 local_ec583720-946a-486d-bfad-d7fe083898b3・シミュ部長 14 本目 local_82fcd4e9-a5a0-4c84-b843-b0d701fef84a (部長どうしで直に頼まない、ブラック経由)。途中の物・触っている行 (dev/touching/emulator.md) は無し、立てた物 (Chrome・dev サーバー) も無し。
+- 5 本目の分 (全部 push 済み):
+  - スパムシミュ: フラクチャーだけの時は頭で高貴 1 回 (b1ab93e0)。「当たった形でクラフト台に戻る」= 工程の後ろに spam: の 1 手 (apply-spam.ts、費用は道のカードなら 100 人の平均・運試しならその 1 人、再生でも同じ形、1 つ戻すで消える。route-place.ts、ae138f6c・4fe9bbf8・1ba7c945・af368729)。どちらも本番 v0.1.593。読み込み中の札 BusyTag (components/ui/BusyTag.vue、661b181b・ac6f9f46・1ee3fc39) は本番 v0.1.594 (5 本目が最終チェック長の手順で出した、pending-release の済みの欄に手順)。
+  - 入口 (engine.ts) に足した物 (シミュの自前の式を入口へ、オーナー「シミュは UI/UX だけ、中身はエンジン」、シミュ部長が置き換え中): aimHits (0d11e79d) + 設定 { data, sameText } (9abbd784)・aimHeldOn (763f6981)・B1 段の換算 tier-rank.ts (60d3da0d)・B2/B3 junkOf・heldSetOf・isAimMod (2788a928)・B4/B5 hand-effect.ts (88440b65)・C magic-odds.ts (2feac81f)。突き合わせの数と解析君への材料 (pHit と pAny、magicLoopCounts → spamCounts の anyOf) は notes/2026-10-22-sim-logic-to-engine.md。
+  - 直した物: ツリーなどのページの後ろでクラフト台のキー (Tab・R) が効いた (b6a11b10、印の外 = 次の本番に入る)。紋章の名前「アビサルロードの紋章」(2d7e5674)。ツリーの英語の点検 (72d4ba99 GLOSSARY・6c20e997 notes、直す所 3 つはシミュ部長の UI の後)。
+  - OK 待ち (pending-release.md に行、本番の deploy:web では revert して外す): 紋章の名前 2d7e5674・書体の読み方 1bef14b9 (保留、オーナー: ツリーの真っ黒はツリー側でフォントは関係ない)・古い塊の読み直し 95310568 (開発版で確かめ済み)。調べの記録: notes/2026-10-22-first-paint.md・2026-10-22-sw-err-failed.md。
+  - 確かめの小技: 送信は 10 通で止まる (オーナーがこのセッションに打つと解ける)、止まったらこの頭に書いて commit。deploy:web-dev は HEAD を ../ExileDesk-devbuild で組む (書きかけは入らない)、開発版の入口は / (web.html は 404、?page=routes の直リンクは開かない)。窓なし Chrome は Bash から --remote-debugging-port で立て、CDP の Browser.close で閉じる。台本で vitest を回す時は config に root: "C:/Users/kyohei/ExileDesk" (vitest の連絡の時間切れのエラーは長い台本で出るだけ)。本番の出し方は pending-release の v0.1.594 の済みの欄 (node_modules のつなぎは node の symlinkSync junction、worktree を消す前に unlink)。
 - 引き継ぎ (10-22 深夜、4 本目 → 5 本目): 下の「4 本目の分」→「3 本目の分」の順に先に読む。宛先のブラックは 5 代目 (dev/todo.md の表)。
 - 4 本目の分 (全部 push 済み):
   - RowTag.replace (3fcae561、シミュのツリーの外れ MOD の行)。パターンの初期値 freshPatterns() (96e6050d、シミュも使用済み)。docs/craft-challenge.md の整理 (50e7a433)。
