@@ -3,7 +3,7 @@
   組む画面 (箱・線・欄) には手を入れず、Vue Flow の zoom-pane の中に重ねる: 通った線は回数で太く明るく (実線だけ、点線・1px は使わない)、
   箱の右上に来た人数「n 人」、線の先に通った回数「n 回」、戻りの弧は箱の下に「↩ n 回」、誰も来ない箱は暗く、止まった箱に赤い札。
   数字は前の値から 0.3 秒で数え上げる (回している間に 2 人ごとに増える)。
-  回す前の 1 人目が進む間は result が無く、今いる箱 (walk) を光らせるだけ (光は 1 箱の間の半分で次の箱へ滑る。長いと滑っている途中ばかりで箱からずれて見えた)
+  回す前の 1 人目が進む間は result が無く、今いる箱 (walk) を光らせ、まだ通っていない箱を暗くする (光は 1 箱の間の半分で次の箱へ滑る。長いと滑っている途中ばかりで箱からずれて見えた)
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
@@ -14,7 +14,7 @@ import { tr } from "../../../i18n/lang";
 
 interface Edge { id: string; stem: string; to: { id: string; d: string }[] }
 const props = defineProps<{
-  result: TreeRunResult | null; walk?: string | null; walkMs?: number; boxes: readonly TreeBox[]; posOf: (b: TreeBox) => { x: number; y: number };
+  result: TreeRunResult | null; walk?: { box: string; ms: number; trail: ReadonlySet<string> } | null; k?: number; boxes: readonly TreeBox[]; posOf: (b: TreeBox) => { x: number; y: number };
   edges: readonly Edge[]; lines: readonly MergeLine[]; paths: ReadonlyMap<string, string>;
 }>();
 const emit = defineEmits<{ go: [id: string] }>();
@@ -56,7 +56,11 @@ const width = (n: number): number => 2 + 6 * Math.min(1, n / top.value);
 const alpha = (n: number): number => 0.3 + 0.7 * Math.min(1, n / top.value);
 
 /** 1 人目が今いる箱の位置 */
-const lit = computed(() => { const b = props.walk ? props.boxes.find((x) => x.id === props.walk) : null; return b ? props.posOf(b) : null; });
+const lit = computed(() => { const b = props.walk ? props.boxes.find((x) => x.id === props.walk!.box) : null; return b ? props.posOf(b) : null; });
+/** 1 人目がまだ通っていない箱 (暗くする。通った箱は明るく残る) */
+const unwalked = computed(() => (props.walk ? props.boxes.filter((b) => !props.walk!.trail.has(b.id)).map((b) => ({ id: b.id, ...props.posOf(b) })) : []));
+/** 光る枠の太さ・光は倍率に関わらず同じ見た目 (全体表示の 25% でも見える) */
+const kk = computed(() => Math.max(1, props.k ?? 1));
 /** 進む線 (親 → 子)。親の幹は子へ行った回数の合計 */
 const fwd = computed(() => !props.result ? [] : props.edges.flatMap((e) => {
   const kids = e.to.map((o) => ({ ...o, key: `e:${e.id}>${o.id}` }));
@@ -81,8 +85,10 @@ const div = (x: number): string => (x >= 100 ? x.toFixed(0) : x.toFixed(1));
     <path v-for="l in back" :key="l.key" :d="l.d" :stroke="ON.back" :stroke-opacity="alpha(l.n)" :stroke-width="width(l.n)" stroke-linecap="round" stroke-linejoin="round" fill="none" />
   </svg>
   <!-- 1 人目が今いる箱 (光る枠。次の箱へ滑る) -->
-  <div v-if="lit" data-tree-run-walk :data-box-id="walk" class="pointer-events-none absolute z-[9] rounded-xl border-[3px] border-amber-300 shadow-[0_0_18px_6px_rgba(243,194,107,0.75)] transition-[left,top] ease-out"
-    :style="{ transitionDuration: `${Math.round((walkMs ?? 250) * 0.5)}ms`, left: `${lit.x - 4}px`, top: `${lit.y - 4}px`, width: `${BOX_W + 8}px`, height: `${BOX_H + 8}px` }" />
+  <div v-for="u in unwalked" :key="`uw-${u.id}`" data-tree-run-unwalked class="pointer-events-none absolute z-[8] rounded-xl bg-black/60" :style="{ left: `${u.x}px`, top: `${u.y}px`, width: `${BOX_W}px`, height: `${BOX_H}px` }" />
+  <div v-if="lit && walk" data-tree-run-walk :data-box-id="walk.box" class="pointer-events-none absolute z-[9] rounded-xl border-amber-300 bg-amber-300/25 transition-[left,top] ease-out"
+    :style="{ transitionDuration: `${Math.round(walk.ms * 0.5)}ms`, borderWidth: `${3 * kk}px`, boxShadow: `0 0 ${18 * kk}px ${6 * kk}px rgba(243,194,107,0.8)`,
+      left: `${lit.x - 4 * kk}px`, top: `${lit.y - 4 * kk}px`, width: `${BOX_W + 8 * kk}px`, height: `${BOX_H + 8 * kk}px` }" />
   <template v-for="m in marks" :key="m.b.id">
     <!-- 誰も来ない箱は暗く -->
     <div v-if="!m.reach" data-tree-run-veil class="pointer-events-none absolute z-[8] rounded-xl bg-black/55" :style="{ left: `${m.x}px`, top: `${m.y}px`, width: `${BOX_W}px`, height: `${BOX_H}px` }" />

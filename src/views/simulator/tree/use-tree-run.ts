@@ -30,7 +30,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
   /** 止まった人が出て途中で止めた時の箱と人数 (10-22 オーナー「止まった瞬間 100 人回すの止めて修正しなよ」) */
   const halted = ref<{ box: string; n: number } | null>(null);
   /** 1 人目が進んでいる所 (今いる箱・何手目 / 全部・着いた時の費用 神) */
-  const walk = ref<{ box: string; step: number; total: number; cost: number; ms: number } | null>(null);
+  const walk = ref<{ box: string; step: number; total: number; cost: number; ms: number; trail: ReadonlySet<string> } | null>(null);
   /** 1 人目を飛ばす (帯の「飛ばす」) */
   let skip = false;
   let token = 0;
@@ -58,8 +58,11 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
       const p1 = firstOf.p!;
       const path = p1.visits.filter((v) => d.boxes[v.box] && d.boxes[v.box]!.out !== "pass");
       const ms = walkMs(path.length);
+      // 通った箱 (足跡)。全体表示の小さい倍率で速く進んでも、どこを通ったか残る (10-22 オーナー「機能してる？」、光る枠だけでは見えなかった)
+      const trail = new Set<string>();
       for (let i = 0; i < path.length && !skip; i++) {
-        walk.value = { box: path[i]!.box, step: i + 1, total: path.length, cost: path[i]!.cost, ms };
+        trail.add(path[i]!.box);
+        walk.value = { box: path[i]!.box, step: i + 1, total: path.length, cost: path[i]!.cost, ms, trail: new Set(trail) };
         onWalk(path[i]!.box, i);
         await new Promise((res) => setTimeout(res, ms));
         if (my !== token) return;
