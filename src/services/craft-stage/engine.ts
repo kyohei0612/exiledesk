@@ -16,6 +16,9 @@ export type { PobBlock } from "./stage-pob";
 
 // アイテムを作る・打つ
 export { freshItem, startFrom, startItem, playStep, playPlan, runPlan, splitOmens } from "./run-plan";
+// 始めのアイテムを指名の MOD (段の名前の T)・ルーン・乱数の MOD の数で作る (断られたら理由を返す。2026-10-22 シミュの自前の式を入口へ)
+export type { StartMod, StartWith } from "./start-with";
+export { startWith, START_FRACTURE_MAX } from "./start-with";
 export { applyCurrency, kindOf, omensFor } from "./apply-currency";
 export { omenBlock } from "./omen-block";
 export { revealOffers, unrevealedOf } from "./apply-desecrate";
