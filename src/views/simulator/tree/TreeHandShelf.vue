@@ -13,9 +13,9 @@ import StageItemCard from "../../craft-stage/StageItemCard.vue";
 import CurrencyShelf from "../../craft-stage/CurrencyShelf.vue";
 import HeldOmens from "../../craft-stage/HeldOmens.vue";
 import { heldOmensOf } from "../../craft-stage/held-omens";
-import { mulberry32, omensFor, stepOutcomes, tierNoOf } from "../../../services/craft-stage/engine";
-import { aimHeld, aimsOf, catalystFull, fillCatalyst, handProblem, sampleOf, singleOutOf } from "../../../services/simulator/tree/tree-sample";
-import { CATALYSING, canSpam, catalystTagOf, ECHO, engineOmens, isBone, isCatalyst, kindOfCurrency, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
+import { catalystForMod, catalystFull, effectOf, fillCatalyst, mulberry32, omensFor, stepOutcomes, tierNoOf } from "../../../services/craft-stage/engine";
+import { aimHeld, aimsOf, handProblem, sampleOf, singleOutOf } from "../../../services/simulator/tree/tree-sample";
+import { CATALYSING, canSpam, ECHO, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handLabel, handName, outName } from "./tree-names";
 import { kindOfHand, setHand, type Aim, type Hand, type HandKind, type OutKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
@@ -39,12 +39,12 @@ const spamMax = ref<number | null>(props.current?.repeat?.max ?? null);
 const free = ref(!!props.current?.free);
 /** フラクチャーの手で ✦ にする狙い (modId。null = 乱数 = エンジンどおり、10-22 オーナー) */
 const fracOf = ref<string | null>(props.current?.fractureOf ?? null);
-const isFracture = computed(() => !!held.value && kindOfCurrency(held.value) === "fracture");
+const isFracture = computed(() => !!held.value && effectOf(held.value) === "fracture");
 /** ✦ の候補 = 完成の狙い (この箱の見本に付いていない物はグレー) */
 const fracChoices = computed(() => { const d = s.data.value, it = item.value; return t.goals.value.map((a) => ({ a, on: !!d && !!it && aimHeld(d, it, a) })); });
 /** 骨の手にアビスの反響 (発現の候補を 1 回引き直す)。既定で付ける (10-22 オーナー「お告げは必ず反響を使わんとやばいよ」)。前の手を開いた時はその手のまま */
 const echo = ref(props.current ? props.current.omens.includes(ECHO) : true);
-const canFree = computed(() => !!held.value && kindOfCurrency(held.value) === "add");
+const canFree = computed(() => !!held.value && effectOf(held.value) === "add");
 /** Esc: 今の手を替えている時は欄ごと取り消す (何も替えない、オーナー 10-22「枠の外・Esc で取り消し」)。新しい手の時は持った物を離す */
 function onKey(e: KeyboardEvent): void {
   if (e.key !== "Escape") return;
@@ -62,24 +62,24 @@ const afterQuality = computed(() => {
 /** 持った物に触媒のお告げが掛けられるか */
 const canCatalyse = computed(() => !!held.value && heldOmensOf(held.value).includes(CATALYSING));
 /**
- * 前に足すカタリストの既定 = この箱でまだ付いていない狙い (木の狙い、次に欲しい MOD のメモ) のタグに合う物 (無ければ並びの 1 つ目)。後から札を押して替えられる。
- * 品質の効きの計算ではなく、選びの初めの値だけ (タグはデータの MOD の tags)。メモも見るのは 10-22 13 通り組んだ #7 (白紙ではいつもライフになった)
+ * 前に足すカタリストの既定 = この箱でまだ付いていない狙い (木の狙い、次に欲しい MOD のメモ) を伸ばす物 (エンジンの catalystForMod)。後から札を押して替えられる。
+ * どの狙いも伸ばせない (靴・鎧など品質が乗らない装備) なら null = 前のカタリストは足さない (触媒のお告げはエンジンの omenBlock で掛けられない、10-22 ブラック)。
+ * メモも見るのは 10-22 13 通り組んだ #7 (白紙ではいつもライフになった)
  */
-const autoCat = computed((): string => {
+const autoCat = computed((): string | null => {
   const d = s.data.value, it = item.value;
   for (const a of d && it ? [...aimsOf(t.doc.value), ...(t.doc.value.memoAims ?? [])].filter((x) => !aimHeld(d, it, x)) : []) {
-    const tags = d!.mods.get(a.modId)?.tags ?? [];
-    const c = TREE_CATALYSTS.find((k) => tags.includes(catalystTagOf(k)));
+    const c = catalystForMod(d!, it!, a.modId, TREE_CATALYSTS);
     if (c) return c;
   }
-  return TREE_CATALYSTS[0]!;
+  return null;
 });
 /**
  * 棚に渡すアイテム = 前にカタリストの手を足す時はそれで品質を最大まで入れた後 (品質 0 では触媒のお告げが「品質が要る」で掛けられない。
  * 前は品質 0 の見本を渡していて、触媒の手を開き直すとお告げが外れていた、10-22)
  */
 const needPre = computed(() => canCatalyse.value && !afterQuality.value);
-const preFill = computed(() => { const d = s.data.value, it = item.value; return d && it && needPre.value ? fillCatalyst(d, it, autoCat.value, mulberry32(1)) : null; });
+const preFill = computed(() => { const d = s.data.value, it = item.value; return d && it && needPre.value && autoCat.value ? fillCatalyst(d, it, autoCat.value, mulberry32(1)) : null; });
 const shelfItem = computed(() => preFill.value?.item ?? item.value);
 const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens);
 const used = computed(() => (held.value ? omensFor(held.value, omens.value) : []));
@@ -103,7 +103,7 @@ const RESULT: Record<HandKind, [string, string]> = {
   essence: ["付いた + 狙いが消えた (付く MOD は必ず付く)", "Added + Target lost (the essence mod always lands)"],
   fracture: ["狙いが ✦ になった + 外れが ✦ になった", "A target fractured + a miss fractured"],
 };
-const kind = computed((): HandKind | null => (hand.value ? kindOfHand(hand.value, kindOfCurrency(hand.value.currency)) : null));
+const kind = computed((): HandKind | null => (hand.value ? kindOfHand(hand.value, effectOf(hand.value.currency)) : null));
 /**
  * 当たりの箱の既定 = このツリーの狙いのうち、この箱でまだ付いていない物。木にまだ狙いが無ければ欲しい MOD のメモ
  * (10-22 白紙から組んだ手袋: 狙い 0 で当たるまでにすると MOD の空の当たりの箱を見本で引き直し続け、ページが 5 分固まった)。

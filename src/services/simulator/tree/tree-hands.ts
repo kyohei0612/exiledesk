@@ -3,19 +3,9 @@
  * 名前は画面の側 (views/simulator/tree/tree-names.ts、クラフト台の棚と同じ nameOfKey)。手の効果はエンジン (applyCurrency)、ここは種類と並びだけ
  */
 import { CATALYSTS, kindOf } from "../../craft-stage/engine";
-import type { HandKind } from "./tree-model";
 
 /** カタリスト = 品質だけ上げる手 (エンジンの kindOf。catalyst_<タグ>・jcatalyst_<タグ>) */
 export const isCatalyst = (key: string): boolean => kindOf(key) === "catalyst";
-/** カタリストの種類 (タグ)。エンジンの spec/run-spec と同じ取り方 (入口に出たら置き換える、notes/2026-10-22-sim-own-logic.md の B5) */
-export const catalystTagOf = (key: string): string => key.slice(key.indexOf("_") + 1);
-/** 手の種類 (必ず付く結果の箱が決まる、tree-model の OUTS_OF): カオス = 入れ替え、消去 = 消す、カタリスト = 品質だけ、それ以外 = 足す */
-export function kindOfCurrency(key: string): HandKind {
-  if (isCatalyst(key)) return "quality";
-  const k = kindOf(key);
-  if (k.startsWith("essence")) return "essence";
-  return k === "chaos" ? "swap" : k === "annul" ? "remove" : k === "fracture" ? "fracture" : "add";
-}
 /** カオススパムにできる手 (今はカオスだけ出す。同じ形で高貴・消去にも広げられる) */
 export const canSpam = (key: string): boolean => kindOf(key) === "chaos";
 

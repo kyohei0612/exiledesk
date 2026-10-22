@@ -5,9 +5,8 @@
  * 打つのは全部エンジンの入口 (applyCurrency / fillCatalyst)。結果の分け方は tree-sample.ts の outcomeOf・aimsOf (見本と同じ分け方)。
  * 繰り返し (当たるまで) は tree-sample の playHand と同じ流れを、個数を数えるためにここでたどる (playHand を変える時はここも合わせる)。
  */
-import { mulberry32, sideOfMod, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
-import { kindOfCurrency } from "./tree-hands";
-import { aimHeld, aimsOf, handAims, handProblem, outcomeOf, playHand, startItemOf as startOf } from "./tree-sample";
+import { effectOf, isAimMod, junkOf, mulberry32, sideOfMod, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { aimHeld, aimOpts, aimsOf, handAims, handProblem, outcomeOf, playHand, startItemOf as startOf, targetsOf } from "./tree-sample";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
 import { aimKey, MATCH_BACK, type Aim, type Hand, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc } from "./tree-model";
@@ -102,9 +101,9 @@ type Range = SplitRange;
 const inRange = (n: number, r?: Range): boolean => !r || (n >= r[0] && n <= r[1]);
 export function splitTo(data: PatchData, rules: readonly SplitRule[], item: StageItem, aims: readonly Aim[]): string | null {
   const held = new Set(aims.filter((a) => aimHeld(data, item, a)).map(aimKey));
-  const isAim = (m: StageMod): boolean => aims.some((a) => aimHeld(data, { ...item, prefixes: [m], suffixes: [] }, a));
+  const junk = junkOf(item, targetsOf(data, aims), aimOpts(data));
   const count = (side: "prefix" | "suffix" | "any", junkOnly: boolean): number =>
-    [...(side !== "suffix" ? item.prefixes : []), ...(side !== "prefix" ? item.suffixes : [])].filter((m) => !m.fractured && (!junkOnly || !isAim(m))).length;
+    (side !== "suffix" ? (junkOnly ? junk.prefix : item.prefixes.filter((m) => !m.fractured)).length : 0) + (side !== "prefix" ? (junkOnly ? junk.suffix : item.suffixes.filter((m) => !m.fractured)).length : 0);
   const ok = (w: SplitWhen): boolean =>
     inRange(held.size, w.heldCount)
     && (w.has ?? []).every((k) => held.has(k))
@@ -141,7 +140,7 @@ export function heldSets(doc: TreeDoc, id: string | null): string[][] {
       sets = sets.flatMap((h) => (h.length ? h.map((k) => h.filter((x) => x !== k)) : [h]));
       // エッセンスの「狙いが消えた」は、エッセンスで付いた MOD (同じ手の当たりの箱の札) は付いている
       const p = c.parent ? doc.boxes[c.parent] : undefined;
-      const ess = p?.hand && kindOfCurrency(p.hand.currency) === "essence" ? p.outs.map((o) => doc.boxes[o]).find((x) => x?.out === "hit" && x.aim)?.aim : undefined;
+      const ess = p?.hand && effectOf(p.hand.currency) === "essence" ? p.outs.map((o) => doc.boxes[o]).find((x) => x?.out === "hit" && x.aim)?.aim : undefined;
       if (ess) { const k = aimKey(ess); sets = sets.map((h) => (h.includes(k) ? h : [...h, k])); }
     }
     const seen = new Set<string>();
@@ -192,9 +191,9 @@ const JUNK_ONLY = shapeKey([], true);
 function itemKey(data: PatchData, item: StageItem, aims: readonly Aim[]): string {
   const held = aims.filter((a) => aimHeld(data, item, a));
   const open = new Set(aims.filter((a) => !held.includes(a)).map((a) => sideOfMod(data, a.modId)));
-  const isAim = (m: StageMod): boolean => aims.some((a) => aimHeld(data, { ...item, prefixes: [m], suffixes: [] }, a));
-  const junkOn = (mods: readonly StageMod[], side: "prefix" | "suffix"): boolean => (!open.size || open.has(side)) && mods.some((m) => !m.fractured && !isAim(m));
-  return shapeKey(held.map(aimKey), junkOn(item.prefixes, "prefix") || junkOn(item.suffixes, "suffix"));
+  const junk = junkOf(item, targetsOf(data, aims), aimOpts(data));
+  const junkOn = (side: "prefix" | "suffix"): boolean => (!open.size || open.has(side)) && junk[side].length > 0;
+  return shapeKey(held.map(aimKey), junkOn("prefix") || junkOn("suffix"));
 }
 function matchBox(data: PatchData, shapes: readonly Shape[], item: StageItem, aims: readonly Aim[]): string | null {
   return boxOfShape(shapes, itemKey(data, item, aims), { data, item });
@@ -241,7 +240,7 @@ export function matchTargets(doc: TreeDoc, id: string): { key: string; to: strin
   const shapes = shapesOf(doc);
   const one = (held: string[], junk: boolean): { key: string; to: string | null } => { const key = shapeKey(held, junk); return { key, to: boxOfShape(shapes, key) }; };
   const p = b.out === "lost" && b.parent ? doc.boxes[b.parent] : undefined;
-  const junk = b.out === "lost" ? p?.out === "junk" || (!!p?.hand && kindOfCurrency(p.hand.currency) !== "remove") : b.out === "junk" || b.out === "any";
+  const junk = b.out === "lost" ? p?.out === "junk" || (!!p?.hand && effectOf(p.hand.currency) !== "remove") : b.out === "junk" || b.out === "any";
   // 付いていうる組ごとに 1 つ (狙いが消えた箱はどれが消えたかで、その下の当たりは消えた後の組で分かれる、heldSets)
   const out = heldSets(doc, b.id).map((h) => one(h, junk));
   return out.filter((x, i) => out.findIndex((y) => y.key === x.key) === i);
@@ -364,7 +363,7 @@ const OUT_TEXT: Partial<Record<OutKind, [string, string]>> = { junk: ["外れ", 
 function outcomeText(data: PatchData, item: StageItem, oc: { out: OutKind; hits: Aim[] }): string {
   if (oc.out !== "hit") { const n = OUT_TEXT[oc.out]; return n ? tr(n[0], n[1]) : oc.out; }
   const mods = [...item.prefixes, ...item.suffixes];
-  const names = oc.hits.map((a) => { const m = mods.find((x) => aimHeld(data, { ...item, prefixes: [x], suffixes: [] }, a)); return m ? modText(m) : a.modId; });
+  const names = oc.hits.map((a) => { const t = targetsOf(data, [a]), m = mods.find((x) => isAimMod(x, t, aimOpts(data))); return m ? modText(m) : a.modId; });
   return tr(`当たり ${names.join("・")}`, `Hit ${names.join(", ")}`);
 }
 /** 完成の箱で狙いが揃っているか (付いている木の狙いの数が、その箱の道の当たりの数の一番少ない組以上。分かれ目の先は行の条件で決まるので数で見る) */

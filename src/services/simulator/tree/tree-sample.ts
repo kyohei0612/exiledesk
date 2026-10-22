@@ -6,16 +6,14 @@
  * その下の箱 = 親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
-import { aimHits, applyCurrency, catalystOf, freshItem, maxQualityOf, mulberry32, omenBlock, revealOffers, runeIdByName, stepOutcomes, tierIndexOf, unrevealedOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
-import { CATALYSING, catalystTagOf, ECHO, engineOmens, isCatalyst, kindOfCurrency } from "./tree-hands";
+import { aimHits, applyCurrency, isAimMod, junkOf, catalystFull, catalystOf, catalystTagOf, effectOf, fillCatalyst, freshItem, mulberry32, omenBlock, revealOffers, runeIdByName, stepOutcomes, tierIndexOf, unrevealedOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { CATALYSING, ECHO, engineOmens, isCatalyst } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import { startOf, type Aim, type Hand, type OutKind, type TreeDoc } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-run";
 
 const TRIES = 3000;
-/** カタリストを 1 個ずつ足す上限 (見張り) */
-const CAT_MAX = 200;
 
 export interface Sample { item: StageItem; note: string | null }
 
@@ -24,6 +22,10 @@ export interface Sample { item: StageItem; note: string | null }
  * 段が T 何以上。未発現は数えない)。木の狙いの段 T は minTierIndex = 段の数 − T に直して渡す (決まり 8、10-22 ブラック)。
  * 系統だけで合わせると「スペルスキルのレベル」にミニオン・近接・投射物のスキルレベルが当たった (10-22 白紙から 13 通り組んだ #3、系統 IncreaseSocketedGemLevel)
  */
+/** 木の狙い (段 T) → エンジンの入口の狙いの形 (段の位置) */
+export const targetsOf = (data: PatchData, aims: readonly Aim[]): AimTarget[] => aims.map((a) => ({ modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) }));
+/** 木の当たりの判定の設定 (同じ系統・同じ文も当たり) */
+export const aimOpts = (data: PatchData): AimHitOpts => ({ data, sameText: true });
 export function aimHeld(data: PatchData, item: StageItem, a: Aim): boolean {
   const t = { modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) };
   return [...item.prefixes, ...item.suffixes].some((m) => aimHits(m, t, { data, sameText: true }));
@@ -45,8 +47,7 @@ export function aimsOf(doc: TreeDoc): Aim[] {
   return out;
 }
 /** 外れ = 固定でも狙いでもない MOD */
-const junkCount = (data: PatchData, item: StageItem, aims: readonly Aim[]): number =>
-  [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured && !aims.some((a) => aimHeld(data, { ...item, prefixes: [m], suffixes: [] }, a))).length;
+const junkCount = (data: PatchData, item: StageItem, aims: readonly Aim[]): number => { const j = junkOf(item, targetsOf(data, aims), aimOpts(data)); return j.prefix.length + j.suffix.length; };
 
 /**
  * 打つ前と後を比べて、どの箱の結果か (付いた狙いは hits に)。key = 打った手 (エッセンスは付く MOD が必ず付くので、狙いが消えたかを先に見る。
@@ -56,9 +57,9 @@ export function outcomeOf(data: PatchData, before: StageItem, after: StageItem, 
   const had = aims.filter((a) => aimHeld(data, before, a));
   const has = aims.filter((a) => aimHeld(data, after, a));
   const hits = has.filter((a) => !had.includes(a));
-  if (key && kindOfCurrency(key) === "essence" && had.some((a) => !has.includes(a))) return { out: "lost", hits };
+  if (key && effectOf(key) === "essence" && had.some((a) => !has.includes(a))) return { out: "lost", hits };
   // フラクチャー: 新しく ✦ になった MOD が狙いなら当たり (札 = その狙い)、ほかは外れ (MOD の数は変わらない)
-  if (key && kindOfCurrency(key) === "fracture") {
+  if (key && effectOf(key) === "fracture") {
     const was = new Set([...before.prefixes, ...before.suffixes].filter((m) => m.fractured).map((m) => m.modId));
     const fr = [...after.prefixes, ...after.suffixes].find((m) => m.fractured && !was.has(m.modId));
     const got = fr ? aims.filter((a) => aimHeld(data, { ...after, prefixes: [fr], suffixes: [] }, a)) : [];
@@ -83,7 +84,7 @@ export function outcomeOf(data: PatchData, before: StageItem, after: StageItem, 
 export function singleOutOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, pre: string | null = null, extra: readonly Aim[] = []): { out: OutKind; aim: Aim | null } | null {
   if (h.repeat || h.free || isCatalyst(h.currency)) return null;
   const aims = [...aimsOf(doc), ...extra.filter((a) => !aimsOf(doc).some((x) => x.modId === a.modId && x.tier === a.tier))];
-  const k = kindOfCurrency(h.currency);
+  const k = effectOf(h.currency);
   let one: { out: OutKind; hits: Aim[] } | null = null;
   const key = (r: { out: OutKind; hits: Aim[] }): string => `${r.out}:${r.hits.map((a) => `${a.modId}/${a.tier}`).join(",")}`;
   for (let seed = 1; seed <= SINGLE_SEEDS; seed++) {
@@ -112,26 +113,6 @@ const SPLIT_TRIES = 40;
 /** 結果が 1 通りかを見る見本の数 */
 const SINGLE_SEEDS = 8;
 
-/**
- * カタリストを 1 押しで、そのアイテムの今の品質の最大まで入れる (2026-10-22 オーナー「個数を数えて入れない」)。
- * 最大はエンジンの maxQualityOf (普通 20%、品質の最大値 +20% の MOD があれば 40%。後で足すインフューザーもここに入る)。
- * 別の種類のカタリストが入っていれば 0 から (エンジンどおり)。count = 入れた個数 (費用はこの分)
- */
-/** そのカタリストの種類で品質が最大か (エンジンの catalystOf = 指輪・アミュレットなどは別の欄のカタリストの品質) */
-export function catalystFull(item: StageItem, key: string): boolean {
-  const c = catalystOf(item);
-  return c.tag === catalystTagOf(key) && c.pct >= maxQualityOf(item);
-}
-export function fillCatalyst(data: PatchData, item: StageItem, key: string, rng: () => number): StageApply & { count: number } {
-  let it = item, count = 0, last: StageApply = { applied: false, item, added: [], removed: [] };
-  for (let i = 0; i < CAT_MAX && !catalystFull(it, key); i++) {
-    last = applyCurrency(data, it, key, rng, [], { oneCatalyst: true });
-    if (!last.applied) break;
-    it = last.item;
-    count++;
-  }
-  return count ? { ...last, applied: true, item: it, count } : { ...last, count: 0, ...(last.applied || last.reason ? {} : { reason: tr("品質はもう最大", "Quality is already at max") }) };
-}
 
 /** 繰り返し (カオススパム) の上限が無い時の見張り */
 const SPAM_CAP = 5000;
@@ -172,7 +153,7 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
   const echo = h.omens.includes(ECHO);
   let r = applyCurrency(data, it, h.currency, rng, engineOmens(h));
   // フラクチャーで ✦ にする MOD を選んだ時: オーブが打てる (4 MOD 以上のレア・✦ 無し、エンジンの判定) なら、選んだ MOD が付いていればそれを固定 (エンジンの force の f = 付いている MOD を固定)
-  if (r.applied && h.fractureOf && kindOfCurrency(h.currency) === "fracture" && [...it.prefixes, ...it.suffixes].some((m) => m.modId === h.fractureOf)) {
+  if (r.applied && h.fractureOf && effectOf(h.currency) === "fracture" && [...it.prefixes, ...it.suffixes].some((m) => m.modId === h.fractureOf)) {
     const f = applyCurrency(data, it, `force:${h.fractureOf}|T1|f`, rng);
     if (f.applied) r = { ...r, item: f.item, added: f.added, removed: f.removed };
   }
@@ -193,7 +174,7 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
 function reveal(data: PatchData, r: StageApply, rng: () => number, aims: readonly Aim[], miss = false, echo = false): StageApply {
   const seed = Math.floor(rng() * 2 ** 31);
   const offers = revealOffers(data, r.item, mulberry32(seed));
-  const isAim = (m: StageMod): boolean => aims.some((a) => aimHeld(data, { ...r.item, prefixes: [m], suffixes: [] }, a));
+  const ts = targetsOf(data, aims), isAim = (m: StageMod): boolean => isAimMod(m, ts, aimOpts(data));
   const n = offers.first.findIndex((m) => isAim(m) !== miss);
   // アビスの反響: 最初の 3 つに無ければ 1 回引き直した 3 つから (同じ種で引くのでエンジンの reveal:N:reroll と同じ候補、apply-desecrate.ts)
   const k = n < 0 && echo ? offers.reroll.findIndex((m) => isAim(m) !== miss) : -1;

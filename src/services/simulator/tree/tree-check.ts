@@ -8,10 +8,10 @@
  * 10-22 靴を白紙から組んで: 狙いが消えて外れを持ったまま始めに戻り、カオスで当たるとサフィックスが満杯で次の高貴が打てず 100 人中 64 人止まるのに、
  * 前は戻った先の手が打てるかだけ見て先へ進まず、精査に出なかった
  */
-import { allMods, listOf, modBoostsOf, mulberry32, room, SIDES, stepOutcomes, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
-import { CATALYSING, catalystTagOf, engineOmens, isCatalyst } from "./tree-hands";
+import { allMods, catalystTagOf, junkOf, modBoostsOf, mulberry32, room, SIDES, stepOutcomes, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { CATALYSING, engineOmens, isCatalyst } from "./tree-hands";
 import { aimKey, type Aim, type OutKind, type TreeDoc } from "./tree-model";
-import { aimHeld, aimsOf, handAims, handProblem, outcomeOf, playHand, sampleOf, startItemOf } from "./tree-sample";
+import { aimHeld, aimOpts, aimsOf, handAims, handProblem, outcomeOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
 import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, runTreeSteps, settle, shapesOf, splitTo } from "./tree-run";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
@@ -240,9 +240,9 @@ function stuckText(data: PatchData, aims: readonly Aim[], n: number, w: { reason
   if (!w) return tr(`${head} (手・戻り先が無い、または分かれ目のどの行にも合わない)`, `${head} (no craft or return, or no split row matches)`);
   const full = SIDES.filter((side) => !room(w.item, side));
   if (!full.length) return `${head}: ${w.reason}`;
-  const isAim = (m: StageItem["prefixes"][number]): boolean => aims.some((a) => aimHeld(data, { ...w.item, prefixes: [m], suffixes: [] }, a));
+  const junkAll = junkOf(w.item, targetsOf(data, aims), aimOpts(data));
   const parts = full.map((side) => {
-    const junk = listOf(w.item, side).filter((m) => !m.fractured && !isAim(m));
+    const junk = junkAll[side];
     const name = side === "prefix" ? tr("プレフィックス", "Prefixes") : tr("サフィックス", "Suffixes");
     return junk.length ? tr(`${name}が満杯 (外れ ${junk.length}: ${junk.map((m) => `${modText(m)} (${m.tierName})`).join("・")})`, `${name} full (${junk.length} miss: ${junk.map((m) => `${modText(m)} (${m.tierName})`).join(", ")})`) : tr(`${name}が満杯`, `${name} full`);
   });
