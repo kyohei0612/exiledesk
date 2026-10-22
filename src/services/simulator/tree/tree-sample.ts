@@ -6,7 +6,7 @@
  * その下の箱 = 親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
-import { aimDiff, aimHeldOn, applyCurrency, applyHand, canUse, effectOf, fillCatalyst, forceKey, freshItem, isAimMod, mulberry32, runeIdByName, stepOutcomes, tierIndexOf, unrevealedOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem } from "../../craft-stage/engine";
+import { aimDiff, aimHeldOn, applyCurrency, applyHand, canUse, effectOf, fillCatalyst, forceKey, freshItem, isAimMod, mulberry32, startWith, stepOutcomes, tierIndexOf, unrevealedOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem } from "../../craft-stage/engine";
 import { ECHO, engineOmens, isCatalyst } from "./tree-hands";
 import { startOf, type Aim, type Hand, type OutKind, type TreeDoc } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
@@ -139,33 +139,8 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
  * note = 打てなかった理由 (無ければ null)
  */
 export function startItemOf(data: PatchData, doc: TreeDoc, rng: () => number): Sample {
-  const st = startOf(doc);
-  // マジックはノーマルから付ける (付けるとマジック、エンジンの force の決まり)。ノーマルは MOD を付けない白 (画面で MOD と乱数を外す)。フラクチャーはレアにだけ付く (force がレアにする)
-  const magic = (st.rarity === "magic" || st.rarity === "normal") && !st.mods.some((m) => m.fractured);
-  let item = freshItem(data, doc.base, doc.itemLevel, magic ? "normal" : "rare");
-  // 選んだルーンを先に差す。ルーンの MOD はそのルーンを差して付く (force が差す)。差すソケットを要る数だけ開けておく (手袋の投射物 +2 = コルの狩り、10-22)
-  const runes = st.runes ?? [];
-  const byMod = new Set(st.mods.flatMap((m) => { const r = data.mods.get(m.modId)?.rune; return r ? [r] : []; }));
-  const need = runes.length + [...byMod].filter((id) => !runes.some((en) => runeIdByName(en) === id)).length;
-  if (need) item = { ...item, sockets: Math.max(item.sockets ?? 0, need) };
-  for (const en of runes) {
-    const r = applyCurrency(data, item, `rune:${en}`, rng);
-    if (!r.applied) return { item: r.item, note: r.reason ?? null };
-    item = r.item;
-  }
-  for (const m of st.mods) {
-    // エッセンスの MOD (グレーターの道の始まり) はクラフト MOD の印で付ける
-    const src = data.mods.get(m.modId)?.source;
-    const r = applyCurrency(data, item, forceKey(m.modId, `T${m.tier}`, m.fractured ? "f" : src === "essence" || src === "perfect_essence" ? "e" : "n"), rng);
-    if (!r.applied) return { item: r.item, note: r.reason ?? null };
-    item = r.item;
-  }
-  for (let i = 0; i < (doc.startRandom ?? 0); i++) {
-    const x = applyCurrency(data, item, item.rarity === "rare" ? "exalt" : "augment", rng);
-    if (!x.applied) return { item, note: x.reason ?? null };
-    item = x.item;
-  }
-  return { item, note: null };
+  // 作り方 (ルーン → 指名の MOD → 乱数の MOD、マジックはノーマルから・フラクチャーはレアに 1 つまで) はエンジンの入口の startWith (B10 10-22)
+  return startWith(data, doc.base, doc.itemLevel, { ...startOf(doc), random: doc.startRandom ?? 0 }, rng);
 }
 
 /**
