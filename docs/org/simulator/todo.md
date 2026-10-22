@@ -58,6 +58,13 @@
 - 次の手: 3,000 人での止まり 2〜3 (rc_q・pX、1/3000) の原因 → 1280 幅で箱の中のボタンが 20px の直す案を 1 行 → 5 (点検の残り)。
 - 気付き: 1280 幅は 75%・100% でも箱の中の押せる物が 20px (ページの zoom の分、前から)。全体表示 33% で右端の箱がミニマップに近い (前から)。
 
+## 引き継ぎ (9 本目 → 10 本目、10-22。会話が長くなったので区切りで)
+- 済んだ物 (全部 commit・push 済み、書きかけ無し、開発版は d68c5b50 の後に Chrome は返した): 下の「9 本目」全部 + 読み込み中の表示 de87e281 (画面ではまだ見ていない)。
+- 途中の物: 読み込み中の表示 = ツリーのページだけの仮の TreeBusy.vue。ブラックに「共通の部品 (くるくる + 一言 + n/m) をジン部長に」と返事待ち。来たら差し替え、他の画面にも (グローバルな依頼)。精査は checkTreeAsync で 1 人ずつ区切った。ベースの値段・見本 (sampleOf) は同期の computed で、待ちは短いが表示は出ない (要るならワーカー)。
+- 次の手: 1) 読み込みの表示を開発版で本物のマウス (データの読み込み中・精査中 n/30、Chrome は聞いてから) 2) 分かれ目へ戻す札に ◇ を添える案 3) 組み直した靴 (共有メモ tree-merge/boots-split-tree.json) を見本に足すかはブラックの返事待ち。
+- オーナーが開く URL: 鍵 https://web-dev.exiledesk.workers.dev/?k=8ZlDQtkU9siTTMXD-qDzj50w → https://web-dev.exiledesk.workers.dev/?page=sim-tree (&sample=gold-ring-suffix)。web.html は付けない。
+- 台本: scripts/_tree-split-probe・_tree-base-cost-probe・_tree-start-probe・_start-cost-probe・_tree-file-check-probe。本物のマウス 共有メモ tree-merge/ の split-shot・cost-shot・start-shot・small-shot・undone-shot・verify3.mjs (Chrome 9333、使う前にブラックへ)。Bash の \ が消えるので台本の正規表現は Edit で。
+
 ## 9 本目 (10-22 深夜〜。全部 push 済み、開発版 31e467e2)
 - 手 1 靴の止まり (5aa6b95e): 精査の stuck の文に満杯の側と外れの MOD (段つき)、外れを持ったまま戻る「狙いが消えた」の戻りにも ! (carry)。tree-run の結果に stuckWhy (理由・形・通った戻り)。原因 = 戻りで持ち込んだ外れはカオスを当たるまでで消えない。作り直しは無し (オーナー)、本当の直しは分かれ目の箱 (次の段)。
 - 手 2 見つけた物 (29d97233・b39b95bd・3e95b5f3・71706961): ＋から開いた時の帯の文・フラクチャーの一覧は普通の MOD が先・探す言葉 速度 ↔ スピード・精査の帯は行を押すと畳む (TreeIssues.vue に分けた)。アイテムレベルの段の ! は入れてから外した (99d661b7、オーナー「Lv は自由」)。
