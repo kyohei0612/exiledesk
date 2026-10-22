@@ -44,11 +44,13 @@ function goldRingSuffix(): TreeDoc {
   /** 触媒の高貴 (前のカタリストの手で入れた品質を使う) */
   const CAT = hand("exalt_perfect", ["OmenofCatalysingExaltation", "OmenofDextralExaltation"]);
   const SPAM = hand("chaos", [], { repeat: { until: "hit", max: null } });
-  // 外れの箱 (id) は消去を打ち、結果の 2 箱: id_g = 外れが消えた → back (外れの前の箱)、id_l = 狙いが消えた → 始めに戻る
-  const J = (parent: string, id: string, back: string, remove: Hand = hand("annul")): Record<string, Partial<TreeBox>> => ({
+  // 外れの箱 (id) は消去を打ち、結果の 2 箱: id_g = 外れが消えた → back (外れの前の箱)、id_l = 狙いが消えた → lost。
+  // lost は狙いが全部消えた時だけ始めに戻る。狙い 2 つ + 外れで 1 つ消えたら、残った狙い 1 つ + 外れの箱 (もう一度消去) へ
+  // (残ったのが別の狙いなら tree-run の settle が形の合う箱へ。10-22 オーナー「2 MOD 狙い・1 外れの時、初めから戻ってる」、解析君の ringTree の match と同じ行き先)
+  const J = (parent: string, id: string, back: string, lost = "start", remove: Hand = hand("annul")): Record<string, Partial<TreeBox>> => ({
     [id]: { out: "junk", parent, hand: remove, outs: [`${id}_g`, `${id}_l`] },
     [`${id}_g`]: { out: "junkGone", parent: id, back },
-    [`${id}_l`]: { out: "lost", parent: id, back: "start" },
+    [`${id}_l`]: { out: "lost", parent: id, back: lost },
   });
   // カタリストの手 (id → 通り抜け id_q) の後に触媒の高貴を打つ箱。outs は触媒の高貴の結果
   const Q = (id: string, box: Partial<TreeBox>, cat: string, outs: string[]): Record<string, Partial<TreeBox>> => ({
@@ -70,13 +72,14 @@ function goldRingSuffix(): TreeDoc {
     d1: { out: "hit", aim: A.A, parent: "rc_q", hand: hand("exalt"), outs: ["pR", "pJ"] },
     d2: { out: "hit", aim: A.C, parent: "ra_q", back: "d1" },
     d3: { out: "hit", aim: A.R, parent: "ca", back: "d1" },
-    ...J("sR_q", "jR", "sR"), ...J("sC", "jC", "sC"), ...J("sA", "jA", "sA"), ...J("rc_q", "jRC", "rc"), ...J("ra_q", "jRA", "ra"), ...J("ca", "jCA", "ca"),
+    ...J("sR_q", "jR", "sR"), ...J("sC", "jC", "sC"), ...J("sA", "jA", "sA"), ...J("rc_q", "jRC", "rc", "jR"), ...J("ra_q", "jRA", "ra", "jR"), ...J("ca", "jCA", "ca", "jC"),
     pR: { out: "hit", aim: A.PR, parent: "d1", hand: hand("desecrate", ["OmenoftheBlackblooded"]), outs: ["pD", "pX"] },
     // 外れ → 餌 (狙い無しの手: 外れを印に替えるだけ) → 削減 + 完全のカオス。外れたら餌の箱へ戻って付け直す
     pJ: { out: "junk", parent: "d1", hand: hand("essence:perfect:Rings/PerfectEssence_EssenceAbyss", ["OmenofSinistralCrystallisation"], { free: true }), outs: ["pB"] },
     pB: { out: "any", parent: "pJ", hand: hand("chaos_perfect", ["OmenofWhittling"]), outs: ["pR2", "pBl", "pBj"] },
     pR2: { out: "hit", aim: A.PR, parent: "pB", back: "pR" },
-    pBl: { out: "lost", parent: "pB", back: "start" },
+    // 削減は必ず餌を消すので狙いは消えない (見本は引けない)。もし消えたらサフィックスの狙い 2 つ + 外れの箱へ (settle が形の合う箱へ)
+    pBl: { out: "lost", parent: "pB", back: "jRC" },
     pBj: { out: "junk", parent: "pB", back: "pJ" },
     pD: { out: "hit", aim: A.PD, parent: "pR", done: "main" },
     // 光のお告げ + 消去は冒涜の MOD だけを消すので結果は「外れが消えた」1 通り (10-22 オーナー、tree-sample の singleOutOf)
