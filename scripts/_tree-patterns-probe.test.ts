@@ -262,6 +262,27 @@ const PATTERNS: { name: string; base: string; note: string; build: (u: Ui) => vo
       annul(u, u.o(at).junk, ["OmenofDextralAnnulment"]);
     }
   } },
+  { name: "body-essence-split", base: "Vile Robe", note: "胴 (解析君の案 c、10-22): ✦ES T1 + 乱数 2、パーフェクトエッセンス (ライフ%) → 分かれ目 (狙い 3 = 完成 / サフィの外れ 2 = 素の消去 / それ以外 = 右側の高貴)。消去の外れが消えた = 分かれ目、狙いが消えた = エッセンスの箱", build: (u) => {
+    const C = A(`${BA}ColdResistance`, 2), L = A(`${BA}LightningResistance`, 2);
+    u.startMod(`${BA}LocalEnergyShield`, 1, true);
+    u.random(2);
+    u.memo(C); u.memo(L);
+    const e = u.hand("start", `essence:perfect:${BA}PerfectEssence_MaximumLifeIncreasePercent`, [])!;
+    const got = u.o(e).hit[0];
+    if (!got) return;
+    // エッセンスの当たりの箱をそのまま分かれ目に (前に狙い無しの高貴を 1 回置くと、打ち直して着いた人のサフィが外れで満杯の時に打てず 36 人止まった)
+    const p = got;
+    const [done, junk, other] = u.split(p, [{ kind: "held", n: 3 }, { kind: "junk", side: "suffix", n: 2 }]);
+    u.done(done!);
+    // 見本の形はプレが満杯で右側のお告げが「今は意味なし」で押せない (画面も同じ) → 素の上級の高貴 (プレが満杯ならサフィに付く)
+    const ex = u.hand(other!, "exalt_greater", [DEX]) ?? u.hand(other!, "exalt_greater")!;
+    u.hits(ex, [C, L]);
+    u.allBack(ex, p);
+    // 素の消去 (サフィの外れが 2 つ以上の時だけ)。外れが消えた = 分かれ目、狙いが消えた = エッセンスの箱 (ライフ% が消えた人は打ち直す。
+    // 耐性が消えた人はエッセンスが打てないので回しの「打てる形の合う箱へ」に任せる。画面の分かれ目の行に「この狙いが無い」が無いため)
+    const an = u.hand(junk!, "annul");
+    if (an) for (const x of u.d.boxes[an]!.outs) u.back(x, u.d.boxes[x]!.out === "lost" ? "start" : p);
+  } },
   { name: "helmet-desecrate", base: "Kamasan Tiara", note: "兜: ✦ES% T1 + 乱数 2、骨 + 右側の死霊術で冒涜 → 発現で 雷混沌耐性。外れは光 + 消去", build: (u) => {
     u.startMod(`${HI}LocalEnergyShieldPercent`, 1, true);
     u.random(2);
