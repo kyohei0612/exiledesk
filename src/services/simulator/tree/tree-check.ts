@@ -8,7 +8,7 @@
  * 10-22 靴を白紙から組んで: 狙いが消えて外れを持ったまま始めに戻り、カオスで当たるとサフィックスが満杯で次の高貴が打てず 100 人中 64 人止まるのに、
  * 前は戻った先の手が打てるかだけ見て先へ進まず、精査に出なかった
  */
-import { allMods, freshItem, listOf, modBoostsOf, modListFor, mulberry32, room, SIDES, stepOutcomes, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { allMods, listOf, modBoostsOf, mulberry32, room, SIDES, stepOutcomes, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { CATALYSING, isCatalyst } from "./tree-hands";
 import { aimKey, type Aim, type OutKind, type TreeDoc } from "./tree-model";
 import { aimHeld, aimsOf, handAims, handProblem, outcomeOf, playHand, sampleOf } from "./tree-sample";
@@ -16,7 +16,7 @@ import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, runTree, s
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
 
-export type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry" | "ilvl";
+export type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry";
 export interface CheckIssue { boxId: string; kind: CheckKind; text: string }
 
 const PEOPLE = 5;
@@ -57,16 +57,6 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
     if (b.hand?.omens.includes(CATALYSING) && !b.hand.catalyst && !afterCat) add(b.id, "noCatalyst", tr("触媒のお告げなのにカタリストを打つ手が無い (手の札でカタリストを選ぶ)", "Catalysing omen without a catalyst craft (pick a catalyst in the craft)"));
   }
 
-  // 1a) アイテムレベルで付かない段 (当たりは「T n 以上」なので n 段目の MOD レベルで見る。行はエンジンの入口の modListFor、MOD 一覧と同じ)
-  const rows = modListFor(data, freshItem(data, doc.base, doc.itemLevel, "rare"));
-  const lvOf = (a: Aim): number | null => rows.find((r) => r.id === a.modId || r.tiers.some((x) => x.modId === a.modId))?.tiers[a.tier - 1]?.ilvl ?? null;
-  const tooHigh = (a: Aim | null): string | null => {
-    const lv = a ? lvOf(a) : null;
-    return lv !== null && lv > doc.itemLevel ? tr(`アイテムレベル ${doc.itemLevel} では付かない段 (T${a!.tier} は MOD レベル ${lv} から)`, `This tier can't roll at item level ${doc.itemLevel} (T${a!.tier} needs level ${lv})`) : null;
-  };
-  { const why = tooHigh(doc.fracture); if (why) add("start", "ilvl", why); }
-  for (const b of boxes) if (b.out === "hit") { const why = tooHigh(b.aim); if (why) add(b.id, "ilvl", why); }
-
   // 1b) 形の合う箱へ: 行きうる形の箱がツリーに無い (tree-run の matchTargets、回す時と同じ判定)
   for (const b of boxes) if (b.back === MATCH) {
     const miss = matchTargets(doc, b.id).filter((x) => !x.to);
@@ -101,8 +91,8 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
   const nOf = (id: string): number => (pathAims(id) ? pathAims(id).split(",").length : 0);
   if (mains.length > 1) { const first = nOf(mains[0]!.id); for (const b of mains.slice(1)) if (nOf(b.id) !== first) add(b.id, "doneShape", tr(`ほかの完成の箱と、揃った狙いの数が違う (${nOf(b.id)} つ / ${first} つ)`, `Different number of targets than the other done box (${nOf(b.id)} / ${first})`)); }
 
-  // 4) エンジンで 5 人を辿る: 打てない手・付かない当たり。アイテムレベルで付かない段がある間は辿らない (当たるまでが付かない段を打ち続けて固まる、10-22)
-  if (doc.fracture && !out.some((x) => x.kind === "ilvl")) {
+  // 4) エンジンで 5 人を辿る: 打てない手・付かない当たり
+  if (doc.fracture) {
     const cant = new Map<string, { who: Set<number>; reason: string }>();
     const never = new Set<string>();
     /** 結果の箱に無い結果が出る箱 (箱 → 人数と出る結果)。結果が 1 通りとして箱を 1 つにした手で、想定外の形で着いた時など (10-22 ブラック) */
@@ -180,7 +170,7 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
     for (const id of never) add(id, "neverHit", tr("上の手を打ち直してもこの札が付かなかった (側・段・手を確かめる)", "This mod never hit when the craft above was retried (check side, tier and craft)"));
   }
   // 止まる・打てない物を先に (10-22 精査で靴の止まりが完成の札の ! の下に埋もれた)
-  const RANK: Partial<Record<CheckKind, number>> = { stuck: 0, carry: 0, ilvl: 1, cantUse: 1, noMatch: 2, unexpected: 3, open: 4, loop: 5, noDone: 6 };
+  const RANK: Partial<Record<CheckKind, number>> = { stuck: 0, carry: 0, cantUse: 1, noMatch: 2, unexpected: 3, open: 4, loop: 5, noDone: 6 };
   return out.map((x, i) => ({ x, i })).sort((a, z) => (RANK[a.x.kind] ?? 9) - (RANK[z.x.kind] ?? 9) || a.i - z.i).map((v) => v.x);
 }
 
