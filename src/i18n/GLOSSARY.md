@@ -47,6 +47,26 @@
 | 適正 (表示通貨) | Auto |
 | 要望・バグ | Feedback |
 
+## シミュレーターのツリー (2026-10-22、?page=sim-tree。画面の英語は tr の対で揃っている、今の言い方を正にする)
+
+| 日本語 | English |
+|---|---|
+| クラフトの道 (ツリー) / 木 | Craft route tree / tree |
+| 箱 / 結果の箱 / 始まり | Box / Result boxes / Start |
+| 手 (打つ手) / 手の札 / 右の棚 | Craft / craft chip / shelf on the right |
+| 当たり / 外れ | Hit / Miss |
+| 外れが消えた / 狙いが消えた | Miss removed / Target lost |
+| 分かれ目 (打たずに分ける) | Split (Split without crafting) |
+| 戻り先 | Returns to (札は return tag) |
+| 完成 / 完成にする | Done / Mark done |
+| 精査 (ルート精査) | Check (Check route) |
+| 回す / N 人回す / 回している | Run / Run N / Running (「Play」は使わない) |
+| 止まり / 打ち止め | stuck / capped |
+| 欲しい MOD のメモ | wanted mods memo (見出しは Notes) |
+| カオススパム | Chaos spam |
+| 触媒のお告げ (= 触媒の高貴のお告げ) | Omen of Catalysing Exaltation (poe2db、items-ja-poe2db.json)。「Catalysing omen」と縮めない |
+| 区切りの「・」 | 英語は ", " |
+
 ## ゲームの言葉 (2026-10-10 にクライアントで確かめた物。食い違いが見つかったら poe2db に合わせて直す)
 
 | 日本語 | English (出どころ) |
