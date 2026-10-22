@@ -462,6 +462,8 @@ const glowOf = (b: Box): boolean => {
         <p v-if="picking || hand || viewOnly" data-tree-mode-pill class="pointer-events-none absolute left-3 top-3 z-20 flex items-center gap-2 rounded-full border px-3 py-1 text-[12px] shadow-[0_4px_14px_rgba(0,0,0,0.6)]"
           :class="picking ? 'border-cyan-400/50 bg-[#0d1a1c]/95 text-cyan-100' : 'border-white/10 bg-[#15110c]/95 text-[#d8ccb4]'">
           {{ picking && panel?.kind === "hand" && panel.id === picking ? tr("右の棚で次に打つ手を選ぶ / 箱を押すとそこへ戻る (Esc でやめる)", "Pick the next craft on the right, or click a box to return to it (Esc cancels)") : picking ? tr("戻り先の箱を押す (Esc でやめる)", "Click the box to return to (Esc cancels)") : hand ? tr("手: 見るだけ (選択に戻すと組める)", "Hand: view only (switch to Select to edit)") : tr("縮めて見ている間は箱を押すとその箱の編集が開く", "Zoomed out: click a box to edit it") }}
+          <!-- 完成の箱からつなぐと完成の印は外れる (黙って外れていた、10-22 白紙から組んだ試し #19) -->
+          <b v-if="picking && doc.boxes[picking]?.done" data-tree-pick-undone class="text-amber-200">{{ tr("(この箱の完成の印は外れる)", "(this box's done mark will be removed)") }}</b>
           <template v-if="picking && picking !== 'start'">
             <button type="button" data-tree-pick-start class="g-btn sm pointer-events-auto" :title="tr('始まりの箱の手から打ち直す', 'Craft again from the start box')" @click="pickBack('start')">{{ tr("↩ 始めに戻る", "↩ Back to start") }}</button>
           </template>
