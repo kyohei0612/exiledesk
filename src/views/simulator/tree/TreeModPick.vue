@@ -22,7 +22,7 @@ const open = ref<string | null>(props.current?.modId ?? null);
  * 当たりは一般の MOD と冒涜専用 MOD (骨の手の当たり、10-22 オーナー「冒涜は冒涜で付与」)、始まりの MOD は創生の樹など (カレンシーでは付かない物) と
  * ルーンの MOD (付けるとエンジンの force がそのルーンを差す) も。普通の MOD が先 (10-22 靴・手袋を白紙から組んで、創生の樹が一番上に並び探しにくかった)
  */
-const groups = computed(() => (props.mode === "hit" ? ["normal", "desecrated"] : ["normal", "special", "rune"]));
+const groups = computed(() => (props.mode === "hit" ? ["normal", "desecrated"] : ["normal", "essence", "special", "rune"]));
 const sections = computed(() => {
   // 「移動速度」でも「移動スピード」(MOD の文) に当たる (10-22 白紙から組んで 0 件だった)
   const qs = [...new Set([query.value.trim().toLowerCase()].flatMap((q) => [q, q.replace(/速度/g, "スピード"), q.replace(/スピード/g, "速度")]))];
@@ -57,7 +57,8 @@ const tierLabel = (tier: number): string => (props.mode === "start" || tier === 
         <div v-for="r in sec.rows" :key="r.id" class="mb-1 rounded-md bg-white/[0.04]">
           <button type="button" class="flex w-full min-w-0 items-center gap-2 px-2 py-1.5 text-left" :aria-expanded="open === r.id" @click="open = open === r.id ? null : r.id">
             <span class="min-w-0 flex-1 truncate text-[13px] text-[#c8c8ff]" :title="r.text">{{ r.template }}</span>
-            <span v-if="r.group === 'special'" class="shrink-0 rounded-sm bg-teal-500/25 px-1 text-[10px] text-teal-100">{{ tr("創生の樹など", "Genesis Tree etc.") }}</span>
+            <span v-if="r.group === 'essence'" class="shrink-0 rounded-sm bg-sky-500/25 px-1 text-[10px] text-sky-100">{{ tr("エッセンス", "Essence") }}</span>
+            <span v-else-if="r.group === 'special'" class="shrink-0 rounded-sm bg-teal-500/25 px-1 text-[10px] text-teal-100">{{ tr("創生の樹など", "Genesis Tree etc.") }}</span>
             <span v-else-if="r.group === 'rune'" class="max-w-[40%] shrink-0 truncate rounded-sm bg-violet-500/25 px-1 text-[10px] text-violet-100" :title="r.runeJa">{{ tr(`ルーン ${r.runeJa ?? ""}`, `Rune ${r.runeJa ?? ""}`) }}</span>
             <span class="shrink-0 rounded-sm bg-emerald-600/80 px-1 text-[11px] font-bold text-white">{{ r.tiers.length }}</span>
           </button>

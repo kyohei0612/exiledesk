@@ -64,7 +64,9 @@ export interface StartMod { modId: string; tier: number; fractured?: true }
  * 始まりの形。ツリーはフラクチャーの後だけを扱う (オーナー 10-22) ので画面はレアだけ。magic はフラクチャーが要らない別軸で使い回せるよう残す
  * (フラクチャーがあればレア、エンジンの決まり 10-06)。runes = 先に差すルーン (英語名。セールの凱旋・コルの狩りなど)。ルーンの MOD は force がそのルーンも差す
  */
-export interface TreeStart { rarity: "magic" | "rare"; mods: StartMod[]; runes?: string[] }
+export interface TreeStart { rarity: "magic" | "rare"; mods: StartMod[]; runes?: string[]; prices?: TreeBasePrices }
+/** 始め方ごとのベースの値段 (神、手入力。入れていない物は無い)。始まりの箱のベースの値段を比べる tree-base-cost.ts で使う */
+export interface TreeBasePrices { white?: number; four?: number; fractured?: number }
 export interface TreeDoc {
   schema: "exiledesk-tree/0";
   base: string;

@@ -182,7 +182,9 @@ export function startItemOf(data: PatchData, doc: TreeDoc, rng: () => number): S
     item = r.item;
   }
   for (const m of st.mods) {
-    const r = applyCurrency(data, item, `force:${m.modId}|T${m.tier}|${m.fractured ? "f" : "n"}`, rng);
+    // エッセンスの MOD (グレーターの道の始まり) はクラフト MOD の印で付ける
+    const src = data.mods.get(m.modId)?.source;
+    const r = applyCurrency(data, item, `force:${m.modId}|T${m.tier}|${m.fractured ? "f" : src === "essence" || src === "perfect_essence" ? "e" : "n"}`, rng);
     if (!r.applied) return { item: r.item, note: r.reason ?? null };
     item = r.item;
   }

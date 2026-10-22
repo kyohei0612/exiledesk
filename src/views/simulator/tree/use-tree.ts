@@ -3,9 +3,10 @@
  * MOD の一覧はエンジンの入口の modListFor (クラフト台の MOD 一覧と同じ行。自前の表は作らない)。ベースとアイテムレベルは木の base・itemLevel (始まりの箱で選ぶ、10-22。前は金の指輪 ilvl 82 に固定)
  */
 import { computed, shallowRef } from "vue";
-import { craftStage as s } from "../../../state/craft-stage";
+import { craftStage as s, nameOf, priceOf } from "../../../state/craft-stage";
 import { freshItem, modListFor } from "../../../services/craft-stage/engine";
-import { isTreeDoc, migrateStart, newTree, type Aim, type StartMod, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { isTreeDoc, migrateStart, newTree, startOf, type Aim, type StartMod, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { treeBaseCost } from "../../../services/simulator/tree/tree-base-cost";
 import { tr } from "../../../i18n/lang";
 
 export type ModRow = ReturnType<typeof modListFor>[number];
@@ -106,6 +107,12 @@ function startModLabel(a: Aim | StartMod | null): string {
   return `T${a.tier} ${t?.text ?? r?.text ?? a.modId}`;
 }
 
+/** 始まりの箱のベースの値段 (始め方を ③ の計算で比べた一番安い物、tree-base-cost.ts。カレンシーは今の相場) */
+const baseCost = computed(() => {
+  const d = s.data.value;
+  return d ? treeBaseCost(d, doc.value, startOf(doc.value).prices ?? {}, priceOf, nameOf) : null;
+});
+
 export function useTree() {
-  return { doc, edit, undo, canUndo, reset, setBase, setStartRandom, lostOnBase, open, setTreeNote, rows, aimLabel, aimShort, startModLabel };
+  return { doc, edit, undo, canUndo, reset, setBase, setStartRandom, lostOnBase, open, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost };
 }

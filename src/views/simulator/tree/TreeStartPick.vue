@@ -49,6 +49,17 @@ function setRand(v: number | null): void {
   rand.value = v === null ? null : Math.max(0, Math.min(RANDOM_MAX, Math.round(v)));
   if (rand.value !== null) t.setStartRandom(rand.value);
 }
+/** ベースの値段 (神、手入力。カレンシーは今の相場で、始め方を ③ の計算で比べる = use-tree の baseCost) */
+const PRICE_ROWS = [
+  { k: "white", ja: "白のベース", en: "White base" },
+  { k: "four", ja: "4 MOD のレア", en: "4-mod rare" },
+  { k: "fractured", ja: "フラクチャー済み", en: "Fractured" },
+] as const;
+const priceIn = (k: (typeof PRICE_ROWS)[number]["k"]): number | null => st.value.prices?.[k] ?? null;
+function setPrice(k: (typeof PRICE_ROWS)[number]["k"], v: number | null): void {
+  change((x) => { const p = { ...(x.prices ?? {}) }; if (v == null || !Number.isFinite(v) || v < 0) delete p[k]; else p[k] = v; if (Object.keys(p).length) x.prices = p; else delete x.prices; });
+}
+const fmt = (n: number): string => (n >= 100 ? n.toFixed(0) : n >= 10 ? n.toFixed(1) : n.toFixed(2));
 /** 作れない時の理由 (エンジンの force・ルーンの理由。枠が足りない・同じ系統・ソケットが足りないなど) */
 const problem = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.value, mulberry32(1)).note : null));
 </script>
@@ -81,6 +92,22 @@ const problem = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.v
         <span class="min-w-0 flex-1 truncate text-violet-200" :title="en">{{ runeName(en) }}</span>
         <button type="button" class="shrink-0 px-1 opacity-60 hover:opacity-100" :title="tr('外す', 'Remove')" @click="removeRune(i)">×</button>
       </div>
+    </div>
+    <!-- ベースの値段: 入れた値段と今の相場で、この始まりに着く始め方を比べ、一番安い物を始まりの箱に出す -->
+    <div data-tree-start-cost class="flex flex-col gap-1 text-[13px]">
+      <span>{{ tr("ベースの値段 (神)", "Base prices (Divine)") }}</span>
+      <label v-for="r in PRICE_ROWS" :key="r.k" class="flex items-center gap-2" :data-tree-start-price="r.k">
+        <span class="flex-1 text-[12px] opacity-80">{{ tr(r.ja, r.en) }}</span>
+        <NumStep :model-value="priceIn(r.k)" width="w-24" placeholder-text="—" @update:model-value="(v) => setPrice(r.k, v)" />
+      </label>
+      <p v-if="t.baseCost.value?.note" class="text-[12px] opacity-70">{{ t.baseCost.value.note }}</p>
+      <ul v-if="t.baseCost.value?.kinds.length" class="flex flex-col gap-0.5 text-[12px]">
+        <li v-for="x in t.baseCost.value.kinds" :key="x.k" data-tree-start-kind class="flex min-w-0 items-center gap-2 rounded px-1"
+          :class="t.baseCost.value.best?.k === x.k ? 'bg-amber-500/15 text-amber-100' : 'opacity-75'">
+          <span class="min-w-0 flex-1 truncate">{{ x.label }}</span>
+          <span class="shrink-0" :title="x.why ?? undefined">{{ x.cost != null ? tr(`${fmt(x.cost)} 神`, `${fmt(x.cost)} div`) : "" }}{{ x.why ? `${x.cost != null ? " · " : ""}${x.why}` : "" }}</span>
+        </li>
+      </ul>
     </div>
     <label class="flex items-center gap-2 text-[13px]" :title="tr('始まりの MOD のほかに乱数で付いている MOD の数 (素の高貴を n 回打った形)', 'Random mods besides the ones above (as if exalts were used n times)')">
       <span class="flex-1">{{ tr("ほかに乱数の MOD", "Other random mods") }}</span>
