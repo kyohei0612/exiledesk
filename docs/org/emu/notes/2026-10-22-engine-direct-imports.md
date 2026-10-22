@@ -8,7 +8,7 @@
 - 見張り scripts/check-engine-entry.mjs は「シミュ・チュートリアル・解析」だけを数える (WEB_SIDE)。エミュは入っていないので、寄せ終わったらエミュも WEB_SIDE に足す (ジン部長の台本)。
 
 ## 今 (10-23、ジン部長が棚・カード・MOD 一覧を for-share へ移した後)
-- エミュの画面は 24 ファイル、入口を通らない import は 40 行 (ジン 32・共通 8)。シミュへの import は 0。ジンの名前 60 個は全部、入口にまだ無い (下の表が今の形)。
+- エミュの画面は 27 ファイル (10-23 に MOD 一覧 StageModList・ModAddPicker・StageWeightEdit が戻った、9f46ef0b)、入口を通らない import は 41 行 (ジン 33・共通 8)。シミュへの import は 0。ジンの名前 61 個は全部、入口にまだ無い (下の表が今の形)。
 - 寄せ方: 結果が変わる物はジン部長が engine.ts か for-emu/ (engine-emu.ts) に、見え方の物 (名前・絵・文) はジン部長が共通か入口に。要望はブラック経由。
 
 ## 10-22 深夜の合計 (移す前、記録)
@@ -30,6 +30,7 @@
 | services/craft-stage/share.ts | 共通 | 3 | `unpackJson` (spam-share-open.ts)、`encodeShare` (CraftStage.vue)、`SHARE_ENABLED` (CraftStage.vue)、`shareUrl` (CraftStage.vue)、`xIntentUrl` (CraftStage.vue)、`packJson` (use-spam-share.ts) |
 | services/craft-stage/apply-currency.ts | ジン | 3 | `catalystSetKey` (CraftStage.vue)、`IMPLICIT_SET` (CraftStage.vue)、`implicitSetKey` (CraftStage.vue)、`isCatalystSet` (CraftStage.vue)、`isQualitySet` (CraftStage.vue)、`QUALITY_CAP` (CraftStage.vue)、`qualityCapKey` (CraftStage.vue)、`qualitySetKey` (CraftStage.vue)、`qualityCapOf` (StageQualityBar.vue)、`qualityFieldMax` (StageQualityBar.vue)、`SANCTIFIED_REASON` (StageQualityBar.vue・StageSettings.vue)、`ITEM_LEVEL_SET` (StageSettings.vue)、`itemLevelKey` (StageSettings.vue) |
 | services/craft-stage/stage-runes.ts | ジン | 2 | `unsocketKey` (CraftStage.vue)、`runeNameOf` (CraftStage.vue)、`RUNE_PREFIX` (CraftStage.vue) |
+| services/craft-stage/engine-emu.ts | ジン | 2 | `previewUse` (CraftStage.vue)、`weightOverrideNote` (StageWeightEdit.vue) |
 | services/trade2/open-external.ts | 共通 | 2 | `openExternal` (CraftStage.vue・use-spam-share.ts) |
 | services/craft-stage/mod-list.ts | ジン | 2 | `aimLabel` (StageAimPanel.vue・StageAimPicker.vue)、`groupLabelOf` (StageAimPicker.vue)、`tierIdOf` (StageAimPicker.vue) |
 | services/craft-stage/stage-core.ts | ジン | 2 | `hasExtraCatalyst` (StageQualityBar.vue)、`stageRuneIds` (StageRoutesPage.vue) |
@@ -38,7 +39,6 @@
 | services/craft-stage/stage-pob.ts | ジン | 1 | `PobStat` (stage-extra.ts) |
 | services/craft-stage/defence.ts | ジン | 1 | `monsterAccuracy` (stage-extra.ts)、`DamageKind` (stage-extra.ts)、`Defender` (stage-extra.ts)、`Outcome` (stage-extra.ts) |
 | services/craft-stage/apply-vaal.ts | ジン | 1 | `isSanctifySet` (CraftStage.vue)、`sanctifySetKey` (CraftStage.vue) |
-| services/craft-stage/engine-emu.ts | ジン | 1 | `previewUse` (CraftStage.vue) |
 | services/htc/game-names.ts | ジン | 1 | `jaOfOmen` (RevealPanel.vue) |
 | services/craft-stage/stage-bases.ts | ジン | 1 | `reqOfItem` (RevealPanel.vue) |
 | services/craft-stage/spec/run-spec.ts | ジン | 1 | `planSpec` (RevealPanel.vue) |
@@ -50,4 +50,4 @@
 | vendor/poe2htc/engine/runes.ts | ジン | 1 | `RUNE_BY_ID` (StageRouteRunes.vue) |
 | services/craft-stage/apply-spam.ts | ジン | 1 | `forcesOf` (route-place.ts)、`spamKey` (route-place.ts) |
 
-名前 (ジン): 入口にもうある 0・まだ無い 60
+名前 (ジン): 入口にもうある 0・まだ無い 61
