@@ -40,6 +40,7 @@ import { ARMED_CLASS, useArmed } from "../../../utils/use-armed";
 import { useTreeLink } from "./use-tree-link";
 import { useTreeCheck } from "./use-tree-check";
 import TreeIssues from "./TreeIssues.vue";
+import TreeStartPick from "./TreeStartPick.vue";
 import { useTreeTune } from "./use-tree-tune";
 import TreeHandChip from "./TreeHandChip.vue";
 import TreeBandLayer from "./TreeBandLayer.vue";
@@ -54,7 +55,7 @@ const doc = t.doc;
 useTreeTune(doc, t.edit);
 
 /** 右の欄 (箱を選んだ時だけ) */
-const panel = ref<{ kind: "hand" | "aim" | "fracture" | "note" | "base"; id: string } | null>(null);
+const panel = ref<{ kind: "hand" | "aim" | "start" | "note" | "base"; id: string } | null>(null);
 /** 戻りの矢印の先を選んでいる箱 */
 const picking = ref<string | null>(null);
 /** メモの窓を開いているか (このブラウザに覚える。無くても使える) */
@@ -248,10 +249,10 @@ useDismiss(() => !!panel.value, [aside], closeHand, { swallow: false, keep: "[da
 function clearHandOf(): void { const id = panel.value!.id; t.edit((d) => clearHand(d, id)); panel.value = null; }
 function pickAim(a: Aim): void {
   const p = panel.value!;
-  t.edit((d) => { if (p.kind === "fracture") d.fracture = { ...a }; else setAim(d, p.id, a); });
+  t.edit((d) => setAim(d, p.id, a));
   panel.value = null;
 }
-function onAim(b: Box): void { panel.value = { kind: b.out === "start" ? "fracture" : "aim", id: b.id }; }
+function onAim(b: Box): void { panel.value = { kind: b.out === "start" ? "start" : "aim", id: b.id }; }
 function onAddHit(b: Box, at?: { x: number; y: number }, link?: string): void {
   let made: string | null = null;
   t.edit((d) => {
@@ -477,11 +478,12 @@ const glowOf = (b: Box): boolean => {
         </div>
 
         <!-- 右の欄 -->
-        <aside v-if="panel && panelBox" ref="aside" data-tree-panel class="flex shrink-0 flex-col overflow-y-auto rounded-md bg-white/[0.04] p-3" :class="panel.kind === 'hand' || panel.kind === 'base' ? 'w-[400px]' : 'w-[320px]'">
+        <aside v-if="panel && panelBox" ref="aside" data-tree-panel class="flex shrink-0 flex-col overflow-y-auto rounded-md bg-white/[0.04] p-3" :class="panel.kind === 'hand' || panel.kind === 'base' || panel.kind === 'start' ? 'w-[400px]' : 'w-[320px]'">
           <TreeHandShelf v-if="panel.kind === 'hand'" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" />
           <TreeBasePick v-else-if="panel.kind === 'base'" @close="panel = null" />
           <TreeNote v-else-if="panel.kind === 'note'" :key="`n-${panel.id}`" :box-id="panel.id" @close="panel = null" />
-          <TreeModPick v-else :key="`m-${panel.id}-${panel.kind}`" :mode="panel.kind === 'fracture' ? 'fracture' : 'hit'" :current="panel.kind === 'fracture' ? doc.fracture : panelBox.aim" @pick="pickAim" @close="panel = null" />
+          <TreeStartPick v-else-if="panel.kind === 'start'" @close="panel = null" />
+          <TreeModPick v-else :key="`m-${panel.id}`" mode="hit" :current="panelBox.aim" @pick="pickAim" @close="panel = null" />
         </aside>
       </div>
     </div>

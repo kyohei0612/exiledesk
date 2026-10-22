@@ -11,7 +11,7 @@
 import { allMods, listOf, modBoostsOf, mulberry32, room, SIDES, stepOutcomes, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { CATALYSING, isCatalyst } from "./tree-hands";
 import { aimKey, type Aim, type OutKind, type TreeDoc } from "./tree-model";
-import { aimHeld, aimsOf, handAims, handProblem, outcomeOf, playHand, sampleOf } from "./tree-sample";
+import { aimHeld, aimsOf, handAims, handProblem, outcomeOf, playHand, sampleOf, startItemOf } from "./tree-sample";
 import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, runTree, settle, shapesOf } from "./tree-run";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
@@ -46,7 +46,8 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
   };
 
   // 1) 形だけで分かる穴: 決めていない芽・MOD を選んでいない当たり
-  if (!doc.fracture) add("start", "noAim", tr("フラクチャーする MOD を選んでいない", "No fractured mod picked"));
+  // 始まりの MOD は自由 (無くてよい、10-22 オーナー)。付けられない時は見本の理由を出す
+  { const note = startItemOf(data, doc, mulberry32(1)).note; if (note) add("start", "cantUse", tr(`始まりの形が作れない: ${note}`, `Can't make the starting item: ${note}`)); }
   for (const b of boxes) {
     if (!b.hand && !b.back && !b.done) add(b.id, "open", b.out === "start" ? tr("最初の手を決めていない (ここで止まる)", "No first craft yet (stops here)") : tr("行き先を決めていない (ここで止まる)", "No next step yet (stops here)"));
     if (b.out === "hit" && !b.aim) add(b.id, "noAim", tr("付く MOD を選んでいない", "No mod picked for this hit"));
@@ -92,7 +93,7 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
   if (mains.length > 1) { const first = nOf(mains[0]!.id); for (const b of mains.slice(1)) if (nOf(b.id) !== first) add(b.id, "doneShape", tr(`ほかの完成の箱と、揃った狙いの数が違う (${nOf(b.id)} つ / ${first} つ)`, `Different number of targets than the other done box (${nOf(b.id)} / ${first})`)); }
 
   // 4) エンジンで 5 人を辿る: 打てない手・付かない当たり
-  if (doc.fracture) {
+  {
     const cant = new Map<string, { who: Set<number>; reason: string }>();
     const never = new Set<string>();
     /** 結果の箱に無い結果が出る箱 (箱 → 人数と出る結果)。結果が 1 通りとして箱を 1 つにした手で、想定外の形で着いた時など (10-22 ブラック) */

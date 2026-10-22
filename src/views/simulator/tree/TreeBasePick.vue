@@ -3,16 +3,19 @@
   一覧はクラフト台と同じ共通の BaseCatalog。アイテムレベルだけ替えるなら木はそのまま、ベースを替えると白紙から (下の箱があれば 1 回確かめる。1 つ戻すで戻せる)
 -->
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import BaseCatalog from "../../../components/items/BaseCatalog.vue";
 import NumStep from "../../../components/NumStep.vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { tr } from "../../../i18n/lang";
+import { startOf } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 
 const emit = defineEmits<{ close: [] }>();
 const t = useTree();
+/** 始まりの MOD の数 (ベースを替えると消える) */
+const startMods = computed(() => startOf(t.doc.value).mods.length);
 /** 開いたら今のベースのカードを欄の真ん中へ (一覧は片手武器から始まり、指輪まで送らないと見えない。上の題とアイテムレベルは貼り付けてある) */
 const root = ref<HTMLElement | null>(null);
 onMounted(() => requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -28,18 +31,11 @@ function setIlvl(v: number | null): void {
   if (v === null || v < ILVL_MIN || v > ILVL_MAX) return;
   t.setBase(t.doc.value.base, Math.round(v));
 }
-/** 始めの乱数の MOD の数 (フラクチャーのほか。レアは 6 つまでなので 0〜5、10-22 白紙から組んで画面で決められなかった) */
-const RANDOM_MAX = 5;
-const rand = ref<number | null>(t.doc.value.startRandom ?? 0);
-function setRand(v: number | null): void {
-  rand.value = v === null ? null : Math.max(0, Math.min(RANDOM_MAX, Math.round(v)));
-  if (rand.value !== null) t.setStartRandom(rand.value);
-}
 /** 替えると下の箱が消えるベース (確かめ待ち) */
 const asking = ref<string | null>(null);
 function pick(en: string): void {
   if (en === t.doc.value.base) return;
-  if (t.lostOnBase.value > 0 || t.doc.value.fracture) { asking.value = en; return; }
+  if (t.lostOnBase.value > 0 || startMods.value) { asking.value = en; return; }
   apply(en);
 }
 function apply(en: string): void {
@@ -62,13 +58,9 @@ function apply(en: string): void {
         <span class="flex-1">{{ tr("アイテムレベル", "Item level") }}</span>
         <NumStep :model-value="ilvl" integer width="w-20" :placeholder-value="t.doc.value.itemLevel" @update:model-value="setIlvl" />
       </label>
-      <label class="flex items-center gap-2 text-[13px]" :title="tr('始めのアイテムに、フラクチャーのほか乱数で付いている MOD の数 (素の高貴を n 回打った形)', 'Random mods on the starting item besides the fracture (as if plain exalts were used n times)')">
-        <span class="flex-1">{{ tr("ほかに付いている MOD (乱数)", "Other random mods") }}</span>
-        <NumStep data-tree-start-random :model-value="rand" integer width="w-20" :placeholder-value="0" @update:model-value="setRand" />
-      </label>
       <!-- ベースを替えると下の箱が消える時だけ、1 回確かめる (札の編集の「下の n 箱が消える」と同じ) -->
       <div v-if="asking" data-tree-base-ask class="rounded-md border border-rose-400/60 bg-[#2a1416] p-2 text-[13px] shadow-[0_6px_16px_rgba(0,0,0,0.6)]">
-        <p>{{ tr(`${jaTypeName(asking)} の白紙から組み直します。今の木 (箱 ${t.lostOnBase.value} 個${t.doc.value.fracture ? "・フラクチャー" : ""}) が消えます (1 つ戻すで戻せます)。`, `Start over from a blank ${asking}. This tree (${t.lostOnBase.value} box(es)${t.doc.value.fracture ? ", fracture" : ""}) will be removed (Undo brings it back).`) }}</p>
+        <p>{{ tr(`${jaTypeName(asking)} の白紙から組み直します。今の木 (箱 ${t.lostOnBase.value} 個${startMods ? "・始まりの MOD" : ""}) が消えます (1 つ戻すで戻せます)。`, `Start over from a blank ${asking}. This tree (${t.lostOnBase.value} box(es)${startMods ? ", starting mods" : ""}) will be removed (Undo brings it back).`) }}</p>
         <div class="mt-2 flex justify-end gap-2">
           <button type="button" class="g-btn sm" @click="asking = null">{{ tr("やめる", "Cancel") }}</button>
           <button type="button" data-tree-base-ok class="g-btn sm" @click="apply(asking!)">{{ tr("替える", "Change") }}</button>

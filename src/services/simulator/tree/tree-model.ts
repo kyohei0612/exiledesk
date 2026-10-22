@@ -58,13 +58,19 @@ export interface TreeBox {
   /** 戻りの矢印を同じ形の箱へ自動でつないだ (tree-run の linkSameShape。手で替えると外す) */
   autoBack?: true;
 }
+/** 始まりの MOD 1 つ (段は指名。fractured = フラクチャー済み、1 つまで) */
+export interface StartMod { modId: string; tier: number; fractured?: true }
+/** 始まりの形。フラクチャーがあればレア (エンジンの決まり 10-06)。ルーンの MOD はエンジンの force がそのルーンを差して付ける */
+export interface TreeStart { rarity: "magic" | "rare"; mods: StartMod[] }
 export interface TreeDoc {
   schema: "exiledesk-tree/0";
   base: string;
   itemLevel: number;
-  /** 始まりのフラクチャー (選ぶまでは null) */
-  fracture: Aim | null;
-  /** 始めの形でフラクチャーのほかに付いている乱数の MOD の数 (素の高貴をこの回数打って作る。見本の金の指輪 = 1、無ければ 0。カオスは外せる MOD が要る) */
+  /** 前の版の始まりのフラクチャー (読み込みで start へ移す。startOf は両方読む) */
+  fracture?: Aim | null;
+  /** 始まりの形 (レアリティと付いている MOD。10-22 オーナー「始まりの MOD を決めさせる、ほかは自由」)。無ければ fracture から (startOf) */
+  start?: TreeStart;
+  /** 始めの形で start の MOD のほかに付いている乱数の MOD の数 (レアは素の高貴、マジックは増強をこの回数打って作る。見本の金の指輪 = 1、無ければ 0。カオスは外せる MOD が要る) */
   startRandom?: number;
   /** エンジンの設定 (触媒の倍率・聖別の倍率・MOD の重み。無い物は既定、tree-tune.ts)。レシピ・共有の URL にも一緒に乗る */
   tune?: TreeTune;
@@ -87,9 +93,16 @@ const GAP_X = 220;
  */
 export const GAP_Y = 200;
 
+/** 始まりの形 (前の版の fracture だけの木はフラクチャー 1 つのレア) */
+export const startOf = (d: TreeDoc): TreeStart => d.start ?? { rarity: "rare", mods: d.fracture ? [{ ...d.fracture, fractured: true }] : [] };
+/** 前の版の fracture を start へ移す (読み込み・開く時) */
+export function migrateStart(d: TreeDoc): void {
+  if (!d.start) d.start = startOf(d);
+  delete d.fracture;
+}
 export function newTree(base: string, itemLevel: number): TreeDoc {
   return {
-    schema: "exiledesk-tree/0", base, itemLevel, fracture: null, seq: 0,
+    schema: "exiledesk-tree/0", base, itemLevel, start: { rarity: "rare", mods: [] }, seq: 0,
     boxes: { start: { id: "start", x: 0, y: 0, out: "start", aim: null, hand: null, outs: [], back: null, done: null, parent: null } },
   };
 }

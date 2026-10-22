@@ -30,7 +30,7 @@ const hand = (currency: string, omens: string[] = [], extra: Partial<Hand> = {})
 function make(base: string, fracture: Aim | null, startRandom: number, boxes: Record<string, Partial<TreeBox>>): TreeDoc {
   const b: Record<string, TreeBox> = {};
   for (const [id, x] of Object.entries(boxes)) b[id] = { id, x: 0, y: 0, out: "junk", aim: null, hand: null, outs: [], back: null, done: null, parent: null, ...x };
-  const d: TreeDoc = { schema: "exiledesk-tree/0", base, itemLevel: 82, fracture, startRandom, boxes: b, seq: Object.keys(b).length };
+  const d: TreeDoc = { schema: "exiledesk-tree/0", base, itemLevel: 82, start: { rarity: "rare", mods: fracture ? [{ ...fracture, fractured: true }] : [] }, startRandom, boxes: b, seq: Object.keys(b).length };
   tidy(d);
   return d;
 }

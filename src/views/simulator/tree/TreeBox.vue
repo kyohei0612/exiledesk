@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
-import { BOX_H, BOX_W, type TreeBox } from "../../../services/simulator/tree/tree-model";
+import { BOX_H, BOX_W, startOf, type TreeBox } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { useTree } from "./use-tree";
@@ -47,6 +47,15 @@ function down(e: PointerEvent): void {
   emit("drag", e);
 }
 const k = computed(() => Math.max(1, props.inv ?? 1));
+/** 始まりの MOD (フラクチャーを先に)・残りの文・全部の文 (乗せた時) */
+const startMods = computed(() => [...startOf(t.doc.value).mods].sort((a, b) => Number(!!b.fractured) - Number(!!a.fractured)));
+const first = computed(() => startMods.value[0] ?? null);
+const startRest = computed(() => {
+  const st = startOf(t.doc.value), n = startMods.value.length - 1, r = t.doc.value.startRandom ?? 0;
+  const parts = [n > 0 ? tr(`ほか ${n} つ`, `+${n} more`) : "", r ? tr(`乱数 ${r} つ`, `${r} random`) : "", st.rarity === "magic" && !first.value?.fractured ? tr("マジック", "Magic") : ""].filter(Boolean);
+  return parts.join(" · ");
+});
+const startTitle = computed(() => startMods.value.map((m) => `${m.fractured ? `✦ ${tr("フラクチャー", "Fractured")} ` : ""}${t.startModLabel(m)}`).join("\n"));
 /** 押せる物を倍率の逆数で戻す (origin = 大きくする軸。まとまりごとに端を軸にして、隣と重ならないように) */
 const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale: String(k.value), transformOrigin: origin } : {});
 
@@ -83,11 +92,11 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
         <button type="button" data-tree-base class="nodrag block w-full truncate text-left text-[13px] font-bold hover:underline" :class="quiet ? 'pointer-events-none' : ''" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :title="tr('ベースとアイテムレベルを選ぶ', 'Choose the base and item level')" @click.stop="!quiet && emit('base')">
           {{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}
         </button>
-        <button type="button" class="nodrag block w-full truncate text-left text-[#c8c8ff] hover:underline" :class="quiet ? 'pointer-events-none' : ''" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :title="t.fractureLabel(t.doc.value.fracture)" @click.stop="!quiet && emit('aim')">
-          {{ t.doc.value.fracture ? `${tr("フラクチャー", "Fractured")}: ${t.fractureLabel(t.doc.value.fracture)}` : tr("＋ フラクチャーする MOD を選ぶ", "+ Pick the mod to fracture") }}
+        <!-- 始まりの MOD (押すと右の欄で選ぶ、10-22 オーナー「始まりの MOD を決めさせる」): 1 行目はフラクチャー (無ければ最初の MOD)、2 行目は残りの数・乱数・マジック -->
+        <button type="button" data-tree-start-mods class="nodrag block w-full truncate text-left text-[#c8c8ff] hover:underline" :class="quiet ? 'pointer-events-none' : ''" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :title="startTitle" @click.stop="!quiet && emit('aim')">
+          {{ first ? `${first.fractured ? "✦ " : ""}${t.startModLabel(first)}` : tr("＋ 始まりの MOD を選ぶ", "+ Pick the starting mods") }}
         </button>
-        <!-- 始めの乱数の MOD (ベースの欄で決める。名前の後ろだと靴の長い名前で切れた、10-22) -->
-        <p v-if="t.doc.value.startRandom" data-tree-start-random-tag class="truncate text-[12px] opacity-70" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }">{{ tr(`＋ 乱数の MOD ${t.doc.value.startRandom} つ`, `+ ${t.doc.value.startRandom} random mod(s)`) }}</p>
+        <p v-if="startRest" data-tree-start-rest class="truncate text-[12px] opacity-70" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }">{{ startRest }}</p>
       </template>
       <button v-else-if="box.out === 'hit'" type="button" class="nodrag block w-[calc(100%-14px)] truncate text-left text-[13px] hover:underline" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :class="[box.aim ? 'text-[#c8c8ff]' : 'text-amber-300', quiet ? 'pointer-events-none' : '']" :title="t.aimLabel(box.aim)" @click.stop="!quiet && emit('aim')">
         {{ box.aim ? t.aimLabel(box.aim) : tr("＋ 付く MOD を選ぶ", "+ Pick the mod") }}

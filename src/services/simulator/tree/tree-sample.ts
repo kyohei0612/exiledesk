@@ -9,7 +9,7 @@
 import { applyCurrency, freshItem, maxQualityOf, mulberry32, omenBlock, revealOffers, stepOutcomes, unrevealedOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { CATALYSING, isCatalyst } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
-import type { Aim, Hand, OutKind, TreeDoc } from "./tree-model";
+import { startOf, type Aim, type Hand, type OutKind, type TreeDoc } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
 
 const TRIES = 3000;
@@ -162,17 +162,25 @@ function reveal(data: PatchData, r: StageApply, rng: () => number, aims: readonl
 }
 
 /**
- * 始めのアイテム = レア + フラクチャー (指名の手) + 乱数の MOD (素の高貴を startRandom 回)。見本・ルート精査・100 人回し (tree-run) で同じ物。
+ * 始めのアイテム = 始まりの形 (レアリティ + 指名の MOD、フラクチャーはその印。startOf) + 乱数の MOD (レアは素の高貴、マジックは増強を startRandom 回)。
+ * 見本・ルート精査・100 人回し (tree-run) で同じ物。
  * note = 打てなかった理由 (無ければ null)
  */
 export function startItemOf(data: PatchData, doc: TreeDoc, rng: () => number): Sample {
-  let item = freshItem(data, doc.base, doc.itemLevel, "rare");
-  if (!doc.fracture) return { item, note: null };
-  const r = applyCurrency(data, item, `force:${doc.fracture.modId}|T${doc.fracture.tier}|f`, rng);
-  if (!r.applied) return { item: r.item, note: r.reason ?? null };
-  item = r.item;
+  const st = startOf(doc);
+  // マジックはノーマルから付ける (付けるとマジック、エンジンの force の決まり)。フラクチャーはレアにだけ付く (force がレアにする)
+  const magic = st.rarity === "magic" && !st.mods.some((m) => m.fractured);
+  let item = freshItem(data, doc.base, doc.itemLevel, magic ? "normal" : "rare");
+  // ルーンの MOD はそのルーンを差して付く (force が差す)。差すソケットを要る数だけ開けておく (手袋の投射物 +2 = コルの狩り、10-22)
+  const runes = new Set(st.mods.flatMap((m) => { const r = data.mods.get(m.modId)?.rune; return r ? [r] : []; }));
+  if (runes.size) item = { ...item, sockets: Math.max(item.sockets ?? 0, runes.size) };
+  for (const m of st.mods) {
+    const r = applyCurrency(data, item, `force:${m.modId}|T${m.tier}|${m.fractured ? "f" : "n"}`, rng);
+    if (!r.applied) return { item: r.item, note: r.reason ?? null };
+    item = r.item;
+  }
   for (let i = 0; i < (doc.startRandom ?? 0); i++) {
-    const x = applyCurrency(data, item, "exalt", rng);
+    const x = applyCurrency(data, item, item.rarity === "rare" ? "exalt" : "augment", rng);
     if (!x.applied) return { item, note: x.reason ?? null };
     item = x.item;
   }

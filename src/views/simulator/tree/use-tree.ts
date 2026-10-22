@@ -5,7 +5,7 @@
 import { computed, shallowRef } from "vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { freshItem, modListFor } from "../../../services/craft-stage/engine";
-import { isTreeDoc, newTree, type Aim, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { isTreeDoc, migrateStart, newTree, type Aim, type StartMod, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 
 export type ModRow = ReturnType<typeof modListFor>[number];
@@ -20,7 +20,7 @@ function load(): TreeDoc {
   try {
     const v = JSON.parse(localStorage.getItem(KEY) ?? "null");
     // 前の版の妥協の完成 (done: "compromise") は普通の箱 = 未完成として読む (妥協は無し、オーナー 10-22)
-    if (isTreeDoc(v)) { for (const b of Object.values(v.boxes)) if (b.done !== "main") b.done = null; return v; }
+    if (isTreeDoc(v)) { for (const b of Object.values(v.boxes)) if (b.done !== "main") b.done = null; migrateStart(v); return v; }
   } catch { /* 無くてよい */ }
   return newTree(FIRST_BASE, FIRST_ILVL);
 }
@@ -64,7 +64,7 @@ function setTreeNote(text: string): void {
   save(d);
 }
 /** 別の木を開く (レシピ・共有の URL から。1 つ戻すで前の木へ戻せる) */
-function open(tree: TreeDoc): void { edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, JSON.parse(JSON.stringify(tree))); }); }
+function open(tree: TreeDoc): void { edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, JSON.parse(JSON.stringify(tree))); migrateStart(d); }); }
 /** 白紙に戻す (今のベースとアイテムレベルのまま。1 つ戻すで戻せる) */
 function reset(): void { edit((d) => { Object.assign(d, newTree(d.base, d.itemLevel)); }); }
 /** ベースを替える = そのベースの白紙から (狙い・手は前のベースの MOD なので残さない)。アイテムレベルだけなら木はそのまま。1 つ戻すで戻せる */
@@ -97,8 +97,8 @@ function aimLabel(a: Aim | null): string {
 }
 /** 狙いの MOD の短い名前 (戻り先の札で、どの狙いの所の箱かを添える) */
 const aimShort = (a: Aim): string => rowOfMod(a.modId)?.template ?? a.modId;
-/** フラクチャーの文 (その段の数値で埋めた文 + 段) */
-function fractureLabel(a: Aim | null): string {
+/** 始まりの MOD の文 (その段の数値で埋めた文 + 段) */
+function startModLabel(a: Aim | StartMod | null): string {
   if (!a) return "";
   const r = rowOfMod(a.modId);
   const t = r?.tiers[a.tier - 1];
@@ -106,5 +106,5 @@ function fractureLabel(a: Aim | null): string {
 }
 
 export function useTree() {
-  return { doc, edit, undo, canUndo, reset, setBase, setStartRandom, lostOnBase, open, setTreeNote, rows, aimLabel, aimShort, fractureLabel };
+  return { doc, edit, undo, canUndo, reset, setBase, setStartRandom, lostOnBase, open, setTreeNote, rows, aimLabel, aimShort, startModLabel };
 }
