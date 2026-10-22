@@ -2,6 +2,16 @@
 
 前の引き継ぎ (1〜3 本目、10-21〜23) と止めている物 (①〜⑥・自動・④ の物・OK 待ちの一覧) は notes/2026-10-22-todo-archive.md にそのまま移した。
 
+## 報告 33 (15 本目 → ブラック 7 代目、10-22 深夜) B6〜B10 を入口に寄せた
+- fa97ad04 (B6〜B8): playHand の 1 回分 = 入口の applyHand (触媒の前のカタリスト・フラクチャーの指名・骨の後の発現と反響)。自前の reveal を消した。発現で選ぶのは木の当たりの札 (miss は狙いでない候補) を渡すだけ。台本 _tree-quality-probe・_tree-patterns-probe が 484ffda4 で消えた kindOfCurrency を読んで落ちていたので effectOf に直した。
+- 7283798c (B9): isCatalyst = 入口の isCatalystKey、TreeHandShelf のお告げの並びは入口の omensAllowedFor から直に。5a040a5e (B10): startItemOf = 入口の startWith を呼ぶだけ。
+- 確かめ (前後の並べ、前 = HEAD に戻して同じ台本、外の正解ではない): 見本の木 4 本の 100 人 × 種 2・ルート精査・箱の見本・65 部位の白紙の木・_tree-fracture-probe・_tree-quality-probe・_tree-start-probe の出力が全部同じ。型 0・入口の見張り「増えた所なし」。画面は回していない。
+- 残り: B13 (TreeModPick の段の札)・B14〜B16 は入ったら。CATALYSING・ECHO・isCatalyst・handProblem・startItemOf は入口を呼ぶだけの名前として残した (呼ぶ所が多い)。
+
+## 報告 32 (15 本目 → ブラック 7 代目、10-22 深夜) B11・B12 を入口に寄せた
+- 85534b07 (B11): handProblem = canUse、use-sim-shelf の棚は usable / usableBare とも canUse。81d90ba2 (B12): outcomeOf は aimDiff から、付きうる狙いは reachableAims、force の鍵は forceKey。
+- 確かめ (前後の並べ): 木の手 8649 回の打てる / 打てない・outcomeOf 249658 回で食い違い 0、65 部位の白紙の木の出力が同じ。棚だけ 2 種類変わる: 効かないお告げを掛けたままの通貨が灰色 (987 件、お告げ抜きの判定で棚からは消えない)・品質が最大のカタリストが打てる側 (15 件、木の通り抜けの手と揃う)。
+
 ## 報告 31 (15 本目 → ブラック 7 代目、10-22 深夜) start-cost の置き換えの確かめ・靴の触媒のお告げ (開発版 4a792bb0)
 - start-cost の置き換えは e6e328f5 (pAt → anyOfAddOdds の pHit・等級 → addGradeFor・ループ → spamCounts の anyOf、magicLoopCounts は keep-compare・sim-greater に残る) で入っていたので、前後の数字を並べた (一時の台本で e6e328f5^ の写しと並べ、済んだら消した。前後の並べで外の正解ではない)。
 - ベースの値段: 見本の木 4 本 (金の指輪・靴・ローブ・アミュ) と台本 _tree-base-cost-probe の靴 2 通りは前後で 0.00% (木の ✦ は候補 1 つなので anyOf の道を通らない)。木からは通らない候補 2 つの形: 両側 金の指輪 マナ | 火耐性 41.51 → 45.81 神 (+10.4%)・両側 靴 移動スピード | 火耐性 42.28 → 47.25 (+11.8%)・同じ側 靴 火耐性 | 冷気 42.04 → 41.98 (−0.1%)。解析君の表 (両側 −9〜−13% の穴が消える) と同じ向き。型 0。
