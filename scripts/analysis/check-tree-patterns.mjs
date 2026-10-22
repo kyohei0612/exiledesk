@@ -53,6 +53,8 @@ const sideOf = (id) => (data.mods.get(id)?.type === "suffix" ? "suffix" : "prefi
  * パターンごとの「字のとおり」の決まり: s = { it, aims, n (今まで持った狙いの数), keep (残す MOD の id) } → 手 { cur, omens?, cat?, reveal? } か "restart"。
  * 外れ junk(side) = その側のフラクチャーでも狙いでも残す MOD でもない物
  */
+/** アビスの反響のお告げ (3e5a1379 の木と同じ): 骨には渡さず、発現の最初の 3 つに狙いが無ければ 1 回引き直した 3 つから選ぶ。骨 1 回ごとに 1 枚数える */
+const ECHO = "OmenofAbyssalEchoes";
 const P = {
   // 右側の高貴 + 上級で 2 つ、外れは消去
   "ring-annul": (s) => (s.junk("suffix") ? { cur: "annul" } : { cur: "exalt_greater", omens: ["OmenofDextralExaltation"] }),
@@ -74,7 +76,7 @@ const P = {
     if (s.desJunk()) return { cur: "annul", omens: ["OmenofLight"] };
     if (pj) return sa + sj ? { cur: "annul", omens: ["OmenofSinistralAnnulment"] } : { cur: "annul" };
     if (!has("Amulets/EnergyShield")) return { cur: "exalt_greater", omens: ["OmenofCatalysingExaltation", "OmenofSinistralExaltation"], cat: "catalyst_defences" };
-    if (!all(it).some((m) => m.desecrated)) return { cur: "desecrate_ancient", omens: ["OmenofSinistralNecromancy"], reveal: true };
+    if (!all(it).some((m) => m.desecrated)) return { cur: "desecrate_ancient", omens: ["OmenofSinistralNecromancy", ECHO], reveal: true };
     return { cur: "exalt_greater", omens: ["OmenofSinistralExaltation"] };
   },
   // カオス当たるまで (どちらか) → 2 つで完成・0 ならカオスに戻る・サフィの外れ 2 つ以上は消去・ほかは右側の高貴 + 上級
@@ -96,12 +98,12 @@ const P = {
   // 完全のカオス + 右側の抹消 を当たるまで (木の上限 30 回は 1 本の手の区切りなので、字のとおりは当たるまで続ける)
   "gloves-whittle-spam": () => ({ cur: "chaos_perfect", omens: ["OmenofDextralErasure"] }),
   // 骨 + 右側の死霊術 → 発現で狙いを選ぶ。冒涜の外れは光 + 消去
-  "helmet-desecrate": (s) => (s.desJunk() ? { cur: "annul", omens: ["OmenofLight"] } : { cur: "desecrate", omens: ["OmenofDextralNecromancy"], reveal: true }),
+  "helmet-desecrate": (s) => (s.desJunk() ? { cur: "annul", omens: ["OmenofLight"] } : { cur: "desecrate", omens: ["OmenofDextralNecromancy", ECHO], reveal: true }),
   // 左側の高貴 + 上級でライフ・ES% (外れは消去) → 古代の骨 → 発現でスピリット効率 (冒涜の外れは光 + 消去)
   "body-sinistral-desecrate": (s) => {
     if (s.desJunk()) return { cur: "annul", omens: ["OmenofLight"] };
     if (!(s.heldIx(0) && s.heldIx(1))) return s.junk("prefix") ? { cur: "annul" } : { cur: "exalt_greater", omens: ["OmenofSinistralExaltation"] };
-    return { cur: "desecrate_ancient", reveal: true };
+    return { cur: "desecrate_ancient", omens: [ECHO], reveal: true };
   },
   // パーフェクトエッセンス (ライフ%) で残す MOD → 右側の高貴 + 上級で冷気・雷、サフィの外れは右側の消去
   "body-essence": (s) => (!s.keepHeld() ? { cur: s.essKey } : s.junk("suffix") ? { cur: "annul", omens: ["OmenofDextralAnnulment"] } : { cur: "exalt_greater", omens: ["OmenofDextralExaltation"] }),
@@ -127,7 +129,7 @@ const mimic0 = (s, h) => (s.count === 0 ? (s.last?.cur.startsWith("exalt") && s.
 if (process.env.MIMIC) {
   const base = P["boots-chaos-onspam"];
   P["boots-chaos-onspam"] = (s) => {
-    const key = s.aims.map((a, k) => (s.heldIx(k) ? 1 : 0)).join("");
+    const key = s.aims.map((_, k) => (s.heldIx(k) ? 1 : 0)).join("");
     if (s.mem.key !== key) { s.mem.key = key; s.mem.spam = false; }
     if (s.count === 1 && s.last?.cur === "exalt_greater" && s.last.junkUp) s.mem.spam = true;
     return s.count === 1 && s.mem.spam ? { cur: "chaos" } : base(s);
@@ -179,17 +181,22 @@ function literal(doc, rule, n, seed) {
         }
       }
       const before = junkMods("any").length;
-      const r = M.applyCurrency(data, it, h.cur, rng, h.omens ?? []);
+      const echo = (h.omens ?? []).includes(ECHO);
+      const r = M.applyCurrency(data, it, h.cur, rng, (h.omens ?? []).filter((o) => o !== ECHO));
       if (!r.applied) { stuck++; break; }
       use(h.cur);
       for (const o of r.omensUsed ?? []) use(o);
       it = r.item;
       last = { cur: h.cur, junkUp: junkMods("any").length > before };
       if (h.reveal && M.unrevealedOf(it)) {
+        if (echo) use(ECHO);
         const sd = Math.floor(rng() * 2 ** 31);
-        const offers = M.revealOffers(data, it, M.mulberry32(sd)).first;
-        const k = Math.max(0, offers.findIndex((m) => aims.some((a) => m.modId === a.modId)));
-        const x = M.applyCurrency(data, it, `reveal:${k + 1}`, M.mulberry32(sd));
+        const offers = M.revealOffers(data, it, M.mulberry32(sd));
+        const isA = (m) => aims.some((a) => m.modId === a.modId);
+        const n = offers.first.findIndex(isA);
+        // 反響: 最初の 3 つに狙いが無ければ、引き直した 3 つから
+        const k = n < 0 && echo ? offers.reroll.findIndex(isA) : -1;
+        const x = k >= 0 ? M.applyCurrency(data, it, `reveal:${k + 1}:reroll`, M.mulberry32(sd), [ECHO]) : M.applyCurrency(data, it, `reveal:${Math.max(0, n) + 1}`, M.mulberry32(sd));
         if (x.applied) it = x.item;
       }
     }
