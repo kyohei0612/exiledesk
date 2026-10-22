@@ -2,6 +2,11 @@
 
 前の引き継ぎ (1〜3 本目、10-21〜23) と止めている物 (①〜⑥・自動・④ の物・OK 待ちの一覧) は notes/2026-10-22-todo-archive.md にそのまま移した。
 
+## 報告 30 (14 本目 → ブラック 7 代目、10-22 夜) aimHeld を消して aimHeldOn に
+- aimHeld を消し、呼ぶ所 26 (木 18・台本 8) を入口の aimHeldOn(data, item, { modId, tier }, { sameText: true }) に。台本 _tree-patterns-probe が 484ffda4 で消した tree-sample の fillCatalyst を読んでいたので入口からに直した。
+- 確かめ: 型 0・入口の見張り「増えた所なし」・_tree-aimhits-probe (前の aimHeld の式と aimHeldOn) 総当たり 3474072 回・見本の木 4 本で食い違い 0 (前後の並べ)。_tree-patterns-probe は読み込めることだけ確かめた (14 本は回していない)。
+- 残り: start-cost の置き換え (解析君の答え待ち)・B6 以降 (入った物から)・autoCat の null を画面で (開発版の許し待ち)。
+
 ## 報告 29 (14 本目 → ブラック 7 代目、10-22 夜) B2〜B5 を入口に寄せた (484ffda4)
 - 外れの数え・狙いの MOD (junkCount・splitTo・itemKey・満杯の文・行の札・発現の選び・当たりの名前) → junkOf・isAimMod (木の狙い T は targetsOf で段の位置に、設定は aimOpts = sameText)。手の働き kindOfCurrency → effectOf。catalystTagOf・catalystFull・fillCatalyst はシミュの物を消して入口から。前に足すカタリスト autoCat → catalystForMod (null なら足さない。触媒のお告げはエンジンの omenBlock で掛けられない)。heldSets・matchTargets・canSpam・aimLabel はシミュに残す (ブラック)。
 - 確かめ: 型 0・入口の見張り「増えた所なし」・前後の並べ (HEAD の写しと一時の台本、済んだら消した): 見本の木 4 本で 100 人回し (同じ seed)・ルート精査・見本 950 個が全部同じ。外の正解ではない。autoCat の null (靴・鎧で触媒のお告げが押せない) は画面で回していない (見本 4 本は指輪・靴・ローブ・アミュで、カタリストの前の手は入っていない)。
