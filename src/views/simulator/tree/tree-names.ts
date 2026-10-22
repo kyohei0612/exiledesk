@@ -8,7 +8,7 @@ import { nameOfKey } from "../../../state/emulator/craft-stage-shelf";
 import { craftStage as s } from "../../../state/craft-stage";
 import { freshItem } from "../../../services/craft-stage/engine";
 import { CATALYSING, isCatalyst } from "../../../services/simulator/tree/tree-hands";
-import type { Hand, SplitWhen, TreeBox, TreeRarity } from "../../../services/simulator/tree/tree-model";
+import { startOf, type Hand, type SplitWhen, type TreeBox, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { tr } from "../../../i18n/lang";
 
@@ -59,3 +59,8 @@ export function handLabel(h: Hand): string {
 }
 /** レアリティの名前 (0 の箱・スタートの箱・レアリティの札) */
 export const rarityName = (r: TreeRarity): string => (r === "normal" ? tr("ノーマル", "Normal") : r === "magic" ? tr("マジック", "Magic") : tr("レア", "Rare"));
+/** 木のタブ・結果のまとめの始め方の名前: ✦ の MOD があれば「✦ <MOD> スタート」、無ければ「<レアリティ> スタート」(10-22 オーナー) */
+export function startName(d: TreeDoc): string {
+  const t = useTree(), st = startOf(d), f = st.mods.find((m) => m.fractured);
+  return f ? tr(`✦ ${t.startModLabel(f)} スタート`, `✦ ${t.startModLabel(f)} start`) : tr(`${rarityName(st.rarity)} スタート`, `${rarityName(st.rarity)} start`);
+}

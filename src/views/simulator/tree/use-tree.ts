@@ -29,9 +29,72 @@ function load(): TreeDoc {
 }
 function save(d: TreeDoc): void {
   try { localStorage.setItem(KEY, JSON.stringify(d)); } catch { /* 覚えられなくても使える */ }
+  const list = [...tabDocs.value];
+  list[active.value] = d;
+  tabDocs.value = list;
+  try { localStorage.setItem(TABS_KEY, JSON.stringify({ active: active.value, docs: list })); } catch { /* 覚えられなくても使える */ }
 }
 
 const doc = shallowRef<TreeDoc>(load());
+/**
+ * 木のタブ (始め方ごとに別の木、0 の完成形は共通。オーナー 10-22「✦ の候補を 2 つ試したい人のために <MOD 名> スタートのタブで木を 2 本」)。
+ * 今のタブの木は doc (KEY にも控える)、全部のタブは TABS_KEY。切り替える時に 0 の完成形 (ベース・アイテムレベル・適正・レアリティ・狙い) を今の木から写す
+ */
+const TABS_KEY = "exiledesk.tree.v0.tabs";
+function loadTabs(): { active: number; docs: TreeDoc[] } | null {
+  try {
+    const v = JSON.parse(localStorage.getItem(TABS_KEY) ?? "null") as { active: number; docs: unknown[] } | null;
+    if (v && Array.isArray(v.docs) && v.docs.length && v.docs.every(isTreeDoc) && v.active >= 0 && v.active < v.docs.length) { for (const d of v.docs) migrateStart(d); return v as { active: number; docs: TreeDoc[] }; }
+  } catch { /* 無くてよい */ }
+  return null;
+}
+const tabs0 = loadTabs();
+const active = ref(tabs0?.active ?? 0);
+const tabDocs = shallowRef<TreeDoc[]>(tabs0 ? tabs0.docs.map((d, i) => (i === tabs0.active ? doc.value : d)) : [doc.value]);
+/** タブごとに回した結果 (結果のまとめの始め方の比べ。このページを開いている間だけ) */
+export interface TabRun { perItem: number; pct: number; price: number }
+const tabRuns = shallowRef<(TabRun | null)[]>(tabDocs.value.map(() => null));
+/** 0 の完成形を from から to へ (ベースが違えばそのベースの白紙から) */
+function shareGoal(from: TreeDoc, to: TreeDoc): TreeDoc {
+  const d = to.base === from.base ? to : newTree(from.base, from.itemLevel);
+  d.itemLevel = from.itemLevel;
+  if (from.ilvlFit) d.ilvlFit = true; else delete d.ilvlFit;
+  if (from.goal) d.goal = { ...from.goal }; else delete d.goal;
+  if (from.memoAims) d.memoAims = from.memoAims.map((a) => ({ ...a })); else delete d.memoAims;
+  return d;
+}
+function setActive(i: number, next: TreeDoc): void {
+  active.value = i;
+  undoStack.length = 0;
+  canUndo.value = false;
+  opened.value++;
+  doc.value = next;
+  save(next);
+}
+/** タブを替える (1 つ戻すは替えたタブの分から) */
+function switchTab(i: number): void {
+  if (i === active.value || !tabDocs.value[i]) return;
+  setActive(i, shareGoal(doc.value, JSON.parse(JSON.stringify(tabDocs.value[i])) as TreeDoc));
+}
+/** 新しいタブ (0 の完成形は同じ、スタートから下は白紙) を足して開く */
+function addTab(): void {
+  const cur = doc.value;
+  tabDocs.value = [...tabDocs.value, cur];
+  tabRuns.value = [...tabRuns.value, null];
+  setActive(tabDocs.value.length - 1, shareGoal(cur, newTree(cur.base, cur.itemLevel)));
+}
+/** タブを閉じる (最後の 1 つは閉じない) */
+function closeTab(i: number): void {
+  if (tabDocs.value.length <= 1) return;
+  const cur = doc.value, list = tabDocs.value.filter((_, j) => j !== i);
+  tabRuns.value = tabRuns.value.filter((_, j) => j !== i);
+  if (i === active.value) { const k = Math.max(0, i - 1); tabDocs.value = list; setActive(k, shareGoal(cur, JSON.parse(JSON.stringify(list[k]!)) as TreeDoc)); return; }
+  if (i < active.value) active.value--;
+  tabDocs.value = list;
+  save(doc.value);
+}
+/** 今のタブを回した結果を控える (結果のまとめが開いた時) */
+function noteRun(r: TabRun): void { const list = [...tabRuns.value]; list[active.value] = r; tabRuns.value = list; }
 const undoStack: string[] = [];
 const canUndo = shallowRef(false);
 
@@ -110,6 +173,9 @@ const goalItem = computed(() => {
 const goalRarity = computed((): TreeRarity => doc.value.goal?.rarity ?? "rare");
 function setRarity(r: TreeRarity): void { edit((d) => { if (r === "rare") delete d.goal; else d.goal = { rarity: r }; }); }
 /** スタートのレアリティ (start.rarity)。ノーマルは MOD 無しの白なので、始まりの MOD と乱数の数を外す (1 つ戻すで戻せる) */
+/** 始め方のベースの値段 (神、start.price。無ければ前の版の始め方の比べの一番安い物、どちらも無ければ 0)。100 人回す時の 1 本ごとの値段 */
+const startPrice = (): number => startOf(doc.value).price ?? baseCost.value?.best?.cost ?? 0;
+function setStartPrice(v: number | null): void { edit((d) => { migrateStart(d); if (v == null || !Number.isFinite(v) || v < 0) delete d.start!.price; else d.start!.price = v; }); }
 function setStartRarity(r: TreeRarity): void { edit((d) => { migrateStart(d); d.start!.rarity = r; if (r === "normal") { d.start!.mods = []; delete d.startRandom; } }); }
 /** blank = 始まりの箱に手が無い (白紙) */
 const isBlank = (d: TreeDoc): boolean => !d.boxes.start?.hand && !d.boxes.start?.split && Object.keys(d.boxes).length === 1;
@@ -214,5 +280,5 @@ const baseCost = computed(() => {
 const baseCostBusy = computed(() => !!s.data.value && !costReady.value);
 
 export function useTree() {
-  return { goalPage, startPage, goals, hasGoal, toggleGoal, goalItem, goalRarity, setRarity, setStartRarity, fitIlvl, setFit, doc, edit, undo, canUndo, reset, setBase, setStartRandom, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
+  return { tabDocs, active, tabRuns, switchTab, addTab, closeTab, noteRun, startPrice, setStartPrice, goalPage, startPage, goals, hasGoal, toggleGoal, goalItem, goalRarity, setRarity, setStartRarity, fitIlvl, setFit, doc, edit, undo, canUndo, reset, setBase, setStartRandom, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
 }
