@@ -5,6 +5,6 @@ export { loadPatch } from "../../tests/helpers/patch";
 export { applyCurrency, startFrom, mulberry32, sideOfMod } from "../../src/services/craft-stage/engine";
 export { spamCounts } from "../../src/services/craft-stage/engine-sim";
 export { magicAddOdds, anyOfAddOdds, addGradeFor } from "../../src/services/craft-stage/engine-sim";
-export { addOddsBySpec } from "../../src/services/craft-stage/spec/odds";
+export { addOddsBySpec } from "../../src/services/craft-stage/engine";
 export { blankWith, fractureOdds } from "../../src/services/simulator/sim-odds";
 export { magicLoopCounts } from "../../src/services/simulator/sim-greater";
