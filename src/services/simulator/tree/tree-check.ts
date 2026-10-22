@@ -12,7 +12,7 @@ import { allMods, listOf, modBoostsOf, mulberry32, room, SIDES, stepOutcomes, un
 import { CATALYSING, isCatalyst } from "./tree-hands";
 import { aimKey, type Aim, type OutKind, type TreeDoc } from "./tree-model";
 import { aimHeld, aimsOf, handAims, handProblem, outcomeOf, playHand, sampleOf, startItemOf } from "./tree-sample";
-import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, runTree, settle, shapesOf, splitTo } from "./tree-run";
+import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, runTreeSteps, settle, shapesOf, splitTo } from "./tree-run";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
 
@@ -28,11 +28,27 @@ const outName = (o: OutKind): string => { const n = OUT_NAME[o]; return n ? tr(n
 /** 1 つの結果が出るまで打ち直す上限 (精査は数秒で終わるよう、見本の 3000 より少なく) */
 const TRIES = 1200;
 
-/** ルート精査 (木の設定 tune で打つ) */
+/** 精査の進み (walk = 5 人を辿る、run = 30 人回す) */
+export interface CheckProgress { phase: "walk" | "run"; n: number; of: number }
+/** ルート精査 (木の設定 tune で打つ。一気に回す、台本・テスト用) */
 export function checkTree(data: PatchData, doc: TreeDoc): CheckIssue[] {
-  return withTreeTune(doc, () => checkIn(data, doc));
+  const g = checkSteps(data, doc);
+  for (;;) { const r = withTreeTune(doc, () => g.next()); if (r.done) return r.value; }
 }
-function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
+/**
+ * ルート精査を 1 人ずつ区切って回し、間に画面を返す (くるくるが回り「精査中 12/30」が出る、10-22 オーナー「ローディング画面を出さないとバグってるのか分からない」)。
+ * 中身は checkTree と同じ。木の設定 (tune) は 1 区切りごとに包む
+ */
+export async function checkTreeAsync(data: PatchData, doc: TreeDoc, onProgress: (p: CheckProgress) => void): Promise<CheckIssue[]> {
+  const g = checkSteps(data, doc);
+  for (;;) {
+    const r = withTreeTune(doc, () => g.next());
+    if (r.done) return r.value;
+    onProgress(r.value);
+    await new Promise((res) => setTimeout(res, 0));
+  }
+}
+function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, CheckIssue[]> {
   const out: CheckIssue[] = [];
   const add = (boxId: string, kind: CheckKind, text: string): void => { if (!out.some((x) => x.boxId === boxId && x.kind === kind)) out.push({ boxId, kind, text }); };
   const boxes = Object.values(doc.boxes);
@@ -168,11 +184,15 @@ function checkIn(data: PatchData, doc: TreeDoc): CheckIssue[] {
         if (tag && hits && !boosted) add(id, "quality", tr("触媒で入れる品質が、この手の当たりの MOD のどれにも効かない (カタリストの種類を確かめる)", "The catalysed quality boosts none of this craft's target mods (check the catalyst type)"));
       };
       walk("start", start, false);
+      yield { phase: "walk", n: person, of: PEOPLE };
     }
     for (const [id, c] of cant) add(id, "cantUse", tr(`この箱に着いた状態では手が打てない (${PEOPLE} 人中 ${c.who.size} 人): ${c.reason}`, `The craft can't be used here (${c.who.size} of ${PEOPLE}): ${c.reason}`));
     for (const [id, c] of odd) add(id, "unexpected", tr(`結果の箱に無い結果も出る (${PEOPLE} 人中 ${c.who.size} 人): ${[...c.outs].join("・")}。回すと形の合う箱へ進み、無ければ止まる`, `Results with no box can happen (${c.who.size} of ${PEOPLE}): ${[...c.outs].join(", ")}. Runs go to a box of the same shape, or stop`));
     // 5) 回して止まる箱 (tree-run を 30 人、値段 0)。10-22 靴を白紙から組んで: 100 人中 64 人が止まる箱を上の辿り方では引かなかった
-    const run = runTree(data, doc, { n: RUN_PEOPLE, seed: 1, price: () => 0, capSteps: 300 });
+    const steps = runTreeSteps(data, doc, { n: RUN_PEOPLE, seed: 1, price: () => 0, capSteps: 300 });
+    let st = steps.next();
+    while (!st.done) { yield { phase: "run", n: st.value, of: RUN_PEOPLE }; st = steps.next(); }
+    const run = st.value;
     for (const [id, n] of Object.entries(run.stuckAt)) {
       const w = run.stuckWhy[id];
       // 外れを持ったまま戻る「狙いが消えた」の戻り (作り直しでない)。カオスを当たるまでは 1 つしか入れ替えないので、持ち込んだ外れは消えずに先で満杯になる (10-22 靴 b14 → b1、100 人中 63 人)

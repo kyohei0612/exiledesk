@@ -2,7 +2,7 @@
  * use-tree-check.ts — ツリーのルート精査の状態 (SimTreePage から分けた、2026-10-22)。精査そのものは services/simulator/tree/tree-check.ts
  */
 import { computed, ref, watch, type Ref } from "vue";
-import { checkTree, type CheckIssue } from "../../../services/simulator/tree/tree-check";
+import { checkTreeAsync, type CheckIssue, type CheckProgress } from "../../../services/simulator/tree/tree-check";
 import { startOf, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { craftStage as s } from "../../../state/craft-stage";
 
@@ -14,6 +14,8 @@ export function useTreeCheck(doc: Ref<TreeDoc>) {
   /** 一覧を畳んで見出しだけ (行を押して箱へ寄った時。帯が箱を隠した、10-22 白紙から組んだ試し) */
   const issuesFold = ref(false);
   const checking = ref(false);
+  /** 精査の進み (くるくるの一言「精査中 12/30」、10-22 オーナー「ローディング画面を出さないとバグってるのか分からない」) */
+  const progress = ref<CheckProgress | null>(null);
   /** 道の形 (箱の位置・メモは入れない)。位置を動かしただけでは精査し直さない */
   const routeKey = computed(() => JSON.stringify([startOf(doc.value), doc.value.startRandom ?? 0, Object.values(doc.value.boxes).map(({ x: _x, y: _y, note: _n, ...r }) => r)]));
   let recheck = 0;
@@ -26,12 +28,12 @@ export function useTreeCheck(doc: Ref<TreeDoc>) {
     checking.value = true;
     await new Promise((r) => setTimeout(r, 30)); // 「精査中」を先に出す
     try {
-      const now = checkTree(d, doc.value);
+      const now = await checkTreeAsync(d, doc.value, (p) => { progress.value = p; });
       if (!keep) found = now;
       issues.value = keep ? now.filter((x) => found.some((y) => y.boxId === x.boxId && y.kind === x.kind)) : now;
-    } finally { checking.value = false; }
+    } finally { checking.value = false; progress.value = null; }
   }
   async function onCheck(): Promise<void> { issuesOpen.value = true; issuesFold.value = false; await runCheck(); }
   const issueOf = (b: TreeBox): string | null => issues.value?.filter((x) => x.boxId === b.id).map((x) => x.text).join(" / ") || null;
-  return { issues, issuesOpen, issuesFold, checking, runCheck, onCheck, issueOf };
+  return { issues, issuesOpen, issuesFold, checking, progress, runCheck, onCheck, issueOf };
 }

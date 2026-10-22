@@ -42,6 +42,7 @@ import { useTreeCheck } from "./use-tree-check";
 import TreeIssues from "./TreeIssues.vue";
 import TreeStartPick from "./TreeStartPick.vue";
 import TreeSplitPick from "./TreeSplitPick.vue";
+import TreeBusy from "./TreeBusy.vue";
 import { useTreeTune } from "./use-tree-tune";
 import TreeHandChip from "./TreeHandChip.vue";
 import TreeBandLayer from "./TreeBandLayer.vue";
@@ -249,7 +250,14 @@ function onTarget(b: Box): void {
   if (from && from !== b.id) t.edit((d) => setBack(d, from, b.id));
 }
 // ルート精査 (押した時に始める、use-tree-check.ts)
-const { issues, issuesOpen, issuesFold, checking, onCheck, issueOf } = useTreeCheck(doc);
+const { issues, issuesOpen, issuesFold, checking, progress, onCheck, issueOf } = useTreeCheck(doc);
+/** 待たせている間の一言 (データの読み込み・精査の進み。TreeBusy) */
+const busy = computed((): { text: string; n?: number; of?: number } | null => {
+  if (!s.data.value) return { text: tr("木を読み込み中…", "Loading the tree…") };
+  if (!checking.value) return null;
+  const p = progress.value;
+  return !p ? { text: tr("精査の準備中…", "Preparing the check…") } : p.phase === "walk" ? { text: tr("精査中: 5 人を辿っている", "Checking: walking runs"), n: p.n, of: p.of } : { text: tr("精査中: 30 人を回している", "Checking: playing runs"), n: p.n, of: p.of };
+});
 function goIssue(id: string): void { void v.reveal(id, true); }
 
 /** 整列して、全体に合わせる (1 つ戻すで元の並びへ) */
@@ -439,6 +447,7 @@ const glowOf = (b: Box): boolean => {
             <button type="button" data-tree-pick-start class="g-btn sm pointer-events-auto" :title="tr('始まりの箱の手から打ち直す', 'Craft again from the start box')" @click="pickBack('start')">{{ tr("↩ 始めに戻る", "↩ Back to start") }}</button>
           </template>
         </p>
+        <TreeBusy v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" />
         <TreeIssues v-if="issues && issuesOpen" v-model:fold="issuesFold" :issues="issues" :lower="!!(picking || hand || viewOnly)" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" />
         <!-- 縮めて見ている時の箱の編集 (等倍。枠の外・Esc で閉じる) -->
         <div v-if="pop && doc.boxes[pop]" ref="popEl" data-tree-pop class="absolute z-30 w-max rounded-2xl border border-white/10 bg-[#0c0a08]/95 p-3 pb-12 pr-7 shadow-[0_10px_30px_rgba(0,0,0,0.7)]" :style="popStyle">

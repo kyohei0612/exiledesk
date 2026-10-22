@@ -332,6 +332,22 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
 export function runTree(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): TreeRunResult {
   return withTreeTune(doc, () => runIn(data, doc, opts));
 }
+/**
+ * 1 人回すごとに人数を返す形 (ルート精査が間に画面を返して「精査中 12/30」を出す、10-22 オーナー「ローディング画面を出さないとバグってるのか分からない」)。
+ * 木の設定 (tune) は呼ぶ側が next() ごとに withTreeTune で包む (tree-check の checkTreeAsync)
+ */
+export function* runTreeSteps(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): Generator<number, TreeRunResult> {
+  const o = { price: opts.price, startCost: opts.startCost ?? 0, capDiv: opts.capDiv ?? 2000, capSteps: opts.capSteps ?? 20000, start: opts.start };
+  const aims = opts.aims ?? aimsOf(doc);
+  const shapes = shapesOf(doc);
+  const rng = mulberry32(opts.seed);
+  const people: Person[] = [];
+  for (let i = 0; i < opts.n; i++) {
+    people.push(runOne(data, doc, aims, shapes, rng, o));
+    yield i + 1;
+  }
+  return summarize(doc, people, o.startCost);
+}
 function runIn(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): TreeRunResult {
   const o = { price: opts.price, startCost: opts.startCost ?? 0, capDiv: opts.capDiv ?? 2000, capSteps: opts.capSteps ?? 20000, start: opts.start };
   const aims = opts.aims ?? aimsOf(doc);
