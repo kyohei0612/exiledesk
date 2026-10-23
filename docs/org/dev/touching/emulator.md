@@ -4,4 +4,3 @@
 
 | 誰 | ファイル |
 |---|---|
-| ジン部長 6 本目 | J1・J2: src/services/craft-stage/engine-sim/start-fracture.ts (新)・engine-sim.ts、10-23 |

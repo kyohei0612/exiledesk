@@ -25,3 +25,6 @@ export { NEGATIVE_WORDS } from "./stage-core";
 export { ALL_OMEN_SPECS } from "./spec/run-spec";
 export { factionCandidates } from "./spec/parts";
 export { armourReduction, esTimeline, attackRow, deflectChance, evadeChance, KIND_COLOR, KIND_JA, layersOf } from "./defence";
+// フラクチャーの候補から始めのアイテム (候補のどれかが ✦ のレア + 外れ 3) と、狙いを付けられる所まで付けた形 (枠を超えた残りを返す)。オーナーの決め 10-23
+export type { TierMod } from "./engine-sim/start-fracture";
+export { fractureStart, placeMods } from "./engine-sim/start-fracture";
