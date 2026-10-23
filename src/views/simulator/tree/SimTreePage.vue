@@ -394,7 +394,7 @@ const glowOf = (b: Box): boolean => {
 </script>
 
 <template>
-  <section data-tree-page class="min-w-0 flex-1 p-4">
+  <section data-tree-page class="min-w-0 flex-1 p-4" :class="t.goalInline.value ? 'max-md:px-2' : ''">
     <div class="mb-3 flex flex-wrap items-center gap-3">
       <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center gap-3 px-8 text-[22px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)] max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-1 max-md:px-4 max-md:py-2 max-md:text-[17px] max-md:tracking-[0.08em]"><span class="whitespace-nowrap">{{ tr("クラフトの道 (ツリー)", "Craft route tree") }}</span><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" /></h1>
       <button type="button" class="g-btn sm" @click="close">{{ tr("← 戻る", "← Back") }}</button>

@@ -81,7 +81,7 @@ const cardW = innerWidth < 768 ? Math.min(CARD_W, innerWidth - 90) : CARD_W;
 
 <template>
   <!-- ページで出している間の 1 ベースの段は高さを決めない (本文が送りの箱にならず、部位を開いた一覧がエミュのベースのページと同じくページごと送られる。10-23 オーナー「エミュと同じ展開時の表示の仕方」)。2 の段は表を送るので高さを残す -->
-  <ModalShell :open="true" :inline="asPage" :closable="!(asPage && unpicked)" rec="tree-goal" :title="tr('0 完成形の設定', '0 Final item')" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" :width="asPage ? (step === 1 ? 'w-full' : 'w-full h-[calc(100vh-140px)]') : 'w-[88%] h-[86%]'" full-on-phone body-class="px-3 pb-3" @close="close">
+  <ModalShell :open="true" :inline="asPage" :closable="!(asPage && unpicked)" rec="tree-goal" :title="tr('0 完成形の設定', '0 Final item')" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" :width="asPage ? (step === 1 ? 'w-full max-md:!border-0 max-md:[border-image:none] max-md:!bg-none max-md:!p-0' : 'w-full h-[calc(100vh-140px)]') : 'w-[88%] h-[86%]'" full-on-phone :body-class="asPage && step === 1 ? 'px-3 pb-3 max-md:px-0' : 'px-3 pb-3'" @close="close">
     <template #subheader>
       <!-- 1 → 2 の段 (押すとその段へ)。初手 (ベース未選択) の間は 2 へは飛べない (ベースを押して初めて 2 へ、10-23 オーナー)。右端に保存したレシピから開く -->
       <div data-tree-goal-steps class="flex flex-wrap items-center gap-2 px-3 pb-2">
