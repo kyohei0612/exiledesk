@@ -1,7 +1,7 @@
 <!--
   BasePickBody.vue — ベースのページの中身 (初めての人への帯 + ベース選びの枠)。エミュのベースのページ (StageBasePage) とシミュの初手のベース選び
   (TreeGoalPage) で同じ作り・同じ並び (部位のタイル・節の見出し・装備とエフェクトの切り替え・人気を上)。2026-10-23 オーナー、シミュ部長の頼み。
-  違うのは上の帯 (data-base-intro) だけ: 題・一言は props、「すぐ試す」のボタン (金の指輪) は quick で出し分け。既定はエミュの文
+  違うのは上の帯 (data-base-intro) だけ: 題・一言は props、「すぐ試す」のボタン (金の指輪) は quick で出し分け、押すと @quick。既定はエミュの文
   使い方: <BasePickBody :selected="unpicked ? '' : base" :popular="unpicked" :intro="unpicked" :title="tr(…)" :lead="tr(…)" :quick="false" @pick="pick" />
 -->
 <script setup lang="ts">
@@ -22,7 +22,8 @@ withDefaults(defineProps<{
   /** 「金の指輪ですぐ試す」を出す */
   quick?: boolean;
 }>(), { popular: false, intro: false, title: undefined, lead: undefined, quick: true });
-const emit = defineEmits<{ pick: [en: string] }>();
+/** pick = カタログで選んだベース、quick = 「すぐ試す」(カタログの選択とは分ける。エミュは人が選んだベースだけを選んだ見た目にする、2026-10-23) */
+const emit = defineEmits<{ pick: [en: string]; quick: [] }>();
 </script>
 
 <template>
@@ -33,7 +34,7 @@ const emit = defineEmits<{ pick: [en: string] }>();
         <p class="g-antique text-[15px] leading-snug text-[var(--exile-color-text-title)] max-md:text-[14px]">{{ title ?? tr("PoE2 のクラフトを、ゲームと同じ決まりで 1 手ずつ試せます", "Try PoE2 crafting one step at a time, with the same rules as the game") }}</p>
         <p class="mt-1 text-[12px] leading-snug text-[var(--exile-color-text-secondary)]">{{ lead ?? tr("ベースを選んで、カレンシーを押して持ち、アイテムを押すと 1 回使います。タダで何回でも", "Pick a base, tap a currency to hold it, then tap the item to use it. Free, as many times as you like") }}</p>
       </div>
-      <button v-if="quick" type="button" data-base-quick class="g-btn-red min-h-11 shrink-0 px-2 text-[14px] max-md:w-full" @click="emit('pick', 'Gold Ring')">{{ tr("金の指輪ですぐ試す", "Try now with a Gold Ring") }}</button>
+      <button v-if="quick" type="button" data-base-quick class="g-btn-red min-h-11 shrink-0 px-2 text-[14px] max-md:w-full" @click="emit('quick')">{{ tr("金の指輪ですぐ試す", "Try now with a Gold Ring") }}</button>
     </div>
     <!-- 未選択の時は前のベース・種類を選んだ状態にしない・人気のベースを上に -->
     <div class="rounded-lg bg-black/30 p-4 max-md:p-2"><BaseCatalog :data="s.data.value" :selected="selected" :popular="popular" @pick="(en) => emit('pick', en)" /></div>
