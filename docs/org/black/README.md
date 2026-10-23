@@ -27,7 +27,7 @@
 | 記事編集長 | ブログの記事の仕上げ: 流れ・見出し・まとめ / 注意 / ヒントの箱・SVG の図・スクリーンショット・OGP の絵・キャラの吹き出し、日英、SEO の手引きの守り (数字と出どころは解析君、入れ物はジン部長) | docs/org/blog/、記事の元 src/data/blog/*.md・img/ (README.md はジン部長) | 「記事」「ブログ」「読み物」 | 呼ばれたら常駐 | Opus | blog/README.md |
 | リサーチ長 | 外の調べもの (YouTube の字幕・クラフト動画の要点・poe2db/CoE の大きな調べ・似たサイト・AI の進め方)、コードは触らない | docs/org/research/ | 「poe2db で確かめて」「この動画の要点」「よそはどうしてる?」 | 呼ばれたら常駐 | Opus | research/README.md |
 | デイリー部長 | デイリークラフトチャレンジ (毎日のお題をシミュレーターで組んで平均の費用で競う別ページ) の画面とサーバー | src/views/daily/・docs/org/daily/ (後で server/live のデイリーの所・D1 の表) | 「デイリー」「クラフトチャレンジ」「お題」 | 呼ばれたら常駐 | Opus | daily/README.md |
-| モンキー隊長 | 開発版を何も知らない人として乱暴に触り、壊れる所・迷う所を notes/ に書くだけ (コード・docs は読まない、直さない) | docs/org/monkey/ | 「モンキー」「乱暴に触って」・大きな画面の直しの後・本番の前 | 呼ぶ時だけ (終わったら閉じる) | Opus | monkey/README.md |
+| モンキー隊長 | 開発版を何も知らない人として乱暴に触り、壊れる所・迷う所を notes/ に書くだけ (コード・docs は読まない、直さない) | docs/org/monkey/ | 「モンキー」「乱暴に触って」・大きな画面の直しの後・本番の前 | 呼ばれたら常駐 (指示待ち) | Opus | monkey/README.md |
 | ホワイト (秘書) | md・コードの荒れ (古い記録・死蔵・重複・大きすぎ・持ち場のずれ・残り物・止め忘れ) を毎朝見てブラックに教えるだけ、何も直さない | docs/org/white/ | (毎朝 9:45 に自分で起きる) ブラックの入れ替え・本番の前に「一回見て」 | 常駐しない (予定のタスク exiledesk-white-daily) | Opus | white/README.md |
 | 最終チェック長 | 本番に上げる時の最後: 型チェック・ビルド・本番に出す物と OK 待ちの出し分け・デバッグ・版上げ・更新内容の日英・deploy:web・push | scripts/bump-version・build-changelog、src/data/changelog*.json、docs/pending-release.md、docs/org/dev/ (全部の部の決まり) | オーナーの「本番に出して」「リリース」 | 呼ぶ時だけ (上げ終わったら閉じる) | Opus | dev/README.md |
 
