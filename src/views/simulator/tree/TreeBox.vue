@@ -8,6 +8,8 @@ import Icon from "../../../components/ui/Icon.vue";
 import { BOX_H, BOX_W, fractureMarks, START_JUNK, startOf, startRarity, type TreeBox } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { jaTypeName } from "../../../i18n/item-names-ja";
+import { handProblem, sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { craftStage as s } from "../../../state/craft-stage";
 import { useTree } from "./use-tree";
 import { OUT_LOOK, rarityName, splitWhenText } from "./tree-names";
 
@@ -27,6 +29,15 @@ const emit = defineEmits<{
   plus: [kind: "side" | "next", e: PointerEvent];
 }>();
 const t = useTree();
+/**
+ * 外れ・狙いが消えたの箱の「カオススパム」の近道は、この箱の形でカオスが打てる時だけ (打てるかはエンジンの入口、箱の見本で)。
+ * 白に変成を足した外れの箱 (マジック) にも出て、カオスを打つのかと迷わせた (10-23 モンキー 3 回目)
+ */
+const spamOk = computed(() => {
+  const d = s.data.value, b = props.box;
+  if (!d || b.hand || (b.out !== "junk" && b.out !== "lost")) return false;
+  return handProblem(d, sampleOf(d, t.doc.value, b.id, 1).item, { currency: "chaos", omens: [], catalyst: null, quality: 0 }) === null;
+});
 
 /** 結果ごとの名前・色・印 (tree-names.ts の OUT_LOOK、まとめた札と同じ) */
 const kind = computed(() => OUT_LOOK[props.box.out]);
@@ -138,7 +149,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
         <button v-if="!box.done" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-cyan-400/40 px-1.5 text-cyan-200 hover:border-cyan-300" :class="k > 1 ? 'min-w-6' : ''" :title="tr('↩ 戻る (既にある箱を指す)', '↩ Return (point to an existing box)')" @click.stop="emit('back')">{{ k > 1 ? "↩" : tr("↩ 戻る", "↩ Return") }}</button>
         <button v-if="box.out === 'hit' || box.out === 'branch'" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" @click.stop="emit('done')" :title="doneText">{{ k > 1 && !box.done ? tr("完成", "Done") : doneText }}</button>
         <!-- 外れ・狙いが消えたの行き先に一番使う手 (オーナー 10-22): 当たりのどれかが付くまでカオス -->
-        <button v-if="box.out === 'junk' || box.out === 'lost'" type="button" data-tree-spam class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" :title="tr('狙いのどれかが付くまでカオスを打ち続ける。付いたらその当たりの枝へ', 'Keep using Chaos Orbs until any target hits, then follow that hit')" @click.stop="emit('spam')">{{ tr("カオススパム", "Chaos spam") }}</button>
+        <button v-if="spamOk" type="button" data-tree-spam class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" :title="tr('狙いのどれかが付くまでカオスを打ち続ける。付いたらその当たりの枝へ', 'Keep using Chaos Orbs until any target hits, then follow that hit')" @click.stop="emit('spam')">{{ tr("カオススパム", "Chaos spam") }}</button>
       </template>
     </div>
 

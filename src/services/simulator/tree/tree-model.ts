@@ -552,7 +552,8 @@ export function tidy(d: TreeDoc): void {
 
 /**
  * 段の目印 (10-22 オーナー「段ごとに 1 つ揃った / 2 つ揃った…」): 当たりの箱の揃った狙いの数 n → その段の y (箱の上の辺)。
- * 手で動かして同じ数の当たりの箱の高さが揃っていない段は出さない (整列の後だけ出る)
+ * 手で動かして同じ数の当たりの箱の高さが揃っていない段は出さない (整列の後だけ出る)。
+ * 0 (狙いをまだ選んでいない当たりの箱だけ) は出さない (白に変成を足すと「0 つ揃った」と出て迷わせた、10-23 モンキー 3 回目)
  */
 export function bandsOf(d: TreeDoc): { n: number; y: number }[] {
   const ys = new Map<number, Set<number>>();
@@ -562,7 +563,7 @@ export function bandsOf(d: TreeDoc): { n: number; y: number }[] {
     for (let x: TreeBox | undefined = b; x; x = x.parent ? d.boxes[x.parent] : undefined) if (x.out === "hit" && x.aim) held.add(aimKey(x.aim));
     ys.set(held.size, (ys.get(held.size) ?? new Set()).add(b.y));
   }
-  return [...ys].filter(([, s]) => s.size === 1).map(([n, s]) => ({ n, y: [...s][0]! })).sort((a, z) => a.n - z.n);
+  return [...ys].filter(([n, s]) => n > 0 && s.size === 1).map(([n, s]) => ({ n, y: [...s][0]! })).sort((a, z) => a.n - z.n);
 }
 
 export function moveBox(d: TreeDoc, id: string, x: number, y: number): void {
