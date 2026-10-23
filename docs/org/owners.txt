@@ -17,6 +17,7 @@ src/state/for-share/**               デザイン
 src/web/**                           デザイン
 src/composables/**                   デザイン
 src/utils/**                         デザイン
+web.html                             デザイン
 
 # サーバー (分析君)
 server/**                            分析
