@@ -63,7 +63,8 @@ export async function bundleEntry(entryPoint) {
     logLevel: "error",
     loader: { ".json": "json" },
     // Web 用の設定 (src/web/config.ts の VITE_WEB_API) は検算では使わない。無いと読み込みで落ちる (2026-10-09 audit-poe2db)
-    define: { "import.meta.env.DEV": "false", "import.meta.env.VITE_WEB_API": "undefined" },
+    // 本番で隠すスイッチ (src/web/release-flags.ts) も同じく。検算・読み物のページは本番の形 (スイッチは切れたまま、2026-10-24)
+    define: { "import.meta.env.DEV": "false", "import.meta.env.VITE_WEB_API": "undefined", "import.meta.env.VITE_DEV_PREVIEW": "undefined" },
   });
   const mod = await import(pathToFileURL(out).href);
   // 読み込んだら要らない (module はもうメモリにある)。消し忘れで Temp が膨らんでいた
