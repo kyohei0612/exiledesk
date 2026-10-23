@@ -6,7 +6,7 @@
   見た目の決まりの出どころは前の StageModList.vue (2026-09-29〜) のコメントのまま。
 -->
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { modListFor, tagLabel, type ListRow, type ListTier, type ModGroup, type PatchData, type StageItem } from "../../../services/craft-stage/engine";
 import { factionOf, groupLabelOf, runeEnOf, shownTags, TAG_STYLE } from "../../../services/craft-stage/mod-list";
 import { fmtPct } from "../../../utils/format-pct";
@@ -42,7 +42,12 @@ const props = withDefaults(defineProps<{
   toCraft?: () => void;
   /** 開いた段の表を閉じない所 (行から出る小窓など) */
   keepOpen?: readonly string[];
-}>(), { overlay: false, shareHead: undefined, tone: "amber", keepOpen: () => ["[data-helptip-pop]"] });
+  /**
+   * 段の表の中で 1 つを選び終える手 (押した後に段の表を閉じる)。既定 = シミュの「狙いにする」(まだ選んでいない段)・エミュの狙いの窓の「確率を見る」・付け方の窓の項目。
+   * 段の中で選び直す物 (含む)・印の付け外し (フラクチャー)・選んだ物を外す手 (.on をもう一度) は閉じない (2026-10-24 オーナー「動きは全部共通に」)
+   */
+  closeAfter?: string;
+}>(), { overlay: false, shareHead: undefined, tone: "amber", keepOpen: () => ["[data-helptip-pop]"], closeAfter: '[data-mod-pick]:not(.on), [data-rec="aim-decide"], [data-mod-add-menu] [role="menuitem"]:not([aria-disabled="true"])' });
 
 const rows = computed(() => (props.data && props.item ? modListFor(props.data, props.item) : []));
 /** 今は付かない行 (同じ系統が付いている・差していないルーン・骨を使わないと付かない冒涜と異界) は 0% (2026-10-09 オーナー) */
@@ -69,6 +74,17 @@ let flashTimer: ReturnType<typeof setTimeout> | undefined;
 const jumped = ref<{ key: string; modId: string; rank: string | null } | null>(null);
 const isJumpTier = (key: string, modId: string, rank: string): boolean => !!jumped.value && jumped.value.key === key && jumped.value.modId === modId && jumped.value.rank === rank;
 
+/** 選び終える手 (closeAfter) を押したら、画面の側の処理の後で段の表を閉じる。押した行は画面の同じ所に残す。小窓 (付け方) は body にあるので document で受ける */
+function onPicked(e: MouseEvent): void {
+  const key = expanded.value;
+  if (!key || !(e.target instanceof Element) || !e.target.closest(props.closeAfter)) return;
+  setTimeout(() => {
+    if (expanded.value !== key) return;
+    keepPlace(listEl.value?.querySelector(`[data-row-key="${CSS.escape(key)}"] [data-rec^="mod:"]`), () => { expanded.value = null; });
+  });
+}
+onMounted(() => document.addEventListener("click", onPicked, true));
+onBeforeUnmount(() => document.removeEventListener("click", onPicked, true));
 /** 行を押して段の表を開く / 閉じる。押した行は画面の同じ所に残し、表はその下に開く。開いた時は行と段の表が全部見える所まで送る (2026-10-19) */
 function toggleRow(key: string, ev: MouseEvent): void {
   const row = (ev.currentTarget as HTMLElement).closest("[data-row-key]"); keepPlace(ev.currentTarget as HTMLElement, () => { expanded.value = expanded.value === key ? null : key; }); if (expanded.value === key) revealOpened(row);

@@ -39,6 +39,9 @@ export function useDismiss(active: () => boolean, inside: El[], cancel: () => vo
     const t = e.target as Node | null;
     if (!t || !t.isConnected) return;
     if (els().some((el) => el.contains(t)) || (t instanceof Element && t.closest(keep))) return;
+    // 上に重なった別の窓 (ModalShell) の中を押した時は、その窓の外にある下の物は取り消さない (狙いの窓の「やめる」で下の段の表が閉じていた。2026-10-24)
+    const modal = t instanceof Element ? t.closest('[aria-modal="true"]') : null;
+    if (modal && !els().some((el) => modal.contains(el))) return;
     cancel();
     if (opts.swallow !== false) swallowNextClick();
   };
