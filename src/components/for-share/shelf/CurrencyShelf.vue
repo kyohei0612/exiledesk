@@ -23,6 +23,7 @@ import Disclosure from "../../ui/Disclosure.vue";
 import { useShelf } from "../../../state/for-share/shelf-context";
 import { bonesFor, CRAFT_RUNE_KEYS, essenceShelf, OMEN_GROUPS, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
 import { tr } from "../../../i18n/lang";
+import { flag } from "../../../web/release-flags";
 
 const emit = defineEmits<{ hold: [key: string] }>();
 type ShelfTab = "usable" | "orb" | "essence" | "rune" | "omen";
@@ -49,7 +50,22 @@ function onInnerScroll(): void { essOpen.value = null; placeAnchor(); }
  */
 const holder = ref<HTMLElement | null>(null);
 function dropHolder(): void { holder.value?.remove(); holder.value = null; }
+/** 本番 (スイッチ omenRow が切れている間) の置き場: アイコンのすぐ下に重ねて出す (棚は押し下げない。前の作り) */
+const ROW = flag("omenRow");
+const anchor = ref<{ style: Record<string, string> } | null>(null);
+function placeOver(): void {
+  const k = craftStage.held.value, r = root.value;
+  if (!k || !r || props.inlineHeld) { anchor.value = null; return; }
+  const btn = [...r.querySelectorAll<HTMLElement>(`[data-key="${CSS.escape(k)}"], [data-ess-keys~="${CSS.escape(k)}"]`)].find((b) => b.offsetParent && !b.closest("[data-held-box]") && !b.closest(".ess-anchor"));
+  if (!btn) { anchor.value = null; return; }
+  anchor.value = { style: popPlace(r, btn) };
+  void nextTick(() => {
+    const pop = r.querySelector<HTMLElement>(".held-anchor .held-pop-in");
+    if (pop && anchor.value) anchor.value = { style: popPlace(r, btn, pop) };
+  });
+}
 function placeAnchor(): void {
+  if (!ROW) { placeOver(); return; }
   const k = craftStage.held.value, r = root.value;
   if (!k || !r || props.inlineHeld) { dropHolder(); return; }
   let btn = [...r.querySelectorAll<HTMLElement>(`[data-key="${CSS.escape(k)}"], [data-ess-keys~="${CSS.escape(k)}"]`)].find((b) => b.offsetParent && !b.closest("[data-held-row]") && !b.closest(".ess-anchor"));
@@ -302,7 +318,7 @@ const TABS = computed(() => (!props.full ? [] : [
         </div>
       </div>
       <p v-if="!usableAll.length" class="text-[12px] opacity-50">{{ tr("今のアイテムに使える物はありません", "Nothing usable on this item") }}</p>
-      <div v-if="$slots.held && !holder" class="mt-2" data-held-box><slot name="held" /></div>
+      <div v-if="$slots.held && !holder && !anchor" class="mt-2" data-held-box><slot name="held" /></div>
     </div>
 
     <!-- 使える物を前に、使えない物は線の下に (2026-10-05)。持っているカレンシーのお告げは使える物の直後 -->
@@ -315,7 +331,7 @@ const TABS = computed(() => (!props.full ? [] : [
         </template>
         <p v-if="!orbSplit.usable.length" class="text-[12px] opacity-50">{{ tr("今のアイテムに使える物はありません", "Nothing usable on this item") }}</p>
       </div>
-      <div v-if="$slots.held && !holder" class="mt-2" data-held-box><slot name="held" /></div>
+      <div v-if="$slots.held && !holder && !anchor" class="mt-2" data-held-box><slot name="held" /></div>
       <template v-if="orbSplit.unusable.length">
         <!-- 2026-10-10 動きの揃え 3: 開く / たたむ は Disclosure に -->
         <div class="mb-1 mt-3 border-t border-white/10 pt-2 max-md:flex max-md:min-h-10 max-md:items-center">
@@ -381,10 +397,11 @@ const TABS = computed(() => (!props.full ? [] : [
       </div>
     </div>
     <!-- オーブ以外のタブ (エッセンス等) で持った時は一番下 (お告げのタブは棚そのものがお告げなので出さない) -->
-    <div v-if="tab !== 'orb' && tab !== 'usable' && tab !== 'omen' && $slots.held && !holder" class="mt-3" data-held-box><slot name="held" /></div>
+    <div v-if="tab !== 'orb' && tab !== 'usable' && tab !== 'omen' && $slots.held && !holder && !anchor" class="mt-3" data-held-box><slot name="held" /></div>
     </div>
     <!-- 持っている物のお告げは、そのアイコンの行のすぐ下に差し込む (下の行を押し下げる。2026-10-22 オーナー「ポップアップはダメ」)。エッセンスの段を選ぶ窓を開いている間は出さない -->
     <Teleport v-if="$slots.held && holder && !essOpen" :to="holder"><div data-held-box><slot name="held" /></div></Teleport>
+    <div v-if="$slots.held && anchor && !essOpen" class="held-anchor" :style="anchor.style" data-held-box><div class="held-pop-in"><slot name="held" /></div></div>
     <!-- エッセンスの段: 種類のアイコンを押すと、お告げの欄と同じ形で出す。使えない段は灰色と理由 (2026-10-10 オーナー) -->
     <div v-if="essOpen && groupKeys(essOpen).length && essPos" class="ess-anchor held-anchor" :style="essPos" :data-ess-for="groupKeys(essOpen).join(' ')">
       <div class="held-pop-in p-2">

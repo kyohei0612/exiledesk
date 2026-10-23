@@ -3,9 +3,11 @@
  * エミュの画面はここだけを読み、シミュの中 (views/simulator) は読まない。シミュの物はここで後から読む (最初の読み込みに入れない)
  */
 import { openTreePage } from "../../web/page";
+import { flag } from "../../web/release-flags";
 
 /** 今のベースとアイテムレベルで白紙のツリーを開く (前の木は 1 つ戻すで戻せる) */
 export async function openTreeWith(base: string, itemLevel: number): Promise<void> {
+  if (!flag("sim")) return; // 本番はシミュレーターを出さない (スイッチ sim)
   const { useTree } = await import("../../views/simulator/tree/use-tree");
   useTree().startTreeWith(base, itemLevel);
   openTreePage();
@@ -13,5 +15,6 @@ export async function openTreeWith(base: string, itemLevel: number): Promise<voi
 
 /** 共有のレシピの URL (#recipe=、views/simulator/recipe-share.ts) から来た時に、そのレシピを開く */
 export function openSharedRecipe(): void {
+  if (!flag("sim")) return;
   void import("../../views/simulator/recipe-share").then((m) => m.openSharedRecipe());
 }

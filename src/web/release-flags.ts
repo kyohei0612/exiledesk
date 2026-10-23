@@ -13,11 +13,22 @@ export const FLAGS = {
   tierClose: "段の表で 1 つ選び終えたら段の表を閉じる (ModTable の closeAfter、b6b7fea2)",
   modeTabs: "上の切り替えタブの帯をベースのページにも出す (ModeTabs、ad68e08b・0d19fb26)",
   fitZoom: "拡大率をスクロールバーがある時の幅でいつも決める (a23050a4)",
+  omenRow: "お告げの欄を持った札の行の下に差し込む・掛けると打てない / 意味が無いお告げは灰色で掛けられない (ff5c6f8c、判定はジン部長の omenBlock)",
   monkey1023: "モンキーテスト 10-23 の共通の直し (窓を閉じた直後の守り・列の見出しを留める・名前を 1 行・押せないボタンを薄く・開く畳むの揃え ほか)",
   // ここから下はエミュ部長の物 (エミュの画面の OK 待ち)
   sanctifyBar: "クラフト台の聖別の帯 (e61bb9ab)",
-  monkeyEmu1023: "クラフト台・スパムシミュのモンキーテスト 10-23 の直し (c069970b・5ff2778a・9eae3311)",
-  baseChosen: "ベースのページで人が選んだベースだけ選んだ見た目 (2aa2d268・7cde43ad・b1b22818・3cbda7e4)",
+  monkeyEmu1023: "モンキーテスト 10-23 のエミュの直し (スパムシミュの Esc・運試しの間の戻る・札の折り返し・狙いの文 c069970b、品質の帯のカーソル 5ff2778a・9eae3311・0beb110a、狙いの窓の一言 f261b842)",
+  baseChosen: "ベースのページは人が選んだベースだけ選んだ見た目・帯とすぐ試す・入口の行き先を同じ印で (2aa2d268・3cbda7e4)",
+  // ここから下はシミュ部長の物 (使い方・コツの OK 待ち。段 5 のクラフト手順のコース 04ad4147・d1e7c664 は course-release.ts の REVIEW で開発版の印の時だけ)
+  tutorialUi: "使い方・コツ: コース一覧の説明は既定で閉じる・段 5 で次に押す物を光らせ説明は 1 文 + 詳しく・進み n / m (d1c97969)",
+  // ここから下はジン部長の物 (エンジンとデータの OK 待ち。お告げの欄の画面はエミュの views、フォントは web.html などの HTML)
+  omenPanel: "お告げの欄を持った札の行の下に差し込む・掛けられないお告げは灰色 (ff5c6f8c。判定の omenBlock はツリーも使うのでエンジンはそのまま)",
+  abyssSuffix: "アビサルロードの紋章のサフィックスを置き場に足す (5d585458)",
+  skillPlus: "スキルのレベルの MOD の日本語に + (「レベル +#」26 行、e82ef1a5)",
+  talismanWeight: "タリスマンのアタックスピード 30 段目の重みを poe2db の 1000 に (ef57fece)",
+  dntBases: "ゲームに無い [DNT] のベース 3 つを一覧から外す (c3a915a8)",
+  runeMagnitude: "ルーンの「明示 MOD の強さが N% 増加」を MOD の値に掛ける (dc3e219a)",
+  fonts: "Google Fonts の CSS を描きを止めない読み方に (1bef14b9、HTML)",
 } as const;
 export type Flag = keyof typeof FLAGS;
 

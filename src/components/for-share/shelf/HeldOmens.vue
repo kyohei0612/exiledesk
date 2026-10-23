@@ -7,6 +7,7 @@
 <script setup lang="ts">
 import { computed, watchEffect } from "vue";
 import { omenBlock } from "../../../services/craft-stage/engine";
+import { flag } from "../../../web/release-flags";
 import { tr } from "../../../i18n/lang";
 import { nameOf } from "../../../state/craft-stage";
 import { useShelf } from "../../../state/for-share/shelf-context";
@@ -21,6 +22,7 @@ const shelf = useShelf();
 const list = computed(() => heldOmensOf(shelf.held.value));
 // 掛かっているお告げが、持った物を打てなくする・意味が無い物になったら外す (ボタンは灰色で掛けられない。2026-10-22 オーナー「進行不能」、判定はエンジンの omenBlock)
 watchEffect(() => {
+  if (!flag("omenRow")) return; // 本番はスイッチ omenRow が入るまで外さない (前の形)
   for (const o of list.value) if (shelf.omens.value.includes(o) && omenBlock(shelf.data.value, shelf.item.value, shelf.held.value, shelf.omens.value, o)) shelf.toggleOmen(o);
 });
 </script>
