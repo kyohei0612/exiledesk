@@ -34,13 +34,13 @@ export function startPwa(): void {
 /** 古い塊で読み直した記録 (sessionStorage、"1 回目の時刻:回数")。STALE_GAP_MS の間に STALE_MAX 回まで (無限に読み直さない印) */
 const STALE_KEY = "exiledesk-stale-reload";
 const STALE_GAP_MS = 60_000;
-const STALE_MAX = 2;
-/** 2 回目の前に待つ (出した直後は新しい版が届き切っておらず、すぐ読み直すとまた 404 の事がある) */
-const STALE_RETRY_WAIT_MS = 3_000;
+const STALE_MAX = 3;
+/** 2 回目からは前に待つ (回数 × これ)。出した直後の 8 秒ほどは新しい版が届き切っておらず、すぐ読み直すとまた 404 (開発版で見た、10-23) */
+const STALE_RETRY_WAIT_MS = 4_000;
 /**
  * 版が替わった後の古い塊 (2026-10-22 オーナー OK、notes/2026-10-22-sw-err-failed.md の案 ①): 開いたままのタブが、次のデプロイで消えた
  * 前の版の JS の塊を後から読むと失敗して画面が壊れる。vite が出す vite:preloadError (後から読む部品の import() は全部これを通る) で読み直して新しい版にする。
- * 1 分に 2 回まで (2 回目は少し待つ。出した直後・続けて 2 回出した時、10-23)。それより多い時・印を書けない時 (保存を止めた端末) は読み直さず、今までどおりのエラーにする
+ * 1 分に 3 回まで (2 回目から 4 秒・8 秒待つ。出した直後・続けて 2 回出した時、10-23)。それより多い時・印を書けない時 (保存を止めた端末) は読み直さず、今までどおりのエラーにする
  */
 export function startStaleReload(): void {
   if (typeof window === "undefined") return;
@@ -53,7 +53,7 @@ export function startStaleReload(): void {
     e.preventDefault();
     logRecord("stale_reload", { n: n + 1, msg: String((e as Event & { payload?: unknown }).payload ?? "").slice(0, 120) });
     if (n === 0) location.reload();
-    else setTimeout(() => location.reload(), STALE_RETRY_WAIT_MS);
+    else setTimeout(() => location.reload(), n * STALE_RETRY_WAIT_MS);
   });
 }
 
