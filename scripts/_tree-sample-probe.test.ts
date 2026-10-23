@@ -37,7 +37,9 @@ it("見本の木", () => {
       const x = checkTree(data, bad).filter((i) => i.boxId === "start" && i.kind === "cantUse");
       console.log(`  消去 + ${omen} (始まりの見本 P${st.prefixes.length}/S${st.suffixes.length}): ${x.map((i) => i.text).join(" / ") || "! 無し"}`);
     }
-    const r = runTree(data, doc, { n: 100, seed: 1, price: () => 0 });
-    console.log(`100 人: 完成 ${r.finished} · 打ち止め ${r.capped} · 止まり ${r.stuck} ${JSON.stringify(r.stuckAt)}`);
+    // N= で人数を替える (既定 100。止まりの少ない所を探す時は 1000 など)
+    const n = Number(process.env.N ?? 100);
+    const r = runTree(data, doc, { n, seed: Number(process.env.SEED ?? 1), price: () => 0 });
+    console.log(`${n} 人: 完成 ${r.finished} · 打ち止め ${r.capped} · 止まり ${r.stuck} ${JSON.stringify(r.stuckAt)}`);
   }
 });
