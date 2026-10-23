@@ -238,14 +238,32 @@ function reset(): void {
     Object.assign(d, newTree(base, itemLevel));
   });
 }
-/** ベースを替える = そのベースの白紙から (狙い・手は前のベースの MOD なので残さない)。アイテムレベルだけなら木はそのまま。1 つ戻すで戻せる */
-function setBase(base: string, itemLevel: number): void {
+/** そのベースの MOD 一覧 (エンジンの入口 modListFor、2 の段の表と同じ行) にその MOD のその段があるか */
+function onBase(base: string, itemLevel: number, a: { modId: string; tier: number }): boolean {
+  const data = s.data.value;
+  if (!data) return false;
+  return modListFor(data, freshItem(data, base, itemLevel, "rare")).some((r) => r.tiers.some((tt) => (tt.modId ?? r.id) === a.modId && tt.tier === a.tier));
+}
+/**
+ * ベースを替える = そのベースの白紙から (手は前のベースの物なので残さない)。完成の狙い・始まりの MOD・完成形のレアリティは、新しいベースにも付く物だけ残す
+ * (10-24 オーナー「MOD 決めたけどベース選び直そうって使い方は多い」)。外した狙いを返す (画面が 1 行で知らせる)。アイテムレベルだけなら木はそのまま。1 つ戻すで戻せる
+ */
+function setBase(base: string, itemLevel: number): Aim[] {
   needBase.value = false;
+  const dropped: Aim[] = [];
   edit((d) => {
     if (d.base === base) { d.itemLevel = itemLevel; d.baseChosen = true; return; }
+    const { memoAims = [], goal } = d, mods = startOf(d).mods;
     for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k];
     Object.assign(d, newTree(base, itemLevel), { baseChosen: true });
+    const keep = memoAims.filter((a) => onBase(base, itemLevel, a));
+    dropped.push(...memoAims.filter((a) => !keep.includes(a)));
+    if (keep.length) d.memoAims = keep;
+    if (goal) d.goal = goal;
+    d.start!.mods = mods.filter((m) => onBase(base, itemLevel, m));
+    migrateStart(d);
   });
+  return dropped;
 }
 /**
  * 白紙の木を開いた時に、まず 0 完成形の設定の重ね窓 (TreeGoalPage) を出すか (10-22 オーナー「ツリー特化」)。
