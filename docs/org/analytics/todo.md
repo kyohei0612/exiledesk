@@ -13,6 +13,7 @@
 
 
 ## やる事
+- 10-24 9:05 の確かめ: 予定のタスク exiledesk-daily-summary がブラックへ SendMessage したか。list_task_runs で 10-24 の run が succeeded か → その run の最後の文に送った宛先の id があるか → ブラックに届いたかを 1 行で聞く。届いていなければ (許可待ちで止まった等) オーナーにアプリで「Run now」を 1 回押してもらい SendMessage の許可をタスクに覚えさせる。
 - Discord の日報は手元から読めない (webhook は書くだけ・Bot 無し・REFRESH_KEY 無し、notes/bunseki-wake-design.md)。中身は D1 から `pull-logs.mjs` + `analyze-logs.py` で作り直す。
 
 ## OK 待ち
