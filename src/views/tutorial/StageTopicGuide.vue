@@ -13,6 +13,7 @@ import { factionCandidates, ALL_OMEN_SPECS } from "../../services/craft-stage/en
 import { currencyHoverOf } from "../../services/currency/currency-hover";
 import { enOf } from "../../state/for-share/craft-stage-shelf";
 import { modText, tr } from "../../i18n/lang";
+import { flag } from "../../web/release-flags";
 import Icon from "../../components/ui/Icon.vue";
 import type { JaEn } from "../../services/tutorial/quiz-tutorials";
 import { topicKey, type TopicStep } from "../../services/tutorial/topic-courses";
@@ -67,11 +68,13 @@ const revealTurn = (b: ChainButton): boolean => b.sub.use === "reveal" && !topic
 function toReveal(): void { document.querySelector("[data-reveal-panel]")?.scrollIntoView({ behavior: "smooth", block: "center" }); }
 /** 発現のお告げが掛かっているか */
 const omensOn = (sub: TopicStep): boolean => (sub.omens ?? []).every((o) => s.omens.value.includes(o));
+/** 次に押す物を光らせる・段 5 の説明を 1 文 + 詳しく・進み n / m (d1c97969)。本番の作りでは前の形 = 光るのは発現の番だけ (スイッチ tutorialUi) */
+const guideUi = flag("tutorialUi");
 /** 次に押す物: 光らせる (段 5 で押す物が分からなかった。2026-10-20 UI 点検 11) */
-const nextBtn = (b: ChainButton): boolean => (b.kind === "omen" ? !topicUsed.value && b.j === topicSub.value && !omensOn(b.sub) : b.kind === "reveal" ? revealTurn(b) : stepReady(b));
+const nextBtn = (b: ChainButton): boolean => !guideUi ? b.kind !== "omen" && revealTurn(b) : (b.kind === "omen" ?!topicUsed.value && b.j === topicSub.value && !omensOn(b.sub) : b.kind === "reveal" ? revealTurn(b) : stepReady(b));
 const GLOW = "ring-2 ring-amber-300/80 shadow-[0_0_12px_rgba(251,191,36,0.45)]";
 /** 段 5 は説明を 1 文 + 残りは ▼ */
-const isGuide = computed(() => topic.value?.level === 5);
+const isGuide = computed(() => guideUi && topic.value?.level === 5);
 /** お告げのボタン: 今の手のお告げを掛ける (最初の手なら、ここで打てるアイテムを用意する) */
 function applyOmens(b: ChainButton): void {
   if (topicUsed.value) return;
@@ -225,7 +228,7 @@ const order = computed(() => [...Array(topic.value?.steps.length ?? 0).keys()]);
       <button type="button" class="g-btn sm max-md:w-full max-md:justify-center" @click="quitLesson">{{ tr("コースをやめる", "Quit course") }}</button>
     </div>
     <div v-if="topicStep" data-topic-now class="rounded-lg border-2 border-amber-300/50 bg-amber-500/[0.08] px-3 py-2">
-      <p class="flex items-baseline justify-between gap-2 text-[11px] font-bold text-amber-200"><span>{{ tr(`${topicAt + 1} 手目: これを使ってみる`, `Step ${topicAt + 1}: try this`) }}</span><span data-topic-progress class="tabular-nums text-[13px]">{{ Math.min(topicAt, topic.steps.length) }} / {{ topic.steps.length }}</span></p>
+      <p class="flex items-baseline justify-between gap-2 text-[11px] font-bold text-amber-200"><span>{{ tr(`${topicAt + 1} 手目: これを使ってみる`, `Step ${topicAt + 1}: try this`) }}</span><span v-if="guideUi" data-topic-progressclass="tabular-nums text-[13px]">{{ Math.min(topicAt, topic.steps.length) }} / {{ topic.steps.length }}</span></p>
       <p v-if="prepared && !topicUsed" data-topic-prepared class="text-[11px] text-[var(--exile-color-text-secondary)]">{{ tr("この手が使えるアイテムを用意しました", "We set up an item this can be used on") }}</p>
       <div class="mt-1 flex flex-wrap items-center gap-2">
         <button v-if="topicStep.step.use === 'reset'" type="button" data-topic-reset class="g-btn sm" @click="topicReset">{{ tr("白に戻す", "Reset to white") }}</button>
