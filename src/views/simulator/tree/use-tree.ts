@@ -10,6 +10,7 @@ import { minIlvlFor, tierRankLabel } from "../../../services/craft-stage/engine"
 import { startItemOf } from "../../../services/simulator/tree/tree-sample";
 import { isTreeDoc, migrateStart, newTree, startOf, type Aim, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { treeBaseCost } from "../../../services/simulator/tree/tree-base-cost";
+import { addTreeRecipe, sameTree, setCurrentTreeRecipe, treeRecipeSaved } from "../../../state/simulator/tree-recipes";
 import { tr } from "../../../i18n/lang";
 
 export type ModRow = ReturnType<typeof modListFor>[number];
@@ -18,6 +19,8 @@ export type ModRow = ReturnType<typeof modListFor>[number];
 const FIRST_BASE = "Gold Ring";
 const FIRST_ILVL = 82;
 const KEY = "exiledesk.tree.v0";
+/** 全部のタブの木 (下の loadTabs) */
+const TABS_KEY = "exiledesk.tree.v0.tabs";
 const UNDO_MAX = 100;
 
 function load(): TreeDoc {
@@ -36,12 +39,36 @@ function save(d: TreeDoc): void {
   try { localStorage.setItem(TABS_KEY, JSON.stringify({ active: active.value, docs: list })); } catch { /* 覚えられなくても使える */ }
 }
 
+/**
+ * 開発版の木の保存を 1 回だけ白紙に戻す (10-23 オーナー「開発版のキャッシュを一応リセット。今レアリティとかいろいろ残っているから、前の物はレシピに入れておいて」)。
+ * 前の木 (タブ全部・今の木・見本を開く前の控え) のうち白紙の初期値でない物をレシピに「前の木 (10-23)」で入れ、保存に書けたのを確かめてから木の鍵を消す。
+ * 書けなかった時は何も消さず、次に開いた時にもう一度。レシピ・ミニマップなどの好み・エミュとチュートリアルの保存は触らない
+ */
+const RESET_KEY = "exiledesk.tree.reset-2026-10-23";
+const BEFORE_SAMPLE_KEY = "exiledesk.tree.v0.before-sample";
+function resetOldTreesOnce(): void {
+  try {
+    if (localStorage.getItem(RESET_KEY)) return;
+    const found: TreeDoc[] = [];
+    const take = (v: unknown): void => { if (isTreeDoc(v) && !found.some((d) => sameTree(d, v)) && !sameTree(v, newTree(v.base, v.itemLevel))) found.push(v); };
+    const tabs = JSON.parse(localStorage.getItem(TABS_KEY) ?? "null") as { docs?: unknown[] } | null;
+    for (const d of tabs?.docs ?? []) take(d);
+    take(JSON.parse(localStorage.getItem(KEY) ?? "null"));
+    take(JSON.parse(localStorage.getItem(BEFORE_SAMPLE_KEY) ?? "null"));
+    const kept = found.map((d, i) => addTreeRecipe(found.length > 1 ? `前の木 (10-23) ${i + 1}` : "前の木 (10-23)", d));
+    if (!kept.every((r) => treeRecipeSaved(r.id))) return;
+    for (const k of [KEY, TABS_KEY, BEFORE_SAMPLE_KEY]) localStorage.removeItem(k);
+    if (kept.length) setCurrentTreeRecipe(null);
+    localStorage.setItem(RESET_KEY, "1");
+  } catch { /* 読めない・書けない時は何もしない (次に開いた時にもう一度) */ }
+}
+resetOldTreesOnce();
+
 const doc = shallowRef<TreeDoc>(load());
 /**
  * 木のタブ (始め方ごとに別の木、0 の完成形は共通。オーナー 10-22「✦ の候補を 2 つ試したい人のために <MOD 名> スタートのタブで木を 2 本」)。
  * 今のタブの木は doc (KEY にも控える)、全部のタブは TABS_KEY。切り替える時に 0 の完成形 (ベース・アイテムレベル・適正・レアリティ・狙い) を今の木から写す
  */
-const TABS_KEY = "exiledesk.tree.v0.tabs";
 function loadTabs(): { active: number; docs: TreeDoc[] } | null {
   try {
     const v = JSON.parse(localStorage.getItem(TABS_KEY) ?? "null") as { active: number; docs: unknown[] } | null;
