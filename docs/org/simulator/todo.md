@@ -6,6 +6,12 @@
 - 避ける (今から): Bash の頭の `cd …;` つなぎ (約 15 回) → `git -C`・`pnpm --dir`・`node "<絶対パス>"` に。python のヒアドキュメントでのファイルの書き換え (約 10 回) → Edit / Write に。台本は scratchpad に Write して絶対パスで node。
 - 窓なし Chrome も Bash で (10-23 ブラック、1 回試して許可は出なかった): 起動は Bash の run_in_background で `"C:/Program Files/Google/Chrome/Application/chrome.exe" --headless=new --remote-debugging-port=9333 --user-data-dir="<scratchpad の絶対パス>/sim17-cdp-profile" about:blank`、止めは `taskkill //PID <pid> //T //F`。PID はポートで決めない: 10-23 は別のセッションの Chrome (monkey/profile) も [::1]:9333 で待っていた。`netstat -ano | grep ":9333 "` の PID ごとに `powershell.exe -NoProfile -Command "(Get-CimInstance Win32_Process -Filter 'ProcessId=<pid>').CommandLine"` で自分の profile か確かめてから止める。止めると起動の裏の仕事は exit 1 で終わる (正常)。
 
+## 報告 (17 本目 → ブラック 8 代目、10-23) 6 つ目: モンキーテスト 15 件 (notes/2026-10-23-monkey.md)
+- 自分で直した 8 件 (985b0db4・1b20accd・0f5a800f): 1 見本を開くのは新しく始める扱い + やり直し (Ctrl+Shift+Z / Ctrl+Y・ボタン)・2 何も開いていない時の Esc でページを出ない・5 スマホは木の枠を画面の 7 割、道具の帯を枠に収める・6 タブの文は右を … で切る・7 飛ばした後は間を取らず、値段は回す間 1 回だけ引く (17.7 → 2.7 秒)・8 箱のメモは開いたらすぐ打てる・10 見本を開いた直後は 1 つ戻すが押せない (灰色は押せない時だけ)・13 回している間はルート精査を押せない。
+- 確かめ (開発版・窓なし Chrome 9333・本物のマウスとキー、台本 scratchpad の monkey17.mjs・monkey17b.mjs・phone17.mjs): 1 見本 29 箱が 1 つ戻す・Ctrl+Z で 29 のまま、白紙 → 戻す → Ctrl+Shift+Z → Ctrl+Z → Ctrl+Y が 2 / 29 / 2 / 29 / 2 / 2 Esc 3 回で ?page=sim-tree のまま / 5 375×812 で枠 583px・帯は枠の中・スタートの箱と重ならない / 6 タブの頭の ✦ が見え「始め方を足す」が画面の中 / 7 2.7 秒 / 8 的は TEXTAREA、「テスト」が入る / 13 精査は disabled。JS エラー 0。
+- 人に頼んだ 6 件: ジン部長 3・11・12 (710d1f86・2aa32e9c。11 は警告 0 を確かめた、3 は 300ms では 0.2 秒あけた 2 回目で /blog/ へ出たので 500ms に直してもらった、開発版の確かめはジン部長)、デザイン部長 4・14・15 (書きかけ)。
+- 直さない 1 件: 9 (10-22 オーナーの決めどおり、notes に記録)。
+
 ## 報告 (17 本目 → ブラック 8 代目、10-23) 5 つ目: 見本の木を新しいスタートへ (24d073e3)
 - アミュ: スタート (✦ + 外れ 3) の後に消去 3 回 (✦ は消えない) → 前の手 (大いなる高貴 + 右側)。外れに狙いが混じって消えた時は次の消去へ戻る箱を足した。ローブ・アミュの JSON は ✦ を印へ・乱数の数を消した。
 - 100 人 (台本 _tree-sample-probe): 金の指輪 100・靴 100・ローブ 100・アミュ 100 (前は 78)、アミュの精査の穴 0。台本は scratchpad の resample17.mjs。開発版で「100 人回す」をマウスで押して 100% / 100% / 100% / 99%、JS エラー 0。
