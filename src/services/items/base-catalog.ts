@@ -12,6 +12,7 @@ import { classOfBase } from "../htc/bridge";
 import { baseStatsOf, FLASK_BASES, GEM_BASES } from "../craft-stage/stage-bases";
 import { jaTypeName } from "../../i18n/item-names-ja";
 import removedBases from "./removed-bases.json";
+import { flag } from "../../web/release-flags";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { tr } from "../../i18n/lang";
 
@@ -88,7 +89,9 @@ export function classJa(cls: string, withAttr = true): string {
 /** ヴェリシウムで作る (最初から選ぶ物ではない) ベース */
 const RUNE_MADE = /^(Runeforged|Runemastered|Runefather's) /;
 /** 今のゲームに無いベース (取引所の一覧に無い物、removed-bases.json)。極寒のワンドなど (2026-10-10) */
-const REMOVED = new Set<string>(removedBases.bases);
+// [DNT] の 3 つ (c3a915a8) は本番で隠す OK 待ち (スイッチ dntBases)
+const DNT_1020 = new Set(["[DNT] Cragbreaker Staff", "[DNT] Driftwood Oar", "[DNT] Venerable Defender"]);
+const REMOVED = new Set<string>(removedBases.bases.filter((b) => flag("dntBases") || !DNT_1020.has(b)));
 export const isRemovedBase = (en: string): boolean => REMOVED.has(en);
 
 const num = (v: number | [number, number] | undefined): string => (v === undefined ? "" : Array.isArray(v) ? `${v[0]}-${v[1]}` : String(v));

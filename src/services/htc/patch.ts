@@ -18,6 +18,7 @@ import { applyWeightOverrides } from "./weight-overrides";
 import poolFixes from "./poe2db-pool-fixes.json";
 import { applyPoe2dbTagFixes } from "./poe2db-tag-fixes";
 import { applyAbyssSuffix } from "./poe2db-abyss-fix";
+import { flag } from "../../web/release-flags";
 import { applyPoe2dbValueFixes } from "./poe2db-value-fixes";
 import { applyPoe2dbImplicitFixes, implicitStatOrder } from "./poe2db-implicit-fixes";
 import runeWeights from "./rune-weights.json";
@@ -269,7 +270,9 @@ export function applyExtras(data: PatchData, extra: ExtraBases, jewels?: JewelBa
   // 特殊 MOD のルーンの、中身の違う MOD が 1 つにまとめられていた物を分ける (2026-10-05、[[rune-split.ts]])
   // poe2db (今のページ) に合わせる直しは最後 (分けた後の id で作ってある。scripts/build-poe2db-fixes.mjs)
   // タグも poe2db に合わせる (陣営・札のタグ。scripts/audit-poe2db-tags.mjs、2026-10-18)
-  return applyPoe2dbValueFixes(applyAbyssSuffix(applyPoe2dbTagFixes(applyPoe2dbFixes(splitMixedRuneMods(applyWeightOverrides({ patch: data.patch, mods, bases }).data, extra.statTags ?? {}).data))));
+  // アビスの紋章のサフィックスは本番で隠す OK 待ち (スイッチ abyssSuffix)
+  const abyss = flag("abyssSuffix") ? applyAbyssSuffix : (d: PatchData): PatchData => d;
+  return applyPoe2dbValueFixes(abyss(applyPoe2dbTagFixes(applyPoe2dbFixes(splitMixedRuneMods(applyWeightOverrides({ patch: data.patch, mods, bases }).data, extra.statTags ?? {}).data))));
 }
 
 type Poe2dbFixes = {

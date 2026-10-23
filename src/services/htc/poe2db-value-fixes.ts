@@ -7,11 +7,13 @@
  * patch.ts の最後で当てる
  */
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
+import { flag } from "../../web/release-flags";
 
 /** MOD の id (正規表現)・段の必要レベル → 生の値の幅 */
 const FIXES: ReadonlyArray<{ id: RegExp; ilvl: number; ranges?: Array<[number, number]>; weight?: number }> = [
   { id: /^Helmets_[a-z_]+\/Rune_berserking_RageLossDelay$/, ilvl: 45, ranges: [[1000, 1000]] },
-  { id: /^Talismans\/IncreasedAttackSpeed$/, ilvl: 30, weight: 1000 },
+  // 本番で隠す OK 待ち (スイッチ talismanWeight)
+  ...(flag("talismanWeight") ? [{ id: /^Talismans\/IncreasedAttackSpeed$/, ilvl: 30, weight: 1000 }] : []),
 ];
 
 export function applyPoe2dbValueFixes(data: PatchData): PatchData {

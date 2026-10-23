@@ -27,8 +27,19 @@ import jaTable from "../../i18n/mod-text-ja.json";
 // 表に無い poe2htc の行 (reduced 側・大文字違い等) をクライアント原本から訳した物 (scripts/build-mod-text-ja-htc.mjs、2026-09-26)
 import jaHtc from "../../i18n/mod-text-ja-htc.json";
 import type { Mod } from "../../vendor/poe2htc/engine/types";
+import { flag } from "../../web/release-flags";
 
-const TABLE = jaTable as Record<string, string>;
+/**
+ * 今の日本語の表。スキルのレベルの「レベル +#」(e82ef1a5 の 26 行) は本番で隠す OK 待ち (スイッチ skillPlus) なので、切れている時は「レベル #」に戻す。
+ * 表を読む所 (ここ・mods/dictionaries.ts・craft-stage/stage-core.ts) は全部これを読む
+ */
+const SKILL_LEVEL_1020 = new Set(["Despair", "Elemental Weakness", "Enfeeble", "Temporal Chains", "Vulnerability"].map((s) => `# to Level of ${s} Skills`)
+  .concat(["Attack", "Chaos", "Chaos Spell", "Cold", "Cold Spell", "Curse", "Elemental", "Fire", "Fire Spell", "Lightning", "Lightning Spell", "Mark", "Melee", "Minion", "Physical Spell", "Projectile", "Spell"].map((s) => `# to Level of all ${s} Skills`))
+  .concat(["# to Level of all Corrupted Skill Gems", "# to Level of all Corrupted Spell Skill Gems", "# to Level of all Skills", "Bonded: # to Level of all Attack Skills"]));
+export const MOD_TEXT_JA: Record<string, string> = flag("skillPlus")
+  ? (jaTable as Record<string, string>)
+  : Object.fromEntries(Object.entries(jaTable as Record<string, string>).map(([k, v]) => [k, SKILL_LEVEL_1020.has(k) ? v.replace("+#", "#") : v]));
+const TABLE = MOD_TEXT_JA;
 const HTC = jaHtc as Record<string, string>;
 const NL = String.fromCharCode(10);
 

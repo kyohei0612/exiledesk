@@ -14,7 +14,8 @@ import { occupiedKeysOf, rawFamiliesOf } from "../mods/mod-rules";
 import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
 import { jaOfModAlways } from "../htc/mod-text";
 import { filledStatsOf, htcBaseLimits, implicitStatsOf } from "../htc/patch";
-import modTextJa from "../../i18n/mod-text-ja.json";
+import { MOD_TEXT_JA as modTextJa } from "../htc/mod-text";
+import { flag } from "../../web/release-flags";
 import { maxQualityForBase } from "../htc/catalysing-setup";
 import { displayedValue } from "../htc/quality";
 import { displayValue, tierDisplayRanges, type TierLike } from "../mods/stat-scale";
@@ -230,6 +231,7 @@ export function magnitudeTagOf(stat: string | undefined): string | null {
   return hit ? hit[1] ?? hit[2] ?? null : null;
 }
 export function magnitudePct(item: StageItem, m: StageMod, data?: PatchData): number {
+  if (!flag("runeMagnitude")) return 0; // 本番で隠す OK 待ち (スイッチ runeMagnitude)
   const tags = data?.mods.get(m.modId)?.tags ?? m.tags ?? [];
   let pct = 0;
   for (const x of allMods(item)) {

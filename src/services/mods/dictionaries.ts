@@ -13,7 +13,7 @@ import modsBundle from "../../i18n/mods-bundle.json";
 import modTierAndGroup from "../../i18n/mod-tier-and-group.json";
 import affixOverridesRaw from "../../i18n/affix-overrides.json";
 import uniqueNamesJaRaw from "../../i18n/unique-names-ja.json";
-import modTextJaRaw from "../../i18n/mod-text-ja.json";
+import { MOD_TEXT_JA as modTextJaRaw } from "../htc/mod-text";
 import modTextJaManualRaw from "../../i18n/mod-text-ja-manual.json";
 import { jaCurrency } from "../../i18n/currencies-ja";
 import type { AffixKind } from "./types";
