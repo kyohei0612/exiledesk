@@ -12,7 +12,7 @@ import { tierIdOf } from "../../services/craft-stage/engine-emu";
 import { aimRangeText } from "./aim-text";
 import { modListFor, type ListRow, type ListTier, type ModGroup, aimLabel, groupLabelOf } from "../../services/craft-stage/engine";
 import { fmtPct } from "../../utils/format-pct";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { AIM_MAX, craftStage as s, type AimPick } from "../../state/craft-stage";
 import { revealOpened, scrollToTop } from "../../utils/keep-place";
 import { ROUTES_MAX, routesTarget } from "../../state/web-page";
@@ -94,8 +94,11 @@ const expanded = ref<string | null>(seedRow?.id ?? null);
 const pct = (x: number): string => fmtPct(x, { zero: "" });
 
 function close(): void { s.aimPicker.value = null; }
+/** 0 個で押した時の一言 (押せない見た目だけでは気付かれなかった。モンキーテスト 10-23 の 7)。選んだら消す */
+const needPick = ref(false);
+watch(() => draft.value.length, (n) => { if (n) needPick.value = false; });
 function decide(): void {
-  if (!draft.value.length) return;
+  if (!draft.value.length) { needPick.value = true; return; }
   if (forRoutes) { routesTarget.value = draft.value.map((a) => ({ modId: a.modId, minTierIndex: a.minTierIndex })); close(); s.modOverlay.value = false; return; }
   s.aims.value = draft.value;
   close();
@@ -154,7 +157,8 @@ function decide(): void {
     <!-- 決める (下に固定。1 つだけでも進める) -->
     <template #footer>
       <button type="button" class="g-btn" @click="close">{{ tr("やめる", "Cancel") }}</button>
-      <button type="button" data-rec="aim-decide" class="g-btn-red ml-auto min-w-40 disabled:opacity-35" :disabled="!draft.length" @click="decide">{{ forRoutes ? tr("比べる", "Compare") : tr("確率を見る", "See chances") }}{{ draft.length ? ` (${draft.length})` : "" }}</button>
+      <span v-if="needPick" data-aim-need class="ml-auto text-[12px] text-rose-300" role="alert">{{ tr("狙う MOD にチェックしてください", "Check a mod to target first") }}</span>
+      <button type="button" data-rec="aim-decide" class="g-btn-red min-w-40" :class="needPick ? '' : 'ml-auto'" @click="decide">{{ forRoutes ? tr("比べる", "Compare") : tr("確率を見る", "See chances") }}{{ draft.length ? ` (${draft.length})` : "" }}</button>
     </template>
   </ModalShell>
 </template>
