@@ -1,6 +1,6 @@
 # デザイン部長 のやる事
 
-## 引き継ぎ (1 本目 → 2 本目 local_d9a6380b-ff4e-49da-99e5-cfc1f662a6d0、10-23)
+## 引き継ぎ (1 本目 → 2 本目 local_d9a6380b-ff4e-49da-99e5-cfc1f662a6d0、10-23) — 2 本目が受け取った。シミュの opacity は 120d0c9e で済み
 - 持ち物: for-share・共通の部品・見た目 (src/styles・style.css)・言語の切り替え・画面の挙動 (src/web・composables・utils)。README の地図・notes/2026-10-23-components-map.md。
 - 使用表 (dev/todo.md): 開発版・確認用 Chrome 9333 は返してある (空き)。手元の dev サーバーも止めた。立てた Chrome は profile ごと消した。
 - 確かめの台本はブラックの共有メモ (side-session-notes/local_ec583720-…) の design-cdp.mjs (CDP の小物、各手 15 秒の上限) と m*.mjs・d12-*.mjs・mback.mjs・mbtn.mjs。開発版は `?k=8ZlDQtkU9siTTMXD-qDzj50w` を 1 回開いてから。出した直後は JS が 404 の事がある (出し直し、同じ profile の古い読み込みも 404 に見える)。
