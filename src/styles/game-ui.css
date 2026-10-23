@@ -107,9 +107,11 @@
   color: var(--exile-color-text-secondary);
   transition: color 120ms;
 }
-.g-tab:hover { background-image: url("/ui-art/tab-hover.webp"); color: var(--exile-color-text-primary); }
+.g-tab:hover:not(:disabled, .on) { background-image: url("/ui-art/tab-hover.webp"); color: var(--exile-color-text-primary); }
 .g-tab.on { background-image: url("/ui-art/tab-on.webp"); color: rgba(28, 20, 8, 1); font-weight: 700; text-shadow: 0 1px 0 rgba(255, 240, 200, 0.4); }
-.g-tab:disabled { background-image: url("/ui-art/tab-off.webp"); opacity: 0.6; }
+/* 押せない札は .g-btn と同じく灰色に (ホバーで光ると押せそうに見えた。2026-10-24 オーナー、シミュの「2 完成の MOD」) */
+.g-tab:disabled { background-image: url("/ui-art/tab-off.webp"); filter: grayscale(0.8) brightness(0.6); opacity: 0.45; cursor: not-allowed; }
+.g-tab.on:disabled { background-image: url("/ui-art/tab-on.webp"); filter: grayscale(0.6); opacity: 0.7; } /* 選んでいる札は押せなくても何を選んでいるか見える (スパム中の段・決まったアイテムレベル) */
 /*
  * 画面の帯の中のタブは、画面名と同じ筆の字体 (2026-10-09 UI の指摘「同じ帯の中でフォントや大きさが揃っていない」: 画面名は筆、タブは
  * antique が日本語を持たずゴシックに落ちて太く見えた)。選んでいる札も太字にしない (金の札の上の太いゴシックがプラスチックっぽく見えた)
