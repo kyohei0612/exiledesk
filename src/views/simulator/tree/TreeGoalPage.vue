@@ -7,7 +7,7 @@
 -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
-import BaseCatalog from "../../../components/items/BaseCatalog.vue";
+import BasePickBody from "../../../components/for-share/BasePickBody.vue";
 import ModalShell from "../../../components/ui/ModalShell.vue";
 import ModTable from "../../../components/for-share/mod-list/ModTable.vue";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
@@ -98,8 +98,11 @@ const cardW = innerWidth < 768 ? Math.min(CARD_W, innerWidth - 90) : CARD_W;
         <button type="button" class="g-btn sm" @click="asking = null">{{ tr("やめる", "Cancel") }}</button>
         <button type="button" data-tree-base-ok class="g-btn sm" @click="apply(asking!)">{{ tr("替える", "Change") }}</button>
       </div>
-      <!-- エミュのベースのページと同じく、未選択の時は人気のベースを上に (10-23 オーナー「ページの作りはエミュのベースのページと同じでよい」) -->
-      <BaseCatalog :data="s.data.value" :selected="unpicked ? '' : t.doc.value.base" :popular="unpicked" @pick="pick" />
+      <!-- エミュのベースのページと同じ作り (共通の BasePickBody: 帯 + ベースの一覧、未選択の時は人気のベースを上に)。帯はシミュの説明で「すぐ試す」は無し (10-23 オーナー) -->
+      <BasePickBody :selected="unpicked ? '' : t.doc.value.base" :popular="unpicked" :intro="unpicked" :quick="false"
+        :title="tr('完成させたいアイテムから、打ち方の道を組んで費用を見積もれます', 'Plan a craft route to the item you want and estimate the cost')"
+        :lead="tr('ベースを選び、狙いの MOD を決めると、スタートから完成までの道をツリーで組めます。100 人回して完成の割合と費用を出します', 'Choose a base and your target mods, then lay out the route from the start to the finished item as a tree. Run it 100 times for the finish rate and the cost')"
+        @pick="pick" />
     </div>
     <!-- 768px 未満は縦に積む (完成形のカードが上、表は全部の幅。横に並べると表が 1 文字幅に潰れた、10-23 デザイン部長の気づき・メモ web-phone-layout) -->
     <div v-else data-tree-goal-mods class="flex min-h-0 min-w-0 items-start gap-4 max-md:flex-col max-md:items-stretch">
