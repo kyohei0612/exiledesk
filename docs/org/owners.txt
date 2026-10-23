@@ -18,6 +18,7 @@ src/web/**                           デザイン
 src/composables/**                   デザイン
 src/utils/**                         デザイン
 web.html                             デザイン
+scripts/deploy-web-dev.mjs           デザイン
 
 # サーバー (分析君)
 server/**                            分析
