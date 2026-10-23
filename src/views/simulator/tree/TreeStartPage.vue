@@ -16,6 +16,8 @@ import { useTree } from "./use-tree";
 const t = useTree();
 const item = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.value, mulberry32(1)).item : null));
 const CARD_W = 320;
+/** スマホ (768px 未満) は窓の中身の幅 (画面 − 枠と余白 90) に合わせる (10-23) */
+const cardW = innerWidth < 768 ? Math.min(CARD_W, innerWidth - 90) : CARD_W;
 </script>
 
 <template>
@@ -24,7 +26,7 @@ const CARD_W = 320;
       <div class="min-w-0 flex-1"><TreeStartPick /></div>
       <div class="flex shrink-0 flex-col gap-1 max-md:!w-full max-md:items-center" :style="{ width: `${CARD_W}px` }">
         <p class="text-[12px] opacity-70">{{ tr("始まりのアイテム (外れの MOD・✦ の候補は 1 例)", "Starting item (miss mods and the ✦ pick are one example)") }}</p>
-        <StageItemCard v-if="item" :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" />
+        <StageItemCard v-if="item" :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" />
       </div>
     </div>
     <template #footer>

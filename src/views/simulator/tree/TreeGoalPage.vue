@@ -50,6 +50,8 @@ function onCardFracture(m: StageMod): void {
   if (g) t.toggleFracture(g.modId, g.tier);
 }
 const CARD_W = 340;
+/** スマホ (768px 未満) は窓の中身の幅 (画面 − 枠と余白 90) に合わせる (340 のままだと右がはみ出した、10-23) */
+const cardW = innerWidth < 768 ? Math.min(CARD_W, innerWidth - 90) : CARD_W;
 </script>
 
 <template>
@@ -85,7 +87,7 @@ const CARD_W = 340;
       </ModTable></div>
       <!-- 完成形のカード (ページの送りでも見えるよう上に留める) -->
       <div data-tree-goal-card class="sticky top-0 flex shrink-0 flex-col gap-2 max-md:static max-md:order-first max-md:!w-full max-md:items-center" :style="{ width: `${CARD_W}px` }">
-        <StageItemCard v-if="t.goalItem.value" :item="t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" :fracture-group="marks" fracturable @fracture="onCardFracture" />
+        <StageItemCard v-if="t.goalItem.value" :item="t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" :fracture-group="marks" fracturable @fracture="onCardFracture" />
         <!-- 枠を超えた狙い (10-23 オーナー「欲しい物を全部選ぶので枠を超えてよい」): 止めずにカードの下に並べる -->
         <div v-if="t.goalItem.value?.left.length" data-tree-goal-over class="flex flex-col gap-0.5 rounded-md bg-white/[0.04] px-2 py-1 text-[12px]">
           <p class="opacity-70">{{ tr(`カードに乗らない狙い ${t.goalItem.value.left.length} つ (枠の外。どれかが付けば当たり)`, `${t.goalItem.value.left.length} target(s) beyond the slots (a hit if any rolls)`) }}</p>
