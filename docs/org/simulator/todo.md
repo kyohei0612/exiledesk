@@ -4,7 +4,7 @@
 
 ## 許可が出る操作 (17 本目の洗い出し、10-23 オーナー「シミュの許可が多い」)
 - 避ける (今から): Bash の頭の `cd …;` つなぎ (約 15 回) → `git -C`・`pnpm --dir`・`node "<絶対パス>"` に。python のヒアドキュメントでのファイルの書き換え (約 10 回) → Edit / Write に。台本は scratchpad に Write して絶対パスで node。
-- 避けられない (今の所): 窓なし Chrome の起動と止め (PowerShell の Start-Process / Stop-Process、確かめ 1 回につき 2 回)。ほかに無し。
+- 窓なし Chrome も Bash で (10-23 ブラック、1 回試して許可は出なかった): 起動は Bash の run_in_background で `"C:/Program Files/Google/Chrome/Application/chrome.exe" --headless=new --remote-debugging-port=9333 --user-data-dir="<scratchpad の絶対パス>/sim17-cdp-profile" about:blank`、止めは `taskkill //PID <pid> //T //F`。PID はポートで決めない: 10-23 は別のセッションの Chrome (monkey/profile) も [::1]:9333 で待っていた。`netstat -ano | grep ":9333 "` の PID ごとに `powershell.exe -NoProfile -Command "(Get-CimInstance Win32_Process -Filter 'ProcessId=<pid>').CommandLine"` で自分の profile か確かめてから止める。止めると起動の裏の仕事は exit 1 で終わる (正常)。
 
 ## 報告 (17 本目 → ブラック 8 代目、10-23) 5 つ目: 見本の木を新しいスタートへ (24d073e3)
 - アミュ: スタート (✦ + 外れ 3) の後に消去 3 回 (✦ は消えない) → 前の手 (大いなる高貴 + 右側)。外れに狙いが混じって消えた時は次の消去へ戻る箱を足した。ローブ・アミュの JSON は ✦ を印へ・乱数の数を消した。
