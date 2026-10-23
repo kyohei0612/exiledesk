@@ -6,7 +6,7 @@
  * その下の箱 = 親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
-import { aimHits as hits, applyCurrency, catalystOf, forceKey, freshItem, kindOf, mulberry32, omenBlock, OMEN_FOR, revealOffers, runeIdByName, tierIndexOf, unrevealedOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimHits as hits, applyCurrency, baseSocketsOf, catalystOf, forceKey, freshItem, kindOf, mulberry32, omenBlock, OMEN_FOR, revealOffers, runeIdByName, tierIndexOf, unrevealedOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { fractureStart, stepOutcomes } from "../../craft-stage/engine-sim";
 import { catalystFull, catalystTagOf, fillCatalyst } from "../../craft-stage/engine-sim";
 import { aimHeldOn, isAimMod, junkOf } from "./tree-aim";
@@ -371,6 +371,10 @@ const START_FRACTURE_MAX = 1;
 function startWith(data: PatchData, base: string, itemLevel: number, s: StartWith, rng: () => number): { item: StageItem; note: string | null } {
   const magic = (s.rarity === "magic" || s.rarity === "normal") && !s.mods.some((m) => m.fractured);
   let item = freshItem(data, base, itemLevel, magic ? "normal" : "rare");
+  // ソケットはエミュの手で打つ新品と同じく規格外の数から (エミュの fullSockets、2026-10-04 オーナー「ソケットも初めからデフォでマックス」)。
+  // 前は 0 で、ツリーの棚に特別なルーン・その他のルーンが出なかった (10-23 オーナー「打つ中身はエミュと同じ」)
+  const full = baseSocketsOf(item.base, item.cls.category);
+  if (full > (item.sockets ?? 0)) item = { ...item, sockets: full };
   if (s.mods.filter((m) => m.fractured).length > START_FRACTURE_MAX) return { item, note: tr("フラクチャーは 1 つまで", "Only one mod can be fractured") };
   // 選んだルーンを先に差す。ルーンの MOD はそのルーンを差して付く (force が差す)。差すソケットを要る数だけ開けておく (手袋の投射物 +2 = コルの狩り、10-22)
   const runes = s.runes ?? [];
