@@ -12,7 +12,7 @@ import { placeMods } from "../../../services/craft-stage/engine-sim";
 import type { StageItem } from "../../../services/craft-stage/engine";
 import { isTreeDoc, migrateStart, newTree, startOf, startRarity, type Aim, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { treeBaseCost } from "../../../services/simulator/tree/tree-base-cost";
-import { addTreeRecipe, sameTree, setCurrentTreeRecipe, treeRecipeSaved } from "../../../state/simulator/tree-recipes";
+import { addTreeRecipe, sameTree, setCurrentTreeRecipe, treeRecipes, treeRecipeSaved } from "../../../state/simulator/tree-recipes";
 import { tr } from "../../../i18n/lang";
 
 export type ModRow = ReturnType<typeof modListFor>[number];
@@ -65,6 +65,38 @@ function resetOldTreesOnce(): void {
   } catch { /* 読めない・書けない時は何もしない (次に開いた時にもう一度) */ }
 }
 resetOldTreesOnce();
+
+/**
+ * 開発版だけ: 出した版が変わったら最初に開いた時 1 回、前の木をレシピに入れてから木の保存を白紙に戻す
+ * (10-23 オーナー「毎回キャッシュクリアして。前の設定の MOD やベースが選ばれてる」。形は上の resetOldTreesOnce と同じ)。
+ * 版の印は入口の部品ファイルの名前 (中身の hash 付き、出し直すと変わる)。空の木と、もうレシピにある同じ木は入れない。本番・手元の dev では動かさない。
+ * 消すのは木・完成形の設定 (ベース・狙いの MOD・レアリティ・印は木の中)・タブ・見本の前の控えだけ。エミュとチュートリアルの保存・レシピ・好みは触らない
+ */
+const BUILD_KEY = "exiledesk.tree.dev-build";
+function resetTreesOnNewBuild(): void {
+  if (import.meta.env.VITE_DEV_PREVIEW !== "1") return;
+  try {
+    const build = [...document.querySelectorAll<HTMLScriptElement>('script[type="module"][src*="/assets/"]')].map((s) => new URL(s.src).pathname).join(" ");
+    if (!build || localStorage.getItem(BUILD_KEY) === build) return;
+    const found: TreeDoc[] = [];
+    const take = (v: unknown): void => {
+      if (!isTreeDoc(v) || sameTree(v, newTree(v.base, v.itemLevel))) return;
+      if (found.some((d) => sameTree(d, v)) || treeRecipes.value.some((r) => sameTree(r.tree, v))) return;
+      found.push(v);
+    };
+    const tabs = JSON.parse(localStorage.getItem(TABS_KEY) ?? "null") as { docs?: unknown[] } | null;
+    for (const d of tabs?.docs ?? []) take(d);
+    take(JSON.parse(localStorage.getItem(KEY) ?? "null"));
+    take(JSON.parse(localStorage.getItem(BEFORE_SAMPLE_KEY) ?? "null"));
+    const stamp = new Date().toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    const kept = found.map((d, i) => addTreeRecipe(found.length > 1 ? `前の木 (${stamp}) ${i + 1}` : `前の木 (${stamp})`, d));
+    if (!kept.every((r) => treeRecipeSaved(r.id))) return;
+    for (const k of [KEY, TABS_KEY, BEFORE_SAMPLE_KEY]) localStorage.removeItem(k);
+    setCurrentTreeRecipe(null);
+    localStorage.setItem(BUILD_KEY, build);
+  } catch { /* 読めない・書けない時は何もしない (次に開いた時にもう一度) */ }
+}
+resetTreesOnNewBuild();
 
 const doc = shallowRef<TreeDoc>(load());
 /**
