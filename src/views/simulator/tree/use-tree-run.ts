@@ -44,11 +44,14 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
     const d = doc.value;
     // 相場は高貴建て → 神に直す (tree-base-cost と同じ。そのまま渡すと 2000 神の打ち止めに当たって完成 8% になった、10-22 開発版で見た)
     const div = priceOf("divine") || 1;
+    // 回す間は相場が変わらないので、同じ物の値段は 1 回だけ引く (1 手ごとに相場の表を引くのが重く、飛ばしても 100 人に 18 秒かかった、10-23 モンキー 7)
+    const memo = new Map<string, number>();
+    const priceIn = (k: string): number => { let v = memo.get(k); if (v === undefined) { v = priceOf(k) / div; memo.set(k, v); } return v; };
     let last: TreeRunResult | null = null;
     const firstOf: { p: Person1 | null } = { p: null };
     // 1 人目が進む間は層の数字を出さない (光る箱だけ)
     let walking = true;
-    const g = runTreeSteps(data, d, { n: RUN_N, seed: 1, price: (k) => priceOf(k) / div, startCost: startCost(), every: 1,
+    const g = runTreeSteps(data, d, { n: RUN_N, seed: 1, price: priceIn, startCost: startCost(), every: 1,
       onProgress: (r) => { last = r; if (my === token && !walking) result.value = r; },
       onPerson: (p, i) => { if (!i) firstOf.p = p; } });
     try {
