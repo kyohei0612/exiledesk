@@ -122,7 +122,7 @@ function reroll(): void { rerolled.value = true; chosen.value = null; lessonErr.
         v-if="canReroll() && !rerolled"
         type="button"
         data-rec="reveal-reroll"
-        class="g-btn sm absolute right-0 !px-1.5 disabled:opacity-40"
+        class="g-btn sm absolute right-0 !px-1.5"
         :title="rerolled ? tr('引き直した候補', 'Rerolled options') : tr(`${jaOfOmen('OmenofAbyssalEchoes') ?? 'アビスの反響のお告げ'}: 候補を 1 回だけ引き直す`, 'Omen of Abyssal Echoes: reroll the options once')"
         @click="reroll"
       ><Icon name="rotate" class="size-4" /></button>
