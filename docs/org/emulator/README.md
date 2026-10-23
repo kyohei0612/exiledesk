@@ -9,13 +9,12 @@
 2. 窓口は核 engine.ts・エミュだけ engine-emu.ts (中身 engine-emu/)・シミュだけ engine-sim.ts (engine-sim/)。核は engine-*/ を読まず、2 つ同士も読まない。
 3. 元からある物はそのまま呼ぶ: 核の関数の写し・言い換え・包み直しを作らない (オーナー 10-23)。窓口の形を変えたら使っている部を報告に書く。
 4. 確かめは小さく: エミュの画面の同じ所と同じ答えか。確率の表を変えたら held-odds-parity で突き合わせ、golden はわざと変えた時だけ書き直す。
-5. ゲームの決まりは書いてある効果どおり。棚の条件は乱数に関係ない物だけ、上限を決めない。poe2db とエンジンが食い違い写しで決まらない物は poe2db に合わせ、聞かない (オーナー 10-20)。
+5. ゲームの決まりは書いてある効果どおり。棚の条件は乱数に関係ない物だけ、上限を決めない (オーナー 10-20)。
 6. カレンシー固有の処理を書き足さず、spec/ の部品とお告げの効き目 (`OmenEffect`) で表す (ADR-004)。
-7. MOD の置き場・重み・段はエンジンの行 1 か所。`m.family` を直接比べない、段の重みを自分で足さない (mods/mod-rules.ts)。
-8. MOD に固定値は無い (+1 も stat の値)。タグ・品質を触る時は暗黙も。
+7. MOD の置き場・重み・段はエンジンの行 1 か所 (mods/mod-rules.ts)。`m.family` を直接比べない、段の重みを自分で足さない。固定値は無い (+1 も stat の値)。タグ・品質を触る時は暗黙も。
+8. 出どころはトレード > poe2db > ほか。付く・付かない・ベースの有無は先にトレードのデータで確かめ、それは消さない。エンジンと食い違い写しで決まらない物もこの順に合わせ、聞かない (オーナー 10-20・10-23)。
 9. 画面 (src/views・src/state/emulator・simulator) と部品 (src/components・for-share・見た目) は直さない。要る時はどの部のどのファイルかを書いてブラックへ。
 10. 常駐・報告・触るファイル (dev/touching/emulator.md)・push と開発版は dev/README.md の決まり 1・2・5・8 のとおり。本番は最終チェック長。
-11. 出どころの順はトレード > poe2db > ほか。MOD が付く・付かない・ベースがあるかは先にトレードのデータで確かめる。トレードのデータは消さない (オーナー 10-23)。
 
 ## 地図
 - 窓口 src/services/craft-stage/: engine.ts (核、使い方 notes/engine-entry.md)・engine-emu.ts (中身 engine-emu/: preview・spam-race・chaos-spam・route-runes、ほか片方だけが使う核の名前)・engine-sim.ts (中身 engine-sim/: hand-effect の fillCatalyst 一式・magic-odds・spam-counts・outcomes・essence-parts)。打てるかは核の useReason (両方の棚)。分け方と経過は notes/2026-10-22-entry-split-plan.md、シミュの自前の式を寄せた記録は notes/2026-10-22-sim-logic-to-engine.md。
