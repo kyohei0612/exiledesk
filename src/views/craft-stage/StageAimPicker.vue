@@ -9,6 +9,7 @@
 -->
 <script setup lang="ts">
 import { tierIdOf } from "../../services/craft-stage/engine-emu";
+import { aimRangeText } from "./aim-text";
 import { modListFor, type ListRow, type ListTier, type ModGroup, aimLabel, groupLabelOf } from "../../services/craft-stage/engine";
 import { fmtPct } from "../../utils/format-pct";
 import { computed, ref } from "vue";
@@ -81,6 +82,11 @@ function pickTier(r: ListRow, t: ListTier): void {
 }
 const isPickedTier = (r: ListRow, t: ListTier): boolean => { const c = pickedOf(r), { modId, idx } = idOf(r, t); return !!c && c.modId === modId && c.minTierIndex === idx; };
 const isCoveredTier = (r: ListRow, t: ListTier): boolean => { const c = pickedOf(r), { modId, idx } = idOf(r, t); return !!c && c.modId === modId && idx >= c.minTierIndex; };
+/** 選んだ札の文。スパムシミュは当たりになる値の幅全部で (ページの狙いの札と同じ。モンキーテスト 10-23 の 6) */
+function chipOf(a: AimPick): string {
+  const m = forRoutes ? s.data.value?.mods.get(a.modId) : undefined;
+  return m ? `${aimRangeText(m, a.minTierIndex, s.itemLevel.value)} (${tr(`${rankOf(a)} 以上`, `${rankOf(a)}+`)})` : aimLabel(s.data.value, a);
+}
 const rankOf = (a: AimPick): string => { const n = s.data.value?.mods.get(a.modId)?.tiers.length ?? 0; return `T${n - a.minTierIndex}`; };
 /** 段の表を開いている行 (押した段の行は最初から開く) */
 const expanded = ref<string | null>(seedRow?.id ?? null);
@@ -108,7 +114,7 @@ function decide(): void {
     </template>
     <template #subheader>
       <p v-if="draft.length" class="mt-1 flex flex-wrap gap-1">
-        <span v-for="a in draft" :key="a.modId" class="inline-flex items-center gap-1 rounded bg-[rgba(136,136,255,0.14)] py-0.5 pl-1.5 text-[12px] text-[var(--color-rarity-magic)]">{{ aimLabel(s.data.value, a) }}<button type="button" class="g-plain grid size-7 place-items-center opacity-60 hover:opacity-100" :title="tr('外す', 'Remove')" @click="draft = draft.filter((x) => x !== a)">×</button></span>
+        <span v-for="a in draft" :key="a.modId" class="inline-flex items-center gap-1 rounded bg-[rgba(136,136,255,0.14)] py-0.5 pl-1.5 text-[12px] text-[var(--color-rarity-magic)]">{{ chipOf(a) }}<button type="button" class="g-plain grid size-7 place-items-center opacity-60 hover:opacity-100" :title="tr('外す', 'Remove')" @click="draft = draft.filter((x) => x !== a)">×</button></span>
       </p>
       <p v-else class="mt-1 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("狙う MOD にチェック (名前を押すと段を選べる)", "Check the mods to target (click a name to pick a tier)") }}</p>
       <nav v-if="groups.length > 1" class="mt-2 flex flex-wrap gap-1">

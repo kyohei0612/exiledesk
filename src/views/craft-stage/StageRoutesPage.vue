@@ -8,7 +8,8 @@
   値段は今の相場 (priceOf)、ベース代と始めの状態 (増強は白、カオスは MOD 1 つのレア、高貴は MOD 0 のレア。2026-10-19 オーナー) を作る費用は入れない。広告ありきの別のページ (WebApp.vue が両脇の枠を置く)
 -->
 <script setup lang="ts">
-import { type StageItem, type RouteKind, fillModText, tierDisplayRanges, stageRuneIds } from "../../services/craft-stage/engine";
+import { type StageItem, type RouteKind, stageRuneIds } from "../../services/craft-stage/engine";
+import { aimRangeText } from "./aim-text";
 import { runePrep } from "../../services/craft-stage/engine-emu";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
@@ -94,8 +95,8 @@ const t = computed(() => (routesTarget.value?.length ? routesTarget.value : null
 const aims = computed(() => (t.value ?? []).flatMap((tt) => {
   const m = s.data.value?.mods.get(tt.modId);
   if (!m) return [];
-  const tier = m.tiers[tt.minTierIndex];
-  const text = fillModText(m, tier ? tierDisplayRanges(tier) : []).replace(/\n/g, " / ");
+  // 当たりになる値の幅全部 (T8 以上なら T8 の下〜付く一番上の段の上。モンキーテスト 10-23 の 6)
+  const text = aimRangeText(m, tt.minTierIndex, ilvl.value).replace(/\n/g, " / ");
   const rank = `T${m.tiers.length - tt.minTierIndex}`;
   return [{ m, text, rank, side: m.type === "suffix" ? tr("サフィックス", "Suffix") : tr("プレフィックス", "Prefix"), label: `${text} (${tr(`${rank} 以上`, `${rank}+`)})` }];
 }));
@@ -256,7 +257,12 @@ const money = (x: number): string => displayCurrency.money(x);
 const fmtN = (n: number): string => (n >= 10 ? Math.round(n).toLocaleString() : n.toFixed(1));
 function back(): void { routesLuck.value = false; routesRunes.value = null; s.aimPicker.value = null; routesOpen.value = false; routesTarget.value = null; }
 function pickMod(): void { s.aimPicker.value = { seed: null, routes: true }; }
-function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && !s.aimPicker.value) back(); }
+/** Esc: 運試しの欄が開いていれば欄だけ閉じる (「閉じる」と同じ。モンキーテスト 10-23 の 1: ページごと閉じて結果が消えた)、無ければクラフトへ戻る */
+function onKey(e: KeyboardEvent): void {
+  if (e.key !== "Escape" || s.aimPicker.value) return;
+  if (luckRow.value) { luckRow.value = null; return; }
+  back();
+}
 let before = 0;
 onMounted(() => { before = window.scrollY; window.scrollTo(0, 0); window.addEventListener("keydown", onKey); if (routesShared.value) void run(); else if (!t.value) next("[data-routes-pick]"); }); // 開いたら次は「狙う MOD を選ぶ」 (スマホは 3 つのカードの下)
 onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); const y = before; requestAnimationFrame(() => window.scrollTo(0, y)); });
@@ -265,7 +271,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
 <template>
   <section data-routes-page class="min-w-0 flex-1 p-4">
     <div class="mb-3 flex flex-wrap items-center gap-3">
-      <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[15px] tracking-[0.18em] max-md:tracking-[0.04em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ tr("スパムシミュレーター", "Spam simulator") }}</h1>
+      <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-3 max-md:text-[14px] max-md:whitespace-nowrap tracking-[0.18em] max-md:tracking-[0.04em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ tr("スパムシミュレーター", "Spam simulator") }}</h1>
       <span class="flex items-center gap-2">
         <button type="button" data-routes-back class="g-btn sm max-md:min-h-10" @click="back">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
         <span class="text-[12px] opacity-60 max-md:hidden">{{ tr("Esc でも戻る", "Esc also goes back") }}</span>
@@ -320,9 +326,11 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
               <p class="tabular-nums"><b class="text-[26px] text-emerald-300 max-md:text-[20px]">{{ money(best.avgCost) }}</b> <span class="text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr(`平均 · ${fmtN(best.avgSteps)} 手`, `avg · ${fmtN(best.avgSteps)} uses`) }}</span></p>
               <p class="text-[12px] tabular-nums text-[var(--exile-color-text-secondary)]">{{ tr("半分の人", "Half") }} {{ money(best.p50) }} · {{ tr("運が悪い 10 人に 1 人", "Unluckiest 1 in 10") }} {{ money(best.p90) }}</p>
             </div>
-            <span class="flex shrink-0 flex-col items-stretch gap-1.5 max-md:w-full max-md:flex-row max-md:items-center max-md:[&>button]:flex-1">
+            <!-- スマホは横に並べ、収まらなければ折り返す (モンキーテスト 10-23 の 5: 2 つ並ぶと札から切れた) -->
+            <span class="flex shrink-0 flex-col items-stretch gap-1.5 max-md:w-full max-md:flex-row max-md:flex-wrap max-md:items-center max-md:[&>button]:min-w-0 max-md:[&>button]:flex-auto max-md:[&>button]:whitespace-normal">
             <button v-if="!busy && !luckOpen && bestLuck" type="button" data-route-luck-open class="g-btn-red" :title="tr(`この道の決まりで、${RUNS} 人と同じ始めの状態から自分でスパムして運を比べる`, `Spam it yourself with this route from the same start and compare your luck with the ${RUNS} people`)" @click="openLuck(bestLuck)">{{ tr("運試し", "Luck test") }}</button>
-            <button v-if="!busy && bestLuck" type="button" data-route-place class="g-btn sm" :disabled="placing" :title="placeTitle" @click="placeHit(bestLuck)">{{ tr("当たった形でクラフト台に戻る", "Back to the craft stage with a hit") }}</button>
+            <!-- 運試しの間は出さない (欄の中の同じ名前のボタンが運試しで当たった物を置く。こちらは別の 1 人を回すので違う物が載った。モンキーテスト 10-23 の 3) -->
+            <button v-if="!busy && !luckOpen && bestLuck" type="button" data-route-place class="g-btn sm" :disabled="placing" :title="placeTitle" @click="placeHit(bestLuck)">{{ tr("当たった形でクラフト台に戻る", "Back to the craft stage with a hit") }}</button>
             <button v-if="!busy" type="button" data-route-recompute class="g-btn sm" :title="tr(`別の ${RUNS} 人でもう一度全部の道を計算する (乱数を変える)`, `Run all routes again with a different ${RUNS} people (new random seed)`)" @click="recompute">{{ tr("再計算", "Recompute") }}</button>
             <span v-if="!busy && round > 1" class="text-center text-[10px] tabular-nums text-[var(--exile-color-text-tertiary)]">{{ tr(`${round} 回目の ${RUNS} 人`, `${RUNS} people, run ${round}`) }}</span>
             </span>
@@ -399,7 +407,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
           <!-- この道で運試し (道の中で一番安い等級。運試しの欄は一番安い欄の下に出す) -->
           <p v-if="!offRoute(r.route) && !busy && bestIn(r.route)" class="mt-auto pt-3 text-center">
             <button type="button" :data-route-luck-card="r.route" class="g-btn sm" :class="luckRow === bestIn(r.route) ? 'on' : ''" :title="tr(`${tr(r.ja, r.en)}の一番安い等級 (${tr(...GRADE_JA[bestIn(r.route)!.grade])}) で運試し`, `Luck test with ${r.en} at its cheapest grade (${GRADE_JA[bestIn(r.route)!.grade][1]})`)" @click="openLuck(bestIn(r.route))">{{ tr("運試し", "Luck test") }}</button>
-            <button type="button" :data-route-place-card="r.route" class="g-btn sm ml-2" :disabled="placing" :title="placeTitle" @click="placeHit(bestIn(r.route))">{{ tr("当たった形でクラフト台に戻る", "Back to the craft stage with a hit") }}</button>
+            <button v-if="!(luckRow && luckRow.route === r.route)" type="button" :data-route-place-card="r.route" class="g-btn sm ml-2" :disabled="placing" :title="placeTitle" @click="placeHit(bestIn(r.route))">{{ tr("当たった形でクラフト台に戻る", "Back to the craft stage with a hit") }}</button>
           </p>
           <p v-if="placeMiss && !busy && bestIn(r.route)" class="mt-1 text-center text-[11px] text-rose-300">{{ tr("上限の手数までに付かなかった。もう一度押して", "Didn't hit within the use cap. Press again") }}</p>
         </article>
