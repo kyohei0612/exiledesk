@@ -26,6 +26,7 @@ import { useStageBase } from "./use-stage-base";
 import StageItemCard from "../../components/for-share/item/StageItemCard.vue";
 import StageQualityBar from "./StageQualityBar.vue";
 import StageSanctifyBar from "./StageSanctifyBar.vue";
+import { flag } from "../../web/release-flags";
 import StageItemMini from "./StageItemMini.vue";
 import StageAimPanel from "./StageAimPanel.vue";
 import StageForesight from "./StageForesight.vue";
@@ -201,6 +202,8 @@ function setImplicit(line: number, values: number[]): void {
   s.use(implicitSetKey(line, values));
 }
 /** 聖別の数値 (聖別の帯)。続けて変えた分は 1 手にまとめる (品質と同じ) */
+/** 聖別の帯は本番では OK まで出さない (release-flags の sanctifyBar。v0.1.589 から本番は帯の所だけ隠していた) */
+const SANCTIFY_BAR = flag("sanctifyBar");
 function setSanctify(k: number | "max" | "min"): void {
   const last = s.log.value[s.log.value.length - 1];
   if (last && isSanctifySet(last.out.currency)) s.undo();
@@ -341,7 +344,7 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
           <StageQualityBar v-if="s.item.value && !s.replay.value" data-rec-part="quality" :item="s.item.value" class="flex-1" @quality="setQuality" @cap="setQualityCap" @catalyst="setCatalyst" />
         </div>
         <!-- 聖別の数値を決める帯 (聖別したアイテムだけ、品質の帯の下。2026-10-20) -->
-        <div v-if="!courseHidesEmulator && s.item.value?.sanctified && !s.replay.value" class="-mb-6 w-full max-w-[480px]"><StageSanctifyBar data-rec-part="sanctify" :item="s.item.value" @set="setSanctify" /></div>
+        <div v-if="SANCTIFY_BAR && !courseHidesEmulator && s.item.value?.sanctified && !s.replay.value" class="-mb-6 w-full max-w-[480px]"><StageSanctifyBar data-rec-part="sanctify" :item="s.item.value" @set="setSanctify" /></div>
         <div ref="cardEl" class="relative" :class="[fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
         <StageItemCard
           :doomed="doomed" :open="preview?.open"

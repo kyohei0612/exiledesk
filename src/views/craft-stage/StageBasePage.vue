@@ -12,6 +12,7 @@ import { craftStage as s } from "../../state/craft-stage";
 import { basePage, baseUnpicked } from "../../state/web-page";
 import { tr } from "../../i18n/lang";
 import { useStageBase } from "./use-stage-base";
+import { flag } from "../../web/release-flags";
 
 defineProps<{ phone: boolean }>();
 const { chosenBase, markChosen, pickSimBase } = useStageBase();
@@ -24,7 +25,12 @@ function pick(en: string): void {
   else markChosen(en); // 今のベースを押し直した時はアイテムはそのまま、自分で選んだ物にだけする
 }
 /** 選んだ見た目にするのは人が自分で選んだベースの時だけ (既定の金の指輪は選んでいない扱い。2026-10-23 オーナー) */
-const shown = computed(() => (!baseUnpicked.value && chosenBase.value === s.base.value ? s.base.value : ""));
+// 本番は OK まで前の形 (release-flags の baseChosen): ベースを持っていれば選んだ見た目、帯は未選択の時いつも
+const CHOSEN_ON = flag("baseChosen");
+const shown = computed(() => (!baseUnpicked.value && (!CHOSEN_ON || chosenBase.value === s.base.value) ? s.base.value : ""));
+const intro = computed(() => baseUnpicked.value && (!CHOSEN_ON || !chosenBase.value) && s.mode.value === "hand");
+/** 上の切り替えタブはベースのページでは本番は OK まで出さない (release-flags の modeTabs) */
+const MODE_TABS = flag("modeTabs");
 // 開いたら一番上から、戻ったら前の位置へ (ページを移ったのと同じに。2026-10-12 広告のお試しと同じ)
 let before = 0;
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && !baseUnpicked.value) back(); }
@@ -51,9 +57,9 @@ onBeforeUnmount(() => {
         </span>
       </div>
       <!-- 何から始めるか。帯は共通の部品 (ModeTabs、2026-10-23 オーナー「帯を 1 つにして両方に」)。シミュレーターを押したらこのページを閉じてツリーへ -->
-      <ModeTabs class="mb-3" @pick="(m) => m === 'sim' && back()" />
+      <ModeTabs v-if="MODE_TABS" class="mb-3" @pick="(m) => m === 'sim' && back()" />
       <!-- 初めての人への帯 + ベース選びの枠は共通の部品 (BasePickBody、シミュの初手のベース選びと同じ作り。2026-10-23)。帯は人がまだベースを選んだ事の無い時のエミュレーターだけ -->
-      <BasePickBody :selected="shown" :popular="baseUnpicked" :intro="baseUnpicked && !chosenBase && s.mode.value === 'hand'" @pick="pick" @quick="pick('Gold Ring')" />
+      <BasePickBody :selected="shown" :popular="baseUnpicked" :intro="intro" @pick="pick" @quick="pick('Gold Ring')" />
     </div>
   </section>
 </template>

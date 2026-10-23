@@ -20,6 +20,7 @@ import { nextTick } from "vue";
 import Icon from "../../components/ui/Icon.vue";
 import ModalShell from "../../components/ui/ModalShell.vue";
 import { tr } from "../../i18n/lang";
+import { flag } from "../../web/release-flags";
 
 const seed = s.aimPicker.value?.seed ?? null;
 /** 選んでいる物 (決めるまで手元だけ) */
@@ -82,9 +83,11 @@ function pickTier(r: ListRow, t: ListTier): void {
 }
 const isPickedTier = (r: ListRow, t: ListTier): boolean => { const c = pickedOf(r), { modId, idx } = idOf(r, t); return !!c && c.modId === modId && c.minTierIndex === idx; };
 const isCoveredTier = (r: ListRow, t: ListTier): boolean => { const c = pickedOf(r), { modId, idx } = idOf(r, t); return !!c && c.modId === modId && idx >= c.minTierIndex; };
+/** モンキーテスト 10-23 の直し (狙いの文を幅全部で・0 個で押した時の一言)。本番は OK まで前の形 (押せないボタン、release-flags の monkeyEmu1023) */
+const MONKEY = flag("monkeyEmu1023");
 /** 選んだ札の文。スパムシミュは当たりになる値の幅全部で (ページの狙いの札と同じ。モンキーテスト 10-23 の 6) */
 function chipOf(a: AimPick): string {
-  const m = forRoutes ? s.data.value?.mods.get(a.modId) : undefined;
+  const m = forRoutes && MONKEY ? s.data.value?.mods.get(a.modId) : undefined;
   return m ? `${aimRangeText(m, a.minTierIndex, s.itemLevel.value)} (${tr(`${rankOf(a)} 以上`, `${rankOf(a)}+`)})` : aimLabel(s.data.value, a);
 }
 const rankOf = (a: AimPick): string => { const n = s.data.value?.mods.get(a.modId)?.tiers.length ?? 0; return `T${n - a.minTierIndex}`; };
@@ -158,7 +161,7 @@ function decide(): void {
     <template #footer>
       <button type="button" class="g-btn" @click="close">{{ tr("やめる", "Cancel") }}</button>
       <span v-if="needPick" data-aim-need class="ml-auto text-[12px] text-rose-300" role="alert">{{ tr("狙う MOD にチェックしてください", "Check a mod to target first") }}</span>
-      <button type="button" data-rec="aim-decide" class="g-btn-red min-w-40" :class="needPick ? '' : 'ml-auto'" @click="decide">{{ forRoutes ? tr("比べる", "Compare") : tr("確率を見る", "See chances") }}{{ draft.length ? ` (${draft.length})` : "" }}</button>
+      <button type="button" data-rec="aim-decide" class="g-btn-red min-w-40" :class="[needPick ? '' : 'ml-auto', MONKEY ? '' : 'disabled:opacity-35']" :disabled="!MONKEY && !draft.length" @click="decide">{{ forRoutes ? tr("比べる", "Compare") : tr("確率を見る", "See chances") }}{{ draft.length ? ` (${draft.length})` : "" }}</button>
     </template>
   </ModalShell>
 </template>

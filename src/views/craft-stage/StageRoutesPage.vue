@@ -8,7 +8,7 @@
   値段は今の相場 (priceOf)、ベース代と始めの状態 (増強は白、カオスは MOD 1 つのレア、高貴は MOD 0 のレア。2026-10-19 オーナー) を作る費用は入れない。広告ありきの別のページ (WebApp.vue が両脇の枠を置く)
 -->
 <script setup lang="ts">
-import { type StageItem, type RouteKind, stageRuneIds } from "../../services/craft-stage/engine";
+import { type StageItem, type RouteKind, fillModText, tierDisplayRanges, stageRuneIds } from "../../services/craft-stage/engine";
 import { aimRangeText } from "./aim-text";
 import { runePrep } from "../../services/craft-stage/engine-emu";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
@@ -27,6 +27,7 @@ import { track } from "../../utils/track";
 import { logRecord } from "../../utils/log-record";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import BusyTag from "../../components/ui/BusyTag.vue";
+import { flag } from "../../web/release-flags";
 
 const GRADE_JA: Record<Grade, [string, string]> = { perfect: ["完全", "Perfect"], greater: ["上級", "Greater"], base: ["無印", "Regular"] };
 /** 1 通りの人数。スマホは 10 人 (2026-10-19 スマホ相当で 100 人は 35 秒・画面が最長 9 秒固まった。オーナー「スマホだと 10 人だな規模感的に」) */
@@ -89,14 +90,17 @@ const FROM_STEP: Step = { k: null, ja: "今のクラフトのアイテムから�
 const shownRoutes = computed(() => (fromItem.value ? ROUTES.map((r) => (r.route === "chaos" ? { ...r, steps: [FROM_STEP, ...r.steps.slice(1)] } : r)) : ROUTES));
 const ORDER = ROUTES.flatMap((r) => r.grades.map((grade) => ({ route: r.route, grade })));
 
+/** モンキーテスト 10-23 のエミュの直し (Esc は運試しの欄だけ・運試しの間の戻るを出さない・スマホの札の折り返し・題を 1 行・狙いの文を幅全部で)。本番は OK まで前の形 (release-flags の monkeyEmu1023) */
+const MONKEY = flag("monkeyEmu1023");
 /** 当たり (並べた物のどれか 1 つが付いたら止める。2 つ以上は開発版だけ ROUTES_MULTI_ON) */
 const t = computed(() => (routesTarget.value?.length ? routesTarget.value : null));
 /** 当たりごとの文・段・側 (狙いの札と内訳に出す) */
 const aims = computed(() => (t.value ?? []).flatMap((tt) => {
   const m = s.data.value?.mods.get(tt.modId);
   if (!m) return [];
-  // 当たりになる値の幅全部 (T8 以上なら T8 の下〜付く一番上の段の上。モンキーテスト 10-23 の 6)
-  const text = aimRangeText(m, tt.minTierIndex, ilvl.value).replace(/\n/g, " / ");
+  // 当たりになる値の幅全部 (T8 以上なら T8 の下〜付く一番上の段の上。モンキーテスト 10-23 の 6)。本番は OK まで一番下の段の幅だけ
+  const tier = m.tiers[tt.minTierIndex];
+  const text = (MONKEY ? aimRangeText(m, tt.minTierIndex, ilvl.value) : fillModText(m, tier ? tierDisplayRanges(tier) : [])).replace(/\n/g, " / ");
   const rank = `T${m.tiers.length - tt.minTierIndex}`;
   return [{ m, text, rank, side: m.type === "suffix" ? tr("サフィックス", "Suffix") : tr("プレフィックス", "Prefix"), label: `${text} (${tr(`${rank} 以上`, `${rank}+`)})` }];
 }));
@@ -260,7 +264,7 @@ function pickMod(): void { s.aimPicker.value = { seed: null, routes: true }; }
 /** Esc: 運試しの欄が開いていれば欄だけ閉じる (「閉じる」と同じ。モンキーテスト 10-23 の 1: ページごと閉じて結果が消えた)、無ければクラフトへ戻る */
 function onKey(e: KeyboardEvent): void {
   if (e.key !== "Escape" || s.aimPicker.value) return;
-  if (luckRow.value) { luckRow.value = null; return; }
+  if (MONKEY && luckRow.value) { luckRow.value = null; return; }
   back();
 }
 let before = 0;
@@ -271,7 +275,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
 <template>
   <section data-routes-page class="min-w-0 flex-1 p-4">
     <div class="mb-3 flex flex-wrap items-center gap-3">
-      <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-3 max-md:text-[14px] max-md:whitespace-nowrap tracking-[0.18em] max-md:tracking-[0.04em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ tr("スパムシミュレーター", "Spam simulator") }}</h1>
+      <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center px-8 text-[22px] max-md:!min-h-[40px] tracking-[0.18em] max-md:tracking-[0.04em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]" :class="MONKEY ? 'max-md:px-3 max-md:text-[14px] max-md:whitespace-nowrap' : 'max-md:px-6 max-md:text-[15px]'">{{ tr("スパムシミュレーター", "Spam simulator") }}</h1>
       <span class="flex items-center gap-2">
         <button type="button" data-routes-back class="g-btn sm max-md:min-h-10" @click="back">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
         <span class="text-[12px] opacity-60 max-md:hidden">{{ tr("Esc でも戻る", "Esc also goes back") }}</span>
@@ -327,10 +331,10 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
               <p class="text-[12px] tabular-nums text-[var(--exile-color-text-secondary)]">{{ tr("半分の人", "Half") }} {{ money(best.p50) }} · {{ tr("運が悪い 10 人に 1 人", "Unluckiest 1 in 10") }} {{ money(best.p90) }}</p>
             </div>
             <!-- スマホは横に並べ、収まらなければ折り返す (モンキーテスト 10-23 の 5: 2 つ並ぶと札から切れた) -->
-            <span class="flex shrink-0 flex-col items-stretch gap-1.5 max-md:w-full max-md:flex-row max-md:flex-wrap max-md:items-center max-md:[&>button]:min-w-0 max-md:[&>button]:flex-auto max-md:[&>button]:whitespace-normal">
+            <span class="flex shrink-0 flex-col items-stretch gap-1.5 max-md:w-full max-md:flex-row max-md:items-center" :class="MONKEY ? 'max-md:flex-wrap max-md:[&>button]:min-w-0 max-md:[&>button]:flex-auto max-md:[&>button]:whitespace-normal' : 'max-md:[&>button]:flex-1'">
             <button v-if="!busy && !luckOpen && bestLuck" type="button" data-route-luck-open class="g-btn-red" :title="tr(`この道の決まりで、${RUNS} 人と同じ始めの状態から自分でスパムして運を比べる`, `Spam it yourself with this route from the same start and compare your luck with the ${RUNS} people`)" @click="openLuck(bestLuck)">{{ tr("運試し", "Luck test") }}</button>
             <!-- 運試しの間は出さない (欄の中の同じ名前のボタンが運試しで当たった物を置く。こちらは別の 1 人を回すので違う物が載った。モンキーテスト 10-23 の 3) -->
-            <button v-if="!busy && !luckOpen && bestLuck" type="button" data-route-place class="g-btn sm" :disabled="placing" :title="placeTitle" @click="placeHit(bestLuck)">{{ tr("当たった形でクラフト台に戻る", "Back to the craft stage with a hit") }}</button>
+            <button v-if="!busy && (!MONKEY || !luckOpen) && bestLuck" type="button" data-route-place class="g-btn sm" :disabled="placing" :title="placeTitle" @click="placeHit(bestLuck)">{{ tr("当たった形でクラフト台に戻る", "Back to the craft stage with a hit") }}</button>
             <button v-if="!busy" type="button" data-route-recompute class="g-btn sm" :title="tr(`別の ${RUNS} 人でもう一度全部の道を計算する (乱数を変える)`, `Run all routes again with a different ${RUNS} people (new random seed)`)" @click="recompute">{{ tr("再計算", "Recompute") }}</button>
             <span v-if="!busy && round > 1" class="text-center text-[10px] tabular-nums text-[var(--exile-color-text-tertiary)]">{{ tr(`${round} 回目の ${RUNS} 人`, `${RUNS} people, run ${round}`) }}</span>
             </span>
@@ -407,7 +411,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
           <!-- この道で運試し (道の中で一番安い等級。運試しの欄は一番安い欄の下に出す) -->
           <p v-if="!offRoute(r.route) && !busy && bestIn(r.route)" class="mt-auto pt-3 text-center">
             <button type="button" :data-route-luck-card="r.route" class="g-btn sm" :class="luckRow === bestIn(r.route) ? 'on' : ''" :title="tr(`${tr(r.ja, r.en)}の一番安い等級 (${tr(...GRADE_JA[bestIn(r.route)!.grade])}) で運試し`, `Luck test with ${r.en} at its cheapest grade (${GRADE_JA[bestIn(r.route)!.grade][1]})`)" @click="openLuck(bestIn(r.route))">{{ tr("運試し", "Luck test") }}</button>
-            <button v-if="!(luckRow && luckRow.route === r.route)" type="button" :data-route-place-card="r.route" class="g-btn sm ml-2" :disabled="placing" :title="placeTitle" @click="placeHit(bestIn(r.route))">{{ tr("当たった形でクラフト台に戻る", "Back to the craft stage with a hit") }}</button>
+            <button v-if="!MONKEY || !(luckRow && luckRow.route === r.route)" type="button" :data-route-place-card="r.route" class="g-btn sm ml-2" :disabled="placing" :title="placeTitle" @click="placeHit(bestIn(r.route))">{{ tr("当たった形でクラフト台に戻る", "Back to the craft stage with a hit") }}</button>
           </p>
           <p v-if="placeMiss && !busy && bestIn(r.route)" class="mt-1 text-center text-[11px] text-rose-300">{{ tr("上限の手数までに付かなかった。もう一度押して", "Didn't hit within the use cap. Press again") }}</p>
         </article>
