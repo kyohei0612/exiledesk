@@ -3,8 +3,9 @@
  * preview-prod.mjs — 手元で本番と同じ環境を出す (2026-10-24 オーナー「ローカルと鯖環境を合わせたら開発版ウェブで確かめる必要なく本番リリースできる」)
  *   pnpm preview:prod             … (a) 本番そのまま  http://exiledesk.localhost:1460/
  *   pnpm preview:prod -- --dev    … (b) 開発版と同じ  http://dev.exiledesk.localhost:1461/ (オーナーのブックマーク「ExileDesk開発版」)
- *   --no-build で前に作った物のまま立て直す、--port で番号を替える。*.localhost は Chrome が手元 (127.0.0.1) に向ける
- * 作り (今の作業中のファイルから。dist-web は触らない) を server/web/.wrangler/preview-dist(-dev) に出し、
+ *   --no-build で前に作った物のまま立て直す、--port で番号を替える (出し先も別になる)。*.localhost は Chrome が手元 (127.0.0.1) に向ける
+ *   --head で commit 済みの HEAD から作る (../ExileDesk-preview、他の部長の書きかけを入れない)、--live で (a) でも相場・訪問者を本番の live から読む (本番と見比べる時)
+ * 作り (既定は今の作業中のファイルから。dist-web は触らない) を server/web/.wrangler/preview-dist(-dev)(-<番号>) に出し、
  * server/web の本番の wrangler.jsonc (run_worker_first・html_handling・404・D1 の名前) のまま wrangler dev (workerd) で出す。
  * (a) 本番の pnpm build:web と同じ並び (vite build + 相場の控え + 読み物 + ブログ)。本番の D1・KV に書かないよう、画面の送り先 (VITE_WEB_API) は
  *     手元の Worker 自身 (/boot.json・/log は 404 → 相場は /market-fallback.json の控え、分析の記録は捨てる)。
@@ -15,7 +16,7 @@
  * 本番と並べて比べる: node scripts/compare-prod-local.mjs http://127.0.0.1:1460 (Node からは *.localhost が引けないことがあるので数字で)
  */
 import { execFileSync, spawn } from "node:child_process";
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -24,33 +25,50 @@ const WEB = resolve(ROOT, "server/web");
 const args = process.argv.slice(2);
 const DEV = args.includes("--dev");
 const BUILD = !args.includes("--no-build");
-const PORT = Number(args[args.indexOf("--port") + 1]) || (DEV ? 1461 : 1460);
+// --live: (a) でも相場・配信を本番の server/live から読む (本番と見比べる時、scripts/compare-snaps.mjs。分析の送りは照らしの台本の側で止める)
+const LIVE = args.includes("--live");
+const DEF = DEV ? 1461 : 1460;
+const PORT = Number(args[args.indexOf("--port") + 1]) || DEF;
+// 決まった番号でない時は出し先・設定も別に (同じ時に 2 つ立てても掴み合わない)
+const TAG = `${DEV ? "-dev" : ""}${PORT === DEF ? "" : `-${PORT}`}`;
 const WORK = resolve(WEB, ".wrangler");
-const OUT = resolve(WORK, DEV ? "preview-dist-dev" : "preview-dist");
+const OUT = resolve(WORK, `preview-dist${TAG}`);
 const STATE = resolve(WORK, "state-preview");
-const CONF = resolve(WORK, DEV ? "wrangler.preview-dev.json" : "wrangler.preview.json");
+const CONF = resolve(WORK, `wrangler.preview${TAG}.json`);
 const WRANGLER = resolve(WEB, "node_modules/wrangler/bin/wrangler.js");
 const ORIGIN = `http://${DEV ? "dev." : ""}exiledesk.localhost:${PORT}`;
 const run = (cmd, a, opt = {}) => execFileSync(cmd, a, { cwd: ROOT, stdio: "inherit", windowsHide: true, ...opt });
 const node = (a, opt) => run(process.execPath, a, opt);
 
+// --head: 作業中のファイルではなく commit 済みの HEAD から作る (他の部長の書きかけを入れない。隣の作業場所 ../ExileDesk-preview (git worktree、detached) で)
+let SRC = ROOT;
+if (BUILD && args.includes("--head")) {
+  const git = (a, cwd = ROOT) => execFileSync("git", a, { cwd, encoding: "utf8", windowsHide: true }).trim();
+  const sha = git(["rev-parse", "HEAD"]);
+  SRC = resolve(ROOT, "..", "ExileDesk-preview");
+  if (!existsSync(resolve(SRC, ".git"))) git(["worktree", "add", "--detach", SRC, sha]);
+  else { git(["checkout", "-q", "--detach", "--force", sha], SRC); git(["clean", "-fdq"], SRC); }
+  if (!existsSync(resolve(SRC, "node_modules"))) symlinkSync(resolve(ROOT, "node_modules"), resolve(SRC, "node_modules"), "junction");
+  console.log(`HEAD ${sha.slice(0, 8)} ${git(["log", "-1", "--format=%s"], SRC).slice(0, 60)} から作る`);
+}
+
 // 1. 作る (型チェックは省く。出し先だけ替える)
 if (BUILD) {
   rmSync(OUT, { recursive: true, force: true });
   // (a) は送り先を手元に、(b) は開発版と同じ (送り先は替えない・開発版の印)
-  const env = { ...process.env, WEB_OUT: OUT, ...(DEV ? { VITE_DEV_PREVIEW: "1" } : { VITE_WEB_API: ORIGIN }) };
-  node([resolve(ROOT, "node_modules/vite/bin/vite.js"), "build", "--config", "vite.web.config.ts"], { env });
+  const env = { ...process.env, WEB_OUT: OUT, ...(DEV ? { VITE_DEV_PREVIEW: "1" } : LIVE ? {} : { VITE_WEB_API: ORIGIN }) };
+  node([resolve(ROOT, "node_modules/vite/bin/vite.js"), "build", "--config", "vite.web.config.ts"], { env, cwd: SRC });
   // 相場の控えは本番の build:web だけ (開発版には無い)。本番に置いてある物を写す (外の API を叩かない)
   if (!DEV) writeFileSync(resolve(OUT, "market-fallback.json"), execFileSync("curl", ["-sf", "https://exiledesk.com/market-fallback.json"], { encoding: "utf8", windowsHide: true, maxBuffer: 1 << 28 }));
-  node(["scripts/build-seo-pages.mjs", OUT]);
-  node(["scripts/build-blog-pages.mjs", OUT, ...(DEV ? ["--drafts"] : [])]);
+  node(["scripts/build-seo-pages.mjs", OUT], { cwd: SRC });
+  node(["scripts/build-blog-pages.mjs", OUT, ...(DEV ? ["--drafts"] : [])], { cwd: SRC });
 }
 
 // 2. 本番の wrangler.jsonc から設定を作る (置き場の道だけ替える。独自ドメインの routes は手元に要らない)
 const src = JSON.parse(readFileSync(resolve(WEB, "wrangler.jsonc"), "utf8").split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n"));
 delete src.$schema;
 delete src.routes;
-const conf = { ...src, main: "../move-gate.js", assets: { ...src.assets, directory: `./${DEV ? "preview-dist-dev" : "preview-dist"}` } };
+const conf = { ...src, main: "../move-gate.js", assets: { ...src.assets, directory: `./preview-dist${TAG}` } };
 mkdirSync(WORK, { recursive: true });
 writeFileSync(CONF, JSON.stringify(conf, null, 2));
 
