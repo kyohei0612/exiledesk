@@ -12,9 +12,9 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import Icon from "../../components/ui/Icon.vue";
 import { currentTreeRecipe, currentTreeRecipeId, duplicateTreeRecipe, oldRecipeCount, overwriteTreeRecipe, removeTreeRecipe, renameTreeRecipe, restoreTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../state/simulator/tree-recipes";
 import { openTreePage } from "../../web/page";
-import { baseArt } from "../../services/craft-stage/engine";
 import { fmtDate, treeShareUrl, useRecipeUrl } from "./recipe-share";
 import { useTree } from "./tree/use-tree";
+import { recipeSummary } from "./tree/recipe-summary";
 import { useArmed, ARMED_CLASS } from "../../utils/use-armed";
 import { track } from "../../utils/track";
 import { jaTypeName } from "../../services/trade2/localize";
@@ -22,9 +22,11 @@ import { tr } from "../../i18n/lang";
 
 const t = useTree();
 const baseName = (r: TreeRecipe): string => tr(jaTypeName(r.tree.base), r.tree.base);
-const countOf = (r: TreeRecipe): { boxes: number; aims: number; done: number } => {
+/** 1 枚の要約 (ベースの絵・完成の狙い・印・空の木か。帯の小窓と同じ) */
+const sumOf = (r: TreeRecipe) => recipeSummary(r.tree);
+const countOf = (r: TreeRecipe): { boxes: number; done: number } => {
   const bs = Object.values(r.tree.boxes);
-  return { boxes: bs.length, aims: new Set(bs.filter((b) => b.out === "hit" && b.aim).map((b) => `${b.aim!.modId}#${b.aim!.tier}`)).size, done: bs.filter((b) => b.done).length };
+  return { boxes: bs.length, done: bs.filter((b) => b.done).length };
 };
 /** 今の木に、開いているレシピに無い変更があるか (開いていない時は箱が始まりだけでなければ) */
 const dirty = computed(() => (currentTreeRecipe.value ? !sameTree(t.doc.value, currentTreeRecipe.value.tree) : Object.keys(t.doc.value.boxes).length > 1));
@@ -151,8 +153,9 @@ onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); clearTimeo
       <p v-else-if="!shown.length" class="py-6 text-center opacity-60">{{ tr("見つかりません", "No matches") }}</p>
       <ul v-else class="mt-3 grid gap-2 lg:grid-cols-2">
         <li v-for="r in shown" :key="r.id" data-recipe-card :data-recipe-id="r.id" class="relative flex min-w-0 items-start gap-3 rounded-md border bg-black/30 px-3 py-2.5 max-md:flex-wrap" :class="r.id === currentTreeRecipeId ? 'border-[var(--exile-color-border-brass)]' : 'border-white/10'">
-          <img v-if="baseArt(r.tree.base)" :src="baseArt(r.tree.base)!" alt="" class="size-12 shrink-0 object-contain" draggable="false" />
-          <span v-else class="size-12 shrink-0" />
+          <!-- ベースの絵 (空の木は空の印)。要約は帯の「レシピ ▾」の小窓と同じ recipe-summary.ts (10-23 オーナー「視覚的に管理しやすく」) -->
+          <img v-if="sumOf(r).art" :src="sumOf(r).art!" alt="" class="size-12 shrink-0 object-contain" draggable="false" />
+          <span v-else data-recipe-empty class="flex size-12 shrink-0 items-center justify-center rounded bg-white/[0.06] text-[11px] opacity-60">{{ sumOf(r).empty ? tr("空", "Empty") : "" }}</span>
           <div class="min-w-0 flex-1">
             <input v-if="renaming === r.id" :data-recipe-rename="r.id" :value="r.name" class="h-8 w-full rounded border border-amber-400/60 bg-black/50 px-1.5 text-[14px] font-bold outline-none max-md:h-10" @keydown.enter.prevent="($event.target as HTMLInputElement).blur()" @keydown.esc.stop="renaming = null" @blur="endRename(r, ($event.target as HTMLInputElement).value)" />
             <p v-else class="flex min-w-0 items-center gap-1.5">
@@ -160,7 +163,11 @@ onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); clearTimeo
               <button type="button" data-recipe-rename-btn class="grid size-7 shrink-0 place-items-center rounded opacity-50 hover:bg-white/10 hover:opacity-100 max-md:size-9" :title="tr('名前を変える', 'Rename')" @click="startRename(r)"><Icon name="pencil" class="size-3.5" /></button>
               <span v-if="r.id === currentTreeRecipeId" class="shrink-0 rounded-sm bg-amber-500/20 px-1.5 text-[11px] font-bold text-amber-200">{{ tr("開いている", "Open") }}</span>
             </p>
-            <p class="mt-0.5 text-[12px] text-[var(--exile-color-text-secondary)]">{{ baseName(r) }} · {{ tr(`箱 ${countOf(r).boxes}`, `${countOf(r).boxes} boxes`) }} · {{ tr(`狙い ${countOf(r).aims} つ`, `${countOf(r).aims} targets`) }} · {{ tr(`完成 ${countOf(r).done}`, `${countOf(r).done} done`) }}</p>
+            <p data-recipe-sum class="mt-0.5 min-w-0 break-words text-[12px] text-[var(--exile-color-text-secondary)]">
+              <template v-if="sumOf(r).empty">{{ tr("ベースなし", "No base") }}</template>
+              <template v-else>{{ baseName(r) }} · {{ tr(`完成の狙い ${sumOf(r).aims} つ`, `${sumOf(r).aims} final target(s)`) }}<span v-if="sumOf(r).marks" class="text-mod-fractured"> · ✦ {{ sumOf(r).marks }}</span> · {{ tr(`箱 ${countOf(r).boxes}`, `${countOf(r).boxes} boxes`) }} · {{ tr(`完成 ${countOf(r).done}`, `${countOf(r).done} done`) }}</template>
+            </p>
+            <p v-if="sumOf(r).first" class="min-w-0 truncate text-[12px] text-[#c8c8ff]" :title="sumOf(r).first">{{ sumOf(r).first }}</p>
             <p class="text-[11px] opacity-50">{{ tr(`更新 ${fmtDate(touchedAtTree(r))}`, `Updated ${fmtDate(touchedAtTree(r))}`) }}<template v-if="r.updatedAt !== r.savedAt"> · {{ tr(`作成 ${fmtDate(r.savedAt)}`, `Created ${fmtDate(r.savedAt)}`) }}</template></p>
             <div class="mt-2 flex flex-wrap items-center gap-1.5">
               <button type="button" data-recipe-open class="max-md:min-h-10" :class="arm.is(`open:${r.id}`) ? ARMED_CLASS : 'g-btn sm'" :title="tr('この木をクラフトの道で開く', 'Open this tree in the crafting path')" @click="open(r)">{{ arm.is(`open:${r.id}`) ? tr("保存していない変更が消えます。もう一度押すと開く", "Unsaved changes will be lost. Click again to open") : tr("開く", "Open") }}</button>
