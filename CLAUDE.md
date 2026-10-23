@@ -37,7 +37,7 @@ PoE2 のクラフトのエミュレーター (Web が本番、アプリは当分
 - 型: `pnpm -s exec vue-tsc --noEmit -p tsconfig.json`。テストはオーナーが言った時だけ (確かめは手元の dev サーバーの画面のスナップ。メモ feedback-test-strategy)。
 - 作る・確かめる・モンキーは手元の dev サーバー (`pnpm dev:web`、1440、直しが数秒で入る)。ビルドに関わる物 (部品の分け方・先読み・古い塊の読み直し・SW) と本番の前の確かめは、手元の本番と同じ環境で (Cloudflare の開発版 web-dev は 10-24 に消した。1 日 10 万リクエストの枠を本番と共有していて、10-23 に開発版だけで 11.9 万回)。手元で出せない物 (端のキャッシュ・出した直後の版の入れ替わり・独自ドメインの https) は本番に出した直後にサーバー管理人が見る。
 - 版上げ: `node scripts/bump-version.mjs patch` → `cd src-tauri && cargo check -q` → commit → push → `pnpm deploy:web`。
-- 手元の開発版 (シミュレーター・チュートリアルが開く、本番と同じ Worker で): `pnpm preview:prod -- --dev` → http://dev.exiledesk.localhost:1461/ 。本番そのままは `pnpm preview:prod` → http://exiledesk.localhost:1460/ 。オーナーに触ってもらう時はブラックが立ち上げてから渡す。
+- 手元の開発版 (シミュレーター・チュートリアルが開く、本番と同じ Worker で): `pnpm preview:prod -- --dev` → http://dev.exiledesk.localhost:1461/ 。本番そのままは `pnpm preview:prod` → http://exiledesk.localhost:1460/ 。オーナーの確かめはふだん dev サーバー (http://localhost:1440/web.html、ブラックが立ち上げてから渡す)。手元の開発版 (ビルドあり) はリリースの指示の時だけ、最終チェック長が使う。
 - Bash では `\` が 1 段消える。正規表現や `\` の入る物は Write / Edit で書く。
 - Bash で `cd <リポジトリの外>; …` とつながない (bypass でも毎回許可が出てオーナーの手が止まる)。scratchpad の台本は絶対パスで呼び、書き換えは Edit / Write で。
 - sleep で待つ Bash の繰り返しをしない (1 回ごとに cmd の窓がちらつく)。待つ物は run_in_background で 1 回立てて知らせを待つか、台本の中で待つ。
