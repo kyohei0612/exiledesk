@@ -5,7 +5,7 @@
   選ぶとクラフトへ戻る。まだ選んでいない時 (初めて・白に戻した後) は戻るボタンを出さない
 -->
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { nextTick, onBeforeUnmount, onMounted } from "vue";
 import BaseCatalog from "../../components/items/BaseCatalog.vue";
 import { craftStage as s, SIM_LOCKED } from "../../state/craft-stage";
 import { basePage, baseUnpicked } from "../../state/web-page";
@@ -14,7 +14,6 @@ import { useStageBase } from "./use-stage-base";
 
 defineProps<{ phone: boolean }>();
 const { pickSimBase } = useStageBase();
-const catalog = ref<InstanceType<typeof BaseCatalog> | null>(null);
 
 function back(): void { basePage.value = false; }
 /**
@@ -34,8 +33,6 @@ onMounted(() => {
   before = window.scrollY;
   window.scrollTo(0, 0);
   window.addEventListener("keydown", onKey);
-  // 選び直しの時は、今のベースの一覧が全部と「もっと見る」の帯の少し下まで見える所へ送る (前の下に開く一覧と同じ BaseCatalog の reveal。2026-10-18 オーナー)
-  if (!baseUnpicked.value) void nextTick(() => catalog.value?.reveal());
 });
 onBeforeUnmount(() => {
   window.removeEventListener("keydown", onKey);
@@ -71,7 +68,7 @@ onBeforeUnmount(() => {
         <button type="button" data-base-quick class="g-btn-red min-h-11 shrink-0 px-2 text-[14px] max-md:w-full" @click="pick('Gold Ring')">{{ tr("金の指輪ですぐ試す", "Try now with a Gold Ring") }}</button>
       </div>
       <!-- 未選択の時は前のベース・種類を選んだ状態にしない・人気のベースを上に (StageBasePicker.vue と同じ) -->
-      <div class="rounded-lg bg-black/30 p-4 max-md:p-2"><BaseCatalog ref="catalog" :data="s.data.value" :selected="baseUnpicked ? '' : s.base.value" :popular="baseUnpicked" @pick="pick" /></div>
+      <div class="rounded-lg bg-black/30 p-4 max-md:p-2"><BaseCatalog :data="s.data.value" :selected="baseUnpicked ? '' : s.base.value" :popular="baseUnpicked" @pick="pick" /></div>
     </div>
   </section>
 </template>
