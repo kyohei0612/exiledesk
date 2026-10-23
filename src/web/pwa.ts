@@ -31,24 +31,29 @@ export function startPwa(): void {
   }
 }
 
-/** 古い塊で読み直した時刻 (sessionStorage)。この間にもう一度起きたら読み直さない (無限に読み直さない印) */
+/** 古い塊で読み直した記録 (sessionStorage、"1 回目の時刻:回数")。STALE_GAP_MS の間に STALE_MAX 回まで (無限に読み直さない印) */
 const STALE_KEY = "exiledesk-stale-reload";
 const STALE_GAP_MS = 60_000;
+const STALE_MAX = 2;
+/** 2 回目の前に待つ (出した直後は新しい版が届き切っておらず、すぐ読み直すとまた 404 の事がある) */
+const STALE_RETRY_WAIT_MS = 3_000;
 /**
  * 版が替わった後の古い塊 (2026-10-22 オーナー OK、notes/2026-10-22-sw-err-failed.md の案 ①): 開いたままのタブが、次のデプロイで消えた
- * 前の版の JS の塊を後から読むと失敗して画面が壊れる。vite が出す vite:preloadError で 1 回だけ読み直して新しい版にする。
- * 1 分以内に 2 回目が起きた時・印を書けない時 (保存を止めた端末) は読み直さず、今までどおりのエラーにする
+ * 前の版の JS の塊を後から読むと失敗して画面が壊れる。vite が出す vite:preloadError (後から読む部品の import() は全部これを通る) で読み直して新しい版にする。
+ * 1 分に 2 回まで (2 回目は少し待つ。出した直後・続けて 2 回出した時、10-23)。それより多い時・印を書けない時 (保存を止めた端末) は読み直さず、今までどおりのエラーにする
  */
 export function startStaleReload(): void {
   if (typeof window === "undefined") return;
   window.addEventListener("vite:preloadError", (e) => {
-    let last = 0;
-    try { last = Number(sessionStorage.getItem(STALE_KEY)) || 0; } catch { return; }
-    if (Date.now() - last < STALE_GAP_MS) return;
-    try { sessionStorage.setItem(STALE_KEY, String(Date.now())); } catch { return; }
+    let first = 0, n = 0;
+    try { [first, n] = (sessionStorage.getItem(STALE_KEY) ?? "").split(":").map((x) => Number(x) || 0); } catch { return; }
+    if (Date.now() - first >= STALE_GAP_MS) { first = Date.now(); n = 0; }
+    if (n >= STALE_MAX) return;
+    try { sessionStorage.setItem(STALE_KEY, `${first}:${n + 1}`); } catch { return; }
     e.preventDefault();
-    logRecord("stale_reload", { msg: String((e as Event & { payload?: unknown }).payload ?? "").slice(0, 120) });
-    location.reload();
+    logRecord("stale_reload", { n: n + 1, msg: String((e as Event & { payload?: unknown }).payload ?? "").slice(0, 120) });
+    if (n === 0) location.reload();
+    else setTimeout(() => location.reload(), STALE_RETRY_WAIT_MS);
   });
 }
 
