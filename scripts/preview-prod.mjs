@@ -4,12 +4,13 @@
  *   pnpm preview:prod             … (a) 本番そのまま  http://exiledesk.localhost:1460/
  *   pnpm preview:prod -- --dev    … (b) 開発版と同じ  http://dev.exiledesk.localhost:1461/ (オーナーのブックマーク「ExileDesk開発版」)
  *   --no-build で前に作った物のまま立て直す、--port で番号を替える。*.localhost は Chrome が手元 (127.0.0.1) に向ける
- * 作り (今の作業中のファイルから。dist-web・dist-web-dev は触らない) を server/web/.wrangler/preview-dist(-dev) に出し、
+ * 作り (今の作業中のファイルから。dist-web は触らない) を server/web/.wrangler/preview-dist(-dev) に出し、
  * server/web の本番の wrangler.jsonc (run_worker_first・html_handling・404・D1 の名前) のまま wrangler dev (workerd) で出す。
  * (a) 本番の pnpm build:web と同じ並び (vite build + 相場の控え + 読み物 + ブログ)。本番の D1・KV に書かないよう、画面の送り先 (VITE_WEB_API) は
  *     手元の Worker 自身 (/boot.json・/log は 404 → 相場は /market-fallback.json の控え、分析の記録は捨てる)。
- * (b) 開発版 (scripts/deploy-web-dev.mjs) と同じビルドの印 VITE_DEV_PREVIEW=1 (チュートリアル・シミュレーターが開く、分析は送らない、ブログは下書きも)。
- *     相場・配信は開発版と同じく本番の server/live の /boot.json を読む (読むだけ。要望を送ると本番に届くのも開発版と同じ)。門 (dev-gate) は無し。
+ * (b) 開発版のビルドの印 VITE_DEV_PREVIEW=1 (チュートリアル・シミュレーターが開く、分析は送らない、ブログは下書きも)。
+ *     相場・配信は本番の server/live の /boot.json を読む (読むだけ。要望を送ると本番に届く)。
+ *     10-24 にネットの開発版 (web-dev.exiledesk.workers.dev・deploy-web-dev.mjs・dev-gate.js) を消し、開発版はこの手元の (b) だけになった (オーナー)。
  * D1 は手元の写し (.wrangler/state-preview。シェアの shares は本番から新しい 20 行を読んで写す)。止める時は Ctrl+C (子の workerd も止まる)。
  * 本番と並べて比べる: node scripts/compare-prod-local.mjs http://127.0.0.1:1460 (Node からは *.localhost が引けないことがあるので数字で)
  */
