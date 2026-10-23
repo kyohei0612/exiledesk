@@ -142,9 +142,13 @@ const keyOk = (env: Env, req: Request): boolean => {
 
 async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): Promise<Response> {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
-  // シミュレーターのツリーのレシピの短い URL (POST /tree/new・GET /tree/<id>、tree-share.ts)
-  const tree = await treeShare(req, env, url, json);
-  if (tree) return tree;
+  // シミュレーターのツリーのレシピの短い URL (POST /tree/new・GET /tree/<id>、tree-share.ts)。TREE_SHARE=1 の時だけ (本番はシミュレーターを出すまで閉じる)
+  if (env.TREE_SHARE === "1") {
+    const tree = await treeShare(req, env, url, json);
+    if (tree) return tree;
+  }
+  // 窓なしの Chrome (部長たちの確かめ) の分析の記録は置かない (10-24 オーナー「2 で」。記録に UA が無く後から見分けられないため、受ける時に外す)
+  if ((url.pathname === "/log" || url.pathname === "/event") && req.method === "POST" && /HeadlessChrome/.test(req.headers.get("user-agent") ?? "")) return json({ ok: true, n: 0 });
   // 操作の印 (Web 版の track.ts が sendBeacon でまとめて送る)
   if (url.pathname === "/event" && req.method === "POST") {
     let body: unknown;

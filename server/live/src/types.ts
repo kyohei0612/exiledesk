@@ -77,6 +77,8 @@ export interface Env {
   EVENTS_DATASET?: string;
   /** "1" の時だけ再現の確かめの入口 (/__sim/…) を開ける (wrangler.sim.jsonc。本番には無い) */
   SIM?: string;
+  /** "1" の時だけツリーのレシピの短い URL (/tree/…、tree-share.ts) を開ける。シミュレーターが本番に出るまで本番には無い (10-24) */
+  TREE_SHARE?: string;
 }
 
 export type Fetch = typeof fetch;
