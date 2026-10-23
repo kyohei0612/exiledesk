@@ -31,7 +31,10 @@ export const FLAGS = {
 export type Flag = keyof typeof FLAGS;
 
 /** OK が出て本番にも入れた物 (ここに 1 行足す) */
-const RELEASED: ReadonlySet<Flag> = new Set<Flag>([]);
+const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
+  // データの OK 待ちで poe2db の裏付けがある物 (オーナー 10-24「データとれてるならそのまま出してええよ」、ジン部長)
+  "abyssSuffix", "skillPlus", "talismanWeight", "dntBases",
+]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */
 export const DEV_BUILD: boolean = import.meta.env.DEV || import.meta.env.VITE_DEV_PREVIEW === "1";
