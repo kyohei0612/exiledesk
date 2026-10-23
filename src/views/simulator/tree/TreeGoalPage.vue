@@ -83,7 +83,7 @@ const cardW = innerWidth < 768 ? Math.min(CARD_W, innerWidth - 90) : CARD_W;
   <ModalShell :open="true" :inline="asPage" rec="tree-goal" :title="tr('0 完成形の設定', '0 Final item')" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" :width="asPage ? 'w-full h-[calc(100vh-140px)]' : 'w-[88%] h-[86%]'" full-on-phone body-class="px-3 pb-3" @close="close">
     <template #subheader>
       <!-- 1 → 2 の段 (押すとその段へ)。初手 (ベース未選択) の間は 2 へは飛べない (ベースを押して初めて 2 へ、10-23 オーナー)。右端に保存したレシピから開く -->
-      <div data-tree-goal-steps class="flex items-center gap-2 px-3 pb-2">
+      <div data-tree-goal-steps class="flex flex-wrap items-center gap-2 px-3 pb-2">
         <button type="button" data-tree-goal-step="1" class="g-tab !min-h-[30px] !px-4 !text-[13px]" :class="step === 1 ? 'on' : ''" @click="t.goalPage.value = 1">{{ tr("1 ベース", "1 Base") }} <span v-if="!unpicked" class="ml-1 text-[11px] opacity-70">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}</span></button>
         <span class="opacity-40">→</span>
         <button type="button" data-tree-goal-step="2" class="g-tab !min-h-[30px] !px-4 !text-[13px] disabled:opacity-40" :class="step === 2 ? 'on' : ''" :disabled="unpicked" :title="unpicked ? tr('先にベースを選ぶ', 'Choose a base first') : undefined" @click="toMods">{{ tr("2 完成の MOD", "2 Final mods") }} <span class="ml-1 rounded-full bg-black/25 px-1.5 text-[11px] tabular-nums">{{ t.goals.value.length }}</span></button>
