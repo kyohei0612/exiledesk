@@ -161,8 +161,18 @@ function setTreeNote(text: string): void {
 const opened = ref(0);
 /** 別の木を開く (レシピ・共有の URL から。1 つ戻すで前の木へ戻せる) */
 function open(tree: TreeDoc): void { opened.value++; edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, JSON.parse(JSON.stringify(tree))); migrateStart(d); }); }
-/** 白紙に戻す (今のベースとアイテムレベルのまま。1 つ戻すで戻せる) */
-function reset(): void { edit((d) => { Object.assign(d, newTree(d.base, d.itemLevel)); }); }
+/**
+ * 白紙に戻す (今のベースとアイテムレベルのまま。1 つ戻すで戻せる)。前の木の鍵は先に全部消す (setBase と同じ)。
+ * 前は上書きだけで、白紙に無い鍵 (乱数の MOD の数 startRandom・完成形のレアリティ goal・完成の狙い memoAims など) が残り、
+ * 見本の木から戻すとスタートに乱数の外れの MOD が付いたままだった (10-23 オーナー「スタートは何も設定していないはず」)
+ */
+function reset(): void {
+  edit((d) => {
+    const { base, itemLevel } = d;
+    for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k];
+    Object.assign(d, newTree(base, itemLevel));
+  });
+}
 /** ベースを替える = そのベースの白紙から (狙い・手は前のベースの MOD なので残さない)。アイテムレベルだけなら木はそのまま。1 つ戻すで戻せる */
 function setBase(base: string, itemLevel: number): void {
   edit((d) => {
