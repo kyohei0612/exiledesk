@@ -28,3 +28,6 @@ export { armourReduction, esTimeline, attackRow, deflectChance, evadeChance, KIN
 // フラクチャーの候補から始めのアイテム (候補のどれかが ✦ のレア + 外れ 3) と、狙いを付けられる所まで付けた形 (枠を超えた残りを返す)。オーナーの決め 10-23
 export type { TierMod } from "./engine-sim/start-fracture";
 export { fractureStart, placeMods } from "./engine-sim/start-fracture";
+// ベースを替えた時に狙い・始まりの MOD を新しいベースの同じ MOD・段へ読み替える (部位ごとに id と段の数が違う。オーナー 10-24)
+export type { CarriedAims } from "./engine-sim/carry-aims";
+export { carryAims } from "./engine-sim/carry-aims";
