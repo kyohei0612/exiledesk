@@ -20,9 +20,9 @@ const CARD_W = 320;
 
 <template>
   <ModalShell :open="true" rec="tree-start" :title="tr('スタート', 'Start')" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" width="w-full max-w-[52rem]" full-on-phone body-class="px-3 pb-3" @close="t.startPage.value = false">
-    <div data-tree-start-page class="flex min-w-0 items-start gap-4">
+    <div data-tree-start-page class="flex min-w-0 items-start gap-4 max-md:flex-col max-md:items-stretch">
       <div class="min-w-0 flex-1"><TreeStartPick /></div>
-      <div class="flex shrink-0 flex-col gap-1" :style="{ width: `${CARD_W}px` }">
+      <div class="flex shrink-0 flex-col gap-1 max-md:!w-full max-md:items-center" :style="{ width: `${CARD_W}px` }">
         <p class="text-[12px] opacity-70">{{ tr("始まりのアイテム (外れの MOD・✦ の候補は 1 例)", "Starting item (miss mods and the ✦ pick are one example)") }}</p>
         <StageItemCard v-if="item" :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" />
       </div>

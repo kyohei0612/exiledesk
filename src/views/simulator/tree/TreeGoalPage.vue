@@ -72,7 +72,8 @@ const CARD_W = 340;
       </div>
       <BaseCatalog :data="s.data.value" :selected="unpicked ? '' : t.doc.value.base" @pick="pick" />
     </div>
-    <div v-else data-tree-goal-mods class="flex min-h-0 min-w-0 items-start gap-4">
+    <!-- 768px 未満は縦に積む (完成形のカードが上、表は全部の幅。横に並べると表が 1 文字幅に潰れた、10-23 デザイン部長の気づき・メモ web-phone-layout) -->
+    <div v-else data-tree-goal-mods class="flex min-h-0 min-w-0 items-start gap-4 max-md:flex-col max-md:items-stretch">
       <div class="min-w-0 flex-1"><ModTable overlay :data="s.data.value" :item="t.goalItem.value?.item ?? null">
         <!-- 段の行のボタンは「フラクチャー」(印、10-23) と「狙いにする」(オーナー 10-22) -->
         <template #tier-actions="{ row: r, tier: tt }">
@@ -83,7 +84,7 @@ const CARD_W = 340;
         </template>
       </ModTable></div>
       <!-- 完成形のカード (ページの送りでも見えるよう上に留める) -->
-      <div data-tree-goal-card class="sticky top-0 flex shrink-0 flex-col gap-2" :style="{ width: `${CARD_W}px` }">
+      <div data-tree-goal-card class="sticky top-0 flex shrink-0 flex-col gap-2 max-md:static max-md:order-first max-md:!w-full max-md:items-center" :style="{ width: `${CARD_W}px` }">
         <StageItemCard v-if="t.goalItem.value" :item="t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" :fracture-group="marks" fracturable @fracture="onCardFracture" />
         <!-- 枠を超えた狙い (10-23 オーナー「欲しい物を全部選ぶので枠を超えてよい」): 止めずにカードの下に並べる -->
         <div v-if="t.goalItem.value?.left.length" data-tree-goal-over class="flex flex-col gap-0.5 rounded-md bg-white/[0.04] px-2 py-1 text-[12px]">
