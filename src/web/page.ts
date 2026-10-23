@@ -235,9 +235,10 @@ export function startPages(): void {
     } catch { /* 積めなくても画面はそのまま */ }
   });
   window.addEventListener("popstate", () => apply(pageOfUrl()));
-  // ページが替わった直後のクリックは受けない (「← 戻る」のダブルクリックの 2 回目が、移った先の同じ位置のヘッダーの「ブログ」に当たって /blog/ へ飛んだ。モンキーテスト 10-23 の 3)
-  for (const ev of ["click", "pointerdown"]) window.addEventListener(ev, (e) => { if (performance.now() - movedAt < MOVE_GUARD_MS) { e.preventDefault(); e.stopPropagation(); } }, { capture: true });
+  // ページが替わった直後 (0.5 秒) のクリックは受けない (「← 戻る」のダブルクリックの 2 回目が、移った先の同じ位置のヘッダーの「ブログ」に当たって /blog/ へ飛んだ。モンキーテスト 10-23 の 3)
+  // 比べるのは押された時刻 (e.timeStamp)。移った先の描画が重いと 2 回目のクリックが待たされ、配られる時には 300ms を過ぎていた (10-23 シミュ部長の確かめ)
+  for (const ev of ["click", "pointerdown"]) window.addEventListener(ev, (e) => { if (e.timeStamp - movedAt < MOVE_GUARD_MS) { e.preventDefault(); e.stopPropagation(); } }, { capture: true });
 }
 /** ページが替わった時刻と、その後クリックを受けない長さ */
 let movedAt = -Infinity;
-const MOVE_GUARD_MS = 300;
+const MOVE_GUARD_MS = 500;
