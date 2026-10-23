@@ -29,10 +29,12 @@ import { closeDailyPage, openDailyPage, openFeedback, openGuide, page } from "./
 import AdSlot from "../components/ui/AdSlot.vue";
 import WebFooter from "./WebFooter.vue";
 import { pageTick, sideAdW } from "../utils/ads";
-import { BLOG_ON, DAILY_ON, dailyPage, feedbackPage, recipesPage, routesOpen, treePage } from "../state/web-page";
+import { BLOG_ON, DAILY_ON, dailyPage, feedbackPage, recipesPage, routesOpen, TREE_ON, treePage } from "../state/web-page";
+import { prefetchWhenIdle } from "./prefetch";
 const SideReads = defineAsyncComponent(() => import("./SideReads.vue")); // 右の列の読み物 (関係する記事・新しい記事・使い方、/blog/index.json)
 const StageRoutesPage = defineAsyncComponent(() => import("../views/craft-stage/StageRoutesPage.vue"));
-const SimTreePage = defineAsyncComponent(() => import("../views/simulator/tree/SimTreePage.vue")); // クラフトの道 (ツリー) のページ (2026-10-22、開発版だけ)
+const loadTree = () => import("../views/simulator/tree/SimTreePage.vue");
+const SimTreePage = defineAsyncComponent(loadTree); // クラフトの道 (ツリー) のページ (2026-10-22、開発版だけ)。手が空いたら先に読む (下の onMounted)
 /**
  * デイリークラフトチャレンジのページ (2026-10-22、開発版だけ。中身 views/daily/DailyPage.vue はデイリー部長が作る)。
  * まだ無い間は下の「準備中」の入れ物 (glob は無いファイルを空で返すので、ビルドは落ちない)
@@ -83,6 +85,8 @@ const onVisible = (): void => { if (document.visibilityState === "visible") onAc
 onMounted(() => {
   for (const ev of ["pointerdown", "keydown", "wheel"] as const) window.addEventListener(ev, onActive, { passive: true, capture: true });
   document.addEventListener("visibilitychange", onVisible);
+  // シミュレーター (ツリー) の塊は、開いてから読むのでなく手が空いた時に先に読む (開発版だけ。2026-10-23 オーナー「裏で読み込んでおいて」)
+  if (TREE_ON) prefetchWhenIdle(loadTree);
 });
 onBeforeUnmount(() => {
   for (const ev of ["pointerdown", "keydown", "wheel"] as const) window.removeEventListener(ev, onActive, { capture: true });
