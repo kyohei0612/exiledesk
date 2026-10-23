@@ -96,8 +96,13 @@ const shownEdges = computed(() => edges.value.filter((e) => [e.id, ...e.to.map((
 const row = ref<HTMLElement | null>(null);
 /** ツリーの段の高さ = 画面の下まで (段の上の位置を測って引く。決め打ちの 230px では 1920 幅で 24px はみ出した、10-22 開発版で測った) */
 const rowH = ref(480);
-/** 段の下にある物 (.g-panel の下の余白 8 + 枠 18 + ページの下の余白 16) と少しの余り */
-const ROW_BOTTOM = 46;
+/**
+ * 段の下にある物 (.g-panel の下の余白 8 + 枠 18 + ページの下の余白 16) と余り。余りは 12px (前は 4px):
+ * ページの拡大率 (html の zoom、WebApp の fitZoom) が 1 より少し小さい時に測ると、拡大率 1 では数 px 高すぎて縦のスクロールバーが出て、
+ * 幅が縮む → 拡大率が下がる → スクロールバーが消える → 拡大率が戻る、をフレームごとにくり返し、CPU が回りっぱなしになった
+ * (10-23 オーナー「シミュめっちゃ重くなった」。初手のページ (長い) から木へ戻った時に起きた)
+ */
+const ROW_BOTTOM = 54;
 function measureRow(): void {
   const el = row.value;
   if (!el) return;
