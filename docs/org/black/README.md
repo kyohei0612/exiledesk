@@ -22,7 +22,7 @@
 | エミュ部長 | エミュの画面 (本番のエミュレーター: 棚から打つ画面・スパムシミュレーター) の UI/UX だけ、エンジンには触れない (10-22 深夜) | src/views/craft-stage・state/emulator | 「エミュの画面の見た目・操作」「スパムシミュの画面」 | 呼ばれたら常駐 | Opus | emu/README.md |
 | シミュ部長 | シミュレーター (ツリー) の画面の UI/UX だけ (エンジンには触れない、10-22 深夜)・費用の見せ方、チュートリアル (使い方・コツ・コース) | src/views・services・state の simulator/ と tutorial/、tests/simulator・tutorial、scripts/_sim-*・sim-telemetry、server/live/src/sim.ts | 「シミュレーター」「チュートリアル・コース・クラフト手順」 | 呼ばれたら常駐 | Opus | simulator/README.md |
 | 解析君 | 確率・期待値・重み・動的計画法、打ち方の比べ (N 人回す)、計算とエンジンの突き合わせ | src/services/simulator/auto/ (auto-order* はシミュ)、scripts/analysis/ | 「〜を回して」「どの打ち方が安い?」「何神かかる?」「確率は合ってる?」 | 呼ばれたら常駐 | Opus | math/README.md |
-| 分析君 | Discord・要望・バグの受けと再現・日報・分析の記録、要望の返事、サーバー | server/ (sim.ts 以外)、tests/live-worker*・log-sender*、scripts/pull-logs・analyze-logs | 「要望が来た」「バグ」「記録・訪問者」「返事を置いて」「サーバー・Discord・相場の取得」 | 呼ばれたら常駐 | Opus | analytics/README.md |
+| 分析君 | Discord・要望・バグの受けと再現・日報・分析の記録、要望の返事、サーバー管理人 (兼任: server/・出しの台本・Cloudflare の使用量の見張り) | server/ (sim.ts 以外)、tests/live-worker*・log-sender*、scripts/pull-logs・analyze-logs | 「要望が来た」「バグ」「記録・訪問者」「返事を置いて」「サーバー・Discord・相場の取得」 | 呼ばれたら常駐 | Opus | analytics/README.md |
 | 動画編集長 | YouTube「チョコバナナ」の台本・撮影・合成・投稿の準備 | video/ | 「動画」「台本」「撮影」「サムネ」 | 呼ばれたら常駐 | Opus | video/README.md |
 | 記事編集長 | ブログの記事の仕上げ: 流れ・見出し・まとめ / 注意 / ヒントの箱・SVG の図・スクリーンショット・OGP の絵・キャラの吹き出し、日英、SEO の手引きの守り (数字と出どころは解析君、入れ物はジン部長) | docs/org/blog/、記事の元 src/data/blog/*.md・img/ (README.md はジン部長) | 「記事」「ブログ」「読み物」 | 呼ばれたら常駐 | Opus | blog/README.md |
 | リサーチ長 | 外の調べもの (YouTube の字幕・クラフト動画の要点・poe2db/CoE の大きな調べ・似たサイト・AI の進め方)、コードは触らない | docs/org/research/ | 「poe2db で確かめて」「この動画の要点」「よそはどうしてる?」 | 呼ばれたら常駐 | Opus | research/README.md |

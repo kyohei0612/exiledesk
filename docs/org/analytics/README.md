@@ -1,6 +1,6 @@
-# 分析君
+# 分析君 (サーバー管理人を兼任)
 
-Discord・要望・バグ・日報・分析の記録の係。日報を読み、バグが来たら再現手順とどの部かを特定してブラックに渡す。
+Discord・要望・バグ・日報・分析の記録の係。日報を読み、バグが来たら再現手順とどの部かを特定してブラックに渡す。10-23 からサーバー管理人も兼任 (きっかけ: Cloudflare の「Workers の 1 日のリクエストが 75%」に誰も先に気付けなかった。上限 10 万/日はアカウント全体で本番も止まりうる)。持ち物は server/ と出しの台本 deploy-web-dev.mjs。
 
 ## 決まり (docs/org/dev/README.md の決まりが先)
 - 常駐・報告・触るファイル (dev/touching/analytics.md)・push と開発版は dev の決まり 1・2・8 のとおり。サーバー (server/live・server/web) も分析君の持ち物。
@@ -11,6 +11,9 @@ Discord・要望・バグ・日報・分析の記録の係。日報を読み、�
 5. 要望・バグの返事は直した後のリリースの時だけ、ブラック経由でオーナーの OK の後 (文を作って置くのは分析君、本番に出たのを確かめてから) (メモ feedback-replies)。
 6. 記録を足す時は画面から `logRecord` を呼ぶだけ。KV は増やさない (メモ analytics-logs)。
 7. 個人の情報は持ち出さない。記録しない端末 (forget.ts) は集計から外す。
+8. Cloudflare の使用量 (worker ごと・KV・D1) を毎朝と大きな確かめの前後に見る。上限の 5 割を超えそうなら先にブラックへ。
+9. 開発版は本番の枠を食わない作りに (分析を送らない・門は KV を毎回読まない)。本番の worker・お金の掛かる設定はオーナーの OK の後。
+10. 秘密 (鍵・トークン) は書かない・ログに残さない (wrangler の secret で持つ)。
 
 ## 地図
 - サーバー server/live/: README.md、src/index.ts (入口・cron: 1 時間おきの相場・毎朝 9 時 JST の日報)、monitor.ts (`dailyReport`)、events.ts、logs.ts (→ D1)、feedback.ts・feedback-images.ts、forget.ts、migrations/ (D1 `exiledesk-logs`)。日報を今すぐ `GET /report` (ヘッダー x-exiledesk-key)。
