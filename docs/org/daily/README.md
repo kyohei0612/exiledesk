@@ -15,5 +15,5 @@
 - 構想: メモ craft-challenge (10-22 の節)、docs/craft-challenge.md (古い 2 コースの記述は 10-22 に 1 本へまとまった、反映はシミュレーター完成後)。
 - 書きかけ: ブランチ wip/craft-challenge (10-16 の古い形、今は使わない・参考だけ)。
 - ページの作り: src/web/page.ts の頭のコメント (?page=○○ と題)、広告の枠 utils/ads.ts の pageTick。
-- モックの作り (10-22): src/views/daily/DailyPage.vue (3 ページの出し分け、dailyPage を読んで openDailyPage で移る、入口・URL・題は web/page.ts = ジン部長)・DailyTopicCard (大 / 小のカード)・DailyModList (MOD の行、フラクチャー選びにも)・DailyMine (自分の結果)・DailyStart (フラクチャー選び、枠の外・Esc で選ぶ前に戻す)・daily-mock.ts (見本のデータ、MOD の文は mod-lines-ja-en.json の写し、7 時と月曜 7 時の残り untilRefresh)。
+- モックの作り (10-22): src/views/daily/DailyPage.vue (3 ページの出し分け、dailyPage を読んで openDailyPage で移る、入口・URL・題は web/page.ts = デザイン部長、10-23)・DailyTopicCard (大 / 小のカード)・DailyModList (MOD の行、フラクチャー選びにも)・DailyMine (自分の結果)・DailyStart (フラクチャー選び、枠の外・Esc で選ぶ前に戻す)・daily-mock.ts (見本のデータ、MOD の文は mod-lines-ja-en.json の写し、7 時と月曜 7 時の残り untilRefresh)。
 - やる事・OK 待ちは todo.md、記録は notes/。
