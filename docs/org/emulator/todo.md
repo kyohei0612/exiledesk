@@ -3,6 +3,7 @@
 10-22 深夜からジン部長 = エンジンの管理者 + 境目の小物 (38982ef3。部品・見た目は 10-23 からデザイン部長)。画面の仕事はエミュ部長 (docs/org/emu/todo.md) とシミュ部長。エンジンへの要望はブラック経由で受けて入口に足す。
 
 ## やる事
+- 途中 (6 本目 → 7 本目、10-23): モンキーテスト (simulator/notes/2026-10-23-monkey.md) のジンの 3 件は直して push 済み (710d1f86・2aa32e9c)。11 Esc の音の警告はシミュ部長が開発版で 0 件を確かめた。残り = 開発版での確かめ 2 つ: (3) ?page=sim-tree で「← 戻る」を 0.2 秒あけて 2 回 → /blog/ へ飛ばないか (守りは押された時刻 e.timeStamp で 500ms、src/web/page.ts)、(12) /web/manifest.webmanifest が開発版で 200 か (web.html の crossorigin="use-credentials")。済んだらシミュ部長 17 本目とブラックへ 1 行。fractureStart (J1、extra・from 込み)・placeMods (J2) は engine-sim.ts に入れてシミュ部長 17 本目に知らせ済み。
 - 引き継ぎ (10-23、6 本目 → 7 本目): 宛先 ブラック 8 代目 local_20eeeb19-c399-4720-b296-5acb3271776a (部長どうしで直に頼まない)・エミュ部長 local_e86c6527-e247-441a-bc94-1bb5cfbbd498・シミュ部長 16 本目 local_6acffe78-65e2-44e5-8f6a-79eaf6603167・デザイン部長 local_72c2b809-abcc-4254-a845-c793e0f73b9e。途中の物・触っている行・立てた物 (Chrome・dev サーバー) は無し、開発版と 9333 は空きに戻した。
   - 次の仕事 (ブラック 8 代目の頼み、オーナー OK 10-23): エンジンの中だけの死蔵の洗い出し。対象 = services/htc のアプリの名残・旧シミュの run-plan / contract・使われない export と JSON など、エンジンの持ち場の中だけ (画面の部長の持ち場には触れない)。形: まず「poe2db 由来のデータと決まり / それ以外」に分けた一覧を emulator/notes/ に書き、ブラックに 2〜5 行で報告。消すのは一覧を見せてから。確かめは型チェック・小さく (エミュの画面の同じ所の答えと同じか)。シミュの死蔵の一覧 docs/org/simulator/notes/2026-10-22-dead-code.md の作り (import のグラフ・export の名前の数え) が参考。
   - 返事待ち (ブラック): 見張り D の残り 4 行 = クラフト台 → views/tutorial/course-entry.ts (チュートリアルの差し込み口)。for-share へ移すか見張りで許すか。
