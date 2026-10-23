@@ -1,6 +1,7 @@
 /**
  * この端末は記録しない (2026-10-09 オーナー「俺の PC からの訪問もおかしいことになっちゃうから、この PC からのアクセスだけ全部 0 に」)。
  * 印があると、分析用の記録 (log-sender)・操作の印 (web/track.ts)・Web Analytics の beacon のどれも送らない。
+ * 開発版 (VITE_DEV_PREVIEW)・手元の dev サーバー・録画モードはいつも送らない。
  * 端末ごと (localStorage)。Web は ?nolog=1 / ?nolog=0 でも切り替えられる。画面には Web の下の行とアプリの設定に切り替えを置く
  */
 import { ref } from "vue";
@@ -10,7 +11,8 @@ export const NO_LOG_KEY = "exiledesk.noLog";
 
 function read(): boolean {
   // スマホ用の開発版 (公開しない、scripts/deploy-web-dev.mjs) は記録しない
-  if (import.meta.env.VITE_DEV_PREVIEW === "1") return true;
+  // 手元の dev サーバー (vite) も送らない (送り先は本番の server/live。10-23 オーナー「開発版でリクエストいらなくね、分析とか」)
+  if (import.meta.env.VITE_DEV_PREVIEW === "1" || import.meta.env.DEV) return true;
   // 録画モード (?rec=1) は送らない (POE2Tube 要望 ㊶。端末の印は書き換えない)
   if (REC) return true;
   try { return localStorage.getItem(NO_LOG_KEY) === "1"; } catch { return false; }
