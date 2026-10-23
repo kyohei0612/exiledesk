@@ -13,6 +13,7 @@
 
 
 ## やる事
+- 10-24 朝 (決まり 8): Cloudflare の使用量を見る (wrangler auth token で GraphQL の workersInvocationsAdaptive・kvOperationsAdaptiveGroups、見るだけ)。10-23 は web-dev 11.8 万回で枠 10 万を越えた (確認用の Chrome で開発版を何度も開いた昼と夜、絵 1 枚ずつまで門を通っていた)。4caa758e で絵・フォント・音を門の外にした後、時間ごとにどれだけ減ったかをブラックへ。
 - 10-24 9:05 の確かめ: 予定のタスク exiledesk-daily-summary がブラックへ SendMessage したか。list_task_runs で 10-24 の run が succeeded か → その run の最後の文に送った宛先の id があるか → ブラックに届いたかを 1 行で聞く。届いていなければ (許可待ちで止まった等) オーナーにアプリで「Run now」を 1 回押してもらい SendMessage の許可をタスクに覚えさせる。
 - Discord の日報は手元から読めない (webhook は書くだけ・Bot 無し・REFRESH_KEY 無し、notes/bunseki-wake-design.md)。中身は D1 から `pull-logs.mjs` + `analyze-logs.py` で作り直す。
 
