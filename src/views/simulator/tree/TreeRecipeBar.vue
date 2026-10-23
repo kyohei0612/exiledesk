@@ -100,7 +100,7 @@ onBeforeUnmount(() => { window.removeEventListener("pointerdown", onDown, true);
     <button type="button" data-tree-recipe-menu class="g-btn sm inline-flex items-center gap-1" :aria-expanded="pop" @click="pop = !pop">{{ tr("レシピ", "Recipes") }} ▾</button>
     <span v-if="note" class="pointer-events-none absolute left-0 top-full z-30 mt-1 whitespace-nowrap rounded bg-emerald-900/90 px-2 py-1 text-[12px] text-emerald-100">{{ note }}</span>
 
-    <div v-if="pop" data-tree-recipe-pop :class="menuOnly ? 'right-0' : 'left-0'" class="absolute top-full z-40 mt-1 flex w-[340px] flex-col gap-1.5 rounded-lg border border-[var(--exile-color-border-brass)]/60 bg-[#14110d] p-2 text-[12px] shadow-[0_8px_24px_rgba(0,0,0,0.7)]">
+    <div v-if="pop" data-tree-recipe-pop :class="menuOnly ? 'right-0' : 'left-0'" class="absolute top-full z-40 mt-1 flex w-[340px] max-w-[calc(100vw-2.5rem)] flex-col gap-1.5 rounded-lg border border-[var(--exile-color-border-brass)]/60 bg-[#14110d] p-2 text-[12px] shadow-[0_8px_24px_rgba(0,0,0,0.7)]">
       <p class="opacity-60">{{ tr("保存したレシピから開く", "Open a saved recipe") }}</p>
       <p v-if="!recent.length" class="py-1 opacity-50">{{ tr("まだありません", "None yet") }}</p>
       <!-- 1 行 = ベースの絵 (空の木は空の印)・名前・ベース · 狙いの数と主な狙い · ✦ の数・日時 (10-23 オーナー「視覚的に管理しやすく」、要約は recipe-summary.ts) -->
