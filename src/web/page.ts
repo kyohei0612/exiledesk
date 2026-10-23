@@ -214,6 +214,7 @@ export function startPages(): void {
     const auto = wasAuto;
     wasAuto = autoBase.value;
     if (p === old) return;
+    movedAt = performance.now();
     pageTick.value++; // ページを移った = 広告の枠の出し直し (utils/ads.ts、60 秒に 1 回まで)
     // ページを移った印 (D1 の screen。広告のページの数を見る)。クラフト画面へ戻ったのも 1 ページ (広告の枠を出し直すので。2026-10-19 PV の点検で抜けていた)
     if (p === "page=guide") track("page:guide");
@@ -234,4 +235,9 @@ export function startPages(): void {
     } catch { /* 積めなくても画面はそのまま */ }
   });
   window.addEventListener("popstate", () => apply(pageOfUrl()));
+  // ページが替わった直後のクリックは受けない (「← 戻る」のダブルクリックの 2 回目が、移った先の同じ位置のヘッダーの「ブログ」に当たって /blog/ へ飛んだ。モンキーテスト 10-23 の 3)
+  for (const ev of ["click", "pointerdown"]) window.addEventListener(ev, (e) => { if (performance.now() - movedAt < MOVE_GUARD_MS) { e.preventDefault(); e.stopPropagation(); } }, { capture: true });
 }
+/** ページが替わった時刻と、その後クリックを受けない長さ */
+let movedAt = -Infinity;
+const MOVE_GUARD_MS = 300;

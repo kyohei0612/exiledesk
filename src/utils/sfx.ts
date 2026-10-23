@@ -76,7 +76,11 @@ export function preloadSfx(): void {
   preloaded = true;
   for (const n of ALL) void load(n);
   // 寝ている (suspended)・電話などで止められた (Safari の interrupted) 時は、次に触った時に起こし直す
-  const wake = (): void => { if (ctx && ctx.state !== "running" && ctx.state !== "closed") void ctx.resume(); };
+  // Esc・修飾キーだけはブラウザが「使う人の操作」に数えないので起こさない (起こすと毎回「The AudioContext was not allowed to start」の警告。モンキーテスト 10-23 の 11)
+  const wake = (e: Event): void => {
+    if (e instanceof KeyboardEvent && (e.key === "Escape" || e.key === "Shift" || e.key === "Control" || e.key === "Alt" || e.key === "Meta")) return;
+    if (ctx && ctx.state !== "running" && ctx.state !== "closed") void ctx.resume();
+  };
   // iPhone の Safari は pointerdown では音の出口を起こさせてくれない (touchend・click が要る。2026-10-16 オーナー「音が出ない」)
   for (const ev of ["pointerdown", "touchend", "click", "keydown"]) window.addEventListener(ev, wake, { capture: true, passive: true });
 }

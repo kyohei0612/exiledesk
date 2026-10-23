@@ -55,7 +55,8 @@
     </script>
     <!-- ホーム画面に追加した時のアイコンはアプリ (PC) と同じ絵 (2026-10-10 オーナー「ホーム追加した時ダサい」) -->
     <link rel="apple-touch-icon" href="/web/apple-touch-icon.png" />
-    <link rel="manifest" href="/web/manifest.webmanifest" />
+    <!-- use-credentials: 開発版は鍵の cookie が無いと 404 を返す (dev-gate) ので、manifest の取りにも cookie を付ける (本番は同じ。モンキーテスト 10-23 の 12) -->
+    <link rel="manifest" href="/web/manifest.webmanifest" crossorigin="use-credentials" />
     <!-- ホーム画面に追加 (PWA): ブラウザの知らせは画面の JS より先に来ることがあるので、ここで取っておく (src/web/pwa.ts が拾う。2026-10-17) -->
     <script>addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); window.__bip = e; });</script>
     <meta name="apple-mobile-web-app-title" content="ExileDesk" />
