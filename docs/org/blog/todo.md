@@ -9,7 +9,7 @@
 - 本番で開かないリンク: ?page=sim-tree と ?page=routes は URL から開かない (src/web/page.ts)。記事・FAQ では使わず、スパムシミュレーターは「クラフトステージのカレンシーの見出しのボタンから」と書く (15fbc24d)。
 - 手袋のフラクチャーの書き方: 記録 (メモ optimal-craft-dp) ではプレフィックスの 1 つがフラクチャー、投射物 +2 はサフィックス (付け直す狙い)。chaos-spam-odds は記録で決め切れず「ある知性の手袋」とだけ書いた。
 - 手順: commit は `-- <ファイル>` で自分の物だけ。push の前に `git pull -q --no-rebase`。開発版のデプロイと確認用の Chrome はブラックに一言伝えてから。
-- 宛先 (10-22 夜): ブラック 4 代目 local_ba9fc825-1ab5-43f4-bb22-7d1f6e3bc4f6・ジン部長 3 本目 local_dc840ea6-9069-489b-9623-cc30c2e3cf55。
+- 宛先: dev/todo.md の常駐の宛先の表 (古い id を写さない)。
 
 ## OK 待ち
 - FAQ: 原稿 src/data/faq/faq.ja.md・faq.en.md (1 問 = `## 質問`、日英 23 問、照らし合わせ済み、ready、d3c25d34)。入れ物はジン部長 (scripts/build-blog-pages.mjs、出る所は dist の faq.html・en/faq.html)。開発版でオーナーの OK 待ち。
