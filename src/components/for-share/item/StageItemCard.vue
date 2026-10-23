@@ -25,6 +25,7 @@ import { boostedMod, hasExtraCatalyst, scaledAugment } from "../../../services/c
 import { shownTags, TAG_STYLE } from "../../../services/craft-stage/mod-list";
 import { craftStage } from "../../../state/craft-stage";
 import { skillQualityOf } from "../../../services/craft-stage/skill-quality";
+import { useDismiss } from "../../../utils/use-dismiss";
 import RichText from "../../decor/RichText.vue";
 import type { RowTag } from "./stage-item-row-tag";
 
@@ -33,7 +34,7 @@ import type { RowTag } from "./stage-item-row-tag";
  * compact: 撮影用。英語のベース名を出さず、区切りの余白を詰める (詰めた分だけ拡大できる。MOD の文字を 1080p で 32px 以上に)
  */
 /** doomed: 今持っている物を打つと消える・入れ替わる・数値が変わる・固定される候補 (ゲームと同じく打つ前に色を付ける。2026-10-04 削減、2026-10-17 全部の手に) */
-const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[]; /** 付く空き (側ごとに光らせる枠の数。spec/preview.ts) */ open?: Record<"prefix" | "suffix", number> | null; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean; /** 付いた瞬間の確率 (無ければステージの工程から。スパムシミュレーターの運試しは自分の物を渡す) */ chances?: ReadonlyMap<string, number> | null; /** MOD の行ごとの札 (modId → 文と色。シミュの「外れ MOD」など。渡さなければ出ない) */ rowTags?: ReadonlyMap<string, RowTag> | null}>();
+const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[]; /** 付く空き (側ごとに光らせる枠の数。spec/preview.ts) */ open?: Record<"prefix" | "suffix", number> | null; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean; /** 付いた瞬間の確率 (無ければステージの工程から。スパムシミュレーターの運試しは自分の物を渡す) */ chances?: ReadonlyMap<string, number> | null; /** MOD の行ごとの札 (modId → 文と色。シミュの「外れ MOD」など。渡さなければ出ない) */ rowTags?: ReadonlyMap<string, RowTag> | null; /** フラクチャーの印の MOD (modId)。2 つ以上付いていれば 1 行「フラクチャー MOD ×n」にまとめ、ホバーで中身 (シミュの完成形、2026-10-23 オーナー) */ fractureGroup?: readonly string[] | null; /** × を出さずに、MOD の行の右クリックで fracture を出す (シミュの完成形。removable なら言わなくても出る) */ fracturable?: boolean}>();
 /** 行の札の色 */
 const ROW_TAG_TONE: Record<RowTag["tone"], string> = { bad: "bg-rose-500/25 text-rose-200", warn: "bg-amber-500/25 text-amber-100", good: "bg-emerald-500/25 text-emerald-200", info: "bg-sky-500/20 text-sky-100" };
 /** replace の札を行の名前にする時の文字の色 */
@@ -174,6 +175,25 @@ const rows = computed(() => {
   // 冒涜の MOD (未発現も) はゲーム・トレードと同じく一番下 (2026-10-17 オーナー「冒涜って基本一番下よね」)
   return list.sort((x, y) => Number(!!(x.m.desecrated || x.m.unrevealed)) - Number(!!(y.m.desecrated || y.m.unrevealed)) || sideOf(x) - sideOf(y) || x.ord - y.ord);
 });
+/** 右クリックでフラクチャーを付け外しできる行 (持っていない時だけ。未発現・冒涜は付かない) */
+const canFracture = (m: StageMod): boolean => !props.holding && (!!props.removable || !!props.fracturable) && (!!m.fractured || !unfracturable(craftStage.data.value, props.item, m));
+function onFracture(e: MouseEvent, m: StageMod): void {
+  if (!canFracture(m)) return;
+  e.preventDefault();
+  e.stopPropagation();
+  emit("fracture", m);
+}
+/** フラクチャーの印をまとめた行 (印の MOD が 2 つ以上付いている時だけ)。まとめた MOD は下の行から外す */
+const fracRows = computed(() => {
+  const g = props.fractureGroup;
+  const hit = g?.length ? rows.value.filter((r) => g.includes(r.m.modId)) : [];
+  return hit.length >= 2 ? hit : [];
+});
+const plainRows = computed(() => (fracRows.value.length ? rows.value.filter((r) => !fracRows.value.includes(r)) : rows.value));
+/** まとめた行の小窓: ホバーで出し、押すと出したまま (スマホ)。枠の外を押す・Esc で閉じる */
+const fracOpen = ref(false);
+const fracEl = ref<HTMLElement | null>(null);
+useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = false; }, { swallow: false });
 </script>
 
 <template>
@@ -253,16 +273,31 @@ const rows = computed(() => {
       <p v-if="hidden" class="py-1 font-bold text-[#d20000]">{{ tr("未鑑定", "Unidentified") }}</p>
       <!-- MOD (冒涜の MOD の行はゲームと同じ緑がかった暗い帯と枠。2026-10-07 オーナー「アイテムに出る時ゲーム仕様に、色だけ、冒涜 MOD のみ」。付いた物は光る。キーを手ごとに変えて光らせ直す。TransitionGroup は leave が光の animation 待ちで残るので使わない) -->
       <div v-if="!hidden" class="space-y-1">
+        <!-- フラクチャーの印が 2 つ以上: 1 行にまとめ、ホバー (スマホは押す) でどれが重なっているかを小窓に。小窓の行は押すと MOD 一覧へ、右クリックで印を外す (2026-10-23 オーナー) -->
+        <div v-if="fracRows.length" ref="fracEl" data-fracture-group class="group/fg relative" @mouseenter="hover = 'mod'" @mouseleave="(hover = null), (fracOpen = false)">
+          <p class="flex cursor-pointer items-center gap-2 rounded px-2 py-0.5 text-mod-fractured hover:bg-white/[0.04]" @click.stop="fracOpen = !fracOpen">
+            <span class="shrink-0 text-left text-[12px] font-bold" :class="sideColW">{{ [...new Set(fracRows.map((r) => (r.side === "プレフィックス" ? "P" : "S")))].join("·") }}</span>
+            <span class="min-w-0 flex-1 text-center">{{ tr(`フラクチャー MOD ×${fracRows.length}`, `Fractured mod ×${fracRows.length}`) }}</span>
+            <span class="shrink-0" :class="sideColW" />
+          </p>
+          <div data-fracture-pop class="absolute left-1/2 top-full z-30 w-max min-w-[260px] max-w-[440px] -translate-x-1/2 space-y-0.5 rounded border border-[#7a6a35] bg-[#0b0a08]/95 px-2 py-1.5 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.7)]" :class="fracOpen ? 'visible' : 'invisible group-hover/fg:visible'">
+            <p class="pb-0.5 text-[11px] text-white/45">{{ tr("この中のどれか 1 つが固定される", "One of these gets fractured") }}</p>
+            <p v-for="r in fracRows" :key="r.key" data-fracture-member class="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-mod-fractured hover:bg-white/[0.06]" :title="canFracture(r.m) ? tr('右クリックでフラクチャーの印を外す', 'Right-click to remove the fracture mark') : undefined" @click.stop="emit('jump', r.m.modId)" @contextmenu="onFracture($event, r.m)">
+              <span class="w-7 shrink-0 text-left font-bold tabular-nums" :class="r.side === 'プレフィックス' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ r.side === "プレフィックス" ? "P" : "S" }}{{ (r.m.tierName ?? "").replace(/^T/, "") }}</span>
+              <span class="min-w-0 flex-1">{{ r.text }}</span>
+            </p>
+          </div>
+        </div>
         <p
-          v-for="r in rows"
+          v-for="r in plainRows"
           @click="!holding && !r.m.unrevealed && (($event as MouseEvent).stopPropagation(), emit('jump', r.m.modId))"
           @mouseenter="hover = r.m.unrevealed ? null : 'mod'"
           @mouseleave="hover = null"
           :key="isNew(r.m) ? `${r.key}#${flashKey}` : r.key"
           class="relative flex items-center gap-2 rounded px-2 py-0.5"
           :class="[r.m.desecrated ? 'g-abyss-row' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? (isRareNew(r.m) ? 'stage-mod-new-rare' : r.m.tierName === 'T1' ? 'stage-mod-new-top' : 'stage-mod-new') : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
-          :title="isDoomed(r.m) ? (doomed!.length > 1 ? tr(`この手で変わる候補 (${doomed!.length} つ)`, `May change with this use (${doomed!.length} candidates)`) : tr('この手で変わる', 'Changes with this use')) : removable && r.m.fractured ? tr('右クリックでフラクチャーを外す', 'Right-click to unfracture') : removable && !unfracturable(craftStage.data.value, item, r.m) ? tr('右クリックでフラクチャー (この MOD を固定)', 'Right-click to fracture this mod') : undefined"
-          @contextmenu="!holding && removable && (r.m.fractured || !unfracturable(craftStage.data.value, item, r.m)) ? ($event.preventDefault(), $event.stopPropagation(), emit('fracture', r.m)) : undefined"
+          :title="isDoomed(r.m) ? (doomed!.length > 1 ? tr(`この手で変わる候補 (${doomed!.length} つ)`, `May change with this use (${doomed!.length} candidates)`) : tr('この手で変わる', 'Changes with this use')) : canFracture(r.m) ? (r.m.fractured ? tr('右クリックでフラクチャーを外す', 'Right-click to unfracture') : tr('右クリックでフラクチャー (この MOD を固定)', 'Right-click to fracture this mod')) : undefined"
+          @contextmenu="onFracture($event, r.m)"
         >
           <!-- 珍しい段が付いた瞬間の光の柱 (ドロップの光の柱のように、行から上へ伸びて消える) -->
           <span v-if="isRareNew(r.m)" aria-hidden="true" class="stage-rare-beam pointer-events-none absolute bottom-1/2 left-1/2 z-20 w-10" />
