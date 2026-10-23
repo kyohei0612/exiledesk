@@ -28,7 +28,8 @@ export { omenBlock } from "./omen-block";
 export { allMods, listOf, room, limitOf, effectiveCls, maxQualityOf, catalystOf, SIDES, sideOfMod, unfracturable } from "./stage-core";
 // MOD を段から作る (数値の決め方は rng)・アイテムに MOD を足した形 (withMod)・そのカタリストがその MOD を伸ばすか
 export { makeStageMod, withMod, catalystBoosts } from "./stage-core";
-export { socketCapOf } from "./stage-runes";
+// ソケットの上限・白の時からあるソケットの数 (規格外。エミュの新品とツリーのスタートが同じ数で始める)
+export { socketCapOf, baseSocketsOf } from "./stage-runes";
 export { dpsText } from "./stage-pob";
 export { DEF } from "./defence";
 
