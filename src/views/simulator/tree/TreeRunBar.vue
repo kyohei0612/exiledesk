@@ -3,7 +3,7 @@
   回す状態は use-tree-run.ts、木の上の層は TreeRunLayer.vue、回し終えた後のまとめは TreeRunReport.vue (木の枠へ Teleport)。回すとまず 1 人目が木を進む (その間は「1 人目 n/m 手」と「飛ばす」)
 -->
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { watch } from "vue";
 import TreeRunReport from "./TreeRunReport.vue";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { tr } from "../../../i18n/lang";
@@ -14,8 +14,8 @@ const props = defineProps<{ result: TreeRunResult | null; running: boolean; read
 const shown = defineModel<boolean>("shown", { required: true });
 const emit = defineEmits<{ run: []; go: [id: string]; skip: [] }>();
 const pct = (r: TreeRunResult): string => `${Math.round((r.finished / (r.n || 1)) * 100)}`;
-/** 回し終えた後の結果のまとめ (TreeRunReport)。回し終えたら開き、止まって止めた時は開かない。帯の「結果のまとめ」でまた開く */
-const report = ref(false);
+/** 回し終えた後の結果のまとめ (TreeRunReport)。回し終えたら開き、止まって止めた時は開かない。帯の「結果のまとめ」・流れの帯の 4 でまた開く (開閉は置き場が持つ) */
+const report = defineModel<boolean>("report", { required: true });
 watch(() => props.running, (on, was) => { if (was && !on && props.result && !props.halted) report.value = true; if (on) report.value = false; });
 const div = (x: number): string => (Number.isFinite(x) ? (x >= 100 ? x.toFixed(0) : x.toFixed(1)) : "—");
 </script>

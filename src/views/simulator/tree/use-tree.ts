@@ -276,6 +276,10 @@ const goalPage = ref<0 | 1 | 2>(0);
 const needBase = ref(false);
 /** 完成形の設定を窓でなくページで出している (初手のベース選び。ツリーは隠す、TreeGoalPage が立てる) */
 const goalInline = ref(false);
+/** 100 人回し終えて結果のまとめを開ける (SimTreePage が回す状態から立てる。流れの帯 TreeFlowSteps の 4) */
+const runReady = ref(false);
+/** 結果のまとめ (TreeRunReport) を開いている (帯の「結果のまとめ」・流れの帯の 4 で開く) */
+const reportOpen = ref(false);
 /** スタートの箱の重ね窓 (TreeStartPage.vue。始まりに付いている MOD・✦・乱数の数) */
 const startPage = ref(false);
 /** 完成の狙い (0 の箱で決める。前の「欲しい MOD のメモ」memoAims を使い回す。後の箱の当たりはこの一覧から選ぶ、オーナー 10-22) */
@@ -430,5 +434,5 @@ const baseCost = computed(() => {
 const baseCostBusy = computed(() => !!s.data.value && !costReady.value);
 
 export function useTree() {
-  return { tabDocs, active, tabRuns, switchTab, addTab, closeTab, noteRun, startPrice, setStartPrice, goalPage, needBase, goalInline, startPage, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, startFresh, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
+  return { tabDocs, active, tabRuns, switchTab, addTab, closeTab, noteRun, startPrice, setStartPrice, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, startFresh, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
 }

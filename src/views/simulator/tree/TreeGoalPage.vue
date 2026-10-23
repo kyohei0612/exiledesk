@@ -17,6 +17,7 @@ import { tr } from "../../../i18n/lang";
 import type { StageMod } from "../../../services/craft-stage/engine";
 import TreeBasePick from "./TreeBasePick.vue";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
+import TreeFlowSteps from "./TreeFlowSteps.vue";
 import { useTree } from "./use-tree";
 
 const t = useTree();
@@ -54,6 +55,12 @@ function close(): void {
 }
 /** 2 へ進む (段のタブ・「次へ」)。今のベースで決めた扱い (白紙のまま 2 を開いてから閉じても空の形にはしない) */
 function toMods(): void { unpicked.value = false; t.chooseBase(); t.goalPage.value = 2; }
+/** 流れの帯を押した: 1 = ベース、2 = 完成の MOD、3 = ツリーへ (閉じる)、4 = 閉じて結果のまとめ */
+function onFlow(n: 1 | 2 | 3 | 4): void {
+  if (n === 1) t.goalPage.value = 1;
+  else if (n === 2) toMods();
+  else { close(); if (n === 4) t.reportOpen.value = true; }
+}
 function pick(en: string): void {
   unpicked.value = false;
   t.needBase.value = false;
@@ -100,11 +107,9 @@ const cardW = innerWidth < 768 ? Math.min(CARD_W, innerWidth - 90) : CARD_W;
   <!-- ページで出している間は高さを決めず、本文の送りの箱も外す (ページごと送る。1 の段 = 10-23 オーナー「エミュと同じ展開時の表示の仕方」、2 の段 = 10-24 オーナー「一覧の中に別のスクロールの箱を作らない」)。窓の時は窓の本文 1 つで送る -->
   <ModalShell :open="true" :inline="asPage" :closable="!(asPage && unpicked)" rec="tree-goal" :title="tr('0 完成形の設定', '0 Final item')" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" :width="asPage ? (step === 1 ? 'w-full max-md:!border-0 max-md:[border-image:none] max-md:!bg-none max-md:!p-0' : 'w-full') : 'w-[88%] h-[86%]'" full-on-phone :body-class="asPage ? (step === 1 ? 'px-3 pb-3 max-md:px-2 !overflow-visible' : 'px-3 pb-3 !overflow-visible') : 'px-3 pb-3'" @close="close">
     <template #subheader>
-      <!-- 1 → 2 の段 (押すとその段へ)。初手 (ベース未選択) の間は 2 へは飛べない (ベースを押して初めて 2 へ、10-23 オーナー)。右端に保存したレシピから開く -->
+      <!-- 流れの 4 段の帯 (ツリーのページの上と同じ部品 TreeFlowSteps、10-24 オーナー)。初手 (ベース未選択) の間は 2 から先は押せない。右端に保存したレシピから開く -->
       <div data-tree-goal-steps class="flex flex-wrap items-center gap-2 px-3 pb-2">
-        <button type="button" data-tree-goal-step="1" class="g-tab !min-h-[30px] !px-4 !text-[13px]" :class="step === 1 ? 'on' : ''" @click="t.goalPage.value = 1">{{ tr("1 ベース", "1 Base") }} <span v-if="!unpicked" class="ml-1 text-[11px] opacity-70">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}</span></button>
-        <span class="opacity-40">→</span>
-        <button type="button" data-tree-goal-step="2" class="g-tab !min-h-[30px] !px-4 !text-[13px]" :class="step === 2 ? 'on' : ''" :disabled="unpicked" :title="unpicked ? tr('先にベースを選ぶ', 'Choose a base first') : undefined" @click="toMods">{{ tr("2 完成の MOD", "2 Final mods") }} <span class="ml-1 rounded-full bg-black/25 px-1.5 text-[11px] tabular-nums">{{ t.goals.value.length }}</span></button>
+        <TreeFlowSteps :current="step === 2 ? 2 : 1" :no-base="unpicked" @go="onFlow" />
         <span class="ml-auto shrink-0"><TreeRecipeBar menu-only @opened="onRecipe" /></span>
       </div>
       <p v-if="step === 2 && dropped.length" data-tree-goal-dropped class="min-w-0 truncate px-3 pb-2 text-[12px] text-rose-200/80" :title="dropped.join('\n')">{{ tr(`このベースに付かない狙いを外した: ${dropped.join("・")}`, `Removed targets this base can't roll: ${dropped.join(", ")}`) }}</p>

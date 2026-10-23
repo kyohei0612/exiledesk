@@ -45,6 +45,7 @@ import { useTreeTune } from "./use-tree-tune";
 import { useTreeReveal } from "./use-tree-reveal";
 import { RUN_N, useTreeRun } from "./use-tree-run";
 import TreeRunBar from "./TreeRunBar.vue";
+import TreeFlowSteps from "./TreeFlowSteps.vue";
 import TreeRunLayer from "./TreeRunLayer.vue";
 import TreeHandChip from "./TreeHandChip.vue"; import TreeBandLayer from "./TreeBandLayer.vue"; import TreeTabs from "./TreeTabs.vue";
 import TreeMergeLayer from "./TreeMergeLayer.vue";
@@ -268,6 +269,9 @@ const { issues, issuesOpen, issuesFold, checking, progress, onCheck, issueOf } =
 /** 待たせている間の小さな札 (題の横。データの読み込み・箱を順に出している間、共通の BusyTag。精査の進みは精査の帯の上) */
 // 100 人回す (結果は木の上に重ねる層だけ、use-tree-run.ts・TreeRunLayer.vue。値段 = 始め方のベースの値段 (結果のまとめで入れる、use-tree の startPrice) + 今の相場)
 const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
+// 流れの帯の 4 (結果) = 100 人回し終えた (止まって止めた時は開かない、帯の「結果のまとめ」と同じ)。帯を押すと 1・2 = 完成形の設定の窓、3 = ツリー、4 = 結果のまとめ
+watch(() => !!tr100.result.value && !tr100.running.value && !tr100.halted.value, (on) => { t.runReady.value = on; if (!on) t.reportOpen.value = false; }, { immediate: true });
+const onFlow = (n: 1 | 2 | 3 | 4): void => { if (n <= 2) t.goalPage.value = n as 1 | 2; else t.reportOpen.value = n === 4; };
 const busy = computed((): { text: string; n?: number; of?: number } | null => {
   if (!s.data.value) return { text: tr("読み込み中", "Loading") };
   if (tr100.running.value) return { text: tr("回している", "Running"), n: tr100.result.value?.n ?? 0, of: RUN_N };
@@ -400,7 +404,8 @@ const glowOf = (b: Box): boolean => {
   <section data-tree-page class="min-w-0 flex-1 p-4" :class="t.goalInline.value ? 'max-md:px-2' : ''">
     <div class="mb-3 flex flex-wrap items-center gap-3">
       <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center gap-3 px-8 text-[22px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)] max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-1 max-md:px-4 max-md:py-2 max-md:text-[17px] max-md:tracking-[0.08em]"><span class="whitespace-nowrap">{{ tr("クラフトの道 (ツリー)", "Craft route tree") }}</span><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" /></h1>
-      <!-- 右上の「← 戻る」は置かない (上の切り替えタブで行き来する。10-24 オーナー「意味が分からない、要らない」) -->
+      <!-- 流れの 4 段の帯 (今どこにいるか。完成形の設定の窓と同じ部品、10-24 オーナー)。初手のページの間は窓の側に出る。右上の「← 戻る」は置かない (上の切り替えタブで行き来する、10-24 オーナー「意味が分からない、要らない」) -->
+      <TreeFlowSteps v-if="!t.goalInline.value" class="max-md:basis-full" :current="t.reportOpen.value ? 4 : 3" :no-base="t.needBase.value" @go="onFlow" />
     </div>
     <!-- エミュレーター / シミュレーター β の切り替え (エミュの画面の帯と同じ共通の部品、10-23 オーナー「帯を 1 つにして両方に」) -->
     <ModeTabs class="mb-3" />
@@ -412,7 +417,7 @@ const glowOf = (b: Box): boolean => {
       <div class="flex flex-wrap items-center gap-2 text-[13px] md:flex-nowrap">
         <span class="flex min-w-0 flex-1 basis-full items-center gap-2 max-md:flex-wrap md:basis-auto">
         <TreeRecipeBar @opened="v.fit()" />
-        <TreeRunBar v-if="!t.needBase.value" v-model:shown="tr100.shown.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :stuck="tr100.stuckBoxes.value" @run="tr100.run" @go="goIssue" :halted="tr100.halted.value" :walk="tr100.walk.value" @skip="tr100.skipWalk" />
+        <TreeRunBar v-if="!t.needBase.value" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :stuck="tr100.stuckBoxes.value" @run="tr100.run" @go="goIssue" :halted="tr100.halted.value" :walk="tr100.walk.value" @skip="tr100.skipWalk" />
         </span>
         <span class="ml-auto flex shrink-0 flex-wrap items-center gap-1 max-md:ml-0 max-md:shrink max-md:basis-full md:flex-nowrap">
           <button v-if="!t.needBase.value" type="button" data-tree-undo class="g-btn sm inline-flex items-center gap-1" :disabled="!t.canUndo.value" :title="tr('1 つ戻す (Ctrl+Z)', 'Undo (Ctrl+Z)')" @click="t.undo"><Icon name="undo" class="size-4" />{{ tr("1 つ戻す", "Undo") }}</button>
