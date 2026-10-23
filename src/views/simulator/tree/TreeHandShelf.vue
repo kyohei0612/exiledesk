@@ -211,11 +211,13 @@ function catalystForMod(data: PatchData, item: StageItem, modId: string, keys: r
 </script>
 
 <template>
-  <div data-tree-hand-pick class="flex min-h-0 flex-col gap-2 text-[13px]" @contextmenu="held && ($event.preventDefault(), release())">
+  <!-- エミュのクラフトの画面と同じ並び: 左にアイテムのカード (幅もエミュと同じ既定)、右にカレンシーの棚。スマホは縦積み (カードが上) (10-24 オーナー「右側カレンシーで左側アイテムの姿勢はエミュ産で慣れてる」) -->
+  <div data-tree-hand-pick class="grid min-h-0 items-start gap-4 text-[13px] md:grid-cols-[auto_minmax(0,1fr)]" @contextmenu="held && ($event.preventDefault(), release())">
     <!-- この箱の時点のアイテム (見本)。持ってカードを押す = この手にする (エミュと同じ操作) -->
-    <div class="flex items-start gap-3">
-      <div data-tree-hand-card class="shrink-0" :class="held && problem ? 'cursor-not-allowed opacity-60' : ''" :title="problem ?? undefined"><StageItemCard v-if="shelfItem" :item="preCat ? shelfItem : item ?? shelfItem" :added="[]" :removed="[]" :holding="!!held && !problem" :flash-key="0" :width="320" @use="ok" /></div>
-      <div class="flex min-w-0 flex-1 flex-col gap-1.5">
+    <!-- カードの下はエミュと同じく空ける (持っている間はカードのすぐ下に「押すと使う · 右クリック / Esc で手放す」が重ねて出る) -->
+    <div class="flex min-w-0 flex-col gap-8 md:w-[480px]">
+      <div data-tree-hand-card :class="held && problem ? 'cursor-not-allowed opacity-60' : ''" :title="problem ?? undefined"><StageItemCard v-if="shelfItem" :item="preCat ? shelfItem : item ?? shelfItem" :added="[]" :removed="[]" :holding="!!held && !problem" :flash-key="0" @use="ok" /></div>
+      <div class="flex min-w-0 flex-col gap-1.5">
         <p class="text-[12px] opacity-70">{{ tr("棚から持って、カードを押すとこの箱の次の手になる", "Hold a currency from the shelf and click the item to make it this box's next craft") }}</p>
         <!-- 打たずに分ける (分かれ目、10-22 オーナー OK): 今の形 (揃った狙い・外れの数) で行き先を分ける。始まりの箱では出さない -->
         <button v-if="t.doc.value.boxes[boxId]?.out !== 'start'" type="button" data-tree-split class="g-btn sm self-start" :title="tr('手を打たずに、今の形 (揃った狙いの数・外れの数) で行き先を分ける', 'Do not craft; branch by the current shape (targets held, misses)')" @click="emit('split')">◇ {{ tr("打たずに分ける (分かれ目)", "Split without crafting") }}</button>

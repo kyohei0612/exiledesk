@@ -14,7 +14,8 @@ import StageItemCard from "../../../components/for-share/item/StageItemCard.vue"
 import { craftStage as s } from "../../../state/craft-stage";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { tr } from "../../../i18n/lang";
-import type { StageMod } from "../../../services/craft-stage/engine";
+import { tierRankLabel, type StageMod } from "../../../services/craft-stage/engine";
+import type { Aim } from "../../../services/simulator/tree/tree-model";
 import TreeBasePick from "./TreeBasePick.vue";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue";
@@ -76,6 +77,8 @@ function apply(en: string): void {
   t.goalPage.value = 2;
 }
 const pickGoal = { has: t.hasGoal, toggle: t.toggleGoal };
+/** その行 (系統) の狙い (段ごとに modId が違うまとめ行もあるので、行の段のどれかの modId で引く) */
+const rowGoal = (r: { id: string; tiers: Array<{ modId?: string }> }): Aim | undefined => t.goals.value.find((a) => a.modId === r.id || r.tiers.some((x) => x.modId === a.modId));
 /**
  * その段の行が狙いの中のどこか (10-24 オーナー「T2 を選んだら T2 以上」、狙いは MOD 1 つ): "pick" = 選んだ段 (✓ 狙い)、"in" = 選んだ段より上で含まれる (控えめな「含む」)、null = 狙いの外
  */
@@ -95,12 +98,9 @@ function onCardFracture(m: StageMod): void {
 const HELP: Array<[string, string]> = [
   ["狙いにする: その段以上が付けば当たり (狙いは MOD 1 つ、上の段は「含む」)", "Target: a hit if that tier or better rolls (one target per mod; higher tiers are included)"],
   ["後の箱の当たりは、この狙いから選ぶ", "Later hit boxes pick from these targets"],
-  ["フラクチャー (カードの右クリックでも): 印のどれか 1 つが固定されたレアから始まる", "Fracture (or right-click on the card): start from a rare with one marked mod fractured"],
+  ["フラクチャー (✦) = 完成品に残す MOD の印。複数付けてよく、どれか 1 つが固定されたレアから始まる (カードの右クリックでも)", "Fracture (✦) = marks a mod the finished item keeps. Several are fine; the start is a rare with one of them fractured (or right-click on the card)"],
   ["印が無ければ白から", "No marks: start from a white item"],
 ];
-const CARD_W = 340;
-/** スマホ (768px 未満) は窓の中身の幅 (画面 − 枠と余白 90) に合わせる (340 のままだと右がはみ出した、10-23) */
-const cardW = innerWidth < 768 ? Math.min(CARD_W, innerWidth - 90) : CARD_W;
 </script>
 
 <template>
@@ -133,18 +133,26 @@ const cardW = innerWidth < 768 ? Math.min(CARD_W, innerWidth - 90) : CARD_W;
       <div class="min-w-0 flex-1"><ModTable overlay :data="s.data.value" :item="t.goalItem.value?.item ?? null">
         <!-- 段の行のボタンは「狙いにする」(オーナー 10-22) と、狙いにした段だけその右に「フラクチャー」(印、10-23)。
              前はフラクチャーが左にあり、狙いでない段で押すと狙いに足して印も付けたので、狙いにするつもりで印が付いた (10-23 オーナー「印を付けていないのに ✦ スタート」) -->
+        <!-- 狙いの MOD の行に札 (印ありは ✦ の色)、段の表では狙いの段の左に色の帯 (行の色、10-24 オーナー「フラクチャーにした行は色を変えて」) -->
+        <template #row-badge="{ row: r }">
+          <span v-if="rowGoal(r)" data-mod-goal-badge class="whitespace-nowrap rounded-sm px-1 py-px text-[10px] leading-none" :class="rowGoal(r)!.fractured ? 'bg-mod-fractured/25 text-mod-fractured' : 'bg-amber-400/20 text-amber-100'">{{ rowGoal(r)!.fractured ? "✦ " : "" }}{{ tierRankLabel(rowGoal(r)!.tier) }}</span>
+        </template>
+        <template #tier-lead="{ row: r, tier: tt }">
+          <td class="w-1 p-0" :class="goalAt(tt.modId ?? r.id, tt.tier) ? (rowGoal(r)?.fractured ? 'bg-mod-fractured/70' : 'bg-amber-300/50') : ''" />
+        </template>
         <template #tier-actions="{ row: r, tier: tt }">
           <td class="w-48 whitespace-nowrap py-0.5 text-right">
             <!-- 選んだ段より上の段は狙いに含まれる印だけ (押すとそこから上に絞る)。ボタンの形にすると狙いが 2 つあるように見えた (10-24 オーナー) -->
             <button v-if="goalAt(tt.modId ?? r.id, tt.tier) === 'in'" type="button" data-mod-included class="px-2 text-[12px] opacity-60 hover:opacity-100" :title="tr(`狙いに含む。押すと ${tt.rank} 以上に絞る`, `Included in the target. Click to narrow to ${tt.rank}+`)" @click.stop="pickGoal.toggle(tt.modId ?? r.id, tt.tier)">{{ tr("含む", "Included") }}</button>
             <button v-else type="button" data-mod-pick class="tbtn" :class="pickGoal.has(tt.modId ?? r.id, tt.tier) ? 'on' : ''" :title="pickGoal.has(tt.modId ?? r.id, tt.tier) ? tr('もう一度押すと狙いから外す', 'Click again to remove the target') : tr(`${tt.rank} 以上を完成の狙いにする`, `Make ${tt.rank}+ a final target`)" @click.stop="pickGoal.toggle(tt.modId ?? r.id, tt.tier)">{{ pickGoal.has(tt.modId ?? r.id, tt.tier) ? (tt.tier === 1 ? tr("✓ 狙い", "✓ Target") : tr(`✓ 狙い (${tt.rank} 以上)`, `✓ Target (${tt.rank}+)`)) : tr("狙いにする", "Target") }}</button>
-            <button v-if="pickGoal.has(tt.modId ?? r.id, tt.tier)" type="button" data-mod-fracture class="tbtn ml-1" :class="isFrac(tt.modId ?? r.id, tt.tier) ? 'on !text-mod-fractured' : ''" :title="isFrac(tt.modId ?? r.id, tt.tier) ? tr('もう一度押すとフラクチャーの印を外す', 'Click again to remove the fracture mark') : tr(`${tt.rank} 以上をフラクチャーの候補にする (どれか 1 つが固定されたレアからスタート)`, `Make ${tt.rank}+ a fracture candidate (start from a rare with one of them fractured)`)" @click.stop="t.toggleFracture(tt.modId ?? r.id, tt.tier)">{{ isFrac(tt.modId ?? r.id, tt.tier) ? tr("✦ 印", "✦ Marked") : tr("フラクチャー", "Fracture") }}</button>
+            <button v-if="goalAt(tt.modId ?? r.id, tt.tier) !== 'in'" type="button" data-mod-fracture class="tbtn ml-1" :class="isFrac(tt.modId ?? r.id, tt.tier) ? 'on !text-mod-fractured' : ''" :title="isFrac(tt.modId ?? r.id, tt.tier) ? tr('もう一度押すとフラクチャーの印を外す', 'Click again to remove the fracture mark') : tr(`${tt.rank} 以上をフラクチャーの候補にする (どれか 1 つが固定されたレアからスタート)`, `Make ${tt.rank}+ a fracture candidate (start from a rare with one of them fractured)`)" @click.stop="t.toggleFracture(tt.modId ?? r.id, tt.tier)">{{ isFrac(tt.modId ?? r.id, tt.tier) ? tr("✦ 印", "✦ Marked") : tr("フラクチャー", "Fracture") }}</button>
           </td>
         </template>
       </ModTable></div>
       <!-- 完成形のカード (ページの送りでも見えるよう上に留める) -->
-      <div data-tree-goal-card class="sticky top-0 flex shrink-0 flex-col gap-2 max-md:static max-md:order-first max-md:!w-full max-md:items-center" :style="{ width: `${CARD_W}px` }">
-        <StageItemCard v-if="t.goalItem.value" :item="t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" :fracture-group="marks" fracturable @fracture="onCardFracture" />
+      <!-- カードはエミュと同じ既定の幅 (480、スマホは全幅。10-24 オーナー「アイテム絵はシミュと同じ」) -->
+      <div data-tree-goal-card class="sticky top-0 flex shrink-0 flex-col gap-2 max-md:static max-md:order-first md:w-[480px]">
+        <StageItemCard v-if="t.goalItem.value" :item="t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable @fracture="onCardFracture" />
         <!-- 枠を超えた狙い (10-23 オーナー「欲しい物を全部選ぶので枠を超えてよい」): 止めずにカードの下に並べる -->
         <div v-if="t.goalItem.value?.left.length" data-tree-goal-over class="flex flex-col gap-0.5 rounded-md bg-white/[0.04] px-2 py-1 text-[12px]">
           <p class="opacity-70">{{ tr(`カードに乗らない狙い ${t.goalItem.value.left.length} つ (枠の外。どれかが付けば当たり)`, `${t.goalItem.value.left.length} target(s) beyond the slots (a hit if any rolls)`) }}</p>

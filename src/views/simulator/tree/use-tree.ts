@@ -296,14 +296,14 @@ function toggleGoal(modId: string, tier: number): void {
 }
 /**
  * フラクチャーの印を付ける / 外す (10-23 オーナー: 「狙いにする」の横のボタン・完成形のカードの右クリック。複数可 = どれかが固定されればよい)。
- * 狙いにある MOD だけ (狙いに無い MOD は何もしない、10-23)。印の MOD はスタートの＋の MOD から外す (✦ の候補と同じ MOD は足さない)。1 つ戻すで戻せる
+ * 狙いに無い MOD は、その段で狙いに足して印を付ける (フラクチャーのボタンは「狙い」の右に初めから並ぶ、10-24 オーナー。前は狙いにした後だけ出していた)。
+ * 印の MOD はスタートの＋の MOD から外す (✦ の候補と同じ MOD は足さない)。1 つ戻すで戻せる
  */
 function toggleFracture(modId: string, tier: number): void {
   edit((d) => {
     const list = d.memoAims ?? [], g = list.find((a) => a.modId === modId);
-    // 狙いでない MOD には付けない (狙いに勝手に足さない。10-23 オーナー「印を付けていないのに ✦ スタート」)
-    if (!g) return;
-    if (g.fractured && g.tier === tier) delete g.fractured;
+    if (!g) list.push({ modId, tier, fractured: true });
+    else if (g.fractured && g.tier === tier) delete g.fractured;
     else { g.tier = tier; g.fractured = true; }
     d.memoAims = list;
     migrateStart(d);
