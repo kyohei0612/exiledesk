@@ -31,7 +31,7 @@ export function startPwa(): void {
   }
 }
 
-/** 古い塊で読み直した記録 (sessionStorage、"1 回目の時刻:回数")。STALE_GAP_MS の間に STALE_MAX 回まで (無限に読み直さない印) */
+/** 古い塊で読み直した記録 (sessionStorage、"1 回目の時刻:回数")。STALE_GAP_MS の間に STALE_MAX 回まで (無限に読み直さない印)。入口の塊は web.html の頭が同じ印・数で見る (変える時は両方) */
 const STALE_KEY = "exiledesk-stale-reload";
 const STALE_GAP_MS = 60_000;
 const STALE_MAX = 3;
@@ -45,11 +45,15 @@ const STALE_RETRY_WAIT_MS = 4_000;
 export function startStaleReload(): void {
   if (typeof window === "undefined") return;
   window.addEventListener("vite:preloadError", (e) => {
+    // 1 回の読み込みで読み直しは 1 回 (いくつ失敗しても回数は 1 つだけ進める。web.html の頭と同じ印)
+    const w = window as { __staleGo?: number };
+    if (w.__staleGo) { e.preventDefault(); return; }
     let first = 0, n = 0;
     try { [first, n] = (sessionStorage.getItem(STALE_KEY) ?? "").split(":").map((x) => Number(x) || 0); } catch { return; }
     if (Date.now() - first >= STALE_GAP_MS) { first = Date.now(); n = 0; }
     if (n >= STALE_MAX) return;
     try { sessionStorage.setItem(STALE_KEY, `${first}:${n + 1}`); } catch { return; }
+    w.__staleGo = 1;
     e.preventDefault();
     logRecord("stale_reload", { n: n + 1, msg: String((e as Event & { payload?: unknown }).payload ?? "").slice(0, 120) });
     if (n === 0) location.reload();

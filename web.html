@@ -59,6 +59,18 @@
     <link rel="manifest" href="/web/manifest.webmanifest" crossorigin="use-credentials" />
     <!-- ホーム画面に追加 (PWA): ブラウザの知らせは画面の JS より先に来ることがあるので、ここで取っておく (src/web/pwa.ts が拾う。2026-10-17) -->
     <script>addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); window.__bip = e; });</script>
+    <!-- 入口の塊 (/assets/web-*.js・.css) が読めない時は読み直す (出した直後の 8 秒ほどは新しい版の塊が 404、10-23)。印・回数・待ちは src/web/pwa.ts の startStaleReload と同じ (後から読む部品は向こう) -->
+    <script>addEventListener("error", function (e) {
+      var t = e.target, u = t && (t.src || t.href);
+      if (!u || !/\/assets\/web-[^\/]+\.(js|css)$/.test(u) || window.__staleGo) return;
+      window.__staleGo = 1;
+      try { var r = (sessionStorage.getItem("exiledesk-stale-reload") || "").split(":"), f = Number(r[0]) || 0, n = Number(r[1]) || 0;
+        if (Date.now() - f >= 60000) { f = Date.now(); n = 0; }
+        if (n >= 3) return;
+        sessionStorage.setItem("exiledesk-stale-reload", f + ":" + (n + 1));
+      } catch (x) { return; }
+      setTimeout(function () { location.reload(); }, n * 4000);
+    }, true);</script>
     <meta name="apple-mobile-web-app-title" content="ExileDesk" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="description" content="Path of Exile 2 のクラフトを日本語で 1 手ずつ試せる無料ツール。カレンシー・骨・お告げ・エッセンス・デリリウムをゲームと同じ決まりで。カオススパムで狙いの MOD が付くまでの回数と運も分かる。" />
