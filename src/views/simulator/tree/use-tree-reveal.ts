@@ -1,6 +1,7 @@
 /**
  * use-tree-reveal.ts — 木を開いた時に箱を 1 段目 (始まり) から段ごとに順に出す (2026-10-22 オーナー「読み込みながら徐々に出す」
- * 「1 列目から徐々に表示していけばいい」。真ん中を覆う表示はやめた)。データが来るまでは箱を出さない。組んで足した数個の箱はすぐ出す
+ * 「1 列目から徐々に表示していけばいい」。真ん中を覆う表示はやめた)。データが来るまでは箱を出さない。組んで足した数個の箱はすぐ出す。
+ * 段ごとに出すのはデータを待った時だけ。もう読み終わっている時は全部すぐ出す (10-23)
  */
 import { computed, onBeforeUnmount, ref, watch, type ComputedRef, type Ref } from "vue";
 import { BOX_H, type TreeBox } from "../../../services/simulator/tree/tree-model";
@@ -26,11 +27,16 @@ export function useTreeReveal(list: ComputedRef<TreeBox[]>, ready: () => boolean
   /** 段ごとに出している途中の段の数 (n/of)。無ければ出し終わり */
   const run = ref<{ n: number; of: number } | null>(null);
   let timer = 0;
+  /**
+   * データを待った時だけ段ごとに出す。開いた時にもうデータがある (エミュの画面などで読み終わっている) 時は全部すぐ出す
+   * (10-23 オーナー「開いてから読み込みじゃなくて、裏で読み込んでおいて」: 読み終わっているのに「読み込み中 n/m」と段ごとに出していた)
+   */
+  let waited = !ready();
   function sync(): void {
     if (!ready() || timer) return;
     const fresh = list.value.filter((b) => !seen.value.has(b.id));
     if (!fresh.length) return;
-    if (fresh.length <= AT_ONCE) { seen.value = new Set([...seen.value, ...fresh.map((b) => b.id)]); return; }
+    if (fresh.length <= AT_ONCE || !waited) { seen.value = new Set([...seen.value, ...fresh.map((b) => b.id)]); waited = false; return; }
     const rows = rowsOf(fresh);
     let i = 0;
     const step = (): void => {
@@ -43,7 +49,7 @@ export function useTreeReveal(list: ComputedRef<TreeBox[]>, ready: () => boolean
   }
   watch([() => list.value.map((b) => b.id).join(","), ready], sync, { immediate: true });
   // 別の木を開いたら上から出し直す (箱の id は木ごとに b1・b2… と同じなので数えた物を捨てる)
-  watch(opened, () => { clearTimeout(timer); timer = 0; seen.value = new Set(); run.value = null; sync(); });
+  watch(opened, () => { clearTimeout(timer); timer = 0; seen.value = new Set(); run.value = null; waited = !ready(); sync(); });
   onBeforeUnmount(() => clearTimeout(timer));
   const isShown = (id: string): boolean => seen.value.has(id);
   const visible = computed(() => list.value.filter((b) => seen.value.has(b.id)));
