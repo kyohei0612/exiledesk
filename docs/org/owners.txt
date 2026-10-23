@@ -18,7 +18,6 @@ src/web/**                           デザイン
 src/composables/**                   デザイン
 src/utils/**                         デザイン
 web.html                             デザイン
-scripts/deploy-web-dev.mjs           分析
 
 # サーバー (サーバー管理人がサーバー管理人を兼任、10-23。Cloudflare の使用量の見張りも)
 server/**                            分析

@@ -15,7 +15,7 @@
 10. **出す順と頻度**: 週 2〜3 本を一定に。公開前の見張りを通す。再申請は 15 本以上そろい、関係ない人 2〜3 人に見てもらってから (時期はブラック)。
 
 ## 地図
-- 記事の元: src/data/blog/<slug>.ja.md・.en.md、絵 src/data/blog/img/ (持ち物)。入れ物 src/data/blog/README.md・src/services/blog/blog-md.ts・scripts/build-blog-pages.mjs・_blog-og.mjs・_blog-client.js (ジン部長、記録 emulator/notes/2026-10-22-blog.md)。確かめ `node scripts/build-blog-pages.mjs dist-web-dev --drafts` → Chrome (headless 1 つ、終わったら閉じる)、開発版は commit の後 `pnpm deploy:web-dev`。
+- 記事の元: src/data/blog/<slug>.ja.md・.en.md、絵 src/data/blog/img/ (持ち物)。入れ物 src/data/blog/README.md・src/services/blog/blog-md.ts・scripts/build-blog-pages.mjs・_blog-og.mjs・_blog-client.js (ジン部長、記録 emulator/notes/2026-10-22-blog.md)。確かめ `node scripts/build-blog-pages.mjs dist-web-dev --drafts` → Chrome (headless 1 つ、終わったら閉じる)、開発版は手元の dev サーバー (1440) で (Cloudflare の開発版は 10-24 に消した)。
 - 決まりの元: research/notes/2026-10-22-blog-seo-guide.md (書き方 15 行)・blog-topics.md (種 32 本と狙う言葉)・adsense-policy-check.md (AdSense の要件と今の状態)。細かい決まり notes/2026-10-22-adsense-seo-rules.md。
 - 下書き: 解析君 (math/notes/blog-drafts/ → src/data/blog/)。図の台本 docs/org/blog/charts/ (svg.mjs が部品・色、<slug>.mjs が記事の数字を写して img/<slug>-*.{ja,en}.svg を書く、`node docs/org/blog/charts/<slug>.mjs`。OGP の元 charts/og/<slug>.<言語>.html を窓なしの Chrome 1200×630 で撮って img/<slug>-og.<言語>.png)。キャラの絵 video/assets/characters/ (git 外、顔は video/src/poe2tube/render/tachie.py)。色は白い紙面 (オーナー 10-22「note 準拠」) に合わせ docs/org/blog/charts/svg.mjs の C (字はコントラスト比 4.5 以上)。
 - やる事・記事ごとの進み: todo.md。仕上げの方針・決めた形: notes/。
