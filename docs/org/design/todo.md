@@ -1,5 +1,13 @@
 # デザイン部長 のやる事
 
+## 引き継ぎ (1 本目 → 2 本目 local_d9a6380b-ff4e-49da-99e5-cfc1f662a6d0、10-23)
+- 持ち物: for-share・共通の部品・見た目 (src/styles・style.css)・言語の切り替え・画面の挙動 (src/web・composables・utils)。README の地図・notes/2026-10-23-components-map.md。
+- 使用表 (dev/todo.md): 開発版・確認用 Chrome 9333 は返してある (空き)。手元の dev サーバーも止めた。立てた Chrome は profile ごと消した。
+- 確かめの台本はブラックの共有メモ (side-session-notes/local_ec583720-…) の design-cdp.mjs (CDP の小物、各手 15 秒の上限) と m*.mjs・d12-*.mjs・mback.mjs・mbtn.mjs。開発版は `?k=8ZlDQtkU9siTTMXD-qDzj50w` を 1 回開いてから。出した直後は JS が 404 の事がある (出し直し、同じ profile の古い読み込みも 404 に見える)。
+- オーナーの OK 待ち (見た目・操作、pending-release へ載せる物): 3a250a59 (窓の閉じた直後のクリック・列の見出しの固定・ベースのカード名 1 行)、60a880d3 (押せないボタンのカーソル)、ec25866e (押せない g-btn の opacity 0.45、全部の画面)。
+- 返事待ち: シミュ部長 17 本目に 51908d81 の SimTreePage の `disabled:opacity-40` を外す頼み (共通で効くので要らない)。エミュの RevealPanel.vue:125 の `disabled:opacity-40` も同じく要らない (まだ誰にも頼んでいない、急がない)。
+- 残り・気づき: 下の各節の「見ていない」。ModTable の列の見出しに差し込み口が無い (要望待ち)。for-share が engine.ts を通さず核を直に読む所 (控え)。
+
 ## 今 (10-23)
 - for-share はジン部長から受け取った (e7c697ef・9f46ef0b)。地図は README と notes/2026-10-23-components-map.md に書いた。
 - ModTable の見立て: エミュ (StageModList)・シミュ (TreeGoalPage) とも今の口で作れている。問いは閉じた (ブラック 8 代目 10-23、オーナー): 「シミュ = % 無し」は % の列ではなく、エミュ専用の「次の手で狙う」ボタン (段の表) がシミュに要らないという事。「狙う」は StageModList の tier-actions の差し込みのまま、土台に入れない。ModTable は今のまま。
@@ -33,3 +41,5 @@
 - 「← 戻る」→ ブラウザの戻るで前のページへ (ブラックの頼み、メモ feedback-basic-flow): page.ts の autoBase を「今のページが自分で出たベース選び」だけに (ada034a6)、ページと autoBase を組で見張って移る直前の値で積む / 置き換えるを決める (13cd3429)。原因 = ベース未選択の時、ツリーなどから出る移りを「自分で出たベース選びからの移り」と見なして置き換えていた・?page=base を直に開いた時の「自分で出た → 人が開いた」を取りこぼしていた。
   - 確かめ (開発版 13cd3429・新しい profile の 9333・台本 mback.mjs): ツリー見本・ツリー白紙 (最初の profile)、ツリー見本・スパムシミュ・ベース選び・要望・コース (ベース選択済み) の 7 つとも「← 戻る」→ ブラウザの戻るで元の URL (ツリーは箱 28 も戻る)。404・エラー 0。前は ツリー → ?page=base、ベース選び → 1 つ前のページへ飛んだ。
   - 見ていない: 白に戻した後に自分で出るベース選びが今までどおり積まれないか (置き換えの条件は残した)。最初の profile で本当にベース未選択だったかは確かめていない (直す前の飛び方は同じ手順で出ていた)。
+- 押せない g-btn の字が押せる物と同じ色に見える (モンキー ツリー 10、ブラックの頼み): game-ui.css の .g-btn:disabled・.g-btn-red:disabled に opacity 0.45 (ec25866e、全部の画面)。src/web/FeedbackDialog.vue の個別の disabled:opacity-40 は外した。
+  - 確かめ (開発版 7fb3678c・9333・台本 mbtn.mjs): エミュの押せない 3 つ (白に戻す・1 手戻す・今の MOD を取引) とツリーの「1 つ戻す」「やり直し」が 0.45、押せる物は 1。ツリーの絵で押せる「整列」とはっきり分かれる。1 回目の出しは JS 2 本が 404 で、出し直した。
