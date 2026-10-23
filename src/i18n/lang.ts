@@ -32,6 +32,11 @@ export function setLang(v: Lang): void {
   lang.value = v;
   try { localStorage.setItem(KEY, v); } catch { /* 無くてよい */ }
   if (typeof document !== "undefined") document.documentElement.lang = v;
+  // URL の ?lang= は入口だけ。押して選んだら消す (残すと再読み込みで URL の言語に戻っていた。2026-10-23 エミュのモンキー 4)。選んだ言語は上で覚えている
+  try {
+    const u = new URL(location.href);
+    if (u.searchParams.has("lang")) { u.searchParams.delete("lang"); history.replaceState(history.state, "", u.pathname + u.search + u.hash); }
+  } catch { /* 無くてよい */ }
 }
 if (typeof document !== "undefined") document.documentElement.lang = lang.value;
 
