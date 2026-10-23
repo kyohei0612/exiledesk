@@ -22,24 +22,26 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 | エミュレーター | `views/craft-stage/CraftStage.vue` | ベース選び → 棚 (`CurrencyShelf.vue`) から持って打つ。アイテム (`StageItemCard.vue`)・工程・MOD 一覧 (`StageModList.vue`)・次の手で狙う (`StageAimPanel.vue`)・スパムシミュレーター (別ページ `StageRoutesPage.vue`、運試し `StageRouteLuck.vue`、計算は `services/craft-stage/route-race.ts`。旧カオススパム計算機は 2026-10-19 に消した) |
 | ジェムコラプト | `views/gem-corrupt/GemCorruptWebPanel.vue` (計算は views/gem-corrupt/model.ts。Web では広告と一緒に出す予定) | 売値 3 つを入れて収支 |
 | チュートリアル (開発版だけ) | `views/tutorial/StageCourses.vue`・`StageTopicGuide.vue`・`StageCourseGuide.vue` | 動作を学ぶコース (`services/tutorial/topic-courses.ts`)・実践 (`course-recipes.ts`) |
-| シミュレーター (開発版だけ) | `views/simulator/StageSimPanel.vue` | 打ち方を組んで何百人分作る (ADR-002・003)。回し方は `services/simulator/` |
+| シミュレーター (開発版だけ) | `views/simulator/tree/SimTreePage.vue` (`?page=sim-tree`、クラフトの道 = ツリー) | 打ち方を組んで何百人分作る (ADR-002・003)。回し方は `services/simulator/tree/` |
 
 開発版だけの物は `state/craft-stage.ts` の `SIM_LOCKED` で本番から隠す (非公開の開発版 `pnpm deploy:web-dev` では開く)。
 
 ## 部ごとの持ち場 (2026-10-20 に分け、10-22〜23 に組み替えた。持ち物の正は docs/org/owners.txt (`node scripts/owner-of.mjs <パス>`)、部の決まりは docs/org/<部>/README.md)
 
-線引き: 結果が変わる物 (付き方・確率・固定される MOD・打てるか) はエンジン、見え方と操作は画面。画面の部長はエンジンにも相手の画面のコードにも触れない。
+線引き: 結果が変わる物 (付き方・確率・固定される MOD・打てるか) はエンジン、見え方と操作は画面。画面の部長はエンジンにも相手の画面のコードにも触れない。どの画面でも同じ物 (ページの枠・決まった挙動・同じゲームの物の部品) は共有 (デザイン部長)、その作業の流れにしか無い物は各画面。迷ったら画面で作り、2 つ目の画面で要った時に共有へ (オーナー 10-23)。
 
 | 部 (部長) | 画面 | 仕組み | 状態 | テスト |
 |---|---|---|---|---|
-| エンジン (ジン部長、画面と部品は持たない) | — | `services/craft-stage/` (spec/・入口 `engine.ts` 核 / `engine-sim.ts` / `engine-emu.ts`)・`services/htc/`・`services/mods/`・`services/items/`・`vendor/poe2htc/` | — | `tests/` の直下 |
+| データ・エンジン (ジン部長 = データベース、出どころはトレード > poe2db。画面と部品は持たない) | — | `services/craft-stage/` (spec/・入口 `engine.ts` 核 / `engine-sim.ts` / `engine-emu.ts`)・`services/htc/`・`services/mods/`・`services/items/`・`vendor/poe2htc/` | — | `tests/` の直下 |
 | エミュの画面 (エミュ部長) | `views/craft-stage/` | エンジンの入口から取る | `state/emulator/` | — |
 | シミュの画面 (シミュ部長) | `views/simulator/` | `services/simulator/` (`htc/` はアプリ専用・凍結) | `state/simulator/` | `tests/simulator/` |
 | チュートリアル (シミュ部長) | `views/tutorial/` (Video*・コース) | `services/tutorial/` | `state/tutorial/` | `tests/tutorial/` |
-| 両方の画面で一緒の部品・見た目 (デザイン部長) | `components/` (`for-share/` = 棚・カード・MOD 表の土台)・`style.css`・`styles/`・`i18n/lang.ts`・GLOSSARY.md | — | `state/for-share/` | — |
-| 共通 (境目・土台、ジン部長) | `web/`・`utils/` | `i18n/` のゲームのデータ・`services/money.ts`・`services/telemetry/` ほか | `state/` の直下 (`craft-stage.ts`・`web-page.ts`・`display-currency.ts` ほか) | — |
+| 画面の土台 (デザイン部長): 両方で一緒の部品・決まった挙動・見た目 | `components/` (`for-share/` = 棚・カード・MOD 表の土台)・`web/`・`composables/`・`utils/`・`web.html`・`style.css`・`styles/`・`i18n/lang.ts`・GLOSSARY.md | — | `state/for-share/` | — |
+| 共通 (データの境目、ジン部長) | — | `i18n/` のゲームのデータ・`services/money.ts`・`services/telemetry/` ほか | `state/` の直下 (`craft-stage.ts`・`web-page.ts`・`display-currency.ts` ほか) | — |
 
 エンジンの核 (ジン部長): `craft-stage/` の `types.ts`・`run-plan.ts`・`contract.ts`、乱数 `htc/rng.ts`。画面 (エミュ・シミュ・チュートリアル)・解析君は入口から取る (核は `engine.ts`、画面の要望の物は出した側だけが `engine-sim.ts` / `engine-emu.ts` から。分け方は org/emulator/notes/2026-10-22-entry-split-plan.md)。`services/simulator/htc/` はアプリ専用・凍結で Web から import しない。craft-stage/ に残した共通の境目: `share.ts`・`trade-search.ts`。htc/ の `buy-or-craft.ts`・`prices.ts`・`paste*.ts` もアプリ・各部がまたがって使うので htc/ に残した。scripts/ は今のまま 1 つのフォルダー。
+
+コードを持たない部 (docs/org/): モンキー隊長 (開発版を何も知らない人として触り notes/ に書くだけ)・リサーチ長・ホワイト。
 
 ## 何を正とするか (同じ事を 2 か所でやらない)
 
@@ -65,6 +67,7 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 | 何 | どこから | 作り直し |
 |---|---|---|
 | アイテム名・MOD の文面・ジェム・エッセンス・説明文 | ゲームのクライアント (`pathofexile-dat`) | `pnpm data:client` |
+| 付く・付かない・ベースの有無 (一番の出どころ、消さない) | トレードのデータ (`services/items/tradeable-bases.json`・`i18n/trade2-*.json`) | `scripts/build-tradeable-bases.mjs`・`scripts/build-trade2-*.mjs` |
 | MOD の置き場・重み | poe2db (同梱エンジン + `poe2db-pool-fixes.json`)。冒涜専用は全部同じ重み | `scripts/build-poe2db-fixes.mjs`、照合は `scripts/audit-poe2db-mods.mjs` |
 | 付き方の正解 | Craft of Exile の写し (`data-cache/coe-beta-package_poe2.js`) とオーナーのゲームでの確認 | — |
 | ベース・ユニーク・ルーンの絵 | クライアントの DDS → webp (`public/<pack>/`) | `pnpm data:client` |

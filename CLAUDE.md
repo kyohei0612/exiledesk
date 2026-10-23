@@ -14,14 +14,15 @@ PoE2 のクラフトのエミュレーター (Web が本番、アプリは当分
 ## 作業 → 先に読む物
 | 作業 | 読む物 |
 |---|---|
-| エンジン: カレンシー・お告げの動き (spec/・parts.ts・入口 engine.ts) | docs/org/emulator/README.md (ジン部長)、docs/decisions/004-currency-as-description.md、docs/reviews/2026-10-17-rule-checklist.md、メモ poe2-craft-rules-confirmed・feedback-game-rules-as-written・feedback-check-settled-rules |
-| MOD の置き場・重み・段・部位 | メモ mod-engine-single-source・feedback-verify-with-poe2db・craft-weight-sources・item-classes-from-client・poe2-client-data-source |
+| データ・エンジン: カレンシー・お告げの動き (spec/・parts.ts・入口 engine.ts) | docs/org/emulator/README.md (ジン部長 = データベース)、docs/decisions/004-currency-as-description.md、docs/reviews/2026-10-17-rule-checklist.md、メモ poe2-craft-rules-confirmed・feedback-game-rules-as-written・feedback-check-settled-rules |
+| MOD の置き場・重み・段・部位・ベースの有無 (出どころはトレードのデータ > poe2db) | メモ mod-engine-single-source・feedback-verify-with-poe2db・craft-weight-sources・item-classes-from-client・poe2-client-data-source |
 | 確率の表・次の手で狙う | メモ held-odds-parity・aim-next-move |
 | スパムシミュレーター・音・X シェア | メモ chaos-spam-and-sfx |
 | エミュの画面 (UI、views/craft-stage) | docs/org/emu/README.md (エミュ部長)、docs/decisions/001-craft-stage.md、メモ craft-stage-feature・ui-one-frame-rule・ui-no-break-rules・feedback-basic-flow・feedback-minimal-text-ui・game-ui-art-direction・web-phone-layout・ui-try-before-release |
 | チュートリアル・コース・クラフトチャレンジ | docs/decisions/003-quiz-recipe.md、docs/craft-challenge.md、メモ quiz-recipe・craft-challenge・recipe-showcase |
 | シミュレーター (ツリー、開発版だけ) | docs/org/simulator/README.md (シミュ部長)、docs/decisions/002-play-recipe.md、メモ sim-cost-model・sim-split-by-side・feedback-show-sim-rules |
-| 両方の画面で一緒の部品 (for-share)・共通の部品・見た目 | docs/org/design/README.md (デザイン部長)、メモ MEMORY.md の「UI の決まり」 |
+| 両方の画面で一緒の部品 (for-share)・画面の挙動 (web/・composables・utils)・見た目 | docs/org/design/README.md (デザイン部長)、メモ org-roles-2026-10-23 (共有と各画面の線引き)・MEMORY.md の「UI の決まり」 |
+| 開発版を乱暴に触る (モンキー) | docs/org/monkey/README.md (モンキー隊長、指示待ち) |
 | 英語の画面・用語 | src/i18n/GLOSSARY.md、メモ web-english・feedback-english-with-every-feature・feedback-no-guessed-terms |
 | リリース・更新内容・要望の返事 | docs/pending-release.md (OK 待ちの物)、メモ feedback-web-only-for-now・feedback-backstage-release・feedback-replies (更新内容は changelog-notes.json と -en.json) |
 | サーバー (server/live・server/web)・分析の記録 | server/live/README.md、メモ analytics-logs |
