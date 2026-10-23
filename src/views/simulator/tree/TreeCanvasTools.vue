@@ -56,6 +56,7 @@ const btn = "flex h-8 min-w-8 items-center justify-center rounded-md px-1.5 text
       <rect v-for="b in boxes" :key="b.id" :x="mx(b.x)" :y="my(b.y)" :width="Math.max(3, BOX_W * box.k)" :height="Math.max(2, BOX_H * box.k)" rx="2" :fill="fill(b)" fill-opacity="0.75" />
       <rect :x="mx(view.x)" :y="my(view.y)" :width="view.w * box.k" :height="view.h * box.k" rx="3" fill="rgba(255,236,190,0.06)" stroke="rgba(255,220,150,0.7)" stroke-width="2" />
     </svg>
+    <!-- スマホ (768px 未満) は区切りを隠し % を細くして木の枠 (375 幅で 281px) に収める (帯が 286px で左の「選択」が枠の外に切れた、10-23 モンキー 5) -->
     <div class="pointer-events-auto flex items-center gap-0.5 rounded-lg border border-white/10 bg-[#15110c]/95 p-1 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.6)]" role="toolbar" :aria-label="tr('見え方', 'View')">
       <button type="button" data-tree-tool-select :class="[btn, !hand ? 'bg-amber-400/20 text-amber-100' : '']" :aria-pressed="!hand" :title="tr('選択 (箱を組む)', 'Select (edit boxes)')" :aria-label="tr('選択', 'Select')" @click="hand = false">
         <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 3l7 17 2.5-7.5L21 10z" /></svg>
@@ -63,14 +64,14 @@ const btn = "flex h-8 min-w-8 items-center justify-center rounded-md px-1.5 text
       <button type="button" data-tree-tool-hand :class="[btn, hand ? 'bg-amber-400/20 text-amber-100' : '']" :aria-pressed="hand" :title="tr('手 (見るだけ。どこを引いても画面が動く)', 'Hand (view only, drag anywhere to pan)')" :aria-label="tr('手', 'Hand')" @click="hand = true">
         <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-4 0v5M14 10V4a2 2 0 0 0-4 0v6M10 10.5V6a2 2 0 0 0-4 0v8" /><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" /></svg>
       </button>
-      <span class="mx-1 h-5 w-0.5 rounded bg-white/10" />
+      <span class="mx-1 h-5 w-0.5 rounded bg-white/10 max-md:hidden" />
       <button type="button" data-tree-fit :class="btn" :title="tr('全体を表示 (1)', 'Fit all (1)')" :aria-label="tr('全体を表示', 'Fit all')" @click="emit('fit')">
         <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3" /></svg>
       </button>
       <button type="button" data-tree-zoom-out :class="btn" :title="tr('縮める (ホイールでも)', 'Zoom out (also mouse wheel)')" :aria-label="tr('縮める', 'Zoom out')" @click="emit('zoomOut')">−</button>
-      <button type="button" data-tree-zoom-reset :class="[btn, 'w-12 tabular-nums']" :title="tr('等倍に戻す', 'Reset to 100%')" @click="emit('reset')">{{ Math.round(zoom * 100) }}%</button>
+      <button type="button" data-tree-zoom-reset :class="[btn, 'w-12 tabular-nums max-md:w-10']" :title="tr('等倍に戻す', 'Reset to 100%')" @click="emit('reset')">{{ Math.round(zoom * 100) }}%</button>
       <button type="button" data-tree-zoom-in :class="btn" :title="tr('広げる (ホイールでも)', 'Zoom in (also mouse wheel)')" :aria-label="tr('広げる', 'Zoom in')" @click="emit('zoomIn')">＋</button>
-      <span class="mx-1 h-5 w-0.5 rounded bg-white/10" />
+      <span class="mx-1 h-5 w-0.5 rounded bg-white/10 max-md:hidden" />
       <button type="button" data-tree-tool-map :class="[btn, showMap ? 'bg-amber-400/20 text-amber-100' : '']" :aria-pressed="showMap" :title="tr('ミニマップ', 'Minimap')" :aria-label="tr('ミニマップ', 'Minimap')" @click="showMap = !showMap">
         <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z" /><path d="M9 3v15M15 6v15" /></svg>
       </button>
