@@ -12,10 +12,15 @@
  *
  *   pnpm deploy:web-dev           … HEAD をビルドして置き、開く URL (鍵付き) を出す
  *   pnpm deploy:web-dev -- --wip  … 前の形: 今の作業中の src をそのままビルド (自分の確かめだけ)
+ *
+ * 2026-10-23: 1 つ前の版の塊 (assets/) も残して一緒に置く。開いたままのタブ・出した直後に Cloudflare が返す古い index.html
+ * (40 秒ほど古い版と新しい版が入れ替わりで返る) が前の版の塊を取っても 404 にならない。残すのは 1 つ前の版の自分の分だけ
+ * (その版が残していたさらに前の分は落とす)。自分の分の一覧は node_modules/.cache/ (git にも配る物にも入らない)
  */
 import { execSync } from "node:child_process";
-import { existsSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { randomBytes } from "node:crypto";
+import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -43,7 +48,28 @@ if (!wip) {
 console.log(`\nビルドする物: ${label}\n`);
 
 run("npx vue-tsc --noEmit", { cwd: src });
+// 1 つ前の版の自分の塊を退避 (vite が OUT を空にするので)。一覧が無い時 (初回) は今ある assets/ を全部前の版と見る
+const ASSETS = resolve(OUT, "assets");
+const OWN_FILE = resolve(ROOT, "node_modules", ".cache", "exiledesk-dev-web-assets.json");
+const PREV = resolve(tmpdir(), "exiledesk-dev-web-prev-assets");
+rmSync(PREV, { recursive: true, force: true });
+if (existsSync(ASSETS)) {
+  const own = existsSync(OWN_FILE) ? JSON.parse(readFileSync(OWN_FILE, "utf8")) : readdirSync(ASSETS);
+  mkdirSync(PREV, { recursive: true });
+  for (const f of own) if (existsSync(resolve(ASSETS, f))) cpSync(resolve(ASSETS, f), resolve(PREV, f));
+}
 run("npx vite build --config vite.web.config.ts", { cwd: src, env: { ...process.env, WEB_OUT: OUT, VITE_DEV_PREVIEW: "1" } });
+// 今の版の自分の塊の一覧を覚え、前の版の塊のうち今の版に無い物を足す
+const own = readdirSync(ASSETS);
+mkdirSync(dirname(OWN_FILE), { recursive: true });
+writeFileSync(OWN_FILE, JSON.stringify(own));
+let kept = 0;
+if (existsSync(PREV)) {
+  const now = new Set(own);
+  for (const f of readdirSync(PREV)) if (!now.has(f)) { cpSync(resolve(PREV, f), resolve(ASSETS, f)); kept++; }
+  rmSync(PREV, { recursive: true, force: true });
+}
+console.log(`\n塊: 今の版 ${own.length} 本 + 1 つ前の版から残した ${kept} 本\n`);
 // 読み物のページ (ベース一覧・サイトマップ。本番の build:web と同じ、2026-10-22 から開発版でも)
 run(`node scripts/build-seo-pages.mjs "${OUT}"`, { cwd: src });
 // ブログ (2026-10-22、開発版だけ。下書きも出す)。記事の元は src/data/blog/、作りは scripts/build-blog-pages.mjs
