@@ -21,8 +21,14 @@ const t = useTree();
 const step = computed(() => t.goalPage.value);
 const startMods = computed(() => startOf(t.doc.value).mods.length);
 const asking = ref<string | null>(null);
+/**
+ * 白紙の木 (箱・始まりの MOD・完成の狙いが無い) で開いた時は、ベースをまだ選んでいない扱い: 一覧はどの部位も開かずに出す (エミュのベースのページの baseUnpicked と同じ)。
+ * 前は今の木のベース (既定の金の指輪) の部位が開いた状態で始まり、指輪を押すと 1 回目は畳むだけだった (10-23 オーナー「指輪にしたかったが 2 回クリックしないと開かない」)
+ */
+const unpicked = ref(t.lostOnBase.value === 0 && !startMods.value && !t.goals.value.length);
 function close(): void { asking.value = null; t.goalPage.value = 0; }
 function pick(en: string): void {
+  unpicked.value = false;
   if (en === t.doc.value.base) { t.goalPage.value = 2; return; }
   if (t.lostOnBase.value > 0 || startMods.value || t.goals.value.length) { asking.value = en; return; }
   apply(en);
@@ -54,7 +60,7 @@ const CARD_W = 340;
         <button type="button" class="g-btn sm" @click="asking = null">{{ tr("やめる", "Cancel") }}</button>
         <button type="button" data-tree-base-ok class="g-btn sm" @click="apply(asking!)">{{ tr("替える", "Change") }}</button>
       </div>
-      <BaseCatalog :data="s.data.value" :selected="t.doc.value.base" @pick="pick" />
+      <BaseCatalog :data="s.data.value" :selected="unpicked ? '' : t.doc.value.base" @pick="pick" />
     </div>
     <div v-else data-tree-goal-mods class="flex min-h-0 min-w-0 items-start gap-4">
       <div class="min-w-0 flex-1"><ModTable overlay :data="s.data.value" :item="t.goalItem.value?.item ?? null">
