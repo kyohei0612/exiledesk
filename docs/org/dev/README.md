@@ -1,7 +1,7 @@
 # 最終チェック長
 
 最終チェック長 (オーナー 10-21)。常駐しない。本番に上げる時の最後だけ、オーナーの OK の後にブラックが立てる。仕事 = 上げる物の最後の確かめ (型チェック・ビルド・本番に出す物と OK 待ちの出し分け)・デバッグ・版上げ・更新内容の日英・本番の deploy:web と push。終わったら 1〜2 行をブラックへ、引き継ぎは dev/todo.md・notes/。
-本番の出し方: docs/pending-release.md の手順。OK 待ちを抜く時は隣の worktree (../ExileDesk-devbuild) で revert・一時の直しをしてビルドし、本体の dist-web に写して `pnpm --dir server/web run deploy` (共有の作業場所は触らない。例 notes/2026-10-21-replies-and-poe2tube.md の 1b)。要望の返事はサーバー管理人が置く (メモ feedback-replies)、上げ終わったらブラックがサーバー管理人に頼む。
+本番の出し方 (オーナー 10-24、main から出す形へ移る途中 = notes/2026-10-24-main-release.md): 移った後は ① 本番に出していない物は必ずスイッチの下に作る ② 出す前に毎回、本番との照らしの台本を回す ③ OK でスイッチを消し、やめた物は中身ごと消す。移るまでは旧手順: docs/pending-release.md の手順。OK 待ちを抜く時は隣の worktree (../ExileDesk-devbuild) で revert・一時の直しをしてビルドし、本体の dist-web に写して `pnpm --dir server/web run deploy` (共有の作業場所は触らない。例 notes/2026-10-21-replies-and-poe2tube.md の 1b)。要望の返事はサーバー管理人が置く (メモ feedback-replies)、上げ終わったらブラックがサーバー管理人に頼む。
 下の決まりは全部の部の決まり (CLAUDE.md・メモ MEMORY.md の「必ず守る」が先)。
 
 ## 決まり (全部の部)
