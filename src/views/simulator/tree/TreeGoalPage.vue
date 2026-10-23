@@ -6,7 +6,7 @@
   ベースを替えると白紙から (下の箱か始まりの MOD があれば 1 回確かめる、1 つ戻すで戻せる)。開いている印は use-tree の goalPage
 -->
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import BaseCatalog from "../../../components/items/BaseCatalog.vue";
 import ModalShell from "../../../components/ui/ModalShell.vue";
 import ModTable from "../../../components/for-share/mod-list/ModTable.vue";
@@ -17,6 +17,7 @@ import { tr } from "../../../i18n/lang";
 import { startOf } from "../../../services/simulator/tree/tree-model";
 import type { StageMod } from "../../../services/craft-stage/engine";
 import TreeBasePick from "./TreeBasePick.vue";
+import TreeRecipeBar from "./TreeRecipeBar.vue";
 import { useTree } from "./use-tree";
 
 const t = useTree();
@@ -29,6 +30,18 @@ const asking = ref<string | null>(null);
  * 前は「白紙の木か」で決めていたので、ベースを選んだ後に「MOD」から開き直して閉じても空の形に戻った (10-23 に needBase へ)
  */
 const unpicked = ref(t.needBase.value);
+/**
+ * 初手 (ベースがまだ無い所から開いた時) は窓でなく 1 ページで出す (エミュのベースのページと同じく、10-23 オーナー)。
+ * 開いている間はツリーを隠す (SimTreePage が use-tree の goalInline を見る)。ベースを選んだ後に札から開いた時は今まで通り窓
+ */
+const asPage = t.needBase.value;
+t.goalInline.value = asPage;
+onBeforeUnmount(() => { t.goalInline.value = false; });
+/** 「替える」の確かめが出たら見える所へ送る (一覧を下まで送っていると上の帯が見えず、ベースを押しても進まないように見えた、10-23 オーナー) */
+const askEl = ref<HTMLElement | null>(null);
+watch(asking, (v) => { if (v) void nextTick(() => askEl.value?.scrollIntoView({ block: "nearest" })); });
+/** 段のタブの右端のレシピから別の木を開いた = 窓を閉じてその木へ */
+function onRecipe(): void { asking.value = null; t.goalPage.value = 0; }
 /**
  * 閉じる (× / Esc / 枠の外)。ベースをまだ選んでいない白紙の木では、既定のベースで木を始めず、シミュの画面に残ってベースが無い時の空の形を出す
  * (use-tree の needBase。10-23 オーナー「ベースが無いとツリーもくそもない」「× 押したらシミュレーターが消え失せる」)
@@ -67,19 +80,20 @@ const cardW = innerWidth < 768 ? Math.min(CARD_W, innerWidth - 90) : CARD_W;
 </script>
 
 <template>
-  <ModalShell :open="true" rec="tree-goal" :title="tr('0 完成形の設定', '0 Final item')" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" width="w-[88%] h-[86%]" full-on-phone body-class="px-3 pb-3" @close="close">
+  <ModalShell :open="true" :inline="asPage" rec="tree-goal" :title="tr('0 完成形の設定', '0 Final item')" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" :width="asPage ? 'w-full h-[calc(100vh-140px)]' : 'w-[88%] h-[86%]'" full-on-phone body-class="px-3 pb-3" @close="close">
     <template #subheader>
-      <!-- 1 → 2 の段 (押すとその段へ) -->
+      <!-- 1 → 2 の段 (押すとその段へ)。初手 (ベース未選択) の間は 2 へは飛べない (ベースを押して初めて 2 へ、10-23 オーナー)。右端に保存したレシピから開く -->
       <div data-tree-goal-steps class="flex items-center gap-2 px-3 pb-2">
-        <button type="button" data-tree-goal-step="1" class="g-tab !min-h-[30px] !px-4 !text-[13px]" :class="step === 1 ? 'on' : ''" @click="t.goalPage.value = 1">{{ tr("1 ベース", "1 Base") }} <span class="ml-1 text-[11px] opacity-70">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}</span></button>
+        <button type="button" data-tree-goal-step="1" class="g-tab !min-h-[30px] !px-4 !text-[13px]" :class="step === 1 ? 'on' : ''" @click="t.goalPage.value = 1">{{ tr("1 ベース", "1 Base") }} <span v-if="!unpicked" class="ml-1 text-[11px] opacity-70">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}</span></button>
         <span class="opacity-40">→</span>
-        <button type="button" data-tree-goal-step="2" class="g-tab !min-h-[30px] !px-4 !text-[13px]" :class="step === 2 ? 'on' : ''" @click="toMods">{{ tr("2 完成の MOD", "2 Final mods") }} <span class="ml-1 rounded-full bg-black/25 px-1.5 text-[11px] tabular-nums">{{ t.goals.value.length }}</span></button>
+        <button type="button" data-tree-goal-step="2" class="g-tab !min-h-[30px] !px-4 !text-[13px] disabled:opacity-40" :class="step === 2 ? 'on' : ''" :disabled="unpicked" :title="unpicked ? tr('先にベースを選ぶ', 'Choose a base first') : undefined" @click="toMods">{{ tr("2 完成の MOD", "2 Final mods") }} <span class="ml-1 rounded-full bg-black/25 px-1.5 text-[11px] tabular-nums">{{ t.goals.value.length }}</span></button>
+        <span class="ml-auto shrink-0"><TreeRecipeBar menu-only @opened="onRecipe" /></span>
       </div>
     </template>
     <div v-if="step === 1" data-tree-goal-base class="flex min-w-0 flex-col gap-3">
       <TreeBasePick />
-      <!-- ベースを替えると今の木が消える時だけ、1 回確かめる -->
-      <div v-if="asking" data-tree-base-ask class="flex flex-wrap items-center gap-3 rounded-lg border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-[13px]">
+      <!-- ベースを替えると今の木が消える時だけ、1 回確かめる (上に貼り付けて、一覧を送っていても見える所に) -->
+      <div v-if="asking" ref="askEl" data-tree-base-ask class="sticky top-0 z-10 flex flex-wrap items-center gap-3 rounded-lg border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-[13px]">
         <p class="min-w-0 flex-1">{{ tr(`${jaTypeName(asking)} の白紙から組み直します。今の木 (箱 ${t.lostOnBase.value} 個${startMods ? "・始まりの MOD" : ""}${t.goals.value.length ? "・完成の狙い" : ""}) が消えます (1 つ戻すで戻せます)。`, `Start over from a blank ${asking}. This tree (${t.lostOnBase.value} box(es)${startMods ? ", starting mods" : ""}${t.goals.value.length ? ", final targets" : ""}) will be removed (Undo brings it back).`) }}</p>
         <button type="button" class="g-btn sm" @click="asking = null">{{ tr("やめる", "Cancel") }}</button>
         <button type="button" data-tree-base-ok class="g-btn sm" @click="apply(asking!)">{{ tr("替える", "Change") }}</button>

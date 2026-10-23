@@ -376,6 +376,8 @@ onMounted(() => {
   t.startFresh(sample);
 });
 onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); });
+// 完成形の設定をページで出していた間はツリーを隠していたので (大きさ 0)、戻ったらスタートの箱を上の真ん中へ合わせ直す
+watch(() => t.goalInline.value, (on) => { if (!on) setTimeout(() => { measureRow(); void v.goHome(); }, 0); });
 
 function close(): void { treePage.value = false; }
 const panelBox = computed(() => (panel.value ? doc.value.boxes[panel.value.id] ?? null : null));
@@ -398,7 +400,7 @@ const glowOf = (b: Box): boolean => {
     </div>
     <TreeOverlays /><TreeHandPage v-if="panel?.kind === 'hand' && panelBox" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" @split="onSplit" @back="picking = panel!.id; panel = null" />
     <TreePanelPage v-else-if="panel && panelBox" :key="`${panel.kind}-${panel.id}`" :kind="panel.kind === 'split' || panel.kind === 'note' ? panel.kind : 'aim'" :box-id="panel.id" :current="panelBox.aim" @pick="pickAim" @close="panel = null" />
-    <div class="g-panel flex flex-col gap-2 px-3 py-2" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
+    <div v-show="!t.goalInline.value" class="g-panel flex flex-col gap-2 px-3 py-2" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
       <!-- 帯: 全体の数字 (まだ) ・1 つ戻す・拡大縮小・全画面。ベースが無い空の形 (t.needBase) の間は「レシピ ▾」と「メモ」だけ (今押しても意味の無い物は出さない、10-23 オーナー) -->
       <!-- 折り返さない (回した結果の文で 1 行と 2 行の境目になり、木の枠が上下して箱の × が押せなかった、10-22)。左は狭ければ … で切る。768px 未満は左と右を 2 段に (右が画面より広く左が潰れて「回す」が押せなかった、10-22) -->
       <div class="flex flex-wrap items-center gap-2 text-[13px] md:flex-nowrap">
