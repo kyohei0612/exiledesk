@@ -4,3 +4,4 @@
 
 | 誰 | ファイル |
 |---|---|
+| エミュ部長 2 本目 (本番に合わせるスイッチ、10-24) | src/views/craft-stage/CraftStage.vue・StageQualityBar.vue・StageRoutesPage.vue・StageAimPicker.vue・StageBasePage.vue・use-stage-base.ts |
