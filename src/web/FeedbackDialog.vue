@@ -15,6 +15,7 @@ import { allMods } from "../services/craft-stage/stage-core";
 import pkg from "../../package.json";
 import { tr } from "../i18n/lang";
 import ModalShell from "../components/ui/ModalShell.vue";
+import { flag } from "./release-flags";
 
 /** forId: 返事で「画像を下さい」と頼んだ要望の id (その要望に画像を足す。2026-10-14) */
 const props = defineProps<{ open: boolean; forId?: string | null; /** 重ねる窓ではなく、要望・バグを送るのページとして出す (web/page.ts、2026-10-18) */ page?: boolean }>();
@@ -142,7 +143,7 @@ async function send(): Promise<void> {
       <template v-else>
         <span v-if="!forId" class="text-[10px] opacity-40">{{ text.trim().length }} / 4000</span>
         <button type="button" class="g-btn sm ml-auto" @click="emit('close')">{{ tr("やめる", "Cancel") }}</button>
-        <button type="button" class="g-btn-red sm" :disabled="!canSend" @click="send">{{ state === "sending" ? tr("送っています…", "Sending…") : tr("送る", "Send") }}</button>
+        <button type="button" class="g-btn-red sm" :class="flag('monkey1023') ? '' : 'disabled:opacity-40'" :disabled="!canSend" @click="send">{{ state === "sending" ? tr("送っています…", "Sending…") : tr("送る", "Send") }}</button>
       </template>
     </template>
   </ModalShell>

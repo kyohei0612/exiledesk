@@ -13,6 +13,9 @@ import { toCss } from "../../utils/zoom";
 import { baseArt } from "../../services/craft-stage/base-art";
 import { gemArt } from "../../services/craft-stage/skill-art";
 import Disclosure from "../ui/Disclosure.vue";
+import { flag } from "../../web/release-flags";
+/** 名前を 1 行で … (モンキー 15、本番は OK 待ち) */
+const ONE_LINE = flag("monkey1023");
 
 const props = defineProps<{ list: CatalogRow[]; selected?: string | null; note?: (en: string) => string; showCls?: boolean; /** 最初は 2 行だけ出して「もっと見る」で全部 (名前で探す時は全部) */ fold?: boolean; /** 人気の札を付けるベース (popular-bases.json) */ hot?: ReadonlySet<string> }>();
 /** expand / collapse: 「もっと見る」で広げた・「たたむ」で畳んだ時 (親が伸びた一覧の下まで送る / 元の位置に戻す。2026-10-14) */
@@ -70,8 +73,8 @@ const rest = computed(() => Math.max(0, props.list.length - shown.value.length))
       <span v-else class="h-12 w-12 shrink-0 md:h-16 md:w-16" />
       <span class="min-w-0 flex-1 max-md:w-full">
         <!-- 名前は 1 行 (入らなければ … で切り、全部は title)。狭い窓で「アミュレ / ット」と折れて下が切れていた (2026-10-23 モンキー 15) -->
-        <span class="flex min-w-0 items-baseline gap-2 max-md:flex-col max-md:items-center max-md:gap-0">
-          <b class="min-w-0 truncate text-[13px] max-md:max-w-full md:text-[15px]" :class="b.en === selected ? 'text-amber-100' : ''" :title="nameOf(b)">{{ nameOf(b) }}</b>
+        <span class="flex items-baseline gap-2 max-md:flex-col max-md:items-center max-md:gap-0" :class="ONE_LINE ? 'min-w-0' : ''">
+          <b class="text-[13px] md:text-[15px]" :class="[b.en === selected ? 'text-amber-100' : '', ONE_LINE ? 'min-w-0 truncate max-md:max-w-full' : '']" :title="ONE_LINE ? nameOf(b) : undefined">{{ nameOf(b) }}</b>
           <span v-if="hot?.has(b.en)" class="shrink-0 rounded bg-amber-500/25 px-1 text-[9.5px] font-bold leading-[14px] text-amber-200 md:text-[10.5px]">{{ tr("人気", "Popular") }}</span>
           <!-- ジュエルはレベルを出さない (付く物がアイテムレベルで変わらない。2026-10-12 オーナー「ジュエルはベースからも」) -->
           <span v-if="b.lvl && !inGroup(b.cls, 'jewel')" class="ml-auto shrink-0 text-[10px] opacity-50 max-md:ml-0 md:text-[12px]">Lv {{ b.lvl }}</span>

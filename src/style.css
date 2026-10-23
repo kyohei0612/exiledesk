@@ -232,8 +232,11 @@ html.web-page body { overflow-y: visible; }
 }
 
 /* 押せないボタンは指にしない (層の外なので disabled:cursor-* より強く、どの画面でも押せないボタンが指のままだった。2026-10-23 エミュ部長の知らせ) */
-button:not(:disabled) {
+button {
   cursor: pointer;
+}
+:where(:root[data-flag-monkey1023]) button:disabled {
+  cursor: revert-layer; /* 本番はスイッチ monkey1023 が入るまで前の形 (押せないボタンも指) */
 }
 
 /*

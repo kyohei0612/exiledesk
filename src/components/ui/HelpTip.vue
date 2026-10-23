@@ -11,6 +11,7 @@ import { computed, onBeforeUnmount, ref } from "vue";
 import { isTouchOnly } from "../../utils/use-phone";
 import { toCss } from "../../utils/zoom";
 import { useDismiss } from "../../utils/use-dismiss";
+import { flag } from "../../web/release-flags";
 import Icon from "./Icon.vue";
 
 const props = withDefaults(defineProps<{
@@ -52,7 +53,7 @@ function hide(): void {
 function toggle(): void { if (open.value && pinned.value) hide(); else show(true); }
 // 押して開いた説明: 外を押す・Esc で閉じ、その押下は下の物 (見出しの開け閉めなど) に届けない (2026-10-22 オーナー「キャンセルは枠の外をクリックで」)。
 // 共通の useDismiss なので、窓の中でも Esc で説明だけ先に閉じる (2026-10-23)。乗せて開いただけの時は離れたら閉じる (Esc は下の物と一緒)
-useDismiss(() => open.value && pinned.value, [btn], hide, { keep: "[data-helptip-pop]" });
+useDismiss(() => open.value && pinned.value, [btn], hide, { keep: "[data-helptip-pop]", always: true, swallow: flag("dismiss") ? undefined : false });
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && open.value && !pinned.value) hide(); }
 document.addEventListener("keydown", onKey);
 onBeforeUnmount(() => document.removeEventListener("keydown", onKey));

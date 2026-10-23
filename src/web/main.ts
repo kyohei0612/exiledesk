@@ -9,6 +9,9 @@ import { startPwa, startStaleReload } from "./pwa";
 import { applyNoLogParam, noLog } from "../utils/no-log";
 import { initRecParts } from "../utils/rec-mode";
 import { setMarketLoader } from "../state/market-store";
+import { markFlags } from "./release-flags";
+// 入っているスイッチを <html> に印 (CSS だけの直しの出し分け。描く前に)
+markFlags();
 import { loadBoot } from "./boot";
 import { pageTitle, startPages } from "./page";
 import type { CurrencyItem, League } from "../api/poe2scout";

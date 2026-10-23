@@ -17,6 +17,9 @@ import { uniqueArt } from "../../services/assets/unique-art";
 import FAM_GLOW from "./fam-glow.json";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import popularData from "../../data/popular-bases.json";
+import { flag } from "../../web/release-flags";
+/** 開く・畳むの揃え (開いた時に今の部位まで送る・データが後から届いた時・スマホの頭)。本番は OK 待ち */
+const OPEN_FIX = flag("monkey1023");
 
 /** popular: 一番上に「人気のベース」の段を出す (初めての人のベース選び。2026-10-11 オーナー「解析で人気のベースをそのまま選択させる」) */
 const props = defineProps<{ data: PatchData | null; selected?: string | null; extras?: boolean; note?: (en: string) => string; height?: string; popular?: boolean }>();
@@ -253,7 +256,7 @@ function pickFamily(f: Family): void {
   // 属性の札は先頭 (筋力・無印) を選んだ状態で開いて、すぐベースを出す。札は上で切り替える
   // (2026-10-10 オーナー「押したら選ばせるんじゃなく最初から筋力のページ開いて上のタブで切り替え、アイコンと文字が挟まれると目が滑る」)
   if (f.variants.length) cls.value = f.variants.some((v) => v.cls === cls.value) ? cls.value : f.variants[0]!.cls;
-  void nextTick(() => { placeUnder(f); void nextTick(() => requestAnimationFrame(() => requestAnimationFrame(() => (phone.value ? revealPhoneHead() : revealPanel())))); });
+  void nextTick(() => { placeUnder(f); void nextTick(() => requestAnimationFrame(() => requestAnimationFrame(() => (phone.value && OPEN_FIX ? revealPhoneHead() : revealPanel())))); });
 }
 /**
  * スマホ: 部位を押すとタイルが一覧に置き換わってページが縮み、送りの位置はそのままなので、一覧の頭が画面の上の外に出て下の記事が映っていた
@@ -294,12 +297,12 @@ function revealPanel(bottomFirst = false): void {
 }
 // 今のベースがある時 (選び直し) は、開いた時にその部位の一覧が全部見えるまで送る。エミュのベースのページもシミュの完成形の設定も同じ (2026-10-23 オーナー
 // 「展開した時の動きをエミュとシミュで一緒に」。前はエミュのページだけが自分で reveal を呼んでいた)。送る先は一番近い送りの箱 (ページ / 窓の本文)
-onMounted(() => { void nextTick(() => { if (props.selected && family.value) reveal(); else placeUnder(family.value); }); });
+onMounted(() => { void nextTick(() => { if (OPEN_FIX && props.selected && family.value) reveal(); else placeUnder(family.value); }); });
 // データや今のベースが後から届いた時 (?page=base を直に開く・再読み込み。最初は未選択の "" で作られる): 両方そろった最初の時に、
 // 今のベースの種類と部位を決め直し、開いた時と同じに送る (前は何も開かなかった、2026-10-23)
 const known = (): boolean => all.value.length > 0 && !!all.value.find((b) => b.en === props.selected);
 watch(known, (now, was) => {
-  if (!now || was) return;
+  if (!now || was || !OPEN_FIX) return;
   // 人が部位を開いていたら触らない (未選択から選んだ瞬間など)
   if (phone.value || family.value) return;
   cls.value = all.value.find((b) => b.en === props.selected)!.cls;

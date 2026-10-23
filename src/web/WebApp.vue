@@ -31,6 +31,7 @@ import WebFooter from "./WebFooter.vue";
 import { pageTick, sideAdW } from "../utils/ads";
 import { BLOG_ON, DAILY_ON, dailyPage, feedbackPage, recipesPage, routesOpen, TREE_ON, treePage } from "../state/web-page";
 import { prefetchWhenIdle } from "./prefetch";
+import { flag } from "./release-flags";
 const SideReads = defineAsyncComponent(() => import("./SideReads.vue")); // 右の列の読み物 (関係する記事・新しい記事・使い方、/blog/index.json)
 const StageRoutesPage = defineAsyncComponent(() => import("../views/craft-stage/StageRoutesPage.vue"));
 const loadTree = () => import("../views/simulator/tree/SimTreePage.vue");
@@ -129,7 +130,7 @@ function fitZoom(): void {
   // iPad など: 縮めると字が 7〜8 px になって読めないので、1280 未満は等倍、それより広くても 0.85 倍より小さくしない (並びは幅に合わせて折り返す。2026-10-10)
   // 幅はいつも「縦のスクロールバーがある時の幅」(innerWidth − スクロールバーの太さ)。innerWidth のままだと外枠が 10 px 横にはみ出し (2026-10-22 はみ出しの見張り)、
   // clientWidth (今バーがあるか次第) だと、高さが画面ぎりぎりのページでバーが出る → 縮む → 消える → 戻る を毎フレームくり返して CPU が回りっぱなしだった (2026-10-23 シミュ部長)
-  const cw = window.innerWidth - SCROLLBAR;
+  const cw = flag("fitZoom") ? window.innerWidth - SCROLLBAR : document.documentElement.clientWidth || window.innerWidth;
   const z = phone.value || window.innerWidth < 1280 ? 1 : Math.min(1.6, Math.max(0.85, cw / DESIGN_WIDTH));
   document.documentElement.style.zoom = String(z);
   // 等倍の時は幅を決め打ちしない (innerWidth は縦のスクロールバーの分も入っていて、768〜1279 px で 10 px 横にはみ出した。2026-10-13 ランダム操作の確かめ)

@@ -14,6 +14,7 @@ import { tr } from "../../../i18n/lang";
 import { keepPlace, revealOpened, scrollToTop } from "../../../utils/keep-place";
 import { useDismiss } from "../../../utils/use-dismiss";
 import Disclosure from "../../ui/Disclosure.vue";
+import { flag } from "../../../web/release-flags";
 import { essName, tierName, toneOf, weightNote } from "./stage-mod-list-look";
 
 export interface ModSection { g: ModGroup; sid: string; label: string; rune: string | null; socketed: boolean; count: number; columns: Array<{ side: "prefix" | "suffix"; title: string; items: ListRow[]; top: number }> }
@@ -77,7 +78,7 @@ const isJumpTier = (key: string, modId: string, rank: string): boolean => !!jump
 /** 選び終える手 (closeAfter) を押したら、画面の側の処理の後で段の表を閉じる。押した行は画面の同じ所に残す。小窓 (付け方) は body にあるので document で受ける */
 function onPicked(e: MouseEvent): void {
   const key = expanded.value;
-  if (!key || !(e.target instanceof Element) || !e.target.closest(props.closeAfter)) return;
+  if (!key || !flag("tierClose") || !(e.target instanceof Element) || !e.target.closest(props.closeAfter)) return;
   setTimeout(() => {
     if (expanded.value !== key) return;
     keepPlace(listEl.value?.querySelector(`[data-row-key="${CSS.escape(key)}"] [data-rec^="mod:"]`), () => { expanded.value = null; });
@@ -141,6 +142,7 @@ function observe(): void {
 }
 watch(sections, () => void nextTick(observe), { immediate: true });
 /** 列の見出し (出やすさ・段・Lv) は目次の帯のすぐ下に留める (2026-10-23 モンキー 14「% の右の 2 つの数字に説明が無い」= 送ると見出しが消えていた)。スマホは目次が留まらないので 0 */
+const STICKY_HEAD = flag("monkey1023");
 const tocEl = ref<HTMLElement | null>(null);
 const tocH = ref(0);
 const measureToc = (): void => { const el = tocEl.value; tocH.value = el && getComputedStyle(el).position === "sticky" ? el.offsetHeight : 0; };
@@ -206,7 +208,7 @@ defineExpose({ jumpTo, counts, sections });
       <!-- プレ・サフィの左右は一覧の幅で決める (窓が狭い小さいパソコンは縦に積む。2026-10-11 オーナー) -->
       <div v-if="secShown(sec.sid)" class="grid gap-3 @4xl:grid-cols-2">
         <div v-for="col in sec.columns" :key="col.side" class="min-w-0">
-          <p data-mod-col-head class="sticky z-[5] mb-1 flex items-baseline gap-2 border-b border-white/10 bg-[#120f0c]/95 pb-1 pr-2 pt-0.5" :style="{ top: `${tocH}px` }">
+          <p data-mod-col-head class="mb-1 flex items-baseline gap-2 border-b border-white/10 pb-1 pr-2" :class="STICKY_HEAD ? 'sticky z-[5] bg-[#120f0c]/95 pt-0.5' : ''" :style="STICKY_HEAD ? { top: `${tocH}px` } : undefined">
             <slot name="col-lead" :col="col" />
             <b class="whitespace-nowrap text-[var(--exile-color-text-primary)]">{{ col.title }}</b>
             <span class="whitespace-nowrap text-[var(--exile-color-text-tertiary)]">{{ col.items.length }} {{ tr("系統", "groups") }}</span>

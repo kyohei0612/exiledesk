@@ -22,6 +22,7 @@ import { nextTick, onBeforeUnmount, ref, useSlots, watch } from "vue";
 import Icon from "./Icon.vue";
 import { tr } from "../../i18n/lang";
 import { cancelTopIn } from "../../utils/use-dismiss";
+import { flag } from "../../web/release-flags";
 
 const props = withDefaults(defineProps<{
   open: boolean;
@@ -59,7 +60,7 @@ function onKey(e: KeyboardEvent): void {
   if (e.key !== "Escape" || stack[stack.length - 1] !== id) return;
   e.stopPropagation();
   e.preventDefault();
-  if (cancelTopIn(panel.value)) return;
+  if (flag("dismiss") && cancelTopIn(panel.value)) return;
   close();
 }
 // 後ろを押した時だけ閉じる (中で押して外で離した時 = 文字の選択などでは閉じない)
@@ -100,7 +101,7 @@ function deactivate(): void {
   if (i >= 0) stack.splice(i, 1);
   if (!props.inline && --locks === 0) { document.body.style.overflow = prevOverflow; document.documentElement.style.overflow = prevHtmlOverflow; }
   window.removeEventListener("keydown", onKey, true);
-  if (!props.inline) guardClicks();
+  if (!props.inline && flag("monkey1023")) guardClicks();
   // 閉じたら前に居た所へ (消えていたらそのまま)
   const back = prevFocus;
   prevFocus = null;

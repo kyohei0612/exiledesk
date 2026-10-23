@@ -26,6 +26,7 @@ import { courseShown } from "../services/tutorial/course-release";
 import { pageTick } from "../utils/ads";
 import { tr } from "../i18n/lang";
 import { track } from "./track";
+import { flag } from "./release-flags";
 
 /** ベース選び・計算機・要望のページを閉じる (別のページへ移る時) */
 function leaveSubPages(): void {
@@ -196,7 +197,7 @@ function apply(p: string): void {
     // スパムシミュレーターは URL からも開く (s.ready の後なので今のアイテムで「狙う MOD を選ぶ」から。途中の結果は再読み込みで消える。モンキー 10-23 の 2)
     if (p === "page=routes" && routesOpen.value) return;
     if (s.mode.value === "tutorial" || inLesson.value) { s.hold(null); endLesson(); s.mode.value = "hand"; }
-    if (p === "page=routes") { leaveSubPages(); openRoutes(); return; }
+    if (p === "page=routes" && flag("monkey1023")) { leaveSubPages(); openRoutes(); return; }
     if (p === "page=base") { openBasePage(); return; }
     leaveSubPages();
     // 旧シミュレーターの工程 (page=sim-<工程>) は 10-22 に消した。古い URL はクラフトのまま開く
@@ -245,7 +246,7 @@ export function startPages(): void {
   // 比べるのは押された時刻 (e.timeStamp)。移った先の描画が重いと 2 回目のクリックが待たされ、配られる時には 300ms を過ぎていた (10-23 シミュ部長の確かめ)
   // 守っている間のクリックは守りを延ばす (8 連打だと 0.5 秒を過ぎた後ろのクリックがブログに当たった。10-23 ジン部長の確かめ)
   // 上の切り替えタブ (ModeTabs) は守らない。どのページでも同じ位置で、続けて押すとずっと捨てられて替わらなかった (10-23 オーナー「エミュとシミュを高速でタブ替えすると死ぬほど重い」)
-  for (const ev of ["click", "pointerdown"]) window.addEventListener(ev, (e) => { if (e.timeStamp - movedAt < MOVE_GUARD_MS && !(e.target as Element | null)?.closest?.("[data-mode-tab]")) { movedAt = e.timeStamp; e.preventDefault(); e.stopPropagation(); } }, { capture: true });
+  if (flag("monkey1023")) for (const ev of ["click", "pointerdown"]) window.addEventListener(ev, (e) => { if (e.timeStamp - movedAt < MOVE_GUARD_MS && !(e.target as Element | null)?.closest?.("[data-mode-tab]")) { movedAt = e.timeStamp; e.preventDefault(); e.stopPropagation(); } }, { capture: true });
 }
 /** ページが替わった時刻と、その後クリックを受けない長さ */
 let movedAt = -Infinity;

@@ -11,12 +11,15 @@
 import { computed } from "vue";
 import { tr } from "../../i18n/lang";
 import { TREE_ON, treePage } from "../../state/web-page";
-import { openTreePage } from "../../web/page";
+import { openTreePage, page } from "../../web/page";
+import { flag } from "../../web/release-flags";
 
 type Mode = "hand" | "sim";
 const props = defineProps<{ active?: Mode | null }>();
 const emit = defineEmits<{ pick: [Mode] }>();
 
+/** 本番 (スイッチ modeTabs が切れている間) はベースのページに帯を出さない (前は帯ごと隠していた) */
+const shown = computed(() => flag("modeTabs") || page.value !== "page=base");
 const on = computed((): Mode | null => (props.active !== undefined ? props.active : treePage.value ? "sim" : "hand"));
 function pick(m: Mode): void {
   if (m === "sim") openTreePage();
@@ -27,7 +30,7 @@ const TAB = "g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex
 </script>
 
 <template>
-  <div data-mode-tabs class="inline-flex gap-1 max-md:flex max-md:w-full" role="tablist">
+  <div v-if="shown" data-mode-tabs class="inline-flex gap-1 max-md:flex max-md:w-full" role="tablist">
     <button type="button" role="tab" data-mode-tab="hand" :aria-selected="on === 'hand'" :class="[TAB, on === 'hand' ? 'on' : '']" @click="pick('hand')">{{ tr("エミュレーター", "Emulator") }}</button>
     <button v-if="TREE_ON" type="button" role="tab" data-mode-tab="sim" :aria-selected="on === 'sim'" :class="[TAB, on === 'sim' ? 'on' : '']" @click="pick('sim')">
       {{ tr("シミュレーター", "Simulator") }}<span class="text-[10px] font-normal opacity-70" :title="tr('作り込み中の機能', 'Still in development')">β</span>
