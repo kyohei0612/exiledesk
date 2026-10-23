@@ -84,12 +84,12 @@ onBeforeUnmount(() => { window.removeEventListener("pointerdown", onDown, true);
 
 <template>
   <span ref="root" data-tree-recipe-bar class="relative flex min-w-0 items-center gap-1.5">
-    <input v-if="renaming" ref="nameInput" data-tree-recipe-name-input :value="currentTreeRecipe?.name ?? defaultName()" class="h-8 w-56 rounded border border-amber-400/60 bg-black/50 px-1.5 text-[13px] font-bold outline-none" @keydown.enter.prevent="($event.target as HTMLInputElement).blur()" @keydown.esc.stop="renaming = false" @blur="endRename(($event.target as HTMLInputElement).value)" />
-    <button v-else type="button" data-tree-recipe-name class="flex h-8 min-w-0 max-w-[240px] items-center gap-1.5 rounded px-1.5 text-[13px] hover:bg-white/[0.06]" :title="tr('名前を変える', 'Rename')" @click="startRename">
+    <input v-if="renaming && !t.needBase.value" ref="nameInput" data-tree-recipe-name-input :value="currentTreeRecipe?.name ?? defaultName()" class="h-8 w-56 rounded border border-amber-400/60 bg-black/50 px-1.5 text-[13px] font-bold outline-none" @keydown.enter.prevent="($event.target as HTMLInputElement).blur()" @keydown.esc.stop="renaming = false" @blur="endRename(($event.target as HTMLInputElement).value)" />
+    <button v-else-if="!t.needBase.value" type="button" data-tree-recipe-name class="flex h-8 min-w-0 max-w-[240px] items-center gap-1.5 rounded px-1.5 text-[13px] hover:bg-white/[0.06]" :title="tr('名前を変える', 'Rename')" @click="startRename">
       <b class="min-w-0 truncate">{{ currentTreeRecipe?.name ?? tr("名前なし", "Untitled") }}</b>
       <span v-if="dirty" data-tree-recipe-dirty class="size-2 shrink-0 rounded-full bg-amber-400" :title="tr('保存していない変更がある', 'Unsaved changes')" />
     </button>
-    <button type="button" data-tree-recipe-save class="g-btn sm" :title="currentTreeRecipe ? tr('開いているレシピに上書き保存', 'Save to the open recipe') : tr('名前を付けて新しく保存', 'Save as a new recipe')" @click="save">{{ tr("保存", "Save") }}</button>
+    <button v-if="!t.needBase.value" type="button" data-tree-recipe-save class="g-btn sm" :title="currentTreeRecipe ? tr('開いているレシピに上書き保存', 'Save to the open recipe') : tr('名前を付けて新しく保存', 'Save as a new recipe')" @click="save">{{ tr("保存", "Save") }}</button>
     <button type="button" data-tree-recipe-menu class="g-btn sm inline-flex items-center gap-1" :aria-expanded="pop" @click="pop = !pop">{{ tr("レシピ", "Recipes") }} ▾</button>
     <span v-if="note" class="pointer-events-none absolute left-0 top-full z-30 mt-1 whitespace-nowrap rounded bg-emerald-900/90 px-2 py-1 text-[12px] text-emerald-100">{{ note }}</span>
 
@@ -106,8 +106,8 @@ onBeforeUnmount(() => { window.removeEventListener("pointerdown", onDown, true);
       </span>
       <p v-if="urlNote" class="text-amber-200">{{ urlNote }}</p>
       <div class="flex flex-wrap gap-1.5 border-t border-white/10 pt-1.5">
-        <button type="button" data-tree-recipe-save-as class="g-btn sm" @click="saveAs">{{ tr("別名で保存", "Save as") }}</button>
-        <button type="button" data-tree-recipe-copy-url class="g-btn sm inline-flex items-center gap-1" @click="copyUrl"><Icon name="link" class="size-3.5" />{{ tr("URL をコピー", "Copy URL") }}</button>
+        <button v-if="!t.needBase.value" type="button" data-tree-recipe-save-as class="g-btn sm" @click="saveAs">{{ tr("別名で保存", "Save as") }}</button>
+        <button v-if="!t.needBase.value" type="button" data-tree-recipe-copy-url class="g-btn sm inline-flex items-center gap-1" @click="copyUrl"><Icon name="link" class="size-3.5" />{{ tr("URL をコピー", "Copy URL") }}</button>
         <button type="button" data-tree-recipe-list class="g-btn sm ml-auto" @click="pop = false; openRecipesPage()">{{ tr("レシピの一覧へ", "All recipes") }}</button>
       </div>
     </div>
