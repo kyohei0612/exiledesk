@@ -34,6 +34,8 @@ export type Flag = keyof typeof FLAGS;
 const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   // データの OK 待ちで poe2db の裏付けがある物 (オーナー 10-24「データとれてるならそのまま出してええよ」、ジン部長)
   "abyssSuffix", "skillPlus", "talismanWeight", "dntBases",
+  // ルーンの「明示 MOD の強さ」は書いてある効果どおり (オーナー 10-24「ルーンも書いてある効果どおりやし出してええよ」)
+  "runeMagnitude",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */
