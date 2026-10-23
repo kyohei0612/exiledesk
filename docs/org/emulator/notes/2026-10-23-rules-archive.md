@@ -13,3 +13,4 @@
 8. MOD に固定値は無い (+1 も stat の値)。タグ・品質を触る時は暗黙も。
 9. 画面 (src/views・src/state/emulator・simulator) と部品 (src/components・for-share・見た目) は直さない。要る時はどの部のどのファイルかを書いてブラックへ。
 10. 常駐・報告・触るファイル (dev/touching/emulator.md)・push と開発版は dev/README.md の決まり 1・2・5・8 のとおり。本番は最終チェック長。
+- (10-23 README の決まり 2 から外した文) 置き場は窓口と同じ名前 (engine-emu/・engine-sim/)、「for-」は画面の部品の for-share だけ (オーナー 10-23)。
