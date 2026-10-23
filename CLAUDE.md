@@ -37,3 +37,4 @@ PoE2 のクラフトのエミュレーター (Web が本番、アプリは当分
 - 版上げ: `node scripts/bump-version.mjs patch` → `cd src-tauri && cargo check -q` → commit → push → `pnpm deploy:web`。
 - 非公開の開発版: `pnpm deploy:web-dev` (チュートリアル・シミュレーターが開く)。
 - Bash では `\` が 1 段消える。正規表現や `\` の入る物は Write / Edit で書く。
+- Bash で `cd <リポジトリの外>; …` とつながない (bypass でも毎回許可が出てオーナーの手が止まる)。scratchpad の台本は絶対パスで呼び、書き換えは Edit / Write で。
