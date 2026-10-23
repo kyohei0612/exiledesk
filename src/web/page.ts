@@ -112,8 +112,11 @@ export function openBasePage(): void {
   basePage.value = true;
 }
 
-/** ベースを選ぶ画面が自分で出ている (まだ選んでいない。人が開いたのではない) */
-const autoBase = computed(() => baseUnpicked.value && !basePage.value);
+/**
+ * ベースを選ぶ画面が自分で出ている (まだ選んでいない。人が開いたのではない)。今出ているページがベース選びの時だけ
+ * (ツリーなど別のページを出している間も true だと、そこから「← 戻る」で出る時に履歴を積まず置き換え、ブラウザの戻るでツリーに戻れなかった。2026-10-23)
+ */
+const autoBase = computed(() => baseUnpicked.value && !basePage.value && page.value === "page=base");
 
 /** 今のページ (URL の query の 1 組。空 = エミュレーターなど今までの画面) */
 export const page = computed((): string => {
@@ -233,7 +236,8 @@ export function startPages(): void {
     if (applying || pageOfUrl() === p) return;
     // 自分で出たベース選び (初めて・白に戻した後) と、そこから選んで出た時は積まない (戻るで選ぶ前に戻っても選び直しになるだけ)
     try {
-      if (auto || autoBase.value) history.replaceState(history.state, "", urlFor(p));
+      // 自分で出たベース選びへ移る時は、クラフトの画面が替わっただけの時 (白に戻した後など) だけ積まない。ツリーなどから出た時は積む (戻るでそのページへ)
+      if (auto || (autoBase.value && old === "")) history.replaceState(history.state, "", urlFor(p));
       else history.pushState(history.state, "", urlFor(p));
     } catch { /* 積めなくても画面はそのまま */ }
   });
