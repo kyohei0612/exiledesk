@@ -4,3 +4,4 @@
 
 | 誰 | ファイル |
 |---|---|
+| ジン部長 7 本目 | src/web/release-flags.ts (RELEASED に abyssSuffix・skillPlus・talismanWeight・dntBases、10-24) |
