@@ -5,7 +5,7 @@
   選ぶとクラフトへ戻る。まだ選んでいない時 (初めて・白に戻した後) は戻るボタンを出さない
 -->
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted } from "vue";
 import BasePickBody from "../../components/for-share/BasePickBody.vue";
 import ModeTabs from "../../components/for-share/ModeTabs.vue";
 import { craftStage as s } from "../../state/craft-stage";
@@ -14,14 +14,17 @@ import { tr } from "../../i18n/lang";
 import { useStageBase } from "./use-stage-base";
 
 defineProps<{ phone: boolean }>();
-const { pickSimBase } = useStageBase();
+const { chosenBase, pickSimBase } = useStageBase();
 
 function back(): void { basePage.value = false; }
-function pick(en: string): void {
+function pick(en: string, chosen = true): void {
   const first = baseUnpicked.value;
   basePage.value = false;
-  if (first || en !== s.base.value) pickSimBase(en);
+  if (first || en !== s.base.value) pickSimBase(en, chosen);
+  else if (chosen) chosenBase.value = en; // 今のベースを押し直した時はアイテムはそのまま、自分で選んだ物にだけする
 }
+/** 選んだ見た目にするのは人が自分で選んだベースの時だけ (既定・すぐ試すの金の指輪は選んでいない扱い。2026-10-23 オーナー) */
+const shown = computed(() => (!baseUnpicked.value && chosenBase.value === s.base.value ? s.base.value : ""));
 // 開いたら一番上から、戻ったら前の位置へ (ページを移ったのと同じに。2026-10-12 広告のお試しと同じ)
 let before = 0;
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && !baseUnpicked.value) back(); }
@@ -50,7 +53,7 @@ onBeforeUnmount(() => {
       <!-- 何から始めるか。帯は共通の部品 (ModeTabs、2026-10-23 オーナー「帯を 1 つにして両方に」)。シミュレーターを押したらこのページを閉じてツリーへ -->
       <ModeTabs class="mb-3" @pick="(m) => m === 'sim' && back()" />
       <!-- 初めての人への帯 + ベース選びの枠は共通の部品 (BasePickBody、シミュの初手のベース選びと同じ作り。2026-10-23)。帯はベースを選んでいない時のエミュレーターだけ -->
-      <BasePickBody :selected="baseUnpicked ? '' : s.base.value" :popular="baseUnpicked" :intro="baseUnpicked && s.mode.value === 'hand'" @pick="pick" />
+      <BasePickBody :selected="shown" :popular="baseUnpicked" :intro="baseUnpicked && s.mode.value === 'hand'" @pick="pick" @quick="pick('Gold Ring', false)" />
     </div>
   </section>
 </template>

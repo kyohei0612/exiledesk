@@ -31,16 +31,25 @@ function create() {
   watch(() => restoredFromSession.value, (v) => { if (v) handNoBase.value = false; }, { immediate: true });
   // クラフトのコースを始めた時もベースは決まっている (2026-10-17)
   watch(() => course.value ?? topic.value, (c) => { if (c) handNoBase.value = false; }, { immediate: true });
-  /** ベースを選ぶ (クラフト台。旧シミュレーターの狙い・順番などを空に戻す所は 10-23 に消した、ツリー特化) */
-  function pickSimBase(en: string): void {
+  /**
+   * 人が自分で選んだベース (ベースのページ・ベースを変える で押した物)。ベースのページはこれが今のベースの時だけ選んだ見た目にする
+   * (2026-10-23 オーナー「開発版で絶対金の指輪で始まる」: 既定の金の指輪・「すぐ試す」の金の指輪まで選んだ見た目で部位が開いていた)
+   */
+  const CHOSEN_KEY = "exiledesk.stage.chosenBase";
+  let chosen0 = "";
+  try { chosen0 = localStorage.getItem(CHOSEN_KEY) ?? ""; } catch { /* 覚えられない時は選んでいない扱い */ }
+  const chosenBase = ref(chosen0);
+  /** ベースを選ぶ (クラフト台。旧シミュレーターの狙い・順番などを空に戻す所は 10-23 に消した、ツリー特化)。chosen = false は「すぐ試す」など人が選んでいない時 */
+  function pickSimBase(en: string, chosen = true): void {
     handNoBase.value = false;
-    try { localStorage.setItem(FIRST_BASE_KEY, "1"); } catch { /* 無くてよい */ }
+    chosenBase.value = chosen ? en : "";
+    try { localStorage.setItem(FIRST_BASE_KEY, "1"); localStorage.setItem(CHOSEN_KEY, chosenBase.value); } catch { /* 無くてよい */ }
     s.base.value = en;
     s.reset();
     // スマホ: 選んだ所 (下の方) から一番上の見出しまで飛ばず、ベースの欄 (次に決めるアイテムレベル・始め方) を画面の上に (2026-10-09)
     if (phone.value) void nextTick(() => scrollToTop(document.querySelector("[data-stage-settings]"), "auto"));
   }
-  return { handNoBase, pickSimBase };
+  return { handNoBase, chosenBase, pickSimBase };
 }
 let one: ReturnType<typeof create> | null = null;
 export function useStageBase(): ReturnType<typeof create> {
