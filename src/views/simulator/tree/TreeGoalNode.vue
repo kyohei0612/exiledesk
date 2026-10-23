@@ -1,41 +1,40 @@
 <!--
-  TreeGoalNode.vue — ツリーの一番上の「0 完成形の設定」の箱 (2026-10-22 オーナー「ツリー特化」)。置き場は tree-goal.ts (スタートの箱の真上、木の形の外)。
-  押すと重ね窓 (TreeGoalPage.vue) で ベース・レアリティ・アイテムレベル → 完成の MOD。押した判定はページの Vue Flow の node-click。下にスタートの箱への線と矢印
+  TreeGoalNode.vue — ツリーの枠の左上に浮かぶ「0 完成形の設定」の札 (2026-10-22 オーナー「ツリー特化」、10-23 に木の箱から外した)。
+  10-23 オーナー「全体的にスタートが分かりづらい」: 木の一番上はスタートにし、完成形の設定は木を送っても見える左上へ。開くボタンは
+  「ベース」(ベースの段) と「MOD」(完成の MOD の段を直接) の 2 つ (前は押すと必ずベースの段が先に出た)。重ね窓は TreeGoalPage.vue
 -->
 <script setup lang="ts">
 import { computed } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
-import { BOX_W } from "../../../services/simulator/tree/tree-model";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { tr } from "../../../i18n/lang";
-import { GOAL_GAP, GOAL_H } from "./tree-goal";
 import { useTree } from "./use-tree";
 import { rarityName } from "./tree-names";
 
-defineProps<{ selected?: boolean }>();
 const t = useTree();
 const RGB = "242,210,122";
 const rarity = computed(() => rarityName(t.goalRarity.value));
 const n = computed(() => t.goals.value.length);
+const marks = computed(() => t.goals.value.filter((a) => a.fractured).length);
 </script>
 
 <template>
-  <div data-tree-goal class="relative cursor-pointer select-none rounded-xl border-[1.5px] bg-gradient-to-b from-[#221b10] to-[#120e08] px-2 py-1 text-[12px] hover:brightness-110"
-    :style="{ width: `${BOX_W}px`, height: `${GOAL_H}px`, borderColor: `rgba(${RGB},${selected ? 0.95 : 0.7})`, boxShadow: `0 0 0 1px rgba(${RGB},0.3), 0 0 16px rgba(${RGB},0.25)` }"
-    :title="tr('押すと完成形を決める (ベース・レアリティ・アイテムレベル → 完成の MOD)', 'Click to set the finished item (base, rarity, item level → final mods)')">
+  <div data-tree-goal class="pointer-events-auto w-[260px] max-w-[calc(100%-1rem)] select-none rounded-xl border-[1.5px] bg-gradient-to-b from-[#221b10]/95 to-[#120e08]/95 px-2 py-1.5 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.6)]"
+    :style="{ borderColor: `rgba(${RGB},${t.goalPage.value ? 0.95 : 0.7})` }">
     <div class="flex h-6 items-center gap-1.5">
       <span class="flex size-5 shrink-0 items-center justify-center rounded-md" :style="{ background: `rgba(${RGB},0.18)`, color: `rgb(${RGB})` }"><Icon name="pin" class="size-3.5" /></span>
       <span class="truncate text-[11px] font-bold tracking-wide" :style="{ color: `rgb(${RGB})` }">{{ tr("0 完成形の設定", "0 Final item") }}</span>
       <span class="ml-auto shrink-0 text-[11px] opacity-70">{{ tr(`Lv ${t.doc.value.itemLevel}${t.doc.value.ilvlFit ? " 適正" : ""}`, `ilvl ${t.doc.value.itemLevel}${t.doc.value.ilvlFit ? " fit" : ""}`) }}</span>
     </div>
-    <p class="truncate text-[13px] font-bold leading-6">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }} <span class="text-[11px] font-normal opacity-70">{{ rarity }}</span></p>
-    <p class="truncate leading-6" :class="n ? 'text-[#c8c8ff]' : 'text-amber-300'" :title="t.goals.value.map((a) => t.aimLabel(a)).join('\n')">
-      {{ n ? tr(`狙い ${n} つ · ${t.startModLabel(t.goals.value[0]!)}`, `${n} target(s) · ${t.startModLabel(t.goals.value[0]!)}`) : tr("＋ 完成の MOD を決める", "+ Set the final mods") }}
-    </p>
-    <!-- スタートの箱への線と矢印 (木の線と同じ色) -->
-    <svg class="pointer-events-none absolute left-1/2 top-full -translate-x-1/2 overflow-visible" width="12" :height="GOAL_GAP">
-      <path :d="`M 6 0 L 6 ${GOAL_GAP - 4}`" stroke="#a39a88" stroke-width="2" />
-      <path :d="`M 1 ${GOAL_GAP - 10} L 6 ${GOAL_GAP - 2} L 11 ${GOAL_GAP - 10}`" stroke="#a39a88" stroke-width="2" fill="none" />
-    </svg>
+    <div class="flex min-w-0 items-center gap-1.5">
+      <p class="min-w-0 flex-1 truncate text-[13px] font-bold leading-7">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }} <span class="text-[11px] font-normal opacity-70">{{ rarity }}</span></p>
+      <button type="button" data-tree-goal-open="base" class="g-btn sm shrink-0" :title="tr('ベース・レアリティ・アイテムレベルを選ぶ', 'Choose the base, rarity and item level')" @click="t.goalPage.value = 1">{{ tr("ベース", "Base") }}</button>
+    </div>
+    <div class="flex min-w-0 items-center gap-1.5">
+      <p class="min-w-0 flex-1 truncate leading-7" :class="n ? 'text-[#c8c8ff]' : 'text-amber-300'" :title="t.goals.value.map((a) => `${a.fractured ? '✦ ' : ''}${t.aimLabel(a)}`).join('\n')">
+        {{ n ? tr(`狙い ${n} つ${marks ? ` · ✦ ${marks}` : ""}`, `${n} target(s)${marks ? ` · ✦ ${marks}` : ""}`) : tr("完成の MOD はまだ", "No final mods yet") }}
+      </p>
+      <button type="button" data-tree-goal-open="mods" class="g-btn sm shrink-0" :title="tr('完成の MOD を決める (狙いにする・フラクチャーの印)', 'Set the final mods (targets and fracture marks)')" @click="t.goalPage.value = 2">{{ tr("MOD", "Mods") }}</button>
+    </div>
   </div>
 </template>

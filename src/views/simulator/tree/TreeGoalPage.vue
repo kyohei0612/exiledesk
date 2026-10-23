@@ -24,10 +24,11 @@ const step = computed(() => t.goalPage.value);
 const startMods = computed(() => startOf(t.doc.value).mods.length);
 const asking = ref<string | null>(null);
 /**
- * 白紙の木 (箱・始まりの MOD・完成の狙いが無い) で開いた時は、ベースをまだ選んでいない扱い: 一覧はどの部位も開かずに出す (エミュのベースのページの baseUnpicked と同じ)。
- * 前は今の木のベース (既定の金の指輪) の部位が開いた状態で始まり、指輪を押すと 1 回目は畳むだけだった (10-23 オーナー「指輪にしたかったが 2 回クリックしないと開かない」)
+ * ベースをまだ選んでいない (use-tree の needBase = 白紙で開いた時・空の形から開いた時): 一覧はどの部位も開かずに出す (エミュのベースのページの baseUnpicked と同じ)。
+ * 前は今の木のベース (既定の金の指輪) の部位が開いた状態で始まり、指輪を押すと 1 回目は畳むだけだった (10-23 オーナー「指輪にしたかったが 2 回クリックしないと開かない」)。
+ * 前は「白紙の木か」で決めていたので、ベースを選んだ後に「MOD」から開き直して閉じても空の形に戻った (10-23 に needBase へ)
  */
-const unpicked = ref(t.lostOnBase.value === 0 && !startMods.value && !t.goals.value.length);
+const unpicked = ref(t.needBase.value);
 /**
  * 閉じる (× / Esc / 枠の外)。ベースをまだ選んでいない白紙の木では、既定のベースで木を始めず、シミュの画面に残ってベースが無い時の空の形を出す
  * (use-tree の needBase。10-23 オーナー「ベースが無いとツリーもくそもない」「× 押したらシミュレーターが消え失せる」)
@@ -88,11 +89,12 @@ const cardW = innerWidth < 768 ? Math.min(CARD_W, innerWidth - 90) : CARD_W;
     <!-- 768px 未満は縦に積む (完成形のカードが上、表は全部の幅。横に並べると表が 1 文字幅に潰れた、10-23 デザイン部長の気づき・メモ web-phone-layout) -->
     <div v-else data-tree-goal-mods class="flex min-h-0 min-w-0 items-start gap-4 max-md:flex-col max-md:items-stretch">
       <div class="min-w-0 flex-1"><ModTable overlay :data="s.data.value" :item="t.goalItem.value?.item ?? null">
-        <!-- 段の行のボタンは「フラクチャー」(印、10-23) と「狙いにする」(オーナー 10-22) -->
+        <!-- 段の行のボタンは「狙いにする」(オーナー 10-22) と、狙いにした段だけその右に「フラクチャー」(印、10-23)。
+             前はフラクチャーが左にあり、狙いでない段で押すと狙いに足して印も付けたので、狙いにするつもりで印が付いた (10-23 オーナー「印を付けていないのに ✦ スタート」) -->
         <template #tier-actions="{ row: r, tier: tt }">
           <td class="w-48 whitespace-nowrap py-0.5 text-right">
-            <button type="button" data-mod-fracture class="tbtn mr-1" :class="isFrac(tt.modId ?? r.id, tt.tier) ? 'on !text-mod-fractured' : ''" :title="isFrac(tt.modId ?? r.id, tt.tier) ? tr('もう一度押すとフラクチャーの印を外す', 'Click again to remove the fracture mark') : tr(`${tt.rank} 以上をフラクチャーの候補にする (どれか 1 つが固定されたレアからスタート)`, `Make ${tt.rank}+ a fracture candidate (start from a rare with one of them fractured)`)" @click.stop="t.toggleFracture(tt.modId ?? r.id, tt.tier)">{{ isFrac(tt.modId ?? r.id, tt.tier) ? tr("✦ 印", "✦ Marked") : tr("フラクチャー", "Fracture") }}</button>
             <button type="button" data-mod-pick class="tbtn" :class="pickGoal.has(tt.modId ?? r.id, tt.tier) ? 'on' : ''" :title="pickGoal.has(tt.modId ?? r.id, tt.tier) ? tr('もう一度押すと狙いから外す', 'Click again to remove the target') : tr(`${tt.rank} 以上を完成の狙いにする`, `Make ${tt.rank}+ a final target`)" @click.stop="pickGoal.toggle(tt.modId ?? r.id, tt.tier)">{{ pickGoal.has(tt.modId ?? r.id, tt.tier) ? tr("✓ 狙い", "✓ Target") : tr("狙いにする", "Target") }}</button>
+            <button v-if="pickGoal.has(tt.modId ?? r.id, tt.tier)" type="button" data-mod-fracture class="tbtn ml-1" :class="isFrac(tt.modId ?? r.id, tt.tier) ? 'on !text-mod-fractured' : ''" :title="isFrac(tt.modId ?? r.id, tt.tier) ? tr('もう一度押すとフラクチャーの印を外す', 'Click again to remove the fracture mark') : tr(`${tt.rank} 以上をフラクチャーの候補にする (どれか 1 つが固定されたレアからスタート)`, `Make ${tt.rank}+ a fracture candidate (start from a rare with one of them fractured)`)" @click.stop="t.toggleFracture(tt.modId ?? r.id, tt.tier)">{{ isFrac(tt.modId ?? r.id, tt.tier) ? tr("✦ 印", "✦ Marked") : tr("フラクチャー", "Fracture") }}</button>
           </td>
         </template>
       </ModTable></div>

@@ -1,7 +1,7 @@
 <!--
   SimTreePage.vue — クラフトの道 (ツリー) のページ (?page=sim-tree、2026-10-22 オーナー OK「UI の表面だけ」、開発版だけ・PC だけ)。
   入口 (web-page.ts の treePage・web/page.ts・WebApp.vue) はジン部長、中身はシミュ部長。設計は docs/org/simulator/notes/2026-10-22-manual-sim-design.md の 11。
-  一番上が 0 完成形の設定の箱 (TreeGoalNode、木の形の外)、その下がスタートの箱。箱を押すと重ね窓 (TreeOverlays)。下の＋で打つ手 (クラフト台の棚から) → 矢印の先に結果の箱。横の＋で当たりを足す、↩ で既にある箱へ戻す。
+  木の一番上はスタートの箱。0 完成形の設定は木の箱にせず枠の左上の札 (TreeGoalNode、「ベース」「MOD」で開く、10-23)。箱を押すと重ね窓 (TreeOverlays)。下の＋で打つ手 (クラフト台の棚から) → 矢印の先に結果の箱。横の＋で当たりを足す、↩ で既にある箱へ戻す。
   ＋は長押しで引っ張り、箱の上で離すとその箱へつなぐ (何も無い所ならやめる)。箱はドラッグで動かす、1 つ戻す / Ctrl+Z。
   線は普通の木の図の直角の線。戻りの矢印だけの箱も普通の箱 (10-22 オーナーの選び)、戻りの線は乗せた箱の分だけ (帯の「線を全部表示」で全部、10-22 オーナーの案 A)。
   箱に乗せるとその時点のアイテムのカード。試し打ちの欄は 10-22 に消した (オーナー「試し打ちマジ意味わからんから消して」)。
@@ -39,7 +39,6 @@ import { ARMED_CLASS, useArmed } from "../../../utils/use-armed";
 import { useTreeLink } from "./use-tree-link";
 import { useTreeCheck } from "./use-tree-check";
 import TreeIssues from "./TreeIssues.vue";
-import { GOAL_ID, goalPos } from "./tree-goal";
 import TreePanelPage from "./TreePanelPage.vue";
 import BusyTag from "../../../components/ui/BusyTag.vue";
 import { useTreeTune } from "./use-tree-tune";
@@ -189,7 +188,6 @@ function onPaneClick(): void { if (panel.value) closeHand(); }
 /** 引っ張り終えた直後の click (押した所と離した所が同じ箱だと出る) は押した事にしない */
 let dragEndedAt = 0;
 function onNodeClick(e: NodeMouseEvent): void {
-  if (e.node.id === GOAL_ID && !hand.value && !picking.value) { panel.value = null; t.goalPage.value = 1; return; } // 0 完成形の設定の重ね窓
   const b = doc.value.boxes[e.node.id];
   if (!b || hand.value || performance.now() - dragEndedAt < 300) return;
   if (picking.value) { if (picking.value !== b.id) onTarget(b); return; }
@@ -337,7 +335,7 @@ const plusLine = computed(() => {
 
 watch(() => panel.value?.id, (id) => { if (id) setTimeout(() => void v.reveal(id), 0); });
 /** Vue Flow に渡す箱 (位置は木の形のまま。動かせるのは組める時だけ = 手・一望・戻り先を選んでいる間は画面だけ動く) */
-const flowNodes = computed(() => [...(rv.isShown("start") ? [{ id: GOAL_ID, type: "goal", position: goalPos(doc.value), draggable: false, selectable: false, connectable: false }] : []), ...rv.visible.value.map((b) => ({ id: b.id, type: "box", position: posOf(b), draggable: false, selectable: false, connectable: false }))]);
+const flowNodes = computed(() => [...rv.visible.value.map((b) => ({ id: b.id, type: "box", position: posOf(b), draggable: false, selectable: false, connectable: false }))]);
 // Vue Flow へは setNodes で直接入れる (:nodes で渡すと、Vue Flow が中の並びを書き戻している一瞬の変化を拾わず、
 // 見本を開いた時に始まりの箱しか出なかった。10-23 開発版で見た)
 watch(flowNodes, (n) => v.flow.setNodes(n), { immediate: true });
@@ -371,7 +369,8 @@ onMounted(() => window.addEventListener("keydown", onKey));
 onMounted(() => {
   const name = new URLSearchParams(location.search).get("sample");
   const sample = name ? treeSample(name) : null;
-  if (!sample) { if (t.takeAskBase()) t.goalPage.value = 1; return; } // 白紙ならまず 0 完成形の設定の重ね窓 (10-22 オーナー)
+  // 白紙ならまず 0 完成形の設定の重ね窓 (10-22 オーナー)。ベースはまだ選んでいない扱い (選ばずに閉じたら空の形、use-tree の needBase)
+  if (!sample) { if (t.takeAskBase()) { t.needBase.value = true; t.goalPage.value = 1; } return; }
   try { localStorage.setItem("exiledesk.tree.v0.before-sample", JSON.stringify(doc.value)); } catch { /* 控えられなくても開く */ }
   tidyOf(sample);
   t.startFresh(sample);
@@ -427,6 +426,8 @@ const glowOf = (b: Box): boolean => {
         <div v-if="t.needBase.value" data-tree-need-base class="absolute inset-0 z-30 flex items-center justify-center bg-[#0c0a08]">
           <button type="button" data-tree-pick-base class="g-btn" @click="t.goalPage.value = 1">{{ tr("ベースを選ぶ", "Choose a base") }}</button>
         </div>
+        <!-- 0 完成形の設定の札 (木の箱にせず、木を送っても見える左上。10-23 オーナー) -->
+        <div v-if="!t.needBase.value" class="pointer-events-none absolute left-2 top-2 z-20"><TreeGoalNode /></div>
         <!-- ページの zoom を枠だけ打ち消す (中は実質 1 倍。Vue Flow の座標とマウスが揃う、use-tree-flow.ts)。格子は Vue Flow の送りと倍率に合わせる。ホイールは決まった段へ 1 段ずつ (use-tree-flow の onWheel) -->
         <div data-tree-canvas data-overflow-ok class="absolute left-0 top-0 h-full w-full" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid }" @wheel="v.onWheel">
           <VueFlow :id="FLOW_ID" :default-viewport="{ x: 0, y: 0, zoom: pageZ }" :min-zoom="v.minZoom.value" :max-zoom="v.maxZoom.value"
@@ -434,7 +435,6 @@ const glowOf = (b: Box): boolean => {
             :pan-on-drag="true" :pan-on-scroll="false" :zoom-on-scroll="false" :zoom-activation-key-code="null" :zoom-on-double-click="false" :zoom-on-pinch="false"
             :delete-key-code="null" :selection-key-code="null" :multi-selection-key-code="null" :auto-pan-on-node-drag="true"
             @pane-click="onPaneClick" @node-click="onNodeClick">
-            <template #node-goal><TreeGoalNode :selected="!!t.goalPage.value" /></template>
             <template #node-box="{ id }">
               <TreeBox v-if="doc.boxes[id]" :box="doc.boxes[id]!" :removable="canRemove(doc, id)" :picking="!!picking && picking !== id"
                 :selected="panel?.id === id || picking === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand" :glow="glowOf(doc.boxes[id]!) || plus?.target === id" :issue="issueOf(doc.boxes[id]!)" :inv="inv" :link-no="picking ? link.get(id) ?? null : null"
@@ -471,7 +471,7 @@ const glowOf = (b: Box): boolean => {
           </VueFlow>
         </div>
         <!-- 今の状態の札 (左上に浮かべる。ツリーを押し下げない) -->
-        <p v-if="picking || hand || viewOnly" data-tree-mode-pill class="pointer-events-none absolute left-3 top-3 z-20 flex items-center gap-2 rounded-full border px-3 py-1 text-[12px] shadow-[0_4px_14px_rgba(0,0,0,0.6)]"
+        <p v-if="picking || hand || viewOnly" data-tree-mode-pill class="pointer-events-none absolute left-1/2 top-3 z-20 -translate-x-1/2 flex items-center gap-2 rounded-full border px-3 py-1 text-[12px] shadow-[0_4px_14px_rgba(0,0,0,0.6)]"
           :class="[picking ? 'border-cyan-400/50 bg-[#0d1a1c]/95 text-cyan-100' : 'border-white/10 bg-[#15110c]/95 text-[#d8ccb4]', picking || hand ? '' : 'max-md:hidden']">
           {{ picking && panel?.kind === "hand" && panel.id === picking ? tr("右の棚で次に打つ手を選ぶ / 箱を押すとそこへ戻る (Esc でやめる)", "Pick the next craft on the right, or click a box to return to it (Esc cancels)") : picking ? tr("戻り先の箱を押す (Esc でやめる)", "Click the box to return to (Esc cancels)") : hand ? tr("手: 見るだけ (選択に戻すと組める)", "Hand: view only (switch to Select to edit)") : tr("縮めて見ている間は箱を押すとその箱の編集が開く", "Zoomed out: click a box to edit it") }}
           <!-- 完成の箱からつなぐと完成の印は外れる (黙って外れていた、10-22 白紙から組んだ試し #19) -->
