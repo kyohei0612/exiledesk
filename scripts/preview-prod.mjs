@@ -1,15 +1,17 @@
 #!/usr/bin/env node
 /**
  * preview-prod.mjs — 手元で本番と同じ環境を出す (2026-10-24 オーナー「ローカルと鯖環境を合わせたら開発版ウェブで確かめる必要なく本番リリースできる」)
- *   pnpm preview:prod [--dev] [--no-build] [--port 1460]
- * 本番の Web と同じ作り (vite build + 相場の控え + 読み物 + ブログ) を server/web/.wrangler/preview-dist に出し、
- * server/web の本番の wrangler.jsonc (run_worker_first・html_handling・404・D1 の名前) のまま wrangler dev (workerd) で http://127.0.0.1:<port>/ に出す。
- *   --dev      開発版 (web-dev) と同じ作り (VITE_DEV_PREVIEW=1: チュートリアル・シミュレーターが開く、ブログは下書きも)
- *   --no-build 前に作った物のまま立て直す
- * 本番の D1・KV には書かない: D1 は手元の写し (.wrangler/state-preview。シェアの shares は本番から新しい 20 行を読んで写す)、
- * 画面の送り先 (VITE_WEB_API) は手元の Worker 自身 (/boot.json・/log は 404 → 相場は /market-fallback.json の控え、分析の記録は捨てる)。
- * dist-web (本番に出す物の置き場) は触らない。止める時は Ctrl+C (wrangler の子の workerd も一緒に止まる)。
- * 本番と並べて比べる: node scripts/compare-prod-local.mjs http://127.0.0.1:<port>
+ *   pnpm preview:prod             … (a) 本番そのまま  http://exiledesk.localhost:1460/
+ *   pnpm preview:prod -- --dev    … (b) 開発版と同じ  http://dev.exiledesk.localhost:1461/ (オーナーのブックマーク「ExileDesk開発版」)
+ *   --no-build で前に作った物のまま立て直す、--port で番号を替える。*.localhost は Chrome が手元 (127.0.0.1) に向ける
+ * 作り (今の作業中のファイルから。dist-web・dist-web-dev は触らない) を server/web/.wrangler/preview-dist(-dev) に出し、
+ * server/web の本番の wrangler.jsonc (run_worker_first・html_handling・404・D1 の名前) のまま wrangler dev (workerd) で出す。
+ * (a) 本番の pnpm build:web と同じ並び (vite build + 相場の控え + 読み物 + ブログ)。本番の D1・KV に書かないよう、画面の送り先 (VITE_WEB_API) は
+ *     手元の Worker 自身 (/boot.json・/log は 404 → 相場は /market-fallback.json の控え、分析の記録は捨てる)。
+ * (b) 開発版 (scripts/deploy-web-dev.mjs) と同じビルドの印 VITE_DEV_PREVIEW=1 (チュートリアル・シミュレーターが開く、分析は送らない、ブログは下書きも)。
+ *     相場・配信は開発版と同じく本番の server/live の /boot.json を読む (読むだけ。要望を送ると本番に届くのも開発版と同じ)。門 (dev-gate) は無し。
+ * D1 は手元の写し (.wrangler/state-preview。シェアの shares は本番から新しい 20 行を読んで写す)。止める時は Ctrl+C (子の workerd も止まる)。
+ * 本番と並べて比べる: node scripts/compare-prod-local.mjs http://127.0.0.1:1460 (Node からは *.localhost が引けないことがあるので数字で)
  */
 import { execFileSync, spawn } from "node:child_process";
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -21,24 +23,24 @@ const WEB = resolve(ROOT, "server/web");
 const args = process.argv.slice(2);
 const DEV = args.includes("--dev");
 const BUILD = !args.includes("--no-build");
-const PORT = Number(args[args.indexOf("--port") + 1]) || 1460;
+const PORT = Number(args[args.indexOf("--port") + 1]) || (DEV ? 1461 : 1460);
 const WORK = resolve(WEB, ".wrangler");
 const OUT = resolve(WORK, DEV ? "preview-dist-dev" : "preview-dist");
 const STATE = resolve(WORK, "state-preview");
-const CONF = resolve(WORK, "wrangler.preview.json");
+const CONF = resolve(WORK, DEV ? "wrangler.preview-dev.json" : "wrangler.preview.json");
 const WRANGLER = resolve(WEB, "node_modules/wrangler/bin/wrangler.js");
-const ORIGIN = `http://127.0.0.1:${PORT}`;
+const ORIGIN = `http://${DEV ? "dev." : ""}exiledesk.localhost:${PORT}`;
 const run = (cmd, a, opt = {}) => execFileSync(cmd, a, { cwd: ROOT, stdio: "inherit", windowsHide: true, ...opt });
 const node = (a, opt) => run(process.execPath, a, opt);
 
-// 1. 作る (本番の pnpm build:web と同じ並び。型チェックは省く。出し先だけ替える)
+// 1. 作る (型チェックは省く。出し先だけ替える)
 if (BUILD) {
   rmSync(OUT, { recursive: true, force: true });
-  const env = { ...process.env, WEB_OUT: OUT, VITE_WEB_API: ORIGIN, ...(DEV ? { VITE_DEV_PREVIEW: "1" } : {}) };
+  // (a) は送り先を手元に、(b) は開発版と同じ (送り先は替えない・開発版の印)
+  const env = { ...process.env, WEB_OUT: OUT, ...(DEV ? { VITE_DEV_PREVIEW: "1" } : { VITE_WEB_API: ORIGIN }) };
   node([resolve(ROOT, "node_modules/vite/bin/vite.js"), "build", "--config", "vite.web.config.ts"], { env });
-  // 相場の控えは本番に置いてある物を写す (外の API を叩かない)
-  const fb = execFileSync("curl", ["-sf", "https://exiledesk.com/market-fallback.json"], { encoding: "utf8", windowsHide: true, maxBuffer: 1 << 28 });
-  writeFileSync(resolve(OUT, "market-fallback.json"), fb);
+  // 相場の控えは本番の build:web だけ (開発版には無い)。本番に置いてある物を写す (外の API を叩かない)
+  if (!DEV) writeFileSync(resolve(OUT, "market-fallback.json"), execFileSync("curl", ["-sf", "https://exiledesk.com/market-fallback.json"], { encoding: "utf8", windowsHide: true, maxBuffer: 1 << 28 }));
   node(["scripts/build-seo-pages.mjs", OUT]);
   node(["scripts/build-blog-pages.mjs", OUT, ...(DEV ? ["--drafts"] : [])]);
 }
@@ -62,7 +64,7 @@ try {
 } catch (e) { console.warn("シェアの写しは取れなかった (wrangler login?)", String(e).slice(0, 160)); }
 
 // 4. 立てる
-console.log(`\n手元の本番と同じ環境: ${ORIGIN}/  ${DEV ? "(開発版の作り)" : "(本番の作り)"}  止めるのは Ctrl+C`);
-const child = spawn(process.execPath, [WRANGLER, "dev", "-c", CONF, "--local", "--persist-to", STATE, "--ip", "127.0.0.1", "--port", String(PORT)], { cwd: WEB, stdio: "inherit", windowsHide: true });
+console.log(`\n手元の${DEV ? "開発版" : "本番"}と同じ環境: ${ORIGIN}/  止めるのは Ctrl+C`);
+const child = spawn(process.execPath, [WRANGLER, "dev", "-c", CONF, "--local", "--persist-to", STATE, "--ip", "localhost", "--port", String(PORT)], { cwd: WEB, stdio: "inherit", windowsHide: true });
 child.on("exit", (c) => process.exit(c ?? 0));
 for (const s of ["SIGINT", "SIGTERM"]) process.on(s, () => child.kill(s));

@@ -80,3 +80,20 @@
 | /og/C6RGjvS.png | クローラー | 200<br>content-type: image/png<br>cache-control: public, max-age=31536000, immutable | 同じ | ○ |
 
 42 通りのうち違う物 20
+
+## (b) 開発版と同じ形 (10-24、オーナー「今の開発版と全く同じ環境を作って触れるように」)
+- 開く: `pnpm preview:prod -- --dev` → Chrome で **http://dev.exiledesk.localhost:1461/** (ブックマーク「ExileDesk開発版」をここへ)。(a) 本番そのままは `pnpm preview:prod` → http://exiledesk.localhost:1460/。作り直さずに立て直すのは `--no-build`。止めるのは Ctrl+C。
+- 開発版 (scripts/deploy-web-dev.mjs) と同じ物: ビルドの印 VITE_DEV_PREVIEW=1 (チュートリアル・シミュレーター・ブログの下書き)、相場・配信は本番の server/live の /boot.json を読む、分析は送らない、要望を送れば本番に届く。違う物: 門 (鍵・cookie) が無い、開発版は commit 済みの HEAD をビルドするが手元は今の作業中のファイルから、1 つ前の版の塊は残さない (手元は出し直しの入れ替わりが無いので要らない)。
+- 待ち受けは `localhost` (127.0.0.1 と ::1)。`::` にすると家の LAN (192.168.x) にも出てしまい、その上 Windows では返らなくなったのでやめた。
+- 確かめ (窓なしの Chrome 9370、10-24): タブの題「ベースを選ぶ — ExileDesk」・アイコン 5 つ (/web/favicon-48・96・144・icon-192・/favicon.ico)・manifest 200 (application/manifest+json) は開発版・本番と同じ (題・アイコンは本番と開発版で分かれていない)。エミュ (?page=base)・シミュのツリー (?page=sim-tree)・見本の木 (?page=sim-tree&sample=gold-ring-suffix で箱 42)・タブ替え エミュ → シミュ → エミュ が動き、JS のエラー 0・400 以上 0。
+- 窓なしの Chrome だけの癖: 新しい profile では Service Worker の CacheStorage が開けず (UnknownError)、後から読む塊が ERR_FAILED になった。CDP で Service Worker を通さない (Network.setBypassServiceWorker) と全部通る。開発版でも同じ sw.js が動いているので、オーナーのいつもの Chrome では起きない見込み (オーナーが触って確かめる)。
+
+## web-dev を消す時の手順 (オーナーが触って OK の後、ブラックの「消して」で。まだしない)
+1. Cloudflare の Worker `web-dev` を消す: `pnpm --dir server/web exec wrangler delete -c wrangler.dev.jsonc` (秘密 DEV_KEY も一緒に消える)。消す前に `wrangler deployments list -c wrangler.dev.jsonc` で名前が web-dev なのを見る。本番の `web` は消さない。
+2. 消した後の確かめ: https://web-dev.exiledesk.workers.dev/ が繋がらない (Cloudflare の 404/1042 等)、本番の exiledesk.com・/s/・/og/ が 200。
+3. リポジトリから消す物 (サーバー管理人の commit): scripts/deploy-web-dev.mjs、server/web/dev-gate.js・wrangler.dev.jsonc、package.json の `deploy:web-dev`、手元の .dev-web-key・dist-web-dev/・node_modules/.cache/exiledesk-dev-web-assets.json (git に無い物)、../ExileDesk-devbuild の worktree は最終チェック長も使うので残す (本番の出しの OK 待ちを抜く所)。
+4. 言い方を替える案 (md はブラックとホワイトが直す): CLAUDE.md の「非公開の開発版: `pnpm deploy:web-dev`」→「手元の開発版: `pnpm preview:prod -- --dev` → http://dev.exiledesk.localhost:1461/」、各部の README・todo・メモの「開発版に出す / 開発版で確かめる」→「手元の開発版で確かめる」、共有の物の使用表の「開発版へのデプロイ」の行は消す。og-card.js の「開発版の門」の文と sw.js の `?k=` の除けは、門が無くなれば外せる (後で)。
+5. 気を付ける事: 開発版のシェアの URL (/s/) や鍵付き URL を誰かに渡していれば切れる。今まで外に出したのはオーナーのスマホだけの見込み。
+
+## CLAUDE.md の「動かし方」に足す 1 行の案 (ブラックが直す)
+- 手元の本番と同じ環境: `pnpm preview:prod` (本番そのまま、http://exiledesk.localhost:1460/)・`pnpm preview:prod -- --dev` (開発版と同じ、http://dev.exiledesk.localhost:1461/)。本番と並べて比べる `node scripts/compare-prod-local.mjs`。
