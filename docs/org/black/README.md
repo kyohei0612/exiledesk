@@ -40,7 +40,7 @@
 - 要望・バグ → サーバー管理人が受けて再現と部を特定 → ブラックがその部へ。要望の返事の文と置く (本番に出た後) → サーバー管理人。
 - サーバー (server/live・server/web、Discord・記録・相場・dev-gate) → サーバー管理人。server/live/src/sim.ts だけシミュ部長。
 - 撮影 URL・録画モード・受け渡しの JSON の形 → 動画編集長とジン部長を同じ commit で (ブラックが順に並べる)。
-- 開発版 (deploy:web-dev) と自分の commit の push → 仕事をした部長。本番 (版上げ・deploy:web) → 最終チェック長だけ (オーナーの OK の後)。
+- 自分の commit の push → 仕事をした部長 (確かめは手元、Cloudflare の開発版は 10-24 に消した)。本番 (版上げ・deploy:web) → 最終チェック長だけ (オーナーの OK の後)。
 - poe2db の大きな照らし・外の動画 → リサーチ長、エンジンの写しの直しはジン部長。アプリ (src-tauri・craft-v2・trade2・market) → 凍結、振らない。
 
 ## 地図
