@@ -26,22 +26,29 @@ const keyOf = (data: PatchData, m: TierMod): string => forceKey(m.modId, `T${m.t
  * フラクチャーの候補から始めのアイテム (J1): 候補のどれか 1 つが ✦ で付いたレア + 外れ junk 個 (既定 3 = フラクチャーのオーブを打てる MOD 4 つのレア)。
  * - どれが固定されるか: ゲームのフラクチャーのオーブは MOD 4 つのレアの固定できる MOD を等しく 1 つ固定する。候補が固定された時に限ると、固定できる候補どうしで等分 (chances)。
  * - 外れ: 素の高貴で 1 つずつ付ける (候補と同じ系統・同じ文の MOD が付いた回は引き直す、tries 回まで)。
- * - 固定できる候補が無い・外れが付けられない時は note に理由 (固定できない時のアイテムは白)。
+ * - extra = ✦ の後・外れの前に指名で付ける MOD (スタートの枠の「＋」で足した物)。外れの数は junk − extra の数 (0 未満は 0)。
+ * - from = 白のレアの代わりに使うアイテム (ルーンを先に差した物など)。
+ * - 固定できる候補が無い・extra や外れが付けられない時は note に理由 (固定できない時のアイテムは白、from があれば from)。
  */
-export function fractureStart(data: PatchData, base: string, itemLevel: number, candidates: readonly TierMod[], rng: () => number, o: { junk?: number; tries?: number } = {}):
+export function fractureStart(data: PatchData, base: string, itemLevel: number, candidates: readonly TierMod[], rng: () => number, o: { junk?: number; tries?: number; extra?: readonly TierMod[]; from?: StageItem } = {}):
   { item: StageItem; fixed: TierMod | null; chances: Record<string, number>; note: string | null } {
-  const junk = o.junk ?? 3, tries = o.tries ?? 200;
-  const rare = freshItem(data, base, itemLevel, "rare");
+  const extra = o.extra ?? [], junk = Math.max(0, (o.junk ?? 3) - extra.length), tries = o.tries ?? 200;
+  const rare = o.from ?? freshItem(data, base, itemLevel, "rare");
   const reasons: string[] = [];
   const can = candidates.filter((c) => {
     const r = applyCurrency(data, rare, keyOf(data, { ...c, fractured: true }), mulberry32(1));
     if (!r.applied && r.reason) reasons.push(r.reason);
     return r.applied;
   });
-  if (!can.length) return { item: freshItem(data, base, itemLevel), fixed: null, chances: {}, note: reasons[0] ?? tr("固定できる候補が無い", "No candidate can be fractured") };
+  if (!can.length) return { item: o.from ?? freshItem(data, base, itemLevel), fixed: null, chances: {}, note: reasons[0] ?? tr("固定できる候補が無い", "No candidate can be fractured") };
   const chances = Object.fromEntries(can.map((c) => [`${c.modId}#T${c.tier}`, 1 / can.length]));
   const pick = can[Math.min(can.length - 1, Math.floor(rng() * can.length))]!;
   let item = applyCurrency(data, rare, keyOf(data, { ...pick, fractured: true }), rng).item;
+  for (const m of extra) {
+    const r = applyCurrency(data, item, keyOf(data, { ...m, fractured: false }), rng);
+    if (!r.applied) return { item, fixed: { ...pick, fractured: true }, chances, note: r.reason ?? tr("足した MOD が付けられない", "Cannot add the extra mod") };
+    item = r.item;
+  }
   const ts = candidates.map((c) => ({ modId: c.modId, minTierIndex: 0 })), opts = { data, sameText: true };
   const isCand = (m: StageMod): boolean => ts.some((t) => hits(m, t, opts));
   for (let i = 0; i < junk; i++) {
