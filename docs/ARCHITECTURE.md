@@ -54,7 +54,7 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 - **確率の表** … `services/craft-stage/held-odds.ts` (棚の確率)・`aim-odds.ts` (次の手で狙う)・`route-race.ts` (スパムシミュレーターの 100 人)・`chaos-spam.ts` (運の順位)。打つ処理と同じ部品を使う。
 - **ベースの一覧** … `services/items/base-catalog.ts` と `components/items/BaseCatalog.vue`。今のゲームに無いベースは `removed-bases.json` で外す。
 - **部位のまとまり** … `services/mods/item-classes.ts` (クライアントの ItemClasses。部位の名前を手で並べない)。
-- **ゲームの名前・文面** … クライアント (`src/i18n/*-client.json`、`currency-hover-*.json`)。自分で訳さない。画面の言葉は `i18n/lang.ts` の `tr("日本語", "English")`、MOD の文は `modText`。
+- **ゲームの名前・文面** … poe2db (日本語・英語は同じページ)。食い違ったら poe2db に合わせる。自分で訳さない (今ある `src/i18n/*-client.json`・`currency-hover-*.json` は下の「データの出どころ」の記録どおり)。画面の言葉は `i18n/lang.ts` の `tr("日本語", "English")`、MOD の文は `modText`。
 - **お金** … `services/money.ts`、画面に出す時は `state/display-currency.ts` (費用は切り上げ・収入は切り下げ)。
 - **アイテムの色** … `src/style.css` の `@theme`。色コードを画面に直接書かない。ゲームの絵の枠・ボタンは `styles/game-ui.css` (`.g-panel`・`.g-tab`・`.g-btn`)。
 - **更新内容** … `src/data/changelog-notes.json` (日本語) と `changelog-notes-en.json` (英語)。`scripts/build-changelog.mjs` が `changelog.json` を作る (タグの無い Web だけの版も入る)。
@@ -63,6 +63,8 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 新しい画面を作る時も上の置き場から取る。直す時は置き場の 1 か所を直せば全部の画面が変わる。1 ファイル 500 行まで。
 
 ## データの出どころ
+
+出どころの順: トレード (取引所のデータ) > poe2db > ほか。クライアントは正しさの根拠にしない (メモ feedback-db-only、10-17)。下の表のクライアントの行は、今ある JSON・絵をどこから作ったかの記録。
 
 | 何 | どこから | 作り直し |
 |---|---|---|
@@ -84,7 +86,7 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 
 - `pnpm -s exec vitest run <ファイル>` … 触った所だけ。全部は main への push で CI (`tests.yml`) が回す。
 - カレンシーの動きを変えたら `tests/currency-spec-golden.test.ts` (結果の見張り) も。わざと変えた時は `GOLDEN_WRITE=1` で取り直す。
-- 期待値は外の正解 (poe2db・クライアント・Craft of Exile・オーナーのゲームでの確認) から。自分のコードの写しでテストを作らない。
+- 期待値は外の正解 (トレード (取引所のデータ)・poe2db・Craft of Exile・オーナーのゲームでの確認) から。自分のコードの写しでテストを作らない。
 
 ## 開発を始める
 
