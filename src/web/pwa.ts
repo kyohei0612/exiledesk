@@ -31,33 +31,23 @@ export function startPwa(): void {
   }
 }
 
-/** 古い塊で読み直した記録 (sessionStorage、"1 回目の時刻:回数")。STALE_GAP_MS の間に STALE_MAX 回まで (無限に読み直さない印)。入口の塊は web.html の頭が同じ印・数で見る (変える時は両方) */
-const STALE_KEY = "exiledesk-stale-reload";
-const STALE_GAP_MS = 60_000;
-const STALE_MAX = 3;
-/** 2 回目からは前に待つ (回数 × これ)。出した直後の 8 秒ほどは新しい版が届き切っておらず、すぐ読み直すとまた 404 (開発版で見た、10-23) */
-const STALE_RETRY_WAIT_MS = 4_000;
 /**
  * 版が替わった後の古い塊 (2026-10-22 オーナー OK、notes/2026-10-22-sw-err-failed.md の案 ①): 開いたままのタブが、次のデプロイで消えた
  * 前の版の JS の塊を後から読むと失敗して画面が壊れる。vite が出す vite:preloadError (後から読む部品の import() は全部これを通る) で読み直して新しい版にする。
- * 1 分に 3 回まで (2 回目から 4 秒・8 秒待つ。出した直後・続けて 2 回出した時、10-23)。それより多い時・印を書けない時 (保存を止めた端末) は読み直さず、今までどおりのエラーにする
+ * 読み直しの作りは web.html の頭の __staleReload (入口の塊と同じ 1 か所。新しい版が揃うのを待ってから 1 回、1 分に 3 回まで、10-23)。
+ * false (回数を使い切った・印を書けない端末) の時は読み直さず、今までどおりのエラーにする
  */
 export function startStaleReload(): void {
   if (typeof window === "undefined") return;
   window.addEventListener("vite:preloadError", (e) => {
-    // 1 回の読み込みで読み直しは 1 回 (いくつ失敗しても回数は 1 つだけ進める。web.html の頭と同じ印)
-    const w = window as { __staleGo?: number };
-    if (w.__staleGo) { e.preventDefault(); return; }
-    let first = 0, n = 0;
-    try { [first, n] = (sessionStorage.getItem(STALE_KEY) ?? "").split(":").map((x) => Number(x) || 0); } catch { return; }
-    if (Date.now() - first >= STALE_GAP_MS) { first = Date.now(); n = 0; }
-    if (n >= STALE_MAX) return;
-    try { sessionStorage.setItem(STALE_KEY, `${first}:${n + 1}`); } catch { return; }
-    w.__staleGo = 1;
+    const w = window as { __staleGo?: number; __staleReload?: () => boolean };
+    const first = !w.__staleGo;
+    if (!w.__staleReload?.()) return;
     e.preventDefault();
-    logRecord("stale_reload", { n: n + 1, msg: String((e as Event & { payload?: unknown }).payload ?? "").slice(0, 120) });
-    if (n === 0) location.reload();
-    else setTimeout(() => location.reload(), n * STALE_RETRY_WAIT_MS);
+    if (!first) return;
+    let mark = "";
+    try { mark = sessionStorage.getItem("exiledesk-stale-reload") ?? ""; } catch { /* 印は __staleReload が書けた */ }
+    logRecord("stale_reload", { mark, msg: String((e as Event & { payload?: unknown }).payload ?? "").slice(0, 120) });
   });
 }
 
