@@ -80,7 +80,8 @@ function resetTreesOnNewBuild(): void {
     if (!build || localStorage.getItem(BUILD_KEY) === build) return;
     const found: TreeDoc[] = [];
     const take = (v: unknown): void => {
-      if (!isTreeDoc(v) || sameTree(v, newTree(v.base, v.itemLevel))) return;
+      // ベースを選んだだけの木 (baseChosen の印だけ) も空の木
+      if (!isTreeDoc(v) || sameTree({ ...v, baseChosen: undefined } as TreeDoc, newTree(v.base, v.itemLevel)) || sameTree(v, newTree(v.base, v.itemLevel))) return;
       if (found.some((d) => sameTree(d, v)) || treeRecipes.value.some((r) => sameTree(r.tree, v))) return;
       found.push(v);
     };
@@ -241,9 +242,9 @@ function reset(): void {
 function setBase(base: string, itemLevel: number): void {
   needBase.value = false;
   edit((d) => {
-    if (d.base === base) { d.itemLevel = itemLevel; return; }
+    if (d.base === base) { d.itemLevel = itemLevel; d.baseChosen = true; return; }
     for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k];
-    Object.assign(d, newTree(base, itemLevel));
+    Object.assign(d, newTree(base, itemLevel), { baseChosen: true });
   });
 }
 /**
@@ -314,12 +315,14 @@ function setStartPrice(v: number | null): void { edit((d) => { migrateStart(d); 
 /** blank = 始まりの箱に手が無い (白紙) */
 const isBlank = (d: TreeDoc): boolean => !d.boxes.start?.hand && !d.boxes.start?.split && Object.keys(d.boxes).length === 1;
 /** 白紙の木を開いた時にベースを選ばせるか (読んだら下ろす) */
-function takeAskBase(): boolean { const v = askBase.value && isBlank(doc.value); askBase.value = true; return v; }
+function takeAskBase(): boolean { const d = doc.value; const v = askBase.value && isBlank(d) && !d.baseChosen && !d.memoAims?.length; askBase.value = true; return v; }
+/** 今のベースで決めた印を付ける (同じベースを押した・2 の段へ進んだ時。1 つ戻すで戻せる) */
+function chooseBase(): void { needBase.value = false; edit((d) => { d.baseChosen = true; }); }
 /** クラフト台のベースとアイテムレベルで白紙の木を開く (前の木は 1 つ戻すで戻せる)。ページを開くのは呼ぶ側 */
 function startTreeWith(base: string, itemLevel: number): void {
   needBase.value = false;
   opened.value++;
-  edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, newTree(base, itemLevel)); });
+  edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, newTree(base, itemLevel), { baseChosen: true }); });
   askBase.value = false;
 }
 /**
@@ -412,5 +415,5 @@ const baseCost = computed(() => {
 const baseCostBusy = computed(() => !!s.data.value && !costReady.value);
 
 export function useTree() {
-  return { tabDocs, active, tabRuns, switchTab, addTab, closeTab, noteRun, startPrice, setStartPrice, goalPage, needBase, goalInline, startPage, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, undo, canUndo, redo, canRedo, startFresh, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
+  return { tabDocs, active, tabRuns, switchTab, addTab, closeTab, noteRun, startPrice, setStartPrice, goalPage, needBase, goalInline, startPage, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, startFresh, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
 }

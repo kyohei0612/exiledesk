@@ -52,11 +52,11 @@ function close(): void {
   t.needBase.value = unpicked.value;
 }
 /** 2 へ進む (段のタブ・「次へ」)。今のベースで決めた扱い (白紙のまま 2 を開いてから閉じても空の形にはしない) */
-function toMods(): void { unpicked.value = false; t.needBase.value = false; t.goalPage.value = 2; }
+function toMods(): void { unpicked.value = false; t.chooseBase(); t.goalPage.value = 2; }
 function pick(en: string): void {
   unpicked.value = false;
   t.needBase.value = false;
-  if (en === t.doc.value.base) { t.goalPage.value = 2; return; }
+  if (en === t.doc.value.base) { t.chooseBase(); t.goalPage.value = 2; return; }
   if (t.lostOnBase.value > 0 || startMods.value || t.goals.value.length) { asking.value = en; return; }
   apply(en);
 }
