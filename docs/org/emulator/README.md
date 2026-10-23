@@ -15,6 +15,7 @@
 8. MOD に固定値は無い (+1 も stat の値)。タグ・品質を触る時は暗黙も。
 9. 画面 (src/views・src/state/emulator・simulator) と部品 (src/components・for-share・見た目) は直さない。要る時はどの部のどのファイルかを書いてブラックへ。
 10. 常駐・報告・触るファイル (dev/touching/emulator.md)・push と開発版は dev/README.md の決まり 1・2・5・8 のとおり。本番は最終チェック長。
+11. 出どころの順はトレード > poe2db > ほか。MOD が付く・付かない・ベースがあるかは先にトレードのデータで確かめる。トレードのデータは消さない (オーナー 10-23)。
 
 ## 地図
 - 窓口 src/services/craft-stage/: engine.ts (核、使い方 notes/engine-entry.md)・engine-emu.ts (中身 engine-emu/: preview・spam-race・chaos-spam・route-runes、ほか片方だけが使う核の名前)・engine-sim.ts (中身 engine-sim/: hand-effect の fillCatalyst 一式・magic-odds・spam-counts・outcomes・essence-parts)。打てるかは核の useReason (両方の棚)。分け方と経過は notes/2026-10-22-entry-split-plan.md、シミュの自前の式を寄せた記録は notes/2026-10-22-sim-logic-to-engine.md。
@@ -24,6 +25,7 @@
 - 確率: held-odds・aim-odds・route-race・spam-counts (始めのアイテムからの平均)・chaos-spam・route-runes。
 - 読む・並べる: 貼り付け item-text.ts (+ item-text-types.ts、見本 notes/paste-samples/)、MOD の並べ mod-list.ts (`modListFor`)・roll-text.ts・text-nums.ts、ベース stage-bases.ts (+ .json)・stage-uniques・stage-runes・stage-props・stage-pob・*-art.ts。境目 (共通) share.ts・trade-search.ts。
 - エンジン・MOD: src/vendor/poe2htc (段の重みの式は engine/pool.ts `modTierWeights` 1 本)、src/services/htc/ (patch.ts `loadHtcPatch()`・bridge.ts・weight-overrides.ts・poe2db-*-fixes・mod-stats.json・rune-weights.json・catalysing*・quality.ts・sockets.ts・名前 game-names.ts。buy-or-craft・prices・paste*・patch-types・labels は共通の境目)、src/services/mods/ (mod-rules・item-classes・tiers・engine-mods・types.ts・コラプトの表 corruption.ts + corruption-mods.json ← scripts/build-corruption-mods.mjs)、ルーンのはめ方 craft-stage/augment-rules.ts、ベースの一覧 services/items/base-catalog.ts。エンジンが読んでよい外は i18n/ (名前 item-names-ja.ts・ジェムの文 gem-hover.ts) と trade-search の trade2/ だけ (アプリの craft-v2・trade2/localize を読まない)。
+- トレードのデータ (出どころの 1 番、消さない): ベースの一覧 services/items/tradeable-bases.json ← scripts/build-tradeable-bases.mjs、MOD の文と stat の対応 i18n/trade2-stat-text・stat-mapping・stat-kinds・skills.json ← scripts/build-trade2-*.mjs、constants/trade2.ts、検索の URL craft-stage/trade-search.ts。アプリの trade2 (src-tauri・trade2/exchange・open) は凍結で触らない。
 - 台本 scripts/: build-poe2db-fixes・audit-poe2db*.mjs (MOD の段・タグ・暗黙・ルーン、結果は notes/2026-10-20-j4-poe2db-audit.md)・build-corruption-mods、build-htc-bases-from-client (+ _htc-*.mjs)・build-gem-hover-ja (+ _gem-csd.mjs)、build-desecrated-weights・build-rune-weights-coe・check-htc-odds-vs-coe、craft-stage-run・check-craft-stage。
 - テスト tests/: currency-spec-*・held-odds-parity・engine-emulator-parity・desecrate-*・coe-rules-2026-10-16・mod-*・item-classes。
 - 画面・部品の地図はここに置かない: エミュ docs/org/emu/README.md、シミュ docs/org/simulator/README.md、部品 docs/org/design/README.md。
