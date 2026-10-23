@@ -28,7 +28,6 @@ import { aimsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { aimHeldOn } from "../../../services/simulator/tree/tree-aim";
 import { treeSample } from "../../../services/simulator/tree/tree-samples";
 import { linkSameShape, MATCH, RESTART } from "../../../services/simulator/tree/tree-run";
-import { treePage } from "../../../state/web-page";
 import { tr } from "../../../i18n/lang";
 import { pageZoom } from "../../../utils/zoom";
 import { LINE, useTreeEdges } from "./use-tree-edges";
@@ -358,7 +357,7 @@ function onKey(e: KeyboardEvent): void {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); t.undo(); return; }
   if (e.key === "1" && !e.ctrlKey && !e.metaKey && !e.altKey) { void v.fit(); return; }
   // 箱の重ね窓は useDismiss が先に閉じる (defaultPrevented)。何も開いていない時の Esc は何もしない
-  // (前はページを閉じてクラフトステージへ出た。窓を閉じるつもりの 2 度押しで画面を出てしまう、10-23 モンキー 2。出るのは「← 戻る」)
+  // (前はページを閉じてクラフトステージへ出た。窓を閉じるつもりの 2 度押しで画面を出てしまう、10-23 モンキー 2。出るのは上の切り替えタブ)
   if (e.key === "Escape" && !e.defaultPrevented) {
     if (cardBox.value) { cardBox.value = null; hoverBox.value = null; }
     else if (plus.value) plus.value = null;
@@ -385,7 +384,6 @@ onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); });
 // 完成形の設定をページで出していた間はツリーを隠していたので (大きさ 0)、戻ったらスタートの箱を上の真ん中へ合わせ直す
 watch(() => t.goalInline.value, (on) => { if (!on) setTimeout(() => { measureRow(); void v.goHome(); }, 0); });
 
-function close(): void { treePage.value = false; }
 const panelBox = computed(() => (panel.value ? doc.value.boxes[panel.value.id] ?? null : null));
 /** 一覧に出す箱の名前 (種類 + 当たりの札) */
 function boxName(id: string): string { const b = doc.value.boxes[id]; return !b ? id : b.out === "hit" && b.aim ? `${outName("hit")} ${t.aimLabel(b.aim)}` : outName(b.out); }
@@ -402,7 +400,7 @@ const glowOf = (b: Box): boolean => {
   <section data-tree-page class="min-w-0 flex-1 p-4" :class="t.goalInline.value ? 'max-md:px-2' : ''">
     <div class="mb-3 flex flex-wrap items-center gap-3">
       <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center gap-3 px-8 text-[22px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)] max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-1 max-md:px-4 max-md:py-2 max-md:text-[17px] max-md:tracking-[0.08em]"><span class="whitespace-nowrap">{{ tr("クラフトの道 (ツリー)", "Craft route tree") }}</span><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" /></h1>
-      <button type="button" class="g-btn sm" @click="close">{{ tr("← 戻る", "← Back") }}</button>
+      <!-- 右上の「← 戻る」は置かない (上の切り替えタブで行き来する。10-24 オーナー「意味が分からない、要らない」) -->
     </div>
     <!-- エミュレーター / シミュレーター β の切り替え (エミュの画面の帯と同じ共通の部品、10-23 オーナー「帯を 1 つにして両方に」) -->
     <ModeTabs class="mb-3" />

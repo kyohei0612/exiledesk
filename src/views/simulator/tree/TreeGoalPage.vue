@@ -64,7 +64,7 @@ function pick(en: string): void {
 function apply(en: string): void {
   asking.value = null;
   // 文は替える前のベースの行で作る (外した MOD は新しいベースの一覧に無い)
-  const label = new Map(t.goals.value.map((a) => [a.modId, t.startModLabel(a)]));
+  const label = new Map(t.goals.value.map((a) => [a.modId, t.startModLabel(a, true)]));
   dropped.value = t.setBase(en, t.doc.value.itemLevel).map((a) => label.get(a.modId) ?? a.modId);
   t.goalPage.value = 2;
 }
@@ -84,14 +84,21 @@ function onCardFracture(m: StageMod): void {
   const g = t.goals.value.find((a) => a.modId === m.modId);
   if (g) t.toggleFracture(g.modId, g.tier);
 }
+/** 完成の MOD の段の説明 (日本語・英語の組、1 つの事 = 1 行) */
+const HELP: Array<[string, string]> = [
+  ["狙いにする: その段以上が付けば当たり (狙いは MOD 1 つ、上の段は「含む」)", "Target: a hit if that tier or better rolls (one target per mod; higher tiers are included)"],
+  ["後の箱の当たりは、この狙いから選ぶ", "Later hit boxes pick from these targets"],
+  ["フラクチャー (カードの右クリックでも): 印のどれか 1 つが固定されたレアから始まる", "Fracture (or right-click on the card): start from a rare with one marked mod fractured"],
+  ["印が無ければ白から", "No marks: start from a white item"],
+];
 const CARD_W = 340;
 /** スマホ (768px 未満) は窓の中身の幅 (画面 − 枠と余白 90) に合わせる (340 のままだと右がはみ出した、10-23) */
 const cardW = innerWidth < 768 ? Math.min(CARD_W, innerWidth - 90) : CARD_W;
 </script>
 
 <template>
-  <!-- ページで出している間の 1 ベースの段は高さを決めない (本文が送りの箱にならず、部位を開いた一覧がエミュのベースのページと同じくページごと送られる。10-23 オーナー「エミュと同じ展開時の表示の仕方」)。2 の段は表を送るので高さを残す -->
-  <ModalShell :open="true" :inline="asPage" :closable="!(asPage && unpicked)" rec="tree-goal" :title="tr('0 完成形の設定', '0 Final item')" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" :width="asPage ? (step === 1 ? 'w-full max-md:!border-0 max-md:[border-image:none] max-md:!bg-none max-md:!p-0' : 'w-full h-[calc(100vh-140px)]') : 'w-[88%] h-[86%]'" full-on-phone :body-class="asPage && step === 1 ? 'px-3 pb-3 max-md:px-2' : 'px-3 pb-3'" @close="close">
+  <!-- ページで出している間は高さを決めず、本文の送りの箱も外す (ページごと送る。1 の段 = 10-23 オーナー「エミュと同じ展開時の表示の仕方」、2 の段 = 10-24 オーナー「一覧の中に別のスクロールの箱を作らない」)。窓の時は窓の本文 1 つで送る -->
+  <ModalShell :open="true" :inline="asPage" :closable="!(asPage && unpicked)" rec="tree-goal" :title="tr('0 完成形の設定', '0 Final item')" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" :width="asPage ? (step === 1 ? 'w-full max-md:!border-0 max-md:[border-image:none] max-md:!bg-none max-md:!p-0' : 'w-full') : 'w-[88%] h-[86%]'" full-on-phone :body-class="asPage ? (step === 1 ? 'px-3 pb-3 max-md:px-2 !overflow-visible' : 'px-3 pb-3 !overflow-visible') : 'px-3 pb-3'" @close="close">
     <template #subheader>
       <!-- 1 → 2 の段 (押すとその段へ)。初手 (ベース未選択) の間は 2 へは飛べない (ベースを押して初めて 2 へ、10-23 オーナー)。右端に保存したレシピから開く -->
       <div data-tree-goal-steps class="flex flex-wrap items-center gap-2 px-3 pb-2">
@@ -136,18 +143,24 @@ const cardW = innerWidth < 768 ? Math.min(CARD_W, innerWidth - 90) : CARD_W;
         <!-- 枠を超えた狙い (10-23 オーナー「欲しい物を全部選ぶので枠を超えてよい」): 止めずにカードの下に並べる -->
         <div v-if="t.goalItem.value?.left.length" data-tree-goal-over class="flex flex-col gap-0.5 rounded-md bg-white/[0.04] px-2 py-1 text-[12px]">
           <p class="opacity-70">{{ tr(`カードに乗らない狙い ${t.goalItem.value.left.length} つ (枠の外。どれかが付けば当たり)`, `${t.goalItem.value.left.length} target(s) beyond the slots (a hit if any rolls)`) }}</p>
-          <p v-for="a in t.goalItem.value.left" :key="a.modId" data-tree-goal-over-row class="min-w-0 truncate" :class="a.fractured ? 'text-mod-fractured' : 'text-[#c8c8ff]'" :title="a.reason">{{ a.fractured ? "✦ " : "" }}{{ t.startModLabel(a) }}</p>
+          <p v-for="a in t.goalItem.value.left" :key="a.modId" data-tree-goal-over-row class="min-w-0 truncate" :class="a.fractured ? 'text-mod-fractured' : 'text-[#c8c8ff]'" :title="a.reason">{{ a.fractured ? "✦ " : "" }}{{ t.startModLabel(a, true) }}</p>
         </div>
         <p v-if="t.goalItem.value?.note" data-tree-goal-problem class="rounded-md border border-rose-400/50 bg-[#2a1416] px-2 py-1 text-[12px] text-rose-100">{{ tr(`付けられない狙いがある: ${t.goalItem.value.note}`, `A target can't be added: ${t.goalItem.value.note}`) }}</p>
-        <p class="text-[12px] opacity-70">{{ tr("「狙いにする」= その段以上が付けば当たり。後の箱の当たりはこの狙いから選ぶ。「フラクチャー」(カードの右クリックでも) = 印のどれか 1 つが固定されたレアからスタート、印が無ければ白から", "“Target” = a hit if that tier or better rolls. Later hit boxes pick from these targets. “Fracture” (or right-click on the card) = start from a rare with one marked mod fractured; no marks = start from white") }}</p>
+        <!-- 説明は 1 つの事 = 1 行 (10-24 オーナー「・で区切って行で分ける、1 行は折り返して OK」) -->
+        <ul data-tree-goal-help class="flex list-disc flex-col gap-0.5 pl-4 text-[12px] opacity-70">
+          <li v-for="(line, k) in HELP" :key="k">{{ tr(line[0], line[1]) }}</li>
+        </ul>
+        <!-- 次へ (決めた) はカードと説明の下 (10-24 オーナー)。列ごと上に留めるので一覧を送っても見える。スマホは列が上に積まれるので下の帯に出す -->
+        <div class="max-md:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="close">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
       </div>
+      <!-- スマホはカードの列が上に積まれるので、「決めた」は一覧の下に貼り付ける (一覧を送っている間は画面の下に見える) -->
+      <div class="sticky bottom-0 z-10 bg-[#120d08]/90 py-2 md:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="close">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
     </div>
-    <!-- 下の帯は 2 完成の MOD の段だけ。ベースの段の「次へ」は出さない (ベースを押すと 2 へ進む。10-23 オーナー「ベース決めないと進めないし、どのみち」)。
-         下の帯は一覧を送っても見える所 (ModalShell の footer)。「決めた」は決める手の赤 (g-btn-red、1 画面 1 つ) で右、「← ベース」は控えめなまま左 (10-23 オーナー「分かりづらい」) -->
+    <!-- 下の帯は 2 完成の MOD の段だけで「← ベース」を控えめに。ベースの段の「次へ」は出さない (ベースを押すと 2 へ進む。10-23 オーナー「ベース決めないと進めないし、どのみち」)。
+         「決めた」(決める手の赤 g-btn-red、1 画面 1 つ) はカードと説明の下へ移した (10-24 オーナー) -->
     <template v-if="step === 2" #footer>
       <div class="flex w-full items-center gap-2">
         <button type="button" class="g-btn sm" @click="t.goalPage.value = 1">{{ tr("← ベース", "← Base") }}</button>
-        <button type="button" data-tree-goal-done class="g-btn-red ml-auto min-h-11 min-w-40 px-4 text-[14px] max-md:flex-1" @click="close">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button>
       </div>
     </template>
   </ModalShell>

@@ -108,10 +108,8 @@ onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); clearTimeo
   <section data-recipes-page class="min-w-0 flex-1 p-4 max-md:px-2">
     <div class="mb-3 flex flex-wrap items-center gap-3">
       <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[15px] tracking-[0.18em] max-md:tracking-[0.04em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ tr("レシピ", "Recipes") }}</h1>
-      <span class="flex items-center gap-2">
-        <button type="button" data-recipes-back class="g-btn sm max-md:min-h-10" @click="back">{{ tr("← クラフトの道へ戻る", "← Back to the crafting path") }}</button>
-        <span class="text-[12px] opacity-60 max-md:hidden">{{ tr("Esc でも戻る", "Esc also goes back") }}</span>
-      </span>
+      <!-- ツリーへ戻る道は題の横 (ここから戻る道がほかに無い。右上でなく題の横、10-24 オーナー)。Esc でも戻る -->
+      <button type="button" data-recipes-back class="g-btn sm order-first" :title="tr('ツリーへ戻る (Esc)', 'Back to the tree (Esc)')" @click="back">{{ tr("← ツリーへ", "← Tree") }}</button>
     </div>
 
     <div class="g-panel px-4 py-3 text-[13px] max-md:px-3">

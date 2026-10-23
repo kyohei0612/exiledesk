@@ -66,7 +66,7 @@ const plusMods = computed(() => startOf(t.doc.value).mods);
 const startHead = computed(() => {
   const m = marks.value;
   if (m.length > 1) return tr(`✦ フラクチャー MOD ×${m.length}`, `✦ Fractured mod ×${m.length}`);
-  if (m[0]) return `✦ ${t.startModLabel(m[0])}`;
+  if (m[0]) return `✦ ${t.startModLabel(m[0], true)}`;
   return plusMods.value[0] ? t.startModLabel(plusMods.value[0]) : tr("白 (ノーマル)", "White (normal)");
 });
 /** 2 行目: 印あり = ＋の数・外れの数、印なし = ほかの＋の数・レアリティ。ルーン・ベースの値段 */
@@ -84,7 +84,7 @@ const costLine = computed(() => {
 });
 const startTitle = computed(() => [
   ...(marks.value.length > 1 ? [tr("この中のどれか 1 つが固定される", "One of these gets fractured")] : []),
-  ...marks.value.map((m) => `✦ ${t.startModLabel(m)}`), ...plusMods.value.map((m) => `＋ ${t.startModLabel(m)}`),
+  ...marks.value.map((m) => `✦ ${t.startModLabel(m, true)}`), ...plusMods.value.map((m) => `＋ ${t.startModLabel(m)}`),
 ].join("\n") || tr("白 (ノーマル) から。押すと始まりの形", "From white (normal). Click for the start"));
 /** 押せる物を倍率の逆数で戻す (origin = 大きくする軸。まとまりごとに端を軸にして、隣と重ならないように) */
 const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale: String(k.value), transformOrigin: origin } : {});

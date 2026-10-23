@@ -58,7 +58,7 @@ const problem = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.v
     <div v-if="marks.length" data-tree-start-shape="fractured" class="flex flex-col gap-1 rounded-md border border-amber-400/40 bg-amber-500/10 px-2 py-1.5 text-[13px]">
       <p>{{ tr(`✦ フラクチャーの候補 ${marks.length} つのどれか 1 つが固定されたレア + 外れ ${junkLeft}`, `A rare with one of ${marks.length} ✦ candidates fractured + ${junkLeft} miss mod(s)`) }}</p>
       <ul class="flex flex-col gap-0.5">
-        <li v-for="a in marks" :key="a.modId" data-tree-start-mark class="min-w-0 truncate text-mod-fractured" :title="t.startModLabel(a)">✦ {{ t.startModLabel(a) }} <span v-if="marks.length > 1" class="text-[11px] opacity-60">{{ tr(`(1/${marks.length})`, `(1/${marks.length})`) }}</span></li>
+        <li v-for="a in marks" :key="a.modId" data-tree-start-mark class="min-w-0 truncate text-mod-fractured" :title="t.startModLabel(a, true)">✦ {{ t.startModLabel(a, true) }} <span v-if="marks.length > 1" class="text-[11px] opacity-60">{{ tr(`(1/${marks.length})`, `(1/${marks.length})`) }}</span></li>
       </ul>
     </div>
     <p v-else data-tree-start-shape="white" class="rounded-md bg-white/[0.04] px-2 py-1.5 text-[13px]">{{ tr("白 (ノーマル) から始める。✦ から始めるなら 0 完成形の設定で MOD にフラクチャーの印を付ける", "Start from a white (normal) base. To start from ✦, mark mods as fractured in 0 Final item") }}</p>

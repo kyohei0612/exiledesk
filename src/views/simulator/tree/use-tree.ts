@@ -8,7 +8,7 @@ import { priceOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { freshItem, modListFor, mulberry32 } from "../../../services/craft-stage/engine";
 import { minIlvlFor, tierRankLabel } from "../../../services/craft-stage/engine";
 import { startItemOf } from "../../../services/simulator/tree/tree-sample";
-import { placeMods } from "../../../services/craft-stage/engine-sim";
+import { carryAims, placeMods } from "../../../services/craft-stage/engine-sim";
 import type { StageItem } from "../../../services/craft-stage/engine";
 import { isTreeDoc, migrateStart, newTree, startOf, startRarity, type Aim, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { treeBaseCost } from "../../../services/simulator/tree/tree-base-cost";
@@ -238,29 +238,26 @@ function reset(): void {
     Object.assign(d, newTree(base, itemLevel));
   });
 }
-/** そのベースの MOD 一覧 (エンジンの入口 modListFor、2 の段の表と同じ行) にその MOD のその段があるか */
-function onBase(base: string, itemLevel: number, a: { modId: string; tier: number }): boolean {
-  const data = s.data.value;
-  if (!data) return false;
-  return modListFor(data, freshItem(data, base, itemLevel, "rare")).some((r) => r.tiers.some((tt) => (tt.modId ?? r.id) === a.modId && tt.tier === a.tier));
-}
 /**
- * ベースを替える = そのベースの白紙から (手は前のベースの物なので残さない)。完成の狙い・始まりの MOD・完成形のレアリティは、新しいベースにも付く物だけ残す
- * (10-24 オーナー「MOD 決めたけどベース選び直そうって使い方は多い」)。外した狙いを返す (画面が 1 行で知らせる)。アイテムレベルだけなら木はそのまま。1 つ戻すで戻せる
+ * ベースを替える = そのベースの白紙から (手は前のベースの物なので残さない)。完成の狙い・始まりの MOD・完成形のレアリティは残し、MOD は新しいベースの同じ MOD へ読み替える
+ * (エンジンの入口 carryAims: 部位で modId が別・段の数も違う。10-24 オーナー「MOD 決めたけどベース選び直そうって使い方は多い」)。付かない狙いは外して返す (画面が 1 行で知らせる)。
+ * アイテムレベルだけなら木はそのまま。1 つ戻すで戻せる
  */
 function setBase(base: string, itemLevel: number): Aim[] {
   needBase.value = false;
+  const data = s.data.value;
   const dropped: Aim[] = [];
   edit((d) => {
     if (d.base === base) { d.itemLevel = itemLevel; d.baseChosen = true; return; }
     const { memoAims = [], goal } = d, mods = startOf(d).mods;
     for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k];
     Object.assign(d, newTree(base, itemLevel), { baseChosen: true });
-    const keep = memoAims.filter((a) => onBase(base, itemLevel, a));
-    dropped.push(...memoAims.filter((a) => !keep.includes(a)));
-    if (keep.length) d.memoAims = keep;
+    if (!data) return;
+    const aims = carryAims(data, base, itemLevel, memoAims);
+    dropped.push(...aims.dropped);
+    if (aims.kept.length) d.memoAims = aims.kept.map((k) => k.to);
     if (goal) d.goal = goal;
-    d.start!.mods = mods.filter((m) => onBase(base, itemLevel, m));
+    d.start!.mods = carryAims(data, base, itemLevel, mods).kept.map((k) => k.to);
     migrateStart(d);
   });
   return dropped;
@@ -384,13 +381,13 @@ function aimLabel(a: Aim | null): string {
 }
 /** 狙いの MOD の短い名前 (戻り先の札で、どの狙いの所の箱かを添える) */
 const aimShort = (a: Aim): string => rowOfMod(a.modId)?.template ?? a.modId;
-/** 始まりの MOD の文 (その段の数値で埋めた文 + 段) */
-function startModLabel(a: Aim | StartMod | null): string {
+/** 始まりの MOD の文 (その段の数値で埋めた文 + 段)。atLeast = 完成の狙い (✦ の印など) で段を「T2 以上」と言う (10-24 オーナー「T2 を選んだら T2 以上」) */
+function startModLabel(a: Aim | StartMod | null, atLeast = false): string {
   if (!a) return "";
   const r = rowOfMod(a.modId);
   // まとめ行 (同じ系統の別の MOD) は段ごとに modId がある。その MOD の段だけで数える
   const t = r?.tiers.filter((x) => (x.modId ?? r.id) === a.modId)[a.tier - 1];
-  return `T${a.tier} ${t?.text ?? r?.text ?? a.modId}`;
+  return `${atLeast ? tierRankLabel(a.tier) : `T${a.tier}`} ${t?.text ?? r?.text ?? a.modId}`;
 }
 
 /** ツリーのベースのアイテム (値段の鍵を引く。骨は部位で顎骨・肋骨・鎖骨が変わる) */

@@ -63,5 +63,5 @@ export const rarityName = (r: TreeRarity): string => (r === "normal" ? tr("ノ�
 export function startName(d: TreeDoc): string {
   const t = useTree(), fs = fractureMarks(d), f = fs[0];
   if (fs.length > 1) return tr(`✦ 候補 ${fs.length} スタート`, `✦ ${fs.length} candidates start`);
-  return f ? tr(`✦ ${t.startModLabel(f)} スタート`, `✦ ${t.startModLabel(f)} start`) : tr(`${rarityName(startRarity(d))} スタート`, `${rarityName(startRarity(d))} start`);
+  return f ? tr(`✦ ${t.startModLabel(f, true)} スタート`, `✦ ${t.startModLabel(f, true)} start`) : tr(`${rarityName(startRarity(d))} スタート`, `${rarityName(startRarity(d))} start`);
 }
