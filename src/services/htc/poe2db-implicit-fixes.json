@@ -739,6 +739,50 @@
      }
     ]
    ]
+  },
+  "Portent Amulet": {
+   "implicits": [
+    {
+     "en": "-1 Suffix Modifier allowed",
+     "ja": "サフィックスモッド -1個"
+    }
+   ],
+   "stats": [
+    0
+   ]
+  },
+  "Distorted Amulet": {
+   "implicits": [
+    {
+     "en": "-1 Suffix Modifier allowed",
+     "ja": "サフィックスモッド -1個"
+    }
+   ],
+   "stats": [
+    0
+   ]
+  },
+  "Lament Amulet": {
+   "implicits": [
+    {
+     "en": "-1 Prefix Modifier allowed",
+     "ja": "プレフィックスモッド -1個"
+    }
+   ],
+   "stats": [
+    0
+   ]
+  },
+  "Twisted Amulet": {
+   "implicits": [
+    {
+     "en": "-1 Prefix Modifier allowed",
+     "ja": "プレフィックスモッド -1個"
+    }
+   ],
+   "stats": [
+    0
+   ]
   }
  }
 }
