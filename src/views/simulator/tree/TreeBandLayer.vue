@@ -5,7 +5,8 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
-import { bandsOf, BOX_H, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { BOX_H, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { bandsOf } from "../../../services/simulator/tree/tree-layout";
 import { tr } from "../../../i18n/lang";
 
 const props = defineProps<{ doc: TreeDoc; k: number }>();

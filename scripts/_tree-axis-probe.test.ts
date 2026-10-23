@@ -7,7 +7,8 @@
  * 一番左と一番右の子の左右の偏り (左右対称なら 0)。行 (y) が親より下にあるかも見る。DUMP=1 で親ごとの行を全部出す
  */
 import { it } from "vitest";
-import { BOX_W, tidy, type TreeDoc } from "../src/services/simulator/tree/tree-model";
+import { BOX_W, type TreeDoc } from "../src/services/simulator/tree/tree-model";
+import { tidy } from "../src/services/simulator/tree/tree-layout";
 import { treeSample } from "../src/services/simulator/tree/tree-samples";
 
 function axis(d: TreeDoc): { one: number[]; many: number[]; sym: number[]; rows: string[] } {

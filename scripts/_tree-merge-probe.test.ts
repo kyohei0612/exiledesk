@@ -7,7 +7,8 @@
  * 形だけ (画面ではない)。打つ手の札の幅は 200px で見る (画面は測った幅)
  */
 import { it } from "vitest";
-import { BOX_H, BOX_W, tidy, type TreeDoc } from "../src/services/simulator/tree/tree-model";
+import { BOX_H, BOX_W, type TreeDoc } from "../src/services/simulator/tree/tree-model";
+import { tidy } from "../src/services/simulator/tree/tree-layout";
 import { treeSample } from "../src/services/simulator/tree/tree-samples";
 import { routeBacks, type Pos, type Seg } from "../src/views/simulator/tree/tree-lines";
 import { mergeReqs } from "../src/views/simulator/tree/tree-merge";

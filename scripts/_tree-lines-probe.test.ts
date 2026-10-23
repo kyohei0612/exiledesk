@@ -7,7 +7,8 @@
  * 箱を足すたび (どの芽にも高貴・横に当たり) の箱の重なりの数。画面ではない (画面は tree-mouse.mjs)
  */
 import { it } from "vitest";
-import { addHit, BOX_H, BOX_W, setHand, tidy, type TreeBox, type TreeDoc } from "../src/services/simulator/tree/tree-model";
+import { addHit, BOX_H, BOX_W, setHand, type TreeBox, type TreeDoc } from "../src/services/simulator/tree/tree-model";
+import { tidy } from "../src/services/simulator/tree/tree-layout";
 import { treeSample } from "../src/services/simulator/tree/tree-samples";
 import { handAnchor, routeBacks, type BackReq, type Seg } from "../src/views/simulator/tree/tree-lines";
 import { MATCH, matchTargets } from "../src/services/simulator/tree/tree-run";

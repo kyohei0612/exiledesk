@@ -10,7 +10,8 @@
  */
 import { computed, ref, watch, type Ref } from "vue";
 import { useVueFlow } from "@vue-flow/core";
-import { bandsOf, BOX_H, BOX_W, boundsOf, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { BOX_H, BOX_W, boundsOf, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { bandsOf } from "../../../services/simulator/tree/tree-layout";
 import { pageZoom } from "../../../utils/zoom";
 
 export const FLOW_ID = "sim-tree";

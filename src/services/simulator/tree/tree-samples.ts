@@ -31,7 +31,8 @@
  *   この 2 つは台本 scripts/_tree-patterns-probe の body-essence-split・amulet-4aims-split で組んだ木の JSON (samples/)。
  *   完成 = 狙いが全部付いた時点 (枠を埋める手は打たない、外れが残っても完成。10-22 オーナー「無理やり 6 MOD にしなくても」)
  */
-import { migrateStart, tidy, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
+import { migrateStart, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
+import { tidy } from "./tree-layout";
 import { ECHO } from "./tree-hands";
 import robeEssence from "./samples/robe-essence-split.json";
 import amulet4aims from "./samples/amulet-4aims.json";

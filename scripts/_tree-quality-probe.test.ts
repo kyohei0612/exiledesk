@@ -14,7 +14,8 @@ import { sampleOf } from "../src/services/simulator/tree/tree-sample";
 import { checkTree } from "../src/services/simulator/tree/tree-check";
 import { runTree } from "../src/services/simulator/tree/tree-run";
 import { effectOf } from "../src/services/simulator/tree/tree-hands";
-import { kindOfHand, newTree, setAim, setDone, setHand, tidy, type Aim, type Hand } from "../src/services/simulator/tree/tree-model";
+import { kindOfHand, newTree, setAim, setDone, setHand, type Aim, type Hand } from "../src/services/simulator/tree/tree-model";
+import { tidy } from "../src/services/simulator/tree/tree-layout";
 
 const data = loadPatch();
 const hand = (currency: string, omens: string[] = [], extra: Partial<Hand> = {}): Hand => ({ currency, omens, catalyst: null, quality: 0, ...extra });
