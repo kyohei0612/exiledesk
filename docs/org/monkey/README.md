@@ -16,4 +16,4 @@
 
 ## 開き方
 - ふだん (10-23 オーナー): 手元の dev サーバー http://localhost:1440/web.html (シミュ ?page=sim-tree)。使用表の「手元の dev サーバー 1440」に書いて立てる。
-- 開発版はブラックが「本番の前の 1 回」と言った時だけ (Cloudflare の 1 日の枠を本番と共有、10-23 に 11.9 万回で超えた): 鍵 https://web-dev.exiledesk.workers.dev/?k=8ZlDQtkU9siTTMXD-qDzj50w を開いてから見る画面へ。鍵はタブ (browser context) ごとに開く。
+- 本番の前の 1 回 (ブラックが言った時だけ): 手元の開発版 `pnpm preview:prod -- --dev` → http://dev.exiledesk.localhost:1461/ 。台本は MONKEY_TARGET=dev。Cloudflare の web-dev は 10-24 に消した。
