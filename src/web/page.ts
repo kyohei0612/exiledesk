@@ -152,6 +152,8 @@ function urlFor(p: string): string {
   u.searchParams.delete("page");
   u.searchParams.delete("course");
   u.searchParams.delete("q");
+  // sample はツリーの見本を開く鍵。ツリーを出る時は消す (残すと「← 戻る」で /?sample=… になっていた。2026-10-23 シミュのモンキー 2 回目)
+  if (p !== "page=sim-tree") u.searchParams.delete("sample");
   for (const [k, v] of new URLSearchParams(p)) u.searchParams.set(k, v);
   return u.pathname + u.search + u.hash;
 }
