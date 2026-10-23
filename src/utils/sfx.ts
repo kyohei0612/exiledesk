@@ -79,10 +79,12 @@ export function preloadSfx(): void {
   // Esc・修飾キーだけはブラウザが「使う人の操作」に数えないので起こさない (起こすと毎回「The AudioContext was not allowed to start」の警告。モンキーテスト 10-23 の 11)
   const wake = (e: Event): void => {
     if (e instanceof KeyboardEvent && (e.key === "Escape" || e.key === "Shift" || e.key === "Control" || e.key === "Alt" || e.key === "Meta")) return;
+    // 指 (タッチ・ペン) は pointerdown ではまだ操作に数えられず、pointerup から (マウスは逆に pointerdown から)。モンキーテスト 10-23 の 9
+    if (e instanceof PointerEvent && (e.type === "pointerdown") !== (e.pointerType === "mouse")) return;
     if (ctx && ctx.state !== "running" && ctx.state !== "closed") void ctx.resume();
   };
   // iPhone の Safari は pointerdown では音の出口を起こさせてくれない (touchend・click が要る。2026-10-16 オーナー「音が出ない」)
-  for (const ev of ["pointerdown", "touchend", "click", "keydown"]) window.addEventListener(ev, wake, { capture: true, passive: true });
+  for (const ev of ["pointerdown", "pointerup", "touchend", "click", "keydown"]) window.addEventListener(ev, wake, { capture: true, passive: true });
 }
 const buffers = new Map<string, Promise<AudioBuffer | null>>();
 /**
