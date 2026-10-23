@@ -253,7 +253,21 @@ function pickFamily(f: Family): void {
   // 属性の札は先頭 (筋力・無印) を選んだ状態で開いて、すぐベースを出す。札は上で切り替える
   // (2026-10-10 オーナー「押したら選ばせるんじゃなく最初から筋力のページ開いて上のタブで切り替え、アイコンと文字が挟まれると目が滑る」)
   if (f.variants.length) cls.value = f.variants.some((v) => v.cls === cls.value) ? cls.value : f.variants[0]!.cls;
-  void nextTick(() => { placeUnder(f); void nextTick(() => requestAnimationFrame(() => requestAnimationFrame(() => revealPanel()))); });
+  void nextTick(() => { placeUnder(f); void nextTick(() => requestAnimationFrame(() => requestAnimationFrame(() => (phone.value ? revealPhoneHead() : revealPanel())))); });
+}
+/**
+ * スマホ: 部位を押すとタイルが一覧に置き換わってページが縮み、送りの位置はそのままなので、一覧の頭が画面の上の外に出て下の記事が映っていた
+ * (エミュ・シミュとも、2026-10-23)。頭 (← 部位の行) が見えていなければ画面の上 8px まで滑らせて送る。見えていれば動かさない
+ */
+function revealPhoneHead(): void {
+  const el = rootEl.value?.querySelector<HTMLElement>("[data-base-phone-head]") ?? null;
+  if (!el) return;
+  const box = scrollBoxOf(el);
+  const viewTop = box ? box.getBoundingClientRect().top : 0;
+  const viewBottom = box ? box.getBoundingClientRect().bottom : window.innerHeight;
+  const r = el.getBoundingClientRect();
+  if (r.top >= viewTop && r.bottom <= viewBottom) return;
+  void glideRect(box, el, r.top - viewTop - 8);
 }
 /**
  * 開いた一覧の下 (「もっと見る」の少し下) が画面から切れている時だけ、そこまで滑らせて送る。見えている時は動かさない。一覧の上が画面の上から出ない所で止める
@@ -375,7 +389,7 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
       </div>
       <!-- スマホ: 部位 → 属性 → ベースを 1 段ずつ -->
       <div v-if="phone && family" class="mb-3">
-        <div class="mb-2 flex items-center gap-2">
+        <div data-base-phone-head class="mb-2 flex items-center gap-2">
           <button type="button" class="min-h-11 rounded-lg border border-white/20 px-3" @click="backToFamilies">{{ tr("← 部位", "← Item class") }}</button>
           <b class="text-[15px] text-amber-100">{{ famLabel(family) }}</b>
         </div>
