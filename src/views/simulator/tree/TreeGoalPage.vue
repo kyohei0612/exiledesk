@@ -80,7 +80,7 @@ const cardW = innerWidth < 768 ? Math.min(CARD_W, innerWidth - 90) : CARD_W;
 </script>
 
 <template>
-  <ModalShell :open="true" :inline="asPage" rec="tree-goal" :title="tr('0 完成形の設定', '0 Final item')" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" :width="asPage ? 'w-full h-[calc(100vh-140px)]' : 'w-[88%] h-[86%]'" full-on-phone body-class="px-3 pb-3" @close="close">
+  <ModalShell :open="true" :inline="asPage" :closable="!(asPage && unpicked)" rec="tree-goal" :title="tr('0 完成形の設定', '0 Final item')" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" :width="asPage ? 'w-full h-[calc(100vh-140px)]' : 'w-[88%] h-[86%]'" full-on-phone body-class="px-3 pb-3" @close="close">
     <template #subheader>
       <!-- 1 → 2 の段 (押すとその段へ)。初手 (ベース未選択) の間は 2 へは飛べない (ベースを押して初めて 2 へ、10-23 オーナー)。右端に保存したレシピから開く -->
       <div data-tree-goal-steps class="flex flex-wrap items-center gap-2 px-3 pb-2">
@@ -98,7 +98,8 @@ const cardW = innerWidth < 768 ? Math.min(CARD_W, innerWidth - 90) : CARD_W;
         <button type="button" class="g-btn sm" @click="asking = null">{{ tr("やめる", "Cancel") }}</button>
         <button type="button" data-tree-base-ok class="g-btn sm" @click="apply(asking!)">{{ tr("替える", "Change") }}</button>
       </div>
-      <BaseCatalog :data="s.data.value" :selected="unpicked ? '' : t.doc.value.base" @pick="pick" />
+      <!-- エミュのベースのページと同じく、未選択の時は人気のベースを上に (10-23 オーナー「ページの作りはエミュのベースのページと同じでよい」) -->
+      <BaseCatalog :data="s.data.value" :selected="unpicked ? '' : t.doc.value.base" :popular="unpicked" @pick="pick" />
     </div>
     <!-- 768px 未満は縦に積む (完成形のカードが上、表は全部の幅。横に並べると表が 1 文字幅に潰れた、10-23 デザイン部長の気づき・メモ web-phone-layout) -->
     <div v-else data-tree-goal-mods class="flex min-h-0 min-w-0 items-start gap-4 max-md:flex-col max-md:items-stretch">
