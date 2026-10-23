@@ -64,6 +64,16 @@ let downOnBackdrop = false;
 const onDown = (e: MouseEvent): void => { downOnBackdrop = e.target === e.currentTarget; };
 const onBackdrop = (e: MouseEvent): void => { if (downOnBackdrop && e.target === e.currentTarget) close(); downOnBackdrop = false; };
 
+/**
+ * 閉じた直後の少しの間は、下に出てきた物にクリックを通さない (2026-10-23 モンキー 4: スマホで × を 2 回押すと、2 回目が真下のヘッダーの「ブログ」に当たってページを出ていた)。
+ * 閉じたクリックはもう document を過ぎているので止まらない。止めるのは次のクリックから
+ */
+function guardClicks(ms = 350): void {
+  const stop = (e: Event): void => { e.stopPropagation(); e.preventDefault(); };
+  document.addEventListener("click", stop, true);
+  setTimeout(() => document.removeEventListener("click", stop, true), ms);
+}
+
 function activate(): void {
   if (active) return;
   active = true;
@@ -87,6 +97,7 @@ function deactivate(): void {
   if (i >= 0) stack.splice(i, 1);
   if (!props.inline && --locks === 0) { document.body.style.overflow = prevOverflow; document.documentElement.style.overflow = prevHtmlOverflow; }
   window.removeEventListener("keydown", onKey, true);
+  if (!props.inline) guardClicks();
   // 閉じたら前に居た所へ (消えていたらそのまま)
   const back = prevFocus;
   prevFocus = null;

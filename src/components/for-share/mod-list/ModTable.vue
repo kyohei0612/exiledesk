@@ -124,7 +124,13 @@ function observe(): void {
   for (const el of sectionEls.values()) io.observe(el);
 }
 watch(sections, () => void nextTick(observe), { immediate: true });
-onBeforeUnmount(() => io?.disconnect());
+/** 列の見出し (出やすさ・段・Lv) は目次の帯のすぐ下に留める (2026-10-23 モンキー 14「% の右の 2 つの数字に説明が無い」= 送ると見出しが消えていた)。スマホは目次が留まらないので 0 */
+const tocEl = ref<HTMLElement | null>(null);
+const tocH = ref(0);
+const measureToc = (): void => { const el = tocEl.value; tocH.value = el && getComputedStyle(el).position === "sticky" ? el.offsetHeight : 0; };
+let tocRo: ResizeObserver | null = null;
+watch(tocEl, (el) => { tocRo?.disconnect(); if (el) { tocRo = new ResizeObserver(measureToc); tocRo.observe(el); measureToc(); } });
+onBeforeUnmount(() => { io?.disconnect(); tocRo?.disconnect(); });
 function setSection(g: string, el: unknown): void {
   if (el instanceof HTMLElement) sectionEls.set(g, el);
   else sectionEls.delete(g);
@@ -160,7 +166,7 @@ defineExpose({ jumpTo, counts, sections });
   <div ref="listEl" data-mod-list class="@container text-[12px]">
     <!-- 目次 (押すとその種類までスクロール。スクロールしても上に残る) と検索。スマホは検索を目次の横送りの外 -->
     <input v-model="query" type="search" :placeholder="tr('文面やタグで探す (例: 耐性、ライフ)', 'Search text or tags')" class="mb-2 w-full rounded-lg border border-white/15 bg-black/30 px-2 py-1.5 md:hidden" />
-    <div data-mod-toc class="sticky top-0 z-10 -mx-3 mb-4 flex flex-wrap items-center gap-1.5 bg-[#120f0c]/95 px-3 py-1.5 backdrop-blur max-md:static max-md:flex-nowrap max-md:overflow-x-auto">
+    <div ref="tocEl" data-mod-toc class="sticky top-0 z-10 -mx-3 mb-4 flex flex-wrap items-center gap-1.5 bg-[#120f0c]/95 px-3 py-1.5 backdrop-blur max-md:static max-md:flex-nowrap max-md:overflow-x-auto">
       <button v-if="props.toCraft" type="button" class="tbtn mr-1 max-md:shrink-0" :title="tr('アイテムのカードへ戻る', 'Back to the item')" @click="props.toCraft()">{{ tr("↑ クラフトへ", "↑ Craft") }}</button>
       <!-- 節の切り替えはほかのタブと同じ .g-tab (2026-10-18 オーナーの UI 点検)。細い帯に合うよう低く -->
       <button v-for="sec in sections" :key="sec.sid" type="button" role="tab" :aria-selected="active === sec.sid" class="g-tab !min-h-[28px] !px-4 !text-[13px] max-md:shrink-0" :class="active === sec.sid ? 'on' : ''" @click="jump(sec.sid)">
@@ -184,7 +190,7 @@ defineExpose({ jumpTo, counts, sections });
       <!-- プレ・サフィの左右は一覧の幅で決める (窓が狭い小さいパソコンは縦に積む。2026-10-11 オーナー) -->
       <div v-if="secShown(sec.sid)" class="grid gap-3 @4xl:grid-cols-2">
         <div v-for="col in sec.columns" :key="col.side" class="min-w-0">
-          <p class="mb-1 flex items-baseline gap-2 border-b border-white/10 pb-1 pr-2">
+          <p data-mod-col-head class="sticky z-[5] mb-1 flex items-baseline gap-2 border-b border-white/10 bg-[#120f0c]/95 pb-1 pr-2 pt-0.5" :style="{ top: `${tocH}px` }">
             <slot name="col-lead" :col="col" />
             <b class="whitespace-nowrap text-[var(--exile-color-text-primary)]">{{ col.title }}</b>
             <span class="whitespace-nowrap text-[var(--exile-color-text-tertiary)]">{{ col.items.length }} {{ tr("系統", "groups") }}</span>
