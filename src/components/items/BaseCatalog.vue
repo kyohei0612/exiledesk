@@ -281,6 +281,14 @@ function revealPanel(bottomFirst = false): void {
 // 今のベースがある時 (選び直し) は、開いた時にその部位の一覧が全部見えるまで送る。エミュのベースのページもシミュの完成形の設定も同じ (2026-10-23 オーナー
 // 「展開した時の動きをエミュとシミュで一緒に」。前はエミュのページだけが自分で reveal を呼んでいた)。送る先は一番近い送りの箱 (ページ / 窓の本文)
 onMounted(() => { void nextTick(() => { if (props.selected && family.value) reveal(); else placeUnder(family.value); }); });
+// データが後から届いた時 (?page=base を直に開く・再読み込み): その時に今のベースの種類と部位を決め直し、開いた時と同じに送る (前は何も開かなかった、2026-10-23)
+watch(() => all.value.length > 0, (ready, was) => {
+  if (!ready || was) return;
+  const c = all.value.find((b) => b.en === props.selected)?.cls;
+  if (c) cls.value = c;
+  if (!phone.value && !family.value) family.value = familyOfCls(cls.value);
+  void nextTick(() => { if (props.selected && family.value) reveal(); else placeUnder(family.value); });
+});
 /**
  * 「もっと見る」で広げた時: 伸びた一覧の下 (たたむの帯 + 少し) が切れていれば、そこまで送る (一覧の上は画面から出さない)。
  * 2026-10-14 オーナー「もっと見る押したら全体表示しないの？」(10-10 は「開いてもスクロールはいらない」だったのを変えた)
