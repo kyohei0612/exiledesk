@@ -31,20 +31,21 @@
  *   この 2 つは台本 scripts/_tree-patterns-probe の body-essence-split・amulet-4aims-split で組んだ木の JSON (samples/)。
  *   完成 = 狙いが全部付いた時点 (枠を埋める手は打たない、外れが残っても完成。10-22 オーナー「無理やり 6 MOD にしなくても」)
  */
-import { tidy, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
+import { migrateStart, tidy, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
 import { ECHO } from "./tree-hands";
 import robeEssence from "./samples/robe-essence-split.json";
 import amulet4aims from "./samples/amulet-4aims.json";
 
 export const TREE_SAMPLES = ["gold-ring-suffix", "boots-res-split", "robe-essence-split", "amulet-4aims"] as const;
 /** JSON で置いた見本 (台本で組んだ木。開くたびに写しを渡す) */
-const fromJson = (j: unknown): TreeDoc => { const d = JSON.parse(JSON.stringify(j)) as TreeDoc; tidy(d); return d; };
+const fromJson = (j: unknown): TreeDoc => { const d = JSON.parse(JSON.stringify(j)) as TreeDoc; migrateStart(d); tidy(d); return d; };
 
 const hand = (currency: string, omens: string[] = [], extra: Partial<Hand> = {}): Hand => ({ currency, omens, catalyst: null, quality: 0, ...extra });
-function make(base: string, fracture: Aim | null, startRandom: number, boxes: Record<string, Partial<TreeBox>>): TreeDoc {
+function make(base: string, fracture: Aim | null, boxes: Record<string, Partial<TreeBox>>): TreeDoc {
   const b: Record<string, TreeBox> = {};
   for (const [id, x] of Object.entries(boxes)) b[id] = { id, x: 0, y: 0, out: "junk", aim: null, hand: null, outs: [], back: null, done: null, parent: null, ...x };
-  const d: TreeDoc = { schema: "exiledesk-tree/0", base, itemLevel: 82, start: { rarity: "rare", mods: fracture ? [{ ...fracture, fractured: true }] : [] }, startRandom, boxes: b, seq: Object.keys(b).length };
+  const d: TreeDoc = { schema: "exiledesk-tree/0", base, itemLevel: 82, start: { rarity: "normal", mods: [] }, ...(fracture ? { memoAims: [{ ...fracture, fractured: true as const }] } : {}), boxes: b, seq: Object.keys(b).length };
+  migrateStart(d);
   tidy(d);
   return d;
 }
@@ -75,7 +76,7 @@ function goldRingSuffix(): TreeDoc {
     [id]: { ...box, hand: hand(cat), outs: [`${id}_q`] },
     [`${id}_q`]: { out: "pass", parent: id, hand: CAT, outs },
   });
-  return make("Gold Ring", { modId: "Rings/Special_genesis_tree_caster_SpellDamage", tier: 2 }, 1, {
+  return make("Gold Ring", { modId: "Rings/Special_genesis_tree_caster_SpellDamage", tier: 2 }, {
     start: { out: "start", hand: SPAM, outs: ["sR", "sC", "sA"] },
     ...Q("sR", { out: "hit", aim: A.R, parent: "start" }, "catalyst_speed", ["rc", "ra", "jR"]),
     sC: { out: "hit", aim: A.C, parent: "start", hand: PLAIN, outs: ["cr", "ca", "jC"] },
@@ -112,7 +113,7 @@ function goldRingSuffix(): TreeDoc {
 
 function bootsResSplit(): TreeDoc {
   const F = { modId: "Boots_dex/FireResistance", tier: 1 }, C = { modId: "Boots_dex/ColdResistance", tier: 1 }, L = { modId: "Boots_dex/LightningResistance", tier: 1 };
-  return make("Drakeskin Boots", { modId: "Boots_dex/MovementVelocity", tier: 1 }, 0, {
+  return make("Drakeskin Boots", { modId: "Boots_dex/MovementVelocity", tier: 1 }, {
     start: { out: "start", hand: hand("exalt_greater", [], { free: true }), outs: ["b1"] },
     b1: { out: "any", parent: "start", hand: hand("chaos", [], { repeat: { until: "hit", max: null } }), outs: ["b2", "b3", "b4"] },
     // 耐性のどれが付いても同じ組の箱 (b2) へ。b2 は打たずに分ける

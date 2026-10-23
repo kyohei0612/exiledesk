@@ -11,7 +11,7 @@ import { tierIndexOf } from "../../craft-stage/engine";
 import { methodsFor, type SimStartKind } from "../sim-methods";
 import type { SimTargetIn } from "../quiz-build";
 import { startCalc, startCostOf } from "../start-cost";
-import { startOf, type TreeBasePrices, type TreeDoc } from "./tree-model";
+import { fractureMarks, startOf, type TreeBasePrices, type TreeDoc } from "./tree-model";
 import { tr } from "../../../i18n/lang";
 
 type TreeStartKind = Extract<SimStartKind, "white" | "four" | "fractured">;
@@ -26,10 +26,11 @@ interface TreeBaseCost {
 
 export function treeBaseCost(data: PatchData, doc: TreeDoc, prices: TreeBasePrices, price: (key: string) => number, name: (key: string) => string): TreeBaseCost {
   const st = startOf(doc);
-  const fr = st.mods.find((m) => m.fractured);
+  const marks = fractureMarks(doc), fr = marks[0];
   const none = (note: string): TreeBaseCost => ({ kinds: [], best: null, note });
   if (!fr) return none(tr("✦ (フラクチャー) の MOD が無いので比べない", "No ✦ (fractured) mod, nothing to compare"));
-  const others = st.mods.filter((m) => !m.fractured);
+  if (marks.length > 1) return none(tr("✦ の候補が 2 つ以上は比べない (前の ③ は 1 つ)", "Can't compare with 2+ ✦ candidates (step 3 had one)"));
+  const others = st.mods;
   if (others.length > 1) return none(tr("反対側の狙いが 2 つ以上は比べられない (前の ③ と同じく 1 つまで)", "Can't compare with 2+ other mods (one at most, as in step 3)"));
   const div = price("divine") || 1;
   const ex = (v: number | undefined): number | null => (v != null && Number.isFinite(v) && v >= 0 ? v * div : null);

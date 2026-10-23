@@ -8,7 +8,7 @@ import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { craftStage as s } from "../../../state/craft-stage";
 import { freshItem } from "../../../services/craft-stage/engine";
 import { CATALYSING, isCatalyst } from "../../../services/simulator/tree/tree-hands";
-import { startOf, type Hand, type SplitWhen, type TreeBox, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
+import { fractureMarks, startRarity, type Hand, type SplitWhen, type TreeBox, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { tr } from "../../../i18n/lang";
 
@@ -59,8 +59,9 @@ export function handLabel(h: Hand): string {
 }
 /** レアリティの名前 (0 の箱・スタートの箱・レアリティの札) */
 export const rarityName = (r: TreeRarity): string => (r === "normal" ? tr("ノーマル", "Normal") : r === "magic" ? tr("マジック", "Magic") : tr("レア", "Rare"));
-/** 木のタブ・結果のまとめの始め方の名前: ✦ の MOD があれば「✦ <MOD> スタート」、無ければ「<レアリティ> スタート」(10-22 オーナー) */
+/** 木のタブ・結果のまとめの始め方の名前: 印が 1 つなら「✦ <MOD> スタート」、2 つ以上なら「✦ 候補 n スタート」、無ければ「<レアリティ> スタート」(10-22 オーナー、印は 10-23) */
 export function startName(d: TreeDoc): string {
-  const t = useTree(), st = startOf(d), f = st.mods.find((m) => m.fractured);
-  return f ? tr(`✦ ${t.startModLabel(f)} スタート`, `✦ ${t.startModLabel(f)} start`) : tr(`${rarityName(st.rarity)} スタート`, `${rarityName(st.rarity)} start`);
+  const t = useTree(), fs = fractureMarks(d), f = fs[0];
+  if (fs.length > 1) return tr(`✦ 候補 ${fs.length} スタート`, `✦ ${fs.length} candidates start`);
+  return f ? tr(`✦ ${t.startModLabel(f)} スタート`, `✦ ${t.startModLabel(f)} start`) : tr(`${rarityName(startRarity(d))} スタート`, `${rarityName(startRarity(d))} start`);
 }

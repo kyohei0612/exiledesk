@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { computed, watch } from "vue";
 import NumStep from "../../../components/NumStep.vue";
-import { startOf } from "../../../services/simulator/tree/tree-model";
+import { fractureMarks, startOf, startRarity } from "../../../services/simulator/tree/tree-model";
 import { useTreeSearch, type TreeSearchKind } from "./use-tree-search";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { useTree } from "./use-tree";
@@ -36,7 +36,7 @@ const stuck = computed(() => Object.entries(props.result.stuckAt).sort((a, z) =>
 watch(() => props.result, (r) => t.noteRun({ perItem: r.perItem, pct: Math.round((r.finished / (r.n || 1)) * 100), price: t.startPrice() }), { immediate: true });
 /** 取引所で探す (開くだけ、値段は手で入れる。ノーマル = 白、フラクチャー済み = ✦ の MOD がフラクチャー、ほかは ✦ が無いので探せない) */
 const ts = useTreeSearch();
-const searchKind = computed((): TreeSearchKind | null => { const st = startOf(t.doc.value); return st.mods.some((m) => m.fractured) ? "fractured" : st.rarity === "normal" ? "white" : null; });
+const searchKind = computed((): TreeSearchKind | null => (fractureMarks(t.doc.value).length ? "fractured" : startRarity(t.doc.value) === "normal" ? "white" : null));
 const priceIn = computed(() => startOf(t.doc.value).price ?? null);
 /** 回したタブの比べ (1 個の神が安い順) */
 const compare = computed(() => t.tabDocs.value.map((d, i) => ({ i, name: startName(i === t.active.value ? t.doc.value : d), run: t.tabRuns.value[i] })).filter((x) => x.run).sort((a, z) => a.run!.perItem - z.run!.perItem));

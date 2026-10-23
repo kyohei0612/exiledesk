@@ -7,12 +7,12 @@
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
 import { aimHits as hits, applyCurrency, catalystOf, forceKey, freshItem, kindOf, mulberry32, omenBlock, OMEN_FOR, revealOffers, runeIdByName, tierIndexOf, unrevealedOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
-import { stepOutcomes } from "../../craft-stage/engine-sim";
+import { fractureStart, stepOutcomes } from "../../craft-stage/engine-sim";
 import { catalystFull, catalystTagOf, fillCatalyst } from "../../craft-stage/engine-sim";
 import { aimHeldOn, isAimMod, junkOf } from "./tree-aim";
 import { CATALYSING as CATALYSING_OMEN, ECHO, ECHO as ABYSSAL_ECHO_OMEN, effectOf, engineOmens, isCatalyst } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
-import { startOf, type Aim, type Hand, type OutKind, type TreeDoc } from "./tree-model";
+import { fractureMarks, START_JUNK, startOf, startRarity, type Aim, type Hand, type OutKind, type TreeDoc } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-run";
 
@@ -138,13 +138,20 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
 }
 
 /**
- * 始めのアイテム = 始まりの形 (レアリティ + 指名の MOD、フラクチャーはその印。startOf) + 乱数の MOD (レアは素の高貴、マジックは増強を startRandom 回)。
- * 見本・ルート精査・100 人回し (tree-run) で同じ物。
+ * 始めのアイテム (10-23 オーナー「スタートは印で決まる」): 完成の狙いにフラクチャーの印があれば、印のどれか 1 つが ✦ のレア + ＋ の MOD + 外れ (合わせて 4 つ、エンジンの入口 fractureStart)。
+ * 印が無ければ白 (ノーマル) に＋の MOD を付けた物 (＋が無ければ白のまま)。ルーンは先に差す。見本・ルート精査・100 人回し (tree-run) で同じ物。
  * note = 打てなかった理由 (無ければ null)
  */
 export function startItemOf(data: PatchData, doc: TreeDoc, rng: () => number): Sample {
-  // 作り方 (ルーン → 指名の MOD → 乱数の MOD、マジックはノーマルから・フラクチャーはレアに 1 つまで) はエンジンの入口の startWith (B10 10-22)
-  return startWith(data, doc.base, doc.itemLevel, { ...startOf(doc), random: doc.startRandom ?? 0 }, rng);
+  const st = startOf(doc), marks = fractureMarks(doc);
+  // 作り方 (ルーン → 指名の MOD、マジックはノーマルから) はエンジンの入口の startWith (B10 10-22)
+  if (!marks.length) return startWith(data, doc.base, doc.itemLevel, { rarity: startRarity(doc), mods: st.mods, runes: st.runes }, rng);
+  // ルーンを先に差したレア (ルーンの MOD の候補・＋の分のソケットも開ける) から
+  const pre = startWith(data, doc.base, doc.itemLevel, { rarity: "rare", mods: [], runes: st.runes, socketFor: [...marks, ...st.mods] }, rng);
+  if (pre.note) return pre;
+  const from = pre.item;
+  const r = fractureStart(data, doc.base, doc.itemLevel, marks.map((a) => ({ modId: a.modId, tier: a.tier })), rng, { junk: START_JUNK, extra: st.mods, from });
+  return { item: r.item, note: r.note };
 }
 
 /**
@@ -353,8 +360,8 @@ interface StartWith {
   mods: readonly StartMod[];
   /** 先に差すルーン (英語名)。指名の MOD のルーンの分もソケットを開ける */
   runes?: readonly string[];
-  /** 指名の後に乱数で足す MOD の数 (レアは素の高貴、ほかは増強) */
-  random?: number;
+  /** ソケットだけ開けておく MOD (ルーンの MOD の分。印のスタートで後から付く ✦ の候補・＋の MOD) */
+  socketFor?: readonly StartMod[];
 }
 
 /** フラクチャー (✦) は 1 つのアイテムに 1 つまで (ゲームのフラクチャーのオーブは 1 つだけ固定する) */
@@ -367,7 +374,7 @@ function startWith(data: PatchData, base: string, itemLevel: number, s: StartWit
   if (s.mods.filter((m) => m.fractured).length > START_FRACTURE_MAX) return { item, note: tr("フラクチャーは 1 つまで", "Only one mod can be fractured") };
   // 選んだルーンを先に差す。ルーンの MOD はそのルーンを差して付く (force が差す)。差すソケットを要る数だけ開けておく (手袋の投射物 +2 = コルの狩り、10-22)
   const runes = s.runes ?? [];
-  const byMod = new Set(s.mods.flatMap((m) => { const r = data.mods.get(m.modId)?.rune; return r ? [r] : []; }));
+  const byMod = new Set([...s.mods, ...(s.socketFor ?? [])].flatMap((m) => { const r = data.mods.get(m.modId)?.rune; return r ? [r] : []; }));
   const need = runes.length + [...byMod].filter((id) => !runes.some((en) => runeIdByName(en) === id)).length;
   if (need) item = { ...item, sockets: Math.max(item.sockets ?? 0, need) };
   for (const en of runes) {
@@ -381,11 +388,6 @@ function startWith(data: PatchData, base: string, itemLevel: number, s: StartWit
     const r = applyCurrency(data, item, forceKey(m.modId, `T${m.tier}`, m.fractured ? "f" : src === "essence" || src === "perfect_essence" ? "e" : "n"), rng);
     if (!r.applied) return { item: r.item, note: r.reason ?? null };
     item = r.item;
-  }
-  for (let i = 0; i < (s.random ?? 0); i++) {
-    const x = applyCurrency(data, item, item.rarity === "rare" ? "exalt" : "augment", rng);
-    if (!x.applied) return { item, note: x.reason ?? null };
-    item = x.item;
   }
   return { item, note: null };
 }

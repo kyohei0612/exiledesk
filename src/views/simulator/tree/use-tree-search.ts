@@ -9,7 +9,7 @@ import { minIlvlFor, tierIndexOf } from "../../../services/craft-stage/engine";
 import { tradeFiltersFor } from "../../../services/htc/buy-or-craft";
 import { buildSpecQuery } from "../../../services/trade2/query/spec";
 import { openTradeQuery } from "../../../services/pob-check/trade-links";
-import { startOf } from "../../../services/simulator/tree/tree-model";
+import { fractureMarks } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 
 /** 取引所の「MOD の数」の疑似 stat (4 以下 = 空きのあるレア、③ と同じ) */
@@ -18,9 +18,9 @@ export type TreeSearchKind = "white" | "four" | "fractured";
 
 export function useTreeSearch() {
   const t = useTree();
-  /** ✦ の MOD (段の下限つき) */
+  /** ✦ の MOD (段の下限つき。印が 2 つ以上なら 1 つ目) */
   const frac = computed(() => {
-    const d = s.data.value, m = startOf(t.doc.value).mods.find((x) => x.fractured);
+    const d = s.data.value, m = fractureMarks(t.doc.value)[0];
     return d && m && d.mods.get(m.modId) ? { d, modId: m.modId, minTierIndex: tierIndexOf(d, m.modId, m.tier), ilvl: minIlvlFor(d, [m]) ?? 0 } : null;
   });
   const ilvlMin = computed(() => Math.min(Math.max(1, frac.value?.ilvl ?? 0), t.doc.value.itemLevel));

@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
-import { BOX_H, BOX_W, startOf, type TreeBox } from "../../../services/simulator/tree/tree-model";
+import { BOX_H, BOX_W, fractureMarks, START_JUNK, startOf, startRarity, type TreeBox } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { useTree } from "./use-tree";
@@ -49,15 +49,20 @@ function down(e: PointerEvent): void {
   emit("drag", e);
 }
 const k = computed(() => Math.max(1, props.inv ?? 1));
-/** 始まりの MOD (フラクチャーを先に)・残りの文・全部の文 (乗せた時) */
-const startMods = computed(() => [...startOf(t.doc.value).mods].sort((a, b) => Number(!!b.fractured) - Number(!!a.fractured)));
-const first = computed(() => startMods.value[0] ?? null);
-/** ノーマルのスタート (MOD 無しの白、10-22) */
-const normal = computed(() => startOf(t.doc.value).rarity === "normal");
+/** スタートの形は印で決まる (10-23 オーナー): フラクチャーの印 (✦ の候補)・＋の MOD・1 行目の文 */
+const marks = computed(() => fractureMarks(t.doc.value));
+const plusMods = computed(() => startOf(t.doc.value).mods);
+const startHead = computed(() => {
+  const m = marks.value;
+  if (m.length > 1) return tr(`✦ フラクチャー MOD ×${m.length}`, `✦ Fractured mod ×${m.length}`);
+  if (m[0]) return `✦ ${t.startModLabel(m[0])}`;
+  return plusMods.value[0] ? t.startModLabel(plusMods.value[0]) : tr("白 (ノーマル)", "White (normal)");
+});
+/** 2 行目: 印あり = ＋の数・外れの数、印なし = ほかの＋の数・レアリティ。ルーン・ベースの値段 */
 const startRest = computed(() => {
-  const st = startOf(t.doc.value), n = startMods.value.length - 1, r = t.doc.value.startRandom ?? 0;
-  const parts = [n > 0 ? tr(`ほか ${n} つ`, `+${n} more`) : "", r ? tr(`乱数 ${r} つ`, `${r} random`) : "", st.runes?.length ? tr(`ルーン ${st.runes.length}`, `${st.runes.length} rune(s)`) : "", st.rarity === "magic" && !first.value?.fractured ? rarityName(st.rarity) : ""].filter(Boolean);
-  return [costLine.value, ...parts].filter(Boolean).join(" · ");
+  const st = startOf(t.doc.value), n = plusMods.value.length, junk = Math.max(0, START_JUNK - n);
+  const parts = marks.value.length ? [n ? tr(`＋${n}`, `+${n}`) : "", tr(`外れ ${junk}`, `${junk} miss`)] : [n > 1 ? tr(`ほか ${n - 1} つ`, `+${n - 1} more`) : "", n ? rarityName(startRarity(t.doc.value)) : ""];
+  return [costLine.value, ...parts, st.runes?.length ? tr(`ルーン ${st.runes.length}`, `${st.runes.length} rune(s)`) : ""].filter(Boolean).join(" · ");
 });
 /** ベースの値段の 1 行 (始め方を比べた一番安い物、use-tree の baseCost。値段を入れていなければ出さない) */
 const costLine = computed(() => {
@@ -66,7 +71,10 @@ const costLine = computed(() => {
   const n = b.cost >= 100 ? b.cost.toFixed(0) : b.cost >= 10 ? b.cost.toFixed(1) : b.cost.toFixed(2);
   return tr(`ベース ${n} 神 · ${b.short}`, `Base ${n} div · ${b.short}`);
 });
-const startTitle = computed(() => startMods.value.map((m) => `${m.fractured ? `✦ ${tr("フラクチャー", "Fractured")} ` : ""}${t.startModLabel(m)}`).join("\n"));
+const startTitle = computed(() => [
+  ...(marks.value.length > 1 ? [tr("この中のどれか 1 つが固定される", "One of these gets fractured")] : []),
+  ...marks.value.map((m) => `✦ ${t.startModLabel(m)}`), ...plusMods.value.map((m) => `＋ ${t.startModLabel(m)}`),
+].join("\n") || tr("白 (ノーマル) から。押すと始まりの形", "From white (normal). Click for the start"));
 /** 押せる物を倍率の逆数で戻す (origin = 大きくする軸。まとまりごとに端を軸にして、隣と重ならないように) */
 const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale: String(k.value), transformOrigin: origin } : {});
 
@@ -103,10 +111,11 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
         <button type="button" data-tree-base class="nodrag block w-full truncate text-left text-[13px] font-bold hover:underline" :class="quiet ? 'pointer-events-none' : ''" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :title="tr('ベースとアイテムレベルを選ぶ', 'Choose the base and item level')" @click.stop="!quiet && emit('base')">
           {{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}
         </button>
-        <!-- 始まりの MOD (押すと右の欄で選ぶ、10-22 オーナー「始まりの MOD を決めさせる」): 1 行目はフラクチャー (無ければ最初の MOD)、2 行目は残りの数・乱数・マジック -->
-        <button type="button" data-tree-start-mods class="nodrag block w-full truncate text-left text-[#c8c8ff] hover:underline" :class="quiet ? 'pointer-events-none' : ''" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :title="startTitle" @click.stop="!quiet && emit('aim')">
-          {{ first ? `${first.fractured ? "✦ " : ""}${t.startModLabel(first)}` : normal ? tr("ノーマル (MOD 無し)", "Normal (no mods)") : tr("＋ 始まりの MOD を選ぶ", "+ Pick the starting mods") }}
-        </button>
+        <!-- 始まりの形 (押すとスタートの重ね窓、10-23 オーナー「印で決まる、スタートの枠に＋」): 1 行目は ✦ の候補 (2 つ以上は ×n、乗せると中身) か白、右の＋で MOD を足す・外れを差し替え -->
+        <div class="flex min-w-0 items-center gap-1" :style="{ height: `${24 * k}px` }">
+          <button type="button" data-tree-start-mods class="nodrag block min-w-0 flex-1 truncate text-left hover:underline" :class="[marks.length ? 'text-mod-fractured' : 'text-[#c8c8ff]', quiet ? 'pointer-events-none' : '']" :style="{ lineHeight: `${24 * k}px` }" :title="startTitle" @click.stop="!quiet && emit('aim')">{{ startHead }}</button>
+          <button v-if="!quiet" type="button" data-tree-start-plus-btn class="nodrag flex size-6 shrink-0 items-center justify-center rounded border border-white/15 text-[14px] leading-none hover:bg-white/10" :style="keep('right center')" :title="marks.length ? tr('＋ MOD を足す (外れを差し替える)', '+ Add a mod (replaces a miss mod)') : tr('＋ 始まりに付いている MOD を足す', '+ Add a starting mod')" @click.stop="emit('aim')">＋</button>
+        </div>
         <p v-if="startRest" data-tree-start-rest class="truncate text-[12px] opacity-70" :title="t.baseCost.value?.best ? `${tr('一番安い始め方', 'Cheapest start')}: ${t.baseCost.value.best.label} · ${startRest}` : startRest" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }">{{ startRest }}</p>
       </template>
       <button v-else-if="box.out === 'hit'" type="button" class="nodrag block w-[calc(100%-14px)] truncate text-left text-[13px] hover:underline" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :class="[box.aim ? 'text-[#c8c8ff]' : 'text-amber-300', quiet ? 'pointer-events-none' : '']" :title="t.aimLabel(box.aim)" @click.stop="!quiet && emit('aim')">

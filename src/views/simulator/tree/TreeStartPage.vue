@@ -1,6 +1,6 @@
 <!--
   TreeStartPage.vue — スタートの箱の重ね窓 (2026-10-22 オーナー「ツリー特化」、前は右の欄の「始まりの形」)。
-  0 完成形の設定のベースから始める: 始まりに付いている MOD (完成の狙いから)・✦・ルーン・乱数の数は TreeStartPick、右にその始まりのアイテムのカード。開いている印は use-tree の startPage
+  0 完成形の設定のベースから始める: 印から決まる形・＋の MOD・ルーンは TreeStartPick (10-23)、右にその始まりのアイテムのカード。開いている印は use-tree の startPage
 -->
 <script setup lang="ts">
 import { computed } from "vue";
@@ -23,7 +23,7 @@ const CARD_W = 320;
     <div data-tree-start-page class="flex min-w-0 items-start gap-4">
       <div class="min-w-0 flex-1"><TreeStartPick /></div>
       <div class="flex shrink-0 flex-col gap-1" :style="{ width: `${CARD_W}px` }">
-        <p class="text-[12px] opacity-70">{{ tr("始まりのアイテム (乱数の MOD は 1 例)", "Starting item (random mods are one example)") }}</p>
+        <p class="text-[12px] opacity-70">{{ tr("始まりのアイテム (外れの MOD・✦ の候補は 1 例)", "Starting item (miss mods and the ✦ pick are one example)") }}</p>
         <StageItemCard v-if="item" :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" />
       </div>
     </div>

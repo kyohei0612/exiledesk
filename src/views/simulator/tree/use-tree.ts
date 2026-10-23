@@ -8,7 +8,9 @@ import { priceOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { freshItem, modListFor, mulberry32 } from "../../../services/craft-stage/engine";
 import { minIlvlFor, tierRankLabel } from "../../../services/craft-stage/engine";
 import { startItemOf } from "../../../services/simulator/tree/tree-sample";
-import { isTreeDoc, migrateStart, newTree, startOf, type Aim, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
+import { placeMods } from "../../../services/craft-stage/engine-sim";
+import type { StageItem } from "../../../services/craft-stage/engine";
+import { isTreeDoc, migrateStart, newTree, startOf, startRarity, type Aim, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { treeBaseCost } from "../../../services/simulator/tree/tree-base-cost";
 import { addTreeRecipe, sameTree, setCurrentTreeRecipe, treeRecipeSaved } from "../../../state/simulator/tree-recipes";
 import { tr } from "../../../i18n/lang";
@@ -197,24 +199,47 @@ const hasGoal = (modId: string, tier: number): boolean => goals.value.some((a) =
 function toggleGoal(modId: string, tier: number): void {
   edit((d) => {
     const list = d.memoAims ?? [], same = list.find((a) => a.modId === modId);
-    const next = same?.tier === tier ? list.filter((a) => a.modId !== modId) : same ? list.map((a) => (a.modId === modId ? { modId, tier } : a)) : [...list, { modId, tier }];
+    const next = same?.tier === tier ? list.filter((a) => a.modId !== modId) : same ? list.map((a) => (a.modId === modId ? { ...a, tier } : a)) : [...list, { modId, tier }];
     if (next.length) d.memoAims = next; else delete d.memoAims;
+    migrateStart(d);
   });
 }
-/** 完成形のアイテム (木のベースに狙いを全部その段で付けた物。付け方はエンジンの force = スタートの箱と同じ startItemOf)。付けられない狙いは note */
-const goalItem = computed(() => {
+/**
+ * フラクチャーの印を付ける / 外す (10-23 オーナー: 「狙いにする」の横のボタン・完成形のカードの右クリック。複数可 = どれかが固定されればよい)。
+ * 狙いに無ければその段で狙いに足して印を付ける。印の MOD はスタートの＋の MOD から外す (✦ の候補と同じ MOD は足さない)。1 つ戻すで戻せる
+ */
+function toggleFracture(modId: string, tier: number): void {
+  edit((d) => {
+    const list = d.memoAims ?? [], g = list.find((a) => a.modId === modId);
+    if (!g) list.push({ modId, tier, fractured: true });
+    else if (g.fractured && g.tier === tier) delete g.fractured;
+    else { g.tier = tier; g.fractured = true; }
+    d.memoAims = list;
+    migrateStart(d);
+    d.start!.mods = d.start!.mods.filter((m) => !list.some((a) => a.fractured && a.modId === m.modId));
+    d.start!.rarity = startRarity(d);
+  });
+}
+/**
+ * 完成形のアイテム (木のベースに狙いを付けられる所まで付けた物、エンジンの入口 placeMods)。狙いは MOD の枠を超えてよい (10-23 オーナー、止めない): 乗らない物は left。
+ * 印の MOD を先に付ける。印が 1 つならその MOD を ✦ で (2 つ以上はカードの fractureGroup で 1 行にまとめる)。ノーマル・マジックの完成形は前と同じ startItemOf
+ */
+const goalItem = computed((): { item: StageItem; note: string | null; left: Array<Aim & { reason: string }> } | null => {
   const data = s.data.value, d = doc.value;
   if (!data) return null;
-  return startItemOf(data, { ...d, start: { rarity: goalRarity.value, mods: goalRarity.value === "normal" ? [] : goals.value.map((a) => ({ modId: a.modId, tier: a.tier })) }, startRandom: 0 }, mulberry32(1));
+  const plain = goals.value.map((a) => ({ modId: a.modId, tier: a.tier }));
+  if (goalRarity.value !== "rare") return { ...startItemOf(data, { ...d, memoAims: plain, start: { rarity: goalRarity.value, mods: goalRarity.value === "normal" ? [] : plain } }, mulberry32(1)), left: [] };
+  const marks = goals.value.filter((a) => a.fractured), one = marks.length === 1;
+  const order = [...marks, ...goals.value.filter((a) => !a.fractured)].map((a) => ({ modId: a.modId, tier: a.tier, ...(one && a.fractured ? { fractured: true } : {}) }));
+  const r = placeMods(data, d.base, d.itemLevel, order, mulberry32(1));
+  return { item: r.item, note: null, left: r.left.map((x) => ({ modId: x.modId, tier: x.tier, ...(marks.some((a) => a.modId === x.modId) ? { fractured: true as const } : {}), reason: x.reason })) };
 });
 /** 完成形のレアリティ (0 の箱、TreeDoc.goal。無ければレア。1 つ戻すで戻せる) */
 const goalRarity = computed((): TreeRarity => doc.value.goal?.rarity ?? "rare");
-function setRarity(r: TreeRarity): void { edit((d) => { if (r === "rare") delete d.goal; else d.goal = { rarity: r }; }); }
-/** スタートのレアリティ (start.rarity)。ノーマルは MOD 無しの白なので、始まりの MOD と乱数の数を外す (1 つ戻すで戻せる) */
+function setRarity(r: TreeRarity): void { edit((d) => { if (r === "rare") delete d.goal; else d.goal = { rarity: r }; migrateStart(d); }); }
 /** 始め方のベースの値段 (神、start.price。無ければ前の版の始め方の比べの一番安い物、どちらも無ければ 0)。100 人回す時の 1 本ごとの値段 */
 const startPrice = (): number => startOf(doc.value).price ?? baseCost.value?.best?.cost ?? 0;
 function setStartPrice(v: number | null): void { edit((d) => { migrateStart(d); if (v == null || !Number.isFinite(v) || v < 0) delete d.start!.price; else d.start!.price = v; }); }
-function setStartRarity(r: TreeRarity): void { edit((d) => { migrateStart(d); d.start!.rarity = r; if (r === "normal") { d.start!.mods = []; delete d.startRandom; } }); }
 /** blank = 始まりの箱に手が無い (白紙) */
 const isBlank = (d: TreeDoc): boolean => !d.boxes.start?.hand && !d.boxes.start?.split && Object.keys(d.boxes).length === 1;
 /** 白紙の木を開いた時にベースを選ばせるか (読んだら下ろす) */
@@ -246,8 +271,6 @@ watch(fitIlvl, (lv) => {
   doc.value = { ...d, itemLevel: lv };
   save(doc.value);
 });
-/** 始めのアイテムにフラクチャーのほか付いている乱数の MOD の数 (素の高貴を n 回、tree-sample の startItemOf。0 は消す。1 つ戻すで戻せる) */
-function setStartRandom(n: number): void { edit((d) => { if (n > 0) d.startRandom = n; else delete d.startRandom; }); }
 /** ベースを替えると消える箱の数 (始まりより下の、画面に出る箱。品質を上げた後の通り抜けは数えない) */
 const lostOnBase = computed(() => Object.values(doc.value.boxes).filter((b) => b.out !== "start" && b.out !== "pass").length);
 
@@ -317,5 +340,5 @@ const baseCost = computed(() => {
 const baseCostBusy = computed(() => !!s.data.value && !costReady.value);
 
 export function useTree() {
-  return { tabDocs, active, tabRuns, switchTab, addTab, closeTab, noteRun, startPrice, setStartPrice, goalPage, startPage, goals, hasGoal, toggleGoal, goalItem, goalRarity, setRarity, setStartRarity, fitIlvl, setFit, doc, edit, undo, canUndo, reset, setBase, setStartRandom, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
+  return { tabDocs, active, tabRuns, switchTab, addTab, closeTab, noteRun, startPrice, setStartPrice, goalPage, startPage, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, undo, canUndo, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
 }

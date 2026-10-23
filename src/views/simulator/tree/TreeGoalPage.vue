@@ -1,7 +1,8 @@
 <!--
   TreeGoalPage.vue — 「0 完成形の設定」の重ね窓 (2026-10-22 オーナー「ツリー特化。箱を押す → 重ね窓で選ぶ → 閉じる で完結」)。枠は ModalShell (前の TreeBasePage と同じ)。
   1 = ベース・レアリティ・アイテムレベル (適正): 上の行が TreeBasePick、下はベースのページと同じ BaseCatalog。ベースを選ぶと 2 へ。
-  2 = 完成の MOD: 共通の MOD 表 (for-share の ModTable、エミュの「このベースに付く MOD」と同じ土台)、段の行のボタンは「狙いにする」1 つ (もう一度押すと外す)。右に完成形のアイテムのカード (付き方を見ながら作る)。
+  2 = 完成の MOD: 共通の MOD 表 (for-share の ModTable、エミュの「このベースに付く MOD」と同じ土台)、段の行のボタンは「狙いにする」(もう一度押すと外す) と「フラクチャー」(印、複数可 = どれかが固定されればよい、10-23 オーナー)。
+  右に完成形のアイテムのカード (付き方を見ながら作る。MOD の行の右クリックでも印を付け外し、印が 2 つ以上なら 1 行「フラクチャー MOD ×n」+ ホバーで中身)。狙いは MOD の枠を超えてよい (止めない、乗らない物はカードの下に)。
   ベースを替えると白紙から (下の箱か始まりの MOD があれば 1 回確かめる、1 つ戻すで戻せる)。開いている印は use-tree の goalPage
 -->
 <script setup lang="ts">
@@ -14,6 +15,7 @@ import { craftStage as s } from "../../../state/craft-stage";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { tr } from "../../../i18n/lang";
 import { startOf } from "../../../services/simulator/tree/tree-model";
+import type { StageMod } from "../../../services/craft-stage/engine";
 import TreeBasePick from "./TreeBasePick.vue";
 import { useTree } from "./use-tree";
 
@@ -39,6 +41,14 @@ function apply(en: string): void {
   t.goalPage.value = 2;
 }
 const pickGoal = { has: t.hasGoal, toggle: t.toggleGoal };
+/** その段の狙いにフラクチャーの印があるか */
+const isFrac = (modId: string, tier: number): boolean => t.goals.value.some((a) => a.modId === modId && a.tier === tier && a.fractured);
+const marks = computed(() => t.goals.value.filter((a) => a.fractured).map((a) => a.modId));
+/** カードの行の右クリック = その狙いの段で印を付け外し (狙いでない MOD は来ない) */
+function onCardFracture(m: StageMod): void {
+  const g = t.goals.value.find((a) => a.modId === m.modId);
+  if (g) t.toggleFracture(g.modId, g.tier);
+}
 const CARD_W = 340;
 </script>
 
@@ -64,16 +74,24 @@ const CARD_W = 340;
     </div>
     <div v-else data-tree-goal-mods class="flex min-h-0 min-w-0 items-start gap-4">
       <div class="min-w-0 flex-1"><ModTable overlay :data="s.data.value" :item="t.goalItem.value?.item ?? null">
-        <!-- 段の行のボタンは「狙いにする」1 つ (オーナー 10-22) -->
+        <!-- 段の行のボタンは「フラクチャー」(印、10-23) と「狙いにする」(オーナー 10-22) -->
         <template #tier-actions="{ row: r, tier: tt }">
-          <td class="w-24 py-0.5 text-right"><button type="button" data-mod-pick class="tbtn" :class="pickGoal.has(tt.modId ?? r.id, tt.tier) ? 'on' : ''" :title="pickGoal.has(tt.modId ?? r.id, tt.tier) ? tr('もう一度押すと狙いから外す', 'Click again to remove the target') : tr(`${tt.rank} 以上を完成の狙いにする`, `Make ${tt.rank}+ a final target`)" @click.stop="pickGoal.toggle(tt.modId ?? r.id, tt.tier)">{{ pickGoal.has(tt.modId ?? r.id, tt.tier) ? tr("✓ 狙い", "✓ Target") : tr("狙いにする", "Target") }}</button></td>
+          <td class="w-48 whitespace-nowrap py-0.5 text-right">
+            <button type="button" data-mod-fracture class="tbtn mr-1" :class="isFrac(tt.modId ?? r.id, tt.tier) ? 'on !text-mod-fractured' : ''" :title="isFrac(tt.modId ?? r.id, tt.tier) ? tr('もう一度押すとフラクチャーの印を外す', 'Click again to remove the fracture mark') : tr(`${tt.rank} 以上をフラクチャーの候補にする (どれか 1 つが固定されたレアからスタート)`, `Make ${tt.rank}+ a fracture candidate (start from a rare with one of them fractured)`)" @click.stop="t.toggleFracture(tt.modId ?? r.id, tt.tier)">{{ isFrac(tt.modId ?? r.id, tt.tier) ? tr("✦ 印", "✦ Marked") : tr("フラクチャー", "Fracture") }}</button>
+            <button type="button" data-mod-pick class="tbtn" :class="pickGoal.has(tt.modId ?? r.id, tt.tier) ? 'on' : ''" :title="pickGoal.has(tt.modId ?? r.id, tt.tier) ? tr('もう一度押すと狙いから外す', 'Click again to remove the target') : tr(`${tt.rank} 以上を完成の狙いにする`, `Make ${tt.rank}+ a final target`)" @click.stop="pickGoal.toggle(tt.modId ?? r.id, tt.tier)">{{ pickGoal.has(tt.modId ?? r.id, tt.tier) ? tr("✓ 狙い", "✓ Target") : tr("狙いにする", "Target") }}</button>
+          </td>
         </template>
       </ModTable></div>
       <!-- 完成形のカード (ページの送りでも見えるよう上に留める) -->
       <div data-tree-goal-card class="sticky top-0 flex shrink-0 flex-col gap-2" :style="{ width: `${CARD_W}px` }">
-        <StageItemCard v-if="t.goalItem.value" :item="t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" />
+        <StageItemCard v-if="t.goalItem.value" :item="t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" :fracture-group="marks" fracturable @fracture="onCardFracture" />
+        <!-- 枠を超えた狙い (10-23 オーナー「欲しい物を全部選ぶので枠を超えてよい」): 止めずにカードの下に並べる -->
+        <div v-if="t.goalItem.value?.left.length" data-tree-goal-over class="flex flex-col gap-0.5 rounded-md bg-white/[0.04] px-2 py-1 text-[12px]">
+          <p class="opacity-70">{{ tr(`カードに乗らない狙い ${t.goalItem.value.left.length} つ (枠の外。どれかが付けば当たり)`, `${t.goalItem.value.left.length} target(s) beyond the slots (a hit if any rolls)`) }}</p>
+          <p v-for="a in t.goalItem.value.left" :key="a.modId" data-tree-goal-over-row class="min-w-0 truncate" :class="a.fractured ? 'text-mod-fractured' : 'text-[#c8c8ff]'" :title="a.reason">{{ a.fractured ? "✦ " : "" }}{{ t.startModLabel(a) }}</p>
+        </div>
         <p v-if="t.goalItem.value?.note" data-tree-goal-problem class="rounded-md border border-rose-400/50 bg-[#2a1416] px-2 py-1 text-[12px] text-rose-100">{{ tr(`付けられない狙いがある: ${t.goalItem.value.note}`, `A target can't be added: ${t.goalItem.value.note}`) }}</p>
-        <p class="text-[12px] opacity-70">{{ tr("「狙いにする」= その段以上が付けば当たり。後の箱の当たりはこの狙いから選ぶ", "“Target” = a hit if that tier or better rolls. Later hit boxes pick from these targets") }}</p>
+        <p class="text-[12px] opacity-70">{{ tr("「狙いにする」= その段以上が付けば当たり。後の箱の当たりはこの狙いから選ぶ。「フラクチャー」(カードの右クリックでも) = 印のどれか 1 つが固定されたレアからスタート、印が無ければ白から", "“Target” = a hit if that tier or better rolls. Later hit boxes pick from these targets. “Fracture” (or right-click on the card) = start from a rare with one marked mod fractured; no marks = start from white") }}</p>
       </div>
     </div>
     <template #footer>

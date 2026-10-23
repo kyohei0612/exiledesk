@@ -19,7 +19,7 @@ export type OutKind = "hit" | "junk" | "junkGone" | "lost" | "any" | "pass" | "b
 /** fracture = フラクチャーのオーブ (10-22 オーナー「フラクチャーする所から回す」。結果 = 狙いが ✦ になった / 外れが ✦ になった) */
 export type HandKind = "add" | "remove" | "swap" | "spam" | "free" | "quality" | "essence" | "fracture";
 /** 狙い: MOD と段 (tier = T 何以上、1 = T1 だけ)。フラクチャーの時は「その段」 */
-export interface Aim { modId: string; tier: number }
+export interface Aim { modId: string; tier: number; /** フラクチャーの印 (完成の狙いだけ。印の MOD のどれか 1 つが ✦ のレアからスタート、10-23 オーナー) */ fractured?: true }
 /**
  * 繰り返し (2026-10-22 オーナー「外れ・狙いが消えたの行き先に一番使うのがカオススパム」): 当たりのどれかが付くまで同じ手を打ち続ける。
  * max = 打つ回数の上限 (null = 上限なし)。今はカオススパムだけ画面に出すが、高貴をもう一度・消去にも同じ形で付けられる
@@ -129,10 +129,35 @@ export const GAP_Y = 200;
 
 /** 始まりの形 (前の版の fracture だけの木はフラクチャー 1 つのレア) */
 export const startOf = (d: TreeDoc): TreeStart => d.start ?? { rarity: "rare", mods: d.fracture ? [{ ...d.fracture, fractured: true }] : [] };
-/** 前の版の fracture を start へ移す (読み込み・開く時) */
+/** フラクチャーの印 (完成の狙いのうち ✦ の候補。どれか 1 つが固定されればよい、10-23 オーナー) */
+export const fractureMarks = (d: TreeDoc): Aim[] => (d.memoAims ?? []).filter((a) => a.fractured);
+/** 印ありのスタートの外れの数の既定 (フラクチャーのオーブを打てる MOD 4 つ = ✦ 1 + 外れ 3。スタートの枠の＋で足した MOD の分だけ減る) */
+export const START_JUNK = 3;
+/**
+ * スタートのレアリティ (10-23 オーナー「切り替えのボタンは置かず印で決まる」): 印あり = レア (✦ + 外れ)、
+ * 印なし = ＋ で足した MOD が無ければノーマル (白)、あればレア (完成形がマジックならマジック)
+ */
+export function startRarity(d: TreeDoc): TreeRarity {
+  if (fractureMarks(d).length) return "rare";
+  if (!startOf(d).mods.length) return "normal";
+  return d.goal?.rarity === "magic" ? "magic" : "rare";
+}
+/**
+ * 前の版の形を今の形へ (読み込み・開く時): fracture → start、始まりの MOD の ✦ → 完成の狙いの印 (無ければ狙いに足す)。
+ * 乱数の MOD の数 (startRandom) はやめた (印あり = 外れ 3、印なし = 白、10-23 オーナー)
+ */
 export function migrateStart(d: TreeDoc): void {
-  if (!d.start) d.start = startOf(d);
+  const st = startOf(d);
+  const fr = st.mods.filter((m) => m.fractured);
+  if (fr.length) {
+    const list = d.memoAims ?? [];
+    for (const m of fr) { const g = list.find((a) => a.modId === m.modId); if (g) { g.tier = m.tier; g.fractured = true; } else list.push({ modId: m.modId, tier: m.tier, fractured: true }); }
+    d.memoAims = list;
+  }
+  d.start = { ...st, mods: st.mods.filter((m) => !m.fractured) };
   delete d.fracture;
+  delete d.startRandom;
+  d.start.rarity = startRarity(d);
 }
 export function newTree(base: string, itemLevel: number): TreeDoc {
   return {
