@@ -142,7 +142,7 @@ async function send(): Promise<void> {
       <template v-else>
         <span v-if="!forId" class="text-[10px] opacity-40">{{ text.trim().length }} / 4000</span>
         <button type="button" class="g-btn sm ml-auto" @click="emit('close')">{{ tr("やめる", "Cancel") }}</button>
-        <button type="button" class="g-btn-red sm disabled:opacity-40" :disabled="!canSend" @click="send">{{ state === "sending" ? tr("送っています…", "Sending…") : tr("送る", "Send") }}</button>
+        <button type="button" class="g-btn-red sm" :disabled="!canSend" @click="send">{{ state === "sending" ? tr("送っています…", "Sending…") : tr("送る", "Send") }}</button>
       </template>
     </template>
   </ModalShell>

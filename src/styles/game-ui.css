@@ -87,7 +87,7 @@
 .g-btn-red:hover:not(:disabled) { border-image-source: url("/ui-art/btn-red-hover.webp"); }
 .g-btn-red:active:not(:disabled) { border-image-source: url("/ui-art/btn-red-pressed.webp"); transform: translateY(1px); }
 .g-btn:disabled,
-.g-btn-red:disabled { filter: grayscale(0.8) brightness(0.6); cursor: default; }
+.g-btn-red:disabled { filter: grayscale(0.8) brightness(0.6); opacity: 0.45; cursor: default; } /* 字も薄く (絵を暗くするだけだと押せるボタンと同じ字の色に見えた。2026-10-23 モンキー ツリー 10) */
 /* 小さいボタン (道具の帯など) */
 .g-btn.sm,
 .g-btn-red.sm { min-height: 28px; border-width: 0 18px; border-image-width: 0 18px; font-size: 12px; }
