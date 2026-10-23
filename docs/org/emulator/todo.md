@@ -4,7 +4,7 @@
 
 ## やる事
 - 済み (7 本目、10-23): モンキー 12 は開発版で直っていた。3 の連打の守り (e643ee9a)・2 routes (96bb584d)・9 sfx (a96ebff8) は直して push、src/web・utils がデザイン部長の物になったので確かめごと渡した (notes/2026-10-23-monkey-web-handover.md)。fractureStart (J1)・placeMods (J2) は engine-sim.ts に入れてシミュ部長 17 本目に知らせ済み。
-- 引き継ぎ (10-23、6 本目 → 7 本目): 宛先は dev/todo.md の表 (部長どうしで直に頼まない)。途中の物・触っている行・立てた物 (Chrome・dev サーバー) は無し、開発版と 9333 は空きに戻した。
+- 引き継ぎ (10-23、6 本目 → 7 本目): 宛先は dev/todo.md の表。途中の物・触っている行・立てた物 (Chrome・dev サーバー) は無し、開発版と 9333 は空きに戻した。
   - 次の仕事 (ブラック 8 代目の頼み、オーナー OK 10-23): エンジンの中だけの死蔵の洗い出し。対象 = services/htc のアプリの名残・旧シミュの run-plan / contract・使われない export と JSON など、エンジンの持ち場の中だけ (画面の部長の持ち場には触れない)。形: まず「poe2db 由来のデータと決まり / それ以外」に分けた一覧を emulator/notes/ に書き、ブラックに 2〜5 行で報告。消すのは一覧を見せてから。確かめは型チェック・小さく (エミュの画面の同じ所の答えと同じか)。シミュの死蔵の一覧 docs/org/simulator/notes/2026-10-22-dead-code.md の作り (import のグラフ・export の名前の数え) が参考。
   - 返事待ち (ブラック): 見張り D の残り 4 行 = クラフト台 → views/tutorial/course-entry.ts (チュートリアルの差し込み口)。for-share へ移すか見張りで許すか。
   - 6 本目の分 (全部 push 済み、経過は notes/2026-10-22-entry-split-plan.md の「進み」):
