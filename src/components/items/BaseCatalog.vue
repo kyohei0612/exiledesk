@@ -278,7 +278,9 @@ function revealPanel(bottomFirst = false): void {
   // 位置の差とスクロール量の比はその場で測って 1 回で送る (glideRect。1920 幅 (拡大 1.16) で帯が 50px ほど切れていた、2026-10-14)
   void glideRect(box, el, revealed).then(() => { revealedAt = scrollTopOf(box); });
 }
-onMounted(() => { void nextTick(() => placeUnder(family.value)); });
+// 今のベースがある時 (選び直し) は、開いた時にその部位の一覧が全部見えるまで送る。エミュのベースのページもシミュの完成形の設定も同じ (2026-10-23 オーナー
+// 「展開した時の動きをエミュとシミュで一緒に」。前はエミュのページだけが自分で reveal を呼んでいた)。送る先は一番近い送りの箱 (ページ / 窓の本文)
+onMounted(() => { void nextTick(() => { if (props.selected && family.value) reveal(); else placeUnder(family.value); }); });
 /**
  * 「もっと見る」で広げた時: 伸びた一覧の下 (たたむの帯 + 少し) が切れていれば、そこまで送る (一覧の上は画面から出さない)。
  * 2026-10-14 オーナー「もっと見る押したら全体表示しないの？」(10-10 は「開いてもスクロールはいらない」だったのを変えた)

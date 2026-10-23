@@ -7,10 +7,10 @@
 -->
 <script setup lang="ts">
 import { tr } from "../../i18n/lang";
-import { computed, nextTick, onBeforeUnmount, ref } from "vue";
+import { computed, onBeforeUnmount, ref } from "vue";
 import { isTouchOnly } from "../../utils/use-phone";
 import { toCss } from "../../utils/zoom";
-import { swallowNextClick } from "../../utils/swallow-click";
+import { useDismiss } from "../../utils/use-dismiss";
 import Icon from "./Icon.vue";
 
 const props = withDefaults(defineProps<{
@@ -44,26 +44,18 @@ function show(pin = false): void {
   place();
   open.value = true;
   if (pin) pinned.value = true;
-  void nextTick(() => document.addEventListener("pointerdown", outside, true));
 }
 function hide(): void {
   open.value = false;
   pinned.value = false;
-  document.removeEventListener("pointerdown", outside, true);
-}
-function outside(e: PointerEvent): void {
-  if (btn.value?.contains(e.target as Node)) return;
-  if ((e.target as HTMLElement)?.closest?.("[data-helptip-pop]")) return;
-  const wasPinned = pinned.value;
-  hide();
-  // 押して開いた説明を外で閉じた時は、その押下を下の物 (見出しの開け閉めなど) に届けない (2026-10-22 オーナー「キャンセルは枠の外をクリックで」)。
-  // 乗せて開いただけの時は止めない (ほかのボタンを押せなくなる)
-  if (wasPinned) swallowNextClick();
 }
 function toggle(): void { if (open.value && pinned.value) hide(); else show(true); }
-function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && open.value) hide(); }
+// 押して開いた説明: 外を押す・Esc で閉じ、その押下は下の物 (見出しの開け閉めなど) に届けない (2026-10-22 オーナー「キャンセルは枠の外をクリックで」)。
+// 共通の useDismiss なので、窓の中でも Esc で説明だけ先に閉じる (2026-10-23)。乗せて開いただけの時は離れたら閉じる (Esc は下の物と一緒)
+useDismiss(() => open.value && pinned.value, [btn], hide, { keep: "[data-helptip-pop]" });
+function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && open.value && !pinned.value) hide(); }
 document.addEventListener("keydown", onKey);
-onBeforeUnmount(() => { document.removeEventListener("keydown", onKey); document.removeEventListener("pointerdown", outside, true); });
+onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
 const style = computed(() => ({ left: `${pos.value.left}px`, top: `${pos.value.top}px`, width: `${props.width}px`, transform: pos.value.above ? "translateY(-100%)" : undefined }));
 </script>
 

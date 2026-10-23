@@ -21,6 +21,7 @@ let prevHtmlOverflow = "";
 import { nextTick, onBeforeUnmount, ref, useSlots, watch } from "vue";
 import Icon from "./Icon.vue";
 import { tr } from "../../i18n/lang";
+import { cancelTopIn } from "../../utils/use-dismiss";
 
 const props = withDefaults(defineProps<{
   open: boolean;
@@ -52,11 +53,13 @@ let active = false;
 
 function close(): void { if (props.closable) emit("close"); }
 
-// Esc: window で先に受け (capture)、一番上の窓だけ閉じる。下の画面の Esc (持っている物を離す など) には渡さない
+// Esc: window で先に受け (capture)、一番上の窓だけ閉じる。下の画面の Esc (持っている物を離す など) には渡さない。
+// 窓の中で開いている物 (段の表・段の欄など useDismiss の物) があれば、窓は閉じずにそれを先に閉じる (エミュのページの欄と同じ、2026-10-23)
 function onKey(e: KeyboardEvent): void {
   if (e.key !== "Escape" || stack[stack.length - 1] !== id) return;
   e.stopPropagation();
   e.preventDefault();
+  if (cancelTopIn(panel.value)) return;
   close();
 }
 // 後ろを押した時だけ閉じる (中で押して外で離した時 = 文字の選択などでは閉じない)
