@@ -168,6 +168,17 @@ function pageOfUrl(): string {
   if (p === "daily" || p === "daily-start") return dailyQuery(dailyOf(q.toString())!);
   return p && PAGE_KEYS.includes(p) ? `page=${p}` : "";
 }
+/** 履歴の印: このアプリが積んだ何番目の画面か (開いた時の画面は 0 か無し)。読み直しても history.state に残る */
+const DEPTH = "exiledeskDepth";
+const depthNow = (): number => { try { return Number((history.state as Record<string, unknown> | null)?.[DEPTH]) || 0; } catch { return 0; } };
+/**
+ * ページの「← 戻る」: このアプリが積んだ前の画面があればブラウザの戻ると同じ (history.back)、無ければ fallback
+ * (URL から直に開いた時など。2026-10-24 オーナー「レシピ一覧に ← 戻る、前の画面へ、前が無ければツリー」)
+ */
+export function backOr(fallback: () => void): void {
+  if (depthNow() > 0) history.back();
+  else fallback();
+}
 /** URL を今の画面に合わせる (出せなかったページ・自分で出たベース選び。履歴は積まない) */
 function syncUrl(): void {
   if (pageOfUrl() !== page.value) try { history.replaceState(history.state, "", urlFor(page.value)); } catch { /* 変えられなくても開く */ }
@@ -237,7 +248,7 @@ export function startPages(): void {
     try {
       // 自分で出たベース選びへ移る時は、クラフトの画面が替わっただけの時 (白に戻した後など) だけ積まない。ツリーなどから出た時は積む (戻るでそのページへ)
       if (auto || (nowAuto && old === "")) history.replaceState(history.state, "", urlFor(p));
-      else history.pushState(history.state, "", urlFor(p));
+      else history.pushState({ ...(history.state ?? {}), [DEPTH]: depthNow() + 1 }, "", urlFor(p));
     } catch { /* 積めなくても画面はそのまま */ }
   });
   window.addEventListener("popstate", () => apply(pageOfUrl()));
