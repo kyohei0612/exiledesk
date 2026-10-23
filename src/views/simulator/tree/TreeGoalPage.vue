@@ -108,11 +108,11 @@ const cardW = innerWidth < 768 ? Math.min(CARD_W, innerWidth - 90) : CARD_W;
         <p class="text-[12px] opacity-70">{{ tr("「狙いにする」= その段以上が付けば当たり。後の箱の当たりはこの狙いから選ぶ。「フラクチャー」(カードの右クリックでも) = 印のどれか 1 つが固定されたレアからスタート、印が無ければ白から", "“Target” = a hit if that tier or better rolls. Later hit boxes pick from these targets. “Fracture” (or right-click on the card) = start from a rare with one marked mod fractured; no marks = start from white") }}</p>
       </div>
     </div>
-    <template #footer>
+    <!-- 下の帯は 2 完成の MOD の段だけ。ベースの段の「次へ」は出さない (ベースを押すと 2 へ進む。10-23 オーナー「ベース決めないと進めないし、どのみち」) -->
+    <template v-if="step === 2" #footer>
       <div class="flex items-center justify-end gap-2">
-        <button v-if="step === 2" type="button" class="g-btn sm" @click="t.goalPage.value = 1">{{ tr("← ベース", "← Base") }}</button>
-        <button v-if="step === 1" type="button" data-tree-goal-next class="g-btn sm" @click="toMods">{{ tr("次へ: 完成の MOD →", "Next: final mods →") }}</button>
-        <button v-else type="button" data-tree-goal-done class="g-btn sm" @click="close">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button>
+        <button type="button" class="g-btn sm" @click="t.goalPage.value = 1">{{ tr("← ベース", "← Base") }}</button>
+        <button type="button" data-tree-goal-done class="g-btn sm" @click="close">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button>
       </div>
     </template>
   </ModalShell>
