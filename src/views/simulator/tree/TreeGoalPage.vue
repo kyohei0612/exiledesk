@@ -18,7 +18,6 @@ import { startOf } from "../../../services/simulator/tree/tree-model";
 import type { StageMod } from "../../../services/craft-stage/engine";
 import TreeBasePick from "./TreeBasePick.vue";
 import { useTree } from "./use-tree";
-import { treePage } from "../../../state/web-page";
 
 const t = useTree();
 const step = computed(() => t.goalPage.value);
@@ -30,18 +29,19 @@ const asking = ref<string | null>(null);
  */
 const unpicked = ref(t.lostOnBase.value === 0 && !startMods.value && !t.goals.value.length);
 /**
- * 閉じる (× / Esc / 枠の外)。ベースをまだ選んでいない白紙の木では、既定のベースで木を始めずに、ツリーへ来る前の画面へ戻す
- * (「← 戻る」と同じ。履歴は積むのでブラウザの戻るでまたツリーへ。10-23 オーナー「ベースが無いとツリーもくそもないから、やめて」)
+ * 閉じる (× / Esc / 枠の外)。ベースをまだ選んでいない白紙の木では、既定のベースで木を始めず、シミュの画面に残ってベースが無い時の空の形を出す
+ * (use-tree の needBase。10-23 オーナー「ベースが無いとツリーもくそもない」「× 押したらシミュレーターが消え失せる」)
  */
 function close(): void {
   asking.value = null;
   t.goalPage.value = 0;
-  if (unpicked.value) treePage.value = false;
+  t.needBase.value = unpicked.value;
 }
-/** 2 へ進む (段のタブ・「次へ」)。今のベースで決めた扱い (白紙のまま 2 を開いてから閉じても前の画面へは出さない) */
-function toMods(): void { unpicked.value = false; t.goalPage.value = 2; }
+/** 2 へ進む (段のタブ・「次へ」)。今のベースで決めた扱い (白紙のまま 2 を開いてから閉じても空の形にはしない) */
+function toMods(): void { unpicked.value = false; t.needBase.value = false; t.goalPage.value = 2; }
 function pick(en: string): void {
   unpicked.value = false;
+  t.needBase.value = false;
   if (en === t.doc.value.base) { t.goalPage.value = 2; return; }
   if (t.lostOnBase.value > 0 || startMods.value || t.goals.value.length) { asking.value = en; return; }
   apply(en);

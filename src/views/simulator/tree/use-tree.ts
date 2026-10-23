@@ -173,6 +173,7 @@ const redo = (): void => step(redoStack, undoStack);
  * 前は見本を開くのも 1 手で、開いた直後の「1 つ戻す」で見本が丸ごと消えて白紙に見えた (10-23 モンキー 1)。前の木は呼ぶ側が控えに残す
  */
 function startFresh(tree: TreeDoc): void {
+  needBase.value = false;
   opened.value++;
   const d = JSON.parse(JSON.stringify(tree)) as TreeDoc;
   migrateStart(d);
@@ -191,7 +192,7 @@ function setTreeNote(text: string): void {
 /** 別の木を開いた回数 (開いた木の箱を上から順に出し直す、use-tree-reveal.ts) */
 const opened = ref(0);
 /** 別の木を開く (レシピ・共有の URL から。1 つ戻すで前の木へ戻せる) */
-function open(tree: TreeDoc): void { opened.value++; edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, JSON.parse(JSON.stringify(tree))); migrateStart(d); }); }
+function open(tree: TreeDoc): void { needBase.value = false; opened.value++; edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, JSON.parse(JSON.stringify(tree))); migrateStart(d); }); }
 /**
  * 白紙に戻す (今のベースとアイテムレベルのまま。1 つ戻すで戻せる)。前の木の鍵は先に全部消す (setBase と同じ)。
  * 前は上書きだけで、白紙に無い鍵 (乱数の MOD の数 startRandom・完成形のレアリティ goal・完成の狙い memoAims など) が残り、
@@ -206,6 +207,7 @@ function reset(): void {
 }
 /** ベースを替える = そのベースの白紙から (狙い・手は前のベースの MOD なので残さない)。アイテムレベルだけなら木はそのまま。1 つ戻すで戻せる */
 function setBase(base: string, itemLevel: number): void {
+  needBase.value = false;
   edit((d) => {
     if (d.base === base) { d.itemLevel = itemLevel; return; }
     for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k];
@@ -219,6 +221,11 @@ function setBase(base: string, itemLevel: number): void {
 const askBase = ref(true);
 /** 0 完成形の設定の重ね窓 (TreeGoalPage.vue): 0 = 閉じている、1 = ベース・レアリティ・アイテムレベル、2 = 完成の MOD (オーナー 10-22) */
 const goalPage = ref<0 | 1 | 2>(0);
+/**
+ * ベースが無い (白紙の木でベースを選ばずに完成形の設定を閉じた) 時の空の形を出すか。木は出さず、真ん中に「ベースを選ぶ」1 つ
+ * (10-23 オーナー「ベースが無いとツリーもくそもない」「× 押したらシミュレーターが消え失せる」= 既定の指輪で始めず、画面からも出さない)。ベースを選ぶと下ろす
+ */
+const needBase = ref(false);
 /** スタートの箱の重ね窓 (TreeStartPage.vue。始まりに付いている MOD・✦・乱数の数) */
 const startPage = ref(false);
 /** 完成の狙い (0 の箱で決める。前の「欲しい MOD のメモ」memoAims を使い回す。後の箱の当たりはこの一覧から選ぶ、オーナー 10-22) */
@@ -275,6 +282,7 @@ const isBlank = (d: TreeDoc): boolean => !d.boxes.start?.hand && !d.boxes.start?
 function takeAskBase(): boolean { const v = askBase.value && isBlank(doc.value); askBase.value = true; return v; }
 /** クラフト台のベースとアイテムレベルで白紙の木を開く (前の木は 1 つ戻すで戻せる)。ページを開くのは呼ぶ側 */
 function startTreeWith(base: string, itemLevel: number): void {
+  needBase.value = false;
   opened.value++;
   edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, newTree(base, itemLevel)); });
   askBase.value = false;
@@ -369,5 +377,5 @@ const baseCost = computed(() => {
 const baseCostBusy = computed(() => !!s.data.value && !costReady.value);
 
 export function useTree() {
-  return { tabDocs, active, tabRuns, switchTab, addTab, closeTab, noteRun, startPrice, setStartPrice, goalPage, startPage, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, undo, canUndo, redo, canRedo, startFresh, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
+  return { tabDocs, active, tabRuns, switchTab, addTab, closeTab, noteRun, startPrice, setStartPrice, goalPage, needBase, startPage, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, undo, canUndo, redo, canRedo, startFresh, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
 }
