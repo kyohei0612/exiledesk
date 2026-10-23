@@ -19,7 +19,7 @@ import { craftStage as s } from "../state/craft-stage";
 import { topic } from "../state/tutorial/craft-topic";
 import { course } from "../state/tutorial/craft-course";
 import { endLesson, inLesson, startTopicAt } from "../state/tutorial/craft-lesson";
-import { basePage, baseUnpicked, dailyPage, DAILY_ON, type DailyView, feedbackPage, recipesPage, routesOpen, TREE_ON, treePage, routesTarget } from "../state/web-page";
+import { basePage, baseUnpicked, dailyPage, DAILY_ON, type DailyView, feedbackPage, openRoutes, recipesPage, routesOpen, TREE_ON, treePage, routesTarget } from "../state/web-page";
 import { SIM_LOCKED } from "../state/craft-stage";
 import { TOPIC_COURSES } from "../services/tutorial/topic-courses";
 import { courseShown } from "../services/tutorial/course-release";
@@ -188,9 +188,10 @@ function apply(p: string): void {
       p = "page=guide";
     }
     if (p === "page=guide") { if (page.value !== p) openGuide(); return; }
-    // 計算機・どのスパムが早いかは URL からは開けない (今のアイテム・狙いが要る)。クラフトに戻す
-    if (p === "page=routes" && page.value === p) return;
+    // スパムシミュレーターは URL からも開く (s.ready の後なので今のアイテムで「狙う MOD を選ぶ」から。途中の結果は再読み込みで消える。モンキー 10-23 の 2)
+    if (p === "page=routes" && routesOpen.value) return;
     if (s.mode.value === "tutorial" || inLesson.value) { s.hold(null); endLesson(); s.mode.value = "hand"; }
+    if (p === "page=routes") { leaveSubPages(); openRoutes(); return; }
     if (p === "page=base") { openBasePage(); return; }
     leaveSubPages();
     // 旧シミュレーターの工程 (page=sim-<工程>) は 10-22 に消した。古い URL はクラフトのまま開く
