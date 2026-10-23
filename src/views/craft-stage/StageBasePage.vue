@@ -7,7 +7,8 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted } from "vue";
 import BaseCatalog from "../../components/items/BaseCatalog.vue";
-import { craftStage as s, SIM_LOCKED } from "../../state/craft-stage";
+import ModeTabs from "../../components/for-share/ModeTabs.vue";
+import { craftStage as s } from "../../state/craft-stage";
 import { basePage, baseUnpicked } from "../../state/web-page";
 import { tr } from "../../i18n/lang";
 import { useStageBase } from "./use-stage-base";
@@ -16,11 +17,6 @@ defineProps<{ phone: boolean }>();
 const { pickSimBase } = useStageBase();
 
 function back(): void { basePage.value = false; }
-/**
- * 何から始めるか (2026-10-18 オーナー「エミュレーターかシミュレーターか。デフォはエミュレーター」)。シミュレーターのベース選びもこのページ (広告の枠のある別のページ)。
- * 切り替えた先でまだベースを選んでいなければ、このページのまま (そのモードのベース選び)
- */
-function setMode(m: "hand" | "sim"): void { if (s.mode.value === m) return; s.hold(null); basePage.value = false; s.mode.value = m; }
 function pick(en: string): void {
   const first = baseUnpicked.value;
   basePage.value = false;
@@ -51,11 +47,8 @@ onBeforeUnmount(() => {
           <span class="text-[12px] opacity-60 max-md:hidden">{{ tr("Esc でも戻る", "Esc also goes back") }}</span>
         </span>
       </div>
-      <!-- 何から始めるか (シミュレーターが開いている開発版だけ。本番はエミュレーターだけなので出さない) -->
-      <div v-if="!SIM_LOCKED" class="mb-3 flex gap-1 max-md:w-full" role="tablist">
-        <button type="button" role="tab" :aria-selected="s.mode.value === 'hand'" class="g-tab min-w-[170px] max-md:min-w-0 max-md:flex-1 max-md:!text-[12px]" :class="s.mode.value === 'hand' ? 'on' : ''" @click="setMode('hand')">{{ tr("エミュレーター", "Emulator") }}</button>
-        <button type="button" role="tab" :aria-selected="s.mode.value === 'sim'" data-base-page-sim class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!text-[12px]" :class="s.mode.value === 'sim' ? 'on' : ''" @click="setMode('sim')">{{ tr("シミュレーター", "Simulator") }}<span class="text-[10px] font-normal opacity-70">β</span></button>
-      </div>
+      <!-- 何から始めるか。帯は共通の部品 (ModeTabs、2026-10-23 オーナー「帯を 1 つにして両方に」)。シミュレーターを押したらこのページを閉じてツリーへ -->
+      <ModeTabs class="mb-3" @pick="(m) => m === 'sim' && back()" />
       <!--
         初めて来た人へ: 一言と「すぐ試す」(2026-10-19 スマホ強化。来た人の半分がベースを選ばずに帰っていた。何のサイトか・何をすると何が起きるかが無かった)。
         ベースを選んでいない時 (初めて・白に戻した後) のエミュレーターだけ。押すと金の指輪 (人気の一番上) ですぐ打てる画面へ

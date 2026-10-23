@@ -30,6 +30,7 @@ import StageItemMini from "./StageItemMini.vue";
 import StageAimPanel from "./StageAimPanel.vue";
 import StageForesight from "./StageForesight.vue";
 import StageBasePage from "./StageBasePage.vue";
+import ModeTabs from "../../components/for-share/ModeTabs.vue";
 import { PAGES_ON, basePage, baseUnpicked, openRoutes } from "../../state/web-page"; // Web のページ (ベース選び。web/page.ts)
 import { openTreePage } from "../../web/page";
 import { openSharedRecipe } from "../../state/for-share/sim-links";
@@ -232,9 +233,6 @@ const { handNoBase } = useStageBase();
 // Web はベース選びを別のページに (?page=base、StageBasePage.vue)。まだ選んでいない時もそのページ (エミュレーターだけ。シミュレーターは今まで通り)
 watch(() => PAGES_ON && !s.replay.value && s.mode.value === "hand" && handNoBase.value, (u) => { baseUnpicked.value = u; }, { immediate: true });
 const subPage = computed(() => PAGES_ON && !s.replay.value && (s.mode.value === "hand" || s.mode.value === "sim") && !inLesson.value && (basePage.value || baseUnpicked.value));
-/** モードのタブ。Web はシミュレーターを作っている途中なのでタブごと出さない (2026-10-16 オーナー「まだシミュレーター開発してないから出さなくておけ、エミュレーターと掲示板のみ」) */
-// 旧シミュレーターのタブは 10-22 に消した (工程ページはクラフトの道 ?page=sim-tree に置き換え)
-const MODE_TABS: readonly (readonly [typeof s.mode.value, string])[] = [["hand", "エミュレーター"]];
 /**
  * ジェムコラプト (Web 版だけ、2026-10-16 ロードマップの土台)。エミュレーター・シミュレーターのタブの並びに置く。開いた時に読む。
  * 計算はアプリのヴァールの天秤と同じ関数 (views/gem-corrupt/model.ts)、入力は売値 3 つの手入力
@@ -254,7 +252,7 @@ const gemCorrupt = computed(() => GEM_CORRUPT_SHOWN && !inApp && gemCorruptOn.va
  * クラフトの道 (ツリー) を開く。白紙のツリーなら始まりの箱でまずベースを選ぶ (use-tree の takeAskBase)、アイテムレベルの適正もそこ
  */
 watch(() => s.mode.value, (m) => { if (m === "sim" && !SIM_LOCKED) { s.mode.value = "hand"; openTreePage(); } }, { immediate: true });
-function pickMode(m: (typeof MODE_TABS)[number][0]): void {
+function pickMode(m: typeof s.mode.value): void {
   s.hold(null); endLesson(); s.mode.value = m; setGemCorrupt(false);
 }
 function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("mode:gem-corrupt"); gemCorruptOn.value = v; }
@@ -288,13 +286,13 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
       <!-- スマホは 2 つで横幅を分ける (170px ずつだと 375px の画面からはみ出した。2026-10-13) -->
       <!-- Web の使い方・コツ・コースのページはタブではなく、ほかのページと同じ「← クラフトへ戻る」(2026-10-18 オーナー) -->
       <button v-if="!inApp && (guidePage || inLesson)" type="button" data-guide-back class="g-btn sm max-md:min-h-10" @click="s.hold(null); endLesson(); s.mode.value = 'hand'; setGemCorrupt(false)">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
-      <div v-else class="inline-flex gap-1 max-md:flex max-md:w-full" role="tablist">
-        <button v-for="t in MODE_TABS" :key="t[0]" type="button" role="tab" :aria-selected="s.mode.value === t[0] && !gemCorrupt && !inLesson" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-3 disabled:cursor-not-allowed disabled:opacity-50 max-md:!px-1 max-md:!text-[12px]" :class="s.mode.value === t[0] && !gemCorrupt && !inLesson ? 'on' : ''" :disabled="t[0] === 'sim' && SIM_LOCKED" :title="t[0] === 'sim' && SIM_LOCKED ? tr('調整中です。しばらくお待ちください', 'Work in progress. Please check back later') : undefined" @click="pickMode(t[0])">{{ tr(t[1], t[0] === 'hand' ? 'Emulator' : 'Simulator') }}<span v-if="t[0] === 'sim' && SIM_LOCKED" class="text-[11px] font-normal max-md:hidden">{{ tr("(調整中)", "(WIP)") }}</span><span v-else-if="t[0] === 'sim'" class="text-[10px] font-normal opacity-70" :title="tr('作り込み中の機能。数字は今の相場と確率の目安', 'Still in development. Numbers are rough estimates from current prices and chances')">β</span></button>
+      <!-- エミュレーター / シミュレーターの帯は共通の部品 (ModeTabs、2026-10-23 オーナー「帯を 1 つにして両方に」)。ここだけのタブは slot に -->
+      <ModeTabs v-else :active="s.mode.value === 'hand' && !gemCorrupt && !inLesson ? 'hand' : null" @pick="(m) => m === 'hand' && pickMode('hand')">
         <!-- ジェムコラプト (Web 版だけ、2026-10-16) -->
         <button v-if="!inApp && GEM_CORRUPT_SHOWN" type="button" role="tab" :aria-selected="gemCorrupt" data-rec="tab-gem-corrupt" class="g-tab min-w-[170px] !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]" :class="gemCorrupt ? 'on' : ''" @click="s.hold(null); if (s.mode.value === 'tutorial' || inLesson) { endLesson(); s.mode.value = 'hand'; } setGemCorrupt(true)">{{ tr("ジェムコラプト", "Gem Corruption") }}</button>
         <!-- Web はタブに出さず、ヘッダーの「使い方・コツ」のページへ (2026-10-18 オーナー「1 回きりでしょこんなもん使うの、使い方にしまう」) -->
         <button v-if="!TUTORIAL_LOCKED && inApp" type="button" role="tab" :aria-selected="(s.mode.value === 'tutorial' || inLesson) && !gemCorrupt" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]" :class="(s.mode.value === 'tutorial' || inLesson) && !gemCorrupt ? 'on' : ''" @click="s.hold(null); endLesson(); s.mode.value = 'tutorial'; setGemCorrupt(false)">{{ tr("チュートリアル", "Tutorial") }}</button><!-- β は外した (入門〜中級の 6 コースを公開。2026-10-18 オーナーの UI 点検) -->
-      </div>
+      </ModeTabs>
     </div>
 
     <!-- ジェムコラプト (Web 版だけ)。エミュレーター・シミュレーターの中身は消さずに隠す (戻った時に打っていた物が残る) -->
