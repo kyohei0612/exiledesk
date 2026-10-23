@@ -15,6 +15,7 @@ import "@vue-flow/core/dist/style.css";
 import Icon from "../../../components/ui/Icon.vue";
 import TreeMemoFloat from "./TreeMemoFloat.vue";
 import TreeCanvasTools from "./TreeCanvasTools.vue";
+import ModeTabs from "../../../components/for-share/ModeTabs.vue";
 import TreeBox from "./TreeBox.vue";
 import TreeOverlays from "./TreeOverlays.vue"; import TreeGoalNode from "./TreeGoalNode.vue";
 import TreeHandPage from "./TreeHandPage.vue";
@@ -398,6 +399,8 @@ const glowOf = (b: Box): boolean => {
       <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center gap-3 px-8 text-[22px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)] max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-1 max-md:px-4 max-md:py-2 max-md:text-[17px] max-md:tracking-[0.08em]"><span class="whitespace-nowrap">{{ tr("クラフトの道 (ツリー)", "Craft route tree") }}</span><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" /></h1>
       <button type="button" class="g-btn sm" @click="close">{{ tr("← 戻る", "← Back") }}</button>
     </div>
+    <!-- エミュレーター / シミュレーター β の切り替え (エミュの画面の帯と同じ共通の部品、10-23 オーナー「帯を 1 つにして両方に」) -->
+    <ModeTabs class="mb-3" />
     <TreeOverlays /><TreeHandPage v-if="panel?.kind === 'hand' && panelBox" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" @split="onSplit" @back="picking = panel!.id; panel = null" />
     <TreePanelPage v-else-if="panel && panelBox" :key="`${panel.kind}-${panel.id}`" :kind="panel.kind === 'split' || panel.kind === 'note' ? panel.kind : 'aim'" :box-id="panel.id" :current="panelBox.aim" @pick="pickAim" @close="panel = null" />
     <div v-show="!t.goalInline.value" class="g-panel flex flex-col gap-2 px-3 py-2" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
