@@ -21,13 +21,12 @@ export const FLAGS = {
   baseChosen: "ベースのページは人が選んだベースだけ選んだ見た目・帯とすぐ試す・入口の行き先を同じ印で (2aa2d268・3cbda7e4)",
   // ここから下はシミュ部長の物 (使い方・コツの OK 待ち。段 5 のクラフト手順のコース 04ad4147・d1e7c664 は course-release.ts の REVIEW で開発版の印の時だけ)
   tutorialUi: "使い方・コツ: コース一覧の説明は既定で閉じる・段 5 で次に押す物を光らせ説明は 1 文 + 詳しく・進み n / m (d1c97969)",
-  // ここから下はジン部長の物 (エンジンとデータの OK 待ち。フォントは web.html などの HTML で、切り替えはまだ)
+  // ここから下はジン部長の物 (エンジンとデータの OK 待ち。フォントの 1bef14b9 は HTML なので main で revert して外した)
   abyssSuffix: "アビサルロードの紋章のサフィックスを置き場に足す (5d585458)",
   skillPlus: "スキルのレベルの MOD の日本語に + (「レベル +#」26 行、e82ef1a5)",
   talismanWeight: "タリスマンのアタックスピード 30 段目の重みを poe2db の 1000 に (ef57fece)",
   dntBases: "ゲームに無い [DNT] のベース 3 つを一覧から外す (c3a915a8)",
   runeMagnitude: "ルーンの「明示 MOD の強さが N% 増加」を MOD の値に掛ける (dc3e219a)",
-  fonts: "Google Fonts の CSS を描きを止めない読み方に (1bef14b9、HTML)",
 } as const;
 export type Flag = keyof typeof FLAGS;
 
