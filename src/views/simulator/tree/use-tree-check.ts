@@ -12,9 +12,12 @@ import { craftStage as s } from "../../../state/craft-stage";
  */
 export const routeKeyOf = (d: TreeDoc): string => JSON.stringify([(({ price: _p, ...st }) => st)(startOf(d)), fractureMarks(d), Object.values(d.boxes).map(({ x: _x, y: _y, note: _n, ...r }) => r)]);
 
-export function useTreeCheck(doc: Ref<TreeDoc>) {
-  // ルート精査 (押した時に始める)。! は穴が解消した時だけ消える: 道を組み替えたら精査し直して、残った穴の ! は残す。
-  // 一覧を閉じる・箱を押す・動かすでは消さない (オーナー 10-22「！マークは解消したら消していく感じで」)
+/**
+ * テストラン = ルート精査 (5 人をエンジンで辿り 30 人を回して、止まる所・打てない手・付かない当たり・完成に着かない道などの穴を探す、tree-check.ts)。
+ * 道を組み替えるたびに合格を外して自動で回し直す (10-24 オーナー「何かしら変更加えたら即テストラン」)。穴が 0 なら合格で、合格するまで「100 人回す」は押せない。
+ * ! は今の道の穴だけ (直せば次のテストランで消える)。一覧を閉じる・箱を押す・動かすでは消さない
+ */
+export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean) {
   const issues = ref<CheckIssue[] | null>(null);
   const issuesOpen = ref(false);
   /** 一覧を畳んで見出しだけ (行を押して箱へ寄った時。帯が箱を隠した、10-22 白紙から組んだ試し) */
@@ -23,25 +26,31 @@ export function useTreeCheck(doc: Ref<TreeDoc>) {
   /** 精査の進み (くるくるの一言「精査中 12/30」、10-22 オーナー「ローディング画面を出さないとバグってるのか分からない」) */
   const progress = ref<CheckProgress | null>(null);
   const routeKey = computed(() => routeKeyOf(doc.value));
-  let recheck = 0;
-  /** 精査を押した時に見つけた穴 (箱と種類)。組み替えた後はこの中で今も残る物だけ出す (新しい穴は精査を押した時。1 つ戻すで穴が戻れば ! も戻る) */
-  let found: CheckIssue[] = [];
-  watch(routeKey, () => { if (!found.length) return; clearTimeout(recheck); recheck = window.setTimeout(() => void runCheck(true), 300); });
-  async function runCheck(keep = false): Promise<void> {
+  /** 合格した道の形 (今の形と同じ間だけ合格) */
+  const passedKey = ref<string | null>(null);
+  const passed = computed(() => passedKey.value === routeKey.value);
+  let timer = 0, again = false;
+  // 組み替えたら少し待って (続けて組む間は回さない) テストラン。開いた時も 1 回
+  watch([routeKey, () => !!s.data.value && on()], ([, ok]) => { clearTimeout(timer); if (ok) timer = window.setTimeout(() => void runCheck(), 500); }, { immediate: true });
+  async function runCheck(): Promise<void> {
     const d = s.data.value;
-    if (!d || checking.value) return;
+    if (!d) return;
+    if (checking.value) { again = true; return; }
     checking.value = true;
-    // 押して始めた精査は見つけた穴を辿った人から順に足す (10-22 オーナー「読み込みながら徐々に出す」)。
-    // 組み替えた後の精査し直しは途中で ! が消えて戻るので、終わってから入れ替える
-    if (!keep) issues.value = [];
-    await new Promise((r) => setTimeout(r, 30)); // 「精査中」を先に出す
+    const key = routeKey.value;
+    issues.value = []; // 穴は辿った人から順に足す (10-22 オーナー「読み込みながら徐々に出す」)
+    await new Promise((r) => setTimeout(r, 30)); // 「テスト中」を先に出す
     try {
-      const now = await checkTreeAsync(d, doc.value, (p) => { progress.value = p; if (!keep) issues.value = p.partial; });
-      if (!keep) found = now;
-      issues.value = keep ? now.filter((x) => found.some((y) => y.boxId === x.boxId && y.kind === x.kind)) : now;
-    } finally { checking.value = false; progress.value = null; }
+      const now = await checkTreeAsync(d, doc.value, (p) => { progress.value = p; issues.value = p.partial; });
+      issues.value = now;
+      if (!now.length && key === routeKey.value) passedKey.value = key;
+    } finally {
+      checking.value = false; progress.value = null;
+      // 回している間に組み替えた = 今の形でもう 1 回
+      if (again || key !== routeKey.value) { again = false; void runCheck(); }
+    }
   }
   async function onCheck(): Promise<void> { issuesOpen.value = true; issuesFold.value = false; await runCheck(); }
   const issueOf = (b: TreeBox): string | null => issues.value?.filter((x) => x.boxId === b.id).map((x) => x.text).join(" / ") || null;
-  return { issues, issuesOpen, issuesFold, checking, progress, runCheck, onCheck, issueOf };
+  return { issues, issuesOpen, issuesFold, checking, progress, passed, runCheck, onCheck, issueOf };
 }

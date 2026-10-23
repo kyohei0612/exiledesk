@@ -265,7 +265,7 @@ function onTarget(b: Box): void {
   if (from && from !== b.id) t.edit((d) => setBack(d, from, b.id));
 }
 // ルート精査 (押した時に始める、use-tree-check.ts)
-const { issues, issuesOpen, issuesFold, checking, progress, onCheck, issueOf } = useTreeCheck(doc);
+const { issues, issuesOpen, issuesFold, checking, progress, passed, onCheck, issueOf } = useTreeCheck(doc, () => !t.needBase.value && !t.goalInline.value);
 /** 待たせている間の小さな札 (題の横。データの読み込み・箱を順に出している間、共通の BusyTag。精査の進みは精査の帯の上) */
 // 100 人回す (結果は木の上に重ねる層だけ、use-tree-run.ts・TreeRunLayer.vue。値段 = 始め方のベースの値段 (結果のまとめで入れる、use-tree の startPrice) + 今の相場)
 const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
@@ -417,14 +417,13 @@ const glowOf = (b: Box): boolean => {
       <div class="flex flex-wrap items-center gap-2 text-[13px] md:flex-nowrap">
         <span class="flex min-w-0 flex-1 basis-full items-center gap-2 max-md:flex-wrap md:basis-auto">
         <TreeRecipeBar @opened="v.fit()" />
-        <TreeRunBar v-if="!t.needBase.value" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :stuck="tr100.stuckBoxes.value" @run="tr100.run" @go="goIssue" :halted="tr100.halted.value" :walk="tr100.walk.value" @skip="tr100.skipWalk" />
+        <TreeRunBar v-if="!t.needBase.value" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking, passed, holes: issues?.length ?? 0 }" @test="onCheck" @holes="issuesOpen = true; issuesFold = false" :stuck="tr100.stuckBoxes.value" @run="tr100.run" @go="goIssue" :halted="tr100.halted.value" :walk="tr100.walk.value" @skip="tr100.skipWalk" />
         </span>
         <span class="ml-auto flex shrink-0 flex-wrap items-center gap-1 max-md:ml-0 max-md:shrink max-md:basis-full md:flex-nowrap">
           <button v-if="!t.needBase.value" type="button" data-tree-undo class="g-btn sm inline-flex items-center gap-1" :disabled="!t.canUndo.value" :title="tr('1 つ戻す (Ctrl+Z)', 'Undo (Ctrl+Z)')" @click="t.undo"><Icon name="undo" class="size-4" />{{ tr("1 つ戻す", "Undo") }}</button>
           <button v-if="!t.needBase.value" type="button" data-tree-redo class="g-btn sm inline-flex items-center" :disabled="!t.canRedo.value" :title="tr('やり直し (Ctrl+Shift+Z / Ctrl+Y)', 'Redo (Ctrl+Shift+Z / Ctrl+Y)')" :aria-label="tr('やり直し', 'Redo')" @click="t.redo"><Icon name="undo" class="size-4 -scale-x-100" /></button>
           <button v-if="!t.needBase.value" type="button" data-tree-tidy class="g-btn sm" :title="tr('段ごとに横一列・親は子の並びの真ん中・線は直角の木の線 (1 つ戻すで元の並びへ)', 'Rows by depth, each parent centered over its children, right-angle tree lines (undo restores)')" @click="onTidy">{{ tr("整列", "Tidy") }}</button>
           <button v-if="!t.needBase.value" type="button" data-tree-lines-all class="g-btn sm" :aria-pressed="linesAll" :title="tr('戻りの線を全部出す (もう一度押すと、乗せた箱の線だけ)', 'Show all return lines (click again to show only the hovered box’s lines)')" @click="linesAll = !linesAll">{{ linesAll ? tr("線を隠す", "Hide lines") : tr("線を全部表示", "Show all lines") }}</button>
-          <button v-if="!t.needBase.value" type="button" data-tree-check class="g-btn sm" :disabled="checking || tr100.running.value" :title="tr('5 人をエンジンで辿り 30 人を回して、止まる所・打てない手・付かない当たり・完成に着かない道を探す (費用は出さない)', 'Walk 5 runs and play 30 runs with the engine to find dead ends, unusable crafts, unreachable hits and paths that never finish (no costs)')" @click="onCheck">{{ checking ? tr("精査中…", "Checking…") : tr("ルート精査", "Check route") }}</button>
           <button type="button" data-tree-memo class="g-btn sm inline-flex items-center gap-1" :aria-pressed="memoOpen" :title="tr('欲しい MOD とメモの窓 (ツリーを押しても閉じない)', 'Wanted mods & notes window (stays open while you edit)')" @click="memoOpen = !memoOpen"><Icon name="pencil" class="size-4" />{{ tr("メモ", "Notes") }}<span v-if="doc.note" class="size-1.5 rounded-full bg-amber-400" /></button>
           <button v-if="!t.needBase.value" type="button" data-tree-full class="g-btn sm" :aria-pressed="full" @click="v.toggleFull">{{ full ? tr("全画面を閉じる", "Exit full screen") : tr("全画面に広げる", "Full screen") }}</button>
           <button v-if="!t.needBase.value" ref="clearBtn" type="button" data-tree-clear :class="clearArm.is() ? ARMED_CLASS : 'g-btn sm'" :title="tr('始まりの箱だけに戻す (1 つ戻すで戻せる)', 'Back to just the start box (undo restores it)')" @click="onClear">{{ clearArm.is() ? tr("もう一度押すと白紙に戻す", "Click again to clear") : tr("白紙に戻す", "Clear") }}</button>
