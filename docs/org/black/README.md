@@ -17,7 +17,7 @@
 ## 振り先 (これだけ見て振る。持ち物は docs/org/owners.txt が正、`node scripts/owner-of.mjs <パス>` で引ける)
 | 部 | 受け持つ仕事 | 持ち物のフォルダー | 呼ぶ時の合図 (こういう頼みならここ) | 常駐 | モデル | 決まり |
 |---|---|---|---|---|---|---|
-| ジン部長 (エンジンの管理者) | エンジン (カレンシー・お告げの効き目・MOD の置き場/重み/段/文・確率の表・品質・聖別・入口 engine.ts / engine-sim.ts / engine-emu.ts)・画面の部長からの追加の要望 (出した側だけが使える形で入口に)・データ (ゲームの名前・MOD の文・相場)。画面・部品・画面の挙動は持たない (オーナー 10-23「ジンはデータ管理」) | services/craft-stage・htc・mods・items・vendor/poe2htc・tests/*.test.ts・golden、「共通」= api・data・constants・i18n のデータ・state/craft-stage.ts・share/trade-search/money など | 「打った結果がおかしい」「確率が変」「入口に足して (画面の部長の要望)」 | 呼ばれたら常駐 | Opus | emulator/README.md |
+| ジン部長 (データベース) | データ (出どころはトレードのデータ > poe2db: MOD・ベース・ゲームの名前・MOD の文・相場) と打った時の決まり = エンジン (カレンシー・お告げの効き目・MOD の置き場/重み/段/文・確率の表・品質・聖別・入口 engine.ts / engine-sim.ts / engine-emu.ts)・画面の部長からの追加の要望 (出した側だけが使える形で入口に)。画面・部品・画面の挙動は持たない (オーナー 10-23「ジンはデータ管理」) | services/craft-stage・htc・mods・items・vendor/poe2htc・tests/*.test.ts・golden、「共通」= api・data・constants・i18n のデータ・state/craft-stage.ts・share/trade-search/money など | 「打った結果がおかしい」「確率が変」「入口に足して (画面の部長の要望)」 | 呼ばれたら常駐 | Opus | emulator/README.md |
 | デザイン部長 | 両方の画面で一緒の部品の核 (共通管理 for-share: 棚・カード・MOD 表の土台など)・ほかの共通の部品・見た目の決まり・画面の挙動 (ページの入口・移り方・音・クリックの守り・スマホ判定)・言語の切り替えと用語集。エンジンには触れない (10-23) | src/components (for-share 含む)・src/state/for-share・src/web・src/composables・src/utils・src/style.css・src/styles・i18n/lang.ts・GLOSSARY.md | 「両方の画面の部品・見た目を直して」「共通の部品」 | 呼ばれたら常駐 | Opus | design/README.md |
 | エミュ部長 | エミュの画面 (本番のエミュレーター: 棚から打つ画面・スパムシミュレーター) の UI/UX だけ、エンジンには触れない (10-22 深夜) | src/views/craft-stage・state/emulator | 「エミュの画面の見た目・操作」「スパムシミュの画面」 | 呼ばれたら常駐 | Opus | emu/README.md |
 | シミュ部長 | シミュレーター (ツリー) の画面の UI/UX だけ (エンジンには触れない、10-22 深夜)・費用の見せ方、チュートリアル (使い方・コツ・コース) | src/views・services・state の simulator/ と tutorial/、tests/simulator・tutorial、scripts/_sim-*・sim-telemetry、server/live/src/sim.ts | 「シミュレーター」「チュートリアル・コース・クラフト手順」 | 呼ばれたら常駐 | Opus | simulator/README.md |
@@ -32,6 +32,7 @@
 | 最終チェック長 | 本番に上げる時の最後: 型チェック・ビルド・本番に出す物と OK 待ちの出し分け・デバッグ・版上げ・更新内容の日英・deploy:web・push | scripts/bump-version・build-changelog、src/data/changelog*.json、docs/pending-release.md、docs/org/dev/ (全部の部の決まり) | オーナーの「本番に出して」「リリース」 | 呼ぶ時だけ (上げ終わったら閉じる) | Opus | dev/README.md |
 
 迷いやすい境目:
+- 共有と各画面 (オーナー 10-23): どの画面でも同じ物 (ページの枠・決まった挙動・同じゲームの物の部品) → デザイン部長、その作業の流れにしか無い物 → エミュ / シミュ。迷ったら画面で作らせ、2 つ目の画面で要った時に共有へ。
 - 画面の見た目・操作 → エミュの画面ならエミュ部長、シミュならシミュ部長、両方で一緒の部品ならデザイン部長。決まり・確率・打てるかなど中身 → ジン部長 (画面の部長はエンジンに触れない。要望は出した側だけが使える形で入口に、オーナー 10-22 深夜)。
 - どの画面からでも、共通の部品 (src/components・for-share)・言語の切り替えと用語集・utils・web/ (ページの入口・移り方・タブ)・音 → デザイン部長。ゲームの名前・MOD の文などのデータ → ジン部長。打つ処理・確率・MOD の数字が足りない → ジン部長に入口へ足してもらう (自前で書かせない)。
 - 入口の置き分け (オーナー 10-23): 結果が変わる物 (付き方・確率・固定・打てるか) はエンジン、見え方と操作は画面。エンジンの中は 核 (engine.ts) / エミュだけ (engine-emu.ts) / シミュだけ (engine-sim.ts)、両方が欲しい物はブラックが決めて核へ。シミュ由来の写しは作らせない (元からエンジンにある物はそのまま呼ぶ、確かめは「エミュの画面の同じ所と同じ答えか」を小さく。メモ feedback-sim-no-own-logic)。
