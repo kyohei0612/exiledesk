@@ -29,8 +29,6 @@ function pick(en: string): void {
 const CHOSEN_ON = flag("baseChosen");
 const shown = computed(() => (!baseUnpicked.value && (!CHOSEN_ON || chosenBase.value === s.base.value) ? s.base.value : ""));
 const intro = computed(() => baseUnpicked.value && (!CHOSEN_ON || !chosenBase.value) && s.mode.value === "hand");
-/** 上の切り替えタブはベースのページでは本番は OK まで出さない (release-flags の modeTabs) */
-const MODE_TABS = flag("modeTabs");
 // 開いたら一番上から、戻ったら前の位置へ (ページを移ったのと同じに。2026-10-12 広告のお試しと同じ)
 let before = 0;
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && !baseUnpicked.value) back(); }
@@ -57,7 +55,7 @@ onBeforeUnmount(() => {
         </span>
       </div>
       <!-- 何から始めるか。帯は共通の部品 (ModeTabs、2026-10-23 オーナー「帯を 1 つにして両方に」)。シミュレーターを押したらこのページを閉じてツリーへ -->
-      <ModeTabs v-if="MODE_TABS" class="mb-3" @pick="(m) => m === 'sim' && back()" />
+      <ModeTabs class="mb-3" @pick="(m) => m === 'sim' && back()" />
       <!-- 初めての人への帯 + ベース選びの枠は共通の部品 (BasePickBody、シミュの初手のベース選びと同じ作り。2026-10-23)。帯は人がまだベースを選んだ事の無い時のエミュレーターだけ -->
       <BasePickBody :selected="shown" :popular="baseUnpicked" :intro="intro" @pick="pick" @quick="pick('Gold Ring')" />
     </div>
