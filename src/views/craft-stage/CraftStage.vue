@@ -296,6 +296,8 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
         <!-- Web はタブに出さず、ヘッダーの「使い方・コツ」のページへ (2026-10-18 オーナー「1 回きりでしょこんなもん使うの、使い方にしまう」) -->
         <button v-if="!TUTORIAL_LOCKED && inApp" type="button" role="tab" :aria-selected="(s.mode.value === 'tutorial' || inLesson) && !gemCorrupt" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]" :class="(s.mode.value === 'tutorial' || inLesson) && !gemCorrupt ? 'on' : ''" @click="s.hold(null); endLesson(); s.mode.value = 'tutorial'; setGemCorrupt(false)">{{ tr("チュートリアル", "Tutorial") }}</button><!-- β は外した (入門〜中級の 6 コースを公開。2026-10-18 オーナーの UI 点検) -->
       </ModeTabs>
+      <!-- 本番の作りだけ: 前の旧シミュの「1 つ戻す」の置き場 (#sim-tools、中身は空) の箱を戻す。スマホで全幅の 2 行目になり、行の間 6px が下の中身の位置を決めていた (本番と照らした差、シミュ部長 18 本目 10-24) -->
+      <div v-if="!flag('sim')" v-show="!gemCorrupt" class="ml-auto flex items-center gap-1.5 text-[12px] max-md:w-full max-md:flex-wrap" aria-hidden="true" />
     </div>
 
     <!-- ジェムコラプト (Web 版だけ)。エミュレーター・シミュレーターの中身は消さずに隠す (戻った時に打っていた物が残る) -->
