@@ -10,7 +10,9 @@
   "assets": {
     "directory": "../../dist-web-dev",
     "binding": "ASSETS",
-    "run_worker_first": true,
+    // 門 (dev-gate.js) を通すのはページと JS (/assets/) など。ゲームの絵・フォント・音は本番でも誰でも読める同じ物なので門を通さない
+    // (2026-10-23: 全部を通していて、画面を開くたびに絵の 1 枚ずつが Worker のリクエストに数えられ、1 日 11.8 万回で無料の枠 10 万を超えた)
+    "run_worker_first": ["/*", "!/skill-art/*", "!/base-art/*", "!/unique-art/*", "!/rune-art/*", "!/og-art/*", "!/ui-art/*", "!/fonts/*", "!/sfx/*", "!/favicon.ico", "!/favicon.png"],
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "404-page"
   }
