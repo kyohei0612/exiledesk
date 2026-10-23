@@ -1,4 +1,9 @@
 {
+  "0.1.595": [
+    "Craft stage: base implicits now match poe2db (charm slots on belts and 34 other bases)",
+    "Craft stage: missing English implicit texts added, and one Rage tier value now matches poe2db",
+    "Craft stage: Portent, Distorted, Lament and Twisted Amulets no longer show a “0” modifier line in their implicit (matches poe2db)"
+  ],
   "0.1.594": [
     "Spam simulator: a small progress indicator (a spinner with “Calculating 100 people each n/900” etc.) now shows while calculating or rolling for “Back to the craft stage with a hit”. The first load of the craft stage shows it too"
   ],

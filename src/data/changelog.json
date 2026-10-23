@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.595",
+  "date": "2026-10-24",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "クラフト台: ベースの暗黙を poe2db に合わせました (ベルトのチャームスロットなど 35 ベース)",
+    "en": "Craft stage: base implicits now match poe2db (charm slots on belts and 34 other bases)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "クラフト台: 英語の暗黙の文を足し、憤怒の 1 段の値を poe2db に合わせました",
+    "en": "Craft stage: missing English implicit texts added, and one Rage tier value now matches poe2db"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "クラフト台: 前兆・歪んだ・悲嘆・捻じれたアミュレットの暗黙に出ていた「0個」の行を出さないようにしました (poe2db に合わせました)",
+    "en": "Craft stage: Portent, Distorted, Lament and Twisted Amulets no longer show a “0” modifier line in their implicit (matches poe2db)"
+   }
+  ]
+ },
+ {
   "v": "0.1.594",
   "date": "2026-10-22",
   "items": [
@@ -637,18 +661,6 @@
     "area": "",
     "text": "更新内容のポップアップは大きなリリースの時だけ出すように (細かい更新は版の番号を押すと見られます)",
     "en": "The update popup now only appears for major releases (click the version number to see every update)"
-   }
-  ]
- },
- {
-  "v": "0.1.555",
-  "date": "2026-10-17",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "冒涜の MOD の行をトレードと同じ見た目に (左右に緑の帯)。文字はほかの MOD と同じ色にして、MOD 一覧の一番下に並べるように",
-    "en": "Desecrated mod rows now look like on the trade site (green bands on the sides), use the same text colour as other mods, and are listed at the bottom"
    }
   ]
  }
