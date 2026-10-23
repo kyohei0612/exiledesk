@@ -262,7 +262,7 @@ function pickFamily(f: Family): void {
  */
 /** bottomFirst: 一覧が画面より高い時も下 (帯 + 24px) を見せる (「もっと見る」で広げた時。2026-10-14 オーナー「下 24px あけるんじゃねえの」) */
 function revealPanel(bottomFirst = false): void {
-  const el = document.querySelector<HTMLElement>("[data-base-panel]");
+  const el = rootEl.value?.querySelector<HTMLElement>("[data-base-panel]") ?? null;
   if (!el) return;
   const box = scrollBoxOf(el);
   const r = el.getBoundingClientRect();
@@ -298,13 +298,13 @@ watch(known, (now, was) => {
  */
 let moreFrom: number | null = null;
 function revealMore(): void {
-  const el = document.querySelector<HTMLElement>("[data-base-panel]");
+  const el = rootEl.value?.querySelector<HTMLElement>("[data-base-panel]") ?? null;
   moreFrom = el ? scrollTopOf(scrollBoxOf(el)) : null;
   void nextTick(() => requestAnimationFrame(() => requestAnimationFrame(() => revealPanel(true))));
 }
 /** 「たたむ」: 広げる前の位置に戻す (2026-10-14 オーナー「畳むのときも元の画面に戻ろうか」) */
 function foldMore(): void {
-  const el = document.querySelector<HTMLElement>("[data-base-panel]");
+  const el = rootEl.value?.querySelector<HTMLElement>("[data-base-panel]") ?? null;
   const top = moreFrom;
   moreFrom = null;
   if (!el || top == null) return;
