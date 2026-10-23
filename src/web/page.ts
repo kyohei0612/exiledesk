@@ -215,10 +215,9 @@ export function startPages(): void {
     if (first) apply(first);
     else syncUrl();
   }, { immediate: true });
-  let wasAuto = autoBase.value;
-  watch(page, (p, old) => {
-    const auto = wasAuto;
-    wasAuto = autoBase.value;
+  // ページと「自分で出たベース選びか」を組で見る。auto = 移る直前のページが自分で出たベース選びだったか
+  // (前は移った時にだけ覚え直していたので、?page=base を直に開いた時の「自分で出た → 人が開いた」(ページの文字は同じ) を取りこぼし、戻るで飛ばされていた。2026-10-23)
+  watch(() => [page.value, autoBase.value] as const, ([p, nowAuto], [old, auto]) => {
     if (p === old) return;
     movedAt = performance.now();
     pageTick.value++; // ページを移った = 広告の枠の出し直し (utils/ads.ts、60 秒に 1 回まで)
@@ -237,7 +236,7 @@ export function startPages(): void {
     // 自分で出たベース選び (初めて・白に戻した後) と、そこから選んで出た時は積まない (戻るで選ぶ前に戻っても選び直しになるだけ)
     try {
       // 自分で出たベース選びへ移る時は、クラフトの画面が替わっただけの時 (白に戻した後など) だけ積まない。ツリーなどから出た時は積む (戻るでそのページへ)
-      if (auto || (autoBase.value && old === "")) history.replaceState(history.state, "", urlFor(p));
+      if (auto || (nowAuto && old === "")) history.replaceState(history.state, "", urlFor(p));
       else history.pushState(history.state, "", urlFor(p));
     } catch { /* 積めなくても画面はそのまま */ }
   });
