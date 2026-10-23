@@ -102,7 +102,10 @@ function measureRow(): void {
   const el = row.value;
   if (!el) return;
   const z = pageZoom();
-  rowH.value = Math.max(200, Math.floor(innerHeight / z - (el.getBoundingClientRect().top + window.scrollY) / z - ROW_BOTTOM));
+  // スマホ (768px 未満) はボタンが何段にも折り返して残りが 240px ほどになり、木がほとんど見えず道具の帯がスタートの箱に重なった (10-23 モンキー 5)。
+  // 画面の高さの 7 割は取り、はみ出す分はページを縦に送る
+  const phoneMin = innerWidth < 768 ? Math.round((innerHeight / z) * 0.72) : 200;
+  rowH.value = Math.max(phoneMin, Math.floor(innerHeight / z - (el.getBoundingClientRect().top + window.scrollY) / z - ROW_BOTTOM));
 }
 const onResizeH = (): void => { requestAnimationFrame(measureRow); };
 onMounted(() => { window.addEventListener("resize", onResizeH); onResizeH(); });
@@ -347,29 +350,31 @@ const grid = computed(() => {
 function onKey(e: KeyboardEvent): void {
   const tag = (e.target as HTMLElement | null)?.tagName;
   if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+  if ((e.ctrlKey || e.metaKey) && ((e.key.toLowerCase() === "z" && e.shiftKey) || e.key.toLowerCase() === "y")) { e.preventDefault(); t.redo(); return; }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); t.undo(); return; }
   if (e.key === "1" && !e.ctrlKey && !e.metaKey && !e.altKey) { void v.fit(); return; }
-  // 箱の重ね窓は useDismiss が先に閉じる (defaultPrevented)。同じ Esc でページまで閉じない
+  // 箱の重ね窓は useDismiss が先に閉じる (defaultPrevented)。何も開いていない時の Esc は何もしない
+  // (前はページを閉じてクラフトステージへ出た。窓を閉じるつもりの 2 度押しで画面を出てしまう、10-23 モンキー 2。出るのは「← 戻る」)
   if (e.key === "Escape" && !e.defaultPrevented) {
     if (cardBox.value) { cardBox.value = null; hoverBox.value = null; }
     else if (plus.value) plus.value = null;
     else if (picking.value) picking.value = null;
     else if (panel.value) panel.value = null;
     else if (full.value) void v.toggleFull();
-    else close();
   }
 }
 onMounted(() => window.addEventListener("keydown", onKey));
 /**
  * 見本を開く (?page=sim-tree&sample=<名前>、tree-samples.ts。10-23 オーナー「サフィックスを全部付けるまでの手順で表示してみて」)。
- * 今の木は置き換える前にこのブラウザに控える (exiledesk.tree.v0.before-sample)。1 つ戻すでも戻せる
+ * 今の木は置き換える前にこのブラウザに控える (exiledesk.tree.v0.before-sample)。見本は新しく始める扱いで、1 つ戻すの控えは空から (10-23 モンキー 1)
  */
 onMounted(() => {
   const name = new URLSearchParams(location.search).get("sample");
   const sample = name ? treeSample(name) : null;
   if (!sample) { if (t.takeAskBase()) t.goalPage.value = 1; return; } // 白紙ならまず 0 完成形の設定の重ね窓 (10-22 オーナー)
   try { localStorage.setItem("exiledesk.tree.v0.before-sample", JSON.stringify(doc.value)); } catch { /* 控えられなくても開く */ }
-  t.edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, sample); tidyOf(d); });
+  tidyOf(sample);
+  t.startFresh(sample);
 });
 onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); });
 
@@ -400,13 +405,14 @@ const glowOf = (b: Box): boolean => {
       <div class="flex flex-wrap items-center gap-2 text-[13px] md:flex-nowrap">
         <span class="flex min-w-0 flex-1 basis-full items-center gap-2 max-md:flex-wrap md:basis-auto">
         <TreeRecipeBar @opened="v.fit()" />
-        <TreeRunBar v-model:shown="tr100.shown.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value" :stuck="tr100.stuckBoxes.value" @run="tr100.run" @go="goIssue" :halted="tr100.halted.value" :walk="tr100.walk.value" @skip="tr100.skipWalk" />
+        <TreeRunBar v-model:shown="tr100.shown.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :stuck="tr100.stuckBoxes.value" @run="tr100.run" @go="goIssue" :halted="tr100.halted.value" :walk="tr100.walk.value" @skip="tr100.skipWalk" />
         </span>
         <span class="ml-auto flex shrink-0 flex-wrap items-center gap-1 max-md:ml-0 max-md:shrink max-md:basis-full md:flex-nowrap">
           <button type="button" data-tree-undo class="g-btn sm inline-flex items-center gap-1" :disabled="!t.canUndo.value" :title="tr('1 つ戻す (Ctrl+Z)', 'Undo (Ctrl+Z)')" @click="t.undo"><Icon name="undo" class="size-4" />{{ tr("1 つ戻す", "Undo") }}</button>
+          <button type="button" data-tree-redo class="g-btn sm inline-flex items-center" :disabled="!t.canRedo.value" :title="tr('やり直し (Ctrl+Shift+Z / Ctrl+Y)', 'Redo (Ctrl+Shift+Z / Ctrl+Y)')" :aria-label="tr('やり直し', 'Redo')" @click="t.redo"><Icon name="undo" class="size-4 -scale-x-100" /></button>
           <button type="button" data-tree-tidy class="g-btn sm" :title="tr('段ごとに横一列・親は子の並びの真ん中・線は直角の木の線 (1 つ戻すで元の並びへ)', 'Rows by depth, each parent centered over its children, right-angle tree lines (undo restores)')" @click="onTidy">{{ tr("整列", "Tidy") }}</button>
           <button type="button" data-tree-lines-all class="g-btn sm" :aria-pressed="linesAll" :title="tr('戻りの線を全部出す (もう一度押すと、乗せた箱の線だけ)', 'Show all return lines (click again to show only the hovered box’s lines)')" @click="linesAll = !linesAll">{{ linesAll ? tr("線を隠す", "Hide lines") : tr("線を全部表示", "Show all lines") }}</button>
-          <button type="button" data-tree-check class="g-btn sm" :disabled="checking" :title="tr('5 人をエンジンで辿り 30 人を回して、止まる所・打てない手・付かない当たり・完成に着かない道を探す (費用は出さない)', 'Walk 5 runs and play 30 runs with the engine to find dead ends, unusable crafts, unreachable hits and paths that never finish (no costs)')" @click="onCheck">{{ checking ? tr("精査中…", "Checking…") : tr("ルート精査", "Check route") }}</button>
+          <button type="button" data-tree-check class="g-btn sm" :disabled="checking || tr100.running.value" :title="tr('5 人をエンジンで辿り 30 人を回して、止まる所・打てない手・付かない当たり・完成に着かない道を探す (費用は出さない)', 'Walk 5 runs and play 30 runs with the engine to find dead ends, unusable crafts, unreachable hits and paths that never finish (no costs)')" @click="onCheck">{{ checking ? tr("精査中…", "Checking…") : tr("ルート精査", "Check route") }}</button>
           <button type="button" data-tree-memo class="g-btn sm inline-flex items-center gap-1" :aria-pressed="memoOpen" :title="tr('欲しい MOD とメモの窓 (ツリーを押しても閉じない)', 'Wanted mods & notes window (stays open while you edit)')" @click="memoOpen = !memoOpen"><Icon name="pencil" class="size-4" />{{ tr("メモ", "Notes") }}<span v-if="doc.note" class="size-1.5 rounded-full bg-amber-400" /></button>
           <button type="button" data-tree-full class="g-btn sm" :aria-pressed="full" @click="v.toggleFull">{{ full ? tr("全画面を閉じる", "Exit full screen") : tr("全画面に広げる", "Full screen") }}</button>
           <button ref="clearBtn" type="button" data-tree-clear :class="clearArm.is() ? ARMED_CLASS : 'g-btn sm'" :title="tr('始まりの箱だけに戻す (1 つ戻すで戻せる)', 'Back to just the start box (undo restores it)')" @click="onClear">{{ clearArm.is() ? tr("もう一度押すと白紙に戻す", "Click again to clear") : tr("白紙に戻す", "Clear") }}</button>

@@ -95,8 +95,7 @@ function shareGoal(from: TreeDoc, to: TreeDoc): TreeDoc {
 }
 function setActive(i: number, next: TreeDoc): void {
   active.value = i;
-  undoStack.length = 0;
-  canUndo.value = false;
+  clearHistory();
   opened.value++;
   doc.value = next;
   save(next);
@@ -127,6 +126,15 @@ function closeTab(i: number): void {
 function noteRun(r: TabRun): void { const list = [...tabRuns.value]; list[active.value] = r; tabRuns.value = list; }
 const undoStack: string[] = [];
 const canUndo = shallowRef(false);
+/** やり直し (1 つ戻した物を戻す。新しく組み替えると消える、10-23 モンキー 1「戻した物がやり直しで戻らない」) */
+const redoStack: string[] = [];
+const canRedo = shallowRef(false);
+function clearHistory(): void {
+  undoStack.length = 0;
+  redoStack.length = 0;
+  canUndo.value = false;
+  canRedo.value = false;
+}
 
 /** 組み替えを 1 回 (写しを書き換えて差し替える。前の形は 1 つ戻す用に控える) */
 function edit(fn: (d: TreeDoc) => void): void {
@@ -138,16 +146,37 @@ function edit(fn: (d: TreeDoc) => void): void {
   undoStack.push(before);
   if (undoStack.length > UNDO_MAX) undoStack.shift();
   canUndo.value = true;
+  redoStack.length = 0;
+  canRedo.value = false;
   doc.value = d;
   save(d);
 }
-/** 1 つ戻す。ツリーのメモの文は戻さない (メモ欄の中の Ctrl+Z が受け持つ。ツリーの Ctrl+Z で書いた文がまとめて消えた、10-22) */
-function undo(): void {
-  const prev = undoStack.pop();
+/** 控えの形へ移る (今の形は反対側の控えへ)。ツリーのメモの文は動かさない (メモ欄の中の Ctrl+Z が受け持つ。ツリーの Ctrl+Z で書いた文がまとめて消えた、10-22) */
+function step(from: string[], to: string[]): void {
+  const prev = from.pop();
+  if (prev) {
+    to.push(JSON.stringify(doc.value));
+    const d = JSON.parse(prev) as TreeDoc;
+    d.note = doc.value.note;
+    doc.value = d;
+    save(d);
+  }
   canUndo.value = undoStack.length > 0;
-  if (!prev) return;
-  const d = JSON.parse(prev) as TreeDoc;
-  d.note = doc.value.note;
+  canRedo.value = redoStack.length > 0;
+}
+/** 1 つ戻す */
+const undo = (): void => step(undoStack, redoStack);
+/** やり直し (Ctrl+Shift+Z / Ctrl+Y) */
+const redo = (): void => step(redoStack, undoStack);
+/**
+ * 別の木で新しく始める (見本を開く時。1 つ戻す・やり直しの控えは空に)。
+ * 前は見本を開くのも 1 手で、開いた直後の「1 つ戻す」で見本が丸ごと消えて白紙に見えた (10-23 モンキー 1)。前の木は呼ぶ側が控えに残す
+ */
+function startFresh(tree: TreeDoc): void {
+  opened.value++;
+  const d = JSON.parse(JSON.stringify(tree)) as TreeDoc;
+  migrateStart(d);
+  clearHistory();
   doc.value = d;
   save(d);
 }
@@ -340,5 +369,5 @@ const baseCost = computed(() => {
 const baseCostBusy = computed(() => !!s.data.value && !costReady.value);
 
 export function useTree() {
-  return { tabDocs, active, tabRuns, switchTab, addTab, closeTab, noteRun, startPrice, setStartPrice, goalPage, startPage, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, undo, canUndo, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
+  return { tabDocs, active, tabRuns, switchTab, addTab, closeTab, noteRun, startPrice, setStartPrice, goalPage, startPage, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, undo, canUndo, redo, canRedo, startFresh, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
 }

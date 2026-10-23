@@ -80,6 +80,9 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
         // 1 人でも止まったらそこで止める (直してから回し直す)。打ち止め (神・手の上限) は止まりではないので続ける
         const st = last ? Object.keys((last as TreeRunResult).stuckAt)[0] : undefined;
         if (st) { halted.value = { box: st, n: r.value }; onHalt(st); break; }
+        // 飛ばした後は数字をゆっくり増やす間を取らず、30ms 計算するごとに画面を返すだけ
+        // (前は飛ばしても 2 人ごとに間を取り、見本のアミュで結果まで 19 秒かかった。計算だけなら 100 人で 2 秒ほど、10-23 モンキー 7)
+        if (skip) { if (performance.now() - t0 < 30) continue; await new Promise((res) => setTimeout(res, 0)); t0 = performance.now(); continue; }
         const wait = r.value % EVERY ? 0 : Math.max(0, PACE_MS - (performance.now() - t0));
         await new Promise((res) => setTimeout(res, wait));
         if (!(r.value % EVERY)) t0 = performance.now();
