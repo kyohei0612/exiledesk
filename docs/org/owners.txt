@@ -13,6 +13,10 @@ src/style.css                        デザイン
 src/i18n/lang.ts                     デザイン
 src/i18n/GLOSSARY.md                 デザイン
 src/state/for-share/**               デザイン
+# 画面の挙動 (ページの入口・移り方・音・クリックの守り・スマホ判定など) もデザイン部長 (オーナー 10-23「ジンはデータ管理」)
+src/web/**                           デザイン
+src/composables/**                   デザイン
+src/utils/**                         デザイン
 
 # サーバー (分析君)
 server/**                            分析
