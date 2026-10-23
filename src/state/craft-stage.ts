@@ -24,6 +24,7 @@ async function hasStageSession(market: Promise<unknown>): Promise<boolean> {
 import { playSfx, playUseSfx } from "../utils/sfx";
 import { isRareChance } from "../utils/format-pct";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
+import { flag } from "../web/release-flags";
 import { OMEN_EXCLUSIVE } from "../services/craft-stage/omens";
 import { recordHistory } from "../services/history";
 import { computed, ref, shallowRef, watch, type Ref, type WritableComputedRef } from "vue";
@@ -139,7 +140,7 @@ const mode = ref<"hand" | "sim" | "tutorial">("hand");
  * タブは「調整中」で押せず、前に開いていた・URL・はじめの窓から入っても手で打つ方に戻す
  */
 // 開発版 (pnpm dev:web) では開ける (クイズのレシピをオーナーに触ってもらう。リリースはオーナーの OK まで閉じたまま、2026-10-12)
-export const SIM_LOCKED = !isTauriRuntime() && !import.meta.env.DEV && import.meta.env.VITE_DEV_PREVIEW !== "1"; // 本番は閉じる。非公開の開発版 (deploy:web-dev) と手元の dev は開く (2026-10-18 オーナー「シミュレーターにとりかかろう、開発版で触ろうか」。10-17 は開発版も閉じていた)
+export const SIM_LOCKED = !isTauriRuntime() && !flag("sim"); // 本番は閉じる (スイッチ sim、web/release-flags.ts)。非公開の開発版 (deploy:web-dev) と手元の dev は開く (2026-10-18 オーナー「シミュレーターにとりかかろう、開発版で触ろうか」。10-17 は開発版も閉じていた)
 // チュートリアルは 2026-10-17 に一度出して、同じ日に取り下げた (オーナー「白紙、動画のクラフトを難しさ順に 1 から作らせる形に作り直す」)
 export const TUTORIAL_LOCKED = false; // 2026-10-17 本番に出した (コースは StageCourses.vue の RELEASED だけ)
 watch(mode, (m) => { if ((SIM_LOCKED && m === "sim") || (TUTORIAL_LOCKED && m === "tutorial")) mode.value = "hand"; }, { immediate: true, flush: "sync" });

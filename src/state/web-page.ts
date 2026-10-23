@@ -4,6 +4,7 @@
  */
 import { ref } from "vue";
 import { isTauriRuntime } from "../utils/isTauriRuntime";
+import { flag } from "../web/release-flags";
 import { craftStage as s } from "./craft-stage";
 
 /** ページを移る作り (Web 版だけ) */
@@ -18,16 +19,16 @@ export const feedbackPage = ref(false);
 export const recipesPage = ref(false);
 /** クラフトの道 (ツリー) のページ (?page=sim-tree。2026-10-22 オーナー OK、中身は views/simulator/tree/SimTreePage.vue) */
 export const treePage = ref(false);
-/** ツリーのページは開発版と手元の dev だけ (本番はオーナーの OK の後) */
-export const TREE_ON = import.meta.env.DEV || import.meta.env.VITE_DEV_PREVIEW === "1";
+/** ツリーのページは開発版と手元の dev だけ (本番はオーナーの OK の後。スイッチ sim、web/release-flags.ts) */
+export const TREE_ON = flag("sim");
 /**
  * デイリークラフトチャレンジのページ (2026-10-22 オーナー、中身は views/daily/DailyPage.vue = デイリー部長)。null = 開いていない。
  * list = お題の一覧 (?page=daily)、detail = 1 つのお題 (?page=daily&q=<id>)、start = 挑戦の始め (?page=daily-start&q=<id>)。URL と題は web/page.ts
  */
 export type DailyView = { view: "list" | "detail" | "start"; q?: string };
 export const dailyPage = ref<DailyView | null>(null);
-/** デイリーのページは開発版と手元の dev だけ (本番はオーナーの OK の後) */
-export const DAILY_ON = import.meta.env.DEV || import.meta.env.VITE_DEV_PREVIEW === "1";
+/** デイリーのページは開発版と手元の dev だけ (本番はオーナーの OK の後。スイッチ daily) */
+export const DAILY_ON = flag("daily");
 /** ブログ (/blog/、ヘッダーのブログ・右の列の新しい記事) は本番でも出す (2026-10-22、ツリーとは切り離した。ページは build:web の build-blog-pages.mjs が作る) */
 export const BLOG_ON = true;
 /**
