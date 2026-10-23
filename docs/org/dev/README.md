@@ -1,7 +1,7 @@
 # 最終チェック長
 
 最終チェック長 (オーナー 10-21)。常駐しない。本番に上げる時の最後だけ、オーナーの OK の後にブラックが立てる。仕事 = 上げる物の最後の確かめ (型チェック・ビルド・本番に出す物と OK 待ちの出し分け)・デバッグ・版上げ・更新内容の日英・本番の deploy:web と push。終わったら 1〜2 行をブラックへ、引き継ぎは dev/todo.md・notes/。
-本番の出し方: docs/pending-release.md の手順。OK 待ちを抜く時は隣の worktree (../ExileDesk-devbuild) で revert・一時の直しをしてビルドし、本体の dist-web に写して `pnpm --dir server/web run deploy` (共有の作業場所は触らない。例 notes/2026-10-21-replies-and-poe2tube.md の 1b)。要望の返事は分析君が置く (メモ feedback-replies)、上げ終わったらブラックが分析君に頼む。
+本番の出し方: docs/pending-release.md の手順。OK 待ちを抜く時は隣の worktree (../ExileDesk-devbuild) で revert・一時の直しをしてビルドし、本体の dist-web に写して `pnpm --dir server/web run deploy` (共有の作業場所は触らない。例 notes/2026-10-21-replies-and-poe2tube.md の 1b)。要望の返事はサーバー管理人が置く (メモ feedback-replies)、上げ終わったらブラックがサーバー管理人に頼む。
 下の決まりは全部の部の決まり (CLAUDE.md・メモ MEMORY.md の「必ず守る」が先)。
 
 ## 決まり (全部の部)
@@ -17,7 +17,7 @@
 10. 作業を分ける時はサブエージェント (同じ部長を 2 本立てない)、commit は部長が自分のパスで。止めるのは自分で立てた物だけ (ポート番号だけで止めない)。
 
 ## 地図
-- 持ち主の表: docs/org/owners.txt (下の行ほど強い) と scripts/owner-of.mjs (`--status`・`--check <部> <パス…>`)。地図と食い違ったら owners.txt が正。境目・土台・英語のデータ (部の名前「共通」) はジン部長、両方の画面で一緒の部品 for-share・共通の部品 src/components・言語の切り替え lang.ts・用語集 (部の名前「デザイン」) はデザイン部長 (10-23)、サーバー (server/) は分析君 (10-21 に開発部長から移した)。入口の見張り scripts/check-engine-entry.mjs (CI、控え check-engine-entry.baseline.json より増えたら落ちる。減ったら `--head --write`。「ジン」の src/services を入口の外として数えるので、共通の物は「共通」のまま)。
+- 持ち主の表: docs/org/owners.txt (下の行ほど強い) と scripts/owner-of.mjs (`--status`・`--check <部> <パス…>`)。地図と食い違ったら owners.txt が正。境目・土台・英語のデータ (部の名前「共通」) はジン部長、両方の画面で一緒の部品 for-share・共通の部品 src/components・言語の切り替え lang.ts・用語集 (部の名前「デザイン」) はデザイン部長 (10-23)、サーバー (server/) はサーバー管理人 (10-21 に開発部長から移した)。入口の見張り scripts/check-engine-entry.mjs (CI、控え check-engine-entry.baseline.json より増えたら落ちる。減ったら `--head --write`。「ジン」の src/services を入口の外として数えるので、共通の物は「共通」のまま)。
 - 動かし方・版上げ: CLAUDE.md の「動かし方」。設定 vite.web.config.ts、開発版 scripts/deploy-web-dev.mjs (commit 済みの HEAD を隣の ../ExileDesk-devbuild (git worktree) でビルド、書きかけは入らない。`-- --wip` で作業中の物)、読み物のページ scripts/build-seo-pages.mjs。
 - 更新内容: src/data/changelog-notes.json・-en.json・changelog-popup.json → scripts/build-changelog.mjs。OK 待ち docs/pending-release.md。テスト tests/ (vitest)。
 - 境目 (どの部も使う、持ち主はジン部長): src/state/craft-stage.ts (`SIM_LOCKED`、手順 JSON・再生・共有は stage-replay.ts に分けた)・web-page.ts・display-currency.ts、src/services/craft-stage/share.ts・trade-search.ts、src/services/htc/patch-types.ts・src/services/money.ts。画面の挙動 src/web/ (WebApp.vue・main.ts・page.ts・boot.ts・config.ts)・src/composables/・src/utils/・web.html・scripts/deploy-web-dev.mjs はデザイン部長 (10-23)。
@@ -25,6 +25,6 @@
 - エンジンの核 (types.ts・run-plan.ts・contract.ts・乱数 htc/rng.ts) は境目ではなくジン部長の持ち物 (emulator/README.md の地図)。
 - 動画 (video/、旧 POE2Tube) との受け渡し (動画編集長と): 録画モード src/utils/rec-mode.ts (`?rec=1`・seed・`__rec`)、撮影 URL・`data-rec` の目印、JSON の形 (正は video/contracts/、ExileDesk 側 contract.ts・scripts/craft-stage-run.mjs)。変える時は両方を同じ commit で、メモ poe2tube-handoff。video/ は CI (tests.yml の paths-ignore)・vite の watch・tailwind (@source not) から外してある。
 - 英語: 言語の切り替え src/i18n/lang.ts (`tr`・`modText`・`nameOf`)・GLOSSARY.md はデザイン部長、ゲームのデータ *-client.json などはジン部長。
-- サーバー (分析君): server/web (og-card.js・dev-gate.js・move-gate.js・wrangler*.jsonc)、server/live (README.md・src/index.ts・market.ts・logs.ts・feedback.ts・monitor.ts・migrations/)。
+- サーバー (サーバー管理人): server/web (og-card.js・dev-gate.js・move-gate.js・wrangler*.jsonc)、server/live (README.md・src/index.ts・market.ts・logs.ts・feedback.ts・monitor.ts・migrations/)。
 - メモ: 出し方 feedback-backstage-release・feedback-changelog-popup・feedback-replies / UI の決まり MEMORY.md の「UI の決まり」/ 英語 web-english / 広告 ads-page-model・web-ads-domain-plan / 確かめ feedback-verify-by-code・feedback-test-strategy・stop-processes-by-pid / 外の API api-probing-policy。
 - docs: ARCHITECTURE.md・roadmap-2026-10.md・decisions/。決着済み: 上のメモ・GLOSSARY.md。

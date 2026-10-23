@@ -22,7 +22,7 @@
 | エミュ部長 | エミュの画面 (本番のエミュレーター: 棚から打つ画面・スパムシミュレーター) の UI/UX だけ、エンジンには触れない (10-22 深夜) | src/views/craft-stage・state/emulator | 「エミュの画面の見た目・操作」「スパムシミュの画面」 | 呼ばれたら常駐 | Opus | emu/README.md |
 | シミュ部長 | シミュレーター (ツリー) の画面の UI/UX だけ (エンジンには触れない、10-22 深夜)・費用の見せ方、チュートリアル (使い方・コツ・コース) | src/views・services・state の simulator/ と tutorial/、tests/simulator・tutorial、scripts/_sim-*・sim-telemetry、server/live/src/sim.ts | 「シミュレーター」「チュートリアル・コース・クラフト手順」 | 呼ばれたら常駐 | Opus | simulator/README.md |
 | 解析君 | 確率・期待値・重み・動的計画法、打ち方の比べ (N 人回す)、計算とエンジンの突き合わせ | src/services/simulator/auto/ (auto-order* はシミュ)、scripts/analysis/ | 「〜を回して」「どの打ち方が安い?」「何神かかる?」「確率は合ってる?」 | 呼ばれたら常駐 | Opus | math/README.md |
-| 分析君 | Discord・要望・バグの受けと再現・日報・分析の記録、要望の返事、サーバー管理人 (兼任: server/・出しの台本・Cloudflare の使用量の見張り) | server/ (sim.ts 以外)、tests/live-worker*・log-sender*、scripts/pull-logs・analyze-logs | 「要望が来た」「バグ」「記録・訪問者」「返事を置いて」「サーバー・Discord・相場の取得」 | 呼ばれたら常駐 | Opus | analytics/README.md |
+| サーバー管理人 (分析も兼任、旧 分析君) | サーバー (server/・出しの台本・Cloudflare の使用量の見張り)、Discord・要望・バグの受けと再現・日報・分析の記録、要望の返事 | server/ (sim.ts 以外)、tests/live-worker*・log-sender*、scripts/pull-logs・analyze-logs | 「要望が来た」「バグ」「記録・訪問者」「返事を置いて」「サーバー・Discord・相場の取得」 | 呼ばれたら常駐 | Opus | analytics/README.md |
 | 動画編集長 | YouTube「チョコバナナ」の台本・撮影・合成・投稿の準備 | video/ | 「動画」「台本」「撮影」「サムネ」 | 呼ばれたら常駐 | Opus | video/README.md |
 | 記事編集長 | ブログの記事の仕上げ: 流れ・見出し・まとめ / 注意 / ヒントの箱・SVG の図・スクリーンショット・OGP の絵・キャラの吹き出し、日英、SEO の手引きの守り (数字と出どころは解析君、入れ物はジン部長) | docs/org/blog/、記事の元 src/data/blog/*.md・img/ (README.md はジン部長) | 「記事」「ブログ」「読み物」 | 呼ばれたら常駐 | Opus | blog/README.md |
 | リサーチ長 | 外の調べもの (YouTube の字幕・クラフト動画の要点・poe2db/CoE の大きな調べ・似たサイト・AI の進め方)、コードは触らない | docs/org/research/ | 「poe2db で確かめて」「この動画の要点」「よそはどうしてる?」 | 呼ばれたら常駐 | Opus | research/README.md |
@@ -37,8 +37,8 @@
 - どの画面からでも、共通の部品 (src/components・for-share)・言語の切り替えと用語集・utils・web/ (ページの入口・移り方・タブ)・音 → デザイン部長。ゲームの名前・MOD の文などのデータ → ジン部長。打つ処理・確率・MOD の数字が足りない → ジン部長に入口へ足してもらう (自前で書かせない)。
 - 入口の置き分け (オーナー 10-23): 結果が変わる物 (付き方・確率・固定・打てるか) はエンジン、見え方と操作は画面。エンジンの中は 核 (engine.ts) / エミュだけ (engine-emu.ts) / シミュだけ (engine-sim.ts)、両方が欲しい物はブラックが決めて核へ。シミュ由来の写しは作らせない (元からエンジンにある物はそのまま呼ぶ、確かめは「エミュの画面の同じ所と同じ答えか」を小さく。メモ feedback-sim-no-own-logic)。
 - 数字が正しいかの確かめ・打ち方の比べ → 解析君 (画面・コードの直しは持ち物の部)。解析君が「エンジンに無い手」を見つけた → ジン部長。
-- 要望・バグ → 分析君が受けて再現と部を特定 → ブラックがその部へ。要望の返事の文と置く (本番に出た後) → 分析君。
-- サーバー (server/live・server/web、Discord・記録・相場・dev-gate) → 分析君。server/live/src/sim.ts だけシミュ部長。
+- 要望・バグ → サーバー管理人が受けて再現と部を特定 → ブラックがその部へ。要望の返事の文と置く (本番に出た後) → サーバー管理人。
+- サーバー (server/live・server/web、Discord・記録・相場・dev-gate) → サーバー管理人。server/live/src/sim.ts だけシミュ部長。
 - 撮影 URL・録画モード・受け渡しの JSON の形 → 動画編集長とジン部長を同じ commit で (ブラックが順に並べる)。
 - 開発版 (deploy:web-dev) と自分の commit の push → 仕事をした部長。本番 (版上げ・deploy:web) → 最終チェック長だけ (オーナーの OK の後)。
 - poe2db の大きな照らし・外の動画 → リサーチ長、エンジンの写しの直しはジン部長。アプリ (src-tauri・craft-v2・trade2・market) → 凍結、振らない。
