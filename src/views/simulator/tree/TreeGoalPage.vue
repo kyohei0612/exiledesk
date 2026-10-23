@@ -18,6 +18,7 @@ import { startOf } from "../../../services/simulator/tree/tree-model";
 import type { StageMod } from "../../../services/craft-stage/engine";
 import TreeBasePick from "./TreeBasePick.vue";
 import { useTree } from "./use-tree";
+import { treePage } from "../../../state/web-page";
 
 const t = useTree();
 const step = computed(() => t.goalPage.value);
@@ -28,7 +29,17 @@ const asking = ref<string | null>(null);
  * 前は今の木のベース (既定の金の指輪) の部位が開いた状態で始まり、指輪を押すと 1 回目は畳むだけだった (10-23 オーナー「指輪にしたかったが 2 回クリックしないと開かない」)
  */
 const unpicked = ref(t.lostOnBase.value === 0 && !startMods.value && !t.goals.value.length);
-function close(): void { asking.value = null; t.goalPage.value = 0; }
+/**
+ * 閉じる (× / Esc / 枠の外)。ベースをまだ選んでいない白紙の木では、既定のベースで木を始めずに、ツリーへ来る前の画面へ戻す
+ * (「← 戻る」と同じ。履歴は積むのでブラウザの戻るでまたツリーへ。10-23 オーナー「ベースが無いとツリーもくそもないから、やめて」)
+ */
+function close(): void {
+  asking.value = null;
+  t.goalPage.value = 0;
+  if (unpicked.value) treePage.value = false;
+}
+/** 2 へ進む (段のタブ・「次へ」)。今のベースで決めた扱い (白紙のまま 2 を開いてから閉じても前の画面へは出さない) */
+function toMods(): void { unpicked.value = false; t.goalPage.value = 2; }
 function pick(en: string): void {
   unpicked.value = false;
   if (en === t.doc.value.base) { t.goalPage.value = 2; return; }
@@ -61,7 +72,7 @@ const cardW = innerWidth < 768 ? Math.min(CARD_W, innerWidth - 90) : CARD_W;
       <div data-tree-goal-steps class="flex items-center gap-2 px-3 pb-2">
         <button type="button" data-tree-goal-step="1" class="g-tab !min-h-[30px] !px-4 !text-[13px]" :class="step === 1 ? 'on' : ''" @click="t.goalPage.value = 1">{{ tr("1 ベース", "1 Base") }} <span class="ml-1 text-[11px] opacity-70">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}</span></button>
         <span class="opacity-40">→</span>
-        <button type="button" data-tree-goal-step="2" class="g-tab !min-h-[30px] !px-4 !text-[13px]" :class="step === 2 ? 'on' : ''" @click="t.goalPage.value = 2">{{ tr("2 完成の MOD", "2 Final mods") }} <span class="ml-1 rounded-full bg-black/25 px-1.5 text-[11px] tabular-nums">{{ t.goals.value.length }}</span></button>
+        <button type="button" data-tree-goal-step="2" class="g-tab !min-h-[30px] !px-4 !text-[13px]" :class="step === 2 ? 'on' : ''" @click="toMods">{{ tr("2 完成の MOD", "2 Final mods") }} <span class="ml-1 rounded-full bg-black/25 px-1.5 text-[11px] tabular-nums">{{ t.goals.value.length }}</span></button>
       </div>
     </template>
     <div v-if="step === 1" data-tree-goal-base class="flex min-w-0 flex-col gap-3">
@@ -100,7 +111,7 @@ const cardW = innerWidth < 768 ? Math.min(CARD_W, innerWidth - 90) : CARD_W;
     <template #footer>
       <div class="flex items-center justify-end gap-2">
         <button v-if="step === 2" type="button" class="g-btn sm" @click="t.goalPage.value = 1">{{ tr("← ベース", "← Base") }}</button>
-        <button v-if="step === 1" type="button" data-tree-goal-next class="g-btn sm" @click="t.goalPage.value = 2">{{ tr("次へ: 完成の MOD →", "Next: final mods →") }}</button>
+        <button v-if="step === 1" type="button" data-tree-goal-next class="g-btn sm" @click="toMods">{{ tr("次へ: 完成の MOD →", "Next: final mods →") }}</button>
         <button v-else type="button" data-tree-goal-done class="g-btn sm" @click="close">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button>
       </div>
     </template>
