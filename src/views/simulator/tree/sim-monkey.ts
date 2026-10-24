@@ -27,9 +27,11 @@ import { useTree } from "./use-tree";
 type Opt = Omit<HandPick, "held" | "omens">;
 /** 部位の日本語 → ベースの一覧の部位 (cls) の頭 (英語の部位名ならそのまま頭で合わせる) */
 const PART_CLASS: Record<string, string> = {
-  兜: "Helmet", 鎧: "Body", 手袋: "Gloves", 靴: "Boots", 盾: "Shield", バックラー: "Buckler", フォーカス: "Focus", 矢筒: "Quiver",
-  指輪: "Ring", アミュレット: "Amulet", ベルト: "Belt", ジュエル: "Jewel", 弓: "Bow", クロスボウ: "Crossbow", ワンド: "Wand", スタッフ: "Staff",
-  セプター: "Sceptre", スピア: "Spear", 片手メイス: "OneHandMace", 両手メイス: "TwoHandMace", クォータースタッフ: "Warstaff", タリスマン: "Talisman",
+  兜: "Helmet", 鎧: "Body", 手袋: "Gloves", 靴: "Boots", 盾: "Shield", バックラー: "Buckler", フォーカス: "Foci", 矢筒: "Quiver",
+  指輪: "Ring", アミュレット: "Amulet", ベルト: "Belt", ジュエル: "Jewel", 弓: "Bow", クロスボウ: "Crossbow", ワンド: "Wand", スタッフ: "Stav",
+  セプター: "Sceptre", スピア: "Spear", 片手メイス: "OneHand_Mace", 両手メイス: "TwoHand_Mace", クォータースタッフ: "Quarterstav", タリスマン: "Talisman",
+  // 英語の部位名 (ベースの一覧の部位の id は複数形・下線つき: Foci・Staves・Quarterstaves・OneHand_Maces)
+  Focus: "Foci", Staff: "Stav", Quarterstaff: "Quarterstav", Warstaff: "Quarterstav", OneHandMace: "OneHand_Mace", TwoHandMace: "TwoHand_Mace",
 };
 
 /** 棚に並ぶ物 (CurrencyShelf と同じ: オーブ・骨・エッセンス、ソケットがあればクラフトのルーン。隠すのは simHidden) */
