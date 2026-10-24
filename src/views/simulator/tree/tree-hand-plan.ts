@@ -2,7 +2,7 @@
  * tree-hand-plan.ts — 箱の次に打つ手の決め方 (TreeHandShelf.vue から分けた、2026-10-24)。棚の画面 (TreeHandShelf)・手を決めた時の組み替え (SimTreePage の pickHand)・
  * 開発の時だけの猿の口 (sim-monkey.ts) が同じ関数を呼ぶ (別の打ち方を作らない、メモ feedback-sim-no-own-logic)。中身はエンジンの入口と木の関数を呼ぶだけ
  */
-import { aimHits, catalystBoosts, heldOdds, makeStageMod, mulberry32, omensFor, tierIndexOf, tierNoOf, type HeldOdds, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { aimHits, catalystBoosts, heldOdds, makeStageMod, mulberry32, omensFor, tierIndexOf, tierRankOf, type HeldOdds, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { catalystFull, catalystTagOf, fillCatalyst, stepOutcomes } from "../../../services/craft-stage/engine-sim";
 import { aimHeldOn } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, ECHO, effectOf, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
@@ -69,7 +69,8 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
     const before = new Set([...item.prefixes, ...item.suffixes].map((m) => m.modId));
     const got = (stepOutcomes(data, item, h.currency, engineOmens(h)) ?? []).filter((o) => !o.void).flatMap((o) => [...o.item.prefixes, ...o.item.suffixes].filter((m) => !before.has(m.modId)));
     const out: Aim[] = [];
-    for (const m of got) if (!out.some((a) => a.modId === m.modId)) out.push({ modId: m.modId, tier: tierNoOf(m) });
+    // 段はエッセンス自身の段 (T1 = グレーター、完成形の設定の表・poe2db と同じ。10-24 オーナー「エッセンスの MOD と一般 MOD は別物」)
+    for (const m of got) if (!out.some((a) => a.modId === m.modId)) out.push({ modId: m.modId, tier: tierRankOf(data, m.modId, m.tierIndex) });
     return out.slice(0, 1);
   }
   // フラクチャー: 当たりの札 = この箱で付いている狙い (✦ にする MOD を選んだらその 1 つ)
