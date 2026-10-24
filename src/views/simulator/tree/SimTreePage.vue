@@ -33,7 +33,8 @@ import { tr } from "../../../i18n/lang";
 import { pageZoom } from "../../../utils/zoom";
 import { LINE, useTreeEdges } from "./use-tree-edges";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
-import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
+import { currentTreeRecipe, sameTree, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
+import { openTreePage, setLeaveGuard, treeStep } from "../../../web/page";
 import { gesture } from "./use-gesture";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { ARMED_CLASS, useArmed } from "../../../utils/use-armed";
@@ -271,7 +272,21 @@ const { issues, issuesOpen, issuesFold, checking, progress, passed, onCheck, iss
 const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
 // 流れの帯の 4 (結果) = 100 人回し終えた (止まって止めた時は開かない、帯の「結果のまとめ」と同じ)。帯を押すと 1・2 = 完成形の設定の窓、3 = ツリー、4 = 結果のまとめ
 watch(() => !!tr100.result.value && !tr100.running.value && !tr100.halted.value, (on) => { t.runReady.value = on; if (!on) t.reportOpen.value = false; }, { immediate: true });
-const onFlow = (n: 1 | 2 | 3 | 4): void => { if (n <= 2) t.goalPage.value = n as 1 | 2; else t.reportOpen.value = n === 4; };
+// 流れの帯の 1・2 はページ (?page=sim-base / sim-mods、10-24 夜オーナー「基本はページ全体、MOD も別ページ」)。木の中の札 (TreeGoalNode) は窓のまま
+const onFlow = (n: 1 | 2 | 3 | 4): void => { if (n <= 2) openTreePage(n === 1 ? "base" : "mods"); else t.reportOpen.value = n === 4; };
+// URL の段 → 完成形の設定 (ページ)。ページからツリーへ戻ったら閉じる (木の中から窓で開いた時は段が tree のまま)
+watch(treeStep, (st, was) => {
+  if (st === "base") t.goalPage.value = 1;
+  else if (st === "mods") t.goalPage.value = 2;
+  else if (was === "base" || was === "mods") t.goalPage.value = 0;
+}, { immediate: true });
+/**
+ * 離れる時の確かめ (10-24 夜オーナー「誤作動もあるからページを離れる警告もセットで。ツリー作成中の場合、保存せずに終了するか聞く」)。
+ * 未保存 = 開いているレシピと木が違う (レシピが無ければ箱が 2 つ以上、TreeRecipeBar の dirty と同じ)。シミュの中 (レシピ・sim-*) へ移る時は聞かない (木はこのブラウザに残る)
+ */
+const treeDirty = (): boolean => (currentTreeRecipe.value ? !sameTree(doc.value, currentTreeRecipe.value.tree) : Object.keys(doc.value.boxes).length > 1);
+onMounted(() => setLeaveGuard((to) => !(to === "page=recipes" || to.startsWith("page=sim-")) && treeDirty()));
+onBeforeUnmount(() => setLeaveGuard(null));
 const busy = computed((): { text: string; n?: number; of?: number } | null => {
   if (!s.data.value) return { text: tr("読み込み中", "Loading") };
   if (tr100.running.value) return { text: tr("回している", "Running"), n: tr100.result.value?.n ?? 0, of: RUN_N };

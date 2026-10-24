@@ -22,6 +22,7 @@ import TreeRecipeBar from "./TreeRecipeBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue";
 import TreeTabs from "./TreeTabs.vue";
 import { useTree } from "./use-tree";
+import { openTreePage, treeStep } from "../../../web/page";
 
 const t = useTree();
 const step = computed(() => t.goalPage.value);
@@ -35,17 +36,26 @@ const dropped = ref<string[]>([]);
  */
 const unpicked = ref(t.needBase.value);
 /**
- * 初手 (ベースがまだ無い所から開いた時) は窓でなく 1 ページで出す (エミュのベースのページと同じく、10-23 オーナー)。
- * 開いている間はツリーを隠す (SimTreePage が use-tree の goalInline を見る)。ベースを選んだ後に札から開いた時は今まで通り窓
+ * ページで出す (?page=sim-base / sim-mods、web/page の treeStep。10-24 夜オーナー「基本はページ全体にベース表示、MOD も別ページ。
+ * オーバーレイはツリーのなかにあるベース選択の所」)。ツリーの中の札 (TreeGoalNode など) から開いた時は今まで通り窓。
+ * 開いている間はツリーを隠す (SimTreePage が use-tree の goalInline を見る)
  */
-const asPage = t.needBase.value;
-t.goalInline.value = asPage;
+const blankOpen = t.needBase.value;
+// ベースがまだ無い白紙の木 (＋ 新しいツリー・白紙で開いた時) も窓でなくページ (ツリーの URL のまま。ここで URL を移すと、戻るで白紙の木へ戻ってまたベース選びへ飛ばされ、戻れなくなる)
+const asPage = computed(() => treeStep.value !== "tree" || blankOpen);
+watch(asPage, (v) => { t.goalInline.value = v; }, { immediate: true });
 onBeforeUnmount(() => { t.goalInline.value = false; });
+/** 段を移る: ページの時は URL ごと移る (履歴に積む = 戻るで前の段)、窓の時は窓の中で替える。0 = ツリーへ */
+function go(n: 0 | 1 | 2): void {
+  const to = n === 1 ? "base" : n === 2 ? "mods" : "tree";
+  if (asPage.value && treeStep.value !== to) openTreePage(to);
+  t.goalPage.value = n;
+}
 /** 「替える」の確かめが出たら見える所へ送る (一覧を下まで送っていると上の帯が見えず、ベースを押しても進まないように見えた、10-23 オーナー) */
 const askEl = ref<HTMLElement | null>(null);
 watch(asking, (v) => { if (v) void nextTick(() => askEl.value?.scrollIntoView({ block: "nearest" })); });
 /** 段のタブの右端のレシピから別の木を開いた = 窓を閉じてその木へ */
-function onRecipe(): void { asking.value = null; dropped.value = []; t.goalPage.value = 0; }
+function onRecipe(): void { asking.value = null; dropped.value = []; go(0); }
 /**
  * 閉じる (× / Esc / 枠の外)。ベースをまだ選んでいない白紙の木では、既定のベースで木を始めず、シミュの画面に残ってベースが無い時の空の形を出す
  * (use-tree の needBase。10-23 オーナー「ベースが無いとツリーもくそもない」「× 押したらシミュレーターが消え失せる」)
@@ -53,21 +63,21 @@ function onRecipe(): void { asking.value = null; dropped.value = []; t.goalPage.
 function close(): void {
   asking.value = null;
   dropped.value = [];
-  t.goalPage.value = 0;
   t.needBase.value = unpicked.value;
+  go(0);
 }
 /** 2 へ進む (段のタブ・「次へ」)。今のベースで決めた扱い (白紙のまま 2 を開いてから閉じても空の形にはしない) */
-function toMods(): void { unpicked.value = false; t.chooseBase(); t.goalPage.value = 2; }
+function toMods(): void { unpicked.value = false; t.chooseBase(); go(2); }
 /** 流れの帯を押した: 1 = ベース、2 = 完成の MOD、3 = ツリーへ (閉じる)、4 = 閉じて結果のまとめ */
 function onFlow(n: 1 | 2 | 3 | 4): void {
-  if (n === 1) t.goalPage.value = 1;
+  if (n === 1) go(1);
   else if (n === 2) toMods();
   else { close(); if (n === 4) t.reportOpen.value = true; }
 }
 function pick(en: string): void {
   unpicked.value = false;
   t.needBase.value = false;
-  if (en === t.doc.value.base) { t.chooseBase(); t.goalPage.value = 2; return; }
+  if (en === t.doc.value.base) { t.chooseBase(); go(2); return; }
   if (t.lostOnBase.value > 0) { asking.value = en; return; }
   apply(en);
 }
@@ -76,7 +86,7 @@ function apply(en: string): void {
   // 文は替える前のベースの行で作る (外した MOD は新しいベースの一覧に無い)
   const label = new Map(t.goals.value.map((a) => [a.modId, t.startModLabel(a, true)]));
   dropped.value = t.setBase(en, t.doc.value.itemLevel).map((a) => label.get(a.modId) ?? tr("(名前の無い MOD)", "(unnamed mod)"));
-  t.goalPage.value = 2;
+  go(2);
 }
 const pickGoal = { has: t.hasGoal, toggle: t.toggleGoal };
 /**
@@ -198,7 +208,7 @@ const HELP: Array<[string, string]> = [
          「決めた」(決める手の赤 g-btn-red、1 画面 1 つ) はカードと説明の下へ移した (10-24 オーナー) -->
     <template v-if="step === 2" #footer>
       <div class="flex w-full items-center gap-2">
-        <button type="button" class="g-btn sm" @click="t.goalPage.value = 1">{{ tr("← ベース", "← Base") }}</button>
+        <button type="button" class="g-btn sm" @click="go(1)">{{ tr("← ベース", "← Base") }}</button>
       </div>
     </template>
   </ModalShell>
