@@ -268,6 +268,8 @@ function onTarget(b: Box): void {
 }
 // ルート精査 (押した時に始める、use-tree-check.ts)
 const { issues, issuesOpen, shown: issuesShown, issuesFold, checking, progress, passed, onCheck, issueOf } = useTreeCheck(doc, () => !t.needBase.value && !t.goalInline.value);
+// 穴の表示のオフは今のタブの間だけ (タブを替えると見せる、10-25)
+watch(() => t.active.value, () => { issuesShown.value = true; issuesOpen.value = true; });
 /** 待たせている間の小さな札 (題の横。データの読み込み・箱を順に出している間、共通の BusyTag。精査の進みは精査の帯の上) */
 // 100 人回す (結果は木の上に重ねる層だけ、use-tree-run.ts・TreeRunLayer.vue。値段 = 始め方のベースの値段 (結果のまとめで入れる、use-tree の startPrice) + 今の相場)
 const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
@@ -482,7 +484,7 @@ const glowOf = (b: Box): boolean => {
             <button type="button" data-tree-pick-start class="g-btn sm pointer-events-auto" :title="tr('始まりの箱の手から打ち直す', 'Craft again from the start box')" @click="pickBack('start')">{{ tr("↩ 始めに戻る", "↩ Back to start") }}</button>
           </template>
         </p>
-        <TreeIssues v-if="issues && issuesOpen" v-model:fold="issuesFold" :issues="issues" :busy="checkBusy" :lower="!!(picking || hand || viewOnly)" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" />
+        <TreeIssues v-if="issues?.length && issuesShown && issuesOpen" v-model:fold="issuesFold" :issues="issues" :busy="checkBusy" :lower="!!(picking || hand || viewOnly)" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" />
         <!-- 縮めて見ている時の箱の編集 (等倍。枠の外・Esc で閉じる) -->
         <div v-if="pop && doc.boxes[pop]" ref="popEl" data-tree-pop class="absolute z-30 w-max rounded-2xl border border-white/10 bg-[#0c0a08]/95 p-3 pb-12 pr-7 shadow-[0_10px_30px_rgba(0,0,0,0.7)]" :style="popStyle">
           <div class="relative" :style="{ width: `${BOX_W}px`, height: `${BOX_H}px` }">
