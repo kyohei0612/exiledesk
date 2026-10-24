@@ -8,6 +8,7 @@ import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { jewelEmotionJa } from "../../../services/htc/patch";
 import { runeToneOf } from "../../../services/craft-stage/mod-list";
 import essenceKeys from "../../../services/htc/essence-keys.json";
+import { flag } from "../../../web/release-flags";
 
 /** エッセンスの段の名前 (英語) → 日本語 */
 const ESS_JA = new Map(Object.values((essenceKeys as unknown as { keys: Record<string, { en: string; ja: string }> }).keys).map((k) => [k.en, k.ja]));
@@ -17,6 +18,9 @@ const ESS_JA = new Map(Object.values((essenceKeys as unknown as { keys: Record<s
  */
 export function essName(r: ListRow, item: StageItem | null): string | null {
   if (r.group !== "essence" && r.group !== "perfect_essence") return null;
+  // 完全エッセンスはエンジンの名前 (ListTier.essence)。棚の名前では深淵の完全エッセンスが日本語の画面でも英語のままだった (2026-10-24、スイッチ essTier)
+  const perfect = r.group === "perfect_essence" ? r.tiers[0]?.essence : undefined;
+  if (perfect && flag("essTier")) return tr(perfect.ja, perfect.en);
   const key = `essence:${r.group === "perfect_essence" ? "perfect" : "normal"}:${r.id}`;
   const n = nameOfKey(key, item);
   if (n && n !== key) return n;
