@@ -33,3 +33,25 @@
 - 866d0ea2・a9ae2fb7: カードはエミュと同じ既定の幅 (480)、次に打つ手の窓は左にカード・右に棚、フラクチャーのボタンは狙いの右に初めから。テストラン = ルート精査 (5 人辿り 30 人回して穴 0 で合格、木を変えるたび自動、合格まで 100 人回すは押せない)。古い台本の data-tree-check は data-tree-test に。
 - 再読み込みは今の作りで合っていた (木と完成形はそのまま、消すのは白紙に戻すだけ、出し直しの白紙は VITE_DEV_PREVIEW=1 の時だけ)。
 - 500 行の分け: SimTreePage.vue (＋の引っ張り → use-tree-plus.ts、97ec51b2、475 行)・tree-model.ts (整列 → tree-layout.ts、cb2d369b、467 行)。残り:確認用の窓なし Chrome は PowerShell を使わない決まりで止められず about:blank に戻しただけ。chrome-devtools の take_snapshot を filePath に書くと uid が使えない (押す前は文字で受け取る)。
+
+## 20 本目の最初の仕事 (10-24 夜、済み。todo.md から 10-24 夜に移した)
+見本の木 absent-b (src/services/simulator/tree/samples/absent-b.json、?sample=absent-b、結果 notes/2026-10-24-absent-amulet.md) を動画どおりに直して 100 人で回し直し、absent-a と数字を並べる。字幕 data-cache/subs/mjaMYCYl-PI.en.txt。
+1. サフィックス (キャストスピード T1): 右側のネクロマンシーのお告げで骨をサフィックスに冒涜 → 外れたら右側の結晶化のお告げ + 無限のパーフェクトエッセンス (Perfect Essence of the Infinite、アミュは % 能力値のサフィックス) で冒涜の MOD を置き換えて消す → また冒涜。光のお告げは使わない (動画 12:47 で infinite・反響・右側のネクロマンシーを買っている)。今の木は光 + 消去で、費用の大半がそこ。
+2. プレフィックス: オーナー「肝心のプレはグローバル防御のエッセンスで 50%」= 強化のパーフェクトエッセンス (Perfect Essence of Enhancement、AllDefences) の所が 50% の賭け。字幕の 20:27〜21:06 と 23:57〜27:00 を読み直して手順を合わせる (今の木はルーンワード = ルーンアロイの所を 50/50 にしている)。
+3. 反響のお告げで発現を何度も選び直す技 (動画の「heart of the well trick」) をツリーで組めるようにする。今の骨の手は「骨 + 反響 = 発現の候補を 1 回引き直す」だけ (tree-sample.ts の applyHand・revealBy)。動画の技の中身を字幕で確かめ、エンジンの入口に無い所はジン部長 8 本目に口を頼む (シミュに自前の打ち方を作らない、メモ feedback-sim-no-own-logic)。これが無いと B の数字は 6〜8 倍ずれる (サブエージェントの近似で A 73・B 77 神 vs 今の木 467・593 神)。
+2b. 50/50 の負け (スピリットが消えた時) の戻り: オーナー「B は光を使わないルート」「スピリット消えたら最初のカオスからやな」= 光のお告げで戻さず、最初のカオススパム (T1 スピリット) の箱へ戻す道にする。
+4. ついでに: 手のある当たりの箱に着いた人が settle (tree-run.ts) で深い所の外れの箱へ移されて止まる件 (サブエージェントは当たりの箱の後に分かれ目を挟んで避けた。画面で組む人も同じ所でつまずく)。
+- 回し方: scripts/_tree-file-check-probe (SAMPLE=absent-b、値段 0 で精査と 100 人)、相場の費用は猿の口の result() か runTree に値段を渡す (サブエージェントの台本の写し scratchpad/absent/_tmp-absent.test.ts.bak、絶対パスは下の道具の所と同じ scratchpad)。報告はブラックへ 3〜6 行。
+
+## 19 本目の報告 (10-24、全部手元 1440 で確かめ)
+- ede04679: 回しで結果の箱に着いてすぐ形の合う箱へ移った来訪も記録 (pass、照らしの当たり 0% の元)。台本 scripts/_tree-odds-probe。
+- fae89d00・6a7f150e: 猿の口に完成形の設定〜結果。da447a84: 形の合う箱の手が打てない時は着いた箱のまま (始めのルーンの外れで全員止まった)、結果に moved。
+- bbc77317 (+ ジン部長 76938343): エッセンスの狙いはエッセンス自身の段で、一般の MOD とは別物 (メモ sim-decisions)。
+- ae77b58f: 木の中のフラクチャーは必ず選んだ狙いを固定 (結果の箱は当たりだけ)、固定できる MOD が 2 つ以上なら着くまでの個数・始めの値段・フラクチャーを 2 回分足し作り直しに 2、結果の箱を親へ自動でつながない、テストランでフラクチャーの枝を見ない。棚の 1 行の見た目はスナップで未確認。
+- ac201d15: タブは別々の木 (＋ = 新しいツリーをベース選びから、完成形も別、名前はベース名、比べは外す)。前のベースの MOD の id を札に出さない (デザイン部長の気づき、元はタブを替える時の完成形の写し)。
+
+## 古い Chrome の立て方 (todo.md の台本の所から移した、今は Bash の run_in_background で立てる)
+- Chrome は PowerShell の `Start-Process chrome.exe -WindowStyle Hidden -PassThru -ArgumentList --headless=new,--remote-debugging-port=9333,--user-data-dir=<scratchpad>/cdp-profile`、使う前にブラックに一言、終わったら PID で止めて profile を消して「返した」。
+
+## 初めての人の回の 1 (済み: tree-sample.ts の startItemOf が fractureStart に avoid で完成の狙いを渡す。todo.md から移した)
+  1. **テストの穴 1 が消えず 100 人回すが押せない** (兜 帝国のグレートヘルム、ライフ T3 狙い・火耐性 T2 フラクチャー → スタートにカオス → 当たり完成 → 外れにカオススパム → 当たり完成)。元は分かった: エンジンの engine-sim/start-fracture.ts の fractureStart が外れ 3 から完成の狙い (ライフ) を除かず、ライフを持ってスタートした人は外れの箱のカオススパムで当たらない (新しく付かない)。ジン部長に「外れに付けない MOD」の口 (例 o.avoid) を頼んだ (返事待ち)。来たら tree-sample.ts の startItemOf で完成の狙い全部を渡す。画面の側も: 穴の文に直し方、押せない理由を title でなく文で (スマホ)。
