@@ -11,7 +11,7 @@ import { lang, tr } from "../../i18n/lang";
 import { closeSkinsPage } from "../../web/page";
 import WebFooter from "../../web/WebFooter.vue";
 import SkinCard from "./SkinCard.vue";
-import { loadSkins, SKIN_GROUPS, type Skin, type SkinCardData as Card, type SkinData, type SkinSet } from "./skins";
+import { buyable, loadSkins, SKIN_GROUPS, type Skin, type SkinCardData as Card, type SkinData, type SkinSet } from "./skins";
 
 const data = shallowRef<SkinData | null>(null);
 const failed = ref(false);
@@ -24,11 +24,16 @@ const query = ref("");
  * 「すべて」と「一式」では一式を 1 枚のカードに (部品は出さない、二重にしない)。ほかのまとめでは部品を 1 枚ずつ
  */
 const cat = ref("");
+/**
+ * ショップで買える物は出さない (オーナー 10-25 最後の決め「PoE2 でコスメ売ってない物、PoE1 から移植できる物のみ表示ね」。切り替えも無し)。
+ * 店は PoE1 と PoE2 で共通。一式は部品のどれか 1 つでも買えれば出さない
+ */
+const srcOk = (x: Skin | SkinSet): boolean => !buyable(x);
 const setMode = computed(() => cat.value === "" || cat.value === "set");
-const cats = computed(() => SKIN_GROUPS.map((g) => ({ key: g.id, label: en.value ? g.en : g.ja, n: g.id === "set" ? (data.value?.sets.length ?? 0) : (data.value?.items ?? []).filter((s) => s.group === g).length })));
-/** 「すべて」の件数 (一式のカード + 一式に入っていない物) */
-const allCount = computed(() => (data.value ? data.value.sets.length + data.value.items.filter((s) => !s.set).length : 0));
-const itemCard = (s: Skin): Card => ({ key: `i:${s.en}:${s.kind.ja}`, name: en.value ? s.en : s.ja, sub: en.value ? "" : s.en, kind: en.value ? s.kind.en : s.kind.ja, art: s.art, url: en.value ? s.url.en : s.url.ja, parts: 0, order: s.order, set: null });
+const cats = computed(() => SKIN_GROUPS.map((g) => ({ key: g.id, label: en.value ? g.en : g.ja, n: g.id === "set" ? (data.value?.sets ?? []).filter(srcOk).length : (data.value?.items ?? []).filter((s) => s.group === g && srcOk(s)).length })));
+/** 「すべて」の件数 (一式のカード + 一式に入っていない物、ショップの切り替えの後) */
+const allCount = computed(() => (data.value ? data.value.sets.filter(srcOk).length + data.value.items.filter((s) => !s.set && srcOk(s)).length : 0));
+const itemCard = (s: Skin): Card => ({ key: `i:${s.en}:${s.kind.ja}`, name: en.value ? s.en : s.ja, sub: en.value ? "" : s.en, kind: en.value ? s.kind.en : s.kind.ja, art: s.art, url: en.value ? s.url.en : s.url.ja, parts: 0, order: s.order, set: null, origin: s.origin });
 /** 一式のカード: 名前は「○○ 一式」、種類の行は部品の種類を並べる (例 兜スキン・靴スキン・ポートレートフレーム) */
 const setCard = (t: SkinSet): Card => ({
   key: `s:${t.en}:${t.ja}`,
@@ -40,6 +45,7 @@ const setCard = (t: SkinSet): Card => ({
   parts: t.parts.length,
   order: t.order,
   set: t,
+  origin: t.origin,
 });
 const hit = (s: Skin, q: string): boolean => s.ja.toLowerCase().includes(q) || s.en.toLowerCase().includes(q);
 const shown = computed((): Card[] => {
@@ -48,10 +54,10 @@ const shown = computed((): Card[] => {
   const q = query.value.trim().toLowerCase();
   const out: Card[] = [];
   if (setMode.value) {
-    for (const t of d.sets) if (!q || t.ja.toLowerCase().includes(q) || t.en.toLowerCase().includes(q) || t.parts.some((s) => hit(s, q))) out.push(setCard(t));
-    if (cat.value === "") for (const s of d.items) if (!s.set && (!q || hit(s, q))) out.push(itemCard(s));
+    for (const t of d.sets) if (srcOk(t) && (!q || t.ja.toLowerCase().includes(q) || t.en.toLowerCase().includes(q) || t.parts.some((s) => hit(s, q)))) out.push(setCard(t));
+    if (cat.value === "") for (const s of d.items) if (!s.set && srcOk(s) && (!q || hit(s, q))) out.push(itemCard(s));
   } else {
-    for (const s of d.items) if (s.group.id === cat.value && (!q || hit(s, q))) out.push(itemCard(s));
+    for (const s of d.items) if (s.group.id === cat.value && srcOk(s) && (!q || hit(s, q))) out.push(itemCard(s));
   }
   // 発売が新しい順 (オーナー 10-25「上から発売日が近い順」)、日付が分からない物は最後で名前の順 (Intl.Collator を 1 つ使い回す)
   const c = new Intl.Collator(en.value ? "en" : "ja");
@@ -94,7 +100,7 @@ const openParts = computed(() => (openSet.value ? openSet.value.parts.map(itemCa
     <div class="g-panel px-4 py-3 text-[13px] max-md:px-3">
       <!-- 断り (オーナー「DB 調べって話と責任持てませんって話」) -->
       <p data-skins-note class="mb-3 text-[12px] leading-relaxed text-[var(--exile-color-text-secondary)]">
-        {{ tr("PoE1 で出た MTX (マイクロトランザクション) のうち PoE2 でも使える物を、poe2db を元にまとめた一覧です (PoE2 で出た物は除く)。ゲームで実際に使えるか・見た目どおりに動くかは保証しません。", "PoE1 MTX (microtransactions) that are also usable in PoE2, listed from poe2db (items released in PoE2 are left out). We can't guarantee that each skin works or looks as expected in the game.") }}
+        {{ tr("PoE1 で出た MTX (マイクロトランザクション) のうち PoE2 でも使える物を、poe2db を元にまとめた一覧です (PoE2 で出た物は除く。今ショップで買える物も除く)。ゲームで実際に使えるか・見た目どおりに動くかは保証しません。", "PoE1 MTX (microtransactions) that are also usable in PoE2, listed from poe2db (items released in PoE2 are left out; items currently sold in the shop are left out too). We can't guarantee that each skin works or looks as expected in the game.") }}
       </p>
 
       <div class="flex flex-wrap items-center gap-2">

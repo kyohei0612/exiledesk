@@ -30,11 +30,16 @@ const GROUPS = [...G.groups, G.other].map((g) => ({ ...g, items: [] }));
 // 一式 (build-mtx-web.mjs の sets) は 1 枚のカードに (絵と飛び先は代表の部品、部品の数を札に)。部品は各まとめにも今までどおり (オーナー 10-25)
 const partsOf = d.sets.map(() => 0);
 const newest = d.sets.map(() => undefined);
-for (const it of d.items) if (it.s != null) { partsOf[it.s]++; if (it.o != null && !(newest[it.s] >= it.o)) newest[it.s] = it.o; }
-GROUPS.unshift({ ...G.set, items: d.sets.map((t, i) => ({ ja: `${t.ja} 一式`, en: `${t.en} Set`, k: -99, a: d.items[t.main].a, slug: d.items[t.main].slug, parts: partsOf[i], o: newest[i], si: i })) });
+const originsOf = d.sets.map(() => []);
+/** 出すのはショップで買えない物だけ (2026-10-25 オーナー「要は PoE2 で買える物を外すって意味ね」。店は PoE1 と PoE2 で共通。アプリの一覧の既定と同じ) */
+const items = d.items.filter((x) => x.c == null);
+for (const it of items) if (it.s != null) { partsOf[it.s]++; originsOf[it.s].push(it); if (it.o != null && !(newest[it.s] >= it.o)) newest[it.s] = it.o; }
+/** 一式の出どころ: 部品が全部ショップならショップ (値段は出さない)、全部同じパックならそのパック、混ざれば無し (アプリの一覧と同じ) */
+const setOrigin = (l) => (l.every((x) => x.c != null) ? { shop: 1 } : l.every((x) => x.pk && x.pk === l[0].pk) ? { pk: l[0].pk } : l.every((x) => x.bx && x.bx === l[0].bx) ? { bx: l[0].bx } : {});
+GROUPS.unshift({ ...G.set, items: d.sets.flatMap((t, i) => (partsOf[i] ? [{ ja: `${t.ja} 一式`, en: `${t.en} Set`, k: -99, a: d.items[t.main].a, slug: d.items[t.main].slug, parts: partsOf[i], o: newest[i], si: i, ...setOrigin(originsOf[i]) }] : [])) });
 const groupOf = new Map(G.groups.flatMap((g) => g.k.map((k) => [k, GROUPS.find((x) => x.id === g.id)])));
-for (const it of d.items) (groupOf.get(it.k) ?? GROUPS.at(-1)).items.push(it);
-const total = d.items.length;
+for (const it of items) (groupOf.get(it.k) ?? GROUPS.at(-1)).items.push(it);
+const total = items.length;
 
 // 読み物のページ (build-seo-pages.mjs) と同じ見た目 + 絵つきのカード
 const CSS = `:root{--bg:#0e0c09;--panel:#17130e;--line:#3a3024;--fg:#e8dfcf;--sub:#a99b84;--accent:#e0b062;--link:#f0c878}
@@ -48,7 +53,7 @@ a{color:var(--link)}.cta{display:inline-block;margin:6px 0 4px;padding:8px 18px;
 table{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0 10px}th,td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left}th{color:var(--sub);font-weight:400}td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
 .note{color:var(--sub);font-size:13px}.crumb{font-size:12px;color:var(--sub);margin-bottom:8px}
 .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:8px 0 12px}@media(max-width:900px){.cards{grid-template-columns:repeat(3,1fr)}}@media(max-width:600px){.cards{grid-template-columns:1fr 1fr;gap:8px}}
-.card{position:relative}.card i{position:absolute;top:8px;right:8px;font-style:normal;font-size:11px;font-weight:700;color:#f3d38a;background:#5a3f1a99;border-radius:99px;padding:1px 8px}
+.card{position:relative}.card em{position:absolute;top:8px;left:8px;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-style:normal;font-size:10px;color:#bfe9d0;background:#1d4a3299;border-radius:99px;padding:1px 8px}.card i{position:absolute;top:8px;right:8px;font-style:normal;font-size:11px;font-weight:700;color:#f3d38a;background:#5a3f1a99;border-radius:99px;padding:1px 8px}
 .card{display:flex;flex-direction:column;align-items:center;min-width:0;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--fg);text-decoration:none;text-align:center;line-height:1.35}.card:hover{border-color:#8a6a32}
 .card img,.card .ph{width:128px;height:128px;max-width:100%;object-fit:contain}
 .card b{margin-top:6px;font-weight:400;font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;width:100%}.card span{color:var(--sub);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%}
@@ -115,8 +120,8 @@ ${alt ? `<link rel="alternate" hreflang="${other}" href="${SITE}${LANGS[other].p
 </html>
 `;
   const note = ja
-    ? `<p class="note">poe2db の Microtransactions の一覧を元にした一覧です (PoE2 で出た物は除く)。ゲームで実際に使えるか・見た目どおりに動くかは保証しません。カードを押すと poe2db のページが開きます。</p>`
-    : `<p class="note">Based on the poe2db Microtransactions list (items released in PoE2 are left out). We can't guarantee that each item works or looks as expected in the game. Click a card to open it on poe2db.</p>`;
+    ? `<p class="note">poe2db の Microtransactions の一覧を元にした一覧です (PoE2 で出た物と、今ショップで買える物は除く)。ゲームで実際に使えるか・見た目どおりに動くかは保証しません。カードを押すと poe2db のページが開きます。</p>`
+    : `<p class="note">Based on the poe2db Microtransactions list (items released in PoE2 and items currently sold in the shop are left out). We can't guarantee that each item works or looks as expected in the game. Click a card to open it on poe2db.</p>`;
   const cta = `<p><a class="cta" href="${L.skins}">${ja ? "名前で探す・種類で絞る (ExileDesk のコスメティックの一覧)" : "Search and filter (ExileDesk cosmetics list)"}</a></p>`;
   /** 発売が新しい順 (build-mtx-web.mjs の o、一式は中の一番新しい物)、日付が分からない物は最後で名前の順 (アプリの一覧と同じ) */
   const sortByNew = (list) => [...list].sort((a, b) => (b.o ?? -1) - (a.o ?? -1) || L.name(a).localeCompare(L.name(b), code));
@@ -124,8 +129,11 @@ ${alt ? `<link rel="alternate" hreflang="${other}" href="${SITE}${LANGS[other].p
     // 絵が主役のカード、押すと poe2db (アプリの一覧と同じ。オーナー 10-25)
     const img = it.a != null ? `<img src="/mtx-art/${it.a}.webp" alt="${esc(L.name(it))}" loading="lazy" decoding="async" width="128" height="128" />` : `<span class="ph"></span>`;
     const sub = L.sub(it);
+    // 出どころの札 (取れた物だけ、小さく。オーナー 10-25)
+    const origin = it.c != null || it.shop ? (ja ? `ショップ${it.c != null ? ` ${it.c}` : ""}` : `Shop${it.c != null ? ` ${it.c}` : ""}`) : it.pk ? (ja ? `パック: ${it.pk}` : `Pack: ${it.pk}`) : it.bx ? (ja ? `ボックス: ${it.bx}` : `Box: ${it.bx}`) : it.rr ? (ja ? "レースの報酬" : "Race reward") : "";
+    const tag = origin ? `<em>${esc(origin)}</em>` : "";
     const badge = it.parts ? `<i>${ja ? `${it.parts} 点` : `${it.parts} pcs`}</i>` : "";
-    return `<a class="card" href="${(ja ? d.url.ja : d.url.en) + it.slug}" target="_blank" rel="noopener">${badge}${img}<b>${esc(L.name(it))}</b>${sub ? `<span>${esc(sub)}</span>` : ""}</a>`;
+    return `<a class="card" href="${(ja ? d.url.ja : d.url.en) + it.slug}" target="_blank" rel="noopener">${tag}${badge}${img}<b>${esc(L.name(it))}</b>${sub ? `<span>${esc(sub)}</span>` : ""}</a>`;
   }).join("")}</div>`;
   const childPath = (g) => `/cosmetics/${g.slug}`;
   /** 子ページの中身: 元の種類ごとの見出し + カード (種類が 1 つ・英語名の無い種類が混ざる時は見出し無し) */
@@ -134,7 +142,7 @@ ${alt ? `<link rel="alternate" hreflang="${other}" href="${SITE}${LANGS[other].p
     for (const it of g.items) (by.get(it.k) ?? by.set(it.k, []).get(it.k)).push(it);
     const ks = [...by.keys()].sort((a, b) => by.get(b).length - by.get(a).length);
     // 一式のページは一式ごとの見出し + 中の部品 (アプリの一式の小窓と同じ中身。オーナー 10-25「一式押したら展開」)
-    if (g.id === "set") return sortByNew(g.items).map((t) => `<h2>${esc(L.name(t))} (${ja ? `${t.parts} 点` : `${t.parts} pcs`})</h2>${cards(d.items.filter((x) => x.s === t.si))}`).join("\n");
+    if (g.id === "set") return sortByNew(g.items).map((t) => `<h2>${esc(L.name(t))} (${ja ? `${t.parts} 点` : `${t.parts} pcs`})</h2>${cards(items.filter((x) => x.s === t.si))}`).join("\n");
     if (ks.length < 2 || ks.some((k) => !L.kind(k))) return cards(g.items);
     return ks.map((k) => `<h2>${esc(L.kind(k))} (${by.get(k).length})</h2>${cards(by.get(k))}`).join("\n");
   };
@@ -173,7 +181,7 @@ ${foot}`);
 
   // 一覧
   const rows = GROUPS.map((g) => `<tr><td><a href="${L.prefix}${childPath(g)}">${esc(L.group(g))}</a></td><td class="n">${g.items.length}</td></tr>`).join("");
-  const w = wings(d.items);
+  const w = wings(items);
   writeFileSync(resolve(dir, "index.html"), `${head(
     ja ? "PoE2 で使える PoE1 のスキン・MTX 一覧 (コスメティック) | ExileDesk" : "PoE1 cosmetics & MTX usable in PoE2 | ExileDesk",
     ja ? `Path of Exile 2 でも使える Path of Exile 1 の MTX (スキン・コスメティック) ${total} 件の一覧。武器・武器エフェクト・背面 (翼・マント)・防具・エフェクト・ペット・ポータル・ポートレートフレーム・隠れ家の種類ごとに、poe2db の日英の名前と絵。` : `All ${total} Path of Exile 1 microtransactions (skins, cosmetics) that also work in Path of Exile 2 — weapon skins and effects, back attachments (wings, cloaks), armour, character effects, pets, portals, portrait frames and hideout decorations, with names and icons from poe2db.`,

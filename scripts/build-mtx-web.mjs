@@ -12,7 +12,7 @@
  *   node scripts/build-mtx-web.mjs [--fetch]   (--fetch で poe2db の 2 ページを取り直す、ふだんは data-cache/poe2db-mtx の写し)
  *   out: src/data/mtx-poe1-in-poe2.json
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -81,6 +81,44 @@ for (const row of (await poedb("Supporter_pack")).match(/<tr.*?<\/tr>/gs) ?? [])
 }
 const poe2Born = (it) => (p2Pack.has(it.en.toLowerCase()) ? "pack" : P2_TAGS.has(it.t) ? "tag" : /Dodge Roll/i.test(it.en) ? "dodge" : P2_NAMES.has(it.en.toLowerCase()) ? "store" : null);
 
+/**
+ * 出どころ (2026-10-25 オーナー「札と絞り込み付けて」。外さずにカードに札)。強い順に 1 つ:
+ *   c = ショップの値段 (poedb (PoE1) → 無ければ poe2db の一覧の Cost。店は PoE1 と PoE2 で共通で、両方に値段のある 739 件中 733 件が同じ)
+ *   pk = サポーターパックの名前 (poedb のパックのページ 52 枚の中身、または一覧の札「〜 Supporter Packs」「〜 Supporter」)
+ *   bx = ミステリーボックスの名前 (poedb の箱のページ 52 枚 packs/box-*.html。10-25 に読んだが箱の値段と説明だけで中身の一覧が無く、今は 0 件。中身の出どころが見つかれば足す)
+ *   rr = レースの報酬 (一覧の札 Race Rewards)。どれも無い物は出どころ不明
+ */
+const listInfo = new Map();
+for (const html of [await poedb("Microtransactions"), await page("us")]) {
+  for (const m of html.matchAll(/<a class="MTXTypes" href="[^"]+">([^<]*)<\/a><\/div>(.*?)<div class="separator">/gs)) {
+    const key = unescape(m[1]).toLowerCase();
+    if (listInfo.has(key) && listInfo.get(key).cost != null) continue;
+    const cost = m[2].match(/Cost: <span[^>]*>(\d+)<\/span>/);
+    const tags = [...(m[2].match(/<div class="property">(.*?)<\/div>/s)?.[1] ?? "").matchAll(/<a href="[^"]+">([^<]*)<\/a>/g)].map((x) => unescape(x[1]));
+    listInfo.set(key, { cost: cost ? +cost[1] : null, tags });
+  }
+}
+const packOf = new Map();
+for (const f of readdirSync(resolve(CACHE, "packs")).filter((x) => /_(supporter_pack|Starter_Pack)\.html$/i.test(x))) {
+  const name = f.replace(/_(supporter_pack|Starter_Pack)\.html$/i, "").replace(/_/g, " ");
+  for (const n of mtxNames(readFileSync(resolve(CACHE, "packs", f), "utf8"))) if (!packOf.has(n)) packOf.set(n, name);
+}
+const boxOf = new Map();
+for (const f of readdirSync(resolve(CACHE, "packs")).filter((x) => /^box-.*_Mystery_Box\.html$/.test(x))) {
+  const name = f.replace(/^box-/, "").replace(/_Mystery_Box\.html$/, "").replace(/_/g, " ");
+  for (const n of mtxNames(readFileSync(resolve(CACHE, "packs", f), "utf8"))) if (!/mystery box/.test(n) && !boxOf.has(n)) boxOf.set(n, name);
+}
+function originOf(en) {
+  const key = en.toLowerCase();
+  const info = listInfo.get(key);
+  if (info?.cost != null) return { c: info.cost };
+  const tag = info?.tags.find((t) => / Supporter( Packs)?$/.test(t));
+  if (packOf.has(key) || tag) return { pk: packOf.get(key) ?? tag.replace(/ Supporter( Packs)?$/, "") };
+  if (boxOf.has(key)) return { bx: boxOf.get(key) };
+  if (info?.tags.includes("Race Rewards")) return { rr: 1 };
+  return {};
+}
+
 const us = parse(await page("us"));
 const jp = parse(await page("jp"));
 const mtx = JSON.parse(readFileSync(resolve(ROOT, "src/services/mtx/mtx.json"), "utf8"));
@@ -108,6 +146,7 @@ for (const it of mtx.items) {
   // 発売の順の目安 (大きいほど新しい。2026-10-25 オーナー「上から発売日が近い順」): シリーズの札がある物は、そのシリーズがクライアントの表に初めて出た行 + 自分の行の小数。
   // 表の行は後から足された物が後ろに付くので、行そのままより札の初めの行の方が発売の順に合う (poedb の 7 つのパックの発売日の順と合うのを見た)。札の無い物は日付が分からないので無し (最後)
   if (it.t) row.o = seriesFirst.get(it.t) + it.i / 100000;
+  Object.assign(row, originOf(it.en));
   items.push(row);
   series.push(it.t ?? "");
   {
@@ -177,5 +216,6 @@ console.log(`${items.length} 件 → ${OUT} (poe2db の一覧 ${us.size} 件、P
 console.log(`外した: PoE2 のパック・報酬 ${dropped.pack.length}・PoE2 の札 ${dropped.tag.length}・ドッジロール ${dropped.dodge.length}・店の説明 ${dropped.store.length}・poe2db に無い ${dropped.noDb.length}`);
 for (const [c, k] of Object.entries(kinds)) console.log(c, k.ja, "/", k.en ?? "(英語名なし)", items.filter((x) => x.k === +c).length);
 console.log(`一式 ${sets.length} (部品 ${items.filter((x) => x.s != null).length})、例: ${sets.slice(0, 8).map((x) => `${x.en} / ${x.ja} (${items.filter((y) => sets[y.s] === x).length})`).join("、")}`);
+console.log(`出どころ: ショップ ${items.filter((x) => x.c != null).length}・サポーターパック ${items.filter((x) => x.pk).length}・ミステリーボックス ${items.filter((x) => x.bx).length}・レースの報酬 ${items.filter((x) => x.rr).length}・不明 ${items.filter((x) => x.c == null && !x.pk && !x.bx && !x.rr).length} (パックのページ ${new Set(packOf.values()).size} 枚・箱 ${new Set(boxOf.values()).size} 個)`);
 console.log("ドッジロール:", dropped.dodge.join(", "), "/ 店の説明:", dropped.store.join(", "));
 console.log("poe2db に無い:", dropped.noDb.join(", "));
