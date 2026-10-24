@@ -133,8 +133,8 @@ const startMods = dual(() => ref<Force[]>([]));
  * シミュレーションのタブ (2026-10-05、実験): 画面の切り替えと、狙いの MOD (MOD の一覧の段の表の「狙う」で足す)。
  * minTierIndex はエンジンの段の番号 (0 = 一番下、T1 = tiers.length - 1)。[[stage-sim.ts]]
  */
-/** hand = エミュレーター、sim = シミュレーター、tutorial = クイズのチュートリアル (2026-10-16、開発版だけ) */
-const mode = ref<"hand" | "sim" | "tutorial">("hand");
+/** hand = エミュレーター、tutorial = クイズのチュートリアル (2026-10-16)。旧シミュの "sim" は 10-24 に消した (シミュはツリーのページだけ、古い保存の "sim" は stage-session.ts が hand に読み替える) */
+const mode = ref<"hand" | "tutorial">("hand");
 /**
  * Web 版はシミュレーションを閉じる (2026-10-10 オーナー「未完成すぎるからシミュレーションは調整中って出してクリックできないように、ウェブ版」)。
  * タブは「調整中」で押せず、前に開いていた・URL・はじめの窓から入っても手で打つ方に戻す
@@ -143,7 +143,7 @@ const mode = ref<"hand" | "sim" | "tutorial">("hand");
 export const SIM_LOCKED = !isTauriRuntime() && !flag("sim"); // 本番は閉じる (スイッチ sim、web/release-flags.ts)。開発版 (preview:prod -- --dev) と手元の dev は開く (2026-10-18 オーナー「シミュレーターにとりかかろう、開発版で触ろうか」。10-17 は開発版も閉じていた)
 // チュートリアルは 2026-10-17 に一度出して、同じ日に取り下げた (オーナー「白紙、動画のクラフトを難しさ順に 1 から作らせる形に作り直す」)
 export const TUTORIAL_LOCKED = false; // 2026-10-17 本番に出した (コースは StageCourses.vue の RELEASED だけ)
-watch(mode, (m) => { if ((SIM_LOCKED && m === "sim") || (TUTORIAL_LOCKED && m === "tutorial")) mode.value = "hand"; }, { immediate: true, flush: "sync" });
+watch(mode, (m) => { if (TUTORIAL_LOCKED && m === "tutorial") mode.value = "hand"; }, { immediate: true, flush: "sync" });
 
 /** Web 版の工程を覚える手の数 */
 export const LOG_KEEP = 50;

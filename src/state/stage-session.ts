@@ -14,6 +14,7 @@ const KEY = "exiledesk.stage.session.v1";
 
 interface Snapshot {
   v: 1;
+  /** "sim" は旧シミュの頃の保存にだけある (戻す時は hand) */
   mode: "hand" | "sim" | "tutorial";
   base: string;
   itemLevel: number;
@@ -42,7 +43,7 @@ export function restoreStageSession(): boolean {
   try { snap = JSON.parse(sessionStorage.getItem(KEY) ?? "null") as Snapshot | null; } catch { return false; }
   if (!snap || snap.v !== 1 || !s.data.value) return false;
   try {
-    s.mode.value = snap.mode;
+    s.mode.value = snap.mode === "sim" ? "hand" : snap.mode;
     s.base.value = snap.base;
     s.itemLevel.value = snap.itemLevel;
     if (snap.plan) {
