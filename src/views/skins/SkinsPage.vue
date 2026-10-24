@@ -64,7 +64,7 @@ const broken = ref(new Set<string>());
     <div class="g-panel px-4 py-3 text-[13px] max-md:px-3">
       <!-- 断り (オーナー「DB 調べって話と責任持てませんって話」) -->
       <p data-skins-note class="mb-3 text-[12px] leading-relaxed text-[var(--exile-color-text-secondary)]">
-        {{ tr("poe2db を元にした一覧です。ゲームで実際に使えるか・見た目どおりに動くかは保証しません。", "This list is based on poe2db. We can't guarantee that each skin works or looks as expected in the game.") }}
+        {{ tr("PoE1 の MTX (マイクロトランザクション) のうち PoE2 でも使える物を、poe2db を元にまとめた一覧です。ゲームで実際に使えるか・見た目どおりに動くかは保証しません。", "PoE1 MTX (microtransactions) that are also usable in PoE2, listed from poe2db. We can't guarantee that each skin works or looks as expected in the game.") }}
       </p>
 
       <div class="flex flex-wrap items-center gap-2">
