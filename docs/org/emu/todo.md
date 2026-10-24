@@ -1,9 +1,12 @@
 # エミュ部長 のやる事
 
-## ブラックへの報告 (10-23、送信の上限で届かなかった分)
-- 猿 7 を直した (f261b842、開発版 c64adafc): 0 個で比べる / 確率を見るを押すと「狙う MOD にチェックしてください」、選ぶと消えて進む。PC・スマホで確かめ、エラー 0。6 は直した形どおり (そのまま)。f261b842 も pending-release の OK 待ちに足してほしい (c069970b・9eae3311 と一緒に)。
-- 気付き: 1 つ前の deploy:web-dev で出力の写しが欠け、base-art・fonts・favicon・about.html が 404 になった (原因: 14:05 にシミュ部長 17 本目の deploy:web-dev が ../ExileDesk-devbuild で数秒重なった、本人の知らせ。出し直しの c64adafc で揃ったのを確かめた。シミュ部長への返事も上限で届いていない)。出した後は dist-web-dev に base-art があるか見るとよい。
-- 開発版と 9333 は使用表で空き、次はデザイン部長 (知らせは送信の上限で届いていない。ブラックから伝えてほしい)。
+## 次の部長へ (2 本目 local_4123d2c2 から、10-24 昼)
+- 今: 本番 v0.1.596 は main の作り。OK 待ちのエミュの物は src/web/release-flags.ts のスイッチの下 (sanctifyBar・monkeyEmu1023・baseChosen、cd4586ec)。OK が出たら RELEASED に名前を 1 行。中身と commit は docs/org/dev/notes/2026-10-24-main-release.md の「進み」。
+- やりかけ: 無し。段 5 (古い作りを消す) のエミュ分は済み (8b661220・565dfebd)。mode の型の "sim" を外すのはジン部長 (565dfebd の後)。
+- 待っている返事: 無し。ベースの印 (baseChosen) は「人が自分で選んだベース」1 つで選んだ見た目・帯とすぐ試す・入口の行き先を決める (exiledesk.stage.chosenBase、すぐ試すも選んだ扱い)。本番の形は FIRST_BASE_KEY。
+- 気を付ける: 長く動いた dev 1440 は HMR の残りで同じモジュールが 2 つ読まれ (?t= 付きと無し)、use-stage-base の様な 1 つだけの物が割れて「押しても進まない」に見える。変だったら dev を立て直してから疑う (10-24 モンキー 3 番)。
+- 気を付ける: devtools の Chrome は前の人の物が動いたままの事がある。自分で立てていなければ止めずにブラックへ。preview:prod は TaskStop だけだと中の wrangler が残るので、1460 が閉じたか見て木ごと止める。
+- 本番の形は 561ddbe7 の空の箱 (flag("sim") の下、シミュを出す時に消える) でスマホの 6px を合わせている。
 
 ## 引き継ぎ (10-22 深夜、ジン部長からエミュの画面を分けた)
 - 1 本目 (local_e86c6527-e247-441a-bc94-1bb5cfbbd498) が docs/org/emulator/todo.md と docs/pending-release.md から画面の仕事を下に写した (ジン部長の todo からは、ジン部長が消す)。立てた物 (Chrome・dev サーバー) は無し。
