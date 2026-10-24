@@ -11,7 +11,7 @@
 import { computed, onBeforeUnmount } from "vue";
 import { isTouchOnly } from "../../../utils/use-phone";
 import { hoverStack } from "../../../state/hover-stack";
-import { iconOf, nameOf, priceOf } from "../../../state/craft-stage";
+import { iconOfKey, nameOfKey, priceOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { displayCurrency } from "../../../state/display-currency";
 import { toCss } from "../../../utils/zoom";
 import { shelfTag } from "../../../state/for-share/craft-stage-help";
@@ -42,6 +42,10 @@ const BADGE: Array<[RegExp, [string, string], string]> = [
 const badge = computed(() => BADGE.find(([re]) => re.test(props.k)) ?? null);
 /** 値段の代わりに出す付く MOD の短い名前 (エッセンス・カタリスト、2026-10-05 オーナー「金額の所、エッセンスは代わりに付く MOD を箇条書きで」「カタリストも一緒」) */
 const shelf = useShelf();
+// 名前・絵・値段は棚のアイテムで引く (シミュの棚は箱の見本を渡す。今のエミュのアイテムで引くと骨の名前と値段がずれた。2026-10-24 シミュ部長)
+const nameOf = (k: string): string => nameOfKey(k, shelf.item.value);
+const iconOf = (k: string): string => iconOfKey(k, shelf.item.value);
+const priceOf = (k: string): number => priceOfKey(k, shelf.item.value);
 const tag = computed(() => (props.omen ? null : shelfTag(props.k, shelf.data.value, shelf.item.value)));
 const reason = computed(() => (props.omen ? null : shelf.usable(props.k)));
 /** 掛けているお告げのせいで打てない (お告げを抜けば打てる)。灰色にせず、値段の代わりに理由を出す */

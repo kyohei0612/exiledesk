@@ -12,7 +12,6 @@ import { socketCapOf } from "../../../services/craft-stage/engine";
 import { emotionKeysFor } from "../../../services/craft-stage/apply-emotion";
 import { scrollBoxOf } from "../../../utils/keep-place";
 import { hoverStack } from "../../../state/hover-stack";
-import { nameOf } from "../../../state/craft-stage";
 import { toCss } from "../../../utils/zoom";
 import { GAP_X, GAP_Y } from "../../../utils/anchor-place";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -21,7 +20,7 @@ import ShelfButton from "./ShelfButton.vue";
 import StageOmenTune from "./StageOmenTune.vue";
 import Disclosure from "../../ui/Disclosure.vue";
 import { useShelf } from "../../../state/for-share/shelf-context";
-import { bonesFor, CRAFT_RUNE_KEYS, essenceShelf, OMEN_GROUPS, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
+import { bonesFor, CRAFT_RUNE_KEYS, essenceShelf, nameOfKey, OMEN_GROUPS, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 
@@ -35,6 +34,8 @@ type ShelfTab = "usable" | "orb" | "essence" | "rune" | "omen";
  */
 const props = withDefaults(defineProps<{ initialTab?: ShelfTab; full?: boolean; inlineHeld?: boolean }>(), { initialTab: "usable", full: false, inlineHeld: false });
 const craftStage = useShelf();
+/** 名前は棚のアイテムで引く (シミュの棚は箱の見本。2026-10-24) */
+const nameOf = (k: string): string => nameOfKey(k, craftStage.item.value);
 const tab = ref<ShelfTab>(props.initialTab);
 /**
  * 持った物に掛けられるお告げの欄 (呼ぶ側の slot "held") は、持ったアイコンの「見た目の行」のすぐ下に差し込み、下の行を押し下げる
