@@ -1,5 +1,15 @@
 # サーバー管理人 のやる事
 
+## 次の管理人へ (10-24、前の管理人。長い物は notes/2026-10-24-handoff.md)
+- 先に README の決まり 10 個と notes/2026-10-24-handoff.md を読む。報告はブラック (dev/todo.md の宛先の表) へ。
+- やりかけ: Discord を読むだけの Bot (1380e836、本番まだ)。オーナーのトークン (secret DISCORD_BOT_TOKEN) と読むチャンネルの ID 待ち (質問はブラックへ送り済み)。揃ったら vars に DISCORD_CHANNELS → 本番の D1 に migrations 0009 → server/live を deploy → 日報の節を見る (notes/2026-10-24-discord-bot.md)。
+- やりかけ: ツリーの短い URL (/tree/、1e3432b5) は TREE_SHARE=1 の時だけ開く。シミュを本番に出す時に表 (0008) と一緒に。
+- 照らしの台本: `node scripts/compare-snaps.mjs --local <手元>` (必ず 01 から、--prev で前の撮り物と)。手元は `node scripts/preview-prod.mjs --head --live --port 1462`。前回は違い 12/40 で全部 RELEASED の分 + スマホの使い方・コツの数 px のずれ (要確認)。
+- Cloudflare の見張り: 毎朝と大きな確かめの前後に、wrangler auth token で GraphQL (workersInvocationsAdaptive・kvOperationsAdaptiveGroups)。1 日 10 万はアカウント全体、JST 9 時に戻る。web-dev は消したので本番だけの数 (10-23 は本番 web 3,423・live 775)。
+- 日報: 予定のタスクが 9:05 頃に md を書いてブラックへ送る。止まったら list_task_runs で見て run_scheduled_task で回し直す。
+- 気を付ける: 本番の worker を出すのは OK の後。server/web を出すと dist-web も上がる (本番と同じか比べてから)。src に新しい import.meta.env.* が入ると _bundle-ts.mjs の define に足さないと build:web が落ちる。
+- 要望は KV の fb:。10-22 の 89ff6ab3 より後は 0 件 (10-24 朝)。返事の無い物は 91832821 だけ (シミュを本番に出す時)。
+
 ## 最新の報告 (10-24、ブラックへ。送信の上限で止まったのでここに)
 - 手元の開発版と同じ環境ができた (29838492)。オーナーへ: `pnpm preview:prod -- --dev` → **http://dev.exiledesk.localhost:1461/** (ブックマーク「ExileDesk開発版」を差し替え、初回はビルドで数分、止めるのは Ctrl+C)。本番そのままは `pnpm preview:prod` → http://exiledesk.localhost:1460/。
 - 開発版と同じ: ビルドの印・シミュとチュートリアル・相場は本番の live の /boot.json・分析は送らない。違う: 門なし、HEAD ではなく今の作業中のファイルから。確かめ (窓なしの Chrome 9370、返した): 題・アイコン 5 つ・manifest は開発版と同じ、エミュ・シミュのツリー・見本の木 (金の指輪で箱 42)・タブ替えが動きエラー 0。窓なしの Chrome だけ Service Worker の取っておき場が開けない癖 (外して見た)、いつもの Chrome はオーナーに触って確かめてほしい。本番と並べた比べは 42 通りで違いは content-type の charset だけ。
