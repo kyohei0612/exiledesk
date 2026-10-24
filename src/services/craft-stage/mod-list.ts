@@ -20,6 +20,7 @@ import { TAG_STYLE } from "../mods/tag-ja";
 import { familyBlocked, fillShares, tierWeight } from "../mods/mod-rules";
 import { tierDisplayRanges } from "../mods/stat-scale";
 import { tr } from "../../i18n/lang";
+import { jaTypeName } from "../../i18n/item-names-ja";
 
 /** エッセンスはパーフェクト (合金も) とそれ以外を分ける (使い道が違う、[[essence-kind.ts]]) */
 export type ModGroup = "normal" | "rune" | "essence" | "perfect_essence" | "desecrated" | "otherworldly" | "special";
@@ -43,8 +44,23 @@ const GROUP_JA: Record<ModGroup, string> = {
 export const groupLabelOf = (g: ModGroup, item: StageItem | null | undefined): string =>
   (g === "essence" || g === "perfect_essence") && !!item && inGroup(item.cls.category, "jewel") ? tr("デリリウム", "Delirium") : GROUP_JA[g];
 
-/** modId = その段の MOD (同じ系統をまとめた行では段ごとに違う、2026-10-05)。tier = rank の数 (T2 → 2、その段の MOD の中で数える) */
-export interface ListTier { rank: string; tier: number; name: string; ilvl: number; weight: number; text: string; modId?: string }
+/**
+ * modId = その段の MOD (同じ系統をまとめた行では段ごとに違う、2026-10-05)。tier = rank の数 (T2 → 2、その段の MOD の中で数える)。
+ * essence = エッセンス・完全エッセンス (合金も) の行の段で、その段を付けるアイテムの名前 (英語はゲームの名前、日本語は items-ja。段の MOD レベルは ilvl。2026-10-24 オーナー)
+ */
+export interface ListTier { rank: string; tier: number; name: string; ilvl: number; weight: number; text: string; modId?: string; essence?: { en: string; ja: string } }
+
+/**
+ * エッセンスの段の名前 (vendor の tiers[].name) → 付けるアイテムの名前。vendor の名前とゲームの名前がずれる物は直す:
+ * コラプトのエッセンスは「Perfect」が付かない (Perfect Essence of Hysteria → Essence of Hysteria)、合金はアポストロフィ (The Runebinders Alloy → The Runebinder's Alloy)
+ */
+export function essenceItemOf(tierName: string): { en: string; ja: string } | null {
+  for (const en of [tierName, tierName.replace(/^Perfect /, ""), tierName.replace(/s Alloy$/, "'s Alloy")]) {
+    const ja = jaTypeName(en);
+    if (ja !== en) return { en, ja };
+  }
+  return null;
+}
 export interface ListRow {
   id: string;
   /** 系統 (URL の mod= で id の代わりに使える) */
@@ -118,7 +134,11 @@ export function modListFor(data: PatchData, item: StageItem): ListRow[] {
     const ja = jaOfMod(m);
     const n = m.tiers.length;
     // 数値は画面の単位に (1 万分率の 400 → 4%。決まりは services/mods/stat-scale.ts、2026-10-03 に生の値が出ていた)
-    const tiers = [...m.tiers].reverse().map((t, i): ListTier => ({ rank: `T${i + 1}`, tier: i + 1, name: t.name, ilvl: t.ilvl, weight: t.weight, text: fillModText(m, tierDisplayRanges(t)) }));
+    const ess = group === "essence" || group === "perfect_essence";
+    const tiers = [...m.tiers].reverse().map((t, i): ListTier => {
+      const e = ess ? essenceItemOf(t.name) : null;
+      return { rank: `T${i + 1}`, tier: i + 1, name: t.name, ilvl: t.ilvl, weight: t.weight, text: fillModText(m, tierDisplayRanges(t)), ...(e ? { essence: e } : {}) };
+    });
     const weight = tierWeight(m, 0, Infinity); // アイテムレベルは見ない (全部の段)
     const on = onIds.has(m.id);
     return {
