@@ -12,7 +12,7 @@
  *   - Chrome はこの台本が立てて、終わったら止めて profile を消す (確認用 Chrome は使用表に書いてから)。
  */
 import { spawn, execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -175,11 +175,22 @@ let loads = 0;
 for (const [vName, view] of Object.entries(VIEWS)) {
   if (ONLY && ONLY !== vName) continue;
   const res = {};
-  for (const side of Object.keys(SIDES)) { res[side] = await runSide(side, view); if (side === "本番") loads += STEPS.filter((s) => s.go).length; }
+  // --prev <前の出し物のフォルダー>: 「本番」の側を前に撮った PNG にする (出した後に、前の本番と今を比べる。文字は残っていないので絵だけ、10-24)
+  const PREV = arg("--prev", null);
+  for (const side of Object.keys(SIDES)) {
+    if (side === "本番" && PREV) {
+      res[side] = Object.fromEntries(STEPS.filter((s) => !s.noshot).map((s) => { const f = resolve(ROOT, PREV, vName, `${s.id}-本番.png`); return [s.id, { ok: true, png: existsSync(f) ? readFileSync(f).toString("base64") : null, text: null, url: null, title: null }]; }));
+      continue;
+    }
+    res[side] = await runSide(side, view);
+    if (side === "本番" || (PREV && side === "手元")) loads += STEPS.filter((s) => s.go).length;
+  }
   for (const st of STEPS.filter((s) => !s.noshot)) {
     const p = res.本番[st.id], l = res.手元[st.id];
+    if (!p?.png) { console.log(`  前の撮り物が無い ${vName} ${st.id}`); continue; }
     const d = await pixelDiff(p.png, l.png);
-    const td = lineDiff(p.text, l.text);
+    const td = p.text ? lineDiff(p.text, l.text) : { onlyA: [], onlyB: [] };
+    if (!p.text) { p.title = l.title; p.url = l.url; }
     const dir = join(OUT, vName); mkdirSync(dir, { recursive: true });
     writeFileSync(join(dir, `${st.id}-本番.png`), Buffer.from(p.png, "base64"));
     writeFileSync(join(dir, `${st.id}-手元.png`), Buffer.from(l.png, "base64"));
