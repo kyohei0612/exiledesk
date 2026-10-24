@@ -60,6 +60,11 @@ const problem = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.v
       <ul class="flex flex-col gap-0.5">
         <li v-for="a in marks" :key="a.modId" data-tree-start-mark class="min-w-0 truncate text-mod-fractured" :title="t.startModLabel(a, true)">✦ {{ t.startModLabel(a, true) }} <span v-if="marks.length > 1" class="text-[11px] opacity-60">{{ tr(`(1/${marks.length})`, `(1/${marks.length})`) }}</span></li>
       </ul>
+      <!-- フラクチャーの始め方 (印を付けた時の 2 択と同じ、TreeFractureAsk。10-24 夜オーナー) -->
+      <div data-tree-start-from class="flex flex-wrap items-center gap-1">
+        <button type="button" data-tree-start-from-k="fractured" class="g-tab !min-h-[26px] !px-2 !text-[12px]" :class="st.from === 'fractured' ? 'on' : ''" :title="tr('✦ が付いたレアを買って始める', 'Buy a rare that already has the ✦ mod')" @click="t.setStartFrom('fractured')">{{ tr("フラクチャー済みから", "From fractured") }}</button>
+        <button type="button" data-tree-start-from-k="four" class="g-tab !min-h-[26px] !px-2 !text-[12px]" :class="st.from === 'four' ? 'on' : ''" :title="tr('4 MOD のレアにフラクチャー。必ず成功として、素材とオーブは 3 個分 (33%)', 'Fracture a 4-mod rare. Counted as a sure success, with materials and orbs ×3 (33%)')" @click="t.setStartFrom('four')">{{ tr("フラクチャー前から ×3", "Pre-fracture ×3") }}</button>
+      </div>
     </div>
     <p v-else data-tree-start-shape="white" class="rounded-md bg-white/[0.04] px-2 py-1.5 text-[13px]">{{ tr("白 (ノーマル) から始める。✦ から始めるなら 0 完成形の設定で MOD にフラクチャーの印を付ける", "Start from a white (normal) base. To start from ✦, mark mods as fractured in 0 Final item") }}</p>
     <button type="button" data-tree-start-to-goal class="g-btn sm self-start" @click="t.startPage.value = false; t.goalPage.value = 2">{{ tr("0 完成形の設定で印を変える →", "Change the marks in 0 Final item →") }}</button>

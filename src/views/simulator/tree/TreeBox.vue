@@ -77,10 +77,14 @@ const startRest = computed(() => {
 });
 /** ベースの値段の 1 行 (始め方を比べた一番安い物、use-tree の baseCost。値段を入れていなければ出さない) */
 const costLine = computed(() => {
-  const b = t.baseCost.value?.best;
-  if (!b) return "";
-  const n = b.cost >= 100 ? b.cost.toFixed(0) : b.cost >= 10 ? b.cost.toFixed(1) : b.cost.toFixed(2);
-  return tr(`ベース ${n} 神 · ${b.short}`, `Base ${n} div · ${b.short}`);
+  // フラクチャーの始め方を決めていれば必ず出す (済みから / 前から ×3、10-24 夜オーナー「選んだ方はスタートの箱に見える形で」)
+  const f = marks.value.length ? startOf(t.doc.value).from : undefined;
+  const b = t.baseCost.value?.best, c = t.startChoice.value;
+  const name = f === "four" ? tr("フラクチャー前から ×3", "pre-fracture ×3") : f === "fractured" ? tr("フラクチャー済みから", "fractured") : b?.short ?? "";
+  const cost = f ? c?.cost ?? null : b?.cost ?? null;
+  if (cost == null) return name;
+  const n = cost >= 100 ? cost.toFixed(0) : cost >= 10 ? cost.toFixed(1) : cost.toFixed(2);
+  return tr(`ベース ${n} 神 · ${name}`, `Base ${n} div · ${name}`);
 });
 const startTitle = computed(() => [
   ...(marks.value.length > 1 ? [tr("この中のどれか 1 つが固定される", "One of these gets fractured")] : []),

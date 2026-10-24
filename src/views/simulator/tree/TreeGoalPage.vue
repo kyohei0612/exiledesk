@@ -21,6 +21,7 @@ import TreeBasePick from "./TreeBasePick.vue";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue";
 import TreeTabs from "./TreeTabs.vue";
+import TreeFractureAsk from "./TreeFractureAsk.vue";
 import { useTree } from "./use-tree";
 import { openTreePage, treeStep } from "../../../web/page";
 
@@ -117,10 +118,17 @@ function goalAt(modId: string, tier: number): "pick" | "in" | null {
 /** その段の狙いにフラクチャーの印があるか */
 const isFrac = (modId: string, tier: number): boolean => t.goals.value.some((a) => a.modId === modId && a.tier === tier && a.fractured);
 const marks = computed(() => t.goals.value.filter((a) => a.fractured).map((a) => a.modId));
+/** 印を付け外す。印が無い所から付けたら、フラクチャーの始め方 (済みから / 前から) を聞く (TreeFractureAsk、10-24 夜オーナー) */
+const fracAsk = ref(false);
+function markFracture(modId: string, tier: number): void {
+  const had = marks.value.length;
+  t.toggleFracture(modId, tier);
+  if (!had && marks.value.length) fracAsk.value = true;
+}
 /** カードの行の右クリック = その狙いの段で印を付け外し (狙いでない MOD は来ない) */
 function onCardFracture(m: StageMod): void {
   const g = t.goals.value.find((a) => a.modId === m.modId);
-  if (g) t.toggleFracture(g.modId, g.tier);
+  if (g) markFracture(g.modId, g.tier);
 }
 /** 完成の MOD の段の説明 (日本語・英語の組、1 つの事 = 1 行) */
 const HELP: Array<[string, string]> = [
@@ -180,7 +188,7 @@ const HELP: Array<[string, string]> = [
             <!-- 選んだ段より上の段は狙いに含まれる印だけ (押すとそこから上に絞る)。ボタンの形にすると狙いが 2 つあるように見えた (10-24 オーナー) -->
             <button v-if="goalAt(tt.modId ?? r.id, tt.tier) === 'in'" type="button" data-mod-included class="px-2 text-[12px] opacity-60 hover:opacity-100" :title="tr(`狙いに含む。押すと ${tt.rank} 以上に絞る`, `Included in the target. Click to narrow to ${tt.rank}+`)" @click.stop="pickGoal.toggle(tt.modId ?? r.id, tt.tier)">{{ tr("含む", "Included") }}</button>
             <button v-else type="button" data-mod-pick class="tbtn" :disabled="!!blockOf(tt.modId ?? r.id, tt.tier)" :class="pickGoal.has(tt.modId ?? r.id, tt.tier) ? 'on' : ''" :title="blockOf(tt.modId ?? r.id, tt.tier) ?? (pickGoal.has(tt.modId ?? r.id, tt.tier) ? tr('もう一度押すと狙いから外す', 'Click again to remove the target') : tr(`${tt.rank} 以上を完成の狙いにする`, `Make ${tt.rank}+ a final target`))" @click.stop="pickGoal.toggle(tt.modId ?? r.id, tt.tier)">{{ pickGoal.has(tt.modId ?? r.id, tt.tier) ? (tt.tier === 1 ? tr("✓ 狙い", "✓ Target") : tr(`✓ 狙い (${tt.rank} 以上)`, `✓ Target (${tt.rank}+)`)) : tr("狙いにする", "Target") }}</button>
-            <button v-if="goalAt(tt.modId ?? r.id, tt.tier) !== 'in'" type="button" data-mod-fracture class="tbtn ml-1" :disabled="!!blockOf(tt.modId ?? r.id, tt.tier)" :class="isFrac(tt.modId ?? r.id, tt.tier) ? 'on !text-mod-fractured' : ''" :title="blockOf(tt.modId ?? r.id, tt.tier) ?? (isFrac(tt.modId ?? r.id, tt.tier) ? tr('もう一度押すとフラクチャーの印を外す', 'Click again to remove the fracture mark') : tr(`${tt.rank} 以上をフラクチャーの候補にする (どれか 1 つが固定されたレアからスタート)`, `Make ${tt.rank}+ a fracture candidate (start from a rare with one of them fractured)`))" @click.stop="t.toggleFracture(tt.modId ?? r.id, tt.tier)">{{ isFrac(tt.modId ?? r.id, tt.tier) ? tr("✦ 印", "✦ Marked") : tr("フラクチャー", "Fracture") }}</button>
+            <button v-if="goalAt(tt.modId ?? r.id, tt.tier) !== 'in'" type="button" data-mod-fracture class="tbtn ml-1" :disabled="!!blockOf(tt.modId ?? r.id, tt.tier)" :class="isFrac(tt.modId ?? r.id, tt.tier) ? 'on !text-mod-fractured' : ''" :title="blockOf(tt.modId ?? r.id, tt.tier) ?? (isFrac(tt.modId ?? r.id, tt.tier) ? tr('もう一度押すとフラクチャーの印を外す', 'Click again to remove the fracture mark') : tr(`${tt.rank} 以上をフラクチャーの候補にする (どれか 1 つが固定されたレアからスタート)`, `Make ${tt.rank}+ a fracture candidate (start from a rare with one of them fractured)`))" @click.stop="markFracture(tt.modId ?? r.id, tt.tier)">{{ isFrac(tt.modId ?? r.id, tt.tier) ? tr("✦ 印", "✦ Marked") : tr("フラクチャー", "Fracture") }}</button>
           </td>
         </template>
       </ModTable></div>
@@ -211,5 +219,6 @@ const HELP: Array<[string, string]> = [
         <button type="button" class="g-btn sm" @click="go(1)">{{ tr("← ベース", "← Base") }}</button>
       </div>
     </template>
+    <TreeFractureAsk v-if="fracAsk" @close="fracAsk = false" />
   </ModalShell>
 </template>

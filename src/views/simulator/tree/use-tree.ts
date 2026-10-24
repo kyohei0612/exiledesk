@@ -10,7 +10,7 @@ import { minIlvlFor, tierRankLabel } from "../../../services/craft-stage/engine"
 import { startItemOf } from "../../../services/simulator/tree/tree-sample";
 import { carryAims, placeMods } from "../../../services/craft-stage/engine-sim";
 import type { StageItem } from "../../../services/craft-stage/engine";
-import { isTreeDoc, migrateStart, newTree, startOf, startRarity, type Aim, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
+import { fractureMarks, isTreeDoc, migrateStart, newTree, startOf, startRarity, type Aim, type StartFrom, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { treeBaseCost } from "../../../services/simulator/tree/tree-base-cost";
 import { addTreeRecipe, sameTree, setCurrentTreeRecipe, treeRecipes, treeRecipeSaved } from "../../../state/simulator/tree-recipes";
 import { tr } from "../../../i18n/lang";
@@ -331,7 +331,16 @@ const goalItem = computed((): { item: StageItem; note: string | null; left: Arra
 const goalRarity = computed((): TreeRarity => doc.value.goal?.rarity ?? "rare");
 function setRarity(r: TreeRarity): void { edit((d) => { if (r === "rare") delete d.goal; else d.goal = { rarity: r }; migrateStart(d); }); }
 /** 始め方のベースの値段 (神、start.price。無ければ前の版の始め方の比べの一番安い物、どちらも無ければ 0)。100 人回す時の 1 本ごとの値段 */
-const startPrice = (): number => startOf(doc.value).price ?? baseCost.value?.best?.cost ?? 0;
+const startPrice = (): number => startOf(doc.value).price ?? startChoice.value?.cost ?? 0;
+/** 使う始め方 (start.from で決めた方、決めていなければ一番安い物。10-24 夜オーナー「フラクチャー済みから / フラクチャー前から」)。cost は値段が無ければ null */
+const startChoice = computed((): { k: string; label: string; cost: number | null } | null => {
+  const c = baseCost.value, f = startOf(doc.value).from;
+  if (!c) return null;
+  if (!f) return c.best;
+  const k = c.kinds.find((x) => x.k === f);
+  return k ? { k: k.k, label: k.label, cost: k.cost } : null;
+});
+function setStartFrom(v: StartFrom): void { edit((d) => { migrateStart(d); d.start!.from = v; }); }
 function setStartPrice(v: number | null): void { edit((d) => { migrateStart(d); if (v == null || !Number.isFinite(v) || v < 0) delete d.start!.price; else d.start!.price = v; }); }
 /** blank = 始まりの箱に手が無い (白紙) */
 const isBlank = (d: TreeDoc): boolean => !d.boxes.start?.hand && !d.boxes.start?.split && Object.keys(d.boxes).length === 1;
@@ -413,7 +422,8 @@ const treePrice = (key: string): number => priceOfKey(key, treeItem.value);
  * なので (1) 値段に関わる物 (ベース・アイテムレベル・始まりの形と値段) だけを鍵にし、箱を足しても計算し直さない (前は木を替えるたびに計算した)
  * (2) 最初の計算は箱を全部出し終えて描いた後に回す (allowCost、計算中は題の横の札) (3) 同じ鍵と相場の答えは覚える
  */
-const costKey = computed(() => JSON.stringify({ b: doc.value.base, l: doc.value.itemLevel, s: startOf(doc.value) }));
+// 印 (✦) は memoAims にある (10-23 に start から移した)。前は鍵にも渡す木にも入れず、比べがいつも「✦ が無い」で止まり値段が 0 だった (10-24 夜 21 本目)
+const costKey = computed(() => JSON.stringify({ b: doc.value.base, l: doc.value.itemLevel, s: startOf(doc.value), m: fractureMarks(doc.value) }));
 const costReady = ref(false);
 let costAsked = false;
 /** 始まりの値段の計算を始めてよい (ツリーのページが箱を全部出し終えた時、use-tree-reveal)。描いてから (2 フレーム待って) 計算する */
@@ -428,12 +438,12 @@ const baseCost = computed(() => {
   if (!d) return null;
   if (!costReady.value) return null;
   const key = costKey.value;
-  const { b, l, s: st } = JSON.parse(key) as { b: string; l: number; s: ReturnType<typeof startOf> };
+  const { b, l, s: st, m } = JSON.parse(key) as { b: string; l: number; s: ReturnType<typeof startOf>; m: Aim[] };
   // 相場 (神の値段と骨・オーブの値段) も鍵に。ここで読むので相場が変われば計算し直す
   const mk = `${key}|${treePrice("divine")}|${treePrice("exalt")}|${treePrice("chaos")}|${treePrice("exalt_greater")}`;
   const hit = costMemo.get(mk);
   if (hit) return hit;
-  const r = treeBaseCost(d, { ...newTree(b, l), start: st }, st.prices ?? {}, treePrice, nameOf);
+  const r = treeBaseCost(d, { ...newTree(b, l), start: st, memoAims: m }, st.prices ?? {}, treePrice, nameOf);
   costMemo.set(mk, r);
   return r;
 });
@@ -441,5 +451,5 @@ const baseCost = computed(() => {
 const baseCostBusy = computed(() => !!s.data.value && !costReady.value);
 
 export function useTree() {
-  return { tabDocs, active, switchTab, addTab, closeTab, ilvlNote, startPrice, setStartPrice, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, startFresh, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
+  return { tabDocs, active, switchTab, addTab, closeTab, ilvlNote, startPrice, setStartPrice, startChoice, setStartFrom, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, startFresh, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
 }

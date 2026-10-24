@@ -92,7 +92,9 @@ export interface StartMod { modId: string; tier: number; fractured?: true }
 /** レアリティ (ノーマルの始まり = MOD 無しの白いベース、10-22 オーナー「ノーマルからも始められるように」) */
 export type TreeRarity = "normal" | "magic" | "rare";
 /** price = この始め方のベースを取引所で買う値段 (神、手入力。結果のまとめで入れる、10-22 オーナー「どの始め方が安いかは結果のまとめで」)。prices は前の版の始め方ごとの値段 */
-export interface TreeStart { rarity: TreeRarity; mods: StartMod[]; runes?: string[]; prices?: TreeBasePrices; price?: number }
+/** フラクチャーの始め方 (10-24 夜オーナー): fractured = フラクチャー済みを買う、four = フラクチャー前 (4 MOD のレア) から。必ず成功として 1/3 で素材とオーブ ×3 (tree-base-cost の four) */
+export type StartFrom = "fractured" | "four";
+export interface TreeStart { rarity: TreeRarity; mods: StartMod[]; runes?: string[]; prices?: TreeBasePrices; price?: number; from?: StartFrom }
 /** 始め方ごとのベースの値段 (神、手入力。入れていない物は無い)。始まりの箱のベースの値段を比べる tree-base-cost.ts で使う */
 export interface TreeBasePrices { white?: number; four?: number; fractured?: number }
 export interface TreeDoc {
