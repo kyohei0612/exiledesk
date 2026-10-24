@@ -16,7 +16,7 @@ import type { SharedRace } from "../../services/craft-stage/engine-emu";
 import { ROUTES_MAX, routesLuck, routesOpen, routesRunes, routesShared, routesTarget } from "../web-page";
 
 /** スパムシミュレーターの運試しのシェア: r = 道、g = 等級、m = 狙いの MOD、t = 段の下限、i = アイテムレベル、a = 当たりが 2 つ以上の時の全部 ([MOD の id, 段の下限]。m・t は 1 つ目) */
-export interface RouteSetup { route: { r: RouteKind; g: Grade; m: string; t: number; i: number; a?: Array<[string, number]>; /** 嵌めたルーンの id */ u?: string[]; /** 計算済みの結果 (開いた人は計算しない) */ x?: SharedRace } }
+interface RouteSetup { route: { r: RouteKind; g: Grade; m: string; t: number; i: number; a?: Array<[string, number]>; /** 嵌めたルーンの id */ u?: string[]; /** 計算済みの結果 (開いた人は計算しない) */ x?: SharedRace } }
 /** 旧カオススパム計算機のシェア (読むだけ): i = アイテムレベル、a = [MOD の id, 段の下限] の並び */
 interface OldSpamSetup { i: number; a: Array<[string, number]> }
 

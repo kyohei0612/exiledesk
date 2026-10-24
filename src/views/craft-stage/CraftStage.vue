@@ -92,7 +92,6 @@ function onKey(e: KeyboardEvent): void {
   // ほかのページ (ツリー・スパムシミュ・デイリー・要望・レシピ) の後ろで隠れている時も動かさない (WebApp.vue の v-show。2026-10-22 ツリーで Tab を押すと MOD 一覧が開いた)
   const root = self?.proxy?.$el as HTMLElement | undefined;
   if (root instanceof HTMLElement && root.getClientRects().length === 0) return;
-  // シミュレーションの時は StageSimPanel.vue が「1 つ戻す」に使う
   // 入力欄の中 (MOD 一覧・ベースの検索) と窓を開いている時は、文字の取り消しや窓の物に任せる (2026-10-10 点検: 文字ではなく 1 手戻っていた)
   const t = e.target as HTMLElement | null;
   const typing = !!t && (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName));
@@ -154,11 +153,6 @@ watch(() => s.log.value, () => { shareOpen.value = null; });
 // 共有の欄は枠の外を押す・Esc で閉じる (2026-10-22 オーナー、全部の画面の決まり。前は閉じる手段が無かった)
 const shareEl = ref<HTMLElement | null>(null);
 useDismiss(() => !!shareOpen.value, [shareEl], () => { shareOpen.value = null; });
-/** シミュレーションでまだベースを選んでいない (ベース選びだけを出す) */
-/**
- * シミュレーションは開くたびにまっさら (ベースを選ぶ所) から。前回閉じた途中は戻さない
- * (2026-10-08 オーナー「前回閉じたクラフトの名残が残るから毎回リセットでおｋ」。途中は writeSimSession で要望・バグの添付にだけ残す。レシピは別に残る)
- */
 /** 道具の帯のボタン (ゲームの 3 枚ボタン、src/styles/game-ui.css) */
 const btn = "g-btn sm";
 /**
@@ -235,7 +229,7 @@ const guidePage = computed(() => !inApp && s.mode.value === "tutorial" && !inLes
 const { handNoBase } = useStageBase();
 // Web はベース選びを別のページに (?page=base、StageBasePage.vue)。まだ選んでいない時もそのページ (エミュレーターだけ。シミュレーターは今まで通り)
 watch(() => PAGES_ON && !s.replay.value && s.mode.value === "hand" && handNoBase.value, (u) => { baseUnpicked.value = u; }, { immediate: true });
-const subPage = computed(() => PAGES_ON && !s.replay.value && (s.mode.value === "hand" || s.mode.value === "sim") && !inLesson.value && (basePage.value || baseUnpicked.value));
+const subPage = computed(() => PAGES_ON && !s.replay.value && s.mode.value === "hand" && !inLesson.value && (basePage.value || baseUnpicked.value));
 /**
  * ジェムコラプト (Web 版だけ、2026-10-16 ロードマップの土台)。エミュレーター・シミュレーターのタブの並びに置く。開いた時に読む。
  * 計算はアプリのヴァールの天秤と同じ関数 (views/gem-corrupt/model.ts)、入力は売値 3 つの手入力
@@ -416,7 +410,6 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
     </div>
     </Transition>
     <!-- このベースに付く MOD (StageModList.vue、2026-09-29) -->
-    <!-- シミュレーションでは ① 狙う MOD の枠の中に出す (StageSimPanel.vue) -->
     <!-- 手で打つ画面は重ね (後ろを暗く) で出す。枠の外を押す・閉じる・Esc・Tab で閉じる。持っている物はそのまま (2026-10-11 オーナー) -->
     <!-- 大きさは後ろの画面の 75% (縦横とも。2026-10-11 オーナー「MOD 枠は後ろのウィンドウの大きさで決まる、75%」) -->
     <!-- ページの下にも同じ一覧 (同じ部品 = 同じエンジン。窓はすぐ見るための便利機能。2026-10-11 オーナー「スクロールした下に配置してていい」) -->
