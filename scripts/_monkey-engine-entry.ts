@@ -10,7 +10,7 @@ import mods from "../src/vendor/poe2htc/data/mods.json";
 import bases from "../src/vendor/poe2htc/data/base_items.json";
 import extra from "../src/services/htc/extra-bases.json";
 import jewels from "../src/services/htc/jewel-bases.json";
-import { applyCurrency, baseSocketsOf, forceKey, freshItem, modListFor, mulberry32, omenBlock, omensAllowedFor, runeEffectFor, runeOf, useReason, type StageItem } from "../src/services/craft-stage/engine";
+import { aimHits, applyCurrency, baseSocketsOf, forceKey, freshItem, modListFor, mulberry32, omenBlock, omensAllowedFor, runeEffectFor, runeOf, tierIndexOf, useReason, type StageItem, type StageMod } from "../src/services/craft-stage/engine";
 import { placeMods, stepOutcomesOrTooMany } from "../src/services/craft-stage/engine-sim";
 import { CRAFT_RUNE_KEYS, ORBS, bonesFor, essenceShelf, nameOfKey, runesFor } from "../src/state/for-share/craft-stage-shelf";
 import { SIM_HIDDEN } from "../src/state/for-share/shelf-context";
@@ -118,6 +118,49 @@ function withRunes(item: StageItem, card: string): StageItem {
 export function itemsFor(base: string, ms: ReadonlyArray<{ modId: string; tier: number }>, card = ""): Record<"normal" | "magic" | "rare", StageItem | null> {
   const out = {} as Record<"normal" | "magic" | "rare", StageItem | null>;
   for (const rarity of ["normal", "magic", "rare"] as const) { const it = itemWith(base, rarity, ms); out[rarity] = it ? withRunes(it, card) : null; }
+  return out;
+}
+/** 狙い (ツリーの札 = modId と段の T) */
+export interface Aim { modId: string; tier: number }
+/**
+ * 1 手で狙いのどれが付くかの割合 (エンジンの stepOutcomes の全部の枝、乱数なし)。当たり = 新しく付いた MOD が狙いに当たる (同じ系統で同じ文も、ツリーの当たりと同じ sameText)。
+ * lost = もう付いていた狙いの MOD が消えた枝。枝が多すぎる・行き先の無い手は null
+ */
+export function oddsOf(item: StageItem, key: string, omens: readonly string[], aims: readonly Aim[]): { hit: Record<string, number>; any: number; lost: number; void: number } | null {
+  const r = stepOutcomesOrTooMany(data!, item, key, omens);
+  if (!r || r === "tooMany") return null;
+  const ts = aims.map((a) => ({ k: `${a.modId}|${a.tier}`, t: { modId: a.modId, minTierIndex: tierIndexOf(data!, a.modId, a.tier) } }));
+  const opts = { data: data!, sameText: true };
+  const held = (it: StageItem): Set<string> => new Set(ts.filter(({ t }) => [...it.prefixes, ...it.suffixes].some((m) => aimHits(m, t, opts))).map(({ k }) => k));
+  const before = held(item);
+  const out = { hit: Object.fromEntries(ts.map(({ k }) => [k, 0])) as Record<string, number>, any: 0, lost: 0, void: 0 };
+  for (const o of r) {
+    if (o.void) { out.void += o.p; continue; }
+    const got = ts.filter(({ k, t }) => !before.has(k) && o.added.some((m) => aimHits(m, t, opts)));
+    for (const { k } of got) out.hit[k]! += o.p;
+    if (got.length) out.any += o.p;
+    if ([...before].some((k) => !held(o.item).has(k))) out.lost += o.p;
+  }
+  return out;
+}
+/** 見えている形 (レアリティ・MOD・品質・ソケット) からエンジンで組み立てたアイテム (組み立てられなければ null)。ツリーが渡した物と比べる */
+export function rebuild(base: string, rarity: "normal" | "magic" | "rare", ms: ReadonlyArray<{ modId: string; tier: number; fractured?: boolean }>, quality = 0, sockets = 0): StageItem | null {
+  const it = itemWith0(base, rarity, ms);
+  if (!it) return null;
+  const fr = new Set(ms.filter((m) => m.fractured).map((m) => m.modId));
+  const mark = (m: StageMod): StageMod => (fr.has(m.modId) ? { ...m, fractured: true } : m);
+  return { ...it, quality, sockets: Math.max(sockets, it.sockets ?? 0), prefixes: it.prefixes.map(mark), suffixes: it.suffixes.map(mark) };
+}
+/** 2 つのアイテムの食い違い (レアリティ・MOD の id と段・✦・品質・ソケット)。同じなら空 */
+export function itemDiff(a: StageItem, b: StageItem): string[] {
+  const sig = (it: StageItem): string[] => [...it.prefixes, ...it.suffixes].map((m) => `${m.side === "prefix" ? "P" : "S"} ${m.modId}#${m.tierIndex}${m.fractured ? "✦" : ""}${m.unrevealed ? "?" : ""}`).sort();
+  const out: string[] = [];
+  if (a.rarity !== b.rarity) out.push(`レアリティ ${a.rarity} / ${b.rarity}`);
+  const sa = sig(a), sb = sig(b);
+  for (const x of sa) if (!sb.includes(x)) out.push(`組み立てだけ ${x}`);
+  for (const x of sb) if (!sa.includes(x)) out.push(`ツリーだけ ${x}`);
+  if ((a.quality ?? 0) !== (b.quality ?? 0)) out.push(`品質 ${a.quality ?? 0} / ${b.quality ?? 0}`);
+  if ((a.sockets ?? 0) !== (b.sockets ?? 0)) out.push(`ソケット ${a.sockets ?? 0} / ${b.sockets ?? 0}`);
   return out;
 }
 /** 名前から鍵 (今の棚にある札の中で) */

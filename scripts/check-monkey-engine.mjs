@@ -9,7 +9,8 @@
  *   - 選んだ手で付きうる MOD の候補 (1 手の行き先の全部の枝。錬金など枝が多すぎる手は数えない)
  * 猿が step に書けば使う欄: rarity ("normal" / "magic" / "rare"、箱のレアリティ。無ければ白・マジック・レアのうち棚の打てる札が猿と一番近い形)、
  *   mods ([{ modId, tier }]、箱の MOD。無ければカードの文から)、modsUnknown (true = 当たりの箱で MOD の見本が空。比べない)、baseEn (英語のベース名、step か記録の頭)。
- * 付いた MOD・当たり外れ (乱数) は比べない。
+ * 付いた MOD・当たり外れ (乱数) は step ごとには比べない。
+ * 記録の頭に tree = { dump: __simMonkey.dump(), items: { 手の箱: __simMonkey.boxItem(id) }, run: __simMonkey.run(300, 1) } があれば、ツリーの数字も照らす (checkTree、10-24 ブラックの頼み)。
  * 書き出し (既定 <フォルダー>/engine/): 猿と同じ名前のファイルに、猿の step と同じ形で engine 欄 (rarity・shelf・pickKey・omens・candidates) と差 (diff) を足した物、
  * まとめは engine-check.json。画面には数と、違いの多い札。手元だけで、外へは出ない
  */
@@ -36,7 +37,59 @@ function parseCard(card) {
 const usable = (list) => new Set((list ?? []).filter((x) => !x.off).map((x) => x.why || x.name));
 const setDiff = (a, b) => [...a].filter((x) => !b.has(x));
 
+/**
+ * ツリーの数字の照らし (記録の頭の tree = { dump, items: { 箱: boxItem }, run }。run は値段を全部 1 で回した物 = 費用は使った個数)。
+ * 手のある箱ごとに、ツリーが渡したアイテム (boxItem の raw、触媒の時は preRaw) と手をエンジンの stepOutcomes に渡して、結果の箱の狙いが付く割合を出し、
+ * run の edges (手の箱 > 結果の箱) ÷ その手の箱から出た数と比べる。繰り返しの手は 1 回の来訪あたりの個数 (spend × n ÷ visits) と 1 ÷ 当たりの割合。
+ * 回した数なので幅で見る: 4σ を超え、差が 3 ポイントより大きい所・エンジンで 0 なのにツリーで出た所を「ずれ」に。見えている MOD から組み立てた物とツリーが渡した物の食い違いも書く
+ */
+const ECHO = "OmenofAbyssalEchoes";
+function checkTree(tr) {
+  const doc = tr?.dump, run = tr?.run;
+  if (!doc?.boxes || !run?.boxes) return null;
+  const res = { n: run.n, finished: run.finished, stuckAt: run.stuckAt ?? {}, unexpected: run.unexpected ?? {}, boxes: [], skipped: [] };
+  const flow = (from, to) => run.edges?.[`${from}>${to}`] ?? 0;
+  for (const b of Object.values(doc.boxes)) {
+    if (!b.hand || !b.outs?.length || b.hand.free) continue;
+    const bi = tr.items?.[b.id];
+    if (!bi?.raw) { res.skipped.push({ box: b.id, why: "boxItem が無い" }); continue; }
+    const outs = b.outs.map((id) => doc.boxes[id]).filter(Boolean);
+    const aims = outs.filter((o) => o.out === "hit" && o.aim).map((o) => o.aim);
+    const built = E.rebuild(doc.base, bi.rarity, bi.mods ?? [], bi.quality ?? 0, bi.sockets ?? 0);
+    const item = bi.preRaw ?? bi.raw;
+    const odds = E.oddsOf(item, b.hand.currency, b.hand.omens.filter((o) => o !== ECHO), aims);
+    const row = { box: b.id, hand: b.hand.currency, omens: b.hand.omens, repeat: !!b.hand.repeat, itemDiff: built ? E.itemDiff(built, bi.raw) : ["見えている形から組み立てられない"], rows: [], off: [] };
+    if (!odds) { row.off.push("エンジンで行き先を数えられない手 (枝が多すぎる・行き先の無い手)"); res.boxes.push(row); continue; }
+    const visits = run.boxes[b.id]?.visits ?? 0;
+    if (b.hand.repeat) {
+      const perVisit = visits ? ((run.boxes[b.id]?.spend ?? 0) * run.n) / visits : NaN, want = odds.any ? 1 / odds.any : Infinity;
+      const sd = odds.any ? Math.sqrt((1 - odds.any) / odds.any ** 2 / Math.max(1, visits)) : 0;
+      row.rows.push({ what: "当たるまでの個数 (1 回の来訪あたり)", tree: perVisit, engine: want, visits });
+      if (visits >= 20 && (!Number.isFinite(want) || (Math.abs(perVisit - want) > 4 * sd && Math.abs(perVisit - want) / want > 0.1))) row.off.push(`当たるまでの個数 ツリー ${perVisit.toFixed(2)} / エンジン ${want.toFixed(2)}`);
+    } else {
+      const total = outs.reduce((s, o) => s + flow(b.id, o.id), 0);
+      const check = (what, obs, p) => {
+        row.rows.push({ what, tree: total ? obs / total : NaN, engine: p, n: total });
+        if (total < 30) return;
+        const q = obs / total, sd = Math.sqrt(Math.max(p * (1 - p), 1e-9) / total);
+        if ((p === 0 && obs > 0) || (Math.abs(q - p) > 4 * sd && Math.abs(q - p) > 0.03)) row.off.push(`${what} ツリー ${(q * 100).toFixed(1)}% / エンジン ${(p * 100).toFixed(1)}% (${total} 回)`);
+      };
+      let hitObs = 0, hitP = 0;
+      for (const o of outs.filter((o) => o.out === "hit" && o.aim)) {
+        const p = odds.hit[`${o.aim.modId}|${o.aim.tier}`] ?? 0, obs = flow(b.id, o.id);
+        hitObs += obs; hitP += p;
+        check(`当たり ${o.aim.modId} T${o.aim.tier}`, obs, p);
+      }
+      if (aims.length) check("当たり以外 (外れ・消えた・不成立)", total - hitObs, Math.max(0, 1 - hitP));
+    }
+    if (row.itemDiff.length) row.off.push(`渡したアイテムが見えている形と違う: ${row.itemDiff.join(" / ")}`);
+    res.boxes.push(row);
+  }
+  return res;
+}
+
 const files = readdirSync(dir).filter((f) => f.endsWith(".json") && f !== "engine-check.json");
+const treeSum = { trees: 0, boxes: 0, off: 0 };
 const sum = { steps: 0, shelfSame: 0, shelfDiff: 0, omensSame: 0, omensDiff: 0, skipped: 0, skipWhy: {} };
 const tally = new Map();
 const add = (k) => tally.set(k, (tally.get(k) ?? 0) + 1);
@@ -91,10 +144,16 @@ for (const f of files) {
     }
     outSteps.push({ ...st, engine, ...(Object.keys(diff).length ? { diff } : {}) });
   }
-  writeFileSync(join(outDir, f), JSON.stringify({ ...rec, steps: outSteps }, null, 1));
+  const treeCheck = checkTree(rec.tree);
+  if (treeCheck) {
+    treeSum.trees++; treeSum.boxes += treeCheck.boxes.length;
+    for (const r of treeCheck.boxes) if (r.off.length) { treeSum.off++; for (const x of r.off) add(`数字 ${r.hand}  ${x.replace(/ ツリー .*$/, "")}`); }
+  }
+  writeFileSync(join(outDir, f), JSON.stringify({ ...rec, steps: outSteps, ...(treeCheck ? { treeCheck } : {}) }, null, 1));
 }
-writeFileSync(join(outDir, "engine-check.json"), JSON.stringify({ ...sum, top: [...tally].sort((a, b) => b[1] - a[1]) }, null, 1));
+writeFileSync(join(outDir, "engine-check.json"), JSON.stringify({ ...sum, tree: treeSum, top:[...tally].sort((a, b) => b[1] - a[1]) }, null, 1));
 console.log(`手 ${sum.steps}: 棚が同じ ${sum.shelfSame} / 違う ${sum.shelfDiff} / 比べられない ${sum.skipped}。お告げ (猿が欄を開いた手) 同じ ${sum.omensSame} / 違う ${sum.omensDiff}`);
+if (treeSum.trees) console.log(`ツリーの数字 (記録の頭の tree): 木 ${treeSum.trees}、手の箱 ${treeSum.boxes}、ずれのある箱 ${treeSum.off}`);
 for (const [w, n] of Object.entries(sum.skipWhy)) console.log(`  比べられない: ${w} ${n}`);
 for (const [k, n] of [...tally].sort((a, b) => b[1] - a[1]).slice(0, 25)) console.log(`  ${n} 手  ${k}`);
 console.log(`書き出し: ${outDir} (猿と同じ名前のファイルに engine 欄と diff、まとめは engine-check.json)`);
