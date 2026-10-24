@@ -39,6 +39,8 @@ const setDiff = (a, b) => [...a].filter((x) => !b.has(x));
 /** ツリーの棚・お告げから外した物 (オーナー 10-24: 聖別・ヒネコラ・ミラー、神のオーブと祝福のお告げ。ルーンはクラフトのルーンだけで、shelfOf が既にそうしている)。エンジンにだけある時は違いに数えない */
 const TREE_OFF = new Set(["OmenofSanctification", "hinekora", "mirror", "divine", "OmenoftheBlessed"]);
 const usableEng = (list) => usable((list ?? []).filter((x) => !TREE_OFF.has(x.key)));
+/** 猿の側からも外した物を除く (外す前の記録や、シミュ部長が直す前のツリーでは棚に残る)。名前はエンジンの札の名前で引く */
+const withoutOff = (names, engList) => { const off = new Set((engList ?? []).filter((x) => TREE_OFF.has(x.key)).map((x) => x.name)); return new Set([...names].filter((n) => !off.has(n))); };
 
 /**
  * ツリーの数字の照らし (記録の頭の tree = { dump, items: { 箱: boxItem }, run }。run は値段を全部 1 で回した物 = 費用は使った個数)。
@@ -117,7 +119,7 @@ for (const f of files) {
     if (raw?.base && raw.cls) {
       base = raw.base;
       const shelf = E.shelfOf(raw, allTiers), eng = usableEng(shelf);
-      const d = { 猿だけ: setDiff(monkey, eng), エンジンだけ: setDiff(eng, monkey) };
+      const d = { 猿だけ: setDiff(withoutOff(monkey, shelf), eng), エンジンだけ: setDiff(eng, withoutOff(monkey, shelf)) };
       best = { rarity: raw.rarity, item: raw, shelf, d, n: d.猿だけ.length + d.エンジンだけ.length };
     } else {
       // 当たりの箱で MOD の見本が空 (猿が modsUnknown を付けた) の時は、白と取り違えないよう比べない
@@ -135,7 +137,7 @@ for (const f of files) {
         if (!item || (st.rarity && st.rarity !== rarity)) continue;
         const shelf = E.shelfOf(item, allTiers);
         const eng = usableEng(shelf);
-        const d = { 猿だけ: setDiff(monkey, eng), エンジンだけ: setDiff(eng, monkey) };
+        const d = { 猿だけ: setDiff(withoutOff(monkey, shelf), eng), エンジンだけ: setDiff(eng, withoutOff(monkey, shelf)) };
         const n = d.猿だけ.length + d.エンジンだけ.length;
         if (!best || n < best.n) best = { rarity, item, shelf, d, n };
       }
@@ -155,7 +157,7 @@ for (const f of files) {
         if (Array.isArray(st.omens)) {
           // 触媒の高貴のお告げ: 品質を入れた後の形 (preRaw) が無く品質 0 の時は比べない (どのカタリストで入れるかはツリーの決め、猿の口はその場で入れて見る)
           const noPre = raw && !st.boxItem.preRaw && !(raw.quality > 0), skipOmen = (n) => noPre && /触媒の高貴/.test(n);
-          const mo = new Set([...usable(st.omens)].filter((n) => !skipOmen(n))), eo = new Set(engine.omens.filter((x) => !x.off && !skipOmen(x.name) && !TREE_OFF.has(x.key)).map((x) => x.name));
+          const mo = new Set([...withoutOff(usable(st.omens), engine.omens)].filter((n) => !skipOmen(n))), eo = new Set(engine.omens.filter((x) => !x.off && !skipOmen(x.name) && !TREE_OFF.has(x.key)).map((x) => x.name));
           const od = { 猿だけ: setDiff(mo, eo), エンジンだけ: setDiff(eo, mo) };
           if (od.猿だけ.length || od.エンジンだけ.length) { sum.omensDiff++; diff.omens = od; for (const x of od.猿だけ) add(`お告げ 猿だけ  ${x}`); for (const x of od.エンジンだけ) add(`お告げ エンジンだけ  ${x}`); } else sum.omensSame++;
         }
