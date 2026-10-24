@@ -85,8 +85,10 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
     return fracOf ? on.filter((a) => a.modId === fracOf) : on.slice(0, 1);
   }
   if (kind !== "spam" && kind !== "add" && kind !== "swap") return [];
-  const tree = aimsOf(doc);
-  const open = (tree.length ? tree : doc.memoAims ?? []).filter((a) => !aimHeldOn(data, item, a, { sameText: true }));
+  // 候補 = 木で使っている当たりの狙い + 完成形の狙い (memoAims)。前は木に狙いが 1 つでもあると木の分だけで、完成形の残りの狙いが出ず
+  // 「どれでも」が空 = 手にならなかった (10-25 モンキー 3 本目 301 の b4: 木の狙いは付いている火耐性貫通だけ、知性・ライフリーチが候補に無い)
+  const pool = [...aimsOf(doc), ...(goals.length ? goals : doc.memoAims ?? [])].filter((a, i, l) => l.findIndex((x) => x.modId === a.modId) === i);
+  const open = pool.filter((a) => !aimHeldOn(data, item, a, { sameText: true }));
   // 見本を数個見て、どれかで付く狙いは並べる (1 つだけだと見本に低い段が付いていて T2 が出なかった、10-22 13 通り組んだ #17)。どの見本でも行き先が無ければ全部。
   // 当たるまで (どれでも) も同じ絞り: 前は付いていない狙い全部で、カオスで付かない狙い (冒涜の MOD・アイテムレベルの足りない段) だけが残ると
   // 当たるまでが毎回 5000 回の上限まで回り、精査の 30 人回しでページが固まった (10-25 モンキー 3 本目、クォータースタッフの外れの箱に 2 つ目のカオススパム)
