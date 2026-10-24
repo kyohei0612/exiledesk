@@ -14,7 +14,7 @@
  *
  *   node scripts/build-blog-pages.mjs [出力先 (既定 dist-web)] [--drafts] [--as-published]
  * --as-published: 下書きを外した時と同じに作る (本番で draft を一度に外す前に、サイトマップ・一覧に全部入るかを確かめる用)
- * 今は開発版 (scripts/deploy-web-dev.mjs) の中でだけ回す (--drafts 付き)。本番の build:web にはまだ入れない (オーナーが記事を読んでから)
+ * 本番の build:web の最後と、手元の本番環境 (scripts/preview-prod.mjs、開発版の作り -- --dev では --drafts 付き) で回す
  */
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
