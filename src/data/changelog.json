@@ -1,5 +1,47 @@
 [
  {
+  "v": "0.1.596",
+  "date": "2026-10-24",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "クラフト台: アビサルロードの紋章のサフィックスも付くように (poe2db に合わせた)",
+    "en": "Craft stage: Mark of the Abyssal Lord suffixes are now in the pool (matches poe2db)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "クラフト台: スキルのレベルの MOD に「+」を付けた",
+    "en": "Craft stage: skill level mods now show “+”"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "クラフト台: タリスマンのアタックスピードの出やすさを poe2db に合わせた",
+    "en": "Craft stage: talisman attack speed weight now matches poe2db"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "クラフト台: ゲームに無いベース 3 つを一覧から外した",
+    "en": "Craft stage: removed 3 bases that are not in the game"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "クラフト台: ルーンの「明示 MOD の強さ」が MOD の値に効くように",
+    "en": "Craft stage: rune “explicit modifier magnitude” now applies to mod values"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "ブラウザの戻る・音の鳴り始め・URL の言語の指定・アプリ版の読み込みの細かい不具合を直した",
+    "en": "Small fixes for browser Back, sound start-up, the language in the URL and the app manifest"
+   }
+  ]
+ },
+ {
   "v": "0.1.595",
   "date": "2026-10-24",
   "items": [
@@ -645,23 +687,5 @@
    }
   ],
   "pop": true
- },
- {
-  "v": "0.1.556",
-  "date": "2026-10-17",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "チュートリアルで手を移った時、前の手で掛けたお告げが残っていたのを直しました",
-    "en": "Fixed omens from the previous tutorial step staying applied after moving to another step"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "更新内容のポップアップは大きなリリースの時だけ出すように (細かい更新は版の番号を押すと見られます)",
-    "en": "The update popup now only appears for major releases (click the version number to see every update)"
-   }
-  ]
  }
 ]

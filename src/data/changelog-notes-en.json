@@ -1,4 +1,12 @@
 {
+  "0.1.596": [
+    "Craft stage: Mark of the Abyssal Lord suffixes are now in the pool (matches poe2db)",
+    "Craft stage: skill level mods now show “+”",
+    "Craft stage: talisman attack speed weight now matches poe2db",
+    "Craft stage: removed 3 bases that are not in the game",
+    "Craft stage: rune “explicit modifier magnitude” now applies to mod values",
+    "Small fixes for browser Back, sound start-up, the language in the URL and the app manifest"
+  ],
   "0.1.595": [
     "Craft stage: base implicits now match poe2db (charm slots on belts and 34 other bases)",
     "Craft stage: missing English implicit texts added, and one Rage tier value now matches poe2db",
