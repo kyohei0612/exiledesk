@@ -1,7 +1,7 @@
 /**
  * tree-recipes.ts — クラフトの道 (ツリー) のレシピ = 名前を付けて残した木の一覧 (2026-10-21 オーナー 10-22「ツリー形式に変えてから無くなった物を足さないと」、
  * 工程ページ式の sim-recipe-store.ts と同じ作り: 保存・上書き・名前替え・複製・消す (元に戻せる)・控え。共有は URL だけ、ファイルは作らない (オーナー 10-22))。
- * 中身は TreeDoc をそのまま (名前・id・保存時刻で包む)。前の工程式のレシピ (exiledesk.craftStageSim.recipes) は木に読み替えられないので触らずに残す
+ * 中身は TreeDoc をそのまま (名前・id・保存時刻で包む)。前の工程式のレシピ (exiledesk.craftStageSim.*) は読み込んだ時に消す (10-25)
  */
 import { computed, ref } from "vue";
 import { isTreeDoc, type TreeDoc } from "../../services/simulator/tree/tree-model";
@@ -119,7 +119,6 @@ export function addTreeRecipe(name: string, tree: TreeDoc): TreeRecipe {
   return r;
 }
 
-/** 前の工程式のレシピの数 (木には読めない。一覧に「残してある」と出すだけ) */
-export function oldRecipeCount(): number {
-  try { return parseList(localStorage.getItem("exiledesk.craftStageSim.recipes"))?.length ?? 0; } catch { return 0; }
-}
+// 前の工程式のレシピ・控え (exiledesk.craftStageSim.*) は木に読み替えられないので、読み込んだ時にこのブラウザから消す
+// (前は残して一覧に件数を出していた。10-25 オーナー「古いレシピ全て削除で OK」)
+try { for (const k of Object.keys(localStorage)) if (k.startsWith("exiledesk.craftStageSim")) localStorage.removeItem(k); } catch { /* 無くてよい */ }

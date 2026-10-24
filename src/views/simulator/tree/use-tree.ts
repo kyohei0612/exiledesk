@@ -27,7 +27,7 @@ const UNDO_MAX = 100;
 
 /**
  * 作業中の木は持ち越さない (10-24 夜オーナー「開発版で触る時は初見がいい」「シミュレーターもエミュレーターみたいにベースから開始」「キャッシュとかなくていい、どうせ保存きかれる」)。
- * 開き直すといつも白紙 (ベース選びから)。残るのは人が保存したレシピ (tree-recipes) と、共有 URL・?sample= で開く物だけ。守りは離れる時の「保存せずに終了しますか」
+ * 開き直すといつも白紙 (ベース選びから)。残るのは人が保存したレシピ (tree-recipes) と共有 URL で開く物だけ (見本の ?sample= は 10-25 に消した)。守りは離れる時の「保存せずに終了しますか」
  */
 const load = (): TreeDoc => newTree(FIRST_BASE, FIRST_ILVL);
 /** 今のタブの木をタブの並びへ (このページを開いている間だけ。保存はしない) */
@@ -154,12 +154,6 @@ const canUndo = shallowRef(false);
 /** やり直し (1 つ戻した物を戻す。新しく組み替えると消える、10-23 モンキー 1「戻した物がやり直しで戻らない」) */
 const redoStack: string[] = [];
 const canRedo = shallowRef(false);
-function clearHistory(): void {
-  undoStack.length = 0;
-  redoStack.length = 0;
-  canUndo.value = false;
-  canRedo.value = false;
-}
 
 /** 組み替えを 1 回 (写しを書き換えて差し替える。前の形は 1 つ戻す用に控える) */
 function edit(fn: (d: TreeDoc) => void): void {
@@ -193,19 +187,6 @@ function step(from: string[], to: string[]): void {
 const undo = (): void => step(undoStack, redoStack);
 /** やり直し (Ctrl+Shift+Z / Ctrl+Y) */
 const redo = (): void => step(redoStack, undoStack);
-/**
- * 別の木で新しく始める (見本を開く時。1 つ戻す・やり直しの控えは空に)。
- * 前は見本を開くのも 1 手で、開いた直後の「1 つ戻す」で見本が丸ごと消えて白紙に見えた (10-23 モンキー 1)。前の木は呼ぶ側が控えに残す
- */
-function startFresh(tree: TreeDoc): void {
-  needBase.value = false;
-  opened.value++;
-  const d = JSON.parse(JSON.stringify(tree)) as TreeDoc;
-  migrateStart(d);
-  clearHistory();
-  doc.value = d;
-  save(d);
-}
 /** ツリーのメモの文を書く (打つたびに覚える、1 つ戻すには入れない) */
 function setTreeNote(text: string): void {
   if ((doc.value.note ?? "") === text) return;
@@ -445,5 +426,5 @@ const baseCost = computed(() => {
 const baseCostBusy = computed(() => !!s.data.value && !costReady.value);
 
 export function useTree() {
-  return { tabDocs, active, switchTab, addTab, closeTab, resetAll, tabLabel, renameTab, copyTab, leaveNewTab, ilvlNote, startPrice, setStartPrice, startChoice, setStartFrom, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, startFresh, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
+  return { tabDocs, active, switchTab, addTab, closeTab, resetAll, tabLabel, renameTab, copyTab, leaveNewTab, ilvlNote, startPrice, setStartPrice, startChoice, setStartFrom, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
 }

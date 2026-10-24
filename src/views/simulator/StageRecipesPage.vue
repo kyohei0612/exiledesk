@@ -4,13 +4,13 @@
 
   保存した木を 1 枚ずつ: 開く・今の木で上書き・名前を変える・複製・URL をコピー・消す (2 回押し、消した後「元に戻す」)。
   上に 探す・並べ替え・今の木を新しく保存・URL を貼って開く (共有・管理は URL だけ、ファイルは作らない、オーナー 10-22)。一覧は state/simulator/tree-recipes.ts
-  (ツリーの上の帯 TreeRecipeBar と同じ物)。前の工程式のレシピは木に読み替えられないので、数だけ出して残してある。
+  (ツリーの上の帯 TreeRecipeBar と同じ物)。前の工程式のレシピは 10-25 に消した (読み込んだ時にブラウザからも消す、tree-recipes.ts)。
   広告の決まりどおりページを移る形 ([[ads-page-model]])。両脇の縦長の枠は WebApp.vue
 -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import Icon from "../../components/ui/Icon.vue";
-import { currentTreeRecipe, currentTreeRecipeId, duplicateTreeRecipe, oldRecipeCount, overwriteTreeRecipe, removeTreeRecipe, renameTreeRecipe, restoreTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../state/simulator/tree-recipes";
+import { currentTreeRecipe, currentTreeRecipeId, duplicateTreeRecipe, overwriteTreeRecipe, removeTreeRecipe, renameTreeRecipe, restoreTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../state/simulator/tree-recipes";
 import { openTreePage, setLeaveGuard } from "../../web/page";
 import { treePage } from "../../state/web-page";
 import { fmtDate, treeShareUrl, useRecipeUrl } from "./recipe-share";
@@ -31,7 +31,6 @@ const countOf = (r: TreeRecipe): { boxes: number; done: number } => {
 };
 /** 今の木に、開いているレシピに無い変更があるか (開いていない時は箱が始まりだけでなければ) */
 const dirty = computed(() => (currentTreeRecipe.value ? !sameTree(t.doc.value, currentTreeRecipe.value.tree) : Object.keys(t.doc.value.boxes).length > 1));
-const olds = oldRecipeCount();
 
 // 探す・並べ替え (並べ替えは覚える)
 const SORT_KEY = "exiledesk.recipes.sort";
@@ -144,7 +143,6 @@ onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); clearTimeo
         </span>
       </div>
       <p v-if="urlNote" class="mt-1 text-[12px] text-amber-200">{{ urlNote }}</p>
-      <p v-if="olds" class="mt-1 text-[11px] opacity-55">{{ tr(`前の工程式のレシピ ${olds} 件はツリーに読み替えられないので、このブラウザに残してあります (消していない)`, `${olds} old step-style recipe(s) can't be read as trees; they are kept in this browser (not deleted)`) }}</p>
 
       <p v-if="note" data-recipes-note class="mt-3 flex items-center gap-2 rounded-md bg-emerald-900/30 px-3 py-1.5 text-[12px] text-emerald-100">
         {{ note.text }}

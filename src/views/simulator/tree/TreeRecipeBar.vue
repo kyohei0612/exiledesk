@@ -73,7 +73,7 @@ function open(r: TreeRecipe): void {
 }
 const { url, urlNote, openUrl, onPaste } = useRecipeUrl({
   notUrl: ["レシピの URL ではありません", "Not a recipe URL"],
-  unreadable: ["このレシピは読めませんでした (前の工程式のレシピかもしれない)", "Couldn't read this recipe (it may be an old step-style one)"],
+  unreadable: ["このレシピは読めませんでした", "Couldn't read this recipe"],
   onOpened: () => { pop.value = false; emit("opened"); },
 });
 async function copyUrl(): Promise<void> {
