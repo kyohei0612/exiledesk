@@ -11,6 +11,6 @@
    - 引用の頭でも書ける (同じ部品): `> [!まとめ]`・`> [!ヒント]`・`> [!注意]`・`> [!めたん] happy`・`> [!ずんだもん]` (英語 `> [!SUMMARY]`・`> [!TIP]`・`> [!NOTE]`・`> [!METAN]`・`> [!ZUNDAMON]`)。2 行目からの `> ` の行が中身 (箇条書き可)。
    - キャラの吹き出し: `:::metan <表情>` (左)・`:::zundamon <表情>` (右)、表情は normal・happy・surprised・troubled。絵は video/assets/characters/ の立ち絵から書き出した顔 (src/data/blog/chars/、作り直しは `video/.venv/Scripts/python scripts/build-blog-chars.py`)。使った記事の下にクレジットが自動で付く。
 5. 数字は台本で出し、台本の場所と出どころ (poe2db・CoE・エンジンで何回) を本文に書く。用語は poe2db の名前 (英語は src/i18n/GLOSSARY.md)。
-6. 置いたら `node scripts/build-blog-pages.mjs dist-web-dev --drafts` で dist-web-dev/blog/ に出て確かめられる。手元の開発版 `pnpm preview:prod -- --dev` (下書き込み) で見られる。本番の build:web にも入っていて、下書き (draft) は本番に出ない。
+6. 置いたら手元の開発版 `pnpm preview:prod -- --dev` (http://dev.exiledesk.localhost:1461/blog/、下書き込み) で確かめる。本番の build:web にも入っていて、下書き (draft) は本番に出ない。
 7. 一覧 (/blog/)・サイトマップ・OGP (絵は image → 本文の 1 枚目の図 → 題を描いた絵)・記事の構造化データ (Article)・シェア (X・Reddit・コピー)・開いた数とシェアの数の記録 (D1 の screen "blog:<slug>"・blog_share)・クラフト台の右の列の「新しい記事」(新しい順に 3 本) は台本が自動で作る。記事の下のコメント欄は置き場だけ (これから)。
 8. 色 (記事のページは白い紙面、2026-10-22): 本文 #2b2b2b・補足 #6b6b6b・線 #e6e6e6・リンク #b5651d。箱 まとめ 地 #fbf5e6 縁 #c8922a / 注意 地 #fdeeee 縁 #d9534f / ヒント 地 #ecf6ee 縁 #4e9a5e。図 (SVG) は地を塗らず (白)、系列は #c8922a #2f7fc1 #3c9a4e #c2507e #7b5cc4、軸の字 #8a8a8a、目盛りの線 #ececec。img/ の .svg は `![説明](img/foo.svg)` でそのまま出る。見本 (slug sample) は一覧・関連・サイトマップに出ない。
