@@ -23,7 +23,7 @@ import { treeRowTags } from "./tree-row-tags";
 import { aimKey, setHand, type Aim, type Hand, type HandKind, type OutKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { useSimShelf } from "../use-sim-shelf";
-import { afterQualityOf, autoCatOf, handOf, hitAimsOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf } from "./tree-hand-plan";
+import { afterQualityOf, autoCatOf, FREE_EFFECTS, handOf, hitAimsOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf } from "./tree-hand-plan";
 import { tr } from "../../../i18n/lang";
 
 const props = defineProps<{ boxId: string; current: Hand | null }>();
@@ -62,7 +62,8 @@ const fracChoices = computed(() => { const d = s.data.value, it = item.value; re
 const fracPick = computed(() => fracOf.value ?? fracChoices.value.find((c) => c.on)?.a.modId ?? null);
 /** 骨の手にアビスの反響 (発現の候補を 1 回引き直す)。既定で付ける (10-22 オーナー「お告げは必ず反響を使わんとやばいよ」)。前の手を開いた時はその手のまま */
 const echo = ref(props.current ? props.current.omens.includes(ECHO) : true);
-const canFree = computed(() => !!held.value && effectOf(held.value) === "add");
+/** MOD が付く・入れ替わる手 (足す・カオス・エッセンス。当たりの箱にする MOD のチェックと狙い無しを出す) */
+const canFree = computed(() => !!held.value && FREE_EFFECTS.includes(effectOf(held.value)));
 /** Esc: 今の手を替えている時は欄ごと取り消す (何も替えない、オーナー 10-22「枠の外・Esc で取り消し」)。新しい手の時は持った物を離す */
 function onKey(e: KeyboardEvent): void {
   if (e.key !== "Escape") return;
@@ -89,16 +90,21 @@ const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens);
 const used = computed(() => (held.value ? omensFor(held.value, omens.value) : []));
 const catalysing = computed(() => used.value.includes(CATALYSING));
 
-/** 当たりの箱にできる狙い = この足す手で付きうる完成の狙い (tree-hand-plan の hitAimsOf、狙い無しでない形で聞く) */
+/**
+ * 当たりの箱にできる狙い = この手で付きうる完成の狙い (tree-hand-plan の hitAimsOf、狙い無しでも繰り返しでもない形で聞く)。
+ * エッセンスは付く MOD が完成の狙いの時だけ (10-25 オーナー「全カレンシーで上記の表示して、カオスとか対応してない」)
+ */
 const aimChoices = computed((): Aim[] => {
   const d = s.data.value, it = item.value;
-  if (!d || !it || !held.value || !canFree.value || spam.value) return [];
-  return hitAimsOf(d, t.doc.value, props.boxId, it, handOf({ held: held.value, omens: omens.value, echo: echo.value }), t.goals.value, null);
+  if (!d || !it || !held.value || !canFree.value) return [];
+  const xs = hitAimsOf(d, t.doc.value, props.boxId, it, handOf({ held: held.value, omens: omens.value, echo: echo.value }), t.goals.value, null);
+  return effectOf(held.value) === "essence" ? xs.filter((a) => t.goals.value.some((g) => g.modId === a.modId)) : xs;
 });
 /** チェックした狙い (候補にある物だけ) */
 const checkedAims = computed((): Aim[] => aimChoices.value.filter((a) => checked.value.includes(aimKey(a))));
-/** チェックの一覧を出す (足す手で、当たるまで繰り返さない時) */
-const showAims = computed(() => canFree.value && !spam.value);
+/** チェックの一覧を出す (MOD が付く・入れ替わる手) */
+const showAims = canFree;
+/** 狙い無し = MOD を 1 つもチェックしていない。当たるまで繰り返す時は「どれでも」= 付いていない完成の狙いのどれかが付くまで (前からの当たりの決め方) */
 const freeOn = computed(() => showAims.value && !checkedAims.value.length);
 /** 狙い無しを押す = MOD を全部外す (もう狙い無しの時に押しても外れない。値が同じだと Vue が描き直さず、チェックだけ外れて見えた) */
 function toggleFree(e: Event): void { checked.value = []; (e.target as HTMLInputElement).checked = true; }
@@ -106,7 +112,7 @@ function toggleAim(a: Aim): void {
   const k = aimKey(a), cur = checkedAims.value.map(aimKey);
   checked.value = cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k];
 }
-const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value, echo: echo.value, fractureOf: isFracture.value ? fracPick.value : null }) : null));
+const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, fractureOf: isFracture.value ? fracPick.value : null }) : null));
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
 const preCat = computed((): string | null => (catalysing.value && !afterQuality.value ? autoCat.value : null));
 const RESULT: Record<HandKind, [string, string]> = {
@@ -130,7 +136,9 @@ const resultText = computed((): [string, string] | null => {
 });
 /** 当たりの箱の既定 (tree-hand-plan の hitAimsOf) */
 const hitAims = computed((): Aim[] => {
-  if (kind.value === "add" && showAims.value) return checkedAims.value;
+  // チェックした MOD が当たりの箱 (当たるまで繰り返す時は、どれかが付くまで = tree-sample の handAims)。繰り返しで狙い無しなら前からの決め方
+  if (showAims.value && checkedAims.value.length) return checkedAims.value;
+  if (showAims.value && !spam.value) return [];
   const d = s.data.value, it = item.value, h = hand.value;
   return d && it && h ? hitAimsOf(d, t.doc.value, props.boxId, it, h, t.goals.value, isFracture.value ? fracPick.value : null) : [];
 });
@@ -202,7 +210,7 @@ function ok(): void {
         </label>
         <!-- 狙い無し (MOD とは排他。前はお告げの列の札、10-25 オーナー「狙い無しも左のチェックに付けるといいね」) -->
         <label data-tree-hand-free class="flex min-h-7 cursor-pointer items-center gap-2" :title="tr('狙い無し (空きを 1 つ埋めるだけ。当たり / 外れに分けない)', 'No target (just fill an open slot; no hit / miss split)')">
-          <input type="checkbox" :checked="freeOn" @change="toggleFree($event)" />{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}
+          <input type="checkbox" :checked="freeOn" @change="toggleFree($event)" />{{ spam ? tr("どれでも (付いていない狙いのどれかが付くまで)", "Any (until any missing target lands)") : tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}
         </label>
       </div>
       <label v-if="canSpam(held)" class="flex min-h-7 cursor-pointer flex-wrap items-center gap-2">
