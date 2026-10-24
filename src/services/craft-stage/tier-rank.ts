@@ -27,3 +27,11 @@ export function minIlvlFor(data: PatchData, aims: ReadonlyArray<{ modId: string;
 }
 /** 段の札の文字: T1 はそのまま、ほかは「T2 以上」(atLeast = false で「T2」) */
 export const tierRankLabel = (rank: number, atLeast = true): string => (!atLeast || rank === 1 ? `T${rank}` : tr(`T${rank} 以上`, `T${rank}+`));
+/**
+ * アイテムのカードの段の札 (トレードのサイトと同じ形、2026-10-24 オーナー「一般 MOD の火耐性 T3 とグレーターで付けた時の T3 が分けられたら何でもいい」):
+ * エッセンス・完全エッセンス・合金で付いた MOD は "T0"、ほかは段の名前 (tierName) のまま。普通の MOD に合わせた段の名前は m.tierName に残る
+ */
+export function cardTierName(data: PatchData, m: Pick<StageMod, "modId" | "tierName">): string {
+  const src = data.mods.get(m.modId)?.source;
+  return src === "essence" || src === "perfect_essence" ? "T0" : m.tierName;
+}
