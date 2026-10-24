@@ -55,6 +55,13 @@ export function normalTierOf(data: PatchData, item: StageItem, mod: Mod, tier: M
   return {};
 }
 
+/** 無限のエッセンスで付きうる MOD (付いていない系統のうち、同じ強さで同じ名前のエッセンスの物)。pickInfinite はここから等しく 1 つ (engine-sim の行き先の一覧も同じ一覧で枝を分ける) */
+export function infiniteChoices(data: PatchData, item: StageItem, key: string): Array<{ mod: Mod; side: StageSide }> {
+  const level = /^essence:([a-z]+):/.exec(key)?.[1];
+  const en = ESSENCE_KEYS[key]?.en;
+  const taken = takenCraftedFamilies(data, item);
+  return essenceMods(data, item).filter((x) => ESSENCE_KEYS[`essence:${level}:${x.mod.id}`]?.en === en && !essenceClash(x.mod, taken));
+}
 /**
  * 無限のエッセンス: 筋力・器用さ・知性のどれかが付く (poe2db はどの部位にも 3 つ並べている。2026-10-09)。
  * 同じ強さ (レッサー / 普通 / グレーター) の 3 つの鍵から、付いていない系統を等しく引く。それ以外のエッセンスは鍵の MOD そのまま
@@ -62,9 +69,7 @@ export function normalTierOf(data: PatchData, item: StageItem, mod: Mod, tier: M
 export const isInfiniteEssence = (key: string): boolean => / of the Infinite$/.test(ESSENCE_KEYS[key]?.en ?? "");
 export function pickInfinite(data: PatchData, item: StageItem, key: string, rng: () => number): { level: string; mod: Mod; side: StageSide } | null {
   const level = /^essence:([a-z]+):/.exec(key)?.[1];
-  const en = ESSENCE_KEYS[key]?.en;
-  const taken = takenCraftedFamilies(data, item);
-  const list = essenceMods(data, item).filter((x) => ESSENCE_KEYS[`essence:${level}:${x.mod.id}`]?.en === en && !essenceClash(x.mod, taken));
+  const list = infiniteChoices(data, item, key);
   if (!level || !list.length) return null;
   return { level, ...list[Math.floor(rng() * list.length)]! };
 }

@@ -12,7 +12,7 @@
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { allMods, candidates, catalystBoosts, catalystOf, hasExtraCatalyst, makeStageMod, overLimit, replaced, room, SIDES, unfracturable, withMod, without } from "../stage-core";
 import { whittleTargets } from "../apply-currency";
-import { isInfiniteEssence } from "../apply-essence";
+import { infiniteChoices, isInfiniteEssence } from "../apply-essence";
 import { tunedCatalysingMultiplier } from "../stage-tuning";
 import type { StageItem, StageMod, StageSide } from "../types";
 import { planSpec, type SpecPlan } from "../spec/run-spec";
@@ -184,13 +184,32 @@ export function stepOutcomesOrTooMany(data: PatchData, item: StageItem, key: str
 
 type State = Branch & { removedSoFar: StageMod[] };
 /** 手の部品を順にたどる */
-function walk(data: PatchData, item: StageItem, key: string, omens: readonly string[], o: { merge?: (r: StepOutcome) => string }): { states: State[]; vp: number } | null | "tooMany" | "block" {
+function walk(data: PatchData, item: StageItem, key: string, omens: readonly string[], o: { merge?: (r: StepOutcome) => string; essence?: ReturnType<typeof prepareEssence> }): { states: State[]; vp: number } | null | "tooMany" | "block" {
   const plan: SpecPlan | null = planSpec(data, item, key, omens);
   if (!plan) return null;
-  if (!plan.actions.every(SUPPORTED) || isInfiniteEssence(key)) return null;
+  if (!plan.actions.every(SUPPORTED)) return null;
   if (plan.block) return "block";
+  // 無限のエッセンス: 付く MOD は付きうる物 (infiniteChoices) から等しく 1 つ。選び方ごとに枝を分けて 1/n ずつ (2026-10-24 シミュ部長 20 本目、前は数え上げなかった)
+  if (isInfiniteEssence(key) && !o.essence) {
+    const n = infiniteChoices(data, item, key).length;
+    if (!n) return "block";
+    const states: State[] = [];
+    let vp = 0;
+    for (let j = 0; j < n; j++) {
+      let first = true;
+      const pickJ = (): number => (first ? ((first = false), (j + 0.5) / n) : 0.5);
+      const essence = prepareEssence(data, item, key, pickJ);
+      if (!essence) continue;
+      const r = walk(data, item, key, omens, { ...o, essence });
+      if (r === "tooMany") return r;
+      if (!r || r === "block") continue;
+      for (const s of r.states) states.push({ ...s, p: s.p / n });
+      vp += r.vp / n;
+    }
+    return states.length || vp ? { states, vp } : "block";
+  }
   const needsEssence = plan.spec.actions.some((a) => "addEssence" in a);
-  const essence = needsEssence ? prepareEssence(data, item, key, MID) : null;
+  const essence = o.essence ?? (needsEssence ? prepareEssence(data, item, key, MID) : null);
   if (needsEssence && !essence) return "block";
   const altered = plan.spec.actions.some((a) => "addUnrevealed" in a && a.addUnrevealed.pools.includes("otherworldly"));
   let states: State[] = [{ p: 1, item, added: [], removed: [], removedSoFar: [] }];
