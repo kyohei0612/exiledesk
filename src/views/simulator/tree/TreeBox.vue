@@ -75,7 +75,7 @@ const startHead = computed(() => {
 /** 2 行目: 印あり = ＋の数・外れの数、印なし = ほかの＋の数・レアリティ。ルーン・ベースの値段 */
 const startRest = computed(() => {
   const st = startOf(t.doc.value), n = plusMods.value.length, junk = Math.max(0, START_JUNK - n);
-  const parts = marks.value.length ? [n ? tr(`＋${n}`, `+${n}`) : "", tr(`外れ ${junk}`, `${junk} miss`)] : [n > 1 ? tr(`ほか ${n - 1} つ`, `+${n - 1} more`) : "", n ? rarityName(startRarity(t.doc.value)) : ""];
+  const parts = marks.value.length ? [n ? tr(`＋${n}`, `+${n}`) : "", junk ? tr(`外れ ${junk}`, `${junk} miss`) : ""] : [n > 1 ? tr(`ほか ${n - 1} つ`, `+${n - 1} more`) : "", n ? rarityName(startRarity(t.doc.value)) : ""];
   return [costLine.value, ...parts, st.runes?.length ? tr(`ルーン ${st.runes.length}`, `${st.runes.length} rune(s)`) : ""].filter(Boolean).join(" · ");
 });
 /** ベースの値段の 1 行 (始め方を比べた一番安い物、use-tree の baseCost。値段を入れていなければ出さない) */

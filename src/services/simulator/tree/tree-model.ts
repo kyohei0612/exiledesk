@@ -141,8 +141,11 @@ export const startOf = (d: TreeDoc): TreeStart => d.start ?? { rarity: "rare", m
 export const fractureMarks = (d: TreeDoc): Aim[] => (d.memoAims ?? []).filter((a) => a.fractured);
 /** 印があってもフラクチャー前から (start.from four) は白 (ノーマル) から始める (10-24 夜オーナー「後者選んだ場合必ず白からはじまる」)。true = ✦ の付いたレアから */
 export const startsFractured = (d: TreeDoc): boolean => fractureMarks(d).length > 0 && d.start?.from !== "four";
-/** 印ありのスタートの外れの数の既定 (フラクチャーのオーブを打てる MOD 4 つ = ✦ 1 + 外れ 3。スタートの枠の＋で足した MOD の分だけ減る) */
-export const START_JUNK = 3;
+/**
+ * 印ありのスタートの外れの数 (10-25 オーナー「フラクチャーから開始ってのはそのフラクチャーしかない状態で始めて欲しい、外れは自分で付ける」で 3 → 0。
+ * 前は ✦ 1 + 外れ 3 = フラクチャーのオーブを打てる MOD 4 つのレア、10-23)。＋で足した MOD はそのまま付く
+ */
+export const START_JUNK = 0;
 /**
  * スタートのレアリティ (10-23 オーナー「切り替えのボタンは置かず印で決まる」): 印あり = レア (✦ + 外れ)、
  * 印なし = ＋ で足した MOD が無ければノーマル (白)、あればレア (完成形がマジックならマジック)

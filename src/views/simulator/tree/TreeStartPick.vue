@@ -19,13 +19,12 @@ const marks = computed(() => fractureMarks(t.doc.value));
 
 /** 始まりの形を書き換える (前の版の形は先に今の形へ。レアリティは印と＋から決まる。1 つ戻すで戻せる) */
 function change(fn: (x: TreeStart) => void): void { t.edit((d) => { migrateStart(d); fn(d.start!); d.start!.rarity = startRarity(d); }); }
-/** ＋で足せる数: 印あり = 外れの数まで (外れを差し替える)、印なし = このベースのレアの枠 (エンジンの limitOf) */
+/** ＋で足せる数: このベースのレアの枠 (エンジンの limitOf)、印ありなら ✦ の 1 つを引く (10-25 外れは付けず ✦ だけから) */
 const plusMax = computed(() => {
-  if (marks.value.length) return START_JUNK;
   const d = s.data.value;
   if (!d) return 0;
   const it = freshItem(d, t.doc.value.base, t.doc.value.itemLevel, "rare");
-  return limitOf(it, "prefix") + limitOf(it, "suffix");
+  return limitOf(it, "prefix") + limitOf(it, "suffix") - (marks.value.length ? 1 : 0);
 });
 /** ＋で足せる狙い (完成の狙いのうち、印でも＋済みでもない物) */
 const addable = computed(() => t.goals.value.filter((a) => !a.fractured && !st.value.mods.some((m) => m.modId === a.modId)));
@@ -57,7 +56,7 @@ const problem = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.v
     <!-- 形は印で決まる (10-23 オーナー)。印を変えるのは 0 完成形の設定 -->
     <div v-if="marks.length" data-tree-start-shape="fractured" class="flex flex-col gap-1 rounded-md border border-amber-400/40 bg-amber-500/10 px-2 py-1.5 text-[13px]">
       <p v-if="st.from === 'four'">{{ tr("白 (ノーマル) のベースから。木の中でフラクチャー (必ず成功、素材 ×3 = 33%)", "From a white (normal) base. Fracture in the tree (sure success, materials ×3 = 33%)") }}</p>
-      <p v-else>{{ tr(`✦ フラクチャーの候補 ${marks.length} つのどれか 1 つが固定されたレア + 外れ ${junkLeft}`, `A rare with one of ${marks.length} ✦ candidates fractured + ${junkLeft} miss mod(s)`) }}</p>
+      <p v-else>{{ junkLeft ? tr(`✦ フラクチャーの候補 ${marks.length} つのどれか 1 つが固定されたレア + 外れ ${junkLeft}`, `A rare with one of ${marks.length} ✦ candidates fractured + ${junkLeft} miss mod(s)`) : tr(`✦ フラクチャーの候補 ${marks.length} つのどれか 1 つだけが付いたレア (外れは木の中で付ける)`, `A rare with only one of ${marks.length} ✦ candidates (fractured); add other mods in the tree`) }}</p>
       <ul class="flex flex-col gap-0.5">
         <li v-for="a in marks" :key="a.modId" data-tree-start-mark class="min-w-0 truncate text-mod-fractured" :title="t.startModLabel(a, true)">✦ {{ t.startModLabel(a, true) }} <span v-if="marks.length > 1" class="text-[11px] opacity-60">{{ tr(`(1/${marks.length})`, `(1/${marks.length})`) }}</span></li>
       </ul>
