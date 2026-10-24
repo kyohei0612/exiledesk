@@ -9,11 +9,11 @@
 
 ## SEO の静的なページ (10-25 ブラックの頼み)
 - [x] scripts/build-cosmetics-pages.mjs (dd49e2b7): /cosmetics/・/en/cosmetics/ + 子ページ (日 17・英 13)、計 32 枚・約 0.5 MB。手元で配って撮った (台本 skins1/cosmetics-check.mjs、PC・スマホ・英語、中のリンク切れ 0・横はみ出し無し)
-- [ ] 開発版の作り (preview-prod.mjs --dev) に 1 行 → ジン 9 に頼み中
-- [ ] noindex のまま (10-22 の /bases/ の決め)。外すか (--index) はブラック経由でオーナーに聞き中
-- [ ] /cosmetics/ が run_worker_first に当たらないか → サーバー管理人 2 本目に聞き中
+- [x] 開発版の作り (preview-prod.mjs --dev) に 1 行 (ジン 9 97205662)
+- [x] noindex のまま。オーナー 10-25 の決め「1」: AdSense が通るまで noindex・サイトマップにも入れない、通ったら /bases/ と一緒に --index (決着)
+- [x] /cosmetics/ は run_worker_first に当たらず静的な置き場から返る (サーバー管理人 2 本目 10-25、本番の後にゾーンの集計を 1 回見てもらう)
 - [ ] 本番に出す時: build:web に足す (--index ならサイトマップにも)
 
 ## 気になる物 (オーナーに見てもらう時に)
-- 英語の画面で「Other」が 596 件 (隠れ家 311・ペット 175 ほか、poe2db の一覧に種類の英語名が無い種類)。推測で訳さない決まりなのでこのまま
+- 英語の画面で「Other」が 596 件 (隠れ家 311・ペット 175 ほか)。オーナー 10-25「Other のままで OK」(決着)
 - poe2db の一覧に無い 24 件は「poe2db に無し」(リンク無し、名前はゲームのデータのまま)
