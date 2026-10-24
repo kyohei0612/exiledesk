@@ -15,8 +15,8 @@ const GROUP_OF = new Map<number, SkinGroup>(G.groups.flatMap((g) => g.k.map((k) 
 const SINGLE = new Set<SkinGroup>(G.groups.filter((g) => g.k.length === 1));
 export const groupOf = (k: number): SkinGroup => GROUP_OF.get(k) ?? G.other;
 
-/** 出どころ (build-mtx-web.mjs の c / pk / rr。2026-10-25 オーナー「札と絞り込み付けて」)。取れない物は null */
-export type SkinOrigin = { kind: "shop"; cost: number | null } | { kind: "pack"; name: string } | { kind: "box"; name: string } | { kind: "race" };
+/** 出どころ (build-mtx-web.mjs の pk / bx / rr。2026-10-25 オーナー「札と絞り込み付けて」)。取れない物は null。ショップで買える物はデータに入っていない (build-mtx-web.mjs で外す) */
+export type SkinOrigin = { kind: "pack"; name: string } | { kind: "box"; name: string } | { kind: "race" };
 
 export interface Skin {
   en: string;
@@ -42,14 +42,12 @@ export interface SkinSet {
   parts: Skin[];
   /** 中の一番新しい物の順 (無ければ null) */
   order: number | null;
-  /** 部品が全部同じ出どころならそれ (全部ショップ = ショップ・値段無し、全部同じパック / 箱 = それ)。混ざれば null */
+  /** 部品が全部同じパック / 箱ならそれ。混ざれば null */
   origin: SkinOrigin | null;
 }
 export interface SkinData { items: Skin[]; sets: SkinSet[] }
 /** 一覧のカード 1 枚 (部品 1 つ、または一式。SkinCard.vue) */
 export interface SkinCardData { key: string; name: string; sub: string; kind: string; art: string | null; url: string; parts: number; order: number | null; set: SkinSet | null; origin: SkinOrigin | null }
-/** ショップで買える物か (一式は部品のどれか 1 つでも買えれば) */
-export const buyable = (x: Skin | SkinSet): boolean => ("parts" in x ? x.parts.some((p) => p.origin?.kind === "shop") : x.origin?.kind === "shop");
 
 let cache: Promise<SkinData> | null = null;
 export function loadSkins(): Promise<SkinData> {
@@ -58,7 +56,7 @@ export function loadSkins(): Promise<SkinData> {
       url: { ja: string; en: string };
       kinds: Record<string, { ja: string | null; en: string | null }>;
       sets: Array<{ en: string; ja: string; main: number }>;
-      items: Array<{ en: string; ja: string; k: number; slug: string; a?: number; s?: number; o?: number; c?: number; pk?: string; bx?: string; rr?: number }>;
+      items: Array<{ en: string; ja: string; k: number; slug: string; a?: number; s?: number; o?: number; pk?: string; bx?: string; rr?: number }>;
     };
     const items = d.items.map((x): Skin => {
       const group = groupOf(x.k);
@@ -72,7 +70,7 @@ export function loadSkins(): Promise<SkinData> {
         art: x.a != null ? `/mtx-art/${x.a}.webp` : null,
         set: null,
         order: x.o ?? null,
-        origin: x.c != null ? { kind: "shop", cost: x.c } : x.pk ? { kind: "pack", name: x.pk } : x.bx ? { kind: "box", name: x.bx } : x.rr ? { kind: "race" } : null,
+        origin: x.pk ? { kind: "pack", name: x.pk } : x.bx ? { kind: "box", name: x.bx } : x.rr ? { kind: "race" } : null,
       };
     });
     const sets = d.sets.map((s): SkinSet => ({ en: s.en, ja: s.ja, main: items[s.main]!, parts: [], order: null, origin: null }));
@@ -86,8 +84,7 @@ export function loadSkins(): Promise<SkinData> {
     for (const t of sets) {
       const o = t.parts.map((p) => p.origin);
       const named = (x: SkinOrigin | null): string => (x && (x.kind === "pack" || x.kind === "box") ? `${x.kind}:${x.name}` : "");
-      if (o.every((x) => x?.kind === "shop")) t.origin = { kind: "shop", cost: null };
-      else if (named(o[0]!) && o.every((x) => named(x) === named(o[0]!))) t.origin = o[0]!;
+      if (named(o[0]!) && o.every((x) => named(x) === named(o[0]!))) t.origin = o[0]!;
     }
     return { items, sets };
   });

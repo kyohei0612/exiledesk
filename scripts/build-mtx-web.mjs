@@ -202,9 +202,35 @@ for (const [key, idx] of members) {
   sets.push({ en, ja, main });
 }
 
+/**
+ * ショップで買える物 (c) は出さない (2026-10-25 オーナー最後の決め「PoE2 でコスメ売ってない物、PoE1 から移植できる物のみ表示ね」。店は PoE1 と PoE2 で共通、切り替えも無し)。
+ * 一式は全部の部品で見分けた後に、買えない部品だけで組み直す (残りが 1 つ以下なら一式にしない。代表は残りから同じ順で選び直す)
+ */
+const shopCount = items.filter((x) => x.c != null).length;
+const keepIdx = items.flatMap((x, i) => (x.c == null ? [i] : []));
+const newIdx = new Map(keepIdx.map((i, j) => [i, j]));
+const setsOut = [];
+const setDrop = { allShop: 0, onePart: 0 };
+sets.forEach((t, si) => {
+  const idx = keepIdx.filter((i) => items[i].s === si);
+  if (idx.length < 2) {
+    for (const i of idx) delete items[i].s;
+    setDrop[idx.length ? "onePart" : "allShop"]++;
+    return;
+  }
+  const main = idx.includes(t.main) ? t.main : (idx.find((i) => items[i].k === 4) ?? idx.find((i) => items[i].k === 5) ?? idx.find((i) => items[i].a != null) ?? idx[0]);
+  for (const i of idx) items[i].s = setsOut.length;
+  setsOut.push({ ...t, main: newIdx.get(main) });
+});
+const allSets = sets.length;
+sets.length = 0;
+sets.push(...setsOut);
+items.splice(0, items.length, ...keepIdx.map((i) => items[i]));
+for (const c of Object.keys(kinds)) if (!items.some((x) => x.k === +c)) delete kinds[c];
+
 const data = {
   generated: new Date().toISOString().slice(0, 10),
-  source: "client MtxTypes c19 (PoE1) & c20 (PoE2) via src/services/mtx/mtx.json, only items listed in poe2db Microtransactions (us / jp), without PoE2-born items (poedb supporter packs / rewards, PoE2 shop tags, dodge roll)",
+  source: "client MtxTypes c19 (PoE1) & c20 (PoE2) via src/services/mtx/mtx.json, only items listed in poe2db Microtransactions (us / jp), without PoE2-born items (poedb supporter packs / rewards, PoE2 shop tags, dodge roll) and without items sold in the shop (cost on poedb / poe2db; the shop is shared by PoE1 and PoE2)",
   url: { ja: "https://poe2db.tw/jp/", en: "https://poe2db.tw/us/" },
   art: "public/mtx-art/<a>.webp",
   kinds,
@@ -216,6 +242,7 @@ console.log(`${items.length} 件 → ${OUT} (poe2db の一覧 ${us.size} 件、P
 console.log(`外した: PoE2 のパック・報酬 ${dropped.pack.length}・PoE2 の札 ${dropped.tag.length}・ドッジロール ${dropped.dodge.length}・店の説明 ${dropped.store.length}・poe2db に無い ${dropped.noDb.length}`);
 for (const [c, k] of Object.entries(kinds)) console.log(c, k.ja, "/", k.en ?? "(英語名なし)", items.filter((x) => x.k === +c).length);
 console.log(`一式 ${sets.length} (部品 ${items.filter((x) => x.s != null).length})、例: ${sets.slice(0, 8).map((x) => `${x.en} / ${x.ja} (${items.filter((y) => sets[y.s] === x).length})`).join("、")}`);
-console.log(`出どころ: ショップ ${items.filter((x) => x.c != null).length}・サポーターパック ${items.filter((x) => x.pk).length}・ミステリーボックス ${items.filter((x) => x.bx).length}・レースの報酬 ${items.filter((x) => x.rr).length}・不明 ${items.filter((x) => x.c == null && !x.pk && !x.bx && !x.rr).length} (パックのページ ${new Set(packOf.values()).size} 枚・箱 ${new Set(boxOf.values()).size} 個)`);
+console.log(`ショップで買える物 ${shopCount} 件を外した。一式 ${allSets} → ${sets.length} (全部ショップで消した ${setDrop.allShop}・残り 1 つで消した ${setDrop.onePart})`);
+console.log(`出どころ (出す物): サポーターパック ${items.filter((x) => x.pk).length}・ミステリーボックス ${items.filter((x) => x.bx).length}・レースの報酬 ${items.filter((x) => x.rr).length}・不明 ${items.filter((x) => !x.pk && !x.bx && !x.rr).length} (パックのページ ${new Set(packOf.values()).size} 枚・箱 ${new Set(boxOf.values()).size} 個)`);
 console.log("ドッジロール:", dropped.dodge.join(", "), "/ 店の説明:", dropped.store.join(", "));
 console.log("poe2db に無い:", dropped.noDb.join(", "));
