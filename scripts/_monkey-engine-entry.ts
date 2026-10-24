@@ -10,7 +10,7 @@ import mods from "../src/vendor/poe2htc/data/mods.json";
 import bases from "../src/vendor/poe2htc/data/base_items.json";
 import extra from "../src/services/htc/extra-bases.json";
 import jewels from "../src/services/htc/jewel-bases.json";
-import { aimHits, applyCurrency, baseSocketsOf, forceKey, freshItem, modListFor, mulberry32, omenBlock, omensAllowedFor, runeEffectFor, runeOf, tierIndexOf, tierRankOf, useReason, type StageItem, type StageMod } from "../src/services/craft-stage/engine";
+import { aimHits, applyCurrency, baseSocketsOf, forceKey, freshItem, modListFor, mulberry32, omenBlock, omensAllowedFor, runeEffectFor, revealOffers, runeOf, tierIndexOf, tierRankOf, useReason, type StageItem, type StageMod } from "../src/services/craft-stage/engine";
 import { placeMods, stepOutcomesOrTooMany } from "../src/services/craft-stage/engine-sim";
 import { CRAFT_RUNE_KEYS, ORBS, bonesFor, essenceShelf, nameOfKey, runesFor } from "../src/state/for-share/craft-stage-shelf";
 import { SIM_HIDDEN } from "../src/state/for-share/shelf-context";
@@ -133,7 +133,9 @@ export interface Aim { modId: string; tier: number }
  * 1 手で狙いのどれが付くかの割合 (エンジンの stepOutcomes の全部の枝、乱数なし)。当たり = 新しく付いた MOD が狙いに当たる (同じ系統で同じ文も、ツリーの当たりと同じ sameText)。
  * lost = もう付いていた狙いの MOD が消えた枝。枝が多すぎる・行き先の無い手は null
  */
-export function oddsOf(item: StageItem, key: string, omens: readonly string[], aims: readonly Aim[], allAims: readonly Aim[] = aims): { hit: Record<string, number>; hitKept: Record<string, number>; any: number; lost: number; void: number; sampled?: number } | null {
+export function oddsOf(item: StageItem, key: string, omens: readonly string[], aims: readonly Aim[], allAims: readonly Aim[] = aims, echo = false): { hit: Record<string, number>; hitKept: Record<string, number>; any: number; lost: number; void: number; sampled?: number } | null {
+  // 骨 (冒涜) はツリーの手 = 骨 + そのまま発現 (候補 3 つ、反響のお告げがあれば引き直しの 3 つも。10-22 オーナー): 打った後の revealOffers の候補を「付いた物」に数える
+  if (key.startsWith("desecrate")) return boneOdds(item, key, omens, aims, allAims, echo);
   const r0 = stepOutcomesOrTooMany(data!, item, key, omens);
   // 行き先を数え上げられない手 (ルーン・神 = stepOutcomes が null、錬金 = 枝が多すぎる) は、打つ処理 applyCurrency を決まった乱数で SAMPLE 回打って割合に (sampled = 回数、幅に入れる)
   let sampled: number | undefined;
@@ -148,6 +150,22 @@ export function oddsOf(item: StageItem, key: string, omens: readonly string[], a
     }
     r = out; sampled = SAMPLE;
   }
+  return tally(item, r, aims, allAims, sampled);
+}
+type Branch = { p: number; item: StageItem; added: StageMod[]; void?: true };
+/** 骨 + 発現: 骨を打った後の候補 (first、反響なら reroll も) のうち狙いに当たる物を付いた物とする (ツリーは狙いに合う候補を選ぶ)。SAMPLE 回 */
+function boneOdds(item: StageItem, key: string, omens: readonly string[], aims: readonly Aim[], allAims: readonly Aim[], echo: boolean) {
+  const rng = mulberry32(12345), out: Branch[] = [];
+  for (let i = 0; i < SAMPLE; i++) {
+    const a = applyCurrency(data!, item, key, rng, omens);
+    if (!a.applied) return null;
+    const o = revealOffers(data!, a.item, rng);
+    out.push({ p: 1 / SAMPLE, item: a.item, added: [...o.first, ...(echo ? o.reroll : [])] });
+  }
+  return tally(item, out, aims, allAims, SAMPLE);
+}
+/** 行き先の枝から狙いごとの割合 */
+function tally(item: StageItem, r: ReadonlyArray<Branch>, aims: readonly Aim[], allAims: readonly Aim[], sampled?: number) {
   // 当たり = 新しく付いた MOD か、新しく ✦ (フラクチャー) になった MOD が狙いに当たる。lost = 木の狙い (allAims) のうち付いていた物が消えた。
   // hitKept = 当たりで、ほかの狙いも消えていない (ツリーは狙いが消えた結果を「狙いが消えた」の箱へ回す)
   const tgt = (as: readonly Aim[]) => as.map((a) => ({ k: `${a.modId}|${a.tier}`, t: { modId: a.modId, minTierIndex: tierIndexOf(data!, a.modId, a.tier) } }));

@@ -64,8 +64,9 @@ function checkTree(tr, steps = []) {
     const st = steps.find((x) => x.box === b.id && x.rarity && Array.isArray(x.mods) && !x.modsUnknown);
     const item = bi.preRaw ?? bi.raw;
     const allAims = Object.values(doc.boxes).filter((o) => o.out === "hit" && o.aim).map((o) => o.aim);
-    const odds = E.oddsOf(item, b.hand.currency, b.hand.omens.filter((o) => o !== ECHO), aims, allAims);
-    const hasLost = outs.some((o) => o.out === "lost");
+    const odds = E.oddsOf(item, b.hand.currency, b.hand.omens.filter((o) => o !== ECHO), aims, allAims, b.hand.omens.includes(ECHO));
+    // 当たりと同時に狙いが消えた時: エッセンスの手は「狙いが消えた」の箱が先、ほかの手は当たりの箱が先 (その後 settle で形の箱へ。10-24 シミュ部長 19 本目)
+    const hasLost = b.hand.currency.startsWith("essence:") && outs.some((o) => o.out === "lost");
     const row = { box: b.id, sampled: odds?.sampled ?? null, hand: b.hand.currency, omens: b.hand.omens, repeat: !!b.hand.repeat, itemDiff: st ? E.seenDiff(st, bi.raw) : [], seen: st ? "step" : null, rows: [], off: [] };
     if (!odds) { row.off.push("エンジンで打てない手 (applyCurrency が打てないと返した)"); res.boxes.push(row); continue; }
     const visits = run.boxes[b.id]?.visits ?? 0;
