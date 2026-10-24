@@ -10,7 +10,7 @@
  *   - シミュレーターのレシピ (保存・上書き・共有): ?page=recipes (2026-10-21)
  *   - クラフトの道 (ツリー): ?page=sim-tree (2026-10-22、開発版だけ。工程の sim-○○ より先に見分ける)。最初のベース選び ?page=sim-base・完成の MOD ?page=sim-mods も同じツリーのページ (treeStep、2026-10-24)
  *   - デイリークラフトチャレンジ: ?page=daily (一覧)・?page=daily&q=<id> (お題)・?page=daily-start&q=<id> (フラクチャー選び) (2026-10-22、開発版だけ。ヘッダーの「デイリー」から)
- *   - PoE2 で使える PoE1 のスキンの一覧: ?page=skins (2026-10-25、開発版だけ。ヘッダーの「スキン」から)
+ *   - コスメティック (PoE2 で使える PoE1 のスキンの一覧): ?page=skins (2026-10-25、開発版だけ。ヘッダーの「コスメティック」から)
  *   - 旧シミュレーターの工程 (?page=sim-mods など) は 10-22 に消した。古い URL はクラフトのまま開く
  * 移るたびに履歴に積む (ブラウザの戻るで前のページへ)。URL から開いた時もそのページで始める (計算機は今のアイテムが要るので URL からは開かない)。
  * ページを移るたびに広告の枠を出し直す (utils/ads.ts の pageTick)。MOD 一覧は重ねる窓のまま、ページにしない (2026-10-12)
@@ -29,7 +29,7 @@ import { tr } from "../i18n/lang";
 import { track } from "./track";
 import { flag } from "./release-flags";
 
-/** PoE2 で使える PoE1 のスキンの一覧のページ (?page=skins、SkinsPage.vue。2026-10-25 オーナー)。開発版だけ (スイッチ skins) */
+/** コスメティック = PoE2 で使える PoE1 のスキンの一覧のページ (?page=skins、views/skins/SkinsPage.vue はスキン部長。2026-10-25 オーナー)。開発版だけ (スイッチ skins) */
 export const skinsPage = ref(false);
 export const SKINS_ON = flag("skins");
 
@@ -158,7 +158,7 @@ export function openDailyPage(to: DailyView = { view: "list" }): void {
     dailyPage.value = { ...to };
   });
 }
-/** スキンの一覧のページを開く (ヘッダーの「スキン」。開発版だけ) */
+/** スキンの一覧のページを開く (ヘッダーの「コスメティック」。開発版だけ) */
 export function openSkinsPage(): void {
   if (!SKINS_ON) return;
   leaveThen("page=skins", () => {
@@ -234,7 +234,7 @@ export const pageTitle = computed((): string => {
   if (p === "page=routes") return tr("スパムシミュレーター — ExileDesk", "Spam simulator — ExileDesk");
   if (p === "page=recipes") return tr("レシピ — シミュレーター — ExileDesk", "Recipes — Simulator — ExileDesk");
   if (p === "page=sim-tree") return tr("クラフトの道 (ツリー) — ExileDesk", "Craft route tree — ExileDesk");
-  if (p === "page=skins") return tr("PoE2 で使える PoE1 のスキン — ExileDesk", "PoE1 skins usable in PoE2 — ExileDesk");
+  if (p === "page=skins") return tr("コスメティック — ExileDesk", "Cosmetics — ExileDesk");
   if (p === "page=sim-base") return tr("ベースを選ぶ — シミュレーター — ExileDesk", "Choose a base — Simulator — ExileDesk");
   if (p === "page=sim-mods") return tr("完成の MOD — シミュレーター — ExileDesk", "Target mods — Simulator — ExileDesk");
   const d = dailyOf(p);
