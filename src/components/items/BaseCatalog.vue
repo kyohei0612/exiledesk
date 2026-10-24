@@ -270,7 +270,20 @@ function revealPhoneHead(): void {
   const viewBottom = box ? box.getBoundingClientRect().bottom : window.innerHeight;
   const r = el.getBoundingClientRect();
   if (r.top >= viewTop && r.bottom <= viewBottom) return;
-  void glideRect(box, el, r.top - viewTop - 8);
+  holdClicks(glideRect(box, el, r.top - viewTop - 8));
+}
+/**
+ * 送っている間と止まってから少しの間は、一覧の中の押しを捨てる (送る前に狙ったベースの位置を押すと、滑ってきた上の札「知性」などに当たっていた。
+ * 2026-10-24 モンキー初めての人の回、シミュの完成形の設定・エミュのベースのページとも)。本番はスイッチ firstVisit1024 が入るまで前の形
+ */
+let holdUntil = 0;
+function holdClicks(p: Promise<unknown>): void {
+  if (!flag("firstVisit1024")) return;
+  holdUntil = Infinity;
+  void p.finally(() => { holdUntil = performance.now() + 350; });
+}
+function onClickCapture(e: MouseEvent): void {
+  if (performance.now() < holdUntil) { e.stopPropagation(); e.preventDefault(); }
 }
 /**
  * 開いた一覧の下 (「もっと見る」の少し下) が画面から切れている時だけ、そこまで滑らせて送る。見えている時は動かさない。一覧の上が画面の上から出ない所で止める
@@ -293,7 +306,8 @@ function revealPanel(bottomFirst = false): void {
   revealed = bottomFirst ? over : Math.max(0, Math.min(over, r.top - viewTop - 8));
   revealedAt = null;
   // 位置の差とスクロール量の比はその場で測って 1 回で送る (glideRect。1920 幅 (拡大 1.16) で帯が 50px ほど切れていた、2026-10-14)
-  void glideRect(box, el, revealed).then(() => { revealedAt = scrollTopOf(box); });
+  const glide = glideRect(box, el, revealed).then(() => { revealedAt = scrollTopOf(box); });
+  holdClicks(glide);
 }
 // 今のベースがある時 (選び直し) は、開いた時にその部位の一覧が全部見えるまで送る。エミュのベースのページもシミュの完成形の設定も同じ (2026-10-23 オーナー
 // 「展開した時の動きをエミュとシミュで一緒に」。前はエミュのページだけが自分で reveal を呼んでいた)。送る先は一番近い送りの箱 (ページ / 窓の本文)
@@ -349,7 +363,7 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
 </script>
 
 <template>
-  <div ref="rootEl">
+  <div ref="rootEl" @click.capture="onClickCapture">
     <!-- 人気のベース (初めての人のベース選び): 部位をまたいだ上位。押せばそのまま始まる -->
     <div v-if="popular && !query.trim() && popularTop.length && (!phone || !family)" class="mb-4">
       <p class="mb-1 text-[12px] text-amber-200/90 md:text-[13px]">{{ tr("人気のベース", "Popular bases") }}<span class="ml-2 text-[11px] opacity-60">{{ tr("みんながよく作っているベース", "What people craft most") }}</span></p>
