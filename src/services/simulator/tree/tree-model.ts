@@ -138,6 +138,8 @@ export const GAP_Y = 200;
 export const startOf = (d: TreeDoc): TreeStart => d.start ?? { rarity: "rare", mods: d.fracture ? [{ ...d.fracture, fractured: true }] : [] };
 /** フラクチャーの印 (完成の狙いのうち ✦ の候補。どれか 1 つが固定されればよい、10-23 オーナー) */
 export const fractureMarks = (d: TreeDoc): Aim[] => (d.memoAims ?? []).filter((a) => a.fractured);
+/** 印があってもフラクチャー前から (start.from four) は白 (ノーマル) から始める (10-24 夜オーナー「後者選んだ場合必ず白からはじまる」)。true = ✦ の付いたレアから */
+export const startsFractured = (d: TreeDoc): boolean => fractureMarks(d).length > 0 && d.start?.from !== "four";
 /** 印ありのスタートの外れの数の既定 (フラクチャーのオーブを打てる MOD 4 つ = ✦ 1 + 外れ 3。スタートの枠の＋で足した MOD の分だけ減る) */
 export const START_JUNK = 3;
 /**
@@ -145,7 +147,8 @@ export const START_JUNK = 3;
  * 印なし = ＋ で足した MOD が無ければノーマル (白)、あればレア (完成形がマジックならマジック)
  */
 export function startRarity(d: TreeDoc): TreeRarity {
-  if (fractureMarks(d).length) return "rare";
+  if (startsFractured(d)) return "rare";
+  if (fractureMarks(d).length) return "normal";
   if (!startOf(d).mods.length) return "normal";
   return d.goal?.rarity === "magic" ? "magic" : "rare";
 }

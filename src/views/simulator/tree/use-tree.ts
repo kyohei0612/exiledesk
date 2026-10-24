@@ -334,13 +334,15 @@ function setRarity(r: TreeRarity): void { edit((d) => { if (r === "rare") delete
 const startPrice = (): number => startOf(doc.value).price ?? startChoice.value?.cost ?? 0;
 /** 使う始め方 (start.from で決めた方、決めていなければ一番安い物。10-24 夜オーナー「フラクチャー済みから / フラクチャー前から」)。cost は値段が無ければ null */
 const startChoice = computed((): { k: string; label: string; cost: number | null } | null => {
-  const c = baseCost.value, f = startOf(doc.value).from;
+  const c = baseCost.value, st = startOf(doc.value), f = st.from;
+  // フラクチャー前からは白のベースから木の中でフラクチャーする (外れ込みの ×3 は回す時の tree-run の FRACTURE_MISS)。始めの値段は白のベース代だけ
+  if (f === "four" && fractureMarks(doc.value).length) return { k: "white", label: tr("白のベース", "White base"), cost: st.prices?.white ?? null };
   if (!c) return null;
   if (!f) return c.best;
   const k = c.kinds.find((x) => x.k === f);
   return k ? { k: k.k, label: k.label, cost: k.cost } : null;
 });
-function setStartFrom(v: StartFrom): void { edit((d) => { migrateStart(d); d.start!.from = v; }); }
+function setStartFrom(v: StartFrom): void { edit((d) => { migrateStart(d); d.start!.from = v; d.start!.rarity = startRarity(d); }); }
 function setStartPrice(v: number | null): void { edit((d) => { migrateStart(d); if (v == null || !Number.isFinite(v) || v < 0) delete d.start!.price; else d.start!.price = v; }); }
 /** blank = 始まりの箱に手が無い (白紙) */
 const isBlank = (d: TreeDoc): boolean => !d.boxes.start?.hand && !d.boxes.start?.split && Object.keys(d.boxes).length === 1;

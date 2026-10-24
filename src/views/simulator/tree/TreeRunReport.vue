@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import NumStep from "../../../components/NumStep.vue";
-import { fractureMarks, startOf, startRarity } from "../../../services/simulator/tree/tree-model";
+import { startOf, startRarity, startsFractured } from "../../../services/simulator/tree/tree-model";
 import { useTreeSearch, type TreeSearchKind } from "./use-tree-search";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { useTree } from "./use-tree";
@@ -37,7 +37,7 @@ const ranPrice = ref(t.startPrice());
 watch(() => props.result, () => { ranPrice.value = t.startPrice(); });
 /** 取引所で探す (開くだけ、値段は手で入れる。ノーマル = 白、フラクチャー済み = ✦ の MOD がフラクチャー、ほかは ✦ が無いので探せない) */
 const ts = useTreeSearch();
-const searchKind = computed((): TreeSearchKind | null => (fractureMarks(t.doc.value).length ? "fractured" : startRarity(t.doc.value) === "normal" ? "white" : null));
+const searchKind = computed((): TreeSearchKind | null => (startsFractured(t.doc.value) ? "fractured" : startRarity(t.doc.value) === "normal" ? "white" : null));
 const priceIn = computed(() => startOf(t.doc.value).price ?? null);
 </script>
 

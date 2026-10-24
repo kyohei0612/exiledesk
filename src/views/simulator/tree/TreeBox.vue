@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
-import { BOX_H, BOX_W, fractureMarks, START_JUNK, startOf, startRarity, type TreeBox } from "../../../services/simulator/tree/tree-model";
+import { BOX_H, BOX_W, fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type TreeBox } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { handProblem, sampleOf } from "../../../services/simulator/tree/tree-sample";
@@ -61,8 +61,9 @@ function down(e: PointerEvent): void {
 }
 const k = computed(() => Math.max(1, props.inv ?? 1));
 /** スタートの形は印で決まる (10-23 オーナー): フラクチャーの印 (✦ の候補)・＋の MOD・1 行目の文 */
-const marks = computed(() => fractureMarks(t.doc.value));
-const plusMods = computed(() => startOf(t.doc.value).mods);
+// フラクチャー前から (start.from four) は印があっても白から始まるので、スタートの箱には印も＋の MOD も出さない (10-24 夜オーナー)
+const marks = computed(() => (startsFractured(t.doc.value) ? fractureMarks(t.doc.value) : []));
+const plusMods = computed(() => (startsFractured(t.doc.value) || !fractureMarks(t.doc.value).length ? startOf(t.doc.value).mods : []));
 const startHead = computed(() => {
   const m = marks.value;
   if (m.length > 1) return tr(`✦ フラクチャー MOD ×${m.length}`, `✦ Fractured mod ×${m.length}`);
@@ -78,7 +79,7 @@ const startRest = computed(() => {
 /** ベースの値段の 1 行 (始め方を比べた一番安い物、use-tree の baseCost。値段を入れていなければ出さない) */
 const costLine = computed(() => {
   // フラクチャーの始め方を決めていれば必ず出す (済みから / 前から ×3、10-24 夜オーナー「選んだ方はスタートの箱に見える形で」)
-  const f = marks.value.length ? startOf(t.doc.value).from : undefined;
+  const f = fractureMarks(t.doc.value).length ? startOf(t.doc.value).from : undefined;
   const b = t.baseCost.value?.best, c = t.startChoice.value;
   const name = f === "four" ? tr("フラクチャー前から ×3", "pre-fracture ×3") : f === "fractured" ? tr("フラクチャー済みから", "fractured") : b?.short ?? "";
   const cost = f ? c?.cost ?? null : b?.cost ?? null;

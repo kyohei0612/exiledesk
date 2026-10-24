@@ -56,7 +56,8 @@ const problem = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.v
   <div data-tree-start-pick class="flex min-h-0 flex-1 flex-col gap-3">
     <!-- 形は印で決まる (10-23 オーナー)。印を変えるのは 0 完成形の設定 -->
     <div v-if="marks.length" data-tree-start-shape="fractured" class="flex flex-col gap-1 rounded-md border border-amber-400/40 bg-amber-500/10 px-2 py-1.5 text-[13px]">
-      <p>{{ tr(`✦ フラクチャーの候補 ${marks.length} つのどれか 1 つが固定されたレア + 外れ ${junkLeft}`, `A rare with one of ${marks.length} ✦ candidates fractured + ${junkLeft} miss mod(s)`) }}</p>
+      <p v-if="st.from === 'four'">{{ tr("白 (ノーマル) のベースから。木の中でフラクチャー (必ず成功、素材 ×3 = 33%)", "From a white (normal) base. Fracture in the tree (sure success, materials ×3 = 33%)") }}</p>
+      <p v-else>{{ tr(`✦ フラクチャーの候補 ${marks.length} つのどれか 1 つが固定されたレア + 外れ ${junkLeft}`, `A rare with one of ${marks.length} ✦ candidates fractured + ${junkLeft} miss mod(s)`) }}</p>
       <ul class="flex flex-col gap-0.5">
         <li v-for="a in marks" :key="a.modId" data-tree-start-mark class="min-w-0 truncate text-mod-fractured" :title="t.startModLabel(a, true)">✦ {{ t.startModLabel(a, true) }} <span v-if="marks.length > 1" class="text-[11px] opacity-60">{{ tr(`(1/${marks.length})`, `(1/${marks.length})`) }}</span></li>
       </ul>
@@ -70,7 +71,8 @@ const problem = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.v
     <button type="button" data-tree-start-to-goal class="g-btn sm self-start" @click="t.startPage.value = false; t.goalPage.value = 2">{{ tr("0 完成形の設定で印を変える →", "Change the marks in 0 Final item →") }}</button>
 
     <!-- ＋ = 狙いの MOD を付けて始める (印ありは外れを差し替える) -->
-    <div data-tree-start-plus class="flex flex-col gap-1 text-[13px]">
+    <!-- フラクチャー前からは白から始まるので＋の MOD は無し -->
+    <div v-if="!(marks.length && st.from === 'four')" data-tree-start-plus class="flex flex-col gap-1 text-[13px]">
       <p>{{ marks.length ? tr(`＋ 外れを狙いの MOD に差し替える (${st.mods.length} / ${plusMax})`, `+ Replace miss mods with targets (${st.mods.length} / ${plusMax})`) : tr(`＋ 始まりに付いている MOD (${st.mods.length} / ${plusMax})`, `+ Mods already on the start (${st.mods.length} / ${plusMax})`) }}</p>
       <div v-for="(m, i) in st.mods" :key="m.modId" data-tree-start-row class="flex min-w-0 items-center gap-1.5 rounded-md bg-sky-500/15 px-2 py-1">
         <span class="min-w-0 flex-1 truncate text-[#c8c8ff]" :title="t.startModLabel(m)">{{ t.startModLabel(m) }}</span>

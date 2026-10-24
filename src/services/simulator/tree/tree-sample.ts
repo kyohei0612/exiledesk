@@ -12,7 +12,7 @@ import { catalystFull, catalystTagOf, fillCatalyst } from "../../craft-stage/eng
 import { aimHeldOn, isAimMod, junkOf } from "./tree-aim";
 import { CATALYSING as CATALYSING_OMEN, ECHO, ECHO as ABYSSAL_ECHO_OMEN, effectOf, engineOmens, isCatalyst } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
-import { fractureMarks, START_JUNK, startOf, startRarity, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
+import { fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-run";
 
@@ -172,7 +172,8 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
 export function startItemOf(data: PatchData, doc: TreeDoc, rng: () => number): Sample {
   const st = startOf(doc), marks = fractureMarks(doc);
   // 作り方 (ルーン → 指名の MOD、マジックはノーマルから) はエンジンの入口の startWith (B10 10-22)
-  if (!marks.length) return startWith(data, doc.base, doc.itemLevel, { rarity: startRarity(doc), mods: st.mods, runes: st.runes }, rng);
+  // フラクチャー前から (印あり・start.from four) は必ず白 (ノーマル)。始まりの MOD も付けない (10-24 夜オーナー)
+  if (!startsFractured(doc)) return startWith(data, doc.base, doc.itemLevel, { rarity: startRarity(doc), mods: marks.length ? [] : st.mods, runes: st.runes }, rng);
   // ルーンを先に差したレア (ルーンの MOD の候補・＋の分のソケットも開ける) から
   const pre = startWith(data, doc.base, doc.itemLevel, { rarity: "rare", mods: [], runes: st.runes, socketFor: [...marks, ...st.mods] }, rng);
   if (pre.note) return pre;
