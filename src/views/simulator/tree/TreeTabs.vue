@@ -5,7 +5,7 @@
   「コピー」= 今の木を丸ごと写して新しいタブで開く (名前は「〜 のコピー」、元は変えない)。10-24 夜オーナー
 -->
 <script setup lang="ts">
-import { nextTick, ref } from "vue";
+import { nextTick, onBeforeUnmount, ref, watch } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
 import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
@@ -30,6 +30,19 @@ function endRename(v: string | null): void {
   editing.value = null;
   if (v !== null && v.trim() !== t.tabLabel(t.active.value)) t.renameTab(v);
 }
+/**
+ * 枠の外を押したら決める。木の枠 (Vue Flow) は押した時の既定の動きを止めるので、欄から blur が来ず開いたままだった (10-24 夜 21 本目の台本)。
+ * 共通の use-dismiss は「外 = 取り消し」なので使わず、名前の欄だけここで見る
+ */
+function onDocDown(e: PointerEvent): void {
+  const el = input.value[0];
+  if (el && !el.contains(e.target as Node)) endRename(el.value);
+}
+watch(editing, (v) => {
+  if (v !== null) document.addEventListener("pointerdown", onDocDown, true);
+  else document.removeEventListener("pointerdown", onDocDown, true);
+});
+onBeforeUnmount(() => document.removeEventListener("pointerdown", onDocDown, true));
 </script>
 
 <template>
