@@ -13,7 +13,7 @@ import { useFlash } from "../../utils/use-flash";
 import { preloadSfx, setSfxOff, sfxOff } from "../../utils/sfx";
 import { scrollToTop } from "../../utils/keep-place";
 import { baseNameOf, tr } from "../../i18n/lang";
-import { LOG_KEEP, SIM_LOCKED, TUTORIAL_LOCKED } from "../../state/craft-stage";
+import { LOG_KEEP, TUTORIAL_LOCKED } from "../../state/craft-stage";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { computed, defineAsyncComponent, getCurrentInstance, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { usePhone } from "../../utils/use-phone";
@@ -33,7 +33,6 @@ import StageForesight from "./StageForesight.vue";
 import StageBasePage from "./StageBasePage.vue";
 import ModeTabs from "../../components/for-share/ModeTabs.vue";
 import { PAGES_ON, basePage, baseUnpicked, openRoutes } from "../../state/web-page"; // Web のページ (ベース選び。web/page.ts)
-import { openTreePage } from "../../web/page";
 import { openSharedRecipe } from "../../state/for-share/sim-links";
 import StageAimPicker from "./StageAimPicker.vue";
 import CurrencyShelf from "../../components/for-share/shelf/CurrencyShelf.vue";
@@ -240,15 +239,6 @@ watch(() => s.mode.value === "tutorial" || inLesson.value, (v) => { if (v) gemCo
 /** 本番には出さない (2026-10-16 オーナー「ジェムコラプトは内緒」)。開発版 (pnpm dev:web) だけタブを出す */
 const GEM_CORRUPT_SHOWN = import.meta.env.DEV;
 const gemCorrupt = computed(() => GEM_CORRUPT_SHOWN && !inApp && gemCorruptOn.value && !s.replay.value);
-/**
- * モードのタブ。シミュレーターはいつも ① ベース選びのページから (2026-10-20 オーナー: 前の工程の続きから出ていた)。
- * 作り途中の中身は消さない (同じベースを押す・「← クラフトへ戻る」で、前の工程のページに戻る)。まだベースが無い時はベース選びが自分で出る
- */
-/**
- * シミュレーターはツリーのページだけ (開発版だけ、オーナー 10-22「ツリー特化」): 旧シミュレーターの mode "sim" (ベースのページの「シミュレーター」タブ) に入ったら、
- * クラフトの道 (ツリー) を開く。白紙のツリーなら始まりの箱でまずベースを選ぶ (use-tree の takeAskBase)、アイテムレベルの適正もそこ
- */
-watch(() => s.mode.value, (m) => { if (m === "sim" && !SIM_LOCKED) { s.mode.value = "hand"; openTreePage(); } }, { immediate: true });
 function pickMode(m: typeof s.mode.value): void {
   s.hold(null); endLesson(); s.mode.value = m; setGemCorrupt(false);
 }
