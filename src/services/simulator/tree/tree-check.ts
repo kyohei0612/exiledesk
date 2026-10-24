@@ -106,7 +106,12 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
   // 3) 完成の形の食い違い (完成の箱どうしで、道の札がそろっていない)
   const pathAims = (id: string): string => {
     const ks = new Set<string>();
-    for (let b: TreeDoc["boxes"][string] | undefined = doc.boxes[id]; b; b = b.parent ? doc.boxes[b.parent] : undefined) if (b.out === "hit" && b.aim) ks.add(aimKey(b.aim));
+    for (let b: TreeDoc["boxes"][string] | undefined = doc.boxes[id]; b; b = b.parent ? doc.boxes[b.parent] : undefined) {
+      if (b.out === "hit" && b.aim) ks.add(aimKey(b.aim));
+      // 分かれ目の行の「付いている狙い」も道の札 (10-24 不在のアミュ B: 負けの後のカオスでキャスト・ルーンワードが残った人の完成の行が「狙い 2 つ」と出た)
+      const p = b.parent ? doc.boxes[b.parent] : undefined;
+      for (const k of p?.split?.find((r) => r.to === b!.id)?.when.has ?? []) ks.add(k);
+    }
     return [...ks].sort().join(",");
   };
   const mains = done.filter((b) => b.done === "main");

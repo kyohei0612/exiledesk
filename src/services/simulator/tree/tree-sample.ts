@@ -12,7 +12,7 @@ import { catalystFull, catalystTagOf, fillCatalyst } from "../../craft-stage/eng
 import { aimHeldOn, isAimMod, junkOf } from "./tree-aim";
 import { CATALYSING as CATALYSING_OMEN, ECHO, ECHO as ABYSSAL_ECHO_OMEN, effectOf, engineOmens, isCatalyst } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
-import { fractureMarks, START_JUNK, startOf, startRarity, type Aim, type Hand, type OutKind, type TreeDoc } from "./tree-model";
+import { fractureMarks, START_JUNK, startOf, startRarity, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-run";
 
@@ -34,10 +34,20 @@ export function handAims(doc: TreeDoc, id: string, aims: readonly Aim[]): readon
   const own = b.outs.flatMap((o) => { const c = doc.boxes[o]; return c?.out === "hit" && c.aim ? [c.aim] : []; });
   return own.length ? own : aims;
 }
-/** このツリーで使っている当たりの札 (重ならない物) */
+/**
+ * このツリーで使っている当たりの札 (重ならない物)。エッセンスの当たりの箱の札は付いた MOD の名前なので、完成の狙いに無い物は数えない
+ * (10-24 不在のアミュ B: 右側の結晶化 + 無限のエッセンスで冒涜の外れを消す。% 能力値を狙いに数えると、次の冒涜で置き換わった時に「狙いが消えた」になった)
+ */
 export function aimsOf(doc: TreeDoc): Aim[] {
   const out: Aim[] = [];
-  for (const b of Object.values(doc.boxes)) if (b.out === "hit" && b.aim && !out.some((x) => x.modId === b.aim!.modId && x.tier === b.aim!.tier)) out.push(b.aim);
+  // 完成形の設定 (memoAims) にフラクチャーの印でない狙いがある木だけ (印だけの古い見本 = 金の指輪はエッセンスの札も狙いのまま)
+  const goals = doc.memoAims ?? [];
+  const byGoals = goals.some((g) => !g.fractured);
+  const label = (b: TreeBox): boolean => {
+    const h = b.parent ? doc.boxes[b.parent]?.hand : null;
+    return byGoals && !!h && effectOf(h.currency) === "essence" && !goals.some((g) => g.modId === b.aim!.modId);
+  };
+  for (const b of Object.values(doc.boxes)) if (b.out === "hit" && b.aim && !label(b) && !out.some((x) => x.modId === b.aim!.modId && x.tier === b.aim!.tier)) out.push(b.aim);
   return out;
 }
 
@@ -49,6 +59,8 @@ export function outcomeOf(data: PatchData, before: StageItem, after: StageItem, 
   // 狙いの付いた・消えた・外れが減った・新しく ✦ になった MOD はエンジンの入口の aimDiff (B12 10-22)。ここは箱の分け方だけ
   const d = aimDiff(data, before, after, aims, { sameText: true });
   if (key && effectOf(key) === "essence" && d.lost.length) return { out: "lost", hits: d.hits };
+  // エッセンスの道は 2 つだけ (10-24 オーナー): 狙いが消えていなければ当たりの道 (付く MOD が完成の狙いに無くても。外れを消すだけのエッセンス)
+  if (key && effectOf(key) === "essence") return { out: "hit", hits: d.hits };
   // フラクチャー: 新しく ✦ になった MOD が狙いなら当たり (札 = その狙い)、ほかは外れ (MOD の数は変わらない)
   if (key && effectOf(key) === "fracture") return d.fracturedHits.length ? { out: "hit", hits: d.fracturedHits.slice(0, 1) } : { out: "junk", hits: [] };
   if (d.hits.length) return { out: "hit", hits: d.hits };
@@ -214,7 +226,8 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
     if (p.hand.repeat && o.out !== "hit") break;
     if (b.out === "pass") return { item: r.item, note: null };
     if (b.out !== "any" && o.out !== b.out) continue;
-    if (b.out === "hit" && b.aim && !o.hits.some((a) => a.modId === b.aim!.modId && a.tier === b.aim!.tier)) continue;
+    // エッセンスの当たりの箱は 1 つ (札は付いた MOD の名前、tree-run の outBoxOf と同じ)
+    if (b.out === "hit" && b.aim && effectOf(p.hand.currency) !== "essence" && !o.hits.some((a) => a.modId === b.aim!.modId && a.tier === b.aim!.tier)) continue;
     return { item: r.item, note: null };
   }
   if (last && !last.applied) return { item: base.item, note: `cant:${last.reason ?? ""}` };
