@@ -67,6 +67,16 @@ function close(): void {
   t.needBase.value = unpicked.value;
   go(0);
 }
+// URL から先にページが開き、白紙の判定 (SimTreePage の onMounted の needBase) が後から立つ時も「まだ選んでいない」にする (初めての sim-base で戻り先の無い「← ツリーに戻る」が出ていた)
+watch(() => t.needBase.value, (v) => { if (v) unpicked.value = true; });
+/** 戻れる木がある (ベースを選んだ木か、新しいツリーの前のタブ) */
+const canBack = computed(() => !unpicked.value || t.tabDocs.value.length > 1);
+function backToTree(): void {
+  asking.value = null;
+  dropped.value = [];
+  if (unpicked.value && t.leaveNewTab()) { if (treeStep.value !== "tree") openTreePage("tree"); return; }
+  go(0);
+}
 /** 2 へ進む (段のタブ・「次へ」)。今のベースで決めた扱い (白紙のまま 2 を開いてから閉じても空の形にはしない) */
 function toMods(): void { unpicked.value = false; t.chooseBase(); go(2); }
 /** 流れの帯を押した: 1 = ベース、2 = 完成の MOD、3 = ツリーへ (閉じる)、4 = 閉じて結果のまとめ */
@@ -145,6 +155,8 @@ const HELP: Array<[string, string]> = [
     <template #subheader>
       <!-- 流れの 4 段の帯 (ツリーのページの上と同じ部品 TreeFlowSteps、10-24 オーナー)。初手 (ベース未選択) の間は 2 から先は押せない。右端に保存したレシピから開く -->
       <div data-tree-goal-steps class="flex flex-wrap items-center gap-2 px-3 pb-2">
+        <!-- ツリーへ戻る (10-24 夜オーナー「一方通行が多い、ツリーに戻るボタンとか普通にあってもいい。保存云々は聞かなくておｋ」)。新しいツリーのベース選びなら、そのタブをやめて前の木へ -->
+        <button v-if="asPage && canBack" type="button" data-tree-goal-back class="g-btn sm shrink-0" @click="backToTree">{{ tr("← ツリーに戻る", "← Back to tree") }}</button>
         <TreeFlowSteps :current="step === 2 ? 2 : 1" :no-base="unpicked" @go="onFlow" />
         <span class="ml-auto shrink-0"><TreeRecipeBar menu-only @opened="onRecipe" /></span>
       </div>

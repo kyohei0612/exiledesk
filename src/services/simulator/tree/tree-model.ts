@@ -115,6 +115,7 @@ export interface TreeDoc {
   startRandom?: number;
   /** エンジンの設定 (触媒の倍率・聖別の倍率・MOD の重み。無い物は既定、tree-tune.ts)。レシピ・共有の URL にも一緒に乗る */
   tune?: TreeTune;
+  /** タブの番号 (ツリー①…、空いている一番小さい番号) と人が付けた名前 (タブのダブルクリック、10-24 夜オーナー)。use-tree の tabLabel */ tabNo?: number; tabName?: string;
   boxes: Record<string, TreeBox>;
   seq: number;
   /** ツリー全体のメモ */

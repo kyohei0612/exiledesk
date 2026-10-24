@@ -143,9 +143,10 @@ function switchTab(i: number): void {
 }
 /** 新しいタブ = 全くの白紙の木 (完成形の設定の 1 = ベース選びから。選ばずに閉じたら空の形、needBase) を足して開く */
 function addTab(): void {
-  const cur = doc.value;
+  const cur = doc.value, no = freeTabNo();
+  prevTab = active.value;
   tabDocs.value = [...tabDocs.value, cur];
-  setActive(tabDocs.value.length - 1, newTree(FIRST_BASE, FIRST_ILVL));
+  setActive(tabDocs.value.length - 1, { ...newTree(FIRST_BASE, FIRST_ILVL), tabNo: no });
   needBase.value = true;
   goalPage.value = 1;
 }
@@ -158,6 +159,50 @@ function closeTab(i: number): void {
   if (i < active.value) active.value--;
   tabDocs.value = list;
   save(doc.value);
+}
+/** タブの番号 (番号の無い前の木はタブの並び順) と、空いている一番小さい番号 */
+const tabNoOf = (d: TreeDoc, i: number): number => d.tabNo ?? i + 1;
+function freeTabNo(): number {
+  const used = new Set(tabDocs.value.map((d0, i) => tabNoOf(i === active.value ? doc.value : d0, i)));
+  let n = 1;
+  while (used.has(n)) n++;
+  return n;
+}
+const CIRCLED = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳";
+/** タブの名前 (10-24 夜オーナー「名前は何選んでもツリー①とかでいい、ダブルクリックで名前変えれる」): 人が付けた名前、無ければ「ツリー①」/「Tree 1」 */
+function tabLabel(i: number): string {
+  const d = i === active.value ? doc.value : tabDocs.value[i];
+  if (!d) return "";
+  const n = tabNoOf(d, i);
+  return d.tabName || tr(`ツリー${CIRCLED[n - 1] ?? `(${n})`}`, `Tree ${n}`);
+}
+/** 今のタブの名前を変える (空なら番号の名前へ戻す) */
+function renameTab(name: string): void { const v = name.trim(); edit((d) => { if (v) d.tabName = v; else delete d.tabName; }); }
+/** 新しいタブを足す前のタブ (新しいツリーをやめて戻る先、10-24 夜オーナー「新しいツリー開いてやっぱもどるとかができない」) */
+let prevTab: number | null = null;
+/** 今のタブの木を丸ごと写して新しいタブで開く (元は変えない。名前は「〜 のコピー」、10-24 夜オーナー) */
+function copyTab(): void {
+  const name = tabLabel(active.value), cp = cloneDoc(doc.value);
+  cp.tabNo = freeTabNo();
+  cp.tabName = tr(`${name} のコピー`, `Copy of ${name}`);
+  prevTab = active.value;
+  tabDocs.value = [...tabDocs.value, doc.value];
+  setActive(tabDocs.value.length - 1, cp);
+  needBase.value = false;
+  goalPage.value = 0;
+}
+/** 新しいツリー (ベースを選ぶ前の白紙のタブ) をやめて前のタブへ戻る。戻れない (タブが 1 つ・白紙でない) 時は false */
+function leaveNewTab(): boolean {
+  const d = doc.value;
+  if (tabDocs.value.length <= 1 || d.baseChosen || !isBlank(d) || d.memoAims?.length) return false;
+  const back = prevTab != null && prevTab !== active.value ? prevTab : null;
+  const was = active.value;
+  closeTab(was);
+  if (back != null) switchTab(back > was ? back - 1 : back);
+  prevTab = null;
+  needBase.value = false;
+  goalPage.value = 0;
+  return true;
 }
 const undoStack: string[] = [];
 const canUndo = shallowRef(false);
@@ -453,5 +498,5 @@ const baseCost = computed(() => {
 const baseCostBusy = computed(() => !!s.data.value && !costReady.value);
 
 export function useTree() {
-  return { tabDocs, active, switchTab, addTab, closeTab, ilvlNote, startPrice, setStartPrice, startChoice, setStartFrom, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, startFresh, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
+  return { tabDocs, active, switchTab, addTab, closeTab, tabLabel, renameTab, copyTab, leaveNewTab, ilvlNote, startPrice, setStartPrice, startChoice, setStartFrom, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, startFresh, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
 }

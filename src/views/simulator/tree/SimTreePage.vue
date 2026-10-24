@@ -407,7 +407,8 @@ const glowOf = (b: Box): boolean => {
         </span>
       </div>
 
-      <TreeTabs v-if="!t.needBase.value" @switched="v.goHome()" />
+      <!-- ベースが無い空の形でも、ほかの木があればタブを出す (前の木へ戻れない行き止まりだった、10-24 夜オーナー「一方通行が多い」) -->
+      <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" @switched="v.goHome()" />
       <div ref="row" class="flex min-h-0 gap-2" :class="full ? 'flex-1' : ''" :style="full ? {} : { height: `${rowH}px` }">
         <!-- ツリー (暗い地 + ドットの格子、見本の 1。右下に浮かぶ道具とミニマップ、左上に今の状態の札) -->
         <div data-tree-frame class="relative min-w-0 flex-1 overflow-hidden rounded-lg border border-white/[0.06] bg-[#0c0a08]">
