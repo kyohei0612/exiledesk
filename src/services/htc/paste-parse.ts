@@ -1,5 +1,6 @@
 /** paste.ts から切り出し (2026-09-26): 貼り付けの文面を読む (MOD 文面の型・ベース名・注記・parseJaItem) */
 import modTextJa from "../../i18n/mod-text-ja.json";
+import modTextJaHtc from "../../i18n/mod-text-ja-htc.json";
 import itemsJaClient from "../../i18n/items-ja-client.json";
 import itemsJa from "../../i18n/items-ja.json";
 import { catalystTagFromLabel } from "./quality";
@@ -77,7 +78,10 @@ const patterns: ReadonlyArray<{ re: RegExp; template: string }> = (() => {
     if (!t.includes("#")) return;
     out.push({ re: new RegExp("^" + t.split("#").map(escapeRe).join(NUMBER) + "$"), template });
   };
-  for (const [en, jaRaw] of Object.entries(modTextJa as Record<string, string>)) {
+  // 表に無い言い回し (reduced 側など) はクライアント原本から訳した mod-text-ja-htc.json (MOD 一覧の日本語と同じ。2026-10-24 タリスマンの「要求能力値が30%減少する」が読めなかった)
+  const ja = modTextJa as Record<string, string>;
+  const table = { ...ja, ...Object.fromEntries(Object.entries(modTextJaHtc as Record<string, string>).filter(([en]) => !(en in ja))) };
+  for (const [en, jaRaw] of Object.entries(table)) {
     add(jaRaw, en);
     add(en, en);
     // 「# to maximum Mana」は貼り付けでは「+247 to maximum Mana」。符号を数値側に含めて拾う

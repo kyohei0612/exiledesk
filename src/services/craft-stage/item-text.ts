@@ -59,7 +59,11 @@ interface Body {
   line: string; text: string; note: LineKind | null;
   template: string | null; values: number[];
   side?: "prefix" | "suffix"; group?: "implicit" | "enchant" | "rune"; tierName?: string;
+  /** トレードのサイトの段の表記 (行頭の「P6 」「S0 」、または P6 だけの行の次の行)。0 はエッセンス・完全エッセンス・合金 */
+  tradeTier?: number;
 }
+/** トレードのサイトの段の表記: 「P6 文」「S0 文」、または「P6」だけの行 (2026-10-24 オーナーの見本、jp.pathofexile.com の画面) */
+const TRADE_TIER = /^([PS])(\d+)(?:\s+(.+))?$/;
 
 /**
  * アイテムの文を読む。data = loadHtcPatch() の物 (MOD・段はここから引く)。
@@ -81,8 +85,15 @@ export function parseItemText(data: PatchData, text: string): ItemTextResult {
   const unrevealed: { line: string; side: "prefix" | "suffix" }[] = [];
   let group: Pick<Body, "side" | "group" | "tierName"> | null = null;
   let inBody = false;
+  let tierNext: { side: "prefix" | "suffix"; tradeTier: number } | null = null;
 
-  for (const line of raw) {
+  for (const line0 of raw) {
+    // 段の表記 (P6・S0) は外して側と段に。表記だけの行は次の行に掛ける
+    const tt = TRADE_TIER.exec(line0);
+    const tier: { side: "prefix" | "suffix"; tradeTier: number } | null = tt ? { side: tt[1] === "P" ? "prefix" as const : "suffix" as const, tradeTier: Number(tt[2]) } : tierNext;
+    if (tt && !tt[3]) { tierNext = tier; continue; }
+    tierNext = null;
+    const line = tt ? tt[3]! : line0;
     if (/^-{3,}$/.test(line)) { separators = true; group = null; continue; }
     if (/^[WP]$/.test(line)) { tradeMarks = true; continue; }
     const price = /^(?:Note:\s*)?~(?:b\/o|price)\s+(.+)$/i.exec(line);
@@ -133,7 +144,7 @@ export function parseItemText(data: PatchData, text: string): ItemTextResult {
     // ベースの後・属性の前の型に当たらない行は種類の名前 (「指輪」「Ring」)
     if (!inBody && !hit && !kind) { kindWords.push(t); continue; }
     inBody = true;
-    body.push({ line, text: t, note: kind, template: hit?.template ?? null, values: hit?.values ?? [], ...(group ?? {}) });
+    body.push({ line, text: t, note: kind, template: hit?.template ?? null, values: hit?.values ?? [], ...(group ?? {}), ...(tier ?? {}) });
   }
 
   if (!out.base) {
@@ -178,10 +189,12 @@ function splitImplicits(data: PatchData, out: ItemTextResult, body: Body[]): Bod
   body = body.filter((b) => { if (!anointOfLine(b.text)) return true; implicit(b, "enchant"); return false; });
   const rest: Body[] = [];
   const marked = body.some((b) => b.note || b.group || b.side);
+  // トレードのサイトの段の表記がある時は、表記の無い行は暗黙側 (サイトは明示の MOD にだけ P・S を付ける)
+  const tiered = body.some((b) => b.tradeTier !== undefined);
   if (marked) {
     // 注記・見出しがあれば推し量らない
     for (const b of body) {
-      const g = b.group ?? (b.note === "implicit" ? "implicit" : b.note === "rune" ? "rune" : b.note === "enchant" ? "enchant" : null);
+      const g = b.group ?? (b.note === "implicit" ? "implicit" : b.note === "rune" ? "rune" : b.note === "enchant" ? "enchant" : tiered && b.tradeTier === undefined && !b.note ? "implicit" : null);
       if (g) implicit(b, g === "implicit" ? "base" : g);
       else rest.push(b);
     }
@@ -294,13 +307,22 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
     return out2;
   };
   const pctOf = (bs: readonly ItemTextBoost[]): number => bs.reduce((a, x) => a + x.pct, 0);
+  // 「30% 減少する」(reduced) は文では正の数、MOD の段の値は負 (-30)。段の値が全部 0 以下なら文の数を負にして比べる (2026-10-24 タリスマンの要求能力値が段に収まらなかった)
+  const signed = (m: Mod, vs: readonly number[]): number[] => (m.tiers.length && m.tiers.every((t) => t.ranges.every(([, hi]) => hi <= 0)) ? vs.map((v) => (v > 0 ? -v : v)) : [...vs]);
   const tierWith = (m: Mod, b: Body): { index: number; fits: boolean } =>
     // エッセンスの段はエッセンスの強さで決まり、アイテムレベルの縛りは無い (パーフェクトのエッセンスの段も同じ)
-    tierOf(m, b.values, pctOf(boostsFor(m, b)), /essence/.test(String(m.source)) ? Infinity : level);
+    tierOf(m, signed(m, b.values), pctOf(boostsFor(m, b)), /essence/.test(String(m.source)) ? Infinity : level);
   for (const pk of picked) {
     const { b, fixed } = pk;
     let mod = pk.mod;
     let t = fixed ?? tierWith(mod, b);
+    // トレードの段 0 はエッセンス・完全エッセンス・合金の MOD: 値の幅で普通の MOD に読まず、同じクラスの同じ文のエッセンスの MOD を先に (収まる物から)
+    if (!fixed && b.tradeTier === 0 && !/essence/.test(String(mod.source))) {
+      const cls = mod.id.split("/")[0], text = mod.text;
+      const ess = [...data.mods.values()].filter((x) => x.id.split("/")[0] === cls && x.text === text && /essence/.test(String(x.source)) && (!b.side || x.type === b.side))
+        .map((x) => ({ x, tx: tierWith(x, b) })).sort((p, q) => Number(q.tx.fits) - Number(p.tx.fits));
+      if (ess[0]) { mod = ess[0].x; t = ess[0].tx; }
+    }
     // 値が段に収まらない時は、同じクラスの同じ文の別の MOD (エッセンス・冒涜・反対側) を見る。印が (crafted) ならエッセンス、(desecrated) なら冒涜を先に
     if (!fixed && !t.fits) {
       const cls = mod.id.split("/")[0];
@@ -315,11 +337,12 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
     out.mods.push({
       text: b.text, modId: mod.id, source: String(mod.source ?? "normal"), side, sideFrom: b.side ? "paste" : "engine",
       tier: { index, of: mod.tiers.length, label: `T${mod.tiers.length - index}`, name: String(mod.tiers[index]?.name ?? ""), fits },
-      values: unboost(b.values, pctOf(boosts)), shownValues: [...b.values], boosts,
+      values: unboost(signed(mod, b.values), pctOf(boosts)), shownValues: [...b.values], boosts,
       fractured: b.note === "fractured", desecrated: b.note === "desecrated" || mod.source === "desecrated", crafted: b.note === "crafted",
       unrevealed: false,
       ...(out.corrupted > 0 && !fits ? { corruption: { status: "unknown" as const } } : {}),
       ...(b.tierName ? { pasteTierName: b.tierName } : {}),
+      ...(b.tradeTier !== undefined ? { pasteTier: b.tradeTier } : {}),
     });
   }
 }

@@ -85,6 +85,8 @@ export interface ItemTextMod {
   corruption?: ItemTextCorruption;
   /** Ctrl+Alt+C の見出しの段の名前 (`"Razor-sharp"`)。それ以外は無し */
   pasteTierName?: string;
+  /** トレードのサイトの段の表記 (行頭の P6・S0 の数字)。0 = エッセンス・完全エッセンス・合金の MOD (2026-10-24 オーナーの見本) */
+  pasteTier?: number;
 }
 
 /** 読めなかった・MOD に数えなかった行の理由 */
