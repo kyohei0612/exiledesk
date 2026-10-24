@@ -14,7 +14,7 @@
   - 初めての人の回 (notes/2026-10-24-monkey.md の末尾) の 2・3・4・6〜13。2 ヒステリーのエッセンスの説明が「このベースには使えない」なのに兜の行に MOD / 3 スマホ (「＋ 新しいツリー」が切れる・スタートの「外れ 3」がはみ出す・枠が細い・上のボタンが 6 段) / 4 段を選ぶとアイテムレベルが黙って変わる / 6 スタートに無い狙いでも「狙いが消えた」の箱 / 7〜13 は記録
   - 手のある当たりの箱に着いた人が settle (tree-run.ts) で深い外れの箱へ移されて止まる件。見本では分かれ目を挟んで避けているだけ
   - 反響の代金は引き直さなかった回も毎回入る (B で 1 個あたり約 3.8 神)。決まりを聞くならオーナーへ
-  - 「ルーンの合金 / Runic Alloy」の名前 (ルーンワードのパーフェクトエッセンス) はブラックがジン部長へ回した
+  - 「ルーンの合金 / Runic Alloy」はデータが正しい (ジン 9 本目: エッセンスではなく遠征の合金、craftedKindOf が "alloy")。見本の文 (tree-samples.ts 32 行のコメント・TreeShowcase.vue の説明) が「パーフェクトエッセンス」と言っていたら合金に直す
 - 確かめの道具 (scratchpad 0a2e8462-3a13-487a-a578-b9fabf523334 の絶対パス C:/Users/kyohei/AppData/Local/Temp/claude/C--Users-kyohei-ExileDesk/0a2e8462-3a13-487a-a578-b9fabf523334/scratchpad/): absent-m.mjs <式> (URL= で見本、猿の口 m で回す。窓なし Chrome は port 9361 を Bash の run_in_background で立て、TaskStop と profile 削除)・ab-res.js (100 人の数字と相場)・ab-ancient.js (冒涜の骨を古代に替える)・showcase.mjs (レシピのページを PC・スマホ・英語で撮る)・_tmp-absent-b.test.ts.bak (B を組んだ台本)。**ページを移った直後 0.5 秒のクリックは page.ts の見張りで捨てられる**ので、台本で押す時は 1 秒以上空ける
 - 猿の口 (sim-monkey.ts)・照らし (ジン部長の scripts/check-monkey-engine.mjs) は 19 本目の引き継ぎのまま (notes/2026-10-24-todo-archive.md の末尾)
 
