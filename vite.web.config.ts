@@ -1,7 +1,7 @@
 /**
  * Web 版のビルド (2026-10-07)。入口は web.html → src/web/main.ts (クラフトステージだけの殻)。出力は dist-web/ (index.html に直す)。
  * アプリ版 (vite.config.ts) と違い、画像 (base-art / unique-art / rune-art / skill-art) はそのまま入れる (Web は静的ファイルとして配る)。
- * mtx-art (47 MB、スキン画面の物) と開発用の stub は入れない。
+ * mtx-art (47 MB、アプリのスキン画面の物) は Web のスキンのページに出す分だけ、開発用の stub は入れない。
  *   pnpm dev:web   … http://localhost:1440/web.html (相場は vite の proxy 経由)
  *   pnpm build:web … dist-web/ → server/web で置く (pnpm deploy:web)
  */
@@ -47,13 +47,16 @@ export default defineConfig({
     name: "exiledesk-web-finish",
     apply: "build" as const,
     async closeBundle() {
-      const { readFile, rm, rename, writeFile } = await import("node:fs/promises");
+      const { readdir, readFile, rm, rename, writeFile } = await import("node:fs/promises");
       await rename(`${OUT}/web.html`, `${OUT}/index.html`);
       // 版の印: 入口の JS の道 (古い塊の読み直しが Worker を通さずに新しい版を見る。web.html の頭の __staleReload、10-24)
       const entry = (await readFile(`${OUT}/index.html`, "utf8")).match(/src="(\/assets\/web-[^"]+\.js)"/)?.[1];
       if (!entry) throw new Error("index.html に入口の塊 (/assets/web-*.js) が無い");
       await writeFile(`${OUT}/version.txt`, `${entry}\n`);
-      for (const p of ["mtx-art", "dev-trade2-stub.js"]) await rm(`${OUT}/${p}`, { recursive: true, force: true });
+      await rm(`${OUT}/dev-trade2-stub.js`, { force: true });
+      // mtx-art はスキンのページ (?page=skins) に出す分だけ残す (1,901 枚・約 8 MB。静的な絵は 1 日 10 万の枠に数えない、サーバー管理人 10-25)
+      const used = new Set((JSON.parse(await readFile("src/data/mtx-poe1-in-poe2.json", "utf8")) as { items: { a?: number }[] }).items.flatMap((x) => (x.a == null ? [] : [`${x.a}.webp`])));
+      for (const f of await readdir(`${OUT}/mtx-art`).catch(() => [] as string[])) if (!used.has(f)) await rm(`${OUT}/mtx-art/${f}`, { force: true });
     },
   }],
   build: { outDir: OUT, emptyOutDir: true, rollupOptions: { input: "web.html" } },

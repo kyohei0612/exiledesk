@@ -16,7 +16,7 @@ self.addEventListener("activate", (e) => {
   e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => !keep.has(k)).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
 });
 
-const FILE_RE = /^\/(assets|base-art|unique-art|rune-art|skill-art|ui-art|og-art|sfx|fonts|web)\//;
+const FILE_RE = /^\/(assets|base-art|unique-art|rune-art|skill-art|mtx-art|ui-art|og-art|sfx|fonts|web)\//;
 
 self.addEventListener("fetch", (e) => {
   const req = e.request;
