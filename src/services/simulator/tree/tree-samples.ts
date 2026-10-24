@@ -14,7 +14,7 @@
  *   カオスで付いた箱の形と実物が違えば続きから (tree-run の settle。無いと 100 人中 23 人がサフィックス満杯で止まった)
  * サフィックスの完成 3 箱は同じ形 (300 人で完成の時点のプレフィックス・空きが全員同じ、scripts/_tree-done-shape-probe) なので d1 に合流し、その下にプレフィックス 1 本
  * (10-22 オーナー「サフィに 3 MOD 付いた時点で、そこから先は全て同じルート」)。プレフィックス (10-22 オーナー「先無駄高貴後エッセンス」「冒涜でレアリティ」):
- *   素の高貴 (無駄高貴、サフィは満杯なのでプレに付く) → 外れのプレならパーフェクトエッセンス (ルーンの守り) + 左側の結晶化 = 消せるプレは外れだけなので確定で入れ替わり、箱 1 つ →
+ *   素の高貴 (無駄高貴、サフィは満杯なのでプレに付く) → 外れのプレならルーンの合金 (ルーンの守り) + 左側の結晶化 = 消せるプレは外れだけなので確定で入れ替わり、箱 1 つ →
  *   骨で冒涜 → 発現 (一般 MOD も候補に出る) でレアリティ (プレ T1) を選べたら完成。外れは光のお告げ + 消去で冒涜の MOD だけ消して打ち直す (結果は 1 通り)。
  *   無駄高貴でレアリティが付いた時は、もう一度無駄高貴 → エッセンスで外れが消えたら完成、レアリティが消えたら消去で外れを消してルーンの守りの箱へ。
  *   左側のお告げはエッセンスの結晶化だけ (10-22 オーナー「エッセンスだけいる、結晶化」)
@@ -63,7 +63,7 @@ function goldRingSuffix(): TreeDoc {
     R: { modId: "Rings/ItemFoundRarityIncrease", tier: 1 }, C: { modId: "Rings/IncreasedCastSpeed", tier: 2 }, A: { modId: "Rings/AllResistances", tier: 2 },
     PR: { modId: "Rings/ItemFoundRarityIncreasePrefix", tier: 1 }, W: { modId: "Rings/PerfectEssence_BaseRunicWard", tier: 1 },
   };
-  /** パーフェクトエッセンス (ルーンの守り) + 左側の結晶化 (プレだけ消す) */
+  /** ルーンの合金 (ルーンの守り) + 左側の結晶化 (プレだけ消す) */
   const ESS = hand("essence:perfect:Rings/PerfectEssence_BaseRunicWard", ["OmenofSinistralCrystallisation"]);
   const PLAIN = hand("exalt_greater", ["OmenofDextralExaltation"]);
   /** 触媒の高貴 (前のカタリストの手で入れた品質を使う) */
@@ -96,7 +96,7 @@ function goldRingSuffix(): TreeDoc {
     ar: { out: "hit", aim: A.R, parent: "sA", back: "ra" },
     ac: { out: "hit", aim: A.C, parent: "sA", back: "ca" },
     // サフィックスの完成 = d1 に合流 (d2・d3 は同じ形)。d1 からプレフィックス (10-22 オーナー「先無駄高貴後エッセンス」「冒涜でレアリティ」)。サフィは満杯なので高貴・骨はお告げ無しでプレに付く:
-    // 素の高貴 (無駄高貴) → 外れのプレならパーフェクトエッセンス (ルーンの守り) + 左側の結晶化 = 消せるプレは外れだけなので確定で入れ替わり、箱 1 つ (pE)
+    // 素の高貴 (無駄高貴) → 外れのプレならルーンの合金 (ルーンの守り) + 左側の結晶化 = 消せるプレは外れだけなので確定で入れ替わり、箱 1 つ (pE)
     d1: { out: "hit", aim: A.A, parent: "rc_q", hand: hand("exalt"), outs: ["pW", "pRx"] },
     d2: { out: "hit", aim: A.C, parent: "ra_q", back: "d1" },
     d3: { out: "hit", aim: A.R, parent: "ca", back: "d1" },
