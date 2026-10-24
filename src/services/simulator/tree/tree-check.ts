@@ -125,7 +125,7 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
     const waste = new Map<string, { who: Set<number>; reason: string }>();
     const shapes = shapesOf(doc);
     const cantIssues = (): CheckIssue[] => [...cant].map(([id, c]) => ({ boxId: id, kind: "cantUse" as const, text: tr(`この箱に着いた状態では手が打てない (${PEOPLE} 人中 ${c.who.size} 人): ${c.reason}`, `The craft can't be used here (${c.who.size} of ${PEOPLE}): ${c.reason}`) }));
-    const oddIssues = (): CheckIssue[] => [...odd].map(([id, c]) => ({ boxId: id, kind: "unexpected" as const, text: tr(`結果の箱に無い結果も出る (${PEOPLE} 人中 ${c.who.size} 人): ${[...c.outs].join("・")}。回すと形の合う箱へ進み、無ければ止まる`, `Results with no box can happen (${c.who.size} of ${PEOPLE}): ${[...c.outs].join(", ")}. Runs go to a box of the same shape, or stop`) }));
+    const oddIssues = (): CheckIssue[] => [...odd].map(([id, c]) => ({ boxId: id, kind: "unexpected" as const, text: tr(`結果の箱に無い結果も出る (${PEOPLE} 人中 ${c.who.size} 人): ${[...c.outs].join("・")}。回すと形の合う箱へ進み、無ければ止まる。直すには、その結果の箱を足すか、同じ形で手のある箱を作る`, `Results with no box can happen (${c.who.size} of ${PEOPLE}): ${[...c.outs].join(", ")}. Runs go to a box of the same shape, or stop. Fix: add a box for that result, or a box with a craft for that shape`) }));
     for (let person = 1; person <= PEOPLE; person++) {
       const rng = mulberry32(7919 * person);
       const start = sampleOf(data, doc, "start", person).item;
@@ -221,7 +221,7 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
     // 回しで結果の箱に無い形になった箱 (5 人の辿りで出なかった物。上限つきの当たるまでが上限で当たらない時など、10-22 13 通り組んだ #13)
     for (const [id, n] of Object.entries(run.unexpected)) {
       const max = doc.boxes[id]?.hand?.repeat?.max;
-      add(id, "unexpected", tr(`回すと ${RUN_PEOPLE} 人中 ${n} 人が結果の箱に無い形になる${max ? ` (${max} 回で当たらなかった)` : ""}。形の合う箱へ進み、無ければ止まる`, `${n} of ${RUN_PEOPLE} runs end in a shape with no result box${max ? ` (no hit in ${max} tries)` : ""}. They go to a box of the same shape, or stop`));
+      add(id, "unexpected", tr(`回すと ${RUN_PEOPLE} 人中 ${n} 人が結果の箱に無い形になる${max ? ` (${max} 回で当たらなかった)` : ""}。形の合う箱へ進み、無ければ止まる。直すには、その結果の箱を足すか、同じ形で手のある箱を作る`, `${n} of ${RUN_PEOPLE} runs end in a shape with no result box${max ? ` (no hit in ${max} tries)` : ""}. They go to a box of the same shape, or stop. Fix: add a box for that result, or a box with a craft for that shape`));
     }
     // 回しで 1 人でも着いた箱は出さない (5 人の辿りは上限つきの当たるまで・始まりに同じ系統が付いている人で外れた、10-22 13 通り組んだ #9 の誤報 3 本)
     for (const id of never) if (!run.boxes[id]?.reach) add(id, "neverHit", tr("上の手を打ち直してもこの札が付かなかった (側・段・手を確かめる)", "This mod never hit when the craft above was retried (check side, tier and craft)"));

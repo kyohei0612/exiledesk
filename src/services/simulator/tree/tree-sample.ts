@@ -167,7 +167,9 @@ export function startItemOf(data: PatchData, doc: TreeDoc, rng: () => number): S
   const from = pre.item;
   // 印の狙いは「その段以上」(10-24 オーナー「T2 を選んだら T2 以上」): 印の段から上の段 (T1 まで) を全部候補に渡す (アイテムレベルで付かない段はエンジンが外す)
   const cands = marks.flatMap((a) => Array.from({ length: a.tier }, (_, i) => ({ modId: a.modId, tier: i + 1 })));
-  const r = fractureStart(data, doc.base, doc.itemLevel, cands, rng, { junk: START_JUNK, extra: st.mods, from });
+  // 外れには完成の狙いを付けない (段は問わず。ライフを持ってスタートした人が外れの箱のカオススパムで当たらず止まった、10-24 モンキー初めての人の回)
+  const avoid = (doc.memoAims ?? []).filter((a) => !a.fractured).map((a) => ({ modId: a.modId, tier: a.tier }));
+  const r = fractureStart(data, doc.base, doc.itemLevel, cands, rng, { junk: START_JUNK, extra: st.mods, from, avoid });
   return { item: r.item, note: r.note };
 }
 
