@@ -13,18 +13,16 @@ import StageItemCard from "../../../components/for-share/item/StageItemCard.vue"
 import CurrencyShelf from "../../../components/for-share/shelf/CurrencyShelf.vue";
 import HeldOmens from "../../../components/for-share/shelf/HeldOmens.vue";
 import { omensAllowedFor } from "../../../services/craft-stage/engine";
-import { mulberry32, omensFor } from "../../../services/craft-stage/engine";
-import { stepOutcomes } from "../../../services/craft-stage/engine-sim";
-import { catalystFull, catalystTagOf, fillCatalyst } from "../../../services/craft-stage/engine-sim";
-import { aimHits, catalystBoosts, heldOdds, makeStageMod, tierIndexOf, tierNoOf, type HeldOdds, type PatchData, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { omensFor } from "../../../services/craft-stage/engine";
 import { aimHeldOn } from "../../../services/simulator/tree/tree-aim";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
-import { aimsOf, handProblem, sampleOf, singleOutOf } from "../../../services/simulator/tree/tree-sample";
-import { CATALYSING, canSpam, ECHO, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
+import { sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { CATALYSING, canSpam, ECHO, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handLabel, handName, outName } from "./tree-names";
-import { kindOfHand, setHand, type Aim, type Hand, type HandKind, type OutKind } from "../../../services/simulator/tree/tree-model";
+import { setHand, type Aim, type Hand, type HandKind, type OutKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { useSimShelf } from "../use-sim-shelf";
+import { afterQualityOf, autoCatOf, handOf, hitAimsOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf } from "./tree-hand-plan";
 import { tr } from "../../../i18n/lang";
 
 const props = defineProps<{ boxId: string; current: Hand | null }>();
@@ -36,11 +34,8 @@ const t = useTree();
 
 const sample = computed(() => (s.data.value ? sampleOf(s.data.value, t.doc.value, props.boxId, 1) : null));
 const item = computed(() => sample.value?.item ?? null);
-/**
- * 当たりの MOD が決まっていない当たりの箱は、この箱のアイテムが作れない (当たりの形が引けず、見本が親のまま = 変成の後でも白のまま)。
- * 棚は出さずに先に当たりの MOD を選ばせる (10-24 モンキー隊長の 1: 完成の MOD を決めずに組んだ兜で、変成の当たりの箱にエッセンスが打てず箱も増えなかった)
- */
-const needAim = computed(() => t.doc.value.boxes[props.boxId]?.out === "hit" && !t.doc.value.boxes[props.boxId]?.aim && sample.value?.note === "none");
+/** 当たりの MOD が決まっていない当たりの箱 (棚は出さずに先に MOD を選ばせる、tree-hand-plan の needAimOf) */
+const needAim = computed(() => needAimOf(t.doc.value, props.boxId, sample.value?.note));
 const held = ref<string | null>(props.current?.currency ?? null);
 const omens = ref<string[]>(props.current ? [...props.current.omens] : []);
 const spam = ref(!!props.current?.repeat);
@@ -65,46 +60,23 @@ onMounted(() => window.addEventListener("keydown", onKey, true));
 onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 /** 持つ / 離す (クラフト台と同じ: 同じ物をもう一度押す・右クリック・Esc = 離す。お告げの欄も閉じる、オーナー 10-22) 棚・打てるかは use-sim-shelf */
 /** この箱が品質だけ上げる手の後 (通り抜け) か */
-const afterQuality = computed(() => {
-  const b = t.doc.value.boxes[props.boxId], p = b?.out === "pass" && b.parent ? t.doc.value.boxes[b.parent] : null;
-  return !!p?.hand && isCatalyst(p.hand.currency);
-});
+const afterQuality = computed(() => afterQualityOf(t.doc.value, props.boxId));
 /** 持った物に触媒のお告げが掛けられるか */
 const canCatalyse = computed(() => !!held.value && omensAllowedFor(held.value).includes(CATALYSING));
-/**
- * 前に足すカタリストの既定 = この箱でまだ付いていない狙い (木の狙い、次に欲しい MOD のメモ) を伸ばす物 (エンジンの catalystForMod)。後から札を押して替えられる。
- * どの狙いも伸ばせない (靴・鎧など品質が乗らない装備) なら null = 前のカタリストは足さない (触媒のお告げはエンジンの omenBlock で掛けられない、10-22 ブラック)。
- * メモも見るのは 10-22 13 通り組んだ #7 (白紙ではいつもライフになった)
- */
-const autoCat = computed((): string | null => {
-  const d = s.data.value, it = item.value;
-  for (const a of d && it ? [...aimsOf(t.doc.value), ...(t.doc.value.memoAims ?? [])].filter((x) => !aimHeldOn(d, it, x, { sameText: true })) : []) {
-    const c = catalystForMod(d!, it!, a.modId, TREE_CATALYSTS);
-    if (c) return c;
-  }
-  return null;
-});
+/** 前に足すカタリストの既定 (tree-hand-plan の autoCatOf) */
+const autoCat = computed((): string | null => { const d = s.data.value, it = item.value; return d && it ? autoCatOf(d, t.doc.value, it) : null; });
 /**
  * 棚に渡すアイテム = 前にカタリストの手を足す時はそれで品質を最大まで入れた後 (品質 0 では触媒のお告げが「品質が要る」で掛けられない。
  * 前は品質 0 の見本を渡していて、触媒の手を開き直すとお告げが外れていた、10-22)
  */
 const needPre = computed(() => canCatalyse.value && !afterQuality.value);
-const preFill = computed(() => { const d = s.data.value, it = item.value; return d && it && needPre.value && autoCat.value ? fillCatalyst(d, it, autoCat.value, mulberry32(1)) : null; });
+const preFill = computed(() => { const d = s.data.value, it = item.value; return d && it ? preFillOf(d, it, needPre.value, autoCat.value) : null; });
 const shelfItem = computed(() => preFill.value?.item ?? item.value);
 const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens);
 const used = computed(() => (held.value ? omensFor(held.value, omens.value) : []));
 const catalysing = computed(() => used.value.includes(CATALYSING));
 
-const hand = computed((): Hand | null => {
-  if (!held.value) return null;
-  return {
-    currency: held.value, omens: isBone(held.value) && echo.value ? [...used.value, ECHO] : used.value,
-    catalyst: null, quality: 0,
-    repeat: spam.value && canSpam(held.value) ? { until: "hit", max: spamMax.value && spamMax.value > 0 ? Math.round(spamMax.value) : null } : null,
-    ...(free.value && canFree.value ? { free: true } : {}),
-    ...(isFracture.value && fracOf.value ? { fractureOf: fracOf.value } : {}),
-  };
-});
+const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: free.value && canFree.value, echo: echo.value, fractureOf: isFracture.value ? fracOf.value : null }) : null));
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
 const preCat = computed((): string | null => (catalysing.value && !afterQuality.value ? autoCat.value : null));
 const RESULT: Record<HandKind, [string, string]> = {
@@ -113,43 +85,11 @@ const RESULT: Record<HandKind, [string, string]> = {
   essence: ["付いた + 狙いが消えた (付く MOD は必ず付く)", "Added + Target lost (the essence mod always lands)"],
   fracture: ["狙いが ✦ になった + 外れが ✦ になった", "A target fractured + a miss fractured"],
 };
-const kind = computed((): HandKind | null => (hand.value ? kindOfHand(hand.value, effectOf(hand.value.currency)) : null));
-/**
- * 当たりの箱の既定 = このツリーの狙いのうち、この箱でまだ付いていない物。木にまだ狙いが無ければ欲しい MOD のメモ
- * (10-22 白紙から組んだ手袋: 狙い 0 で当たるまでにすると MOD の空の当たりの箱を見本で引き直し続け、ページが 5 分固まった)。
- * カオススパムはその全部、足す・入れ替える手はこの手で付きうる物だけ (エンジンの stepOutcomes。10-22 靴・手袋で、当たりの箱が空のまま 1 箱ずつ MOD・行・段を選ぶのが手間だった)
- */
-const hitAims = computed((): Aim[] => {
-  const d = s.data.value, it = item.value, h = hand.value;
-  if (!d || !it || !h) return [];
-  // エッセンス = 付く MOD は決まっている。エンジンの結果で新しく付いた MOD を当たりの札に (10-22 オーナー「エッセンスの道」)
-  if (kind.value === "essence") {
-    const before = new Set([...it.prefixes, ...it.suffixes].map((m) => m.modId));
-    const got = (stepOutcomes(d, it, h.currency, engineOmens(h)) ?? []).filter((o) => !o.void).flatMap((o) => [...o.item.prefixes, ...o.item.suffixes].filter((m) => !before.has(m.modId)));
-    const out: Aim[] = [];
-    for (const m of got) if (!out.some((a) => a.modId === m.modId)) out.push({ modId: m.modId, tier: tierNoOf(m) });
-    return out.slice(0, 1);
-  }
-  // フラクチャー: 当たりの札 = この箱で付いている狙い (✦ にする MOD を選んだらその 1 つ)
-  if (kind.value === "fracture") {
-    const on = [...aimsOf(t.doc.value), ...t.goals.value].filter((a, i, l) => aimHeldOn(d, it, a, { sameText: true }) && l.findIndex((x) => x.modId === a.modId) === i);
-    return fracOf.value ? on.filter((a) => a.modId === fracOf.value) : on;
-  }
-  if (kind.value !== "spam" && kind.value !== "add" && kind.value !== "swap") return [];
-  const tree = aimsOf(t.doc.value);
-  const open = (tree.length ? tree : t.doc.value.memoAims ?? []).filter((a) => !aimHeldOn(d, it, a, { sameText: true }));
-  if (kind.value === "spam") return open;
-  // 見本を数個見て、どれかで付く狙いは並べる (1 つだけだと見本に低い段が付いていて T2 が出なかった、10-22 13 通り組んだ #17)
-  // 付きうるかはエンジンの入口の reachableAims (B12 10-22)。どの見本でも行き先が無ければ全部
-  const items = [1, 2, 3, 4].map((seed) => (seed === 1 ? it : sampleOf(d, t.doc.value, props.boxId, seed).item));
-  return reachableAims(d, items, h.currency, engineOmens(h), open, { sameText: true }) ?? open;
-});
-/** 結果が 1 通りの手か (この箱の見本 8 つにエンジンで打った行き先を全部たどる。触媒の手は前のカタリストを入れた後で) */
-const only = computed(() => {
-  // ✦ にする MOD を選んで、この箱の見本に付いている時は結果は「その狙いが ✦」の 1 通り
-  if (isFracture.value && fracOf.value && hitAims.value.length) return { out: "hit" as OutKind, aim: hitAims.value[0]! };
-  return hand.value && s.data.value ? singleOutOf(s.data.value, t.doc.value, props.boxId, hand.value, preCat.value, hitAims.value) : null;
-});
+const kind = computed((): HandKind | null => (hand.value ? kindOf(hand.value) : null));
+/** 当たりの箱の既定 (tree-hand-plan の hitAimsOf) */
+const hitAims = computed((): Aim[] => { const d = s.data.value, it = item.value, h = hand.value; return d && it && h ? hitAimsOf(d, t.doc.value, props.boxId, it, h, t.goals.value, isFracture.value ? fracOf.value : null) : []; });
+/** 結果が 1 通りの手か (tree-hand-plan の onlyOf) */
+const only = computed(() => (hand.value && s.data.value ? onlyOf(s.data.value, t.doc.value, props.boxId, hand.value, preCat.value, hitAims.value) : null));
 /** この手に替えると消える箱の数 (結果の箱から先。手の種類が同じなら 0。写しに打って数える) */
 const gone = computed((): number => {
   const h = hand.value, k = kind.value;
@@ -160,58 +100,14 @@ const gone = computed((): number => {
   const kept = new Set(Object.keys(d.boxes));
   return before - Object.keys(t.doc.value.boxes).filter((id) => kept.has(id)).length;
 });
-/** この箱の見本に打てない手は確定させない (お告げが効かない・消せる物が無い等。オーナー 10-22「進行不能」、tree-sample の handProblem) */
-const problem = computed((): string | null => {
-  if (!hand.value || !shelfItem.value || !s.data.value) return null;
-  // 当たるまで繰り返すのに狙いが 1 つも無い (まだ付いていない狙いが無い) 時は決めさせない
-  // 前に足すカタリストが入らないベース (装飾品だけに入る。前は触媒のお告げの「品質が要る」と出た、10-22 13 通り組んだ #16)
-  const pf = preFill.value, it0 = item.value;
-  const full = !!it0 && !!preCat.value && catalystFull(it0, preCat.value);
-  if (preCat.value && pf && !pf.applied && !full) return tr(`前に足すカタリストが入らない: ${pf.reason ?? ""}`, `The catalyst before this can't be used: ${pf.reason ?? ""}`);
-  if (kind.value === "spam" && !hitAims.value.length) return tr("狙いが無い (欲しい MOD のメモに足すか、当たりの箱で MOD を選んでから)", "No target yet (add one to the wanted mods memo, or pick a mod in a hit box first)");
-  return handProblem(s.data.value, preCat.value ? shelfItem.value : item.value!, hand.value);
-});
+/** この箱の見本に打てない手は確定させない (tree-hand-plan の problemOf) */
+const problem = computed((): string | null => (hand.value && item.value && s.data.value ? problemOf(s.data.value, item.value, hand.value, hitAims.value, preCat.value, preFill.value) : null));
 /** お告げの並びに置く札 (お告げのボタンと同じ高さ) */
 const OMEN_CHIP = "flex min-h-12 max-w-[96px] items-center justify-center rounded-lg border border-white/15 bg-black/30 px-2 text-center text-[11px] leading-tight hover:border-violet-300/60";
 const OMEN_ON = "!border-violet-300 bg-violet-500/30 text-violet-50";
 function ok(): void {
   const h = hand.value, k = kind.value;
   if (h && k && !problem.value) emit("pick", h, k, hitAims.value, preCat.value, only.value);
-}
-// 付きうる狙い・伸ばすカタリスト (2026-10-23 エンジンの for-sim から戻した。中身はエンジンの核の heldOdds・aimHits・catalystBoosts を呼ぶだけ)
-interface TierAim { modId: string; tier: number }
-interface AimDiffOpts { sameText?: boolean }
-const heldOn = (data: PatchData, mods: readonly StageMod[], a: TierAim, o: AimDiffOpts): boolean => {
-  const t = { modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) }, opts = o.sameText ? { data, sameText: true } : undefined;
-  return mods.some((m) => aimHits(m, t, opts));
-};
-
-/**
- * この手で付きうる狙い = items (同じ箱の見本など) のどれかで、クラフト台でそのカレンシーを持った時に出る % (heldOdds。CoE と合わせ済み) が 0 より大きい段がある狙い
- * (並びは aims のまま。オーナー 10-22: 行き先は数え上げず heldOdds の答えをそのまま、錬金・大いなる高貴・骨の候補も heldOdds の物)。
- * もう付いている狙いは見ない (呼ぶ側が外して渡す)。どの見本でも heldOdds に % が 1 つも無い (打てない・確率の表が無い手) 時は null (呼ぶ側が決める)
- */
-function reachableAims<A extends TierAim>(data: PatchData, items: readonly StageItem[], key: string, omens: readonly string[], aims: readonly A[], o: AimDiffOpts = {}): A[] | null {
-  const pools = items.flatMap((it) => { const h = heldOdds(data, it, key, omens), ms = h ? poolOf(data, h) : []; return ms.length ? [ms] : []; });
-  if (!pools.length) return null;
-  return aims.filter((a) => pools.some((ms) => heldOn(data, ms, a, o)));
-}
-/** heldOdds で % が 0 より大きい段の MOD (数値は段の真ん中、当たりの判定にだけ使う) */
-function poolOf(data: PatchData, h: HeldOdds): StageMod[] {
-  const out: StageMod[] = [];
-  for (const [id, x] of h.byMod) {
-    const mod = data.mods.get(id);
-    if (!mod) continue;
-    for (const t of x.tiers) if (t.w > 0) out.push(makeStageMod(mod, mod.type === "suffix" ? "suffix" : "prefix", t.index, () => 0.5));
-  }
-  return out;
-}
-
-/** その MOD を伸ばすカタリスト (keys の並びで最初の物、伸ばす物が無ければ null)。伸びるかはエンジンの catalystBoosts (指輪・アミュレットは MOD の tags、ジュエル・上のベースは中身のタグ) */
-function catalystForMod(data: PatchData, item: StageItem, modId: string, keys: readonly string[]): string | null {
-  const mod = data.mods.get(modId);
-  if (!mod) return null;
-  return keys.find((k) => catalystBoosts(item, { modId, tags: mod.tags }, catalystTagOf(k), data)) ?? null;
 }
 </script>
 

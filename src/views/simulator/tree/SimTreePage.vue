@@ -28,7 +28,7 @@ import { handLabel, outName } from "./tree-names";
 import { aimsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { aimHeldOn } from "../../../services/simulator/tree/tree-aim";
 import { treeSample } from "../../../services/simulator/tree/tree-samples";
-import { linkSameShape, MATCH, RESTART } from "../../../services/simulator/tree/tree-run";
+import { MATCH, RESTART } from "../../../services/simulator/tree/tree-run";
 import { tr } from "../../../i18n/lang";
 import { pageZoom } from "../../../utils/zoom";
 import { LINE, useTreeEdges } from "./use-tree-edges";
@@ -48,11 +48,12 @@ import { useTreeReveal } from "./use-tree-reveal";
 import { RUN_N, useTreeRun } from "./use-tree-run";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue";
+import { applyPick } from "./tree-hand-plan";
 import TreeRunLayer from "./TreeRunLayer.vue";
 import TreeHandChip from "./TreeHandChip.vue"; import TreeBandLayer from "./TreeBandLayer.vue"; import TreeTabs from "./TreeTabs.vue";
 import TreeMergeLayer from "./TreeMergeLayer.vue";
 import TreeHoverCard from "./TreeHoverCard.vue";
-import { backTargetsOf, joinSameShape } from "./tree-merge";
+import { backTargetsOf } from "./tree-merge";
 import { useTreeMerge } from "./use-tree-merge";
 
 const t = useTree();
@@ -171,14 +172,8 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = nul
   const id = panel.value!.id;
   if (picking.value === id) picking.value = null;
   let at = id;
-  t.edit((d) => {
-    const had = new Set(Object.keys(d.boxes));
-    if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
-    setHand(d, at, h, kind, aims, only);
-    joinSameShape(d, id);
-    // 前に作ってまだ行き先も手も無い箱も、今手を付けた箱と同じ形ならつなぐ (先に作った当たりの箱は、同じ形の箱に手が付いた時につながる)
-    linkSameShape(d, Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id));
-  });
+  // 組み替えは tree-hand-plan の applyPick (猿の口 sim-monkey と同じ)
+  t.edit((d) => { at = applyPick(d, id, h, kind, aims, pre, only); });
   panel.value = null;
   // 出来た結果の箱が枠の外なら寄る (真ん中の箱。10-22 白紙から組んで、出来た箱が下に出て自分で動かさないと見えなかった)
   const kids = doc.value.boxes[at]?.outs ?? [];
