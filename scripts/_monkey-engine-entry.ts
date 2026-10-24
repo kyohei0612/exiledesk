@@ -146,18 +146,19 @@ export function oddsOf(item: StageItem, key: string, omens: readonly string[], a
   return out;
 }
 /** 見えている形 (レアリティ・MOD・品質・ソケット) からエンジンで組み立てたアイテム (組み立てられなければ null)。ツリーが渡した物と比べる */
-export function rebuild(base: string, rarity: "normal" | "magic" | "rare", ms: ReadonlyArray<{ modId: string; tier: number; fractured?: boolean }>, quality = 0, sockets = 0): StageItem | null {
+export function rebuild(base: string, rarity: "normal" | "magic" | "rare", ms: ReadonlyArray<{ modId: string; tier: number; fractured?: boolean }>, quality = 0, sockets = 0, itemLevel = 82): StageItem | null {
   const it = itemWith0(base, rarity, ms);
   if (!it) return null;
   const fr = new Set(ms.filter((m) => m.fractured).map((m) => m.modId));
   const mark = (m: StageMod): StageMod => (fr.has(m.modId) ? { ...m, fractured: true } : m);
-  return { ...it, quality, sockets: Math.max(sockets, it.sockets ?? 0), prefixes: it.prefixes.map(mark), suffixes: it.suffixes.map(mark) };
+  return { ...it, itemLevel, quality, sockets: Math.max(sockets, it.sockets ?? 0), prefixes: it.prefixes.map(mark), suffixes: it.suffixes.map(mark) };
 }
 /** 2 つのアイテムの食い違い (レアリティ・MOD の id と段・✦・品質・ソケット)。同じなら空 */
 export function itemDiff(a: StageItem, b: StageItem): string[] {
   const sig = (it: StageItem): string[] => [...it.prefixes, ...it.suffixes].map((m) => `${m.side === "prefix" ? "P" : "S"} ${m.modId}#${m.tierIndex}${m.fractured ? "✦" : ""}${m.unrevealed ? "?" : ""}`).sort();
   const out: string[] = [];
   if (a.rarity !== b.rarity) out.push(`レアリティ ${a.rarity} / ${b.rarity}`);
+  if (a.itemLevel !== b.itemLevel) out.push(`アイテムレベル ${a.itemLevel} / ${b.itemLevel}`);
   const sa = sig(a), sb = sig(b);
   for (const x of sa) if (!sb.includes(x)) out.push(`組み立てだけ ${x}`);
   for (const x of sb) if (!sa.includes(x)) out.push(`ツリーだけ ${x}`);

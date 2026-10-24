@@ -55,7 +55,7 @@ function checkTree(tr) {
     if (!bi?.raw) { res.skipped.push({ box: b.id, why: "boxItem が無い" }); continue; }
     const outs = b.outs.map((id) => doc.boxes[id]).filter(Boolean);
     const aims = outs.filter((o) => o.out === "hit" && o.aim).map((o) => o.aim);
-    const built = E.rebuild(doc.base, bi.rarity, bi.mods ?? [], bi.quality ?? 0, bi.sockets ?? 0);
+    const built = E.rebuild(doc.base, bi.rarity, bi.mods ?? [], bi.quality ?? 0, bi.sockets ?? 0, doc.itemLevel ?? 82);
     const item = bi.preRaw ?? bi.raw;
     const odds = E.oddsOf(item, b.hand.currency, b.hand.omens.filter((o) => o !== ECHO), aims);
     const row = { box: b.id, hand: b.hand.currency, omens: b.hand.omens, repeat: !!b.hand.repeat, itemDiff: built ? E.itemDiff(built, bi.raw) : ["見えている形から組み立てられない"], rows: [], off: [] };
