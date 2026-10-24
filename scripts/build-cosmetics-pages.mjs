@@ -3,9 +3,10 @@
  * build-cosmetics-pages.mjs — PoE2 で使える PoE1 のスキン (MTX・コスメティック) の静的なページ (2026-10-25、スキン部長)
  *
  * オーナー「PoE1・PoE2 スキンとかでも色々引っかかるように SEO こっちでも頑張るか」。検索の入口になる、JS 無しで読める一覧。
- * 出す物: /cosmetics/ と /en/cosmetics/ (種類ごとの件数と小さい種類の全部)、件数の多い種類は /cosmetics/<種類> (と /en/…) の子ページ。
+ * 出す物: /cosmetics/ と /en/cosmetics/ (まとめごとの件数)、まとめごとの子ページ /cosmetics/<まとめ> (と /en/…)。
+ * まとめはアプリの一覧の絞り込みと同じ src/views/skins/groups.json の 10 個 (オーナー 10-25「8 種類くらい、武器・エフェクト・背面は絶対分けたい」)。
+ * 子ページの中は元の種類ごとの見出し (英語名の無い種類が混ざるまとめは英語では見出し無し)。
  * 中身は src/data/mtx-poe1-in-poe2.json (scripts/build-mtx-web.mjs、名前は poe2db の日英)。絵は /mtx-art/<a>.webp (静的な置き場なので 1 日の枠に数えない)。
- * 英語の子ページは poe2db に種類の英語名がある種類だけ (ペット・隠れ家などは英語の一覧の「Other」に入れる、推測で訳さない)。
  * 見た目と頭・足は読み物のページ (build-seo-pages.mjs) に合わせる。アプリの一覧 (?page=skins) への入口を付ける。
  * 自動で作った一覧なので既定は noindex (10-22 オーナー OK の /bases/ と同じ)。--index で index にしてサイトマップに足す (オーナーの OK の後)。
  *   node scripts/build-cosmetics-pages.mjs [出力先 (既定 dist-web)] [--index]
@@ -20,20 +21,14 @@ const args = process.argv.slice(2);
 const INDEX = args.includes("--index");
 const OUT = resolve(ROOT, args.find((a) => !a.startsWith("--")) ?? "dist-web");
 const SITE = "https://exiledesk.com";
-/** 子ページを作る件数 (これより少ない種類は一覧のページに全部並べる) */
-const CHILD_MIN = 20;
-/** 英語名の無い種類の道 (道に使うだけで、画面には出さない) */
-const SLUG_NO_EN = { 14: "pets", 20: "hideout", 24: "amulet-skins", 28: "ring-skins", 25: "belt-skins", 26: "flask-skins" };
-
 const d = JSON.parse(readFileSync(resolve(ROOT, "src/data/mtx-poe1-in-poe2.json"), "utf8"));
+const G = JSON.parse(readFileSync(resolve(ROOT, "src/views/skins/groups.json"), "utf8"));
 const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-const slugOf = (k) => (d.kinds[k]?.en ? d.kinds[k].en.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") : SLUG_NO_EN[k] ?? null);
 
-// 種類ごと (多い順、種類の無い物 -1 は最後)
-const byKind = new Map();
-for (const it of d.items) (byKind.get(it.k) ?? byKind.set(it.k, []).get(it.k)).push(it);
-const kinds = [...byKind.keys()].sort((a, b) => Number(a < 0) - Number(b < 0) || byKind.get(b).length - byKind.get(a).length);
-// 同じ英語名の種類 (例 鎧装飾品 と 腰装飾品 = Body Armour Attachment) は英語の子ページを 1 つに
+// まとめごと (groups.json の並び、その他は最後)。中は元の種類ごと (多い順)
+const GROUPS = [...G.groups, G.other].map((g) => ({ ...g, items: [] }));
+const groupOf = new Map(G.groups.flatMap((g) => g.k.map((k) => [k, GROUPS.find((x) => x.id === g.id)])));
+for (const it of d.items) (groupOf.get(it.k) ?? GROUPS.at(-1)).items.push(it);
 const total = d.items.length;
 
 // 読み物のページ (build-seo-pages.mjs) と同じ見た目 + 絵つきのカード
@@ -62,7 +57,8 @@ const LANGS = {
     foot: `<p class="fnav"><a href="/">クラフトステージ</a> · <a href="/guide">使い方</a> · <a href="/bases/">ベース一覧</a> · <a href="/cosmetics/">コスメティック</a> · <a href="/blog/">ブログ</a> · <a href="/about">ExileDesk について</a> · <a href="/privacy">プライバシーポリシー</a> · <a href="/contact">お問い合わせ</a> · <a href="/en/cosmetics/" hreflang="en">English</a></p>ExileDesk は非公式のファンサイトです。Path of Exile・Path of Exile 2 とゲーム内の画像・名称の権利は Grinding Gear Games に帰属します。`,
     name: (it) => it.ja,
     sub: (it) => it.en,
-    kind: (k) => d.kinds[k]?.ja ?? "その他",
+    kind: (k) => d.kinds[k]?.ja ?? null,
+    group: (g) => g.ja,
   },
   en: {
     prefix: "/en",
@@ -72,7 +68,8 @@ const LANGS = {
     foot: `<p class="fnav"><a href="/?lang=en">Craft Stage</a> · <a href="/en/bases/">Bases</a> · <a href="/en/cosmetics/">Cosmetics</a> · <a href="/en/blog/">Blog</a> · <a href="/en/about">About</a> · <a href="/en/privacy">Privacy Policy</a> · <a href="/en/contact">Contact</a> · <a href="/cosmetics/" hreflang="ja">日本語</a></p>ExileDesk is an unofficial fan site. Path of Exile, Path of Exile 2 and their images and names belong to Grinding Gear Games.`,
     name: (it) => it.en,
     sub: () => "",
-    kind: (k) => d.kinds[k]?.en ?? "Other",
+    kind: (k) => d.kinds[k]?.en ?? null,
+    group: (g) => g.en,
   },
 };
 
@@ -82,21 +79,6 @@ for (const [code, L] of Object.entries(LANGS)) {
   const other = ja ? "en" : "ja";
   const dir = resolve(OUT, `${L.prefix.slice(1)}${L.prefix ? "/" : ""}cosmetics`);
   mkdirSync(dir, { recursive: true });
-  /** 英語の子ページがある種類か (英語名の無い種類は日本語だけ) */
-  const hasChild = (k, lang) => k >= 0 && byKind.get(k).length >= CHILD_MIN && slugOf(k) && (lang === "ja" || !!d.kinds[k]?.en);
-  /** 英語は同じ英語名の種類を 1 つにまとめる (鎧装飾品 + 腰装飾品 = Body Armour Attachment) */
-  const groups = [];
-  for (const k of kinds) {
-    const key = ja || !d.kinds[k]?.en ? `k${k}` : d.kinds[k].en;
-    const g = groups.find((x) => x.key === key);
-    if (g) g.items.push(...byKind.get(k)), g.ks.push(k);
-    else groups.push({ key, ks: [k], items: [...byKind.get(k)], label: L.kind(k), slug: slugOf(k) });
-  }
-  // 英語の「Other」= 英語名の無い種類をまとめた箱
-  const en = !ja;
-  const shown = en ? [...groups.filter((g) => d.kinds[g.ks[0]]?.en), { key: "other", ks: groups.filter((g) => !d.kinds[g.ks[0]]?.en).flatMap((g) => g.ks), items: groups.filter((g) => !d.kinds[g.ks[0]]?.en).flatMap((g) => g.items), label: "Other", slug: null }] : groups;
-  for (const g of shown) g.child = g.slug && g.items.length >= CHILD_MIN && g.ks.every((k) => k >= 0) && (ja || hasChild(g.ks[0], "en"));
-
   const head = (title, desc, path, alt) => `<!doctype html>
 <html lang="${code}">
 <head>
@@ -138,32 +120,40 @@ ${alt ? `<link rel="alternate" hreflang="${other}" href="${SITE}${LANGS[other].p
     return `<div class="card">${img}<span class="t"><b>${esc(L.name(it))}</b>${sub ? `<span>${esc(sub)}</span>` : ""}</span>${link}</div>`;
   }).join("")}</div>`;
   const childPath = (g) => `/cosmetics/${g.slug}`;
+  /** 子ページの中身: 元の種類ごとの見出し + カード (種類が 1 つ・英語名の無い種類が混ざる時は見出し無し) */
+  const sections = (g) => {
+    const by = new Map();
+    for (const it of g.items) (by.get(it.k) ?? by.set(it.k, []).get(it.k)).push(it);
+    const ks = [...by.keys()].sort((a, b) => by.get(b).length - by.get(a).length);
+    if (ks.length < 2 || ks.some((k) => !L.kind(k))) return cards(g.items);
+    return ks.map((k) => `<h2>${esc(L.kind(k))} (${by.get(k).length})</h2>${cards(by.get(k))}`).join("\n");
+  };
   /** 名前に多く出る言葉 (翼・Wings など) を数える。種類の説明の 1 文に使う */
   const wings = (list) => list.filter((it) => /Wings/i.test(it.en)).length;
 
   // 子ページ
   let nChild = 0;
-  for (const g of shown.filter((x) => x.child)) {
+  for (const g of GROUPS) {
     const path = childPath(g);
-    const altG = (ja ? g.ks.some((k) => d.kinds[k]?.en) : true) ? path : null;
+    const label = L.group(g);
     const n = g.items.length;
     const w = wings(g.items);
-    const title = ja ? `PoE2 で使える PoE1 の${g.label} ${n} 件 — スキン・MTX 一覧 | ExileDesk` : `PoE1 ${g.label} usable in PoE2 (${n}) — PoE2 cosmetics & MTX | ExileDesk`;
+    const title = ja ? `PoE2 で使える PoE1 の${label} ${n} 件 — スキン・MTX 一覧 | ExileDesk` : `PoE1 ${label} usable in PoE2 (${n}) — PoE2 cosmetics & MTX | ExileDesk`;
     const desc = ja
-      ? `Path of Exile 2 でも使える Path of Exile 1 の MTX (スキン) のうち${g.label} ${n} 件の一覧${w >= 10 ? ` (翼 ${w} 件を含む)` : ""}。poe2db の日本語と英語の名前・絵・poe2db へのリンク。`
-      : `${n} Path of Exile 1 microtransactions (${g.label}) that are also usable in Path of Exile 2${w >= 10 ? `, including ${w} wings` : ""}. Names, icons and poe2db links.`;
+      ? `Path of Exile 2 でも使える Path of Exile 1 の MTX (スキン) のうち${label} ${n} 件の一覧${w >= 10 ? ` (翼 ${w} 件を含む)` : ""}。poe2db の日本語と英語の名前・絵・poe2db へのリンク。`
+      : `${n} Path of Exile 1 microtransactions (${label}) that are also usable in Path of Exile 2${w >= 10 ? `, including ${w} wings` : ""}. Names, icons and poe2db links.`;
     const intro = ja
-      ? `Path of Exile 1 で手に入れた MTX (マイクロトランザクション) のうち、Path of Exile 2 でも使える${esc(g.label)}は ${n} 件です${w >= 10 ? ` (名前に Wings が付く翼は ${w} 件)` : ""}。名前は poe2db の日本語と英語です。`
-      : `${n} of the Path of Exile 1 microtransactions (MTX) in the ${esc(g.label)} category are also usable in Path of Exile 2${w >= 10 ? ` (${w} of them are wings)` : ""}. Names follow poe2db.`;
-    const others = shown.filter((x) => x.child && x !== g).map((x) => `<a href="${L.prefix}${childPath(x)}">${esc(x.label)}</a>`).join(" · ");
-    writeFileSync(resolve(dir, `${g.slug}.html`), `${head(title, desc, path, altG)}
-<p class="crumb"><a href="${L.prefix}/cosmetics/">${ja ? "PoE2 で使える PoE1 のスキン" : "PoE1 cosmetics usable in PoE2"}</a> › ${esc(g.label)}</p>
-<h1>${ja ? `PoE2 で使える PoE1 の${esc(g.label)}` : `PoE1 ${esc(g.label)} usable in PoE2`}</h1>
+      ? `Path of Exile 1 で手に入れた MTX (マイクロトランザクション) のうち、Path of Exile 2 でも使える${esc(label)}は ${n} 件です${w >= 10 ? ` (名前に Wings が付く翼は ${w} 件)` : ""}。名前は poe2db の日本語と英語です。`
+      : `${n} of the Path of Exile 1 microtransactions (MTX) in the ${esc(label)} category are also usable in Path of Exile 2${w >= 10 ? ` (${w} of them are wings)` : ""}. Names follow poe2db.`;
+    const others = GROUPS.filter((x) => x !== g).map((x) => `<a href="${L.prefix}${childPath(x)}">${esc(L.group(x))}</a>`).join(" · ");
+    writeFileSync(resolve(dir, `${g.slug}.html`), `${head(title, desc, path, path)}
+<p class="crumb"><a href="${L.prefix}/cosmetics/">${ja ? "PoE2 で使える PoE1 のスキン" : "PoE1 cosmetics usable in PoE2"}</a> › ${esc(label)}</p>
+<h1>${ja ? `PoE2 で使える PoE1 の${esc(label)}` : `PoE1 ${esc(label)} usable in PoE2`}</h1>
 <p class="en">${ja ? `${n} 件 · スキン / MTX / コスメティック` : `${n} items · skins / MTX / cosmetics`}</p>
 <p>${intro}</p>
 ${note}
 ${cta}
-${cards(g.items)}
+${sections(g)}
 <h2>${ja ? "ほかの種類" : "Other categories"}</h2>
 <p>${others}</p>
 ${foot}`);
@@ -172,12 +162,11 @@ ${foot}`);
   }
 
   // 一覧
-  const rows = shown.map((g) => `<tr><td>${g.child ? `<a href="${L.prefix}${childPath(g)}">${esc(g.label)}</a>` : `<a href="#${g.key}">${esc(g.label)}</a>`}</td><td class="n">${g.items.length}</td></tr>`).join("");
-  const small = shown.filter((g) => !g.child).map((g) => `<h2 id="${g.key}">${esc(g.label)} (${g.items.length})</h2>${cards(g.items)}`).join("\n");
+  const rows = GROUPS.map((g) => `<tr><td><a href="${L.prefix}${childPath(g)}">${esc(L.group(g))}</a></td><td class="n">${g.items.length}</td></tr>`).join("");
   const w = wings(d.items);
   writeFileSync(resolve(dir, "index.html"), `${head(
     ja ? "PoE2 で使える PoE1 のスキン・MTX 一覧 (コスメティック) | ExileDesk" : "PoE1 cosmetics & MTX usable in PoE2 | ExileDesk",
-    ja ? `Path of Exile 2 でも使える Path of Exile 1 の MTX (スキン・コスメティック) ${total} 件の一覧。鎧装飾品 (翼)・ペット・兜・武器エフェクト・ポータル・ポートレートフレームなど種類ごとに、poe2db の日英の名前と絵。` : `All ${total} Path of Exile 1 microtransactions (skins, cosmetics) that also work in Path of Exile 2 — wings, pets, helmets, weapon effects, portals, portrait frames and more, with names and icons from poe2db.`,
+    ja ? `Path of Exile 2 でも使える Path of Exile 1 の MTX (スキン・コスメティック) ${total} 件の一覧。武器・武器エフェクト・背面 (翼・マント)・防具・エフェクト・ペット・ポータル・ポートレートフレーム・隠れ家の種類ごとに、poe2db の日英の名前と絵。` : `All ${total} Path of Exile 1 microtransactions (skins, cosmetics) that also work in Path of Exile 2 — weapon skins and effects, back attachments (wings, cloaks), armour, character effects, pets, portals, portrait frames and hideout decorations, with names and icons from poe2db.`,
     "/cosmetics/", "/cosmetics/")}
 <h1>${ja ? "PoE2 で使える PoE1 のスキン (MTX) 一覧" : "PoE1 skins (MTX) usable in PoE2"}</h1>
 <p class="en">${ja ? `${total} 件 · Path of Exile 1 / Path of Exile 2 共通のコスメティック` : `${total} items · cosmetics shared by Path of Exile 1 and Path of Exile 2`}</p>
@@ -186,7 +175,6 @@ ${note}
 ${cta}
 <h2>${ja ? "種類" : "Categories"}</h2>
 <table><thead><tr><th>${ja ? "種類" : "Category"}</th><th class="n">${ja ? "件数" : "Items"}</th></tr></thead><tbody>${rows}</tbody></table>
-${small}
 ${foot}`);
   urls.push(`${L.prefix}/cosmetics/`);
   console.log(`${code}: 一覧 + 種類のページ ${nChild} 枚`);
