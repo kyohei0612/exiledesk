@@ -316,11 +316,13 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
     const { b, fixed } = pk;
     let mod = pk.mod;
     let t = fixed ?? tierWith(mod, b);
-    // トレードの段 0 はエッセンス・完全エッセンス・合金の MOD: 値の幅で普通の MOD に読まず、同じクラスの同じ文のエッセンスの MOD を先に (収まる物から)
-    if (!fixed && b.tradeTier === 0 && !/essence/.test(String(mod.source))) {
+    // トレードの段 0 はエッセンス・完全エッセンス・合金の MOD (見本 t1・t2): 値の幅で普通の MOD に読まず、同じクラスの同じ文のエッセンスの MOD を先に (収まる物から)。
+    // 冒涜専用の MOD も候補に並べる (オーナー 10-24「冒涜専用も 0 かな多分」、見本はまだ無いので決め打ちしない。両方収まればエッセンスが先)
+    const zeroSrc = (src: unknown): number => (/essence/.test(String(src)) ? 2 : src === "desecrated" ? 1 : 0);
+    if (!fixed && b.tradeTier === 0 && !zeroSrc(mod.source)) {
       const cls = mod.id.split("/")[0], text = mod.text;
-      const ess = [...data.mods.values()].filter((x) => x.id.split("/")[0] === cls && x.text === text && /essence/.test(String(x.source)) && (!b.side || x.type === b.side))
-        .map((x) => ({ x, tx: tierWith(x, b) })).sort((p, q) => Number(q.tx.fits) - Number(p.tx.fits));
+      const ess = [...data.mods.values()].filter((x) => x.id.split("/")[0] === cls && x.text === text && zeroSrc(x.source) > 0 && (!b.side || x.type === b.side))
+        .map((x) => ({ x, tx: tierWith(x, b) })).sort((p, q) => Number(q.tx.fits) - Number(p.tx.fits) || zeroSrc(q.x.source) - zeroSrc(p.x.source));
       if (ess[0]) { mod = ess[0].x; t = ess[0].tx; }
     }
     // 値が段に収まらない時は、同じクラスの同じ文の別の MOD (エッセンス・冒涜・反対側) を見る。印が (crafted) ならエッセンス、(desecrated) なら冒涜を先に
