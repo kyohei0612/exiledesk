@@ -27,6 +27,8 @@ export interface Skin {
   art: string | null;
   /** 入っている一式 (無ければ null) */
   set: SkinSet | null;
+  /** 発売の順の目安 (大きいほど新しい、build-mtx-web.mjs の o)。日付が分からない物は null (最後に並べる) */
+  order: number | null;
 }
 /** 一式のカード (絵と飛び先は代表の部品 = 鎧 → 背面 → 初めの物。poe2db に一式のページは無い) */
 export interface SkinSet {
@@ -34,6 +36,8 @@ export interface SkinSet {
   ja: string;
   main: Skin;
   parts: Skin[];
+  /** 中の一番新しい物の順 (無ければ null) */
+  order: number | null;
 }
 export interface SkinData { items: Skin[]; sets: SkinSet[] }
 
@@ -44,7 +48,7 @@ export function loadSkins(): Promise<SkinData> {
       url: { ja: string; en: string };
       kinds: Record<string, { ja: string | null; en: string | null }>;
       sets: Array<{ en: string; ja: string; main: number }>;
-      items: Array<{ en: string; ja: string; k: number; slug: string; a?: number; s?: number }>;
+      items: Array<{ en: string; ja: string; k: number; slug: string; a?: number; s?: number; o?: number }>;
     };
     const items = d.items.map((x): Skin => {
       const group = groupOf(x.k);
@@ -57,13 +61,16 @@ export function loadSkins(): Promise<SkinData> {
         url: { ja: d.url.ja + x.slug, en: d.url.en + x.slug },
         art: x.a != null ? `/mtx-art/${x.a}.webp` : null,
         set: null,
+        order: x.o ?? null,
       };
     });
-    const sets = d.sets.map((s): SkinSet => ({ en: s.en, ja: s.ja, main: items[s.main]!, parts: [] }));
+    const sets = d.sets.map((s): SkinSet => ({ en: s.en, ja: s.ja, main: items[s.main]!, parts: [], order: null }));
     d.items.forEach((x, i) => {
       if (x.s == null) return;
-      items[i]!.set = sets[x.s]!;
-      sets[x.s]!.parts.push(items[i]!);
+      const t = sets[x.s]!;
+      items[i]!.set = t;
+      t.parts.push(items[i]!);
+      if (x.o != null && (t.order == null || x.o > t.order)) t.order = x.o;
     });
     return { items, sets };
   });

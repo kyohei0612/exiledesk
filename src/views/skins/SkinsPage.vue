@@ -27,8 +27,8 @@ const cats = computed(() => SKIN_GROUPS.map((g) => ({ key: g.id, label: en.value
 /** 「すべて」の件数 (一式のカード + 一式に入っていない物) */
 const allCount = computed(() => (data.value ? data.value.sets.length + data.value.items.filter((s) => !s.set).length : 0));
 /** 一覧のカード 1 枚 (部品 1 つ、または一式) */
-interface Card { key: string; name: string; sub: string; kind: string; art: string | null; url: string; parts: number }
-const itemCard = (s: Skin): Card => ({ key: `i:${s.en}:${s.kind.ja}`, name: en.value ? s.en : s.ja, sub: en.value ? "" : s.en, kind: en.value ? s.kind.en : s.kind.ja, art: s.art, url: en.value ? s.url.en : s.url.ja, parts: 0 });
+interface Card { key: string; name: string; sub: string; kind: string; art: string | null; url: string; parts: number; order: number | null }
+const itemCard = (s: Skin): Card => ({ key: `i:${s.en}:${s.kind.ja}`, name: en.value ? s.en : s.ja, sub: en.value ? "" : s.en, kind: en.value ? s.kind.en : s.kind.ja, art: s.art, url: en.value ? s.url.en : s.url.ja, parts: 0, order: s.order });
 /** 一式のカード: 名前は「○○ 一式」、種類の行は部品の種類を並べる (例 兜スキン・靴スキン・ポートレートフレーム) */
 const setCard = (t: SkinSet): Card => ({
   key: `s:${t.en}:${t.ja}`,
@@ -38,6 +38,7 @@ const setCard = (t: SkinSet): Card => ({
   art: t.main.art,
   url: en.value ? t.main.url.en : t.main.url.ja,
   parts: t.parts.length,
+  order: t.order,
 });
 const hit = (s: Skin, q: string): boolean => s.ja.toLowerCase().includes(q) || s.en.toLowerCase().includes(q);
 const shown = computed((): Card[] => {
@@ -51,9 +52,9 @@ const shown = computed((): Card[] => {
   } else {
     for (const s of d.items) if (s.group.id === cat.value && (!q || hit(s, q))) out.push(itemCard(s));
   }
-  // 名前の順 (Intl.Collator を 1 つ使い回す。localeCompare を毎回呼ぶと開いた時に重い)
+  // 発売が新しい順 (オーナー 10-25「上から発売日が近い順」)、日付が分からない物は最後で名前の順 (Intl.Collator を 1 つ使い回す)
   const c = new Intl.Collator(en.value ? "en" : "ja");
-  return out.sort((x, y) => c.compare(x.name, y.name));
+  return out.sort((x, y) => (y.order ?? -1) - (x.order ?? -1) || c.compare(x.name, y.name));
 });
 /**
  * 一度に出す数。始めは 1〜2 画面分だけ出し、下の「もっと見る」が見えかけたら足す (出しすぎない)。
@@ -109,15 +110,16 @@ const broken = ref(new Set<string>());
       <p v-else-if="!data" class="py-8 text-center opacity-60">{{ tr("読み込み中", "Loading") }}</p>
       <template v-else>
         <p class="mt-3 text-[12px] opacity-60">{{ tr(`${shown.length} 件`, `${shown.length} skins`) }}</p>
-        <!-- 絵が主役のカード (オーナー 10-25「横 3 列ででかく」: PC は 3 枚、狭い所は 2 枚、絵はカードの幅いっぱいの正方形、名前と種類は下)。
+        <!-- 絵が主役のカード (オーナー 10-25「横 3 列ででかく」→ 元の絵が 128px で 3 列だと引き伸ばしになるので「統一できなければ 4 列」: PC 4 枚・狭い PC 3 枚・スマホ 2 枚、名前と種類は下)。
              押すと poe2db のページを新しいタブで (アプリの MtxList と同じ)。一式は代表の部品 (鎧など) の絵とページ、右上に点数 -->
         <div data-skins-list class="mt-2">
-          <div v-for="(c, i) in chunks" :key="i" class="grid grid-cols-3 gap-4 pb-4 [contain-intrinsic-size:auto_3000px] [content-visibility:auto] max-lg:grid-cols-2 max-md:gap-2 max-md:pb-2">
+          <div v-for="(c, i) in chunks" :key="i" class="grid grid-cols-4 gap-3 pb-3 [contain-intrinsic-size:auto_2400px] [content-visibility:auto] max-xl:grid-cols-3 max-md:grid-cols-2 max-md:gap-2 max-md:pb-2">
             <a v-for="s in c" :key="s.key" :href="s.url" target="_blank" rel="noopener noreferrer" data-skins-row :data-skins-set="s.parts ? '' : undefined" :title="tr('poe2db で見る', 'Open on poe2db')"
               class="group relative flex min-w-0 flex-col items-center rounded-xl border border-white/[0.06] bg-black/25 p-4 text-center no-underline transition hover:border-amber-400/40 hover:bg-white/[0.05] max-md:p-2">
               <span v-if="s.parts" class="absolute right-2 top-2 rounded-full bg-amber-500/20 px-2 py-0.5 text-[11px] font-bold text-amber-200">{{ tr(`${s.parts} 点`, `${s.parts} pcs`) }}</span>
-              <span class="grid aspect-square w-full place-items-center">
-                <img v-if="s.art && !broken.has(s.art)" :src="s.art" alt="" loading="lazy" decoding="async" draggable="false" class="size-full object-contain transition group-hover:scale-105" @error="broken = new Set(broken).add(s.art!)" />
+              <!-- 絵は元の大きさ (長い辺 128px) まで、引き伸ばさない (オーナー 10-25「画素粗い」) -->
+              <span class="grid h-[136px] w-full place-items-center max-md:h-[120px]">
+                <img v-if="s.art && !broken.has(s.art)" :src="s.art" alt="" loading="lazy" decoding="async" draggable="false" class="max-h-[128px] max-w-[128px] object-contain transition group-hover:scale-105 max-md:max-h-[112px] max-md:max-w-[112px]" @error="broken = new Set(broken).add(s.art!)" />
               </span>
               <span class="mt-2 line-clamp-2 w-full text-[15px] leading-snug text-[var(--exile-color-text-title)] max-md:text-[12px]">{{ s.name }}</span>
               <span v-if="s.sub" class="mt-0.5 block w-full truncate text-[11px] opacity-45 max-md:text-[10px]">{{ s.sub }}</span>

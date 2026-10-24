@@ -86,6 +86,10 @@ const jp = parse(await page("jp"));
 const mtx = JSON.parse(readFileSync(resolve(ROOT, "src/services/mtx/mtx.json"), "utf8"));
 const slugOf = new Map([...us].map(([slug, v]) => [v.name.toLowerCase(), slug]));
 
+/** シリーズの札 → クライアントの表に初めて出た行 (PoE1 だけの物も含めた全部で) */
+const seriesFirst = new Map();
+for (const it of mtx.items) if (it.t) seriesFirst.set(it.t, Math.min(seriesFirst.get(it.t) ?? Infinity, it.i));
+
 const items = [];
 /** items と同じ並びのクライアントのシリーズの札 (ShopTag、一式の見分けに使う。出力には入れない) */
 const series = [];
@@ -101,6 +105,9 @@ for (const it of mtx.items) {
   if (!slug) { dropped.noDb.push(it.en); continue; }
   const row = { en: us.get(slug).name, ja: jp.get(slug)?.name ?? it.ja, k: it.c, slug };
   if (it.a != null) row.a = it.a;
+  // 発売の順の目安 (大きいほど新しい。2026-10-25 オーナー「上から発売日が近い順」): シリーズの札がある物は、そのシリーズがクライアントの表に初めて出た行 + 自分の行の小数。
+  // 表の行は後から足された物が後ろに付くので、行そのままより札の初めの行の方が発売の順に合う (poedb の 7 つのパックの発売日の順と合うのを見た)。札の無い物は日付が分からないので無し (最後)
+  if (it.t) row.o = seriesFirst.get(it.t) + it.i / 100000;
   items.push(row);
   series.push(it.t ?? "");
   {
@@ -126,7 +133,7 @@ for (const c of [...new Set(items.map((x) => x.k))].sort((a, b) => a - b)) {
  * poe2db に一式の分けは無いので、英語名の頭 (語の区切り) が同じで、クライアントのシリーズの札 (ShopTag) も同じ物が 3 つ以上で一式。
  * 札の無い物 (隠れ家の家具など) と札の違う物 (Arcane の防具と Arcane Golem のポータルなど) は混ぜない。頭は長い方を先に取る (Sin と Sin and Innocence は別)。
  * 種類が 2 つ以上ある物だけ (同じ種類の段違い・色違いは一式にしない)。
- * 出力: sets = [{ en, ja, main (代表の items の番号: 鎧 → 背面 → 初めの物) }]、items[].s = 入っている一式の番号
+ * 出力: sets = [{ en, ja, main (代表の items の番号: 鎧 → 背面 → 初めの物) }]、items[].s = 入っている一式の番号、items[].o = 発売の順の目安 (無い物は日付不明)
  */
 /** 一式の頭にしない言葉 (Alternate Art = レースの報酬の別絵で、一式ではない) */
 const STOP = new Set(["The", "A", "An", "Alternate", "Alternate Art"]);
