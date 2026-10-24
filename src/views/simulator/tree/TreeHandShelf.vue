@@ -12,13 +12,14 @@ import { craftStage as s, iconOf, nameOf } from "../../../state/craft-stage";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import CurrencyShelf from "../../../components/for-share/shelf/CurrencyShelf.vue";
 import HeldOmens from "../../../components/for-share/shelf/HeldOmens.vue";
-import { omensAllowedFor } from "../../../services/craft-stage/engine";
+import { omensAllowedFor, type StageItem } from "../../../services/craft-stage/engine";
 import { omensFor } from "../../../services/craft-stage/engine";
 import { aimHeldOn } from "../../../services/simulator/tree/tree-aim";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, ECHO, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handLabel, handName, outName } from "./tree-names";
+import { treeRowTags } from "./tree-row-tags";
 import { setHand, type Aim, type Hand, type HandKind, type OutKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { useSimShelf } from "../use-sim-shelf";
@@ -34,6 +35,8 @@ const t = useTree();
 
 const sample = computed(() => (s.data.value ? sampleOf(s.data.value, t.doc.value, props.boxId, 1) : null));
 const item = computed(() => sample.value?.item ?? null);
+/** 狙いに当たらない MOD の行は「外れ MOD」(乗せた時のカードと同じ、10-25 オーナー「プラスで MOD 選んだ時ハズレ MOD の表示が溶けてる」) */
+const rowTags = (it: StageItem | null) => (s.data.value && it ? treeRowTags(s.data.value, t.doc.value, t.doc.value.boxes[props.boxId]?.unwanted ?? [], it) : null);
 /** 当たりの MOD が決まっていない当たりの箱 (棚は出さずに先に MOD を選ばせる、tree-hand-plan の needAimOf) */
 const needAim = computed(() => needAimOf(t.doc.value, props.boxId, sample.value?.note));
 const held = ref<string | null>(props.current?.currency ?? null);
@@ -135,7 +138,7 @@ function ok(): void {
     <!-- この箱の時点のアイテム (見本)。持ってカードを押す = この手にする (エミュと同じ操作) -->
     <!-- カードの下はエミュと同じく空ける (持っている間はカードのすぐ下に「押すと使う · 右クリック / Esc で手放す」が重ねて出る) -->
     <div class="flex min-w-0 flex-col gap-8 md:w-[480px]">
-      <div data-tree-hand-card :class="held && problem ? 'cursor-not-allowed opacity-60' : ''" :title="problem ?? undefined"><StageItemCard v-if="shelfItem" :item="preCat ? shelfItem : item ?? shelfItem" :added="[]" :removed="[]" :holding="!!held && !problem" :flash-key="0" @use="ok" /></div>
+      <div data-tree-hand-card :class="held && problem ? 'cursor-not-allowed opacity-60' : ''" :title="problem ?? undefined"><StageItemCard v-if="shelfItem" :item="preCat ? shelfItem : item ?? shelfItem" :row-tags="rowTags(preCat ? shelfItem : item ?? shelfItem)" :added="[]" :removed="[]" :holding="!!held && !problem" :flash-key="0" @use="ok" /></div>
       <div class="flex min-w-0 flex-col gap-1.5">
         <p class="text-[12px] opacity-70">{{ tr("棚から持って、カードを押すとこの箱の次の手になる", "Hold a currency from the shelf and click the item to make it this box's next craft") }}</p>
         <!-- 打たずに分ける (分かれ目、10-22 オーナー OK): 今の形 (揃った狙い・外れの数) で行き先を分ける。始まりの箱では出さない -->
