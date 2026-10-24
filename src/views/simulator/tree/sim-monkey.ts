@@ -2,7 +2,7 @@
  * sim-monkey.ts — 猿の台本が呼ぶツリーのページの中の口 window.__simMonkey (2026-10-24 モンキー隊長の頼み、オーナー「各ベースに猿 3 匹、記録を隊長に」)。
  * 開発の時だけ (release-flags の DEV_BUILD = 手元の dev と preview:prod -- --dev)。本番のビルドでは入れない。
  * 中身は画面と同じ関数を呼ぶだけ (棚 = CurrencyShelf と同じ一覧と useReason、お告げ = omenBlock、手 = tree-hand-plan、組み替え = applyPick、見本 = sampleOf)。
- * 別の打ち方は作らない (メモ feedback-sim-no-own-logic)。液化した感情 (ジュエルだけ) は入口に一覧が無いので棚に入れていない
+ * 名前はその箱のアイテムで引く (骨の名前は部位で変わる、nameOfKey)。別の打ち方は作らない (メモ feedback-sim-no-own-logic)。液化した感情 (ジュエルだけ) は入口に一覧が無いので棚に入れていない
  *
  *   __simMonkey.setBase("兜", "Imperial Greathelm")     完成形の設定を飛ばしてツリーへ (部位は記録用、ベースは英語名。アイテムレベルは 3 つ目、既定 82)
  *   __simMonkey.addable()                              手を足せる箱 [{ id, out, needAim }] (needAim = 当たりの MOD が無い当たりの箱、先に MOD が要る)
@@ -14,9 +14,9 @@
 import { omenBlock, omensAllowedFor, runeOf, socketCapOf, useReason, type StageItem } from "../../../services/craft-stage/engine";
 import { CATALYSING } from "../../../services/simulator/tree/tree-hands";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
-import { bonesFor, CRAFT_RUNE_KEYS, essenceShelf, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
+import { bonesFor, CRAFT_RUNE_KEYS, essenceShelf, nameOfKey, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
 import { simHidden } from "../../../state/for-share/shelf-context";
-import { craftStage as s, nameOf } from "../../../state/craft-stage";
+import { craftStage as s } from "../../../state/craft-stage";
 import { DEV_BUILD } from "../../../web/release-flags";
 import { modText } from "../../../i18n/lang";
 import { afterQualityOf, applyPick, autoCatOf, handOf, hitAimsOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type HandPick } from "./tree-hand-plan";
@@ -58,12 +58,12 @@ export function installSimMonkey(): () => void {
     shelf(id: string): Array<{ key: string; name: string; ok: boolean; reason: string | null }> {
       const d = s.data.value, it = sample(id)?.item;
       if (!d || !it) return [];
-      return shelfKeys(it).map((k) => { const reason = useReason(d, it, k, []); return { key: k, name: nameOf(k), ok: !reason, reason }; });
+      return shelfKeys(it).map((k) => { const reason = useReason(d, it, k, []); return { key: k, name: nameOfKey(k, it), ok: !reason, reason }; });
     },
     omens(id: string, key: string): Array<{ key: string; name: string; ok: boolean; reason: string | null }> {
       const d = s.data.value, it = shelfItemFor(id, key);
       if (!d || !it) return [];
-      return omensAllowedFor(key).map((o) => { const reason = omenBlock(d, it, key, [], o); return { key: o, name: nameOf(o), ok: !reason, reason }; });
+      return omensAllowedFor(key).map((o) => { const reason = omenBlock(d, it, key, [], o); return { key: o, name: nameOfKey(o, it), ok: !reason, reason }; });
     },
     add(id: string, key: string, omens: string[] = [], opt: Opt = {}) {
       const d = s.data.value, smp = sample(id), it = smp?.item;
