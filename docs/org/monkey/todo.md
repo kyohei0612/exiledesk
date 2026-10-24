@@ -6,7 +6,7 @@
 - 照らし: リポジトリの根で `node scripts/check-monkey-engine.mjs <出力のフォルダー>` (ジン部長の台本、<出力>/engine/ に書く)。正はエンジン (エミュの画面ではない)。
 - 猿の口 = 手元 1440 の ?page=sim-tree の window.__simMonkey (setBase・addable・shelf・omens・add・boxItem・run・dump、シミュ部長の物)。コードは読まない、使い方は部長に聞く。
 - 外の通信: lib2 の tab() が CDP の Fetch で localhost 以外を止めて c.blocked に数える。1 回でも外へ出たら止めてブラックへ。
-- 気を付ける: 他のセッションへの送りは、オーナーが書いてから 10 回で止まる (要る物だけ送る)。Bash の heredoc は  が消えるので、正規表現の入る台本は Write / Edit で書く。猿は全部で 10 分以内。
+- 気を付ける: 他のセッションへの送りは、オーナーが書いてから 10 回で止まる (要る物だけ送る)。Bash の heredoc は `\` が 1 段消えるので、正規表現の入る台本は Write / Edit で書く。猿は全部で 10 分以内。
 - 気を付ける: dev サーバーが読み直すと window.__simMonkey が一時消える (5 回目の 16 手)。終わったら Chrome を止めて profile を消し、使用表を「空き」に。
 - 今の残り: 確率の 3 件 (指輪の (完全) 高貴 0% 対 22.5% ほか) はシミュ部長の直し待ち。直ったら jobs-p で回し直して照らす。記録は docs/org/simulator/notes/2026-10-24-monkey.md の末尾。
 
