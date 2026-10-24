@@ -10,6 +10,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import Icon from "../../components/ui/Icon.vue";
+import TreeShowcase from "./TreeShowcase.vue";
 import { currentTreeRecipe, currentTreeRecipeId, duplicateTreeRecipe, oldRecipeCount, overwriteTreeRecipe, removeTreeRecipe, renameTreeRecipe, restoreTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../state/simulator/tree-recipes";
 import { openTreePage } from "../../web/page";
 import { fmtDate, treeShareUrl, useRecipeUrl } from "./recipe-share";
@@ -113,6 +114,8 @@ onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); clearTimeo
     </div>
 
     <div class="g-panel px-4 py-3 text-[13px] max-md:px-3">
+      <!-- 見本のレシピ (動画の作り方の見本の木、10-24) -->
+      <TreeShowcase :dirty="dirty" />
       <!-- 今の木 -->
       <div data-recipes-now class="mb-3 flex flex-wrap items-center gap-2 rounded-md bg-white/[0.04] px-3 py-2">
         <span class="text-[var(--exile-color-text-secondary)]">{{ tr("今の木", "Current tree") }}:</span>
