@@ -117,9 +117,17 @@ const tabDocs = shallowRef<TreeDoc[]>(tabs0 ? tabs0.docs.map((d, i) => (i === ta
 /** タブごとに回した結果 (結果のまとめの始め方の比べ。このページを開いている間だけ) */
 /** タブの木を写す (タブごとに別の木。完成形の設定も写さない、10-24 オーナー「タブは人が押した時だけ、新しいツリーを最初から」) */
 const cloneDoc = (d: TreeDoc): TreeDoc => JSON.parse(JSON.stringify(d)) as TreeDoc;
-function setActive(i: number, next: TreeDoc): void {
+/** タブごとの 1 つ戻す・やり直しの控え (替えて戻っても続きから戻せる、10-24 モンキー初めての人の回 9。保存はしない、読み直したら空) */
+const histories: Array<{ u: string[]; r: string[] }> = [];
+/** from = 今の控えをしまうタブ (閉じたタブは null) */
+function setActive(i: number, next: TreeDoc, from: number | null = active.value): void {
+  if (from !== null) histories[from] = { u: [...undoStack], r: [...redoStack] };
+  const h = histories[i] ?? { u: [], r: [] };
   active.value = i;
-  clearHistory();
+  undoStack.splice(0, undoStack.length, ...h.u);
+  redoStack.splice(0, redoStack.length, ...h.r);
+  canUndo.value = undoStack.length > 0;
+  canRedo.value = redoStack.length > 0;
   opened.value++;
   doc.value = next;
   save(next);
@@ -145,7 +153,8 @@ function addTab(): void {
 function closeTab(i: number): void {
   if (tabDocs.value.length <= 1) return;
   const list = tabDocs.value.filter((_, j) => j !== i);
-  if (i === active.value) { const k = Math.max(0, i - 1); tabDocs.value = list; setActive(k, cloneDoc(list[k]!)); return; }
+  histories.splice(i, 1);
+  if (i === active.value) { const k = Math.max(0, i - 1); tabDocs.value = list; setActive(k, cloneDoc(list[k]!), null); return; }
   if (i < active.value) active.value--;
   tabDocs.value = list;
   save(doc.value);
