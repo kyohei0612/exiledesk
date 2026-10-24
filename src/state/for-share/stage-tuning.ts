@@ -7,11 +7,12 @@
 import { ref } from "vue";
 import { setStageTuning } from "../../services/craft-stage/engine";
 import { craftStage } from "../craft-stage";
+import { flag } from "../../web/release-flags";
 
 /** 本番も出す (2026-10-21 オーナー OK「触媒はそのまま本番出して」) */
 export const TUNING_ON = true;
-/** MOD の重みを直す欄は開発版と手元の dev だけ (本番はオーナーの OK の後) */
-export const WEIGHTS_ON = import.meta.env.DEV || import.meta.env.VITE_DEV_PREVIEW === "1";
+/** MOD の重みを直す欄 (本番の作りではスイッチ weights で隠す、src/web/release-flags.ts) */
+export const WEIGHTS_ON = flag("weights");
 
 const KEY = "stage-tuning";
 const WKEY = "stage-mod-weights";
