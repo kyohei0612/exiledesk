@@ -8,7 +8,7 @@
 import { mulberry32, sideOfMod, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { aimHeldOn, isAimMod, junkOf } from "./tree-aim";
 import { effectOf } from "./tree-hands";
-import { aimOpts, aimsOf, fractureChoices, handAims, handProblem, outcomeOf, playHand, startItemOf as startOf, targetsOf } from "./tree-sample";
+import { aimOpts, aimsOf, essenceBoxFits, fractureChoices, handAims, handProblem, outcomeOf, playHand, startItemOf as startOf, targetsOf } from "./tree-sample";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
 import { aimKey, MATCH_BACK, type Aim, type Hand, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc } from "./tree-model";
@@ -290,14 +290,15 @@ export function linkSameShape(doc: TreeDoc, ids: readonly string[]): void {
 }
 
 /** 手の結果 (outcomeOf) に合う結果の箱 (回す時と精査で同じ)。any = 狙い無しの手の「打った後」、pass = 品質だけ上げた後 */
-export function outBoxOf(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[] }): string | undefined {
+/** after = 打った後のアイテム (無限のエッセンスで当たりの箱が 2 つ以上の時、付いた MOD の箱を選ぶ。無ければ 1 つ目) */
+export function outBoxOf(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[] }, after?: StageItem): string | undefined {
   return b.outs.find((id) => {
     const c = doc.boxes[id];
     if (!c || (c.out !== oc.out && c.out !== "any" && c.out !== "pass")) return false;
     // 打った後・品質の後の箱はどの結果も受ける (狙い無しの手で狙いが付いても。前は当たりだと狙いを見て外れ、精査の「結果の箱に無い結果」・回しの止まりになった、10-22 靴・手袋)
     if (c.out === "any" || c.out === "pass") return true;
     // エッセンスの当たりの箱は 1 つ (付く MOD は必ず付く)。付く MOD が完成の狙いに無い時は hits が空でもこの箱 (tree-sample の outcomeOf)
-    if (oc.out === "hit" && b.hand && effectOf(b.hand.currency) === "essence") return true;
+    if (oc.out === "hit" && b.hand && effectOf(b.hand.currency) === "essence") return !after || essenceBoxFits(doc, b, c, after);
     return oc.out !== "hit" || (!!c.aim && oc.hits.some((a) => a.modId === c.aim!.modId && a.tier === c.aim!.tier));
   });
 }
@@ -377,7 +378,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     }
     if (sb.next) { item = r.item; at = sb.next; continue; }
     const oc = outcomeOf(data, before, r.item, aims, b.hand.currency);
-    const next = outBoxOf(doc, b, oc);
+    const next = outBoxOf(doc, b, oc, r.item);
     if (!next) {
       // 合う結果の箱が無い (10-22 ブラック「1 箱にした手で別の結果が出た時に黙って止まらない」): 形の合う箱があればそこへ、無ければ止まり。どちらも想定外として数える
       odd.add(at);

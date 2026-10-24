@@ -52,6 +52,16 @@ export function aimsOf(doc: TreeDoc): Aim[] {
 }
 
 /**
+ * エッセンスの当たりの箱 box が、打った後 after の行き先か。当たりの箱が 1 つなら必ず (付く MOD は必ず付く)。
+ * 2 つ以上 (無限のエッセンス = 筋力・器用さ・知性のどれか、エンジンの infiniteChoices) は箱の札の MOD が付いている箱
+ * (前は 1 つ目の箱へ全員送り、ツリーは筋力 100% / エンジンは 1/3 ずつ。10-25 モンキー 4 本目・ジン部長の見立て)
+ */
+export function essenceBoxFits(doc: TreeDoc, parent: TreeBox, box: TreeBox, after: StageItem): boolean {
+  if (!box.aim || parent.outs.filter((id) => doc.boxes[id]?.out === "hit").length < 2) return true;
+  return [...after.prefixes, ...after.suffixes].some((m) => m.modId === box.aim!.modId);
+}
+
+/**
  * 打つ前と後を比べて、どの箱の結果か (付いた狙いは hits に)。key = 打った手 (エッセンスは付く MOD が必ず付くので、狙いが消えたかを先に見る。
  * 付いた MOD は hits のまま、10-22 オーナー「エッセンスの道」)
  */
@@ -227,7 +237,8 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
     if (p.hand.repeat && o.out !== "hit") break;
     if (b.out === "pass") return { item: r.item, note: null };
     if (b.out !== "any" && o.out !== b.out) continue;
-    // エッセンスの当たりの箱は 1 つ (札は付いた MOD の名前、tree-run の outBoxOf と同じ)
+    // エッセンスの当たりの箱は札が付いた MOD の名前 (tree-run の outBoxOf と同じ)。無限のエッセンスで箱が 2 つ以上なら付いた MOD の箱
+    if (b.out === "hit" && b.aim && effectOf(p.hand.currency) === "essence" && !essenceBoxFits(doc, p, b, r.item)) continue;
     if (b.out === "hit" && b.aim && effectOf(p.hand.currency) !== "essence" && !o.hits.some((a) => a.modId === b.aim!.modId && a.tier === b.aim!.tier)) continue;
     return { item: r.item, note: null };
   }
