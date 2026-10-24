@@ -10,7 +10,7 @@ import { REC } from "./rec-mode";
 export const NO_LOG_KEY = "exiledesk.noLog";
 
 function read(): boolean {
-  // スマホ用の開発版 (公開しない、scripts/deploy-web-dev.mjs) は記録しない
+  // 開発版 (手元の preview:prod -- --dev) は記録しない
   // 手元の dev サーバー (vite) も送らない (送り先は本番の server/live。10-23 オーナー「開発版でリクエストいらなくね、分析とか」)
   if (import.meta.env.VITE_DEV_PREVIEW === "1" || import.meta.env.DEV) return true;
   // 録画モード (?rec=1) は送らない (POE2Tube 要望 ㊶。端末の印は書き換えない)

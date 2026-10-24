@@ -1,7 +1,7 @@
 /**
  * base-values.ts — クラフト台で MOD の数字を素の値で出す (2026-10-21 J11、オーナー「MOD の数字は上乗せを全部抜いた素の値と段で出す、盛った値は要る所でだけ小さく」)。
  * 上乗せと割り戻しはエンジンの入口 (boosts.ts・stage-core の boostedMod・retext) から取り、ここは画面の文にするだけ。
- * 開発版 (pnpm dev:web・deploy:web-dev) だけ。本番はオーナーの OK の後に BASE_VALUES_ON を外す (docs/pending-release.md)。
+ * 開発版 (pnpm dev:web・preview:prod -- --dev) だけ。本番はオーナーの OK の後に BASE_VALUES_ON を外す (docs/pending-release.md)。
  */
 import type { StageItem, StageMod } from "../../../services/craft-stage/engine";
 import { craftStage } from "../../../state/craft-stage";
