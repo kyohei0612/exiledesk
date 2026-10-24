@@ -5,11 +5,11 @@
  * 名前はその箱のアイテムで引く (骨の名前は部位で変わる、nameOfKey)。別の打ち方は作らない (メモ feedback-sim-no-own-logic)。液化した感情 (ジュエルだけ) は入口に一覧が無いので棚に入れていない
  *
  *   __simMonkey.setBase("兜", "Imperial Greathelm")     完成形の設定を飛ばしてツリーへ (ベースは英語名か日本語名、空なら部位の代表 = 一番レベルの高い物。アイテムレベルは 3 つ目、既定 82)
- *   __simMonkey.addable()                              手を足せる箱 [{ id, out, needAim }] (needAim = 当たりの MOD が無い当たりの箱、先に MOD が要る)
+ *   __simMonkey.addable()                              手を足せる箱 [{ id, out, needAim, rarity }] (rarity = その箱のアイテム (見本) のレアリティ) (needAim = 当たりの MOD が無い当たりの箱、先に MOD が要る)
  *   __simMonkey.shelf(id)                              その箱の棚 [{ key, name, ok, reason }]
  *   __simMonkey.omens(id, key)                         持った物に掛けられるお告げ [{ key, name, ok, reason }]
  *   __simMonkey.add(id, key, omens?, opt?)             次の手の箱を作る → { ok, problem?, at, boxes: [{ id, out, aim, mods: [{ side, modId, tier, text }] }] }
- *   __simMonkey.dump()                                 今の木 (JSON)
+ *   __simMonkey.dump()                                 今の木 (JSON、startRarity = スタートの本当のレアリティ)。add の boxes にも rarity
  */
 import { baseCatalog, omenBlock, omensAllowedFor, runeOf, socketCapOf, useReason, type StageItem } from "../../../services/craft-stage/engine";
 import { CATALYSING } from "../../../services/simulator/tree/tree-hands";
@@ -68,10 +68,10 @@ export function installSimMonkey(): () => void {
       t.goalPage.value = 0;
       return { ok: t.doc.value.base === pick, part, base: pick, why };
     },
-    addable(): Array<{ id: string; out: string; needAim: boolean }> {
+    addable(): Array<{ id: string; out: string; needAim: boolean; rarity: string | null }> {
       return Object.values(t.doc.value.boxes)
         .filter((b) => !b.hand && !b.back && !b.done && !b.split)
-        .map((b) => ({ id: b.id, out: b.out, needAim: needAimOf(t.doc.value, b.id, sample(b.id)?.note) }));
+        .map((b) => { const smp = sample(b.id); return { id: b.id, out: b.out, needAim: needAimOf(t.doc.value, b.id, smp?.note), rarity: smp?.item.rarity ?? null }; });
     },
     shelf(id: string): Array<{ key: string; name: string; ok: boolean; reason: string | null }> {
       const d = s.data.value, it = sample(id)?.item;
@@ -101,13 +101,14 @@ export function installSimMonkey(): () => void {
       const boxes = (t.doc.value.boxes[at]?.outs ?? []).map((bid) => {
         const b = t.doc.value.boxes[bid]!, item = sample(bid)?.item;
         return {
-          id: bid, out: b.out, aim: b.aim,
+          id: bid, out: b.out, aim: b.aim, rarity: item?.rarity ?? null,
           mods: item ? [...item.prefixes, ...item.suffixes].map((m) => ({ side: m.side, modId: m.modId, tier: m.tierName, text: modText(m), fractured: !!m.fractured })) : [],
         };
       });
       return { ok: true, at, hand: h, kind, boxes };
     },
-    dump(): unknown { return JSON.parse(JSON.stringify(t.doc.value)); },
+    /** 今の木。startRarity = スタートの本当のレアリティ (start.rarity は保存の形の値で、印も＋の MOD も無い時の白とずれる事がある) */
+    dump(): unknown { return { ...JSON.parse(JSON.stringify(t.doc.value)), startRarity: sample("start")?.item.rarity ?? null }; },
   };
   (window as unknown as { __simMonkey?: typeof api }).__simMonkey = api;
   return () => { delete (window as unknown as { __simMonkey?: typeof api }).__simMonkey; };
