@@ -167,10 +167,14 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
         else if (why || !first.applied) { const c = cant.get(id) ?? { who: new Set<number>(), reason: why ?? first.reason ?? "" }; c.who.add(person); cant.set(id, c); return; }
         // 結果の箱に無い結果 (エンジンの stepOutcomes で起こりうる枝を全部。未発現が付く手・繰り返しの手は見ない。
         // フラクチャーも見ない: 必ず選んだ狙いを固定し、外れは費用で数える、10-24 オーナー)
+        /** 起こりうる結果が全部見えている時の一覧 (無い結果の箱は下で打ち直さない) */
+        let canBe: { out: OutKind; hits: Aim[] }[] | null = null;
         if (!b.hand.repeat && effectOf(b.hand.currency) !== "fracture") {
-          const miss = (stepOutcomes(data, item, b.hand.currency, engineOmens(b.hand)) ?? []).filter((o) => !o.void && !unrevealedOf(o.item))
-            .map((o) => outcomeOf(data, item, o.item, aims, b.hand!.currency)).filter((oc) => !outBoxOf(doc, b, oc));
+          const all = stepOutcomes(data, item, b.hand.currency, engineOmens(b.hand)) ?? [];
+          const shown = all.filter((o) => !o.void && !unrevealedOf(o.item)).map((o) => outcomeOf(data, item, o.item, aims, b.hand!.currency));
+          const miss = shown.filter((oc) => !outBoxOf(doc, b, oc));
           if (miss.length) { const c = odd.get(id) ?? { who: new Set<number>(), outs: new Set<string>() }; c.who.add(person); for (const oc of miss) c.outs.add(outName(oc.out)); odd.set(id, c); }
+          if (all.length && shown.length === all.length) canBe = shown;
         }
         // 品質 (オーナー 10-22「ルート精査の時の品質のチェック」): 触媒の品質が当たりの MOD に効くかは下で見る。
         // 聖別・コラプトの後の手・カタリストが入らない手は、上の打てない手 (エンジンの理由) で出る。触媒は打つと品質を使い切るので、前の品質の入れ替えは起きない
@@ -184,13 +188,17 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
           // もう付いている狙いの当たりの箱には着かない (打ち直しても付かないので飛ばす。始めに戻った人で当たるまでを 1200 回打ち直し、精査が 13 秒かかった、10-22 金の指輪)
           if (ob.out === "hit" && ob.aim && aimHeldOn(data, item, ob.aim, { sameText: true })) continue;
           let got: StageItem | null = null;
-          for (let i = 0; i < TRIES && !got; i++) {
+          const fits = (res: { out: OutKind; hits: Aim[] }): boolean => (res.out === ob.out || ob.out === "any" || ob.out === "pass") && (ob.out !== "hit" || !ob.aim || res.hits.some((a: Aim) => aimKey(a) === aimKey(ob.aim!)));
+          // 出ない結果の箱は打ち直さない: 当たるまでの手は当たりしか返さない (外れ・消えたは下の break で必ず着かない)、ほかはエンジンの起こりうる結果に無い物
+          // (10-25 不在のアミュ B: カオスの当たるまで →「狙いが消えた」と完璧なエッセンス → 当たり・消えたを 1 箱 1,200 回ずつ打ち、開くたび画面が 17 秒固まった)
+          const impossible = b.hand.repeat ? ob.out !== "hit" && ob.out !== "any" && ob.out !== "pass" : !!canBe && !canBe.some(fits);
+          for (let i = 0; i < (impossible ? 0 : TRIES) && !got; i++) {
             const r = i === 0 ? first : playHand(data, item, b.hand, rng, handAims(doc, b.id, aims));
             if (!r.applied) break;
             const res = outcomeOf(data, item, r.item, aims, b.hand.currency);
             // 当たるまでの手が上限まで打っても当たらない = 付かない狙いだけ。打ち直しても同じなのでやめる (1 回 5000 回 × 1200 で固まった、10-22)
             if (b.hand.repeat && res.out !== "hit") break;
-            if ((res.out === ob.out || ob.out === "any" || ob.out === "pass") && (ob.out !== "hit" || !ob.aim || res.hits.some((a: Aim) => aimKey(a) === aimKey(ob.aim!)))) got = r.item;
+            if (fits(res)) got = r.item;
           }
           if (got && tag && ob.out === "hit" && ob.aim) {
             // 触媒の品質がこの当たりの MOD に効くか (エンジンの modBoostsOf。触媒は打つと品質を使い切るので、その種類の品質が載った形で聞く)
