@@ -8,7 +8,7 @@ import { aimHeldOn } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, ECHO, effectOf, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, sampleOf, singleOutOf } from "../../../services/simulator/tree/tree-sample";
 import { linkSameShape } from "../../../services/simulator/tree/tree-run";
-import { kindOfHand, setHand, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { healLost, kindOfHand, setHand, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
 import { tr } from "../../../i18n/lang";
 
@@ -112,6 +112,8 @@ export function applyPick(d: TreeDoc, id: string, h: Hand, kind: HandKind, aims:
   setHand(d, at, h, kind, aims, only);
   joinSameShape(d, id);
   linkSameShape(d, Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id));
+  // 自動でつないだ戻りで狙いを持って着く道ができた箱に「狙いが消えた」を足す (tree-model の healLost)
+  healLost(d);
   return at;
 }
 

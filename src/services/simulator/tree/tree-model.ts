@@ -9,6 +9,7 @@
  */
 
 import type { TreeTune } from "./tree-tune";
+import { mayHoldAim } from "./tree-lost";
 
 /**
  * any = 狙い無しの手の結果 (何が付いても次へ進む「打った後」、オーナー 10-22 の適当打ち)。
@@ -62,6 +63,8 @@ export interface TreeBox {
   autoBack?: true;
   /** 分かれ目 (打たずに分ける、10-22 オーナー OK): 行を上から見て最初に合った行の箱へ進む。hand・back・done・outs とは一緒に持たない。最後の行は「それ以外」(when が空) */
   split?: SplitRule[];
+  /** 狙いを持って着く人がいないので「狙いが消えた」の結果の箱を作らなかった (tree-lost.ts。持って着く道ができたら healLost が足す) */
+  noLost?: true;
 }
 /** 分かれ目の条件の範囲 [下, 上] (上は 99 で「以上」) */
 export type SplitRange = [number, number];
@@ -276,9 +279,13 @@ export const kindOfHand = (h: Hand, base: HandKind): HandKind => (h.repeat ? "sp
 export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims: readonly Aim[] = [], only: { out: OutKind; aim: Aim | null } | null = null): void {
   const b = d.boxes[id];
   if (!b) return;
-  const want = only ? [only.out] : OUTS_OF[kind];
-  if (only?.aim) aims = [only.aim];
   const now = b.outs.map((o) => d.boxes[o]!.out);
+  // 消せる狙いを持って着く人がいなければ「狙いが消えた」は起きない (10-24 モンキー初めての人の回 6)。前から箱がある木は替えない (同じ手を選び直して下が消えないように)
+  const kept = !!b.hand && now.includes("lost") && now.every((k) => k !== "start" && OUTS_OF[kind].includes(k));
+  const noLost = !only && OUTS_OF[kind].includes("lost") && OUTS_OF[kind].length > 1 && !kept && !mayHoldAim(d, id);
+  const want = only ? [only.out] : noLost ? OUTS_OF[kind].filter((k) => k !== "lost") : OUTS_OF[kind];
+  if (only?.aim) aims = [only.aim];
+  if (noLost) b.noLost = true; else delete b.noLost;
   const same = b.hand && want.every((k) => now.includes(k)) && now.every((k) => k !== "start" && want.includes(k));
   b.hand = { ...hand, omens: [...hand.omens], repeat: hand.repeat ? { ...hand.repeat } : null };
   b.back = null;
@@ -300,6 +307,25 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   }
   spread(d, id);
   makeRoom(d, id);
+  healLost(d);
+}
+
+/** 「狙いが消えた」を作らなかった箱に、狙いを持って着く道ができたら足す (外れの箱の前・始めに戻る。足した箱が始めへ戻るので、増えなくなるまで) */
+export function healLost(d: TreeDoc): void {
+  for (let more = true, n = 0; more && n < 20; n++) {
+    more = false;
+    for (const b of Object.values(d.boxes)) {
+      if (!b.noLost || !b.hand || !mayHoldAim(d, b.id)) continue;
+      delete b.noLost;
+      const c = mk(d, "lost", b.id);
+      c.back = "start";
+      const j = b.outs.findIndex((o) => d.boxes[o]?.out === "junk");
+      b.outs.splice(j < 0 ? b.outs.length : j, 0, c.id);
+      spread(d, b.id);
+      makeRoom(d, b.id);
+      more = true;
+    }
+  }
 }
 
 /** 次の手を消す (結果の箱と、その下も全部) */
@@ -353,7 +379,7 @@ export function setBack(d: TreeDoc, id: string, to: string | null): void {
   if (to && (to === id || !d.boxes[to])) return;
   b.back = to;
   delete b.autoBack;
-  if (to) { b.done = null; delete b.split; }
+  if (to) { b.done = null; delete b.split; healLost(d); }
 }
 
 /** 完成の印 (当たりの箱だけ。次の手・戻りの矢印とは一緒に持たない) */

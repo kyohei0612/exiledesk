@@ -87,7 +87,19 @@ const RESULT: Record<HandKind, [string, string]> = {
   essence: ["付いた + 狙いが消えた (付く MOD は必ず付く)", "Added + Target lost (the essence mod always lands)"],
   fracture: ["狙いが ✦ になった (必ず選んだ狙いを固定)", "The target fractured (always fixes the chosen target)"],
 };
+/** 狙いを持って着く人がいない箱では「狙いが消えた」を作らない時の文 (tree-model の setHand、tree-lost.ts) */
+const RESULT_NO_LOST: Partial<Record<HandKind, [string, string]>> = { remove: ["外れが消えた", "Miss removed"], swap: ["当たり + 外れ", "Hit + Miss"], essence: ["付いた (付く MOD は必ず付く)", "Added (the essence mod always lands)"] };
 const kind = computed((): HandKind | null => (hand.value ? kindOf(hand.value) : null));
+/** 結果の箱の文 (写しに手を付けて「狙いが消えた」が出来るかを見る) */
+const resultText = computed((): [string, string] | null => {
+  const h = hand.value, k = kind.value;
+  if (!h || !k) return null;
+  const alt = RESULT_NO_LOST[k];
+  if (!alt) return RESULT[k];
+  const d = structuredClone(toRaw(t.doc.value));
+  setHand(d, props.boxId, h, k, hitAims.value, null);
+  return d.boxes[props.boxId]?.outs.some((o) => d.boxes[o]?.out === "lost") ? RESULT[k] : alt;
+});
 /** 当たりの箱の既定 (tree-hand-plan の hitAimsOf) */
 const hitAims = computed((): Aim[] => { const d = s.data.value, it = item.value, h = hand.value; return d && it && h ? hitAimsOf(d, t.doc.value, props.boxId, it, h, t.goals.value, isFracture.value ? fracPick.value : null) : []; });
 /** 結果が 1 通りの手か (tree-hand-plan の onlyOf) */
@@ -155,7 +167,7 @@ function ok(): void {
         <input v-model="spam" type="checkbox" />{{ tr("当たるまで繰り返す (カオススパム)", "Repeat until a hit (Chaos spam)") }}
         <span v-if="spam" class="flex items-center gap-1 text-[12px] opacity-80">{{ tr("上限", "Max") }}<input v-model.number="spamMax" type="number" min="1" class="h-7 w-16 rounded-md border border-white/15 bg-black/40 px-1 text-right" :placeholder="tr('なし', 'none')" />{{ tr("回", "") }}</span>
       </label>
-      <p v-if="kind" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? tr(`${outName(only.out)}だけ (結果は 1 通り)`, `${outName(only.out)} only (one possible result)`) : tr(RESULT[kind][0], RESULT[kind][1]) }}</p>
+      <p v-if="kind" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? tr(`${outName(only.out)}だけ (結果は 1 通り)`, `${outName(only.out)} only (one possible result)`) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
       <!-- 替える時は、消える箱の数を先に小さく (オーナー 10-22。1 つ戻す / Ctrl+Z で戻せる)。持ち直しは棚で別の物を押すだけ。決めるのはカードを押す -->
       <div class="flex flex-wrap items-center gap-1.5">
         <span v-if="problem" data-tree-hand-problem class="text-[11px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</span>
