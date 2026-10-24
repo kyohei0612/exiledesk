@@ -1,22 +1,25 @@
 #!/usr/bin/env node
 /**
  * check-monkey-engine.mjs — 猿 (モンキー隊長の台本) がツリーで書き出した記録と、エンジンの入口を照らし合わせる (2026-10-24 オーナー「照らし合わせの相手はエンジン」、ジン部長)
- *   node scripts/check-monkey-engine.mjs <猿の JSON のフォルダー> [--out <書き出すファイル>]
- * 読む物: フォルダーの中の *.json のうち { steps: [{ card, shelf: [{ why, off }], pick }] } の形の物 (1 匹 1 ファイル)。
- * 1 手ごとに: カードの文からベースと MOD (P7 物理ダメージが… = プレフィックス T7) を読み、エンジンで同じ形のアイテムを作り、
- *   棚の「打てる」の札の名前の集合 (エンジンの useReason、お告げ無し) と、猿が見た打てる札の名前の集合を比べる。
- *   カードにルーンの効き目の文があれば、そのクラフトのルーンをはめてから比べる。レアリティはカードに無いので、白・マジック・レアのどれかで集合が同じなら「合う」。合わない時は一番近い形との差を出す。
- * 乱数で変わる物 (付いた MOD・当たり外れ) は比べない (ツリーの箱の結果は当たり / 外れの見出しで、付いた MOD は記録に無い)。
- * 書き出し: 差の一覧を画面に、全部の手を --out (既定 <フォルダー>/engine-check.json) に。手元だけで、外へは出ない
+ *   node scripts/check-monkey-engine.mjs <猿の JSON のフォルダー> [--out <書き出すフォルダー>]
+ * 読む物: フォルダーの中の *.json のうち { steps: [{ card, shelf: [{ name, off, why }], pick, omens }] } の形の物 (1 匹 1 ファイル)。
+ * 1 手ごとに、カードの文からベース・MOD (P7 文 = プレフィックス T7)・はまったクラフトのルーン (効き目の文) を読み、エンジンで同じ形のアイテムを作って:
+ *   - 棚: 打てる札と打てない札 (理由つき)。打てるかはエンジンの useReason (お告げ無し、ツリーの棚と同じ並び)
+ *   - 選んだ手 (pick) に掛けられるお告げ / 掛けられない物 (理由つき、omenBlock)
+ *   - 選んだ手で付きうる MOD の候補 (1 手の行き先の全部の枝。錬金など枝が多すぎる手は数えない)
+ * レアリティはカードに無いので、白・マジック・レアのうち棚の打てる札が猿と一番近い形を使う。付いた MOD・当たり外れ (乱数) は比べない。
+ * 書き出し (既定 <フォルダー>/engine/): 猿と同じ名前のファイルに、猿の step と同じ形で engine 欄 (rarity・shelf・pickKey・omens・candidates) と差 (diff) を足した物、
+ * まとめは engine-check.json。画面には数と、違いの多い札。手元だけで、外へは出ない
  */
-import { readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { bundleEntry } from "./_bundle-ts.mjs";
 
 const args = process.argv.slice(2);
-const dir = args.find((a) => !a.startsWith("--"));
-if (!dir) { console.error("使い方: node scripts/check-monkey-engine.mjs <猿の JSON のフォルダー> [--out <ファイル>]"); process.exit(1); }
-const outFile = args.includes("--out") ? args[args.indexOf("--out") + 1] : join(dir, "engine-check.json");
+const dir = args.find((a, i) => !a.startsWith("--") && args[i - 1] !== "--out");
+if (!dir) { console.error("使い方: node scripts/check-monkey-engine.mjs <猿の JSON のフォルダー> [--out <書き出すフォルダー>]"); process.exit(1); }
+const outDir = args.includes("--out") ? args[args.indexOf("--out") + 1] : join(dir, "engine");
+mkdirSync(outDir, { recursive: true });
 
 const E = await bundleEntry("scripts/_monkey-engine-entry.ts");
 E.load();
@@ -25,53 +28,67 @@ E.load();
 function parseCard(card) {
   const head = card.match(/^(\S+) /);
   const mods = [];
-  const re = / ([PS])(\d+) (.+?)(?= [PS]\d+ |$)/g;
-  for (const m of card.matchAll(re)) mods.push({ side: m[1], tier: Number(m[2]), text: m[3].trim() });
+  for (const m of card.matchAll(/ ([PS])(\d+) (.+?)(?= [PS]\d+ |$)/g)) mods.push({ side: m[1], tier: Number(m[2]), text: m[3].trim() });
   return { baseJa: head?.[1] ?? null, mods };
 }
+const usable = (list) => new Set((list ?? []).filter((x) => !x.off).map((x) => x.why || x.name));
+const setDiff = (a, b) => [...a].filter((x) => !b.has(x));
 
 const files = readdirSync(dir).filter((f) => f.endsWith(".json") && f !== "engine-check.json");
-const rows = [];
-let steps = 0, same = 0, skipped = 0;
-const skipWhy = new Map();
-const skip = (why) => { skipped++; skipWhy.set(why, (skipWhy.get(why) ?? 0) + 1); };
+const sum = { steps: 0, shelfSame: 0, shelfDiff: 0, omensSame: 0, omensDiff: 0, skipped: 0, skipWhy: {} };
+const tally = new Map();
+const add = (k) => tally.set(k, (tally.get(k) ?? 0) + 1);
+const skip = (why) => { sum.skipped++; sum.skipWhy[why] = (sum.skipWhy[why] ?? 0) + 1; };
 for (const f of files) {
   let rec;
   try { rec = JSON.parse(readFileSync(join(dir, f), "utf8")); } catch { continue; }
   if (!Array.isArray(rec?.steps)) continue;
+  const outSteps = [];
   for (const st of rec.steps) {
-    if (!st.card || !Array.isArray(st.shelf)) continue;
-    steps++;
+    if (!st.card || !Array.isArray(st.shelf)) { outSteps.push(st); continue; }
+    sum.steps++;
     const c = parseCard(st.card);
     const base = c.baseJa && E.baseOfJa(c.baseJa);
-    if (!base) { skip(`ベースが読めない (${c.baseJa})`); continue; }
+    if (!base) { skip(`ベースが読めない (${c.baseJa})`); outSteps.push({ ...st, engine: { error: "ベースが読めない" } }); continue; }
     const ms = c.mods.map((m) => ({ ...m, hit: E.modOf(base, m.side, m.tier, m.text) }));
-    const miss = ms.filter((m) => !m.hit);
-    if (miss.length) { skip("MOD がエンジンの一覧に無い"); rows.push({ file: f, i: st.i, base, kind: "MOD が読めない", mods: miss.map((m) => `${m.side}${m.tier} ${m.text}`) }); continue; }
-    const monkey = new Set(st.shelf.filter((x) => !x.off).map((x) => x.why));
-    const eng = E.check(base, ms.map((m) => m.hit), st.card);
+    const miss = ms.filter((m) => !m.hit).map((m) => `${m.side}${m.tier} ${m.text}`);
+    if (miss.length) { skip("MOD がエンジンの一覧に無い"); outSteps.push({ ...st, engine: { error: "MOD がエンジンの一覧に無い", mods: miss } }); continue; }
+    // 白・マジック・レアのうち、棚の打てる札が猿と一番近い形
+    const monkey = usable(st.shelf);
     let best = null;
-    for (const [rarity, names] of Object.entries(eng)) {
-      if (!names) continue;
-      const e = new Set(names);
-      const onlyMonkey = [...monkey].filter((n) => !e.has(n));
-      const onlyEngine = [...e].filter((n) => !monkey.has(n));
-      const d = onlyMonkey.length + onlyEngine.length;
-      if (!best || d < best.d) best = { rarity, d, onlyMonkey, onlyEngine };
+    for (const [rarity, item] of Object.entries(E.itemsFor(base, ms.map((m) => m.hit), st.card))) {
+      if (!item) continue;
+      const shelf = E.shelfOf(item);
+      const eng = usable(shelf);
+      const d = { 猿だけ: setDiff(monkey, eng), エンジンだけ: setDiff(eng, monkey) };
+      const n = d.猿だけ.length + d.エンジンだけ.length;
+      if (!best || n < best.n) best = { rarity, item, shelf, d, n };
     }
-    if (!best) { skip("どのレアリティでも組み立てられない"); continue; }
-    if (best.d === 0) { same++; continue; }
-    rows.push({ file: f, i: st.i, base, kind: "棚が違う", rarity: best.rarity, card: st.card.slice(0, 160), 猿だけ: best.onlyMonkey, エンジンだけ: best.onlyEngine });
+    if (!best) { skip("どのレアリティでも組み立てられない"); outSteps.push({ ...st, engine: { error: "組み立てられない" } }); continue; }
+    const engine = { base, rarity: best.rarity, shelf: best.shelf.map(({ name, off, why }) => ({ name, off, why })) };
+    const diff = {};
+    if (best.n) { sum.shelfDiff++; diff.shelf = best.d; for (const x of best.d.猿だけ) add(`棚 猿だけ  ${x}`); for (const x of best.d.エンジンだけ) add(`棚 エンジンだけ  ${x}`); } else sum.shelfSame++;
+    // 選んだ手: 猿の札の名前 (why が札の名前) → エンジンの鍵
+    const pickCard = st.pick ? st.shelf.find((x) => x.name === st.pick) : null;
+    const pickKey = pickCard ? E.keyOfName(best.shelf, pickCard.why || pickCard.name) : null;
+    if (st.pick) {
+      engine.pickKey = pickKey;
+      if (pickKey) {
+        engine.omens = E.omensOf(best.item, pickKey).map(({ name, off, why }) => ({ name, off, why }));
+        engine.candidates = E.candidatesOf(best.item, pickKey);
+        if (Array.isArray(st.omens)) {
+          const mo = usable(st.omens), eo = new Set(engine.omens.filter((x) => !x.off).map((x) => x.name));
+          const od = { 猿だけ: setDiff(mo, eo), エンジンだけ: setDiff(eo, mo) };
+          if (od.猿だけ.length || od.エンジンだけ.length) { sum.omensDiff++; diff.omens = od; for (const x of od.猿だけ) add(`お告げ 猿だけ  ${x}`); for (const x of od.エンジンだけ) add(`お告げ エンジンだけ  ${x}`); } else sum.omensSame++;
+        }
+      } else diff.pick = `選んだ手 ${st.pick} がエンジンの棚に無い`;
+    }
+    outSteps.push({ ...st, engine, ...(Object.keys(diff).length ? { diff } : {}) });
   }
+  writeFileSync(join(outDir, f), JSON.stringify({ ...rec, steps: outSteps }, null, 1));
 }
-writeFileSync(outFile, JSON.stringify({ steps, same, skipped, skipWhy: Object.fromEntries(skipWhy), rows }, null, 1));
-console.log(`手 ${steps}: 棚が同じ ${same} / 違う ${rows.filter((r) => r.kind === "棚が違う").length} / 比べられない ${skipped}`);
-for (const [w, n] of skipWhy) console.log(`  比べられない: ${w} ${n}`);
-// 違いを札ごとにまとめる
-const tally = new Map();
-for (const r of rows.filter((r) => r.kind === "棚が違う")) {
-  for (const n of r.猿だけ) tally.set(`猿だけ  ${n}`, (tally.get(`猿だけ  ${n}`) ?? 0) + 1);
-  for (const n of r.エンジンだけ) tally.set(`エンジンだけ  ${n}`, (tally.get(`エンジンだけ  ${n}`) ?? 0) + 1);
-}
-for (const [k, n] of [...tally].sort((a, b) => b[1] - a[1]).slice(0, 30)) console.log(`  ${n} 手  ${k}`);
-console.log(`詳しく: ${outFile}`);
+writeFileSync(join(outDir, "engine-check.json"), JSON.stringify({ ...sum, top: [...tally].sort((a, b) => b[1] - a[1]) }, null, 1));
+console.log(`手 ${sum.steps}: 棚が同じ ${sum.shelfSame} / 違う ${sum.shelfDiff} / 比べられない ${sum.skipped}。お告げ (猿が欄を開いた手) 同じ ${sum.omensSame} / 違う ${sum.omensDiff}`);
+for (const [w, n] of Object.entries(sum.skipWhy)) console.log(`  比べられない: ${w} ${n}`);
+for (const [k, n] of [...tally].sort((a, b) => b[1] - a[1]).slice(0, 25)) console.log(`  ${n} 手  ${k}`);
+console.log(`書き出し: ${outDir} (猿と同じ名前のファイルに engine 欄と diff、まとめは engine-check.json)`);

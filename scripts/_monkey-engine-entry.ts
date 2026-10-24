@@ -10,8 +10,8 @@ import mods from "../src/vendor/poe2htc/data/mods.json";
 import bases from "../src/vendor/poe2htc/data/base_items.json";
 import extra from "../src/services/htc/extra-bases.json";
 import jewels from "../src/services/htc/jewel-bases.json";
-import { applyCurrency, baseSocketsOf, forceKey, freshItem, modListFor, mulberry32, runeEffectFor, runeOf, useReason, type StageItem } from "../src/services/craft-stage/engine";
-import { placeMods } from "../src/services/craft-stage/engine-sim";
+import { applyCurrency, baseSocketsOf, forceKey, freshItem, modListFor, mulberry32, omenBlock, omensAllowedFor, runeEffectFor, runeOf, useReason, type StageItem } from "../src/services/craft-stage/engine";
+import { placeMods, stepOutcomesOrTooMany } from "../src/services/craft-stage/engine-sim";
 import { CRAFT_RUNE_KEYS, ORBS, bonesFor, essenceShelf, nameOfKey, runesFor } from "../src/state/for-share/craft-stage-shelf";
 import { SIM_HIDDEN } from "../src/state/for-share/shelf-context";
 
@@ -58,20 +58,46 @@ function itemWith0(base: string, rarity: "normal" | "magic" | "rare", ms: Readon
   return item;
 }
 
+/** 棚の札 1 つ (猿の shelf と同じ形: name = 札の名前、off = 打てない、why = 打てない理由) */
+export interface Card { name: string; off: boolean; why: string | null; key: string }
+const ESS_ORDER = ["essence:lesser:", "essence:normal:", "essence:greater:", "essence:perfect:"];
+const essRank = (k: string): number => { const i = ESS_ORDER.findIndex((p) => k.startsWith(p)); return i < 0 ? 9 : i; };
+
 /**
- * 棚の「打てる」の欄 (CurrencyShelf の usableAll) と同じ並び: オーブ・骨 / エッセンスは系統ごとに 1 つ (どれかの段が打てれば、札の名前はグレーター) /
- * ルーンはソケットがある時だけで、クラフトに関わるルーン (CRAFT_RUNE_KEYS) だけ (ほかのルーンは畳んだ欄で、猿には見えない)。ツリーで隠す札 (SIM_HIDDEN: 品質の札・ヒネコラの髪束など) は抜く
+ * 棚 (CurrencyShelf の「打てる」の欄と同じ並び): オーブ・骨 / エッセンスは系統ごとに 1 つ (札は打てる段のうち一番上、どれも打てなければ普通の段。groupRep と同じ) /
+ * ルーンはソケットがある時だけで、クラフトに関わるルーン (CRAFT_RUNE_KEYS) だけ (ほかのルーンは畳んだ欄で、猿には見えない)。ツリーで隠す札 (SIM_HIDDEN) は抜く。
+ * 打てない札も理由つきで返す (猿の棚は打てる欄だけなので、比べるのは off でない物)
  */
-function usableNames(item: StageItem): string[] {
-  const ok = (k: string): boolean => !SIM_HIDDEN.has(k) && !useReason(data!, item, k);
-  const out = new Set<string>();
+export function shelfOf(item: StageItem): Card[] {
+  const why = (k: string): string | null => useReason(data!, item, k);
+  const out: Card[] = [];
   const keys = [...ORBS.flatMap((g) => g.keys), ...bonesFor(item), ...((item.sockets ?? 0) > 0 ? runesFor(item).flatMap((g) => g.keys).filter((k) => CRAFT_RUNE_KEYS.includes(k)) : [])];
-  for (const k of keys) if (ok(k)) out.add(nameOfKey(k, item));
-  for (const g of essenceShelf(data!, item)) if (g.keys.some(ok)) out.add(nameOfKey(g.keys.find((k) => k.startsWith("essence:greater:")) ?? g.keys[0]!, item));
-  return [...out];
+  for (const k of keys) { if (SIM_HIDDEN.has(k)) continue; const w = why(k); out.push({ name: nameOfKey(k, item), off: !!w, why: w, key: k }); }
+  for (const g of essenceShelf(data!, item)) {
+    const ks = g.keys.filter((k) => !SIM_HIDDEN.has(k)).sort((a, b) => essRank(a) - essRank(b));
+    const ok = ks.filter((k) => !why(k));
+    const rep = ok[ok.length - 1] ?? ks.find((k) => k.startsWith("essence:normal:")) ?? ks[0];
+    if (rep) out.push({ name: nameOfKey(rep, item), off: !ok.length, why: ok.length ? null : why(rep), key: rep });
+  }
+  return out;
 }
 
-/** 1 手: 白・マジック・レアの形それぞれで打てる札の名前 (組み立てられない形は null) */
+/** 選んだ手に掛けられるお告げ (エンジンの omensAllowedFor) と、掛けられない物の理由 (omenBlock。お告げの欄の灰色と同じ) */
+export function omensOf(item: StageItem, key: string): Array<{ name: string; off: boolean; why: string | null; key: string }> {
+  return omensAllowedFor(key).map((o) => { const w = omenBlock(data!, item, key, [], o); return { name: nameOfKey(o, item), off: !!w, why: w, key: o }; });
+}
+
+/** 選んだ手で付きうる MOD の候補 (1 手の行き先の全部の枝で新しく付く MOD の文、段つき)。枝が多すぎる手 (錬金など) は "多すぎて数えない" */
+export function candidatesOf(item: StageItem, key: string): string[] | "多すぎて数えない" {
+  const r = stepOutcomesOrTooMany(data!, item, key, []);
+  if (r === "tooMany") return "多すぎて数えない";
+  if (!r) return [];
+  const before = new Set([...item.prefixes, ...item.suffixes].map((m) => m.modId));
+  const out = new Set<string>();
+  for (const o of r) if (!o.void) for (const m of o.added) if (!before.has(m.modId)) out.add(`${m.side === "prefix" ? "P" : "S"} ${m.modId}#${m.tierIndex}`);
+  return [...out].sort();
+}
+
 /** カードの文に効き目の文があるクラフトのルーンを、ソケットにはめる (ツリーの箱でもうはまっている物) */
 function withRunes(item: StageItem, card: string): StageItem {
   const c = norm(card);
@@ -85,11 +111,12 @@ function withRunes(item: StageItem, card: string): StageItem {
   }
   return it;
 }
-export function check(base: string, ms: ReadonlyArray<{ modId: string; tier: number }>, card = ""): Record<string, string[] | null> {
-  const out: Record<string, string[] | null> = {};
-  for (const rarity of ["normal", "magic", "rare"] as const) {
-    const it = itemWith(base, rarity, ms);
-    out[rarity] = it ? usableNames(withRunes(it, card)) : null;
-  }
+
+/** 1 手: 白・マジック・レアの形それぞれのアイテム (組み立てられない形は null)。ルーンはカードの文から */
+export function itemsFor(base: string, ms: ReadonlyArray<{ modId: string; tier: number }>, card = ""): Record<"normal" | "magic" | "rare", StageItem | null> {
+  const out = {} as Record<"normal" | "magic" | "rare", StageItem | null>;
+  for (const rarity of ["normal", "magic", "rare"] as const) { const it = itemWith(base, rarity, ms); out[rarity] = it ? withRunes(it, card) : null; }
   return out;
 }
+/** 名前から鍵 (今の棚にある札の中で) */
+export const keyOfName = (cards: Card[], name: string): string | null => cards.find((c) => c.name === name)?.key ?? null;
