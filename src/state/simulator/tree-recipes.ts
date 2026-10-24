@@ -105,10 +105,6 @@ export function restoreTreeRecipe(x: { r: TreeRecipe; at: number }): void {
   const list = treeRecipes.value.filter((r) => r.id !== x.r.id);
   put([...list.slice(0, x.at), x.r, ...list.slice(x.at)]);
 }
-/** そのレシピがこのブラウザの保存 (localStorage) に本当に書けているか (書けたのを確かめてから元を消す時に) */
-export function treeRecipeSaved(id: string): boolean {
-  try { return (parseList(localStorage.getItem(TREE_RECIPES_KEY)) ?? []).some((x) => (x as Partial<TreeRecipe> | null)?.id === id); } catch { return false; }
-}
 /** 同じ中身があればそれ、無ければ足す (URL から開いた時) */
 export function addTreeRecipe(name: string, tree: TreeDoc): TreeRecipe {
   const same = treeRecipes.value.find((r) => sameTree(r.tree, tree));
