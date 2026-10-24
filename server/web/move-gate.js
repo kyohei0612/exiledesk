@@ -1,26 +1,14 @@
-// 旧 URL (web.exiledesk.workers.dev) の検索エンジン向けの引っ越しの知らせ (2026-10-11)。
-// 人は web.html の頭の script で、作業中のデータごと exiledesk.com へ移る (localStorage はページを開かないと読めないので 301 にはできない)。
-// 検索エンジンのクローラーにだけ 301 を返して「住所が変わった」と伝える (行き先は人と同じ)。
-// ここを通るのは HTML のページだけ (wrangler.jsonc の run_worker_first)。絵や JS は通さないので、問い合わせは増えない
-// 2026-10-22 www.exiledesk.com も同じ形に (Search Console で exiledesk.com と同じ中身の代替ページに数えられた。人は今のまま www で開ける = 作業中のデータを消さない)
+// Web 版の Worker。ここを通るのはシェアの /s/*・/og/* だけ (wrangler.jsonc の run_worker_first)。ページ・絵・JS は静的な置き場から直接
+// 2026-10-25 トップ (/・/index.html・/web.html) を外した (Bot の巡回が 1 日の枠の大半を食っていた。notes/2026-10-25-www-redirect-rule.md)。
+// 前はここで旧 URL (web.exiledesk.workers.dev)・www のクローラーにだけ 301 を返していた。www の 301 は Cloudflare の Redirect Rules (ダッシュボード) へ、
+// workers.dev の 301 はやめた (アドレス変更は 10-11 に済み、canonical は exiledesk.com)。人は今までどおり web.html の script でデータごと移る
 import { ogCard } from "./og-card.js";
-
-const OLD_HOSTS = new Set(["web.exiledesk.workers.dev", "www.exiledesk.com"]);
-const NEW_ORIGIN = "https://exiledesk.com";
-// Search Console の確かめは Googlebot 以外の名前 (Google-InspectionTool / Google-Site-Verification / GoogleOther) で来るので google も (2026-10-11 アドレス変更が「取得できません」で落ちた)
-const BOT = /google|bot|crawl|spider|slurp|bingbot|duckduckbot|yandex|baidu|facebookexternalhit|twitterbot|discordbot|linkedinbot|embedly|preview/i;
 
 export default {
   async fetch(request, env, ctx) {
     // カオススパムの自慢のカード (/s/spam・/og/spam.png。og-card.js)
     const og = await ogCard(request, env, ctx);
     if (og) return og;
-    const url = new URL(request.url);
-    // 今のブラウザはページを開く時に必ず Sec-Fetch-Mode を付ける。付いていない = プログラムからの取得 (名前を名乗らないクローラーも) なので 301
-    const program = !request.headers.get("sec-fetch-mode");
-    if (OLD_HOSTS.has(url.hostname) && (program || BOT.test(request.headers.get("user-agent") ?? ""))) {
-      return Response.redirect(NEW_ORIGIN + url.pathname + url.search, 301);
-    }
     return env.ASSETS.fetch(request);
   },
 };

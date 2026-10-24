@@ -18,5 +18,5 @@
 - サーバー: server/web (本番の Web の worker。手元の本番・開発版と同じ環境は notes/2026-10-24-local-prod-env.md)・server/live (README.md、src/index.ts = 入口・cron の 1 時間おきの相場と毎朝 9 時 JST の日報、monitor.ts `dailyReport`、events.ts、logs.ts → D1、feedback.ts・feedback-images.ts、forget.ts、migrations/ = D1 `exiledesk-logs`)。日報を今すぐ `GET /report` (ヘッダー x-exiledesk-key)。
 - 使用量: Cloudflare のダッシュボードの Workers & Pages。無料の枠は 1 日 10 万リクエスト (UTC 0:00 = 日本時間 9:00 に戻る)。
 - 画面の側 (持ち主はデザイン部長、送る口だけ): src/utils/log-record.ts (`logRecord`)・no-log.ts、src/services/telemetry/log-sender.ts、src/web/track.ts、要望 src/web/FeedbackDialog.vue・feedback-images.ts・feedback-summary.ts、返事 src/state/feedback-replies.ts。
-- 台本 scripts/: pull-logs.mjs・analyze-logs.py (`--json` で数字だけ)・daily-summary.mjs・sim-telemetry.mjs・preview-prod.mjs・compare-prod-local.mjs。テスト tests/: live-worker・log-sender-throttle。
+- 台本 scripts/: pull-logs.mjs・analyze-logs.py (`--json` で数字だけ)・daily-summary.mjs・sim-telemetry.mjs・preview-prod.mjs・compare-prod-local.mjs・check-www-redirect.mjs (www の Bot の 301 とトップ・シェア、本番で見るだけ)。テスト tests/: live-worker・log-sender-throttle。
 - メモ: analytics-logs (決着済み: D1 の visit・screen)・feedback-replies (`wrangler kv key put fbr:<id>`)・history-logs・roadmap-2026-10 (月 10 万 PV)・ads-page-model。docs: roadmap-2026-10.md、pending-release.md。

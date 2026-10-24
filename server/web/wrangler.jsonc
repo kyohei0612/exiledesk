@@ -1,9 +1,9 @@
-// Web 版の置き場 (中身は静的ファイル。ページ (HTML) だけ move-gate.js を通す、2026-10-11)。
+// Web 版の置き場 (中身は静的ファイル。シェアの /s/*・/og/* だけ move-gate.js を通す、2026-10-25)。
 // 中身は pnpm build:web が作る dist-web/。置くのはリポジトリの根で `pnpm deploy:web` (ビルド → ここで wrangler deploy)
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "web",
-  // 旧 URL を開いたクローラーにだけ 301 (move-gate.js)。人は web.html の script でデータごと移る
+  // シェアのカード (og-card.js) を返す。www の Bot 向けの 301 は Cloudflare の Redirect Rules (notes/2026-10-25-www-redirect-rule.md)
   "main": "move-gate.js",
   "compatibility_date": "2026-09-01",
   // シェアの短い URL (/s/<id>) の中身。分析の記録と同じ D1 (KV は増やさない)。表は server/live/migrations/0007_shares.sql (2026-10-18)
@@ -18,8 +18,9 @@
   "assets": {
     "directory": "../../dist-web",
     "binding": "ASSETS",
-    // Worker を通すのはページ (HTML) だけ。絵・JS・CSS は今まで通り直接 (無料の問い合わせの数を食わない)
-    "run_worker_first": ["/", "/index.html", "/web.html", "/s/*", "/og/*"],
+    // Worker を通すのはシェアだけ。ページ・絵・JS・CSS は直接 (1 日 10 万の枠を食わない、越えても止まらない)。
+    // 2026-10-25 トップを外した (巡回の Bot が web の Worker の 6〜8 割。docs/org/analytics/notes/2026-10-25-request-inventory.md)
+    "run_worker_first": ["/s/*", "/og/*"],
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "404-page"
   }
