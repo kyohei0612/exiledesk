@@ -49,6 +49,7 @@ import { RUN_N, useTreeRun } from "./use-tree-run";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue";
 import { applyPick } from "./tree-hand-plan";
+import { installSimMonkey } from "./sim-monkey";
 import TreeRunLayer from "./TreeRunLayer.vue";
 import TreeHandChip from "./TreeHandChip.vue"; import TreeBandLayer from "./TreeBandLayer.vue"; import TreeTabs from "./TreeTabs.vue";
 import TreeMergeLayer from "./TreeMergeLayer.vue";
@@ -79,6 +80,8 @@ const { zoom, full, viewOnly, pageZ } = v;
  */
 const inv = computed(() => (viewOnly.value ? 1 : zoom.value < 1 ? 1 / zoom.value : Math.max(1, 1 / (zoom.value * pageZ.value))));
 onBeforeUnmount(v.dispose);
+// 猿の台本が呼ぶ口 window.__simMonkey (開発の時だけ、sim-monkey.ts)
+onBeforeUnmount(installSimMonkey());
 
 // ドラッグ中は Vue Flow の箱だけが動き、離した時に 1 回だけ組み替える (1 つ戻すが 1 手で済む)。線は引っ張っている位置に合わせる
 const drag = ref<{ id: string; x: number; y: number } | null>(null);
