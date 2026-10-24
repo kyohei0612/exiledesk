@@ -19,6 +19,7 @@ export const FLAGS = {
   weights: "MOD 一覧で MOD の重みを直せる欄 (state/for-share/stage-tuning.ts の WEIGHTS_ON・StageWeightEdit、3bc0ea1d)",
   firstVisit1024: "モンキー初めての人の回 10-24 の共通の直し (ベースの一覧で部位を開いて送っている間と止まって 0.35 秒は一覧の中の押しを捨てる。BaseCatalog ・ 説明のカードはマウスが実際に動いた時だけ開く。ShelfButton・BaseCardGrid・utils/pointer-moved)",
   essCard:"アイテムのカードでエッセンス・合金で付いた MOD の段を P0 / S0 に・T1 の光りを付けない・横に「エッセンス」「合金」の札 (StageItemCard、口はジン部長の cardTierName fe71cb34)",
+  noHeaderBlog: "ヘッダーの「ブログ」のボタンを外す (読み物へは右の欄の新しい記事 3 本・すべて見るの <a href> と、web.html の静的な一覧から。オーナー 10-25「ブログは右のチャンネルの所に出すから、そもそも上に要らない」)",
   skins: "コスメティック = PoE2 で使える PoE1 のスキンの一覧のページ (?page=skins・ヘッダーの「コスメティック」、views/skins/SkinsPage.vue = スキン部長)",
   essTier:"段の表のエッセンス・合金の行の各段に、付けるアイテムの名前 (例 T1 断熱のグレーターエッセンス。ModTable、口はジン部長の ListTier.essence 3cfe3123)",
   // ここから下はエミュ部長の物 (エミュの画面の OK 待ち)

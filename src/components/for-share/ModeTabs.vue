@@ -6,7 +6,7 @@
   - シミュレーターのタブは開発版だけ (TREE_ON。本番はまだ出さない)
   - 今いる方が選ばれた見た目。active で上書きできる (エミュの画面でジェムコラプトを開いている時は null = どちらも選ばない)
   - その画面だけのタブ (エミュのジェムコラプト・アプリのチュートリアル) は既定の slot で後ろに足す
-  - 右端にコスメティック (?page=skins) とデイリー (?page=daily)。目立たない所に置く (2026-10-25 オーナー「ここの右端が良いな、目立たんし」、ヘッダーから移した)。どちらも開発版だけ (スイッチ skins・daily)。
+  - 右端にデイリー (?page=daily)、一番端にコスメティック (?page=skins、オーナー 10-25「コスメが端かな」)。目立たない所に置く (2026-10-25 オーナー「ここの右端が良いな、目立たんし」、ヘッダーから移した)。どちらも開発版だけ (スイッチ skins・daily)。
     スマホ・狭い幅では 2 段目に回す (1 段に 5 つは入らない)
   使い方: <ModeTabs @pick="(m) => …画面の後片付け" ><button class="g-tab">…</button></ModeTabs>
 -->
@@ -44,8 +44,8 @@ const TAB = "g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex
     </button>
     <slot />
     <span v-if="EXTRA" data-mode-extra class="inline-flex gap-1 max-md:flex max-md:basis-full">
-      <button v-if="SKINS_ON" type="button" role="tab" data-mode-tab="skins" :aria-selected="false" :class="TAB_S" @click="openSkinsPage">{{ tr("コスメティック", "Cosmetics") }}</button>
       <button v-if="DAILY_ON" type="button" role="tab" data-mode-tab="daily" :aria-selected="false" :class="TAB_S" @click="openDailyPage()">{{ tr("デイリー", "Daily") }}</button>
+      <button v-if="SKINS_ON" type="button" role="tab" data-mode-tab="skins" :aria-selected="false" :class="TAB_S" @click="openSkinsPage">{{ tr("コスメティック", "Cosmetics") }}</button>
     </span>
   </div>
 </template>

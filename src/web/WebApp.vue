@@ -170,7 +170,8 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       <!-- 使い方・コツのページ (動画へのリンク + チュートリアルのコース。2026-10-18 オーナー「チュートリアルは使い方にしまう」) -->
       <!-- デイリー・コスメティックの入口は上の切り替えタブの右端 (ModeTabs、2026-10-25 オーナー「ここの右端が良いな、目立たんし」) -->
       <!-- ブログ (読み物への入口、2026-10-22 AdSense の再申請。開発版だけ) -->
-      <a v-if="BLOG_ON" data-rec-part="header-blog" :href="tr('/blog/', '/en/blog/')" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''">{{ tr("ブログ", "Blog") }}</a>
+      <!-- 開発版は外す (スイッチ noHeaderBlog、右の欄の「新しい記事・すべて見る」で足りる。オーナー 10-25) -->
+      <a v-if="BLOG_ON && !flag('noHeaderBlog')" data-rec-part="header-blog" :href="tr('/blog/', '/en/blog/')" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''">{{ tr("ブログ", "Blog") }}</a>
       <button type="button" data-rec-part="header-help" class="g-btn sm" :class="[phone ? '!min-h-9 !px-0 text-[12px]' : '', guideOn ? 'on' : '']" :aria-pressed="guideOn" @click="openGuide">{{ tr("使い方・コツ", "Guide & Tips") }}</button>
       <button type="button" data-rec-part="header-feedback" class="g-btn sm" :class="[phone ? '!min-h-9 !px-0 text-[12px]' : '', feedbackPage ? 'on' : '']" :aria-pressed="feedbackPage" :title="tr('要望やバグを送る (今の画面の状態も一緒に届きます)', 'Send feedback or bug reports (the current screen state is sent along)')" @click="imageAskFor = null; openFeedback()">{{ phone ? tr("要望・バグ", "Feedback") : tr("要望・バグを送る", "Send feedback") }}</button>
       <!-- 支援 (投げ銭)。リンクが 1 つも無ければ出さない (2026-10-10) -->
