@@ -34,7 +34,7 @@ export interface TreeRunOpts {
   onProgress?: (r: TreeRunResult) => void;
   every?: number;
   /** 1 人終わるごとに、その人の通った箱 (順に、着いた時の費用) と終わり方。画面の「1 人目が木を進む」が読む (10-22) */
-  onPerson?: (p: { end: End; at: string; cost: number; visits: readonly { box: string; cost: number }[]; why?: { reason: string; item: StageItem } }, i: number) => void;
+  onPerson?: (p: { end: End; at: string; cost: number; visits: readonly { box: string; cost: number; pass?: true }[]; why?: { reason: string; item: StageItem } }, i: number) => void;
 }
 interface BoxStat {
   /** 1 回でもここに来た人数 */
@@ -80,7 +80,7 @@ export interface TreeRunResult {
 }
 
 export type End = "done" | "capped" | "stuck";
-interface Person { end: End; cost: number; at: string; visits: { box: string; cost: number }[]; uses: Record<string, number>; restarts: number; odd: Set<string>; why?: { reason: string; item: StageItem; noBox?: boolean } }
+interface Person { end: End; cost: number; at: string; visits: { box: string; cost: number; pass?: true }[]; uses: Record<string, number>; restarts: number; odd: Set<string>; why?: { reason: string; item: StageItem; noBox?: boolean } }
 
 const startItemOf = (data: PatchData, doc: TreeDoc, rng: () => number): StageItem => startOf(data, doc, rng).item;
 
@@ -356,7 +356,10 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
       continue;
     }
     item = r.item;
-    at = settle(data, doc, shapes, next, item, aims);
+    // 結果の箱には一度着いてから形の合う箱へ移る (着いた数と線に入れる。前は飛ばして、当たりの箱が「来た人 0」・照らしで当たり 0% になった、10-24 モンキー m-602・指輪 b11)
+    const to = settle(data, doc, shapes, next, item, aims);
+    if (to !== next) visits.push({ box: next, cost, pass: true });
+    at = to;
   }
 }
 
@@ -397,6 +400,8 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
       if (!a) return;
       a.spend += (p.visits[i + 1]?.cost ?? p.cost) - v.cost;
       if (!seen.has(v.box)) { seen.add(v.box); a.reach++; }
+      // 着いてすぐ形の合う箱へ移った来訪 (pass) は、来た人と線には入れ、来た回数・平均の費用には入れない (この箱の手は打っていない)
+      if (v.pass) return;
       a.visits++;
       a.costIn += v.cost;
       a.remain += p.cost - v.cost;
