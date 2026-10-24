@@ -257,8 +257,7 @@ select option:disabled {
 
 /* tabular numeric は body 既定で ON（文章中の数字も等幅で揃える） */
 table td,
-table th,
-.exile-num {
+table th {
   font-variant-numeric: tabular-nums;
 }
 
@@ -302,10 +301,6 @@ table th,
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     transition-duration: var(--exile-motion-fast) !important;
-  }
-  /* クラフト相談 300ms 初回遷移のみ 0ms 化（visual-concept §6.6 規定） */
-  .craft-consultation-enter-active {
-    transition-duration: 0ms !important;
   }
 }
 
@@ -392,7 +387,7 @@ table th,
  *
  * 画面ごとに Tailwind の長い連なりで書いていた 枠 / 見出し / ボタン / 注記 を 1 か所に置く。
  *   .card        … 枠 (角丸 12px、薄い白の線、うっすら明るい地)。BaseCard.vue と同じ見た目で、BaseCard を使わない所用
- *   .card-title  … 枠の中の見出し (13px 太字、暖色)。番号の丸は .card-no
+ *   .card-title  … 枠の中の見出し (13px 太字、暖色)
  *   .sec-title   … 枠の外の節の見出し (12px 太字、2 番目の色)。相手との差の「取り入れたら / ジェム / 装備」など
  *   .btn         … ボタンの土台 (高さ 28px、角丸 8px、12px 太字)。色は .btn-primary (主 = 1 色で塗る) / .btn-outline (副 = 枠だけ)
  *                  / .btn-ghost (地だけ薄く)。小さい物は .btn-sm (高さ 24px、11px)
@@ -416,20 +411,6 @@ table th,
     font-size: 13px;
     font-weight: 700;
     color: var(--exile-color-text-primary);
-  }
-  .card-no {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 20px;
-    height: 20px;
-    padding: 0 6px;
-    border-radius: 9999px;
-    background: var(--exile-color-accent-focus);
-    color: var(--exile-color-bg-canvas);
-    font-size: 11px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
   }
   .sec-title {
     display: flex;

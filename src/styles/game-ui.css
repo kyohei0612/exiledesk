@@ -4,7 +4,6 @@
  * オーナー「AI で作ったなってわかる」「細い金の線」「ちゃっちくならんように」→ クライアントの UI の絵 (public/ui-art、
  * scripts/build-ui-art-from-client.mjs) で枠・ボタン・タブを作る。見本に「めっちゃUIいいやん」。
  *   .g-panel   面 (ロード画面の彫りの枠、9 分割)
- *   .g-head    面の見出し (両端に像の付いた帯)。中に h2 等
  *   .g-btn     ボタン (ゲームの 3 枚ボタン)。.g-btn-red は決める手 (打つ・完成 など 1 画面 1 つ)
  *   .g-tab     札 (両替所のタブ)。.on が選んでいる物
  *   .g-slot    棚の枠 (両替所の枠)。.on が持っている物
@@ -38,26 +37,6 @@
 /* 冒涜の MOD の行: トレードと同じく左右に緑の帯・真ん中は黒 (ゲームの HoverModBGAbyss の内側の帯を左右に。2026-10-17 オーナー「枠はトレードで言うとこんな感じ」) */
 .g-abyss-row {
   background: url("/ui-art/abyss-modrow.webp") center / 100% 100% no-repeat, #050604;
-}
-
-.g-head {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 48px;
-  padding: 0 64px;
-  background:
-    url("/ui-art/head-l.webp") left center / auto 100% no-repeat,
-    url("/ui-art/head-r.webp") right center / auto 100% no-repeat;
-}
-.g-head > :is(h1, h2, h3, p, span) {
-  font-family: var(--exile-font-family-brush);
-  font-weight: 400;
-  font-size: 20px;
-  letter-spacing: 0.16em;
-  color: var(--exile-color-text-title);
-  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.9), 0 0 14px rgba(255, 200, 110, 0.25);
 }
 
 .g-btn,
