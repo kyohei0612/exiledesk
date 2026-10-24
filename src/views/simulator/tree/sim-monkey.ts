@@ -17,7 +17,7 @@ import { CATALYSING } from "../../../services/simulator/tree/tree-hands";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { runTree } from "../../../services/simulator/tree/tree-run";
 import { bonesFor, CRAFT_RUNE_KEYS, essenceShelf, nameOfKey, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
-import { simHidden } from "../../../state/for-share/shelf-context";
+import { treeHidden } from "../use-sim-shelf";
 import { craftStage as s } from "../../../state/craft-stage";
 import { DEV_BUILD } from "../../../web/release-flags";
 import { modText } from "../../../i18n/lang";
@@ -34,13 +34,13 @@ const PART_CLASS: Record<string, string> = {
   Focus: "Foci", Staff: "Stav", Quarterstaff: "Quarterstav", Warstaff: "Quarterstav", OneHandMace: "OneHand_Mace", TwoHandMace: "TwoHand_Mace",
 };
 
-/** 棚に並ぶ物 (CurrencyShelf と同じ: オーブ・骨・エッセンス、ソケットがあればクラフトのルーン。隠すのは simHidden) */
+/** 棚に並ぶ物 (CurrencyShelf と同じ: オーブ・骨・エッセンス、ソケットがあればクラフトのルーン。隠すのはツリーの棚と同じ treeHidden) */
 function shelfKeys(it: StageItem): string[] {
   const d = s.data.value;
   if (!d) return [];
   const sockets = socketCapOf(it.base, it.cls.category) > 0 || (it.sockets ?? 0) > 0;
   const runes = sockets ? runesFor(it).flatMap((g) => g.keys).filter((k) => CRAFT_RUNE_KEYS.includes(k) && runeOf(k)) : [];
-  return [...ORBS.flatMap((g) => g.keys), ...bonesFor(it), ...essenceShelf(d, it).flatMap((g) => g.keys), ...runes].filter((k) => !simHidden(k));
+  return [...ORBS.flatMap((g) => g.keys), ...bonesFor(it), ...essenceShelf(d, it).flatMap((g) => g.keys), ...runes].filter((k) => !treeHidden(k));
 }
 
 export function installSimMonkey(): () => void {
@@ -85,7 +85,7 @@ export function installSimMonkey(): () => void {
     omens(id: string, key: string): Array<{ key: string; name: string; ok: boolean; reason: string | null }> {
       const d = s.data.value, it = shelfItemFor(id, key);
       if (!d || !it) return [];
-      return omensAllowedFor(key).map((o) => { const reason = omenBlock(d, it, key, [], o); return { key: o, name: nameOfKey(o, it), ok: !reason, reason }; });
+      return omensAllowedFor(key).filter((o) => !treeHidden(o)).map((o) => { const reason = omenBlock(d, it, key, [], o); return { key: o, name: nameOfKey(o, it), ok: !reason, reason }; });
     },
     add(id: string, key: string, omens: string[] = [], opt: Opt = {}) {
       const d = s.data.value, smp = sample(id), it = smp?.item;

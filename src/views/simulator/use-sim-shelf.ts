@@ -8,7 +8,16 @@ import { ref, type Ref } from "vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { provideShelf, simHidden } from "../../state/for-share/shelf-context";
 import { useReason, type StageItem } from "../../services/craft-stage/engine";
+import { CRAFT_RUNE_KEYS } from "../../state/for-share/craft-stage-shelf";
 import { tr } from "../../i18n/lang";
+
+/**
+ * ツリーの棚だけで出さない物 (10-24 オーナー「要望があれば戻す」温度感。消さずに出さないだけ、戻す時はここ 1 か所):
+ * 聖別 (聖別のお告げ。神のオーブと組む手) と、クラフトのルーン以外のルーン (ソウルコア・アイドル・遺産・効き目だけのルーン)。
+ * ヒネコラの錠・鏡写しは前から共通の SIM_HIDDEN で出していない。エミュの棚は変えない
+ */
+export const TREE_HIDDEN = new Set(["OmenofSanctification"]);
+export const treeHidden = (key: string): boolean => simHidden(key) || TREE_HIDDEN.has(key) || (key.startsWith("rune:") && !CRAFT_RUNE_KEYS.includes(key));
 
 export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null> = ref(null), omens: Ref<string[]> = ref([])) {
   function toggleOmen(id: string): void { omens.value = omens.value.includes(id) ? omens.value.filter((o) => o !== id) : [...omens.value, id]; }
@@ -26,7 +35,7 @@ export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null
     usable: (k) => usableWith(k, omens.value),
     usableBare: (k) => usableWith(k, []),
     toggleOmen,
-    hidden: simHidden,
+    hidden: treeHidden,
   });
   return { held, omens, toggleOmen, release, onHold, onShelfDown };
 }
