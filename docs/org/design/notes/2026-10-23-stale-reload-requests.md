@@ -21,3 +21,8 @@
 
 ## 見ていない
 - 本番の stale_reload の記録の数 (D1、分析君の持ち物) で、実際に 1 日何回走っているか。
+
+## 10-24 にした事 (4 本目、cd82fc4a): 案 2
+- web.html の頭の __staleReload は `/version.txt?t=` (静的、run_worker_first に無い) を取り直す。中身は入口の JS の道 1 行で、vite.web.config.ts の closeBundle が index.html から書く (無ければビルドが落ちる)。/web/ は sw.js が cache-first で持つので根に置いた。
+- 確かめ (手元の本番の作り preview:prod --port 1464、窓なし Chrome 9334、SW の下で __staleReload() を 2 回): 印 3 回 + 入口の JS 3 回 → 3.2 秒で読み直し、Worker を通るのは読み直しのページ 1 回だけ、画面が出る・印 1→2・エラー 0。台本 scratchpad の stale-ver-check.mjs。
+- 見ていない: 印が取れない時 (dev サーバーなど) は 60 秒で読み直す前の形のまま (回していない)。本番の出した直後の入れ替わり (サーバー管理人が出した直後に見る物)。
