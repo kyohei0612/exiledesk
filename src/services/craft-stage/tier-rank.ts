@@ -13,9 +13,16 @@ export const tierIndexOf = (data: PatchData, modId: string, rank: number): numbe
 export const tierRankOf = (data: PatchData, modId: string, index: number): number => (data.mods.get(modId)?.tiers.length ?? index) - index;
 /** 付いている MOD の段の名前の T (名前に数字が無ければ 99 = 一番下より下) */
 export const tierNoOf = (m: Pick<StageMod, "tierName">): number => Number(/\d+/.exec(m.tierName)?.[0] ?? 99);
-/** 狙い (modId と段の T) が全部付く一番低いアイテムレベル = その段の MOD レベルの一番高い物。分かる狙いが無ければ null */
+/**
+ * 狙い (modId と段の T) が全部付く一番低いアイテムレベル = その段の MOD レベルの一番高い物。分かる狙いが無ければ null。
+ * エッセンスの MOD は数えない (アイテムレベルの制限は無い、essence-specs の owner。段の T も普通の MOD の段で数えた名前で、エッセンスの 3 段では読めない。10-24 シミュ部長)
+ */
 export function minIlvlFor(data: PatchData, aims: ReadonlyArray<{ modId: string; tier: number }>): number | null {
-  const lv = aims.map((a) => { const ts = data.mods.get(a.modId)?.tiers; return ts?.[ts.length - a.tier]?.ilvl ?? 0; }).filter((x) => x > 0);
+  const lv = aims.map((a) => {
+    const m = data.mods.get(a.modId);
+    if (!m || m.source === "essence" || m.source === "perfect_essence") return 0;
+    return m.tiers[m.tiers.length - a.tier]?.ilvl ?? 0;
+  }).filter((x) => x > 0);
   return lv.length ? Math.max(...lv) : null;
 }
 /** 段の札の文字: T1 はそのまま、ほかは「T2 以上」(atLeast = false で「T2」) */
