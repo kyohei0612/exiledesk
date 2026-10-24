@@ -9,6 +9,7 @@
  *   __simMonkey.shelf(id)                              その箱の棚 [{ key, name, ok, reason }]
  *   __simMonkey.omens(id, key)                         持った物に掛けられるお告げ [{ key, name, ok, reason }]
  *   __simMonkey.add(id, key, omens?, opt?)             次の手の箱を作る → { ok, problem?, at, boxes: [{ id, out, aim, mods: [{ side, modId, tier, text }] }] }
+ *   __simMonkey.hitChoices(id, key, omens?)            窓の「当たりの箱にする MOD」の候補 [{ modId, tier, label }]。add の opt.hitAims = [modId…] でチェック (画面と同じ: [] = 狙い無し・当たるまでなら「どれでも」、渡さないと付きうる狙い全部)
  *   __simMonkey.boxItem(id)                            その箱でエンジンに渡すアイテム { item, preItem, raw, preRaw, hand } / run(n=300, seed=1) = 画面と同じ tree-run を値段 1 で (費用 = 個数)
  *   __simMonkey.dump()                                 今の木 (JSON、startRarity = スタートの本当のレアリティ)。add の boxes にも rarity
  * 流れの 2・4 (完成形の設定と結果、10-24 ブラックの頼み。中身は完成形の設定の窓・箱の窓・テストラン・「100 人回す」と同じ関数):
@@ -32,10 +33,10 @@ import { treeHidden } from "../use-sim-shelf";
 import { craftStage as s } from "../../../state/craft-stage";
 import { DEV_BUILD } from "../../../web/release-flags";
 import { modText } from "../../../i18n/lang";
-import { afterQualityOf, applyPick, autoCatOf, handOf, hitAimsOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type HandPick } from "./tree-hand-plan";
+import { afterQualityOf, applyPick, autoCatOf, handOf, hitAimsOf, hitChoicesOf, kindOf, needAimOf, onlyOf, pickedHits, preFillOf, problemOf, type HandPick } from "./tree-hand-plan";
 import { useTree } from "./use-tree";
 
-type Opt = Omit<HandPick, "held" | "omens">;
+type Opt = Omit<HandPick, "held" | "omens"> & { /** 当たりの箱にする MOD (modId の並び、[] = 狙い無し。渡さないと付きうる狙い全部) */ hitAims?: string[] };
 /** 部位の日本語 → ベースの一覧の部位 (cls) の頭 (英語の部位名ならそのまま頭で合わせる) */
 const PART_CLASS: Record<string, string> = {
   兜: "Helmet", 鎧: "Body", 手袋: "Gloves", 靴: "Boots", 盾: "Shield", バックラー: "Buckler", フォーカス: "Foci", 矢筒: "Quiver",
@@ -98,6 +99,12 @@ export function installSimMonkey(): () => void {
       if (!d || !it) return [];
       return omensAllowedFor(key).filter((o) => !treeHidden(o)).map((o) => { const reason = omenBlock(d, it, key, [], o); return { key: o, name: nameOfKey(o, it), ok: !reason, reason }; });
     },
+    /** 次に打つ手の窓の「当たりの箱にする MOD」の候補 (画面と同じ hitChoicesOf。付く MOD を選べない手でなければ []) */
+    hitChoices(id: string, key: string, omens: string[] = [], echo = true): Array<{ modId: string; tier: number; label: string }> {
+      const d = s.data.value, it = sample(id)?.item;
+      if (!d || !it) return [];
+      return hitChoicesOf(d, t.doc.value, id, it, { held: key, omens, echo }, t.goals.value).map((a) => ({ modId: a.modId, tier: a.tier, label: t.aimLabel(a) }));
+    },
     add(id: string, key: string, omens: string[] = [], opt: Opt = {}) {
       const d = s.data.value, smp = sample(id), it = smp?.item;
       if (!d || !it || !t.doc.value.boxes[id]) return { ok: false, problem: "箱が無い・データが無い" };
@@ -105,8 +112,10 @@ export function installSimMonkey(): () => void {
       const doc = t.doc.value, afterQ = afterQualityOf(doc, id), autoCat = autoCatOf(d, doc, it);
       const needPre = omensAllowedFor(key).includes(CATALYSING) && !afterQ;
       const preFill = preFillOf(d, it, needPre, autoCat);
-      const h = handOf({ held: key, omens, ...opt }), kind = kindOf(h);
-      const hitAims = hitAimsOf(d, doc, id, it, h, t.goals.value, opt.fractureOf ?? null);
+      // 「当たりの箱にする MOD」のチェック (opt.hitAims = modId の並び、[] = 狙い無し)。渡さない時は前からの既定 (付きうる狙い全部)
+      const pick = opt.hitAims ? pickedHits(hitChoicesOf(d, doc, id, it, { held: key, omens, echo: opt.echo }, t.goals.value), opt.hitAims, key, !!opt.spam) : null;
+      const h = handOf({ held: key, omens, ...opt, ...(pick ? { free: pick.free } : {}) }), kind = kindOf(h);
+      const hitAims = pick && !pick.free ? pick.aims : hitAimsOf(d, doc, id, it, h, t.goals.value, opt.fractureOf ?? null);
       const preCat = h.omens.includes(CATALYSING) && !afterQ ? autoCat : null;
       const only = onlyOf(d, doc, id, h, preCat, hitAims);
       const problem = problemOf(d, it, h, hitAims, preCat, preFill);

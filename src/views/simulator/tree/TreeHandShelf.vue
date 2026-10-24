@@ -23,7 +23,7 @@ import { treeRowTags } from "./tree-row-tags";
 import { aimKey, setHand, type Aim, type Hand, type HandKind, type OutKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { useSimShelf } from "../use-sim-shelf";
-import { afterQualityOf, autoCatOf, FREE_EFFECTS, handOf, hitAimsOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf } from "./tree-hand-plan";
+import { afterQualityOf, autoCatOf, FREE_EFFECTS, handOf, hitAimsOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf } from "./tree-hand-plan";
 import { tr } from "../../../i18n/lang";
 
 const props = defineProps<{ boxId: string; current: Hand | null }>();
@@ -96,8 +96,7 @@ const catalysing = computed(() => used.value.includes(CATALYSING));
  */
 const aimChoices = computed((): Aim[] => {
   const d = s.data.value, it = item.value;
-  if (!d || !it || !held.value || !canFree.value) return [];
-  return hitAimsOf(d, t.doc.value, props.boxId, it, handOf({ held: held.value, omens: omens.value, echo: echo.value }), t.goals.value, null);
+  return d && it && held.value ? hitChoicesOf(d, t.doc.value, props.boxId, it, { held: held.value, omens: omens.value, echo: echo.value }, t.goals.value) : [];
 });
 /** チェックした狙い (候補にある物だけ) */
 const checkedAims = computed((): Aim[] => aimChoices.value.filter((a) => checked.value.includes(aimKey(a))));

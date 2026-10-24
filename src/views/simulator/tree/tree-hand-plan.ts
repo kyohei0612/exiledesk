@@ -92,6 +92,24 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
   const items = [1, 2, 3, 4].map((seed) => (seed === 1 ? item : sampleOf(data, doc, boxId, seed).item));
   return reachableAims(data, items, h.currency, engineOmens(h), open, { sameText: true }) ?? open;
 }
+/**
+ * 次に打つ手の窓の「当たりの箱にする MOD」の候補 = 付く MOD を選べない手 (FREE_EFFECTS) で付きうる完成の狙い (狙い無しでも繰り返しでもない形で hitAimsOf に聞く)。
+ * 画面 (TreeHandShelf) と猿の口 (sim-monkey の hitChoices・add の opt.hitAims) が同じ物を呼ぶ
+ */
+export function hitChoicesOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, p: Pick<HandPick, "held" | "omens" | "echo">, goals: readonly Aim[]): Aim[] {
+  if (!FREE_EFFECTS.includes(effectOf(p.held))) return [];
+  return hitAimsOf(data, doc, boxId, item, handOf({ held: p.held, omens: p.omens, echo: p.echo }), goals, null);
+}
+/**
+ * チェックした狙い (modId) から、手を決める時に渡す当たりの箱と狙い無しを出す (画面と同じ決め方): 付く MOD を選べない手で 1 つ以上チェック = その狙いの当たりの箱、
+ * 何もチェックしない = 狙い無し (当たるまで繰り返す時は「どれでも」= 前からの hitAimsOf)。付く MOD を選べない手でなければ null (呼ぶ側の既定のまま)
+ */
+export function pickedHits(choices: readonly Aim[], checked: readonly string[], held: string, spam: boolean): { aims: Aim[]; free: boolean } | null {
+  if (!FREE_EFFECTS.includes(effectOf(held))) return null;
+  const aims = choices.filter((a) => checked.includes(a.modId));
+  if (aims.length) return { aims, free: false };
+  return spam ? null : { aims: [], free: true };
+}
 /** 結果が 1 通りの手か (この箱の見本 8 つにエンジンで打った行き先を全部たどる。触媒の手は前のカタリストを入れた後で)。✦ にする MOD を選んで、この箱の見本に付いている時は「その狙いが ✦」の 1 通り */
 export function onlyOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, preCat: string | null, hitAims: Aim[]): OnlyOut {
   if (kindOf(h) === "fracture" && hitAims.length) return { out: "hit", aim: hitAims[0]! };
