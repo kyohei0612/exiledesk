@@ -128,6 +128,10 @@ function setActive(i: number, next: TreeDoc): void {
 function switchTab(i: number): void {
   if (i === active.value || !tabDocs.value[i]) return;
   setActive(i, cloneDoc(tabDocs.value[i]!));
+  // ベースを選ぶ前の白紙のタブはベース選びから、ほかは完成形の設定を閉じてその木へ (完成形の設定の窓の上のタブから替えた時、10-24 モンキー初めての人の回 8)
+  const d = doc.value, blank = !d.baseChosen && isBlank(d) && !d.memoAims?.length;
+  needBase.value = blank;
+  goalPage.value = blank ? 1 : 0;
 }
 /** 新しいタブ = 全くの白紙の木 (完成形の設定の 1 = ベース選びから。選ばずに閉じたら空の形、needBase) を足して開く */
 function addTab(): void {

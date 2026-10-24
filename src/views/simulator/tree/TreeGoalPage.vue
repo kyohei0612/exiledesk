@@ -19,6 +19,7 @@ import type { Aim } from "../../../services/simulator/tree/tree-model";
 import TreeBasePick from "./TreeBasePick.vue";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue";
+import TreeTabs from "./TreeTabs.vue";
 import { useTree } from "./use-tree";
 
 const t = useTree();
@@ -112,6 +113,8 @@ const HELP: Array<[string, string]> = [
         <TreeFlowSteps :current="step === 2 ? 2 : 1" :no-base="unpicked" @go="onFlow" />
         <span class="ml-auto shrink-0"><TreeRecipeBar menu-only @opened="onRecipe" /></span>
       </div>
+      <!-- 木が 2 つ以上ある時はタブもここに (新しいツリーのベース選びの間も前の木へ戻れる、10-24 モンキー初めての人の回 8) -->
+      <TreeTabs v-if="t.tabDocs.value.length > 1" class="px-3 pb-2" />
       <p v-if="step === 2 && dropped.length" data-tree-goal-dropped class="min-w-0 truncate px-3 pb-2 text-[12px] text-rose-200/80" :title="dropped.join('\n')">{{ tr(`このベースに付かない狙いを外した: ${dropped.join("・")}`, `Removed targets this base can't roll: ${dropped.join(", ")}`) }}</p>
     </template>
     <div v-if="step === 1" data-tree-goal-base class="flex min-w-0 flex-col gap-3">
