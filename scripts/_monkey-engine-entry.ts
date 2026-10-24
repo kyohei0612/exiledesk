@@ -10,7 +10,7 @@ import mods from "../src/vendor/poe2htc/data/mods.json";
 import bases from "../src/vendor/poe2htc/data/base_items.json";
 import extra from "../src/services/htc/extra-bases.json";
 import jewels from "../src/services/htc/jewel-bases.json";
-import { aimHits, applyCurrency, baseSocketsOf, forceKey, freshItem, modListFor, mulberry32, omenBlock, omensAllowedFor, runeEffectFor, runeOf, tierIndexOf, useReason, type StageItem, type StageMod } from "../src/services/craft-stage/engine";
+import { aimHits, applyCurrency, baseSocketsOf, forceKey, freshItem, modListFor, mulberry32, omenBlock, omensAllowedFor, runeEffectFor, runeOf, tierIndexOf, tierRankOf, useReason, type StageItem, type StageMod } from "../src/services/craft-stage/engine";
 import { placeMods, stepOutcomesOrTooMany } from "../src/services/craft-stage/engine-sim";
 import { CRAFT_RUNE_KEYS, ORBS, bonesFor, essenceShelf, nameOfKey, runesFor } from "../src/state/for-share/craft-stage-shelf";
 import { SIM_HIDDEN } from "../src/state/for-share/shelf-context";
@@ -122,48 +122,61 @@ export function itemsFor(base: string, ms: ReadonlyArray<{ modId: string; tier: 
   for (const rarity of ["normal", "magic", "rare"] as const) { const it = itemWith(base, rarity, ms); out[rarity] = it ? withRunes(it, card) : null; }
   return out;
 }
+/** 行き先を数え上げられない手を打って数える回数 (割合の幅 = √(p(1−p)/SAMPLE)) */
+const SAMPLE = 2000;
 /** 狙い (ツリーの札 = modId と段の T) */
 export interface Aim { modId: string; tier: number }
 /**
  * 1 手で狙いのどれが付くかの割合 (エンジンの stepOutcomes の全部の枝、乱数なし)。当たり = 新しく付いた MOD が狙いに当たる (同じ系統で同じ文も、ツリーの当たりと同じ sameText)。
  * lost = もう付いていた狙いの MOD が消えた枝。枝が多すぎる・行き先の無い手は null
  */
-export function oddsOf(item: StageItem, key: string, omens: readonly string[], aims: readonly Aim[]): { hit: Record<string, number>; any: number; lost: number; void: number } | null {
-  const r = stepOutcomesOrTooMany(data!, item, key, omens);
-  if (!r || r === "tooMany") return null;
-  const ts = aims.map((a) => ({ k: `${a.modId}|${a.tier}`, t: { modId: a.modId, minTierIndex: tierIndexOf(data!, a.modId, a.tier) } }));
+export function oddsOf(item: StageItem, key: string, omens: readonly string[], aims: readonly Aim[], allAims: readonly Aim[] = aims): { hit: Record<string, number>; hitKept: Record<string, number>; any: number; lost: number; void: number; sampled?: number } | null {
+  const r0 = stepOutcomesOrTooMany(data!, item, key, omens);
+  // 行き先を数え上げられない手 (ルーン・神 = stepOutcomes が null、錬金 = 枝が多すぎる) は、打つ処理 applyCurrency を決まった乱数で SAMPLE 回打って割合に (sampled = 回数、幅に入れる)
+  let sampled: number | undefined;
+  let r: ReadonlyArray<{ p: number; item: StageItem; added: StageMod[]; void?: true }> | null = r0 === "tooMany" ? null : r0;
+  if (!r) {
+    const rng = mulberry32(12345), out: Array<{ p: number; item: StageItem; added: StageMod[]; void?: true }> = [];
+    const ids = new Set([...item.prefixes, ...item.suffixes].map((m) => `${m.modId}#${m.tierIndex}`));
+    for (let i = 0; i < SAMPLE; i++) {
+      const a = applyCurrency(data!, item, key, rng, omens);
+      if (!a.applied) return null;
+      out.push({ p: 1 / SAMPLE, item: a.item, added: [...a.item.prefixes, ...a.item.suffixes].filter((m) => !ids.has(`${m.modId}#${m.tierIndex}`)) });
+    }
+    r = out; sampled = SAMPLE;
+  }
+  // 当たり = 新しく付いた MOD か、新しく ✦ (フラクチャー) になった MOD が狙いに当たる。lost = 木の狙い (allAims) のうち付いていた物が消えた。
+  // hitKept = 当たりで、ほかの狙いも消えていない (ツリーは狙いが消えた結果を「狙いが消えた」の箱へ回す)
+  const tgt = (as: readonly Aim[]) => as.map((a) => ({ k: `${a.modId}|${a.tier}`, t: { modId: a.modId, minTierIndex: tierIndexOf(data!, a.modId, a.tier) } }));
+  const ts = tgt(aims), all = tgt(allAims);
   const opts = { data: data!, sameText: true };
-  const held = (it: StageItem): Set<string> => new Set(ts.filter(({ t }) => [...it.prefixes, ...it.suffixes].some((m) => aimHits(m, t, opts))).map(({ k }) => k));
-  const before = held(item);
-  const out = { hit: Object.fromEntries(ts.map(({ k }) => [k, 0])) as Record<string, number>, any: 0, lost: 0, void: 0 };
+  const mods = (it: StageItem): StageMod[] => [...it.prefixes, ...it.suffixes];
+  const heldIn = (it: StageItem, list: typeof ts): Set<string> => new Set(list.filter(({ t }) => mods(it).some((m) => aimHits(m, t, opts))).map(({ k }) => k));
+  const before = heldIn(item, all), frBefore = new Set(mods(item).filter((m) => m.fractured).map((m) => m.modId));
+  const out = { hit: Object.fromEntries(ts.map(({ k }) => [k, 0])) as Record<string, number>, hitKept: Object.fromEntries(ts.map(({ k }) => [k, 0])) as Record<string, number>, any: 0, lost: 0, void: 0 };
   for (const o of r) {
     if (o.void) { out.void += o.p; continue; }
-    const got = ts.filter(({ k, t }) => !before.has(k) && o.added.some((m) => aimHits(m, t, opts)));
-    for (const { k } of got) out.hit[k]! += o.p;
+    const fresh = [...o.added, ...mods(o.item).filter((m) => m.fractured && !frBefore.has(m.modId))];
+    const got = ts.filter(({ k, t }) => fresh.some((m) => aimHits(m, t, opts)) && (!before.has(k) || fresh.some((m) => m.fractured && aimHits(m, t, opts))));
+    const after = heldIn(o.item, all), lost = [...before].some((k) => !after.has(k));
+    for (const { k } of got) { out.hit[k]! += o.p; if (!lost) out.hitKept[k]! += o.p; }
     if (got.length) out.any += o.p;
-    if ([...before].some((k) => !held(o.item).has(k))) out.lost += o.p;
+    if (lost) out.lost += o.p;
   }
-  return out;
+  return sampled ? { ...out, sampled } : out;
 }
-/** 見えている形 (レアリティ・MOD・品質・ソケット) からエンジンで組み立てたアイテム (組み立てられなければ null)。ツリーが渡した物と比べる */
-export function rebuild(base: string, rarity: "normal" | "magic" | "rare", ms: ReadonlyArray<{ modId: string; tier: number; fractured?: boolean }>, quality = 0, sockets = 0, itemLevel = 82): StageItem | null {
-  const it = itemWith0(base, rarity, ms);
-  if (!it) return null;
-  const fr = new Set(ms.filter((m) => m.fractured).map((m) => m.modId));
-  const mark = (m: StageMod): StageMod => (fr.has(m.modId) ? { ...m, fractured: true } : m);
-  return { ...it, itemLevel, quality, sockets: Math.max(sockets, it.sockets ?? 0), prefixes: it.prefixes.map(mark), suffixes: it.suffixes.map(mark) };
-}
-/** 2 つのアイテムの食い違い (レアリティ・MOD の id と段・✦・品質・ソケット)。同じなら空 */
-export function itemDiff(a: StageItem, b: StageItem): string[] {
-  const sig = (it: StageItem): string[] => [...it.prefixes, ...it.suffixes].map((m) => `${m.side === "prefix" ? "P" : "S"} ${m.modId}#${m.tierIndex}${m.fractured ? "✦" : ""}${m.unrevealed ? "?" : ""}`).sort();
+/**
+ * 猿が画面で読んだ形 (step の rarity と mods [{ modId, tier = T }]) と、ツリーがエンジンに渡したアイテム (boxItem の raw) の食い違い。組み立てずに直に比べる。
+ * エッセンスの MOD は段を比べない (猿の T は普通の MOD の段で数えた名前)
+ */
+export function seenDiff(seen: { rarity: string; mods: ReadonlyArray<{ modId: string; tier: number }> }, raw: StageItem): string[] {
+  const ess = (id: string): boolean => /^(perfect_)?essence$/.test(data!.mods.get(id)?.source ?? "");
+  const a = seen.mods.map((m) => `${m.modId}${ess(m.modId) ? "" : ` T${m.tier}`}`).sort();
+  const b = [...raw.prefixes, ...raw.suffixes].filter((m) => !m.unrevealed).map((m) => `${m.modId}${ess(m.modId) ? "" : ` T${tierRankOf(data!, m.modId, m.tierIndex)}`}`).sort();
   const out: string[] = [];
-  if (a.rarity !== b.rarity) out.push(`レアリティ ${a.rarity} / ${b.rarity}`);
-  if (a.itemLevel !== b.itemLevel) out.push(`アイテムレベル ${a.itemLevel} / ${b.itemLevel}`);
-  const sa = sig(a), sb = sig(b);
-  for (const x of sa) if (!sb.includes(x)) out.push(`組み立てだけ ${x}`);
-  for (const x of sb) if (!sa.includes(x)) out.push(`ツリーだけ ${x}`);
-  if ((a.quality ?? 0) !== (b.quality ?? 0)) out.push(`品質 ${a.quality ?? 0} / ${b.quality ?? 0}`);
-  if ((a.sockets ?? 0) !== (b.sockets ?? 0)) out.push(`ソケット ${a.sockets ?? 0} / ${b.sockets ?? 0}`);
+  if (seen.rarity !== raw.rarity) out.push(`レアリティ ${seen.rarity} / ${raw.rarity}`);
+  for (const x of a) if (!b.includes(x)) out.push(`見えているだけ ${x}`);
+  for (const x of b) if (!a.includes(x)) out.push(`ツリーだけ ${x}`);
   return out;
 }
 /** 名前から鍵 (今の棚にある札の中で) */

@@ -44,7 +44,7 @@ const setDiff = (a, b) => [...a].filter((x) => !b.has(x));
  * 回した数なので幅で見る: 4σ を超え、差が 3 ポイントより大きい所・エンジンで 0 なのにツリーで出た所を「ずれ」に。見えている MOD から組み立てた物とツリーが渡した物の食い違いも書く
  */
 const ECHO = "OmenofAbyssalEchoes";
-function checkTree(tr) {
+function checkTree(tr, steps = []) {
   const doc = tr?.dump, run = tr?.run;
   if (!doc?.boxes || !run?.boxes) return null;
   const res = { n: run.n, finished: run.finished, stuckAt: run.stuckAt ?? {}, unexpected: run.unexpected ?? {}, boxes: [], skipped: [] };
@@ -55,11 +55,14 @@ function checkTree(tr) {
     if (!bi?.raw) { res.skipped.push({ box: b.id, why: "boxItem が無い" }); continue; }
     const outs = b.outs.map((id) => doc.boxes[id]).filter(Boolean);
     const aims = outs.filter((o) => o.out === "hit" && o.aim).map((o) => o.aim);
-    const built = E.rebuild(doc.base, bi.rarity, bi.mods ?? [], bi.quality ?? 0, bi.sockets ?? 0, doc.itemLevel ?? 82);
+    // 見えている形 = 猿がその箱で読んだ step (rarity・mods)。ツリーが渡した物 (boxItem の raw = 箱の手の前、preRaw = 触媒の時に品質を入れた後) と直に比べる
+    const st = steps.find((x) => x.box === b.id && x.rarity && Array.isArray(x.mods) && !x.modsUnknown);
     const item = bi.preRaw ?? bi.raw;
-    const odds = E.oddsOf(item, b.hand.currency, b.hand.omens.filter((o) => o !== ECHO), aims);
-    const row = { box: b.id, hand: b.hand.currency, omens: b.hand.omens, repeat: !!b.hand.repeat, itemDiff: built ? E.itemDiff(built, bi.raw) : ["見えている形から組み立てられない"], rows: [], off: [] };
-    if (!odds) { row.off.push("エンジンで行き先を数えられない手 (枝が多すぎる・行き先の無い手)"); res.boxes.push(row); continue; }
+    const allAims = Object.values(doc.boxes).filter((o) => o.out === "hit" && o.aim).map((o) => o.aim);
+    const odds = E.oddsOf(item, b.hand.currency, b.hand.omens.filter((o) => o !== ECHO), aims, allAims);
+    const hasLost = outs.some((o) => o.out === "lost");
+    const row = { box: b.id, sampled: odds?.sampled ?? null, hand: b.hand.currency, omens: b.hand.omens, repeat: !!b.hand.repeat, itemDiff: st ? E.seenDiff(st, bi.raw) : [], seen: st ? "step" : null, rows: [], off: [] };
+    if (!odds) { row.off.push("エンジンで打てない手 (applyCurrency が打てないと返した)"); res.boxes.push(row); continue; }
     const visits = run.boxes[b.id]?.visits ?? 0;
     if (b.hand.repeat) {
       const perVisit = visits ? ((run.boxes[b.id]?.spend ?? 0) * run.n) / visits : NaN, want = odds.any ? 1 / odds.any : Infinity;
@@ -71,12 +74,12 @@ function checkTree(tr) {
       const check = (what, obs, p) => {
         row.rows.push({ what, tree: total ? obs / total : NaN, engine: p, n: total });
         if (total < 30) return;
-        const q = obs / total, sd = Math.sqrt(Math.max(p * (1 - p), 1e-9) / total);
+        const q = obs / total, sd = Math.sqrt(Math.max(p * (1 - p), 1e-9) * (1 / total + (odds.sampled ? 1 / odds.sampled : 0)));
         if ((p === 0 && obs > 0) || (Math.abs(q - p) > 4 * sd && Math.abs(q - p) > 0.03)) row.off.push(`${what} ツリー ${(q * 100).toFixed(1)}% / エンジン ${(p * 100).toFixed(1)}% (${total} 回)`);
       };
       let hitObs = 0, hitP = 0;
       for (const o of outs.filter((o) => o.out === "hit" && o.aim)) {
-        const p = odds.hit[`${o.aim.modId}|${o.aim.tier}`] ?? 0, obs = flow(b.id, o.id);
+        const k = `${o.aim.modId}|${o.aim.tier}`, p = (hasLost ? odds.hitKept[k] : odds.hit[k]) ?? 0, obs = flow(b.id, o.id);
         hitObs += obs; hitP += p;
         check(`当たり ${o.aim.modId} T${o.aim.tier}`, obs, p);
       }
@@ -146,7 +149,7 @@ for (const f of files) {
     }
     outSteps.push({ ...st, engine, ...(Object.keys(diff).length ? { diff } : {}) });
   }
-  const treeCheck = checkTree(rec.tree);
+  const treeCheck = checkTree(rec.tree, rec.steps);
   if (treeCheck) {
     treeSum.trees++; treeSum.boxes += treeCheck.boxes.length;
     for (const r of treeCheck.boxes) if (r.off.length) { treeSum.off++; for (const x of r.off) add(`数字 ${r.hand}  ${x.replace(/ ツリー .*$/, "")}`); }
