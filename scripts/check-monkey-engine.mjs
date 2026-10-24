@@ -58,6 +58,8 @@ function checkTree(tr, steps = []) {
     if (!b.hand || !b.outs?.length || b.hand.free) continue;
     const bi = tr.items?.[b.id];
     if (!bi?.raw) { res.skipped.push({ box: b.id, why: "boxItem が無い" }); continue; }
+    // フラクチャーの指名 (✦ にする MOD を選んだ手) はツリーがその MOD に固定するので割合を比べない (walk の「辿らない形」と同じ、隊長 4 本目 10-25)
+    if (b.hand.fractureOf) { res.skipped.push({ box: b.id, why: "フラクチャーの指名" }); continue; }
     const outs = b.outs.map((id) => doc.boxes[id]).filter(Boolean);
     const aims = outs.filter((o) => o.out === "hit" && o.aim).map((o) => o.aim);
     // 見えている形 = 猿がその箱で読んだ step (rarity・mods)。ツリーが渡した物 (boxItem の raw = 箱の手の前、preRaw = 触媒の時に品質を入れた後) と直に比べる
