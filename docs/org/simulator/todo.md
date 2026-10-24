@@ -2,12 +2,22 @@
 
 前の引き継ぎ (1〜3 本目、10-21〜23) と止めている物 (①〜⑥・自動・④ の物・OK 待ちの一覧) は notes/2026-10-22-todo-archive.md にそのまま移した。
 
-## 23 本目の区切り (10-25、local_5efc5d0a。ブラックへの送信は上限で止まりがち、報告は共有メモ side-session-notes/local_b4352604…/sim23-report.md・sim23-cleanup-list.md)
-- 済み (どれも開発版だけ、手元 1440 で台本から本物のマウスの動き): 精査の打ち直しを減らす (a27c7e0e、B が 17.7 → 0.39 秒)・次に打つ手の窓の「当たりの箱にする MOD」のチェック (e54e7910 → 491cb05e → 3f018e85 → 52357407 → bf7bddf0: 足す手・カオスだけ、一番下に狙い無し・既定 ☑・MOD を選ぶと外れる・全部外すと戻る、カオスの当たるまでは選んだ MOD のどれか、エッセンス・合金は出さない)・見本の木 6 本と古い工程式のレシピを消した (2d492b9d、台本 11 本 777b38fb)・古いシミュの整理は丸ごと消せるファイル無し (treeRecipeSaved だけ、一覧は sim23-cleanup-list.md)
-- 返事待ち: 開いた時の見え方を全体表示にするか (今は 10-22 の決めの 100%・始まりを上の真ん中。オーナー「はみ出しも直して」は箱が枠の外にあっただけで崩れは 0)
-- 迷う物 (消していない): 分かれ目 (split の箱) の作り一式。人が作るボタンも見本も無く今の画面からは作れない、精査の「外れを持ったまま戻る」の直し方の文が分かれ目を勧めたまま
-- 共有 URL (手元 1440 用): 共有メモ sim23-recipe-b-url.md (不在のアミュ B、見本を消したので中身は古い形)・sim23-recipe-frac-spell3-url.md (フラクチャー スペ3、✦ だけ・手無し)
-- 台本 (scratchpad C:/Users/kyohei/AppData/Local/Temp/claude/C--Users-kyohei-ExileDesk/dec8c067-fef9-42ba-9922-c5b8f6fdc1e8/scratchpad/、port 9363): heavy.mjs・steps.mjs (精査の重さ)・aimcheck2.mjs・allcur.mjs (チェック)・overflow.mjs (はみ出し)・reach.mjs・deadexp.mjs (届かないファイル・呼ばれない export)・flow.mjs (ベース → 保存 → レシピ → 使い方)
+## 次の部長へ (23 本目 → 24 本目、10-25。会話 1,000 件超えでブラック 10 代目の頼みで入れ替え)
+- 宛先: ブラック 10 代目 local_b4352604-0717-4065-92a4-7f1ac6ebcc83、24 本目 local_720e4011-7b08-4f60-ba9c-4a03d4b3f0f2。ほかは docs/org/dev/todo.md の表。報告の全文は共有メモ side-session-notes/local_b4352604…/ の sim23-report.md (済んだ物の流れ)・sim23-cleanup-list.md (整理の 消す / 残す / 迷う)・sim23-requests.md (リクエスト数)。送信の上限 (ユーザーの書き込みの後 10 回ほど) で止まったら共有メモと commit の題で
+- **約束: モンキー隊長の照らし合わせ (本番) の間は src を保存しない** (dev サーバーの読み直しで猿のタブが ?page=sim-base に戻り木が消える)。終わったら 1 行もらう約束。モンキー隊長は 3 本目 local_b0acaffd に返事したが、今は 4 本目 (monkey-4 = local_9251ede8) が動いている。保存してよいかは先に確かめる
+- **やる事 (返事待ちだった物、オーナー「任せる」で決まった)**: 開いた時の見え方を全体表示に。決めた形 (まだ入れていない):
+  - src/views/simulator/tree/use-tree-flow.ts に「開く時の見え方」を足す: 木全体が収まる段 (fit と同じ段の選び方、1 = 100% より大きくしない) で、**上寄せ** (y = 40 前後、fit は縦の真ん中)。50% (PHONE_MIN と同じ) より小さくなる時は 50% で始まりの箱を上の真ん中 (今のスマホの扱いと同じ)。fit(whole, …) に引数を足して作るのが早い
+  - 呼ぶ所を替える: use-tree-flow の onPaneReady の goHome・SimTreePage.vue の goalInline の watch の goHome (完成形の設定から戻った時)・TreeTabs の @switched の goHome・TreeRecipeBar の @opened の fit。右下の全体表示・キーの「1」(fit)・resetZoom の等倍 (goHome) はそのまま
+  - 確かめ: 手元 1440 で、白紙 (箱 1 つ = 100% 上寄せ)・フラクチャー スペ3・手を 10 個ほど足した木・大きい木 (20 箱以上) を開いて、箱が枠に収まる / 50% で上の真ん中、をスナップで。終わったらブラックへ 1 行
+- 23 本目に済んだ物 (どれも開発版だけ、手元 1440 で台本から本物のマウスの動き):
+  - 精査 (自動のテストラン) は出ない結果の箱を打ち直さない (a27c7e0e、不在のアミュ B が 17.7 → 0.39 秒)
+  - 次に打つ手の窓の「当たりの箱にする MOD」のチェック (e54e7910 → 491cb05e → 3f018e85 → 52357407 → bf7bddf0): 付く MOD を選べない手 (足す手・カオス) だけ、一番下に狙い無し・既定 ☑・MOD を選ぶと外れる・全部外すと戻る、カオスの当たるまでは選んだ MOD のどれかまで (何も選ばない =「どれでも」)、エッセンス・合金は出さない。決め方は tree-hand-plan の FREE_EFFECTS・hitChoicesOf・pickedHits (画面と猿の口が同じ物を呼ぶ)。猿の口に hitChoices・add の opt.hitAims (10e11dd3、モンキー隊長は取り下げたがそのまま)
+  - 見本の木 6 本 (tree-samples・?sample=) と古い工程式のレシピ (exiledesk.craftStageSim.*、読み込んだ時に消す) を消した (2d492b9d)。見本を読む台本はシミュの 13 本を消し、解析君の入口 2 本と check-tree-patterns から見本を外した (777b38fb・4a9f7d6b)。古いシミュの整理は丸ごと消せるファイル無し (30ea7f2e)。README の頭も今の形に
+  - 共有 URL: sim23-recipe-frac-spell3-url.md (フラクチャー スペ3、不在のアミュ Lv79・狙い 4 つ・✦ だけ・手無し)。sim23-recipe-b-url.md は見本の形の古い B
+  - リクエスト数: シミュの操作中にサーバーへは 0、開いた時に boot.json 1 回と静的ファイル 84 本。オーナー「なら今のままで」で直さない
+- 迷う物 (消していない): 分かれ目 (split の箱) の作り一式。今の画面からは作れないが、回す所と精査に深く入っている。精査の「外れを持ったまま戻る」の直し方の文が分かれ目の箱を勧めたまま (今は作れない手)
+- 途中の物: 無し。書きかけ無し、触っている行無し、立てた物無し (窓なし Chrome は止めて profile は消した)
+- 台本 (23 本目の scratchpad C:/Users/kyohei/AppData/Local/Temp/claude/C--Users-kyohei-ExileDesk/dec8c067-fef9-42ba-9922-c5b8f6fdc1e8/scratchpad/、窓なし Chrome は port 9363 を Bash の run_in_background で立てて TaskStop で止める): heavy.mjs・steps.mjs (精査の重さ)・aimcheck2.mjs・allcur.mjs・robe.mjs (チェック)・overflow.mjs (はみ出し)・reach.mjs・deadexp.mjs (届かないファイル・呼ばれない export)・flow.mjs (ベース → 保存 → レシピ → 使い方)・netcount.mjs (リクエスト数)・monkeyhit.mjs (猿の口)・frac3.mjs (共有 URL を作る)
 
 ## 次の部長へ (22 本目 → 23 本目、10-25 深夜。会話 1,100 件超え・送信の上限でブラック 10 代目の頼みで入れ替え)
 - 宛先: ブラック 10 代目 local_b4352604-0717-4065-92a4-7f1ac6ebcc83、デザイン部長 5 本目 local_ee8c33db-2bdf-4656-9e00-58c9d121cb1c。ほかは docs/org/dev/todo.md の表。21 → 22 の引き継ぎは notes/2026-10-24-todo-archive.md の末尾、22 本目の後半の報告の全文は notes/2026-10-25-sim22-report.md
