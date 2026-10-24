@@ -88,7 +88,7 @@ const broken = ref(new Set<string>());
               <img v-if="s.art && !broken.has(s.art)" :src="s.art" alt="" loading="lazy" decoding="async" draggable="false" class="max-h-12 max-w-12 object-contain" @error="broken = new Set(broken).add(s.art!)" />
             </span>
             <span class="min-w-0 flex-1">
-              <span class="block truncate text-[14px] text-[var(--exile-color-text-title)]">{{ nameOf(s) }}</span>
+              <span class="block truncate text-[14px] text-[var(--exile-color-text-title)] max-md:line-clamp-2 max-md:whitespace-normal max-md:text-[13px] max-md:leading-tight">{{ nameOf(s) }}</span>
               <span v-if="!en" class="block truncate text-[11px] opacity-45">{{ s.en }}</span>
               <span class="hidden truncate text-[11px] text-[var(--exile-color-text-secondary)] max-md:block">{{ labelOf(s) }}</span>
             </span>
