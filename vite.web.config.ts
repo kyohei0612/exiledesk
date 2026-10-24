@@ -47,8 +47,12 @@ export default defineConfig({
     name: "exiledesk-web-finish",
     apply: "build" as const,
     async closeBundle() {
-      const { rm, rename } = await import("node:fs/promises");
+      const { readFile, rm, rename, writeFile } = await import("node:fs/promises");
       await rename(`${OUT}/web.html`, `${OUT}/index.html`);
+      // 版の印: 入口の JS の道 (古い塊の読み直しが Worker を通さずに新しい版を見る。web.html の頭の __staleReload、10-24)
+      const entry = (await readFile(`${OUT}/index.html`, "utf8")).match(/src="(\/assets\/web-[^"]+\.js)"/)?.[1];
+      if (!entry) throw new Error("index.html に入口の塊 (/assets/web-*.js) が無い");
+      await writeFile(`${OUT}/version.txt`, `${entry}\n`);
       for (const p of ["mtx-art", "dev-trade2-stub.js"]) await rm(`${OUT}/${p}`, { recursive: true, force: true });
     },
   }],

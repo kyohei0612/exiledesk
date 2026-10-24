@@ -61,7 +61,8 @@
     <script>addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); window.__bip = e; });</script>
     <!-- 版が替わって塊が読めない時の読み直し (10-23)。入口の塊 (/assets/web-*.js・.css) はここで、後から読む部品は src/web/pwa.ts が __staleReload を呼ぶ。
          出した直後の 40 秒ほどは Cloudflare が古い版と新しい版を入れ替わりで返し、すぐ読み直すとまた 404 (開発版で見た)。
-         なので裏で index.html とその入口を取り直し、同じ版が 3 回続けて取れてから 1 回だけ読み直す (60 秒まで)。1 回の読み込みで 1 回、1 分に 3 回まで (印 sessionStorage) -->
+         なので裏で版の印 /version.txt (ビルドが書く入口の JS の道、vite.web.config.ts) とその入口を取り直し、同じ版が 3 回続けて取れてから 1 回だけ読み直す (60 秒まで)。1 回の読み込みで 1 回、1 分に 3 回まで (印 sessionStorage)。
+         印は静的なファイル (run_worker_first に無い) なので Worker の枠に数えない (前は /?stale= で 1 タブ 3〜41 回、10-24)。/web/ は sw.js が取っておくので根に置く -->
     <script>window.__staleReload = function () {
       if (window.__staleGo) return true;
       try { var r = (sessionStorage.getItem("exiledesk-stale-reload") || "").split(":"), f = Number(r[0]) || 0, n = Number(r[1]) || 0;
@@ -72,10 +73,10 @@
       window.__staleGo = 1;
       var t0 = Date.now(), last = "", same = 0;
       (function poll() {
-        fetch("/?stale=" + Date.now(), { cache: "no-store" }).then(function (res) { return res.text(); }).then(function (h) {
-          var m = h.match(/src="(\/assets\/web-[^"]+\.js)"/);
-          if (!m) throw 0;
-          return fetch(m[1], { cache: "no-store" }).then(function (res) { if (!res.ok) throw 0; same = m[1] === last ? same + 1 : 1; last = m[1]; });
+        fetch("/version.txt?t=" + Date.now(), { cache: "no-store" }).then(function (res) { if (!res.ok) throw 0; return res.text(); }).then(function (h) {
+          var u = h.trim();
+          if (!/^\/assets\/web-[^\/]+\.js$/.test(u)) throw 0;
+          return fetch(u, { cache: "no-store" }).then(function (res) { if (!res.ok) throw 0; same = u === last ? same + 1 : 1; last = u; });
         }).catch(function () { same = 0; last = ""; }).then(function () {
           if (same >= 3 || Date.now() - t0 > 60000) location.reload(); else setTimeout(poll, 1500);
         });
