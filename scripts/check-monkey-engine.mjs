@@ -36,8 +36,8 @@ function parseCard(card) {
 }
 const usable = (list) => new Set((list ?? []).filter((x) => !x.off).map((x) => x.why || x.name));
 const setDiff = (a, b) => [...a].filter((x) => !b.has(x));
-/** ツリーの棚・お告げから外した物 (オーナー 10-24: 聖別・ヒネコラ・ミラー。ルーンはクラフトのルーンだけで、shelfOf が既にそうしている)。エンジンにだけある時は違いに数えない */
-const TREE_OFF = new Set(["OmenofSanctification", "hinekora", "mirror"]);
+/** ツリーの棚・お告げから外した物 (オーナー 10-24: 聖別・ヒネコラ・ミラー、神のオーブと祝福のお告げ。ルーンはクラフトのルーンだけで、shelfOf が既にそうしている)。エンジンにだけある時は違いに数えない */
+const TREE_OFF = new Set(["OmenofSanctification", "hinekora", "mirror", "divine", "OmenoftheBlessed"]);
 const usableEng = (list) => usable((list ?? []).filter((x) => !TREE_OFF.has(x.key)));
 
 /**
