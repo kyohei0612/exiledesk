@@ -269,7 +269,9 @@ function onTarget(b: Box): void {
 // ルート精査 (押した時に始める、use-tree-check.ts)
 const { issues, issuesOpen, shown: issuesShown, issuesFold, checking, progress, passed, onCheck, issueOf } = useTreeCheck(doc, () => !t.needBase.value && !t.goalInline.value);
 // 穴の表示のオフは今のタブの間だけ (タブを替えると見せる、10-25)
-watch(() => t.active.value, () => { issuesShown.value = true; issuesOpen.value = true; });
+watch(() => t.active.value, () => { issuesShown.value = true; });
+/** 穴の一覧の窓を開く (箱の !・札の横の ▾。光が消えていれば一緒に点ける) */
+function openIssues(): void { issuesShown.value = true; issuesOpen.value = true; issuesFold.value = false; }
 /** 待たせている間の小さな札 (題の横。データの読み込み・箱を順に出している間、共通の BusyTag。精査の進みは精査の帯の上) */
 // 100 人回す (結果は木の上に重ねる層だけ、use-tree-run.ts・TreeRunLayer.vue。値段 = 始め方のベースの値段 (結果のまとめで入れる、use-tree の startPrice) + 今の相場)
 const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
@@ -408,7 +410,7 @@ const glowOf = (b: Box): boolean => {
       <div class="flex flex-wrap items-center gap-2 text-[13px] md:flex-nowrap">
         <span class="flex min-w-0 flex-1 basis-full items-center gap-2 max-md:flex-wrap md:basis-auto">
         <TreeRecipeBar @opened="v.fit()" />
-        <TreeRunBar v-if="!t.needBase.value" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking, passed, holes: issues?.length ?? 0, shown: issuesShown }" @test="onCheck" @holes="issuesShown = !issuesShown; issuesOpen = issuesShown; issuesFold = false" @holes-on="issuesShown = true; issuesOpen = true; issuesFold = false" :stuck="tr100.stuckBoxes.value" @run="tr100.run" @go="goIssue" :halted="tr100.halted.value" :walk="tr100.walk.value" @skip="tr100.skipWalk" />
+        <TreeRunBar v-if="!t.needBase.value" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking, passed, holes: issues?.length ?? 0, shown: issuesShown }" @test="onCheck" @holes="issuesShown = !issuesShown" @holes-on="openIssues" @list="openIssues" :stuck="tr100.stuckBoxes.value" @run="tr100.run" @go="goIssue" :halted="tr100.halted.value" :walk="tr100.walk.value" @skip="tr100.skipWalk" />
         </span>
         <span class="ml-auto flex shrink-0 flex-wrap items-center gap-1 max-md:ml-0 max-md:min-w-0 max-md:shrink max-md:basis-full max-md:flex-nowrap max-md:overflow-x-auto max-md:pb-1 max-md:[&>*]:shrink-0 max-md:[&>*]:whitespace-nowrap md:flex-nowrap">
           <button v-if="!t.needBase.value" type="button" data-tree-undo class="g-btn sm inline-flex items-center gap-1" :disabled="!t.canUndo.value" :title="tr('1 つ戻す (Ctrl+Z)', 'Undo (Ctrl+Z)')" @click="t.undo"><Icon name="undo" class="size-4" /><span class="max-md:hidden">{{ tr("1 つ戻す", "Undo") }}</span></button>
@@ -444,7 +446,7 @@ const glowOf = (b: Box): boolean => {
                 :selected="panel?.id === id || picking === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand" :glow="glowOf(doc.boxes[id]!) || plus?.target === id" :issue="issueOf(doc.boxes[id]!)" :inv="inv" :link-no="picking ? link.get(id) ?? null : null"
                 @drag="startDrag(doc.boxes[id]!, $event)" @aim="onAim(doc.boxes[id]!)" @plus="(k, e) => onPlus(doc.boxes[id]!, k, e)" @remove="t.edit((d) => removeHit(d, id))"
                 @back="picking = id" @clear-back="t.edit((d) => setBack(d, id, null))" @done="onDone(doc.boxes[id]!)"
-                @note="panel = { kind: 'note', id }" @base="t.goalPage.value = 1" @spam="onSpam(doc.boxes[id]!)" @back-go="goBack(doc.boxes[id]!)" @hover="(on) => (hoverBox = on ? id : hoverBox === id ? null : hoverBox)" />
+                @note="panel = { kind: 'note', id }" @base="t.goalPage.value = 1" @spam="onSpam(doc.boxes[id]!)" @issue="openIssues" @back-go="goBack(doc.boxes[id]!)" @hover="(on) => (hoverBox = on ? id : hoverBox === id ? null : hoverBox)" />
             </template>
             <!-- Vue Flow の倍率と移動が掛かる層: 線は箱の後ろ (z-index -1)、打つ手の札・引っ張る線・戻りの弧は箱の前 -->
             <template #zoom-pane>
@@ -491,7 +493,7 @@ const glowOf = (b: Box): boolean => {
             <TreeBox :box="doc.boxes[pop]!" :x="0" :y="0" :removable="canRemove(doc, pop)" :picking="false" :selected="true" :back-label="backLabel(doc.boxes[pop]!)" :issue="issueOf(doc.boxes[pop]!)"
               @drag="() => {}" @aim="popDo((_, b) => onAim(b))" @plus="(k) => popDo((_, b) => (k === 'side' ? onAddHit(b) : startLink(b)))" @remove="popDo((id) => t.edit((d) => removeHit(d, id)))"
               @back="popDo((id) => (picking = id))" @clear-back="t.edit((d) => setBack(d, pop!, null))" @done="onDone(doc.boxes[pop!]!)"
-              @note="popDo((id) => (panel = { kind: 'note', id }))" @base="popDo(() => (t.goalPage.value = 1))" @spam="onSpam(doc.boxes[pop!]!)" @back-go="popDo((_, b) => goBack(b))" />
+              @note="popDo((id) => (panel = { kind: 'note', id }))" @base="popDo(() => (t.goalPage.value = 1))" @spam="onSpam(doc.boxes[pop!]!)" @issue="popDo(() => openIssues())" @back-go="popDo((_, b) => goBack(b))" />
           </div>
         </div>
         <TreeHoverCard v-if="cardBox && doc.boxes[cardBox]" :box-id="cardBox" :rect="v.rectOf(doc.boxes[cardBox]!)" />

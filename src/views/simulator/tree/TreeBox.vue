@@ -18,7 +18,9 @@ const props = defineProps<{ box: TreeBox; /** 自分で置く時の位置 (Vue F
   /** 戻り先を選んでいる間のつなげない理由 (灰色にする。use-tree-link.ts) */ linkNo?: string | null }>();
 const emit = defineEmits<{
   /** 箱を引っ張り始めた (押した所から。判定はページの use-gesture.ts) */
-  drag: [e: PointerEvent]; aim: []; remove: []; back: []; clearBack: []; done: []; note: []; spam: [];
+  drag: [e: PointerEvent]; aim: [];
+  /** 穴の ! を押した (穴の一覧の窓を開く、10-25 オーナー) */
+  issue: []; remove: []; back: []; clearBack: []; done: []; note: []; spam: [];
   /** 始まりの箱のベースを押した (ベースとアイテムレベルを選ぶ欄) */
   base: [];
   /** マウスを乗せた / 外した (その箱の線を濃く・乗せた時のカード) */
@@ -112,7 +114,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <span v-if="box.out === 'start'" class="shrink-0 text-[11px] opacity-70">{{ tr(`Lv ${t.doc.value.itemLevel}${t.doc.value.ilvlFit ? " 適正" : ""}`, `ilvl ${t.doc.value.itemLevel}${t.doc.value.ilvlFit ? " fit" : ""}`) }}</span>
       <span v-if="box.done" class="shrink-0 rounded-full bg-amber-300/25 px-1.5 text-[10px] font-bold text-amber-100">{{ doneText }}</span>
       <span v-if="box.unwanted?.length" data-tree-unwanted class="shrink-0 rounded-sm bg-rose-400/20 px-1.5 text-[11px] font-bold text-rose-200" :title="tr(`× (要らない) の印 ${box.unwanted.length} 個 (前の試し打ちで付けた物)`, `${box.unwanted.length} mod(s) marked × (unwanted, set in the old try-out)`)">× {{ box.unwanted.length }}</span>
-      <span v-if="issue" data-tree-issue class="rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white" :title="issue">!</span>
+      <button v-if="issue" type="button" data-tree-issue class="nodrag rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white hover:bg-rose-500" :title="tr(`${issue} (押すと穴の一覧)`, `${issue} (click for the list of issues)`)" @click.stop="emit('issue')">!</button>
       <span class="flex-1" />
       <span class="flex items-center" :style="keep('right center')">
       <button v-if="!quiet" type="button" data-tree-note-mark class="nodrag flex size-6 items-center justify-center rounded hover:bg-white/10" :class="box.note ? 'text-amber-300' : 'text-white/30 hover:text-white/70'" :title="box.note || tr('メモを書く', 'Write a note')" @click.stop="emit('note')"><Icon name="pencil" class="size-3.5" /></button>

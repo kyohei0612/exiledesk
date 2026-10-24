@@ -21,7 +21,8 @@ export const routeKeyOf = (d: TreeDoc): string => JSON.stringify([(({ price: _p,
  */
 export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean) {
   const issues = ref<CheckIssue[] | null>(null);
-  const issuesOpen = ref(true);
+  /** 穴の一覧の窓 (人が開いた時だけ: 箱の ! か札の横の ▾。10-25 オーナー「デフォではここ出さないけど穴は UI で光る」) */
+  const issuesOpen = ref(false);
   /** 一覧を畳んで見出しだけ (行を押して箱へ寄った時。帯が箱を隠した、10-22 白紙から組んだ試し) */
   const issuesFold = ref(false);
   const checking = ref(false);
@@ -54,7 +55,7 @@ export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean) {
       if (again || key !== routeKey.value) { again = false; void runCheck(); }
     }
   }
-  async function onCheck(): Promise<void> { issuesOpen.value = true; issuesFold.value = false; await runCheck(); }
+  async function onCheck(): Promise<void> { await runCheck(); }
   const issueOf = (b: TreeBox): string | null => (!shown.value ? null : issues.value?.filter((x) => x.boxId === b.id).map((x) => x.text).join(" / ") || null);
   return { issues, issuesOpen, shown, issuesFold, checking, progress, passed, runCheck, onCheck, issueOf };
 }

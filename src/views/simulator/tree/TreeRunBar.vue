@@ -13,7 +13,7 @@ import { RUN_N } from "./use-tree-run";
 /** test = テストラン (use-tree-check: 回している・今の道で合格・見つけた穴の数)。合格するまで「100 人回す」は押せない (10-24 オーナー) */
 const props = defineProps<{ result: TreeRunResult | null; running: boolean; ready: boolean; test: { busy: boolean; passed: boolean; holes: number; /** 穴を見せている (札が押された状態) */ shown: boolean }; stuck: [string, number][]; halted?: { box: string; n: number } | null; walk?: { step: number; total: number; cost: number } | null }>();
 const shown = defineModel<boolean>("shown", { required: true });
-const emit = defineEmits<{ run: []; go: [id: string]; skip: []; test: []; holes: []; holesOn: [] }>();
+const emit = defineEmits<{ run: []; go: [id: string]; skip: []; test: []; holes: []; holesOn: []; /** 穴の一覧の窓を開く (札の横の ▾) */ list: [] }>();
 const pct = (r: TreeRunResult): string => `${Math.round((r.finished / (r.n || 1)) * 100)}`;
 /** 回し終えた後の結果のまとめ (TreeRunReport)。回し終えたら開き、止まって止めた時は開かない。帯の「結果のまとめ」・流れの帯の 4 でまた開く (開閉は置き場が持つ) */
 const report = defineModel<boolean>("report", { required: true });
@@ -27,6 +27,7 @@ const div = (x: number): string => (Number.isFinite(x) ? (x >= 100 ? x.toFixed(0
   <span v-if="test.passed && !test.busy" data-tree-test-ok class="shrink-0 whitespace-nowrap rounded-full bg-emerald-700/80 px-2 text-[12px] font-bold text-white">{{ tr("✓ 合格", "✓ Passed") }}</span>
   <!-- 穴の札はスイッチ (10-25 オーナー「クリックでオンオフ」): 既定はオン (赤い札・箱の !・一覧)、押すとオフで数だけ灰色、もう一度でオン。オフは組み替えてもそのまま (10-25 オーナー「デフォで赤、押したらオフ」) -->
   <button v-else-if="test.holes && !test.busy" type="button" data-tree-test-holes :aria-pressed="test.shown" class="shrink-0 whitespace-nowrap rounded-full border px-2 text-[12px] transition-colors" :class="test.shown ? 'border-rose-400 bg-rose-700/90 font-bold text-white shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)]' : 'border-white/15 bg-white/[0.04] text-white/55 hover:text-white/80'" :title="test.shown ? tr('穴の表示を消す (箱の ! と一覧)', 'Hide the issues (box marks and list)') : tr('穴を見る (箱の ! と一覧を出す、直すと次のテストで消える)', 'Show the issues (box marks and list; they clear on the next test once fixed)')" @click="emit('holes')">{{ tr(`穴 ${test.holes}`, `${test.holes} issue(s)`) }}</button>
+  <button v-if="test.holes && !test.busy" type="button" data-tree-test-list class="-ml-1.5 shrink-0 rounded px-1 text-[12px] text-white/50 hover:bg-white/10 hover:text-white/85" :title="tr('穴の一覧を開く', 'Open the list of issues')" @click="emit('list')">▾</button>
   <button type="button" data-tree-run class="g-btn sm shrink-0" :disabled="running || !ready" :class="test.passed ? '' : 'opacity-60'" :title="test.passed ? tr(`${RUN_N} 人をエンジンで回し、通った道と人数を木の上に重ねて出す (値段は結果のまとめで入れたベースの値段と今の相場)`, `Run ${RUN_N} times with the engine and overlay the paths taken (prices: the base price from the summary + current market)`) : tr('テストランに合格してから回せる。押すと穴の一覧を開く', 'Pass the test run first. Click to open the list of issues')" @click="test.passed ? emit('run') : emit('holesOn')">{{ tr(`${RUN_N} 人回す`, `Run ${RUN_N}`) }}</button>
   <!-- 一番大事な数字なので切らない (縮めるのはレシピの名前、10-22 金の指輪の録画で完成 % が … で切れた) -->
   <span data-tree-run-sum class="shrink-0 whitespace-nowrap tabular-nums" :class="result && !running ? '' : 'opacity-70'">
