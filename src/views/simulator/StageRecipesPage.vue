@@ -105,7 +105,7 @@ onMounted(() => { before = window.scrollY; window.scrollTo(0, 0); window.addEven
 // ツリーから来た作りかけの木を、ここからシミュの外へ出る時も聞く (ツリーのページと同じ。ツリーへ戻る時は聞かない。page.ts の mustAsk がツリーのページの間だけなので、今は効かない)。
 // 外へ出たら木を白紙に戻す (10-24 夜、作業中の木は持ち越さない)。ただし聞けていない間は、未保存の変更がある木は黙って消さない
 onMounted(() => setLeaveGuard((to) => !to.startsWith("page=sim-") && dirty.value));
-onBeforeUnmount(() => { setLeaveGuard(null); if (!treePage.value && !dirty.value) t.resetAll(); });
+onBeforeUnmount(() => { setLeaveGuard(null); if (!treePage.value) t.resetAll(); });
 onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); clearTimeout(noteT); const y = before; requestAnimationFrame(() => window.scrollTo(0, y)); });
 </script>
 

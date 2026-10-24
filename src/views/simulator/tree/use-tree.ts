@@ -5,7 +5,7 @@
 import { computed, ref, shallowRef, watch } from "vue";
 import { craftStage as s, nameOf } from "../../../state/craft-stage";
 import { priceOfKey } from "../../../state/for-share/craft-stage-shelf";
-import { freshItem, modListFor, mulberry32 } from "../../../services/craft-stage/engine";
+import { freshItem, modListFor } from "../../../services/craft-stage/engine";
 import { minIlvlFor, tierRankLabel } from "../../../services/craft-stage/engine";
 import { startItemOf } from "../../../services/simulator/tree/tree-sample";
 import { carryAims, placeMods } from "../../../services/craft-stage/engine-sim";
@@ -303,6 +303,8 @@ function toggleFracture(modId: string, tier: number): void {
     d.start!.rarity = startRarity(d);
   });
 }
+/** 完成形のカードの値は幅の真ん中 (1 本の乱数を順に使うと、狙いを 1 つ外しただけで残りの MOD の値がずれた。10-24 夜 デザイン部長の気付き)。外れの選び方は無い指名の手なので固定でも止まらない */
+const MID_ROLL = (): number => 0.5;
 /**
  * 完成形のアイテム (木のベースに狙いを付けられる所まで付けた物、エンジンの入口 placeMods)。狙いは MOD の枠を超えてよい (10-23 オーナー、止めない): 乗らない物は left。
  * 印の MOD を先に付ける。印が 1 つならその MOD を ✦ で (2 つ以上はカードの fractureGroup で 1 行にまとめる)。ノーマル・マジックの完成形は前と同じ startItemOf
@@ -311,10 +313,10 @@ const goalItem = computed((): { item: StageItem; note: string | null; left: Arra
   const data = s.data.value, d = doc.value;
   if (!data) return null;
   const plain = goals.value.map((a) => ({ modId: a.modId, tier: a.tier }));
-  if (goalRarity.value !== "rare") return { ...startItemOf(data, { ...d, memoAims: plain, start: { rarity: goalRarity.value, mods: goalRarity.value === "normal" ? [] : plain } }, mulberry32(1)), left: [] };
+  if (goalRarity.value !== "rare") return { ...startItemOf(data, { ...d, memoAims: plain, start: { rarity: goalRarity.value, mods: goalRarity.value === "normal" ? [] : plain } }, MID_ROLL), left: [] };
   const marks = goals.value.filter((a) => a.fractured), one = marks.length === 1;
   const order = [...marks, ...goals.value.filter((a) => !a.fractured)].map((a) => ({ modId: a.modId, tier: a.tier, ...(one && a.fractured ? { fractured: true } : {}) }));
-  const r = placeMods(data, d.base, d.itemLevel, order, mulberry32(1));
+  const r = placeMods(data, d.base, d.itemLevel, order, MID_ROLL);
   return { item: r.item, note: null, left: r.left.map((x) => ({ modId: x.modId, tier: x.tier, ...(marks.some((a) => a.modId === x.modId) ? { fractured: true as const } : {}), reason: x.reason })) };
 });
 /** 完成形のレアリティ (0 の箱、TreeDoc.goal。無ければレア。1 つ戻すで戻せる) */
