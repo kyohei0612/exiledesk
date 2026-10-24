@@ -9,11 +9,13 @@
  *   __simMonkey.shelf(id)                              その箱の棚 [{ key, name, ok, reason }]
  *   __simMonkey.omens(id, key)                         持った物に掛けられるお告げ [{ key, name, ok, reason }]
  *   __simMonkey.add(id, key, omens?, opt?)             次の手の箱を作る → { ok, problem?, at, boxes: [{ id, out, aim, mods: [{ side, modId, tier, text }] }] }
+ *   __simMonkey.boxItem(id)                            その箱でエンジンに渡すアイテム { item, preItem, hand } / run(n=300, seed=1) = 画面と同じ tree-run を値段 1 で (費用 = 個数)
  *   __simMonkey.dump()                                 今の木 (JSON、startRarity = スタートの本当のレアリティ)。add の boxes にも rarity
  */
 import { baseCatalog, omenBlock, omensAllowedFor, runeOf, socketCapOf, useReason, type StageItem } from "../../../services/craft-stage/engine";
 import { CATALYSING } from "../../../services/simulator/tree/tree-hands";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { runTree } from "../../../services/simulator/tree/tree-run";
 import { bonesFor, CRAFT_RUNE_KEYS, essenceShelf, nameOfKey, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
 import { simHidden } from "../../../state/for-share/shelf-context";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -106,6 +108,33 @@ export function installSimMonkey(): () => void {
         };
       });
       return { ok: true, at, hand: h, kind, boxes };
+    },
+    /**
+     * その箱でツリーがエンジンに渡すアイテム (sampleOf の見本そのもの)。preItem = その箱の手が触媒のお告げを使う時に、前のカタリストで品質を入れた後 (TreeHandShelf の preFill と同じ)。
+     * ジン部長の照らし (scripts/check-monkey-engine.mjs) が stepOutcomes に渡す
+     */
+    boxItem(id: string) {
+      const d = s.data.value, smp = sample(id), b = t.doc.value.boxes[id];
+      if (!d || !smp || !b) return null;
+      const view = (it: StageItem) => ({
+        base: it.base, itemLevel: it.itemLevel, rarity: it.rarity, quality: it.quality, sockets: it.sockets ?? 0, corrupted: it.corrupted,
+        mods: [...it.prefixes, ...it.suffixes].map((m) => ({ side: m.side, modId: m.modId, tier: m.tierName, tierIndex: m.tierIndex, fractured: !!m.fractured })),
+        runes: (it.augments ?? []).map((a) => (typeof a === "string" ? a : JSON.parse(JSON.stringify(a)) as unknown)),
+      });
+      const key = b.hand?.currency ?? null;
+      const pre = key ? shelfItemFor(id, key) : null;
+      return { id, out: b.out, note: smp.note, item: view(smp.item), preItem: pre && pre !== smp.item ? view(pre) : null, hand: b.hand ? JSON.parse(JSON.stringify(b.hand)) as unknown : null };
+    },
+    /**
+     * 画面の「100 人回す」と同じ tree-run (runTree) を、値段を全部 1・始めの値段 0 で回した結果 (費用 = 使った個数。エンジンの 1/P と並べる、ジン部長 8 本目の頼み)。
+     * 神の打ち止め (capDiv) は値段 1 だと個数の上限になってしまうので外し、打ち止めは手の上限 (capSteps、既定 20000) だけ。stuckWhy は理由と箱だけ
+     */
+    run(n = 300, seed = 1) {
+      const d = s.data.value;
+      if (!d) return null;
+      const r = runTree(d, t.doc.value, { n, seed, price: () => 1, startCost: 0, capDiv: Number.POSITIVE_INFINITY });
+      const stuckWhy = Object.fromEntries(Object.entries(r.stuckWhy).map(([k, v]) => [k, { reason: v.reason, backs: v.backs, noBox: !!v.noBox }]));
+      return { ...r, stuckWhy };
     },
     /** 今の木。startRarity = スタートの本当のレアリティ (start.rarity は保存の形の値で、印も＋の MOD も無い時の白とずれる事がある) */
     dump(): unknown { return { ...JSON.parse(JSON.stringify(t.doc.value)), startRarity: sample("start")?.item.rarity ?? null }; },
