@@ -29,6 +29,10 @@
  * amulet-4aims: 星のアミュレット ilvl 82、✦スペルダメージ T1 → サフィ 2 つ (右側の高貴・分かれ目) → 防御のカタリスト + 触媒 + 左側の高貴で ES →
  *   古代の骨 + 左側の死霊術でスピリット。解析君の v5b (本番の相場で 約 704 神・完成 99%、追記 5)。
  *   この 2 つは台本 scripts/_tree-patterns-probe の body-essence-split・amulet-4aims-split で組んだ木の JSON (samples/)。
+ * absent-b / absent-a: 不在のアミュレット ilvl 79 (プレ 2・サフィ 2)、✦全スペルスキルのレベル +3 → スピリット T1・キャスト T1 (冒涜)・ルーンワード (ルーンアロイのパーフェクトエッセンス)。
+ *   YouTube mjaMYCYl-PI の 2 つの作り方 (10-24 オーナーの頼み、結果 docs/org/simulator/notes/2026-10-24-absent-amulet.md)。
+ *   B = カオスでスピリット → 右側の消去 → 冒涜でキャスト → ルーンワード + 左側の結晶化 (50/50)、負けは光 + 消去でキャストを消してカオスから A の流れ。
+ *   A = 左側の消去 → カオスでスピリット → ルーンワード + 右側の結晶化 → 冒涜でキャスト。台本 scripts/_tmp-absent (一時、消した) で組んだ木の JSON
  *   完成 = 狙いが全部付いた時点 (枠を埋める手は打たない、外れが残っても完成。10-22 オーナー「無理やり 6 MOD にしなくても」)
  */
 import { migrateStart, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
@@ -36,8 +40,10 @@ import { tidy } from "./tree-layout";
 import { ECHO } from "./tree-hands";
 import robeEssence from "./samples/robe-essence-split.json";
 import amulet4aims from "./samples/amulet-4aims.json";
+import absentB from "./samples/absent-b.json";
+import absentA from "./samples/absent-a.json";
 
-export const TREE_SAMPLES = ["gold-ring-suffix", "boots-res-split", "robe-essence-split", "amulet-4aims"] as const;
+export const TREE_SAMPLES = ["gold-ring-suffix", "boots-res-split", "robe-essence-split", "amulet-4aims", "absent-b", "absent-a"] as const;
 /** JSON で置いた見本 (台本で組んだ木。開くたびに写しを渡す) */
 const fromJson = (j: unknown): TreeDoc => { const d = JSON.parse(JSON.stringify(j)) as TreeDoc; migrateStart(d); tidy(d); return d; };
 
@@ -137,5 +143,6 @@ function bootsResSplit(): TreeDoc {
 
 export function treeSample(name: string): TreeDoc | null {
   return name === "gold-ring-suffix" ? goldRingSuffix() : name === "boots-res-split" ? bootsResSplit()
-    : name === "robe-essence-split" ? fromJson(robeEssence) : name === "amulet-4aims" ? fromJson(amulet4aims) : null;
+    : name === "robe-essence-split" ? fromJson(robeEssence) : name === "amulet-4aims" ? fromJson(amulet4aims)
+    : name === "absent-b" ? fromJson(absentB) : name === "absent-a" ? fromJson(absentA) : null;
 }
