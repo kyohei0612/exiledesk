@@ -14,6 +14,7 @@ import { aimHits, applyCurrency, baseSocketsOf, forceKey, freshItem, modListFor,
 import { placeMods, stepOutcomesOrTooMany } from "../src/services/craft-stage/engine-sim";
 import { CRAFT_RUNE_KEYS, ORBS, bonesFor, essenceShelf, nameOfKey, runesFor } from "../src/state/for-share/craft-stage-shelf";
 import { SIM_HIDDEN } from "../src/state/for-share/shelf-context";
+import { walkTree as walkTreeOn, type WalkBox, type WalkOpts } from "./_monkey-tree-walk";
 
 let data: PatchData | null = null;
 export function load(): void {
@@ -203,71 +204,5 @@ export function seenDiff(seen: { rarity: string; mods: ReadonlyArray<{ modId: st
 /** 名前から鍵 (今の棚にある札の中で) */
 export const keyOfName = (cards: Card[], name: string): string | null => cards.find((c) => c.name === name)?.key ?? null;
 
-/** 木の箱 (猿の dump の形のうち、辿るのに使う所だけ) */
-interface WalkBox { id: string; out: string; aim: Aim | null; hand: { currency: string; omens: string[]; repeat?: { until: string; max: number | null } | null; catalyst?: string | null; free?: boolean; fractureOf?: string } | null; outs: string[]; back: string | null; done: string | null; split?: unknown }
-export interface WalkResult { n: number; finished: number; stuck: number; capped: number; uses: Record<string, number>; stuckAt: Record<string, number>; unsupported: string | null }
-const ECHO_OMEN = "OmenofAbyssalEchoes";
-/**
- * 木をエンジンだけで n 人に辿らせる (ツリーの回す処理 tree-run は読まない。照らしの相手を作るため、2026-10-24 モンキー隊長 2 本目)。
- * 1 手 = applyCurrency (骨はそのまま発現: 候補に結果の箱の狙いがあればそれ、反響なら引き直しも)。結果の箱へは:
- *   エッセンスの手で狙いが消えた → 「狙いが消えた」の箱 / 新しく付いた (✦ になった) 狙い → その当たりの箱 / 狙いが消えた → 消えた箱 / ほか → 外れの箱。
- * 繰り返しの手は当たりの箱へ行くまで打つ。戻り (back) はその箱へ今のアイテムのまま、done で完成、手も戻りも無い箱・打てない手・行き先の箱が無い結果は止まり。
- * 手の上限 capSteps で打ち止め (ツリーは値段の打ち止めもあるので、比べるのはツリーが打ち止め 0 の木だけにする)。
- * ツリーの形合わせ (settle・match)・分かれ目・カタリスト・フラクチャーの指名・狙い無しの手は辿らない (unsupported に理由)
- */
-export function walkTree(boxes: Record<string, WalkBox>, start: StageItem, n = 100, seed = 1, capSteps = 20000): WalkResult {
-  const res: WalkResult = { n, finished: 0, stuck: 0, capped: 0, uses: {}, stuckAt: {}, unsupported: null };
-  for (const b of Object.values(boxes)) {
-    const why = b.split ? "分かれ目の箱" : b.back === "match" ? "形の合う箱へ戻る" : b.hand?.catalyst ? "カタリスト" : b.hand?.fractureOf ? "フラクチャーの指名" : b.hand?.free ? "狙い無しの手" : null;
-    if (why) return { ...res, unsupported: why };
-  }
-  const allAims = Object.values(boxes).filter((b) => b.out === "hit" && b.aim).map((b) => b.aim!);
-  const tg = (a: Aim) => ({ modId: a.modId, minTierIndex: tierIndexOf(data!, a.modId, a.tier) });
-  const opts = { data: data!, sameText: true };
-  const mods = (it: StageItem): StageMod[] => [...it.prefixes, ...it.suffixes];
-  const has = (it: StageItem, a: Aim): boolean => mods(it).some((m) => aimHits(m, tg(a), opts));
-  const rng = mulberry32(seed);
-  const use = (k: string, x: number) => { res.uses[k] = (res.uses[k] ?? 0) + x; };
-  for (let p = 0; p < n; p++) {
-    let item = start, at = "start", steps = 0, end: "done" | "stuck" | "capped" | null = null;
-    while (!end) {
-      const b = boxes[at];
-      if (!b) { end = "stuck"; break; }
-      if (b.done) { end = "done"; break; }
-      if (!b.hand) { if (b.back && boxes[b.back]) { at = b.back; continue; } end = "stuck"; break; }
-      const h = b.hand, outs = b.outs.map((id) => boxes[id]).filter((o): o is WalkBox => !!o);
-      const hitOuts = outs.filter((o) => o.out === "hit" && o.aim);
-      let next: string | null = null;
-      do {
-        if (++steps > capSteps) { end = "capped"; break; }
-        const omens = h.omens.filter((o) => o !== ECHO_OMEN);
-        let r = applyCurrency(data!, item, h.currency, rng, omens);
-        if (!r.applied) { end = "stuck"; break; }
-        use(h.currency, 1 / n); for (const o of h.omens) use(o, 1 / n);
-        if (h.currency.startsWith("desecrate")) {
-          const offers = revealOffers(data!, r.item, mulberry32(Math.floor(rng() * 2 ** 31)));
-          const want = (m: StageMod) => hitOuts.some((o) => aimHits(m, tg(o.aim!), opts));
-          const i = offers.first.findIndex(want), k = i < 0 && h.omens.includes(ECHO_OMEN) ? offers.reroll.findIndex(want) : -1;
-          const s = mulberry32(Math.floor(rng() * 2 ** 31));
-          const x = k >= 0 ? applyCurrency(data!, r.item, `reveal:${k + 1}:reroll`, s, [ECHO_OMEN]) : applyCurrency(data!, r.item, `reveal:${Math.max(0, i) + 1}`, s);
-          if (x.applied) r = x;
-        }
-        const before = item, after = r.item;
-        const fr = new Set(mods(before).filter((m) => m.fractured).map((m) => m.modId));
-        const ids = new Set(mods(before).map((m) => `${m.modId}#${m.tierIndex}`));
-        const fresh = mods(after).filter((m) => !ids.has(`${m.modId}#${m.tierIndex}`) || (m.fractured && !fr.has(m.modId)));
-        const lost = allAims.some((a) => has(before, a) && !has(after, a));
-        const hit = hitOuts.find((o) => fresh.some((m) => aimHits(m, tg(o.aim!), opts)));
-        const lostBox = outs.find((o) => o.out === "lost"), junkBox = outs.find((o) => o.out === "junk" || o.out === "any" || o.out === "pass");
-        item = after;
-        next = (h.currency.startsWith("essence:") && lost && lostBox) ? lostBox.id : hit ? hit.id : lost && lostBox ? lostBox.id : junkBox ? junkBox.id : null;
-        if (h.repeat && !(hit && next === hit.id)) next = null;
-      } while (h.repeat && !next && !end);
-      if (end) break;
-      if (!next) { end = "stuck"; break; }
-      at = next;
-    }
-    if (end === "done") res.finished++; else if (end === "capped") res.capped++; else { res.stuck++; res.stuckAt[at] = (res.stuckAt[at] ?? 0) + 1; }
-  }
-  return res;
-}
+/** 木をエンジンだけで n 人に辿らせる (中身は _monkey-tree-walk.ts、決まりはシミュ部長の tree-shape-rules.md) */
+export const walkTree = (boxes: Record<string, WalkBox>, start: StageItem, o: WalkOpts = {}) => walkTreeOn(data!, boxes, start, o);

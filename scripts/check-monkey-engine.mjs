@@ -106,20 +106,21 @@ function checkWalk(tr) {
   const doc = tr?.dump, res = tr?.result, start = tr?.items?.start?.raw;
   if (!doc?.boxes || !res?.n) return null;
   if (!start) return { skipped: "始まりの boxItem が無い" };
-  if (res.capped) return { skipped: `ツリーで打ち止め ${res.capped} 人 (値段の打ち止めは辿れない)` };
-  // ツリーが着いた箱から形の合う箱へ移した (settle、result.moved = 箱ごとの人数) 木は、walkTree が形合わせを辿らないので比べない (10-24 シミュ部長 19 本目)
-  const moved = typeof res.moved === "number" ? res.moved : Object.values(res.moved ?? {}).reduce((a, n) => a + Number(n || 0), 0);
-  if (moved > 0) return { skipped: `ツリーが形の合う箱へ移した (${moved} 回)` };
-  const w = E.walkTree(doc.boxes, start, res.n, 1);
+  // 打ち止めは値段 (result.prices = 手ごとの神建て、startCost・capDiv・capSteps) があれば同じ条件で辿る、無ければ比べない
+  if (res.capped && !res.prices) return { skipped: `ツリーで打ち止め ${res.capped} 人 (値段が記録に無い)` };
+  // 形の合う箱へ移す道 (settle・match) もシミュ部長の決まりの文 (tree-shape-rules.md) どおりに辿る (10-24)
+  const w = E.walkTree(doc.boxes, start, { n: res.n, seed: 1, prices: res.prices ?? {}, startCost: res.startCost ?? 0, capDiv: res.prices ? res.capDiv ?? 2000 : Infinity, capSteps: res.capSteps ?? 20000 });
   if (w.unsupported) return { skipped: `辿らない形: ${w.unsupported}` };
   const off = [];
   const q1 = res.finished / res.n, q2 = w.finished / w.n, sd = Math.sqrt(Math.max(q1 * (1 - q1), q2 * (1 - q2), 1e-9) * (1 / res.n + 1 / w.n));
   if (Math.abs(q1 - q2) > 4 * sd && Math.abs(q1 - q2) > 0.1) off.push(`完成 ツリー ${(q1 * 100).toFixed(0)}% / エンジン ${(q2 * 100).toFixed(0)}%`);
+  const c1 = (res.capped ?? 0) / res.n, c2 = w.capped / w.n;
+  if (Math.abs(c1 - c2) > 0.1) off.push(`打ち止め ツリー ${(c1 * 100).toFixed(0)}% / エンジン ${(c2 * 100).toFixed(0)}%`);
   for (const k of new Set([...Object.keys(res.uses ?? {}), ...Object.keys(w.uses)])) {
     const a = res.uses?.[k] ?? 0, b = w.uses[k] ?? 0;
     if (Math.abs(a - b) >= 0.5 && Math.abs(a - b) > 0.5 * Math.max(a, b)) off.push(`個数 ${k} ツリー ${a.toFixed(2)} / エンジン ${b.toFixed(2)}`);
   }
-  return { tree: { n: res.n, finished: res.finished, stuck: res.stuck, stuckAt: res.stuckAt, uses: res.uses }, engine: w, off };
+  return { tree: { n: res.n, finished: res.finished, stuck: res.stuck, capped: res.capped, stuckAt: res.stuckAt, moved: res.moved, uses: res.uses }, engine: w, off };
 }
 const walkSum = { trees: 0, compared: 0, off: 0, skipped: {} };
 
