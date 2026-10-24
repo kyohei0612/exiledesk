@@ -87,7 +87,7 @@ function enter(e: MouseEvent): void {
   if (touchOnly) return;
   const el = e.currentTarget as HTMLElement;
   stopWait();
-  if (flag("firstVisit1024")) stopWait = afterPointerMoves(() => openCard(el)); else openCard(el);
+  if (flag("firstVisit1024")) stopWait = afterPointerMoves(e, () => openCard(el)); else openCard(el);
 }
 function openCard(el: HTMLElement): void {
   let r: { left: number; right: number; top: number; bottom: number } = el.getBoundingClientRect();

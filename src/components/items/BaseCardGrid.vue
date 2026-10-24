@@ -40,7 +40,7 @@ function enter(e: MouseEvent, b: CatalogRow): void {
     hoverStack.openRootDelayed({ kind: "base", en: b.en }, toCss(r.right), toCss(r.top), { left: toCss(r.left), right: toCss(r.right), top: toCss(r.top), bottom: toCss(r.bottom) });
   };
   stopWait();
-  if (flag("firstVisit1024")) stopWait = afterPointerMoves(open); else open();
+  if (flag("firstVisit1024")) stopWait = afterPointerMoves(e, open); else open();
 }
 function leave(): void { stopWait(); hoverStack.leave(); }
 onBeforeUnmount(leave);
