@@ -2,9 +2,9 @@
  * tree-hand-plan.ts — 箱の次に打つ手の決め方 (TreeHandShelf.vue から分けた、2026-10-24)。棚の画面 (TreeHandShelf)・手を決めた時の組み替え (SimTreePage の pickHand)・
  * 開発の時だけの猿の口 (sim-monkey.ts) が同じ関数を呼ぶ (別の打ち方を作らない、メモ feedback-sim-no-own-logic)。中身はエンジンの入口と木の関数を呼ぶだけ
  */
-import { aimHits, catalystBoosts, heldOdds, makeStageMod, mulberry32, omensFor, tierIndexOf, tierRankOf, type HeldOdds, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { catalystBoosts, mulberry32, omensFor, tierRankOf, type PatchData, type StageApply, type StageItem } from "../../../services/craft-stage/engine";
 import { catalystFull, catalystTagOf, fillCatalyst, stepOutcomes } from "../../../services/craft-stage/engine-sim";
-import { aimHeldOn } from "../../../services/simulator/tree/tree-aim";
+import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, ECHO, effectOf, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, sampleOf, singleOutOf } from "../../../services/simulator/tree/tree-sample";
 import { linkSameShape } from "../../../services/simulator/tree/tree-run";
@@ -141,33 +141,7 @@ export function applyPick(d: TreeDoc, id: string, h: Hand, kind: HandKind, aims:
   return at;
 }
 
-// 付きうる狙い・伸ばすカタリスト (2026-10-23 エンジンの for-sim から戻した。中身はエンジンの核の heldOdds・aimHits・catalystBoosts を呼ぶだけ)
-interface TierAim { modId: string; tier: number }
-interface AimDiffOpts { sameText?: boolean }
-const heldOn = (data: PatchData, mods: readonly StageMod[], a: TierAim, o: AimDiffOpts): boolean => {
-  const t = { modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) }, opts = o.sameText ? { data, sameText: true } : undefined;
-  return mods.some((m) => aimHits(m, t, opts));
-};
-/**
- * この手で付きうる狙い = items (同じ箱の見本など) のどれかで、クラフト台でそのカレンシーを持った時に出る % (heldOdds。CoE と合わせ済み) が 0 より大きい段がある狙い
- * (並びは aims のまま。オーナー 10-22: 行き先は数え上げず heldOdds の答えをそのまま、錬金・大いなる高貴・骨の候補も heldOdds の物)。
- * もう付いている狙いは見ない (呼ぶ側が外して渡す)。どの見本でも heldOdds に % が 1 つも無い (打てない・確率の表が無い手) 時は null (呼ぶ側が決める)
- */
-function reachableAims<A extends TierAim>(data: PatchData, items: readonly StageItem[], key: string, omens: readonly string[], aims: readonly A[], o: AimDiffOpts = {}): A[] | null {
-  const pools = items.flatMap((it) => { const h = heldOdds(data, it, key, omens), ms = h ? poolOf(data, h) : []; return ms.length ? [ms] : []; });
-  if (!pools.length) return null;
-  return aims.filter((a) => pools.some((ms) => heldOn(data, ms, a, o)));
-}
-/** heldOdds で % が 0 より大きい段の MOD (数値は段の真ん中、当たりの判定にだけ使う) */
-function poolOf(data: PatchData, h: HeldOdds): StageMod[] {
-  const out: StageMod[] = [];
-  for (const [id, x] of h.byMod) {
-    const mod = data.mods.get(id);
-    if (!mod) continue;
-    for (const t of x.tiers) if (t.w > 0) out.push(makeStageMod(mod, mod.type === "suffix" ? "suffix" : "prefix", t.index, () => 0.5));
-  }
-  return out;
-}
+// 伸ばすカタリスト (2026-10-23 エンジンの for-sim から戻した。中身はエンジンの核の catalystBoosts を呼ぶだけ)。付きうる狙い reachableAims は精査も使うので tree-aim.ts (10-25)
 /** その MOD を伸ばすカタリスト (keys の並びで最初の物、伸ばす物が無ければ null)。伸びるかはエンジンの catalystBoosts (指輪・アミュレットは MOD の tags、ジュエル・上のベースは中身のタグ) */
 function catalystForMod(data: PatchData, item: StageItem, modId: string, keys: readonly string[]): string | null {
   const mod = data.mods.get(modId);

@@ -11,7 +11,7 @@
 import { allMods, modBoostsOf, mulberry32, room, SIDES, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomes } from "../../craft-stage/engine-sim";
 import { catalystTagOf } from "../../craft-stage/engine-sim";
-import { aimHeldOn, junkOf } from "./tree-aim";
+import { aimHeldOn, junkOf, reachableAims } from "./tree-aim";
 import { CATALYSING, effectOf, engineOmens, isCatalyst } from "./tree-hands";
 import { aimKey, type Aim, type OutKind, type TreeDoc } from "./tree-model";
 import { aimOpts, aimsOf, handAims, handProblem, outcomeOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
@@ -51,8 +51,35 @@ export async function checkTreeAsync(data: PatchData, doc: TreeDoc, onProgress: 
     await new Promise((res) => setTimeout(res, 0));
   }
 }
-function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, CheckIssue[]> {
+/**
+ * 精査の中だけの「当たるまで」の上限 (上限無し・これより多い物はここで打ち切る)。付かない狙いの当たるまでが 1 人ごとに 5000 回 (見本の上限) 回り、
+ * 30 人回しでページが固まった (10-25 モンキー 3 本目、前に保存した木でも起きる)。打ち切った箱は穴として出す。100 人回しは今までどおり
+ */
+const CHECK_SPAM_CAP = 1000;
+/**
+ * 精査に使う木の写し: 当たるまでの上限を CHECK_SPAM_CAP までに (capped)。当たりの狙いがこの箱の見本で 1 つもそのカレンシーで付かない当たるまで (dead) は手を外す
+ * (当たらなかった人が形の合う同じ箱へ戻って打ち直し、上限を付けても 1 人の中で回り続けた。今の画面では作れない形、前に保存した木の分)
+ */
+function capSpam(data: PatchData, doc: TreeDoc): { doc: TreeDoc; capped: Set<string>; dead: Set<string> } {
+  const capped = new Set<string>(), dead = new Set<string>();
+  const boxes = { ...doc.boxes }, all = aimsOf(doc);
+  for (const b of Object.values(doc.boxes)) {
+    const r = b.hand?.repeat;
+    if (!r) continue;
+    const item = sampleOf(data, doc, b.id, 1).item;
+    const open = handAims(doc, b.id, all).filter((a) => !aimHeldOn(data, item, a, { sameText: true }));
+    const reach = reachableAims(data, [item], b.hand!.currency, engineOmens(b.hand!), open, { sameText: true });
+    if (open.length && reach && !reach.length) { boxes[b.id] = { ...b, hand: null }; dead.add(b.id); continue; }
+    if (r.max != null && r.max <= CHECK_SPAM_CAP) continue;
+    boxes[b.id] = { ...b, hand: { ...b.hand!, repeat: { ...r, max: CHECK_SPAM_CAP } } };
+    capped.add(b.id);
+  }
+  return { doc: capped.size || dead.size ? { ...doc, boxes } : doc, capped, dead };
+}
+function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, CheckIssue[]> {
+  const { doc, capped, dead } = capSpam(data, doc0);
   const out: CheckIssue[] = [];
+  for (const id of dead) out.push({ boxId: id, kind: "cantUse", text: tr("この手で付く狙いが無い (当たりの狙いはこのカレンシーでは付かない。当たるまで繰り返すと終わらないので、精査はここで止まる扱い)", "No target this craft can add (this currency can't add the hit's target; repeating would never end, so the check treats this box as a stop)") });
   const add = (boxId: string, kind: CheckKind, text: string): void => { if (!out.some((x) => x.boxId === boxId && x.kind === kind)) out.push({ boxId, kind, text }); };
   const boxes = Object.values(doc.boxes);
   const aims = aimsOf(doc);
@@ -71,7 +98,7 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
   { const note = startItemOf(data, doc, mulberry32(1)).note; if (note) add("start", "cantUse", tr(`始まりの形が作れない: ${note}`, `Can't make the starting item: ${note}`)); }
   for (const b of boxes) {
     if (b.split?.some((r) => !r.to)) add(b.id, "open", tr("分かれ目の行き先を決めていない行がある (その形で来た人はここで止まる)", "A split row has no destination (runs of that shape stop here)"));
-    if (!b.hand && !b.back && !b.done && !b.split) add(b.id, "open", b.out === "start" ? tr("最初の手を決めていない (ここで止まる)", "No first craft yet (stops here)") : tr("行き先を決めていない (ここで止まる)", "No next step yet (stops here)"));
+    if (!b.hand && !b.back && !b.done && !b.split && !dead.has(b.id)) add(b.id, "open", b.out === "start" ? tr("最初の手を決めていない (ここで止まる)", "No first craft yet (stops here)") : tr("行き先を決めていない (ここで止まる)", "No next step yet (stops here)"));
     if (b.out === "hit" && !b.aim) add(b.id, "noAim", tr("付く MOD を選んでいない", "No mod picked for this hit"));
     // 触媒のお告げはカタリストで入れた品質にだけ効く。カタリストを打つ手が無ければ効きは乗らない (10-22 オーナー「ちゃんと打つルートが無いとあかん」)。
     // 品質だけ上げる手 (カタリスト) の後の通り抜けから打つ時は、その手がカタリストを打つ手
@@ -226,7 +253,7 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
     if (!run.finished && run.capped * 2 >= RUN_PEOPLE) add("start", "noDone", tr(`回すと ${RUN_PEOPLE} 人中 1 人も完成せず、${run.capped} 人が手の上限まで打っても着かない (輪から出られない・狙いが付きにくい道を確かめる)`, `None of ${RUN_PEOPLE} runs finished; ${run.capped} hit the craft limit (check for loops or hard-to-hit paths)`));
     for (const [id, n] of Object.entries(run.stuckAt)) {
       // 手も行き先も決めていない箱は 1) の「決めていない」だけ (何もしないスタートで「30 人中 27 人が止まる」が重なり、残りの人が何か分からなかった。10-24 初めての人の回 5)
-      if (out.some((x) => x.boxId === id && x.kind === "open")) continue;
+      if (dead.has(id) || out.some((x) => x.boxId === id && x.kind === "open")) continue;
       const w = run.stuckWhy[id];
       // 外れを持ったまま戻る「狙いが消えた」の戻り (作り直しでない)。カオスを当たるまでは 1 つしか入れ替えないので、持ち込んだ外れは消えずに先で満杯になる (10-22 靴 b14 → b1、100 人中 63 人)
       const carry = (w?.backs ?? []).filter((x) => doc.boxes[x]?.out === "lost" && doc.boxes[x]?.back !== RESTART);
@@ -236,6 +263,10 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
     // 回しで結果の箱に無い形になった箱 (5 人の辿りで出なかった物。上限つきの当たるまでが上限で当たらない時など、10-22 13 通り組んだ #13)
     for (const [id, n] of Object.entries(run.unexpected)) {
       const max = doc.boxes[id]?.hand?.repeat?.max;
+      if (capped.has(id)) {
+        add(id, "unexpected", tr(`この手で付く狙いが無いか、とても付きにくい: 精査では当たるまでを ${CHECK_SPAM_CAP} 回で打ち切り、${RUN_PEOPLE} 人中 ${n} 人が当たらなかった (付く狙いを当たりに選ぶか、手を替える)`, `No target this craft can add, or very unlikely: the check stops repeating at ${CHECK_SPAM_CAP} tries and ${n} of ${RUN_PEOPLE} runs got no hit (pick a target it can add, or change the craft)`));
+        continue;
+      }
       add(id, "unexpected", tr(`回すと ${RUN_PEOPLE} 人中 ${n} 人が結果の箱に無い形になる${max ? ` (${max} 回で当たらなかった)` : ""}。形の合う箱へ進み、無ければ止まる。直すには、その結果の箱を足すか、同じ形で手のある箱を作る`, `${n} of ${RUN_PEOPLE} runs end in a shape with no result box${max ? ` (no hit in ${max} tries)` : ""}. They go to a box of the same shape, or stop. Fix: add a box for that result, or a box with a craft for that shape`));
     }
     // 回しで 1 人でも着いた箱は出さない (5 人の辿りは上限つきの当たるまで・始まりに同じ系統が付いている人で外れた、10-22 13 通り組んだ #9 の誤報 3 本)
