@@ -27,10 +27,10 @@ const why = (n: 1 | 2 | 3 | 4): string | undefined =>
 </script>
 
 <template>
-  <nav data-tree-flow class="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
+  <nav data-tree-flow class="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 max-md:gap-x-1">
     <template v-for="st in STEPS" :key="st.n">
       <span v-if="st.n > 1" class="opacity-40" aria-hidden="true">→</span>
-      <button type="button" :data-tree-flow-step="st.n" class="g-tab !min-h-[30px] !px-3 !text-[13px] max-md:!px-2 max-md:!text-[12px]" :class="current === st.n ? 'on' : ''" :disabled="!reached[st.n]" :title="why(st.n)" :aria-current="current === st.n ? 'step' : undefined" @click="emit('go', st.n)">
+      <button type="button" :data-tree-flow-step="st.n" class="g-tab !min-h-[30px] !px-3 !text-[13px] max-md:!px-1.5 max-md:!text-[12px]" :class="current === st.n ? 'on' : ''" :disabled="!reached[st.n]" :title="why(st.n)" :aria-current="current === st.n ? 'step' : undefined" @click="emit('go', st.n)">
         {{ st.n }} {{ tr(st.ja, st.en) }}
         <span v-if="st.n === 1 && !noBase" class="ml-1 text-[11px] opacity-70 max-md:hidden">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}</span>
         <span v-if="st.n === 2" class="ml-1 rounded-full bg-black/25 px-1.5 text-[11px] tabular-nums">{{ t.goals.value.length }}</span>

@@ -362,7 +362,8 @@ const glowOf = (b: Box): boolean => {
 </script>
 
 <template>
-  <section data-tree-page class="min-w-0 flex-1 p-4" :class="t.goalInline.value ? 'max-md:px-2' : ''">
+  <!-- スマホは左右の余白を詰める (ページ 16 + 枠の絵 18 + 中 12 で木の枠が 375 中 281px しかなく、左右の箱が切れ上の帯が 6 段になった、10-24 モンキー初めての人の回 3) -->
+  <section data-tree-page class="min-w-0 flex-1 p-4 max-md:px-2">
     <div class="mb-3 flex flex-wrap items-center gap-3">
       <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center gap-3 px-8 text-[22px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)] max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-1 max-md:px-4 max-md:py-2 max-md:text-[17px] max-md:tracking-[0.08em]"><span class="whitespace-nowrap">{{ tr("クラフトの道 (ツリー)", "Craft route tree") }}</span><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" /></h1>
       <!-- 流れの 4 段の帯 (今どこにいるか。完成形の設定の窓と同じ部品、10-24 オーナー)。初手のページの間は窓の側に出る。右上の「← 戻る」は置かない (上の切り替えタブで行き来する、10-24 オーナー「意味が分からない、要らない」) -->
@@ -372,7 +373,7 @@ const glowOf = (b: Box): boolean => {
     <ModeTabs class="mb-3" />
     <TreeOverlays /><TreeHandPage v-if="panel?.kind === 'hand' && panelBox" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" @split="onSplit" @back="picking = panel!.id; panel = null" @aim="panel = { kind: 'aim', id: panel!.id }" />
     <TreePanelPage v-else-if="panel && panelBox" :key="`${panel.kind}-${panel.id}`" :kind="panel.kind === 'split' || panel.kind === 'note' ? panel.kind : 'aim'" :box-id="panel.id" :current="panelBox.aim" @pick="pickAim" @close="panel = null" />
-    <div v-show="!t.goalInline.value" class="g-panel flex flex-col gap-2 px-3 py-2" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
+    <div v-show="!t.goalInline.value" class="g-panel flex flex-col gap-2 px-3 py-2 max-md:px-0.5" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
       <!-- 帯: 全体の数字 (まだ) ・1 つ戻す・拡大縮小・全画面。ベースが無い空の形 (t.needBase) の間は「レシピ ▾」と「メモ」だけ (今押しても意味の無い物は出さない、10-23 オーナー) -->
       <!-- 折り返さない (回した結果の文で 1 行と 2 行の境目になり、木の枠が上下して箱の × が押せなかった、10-22)。左は狭ければ … で切る。768px 未満は左と右を 2 段に (右が画面より広く左が潰れて「回す」が押せなかった、10-22) -->
       <div class="flex flex-wrap items-center gap-2 text-[13px] md:flex-nowrap">
