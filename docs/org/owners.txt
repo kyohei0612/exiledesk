@@ -231,4 +231,5 @@ docs/org/daily/**                    デイリー
 src/views/skins/**                   スキン
 src/data/mtx-poe1-in-poe2.json       スキン
 scripts/build-mtx-web.mjs            スキン
+scripts/build-cosmetics-pages.mjs    スキン
 docs/org/skins/**                    スキン
