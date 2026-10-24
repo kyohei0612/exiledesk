@@ -1,13 +1,7 @@
 # 解析君 のやる事
 
-## 引き継ぎ (2026-10-22 夜、3 本目 → 4 本目、会話が長くなったので入れ替え)
-- 宛先: dev/todo.md の常駐の宛先の表 (送信の上限で送れない時はブラック経由)。送れない時は報告をこの頭に書いて commit、ターンの最後の文にも同じ 2〜5 行 (dev/README 決まり 8)。
-- 3 本目でやった事 (全部 push 済み): 金の指輪サフィの替え案の確かめ (上の 3 本目の行)・ツリーのベースの値段の突き合わせ (notes/2026-10-22-tree-base-cost.md、4 MOD は壁つき 1/3 で決着)・金の指輪の全体 約 643〜672 神 (prefix の追記 3)・**白紙のツリー 13 本の突き合わせ** (notes/2026-10-22-tree-patterns-check.md 追記 1〜8)・amulet-4aims の安い打ち方 v5b (notes/2026-10-22-amulet-4aims.md)・body-essence の安い形 (追記 6・7)。
-- 回し直しの手順 (シミュ部長が木を直すたびに頼まれる): `git pull` → 台本から組み直し `OUT=<scratchpad>/pat PAT=<名前> pnpm -s exec vitest run -c scripts/_tree-patterns-probe.config.ts` (PAT 無しで全部、前の形の body-essence は組む途中で落ちる) → `DIR=<その置き場> SAMPLES=1 USES=1 node scripts/analysis/check-tree-patterns.mjs 1000 <種 1・2>` (値段 = data-cache/boot/boot-2026-10-22.json を画面と同じ enOf で、MIMIC= 木の真似・ALT= 対案) → `node scripts/analysis/check-tree-run.mjs all 300 1` を前の数字と行ごとに比べる (控えは scratchpad にしか無いので、新しい解析君は最初に 1 回取る)。
-- 今の数字 (de6ddf96、反響のお告げの後): 13 本 + 見本 4 本とも字のとおりと 1 割以内、1 割超えは boots-chaos-onspam だけ (木の手順がカオスの 2 箱を行き来、空きがあれば側の高貴に戻す形で 27〜28 神)。見本 金の指輪 375〜383 神・アミュ 540〜554・靴 28〜31・robe 38〜40。
-- 触らない: tree-run.ts は解析君の物だが今はシミュ部長が直している (ブラックの指示)。
-
-## 前の引き継ぎ (2→3 本目)・閉じた物・済み (10-20) は notes/2026-10-23-todo-archive.md に移した (10-23 ホワイト)
+## 前の引き継ぎ (2→3・3→4 本目、回し直しの手順と de6ddf96 の数字はここ)・閉じた物・済み (10-20・10-23) は notes/2026-10-23-todo-archive.md に移した (10-23・10-25 ホワイト)
+- 10-25 の変わり目 (シミュ部長): 木の見本 (tree-samples.ts・samples/*.json・?sample=) と古いレシピは消した (2d492b9d)、人が作る分かれ目のボタンは外した (split の箱の作りは木・回す所・精査に残る)、フラクチャー済みのスタートは ✦ 1 つだけ (外れ 3 はやめた)。**tree-samples を読む台本は今は動かない**: scripts/analysis の _tree-run-entry.ts (check-tree-run.mjs の入口)・_tree-patterns-entry.ts・check-tree-patterns.mjs・gold-ring-midway-ev.mjs・gold-ring-suffix-dp.mjs (10-25 ホワイトが grep)。回し直す時は見本の代わりの木を決めてから。
 
 ## 引き継ぎ (2026-10-23、前の解析君がコンテキストが重くなって入れ替え。11/10 が全部の完成の目標)
 今の主な仕事 = **ツリーの 100 人回しの核** `src/services/simulator/tree/tree-run.ts` (解析君の物。ワーカーと画面はシミュ部長、**画面に繋ぐのはオーナーの UI/UX の合格の後**)。記録 = notes/2026-10-23-tree-run.md (入口の形・確かめ・追記 1〜3)。
@@ -17,8 +11,7 @@
 - CoE との 1 手の突き合わせ (外の正解はこれが初めて) `node scripts/analysis/check-coe-odds.mjs 50000` (CoE の手元の写しを vm で動かす _coe-load.cjs): 金の指輪の右側の高貴 × 通常/上級/完全 × 触媒あり・なし 15 通り全部 95% の幅の中 (notes/2026-10-23-coe-odds.md)。
 
 ## やる事 (11/10 まで、ブラックと決めた並び)
-1. ~~代わりの見本の数字~~ 済み (10-23、2 本目): ドレイクスキンブーツ + 移動速度 T1 フラクチャー + 元素耐性 T1 × 2 = 1 個 29.86 神 (台本 1 万人)。ツリー 2 通り (分かれ目・当たり外れの箱) は台本と同じ seed で一致 (notes/2026-10-23-boots-res.md、`check-tree-run.mjs boots`・`boots-res-ev.mjs`)。
-2. ~~CoE との突き合わせを広げる~~ 済み (10-23、2 本目): カオス (通常・上級・完全) × 靴 3 形・指輪 1 形と、消去 (素・右側・左側) が CoE の正確な割合と幅の中 (notes/2026-10-23-coe-chaos.md、`check-coe-chaos.mjs`)。前の check-coe-odds.mjs の CoE のレアリティの書き方 (3 → ItemRarity.RARE) も直した、数字は同じ。
+1・2 (代わりの見本の数字・CoE との突き合わせ) は済み (10-23)、notes/2026-10-23-todo-archive.md へ。
 3. **⑤ 回し直し** (11/7〜10): 相場を新しくして (自分のサーバーの /boot.json を 1 回) 見本 (ES 手袋・金の指輪 C・マナ系の指輪・耐性の靴 boots-res-ev.mjs) を回し直して表に。
 - 決まり: 配信者の名前を notes・見本・記事に出さない (オーナー 10-22)。記事は書かない (記事編集長、照らし合わせも向こうの部下)。報告はブラック (宛先は dev/todo.md の表) へ直接。
 

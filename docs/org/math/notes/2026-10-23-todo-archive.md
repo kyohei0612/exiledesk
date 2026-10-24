@@ -20,3 +20,16 @@
 - K3 範囲 A: 始めの形を stepOutcomes で (model.starts)、白からマジックで一緒に揃える道に対応
 - K2 auto-rules.ts (rulesFromDetail・methodsFromDetail・answerFor)、手袋・靴で答え無し 0・イレギュラー 0。answerFor はまだ一度も使われていない
 - solveOrder の NaN (9f44b722)・カオスの下限を orbFloor に (c8cd7ab5)・手 5 stepOutcomes (32e938d9)・手 4 の突き合わせ (11cbb873)
+
+## 10-25 にホワイトが todo から移した物 (中身はそのまま)
+
+### 引き継ぎ (2026-10-22 夜、3 本目 → 4 本目、会話が長くなったので入れ替え)
+- 宛先: dev/todo.md の常駐の宛先の表 (送信の上限で送れない時はブラック経由)。送れない時は報告をこの頭に書いて commit、ターンの最後の文にも同じ 2〜5 行 (dev/README 決まり 8)。
+- 3 本目でやった事 (全部 push 済み): 金の指輪サフィの替え案の確かめ (上の 3 本目の行)・ツリーのベースの値段の突き合わせ (notes/2026-10-22-tree-base-cost.md、4 MOD は壁つき 1/3 で決着)・金の指輪の全体 約 643〜672 神 (prefix の追記 3)・**白紙のツリー 13 本の突き合わせ** (notes/2026-10-22-tree-patterns-check.md 追記 1〜8)・amulet-4aims の安い打ち方 v5b (notes/2026-10-22-amulet-4aims.md)・body-essence の安い形 (追記 6・7)。
+- 回し直しの手順 (シミュ部長が木を直すたびに頼まれる): `git pull` → 台本から組み直し `OUT=<scratchpad>/pat PAT=<名前> pnpm -s exec vitest run -c scripts/_tree-patterns-probe.config.ts` (PAT 無しで全部、前の形の body-essence は組む途中で落ちる) → `DIR=<その置き場> SAMPLES=1 USES=1 node scripts/analysis/check-tree-patterns.mjs 1000 <種 1・2>` (値段 = data-cache/boot/boot-2026-10-22.json を画面と同じ enOf で、MIMIC= 木の真似・ALT= 対案) → `node scripts/analysis/check-tree-run.mjs all 300 1` を前の数字と行ごとに比べる (控えは scratchpad にしか無いので、新しい解析君は最初に 1 回取る)。
+- 今の数字 (de6ddf96、反響のお告げの後): 13 本 + 見本 4 本とも字のとおりと 1 割以内、1 割超えは boots-chaos-onspam だけ (木の手順がカオスの 2 箱を行き来、空きがあれば側の高貴に戻す形で 27〜28 神)。見本 金の指輪 375〜383 神・アミュ 540〜554・靴 28〜31・robe 38〜40。
+- 触らない: tree-run.ts は解析君の物だが今はシミュ部長が直している (ブラックの指示)。
+
+### 済み (10-23、2 本目。11/10 までの並びの 1・2)
+1. 代わりの見本の数字: ドレイクスキンブーツ + 移動速度 T1 フラクチャー + 元素耐性 T1 × 2 = 1 個 29.86 神 (台本 1 万人)。ツリー 2 通り (分かれ目・当たり外れの箱) は台本と同じ seed で一致 (notes/2026-10-23-boots-res.md、`check-tree-run.mjs boots`・`boots-res-ev.mjs`)。
+2. CoE との突き合わせを広げる: カオス (通常・上級・完全) × 靴 3 形・指輪 1 形と、消去 (素・右側・左側) が CoE の正確な割合と幅の中 (notes/2026-10-23-coe-chaos.md、`check-coe-chaos.mjs`)。前の check-coe-odds.mjs の CoE のレアリティの書き方 (3 → ItemRarity.RARE) も直した、数字は同じ。
