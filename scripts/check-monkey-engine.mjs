@@ -107,6 +107,9 @@ function checkWalk(tr) {
   if (!doc?.boxes || !res?.n) return null;
   if (!start) return { skipped: "始まりの boxItem が無い" };
   if (res.capped) return { skipped: `ツリーで打ち止め ${res.capped} 人 (値段の打ち止めは辿れない)` };
+  // ツリーが着いた箱から形の合う箱へ移した (settle、result.moved = 箱ごとの人数) 木は、walkTree が形合わせを辿らないので比べない (10-24 シミュ部長 19 本目)
+  const moved = typeof res.moved === "number" ? res.moved : Object.values(res.moved ?? {}).reduce((a, n) => a + Number(n || 0), 0);
+  if (moved > 0) return { skipped: `ツリーが形の合う箱へ移した (${moved} 回)` };
   const w = E.walkTree(doc.boxes, start, res.n, 1);
   if (w.unsupported) return { skipped: `辿らない形: ${w.unsupported}` };
   const off = [];
@@ -193,7 +196,7 @@ for (const f of files) {
   const walk = checkWalk(rec.tree);
   if (walk) {
     walkSum.trees++;
-    if (walk.skipped) walkSum.skipped[walk.skipped.replace(/\d+ 人/, "N 人")] = (walkSum.skipped[walk.skipped.replace(/\d+ 人/, "N 人")] ?? 0) + 1;
+    if (walk.skipped) walkSum.skipped[walk.skipped.replace(/\d+ (人|回)/, "N $1")] = (walkSum.skipped[walk.skipped.replace(/\d+ (人|回)/, "N $1")] ?? 0) + 1;
     else { walkSum.compared++; if (walk.off.length) { walkSum.off++; for (const x of walk.off) add(`完成・個数  ${x.replace(/ ツリー .*$/, "")}`); } }
   }
   if (treeCheck) {
