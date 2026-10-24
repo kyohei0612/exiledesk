@@ -10,6 +10,7 @@
  *   - シミュレーターのレシピ (保存・上書き・共有): ?page=recipes (2026-10-21)
  *   - クラフトの道 (ツリー): ?page=sim-tree (2026-10-22、開発版だけ。工程の sim-○○ より先に見分ける)。最初のベース選び ?page=sim-base・完成の MOD ?page=sim-mods も同じツリーのページ (treeStep、2026-10-24)
  *   - デイリークラフトチャレンジ: ?page=daily (一覧)・?page=daily&q=<id> (お題)・?page=daily-start&q=<id> (フラクチャー選び) (2026-10-22、開発版だけ。ヘッダーの「デイリー」から)
+ *   - PoE2 で使える PoE1 のスキンの一覧: ?page=skins (2026-10-25、開発版だけ。ヘッダーの「スキン」から)
  *   - 旧シミュレーターの工程 (?page=sim-mods など) は 10-22 に消した。古い URL はクラフトのまま開く
  * 移るたびに履歴に積む (ブラウザの戻るで前のページへ)。URL から開いた時もそのページで始める (計算機は今のアイテムが要るので URL からは開かない)。
  * ページを移るたびに広告の枠を出し直す (utils/ads.ts の pageTick)。MOD 一覧は重ねる窓のまま、ページにしない (2026-10-12)
@@ -27,6 +28,10 @@ import { pageTick } from "../utils/ads";
 import { tr } from "../i18n/lang";
 import { track } from "./track";
 import { flag } from "./release-flags";
+
+/** PoE2 で使える PoE1 のスキンの一覧のページ (?page=skins、SkinsPage.vue。2026-10-25 オーナー)。開発版だけ (スイッチ skins) */
+export const skinsPage = ref(false);
+export const SKINS_ON = flag("skins");
 
 /**
  * ツリーのページの中の段 (2026-10-24 オーナー「シミュレーターのタブを押したら最初のベース選択のページへ (オーバーレイでなくページ全体)、MOD も別ページ」)。
@@ -78,6 +83,7 @@ function stateAt(i: number): Record<string, unknown> {
 /** ベース選び・計算機・要望のページを閉じる (別のページへ移る時) */
 function leaveSubPages(): void {
   feedbackPage.value = false;
+  skinsPage.value = false;
   recipesPage.value = false;
   treePage.value = false;
   dailyPage.value = null;
@@ -103,6 +109,7 @@ export function openFeedback(): void {
     recipesPage.value = false;
     treePage.value = false;
     dailyPage.value = null;
+    skinsPage.value = false;
     feedbackPage.value = true;
   });
 }
@@ -115,6 +122,7 @@ export function openRecipesPage(): void {
     feedbackPage.value = false;
     treePage.value = false;
     dailyPage.value = null;
+    skinsPage.value = false;
     recipesPage.value = true;
   });
 }
@@ -126,6 +134,7 @@ export function openTreePage(step: TreeStep = "tree"): void {
   feedbackPage.value = false;
   recipesPage.value = false;
   dailyPage.value = null;
+  skinsPage.value = false;
   treeStep.value = step;
   treePage.value = true;
 }
@@ -145,8 +154,25 @@ export function openDailyPage(to: DailyView = { view: "list" }): void {
     feedbackPage.value = false;
     recipesPage.value = false;
     treePage.value = false;
+    skinsPage.value = false;
     dailyPage.value = { ...to };
   });
+}
+/** スキンの一覧のページを開く (ヘッダーの「スキン」。開発版だけ) */
+export function openSkinsPage(): void {
+  if (!SKINS_ON) return;
+  leaveThen("page=skins", () => {
+    s.hold(null);
+    feedbackPage.value = false;
+    recipesPage.value = false;
+    treePage.value = false;
+    dailyPage.value = null;
+    skinsPage.value = true;
+  });
+}
+/** スキンの一覧のページを閉じてクラフトへ戻る */
+export function closeSkinsPage(): void {
+  skinsPage.value = false;
 }
 /** デイリーのページを閉じてクラフトへ戻る (クラフト画面は隠していただけなので、前の状態のまま) */
 export function closeDailyPage(): void {
@@ -174,6 +200,7 @@ export function openBasePage(): void {
     recipesPage.value = false;
     treePage.value = false;
     dailyPage.value = null;
+    skinsPage.value = false;
     basePage.value = true;
   });
 }
@@ -190,6 +217,7 @@ export const page = computed((): string => {
   if (recipesPage.value) return "page=recipes";
   if (treePage.value) return `page=sim-${treeStep.value}`;
   if (dailyPage.value) return dailyQuery(dailyPage.value);
+  if (skinsPage.value) return "page=skins";
   if (routesOpen.value) return "page=routes";
   const id = topic.value?.id ?? course.value?.id;
   if (id) return `course=${id}`;
@@ -206,6 +234,7 @@ export const pageTitle = computed((): string => {
   if (p === "page=routes") return tr("スパムシミュレーター — ExileDesk", "Spam simulator — ExileDesk");
   if (p === "page=recipes") return tr("レシピ — シミュレーター — ExileDesk", "Recipes — Simulator — ExileDesk");
   if (p === "page=sim-tree") return tr("クラフトの道 (ツリー) — ExileDesk", "Craft route tree — ExileDesk");
+  if (p === "page=skins") return tr("PoE2 で使える PoE1 のスキン — ExileDesk", "PoE1 skins usable in PoE2 — ExileDesk");
   if (p === "page=sim-base") return tr("ベースを選ぶ — シミュレーター — ExileDesk", "Choose a base — Simulator — ExileDesk");
   if (p === "page=sim-mods") return tr("完成の MOD — シミュレーター — ExileDesk", "Target mods — Simulator — ExileDesk");
   const d = dailyOf(p);
@@ -217,7 +246,7 @@ export const pageTitle = computed((): string => {
   return tr("ExileDesk — PoE2 クラフトシミュレーター", "ExileDesk — PoE2 Craft Simulator");
 });
 
-const PAGE_KEYS = ["guide", "base", "feedback", "routes", "recipes", "sim-tree", "sim-base", "sim-mods", "daily", "daily-start"];
+const PAGE_KEYS = ["guide", "base", "feedback", "routes", "recipes", "sim-tree", "sim-base", "sim-mods", "skins", "daily", "daily-start"];
 function urlFor(p: string): string {
   const u = new URL(location.href);
   u.searchParams.delete("page");
@@ -255,6 +284,8 @@ function apply(p: string): void {
     const d = dailyOf(p);
     if (d && DAILY_ON) { dailyPage.value = d; return; }
     dailyPage.value = null;
+    if (p === "page=skins" && SKINS_ON) { skinsPage.value = true; return; }
+    skinsPage.value = false;
     if (p.startsWith("course=")) {
       const c = TOPIC_COURSES.find((x) => x.id === p.slice(7) && courseShown(x));
       if (c) { if (topic.value?.id !== c.id) { leaveSubPages(); s.hold(null); endLesson(); startTopicAt(c, 0); } return; }
@@ -299,6 +330,7 @@ export function startPages(): void {
     else if (p === "page=sim-base") track("page:sim-base");
     else if (p === "page=sim-mods") track("page:sim-mods");
     else if (dailyOf(p)) track("page:daily", dailyOf(p)!.view);
+    else if (p === "page=skins") track("page:skins");
     else if (p === "page=routes") track("page:routes");
     else if (p.startsWith("page=sim-")) track("page:sim", p.slice(9));
     else if (p === "") track("page:craft");

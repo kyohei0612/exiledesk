@@ -26,7 +26,7 @@ import { tr } from "../i18n/lang";
 import { loadBoot, type Boot } from "./boot";
 import InstallButton from "./InstallButton.vue";
 import LangSwitch from "../components/LangSwitch.vue";
-import { closeDailyPage, openDailyPage, openFeedback, openGuide, page } from "./page";
+import { closeDailyPage, openDailyPage, openFeedback, openGuide, openSkinsPage, page, SKINS_ON, skinsPage } from "./page";
 import AdSlot from "../components/ui/AdSlot.vue";
 import WebFooter from "./WebFooter.vue";
 import { pageTick, sideAdW } from "../utils/ads";
@@ -34,6 +34,7 @@ import { BLOG_ON, DAILY_ON, dailyPage, feedbackPage, recipesPage, routesOpen, TR
 import { prefetchWhenIdle } from "./prefetch";
 import { flag } from "./release-flags";
 const SideReads = defineAsyncComponent(() => import("./SideReads.vue")); // 右の列の読み物 (関係する記事・新しい記事・使い方、/blog/index.json)
+const SkinsPage = defineAsyncComponent(() => import("./SkinsPage.vue")); // PoE2 で使える PoE1 のスキンの一覧 (2026-10-25、開発版だけ)
 const StageRoutesPage = defineAsyncComponent(() => import("../views/craft-stage/StageRoutesPage.vue"));
 const loadTree = () => import("../views/simulator/tree/SimTreePage.vue");
 const SimTreePage = defineAsyncComponent(loadTree); // クラフトの道 (ツリー) のページ (2026-10-22、開発版だけ)。手が空いたら先に読む (下の onMounted)
@@ -66,7 +67,7 @@ watch(feedbackPage, (on) => {
  */
 const craftPage = computed(() => page.value === "");
 /** 広告の枠を置くのは文章のあるページだけ (使い方・コツ、コース、デイリー)。操作の画面 (クラフト台・ベース選び・スパムシミュレーター・要望) には置かない (2026-10-22 AdSense の再申請。デイリーはデイリー部長の頼みで両脇に置く) */
-const textPage = computed(() => page.value === "page=guide" || page.value.startsWith("course=") || !!dailyPage.value);
+const textPage = computed(() => page.value === "page=guide" || page.value.startsWith("course=") || !!dailyPage.value || skinsPage.value);
 /**
  * 45 分以上触らずに戻ってきた時 (タブを開き直した・何か押した時) は、相場とチャンネルだけ裏で取り直す。画面と作業中の物はそのまま
  * (2026-10-07 オーナー「45 分放置でリロードにしようかな」→ ページごと読み直すと手で打った手順などが消えるので、取り直しだけに)
@@ -169,6 +170,8 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       <!-- 使い方・コツのページ (動画へのリンク + チュートリアルのコース。2026-10-18 オーナー「チュートリアルは使い方にしまう」) -->
       <!-- デイリークラフトチャレンジ (2026-10-22、開発版だけ。?page=daily) -->
       <button v-if="DAILY_ON" type="button" data-rec-part="header-daily" class="g-btn sm" :class="[phone ? '!min-h-9 !px-0 text-[12px]' : '', dailyPage ? 'on' : '']" :aria-pressed="!!dailyPage" @click="openDailyPage()">{{ tr("デイリー", "Daily") }}</button>
+      <!-- PoE2 で使える PoE1 のスキンの一覧 (2026-10-25、開発版だけ。?page=skins) -->
+      <button v-if="SKINS_ON" type="button" data-rec-part="header-skins" class="g-btn sm" :class="[phone ? '!min-h-9 !px-0 text-[12px]' : '', skinsPage ? 'on' : '']" :aria-pressed="skinsPage" @click="openSkinsPage">{{ tr("スキン", "Skins") }}</button>
       <!-- ブログ (読み物への入口、2026-10-22 AdSense の再申請。開発版だけ) -->
       <a v-if="BLOG_ON" data-rec-part="header-blog" :href="tr('/blog/', '/en/blog/')" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''">{{ tr("ブログ", "Blog") }}</a>
       <button type="button" data-rec-part="header-help" class="g-btn sm" :class="[phone ? '!min-h-9 !px-0 text-[12px]' : '', guideOn ? 'on' : '']" :aria-pressed="guideOn" @click="openGuide">{{ tr("使い方・コツ", "Guide & Tips") }}</button>
@@ -218,8 +221,9 @@ window.visualViewport?.addEventListener("resize", fitZoom);
           <div class="g-panel px-4 py-10 text-center text-[var(--exile-color-text-secondary)]">{{ tr("準備中", "Coming soon") }}</div>
         </section>
       </template>
+      <SkinsPage v-if="skinsPage && !feedbackPage" />
       <SimTreePage v-if="treePage && !feedbackPage && !recipesPage" /><!-- クラフトの道 (ツリー) のページ (2026-10-22、開発版だけ) -->
-      <CraftStage v-show="!feedbackPage && !recipesPage && !treePage && !dailyPage && !(routesOpen && craftStage.item.value)" class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
+      <CraftStage v-show="!feedbackPage && !recipesPage && !treePage && !dailyPage && !skinsPage && !(routesOpen && craftStage.item.value)" class="min-w-0 flex-1 !h-auto !overflow-visible" :class="phone ? 'shrink-0' : ''">
         <template #footer>
           <WebFooter class="-mx-4" />
         </template>
