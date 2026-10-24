@@ -209,12 +209,10 @@ function literal(doc, rule, n, seed) {
 
 /** 木のとおり (tree-run) + 完成の中身: 完成に数えた人のうち狙いが全部付いていた割合は tree-run の結果に無いので、ここでは perItem・完成・打ち止め・止まりだけ */
 const files = fs.readdirSync(PAT_DIR).filter((f) => f.endsWith(".json")).sort();
-/** SAMPLES=1: 見本の木 (tree-samples) も木だけ回す (字のとおりの決まりは無い)。始めの費用 (ベース代) は入れない */
-const samples = process.env.SAMPLES ? M.TREE_SAMPLES.map((nm) => ({ pattern: `見本 ${nm}`, tree: M.treeSample(nm) })) : [];
 const pct = (x) => `${(100 * x).toFixed(0)}%`;
 console.log(`${N} 人・種 ${SEED}。1 個あたり (神) / 完成 / 打ち止め / 止まり`);
-for (const f of [...files, ...samples]) {
-  const j = typeof f === "string" ? JSON.parse(fs.readFileSync(path.join(PAT_DIR, f), "utf8")) : f;
+for (const f of files) {
+  const j = JSON.parse(fs.readFileSync(path.join(PAT_DIR, f), "utf8"));
   const name = j.pattern ?? f.replace(/\.json$/, "");
   if (ONLY && !ONLY.has(name)) continue;
   const doc = j.tree;

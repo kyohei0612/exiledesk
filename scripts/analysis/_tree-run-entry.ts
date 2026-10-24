@@ -5,4 +5,3 @@ export { loadPatch } from "../../tests/helpers/patch";
 export { runTree } from "../../src/services/simulator/tree/tree-run";
 export { startFrom, applyCurrency, mulberry32 } from "../../src/services/craft-stage/engine";
 export { makeStageMod, withMod } from "../../src/services/craft-stage/engine";
-export { treeSample } from "../../src/services/simulator/tree/tree-samples";

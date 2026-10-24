@@ -3,7 +3,6 @@
  */
 export { loadPatch } from "../../tests/helpers/patch";
 export { runTree } from "../../src/services/simulator/tree/tree-run";
-export { treeSample, TREE_SAMPLES } from "../../src/services/simulator/tree/tree-samples";
 export { startItemOf } from "../../src/services/simulator/tree/tree-sample";
 export { applyCurrency, freshItem, mulberry32, revealOffers, unrevealedOf } from "../../src/services/craft-stage/engine";
 export { enOf } from "../../src/state/for-share/craft-stage-shelf";
