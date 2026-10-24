@@ -97,6 +97,29 @@ function checkTree(tr, steps = []) {
   return res;
 }
 
+/**
+ * 完成した人の割合と手ごとの 1 人あたりの個数 (記録の頭の tree.result = 画面の「100 人回す」と同じ物、7 回目〜)。エンジンだけで同じ木を同じ人数辿らせて (walkTree) 比べる。
+ * 値段の表は記録に無いので費用は個数で比べる。ツリーが打ち止め (値段の打ち止めもある) の人を出した木は比べない。
+ * ずれ = 完成の割合が 4σ (両方の 2 項の幅) を超えて 10 ポイントより違う、または手の個数が 0.5 個以上・5 割より違う
+ */
+function checkWalk(tr) {
+  const doc = tr?.dump, res = tr?.result, start = tr?.items?.start?.raw;
+  if (!doc?.boxes || !res?.n) return null;
+  if (!start) return { skipped: "始まりの boxItem が無い" };
+  if (res.capped) return { skipped: `ツリーで打ち止め ${res.capped} 人 (値段の打ち止めは辿れない)` };
+  const w = E.walkTree(doc.boxes, start, res.n, 1);
+  if (w.unsupported) return { skipped: `辿らない形: ${w.unsupported}` };
+  const off = [];
+  const q1 = res.finished / res.n, q2 = w.finished / w.n, sd = Math.sqrt(Math.max(q1 * (1 - q1), q2 * (1 - q2), 1e-9) * (1 / res.n + 1 / w.n));
+  if (Math.abs(q1 - q2) > 4 * sd && Math.abs(q1 - q2) > 0.1) off.push(`完成 ツリー ${(q1 * 100).toFixed(0)}% / エンジン ${(q2 * 100).toFixed(0)}%`);
+  for (const k of new Set([...Object.keys(res.uses ?? {}), ...Object.keys(w.uses)])) {
+    const a = res.uses?.[k] ?? 0, b = w.uses[k] ?? 0;
+    if (Math.abs(a - b) >= 0.5 && Math.abs(a - b) > 0.5 * Math.max(a, b)) off.push(`個数 ${k} ツリー ${a.toFixed(2)} / エンジン ${b.toFixed(2)}`);
+  }
+  return { tree: { n: res.n, finished: res.finished, stuck: res.stuck, stuckAt: res.stuckAt, uses: res.uses }, engine: w, off };
+}
+const walkSum = { trees: 0, compared: 0, off: 0, skipped: {} };
+
 const files = readdirSync(dir).filter((f) => f.endsWith(".json") && f !== "engine-check.json");
 const treeSum = { trees: 0, boxes: 0, off: 0 };
 const sum = { steps: 0, shelfSame: 0, shelfDiff: 0, omensSame: 0, omensDiff: 0, skipped: 0, skipWhy: {} };
@@ -167,15 +190,22 @@ for (const f of files) {
     outSteps.push({ ...st, engine, ...(Object.keys(diff).length ? { diff } : {}) });
   }
   const treeCheck = checkTree(rec.tree, rec.steps);
+  const walk = checkWalk(rec.tree);
+  if (walk) {
+    walkSum.trees++;
+    if (walk.skipped) walkSum.skipped[walk.skipped.replace(/\d+ 人/, "N 人")] = (walkSum.skipped[walk.skipped.replace(/\d+ 人/, "N 人")] ?? 0) + 1;
+    else { walkSum.compared++; if (walk.off.length) { walkSum.off++; for (const x of walk.off) add(`完成・個数  ${x.replace(/ ツリー .*$/, "")}`); } }
+  }
   if (treeCheck) {
     treeSum.trees++; treeSum.boxes += treeCheck.boxes.length;
     for (const r of treeCheck.boxes) if (r.off.length) { treeSum.off++; for (const x of r.off) add(`数字 ${r.hand}  ${x.replace(/ ツリー .*$/, "")}`); }
   }
-  writeFileSync(join(outDir, f), JSON.stringify({ ...rec, steps: outSteps, ...(treeCheck ? { treeCheck } : {}) }, null, 1));
+  writeFileSync(join(outDir, f), JSON.stringify({ ...rec, steps: outSteps, ...(treeCheck ? { treeCheck } : {}), ...(walk ? { walk } : {}) }, null, 1));
 }
-writeFileSync(join(outDir, "engine-check.json"), JSON.stringify({ ...sum, tree: treeSum, top:[...tally].sort((a, b) => b[1] - a[1]) }, null, 1));
+writeFileSync(join(outDir, "engine-check.json"), JSON.stringify({ ...sum, tree: treeSum, walk: walkSum, top:[...tally].sort((a, b) => b[1] - a[1]) }, null, 1));
 console.log(`手 ${sum.steps}: 棚が同じ ${sum.shelfSame} / 違う ${sum.shelfDiff} / 比べられない ${sum.skipped}。お告げ (猿が欄を開いた手) 同じ ${sum.omensSame} / 違う ${sum.omensDiff}`);
 if (treeSum.trees) console.log(`ツリーの数字 (記録の頭の tree): 木 ${treeSum.trees}、手の箱 ${treeSum.boxes}、ずれのある箱 ${treeSum.off}`);
+if (walkSum.trees) console.log(`完成・個数 (記録の頭の tree.result): 木 ${walkSum.trees}、比べた ${walkSum.compared}、ずれ ${walkSum.off}。比べない: ${Object.entries(walkSum.skipped).map(([k, n]) => `${k} ${n}`).join(" / ") || "無し"}`);
 for (const [w, n] of Object.entries(sum.skipWhy)) console.log(`  比べられない: ${w} ${n}`);
 for (const [k, n] of [...tally].sort((a, b) => b[1] - a[1]).slice(0, 25)) console.log(`  ${n} 手  ${k}`);
 console.log(`書き出し: ${outDir} (猿と同じ名前のファイルに engine 欄と diff、まとめは engine-check.json)`);
