@@ -4,6 +4,7 @@
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { applyCurrency } from "../apply-currency";
+import { craftedLimitOf } from "../apply-essence";
 import { forceKey } from "../apply-force";
 import { hits } from "../aim-odds";
 import { freshItem } from "../run-plan";
@@ -80,4 +81,35 @@ export function placeMods(data: PatchData, base: string, itemLevel: number, mods
     else left.push({ ...m, reason: r.reason ?? tr("付けられない", "Cannot add") });
   }
   return { item, left };
+}
+
+/** goalBlock の狙いの組を付けた形の覚え (表の行ごとに同じ組で呼ばれるので、組ごとに 1 回だけ付ける) */
+const placedMemo = new Map<string, StageItem>();
+/**
+ * 完成形の狙いの組 aims に、もう 1 つ add を足せるか (2026-10-24 シミュ部長 19 本目の頼み、オーナー OK: 付けられない組を選べなくする)。足せなければ理由の文、足せれば null。
+ * 見る物: 冒涜の MOD は 1 つまで・クラフト MOD (エッセンス・完全エッセンス・合金で付く物) は craftedLimitOf まで (指名の手はこの 2 つを数えないので、ここで数える)。
+ * 枠 (プレ・サフィの数)・同じ系統・アイテムレベルは、狙いの組を placeMods と同じ指名の手で付けた形に add を 1 回付けてみて、核の断りの文をそのまま返す。
+ * aims に add と同じ物があれば null (もう選んである)
+ */
+export function goalBlock(data: PatchData, base: string, itemLevel: number, aims: readonly TierMod[], add: TierMod): string | null {
+  if (aims.some((a) => a.modId === add.modId && a.tier === add.tier)) return null;
+  if (!data.mods.get(add.modId)) return tr("この MOD はベースに無い", "This mod is not on the base");
+  const src = (m: TierMod): string => String(data.mods.get(m.modId)?.source ?? "");
+  const all = [...aims, add];
+  if (src(add) === "desecrated" && all.filter((m) => src(m) === "desecrated").length > 1) return tr("冒涜の MOD は 1 つまで", "Only 1 desecrated mod per item");
+  // 同じ系統 (同じ MOD の別の段も): 指名の手は段を置き換えて通るので、ここで断る。エッセンスの MOD と同じ系統の普通の MOD は一緒に付く (確認済みの決まり) ので通す
+  const fams = (m: TierMod): string[] => { const d = data.mods.get(m.modId); return d ? (d.families?.length ? [...d.families] : [d.family]) : []; };
+  const ess = (m: TierMod): boolean => /essence/.test(src(m));
+  if (aims.some((a) => ess(a) === ess(add) && fams(a).some((f) => fams(add).includes(f)))) return tr("同じ系統の MOD がもう狙いにある", "A mod of the same family is already a target");
+  const key = `${base}|${itemLevel}|${aims.map((a) => `${a.modId}#${a.tier}${a.fractured ? "f" : ""}`).sort().join(",")}`;
+  let item = placedMemo.get(key);
+  if (!item) {
+    item = placeMods(data, base, itemLevel, aims, mulberry32(1)).item;
+    if (placedMemo.size > 200) placedMemo.clear();
+    placedMemo.set(key, item);
+  }
+  const crafted = (m: TierMod): boolean => /essence/.test(src(m)) && !m.fractured;
+  if (crafted(add) && all.filter(crafted).length > craftedLimitOf(item)) return tr(`クラフト MOD (エッセンス・合金) は ${craftedLimitOf(item)} つまで`, `Max ${craftedLimitOf(item)} crafted (Essence / Alloy) mod(s)`);
+  const r = applyCurrency(data, item, keyOf(data, add), mulberry32(1));
+  return r.applied ? null : r.reason ?? tr("付けられない", "Cannot add");
 }
