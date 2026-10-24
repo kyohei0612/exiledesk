@@ -9,11 +9,11 @@ import { tr } from "../../../i18n/lang";
 import TreeHandShelf from "./TreeHandShelf.vue";
 
 defineProps<{ boxId: string; current: Hand | null }>();
-const emit = defineEmits<{ pick: [hand: Hand, kind: HandKind, aims: Aim[], preCatalyst: string | null, only: { out: OutKind; aim: Aim | null } | null]; clear: []; close: []; split: []; back: []; aim: [] }>();
+const emit = defineEmits<{ pick: [hand: Hand, kind: HandKind, aims: Aim[], preCatalyst: string | null, only: { out: OutKind; aim: Aim | null } | null]; clear: []; close: []; back: []; aim: [] }>();
 </script>
 
 <template>
   <ModalShell :open="true" rec="tree-hand" :title="current ? tr('打つ手を替える', 'Change the craft') : tr('次に打つ手', 'Next craft')" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" width="w-[94%] max-w-[1500px] max-md:w-full" full-on-phone body-class="px-3 pb-3" @close="emit('close')">
-    <TreeHandShelf :box-id="boxId" :current="current" @pick="(...a) => emit('pick', ...a)" @clear="emit('clear')" @close="emit('close')" @split="emit('split')" @back="emit('back')" @aim="emit('aim')" />
+    <TreeHandShelf :box-id="boxId" :current="current" @pick="(...a) => emit('pick', ...a)" @clear="emit('clear')" @close="emit('close')" @back="emit('back')" @aim="emit('aim')" />
   </ModalShell>
 </template>

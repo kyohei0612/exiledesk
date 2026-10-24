@@ -22,7 +22,7 @@ import TreeHandPage from "./TreeHandPage.vue";
 import { useTree } from "./use-tree";
 import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
 import { craftStage as s } from "../../../state/craft-stage";
-import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, removeHit, setAim, setBack, setDone, setHand, setSplit, handUses, type Aim, type Hand, type HandKind, type OutKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
+import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, removeHit, setAim, setBack, setDone, setHand, handUses, type Aim, type Hand, type HandKind, type OutKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
 import { tidy } from "../../../services/simulator/tree/tree-layout";
 import { handLabel, outName } from "./tree-names";
 import { aimsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
@@ -184,8 +184,6 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = nul
   const kids = doc.value.boxes[at]?.outs ?? [];
   if (kids.length) void v.reveal(kids[Math.floor(kids.length / 2)]!);
 }
-/** 打たずに分ける (分かれ目にして、行の欄を開く) */
-function onSplit(): void { const id = panel.value!.id; if (picking.value === id) picking.value = null; t.edit((d) => setSplit(d, id)); panel.value = { kind: "split", id }; }
 /**
  * Vue Flow の出来事: 空き所を押す = 右の欄を閉じる (よくあるモーダルと同じ。オーナー 10-22。引っ張った時は Vue Flow が画面を動かすだけ)。
  * 箱を押す = 戻り先を選んでいる時はそこへつなぐ / 縮めて見ている時は編集のポップアップ / ふつうは開いている欄を閉じるだけ
@@ -402,7 +400,7 @@ const glowOf = (b: Box): boolean => {
     </div>
     <!-- エミュレーター / シミュレーター β の切り替え (エミュの画面の帯と同じ共通の部品、10-23 オーナー「帯を 1 つにして両方に」) -->
     <ModeTabs class="mb-3" />
-    <TreeOverlays /><TreeHandPage v-if="panel?.kind === 'hand' && panelBox" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" @split="onSplit" @back="picking = panel!.id; panel = null" @aim="panel = { kind: 'aim', id: panel!.id }" />
+    <TreeOverlays /><TreeHandPage v-if="panel?.kind === 'hand' && panelBox" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" @back="picking = panel!.id; panel = null" @aim="panel = { kind: 'aim', id: panel!.id }" />
     <TreePanelPage v-else-if="panel && panelBox" :key="`${panel.kind}-${panel.id}`" :kind="panel.kind === 'split' || panel.kind === 'note' ? panel.kind : 'aim'" :box-id="panel.id" :current="panelBox.aim" @pick="pickAim" @close="panel = null" />
     <div v-show="!t.goalInline.value" class="g-panel flex flex-col gap-2 px-3 py-2 max-md:px-0.5" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
       <!-- 帯: 全体の数字 (まだ) ・1 つ戻す・拡大縮小・全画面。ベースが無い空の形 (t.needBase) の間は「レシピ ▾」と「メモ」だけ (今押しても意味の無い物は出さない、10-23 オーナー) -->

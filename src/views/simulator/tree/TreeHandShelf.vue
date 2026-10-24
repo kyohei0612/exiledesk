@@ -30,7 +30,7 @@ const props = defineProps<{ boxId: string; current: Hand | null }>();
 /** pick の preCatalyst = 前に足す品質だけ上げる手のカタリスト (触媒のお告げで、まだ品質を上げる手の後でない時) */
 /** only = 結果が 1 通りの手の結果 (tree-sample の singleOutOf、光のお告げ + 消去など) */
 /** back = 打たずに既にある箱へ戻す (重ね窓を閉じて箱を押して選ぶ) */
-const emit = defineEmits<{ pick: [hand: Hand, kind: HandKind, aims: Aim[], preCatalyst: string | null, only: { out: OutKind; aim: Aim | null } | null]; clear: []; close: []; split: []; back: []; aim: [] }>();
+const emit = defineEmits<{ pick: [hand: Hand, kind: HandKind, aims: Aim[], preCatalyst: string | null, only: { out: OutKind; aim: Aim | null } | null]; clear: []; close: []; back: []; aim: [] }>();
 const t = useTree();
 
 const sample = computed(() => (s.data.value ? sampleOf(s.data.value, t.doc.value, props.boxId, 1) : null));
@@ -141,8 +141,7 @@ function ok(): void {
       <div data-tree-hand-card :class="held && problem ? 'cursor-not-allowed opacity-60' : ''" :title="problem ?? undefined"><StageItemCard v-if="shelfItem" :item="preCat ? shelfItem : item ?? shelfItem" :row-tags="rowTags(preCat ? shelfItem : item ?? shelfItem)" :added="[]" :removed="[]" :holding="!!held && !problem" :flash-key="0" @use="ok" /></div>
       <div class="flex min-w-0 flex-col gap-1.5">
         <p class="text-[12px] opacity-70">{{ tr("棚から持って、カードを押すとこの箱の次の手になる", "Hold a currency from the shelf and click the item to make it this box's next craft") }}</p>
-        <!-- 打たずに分ける (分かれ目、10-22 オーナー OK): 今の形 (揃った狙い・外れの数) で行き先を分ける。始まりの箱では出さない -->
-        <button v-if="t.doc.value.boxes[boxId]?.out !== 'start'" type="button" data-tree-split class="g-btn sm self-start" :title="tr('手を打たずに、今の形 (揃った狙いの数・外れの数) で行き先を分ける', 'Do not craft; branch by the current shape (targets held, misses)')" @click="emit('split')">◇ {{ tr("打たずに分ける (分かれ目)", "Split without crafting") }}</button>
+        <!-- 打たずに分ける (分かれ目) のボタンは 10-25 に外した (オーナー「分かれ道マジでややこしいからボタンいらない」)。分かれ目は見本の木にある物だけ、窓 TreeSplitPick で行を直せる -->
         <button v-if="t.doc.value.boxes[boxId]?.out !== 'start'" type="button" data-tree-hand-back class="g-btn sm self-start" :title="tr('打たずに既にある箱へ戻す (窓を閉じて、戻り先の箱を押す)', 'Return to an existing box instead (closes this window; click the box)')" @click="emit('back')">↩ {{ tr("既にある箱へ戻す", "Return to a box") }}</button>
         <button v-if="current" type="button" class="g-btn sm self-start" @click="emit('clear')">{{ tr("この手を消す (下も消える)", "Remove this craft (and below)") }}</button>
 
