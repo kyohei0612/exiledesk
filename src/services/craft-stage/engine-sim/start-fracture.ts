@@ -28,9 +28,11 @@ const keyOf = (data: PatchData, m: TierMod): string => forceKey(m.modId, `T${m.t
  * - 外れ: 素の高貴で 1 つずつ付ける (候補と同じ系統・同じ文の MOD が付いた回は引き直す、tries 回まで)。
  * - extra = ✦ の後・外れの前に指名で付ける MOD (スタートの枠の「＋」で足した物)。外れの数は junk − extra の数 (0 未満は 0)。
  * - from = 白のレアの代わりに使うアイテム (ルーンを先に差した物など)。
+ * - avoid = 外れに付けない MOD (ツリーの完成の狙い全部など。同じ MOD・同じ系統で同じ文なら段を問わず引き直す、候補と同じ扱い。2026-10-24 シミュ部長 19 本目:
+ *   外れに完成の狙いの MOD が付くと、外れの箱のカオススパムで当たらず上限で外れになっていた)
  * - 固定できる候補が無い・extra や外れが付けられない時は note に理由 (固定できない時のアイテムは白、from があれば from)。
  */
-export function fractureStart(data: PatchData, base: string, itemLevel: number, candidates: readonly TierMod[], rng: () => number, o: { junk?: number; tries?: number; extra?: readonly TierMod[]; from?: StageItem } = {}):
+export function fractureStart(data: PatchData, base: string, itemLevel: number, candidates: readonly TierMod[], rng: () => number, o: { junk?: number; tries?: number; extra?: readonly TierMod[]; from?: StageItem; avoid?: readonly TierMod[] } = {}):
   { item: StageItem; fixed: TierMod | null; chances: Record<string, number>; note: string | null } {
   const extra = o.extra ?? [], junk = Math.max(0, (o.junk ?? 3) - extra.length), tries = o.tries ?? 200;
   const rare = o.from ?? freshItem(data, base, itemLevel, "rare");
@@ -49,7 +51,7 @@ export function fractureStart(data: PatchData, base: string, itemLevel: number, 
     if (!r.applied) return { item, fixed: { ...pick, fractured: true }, chances, note: r.reason ?? tr("足した MOD が付けられない", "Cannot add the extra mod") };
     item = r.item;
   }
-  const ts = candidates.map((c) => ({ modId: c.modId, minTierIndex: 0 })), opts = { data, sameText: true };
+  const ts = [...candidates, ...(o.avoid ?? [])].map((c) => ({ modId: c.modId, minTierIndex: 0 })), opts = { data, sameText: true };
   const isCand = (m: StageMod): boolean => ts.some((t) => hits(m, t, opts));
   for (let i = 0; i < junk; i++) {
     let placed = false;
@@ -60,7 +62,7 @@ export function fractureStart(data: PatchData, base: string, itemLevel: number, 
       item = x.item;
       placed = true;
     }
-    if (!placed) return { item, fixed: { ...pick, fractured: true }, chances, note: tr("候補でない MOD が付かなかった", "Could not roll a non-candidate mod") };
+    if (!placed) return { item, fixed: { ...pick, fractured: true }, chances, note: tr("候補・避ける MOD でない MOD が付かなかった", "Could not roll a mod outside the candidates and the avoided mods") };
   }
   return { item, fixed: { ...pick, fractured: true }, chances, note: null };
 }
