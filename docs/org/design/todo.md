@@ -1,13 +1,14 @@
 # デザイン部長 のやる事
 
-## 引き継ぎ (2 本目 local_d9a6380b-ff4e-49da-99e5-cfc1f662a6d0 → 3 本目、10-23 夜)
-- 持ち物 (10-23 に増えた): for-share・共通の部品・見た目・言語の切り替え・画面の挙動 (src/web・composables・utils) に加え、web.html (ページの入口) と scripts/deploy-web-dev.mjs (開発版の出し)。README の地図に書いた。決まりは 10 個 (8 = 両方の画面で同じ操作をして見た目と動きを並べ比べる、10 = 共有の線引き)。
-- 今日やった事 (詳しくは下の各節と notes/): 古い塊の読み直し (web.html の __staleReload + pwa.ts、出した直後の Cloudflare の版のずれは揃うのを待って 1 回)・開発版で 1 つ前の版の塊を残す (本番の案は notes/2026-10-23-keep-prev-assets.md)・開く・畳むの揃え (Esc は内側から、use-dismiss の積み)・上のタブの帯 ModeTabs・ベースのページの中身 BasePickBody・シミュの初手の送り・シミュの先読み (prefetch.ts)・fitZoom の揺れ。
-- オーナーの OK 待ち (見た目・操作): 3a250a59・60a880d3・ec25866e (1 本目から)、開く・畳むの揃え (994b95b8・6d535cbd・fb69342b)、ModeTabs (ad68e08b)、シミュの初手の送りとスマホの頭 (c01b78e7)。BasePickBody の @quick (7cde43ad) はエミュの @quick="pick('Gold Ring')" とそろった (画面はまだ見ていない)。裏方 (見た目ほぼ同じ): 古い塊の読み直し (12733c99〜2e952b59)・先読み (4f58312f)・fitZoom (a23050a4、バーの無いページで右に約 15px 余る)。本番の判断はブラック。
-- 残りの頼み: 無し (全部返した)。急がない控え: エミュの RevealPanel.vue:125 の `disabled:opacity-40` は共通で効くので要らない (誰にも頼んでいない)。ModTable の列の見出しに差し込み口が無い (要望待ち)。for-share が engine.ts を通さず核を直に読む所。本番で 1 つ前の版の塊を残す案 (最終チェック長・サーバー管理人へ)。
-- 気づき: 台本の posOf はタイルを真ん中へ送ってから押すので、送りの比べには使わない。隠れたもう 1 つのベース選びがあるので、目印は見えているページの中で探す。エミュがベース未選択で始まるのはタブで初めての時だけ (新しい profile が要る)。待ちは台本の中 (go-wait.mjs)、Chrome は close-chrome.mjs (CDP の Browser.close) で閉じる (PowerShell・sleep の繰り返しは使わない、オーナー「cmd がちらつく」)。python3 は Windows の入口で止まるので使わない。
-- 台本はブラックの共有メモ (side-session-notes/local_20eeeb19-…) の stale-*・expand-*・tabs-*・basepick-*・prefetch-check・zoom-flap・cpu-sweep・go-wait・close-chrome.mjs。小物 design-cdp.mjs は local_ec583720-… の方。開発版は `?k=8ZlDQtkU9siTTMXD-qDzj50w` を 1 回開いてから。
-- 使用表: 開発版・確認用 Chrome は返してある (空き)。dev/touching/design.md に触っている行は無い。
+## 次の部長へ (3 本目 local_1e0c8dab-f968-48a2-b867-04e5816e7dac → 4 本目、10-24)
+- 今の状態: v0.1.596 で本番も main の作り。本番に出していない物は src/web/release-flags.ts のスイッチで隠す (本番のビルドで切れ・開発版 / dev で入る、OK が出たら RELEASED に 1 行、CSS は :root[data-flag-…] の下)。使い方と入れた物は docs/org/dev/notes/2026-10-24-main-release.md。
+- 私の名前: sim・daily・dismiss・tierClose・modeTabs・fitZoom・omenRow・monkey1023 (エミュ 3 つ・ジン 5 つは各部)。確かめは本番の作りを WEB_OUT で scratchpad に vite build → vite preview (preview:prod は出し先が 1 つで 1 人ずつ、使用表を見る)。
+- 10-24 にした事 (詳しくは notes/2026-10-24-todo-archive.md と commit): 段の表を閉じる b6b7fea2・押せない札 178daf1b・タブ替えの守り 2affeeeb・分析を送らない (手元の dev) 00551d1f・スイッチ 3d616bd1・338c1c25・古いコードを消す 37839454 ほか・棚と for-share はアイテムを渡された物で引く 4194c728・8cb0a906。アイテムの枠の A/B 案は取り下げ。
+- 待っている返事: ブラック — 見た目に出ない裏の直し (履歴の戻り方・音・?lang=) を隠すか。オーナー判断 — 使われなくなった絵 public/ui-art/head-l・head-r.webp を消すか。
+- やりかけ: 無し (頼みは全部返した)。古い塊の読み直しの index.html の取り直しを静的な版の印にする案は notes/2026-10-23-stale-reload-requests.md (明日やる予定だった、ブラックに確かめて)。
+- 気を付ける事: 確認用 Chrome 9333 は他の部長も使う → 空いていなければ自分の番号 (9334 など) と自分の profile で、台本の小物は CDP_PORT で番号を替える (scratchpad の cdp.mjs の形)。立てた物は根から止める (preview:prod は wrangler と workerd が残る)。
+- 気を付ける事 2: Bash の heredoc・node -e で \ が消える・CRLF のファイルは一致が外れる → 正規表現や置き換えは Write / Edit で。手元の dev の Web は /web.html (/ はアプリ)。
+- 台本はブラックの共有メモ (side-session-notes/local_20eeeb19-…) の tab-flip・tab-rapid・tier-probe・nolog-check・card-variants・gtab-disabled・backor-check・reset-check.mjs。
 
 ## 済んだ節 (前の版の塊を残す・404 が 3 回・入口の塊の 404・古い塊の読み直し・StageItemCard の D1・D2・エミュ部長の頼み) は notes/2026-10-23-todo-archive.md にそのまま移した。各節の「見ていない」もそこ (10-23 夜 ホワイト)。10-23 夜に 3 本目が fitZoom・先読み・シミュの初手・BasePickBody・ModeTabs・モンキー 4・14・15・モンキー 3・2・9 も移した (OK 待ちは上の引き継ぎに commit で並べてある)
 
