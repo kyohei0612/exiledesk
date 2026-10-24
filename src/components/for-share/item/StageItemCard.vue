@@ -35,7 +35,7 @@ import type { RowTag } from "./stage-item-row-tag";
  * compact: 撮影用。英語のベース名を出さず、区切りの余白を詰める (詰めた分だけ拡大できる。MOD の文字を 1080p で 32px 以上に)
  */
 /** doomed: 今持っている物を打つと消える・入れ替わる・数値が変わる・固定される候補 (ゲームと同じく打つ前に色を付ける。2026-10-04 削減、2026-10-17 全部の手に) */
-const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[]; /** 付く空き (側ごとに光らせる枠の数。spec/preview.ts) */ open?: Record<"prefix" | "suffix", number> | null; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean; /** 付いた瞬間の確率 (無ければステージの工程から。スパムシミュレーターの運試しは自分の物を渡す) */ chances?: ReadonlyMap<string, number> | null; /** MOD の行ごとの札 (modId → 文と色。シミュの「外れ MOD」など。渡さなければ出ない) */ rowTags?: ReadonlyMap<string, RowTag> | null; /** フラクチャーの印の MOD (modId)。2 つ以上付いていれば 1 行「フラクチャー MOD ×n」にまとめ、ホバーで中身 (シミュの完成形、2026-10-23 オーナー) */ fractureGroup?: readonly string[] | null; /** × を出さずに、MOD の行の右クリックで fracture を出す (シミュの完成形。removable なら言わなくても出る) */ fracturable?: boolean; /** 明示の MOD の行にホバーした時だけ小さな × (remove を出す)。ルーン・暗黙・列の幅は変えない (シミュの完成形、2026-10-24 オーナー「アイテムにつく UI から × で消したい」) */ rowRemove?: boolean}>();
+const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[]; /** 付く空き (側ごとに光らせる枠の数。spec/preview.ts) */ open?: Record<"prefix" | "suffix", number> | null; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean; /** 付いた瞬間の確率 (無ければステージの工程から。スパムシミュレーターの運試しは自分の物を渡す) */ chances?: ReadonlyMap<string, number> | null; /** MOD の行ごとの札 (modId → 文と色。シミュの「外れ MOD」など。渡さなければ出ない) */ rowTags?: ReadonlyMap<string, RowTag> | null; /** フラクチャーの印の MOD (modId)。2 つ以上付いていれば 1 行「フラクチャー MOD ×n」にまとめ、ホバーで中身 (シミュの完成形、2026-10-23 オーナー) */ fractureGroup?: readonly string[] | null; /** × を出さずに、MOD の行の右クリックで fracture を出す (シミュの完成形。removable なら言わなくても出る) */ fracturable?: boolean; /** 明示の MOD の行にホバーした時だけ小さな × (remove を出す)。ルーン・暗黙・列の幅は変えない (シミュの完成形、2026-10-24 オーナー「アイテムにつく UI から × で消したい」) */ rowRemove?: boolean; /** 段を「S2 以上」(英語 S2+) と出す。狙いの段 (シミュの完成形、2026-10-24 オーナー「S2 なら S2 以上って書かんと」)。一番上の段 (1) には付けない */ tierAtLeast?: boolean}>();
 /** 行の札の色 */
 const ROW_TAG_TONE: Record<RowTag["tone"], string> = { bad: "bg-rose-500/25 text-rose-200", warn: "bg-amber-500/25 text-amber-100", good: "bg-emerald-500/25 text-emerald-200", info: "bg-sky-500/20 text-sky-100" };
 /** replace の札を行の名前にする時の文字の色 */
@@ -45,7 +45,7 @@ const isDoomed = (m: StageMod): boolean => !!props.doomed?.includes(m.modId);
 const rowX = (m: StageMod): boolean => !!props.rowRemove && !props.removable && !props.holding && !m.unrevealed;
 const ROW_X = "rounded px-1 text-[12px] leading-none text-rose-300/80 opacity-0 transition-opacity hover:bg-rose-500/20 hover:text-rose-200 focus-visible:opacity-100 max-md:px-2 max-md:py-1 max-md:text-[15px] max-md:opacity-50";
 /** 行の左 (P / S) と右 (↓・確率・×) の枠は同じ幅。MOD の文がカードの真ん中に来る (2026-10-17 オーナー「全体的に左に寄ってる、MOD は真ん中、→ に %、← に P,S」) */
-const sideColW = computed(() => (props.removable ? "w-[4.5rem] max-md:w-[5.25rem]" : "w-[3rem] max-md:w-[3rem]")); // ↓ を外した分 (2026-10-17) 細く
+const sideColW = computed(() => (props.removable ? "w-[4.5rem] max-md:w-[5.25rem]" : props.tierAtLeast ? "w-[4.25rem] max-md:w-[3.5rem] whitespace-nowrap" : "w-[3rem] max-md:w-[3rem]")); // ↓ を外した分 (2026-10-17) 細く
 /** 未発現の行の崩れた文字。どの行も同じ並び・同じフォント (行ごとに変えると形がばらばらで気持ち悪い。2026-10-17 オーナー) */
 const UNREVEALED_GLYPHS = "ʘɿɕʞɞ ʖɷɦɕɷʞ";
 /** 付く空きの枠 (プレ → サフィ) */
@@ -135,6 +135,11 @@ const isNew = (m: StageMod): boolean => props.added.some((a) => a.modId === m.mo
 const ESS_CARD = flag("essCard");
 const tierLabel = (m: StageMod): string => (ESS_CARD && craftStage.data.value ? cardTierName(craftStage.data.value, m) : m.tierName ?? "");
 const tierNo = (m: StageMod): string => tierLabel(m).replace(/^T/, "");
+/** 行の左の札 (P3・S2)。tierAtLeast なら「S2 以上」/「S2+」(1 はそのまま) */
+const sideTier = (r: { side: string; m: StageMod }): string => {
+  const n = tierNo(r.m);
+  return `${r.side === "プレフィックス" ? "P" : "S"}${n}${props.tierAtLeast && n && n !== "1" ? tr(" 以上", "+") : ""}`;
+};
 const isRareNew = (m: StageMod): boolean => isNew(m) && chanceOf(m) != null && isRareChance(chanceOf(m)!);
 /** ワンド・スタッフの品質で上がる付与スキルの物 */
 const skillQ = computed(() => skillQualityOf(props.item.base, props.item.cls.category, props.item.quality));
@@ -296,7 +301,7 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
           <div data-fracture-pop class="absolute left-1/2 top-full z-30 w-max min-w-[260px] max-w-[440px] -translate-x-1/2 space-y-0.5 rounded border border-[#7a6a35] bg-[#0b0a08]/95 px-2 py-1.5 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.7)]" :class="fracOpen ? 'visible' : 'invisible group-hover/fg:visible'">
             <p class="pb-0.5 text-[11px] text-white/45">{{ tr("この中のどれか 1 つが固定される", "One of these gets fractured") }}</p>
             <p v-for="r in fracRows" :key="r.key" data-fracture-member class="group/fm flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-mod-fractured hover:bg-white/[0.06]" :title="canFracture(r.m) ? tr('右クリックでフラクチャーの印を外す', 'Right-click to remove the fracture mark') : undefined" @click.stop="emit('jump', r.m.modId)" @contextmenu="onFracture($event, r.m)">
-              <span class="w-7 shrink-0 text-left font-bold tabular-nums" :class="r.side === 'プレフィックス' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ r.side === "プレフィックス" ? "P" : "S" }}{{ tierNo(r.m) }}</span>
+              <span class="min-w-7 shrink-0 whitespace-nowrap text-left font-bold tabular-nums" :class="r.side === 'プレフィックス' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ sideTier(r) }}</span>
               <span class="min-w-0 flex-1">{{ r.text }}</span>
               <button v-if="rowX(r.m)" type="button" data-row-remove :class="[ROW_X, 'group-hover/fm:opacity-100']" :title="tr('この MOD を外す', 'Remove this mod')" @click.stop="emit('remove', r.m.modId)">×</button>
             </p>
@@ -316,7 +321,7 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
           <!-- 珍しい段が付いた瞬間の光の柱 (ドロップの光の柱のように、行から上へ伸びて消える) -->
           <span v-if="isRareNew(r.m)" aria-hidden="true" class="stage-rare-beam pointer-events-none absolute bottom-1/2 left-1/2 z-20 w-10" />
           <!-- トレードサイトと同じ: 左端に P1 / S5 (プレ / サフィと段)、真ん中に MOD の文 (長い物は折り返す)、右端に付いた瞬間の確率と × (2026-10-10 オーナーの見本) -->
-          <span class="shrink-0 text-left text-[12px] font-bold tabular-nums" :class="[sideColW, r.side === 'プレフィックス' ? 'text-[#e0846a]' : 'text-[#6aa8e8]']">{{ r.side === "プレフィックス" ? "P" : "S" }}{{ tierNo(r.m) }}</span>
+          <span class="shrink-0 text-left text-[12px] font-bold tabular-nums" :class="[sideColW, r.side === 'プレフィックス' ? 'text-[#e0846a]' : 'text-[#6aa8e8]']">{{ sideTier(r) }}</span>
           <span class="min-w-0 flex-1 text-center">
             <!-- 消える候補は文字をオレンジに (フラクチャーのくすんだ金色と被らない色。2026-10-07 オーナー「光るの文字にしようか、フラクチャーの色被らんようにオレンジで」) -->
             <!-- 未発現はゲームと同じく緑の崩れた文字 (中身は分からない。ホバーで「未発現の冒涜 MOD (側)」。2026-10-17 オーナー「アイテムについた冒涜未発現はこの感じ、全体的に緑」) -->
