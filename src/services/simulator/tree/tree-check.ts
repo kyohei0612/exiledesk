@@ -12,7 +12,7 @@ import { allMods, modBoostsOf, mulberry32, room, SIDES, unrevealedOf, type Patch
 import { stepOutcomes } from "../../craft-stage/engine-sim";
 import { catalystTagOf } from "../../craft-stage/engine-sim";
 import { aimHeldOn, junkOf } from "./tree-aim";
-import { CATALYSING, engineOmens, isCatalyst } from "./tree-hands";
+import { CATALYSING, effectOf, engineOmens, isCatalyst } from "./tree-hands";
 import { aimKey, type Aim, type OutKind, type TreeDoc } from "./tree-model";
 import { aimOpts, aimsOf, handAims, handProblem, outcomeOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
 import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, runTreeSteps, settle, shapesOf, splitTo } from "./tree-run";
@@ -160,8 +160,9 @@ function* checkSteps(data: PatchData, doc: TreeDoc): Generator<CheckProgress, Ch
         // お告げが効かないだけ (回すと打って進む) は止まりと分ける (10-22 13 通り組んだ #12: 「手が打てない」と出たのに 100 人とも進んだ)
         if (why && first.applied) { const c = waste.get(id) ?? { who: new Set<number>(), reason: why }; c.who.add(person); waste.set(id, c); }
         else if (why || !first.applied) { const c = cant.get(id) ?? { who: new Set<number>(), reason: why ?? first.reason ?? "" }; c.who.add(person); cant.set(id, c); return; }
-        // 結果の箱に無い結果 (エンジンの stepOutcomes で起こりうる枝を全部。未発現が付く手・繰り返しの手は見ない)
-        if (!b.hand.repeat) {
+        // 結果の箱に無い結果 (エンジンの stepOutcomes で起こりうる枝を全部。未発現が付く手・繰り返しの手は見ない。
+        // フラクチャーも見ない: 必ず選んだ狙いを固定し、外れは費用で数える、10-24 オーナー)
+        if (!b.hand.repeat && effectOf(b.hand.currency) !== "fracture") {
           const miss = (stepOutcomes(data, item, b.hand.currency, engineOmens(b.hand)) ?? []).filter((o) => !o.void && !unrevealedOf(o.item))
             .map((o) => outcomeOf(data, item, o.item, aims, b.hand!.currency)).filter((oc) => !outBoxOf(doc, b, oc));
           if (miss.length) { const c = odd.get(id) ?? { who: new Set<number>(), outs: new Set<string>() }; c.who.add(person); for (const oc of miss) c.outs.add(outName(oc.out)); odd.set(id, c); }

@@ -174,8 +174,8 @@ export const MATCH_BACK = "match";
 /** 結果の箱の並び (手の種類ごとに必ず付く物) */
 const OUTS_OF: Record<HandKind, OutKind[]> = {
   add: ["hit", "junk"],
-  // フラクチャー: 狙いが ✦ になった (当たり、札 = その狙い) / 狙いでない MOD が ✦ になった (外れ)
-  fracture: ["hit", "junk"],
+  // フラクチャー: 狙いが ✦ になった (当たり、札 = その狙い) だけ。必ず選んだ狙いを固定し、外れは費用で数える (10-24 オーナー「2 回外れて 1 回当たり」、tree-run の FRACTURE_MISS)
+  fracture: ["hit"],
   remove: ["junkGone", "lost"],
   swap: ["hit", "lost", "junk"],
   // 繰り返し (カオススパム): 当たるまで打つので、結果は当たりだけ

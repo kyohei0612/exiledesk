@@ -100,6 +100,21 @@ const SPLIT_TRIES = 40;
 const SINGLE_SEEDS = 8;
 
 
+/**
+ * フラクチャーの手で ✦ にするアイテムの MOD (10-24 オーナー「フラクチャーは必ずどれか 1 つを固定」)。選んだ狙い (fractureOf) に当たる付いている MOD、
+ * 選んでいない前の木は狙いの札の並びで最初に付いている物。どれも付いていなければ null (エンジンの乱数のまま)
+ */
+export function fractureTarget(data: PatchData, item: StageItem, h: Hand, aims: readonly Aim[]): string | null {
+  if (effectOf(h.currency) !== "fracture") return null;
+  const mods = [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured);
+  const want = h.fractureOf ? [{ modId: h.fractureOf, tier: aims.find((a) => a.modId === h.fractureOf)?.tier ?? 99 }, ...aims] : aims;
+  for (const a of want) { const m = mods.find((x) => isAimMod(x, targetsOf(data, [a]), aimOpts(data))); if (m) return m.modId; }
+  return null;
+}
+
+/** フラクチャーで固定できる MOD の数 (エンジンの stepOutcomes の行き先の数。2 つ以上なら外れうる) */
+export const fractureChoices = (data: PatchData, item: StageItem): number => (stepOutcomes(data, item, "fracture") ?? []).filter((o) => !o.void).length;
+
 /** 繰り返し (カオススパム) の上限が無い時の見張り */
 const SPAM_CAP = 5000;
 
@@ -125,7 +140,7 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
   // フラクチャーで ✦ にする MOD・骨の後はそのまま発現 (反響は骨に掛けず発現で使う)。
   // 発現は当たりの札に合う候補、無ければ 1 つ目 (2026-10-22 オーナー「冒涜は冒涜で付与かな」)。miss = 外れの箱の見本 (狙いでない候補を選ぶ。黒き血は狙いが必ず候補に入り、見本が外れの箱に着かなかった、10-22)
   const ts = targetsOf(data, aims);
-  const r = applyHand(data, item, h.currency, rng, { omens: h.omens, catalyst: h.catalyst, fractureOf: h.fractureOf, reveal: (m) => isAimMod(m, ts, aimOpts(data)) !== miss });
+  const r = applyHand(data, item, h.currency, rng, { omens: h.omens, catalyst: h.catalyst, fractureOf: fractureTarget(data, item, h, aims), reveal: (m) => isAimMod(m, ts, aimOpts(data)) !== miss });
   if (use) {
     if (r.catalystCount) use(isCatalyst(h.currency) ? h.currency : h.catalyst!, r.catalystCount);
     if (r.applied && !isCatalyst(h.currency)) {

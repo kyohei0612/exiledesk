@@ -8,7 +8,7 @@
 import { mulberry32, sideOfMod, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { aimHeldOn, isAimMod, junkOf } from "./tree-aim";
 import { effectOf } from "./tree-hands";
-import { aimOpts, aimsOf, handAims, handProblem, outcomeOf, playHand, startItemOf as startOf, targetsOf } from "./tree-sample";
+import { aimOpts, aimsOf, fractureChoices, handAims, handProblem, outcomeOf, playHand, startItemOf as startOf, targetsOf } from "./tree-sample";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
 import { aimKey, MATCH_BACK, type Aim, type Hand, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc } from "./tree-model";
@@ -91,6 +91,9 @@ const startItemOf = (data: PatchData, doc: TreeDoc, rng: () => number): StageIte
  * 箱の形 = 始まりから親をたどった当たりの札の組 (+ 外れの箱なら外れあり)。狙いが 1 つも無ければ始まりへ (始まりの手が外れも扱う)
  */
 export const MATCH = MATCH_BACK;
+/** フラクチャーの外れの回数 (10-24 オーナー「2 回外れて 1 回当たり」) と、外れうる固定の候補の数 */
+export const FRACTURE_MISS = 2;
+const FRACTURE_PICK = 2;
 /** 作り直し (設計の「作り直し」、back: "restart"): 始めのアイテムに戻して、始めの費用をもう一度払う。数えた回数は TreeRunResult.restarts */
 export const RESTART = "restart";
 
@@ -268,6 +271,9 @@ export function linkSameShape(doc: TreeDoc, ids: readonly string[]): void {
     // 分かれ目の行の箱 (branch) は人が手を決める所 (分かれ目の箱も行き先になったので、つなぐと自分の分かれ目へ戻る輪になる)
     if (!c || c.hand || c.out === "pass" || c.out === "any" || c.out === "branch") continue;
     if ((c.out === "hit" && !c.aim) || (c.back && c.back !== MATCH && !(c.out === "lost" && c.back === "start"))) continue;
+    // フラクチャーの結果の箱は、形 (✦ は数えない) が親と同じでも つながない (親へ戻すと ✦ のある品にもう一度フラクチャーを打って止まった、10-24)
+    const p = c.parent ? doc.boxes[c.parent] : undefined;
+    if (p?.hand && effectOf(p.hand.currency) === "fracture") continue;
     const to = matchTargets(doc, id).map((m) => m.to).find((x): x is string => !!x && x !== id && (x !== "start" || c.out === "lost"));
     if (!to) continue;
     c.back = to;
@@ -349,8 +355,17 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     if (++steps > o.capSteps || cost > o.capDiv) return { end: "capped", cost, at, visits, uses, restarts, odd, why: { reason: tr("打ち止め", "Capped"), item } };
     hops = 0;
     const before = item;
+    // フラクチャーは必ず狙いを固定し (playHand の fractureTarget)、固定できる MOD が 2 つ以上なら「2 回外れて 1 回当たり」として、ここまでに使った物と
+    // 始めの値段を 2 回分足す (外れた時は素材を作り直す。10-24 オーナー、ツリーに買い直しの道は作らない)。作り直しの回数にも 2
+    const miss = effectOf(b.hand.currency) === "fracture" && fractureChoices(data, item) >= FRACTURE_PICK ? Object.entries(uses) : null;
     const r = playHand(data, item, b.hand, rng, handAims(doc, at, aims), use);
     if (!r.applied) return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: r.reason ?? "", item } };
+    if (miss) {
+      for (const [k, n] of miss) use(k, FRACTURE_MISS * n);
+      use(b.hand.currency, FRACTURE_MISS);
+      cost += FRACTURE_MISS * o.startCost;
+      restarts += FRACTURE_MISS;
+    }
     if (sb.next) { item = r.item; at = sb.next; continue; }
     const oc = outcomeOf(data, before, r.item, aims, b.hand.currency);
     const next = outBoxOf(doc, b, oc);

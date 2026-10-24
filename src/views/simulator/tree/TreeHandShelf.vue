@@ -47,6 +47,8 @@ const fracOf = ref<string | null>(props.current?.fractureOf ?? null);
 const isFracture = computed(() => !!held.value && effectOf(held.value) === "fracture");
 /** ✦ の候補 = 完成の狙い (この箱の見本に付いていない物はグレー) */
 const fracChoices = computed(() => { const d = s.data.value, it = item.value; return t.goals.value.map((a) => ({ a, on: !!d && !!it && aimHeldOn(d, it, a, { sameText: true }) })); });
+/** ✦ にする狙い (選んでいなければ、この箱で付いている最初の狙い。必ずどれか 1 つを固定、10-24 オーナー) */
+const fracPick = computed(() => fracOf.value ?? fracChoices.value.find((c) => c.on)?.a.modId ?? null);
 /** 骨の手にアビスの反響 (発現の候補を 1 回引き直す)。既定で付ける (10-22 オーナー「お告げは必ず反響を使わんとやばいよ」)。前の手を開いた時はその手のまま */
 const echo = ref(props.current ? props.current.omens.includes(ECHO) : true);
 const canFree = computed(() => !!held.value && effectOf(held.value) === "add");
@@ -76,18 +78,18 @@ const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens);
 const used = computed(() => (held.value ? omensFor(held.value, omens.value) : []));
 const catalysing = computed(() => used.value.includes(CATALYSING));
 
-const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: free.value && canFree.value, echo: echo.value, fractureOf: isFracture.value ? fracOf.value : null }) : null));
+const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: free.value && canFree.value, echo: echo.value, fractureOf: isFracture.value ? fracPick.value : null }) : null));
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
 const preCat = computed((): string | null => (catalysing.value && !afterQuality.value ? autoCat.value : null));
 const RESULT: Record<HandKind, [string, string]> = {
   add: ["当たり + 外れ", "Hit + Miss"], remove: ["外れが消えた + 狙いが消えた", "Miss removed + Target lost"], swap: ["当たり + 狙いが消えた + 外れ", "Hit + Target lost + Miss"], spam: ["当たりだけ (当たるまで打つ)", "Hits only (until a hit)"], free: ["打った後 (何が付いても次へ。当たり / 外れに分けない)", "After (anything counts, no hit / miss split)"],
   quality: ["無し (品質を最大まで上げて、下の＋で次の手)", "None (raise quality to max, then add the next craft with + below)"],
   essence: ["付いた + 狙いが消えた (付く MOD は必ず付く)", "Added + Target lost (the essence mod always lands)"],
-  fracture: ["狙いが ✦ になった + 外れが ✦ になった", "A target fractured + a miss fractured"],
+  fracture: ["狙いが ✦ になった (必ず選んだ狙いを固定)", "The target fractured (always fixes the chosen target)"],
 };
 const kind = computed((): HandKind | null => (hand.value ? kindOf(hand.value) : null));
 /** 当たりの箱の既定 (tree-hand-plan の hitAimsOf) */
-const hitAims = computed((): Aim[] => { const d = s.data.value, it = item.value, h = hand.value; return d && it && h ? hitAimsOf(d, t.doc.value, props.boxId, it, h, t.goals.value, isFracture.value ? fracOf.value : null) : []; });
+const hitAims = computed((): Aim[] => { const d = s.data.value, it = item.value, h = hand.value; return d && it && h ? hitAimsOf(d, t.doc.value, props.boxId, it, h, t.goals.value, isFracture.value ? fracPick.value : null) : []; });
 /** 結果が 1 通りの手か (tree-hand-plan の onlyOf) */
 const only = computed(() => (hand.value && s.data.value ? onlyOf(s.data.value, t.doc.value, props.boxId, hand.value, preCat.value, hitAims.value) : null));
 /** この手に替えると消える箱の数 (結果の箱から先。手の種類が同じなら 0。写しに打って数える) */
@@ -141,11 +143,13 @@ function ok(): void {
         <button v-for="c in TREE_CATALYSTS" :key="c" type="button" data-tree-hand-cat :data-cat="c" class="min-h-7 rounded-md border px-2 text-[12px]" :class="c === held ? 'border-amber-300 bg-amber-500/20 text-amber-100' : 'border-white/10 hover:bg-white/10'" :title="nameOf(c)" :aria-pressed="c === held" @click="held = c">{{ nameOf(c).replace(/のカタリスト$| Catalyst$/, "") }}</button>
       </div>
       <p v-if="preCat" data-tree-hand-pre-cat class="text-[12px] text-sky-200/90">{{ tr(`前に「${handName(preCat)} (品質を最大まで)」の手を足す (札を押すとカタリストを替えられる)`, `Adds "${handName(preCat)} (to max quality)" before this (click its chip to change the catalyst)`) }}</p>
-      <!-- フラクチャー: ✦ にする MOD を狙いから選ぶ (選ばなければ乱数 = エンジンどおり、10-22 オーナー) -->
-      <div v-if="isFracture" data-tree-hand-frac class="flex flex-wrap items-center gap-1 text-[12px]">
-        <span class="opacity-80">{{ tr("✦ にする MOD", "Fracture") }}</span>
-        <button type="button" data-tree-hand-frac-pick data-frac="" class="min-h-7 rounded-md border px-2" :class="!fracOf ? 'border-amber-300 bg-amber-500/20 text-amber-100' : 'border-white/10 hover:bg-white/10'" @click="fracOf = null">{{ tr("乱数", "Random") }}</button>
-        <button v-for="c in fracChoices" :key="c.a.modId" type="button" data-tree-hand-frac-pick :data-frac="c.a.modId" class="min-h-7 max-w-[220px] truncate rounded-md border px-2" :class="[fracOf === c.a.modId ? 'border-amber-300 bg-amber-500/20 text-amber-100' : 'border-white/10 hover:bg-white/10', c.on ? '' : 'opacity-40']" :title="c.on ? t.startModLabel(c.a, true) : tr('この箱の時点では付いていない (付いていない時は乱数)', 'Not on the item at this box (random if missing)')" @click="fracOf = c.a.modId">✦ {{ t.startModLabel(c.a, true) }}</button>
+      <!-- フラクチャー: ✦ にする MOD を狙いから選ぶ。必ずその狙いを固定し、外れは費用で数える (10-24 オーナー「2 回外れて 1 回当たり」。前の「乱数」の選択肢はやめた) -->
+      <div v-if="isFracture" data-tree-hand-frac class="flex flex-col gap-1 text-[12px]">
+        <div class="flex flex-wrap items-center gap-1">
+          <span class="opacity-80">{{ tr("✦ にする MOD", "Fracture") }}</span>
+          <button v-for="c in fracChoices" :key="c.a.modId" type="button" data-tree-hand-frac-pick :data-frac="c.a.modId" class="min-h-7 max-w-[220px] truncate rounded-md border px-2" :class="[fracPick === c.a.modId ? 'border-amber-300 bg-amber-500/20 text-amber-100' : 'border-white/10 hover:bg-white/10', c.on ? '' : 'opacity-40']" :title="c.on ? t.startModLabel(c.a, true) : tr('この箱の時点では付いていない', 'Not on the item at this box')" @click="fracOf = c.a.modId">✦ {{ t.startModLabel(c.a, true) }}</button>
+        </div>
+        <p data-tree-hand-frac-rule class="opacity-70">{{ tr("固定できる MOD が 2 つ以上なら、2 回外れて 1 回当たりとして、ここまでの費用とフラクチャーを 2 回分足す", "With 2+ mods that could fracture, counts as 2 misses then a hit: adds this point's cost and the Fracturing Orb twice") }}</p>
       </div>
       <label v-if="canSpam(held)" class="flex min-h-7 cursor-pointer flex-wrap items-center gap-2">
         <input v-model="spam" type="checkbox" />{{ tr("当たるまで繰り返す (カオススパム)", "Repeat until a hit (Chaos spam)") }}

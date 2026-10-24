@@ -76,7 +76,8 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
   // フラクチャー: 当たりの札 = この箱で付いている狙い (✦ にする MOD を選んだらその 1 つ)
   if (kind === "fracture") {
     const on = [...aimsOf(doc), ...goals].filter((a, i, l) => aimHeldOn(data, item, a, { sameText: true }) && l.findIndex((x) => x.modId === a.modId) === i);
-    return fracOf ? on.filter((a) => a.modId === fracOf) : on;
+    // 選んでいなければ付いている最初の狙い (必ずどれか 1 つを固定、回す時の tree-sample の fractureTarget と同じ並び。10-24 オーナー)
+    return fracOf ? on.filter((a) => a.modId === fracOf) : on.slice(0, 1);
   }
   if (kind !== "spam" && kind !== "add" && kind !== "swap") return [];
   const tree = aimsOf(doc);
@@ -88,7 +89,7 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
 }
 /** 結果が 1 通りの手か (この箱の見本 8 つにエンジンで打った行き先を全部たどる。触媒の手は前のカタリストを入れた後で)。✦ にする MOD を選んで、この箱の見本に付いている時は「その狙いが ✦」の 1 通り */
 export function onlyOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, preCat: string | null, hitAims: Aim[]): OnlyOut {
-  if (kindOf(h) === "fracture" && h.fractureOf && hitAims.length) return { out: "hit", aim: hitAims[0]! };
+  if (kindOf(h) === "fracture" && hitAims.length) return { out: "hit", aim: hitAims[0]! };
   return singleOutOf(data, doc, boxId, h, preCat, hitAims);
 }
 /** この箱の見本に打てない手は確定させない (お告げが効かない・消せる物が無い等。オーナー 10-22「進行不能」、tree-sample の handProblem) */
