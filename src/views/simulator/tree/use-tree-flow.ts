@@ -30,6 +30,12 @@ const WHEEL_STEP = 60;
 const VIEW_ONLY = 0.75;
 /** スマホの全体表示の一番小さい段 */
 const PHONE_MIN = 0.5;
+/** 開いた時の一番小さい段 (これ未満でしか収まらない木は、この段で始まりの箱を上の真ん中) */
+const OPEN_MIN = 0.5;
+/** 全体に合わせる時の余白の下限 */
+const PAD_MIN = 12;
+/** 右下に浮かぶ道具とミニマップ (TreeCanvasTools) の幅・高さ (ページの CSS ピクセル) */
+const RIGHT_ROOM = 250, TOOLS_H = 200;
 
 export function useTreeFlow(doc: Ref<TreeDoc>) {
   const f = useVueFlow(FLOW_ID);
@@ -74,37 +80,62 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
    * 全体に合わせる (大きくはしない。収まる一番大きい段)。右下に浮かぶ道具とミニマップ (TreeCanvasTools、幅 RIGHT_ROOM) の所を空けて収める
    * (Vue Flow の fitView は浮かぶ物を知らず、右下の箱がミニマップの下に隠れた。10-22 手元で見た)
    */
-  /** whole = スマホでも 50% の下限を使わず木の全体 (回すの 1 人目が歩く時。光る枠を画面の外へ出さない) */
-  async function fit(whole = false): Promise<void> {
+  /** 一番上の箱を置く高さ (0 完成形の設定は枠の左上の札、10-23。スマホは札 (高さ約 110px) の下へ) */
+  const topY = (): number => (innerWidth < 768 ? 130 : 40);
+  /**
+   * 全体に収まる一番大きい段 lv と、左 left・右下 room に空ける幅。top = 上寄せの時 (上は topY、下は余白だけ)
+   */
+  function fitPlan(top: boolean): { lv: number; left: number; room: number } | null {
     const b = bounds.value, w = f.dimensions.value.width, h = f.dimensions.value.height;
-    if (!w || !h) return;
-    const PAD = 28, PAD_MIN = 12, RIGHT_ROOM = 250;
+    if (!w || !h) return null;
+    const availH = top ? h - topY() - PAD_MIN : h - PAD_MIN * 2;
     // 木の左の外の段の目印 (TreeBandLayer、画面の上で約 110px × ページの zoom) の分も左を空ける (1280 で目印が枠の外に切れた、10-22)
     const left = bandsOf(doc.value).length ? Math.round(110 * pageZ.value) : 0;
     /** 幅 avail に収まる一番大きい段 (段を選ぶ時は余白を PAD_MIN まで詰めてよい) */
     const level = (avail: number): number => {
-      const fz = Math.min((avail - PAD_MIN * 2) / b.w, (h - PAD_MIN * 2) / b.h) / pageZ.value;
+      const fz = Math.min((avail - PAD_MIN * 2) / b.w, availH / b.h) / pageZ.value;
       return [...ZOOM_LEVELS].reverse().find((l) => l <= Math.min(1, fz) + 1e-6) ?? ZOOM_MIN;
     };
     // 右下を空けると段が下がる時は空けない (見本の木は 1920 幅で空けると 25%、空けなければ 33%)
     const room = level(w - left - RIGHT_ROOM) >= level(w - left) ? RIGHT_ROOM : 0;
-    const lv = level(w - left - room);
-    // スマホ (768px 未満) は 50% より小さくしない (20% で箱の字が読めなかった、10-22)。収まらない時は始まりの箱を上の真ん中に
-    if (!whole && innerWidth < 768 && lv < PHONE_MIN) {
-      const z = PHONE_MIN * pageZ.value, st = doc.value.boxes.start;
-      if (st) { await f.setViewport({ x: w / 2 - (st.x + BOX_W / 2) * z, y: PAD - st.y * z, zoom: z }); return; }
-    }
-    const z = lv * pageZ.value;
-    await f.setViewport({ x: left + (w - left - room) / 2 - (b.x + b.w / 2) * z, y: Math.max(PAD, h / 2 - (b.y + b.h / 2) * z), zoom: z });
+    return { lv: level(w - left - room), left, room };
   }
-  /** 始まりの箱を上の真ん中へ、等倍で (開いた時と、一望から等倍に戻した時。真ん中を軸にすると枝の間の空き所に出た、10-22) */
-  async function goHome(): Promise<void> {
+  /** 始まりの箱を上の真ん中へ、段 lv で */
+  async function startTop(lv: number): Promise<void> {
     const st = doc.value.boxes.start;
     if (!st) return;
-    const z = pageZ.value, w = f.dimensions.value.width;
-    // 一番上はスタートの箱 (0 完成形の設定は枠の左上の札、10-23)。スマホは札 (高さ約 110px) の下へ
-    await f.setViewport({ x: w / 2 - (st.x + BOX_W / 2) * z, y: (innerWidth < 768 ? 130 : 40) - st.y * z, zoom: z });
+    const z = lv * pageZ.value, w = f.dimensions.value.width;
+    await f.setViewport({ x: w / 2 - (st.x + BOX_W / 2) * z, y: topY() - st.y * z, zoom: z });
   }
+  /** whole = スマホでも 50% の下限を使わず木の全体 (回すの 1 人目が歩く時。光る枠を画面の外へ出さない) */
+  async function fit(whole = false): Promise<void> {
+    const p = fitPlan(false);
+    if (!p) return;
+    const b = bounds.value, w = f.dimensions.value.width, h = f.dimensions.value.height, PAD = 28;
+    // スマホ (768px 未満) は 50% より小さくしない (20% で箱の字が読めなかった、10-22)。収まらない時は始まりの箱を上の真ん中に
+    if (!whole && innerWidth < 768 && p.lv < PHONE_MIN && doc.value.boxes.start) { await startTop(PHONE_MIN); return; }
+    const z = p.lv * pageZ.value;
+    // 縦は真ん中、上は PAD まで。PAD だと下が切れる時は下を PAD_MIN に (段は PAD_MIN の余白で選ぶので、下の箱が 2px 枠の外に出た、10-25)
+    const y = Math.max(h / 2 - (b.y + b.h / 2) * z, Math.min(PAD - b.y * z, h - PAD_MIN - (b.y + b.h) * z));
+    await f.setViewport({ x: p.left + (w - p.left - p.room) / 2 - (b.x + b.w / 2) * z, y, zoom: z });
+  }
+  /**
+   * 開いた時の見え方 (10-25 オーナー「任せる」、23 本目の決め): 木全体が収まる段 (100% まで) で上寄せ。
+   * 50% 未満でしか収まらない時は 50% で始まりの箱を上の真ん中 (前は 100% で始まりを上の真ん中にしていて、木の下が枠の外にあった)
+   */
+  async function openView(): Promise<void> {
+    const p = fitPlan(true);
+    if (!p) { await goHome(); return; }
+    if (p.lv < OPEN_MIN) { await startTop(OPEN_MIN); return; }
+    const b = bounds.value, w = f.dimensions.value.width, h = f.dimensions.value.height, z = p.lv * pageZ.value;
+    // 右下の道具に掛からない木は枠の真ん中に (上寄せの小さい木が道具の分だけ左へ寄った、10-25)
+    const mid = p.left + (w - p.left) / 2, Z = pageZ.value;
+    const clear = mid + (b.w * z) / 2 < w - RIGHT_ROOM * Z || topY() + b.h * z < h - TOOLS_H * Z;
+    const cx = clear ? mid : p.left + (w - p.left - p.room) / 2;
+    await f.setViewport({ x: cx - (b.x + b.w / 2) * z, y: topY() - b.y * z, zoom: z });
+  }
+  /** 始まりの箱を上の真ん中へ、等倍で (一望から等倍に戻した時。真ん中を軸にすると枝の間の空き所に出た、10-22) */
+  const goHome = (): Promise<void> => startTop(1);
   /** 等倍に戻す。一望 (VIEW_ONLY 未満) からは始まりへ、75% 以上の時は今見ている真ん中を軸に */
   async function resetZoom(): Promise<void> {
     if (viewOnly.value) await goHome(); else await setZoom(1);
@@ -145,7 +176,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     });
   };
   window.addEventListener("resize", onResize);
-  f.onPaneReady(() => { void goHome(); });
+  f.onPaneReady(() => { void openView(); });
   // 右の欄を開いた時など、枠の幅が変わっても見ている真ん中は動かさない (Vue Flow は左上を軸にするので、何もしなければ左上が残る)
   watch(() => f.dimensions.value.width, (w, old) => {
     if (!old || !w) return;
@@ -153,5 +184,5 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     void f.setViewport({ x: vp.x + (w - old) / 2, y: vp.y, zoom: vp.zoom });
   });
 
-  return { flow: f, pageZ, zoom, viewOnly, minZoom, maxZoom, full, bounds, view, setZoom, zoomIn, zoomOut, onWheel, fit, goHome, resetZoom, toWorld, reveal, toggleFull, centerOn, rectOf, dispose: () => window.removeEventListener("resize", onResize) };
+  return { flow: f, pageZ, zoom, viewOnly, minZoom, maxZoom, full, bounds, view, setZoom, zoomIn, zoomOut, onWheel, fit, openView, goHome, resetZoom, toWorld, reveal, toggleFull, centerOn, rectOf, dispose: () => window.removeEventListener("resize", onResize) };
 }

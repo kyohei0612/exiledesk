@@ -366,8 +366,8 @@ onMounted(() => {
   t.goalPage.value = 1;
 });
 onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); });
-// 完成形の設定をページで出していた間はツリーを隠していたので (大きさ 0)、戻ったらスタートの箱を上の真ん中へ合わせ直す
-watch(() => t.goalInline.value, (on) => { if (!on) setTimeout(() => { measureRow(); void v.goHome(); }, 0); });
+// 完成形の設定をページで出していた間はツリーを隠していたので (大きさ 0)、戻ったら開いた時の見え方 (全体・上寄せ) に合わせ直す
+watch(() => t.goalInline.value, (on) => { if (!on) setTimeout(() => { measureRow(); void v.openView(); }, 0); });
 
 const panelBox = computed(() => (panel.value ? doc.value.boxes[panel.value.id] ?? null : null));
 /** 一覧に出す箱の名前 (種類 + 当たりの札) */
@@ -398,7 +398,7 @@ const glowOf = (b: Box): boolean => {
       <!-- 折り返さない (回した結果の文で 1 行と 2 行の境目になり、木の枠が上下して箱の × が押せなかった、10-22)。左は狭ければ … で切る。768px 未満は左と右を 2 段に (右が画面より広く左が潰れて「回す」が押せなかった、10-22) -->
       <div class="flex flex-wrap items-center gap-2 text-[13px] md:flex-nowrap">
         <span class="flex min-w-0 flex-1 basis-full items-center gap-2 max-md:flex-wrap md:basis-auto">
-        <TreeRecipeBar @opened="v.fit()" />
+        <TreeRecipeBar @opened="v.openView()" />
         <TreeRunBar v-if="!t.needBase.value" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking, passed, holes: issues?.length ?? 0, shown: issuesShown }" @test="onCheck" @holes="issuesShown = !issuesShown" @holes-on="openIssues" @list="openIssues" :stuck="tr100.stuckBoxes.value" @run="tr100.run" @go="goIssue" :halted="tr100.halted.value" :walk="tr100.walk.value" @skip="tr100.skipWalk" />
         </span>
         <span class="ml-auto flex shrink-0 flex-wrap items-center gap-1 max-md:ml-0 max-md:min-w-0 max-md:shrink max-md:basis-full max-md:flex-nowrap max-md:overflow-x-auto max-md:pb-1 max-md:[&>*]:shrink-0 max-md:[&>*]:whitespace-nowrap md:flex-nowrap">
@@ -413,7 +413,7 @@ const glowOf = (b: Box): boolean => {
       </div>
 
       <!-- ベースが無い空の形でも、ほかの木があればタブを出す (前の木へ戻れない行き止まりだった、10-24 夜オーナー「一方通行が多い」) -->
-      <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" @switched="v.goHome()" />
+      <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" @switched="v.openView()" />
       <div ref="row" class="flex min-h-0 gap-2" :class="full ? 'flex-1' : ''" :style="full ? {} : { height: `${rowH}px` }">
         <!-- ツリー (暗い地 + ドットの格子、見本の 1。右下に浮かぶ道具とミニマップ、左上に今の状態の札) -->
         <div data-tree-frame class="relative min-w-0 flex-1 overflow-hidden rounded-lg border border-white/[0.06] bg-[#0c0a08]">
