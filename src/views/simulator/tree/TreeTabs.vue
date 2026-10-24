@@ -35,6 +35,6 @@ const names = computed(() => {
       <button type="button" data-tree-tab :data-tab-i="i" class="g-tab !min-h-[30px] min-w-0 max-w-[320px] !px-3 !text-[13px]" :class="i === t.active.value ? 'on' : ''" :title="names[i]" @click="go(i)"><span class="block min-w-0 truncate">{{ names[i] }}</span></button>
       <button v-if="t.tabDocs.value.length > 1" type="button" data-tree-tab-close class="-ml-1 flex size-6 shrink-0 items-center justify-center rounded opacity-50 hover:bg-white/10 hover:opacity-100" :title="tr('このタブの木を閉じる', 'Close this tab’s tree')" @click="close(i)"><Icon name="x" class="size-3.5" /></button>
     </span>
-    <button type="button" data-tree-tab-add class="g-btn sm inline-flex shrink-0 items-center gap-1" :title="tr('新しいツリーを白紙から作る (ベース選びから)', 'Start a new tree from scratch (choose a base first)')" @click="add"><Icon name="plus" class="size-3.5" />{{ tr("新しいツリー", "New tree") }}</button>
+    <button type="button" data-tree-tab-add class="g-btn sm inline-flex shrink-0 items-center gap-1" :aria-label="tr('新しいツリー', 'New tree')" :title="tr('新しいツリーを白紙から作る (ベース選びから)', 'Start a new tree from scratch (choose a base first)')" @click="add"><Icon name="plus" class="size-3.5" /><span class="max-md:hidden">{{ tr("新しいツリー", "New tree") }}</span></button>
   </div>
 </template>
