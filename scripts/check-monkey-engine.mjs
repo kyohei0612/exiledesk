@@ -73,10 +73,13 @@ function checkTree(tr, steps = []) {
     if (!odds) { row.off.push("エンジンで打てない手 (applyCurrency が打てないと返した)"); res.boxes.push(row); continue; }
     const visits = run.boxes[b.id]?.visits ?? 0;
     if (b.hand.repeat) {
-      const perVisit = visits ? ((run.boxes[b.id]?.spend ?? 0) * run.n) / visits : NaN, want = odds.any ? 1 / odds.any : Infinity;
-      const sd = odds.any ? Math.sqrt((1 - odds.any) / odds.any ** 2 / Math.max(1, visits)) : 0;
-      row.rows.push({ what: "当たるまでの個数 (1 回の来訪あたり)", tree: perVisit, engine: want, visits });
-      if (visits >= 20 && (!Number.isFinite(want) || (Math.abs(perVisit - want) > 4 * sd && Math.abs(perVisit - want) / want > 0.1))) row.off.push(`当たるまでの個数 ツリー ${perVisit.toFixed(2)} / エンジン ${want.toFixed(2)}`);
+      // エンジンの側も同じ手を打ち続けて数える (打つたびにアイテムが変わるので 1 ÷ 始めの当たりの割合ではない。上限は手の max、無ければ 5000 = 100 人回しと同じ。10-25)
+      const perVisit = visits ? ((run.boxes[b.id]?.spend ?? 0) * run.n) / visits : NaN;
+      const u = E.untilOf(item, b.hand.currency, b.hand.omens.filter((o) => o !== ECHO), aims, b.hand.repeat.max ?? 5000);
+      const want = u ? u.mean : Infinity;
+      const sd = u ? Math.sqrt(u.sd ** 2 / Math.max(1, visits) + u.sd ** 2 / u.people) : 0;
+      row.rows.push({ what: "当たるまでの個数 (1 回の来訪あたり)", tree: perVisit, engine: want, visits, stuck: u?.stuck ?? null });
+      if (visits >= 20 && (!Number.isFinite(want) || (Math.abs(perVisit - want) > 4 * sd && Math.abs(perVisit - want) / want > 0.1))) row.off.push(`当たるまでの個数 ツリー ${perVisit.toFixed(2)} / エンジン ${want.toFixed(2)}${u?.stuck ? ` (エンジンで上限まで当たらない人 ${(u.stuck * 100).toFixed(0)}%)` : ""}`);
     } else {
       const total = outs.reduce((s, o) => s + flow(b.id, o.id), 0);
       const check = (what, obs, p) => {

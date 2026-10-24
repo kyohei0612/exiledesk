@@ -188,6 +188,34 @@ function tally(item: StageItem, r: ReadonlyArray<Branch>, aims: readonly Aim[], 
   return sampled ? { ...out, sampled } : out;
 }
 /**
+ * 「当たるまで」の手を同じ手で打ち続けた時の 1 回の来訪あたりの個数 (people 人、上限 cap 回で打ち切り)。
+ * 打つたびにアイテムが変わる (削減のお告げは毎回いちばん低い MOD を消す) ので、始めのアイテムの 1 回の当たりの割合の逆数とは合わない。
+ * 当たり = 始めに無かった狙いが付いている。抜けられない形 (例: プレフィックスが満杯でいちばん低いのがサフィックス) に入った人は cap まで打つ (10-25)
+ */
+export function untilOf(item: StageItem, key: string, omens: readonly string[], aims: readonly Aim[], cap: number, people = 200): { mean: number; sd: number; stuck: number; people: number } | null {
+  const ts = aims.map((a) => ({ modId: a.modId, minTierIndex: tierIndexOf(data!, a.modId, a.tier) }));
+  const opts = { data: data!, sameText: true };
+  const holds = (it: StageItem): boolean[] => ts.map((t) => [...it.prefixes, ...it.suffixes].some((m) => aimHits(m, t, opts)));
+  const before = holds(item);
+  const rng = mulberry32(24680);
+  const counts: number[] = [];
+  let stuck = 0;
+  for (let p = 0; p < people; p++) {
+    let it = item, k = 0;
+    while (k < cap) {
+      const a = applyCurrency(data!, it, key, rng, omens);
+      if (!a.applied) { if (p === 0 && k === 0) return null; break; }
+      it = a.item; k++;
+      if (holds(it).some((h, i) => h && !before[i])) break;
+    }
+    if (k >= cap) stuck++;
+    counts.push(k);
+  }
+  const mean = counts.reduce((s, c) => s + c, 0) / people;
+  const sd = Math.sqrt(counts.reduce((s, c) => s + (c - mean) ** 2, 0) / Math.max(1, people - 1));
+  return { mean, sd, stuck: stuck / people, people };
+}
+/**
  * 猿が画面で読んだ形 (step の rarity と mods [{ modId, tier = T }]) と、ツリーがエンジンに渡したアイテム (boxItem の raw) の食い違い。組み立てずに直に比べる。
  * エッセンスの MOD は段を比べない (猿の T は普通の MOD の段で数えた名前)
  */
