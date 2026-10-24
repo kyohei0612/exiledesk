@@ -20,6 +20,8 @@ export function useTreeLink(doc: Ref<TreeDoc>, from: Ref<string | null>) {
       if (b.id === id) { out.set(b.id, tr("自分の箱", "This box itself")); continue; }
       // 分かれ目 (打たずに分ける) は手が無くてもつなげる (どの形でも行の箱へ分かれる、10-22)
       if (b.split) { out.set(b.id, null); continue; }
+      // 始まりの箱は帯の「↩ 始めに戻る」と同じ (setBack の "start")。箱だけ手の打てる / 打てないで灰色にしていて、押しても黙って何も起きなかった (10-25 モンキー 4 本目)
+      if (b.out === "start") { out.set(b.id, null); continue; }
       if (!b.hand) { out.set(b.id, tr("この箱にはまだ打つ手が無い", "This box has no craft yet")); continue; }
       const why = handProblem(d, item, b.hand);
       out.set(b.id, why ? tr(`この箱の手が打てない: ${why}`, `Its craft can't be used here: ${why}`) : null);
