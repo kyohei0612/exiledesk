@@ -147,8 +147,10 @@ for (const f of files) {
     if (!st.card || !Array.isArray(st.shelf)) { outSteps.push(st); continue; }
     sum.steps++;
     const monkey = usable(st.shelf);
-    // エッセンスの数え方を猿に合わせる: 猿の口の棚 (レッサーの札がある) は段ごと、画面を押す猿の棚 (系統ごとに一番上の段 1 枚) は系統ごと
-    const allTiers = st.shelf.some((x) => /レッサーエッセンス/.test(x.name));
+    // エッセンスの数え方を猿に合わせる: 猿の口の棚 (同じ系統の段が 2 枚以上ある) は段ごと、画面を押す猿の棚 (系統ごとに一番上の段 1 枚) は系統ごと。
+    // 一番上がレッサーの系統 (フォーカスの肉体など) もあるので、レッサーの札があるだけでは決めない (隊長 4 本目 10-25)
+    const essFam = st.shelf.map((x) => /^(.+?)の(?:レッサー|グレーター)?エッセンス$/.exec(x.name)?.[1]).filter(Boolean);
+    const allTiers = essFam.length !== new Set(essFam).size;
     let best = null, base = null;
     // 猿が step に boxItem (ツリーがその箱で持っているアイテム) を書いていれば、その raw をそのままエンジンに渡す (聖別・ルーン・冒涜・エッセンスの数もそのまま。10-24 隊長)
     const raw = st.boxItem?.raw;
