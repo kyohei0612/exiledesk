@@ -1,5 +1,8 @@
 // poe2db の照合の共通 (audit-poe2db*.mjs・build-poe2db-fixes.mjs。2026-10-22 に 4 本の写しを 1 つに、中身はそのまま)
 
+/** 引数「--名前 値」の値 (無ければ def)。写しの置き場 --cache・英語の写し --cache-us・結果 --out・取る間 --wait を日付つきで分ける (2026-10-24 取り直し、前の写しは消さない) */
+export const argOf = (name, def) => { const i = process.argv.indexOf(`--${name}`); return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : def; };
+
 /** 置き場の行 → poe2db のページの名前 */
 export const pageOf = (cls) => cls.replace(/^(Wands|Staves|Crossbows)_.*$/, "$1").replace(/^OneHand_/, "One_Hand_").replace(/^TwoHand_/, "Two_Hand_");
 /** 埋め込み JSON (new ModsView({...})) */

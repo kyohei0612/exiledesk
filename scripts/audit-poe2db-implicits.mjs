@@ -19,11 +19,12 @@ import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bundleEntry } from "./_bundle-ts.mjs";
+import { argOf } from "./_poe2db-common.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const CACHE = resolve(ROOT, "data-cache/poe2db-pages");
-const CACHE_US = resolve(ROOT, "data-cache/poe2db-pages-us");
-const OUT = resolve(ROOT, "data-cache/poe2db-implicit-audit.json");
+const CACHE = resolve(ROOT, argOf("cache", "data-cache/poe2db-pages"));
+const CACHE_US = resolve(ROOT, argOf("cache-us", "data-cache/poe2db-pages-us"));
+const OUT = resolve(ROOT, argOf("out", "data-cache/poe2db-implicit-audit.json"));
 const FIXES = resolve(ROOT, "src/services/htc/poe2db-implicit-fixes.json");
 const WRITE = process.argv.includes("--write");
 const extra = JSON.parse(readFileSync(resolve(ROOT, "src/services/htc/extra-bases.json"), "utf8"));

@@ -18,13 +18,16 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bundleEntry } from "./_bundle-ts.mjs";
-import { pageOf, modsView, famKey } from "./_poe2db-common.mjs";
+import { pageOf, modsView, famKey, argOf } from "./_poe2db-common.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const CACHE = resolve(ROOT, "data-cache/poe2db-pages");
+// --us = 英語のページ (/us/、暗黙の照らしの poe2db-pages-us と同じ物)
+const US = process.argv.includes("--us");
+const CACHE = resolve(ROOT, argOf("cache", US ? "data-cache/poe2db-pages-us" : "data-cache/poe2db-pages"));
+const WAIT = Number(argOf("wait", "1200"));
 const REFRESH = process.argv.includes("--refresh");
 const WRITE = process.argv.includes("--write");
-const UA = { "User-Agent": "ExileDesk/0.1 pool-audit (+https://github.com/kyohei0612/exiledesk)", "Accept-Language": "ja" };
+const UA = { "User-Agent": "ExileDesk/0.1 pool-audit (+https://github.com/kyohei0612/exiledesk)", "Accept-Language": US ? "en" : "ja" };
 mkdirSync(CACHE, { recursive: true });
 
 const { loadPatchSync, baseCatalog, jaOfMod } = await bundleEntry("scripts/_audit-poe2db-entry.ts");
@@ -46,11 +49,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function page(name) {
   const p = resolve(CACHE, `${name}.html`);
   if (!REFRESH && existsSync(p)) return readFileSync(p, "utf8");
-  const r = await fetch(`https://poe2db.tw/jp/${URL_OF[name] ?? name}`, { headers: UA });
+  const r = await fetch(`https://poe2db.tw/${US ? "us" : "jp"}/${URL_OF[name] ?? name}`, { headers: UA });
   if (!r.ok) throw new Error(`${name}: ${r.status}`);
   const html = await r.text();
   writeFileSync(p, html);
-  await sleep(1200);
+  await sleep(WAIT);
   return html;
 }
 
@@ -117,8 +120,9 @@ for (const [pg, classes] of pages) {
   const poolIssues = Object.values(out.pools).reduce((a, x) => a + Object.values(x).reduce((b, y) => b + y.extra.length + y.missing.length, 0), 0);
   console.log(`${pg.padEnd(18)} ベース db ${String(out.bases.db).padStart(2)} / こちら ${String(out.bases.ours).padStart(2)}${out.bases.missing.length ? ` 無い: ${out.bases.missing.join("・")}` : ""}${out.bases.extra.length ? ` 余計: ${out.bases.extra.join("・")}` : ""} | 置き場の食い違い ${poolIssues}`);
 }
-writeFileSync(resolve(ROOT, "data-cache/poe2db-audit.json"), JSON.stringify(report, null, 1));
-console.log("→ data-cache/poe2db-audit.json");
+const OUT = argOf("out", "data-cache/poe2db-audit.json");
+writeFileSync(resolve(ROOT, OUT), JSON.stringify(report, null, 1));
+console.log(`→ ${OUT}`);
 if (WRITE) {
   writeFileSync(resolve(ROOT, "src/services/htc/poe2db-pool-fixes.json"), JSON.stringify({ generated: report.generated, note: "poe2db のページに無い系統を置き場から外す (scripts/audit-poe2db.mjs --write)", remove: fixes }, null, 1));
   console.log("→ src/services/htc/poe2db-pool-fixes.json");

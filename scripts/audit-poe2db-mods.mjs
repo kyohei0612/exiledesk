@@ -18,10 +18,10 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bundleEntry } from "./_bundle-ts.mjs";
 import { RUNE_POOLS } from "./_htc-base-tags.mjs";
-import { pageOf, modsView, famKey, sameNumsScaled } from "./_poe2db-common.mjs";
+import { pageOf, modsView, famKey, sameNumsScaled, argOf } from "./_poe2db-common.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const CACHE = resolve(ROOT, "data-cache/poe2db-pages");
+const CACHE = resolve(ROOT, argOf("cache", "data-cache/poe2db-pages"));
 const { loadPatchSync, jaOfMod, tierDisplayRanges } = await bundleEntry("scripts/_audit-poe2db-entry.ts");
 const data = loadPatchSync();
 
@@ -103,6 +103,7 @@ for (const [pg, classes] of pages) {
   console.log(`${pg.padEnd(26)} ${s || "一致"}`);
 }
 report.total = total;
-writeFileSync(resolve(ROOT, "data-cache/poe2db-mod-audit.json"), JSON.stringify(report, null, 1));
+const OUT = argOf("out", "data-cache/poe2db-mod-audit.json");
+writeFileSync(resolve(ROOT, OUT), JSON.stringify(report, null, 1));
 console.log("\n合計", total);
-console.log("→ data-cache/poe2db-mod-audit.json");
+console.log(`→ ${OUT}`);
