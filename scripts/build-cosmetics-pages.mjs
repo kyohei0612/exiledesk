@@ -4,7 +4,7 @@
  *
  * オーナー「PoE1・PoE2 スキンとかでも色々引っかかるように SEO こっちでも頑張るか」。検索の入口になる、JS 無しで読める一覧。
  * 出す物: /cosmetics/ と /en/cosmetics/ (まとめごとの件数)、まとめごとの子ページ /cosmetics/<まとめ> (と /en/…)。
- * まとめはアプリの一覧の絞り込みと同じ src/views/skins/groups.json の 10 個 (オーナー 10-25「8 種類くらい、武器・エフェクト・背面は絶対分けたい」)。
+ * まとめはアプリの一覧の絞り込みと同じ src/views/skins/groups.json の 10 個 + 一式 (同じ名前の頭・同じシリーズ、build-mtx-web.mjs の sets) (オーナー 10-25「8 種類くらい、武器・エフェクト・背面は絶対分けたい」)。
  * 子ページの中は元の種類ごとの見出し (英語名の無い種類が混ざるまとめは英語では見出し無し)。
  * 中身は src/data/mtx-poe1-in-poe2.json (scripts/build-mtx-web.mjs、名前は poe2db の日英)。絵は /mtx-art/<a>.webp (静的な置き場なので 1 日の枠に数えない)。
  * 見た目と頭・足は読み物のページ (build-seo-pages.mjs) に合わせる。アプリの一覧 (?page=skins) への入口を付ける。
@@ -27,6 +27,10 @@ const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").
 
 // まとめごと (groups.json の並び、その他は最後)。中は元の種類ごと (多い順)
 const GROUPS = [...G.groups, G.other].map((g) => ({ ...g, items: [] }));
+// 一式 (build-mtx-web.mjs の sets) は 1 枚のカードに (絵と飛び先は代表の部品、部品の数を札に)。部品は各まとめにも今までどおり (オーナー 10-25)
+const partsOf = d.sets.map(() => 0);
+for (const it of d.items) if (it.s != null) partsOf[it.s]++;
+GROUPS.unshift({ ...G.set, items: d.sets.map((t, i) => ({ ja: `${t.ja} 一式`, en: `${t.en} Set`, k: -99, a: d.items[t.main].a, slug: d.items[t.main].slug, parts: partsOf[i] })) });
 const groupOf = new Map(G.groups.flatMap((g) => g.k.map((k) => [k, GROUPS.find((x) => x.id === g.id)])));
 for (const it of d.items) (groupOf.get(it.k) ?? GROUPS.at(-1)).items.push(it);
 const total = d.items.length;
@@ -42,9 +46,10 @@ h2{font-size:17px;margin:28px 0 8px;padding-bottom:4px;border-bottom:1px solid v
 a{color:var(--link)}.cta{display:inline-block;margin:6px 0 4px;padding:8px 18px;border:1px solid #8a6a32;border-radius:6px;background:#2a1f12;color:var(--accent);text-decoration:none;font-weight:700}
 table{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0 10px}th,td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left}th{color:var(--sub);font-weight:400}td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
 .note{color:var(--sub);font-size:13px}.crumb{font-size:12px;color:var(--sub);margin-bottom:8px}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin:8px 0 12px}@media(max-width:480px){.cards{grid-template-columns:1fr 1fr;gap:8px}}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:8px 0 12px}@media(max-width:760px){.cards{grid-template-columns:1fr 1fr;gap:8px}}
+.card{position:relative}.card i{position:absolute;top:8px;right:8px;font-style:normal;font-size:11px;font-weight:700;color:#f3d38a;background:#5a3f1a99;border-radius:99px;padding:1px 8px}
 .card{display:flex;flex-direction:column;align-items:center;min-width:0;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--fg);text-decoration:none;text-align:center;line-height:1.35}.card:hover{border-color:#8a6a32}
-.card img,.card .ph{width:100%;max-width:128px;aspect-ratio:1;height:auto;object-fit:contain}
+.card img,.card .ph{width:100%;aspect-ratio:1;height:auto;object-fit:contain}
 .card b{margin-top:6px;font-weight:400;font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;width:100%}.card span{color:var(--sub);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%}
 footer{border-top:1px solid var(--line);color:var(--sub);font-size:12px}footer .fnav{margin:0 0 6px}footer .fnav a{color:var(--sub)}footer .in{padding-top:14px;padding-bottom:20px}`;
 
@@ -117,7 +122,8 @@ ${alt ? `<link rel="alternate" hreflang="${other}" href="${SITE}${LANGS[other].p
     // 絵が主役のカード、押すと poe2db (アプリの一覧と同じ。オーナー 10-25)
     const img = it.a != null ? `<img src="/mtx-art/${it.a}.webp" alt="${esc(L.name(it))}" loading="lazy" decoding="async" width="128" height="128" />` : `<span class="ph"></span>`;
     const sub = L.sub(it);
-    return `<a class="card" href="${(ja ? d.url.ja : d.url.en) + it.slug}" target="_blank" rel="noopener">${img}<b>${esc(L.name(it))}</b>${sub ? `<span>${esc(sub)}</span>` : ""}</a>`;
+    const badge = it.parts ? `<i>${ja ? `${it.parts} 点` : `${it.parts} pcs`}</i>` : "";
+    return `<a class="card" href="${(ja ? d.url.ja : d.url.en) + it.slug}" target="_blank" rel="noopener">${badge}${img}<b>${esc(L.name(it))}</b>${sub ? `<span>${esc(sub)}</span>` : ""}</a>`;
   }).join("")}</div>`;
   const childPath = (g) => `/cosmetics/${g.slug}`;
   /** 子ページの中身: 元の種類ごとの見出し + カード (種類が 1 つ・英語名の無い種類が混ざる時は見出し無し) */

@@ -1,5 +1,5 @@
 {
-  "_": "コスメティックの絞り込みのまとめ (2026-10-25 オーナー「8 種類くらいに分類分け、あとはその他で。武器・エフェクト・背面は絶対分けたい」)。k = mtx-poe1-in-poe2.json の種類の番号。ここに無い種類は other。SkinsPage.vue と scripts/build-cosmetics-pages.mjs が読む",
+  "_": "コスメティックの絞り込みのまとめ (2026-10-25 オーナー「8 種類くらいに分類分け、あとはその他で。武器・エフェクト・背面は絶対分けたい」)。k = mtx-poe1-in-poe2.json の種類の番号。ここに無い種類は other。一式 (set) は種類ではなく build-mtx-web.mjs の sets。SkinsPage.vue と scripts/build-cosmetics-pages.mjs が読む",
   "groups": [
     { "id": "weapon", "slug": "weapon-skins", "ja": "武器", "en": "Weapon Skins", "k": [0] },
     { "id": "weapon-fx", "slug": "weapon-effects", "ja": "武器エフェクト", "en": "Weapon Effects", "k": [2, 3] },
@@ -11,5 +11,6 @@
     { "id": "frame", "slug": "portrait-frames", "ja": "ポートレートフレーム", "en": "Portrait Frames", "k": [12] },
     { "id": "hideout", "slug": "hideout", "ja": "隠れ家", "en": "Hideout", "k": [20, -1] }
   ],
+  "set": { "id": "set", "slug": "sets", "ja": "一式", "en": "Sets" },
   "other": { "id": "other", "slug": "other", "ja": "その他", "en": "Other" }
 }

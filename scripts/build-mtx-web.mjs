@@ -87,6 +87,8 @@ const mtx = JSON.parse(readFileSync(resolve(ROOT, "src/services/mtx/mtx.json"), 
 const slugOf = new Map([...us].map(([slug, v]) => [v.name.toLowerCase(), slug]));
 
 const items = [];
+/** items と同じ並びのクライアントのシリーズの札 (ShopTag、一式の見分けに使う。出力には入れない) */
+const series = [];
 const tagCount = {};
 /** 外した物 (理由ごと) */
 const dropped = { pack: [], tag: [], dodge: [], store: [], noDb: [] };
@@ -100,6 +102,7 @@ for (const it of mtx.items) {
   const row = { en: us.get(slug).name, ja: jp.get(slug)?.name ?? it.ja, k: it.c, slug };
   if (it.a != null) row.a = it.a;
   items.push(row);
+  series.push(it.t ?? "");
   {
     const t = (tagCount[it.c] ??= {});
     const key = `${us.get(slug).tags[0] ?? ""}\t${jp.get(slug)?.tags[0] ?? ""}`;
@@ -118,17 +121,54 @@ for (const c of [...new Set(items.map((x) => x.k))].sort((a, b) => a - b)) {
   kinds[c] = { ja: mtx.cats[c] ?? null, en };
 }
 
+/**
+ * 一式 (2026-10-25 オーナー「同じ種類の一式はもう一式としてまとめちゃっていい」「インシネレーターの幻影ポータル・武器・翼・フレーム・武器エフェクトも一式で」)。
+ * poe2db に一式の分けは無いので、英語名の頭 (語の区切り) が同じで、クライアントのシリーズの札 (ShopTag) も同じ物が 3 つ以上で一式。
+ * 札の無い物 (隠れ家の家具など) と札の違う物 (Arcane の防具と Arcane Golem のポータルなど) は混ぜない。頭は長い方を先に取る (Sin と Sin and Innocence は別)。
+ * 種類が 2 つ以上ある物だけ (同じ種類の段違い・色違いは一式にしない)。
+ * 出力: sets = [{ en, ja, main (代表の items の番号: 鎧 → 背面 → 初めの物) }]、items[].s = 入っている一式の番号
+ */
+/** 一式の頭にしない言葉 (Alternate Art = レースの報酬の別絵で、一式ではない) */
+const STOP = new Set(["The", "A", "An", "Alternate", "Alternate Art"]);
+const prefixes = (en) => { const w = en.split(" "); return w.slice(0, -1).map((_, i) => w.slice(0, i + 1).join(" ")).reverse(); };
+const count = new Map();
+items.forEach((x, i) => { if (!series[i]) return; for (const p of prefixes(x.en)) { const key = `${series[i]}\t${p}`; count.set(key, (count.get(key) ?? 0) + 1); } });
+const setOf = new Map();
+items.forEach((x, i) => {
+  if (!series[i]) return;
+  const p = prefixes(x.en).find((q) => !STOP.has(q) && (count.get(`${series[i]}\t${q}`) ?? 0) >= 3);
+  if (p) setOf.set(i, `${series[i]}\t${p}`);
+});
+// 長い頭に取られて 3 つ未満になった一式は外す
+const members = new Map();
+for (const [i, key] of setOf) (members.get(key) ?? members.set(key, []).get(key)).push(i);
+const lcp = (a) => { let s = a[0]; for (const t of a) while (!t.startsWith(s)) s = s.slice(0, -1); return s; };
+const sets = [];
+for (const [key, idx] of members) {
+  // 種類が 1 つだけ (フレームの段違い・同じペットの色違い・隠れ家の家具など) は一式にしない
+  if (idx.length < 3 || new Set(idx.map((i) => items[i].k)).size < 2) continue;
+  const en = key.split("\t")[1];
+  // 日本語は部品の名前の頭 (日本語の付け方がばらばらで 1 文字しか揃わない時はシリーズの札の名前。例 Celestial = 天体)
+  const head = lcp(idx.map((i) => items[i].ja)).replace(/[の・\s-]+$/, "");
+  const ja = head.length >= 2 ? head : key.split("\t")[0];
+  const main = idx.find((i) => items[i].k === 4) ?? idx.find((i) => items[i].k === 5) ?? idx.find((i) => items[i].a != null) ?? idx[0];
+  for (const i of idx) items[i].s = sets.length;
+  sets.push({ en, ja, main });
+}
+
 const data = {
   generated: new Date().toISOString().slice(0, 10),
   source: "client MtxTypes c19 (PoE1) & c20 (PoE2) via src/services/mtx/mtx.json, only items listed in poe2db Microtransactions (us / jp), without PoE2-born items (poedb supporter packs / rewards, PoE2 shop tags, dodge roll)",
   url: { ja: "https://poe2db.tw/jp/", en: "https://poe2db.tw/us/" },
   art: "public/mtx-art/<a>.webp",
   kinds,
+  sets,
   items,
 };
 writeFileSync(OUT, JSON.stringify(data));
 console.log(`${items.length} 件 → ${OUT} (poe2db の一覧 ${us.size} 件、PoE2 のパックの名前 ${p2Pack.size} 件)`);
 console.log(`外した: PoE2 のパック・報酬 ${dropped.pack.length}・PoE2 の札 ${dropped.tag.length}・ドッジロール ${dropped.dodge.length}・店の説明 ${dropped.store.length}・poe2db に無い ${dropped.noDb.length}`);
 for (const [c, k] of Object.entries(kinds)) console.log(c, k.ja, "/", k.en ?? "(英語名なし)", items.filter((x) => x.k === +c).length);
+console.log(`一式 ${sets.length} (部品 ${items.filter((x) => x.s != null).length})、例: ${sets.slice(0, 8).map((x) => `${x.en} / ${x.ja} (${items.filter((y) => sets[y.s] === x).length})`).join("、")}`);
 console.log("ドッジロール:", dropped.dodge.join(", "), "/ 店の説明:", dropped.store.join(", "));
 console.log("poe2db に無い:", dropped.noDb.join(", "));
