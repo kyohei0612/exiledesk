@@ -114,10 +114,12 @@ for (const f of files) {
     if (miss.length) { skip("MOD がエンジンの一覧に無い"); outSteps.push({ ...st, engine: { error: "MOD がエンジンの一覧に無い", mods: miss } }); continue; }
     // レアリティ: 猿が rarity ("normal" / "magic" / "rare") を書いていればそれだけ、無ければ棚の打てる札が猿と一番近い形
     const monkey = usable(st.shelf);
+    // エッセンスの数え方を猿に合わせる: 猿の口の棚 (レッサーの札がある) は段ごと、画面を押す猿の棚 (系統ごとに一番上の段 1 枚) は系統ごと
+    const allTiers = st.shelf.some((x) => /レッサーエッセンス/.test(x.name));
     let best = null;
     for (const [rarity, item] of Object.entries(E.itemsFor(base, ms.map((m) => m.hit), st.card))) {
       if (!item || (st.rarity && st.rarity !== rarity)) continue;
-      const shelf = E.shelfOf(item);
+      const shelf = E.shelfOf(item, allTiers);
       const eng = usable(shelf);
       const d = { 猿だけ: setDiff(monkey, eng), エンジンだけ: setDiff(eng, monkey) };
       const n = d.猿だけ.length + d.エンジンだけ.length;

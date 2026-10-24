@@ -68,15 +68,17 @@ const essRank = (k: string): number => { const i = ESS_ORDER.findIndex((p) => k.
 /**
  * 棚 (CurrencyShelf の「打てる」の欄と同じ並び): オーブ・骨 / エッセンスは系統ごとに 1 つ (札は打てる段のうち一番上、どれも打てなければ普通の段。groupRep と同じ) /
  * ルーンはソケットがある時だけで、クラフトに関わるルーン (CRAFT_RUNE_KEYS) だけ (ほかのルーンは畳んだ欄で、猿には見えない)。ツリーで隠す札 (SIM_HIDDEN) は抜く。
- * 打てない札も理由つきで返す (猿の棚は打てる欄だけなので、比べるのは off でない物)
+ * 打てない札も理由つきで返す (猿の棚は打てる欄だけなので、比べるのは off でない物)。allTiers = エッセンスを段ごとに全部 (猿の口の棚と同じ数え方)
  */
-export function shelfOf(item: StageItem): Card[] {
+export function shelfOf(item: StageItem, allTiers = false): Card[] {
   const why = (k: string): string | null => useReason(data!, item, k);
   const out: Card[] = [];
   const keys = [...ORBS.flatMap((g) => g.keys), ...bonesFor(item), ...((item.sockets ?? 0) > 0 ? runesFor(item).flatMap((g) => g.keys).filter((k) => CRAFT_RUNE_KEYS.includes(k)) : [])];
   for (const k of keys) { if (SIM_HIDDEN.has(k)) continue; const w = why(k); out.push({ name: nameOfKey(k, item), off: !!w, why: w, key: k }); }
   for (const g of essenceShelf(data!, item)) {
     const ks = g.keys.filter((k) => !SIM_HIDDEN.has(k)).sort((a, b) => essRank(a) - essRank(b));
+    // 段ごと (猿の口 __simMonkey.shelf は系統の段を全部別の札で返す。名前は系統で揃わない: 氷のレッサー / 氷晶 / 氷のグレーター)
+    if (allTiers) { for (const k of ks) { const w = why(k); out.push({ name: nameOfKey(k, item), off: !!w, why: w, key: k }); } continue; }
     const ok = ks.filter((k) => !why(k));
     const rep = ok[ok.length - 1] ?? ks.find((k) => k.startsWith("essence:normal:")) ?? ks[0];
     if (rep) out.push({ name: nameOfKey(rep, item), off: !ok.length, why: ok.length ? null : why(rep), key: rep });
