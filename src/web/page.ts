@@ -8,13 +8,13 @@
  *   - スパムシミュレーター: ?page=routes (カレンシーの見出しから・X のシェアから。旧カオススパム計算機 ?page=spam は 2026-10-19 に消した)
  *   - 要望・バグを送る: ?page=feedback
  *   - シミュレーターのレシピ (保存・上書き・共有): ?page=recipes (2026-10-21)
- *   - クラフトの道 (ツリー): ?page=sim-tree (2026-10-22、開発版だけ。工程の sim-○○ より先に見分ける)
+ *   - クラフトの道 (ツリー): ?page=sim-tree (2026-10-22、開発版だけ。工程の sim-○○ より先に見分ける)。最初のベース選び ?page=sim-base・完成の MOD ?page=sim-mods も同じツリーのページ (treeStep、2026-10-24)
  *   - デイリークラフトチャレンジ: ?page=daily (一覧)・?page=daily&q=<id> (お題)・?page=daily-start&q=<id> (フラクチャー選び) (2026-10-22、開発版だけ。ヘッダーの「デイリー」から)
  *   - 旧シミュレーターの工程 (?page=sim-mods など) は 10-22 に消した。古い URL はクラフトのまま開く
  * 移るたびに履歴に積む (ブラウザの戻るで前のページへ)。URL から開いた時もそのページで始める (計算機は今のアイテムが要るので URL からは開かない)。
  * ページを移るたびに広告の枠を出し直す (utils/ads.ts の pageTick)。MOD 一覧は重ねる窓のまま、ページにしない (2026-10-12)
  */
-import { computed, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { craftStage as s } from "../state/craft-stage";
 import { topic } from "../state/tutorial/craft-topic";
 import { course } from "../state/tutorial/craft-course";
@@ -27,6 +27,52 @@ import { pageTick } from "../utils/ads";
 import { tr } from "../i18n/lang";
 import { track } from "./track";
 import { flag } from "./release-flags";
+
+/**
+ * ツリーのページの中の段 (2026-10-24 オーナー「シミュレーターのタブを押したら最初のベース選択のページへ (オーバーレイでなくページ全体)、MOD も別ページ」)。
+ * tree = ツリー、base = 最初のベース選び、mods = 完成の MOD。どれも treePage = true で、SimTreePage が見て出し分ける
+ */
+export type TreeStep = "tree" | "base" | "mods";
+export const treeStep = ref<TreeStep>("tree");
+const TREE_PAGES: Record<string, TreeStep> = { "page=sim-tree": "tree", "page=sim-base": "base", "page=sim-mods": "mods" };
+
+/**
+ * 離れる時の確かめ (2026-10-24 オーナー「ツリー作成中は離れる時に保存せずに終了するか聞く」)。fn(to) が true = 聞く (保存していない変更あり)。
+ * to = 移る先のページ (page の値。"" = クラフト、"unload" = 閉じる・読み直す・外のリンク)。
+ * 登録中にツリーのページから外へ移る時 (open○○Page・closeTreePage・戻る / 進む) は LeaveConfirm.vue で聞く。ツリーの中の段の行き来 (treeStep だけ替わる) は聞かない
+ */
+let leaveGuard: ((to: string) => boolean) | null = null;
+export function setLeaveGuard(fn: ((to: string) => boolean) | null): void {
+  leaveGuard = fn;
+}
+/** 聞いている間の「保存せずに終了」で移る先 (null = 聞いていない)。LeaveConfirm.vue が出す */
+export const leaveAsk = ref<(() => void) | null>(null);
+function mustAsk(to: string): boolean {
+  return treePage.value && !(to in TREE_PAGES) && !!leaveGuard?.(to);
+}
+/** to へ移る前に、確かめが要れば聞いてから、要らなければすぐ移る */
+function leaveThen(to: string, go: () => void): void {
+  if (mustAsk(to)) leaveAsk.value = go;
+  else go();
+}
+/** LeaveConfirm.vue のボタン (true = 保存せずに終了) */
+export function answerLeave(ok: boolean): void {
+  const go = leaveAsk.value;
+  leaveAsk.value = null;
+  if (ok) go?.();
+}
+/** 戻る / 進むで聞いて「保存せずに終了」になった時の 1 回は聞かずに通す。popBack = 聞くために元の位置へ戻した 1 回は何もしない */
+let popThrough = false, popBack = false;
+/** 履歴の何番目か (history.state の edIdx。戻る / 進むでどちらへ何歩動いたかを知り、聞く間は元の位置へ戻すため) */
+function histOf(): number {
+  const n = (history.state as { edIdx?: unknown } | null)?.edIdx;
+  return typeof n === "number" ? n : 0;
+}
+let histAt = histOf();
+function stateAt(i: number): Record<string, unknown> {
+  const st = history.state as unknown;
+  return { ...(st && typeof st === "object" ? st : {}), edIdx: i };
+}
 
 /** ベース選び・計算機・要望のページを閉じる (別のページへ移る時) */
 function leaveSubPages(): void {
@@ -41,49 +87,65 @@ function leaveSubPages(): void {
 
 /** 使い方・コツを開く (ヘッダーのボタン)。コースの途中なら抜ける */
 export function openGuide(): void {
-  leaveSubPages();
-  s.hold(null);
-  endLesson();
-  s.mode.value = "tutorial";
+  leaveThen("page=guide", () => {
+    leaveSubPages();
+    s.hold(null);
+    endLesson();
+    s.mode.value = "tutorial";
+  });
 }
 
 /** 要望・バグを送るのページを開く (ヘッダーのボタン・返事の窓から) */
 export function openFeedback(): void {
-  s.hold(null);
-  recipesPage.value = false;
-  treePage.value = false;
-  dailyPage.value = null;
-  feedbackPage.value = true;
+  leaveThen("page=feedback", () => {
+    s.hold(null);
+    recipesPage.value = false;
+    treePage.value = false;
+    dailyPage.value = null;
+    feedbackPage.value = true;
+  });
 }
 
 /** レシピのページを開く (シミュレーターの右上・ベースを選ぶページから) */
 export function openRecipesPage(): void {
   if (SIM_LOCKED) return;
-  s.hold(null);
-  feedbackPage.value = false;
-  treePage.value = false;
-  dailyPage.value = null;
-  recipesPage.value = true;
+  leaveThen("page=recipes", () => {
+    s.hold(null);
+    feedbackPage.value = false;
+    treePage.value = false;
+    dailyPage.value = null;
+    recipesPage.value = true;
+  });
 }
 
-/** クラフトの道 (ツリー) のページを開く (開発版だけ) */
-export function openTreePage(): void {
+/** クラフトの道 (ツリー) のページを開く (開発版だけ)。step = ツリーの中のどの段か (段だけ替えるのも、これ。履歴に積む) */
+export function openTreePage(step: TreeStep = "tree"): void {
   if (!TREE_ON) return;
   s.hold(null);
   feedbackPage.value = false;
   recipesPage.value = false;
   dailyPage.value = null;
+  treeStep.value = step;
   treePage.value = true;
+}
+/** ツリーのページを閉じてクラフトへ (上の切り替えタブの「エミュレーター」)。then = 閉じた後 (やめたら呼ばない) */
+export function closeTreePage(then?: () => void): void {
+  leaveThen("", () => {
+    treePage.value = false;
+    then?.();
+  });
 }
 
 /** デイリークラフトチャレンジのページを開く (ヘッダーの「デイリー」・ページの中の移動。開発版だけ)。既定は一覧 */
 export function openDailyPage(to: DailyView = { view: "list" }): void {
   if (!DAILY_ON) return;
-  s.hold(null);
-  feedbackPage.value = false;
-  recipesPage.value = false;
-  treePage.value = false;
-  dailyPage.value = { ...to };
+  leaveThen(dailyQuery(to), () => {
+    s.hold(null);
+    feedbackPage.value = false;
+    recipesPage.value = false;
+    treePage.value = false;
+    dailyPage.value = { ...to };
+  });
 }
 /** デイリーのページを閉じてクラフトへ戻る (クラフト画面は隠していただけなので、前の状態のまま) */
 export function closeDailyPage(): void {
@@ -106,11 +168,13 @@ function dailyOf(p: string): DailyView | null {
 
 /** ベース選びのページを開く (「ベースを変える」) */
 export function openBasePage(): void {
-  s.hold(null);
-  recipesPage.value = false;
-  treePage.value = false;
-  dailyPage.value = null;
-  basePage.value = true;
+  leaveThen("page=base", () => {
+    s.hold(null);
+    recipesPage.value = false;
+    treePage.value = false;
+    dailyPage.value = null;
+    basePage.value = true;
+  });
 }
 
 /**
@@ -123,7 +187,7 @@ const autoBase = computed(() => baseUnpicked.value && !basePage.value && page.va
 export const page = computed((): string => {
   if (feedbackPage.value) return "page=feedback";
   if (recipesPage.value) return "page=recipes";
-  if (treePage.value) return "page=sim-tree";
+  if (treePage.value) return `page=sim-${treeStep.value}`;
   if (dailyPage.value) return dailyQuery(dailyPage.value);
   if (routesOpen.value) return "page=routes";
   const id = topic.value?.id ?? course.value?.id;
@@ -141,6 +205,8 @@ export const pageTitle = computed((): string => {
   if (p === "page=routes") return tr("スパムシミュレーター — ExileDesk", "Spam simulator — ExileDesk");
   if (p === "page=recipes") return tr("レシピ — シミュレーター — ExileDesk", "Recipes — Simulator — ExileDesk");
   if (p === "page=sim-tree") return tr("クラフトの道 (ツリー) — ExileDesk", "Craft route tree — ExileDesk");
+  if (p === "page=sim-base") return tr("ベースを選ぶ — シミュレーター — ExileDesk", "Choose a base — Simulator — ExileDesk");
+  if (p === "page=sim-mods") return tr("完成の MOD — シミュレーター — ExileDesk", "Target mods — Simulator — ExileDesk");
   const d = dailyOf(p);
   if (d) return d.view === "list" ? tr("デイリークラフトチャレンジ — ExileDesk", "Daily Craft Challenge — ExileDesk") : d.view === "detail" ? tr("お題 — デイリークラフトチャレンジ — ExileDesk", "Challenge — Daily Craft Challenge — ExileDesk") : tr("フラクチャー選び — デイリークラフトチャレンジ — ExileDesk", "Pick a fracture — Daily Craft Challenge — ExileDesk");
   const t = topic.value?.title ?? course.value?.video.title;
@@ -150,14 +216,14 @@ export const pageTitle = computed((): string => {
   return tr("ExileDesk — PoE2 クラフトシミュレーター", "ExileDesk — PoE2 Craft Simulator");
 });
 
-const PAGE_KEYS = ["guide", "base", "feedback", "routes", "recipes", "sim-tree", "daily", "daily-start"];
+const PAGE_KEYS = ["guide", "base", "feedback", "routes", "recipes", "sim-tree", "sim-base", "sim-mods", "daily", "daily-start"];
 function urlFor(p: string): string {
   const u = new URL(location.href);
   u.searchParams.delete("page");
   u.searchParams.delete("course");
   u.searchParams.delete("q");
   // sample はツリーの見本を開く鍵。ツリーを出る時は消す (残すと「← 戻る」で /?sample=… になっていた。2026-10-23 シミュのモンキー 2 回目)
-  if (p !== "page=sim-tree") u.searchParams.delete("sample");
+  if (!(p in TREE_PAGES)) u.searchParams.delete("sample");
   for (const [k, v] of new URLSearchParams(p)) u.searchParams.set(k, v);
   return u.pathname + u.search + u.hash;
 }
@@ -183,7 +249,7 @@ function apply(p: string): void {
     feedbackPage.value = false;
     if (p === "page=recipes" && !SIM_LOCKED) { recipesPage.value = true; return; }
     recipesPage.value = false;
-    if (p === "page=sim-tree" && TREE_ON) { treePage.value = true; return; }
+    if (p in TREE_PAGES && TREE_ON) { treeStep.value = TREE_PAGES[p]; treePage.value = true; return; }
     treePage.value = false;
     const d = dailyOf(p);
     if (d && DAILY_ON) { dailyPage.value = d; return; }
@@ -229,6 +295,8 @@ export function startPages(): void {
     else if (p === "page=feedback") track("page:feedback");
     else if (p === "page=recipes") track("page:recipes");
     else if (p === "page=sim-tree") track("page:tree");
+    else if (p === "page=sim-base") track("page:sim-base");
+    else if (p === "page=sim-mods") track("page:sim-mods");
     else if (dailyOf(p)) track("page:daily", dailyOf(p)!.view);
     else if (p === "page=routes") track("page:routes");
     else if (p.startsWith("page=sim-")) track("page:sim", p.slice(9));
@@ -238,10 +306,22 @@ export function startPages(): void {
     try {
       // 自分で出たベース選びへ移る時は、クラフトの画面が替わっただけの時 (白に戻した後など) だけ積まない。ツリーなどから出た時は積む (戻るでそのページへ)
       if (auto || (nowAuto && old === "")) history.replaceState(history.state, "", urlFor(p));
-      else history.pushState(history.state, "", urlFor(p));
+      else history.pushState(stateAt(++histAt), "", urlFor(p));
     } catch { /* 積めなくても画面はそのまま */ }
   });
-  window.addEventListener("popstate", () => apply(pageOfUrl()));
+  try { history.replaceState(stateAt(histAt), ""); } catch { /* 番号が無くても戻る / 進むはできる (聞いた時に URL を戻せないだけ) */ }
+  window.addEventListener("popstate", () => {
+    const to = pageOfUrl(), at = histOf();
+    if (popBack) { popBack = false; return; } // 聞くために元の位置へ戻った分
+    const step = histAt - at;
+    if (popThrough || !mustAsk(to) || !step) { popThrough = false; histAt = at; apply(to); return; }
+    // 保存していない変更がある: 履歴の元の位置 (ツリー) へ戻してから聞く (積み直さないので、やめた後の戻るもすぐ聞く)。「保存せずに終了」なら行こうとした所へ (その 1 回は聞かない)
+    popBack = true;
+    history.go(step);
+    leaveAsk.value = () => { popThrough = true; history.go(-step); };
+  });
+  // 閉じる・読み直す・外のリンク (ブログなど) はブラウザの確かめ
+  window.addEventListener("beforeunload", (e) => { if (mustAsk("unload")) e.preventDefault(); });
   // ページが替わった直後 (0.5 秒) のクリックは受けない (「← 戻る」のダブルクリックの 2 回目が、移った先の同じ位置のヘッダーの「ブログ」に当たって /blog/ へ飛んだ。モンキーテスト 10-23 の 3)
   // 比べるのは押された時刻 (e.timeStamp)。移った先の描画が重いと 2 回目のクリックが待たされ、配られる時には 300ms を過ぎていた (10-23 シミュ部長の確かめ)
   // 守っている間のクリックは守りを延ばす (8 連打だと 0.5 秒を過ぎた後ろのクリックがブログに当たった。10-23 ジン部長の確かめ)
