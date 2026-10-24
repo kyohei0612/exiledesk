@@ -364,9 +364,12 @@ function setFit(on: boolean): void {
 watch(fitIlvl, (lv) => {
   const d = doc.value;
   if (!d.ilvlFit || !lv || lv === d.itemLevel) return;
+  ilvlNote.value = { from: d.itemLevel, to: lv };
   doc.value = { ...d, itemLevel: lv };
   save(doc.value);
 });
+/** 適正で狙いに合わせてアイテムレベルを変えた知らせ (完成形の設定の窓に小さく 1 行、× で閉じる。10-24 オーナー「合わせましたと小さく一言」) */
+const ilvlNote = ref<{ from: number; to: number } | null>(null);
 /** ベースを替えると消える箱の数 (始まりより下の、画面に出る箱。品質を上げた後の通り抜けは数えない) */
 const lostOnBase = computed(() => Object.values(doc.value.boxes).filter((b) => b.out !== "start" && b.out !== "pass").length);
 
@@ -438,5 +441,5 @@ const baseCost = computed(() => {
 const baseCostBusy = computed(() => !!s.data.value && !costReady.value);
 
 export function useTree() {
-  return { tabDocs, active, switchTab, addTab, closeTab, startPrice, setStartPrice, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, startFresh, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
+  return { tabDocs, active, switchTab, addTab, closeTab, ilvlNote, startPrice, setStartPrice, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, startFresh, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
 }

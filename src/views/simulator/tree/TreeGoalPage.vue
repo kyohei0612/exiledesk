@@ -115,6 +115,11 @@ const HELP: Array<[string, string]> = [
       </div>
       <!-- 木が 2 つ以上ある時はタブもここに (新しいツリーのベース選びの間も前の木へ戻れる、10-24 モンキー初めての人の回 8) -->
       <TreeTabs v-if="t.tabDocs.value.length > 1" class="px-3 pb-2" />
+      <!-- 適正でアイテムレベルを変えた時の一言 (10-24 オーナー: 黙って変わると気づかない、文字は最低限で閉じられる形) -->
+      <p v-if="t.ilvlNote.value" data-tree-ilvl-note class="flex min-w-0 items-center gap-2 px-3 pb-2 text-[12px] text-amber-200/90">
+        <span class="min-w-0 truncate">{{ tr(`アイテムレベルを ${t.ilvlNote.value.to} に合わせました (適正)`, `Item level set to ${t.ilvlNote.value.to} (fit)`) }}</span>
+        <button type="button" data-tree-ilvl-note-close class="shrink-0 rounded px-1 opacity-60 hover:bg-white/10 hover:opacity-100" :aria-label="tr('閉じる', 'Close')" @click="t.ilvlNote.value = null">×</button>
+      </p>
       <p v-if="step === 2 && dropped.length" data-tree-goal-dropped class="min-w-0 truncate px-3 pb-2 text-[12px] text-rose-200/80" :title="dropped.join('\n')">{{ tr(`このベースに付かない狙いを外した: ${dropped.join("・")}`, `Removed targets this base can't roll: ${dropped.join(", ")}`) }}</p>
     </template>
     <div v-if="step === 1" data-tree-goal-base class="flex min-w-0 flex-col gap-3">

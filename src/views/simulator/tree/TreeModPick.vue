@@ -17,6 +17,7 @@ import { tierRankLabel } from "../../../services/craft-stage/engine";
 import { aimHeldOn } from "../../../services/simulator/tree/tree-aim";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { aimKey } from "../../../services/simulator/tree/tree-model";
+import { hitAimsOf, kindOf } from "./tree-hand-plan";
 
 /** title: 見出しを替える (メモの窓では「欲しい MOD を足す」)。autofocus: 開いたら探す欄に入る */
 const props = defineProps<{ mode: "hit" | "start"; current: Aim | null; title?: string; autofocus?: boolean; embedded?: boolean; /** 当たりの箱 (前の箱で付いている狙いをグレーに) */ boxId?: string }>();
@@ -73,6 +74,18 @@ const heldBefore = computed(() => {
   const it = sampleOf(d, t.doc.value, p, 1).item;
   return new Set(t.goals.value.filter((a) => aimHeldOn(d, it, a, { sameText: true })).map(aimKey));
 });
+/**
+ * 親の箱の手で付きうる狙い (modId の組。手を置く時の当たりの候補 hitAimsOf と同じ = エンジンの付きうる狙い)。見ない手 (消す・品質など) は null。
+ * これに無い狙いは灰色で選べない (例 オーブの下のエッセンスの MOD、10-24 オーナー)
+ */
+const REACH_KINDS = ["add", "swap", "spam", "essence", "fracture"];
+const reach = computed((): Set<string> | null => {
+  const d = s.data.value, b = props.boxId ? t.doc.value.boxes[props.boxId] : null, p = b?.parent ? t.doc.value.boxes[b.parent] : null;
+  if (!fromGoals.value || !d || !p?.hand || !REACH_KINDS.includes(kindOf(p.hand))) return null;
+  const it = sampleOf(d, t.doc.value, p.id, 1).item;
+  return new Set(hitAimsOf(d, t.doc.value, p.id, it, p.hand, t.goals.value, p.hand.fractureOf ?? null).map((a) => a.modId));
+});
+const cantReach = (a: Aim): boolean => !!reach.value && !heldBefore.value.has(aimKey(a)) && !reach.value.has(a.modId);
 const tierLabel = (tier: number): string => tierRankLabel(tier, props.mode !== "start");
 </script>
 
@@ -85,8 +98,8 @@ const tierLabel = (tier: number): string => tierRankLabel(tier, props.mode !== "
     <p class="text-[12px] opacity-70">{{ tr(`${jaTypeName(t.doc.value.base)} (アイテムレベル ${t.doc.value.itemLevel})`, `${t.doc.value.base} (item level ${t.doc.value.itemLevel})`) }}</p>
     <ul v-if="fromGoals" data-tree-goal-aims class="flex flex-col gap-1">
       <li v-for="a in t.goals.value" :key="aimKey(a)"><button type="button" data-tree-goal-aim class="flex w-full min-w-0 items-center gap-2 rounded-md border px-2 py-1.5 text-left text-[13px]"
-        :class="[current && aimKey(current) === aimKey(a) ? 'border-amber-400/80 bg-amber-500/20 text-amber-100' : 'border-white/10 bg-white/[0.04] text-[#c8c8ff] hover:border-amber-400/60', heldBefore.has(aimKey(a)) ? 'opacity-40' : '']"
-        :title="heldBefore.has(aimKey(a)) ? tr('この箱の前でもう付いている', 'Already on the item before this box') : t.aimLabel(a)" @click="emit('pick', a)"><span class="min-w-0 flex-1 truncate">{{ t.aimLabel(a) }}</span><span v-if="heldBefore.has(aimKey(a))" class="shrink-0 text-[11px]">{{ tr("付いている", "On item") }}</span></button></li>
+        :class="[current && aimKey(current) === aimKey(a) ? 'border-amber-400/80 bg-amber-500/20 text-amber-100' : 'border-white/10 bg-white/[0.04] text-[#c8c8ff] hover:border-amber-400/60', heldBefore.has(aimKey(a)) || cantReach(a) ? 'opacity-40' : '']" :disabled="cantReach(a)"
+        :title="heldBefore.has(aimKey(a)) ? tr('この箱の前でもう付いている', 'Already on the item before this box') : cantReach(a) ? tr('この手では付かない', 'This craft can’t roll it') : t.aimLabel(a)" @click="emit('pick', a)"><span class="min-w-0 flex-1 truncate">{{ t.aimLabel(a) }}</span><span v-if="heldBefore.has(aimKey(a))" class="shrink-0 text-[11px]">{{ tr("付いている", "On item") }}</span><span v-else-if="cantReach(a)" data-tree-goal-aim-cant class="shrink-0 text-[11px]">{{ tr("この手では付かない", "Can’t roll") }}</span></button></li>
       <li class="pt-1 text-[12px] opacity-60">{{ tr("狙いは 0 完成形の設定で決める。狙い以外は外れ MOD", "Targets are set in 0 Final item. Anything else is a miss mod") }}</li>
     </ul>
     <template v-else>
