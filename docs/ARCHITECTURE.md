@@ -22,9 +22,9 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 | エミュレーター | `views/craft-stage/CraftStage.vue` | ベース選び → 棚 (`CurrencyShelf.vue`) から持って打つ。アイテム (`StageItemCard.vue`)・工程・MOD 一覧 (`StageModList.vue`)・次の手で狙う (`StageAimPanel.vue`)・スパムシミュレーター (別ページ `StageRoutesPage.vue`、運試し `StageRouteLuck.vue`、計算は `services/craft-stage/route-race.ts`。旧カオススパム計算機は 2026-10-19 に消した) |
 | ジェムコラプト | `views/gem-corrupt/GemCorruptWebPanel.vue` (計算は views/gem-corrupt/model.ts。Web では広告と一緒に出す予定) | 売値 3 つを入れて収支 |
 | チュートリアル (開発版だけ) | `views/tutorial/StageCourses.vue`・`StageTopicGuide.vue`・`StageCourseGuide.vue` | 動作を学ぶコース (`services/tutorial/topic-courses.ts`)・実践 (`course-recipes.ts`) |
-| シミュレーター (開発版だけ) | `views/simulator/tree/SimTreePage.vue` (`?page=sim-tree`、クラフトの道 = ツリー) | 打ち方を組んで何百人分作る (ADR-002・003)。回し方は `services/simulator/tree/` |
+| シミュレーター (開発版だけ) | `views/simulator/tree/SimTreePage.vue` (ページは `?page=sim-base` ベース → `sim-mods` 完成の MOD → `sim-tree` クラフトの道 = ツリー、10-24 夜に分けた。段は web/page.ts の treeStep) | 打ち方を組んで何百人分作る (ADR-002・003)。回し方は `services/simulator/tree/` |
 
-開発版だけの物は `state/craft-stage.ts` の `SIM_LOCKED` で本番から隠す (非公開の開発版 `pnpm deploy:web-dev` では開く)。
+開発版だけの物は `state/craft-stage.ts` の `SIM_LOCKED` と `src/web/release-flags.ts` のスイッチで本番から隠す (手元の開発版 `pnpm preview:prod -- --dev` と dev サーバー 1440 では開く。Cloudflare の開発版 web-dev は 10-24 に消した)。
 
 ## 部ごとの持ち場 (2026-10-20 に分け、10-22〜23 に組み替えた。持ち物の正は docs/org/owners.txt (`node scripts/owner-of.mjs <パス>`)、部の決まりは docs/org/<部>/README.md)
 
@@ -79,7 +79,7 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 
 - **Web**: `node scripts/bump-version.mjs patch` → `cd src-tauri && cargo check -q` → コミット → push → `pnpm deploy:web` (= `pnpm build:web` + `server/web` の deploy)。タグは打たない。
   `pnpm build:web` の最後に `scripts/build-seo-pages.mjs` がベースの読み物のページ (日本語 `/bases/`・英語 `/en/bases/`) と sitemap.xml を作る。
-- **非公開の開発版**: `pnpm deploy:web-dev` (URL は `?k=` 付き、チュートリアル・シミュレーターが開く、記録は送らない)。
+- **開発版**: 手元だけ。`pnpm preview:prod -- --dev` → http://dev.exiledesk.localhost:1461/ (本番と同じ Worker、チュートリアル・シミュレーターが開く、記録は送らない)。Cloudflare の開発版 web-dev (`deploy:web-dev`・`?k=`) は 10-24 に消した (本番と 1 日 10 万の枠を共有していたため)。
 - **サーバー**: `cd server/live && pnpm run deploy` (手順は `server/live/README.md`)。D1 は `exiledesk-logs`、KV は増やさない。
 
 ## テスト
