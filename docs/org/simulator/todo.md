@@ -21,7 +21,7 @@
   4〜13: 段を選ぶとアイテムレベルが黙って変わる (適正)・「穴」「!」の意味・何もしないスタートの「30 人中 27 人」・スタートに無い狙いでも「狙いが消えた」の箱・ベース選びに戻るとタブが見えない・設定「レア」とスタート「白」・タブを替えると「1 つ戻す」が灰色・段の出やすさが全部同じ・当たるまでのチェックが付かなかった (1 回)・兜を押した後ページが動く・説明の浮き窓が残る。詳しくは記録。
 - 確かめの道具 (scratchpad の台本、絶対パス): C:/Users/kyohei/AppData/Local/Temp/claude/C--Users-kyohei-ExileDesk/f45d08d4-e179-4920-b6f1-52076e45bc83/scratchpad/monkey-goal.mjs <式のファイル> (窓なし Chrome を port 9351 で Bash の run_in_background で立て、localStorage を空にして 1440 のツリーで猿の口 m を使う式を回す。goal4.js が 1 の再現)。終わったら TaskStop と profile 削除。
 - 猿の口 (sim-monkey.ts) に足した物: goalCandidates・setGoal (フラクチャーの印も)・setAim・setBack (箱か start)・setDone・check (テストラン)・result (画面と同じ値段の 100 人、moved・unexpected・prices・capDiv・capSteps つき)。
-- 10-24 夜に足した物: 初めての人の回の 1・2・3・5・8・9 とオーナー OK の 3 つ (適正の一言・付けられない組を押せない goalBlock・付かない狙いを灰色) は済み (9347b06f〜efb35963)、残りは 4 の「30 人中 27 人」の文だけ。動画の不在のアミュ A・B の見本 (?sample=absent-a / absent-b、結果 notes/2026-10-24-absent-amulet.md) の気づき: 反響で何度も選び直す冒涜がツリーに無い (費用 6〜8 倍)・手のある当たりの箱が形合わせで深い外れの箱へ移されて止まる (分かれ目で逃げた)。
+- 10-24 夜に足した物: 初めての人の回の 1・2・3・5・8・9 とオーナー OK の 3 つ (適正の一言・付けられない組を押せない goalBlock・付かない狙いを灰色) は済み (9347b06f〜efb35963)、「30 人中 27 人」の文も済み (20 本目: 27 人は外れに狙いを付けない直しで 30 人に、手の無い箱では回しの止まりを重ねて出さない)。動画の不在のアミュ A・B の見本 (?sample=absent-a / absent-b、結果 notes/2026-10-24-absent-amulet.md) の気づき: 反響で選び直す技は取りやめ (オーナー「シミュは選ぶとかない」、骨は候補に狙いがあれば当たり + 反響で 1 回引き直し)・手のある当たりの箱が形合わせで深い外れの箱へ移されて止まる (分かれ目で逃げた)。
 - 照らし: ジン部長の scripts/check-monkey-engine.mjs + scripts/_monkey-tree-walk.ts (形合わせも辿る、決まりの文は共有メモ local_52fe22f9…/tree-shape-rules.md)。g3 の 66 本でずれ 0。
 
 ## 19 本目の報告 (10-24、全部手元 1440 で確かめ)
