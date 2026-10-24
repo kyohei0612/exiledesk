@@ -9,7 +9,7 @@ import { computed, watchEffect } from "vue";
 import { omenBlock } from "../../../services/craft-stage/engine";
 import { flag } from "../../../web/release-flags";
 import { tr } from "../../../i18n/lang";
-import { nameOf } from "../../../state/craft-stage";
+import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { useShelf } from "../../../state/for-share/shelf-context";
 import ShelfButton from "./ShelfButton.vue";
 import StageOmenTune from "./StageOmenTune.vue";
@@ -30,7 +30,7 @@ watchEffect(() => {
 <template>
   <div v-if="list.length || $slots.default" class="rounded-lg border border-violet-400/25 bg-violet-500/[0.06] p-2" data-held-omens>
     <!-- 横に「MOD 一覧へ」(お告げを選びながら付く MOD を見に行ける。2026-10-11 オーナー「お告げの横にも MOD 一覧へ、楽だ」) -->
-    <p class="mb-1 flex items-center gap-2 text-[11px] text-violet-200/80">{{ tr(`${nameOf(shelf.held.value ?? "")} に掛けられるお告げ`, `Omens for ${nameOf(shelf.held.value ?? "")}`) }}<button v-if="modList" type="button" data-rec="mod-list-open" data-rec-part="mod-list-button" class="tbtn-top ml-auto" :title="tr('このベースに付く MOD の一覧へ', 'Go to the mod list')" @click.stop="emit('modList')">{{ tr("MOD 一覧", "Mod list") }}<kbd class="kbd max-md:hidden">Tab</kbd></button></p>
+    <p class="mb-1 flex items-center gap-2 text-[11px] text-violet-200/80">{{ tr(`${nameOfKey(shelf.held.value ?? "", shelf.item.value)} に掛けられるお告げ`, `Omens for ${nameOfKey(shelf.held.value ?? "", shelf.item.value)}`) }}<button v-if="modList" type="button" data-rec="mod-list-open" data-rec-part="mod-list-button" class="tbtn-top ml-auto" :title="tr('このベースに付く MOD の一覧へ', 'Go to the mod list')" @click.stop="emit('modList')">{{ tr("MOD 一覧", "Mod list") }}<kbd class="kbd max-md:hidden">Tab</kbd></button></p>
     <div class="flex flex-wrap gap-1.5">
       <div v-for="k in list" :key="k" class="flex flex-col items-center"><ShelfButton :k="k" omen @pick="shelf.toggleOmen($event)" /><StageOmenTune :k="k" /></div>
       <slot />

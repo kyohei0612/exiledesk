@@ -235,7 +235,7 @@ defineExpose({ jumpTo, counts, sections });
                   <!-- 勢力 (アマナム・クルガル・ウラマン) は文の頭に札で (2026-10-16 オーナー) -->
                   <span class="mr-0.5 min-w-0 text-[13px] text-[#c8c8ff]"><span v-if="factionOf(r.tags)" class="mr-1 inline-block rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[factionOf(r.tags)!]?.cls">{{ tagLabel(factionOf(r.tags)!) }}</span>{{ r.text }}</span>
                   <span v-for="g in shownTags(r.tags)" :key="g" class="shrink-0 whitespace-nowrap rounded-sm px-1 py-px text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span>
-                  <span v-if="essName(r)" class="shrink-0 whitespace-nowrap rounded-sm border border-sky-400/40 px-1 py-px text-[10px] leading-none text-sky-200">⚗ {{ essName(r) }}</span>
+                  <span v-if="essName(r, props.item)" class="shrink-0 whitespace-nowrap rounded-sm border border-sky-400/40 px-1 py-px text-[10px] leading-none text-sky-200">⚗ {{ essName(r, props.item) }}</span>
                   <span v-if="r.on" class="shrink-0 whitespace-nowrap rounded-sm bg-emerald-500/25 px-1 py-px text-[10px] leading-none text-emerald-200">{{ tr("付いている", "On item") }}</span>
                 </span>
                 <span class="flex shrink-0 items-center gap-1 tabular-nums">

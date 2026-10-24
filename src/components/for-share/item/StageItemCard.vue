@@ -115,9 +115,10 @@ const baseRows = computed(() => propRows(props.item));
 /** 未鑑定なら MOD を隠す */
 const hidden = computed(() => props.item.identified === false);
 // 範囲 (20-30) はゲームのように振った値で (要望 ㉝ の 5)
-/** 付いた瞬間の確率 (工程の記録から。後から付き直した物は新しい方)。右端に出す */
+/** 付いた瞬間の確率 (工程の記録から。後から付き直した物は新しい方)。右端に出す。記録はエミュの台の物なので、渡されたのがエミュのアイテムそのものの時だけ (シミュの箱・動画の台は自分の chances を渡す。2026-10-24) */
 const chances = computed(() => {
   const m = new Map<string, number>();
+  if (props.item !== craftStage.item.value) return m;
   for (const e of craftStage.log.value) for (const [id, c] of Object.entries(e.chances ?? {})) m.set(id, c as number);
   return m;
 });
