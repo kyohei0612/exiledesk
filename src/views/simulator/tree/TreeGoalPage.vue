@@ -135,6 +135,11 @@ function markFracture(modId: string, tier: number): void {
   t.toggleFracture(modId, tier);
   if (!had && marks.value.length) fracAsk.value = true;
 }
+/** カードの行の × = 一覧で外したのと同じ (狙いから外す、印も一緒に外れる。10-24 夜オーナー「アイテムにつく UI からもバツで消したい」) */
+function onCardRemove(modId: string): void {
+  const g = t.goals.value.find((a) => a.modId === modId);
+  if (g) t.toggleGoal(g.modId, g.tier);
+}
 /** カードの行の右クリック = その狙いの段で印を付け外し (狙いでない MOD は来ない) */
 function onCardFracture(m: StageMod): void {
   const g = t.goals.value.find((a) => a.modId === m.modId);
@@ -207,7 +212,7 @@ const HELP: Array<[string, string]> = [
       <!-- 完成形のカード (ページの送りでも見えるよう上に留める) -->
       <!-- カードはエミュと同じ既定の幅 (480、スマホは全幅。10-24 オーナー「アイテム絵はシミュと同じ」) -->
       <div data-tree-goal-card class="sticky top-0 flex shrink-0 flex-col gap-2 max-md:static max-md:order-first md:w-[480px]">
-        <StageItemCard v-if="t.goalItem.value" :item="t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable @fracture="onCardFracture" />
+        <StageItemCard v-if="t.goalItem.value" :item="t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable @fracture="onCardFracture" @remove="onCardRemove" />
         <!-- 枠を超えた狙い (10-23 オーナー「欲しい物を全部選ぶので枠を超えてよい」): 止めずにカードの下に並べる -->
         <div v-if="t.goalItem.value?.left.length" data-tree-goal-over class="flex flex-col gap-0.5 rounded-md bg-white/[0.04] px-2 py-1 text-[12px]">
           <p class="opacity-70">{{ tr(`カードに乗らない狙い ${t.goalItem.value.left.length} つ (枠の外。どれかが付けば当たり)`, `${t.goalItem.value.left.length} target(s) beyond the slots (a hit if any rolls)`) }}</p>
