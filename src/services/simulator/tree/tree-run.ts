@@ -63,6 +63,8 @@ export interface TreeRunResult {
   stuckWhy: Record<string, { reason: string; item: StageItem; backs: string[]; noBox?: boolean }>;
   /** 手の結果に合う結果の箱が無かった人数 (箱ごと。結果が 1 通りとして箱を 1 つにした手で別の結果が出た等。形の合う箱があればそこへ進み、無ければ止まり) */
   unexpected: Record<string, number>;
+  /** 着いた箱 (手の結果の箱・戻り先) の形が実物と違い、形の合う箱へ移した人数 (箱ごと、settle。照らしの台本は形合わせを辿らないので、これのある木は比べ方が違う、10-24) */
+  moved: Record<string, number>;
   /** 全員の合計 ÷ 完成数 (完成 0 なら NaN) */
   perItem: number;
   meanFinished: number;
@@ -224,7 +226,11 @@ export function settle(data: PatchData, doc: TreeDoc, shapes: readonly Shape[], 
   const key = itemKey(data, item, aims);
   // 形が合っても手が打てない (外れが消去の届かない側にある等) 時は、形の合う打てる箱へ (10-22 解析君 body-essence-path、狙いが消えた → 外れの箱の戻り)
   if (heldSets(doc, b.out === "junk" ? b.parent : id).some((h) => shapeKey(h, b.out === "junk") === key) && canPlay(data, item, b.hand)) return id;
-  return boxOfShape(shapes, key, { data, item }) ?? id;
+  const to = boxOfShape(shapes, key, { data, item }) ?? id;
+  // 形の合う箱の手が打てず、この箱の手は打てる時はこの箱のまま (10-24 モンキー 7 回目: 始めのルーンの外れは MOD が増えず「外れ無し」の形で始めへ戻され、
+  // 同じルーンをもう差せずに 100 人とも止まった。外れの箱の変成はそのまま打てる)
+  const th = to !== id ? doc.boxes[to]?.hand : null;
+  return th && !canPlay(data, item, th) && canPlay(data, item, b.hand) ? id : to;
 }
 /** アイテムから行き先 (ルート精査が回す時と同じ道を辿る用) */
 export function matchItem(data: PatchData, doc: TreeDoc, item: StageItem, aims: readonly Aim[] = aimsOf(doc)): string | null {
@@ -328,6 +334,8 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
       }
       const to = b.back === MATCH ? matchBox(data, shapes, item, aims) : settle(data, doc, shapes, b.back, item, aims);
       if (!to) return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("戻り先の「形の合う箱」が無い", "No box matches the shape to return to"), item, noBox: true } };
+      // 戻り先に着いてから形の合う箱へ移った時も、結果の箱と同じく戻り先の来訪を pass で残す (moved に数える)
+      if (b.back !== MATCH && to !== b.back) visits.push({ box: b.back, cost, pass: true });
       at = to;
       continue;
     }
@@ -391,6 +399,8 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
   for (const p of people) if (p.end === "stuck") { stuckAt[p.at] = (stuckAt[p.at] ?? 0) + 1; if (p.why && !stuckWhy[p.at]) stuckWhy[p.at] = { ...p.why, backs: [...new Set(p.visits.map((v) => v.box).filter((id) => doc.boxes[id]?.back))] }; }
   const unexpected: Record<string, number> = {};
   for (const p of people) for (const id of p.odd) unexpected[id] = (unexpected[id] ?? 0) + 1;
+  const moved: Record<string, number> = {};
+  for (const p of people) for (const id of new Set(p.visits.filter((v) => v.pass).map((v) => v.box))) moved[id] = (moved[id] ?? 0) + 1;
   const acc: Record<string, { reach: number; visits: number; costIn: number; remain: number; spend: number }> = {};
   for (const id of Object.keys(doc.boxes)) acc[id] = { reach: 0, visits: 0, costIn: 0, remain: 0, spend: 0 };
   for (const p of people) {
@@ -418,7 +428,7 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
     n, finished: fin.length,
     capped: people.filter((p) => p.end === "capped").length,
     stuck: people.filter((p) => p.end === "stuck").length,
-    stuckAt, stuckWhy, unexpected, perItem,
+    stuckAt, stuckWhy, unexpected, moved, perItem,
     meanFinished: costs.length ? costs.reduce((a, b) => a + b, 0) / costs.length : NaN,
     median: q(0.5), p90: q(0.9), p10: q(0.1), uses, boxes, edges,
     restarts: people.reduce((a, p) => a + p.restarts, 0) / (n || 1),
