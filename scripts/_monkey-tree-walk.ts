@@ -5,13 +5,13 @@
  * エンジンを正として、ツリーの移し方がこの決まりどおりかを見るのが目的 (同じ数になれば決まりどおり)
  */
 import type { PatchData } from "../src/vendor/poe2htc/engine/types";
-import { aimHits, applyCurrency, mulberry32, revealOffers, tierIndexOf, type StageItem, type StageMod } from "../src/services/craft-stage/engine";
+import { aimHits, applyCurrency, mulberry32, omenBlock, revealOffers, tierIndexOf, useReason, type StageItem, type StageMod } from "../src/services/craft-stage/engine";
 
 interface Aim { modId: string; tier: number }
 interface Hand { currency: string; omens: string[]; repeat?: { until: string; max: number | null } | null; catalyst?: string | null; free?: boolean; fractureOf?: string }
 export interface WalkBox { id: string; out: string; aim: Aim | null; hand: Hand | null; outs: string[]; back: string | null; done: string | null; split?: unknown; parent?: string | null }
 export interface WalkOpts { debug?: (e: { from: string; to: string; item: StageItem; key: { set: string; junk: boolean } }) => void; n?: number; seed?: number; capSteps?: number; capDiv?: number; prices?: Record<string, number>; startCost?: number }
-export interface WalkResult { n: number; finished: number; stuck: number; capped: number; uses: Record<string, number>; stuckAt: Record<string, number>; moved: number; movedAt: Record<string, number>; unsupported: string | null }
+export interface WalkResult { n: number; finished: number; stuck: number; capped: number; uses: Record<string, number>; stuckAt: Record<string, number>; moved: number; movedAt: Record<string, number>; backs: Record<string, number>; edges: Record<string, number>; unsupported: string | null }
 
 const ECHO = "OmenofAbyssalEchoes";
 const MAX_SETS = 64;
@@ -20,7 +20,7 @@ const ak = (a: Aim): string => `${a.modId}|${a.tier}`;
 
 export function walkTree(data: PatchData, boxes: Record<string, WalkBox>, start: StageItem, o: WalkOpts = {}): WalkResult {
   const n = o.n ?? 100, capSteps = o.capSteps ?? 20000, capDiv = o.capDiv ?? Infinity, prices = o.prices ?? {};
-  const res: WalkResult = { n, finished: 0, stuck: 0, capped: 0, uses: {}, stuckAt: {}, moved: 0, movedAt: {}, unsupported: null };
+  const res: WalkResult = { n, finished: 0, stuck: 0, capped: 0, uses: {}, stuckAt: {}, moved: 0, movedAt: {}, backs: {}, edges: {}, unsupported: null };
   const list = Object.values(boxes);
   for (const b of list) {
     const why = b.split ? "分かれ目の箱" : b.back === "restart" ? "作り直し" : b.hand?.catalyst ? "カタリスト" : b.hand?.fractureOf ? "フラクチャーの指名" : b.hand?.free ? "狙い無しの手" : null;
@@ -67,6 +67,13 @@ export function walkTree(data: PatchData, boxes: Record<string, WalkBox>, start:
   };
   walkSets("start", new Set([""]));
   const shapeOk = (b: WalkBox, k: { set: string; junk: boolean }): boolean => (b.out === "hit" ? !k.junk : b.out === "junk" ? k.junk : false) && !!sets.get(b.id)?.has(k.set);
+  // 打つ前の判定 (ツリーの handProblem と同じ決まり: エンジンの useReason とお告げごとの omenBlock、お告げ込み。「今は意味なし」のお告げも打てない扱い)
+  const noProblem = (it: StageItem, h: Hand | null): boolean => {
+    if (!h) return true;
+    const om = h.omens.filter((x) => x !== ECHO);
+    return !useReason(data, it, h.currency, om) && om.every((x) => !omenBlock(data, it, h.currency, om.filter((y) => y !== x), x));
+  };
+  // 1 回打って試す (seed 1 で打てたか、当たり所で弾かれたか)
   const canPlay = (it: StageItem, h: Hand | null): boolean => {
     if (!h) return true;
     const r = applyCurrency(data, it, h.currency, mulberry32(1), h.omens.filter((x) => x !== ECHO));
@@ -77,7 +84,7 @@ export function walkTree(data: PatchData, boxes: Record<string, WalkBox>, start:
   const boxOfShape = (it: StageItem): string | null => {
     const k = keyOf(it);
     const same = shaped.filter((b) => shapeOk(b, k));
-    const play = same.find((b) => canPlay(it, b.hand));
+    const play = same.find((b) => noProblem(it, b.hand));
     if (play) return play.id;
     if (!k.set && k.junk) return "start";
     if (k.junk) { const nj = shaped.find((b) => b.out === "hit" && sets.get(b.id)?.has(k.set) && canPlay(it, b.hand)); if (nj) return nj.id; }
@@ -91,7 +98,7 @@ export function walkTree(data: PatchData, boxes: Record<string, WalkBox>, start:
     if (id === "start") {
       const k = keyOf(it);
       if (!k.set && k.junk) return boxOfShape(it) ?? id;
-      if (canPlay(it, b.hand)) return id;
+      if (noProblem(it, b.hand)) return id;
       const to = boxOfShape(it), th = to ? boxes[to]?.hand ?? null : null;
       return to && canPlay(it, th) ? to : id;
     }
@@ -126,6 +133,7 @@ export function walkTree(data: PatchData, boxes: Record<string, WalkBox>, start:
       if (!b.hand) {
         if (++backs > MAX_BACKS) { end = "stuck"; break; }
         if (b.back === "match") { const to = boxOfShape(item); if (!to) { end = "stuck"; break; } at = to; continue; }
+        if (b.back) res.backs[`${b.id}>${b.back}`] = (res.backs[`${b.id}>${b.back}`] ?? 0) + 1;
         if (b.back && boxes[b.back]) { const to = settle(b.back, item); if (to !== b.back) { res.moved++; mv(b.back, to, item); } at = to; continue; }
         end = "stuck"; break;
       }
@@ -139,11 +147,12 @@ export function walkTree(data: PatchData, boxes: Record<string, WalkBox>, start:
         cost += use(h.currency); for (const om of h.omens) cost += use(om);
         if (h.currency.startsWith("desecrate")) {
           // 骨はそのまま発現: 候補に結果の当たりの箱の狙いがあればそれ、反響なら引き直しの候補からも
-          const offers = revealOffers(data, r.item, mulberry32(Math.floor(rng() * 2 ** 31)));
+          // 候補を引く種と発現を打つ種は同じ (同じ種ならエンジンの reveal:N は revealOffers と同じ候補)
+          const seed = Math.floor(rng() * 2 ** 31);
+          const offers = revealOffers(data, r.item, mulberry32(seed));
           const want = (m: StageMod) => hitOuts.some((x) => aimHits(m, tg(x.aim!), opts));
           const i = offers.first.findIndex(want), k = i < 0 && h.omens.includes(ECHO) ? offers.reroll.findIndex(want) : -1;
-          const s = mulberry32(Math.floor(rng() * 2 ** 31));
-          const x = k >= 0 ? applyCurrency(data, r.item, `reveal:${k + 1}:reroll`, s, [ECHO]) : applyCurrency(data, r.item, `reveal:${Math.max(0, i) + 1}`, s);
+          const x = k >= 0 ? applyCurrency(data, r.item, `reveal:${k + 1}:reroll`, mulberry32(seed), [ECHO]) : applyCurrency(data, r.item, `reveal:${Math.max(0, i) + 1}`, mulberry32(seed));
           if (x.applied) r = x;
         }
         // 結果の分け方: エッセンスで狙いが消えた → 消えた / フラクチャー: 新しく ✦ の狙い → 当たり、ほか外れ / 新しく付いた狙い → 当たり / 狙いが消えた / 外れが減った → 外れが消えた / ほか外れ
@@ -166,6 +175,7 @@ export function walkTree(data: PatchData, boxes: Record<string, WalkBox>, start:
         if (!to) { end = "stuck"; break; }
         at = to; continue;
       }
+      res.edges[`${at}>${next}`] = (res.edges[`${at}>${next}`] ?? 0) + 1;
       const to = settle(next, item);
       if (to !== next) { res.moved++; mv(next, to); }
       at = to;
