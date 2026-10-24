@@ -9,7 +9,7 @@ import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import tailwindcss from "@tailwindcss/vite";
 
-/** 出す場所。スマホ用の開発版 (scripts/deploy-web-dev.mjs) は dist-web-dev に出す */
+/** 出す場所。手元の本番環境・開発版 (scripts/preview-prod.mjs) は WEB_OUT で server/web/.wrangler/preview-dist(-dev) に出す */
 const OUT = process.env.WEB_OUT || "dist-web";
 
 export default defineConfig({
