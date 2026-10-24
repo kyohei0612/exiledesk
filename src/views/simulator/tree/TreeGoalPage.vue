@@ -15,7 +15,7 @@ import { craftStage as s } from "../../../state/craft-stage";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { tr } from "../../../i18n/lang";
 import { tierRankLabel, type StageMod } from "../../../services/craft-stage/engine";
-import type { Aim } from "../../../services/simulator/tree/tree-model";
+import type { Aim, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { goalBlock } from "../../../services/craft-stage/engine-sim";
 import TreeBasePick from "./TreeBasePick.vue";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
@@ -69,8 +69,10 @@ function close(): void {
 }
 // URL から先にページが開き、白紙の判定 (SimTreePage の onMounted の needBase) が後から立つ時も「まだ選んでいない」にする (初めての sim-base で戻り先の無い「← ツリーに戻る」が出ていた)
 watch(() => t.needBase.value, (v) => { if (v) unpicked.value = true; });
-/** 戻れる木がある (ベースを選んだ木か、新しいツリーの前のタブ) */
-const canBack = computed(() => !unpicked.value || t.tabDocs.value.length > 1);
+/** ベースの決まった木 (選んだ印・手・狙いのどれかがある。持ち越さない白紙の木は数えない) */
+const realTree = (d: TreeDoc): boolean => !!d.baseChosen || Object.keys(d.boxes).length > 1 || !!d.boxes.start?.hand || !!d.memoAims?.length;
+/** 戻れる木がある (今のタブが決まった木か、ほかのタブに決まった木)。開いてすぐの白紙では出さない (10-25 オーナー「ベース決めるところでツリーへ戻るはないでしょ」) */
+const canBack = computed(() => t.tabDocs.value.some((d0, i) => (i === t.active.value ? !unpicked.value && realTree(t.doc.value) : realTree(d0))));
 function backToTree(): void {
   asking.value = null;
   dropped.value = [];
