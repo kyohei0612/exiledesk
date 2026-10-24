@@ -19,6 +19,10 @@
 4. 「Then…」: Type **Dynamic**、Expression に `concat("https://exiledesk.com", http.request.uri.path)`、Status code **301**、**Preserve query string** に印。
 5. **Deploy** (Save)。無料プランで 10 本まで作れるうちの 1 本。お金は掛からない。
 - 3 で「この関数は使えない」と出たら、そこで止めてサーバー管理人へ (式を書き直す)。
+- **10-25 の直し**: 出した後、名乗らないプログラム (curl など) が www の / でも /blog/ でも 200 だった。`len(http.request.headers["sec-fetch-mode"]) eq 0` はヘッダーが無い時に真にならない。Rule の式の頭の所を `not any(lower(http.request.headers.names[*])[*] eq "sec-fetch-mode")` に替える (Edit → 式を下の 1 行に貼り替え → Save):
+   ```
+   (http.host eq "www.exiledesk.com" and (not any(lower(http.request.headers.names[*])[*] eq "sec-fetch-mode") or lower(http.user_agent) contains "bot" or lower(http.user_agent) contains "google" or lower(http.user_agent) contains "crawl" or lower(http.user_agent) contains "spider" or lower(http.user_agent) contains "slurp" or lower(http.user_agent) contains "yandex" or lower(http.user_agent) contains "baidu" or lower(http.user_agent) contains "facebookexternalhit" or lower(http.user_agent) contains "embedly" or lower(http.user_agent) contains "preview"))
+   ```
 
 ## ② 確かめ (サーバー管理人、① の後すぐ)
 - `node scripts/check-www-redirect.mjs` → **全部 OK** なら ③ へ。
