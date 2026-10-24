@@ -10,9 +10,9 @@ import { minIlvlFor, tierRankLabel } from "../../../services/craft-stage/engine"
 import { startItemOf } from "../../../services/simulator/tree/tree-sample";
 import { carryAims, placeMods } from "../../../services/craft-stage/engine-sim";
 import type { StageItem } from "../../../services/craft-stage/engine";
-import { fractureMarks, isTreeDoc, migrateStart, newTree, startOf, startRarity, type Aim, type StartFrom, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
+import { fractureMarks, migrateStart, newTree, startOf, startRarity, type Aim, type StartFrom, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { treeBaseCost } from "../../../services/simulator/tree/tree-base-cost";
-import { addTreeRecipe, sameTree, setCurrentTreeRecipe, treeRecipes, treeRecipeSaved } from "../../../state/simulator/tree-recipes";
+import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { tr } from "../../../i18n/lang";
 
 export type ModRow = ReturnType<typeof modListFor>[number];
@@ -25,95 +25,40 @@ const KEY = "exiledesk.tree.v0";
 const TABS_KEY = "exiledesk.tree.v0.tabs";
 const UNDO_MAX = 100;
 
-function load(): TreeDoc {
-  try {
-    const v = JSON.parse(localStorage.getItem(KEY) ?? "null");
-    // 前の版の妥協の完成 (done: "compromise") は普通の箱 = 未完成として読む (妥協は無し、オーナー 10-22)
-    if (isTreeDoc(v)) { for (const b of Object.values(v.boxes)) if (b.done !== "main") b.done = null; migrateStart(v); return v; }
-  } catch { /* 無くてよい */ }
-  return newTree(FIRST_BASE, FIRST_ILVL);
-}
+/**
+ * 作業中の木は持ち越さない (10-24 夜オーナー「開発版で触る時は初見がいい」「シミュレーターもエミュレーターみたいにベースから開始」「キャッシュとかなくていい、どうせ保存きかれる」)。
+ * 開き直すといつも白紙 (ベース選びから)。残るのは人が保存したレシピ (tree-recipes) と、共有 URL・?sample= で開く物だけ。守りは離れる時の「保存せずに終了しますか」
+ */
+const load = (): TreeDoc => newTree(FIRST_BASE, FIRST_ILVL);
+/** 今のタブの木をタブの並びへ (このページを開いている間だけ。保存はしない) */
 function save(d: TreeDoc): void {
-  try { localStorage.setItem(KEY, JSON.stringify(d)); } catch { /* 覚えられなくても使える */ }
   const list = [...tabDocs.value];
   list[active.value] = d;
   tabDocs.value = list;
-  try { localStorage.setItem(TABS_KEY, JSON.stringify({ active: active.value, docs: list })); } catch { /* 覚えられなくても使える */ }
 }
-
-/**
- * 開発版の木の保存を 1 回だけ白紙に戻す (10-23 オーナー「開発版のキャッシュを一応リセット。今レアリティとかいろいろ残っているから、前の物はレシピに入れておいて」)。
- * 前の木 (タブ全部・今の木・見本を開く前の控え) のうち白紙の初期値でない物をレシピに「前の木 (10-23)」で入れ、保存に書けたのを確かめてから木の鍵を消す。
- * 書けなかった時は何も消さず、次に開いた時にもう一度。レシピ・ミニマップなどの好み・エミュとチュートリアルの保存は触らない
- */
-const RESET_KEY = "exiledesk.tree.reset-2026-10-23";
+/** 前の版の作業中の木の鍵 (今の木・タブ・見本の前の控え・前の白紙に戻しの印) は読まずに消す */
 const BEFORE_SAMPLE_KEY = "exiledesk.tree.v0.before-sample";
-function resetOldTreesOnce(): void {
-  try {
-    if (localStorage.getItem(RESET_KEY)) return;
-    const found: TreeDoc[] = [];
-    const take = (v: unknown): void => { if (isTreeDoc(v) && !found.some((d) => sameTree(d, v)) && !sameTree(v, newTree(v.base, v.itemLevel))) found.push(v); };
-    const tabs = JSON.parse(localStorage.getItem(TABS_KEY) ?? "null") as { docs?: unknown[] } | null;
-    for (const d of tabs?.docs ?? []) take(d);
-    take(JSON.parse(localStorage.getItem(KEY) ?? "null"));
-    take(JSON.parse(localStorage.getItem(BEFORE_SAMPLE_KEY) ?? "null"));
-    const kept = found.map((d, i) => addTreeRecipe(found.length > 1 ? `前の木 (10-23) ${i + 1}` : "前の木 (10-23)", d));
-    if (!kept.every((r) => treeRecipeSaved(r.id))) return;
-    for (const k of [KEY, TABS_KEY, BEFORE_SAMPLE_KEY]) localStorage.removeItem(k);
-    if (kept.length) setCurrentTreeRecipe(null);
-    localStorage.setItem(RESET_KEY, "1");
-  } catch { /* 読めない・書けない時は何もしない (次に開いた時にもう一度) */ }
-}
-resetOldTreesOnce();
-
-/**
- * 開発版だけ: 出した版が変わったら最初に開いた時 1 回、前の木をレシピに入れてから木の保存を白紙に戻す
- * (10-23 オーナー「毎回キャッシュクリアして。前の設定の MOD やベースが選ばれてる」。形は上の resetOldTreesOnce と同じ)。
- * 版の印は入口の部品ファイルの名前 (中身の hash 付き、出し直すと変わる)。空の木と、もうレシピにある同じ木は入れない。本番・手元の dev では動かさない。
- * 消すのは木・完成形の設定 (ベース・狙いの MOD・レアリティ・印は木の中)・タブ・見本の前の控えだけ。エミュとチュートリアルの保存・レシピ・好みは触らない
- */
-const BUILD_KEY = "exiledesk.tree.dev-build";
-function resetTreesOnNewBuild(): void {
-  if (import.meta.env.VITE_DEV_PREVIEW !== "1") return;
-  try {
-    const build = [...document.querySelectorAll<HTMLScriptElement>('script[type="module"][src*="/assets/"]')].map((s) => new URL(s.src).pathname).join(" ");
-    if (!build || localStorage.getItem(BUILD_KEY) === build) return;
-    const found: TreeDoc[] = [];
-    const take = (v: unknown): void => {
-      // ベースを選んだだけの木 (baseChosen の印だけ) も空の木
-      if (!isTreeDoc(v) || sameTree({ ...v, baseChosen: undefined } as TreeDoc, newTree(v.base, v.itemLevel)) || sameTree(v, newTree(v.base, v.itemLevel))) return;
-      if (found.some((d) => sameTree(d, v)) || treeRecipes.value.some((r) => sameTree(r.tree, v))) return;
-      found.push(v);
-    };
-    const tabs = JSON.parse(localStorage.getItem(TABS_KEY) ?? "null") as { docs?: unknown[] } | null;
-    for (const d of tabs?.docs ?? []) take(d);
-    take(JSON.parse(localStorage.getItem(KEY) ?? "null"));
-    take(JSON.parse(localStorage.getItem(BEFORE_SAMPLE_KEY) ?? "null"));
-    const stamp = new Date().toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
-    const kept = found.map((d, i) => addTreeRecipe(found.length > 1 ? `前の木 (${stamp}) ${i + 1}` : `前の木 (${stamp})`, d));
-    if (!kept.every((r) => treeRecipeSaved(r.id))) return;
-    for (const k of [KEY, TABS_KEY, BEFORE_SAMPLE_KEY]) localStorage.removeItem(k);
-    setCurrentTreeRecipe(null);
-    localStorage.setItem(BUILD_KEY, build);
-  } catch { /* 読めない・書けない時は何もしない (次に開いた時にもう一度) */ }
-}
-resetTreesOnNewBuild();
+try { for (const k of [KEY, TABS_KEY, BEFORE_SAMPLE_KEY, "exiledesk.tree.reset-2026-10-23", "exiledesk.tree.dev-build"]) localStorage.removeItem(k); } catch { /* 消せなくても読まない */ }
+// 開いていたレシピの印も持ち越さない (木は白紙なので、残すと一覧で「開いている」と出て、空の木が未保存の扱いになり離れる時に聞いた)
+setCurrentTreeRecipe(null);
 
 const doc = shallowRef<TreeDoc>(load());
-/**
- * 木のタブ (始め方ごとに別の木、0 の完成形は共通。オーナー 10-22「✦ の候補を 2 つ試したい人のために <MOD 名> スタートのタブで木を 2 本」)。
- * 今のタブの木は doc (KEY にも控える)、全部のタブは TABS_KEY。切り替える時に 0 の完成形 (ベース・アイテムレベル・適正・レアリティ・狙い) を今の木から写す
- */
-function loadTabs(): { active: number; docs: TreeDoc[] } | null {
-  try {
-    const v = JSON.parse(localStorage.getItem(TABS_KEY) ?? "null") as { active: number; docs: unknown[] } | null;
-    if (v && Array.isArray(v.docs) && v.docs.length && v.docs.every(isTreeDoc) && v.active >= 0 && v.active < v.docs.length) { for (const d of v.docs) migrateStart(d); return v as { active: number; docs: TreeDoc[] }; }
-  } catch { /* 無くてよい */ }
-  return null;
+/** 木のタブ (タブごとに別の木、10-24 オーナー)。今のタブの木は doc、全部のタブは tabDocs。このページを開いている間だけ (持ち越さない) */
+const active = ref(0);
+const tabDocs = shallowRef<TreeDoc[]>([doc.value]);
+/** 木を全部白紙に戻す (タブも 1 つ)。シミュの外へ出た時 (SimTreePage・レシピのページ)、次にシミュへ入るとベース選びの空から (10-24 夜オーナー) */
+function resetAll(): void {
+  const d = load();
+  tabDocs.value = [d];
+  histories.length = 0;
+  prevTab = null;
+  setActive(0, d, null);
+  needBase.value = false;
+  goalPage.value = 0;
+  startPage.value = false;
+  reportOpen.value = false;
+  setCurrentTreeRecipe(null);
 }
-const tabs0 = loadTabs();
-const active = ref(tabs0?.active ?? 0);
-const tabDocs = shallowRef<TreeDoc[]>(tabs0 ? tabs0.docs.map((d, i) => (i === tabs0.active ? doc.value : d)) : [doc.value]);
 /** タブごとに回した結果 (結果のまとめの始め方の比べ。このページを開いている間だけ) */
 /** タブの木を写す (タブごとに別の木。完成形の設定も写さない、10-24 オーナー「タブは人が押した時だけ、新しいツリーを最初から」) */
 const cloneDoc = (d: TreeDoc): TreeDoc => JSON.parse(JSON.stringify(d)) as TreeDoc;
@@ -498,5 +443,5 @@ const baseCost = computed(() => {
 const baseCostBusy = computed(() => !!s.data.value && !costReady.value);
 
 export function useTree() {
-  return { tabDocs, active, switchTab, addTab, closeTab, tabLabel, renameTab, copyTab, leaveNewTab, ilvlNote, startPrice, setStartPrice, startChoice, setStartFrom, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, startFresh, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
+  return { tabDocs, active, switchTab, addTab, closeTab, resetAll, tabLabel, renameTab, copyTab, leaveNewTab, ilvlNote, startPrice, setStartPrice, startChoice, setStartFrom, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, startFresh, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
 }

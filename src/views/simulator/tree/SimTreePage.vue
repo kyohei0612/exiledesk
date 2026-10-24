@@ -35,6 +35,7 @@ import { LINE, useTreeEdges } from "./use-tree-edges";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
 import { currentTreeRecipe, sameTree, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { openTreePage, setLeaveGuard, treeStep } from "../../../web/page";
+import { recipesPage } from "../../../state/web-page";
 import { gesture } from "./use-gesture";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { ARMED_CLASS, useArmed } from "../../../utils/use-armed";
@@ -286,7 +287,8 @@ watch(treeStep, (st, was) => {
  */
 const treeDirty = (): boolean => (currentTreeRecipe.value ? !sameTree(doc.value, currentTreeRecipe.value.tree) : Object.keys(doc.value.boxes).length > 1);
 onMounted(() => setLeaveGuard((to) => !(to === "page=recipes" || to.startsWith("page=sim-")) && treeDirty()));
-onBeforeUnmount(() => setLeaveGuard(null));
+// シミュの外へ出たら木を白紙に戻す (次に入るとベース選びの空から。レシピのページへ移る時は残す、そこから戻って続ける)
+onBeforeUnmount(() => { setLeaveGuard(null); if (!recipesPage.value) t.resetAll(); });
 const busy = computed((): { text: string; n?: number; of?: number } | null => {
   if (!s.data.value) return { text: tr("読み込み中", "Loading") };
   if (tr100.running.value) return { text: tr("回している", "Running"), n: tr100.result.value?.n ?? 0, of: RUN_N };
@@ -349,14 +351,24 @@ function onKey(e: KeyboardEvent): void {
 onMounted(() => window.addEventListener("keydown", onKey));
 /**
  * 見本を開く (?page=sim-tree&sample=<名前>、tree-samples.ts。10-23 オーナー「サフィックスを全部付けるまでの手順で表示してみて」)。
- * 今の木は置き換える前にこのブラウザに控える (exiledesk.tree.v0.before-sample)。見本は新しく始める扱いで、1 つ戻すの控えは空から (10-23 モンキー 1)
+ * 見本は新しく始める扱いで、1 つ戻すの控えは空から (10-23 モンキー 1)。作業中の木は持ち越さないので前の木の控えも無し (10-24 夜)
  */
 onMounted(() => {
   const name = new URLSearchParams(location.search).get("sample");
   const sample = name ? treeSample(name) : null;
-  // 白紙ならまず 0 完成形の設定の重ね窓 (10-22 オーナー)。ベースはまだ選んでいない扱い (選ばずに閉じたら空の形、use-tree の needBase)
-  if (!sample) { if (t.takeAskBase()) { t.needBase.value = true; t.goalPage.value = 1; } return; }
-  try { localStorage.setItem("exiledesk.tree.v0.before-sample", JSON.stringify(doc.value)); } catch { /* 控えられなくても開く */ }
+  // 白紙ならベース選びのページ (?page=sim-base) から。ベースはまだ選んでいない扱い (use-tree の needBase)。
+  // ?page=sim-tree / sim-mods を直に開いて木が無い時も sim-base へ (10-24 夜オーナー「エミュレーターみたいにベースから開始」)。
+  // URL は先に置き換える (page.ts は URL と同じページへの移りを履歴に積まない。積むと戻るでまた白紙の sim-tree へ来て、ここから出られなくなる)
+  if (!sample) {
+    if (!t.takeAskBase()) return;
+    t.needBase.value = true;
+    if (treeStep.value !== "base") {
+      try { const u = new URL(location.href); u.searchParams.set("page", "sim-base"); history.replaceState(history.state, "", u.pathname + u.search + u.hash); } catch { /* 置き換えられなくても開く */ }
+      openTreePage("base");
+    }
+    t.goalPage.value = 1;
+    return;
+  }
   tidyOf(sample);
   t.startFresh(sample);
 });
