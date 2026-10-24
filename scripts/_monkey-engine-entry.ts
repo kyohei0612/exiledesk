@@ -86,9 +86,12 @@ export function shelfOf(item: StageItem, allTiers = false): Card[] {
   return out;
 }
 
+const CATALYSING = "OmenofCatalysingExaltation";
 /** 選んだ手に掛けられるお告げ (エンジンの omensAllowedFor) と、掛けられない物の理由 (omenBlock。お告げの欄の灰色と同じ) */
-export function omensOf(item: StageItem, key: string): Array<{ name: string; off: boolean; why: string | null; key: string }> {
-  return omensAllowedFor(key).map((o) => { const w = omenBlock(data!, item, key, [], o); return { name: nameOfKey(o, item), off: !!w, why: w, key: o }; });
+export function omensOf(item: StageItem, key: string, preItem: StageItem | null = null): Array<{ name: string; off: boolean; why: string | null; key: string }> {
+  // 触媒の高貴のお告げが掛けられる手は、カタリストで品質を入れた後のアイテムで見る (猿の口の omens・TreeHandShelf と同じ。preItem = boxItem の preRaw)
+  const list = omensAllowedFor(key), it = preItem && list.includes(CATALYSING) ? preItem : item;
+  return list.map((o) => { const w = omenBlock(data!, it, key, [], o); return { name: nameOfKey(o, it), off: !!w, why: w, key: o }; });
 }
 
 /** 選んだ手で付きうる MOD の候補 (1 手の行き先の全部の枝で新しく付く MOD の文、段つき)。枝が多すぎる手 (錬金など) は "多すぎて数えない" */

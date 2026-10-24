@@ -36,6 +36,9 @@ function parseCard(card) {
 }
 const usable = (list) => new Set((list ?? []).filter((x) => !x.off).map((x) => x.why || x.name));
 const setDiff = (a, b) => [...a].filter((x) => !b.has(x));
+/** ツリーの棚・お告げから外した物 (オーナー 10-24: 聖別・ヒネコラ・ミラー。ルーンはクラフトのルーンだけで、shelfOf が既にそうしている)。エンジンにだけある時は違いに数えない */
+const TREE_OFF = new Set(["OmenofSanctification", "hinekora", "mirror"]);
+const usableEng = (list) => usable((list ?? []).filter((x) => !TREE_OFF.has(x.key)));
 
 /**
  * ツリーの数字の照らし (記録の頭の tree = { dump, items: { 箱: boxItem }, run }。run は値段を全部 1 で回した物 = 費用は使った個数)。
@@ -105,31 +108,40 @@ for (const f of files) {
   for (const st of rec.steps) {
     if (!st.card || !Array.isArray(st.shelf)) { outSteps.push(st); continue; }
     sum.steps++;
-    // 当たりの箱で MOD の見本が空 (猿が modsUnknown を付けた) の時は、白と取り違えないよう比べない
-    if (st.modsUnknown) { skip("MOD の見本が空 (modsUnknown)"); outSteps.push({ ...st, engine: { error: "MOD の見本が空" } }); continue; }
-    const c = parseCard(st.card);
-    const baseEn = st.baseEn ?? rec.baseEn;
-    const base = (baseEn && E.isBase(baseEn) ? baseEn : null) ?? (c.baseJa && E.baseOfJa(c.baseJa));
-    if (!base) { skip(`ベースが読めない (${c.baseJa})`); outSteps.push({ ...st, engine: { error: "ベースが読めない" } }); continue; }
-    // MOD: 猿が mods [{ modId, tier }] を書いていればそれ、無ければカードの文から
-    const ms = Array.isArray(st.mods) ? st.mods.map((m) => ({ side: "", tier: m.tier, text: m.modId, hit: { modId: m.modId, tier: m.tier } })) : c.mods.map((m) => ({ ...m, hit: E.modOf(base, m.side, m.tier, m.text) }));
-    const miss = ms.filter((m) => !m.hit).map((m) => `${m.side}${m.tier} ${m.text}`);
-    if (miss.length) { skip("MOD がエンジンの一覧に無い"); outSteps.push({ ...st, engine: { error: "MOD がエンジンの一覧に無い", mods: miss } }); continue; }
-    // レアリティ: 猿が rarity ("normal" / "magic" / "rare") を書いていればそれだけ、無ければ棚の打てる札が猿と一番近い形
     const monkey = usable(st.shelf);
     // エッセンスの数え方を猿に合わせる: 猿の口の棚 (レッサーの札がある) は段ごと、画面を押す猿の棚 (系統ごとに一番上の段 1 枚) は系統ごと
     const allTiers = st.shelf.some((x) => /レッサーエッセンス/.test(x.name));
-    let best = null;
-    for (const [rarity, item] of Object.entries(E.itemsFor(base, ms.map((m) => m.hit), st.card))) {
-      if (!item || (st.rarity && st.rarity !== rarity)) continue;
-      const shelf = E.shelfOf(item, allTiers);
-      const eng = usable(shelf);
+    let best = null, base = null;
+    // 猿が step に boxItem (ツリーがその箱で持っているアイテム) を書いていれば、その raw をそのままエンジンに渡す (聖別・ルーン・冒涜・エッセンスの数もそのまま。10-24 隊長)
+    const raw = st.boxItem?.raw;
+    if (raw?.base && raw.cls) {
+      base = raw.base;
+      const shelf = E.shelfOf(raw, allTiers), eng = usableEng(shelf);
       const d = { 猿だけ: setDiff(monkey, eng), エンジンだけ: setDiff(eng, monkey) };
-      const n = d.猿だけ.length + d.エンジンだけ.length;
-      if (!best || n < best.n) best = { rarity, item, shelf, d, n };
+      best = { rarity: raw.rarity, item: raw, shelf, d, n: d.猿だけ.length + d.エンジンだけ.length };
+    } else {
+      // 当たりの箱で MOD の見本が空 (猿が modsUnknown を付けた) の時は、白と取り違えないよう比べない
+      if (st.modsUnknown) { skip("MOD の見本が空 (modsUnknown)"); outSteps.push({ ...st, engine: { error: "MOD の見本が空" } }); continue; }
+      const c = parseCard(st.card);
+      const baseEn = st.baseEn ?? rec.baseEn;
+      base = (baseEn && E.isBase(baseEn) ? baseEn : null) ?? (c.baseJa && E.baseOfJa(c.baseJa));
+      if (!base) { skip(`ベースが読めない (${c.baseJa})`); outSteps.push({ ...st, engine: { error: "ベースが読めない" } }); continue; }
+      // MOD: 猿が mods [{ modId, tier }] を書いていればそれ、無ければカードの文から
+      const ms = Array.isArray(st.mods) ? st.mods.map((m) => ({ side: "", tier: m.tier, text: m.modId, hit: { modId: m.modId, tier: m.tier } })) : c.mods.map((m) => ({ ...m, hit: E.modOf(base, m.side, m.tier, m.text) }));
+      const miss = ms.filter((m) => !m.hit).map((m) => `${m.side}${m.tier} ${m.text}`);
+      if (miss.length) { skip("MOD がエンジンの一覧に無い"); outSteps.push({ ...st, engine: { error: "MOD がエンジンの一覧に無い", mods: miss } }); continue; }
+      // レアリティ: 猿が rarity ("normal" / "magic" / "rare") を書いていればそれだけ、無ければ棚の打てる札が猿と一番近い形
+      for (const [rarity, item] of Object.entries(E.itemsFor(base, ms.map((m) => m.hit), st.card))) {
+        if (!item || (st.rarity && st.rarity !== rarity)) continue;
+        const shelf = E.shelfOf(item, allTiers);
+        const eng = usableEng(shelf);
+        const d = { 猿だけ: setDiff(monkey, eng), エンジンだけ: setDiff(eng, monkey) };
+        const n = d.猿だけ.length + d.エンジンだけ.length;
+        if (!best || n < best.n) best = { rarity, item, shelf, d, n };
+      }
+      if (!best) { skip("どのレアリティでも組み立てられない"); outSteps.push({ ...st, engine: { error: "組み立てられない" } }); continue; }
     }
-    if (!best) { skip("どのレアリティでも組み立てられない"); outSteps.push({ ...st, engine: { error: "組み立てられない" } }); continue; }
-    const engine = { base, rarity: best.rarity, shelf: best.shelf.map(({ name, off, why }) => ({ name, off, why })) };
+    const engine = { base, rarity: best.rarity, from: raw ? "boxItem" : "card", shelf: best.shelf.map(({ name, off, why }) => ({ name, off, why })) };
     const diff = {};
     if (best.n) { sum.shelfDiff++; diff.shelf = best.d; for (const x of best.d.猿だけ) add(`棚 猿だけ  ${x}`); for (const x of best.d.エンジンだけ) add(`棚 エンジンだけ  ${x}`); } else sum.shelfSame++;
     // 選んだ手: 猿の札の名前 (why が札の名前) → エンジンの鍵
@@ -138,10 +150,12 @@ for (const f of files) {
     if (st.pick) {
       engine.pickKey = pickKey;
       if (pickKey) {
-        engine.omens = E.omensOf(best.item, pickKey).map(({ name, off, why }) => ({ name, off, why }));
+        engine.omens = E.omensOf(best.item, pickKey, raw ? st.boxItem.preRaw ?? null : null).map(({ name, off, why }) => ({ name, off, why }));
         engine.candidates = E.candidatesOf(best.item, pickKey);
         if (Array.isArray(st.omens)) {
-          const mo = usable(st.omens), eo = new Set(engine.omens.filter((x) => !x.off).map((x) => x.name));
+          // 触媒の高貴のお告げ: 品質を入れた後の形 (preRaw) が無く品質 0 の時は比べない (どのカタリストで入れるかはツリーの決め、猿の口はその場で入れて見る)
+          const noPre = raw && !st.boxItem.preRaw && !(raw.quality > 0), skipOmen = (n) => noPre && /触媒の高貴/.test(n);
+          const mo = new Set([...usable(st.omens)].filter((n) => !skipOmen(n))), eo = new Set(engine.omens.filter((x) => !x.off && !skipOmen(x.name) && !TREE_OFF.has(x.key)).map((x) => x.name));
           const od = { 猿だけ: setDiff(mo, eo), エンジンだけ: setDiff(eo, mo) };
           if (od.猿だけ.length || od.エンジンだけ.length) { sum.omensDiff++; diff.omens = od; for (const x of od.猿だけ) add(`お告げ 猿だけ  ${x}`); for (const x of od.エンジンだけ) add(`お告げ エンジンだけ  ${x}`); } else sum.omensSame++;
         }
