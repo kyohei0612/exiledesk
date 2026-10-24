@@ -342,9 +342,13 @@ function onKey(e: KeyboardEvent): void {
   // 箱の重ね窓は useDismiss が先に閉じる (defaultPrevented)。何も開いていない時の Esc は何もしない
   // (前はページを閉じてクラフトステージへ出た。窓を閉じるつもりの 2 度押しで画面を出てしまう、10-23 モンキー 2。出るのは上の切り替えタブ)
   if (e.key === "Escape" && !e.defaultPrevented) {
-    if (cardBox.value) { cardBox.value = null; hoverBox.value = null; }
-    else if (plus.value) plus.value = null;
+    // 乗せた時のカードは消すだけ。ただし戻り先を選んでいる間・＋を引っ張っている間は同じ 1 回でやめる
+    // (前はカードだけ消えて戻り先選びが残り、ほかの葉の ＋ を押しても窓が出なかった、10-25 モンキー 4 本目)
+    const hadCard = !!cardBox.value;
+    if (hadCard) { cardBox.value = null; hoverBox.value = null; }
+    if (plus.value) plus.value = null;
     else if (picking.value) picking.value = null;
+    else if (hadCard) { /* カードだけ */ }
     else if (panel.value) panel.value = null;
     else if (full.value) void v.toggleFull();
   }
