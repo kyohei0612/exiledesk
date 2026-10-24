@@ -226,3 +226,9 @@ docs/org/white/**                    ブラック
 # デイリークラフトチャレンジ (デイリー部長、10-22)
 src/views/daily/**                   デイリー
 docs/org/daily/**                    デイリー
+
+# PoE2 で使える PoE1 のスキンの一覧 (スキン部長、10-25。ページの中身・データ・絵。入口・page.ts・ヘッダーはデザイン)
+src/views/skins/**                   スキン
+src/data/mtx-poe1-in-poe2.json       スキン
+scripts/build-mtx-web.mjs            スキン
+docs/org/skins/**                    スキン
