@@ -4,7 +4,7 @@
   結果の箱は手の種類で決める (カオス = 入れ替え、消去 = 消す、カタリスト = 品質だけ、それ以外 = 足す、カオススパム = 当たりだけ)。入力はカオススパムだけ。
   触媒のお告げの手は、前に「品質だけ上げる手」(カタリストの札) を自動で足す (10-22 オーナーの案 A。前の「先に打つカタリスト」の選びと 1 枚札は消した)。
   10-22 オーナー「今の箱の時点のアイテムに付けるイメージ」: 上にその箱の時点のアイテムのカード、棚から持ってカードを押すとその手になる (エミュと同じ、文字のボタンは無し)。
-  「狙い無し」と骨のアビスの反響はお告げの枠の中 (HeldOmens の slot、お告げと同じ並び)。重ね窓の枠は TreeHandPage
+  骨のアビスの反響はお告げの枠の中 (HeldOmens の slot、お告げと同じ並び)。足す手の「狙い無し」は左の「当たりの箱にする MOD」のチェックの一番下 (10-25)。重ね窓の枠は TreeHandPage
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, toRaw } from "vue";
@@ -46,13 +46,13 @@ const spamMax = ref<number | null>(props.current?.repeat?.max ?? null);
 /** 狙い無し (足す手だけ。カオススパムとは一緒にしない) */
 const free = ref(!!props.current?.free);
 /**
- * 足す手で当たりの箱にする狙い (aimKey。null = 付きうる狙い全部 = 前からの既定、[] = 狙い無し)。チェックした MOD ごとに当たりの箱、どれも付かなければ外れの箱
- * (10-25 オーナー「狙い無しのところに狙う MOD も表示してチェック式で複数選択、その場合枝分かれできるでしょヒット時」。不在のアミュ B の精査が重かった時の話から)
+ * 足す手で当たりの箱にする狙い (aimKey)。チェックした MOD ごとに当たりの箱、どれも付かなければ外れの箱。狙い無しとは排他。
+ * 既定は何も選んでいない = 「どれか選んで」で手を確定させない (10-25 オーナー「狙い無しのところに狙う MOD も表示してチェック式で複数選択」
+ * →「狙い無しも左のチェックに付けるといいね、デフォで全部チェックなしで『どれか選択して』ってので目立たせる」)。前に開いた手はその当たりの箱の MOD
  */
-const checked = ref<string[] | null>((() => {
+const checked = ref<string[]>((() => {
   const c = props.current, d = t.doc.value;
-  if (!c) return null;
-  if (c.free) return [];
+  if (!c || c.free) return [];
   return (d.boxes[props.boxId]?.outs ?? []).flatMap((o) => { const x = d.boxes[o]; return x?.out === "hit" && x.aim ? [aimKey(x.aim)] : []; });
 })());
 /** フラクチャーの手で ✦ にする狙い (modId。null = 乱数 = エンジンどおり、10-22 オーナー) */
@@ -98,14 +98,17 @@ const aimChoices = computed((): Aim[] => {
   return hitAimsOf(d, t.doc.value, props.boxId, it, handOf({ held: held.value, omens: omens.value, echo: echo.value }), t.goals.value, null);
 });
 /** チェックした狙い (候補にある物だけ) */
-const checkedAims = computed((): Aim[] => (checked.value ? aimChoices.value.filter((a) => checked.value!.includes(aimKey(a))) : aimChoices.value));
-/** 狙い無し = 札を押した、または候補があるのに 1 つもチェックしていない */
-const freeOn = computed(() => canFree.value && (free.value || (checked.value !== null && aimChoices.value.length > 0 && !checkedAims.value.length)));
-function toggleFree(): void { free.value = !freeOn.value; checked.value = free.value ? [] : null; }
+const checkedAims = computed((): Aim[] => aimChoices.value.filter((a) => checked.value.includes(aimKey(a))));
+/** チェックの一覧を出す (足す手で、当たるまで繰り返さない時) */
+const showAims = computed(() => canFree.value && !spam.value);
+const freeOn = computed(() => showAims.value && free.value);
+/** 狙い無しも MOD も選んでいない = 手を確定させない */
+const mustPick = computed(() => showAims.value && !free.value && !checkedAims.value.length);
+function toggleFree(): void { free.value = !free.value; if (free.value) checked.value = []; }
 function toggleAim(a: Aim): void {
   const k = aimKey(a), cur = checkedAims.value.map(aimKey);
   checked.value = cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k];
-  free.value = !checked.value.length;
+  if (checked.value.length) free.value = false;
 }
 const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value, echo: echo.value, fractureOf: isFracture.value ? fracPick.value : null }) : null));
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
@@ -122,7 +125,7 @@ const kind = computed((): HandKind | null => (hand.value ? kindOf(hand.value) : 
 /** 結果の箱の文 (写しに手を付けて「狙いが消えた」が出来るかを見る) */
 const resultText = computed((): [string, string] | null => {
   const h = hand.value, k = kind.value;
-  if (!h || !k) return null;
+  if (!h || !k || mustPick.value) return null;
   const alt = RESULT_NO_LOST[k];
   if (!alt) return RESULT[k];
   const d = structuredClone(toRaw(t.doc.value));
@@ -131,7 +134,7 @@ const resultText = computed((): [string, string] | null => {
 });
 /** 当たりの箱の既定 (tree-hand-plan の hitAimsOf) */
 const hitAims = computed((): Aim[] => {
-  if (kind.value === "add" && aimChoices.value.length) return checkedAims.value;
+  if (kind.value === "add" && showAims.value) return checkedAims.value;
   const d = s.data.value, it = item.value, h = hand.value;
   return d && it && h ? hitAimsOf(d, t.doc.value, props.boxId, it, h, t.goals.value, isFracture.value ? fracPick.value : null) : [];
 });
@@ -152,9 +155,11 @@ const problem = computed((): string | null => (hand.value && item.value && s.dat
 /** お告げの並びに置く札 (お告げのボタンと同じ高さ) */
 const OMEN_CHIP = "flex min-h-12 max-w-[96px] items-center justify-center rounded-lg border border-white/15 bg-black/30 px-2 text-center text-[11px] leading-tight hover:border-violet-300/60";
 const OMEN_ON = "!border-violet-300 bg-violet-500/30 text-violet-50";
+/** 確定させない理由 (打てない・狙い無しも MOD も選んでいない) */
+const blocked = computed((): string | null => problem.value ?? (mustPick.value ? tr("当たりの箱にする MOD か狙い無しを選ぶ", "Pick the hit mods or No target") : null));
 function ok(): void {
   const h = hand.value, k = kind.value;
-  if (h && k && !problem.value) emit("pick", h, k, hitAims.value, preCat.value, only.value);
+  if (h && k && !blocked.value) emit("pick", h, k, hitAims.value, preCat.value, only.value);
 }
 </script>
 
@@ -168,7 +173,7 @@ function ok(): void {
     <!-- この箱の時点のアイテム (見本)。持ってカードを押す = この手にする (エミュと同じ操作) -->
     <!-- カードの下はエミュと同じく空ける (持っている間はカードのすぐ下に「押すと使う · 右クリック / Esc で手放す」が重ねて出る) -->
     <div class="flex min-w-0 flex-col gap-8 md:w-[480px]">
-      <div data-tree-hand-card :class="held && problem ? 'cursor-not-allowed opacity-60' : ''" :title="problem ?? undefined"><StageItemCard v-if="shelfItem" :item="preCat ? shelfItem : item ?? shelfItem" :row-tags="rowTags(preCat ? shelfItem : item ?? shelfItem)" :added="[]" :removed="[]" :holding="!!held && !problem" :flash-key="0" @use="ok" /></div>
+      <div data-tree-hand-card :class="held && blocked ? 'cursor-not-allowed opacity-60' : ''" :title="blocked ?? undefined"><StageItemCard v-if="shelfItem" :item="preCat ? shelfItem : item ?? shelfItem" :row-tags="rowTags(preCat ? shelfItem : item ?? shelfItem)" :added="[]" :removed="[]" :holding="!!held && !blocked" :flash-key="0" @use="ok" /></div>
       <div class="flex min-w-0 flex-col gap-1.5">
         <p class="text-[12px] opacity-70">{{ tr("棚から持って、カードを押すとこの箱の次の手になる", "Hold a currency from the shelf and click the item to make it this box's next craft") }}</p>
         <!-- 打たずに分ける (分かれ目) のボタンは 10-25 に外した (オーナー「分かれ道マジでややこしいからボタンいらない」)。分かれ目は見本の木にある物だけ、窓 TreeSplitPick で行を直せる -->
@@ -196,21 +201,25 @@ function ok(): void {
         <p data-tree-hand-frac-rule class="opacity-70">{{ tr("固定できる MOD が 2 つ以上なら、2 回外れて 1 回当たりとして、ここまでの費用とフラクチャーを 2 回分足す", "With 2+ mods that could fracture, counts as 2 misses then a hit: adds this point's cost and the Fracturing Orb twice") }}</p>
       </div>
       <!-- 足す手: 当たりの箱にする狙いをチェック (複数可)。チェックした MOD ごとに当たり、どれも付かなければ外れ、0 個 = 狙い無し (10-25 オーナー) -->
-      <div v-if="aimChoices.length" data-tree-hand-aims class="flex flex-col gap-1 text-[12px]">
-        <span class="opacity-80">{{ tr("当たりの箱にする MOD", "Mods that make a hit box") }}</span>
+      <div v-if="showAims" data-tree-hand-aims class="flex flex-col gap-1 text-[12px]">
+        <span class="flex flex-wrap items-baseline gap-x-2"><span class="opacity-80">{{ tr("当たりの箱にする MOD", "Mods that make a hit box") }}</span><b v-if="mustPick" data-tree-hand-must-pick class="text-[13px] text-amber-300">{{ tr("どれか選んで", "Pick one") }}</b></span>
         <label v-for="a in aimChoices" :key="aimKey(a)" data-tree-hand-aim :data-aim="aimKey(a)" class="flex min-h-7 min-w-0 cursor-pointer items-center gap-2">
           <input type="checkbox" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 truncate" :title="t.aimLabel(a)">{{ t.aimLabel(a) }}</span>
+        </label>
+        <!-- 狙い無し (MOD とは排他。前はお告げの列の札、10-25 オーナー「狙い無しも左のチェックに付けるといいね」) -->
+        <label data-tree-hand-free class="flex min-h-7 cursor-pointer items-center gap-2" :title="tr('狙い無し (空きを 1 つ埋めるだけ。当たり / 外れに分けない)', 'No target (just fill an open slot; no hit / miss split)')">
+          <input type="checkbox" :checked="freeOn" @change="toggleFree" />{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}
         </label>
       </div>
       <label v-if="canSpam(held)" class="flex min-h-7 cursor-pointer flex-wrap items-center gap-2">
         <input v-model="spam" type="checkbox" />{{ tr("当たるまで繰り返す (カオススパム)", "Repeat until a hit (Chaos spam)") }}
         <span v-if="spam" class="flex items-center gap-1 text-[12px] opacity-80">{{ tr("上限", "Max") }}<input v-model.number="spamMax" type="number" min="1" class="h-7 w-16 rounded-md border border-white/15 bg-black/40 px-1 text-right" :placeholder="tr('なし', 'none')" />{{ tr("回", "") }}</span>
       </label>
-      <p v-if="kind" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? tr(`${outName(only.out)}だけ (結果は 1 通り)`, `${outName(only.out)} only (one possible result)`) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
+      <p v-if="kind" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ mustPick ? "—" : only ? tr(`${outName(only.out)}だけ (結果は 1 通り)`, `${outName(only.out)} only (one possible result)`) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
       <!-- 替える時は、消える箱の数を先に小さく (オーナー 10-22。1 つ戻す / Ctrl+Z で戻せる)。持ち直しは棚で別の物を押すだけ。決めるのはカードを押す -->
       <div class="flex flex-wrap items-center gap-1.5">
         <span v-if="problem" data-tree-hand-problem class="text-[11px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</span>
-        <span v-else-if="gone" data-tree-hand-gone class="text-[11px] text-rose-200/90">{{ tr(`替えると下の ${gone} 箱が消える (1 つ戻すで戻せる)`, `Replacing removes ${gone} box(es) below (Undo restores)`) }}</span>
+        <span v-else-if="gone && !mustPick" data-tree-hand-gone class="text-[11px] text-rose-200/90">{{ tr(`替えると下の ${gone} 箱が消える (1 つ戻すで戻せる)`, `Replacing removes ${gone} box(es) below (Undo restores)`) }}</span>
       </div>
     </div>
       </div>
@@ -220,10 +229,9 @@ function ok(): void {
       <CurrencyShelf @hold="onHold">
         <!-- 持った物に掛けられるお告げ = クラフト台と同じ部品と置き場 (HeldOmens.vue を持ったアイコンのすぐ下に重ねる。inline-held だと棚の一番下で見切れた、10-21 本物のマウス)。
              足す手は同じ欄に「狙い無し」(適当打ち、オーナー 10-22「お告げの欄の中に適当打ちがまだ無い」) -->
-        <template v-if="omensAllowedFor(held).length || canFree || (!!held && isBone(held))" #held><HeldOmens>
+        <template v-if="omensAllowedFor(held).length || (!!held && isBone(held))" #held><HeldOmens>
           <!-- お告げと同じ並びの札 (10-22 オーナー「狙い無しはお告げの枠の中に」): アビスの反響 (骨) と狙い無し (足す手) -->
           <button v-if="held && isBone(held)" type="button" data-tree-hand-echo :aria-pressed="echo" :class="[OMEN_CHIP, echo ? OMEN_ON : '']" :title="tr('アビスの反響のお告げ (発現の候補を 1 回引き直す)', 'Omen of Abyssal Echoes (reroll the reveal options once)')" @click="echo = !echo">{{ tr("アビスの反響", "Abyssal Echoes") }}</button>
-          <button v-if="canFree" type="button" data-tree-hand-free :aria-pressed="freeOn" :class="[OMEN_CHIP, freeOn ? OMEN_ON : '']" :title="tr('狙い無し (空きを 1 つ埋めるだけ。当たり / 外れに分けない)', 'No target (just fill an open slot; no hit / miss split)')" @click="toggleFree">{{ tr("狙い無し", "No target") }}</button>
         </HeldOmens></template>
       </CurrencyShelf>
     </div>
