@@ -17,7 +17,8 @@ export const FLAGS = {
   monkey1023: "モンキーテスト 10-23 の共通の直し (窓を閉じた直後の守り・列の見出しを留める・名前を 1 行・押せないボタンを薄く・開く畳むの揃え ほか)",
   baseValues: "MOD の数字を素の値で出し、盛った値は後ろに小さく (for-share/item/base-values.ts、J11 afa0b266・86b42bb4・ada62af7・2d301a1a)",
   weights: "MOD 一覧で MOD の重みを直せる欄 (state/for-share/stage-tuning.ts の WEIGHTS_ON・StageWeightEdit、3bc0ea1d)",
-  essTier: "段の表のエッセンス・合金の行の各段に、付けるアイテムの名前 (例 T1 断熱のグレーターエッセンス。ModTable、口はジン部長の ListTier.essence 3cfe3123)",
+  essCard: "アイテムのカードでエッセンス・合金で付いた MOD の段を P0 / S0 に・T1 の光りを付けない・横に「エッセンス」「合金」の札 (StageItemCard、口はジン部長の cardTierName fe71cb34)",
+  essTier:"段の表のエッセンス・合金の行の各段に、付けるアイテムの名前 (例 T1 断熱のグレーターエッセンス。ModTable、口はジン部長の ListTier.essence 3cfe3123)",
   // ここから下はエミュ部長の物 (エミュの画面の OK 待ち)
   sanctifyBar: "クラフト台の聖別の帯 (e61bb9ab)",
   monkeyEmu1023: "モンキーテスト 10-23 のエミュの直し (スパムシミュの Esc・運試しの間の戻る・札の折り返し・狙いの文 c069970b、品質の帯のカーソル 5ff2778a・9eae3311・0beb110a、狙いの窓の一言 f261b842)",

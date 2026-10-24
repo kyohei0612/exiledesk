@@ -9,7 +9,8 @@
   poe2db の Quality)。ユニーク (名前と色)・未鑑定 (MOD を隠す)・壊れた・ソケットの絵・スキルジェムのサポート枠。
 -->
 <script setup lang="ts">
-import { type StageItem, type StageMod, isGem, allMods, unfracturable, classLabel, tagLabel } from "../../../services/craft-stage/engine";
+import { type StageItem, type StageMod, isGem, allMods, unfracturable, classLabel, tagLabel, cardTierName, craftedKindOf } from "../../../services/craft-stage/engine";
+import { flag } from "../../../web/release-flags";
 import STAT_ORDER from "../../../data/stat-order.json";
 import { fmtChance, isRareChance } from "../../../utils/format-pct";
 import { modText, nameOf, baseNameOf, tr } from "../../../i18n/lang";
@@ -127,6 +128,10 @@ const chanceOf = (m: { modId: string }): number | null => (props.chances ?? chan
 const implicits = computed(() => implicitRows(props.item).map((r) => ({ ...r, tags: props.showTags ? shownTags(r.tags) : [] })));
 const isNew = (m: StageMod): boolean => props.added.some((a) => a.modId === m.modId && !!a.fractured === !!m.fractured);
 /** 今付いた珍しい段 (付いた瞬間の確率 ≤ 0.2%)。神のオーブのフィルターのような枠・光の柱・文字の光を一瞬 (2026-10-16 オーナー「神のフィルターでエフェクト付きで」「一瞬文字光的なやつ」) */
+/** 左端の段の数字 (P3 の 3)。エッセンス・合金で付いた MOD はトレードと同じ 0 (エンジンの cardTierName、2026-10-24 オーナー。本番はスイッチ essCard が入るまで普通の段) */
+const ESS_CARD = flag("essCard");
+const tierLabel = (m: StageMod): string => (ESS_CARD && craftStage.data.value ? cardTierName(craftStage.data.value, m) : m.tierName ?? "");
+const tierNo = (m: StageMod): string => tierLabel(m).replace(/^T/, "");
 const isRareNew = (m: StageMod): boolean => isNew(m) && chanceOf(m) != null && isRareChance(chanceOf(m)!);
 /** ワンド・スタッフの品質で上がる付与スキルの物 */
 const skillQ = computed(() => skillQualityOf(props.item.base, props.item.cls.category, props.item.quality));
@@ -141,7 +146,11 @@ function look(m: StageMod): { cls: string; tag: string } {
   // 札は無し: 行の緑の帯で冒涜と分かる (2026-10-17 オーナー「冒涜って文字はいらん」)
   if (m.desecrated) return { cls: "text-rarity-magic", tag: "" };
   // 液化した感情 (ジュエル) で付いた物はデリリウム (2026-10-11 オーナー「デリリウムに変えて」)
-  if (m.crafted) return { cls: "text-mod-crafted", tag: m.modId.includes("/Emotion_") ? tr("デリリウム", "Delirium") : tr("エッセンス", "Essence") };
+  if (m.crafted && m.modId.includes("/Emotion_")) return { cls: "text-mod-crafted", tag: tr("デリリウム", "Delirium") };
+  // エッセンスか合金かはエンジンの craftedKindOf (付け方の印ではなく MOD の出どころ。貼り付けた物も、2026-10-24 オーナー「冒涜よろしく MOD の横にエッセンス」。スイッチ essCard)
+  const kind = ESS_CARD && craftStage.data.value ? craftedKindOf(craftStage.data.value, m) : null;
+  if (kind) return { cls: "text-mod-crafted", tag: kind === "alloy" ? tr("合金", "Alloy") : tr("エッセンス", "Essence") };
+  if (m.crafted) return { cls: "text-mod-crafted", tag: tr("エッセンス", "Essence") };
   // 要望 ㉙: 特殊 MOD のルーンの MOD (重みは仮定) / アルダーのルーンで属性を変えた MOD
   // 札は「ルーン」だけ (POE2Tube 要望 ㉚-3: 動画では「データサイトでは特殊 MOD の出やすさは全部同じ = 完全にランダムな抽選」と説明する。
   // 重みが仮定なのは結果 JSON の assumed_weight に残る)
@@ -284,7 +293,7 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
           <div data-fracture-pop class="absolute left-1/2 top-full z-30 w-max min-w-[260px] max-w-[440px] -translate-x-1/2 space-y-0.5 rounded border border-[#7a6a35] bg-[#0b0a08]/95 px-2 py-1.5 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.7)]" :class="fracOpen ? 'visible' : 'invisible group-hover/fg:visible'">
             <p class="pb-0.5 text-[11px] text-white/45">{{ tr("この中のどれか 1 つが固定される", "One of these gets fractured") }}</p>
             <p v-for="r in fracRows" :key="r.key" data-fracture-member class="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-mod-fractured hover:bg-white/[0.06]" :title="canFracture(r.m) ? tr('右クリックでフラクチャーの印を外す', 'Right-click to remove the fracture mark') : undefined" @click.stop="emit('jump', r.m.modId)" @contextmenu="onFracture($event, r.m)">
-              <span class="w-7 shrink-0 text-left font-bold tabular-nums" :class="r.side === 'プレフィックス' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ r.side === "プレフィックス" ? "P" : "S" }}{{ (r.m.tierName ?? "").replace(/^T/, "") }}</span>
+              <span class="w-7 shrink-0 text-left font-bold tabular-nums" :class="r.side === 'プレフィックス' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ r.side === "プレフィックス" ? "P" : "S" }}{{ tierNo(r.m) }}</span>
               <span class="min-w-0 flex-1">{{ r.text }}</span>
             </p>
           </div>
@@ -296,14 +305,14 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
           @mouseleave="hover = null"
           :key="isNew(r.m) ? `${r.key}#${flashKey}` : r.key"
           class="relative flex items-center gap-2 rounded px-2 py-0.5"
-          :class="[r.m.desecrated ? 'g-abyss-row' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? (isRareNew(r.m) ? 'stage-mod-new-rare' : r.m.tierName === 'T1' ? 'stage-mod-new-top' : 'stage-mod-new') : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
+          :class="[r.m.desecrated ? 'g-abyss-row' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? (isRareNew(r.m) ? 'stage-mod-new-rare' : tierLabel(r.m) === 'T1' ? 'stage-mod-new-top' : 'stage-mod-new') : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
           :title="isDoomed(r.m) ? (doomed!.length > 1 ? tr(`この手で変わる候補 (${doomed!.length} つ)`, `May change with this use (${doomed!.length} candidates)`) : tr('この手で変わる', 'Changes with this use')) : canFracture(r.m) ? (r.m.fractured ? tr('右クリックでフラクチャーを外す', 'Right-click to unfracture') : tr('右クリックでフラクチャー (この MOD を固定)', 'Right-click to fracture this mod')) : undefined"
           @contextmenu="onFracture($event, r.m)"
         >
           <!-- 珍しい段が付いた瞬間の光の柱 (ドロップの光の柱のように、行から上へ伸びて消える) -->
           <span v-if="isRareNew(r.m)" aria-hidden="true" class="stage-rare-beam pointer-events-none absolute bottom-1/2 left-1/2 z-20 w-10" />
           <!-- トレードサイトと同じ: 左端に P1 / S5 (プレ / サフィと段)、真ん中に MOD の文 (長い物は折り返す)、右端に付いた瞬間の確率と × (2026-10-10 オーナーの見本) -->
-          <span class="shrink-0 text-left text-[12px] font-bold tabular-nums" :class="[sideColW, r.side === 'プレフィックス' ? 'text-[#e0846a]' : 'text-[#6aa8e8]']">{{ r.side === "プレフィックス" ? "P" : "S" }}{{ (r.m.tierName ?? "").replace(/^T/, "") }}</span>
+          <span class="shrink-0 text-left text-[12px] font-bold tabular-nums" :class="[sideColW, r.side === 'プレフィックス' ? 'text-[#e0846a]' : 'text-[#6aa8e8]']">{{ r.side === "プレフィックス" ? "P" : "S" }}{{ tierNo(r.m) }}</span>
           <span class="min-w-0 flex-1 text-center">
             <!-- 消える候補は文字をオレンジに (フラクチャーのくすんだ金色と被らない色。2026-10-07 オーナー「光るの文字にしようか、フラクチャーの色被らんようにオレンジで」) -->
             <!-- 未発現はゲームと同じく緑の崩れた文字 (中身は分からない。ホバーで「未発現の冒涜 MOD (側)」。2026-10-17 オーナー「アイテムについた冒涜未発現はこの感じ、全体的に緑」) -->
