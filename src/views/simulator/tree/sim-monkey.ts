@@ -11,11 +11,22 @@
  *   __simMonkey.add(id, key, omens?, opt?)             次の手の箱を作る → { ok, problem?, at, boxes: [{ id, out, aim, mods: [{ side, modId, tier, text }] }] }
  *   __simMonkey.boxItem(id)                            その箱でエンジンに渡すアイテム { item, preItem, raw, preRaw, hand } / run(n=300, seed=1) = 画面と同じ tree-run を値段 1 で (費用 = 個数)
  *   __simMonkey.dump()                                 今の木 (JSON、startRarity = スタートの本当のレアリティ)。add の boxes にも rarity
+ * 流れの 2・4 (完成形の設定と結果、10-24 ブラックの頼み。中身は完成形の設定の窓・箱の窓・テストラン・「100 人回す」と同じ関数):
+ *   __simMonkey.goalCandidates()                       そのベースの完成の MOD の候補 (完成形の設定の表と同じ行) [{ id, side, group, text, tiers: [{ modId, tier, rank, ilvl, text }] }]
+ *   __simMonkey.setGoal([{ modId, tier, fractured? }])  完成の MOD を決め直す (tier = 表の段の番号、その段以上が当たり。fractured = フラクチャーの印) → { ok, goals, left, unknown }
+ *   __simMonkey.setAim(id, modId, tier)                当たりの箱の MOD を選ぶ (完成の MOD があればその中から、画面の MOD を選ぶ窓と同じ)
+ *   __simMonkey.setBack(id, to)                        戻り先 (箱の id、"start" = 始めに戻る、null で外す。画面と同じく作り直し・形の合う箱は無し)
+ *   __simMonkey.setDone(id, on = true)               完成の印 (当たり・分かれ目の行の、次の手も戻りも無い箱だけ)
+ *   await __simMonkey.check()                          テストラン (ルート精査) → { passed, done: [完成の箱], issues: [{ boxId, kind, text }] }
+ *   await __simMonkey.result(n = 100, seed = 1)        画面の「100 人回す」と同じ値段 (相場、神建て) と始めの値段で回す → { finished, perItem, median, … }
  */
 import { baseCatalog, omenBlock, omensAllowedFor, runeOf, socketCapOf, useReason, type StageItem } from "../../../services/craft-stage/engine";
 import { CATALYSING } from "../../../services/simulator/tree/tree-hands";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { runTree } from "../../../services/simulator/tree/tree-run";
+import { checkTreeAsync } from "../../../services/simulator/tree/tree-check";
+import { setAim, setBack, setDone } from "../../../services/simulator/tree/tree-model";
+import { RUN_N } from "./use-tree-run";
 import { bonesFor, CRAFT_RUNE_KEYS, essenceShelf, nameOfKey, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
 import { treeHidden } from "../use-sim-shelf";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -140,6 +151,50 @@ export function installSimMonkey(): () => void {
       const r = runTree(d, t.doc.value, { n, seed, price: () => 1, startCost: 0, capDiv: Number.POSITIVE_INFINITY });
       const stuckWhy = Object.fromEntries(Object.entries(r.stuckWhy).map(([k, v]) => [k, { reason: v.reason, backs: v.backs, noBox: !!v.noBox }]));
       return { ...r, stuckWhy };
+    },
+    goalCandidates() {
+      return t.rows.value.map((r) => ({ id: r.id, side: r.side, group: r.group, text: r.text, tiers: r.tiers.map((x) => ({ modId: x.modId ?? r.id, tier: x.tier, rank: x.rank, ilvl: x.ilvl, text: x.text })) }));
+    },
+    /** 完成形の設定の窓の「狙いにする」「フラクチャー」(toggleGoal・toggleFracture) で、今の狙いを外してから mods を入れる。表に無い MOD は入れずに unknown へ */
+    setGoal(mods: Array<{ modId: string; tier: number; fractured?: boolean }>) {
+      const known = new Set(t.rows.value.flatMap((r) => r.tiers.map((x) => `${x.modId ?? r.id}|${x.tier}`)));
+      const unknown = mods.filter((m) => !known.has(`${m.modId}|${m.tier}`));
+      for (const g of [...t.goals.value]) t.toggleGoal(g.modId, g.tier);
+      for (const m of mods.filter((x) => !unknown.includes(x))) (m.fractured ? t.toggleFracture : t.toggleGoal)(m.modId, m.tier);
+      t.goalPage.value = 0;
+      const g = t.goalItem.value;
+      return { ok: !unknown.length, goals: JSON.parse(JSON.stringify(t.goals.value)) as unknown, left: g?.left ?? [], unknown };
+    },
+    setAim(id: string, modId: string, tier: number) {
+      const b = t.doc.value.boxes[id], goals = t.goals.value;
+      if (b?.out !== "hit") return { ok: false, problem: "当たりの箱ではない" };
+      if (goals.length && !goals.some((a) => a.modId === modId && a.tier === tier)) return { ok: false, problem: "完成の MOD に無い (当たりの MOD は完成の MOD から選ぶ)" };
+      t.edit((d) => setAim(d, id, { modId, tier }));
+      return { ok: t.doc.value.boxes[id]?.aim?.modId === modId };
+    },
+    /** 戻り先 (画面の戻り先を選ぶ札と同じ setBack。to = 箱の id ("start" = 始めに戻る)・null = 外す。作り直し・形の合う箱は画面でまだ選べないので張れない。次の手のある箱にも張れない) */
+    setBack(id: string, to: string | null) {
+      t.edit((d) => setBack(d, id, to));
+      return { ok: (t.doc.value.boxes[id]?.back ?? null) === to };
+    },
+    setDone(id: string, on = true) {
+      t.edit((d) => setDone(d, id, on ? "main" : null));
+      return { ok: (t.doc.value.boxes[id]?.done === "main") === on };
+    },
+    async check() {
+      const d = s.data.value;
+      if (!d) return null;
+      const issues = await checkTreeAsync(d, t.doc.value, () => {});
+      return { passed: !issues.length, done: Object.values(t.doc.value.boxes).filter((b) => b.done === "main").map((b) => b.id), issues };
+    },
+    /** 画面の use-tree-run と同じ: 相場は高貴建てを神に直し、同じ物の値段は 1 回だけ引く。始めの値段はスタートの値段 (startPrice) */
+    async result(n = RUN_N, seed = 1) {
+      const d = s.data.value;
+      if (!d) return null;
+      const div = t.treePrice("divine") || 1, memo = new Map<string, number>();
+      const price = (k: string): number => { let v = memo.get(k); if (v === undefined) { v = t.treePrice(k) / div; memo.set(k, v); } return v; };
+      const r = runTree(d, t.doc.value, { n, seed, price, startCost: t.startPrice() });
+      return { n: r.n, finished: r.finished, capped: r.capped, stuck: r.stuck, stuckAt: r.stuckAt, perItem: r.perItem, meanFinished: r.meanFinished, median: r.median, p10: r.p10, p90: r.p90, restarts: r.restarts, startCost: t.startPrice(), divinePrice: div, uses: r.uses };
     },
     /** 今の木。startRarity = スタートの本当のレアリティ (start.rarity は保存の形の値で、印も＋の MOD も無い時の白とずれる事がある) */
     dump(): unknown { return { ...JSON.parse(JSON.stringify(t.doc.value)), startRarity: sample("start")?.item.rarity ?? null }; },
