@@ -12,7 +12,7 @@ import log from "../data/changelog.json";
 
 /** en = 英語の文 (changelog-notes-en.json、2026-10-17)。無い物は英語の画面でも日本語のまま */
 /** pop = 起動した時にポップアップで出す版 (大型のリリースだけ。src/data/changelog-popup.json) */
-export interface ChangelogEntry { v: string; date: string; items: Array<{ kind: string; area: string; text: string; en?: string }>; pop?: boolean }
+interface ChangelogEntry { v: string; date: string; items: Array<{ kind: string; area: string; text: string; en?: string }>; pop?: boolean }
 export const APP_VERSION: string = pkg.version;
 
 const cmp = (a: string, b: string): number => {

@@ -41,7 +41,7 @@ export interface GemLevelInfo extends GemLevelStats {
   sets?: Array<GemLevelStats & { l: string }>;
 }
 
-export interface GemHover {
+interface GemHover {
   /** 名前 (日本語 / 英語の画面では英語) */
   n: string;
   /** 説明 ([Tag|表示] の印つき) */

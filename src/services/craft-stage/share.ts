@@ -15,7 +15,7 @@ import type { StartSpec } from "./run-plan";
 import { tr } from "../../i18n/lang";
 
 /** URL の # の頭 */
-export const SHARE_PREFIX = "#share=";
+const SHARE_PREFIX = "#share=";
 /**
  * 共有を出すか。2026-10-12 オーナー「共有は一旦なくそう、まだチェックしてないし内容決まってなかった」で止めている (ボタンも #share= の読み込みも)。
  * 仕組みとテストは残すので、中身が決まったら true に戻す

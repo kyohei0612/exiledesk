@@ -28,7 +28,7 @@ export function toExalted(amount: number, currency: string, rates: ExaltedRates)
  * 取引所の値段は高貴建てで小数 2 桁に丸めて保存されるので、神に戻すと 60 神が 59.99999 神になる
  * (オーナー報告 2026-09-20「完成品の値段がズレてる」)。2 桁の丸めの誤差は最大 0.005 高貴 ÷ 約 490 ≈ 1e-5
  */
-export const ROUND_EPS = 1e-4;
+const ROUND_EPS = 1e-4;
 /** 切り上げ (費用・払う量) */
 export const ceilMoney = (v: number): number => Math.ceil(v - ROUND_EPS);
 /** 切り下げ (収入) */

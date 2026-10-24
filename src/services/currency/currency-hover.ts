@@ -10,7 +10,7 @@
 import { shallowRef } from "vue";
 import { lang, type Lang } from "../../i18n/lang";
 
-export interface CurrencyHover {
+interface CurrencyHover {
   /** 日本語名 */
   n: string;
   /** 説明の行 */

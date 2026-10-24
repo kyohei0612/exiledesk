@@ -151,15 +151,13 @@ const TRADE_CATEGORY: Record<string, string> = {
   // 新しい武器 (剣・斧・短剣・爪・フレイル) は取引所の名前を確かめてから足す (推測で書かない)。無い時は null = ベース名で引く
 };
 
-/** そのクラスを取引所で引けるか。引けなければ null (理由は `tradeCategoryNote`) */
+/** そのクラスを取引所で引けるか。引けなければ null (取引所のカテゴリが未確認なので、間違った値段を出さないよう検索を組まない) */
 export function tradeCategoryOf(cls: ItemBase): string | null {
   return TRADE_CATEGORY[clientClassOf(cls.category) ?? ""] ?? null;
 }
-export const tradeCategoryNote = (cls: ItemBase): string =>
-  `「${cls.category}」は取引所のカテゴリが未確認です。間違った値段を出さないよう、検索を組みません。`;
 
 /** 取引所の条件 1 本 */
-export interface TradeStatFilter {
+interface TradeStatFilter {
   /** trade2 の stat id (`explicit.stat_...`) */
   id: string;
   /** 下限。**素の抽選値** (ティアの下限) */
@@ -346,9 +344,9 @@ export function buildFinishedQuery(
 }
 
 /** 判定 */
-export type BuyOrCraftVerdict = "buy" | "craft" | "unknown";
+type BuyOrCraftVerdict = "buy" | "craft" | "unknown";
 
-export interface BuyOrCraftResult {
+interface BuyOrCraftResult {
   verdict: BuyOrCraftVerdict;
   /** 作成費 ÷ 出品価格。1 より大きければ買ったほうが安い */
   ratio: number | null;

@@ -6,7 +6,7 @@
 import { shallowRef } from "vue";
 import { lang, type Lang } from "../i18n/lang";
 
-export interface Keyword {
+interface Keyword {
   /** 見出し (日本語) */
   t: string;
   /** 説明 (日本語。[Tag|表示] の印を含む = さらに奥へ辿れる) */

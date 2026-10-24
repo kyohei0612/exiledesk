@@ -30,7 +30,7 @@ export function exchangeSubJaOf(nameEn: string): string | null {
   return e?.sub ? (EX.subcategories[e.sub]?.nameJa ?? e.sub) : null;
 }
 
-export function isExchangeGroup(groupId: string): boolean {
+function isExchangeGroup(groupId: string): boolean {
   return groupId.startsWith(PREFIX);
 }
 

@@ -4,7 +4,7 @@
  * 読むのは scripts/build-blog-pages.mjs (静的な HTML を作る、開発版のデプロイの中だけ)。部品を足さずに書いた小さな変換なので、README に無い書き方は文字のまま出る。
  */
 
-export interface BlogMeta {
+interface BlogMeta {
   slug: string;
   lang: "ja" | "en";
   title: string;

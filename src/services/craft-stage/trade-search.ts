@@ -10,7 +10,7 @@ import { hasStatKind, type StatKind } from "../trade2/stat-kinds";
 import { openTradeQuery } from "../pob-check/trade-links";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 
-export interface ModPick { modId: string; minTierIndex: number }
+interface ModPick { modId: string; minTierIndex: number }
 /** 1 つの条件: 候補 (picks) のうち count 個 (既定 1) */
 export interface ModGroup { picks: readonly ModPick[]; count?: number }
 
@@ -20,14 +20,14 @@ const KINDS: StatKind[] = ["explicit", "fractured", "desecrated"];
  * その MOD の取引所の条件 (普通 / 固定済み / 冒涜 のどれでも)。値の下限は入れない: 組み合わせだけで探す
  * (2026-10-07 オーナー「組み合わせだけの検索でおｋだから一旦数値は抜き」)
  */
-export function statsOfMod(data: PatchData, t: ModPick, withMin = false): Array<{ id: string; min?: number }> {
+function statsOfMod(data: PatchData, t: ModPick, withMin = false): Array<{ id: string; min?: number }> {
   return statGroupsOfMod(data, t, withMin).flat();
 }
 /**
  * 値ごとの条件 (1 つの値 = 普通 / 固定済み / 冒涜 のどれか)。2 つの値を持つ MOD (光半径 / マナ自動回復など) は、両方の値がそれぞれ要る
  * (まとめて「どれか 1 つ」にすると片方だけの物も出ていた。2026-10-08 使い倒しテスト)
  */
-export function statGroupsOfMod(data: PatchData, t: ModPick, withMin = false): Array<Array<{ id: string; min?: number }>> {
+function statGroupsOfMod(data: PatchData, t: ModPick, withMin = false): Array<Array<{ id: string; min?: number }>> {
   return tradeFiltersFor(data, [t]).filters.map((f) => {
     const min = withMin && f.min != null ? { min: f.min } : {};
     if (!/^explicit\./.test(f.id)) return [{ id: f.id, ...min }];

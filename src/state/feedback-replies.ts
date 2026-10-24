@@ -12,7 +12,7 @@ import { WEB_API_BASE } from "../web/config";
 const SENT_KEY = "exiledesk.feedback.sent";
 const SEEN_KEY = "exiledesk.feedback.replySeen";
 interface Sent { id: string; at: string; text: string }
-export interface ShownReply { id: string; asked: string; reply: string; en?: string; version?: string; askImage?: boolean }
+interface ShownReply { id: string; asked: string; reply: string; en?: string; version?: string; askImage?: boolean }
 /** 出す返事 (まだ見ていない物) */
 export const feedbackReplies = ref<ShownReply[]>([]);
 /** 返事で「画像を下さい」と頼まれた要望の id (押すと画像を送る窓が開く。WebApp の FeedbackDialog、2026-10-14) */
