@@ -6,8 +6,9 @@
   - シミュレーターのタブは開発版だけ (TREE_ON。本番はまだ出さない)
   - 今いる方が選ばれた見た目。active で上書きできる (エミュの画面でジェムコラプトを開いている時は null = どちらも選ばない)
   - その画面だけのタブ (エミュのジェムコラプト・アプリのチュートリアル) は既定の slot で後ろに足す
-  - 右端にデイリー (?page=daily)、一番端にコスメティック (?page=skins、オーナー 10-25「コスメが端かな」)。目立たない所に置く (2026-10-25 オーナー「ここの右端が良いな、目立たんし」、ヘッダーから移した)。どちらも開発版だけ (スイッチ skins・daily)。
-    スマホ・狭い幅では 2 段目に回す (1 段に 5 つは入らない)
+  - 並びは エミュレーター / シミュレーター / デイリー / (slot = ジェムコラプト) / コスメティック (2026-10-25 オーナー「ここの右端が良いな、目立たんし」「コスメが端かな」
+    「デイリーの右に将来追加するジェムコラプト置こうか」、ヘッダーから移した)。デイリー・コスメティックは開発版だけ (スイッチ daily・skins)。
+    スマホは 3 列の格子 (5 つなら 3 + 2)、狭い PC は折り返す
   使い方: <ModeTabs @pick="(m) => …画面の後片付け" ><button class="g-tab">…</button></ModeTabs>
 -->
 <script setup lang="ts">
@@ -37,15 +38,13 @@ const TAB = "g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex
 </script>
 
 <template>
-  <div v-if="shown" data-mode-tabs class="inline-flex flex-wrap gap-1 max-md:flex max-md:w-full" role="tablist">
+  <div v-if="shown" data-mode-tabs class="inline-flex flex-wrap gap-1 max-md:w-full" :class="EXTRA ? 'max-md:grid max-md:grid-cols-3' : 'max-md:flex'" role="tablist">
     <button type="button" role="tab" data-mode-tab="hand" :aria-selected="on === 'hand'" :class="[TAB, on === 'hand' ? 'on' : '']" @click="pick('hand')">{{ tr("エミュレーター", "Emulator") }}</button>
     <button v-if="TREE_ON" type="button" role="tab" data-mode-tab="sim" :aria-selected="on === 'sim'" :class="[TAB, on === 'sim' ? 'on' : '']" @click="pick('sim')">
       {{ tr("シミュレーター", "Simulator") }}<span class="text-[10px] font-normal opacity-70" :title="tr('作り込み中の機能', 'Still in development')">β</span>
     </button>
+    <button v-if="EXTRA && DAILY_ON" type="button" role="tab" data-mode-tab="daily" :aria-selected="false" :class="TAB_S" @click="openDailyPage()">{{ tr("デイリー", "Daily") }}</button>
     <slot />
-    <span v-if="EXTRA" data-mode-extra class="inline-flex gap-1 max-md:flex max-md:basis-full">
-      <button v-if="DAILY_ON" type="button" role="tab" data-mode-tab="daily" :aria-selected="false" :class="TAB_S" @click="openDailyPage()">{{ tr("デイリー", "Daily") }}</button>
-      <button v-if="SKINS_ON" type="button" role="tab" data-mode-tab="skins" :aria-selected="false" :class="TAB_S" @click="openSkinsPage">{{ tr("コスメティック", "Cosmetics") }}</button>
-    </span>
+    <button v-if="EXTRA && SKINS_ON" type="button" role="tab" data-mode-tab="skins" :aria-selected="false" :class="TAB_S" @click="openSkinsPage">{{ tr("コスメティック", "Cosmetics") }}</button>
   </div>
 </template>
