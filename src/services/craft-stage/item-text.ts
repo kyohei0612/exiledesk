@@ -325,6 +325,15 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
         .map((x) => ({ x, tx: tierWith(x, b) })).sort((p, q) => Number(q.tx.fits) - Number(p.tx.fits) || zeroSrc(q.x.source) - zeroSrc(p.x.source));
       if (ess[0]) { mod = ess[0].x; t = ess[0].tx; }
     }
+    // ルーンの特殊 MOD (id に Rune_) は明示の MOD の行に当てない ((rune) の印の行だけ。2026-10-24 ブラック 9 代目: 胴の「+15% to Fire and Chaos Resistances」が Rune_soul に当たっていた)。
+    // 同じクラスの同じ文の一般 → エッセンス系 → 冒涜専用の順で、値が段に収まる物を先に
+    if (!fixed && /\/Rune_/.test(mod.id) && b.note !== "rune") {
+      const cls = mod.id.split("/")[0], text = mod.text;
+      const rank = (src: unknown): number => (src === "normal" ? 3 : /essence/.test(String(src)) ? 2 : src === "desecrated" ? 1 : 0);
+      const alt = [...data.mods.values()].filter((x) => x.id.split("/")[0] === cls && x.text === text && !/\/Rune_/.test(x.id) && (!b.side || x.type === b.side))
+        .map((x) => ({ x, tx: tierWith(x, b) })).sort((p, q) => Number(q.tx.fits) - Number(p.tx.fits) || rank(q.x.source) - rank(p.x.source));
+      if (alt[0]) { mod = alt[0].x; t = alt[0].tx; }
+    }
     // 値が段に収まらない時は、同じクラスの同じ文の別の MOD (エッセンス・冒涜・反対側) を見る。印が (crafted) ならエッセンス、(desecrated) なら冒涜を先に
     if (!fixed && !t.fits) {
       const cls = mod.id.split("/")[0];
