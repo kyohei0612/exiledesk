@@ -1,3 +1,7 @@
 User-agent: *
 Allow: /
+
+User-agent: SemrushBot
+Disallow: /
+
 Sitemap: https://exiledesk.com/sitemap.xml
