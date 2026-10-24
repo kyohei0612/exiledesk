@@ -2,6 +2,13 @@
 
 前の引き継ぎ (1〜3 本目、10-21〜23) と止めている物 (①〜⑥・自動・④ の物・OK 待ちの一覧) は notes/2026-10-22-todo-archive.md にそのまま移した。
 
+## 23 本目の区切り (10-25、local_5efc5d0a。ブラックへの送信は上限で止まりがち、報告は共有メモ side-session-notes/local_b4352604…/sim23-report.md・sim23-cleanup-list.md)
+- 済み (どれも開発版だけ、手元 1440 で台本から本物のマウスの動き): 精査の打ち直しを減らす (a27c7e0e、B が 17.7 → 0.39 秒)・次に打つ手の窓の「当たりの箱にする MOD」のチェック (e54e7910 → 491cb05e → 3f018e85 → 52357407 → bf7bddf0: 足す手・カオスだけ、一番下に狙い無し・既定 ☑・MOD を選ぶと外れる・全部外すと戻る、カオスの当たるまでは選んだ MOD のどれか、エッセンス・合金は出さない)・見本の木 6 本と古い工程式のレシピを消した (2d492b9d、台本 11 本 777b38fb)・古いシミュの整理は丸ごと消せるファイル無し (treeRecipeSaved だけ、一覧は sim23-cleanup-list.md)
+- 返事待ち: 開いた時の見え方を全体表示にするか (今は 10-22 の決めの 100%・始まりを上の真ん中。オーナー「はみ出しも直して」は箱が枠の外にあっただけで崩れは 0)
+- 迷う物 (消していない): 分かれ目 (split の箱) の作り一式。人が作るボタンも見本も無く今の画面からは作れない、精査の「外れを持ったまま戻る」の直し方の文が分かれ目を勧めたまま
+- 共有 URL (手元 1440 用): 共有メモ sim23-recipe-b-url.md (不在のアミュ B、見本を消したので中身は古い形)・sim23-recipe-frac-spell3-url.md (フラクチャー スペ3、✦ だけ・手無し)
+- 台本 (scratchpad C:/Users/kyohei/AppData/Local/Temp/claude/C--Users-kyohei-ExileDesk/dec8c067-fef9-42ba-9922-c5b8f6fdc1e8/scratchpad/、port 9363): heavy.mjs・steps.mjs (精査の重さ)・aimcheck2.mjs・allcur.mjs (チェック)・overflow.mjs (はみ出し)・reach.mjs・deadexp.mjs (届かないファイル・呼ばれない export)・flow.mjs (ベース → 保存 → レシピ → 使い方)
+
 ## 次の部長へ (22 本目 → 23 本目、10-25 深夜。会話 1,100 件超え・送信の上限でブラック 10 代目の頼みで入れ替え)
 - 宛先: ブラック 10 代目 local_b4352604-0717-4065-92a4-7f1ac6ebcc83、デザイン部長 5 本目 local_ee8c33db-2bdf-4656-9e00-58c9d121cb1c。ほかは docs/org/dev/todo.md の表。21 → 22 の引き継ぎは notes/2026-10-24-todo-archive.md の末尾、22 本目の後半の報告の全文は notes/2026-10-25-sim22-report.md
 - **送信の上限**: 10 回ほどで止まる (22 本目は 11 回目から止まった)。止まったら共有メモ (side-session-notes/local_b4352604…/) に書き、commit の題に要点を入れる
