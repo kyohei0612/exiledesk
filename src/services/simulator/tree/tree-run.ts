@@ -225,6 +225,13 @@ export function settle(data: PatchData, doc: TreeDoc, shapes: readonly Shape[], 
     return to && (!th || canPlay(data, item, th)) ? to : id;
   }
   const b = doc.boxes[id];
+  // 「打った後」の箱 (見本の頭で外れを付けた後 = 前の始まり、10-25) へ戻って手が打てない時も、始まりと同じく形の合う打てる箱へ
+  if (b?.hand && b.out === "any") {
+    if (!handProblem(data, item, b.hand)) return id;
+    const to = boxOfShape(shapes, itemKey(data, item, aims), { data, item });
+    const th = to ? doc.boxes[to]?.hand : null;
+    return to && (!th || canPlay(data, item, th)) ? to : id;
+  }
   if (!b?.hand || (b.out !== "hit" && b.out !== "junk")) return id;
   const key = itemKey(data, item, aims);
   // 形が合っても手が打てない (外れが消去の届かない側にある等) 時は、形の合う打てる箱へ (10-22 解析君 body-essence-path、狙いが消えた → 外れの箱の戻り)

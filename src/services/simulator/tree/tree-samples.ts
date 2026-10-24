@@ -38,7 +38,7 @@
  */
 import { migrateStart, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
 import { tidy } from "./tree-layout";
-import { ECHO } from "./tree-hands";
+import { ECHO, effectOf } from "./tree-hands";
 import robeEssence from "./samples/robe-essence-split.json";
 import amulet4aims from "./samples/amulet-4aims.json";
 import absentB from "./samples/absent-b.json";
@@ -142,8 +142,36 @@ function bootsResSplit(): TreeDoc {
   });
 }
 
+/**
+ * 外れを付けるまでの手を木の頭に足す (10-25 オーナー「フラクチャースタートでハズレなし、付けるとこまで一旦やってあげないとぐちゃる」):
+ * スタートは ✦ 1 つだけのレアになったので、前の始まり (✦ 1 + 外れ 3 = 買った状態) までを高貴の適当打ち (free、結果は「打った後」1 つ) で埋める。
+ * 前の始まりの手と結果は最後の「打った後」の箱へ移す。戻り先 "start" も最後の箱へ (前の始まり = 外れの付いた形へ戻る手。start へ戻すと外れを持ったまま高貴を打って満杯で止まった)
+ */
+function withFill(d: TreeDoc, n = 3): TreeDoc {
+  const s = d.boxes.start!;
+  const ids = Array.from({ length: n }, (_, i) => `fill${i + 1}`), last = ids[n - 1]!;
+  const fill = hand("exalt", [], { free: true });
+  ids.forEach((id, i) => {
+    d.boxes[id] = { id, x: 0, y: 0, out: "any", aim: null, hand: i === n - 1 ? s.hand : fill, outs: i === n - 1 ? [...s.outs] : [ids[i + 1]!], back: null, done: null, parent: i ? ids[i - 1]! : "start", ...(i === n - 1 && s.split ? { split: s.split } : {}) };
+  });
+  for (const b of Object.values(d.boxes)) {
+    if (ids.includes(b.id)) continue;
+    if (b.parent === "start") b.parent = last;
+    if (b.back === "start") b.back = last;
+  }
+  s.hand = fill; s.outs = [ids[0]!]; delete s.split;
+  // 適当打ちで狙いが付いていると、前の始まりの手 (消去など) で狙いが消える事がある (前の始まりは狙いを持たなかった)。消す手なら 1 つ前の「打った後」(外れが 1 つ少ない形) へ戻って埋め直し、入れ替える手 (カオス) なら同じ箱で打ち直す
+  const lb = d.boxes[last]!;
+  if (lb.hand && !lb.split && !lb.outs.some((o) => d.boxes[o]?.out === "lost")) {
+    d.boxes.fillLost = { id: "fillLost", x: 0, y: 0, out: "lost", aim: null, hand: null, outs: [], back: effectOf(lb.hand.currency) === "remove" ? ids[n - 2] ?? "start" : last, done: null, parent: last };
+    lb.outs.push("fillLost");
+  }
+  tidy(d);
+  return d;
+}
+
 export function treeSample(name: string): TreeDoc | null {
-  return name === "gold-ring-suffix" ? goldRingSuffix() : name === "boots-res-split" ? bootsResSplit()
-    : name === "robe-essence-split" ? fromJson(robeEssence) : name === "amulet-4aims" ? fromJson(amulet4aims)
-    : name === "absent-b" ? fromJson(absentB) : name === "absent-a" ? fromJson(absentA) : null;
+  return name === "gold-ring-suffix" ? withFill(goldRingSuffix()) : name === "boots-res-split" ? bootsResSplit()
+    : name === "robe-essence-split" ? withFill(fromJson(robeEssence)) : name === "amulet-4aims" ? withFill(fromJson(amulet4aims))
+    : name === "absent-b" ? withFill(fromJson(absentB)) : name === "absent-a" ? withFill(fromJson(absentA)) : null;
 }
