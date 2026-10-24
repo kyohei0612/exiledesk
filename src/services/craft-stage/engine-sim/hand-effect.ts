@@ -1,6 +1,6 @@
 /**
  * hand-effect.ts — カタリストを品質が最大になるまで打つ (シミュの要望、sim-own-logic.md の B5)。核の applyCurrency は 1 回 = 1 個 (品質の上がり方は乱数) で、
- * 「最大まで何個」を数える手は核に無いので for-sim に置く (2026-10-23 オーナー: 元からある物の言い換えは外し、新しい物だけ残す)
+ * 「最大まで何個」を数える手は核に無いので engine-sim/ に置く (2026-10-23 オーナー: 元からある物の言い換えは外し、新しい物だけ残す)
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { applyCurrency } from "../apply-currency";

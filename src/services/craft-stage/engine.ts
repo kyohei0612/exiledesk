@@ -2,8 +2,8 @@
  * engine.ts — エンジンの核の入口 (2026-10-20 オーナー「エンジンの核」。案は docs/org/emulator/notes/engine-entry.md)。
  *
  * どの画面 (エミュ・シミュ・チュートリアル・解析君) も、MOD の置き場・重み・段・文、カレンシーとお告げの効果、確率、品質・聖別の式をここから取る (自前の表・式・重みの足し算を作らない)。
- * 要望を出した側だけが使う物は engine-sim.ts (シミュ)・engine-emu.ts (エミュ) と中身の for-sim/・for-emu/ (2026-10-22 深夜 オーナー、
- * docs/org/emulator/notes/2026-10-22-entry-split-plan.md)。核は for-sim / for-emu を読まない。足りない物はジン部長がここへ足す。ここは名前を並べるだけ (中身は元のファイル)。型は export type、関数は名前ごとに並べ、
+ * 要望を出した側だけが使う物は engine-sim.ts (シミュ)・engine-emu.ts (エミュ) と中身の engine-sim/・engine-emu/ (2026-10-22 深夜 オーナー、
+ * docs/org/emulator/notes/2026-10-22-entry-split-plan.md)。核は engine-sim/ / engine-emu/ を読まない。足りない物はジン部長がここへ足す。ここは名前を並べるだけ (中身は元のファイル)。型は export type、関数は名前ごとに並べ、
  * `export *` の束ねを作らない (ワーカーのバンドルに要らない物を引き込まないため)。
  */
 

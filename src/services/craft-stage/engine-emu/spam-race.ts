@@ -1,6 +1,6 @@
 /**
  * spam-race.ts — スパムシミュレーター (エミュの画面) の 100 人の競争・その行の形・シェアの包み (2026-10-23 route-race.ts から分けた。
- * エミュの要望の機能なので for-emu。打つ処理は核の route-race の routeRun のまま)
+ * エミュの要望の機能なので engine-emu/。打つ処理は核の route-race の routeRun のまま)
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { mulberry32 } from "../../htc/rng";
