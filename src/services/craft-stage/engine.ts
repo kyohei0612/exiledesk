@@ -70,7 +70,7 @@ export type { AimTarget, AimCombo, AimOdd, AimHitOpts } from "./aim-odds";
 // aimHits = その MOD が狙い (段の番号以上) に当たるか (sameText = 同じ系統で文も同じ別の modId も当たり)
 export { aimCombos, aimOdds, aimChain, aimDone, hits as aimHits } from "./aim-odds";
 // 段の換算 (段の番号 ↔ 段の名前の T・狙いが全部付く一番低いアイテムレベル・段の札の文字)
-export { tierIndexOf, tierRankOf, tierNoOf, minIlvlFor, tierRankLabel, cardTierName } from "./tier-rank";
+export { tierIndexOf, tierRankOf, tierNoOf, minIlvlFor, tierRankLabel, cardTierName, craftedKindOf } from "./tier-rank";
 export { DESECRATION_EXCLUSIVE_COUNT, bossOmenAllowed, desecrationOmenForMod } from "../../vendor/poe2htc/engine/probability";
 
 // 名簿

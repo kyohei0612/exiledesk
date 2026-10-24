@@ -35,3 +35,13 @@ export function cardTierName(data: PatchData, m: Pick<StageMod, "modId" | "tierN
   const src = data.mods.get(m.modId)?.source;
   return src === "essence" || src === "perfect_essence" ? "T0" : m.tierName;
 }
+/**
+ * カードの札の種類 (2026-10-24 デザイン部長 4 本目): エッセンス・完全エッセンスで付いた MOD は "essence"、合金で付いた MOD は "alloy"、ほかは null。
+ * 判定は cardTierName と同じ source (essence / perfect_essence)。合金は完全エッセンスの MOD のうち、段の名前 (付けるアイテム) が「… Alloy」の物
+ */
+export function craftedKindOf(data: PatchData, m: Pick<StageMod, "modId">): "essence" | "alloy" | null {
+  const mod = data.mods.get(m.modId);
+  if (mod?.source === "essence") return "essence";
+  if (mod?.source !== "perfect_essence") return null;
+  return mod.tiers.some((t) => /Alloy$/.test(String(t.name ?? ""))) ? "alloy" : "essence";
+}
