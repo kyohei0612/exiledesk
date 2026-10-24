@@ -26,11 +26,11 @@ import { tr } from "../i18n/lang";
 import { loadBoot, type Boot } from "./boot";
 import InstallButton from "./InstallButton.vue";
 import LangSwitch from "../components/LangSwitch.vue";
-import { closeDailyPage, openDailyPage, openFeedback, openGuide, openSkinsPage, page, SKINS_ON, skinsPage } from "./page";
+import { closeDailyPage, openFeedback, openGuide, page, skinsPage } from "./page";
 import AdSlot from "../components/ui/AdSlot.vue";
 import WebFooter from "./WebFooter.vue";
 import { pageTick, sideAdW } from "../utils/ads";
-import { BLOG_ON, DAILY_ON, dailyPage, feedbackPage, recipesPage, routesOpen, TREE_ON, treePage } from "../state/web-page";
+import { BLOG_ON, dailyPage, feedbackPage, recipesPage, routesOpen, TREE_ON, treePage } from "../state/web-page";
 import { prefetchWhenIdle } from "./prefetch";
 import { flag } from "./release-flags";
 const SideReads = defineAsyncComponent(() => import("./SideReads.vue")); // 右の列の読み物 (関係する記事・新しい記事・使い方、/blog/index.json)
@@ -168,10 +168,7 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       <span v-if="!phone" data-rec-part="header-lang" class="shrink-0 whitespace-nowrap"><LangSwitch /></span>
       <!-- 帯のボタンは窓と同じ g-btn sm (2026-10-10 動きの揃え 6) -->
       <!-- 使い方・コツのページ (動画へのリンク + チュートリアルのコース。2026-10-18 オーナー「チュートリアルは使い方にしまう」) -->
-      <!-- デイリークラフトチャレンジ (2026-10-22、開発版だけ。?page=daily) -->
-      <button v-if="DAILY_ON" type="button" data-rec-part="header-daily" class="g-btn sm" :class="[phone ? '!min-h-9 !px-0 text-[12px]' : '', dailyPage ? 'on' : '']" :aria-pressed="!!dailyPage" @click="openDailyPage()">{{ tr("デイリー", "Daily") }}</button>
-      <!-- コスメティック = PoE2 で使える PoE1 のスキンの一覧 (2026-10-25、開発版だけ。?page=skins、オーナー 10-25 に名前を「コスメティック」へ) -->
-      <button v-if="SKINS_ON" type="button" data-rec-part="header-skins" class="g-btn sm" :class="[phone ? '!min-h-9 !px-0 text-[12px]' : '', skinsPage ? 'on' : '']" :aria-pressed="skinsPage" @click="openSkinsPage">{{ tr("コスメティック", "Cosmetics") }}</button>
+      <!-- デイリー・コスメティックの入口は上の切り替えタブの右端 (ModeTabs、2026-10-25 オーナー「ここの右端が良いな、目立たんし」) -->
       <!-- ブログ (読み物への入口、2026-10-22 AdSense の再申請。開発版だけ) -->
       <a v-if="BLOG_ON" data-rec-part="header-blog" :href="tr('/blog/', '/en/blog/')" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''">{{ tr("ブログ", "Blog") }}</a>
       <button type="button" data-rec-part="header-help" class="g-btn sm" :class="[phone ? '!min-h-9 !px-0 text-[12px]' : '', guideOn ? 'on' : '']" :aria-pressed="guideOn" @click="openGuide">{{ tr("使い方・コツ", "Guide & Tips") }}</button>

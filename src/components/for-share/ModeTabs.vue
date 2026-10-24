@@ -6,13 +6,15 @@
   - シミュレーターのタブは開発版だけ (TREE_ON。本番はまだ出さない)
   - 今いる方が選ばれた見た目。active で上書きできる (エミュの画面でジェムコラプトを開いている時は null = どちらも選ばない)
   - その画面だけのタブ (エミュのジェムコラプト・アプリのチュートリアル) は既定の slot で後ろに足す
+  - 右端にコスメティック (?page=skins) とデイリー (?page=daily)。目立たない所に置く (2026-10-25 オーナー「ここの右端が良いな、目立たんし」、ヘッダーから移した)。どちらも開発版だけ (スイッチ skins・daily)。
+    スマホ・狭い幅では 2 段目に回す (1 段に 5 つは入らない)
   使い方: <ModeTabs @pick="(m) => …画面の後片付け" ><button class="g-tab">…</button></ModeTabs>
 -->
 <script setup lang="ts">
 import { computed } from "vue";
 import { tr } from "../../i18n/lang";
-import { TREE_ON, treePage } from "../../state/web-page";
-import { closeTreePage, openTreePage, page } from "../../web/page";
+import { DAILY_ON, PAGES_ON, TREE_ON, treePage } from "../../state/web-page";
+import { closeTreePage, openDailyPage, openSkinsPage, openTreePage, page, SKINS_ON } from "../../web/page";
 import { flag } from "../../web/release-flags";
 
 type Mode = "hand" | "sim";
@@ -28,15 +30,22 @@ function pick(m: Mode): void {
     emit("pick", m);
   } else closeTreePage(() => emit("pick", m));
 }
+/** 右端の小さいタブ (コスメティック・デイリー)。Web だけ */
+const EXTRA = PAGES_ON && (SKINS_ON || DAILY_ON);
+const TAB_S = "g-tab min-w-[120px] !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]";
 const TAB = "g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]";
 </script>
 
 <template>
-  <div v-if="shown" data-mode-tabs class="inline-flex gap-1 max-md:flex max-md:w-full" role="tablist">
+  <div v-if="shown" data-mode-tabs class="inline-flex flex-wrap gap-1 max-md:flex max-md:w-full" role="tablist">
     <button type="button" role="tab" data-mode-tab="hand" :aria-selected="on === 'hand'" :class="[TAB, on === 'hand' ? 'on' : '']" @click="pick('hand')">{{ tr("エミュレーター", "Emulator") }}</button>
     <button v-if="TREE_ON" type="button" role="tab" data-mode-tab="sim" :aria-selected="on === 'sim'" :class="[TAB, on === 'sim' ? 'on' : '']" @click="pick('sim')">
       {{ tr("シミュレーター", "Simulator") }}<span class="text-[10px] font-normal opacity-70" :title="tr('作り込み中の機能', 'Still in development')">β</span>
     </button>
     <slot />
+    <span v-if="EXTRA" data-mode-extra class="inline-flex gap-1 max-md:flex max-md:basis-full">
+      <button v-if="SKINS_ON" type="button" role="tab" data-mode-tab="skins" :aria-selected="false" :class="TAB_S" @click="openSkinsPage">{{ tr("コスメティック", "Cosmetics") }}</button>
+      <button v-if="DAILY_ON" type="button" role="tab" data-mode-tab="daily" :aria-selected="false" :class="TAB_S" @click="openDailyPage()">{{ tr("デイリー", "Daily") }}</button>
+    </span>
   </div>
 </template>
