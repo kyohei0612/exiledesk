@@ -28,6 +28,7 @@ import { DATASET, parseBatch, sql, usersBetween, writeEvents } from "./events";
 import { dayLogs, jstDay, saveLog, sendDayLogs } from "./logs";
 import { alert, dailyReport, lastPosted, reqLog, yesterdayJst } from "./monitor";
 import { treeShare } from "./tree-share";
+import { pullDiscord } from "./discord";
 import { MARKET_KEY, refreshMarket } from "./market";
 import { compare, exportSessions } from "./sim";
 import type { ChannelDef, Env, Fetch, LiveState } from "./types";
@@ -361,6 +362,11 @@ export default {
   async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
     // 1 時間おきに相場、8 時間おきに配信の見張り (最新動画。2026-10-10 オーナー「5 分監視、8 時間に 1 回でええな」「相場も 1 時間に 1 回」)、毎朝 9 時 (JST = 0:00 UTC) は日報
     // 同じ時に、昨日 (JST) の分析用の記録をファイルで (日報とは別々に動かす。片方が落ちても、もう片方は送る)
+    // 毎朝 9:03 (JST = 0:03 UTC): Discord を読むだけの Bot が前回より後の書き込みを D1 に置く (discord.ts、日報の 9:05 より前)
+    if (controller.cron === "3 0 * * *") {
+      ctx.waitUntil(pullDiscord(env).then(() => undefined).catch((e) => console.warn("discord:", String(e).slice(0, 200))));
+      return;
+    }
     if (controller.cron === "0 0 * * *") {
       ctx.waitUntil(dailyReport(env));
       ctx.waitUntil(sendYesterdayLogs(env));

@@ -79,6 +79,10 @@ export interface Env {
   SIM?: string;
   /** "1" の時だけツリーのレシピの短い URL (/tree/…、tree-share.ts) を開ける。シミュレーターが本番に出るまで本番には無い (10-24) */
   TREE_SHARE?: string;
+  /** Discord を読むだけの Bot のトークン (secret。オーナーが `wrangler secret put DISCORD_BOT_TOKEN` で入れる、discord.ts) */
+  DISCORD_BOT_TOKEN?: string;
+  /** Bot が読むチャンネルの id (カンマで並べる、vars。秘密ではない) */
+  DISCORD_CHANNELS?: string;
 }
 
 export type Fetch = typeof fetch;

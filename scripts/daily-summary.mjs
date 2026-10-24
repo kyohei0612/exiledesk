@@ -40,6 +40,18 @@ try {
   feedback = recent.map((k) => JSON.parse(wr(["kv", "key", "get", "--binding", "LIVE", "--remote", k]))).filter((f) => Date.parse(f.at) >= since);
 } catch (e) { fbError = String(e).slice(0, 200); }
 
+// 3b. Discord の書き込み (server/live の Bot が今朝 9:03 に D1 の discord_daily に置いた 1 日分、src/discord.ts。2026-10-24)
+const today = shift(day, 1);
+const hm = (iso) => new Date(Date.parse(iso) + 9 * 3600e3).toISOString().slice(5, 16).replace("T", " ");
+let discordMd;
+try {
+  const rows = JSON.parse(wr(["d1", "execute", "exiledesk-logs", "--remote", "--json", "--command", `SELECT body FROM discord_daily WHERE day = '${today}'`]))[0].results;
+  const d = rows[0] ? JSON.parse(rows[0].body) : null;
+  if (!d) discordMd = `(${today} の分が無い: 9:03 の Bot の回が動いていない)`;
+  else if (d.status === "未設定") discordMd = "Bot 未設定 (トークンか読むチャンネルが無い。docs/org/analytics/notes/2026-10-24-discord-bot.md)";
+  else discordMd = d.channels.map((c) => `### チャンネル ${c.id} (${c.messages.length} 件${c.error ? `、読めなかった: ${c.error}` : ""})\n` + (c.messages.map((m) => `- ${hm(m.at)} · ${m.author}${m.webhook ? " (webhook)" : m.bot ? " (bot)" : ""}: ${m.text.replace(/\s+/g, " ").slice(0, 400)}${m.files.length ? ` [添付 ${m.files.join(", ")}]` : ""}`).join("\n") || "(無し)")).join("\n\n");
+} catch (e) { discordMd = /no such table/i.test(`${e} ${e?.stdout ?? ""}`) ? "Bot 未設定 (本番の D1 に表がまだ無い。migrations/0009_discord.sql)" : `読めなかった: ${String(e).slice(0, 200)}`; }
+
 // 4. md に書く
 const diff = (a, b) => (b == null ? "—" : `${a - b >= 0 ? "+" : ""}${a - b}`);
 const row = (name, key) => `| ${name} | ${cur[key]} | ${diff(cur[key], p1?.[key])} | ${diff(cur[key], p7?.[key])} |`;
@@ -75,6 +87,9 @@ ${Object.keys(cur.blog).length ? `| 記事:言語 | PV | 前の日との差 | �
 
 ## 要望・バグ (${day} 0 時から今まで ${feedback.length} 件)
 ${fbError ? `読めなかった: ${fbError}` : feedback.map((f) => `- ${f.id} · ${jst(f.at)} · v${f.context?.version ?? "?"} · ${f.context?.lang ?? ""} · ${f.context?.base ?? ""}\n  - ${String(f.text).replace(/\s+/g, " ").slice(0, 400)}\n  - ${(f.context?.summaryJa ?? []).join(" / ").replace(/\s+/g, " ").slice(0, 300)}`).join("\n") || "(無し)"}
+
+## Discord の書き込み (Bot が ${today} 9:03 に取った分)
+${discordMd}
 
 ## 全文 (analyze-logs.py)
 \`\`\`

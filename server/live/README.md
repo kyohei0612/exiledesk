@@ -45,6 +45,8 @@ Cloudflare Workers (無料枠) で動き、**ドメインは要らない** (`exi
 - **異常の通知**: 相場の中継が落ちた・配信の見張りが失敗した・サーバーのエラー、を Discord にすぐ (同じ物は 6 時間に 1 回)
 - **ログ**: ダッシュボードの Workers → exiledesk-live → ログ に 1 回ごとの記録 (path・status・ms・国。無料は 3 日分)。手元で見るなら `pnpm tail`
 
+- **Discord を読むだけの Bot** (2026-10-24): 毎朝 9:03 (JST、cron `3 0 * * *`) に、`DISCORD_CHANNELS` (vars、チャンネルの id をカンマで) の前回より後の書き込みを Discord の REST で取り、D1 の `discord_daily` に 1 日 1 行 (src/discord.ts、migrations/0009)。9:05 の日報のまとめ (scripts/daily-summary.mjs) が「Discord の書き込み」の節に載せる。トークンは secret の `DISCORD_BOT_TOKEN` (オーナーが入れる)。無ければ「Bot 未設定」。Bot は何も書かない。作り方は docs/org/analytics/notes/2026-10-24-discord-bot.md。
+
 ## オーナーがやること (初回だけ、全部無料)
 
 1. **Cloudflare のアカウント** を作る: https://dash.cloudflare.com/sign-up
@@ -65,6 +67,7 @@ Cloudflare Workers (無料枠) で動き、**ドメインは要らない** (`exi
    npx wrangler secret put REFRESH_KEY          # 好きな文字列 (手で調べ直す時の合言葉。要望の一覧を見る時にも使う)
    npx wrangler secret put DISCORD_WEBHOOK      # (任意) 要望・バグ・異常・日報を Discord に流す
    npx wrangler secret put CF_ANALYTICS_TOKEN   # (任意) 日報の訪問数など (Account Analytics: Read のトークン)
+   npx wrangler secret put DISCORD_BOT_TOKEN    # (任意) Discord を読むだけの Bot (docs/org/analytics/notes/2026-10-24-discord-bot.md)
    ```
 6. `channels.json` を本物にする (自分のチャンネルの `youtubeChannelId`、協賛チャンネル)。YouTube のチャンネル ID は UC で始まる 24 文字: YouTube Studio → 設定 → チャンネル → 詳細設定 に出る
 7. 置く:
