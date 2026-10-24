@@ -87,8 +87,9 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
   if (kind !== "spam" && kind !== "add" && kind !== "swap") return [];
   const tree = aimsOf(doc);
   const open = (tree.length ? tree : doc.memoAims ?? []).filter((a) => !aimHeldOn(data, item, a, { sameText: true }));
-  if (kind === "spam") return open;
-  // 見本を数個見て、どれかで付く狙いは並べる (1 つだけだと見本に低い段が付いていて T2 が出なかった、10-22 13 通り組んだ #17)。どの見本でも行き先が無ければ全部
+  // 見本を数個見て、どれかで付く狙いは並べる (1 つだけだと見本に低い段が付いていて T2 が出なかった、10-22 13 通り組んだ #17)。どの見本でも行き先が無ければ全部。
+  // 当たるまで (どれでも) も同じ絞り: 前は付いていない狙い全部で、カオスで付かない狙い (冒涜の MOD・アイテムレベルの足りない段) だけが残ると
+  // 当たるまでが毎回 5000 回の上限まで回り、精査の 30 人回しでページが固まった (10-25 モンキー 3 本目、クォータースタッフの外れの箱に 2 つ目のカオススパム)
   const items = [1, 2, 3, 4].map((seed) => (seed === 1 ? item : sampleOf(data, doc, boxId, seed).item));
   return reachableAims(data, items, h.currency, engineOmens(h), open, { sameText: true }) ?? open;
 }
@@ -121,7 +122,7 @@ export function problemOf(data: PatchData, item: StageItem, h: Hand, hitAims: Ai
   const full = !!preCat && catalystFull(item, preCat);
   if (preCat && preFill && !preFill.applied && !full) return tr(`前に足すカタリストが入らない: ${preFill.reason ?? ""}`, `The catalyst before this can't be used: ${preFill.reason ?? ""}`);
   // 当たるまで繰り返すのに狙いが 1 つも無い (まだ付いていない狙いが無い) 時は決めさせない
-  if (kindOf(h) === "spam" && !hitAims.length) return tr("狙いが無い (欲しい MOD のメモに足すか、当たりの箱で MOD を選んでから)", "No target yet (add one to the wanted mods memo, or pick a mod in a hit box first)");
+  if (kindOf(h) === "spam" && !hitAims.length) return tr("この手で付く狙いが無い (まだ付いていない狙いが無いか、このカレンシーでは付かない。欲しい MOD のメモに足すか、当たりの箱で MOD を選んでから)", "No target this craft can add (none left, or this currency can't add them; add one to the wanted mods memo, or pick a mod in a hit box first)");
   return handProblem(data, preCat && preFill ? preFill.item : item, h);
 }
 /**
