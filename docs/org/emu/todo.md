@@ -19,16 +19,12 @@
 - クラフト画面 1440 幅で元からはみ出している 1 件 (DIV.flex flex-col、overflow-guard の判定で見つけた、10-22 ジン部長の記録) を直す。
 - 返事待ち (オーナー、スパムシミュ。FROM_ON・ROUTES_MULTI_ON は v0.1.593 で本番に出て、どちらも今は true): 今のアイテムからの時に高貴の道も灰色 (増強だけでよいか)・この形の X のシェア (開いた人は同じアイテムを持っていないので今は出さない)・既定の始めの状態を今のアイテムにするか。複数の当たりのシェアは a に全部入る、両方揃うまでの数字はシェアに入れていない。スナップ 共有メモ routes-from/・multi-aim/。
 
-## OK 待ち (エミュの画面の物。行は docs/pending-release.md、本番の出し方もそこ)
-- 人が自分でベースを選んだかを 1 つの印 chosenBase に (2aa2d268・3cbda7e4、デザイン部長の BasePickBody の quick 7cde43ad と組。オーナー「開発版で絶対金の指輪で始まる」「直ってなくね」)。選んだ見た目・帯とすぐ試す・クラフトかベース選びか、をこれで決める。すぐ試すは選んだ扱い。開発版 2fae18a4 でオーナーと同じ状態から 4 通りを PC・スマホとも本物のクリックで確かめ済み。
-- 狙いの窓で 0 個のまま比べる・確率を見るを押すと一言 (f261b842、猿 7)。
-- 品質の帯の押せないボタンは普通のカーソル (5ff2778a・9eae3311、猿 8)。
-- スパムシミュの猿の結果の直し 4 件 (c069970b、モンキーテスト 10-23 の 1・3・5・6): Esc は運試しの欄だけ閉じる・運試しの間は上の「当たった形でクラフト台に戻る」を出さない・スマホの一番安い札のボタンを折り返す・題を 1 行に・狙いの文を当たりになる幅全部で (例 最大ライフ (10-119) T8 以上)。pending-release への行はブラックに頼む。本番の deploy:web では OK 前は revert して外す。
-- お告げの欄を持った札の行の下に + 打てないお告げは灰色 (ff5c6f8c、HeldOmens・棚。シミュの棚・試し打ちも同じ部品)。本番の deploy:web では revert して外す。
-- 枠の外・Esc で選ぶ前に戻す (490989fb・30760e05、共通の use-dismiss.ts とクラフト台の小窓・段の表など)。revert して外す。
-- 聖別の帯 (e61bb9ab、StageSanctifyBar)。本番は CraftStage.vue で v-show="false" にして出している。
-- MOD の数字を素の値で + 盛った値を小さく (afa0b266・86b42bb4・ada62af7・2d301a1a、base-values.ts の BASE_VALUES_ON、開発版だけ)。OK が出たら BASE_VALUES_ON を true。スナップ 共有メモ j11/。
-- MOD の重みを直せる (StageWeightEdit、stage-tuning.ts の WEIGHTS_ON、開発版だけ。docs/org/emulator/notes/2026-10-22-mod-weight-edit.md)。OK が出たら印を外す。
-- ほかに pending-release にあるクラフト台の物 (ベースの暗黙・紋章・スキルレベルの +・タリスマンの重み・[DNT] ベース・ルーンの明示 MOD の強さ・書体 1bef14b9) は中身がエンジン / 共通なのでジン部長の物。画面で見える変わり方だけ、開発版で一緒に見る。
+## OK 待ち (エミュの画面の物。行は docs/pending-release.md、出し方もそこ)
+本番の作りでは src/web/release-flags.ts のスイッチで隠す。OK が出たら RELEASED に名前を 1 行足す (revert・v-show で抜く旧手順はやめた、10-24)。
+- baseChosen: 人が自分でベースを選んだかを 1 つの印 (exiledesk.stage.chosenBase) に (2aa2d268・3cbda7e4、デザイン部長の BasePickBody の quick 7cde43ad・b1b22818 と組)。選んだ見た目・帯とすぐ試す・入口の行き先をこれで決め、すぐ試すは選んだ扱い。開発版 2fae18a4 でオーナーと同じ状態から 4 通りを PC・スマホとも本物のクリックで確かめ済み。使う所 StageBasePage.vue・use-stage-base.ts。
+- monkeyEmu1023: モンキーテスト 10-23 のエミュの直し。スパムシミュ (c069970b: Esc は運試しの欄だけ閉じる・運試しの間は「当たった形で戻る」を出さない・スマホの札のボタンを折り返す・狙いの文を当たりの幅全部で)、品質の帯の押せないボタンは普通のカーソル (5ff2778a・9eae3311・0beb110a)、狙いの窓で 0 個のまま押すと一言 (f261b842)。使う所 StageRoutesPage.vue・StageQualityBar.vue・StageAimPicker.vue。
+- sanctifyBar: 聖別の帯 (e61bb9ab、StageSanctifyBar)。使う所 CraftStage.vue の SANCTIFY_BAR。
+- 開発版だけの印 (スイッチの外、自前の DEV 判定): MOD の数字を素の値で + 盛った値を小さく (afa0b266・86b42bb4・ada62af7・2d301a1a、for-share の base-values.ts の BASE_VALUES_ON、スナップ 共有メモ j11/)・MOD の重みを直せる (StageWeightEdit、for-share の stage-tuning.ts の WEIGHTS_ON、docs/org/emulator/notes/2026-10-22-mod-weight-edit.md)。どちらも持ち主はデザイン部長の for-share、スイッチに寄せるかはブラックの決め。
+- 他の部のスイッチでエミュの画面に出る物 (持ち主が出す、画面の見え方だけ一緒に見る): omenRow (お告げの欄を札の行の下に + 打てないお告げは灰色、ff5c6f8c)・dismiss (枠の外・Esc で選ぶ前に戻す、490989fb・30760e05)・tierClose・modeTabs・monkey1023・fitZoom。
 
 ## 済み (ジン部長の時代、画面の物) は notes/2026-10-23-todo-archive.md に移した
