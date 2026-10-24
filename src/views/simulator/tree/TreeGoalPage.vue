@@ -69,10 +69,13 @@ function close(): void {
 }
 // URL から先にページが開き、白紙の判定 (SimTreePage の onMounted の needBase) が後から立つ時も「まだ選んでいない」にする (初めての sim-base で戻り先の無い「← ツリーに戻る」が出ていた)
 watch(() => t.needBase.value, (v) => { if (v) unpicked.value = true; });
-/** ベースの決まった木 (選んだ印・手・狙いのどれかがある。持ち越さない白紙の木は数えない) */
-const realTree = (d: TreeDoc): boolean => !!d.baseChosen || Object.keys(d.boxes).length > 1 || !!d.boxes.start?.hand || !!d.memoAims?.length;
-/** 戻れる木がある (今のタブが決まった木か、ほかのタブに決まった木)。開いてすぐの白紙では出さない (10-25 オーナー「ベース決めるところでツリーへ戻るはないでしょ」) */
-const canBack = computed(() => t.tabDocs.value.some((d0, i) => (i === t.active.value ? !unpicked.value && realTree(t.doc.value) : realTree(d0))));
+/** 手の入った木 (始まりの箱に手がある) */
+const hasHand = (d: TreeDoc): boolean => Object.keys(d.boxes).length > 1 || !!d.boxes.start?.hand;
+/**
+ * 戻れる木がある: ほかのタブに手か狙いの入った木、または今のタブに手が入っている (木で打ってから MOD のページへ来た)。
+ * 初めての時のベース選び・ベースを選んだ後の MOD のページ (狙いだけ) には出さない (10-25 オーナー「ベース決めるところでツリーへ戻るはないでしょ」「残さないで」)
+ */
+const canBack = computed(() => t.tabDocs.value.some((d0, i) => (i === t.active.value ? !unpicked.value && hasHand(t.doc.value) : hasHand(d0) || !!d0.memoAims?.length)));
 function backToTree(): void {
   asking.value = null;
   dropped.value = [];
