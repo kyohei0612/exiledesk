@@ -48,7 +48,8 @@ export function setLeaveGuard(fn: ((to: string) => boolean) | null): void {
 /** 聞いている間の「保存せずに終了」で移る先 (null = 聞いていない)。LeaveConfirm.vue が出す */
 export const leaveAsk = ref<(() => void) | null>(null);
 function mustAsk(to: string): boolean {
-  return treePage.value && !(to in TREE_PAGES) && !!leaveGuard?.(to);
+  // シミュのレシピのページから外へ出る時も聞く (StageRecipesPage も登録する。10-24 夜 シミュ部長 21 本目)
+  return (treePage.value || recipesPage.value) && !(to in TREE_PAGES) && !!leaveGuard?.(to);
 }
 /** to へ移る前に、確かめが要れば聞いてから、要らなければすぐ移る */
 function leaveThen(to: string, go: () => void): void {

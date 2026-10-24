@@ -35,12 +35,15 @@ import type { RowTag } from "./stage-item-row-tag";
  * compact: 撮影用。英語のベース名を出さず、区切りの余白を詰める (詰めた分だけ拡大できる。MOD の文字を 1080p で 32px 以上に)
  */
 /** doomed: 今持っている物を打つと消える・入れ替わる・数値が変わる・固定される候補 (ゲームと同じく打つ前に色を付ける。2026-10-04 削減、2026-10-17 全部の手に) */
-const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[]; /** 付く空き (側ごとに光らせる枠の数。spec/preview.ts) */ open?: Record<"prefix" | "suffix", number> | null; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean; /** 付いた瞬間の確率 (無ければステージの工程から。スパムシミュレーターの運試しは自分の物を渡す) */ chances?: ReadonlyMap<string, number> | null; /** MOD の行ごとの札 (modId → 文と色。シミュの「外れ MOD」など。渡さなければ出ない) */ rowTags?: ReadonlyMap<string, RowTag> | null; /** フラクチャーの印の MOD (modId)。2 つ以上付いていれば 1 行「フラクチャー MOD ×n」にまとめ、ホバーで中身 (シミュの完成形、2026-10-23 オーナー) */ fractureGroup?: readonly string[] | null; /** × を出さずに、MOD の行の右クリックで fracture を出す (シミュの完成形。removable なら言わなくても出る) */ fracturable?: boolean}>();
+const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[]; /** 付く空き (側ごとに光らせる枠の数。spec/preview.ts) */ open?: Record<"prefix" | "suffix", number> | null; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean; /** 付いた瞬間の確率 (無ければステージの工程から。スパムシミュレーターの運試しは自分の物を渡す) */ chances?: ReadonlyMap<string, number> | null; /** MOD の行ごとの札 (modId → 文と色。シミュの「外れ MOD」など。渡さなければ出ない) */ rowTags?: ReadonlyMap<string, RowTag> | null; /** フラクチャーの印の MOD (modId)。2 つ以上付いていれば 1 行「フラクチャー MOD ×n」にまとめ、ホバーで中身 (シミュの完成形、2026-10-23 オーナー) */ fractureGroup?: readonly string[] | null; /** × を出さずに、MOD の行の右クリックで fracture を出す (シミュの完成形。removable なら言わなくても出る) */ fracturable?: boolean; /** 明示の MOD の行にホバーした時だけ小さな × (remove を出す)。ルーン・暗黙・列の幅は変えない (シミュの完成形、2026-10-24 オーナー「アイテムにつく UI から × で消したい」) */ rowRemove?: boolean}>();
 /** 行の札の色 */
 const ROW_TAG_TONE: Record<RowTag["tone"], string> = { bad: "bg-rose-500/25 text-rose-200", warn: "bg-amber-500/25 text-amber-100", good: "bg-emerald-500/25 text-emerald-200", info: "bg-sky-500/20 text-sky-100" };
 /** replace の札を行の名前にする時の文字の色 */
 const ROW_TAG_TEXT: Record<RowTag["tone"], string> = { bad: "text-rose-300", warn: "text-amber-200", good: "text-emerald-300", info: "text-sky-200" };
 const isDoomed = (m: StageMod): boolean => !!props.doomed?.includes(m.modId);
+/** 行の × (rowRemove)。removable の × がある時・持っている時・未発現には出さない */
+const rowX = (m: StageMod): boolean => !!props.rowRemove && !props.removable && !props.holding && !m.unrevealed;
+const ROW_X = "rounded px-1 text-[12px] leading-none text-rose-300/80 opacity-0 transition-opacity hover:bg-rose-500/20 hover:text-rose-200 focus-visible:opacity-100 max-md:px-2 max-md:py-1 max-md:text-[15px] max-md:opacity-50";
 /** 行の左 (P / S) と右 (↓・確率・×) の枠は同じ幅。MOD の文がカードの真ん中に来る (2026-10-17 オーナー「全体的に左に寄ってる、MOD は真ん中、→ に %、← に P,S」) */
 const sideColW = computed(() => (props.removable ? "w-[4.5rem] max-md:w-[5.25rem]" : "w-[3rem] max-md:w-[3rem]")); // ↓ を外した分 (2026-10-17) 細く
 /** 未発現の行の崩れた文字。どの行も同じ並び・同じフォント (行ごとに変えると形がばらばらで気持ち悪い。2026-10-17 オーナー) */
@@ -292,9 +295,10 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
           </p>
           <div data-fracture-pop class="absolute left-1/2 top-full z-30 w-max min-w-[260px] max-w-[440px] -translate-x-1/2 space-y-0.5 rounded border border-[#7a6a35] bg-[#0b0a08]/95 px-2 py-1.5 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.7)]" :class="fracOpen ? 'visible' : 'invisible group-hover/fg:visible'">
             <p class="pb-0.5 text-[11px] text-white/45">{{ tr("この中のどれか 1 つが固定される", "One of these gets fractured") }}</p>
-            <p v-for="r in fracRows" :key="r.key" data-fracture-member class="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-mod-fractured hover:bg-white/[0.06]" :title="canFracture(r.m) ? tr('右クリックでフラクチャーの印を外す', 'Right-click to remove the fracture mark') : undefined" @click.stop="emit('jump', r.m.modId)" @contextmenu="onFracture($event, r.m)">
+            <p v-for="r in fracRows" :key="r.key" data-fracture-member class="group/fm flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-mod-fractured hover:bg-white/[0.06]" :title="canFracture(r.m) ? tr('右クリックでフラクチャーの印を外す', 'Right-click to remove the fracture mark') : undefined" @click.stop="emit('jump', r.m.modId)" @contextmenu="onFracture($event, r.m)">
               <span class="w-7 shrink-0 text-left font-bold tabular-nums" :class="r.side === 'プレフィックス' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ r.side === "プレフィックス" ? "P" : "S" }}{{ tierNo(r.m) }}</span>
               <span class="min-w-0 flex-1">{{ r.text }}</span>
+              <button v-if="rowX(r.m)" type="button" data-row-remove :class="[ROW_X, 'group-hover/fm:opacity-100']" :title="tr('この MOD を外す', 'Remove this mod')" @click.stop="emit('remove', r.m.modId)">×</button>
             </p>
           </div>
         </div>
@@ -304,7 +308,7 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
           @mouseenter="hover = r.m.unrevealed ? null : 'mod'"
           @mouseleave="hover = null"
           :key="isNew(r.m) ? `${r.key}#${flashKey}` : r.key"
-          class="relative flex items-center gap-2 rounded px-2 py-0.5"
+          class="group/row relative flex items-center gap-2 rounded px-2 py-0.5"
           :class="[r.m.desecrated ? 'g-abyss-row' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? (isRareNew(r.m) ? 'stage-mod-new-rare' : tierLabel(r.m) === 'T1' ? 'stage-mod-new-top' : 'stage-mod-new') : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
           :title="isDoomed(r.m) ? (doomed!.length > 1 ? tr(`この手で変わる候補 (${doomed!.length} つ)`, `May change with this use (${doomed!.length} candidates)`) : tr('この手で変わる', 'Changes with this use')) : canFracture(r.m) ? (r.m.fractured ? tr('右クリックでフラクチャーを外す', 'Right-click to unfracture') : tr('右クリックでフラクチャー (この MOD を固定)', 'Right-click to fracture this mod')) : undefined"
           @contextmenu="onFracture($event, r.m)"
@@ -330,6 +334,8 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
             <span v-if="chanceOf(r.m) != null" data-rec-part="odds" class="w-11 text-right text-[11px] tabular-nums" :class="isRareChance(chanceOf(r.m)!) ? 'font-bold text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'" :title="tr('付いた瞬間に、この段が付く確率 (その段の重み ÷ この手で付きうる全部の重み)', 'Chance this tier rolled when it was added (tier weight ÷ total weight of everything that step could add)')">{{ fmtChance(chanceOf(r.m)!) }}</span>
             <button v-if="removable && !r.m.unrevealed" type="button" class="rounded px-1 text-[12px] leading-none text-rose-300/70 hover:bg-rose-500/20 hover:text-rose-200 max-md:px-2 max-md:py-1 max-md:text-[16px]" :title="tr('この MOD を外す (費用 0、1 手戻すで戻る)', 'Remove this mod (free, Undo brings it back)')" @click.stop="emit('remove', r.m.modId)">×</button>
           </span>
+          <!-- rowRemove の × は右端に重ねる (列の幅・真ん中の文字の位置を変えない) -->
+          <button v-if="rowX(r.m)" type="button" data-row-remove class="absolute right-1 top-1/2 -translate-y-1/2 bg-[#050506]/80 group-hover/row:opacity-100" :class="ROW_X" :title="tr('この MOD を外す', 'Remove this mod')" @click.stop="emit('remove', r.m.modId)">×</button>
         </p>
       </div>
       <!-- 付く空き: 持っている物で新しい MOD が付きうる枠を緑で光らせる (両側が空いていれば両方、大いなる高貴なら側ごとに 2 つまで。2026-10-17 オーナー) -->
