@@ -9,6 +9,7 @@ import { isTouchOnly } from "../../utils/use-phone";
 import { classLabel, type CatalogRow } from "../../services/items/base-catalog";
 import { nameOf, tr } from "../../i18n/lang";
 import { hoverStack } from "../../state/hover-stack";
+import { afterPointerMoves } from "../../utils/pointer-moved";
 import { toCss } from "../../utils/zoom";
 import { baseArt } from "../../services/craft-stage/base-art";
 import { gemArt } from "../../services/craft-stage/skill-art";
@@ -28,13 +29,20 @@ const artOf = (en: string): string | null => baseArt(en) ?? gemArt(en);
  * 指の端末 (hover の無い画面) では出さない。押したら消す
  */
 const touchOnly = isTouchOnly();
+/** マウスが動くのを待っている時の取り消し (画面が動いて下に来ただけでは開かない、utils/pointer-moved。本番はスイッチ firstVisit1024 まで前の形) */
+let stopWait = (): void => undefined;
 function enter(e: MouseEvent, b: CatalogRow): void {
   if (touchOnly) return;
-  const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
-  // 右へ少し離して出す (隣のベースの左側が見えて、そのまま右へ乗り換えられるように。2026-10-10 オーナー「カード右側、ちょっと離れててもおｋ」)
-  hoverStack.openRootDelayed({ kind: "base", en: b.en }, toCss(r.right), toCss(r.top), { left: toCss(r.left), right: toCss(r.right), top: toCss(r.top), bottom: toCss(r.bottom) });
+  const el = e.currentTarget as HTMLElement;
+  const open = (): void => {
+    const r = el.getBoundingClientRect();
+    // 右へ少し離して出す (隣のベースの左側が見えて、そのまま右へ乗り換えられるように。2026-10-10 オーナー「カード右側、ちょっと離れててもおｋ」)
+    hoverStack.openRootDelayed({ kind: "base", en: b.en }, toCss(r.right), toCss(r.top), { left: toCss(r.left), right: toCss(r.right), top: toCss(r.top), bottom: toCss(r.bottom) });
+  };
+  stopWait();
+  if (flag("firstVisit1024")) stopWait = afterPointerMoves(open); else open();
 }
-function leave(): void { hoverStack.leave(); }
+function leave(): void { stopWait(); hoverStack.leave(); }
 onBeforeUnmount(leave);
 
 /**

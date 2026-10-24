@@ -11,6 +11,7 @@
 import { computed, onBeforeUnmount } from "vue";
 import { isTouchOnly } from "../../../utils/use-phone";
 import { hoverStack } from "../../../state/hover-stack";
+import { afterPointerMoves } from "../../../utils/pointer-moved";
 import { iconOfKey, nameOfKey, priceOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { displayCurrency } from "../../../state/display-currency";
 import { toCss } from "../../../utils/zoom";
@@ -80,11 +81,17 @@ const on = computed(() => (props.omen ? shelf.omens.value.includes(props.k) : sh
  * (2026-10-08 オーナー iPhone「付けたいカレンシーをタップしたら説明が出て、付けたい時に押せなかったり説明が邪魔」)
  */
 const touchOnly = isTouchOnly();
+/** マウスが動くのを待っている時の取り消し (画面が動いて下に来ただけでは開かない、utils/pointer-moved。本番はスイッチ firstVisit1024 まで前の形) */
+let stopWait = (): void => undefined;
 function enter(e: MouseEvent): void {
   if (touchOnly) return;
-  let r: { left: number; right: number; top: number; bottom: number } = (e.currentTarget as HTMLElement).getBoundingClientRect();
-  // 持っている物はお告げの欄も合わせた範囲の横に出す (欄に重ならないように。2026-10-10 オーナー「被らないようにお告げと表示したらいいだけ」)
   const el = e.currentTarget as HTMLElement;
+  stopWait();
+  if (flag("firstVisit1024")) stopWait = afterPointerMoves(() => openCard(el)); else openCard(el);
+}
+function openCard(el: HTMLElement): void {
+  let r: { left: number; right: number; top: number; bottom: number } = el.getBoundingClientRect();
+  // 持っている物はお告げの欄も合わせた範囲の横に出す (欄に重ならないように。2026-10-10 オーナー「被らないようにお告げと表示したらいいだけ」)
   // 重ねて出している欄 (お告げ・段) に重ならないよう、欄も合わせた範囲の横に出す: 欄の中のボタン、持っている物、段の欄を開いているまとめたアイコン
   // (2026-10-10 オーナー「カードにカードが重なる、その際はスクロールと同じ扱いで」)
   const rootEl = el.closest("[data-shelf-root]");
@@ -100,7 +107,7 @@ function enter(e: MouseEvent): void {
   // 説明のカードは棚の文脈のアイテムで引く (シミュの棚でエミュの今のアイテムを見て「このベースには使えない」が出ていた、10-24 シミュ部長)
   hoverStack.openRootDelayed({ kind: "shelf", k: props.k, reason: reason.value, omen: !!props.omen, item: shelf.item.value }, toCss(r.right), toCss(r.top), { left: toCss(r.left), right: toCss(r.right), top: toCss(r.top), bottom: toCss(r.bottom) });
 }
-function leave(): void { hoverStack.leave(); }
+function leave(): void { stopWait(); hoverStack.leave(); }
 onBeforeUnmount(leave);
 </script>
 
