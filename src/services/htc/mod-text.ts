@@ -70,7 +70,6 @@ for (const [k, v] of Object.entries(TABLE)) {
  * 品質の最大値は値を持たない MOD なので # が残った)。表は作り直しで上書きされるので、ここで直す
  */
 const JA_FIX: Record<string, string> = {
-  "最大ルーンワード": "最大ルーンワード +#",
   "ランダムなノータブルパッシブスキル を割り当てる": "ランダムなノータブルパッシブスキルを割り当てる",
 };
 const fixJa = (t: string | null | undefined): string | null => (t == null ? null : JA_FIX[t] ?? t);
