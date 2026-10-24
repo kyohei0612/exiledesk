@@ -9,7 +9,7 @@
  *   __simMonkey.shelf(id)                              その箱の棚 [{ key, name, ok, reason }]
  *   __simMonkey.omens(id, key)                         持った物に掛けられるお告げ [{ key, name, ok, reason }]
  *   __simMonkey.add(id, key, omens?, opt?)             次の手の箱を作る → { ok, problem?, at, boxes: [{ id, out, aim, mods: [{ side, modId, tier, text }] }] }
- *   __simMonkey.boxItem(id)                            その箱でエンジンに渡すアイテム { item, preItem, hand } / run(n=300, seed=1) = 画面と同じ tree-run を値段 1 で (費用 = 個数)
+ *   __simMonkey.boxItem(id)                            その箱でエンジンに渡すアイテム { item, preItem, raw, preRaw, hand } / run(n=300, seed=1) = 画面と同じ tree-run を値段 1 で (費用 = 個数)
  *   __simMonkey.dump()                                 今の木 (JSON、startRarity = スタートの本当のレアリティ)。add の boxes にも rarity
  */
 import { baseCatalog, omenBlock, omensAllowedFor, runeOf, socketCapOf, useReason, type StageItem } from "../../../services/craft-stage/engine";
@@ -123,7 +123,10 @@ export function installSimMonkey(): () => void {
       });
       const key = b.hand?.currency ?? null;
       const pre = key ? shelfItemFor(id, key) : null;
-      return { id, out: b.out, note: smp.note, item: view(smp.item), preItem: pre && pre !== smp.item ? view(pre) : null, hand: b.hand ? JSON.parse(JSON.stringify(b.hand)) as unknown : null };
+      // raw / preRaw = 渡している StageItem を JSON にした物そのまま (見えている MOD から組み立てた物との食い違いを照らす、ジン部長 8 本目)
+      const raw = (it: StageItem): unknown => JSON.parse(JSON.stringify(it));
+      const hasPre = !!pre && pre !== smp.item;
+      return { id, out: b.out, note: smp.note, item: view(smp.item), preItem: hasPre ? view(pre!) : null, raw: raw(smp.item), preRaw: hasPre ? raw(pre!) : null, hand: b.hand ? JSON.parse(JSON.stringify(b.hand)) as unknown : null };
     },
     /**
      * 画面の「100 人回す」と同じ tree-run (runTree) を、値段を全部 1・始めの値段 0 で回した結果 (費用 = 使った個数。エンジンの 1/P と並べる、ジン部長 8 本目の頼み)。
