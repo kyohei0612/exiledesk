@@ -2,22 +2,21 @@
 
 前の引き継ぎ (1〜3 本目、10-21〜23) と止めている物 (①〜⑥・自動・④ の物・OK 待ちの一覧) は notes/2026-10-22-todo-archive.md にそのまま移した。
 
-## 次の部長へ (20 本目 → 21 本目、10-24 夜。ブラック 10 代目の頼みで入れ替え)
-- 宛先: ブラック 10 代目 local_b4352604-0717-4065-92a4-7f1ac6ebcc83 (9 代目は止まった)。ほかは docs/org/dev/todo.md の表 (ジン部長は 9 本目に替わっている)。
-- 20 本目に済んだ物 (詳しくは notes/2026-10-24-absent-amulet.md の末尾):
-  - 不在のアミュ B を動画どおりに (888538a6、光なし・冒涜の外れは右側の結晶化 + 無限のエッセンス・50/50 の負けは最初のカオスへ)。画面の 100 人で B 96.2 神 / A 464.6 (同じ相場)。古代の鎖骨なら A 393・B 328 (c5062ae4)。満杯の骨は前の冒涜と置き換わらない (オーナー、B 96.2 で確定)
-  - 外れを消すだけのエッセンスの道 (d85e880b): エッセンスの結果は「狙いが消えた / 当たりの道」の 2 つ、完成形の設定にない札は狙いに数えない、完成の形の精査は分かれ目の行の狙いも数える。ローブの見本の完成形にライフ% を足した
-  - 精査: 手も行き先も無い箱に「回すと n 人がここで止まる」を重ねない (640243be、初めての人の回の 5「30 人中 27 人」)
-  - レシピのページの上に「見本のレシピ」(e6127a62) → 10-24 夜に外した (オーナー「見本はいらんわ」、TreeShowcase.vue は消した)
-  - 反響で何度も選び直す技は取りやめ (オーナー「シミュは選ぶとかない」)。骨は候補に狙いがあれば当たり + 反響で 1 回引き直し (revealBy)
-- 残り:
-  - (21 本目、10-24 夜) 初めての人の回で済んだ物: 1 (9347b06f)・3 (ed461745 + a17d23c1 スマホの余白、木の枠 281 → 317px・枠は 510px から、外れ 3 のはみ出しは撮って無かった)・4 (de6c01e3)・5 (8bce3000)・8 (f3057772)・9 の一部 (e5dc59c2)・2 (デザイン部長 193d0440 で直っていた。21 本目が兜・火耐性 T2 フラクチャーのスタートの棚でヒステリーに本物のマウスを乗せ、説明に「使えない」が無くエンジンの shelf も ok で揃うのを見た、台本 hyst.mjs)。6 (f3455083、消せる狙いを持って着く人がいない箱は「狙いが消えた」を作らない。木の形だけで数える tree-lost.ts、後で持って戻る道ができたら tree-model の healLost が足す。台本 lost.mjs・lost2.mjs)。7 以降は記録のまま (ブラック 10-24 夜)。スマホを撮る台本は 21 本目の scratchpad の phone.mjs (C:/Users/kyohei/AppData/Local/Temp/claude/C--Users-kyohei-ExileDesk/29e4dcf2-ed9c-4a90-a68e-be8adbf99a33/scratchpad/phone.mjs <出す所> [見本] [幅]、EN=1 で英語、Chrome は 9361)
-  - 初めての人の回 (notes/2026-10-24-monkey.md の末尾) の 2・3・4・6〜13。2 ヒステリーのエッセンスの説明が「このベースには使えない」なのに兜の行に MOD / 3 スマホ (「＋ 新しいツリー」が切れる・スタートの「外れ 3」がはみ出す・枠が細い・上のボタンが 6 段) / 4 段を選ぶとアイテムレベルが黙って変わる / 6 スタートに無い狙いでも「狙いが消えた」の箱 / 7〜13 は記録
-  - 手のある当たりの箱に着いた人が settle (tree-run.ts) で深い外れの箱へ移されて止まる件。見本では分かれ目を挟んで避けているだけ
-  - 反響の代金は引き直さなかった回も毎回入る (B で 1 個あたり約 3.8 神)。決まりを聞くならオーナーへ
-  - 「ルーンの合金 / Runic Alloy」はデータが正しい (ジン 9 本目: エッセンスではなく遠征の合金、craftedKindOf が "alloy")。見本の文の直しは 21 本目が済ませた (b242d90f、tree-samples.ts 32 行のコメントだけ。TreeShowcase.vue は鍵から名前を引くので元から合金)
-- 確かめの道具 (scratchpad 0a2e8462-3a13-487a-a578-b9fabf523334 の絶対パス C:/Users/kyohei/AppData/Local/Temp/claude/C--Users-kyohei-ExileDesk/0a2e8462-3a13-487a-a578-b9fabf523334/scratchpad/): absent-m.mjs <式> (URL= で見本、猿の口 m で回す。窓なし Chrome は port 9361 を Bash の run_in_background で立て、TaskStop と profile 削除)・ab-res.js (100 人の数字と相場)・ab-ancient.js (冒涜の骨を古代に替える)・showcase.mjs (レシピのページを PC・スマホ・英語で撮る)・_tmp-absent-b.test.ts.bak (B を組んだ台本)。**ページを移った直後 0.5 秒のクリックは page.ts の見張りで捨てられる**ので、台本で押す時は 1 秒以上空ける
-- 猿の口 (sim-monkey.ts)・照らし (ジン部長の scripts/check-monkey-engine.mjs) は 19 本目の引き継ぎのまま (notes/2026-10-24-todo-archive.md の末尾)
+## 次の部長へ (21 本目 → 22 本目、10-24 深夜。1,300 件超え・送信の上限でブラック 10 代目の頼みで入れ替え)
+- 宛先: ブラック 10 代目 local_b4352604-0717-4065-92a4-7f1ac6ebcc83、デザイン部長 5 本目 local_ee8c33db-2bdf-4656-9e00-58c9d121cb1c。ほかは docs/org/dev/todo.md の表。21 本目の報告の全文は notes/2026-10-24-sim21-report.md (共有メモ sim21-report-fracture-ask.md の写し)、20 → 21 の引き継ぎは notes/2026-10-24-todo-archive.md の末尾へ移した
+- **送信の上限**: セッションどうしの送信は、オーナーがそのセッションに書かないまま 10 回ほどで止まる。止まったら共有メモ (side-session-notes/local_b4352604…/) に書き、commit の題に要点を入れる (ブラックが git log で拾う)
+- 21 本目に済んだ物 (どれも開発版だけ、手元 1440 で台本から本物のマウスの動きで見た):
+  - ページ分け (bcc3c59d、土台はデザイン部長 b042f6c2): ?page=sim-base / sim-mods / sim-tree (web/page.ts の treeStep・openTreePage(step))。上のタブ「シミュレーター」= sim-base。流れの帯の 1・2 はページ、木の中の「ベース」「MOD」の札は窓のまま。作りかけで外へ出ると「保存せずに終了しますか」(setLeaveGuard、レシピ・sim-* の間は聞かない)
+  - 作業中の木・タブを持ち越さない (cede3e93): 開き直す・シミュの外から入るといつも sim-base の空から。sim-tree / sim-mods を直に開いて木が無ければ URL を sim-base へ置き換え (先に replaceState すると page.ts は積まない)。残すのは保存したレシピ・共有 URL・?sample=。古い鍵 (exiledesk.tree.v0・.tabs・.before-sample ほか) と開いていたレシピの印は消す。外へ出たら use-tree の resetAll (SimTreePage の unmount、レシピのページは未保存なら残す)
+  - フラクチャーの 2 択 (5a3ab1f3・1a7b11d5): MOD のページで印が無い所から印を付けると窓 TreeFractureAsk (2 枚のカード「始まり」「フラクチャーの費用」)。① 済みから = ✦ が 1 つのレア / ② 前から = 必ず白 (ノーマル) から木の中でフラクチャー (×3 は回しの FRACTURE_MISS、始めの値段は白のベース代)。start.from、tree-model の startsFractured。スタートの箱・始まりの形の窓に出る。同じ commit で始めの値段の比べに印 (memoAims) を渡していなかった穴を直した (前はいつも 0)
+  - 戻り道・コピー・タブの名前 (2aa1c7c6・63007f44): ベース・MOD のページに「← ツリーに戻る」(新しいツリーなら前の木へ、use-tree の leaveNewTab)、空の形でもタブ、「コピー」(〜 のコピー、copyTab)、タブの名前はツリー①… (tabNo・tabName) でダブルクリックで変える (Enter・外を押すと決める、Esc で取り消し)
+  - 「狙いが消えた」は消せる狙いを持って着く人がいない箱では作らない (f3455083、tree-lost.ts・healLost)、レシピの見本の帯を外した (70b59be0)、スマホの余白 (a17d23c1)、合金のコメント (b242d90f・7e9dc765)
+- 途中の物:
+  - 完成形のカードの × (オーナー「アイテムにつく UI からもバツで消したい」): シミュの受け onCardRemove は済み (0dedcb05)。× を出す口 rowRemove は StageItemCard (for-share) にデザイン部長が作っている最中 (ブラックが頼んだ)。入ったら TreeGoalPage の StageItemCard に `row-remove` を付けて (デザイン部長が付けるかも、TreeGoalPage を触っていた)、1440 で行にホバー → × → 一覧の選択も戻るのを見る
+  - レシピのページからシミュの外へ出る時の確かめ: page.ts の mustAsk が treePage の時だけ (ブラックがデザイン部長に頼んだ)。入ったら StageRecipesPage の unmount の `!dirty.value` を外して白紙に戻す
+- 決まり (10-24 夜): スマホのツリーは作り直す前提で細かい直しはしない。印が複数の時は 1 つのツリー (① は候補の 1 つが固定されたレア、② は白から)、タブの自動分けは作らない (オーナーに聞いている)
+- 残り: 初めての人の回の 7 以降は記録のまま。settle で深い外れの箱へ移される件・反響の代金 (下の 20 → 21 から持ち越し、notes/2026-10-24-todo-archive.md)
+- 台本 (21 本目の scratchpad C:/Users/kyohei/AppData/Local/Temp/claude/C--Users-kyohei-ExileDesk/29e4dcf2-ed9c-4a90-a68e-be8adbf99a33/scratchpad/、窓なし Chrome は port 9361 を run_in_background で立てて TaskStop、profile cdp-profile は消す): pages.mjs (ページ分けと離れる確かめ)・frac.mjs (2 択の窓、CLEAR=1 / EN=1)・back.mjs (戻り道・コピー・名前・Esc)・fresh.mjs (持ち越さない)・cost.mjs (始め方ごとの値段)・lost.mjs / lost2.mjs (狙いが消えた)・phone.mjs・recipes.mjs・share-b.mjs (B の共有 URL)。押す物は見えている物を選ぶ (同じ印の隠れた写しがある)。作りかけの木で about:blank へ移ると beforeunload で止まるので Page.javascriptDialogOpening を受けて閉じる。未選択のベース選びは部位 (data-rec="family:…") を押してからベース
 
 ## 前の引き継ぎ・報告は notes/ に写した: 17 → 18 本目の引き継ぎ (10-23 夜) は notes/2026-10-24-todo-archive.md、4〜17 本目の報告と引き継ぎ (10-22〜23) は notes/2026-10-23-todo-archive.md
 
