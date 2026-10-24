@@ -7,7 +7,9 @@
  *   - 棚: 打てる札と打てない札 (理由つき)。打てるかはエンジンの useReason (お告げ無し、ツリーの棚と同じ並び)
  *   - 選んだ手 (pick) に掛けられるお告げ / 掛けられない物 (理由つき、omenBlock)
  *   - 選んだ手で付きうる MOD の候補 (1 手の行き先の全部の枝。錬金など枝が多すぎる手は数えない)
- * レアリティはカードに無いので、白・マジック・レアのうち棚の打てる札が猿と一番近い形を使う。付いた MOD・当たり外れ (乱数) は比べない。
+ * 猿が step に書けば使う欄: rarity ("normal" / "magic" / "rare"、箱のレアリティ。無ければ白・マジック・レアのうち棚の打てる札が猿と一番近い形)、
+ *   mods ([{ modId, tier }]、箱の MOD。無ければカードの文から)、modsUnknown (true = 当たりの箱で MOD の見本が空。比べない)、baseEn (英語のベース名、step か記録の頭)。
+ * 付いた MOD・当たり外れ (乱数) は比べない。
  * 書き出し (既定 <フォルダー>/engine/): 猿と同じ名前のファイルに、猿の step と同じ形で engine 欄 (rarity・shelf・pickKey・omens・candidates) と差 (diff) を足した物、
  * まとめは engine-check.json。画面には数と、違いの多い札。手元だけで、外へは出ない
  */
@@ -47,17 +49,21 @@ for (const f of files) {
   for (const st of rec.steps) {
     if (!st.card || !Array.isArray(st.shelf)) { outSteps.push(st); continue; }
     sum.steps++;
+    // 当たりの箱で MOD の見本が空 (猿が modsUnknown を付けた) の時は、白と取り違えないよう比べない
+    if (st.modsUnknown) { skip("MOD の見本が空 (modsUnknown)"); outSteps.push({ ...st, engine: { error: "MOD の見本が空" } }); continue; }
     const c = parseCard(st.card);
-    const base = c.baseJa && E.baseOfJa(c.baseJa);
+    const baseEn = st.baseEn ?? rec.baseEn;
+    const base = (baseEn && E.isBase(baseEn) ? baseEn : null) ?? (c.baseJa && E.baseOfJa(c.baseJa));
     if (!base) { skip(`ベースが読めない (${c.baseJa})`); outSteps.push({ ...st, engine: { error: "ベースが読めない" } }); continue; }
-    const ms = c.mods.map((m) => ({ ...m, hit: E.modOf(base, m.side, m.tier, m.text) }));
+    // MOD: 猿が mods [{ modId, tier }] を書いていればそれ、無ければカードの文から
+    const ms = Array.isArray(st.mods) ? st.mods.map((m) => ({ side: "", tier: m.tier, text: m.modId, hit: { modId: m.modId, tier: m.tier } })) : c.mods.map((m) => ({ ...m, hit: E.modOf(base, m.side, m.tier, m.text) }));
     const miss = ms.filter((m) => !m.hit).map((m) => `${m.side}${m.tier} ${m.text}`);
     if (miss.length) { skip("MOD がエンジンの一覧に無い"); outSteps.push({ ...st, engine: { error: "MOD がエンジンの一覧に無い", mods: miss } }); continue; }
-    // 白・マジック・レアのうち、棚の打てる札が猿と一番近い形
+    // レアリティ: 猿が rarity ("normal" / "magic" / "rare") を書いていればそれだけ、無ければ棚の打てる札が猿と一番近い形
     const monkey = usable(st.shelf);
     let best = null;
     for (const [rarity, item] of Object.entries(E.itemsFor(base, ms.map((m) => m.hit), st.card))) {
-      if (!item) continue;
+      if (!item || (st.rarity && st.rarity !== rarity)) continue;
       const shelf = E.shelfOf(item);
       const eng = usable(shelf);
       const d = { 猿だけ: setDiff(monkey, eng), エンジンだけ: setDiff(eng, monkey) };

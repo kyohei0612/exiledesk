@@ -21,6 +21,8 @@ export function load(): void {
   data = applyExtras(d, extra as unknown as Parameters<typeof applyExtras>[1], jewels as unknown as Parameters<typeof applyExtras>[2]);
 }
 
+/** 英語のベース名がエンジンのベースの一覧にあるか */
+export const isBase = (en: string): boolean => !!htcBaseInfo()[en];
 /** 日本語のベース名 → 英語 (ベースの一覧の ja) */
 export function baseOfJa(ja: string): string | null {
   for (const [en, b] of Object.entries(htcBaseInfo())) if ((b as { ja?: string }).ja === ja) return en;
