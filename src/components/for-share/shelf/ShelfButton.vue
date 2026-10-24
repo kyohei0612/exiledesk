@@ -97,7 +97,8 @@ function enter(e: MouseEvent): void {
   const heldPop = !props.omen && shelf.held.value === props.k ? rootEl?.querySelector<HTMLElement>(".held-anchor:not(.ess-anchor) .held-pop-in") : null;
   const pop = (inPop ?? famOpen ?? heldPop)?.getBoundingClientRect() ?? null;
   if (pop) r = { left: Math.min(r.left, pop.left), right: Math.max(r.right, pop.right), top: Math.min(r.top, pop.top), bottom: Math.max(r.bottom, pop.bottom) };
-  hoverStack.openRootDelayed({ kind: "shelf", k: props.k, reason: reason.value, omen: !!props.omen }, toCss(r.right), toCss(r.top), { left: toCss(r.left), right: toCss(r.right), top: toCss(r.top), bottom: toCss(r.bottom) });
+  // 説明のカードは棚の文脈のアイテムで引く (シミュの棚でエミュの今のアイテムを見て「このベースには使えない」が出ていた、10-24 シミュ部長)
+  hoverStack.openRootDelayed({ kind: "shelf", k: props.k, reason: reason.value, omen: !!props.omen, item: shelf.item.value }, toCss(r.right), toCss(r.top), { left: toCss(r.left), right: toCss(r.right), top: toCss(r.top), bottom: toCss(r.bottom) });
 }
 function leave(): void { hoverStack.leave(); }
 onBeforeUnmount(leave);
