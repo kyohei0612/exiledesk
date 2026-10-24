@@ -12,7 +12,7 @@
     "preview": "vite preview",
     "preview:prod": "node scripts/preview-prod.mjs",
     "dev:web": "vite --config vite.web.config.ts",
-    "build:web": "vue-tsc --noEmit && vite build --config vite.web.config.ts && node scripts/build-market-fallback.mjs && node scripts/build-seo-pages.mjs && node scripts/build-blog-pages.mjs",
+    "build:web": "vue-tsc --noEmit && node scripts/keep-prev-assets.mjs save dist-web web && vite build --config vite.web.config.ts && node scripts/keep-prev-assets.mjs restore dist-web web && node scripts/build-market-fallback.mjs && node scripts/build-seo-pages.mjs && node scripts/build-blog-pages.mjs",
     "deploy:web": "pnpm build:web && pnpm --dir server/web run deploy",
     "tauri": "tauri",
     "lint:hex": "node scripts/lint-hex.mjs",
