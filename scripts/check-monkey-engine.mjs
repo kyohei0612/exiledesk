@@ -74,7 +74,10 @@ function checkTree(tr, steps = []) {
     const visits = run.boxes[b.id]?.visits ?? 0;
     if (b.hand.repeat) {
       // エンジンの側も同じ手を打ち続けて数える (打つたびにアイテムが変わるので 1 ÷ 始めの当たりの割合ではない。上限は手の max、無ければ 5000 = 100 人回しと同じ。10-25)
-      const perVisit = visits ? ((run.boxes[b.id]?.spend ?? 0) * run.n) / visits : NaN;
+      // run の spend は個数ではなく費用 (カオス 1 個 = 2 など)。この手を使う箱が 1 つなら uses (1 人あたりの個数) で数える。2 つ以上なら費用のまま (10-25)
+      const sameCur = Object.values(doc.boxes).filter((o) => o.hand && !o.hand.free && o.hand.currency === b.hand.currency).length;
+      const used = sameCur === 1 && run.uses?.[b.hand.currency] != null ? run.uses[b.hand.currency] : run.boxes[b.id]?.spend ?? 0;
+      const perVisit = visits ? (used * run.n) / visits : NaN;
       const u = E.untilOf(item, b.hand.currency, b.hand.omens.filter((o) => o !== ECHO), aims, b.hand.repeat.max ?? 5000);
       const want = u ? u.mean : Infinity;
       const sd = u ? Math.sqrt(u.sd ** 2 / Math.max(1, visits) + u.sd ** 2 / u.people) : 0;
