@@ -13,6 +13,7 @@
 ## 前の報告 (10-24 の手元の開発版・10-22 の要望と /craft-basics) は notes/2026-10-23-todo-archive.md に移した (10-25 ホワイト)
 
 ## やる事
+- スキン一覧の SEO のページ (/cosmetics/・/en/cosmetics/、スキン部長) が本番に出たら、ゾーンの集計で Worker の数に出ていないかを 1 回見る (notes/2026-10-25-request-inventory.md の台本の形)。
 - Discord の日報は手元から読めない (webhook は書くだけ・Bot 無し・REFRESH_KEY 無し、notes/bunseki-wake-design.md)。中身は D1 から `pull-logs.mjs` + `analyze-logs.py` で作り直す。
 
 ## OK 待ち
