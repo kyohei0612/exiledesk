@@ -31,11 +31,16 @@ const props = defineProps<{ boxId: string; current: Hand | null }>();
 /** pick の preCatalyst = 前に足す品質だけ上げる手のカタリスト (触媒のお告げで、まだ品質を上げる手の後でない時) */
 /** only = 結果が 1 通りの手の結果 (tree-sample の singleOutOf、光のお告げ + 消去など) */
 /** back = 打たずに既にある箱へ戻す (重ね窓を閉じて箱を押して選ぶ) */
-const emit = defineEmits<{ pick: [hand: Hand, kind: HandKind, aims: Aim[], preCatalyst: string | null, only: { out: OutKind; aim: Aim | null } | null]; clear: []; close: []; split: []; back: [] }>();
+const emit = defineEmits<{ pick: [hand: Hand, kind: HandKind, aims: Aim[], preCatalyst: string | null, only: { out: OutKind; aim: Aim | null } | null]; clear: []; close: []; split: []; back: []; aim: [] }>();
 const t = useTree();
 
 const sample = computed(() => (s.data.value ? sampleOf(s.data.value, t.doc.value, props.boxId, 1) : null));
 const item = computed(() => sample.value?.item ?? null);
+/**
+ * 当たりの MOD が決まっていない当たりの箱は、この箱のアイテムが作れない (当たりの形が引けず、見本が親のまま = 変成の後でも白のまま)。
+ * 棚は出さずに先に当たりの MOD を選ばせる (10-24 モンキー隊長の 1: 完成の MOD を決めずに組んだ兜で、変成の当たりの箱にエッセンスが打てず箱も増えなかった)
+ */
+const needAim = computed(() => t.doc.value.boxes[props.boxId]?.out === "hit" && !t.doc.value.boxes[props.boxId]?.aim && sample.value?.note === "none");
 const held = ref<string | null>(props.current?.currency ?? null);
 const omens = ref<string[]>(props.current ? [...props.current.omens] : []);
 const spam = ref(!!props.current?.repeat);
@@ -212,7 +217,11 @@ function catalystForMod(data: PatchData, item: StageItem, modId: string, keys: r
 
 <template>
   <!-- エミュのクラフトの画面と同じ並び: 左にアイテムのカード (幅もエミュと同じ既定)、右にカレンシーの棚。スマホは縦積み (カードが上) (10-24 オーナー「右側カレンシーで左側アイテムの姿勢はエミュ産で慣れてる」) -->
-  <div data-tree-hand-pick class="grid min-h-0 items-start gap-4 text-[13px] md:grid-cols-[auto_minmax(0,1fr)]" @contextmenu="held && ($event.preventDefault(), release())">
+  <div v-if="needAim" data-tree-hand-need-aim class="flex flex-col items-start gap-3 py-6 text-[14px]">
+    <p>{{ tr("この当たりの箱は、まだ当たりの MOD が決まっていません。先に MOD を選ぶと、この箱のアイテムができて次の手を選べます", "This hit box has no target mod yet. Pick the mod first; then the item at this box exists and you can choose the next craft") }}</p>
+    <button type="button" data-tree-hand-pick-aim class="g-btn-red min-h-10 px-4" @click="emit('aim')">{{ tr("当たりの MOD を選ぶ", "Pick the hit mod") }}</button>
+  </div>
+  <div v-else data-tree-hand-pick class="grid min-h-0 items-start gap-4 text-[13px] md:grid-cols-[auto_minmax(0,1fr)]" @contextmenu="held && ($event.preventDefault(), release())">
     <!-- この箱の時点のアイテム (見本)。持ってカードを押す = この手にする (エミュと同じ操作) -->
     <!-- カードの下はエミュと同じく空ける (持っている間はカードのすぐ下に「押すと使う · 右クリック / Esc で手放す」が重ねて出る) -->
     <div class="flex min-w-0 flex-col gap-8 md:w-[480px]">
