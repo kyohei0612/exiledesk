@@ -12,9 +12,9 @@
 
 ## 4 本目 (10-24 夕〜) にした事・見ていない物
 - 古い塊の読み直しを静的な版の印 /version.txt に (cd82fc4a、記録 notes/2026-10-23-stale-reload-requests.md)。本番に出すのは次の本番と一緒 (先に裏方の deploy:web で出すならブラックへ 1 行)。
-- スイッチに寄せた: baseValues・weights (b35b5826)。足した: essTier (段の表のエッセンスの名前 640e3c04・c16d53d7)・essCard (カードの P0 / S0 と札 ae41e4a7)・firstVisit1024 (ベースの一覧の押しの守り ea96b954・説明はマウスが動いた時だけ 7ca9b118)。どれも pending-release.md に日英。
+- スイッチに寄せた: baseValues・weights (b35b5826)。足した: essTier (段の表のエッセンスの名前 640e3c04・c16d53d7)・essCard (カードの P0 / S0 と札 ae41e4a7)・firstVisit1024 (ベースの一覧の押しの守り ea96b954・説明はマウスが動いた時だけ 7ca9b118・38177e55)。どれも pending-release.md に日英。
 - 頼みの直し: HeldOmens が棚の hidden を見る (fb0e0d95)・ShelfButton の説明に棚のアイテム (193d0440)。
-- 見ていない: firstVisit1024 の棚の札の説明 (窓なし Chrome では止まったマウスの下に窓を開けなかった。夜にオーナーかブラックが本物のマウスで)。窓のある Chrome で、画面が動いた時に mousemove が出ない事。
+- firstVisit1024 の説明のカードは 38177e55 で「入った位置が最後に動いた位置と違うか」に。隊長が本物のマウスで確かめ済み (17e0fbf3: ＋ の直後 0/5・動かすと 5/5・兜の直後 0/3)。
 - 確かめの台本 (scratchpad、4 本目): stale-ver-check・ess-tier-check・ess-card-check・ess-card-sim・hover-check・still-check.mjs。窓なし Chrome は 9334 と自分の profile で立てて、台本の中で閉じる。
 
 ## 済んだ節 (前の版の塊を残す・404 が 3 回・入口の塊の 404・古い塊の読み直し・StageItemCard の D1・D2・エミュ部長の頼み) は notes/2026-10-23-todo-archive.md にそのまま移した。各節の「見ていない」もそこ (10-23 夜 ホワイト)。10-23 夜に 3 本目が fitZoom・先読み・シミュの初手・BasePickBody・ModeTabs・モンキー 4・14・15・モンキー 3・2・9 も移した (OK 待ちは上の引き継ぎに commit で並べてある)
