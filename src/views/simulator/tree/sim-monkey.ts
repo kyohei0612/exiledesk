@@ -4,14 +4,14 @@
  * 中身は画面と同じ関数を呼ぶだけ (棚 = CurrencyShelf と同じ一覧と useReason、お告げ = omenBlock、手 = tree-hand-plan、組み替え = applyPick、見本 = sampleOf)。
  * 名前はその箱のアイテムで引く (骨の名前は部位で変わる、nameOfKey)。別の打ち方は作らない (メモ feedback-sim-no-own-logic)。液化した感情 (ジュエルだけ) は入口に一覧が無いので棚に入れていない
  *
- *   __simMonkey.setBase("兜", "Imperial Greathelm")     完成形の設定を飛ばしてツリーへ (部位は記録用、ベースは英語名。アイテムレベルは 3 つ目、既定 82)
+ *   __simMonkey.setBase("兜", "Imperial Greathelm")     完成形の設定を飛ばしてツリーへ (ベースは英語名か日本語名、空なら部位の代表 = 一番レベルの高い物。アイテムレベルは 3 つ目、既定 82)
  *   __simMonkey.addable()                              手を足せる箱 [{ id, out, needAim }] (needAim = 当たりの MOD が無い当たりの箱、先に MOD が要る)
  *   __simMonkey.shelf(id)                              その箱の棚 [{ key, name, ok, reason }]
  *   __simMonkey.omens(id, key)                         持った物に掛けられるお告げ [{ key, name, ok, reason }]
  *   __simMonkey.add(id, key, omens?, opt?)             次の手の箱を作る → { ok, problem?, at, boxes: [{ id, out, aim, mods: [{ side, modId, tier, text }] }] }
  *   __simMonkey.dump()                                 今の木 (JSON)
  */
-import { omenBlock, omensAllowedFor, runeOf, socketCapOf, useReason, type StageItem } from "../../../services/craft-stage/engine";
+import { baseCatalog, omenBlock, omensAllowedFor, runeOf, socketCapOf, useReason, type StageItem } from "../../../services/craft-stage/engine";
 import { CATALYSING } from "../../../services/simulator/tree/tree-hands";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { bonesFor, CRAFT_RUNE_KEYS, essenceShelf, nameOfKey, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
@@ -23,6 +23,12 @@ import { afterQualityOf, applyPick, autoCatOf, handOf, hitAimsOf, kindOf, needAi
 import { useTree } from "./use-tree";
 
 type Opt = Omit<HandPick, "held" | "omens">;
+/** 部位の日本語 → ベースの一覧の部位 (cls) の頭 (英語の部位名ならそのまま頭で合わせる) */
+const PART_CLASS: Record<string, string> = {
+  兜: "Helmet", 鎧: "Body", 手袋: "Gloves", 靴: "Boots", 盾: "Shield", バックラー: "Buckler", フォーカス: "Focus", 矢筒: "Quiver",
+  指輪: "Ring", アミュレット: "Amulet", ベルト: "Belt", ジュエル: "Jewel", 弓: "Bow", クロスボウ: "Crossbow", ワンド: "Wand", スタッフ: "Staff",
+  セプター: "Sceptre", スピア: "Spear", 片手メイス: "OneHandMace", 両手メイス: "TwoHandMace", クォータースタッフ: "Warstaff", タリスマン: "Talisman",
+};
 
 /** 棚に並ぶ物 (CurrencyShelf と同じ: オーブ・骨・エッセンス、ソケットがあればクラフトのルーン。隠すのは simHidden) */
 function shelfKeys(it: StageItem): string[] {
@@ -45,10 +51,22 @@ export function installSimMonkey(): () => void {
     return preFillOf(d, it, needPre, autoCatOf(d, t.doc.value, it))?.item ?? it;
   }
   const api = {
-    setBase(part: string, base: string, itemLevel = 82): { ok: boolean; part: string; base: string } {
-      t.startTreeWith(base, itemLevel);
+    /** base は英語名・日本語名 (一覧 baseCatalog の en / ja)。無い・空なら部位 (兜・靴・指輪… か英語の部位名) のうち一番レベルの高いベース */
+    setBase(part: string, base = "", itemLevel = 82): { ok: boolean; part: string; base: string; why: string } {
+      const d = s.data.value;
+      if (!d) return { ok: false, part, base, why: "データの読み込み前" };
+      const rows = baseCatalog(d, false);
+      const hit = rows.find((r) => r.en === base || r.ja === base) ?? (base ? rows.find((r) => r.en.toLowerCase() === base.toLowerCase()) : undefined);
+      let pick = hit?.en, why = hit ? "名前" : "";
+      if (!pick) {
+        const pre = (PART_CLASS[part] ?? part).toLowerCase();
+        const fam = rows.filter((r) => r.cls.toLowerCase().startsWith(pre)).sort((a, b) => b.lvl - a.lvl);
+        pick = fam[0]?.en; why = pick ? `部位の代表 (${fam.length} 種のうち一番レベルの高い物)` : "";
+      }
+      if (!pick) return { ok: false, part, base, why: "名前にも部位にも合うベースが無い" };
+      t.startTreeWith(pick, itemLevel);
       t.goalPage.value = 0;
-      return { ok: t.doc.value.base === base, part, base };
+      return { ok: t.doc.value.base === pick, part, base: pick, why };
     },
     addable(): Array<{ id: string; out: string; needAim: boolean }> {
       return Object.values(t.doc.value.boxes)
