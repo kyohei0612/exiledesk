@@ -20,8 +20,8 @@ export interface Skin {
   /** 種類 (日本語はクライアントの種類の名前、英語は poe2db の種類の英語名。英語名の無い種類と、種類が 1 つだけのまとめはまとめの名前) */
   kind: { ja: string; en: string };
   group: SkinGroup;
-  /** poe2db のページ (日本語・英語)。poe2db の一覧に無い物は null */
-  url: { ja: string; en: string } | null;
+  /** poe2db のページ (日本語・英語)。一覧は poe2db に載っている物だけ (10-25 オーナー「DB に無ければ表示無くていい」) */
+  url: { ja: string; en: string };
   /** 絵 (無ければ null) */
   art: string | null;
 }
@@ -32,7 +32,7 @@ export function loadSkins(): Promise<Skin[]> {
     const d = (m.default ?? m) as unknown as {
       url: { ja: string; en: string };
       kinds: Record<string, { ja: string | null; en: string | null }>;
-      items: Array<{ en: string; ja: string; k: number; slug: string | null; a?: number }>;
+      items: Array<{ en: string; ja: string; k: number; slug: string; a?: number }>;
     };
     return d.items.map((x): Skin => {
       const group = groupOf(x.k);
@@ -42,7 +42,7 @@ export function loadSkins(): Promise<Skin[]> {
         ja: x.ja,
         kind: SINGLE.has(group) ? { ja: group.ja, en: group.en } : { ja: k?.ja ?? group.ja, en: k?.en ?? group.en },
         group,
-        url: x.slug ? { ja: d.url.ja + x.slug, en: d.url.en + x.slug } : null,
+        url: { ja: d.url.ja + x.slug, en: d.url.en + x.slug },
         art: x.a != null ? `/mtx-art/${x.a}.webp` : null,
       };
     });

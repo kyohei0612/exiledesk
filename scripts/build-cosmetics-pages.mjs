@@ -42,10 +42,10 @@ h2{font-size:17px;margin:28px 0 8px;padding-bottom:4px;border-bottom:1px solid v
 a{color:var(--link)}.cta{display:inline-block;margin:6px 0 4px;padding:8px 18px;border:1px solid #8a6a32;border-radius:6px;background:#2a1f12;color:var(--accent);text-decoration:none;font-weight:700}
 table{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0 10px}th,td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left}th{color:var(--sub);font-weight:400}td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
 .note{color:var(--sub);font-size:13px}.crumb{font-size:12px;color:var(--sub);margin-bottom:8px}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:6px 12px;margin:8px 0 12px}
-.card{display:flex;align-items:center;gap:10px;min-width:0;padding:4px 0;border-bottom:1px solid var(--line)}.card img,.card .ph{flex:none;width:48px;height:48px;object-fit:contain;border-radius:6px;background:#000a}
-.card .t{min-width:0;flex:1;line-height:1.35}.card .t b{display:block;font-weight:400;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.card .t span{display:block;color:var(--sub);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.card a.db{flex:none;font-size:12px}.card .no{flex:none;font-size:11px;color:var(--sub)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin:8px 0 12px}@media(max-width:480px){.cards{grid-template-columns:1fr 1fr;gap:8px}}
+.card{display:flex;flex-direction:column;align-items:center;min-width:0;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--fg);text-decoration:none;text-align:center;line-height:1.35}.card:hover{border-color:#8a6a32}
+.card img,.card .ph{width:100%;max-width:128px;aspect-ratio:1;height:auto;object-fit:contain}
+.card b{margin-top:6px;font-weight:400;font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;width:100%}.card span{color:var(--sub);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%}
 footer{border-top:1px solid var(--line);color:var(--sub);font-size:12px}footer .fnav{margin:0 0 6px}footer .fnav a{color:var(--sub)}footer .in{padding-top:14px;padding-bottom:20px}`;
 
 const LANGS = {
@@ -109,15 +109,15 @@ ${alt ? `<link rel="alternate" hreflang="${other}" href="${SITE}${LANGS[other].p
 </html>
 `;
   const note = ja
-    ? `<p class="note">poe2db の Microtransactions の一覧を元にした一覧です。ゲームで実際に使えるか・見た目どおりに動くかは保証しません。「poe2db に無し」はゲームのデータには両方で使える印があるのに poe2db の一覧に無い物で、名前はゲームのデータのままです。</p>`
-    : `<p class="note">Based on the poe2db Microtransactions list. We can't guarantee that each item works or looks as expected in the game. "Not on poe2db" marks items the game data flags as usable in both games but that aren't in the poe2db list (names come from the game data).</p>`;
+    ? `<p class="note">poe2db の Microtransactions の一覧を元にした一覧です (PoE2 で出た物は除く)。ゲームで実際に使えるか・見た目どおりに動くかは保証しません。カードを押すと poe2db のページが開きます。</p>`
+    : `<p class="note">Based on the poe2db Microtransactions list (items released in PoE2 are left out). We can't guarantee that each item works or looks as expected in the game. Click a card to open it on poe2db.</p>`;
   const cta = `<p><a class="cta" href="${L.skins}">${ja ? "名前で探す・種類で絞る (ExileDesk のコスメティックの一覧)" : "Search and filter (ExileDesk cosmetics list)"}</a></p>`;
   const sortByName = (list) => [...list].sort((a, b) => L.name(a).localeCompare(L.name(b), code));
   const cards = (list) => `<div class="cards">${sortByName(list).map((it) => {
-    const img = it.a != null ? `<img src="/mtx-art/${it.a}.webp" alt="" loading="lazy" decoding="async" width="48" height="48" />` : `<span class="ph"></span>`;
+    // 絵が主役のカード、押すと poe2db (アプリの一覧と同じ。オーナー 10-25)
+    const img = it.a != null ? `<img src="/mtx-art/${it.a}.webp" alt="${esc(L.name(it))}" loading="lazy" decoding="async" width="128" height="128" />` : `<span class="ph"></span>`;
     const sub = L.sub(it);
-    const link = it.slug ? `<a class="db" href="${(ja ? d.url.ja : d.url.en) + it.slug}" target="_blank" rel="noopener">poe2db</a>` : `<span class="no">${ja ? "poe2db に無し" : "Not on poe2db"}</span>`;
-    return `<div class="card">${img}<span class="t"><b>${esc(L.name(it))}</b>${sub ? `<span>${esc(sub)}</span>` : ""}</span>${link}</div>`;
+    return `<a class="card" href="${(ja ? d.url.ja : d.url.en) + it.slug}" target="_blank" rel="noopener">${img}<b>${esc(L.name(it))}</b>${sub ? `<span>${esc(sub)}</span>` : ""}</a>`;
   }).join("")}</div>`;
   const childPath = (g) => `/cosmetics/${g.slug}`;
   /** 子ページの中身: 元の種類ごとの見出し + カード (種類が 1 つ・英語名の無い種類が混ざる時は見出し無し) */

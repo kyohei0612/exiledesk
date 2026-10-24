@@ -67,7 +67,7 @@ const broken = ref(new Set<string>());
     <div class="g-panel px-4 py-3 text-[13px] max-md:px-3">
       <!-- 断り (オーナー「DB 調べって話と責任持てませんって話」) -->
       <p data-skins-note class="mb-3 text-[12px] leading-relaxed text-[var(--exile-color-text-secondary)]">
-        {{ tr("PoE1 の MTX (マイクロトランザクション) のうち PoE2 でも使える物を、poe2db を元にまとめた一覧です。ゲームで実際に使えるか・見た目どおりに動くかは保証しません。", "PoE1 MTX (microtransactions) that are also usable in PoE2, listed from poe2db. We can't guarantee that each skin works or looks as expected in the game.") }}
+        {{ tr("PoE1 で出た MTX (マイクロトランザクション) のうち PoE2 でも使える物を、poe2db を元にまとめた一覧です (PoE2 で出た物は除く)。ゲームで実際に使えるか・見た目どおりに動くかは保証しません。", "PoE1 MTX (microtransactions) that are also usable in PoE2, listed from poe2db (items released in PoE2 are left out). We can't guarantee that each skin works or looks as expected in the game.") }}
       </p>
 
       <div class="flex flex-wrap items-center gap-2">
@@ -85,22 +85,19 @@ const broken = ref(new Set<string>());
       <p v-else-if="!data" class="py-8 text-center opacity-60">{{ tr("読み込み中", "Loading") }}</p>
       <template v-else>
         <p class="mt-3 text-[12px] opacity-60">{{ tr(`${shown.length} 件`, `${shown.length} skins`) }}</p>
-        <div data-skins-list class="mt-1">
-        <ul v-for="(c, i) in chunks" :key="i" class="divide-y divide-white/[0.06] [contain-intrinsic-size:auto_2400px] [content-visibility:auto]" :class="i ? 'border-t border-white/[0.06]' : ''">
-          <li v-for="s in c" :key="s.en + s.kind.ja" data-skins-row class="flex items-center gap-3 py-1.5 max-md:gap-2">
-            <span class="grid size-12 shrink-0 place-items-center rounded-md bg-black/40">
-              <img v-if="s.art && !broken.has(s.art)" :src="s.art" alt="" loading="lazy" decoding="async" draggable="false" class="max-h-12 max-w-12 object-contain" @error="broken = new Set(broken).add(s.art!)" />
-            </span>
-            <span class="min-w-0 flex-1">
-              <span class="block truncate text-[14px] text-[var(--exile-color-text-title)] max-md:line-clamp-2 max-md:whitespace-normal max-md:text-[13px] max-md:leading-tight">{{ nameOf(s) }}</span>
-              <span v-if="!en" class="block truncate text-[11px] opacity-45">{{ s.en }}</span>
-              <span class="hidden truncate text-[11px] text-[var(--exile-color-text-secondary)] max-md:block">{{ kindOf(s) }}</span>
-            </span>
-            <span class="w-40 shrink-0 truncate text-[12px] text-[var(--exile-color-text-secondary)] max-md:hidden">{{ kindOf(s) }}</span>
-            <a v-if="s.url" :href="en ? s.url.en : s.url.ja" target="_blank" rel="noopener noreferrer" data-skins-link class="g-btn sm shrink-0 max-md:min-h-9">poe2db ↗</a>
-            <span v-else class="w-[74px] shrink-0 text-center text-[11px] opacity-45" :title="tr('poe2db の一覧に無い物 (名前はゲームのデータのまま)', 'Not in the poe2db list (name from the game data)')">{{ tr("poe2db に無し", "Not on poe2db") }}</span>
-          </li>
-        </ul>
+        <!-- 絵が主役のカード (オーナー 10-25「でかく」: 絵は前の倍くらい、名前と種類は下に小さく)。押すと poe2db のページを新しいタブで (アプリの MtxList と同じ) -->
+        <div data-skins-list class="mt-2">
+          <div v-for="(c, i) in chunks" :key="i" class="grid grid-cols-[repeat(auto-fill,minmax(168px,1fr))] gap-3 pb-3 [contain-intrinsic-size:auto_2400px] [content-visibility:auto] max-md:grid-cols-2 max-md:gap-2 max-md:pb-2">
+            <a v-for="s in c" :key="s.en + s.kind.ja" :href="en ? s.url.en : s.url.ja" target="_blank" rel="noopener noreferrer" data-skins-row :title="tr('poe2db で見る', 'Open on poe2db')"
+              class="group flex min-w-0 flex-col items-center rounded-xl border border-white/[0.06] bg-black/25 p-3 text-center no-underline transition hover:border-amber-400/40 hover:bg-white/[0.05] max-md:p-2">
+              <span class="grid aspect-square w-full max-w-[128px] place-items-center">
+                <img v-if="s.art && !broken.has(s.art)" :src="s.art" alt="" loading="lazy" decoding="async" draggable="false" class="max-h-full max-w-full object-contain transition group-hover:scale-105" @error="broken = new Set(broken).add(s.art!)" />
+              </span>
+              <span class="mt-2 line-clamp-2 w-full text-[13px] leading-snug text-[var(--exile-color-text-title)] max-md:text-[12px]">{{ nameOf(s) }}</span>
+              <span v-if="!en" class="mt-0.5 block w-full truncate text-[10px] opacity-45">{{ s.en }}</span>
+              <span class="mt-0.5 block w-full truncate text-[11px] text-[var(--exile-color-text-secondary)]">{{ kindOf(s) }}</span>
+            </a>
+          </div>
         </div>
         <p v-if="!shown.length" class="py-8 text-center opacity-60">{{ tr("見つかりません", "No matches") }}</p>
         <!-- 一覧の下は「もっと見る」の帯くらい空ける (メモ feedback-list-bottom-space) -->
