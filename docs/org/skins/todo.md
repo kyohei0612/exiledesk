@@ -11,6 +11,11 @@
 - [x] 軽く: 40 行ずつ・見えかけたら足す・40 行の塊ごとに content-visibility。測り (skins1/skins-perf.mjs、PC): 全部出した後に流す 20ms 超え 76 → 1〜4、上から流しても 50ms 超え 0 (スマホも 0)
 - [x] 種類を 10 個にまとめる (src/views/skins/groups.json): 武器 82・武器エフェクト 84・背面 177・防具 599・エフェクト 132・ペット 175・ポータル 88・ポートレートフレーム 205・隠れ家 331・その他 93。/cosmetics/ の子ページも同じ 10 個 (日英とも)
 
+## オーナー 10-25 夜の直し (a37d2fa5)
+- [x] PoE1 で出た物だけ: PoE2 で出た物を外す (poedb の PoE2 のパック 4 つ・PoE2 の版の報酬・PoE2 の版の札・ドッジロール・店の説明)、poe2db に無い物も外す。1,966 → 1,569 件。写し data-cache/poe2db-mtx/packs (Supporter_pack.html + PoE2/PoE1 のパック 8 つ)
+- [x] 絵が主役のカード (128px、PC 6 列・スマホ 2 列)、カード全体で poe2db へ。/cosmetics/ も同じ
+- [ ] オーナーが手元 1440 の ?page=skins で見る (本番はまだ、オーナー「一旦こっちでチェックしたい」)
+
 ## SEO の静的なページ (10-25 ブラックの頼み)
 - [x] scripts/build-cosmetics-pages.mjs (dd49e2b7): /cosmetics/・/en/cosmetics/ + 子ページ (10-25 夜にまとめの 10 個へ: 日英 10 ずつ、計 22 枚)。手元で配って撮った (台本 skins1/cosmetics-check.mjs、PC・スマホ・英語、中のリンク切れ 0・横はみ出し無し)
 - [x] 開発版の作り (preview-prod.mjs --dev) に 1 行 (ジン 9 97205662)

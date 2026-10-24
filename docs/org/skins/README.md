@@ -4,7 +4,7 @@ PoE2 で使える PoE1 のスキン (コスメティック) の一覧のペー�
 
 ## 決まり (docs/org/dev/README.md の決まりが先)
 1. 一覧は poe2db を元にし、頭に「ゲームでの動作は保証しない」を出す (オーナー「DB 調べって話と責任持てませんって話で」)。
-2. データは src/data/mtx-poe1-in-poe2.json だけを読む。作り直しは `node scripts/build-mtx-web.mjs` (poe2db の取り直しは --fetch、1 日 1 回まで。メモ api-probing-policy)。
+2. 出すのは PoE1 で出て PoE2 でも使え、poe2db に載る物だけ (PoE2 で出た物は外す、オーナー 10-25)。データは src/data/mtx-poe1-in-poe2.json だけを読む。作り直しは `node scripts/build-mtx-web.mjs` (poe2db の取り直しは --fetch、1 日 1 回まで。メモ api-probing-policy)。
 3. 名前・種類の英語は poe2db の表記だけ。英語名の無い種類は英語の画面で「Other」にまとめる (推測で訳さない、メモ feedback-no-guessed-terms)。
 4. 絵は public/mtx-art/<a>.webp を 1 枚ずつ、遅れて読む (loading=lazy)。Web のビルドには一覧に出す分だけ残す (vite.web.config.ts)。
 5. 1 日 10 万の枠: 静的な絵は数えない (サーバー管理人 10-25)。ページで Worker を通る取り物を足さない。入口を /web.html 以外の新しい道にする時はサーバー管理人に聞く。
@@ -14,7 +14,7 @@ PoE2 で使える PoE1 のスキン (コスメティック) の一覧のペー�
 ## 地図
 - ページ src/views/skins/ (SkinsPage.vue = 一覧・検索・絞り込み、40 行ずつ足して塊ごとに content-visibility。skins.ts = データの読み込みと poe2db の道。groups.json = 絞り込みのまとめ 10 個 (オーナー 10-25、静的なページも読む))。WebApp.vue が読む (デザイン部長)。
 - 入口・道: src/web/page.ts の skinsPage・openSkinsPage・?page=skins、ヘッダーのタブ (WebApp.vue)、スイッチ src/web/release-flags.ts の skins、記録 track.ts の page:skins。どれもデザイン部長の持ち物。
-- データ src/data/mtx-poe1-in-poe2.json (1,966 件、poe2db で裏の取れた ok 1,942。形 kinds{id:{ja,en|null}}・items[{en,ja,k,slug|null,ok,a?}])、作り直し scripts/build-mtx-web.mjs (元はアプリの src/services/mtx/mtx.json、poe2db の写し data-cache/poe2db-mtx)。10-25 にジン部長 9 本目から受け取った。
+- データ src/data/mtx-poe1-in-poe2.json (1,569 件。形 kinds{id:{ja,en|null}}・items[{en,ja,k,slug,a?}])。PoE2 で出た物の見分けは build-mtx-web.mjs の poe2Born (poedb のパックの中身・報酬の表・札・ドッジロール)、作り直し scripts/build-mtx-web.mjs (元はアプリの src/services/mtx/mtx.json、poe2db の写し data-cache/poe2db-mtx)。10-25 にジン部長 9 本目から受け取った。
 - 絵 public/mtx-art/ (アプリの物 6,316 枚、使うのは 1,930 枚・約 8 MB)。SW は mtx-art を取っておく (public/sw.js の FILE_RE)。
 - SEO の静的なページ scripts/build-cosmetics-pages.mjs → /cosmetics/・/en/cosmetics/ (子ページは groups.json のまとめごと、中は元の種類ごとの見出し。既定 noindex、--index で index + サイトマップ。AdSense が通るまで noindex、通ったら /bases/ と一緒に index = オーナー 10-25)。手元の開発版の作り (preview-prod.mjs --dev) だけが呼ぶ、本番の build:web にはオーナーの OK の後に足す。見た目は build-seo-pages.mjs (共通) の写し。
 - 確かめの台本: 共有メモ side-session-notes/local_b4352604-…/skins1/ (skins-check.mjs = ?page=skins、cosmetics-check.mjs = 静的なページを配って撮る)。
