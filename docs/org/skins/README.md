@@ -13,7 +13,7 @@ PoE2 で使える PoE1 のスキン (コスメティック) の一覧のペー�
 
 ## 地図
 - ページ src/views/skins/ (SkinsPage.vue = 一覧・検索・絞り込み、40 行ずつ足して塊ごとに content-visibility。skins.ts = データの読み込みと poe2db の道。groups.json = 絞り込みのまとめ 10 個 (オーナー 10-25、静的なページも読む))。WebApp.vue が読む (デザイン部長)。
-- 入口・道: src/web/page.ts の skinsPage・openSkinsPage・?page=skins、ヘッダーのタブ (WebApp.vue)、スイッチ src/web/release-flags.ts の skins、記録 track.ts の page:skins。どれもデザイン部長の持ち物。
+- 入口・道: src/web/page.ts の skinsPage・openSkinsPage・?page=skins、入口は上の切り替えタブの右端 (ModeTabs の data-mode-tab="skins"、e160608e)、スイッチ src/web/release-flags.ts の skins、記録 track.ts の page:skins。どれもデザイン部長の持ち物。
 - データ src/data/mtx-poe1-in-poe2.json (1,569 件。形 kinds{id:{ja,en|null}}・items[{en,ja,k,slug,a?}])。PoE2 で出た物の見分けは build-mtx-web.mjs の poe2Born (poedb のパックの中身・報酬の表・札・ドッジロール)、作り直し scripts/build-mtx-web.mjs (元はアプリの src/services/mtx/mtx.json、poe2db の写し data-cache/poe2db-mtx)。10-25 にジン部長 9 本目から受け取った。
 - 絵 public/mtx-art/ (アプリの物 6,316 枚、使うのは 1,930 枚・約 8 MB)。SW は mtx-art を取っておく (public/sw.js の FILE_RE)。
 - SEO の静的なページ scripts/build-cosmetics-pages.mjs → /cosmetics/・/en/cosmetics/ (子ページは groups.json のまとめごと、中は元の種類ごとの見出し。既定 noindex、--index で index + サイトマップ。AdSense が通るまで noindex、通ったら /bases/ と一緒に index = オーナー 10-25)。手元の開発版の作り (preview-prod.mjs --dev) だけが呼ぶ、本番の build:web にはオーナーの OK の後に足す。見た目は build-seo-pages.mjs (共通) の写し。
