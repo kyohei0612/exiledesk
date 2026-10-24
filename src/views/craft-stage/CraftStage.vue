@@ -236,8 +236,8 @@ const subPage = computed(() => PAGES_ON && !s.replay.value && s.mode.value === "
 const GemCorruptWebPanel = defineAsyncComponent(() => import("../gem-corrupt/GemCorruptWebPanel.vue"));
 const gemCorruptOn = ref(false);
 watch(() => s.mode.value === "tutorial" || inLesson.value, (v) => { if (v) gemCorruptOn.value = false; }); // 使い方・コツを開いたらジェムコラプトは閉じる (web/page.ts)
-/** 本番には出さない (2026-10-16 オーナー「ジェムコラプトは内緒」)。開発版 (pnpm dev:web) だけタブを出す */
-const GEM_CORRUPT_SHOWN = import.meta.env.DEV;
+/** 本番には出さない (2026-10-16 オーナー「ジェムコラプトは内緒」)。スイッチ gemCorrupt (開発版・手元の dev だけタブを出す) */
+const GEM_CORRUPT_SHOWN = flag("gemCorrupt");
 const gemCorrupt = computed(() => GEM_CORRUPT_SHOWN && !inApp && gemCorruptOn.value && !s.replay.value);
 function pickMode(m: typeof s.mode.value): void {
   s.hold(null); endLesson(); s.mode.value = m; setGemCorrupt(false);
