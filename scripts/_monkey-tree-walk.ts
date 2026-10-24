@@ -10,7 +10,7 @@ import { aimHits, applyCurrency, mulberry32, revealOffers, tierIndexOf, type Sta
 interface Aim { modId: string; tier: number }
 interface Hand { currency: string; omens: string[]; repeat?: { until: string; max: number | null } | null; catalyst?: string | null; free?: boolean; fractureOf?: string }
 export interface WalkBox { id: string; out: string; aim: Aim | null; hand: Hand | null; outs: string[]; back: string | null; done: string | null; split?: unknown; parent?: string | null }
-export interface WalkOpts { n?: number; seed?: number; capSteps?: number; capDiv?: number; prices?: Record<string, number>; startCost?: number }
+export interface WalkOpts { debug?: (e: { from: string; to: string; item: StageItem; key: { set: string; junk: boolean } }) => void; n?: number; seed?: number; capSteps?: number; capDiv?: number; prices?: Record<string, number>; startCost?: number }
 export interface WalkResult { n: number; finished: number; stuck: number; capped: number; uses: Record<string, number>; stuckAt: Record<string, number>; moved: number; movedAt: Record<string, number>; unsupported: string | null }
 
 const ECHO = "OmenofAbyssalEchoes";
@@ -105,7 +105,8 @@ export function walkTree(data: PatchData, boxes: Record<string, WalkBox>, start:
   };
 
   const rng = mulberry32(o.seed ?? 1);
-  const mv = (from: string, to: string): void => { res.movedAt[`${from}>${to}`] = (res.movedAt[`${from}>${to}`] ?? 0) + 1; };
+  const mv = (from: string, to: string, it?: StageItem): void => {
+    if (o.debug && it) o.debug({ from, to, item: it, key: keyOf(it) }); res.movedAt[`${from}>${to}`] = (res.movedAt[`${from}>${to}`] ?? 0) + 1; };
   const use = (k: string): number => { res.uses[k] = (res.uses[k] ?? 0) + 1 / n; return prices[k] ?? 0; };
   for (let p = 0; p < n; p++) {
     let item = start, at = settle("start", start), steps = 0, backs = 0, cost = o.startCost ?? 0;
@@ -125,7 +126,7 @@ export function walkTree(data: PatchData, boxes: Record<string, WalkBox>, start:
       if (!b.hand) {
         if (++backs > MAX_BACKS) { end = "stuck"; break; }
         if (b.back === "match") { const to = boxOfShape(item); if (!to) { end = "stuck"; break; } at = to; continue; }
-        if (b.back && boxes[b.back]) { const to = settle(b.back, item); if (to !== b.back) { res.moved++; mv(b.back, to); } at = to; continue; }
+        if (b.back && boxes[b.back]) { const to = settle(b.back, item); if (to !== b.back) { res.moved++; mv(b.back, to, item); } at = to; continue; }
         end = "stuck"; break;
       }
       const h = b.hand, outs = b.outs.map((id) => boxes[id]).filter((x): x is WalkBox => !!x);
