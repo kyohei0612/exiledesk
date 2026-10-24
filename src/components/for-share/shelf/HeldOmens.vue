@@ -19,7 +19,8 @@ import { heldOmensOf } from "./held-omens";
 defineProps<{ modList?: boolean }>();
 const emit = defineEmits<{ modList: [] }>();
 const shelf = useShelf();
-const list = computed(() => heldOmensOf(shelf.held.value));
+// 棚が隠す物 (provideShelf の hidden、シミュの聖別のお告げなど) は出さない (2026-10-24 オーナー「シミュの棚から聖別を外す」)
+const list = computed(() => heldOmensOf(shelf.held.value).filter((o) => !shelf.hidden?.(o)));
 // 掛かっているお告げが、持った物を打てなくする・意味が無い物になったら外す (ボタンは灰色で掛けられない。2026-10-22 オーナー「進行不能」、判定はエンジンの omenBlock)
 watchEffect(() => {
   if (!flag("omenRow")) return; // 本番はスイッチ omenRow が入るまで外さない (前の形)
