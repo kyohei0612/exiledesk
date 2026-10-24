@@ -5,7 +5,7 @@
  * 直前の流れ (trail) は要望・バグの添付にも使う
  */
 import { watch } from "vue";
-import { craftStage, SIM_LOCKED } from "../state/craft-stage";
+import { craftStage } from "../state/craft-stage";
 import { noLog } from "../utils/no-log";
 import { randId } from "../utils/rand-id";
 import { lang } from "../i18n/lang";
@@ -155,8 +155,7 @@ export function startTracking(): void {
   // 画面の言語 (英語版の需要を見る。訪問ごとに 1 回、切り替えたらその言語も 1 回。2026-10-12)
   watch(lang, (l) => trackOnce(`lang:${l}`), { immediate: true });
   const s = craftStage;
-  // シミュレーターを閉じている間は数えない (前に開いていた人が一瞬 sim になって数えられていた)
-  watch(s.mode, (m) => { if (m === "sim" && SIM_LOCKED) return; trackOnce(`mode:${m}`); }, { immediate: true });
+  watch(s.mode, (m) => trackOnce(`mode:${m}`), { immediate: true });
   // 確率機だけ回した人は「エミュレーターで打った人」に入れない (2026-10-16)
   watch(() => s.log.value.length, (n) => { const p = s.log.value[n - 1]; if (n > 0 && p) trackOnce("hand:use"); });
   // 打った手を数える (戻した時は数え直さない。新しく足された最後の手だけ)
