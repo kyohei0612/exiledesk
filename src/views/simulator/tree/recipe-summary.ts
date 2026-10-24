@@ -46,7 +46,7 @@ export function recipeSummary(tree: TreeDoc): RecipeSummary {
     const r = rowsFor(tree.base, tree.itemLevel).find((x) => x.id === a.modId || x.tiers.some((t) => t.modId === a.modId));
     // その段の数値の入った文 (use-tree の startModLabel と同じ引き方。行の template は「回避力 #」の形で数値が無い)
     const t = r?.tiers.filter((x) => (x.modId ?? r.id) === a.modId)[a.tier - 1];
-    first = `${a.fractured ? "✦ " : ""}${tierRankLabel(a.tier)} ${t?.text ?? r?.text ?? a.modId}`;
+    first = `${a.fractured ? "✦ " : ""}${tierRankLabel(a.tier)} ${t?.text ?? r?.text ?? tr("(このベースに無い MOD)", "(mod not on this base)")}`;
   }
   return { art: empty ? null : baseArt(tree.base), base: tr(jaTypeName(tree.base), tree.base), aims: aims.length, marks: aims.filter((x) => x.fractured).length, first, empty };
 }

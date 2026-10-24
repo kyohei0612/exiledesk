@@ -115,17 +115,8 @@ const tabs0 = loadTabs();
 const active = ref(tabs0?.active ?? 0);
 const tabDocs = shallowRef<TreeDoc[]>(tabs0 ? tabs0.docs.map((d, i) => (i === tabs0.active ? doc.value : d)) : [doc.value]);
 /** タブごとに回した結果 (結果のまとめの始め方の比べ。このページを開いている間だけ) */
-export interface TabRun { perItem: number; pct: number; price: number }
-const tabRuns = shallowRef<(TabRun | null)[]>(tabDocs.value.map(() => null));
-/** 0 の完成形を from から to へ (ベースが違えばそのベースの白紙から) */
-function shareGoal(from: TreeDoc, to: TreeDoc): TreeDoc {
-  const d = to.base === from.base ? to : newTree(from.base, from.itemLevel);
-  d.itemLevel = from.itemLevel;
-  if (from.ilvlFit) d.ilvlFit = true; else delete d.ilvlFit;
-  if (from.goal) d.goal = { ...from.goal }; else delete d.goal;
-  if (from.memoAims) d.memoAims = from.memoAims.map((a) => ({ ...a })); else delete d.memoAims;
-  return d;
-}
+/** タブの木を写す (タブごとに別の木。完成形の設定も写さない、10-24 オーナー「タブは人が押した時だけ、新しいツリーを最初から」) */
+const cloneDoc = (d: TreeDoc): TreeDoc => JSON.parse(JSON.stringify(d)) as TreeDoc;
 function setActive(i: number, next: TreeDoc): void {
   active.value = i;
   clearHistory();
@@ -136,27 +127,25 @@ function setActive(i: number, next: TreeDoc): void {
 /** タブを替える (1 つ戻すは替えたタブの分から) */
 function switchTab(i: number): void {
   if (i === active.value || !tabDocs.value[i]) return;
-  setActive(i, shareGoal(doc.value, JSON.parse(JSON.stringify(tabDocs.value[i])) as TreeDoc));
+  setActive(i, cloneDoc(tabDocs.value[i]!));
 }
-/** 新しいタブ (0 の完成形は同じ、スタートから下は白紙) を足して開く */
+/** 新しいタブ = 全くの白紙の木 (完成形の設定の 1 = ベース選びから。選ばずに閉じたら空の形、needBase) を足して開く */
 function addTab(): void {
   const cur = doc.value;
   tabDocs.value = [...tabDocs.value, cur];
-  tabRuns.value = [...tabRuns.value, null];
-  setActive(tabDocs.value.length - 1, shareGoal(cur, newTree(cur.base, cur.itemLevel)));
+  setActive(tabDocs.value.length - 1, newTree(FIRST_BASE, FIRST_ILVL));
+  needBase.value = true;
+  goalPage.value = 1;
 }
 /** タブを閉じる (最後の 1 つは閉じない) */
 function closeTab(i: number): void {
   if (tabDocs.value.length <= 1) return;
-  const cur = doc.value, list = tabDocs.value.filter((_, j) => j !== i);
-  tabRuns.value = tabRuns.value.filter((_, j) => j !== i);
-  if (i === active.value) { const k = Math.max(0, i - 1); tabDocs.value = list; setActive(k, shareGoal(cur, JSON.parse(JSON.stringify(list[k]!)) as TreeDoc)); return; }
+  const list = tabDocs.value.filter((_, j) => j !== i);
+  if (i === active.value) { const k = Math.max(0, i - 1); tabDocs.value = list; setActive(k, cloneDoc(list[k]!)); return; }
   if (i < active.value) active.value--;
   tabDocs.value = list;
   save(doc.value);
 }
-/** 今のタブを回した結果を控える (結果のまとめが開いた時) */
-function noteRun(r: TabRun): void { const list = [...tabRuns.value]; list[active.value] = r; tabRuns.value = list; }
 const undoStack: string[] = [];
 const canUndo = shallowRef(false);
 /** やり直し (1 つ戻した物を戻す。新しく組み替えると消える、10-23 モンキー 1「戻した物がやり直しで戻らない」) */
@@ -381,17 +370,19 @@ function aimLabel(a: Aim | null): string {
   if (!a) return "";
   const r = rowOfMod(a.modId);
   const side = r ? (r.side === "prefix" ? tr("プレ", "Prefix") : tr("サフィ", "Suffix")) : "";
-  return `${tierRankLabel(a.tier)} ${side} ${r?.template ?? a.modId}`;
+  return `${tierRankLabel(a.tier)} ${side} ${r?.template ?? NOT_ON_BASE()}`;
 }
+/** 木のベースの MOD 一覧に無い MOD (前のベースの狙いが残った等) の文。MOD の id はそのまま出さない (10-24 デザイン部長の気づき) */
+const NOT_ON_BASE = (): string => tr("(このベースに無い MOD)", "(mod not on this base)");
 /** 狙いの MOD の短い名前 (戻り先の札で、どの狙いの所の箱かを添える) */
-const aimShort = (a: Aim): string => rowOfMod(a.modId)?.template ?? a.modId;
+const aimShort = (a: Aim): string => rowOfMod(a.modId)?.template ?? NOT_ON_BASE();
 /** 始まりの MOD の文 (その段の数値で埋めた文 + 段)。atLeast = 完成の狙い (✦ の印など) で段を「T2 以上」と言う (10-24 オーナー「T2 を選んだら T2 以上」) */
 function startModLabel(a: Aim | StartMod | null, atLeast = false): string {
   if (!a) return "";
   const r = rowOfMod(a.modId);
   // まとめ行 (同じ系統の別の MOD) は段ごとに modId がある。その MOD の段だけで数える
   const t = r?.tiers.filter((x) => (x.modId ?? r.id) === a.modId)[a.tier - 1];
-  return `${atLeast ? tierRankLabel(a.tier) : `T${a.tier}`} ${t?.text ?? r?.text ?? a.modId}`;
+  return `${atLeast ? tierRankLabel(a.tier) : `T${a.tier}`} ${t?.text ?? r?.text ?? NOT_ON_BASE()}`;
 }
 
 /** ツリーのベースのアイテム (値段の鍵を引く。骨は部位で顎骨・肋骨・鎖骨が変わる) */
@@ -434,5 +425,5 @@ const baseCost = computed(() => {
 const baseCostBusy = computed(() => !!s.data.value && !costReady.value);
 
 export function useTree() {
-  return { tabDocs, active, tabRuns, switchTab, addTab, closeTab, noteRun, startPrice, setStartPrice, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, startFresh, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
+  return { tabDocs, active, switchTab, addTab, closeTab, startPrice, setStartPrice, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, startFresh, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
 }

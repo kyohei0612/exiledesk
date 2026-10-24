@@ -6,7 +6,7 @@
   10-22 オーナー「どの始め方が安いかは結果のまとめで」: 一番上にこのタブの始め方のベースの値段 (取引所で探す・手で入れる) と、回したタブどうしの比べ
 -->
 <script setup lang="ts">
-import { computed, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import NumStep from "../../../components/NumStep.vue";
 import { fractureMarks, startOf, startRarity } from "../../../services/simulator/tree/tree-model";
 import { useTreeSearch, type TreeSearchKind } from "./use-tree-search";
@@ -32,14 +32,13 @@ const rest = computed(() => uses.value.slice(SHOW).reduce((a, u) => a + u.div, 0
 /** 一番お金を使った箱 (1 人あたり、上位 3) */
 const spend = computed(() => Object.entries(props.result.boxes).filter(([, b]) => b.spend > 0.005).sort((a, z) => z[1].spend - a[1].spend).slice(0, 3));
 const stuck = computed(() => Object.entries(props.result.stuckAt).sort((a, z) => z[1] - a[1]));
-/** このタブの回した結果を控える (タブどうしの比べ) */
-watch(() => props.result, (r) => t.noteRun({ perItem: r.perItem, pct: Math.round((r.finished / (r.n || 1)) * 100), price: t.startPrice() }), { immediate: true });
+/** 回した時の始めの値段 (後で値段を替えたら「回し直す」の一言。タブどうしの比べは 10-24 にやめた、タブは別々の木) */
+const ranPrice = ref(t.startPrice());
+watch(() => props.result, () => { ranPrice.value = t.startPrice(); });
 /** 取引所で探す (開くだけ、値段は手で入れる。ノーマル = 白、フラクチャー済み = ✦ の MOD がフラクチャー、ほかは ✦ が無いので探せない) */
 const ts = useTreeSearch();
 const searchKind = computed((): TreeSearchKind | null => (fractureMarks(t.doc.value).length ? "fractured" : startRarity(t.doc.value) === "normal" ? "white" : null));
 const priceIn = computed(() => startOf(t.doc.value).price ?? null);
-/** 回したタブの比べ (1 個の神が安い順) */
-const compare = computed(() => t.tabDocs.value.map((d, i) => ({ i, name: startName(i === t.active.value ? t.doc.value : d), run: t.tabRuns.value[i] })).filter((x) => x.run).sort((a, z) => a.run!.perItem - z.run!.perItem));
 </script>
 
 <template>
@@ -61,11 +60,7 @@ const compare = computed(() => t.tabDocs.value.map((d, i) => ({ i, name: startNa
           <NumStep data-tree-run-report-price :model-value="priceIn" width="w-24" placeholder-text="—" @update:model-value="t.setStartPrice" /><span>{{ tr("神", "div") }}</span>
           <button type="button" data-tree-run-report-search class="g-btn sm ml-auto" :disabled="!searchKind || !ts.can(searchKind)" :title="searchKind ? tr('取引所で探す (開くだけ。値段は手で入れる)', 'Search the trade site (opens it; type the price yourself)') : tr('ノーマル・フラクチャー済みの始め方で探せる', 'Available for normal and fractured starts')" @click="searchKind && ts.search(searchKind)">{{ tr("取引所で探す", "Search trade") }}</button>
         </div>
-        <p v-if="priceIn !== null && Math.abs(priceIn - (t.tabRuns.value[t.active.value]?.price ?? 0)) > 1e-9" class="mt-1 text-[11px] text-amber-200">{{ tr("値段を替えた: 回し直すと 1 個の神に入る", "Price changed: run again to include it") }}</p>
-        <table v-if="compare.length > 1" data-tree-run-report-compare class="mt-2 w-full text-[12px] tabular-nums">
-          <tr class="text-[11px] text-[#a99d86]"><th class="text-left font-normal">{{ tr("始め方", "Start") }}</th><th class="text-right font-normal">{{ tr("ベース", "Base") }}</th><th class="text-right font-normal">{{ tr("1 個", "Per item") }}</th><th class="text-right font-normal">{{ tr("完成", "Done") }}</th></tr>
-          <tr v-for="(c, k) in compare" :key="c.i" :class="c.i === t.active.value ? 'text-amber-100' : ''"><td class="max-w-[150px] truncate">{{ k === 0 ? "★ " : "" }}{{ c.name }}</td><td class="text-right">{{ div(c.run!.price) }}</td><td class="text-right font-bold">{{ div(c.run!.perItem) }}</td><td class="text-right">{{ c.run!.pct }}%</td></tr>
-        </table>
+        <p v-if="priceIn !== null && Math.abs(priceIn - ranPrice) > 1e-9" class="mt-1 text-[11px] text-amber-200">{{ tr("値段を替えた: 回し直すと 1 個の神に入る", "Price changed: run again to include it") }}</p>
       </div>
       <!-- 費用の幅 (完成した人) -->
       <div>

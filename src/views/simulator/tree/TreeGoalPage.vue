@@ -73,7 +73,7 @@ function apply(en: string): void {
   asking.value = null;
   // 文は替える前のベースの行で作る (外した MOD は新しいベースの一覧に無い)
   const label = new Map(t.goals.value.map((a) => [a.modId, t.startModLabel(a, true)]));
-  dropped.value = t.setBase(en, t.doc.value.itemLevel).map((a) => label.get(a.modId) ?? a.modId);
+  dropped.value = t.setBase(en, t.doc.value.itemLevel).map((a) => label.get(a.modId) ?? tr("(名前の無い MOD)", "(unnamed mod)"));
   t.goalPage.value = 2;
 }
 const pickGoal = { has: t.hasGoal, toggle: t.toggleGoal };
