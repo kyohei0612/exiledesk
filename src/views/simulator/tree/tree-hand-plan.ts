@@ -44,8 +44,11 @@ export function autoCatOf(data: PatchData, doc: TreeDoc, item: StageItem): strin
  * 前は品質 0 の見本を渡していて、触媒の手を開き直すとお告げが外れていた、10-22)。needPre = 持った物に触媒のお告げが掛けられて、まだ品質を上げる手の後でない
  */
 export const preFillOf = (data: PatchData, item: StageItem, needPre: boolean, autoCat: string | null): StageApply | null => (needPre && autoCat ? fillCatalyst(data, item, autoCat, mulberry32(1)) : null);
-/** 狙い無し (結果は「打った後」の 1 つ) にできる手 = MOD が付く・入れ替わる手 (10-25 オーナー「全カレンシーで」。前は足す手だけ) */
-export const FREE_EFFECTS: readonly string[] = ["add", "swap", "essence"];
+/**
+ * 狙い無し (結果は「打った後」の 1 つ) にできる手 = 付く MOD を選べない手 (足す・カオス。10-25 オーナー「全カレンシーで」。前は足す手だけ)。
+ * エッセンス・合金 (キーは同じ essence:) は付く MOD がそれ自身の 1 つに決まっているので入れない (オーナー「エッセンスではエッセンスでしか付かんでしょうに」)
+ */
+export const FREE_EFFECTS: readonly string[] = ["add", "swap"];
 /** 棚で選んだ物 → 箱の手 */
 export function handOf(p: HandPick): Hand {
   const used = omensFor(p.held, [...p.omens]);

@@ -62,7 +62,7 @@ const fracChoices = computed(() => { const d = s.data.value, it = item.value; re
 const fracPick = computed(() => fracOf.value ?? fracChoices.value.find((c) => c.on)?.a.modId ?? null);
 /** 骨の手にアビスの反響 (発現の候補を 1 回引き直す)。既定で付ける (10-22 オーナー「お告げは必ず反響を使わんとやばいよ」)。前の手を開いた時はその手のまま */
 const echo = ref(props.current ? props.current.omens.includes(ECHO) : true);
-/** MOD が付く・入れ替わる手 (足す・カオス・エッセンス。当たりの箱にする MOD のチェックと狙い無しを出す) */
+/** 付く MOD を選べない手 (足す・カオス。当たりの箱にする MOD のチェックと狙い無しを出す) */
 const canFree = computed(() => !!held.value && FREE_EFFECTS.includes(effectOf(held.value)));
 /** Esc: 今の手を替えている時は欄ごと取り消す (何も替えない、オーナー 10-22「枠の外・Esc で取り消し」)。新しい手の時は持った物を離す */
 function onKey(e: KeyboardEvent): void {
@@ -92,13 +92,12 @@ const catalysing = computed(() => used.value.includes(CATALYSING));
 
 /**
  * 当たりの箱にできる狙い = この手で付きうる完成の狙い (tree-hand-plan の hitAimsOf、狙い無しでも繰り返しでもない形で聞く)。
- * エッセンスは付く MOD が完成の狙いの時だけ (10-25 オーナー「全カレンシーで上記の表示して、カオスとか対応してない」)
+ * 付く MOD を選べない手だけ (足す・カオス。10-25 オーナー「全カレンシーで上記の表示して、カオスとか対応してない」、エッセンス・合金は出さない)
  */
 const aimChoices = computed((): Aim[] => {
   const d = s.data.value, it = item.value;
   if (!d || !it || !held.value || !canFree.value) return [];
-  const xs = hitAimsOf(d, t.doc.value, props.boxId, it, handOf({ held: held.value, omens: omens.value, echo: echo.value }), t.goals.value, null);
-  return effectOf(held.value) === "essence" ? xs.filter((a) => t.goals.value.some((g) => g.modId === a.modId)) : xs;
+  return hitAimsOf(d, t.doc.value, props.boxId, it, handOf({ held: held.value, omens: omens.value, echo: echo.value }), t.goals.value, null);
 });
 /** チェックした狙い (候補にある物だけ) */
 const checkedAims = computed((): Aim[] => aimChoices.value.filter((a) => checked.value.includes(aimKey(a))));
