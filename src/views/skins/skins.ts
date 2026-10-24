@@ -1,7 +1,7 @@
 /**
  * skins.ts — PoE2 で使える PoE1 のスキンの一覧のデータ (?page=skins、SkinsPage.vue。2026-10-25 オーナー「スキン PoE2 で使える PoE1 スキン一覧みたいな奴、DB 調べって話と責任持てませんって話で」)。
  * 元は src/data/mtx-poe1-in-poe2.json (scripts/build-mtx-web.mjs、poe2db の Microtransactions の一覧の英日で裏を取った物、PoE2 で出た物は除く)。
- * 絞り込みは種類 (30 近く) をまとめた groups.json の 11 個 (オーナー「8 種類くらいに分類分け、あとはその他で」+「一式」)。
+ * 絞り込みは種類 (30 近く) をまとめた groups.json の 9 個 (一式を含む。オーナー「8 種類くらい」→ 10-25 夜「9 個」)。
  * 一式 (同じ名前の頭・同じシリーズの部品) は 1 枚のカードにまとめ、「一式」と「すべて」に出す。部品は各ジャンルに今までどおり (オーナー 10-25「一式は一式で、他のジャンルはあるか」)。
  * 大きいのでページを開いた時に読む (動的 import)。絵は public/mtx-art/<a>.webp (静的な置き場から返るので 1 日の枠に数えない、サーバー管理人 10-25)
  */
@@ -40,6 +40,8 @@ export interface SkinSet {
   order: number | null;
 }
 export interface SkinData { items: Skin[]; sets: SkinSet[] }
+/** 一覧のカード 1 枚 (部品 1 つ、または一式。SkinCard.vue) */
+export interface SkinCardData { key: string; name: string; sub: string; kind: string; art: string | null; url: string; parts: number; order: number | null; set: SkinSet | null }
 
 let cache: Promise<SkinData> | null = null;
 export function loadSkins(): Promise<SkinData> {

@@ -6,10 +6,12 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
 import Icon from "../../components/ui/Icon.vue";
+import ModalShell from "../../components/ui/ModalShell.vue";
 import { lang, tr } from "../../i18n/lang";
 import { closeSkinsPage } from "../../web/page";
 import WebFooter from "../../web/WebFooter.vue";
-import { loadSkins, SKIN_GROUPS, type Skin, type SkinData, type SkinSet } from "./skins";
+import SkinCard from "./SkinCard.vue";
+import { loadSkins, SKIN_GROUPS, type Skin, type SkinCardData as Card, type SkinData, type SkinSet } from "./skins";
 
 const data = shallowRef<SkinData | null>(null);
 const failed = ref(false);
@@ -18,7 +20,7 @@ onMounted(() => { loadSkins().then((x) => { data.value = x; }, () => { failed.va
 const en = computed(() => lang.value === "en");
 const query = ref("");
 /**
- * 絞るまとめの id ("" = すべて)。まとめは groups.json の 11 個 (オーナー 10-25「8 種類くらい、あとはその他」+「一式」)。
+ * 絞るまとめの id ("" = すべて)。まとめは groups.json の 9 個 (一式を含む、オーナー 10-25 夜「9 個」)。
  * 「すべて」と「一式」では一式を 1 枚のカードに (部品は出さない、二重にしない)。ほかのまとめでは部品を 1 枚ずつ
  */
 const cat = ref("");
@@ -26,9 +28,7 @@ const setMode = computed(() => cat.value === "" || cat.value === "set");
 const cats = computed(() => SKIN_GROUPS.map((g) => ({ key: g.id, label: en.value ? g.en : g.ja, n: g.id === "set" ? (data.value?.sets.length ?? 0) : (data.value?.items ?? []).filter((s) => s.group === g).length })));
 /** 「すべて」の件数 (一式のカード + 一式に入っていない物) */
 const allCount = computed(() => (data.value ? data.value.sets.length + data.value.items.filter((s) => !s.set).length : 0));
-/** 一覧のカード 1 枚 (部品 1 つ、または一式) */
-interface Card { key: string; name: string; sub: string; kind: string; art: string | null; url: string; parts: number; order: number | null }
-const itemCard = (s: Skin): Card => ({ key: `i:${s.en}:${s.kind.ja}`, name: en.value ? s.en : s.ja, sub: en.value ? "" : s.en, kind: en.value ? s.kind.en : s.kind.ja, art: s.art, url: en.value ? s.url.en : s.url.ja, parts: 0, order: s.order });
+const itemCard = (s: Skin): Card => ({ key: `i:${s.en}:${s.kind.ja}`, name: en.value ? s.en : s.ja, sub: en.value ? "" : s.en, kind: en.value ? s.kind.en : s.kind.ja, art: s.art, url: en.value ? s.url.en : s.url.ja, parts: 0, order: s.order, set: null });
 /** 一式のカード: 名前は「○○ 一式」、種類の行は部品の種類を並べる (例 兜スキン・靴スキン・ポートレートフレーム) */
 const setCard = (t: SkinSet): Card => ({
   key: `s:${t.en}:${t.ja}`,
@@ -39,6 +39,7 @@ const setCard = (t: SkinSet): Card => ({
   url: en.value ? t.main.url.en : t.main.url.ja,
   parts: t.parts.length,
   order: t.order,
+  set: t,
 });
 const hit = (s: Skin, q: string): boolean => s.ja.toLowerCase().includes(q) || s.en.toLowerCase().includes(q);
 const shown = computed((): Card[] => {
@@ -78,8 +79,9 @@ watch(more, (el) => {
   io.observe(el);
 });
 onBeforeUnmount(() => io?.disconnect());
-/** 読めなかった絵 (枠だけ残す) */
-const broken = ref(new Set<string>());
+/** 開いている一式 (押すと中の部品を小窓で。オーナー 10-25「一式押したら展開させないと意味ない」。もう一度押す・枠の外・Esc で閉じる = ModalShell) */
+const openSet = shallowRef<SkinSet | null>(null);
+const openParts = computed(() => (openSet.value ? openSet.value.parts.map(itemCard).sort((x, y) => (y.order ?? -1) - (x.order ?? -1)) : []));
 </script>
 
 <template>
@@ -111,20 +113,10 @@ const broken = ref(new Set<string>());
       <template v-else>
         <p class="mt-3 text-[12px] opacity-60">{{ tr(`${shown.length} 件`, `${shown.length} skins`) }}</p>
         <!-- 絵が主役のカード (オーナー 10-25「横 3 列ででかく」→ 元の絵が 128px で 3 列だと引き伸ばしになるので「統一できなければ 4 列」: PC 4 枚・狭い PC 3 枚・スマホ 2 枚、名前と種類は下)。
-             押すと poe2db のページを新しいタブで (アプリの MtxList と同じ)。一式は代表の部品 (鎧など) の絵とページ、右上に点数 -->
+             押すと poe2db のページを新しいタブで (アプリの MtxList と同じ)。一式は代表の部品 (鎧など) の絵と右上に点数、押すと中の部品の小窓 -->
         <div data-skins-list class="mt-2">
           <div v-for="(c, i) in chunks" :key="i" class="grid grid-cols-4 gap-3 pb-3 [contain-intrinsic-size:auto_2400px] [content-visibility:auto] max-xl:grid-cols-3 max-md:grid-cols-2 max-md:gap-2 max-md:pb-2">
-            <a v-for="s in c" :key="s.key" :href="s.url" target="_blank" rel="noopener noreferrer" data-skins-row :data-skins-set="s.parts ? '' : undefined" :title="tr('poe2db で見る', 'Open on poe2db')"
-              class="group relative flex min-w-0 flex-col items-center rounded-xl border border-white/[0.06] bg-black/25 p-4 text-center no-underline transition hover:border-amber-400/40 hover:bg-white/[0.05] max-md:p-2">
-              <span v-if="s.parts" class="absolute right-2 top-2 rounded-full bg-amber-500/20 px-2 py-0.5 text-[11px] font-bold text-amber-200">{{ tr(`${s.parts} 点`, `${s.parts} pcs`) }}</span>
-              <!-- 絵は元の大きさ (長い辺 128px) まで、引き伸ばさない (オーナー 10-25「画素粗い」) -->
-              <span class="grid h-[136px] w-full place-items-center max-md:h-[120px]">
-                <img v-if="s.art && !broken.has(s.art)" :src="s.art" alt="" loading="lazy" decoding="async" draggable="false" class="max-h-[128px] max-w-[128px] object-contain transition group-hover:scale-105 max-md:max-h-[112px] max-md:max-w-[112px]" @error="broken = new Set(broken).add(s.art!)" />
-              </span>
-              <span class="mt-2 line-clamp-2 w-full text-[15px] leading-snug text-[var(--exile-color-text-title)] max-md:text-[12px]">{{ s.name }}</span>
-              <span v-if="s.sub" class="mt-0.5 block w-full truncate text-[11px] opacity-45 max-md:text-[10px]">{{ s.sub }}</span>
-              <span class="mt-0.5 block w-full truncate text-[12px] text-[var(--exile-color-text-secondary)] max-md:text-[11px]">{{ s.kind }}</span>
-            </a>
+            <SkinCard v-for="s in c" :key="s.key" :card="s" @open="openSet = s.set" />
           </div>
         </div>
         <p v-if="!shown.length" class="py-8 text-center opacity-60">{{ tr("見つかりません", "No matches") }}</p>
@@ -134,5 +126,11 @@ const broken = ref(new Set<string>());
       </template>
     </div>
     <WebFooter class="mt-10" />
+    <!-- 一式の中の部品 (部品のカードを押すとそれぞれの poe2db) -->
+    <ModalShell :open="!!openSet" :title="openSet ? (en ? `${openSet.en} Set` : `${openSet.ja} 一式`) : ''" width="w-full max-w-[56rem]" rec="skins-set" @close="openSet = null">
+      <div data-skins-set-parts class="grid grid-cols-4 gap-3 max-md:grid-cols-2 max-md:gap-2">
+        <SkinCard v-for="s in openParts" :key="s.key" :card="s" />
+      </div>
+    </ModalShell>
   </section>
 </template>

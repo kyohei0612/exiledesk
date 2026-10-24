@@ -4,7 +4,7 @@
  *
  * オーナー「PoE1・PoE2 スキンとかでも色々引っかかるように SEO こっちでも頑張るか」。検索の入口になる、JS 無しで読める一覧。
  * 出す物: /cosmetics/ と /en/cosmetics/ (まとめごとの件数)、まとめごとの子ページ /cosmetics/<まとめ> (と /en/…)。
- * まとめはアプリの一覧の絞り込みと同じ src/views/skins/groups.json の 10 個 + 一式 (同じ名前の頭・同じシリーズ、build-mtx-web.mjs の sets) (オーナー 10-25「8 種類くらい、武器・エフェクト・背面は絶対分けたい」)。
+ * まとめはアプリの一覧の絞り込みと同じ src/views/skins/groups.json の 8 個 + 一式 (同じ名前の頭・同じシリーズ、build-mtx-web.mjs の sets) (オーナー 10-25「8 種類くらい、武器・エフェクト・背面は絶対分けたい」)。
  * 子ページの中は元の種類ごとの見出し (英語名の無い種類が混ざるまとめは英語では見出し無し)。
  * 中身は src/data/mtx-poe1-in-poe2.json (scripts/build-mtx-web.mjs、名前は poe2db の日英)。絵は /mtx-art/<a>.webp (静的な置き場なので 1 日の枠に数えない)。
  * 見た目と頭・足は読み物のページ (build-seo-pages.mjs) に合わせる。アプリの一覧 (?page=skins) への入口を付ける。
@@ -31,7 +31,7 @@ const GROUPS = [...G.groups, G.other].map((g) => ({ ...g, items: [] }));
 const partsOf = d.sets.map(() => 0);
 const newest = d.sets.map(() => undefined);
 for (const it of d.items) if (it.s != null) { partsOf[it.s]++; if (it.o != null && !(newest[it.s] >= it.o)) newest[it.s] = it.o; }
-GROUPS.unshift({ ...G.set, items: d.sets.map((t, i) => ({ ja: `${t.ja} 一式`, en: `${t.en} Set`, k: -99, a: d.items[t.main].a, slug: d.items[t.main].slug, parts: partsOf[i], o: newest[i] })) });
+GROUPS.unshift({ ...G.set, items: d.sets.map((t, i) => ({ ja: `${t.ja} 一式`, en: `${t.en} Set`, k: -99, a: d.items[t.main].a, slug: d.items[t.main].slug, parts: partsOf[i], o: newest[i], si: i })) });
 const groupOf = new Map(G.groups.flatMap((g) => g.k.map((k) => [k, GROUPS.find((x) => x.id === g.id)])));
 for (const it of d.items) (groupOf.get(it.k) ?? GROUPS.at(-1)).items.push(it);
 const total = d.items.length;
@@ -133,6 +133,8 @@ ${alt ? `<link rel="alternate" hreflang="${other}" href="${SITE}${LANGS[other].p
     const by = new Map();
     for (const it of g.items) (by.get(it.k) ?? by.set(it.k, []).get(it.k)).push(it);
     const ks = [...by.keys()].sort((a, b) => by.get(b).length - by.get(a).length);
+    // 一式のページは一式ごとの見出し + 中の部品 (アプリの一式の小窓と同じ中身。オーナー 10-25「一式押したら展開」)
+    if (g.id === "set") return sortByNew(g.items).map((t) => `<h2>${esc(L.name(t))} (${ja ? `${t.parts} 点` : `${t.parts} pcs`})</h2>${cards(d.items.filter((x) => x.s === t.si))}`).join("\n");
     if (ks.length < 2 || ks.some((k) => !L.kind(k))) return cards(g.items);
     return ks.map((k) => `<h2>${esc(L.kind(k))} (${by.get(k).length})</h2>${cards(by.get(k))}`).join("\n");
   };
