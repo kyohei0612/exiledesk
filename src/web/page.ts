@@ -234,7 +234,7 @@ export const pageTitle = computed((): string => {
   if (p === "page=routes") return tr("スパムシミュレーター — ExileDesk", "Spam simulator — ExileDesk");
   if (p === "page=recipes") return tr("レシピ — シミュレーター — ExileDesk", "Recipes — Simulator — ExileDesk");
   if (p === "page=sim-tree") return tr("クラフトの道 (ツリー) — ExileDesk", "Craft route tree — ExileDesk");
-  if (p === "page=skins") return tr("コスメティック — ExileDesk", "Cosmetics — ExileDesk");
+  if (p === "page=skins") return tr("コスメティック (PoE1 の MTX・スキン) — ExileDesk", "Cosmetics (PoE1 MTX & skins) — ExileDesk"); // 検索で「PoE2 MTX」と探す人向け (ブラック 10 代目の呼び名の決め)
   if (p === "page=sim-base") return tr("ベースを選ぶ — シミュレーター — ExileDesk", "Choose a base — Simulator — ExileDesk");
   if (p === "page=sim-mods") return tr("完成の MOD — シミュレーター — ExileDesk", "Target mods — Simulator — ExileDesk");
   const d = dailyOf(p);
