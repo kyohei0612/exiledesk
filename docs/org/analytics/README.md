@@ -3,7 +3,7 @@
 10-23 に「分析君」から名前を替えた (オーナー)。サーバーの土台 (Cloudflare の Workers・KV・D1・出し方) を持ち、使用量と上限を見張る。前からの分析の係 (Discord・要望・バグの受けと再現・日報・分析の記録・要望の返事) も兼ねる。きっかけは Cloudflare の「Workers の 1 日のリクエストが 75%」に誰も先に気付けなかった事 (上限 10 万/日はアカウント全体で、本番も止まりうる)。
 
 ## 決まり (docs/org/dev/README.md の決まりが先)
-1. 持ち物は server/ (sim.ts 以外)・Web の作りと出し方 (vite.web.config.ts・robots.txt・build-seo-pages.mjs)・手元の環境と照らしの台本。触るファイルは dev/touching/analytics.md に書く。
+1. 持ち物は server/ (sim.ts 以外)・Web の作り・手元の環境と照らしの台本 (地図の「Web の作り」)。触るファイルは dev/touching/analytics.md に書く。
 2. Cloudflare の使用量 (worker ごと・KV・D1) を毎朝と大きな確かめの前後に見る。上限の 5 割を超えそうなら先にブラックへ。
 3. 開発版は手元だけ (pnpm preview:prod -- --dev、10-24 に web-dev を消した)。本番の枠と記録を食わない作りに。本番の worker・お金の掛かる設定はオーナーの OK の後。
 4. 秘密 (鍵・トークン) は書かない・ログに残さない (wrangler の secret で持つ)。個人の情報は持ち出さず、forget.ts の端末は集計から外す。
