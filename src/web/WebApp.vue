@@ -69,8 +69,9 @@ watch(feedbackPage, (on) => {
  */
 const craftPage = computed(() => page.value === "");
 /** 広告の枠を置くのは文章のあるページだけ (使い方・コツ、コース、デイリー)。操作の画面 (クラフト台・ベース選び・スパムシミュレーター・要望) には置かない (2026-10-22 AdSense の再申請。デイリーはデイリー部長の頼みで両脇に置く) */
-/** スマホのヘッダーのアイコンだけのボタン (ブログ・使い方・要望。1 段に収める、2026-10-25) */
-const PHONE_ICON = "!grid !size-8 !min-w-0 shrink-0 place-items-center !min-h-8 !p-0";
+/** スマホのヘッダーのアイコンのボタン (ブログ・使い方・要望。1 段に収める、2026-10-25)。絵の下に小さな名前 (絵だけだと押すまで分からない、モンキー 10-26 の 14・オーナー「直して」) */
+const PHONE_ICON = "!flex !h-10 !min-h-0 !w-9 !min-w-0 shrink-0 flex-col items-center justify-center !gap-0.5 !p-0"; // 幅は前と同じ決め打ち (g-btn sm の左右の枠 18px ずつで中身の幅は 0、絵と名前は真ん中に寄せてはみ出させる)
+const PHONE_LABEL = "whitespace-nowrap text-[9px] leading-none";
 const textPage = computed(() => page.value === "page=guide" || page.value.startsWith("course=") || !!dailyPage.value || skinsPage.value);
 /**
  * 45 分以上触らずに戻ってきた時 (タブを開き直した・何か押した時) は、相場とチャンネルだけ裏で取り直す。画面と作業中の物はそのまま
@@ -179,9 +180,9 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       <!-- デイリー・コスメティックの入口は上の切り替えタブの右端 (ModeTabs、2026-10-25 オーナー「ここの右端が良いな、目立たんし」) -->
       <!-- ブログ (読み物への入口、2026-10-22 AdSense の再申請。開発版だけ) -->
       <!-- PC の開発版は外す (スイッチ noHeaderBlog、右の欄の「新しい記事・すべて見る」で足りる。オーナー 10-25)。スマホは右の欄が下に回るので残す (同「スマホ版はヘッダーにブログを出していい」) -->
-      <a v-if="BLOG_ON && (phone || !flag('noHeaderBlog'))" data-rec-part="header-blog" :href="tr('/blog/', '/en/blog/')" class="g-btn sm" :class="phone ? PHONE_ICON : ''" :title="phone ? tr('ブログ', 'Blog') : undefined" :aria-label="phone ? tr('ブログ', 'Blog') : undefined"><Icon v-if="phone" name="book" class="size-4" /><template v-else>{{ tr("ブログ", "Blog") }}</template></a>
-      <button type="button" data-rec-part="header-help" class="g-btn sm" :class="[phone ? PHONE_ICON : '', guideOn ? 'on' : '']" :aria-pressed="guideOn" :title="phone ? tr('使い方・コツ', 'Guide & Tips') : undefined" :aria-label="phone ? tr('使い方・コツ', 'Guide & Tips') : undefined" @click="openGuide"><Icon v-if="phone" name="help" class="size-4" /><template v-else>{{ tr("使い方・コツ", "Guide & Tips") }}</template></button>
-      <button type="button" data-rec-part="header-feedback" class="g-btn sm" :class="[phone ? PHONE_ICON : '', feedbackPage ? 'on' : '']" :aria-pressed="feedbackPage" :aria-label="phone ? tr('要望・バグを送る', 'Send feedback') : undefined" :title="tr('要望やバグを送る (今の画面の状態も一緒に届きます)', 'Send feedback or bug reports (the current screen state is sent along)')" @click="imageAskFor = null; openFeedback()"><Icon v-if="phone" name="message" class="size-4" /><template v-else>{{ tr("要望・バグを送る", "Send feedback") }}</template></button>
+      <a v-if="BLOG_ON && (phone || !flag('noHeaderBlog'))" data-rec-part="header-blog" :href="tr('/blog/', '/en/blog/')" class="g-btn sm" :class="phone ? PHONE_ICON : ''" :title="phone ? tr('ブログ', 'Blog') : undefined" :aria-label="phone ? tr('ブログ', 'Blog') : undefined"><template v-if="phone"><Icon name="book" class="size-4" /><span :class="PHONE_LABEL">{{ tr("ブログ", "Blog") }}</span></template><template v-else>{{ tr("ブログ", "Blog") }}</template></a>
+      <button type="button" data-rec-part="header-help" class="g-btn sm" :class="[phone ? PHONE_ICON : '', guideOn ? 'on' : '']" :aria-pressed="guideOn" :title="phone ? tr('使い方・コツ', 'Guide & Tips') : undefined" :aria-label="phone ? tr('使い方・コツ', 'Guide & Tips') : undefined" @click="openGuide"><template v-if="phone"><Icon name="help" class="size-4" /><span :class="PHONE_LABEL">{{ tr("使い方", "Guide") }}</span></template><template v-else>{{ tr("使い方・コツ", "Guide & Tips") }}</template></button>
+      <button type="button" data-rec-part="header-feedback" class="g-btn sm" :class="[phone ? PHONE_ICON : '', feedbackPage ? 'on' : '']" :aria-pressed="feedbackPage" :aria-label="phone ? tr('要望・バグを送る', 'Send feedback') : undefined" :title="tr('要望やバグを送る (今の画面の状態も一緒に届きます)', 'Send feedback or bug reports (the current screen state is sent along)')" @click="imageAskFor = null; openFeedback()"><template v-if="phone"><Icon name="message" class="size-4" /><span :class="[PHONE_LABEL, tr('', '!text-[8px] tracking-tighter')]">{{ tr("要望", "Feedback") }}</span></template><template v-else>{{ tr("要望・バグを送る", "Send feedback") }}</template></button>
       <!-- 支援 (投げ銭)。リンクが 1 つも無ければ出さない (2026-10-10) -->
       <button v-if="SUPPORT_LINKS.length" type="button" class="g-btn sm" :class="phone ? '!min-h-8 !px-1.5 text-[11px]' : ''" :title="tr('ExileDesk を支援する', 'Support ExileDesk')" @click="supportOpen = true">{{ tr("支援する", "Support") }}</button>
       <!-- 前の「アプリ版 近日公開」の所: このサイトをアプリとしてデスクトップに置く (PWA、2026-10-17 オーナー) -->
