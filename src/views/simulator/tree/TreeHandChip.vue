@@ -10,6 +10,10 @@ import { CATALYSING } from "../../../services/simulator/tree/tree-hands";
 import type { Hand } from "../../../services/simulator/tree/tree-model";
 import { handLabel, handName } from "./tree-names";
 import { tr } from "../../../i18n/lang";
+import { craftStage as s } from "../../../state/craft-stage";
+import { sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { autoRuneKeys, prepFor } from "../../../services/simulator/tree/tree-unbounded";
+import { useTree } from "./use-tree";
 
 /** hand が無い = 分かれ目の札 (split = 行の数。打たずに分ける、10-22) */
 /** room = 札の幅の上限 (ツリーの座標、use-tree-edges の chipRoom) */
@@ -20,6 +24,19 @@ const cat = computed(() => (props.hand?.catalyst && props.hand.omens.includes(CA
 /** アイコンの列 (カレンシー → お告げ) */
 const icons = computed(() => (props.hand ? [props.hand.currency, ...props.hand.omens] : []).filter((k) => !!iconOf(k)));
 /** 札の幅の上限: 隣の札と重ならない幅 (倍率で拡げる分を戻す)。はみ出す名前は … で切り、全文は乗せた時 (10-25 オーナー「こういうところだぶるね」) */
+/**
+ * ルーンが嵌まる手 (10-26 オーナー「2個目のクラフトモッド使う時や特殊ルーンをツリーで選んだ時に自動で付ける」): ルーンの手と、
+ * 着いた人 (箱の見本) のクラフト MOD が上限で打つ前にアストリッドの創造性を嵌める手 (tree-unbounded)。札に小さく「ルーン」
+ */
+const t = useTree();
+const runeOn = computed((): string | null => {
+  const h = props.hand, d = s.data.value;
+  if (!h || !d) return null;
+  if (h.currency.startsWith("rune:")) return handName(h.currency);
+  const it = sampleOf(d, t.doc.value, props.id, 1).item;
+  const keys = autoRuneKeys(it, prepFor(d, it, h.currency));
+  return keys.length ? keys.map((k) => handName(k)).join(tr("・", ", ")) : null;
+});
 const maxW = computed(() => `${Math.round(props.room / props.inv)}px`);
 </script>
 
@@ -37,5 +54,6 @@ const maxW = computed(() => `${Math.round(props.room / props.inv)}px`);
     <span v-if="hand.repeat" class="shrink-0 rounded-sm bg-rose-400/20 px-1 text-[10px]">{{ handName(hand.currency) }}</span>
     <!-- 狙い無しの手 (結果は「打った後」の箱 1 つ。札が高貴だけで狙い無しと分からなかった、10-22 白紙から組んだ試し) -->
     <span v-if="hand.free" class="shrink-0 rounded-sm bg-white/15 px-1 text-[10px]">{{ tr("狙い無し", "no target") }}</span>
+    <span v-if="runeOn" data-tree-hand-rune class="shrink-0 rounded-sm bg-sky-400/20 px-1 text-[10px] text-sky-100" :title="tr(`この手でルーンが嵌まる: ${runeOn} (一度嵌まったら戻っても嵌まったまま)`, `A rune is socketed at this step: ${runeOn} (stays socketed on return paths)`)">{{ tr("ルーン", "Rune") }}</span>
   </button>
 </template>

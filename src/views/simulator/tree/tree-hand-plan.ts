@@ -3,9 +3,10 @@
  * 開発の時だけの猿の口 (sim-monkey.ts) が同じ関数を呼ぶ (別の打ち方を作らない、メモ feedback-sim-no-own-logic)。中身はエンジンの入口と木の関数を呼ぶだけ
  */
 import { catalystBoosts, mulberry32, omensAllowedFor, omensFor, runeOf, socketCapOf, tierRankOf, type PatchData, type StageApply, type StageItem } from "../../../services/craft-stage/engine";
-import { bonesFor, CRAFT_RUNE_KEYS, essenceShelf, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
+import { bonesFor, essenceShelf, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
 import { treeHidden } from "../use-sim-shelf";
 import { catalystFull, catalystTagOf, fillCatalyst, stepOutcomes } from "../../../services/simulator/sim-engine";
+import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
@@ -73,7 +74,7 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
   // エッセンス = 付く MOD は決まっている。エンジンの結果で新しく付いた MOD を当たりの札に (10-22 オーナー「エッセンスの道」)
   if (kind === "essence") {
     const before = new Set([...item.prefixes, ...item.suffixes].map((m) => m.modId));
-    const got = (stepOutcomes(data, item, h.currency, engineOmens(h)) ?? []).filter((o) => !o.void).flatMap((o) => [...o.item.prefixes, ...o.item.suffixes].filter((m) => !before.has(m.modId)));
+    const got = (stepOutcomes(data, prepFor(data, item, h.currency), h.currency, engineOmens(h)) ?? []).filter((o) => !o.void).flatMap((o) => [...o.item.prefixes, ...o.item.suffixes].filter((m) => !before.has(m.modId)));
     const out: Aim[] = [];
     // 段はエッセンス自身の段 (T1 = グレーター、完成形の設定の表・poe2db と同じ。10-24 オーナー「エッセンスの MOD と一般 MOD は別物」)
     for (const m of got) if (!out.some((a) => a.modId === m.modId)) out.push({ modId: m.modId, tier: tierRankOf(data, m.modId, m.tierIndex) });
@@ -152,7 +153,7 @@ export function applyPick(d: TreeDoc, id: string, h: Hand, kind: HandKind, aims:
 /** 棚に並ぶ物 (CurrencyShelf と同じ: オーブ・骨・エッセンス、ソケットがあればクラフトのルーン。隠すのはツリーの棚と同じ treeHidden。猿の口) */
 export function shelfKeysOf(data: PatchData, it: StageItem): string[] {
   const sockets = socketCapOf(it.base, it.cls.category) > 0 || (it.sockets ?? 0) > 0;
-  const runes = sockets ? runesFor(it).flatMap((g) => g.keys).filter((k) => CRAFT_RUNE_KEYS.includes(k) && runeOf(k)) : [];
+  const runes = sockets ? runesFor(it).flatMap((g) => g.keys).filter((k) => runeOf(k)) : []; // クラフトのルーン・特別なルーン (ほかは treeHidden で外す)
   return [...ORBS.flatMap((g) => g.keys), ...bonesFor(it), ...essenceShelf(data, it).flatMap((g) => g.keys), ...runes].filter((k) => !treeHidden(k));
 }
 /** 棚で持った物の残り (お告げ以外)。hitAims = 当たりの箱にする MOD (modId の並び、[] = 狙い無し。渡さないと付きうる狙い全部) */

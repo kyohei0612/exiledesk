@@ -8,12 +8,13 @@ import { ref, type Ref } from "vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { provideShelf, simHidden } from "../../state/for-share/shelf-context";
 import { useReason, type StageItem } from "../../services/craft-stage/engine";
-import { CRAFT_RUNE_KEYS } from "../../state/for-share/craft-stage-shelf";
+import { CRAFT_RUNE_KEYS, RUNE_GROUPS } from "../../state/for-share/craft-stage-shelf";
+import { prepFor } from "../../services/simulator/tree/tree-unbounded";
 import { tr } from "../../i18n/lang";
 
 /**
  * ツリーの棚だけで出さない物 (10-24 オーナー「要望があれば戻す」温度感。消さずに出さないだけ、戻す時はここ 1 か所):
- * 聖別 (聖別のお告げ。神のオーブと組む手)、神のオーブと祝福のお告げ (10-24 オーナー「神のオーブもいらんな」)、クラフトのルーン以外のルーン (ソウルコア・アイドル・遺産・効き目だけのルーン)。
+ * 聖別 (聖別のお告げ。神のオーブと組む手)、神のオーブと祝福のお告げ (10-24 オーナー「神のオーブもいらんな」)、クラフトのルーン・特別なルーン以外のルーン (ソウルコア・アイドル・遺産・効き目だけのルーン)。
  * ヒネコラの錠・鏡写しは前から共通の SIM_HIDDEN で出していない。エミュの棚は変えない
  */
 /**
@@ -22,7 +23,9 @@ import { tr } from "../../i18n/lang";
  */
 export const TREE_SPAM_ORB = false;
 export const TREE_HIDDEN = new Set(["OmenofSanctification", "divine", "OmenoftheBlessed"]);
-export const treeHidden = (key: string): boolean => simHidden(key) || TREE_HIDDEN.has(key) || (key.startsWith("rune:") && !CRAFT_RUNE_KEYS.includes(key));
+/** ツリーの棚に出すルーン: クラフトのルーンと特別なルーン (古代・ウォード・人の名前の物など = ルーンの特殊 MOD を付ける物。10-26 オーナー「特殊ルーンをツリーで選んだ時に自動で付ける」) */
+const SPECIAL_RUNE_KEYS = new Set(RUNE_GROUPS.find((g) => g.kind === "special")?.keys ?? []);
+export const treeHidden = (key: string): boolean => simHidden(key) || TREE_HIDDEN.has(key) || (key.startsWith("rune:") && !CRAFT_RUNE_KEYS.includes(key) && !SPECIAL_RUNE_KEYS.has(key));
 
 /** block = 画面の決まりで打たせない理由 (ツリーの「フラクチャーの印が無い」など。null ならエンジンの useReason) */
 export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null> = ref(null), omens: Ref<string[]> = ref([]), block: (key: string) => string | null = () => null) {
@@ -33,7 +36,7 @@ export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null
   function onShelfDown(e: PointerEvent): void { if (held.value && !(e.target as HTMLElement).closest("button,input,select,label,[data-held-box]")) release(); }
   function usableWith(k: string, om: readonly string[]): string | null {
     const d = s.data.value, it = item.value;
-    return block(k) ?? (d && it ? useReason(d, it, k, om) : tr("準備中", "Loading"));
+    return block(k) ?? (d && it ? useReason(d, prepFor(d, it, k), k, om) : tr("準備中", "Loading")); // 規格外の形で聞く (ルーンはソケットを足す・アストリッド、tree-unbounded)
   }
   provideShelf({
     data: s.data, item, omens, held,

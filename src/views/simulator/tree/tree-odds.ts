@@ -6,6 +6,7 @@
  */
 import { computed, type Ref } from "vue";
 import { outcomeOdds } from "../../../services/simulator/sim-engine";
+import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { aimsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { engineOmens } from "../../../services/simulator/tree/tree-hands";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -19,7 +20,7 @@ export function oddsOfHand(doc: TreeDoc, id: string): Map<string, number> | null
   const kids = b.outs.map((o) => doc.boxes[o]!).filter(Boolean);
   const hits = kids.filter((k) => k.out === "hit" && k.aim).map((k) => k.aim!);
   const aims = [...hits, ...aimsOf(doc).filter((a) => !hits.some((h) => h.modId === a.modId && h.tier === a.tier))];
-  const odds = outcomeOdds(data, sampleOf(data, doc, id, 1).item, b.hand.currency, engineOmens(b.hand), aims, { sameText: true });
+  const odds = outcomeOdds(data, prepFor(data, sampleOf(data, doc, id, 1).item, b.hand.currency), b.hand.currency, engineOmens(b.hand), aims, { sameText: true });
   if (!odds) return null;
   const out = new Map<string, number>();
   for (const o of odds) {

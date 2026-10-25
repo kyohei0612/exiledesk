@@ -17,6 +17,8 @@ import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-shape";
 import { arrivedAt } from "./tree-arrived";
 import { aimsMayHold } from "./tree-lost";
+import { autoRuneKeys, passThrough, prepFor } from "./tree-unbounded";
+export { goalsHeld, heldHitOf } from "./tree-unbounded";
 
 const TRIES = 3000;
 
@@ -121,7 +123,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
     // 前は持って着かない狙いまで足し、右側の結晶化で外れしか消えない手にも「狙いが消えた」が出た、10-25)
     const forms = [item, ...hold.filter((a) => !aimHeldOn(data, item, a, { sameText: true })).map((a) => applyCurrency(data, item, forceKey(a.modId, `T${a.tier}`, "n"), mulberry32(seed))).filter((r) => r.applied).map((r) => r.item)];
     for (const it of forms) {
-      const outs = stepOutcomes(data, it, h.currency, engineOmens(h))?.filter((o) => !o.void);
+      const outs = stepOutcomes(data, prepFor(data, it, h.currency), h.currency, engineOmens(h))?.filter((o) => !o.void);
       if (!outs?.length) return null;
       if (outs.some((o) => unrevealedOf(o.item))) {
         veiled = true;
@@ -200,13 +202,17 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
   }
   // 狙い無しの埋めるだけの高貴は、もう両側満杯なら打たずにそのまま次の箱へ (何も使わない。10-25 オーナー・ブラック、
   // 合金の 50/50 で負けて満杯のまま戻った人がスピリットの後の埋める高貴で止まっていた。分かれ道の箱は作らない)
-  if (fillDone(item, h)) return { applied: true, item, added: [], removed: [] };
+  // もう嵌まっているルーンの手も打たずに通す (戻りの道でまた来た。10-26 オーナー「もっかい嵌め直しとかないから」)
+  if (passThrough(item, h)) return { applied: true, item, added: [], removed: [] };
+  const before = item;
+  item = prepFor(data, item, h.currency); // 規格外: ルーンの手はソケットを足す・クラフト MOD が上限ならアストリッドを先に嵌める (tree-unbounded)
   // 1 回分はエンジンの入口の applyHand (B6〜B8 10-22): カタリストの手は品質を今の最大まで (もう最大なら通る)・触媒の前のカタリスト・
   // フラクチャーで ✦ にする MOD・骨の後はそのまま発現 (反響は骨に掛けず発現で使う)。
   // 発現は当たりの札に合う候補、無ければ 1 つ目 (2026-10-22 オーナー「冒涜は冒涜で付与かな」)。miss = 外れの箱の見本 (狙いでない候補を選ぶ。黒き血は狙いが必ず候補に入り、見本が外れの箱に着かなかった、10-22)
   const ts = targetsOf(data, aims);
   const r = applyHand(data, item, h.currency, rng, { omens: h.omens, catalyst: h.catalyst, fractureOf: fractureTarget(data, item, h, aims), reveal: (m) => isAimMod(m, ts, aimOpts(data)) !== miss });
   if (use) {
+    if (r.applied) for (const k of autoRuneKeys(before, item)) use(k);
     if (r.catalystCount) use(isCatalyst(h.currency) ? h.currency : h.catalyst!, r.catalystCount);
     if (r.applied && !isCatalyst(h.currency)) {
       use(h.currency);
@@ -243,23 +249,9 @@ export function startItemOf(data: PatchData, doc: TreeDoc, rng: () => number): S
  * その手がこのアイテムに打てない理由 (打てるなら null。オーナー 10-22「進行不能」: 消せる物が無い側のお告げ・効かないお告げが掛かった手を確定させない)。
  * 判定はエンジンの入口の canUse (お告げ → 触媒の前のカタリスト → 手そのもの、繰り返しは 1 回分、乱数で決まる物は打てる扱い。B11 10-22)
  */
-/**
- * 回し方だけの扱い (10-25 オーナー・ブラック、木の形は変えない。木の「自動の完成」= 完成の箱を作って先を止める、とは別物でそちらは取りやめのまま):
- * goalsHeld = 完成の狙いが全部そろった人は、どの箱に着いてもその場で完成として数える (100 人回し・テストラン・精査)。
- * heldHitOf = 手が打てない時、その手の当たりの箱の狙いがもう付いていれば打たずにその箱へ進む (合金の負けで冒涜のキャストを持ったまま戻った人など)
- */
-export function goalsHeld(data: PatchData, doc: TreeDoc, item: StageItem): boolean {
-  const goals = doc.memoAims ?? [];
-  return !!goals.length && goals.every((a) => aimHeldOn(data, item, a, { sameText: true }));
-}
-export function heldHitOf(data: PatchData, doc: TreeDoc, b: TreeBox, item: StageItem): string | null {
-  return b.outs.find((id) => { const o = doc.boxes[id]; return o?.out === "hit" && !!o.aim && aimHeldOn(data, item, o.aim, { sameText: true }); }) ?? null;
-}
-/** 狙い無しの埋めるだけの高貴で、もう両側満杯 (打たずに通す。playHand・handProblem) */
-const fillDone = (item: StageItem, h: Hand): boolean => !!h.free && kindOf(h.currency) === "exalt" && !room(item, "prefix") && !room(item, "suffix");
 export function handProblem(data: PatchData, item: StageItem, h: Hand): string | null {
-  if (fillDone(item, h)) return null;
-  return canUse(data, item, h.currency, { omens: h.omens, catalyst: h.catalyst });
+  if (passThrough(item, h)) return null;
+  return canUse(data, prepFor(data, item, h.currency), h.currency, { omens: h.omens, catalyst: h.catalyst });
 }
 
 /** 箱の見本 (seed が同じなら同じ物。木の設定 tune で打つ) */

@@ -3,6 +3,7 @@
  * (2026-10-23 エンジンの for-sim から戻した。オーナー「元からエンジンにあった物をシミュが勝手に自前で作っただけ」)
  */
 import { aimHits as hits, heldOdds, makeStageMod, tierIndexOf, type AimHitOpts, type AimTarget, type HeldOdds, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { prepFor } from "./tree-unbounded";
 
 // 付きうる狙い (2026-10-23 エンジンの for-sim から戻した。中身はエンジンの核の heldOdds・aimHits を呼ぶだけ。10-25 に画面の tree-hand-plan から精査と一緒に使うここへ)
 interface TierAim { modId: string; tier: number }
@@ -17,7 +18,7 @@ const heldOn = (data: PatchData, mods: readonly StageMod[], a: TierAim, o: AimDi
  * もう付いている狙いは見ない (呼ぶ側が外して渡す)。どの見本でも heldOdds に % が 1 つも無い (打てない・確率の表が無い手) 時は null (呼ぶ側が決める)
  */
 export function reachableAims<A extends TierAim>(data: PatchData, items: readonly StageItem[], key: string, omens: readonly string[], aims: readonly A[], o: AimDiffOpts = {}): A[] | null {
-  const pools = items.flatMap((it) => { const h = heldOdds(data, it, key, omens), ms = h ? poolOf(data, h) : []; return ms.length ? [ms] : []; });
+  const pools = items.flatMap((it) => { const h = heldOdds(data, prepFor(data, it, key), key, omens), ms = h ? poolOf(data, h) : []; return ms.length ? [ms] : []; });
   if (!pools.length) return null;
   return aims.filter((a) => pools.some((ms) => heldOn(data, ms, a, o)));
 }

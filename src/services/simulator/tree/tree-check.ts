@@ -10,6 +10,7 @@
  */
 import { allMods, modBoostsOf, mulberry32, room, SIDES, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomes } from "../../simulator/sim-engine";
+import { prepFor } from "./tree-unbounded";
 import { catalystTagOf } from "../../simulator/sim-engine";
 import { aimHeldOn, junkOf, reachableAims } from "./tree-aim";
 import { CATALYSING, effectOf, engineOmens, isCatalyst } from "./tree-hands";
@@ -203,7 +204,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
         /** 起こりうる結果が全部見えている時の一覧 (無い結果の箱は下で打ち直さない) */
         let canBe: { out: OutKind; hits: Aim[] }[] | null = null;
         if (!b.hand.repeat && effectOf(b.hand.currency) !== "fracture") {
-          const all = stepOutcomes(data, item, b.hand.currency, engineOmens(b.hand)) ?? [];
+          const all = stepOutcomes(data, prepFor(data, item, b.hand.currency), b.hand.currency, engineOmens(b.hand)) ?? []; // 規格外の形で (tree-unbounded)
           const shown = all.filter((o) => !o.void && !unrevealedOf(o.item)).map((o) => outcomeOf(data, item, o.item, aims, b.hand!.currency));
           const miss = shown.filter((oc) => !outBoxOf(doc, b, oc));
           if (miss.length) { const c = odd.get(id) ?? { who: new Set<number>(), outs: new Set<string>() }; c.who.add(person); for (const oc of miss) c.outs.add(outName(oc.out)); odd.set(id, c); }
