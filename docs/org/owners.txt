@@ -245,3 +245,4 @@ public/sw.js                         デザイン
 scripts/check-monkey-engine.mjs      モンキー
 scripts/_monkey-*.ts                 モンキー
 scripts/check-www-redirect.mjs       サーバー
+src/state/stage-session.ts           デザイン
