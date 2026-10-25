@@ -7,8 +7,8 @@ import { catalystFull, catalystTagOf, fillCatalyst, stepOutcomes } from "../../.
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, ECHO, effectOf, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, sampleOf, singleOutOf } from "../../../services/simulator/tree/tree-sample";
-import { linkSameShape } from "../../../services/simulator/tree/tree-shape";
-import { fractureMarks, healLost, kindOfHand, setHand, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { heldSets, linkSameShape } from "../../../services/simulator/tree/tree-shape";
+import { aimKey, fractureMarks, healLost, kindOfHand, setHand, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
 import { tr } from "../../../i18n/lang";
 
@@ -135,6 +135,12 @@ export function applyPick(d: TreeDoc, id: string, h: Hand, kind: HandKind, aims:
   setHand(d, at, h, kind, aims, only);
   joinSameShape(d, id);
   linkSameShape(d, Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id));
+  // 新しい当たりの箱で、合流せず完成の狙いが全部揃う物は完成で止まる (10-25 オーナー「完成したら止まるじゃん」。完成のボタンで外せる、外したら付け直さない)
+  const goals = (d.memoAims ?? []).map(aimKey);
+  for (const b of Object.values(d.boxes)) {
+    if (had.has(b.id) || b.out !== "hit" || !b.aim || b.hand || b.back || b.split) continue;
+    if (goals.length && heldSets(d, b.id).every((h) => goals.every((g) => h.includes(g)))) b.done = "main";
+  }
   // 自動でつないだ戻りで狙いを持って着く道ができた箱に「狙いが消えた」を足す (tree-model の healLost)
   healLost(d);
   return at;

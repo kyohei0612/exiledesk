@@ -195,6 +195,7 @@ export function matchTargets(doc: TreeDoc, id: string): { key: string; to: strin
 /**
  * 手を付けて新しくできた結果の箱 (ids) のうち、形 (matchTargets = 回す時の settle と同じ鍵) が木の中の手のある箱と同じ物は、そこへ自動でつなぐ
  * (10-22 オーナー「消去で打った結果が同じ狙い MOD 群や外れ MOD の形になったら自動で案内…同じ形だから自分で付ける必要ない」)。印は autoBack (乗せた時のカード)。
+ * 当たりの箱は、手の無い同じ状態の当たり (狙いが揃った箱・まだ決めていない箱) へも合流する (sameHitOf、10-25 オーナー)。
  * 形が複数ありうる箱 (狙いが消えた = どれが消えたかで分かれる) と、同じ形の箱が複数ある時は先に作った箱 (残りは回す時の settle が形の合う箱へ)。
  * 同じ形の箱が無い箱は setHand の既定のまま。つながない物 (10-22 白紙から 13 通り組んだ #2、毎回 × で外す手間・始まりの手を打ち直せない木で 100 人止まり):
  * MOD をまだ選んでいない当たりの箱、狙い 0 の形 (始まりへ送るのは狙いが消えた箱だけ)、setHand が決めた戻り先 (外れが消えた → 外れの前の箱など。
@@ -209,12 +210,25 @@ export function linkSameShape(doc: TreeDoc, ids: readonly string[]): void {
     // フラクチャーの結果の箱は、形 (✦ は数えない) が親と同じでも つながない (親へ戻すと ✦ のある品にもう一度フラクチャーを打って止まった、10-24)
     const p = c.parent ? doc.boxes[c.parent] : undefined;
     if (p?.hand && effectOf(p.hand.currency) === "fracture") continue;
-    const to = matchTargets(doc, id).map((m) => m.to).find((x): x is string => !!x && x !== id && (x !== "start" || c.out === "lost"));
+    const to = matchTargets(doc, id).map((m) => m.to).find((x): x is string => !!x && x !== id && (x !== "start" || c.out === "lost")) ?? (c.out === "hit" ? sameHitOf(doc, id) : null);
     if (!to) continue;
     c.back = to;
     c.autoBack = true;
     c.done = null;
   }
+}
+
+/**
+ * 道の札 (付いている狙いの組) が同じ、既にある当たりの箱 (手が無くても = 狙いが揃った箱・まだ決めていない箱も)。順番違いで同じ状態になった当たりは
+ * 木を伸ばさずそこへ合流させる (10-25 オーナー「自動で同じ形のツリーまで引っ張ってほしいな矢印そしたら解決でしょ」、notes/2026-10-25-auto-close.md の B)
+ */
+function sameHitOf(doc: TreeDoc, id: string): string | null {
+  const keyOf = (x: string): string | null => { const s = heldSets(doc, x); return s.length === 1 ? s[0]!.join(",") : null; };
+  const k = keyOf(id);
+  if (k === null) return null;
+  // 行き先は先に作った箱だけ (linkSameShape はまだ決めていない古い箱も見直すので、古い箱が新しい箱へつながる逆向きを作らない)
+  const older = Object.keys(doc.boxes).slice(0, Object.keys(doc.boxes).indexOf(id));
+  return older.find((x) => { const o = doc.boxes[x]!; return o.out === "hit" && !!o.aim && !o.back && !o.split && keyOf(x) === k; }) ?? null;
 }
 
 /** 手の結果 (outcomeOf) に合う結果の箱 (回す時と精査で同じ)。any = 狙い無しの手の「打った後」、pass = 品質だけ上げた後 */
