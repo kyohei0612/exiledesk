@@ -391,3 +391,13 @@ input[type="checkbox"], input[type="radio"] { accent-color: #b5813a; }
  * 帯 (Disclosure の bar) は mt-2 + py-1.5 + 文字 ≒ 40px と、その下に mb-3
  */
 .g-list-end { height: 2rem; }
+
+/*
+ * スマホのページの題の札 (h1.g-tabbar.g-brush) は横幅いっぱいに伸ばす。横の「適正」「← クラフトへ戻る」などは上か下の段へ (2026-10-25 オーナーがスマホの見え方を見て)。
+ * 題を直に持つ段と、題を包む枠を持つ段 (クラフト台の data-rec-part="title") を折り返させ、包む枠も 1 段まるごとに。PC は今のまま
+ */
+@media (max-width: 767px) {
+  h1.g-tabbar.g-brush { flex: 1 1 100%; width: 100%; }
+  :has(> h1.g-tabbar.g-brush), :has(> * > h1.g-tabbar.g-brush) { flex-wrap: wrap; }
+  :has(> * > h1.g-tabbar.g-brush) > :has(> h1.g-tabbar.g-brush) { flex: 1 1 100%; }
+}

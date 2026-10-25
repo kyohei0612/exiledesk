@@ -14,6 +14,7 @@ import FeedbackDialog from "./FeedbackDialog.vue";
 import ChangelogDialog from "../components/ChangelogDialog.vue";
 import SupportDialog from "../components/SupportDialog.vue";
 import LeaveConfirm from "./LeaveConfirm.vue";
+import ToTop from "./ToTop.vue";
 import HoverStack from "../components/decor/HoverStack.vue";
 import { SUPPORT_LINKS, supportOpen } from "../state/support";
 import { changelogNew, changelogOpen, initChangelog } from "../state/changelog";
@@ -190,6 +191,7 @@ window.visualViewport?.addEventListener("resize", fitZoom);
     <ChangelogDialog />
     <SupportDialog />
     <LeaveConfirm /><!-- ツリーの作りかけで外へ移る前の確かめ (web/page.ts の setLeaveGuard) -->
+    <ToTop /><!-- スマホの「上へ戻る」(全部の画面の右下) -->
     <!-- スマホの広告の枠: 上の帯の下に 1 つ。棚・「ベースを変える」から指 1 本分離す (誤タップは規約違反。utils/ads.ts) -->
     <div v-if="phone && textPage" class="mb-4 flex justify-center pt-2 empty:hidden"><AdSlot id="phone-top" :w="320" :h="100" :tick="pageTick" /></div>
     <!-- スマホは縦に積む: ステージ → チャンネル (横スクロールは出さない) -->
