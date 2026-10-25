@@ -9,7 +9,7 @@
  * 分析は python scripts/analyze-logs.py data-cache/logs/<日付>.jsonl ...
  */
 import { execFileSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -26,9 +26,20 @@ function viaWrangler(day) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Error(`日付の形が違う: ${day}`);
   // npx は Windows で shell 経由になり、SQL の引数が引用されずに崩れる。server/live の wrangler を node で直接動かす
   const bin = resolve(ROOT, "server/live/node_modules/wrangler/bin/wrangler.js");
-  const json = execFileSync(process.execPath, [bin, "d1", "execute", "exiledesk-logs", "--remote", "--json", "--command", `SELECT at, country, body FROM logs WHERE day = '${day}' ORDER BY id`], { windowsHide: true,
-    cwd: resolve(ROOT, "server/live"), encoding: "utf8", maxBuffer: 1 << 30, stdio: ["ignore", "pipe", "ignore"],
-  });
+  const args = [bin, "d1", "execute", "exiledesk-logs", "--remote", "--json", "--command", `SELECT at, country, body FROM logs WHERE day = '${day}' ORDER BY id`];
+  // 2026-10-25 9:05 の毎朝の回で 1 度だけ落ちた (手で回すと通る、その時だけの失敗)。3 回まで読み直し、落ちた訳は wrangler の stderr の終わりを残す
+  let json;
+  for (let i = 1; ; i++) {
+    try {
+      json = execFileSync(process.execPath, args, { windowsHide: true, cwd: resolve(ROOT, "server/live"), encoding: "utf8", maxBuffer: 1 << 30, stdio: ["ignore", "pipe", "pipe"] });
+      break;
+    } catch (e) {
+      const why = `${e.stderr ?? ""}${e.stdout ?? ""}`.replace(/\s+/g, " ").trim().slice(-300) || String(e).slice(-300);
+      if (i >= 3) throw new Error(`3 回とも読めない: ${why}`);
+      console.error(day, `読めない (${i} 回目、5 秒後に読み直す): ${why}`);
+      execFileSync(process.execPath, ["-e", "setTimeout(() => {}, 5000)"]);
+    }
+  }
   const rows = JSON.parse(json)[0].results;
   return rows.flatMap((r) => { try { return [JSON.stringify({ at: r.at, country: r.country, b: JSON.parse(r.body) })]; } catch { return []; } }).join("\n");
 }
@@ -40,7 +51,12 @@ for (const day of days) {
     if (!r.ok) { console.error(day, r.status, await r.text()); continue; }
     text = await r.text();
   } else {
-    try { text = viaWrangler(day); } catch (e) { console.error(day, "wrangler で読めない (wrangler login が要るかも):", String(e).slice(0, 200)); continue; }
+    try { text = viaWrangler(day); } catch (e) {
+      // 前に取った途中の物で日報を作らないよう、その日のファイルは消す (daily-summary.mjs が「昨日の記録が無い」で止まる)
+      rmSync(resolve(out, `${day}.jsonl`), { force: true });
+      console.error(day, "wrangler で読めない (code 7403 なら wrangler login が要る):", String(e.message ?? e).slice(0, 400));
+      continue;
+    }
   }
   writeFileSync(resolve(out, `${day}.jsonl`), text);
   const lines = text ? text.split("\n").length : 0;

@@ -28,6 +28,8 @@ execFileSync(process.execPath, [resolve(ROOT, "scripts/pull-logs.mjs"), day, pre
 const py = (args) => execFileSync("python", [resolve(ROOT, "scripts/analyze-logs.py"), ...args], { windowsHide: true, cwd: ROOT, encoding: "utf8", maxBuffer: 1 << 28, env: { ...process.env, PYTHONIOENCODING: "utf-8" } });
 const stats = (d) => (existsSync(logFile(d)) ? JSON.parse(py([logFile(d), "--json"])) : null);
 const [cur, p1, p7] = [stats(day), stats(prev), stats(week)];
+// 昨日の分が読めなかった時は、訳 (上の pull-logs.mjs の行) を見るように言って止める (10-25 は TypeError で落ちて訳が見えなかった)
+if (!cur) { console.error(`${day} の記録が無い (D1 から読めなかった。上の「読めない」の行を見る)。日報は書いていない`); process.exit(1); }
 const full = py([logFile(day)]);
 
 // 3. 要望 (KV fb:<逆順の時刻>:<id>)。昨日の 0 時から今まで (朝に来た物も 1 日早く拾う)。連絡先・uid は持ち出さない
