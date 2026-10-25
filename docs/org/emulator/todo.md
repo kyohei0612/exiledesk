@@ -3,6 +3,14 @@
 10-23 からジン部長 = データベース (データと打った時の決まり。部品・見た目・画面の挙動 web/・composables・utils はデザイン部長)。画面の仕事はエミュ部長 (docs/org/emu/todo.md) とシミュ部長。エンジンへの要望はブラック経由で受けて入口に足す。
 
 ## やる事
+- **次のジンへ (10 本目 → 次、2026-10-26。オーナー 10-26: 整理が済んだらジンは常駐をやめて閉じる、パッチの決まりの変更・データの不具合の時だけ立てる)**:
+  - 動く時の決まり: 立つのは MOD・カレンシーの決まりの変更 (パッチ) とエンジン・データの不具合の時だけ (オーナー 10-25 夜「ジンはMOD変更やカレンシールール変更等の修正でやっと動く」)。画面への指示・表示の決めはしない。画面はエンジンの関数を何でも直接呼んでよく、エンジンのファイルを書き換えない (書き換えはジンだけ、鍵の仕掛けの案は共有メモ side-session-notes/local_b4352604…/jin10-engine-lock-plan.md、オーナーに見せる前で入れていない)。
+  - 持ち物の今の形 (owners.txt 53f3cfbc): データ (vendor/poe2htc/data・services/htc/*.json・craft-stage/stage-*.json・i18n の MOD の文)・カレンシーとお告げの効き方 (craft-stage/apply-*・omens・spec/・stage-core・stage-draw・boosts・defence)・確率と計算機の核 (held-odds・aim-odds・route-race・run-plan・mods/)・MOD の文から MOD を引く所 (htc/bridge・paste-parse・paste-targets)。よく使う名前の束 craft-stage/engine.ts (使われない名前は 10-26 に外した)。
+  - 10-26 にエンジンから出した物 (もうジンの物ではない): シミュの services/simulator/sim-engine.ts・sim-engine/ (完成形の判定・結果の箱の割合・requiredRunes・規格外の打ち方 applyUnbounded ほか)・services/simulator/paste/ (貼り付けの読み item-text)、エミュの services/emulator/emu-engine.ts・emu-engine/、デザインの src/components/art/ (base・skill・rune-art)。テスト・golden・データの台本は解析・エミュ、見張り check-engine-entry はデザイン。経過は共有メモ side-session-notes/local_cbd85ab5…/jin-split-plan.md。
+  - 見張り check-engine-entry (B 凍結の htc・C エンジンはシミュ・エミュ・画面の置き場を読まない・D エミュ ⇄ シミュ・E 画面の中のエンジンらしき物、控えから増えた時だけ落ちる)。
+  - 10-25〜26 にジンが入れた物: 目録 data-catalog.md・outcomeOdds・貼り付けの読みの一般の解き方 (決め notes/2026-10-25-paste-hybrid-sum.md、見本 notes/paste-samples/)・足しの MOD の文を整える applyExtras の extraModText (b48d7f18)・完成形の規格外とルーン (93e81540・8824f3ef・403a3de7)。
+  - 残り (データ・決まりの側): タリスマンの物理の段 (トレード P6 / データは 9 段で T5、未決)・冒涜専用が貼り付けで段 0 かの見本待ち・ジュエルの枠 2/2 は poe2db で未確認・英語の文の「-30% reduced」と負の数が重なる (セプターも前から同じ)・t4 の「パペットマスターの最大スタック数 +6」が段に収まらない (未調査)・テストの落ち 5 本はオーナーが言うまで触らない。
+  - 送信の上限: ユーザーの書き込みなしで 10 通ほどで止まる。区切りだけ送り、止まったら共有メモに書く (docs/org/README.md)。
 - 次の部長へ (9 本目 → 10 本目、10-25。会話 850 件超え・送信の上限でブラック 10 代目の頼み):
   - 役: データセンター (オーナー 10-25「核の情報をただ持ってるだけ」)。データと決まりの事実を答える・データの元 (トレード > poe2db) からの取り込み・エンジンの核 (engine*.ts ほか) を足す。ビルド・出し方・Web の土台・照らしの台本は受けず owner-of で持ち主へ (README の頭)。持ち物の移し 701e97b5: vite.web.config・robots.txt・build-seo-pages・preview-prod・compare-* = サーバー管理人、public/sw.js = デザイン、check-monkey-engine・_monkey-* = モンキー。
   - 目録 data-catalog.md (79c1b408): ① 目録は書けた (よく聞かれる答え 21 行・データ 11 種・入口の名前の全部と使っている部)。② engine.ts に PRICE_KEYS・ESSENCE_TABLE を出した。デザインの付け替え 2 か所 (state/for-share/craft-stage-shelf.ts → PRICE_KEYS・ESSENCE_TABLE、components/for-share/mod-list/stage-mod-list-look.ts → ESSENCE_KEYS) はブラックに未報告。③ README に目録の 1 行を足す部の一覧 (emu・simulator・design・skins・monkey・analytics・解析君) もブラックに未報告 → 共有メモ jin9-replies-2026-10-25.md の末尾をブラックへ。
