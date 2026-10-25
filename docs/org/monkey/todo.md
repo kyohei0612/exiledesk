@@ -1,6 +1,15 @@
 # モンキー隊長 のやる事
 
-## 次の隊長へ (4 本目、10-25 朝。全ベースの照らしは済んだ、結果は notes/2026-10-25-monkey.md)
+## 次の隊長へ (4 本目 → 5 本目、10-25 午後。今の画面だけで回す形に作り替え中)
+- オーナーの決め (10-25、README 決まり 11〜13): まず 1 ベース → ブラックへ 1 行 → OK で広げる。今の画面だけで組む・読む (猿の口 __simMonkey は答え合わせの boxItem だけ)。木を仕上げ、テストで ✓ 合格した木だけ「100 人回す」で比べ、合格しない木は棚・お告げ・穴の一覧の文だけ照らす (合格の割合も)。猿の半分 (偶数番) は「道の形」(スタートに錬金術・狙い ☑ → 当たりは完成にする、外れにカオスの当たるまで・狙い ☑ → 当たりは完成にする)、半分はでたらめ (ブラック OK)。
+- 今の結果 (ハンマー 12 匹、1461・8457bb23 のビルド): 合格 6/12 (道 6/6・でたらめ 0/6)。棚 48 手・お告げ 45 手はエンジンと一致 (e592b8eb で「印の無い木はフラクチャーオーブを出さない」を照らしに入れた後)。合格した 6 本は 100 人の数が画面から取れた (h-4/m-<偶数>.json の ui.boxes・ui.report・ui.after100)。
+- やる事 (残り): 合格した木の 100 人の数をエンジンと比べる口。照らしの台本 check-monkey-engine の checkTree・checkWalk は rec.tree.dump (箱・手の鍵・お告げの鍵・aim の modId/tier・repeat・outs・back) と rec.tree.run / result (n・boxes[id].visits・edges["a>b"]・uses・finished) を受ける。画面の猿は rec.tree.screen (箱の文・out・back) と rec.steps (pick の札の名前・omen・checks・newNodes) と rec.ui (boxes[id].treeRunReach「n 人」・report の「使った物 (1 人あたり)」・after100 の「完成 n%」) を書くので、これを dump / run / result の形に組み立てる関数を台本に足す: 手の鍵は engine.pickKey (照らしの手ごとに出している)、お告げの鍵は E.omensOf の key、aim は当たりの箱の文「T10 以上 プレ <文の型>」→ 入口に「文の型 → modId」の引きを足す (_monkey-engine-entry.ts、# を数に置き換えて modListFor の文と合わせる)、repeat は checks の「当たるまで ☑」、線の人数は子の箱の「n 人」(戻りの無い木)。比べの仕方は今の checkTree (4σ) と checkWalk のまま。
+- 台本 (共有メモ local_52fe22f9…/monkey-scripts/): ui-monkey.mjs (前の形は ui-monkey-v4〜v4e.mjs に控え)、jobs-hammer12.json、出力 h-4/。走らせ方 `MONKEY_TARGET=dev CDP_PORT=9335 FROM=0 TO=12 node ui-monkey.mjs jobs-hammer12.json h-5 6 6` → `node scripts/check-monkey-engine.mjs <出力>`。Chrome は自分の番号 (9335)・自分の profile で立てる (lib2 の CDP_PORT)。
+- 分かった画面の作り: 箱の下の行はボタン (「↩」戻す・「完成」title 完成にする → 押した後 title 完成・[data-tree-spam]「カオススパム」・[data-tree-next] 次の手・[data-tree-add-hit])。箱の文はこれらを除いて読む (NODES)。縮めている間はボタンが描かれないので右下の ＋ で 75% 以上に寄せる。テスト中は「テスト中…」、結果は「100 人回す」の手前の「✓ 合格 / 穴 n」。穴の一覧 [data-tree-issues] は ▾ で開く。100 人は少しずつ増えて出る (「100 人: … 完成 n%」まで待つ)。箱ごとの数は箱の外の層 [data-tree-run-reach][data-box-id]、結果の窓 [data-tree-run-report]。
+- 1440 は他の部の保存で読み直しが続くので、回すのは 1461 (使用表で取る)。読み直しの重なり (木が 2 つ) で「このベースには使えないエッセンス」「上の段が金の指輪」が出たのは 1440 の立て直しで消えた (数えない)。
+- でたらめの猿のエッセンスの札「全 3 段」は押した後の段の選びに台本が対応しておらず「使っても手にならない」になる (台本側、未対応)。
+
+## 前の隊長へ (4 本目、10-25 朝。全ベースの照らしは済んだ、結果は notes/2026-10-25-monkey.md)
 - 済み: 全 764 ベース × 3 匹 = 2,292 匹を 1461 (シミュ 24 の直し 7 本入り) で、画面の操作だけで組んで照らした。棚 13,157 手・お告げ 13,090 手はエンジンとずれ 0 (棚の 84 はジュエルの液化した感情 = 既知の外れ)。完成・個数 157 本ずれ 2 (打ち止めの数え方だけ)。固まり 0。ツリーの数字は 3,360 箱中 247 箱ずれ、止まる 12 本 → どちらもシミュ 25 の最初の仕事 (simulator/todo.md の頭)。
 - 台本 (共有メモ local_52fe22f9…/monkey-scripts/): ui-monkey.mjs (1 匹 1 タブ・画面の棚とお告げを照らす・防具の能力の札・帯は [data-tree-pick-start]・部位が開かなければ押し直す)、ui-lib.mjs (半分切れの物は動かしてから押す・画面の外は textContent で探す)、run-all.sh (`sh run-all.sh <始め> <終わり> <頭>`、120 匹ずつ回して照らす、stop-all を置くと区切りで止まる)、agg.mjs (`node agg.mjs <頭>` でずれを手の種類ごと)。出力 e-<始め>/・e-fix/ (各 engine/)、d-*/ は前の版 (数に入れない)。全部で 471MB、要らなくなったら消してよい。
 - ジン部長の返事 (共有メモ local_52fe22f9…/jin9-replies-2026-10-25.md): カオスの当たるまではエンジンが正、残りは全部ツリーが多い側。指名の無いフラクチャーはエンジンの 25% が正 → シミュ 25 へ送った。打ち止めの 2 本は照らしの台本の直し (1fd9f27f) で一致。
