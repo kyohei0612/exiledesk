@@ -50,6 +50,70 @@ const withoutOff = (names, engList) => { const off = new Set((engList ?? []).fil
  * 回した数なので幅で見る: 4σ を超え、差が 3 ポイントより大きい所・エンジンで 0 なのにツリーで出た所を「ずれ」に。見えている MOD から組み立てた物とツリーが渡した物の食い違いも書く
  */
 const ECHO = "OmenofAbyssalEchoes";
+
+/**
+ * 画面の猿 (今の画面だけで組む形、隊長 4 本目〜) の記録 → checkTree・checkWalk が受ける tree = { dump, items, run, result } (隊長 5 本目 10-25)。
+ * 読む物: tree.screen (箱の文・out・back、手の札の名前・お告げ・チェック・outs)、tree.items (手の箱の boxItem = 答え合わせの例外)、
+ * ui (箱ごとの「n 人」・結果の窓の「使った物 (1 人あたり)」・「完成 n%」)。手とお告げの鍵は箱のアイテムの棚から名前で引く。
+ * 狙いは当たりの箱の文「T10 以上 プレ <文の型>」→ 段 10・aimOf。線の人数は子の箱の「n 人」(戻りのある木は人数 ≠ 回数なので run を作らない)
+ */
+function fromScreen(rec) {
+  const sc = rec.tree?.screen, items = rec.tree?.items ?? {};
+  const base = items.start?.raw?.base;
+  if (!sc?.boxes || !base) return null;
+  const names = new Map(); // 札の名前 → 鍵 (棚とお告げ)
+  for (const bi of Object.values(items)) if (bi?.raw?.cls) for (const c of E.shelfOf(bi.raw, true)) names.set(c.name, c.key);
+  const why = [];
+  const aimOfText = (t) => {
+    const m = /(?:^|\s)T(\d+)(?: 以上)? (プレ|サフィ) (.+?)(?: 完成)?$/.exec(t.replace(/^\[完成済\]\s*/, ""));
+    if (!m) return null;
+    const modId = E.aimOf(base, m[2] === "プレ" ? "P" : "S", m[3]);
+    if (!modId) why.push(`狙いの文が MOD の一覧に無い: ${m[3]}`);
+    return modId ? { modId, tier: Number(m[1]) } : null;
+  };
+  const boxes = {};
+  for (const b of sc.boxes) boxes[b.id] = { id: b.id, out: b.out, aim: b.out === "hit" ? aimOfText(b.text) : null, hand: null, outs: [], back: b.back ?? null, done: /^\[完成済\]/.test(b.text) ? "done" : null };
+  for (const h of sc.hands ?? []) {
+    const b = boxes[h.box];
+    if (!b) continue;
+    const raw = items[h.box]?.raw;
+    if (raw?.cls) for (const k of E.shelfOf(raw, true)) names.set(k.name, k.key);
+    const currency = names.get(h.pick) ?? null;
+    if (!currency) { why.push(`手の札 ${h.pick} の鍵が引けない`); continue; }
+    const omenNames = h.omen ? (Array.isArray(h.omen) ? h.omen : [h.omen]) : [];
+    const omens = [];
+    for (const on of omenNames) {
+      const o = raw?.cls ? E.omensOf(raw, currency, items[h.box]?.preRaw ?? null).find((x) => x.name === on) : null;
+      if (o) { omens.push(o.key); names.set(o.name, o.key); } else why.push(`お告げ ${on} の鍵が引けない`);
+    }
+    const on = (re) => (h.checks ?? []).find((c) => re.test(c) && c.endsWith("☑"));
+    const rep = on(/当たるまで繰り返す/);
+    b.hand = { currency, omens, repeat: rep ? { until: "hit", max: Number(/上限 (\d+) 回/.exec(rep)?.[1]) || null } : null, free: !!on(/狙い無し/) };
+    b.outs = h.outs ?? [];
+  }
+  // 100 人の数 (画面の文)
+  const ppl = (s) => Number(/(\d+) 人/.exec(s ?? "")?.[1] ?? NaN);
+  const n = ppl(rec.ui?.after100), pct = Number(/完成 (\d+(?:\.\d+)?)%/.exec(rec.ui?.after100 ?? "")?.[1] ?? NaN);
+  const rp = rec.ui?.report ?? [], uses = {};
+  for (let i = rp.indexOf("使った物 (1 人あたり)") + 1; i > 0 && i + 1 < rp.length; i++) {
+    const m = /^(\d+(?:\.\d+)?) 個$/.exec(rp[i + 1]);
+    if (!m) continue;
+    const k = names.get(rp[i]);
+    if (k) uses[k] = Number(m[1]); else why.push(`使った物 ${rp[i]} の鍵が引けない`);
+    i++;
+  }
+  const result = Number.isFinite(n) && Number.isFinite(pct) ? { n, finished: Math.round((pct / 100) * n), capped: /打ち止め/.test(rp.join(" ")) ? NaN : 0, uses } : null;
+  // 箱ごとの人数 → run (戻りの無い木だけ)
+  let run = null;
+  if (result && !Object.values(boxes).some((b) => b.back)) {
+    const rb = {}, edges = {};
+    for (const [id, v] of Object.entries(rec.ui?.boxes ?? {})) rb[id] = { visits: ppl(v.treeRunReach) };
+    for (const b of Object.values(boxes)) for (const c of b.outs) if (rb[c]) edges[`${b.id}>${c}`] = rb[c].visits;
+    run = { n, finished: result.finished, boxes: rb, edges, uses };
+  }
+  return { dump: { boxes }, items, run, result, why };
+}
+
 function checkTree(tr, steps = []) {
   const doc = tr?.dump, run = tr?.run;
   if (!doc?.boxes || !run?.boxes) return null;
@@ -206,6 +270,8 @@ for (const f of files) {
     }
     outSteps.push({ ...st, engine, ...(Object.keys(diff).length ? { diff } : {}) });
   }
+  // 画面の猿の記録は、合格 (✓) した木だけ照らしの形に組み立てて比べる (決まり 13)
+  if (rec.tree?.screen && !rec.tree.dump && rec.pass) rec.tree = { ...rec.tree, ...fromScreen(rec) };
   const treeCheck = checkTree(rec.tree, rec.steps);
   const walk = checkWalk(rec.tree);
   if (walk) {

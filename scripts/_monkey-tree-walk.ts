@@ -140,7 +140,22 @@ export function walkTree(data: PatchData, boxes: Record<string, WalkBox>, start:
       const h = b.hand, outs = b.outs.map((id) => boxes[id]).filter((x): x is WalkBox => !!x);
       const hitOuts = outs.filter((x) => x.out === "hit" && x.aim);
       let next: string | null = null;
-      do {
+      // カオススパム (当たるまでのカオス): 画面の文「狙いの側に空きがあれば先に高貴を 1 回、その後は当たるまでカオス」(結果の箱の行、隊長 5 本目 10-25)。
+      // 空き = その側の高貴のお告げを付けた高貴が打てる。打つ高貴はお告げ無し (結果の窓の使った物にお告げが出ない)。高貴で狙いが付いたらその当たりの箱へ
+      if (h.repeat && h.currency.startsWith("chaos")) {
+        const open = hitOuts.filter((x) => !has(item, x.aim!));
+        const room = open.some((x) => !useReason(data, item, "exalt", [sideOf(x.aim!) === "prefix" ? "OmenofSinistralExaltation" : "OmenofDextralExaltation"]));
+        if (room) {
+          const r = applyCurrency(data, item, "exalt", rng);
+          if (r.applied) {
+            cost += use("exalt");
+            const hit = open.find((x) => has(r.item, x.aim!));
+            item = r.item;
+            if (hit) next = hit.id;
+          }
+        }
+      }
+      if (!next) do {
         if (++steps > capSteps || cost > capDiv) { end = "capped"; break; }
         backs = 0; // 戻りの見張りは手を打つたびに 0 から (ツリーの hops と同じ。10-25 隊長 4 本目の m-83)
         let r = applyCurrency(data, item, h.currency, rng, h.omens.filter((x) => x !== ECHO));

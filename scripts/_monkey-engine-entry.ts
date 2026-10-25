@@ -39,6 +39,21 @@ export function modOf(base: string, side: "P" | "S", tier: number, text: string)
   return null;
 }
 
+/**
+ * 当たりの箱の札の文「プレ #から#の冷気ダメージを追加する」(画面の猿が読んだ物、2 行の MOD は「 / 」でつなぐ) → その部位の MOD の行の id。
+ * 段は札の「T10 以上」を呼ぶ側が持つ (隊長 5 本目 10-25、画面の木 → 照らしの形)
+ */
+export function aimOf(base: string, side: "P" | "S", text: string): string | null {
+  const n = (s: string): string => norm(s).replace(/\//g, "");
+  const rows = modListFor(data!, freshItem(data!, base, 82, "rare"));
+  const want = n(text);
+  for (const r of rows) {
+    if ((r.side === "prefix") !== (side === "P")) continue;
+    if (r.tiers.some((t) => n(t.text) === want)) return r.id;
+  }
+  return null;
+}
+
 /** そのレアリティで MOD を付けた形 (付けられなければ null)。ソケットはツリーのスタートと同じ規格外の数 (baseSocketsOf) */
 function itemWith(base: string, rarity: "normal" | "magic" | "rare", ms: ReadonlyArray<{ modId: string; tier: number }>): StageItem | null {
   const it = itemWith0(base, rarity, ms);
