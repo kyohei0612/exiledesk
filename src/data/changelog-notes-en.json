@@ -1,4 +1,9 @@
 {
+  "0.1.601": [
+    "Simulator (beta) is out: pick a base and target mods, then build your craft route as a tree (the “Simulator” tab at the top)",
+    "Run your route 100 times to see the completion rate and average cost",
+    "Keep your recipes by saving them, sharing a URL or exporting a file. PC only (on phones you'll be asked to open it on a PC)"
+  ],
   "0.1.600": [
     "Going back with the browser now keeps your Cosmetics search and filters and your spam simulator target (reloading still starts fresh)"
   ],
