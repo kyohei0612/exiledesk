@@ -12,6 +12,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import Icon from "../../components/ui/Icon.vue";
 import SimPcOnly from "./SimPcOnly.vue";
 import { usePhone } from "../../utils/use-phone";
+import { flag } from "../../web/release-flags";
 import { currentTreeRecipe, currentTreeRecipeId, duplicateTreeRecipe, exportTreeRecipes, importTreeRecipes, overwriteTreeRecipe, removeTreeRecipe, renameTreeRecipe, restoreTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../state/simulator/tree-recipes";
 import { openTreePage, setLeaveGuard } from "../../web/page";
 import { treePage } from "../../state/web-page";
@@ -129,13 +130,14 @@ onMounted(() => { before = window.scrollY; window.scrollTo(0, 0); window.addEven
 onMounted(() => setLeaveGuard((to) => !to.startsWith("page=sim-") && dirty.value));
 onBeforeUnmount(() => { setLeaveGuard(null); if (!treePage.value) t.resetAll(); });
 onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); clearTimeout(noteT); const y = before; requestAnimationFrame(() => window.scrollTo(0, y)); });
-/** スマホ (768px 未満) は「PC で開いてください」だけ (SimPcOnly、10-25) */
+/** スマホ (768px 未満) は「PC で開いてください」だけ (SimPcOnly、10-25)。スイッチ simPhone が入っていれば PC と同じ中身 (縦積みは max-md の寸法) */
 const phone = usePhone();
+const SIM_PHONE = flag("simPhone");
 </script>
 
 <template>
   <section data-recipes-page class="min-w-0 flex-1 p-4 max-md:px-2">
-    <SimPcOnly v-if="phone" />
+    <SimPcOnly v-if="phone && !SIM_PHONE" />
     <template v-else>
     <div class="mb-3 flex flex-wrap items-center gap-3">
       <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[15px] tracking-[0.18em] max-md:tracking-[0.04em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ tr("レシピ", "Recipes") }}</h1>

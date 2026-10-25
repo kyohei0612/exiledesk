@@ -16,7 +16,7 @@ import Icon from "../../../components/ui/Icon.vue";
 import TreeMemoFloat from "./TreeMemoFloat.vue";
 import TreeCanvasTools from "./TreeCanvasTools.vue";
 import ModeTabs from "../../../components/for-share/ModeTabs.vue";
-import SimPcOnly from "../SimPcOnly.vue";
+import SimPcOnly from "../SimPcOnly.vue"; import PhoneTreePage from "../phone/PhoneTreePage.vue";
 import { usePhone } from "../../../utils/use-phone";
 import TreeBox from "./TreeBox.vue";
 import TreeOverlays from "./TreeOverlays.vue"; import TreeGoalNode from "./TreeGoalNode.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { flag } from "../../../web/release-flags";
@@ -375,14 +375,16 @@ const glowOf = (b: Box): boolean => {
   if (g.startsWith("cur:")) return handUses(b, g.slice(4));
   return b.out === "hit" && !!b.aim && aimKey(b.aim) === g;
 };
-/** スマホ (768px 未満) は「PC で開いてください」だけ (SimPcOnly、10-25) */
-const phone = usePhone();
+/** スマホ (768px 未満) は「PC で開いてください」だけ (SimPcOnly、10-25)。スイッチ simPhone でスマホ版 */
+const phone = usePhone(), simPhone = flag("simPhone");
 </script>
 
 <template>
   <!-- スマホは左右の余白を詰める (ページ 16 + 枠の絵 18 + 中 12 で木の枠が 375 中 281px しかなく、左右の箱が切れ上の帯が 6 段になった、10-24 モンキー初めての人の回 3) -->
   <section data-tree-page class="min-w-0 flex-1 p-4 max-md:px-2">
-    <SimPcOnly v-if="phone" />
+    <!-- スマホはスイッチ simPhone が入っていれば質問で進める形 (phone/PhoneTreePage、木は同じ TreeDoc)、閉じていれば「PC で開いてください」 -->
+    <SimPcOnly v-if="phone && !simPhone" />
+    <PhoneTreePage v-else-if="phone" />
     <template v-else>
     <div class="mb-3 flex flex-wrap items-center gap-3">
       <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center gap-3 px-8 text-[22px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)] max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-1 max-md:px-4 max-md:py-2 max-md:text-[17px] max-md:tracking-[0.08em]"><span class="whitespace-nowrap">{{ tr("クラフトの道 (ツリー)", "Craft route tree") }}</span><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" /></h1>
