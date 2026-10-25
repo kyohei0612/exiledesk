@@ -58,6 +58,25 @@ export default defineConfig({
       const used = new Set((JSON.parse(await readFile("src/data/mtx-poe1-in-poe2.json", "utf8")) as { items: { a?: number }[] }).items.flatMap((x) => (x.a == null ? [] : [`${x.a}.webp`])));
       for (const f of await readdir(`${OUT}/mtx-art`).catch(() => [] as string[])) if (!used.has(f)) await rm(`${OUT}/mtx-art/${f}`, { force: true });
     },
+  }, {
+    // dev だけ: 読み物 (/blog/・/en/blog/) を build-blog-pages.mjs で data-cache/dev-blog に作って配る。右の列の新しい記事・すべて見るを dev でも辿れるように
+    // (2026-10-25 オーナー「開発版だとブログどっか行ってる」、案はデザイン部長 5 本目)。記事を書き足したら dev を立て直すと新しくなる
+    name: "exiledesk-dev-blog",
+    apply: "serve" as const,
+    configureServer(server: import("vite").ViteDevServer) {
+      const DIR = "data-cache/dev-blog";
+      const TYPES: Record<string, string> = { ".html": "text/html; charset=utf-8", ".json": "application/json", ".js": "text/javascript", ".png": "image/png", ".webp": "image/webp", ".jpg": "image/jpeg", ".svg": "image/svg+xml" };
+      void import("node:child_process").then(({ execFile }) => execFile(process.execPath, ["scripts/build-blog-pages.mjs", DIR], (e) => e && console.warn("dev-blog:", e.message)));
+      server.middlewares.use(async (req, res, next) => {
+        let u: string;
+        try { u = decodeURIComponent((req.url ?? "").split("?")[0]!); } catch { return next(); }
+        if (!/^\/(en\/)?blog(\/|$)/.test(u) || u.includes("..")) return next();
+        const { readFile } = await import("node:fs/promises");
+        const { extname, join } = await import("node:path");
+        const f = join(DIR, u.endsWith("/") ? `${u}index.html` : u);
+        try { const b = await readFile(f); res.setHeader("Content-Type", TYPES[extname(f)] ?? "application/octet-stream"); res.end(b); } catch { next(); }
+      });
+    },
   }],
   build: { outDir: OUT, emptyOutDir: true, rollupOptions: { input: "web.html" } },
   // シミュレーションの作業場所は ES モジュールで (vite.config.ts と同じ)
