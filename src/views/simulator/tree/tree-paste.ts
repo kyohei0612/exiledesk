@@ -10,6 +10,7 @@
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import { goalBlock } from "../../../services/craft-stage/engine-sim";
 import { parseItemText } from "../../../services/craft-stage/engine";
+import type { ItemTextMod, ItemTextReading } from "../../../services/craft-stage/item-text-types";
 import { craftStage as s } from "../../../state/craft-stage";
 import { migrateStart, startRarity, type Aim, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { currentTreeRecipe, overwriteTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
@@ -21,7 +22,7 @@ import { fmtDate } from "../recipe-share";
 import { useTree } from "./use-tree";
 
 /** 最後に取り込んだ結果 (sim-mods の上に出す。閉じるか次の取り込みまで) */
-export const pasteNote = ref<{ base: string; aims: number; bad: Array<{ line: string; why: string }> } | null>(null);
+export const pasteNote = ref<{ base: string; aims: number; bad: Array<{ line: string; why: string }>; /** 読み方が 2 通り以上の時だけ (先頭 = 仮に選んだ読み) */ readings?: ItemTextReading[]; /** 今の読み方 */ pick: number; /** 段が仮の MOD (1 行に足された値の割り方が決まらない) */ guess: string[] } | null>(null);
 /** 取り込めなかった時の理由 (貼る口の下に出す) */
 export const pasteWhy = ref<string | null>(null);
 /** 貼り付けで置き換えた作りかけの木 (保存していない手のある木)。② から木へ戻る時に保存を聞く。recipeId = 開いていたレシピ (上書き先) */
@@ -70,12 +71,29 @@ function importPaste(text: string): void {
   if (ilvl) t.edit((d) => { delete d.ilvlFit; d.itemLevel = ilvl; });
   // 前の木の「適正で合わせました」の一言は消す (貼った値なので)
   t.ilvlNote.value = null;
-  const bad: Array<{ line: string; why: string }> = r.skipped.map((x) => ({ line: x.line, why: tr(x.reason.ja, x.reason.en) }));
+  // 読み方 (ジン部長の parseItemText の readings。無ければ mods の 1 通り)。先頭 = 一番もっともらしい読み
+  const readings = r.readings?.length ? r.readings : [{ mods: r.mods, skipped: r.skipped }];
+  const { aims, bad } = aimsOfReading(readings[0]!);
+  setAims(aims);
+  // 貼った木は名前なしの新しい木 (開いていたレシピの続きではない)
+  setCurrentTreeRecipe(null);
+  pasteNote.value = { base: tr(r.base.ja, r.base.en), aims: aims.length, bad, readings: readings.length > 1 ? readings : undefined, pick: 0, guess: guessOf(readings[0]!) };
+  track("sim:paste");
+  // ② 完成の MOD のページへ (どの画面から貼っても同じ。ツリーの窓で開いていた時も)
+  t.needBase.value = false;
+  openTreePage("mods");
+  t.goalPage.value = 2;
+}
+
+/** 1 通りの読み方 → 完成形の狙いと、狙いにできなかった行 (読めなかった行も) */
+function aimsOfReading(rd: ItemTextReading): { aims: Aim[]; bad: Array<{ line: string; why: string }> } {
+  const data = s.data.value!, t = useTree();
+  const bad: Array<{ line: string; why: string }> = rd.skipped.map((x) => ({ line: x.line, why: tr(x.reason.ja, x.reason.en) }));
   // 完成形の窓の表にある MOD と段 (表に無い MOD は狙いにできない)
   const known = new Set(t.rows.value.flatMap((row) => row.tiers.map((x) => `${x.modId ?? row.id}|${x.tier}`)));
   const lv = t.doc.value.itemLevel, aims: Aim[] = [];
   // フラクチャーの MOD を先に (印の候補)、ほかは貼った順
-  for (const m of [...r.mods.filter((x) => x.fractured), ...r.mods.filter((x) => !x.fractured)]) {
+  for (const m of [...rd.mods.filter((x) => x.fractured), ...rd.mods.filter((x) => !x.fractured)]) {
     if (!m.modId || !m.tier) { bad.push({ line: m.text, why: m.unrevealed ? tr("未発現 (発現するまで MOD が決まらない)", "Unrevealed (the mod isn't known yet)") : tr("MOD が分からない", "Unknown mod") }); continue; }
     const tier = Number(m.tier.label.replace(/^T/, ""));
     if (!known.has(`${m.modId}|${tier}`)) { bad.push({ line: m.text, why: tr("完成の MOD の表に無い", "Not in the final-mod table") }); continue; }
@@ -85,21 +103,42 @@ function importPaste(text: string): void {
     // 冒涜の MOD はフラクチャーできない (完成形の窓と同じ)。印は付けず狙いだけ
     aims.push({ modId: m.modId, tier, ...(m.fractured && !m.desecrated ? { fractured: true as const } : {}) });
   }
-  // 印はスタートの形を決める (use-tree の toggleFracture と同じく、印の MOD はスタートの MOD から外してレアリティを決め直す)
-  t.edit((d) => {
+  return { aims, bad };
+}
+/** 完成形の狙いを入れ替える (1 手)。印はスタートの形を決める (use-tree の toggleFracture と同じく、印の MOD はスタートの MOD から外してレアリティを決め直す) */
+function setAims(aims: Aim[]): void {
+  useTree().edit((d) => {
     if (aims.length) d.memoAims = aims; else delete d.memoAims;
     migrateStart(d);
     d.start!.mods = d.start!.mods.filter((m) => !aims.some((a) => a.fractured && a.modId === m.modId));
     d.start!.rarity = startRarity(d);
   });
-  // 貼った木は名前なしの新しい木 (開いていたレシピの続きではない)
-  setCurrentTreeRecipe(null);
-  pasteNote.value = { base: tr(r.base.ja, r.base.en), aims: aims.length, bad };
-  track("sim:paste");
-  // ② 完成の MOD のページへ (どの画面から貼っても同じ。ツリーの窓で開いていた時も)
-  t.needBase.value = false;
-  openTreePage("mods");
-  t.goalPage.value = 2;
+}
+/**
+ * 仮の読みを切り替える (② の帯の「仮の読み ▸」の候補を押した。10-25 オーナー: 合算の行の分け方が何通りも残る時だけ候補を出し、1 押しで狙いが入れ替わる)。
+ * ベース・アイテムレベルはそのまま、狙いだけ (1 つ戻すで戻せる)
+ */
+export function pickReading(i: number): void {
+  const n = pasteNote.value, rd = n?.readings?.[i];
+  if (!n || !rd || i === n.pick) return;
+  const { aims, bad } = aimsOfReading(rd);
+  setAims(aims);
+  pasteNote.value = { ...n, aims: aims.length, bad, pick: i, guess: guessOf(rd) };
+}
+/** 段が仮 (和の行の割り方が 2 通り以上、ジン部長の guess) の MOD の見出し (「T2? 名前」) */
+function guessOf(rd: ItemTextReading): string[] {
+  const t = useTree();
+  return rd.mods.filter((m) => m.guess && m.modId && m.tier).map((m) => `${m.tier!.label}? ${t.aimShort({ modId: m.modId!, tier: Number(m.tier!.label.replace(/^T/, "")) })}`);
+}
+/** 候補の見出し: ほかの読み方と違う MOD だけ (段 + 名前、仮は「?」)。全部同じなら全部 */
+export function readingLabel(i: number): string {
+  const rs = pasteNote.value?.readings;
+  if (!rs?.[i]) return "";
+  const t = useTree();
+  const key = (m: ItemTextMod): string => `${m.modId}|${m.tier?.label}`;
+  const everywhere = (k: string): boolean => rs.every((r) => r.mods.some((m) => key(m) === k));
+  const own = rs[i]!.mods.filter((m) => m.modId && m.tier && !everywhere(key(m)));
+  return (own.length ? own : rs[i]!.mods.filter((m) => m.modId && m.tier)).map((m) => `${m.tier!.label}${m.guess ? "?" : ""} ${t.aimShort({ modId: m.modId!, tier: Number(m.tier!.label.replace(/^T/, "")) })}`).join(" + ");
 }
 
 /**
