@@ -108,7 +108,7 @@ function goBox(id: string): void {
         <button type="button" data-phone-routes class="g-btn sm shrink-0" :aria-pressed="routesOpen" @click="routesOpen = !routesOpen">{{ routesOpen ? tr("質問へ", "Question") : tr("全体を見る", "Overview") }}</button>
       </div>
       <PhoneRoutes v-if="routesOpen" @pick="routesOpen = false" />
-      <PhoneAsk v-else-if="q.current.value" :key="`${q.current.value.kind}-${q.current.value.id}`" :q="q.current.value" @hand="(id) => (handFor = id)" />
+      <PhoneAsk v-else-if="q.current.value" :key="`${q.current.value.kind}-${q.current.value.id}`" :q="q.current.value" @hand="(id) => (handFor = id)" @pick="(p) => { handFor = q.current.value!.id; pickHand(p.hand, p.kind, p.aims, p.preCat, p.only); }" />
       <!-- 全部の道が決まった (残りの道 0) -->
       <template v-else>
         <div data-phone-all-done class="rounded-xl border border-emerald-400/50 bg-[#13190f] px-3 py-4 text-center">

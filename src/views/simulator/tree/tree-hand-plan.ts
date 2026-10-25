@@ -171,6 +171,7 @@ export function planPick(data: PatchData, doc: TreeDoc, id: string, it: StageIte
   const only = onlyOf(data, doc, id, hand, preCat, aims);
   return { hand, kind, aims, preCat, only, problem: problemOf(data, it, hand, aims, preCat, preFill) };
 }
+export type PickPlan = ReturnType<typeof planPick>;
 
 // 伸ばすカタリスト (2026-10-23 エンジンの for-sim から戻した。中身はエンジンの核の catalystBoosts を呼ぶだけ)。付きうる狙い reachableAims は精査も使うので tree-aim.ts (10-25)
 /** その MOD を伸ばすカタリスト (keys の並びで最初の物、伸ばす物が無ければ null)。伸びるかはエンジンの catalystBoosts (指輪・アミュレットは MOD の tags、ジュエル・上のベースは中身のタグ) */
