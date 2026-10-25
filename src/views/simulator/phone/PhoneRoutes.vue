@@ -5,7 +5,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { backTargetsOf } from "../tree/tree-merge";
-import { RESTART } from "../../../services/simulator/tree/tree-shape";
 import { handLabel, OUT_LOOK } from "../tree/tree-names";
 import { usePhoneQuiz, walkOrder, type Question } from "./use-phone-quiz";
 import { tr } from "../../../i18n/lang";
@@ -19,7 +18,6 @@ const what = (id: string): string => {
   const b = q.doc.value.boxes[id]!;
   if (b.hand) return `→ ${handLabel(b.hand)}`;
   if (b.done) return tr("✓ 完成", "✓ Done");
-  if (b.back === RESTART) return tr("↩ 始めから (新しいベース)", "↩ Start over (new base)");
   const to = backTargetsOf(q.doc.value, id)[0];
   return to ? `↩ ${q.boxTitle(to)}${b.autoBack ? tr(" (自動)", " (auto)") : ""}` : "";
 };

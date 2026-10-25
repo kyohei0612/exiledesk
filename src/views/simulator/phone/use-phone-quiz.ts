@@ -8,7 +8,7 @@
  */
 import { computed, ref } from "vue";
 import { aimKey, setBack, setDone, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { heldSets, RESTART } from "../../../services/simulator/tree/tree-shape";
+import { heldSets } from "../../../services/simulator/tree/tree-shape";
 import { useTree } from "../tree/use-tree";
 import { handLabel, outName } from "../tree/tree-names";
 import { tr } from "../../../i18n/lang";
@@ -92,21 +92,14 @@ export function usePhoneQuiz() {
     const b = t.doc.value.boxes[id];
     if (b && (b.back || b.done)) answer((d) => { setBack(d, id, null); setDone(d, id, null); });
   }
+  /** 別の木を開いた = 木の外の印 (次の手を決める・一覧で選んだ質問) を空に */
+  function reset(): void { later.value = []; focus.value = null; }
   /** 「次の手を決める」を外す (② でもう一度聞く) */
   function unLater(id: string): void { later.value = later.value.filter((x) => x !== id); }
   /** 戻りの矢印 (同じ手をもう一度 = 親の箱・始めから = start・ほかの箱) */
   function setReturn(id: string, to: string): void {
     later.value = later.value.filter((x) => x !== id);
     answer((d) => { setDone(d, id, null); setBack(d, id, to); });
-  }
-  /**
-   * 始めから = 新しいベースで作り直し (tree-run の RESTART: 始めのアイテムを引き直し、始めの値段を足して始まりの箱へ)。
-   * 「↩ スタート」(同じアイテムのままスタートの手を打ち直す) は変成の外れなどで打てず止まるので、スマホの「始めから」はこれ。
-   * setBack は箱の id しか受けないので印だけここで付ける (木を描く PC の画面は札「作り直し」で読む。差し込みの時に setBack へ寄せる)
-   */
-  function setRestart(id: string): void {
-    later.value = later.value.filter((x) => x !== id);
-    answer((d) => { const b = d.boxes[id]; if (!b || b.out === "start" || b.hand) return; b.back = RESTART; b.done = null; delete b.autoBack; delete b.split; });
   }
   function setFinished(id: string): void {
     later.value = later.value.filter((x) => x !== id);
@@ -147,5 +140,5 @@ export function usePhoneQuiz() {
     });
     return parts.join(" › ");
   }
-  return { doc: t.doc, questions, current, focus, answered, later: laterSet, answer, setLater, unLater, setReturn, setRestart, setFinished, stateOf, boxTitle, pathText };
+  return { doc: t.doc, questions, current, focus, answered, later: laterSet, answer, reset, setLater, unLater, setReturn, setFinished, stateOf, boxTitle, pathText };
 }

@@ -14,6 +14,7 @@ import StageItemCard from "../../../components/for-share/item/StageItemCard.vue"
 import TreeOverlays from "../tree/TreeOverlays.vue";
 import TreeHandPage from "../tree/TreeHandPage.vue";
 import TreePanelPage from "../tree/TreePanelPage.vue";
+import TreeRecipeBar from "../tree/TreeRecipeBar.vue";
 import { applyPick, type OnlyOut } from "../tree/tree-hand-plan";
 import { useTree } from "../tree/use-tree";
 import { clearHand, setAim, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
@@ -67,6 +68,8 @@ const run = useTreeRun(t.doc, t.startPrice, t.treePrice, () => {}, () => {});
 watch(() => run.walk.value, (w) => { if (w) run.skipWalk(); });
 const reportOpen = ref(false);
 watch(() => !!run.result.value && !run.running.value && !run.halted.value, (on) => { reportOpen.value = on; });
+/** 止まった理由 (tree-run の stuckWhy: エンジンの断りの文と、そこへ戻ってきた箱) */
+const haltWhy = computed(() => { const h = run.halted.value; return h ? run.result.value?.stuckWhy?.[h.box] ?? null : null; });
 const donePct = computed(() => Math.round(((run.result.value?.finished ?? 0) / (run.result.value?.n || 1)) * 100));
 const fmt = (x: number): string => (!Number.isFinite(x) ? "—" : x >= 100 ? x.toFixed(0) : x.toFixed(1));
 /** 箱の質問へ (手のある箱は ②、無ければ親の ②) */
@@ -82,6 +85,8 @@ function goBox(id: string): void {
     <ModeTabs />
     <TreeOverlays />
     <template v-if="!t.goalInline.value">
+      <!-- レシピ (保存・開く・共有 URL。PC の帯と同じ部品、木が同じなので PC で開き直せる) -->
+      <div data-phone-recipe class="flex min-w-0 flex-wrap items-center gap-2 text-[13px]"><TreeRecipeBar @opened="q.reset()" /></div>
       <!-- 完成形 (畳んだ 1 行: ベース・狙いの数。開くと PC の 0 の枠と同じカード) -->
       <div data-phone-goal class="rounded-xl border border-[#c9a45c]/60 bg-[#1a140d] px-3 py-2">
         <div class="flex min-w-0 items-center gap-2 text-[13px]">
@@ -117,7 +122,10 @@ function goBox(id: string): void {
           <span class="float-right mt-2 text-[13px]" :class="donePct < 100 ? 'text-rose-300' : 'text-emerald-300'">{{ tr(`完成 ${donePct}%`, `${donePct}% done`) }}</span>
           <span class="block text-[12px] text-amber-200/80">{{ tr("結果のまとめ ›", "Summary ›") }}</span>
         </button>
-        <button v-if="run.halted.value" type="button" data-phone-run-halt class="rounded-xl border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-left text-[13px] text-rose-100" @click="goBox(run.halted.value.box)">{{ tr(`途中で止まった人がいる: ${q.boxTitle(run.halted.value.box)} ›`, `Some runs got stuck: ${q.boxTitle(run.halted.value.box)} ›`) }}</button>
+        <button v-if="run.halted.value" type="button" data-phone-run-halt class="rounded-xl border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-left text-[13px] text-rose-100" @click="goBox(haltWhy?.backs?.[0] ?? run.halted.value.box)">
+          {{ tr(`途中で止まった人がいる: ${q.boxTitle(run.halted.value.box)} ›`, `Some runs got stuck: ${q.boxTitle(run.halted.value.box)} ›`) }}
+          <span v-if="haltWhy?.reason" class="block text-[12px] text-rose-200/80">{{ haltWhy.reason }}{{ haltWhy.backs?.length ? tr(` (戻ってきた箱: ${q.boxTitle(haltWhy.backs[0]!)})`, ` (came back from: ${q.boxTitle(haltWhy.backs[0]!)})`) : "" }}</span>
+        </button>
       </template>
       <!-- 下の帯: 1 つ戻す・やり直し -->
       <div class="sticky bottom-0 z-10 -mx-2 flex gap-2 border-t border-white/10 bg-[#0c0a08]/95 px-2 py-2">

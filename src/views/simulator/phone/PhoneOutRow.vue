@@ -8,7 +8,6 @@ import { computed, ref } from "vue";
 import { useTree } from "../tree/use-tree";
 import { useTreeLink } from "../tree/use-tree-link";
 import { backTargetsOf } from "../tree/tree-merge";
-import { RESTART } from "../../../services/simulator/tree/tree-shape";
 import { handLabel, OUT_LOOK } from "../tree/tree-names";
 import { usePhoneQuiz } from "./use-phone-quiz";
 import { tr } from "../../../i18n/lang";
@@ -32,7 +31,7 @@ const canDone = computed(() => box.value?.out === "hit" || box.value?.out === "b
 const others = computed(() => [...link.value].filter(([id, why]) => why === null && id !== parent.value && id !== "start" && !!t.doc.value.boxes[id]?.hand).map(([id]) => id));
 const pickOther = ref(false);
 const look = computed(() => OUT_LOOK[box.value?.out ?? "junk"]);
-const backKind = computed(() => (state.value !== "back" ? null : box.value?.back === RESTART ? "start" : backTo.value === parent.value ? "retry" : "other"));
+const backKind = computed(() => (state.value !== "back" ? null : box.value?.back === "start" ? "start" : backTo.value === parent.value ? "retry" : "other"));
 const CHIP = "rounded-full border px-3 py-1.5 text-[13px] leading-none";
 const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-amber-500/20 text-amber-50" : "border-white/15 bg-white/[0.03] text-[#d8ccb4]"}`;
 </script>
@@ -52,7 +51,7 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
       <div class="mt-2 flex flex-wrap gap-1.5">
         <button type="button" data-phone-ans="later" :class="chipClass(state === 'later')" @click="q.setLater(boxId)">{{ tr("次の手を決める", "Next craft") }}</button>
         <button v-if="canRetry" type="button" data-phone-ans="retry" :class="chipClass(backKind === 'retry')" @click="q.setReturn(boxId, parent!)">{{ tr("同じ手をもう一度", "Same craft again") }}</button>
-        <button type="button" data-phone-ans="start" :class="chipClass(backKind === 'start')" @click="q.setRestart(boxId)">{{ tr("始めから (新しいベース)", "Start over (new base)") }}</button>
+        <button type="button" data-phone-ans="start" :class="chipClass(backKind === 'start')" @click="q.setReturn(boxId, 'start')">{{ tr("↩ 始めに戻る", "↩ Back to start") }}</button>
         <button v-if="canDone" type="button" data-phone-ans="done" :class="chipClass(state === 'done')" @click="q.setFinished(boxId)">{{ tr("完成", "Done") }}</button>
         <button v-if="others.length" type="button" data-phone-ans="other" :class="chipClass(backKind === 'other' || pickOther)" @click="pickOther = !pickOther">{{ tr("ほかの箱へ ▾", "Other box ▾") }}</button>
       </div>
