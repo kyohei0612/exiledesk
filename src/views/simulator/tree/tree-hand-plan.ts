@@ -76,8 +76,11 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
     // 段はエッセンス自身の段 (T1 = グレーター、完成形の設定の表・poe2db と同じ。10-24 オーナー「エッセンスの MOD と一般 MOD は別物」)
     for (const m of got) if (!out.some((a) => a.modId === m.modId)) out.push({ modId: m.modId, tier: tierRankOf(data, m.modId, m.tierIndex) });
     // 付く MOD が 1 つに決まらないエッセンス (無限のエッセンス = 筋力・器用さ・知性のうち付いていない系統から等しく 1 つ、エンジンの infiniteChoices) は
-    // 出うる MOD ごとに当たりの箱 (前は 1 つ目だけで、ツリーは筋力 100% / エンジンは 1/3 ずつ。10-25 モンキー 4 本目・ジン部長の見立て)
-    return out;
+    // 出うる MOD ごとに当たりの箱 (前は 1 つ目だけで、ツリーは筋力 100% / エンジンは 1/3 ずつ。10-25 モンキー 4 本目・ジン部長の見立て)。
+    // 当たりにするのは完成の狙いの MOD だけ。狙いで無い MOD が付くだけのエッセンス (冒涜の外れを無限のエッセンスで置き換える等) は当たりを作らず、
+    // applyPick が結果を「付いた」の箱 1 つにする (10-25 オーナー「ここに関してはあたりなんてもんは存在しない」、前は筋力・器用さ・知性の当たり 3 つ + 狙いが消えたで 4 つ出た)
+    const goals = [...(doc.memoAims ?? []), ...aimsOf(doc)];
+    return out.filter((a) => goals.some((g) => g.modId === a.modId));
   }
   // フラクチャー: 当たりの札 = この箱で付いている印の狙い (完成の MOD のフラクチャーの印、10-25)。どれが ✦ になるかはエンジンのまま
   if (kind === "fracture") return fractureMarks(doc).filter((a) => aimHeldOn(data, item, a, { sameText: true }));
@@ -131,6 +134,8 @@ export function problemOf(data: PatchData, item: StageItem, h: Hand, hitAims: Ai
 export function applyPick(d: TreeDoc, id: string, h: Hand, kind: HandKind, aims: Aim[], pre: string | null, only: OnlyOut): string {
   const had = new Set(Object.keys(d.boxes));
   let at = id;
+  // 狙いの MOD が付かないエッセンス (hitAimsOf が当たりを返さない) は狙い無しの手と同じく結果を「付いた」の箱 1 つに (TreeBox がエッセンスの名前で「〜の MOD が付いた」と出す)
+  if (kind === "essence" && !aims.length && !only) { h = { ...h, free: true }; kind = "free"; }
   if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
   setHand(d, at, h, kind, aims, only);
   joinSameShape(d, id);

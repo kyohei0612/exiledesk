@@ -9,7 +9,8 @@ import { BOX_H, BOX_W, fractureMarks, START_JUNK, startOf, startRarity, startsFr
 import { tr } from "../../../i18n/lang";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { useTree } from "./use-tree";
-import { OUT_LOOK, rarityName, splitWhenText } from "./tree-names";
+import { handName, OUT_LOOK, rarityName, splitWhenText } from "./tree-names";
+import { effectOf } from "../../../services/simulator/tree/tree-hands";
 
 const props = defineProps<{ box: TreeBox; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
   /** 縮めた時の倍率の逆数 (押せる物だけこれで大きさを戻し、画面の上で 24px 以上を保つ。オーナー 10-22「縮めても押せる物は小さくならない」) */ inv?: number;
@@ -31,6 +32,8 @@ const emit = defineEmits<{
   checked: [];
 }>();
 const t = useTree();
+/** 打った後の箱の親の手がエッセンス (狙いで無い MOD が付くだけ、tree-hand-plan の applyPick) なら、その名前で「〜の MOD が付いた」と出す (10-25 オーナー) */
+const essOf = computed((): string | null => { const h = props.box.parent ? t.doc.value.boxes[props.box.parent]?.hand : null; return h && effectOf(h.currency) === "essence" ? handName(h.currency) : null; });
 /** 要確認 (古い版・壊れたレシピで読めなかった所、tree-migrate) の文 */
 const CHECK_PART = { out: ["結果の種類", "result kind"], aim: ["狙い", "target"], hand: ["打つ手", "craft"], link: ["矢印の先", "link"] } as const;
 const checkTitle = computed(() => (props.box.check ?? []).map((k) => tr(CHECK_PART[k][0], CHECK_PART[k][1])).join(" · "));
@@ -139,7 +142,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
         {{ box.aim ? t.aimLabel(box.aim) : tr("＋ 付く MOD を選ぶ", "+ Pick the mod") }}
       </button>
       <p v-else-if="box.out === 'branch'" data-tree-branch-text class="truncate leading-6 text-teal-100" :title="branchText">{{ branchText }}</p>
-      <p v-else class="truncate leading-6 opacity-60">{{ box.out === "junk" ? tr("当たり以外が付いた", "Anything but a hit") : box.out === "junkGone" ? tr("外れの MOD が消えた", "A miss mod was removed") : box.out === "any" ? tr("何かが 1 つ付いた (狙い無し)", "Something was added (no target)") : tr("狙いの MOD が消えた", "A target mod was removed") }}</p>
+      <p v-else class="truncate leading-6 opacity-60">{{ box.out === "junk" ? tr("当たり以外が付いた", "Anything but a hit") : box.out === "junkGone" ? tr("外れの MOD が消えた", "A miss mod was removed") : box.out === "any" ? (essOf ? tr(`${essOf} の MOD が付いた`, `${essOf} mod added`) : tr("何かが 1 つ付いた (狙い無し)", "Something was added (no target)")) : tr("狙いの MOD が消えた", "A target mod was removed") }}</p>
     </div>
 
 
