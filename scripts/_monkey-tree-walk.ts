@@ -142,6 +142,7 @@ export function walkTree(data: PatchData, boxes: Record<string, WalkBox>, start:
       let next: string | null = null;
       do {
         if (++steps > capSteps || cost > capDiv) { end = "capped"; break; }
+        backs = 0; // 戻りの見張りは手を打つたびに 0 から (ツリーの hops と同じ。10-25 隊長 4 本目の m-83)
         let r = applyCurrency(data, item, h.currency, rng, h.omens.filter((x) => x !== ECHO));
         if (!r.applied) { if (r.random && h.repeat) continue; end = "stuck"; break; }
         cost += use(h.currency); for (const om of h.omens) cost += use(om);
