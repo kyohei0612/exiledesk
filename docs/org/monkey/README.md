@@ -21,7 +21,7 @@
 ## 地図 (持ち物、owners.txt)
 - データとエンジンの答え (呼び方・使っている部) は docs/org/emulator/data-catalog.md から。JSON を直に読まず入口から (直に読んでよい表は目録に書いてある物だけ)。
 - scripts/check-monkey-engine.mjs (照らしの入口: 猿の記録 → 棚・お告げ・付く MOD・treeCheck・walk) と scripts/_monkey-engine-entry.ts・_monkey-tree-walk.ts (エンジンの入口を呼ぶ所)。10-25 にジン部長から移った (ブラック 701e97b5)。台本の直しは隊長が自分で、エンジンの入口の答えが正かどうかの判定だけジン部長へ。決まり 1 の「コードは読まない・直さない」はこの 3 つを除く。
-- 猿の台本 (画面で組む ui-monkey.mjs・ui-lib.mjs・回す run-all.sh・数える agg.mjs) は共有メモ local_52fe22f9…/monkey-scripts/ (リポジトリの外)。
+- 猿の台本 (画面で組む ui-monkey.mjs・ui-lib.mjs・回す run-all.sh・数える agg.mjs) は共有メモ local_cbd85ab5…/monkey-scripts/ (リポジトリの外。10-26 に local_52fe22f9… が消えたので作り直し、lib2・ui-lib・spec30 だけ)。
 
 ## 開き方
 - ふだん (10-23 オーナー): 手元の dev サーバー http://localhost:1440/web.html (シミュ ?page=sim-tree)。使用表の「手元の dev サーバー 1440」に書いて立てる。
