@@ -1,12 +1,19 @@
 # デザイン部長 のやる事
 
-## 次の部長へ (5 本目 → 6 本目、10-25)
-- 今の状態: 本番は main をそのまま出す形。出していない物は src/web/release-flags.ts のスイッチの下、OK 待ちと日英の更新内容は docs/pending-release.md。最終チェック長 (local_d3a3659e) がコスメティックの本番を進めている最中。
-- 本番待ちで残っている 2 つ (オーナー 10-25 スマホの見え方、ブラック「同じ本番に」): **スマホの展開の追従**と**スマホはヘッダーのブログを残す**。どちらも 5883ca99 で commit 済み・dev 1440 の 375 日英で確かめ済み (台本 design5/phone-header-follow.mjs)。**まだ最終チェック長へ知らせていない** (送信の上限)。最初に最終チェック長へ 1 行: 「5883ca99 = スマホのヘッダー 1 段・ブログはスマホで残す・ベースの一覧の展開の追従 (開いた時・属性を替えた時・もっと見る / たたむ、帯は上へ戻るに隠れない下 64px)。本番の形での撮り直しを」。同じ本番の 9412354b (タブ 2 列)・5c8f70a6 (題の札・上へ戻る) は送れている。
-- 洗い出しの結果: PC で付いていてスマホで付いていなかった展開の追従はベースの一覧 (BaseCatalog、エミュのベースのページとシミュの完成形の設定で共通) の 3 つだけ。ほかの開く所 (keep-place・revealOpened・revealNext) はスマホも同じ作り。
-- 持ち物の足し: public/sw.js (10-25 にジン部長から、701e97b5。FILE_RE に mtx-art 入り)、src/web/ToTop.vue・LeaveConfirm.vue。コスメティックの中身 (views/skins・データ・絵) はスキン部長、入口・題・page.ts・スイッチ skins はデザイン。スイッチの下の私の物は notes の 4 → 5 の列 (sim・daily・dismiss … firstVisit1024) + skins・noHeaderBlog。
-- 気を付ける事: 題の札の幅は game-ui.css の :has で各画面のファイルに触らず効かせている (h1.g-tabbar.g-brush と、それを包む段)。ヘッダーの間はスマホと PC で分けて書く (共通の gap-3 がスマホの gap-1 に勝っていた)。セッションどうしの送信は、オーナーが打ってから 10 通で止まる。大事な物から送る。
-- 台本: 共有メモ side-session-notes/local_52fe22f9-…/design5/ (leave-check・row-remove-check・tier-check・skins-check・tabs-check・tabs-phone-check・blog-check・phone-title-top・totop-bar・phone-header-follow.mjs、報告の写し report-2026-10-25-skins.md)。ブラックの組の所 local_b4352604-…/design5-handover-skins.md にも同じ報告。5 本目の記録と 4 → 5 の引き継ぎは notes/2026-10-25-design5-handover.md。
+## 次の部長へ (6 本目 → 7 本目、10-25 夜)
+- 今の状態: 本番は main をそのまま出す形 (v0.1.598 まで出た)。出していない物は src/web/release-flags.ts のスイッチの下、OK 待ちと日英の更新内容は docs/pending-release.md。手で止めた物・立てっぱなしの物は無し (確かめの Chrome 9334〜9337 は台本の中で止めた、dev 1440 はブラックの物)。
+- 今日の済み (6 本目):
+  - 5883ca99 (スマホのヘッダー 1 段・ブログはスマホで残す・ベースの一覧の展開の追従) を 375 日英で撮り直し、最終チェック長 2 本目へ知らせた → v0.1.598 で本番。
+  - aecc19d4: ジン 10 の目録の付け替え (craft-stage-shelf → PRICE_KEYS・ESSENCE_TABLE、stage-mod-list-look → ESSENCE_KEYS を入口から。値は前の JSON と同じ)。
+  - 8b145a7e・3784372b・4c5711b1: 「開き直し・ブクマ・打ち直し = そのページの最初 / リロード = 同じページの最初 / 戻る・記事から戻る・版替わりの自動の読み直し = 前の画面」(オーナー 10-25) を全部のページで。どれもスイッチ emuFresh の下 (本番は切れたまま、出すのはオーナーの OK の後)。洗い出しの表は共有メモ local_b4352604-…/design6-fresh-pages.md。
+- 持ち物の増えた物:
+  - public/sw.js (10-25 にジン部長から、701e97b5)。
+  - src/state/stage-session.ts (エミュの作業中のアイテムの写し。29e4068a はジン 10 が入れた hasUsableSession、見分けは page-memo の cameBack に寄せた)。
+  - src/web/page-memo.ts (新しい、3784372b): cameBack() = 戻る・同じサイトのリンク・版替わりの自動の読み直し (印 exiledesk-stale-reload の 1 分の窓)。remember(name, get) / forget(name) = 離れる時に各ページの要る物だけ sessionStorage へ写し、同じ URL に戻った時だけ 1 回返す。使っている所: page.ts (スパムシミュの狙いとルーン・コースの段)、SkinsPage (探す・絞る・出した数)、GemCorruptWebPanel (入力は cameBack の時も読む)。
+  - page.ts の gemCorruptPage (?page=gem-corrupt、CraftStage はそれを見る)。
+- 残り (頼まれていない・決めてほしい物): 戻るで画面の送りの位置 (スクロール) は戻さない、スパムシミュの結果の数字は同じ狙いで回し直すので変わる、要望の書きかけ・デイリーの中の選び (見本の作り) は写さない。シミュは cede3e93 の決め (戻るでも空から) のまま。MOD 表などの開いた段を見せる送り (keep-place の revealNext) はスマホの下の固定の帯の高さを数えていない (症状の報告は無い)。
+- 台本: 共有メモ local_b4352604-…/design6/ (back-check = 4 ページの戻る / リロード / 打ち直し、NOBF=1 で bfcache を切る・fresh-check = エミュの写しの 6 通り・pages-check = 11 の URL の開く / リロード・catalog-check = 目録の値の比べと棚・段の表・gem-check)。どれも dev 1440 に窓なし Chrome (9335〜9337) を立てて最後に止める。
+- 6 本目の記録と 5 → 6 の引き継ぎの写しは notes/2026-10-25-design6-handover.md。
 
 ## 済んだ節 (前の版の塊を残す・404 が 3 回・入口の塊の 404・古い塊の読み直し・StageItemCard の D1・D2・エミュ部長の頼み) は notes/2026-10-23-todo-archive.md にそのまま移した。各節の「見ていない」もそこ (10-23 夜 ホワイト)。10-23 夜に 3 本目が fitZoom・先読み・シミュの初手・BasePickBody・ModeTabs・モンキー 4・14・15・モンキー 3・2・9 も移した (OK 待ちは上の引き継ぎに commit で並べてある)
 
