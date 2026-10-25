@@ -29,7 +29,7 @@ const style = computed(() => {
 <template>
   <div v-if="item" ref="el" data-tree-hover-card class="pointer-events-none absolute z-40 drop-shadow-[0_10px_24px_rgba(0,0,0,0.75)]" :style="style">
     <!-- 戻り先を同じ形の箱へ自動でつないだ箱 (tree-run の linkSameShape。押せば別の箱にも替えられる、10-22 オーナー) -->
-    <p v-if="t.doc.value.boxes[boxId]?.autoBack" data-tree-auto-back class="mb-1 rounded-md bg-cyan-950/90 px-2 py-1 text-[12px] text-cyan-100">{{ tr("↩ 同じ形の箱へ自動でつないだ (戻り先の札で替えられる)", "↩ Auto-linked to the box with the same shape (change it from the return tag)") }}</p>
+    <p v-if="t.doc.value.boxes[boxId]?.autoBack" data-tree-auto-back class="mb-1 rounded-md bg-cyan-950/90 px-2 py-1 text-[12px] text-cyan-100">{{ tr("↩ 狙いの MOD が同じ箱へ自動でつないだ (狙い以外の MOD は違ってよい。戻り先の札で替えられる)", "↩ Auto-linked to the box with the same target mods (other mods may differ; change it from the return tag)") }}</p>
     <StageItemCard :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact :row-tags="tags" />
   </div>
 </template>

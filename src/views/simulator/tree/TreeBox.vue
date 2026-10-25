@@ -42,6 +42,8 @@ const neon = computed(() => {
 });
 const doneText = computed(() => (props.box.done ? tr("完成", "Done") : tr("完成にする", "Mark done")));
 /** 下の＋を出す (完成の箱からも伸ばせる。手を付けると完成の印は外れ、同じ形の完成の箱もそこへ戻る、tree-merge の joinSameShape) */
+/** 戻り先 = 狙いの MOD が同じ箱 (自動でつないだ矢印。行き先はいつも箱、狙い以外の MOD は違ってよい。10-25 オーナー「なら箱にしようか基本的に戻るとかの挙動」) */
+const sameAim = computed(() => !!props.box.autoBack && props.box.back !== "start");
 const free = computed(() => !props.box.hand && !props.box.back && !props.box.split);
 /** 分かれ目の先の箱の文 = 親の分かれ目の行の条件 */
 const branchText = computed(() => { const r = props.box.parent ? t.doc.value.boxes[props.box.parent]?.split?.find((x) => x.to === props.box.id) : null; return r ? splitWhenText(r.when) : ""; });
@@ -139,8 +141,8 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     <div class="pointer-events-none absolute inset-x-2 bottom-1 flex h-6 items-center gap-1 text-[11px] *:pointer-events-auto" :style="k > 1 ? { right: 'auto', width: `${(BOX_W - 16 - (box.out === 'hit' ? 22 : 0)) / k}px`, ...keep('left bottom') } : {}">
       <template v-if="box.back">
         <!-- 戻り先の札: 乗せると戻りの線が出て戻り先が光る、押すとそこへ寄る (線は既定で引かない、10-22) -->
-        <button type="button" data-tree-back-tag class="nodrag flex h-6 min-w-0 flex-1 items-center truncate rounded px-1 text-left text-cyan-200 hover:bg-cyan-400/15" :class="quiet ? '!pointer-events-none' : ''" :title="tr(`戻り先: ${backLabel} (押すとそこへ寄る)`, `Returns to: ${backLabel} (click to go there)`)"
-          @pointerenter="emit('backHover', true)" @pointerleave="emit('backHover', false)" @focus="emit('backHover', true)" @blur="emit('backHover', false)" @click.stop="!quiet && emit('backGo')"><span class="min-w-0 truncate">↩ {{ backLabel }}</span></button>
+        <button type="button" data-tree-back-tag class="nodrag flex h-6 min-w-0 flex-1 items-center truncate rounded px-1 text-left text-cyan-200 hover:bg-cyan-400/15" :class="quiet ? '!pointer-events-none' : ''" :title="sameAim ? tr(`戻り先: ${backLabel} (狙いの MOD が同じ箱。狙い以外の MOD は違ってよい。押すとそこへ寄る)`, `Returns to: ${backLabel} (a box with the same target mods; other mods may differ. Click to go there)`) : tr(`戻り先: ${backLabel} (押すとそこへ寄る)`, `Returns to: ${backLabel} (click to go there)`)"
+          @pointerenter="emit('backHover', true)" @pointerleave="emit('backHover', false)" @focus="emit('backHover', true)" @blur="emit('backHover', false)" @click.stop="!quiet && emit('backGo')"><span class="min-w-0 truncate">↩ <span v-if="sameAim" data-tree-same-aim class="mr-0.5 rounded bg-cyan-400/15 px-1 text-[10px]">{{ tr("狙い同じ", "Same targets") }}</span>{{ backLabel }}</span></button>
         <button v-if="!quiet" type="button" class="nodrag -mr-1 flex size-6 items-center justify-center rounded opacity-60 hover:bg-white/10 hover:opacity-100" :title="tr('戻りの矢印を外す', 'Remove the return arrow')" @click.stop="emit('clearBack')"><Icon name="x" class="size-3" /></button>
       </template>
       <template v-else-if="!box.hand && !box.split && box.out !== 'start' && !quiet">
