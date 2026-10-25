@@ -6,7 +6,7 @@
  * その下の箱 = 親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
-import { aimHits as hits, applyCurrency, baseSocketsOf, catalystOf, forceKey, freshItem, kindOf, mulberry32, omenBlock, OMEN_FOR, revealOffers, runeIdByName, tierIndexOf, unrevealedOf, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimHits as hits, applyCurrency, baseSocketsOf, catalystOf, forceKey, freshItem, kindOf, mulberry32, omenBlock, OMEN_FOR, revealOffers, runeIdByName, tierIndexOf, unrevealedOf, useReason, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { fractureStart, stepOutcomes } from "../../craft-stage/engine-sim";
 import { catalystFull, catalystTagOf, fillCatalyst } from "../../craft-stage/engine-sim";
 import { aimHeldOn, isAimMod, junkOf } from "./tree-aim";
@@ -315,7 +315,7 @@ interface UseSpec {
  * - お告げ: 1 枚ずつ omenBlock (触媒の時はカタリストで品質を入れた後のアイテムで聞く)。消せる物が無い側のお告げ・効かないお告げ (オーナー 10-22「進行不能」)
  * - カタリストの手: 1 個でも入る・もう最大なら打てる
  * - 触媒の高貴: カタリストが入らず、別の種類の品質しか無ければ打てない
- * - 手そのもの: applyCurrency が打てる・乱数で決まる (random) なら打てる
+ * - 手そのもの: エンジンの useReason (クラフト台の棚の灰色と同じ判定。乱数で決まる物は打てる扱い、10-25 置き換え)
  */
 function canUse(data: PatchData, item: StageItem, key: string, spec: UseSpec = {}): string | null {
   const now = handOmens(key, spec.omens ?? []).now;
@@ -333,8 +333,7 @@ function canUse(data: PatchData, item: StageItem, key: string, spec: UseSpec = {
     if (!r.applied && r.count === 0 && catalystOf(it).tag !== catalystTagOf(cat)) return r.random ? null : r.reason ?? tr("打てない", "Can't use");
     it = r.item;
   }
-  const r = applyCurrency(data, it, key, rng, now);
-  return r.applied || r.random ? null : r.reason ?? tr("打てない", "Can't use");
+  return useReason(data, it, key, now);
 }
 
 interface HandSpec {
