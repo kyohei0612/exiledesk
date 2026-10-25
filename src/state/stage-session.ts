@@ -9,8 +9,39 @@
 import { ref } from "vue";
 import { craftStage as s } from "./craft-stage";
 import type { CraftStagePlan } from "../services/craft-stage/contract";
+import { flag } from "../web/release-flags";
 
 const KEY = "exiledesk.stage.session.v1";
+
+/**
+ * スイッチ emuFresh (10-25 オーナー「エミュもリロードしたら基本最初からのはず」): 写しを戻すのは戻る (back_forward) と同じサイトのリンク (記事のロゴ・ヘッダー) から来た時だけ。
+ * リロード・外から来た (referrer が無い / 別の origin) 時は写しを消して初めから
+ */
+function freshLoad(): boolean {
+  if (!flag("emuFresh")) return false;
+  try {
+    const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+    if (nav?.type === "back_forward") return false;
+    if (nav?.type === "reload") return true;
+    return !document.referrer || new URL(document.referrer).origin !== location.origin;
+  } catch {
+    return false;
+  }
+}
+
+/** 戻せる写しがあるか (craft-stage.ts が相場を待つ前に見る)。初めからの読み込みなら写しを消して false */
+export function hasUsableSession(): boolean {
+  try {
+    if (!sessionStorage.getItem(KEY)) return false;
+    if (freshLoad()) {
+      sessionStorage.removeItem(KEY);
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 interface Snapshot {
   v: 1;
@@ -39,6 +70,7 @@ function save(): void {
 
 /** 写しがあれば戻す (データを読んだ後、URL の指定が無い時に init から)。戻したら true */
 export function restoreStageSession(): boolean {
+  if (!hasUsableSession()) return false;
   let snap: Snapshot | null = null;
   try { snap = JSON.parse(sessionStorage.getItem(KEY) ?? "null") as Snapshot | null; } catch { return false; }
   if (!snap || snap.v !== 1 || !s.data.value) return false;

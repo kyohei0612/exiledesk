@@ -12,12 +12,10 @@
  *     layout=clip で撮影用のすっきりレイアウト)
  * 1 手の中身は services/craft-stage (計算機と同じ規則)。棚・名前・値段は [[craft-stage-shelf.ts]]。
  */
-import { restoreStageSession } from "./stage-session";
-/** 写しがあれば相場を最大 2.5 秒待ってから戻す (待たずに再生すると工程の費用が 0 で積まれる)。写しが無ければ待たない */
+import { hasUsableSession, restoreStageSession } from "./stage-session";
+/** 写しがあれば相場を最大 2.5 秒待ってから戻す (待たずに再生すると工程の費用が 0 で積まれる)。写しが無い・使わない読み込み (emuFresh のリロードなど) なら待たない */
 async function hasStageSession(market: Promise<unknown>): Promise<boolean> {
-  let has = false;
-  try { has = !!sessionStorage.getItem("exiledesk.stage.session.v1"); } catch { /* 無い扱い */ }
-  if (!has) return false;
+  if (!hasUsableSession()) return false;
   await Promise.race([market.catch(() => null), new Promise((r) => setTimeout(r, 2500))]);
   return restoreStageSession();
 }
