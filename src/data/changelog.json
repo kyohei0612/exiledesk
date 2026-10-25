@@ -1,5 +1,35 @@
 [
  {
+  "v": "0.1.606",
+  "date": "2026-10-26",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: どの画面でもアイテムの文を貼ると、ベースと MOD を取り込んで完成の MOD の画面へ。作りかけのツリーがあればツリーへ戻る時に保存を聞くように",
+    "en": "Simulator: Paste an item on any screen to import its base and mods and jump to the final mods; if an unsaved tree would be replaced, you're asked to save it when going back to the tree"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 貼り付けで取り込んだ MOD を、完成形のカードで貼った値のまま出すように (前は段の真ん中の値になっていました)",
+    "en": "Simulator: Pasted mods now keep their pasted values on the final item card (they used to show the middle of the tier range)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 貼り付けで、トレードの合算された行 (単体 + ハイブリッドなど) をベースの MOD の組み合わせで読み分けるように。分け方が何通りもある時は候補から読み方を切り替えられます",
+    "en": "Simulator: When pasting, summed lines from the trade site (e.g. a single mod plus a hybrid) are now split using the base's mod pool; when they can be read several ways, you can switch between the candidate readings"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 新しいツリーのタブを閉じた時に、残ったツリーが消えたように見える不具合を直しました",
+    "en": "Simulator: Fixed the remaining tree looking erased after closing a new tree's tab"
+   }
+  ]
+ },
+ {
   "v": "0.1.605",
   "date": "2026-10-25",
   "items": [
@@ -160,7 +190,7 @@
  },
  {
   "v": "0.1.597",
-  "date": "2026-10-25",
+  "date": "2026-10-26",
   "items": [
    {
     "kind": "",
@@ -763,18 +793,6 @@
     "area": "",
     "text": "品質で伸びる MOD の数字を、ゲームと同じ切り捨てに (例: 全てのスペルスキルのレベル +3 は、品質 34% でちょうど +4)",
     "en": "Quality-boosted mod values now round down like the game (e.g. +3 to Level of all Spell Skills becomes +4 at exactly 34% quality)"
-   }
-  ]
- },
- {
-  "v": "0.1.566",
-  "date": "2026-10-18",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "チュートリアルの「お告げを学ぶ」のアイコンをお告げの絵に",
-    "en": "Tutorial: the “Learn omens” card now shows an omen icon"
    }
   ]
  }

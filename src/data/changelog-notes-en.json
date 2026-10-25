@@ -1,4 +1,10 @@
 {
+  "0.1.606": [
+    "Simulator: Paste an item on any screen to import its base and mods and jump to the final mods; if an unsaved tree would be replaced, you're asked to save it when going back to the tree",
+    "Simulator: Pasted mods now keep their pasted values on the final item card (they used to show the middle of the tier range)",
+    "Simulator: When pasting, summed lines from the trade site (e.g. a single mod plus a hybrid) are now split using the base's mod pool; when they can be read several ways, you can switch between the candidate readings",
+    "Simulator: Fixed the remaining tree looking erased after closing a new tree's tab"
+  ],
   "0.1.605": [
     "When pasting an item, a hybrid mod split over two lines (e.g. % increased Spirit and maximum Mana) is now read as one mod",
     "When pasting an item, the trade site's total lines are no longer mistaken for mods, and +1 Elemental Infusion / +20% maximum Quality no longer show as outside every tier"
