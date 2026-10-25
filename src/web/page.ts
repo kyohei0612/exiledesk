@@ -60,11 +60,15 @@ const TREE_PAGES: Record<string, TreeStep> = { "page=sim-tree": "tree", "page=si
 let leaveGuard: ((to: string) => boolean) | null = null;
 /** 保存の手 (opts.save) がある時は「保存して進む / 保存せず進む / やめる」の 3 つで聞く (2026-10-26 オーナー「保存しますかって聞かれたら保存でおｋ」、シミュ部長 29) */
 let leaveSave: (() => void) | null = null;
-export const leaveCanSave = ref(false);
+const guardCanSave = ref(false);
+/** askLeave で渡した、その回だけの保存の手 (答えたら消す) */
+let askSave: (() => void) | null = null;
+const askCanSave = ref(false);
+export const leaveCanSave = computed(() => askCanSave.value || guardCanSave.value);
 export function setLeaveGuard(fn: ((to: string) => boolean) | null, opts?: { save?: () => void }): void {
   leaveGuard = fn;
   leaveSave = (fn && opts?.save) || null;
-  leaveCanSave.value = !!leaveSave;
+  guardCanSave.value = !!leaveSave;
 }
 /** 聞いている間の「保存せずに終了」で移る先 (null = 聞いていない)。LeaveConfirm.vue が出す */
 export const leaveAsk = ref<(() => void) | null>(null);
@@ -77,11 +81,23 @@ function leaveThen(to: string, go: () => void): void {
   if (mustAsk(to)) leaveAsk.value = go;
   else go();
 }
+/**
+ * ページを移らない操作 (白紙に戻す・タブの ×・レシピを開いて今の木を替える) でも同じ窓で聞く (2026-10-26 オーナー「ツリー消す作業とかもろもろ」、シミュ部長 29)。
+ * 聞くかどうかは呼ぶ側が決める (ここではすぐ聞く)。save はその回だけの保存の手、無ければ setLeaveGuard の save
+ */
+export function askLeave(go: () => void, save?: () => void): void {
+  askSave = save ?? null;
+  askCanSave.value = !!save;
+  leaveAsk.value = go;
+}
 /** LeaveConfirm.vue のボタン (true = 保存せず進む、"save" = 保存の手を呼んでから進む) */
 export function answerLeave(ok: boolean | "save"): void {
   const go = leaveAsk.value;
   leaveAsk.value = null;
-  if (ok === "save") leaveSave?.();
+  const save = askSave ?? leaveSave;
+  askSave = null;
+  askCanSave.value = false;
+  if (ok === "save") save?.();
   if (ok) go?.();
 }
 /** 戻る / 進むで聞いて「保存せずに終了」になった時の 1 回は聞かずに通す。popBack = 聞くために元の位置へ戻した 1 回は何もしない */
