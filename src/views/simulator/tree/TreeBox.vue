@@ -11,6 +11,7 @@ import { jaTypeName } from "../../../i18n/item-names-ja";
 import { useTree } from "./use-tree";
 import { handName, OUT_LOOK, rarityName, splitWhenText } from "./tree-names";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
+import { pctText, useTreeOdds } from "./tree-odds";
 
 const props = defineProps<{ box: TreeBox; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
   /** 縮めた時の倍率の逆数 (押せる物だけこれで大きさを戻し、画面の上で 24px 以上を保つ。オーナー 10-22「縮めても押せる物は小さくならない」) */ inv?: number;
@@ -42,6 +43,9 @@ const checkTitle = computed(() => (props.box.check ?? []).map((k) => tr(CHECK_PA
 
 /** 結果ごとの名前・色・印 (tree-names.ts の OUT_LOOK、まとめた札と同じ) */
 const kind = computed(() => OUT_LOOK[props.box.out]);
+/** この結果の箱に着く割合 (無ければ出さない、tree-odds.ts) */
+const treeOdds = useTreeOdds();
+const odds = computed(() => treeOdds.value.get(props.box.id) ?? null);
 /** 縁の色 (完成は明るい金) と光り方。選んだ・光らせた時は強く */
 const rgb = computed(() => (props.box.done ? "242,210,122" : kind.value.c));
 const neon = computed(() => {
@@ -111,6 +115,8 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     <div class="flex items-center gap-1.5" :style="{ height: `${24 * k}px` }">
       <span class="flex size-5 shrink-0 items-center justify-center rounded-md" :style="{ background: `rgba(${rgb},0.18)`, color: `rgb(${rgb})` }"><Icon :name="kind.icon" class="size-3.5" /></span>
       <span class="truncate text-[11px] font-bold tracking-wide" :style="{ color: `rgb(${rgb})` }">{{ tr(kind.ja, kind.en) }}</span>
+      <!-- この結果に着く割合 (親の箱のアイテム × 手、エンジンの outcomeOdds。tree-odds.ts) -->
+      <span v-if="odds != null" data-tree-odds class="shrink-0 text-[11px] tabular-nums opacity-80" :title="tr('この手でこの結果になる割合 (1 手分、エンジンから)', 'Chance of this result from the craft (one use, from the engine)')">{{ pctText(odds) }}</span>
       <!-- 始まりのアイテムレベルは見出しに (ベースの名前が長いと下の行で切れて見えない、10-22 靴) -->
       <span v-if="box.out === 'start'" class="shrink-0 text-[11px] opacity-70">{{ tr(`Lv ${t.doc.value.itemLevel}${t.doc.value.ilvlFit ? " 適正" : ""}`, `ilvl ${t.doc.value.itemLevel}${t.doc.value.ilvlFit ? " fit" : ""}`) }}</span>
       <span v-if="box.done" class="shrink-0 rounded-full bg-amber-300/25 px-1.5 text-[10px] font-bold text-amber-100">{{ doneText }}</span>

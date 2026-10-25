@@ -14,6 +14,7 @@ import StageItemCard from "../../../components/for-share/item/StageItemCard.vue"
 import { craftStage as s } from "../../../state/craft-stage";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { treeRowTags } from "../tree/tree-row-tags";
+import { pctText, useTreeOdds } from "../tree/tree-odds";
 import { tr } from "../../../i18n/lang";
 
 const props = defineProps<{ boxId: string }>();
@@ -36,6 +37,8 @@ const others = computed(() => [...link.value].filter(([id, why]) => why === null
 const pickOther = ref(false);
 const look = computed(() => OUT_LOOK[box.value?.out ?? "junk"]);
 const backKind = computed(() => (state.value !== "back" ? null : box.value?.back === "start" ? "start" : backTo.value === parent.value ? "retry" : "other"));
+const treeOdds = useTreeOdds();
+const odds = computed(() => treeOdds.value.get(props.boxId) ?? null);
 const cardOpen = ref(false);
 const item = computed(() => (cardOpen.value && s.data.value && box.value ? sampleOf(s.data.value, t.doc.value, props.boxId, 1).item : null));
 const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.value, t.doc.value, box.value?.unwanted ?? [], item.value) : null));
@@ -48,9 +51,9 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
   <div v-if="box" data-phone-out :data-box-id="boxId" class="rounded-xl border bg-[#1a140d] px-3 py-2" :style="{ borderColor: `rgba(${look.c},${state === 'open' ? 0.75 : 0.35})` }">
     <p class="flex min-w-0 items-center gap-2 text-[14px] font-bold" :style="{ color: `rgb(${look.c})` }">
       <span class="min-w-0 flex-1 truncate">{{ q.boxTitle(boxId) }}</span>
+      <!-- この結果になる割合 (PC の箱と同じ、エンジンの outcomeOdds) -->
+      <span v-if="odds != null" data-phone-odds class="shrink-0 text-[12px] font-normal tabular-nums text-[#d8ccb4]">{{ pctText(odds) }}</span>
       <span v-if="state === 'open'" class="shrink-0 text-[11px] font-normal text-amber-200/80">{{ tr("どうする?", "Then?") }}</span>
-      <!-- この結果のアイテム (既定は閉じる。PC の箱に乗せた時のカードと同じ見本) -->
-      <button type="button" data-phone-out-card class="shrink-0 rounded-md border border-white/15 px-1.5 text-[11px] font-normal leading-6 text-[#d8ccb4]" :aria-expanded="cardOpen" @click="cardOpen = !cardOpen">{{ tr("アイテム", "Item") }} {{ cardOpen ? "▾" : "▸" }}</button>
     </p>
     <StageItemCard v-if="cardOpen && item" class="mt-2" :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
     <!-- 次の手が付いている箱 (① で答えた) は手の名前だけ。押すとその手を見直す -->
@@ -65,6 +68,8 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
         <button type="button" data-phone-ans="start" :class="chipClass(backKind === 'start')" @click="q.setReturn(boxId, 'start')">{{ tr("↩ 始めに戻る", "↩ Back to start") }}</button>
         <button v-if="canDone" type="button" data-phone-ans="done" :class="chipClass(state === 'done')" @click="q.setFinished(boxId)">{{ tr("完成", "Done") }}</button>
         <button v-if="others.length" type="button" data-phone-ans="other" :class="chipClass(backKind === 'other' || pickOther)" @click="pickOther = !pickOther">{{ tr("ほかの箱へ ▾", "Other box ▾") }}</button>
+        <!-- この結果のアイテム (既定は閉じる。PC の箱に乗せた時のカードと同じ見本) -->
+        <button type="button" data-phone-out-card class="ml-auto rounded-full border border-white/10 px-2.5 py-1.5 text-[12px] leading-none text-[#c8bca4]" :aria-expanded="cardOpen" @click="cardOpen = !cardOpen">{{ tr("アイテム", "Item") }} {{ cardOpen ? "▾" : "▸" }}</button>
       </div>
       <div v-if="pickOther" data-phone-other class="mt-2 flex flex-col gap-1">
         <button v-for="id in others" :key="id" type="button" class="truncate rounded-lg border border-white/10 bg-black/20 px-2 py-1.5 text-left text-[12px]" :class="backTo === id ? 'border-cyan-300/70 text-cyan-100' : 'text-[#d8ccb4]'" @click="pickOther = false; q.setReturn(boxId, id)">↩ {{ q.pathText(id) }}</button>
