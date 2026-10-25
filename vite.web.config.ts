@@ -74,7 +74,11 @@ export default defineConfig({
         const { readFile } = await import("node:fs/promises");
         const { extname, join } = await import("node:path");
         const f = join(DIR, u.endsWith("/") ? `${u}index.html` : u);
-        try { const b = await readFile(f); res.setHeader("Content-Type", TYPES[extname(f)] ?? "application/octet-stream"); res.end(b); } catch { next(); }
+        let b: Awaited<ReturnType<typeof readFile>>;
+        try { b = await readFile(f); } catch { return next(); }
+        res.setHeader("Content-Type", TYPES[extname(f)] ?? "application/octet-stream");
+        // dev の / はアプリの入口なので、トップへのリンク (戻る・ロゴ・?base= 付き) は Web の入口 /web.html へ (2026-10-25 オーナー「戻るを押すとアプリの画面に行く」)
+        res.end(extname(f) === ".html" ? b.toString("utf8").replace(/href="\/(\?[^"]*)?"/g, 'href="/web.html$1"') : b);
       });
     },
   }],
