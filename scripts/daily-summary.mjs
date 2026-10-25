@@ -87,6 +87,9 @@ ${counts(cur.screens, p1?.screens, p7?.screens)}
 ## ブログ (記事:言語 ごとの PV)
 ${Object.keys(cur.blog).length ? `| 記事:言語 | PV | 前の日との差 | 前の週との差 |\n|---|---|---|---|\n${counts(cur.blog, p1?.blog, p7?.blog)}` : "(記録なし)"}
 
+## コスメティック (静的なページ /cosmetics/、まとめ:言語 ごとの PV。アプリの一覧 ?page=skins は上の画面ごとの skins)
+${Object.keys(cur.cosmetics ?? {}).length ? `| まとめ:言語 | PV | 前の日との差 | 前の週との差 |\n|---|---|---|---|\n${counts(cur.cosmetics, p1?.cosmetics, p7?.cosmetics)}` : "(記録なし)"}
+
 ## 要望・バグ (${day} 0 時から今まで ${feedback.length} 件)
 ${fbError ? `読めなかった: ${fbError}` : feedback.map((f) => `- ${f.id} · ${jst(f.at)} · v${f.context?.version ?? "?"} · ${f.context?.lang ?? ""} · ${f.context?.base ?? ""}\n  - ${String(f.text).replace(/\s+/g, " ").slice(0, 400)}\n  - ${(f.context?.summaryJa ?? []).join(" / ").replace(/\s+/g, " ").slice(0, 300)}`).join("\n") || "(無し)"}
 

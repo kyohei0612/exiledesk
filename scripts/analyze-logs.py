@@ -64,10 +64,12 @@ print(f"また来た (2 日以上来た人): {multi} / {len(uid_days)} ({pct(mul
 
 # ---- PV (広告の枠を出し直すページ。来た 1 回 + ページを移った回数) ----
 print("\n== PV (来た 1 回 + ページを移った回数)")
-PAGE = lambda to: to in ("picker", "guide", "feedback", "routes", "craft", "spam") or to.startswith(("course:", "blog:"))
-# ブログは 1 ページ開くたびに visit + screen "blog:<slug>:<言語>" (scripts/_blog-client.js)、溜めて送るので 1 つの sid に何ページも入る。ブログの visit は screen の側で数える (2026-10-21)
+# 静的なページ (ブログ・コスメティック) は 1 ページ開くたびに visit + screen (scripts/_blog-client.js・_pv-client.js)
+STATIC = ("blog:", "cosmetics:")
+PAGE = lambda to: to in ("picker", "guide", "feedback", "routes", "craft", "spam") or to.startswith(("course:",) + STATIC)
+# 静的なページは 1 ページ開くたびに visit + screen "blog:<slug>:<言語>" / "cosmetics:<まとめ>:<言語>"、溜めて送るので 1 つの sid に何ページも入る。その visit は screen の側で数える (2026-10-21、コスメは 10-25)
 def pv(s):
-    blog = sum(1 for t in s["screens"] if t.startswith("blog:"))
+    blog = sum(1 for t in s["screens"] if t.startswith(STATIC))
     return (1 if s["visits"] > blog or not blog else 0) + sum(1 for t in s["screens"] if PAGE(t))
 for name, lo, hi in (("〜0.1.572 (ページの作りの前。参考: 前はページを移っても広告を出し直さない)", 0, 573), ("0.1.573〜579 (クラフトへ戻るは数えていない)", 573, 580), ("0.1.580〜", 580, 10**6)):
     xs = [s for s in sessions if lo <= ver(s["v"]) < hi]
@@ -76,7 +78,12 @@ for name, lo, hi in (("〜0.1.572 (ページの作りの前。参考: 前はペ�
     for s in xs: per_user[s["uid"]] += pv(s)
     print(f"{name}: 訪問 {len(xs)} / PV / 訪問 平均 {avg([pv(s) for s in xs])}・真ん中 {med([pv(s) for s in xs])} / PV / 人 {avg(list(per_user.values()))}"
           f" (PC {avg([pv(s) for s in xs if s['dev'] == 'pc'])}・スマホ {avg([pv(s) for s in xs if s['dev'] == 'mobile'])})")
-print("画面の切り替え:", top(collections.Counter("course" if t.startswith("course:") else "blog" if t.startswith("blog:") else t for s in sessions for t in s["screens"]), 15))
+print("画面の切り替え:", top(collections.Counter("course" if t.startswith("course:") else "blog" if t.startswith("blog:") else "cosmetics" if t.startswith("cosmetics:") else t for s in sessions for t in s["screens"]), 15))
+
+# ---- コスメティックの静的なページ (2026-10-25〜。画面名 cosmetics:<まとめ>:<言語>、一覧は cosmetics:index:<言語>。アプリの一覧 ?page=skins は "skins") ----
+cosm = [r for r in recs["screen"] if str(r["d"].get("to", "")).startswith("cosmetics:")]
+if cosm:
+    print(f"\n== コスメティック: PV {len(cosm)} / 人 {len({r['uid'] for r in cosm})}", top(collections.Counter(r["d"]["to"][10:] for r in cosm), 20))
 
 # ---- ブログ (2026-10-21〜。画面名 blog:<slug>:<言語>、一覧は blog:index:<言語>) ----
 blog = [r for r in recs["screen"] if str(r["d"].get("to", "")).startswith("blog:")]
@@ -176,11 +183,12 @@ if tut:
 print(f"\nPWA の記録 {len(recs['pwa'])} / ジェムコラプト {len(recs['gem_corrupt'])} / シミュレーション (開発版だけ) {len(recs['sim_run'])}")
 
 if AS_JSON:
-    scr = collections.Counter("course" if t.startswith("course:") else t for s in sessions for t in s["screens"] if not t.startswith("blog:"))
+    scr = collections.Counter("course" if t.startswith("course:") else t for s in sessions for t in s["screens"] if not t.startswith(STATIC))
     sys.stdout.write(json.dumps({
         "visits": len(sessions), "people": len({s["uid"] for s in sessions}),
         "pv": sum(pv(s) for s in sessions), "pv_pc": sum(pv(s) for s in sessions if s["dev"] == "pc"), "pv_mobile": sum(pv(s) for s in sessions if s["dev"] == "mobile"),
         "first": sum(1 for s in sessions if (s["visit"] or {}).get("first")), "ref": dict(collections.Counter(v.get("ref") for v in vis).most_common(8)),
         "screens": dict(scr.most_common()), "blog": dict(collections.Counter(r["d"]["to"][5:] for r in blog).most_common()),
+        "cosmetics": dict(collections.Counter(r["d"]["to"][10:] for r in cosm).most_common()),
         "uses": len(uses), "users": len({u["uid"] for u in uses}), "used_visits": sum(1 for s in sessions if s["uses"]),
     }, ensure_ascii=False) + "\n")

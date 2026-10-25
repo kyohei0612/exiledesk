@@ -19,5 +19,6 @@
 - 使用量: Cloudflare のダッシュボードの Workers & Pages。無料の枠は 1 日 10 万リクエスト (UTC 0:00 = 日本時間 9:00 に戻る)。
 - 画面の側 (持ち主はデザイン部長、送る口だけ): src/utils/log-record.ts (`logRecord`)・no-log.ts、src/services/telemetry/log-sender.ts、src/web/track.ts、要望 src/web/FeedbackDialog.vue・feedback-images.ts・feedback-summary.ts、返事 src/state/feedback-replies.ts。
 - Web の作り (10-25 に共通から移った、701e97b5): vite.web.config.ts (mtx-art・stub を外す)・public/robots.txt・scripts/build-seo-pages.mjs (読み物のページ)。手元の本番環境 preview-prod.mjs・返りの比べ compare-prod-local.mjs・照らし compare-snaps.mjs。
+- 静的なページを数える JS: scripts/_pv-client.js (→ /pv.js、コスメの build-cosmetics-pages.mjs が写して head に札を置く。visit + screen "cosmetics:<まとめ>:<言語>"、1 時間に 1 回・ロボットと exiledesk.com の外は送らない、PV_API=<手元の server/live> で確かめ。10-25)。ブログは別の _blog-client.js。
 - 台本 scripts/: pull-logs.mjs・analyze-logs.py (`--json` で数字だけ)・daily-summary.mjs・sim-telemetry.mjs・check-www-redirect.mjs (www の Bot の 301 とトップ・シェア、本番で見るだけ)。テスト tests/: live-worker・log-sender-throttle。
 - メモ: analytics-logs (決着済み: D1 の visit・screen)・feedback-replies (`wrangler kv key put fbr:<id>`)・history-logs・roadmap-2026-10 (月 10 万 PV)・ads-page-model。docs: roadmap-2026-10.md、pending-release.md。

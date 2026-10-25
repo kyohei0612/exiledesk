@@ -12,7 +12,7 @@
  *   node scripts/build-cosmetics-pages.mjs [出力先 (既定 dist-web)] [--index]
  * 本番の build:web と手元の作り (scripts/preview-prod.mjs) の両方で回す (オーナー 10-25 の OK で本番に。noindex のまま)
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -23,6 +23,9 @@ const OUT = resolve(ROOT, args.find((a) => !a.startsWith("--")) ?? "dist-web");
 const SITE = "https://exiledesk.com";
 const d = JSON.parse(readFileSync(resolve(ROOT, "src/data/mtx-poe1-in-poe2.json"), "utf8"));
 const G = JSON.parse(readFileSync(resolve(ROOT, "src/views/skins/groups.json"), "utf8"));
+const VERSION = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf8")).version;
+/** 1 ページを数える JS (scripts/_pv-client.js → /pv.js、サーバー管理人 10-25)。PV_API を付けた時だけ exiledesk.com の外からも送る (確かめ用) */
+const PV_API = process.env.PV_API ?? "";
 const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 // まとめごと (groups.json の並び、その他は最後)。中は元の種類ごと (多い順)
@@ -110,6 +113,7 @@ ${alt ? `<link rel="alternate" hreflang="${other}" href="${SITE}${LANGS[other].p
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet" />
 <style>${CSS}</style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1993030721214430" crossorigin="anonymous"></script>
+<script defer src="/pv.js" data-screen="cosmetics:${esc(path.replace(/^\/cosmetics\/?/, "") || "index")}:${code}" data-lang="${code}" data-v="${VERSION}"${PV_API ? ` data-api="${esc(PV_API)}"` : ""}></script>
 </head>
 <body>
 <header><div class="in"><a href="${L.app}">ExileDesk</a><nav>${L.nav}</nav></div></header>
@@ -197,6 +201,8 @@ ${foot}`);
   urls.push(`${L.prefix}/cosmetics/`);
   console.log(`${code}: 一覧 + 種類のページ ${nChild} 枚`);
 }
+
+copyFileSync(resolve(ROOT, "scripts/_pv-client.js"), resolve(OUT, "pv.js"));
 
 // サイトマップ (--index の時だけ。出力先にあれば足す)
 const sm = resolve(OUT, "sitemap.xml");
