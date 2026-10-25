@@ -58,8 +58,13 @@ const TREE_PAGES: Record<string, TreeStep> = { "page=sim-tree": "tree", "page=si
  * 登録中にツリーのページから外へ移る時 (open○○Page・closeTreePage・戻る / 進む) は LeaveConfirm.vue で聞く。ツリーの中の段の行き来 (treeStep だけ替わる) は聞かない
  */
 let leaveGuard: ((to: string) => boolean) | null = null;
-export function setLeaveGuard(fn: ((to: string) => boolean) | null): void {
+/** 保存の手 (opts.save) がある時は「保存して進む / 保存せず進む / やめる」の 3 つで聞く (2026-10-26 オーナー「保存しますかって聞かれたら保存でおｋ」、シミュ部長 29) */
+let leaveSave: (() => void) | null = null;
+export const leaveCanSave = ref(false);
+export function setLeaveGuard(fn: ((to: string) => boolean) | null, opts?: { save?: () => void }): void {
   leaveGuard = fn;
+  leaveSave = (fn && opts?.save) || null;
+  leaveCanSave.value = !!leaveSave;
 }
 /** 聞いている間の「保存せずに終了」で移る先 (null = 聞いていない)。LeaveConfirm.vue が出す */
 export const leaveAsk = ref<(() => void) | null>(null);
@@ -72,10 +77,11 @@ function leaveThen(to: string, go: () => void): void {
   if (mustAsk(to)) leaveAsk.value = go;
   else go();
 }
-/** LeaveConfirm.vue のボタン (true = 保存せずに終了) */
-export function answerLeave(ok: boolean): void {
+/** LeaveConfirm.vue のボタン (true = 保存せず進む、"save" = 保存の手を呼んでから進む) */
+export function answerLeave(ok: boolean | "save"): void {
   const go = leaveAsk.value;
   leaveAsk.value = null;
+  if (ok === "save") leaveSave?.();
   if (ok) go?.();
 }
 /** 戻る / 進むで聞いて「保存せずに終了」になった時の 1 回は聞かずに通す。popBack = 聞くために元の位置へ戻した 1 回は何もしない */
