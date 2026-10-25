@@ -242,6 +242,9 @@ function swapJunkOf(c: TreeBox, p: TreeBox | undefined): string | null {
 /** 手の結果 (outcomeOf) に合う結果の箱 (回す時と精査で同じ)。any = 狙い無しの手の「打った後」、pass = 品質だけ上げた後 */
 /** after = 打った後のアイテム (無限のエッセンスで当たりの箱が 2 つ以上の時、付いた MOD の箱を選ぶ。無ければ 1 つ目) */
 export function outBoxOf(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[] }, after?: StageItem): string | undefined {
+  // 種類がぴったり合う箱を先に (打った後の箱と狙いが消えたの箱が並ぶ時、狙いが消えた人を打った後へ入れない。10-25 起こりうる結果の箱 possibleOutsOf)
+  const exact = b.outs.find((id) => { const c = doc.boxes[id]; return !!c && c.out === oc.out && c.out !== "hit"; });
+  if (exact) return exact;
   return b.outs.find((id) => {
     const c = doc.boxes[id];
     if (!c || (c.out !== oc.out && c.out !== "any" && c.out !== "pass")) return false;

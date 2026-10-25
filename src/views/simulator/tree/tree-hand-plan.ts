@@ -6,14 +6,14 @@ import { catalystBoosts, mulberry32, omensFor, tierRankOf, type PatchData, type 
 import { catalystFull, catalystTagOf, fillCatalyst, stepOutcomes } from "../../../services/craft-stage/engine-sim";
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, ECHO, effectOf, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
-import { aimsOf, handProblem, sampleOf, singleOutOf } from "../../../services/simulator/tree/tree-sample";
+import { aimsOf, handProblem, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { linkSameShape } from "../../../services/simulator/tree/tree-shape";
 import { fractureMarks, healLost, kindOfHand, setHand, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
 import { tr } from "../../../i18n/lang";
 
-/** 結果が 1 通りの手の結果 (tree-sample の singleOutOf) */
-export type OnlyOut = { out: OutKind; aim: Aim | null } | null;
+/** 起こりうる結果の一覧 (tree-sample の possibleOutsOf)。null = 手の種類ごとの箱 */
+export type OnlyOut = ReadonlyArray<{ out: OutKind; aim: Aim | null }> | null;
 /** 棚で選んだ物 (持った物・掛けたお告げ・当たるまで・狙い無し・骨の反響・フラクチャーで ✦ にする狙い) */
 export interface HandPick { held: string; omens: readonly string[]; spam?: boolean; spamMax?: number | null; free?: boolean; echo?: boolean }
 
@@ -114,9 +114,13 @@ export function pickedHits(choices: readonly Aim[], checked: readonly string[], 
   if (aims.length) return { aims, free: false };
   return { aims: [], free: !spam };
 }
-/** 結果が 1 通りの手か (この箱の見本 8 つにエンジンで打った行き先を全部たどる。触媒の手は前のカタリストを入れた後で) (フラクチャーも同じ。✦ になる MOD が 1 つしか無ければ 1 通り) */
+/** 起こりうる結果の一覧 (この箱の見本 8 つにエンジンで打った行き先を全部たどる。触媒の手は前のカタリストを入れた後で。フラクチャーも同じ) */
 export function onlyOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, preCat: string | null, hitAims: Aim[]): OnlyOut {
-  return singleOutOf(data, doc, boxId, h, preCat, hitAims);
+  const l = possibleOutsOf(data, doc, boxId, h, preCat, hitAims);
+  if (!l || !hitAims.length) return l;
+  // チェックした狙いでない当たり (木のほかの狙いが付いた) は外れとして数える (当たりの箱はチェックした札だけ)
+  const out = l.map((e) => (e.out === "hit" && e.aim && !hitAims.some((a) => a.modId === e.aim!.modId && a.tier === e.aim!.tier) ? { out: "junk" as OutKind, aim: null } : e));
+  return out.filter((e, i) => out.findIndex((x) => x.out === e.out && x.aim?.modId === e.aim?.modId && x.aim?.tier === e.aim?.tier) === i);
 }
 /** この箱の見本に打てない手は確定させない (お告げが効かない・消せる物が無い等。オーナー 10-22「進行不能」、tree-sample の handProblem) */
 export function problemOf(data: PatchData, item: StageItem, h: Hand, hitAims: Aim[], preCat: string | null, preFill: StageApply | null): string | null {
@@ -134,8 +138,6 @@ export function problemOf(data: PatchData, item: StageItem, h: Hand, hitAims: Ai
 export function applyPick(d: TreeDoc, id: string, h: Hand, kind: HandKind, aims: Aim[], pre: string | null, only: OnlyOut): string {
   const had = new Set(Object.keys(d.boxes));
   let at = id;
-  // 狙いの MOD が付かないエッセンス (hitAimsOf が当たりを返さない) は狙い無しの手と同じく結果を「付いた」の箱 1 つに (TreeBox がエッセンスの名前で「〜の MOD が付いた」と出す)
-  if (kind === "essence" && !aims.length && !only) { h = { ...h, free: true }; kind = "free"; }
   if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
   setHand(d, at, h, kind, aims, only);
   joinSameShape(d, id);

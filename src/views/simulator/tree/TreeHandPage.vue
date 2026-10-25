@@ -4,12 +4,13 @@
 -->
 <script setup lang="ts">
 import ModalShell from "../../../components/ui/ModalShell.vue";
-import type { Aim, Hand, HandKind, OutKind } from "../../../services/simulator/tree/tree-model";
+import type { Aim, Hand, HandKind } from "../../../services/simulator/tree/tree-model";
+import type { OnlyOut } from "./tree-hand-plan";
 import { tr } from "../../../i18n/lang";
 import TreeHandShelf from "./TreeHandShelf.vue";
 
 defineProps<{ boxId: string; current: Hand | null }>();
-const emit = defineEmits<{ pick: [hand: Hand, kind: HandKind, aims: Aim[], preCatalyst: string | null, only: { out: OutKind; aim: Aim | null } | null]; clear: []; close: []; back: []; aim: [] }>();
+const emit = defineEmits<{ pick: [hand: Hand, kind: HandKind, aims: Aim[], preCatalyst: string | null, only: OnlyOut]; clear: []; close: []; back: []; aim: [] }>();
 </script>
 
 <template>

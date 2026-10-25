@@ -285,24 +285,29 @@ export function shift(d: TreeDoc, id: string, dx: number, dy: number): void {
   for (const x of subtree(d, id)) { const b = d.boxes[x]!; b.x += dx; b.y += dy; }
 }
 
+/** 結果の箱の並び (起こりうる結果の一覧から作る時) */
+const OUT_ORDER: OutKind[] = ["hit", "any", "pass", "branch", "lost", "junkGone", "junk"];
 /** 手の種類 (繰り返しの手は spam) */
 export const kindOfHand = (h: Hand, base: HandKind): HandKind => (h.repeat ? "spam" : h.free ? "free" : base);
 
 /**
  * 箱の次の手を決める。手の種類が同じなら結果の箱はそのまま、違えば作り直す。
  * aims を渡すと、当たりの箱をその札の数だけ作る (カオススパムの既定 = まだ付いていない狙いを全部)。
- * only = 結果が 1 通りの手 (tree-sample の singleOutOf。光のお告げ + 消去 = 外れが消えただけ など) の時はその箱 1 つだけ
+ * only = 起こりうる結果の一覧 (tree-sample の possibleOutsOf。光のお告げ + 消去 = 外れが消えただけ、お告げ無しのエッセンス = 付いた・狙いが消えた など) があれば、その箱だけ。
+ * 当たりの箱は一覧の札だけ。一覧が無ければ手の種類ごとの箱 (OUTS_OF)
  */
-export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims: readonly Aim[] = [], only: { out: OutKind; aim: Aim | null } | null = null): void {
+export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims: readonly Aim[] = [], only: ReadonlyArray<{ out: OutKind; aim: Aim | null }> | null = null): void {
   const b = d.boxes[id];
   if (!b) return;
   const now = b.outs.map((o) => d.boxes[o]!.out);
   // 消せる狙いを持って着く人がいなければ「狙いが消えた」は起きない (10-24 モンキー初めての人の回 6)。前から箱がある木は替えない (同じ手を選び直して下が消えないように)
   const kept = !!b.hand && now.includes("lost") && now.every((k) => k !== "start" && OUTS_OF[kind].includes(k));
   const noLost = !only && OUTS_OF[kind].includes("lost") && OUTS_OF[kind].length > 1 && !kept && !mayHoldAim(d, id);
-  const want = only ? [only.out] : noLost ? OUTS_OF[kind].filter((k) => k !== "lost") : OUTS_OF[kind];
-  if (only?.aim) aims = [only.aim];
-  if (noLost) b.noLost = true; else delete b.noLost;
+  const want = only ? OUT_ORDER.filter((k) => only.some((o) => o.out === k)) : noLost ? OUTS_OF[kind].filter((k) => k !== "lost") : OUTS_OF[kind];
+  if (only) { const hs = only.flatMap((o) => (o.out === "hit" && o.aim ? [o.aim] : [])); if (hs.length) aims = hs; }
+  // 起こりうる結果の一覧に「狙いが消えた」が無いのが、まだ誰も狙いを持って着かないからなら印を残す (後で戻りの矢印が付いたら healLost が足す)。
+  // 持って着く人がいて無いなら、その手では消えない (右側の結晶化で外れだけ消える等) ので足さない
+  if (noLost || (only && !want.includes("lost") && OUTS_OF[kind].includes("lost") && !mayHoldAim(d, id))) b.noLost = true; else delete b.noLost;
   const same = b.hand && want.every((k) => now.includes(k)) && now.every((k) => k !== "start" && want.includes(k));
   b.hand = { ...hand, omens: [...hand.omens], repeat: hand.repeat ? { ...hand.repeat } : null };
   b.back = null;

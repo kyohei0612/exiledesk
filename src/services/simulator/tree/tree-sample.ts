@@ -16,6 +16,7 @@ import { fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type 
 import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-shape";
 import { arrivedAt } from "./tree-arrived";
+import { aimsMayHold } from "./tree-lost";
 
 const TRIES = 3000;
 
@@ -81,21 +82,20 @@ export function outcomeOf(data: PatchData, before: StageItem, after: StageItem, 
 }
 
 /**
- * 結果が 1 通りの手 (10-22 オーナー「光のお告げの場合ハズレとかないから、使った時点でその先には冒涜が消えた状態の枠しかない」
- * 「サフィ 3 MOD・プレ 1 MOD で左側の消去の時は狙いの MOD が無いから 1 通り。そういう判断は自動で」): 手を置く時に、この箱の見本 (木を回して着いた人のアイテム、tree-arrived) を
- * SINGLE_SEEDS 個まで取り (同じ箱でも外れが左右どちらかなどで違う)、それぞれにエンジンの stepOutcomes で起こりうる行き先を全部たどる。
- * 全部の見本で結果の分け方 (outcomeOf) が同じ 1 つの時だけそれを返す (当たりは付く札も)。箱に着かなかった見本は数えない。
- * pre = 前に品質を最大まで入れるカタリスト (触媒の手の前の札)。
- * 繰り返し・狙い無し・品質だけの手・未発現が付く手と、エンジンが枝に分けられない手 (数値だけ変わる手など) は null (今までどおり手の種類の箱)。
- * extra = 棚の当たりの候補 (欲しい MOD のメモなど、木にまだ無い狙い)。足す・入れ替える手が「外れだけ」の 1 通りになる時も null
+ * 起こりうる結果の箱 (10-25 オーナー「結局 例えばプレフィックスに付いたらどか考えられるでしょ」、前は手の種類ごとの決め打ち OUTS_OF と「1 通りなら 1 つ」だけ):
+ * 手を置く時に、この箱の見本 (木を回して着いた人のアイテム、tree-arrived) を SINGLE_SEEDS 個まで取り (同じ箱でも外れが左右どちらかなどで違う)、
+ * それぞれにエンジンの stepOutcomes で起こりうる行き先を全部たどり、結果の分け方 (outcomeOf) を全部集める (当たりは付く札ごと)。お告げ込み。
+ * 狙いの付かない当たり (エッセンスで外れを置き換える等) は「打った後」(any)。箱に着かなかった見本は数えない。pre = 前に品質を最大まで入れるカタリスト。
+ * 繰り返し・狙い無し・品質だけの手・未発現が付く手 (冒涜の骨、発現で選ぶ候補で分かれる) と、エンジンが枝に分けられない手は null (今までどおり手の種類の箱)。
+ * extra = 棚の当たりの候補 (チェックした狙い・欲しい MOD のメモ)。足す・入れ替える手が「外れだけ」になる時も null
  * (10-22 白紙から 13 通り組んだ #1: 木にまだ無い狙いを足す手で当たりの箱が作れず、横の＋も出なかった。外れだけなら当たりの箱を作って MOD を選ばせる)
  */
-export function singleOutOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, pre: string | null = null, extra: readonly Aim[] = []): { out: OutKind; aim: Aim | null } | null {
+export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, pre: string | null = null, extra: readonly Aim[] = []): Array<{ out: OutKind; aim: Aim | null }> | null {
   if (h.repeat || h.free || isCatalyst(h.currency)) return null;
   const aims = [...aimsOf(doc), ...extra.filter((a) => !aimsOf(doc).some((x) => x.modId === a.modId && x.tier === a.tier))];
   const k = effectOf(h.currency);
-  let one: { out: OutKind; hits: Aim[] } | null = null;
-  const key = (r: { out: OutKind; hits: Aim[] }): string => `${r.out}:${r.hits.map((a) => `${a.modId}/${a.tier}`).join(",")}`;
+  const found = new Map<string, { out: OutKind; aim: Aim | null }>();
+  const hold = aimsMayHold(doc, boxId);
   // 見本 = この箱に着いた人のアイテム (着いた人が SINGLE_SEEDS より少なければ同じ物が回ってくるので 1 回だけ見る)
   const seen = new Set<StageItem>();
   for (let seed = 1; seed <= SINGLE_SEEDS; seed++) {
@@ -103,22 +103,29 @@ export function singleOutOf(data: PatchData, doc: TreeDoc, boxId: string, h: Han
     if (smp.note === "none" || smp.note?.startsWith("cant:") || seen.has(smp.item)) continue;
     seen.add(smp.item);
     const item = pre ? fillCatalyst(data, smp.item, pre, mulberry32(seed)).item : smp.item;
-    // 消す手は、見本にまだ無い狙いを 1 つ足した形でも見る (見本は初めて着いた人の形。戻りで狙いを持って来た人は狙いが消えうる、10-22 #8 の後:
-    // 分かれ目の行の見本が外れだけになり、素の消去が「外れが消えた」1 通りにまとまって 96 人止まった)
-    const forms = [item, ...(k === "remove" || k === "essence" ? aims.filter((a) => !aimHeldOn(data, item, a, { sameText: true })).map((a) => applyCurrency(data, item, forceKey(a.modId, `T${a.tier}`, "n"), mulberry32(seed))).filter((r) => r.applied).map((r) => r.item) : [])];
+    // 見本にまだ無い狙いのうち、この箱に持って着きうる物 (自分の道・戻ってくる箱の道の当たり、tree-lost の aimsMayHold) を 1 つ足した形でも見る
+    // (見本は初めて着いた人の形。戻りで狙いを持って来た人は狙いが消えうる、10-22 #8: 素の消去が「外れが消えた」1 通りにまとまって 96 人止まった。
+    // 前は持って着かない狙いまで足し、右側の結晶化で外れしか消えない手にも「狙いが消えた」が出た、10-25)
+    const forms = [item, ...hold.filter((a) => !aimHeldOn(data, item, a, { sameText: true })).map((a) => applyCurrency(data, item, forceKey(a.modId, `T${a.tier}`, "n"), mulberry32(seed))).filter((r) => r.applied).map((r) => r.item)];
     for (const it of forms) {
       const outs = stepOutcomes(data, it, h.currency, engineOmens(h))?.filter((o) => !o.void);
-      // 未発現が付く手 (冒涜の骨) は、発現で選ぶ候補で当たり / 外れが分かれる
       if (!outs?.length || outs.some((o) => unrevealedOf(o.item))) return null;
       for (const o of outs) {
         const r = outcomeOf(data, it, o.item, aims, h.currency);
-        if (r.hits.length > 1 || (one && key(one) !== key(r))) return null;
-        one = r;
+        if (r.hits.length > 1) return null;
+        const e = r.out === "hit" && !r.hits.length ? { out: "any" as OutKind, aim: null } : { out: r.out, aim: r.hits[0] ?? null };
+        found.set(`${e.out}:${e.aim ? `${e.aim.modId}/${e.aim.tier}` : ""}`, e);
       }
     }
   }
-  if (one?.out === "junk" && (k === "add" || k === "swap")) return null;
-  return one ? { out: one.out, aim: one.hits[0] ?? null } : null;
+  const list = [...found.values()];
+  if (!list.length || ((k === "add" || k === "swap") && list.every((e) => e.out === "junk"))) return null;
+  return list;
+}
+/** 結果が 1 通りの手 (possibleOutsOf が 1 つだけの時。台本 scripts/_tree-patterns-ui が使う) */
+export function singleOutOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, pre: string | null = null, extra: readonly Aim[] = []): { out: OutKind; aim: Aim | null } | null {
+  const l = possibleOutsOf(data, doc, boxId, h, pre, extra);
+  return l?.length === 1 ? l[0]! : null;
 }
 /** 分かれ目の行の箱の見本を引き直す回数 */
 const SPLIT_TRIES = 40;

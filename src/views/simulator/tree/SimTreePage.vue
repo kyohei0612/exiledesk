@@ -24,7 +24,7 @@ import TreeHandPage from "./TreeHandPage.vue";
 import { useTree } from "./use-tree";
 import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
 import { craftStage as s } from "../../../state/craft-stage";
-import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, removeHit, setAim, setBack, setDone, type Aim, type Hand, type HandKind, type OutKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
+import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, removeHit, setAim, setBack, setDone, type Aim, type Hand, type HandKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
 import { handUses } from "../../../services/simulator/tree/tree-memo";
 import { tidy } from "../../../services/simulator/tree/tree-layout";
 import { outName } from "./tree-names";
@@ -50,7 +50,7 @@ import { useTreeReveal } from "./use-tree-reveal";
 import { RUN_N, useTreeRun } from "./use-tree-run";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue";
-import { applyPick } from "./tree-hand-plan";
+import { applyPick, type OnlyOut } from "./tree-hand-plan";
 import { installSimMonkey } from "./sim-monkey";
 import TreeRunLayer from "./TreeRunLayer.vue";
 import TreeHandChip from "./TreeHandChip.vue"; import TreeBandLayer from "./TreeBandLayer.vue"; import TreeTabs from "./TreeTabs.vue";
@@ -164,7 +164,7 @@ function backLabel(b: Box): string {
  * 手を決める。pre = 前に足す品質だけ上げる手のカタリスト (触媒のお告げ、10-22 オーナーの案 A)。完成の箱に手を付けたら同じ形の完成の箱もここへ (joinSameShape)。
  * 新しくできた結果の箱は、同じ形の箱があればそこへ自動でつなぐ (linkSameShape。手の種類が同じで箱を作り直さない時は人が選んだ戻り先のまま)
  */
-function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = null, only: { out: OutKind; aim: Aim | null } | null = null): void {
+function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = null, only: OnlyOut = null): void {
   const id = panel.value!.id;
   if (picking.value === id) picking.value = null;
   let at = id;
