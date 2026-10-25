@@ -6,14 +6,15 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
-import { currentTreeRecipe, overwriteTreeRecipe, renameTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
+import { currentTreeRecipe, renameTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
 import { openRecipesPage } from "../../../web/page";
 import { fmtDate, treeShareUrl, useRecipeUrl } from "../recipe-share";
 import { useTree } from "./use-tree";
+import { autoName, quickSave } from "./tree-save";
+import { usePhone } from "../../../utils/use-phone";
 import { recipeSummary } from "./recipe-summary";
 import { useArmed, ARMED_CLASS } from "../../../utils/use-armed";
 import { track } from "../../../utils/track";
-import { jaTypeName } from "../../../services/trade2/localize";
 import { tr } from "../../../i18n/lang";
 
 const t = useTree();
@@ -26,7 +27,7 @@ const bare = computed(() => t.needBase.value || !!props.menuOnly);
 /** 一覧の 1 行の要約 (ベースの絵・狙い・印) */
 const sum = (r: { tree: Parameters<typeof recipeSummary>[0] }) => recipeSummary(r.tree);
 const dirty = computed(() => (currentTreeRecipe.value ? !sameTree(t.doc.value, currentTreeRecipe.value.tree) : Object.keys(t.doc.value.boxes).length > 1));
-const defaultName = (): string => `${tr(jaTypeName(t.doc.value.base), t.doc.value.base)} ${fmtDate(Date.now())}`;
+const defaultName = (): string => autoName(t.doc.value);
 
 const note = ref("");
 let noteT = 0;
@@ -43,12 +44,10 @@ function endRename(v: string): void {
   if (currentTreeRecipe.value) renameTreeRecipe(currentTreeRecipe.value.id, v);
   else { saveTreeRecipe(v, t.doc.value); track("tree-recipe:save"); say(tr(`「${v.trim()}」で保存しました`, `Saved as "${v.trim()}"`)); }
 }
+/** 保存 = その場で (開いているレシピへ上書き、無ければ自動の名前。名前は聞かない、tree-save.ts) */
 function save(): void {
-  const cur = currentTreeRecipe.value;
-  if (cur) { overwriteTreeRecipe(cur.id, t.doc.value); track("tree-recipe:overwrite"); say(tr(`「${cur.name}」に保存しました`, `Saved to "${cur.name}"`)); return; }
-  const r = saveTreeRecipe(defaultName(), t.doc.value);
-  track("tree-recipe:save");
-  say(tr(`「${r.name}」で保存しました (名前を押すと変えられる)`, `Saved as "${r.name}" (click the name to rename)`));
+  const { r, over } = quickSave();
+  say(over ? tr(`「${r.name}」に保存しました`, `Saved to "${r.name}"`) : tr(`「${r.name}」で保存しました (名前を押すと変えられる)`, `Saved as "${r.name}" (click the name to rename)`));
 }
 function saveAs(): void {
   const r = saveTreeRecipe(currentTreeRecipe.value ? `${currentTreeRecipe.value.name}${tr(" のコピー", " (copy)")}` : defaultName(), t.doc.value);
@@ -84,7 +83,15 @@ async function copyUrl(): Promise<void> {
   say(ok ? tr("今の木の URL をコピーしました (開いた人はこの木で始まる)", "Copied a URL for this tree (opening it starts with this tree)") : tr("コピーできませんでした", "Couldn't copy"));
 }
 function onDown(e: PointerEvent): void { if (pop.value && root.value && !root.value.contains(e.target as Node)) pop.value = false; }
-function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && pop.value) { pop.value = false; e.stopImmediatePropagation(); } }
+/**
+ * Ctrl+S (Mac は Cmd+S) = 保存 (ブラウザの「ページを保存」は止める。文字の欄に入力中でも効く)。PC のツリーの帯だけ (スマホ・完成形の設定の右端の「レシピ ▾」だけの帯では効かない)。
+ * 10-26 オーナー「コントロールSだっけホットキー保存させよう」
+ */
+const phone = usePhone();
+function onKey(e: KeyboardEvent): void {
+  if (e.key === "Escape" && pop.value) { pop.value = false; e.stopImmediatePropagation(); return; }
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "s" && !bare.value && !phone.value && !t.goalInline.value && !t.goalPage.value) { e.preventDefault(); save(); }
+}
 onMounted(() => { window.addEventListener("pointerdown", onDown, true); window.addEventListener("keydown", onKey, true); });
 onBeforeUnmount(() => { window.removeEventListener("pointerdown", onDown, true); window.removeEventListener("keydown", onKey, true); clearTimeout(noteT); });
 </script>
@@ -96,7 +103,7 @@ onBeforeUnmount(() => { window.removeEventListener("pointerdown", onDown, true);
       <b class="min-w-0 truncate">{{ currentTreeRecipe?.name ?? tr("名前なし", "Untitled") }}</b>
       <span v-if="dirty" data-tree-recipe-dirty class="size-2 shrink-0 rounded-full bg-amber-400" :title="tr('保存していない変更がある', 'Unsaved changes')" />
     </button>
-    <button v-if="!bare" type="button" data-tree-recipe-save class="g-btn sm shrink-0" :title="currentTreeRecipe ? tr('開いているレシピに上書き保存', 'Save to the open recipe') : tr('名前を付けて新しく保存', 'Save as a new recipe')" @click="save">{{ tr("保存", "Save") }}</button>
+    <button v-if="!bare" type="button" data-tree-recipe-save class="g-btn sm shrink-0" :title="currentTreeRecipe ? tr('開いているレシピに上書き保存 (Ctrl+S)', 'Save to the open recipe (Ctrl+S)') : tr('新しく保存 (名前は自動、後で変えられる。Ctrl+S)', 'Save as a new recipe (auto-named, rename later. Ctrl+S)')" @click="save">{{ tr("保存", "Save") }}</button>
     <button type="button" data-tree-recipe-menu class="g-btn sm inline-flex shrink-0 items-center gap-1" :aria-expanded="pop" @click="pop = !pop">{{ tr("レシピ", "Recipes") }} ▾</button>
     <span v-if="note" class="pointer-events-none absolute left-0 top-full z-30 mt-1 whitespace-nowrap rounded bg-emerald-900/90 px-2 py-1 text-[12px] text-emerald-100">{{ note }}</span>
 
