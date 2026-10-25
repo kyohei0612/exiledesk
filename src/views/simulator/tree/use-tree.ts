@@ -373,12 +373,33 @@ function aimLabel(a: Aim | null): string {
   if (!a) return "";
   const r = rowOfMod(a.modId);
   const side = r ? (r.side === "prefix" ? tr("プレ", "Prefix") : tr("サフィ", "Suffix")) : "";
-  return `${tierRankLabel(a.tier)} ${side} ${r?.template ?? NOT_ON_BASE()}`;
+  return `${tierRankLabel(a.tier)} ${side} ${aimText(a)}`;
+}
+/** 段の文の数値 ((a-b) か 1 つの数) */
+const NUM = /\((-?[\d.]+)-(-?[\d.]+)\)|(-?\d+(?:\.\d+)?)/g;
+/**
+ * 狙いの MOD の文を段の幅で (「最大ライフ #」でなく「最大ライフ (85-119)」= 狙いの段の下限〜一番上の段の上限。狙いは「その段以上」、10-25 オーナー「おすすめの2つで進めて」)。
+ * 文は MOD の一覧の段の文 (ListTier.text) から。数値の並びが段どうしで合わない時は狙いの段の文のまま
+ */
+function aimText(a: Aim): string {
+  const r = rowOfMod(a.modId);
+  if (!r) return NOT_ON_BASE();
+  const ts = r.tiers.filter((x) => (x.modId ?? r.id) === a.modId);
+  const at = ts[a.tier - 1], top = ts[0];
+  if (!at || !top) return r.template;
+  const hi = [...top.text.matchAll(NUM)].map((m) => m[2] ?? m[3]!);
+  const n = [...at.text.matchAll(NUM)].length;
+  if (a.tier === 1 || hi.length !== n) return at.text;
+  let i = 0;
+  return at.text.replace(NUM, (_m, lo: string | undefined, _h: string | undefined, one: string | undefined) => {
+    const low = lo ?? one!, high = hi[i++]!;
+    return low === high ? low : `(${low}-${high})`;
+  });
 }
 /** 木のベースの MOD 一覧に無い MOD (前のベースの狙いが残った等) の文。MOD の id はそのまま出さない (10-24 デザイン部長の気づき) */
 const NOT_ON_BASE = (): string => tr("(このベースに無い MOD)", "(mod not on this base)");
 /** 狙いの MOD の短い名前 (戻り先の札で、どの狙いの所の箱かを添える) */
-const aimShort = (a: Aim): string => rowOfMod(a.modId)?.template ?? NOT_ON_BASE();
+const aimShort = (a: Aim): string => aimText(a);
 /** 始まりの MOD の文 (その段の数値で埋めた文 + 段)。atLeast = 完成の狙い (✦ の印など) で段を「T2 以上」と言う (10-24 オーナー「T2 を選んだら T2 以上」) */
 function startModLabel(a: Aim | StartMod | null, atLeast = false): string {
   if (!a) return "";
