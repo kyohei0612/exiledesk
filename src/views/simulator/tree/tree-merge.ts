@@ -9,7 +9,7 @@
  * 結果の見せ方は 10-22 オーナーが「全部普通の箱」を選んだ (前は箱を描かず小さな札にしていた。「何で表示が違うんですか」で札を消した)
  */
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { heldSets, MATCH, matchTargets, RESTART } from "../../../services/simulator/tree/tree-run";
+import { heldSets, MATCH, matchTargets, RESTART } from "../../../services/simulator/tree/tree-shape";
 import { handAnchor, type BackReq, type Pos } from "./tree-lines";
 
 /** 戻りの行き先の箱 (決めた箱 1 つ。前の版の形の合う箱へ = 行きうる形の箱を全部、作り直しは無し) */

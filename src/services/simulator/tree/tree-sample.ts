@@ -14,7 +14,7 @@ import { CATALYSING as CATALYSING_OMEN, ECHO, ECHO as ABYSSAL_ECHO_OMEN, effectO
 import { tr } from "../../../i18n/lang";
 import { fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
-import { splitTo } from "./tree-run";
+import { splitTo } from "./tree-shape";
 
 const TRIES = 3000;
 

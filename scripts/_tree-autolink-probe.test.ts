@@ -7,7 +7,7 @@
  */
 import { it } from "vitest";
 import { newTree, setHand, type Aim, type Hand, type HandKind, type TreeDoc } from "../src/services/simulator/tree/tree-model";
-import { linkSameShape } from "../src/services/simulator/tree/tree-run";
+import { linkSameShape } from "../src/services/simulator/tree/tree-shape";
 
 const A = { R: { modId: "Rings/ItemFoundRarityIncrease", tier: 1 }, C: { modId: "Rings/IncreasedCastSpeed", tier: 2 }, A: { modId: "Rings/AllResistances", tier: 2 } };
 const hand = (currency: string, omens: string[] = [], extra: Partial<Hand> = {}): Hand => ({ currency, omens, catalyst: null, quality: 0, ...extra });

@@ -22,12 +22,13 @@ import TreeHandPage from "./TreeHandPage.vue";
 import { useTree } from "./use-tree";
 import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
 import { craftStage as s } from "../../../state/craft-stage";
-import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, removeHit, setAim, setBack, setDone, setHand, handUses, type Aim, type Hand, type HandKind, type OutKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
+import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, removeHit, setAim, setBack, setDone, setHand, type Aim, type Hand, type HandKind, type OutKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
+import { handUses } from "../../../services/simulator/tree/tree-memo";
 import { tidy } from "../../../services/simulator/tree/tree-layout";
 import { handLabel, outName } from "./tree-names";
 import { aimsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { aimHeldOn } from "../../../services/simulator/tree/tree-aim";
-import { MATCH, RESTART } from "../../../services/simulator/tree/tree-run";
+import { MATCH, RESTART } from "../../../services/simulator/tree/tree-shape";
 import { tr } from "../../../i18n/lang";
 import { pageZoom } from "../../../utils/zoom";
 import { LINE, useTreeEdges } from "./use-tree-edges";
@@ -320,7 +321,6 @@ function onSpam(b: Box): void {
 
 // ＋を引っ張ってつなぐ (use-tree-plus.ts)
 const { plus, onPlus, plusLine } = useTreePlus({ doc, posOf, viewOnly, toWorld: v.toWorld, edit: t.edit, onAddHit, startLink });
-
 watch(() => panel.value?.id, (id) => { if (id) setTimeout(() => void v.reveal(id), 0); });
 /** Vue Flow に渡す箱 (位置は木の形のまま。動かせるのは組める時だけ = 手・一望・戻り先を選んでいる間は画面だけ動く) */
 const flowNodes = computed(() => [...rv.visible.value.map((b) => ({ id: b.id, type: "box", position: posOf(b), draggable: false, selectable: false, connectable: false }))]);

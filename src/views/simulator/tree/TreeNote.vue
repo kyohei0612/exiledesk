@@ -4,7 +4,7 @@
 -->
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from "vue";
-import { setNote } from "../../../services/simulator/tree/tree-model";
+import { setNote } from "../../../services/simulator/tree/tree-memo";
 import { useTree } from "./use-tree";
 import { tr } from "../../../i18n/lang";
 

@@ -15,7 +15,8 @@ import { aimHeldOn, junkOf, reachableAims } from "./tree-aim";
 import { CATALYSING, effectOf, engineOmens, isCatalyst } from "./tree-hands";
 import { aimKey, type Aim, type OutKind, type TreeDoc } from "./tree-model";
 import { aimOpts, aimsOf, handAims, handProblem, outcomeOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
-import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, runTreeSteps, settle, shapesOf, splitTo } from "./tree-run";
+import { runTreeSteps } from "./tree-run";
+import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapesOf, splitTo } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
 

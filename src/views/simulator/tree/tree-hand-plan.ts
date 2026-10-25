@@ -7,7 +7,7 @@ import { catalystFull, catalystTagOf, fillCatalyst, stepOutcomes } from "../../.
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, ECHO, effectOf, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, sampleOf, singleOutOf } from "../../../services/simulator/tree/tree-sample";
-import { linkSameShape } from "../../../services/simulator/tree/tree-run";
+import { linkSameShape } from "../../../services/simulator/tree/tree-shape";
 import { healLost, kindOfHand, setHand, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
 import { tr } from "../../../i18n/lang";
