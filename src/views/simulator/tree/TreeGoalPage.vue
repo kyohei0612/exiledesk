@@ -24,6 +24,7 @@ import TreeTabs from "./TreeTabs.vue";
 import TreeFractureAsk from "./TreeFractureAsk.vue";
 import TreePasteBox from "./TreePasteBox.vue";
 import TreePasteNote from "./TreePasteNote.vue";
+import { pasteNote, pastePrev, savePrev } from "./tree-paste";
 import { useTree } from "./use-tree";
 import { openTreePage, treeStep } from "../../../web/page";
 
@@ -49,7 +50,9 @@ const asPage = computed(() => treeStep.value !== "tree" || blankOpen);
 watch(asPage, (v) => { t.goalInline.value = v; }, { immediate: true });
 onBeforeUnmount(() => { t.goalInline.value = false; });
 /** 段を移る: ページの時は URL ごと移る (履歴に積む = 戻るで前の段)、窓の時は窓の中で替える。0 = ツリーへ */
-function go(n: 0 | 1 | 2): void {
+function go(n: 0 | 1 | 2, force = false): void {
+  // 貼り付けで作りかけの木を置き換えた後にツリーへ進む時は、前の木を保存するか聞く (10-25 オーナー「ツリー作成中なら保存云々は聞かんとあかん」)
+  if (n === 0 && !force && pastePrev.value) { saveAsk.value = true; return; }
   const to = n === 1 ? "base" : n === 2 ? "mods" : "tree";
   if (asPage.value && treeStep.value !== to) openTreePage(to);
   t.goalPage.value = n;
@@ -58,7 +61,19 @@ function go(n: 0 | 1 | 2): void {
 const askEl = ref<HTMLElement | null>(null);
 watch(asking, (v) => { if (v) void nextTick(() => askEl.value?.scrollIntoView({ block: "nearest" })); });
 /** 段のタブの右端のレシピから別の木を開いた = 窓を閉じてその木へ */
-function onRecipe(): void { asking.value = null; dropped.value = []; go(0); }
+function onRecipe(): void { asking.value = null; dropped.value = []; pastePrev.value = null; go(0, true); }
+/** 貼り付けの前の木を保存するかの確かめ (保存して進む / 保存せず進む / やめる = この画面に残る) */
+const saveAsk = ref(false);
+// スマホは「決めた」が一覧の下なので、聞いた時は上の確かめへ送る
+watch(saveAsk, (v) => { if (v) void nextTick(() => document.querySelector("[data-tree-paste-save-ask]")?.scrollIntoView({ block: "center" })); });
+function answerSave(k: "save" | "skip" | "cancel"): void {
+  saveAsk.value = false;
+  if (k === "cancel") return;
+  if (k === "save") savePrev(); else pastePrev.value = null;
+  go(0, true);
+}
+/** 貼り付けで取り込んだ (どの画面から貼っても。ベースと狙いを入れて ② へ移すのは tree-paste) = この窓の「まだ選んでいない」と確かめを外す */
+watch(pasteNote, (v) => { if (v) { asking.value = null; dropped.value = []; unpicked.value = false; } });
 /**
  * 閉じる (× / Esc / 枠の外)。ベースをまだ選んでいない白紙の木では、既定のベースで木を始めず、シミュの画面に残ってベースが無い時の空の形を出す
  * (use-tree の needBase。10-23 オーナー「ベースが無いとツリーもくそもない」「× 押したらシミュレーターが消え失せる」)
@@ -189,6 +204,12 @@ const HELP: Array<[string, string]> = [
         <button type="button" data-tree-ilvl-note-close class="shrink-0 rounded px-1 opacity-60 hover:bg-white/10 hover:opacity-100" :aria-label="tr('閉じる', 'Close')" @click="t.ilvlNote.value = null">×</button>
       </p>
       <TreePasteNote v-if="step === 2" />
+      <div v-if="saveAsk && pastePrev" data-tree-paste-save-ask role="alertdialog" class="mx-3 mb-2 flex flex-wrap items-center gap-2 rounded-lg border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-[13px]">
+        <p class="min-w-0 flex-1 basis-60">{{ tr(`貼り付ける前のツリー「${pastePrev.name}」(箱 ${pastePrev.boxes} 個) は保存されていません。保存しますか?`, `The tree before pasting, "${pastePrev.name}" (${pastePrev.boxes} box(es)), isn't saved. Save it?`) }}</p>
+        <button type="button" data-tree-paste-save="save" class="g-btn sm" @click="answerSave('save')">{{ tr("保存して進む", "Save and continue") }}</button>
+        <button type="button" data-tree-paste-save="skip" class="g-btn sm" @click="answerSave('skip')">{{ tr("保存せず進む", "Continue without saving") }}</button>
+        <button type="button" data-tree-paste-save="cancel" class="g-btn sm" @click="answerSave('cancel')">{{ tr("やめる", "Cancel") }}</button>
+      </div>
       <p v-if="step === 2 && dropped.length" data-tree-goal-dropped class="min-w-0 truncate px-3 pb-2 text-[12px] text-rose-200/80" :title="dropped.join('\n')">{{ tr(`このベースに付かない狙いを外した: ${dropped.join("・")}`, `Removed targets this base can't roll: ${dropped.join(", ")}`) }}</p>
     </template>
     <div v-if="step === 1" data-tree-goal-base class="flex min-w-0 flex-col gap-3">
