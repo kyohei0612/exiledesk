@@ -15,6 +15,7 @@ import ChangelogDialog from "../components/ChangelogDialog.vue";
 import SupportDialog from "../components/SupportDialog.vue";
 import LeaveConfirm from "./LeaveConfirm.vue";
 import ToTop from "./ToTop.vue";
+import Icon from "../components/ui/Icon.vue";
 import HoverStack from "../components/decor/HoverStack.vue";
 import { SUPPORT_LINKS, supportOpen } from "../state/support";
 import { changelogNew, changelogOpen, initChangelog } from "../state/changelog";
@@ -68,6 +69,8 @@ watch(feedbackPage, (on) => {
  */
 const craftPage = computed(() => page.value === "");
 /** 広告の枠を置くのは文章のあるページだけ (使い方・コツ、コース、デイリー)。操作の画面 (クラフト台・ベース選び・スパムシミュレーター・要望) には置かない (2026-10-22 AdSense の再申請。デイリーはデイリー部長の頼みで両脇に置く) */
+/** スマホのヘッダーのアイコンだけのボタン (ブログ・使い方・要望。1 段に収める、2026-10-25) */
+const PHONE_ICON = "!grid !size-8 !min-w-0 shrink-0 place-items-center !min-h-8 !p-0";
 const textPage = computed(() => page.value === "page=guide" || page.value.startsWith("course=") || !!dailyPage.value || skinsPage.value);
 /**
  * 45 分以上触らずに戻ってきた時 (タブを開き直した・何か押した時) は、相場とチャンネルだけ裏で取り直す。画面と作業中の物はそのまま
@@ -150,33 +153,37 @@ window.visualViewport?.addEventListener("resize", fitZoom);
   <!-- 高さを決めず、ページ全体を縦に送る (決まり事の footer も一緒に流れる)。PC も同じ: スクロールの棒は窓の右端の 1 本だけ
        (2026-10-11 オーナー「スクロールはチャンネルの右側でおｋ、全体スクロールだけ」) -->
   <div class="flex flex-col" :style="{ width: phone || !frame.w ? '100%' : `${frame.w}px`, minHeight: `${frame.h}px` }">
-    <header data-rec-part="header" class="flex shrink-0 items-center gap-3 border-b border-[var(--exile-color-border-subtle)] px-4 text-[12px]" :class="phone ? 'h-auto flex-wrap gap-1.5 px-2 py-1.5 text-[12px]' : 'h-10'">
-      <!-- スマホは 2 段 (1 段目 = ロゴ、2 段目 = 版とボタン。2026-10-10 支援するを足して 1 段に入らなくなった) -->
-      <span class="flex shrink-0 items-center" :class="phone ? 'basis-full gap-1' : 'gap-2'">
+    <header data-rec-part="header" class="flex shrink-0 items-center border-b border-[var(--exile-color-border-subtle)] text-[12px]" :class="phone ? 'h-11 min-w-0 gap-1 px-2' : 'h-10 gap-3 px-4'">
+      <!-- スマホも 1 段 (ロゴ・本日の訪問者と版を小さく 2 行に重ねて・言語・ブログ / 使い方 / 要望のアイコン。2026-10-25 オーナー「基本あそこは 1 行がいい、段がもったいない」) -->
+      <span class="flex shrink-0 items-center" :class="phone ? 'gap-1' : 'gap-2'">
         <img src="/favicon.png" alt="" class="g-brand-icon shrink-0" :class="phone ? 'size-6' : 'size-8'" draggable="false" />
-        <span class="g-brand-word leading-none" :class="phone ? 'text-[13px]' : 'text-[18px]'">EXILEDESK</span>
-        <!-- 言語 (2026-10-10 英語版)。スマホは 1 段目の右 -->
-        <span v-if="phone" class="ml-auto" data-rec-part="header-lang"><LangSwitch /></span>
+        <span class="g-brand-word leading-none" :class="phone ? 'text-[12px]' : 'text-[18px]'">EXILEDESK</span>
       </span>
+      <!-- スマホ: 本日の訪問者と版を小さく 2 行に重ねる (押すと更新履歴) -->
+      <button v-if="phone" type="button" data-rec-part="header-version" class="g-plain flex min-w-[3rem] shrink flex-col items-start text-[10px] leading-tight opacity-60 hover:opacity-100" :title="tr('更新履歴を見る', 'View changelog')" @click="changelogOpen = 'all'">
+        <span v-if="visitors" data-rec-part="header-visitors" class="max-w-full truncate">{{ tr(`本日 ${visitors.today.toLocaleString()} 人`, `${visitors.today.toLocaleString()} today`) }}</span>
+        <span class="max-w-full truncate">v{{ pkg.version }}</span>
+      </button>
+      <span v-if="phone" class="ml-auto shrink-0" data-rec-part="header-lang"><LangSwitch /></span>
       <!-- 1024 px 未満は飾りの札 (画面名・アプリ版) を出さない (768 px で帯が詰まって「日本語」が縦に折れた。2026-10-13) -->
       <span class="whitespace-nowrap rounded border border-white/15 px-1.5 py-0.5 opacity-70 max-lg:hidden" :class="phone ? 'hidden' : ''">{{ tr("クラフトステージ", "Craft Stage") }}</span>
       <!-- 本日の訪問者 (9:00 から、1 時間ごとに数え直す。2026-10-11 オーナー)。数えられていない時は出さない -->
       <!-- 録画モードは訪問者を隠すので、右寄せの押さえだけ置く -->
       <span v-if="REC && !phone" class="ml-auto" />
-      <span v-if="visitors" data-rec-part="header-visitors" class="ml-auto whitespace-nowrap opacity-60" :class="phone ? 'text-[10px]' : ''" :title="visitors.yesterday != null ? tr(`9:00 から (1 時間ごとに更新) · 昨日 ${visitors.yesterday.toLocaleString()} 人`, `Since 9:00 JST (updated hourly) · Yesterday ${visitors.yesterday.toLocaleString()}`) : tr('9:00 から (1 時間ごとに更新)', 'Since 9:00 JST (updated hourly)')">{{ phone ? tr(`本日 ${visitors.today.toLocaleString()} 人`, `${visitors.today.toLocaleString()} today`) : tr(`本日の訪問者 ${visitors.today.toLocaleString()} 人`, `Today's visitors ${visitors.today.toLocaleString()}`) }}</span>
+      <span v-if="visitors && !phone" data-rec-part="header-visitors" class="ml-auto whitespace-nowrap opacity-60" :title="visitors.yesterday != null ? tr(`9:00 から (1 時間ごとに更新) · 昨日 ${visitors.yesterday.toLocaleString()} 人`, `Since 9:00 JST (updated hourly) · Yesterday ${visitors.yesterday.toLocaleString()}`) : tr('9:00 から (1 時間ごとに更新)', 'Since 9:00 JST (updated hourly)')">{{ phone ? tr(`本日 ${visitors.today.toLocaleString()} 人`, `${visitors.today.toLocaleString()} today`) : tr(`本日の訪問者 ${visitors.today.toLocaleString()} 人`, `Today's visitors ${visitors.today.toLocaleString()}`) }}</span>
       <!-- 版を押すと更新履歴 (2026-10-10) -->
-      <button type="button" data-rec-part="header-version" class="g-plain opacity-50 hover:opacity-100 hover:text-[var(--exile-color-accent-focus)]" :class="phone ? '!min-h-9 shrink-0 text-[10px]' : ''" :title="tr('更新履歴を見る', 'View changelog')" @click="changelogOpen = 'all'">v{{ pkg.version }}</button>
+      <button v-if="!phone" type="button" data-rec-part="header-version" class="g-plain opacity-50 hover:opacity-100 hover:text-[var(--exile-color-accent-focus)]" :title="tr('更新履歴を見る', 'View changelog')" @click="changelogOpen = 'all'">v{{ pkg.version }}</button>
       <span v-if="!phone" data-rec-part="header-lang" class="shrink-0 whitespace-nowrap"><LangSwitch /></span>
       <!-- 帯のボタンは窓と同じ g-btn sm (2026-10-10 動きの揃え 6) -->
       <!-- 使い方・コツのページ (動画へのリンク + チュートリアルのコース。2026-10-18 オーナー「チュートリアルは使い方にしまう」) -->
       <!-- デイリー・コスメティックの入口は上の切り替えタブの右端 (ModeTabs、2026-10-25 オーナー「ここの右端が良いな、目立たんし」) -->
       <!-- ブログ (読み物への入口、2026-10-22 AdSense の再申請。開発版だけ) -->
-      <!-- 開発版は外す (スイッチ noHeaderBlog、右の欄の「新しい記事・すべて見る」で足りる。オーナー 10-25) -->
-      <a v-if="BLOG_ON && !flag('noHeaderBlog')" data-rec-part="header-blog" :href="tr('/blog/', '/en/blog/')" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''">{{ tr("ブログ", "Blog") }}</a>
-      <button type="button" data-rec-part="header-help" class="g-btn sm" :class="[phone ? '!min-h-9 !px-0 text-[12px]' : '', guideOn ? 'on' : '']" :aria-pressed="guideOn" @click="openGuide">{{ tr("使い方・コツ", "Guide & Tips") }}</button>
-      <button type="button" data-rec-part="header-feedback" class="g-btn sm" :class="[phone ? '!min-h-9 !px-0 text-[12px]' : '', feedbackPage ? 'on' : '']" :aria-pressed="feedbackPage" :title="tr('要望やバグを送る (今の画面の状態も一緒に届きます)', 'Send feedback or bug reports (the current screen state is sent along)')" @click="imageAskFor = null; openFeedback()">{{ phone ? tr("要望・バグ", "Feedback") : tr("要望・バグを送る", "Send feedback") }}</button>
+      <!-- PC の開発版は外す (スイッチ noHeaderBlog、右の欄の「新しい記事・すべて見る」で足りる。オーナー 10-25)。スマホは右の欄が下に回るので残す (同「スマホ版はヘッダーにブログを出していい」) -->
+      <a v-if="BLOG_ON && (phone || !flag('noHeaderBlog'))" data-rec-part="header-blog" :href="tr('/blog/', '/en/blog/')" class="g-btn sm" :class="phone ? PHONE_ICON : ''" :title="phone ? tr('ブログ', 'Blog') : undefined" :aria-label="phone ? tr('ブログ', 'Blog') : undefined"><Icon v-if="phone" name="book" class="size-4" /><template v-else>{{ tr("ブログ", "Blog") }}</template></a>
+      <button type="button" data-rec-part="header-help" class="g-btn sm" :class="[phone ? PHONE_ICON : '', guideOn ? 'on' : '']" :aria-pressed="guideOn" :title="phone ? tr('使い方・コツ', 'Guide & Tips') : undefined" :aria-label="phone ? tr('使い方・コツ', 'Guide & Tips') : undefined" @click="openGuide"><Icon v-if="phone" name="help" class="size-4" /><template v-else>{{ tr("使い方・コツ", "Guide & Tips") }}</template></button>
+      <button type="button" data-rec-part="header-feedback" class="g-btn sm" :class="[phone ? PHONE_ICON : '', feedbackPage ? 'on' : '']" :aria-pressed="feedbackPage" :aria-label="phone ? tr('要望・バグを送る', 'Send feedback') : undefined" :title="tr('要望やバグを送る (今の画面の状態も一緒に届きます)', 'Send feedback or bug reports (the current screen state is sent along)')" @click="imageAskFor = null; openFeedback()"><Icon v-if="phone" name="message" class="size-4" /><template v-else>{{ tr("要望・バグを送る", "Send feedback") }}</template></button>
       <!-- 支援 (投げ銭)。リンクが 1 つも無ければ出さない (2026-10-10) -->
-      <button v-if="SUPPORT_LINKS.length" type="button" class="g-btn sm" :class="phone ? '!min-h-9 !px-0 text-[12px]' : ''" :title="tr('ExileDesk を支援する', 'Support ExileDesk')" @click="supportOpen = true">{{ tr("支援する", "Support") }}</button>
+      <button v-if="SUPPORT_LINKS.length" type="button" class="g-btn sm" :class="phone ? '!min-h-8 !px-1.5 text-[11px]' : ''" :title="tr('ExileDesk を支援する', 'Support ExileDesk')" @click="supportOpen = true">{{ tr("支援する", "Support") }}</button>
       <!-- 前の「アプリ版 近日公開」の所: このサイトをアプリとしてデスクトップに置く (PWA、2026-10-17 オーナー) -->
       <InstallButton v-if="!phone" pc :phone="false" class="max-lg:hidden" />
     </header>

@@ -262,6 +262,8 @@ function pickFamily(f: Family): void {
  * スマホ: 部位を押すとタイルが一覧に置き換わってページが縮み、送りの位置はそのままなので、一覧の頭が画面の上の外に出て下の記事が映っていた
  * (エミュ・シミュとも、2026-10-23)。頭 (← 部位の行) が見えていなければ画面の上 8px まで滑らせて送る。見えていれば動かさない
  */
+// 2026-10-25 オーナー「スマホ版って展開したらスクロール追従無かったよね、PC と同じ仕組みを」: 頭が見えていても、開いた一覧の下 (+24px) が切れていれば PC の revealPanel と同じに送る。
+// 送るのは頭が画面の上 8px に来るまで (頭は画面から出さない)。属性の札を替えた時も同じ
 function revealPhoneHead(): void {
   const el = rootEl.value?.querySelector<HTMLElement>("[data-base-phone-head]") ?? null;
   if (!el) return;
@@ -269,9 +271,15 @@ function revealPhoneHead(): void {
   const viewTop = box ? box.getBoundingClientRect().top : 0;
   const viewBottom = box ? box.getBoundingClientRect().bottom : window.innerHeight;
   const r = el.getBoundingClientRect();
-  if (r.top >= viewTop && r.bottom <= viewBottom) return;
-  holdClicks(glideRect(box, el, r.top - viewTop - 8));
+  const headOff = r.top - viewTop - 8;
+  const list = panelEl();
+  const over = list ? list.getBoundingClientRect().bottom + 24 - viewBottom : 0;
+  const d = headOff < 0 || r.bottom > viewBottom ? headOff : Math.min(Math.max(0, over), headOff);
+  if (d <= 0 && !(headOff < 0)) return;
+  holdClicks(glideRect(box, el, d));
 }
+// スマホで属性の札を替えた時 (一覧の長さが変わる) も、下が切れていれば送る
+watch(cls, (v, was) => { if (phone.value && OPEN_FIX && family.value && v && was && v !== was && !query.value.trim()) void nextTick(() => requestAnimationFrame(() => requestAnimationFrame(revealPhoneHead))); });
 /**
  * 送っている間と止まってから少しの間は、一覧の中の押しを捨てる (送る前に狙ったベースの位置を押すと、滑ってきた上の札「知性」などに当たっていた。
  * 2026-10-24 モンキー初めての人の回、シミュの完成形の設定・エミュのベースのページとも)。本番はスイッチ firstVisit1024 が入るまで前の形
@@ -291,8 +299,10 @@ function onClickCapture(e: MouseEvent): void {
  * 一覧そのものはぱっと開く。測るのは中の並び (列の数) が決まった後 (1 コマ待つ)
  */
 /** bottomFirst: 一覧が画面より高い時も下 (帯 + 24px) を見せる (「もっと見る」で広げた時。2026-10-14 オーナー「下 24px あけるんじゃねえの」) */
+/** 開いた一覧 (PC は部位の下に差し込む枠、スマホは 1 段ずつの最後のカードの一覧) */
+const panelEl = (): HTMLElement | null => rootEl.value?.querySelector<HTMLElement>("[data-base-panel], [data-base-phone-list]") ?? null;
 function revealPanel(bottomFirst = false): void {
-  const el = rootEl.value?.querySelector<HTMLElement>("[data-base-panel]") ?? null;
+  const el = panelEl();
   if (!el) return;
   const box = scrollBoxOf(el);
   const r = el.getBoundingClientRect();
@@ -301,7 +311,8 @@ function revealPanel(bottomFirst = false): void {
   // 広げた時は「たたむ」の帯の下 + 24px を見せる (2026-10-14 オーナー「たたむ見えて + 24px ね」)
   const bars = bottomFirst ? el.querySelectorAll<HTMLElement>('button[aria-expanded="true"]') : null;
   const bar = bars?.length ? bars[bars.length - 1]! : null;
-  const over = (bar ? bar.getBoundingClientRect().bottom : r.bottom) + 24 - viewBottom;
+  // スマホは右下の「上へ戻る」(ToTop.vue、44px) に帯が隠れないよう 64px 空ける (2026-10-25)
+  const over = (bar ? bar.getBoundingClientRect().bottom : r.bottom) + (phone.value ? 64 : 24) - viewBottom;
   if (over <= 0) return;
   revealed = bottomFirst ? over : Math.max(0, Math.min(over, r.top - viewTop - 8));
   revealedAt = null;
@@ -329,13 +340,13 @@ watch(known, (now, was) => {
  */
 let moreFrom: number | null = null;
 function revealMore(): void {
-  const el = rootEl.value?.querySelector<HTMLElement>("[data-base-panel]") ?? null;
+  const el = panelEl();
   moreFrom = el ? scrollTopOf(scrollBoxOf(el)) : null;
   void nextTick(() => requestAnimationFrame(() => requestAnimationFrame(() => revealPanel(true))));
 }
 /** 「たたむ」: 広げる前の位置に戻す (2026-10-14 オーナー「畳むのときも元の画面に戻ろうか」) */
 function foldMore(): void {
-  const el = rootEl.value?.querySelector<HTMLElement>("[data-base-panel]") ?? null;
+  const el = panelEl();
   const top = moreFrom;
   moreFrom = null;
   if (!el || top == null) return;
@@ -417,7 +428,8 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
       </div>
     </template>
     <!-- ② ベースのカード: スマホ (1 段ずつの最後) と名前で探す時はここ -->
-    <BaseCardGrid v-if="query.trim() || (phone && cls)" :list="list" :selected="selected" :note="note" :hot="hot" :show-cls="!!query.trim()" :fold="!query.trim()" @pick="(en) => emit('pick', en)" />
+    <!-- スマホの一覧も PC と同じに、出た時・「もっと見る」で広げた時は下が切れていれば送り、「たたむ」で元の位置へ (2026-10-25 オーナー「スマホ版って展開したらスクロール追従無かったよね」) -->
+    <BaseCardGrid v-if="query.trim() || (phone && cls)" :data-base-phone-list="phone && !query.trim() ? '' : undefined" :list="list" :selected="selected" :note="note" :hot="hot" :show-cls="!!query.trim()" :fold="!query.trim()" @pick="(en) => emit('pick', en)" @expand="revealMore" @collapse="foldMore" />
     <!-- 名前で探す欄は外した (2026-10-18 オーナー「ここで探すことは無い」)。装備 (ユニークの絵)・エフェクトを切るチェックは一番下 (同)。
          タイルを元のベースの絵にして、光と粒も出さない。このブラウザに覚える (2026-10-13 オーナー) -->
     <label class="mt-3 flex w-fit cursor-pointer items-center gap-1.5 text-[12px] text-[var(--exile-color-text-secondary)] md:text-[13px]" :title="tr('部位のタイルを元のベースの絵にして、光と動きを止める', 'Show the plain base art on the category tiles, without glow or motion')">
