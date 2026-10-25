@@ -1,4 +1,13 @@
 {
+  "0.1.607": [
+    "Simulator: Leaving or clearing an unsaved tree now asks \"Save and continue / Don't save / Cancel\" (also for a tree with only base and mods); after saving, going back or reloading reopens that recipe",
+    "Simulator: Press Ctrl+S on the tree screen to save the recipe",
+    "Simulator: The final item can now include rune-only mods and a second crafted mod (Essence / Alloy), including when pasting an item",
+    "Simulator: Special runes can now be used in the tree, and Astrid's Creativity is socketed automatically for a second crafted mod",
+    "Simulator: Target mods are pre-checked when choosing a craft, a just-started tree no longer shows red warnings, returning from the emulator brings you back to your tree, and other usability fixes",
+    "Phone: The icon-only header buttons (Blog, Guide, Feedback) now show a small label",
+    "Fixed some mod texts (e.g. the Talisman attribute requirement) showing in English"
+  ],
   "0.1.606": [
     "Simulator: Paste an item on any screen to import its base and mods and jump to the final mods; if an unsaved tree would be replaced, you're asked to save it when going back to the tree",
     "Simulator: Pasted mods now keep their pasted values on the final item card (they used to show the middle of the tier range)",
