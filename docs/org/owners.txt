@@ -146,16 +146,22 @@ src/services/mods/**                 ジン
 src/services/items/**                ジン
 src/vendor/poe2htc/**                ジン
 src/state/emulator/**                エミュ
-scripts/build-poe2db-*.mjs           ジン
-scripts/audit-poe2db*.mjs            ジン
-scripts/build-desecrated-weights*.mjs ジン
-scripts/build-rune-weights*.mjs      ジン
-scripts/build-corruption-mods.mjs    ジン
-scripts/_corruption-entry.ts         ジン
-scripts/craft-stage-run.mjs          ジン
-scripts/check-craft-stage*.mjs       ジン
-tests/*.test.ts                      ジン
-tests/golden/**                      ジン
+scripts/build-poe2db-*.mjs           解析
+scripts/audit-poe2db*.mjs            解析
+scripts/build-desecrated-weights*.mjs 解析
+scripts/build-rune-weights*.mjs      解析
+scripts/build-corruption-mods.mjs    解析
+scripts/_corruption-entry.ts         解析
+scripts/craft-stage-run.mjs          解析
+scripts/check-craft-stage*.mjs       解析
+tests/*.test.ts                      エミュ
+tests/golden/**                      解析
+# 10-26 オーナー: テストとデータの台本はジンでなく使って確かめる人へ (データを作る / 照らす台本 = 解析、エミュの画面と同じ答えかのテスト = エミュ)
+tests/held-odds-parity*.test.ts      解析
+tests/craft-stage-text.test.ts       シミュ
+tests/pob-item-text.test.ts          アプリ
+src/services/emulator/**             エミュ
+scripts/check-engine-entry*          デザイン
 tests/live-worker*.test.ts           分析
 tests/log-sender*.test.ts           分析
 
