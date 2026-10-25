@@ -7,7 +7,7 @@
   骨のアビスの反響はお告げの枠の中 (HeldOmens の slot、お告げと同じ並び)。足す手の「狙い無し」は左の「当たりの箱にする MOD」のチェックの一番下 (10-25)。重ね窓の枠は TreeHandPage
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, toRaw } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, toRaw, watch } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../../state/craft-stage";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import CurrencyShelf from "../../../components/for-share/shelf/CurrencyShelf.vue";
@@ -44,8 +44,9 @@ const spam = ref(!!props.current?.repeat);
 const spamMax = ref<number | null>(props.current?.repeat?.max ?? null);
 /**
  * 足す手で当たりの箱にする狙い (aimKey)。チェックした MOD ごとに当たりの箱、どれも付かなければ外れの箱。1 つも無い = 狙い無し (何も無い状態は作らない)。
- * 既定は狙い無し、MOD を押すと狙い無しが外れ、全部外すと狙い無しに戻る、狙い無しを押すと MOD が全部外れる (10-25 オーナー「狙い無しのところに狙う MOD も
- * 表示してチェック式で複数選択」→「狙い無しも左のチェックに」→「デフォは狙い無しでいいんじゃね、MOD 選んだら狙い無しが外れる」)。前に開いた手はその当たりの箱の MOD
+ * 既定は完成形で狙いにした MOD のうちその手で付きうる物 (候補) に全部チェック、候補が無ければ狙い無し (10-26 オーナー「両方おｋ」、猿の 2: 前の既定の
+ * 「狙い無し ☑」は狙いを決めたのに当たり・外れに分かれなかった。10-25 の「デフォは狙い無し」を置き換え)。MOD を押すと狙い無しが外れ、全部外すと狙い無しに戻る、
+ * 狙い無しを押すと MOD が全部外れる。自分で触ったら、その持った物の間はそのまま (持ち替えると既定に戻る)。前に開いた手はその当たりの箱の MOD
  */
 const checked = ref<string[]>((() => {
   const c = props.current, d = t.doc.value;
@@ -117,14 +118,19 @@ const aimChoices = computed((): Aim[] => {
 });
 /** チェックした狙い (候補にある物だけ) */
 const checkedAims = computed((): Aim[] => aimChoices.value.filter((a) => checked.value.includes(aimKey(a))));
+/** チェックを自分で触ったか (新しい手の既定 = 候補に全部チェック、を上書きしない)。持ち替えると既定に戻る */
+let touched = false;
+watch(held, () => { touched = false; });
+watch(aimChoices, (l) => { if (!props.current && !touched) checked.value = l.map(aimKey); }, { immediate: true });
 /** チェックの一覧を出す (MOD が付く・入れ替わる手) */
 const showAims = canFree;
 /** 狙い無し = MOD を 1 つもチェックしていない。当たるまで繰り返す時は狙い無しも「どれでも」も無い (MOD を 1 つ以上チェックするまで確定しない、10-25 オーナー) */
 const freeOn = computed(() => showAims.value && !spam.value && !checkedAims.value.length);
 /** 狙い無しを押す = MOD を全部外す (もう狙い無しの時に押しても外れない。値が同じだと Vue が描き直さず、チェックだけ外れて見えた) */
-function toggleFree(e: Event): void { checked.value = []; (e.target as HTMLInputElement).checked = true; }
+function toggleFree(e: Event): void { touched = true; checked.value = []; (e.target as HTMLInputElement).checked = true; }
 function toggleAim(a: Aim): void {
   const k = aimKey(a), cur = checkedAims.value.map(aimKey);
+  touched = true;
   checked.value = cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k];
 }
 const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value }) : null));
@@ -219,7 +225,7 @@ function ok(): void {
       <!-- 足す手: 当たりの箱にする狙いをチェック (複数可)。チェックした MOD ごとに当たり、どれも付かなければ外れ、0 個 = 狙い無し (10-25 オーナー) -->
       <div v-if="showAims" data-tree-hand-aims class="flex flex-col gap-1 text-[12px]">
         <span v-if="spam && !checkedAims.length" data-tree-hand-aim-need class="text-rose-200/90">{{ tr("狙う MOD を選んで", "Pick a target mod") }}</span>
-        <span v-else class="opacity-80">{{ tr("当たりの箱にする MOD", "Mods that make a hit box") }}</span>
+        <span v-else class="opacity-80">{{ tr("狙う MOD (付いたら当たりの箱)", "Target mods (a hit box when one lands)") }}</span>
         <label v-for="a in aimChoices" :key="aimKey(a)" data-tree-hand-aim :data-aim="aimKey(a)" class="flex min-h-7 min-w-0 cursor-pointer items-center gap-2">
           <input type="checkbox" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 truncate" :title="t.aimLabel(a)">{{ t.aimLabel(a) }}</span>
         </label>

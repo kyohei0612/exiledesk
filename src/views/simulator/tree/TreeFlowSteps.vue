@@ -20,8 +20,8 @@ const STEPS = [
   { n: 3, ja: "ツリー", en: "Tree" },
   { n: 4, ja: "結果", en: "Results" },
 ] as const;
-/** その段まで届いているか (初手のページで出している間は、決めるまでツリーへは進めない) */
-const reached = computed(() => ({ 1: true, 2: !props.noBase, 3: !props.noBase && !t.goalInline.value, 4: !props.noBase && t.runReady.value }));
+/** その段まで届いているか (初手のページで出している間は、決めるまでツリーへは進めない。狙いか手の入った木ならいつでも、10-26 猿の 8) */
+const reached = computed(() => ({ 1: true, 2: !props.noBase, 3: !props.noBase && (!t.goalInline.value || !!t.doc.value.memoAims?.length || !!t.doc.value.boxes.start?.hand), 4: !props.noBase && t.runReady.value }));
 const why = (n: 1 | 2 | 3 | 4): string | undefined =>
   reached.value[n] ? undefined : n === 2 ? tr("先にベースを選ぶ", "Choose a base first") : n === 3 ? tr("完成の MOD を決めてから", "Set the target mods first") : tr("100 人回した後に開く", "Opens after running 100 times");
 </script>

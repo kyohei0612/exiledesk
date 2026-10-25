@@ -33,7 +33,7 @@ const goalState = computed(() => {
 const cardW = ref(340);
 const fit = (): void => { cardW.value = Math.min(360, window.innerWidth - 40); };
 onMounted(() => { fit(); window.addEventListener("resize", fit); });
-// 出した質問は「決めた」・手を決めるまで留める (② の最後の行に答えた瞬間に次の質問へ飛ばない)
+// 出した質問は「次へ」・手を決めるまで留める (② の最後の行に答えた瞬間に次の質問へ飛ばない)
 onMounted(() => { if (!quiz.focus.value) quiz.focus.value = props.q; });
 onBeforeUnmount(() => window.removeEventListener("resize", fit));
 const outs = computed(() => quiz.outsOf(props.q.id));
@@ -61,7 +61,7 @@ function showHand(id: string): void { quiz.focus.value = { kind: "hand", id }; }
     </template>
     <template v-else>
       <h2 class="text-[16px] font-bold text-[#f0e4c8]">{{ box.hand ? tr(`${handLabel(box.hand)} を打つと…`, `After ${handLabel(box.hand)}…`) : "" }}</h2>
-      <p class="text-[12px] text-[#9a8a70]">{{ tr("結果ごとにどうするか (結果はエンジンが出しうる物から)。答えていない結果は「決めた」で次の手の質問へ", "What to do with each result (results come from the engine). Unanswered ones become next-craft questions when you tap Done") }}</p>
+      <p class="text-[12px] text-[#9a8a70]">{{ tr("結果ごとに次をどうするか選ぶ。選ばなかった結果は「次へ」の後で 1 つずつ聞きます", "Pick what to do next for each result. Ones you skip are asked one by one after Next") }}</p>
       <PhoneOutRow v-for="id in outs" :key="id" :box-id="id" @hand="showHand" />
       <button type="button" data-phone-hand-change class="g-btn self-start" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
     </template>

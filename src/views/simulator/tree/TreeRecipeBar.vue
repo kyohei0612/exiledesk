@@ -41,7 +41,8 @@ function endRename(v: string): void {
   if (!renaming.value) return;
   renaming.value = false;
   if (!v.trim()) return;
-  if (currentTreeRecipe.value) renameTreeRecipe(currentTreeRecipe.value.id, v);
+  // 名前を変えたら新しい名前で一言 (前は「〜で保存しました」が前の名前のまま残り、新しい名前で残ったか分からなかった、10-26 猿の 7)
+  if (currentTreeRecipe.value) { renameTreeRecipe(currentTreeRecipe.value.id, v); say(tr(`「${v.trim()}」に名前を変えました`, `Renamed to "${v.trim()}"`)); }
   else { saveTreeRecipe(v, t.doc.value); track("tree-recipe:save"); say(tr(`「${v.trim()}」で保存しました`, `Saved as "${v.trim()}"`)); }
 }
 /** 保存 = その場で (開いているレシピへ上書き、無ければ自動の名前。名前は聞かない、tree-save.ts) */
@@ -94,15 +95,15 @@ onBeforeUnmount(() => { window.removeEventListener("pointerdown", onDown, true);
 </script>
 
 <template>
-  <span ref="root" data-tree-recipe-bar class="relative flex min-w-0 items-center gap-1.5">
-    <input v-if="renaming && !bare" ref="nameInput" data-tree-recipe-name-input :value="currentTreeRecipe?.name ?? defaultName()" class="h-8 w-56 rounded border border-amber-400/60 bg-black/50 px-1.5 text-[13px] font-bold outline-none" @keydown.enter.prevent="($event.target as HTMLInputElement).blur()" @keydown.esc.stop="renaming = false" @blur="endRename(($event.target as HTMLInputElement).value)" />
+  <span ref="root" data-tree-recipe-bar class="relative flex min-w-0 flex-wrap items-center gap-1.5">
+    <input v-if="renaming && !bare" ref="nameInput" data-tree-recipe-name-input :value="currentTreeRecipe?.name ?? defaultName()" class="h-8 w-56 max-md:order-last max-md:w-full rounded border border-amber-400/60 bg-black/50 px-1.5 text-[13px] font-bold outline-none" @keydown.enter.prevent="($event.target as HTMLInputElement).blur()" @keydown.esc.stop="renaming = false" @blur="endRename(($event.target as HTMLInputElement).value)" />
     <button v-else-if="!bare" type="button" data-tree-recipe-name class="flex h-8 min-w-0 max-w-[240px] items-center gap-1.5 rounded px-1.5 text-[13px] hover:bg-white/[0.06]" :title="tr('名前を変える', 'Rename')" @click="startRename">
       <b class="min-w-0 truncate">{{ currentTreeRecipe?.name ?? tr("名前なし", "Untitled") }}</b>
       <span v-if="dirty" data-tree-recipe-dirty class="size-2 shrink-0 rounded-full bg-amber-400" :title="tr('保存していない変更がある', 'Unsaved changes')" />
     </button>
     <button v-if="!bare" type="button" data-tree-recipe-save class="g-btn sm shrink-0" :title="currentTreeRecipe ? tr('開いているレシピに上書き保存 (Ctrl+S)', 'Save to the open recipe (Ctrl+S)') : tr('新しく保存 (名前は自動、後で変えられる。Ctrl+S)', 'Save as a new recipe (auto-named, rename later. Ctrl+S)')" @click="save">{{ tr("保存", "Save") }}</button>
     <button type="button" data-tree-recipe-menu class="g-btn sm inline-flex shrink-0 items-center gap-1" :aria-expanded="pop" @click="pop = !pop">{{ tr("レシピ", "Recipes") }} ▾</button>
-    <span v-if="note" class="pointer-events-none absolute left-0 top-full z-30 mt-1 whitespace-nowrap rounded bg-emerald-900/90 px-2 py-1 text-[12px] text-emerald-100">{{ note }}</span>
+    <span v-if="note" data-tree-recipe-note class="pointer-events-none min-w-0 max-w-full truncate rounded bg-emerald-900/90 px-2 py-0.5 text-[12px] text-emerald-100">{{ note }}</span>
 
     <div v-if="pop" data-tree-recipe-pop :class="menuOnly ? 'right-0' : 'left-0'" class="absolute top-full z-40 mt-1 flex w-[340px] max-w-[calc(100vw-4rem)] flex-col gap-1.5 rounded-lg border border-[var(--exile-color-border-brass)]/60 bg-[#14110d] p-2 text-[12px] shadow-[0_8px_24px_rgba(0,0,0,0.7)]">
       <p class="opacity-60">{{ tr("保存したレシピから開く", "Open a saved recipe") }}</p>

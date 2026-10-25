@@ -33,7 +33,7 @@ import { tr } from "../../../i18n/lang";
 import { pageZoom } from "../../../utils/zoom";
 import { LINE, useTreeEdges } from "./use-tree-edges";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
-import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes"; import { quickSave, rememberResume, takeResume, unsaved } from "./tree-save";
+import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes"; import { quickSave, rememberResume, resumeTree, unsaved } from "./tree-save";
 import { askLeave, openTreePage, setLeaveGuard, treeStep } from "../../../web/page";
 import { recipesPage } from "../../../state/web-page";
 import { gesture } from "./use-gesture";
@@ -352,7 +352,7 @@ onMounted(() => window.addEventListener("keydown", onKey));
  * 見本の木 (?sample=、tree-samples.ts) は 10-25 に消した (オーナー「古いレシピ全て削除で OK」)
  */
 onMounted(() => {
-  const back = t.doc.value.memoAims?.length || Object.keys(t.doc.value.boxes).length > 1 ? null : takeResume(); if (back) { setCurrentTreeRecipe(back.id); t.open(back.tree); return; }
+  if (resumeTree()) return; // 保存したレシピを開いていた時はそれを開き直してツリーへ (tree-save)
   if (!t.takeAskBase()) return;
   t.needBase.value = true;
   if (treeStep.value !== "base") {

@@ -58,6 +58,12 @@ export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean) {
   }
   /** テストランのボタン (記録の印は 1 押し 1 回、10-25 オーナー「回すボタンに記録足して」) */
   async function onCheck(): Promise<void> { if (!checking.value) track("sim:test"); await runCheck(); }
-  const issueOf = (b: TreeBox): string | null => (!shown.value ? null : issues.value?.filter((x) => x.boxId === b.id).map((x) => x.text).join(" / ") || null);
-  return { issues, issuesOpen, shown, issuesFold, checking, progress, passed, runCheck, onCheck, issueOf };
+  /**
+   * 始めたばかり (スタートにまだ手も分かれ目も無い) の木では足りない所を見せない (赤い「!」と数で壊れた・間違えたに見えた、10-26 猿の 3。
+   * まずスタートの ＋ で手を足すだけ)。合格ではないので「100 人回す」は今のまま押せない
+   */
+  const fresh = computed(() => !doc.value.boxes.start?.hand && !doc.value.boxes.start?.split);
+  const shownIssues = computed(() => (fresh.value ? [] : issues.value));
+  const issueOf = (b: TreeBox): string | null => (!shown.value || fresh.value ? null : issues.value?.filter((x) => x.boxId === b.id).map((x) => x.text).join(" / ") || null);
+  return { issues: shownIssues, issuesOpen, shown, issuesFold, checking, progress, passed, runCheck, onCheck, issueOf };
 }

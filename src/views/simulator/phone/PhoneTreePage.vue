@@ -81,7 +81,7 @@ const main = computed((): { kind: string; text: string; off?: boolean; go: () =>
   if (c && b && c.kind === "hand" && !b.hand) return { kind: "hand", text: tr("打つ手を選ぶ", "Choose a craft"), go: () => { handFor.value = c.id; } };
   if (c && c.kind === "outs") {
     const left = q.outsOf(c.id).filter((id) => q.stateOf(id) === "open").length;
-    return { kind: "decide", text: left ? tr(`決めた (残り ${left})`, `Done (${left} left)`) : tr("決めた", "Done"), go: () => q.decide(c.id) };
+    return { kind: "decide", text: left ? tr(`次へ (未定 ${left})`, `Next (${left} open)`) : tr("次へ", "Next"), go: () => q.decide(c.id) };
   }
   if (c) return null;
   // 全部の道が決まった = 100 人回す (PC と同じ use-tree-run。1 人目が木を進む再生は木が無いので飛ばす)

@@ -3,7 +3,8 @@
  * 開いていたレシピなら上書き、無ければ自動の名前 (「<ベース> 10/26 21:30」、後で一覧で直せる) で新しく。名前は聞かない。
  * 帯の「保存」(TreeRecipeBar)・離れる時の「保存して進む」(SimTreePage・StageRecipesPage の setLeaveGuard)・ベースを替える時の「保存して替える」(TreeGoalPage) で同じ
  */
-import { currentTreeRecipe, overwriteTreeRecipe, sameTree, saveTreeRecipe, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
+import { currentTreeRecipe, overwriteTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
+import { openTreePage, treeStep } from "../../../web/page";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { tr } from "../../../i18n/lang";
@@ -41,6 +42,26 @@ export function takeResume(): TreeRecipe | null {
     sessionStorage.removeItem(RESUME_KEY);
     return id ? treeRecipes.value.find((r) => r.id === id) ?? null : null;
   } catch { return null; }
+}
+/**
+ * 覚えたレシピを開き直す (白紙の木でツリーのページを開いた時)。上のタブの「シミュレーター」はベース選び (sim-base) を開くので、
+ * ツリーの画面へ移して URL も sim-tree に (10-26 猿の 8・13: ベース選びに着き「3 ツリー」が押せず、狙いが消えたように見えた)。
+ * 作りかけの木がまだ手元にある (このタブで作っていた) 時も、上のタブで来たベース選びでなくその木へ。開き直したら true
+ */
+export function resumeTree(): boolean {
+  const t = useTree(), d = t.doc.value;
+  if (d.memoAims?.length || Object.keys(d.boxes).length > 1) {
+    if (treeStep.value !== "base" || !d.baseChosen) return false;
+  } else {
+    const r = takeResume();
+    if (!r) return false;
+    setCurrentTreeRecipe(r.id);
+    t.open(r.tree);
+  }
+  try { const u = new URL(location.href); u.searchParams.set("page", "sim-tree"); history.replaceState(history.state, "", u.pathname + u.search + u.hash); } catch { /* 置き換えられなくても開く */ }
+  openTreePage("tree");
+  t.goalPage.value = 0;
+  return true;
 }
 /** 今の木を保存する。返すのは保存先のレシピと、上書きか (画面の一言用) */
 export function quickSave(): { r: TreeRecipe; over: boolean } {

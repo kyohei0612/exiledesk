@@ -175,13 +175,18 @@ function onCardFracture(m: StageMod): void {
   if (m.desecrated && !g?.fractured) return;
   if (g) markFracture(g.modId, g.tier);
 }
-/** 完成の MOD の段の説明 (日本語・英語の組、1 つの事 = 1 行) */
-const HELP: Array<[string, string]> = [
+/** 完成の MOD の段の説明 (日本語・英語の組、1 つの事 = 1 行。3 つ目が true の行は PC だけ = スマホに右クリックは無い、10-26 猿の 9) */
+const HELP: Array<[string, string, boolean?]> = [
   ["狙いにする: その段以上が付けば当たり (狙いは MOD 1 つ、上の段は「含む」)", "Target: a hit if that tier or better rolls (one target per mod; higher tiers are included)"],
   ["後の箱の当たりは、この狙いから選ぶ", "Later hit boxes pick from these targets"],
-  ["フラクチャー (✦) = 完成品に残す MOD の印。複数付けてよく、どれか 1 つが固定されたレアから始まる (カードの右クリックでも)", "Fracture (✦) = marks a mod the finished item keeps. Several are fine; the start is a rare with one of them fractured (or right-click on the card)"],
+  ["フラクチャー (✦) = 完成品に残す MOD の印。複数付けてよく、どれか 1 つが固定されたレアから始まる", "Fracture (✦) = marks a mod the finished item keeps. Several are fine; the start is a rare with one of them fractured"],
+  ["カードの行の右クリックでも印を付け外し", "Right-click a row on the card to toggle the mark too", true],
   ["印が無ければ白から", "No marks: start from a white item"],
 ];
+/** 説明はスマホでは既定で閉じる (カードの下で MOD の行が画面の外へ押し出された、10-26 猿の 10)。PC は開いたまま */
+const helpOpen = ref(typeof matchMedia !== "function" || matchMedia("(min-width: 768px)").matches);
+// 2 の段に着いたら上から (ベースの一覧を送った位置のまま着き、カードと狙いの行が見えなかった、10-26 猿の 1)
+watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scrollTo(0, 0)); });
 </script>
 
 <template>
@@ -256,9 +261,12 @@ const HELP: Array<[string, string]> = [
         </div>
         <p v-if="t.goalItem.value?.note" data-tree-goal-problem class="rounded-md border border-rose-400/50 bg-[#2a1416] px-2 py-1 text-[12px] text-rose-100">{{ tr(`付けられない狙いがある: ${t.goalItem.value.note}`, `A target can't be added: ${t.goalItem.value.note}`) }}</p>
         <!-- 説明は 1 つの事 = 1 行 (10-24 オーナー「・で区切って行で分ける、1 行は折り返して OK」) -->
-        <ul data-tree-goal-help class="flex list-disc flex-col gap-0.5 pl-4 text-[12px] opacity-70">
-          <li v-for="(line, k) in HELP" :key="k">{{ tr(line[0], line[1]) }}</li>
-        </ul>
+        <details data-tree-goal-help-wrap :open="helpOpen" @toggle="helpOpen = ($event.target as HTMLDetailsElement).open">
+          <summary class="cursor-pointer text-[12px] opacity-70 md:hidden">{{ tr("狙い・フラクチャーの使い方", "How targets and fracture work") }}</summary>
+          <ul data-tree-goal-help class="flex list-disc flex-col gap-0.5 pl-4 text-[12px] opacity-70">
+            <li v-for="(line, k) in HELP" :key="k" :class="line[2] ? 'max-md:hidden' : ''">{{ tr(line[0], line[1]) }}</li>
+          </ul>
+        </details>
         <!-- 次へ (決めた) はカードと説明の下 (10-24 オーナー)。列ごと上に留めるので一覧を送っても見える。スマホは列が上に積まれるので下の帯に出す -->
         <div class="max-md:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="close">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
       </div>
