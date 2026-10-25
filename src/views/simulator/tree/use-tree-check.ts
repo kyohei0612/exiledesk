@@ -5,6 +5,7 @@ import { computed, ref, watch, type Ref } from "vue";
 import { checkTreeAsync, type CheckIssue, type CheckProgress } from "../../../services/simulator/tree/tree-check";
 import { fractureMarks, startOf, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { craftStage as s } from "../../../state/craft-stage";
+import { track } from "../../../utils/track";
 
 /**
  * 道の形 (箱の位置・メモ・ベースの値段は入れない)。位置を動かしただけでは精査し直さない・回した結果を消さない
@@ -55,7 +56,8 @@ export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean) {
       if (again || key !== routeKey.value) { again = false; void runCheck(); }
     }
   }
-  async function onCheck(): Promise<void> { await runCheck(); }
+  /** テストランのボタン (記録の印は 1 押し 1 回、10-25 オーナー「回すボタンに記録足して」) */
+  async function onCheck(): Promise<void> { if (!checking.value) track("sim:test"); await runCheck(); }
   const issueOf = (b: TreeBox): string | null => (!shown.value ? null : issues.value?.filter((x) => x.boxId === b.id).map((x) => x.text).join(" / ") || null);
   return { issues, issuesOpen, shown, issuesFold, checking, progress, passed, runCheck, onCheck, issueOf };
 }

@@ -11,6 +11,7 @@ import { withTreeTune } from "../../../services/simulator/tree/tree-tune";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { craftStage as s } from "../../../state/craft-stage";
 import { routeKeyOf } from "./use-tree-check";
+import { track } from "../../../utils/track";
 
 /** 回す人数 (帯の「100 人回した時」と同じ)。seed は台本・解析君と同じ 1 */
 export const RUN_N = 100;
@@ -54,6 +55,8 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
   async function run(): Promise<void> {
     const data = s.data.value;
     if (!data || running.value) return;
+    // 記録の印 (1 押し 1 回、PC・スマホとも。画面を離れる時にまとめて POST /log、10-25 オーナー「回すボタンに記録足して」)
+    track("sim:run");
     const my = ++token;
     running.value = true; shown.value = true; raw.value = null; halted.value = null; skip = false;
     const d = doc.value;
