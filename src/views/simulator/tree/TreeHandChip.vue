@@ -29,8 +29,9 @@ const icons = computed(() => (props.hand ? [props.hand.currency, ...props.hand.o
     :class="off ? '!pointer-events-none' : ''" :style="{ left: `${x}px`, top: `${y}px`, scale: String(inv) }" :title="handLabel(hand)" @click="$emit('open')">
     <span v-if="cat" data-tree-hand-catalyst class="flex shrink-0 items-center gap-0.5 text-sky-200"><img v-if="iconOf(cat)" :src="iconOf(cat)" alt="" class="size-6 object-contain" />{{ handName(cat) }}<span aria-hidden="true" class="opacity-70">→</span></span>
     <span class="flex shrink-0 items-center -space-x-1"><img v-for="k in icons" :key="k" :src="iconOf(k)" alt="" class="size-6 object-contain" /></span>
-    <span class="min-w-0 truncate">{{ handName(hand.currency) }}</span>
-    <span v-if="hand.repeat" class="shrink-0 rounded-sm bg-amber-400/20 px-1 text-[10px]">{{ tr("当たるまで", "until a hit") }}</span>
+    <span class="min-w-0 truncate">{{ hand.repeat ? tr("カオススパムオーブ", "Chaos Spam Orb") : handName(hand.currency) }}</span>
+    <!-- カオススパムオーブ (当たるまで) は横にカオスの段の名前 -->
+    <span v-if="hand.repeat" class="shrink-0 rounded-sm bg-rose-400/20 px-1 text-[10px]">{{ handName(hand.currency) }}</span>
     <!-- 狙い無しの手 (結果は「打った後」の箱 1 つ。札が高貴だけで狙い無しと分からなかった、10-22 白紙から組んだ試し) -->
     <span v-if="hand.free" class="shrink-0 rounded-sm bg-white/15 px-1 text-[10px]">{{ tr("狙い無し", "no target") }}</span>
   </button>

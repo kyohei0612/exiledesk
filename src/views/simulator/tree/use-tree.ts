@@ -407,6 +407,12 @@ export function allowCost(): void {
   costAsked = true;
   requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => { costReady.value = true; }, 0)));
 }
+/**
+ * 箱を出し終えた合図が来ない時の逃げ道: データが来て COST_WAIT_MS たっても来なければ計算を始める (題の横の「始まりの値段を計算中」が消えない、
+ * 10-25 オーナー「このリロードなんだ」。手元 1440 の読み直しの重なりで use-tree が 2 つの版になり、合図が別の版へ行って出たままだった)
+ */
+const COST_WAIT_MS = 5000;
+watch(() => !!s.data.value, (ok) => { if (ok) setTimeout(allowCost, COST_WAIT_MS); }, { immediate: true });
 const costMemo = new Map<string, ReturnType<typeof treeBaseCost>>();
 const baseCost = computed(() => {
   const d = s.data.value;

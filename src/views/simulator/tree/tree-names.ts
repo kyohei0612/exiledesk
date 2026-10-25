@@ -55,7 +55,9 @@ export function handLabel(h: Hand): string {
     : "";
   const label = cat + [handName(h.currency), ...h.omens.map(handName)].join(" + ") + (h.free ? tr(" (狙い無し)", " (no target)") : "") + (isCatalyst(h.currency) ? tr(" (品質を最大まで)", " (to max quality)") : "");
   if (!h.repeat) return label;
-  return h.repeat.max ? tr(`${label} (当たるまで、${h.repeat.max} 回まで)`, `${label} (until a hit, max ${h.repeat.max})`) : tr(`${label} (当たるまで)`, `${label} (until a hit)`);
+  // 当たるまで = カオススパムオーブ (10-25 オーナー。前に保存した木の「カオスの当たるまで」も同じ手として読む)
+  const spam = tr("カオススパムオーブ", "Chaos Spam Orb");
+  return h.repeat.max ? tr(`${spam} (${label}、${h.repeat.max} 回まで)`, `${spam} (${label}, max ${h.repeat.max})`) : `${spam} (${label})`;
 }
 /** レアリティの名前 (0 の箱・スタートの箱・レアリティの札) */
 export const rarityName = (r: TreeRarity): string => (r === "normal" ? tr("ノーマル", "Normal") : r === "magic" ? tr("マジック", "Magic") : tr("レア", "Rare"));

@@ -121,7 +121,7 @@ export function problemOf(data: PatchData, item: StageItem, h: Hand, hitAims: Ai
   const full = !!preCat && catalystFull(item, preCat);
   if (preCat && preFill && !preFill.applied && !full) return tr(`前に足すカタリストが入らない: ${preFill.reason ?? ""}`, `The catalyst before this can't be used: ${preFill.reason ?? ""}`);
   // 当たるまで繰り返すのに狙いが 1 つも無い時は決めさせない (MOD を選んでいない・まだ付いていない狙いが無い・このカレンシーでは付かない)
-  if (kindOf(h) === "spam" && !hitAims.length) return tr("狙う MOD を選んで (当たるまで繰り返す手は、狙う MOD が要る。候補が無い時は、欲しい MOD のメモに足すか、当たりの箱で MOD を選んでから)", "Pick a target mod (repeating needs one; if there are none, add one to the wanted mods memo, or pick a mod in a hit box first)");
+  if (kindOf(h) === "spam" && !hitAims.length) return tr("狙う MOD を選んで (カオススパムオーブは狙う MOD が要る。候補が無い時は、完成の MOD に足してから)", "Pick a target mod (the Chaos Spam Orb needs one; if there are none, add one to the final mods first)");
   return handProblem(data, preCat && preFill ? preFill.item : item, h);
 }
 /**

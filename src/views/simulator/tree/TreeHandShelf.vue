@@ -82,6 +82,26 @@ const shelfItem = computed(() => preFill.value?.item ?? item.value);
 // フラクチャーのオーブは完成の MOD でフラクチャーの印を決めた木でだけ打てる (10-25 オーナー「最初にフラクチャーを決めないとフラクチャーオーブを打てないように」)
 const fractureBlock = (k: string): string | null => (effectOf(k) === "fracture" && !fractureMarks(t.doc.value).length ? tr("先に完成の MOD でフラクチャーを決めて", "Set a fracture on the final mods first") : null);
 const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens, fractureBlock);
+/**
+ * カオススパムオーブ (10-25 オーナー「レア状態のアイテムになら特別にカオススパムオーブを実装しよう」): 棚の上のシミュだけの札。レアの時だけ出す。
+ * 持つ = カオス (段は持った物の欄で普通・上級・完全) を当たるまで (spam)。狙う MOD は必ず選ぶ、お告げはカオスと同じ。前は普通のカオスの窓の「当たるまで繰り返す」のチェックだった (消した)
+ */
+const SPAM_TIERS = ["chaos", "chaos_greater", "chaos_perfect"] as const;
+const isRare = computed(() => item.value?.rarity === "rare");
+const spamOn = computed(() => spam.value && !!held.value && canSpam(held.value));
+/** 打てない理由 (カオスと同じ。外せる MOD が無い等、エンジンの useReason) */
+const spamWhy = computed((): string | null => { const d = s.data.value, it = item.value; return d && it ? useReason(d, it, "chaos") : null; });
+function holdSpam(): void {
+  if (spamOn.value) { release(); spam.value = false; return; }
+  omens.value = [];
+  held.value = "chaos";
+  spam.value = true;
+}
+/** 棚の札を持つ = 普通の手 (スパムを持っていたら外して持ち替える。同じカオスを押した時も普通のカオスへ) */
+function onShelfHold(k: string): void {
+  if (spam.value) { spam.value = false; held.value = k; return; }
+  onHold(k);
+}
 /** ツリーの棚は打てる札だけを出すので、印が無いせいで出ないフラクチャーは窓に理由を 1 行 (アイテムには打てる時だけ) */
 const fracHidden = computed(() => { const d = s.data.value, it = item.value; return !!d && !!it && !!fractureBlock("fracture") && !useReason(d, it, "fracture"); });
 const used = computed(() => (held.value ? omensFor(held.value, omens.value) : []));
@@ -181,7 +201,12 @@ function ok(): void {
     <div v-if="held" class="flex flex-col gap-1.5 rounded-md bg-white/[0.04] p-2">
       <div class="flex min-w-0 items-center gap-1.5">
         <span class="flex shrink-0 items-center -space-x-1"><img v-for="ic in [held, ...used].filter((x) => !!iconOf(x))" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
-        <b class="min-w-0 truncate" :title="hand ? handLabel(hand) : ''">{{ [nameOf(held), ...used.map(nameOf)].join(" + ") }}</b>
+        <b class="min-w-0 truncate" :title="hand ? handLabel(hand) : ''">{{ spamOn ? `${tr("カオススパムオーブ", "Chaos Spam Orb")} (${[nameOf(held), ...used.map(nameOf)].join(" + ")})` : [nameOf(held), ...used.map(nameOf)].join(" + ") }}</b>
+      </div>
+      <!-- カオススパムオーブ: カオスの段を替える (カタリストの札と同じ形) と上限 -->
+      <div v-if="spamOn" data-tree-hand-spam-tiers class="flex flex-wrap items-center gap-1">
+        <button v-for="c in SPAM_TIERS" :key="c" type="button" data-tree-hand-spam-tier :data-tier="c" class="flex min-h-7 items-center gap-1 rounded-md border px-2 text-[12px]" :class="c === held ? 'border-amber-300 bg-amber-500/20 text-amber-100' : 'border-white/10 hover:bg-white/10'" :aria-pressed="c === held" @click="held = c"><img v-if="iconOf(c)" :src="iconOf(c)" alt="" class="size-5 object-contain" />{{ nameOf(c) }}</button>
+        <span class="ml-1 flex items-center gap-1 text-[12px] opacity-80">{{ tr("上限", "Max") }}<input v-model.number="spamMax" type="number" min="1" class="h-7 w-16 rounded-md border border-white/15 bg-black/40 px-1 text-right" :placeholder="tr('なし', 'none')" />{{ tr("回", "") }}</span>
       </div>
       <!-- カタリストの手はここで種類を替える (棚にカタリストが無い、10-22 13 通り組んだ #7) -->
       <div v-if="isCatalyst(held)" data-tree-hand-cats class="flex flex-wrap gap-1">
@@ -203,10 +228,6 @@ function ok(): void {
           <input type="checkbox" :checked="freeOn" @change="toggleFree($event)" />{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}
         </label>
       </div>
-      <label v-if="canSpam(held)" class="flex min-h-7 cursor-pointer flex-wrap items-center gap-2">
-        <input v-model="spam" type="checkbox" />{{ tr("当たるまで繰り返す (カオススパム)", "Repeat until a hit (Chaos spam)") }}
-        <span v-if="spam" class="flex items-center gap-1 text-[12px] opacity-80">{{ tr("上限", "Max") }}<input v-model.number="spamMax" type="number" min="1" class="h-7 w-16 rounded-md border border-white/15 bg-black/40 px-1 text-right" :placeholder="tr('なし', 'none')" />{{ tr("回", "") }}</span>
-      </label>
       <p v-if="kind" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? tr(`${outName(only.out)}だけ (結果は 1 通り)`, `${outName(only.out)} only (one possible result)`) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
       <!-- 替える時は、消える箱の数を先に小さく (オーナー 10-22。1 つ戻す / Ctrl+Z で戻せる)。持ち直しは棚で別の物を押すだけ。決めるのはカードを押す -->
       <div class="flex flex-wrap items-center gap-1.5">
@@ -218,7 +239,17 @@ function ok(): void {
     </div>
 
     <div data-tree-shelf @pointerdown="onShelfDown">
-      <CurrencyShelf @hold="onHold">
+      <!-- カオススパムオーブ (シミュだけの札、レアの時だけ)。棚の札と同じ形 (ShelfButton の枠・絵・名前)、絵はカオスオーブそのまま、
+           右上に「上級」「完全」と同じ形の札で「スパム」、見分けは札と枠の色だけ (10-25 オーナー、前の ↻ の印はこれに置き換え) -->
+      <button v-if="isRare || spamOn" type="button" data-tree-spam-orb :aria-pressed="spamOn" :disabled="!!spamWhy && !spamOn"
+        class="group relative mb-2 flex w-[74px] flex-col items-center px-0.5 pb-1 text-[10px] transition disabled:cursor-not-allowed disabled:opacity-35 md:w-[80px] md:text-[11px]"
+        :class="spamOn ? 'text-[var(--exile-color-text-title)]' : ''"
+        :title="spamWhy ?? tr('狙う MOD が付くまでカオスを打ち続ける (狙いの側に空きがあれば先に高貴を 1 回)。レアの時だけ', 'Keep using Chaos until a target mod lands (an Exalted Orb first if the target side has room). Rare only')" @click="holdSpam">
+        <span class="g-slot grid size-[52px] place-items-center ring-1 ring-rose-400/50 md:size-[56px]" :class="spamOn ? 'on' : ''"><img v-if="iconOf('chaos')" :src="iconOf('chaos')" alt="" class="h-9 w-9 object-contain md:h-[42px] md:w-[42px]" draggable="false" /></span>
+        <span class="mt-0.5 min-h-[2.5em] text-center leading-tight">{{ tr("カオススパムオーブ", "Chaos Spam Orb") }}</span>
+        <span class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] text-rose-300">{{ tr("スパム", "Spam") }}</span>
+      </button>
+      <CurrencyShelf @hold="onShelfHold">
         <!-- 持った物に掛けられるお告げ = クラフト台と同じ部品と置き場 (HeldOmens.vue を持ったアイコンのすぐ下に重ねる。inline-held だと棚の一番下で見切れた、10-21 本物のマウス)。
              足す手は同じ欄に「狙い無し」(適当打ち、オーナー 10-22「お告げの欄の中に適当打ちがまだ無い」) -->
         <template v-if="omensAllowedFor(held).length || (!!held && isBone(held))" #held><HeldOmens>

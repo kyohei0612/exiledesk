@@ -65,6 +65,7 @@
 | 止まり / 打ち止め | stuck / capped |
 | 欲しい MOD のメモ | wanted mods memo (見出しは Notes) |
 | カオススパム | Chaos spam |
+| カオススパムオーブ (シミュだけの札、右上の札は「スパム」) | Chaos Spam Orb (badge: Spam) |
 | 触媒のお告げ (= 触媒の高貴のお告げ) | Omen of Catalysing Exaltation (poe2db、items-ja-poe2db.json)。「Catalysing omen」と縮めない |
 | 区切りの「・」 | 英語は ", " |
 
