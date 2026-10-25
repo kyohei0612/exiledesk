@@ -214,6 +214,18 @@ export function startItemOf(data: PatchData, doc: TreeDoc, rng: () => number): S
  * その手がこのアイテムに打てない理由 (打てるなら null。オーナー 10-22「進行不能」: 消せる物が無い側のお告げ・効かないお告げが掛かった手を確定させない)。
  * 判定はエンジンの入口の canUse (お告げ → 触媒の前のカタリスト → 手そのもの、繰り返しは 1 回分、乱数で決まる物は打てる扱い。B11 10-22)
  */
+/**
+ * 回し方だけの扱い (10-25 オーナー・ブラック、木の形は変えない。木の「自動の完成」= 完成の箱を作って先を止める、とは別物でそちらは取りやめのまま):
+ * goalsHeld = 完成の狙いが全部そろった人は、どの箱に着いてもその場で完成として数える (100 人回し・テストラン・精査)。
+ * heldHitOf = 手が打てない時、その手の当たりの箱の狙いがもう付いていれば打たずにその箱へ進む (合金の負けで冒涜のキャストを持ったまま戻った人など)
+ */
+export function goalsHeld(data: PatchData, doc: TreeDoc, item: StageItem): boolean {
+  const goals = doc.memoAims ?? [];
+  return !!goals.length && goals.every((a) => aimHeldOn(data, item, a, { sameText: true }));
+}
+export function heldHitOf(data: PatchData, doc: TreeDoc, b: TreeBox, item: StageItem): string | null {
+  return b.outs.find((id) => { const o = doc.boxes[id]; return o?.out === "hit" && !!o.aim && aimHeldOn(data, item, o.aim, { sameText: true }); }) ?? null;
+}
 /** 狙い無しの埋めるだけの高貴で、もう両側満杯 (打たずに通す。playHand・handProblem) */
 const fillDone = (item: StageItem, h: Hand): boolean => !!h.free && kindOf(h.currency) === "exalt" && !room(item, "prefix") && !room(item, "suffix");
 export function handProblem(data: PatchData, item: StageItem, h: Hand): string | null {

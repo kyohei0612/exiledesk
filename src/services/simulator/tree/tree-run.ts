@@ -8,7 +8,7 @@
 import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { effectOf } from "./tree-hands";
-import { aimOpts, aimsOf, fractureChoices, handAims, outcomeOf, playHand, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
+import { aimOpts, aimsOf, fractureChoices, goalsHeld, handAims, heldHitOf, outcomeOf, playHand, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
 import { heldSets, MATCH, matchBox, outBoxOf, RESTART, settle, shapesOf, splitTo, type Shape, type SplitBox } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
@@ -117,6 +117,8 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     if (!b) return { end: "stuck", cost, at, visits, uses, restarts, odd };
     visits.push({ box: at, cost });
     o.onArrive?.(at, item);
+    // 完成の狙いが全部そろった人は、どの箱でもその場で完成 (回し方だけ、tree-sample の goalsHeld)
+    if (goalsHeld(data, doc, item)) return { end: "done", cost, at, visits, uses, restarts, odd, why: { reason: tr("完成", "Done"), item } };
     // 完成の印は "main" だけ (前の版の妥協 "compromise" は未完成 = 印の無い箱として先へ読む)。
     // 着いた時に狙いの数を見る: 道の当たりの数より少なければ完成にせず、形の合う箱へ (無ければ止まり)
     // (10-22 白紙から 13 通り組んだ #4: 入れ替えのカオスで途中の狙いが消え、完成 100% と出たのに 96 人は狙い 1 つだった)
@@ -169,7 +171,12 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     const tried = uses[b.hand.currency] ?? 0, own = handAims(doc, at, aims);
     o.onHand?.(at, item);
     const r = playHand(data, item, b.hand, rng, own, use);
-    if (!r.applied) return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: r.reason ?? "", item } };
+    if (!r.applied) {
+      // 打てないが、この手の当たりの狙いがもう付いている = 打たずにその当たりの箱へ (tree-sample の heldHitOf)
+      const held = heldHitOf(data, doc, b, item);
+      if (held && ++hops <= 1000) { at = held; continue; }
+      return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: r.reason ?? "", item } };
+    }
     const cap = b.hand.repeat?.max ?? SPAM_CAP;
     if (o.untilHit.has(at) && (uses[b.hand.currency] ?? 0) - tried >= cap && outcomeOf(data, before, r.item, own, b.hand.currency).out !== "hit") {
       return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`当たるまでを ${cap} 回打っても当たらない (この形からは狙いが付きにくい・付かない)`, `No hit in ${cap} repeats (the target is unlikely or impossible from this item)`), item: r.item, spam: cap } };
