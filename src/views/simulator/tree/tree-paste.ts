@@ -10,7 +10,7 @@
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import { goalBlock } from "../../../services/craft-stage/engine-sim";
 import { parseItemText } from "../../../services/craft-stage/engine";
-import type { ItemTextMod, ItemTextReading } from "../../../services/craft-stage/item-text-types";
+import type { ItemTextMod, ItemTextReading } from "../../../services/craft-stage/engine";
 import { craftStage as s } from "../../../state/craft-stage";
 import { migrateStart, startRarity, type Aim, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { currentTreeRecipe, overwriteTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
@@ -101,7 +101,8 @@ function aimsOfReading(rd: ItemTextReading): { aims: Aim[]; bad: Array<{ line: s
     const why = goalBlock(data, t.doc.value.base, lv, aims.map((a) => ({ modId: a.modId, tier: a.tier })), { modId: m.modId, tier });
     if (why) { bad.push({ line: m.text, why }); continue; }
     // 冒涜の MOD はフラクチャーできない (完成形の窓と同じ)。印は付けず狙いだけ
-    aims.push({ modId: m.modId, tier, ...(m.fractured && !m.desecrated ? { fractured: true as const } : {}) });
+    // 貼った素の値も持つ (完成形のカードにそのまま出す、use-tree の goalItem)
+    aims.push({ modId: m.modId, tier, ...(m.fractured && !m.desecrated ? { fractured: true as const } : {}), ...(m.values.length ? { values: [...m.values] } : {}) });
   }
   return { aims, bad };
 }

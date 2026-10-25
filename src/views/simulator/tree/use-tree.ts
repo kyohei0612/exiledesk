@@ -8,7 +8,7 @@ import { priceOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { freshItem, modListFor } from "../../../services/craft-stage/engine";
 import { minIlvlFor, tierRankLabel } from "../../../services/craft-stage/engine";
 import { startItemOf } from "../../../services/simulator/tree/tree-sample";
-import { carryAims, placeMods } from "../../../services/craft-stage/engine-sim";
+import { carryAims, placeMods, retext } from "../../../services/craft-stage/engine-sim";
 import type { StageItem } from "../../../services/craft-stage/engine";
 import { fractureMarks, migrateStart, newTree, startOf, startRarity, type Aim, type StartFrom, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { treeBaseCost } from "../../../services/simulator/tree/tree-base-cost";
@@ -269,7 +269,8 @@ const hasGoal = (modId: string, tier: number): boolean => goals.value.some((a) =
 function toggleGoal(modId: string, tier: number): void {
   edit((d) => {
     const list = d.memoAims ?? [], same = list.find((a) => a.modId === modId);
-    const next = same?.tier === tier ? list.filter((a) => a.modId !== modId) : same ? list.map((a) => (a.modId === modId ? { ...a, tier } : a)) : [...list, { modId, tier }];
+    // 段を替えたら貼り付けの値は外す (その段の幅に入らない)
+    const next = same?.tier === tier ? list.filter((a) => a.modId !== modId) : same ? list.map((a) => (a.modId === modId ? { modId, tier, ...(a.fractured ? { fractured: true as const } : {}) } : a)) : [...list, { modId, tier }];
     if (next.length) d.memoAims = next; else delete d.memoAims;
     migrateStart(d);
   });
@@ -284,7 +285,7 @@ function toggleFracture(modId: string, tier: number): void {
     const list = d.memoAims ?? [], g = list.find((a) => a.modId === modId);
     if (!g) list.push({ modId, tier, fractured: true });
     else if (g.fractured && g.tier === tier) delete g.fractured;
-    else { g.tier = tier; g.fractured = true; }
+    else { if (g.tier !== tier) delete g.values; g.tier = tier; g.fractured = true; }
     d.memoAims = list;
     migrateStart(d);
     d.start!.mods = d.start!.mods.filter((m) => !list.some((a) => a.fractured && a.modId === m.modId));
@@ -305,7 +306,15 @@ const goalItem = computed((): { item: StageItem; note: string | null; left: Arra
   const marks = goals.value.filter((a) => a.fractured), one = marks.length === 1;
   const order = [...marks, ...goals.value.filter((a) => !a.fractured)].map((a) => ({ modId: a.modId, tier: a.tier, ...(one && a.fractured ? { fractured: true } : {}) }));
   const r = placeMods(data, d.base, d.itemLevel, order, MID_ROLL);
-  return { item: r.item, note: null, left: r.left.map((x) => ({ modId: x.modId, tier: x.tier, ...(marks.some((a) => a.modId === x.modId) ? { fractured: true as const } : {}), reason: x.reason })) };
+  // 貼り付けで取り込んだ狙いは貼った素の値で出す (段の中央でなく、10-25 オーナー「コピペした時数値の変更が若干ある」)
+  // 文 (textJa / textEn) も値から作り直す (エンジンの retext。値だけ替えると文は段の中央のままだった)
+  // 貼り付けの読みは「減少」を負の値で返し、エンジンの MOD の値は正の向きの物がある。符号が合わない時は差し替えない (文が崩れた、t1 の要求能力値)
+  const pasted = (m: StageItem["prefixes"][number]): typeof m => {
+    const v = goals.value.find((a) => a.modId === m.modId && a.values?.length === m.values.length)?.values;
+    return v && v.every((x, i) => Math.sign(x) === Math.sign(m.values[i]!) || x === 0) ? { ...m, values: [...v], ...retext(m, v, data) } : m;
+  };
+  const item = goals.value.some((a) => a.values) ? { ...r.item, prefixes: r.item.prefixes.map(pasted), suffixes: r.item.suffixes.map(pasted) } : r.item;
+  return { item, note: null, left: r.left.map((x) => ({ modId: x.modId, tier: x.tier, ...(marks.some((a) => a.modId === x.modId) ? { fractured: true as const } : {}), reason: x.reason })) };
 });
 /** 完成形のレアリティ (0 の箱、TreeDoc.goal。無ければレア。1 つ戻すで戻せる) */
 const goalRarity = computed((): TreeRarity => doc.value.goal?.rarity ?? "rare");
