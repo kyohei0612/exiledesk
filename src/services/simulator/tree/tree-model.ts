@@ -66,6 +66,8 @@ export interface TreeBox {
   split?: SplitRule[];
   /** 狙いを持って着く人がいないので「狙いが消えた」の結果の箱を作らなかった (tree-lost.ts。持って着く道ができたら healLost が足す) */
   noLost?: true;
+  /** 要確認 (tree-migrate の読み替えで読めなかった所: out = 結果の種類・aim = 狙い・hand = 打つ手・link = 矢印の先)。checkRaw = 読めなかった元の値 (捨てない) */
+  check?: Array<"out" | "aim" | "hand" | "link">; checkRaw?: Record<string, unknown>;
 }
 /** 分かれ目の条件の範囲 [下, 上] (上は 99 で「以上」) */
 export type SplitRange = [number, number];
@@ -463,10 +465,4 @@ export function boundsOf(d: TreeDoc): { x: number; y: number; w: number; h: numb
   const x0 = Math.min(...bs.map((b) => b.x)), y0 = Math.min(...bs.map((b) => b.y));
   const x1 = Math.max(...bs.map((b) => b.x + BOX_W)), y1 = Math.max(...bs.map((b) => b.y + BOX_H));
   return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
-}
-
-/** 読み込んだ物が形として使えるか (localStorage の古い物・壊れた物は捨てる) */
-export function isTreeDoc(v: unknown): v is TreeDoc {
-  const d = v as TreeDoc;
-  return !!d && d.schema === "exiledesk-tree/0" && typeof d.boxes === "object" && !!d.boxes?.start && typeof d.seq === "number";
 }

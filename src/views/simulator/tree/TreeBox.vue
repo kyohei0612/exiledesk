@@ -27,8 +27,13 @@ const emit = defineEmits<{
   backHover: [on: boolean]; backGo: [];
   /** ＋を押した (押すだけ = 足す、長押しで引っ張る = 箱の上で離すとつなぐ。決めるのはページ) */
   plus: [kind: "side" | "next", e: PointerEvent];
+  /** 要確認の印を押した (確かめたので印を消す) */
+  checked: [];
 }>();
 const t = useTree();
+/** 要確認 (古い版・壊れたレシピで読めなかった所、tree-migrate) の文 */
+const CHECK_PART = { out: ["結果の種類", "result kind"], aim: ["狙い", "target"], hand: ["打つ手", "craft"], link: ["矢印の先", "link"] } as const;
+const checkTitle = computed(() => (props.box.check ?? []).map((k) => tr(CHECK_PART[k][0], CHECK_PART[k][1])).join(" · "));
 // 外れ・狙いが消えたの箱の「カオススパム」の近道は 10-25 に消した (オーナー「ハズレMODついた時の枠の中カオススパムっておかしいな消してくれ戻るボタンだけでしょ」。
 // 外れの箱の道は ↩ 戻る と ＋ で枝を足すだけ、当たるまでは手を足す棚のカオススパムオーブで選ぶ)
 
@@ -107,6 +112,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <span v-if="box.out === 'start'" class="shrink-0 text-[11px] opacity-70">{{ tr(`Lv ${t.doc.value.itemLevel}${t.doc.value.ilvlFit ? " 適正" : ""}`, `ilvl ${t.doc.value.itemLevel}${t.doc.value.ilvlFit ? " fit" : ""}`) }}</span>
       <span v-if="box.done" class="shrink-0 rounded-full bg-amber-300/25 px-1.5 text-[10px] font-bold text-amber-100">{{ doneText }}</span>
       <span v-if="box.unwanted?.length" data-tree-unwanted class="shrink-0 rounded-sm bg-rose-400/20 px-1.5 text-[11px] font-bold text-rose-200" :title="tr(`× (要らない) の印 ${box.unwanted.length} 個 (前の試し打ちで付けた物)`, `${box.unwanted.length} mod(s) marked × (unwanted, set in the old try-out)`)">× {{ box.unwanted.length }}</span>
+      <button v-if="box.check?.length" type="button" data-tree-check class="nodrag shrink-0 rounded-sm bg-amber-500/80 px-1.5 text-[11px] font-bold text-black hover:bg-amber-400" :class="quiet ? 'pointer-events-none' : ''" :title="tr(`読めなかった所: ${checkTitle} (直したら押して印を消す)`, `Couldn’t read: ${checkTitle} (fix it, then click to clear)`)" @click.stop="!quiet && emit('checked')">{{ tr("要確認", "Check") }}</button>
       <button v-if="issue" type="button" data-tree-issue class="nodrag rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white hover:bg-rose-500" :title="tr(`${issue} (押すと穴の一覧)`, `${issue} (click for the list of issues)`)" @click.stop="emit('issue')">!</button>
       <span class="flex-1" />
       <span class="flex items-center" :style="keep('right center')">

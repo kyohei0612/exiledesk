@@ -8,7 +8,8 @@ import { SIM_LOCKED } from "../../state/craft-stage";
 import { packJson, unpackJson } from "../../services/craft-stage/share";
 import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { logRecord } from "../../utils/log-record";
-import { isTreeDoc, type TreeDoc } from "../../services/simulator/tree/tree-model";
+import type { TreeDoc } from "../../services/simulator/tree/tree-model";
+import { migrateTreeDoc } from "../../services/simulator/tree/tree-migrate";
 import { addTreeRecipe, setCurrentTreeRecipe } from "../../state/simulator/tree-recipes";
 import { useTree } from "./tree/use-tree";
 import { openTreePage } from "../../web/page";
@@ -53,8 +54,9 @@ async function openRecipeCode(code: string): Promise<boolean> {
     const p = (await unpackJson(code)) as Partial<PackedTree>;
     // ツリーのレシピ: 保存したレシピに足して (同じ中身があればそれ)、クラフトの道で開く
     if (p && p.v === 2) {
-      const t = (p as PackedTree).t;
-      if (!isTreeDoc(t)) return false;
+      // 古い版の木は今の形へ読み替える (読めない箱は要確認の印で残す、tree-migrate)
+      const t = migrateTreeDoc((p as PackedTree).t)?.doc;
+      if (!t) return false;
       const tr2 = addTreeRecipe(String((p as PackedTree).n ?? ""), t);
       setCurrentTreeRecipe(tr2.id);
       useTree().open(tr2.tree);

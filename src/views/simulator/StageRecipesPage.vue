@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import Icon from "../../components/ui/Icon.vue";
-import { currentTreeRecipe, currentTreeRecipeId, duplicateTreeRecipe, overwriteTreeRecipe, removeTreeRecipe, renameTreeRecipe, restoreTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../state/simulator/tree-recipes";
+import { currentTreeRecipe, currentTreeRecipeId, duplicateTreeRecipe, exportTreeRecipes, importTreeRecipes, overwriteTreeRecipe, removeTreeRecipe, renameTreeRecipe, restoreTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../state/simulator/tree-recipes";
 import { openTreePage, setLeaveGuard } from "../../web/page";
 import { treePage } from "../../state/web-page";
 import { fmtDate, treeShareUrl, useRecipeUrl } from "./recipe-share";
@@ -97,6 +97,27 @@ async function copyUrl(r: TreeRecipe): Promise<void> {
 // URL を貼って開く
 const { url, urlNote, openUrl, onPaste } = useRecipeUrl();
 
+// ファイルへの書き出し・読み込み (このブラウザの外の控え、10-25 オーナー「レシピはユーザーによって貴重なデータ、絶対に消したくない」)
+function exportFile(): void {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([exportTreeRecipes()], { type: "application/json" }));
+  const d = new Date();
+  a.download = `exiledesk-recipes-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  track("tree-recipe:export");
+}
+const fileIn = ref<HTMLInputElement | null>(null);
+async function importFile(e: Event): Promise<void> {
+  const el = e.target as HTMLInputElement, f = el.files?.[0];
+  el.value = "";
+  if (!f) return;
+  const r = importTreeRecipes(await f.text());
+  track("tree-recipe:import");
+  if (!r) { say(tr("レシピのファイルではありませんでした", "Not a recipe file")); return; }
+  say(tr(`${r.added} 件を足しました${r.same ? ` (同じ物 ${r.same} 件は足さず)` : ""}${r.bad ? ` · 読めない ${r.bad} 件は控えに` : ""}`, `Added ${r.added}${r.same ? ` (${r.same} already here)` : ""}${r.bad ? ` · ${r.bad} unreadable kept aside` : ""}`));
+}
+
 function back(): void { openTreePage(); }
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && !renaming.value) { back(); } }
 let before = 0;
@@ -141,6 +162,9 @@ onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); clearTimeo
           <input v-model="url" data-recipes-url type="text" inputmode="url" spellcheck="false" autocomplete="off" class="h-8 min-w-0 flex-1 rounded-lg border border-white/15 bg-black/40 px-2 outline-none placeholder:opacity-45 focus:border-amber-400/60 max-md:h-11" :placeholder="tr('共有されたレシピの URL を貼る (貼ると開く)', 'Paste a shared recipe URL (opens on paste)')" @paste="onPaste" @keydown.enter.prevent="openUrl" />
           <button type="button" class="g-btn sm max-md:min-h-10" :disabled="!url.trim()" @click="openUrl">{{ tr("開く", "Open") }}</button>
         </span>
+        <button type="button" data-recipes-export class="g-btn sm max-md:min-h-10" :disabled="!treeRecipes.length" :title="tr('全部のレシピを 1 つのファイル (JSON) に書き出す (このブラウザの外の控え)', 'Save all recipes to one file (JSON), a backup outside this browser')" @click="exportFile">{{ tr("書き出す", "Export") }}</button>
+        <button type="button" data-recipes-import class="g-btn sm max-md:min-h-10" :title="tr('書き出したファイルからレシピを足す (同じ物は足さない)', 'Add recipes from an exported file (skips ones already here)')" @click="fileIn?.click()">{{ tr("読み込む", "Import") }}</button>
+        <input ref="fileIn" data-recipes-import-file type="file" accept=".json,application/json" class="hidden" @change="importFile" />
       </div>
       <p v-if="urlNote" class="mt-1 text-[12px] text-amber-200">{{ urlNote }}</p>
 

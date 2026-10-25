@@ -1,10 +1,12 @@
 /**
  * tree-recipes.ts — クラフトの道 (ツリー) のレシピ = 名前を付けて残した木の一覧 (2026-10-21 オーナー 10-22「ツリー形式に変えてから無くなった物を足さないと」、
- * 工程ページ式の sim-recipe-store.ts と同じ作り: 保存・上書き・名前替え・複製・消す (元に戻せる)・控え。共有は URL だけ、ファイルは作らない (オーナー 10-22))。
+ * 工程ページ式の sim-recipe-store.ts と同じ作り: 保存・上書き・名前替え・複製・消す (元に戻せる)・控え。共有は URL、ファイルへの書き出し・読み込みは控え (10-25 オーナー「絶対に消したくない」))。
+ * 木の版の読み替え・読めない箱の要確認は tree-migrate.ts。読めないレシピも捨てずに unread へ取っておく
  * 中身は TreeDoc をそのまま (名前・id・保存時刻で包む)。前の工程式のレシピ (exiledesk.craftStageSim.*) は読み込んだ時に消す (10-25)
  */
 import { computed, ref } from "vue";
-import { isTreeDoc, type TreeDoc } from "../../services/simulator/tree/tree-model";
+import type { TreeDoc } from "../../services/simulator/tree/tree-model";
+import { migrateTreeDoc } from "../../services/simulator/tree/tree-migrate";
 import { clone, newId, parseList } from "./recipe-store-util";
 
 const TREE_RECIPES_KEY = "exiledesk.tree.recipes";
@@ -14,17 +16,18 @@ const BAK = "exiledesk.tree.recipes.bak";
 const UNREAD = "exiledesk.tree.recipes.unread";
 /** 今ツリーで開いているレシピ (読み込み直しても続く) */
 const CURRENT = "exiledesk.tree.recipes.current";
-/** レシピの形の版 (形を変えたら上げて normalize で読み替える) */
+/** レシピの包みの版 (名前・時刻などの包みを変えたら上げて normalize で読み替える。木の中身の版は tree-migrate の schema の番号)。版の無い物 (10-25 までの開発版) も捨てずに読む */
 const TREE_RECIPE_FORMAT = 1;
 export interface TreeRecipe { id: string; name: string; savedAt: number; updatedAt: number; v: number; tree: TreeDoc }
 
 function normalizeTreeRecipe(x: unknown): TreeRecipe | null {
   const r = x as Partial<TreeRecipe> | null;
-  if (!r || typeof r !== "object" || !isTreeDoc(r.tree)) return null;
+  if (!r || typeof r !== "object") return null;
+  // 木は今の形へ読み替える (前の版の妥協の完成は未完成に、読めない箱は要確認の印で残す。tree-migrate)
+  const m = migrateTreeDoc(r.tree);
+  if (!m) return null;
   const savedAt = typeof r.savedAt === "number" ? r.savedAt : Date.now();
-  // 前の版の妥協の完成は未完成として読む (use-tree の load と同じ)
-  for (const b of Object.values(r.tree.boxes)) if (b.done !== "main") b.done = null;
-  return { id: typeof r.id === "string" && r.id ? r.id : newId(), name: typeof r.name === "string" && r.name.trim() ? r.name : r.tree.base, savedAt, updatedAt: typeof r.updatedAt === "number" ? r.updatedAt : savedAt, v: TREE_RECIPE_FORMAT, tree: r.tree };
+  return { id: typeof r.id === "string" && r.id ? r.id : newId(), name: typeof r.name === "string" && r.name.trim() ? r.name : m.doc.base, savedAt, updatedAt: typeof r.updatedAt === "number" ? r.updatedAt : savedAt, v: TREE_RECIPE_FORMAT, tree: m.doc };
 }
 function keepUnread(xs: unknown[]): void {
   if (!xs.length) return;
@@ -113,6 +116,37 @@ export function addTreeRecipe(name: string, tree: TreeDoc): TreeRecipe {
   const r: TreeRecipe = { id: newId(), name: name.trim() || tree.base, savedAt: now, updatedAt: now, v: TREE_RECIPE_FORMAT, tree: clone(tree) };
   put([r, ...treeRecipes.value]);
   return r;
+}
+
+/** ファイルへの書き出し (localStorage の外の控え、10-25 オーナー)。読めずに取っておいた物 (unread) も一緒に入れる */
+export function exportTreeRecipes(): string {
+  let unread: unknown[] = [];
+  try { unread = parseList(localStorage.getItem(UNREAD)) ?? []; } catch { /* 無くてよい */ }
+  return JSON.stringify({ kind: "exiledesk-tree-recipes", v: TREE_RECIPE_FORMAT, at: Date.now(), recipes: treeRecipes.value, unread }, null, 1);
+}
+/**
+ * ファイルからの読み込み: 書き出したファイル (recipes の並び) か、レシピ 1 つ・木 1 つの JSON。同じ中身は足さず、同じ id で中身が違えば別のレシピとして足す。
+ * 読めなかった物は捨てずに unread へ。added = 足した数、same = 同じ中身があった数、bad = 読めなかった数 (JSON でなければ null)
+ */
+export function importTreeRecipes(text: string): { added: number; same: number; bad: number } | null {
+  let raw: unknown;
+  try { raw = JSON.parse(text); } catch { return null; }
+  const o = raw as { recipes?: unknown; unread?: unknown; tree?: unknown; boxes?: unknown } | null;
+  const items: unknown[] = Array.isArray(raw) ? raw : Array.isArray(o?.recipes) ? [...o.recipes, ...(Array.isArray(o.unread) ? o.unread : [])] : o?.tree ? [raw] : o?.boxes ? [{ tree: raw }] : [];
+  const ids = new Set(treeRecipes.value.map((r) => r.id));
+  const add: TreeRecipe[] = [], bad: unknown[] = [];
+  let same = 0;
+  for (const x of items) {
+    const r = normalizeTreeRecipe(x);
+    if (!r) { bad.push(x); continue; }
+    if ([...treeRecipes.value, ...add].some((y) => sameTree(y.tree, r.tree))) { same++; continue; }
+    if (ids.has(r.id)) r.id = newId();
+    ids.add(r.id);
+    add.push(r);
+  }
+  keepUnread(bad);
+  if (add.length) put([...add, ...treeRecipes.value]);
+  return { added: add.length, same, bad: bad.length };
 }
 
 // 前の工程式のレシピ・控え (exiledesk.craftStageSim.*) は木に読み替えられないので、読み込んだ時にこのブラウザから消す
