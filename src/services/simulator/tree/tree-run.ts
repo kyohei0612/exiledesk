@@ -43,6 +43,8 @@ export interface TreeRunOpts {
   onPerson?: (p: { end: End; at: string; cost: number; visits: readonly { box: string; cost: number; pass?: true }[]; why?: { reason: string; item: StageItem } }, i: number) => void;
   /** 手を打つ直前の箱とアイテム (照らしの台本が、箱に着いた実物ごとにエンジンの確率を出して比べる。シミュ 25 本目 10-25) */
   onHand?: (box: string, item: StageItem) => void;
+  /** 箱に着いた時のアイテム (形の合う箱へ移るだけの来訪は除く)。箱の見本 = 回して実際に着いた人のアイテム (tree-arrived、シミュ 26 本目 10-25) */
+  onArrive?: (box: string, item: StageItem) => void;
 }
 interface BoxStat {
   /** 1 回でもここに来た人数 */
@@ -98,7 +100,7 @@ export const FRACTURE_MISS = 2;
 const FRACTURE_PICK = 2;
 
 
-function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: readonly Shape[], rng: () => number, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps" | "untilHit">> & Pick<TreeRunOpts, "start" | "onHand">): Person {
+function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: readonly Shape[], rng: () => number, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps" | "untilHit">> & Pick<TreeRunOpts, "start" | "onHand" | "onArrive">): Person {
   let item = o.start ? o.start(rng) : startItemOf(data, doc, rng);
   let cost = o.startCost;
   const uses: Record<string, number> = {};
@@ -114,6 +116,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     const b = doc.boxes[at];
     if (!b) return { end: "stuck", cost, at, visits, uses, restarts, odd };
     visits.push({ box: at, cost });
+    o.onArrive?.(at, item);
     // 完成の印は "main" だけ (前の版の妥協 "compromise" は未完成 = 印の無い箱として先へ読む)。
     // 着いた時に狙いの数を見る: 道の当たりの数より少なければ完成にせず、形の合う箱へ (無ければ止まり)
     // (10-22 白紙から 13 通り組んだ #4: 入れ替えのカオスで途中の狙いが消え、完成 100% と出たのに 96 人は狙い 1 つだった)
@@ -271,7 +274,7 @@ export function runTree(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): TreeR
  */
 export function* runTreeSteps(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): Generator<number, TreeRunResult> {
   const untilHit = opts.untilHit ?? new Set(Object.values(doc.boxes).filter((b) => b.hand?.repeat && b.hand.repeat.max == null).map((b) => b.id));
-  const o = { price: opts.price, startCost: opts.startCost ?? 0, capDiv: opts.capDiv ?? 2000, capSteps: opts.capSteps ?? 20000, start: opts.start, untilHit, onHand: opts.onHand };
+  const o = { price: opts.price, startCost: opts.startCost ?? 0, capDiv: opts.capDiv ?? 2000, capSteps: opts.capSteps ?? 20000, start: opts.start, untilHit, onHand: opts.onHand, onArrive: opts.onArrive };
   const aims = opts.aims ?? aimsOf(doc);
   const shapes = shapesOf(doc);
   const rng = mulberry32(opts.seed);

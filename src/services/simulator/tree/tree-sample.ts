@@ -3,7 +3,7 @@
  * 外れのやり方を決める時にカレンシーを打たせて決める」)。打つのは全部エンジンの入口 (engine.ts の applyCurrency)、ここで結果は作らない。
  *
  * 見本の作り方: 始まり = 金の指輪のレア + フラクチャー (指名の手 force:…|f をエンジンで打つ。創生の樹の MOD も置ける)。
- * その下の箱 = 親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
+ * その下の箱 = 木を回して実際にその箱に着いた人のアイテム (tree-arrived、10-25 シミュ 26 本目)。誰も着かない箱だけ、親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
 import { aimDone, aimHits as hits, applyCurrency, room, sideOfMod, baseSocketsOf, catalystOf, forceKey, freshItem, kindOf, mulberry32, omenBlock, OMEN_FOR, revealOffers, runeIdByName, tierIndexOf, unrevealedOf, useReason, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
@@ -15,6 +15,7 @@ import { tr } from "../../../i18n/lang";
 import { fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-shape";
+import { arrivedAt } from "./tree-arrived";
 
 const TRIES = 3000;
 
@@ -81,8 +82,8 @@ export function outcomeOf(data: PatchData, before: StageItem, after: StageItem, 
 
 /**
  * 結果が 1 通りの手 (10-22 オーナー「光のお告げの場合ハズレとかないから、使った時点でその先には冒涜が消えた状態の枠しかない」
- * 「サフィ 3 MOD・プレ 1 MOD で左側の消去の時は狙いの MOD が無いから 1 通り。そういう判断は自動で」): 手を置く時に、この箱の見本を
- * SINGLE_SEEDS 個作り (同じ箱でも外れが左右どちらかなどで違う)、それぞれにエンジンの stepOutcomes で起こりうる行き先を全部たどる。
+ * 「サフィ 3 MOD・プレ 1 MOD で左側の消去の時は狙いの MOD が無いから 1 通り。そういう判断は自動で」): 手を置く時に、この箱の見本 (木を回して着いた人のアイテム、tree-arrived) を
+ * SINGLE_SEEDS 個まで取り (同じ箱でも外れが左右どちらかなどで違う)、それぞれにエンジンの stepOutcomes で起こりうる行き先を全部たどる。
  * 全部の見本で結果の分け方 (outcomeOf) が同じ 1 つの時だけそれを返す (当たりは付く札も)。箱に着かなかった見本は数えない。
  * pre = 前に品質を最大まで入れるカタリスト (触媒の手の前の札)。
  * 繰り返し・狙い無し・品質だけの手・未発現が付く手と、エンジンが枝に分けられない手 (数値だけ変わる手など) は null (今までどおり手の種類の箱)。
@@ -95,9 +96,12 @@ export function singleOutOf(data: PatchData, doc: TreeDoc, boxId: string, h: Han
   const k = effectOf(h.currency);
   let one: { out: OutKind; hits: Aim[] } | null = null;
   const key = (r: { out: OutKind; hits: Aim[] }): string => `${r.out}:${r.hits.map((a) => `${a.modId}/${a.tier}`).join(",")}`;
+  // 見本 = この箱に着いた人のアイテム (着いた人が SINGLE_SEEDS より少なければ同じ物が回ってくるので 1 回だけ見る)
+  const seen = new Set<StageItem>();
   for (let seed = 1; seed <= SINGLE_SEEDS; seed++) {
     const smp = sampleOf(data, doc, boxId, seed);
-    if (smp.note === "none" || smp.note?.startsWith("cant:")) continue;
+    if (smp.note === "none" || smp.note?.startsWith("cant:") || seen.has(smp.item)) continue;
+    seen.add(smp.item);
     const item = pre ? fillCatalyst(data, smp.item, pre, mulberry32(seed)).item : smp.item;
     // 消す手は、見本にまだ無い狙いを 1 つ足した形でも見る (見本は初めて着いた人の形。戻りで狙いを持って来た人は狙いが消えうる、10-22 #8 の後:
     // 分かれ目の行の見本が外れだけになり、素の消去が「外れが消えた」1 通りにまとまって 96 人止まった)
@@ -219,6 +223,9 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
   const b = doc.boxes[boxId];
   if (!b) return { item: freshItem(data, doc.base, doc.itemLevel, "rare"), note: null };
   if (b.out === "start") return startItemOf(data, doc, mulberry32(seed));
+  // 回して実際にこの箱に着いた人のアイテム (seed 番目、tree-arrived)。誰も着かない箱だけ下の作り方 (引き直し・指名で付ける)
+  const got = arrivedAt(data, doc, boxId);
+  if (got.length) return { item: got[(Math.max(1, seed) - 1) % got.length]!, note: null };
   const p = doc.boxes[b.parent!]!;
   const base = sampleIn(data, doc, p.id, seed);
   // 分かれ目の行の箱: その行に合う形が出るまで親の見本を別の種で引き直す (10-22 13 通り組んだ #8: 「サフィの外れ 1 つ以上」の行の見本がプレに外れの形で、
