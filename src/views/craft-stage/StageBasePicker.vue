@@ -6,7 +6,8 @@
   種類は poe2db どおり STR / DEX / INT ごと、素の数値つき、ルーンフォージ等は出さない。フラスコ・スキルジェムは 2026-10-09 から出さない。選ぶと閉じる。
 -->
 <script setup lang="ts">
-import { classLabel, type PatchData, baseCatalog, baseArt } from "../../services/craft-stage/engine";
+import { classLabel, type PatchData, baseCatalog } from "../../services/craft-stage/engine";
+import { baseArt } from "../../components/art/base-art";
 import { computed, ref, watch } from "vue";
 import BaseCatalog from "../../components/items/BaseCatalog.vue";
 import Icon from "../../components/ui/Icon.vue";

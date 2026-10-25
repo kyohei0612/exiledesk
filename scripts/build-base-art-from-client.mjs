@@ -8,7 +8,7 @@
  *      ベース名 → DDSFile を引く
  *   2. pathofexile-dat の読み込み部分でクライアントから DDS を取り出す (付属の書き出しは ImageMagick が要るので使わない)
  *   3. ffmpeg で高さ 128px の webp にする。**RGBA 並びの DDS (DXGI 27〜29) は ffmpeg が BGRA として読むので赤と青を入れ替える**
- *      (2026-09-29 オーナー「色が全体的に淡い」: 金の指輪が青く出ていた) → public/base-art/<ファイル名>.webp と src/services/craft-stage/base-art.json (英語名 → ファイル名)
+ *      (2026-09-29 オーナー「色が全体的に淡い」: 金の指輪が青く出ていた) → public/base-art/<ファイル名>.webp と src/components/art/base-art.json (英語名 → ファイル名)
  * フラスコの DDS は 3 枚横並び (枠 / 暗いガラス / 液体)。ゲームの見た目は「液体の上に枠を重ねる」(枠のガラスの所は透けている) なので、そう合成して 1 枚にする
  * (2026-09-29 オーナー「フラスコとか画像ちょっとおかしい奴」: 3 つ並んで出ていた)。
  * 対象は計算機のベース (ルーンフォージ等・[DNT] を除く) とフラスコ、ジュエル (2026-10-04)。
@@ -92,7 +92,7 @@ for (const [name, file] of [...dds.entries()].sort()) {
   map[name] = done.get(file);
 }
 rmSync(tmp, { recursive: true, force: true });
-writeFileSync(resolve(ROOT, "src/services/craft-stage/base-art.json"), JSON.stringify(map, null, 1) + "\n");
+writeFileSync(resolve(ROOT, "src/components/art/base-art.json"), JSON.stringify(map, null, 1) + "\n");
 const missing = [...want].filter((n) => !map[n]);
 console.log(`DDS の形式: ${[...formats].map(([k, v]) => `${k || "旧形式"}=${v}`).join(" ")}`);
 console.log(`ベース ${Object.keys(map).length} / ${want.size} 件、絵 ${done.size} 枚 (失敗 ${fail}、絵の無いベース ${missing.length}${missing.length ? ": " + missing.slice(0, 8).join(", ") : ""})`);

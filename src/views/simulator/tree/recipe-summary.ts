@@ -3,7 +3,8 @@
  * ツリーの帯の「レシピ ▾」の小窓 (TreeRecipeBar) とレシピの一覧のページ (StageRecipesPage) で同じ物を出す:
  * ベースの絵 (エミュのベース選びと同じ baseArt)・ベースの名前・完成の狙いの数と主な狙い 1 つ (印があれば印の物)・フラクチャーの印の数・空の木か
  */
-import { baseArt, freshItem, modListFor, tierRankLabel } from "../../../services/craft-stage/engine";
+import { freshItem, modListFor, tierRankLabel } from "../../../services/craft-stage/engine";
+import { baseArt } from "../../../components/art/base-art";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { craftStage as s } from "../../../state/craft-stage";
 import { jaTypeName } from "../../../i18n/item-names-ja";

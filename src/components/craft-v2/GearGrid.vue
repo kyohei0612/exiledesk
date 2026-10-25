@@ -7,7 +7,7 @@
 import type { AggregatedAscendancy, ModEntry, SlotKey } from "../../services/craft-v2/types";
 import { SLOT_TABS } from "../../views/craft-v2/helpers";
 import { uniqueArt } from "../../services/assets/unique-art";
-import { baseArt } from "../../services/craft-stage/base-art";
+import { baseArt } from "../../components/art/base-art";
 
 const props = defineProps<{ agg: AggregatedAscendancy }>();
 const activeSlot = defineModel<SlotKey>("activeSlot", { required: true });

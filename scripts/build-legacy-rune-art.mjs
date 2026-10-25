@@ -7,7 +7,7 @@
  *   - 元のユニーク = クライアントの Expedition2OlrothsLegacyRuneClient (UniqueName → Words)。名前は「Legacy of <ユニーク名>」で
  *     1 つだけ違う (Legacy of A Worthy Foe = Eyes of the Runefather、表に残る 1 つ)
  *   - 絵: public/rune-art/<ルーンの絵>.webp + public/unique-art/<ユニーク>.webp → public/rune-art/<ルーンの絵>__<ユニーク>.webp
- *   - src/services/craft-stage/rune-art.json の遺産のルーンを、その絵に差し替える (棚の札・ソケットの丸・書き出しの全部がこれを読む)
+ *   - src/components/art/rune-art.json の遺産のルーンを、その絵に差し替える (棚の札・ソケットの丸・書き出しの全部がこれを読む)
  * build-skill-art-from-client.mjs の後に呼ばれる (単体でも動く)。通信しない。要 ffmpeg
  */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
@@ -21,7 +21,7 @@ const W = rows("data-cache/client-export-expedition/tables/English/Words.json");
 const table = rows("data-cache/client-export-expedition/tables/English/Expedition2OlrothsLegacyRuneClient.json")[0];
 const uniques = table.UniqueName.map((i) => W[i]?.Text).filter(Boolean);
 
-const ART_JSON = resolve(ROOT, "src/services/craft-stage/rune-art.json");
+const ART_JSON = resolve(ROOT, "src/components/art/rune-art.json");
 const runeArt = JSON.parse(readFileSync(ART_JSON, "utf8"));
 const uniqueArt = JSON.parse(readFileSync(resolve(ROOT, "src/services/assets/unique-art.json"), "utf8"));
 const legacy = Object.keys(runeArt).filter((en) => /^Legacy of /.test(en));

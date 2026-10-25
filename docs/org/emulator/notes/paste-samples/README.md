@@ -1,6 +1,6 @@
 # 貼り付けの見本 (オーナー 2026-10-20)
 
-トレード (trade2) / poe.ninja からのコピー。どれがどの出どころかは未記入。`parseItemText` (engine.ts) の確かめに使う。
+トレード (trade2) / poe.ninja からのコピー。どれがどの出どころかは未記入。`parseItemText` (10-26 から src/services/simulator/paste/item-text.ts、持ち主はシミュ部長。見本と答えの表はここに残す) の確かめに使う。
 
 | # | 物 | 言語 | 見どころ |
 |---|---|---|---|

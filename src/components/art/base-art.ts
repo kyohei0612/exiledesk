@@ -4,7 +4,7 @@
  * 絵の無いベース (スキルジェムなど) と、画像パックがまだ無い時は null
  */
 import art from "./base-art.json";
-import { assetUrl } from "../assets/asset-packs";
+import { assetUrl } from "../../services/assets/asset-packs";
 
 const MAP = art as Record<string, string>;
 export const baseArt = (en: string): string | null => (MAP[en] ? assetUrl("base-art", `${MAP[en]}.webp`) : null);

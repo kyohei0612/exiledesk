@@ -15,7 +15,7 @@ import { toCss } from "../../utils/zoom";
 import { jaCurrency } from "../../i18n/currencies-ja";
 import RichText from "../decor/RichText.vue";
 import RareMods from "./RareMods.vue";
-import { baseArt } from "../../services/craft-stage/base-art";
+import { baseArt } from "../../components/art/base-art";
 import { uniqueArt } from "../../services/assets/unique-art";
 import type { ItemRow } from "../../views/build-copy/useBuildCopy";
 import type { AutoStage } from "../../services/build-copy/rare-auto";

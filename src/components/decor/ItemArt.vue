@@ -6,7 +6,7 @@
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { baseArt } from "../../services/craft-stage/base-art";
+import { baseArt } from "../../components/art/base-art";
 import { uniqueArt } from "../../services/assets/unique-art";
 
 const props = withDefaults(defineProps<{ /** 英語のユニーク名 (レアは固有名でも可、絵は引けない) */ name?: string | null; /** 英語のベース名 */ base?: string | null; rarity?: string | null; size?: number }>(), {

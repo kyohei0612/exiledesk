@@ -12,7 +12,7 @@ import { computed, ref } from "vue";
 import ItemCard from "./ItemCard.vue";
 import BaseCatalog from "../../components/items/BaseCatalog.vue";
 import { classJa } from "../../services/items/base-catalog";
-import { baseArt } from "../../services/craft-stage/base-art";
+import { baseArt } from "../../components/art/base-art";
 import SocketPicker from "./SocketPicker.vue";
 import ModPickColumn from "./ModPickColumn.vue";
 import { ASSUMED_RUNE_WEIGHT_NOTE, effectiveSocket, requiredRunes, socketBlock, socketEffects, socketLabel, specialKeyOf, withRequired, withSocketLimits } from "../../services/htc/sockets";

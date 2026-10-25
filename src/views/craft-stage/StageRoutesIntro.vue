@@ -5,7 +5,7 @@
   上にカレンシーの絵を棚の枠 (.g-slot) に入れて、始めの状態 = 性能の行、打ち方 = MOD の青い行、等級 = 棚の枠。下の真ん中に嵌めるルーン (StageRouteRunes) と選ぶボタン
 -->
 <script setup lang="ts">
-import { baseArt } from "../../services/craft-stage/engine";
+import { baseArt } from "../../components/art/base-art";
 import { computed } from "vue";
 import { craftStage as s, iconOf } from "../../state/craft-stage";
 import { tr } from "../../i18n/lang";

@@ -8,7 +8,7 @@
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { gemArt, skillIcon } from "../../services/craft-stage/skill-art";
+import { gemArt, skillIcon } from "../../components/art/skill-art";
 import { hoverStack } from "../../state/hover-stack";
 import { toCss } from "../../utils/zoom";
 

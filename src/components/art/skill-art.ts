@@ -6,7 +6,7 @@
  * 本番のアプリは画像パック (asset-packs.ts) から読む。無ければ null
  */
 import list from "./skill-art.json";
-import { assetUrl } from "../assets/asset-packs";
+import { assetUrl } from "../../services/assets/asset-packs";
 
 interface SkillArt { id: string; en: string; ja: string; color: "red" | "green" | "blue" | "white"; support: boolean; tags: string[]; icon: string | null; gem: string | null }
 const SKILL_ART = list as SkillArt[];

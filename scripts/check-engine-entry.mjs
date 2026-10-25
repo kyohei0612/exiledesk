@@ -62,7 +62,7 @@ const OWN_LOGIC = [
 ];
 const CS = "src/services/craft-stage/";
 /** シミュだけ・エミュだけの、エンジンを使う置き場 (2026-10-26 にエンジンから出した、オーナー「全部それシミュに渡して削除してくれ」) */
-const SIM_ENGINE = ["src/services/simulator/sim-engine.ts", "src/services/simulator/sim-engine/"];
+const SIM_ENGINE = ["src/services/simulator/sim-engine.ts", "src/services/simulator/sim-engine/", "src/services/simulator/paste/"];
 const EMU_ENGINE = ["src/services/emulator/emu-engine.ts", "src/services/emulator/emu-engine/"];
 const under = (path, list) => list.some((p) => (p.endsWith("/") ? path.startsWith(p) : path === p));
 /** C で見る側: エンジン (core = craft-stage のジンの物)・シミュの置き場 (sim)・エミュの置き場 (emu)。画面は 10-25 夜から何を読んでもよい */
@@ -74,7 +74,8 @@ function sideOfEngine(path, who) {
 }
 /** 読んではいけない向き (読む側 → 読まれる側)。エンジンはシミュ・エミュの物を読まない、シミュの置き場とエミュの置き場は互いを読まない */
 function crosses(a, b, t) {
-  if (a === "core" && (b === "sim" || b === "emu" || t.startsWith("src/services/simulator/") || t.startsWith("src/services/emulator/"))) return true;
+  // エンジンはシミュ・エミュの置き場と、画面の置き場 (部品・画面・状態) を読まない (10-26 に貼り付けの読みをシミュへ、絵の材料をデザインの src/components/art へ移した)
+  if (a === "core" && (b === "sim" || b === "emu" || /^src\/(services\/simulator|services\/emulator|components|views|state)\//.test(t))) return true;
   if (a === "sim" && b === "emu") return true;
   if (a === "emu" && b === "sim") return true;
   return false;

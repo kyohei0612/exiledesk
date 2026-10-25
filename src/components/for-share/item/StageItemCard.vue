@@ -18,7 +18,7 @@ import { computed, ref } from "vue";
 import { qualityLabelOf } from "../../../services/htc/quality";
 import { isFlask } from "../../../services/craft-stage/stage-bases";
 import { implicitRows, propRows } from "../../../services/craft-stage/stage-props";
-import { runeArt } from "../../../services/craft-stage/rune-art";
+import { runeArt } from "../../../components/art/rune-art";
 import { uniqueLines } from "../../../services/craft-stage/stage-uniques";
 import { rollLines } from "../../../services/craft-stage/roll-text";
 import { BASE_VALUES_ON, augmentLineOf, modLineOf } from "./base-values";

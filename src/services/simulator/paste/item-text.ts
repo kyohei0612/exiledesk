@@ -9,20 +9,20 @@
  *   - 「W」「P」の行・`~b/o` の値段・品質の種類・未発現のプレ / サフィ・武器の基本値の行・付与スキル・ソケット。
  *   - Ctrl+Alt+C の `{ Prefix Modifier "名前" (Tier: 3) }` の見出し (側はここが正)、poe.ninja の行末の注記。
  */
-import { baseInText, baseOfLine, matchModLine, noteOfLine, stripMarkers, type LineKind, type PastedItem, type PastedLine } from "../htc/paste-parse";
-import { targetsFor } from "../htc/paste-targets";
-import { htcBaseInfo } from "../htc/patch";
-import { classOfBase, sideLimits } from "../htc/bridge";
-import { catalystTagFromLabel, rawValue } from "../htc/quality";
-import { matchKey } from "../htc/bridge-index";
-import { tierDisplayRanges } from "../mods/stat-scale";
-import { catalystBoosts, magnitudeTagOf } from "./stage-core";
-import { RUNES, runeCategoryOf, runeEffectFor } from "./stage-runes";
-import { matchCorruption } from "../mods/corruption";
-import { anointOfLine } from "../mods/anoint";
-import { unboost } from "./boosts";
-import type { StageItem } from "./types";
-import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
+import { baseInText, baseOfLine, matchModLine, noteOfLine, stripMarkers, type LineKind, type PastedItem, type PastedLine } from "../../htc/paste-parse";
+import { targetsFor } from "../../htc/paste-targets";
+import { htcBaseInfo } from "../../htc/patch";
+import { classOfBase, sideLimits } from "../../htc/bridge";
+import { catalystTagFromLabel, rawValue } from "../../htc/quality";
+import { matchKey } from "../../htc/bridge-index";
+import { tierDisplayRanges } from "../../mods/stat-scale";
+import { catalystBoosts, magnitudeTagOf } from "../../craft-stage/stage-core";
+import { RUNES, runeCategoryOf, runeEffectFor } from "../../craft-stage/stage-runes";
+import { matchCorruption } from "../../mods/corruption";
+import { anointOfLine } from "../../mods/anoint";
+import { unboost } from "../../craft-stage/boosts";
+import type { StageItem } from "../../craft-stage/types";
+import type { Mod, PatchData } from "../../../vendor/poe2htc/engine/types";
 import type { ItemTextBoost, ItemTextCorruption, ItemTextImplicit, ItemTextMod, ItemTextResult, ItemTextSkip, ItemTextSkipCode, ItemTextWords } from "./item-text-types";
 import { solveLines, splitSums, type SolveLine, type Solution } from "./item-text-solve";
 

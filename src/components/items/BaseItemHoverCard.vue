@@ -11,7 +11,7 @@ import GameItemCard from "../decor/GameItemCard.vue";
 import RichText from "../decor/RichText.vue";
 import GemName from "../decor/GemName.vue";
 import GemIcon from "../decor/GemIcon.vue";
-import { baseArt } from "../../services/craft-stage/base-art";
+import { baseArt } from "../../components/art/base-art";
 import baseInfo from "../../data/base-info.json";
 import grantedSkills from "../../data/granted-skills.json";
 import { htcBaseInfo } from "../../services/htc/patch";

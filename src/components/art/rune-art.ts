@@ -3,7 +3,7 @@
  * public/rune-art/*.webp に置く。本番のアプリは画像パック (asset-packs.ts) から読む。無ければ null
  */
 import art from "./rune-art.json";
-import { assetUrl } from "../assets/asset-packs";
+import { assetUrl } from "../../services/assets/asset-packs";
 
 const MAP = art as Record<string, string>;
 export const runeArt = (en: string): string | null => (MAP[en] ? assetUrl("rune-art", `${MAP[en]}.webp`) : null);

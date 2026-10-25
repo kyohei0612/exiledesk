@@ -57,7 +57,7 @@ const result = M.runPlan(data, plan, {
 });
 
 // ---- PoB (要望 ⑰-3): 手順 JSON に pob があれば、手 0 (始め) と各手の後のアイテムで PoB を計算して結果 JSON の pob と steps[i].pob に入れる ----
-const skillJa = new Map(JSON.parse(readFileSync(join(root, "src/services/craft-stage/skill-art.json"), "utf8")).map((s) => [s.en, s.ja]));
+const skillJa = new Map(JSON.parse(readFileSync(join(root, "src/components/art/skill-art.json"), "utf8")).map((s) => [s.en, s.ja]));
 /**
  * クエストの報酬 (要望 ⑲-6): quests_act (何アクトまで終えたか) より先のアクトの物を外す設定と、入れた物の一覧。無ければ PoB の既定 (全部入り)。
  * 手順の pob と耐性の画面 (--resists) の両方がこれを使う (要望 ⑳: 耐性の方に渡っていなかった)

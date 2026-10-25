@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { tr } from "../../i18n/lang";
-import { baseArt } from "../../services/craft-stage/base-art";
+import { baseArt } from "../../components/art/base-art";
 import { SOLVE_RATE, type DailyTopic } from "./daily-mock";
 import DailyModList from "./DailyModList.vue";
 import DailyMine from "./DailyMine.vue";

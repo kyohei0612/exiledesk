@@ -4,7 +4,7 @@
 -->
 <script setup lang="ts">
 import Disclosure from "../ui/Disclosure.vue";
-import { baseArt } from "../../services/craft-stage/base-art";
+import { baseArt } from "../../components/art/base-art";
 import BaseCard from "../decor/BaseCard.vue";
 import type { BaseEntry } from "../../services/craft-v2/types";
 

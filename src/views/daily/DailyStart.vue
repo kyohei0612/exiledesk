@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { tr } from "../../i18n/lang";
-import { baseArt } from "../../services/craft-stage/base-art";
+import { baseArt } from "../../components/art/base-art";
 import { usePhone } from "../../utils/use-phone";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import { fillMod, type DailyTopic } from "./daily-mock";

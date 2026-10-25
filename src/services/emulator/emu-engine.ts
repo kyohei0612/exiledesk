@@ -26,7 +26,7 @@ export { tierIdOf } from "../craft-stage/mod-list";
 export { monsterAccuracy } from "../craft-stage/defence";
 export type { SpamStats } from "./emu-engine/chaos-spam";
 export { medianOf, rankOf, unluckyOf } from "./emu-engine/chaos-spam";
-export { baseArtFile } from "../craft-stage/base-art";
+export { baseArtFile } from "../../components/art/base-art";
 export { sanctifySetKey } from "../craft-stage/apply-vaal";
 export { forcesOf, spamKey } from "../craft-stage/apply-spam";
 export { catalystSetKey, implicitSetKey, qualityCapKey, qualitySetKey, qualityCapOf, itemLevelKey } from "../craft-stage/apply-currency";

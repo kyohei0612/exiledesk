@@ -9,8 +9,8 @@
  */
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import { goalBlock } from "../../../services/simulator/sim-engine";
-import { parseItemText } from "../../../services/craft-stage/engine";
-import type { ItemTextMod, ItemTextReading } from "../../../services/craft-stage/engine";
+import { parseItemText } from "../../../services/simulator/paste/item-text";
+import type { ItemTextMod, ItemTextReading } from "../../../services/simulator/paste/item-text-types";
 import { craftStage as s } from "../../../state/craft-stage";
 import { migrateStart, startRarity, type Aim } from "../../../services/simulator/tree/tree-model";
 import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";

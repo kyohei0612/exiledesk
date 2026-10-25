@@ -23,7 +23,8 @@
 | 段の名前・番号 | `tierIndexOf(data, modId, T)`・`tierRankOf(data, modId, index)`・`cardTierName(data, mod)` (P0/S0 も) | シミュ・デザイン・モンキー |
 | エッセンスか合金か | `craftedKindOf(data, mod)` → "essence" / "alloy" / null | デザイン |
 | 冒涜の発現の候補 | `revealOffers(data, item, rng)` → `{ first, reroll }` | シミュ・チュートリアル・モンキー |
-| 貼り付けたアイテムを読む | `parseItemText(data, text)` | (今はジンの中だけ) |
+| 貼り付けたアイテムを読む | `parseItemText(data, text)` (src/services/simulator/paste/item-text.ts、10-26 にシミュの置き場へ移した) | シミュ |
+| ベース・ジェム・ルーンの絵 | `baseArt`・`skillIcon`・`runeArt` (src/components/art/、10-26 にデザインの置き場へ移した) | デザイン・エミュ・シミュほか |
 | ルーン | `RUNES`・`runeOf(key)`・`runeEffectFor(...)`・`withRunes` | シミュ・デザイン・モンキー |
 | エッセンス・カレンシーの名前 | `ESSENCE_KEYS` (鍵 → { en, ja })・`PRICE_KEYS` (カレンシー・骨・お告げの名前、10-25 に出した)・`ESSENCE_TABLE` (エッセンスごとの段の鍵、10-25)・`jaOfOmen` | シミュ・デザイン |
 | お告げの下の設定・重みの直し | `stageTuning`・`setStageTuning`・`defaultWeightOf`・`OVERRIDDEN` | シミュ・デザイン・エミュ |

@@ -5,7 +5,8 @@
   名前 (レアリティの色) と MOD を小さく。直前の手で付いた MOD は緑、消えた MOD は取り消し線で 1 手分だけ出す。
 -->
 <script setup lang="ts">
-import { type StageItem, type StageMod, baseArt } from "../../services/craft-stage/engine";
+import { type StageItem, type StageMod } from "../../services/craft-stage/engine";
+import { baseArt } from "../../components/art/base-art";
 import { nameOf, baseNameOf, tr } from "../../i18n/lang";
 import { stageModText } from "../../components/for-share/item/base-values";
 import { computed } from "vue";

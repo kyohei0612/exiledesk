@@ -7,9 +7,9 @@
  *   - ジェム: vendor の PoB の Data/Gems.lua (ゲーム内 ID・名前・スキル・タグ・必要な能力値 = 色)
  *       スキルのアイコン = PoB の Data/Skills/*.lua の skills[grantedEffectId].icon (Art/2DArt/SkillIcons/…)
  *       ジェムの絵 = クライアントの BaseItemTypes (Id = ゲーム内 ID) → ItemVisualIdentity.DDSFile (Art/2DItems/Gems/…)。原石 (Uncut) 3 種も
- *     → public/skill-art/<id>_icon.webp / <id>_gem.webp と src/services/craft-stage/skill-art.json
+ *     → public/skill-art/<id>_icon.webp / <id>_gem.webp と src/components/art/skill-art.json
  *        [{ id, en, ja, color: red|green|blue|white, support, tags, icon, gem }]
- *   - ルーン: stage-runes.json の dds → public/rune-art/<id>.webp と src/services/craft-stage/rune-art.json (英語名 → ファイル名)
+ *   - ルーン: stage-runes.json の dds → public/rune-art/<id>.webp と src/components/art/rune-art.json (英語名 → ファイル名)
  *   - PoB に無いジェムはクライアントの表から (SkillGems / GemEffects / GrantedEffects / ActiveSkills / SupportGems / GemTags、2026-10-04)
  *   (cd data-cache/client-export-art && npx pathofexile-dat) && node scripts/build-skill-art-from-client.mjs
  */
@@ -150,7 +150,7 @@ for (const [gameId, en] of [["Metadata/Items/Gems/SkillGemUncut", "Uncut Skill G
   const gem = f ? await toWebp(f, SKILL, `${safe(en)}_gem`) : null;
   if (gem) list.push({ id: safe(en), en, ja: itemsJa[en] ?? en, color: "white", support: en.includes("Support"), tags: ["Uncut"], icon: null, gem });
 }
-writeFileSync(resolve(ROOT, "src/services/craft-stage/skill-art.json"), JSON.stringify(list, null, 1) + "\n");
+writeFileSync(resolve(ROOT, "src/components/art/skill-art.json"), JSON.stringify(list, null, 1) + "\n");
 
 // ルーン
 const RUNE = resolve(ROOT, "public/rune-art");
@@ -163,7 +163,7 @@ for (const [en, r] of Object.entries(runes)) {
   const id = await toWebp(r.dds, RUNE, safe(r.dds.replace(/^Art\/2DItems\//, "").replace(/\.dds$/, "")));
   if (id) runeMap[en] = id;
 }
-writeFileSync(resolve(ROOT, "src/services/craft-stage/rune-art.json"), JSON.stringify(runeMap, null, 1) + "\n");
+writeFileSync(resolve(ROOT, "src/components/art/rune-art.json"), JSON.stringify(runeMap, null, 1) + "\n");
 // 遺産のルーン (63 種とも同じ絵) に元のユニークの絵を重ねる (POE2Tube 要望 ㉛)
 execFileSync(process.execPath, [resolve(ROOT, "scripts/build-legacy-rune-art.mjs")], { windowsHide: true, stdio: "inherit" });
 rmSync(tmp, { recursive: true, force: true });

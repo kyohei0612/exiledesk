@@ -11,8 +11,8 @@ import { nameOf, tr } from "../../i18n/lang";
 import { hoverStack } from "../../state/hover-stack";
 import { afterPointerMoves } from "../../utils/pointer-moved";
 import { toCss } from "../../utils/zoom";
-import { baseArt } from "../../services/craft-stage/base-art";
-import { gemArt } from "../../services/craft-stage/skill-art";
+import { baseArt } from "../../components/art/base-art";
+import { gemArt } from "../../components/art/skill-art";
 import Disclosure from "../ui/Disclosure.vue";
 import { flag } from "../../web/release-flags";
 /** 名前を 1 行で … (モンキー 15、本番は OK 待ち) */

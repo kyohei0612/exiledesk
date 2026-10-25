@@ -9,7 +9,7 @@
 import { isEmotion, ESSENCE_KEYS, ESSENCE_TABLE, OMEN_FOR, PRICE_KEYS, isGem, isRune, runeEffectFor, runeOf, type PatchData, type StageItem } from "../../services/craft-stage/engine";
 import { isSpam, parseSpam } from "../../services/craft-stage/apply-spam";
 import { emotionNameOf } from "../../services/craft-stage/apply-emotion";
-import { baseArt } from "../../services/craft-stage/base-art";
+import { baseArt } from "../../components/art/base-art";
 import { CRAFT_RUNES_EN } from "../../services/htc/sockets";
 import { isLegacyRune, LEGACY_SOURCE } from "../../services/market/legacy-rune";
 import { desecrationBoneFor } from "../../vendor/poe2htc/engine/probability";
@@ -17,7 +17,7 @@ import { jaOfOmen } from "../../services/htc/game-names";
 import { stepEn, stepJa } from "../../services/craft-stage/run-plan";
 import { isFlask } from "../../services/craft-stage/stage-bases";
 import { runeCategoryOf, runeKeys, runeNameOf } from "../../services/craft-stage/stage-runes";
-import { runeArt } from "../../services/craft-stage/rune-art";
+import { runeArt } from "../../components/art/rune-art";
 import { marketStore } from "../market-store";
 import { lang, tr } from "../../i18n/lang";
 

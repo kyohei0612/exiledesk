@@ -90,10 +90,6 @@ export { isGem } from "./stage-bases";
 // MOD の値の上乗せ (品質・側の効果・聖別) の一覧 (J8、MOD の数字は素の値で出す。画面はこれを呼ぶだけ)
 export { modBoostsOf } from "./boosts";
 
-// 貼り付けたアイテムの文を読む (トレード・poe.ninja・ゲームの Ctrl+C / Ctrl+Alt+C、日英。形は item-text-types.ts)
-export type { ItemTextResult, ItemTextMod, ItemTextImplicit, ItemTextSkip, ItemTextSkipCode, ItemTextSource, ItemTextWords, ItemTextCorruption, ItemTextBoost, ItemTextReading } from "./item-text-types";
-export { parseItemText } from "./item-text";
-
 // 使う人が決める設定 (触媒の高貴の品質 1% ごとの倍率・聖別の倍率。null = 既定。打つ処理と確率の表が同じ値を読む)
 export type { StageTuning } from "./stage-tuning";
 export { stageTuning, setStageTuning, tunedCatalysingMultiplier, CATALYSING_PER_PCT, defaultWeightOf } from "./stage-tuning";
@@ -119,13 +115,11 @@ export { reqOfItem } from "./stage-bases";
 export { planSpec } from "./spec/run-spec";
 export { aimLabel, groupLabelOf } from "./mod-list";
 export type { DamageKind, Defender, Outcome } from "./defence";
-export { baseArt } from "./base-art";
 export { isSanctifySet } from "./apply-vaal";
 export { IMPLICIT_SET, isCatalystSet, isQualitySet, QUALITY_CAP, qualityFieldMax, SANCTIFIED_REASON, ITEM_LEVEL_SET } from "./apply-currency";
 
 // シミュ・チュートリアル・解析が読んでいた物 (2026-10-23 エンジンの仕分け、付け替えの対応表 docs/org/emulator/notes/2026-10-23-sim-import-map.md)
 export { qualityLabelOf } from "../htc/quality";
 export { boostedMod } from "./stage-core";
-export { skillIcon } from "./skill-art";
 export { shownTags, TAG_STYLE } from "./mod-list";
 export { SHARDS_PER_ORB } from "./apply-act";
