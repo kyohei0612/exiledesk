@@ -20,6 +20,15 @@ const PACE_MS = 60;
 type Person1 = Parameters<NonNullable<TreeRunOpts["onPerson"]>>[0];
 /** 1 人目の 1 箱の間 (ms)。長い道 (始めに戻るが多い) は全体で 20 秒ほどに縮める、最低 40ms (金の指輪は 540 箱、90ms で 49 秒かかった) */
 const walkMs = (len: number): number => Math.max(40, Math.min(450, Math.round(20000 / Math.max(1, len))));
+/**
+ * 1 人目が同じ所に 3 秒とどまったら、そこを抜けるまで早送り (10-25 オーナー「1人目沼ったら長い時間待つ」「3秒同じとこにとどまったら高速化で」)。
+ * 同じ所 = 直近 3 秒の手が LOOP_BOXES 箱以内で、どの箱も平均 2 回以上通るくり返し (カオスの外れ → 親の箱、冒涜の外れ → エッセンスの結果 3 つ → 冒涜の輪など)。
+ * 早送りは輪の長さによらず FAST_MS ほどで抜け、抜けたら元の速さ
+ */
+const STAY_MS = 3000;
+const LOOP_BOXES = 6;
+const FAST_MS = 1200;
+const FRAME_MS = 30;
 
 /** onHalt = 止まった人が出て止めた時 (その箱へ寄る)。onWalk = 1 人目が箱に着いた時 (i = 何箱目、0 で全体を表示して、後は外れた時だけ見える所へ) */
 export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: (key: string) => number, onHalt: (box: string) => void, onWalk: (box: string, i: number) => void) {
@@ -29,8 +38,8 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
   const shown = ref(true);
   /** 止まった人が出て途中で止めた時の箱と人数 (10-22 オーナー「止まった瞬間 100 人回すの止めて修正しなよ」) */
   const halted = ref<{ box: string; n: number } | null>(null);
-  /** 1 人目が進んでいる所 (今いる箱・何手目 / 全部・着いた時の費用 神) */
-  const walk = ref<{ box: string; step: number; total: number; cost: number; ms: number; trail: ReadonlySet<string> } | null>(null);
+  /** 1 人目が進んでいる所 (今いる箱・何手目 / 全部・着いた時の費用 神・早送り中か) */
+  const walk = ref<{ box: string; step: number; total: number; cost: number; ms: number; trail: ReadonlySet<string>; fast: boolean } | null>(null);
   /** 1 人目を飛ばす (帯の「飛ばす」) */
   let skip = false;
   let token = 0;
@@ -63,12 +72,31 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
       const ms = walkMs(path.length);
       // 通った箱 (足跡)。全体表示の小さい倍率で速く進んでも、どこを通ったか残る (10-22 オーナー「機能してる？」、光る枠だけでは見えなかった)
       const trail = new Set<string>();
+      const stayN = Math.ceil(STAY_MS / ms);
+      // since = 元の速さで進み始めた手 (早送りの後は 3 秒数え直す)
+      let since = 0;
       for (let i = 0; i < path.length && !skip; i++) {
         trail.add(path[i]!.box);
-        walk.value = { box: path[i]!.box, step: i + 1, total: path.length, cost: path[i]!.cost, ms, trail: new Set(trail) };
+        walk.value = { box: path[i]!.box, step: i + 1, total: path.length, cost: path[i]!.cost, ms, trail: new Set(trail), fast: false };
         onWalk(path[i]!.box, i);
         await new Promise((res) => setTimeout(res, ms));
         if (my !== token) return;
+        if (i - since + 1 < stayN) continue;
+        const stay = new Set(path.slice(i - stayN + 1, i + 1).map((v) => v.box));
+        if (stay.size > LOOP_BOXES || stay.size * 2 > stayN) continue;
+        let j = i + 1;
+        while (j < path.length && stay.has(path[j]!.box)) j++;
+        const n = j - 1 - i;
+        if (!n) continue;
+        const frames = Math.max(1, Math.min(Math.round(FAST_MS / FRAME_MS), n));
+        for (let f = 1; f <= frames && !skip; f++) {
+          const at = i + Math.round((n * f) / frames);
+          walk.value = { box: path[at]!.box, step: at + 1, total: path.length, cost: path[at]!.cost, ms: FRAME_MS, trail: new Set(trail), fast: true };
+          await new Promise((res) => setTimeout(res, FRAME_MS));
+          if (my !== token) return;
+        }
+        i = j - 1;
+        since = j;
       }
       walk.value = null; walking = false;
       result.value = f0.done ? f0.value : last;
