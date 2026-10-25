@@ -85,6 +85,8 @@ export function parseItemText(data: PatchData, text: string): ItemTextResult {
   /** 種類の名前 (Item Class: の値・トレードの「指輪」「Flask」の行) */
   const kindWords: string[] = [];
   const body: Body[] = [];
+  /** 「スキルを付与」の行が来た時の body の数 (印の無いトレードのコピーは、それより前がルーン・オーグメントの段) */
+  let grantAt = -1;
   const unrevealed: { line: string; side: "prefix" | "suffix" }[] = [];
   let group: Pick<Body, "side" | "group" | "tierName"> | null = null;
   let inBody = false;
@@ -129,7 +131,7 @@ export function parseItemText(data: PatchData, text: string): ItemTextResult {
         const q = /\+?(\d+)%/.exec(value);
         if (q) { out.quality = { value: Number(q[1]), tag: catalystTagFromLabel(l), label: l }; continue; }
       }
-      if (/^(Grants Skill|スキルを付与)$/i.test(l)) { out.grants.push(value.replace(/^Level \d+\s+/i, "").trim()); continue; }
+      if (/^(Grants Skill|スキルを付与)$/i.test(l)) { if (grantAt < 0) grantAt = body.length; out.grants.push(value.replace(/^Level \d+\s+/i, "").trim()); continue; }
       if (/^(Sockets|ソケット)$/i.test(l)) { out.sockets.count = value.trim().split(/\s+/).filter(Boolean).length; continue; }
       if (/^(Requires|Requirements|必要)/i.test(l) || /^(Note)$/i.test(l)) continue;
       out.properties.push(line);
@@ -175,7 +177,7 @@ export function parseItemText(data: PatchData, text: string): ItemTextResult {
   out.cls = htcBaseInfo()[out.base.en]?.cls ?? classOfBase(data, out.base.en)?.id ?? null;
   out.count.limit = sideLimits(data, out.base.en);
 
-  const explicit = splitImplicits(data, out, body);
+  const explicit = splitImplicits(data, out, body, grantAt);
   readMods(data, out, explicit);
   for (const u of unrevealed) {
     out.mods.push({ text: u.line, modId: null, source: "desecrated", side: u.side, sideFrom: "paste", tier: null, values: [], shownValues: [], boosts: [], fractured: false, desecrated: true, crafted: false, unrevealed: true });
@@ -185,7 +187,7 @@ export function parseItemText(data: PatchData, text: string): ItemTextResult {
 }
 
 /** 暗黙側の行を out.implicits に移し、残り (明示の MOD の候補) を返す */
-function splitImplicits(data: PatchData, out: ItemTextResult, body: Body[]): Body[] {
+function splitImplicits(data: PatchData, out: ItemTextResult, body: Body[], grantAt = -1): Body[] {
   const implicit = (b: Body, from: ItemTextImplicit["from"]): void => {
     out.implicits.push({ text: b.text, from, template: b.template, values: b.values, ...(from === "corruption" ? { corruption: corruptionOf(out, b) } : {}) });
     if (from === "rune") out.sockets.runes.push(b.text);
@@ -224,7 +226,8 @@ function splitImplicits(data: PatchData, out: ItemTextResult, body: Body[]): Bod
   });
   // 絆の行 (「絆 …」「Bonded: …」) はルーンの効果。印の無いトレードの日本語でも、最後の絆の行までがルーン側 (見本 t3 10-25: 絆の前の「スピリットが15%増加する」はルーン)
   const bond = (b: Body): boolean => /^(絆\s|Bonded:)/i.test(b.text);
-  const last = Math.max(isBase.lastIndexOf(true), body.map(bond).lastIndexOf(true));
+  // 「スキルを付与」より前の行もルーン側 (絆の行はアイドルなどにしか付かない。poe2db のセプターではめる物 76 のうち 30 は絆が無い、10-25 オーナー「絶対絆ってつくっけ」)
+  const last = Math.max(isBase.lastIndexOf(true), body.map(bond).lastIndexOf(true), grantAt - 1);
   // 暗黙より前の行: 差したルーン・ソウルコアの効果 (ソケットの数だけ値が足される) と文が同じなら rune。
   // 残りはコラプトした物ならエンチャント (コラプトの結果は poe2db の Vaal Orb で Corrupted Enchantment)、それ以外は見分けられない (extra)
   const cls = classOfBase(data, out.base!.en);
@@ -233,6 +236,7 @@ function splitImplicits(data: PatchData, out: ItemTextResult, body: Body[]): Bod
   body.forEach((b, i) => {
     if (isBase[i]) implicit(b, "base");
     else if (i <= last && bond(b)) implicit(b, "rune");
+    else if (i <= last && i < grantAt && !isBase.slice(i + 1).some(Boolean)) implicit(b, "rune");
     else if (i < last) implicit(b, runeTexts.has(bare(b.text)) || body.slice(i + 1, last + 1).some(bond) ? "rune" : out.corrupted > 0 ? "corruption" : "extra");
     else rest.push(b);
   });
