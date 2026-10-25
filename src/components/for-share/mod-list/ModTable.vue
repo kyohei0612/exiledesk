@@ -253,15 +253,16 @@ defineExpose({ jumpTo, counts, sections });
               <slot name="row-open" :row="r" />
               <table class="mt-1 w-full text-[11px]">
                 <tbody>
-                  <tr v-for="t in r.tiers" :key="t.rank" class="group border-b border-white/5" :class="[props.tierDim?.(r, t) ? 'opacity-35' : '', isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank) ? 'bg-amber-400/15 outline outline-2 outline-amber-300/80' : '']" :title="props.tierTitle?.(r, t)">
+                  <tr v-for="t in r.tiers" :key="t.rank" class="group border-b border-white/5 max-md:flex max-md:flex-wrap max-md:[&>[data-tier-end]~td]:basis-full" :class="[props.tierDim?.(r, t) ? 'opacity-35' : '', isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank) ? 'bg-amber-400/15 outline outline-2 outline-amber-300/80' : '']" :title="props.tierTitle?.(r, t)">
                     <slot name="tier-lead" :row="r" :tier="t" />
-                    <td class="w-8 py-0.5 font-bold text-amber-200">{{ t.rank }}</td>
-                    <td class="py-0.5 text-[#c8c8ff]">{{ t.text }}<span v-for="g in tierTags(r, t)" :key="g" class="ml-1 inline-block whitespace-nowrap rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span><span v-if="isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank)" data-jump-tier class="ml-1.5 rounded-sm bg-amber-400/25 px-1 py-px text-[10px] leading-none text-amber-100">{{ tr("付いている", "On item") }}</span><span v-if="ESS_TIER && t.essence" class="block text-[10px] leading-tight opacity-60 md:hidden">{{ tr(t.essence.ja, t.essence.en) }}</span></td>
+                    <td class="w-8 py-0.5 font-bold text-amber-200 max-md:shrink-0">{{ t.rank }}</td>
+                    <td class="py-0.5 text-[#c8c8ff] max-md:min-w-0 max-md:flex-1">{{ t.text }}<span v-for="g in tierTags(r, t)" :key="g" class="ml-1 inline-block whitespace-nowrap rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span><span v-if="isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank)" data-jump-tier class="ml-1.5 rounded-sm bg-amber-400/25 px-1 py-px text-[10px] leading-none text-amber-100">{{ tr("付いている", "On item") }}</span><span v-if="ESS_TIER && t.essence" class="block text-[10px] leading-tight opacity-60 md:hidden">{{ tr(t.essence.ja, t.essence.en) }}</span></td>
                     <!-- 段の名前 (Zaffre など) は英語しか無いので出さない。エッセンスの節はエッセンスの名前なので出す (2026-10-18 オーナー) -->
                     <td v-if="ESS_TIER && t.essence" class="py-0.5 pl-2 whitespace-nowrap opacity-70 max-md:hidden" data-ess-tier>{{ tr(t.essence.ja, t.essence.en) }}</td>
                     <td v-else-if="r.group === 'essence' || r.group === 'perfect_essence'" class="py-0.5 pl-2 opacity-60 max-md:hidden">{{ tierName(r, t.name) }}</td>
-                    <td class="w-14 py-0.5 text-right tabular-nums opacity-70">Lv {{ t.ilvl }}</td>
-                    <td class="w-16 py-0.5 text-right tabular-nums opacity-70 max-md:hidden" :class="props.tone === 'sky' ? 'text-sky-200' : ''" :title="t.weight ? tr(`重み ${t.weight}`, `Weight ${t.weight}`) : undefined">{{ tierShareText(r, t) }}</td>
+                    <td class="w-14 py-0.5 text-right tabular-nums opacity-70 max-md:shrink-0">Lv {{ t.ilvl }}</td>
+                    <td data-tier-end class="w-16 py-0.5 text-right tabular-nums opacity-70 max-md:hidden" :class="props.tone === 'sky' ? 'text-sky-200' : ''" :title="t.weight ? tr(`重み ${t.weight}`, `Weight ${t.weight}`) : undefined">{{ tierShareText(r, t) }}</td>
+                    <!-- スマホは行を折り返し、tier-actions の td (data-tier-end より後ろ) は 2 段目いっぱいに (MOD の文が 1〜3 文字ずつ縦に折れた、シミュ部長 29 10-25) -->
                     <slot name="tier-actions" :row="r" :tier="t" />
                   </tr>
                 </tbody>
