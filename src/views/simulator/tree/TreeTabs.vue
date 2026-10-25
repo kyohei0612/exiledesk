@@ -9,13 +9,19 @@ import { nextTick, onBeforeUnmount, ref, watch } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
 import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
+import { openTreePage, treeStep } from "../../../web/page";
 
 const emit = defineEmits<{ switched: [] }>();
 const t = useTree();
-function go(i: number): void { t.switchTab(i); emit("switched"); }
+/** タブを替えた後の段の URL を画面に合わせる (完成形の設定のページから替えて木へ戻った時に sim-base のまま残らない。ベース選びの白紙のタブは sim-base) */
+function syncStep(): void {
+  const to = t.goalPage.value === 1 ? "base" : t.goalPage.value === 2 ? "mods" : "tree";
+  if (treeStep.value !== "tree" && treeStep.value !== to) openTreePage(to);
+}
+function go(i: number): void { t.switchTab(i); syncStep(); emit("switched"); }
 function add(): void { t.addTab(); emit("switched"); }
-function copy(): void { t.copyTab(); emit("switched"); }
-function close(i: number): void { t.closeTab(i); emit("switched"); }
+function copy(): void { t.copyTab(); syncStep(); emit("switched"); }
+function close(i: number): void { t.closeTab(i); syncStep(); emit("switched"); }
 /** 名前を変えているタブ (null = 変えていない) */
 const editing = ref<number | null>(null);
 const input = ref<HTMLInputElement[]>([]);

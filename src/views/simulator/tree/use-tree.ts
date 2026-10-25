@@ -81,7 +81,10 @@ function setActive(i: number, next: TreeDoc, from: number | null = active.value)
 function switchTab(i: number): void {
   if (i === active.value || !tabDocs.value[i]) return;
   setActive(i, cloneDoc(tabDocs.value[i]!));
-  // ベースを選ぶ前の白紙のタブはベース選びから、ほかは完成形の設定を閉じてその木へ (完成形の設定の窓の上のタブから替えた時、10-24 モンキー初めての人の回 8)
+  showTab();
+}
+/** タブを替えた・閉じた後の画面: ベースを選ぶ前の白紙のタブはベース選びから、ほかは完成形の設定を閉じてその木へ (完成形の設定の窓の上のタブから替えた時、10-24 モンキー初めての人の回 8) */
+function showTab(): void {
   const d = doc.value, blank = !d.baseChosen && isBlank(d) && !d.memoAims?.length;
   needBase.value = blank;
   goalPage.value = blank ? 1 : 0;
@@ -100,7 +103,8 @@ function closeTab(i: number): void {
   if (tabDocs.value.length <= 1) return;
   const list = tabDocs.value.filter((_, j) => j !== i);
   histories.splice(i, 1);
-  if (i === active.value) { const k = Math.max(0, i - 1); tabDocs.value = list; setActive(k, cloneDoc(list[k]!), null); return; }
+  // 開いているタブを閉じたら隣のタブの木を、その木に合った画面で出す (前は新しいツリーのベース選びのまま残り、残ったツリー① も消えたように見えた、10-25 オーナー)
+  if (i === active.value) { const k = Math.max(0, i - 1); tabDocs.value = list; setActive(k, cloneDoc(list[k]!), null); showTab(); return; }
   if (i < active.value) active.value--;
   tabDocs.value = list;
   save(doc.value);
