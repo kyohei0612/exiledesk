@@ -51,7 +51,8 @@ try {
   const d = rows[0] ? JSON.parse(rows[0].body) : null;
   if (!d) discordMd = `(${today} の分が無い: 9:03 の Bot の回が動いていない)`;
   else if (d.status === "未設定") discordMd = "Bot 未設定 (トークンか読むチャンネルが無い。docs/org/analytics/notes/2026-10-24-discord-bot.md)";
-  else discordMd = d.channels.map((c) => `### チャンネル ${c.id} (${c.messages.length} 件${c.error ? `、読めなかった: ${c.error}` : ""})\n` + (c.messages.map((m) => `- ${hm(m.at)} · ${m.author}${m.webhook ? " (webhook)" : m.bot ? " (bot)" : ""}: ${m.text.replace(/\s+/g, " ").slice(0, 400)}${m.files.length ? ` [添付 ${m.files.join(", ")}]` : ""}`).join("\n") || "(無し)")).join("\n\n");
+  // 書き込みの無いチャンネル・飛ばしたチャンネル (権限が無い等) は 1 行にまとめる (サーバーの全部のチャンネルを読む形、10-26)
+  else discordMd = [d.error ? `チャンネルの一覧を読めなかった: ${d.error}` : "", (() => { const quiet = d.channels.filter((c) => !c.messages.length && !c.error); return quiet.length ? `書き込み無し・飛ばした: ${quiet.map((c) => `#${c.name || c.id}${c.skipped ? ` (${c.skipped})` : ""}`).join("、")}` : ""; })()].filter(Boolean).concat(d.channels.filter((c) => c.messages.length || c.error).map((c) => `### #${c.name || c.id} (${c.messages.length} 件${c.error ? `、読めなかった: ${c.error}` : ""})\n` + (c.messages.map((m) => `- ${hm(m.at)} · ${m.author}${m.webhook ? " (webhook)" : m.bot ? " (bot)" : ""}: ${m.text.replace(/\s+/g, " ").slice(0, 400)}${m.files.length ? ` [添付 ${m.files.join(", ")}]` : ""}`).join("\n") || "(無し)"))).join("\n\n") || "(どのチャンネルにも書き込み無し)";
 } catch (e) { discordMd = /no such table/i.test(`${e} ${e?.stdout ?? ""}`) ? "Bot 未設定 (本番の D1 に表がまだ無い。migrations/0009_discord.sql)" : `読めなかった: ${String(e).slice(0, 200)}`; }
 
 // 4. md に書く

@@ -83,6 +83,8 @@ export interface Env {
   DISCORD_BOT_TOKEN?: string;
   /** Bot が読むチャンネルの id (カンマで並べる、vars。秘密ではない) */
   DISCORD_CHANNELS?: string;
+  /** 読む Discord のサーバー (guild) の id (vars、秘密ではない)。毎回このサーバーの文字のチャンネルを全部拾って読む (DISCORD_CHANNELS が無い時。オーナー 10-26「全部読んで」) */
+  DISCORD_GUILD_ID?: string;
 }
 
 export type Fetch = typeof fetch;

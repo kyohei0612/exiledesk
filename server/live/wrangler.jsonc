@@ -27,7 +27,9 @@
     // Web Analytics のサイト (web.html の beacon の token)
     "WEB_ANALYTICS_SITE": "72192ac351aa4259ad607ec32e069cfb",
     // 数え始め (UTC)。これより前は日報と記録の取り出しで数えない (消してはいない)。2026-10-09 オーナーの PC の分を外すためにリセット
-    "STATS_SINCE": "2026-10-09T11:15:51Z"
+    "STATS_SINCE": "2026-10-09T11:15:51Z",
+    // Discord を読むだけの Bot が読むサーバー (guild) の id (秘密ではない)。文字のチャンネルを毎朝全部拾って読む (src/discord.ts、オーナー 10-26「全部読んで」)。トークンは secret の DISCORD_BOT_TOKEN
+    "DISCORD_GUILD_ID": "1504880690867732630"
   },
   "observability": { "enabled": true }
 }
