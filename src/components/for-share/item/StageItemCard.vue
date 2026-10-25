@@ -135,10 +135,10 @@ const isNew = (m: StageMod): boolean => props.added.some((a) => a.modId === m.mo
 const ESS_CARD = flag("essCard");
 const tierLabel = (m: StageMod): string => (ESS_CARD && craftStage.data.value ? cardTierName(craftStage.data.value, m) : m.tierName ?? "");
 const tierNo = (m: StageMod): string => tierLabel(m).replace(/^T/, "");
-/** 行の左の札 (P3・S2)。tierAtLeast なら「S2 以上」/「S2+」(1 はそのまま) */
+/** 行の左の札 (P3・S2)。tierAtLeast なら「S2 以上」/「S2+」(1 と、エッセンス・合金の 0 はそのまま。10-25 オーナー「P0 以上」が変) */
 const sideTier = (r: { side: string; m: StageMod }): string => {
   const n = tierNo(r.m);
-  return `${r.side === "プレフィックス" ? "P" : "S"}${n}${props.tierAtLeast && n && n !== "1" ? tr(" 以上", "+") : ""}`;
+  return `${r.side === "プレフィックス" ? "P" : "S"}${n}${props.tierAtLeast && n && n !== "1" && n !== "0" ? tr(" 以上", "+") : ""}`;
 };
 const isRareNew = (m: StageMod): boolean => isNew(m) && chanceOf(m) != null && isRareChance(chanceOf(m)!);
 /** ワンド・スタッフの品質で上がる付与スキルの物 */
