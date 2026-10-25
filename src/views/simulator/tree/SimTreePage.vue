@@ -19,7 +19,7 @@ import ModeTabs from "../../../components/for-share/ModeTabs.vue";
 import SimPcOnly from "../SimPcOnly.vue";
 import { usePhone } from "../../../utils/use-phone";
 import TreeBox from "./TreeBox.vue";
-import TreeOverlays from "./TreeOverlays.vue"; import TreeGoalNode from "./TreeGoalNode.vue";
+import TreeOverlays from "./TreeOverlays.vue"; import TreeGoalNode from "./TreeGoalNode.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { flag } from "../../../web/release-flags";
 import TreeHandPage from "./TreeHandPage.vue";
 import { useTree } from "./use-tree";
 import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
@@ -263,6 +263,8 @@ watch(() => t.active.value, () => { issuesShown.value = true; });
 function openIssues(): void { issuesShown.value = true; issuesOpen.value = true; issuesFold.value = false; }
 /** 待たせている間の小さな札 (題の横。データの読み込み・箱を順に出している間、共通の BusyTag。精査の進みは精査の帯の上) */
 // 100 人回す (結果は木の上に重ねる層だけ、use-tree-run.ts・TreeRunLayer.vue。値段 = 始め方のベースの値段 (結果のまとめで入れる、use-tree の startPrice) + 今の相場)
+/** 0 完成形の設定を完成形のアイテム枠で (スイッチ goalCard、オーナーの OK 待ち) */
+const goalCard = flag("goalCard");
 const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
 // 流れの帯の 4 (結果) = 100 人回し終えた (止まって止めた時は開かない、帯の「結果のまとめ」と同じ)。帯を押すと 1・2 = 完成形の設定の窓、3 = ツリー、4 = 結果のまとめ
 watch(() => !!tr100.result.value && !tr100.running.value && !tr100.halted.value, (on) => { t.runReady.value = on; if (!on) t.reportOpen.value = false; }, { immediate: true });
@@ -422,8 +424,8 @@ const phone = usePhone();
         <div v-if="t.needBase.value" data-tree-need-base class="absolute inset-0 z-30 flex items-center justify-center bg-[#0c0a08]">
           <button type="button" data-tree-pick-base class="g-btn" @click="t.goalPage.value = 1">{{ tr("ベースを選ぶ", "Choose a base") }}</button>
         </div>
-        <!-- 0 完成形の設定の札 (木の箱にせず、木を送っても見える左上。10-23 オーナー) -->
-        <div v-if="!t.needBase.value" class="pointer-events-none absolute left-2 top-2 z-20"><TreeGoalNode /></div>
+        <!-- 0 完成形の設定の札 (木の箱にせず、木を送っても見える左上。10-23 オーナー)。スイッチ goalCard で完成形のアイテム枠 (10-25 オーナー) -->
+        <div v-if="!t.needBase.value" class="pointer-events-none absolute left-2 top-2 z-20"><TreeGoalCard v-if="goalCard" /><TreeGoalNode v-else /></div>
         <!-- ページの zoom を枠だけ打ち消す (中は実質 1 倍。Vue Flow の座標とマウスが揃う、use-tree-flow.ts)。格子は Vue Flow の送りと倍率に合わせる。ホイールは決まった段へ 1 段ずつ (use-tree-flow の onWheel) -->
         <div data-tree-canvas data-overflow-ok class="absolute left-0 top-0 h-full w-full" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid }" @wheel="v.onWheel">
           <VueFlow :id="FLOW_ID" :default-viewport="{ x: 0, y: 0, zoom: pageZ }" :min-zoom="v.minZoom.value" :max-zoom="v.maxZoom.value"
