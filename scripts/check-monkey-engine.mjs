@@ -65,7 +65,7 @@ function fromScreen(rec) {
   for (const bi of Object.values(items)) if (bi?.raw?.cls) for (const c of E.shelfOf(bi.raw, true)) names.set(c.name, c.key);
   const why = [];
   const aimOfText = (t) => {
-    const m = /(?:^|\s)T(\d+)(?: 以上)? (プレ|サフィ) (.+?)(?: 完成)?$/.exec(t.replace(/^\[完成済\]\s*/, ""));
+    const m = /(?:^|\s)T(\d+)(?: 以上)? (プレ|サフィ) (.+?)(?: 完成)?$/.exec(t.replace(/^\[完成済\]\s*/, "").replace(/\s*↩.*$/, ""));
     if (!m) return null;
     const modId = E.aimOf(base, m[2] === "プレ" ? "P" : "S", m[3]);
     if (!modId) why.push(`狙いの文が MOD の一覧に無い: ${m[3]}`);
@@ -90,6 +90,20 @@ function fromScreen(rec) {
     const rep = on(/当たるまで繰り返す/);
     b.hand = { currency, omens, repeat: rep ? { until: "hit", max: Number(/上限 (\d+) 回/.exec(rep)?.[1]) || null } : null, free: !!on(/狙い無し/) };
     b.outs = h.outs ?? [];
+  }
+  // 戻り先の札 → 箱の id (「始めに戻る」= start、自動の矢印「狙い同じ<札>」= 同じ種類の箱、親の側を先に。隊長 6 本目 10-25)
+  const parentOf = (id) => Object.values(boxes).find((x) => x.outs.includes(id))?.id ?? null;
+  const textOf = Object.fromEntries(sc.boxes.map((b) => [b.id, b.text.replace(/^\[完成済\]\s*/, "")]));
+  for (const b of Object.values(boxes)) {
+    if (!b.back) continue;
+    if (b.back === "始めに戻る") { b.back = "start"; continue; }
+    const m = /^狙い同じ\s*(.+)$/.exec(b.back);
+    if (!m) continue;
+    const rest = m[1].replace(/…$/, "").trim(), kind = /^外れ/.test(rest) ? "junk" : /^打った後/.test(rest) ? "any" : "hit";
+    const chain = []; for (let p = parentOf(b.id); p && !chain.includes(p); p = parentOf(p)) chain.push(p);
+    const ok = (id) => id !== b.id && boxes[id]?.out === kind && (kind !== "hit" || textOf[id].includes(rest.slice(0, 20)));
+    const to = chain.find(ok) ?? Object.keys(boxes).find(ok);
+    if (to) b.back = to; else why.push(`戻り先の札 ${b.back} の箱が引けない`);
   }
   // 100 人の数 (画面の文)
   const ppl = (s) => Number(/(\d+) 人/.exec(s ?? "")?.[1] ?? NaN);
