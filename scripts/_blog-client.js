@@ -9,7 +9,8 @@
   var me = document.currentScript;
   var slug = me.getAttribute("data-slug") || "";
   var lang = me.getAttribute("data-lang") || "ja";
-  var dev = me.getAttribute("data-dev") === "1";
+  // exiledesk.com の外 (手元の本番と同じ作り exiledesk.localhost など) も送らない (送り先は本番。10-25 オーナー「オーナーは記録されない、本番全部に」)
+  var dev = me.getAttribute("data-dev") === "1" || !/(^|\.)exiledesk\.com$/.test(location.hostname);
   var api = me.getAttribute("data-api") || "";
   var ver = me.getAttribute("data-v") || "";
   var PEND = "exiledesk.log.pending", LAST = "exiledesk.log.lastSent", UID = "exiledesk.web.uid", HOUR = 3600000;

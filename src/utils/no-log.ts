@@ -6,6 +6,7 @@
  */
 import { ref } from "vue";
 import { REC } from "./rec-mode";
+import { isTauriRuntime } from "./isTauriRuntime";
 
 export const NO_LOG_KEY = "exiledesk.noLog";
 
@@ -13,6 +14,8 @@ function read(): boolean {
   // 開発版 (手元の preview:prod -- --dev) は記録しない
   // 手元の dev サーバー (vite) も送らない (送り先は本番の server/live。10-23 オーナー「開発版でリクエストいらなくね、分析とか」)
   if (import.meta.env.VITE_DEV_PREVIEW === "1" || import.meta.env.DEV) return true;
+  // Web 版を手元の住所で開いた時 (preview:prod の --live など、送り先が本番のまま) も送らない (10-25 オーナー「オーナーは記録されない、本番全部に」)。アプリ (Tauri) は別
+  if (!isTauriRuntime() && /^(localhost|127\.0\.0\.1|\[::1\])$|\.localhost$/.test(location.hostname)) return true;
   // 録画モード (?rec=1) は送らない (POE2Tube 要望 ㊶。端末の印は書き換えない)
   if (REC) return true;
   try { return localStorage.getItem(NO_LOG_KEY) === "1"; } catch { return false; }
