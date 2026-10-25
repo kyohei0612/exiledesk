@@ -169,6 +169,9 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
     }
     return { ...r, item: it };
   }
+  // 狙い無しの埋めるだけの高貴は、もう両側満杯なら打たずにそのまま次の箱へ (何も使わない。10-25 オーナー・ブラック、
+  // 合金の 50/50 で負けて満杯のまま戻った人がスピリットの後の埋める高貴で止まっていた。分かれ道の箱は作らない)
+  if (fillDone(item, h)) return { applied: true, item, added: [], removed: [] };
   // 1 回分はエンジンの入口の applyHand (B6〜B8 10-22): カタリストの手は品質を今の最大まで (もう最大なら通る)・触媒の前のカタリスト・
   // フラクチャーで ✦ にする MOD・骨の後はそのまま発現 (反響は骨に掛けず発現で使う)。
   // 発現は当たりの札に合う候補、無ければ 1 つ目 (2026-10-22 オーナー「冒涜は冒涜で付与かな」)。miss = 外れの箱の見本 (狙いでない候補を選ぶ。黒き血は狙いが必ず候補に入り、見本が外れの箱に着かなかった、10-22)
@@ -211,7 +214,10 @@ export function startItemOf(data: PatchData, doc: TreeDoc, rng: () => number): S
  * その手がこのアイテムに打てない理由 (打てるなら null。オーナー 10-22「進行不能」: 消せる物が無い側のお告げ・効かないお告げが掛かった手を確定させない)。
  * 判定はエンジンの入口の canUse (お告げ → 触媒の前のカタリスト → 手そのもの、繰り返しは 1 回分、乱数で決まる物は打てる扱い。B11 10-22)
  */
+/** 狙い無しの埋めるだけの高貴で、もう両側満杯 (打たずに通す。playHand・handProblem) */
+const fillDone = (item: StageItem, h: Hand): boolean => !!h.free && kindOf(h.currency) === "exalt" && !room(item, "prefix") && !room(item, "suffix");
 export function handProblem(data: PatchData, item: StageItem, h: Hand): string | null {
+  if (fillDone(item, h)) return null;
   return canUse(data, item, h.currency, { omens: h.omens, catalyst: h.catalyst });
 }
 
