@@ -25,6 +25,8 @@ export { essenceNameEn, headingHits } from "./engine-sim/essence-parts";
 
 // シミュ・チュートリアル・解析が読んでいた物 (2026-10-23 エンジンの仕分け、付け替えの対応表 docs/org/emulator/notes/2026-10-23-sim-import-map.md)
 export { NEGATIVE_WORDS } from "./stage-core";
+// MOD の値を替えた時の文 (textJa / textEn) を作り直す。完成形のカードに貼り付けの素の値を出す (10-25 夜 シミュ部長 29 本目、見本 t7 の 34% が段の真ん中 36% になっていた)
+export { retext } from "./stage-core";
 export { ALL_OMEN_SPECS } from "./spec/run-spec";
 export { factionCandidates } from "./spec/parts";
 export { armourReduction, esTimeline, attackRow, deflectChance, evadeChance, KIND_COLOR, KIND_JA, layersOf } from "./defence";
