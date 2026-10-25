@@ -26,14 +26,18 @@ import { searchGems } from "./search";
 import { GEMS, type GemInfo, type SaleKey } from "./gem-list";
 import { originalGemQuery, rowQuery } from "./row-query";
 import { evClass, money, pct } from "./ui";
+import { flag } from "../../web/release-flags";
 
 // ---- 覚える物 (この端末だけ。localStorage) ----
 const KEY = "exiledesk.web.gemCorrupt";
-interface Saved { gem?: string | null; spirit?: boolean; sale?: SalePrices; baseManual?: number | null; params?: CorruptParams }
+interface Saved { at?: number; gem?: string | null; spirit?: boolean; sale?: SalePrices; baseManual?: number | null; params?: CorruptParams }
 function load(): Saved {
   try { return JSON.parse(localStorage.getItem(KEY) ?? "{}") as Saved; } catch { return {}; }
 }
-const saved = load();
+// スイッチ emuFresh (10-25 オーナー「開き直したら全部最初の画面から」): ページを読み込み直したら空から。読むのは同じ読み込みの中で書いた物だけ
+// (タブを閉じて開き直した時は続き。at = 書いた読み込みの performance.timeOrigin)
+const loaded = load();
+const saved: Saved = !flag("emuFresh") || loaded.at === performance.timeOrigin ? loaded : {};
 
 void marketStore.ensureMarket();
 
@@ -127,7 +131,7 @@ const expanded = ref<Record<string, boolean>>({});
 
 // ---- 保存と分析用の記録 ----
 watch([selected, spiritPick, sale, baseManual, params], () => {
-  try { localStorage.setItem(KEY, JSON.stringify({ gem: selected.value?.en ?? null, spirit: spiritPick.value, sale: sale.value, baseManual: baseManual.value, params: params.value } satisfies Saved)); } catch { /* 覚えられなくてよい */ }
+  try { localStorage.setItem(KEY, JSON.stringify({ at: performance.timeOrigin, gem: selected.value?.en ?? null, spirit: spiritPick.value, sale: sale.value, baseManual: baseManual.value, params: params.value } satisfies Saved)); } catch { /* 覚えられなくてよい */ }
 }, { deep: true });
 /** 入力が落ち着いてから 1 件 (3 つ揃った時だけ。同じ中身は送らない) */
 let logTimer: ReturnType<typeof setTimeout> | null = null;
