@@ -1,5 +1,102 @@
 [
  {
+  "v": "0.1.598",
+  "date": "2026-10-25",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "コスメティック: PoE2 でも使える PoE1 のスキン (MTX) の一覧を追加 (上のタブの右端。poe2db を元に、一式・出どころの札・ショップの値段つき。動作は保証しません)",
+    "en": "Cosmetics: added a list of PoE1 skins (MTX) usable in PoE2 (rightmost tab at the top; based on poe2db, with sets, source tags and shop prices; not guaranteed to work in game)"
+   }
+  ],
+  "pop": true
+ },
+ {
+  "v": "0.1.597",
+  "date": "2026-10-25",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "クラフト台: お告げの欄が棚の上に重ならず、持ったカレンシーの行の下に出るように。掛けると打てない・意味が無いお告げは選べないように",
+    "en": "Craft stage: the omen panel now opens below the held currency's row instead of covering the shelf, and omens that would block the craft or do nothing can no longer be selected"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "クラフト台: 選びかけ (持ったカレンシー・段の表・小窓など) は、枠の外を押すか Esc で選ぶ前に戻るように",
+    "en": "Craft stage: anything half-picked (held currency, tier tables, pop-ups) now cancels back when you click outside it or press Esc"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "クラフト台: MOD の数字を素の値で表示し、品質や聖別で上がった値は小さく添えるように",
+    "en": "Craft stage: mod values are shown without boosts, with the boosted value (quality, Sanctify, etc.) shown small next to them"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "クラフト台: 聖別したアイテムの数値を手で決められるように (カードの上の聖別の帯で倍率・最小・最大)",
+    "en": "Craft stage: set the values of a Sanctified item by hand (multiplier / Min / Max on the Sanctified bar above the card)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "クラフト台: MOD 一覧で MOD の重みを自分で直せるように (打った結果と確率の両方に効きます)",
+    "en": "Craft stage: you can now edit a mod's weight in the mod list (affects both rolls and the odds)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "MOD の段の表で、エッセンスの各段にどのエッセンスで付くかを表示し、狙う・付け方を選んだ後は段の表が閉じるように",
+    "en": "The mod tier table now shows which essence gives each essence tier, and closes after you pick a target or how to add a mod"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "アイテムのカードで、エッセンスや合金で付いた MOD を P0 / S0 と表示し、横に「エッセンス」「合金」と出すように",
+    "en": "Item cards now show mods added by an essence or alloy as P0 / S0, labeled “Essence” or “Alloy”"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "使い方・コツ: 「クラフト手順」を追加 (完成品までを 1 手ずつ。最初は不在のアミュレットで全スペル +5)。コースの説明は閉じて題と手数だけに",
+    "en": "Guide & Tips: new “Crafting guides” (build a finished item step by step, starting with +5 to all Spell Skills on an Absent Amulet); course descriptions are collapsed to title and steps"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "ベースを選ぶページの上にもほかの画面と同じタブを出し、まだ選んでいない金の指輪が選ばれて見えていたのを直しました",
+    "en": "The base selection page now shows the same tab bar as the other pages, and no longer shows Gold Ring as selected when you haven't picked it"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "スパムシミュ: 運試しの欄で Esc を押しても結果が消えないように。クラフト台: 狙う MOD を選ばずに確率を見ようとした時に一言出すように",
+    "en": "Spam simulator: pressing Esc in the luck-test panel no longer clears your results. Craft stage: a hint now appears if you try to see the odds without checking a mod to target"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "窓を閉じる時や「戻る」の連打で別のページに飛ぶ事・ベースの一覧を開いた直後の押し間違い・一部の画面の大きさで重くなる事を直しました。押せないボタンは薄く表示",
+    "en": "Fixed jumps to another page when double-tapping close or “Back”, misclicks right after opening the base list, and slowdowns at some window sizes. Disabled buttons are now dimmed"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "「最大ルーンワード」の MOD に数値が表示されていなかったのを直しました",
+    "en": "Fixed the maximum Runic Ward modifier showing without its value"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "スマホ: ヘッダーを 1 段に、ページの題を横幅いっぱいに、下へ送った時は右下に「上へ戻る」ボタン。PC はヘッダーの「ブログ」を外しました (記事は右の欄から)",
+    "en": "Phone: one-row header, full-width page titles, and a “Back to top” button at the bottom right after scrolling down. On PC the Blog button left the header (posts are in the right column)"
+   }
+  ]
+ },
+ {
   "v": "0.1.596",
   "date": "2026-10-24",
   "items": [
@@ -650,42 +747,5 @@
     "en": "Chaos spam calculator: the Share on X link is now short (exiledesk.com/s/ + 7 characters). Old long links still work"
    }
   ]
- },
- {
-  "v": "0.1.558",
-  "date": "2026-10-18",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "チュートリアルに「お告げを学ぶ」を追加: 高貴 (左右・偉大なる・重ね掛け)・消去 (左右)・カオス (削減・左右の抹消)・神 (祝福・聖別)",
-    "en": "Added the “Learn omens” tutorial: Exalt (Sinistral, Dextral, Greater, stacking), Annul (Sinistral, Dextral), Chaos (Whittling, Erasure) and Divine (Blessed, Sanctification)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "チュートリアルのお告げは、カレンシーと別のボタンで先に掛けるように",
-    "en": "In tutorials, omens now have their own button and are applied before the currency"
-   }
-  ]
- },
- {
-  "v": "0.1.557",
-  "date": "2026-10-18",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "チュートリアルに「冒涜を学ぶ」を追加: 骨 4 種と発現・左右のネクロマンシー・アビスの反響・勢力のお告げ (このアイテムに付く勢力の MOD の一覧つき)・光のお告げ・アビスのエッセンス・腐食のお告げ",
-    "en": "Added the “Learn desecration” tutorial: 4 Bones and revealing, Necromancy, Abyssal Echoes, faction omens (with a list of that faction’s mods for the item), Omen of Light, Essence of the Abyss and Omen of Putrefaction"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "アイテムの MOD の行の ↓ をなくしました。MOD を押すと MOD 一覧が開き、付いている段を枠で囲んで見せます",
-    "en": "Removed the ↓ on item mod rows. Clicking a mod opens the mod list with its current tier framed"
-   }
-  ],
-  "pop": true
  }
 ]
