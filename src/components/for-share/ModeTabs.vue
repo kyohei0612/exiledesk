@@ -3,7 +3,7 @@
   「シミュへ移るとエミュのタブが消え、戻るとシミュのタブが消える。帯を 1 つにして両方に」)。
   - エミュレーター = クラフトステージ (/)、シミュレーター = 最初のベース選び (?page=sim-base、2026-10-24 オーナー)。押すとそのページへ (ブラウザの戻るは page.ts の履歴)
   - ツリーの作りかけでエミュレーターへ移る時は page.ts の closeTreePage が確かめる (やめたら pick を出さない)
-  - シミュレーターのタブは開発版だけ (TREE_ON。本番はまだ出さない)。スマホ (768px 未満) では出さない (2026-10-25 オーナー「A でいこう」、URL で開いた時の案内はシミュの画面)
+  - シミュレーターのタブは開発版だけ (TREE_ON。本番はまだ出さない)。スマホ (768px 未満) では出さない (2026-10-25 オーナー「A でいこう」、URL で開いた時の案内はシミュの画面)。スイッチ simPhone が入っていればスマホでも出す
   - 今いる方が選ばれた見た目。active で上書きできる (エミュの画面でジェムコラプトを開いている時は null = どちらも選ばない)
   - その画面だけのタブ (エミュのジェムコラプト・アプリのチュートリアル) は既定の slot で後ろに足す
   - 並びは エミュレーター / シミュレーター / デイリー / (slot = ジェムコラプト) / コスメティック (2026-10-25 オーナー「ここの右端が良いな、目立たんし」「コスメが端かな」
@@ -33,6 +33,8 @@ function pick(m: Mode): void {
 }
 /** 右端の小さいタブ (コスメティック・デイリー)。Web だけ */
 const EXTRA = PAGES_ON && (SKINS_ON || DAILY_ON);
+/** シミュのスマホ版 (スイッチ simPhone) が入っている時だけ、スマホでもシミュレーターのタブを出す */
+const SIM_PHONE = flag("simPhone");
 const TAB_S = "g-tab min-w-[120px] !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]";
 const TAB = "g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]";
 </script>
@@ -41,7 +43,7 @@ const TAB = "g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex
   <!-- スマホは 1 段に 3 つまで折り返し、余った段は広げて埋める (2 つなら 2 列・5 つなら 3 + 2、空き枠を出さない。オーナー 10-25「2 列にしてから出して」)。slot のタブにも効くよう子に付ける -->
   <div v-if="shown" data-mode-tabs class="inline-flex flex-wrap gap-1 max-md:flex max-md:w-full" :class="EXTRA ? 'max-md:[&>*]:!grow max-md:[&>*]:!basis-[calc((100%-0.5rem)/3)]' : ''" role="tablist">
     <button type="button" role="tab" data-mode-tab="hand" :aria-selected="on === 'hand'" :class="[TAB, on === 'hand' ? 'on' : '']" @click="pick('hand')">{{ tr("エミュレーター", "Emulator") }}</button>
-    <button v-if="TREE_ON" type="button" role="tab" data-mode-tab="sim" :aria-selected="on === 'sim'" :class="[TAB, 'max-md:!hidden', on === 'sim' ? 'on' : '']" @click="pick('sim')">
+    <button v-if="TREE_ON" type="button" role="tab" data-mode-tab="sim" :aria-selected="on === 'sim'" :class="[TAB, SIM_PHONE ? '' : 'max-md:!hidden', on === 'sim' ? 'on' : '']" @click="pick('sim')">
       {{ tr("シミュレーター", "Simulator") }}<span class="text-[10px] font-normal opacity-70" :title="tr('作り込み中の機能', 'Still in development')">β</span>
     </button>
     <button v-if="EXTRA && DAILY_ON" type="button" role="tab" data-mode-tab="daily" :aria-selected="false" :class="TAB_S" @click="openDailyPage()">{{ tr("デイリー", "Daily") }}</button>
