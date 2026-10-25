@@ -22,7 +22,8 @@ function freshLoad(): boolean {
   try {
     const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
     if (nav?.type === "back_forward") return false;
-    if (nav?.type === "reload") return true;
+    // 版が替わった後の自動の読み直し (web.html の __staleReload、印は 1 分の窓の頭の時刻:回数) は人が押したのではないので作業を残す (デザイン 6 本目)
+    if (nav?.type === "reload") { const [f, n] = (sessionStorage.getItem("exiledesk-stale-reload") ?? "").split(":").map(Number); return !(n && Date.now() - (f ?? 0) < 90_000); }
     return !document.referrer || new URL(document.referrer).origin !== location.origin;
   } catch {
     return false;
