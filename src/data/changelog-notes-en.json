@@ -1,4 +1,7 @@
 {
+  "0.1.600": [
+    "Going back with the browser now keeps your Cosmetics search and filters and your spam simulator target (reloading still starts fresh)"
+  ],
   "0.1.599": [
     "Craft stage: reloading the page now starts over from base selection (coming back from an article still keeps your item)"
   ],
