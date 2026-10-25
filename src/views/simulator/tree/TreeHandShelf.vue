@@ -21,7 +21,7 @@ import { handLabel, handName, outName } from "./tree-names";
 import { treeRowTags } from "./tree-row-tags";
 import { aimKey, fractureMarks, setHand, type Aim, type Hand, type HandKind, type OutKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
-import { useSimShelf } from "../use-sim-shelf";
+import { TREE_SPAM_ORB, useSimShelf } from "../use-sim-shelf";
 import { afterQualityOf, autoCatOf, FREE_EFFECTS, handOf, hitAimsOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf } from "./tree-hand-plan";
 import { tr } from "../../../i18n/lang";
 
@@ -241,7 +241,7 @@ function ok(): void {
     <div data-tree-shelf @pointerdown="onShelfDown">
       <!-- カオススパムオーブ (シミュだけの札、レアの時だけ)。棚の札と同じ形 (ShelfButton の枠・絵・名前)、絵はカオスオーブそのまま、
            右上に「上級」「完全」と同じ形の札で「スパム」、見分けは札と枠の色だけ (10-25 オーナー、前の ↻ の印はこれに置き換え) -->
-      <button v-if="isRare || spamOn" type="button" data-tree-spam-orb :aria-pressed="spamOn" :disabled="!!spamWhy && !spamOn"
+      <button v-if="(TREE_SPAM_ORB && isRare) || spamOn" type="button" data-tree-spam-orb :aria-pressed="spamOn" :disabled="!!spamWhy && !spamOn"
         class="group relative mb-2 flex w-[74px] flex-col items-center px-0.5 pb-1 text-[10px] transition disabled:cursor-not-allowed disabled:opacity-35 md:w-[80px] md:text-[11px]"
         :class="spamOn ? 'text-[var(--exile-color-text-title)]' : ''"
         :title="spamWhy ?? tr('狙う MOD が付くまでカオスを打ち続ける (狙いの側に空きがあれば先に高貴を 1 回)。レアの時だけ', 'Keep using Chaos until a target mod lands (an Exalted Orb first if the target side has room). Rare only')" @click="holdSpam">

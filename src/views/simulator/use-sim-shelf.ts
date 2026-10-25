@@ -16,6 +16,11 @@ import { tr } from "../../i18n/lang";
  * 聖別 (聖別のお告げ。神のオーブと組む手)、神のオーブと祝福のお告げ (10-24 オーナー「神のオーブもいらんな」)、クラフトのルーン以外のルーン (ソウルコア・アイドル・遺産・効き目だけのルーン)。
  * ヒネコラの錠・鏡写しは前から共通の SIM_HIDDEN で出していない。エミュの棚は変えない
  */
+/**
+ * カオススパムオーブ (棚の上の札「スパム」、当たるまでカオス。800a5274) を出すか。10-25 オーナー「これならぶっちゃけカオススパムモードいらんわ。俺が間違ってた」で
+ * 出さない (同じ状態の箱への自動の矢印で、カオス 1 回ずつ + 外れ → 親の箱で組める)。作りは残す、要望が来たらここを true に。前に保存した当たるまでの手は開いた時に札が出る
+ */
+export const TREE_SPAM_ORB = false;
 export const TREE_HIDDEN = new Set(["OmenofSanctification", "divine", "OmenoftheBlessed"]);
 export const treeHidden = (key: string): boolean => simHidden(key) || TREE_HIDDEN.has(key) || (key.startsWith("rune:") && !CRAFT_RUNE_KEYS.includes(key));
 
