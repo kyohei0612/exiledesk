@@ -87,6 +87,9 @@ ${counts(cur.screens, p1?.screens, p7?.screens)}
 ## ブログ (記事:言語 ごとの PV)
 ${Object.keys(cur.blog).length ? `| 記事:言語 | PV | 前の日との差 | 前の週との差 |\n|---|---|---|---|\n${counts(cur.blog, p1?.blog, p7?.blog)}` : "(記録なし)"}
 
+## シミュで回した (「100 人回す」sim:run・テストラン sim:test、1 押し 1 回)
+${cur.sim ? `| 手 | 回数 | 人 | 回数の前の日との差 | 前の週との差 |\n|---|---|---|---|---|\n${["run", "test"].map((k) => `| ${k === "run" ? "100 人回す" : "テストラン"} | ${cur.sim[k].n} | ${cur.sim[k].people} | ${diff(cur.sim[k].n, p1 ? p1.sim?.[k]?.n ?? 0 : null)} | ${diff(cur.sim[k].n, p7 ? p7.sim?.[k]?.n ?? 0 : null)} |`).join("\n")}` : "(記録なし)"}
+
 ## コスメティック (静的なページ /cosmetics/、まとめ:言語 ごとの PV。アプリの一覧 ?page=skins は上の画面ごとの skins)
 ${Object.keys(cur.cosmetics ?? {}).length ? `| まとめ:言語 | PV | 前の日との差 | 前の週との差 |\n|---|---|---|---|\n${counts(cur.cosmetics, p1?.cosmetics, p7?.cosmetics)}` : "(記録なし)"}
 

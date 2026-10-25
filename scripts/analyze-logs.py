@@ -85,6 +85,12 @@ cosm = [r for r in recs["screen"] if str(r["d"].get("to", "")).startswith("cosme
 if cosm:
     print(f"\n== コスメティック: PV {len(cosm)} / 人 {len({r['uid'] for r in cosm})}", top(collections.Counter(r["d"]["to"][10:] for r in cosm), 20))
 
+# ---- シミュレーターで回した数 (2026-10-25〜、シミュ部長 29 の 64fe0a3d。「100 人回す」= screen "sim:run"、テストラン = "sim:test"。1 押し 1 回) ----
+simrun = {k: [r for r in recs["screen"] if r["d"].get("to") == f"sim:{k}"] for k in ("run", "test")}
+SIM = {k: {"n": len(v), "people": len({r["uid"] for r in v})} for k, v in simrun.items()}
+if any(x["n"] for x in SIM.values()):
+    print(f"\n== シミュで回した: 100 人回す {SIM['run']['n']} 回 / {SIM['run']['people']} 人・テストラン {SIM['test']['n']} 回 / {SIM['test']['people']} 人")
+
 # ---- ブログ (2026-10-21〜。画面名 blog:<slug>:<言語>、一覧は blog:index:<言語>) ----
 blog = [r for r in recs["screen"] if str(r["d"].get("to", "")).startswith("blog:")]
 if blog:
@@ -190,5 +196,6 @@ if AS_JSON:
         "first": sum(1 for s in sessions if (s["visit"] or {}).get("first")), "ref": dict(collections.Counter(v.get("ref") for v in vis).most_common(8)),
         "screens": dict(scr.most_common()), "blog": dict(collections.Counter(r["d"]["to"][5:] for r in blog).most_common()),
         "cosmetics": dict(collections.Counter(r["d"]["to"][10:] for r in cosm).most_common()),
+        "sim": SIM,
         "uses": len(uses), "users": len({u["uid"] for u in uses}), "used_visits": sum(1 for s in sessions if s["uses"]),
     }, ensure_ascii=False) + "\n")
