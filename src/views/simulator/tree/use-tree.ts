@@ -217,6 +217,8 @@ function reset(): void {
  * アイテムレベルだけなら木はそのまま。1 つ戻すで戻せる
  */
 function setBase(base: string, itemLevel: number): Aim[] {
+  // まだベースを選んでいない白紙 (仮の金の指輪) から選んだ時は、ここを履歴の始まりにする (Ctrl+Z で選ぶ前の金の指輪に戻った、10-25 モンキー 6)
+  const first = !doc.value.baseChosen && isBlank(doc.value);
   needBase.value = false;
   const data = s.data.value;
   const dropped: Aim[] = [];
@@ -233,6 +235,7 @@ function setBase(base: string, itemLevel: number): Aim[] {
     d.start!.mods = carryAims(data, base, itemLevel, mods).kept.map((k) => k.to);
     migrateStart(d);
   });
+  if (first) { undoStack.length = 0; redoStack.length = 0; canUndo.value = false; canRedo.value = false; }
   return dropped;
 }
 /**
