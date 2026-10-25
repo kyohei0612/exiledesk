@@ -24,9 +24,10 @@ const query = ref("");
  * 「すべて」と「一式」では一式を 1 枚のカードに (部品は出さない、二重にしない)。ほかのまとめでは部品を 1 枚ずつ
  */
 const cat = ref("");
+/** ショップで買える物も出す (札に値段)。店は PoE1 と PoE2 で共通なので、買える物を外すと PoE1 の物がほぼ消える (オーナー 10-25「ほぼ消えた、ミッドナイトパクトも PoE1 産でしょ」) */
 const setMode = computed(() => cat.value === "" || cat.value === "set");
 const cats = computed(() => SKIN_GROUPS.map((g) => ({ key: g.id, label: en.value ? g.en : g.ja, n: g.id === "set" ? (data.value?.sets ?? []).length : (data.value?.items ?? []).filter((s) => s.group === g).length })));
-/** 「すべて」の件数 (一式のカード + 一式に入っていない物。ショップで買える物はデータに無い = build-mtx-web.mjs、オーナー 10-25) */
+/** 「すべて」の件数 (一式のカード + 一式に入っていない物) */
 const allCount = computed(() => (data.value ? data.value.sets.length + data.value.items.filter((s) => !s.set).length : 0));
 const itemCard = (s: Skin): Card => ({ key: `i:${s.en}:${s.kind.ja}`, name: en.value ? s.en : s.ja, sub: en.value ? "" : s.en, kind: en.value ? s.kind.en : s.kind.ja, art: s.art, url: en.value ? s.url.en : s.url.ja, parts: 0, order: s.order, set: null, origin: s.origin });
 /** 一式のカード: 名前は「○○ 一式」、種類の行は部品の種類を並べる (例 兜スキン・靴スキン・ポートレートフレーム) */
@@ -95,7 +96,7 @@ const openParts = computed(() => (openSet.value ? openSet.value.parts.map(itemCa
     <div class="g-panel px-4 py-3 text-[13px] max-md:px-3">
       <!-- 断り (オーナー「DB 調べって話と責任持てませんって話」) -->
       <p data-skins-note class="mb-3 text-[12px] leading-relaxed text-[var(--exile-color-text-secondary)]">
-        {{ tr("PoE1 で出た MTX (マイクロトランザクション) のうち PoE2 でも使える物を、poe2db を元にまとめた一覧です (PoE2 で出た物は除く。今ショップで買える物も除く)。ゲームで実際に使えるか・見た目どおりに動くかは保証しません。", "PoE1 MTX (microtransactions) that are also usable in PoE2, listed from poe2db (items released in PoE2 are left out; items currently sold in the shop are left out too). We can't guarantee that each skin works or looks as expected in the game.") }}
+        {{ tr("PoE1 で出た MTX (マイクロトランザクション) のうち PoE2 でも使える物を、poe2db を元にまとめた一覧です (PoE2 で出た物は除く。今ショップで買える物は札に値段)。ゲームで実際に使えるか・見た目どおりに動くかは保証しません。", "PoE1 MTX (microtransactions) that are also usable in PoE2, listed from poe2db (items released in PoE2 are left out; items currently sold in the shop show their price). We can't guarantee that each skin works or looks as expected in the game.") }}
       </p>
 
       <div class="flex flex-wrap items-center gap-2">

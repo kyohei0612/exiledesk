@@ -31,11 +31,11 @@ const GROUPS = [...G.groups, G.other].map((g) => ({ ...g, items: [] }));
 const partsOf = d.sets.map(() => 0);
 const newest = d.sets.map(() => undefined);
 const originsOf = d.sets.map(() => []);
-/** ショップで買える物はデータに入っていない (build-mtx-web.mjs で外す、一式も買えない部品だけで組み直し済み。オーナー 10-25) */
+/** ショップで買える物も出す (札に値段。店は PoE1 と PoE2 で共通なので外すと PoE1 の物がほぼ消える、オーナー 10-25) */
 const items = d.items;
 for (const it of items) if (it.s != null) { partsOf[it.s]++; originsOf[it.s].push(it); if (it.o != null && !(newest[it.s] >= it.o)) newest[it.s] = it.o; }
-/** 一式の出どころ: 部品が全部同じパック / 箱ならそれ、混ざれば無し (アプリの一覧と同じ) */
-const setOrigin = (l) => (l.every((x) => x.pk && x.pk === l[0].pk) ? { pk: l[0].pk } : l.every((x) => x.bx && x.bx === l[0].bx) ? { bx: l[0].bx } : {});
+/** 一式の出どころ: 部品が全部ショップならショップ (値段は出さない)、全部同じパックならそのパック、混ざれば無し (アプリの一覧と同じ) */
+const setOrigin = (l) => (l.every((x) => x.c != null) ? { shop: 1 } : l.every((x) => x.pk && x.pk === l[0].pk) ? { pk: l[0].pk } : l.every((x) => x.bx && x.bx === l[0].bx) ? { bx: l[0].bx } : {});
 GROUPS.unshift({ ...G.set, items: d.sets.flatMap((t, i) => (partsOf[i] ? [{ ja: `${t.ja} 一式`, en: `${t.en} Set`, k: -99, a: d.items[t.main].a, slug: d.items[t.main].slug, parts: partsOf[i], o: newest[i], si: i, ...setOrigin(originsOf[i]) }] : [])) });
 const groupOf = new Map(G.groups.flatMap((g) => g.k.map((k) => [k, GROUPS.find((x) => x.id === g.id)])));
 for (const it of items) (groupOf.get(it.k) ?? GROUPS.at(-1)).items.push(it);
@@ -120,8 +120,8 @@ ${alt ? `<link rel="alternate" hreflang="${other}" href="${SITE}${LANGS[other].p
 </html>
 `;
   const note = ja
-    ? `<p class="note">poe2db の Microtransactions の一覧を元にした一覧です (PoE2 で出た物と、今ショップで買える物は除く)。ゲームで実際に使えるか・見た目どおりに動くかは保証しません。カードを押すと poe2db のページが開きます。</p>`
-    : `<p class="note">Based on the poe2db Microtransactions list (items released in PoE2 and items currently sold in the shop are left out). We can't guarantee that each item works or looks as expected in the game. Click a card to open it on poe2db.</p>`;
+    ? `<p class="note">poe2db の Microtransactions の一覧を元にした一覧です (PoE2 で出た物は除く。今ショップで買える物は札に値段)。ゲームで実際に使えるか・見た目どおりに動くかは保証しません。カードを押すと poe2db のページが開きます。</p>`
+    : `<p class="note">Based on the poe2db Microtransactions list (items released in PoE2 are left out; items currently sold in the shop show their price). We can't guarantee that each item works or looks as expected in the game. Click a card to open it on poe2db.</p>`;
   const cta = `<p><a class="cta" href="${L.skins}">${ja ? "名前で探す・種類で絞る (ExileDesk のコスメティックの一覧)" : "Search and filter (ExileDesk cosmetics list)"}</a></p>`;
   /** 発売が新しい順 (build-mtx-web.mjs の o、一式は中の一番新しい物)、日付が分からない物は最後で名前の順 (アプリの一覧と同じ) */
   const sortByNew = (list) => [...list].sort((a, b) => (b.o ?? -1) - (a.o ?? -1) || L.name(a).localeCompare(L.name(b), code));
@@ -130,7 +130,7 @@ ${alt ? `<link rel="alternate" hreflang="${other}" href="${SITE}${LANGS[other].p
     const img = it.a != null ? `<img src="/mtx-art/${it.a}.webp" alt="${esc(L.name(it))}" loading="lazy" decoding="async" width="128" height="128" />` : `<span class="ph"></span>`;
     const sub = L.sub(it);
     // 出どころの札 (取れた物だけ、小さく。オーナー 10-25)
-    const origin = it.pk ? (ja ? `パック: ${it.pk}` : `Pack: ${it.pk}`) : it.bx ? (ja ? `ボックス: ${it.bx}` : `Box: ${it.bx}`) : it.rr ? (ja ? "レースの報酬" : "Race reward") : "";
+    const origin = it.c != null || it.shop ? (ja ? `ショップ${it.c != null ? ` ${it.c}` : ""}` : `Shop${it.c != null ? ` ${it.c}` : ""}`) : it.pk ? (ja ? `パック: ${it.pk}` : `Pack: ${it.pk}`) : it.bx ? (ja ? `ボックス: ${it.bx}` : `Box: ${it.bx}`) : it.rr ? (ja ? "レースの報酬" : "Race reward") : "";
     const tag = origin ? `<em>${esc(origin)}</em>` : "";
     const badge = it.parts ? `<i>${ja ? `${it.parts} 点` : `${it.parts} pcs`}</i>` : "";
     return `<a class="card" href="${(ja ? d.url.ja : d.url.en) + it.slug}" target="_blank" rel="noopener">${tag}${badge}${img}<b>${esc(L.name(it))}</b>${sub ? `<span>${esc(sub)}</span>` : ""}</a>`;

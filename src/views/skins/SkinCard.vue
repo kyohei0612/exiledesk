@@ -11,7 +11,7 @@ import type { SkinCardData, SkinOrigin } from "./skins";
 defineProps<{ card: SkinCardData }>();
 defineEmits<{ open: [] }>();
 const originLabel = (o: SkinOrigin): string =>
-  o.kind === "pack" ? tr(`パック: ${o.name}`, `Pack: ${o.name}`) : o.kind === "box" ? tr(`ボックス: ${o.name}`, `Box: ${o.name}`) : tr("レースの報酬", "Race reward");
+  o.kind === "shop" ? tr(`ショップ${o.cost != null ? ` ${o.cost}` : ""}`, `Shop${o.cost != null ? ` ${o.cost}` : ""}`) : o.kind === "pack" ? tr(`パック: ${o.name}`, `Pack: ${o.name}`) : o.kind === "box" ? tr(`ボックス: ${o.name}`, `Box: ${o.name}`) : tr("レースの報酬", "Race reward");
 /** 読めなかった絵 (枠だけ残す) */
 const broken = ref(false);
 const cls = "group relative flex min-w-0 flex-col items-center rounded-xl border border-white/[0.06] bg-black/25 p-4 text-center no-underline transition hover:border-amber-400/40 hover:bg-white/[0.05] max-md:p-2";
@@ -27,7 +27,7 @@ const cls = "group relative flex min-w-0 flex-col items-center rounded-xl border
     @click="card.set && $emit('open')"
   >
     <!-- 出どころの札 (取れた物だけ、小さく) -->
-    <span v-if="card.origin" data-skins-origin class="absolute left-2 top-2 max-w-[60%] truncate rounded-full px-2 py-0.5 text-[10px]" :class="card.origin.kind === 'pack' ? 'bg-sky-500/20 text-sky-200' : card.origin.kind === 'box' ? 'bg-violet-500/20 text-violet-200' : 'bg-white/10 text-white/70'">{{ originLabel(card.origin) }}</span>
+    <span v-if="card.origin" data-skins-origin class="absolute left-2 top-2 max-w-[60%] truncate rounded-full px-2 py-0.5 text-[10px]" :class="card.origin.kind === 'shop' ? 'bg-emerald-500/20 text-emerald-200' : card.origin.kind === 'pack' ? 'bg-sky-500/20 text-sky-200' : card.origin.kind === 'box' ? 'bg-violet-500/20 text-violet-200' : 'bg-white/10 text-white/70'">{{ originLabel(card.origin) }}</span>
     <span v-if="card.parts" class="absolute right-2 top-2 rounded-full bg-amber-500/20 px-2 py-0.5 text-[11px] font-bold text-amber-200">{{ tr(`${card.parts} 点`, `${card.parts} pcs`) }}</span>
     <span class="grid h-[136px] w-full place-items-center max-md:h-[120px]">
       <img v-if="card.art && !broken" :src="card.art" alt="" loading="lazy" decoding="async" draggable="false" class="max-h-[128px] max-w-[128px] object-contain transition group-hover:scale-105 max-md:max-h-[112px] max-md:max-w-[112px]" @error="broken = true" />
