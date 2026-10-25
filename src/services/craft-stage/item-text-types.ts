@@ -87,7 +87,15 @@ export interface ItemTextMod {
   pasteTierName?: string;
   /** トレードのサイトの段の表記 (行頭の P6・S0 の数字)。0 = エッセンス・完全エッセンス・合金の MOD (2026-10-24 オーナーの見本) */
   pasteTier?: number;
+  /**
+   * 1 行の値を 2 つ以上の MOD で分けた (トレード・ゲームのコピーは同じ能力値の行を 1 行に足して出す、見本 t3 10-25)。
+   * values・shownValues はこの MOD の分 (段の幅に収まるように割った目安)
+   */
+  summed?: true;
 }
+
+/** 貼り付けの読み方の 1 通り (明示の MOD と、MOD に数えなかった行)。readings の先頭が mods と同じ */
+export interface ItemTextReading { mods: ItemTextMod[]; skipped: ItemTextSkip[] }
 
 /** 読めなかった・MOD に数えなかった行の理由 */
 export type ItemTextSkipCode =
@@ -98,6 +106,7 @@ export type ItemTextSkipCode =
   | "hybridPart"  // 2 行で 1 つの MOD のもう 1 行 (MOD は 1 つに数えた)
   | "corruptionUnknown" // コラプトした物で、置き場にもコラプトの表にも無い行
   | "pseudoTotal" // トレードの合計の行 (「最大マナ合計 +160」、MOD ではない)
+  | "unexplained" // 池の MOD のどの組み合わせ (段の幅・枠・系統) でも説明できない行 (推し量らない)
   | "flaskCharmUnsupported"; // フラスコ・チャーム (エンジンに無い、オーナー 10-20 決定。base は null)
 
 export interface ItemTextSkip { line: string; code: ItemTextSkipCode; reason: ItemTextWords }
@@ -133,4 +142,9 @@ export interface ItemTextResult {
   /** 値段の行 (`~b/o 69420 mirror` の `69420 mirror`) */
   price: string | null;
   skipped: ItemTextSkip[];
+  /**
+   * 明示の MOD の読み方が 2 通り以上ある時だけ (ハイブリッドか別々の 2 つか・和の分け方、10-25)。先頭 = mods と skipped の読み (一番もっともらしい)、
+   * 2 つ目からがほかの候補 (画面で 1 押しで切り替える用)。未発現の枠は含まない
+   */
+  readings?: ItemTextReading[];
 }

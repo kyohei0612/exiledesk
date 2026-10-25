@@ -23,7 +23,8 @@ import { anointOfLine } from "../mods/anoint";
 import { unboost } from "./boosts";
 import type { StageItem } from "./types";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
-import type { ItemTextBoost, ItemTextCorruption, ItemTextImplicit, ItemTextResult, ItemTextSkip, ItemTextSkipCode, ItemTextWords } from "./item-text-types";
+import type { ItemTextBoost, ItemTextCorruption, ItemTextImplicit, ItemTextMod, ItemTextResult, ItemTextSkip, ItemTextSkipCode, ItemTextWords } from "./item-text-types";
+import { solveLines, splitSums, type SolveLine, type Solution } from "./item-text-solve";
 
 const REASON: Readonly<Record<ItemTextSkipCode, ItemTextWords>> = {
   noBase: { ja: "ベースが分からない (MOD の置き場が決まらない)", en: "Unknown base type (the mod pool cannot be chosen)" },
@@ -34,6 +35,7 @@ const REASON: Readonly<Record<ItemTextSkipCode, ItemTextWords>> = {
   flaskCharmUnsupported: { ja: "フラスコ・チャームは未対応", en: "Flasks and charms are not supported" },
   corruptionUnknown: { ja: "コラプトした物で、クラフトの MOD にも poe2db のコラプトの表にも無い (不明)", en: "Corrupted item: not a craftable modifier and not in poe2db's corruption list (unknown)" },
   pseudoTotal: { ja: "トレードの合計の行 (MOD ではない)", en: "Trade site total line (not a modifier)" },
+  unexplained: { ja: "このベースの MOD のどの組み合わせでも説明できない (段の幅・枠・系統)", en: "No combination of this base's modifiers explains this line (tier ranges, affix slots, groups)" },
 };
 const skip = (line: string, code: ItemTextSkipCode): ItemTextSkip => ({ line, code, reason: REASON[code] });
 
@@ -318,9 +320,75 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
   const tierWith = (m: Mod, b: Body): { index: number; fits: boolean } =>
     // エッセンスの段はエッセンスの強さで決まり、アイテムレベルの縛りは無い (パーフェクトのエッセンスの段も同じ)
     tierOf(m, signed(m, b.values), pctOf(boostsFor(m, b)), /essence/.test(String(m.source)) ? Infinity : level);
-  pairHybrids(data, out, picked, tierWith);
-  for (const pk of picked) {
-    const { b, fixed } = pk;
+  // 明示の行を池の MOD の組み合わせで説明する (ハイブリッド・同じ能力値の和、item-text-solve.ts)。値の数と能力値の数が合わない行・アルダーの行はそのまま
+  type Entry = { b: Body; mod: Mod; fixed?: { index: number; fits: boolean }; solved?: { index: number; values: number[]; shown: number[]; summed: boolean }; at: number };
+  // 能力値 (段の stats)。エッセンスの MOD は stats を持たないので、同じクラスの同じ文の MOD から借りる
+  const ownStats = (m: Mod): readonly string[] => (m.tiers[0] as { stats?: string[] } | undefined)?.stats ?? [];
+  const byText = new Map<string, readonly string[]>();
+  for (const m of data.mods.values()) if (out.cls && m.id.startsWith(out.cls + "/") && m.text && ownStats(m).length && !byText.has(m.text)) byText.set(m.text, ownStats(m));
+  const statsOf = (m: Mod): readonly string[] => (ownStats(m).length ? ownStats(m) : (m.text && byText.get(m.text)) || []);
+  const free =picked.filter((p) => !p.fixed && statsOf(p.mod).length > 0 && statsOf(p.mod).length === p.b.values.length);
+  const rest: Entry[] = picked.filter((p) => !free.includes(p)).map((p) => ({ ...p, at: used.indexOf(p.b) }));
+  const cls = classOfBase(data, out.base!.en);
+  const poolIds = new Set([cls?.pools.normal, cls?.pools.essence, cls?.pools.desecrated, cls?.pools.otherworldly].flatMap((p) => (p ? [...p.prefixes, ...p.suffixes] : [])));
+  for (const p of free) poolIds.add(p.mod.id);
+  // エッセンス・合金・冒涜の MOD は置き場の池に無い物もある (クラスの表で付く、見本 n1 の火耐性 34% (crafted))。同じクラスの普通でない MOD も足す
+  for (const m of data.mods.values()) if (out.cls && m.id.startsWith(out.cls + "/") && String(m.source ?? "normal") !== "normal") poolIds.add(m.id);
+  const pool = [...poolIds].map((id) => data.mods.get(id)).filter((m): m is Mod => !!m && !/\/Rune_/.test(m.id) && (m.type === "prefix" || m.type === "suffix"));
+  const linePct = (i: number, m: Mod): number => pctOf(boostsFor(m, free[i]!.b));
+  const solveIn: SolveLine[] = free.map((p) => ({ stats: statsOf(p.mod), values: p.b.values, note: p.b.note, ...(p.b.side ? { side: p.b.side } : {}), ...(p.b.tradeTier !== undefined ? { tradeTier: p.b.tradeTier } : {}) }));
+  const sols = free.length ? solveLines({
+    lines: solveIn,
+    pool, fixed: rest.map((p) => p.mod), limit: out.count.limit,
+    levelOf: (m) => (/essence/.test(String(m.source)) ? Infinity : level), pctOf: linePct, statsOf,
+  }) : [];
+  /** 割り当て 1 通り → 出す行の並び (2 行にまたがる MOD は「a / b」の 1 つ、和の行は MOD ごとに値を割る) と、MOD に数えなかった行 */
+  const entriesOf = (sol: Solution): { list: Entry[]; skipped: ItemTextSkip[] } => {
+    const list: Entry[] = [...rest], skipped: ItemTextSkip[] = [];
+    const per = free.map(() => 0);
+    for (const pk of sol.picks) for (const i of new Set(pk.lines)) per[i]!++;
+    const split = splitSums(sol, solveIn, linePct, per, statsOf);
+    for (const [n, pk] of sol.picks.entries()) {
+      const ls = [...new Set(pk.lines)], main = free[pk.lines[0]!]!.b;
+      const vals = statsOf(pk.mod).map((s, j) => { const l = free[pk.lines[j]!]!.b; return l.values[statsOf(free[pk.lines[j]!]!.mod).indexOf(s)] ?? 0; });
+      const b: Body = ls.length > 1 ? { ...main, text: ls.map((i) => free[i]!.b.text).join(" / "), values: vals } : { ...main, values: vals };
+      const summed = pk.lines.some((i) => per[i]! > 1);
+      const raw = statsOf(pk.mod).map((_, j) => split.get(`${n}:${j}`) ?? unboost(signed(pk.mod, [vals[j]!]), linePct(pk.lines[j]!, pk.mod))[0]!);
+      const shown = summed ? raw.map((v, j) => Math.trunc(v * (1 + linePct(pk.lines[j]!, pk.mod) / 100))).map(Math.abs) : [...vals];
+      list.push({ b, mod: pk.mod, solved: { index: pk.tier, values: raw, shown, summed }, at: used.indexOf(main) });
+    }
+    const primary = new Set(sol.picks.map((pk) => pk.lines[0]!));
+    free.forEach((p, i) => { if (per[i]! > 0 && !primary.has(i)) skipped.push(skip(p.b.line, "hybridPart")); });
+    // どの組み合わせでも説明できない行: コラプトした物は今までどおり段に収まらないの印 (コラプトで値が変わったかは推し量らない)、ほかは読めなかった行
+    for (const i of sol.unexplained) {
+      if (out.corrupted > 0) list.push({ ...free[i]!, at: used.indexOf(free[i]!.b) });
+      else skipped.push(skip(free[i]!.b.line, "unexplained"));
+    }
+    return { list: list.sort((a, c) => a.at - c.at), skipped };
+  };
+  const emit = (list: readonly Entry[], into: ItemTextMod[]): void => { for (const pk of list) emitOne(pk, into); };
+  if (!sols.length) emit([...picked.map((p) => ({ ...p, at: used.indexOf(p.b) }))], out.mods);
+  else {
+    const first = entriesOf(sols[0]!);
+    emit(first.list, out.mods);
+    out.skipped.push(...first.skipped);
+    // ほかの読み方の候補は、読めない行と和の行の数が一番目と同じで、行の組み方 (どの行どうしが 1 つの MOD か) が違う物だけ。
+    // 出どころだけの違い (印の無いコピーの普通の MOD ⇄ エッセンスの MOD) は候補にしない (印が無ければ見分けられず、組み合わせで増える)
+    const groups = (s: Solution): string => s.picks.map((p) => [...new Set(p.lines)].sort().join("+")).sort().join(",");
+    const same = sols.filter((s, k) => k === 0 || (s.score[0] === sols[0]!.score[0] && s.score[1] === sols[0]!.score[1] && groups(s) !== groups(sols[0]!)));
+    // 出す形 (MOD・段・値) が同じ読み方は 1 つに (コラプトした物は説明できない行を今までどおり出すので、割り当てが違っても同じ形になる)
+    const shape = (ms: readonly ItemTextMod[]): string => ms.map((m) => `${m.modId}@${m.tier?.index}:${m.values.join(",")}`).join("|");
+    const readings = [{ mods: [...out.mods], skipped: [...first.skipped] }];
+    for (const s of same.slice(1)) {
+      const e = entriesOf(s), mods: ItemTextMod[] = [];
+      emit(e.list, mods);
+      if (!readings.some((r) => shape(r.mods) === shape(mods))) readings.push({ mods, skipped: e.skipped });
+    }
+    if (readings.length > 1) out.readings = readings;
+  }
+  function emitOne(pk: Entry, into: ItemTextMod[]): void {
+    const { b } = pk;
+    const fixed = pk.fixed ?? (pk.solved ? { index: pk.solved.index, fits: true } : undefined);
     let mod = pk.mod;
     let t = fixed ?? tierWith(mod, b);
     // トレードの段 0 はエッセンス・完全エッセンス・合金の MOD (見本 t1・t2): 値の幅で普通の MOD に読まず、同じクラスの同じ文のエッセンスの MOD を先に (収まる物から)。
@@ -351,59 +419,18 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
     }
     const side = mod.type === "prefix" || mod.type === "suffix" ? mod.type : (b.side ?? null);
     const { index, fits } = t;
-    const boosts = fixed ? [] : boostsFor(mod, b);
-    out.mods.push({
+    const boosts = pk.fixed ? [] : boostsFor(mod, b);
+    into.push({
       text: b.text, modId: mod.id, source: String(mod.source ?? "normal"), side, sideFrom: b.side ? "paste" : "engine",
       tier: { index, of: mod.tiers.length, label: `T${mod.tiers.length - index}`, name: String(mod.tiers[index]?.name ?? ""), fits },
-      values: unboost(signed(mod, b.values), pctOf(boosts)), shownValues: [...b.values], boosts,
+      values: pk.solved?.values ?? unboost(signed(mod, b.values), pctOf(boosts)), shownValues: pk.solved?.shown ?? [...b.values], boosts,
+      ...(pk.solved?.summed ? { summed: true as const } : {}),
       fractured: b.note === "fractured", desecrated: b.note === "desecrated" || mod.source === "desecrated", crafted: b.note === "crafted",
       unrevealed: false,
       ...(out.corrupted > 0 && !fits ? { corruption: { status: "unknown" as const } } : {}),
       ...(b.tierName ? { pasteTierName: b.tierName } : {}),
       ...(b.tradeTier !== undefined ? { pasteTier: b.tradeTier } : {}),
     });
-  }
-}
-
-/**
- * ハイブリッド (能力値 2 つで 1 つの MOD、セプターの「スピリット% + 最大マナ」など) が 2 行に分かれて読まれた物を 1 つにまとめる (見本 n6、オーナー 10-25)。
- * まとめるのは、そのままだと有り得ない形の時だけ: 同じ MOD が 2 行ある・側の枠を超える。別々の 2 つの MOD とも読める時は推し量らない。
- * 組 = 同じ印 (✦・冒涜など) で同じ側の、能力値 1 つの MOD の 2 行で、両方の値が同じクラスのハイブリッドの同じ段に収まる物。2 行目は hybridPart で飛ばす。
- * 合算された 1 行 (トレードの日本語の「スピリットが80%増加する」= 素の MOD + ハイブリッドの片割れ、見本 t3) は分けず、段に収まらないの印のまま
- */
-function pairHybrids(
-  data: PatchData, out: ItemTextResult, picked: { b: Body; mod: Mod; fixed?: { index: number; fits: boolean } }[],
-  tierWith: (m: Mod, b: Body) => { index: number; fits: boolean },
-): void {
-  const statsOf = (m: Mod): readonly string[] => (m.tiers[0] as { stats?: string[] } | undefined)?.stats ?? [];
-  const limit = out.count.limit;
-  const odd = (): boolean => {
-    const free = picked.filter((p) => !p.fixed);
-    const n = (side: string): number => free.filter((p) => p.mod.type === side).length;
-    return free.some((p, i) => free.findIndex((q) => q.mod.id === p.mod.id) !== i) || (!!limit && (n("prefix") > limit.prefix || n("suffix") > limit.suffix));
-  };
-  const cls = out.cls;
-  if (!cls) return;
-  const hybrids = [...data.mods.values()].filter((h) => h.id.startsWith(cls + "/") && statsOf(h).length === 2 && (h.type === "prefix" || h.type === "suffix"));
-  while (odd()) {
-    let done = false;
-    for (let i = 0; i < picked.length && !done; i++) {
-      for (let j = 0; j < picked.length && !done; j++) {
-        const a = picked[i]!, b = picked[j]!;
-        if (i === j || a.fixed || b.fixed || a.b.note !== b.b.note || a.mod.type !== b.mod.type || a.b.values.length !== 1 || b.b.values.length !== 1) continue;
-        const sa = statsOf(a.mod), sb = statsOf(b.mod);
-        if (sa.length !== 1 || sb.length !== 1 || sa[0] === sb[0]) continue;
-        const h = hybrids.find((x) => x.type === a.mod.type && statsOf(x)[0] === sa[0] && statsOf(x)[1] === sb[0]);
-        if (!h) continue;
-        const both: Body = { ...a.b, text: `${a.b.text} / ${b.b.text}`, values: [a.b.values[0]!, b.b.values[0]!] };
-        if (!tierWith(h, both).fits) continue;
-        picked[i] = { b: both, mod: h };
-        picked.splice(j, 1);
-        out.skipped.push(skip(b.b.line, "hybridPart"));
-        done = true;
-      }
-    }
-    if (!done) return;
   }
 }
 
