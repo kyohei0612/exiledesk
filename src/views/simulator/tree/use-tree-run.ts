@@ -23,11 +23,13 @@ const walkMs = (len: number): number => Math.max(40, Math.min(450, Math.round(20
 /**
  * 1 人目が同じ所に 3 秒とどまったら、そこを抜けるまで早送り (10-25 オーナー「1人目沼ったら長い時間待つ」「3秒同じとこにとどまったら高速化で」)。
  * 同じ所 = 直近 3 秒の手が LOOP_BOXES 箱以内で、どの箱も平均 2 回以上通るくり返し (カオスの外れ → 親の箱、冒涜の外れ → エッセンスの結果 3 つ → 冒涜の輪など)。
- * 早送りは輪の長さによらず FAST_MS ほどで抜け、抜けたら元の速さ
+ * 早送りは輪の長さによらず FAST_MS ほどで抜け、抜けたら元の速さ。一度早送りした輪にまた入ったら 3 秒待たずにすぐ早送り (10-25 オーナー)
  */
 const STAY_MS = 3000;
 const LOOP_BOXES = 6;
 const FAST_MS = 1200;
+/** 一度早送りした輪にまた入った時の早送りの長さ (見たことのある輪なので短く) */
+const FAST_AGAIN_MS = 400;
 const FRAME_MS = 30;
 
 /** onHalt = 止まった人が出て止めた時 (その箱へ寄る)。onWalk = 1 人目が箱に着いた時 (i = 何箱目、0 で全体を表示して、後は外れた時だけ見える所へ) */
@@ -75,20 +77,30 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
       const stayN = Math.ceil(STAY_MS / ms);
       // since = 元の速さで進み始めた手 (早送りの後は 3 秒数え直す)
       let since = 0;
+      /** 一度早送りした輪 (箱の組) */
+      const known: Set<string>[] = [];
       for (let i = 0; i < path.length && !skip; i++) {
         trail.add(path[i]!.box);
         walk.value = { box: path[i]!.box, step: i + 1, total: path.length, cost: path[i]!.cost, ms, trail: new Set(trail), fast: false };
         onWalk(path[i]!.box, i);
         await new Promise((res) => setTimeout(res, ms));
         if (my !== token) return;
-        if (i - since + 1 < stayN) continue;
-        const stay = new Set(path.slice(i - stayN + 1, i + 1).map((v) => v.box));
-        if (stay.size > LOOP_BOXES || stay.size * 2 > stayN) continue;
+        // 一度早送りした輪にまた入ったら (今の箱と次の箱がその輪の箱)、3 秒待たずにすぐ早送り (10-25 オーナー「同じルートまた来たら早送りでいいな 今毎回3秒考えてるでしょ」)
+        const again = i + 1 < path.length ? known.find((L) => L.has(path[i]!.box) && L.has(path[i + 1]!.box)) : undefined;
+        let stay: Set<string>;
+        if (again) stay = again;
+        else {
+          if (i - since + 1 < stayN) continue;
+          stay = new Set(path.slice(i - stayN + 1, i + 1).map((v) => v.box));
+          if (stay.size > LOOP_BOXES || stay.size * 2 > stayN) continue;
+        }
         let j = i + 1;
         while (j < path.length && stay.has(path[j]!.box)) j++;
         const n = j - 1 - i;
-        if (!n) continue;
-        const frames = Math.max(1, Math.min(Math.round(FAST_MS / FRAME_MS), n));
+        // 覚えた輪を通り抜けるだけ (1 手) は早送りしない
+        if (!n || (again && n < 2)) continue;
+        if (!again) known.push(stay);
+        const frames = Math.max(1, Math.min(Math.round((again ? FAST_AGAIN_MS : FAST_MS) / FRAME_MS), n));
         for (let f = 1; f <= frames && !skip; f++) {
           const at = i + Math.round((n * f) / frames);
           walk.value = { box: path[at]!.box, step: at + 1, total: path.length, cost: path[at]!.cost, ms: FRAME_MS, trail: new Set(trail), fast: true };
