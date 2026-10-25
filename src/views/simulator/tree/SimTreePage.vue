@@ -294,7 +294,14 @@ const checkBusy = computed((): { text: string; n?: number; of?: number } | null 
 function goIssue(id: string): void { void v.reveal(id, true); }
 
 /** 整列して、全体に合わせる (1 つ戻すで元の並びへ) */
-const tidyOf = (d: typeof doc.value): void => tidy(d);
+// 札の幅は名前を切らない幅 (… で切れている分を足す) × 今の倍率で拡げる分 (全体表示で並んでも重ならない)
+const chipNatural = (id: string): number | undefined => {
+  const el = document.querySelector<HTMLElement>(`[data-hand-of="${id}"]`);
+  if (!el) return undefined;
+  const name = el.querySelector<HTMLElement>(".truncate");
+  return (el.offsetWidth + (name ? name.scrollWidth - name.clientWidth : 0)) * Math.max(1, inv.value);
+};
+const tidyOf = (d: typeof doc.value): void => tidy(d, chipNatural);
 async function onTidy(): Promise<void> {
   t.edit(tidyOf);
   await v.fit();

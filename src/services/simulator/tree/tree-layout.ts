@@ -45,9 +45,11 @@ function rowsOf(d: TreeDoc, kids: (id: string) => string[]): Map<string, number>
 /**
  * 整列 (2026-10-22 オーナー「ごちゃっとなってるのを整列。2 段目を合わせる、矢印が重ならない」):
  * 行 (rowsOf: 当たりの箱は揃った狙いの数の段) ごとに横一列、兄弟は親の下に OUT_ORDER の順。行ごとの輪郭で寄せるので箱は重ならない。
- * 始まりの箱は x = 0 のまま。線は直角の木の線、戻りの矢印は既定では引かない (画面の側、SimTreePage の edges・backLine。10-22 整列の定義)
+ * 始まりの箱は x = 0 のまま。線は直角の木の線、戻りの矢印は既定では引かない (画面の側、SimTreePage の edges・backLine。10-22 整列の定義)。
+ * chipW = 箱の下の手の札の幅 (ツリーの座標、名前を切らない幅。画面で測って渡す)。札も行の輪郭に入れて、同じ高さに並ぶ札どうしも TIDY_GAP 空ける
+ * (10-25 オーナー「ここが詰まるな」= ルーンの合金と無限のパーフェクトエッセンスの札が並んで名前が切れた。前は箱だけで寄せていた)
  */
-export function tidy(d: TreeDoc): void {
+export function tidy(d: TreeDoc, chipW?: (id: string) => number | undefined): void {
   const kids = (id: string): string[] => {
     const b = d.boxes[id]!;
     b.outs = b.outs.map((o, i) => ({ o, i })).sort((a, z) => OUT_ORDER[d.boxes[a.o]!.out] - OUT_ORDER[d.boxes[z.o]!.out] || a.i - z.i).map((x) => x.o);
@@ -92,6 +94,9 @@ export function tidy(d: TreeDoc): void {
     }
     ks.forEach((k, i) => rel.set(k, offs[i]! - px));
     const out: Contour = new Map([[me, [0, BOX_W]]]);
+    // 手の札 (箱の下の真ん中、行の間 = me + 0.5)
+    const w = ks.length ? chipW?.(id) : undefined;
+    if (w) put(out, me + 0.5, BOX_W / 2 - w / 2, BOX_W / 2 + w / 2);
     for (const [r, [l, rr]] of acc) put(out, r, l - px, rr - px);
     return out;
   };
