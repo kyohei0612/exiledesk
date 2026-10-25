@@ -6,7 +6,7 @@
  * その下の箱 = 親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
-import { aimHits as hits, applyCurrency, baseSocketsOf, catalystOf, forceKey, freshItem, kindOf, mulberry32, omenBlock, OMEN_FOR, revealOffers, runeIdByName, tierIndexOf, unrevealedOf, useReason, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimDone, aimHits as hits, applyCurrency, room, sideOfMod, baseSocketsOf, catalystOf, forceKey, freshItem, kindOf, mulberry32, omenBlock, OMEN_FOR, revealOffers, runeIdByName, tierIndexOf, unrevealedOf, useReason, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { fractureStart, stepOutcomes } from "../../craft-stage/engine-sim";
 import { catalystFull, catalystTagOf, fillCatalyst } from "../../craft-stage/engine-sim";
 import { aimHeldOn, isAimMod, junkOf } from "./tree-aim";
@@ -147,14 +147,22 @@ export const SPAM_CAP = 5000;
  */
 export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => number, aims: readonly Aim[] = [], use?: (key: string, n?: number) => void, miss = false): StageApply {
   if (h.repeat) {
+    // カオススパム = まとめた設定 (10-25 オーナー・ブラック): 狙いの側に空きがあれば高貴を 1 回 → カオス (お告げ込み) を 1 回ずつ、選んだ狙いのどれかが付いたら当たり。
+    // 1 手ずつはエンジンの applyCurrency (applyHand)、当たりはエンジンの aimDone。ツリーの物は繰り返す順番だけ (スパムシミュは使わない、オーナー「あっちはカオスオーブ全部打つ仕組み」)
     const cap = h.repeat.max ?? SPAM_CAP;
+    const open = targetsOf(data, aims).filter((t) => !aimDone(item, [t]));
+    const done = (x: StageItem): boolean => open.some((t) => aimDone(x, [t]));
     let r: StageApply = { applied: false, item, added: [], removed: [] };
     let it = item;
+    if (aims.some((a, i) => !aimDone(item, [targetsOf(data, aims)[i]!]) && room(it, sideOfMod(data, a.modId)))) {
+      const e = playHand(data, it, { ...h, currency: "exalt", omens: [], catalyst: null, repeat: null }, rng, aims, use, miss);
+      if (e.applied) { it = e.item; r = { ...e, applied: true }; if (done(it)) return r; }
+    }
     for (let i = 0; i < cap; i++) {
-      r = playHand(data, it, { ...h, repeat: null }, rng, aims, use, miss);
-      if (!r.applied) return i ? { ...r, applied: true, item: it } : r;
-      it = r.item;
-      if (outcomeOf(data, item, it, aims, h.currency).out === "hit") break;
+      const c = playHand(data, it, { ...h, repeat: null }, rng, aims, use, miss);
+      if (!c.applied) return it !== item ? { ...c, applied: true, item: it } : c;
+      r = c; it = c.item;
+      if (done(it)) break;
     }
     return { ...r, item: it };
   }
