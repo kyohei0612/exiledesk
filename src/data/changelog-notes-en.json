@@ -1,4 +1,10 @@
 {
+  "0.1.602": [
+    "Simulator: The final item is now shown as an item card at the top left of the tree, so you can build while looking at it (collapsible)",
+    "Simulator: The result boxes of a craft now only show outcomes that can actually happen for that item and omens (crafts that can remove a target mod already on the starting item, such as essences, Annulment, Chaos and Desecration, now show the “target lost” result)",
+    "Simulator: The first-run replay when running 100 crafters is now 3x faster, and a loop that was already fast-forwarded is skipped right away the next time",
+    "Simulator: Entering the base price now adds it to the per-item cost right away, without re-running"
+  ],
   "0.1.601": [
     "Simulator (beta) is out: pick a base and target mods, then build your craft route as a tree (the “Simulator” tab at the top)",
     "Run your route 100 times to see the completion rate and average cost",
