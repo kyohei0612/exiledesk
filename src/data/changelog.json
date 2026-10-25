@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.603",
+  "date": "2026-10-25",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 消去で外れが消えた後に先の手を足せるように・打てない理由の文を正しく・冒涜の MOD はフラクチャーの印を付けられないように",
+    "en": "Simulator: You can now add crafts after an annul removes a miss, the “can’t craft” reason is now accurate, and desecrated mods can no longer be marked for Fracture"
+   }
+  ]
+ },
+ {
   "v": "0.1.602",
   "date": "2026-10-25",
   "items": [
@@ -734,24 +746,5 @@
     "en": "Desecration reveal: options now appear one by one with a glow, like the Well of Souls (rerolls too; the reroll arrow disappears after use)"
    }
   ]
- },
- {
-  "v": "0.1.563",
-  "date": "2026-10-18",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "MOD 一覧の「付ける」で、普通の MOD も冒涜で付けられるように・お告げは打っても掛けたままに (切り替えのチェックは無くしました。外す時はもう一度押す)",
-    "en": "Mod list “Add”: normal mods can now be added as Desecrated. Omens now stay on after you craft (the toggle is gone; click an omen again to remove it)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "品質の帯を 1 行に揃える・カレンシーの名前を切りの良い所で折る・チュートリアルの「β」を外す・MOD 一覧のタブをほかのタブと同じ見た目に",
-    "en": "Quality bar fits on one line, currency names wrap at natural points, “β” removed from Tutorial, mod list tabs match the other tabs"
-   }
-  ],
-  "pop": true
  }
 ]

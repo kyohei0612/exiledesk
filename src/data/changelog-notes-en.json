@@ -1,4 +1,7 @@
 {
+  "0.1.603": [
+    "Simulator: You can now add crafts after an annul removes a miss, the “can’t craft” reason is now accurate, and desecrated mods can no longer be marked for Fracture"
+  ],
   "0.1.602": [
     "Simulator: The final item is now shown as an item card at the top left of the tree, so you can build while looking at it (collapsible)",
     "Simulator: The result boxes of a craft now only show outcomes that can actually happen for that item and omens (crafts that can remove a target mod already on the starting item, such as essences, Annulment, Chaos and Desecration, now show the “target lost” result)",
