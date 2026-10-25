@@ -114,7 +114,7 @@ const RESULT: Record<HandKind, [string, string]> = {
   add: ["当たり + 外れ", "Hit + Miss"], remove: ["外れが消えた + 狙いが消えた", "Miss removed + Target lost"], swap: ["当たり + 狙いが消えた + 外れ", "Hit + Target lost + Miss"], spam: ["当たりだけ (狙いの側に空きがあれば先に高貴を 1 回、その後は当たるまでカオス)", "Hits only (an Exalted Orb first if the target's side has room, then Chaos until a hit)"], free: ["打った後 (何が付いても次へ。当たり / 外れに分けない)", "After (anything counts, no hit / miss split)"],
   quality: ["無し (品質を最大まで上げて、下の＋で次の手)", "None (raise quality to max, then add the next craft with + below)"],
   essence: ["付いた + 狙いが消えた (付く MOD は必ず付く)", "Added + Target lost (the essence mod always lands)"],
-  fracture: ["印の狙いが ✦ になった + 外れ (ほかが ✦)", "Marked target fractured + Miss (another fractured)"],
+  fracture: ["印の狙いが ✦ になった (必ず印の狙いを固定)", "The marked target fractured (always fixes it)"],
 };
 /** 狙いを持って着く人がいない箱では「狙いが消えた」を作らない時の文 (tree-model の setHand、tree-lost.ts) */
 const RESULT_NO_LOST: Partial<Record<HandKind, [string, string]>> = { remove: ["外れが消えた", "Miss removed"], swap: ["当たり + 外れ", "Hit + Miss"], essence: ["付いた (付く MOD は必ず付く)", "Added (the essence mod always lands)"] };
@@ -189,8 +189,8 @@ function ok(): void {
         <button v-for="c in TREE_CATALYSTS" :key="c" type="button" data-tree-hand-cat :data-cat="c" class="min-h-7 rounded-md border px-2 text-[12px]" :class="c === held ? 'border-amber-300 bg-amber-500/20 text-amber-100' : 'border-white/10 hover:bg-white/10'" :title="nameOf(c)" :aria-pressed="c === held" @click="held = c">{{ nameOf(c).replace(/のカタリスト$| Catalyst$/, "") }}</button>
       </div>
       <p v-if="preCat" data-tree-hand-pre-cat class="text-[12px] text-sky-200/90">{{ tr(`前に「${handName(preCat)} (品質を最大まで)」の手を足す (札を押すとカタリストを替えられる)`, `Adds "${handName(preCat)} (to max quality)" before this (click its chip to change the catalyst)`) }}</p>
-      <!-- フラクチャー: どれが ✦ になるかはエンジンのまま。印の狙いが ✦ になれば当たり、ほかは外れ (10-25 オーナー・ブラック) -->
-      <p v-if="isFracture" data-tree-hand-frac-rule class="text-[12px] opacity-70">{{ tr("✦ になる MOD はオーブの乱数のまま。完成の MOD の印の狙いが ✦ になれば当たり、ほかが ✦ になれば外れ", "Which mod fractures is random (the orb as is). The marked final mod fracturing is a hit; any other is a miss") }}</p>
+      <!-- フラクチャー: 印の狙いを必ず固定、外れは費用で数える (10-24 オーナー「2 回外れて 1 回当たり」、10-25 に戻した) -->
+      <p v-if="isFracture" data-tree-hand-frac-rule class="text-[12px] opacity-70">{{ tr("完成の MOD の印の狙いを必ず ✦ にする。固定できる MOD が 2 つ以上なら、2 回外れて 1 回当たりとして、ここまでの費用とフラクチャーを 2 回分足す", "Always fractures the marked final mod. With 2+ mods that could fracture, counts as 2 misses then a hit: adds this point's cost and the Fracturing Orb twice") }}</p>
       <!-- 足す手: 当たりの箱にする狙いをチェック (複数可)。チェックした MOD ごとに当たり、どれも付かなければ外れ、0 個 = 狙い無し (10-25 オーナー) -->
       <div v-if="showAims" data-tree-hand-aims class="flex flex-col gap-1 text-[12px]">
         <span v-if="spam && !checkedAims.length" data-tree-hand-aim-need class="text-rose-200/90">{{ tr("狙う MOD を選んで", "Pick a target mod") }}</span>
