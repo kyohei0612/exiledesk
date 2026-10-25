@@ -1,0 +1,32 @@
+Rarity: Rare
+Golem Bane
+Shrine Sceptre
+--------
+Quality: +20% (augmented)
+Spirit: 214 (augmented)
+--------
+Requires: Level 65, 17 Str, 38 Int
+--------
+Sockets: S S
+--------
+Item Level: 82
+--------
+Allies in your Presence have 13% increased Critical Damage Bonus (enchant)
+Allies in your Presence have 9% increased Cast Speed (enchant)
+--------
+15% increased Spirit (rune)
+50% increased Spell Damage while your Companion is in your Presence (rune)
+Bonded: 8% increased Mana Recovery rate while your Companion is in your Presence (rune)
+Bonded: Minions have 30% increased Cooldown Recovery Rate for Command Skills (rune)
+--------
+Grants Skill: Level 20 Purity of Fire
+--------
+65% increased Spirit (fractured)
+34% increased Spirit
++39 to maximum Mana
+68% increased Mana Regeneration Rate
++161 to maximum Mana (desecrated)
+Aura Skills have 20% increased Magnitudes (crafted)
++1 to maximum number of Elemental Infusions (crafted)
+--------
+Twice Corrupted
