@@ -106,6 +106,11 @@ function boxOfShape(shapes: readonly Shape[], key: string, at?: { data: PatchDat
   if (at && !ok && key.endsWith("#1")) { const clean = shapes.find((s) => s.key === `${key.slice(0, -1)}0` && (!s.hand || canPlay(at.data, at.item, s.hand))); if (clean) return clean.box; }
   return key.startsWith("#") ? "start" : (ok ?? same[0])?.box ?? null;
 }
+/** 手も戻りもまだ決めていない当たり (MOD を選んだ物) / 外れの箱で、その形の物 (始めに戻った人の行き先が無い時。settle) */
+function openOfShape(doc: TreeDoc, key: string): string | null {
+  const open = (c: TreeBox): boolean => !c.hand && !c.back && !c.split && !c.done && ((c.out === "hit" && !!c.aim) || c.out === "junk");
+  return Object.values(doc.boxes).find((c) => open(c) && shapeKey(pathHeld(doc, c.out === "junk" ? c.parent : c.id), c.out === "junk") === key)?.id ?? null;
+}
 /** 回す時に手が打てるか (playHand。乱数の当たり所で弾かれる物は打てる扱い) */
 const canPlay = (data: PatchData, item: StageItem, h: Hand): boolean => { const r = playHand(data, item, { ...h, repeat: null }, mulberry32(1)); return r.applied || !!r.random; };
 /** 狙い 0 + 外れあり の形の鍵 */
@@ -135,13 +140,17 @@ export function matchBox(data: PatchData, shapes: readonly Shape[], item: StageI
 export function settle(data: PatchData, doc: TreeDoc, shapes: readonly Shape[], id: string, item: StageItem, aims: readonly Aim[]): string {
   // 始めに戻る時も、狙い 0 で外れを持っていれば、その形の外れの箱があればそこへ (上の boxOfShape と同じ)
   if (id === "start") {
-    if (itemKey(data, item, aims) === JUNK_ONLY) return boxOfShape(shapes, JUNK_ONLY, { data, item }) ?? id;
-    // 始まりの手が打てない (エッセンスの MOD が既に付いている等) 時は、形の合う打てる箱へ (10-22 解析君 body-essence-path: 狙いが消えて始めに戻り 49 人止まった)
+    const key = itemKey(data, item, aims);
     const h = doc.boxes.start?.hand;
-    if (!h || !handProblem(data, item, h)) return id;
-    const to = boxOfShape(shapes, itemKey(data, item, aims), { data, item });
+    const cant = !!h && !!handProblem(data, item, h);
+    // 始まりの手が打てず形の合う手のある箱も無い時は、同じ形の手をまだ決めていない箱へ (止まりをその箱の「決めていない」にまとめる。
+    // 10-25 シミュ 27: 錬金術のスタートで狙いが消えて始めに戻った人が、外れの箱に手が無いうちは始まりで「ノーマルかマジックにだけ」と止まり、戻りの箱に持ち越しの穴が出た)
+    if (key === JUNK_ONLY) { const to = boxOfShape(shapes, JUNK_ONLY, { data, item }) ?? id; return to === id && cant ? openOfShape(doc, key) ?? id : to; }
+    // 始まりの手が打てない (エッセンスの MOD が既に付いている等) 時は、形の合う打てる箱へ (10-22 解析君 body-essence-path: 狙いが消えて始めに戻り 49 人止まった)
+    if (!cant) return id;
+    const to = boxOfShape(shapes, key, { data, item });
     const th = to ? doc.boxes[to]?.hand : null;
-    return to && (!th || canPlay(data, item, th)) ? to : id;
+    return to && (!th || canPlay(data, item, th)) ? to : openOfShape(doc, key) ?? id;
   }
   const b = doc.boxes[id];
   // 「打った後」の箱 (見本の頭で外れを付けた後 = 前の始まり、10-25) へ戻って手が打てない時も、始まりと同じく形の合う打てる箱へ
