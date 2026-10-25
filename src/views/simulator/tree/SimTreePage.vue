@@ -16,6 +16,8 @@ import Icon from "../../../components/ui/Icon.vue";
 import TreeMemoFloat from "./TreeMemoFloat.vue";
 import TreeCanvasTools from "./TreeCanvasTools.vue";
 import ModeTabs from "../../../components/for-share/ModeTabs.vue";
+import SimPcOnly from "../SimPcOnly.vue";
+import { usePhone } from "../../../utils/use-phone";
 import TreeBox from "./TreeBox.vue";
 import TreeOverlays from "./TreeOverlays.vue"; import TreeGoalNode from "./TreeGoalNode.vue";
 import TreeHandPage from "./TreeHandPage.vue";
@@ -371,11 +373,15 @@ const glowOf = (b: Box): boolean => {
   if (g.startsWith("cur:")) return handUses(b, g.slice(4));
   return b.out === "hit" && !!b.aim && aimKey(b.aim) === g;
 };
+/** スマホ (768px 未満) は「PC で開いてください」だけ (SimPcOnly、10-25) */
+const phone = usePhone();
 </script>
 
 <template>
   <!-- スマホは左右の余白を詰める (ページ 16 + 枠の絵 18 + 中 12 で木の枠が 375 中 281px しかなく、左右の箱が切れ上の帯が 6 段になった、10-24 モンキー初めての人の回 3) -->
   <section data-tree-page class="min-w-0 flex-1 p-4 max-md:px-2">
+    <SimPcOnly v-if="phone" />
+    <template v-else>
     <div class="mb-3 flex flex-wrap items-center gap-3">
       <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center gap-3 px-8 text-[22px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)] max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-1 max-md:px-4 max-md:py-2 max-md:text-[17px] max-md:tracking-[0.08em]"><span class="whitespace-nowrap">{{ tr("クラフトの道 (ツリー)", "Craft route tree") }}</span><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" /></h1>
       <!-- 流れの 4 段の帯 (今どこにいるか。完成形の設定の窓と同じ部品、10-24 オーナー)。初手のページの間は窓の側に出る。右上の「← 戻る」は置かない (上の切り替えタブで行き来する、10-24 オーナー「意味が分からない、要らない」) -->
@@ -393,6 +399,12 @@ const glowOf = (b: Box): boolean => {
         <TreeRecipeBar @opened="v.openView()" />
         <TreeRunBar v-if="!t.needBase.value" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking, passed, holes: issues?.length ?? 0, shown: issuesShown }" @test="onCheck" @holes="issuesShown = !issuesShown" @holes-on="openIssues" @list="openIssues" :stuck="tr100.stuckBoxes.value" @run="tr100.run" @go="goIssue" :halted="tr100.halted.value" :walk="tr100.walk.value" @skip="tr100.skipWalk" />
         </span>
+      </div>
+
+      <!-- ベースが無い空の形でも、ほかの木があればタブを出す (前の木へ戻れない行き止まりだった、10-24 夜オーナー「一方通行が多い」) -->
+      <!-- ツリーのタブと、右に道具 (1 つ戻す・整列・線・メモ・全画面・白紙)。前は上の帯の右にあり、100 人回した後に帯の左 (レシピ・回す・結果) が足りず重なった (10-25 英語の通しで見つけた、日本語も同じ) -->
+      <div class="flex flex-wrap items-center gap-2 text-[13px] md:flex-nowrap">
+        <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" class="min-w-0 flex-1" @switched="v.openView()" />
         <span class="ml-auto flex shrink-0 flex-wrap items-center gap-1 max-md:ml-0 max-md:min-w-0 max-md:shrink max-md:basis-full max-md:flex-nowrap max-md:overflow-x-auto max-md:pb-1 max-md:[&>*]:shrink-0 max-md:[&>*]:whitespace-nowrap md:flex-nowrap">
           <button v-if="!t.needBase.value" type="button" data-tree-undo class="g-btn sm inline-flex items-center gap-1" :disabled="!t.canUndo.value" :title="tr('1 つ戻す (Ctrl+Z)', 'Undo (Ctrl+Z)')" @click="t.undo"><Icon name="undo" class="size-4" /><span class="max-md:hidden">{{ tr("1 つ戻す", "Undo") }}</span></button>
           <button v-if="!t.needBase.value" type="button" data-tree-redo class="g-btn sm inline-flex items-center" :disabled="!t.canRedo.value" :title="tr('やり直し (Ctrl+Shift+Z / Ctrl+Y)', 'Redo (Ctrl+Shift+Z / Ctrl+Y)')" :aria-label="tr('やり直し', 'Redo')" @click="t.redo"><Icon name="undo" class="size-4 -scale-x-100" /></button>
@@ -403,9 +415,6 @@ const glowOf = (b: Box): boolean => {
           <button v-if="!t.needBase.value" ref="clearBtn" type="button" data-tree-clear :class="clearArm.is() ? ARMED_CLASS : 'g-btn sm'" :title="tr('始まりの箱だけに戻す (1 つ戻すで戻せる)', 'Back to just the start box (undo restores it)')" @click="onClear">{{ clearArm.is() ? tr("もう一度押すと白紙に戻す", "Click again to clear") : tr("白紙に戻す", "Clear") }}</button>
         </span>
       </div>
-
-      <!-- ベースが無い空の形でも、ほかの木があればタブを出す (前の木へ戻れない行き止まりだった、10-24 夜オーナー「一方通行が多い」) -->
-      <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" @switched="v.openView()" />
       <div ref="row" class="flex min-h-0 gap-2" :class="full ? 'flex-1' : ''" :style="full ? {} : { height: `${rowH}px` }">
         <!-- ツリー (暗い地 + ドットの格子、見本の 1。右下に浮かぶ道具とミニマップ、左上に今の状態の札) -->
         <div data-tree-frame class="relative min-w-0 flex-1 overflow-hidden rounded-lg border border-white/[0.06] bg-[#0c0a08]">
@@ -482,5 +491,6 @@ const glowOf = (b: Box): boolean => {
     </div>
     <!-- 欲しい MOD とメモの浮かぶ窓 (ページの中で一番上、ツリーを押しても閉じない) -->
     <TreeMemoFloat v-model:open="memoOpen" v-model:glow="glowAim" :avoid="panel ? `${panel.kind}:${panel.id}:${full}` : null" />
+    </template>
   </section>
 </template>

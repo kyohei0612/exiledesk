@@ -96,8 +96,8 @@ onBeforeUnmount(() => { window.removeEventListener("pointerdown", onDown, true);
       <b class="min-w-0 truncate">{{ currentTreeRecipe?.name ?? tr("名前なし", "Untitled") }}</b>
       <span v-if="dirty" data-tree-recipe-dirty class="size-2 shrink-0 rounded-full bg-amber-400" :title="tr('保存していない変更がある', 'Unsaved changes')" />
     </button>
-    <button v-if="!bare" type="button" data-tree-recipe-save class="g-btn sm" :title="currentTreeRecipe ? tr('開いているレシピに上書き保存', 'Save to the open recipe') : tr('名前を付けて新しく保存', 'Save as a new recipe')" @click="save">{{ tr("保存", "Save") }}</button>
-    <button type="button" data-tree-recipe-menu class="g-btn sm inline-flex items-center gap-1" :aria-expanded="pop" @click="pop = !pop">{{ tr("レシピ", "Recipes") }} ▾</button>
+    <button v-if="!bare" type="button" data-tree-recipe-save class="g-btn sm shrink-0" :title="currentTreeRecipe ? tr('開いているレシピに上書き保存', 'Save to the open recipe') : tr('名前を付けて新しく保存', 'Save as a new recipe')" @click="save">{{ tr("保存", "Save") }}</button>
+    <button type="button" data-tree-recipe-menu class="g-btn sm inline-flex shrink-0 items-center gap-1" :aria-expanded="pop" @click="pop = !pop">{{ tr("レシピ", "Recipes") }} ▾</button>
     <span v-if="note" class="pointer-events-none absolute left-0 top-full z-30 mt-1 whitespace-nowrap rounded bg-emerald-900/90 px-2 py-1 text-[12px] text-emerald-100">{{ note }}</span>
 
     <div v-if="pop" data-tree-recipe-pop :class="menuOnly ? 'right-0' : 'left-0'" class="absolute top-full z-40 mt-1 flex w-[340px] max-w-[calc(100vw-4rem)] flex-col gap-1.5 rounded-lg border border-[var(--exile-color-border-brass)]/60 bg-[#14110d] p-2 text-[12px] shadow-[0_8px_24px_rgba(0,0,0,0.7)]">
