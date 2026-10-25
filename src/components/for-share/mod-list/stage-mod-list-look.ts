@@ -2,16 +2,15 @@
  * stage-mod-list-look.ts — StageModList.vue の見た目の表と名前の小物 (2026-10-22 StageModList が 500 行に届いたので分けた。中身は前のまま)。
  * 節の色 (TONE)・重みの出どころの文 (weightNote)・エッセンスの名前 (essName・tierName)
  */
-import type { ListRow, ModGroup, StageItem } from "../../../services/craft-stage/engine";
+import { ESSENCE_KEYS, type ListRow, type ModGroup, type StageItem } from "../../../services/craft-stage/engine";
 import { tr } from "../../../i18n/lang";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { jewelEmotionJa } from "../../../services/htc/patch";
 import { runeToneOf } from "../../../services/craft-stage/mod-list";
-import essenceKeys from "../../../services/htc/essence-keys.json";
 import { flag } from "../../../web/release-flags";
 
 /** エッセンスの段の名前 (英語) → 日本語 */
-const ESS_JA = new Map(Object.values((essenceKeys as unknown as { keys: Record<string, { en: string; ja: string }> }).keys).map((k) => [k.en, k.ja]));
+const ESS_JA = new Map(Object.values(ESSENCE_KEYS).map((k) => [k.en, k.ja]));
 /**
  * そのエッセンス / 合金の MOD を付ける物の名前 (2026-10-05 オーナー「エッセンスと合金は使うエッセンスを表示、タグの後ろに簡易的に名前」)。
  * 名前はカレンシーの棚と同じ引き方 (パーフェクトの深淵・ヒステリーなど essence-keys に無い物も出る)

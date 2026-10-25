@@ -6,14 +6,12 @@
  * カタリスト (指輪・アミュレット)、お告げ。キーは計算機と同じ price-keys.json / essence-keys.json の物。
  * 値段とアイコンは相場 (market-store) の行を英語名で引く (計算機の buildHtcPrices と同じ引き方)。
  */
-import { isEmotion, ESSENCE_KEYS, OMEN_FOR, isGem, isRune, runeEffectFor, runeOf, type PatchData, type StageItem } from "../../services/craft-stage/engine";
+import { isEmotion, ESSENCE_KEYS, ESSENCE_TABLE, OMEN_FOR, PRICE_KEYS, isGem, isRune, runeEffectFor, runeOf, type PatchData, type StageItem } from "../../services/craft-stage/engine";
 import { isSpam, parseSpam } from "../../services/craft-stage/apply-spam";
 import { emotionNameOf } from "../../services/craft-stage/apply-emotion";
 import { baseArt } from "../../services/craft-stage/base-art";
 import { CRAFT_RUNES_EN } from "../../services/htc/sockets";
 import { isLegacyRune, LEGACY_SOURCE } from "../../services/market/legacy-rune";
-import priceKeys from "../../services/htc/price-keys.json";
-import essences from "../../vendor/poe2htc/data/essences.json";
 import { desecrationBoneFor } from "../../vendor/poe2htc/engine/probability";
 import { jaOfOmen } from "../../services/htc/game-names";
 import { stepEn, stepJa } from "../../services/craft-stage/run-plan";
@@ -24,7 +22,7 @@ import { marketStore } from "../market-store";
 import { lang, tr } from "../../i18n/lang";
 
 type Named = Record<string, { en: string; ja: string }>;
-const KEYS = priceKeys as unknown as { currency: Named; bones: Named; omens: Named };
+const KEYS = PRICE_KEYS as unknown as { currency: Named; bones: Named; omens: Named };
 const ESS: Named = ESSENCE_KEYS;
 
 export interface ShelfGroup { kind: string; label: string; keys: string[] }
@@ -114,7 +112,7 @@ export function essenceShelf(data: PatchData | null, item: StageItem | null): Sh
   if (!data || !item) return [];
   const pool = new Set([...item.cls.pools.essence.prefixes, ...item.cls.pools.essence.suffixes]);
   const out: ShelfGroup[] = [];
-  for (const e of (essences as { essences: Array<{ name: string; tiers: Record<string, string[]> }> }).essences) {
+  for (const e of (ESSENCE_TABLE as { essences: Array<{ name: string; tiers: Record<string, string[]> }> }).essences) {
     const keys: string[] = [];
     for (const [lvl, ids] of Object.entries(e.tiers)) {
       // 写した MOD (poe2db に合わせて足した物、essence-key-table) は essences.json に無いので、同じ名前の鍵を持つ置き場の MOD も見る
