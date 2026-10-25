@@ -14,6 +14,10 @@
 9. 報告は notes/<日付>-monkey.md に重い順。頭に何を何回押したか。1 件ごとに手順・期待と実際・何回中何回・場所・エラー文・影響。推測の原因は書かず、1 回だけの物は分ける。
 10. 指示待ち (自分から始めない)。指示から報告まで 10 分以内、再現の数え直しは重い物だけ 3 回。ブラックへ件数と上位 3 件。
 
+## 地図 (持ち物、owners.txt)
+- scripts/check-monkey-engine.mjs (照らしの入口: 猿の記録 → 棚・お告げ・付く MOD・treeCheck・walk) と scripts/_monkey-engine-entry.ts・_monkey-tree-walk.ts (エンジンの入口を呼ぶ所)。10-25 にジン部長から移った (ブラック 701e97b5)。台本の直しは隊長が自分で、エンジンの入口の答えが正かどうかの判定だけジン部長へ。決まり 1 の「コードは読まない・直さない」はこの 3 つを除く。
+- 猿の台本 (画面で組む ui-monkey.mjs・ui-lib.mjs・回す run-all.sh・数える agg.mjs) は共有メモ local_52fe22f9…/monkey-scripts/ (リポジトリの外)。
+
 ## 開き方
 - ふだん (10-23 オーナー): 手元の dev サーバー http://localhost:1440/web.html (シミュ ?page=sim-tree)。使用表の「手元の dev サーバー 1440」に書いて立てる。
 - 本番の前の 1 回 (ブラックが言った時だけ): 手元の開発版 `pnpm preview:prod -- --dev` → http://dev.exiledesk.localhost:1461/ 。台本は MONKEY_TARGET=dev。Cloudflare の web-dev は 10-24 に消した。
