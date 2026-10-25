@@ -1,4 +1,7 @@
 {
+  "0.1.608": [
+    "Simulator: Fixed crafted mods (Essence / Alloy) not being read when pasting gloves, boots, helmets, body armours or shields"
+  ],
   "0.1.607": [
     "Simulator: Leaving or clearing an unsaved tree now asks \"Save and continue / Don't save / Cancel\" (also for a tree with only base and mods); after saving, going back or reloading reopens that recipe",
     "Simulator: Press Ctrl+S on the tree screen to save the recipe",

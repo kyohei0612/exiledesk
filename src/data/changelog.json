@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.608",
+  "date": "2026-10-26",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 手袋・靴・兜・鎧・盾のアイテムを貼り付けた時、クラフト MOD (エッセンス・合金) が読めなかったのを直しました",
+    "en": "Simulator: Fixed crafted mods (Essence / Alloy) not being read when pasting gloves, boots, helmets, body armours or shields"
+   }
+  ]
+ },
+ {
   "v": "0.1.607",
   "date": "2026-10-26",
   "items": [
@@ -806,30 +818,5 @@
     "en": "Tutorials now live under “Guide & Tips” at the top (how-to video and course list). Each course has its own URL, and the back button works"
    }
   ]
- },
- {
-  "v": "0.1.568",
-  "date": "2026-10-18",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "チュートリアルに上級「損をせずに確率を上げる小技」を追加: フラクチャーを 33% に・冒涜をエッセンスでやり直す (不在のアミュレット)・サフィックスでエッセンス 2 つ・ジュエルの 5 MOD・品質を上げてからカオス",
-    "en": "Tutorial: Advanced courses added (tricks to raise your odds): Fracture at 33%, redo Desecrations with an essence (Absent Amulet), two essences on suffixes, 5-mod jewels, quality first then Chaos"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "チュートリアルを遊んでも、エミュレーターでやっていたアイテムと工程はそのまま残るように",
-    "en": "Playing a tutorial no longer replaces the item and steps you had in the emulator"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "ジュエルの MOD がプレフィックスとサフィックスで混ざって並んでいたのを直しました",
-    "en": "Jewel mods are no longer listed with prefixes and suffixes mixed together"
-   }
-  ],
-  "pop": true
  }
 ]
