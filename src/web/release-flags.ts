@@ -52,6 +52,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "sanctifyBar", "monkeyEmu1023", "baseChosen", "tutorialUi",
   // エミュはリロードでベース選びの空から (オーナー 10-25「emuFresh も本番出して OK」)
   "emuFresh",
+  // シミュレーター (ツリー)。スマホはタブを出さず「PC で開いてください」(オーナー 10-25「A でいこう」「おけ、見た目OK 出して」)
+  "sim",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */

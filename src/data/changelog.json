@@ -1,5 +1,30 @@
 [
  {
+  "v": "0.1.601",
+  "date": "2026-10-25",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター (β) を公開しました: ベースと狙う MOD を決めて、クラフトの道をツリーで組めます (上のタブの「シミュレーター」)",
+    "en": "Simulator (beta) is out: pick a base and target mods, then build your craft route as a tree (the “Simulator” tab at the top)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "組んだ道は 100 人回して、完成率と平均の費用を確かめられます",
+    "en": "Run your route 100 times to see the completion rate and average cost"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "組んだレシピは保存・共有 URL・ファイルの書き出しで残せます。PC だけで、スマホでは「PC で開いてください」と出ます",
+    "en": "Keep your recipes by saving them, sharing a URL or exporting a file. PC only (on phones you'll be asked to open it on a PC)"
+   }
+  ],
+  "pop": true
+ },
+ {
   "v": "0.1.600",
   "date": "2026-10-25",
   "items": [
@@ -722,30 +747,5 @@
     "en": "Chaos spam share card: the logo now matches the site"
    }
   ]
- },
- {
-  "v": "0.1.561",
-  "date": "2026-10-18",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "チュートリアルに中級を追加 (2 コース)",
-    "en": "Tutorial: two Medium courses added"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "「カタリストと品質を学ぶ」: 品質を 20% まで上げて変わる MOD を見比べる・13 種類のカタリスト・別の種類は 0 から・触媒の高貴のお告げ (偉大なると重ねる)",
-    "en": "“Learn catalysts and quality”: raise quality to 20% and compare the mods it changes, the 13 catalysts, a new type restarts from 0, Omen of Catalysing Exaltation (stacked with Greater)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "「液化した感情を学ぶ」: 黄 (レア) のジュエルに作った MOD を付ける (希釈された・普通・濃縮された)・枠を増やす強力な軽蔑 (高貴で 5 つ目)・反対側を上げる強力な獰猛",
-    "en": "“Learn liquid emotions”: add a crafted mod to a yellow (Rare) jewel (Diluted, plain, Concentrated), Potent Contempt adds a slot (5th mod with an Exalted Orb), Potent Ferocity boosts the other side"
-   }
-  ],
-  "pop": true
  }
 ]
