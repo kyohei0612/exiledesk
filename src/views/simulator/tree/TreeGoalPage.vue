@@ -188,7 +188,8 @@ const HELP: Array<[string, string]> = [
         <button type="button" data-tree-base-ok class="g-btn sm" @click="apply(asking!)">{{ tr("替える", "Change") }}</button>
       </div>
       <!-- エミュのベースのページと同じ作り (共通の BasePickBody: 帯 + ベースの一覧、未選択の時は人気のベースを上に)。帯はシミュの説明で「すぐ試す」は無し (10-23 オーナー) -->
-      <BasePickBody :selected="unpicked ? '' : t.doc.value.base" :popular="unpicked" :intro="unpicked" :quick="false"
+      <!-- key: 白紙の判定が後から立つと (上の watch)、一覧は金の指輪の部位を開いた形で作られた後で、指輪の 1 回目の押しが畳むだけになっていた (猿 8 匹中 8 匹、10-25)。未選択に変わったら作り直して部位を閉じる -->
+      <BasePickBody :key="unpicked ? 'unpicked' : 'picked'" :selected="unpicked ? '' : t.doc.value.base" :popular="unpicked" :intro="unpicked" :quick="false"
         :title="tr('完成させたいアイテムから、打ち方の道を組んで費用を見積もれます', 'Plan a craft route to the item you want and estimate the cost')"
         :lead="tr('ベースを選び、狙いの MOD を決めると、スタートから完成までの道をツリーで組めます。100 人回して完成の割合と費用を出します', 'Choose a base and your target mods, then lay out the route from the start to the finished item as a tree. Run it 100 times for the finish rate and the cost')"
         @pick="pick" />
