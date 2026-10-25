@@ -21,22 +21,22 @@
  *   await __simMonkey.check()                          テストラン (ルート精査) → { passed, done: [完成の箱], issues: [{ boxId, kind, text }] }
  *   await __simMonkey.result(n = 100, seed = 1)        画面の「100 人回す」と同じ値段 (相場、神建て) と始めの値段で回す → { finished, perItem, median, … }
  */
-import { baseCatalog, omenBlock, omensAllowedFor, runeOf, socketCapOf, useReason, type StageItem } from "../../../services/craft-stage/engine";
+import { baseCatalog, omenBlock, omensAllowedFor, useReason, type StageItem } from "../../../services/craft-stage/engine";
 import { CATALYSING } from "../../../services/simulator/tree/tree-hands";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { runTree } from "../../../services/simulator/tree/tree-run";
 import { checkTreeAsync } from "../../../services/simulator/tree/tree-check";
 import { setAim, setBack, setDone } from "../../../services/simulator/tree/tree-model";
 import { RUN_N } from "./use-tree-run";
-import { bonesFor, CRAFT_RUNE_KEYS, essenceShelf, nameOfKey, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
+import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { treeHidden } from "../use-sim-shelf";
 import { craftStage as s } from "../../../state/craft-stage";
 import { DEV_BUILD } from "../../../web/release-flags";
 import { modText } from "../../../i18n/lang";
-import { afterQualityOf, applyPick, autoCatOf, handOf, hitAimsOf, hitChoicesOf, kindOf, needAimOf, onlyOf, pickedHits, preFillOf, problemOf, type HandPick } from "./tree-hand-plan";
+import { afterQualityOf, applyPick, autoCatOf, hitChoicesOf, needAimOf, planPick, preFillOf, shelfKeysOf, type PickOpt } from "./tree-hand-plan";
 import { useTree } from "./use-tree";
 
-type Opt = Omit<HandPick, "held" | "omens"> & { /** 当たりの箱にする MOD (modId の並び、[] = 狙い無し。渡さないと付きうる狙い全部) */ hitAims?: string[] };
+type Opt = PickOpt;
 /** 部位の日本語 → ベースの一覧の部位 (cls) の頭 (英語の部位名ならそのまま頭で合わせる) */
 const PART_CLASS: Record<string, string> = {
   兜: "Helmet", 鎧: "Body", 手袋: "Gloves", 靴: "Boots", 盾: "Shield", バックラー: "Buckler", フォーカス: "Foci", 矢筒: "Quiver",
@@ -45,15 +45,6 @@ const PART_CLASS: Record<string, string> = {
   // 英語の部位名 (ベースの一覧の部位の id は複数形・下線つき: Foci・Staves・Quarterstaves・OneHand_Maces)
   Focus: "Foci", Staff: "Stav", Quarterstaff: "Quarterstav", Warstaff: "Quarterstav", OneHandMace: "OneHand_Mace", TwoHandMace: "TwoHand_Mace",
 };
-
-/** 棚に並ぶ物 (CurrencyShelf と同じ: オーブ・骨・エッセンス、ソケットがあればクラフトのルーン。隠すのはツリーの棚と同じ treeHidden) */
-function shelfKeys(it: StageItem): string[] {
-  const d = s.data.value;
-  if (!d) return [];
-  const sockets = socketCapOf(it.base, it.cls.category) > 0 || (it.sockets ?? 0) > 0;
-  const runes = sockets ? runesFor(it).flatMap((g) => g.keys).filter((k) => CRAFT_RUNE_KEYS.includes(k) && runeOf(k)) : [];
-  return [...ORBS.flatMap((g) => g.keys), ...bonesFor(it), ...essenceShelf(d, it).flatMap((g) => g.keys), ...runes].filter((k) => !treeHidden(k));
-}
 
 export function installSimMonkey(): () => void {
   if (!DEV_BUILD) return () => {};
@@ -92,7 +83,7 @@ export function installSimMonkey(): () => void {
     shelf(id: string): Array<{ key: string; name: string; ok: boolean; reason: string | null }> {
       const d = s.data.value, it = sample(id)?.item;
       if (!d || !it) return [];
-      return shelfKeys(it).map((k) => { const reason = useReason(d, it, k, []); return { key: k, name: nameOfKey(k, it), ok: !reason, reason }; });
+      return shelfKeysOf(d, it).map((k) => { const reason = useReason(d, it, k, []); return { key: k, name: nameOfKey(k, it), ok: !reason, reason }; });
     },
     omens(id: string, key: string): Array<{ key: string; name: string; ok: boolean; reason: string | null }> {
       const d = s.data.value, it = shelfItemFor(id, key);
@@ -109,16 +100,8 @@ export function installSimMonkey(): () => void {
       const d = s.data.value, smp = sample(id), it = smp?.item;
       if (!d || !it || !t.doc.value.boxes[id]) return { ok: false, problem: "箱が無い・データが無い" };
       if (needAimOf(t.doc.value, id, smp?.note)) return { ok: false, problem: "当たりの MOD が無い当たりの箱 (先に MOD を選ぶ)" };
-      const doc = t.doc.value, afterQ = afterQualityOf(doc, id), autoCat = autoCatOf(d, doc, it);
-      const needPre = omensAllowedFor(key).includes(CATALYSING) && !afterQ;
-      const preFill = preFillOf(d, it, needPre, autoCat);
       // 「当たりの箱にする MOD」のチェック (opt.hitAims = modId の並び、[] = 狙い無し)。渡さない時は前からの既定 (付きうる狙い全部)
-      const pick = opt.hitAims ? pickedHits(hitChoicesOf(d, doc, id, it, { held: key, omens, echo: opt.echo }, t.goals.value), opt.hitAims, key, !!opt.spam) : null;
-      const h = handOf({ held: key, omens, ...opt, ...(pick ? { free: pick.free } : {}) }), kind = kindOf(h);
-      const hitAims = pick && !pick.free ? pick.aims : hitAimsOf(d, doc, id, it, h, t.goals.value);
-      const preCat = h.omens.includes(CATALYSING) && !afterQ ? autoCat : null;
-      const only = onlyOf(d, doc, id, h, preCat, hitAims);
-      const problem = problemOf(d, it, h, hitAims, preCat, preFill);
+      const { hand: h, kind, aims: hitAims, preCat, only, problem } = planPick(d, t.doc.value, id, it, key, omens, opt, t.goals.value);
       if (problem) return { ok: false, problem };
       let at = id;
       t.edit((x) => { at = applyPick(x, id, h, kind, hitAims, preCat, only); });

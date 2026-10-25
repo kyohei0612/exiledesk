@@ -2,10 +2,12 @@
  * tree-hand-plan.ts — 箱の次に打つ手の決め方 (TreeHandShelf.vue から分けた、2026-10-24)。棚の画面 (TreeHandShelf)・手を決めた時の組み替え (SimTreePage の pickHand)・
  * 開発の時だけの猿の口 (sim-monkey.ts) が同じ関数を呼ぶ (別の打ち方を作らない、メモ feedback-sim-no-own-logic)。中身はエンジンの入口と木の関数を呼ぶだけ
  */
-import { catalystBoosts, mulberry32, omensFor, tierRankOf, type PatchData, type StageApply, type StageItem } from "../../../services/craft-stage/engine";
+import { catalystBoosts, mulberry32, omensAllowedFor, omensFor, runeOf, socketCapOf, tierRankOf, type PatchData, type StageApply, type StageItem } from "../../../services/craft-stage/engine";
+import { bonesFor, CRAFT_RUNE_KEYS, essenceShelf, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
+import { treeHidden } from "../use-sim-shelf";
 import { catalystFull, catalystTagOf, fillCatalyst, stepOutcomes } from "../../../services/craft-stage/engine-sim";
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
-import { canSpam, ECHO, effectOf, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
+import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { linkSameShape } from "../../../services/simulator/tree/tree-shape";
 import { fractureMarks, healLost, kindOfHand, setHand, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -145,6 +147,29 @@ export function applyPick(d: TreeDoc, id: string, h: Hand, kind: HandKind, aims:
   // 自動でつないだ戻りで狙いを持って着く道ができた箱に「狙いが消えた」を足す (tree-model の healLost)
   healLost(d);
   return at;
+}
+
+/** 棚に並ぶ物 (CurrencyShelf と同じ: オーブ・骨・エッセンス、ソケットがあればクラフトのルーン。隠すのはツリーの棚と同じ treeHidden。猿の口・スマホの早押し) */
+export function shelfKeysOf(data: PatchData, it: StageItem): string[] {
+  const sockets = socketCapOf(it.base, it.cls.category) > 0 || (it.sockets ?? 0) > 0;
+  const runes = sockets ? runesFor(it).flatMap((g) => g.keys).filter((k) => CRAFT_RUNE_KEYS.includes(k) && runeOf(k)) : [];
+  return [...ORBS.flatMap((g) => g.keys), ...bonesFor(it), ...essenceShelf(data, it).flatMap((g) => g.keys), ...runes].filter((k) => !treeHidden(k));
+}
+/** 棚で持った物の残り (お告げ以外)。hitAims = 当たりの箱にする MOD (modId の並び、[] = 狙い無し。渡さないと付きうる狙い全部) */
+export type PickOpt = Omit<HandPick, "held" | "omens"> & { hitAims?: string[] };
+/**
+ * 棚で選んだ物 → 手を決める時に渡す物一式 (棚の窓の決め方と同じ。猿の口 sim-monkey の add・スマホの早押しが呼ぶ)。problem があれば確定させない
+ */
+export function planPick(data: PatchData, doc: TreeDoc, id: string, it: StageItem, key: string, omens: string[], opt: PickOpt, goals: readonly Aim[]) {
+  const afterQ = afterQualityOf(doc, id), autoCat = autoCatOf(data, doc, it);
+  const needPre = omensAllowedFor(key).includes(CATALYSING) && !afterQ;
+  const preFill = preFillOf(data, it, needPre, autoCat);
+  const pick = opt.hitAims ? pickedHits(hitChoicesOf(data, doc, id, it, { held: key, omens, echo: opt.echo }, goals), opt.hitAims, key, !!opt.spam) : null;
+  const hand = handOf({ held: key, omens, ...opt, ...(pick ? { free: pick.free } : {}) }), kind = kindOf(hand);
+  const aims = pick && !pick.free ? pick.aims : hitAimsOf(data, doc, id, it, hand, goals);
+  const preCat = hand.omens.includes(CATALYSING) && !afterQ ? autoCat : null;
+  const only = onlyOf(data, doc, id, hand, preCat, aims);
+  return { hand, kind, aims, preCat, only, problem: problemOf(data, it, hand, aims, preCat, preFill) };
 }
 
 // 伸ばすカタリスト (2026-10-23 エンジンの for-sim から戻した。中身はエンジンの核の catalystBoosts を呼ぶだけ)。付きうる狙い reachableAims は精査も使うので tree-aim.ts (10-25)
