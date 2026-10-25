@@ -13,6 +13,8 @@ import { busLevels, HAND_DY, type Seg } from "./tree-lines";
 export const LINE = { fwd: "#a39a88", bad: "#c96a72", back: "#5fd0e0" } as const;
 /** 通り抜けの所の札 / ＋の半分の高さ (上から来る矢印の先) */
 const PASS_R = 16;
+/** 横の棒を子の箱の上の辺から離す高さ (▼ が箱の枠に付いて見える長さ。10-25 オーナー「矢印の位置がわるい、そもそもここは枠でしょ」で 18 → 34) */
+const BUS_DY = 34;
 
 export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, posOf: (b: TreeBox) => { x: number; y: number }) {
   /** 箱の真ん中 */
@@ -20,7 +22,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
   /** 横の棒が同じ高さで横に重なる親どうしは段をずらす (tree-lines.ts の busLevels) */
   const busShift = computed(() => busLevels(boxes.value.filter((b) => (b.hand || b.split) && b.outs.length).map((b) => {
     const xs = [posOf(b).x + BOX_W / 2, ...b.outs.map(midOf)];
-    return { id: b.id, x0: Math.min(...xs), x1: Math.max(...xs), y: Math.min(...b.outs.map((o) => posOf(doc.value.boxes[o]!).y)) - 18 };
+    return { id: b.id, x0: Math.min(...xs), x1: Math.max(...xs), y: Math.min(...b.outs.map((o) => posOf(doc.value.boxes[o]!).y)) - BUS_DY };
   })));
   // 分かれ目 (手の無い箱) も、札を「分かれ目」にして同じ線で下の行の箱へ
   const edges = computed(() => boxes.value.filter((b) => (b.hand || b.split) && b.outs.length).map((b) => {
@@ -28,7 +30,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     // 通り抜けは箱が無いので、手の札を箱の上の端の所に置き、そこから下りる
     const px = p.x + BOX_W / 2, py = pass ? p.y : p.y + BOX_H, jy = pass ? p.y : py + HAND_DY;
     const kids = b.outs.map((o) => ({ id: o, c: doc.value.boxes[o]!, q: posOf(doc.value.boxes[o]!) }));
-    const busY = Math.min(...kids.map((k) => k.q.y)) - 18 - (busShift.value.get(b.id) ?? 0);
+    const busY = Math.min(...kids.map((k) => k.q.y)) - BUS_DY - (busShift.value.get(b.id) ?? 0);
     // 角丸の段付き (React Flow の smoothstep、見本の 3): 親の下から下りて、角を丸めて横へ、角を丸めて子の上の辺へ。
     // 外れ (赤) を先に描き、進む (灰) を上に重ねる (同じ横の棒を通る所は灰に見える)
     const to = kids.map((k) => {

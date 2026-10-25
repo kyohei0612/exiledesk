@@ -3,13 +3,14 @@
  * 決まり (docs/org/simulator/README): 木の形を変える時は schema の番号 (exiledesk-tree/N) を上げ、MIGRATIONS に N → N+1 の読み替えを足す。古い版は消さずに読み替える。
  * 読めない箱・手は捨てずに、その箱に要確認 (check) の印と元の値 (checkRaw) を残して開く。start の箱が無いなど木として読めない物だけ null (呼ぶ側が別の所に取っておく)
  */
-import { migrateStart, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
+import { migrateStart, TREE_SCHEMA_N, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 
-/** 今の木の形の番号 (schema の exiledesk-tree/N) */
-export const TREE_SCHEMA_N = 0;
 const SCHEMA = (n: number): string => `exiledesk-tree/${n}`;
 /** N → N+1 の読み替え (形を変えたらここに足す)。番号の無い物 (10-25 までの開発版) は 0 と読む */
-const MIGRATIONS: Record<number, (d: Record<string, unknown>) => void> = {};
+const MIGRATIONS: Record<number, (d: Record<string, unknown>) => void> = {
+  // 0 → 1 (10-25 オーナー「オーブから枠までとかが長さ短すぎる」): 段の間を 200 → 240 にしたので、箱の縦の位置を 1.2 倍 (手で置いた所の並びもそのまま広がる)
+  0: (d) => { for (const b of Object.values((d.boxes ?? {}) as Record<string, { y?: unknown }>)) if (typeof b?.y === "number") b.y = Math.round(b.y * 1.2); },
+};
 
 const OUTS: ReadonlySet<string> = new Set<OutKind | "start">(["hit", "junk", "junkGone", "lost", "any", "pass", "branch", "start"]);
 const obj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);

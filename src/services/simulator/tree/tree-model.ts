@@ -101,7 +101,8 @@ export interface TreeStart { rarity: TreeRarity; mods: StartMod[]; runes?: strin
 /** 始め方ごとのベースの値段 (神、手入力。入れていない物は無い)。始まりの箱のベースの値段を比べる tree-base-cost.ts で使う */
 export interface TreeBasePrices { white?: number; four?: number; fractured?: number }
 export interface TreeDoc {
-  schema: "exiledesk-tree/0";
+  /** 木の形の番号 (exiledesk-tree/N、上げたら tree-migrate の MIGRATIONS に読み替えを足す) */
+  schema: `exiledesk-tree/${number}`;
   base: string;
   itemLevel: number;
   /** 完成形のレアリティ (0 完成形の設定の箱。無ければレア。スタートの箱の start.rarity とは別、10-22 オーナー) */
@@ -134,9 +135,12 @@ export const BOX_H = 112;
 const GAP_X = 220;
 /**
  * 段の間 (親の下 → 手の札 → 横の棒 → 子の上。直角の木の線が手の札と重ならない広さ、10-22)。10-22 オーナー「少し詰める」で 210 → 200:
- * 見本の木 (11 行) で 1920 の全体表示が 20 → 25% に乗る一番ゆとりのある値 (201 以下で 25%)。札の下と子の箱の間は 1920 で約 27px・1280 で約 24px
+ * 見本の木 (11 行) で 1920 の全体表示が 20 → 25% に乗る一番ゆとりのある値 (201 以下で 25%)。札の下と子の箱の間は 1920 で約 27px・1280 で約 24px。
+ * 10-25 オーナー「オーブから枠までとかが長さ短すぎる」で 200 → 240 (横の棒は子の 34px 上、use-tree-edges の BUS_DY)
  */
-export const GAP_Y = 200;
+export const GAP_Y = 240;
+/** 今の木の形の番号 (schema の exiledesk-tree/N)。1 = 10-25 に段の間を 200 → 240 にした (tree-migrate で古い木の縦を 1.2 倍) */
+export const TREE_SCHEMA_N = 1;
 
 /** 始まりの形 (前の版の fracture だけの木はフラクチャー 1 つのレア) */
 export const startOf = (d: TreeDoc): TreeStart => d.start ?? { rarity: "rare", mods: d.fracture ? [{ ...d.fracture, fractured: true }] : [] };
@@ -178,7 +182,7 @@ export function migrateStart(d: TreeDoc): void {
 }
 export function newTree(base: string, itemLevel: number): TreeDoc {
   return {
-    schema: "exiledesk-tree/0", base, itemLevel, ilvlFit: true, start: { rarity: "rare", mods: [] }, seq: 0,
+    schema: `exiledesk-tree/${TREE_SCHEMA_N}`, base, itemLevel, ilvlFit: true, start: { rarity: "rare", mods: [] }, seq: 0,
     boxes: { start: { id: "start", x: 0, y: 0, out: "start", aim: null, hand: null, outs: [], back: null, done: null, parent: null } },
   };
 }
