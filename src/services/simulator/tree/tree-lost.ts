@@ -8,13 +8,18 @@ import { effectOf } from "./tree-hands";
 import type { TreeDoc } from "./tree-model";
 
 const keyOf = (a: { modId: string; tier: number }): string => `${a.modId}/${a.tier}`;
+/** 始めのアイテムに付いている完成の狙い (どの道でも持って着く。tree-sample の startGoalAims と同じ、循環を避けて木の形から直に読む) */
+function startHeld(d: TreeDoc): Array<{ modId: string; tier: number }> {
+  const goals = (d.memoAims ?? []).filter((g) => !g.fractured);
+  return (d.start?.mods ?? []).filter((m) => !m.fractured).flatMap((m) => goals.filter((g) => g.modId === m.modId).slice(0, 1).map((g) => ({ modId: g.modId, tier: g.tier })));
+}
 
 /** この箱の道で持っている狙いの数 (多い方の組。始まりの ✦ は当たりの箱ではないので数えない) */
 function heldOnPath(d: TreeDoc, id: string): number {
   const path: string[] = [];
   for (let x: string | null = id; x; x = d.boxes[x]?.parent ?? null) path.unshift(x);
-  const seen = new Set<string>();
-  let n = 0;
+  const seen = new Set<string>(startHeld(d).map(keyOf));
+  let n = seen.size;
   for (const x of path) {
     const c = d.boxes[x];
     // フラクチャーの手の当たりは ✦ (消えない) なので数えない
@@ -47,6 +52,7 @@ export function aimsMayHold(d: TreeDoc, id: string): Array<{ modId: string; tier
       if (c?.out === "hit" && c.aim && !(fr && effectOf(fr.currency) === "fracture")) out.set(keyOf(c.aim), { modId: c.aim.modId, tier: c.aim.tier });
     }
   };
+  for (const a of startHeld(d)) out.set(keyOf(a), a);
   walk(id);
   for (const b of Object.values(d.boxes)) if (b.back === id) walk(b.id);
   return [...out.values()];

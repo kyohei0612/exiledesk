@@ -50,7 +50,15 @@ export function aimsOf(doc: TreeDoc): Aim[] {
     return byGoals && !!h && effectOf(h.currency) === "essence" && !goals.some((g) => g.modId === b.aim!.modId);
   };
   for (const b of Object.values(doc.boxes)) if (b.out === "hit" && b.aim && !label(b) && !out.some((x) => x.modId === b.aim!.modId && x.tier === b.aim!.tier)) out.push(b.aim);
+  // 始めから付いている完成の狙い (スタートの窓の「＋ 外れを狙いに差し替える」)。前は当たりの箱の札だけで、始めの狙いが消える結果を「外れが消えた」と数え、
+  // 「狙いが消えた」の箱も作らなかった (10-25 シミュ 28 の洗い出し: 始めにスピリット・キャストを付けた形で、消去・カオス・パーフェクトの全部)
+  for (const m of startGoalAims(doc)) if (!out.some((x) => x.modId === m.modId && x.tier === m.tier)) out.push(m);
   return out;
+}
+/** 始めのアイテムに付いている完成の狙い (印の ✦ でない物。札は完成形の設定の段) */
+export function startGoalAims(doc: TreeDoc): Aim[] {
+  const goals = (doc.memoAims ?? []).filter((g) => !g.fractured);
+  return (doc.start?.mods ?? []).filter((m) => !m.fractured).flatMap((m) => goals.filter((g) => g.modId === m.modId).slice(0, 1));
 }
 
 /**
@@ -96,12 +104,17 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   const k = effectOf(h.currency);
   const found = new Map<string, { out: OutKind; aim: Aim | null }>();
   const hold = aimsMayHold(doc, boxId);
+  /** 未発現が付く手 (冒涜の骨): 当たり / 外れは発現で選ぶ候補で分かれるので見ない。消える側 (狙いが消えた) だけ発現の前の形で見る */
+  let veiled = false, veiledLost = false;
+  /** 見本の中に、まだ付いていない狙いがあるか (外れだけの手でも当たりの箱を作って MOD を選ばせる時の見分け) */
+  let unheld = false;
   // 見本 = この箱に着いた人のアイテム (着いた人が SINGLE_SEEDS より少なければ同じ物が回ってくるので 1 回だけ見る)
   const seen = new Set<StageItem>();
   for (let seed = 1; seed <= SINGLE_SEEDS; seed++) {
     const smp = sampleOf(data, doc, boxId, seed);
     if (smp.note === "none" || smp.note?.startsWith("cant:") || seen.has(smp.item)) continue;
     seen.add(smp.item);
+    if (aims.some((a) => !aimHeldOn(data, smp.item, a, { sameText: true }))) unheld = true;
     const item = pre ? fillCatalyst(data, smp.item, pre, mulberry32(seed)).item : smp.item;
     // 見本にまだ無い狙いのうち、この箱に持って着きうる物 (自分の道・戻ってくる箱の道の当たり、tree-lost の aimsMayHold) を 1 つ足した形でも見る
     // (見本は初めて着いた人の形。戻りで狙いを持って来た人は狙いが消えうる、10-22 #8: 素の消去が「外れが消えた」1 通りにまとまって 96 人止まった。
@@ -109,7 +122,12 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
     const forms = [item, ...hold.filter((a) => !aimHeldOn(data, item, a, { sameText: true })).map((a) => applyCurrency(data, item, forceKey(a.modId, `T${a.tier}`, "n"), mulberry32(seed))).filter((r) => r.applied).map((r) => r.item)];
     for (const it of forms) {
       const outs = stepOutcomes(data, it, h.currency, engineOmens(h))?.filter((o) => !o.void);
-      if (!outs?.length || outs.some((o) => unrevealedOf(o.item))) return null;
+      if (!outs?.length) return null;
+      if (outs.some((o) => unrevealedOf(o.item))) {
+        veiled = true;
+        if (outs.some((o) => aimDiff(data, it, o.item, aims, { sameText: true }).lost.length)) veiledLost = true;
+        continue;
+      }
       for (const o of outs) {
         const r = outcomeOf(data, it, o.item, aims, h.currency);
         if (r.hits.length > 1) return null;
@@ -118,8 +136,12 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
       }
     }
   }
+  // 冒涜: 当たり (この手の札) と外れはいつも、狙いが消えたは消える側で狙いを失いうる時だけ (10-25 シミュ 28 の洗い出し: 満杯の側に死霊術で打つと 13〜14% 狙いが消えるのに箱が無く、回すと止まった)
+  if (veiled) return [...extra.map((a) => ({ out: "hit" as OutKind, aim: a })), { out: "junk", aim: null }, ...(veiledLost ? [{ out: "lost" as OutKind, aim: null }] : [])];
   const list = [...found.values()];
-  if (!list.length || ((k === "add" || k === "swap") && list.every((e) => e.out === "junk"))) return null;
+  // 足す・入れ替える手が外れだけの時は、まだ付いていない狙いがある時だけ手の種類の箱へ (当たりの箱を作って MOD を選ばせる)。
+  // 狙いが全部付いていれば外れ (と消えた) だけ (10-25 シミュ 28 の洗い出し: 満杯で削減のお告げのカオスに、起こりえない当たりの箱が出た)
+  if (!list.length || ((k === "add" || k === "swap") && unheld && list.every((e) => e.out === "junk"))) return null;
   return list;
 }
 /** 結果が 1 通りの手 (possibleOutsOf が 1 つだけの時。台本 scripts/_tree-patterns-ui が使う) */
