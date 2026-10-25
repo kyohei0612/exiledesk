@@ -18,7 +18,7 @@
 - baseChosen: 人が自分でベースを選んだかを 1 つの印 (exiledesk.stage.chosenBase) に (2aa2d268・3cbda7e4、デザイン部長の BasePickBody の quick 7cde43ad・b1b22818 と組)。選んだ見た目・帯とすぐ試す・入口の行き先をこれで決め、すぐ試すは選んだ扱い。開発版 2fae18a4 でオーナーと同じ状態から 4 通りを PC・スマホとも本物のクリックで確かめ済み。使う所 StageBasePage.vue・use-stage-base.ts。
 - monkeyEmu1023: モンキーテスト 10-23 のエミュの直し。スパムシミュ (c069970b: Esc は運試しの欄だけ閉じる・運試しの間は「当たった形で戻る」を出さない・スマホの札のボタンを折り返す・狙いの文を当たりの幅全部で)、品質の帯の押せないボタンは普通のカーソル (5ff2778a・9eae3311・0beb110a)、狙いの窓で 0 個のまま押すと一言 (f261b842)。使う所 StageRoutesPage.vue・StageQualityBar.vue・StageAimPicker.vue。
 - sanctifyBar: 聖別の帯 (e61bb9ab、StageSanctifyBar)。使う所 CraftStage.vue の SANCTIFY_BAR。
-- emuFresh: リロード・打ち直し・外から来た時はベース選びの空から、戻る・同じサイトのリンクは前の画面 (オーナー 10-25。4c49ebd9 use-stage-base のスマホ・29e4068a 写しの分け方 stage-session.ts の hasUsableSession、持ち主はデザインへ移る)。手元 1440 で 4 通り確かめ済み。
+- emuFresh: リロード・打ち直し・外から来た時はベース選びの空から、戻る・同じサイトのリンクは前の画面 (オーナー 10-25。4c49ebd9 use-stage-base のスマホ・29e4068a・8b145a7e (版替わりの読み直しでは消さない) 写しの分け方 stage-session.ts の hasUsableSession、持ち主はデザインへ移る)。手元 1440 で 4 通り確かめ済み。
 - gemCorrupt: ジェムコラプトのタブ (23f1d1d9、オーナー 10-16「内緒」、OK 待ちではなく出す時期はオーナー)。10-24 に自前の DEV 判定から寄せた (2a55e6b9、手元の開発版 1461 にも出るようになった)。使う所 CraftStage.vue の GEM_CORRUPT_SHOWN。
 - 開発版だけの印 (スイッチの外、自前の DEV 判定): MOD の数字を素の値で + 盛った値を小さく (afa0b266・86b42bb4・ada62af7・2d301a1a、for-share の base-values.ts の BASE_VALUES_ON、スナップ 共有メモ j11/)・MOD の重みを直せる (StageWeightEdit、for-share の stage-tuning.ts の WEIGHTS_ON、docs/org/emulator/notes/2026-10-22-mod-weight-edit.md)。どちらも持ち主はデザイン部長の for-share、スイッチに寄せるかはブラックの決め。
 - 他の部のスイッチでエミュの画面に出る物 (持ち主が出す、画面の見え方だけ一緒に見る): omenRow (お告げの欄を札の行の下に + 打てないお告げは灰色、ff5c6f8c)・dismiss (枠の外・Esc で選ぶ前に戻す、490989fb・30760e05)・tierClose・modeTabs・monkey1023・fitZoom。
