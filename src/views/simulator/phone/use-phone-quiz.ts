@@ -115,6 +115,18 @@ export function usePhoneQuiz() {
     return laterSet.value.has(id) ? "later" : "open";
   }
 
+  /** ② の結果の箱 (品質だけ上げた後の通り抜けはその先の手の結果) */
+  function outsOf(id: string): string[] {
+    const d = t.doc.value, b = d.boxes[id];
+    if (!b) return [];
+    const pass = b.outs.length === 1 && d.boxes[b.outs[0]!]?.out === "pass" ? d.boxes[b.outs[0]!]! : null;
+    return pass?.hand ? pass.outs : pass ? [] : b.outs;
+  }
+  /** ② の「決めた」= 答えていない結果は「次の手を決める」にして次の質問へ */
+  function decide(id: string): void {
+    for (const o of outsOf(id)) if (stateOf(o) === "open") setLater(o);
+    focus.value = null;
+  }
   /**
    * 箱の名前 (SimTreePage の boxLabel と同じ形)。当たりは道で揃った狙いを全部 (スマホは木が見えないので、同じ MOD の当たりの箱が見分けられるように)、
    * ほかは結果の名前 + 道で付いている狙い
@@ -140,5 +152,5 @@ export function usePhoneQuiz() {
     });
     return parts.join(" › ");
   }
-  return { doc: t.doc, questions, current, focus, answered, later: laterSet, answer, reset, setLater, unLater, setReturn, setFinished, stateOf, boxTitle, pathText };
+  return { doc: t.doc, questions, current, focus, answered, later: laterSet, answer, reset, setLater, unLater, setReturn, setFinished, stateOf, outsOf, decide, boxTitle, pathText };
 }

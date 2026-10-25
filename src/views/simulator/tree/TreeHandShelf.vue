@@ -258,5 +258,9 @@ function ok(): void {
         </HeldOmens></template>
       </CurrencyShelf>
     </div>
+    <!-- スマホだけ: 持っている間は下に「使う」の帯 (カードの「下の帯の『使う』でも」の帯。カードまで戻らず親指で決められる、10-25 シミュ 29 の点検) -->
+    <div v-if="held" data-tree-hand-use-bar class="sticky bottom-0 z-10 -mx-3 border-t border-white/10 bg-[#0c0a08]/95 px-3 py-2 md:hidden">
+      <button type="button" data-tree-hand-use class="g-btn-red min-h-11 w-full text-[15px]" :disabled="!!problem" @click="ok">{{ tr("使う (この手にする)", "Use (make it this craft)") }}</button>
+    </div>
   </div>
 </template>

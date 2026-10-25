@@ -72,6 +72,21 @@ watch(() => !!run.result.value && !run.running.value && !run.halted.value, (on) 
 const haltWhy = computed(() => { const h = run.halted.value; return h ? run.result.value?.stuckWhy?.[h.box] ?? null : null; });
 const donePct = computed(() => Math.round(((run.result.value?.finished ?? 0) / (run.result.value?.n || 1)) * 100));
 const fmt = (x: number): string => (!Number.isFinite(x) ? "—" : x >= 100 ? x.toFixed(0) : x.toFixed(1));
+/** 畳んだ完成形の帯の狙いの名前 (✦ = フラクチャーの印) */
+const goalText = computed(() => t.goals.value.map((a) => `${a.fractured ? "✦ " : ""}${t.aimShort(a)}`).join(tr(" ・ ", " · ")));
+/** 下の帯の主な操作 (今の質問ごと。一覧を出している間は無し) */
+const main = computed((): { kind: string; text: string; off?: boolean; go: () => void } | null => {
+  if (routesOpen.value) return null;
+  const c = q.current.value, b = c ? t.doc.value.boxes[c.id] : null;
+  if (c && b && c.kind === "hand" && !b.hand) return { kind: "hand", text: tr("打つ手を選ぶ", "Choose a craft"), go: () => { handFor.value = c.id; } };
+  if (c && c.kind === "outs") {
+    const left = q.outsOf(c.id).filter((id) => q.stateOf(id) === "open").length;
+    return { kind: "decide", text: left ? tr(`決めた (残り ${left})`, `Done (${left} left)`) : tr("決めた", "Done"), go: () => q.decide(c.id) };
+  }
+  if (c) return null;
+  // 全部の道が決まった = 100 人回す (PC と同じ use-tree-run。1 人目が木を進む再生は木が無いので飛ばす)
+  return { kind: "run", text: run.running.value ? tr(`回している ${run.result.value?.n ?? 0} / ${RUN_N}`, `Running ${run.result.value?.n ?? 0} / ${RUN_N}`) : tr(`${RUN_N} 人回す`, `Run ${RUN_N}`), off: !s.data.value || run.running.value, go: () => void run.run() };
+});
 /** 箱の質問へ (手のある箱は ②、無ければ親の ②) */
 function goBox(id: string): void {
   const b = t.doc.value.boxes[id];
@@ -87,18 +102,17 @@ function goBox(id: string): void {
     <template v-if="!t.goalInline.value">
       <!-- レシピ (保存・開く・共有 URL。PC の帯と同じ部品、木が同じなので PC で開き直せる) -->
       <div data-phone-recipe class="flex min-w-0 flex-wrap items-center gap-2 text-[13px]"><TreeRecipeBar @opened="q.reset()" /></div>
-      <!-- 完成形 (畳んだ 1 行: ベース・狙いの数。開くと PC の 0 の枠と同じカード) -->
-      <div data-phone-goal class="rounded-xl border border-[#c9a45c]/60 bg-[#1a140d] px-3 py-2">
+      <!-- 完成形 (上に留める = どこまで送っても狙いを見直せる。畳んだ形: ベースと狙いの MOD の名前、開くと PC の 0 の枠と同じカード) -->
+      <div data-phone-goal class="sticky top-0 z-20 -mx-2 border-b border-[#c9a45c]/50 bg-[#1a140d]/[0.97] px-3 py-1.5 shadow-[0_4px_12px_rgba(0,0,0,0.6)]">
         <div class="flex min-w-0 items-center gap-2 text-[13px]">
-          <button type="button" data-phone-goal-fold class="flex min-w-0 flex-1 items-center gap-2 text-left" :aria-expanded="goalOpen" @click="goalOpen = !goalOpen">
-            <span class="shrink-0 font-bold text-[#f2d27a]">{{ tr("完成形", "Final item") }}</span>
-            <span class="min-w-0 flex-1 truncate text-[#d8ccb4]">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }} · {{ t.goals.value.length ? tr(`狙い ${t.goals.value.length} つ`, `${t.goals.value.length} target(s)`) : tr("MOD はまだ", "No mods yet") }}</span>
-            <span class="shrink-0 text-[11px] opacity-70">{{ goalOpen ? "▾" : "▸" }}</span>
+          <button type="button" data-phone-goal-fold class="flex min-w-0 flex-1 flex-col text-left" :aria-expanded="goalOpen" @click="goalOpen = !goalOpen">
+            <span class="flex min-w-0 items-center gap-2"><span class="shrink-0 font-bold text-[#f2d27a]">{{ tr("完成形", "Final item") }}</span><span class="min-w-0 flex-1 truncate text-[#d8ccb4]">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}</span><span class="shrink-0 text-[11px] opacity-70">{{ goalOpen ? "▾" : "▸" }}</span></span>
+            <span data-phone-goal-aims class="truncate text-[11px] text-[#c8c8ff]">{{ goalText || tr("MOD はまだ (右の MOD で決める)", "No mods yet (set them with Mods)") }}</span>
           </button>
           <button type="button" data-phone-goal-open="base" :class="PILL" @click="t.goalPage.value = 1">{{ tr("ベース", "Base") }}</button>
           <button type="button" data-phone-goal-open="mods" :class="PILL" @click="t.goalPage.value = 2">MOD</button>
         </div>
-        <div v-if="goalOpen && t.goalItem.value" class="mt-2"><StageItemCard :item="t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :fracture-group="marks" tier-at-least /></div>
+        <div v-if="goalOpen && t.goalItem.value" class="mt-2 max-h-[55vh] overflow-y-auto pb-1"><StageItemCard :item="t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :fracture-group="marks" tier-at-least /></div>
       </div>
       <!-- 進み (残りの道・答えた数) と、残りの道の一覧の切り替え -->
       <div data-phone-progress class="flex items-center gap-2 text-[12px] text-[#d8ccb4]">
@@ -115,8 +129,6 @@ function goBox(id: string): void {
           <p class="text-[15px] font-bold text-emerald-300">{{ tr("全部の道が決まりました", "Every path is decided") }}</p>
           <p class="mt-1 text-[12px] text-[#9a8a70]">{{ tr("狙いが全部そろう道は自動で完成 (答え直せる)", "Paths with every target are marked done automatically (you can change them)") }}</p>
         </div>
-        <!-- 100 人回す (PC と同じ use-tree-run。1 人目が木を進む再生は木が無いので飛ばす) -->
-        <button type="button" data-phone-run class="g-btn py-3 text-[15px]" :disabled="!s.data.value || run.running.value" @click="run.run">{{ run.running.value ? tr(`回している ${run.result.value?.n ?? 0} / ${RUN_N}`, `Running ${run.result.value?.n ?? 0} / ${RUN_N}`) : tr(`${RUN_N} 人回す`, `Run ${RUN_N}`) }}</button>
         <button v-if="run.result.value && !run.running.value" type="button" data-phone-run-sum class="rounded-xl border border-amber-300/50 bg-[#1a140d] px-3 py-3 text-left" @click="reportOpen = true">
           <span class="text-[26px] font-bold tabular-nums text-amber-100">{{ fmt(run.result.value.perItem) }}</span><small class="ml-1 text-[13px] text-[#d8ccb4]">{{ tr("神 / 1 個", "div / item") }}</small>
           <span class="float-right mt-2 text-[13px]" :class="donePct < 100 ? 'text-rose-300' : 'text-emerald-300'">{{ tr(`完成 ${donePct}%`, `${donePct}% done`) }}</span>
@@ -127,10 +139,12 @@ function goBox(id: string): void {
           <span v-if="haltWhy?.reason" class="block text-[12px] text-rose-200/80">{{ haltWhy.reason }}{{ haltWhy.backs?.length ? tr(` (戻ってきた箱: ${q.boxTitle(haltWhy.backs[0]!)})`, ` (came back from: ${q.boxTitle(haltWhy.backs[0]!)})`) : "" }}</span>
         </button>
       </template>
-      <!-- 下の帯: 1 つ戻す・やり直し -->
-      <div class="sticky bottom-0 z-10 -mx-2 flex gap-2 border-t border-white/10 bg-[#0c0a08]/95 px-2 py-2">
-        <button type="button" data-phone-undo class="g-btn flex-1" :disabled="!t.canUndo.value" @click="t.undo">{{ tr("↶ 1 つ戻す", "↶ Undo") }}</button>
-        <button type="button" data-phone-redo class="g-btn" :disabled="!t.canRedo.value" :aria-label="tr('やり直し', 'Redo')" @click="t.redo">↷</button>
+      <!-- 下の帯 (親指の届く所): 1 つ戻す・今の質問の主な操作 (① 打つ手を選ぶ / ② 決めた / 全部決まったら 100 人回す)・やり直し -->
+      <div data-phone-bar class="sticky bottom-0 z-10 -mx-2 flex gap-2 border-t border-white/10 bg-[#0c0a08]/95 px-2 py-2">
+        <button type="button" data-phone-undo class="g-btn min-h-11 shrink-0 px-3" :disabled="!t.canUndo.value" :title="tr('1 つ戻す', 'Undo')" @click="t.undo">↶<span class="ml-1 text-[12px]">{{ tr("戻す", "Undo") }}</span></button>
+        <button v-if="main" type="button" data-phone-main :data-main="main.kind" class="g-btn-red min-h-11 min-w-0 flex-1 truncate px-2 text-[15px]" :disabled="main.off" @click="main.go">{{ main.text }}</button>
+        <span v-else class="flex-1" />
+        <button type="button" data-phone-redo class="g-btn min-h-11 shrink-0 px-3" :disabled="!t.canRedo.value" :aria-label="tr('やり直し', 'Redo')" @click="t.redo">↷</button>
       </div>
     </template>
     <TreeHandPage v-if="handFor && t.doc.value.boxes[handFor]" :key="`h-${handFor}`" :box-id="handFor" :current="t.doc.value.boxes[handFor]!.hand" @pick="pickHand" @clear="clearHandOf" @close="handFor = null" @back="backOf" @aim="aimFor = handFor; handFor = null" />

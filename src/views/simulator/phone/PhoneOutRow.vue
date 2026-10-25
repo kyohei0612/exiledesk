@@ -10,6 +10,10 @@ import { useTreeLink } from "../tree/use-tree-link";
 import { backTargetsOf } from "../tree/tree-merge";
 import { handLabel, OUT_LOOK } from "../tree/tree-names";
 import { usePhoneQuiz } from "./use-phone-quiz";
+import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
+import { craftStage as s } from "../../../state/craft-stage";
+import { sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { treeRowTags } from "../tree/tree-row-tags";
 import { tr } from "../../../i18n/lang";
 
 const props = defineProps<{ boxId: string }>();
@@ -32,7 +36,11 @@ const others = computed(() => [...link.value].filter(([id, why]) => why === null
 const pickOther = ref(false);
 const look = computed(() => OUT_LOOK[box.value?.out ?? "junk"]);
 const backKind = computed(() => (state.value !== "back" ? null : box.value?.back === "start" ? "start" : backTo.value === parent.value ? "retry" : "other"));
-const CHIP = "rounded-full border px-3 py-1.5 text-[13px] leading-none";
+const cardOpen = ref(false);
+const item = computed(() => (cardOpen.value && s.data.value && box.value ? sampleOf(s.data.value, t.doc.value, props.boxId, 1).item : null));
+const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.value, t.doc.value, box.value?.unwanted ?? [], item.value) : null));
+const cardW = Math.min(340, (typeof window === "undefined" ? 375 : window.innerWidth) - 60);
+const CHIP ="rounded-full border px-3 py-1.5 text-[13px] leading-none";
 const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-amber-500/20 text-amber-50" : "border-white/15 bg-white/[0.03] text-[#d8ccb4]"}`;
 </script>
 
@@ -41,7 +49,10 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
     <p class="flex min-w-0 items-center gap-2 text-[14px] font-bold" :style="{ color: `rgb(${look.c})` }">
       <span class="min-w-0 flex-1 truncate">{{ q.boxTitle(boxId) }}</span>
       <span v-if="state === 'open'" class="shrink-0 text-[11px] font-normal text-amber-200/80">{{ tr("どうする?", "Then?") }}</span>
+      <!-- この結果のアイテム (既定は閉じる。PC の箱に乗せた時のカードと同じ見本) -->
+      <button type="button" data-phone-out-card class="shrink-0 rounded-md border border-white/15 px-1.5 text-[11px] font-normal leading-6 text-[#d8ccb4]" :aria-expanded="cardOpen" @click="cardOpen = !cardOpen">{{ tr("アイテム", "Item") }} {{ cardOpen ? "▾" : "▸" }}</button>
     </p>
+    <StageItemCard v-if="cardOpen && item" class="mt-2" :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
     <!-- 次の手が付いている箱 (① で答えた) は手の名前だけ。押すとその手を見直す -->
     <button v-if="state === 'hand'" type="button" data-phone-out-hand class="mt-1 block w-full truncate text-left text-[12px] text-[#c8bca4] underline decoration-white/20" @click="emit('hand', boxId)">→ {{ box.hand ? handLabel(box.hand) : tr("分かれ目", "Split") }}</button>
     <template v-else>
