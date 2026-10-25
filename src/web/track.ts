@@ -84,6 +84,7 @@ export function track(name: string, extra?: string): void {
   if (name === "page:skins") screen("skins"); // PoE2 で使える PoE1 のスキンの一覧 (2026-10-25、開発版だけ)
   if (name === "page:craft") screen("craft");
   if (name === "page:sim") screen(`sim:${extra ?? ""}`); // シミュレーターの工程のページ (2026-10-19、sim:mods / start / order / play / result)
+  if (name === "sim:run" || name === "sim:test") screen(name); // シミュの「100 人回す」・テストランの 1 押し (2026-10-25 オーナー「回すボタンに記録足して」、日報で数える)
   buf.push({ n: name, ...(extra ? { x: extra.slice(0, 120) } : {}), s: Math.round((Date.now() - t0) / 1000) });
   trail.push({ n: name, t: Date.now() });
   if (trail.length > 40) trail.shift();
