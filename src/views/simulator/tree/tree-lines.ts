@@ -11,8 +11,10 @@ import { BOX_H, BOX_W } from "../../../services/simulator/tree/tree-model";
 export interface Pos { x: number; y: number; w?: number; h?: number }
 /** 戻りの線が箱の下のどこから出るか (左から。真ん中は木の線) */
 const ENTER = 26;
-/** 縦の通り道と箱の間 */
-const CLEAR = 10;
+/** 縦の通り道と箱の間。箱の間 (24) は通らず、空いた外側を回る (10-25 オーナー「箱の枠に重ならない・沿わない」で 10 → 32) */
+const CLEAR = 32;
+/** 横の線と箱の上下の辺の間 (同じく 2 → 20) */
+const CLEAR_Y = 20;
 const R = 8;
 
 /** 縦の線 x が y0〜y1 の間で箱を通らないか (除く箱は自分と戻り先) */
@@ -23,7 +25,7 @@ function freeColumn(x: number, y0: number, y1: number, boxes: readonly Pos[]): b
 /** 横の線 y が x0〜x1 の間で箱を通らないか */
 function freeRow(y: number, x0: number, x1: number, boxes: readonly Pos[]): boolean {
   const lo = Math.min(x0, x1), hi = Math.max(x0, x1);
-  return boxes.every((b) => y < b.y - 2 || y > b.y + (b.h ?? BOX_H) + 2 || b.x + (b.w ?? BOX_W) < lo || b.x > hi);
+  return boxes.every((b) => y < b.y - CLEAR_Y || y > b.y + (b.h ?? BOX_H) + CLEAR_Y || b.x + (b.w ?? BOX_W) < lo || b.x > hi);
 }
 
 /** 手の札の真ん中 (箱の下から。SimTreePage の札の位置) と、下の＋の真ん中。札の上下の半分は CHIP_HALF (箱 → 札の縦の線 = HAND_DY - CHIP_HALF = 40、10-25 オーナー「長さ十分」の形で 46 → 60) */
@@ -45,8 +47,8 @@ export interface Seg { x0: number; y0: number; x1: number; y1: number }
 export interface BackReq { id: string; from: Pos; to: Pos; end: Pos; start?: Pos }
 /** 平行に走る線どうしの間 */
 const LANE = 7;
-/** 出口の横の線を通す帯 (箱の下 +8〜+30。手の札 +34〜 と進む線の横の棒 +60〜 より上) */
-const BAND = [8, 30] as const;
+/** 出口の横の線を通す帯 (箱の下 +20〜+34。手の札 +40〜 より上、箱の枠に沿わない高さ) */
+const BAND = [CLEAR_Y, 34] as const;
 /** 跨ぐ形の半径 */
 const HOP = 5;
 
