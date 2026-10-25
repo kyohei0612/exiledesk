@@ -15,6 +15,7 @@
 10. 1 ファイル 500 行まで。
 
 ## 地図
+- データとエンジンの答え (呼び方・使っている部) は docs/org/emulator/data-catalog.md から。JSON を直に読まず入口から (直に読んでよい表は目録に書いてある物だけ)。
 - 画面 src/views/craft-stage/: CraftStage.vue (入口)、アイテム StageItemMini・StageCurrencyCard、MOD 一覧 StageModList (このベースに付く MOD。持った時の %・チェック欄・次の手で狙う・付ける・重み・カードから飛ぶ。表の土台は for-share の ModTable を包み props と slot で、10-23)・ModAddPicker・StageWeightEdit、工程 StageHistory、StageForesight・RevealPanel・StageQualityBar・StageSanctifyBar・StageBasePicker/Page・use-stage-base・StageSettings・StagePhoneBar。狙う StageAimPanel・StageAimPicker。スパム StageRoutes*・StageRouteLuck・StageRouteRunes・route-place・use-spam-share。
 - 状態 src/state/emulator/: aim-state・stage-extra・spam-share-open。
 - 共通管理 for-share (デザイン部長の物、10-23): 棚 src/components/for-share/shelf (CurrencyShelf・ShelfButton・HeldOmens・StageOmenTune)、アイテムのカード item (StageItemCard・base-values)、MOD 表の土台 mod-list (ModTable)、use-stage-fx、状態 src/state/for-share (craft-stage-shelf・shelf-context・stage-steps・stage-tuning・craft-stage-help*)。シミュの画面も使う。直したい時はブラック経由でデザイン部長に。

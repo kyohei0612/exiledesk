@@ -15,6 +15,7 @@
 10. 部品の核 for-share (デザイン部長) は直に書き換えず、シミュだけの違い (「狙いにする」など) は包む / slot で足す (オーナー 10-23)。
 
 ## 地図
+- データとエンジンの答え (呼び方・使っている部) は docs/org/emulator/data-catalog.md から。JSON を直に読まず入口から (直に読んでよい表は目録に書いてある物だけ)。
 - 見本のレシピ (TreeShowcase.vue、e6127a62) は 10-24 夜に外した (オーナー「見本はいらんわ」)。見本の木 tree-samples.ts (?sample=、動画の撮影の分も) と古い工程式のレシピ (exiledesk.craftStageSim.*、読み込んだ時にブラウザから消す) は 10-25 に消した (オーナー「古いレシピ全て削除で OK」「動画のは要らんから消してええよ」、2d492b9d)。見本を読んでいた台本は消すか直した (777b38fb ほか: シミュの probe 13 本を消し、解析君の scripts/analysis の入口 2 本と check-tree-patterns の SAMPLES=1 から見本を外した)。分かれ目 (split の箱) の作りは木・回す所・精査に残る (人が作るボタンは無い、整理の一覧は共有メモ sim23-cleanup-list.md)。
 - 画面 src/views/simulator/: 旧シミュレーター ①〜⑥ の工程ページ (SimHost・StageSimPanel・工程の帯・始め方・順番のおすすめ・自動の画面・use-sim-* ほか 32 本) は 10-22 に消した (ツリーに置き換え、一覧はブラックの共有メモ sim-11-old-steps-and-share.md)。残り: レシピ StageRecipesPage (?page=recipes = 木のレシピ)・recipe-share.ts (URL)、見本に棚を出す use-sim-shelf.ts (木の TreeHandShelf・TreeTrial)。貼り付け・SimBaseExtras・StageRecipeStart・SimMethodPop は 10-22 深夜〜10-23 に消した (16 本目 e3bb6f86、ジン部長 37d1bdcf)。棚・カード・MOD 一覧は共通 src/components/for-share・src/state/for-share から使い、エミュの画面 (src/views/craft-stage・src/state/emulator) は import しない (10-23、見張り D でシミュ → エミュは 0)。側は必ずエンジンの sideOfMod。
 - 共有と各画面 (オーナー 10-23、docs/org/README.md の「流れ」): どの画面でも同じ物はデザイン部長、シミュの流れにしか無い物 (箱・道・100 人回し・スタート) はここ。迷ったらここで作り、2 つ目の画面で要った時に共有へ。

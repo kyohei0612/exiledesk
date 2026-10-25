@@ -15,6 +15,7 @@
 10. 共有 = 人がどの画面でも同じと感じる物 (ページの枠: ヘッダー・上のタブ・戻る・広告の枠 / 決まった挙動 / カード・MOD 表・棚・ベース選び)。迷えば画面で作り、2 つ目の画面で要ったら共有へ (10-23)。
 
 ## 地図
+- データとエンジンの答え (呼び方・使っている部) は docs/org/emulator/data-catalog.md から。JSON を直に読まず入口から (直に読んでよい表は目録に書いてある物だけ)。
 - 共有にする線引き (オーナー 10-23、メモ org-roles-2026-10-23): ユーザーが「どの画面でも同じ」と感じる物 = ページの枠 (ヘッダー・上の切り替えタブ・戻る・フッター・広告の枠)・決まった挙動 (Esc・枠の外・連打の守り・移り方・開く畳む)・同じゲームの物を出す部品 (アイテムのカード・MOD 表の土台・棚・ベース選び)。その作業の流れにしか無い物は各画面。迷ったら画面で作り、2 つ目の画面で要った時に共有へ上げる。
 - for-share: src/components/for-share/ (棚一式 shelf/・アイテムのカード item/・MOD 表の土台 mod-list/ModTable.vue (エミュの特化は views/craft-stage/StageModList.vue、シミュは TreeGoalPage の slot)・use-stage-fx、10-23 にジン部長が src/views/craft-stage から移した)・src/state/for-share/ (棚・説明・stage-steps など)。移しの記録 docs/org/emulator/notes/2026-10-22-entry-split-plan.md。ファイルごとの使う画面と ModTable の差し込み口 (props・slot 8 つ) は notes/2026-10-23-components-map.md。カードはエミュ・シミュ・チュートリアル、棚は CraftStage と TreeHandShelf・TreeMemoFloat、sim-links はエミュだけが使う。
 - ほかの共通の部品 src/components/ (アプリだけの物は owners.txt のアプリの行で凍結)。部品ごとの使う画面の表は notes/2026-10-23-components-map.md。Web で多く使う物: ui/ (Icon・ModalShell・Disclosure・HelpTip・BusyTag・AdSlot)・decor/ (RichText・GameItemCard・HoverStack)・items/BaseCatalog (エミュ・シミュのベース選び)・NumStep (シミュ)・vaal-scales/CurrencyPicker (エミュ)・ChangelogDialog・SupportDialog・LangSwitch (web 枠)。

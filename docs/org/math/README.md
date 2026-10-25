@@ -11,6 +11,7 @@
 6. 他の部の持ち物は、頼みに入っていても触る前に `node scripts/owner-of.mjs <パス>` で持ち主を引き、解析でなければ止まってブラックへ 1 行。
 
 ## 地図 (本体は読むだけ、直すのは各部)
+- データとエンジンの答え (呼び方・使っている部) は docs/org/emulator/data-catalog.md から。JSON を直に読まず入口から (直に読んでよい表は目録に書いてある物だけ)。
 - ツリーの 100 人回し (解析君の物): src/services/simulator/tree/tree-run.ts、確かめ scripts/analysis/check-tree-run.mjs、CoE の突き合わせ scripts/analysis/check-coe-odds.mjs (高貴)・check-coe-chaos.mjs (カオス・消去) (_coe-load.cjs。CoE のレアリティは `ItemRarity.RARE`、数字の 3 だと枠の上限が無くなる)。記録 notes/2026-10-23-tree-run.md・2026-10-23-coe-odds.md・2026-10-23-coe-chaos.md・2026-10-23-boots-res.md (耐性の靴、台本 scripts/analysis/boots-res-ev.mjs)。
 - 確率の表: src/services/craft-stage/held-odds.ts・aim-odds.ts・route-race.ts・chaos-spam.ts・spec/odds.ts。
 - 重み・段: src/services/htc/patch.ts・weight-overrides.ts・poe2db-pool-fixes.json・rune-weights.json、src/services/mods/mod-rules.ts・tiers.ts。段の下限は src/vendor/poe2htc/engine/types.ts の `CURRENCY_FLOOR` (変成・増強は高貴と違う)。
