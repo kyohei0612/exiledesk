@@ -17,6 +17,9 @@ export { spamCounts } from "./engine-sim/spam-counts";
 // 1 手の行き先の一覧 (消える・付く・未発現・フラクチャーの枝ごとの割合と打った後のアイテム)。枝が STEP_OUTCOMES_MAX を超える手 (錬金など 3 つ以上足す) は数え上げない
 export type { StepOutcome } from "./engine-sim/outcomes";
 export { stepOutcomes, stepOutcomesOrTooMany, STEP_OUTCOMES_MAX } from "./engine-sim/outcomes";
+// 1 手の結果の種類 (当たり・外れ・狙いが消えた・外れが消えた・打った後) ごとの割合と、前後の 2 つのアイテムの分け方 (ツリーの結果の箱の割合、10-25 シミュ部長 29 本目)
+export type { OutcomeKind, OutcomeOdd, TierAimLike } from "./engine-sim/outcome-odds";
+export { outcomeOdds, outcomeKindOf } from "./engine-sim/outcome-odds";
 // エッセンスの見出しの文 (チュートリアルの動画)
 export { essenceNameEn, headingHits } from "./engine-sim/essence-parts";
 
