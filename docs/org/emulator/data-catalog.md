@@ -46,6 +46,13 @@
 | コラプト | services/mods/corruption-mods.json | `corruptionRowsFor`・`matchCorruption` |
 | 相場 | server/live の /boot.json → services/money.ts・htc/prices.ts | 相場の店 state/market-store |
 | スキンの一覧 | src/data/mtx-poe1-in-poe2.json | スキン部長の持ち物 |
+| 能力値の並び順 (カードの行の順) | src/data/stat-order.json ← scripts/build-stat-order.mjs | 直に import してよい (デザイン StageItemCard) |
+| ベースの説明 (要求・固有スキル) | src/data/base-info.json ← build-base-info.mjs | 直に import してよい (デザイン BaseItemHoverCard、エンジン skill-quality) |
+| ベースが持つスキル | src/data/granted-skills.json ← build-granted-skills-poe2db.mjs | 直に import してよい (デザイン GemHoverCard・BaseItemHoverCard) |
+| 人気のベース | src/data/popular-bases.json ← build-popular-bases.mjs | 直に import してよい (デザイン BaseCatalog・BaseCardGrid) |
+
+- 直に読んでよいか: 上の「直に import してよい」は直しの入らない表 (作る台本の出力そのまま)。ほかは入口から (直し・写した鍵・索引が入るので、JSON を直に読むと答えが変わる)。
+- node の台本でも `await loadHtcPatch()` でよい (scripts/_bundle-ts.mjs の bundleEntry で束ねれば JSON の import も入る)。10-25 に、mods.json・base_items.json・extra-bases・jewel-bases を読んで indexPatch + applyExtras で組む形と同じ物か比べた: キー・中身の長さ・指輪の MOD 一覧 98 行とも同じ。自前で組むと読み終わりの知らせ (`onHtcPatchLoaded`) が走らず、同期で引く所 (engine-mods ほか) が空のまま。
 
 ## 入口の名前の全部 (台本で数えた。[ ] は今使っている部、空 = ジンの中だけ)
 
@@ -91,6 +98,12 @@
 - goalBlock[シミュ]・CarriedAims・carryAims[シミュ]
 
 ## データのファイルを直に読んでいる部 (ジン・共通の外、台本で数えた)
+入口へ付け替える物 (10-25、中身はそのまま。直すのは各部):
+- デザイン state/for-share/craft-stage-shelf.ts: price-keys.json → `PRICE_KEYS`、vendor essences.json → `ESSENCE_TABLE` (engine.ts)
+- デザイン components/for-share/mod-list/stage-mod-list-look.ts: essence-keys.json → `ESSENCE_KEYS` (json だけだと写した鍵が抜ける)
+- モンキー scripts/_monkey-engine-entry.ts の load(): mods.json・base_items.json・extra-bases・jewel-bases を自前で組む → `await loadHtcPatch()` (同じ物を返すのは上で確かめた)
+
+ほかは付け替え不要 (直しの入らない表・アプリの凍結の所・スキン部長の持ち物):
 - package.json: アプリ/エミュ/デザイン
 - src/components/items/fam-glow.json: デザイン
 - src/data/base-info.json: デザイン
