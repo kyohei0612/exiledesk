@@ -38,7 +38,8 @@ const usable = (list) => new Set((list ?? []).filter((x) => !x.off).map((x) => x
 const setDiff = (a, b) => [...a].filter((x) => !b.has(x));
 /** ツリーの棚・お告げから外した物 (オーナー 10-24: 聖別・ヒネコラ・ミラー、神のオーブと祝福のお告げ。ルーンはクラフトのルーンだけで、shelfOf が既にそうしている)。エンジンにだけある時は違いに数えない */
 const TREE_OFF = new Set(["OmenofSanctification", "hinekora", "mirror", "divine", "OmenoftheBlessed"]);
-const usableEng = (list) => usable((list ?? []).filter((x) => !TREE_OFF.has(x.key)));
+/** noFrac = 完成の MOD にフラクチャーの印が無い木。ツリーはフラクチャーオーブを棚に出さない (シミュ 25 edce59a2) ので、エンジンにだけある時は違いに数えない */
+const usableEng = (list, noFrac = false) => usable((list ?? []).filter((x) => !TREE_OFF.has(x.key) && !(noFrac && x.key === "fracture")));
 /** 猿の側からも外した物を除く (外す前の記録や、シミュ部長が直す前のツリーでは棚に残る)。名前はエンジンの札の名前で引く */
 const withoutOff = (names, engList) => { const off = new Set((engList ?? []).filter((x) => TREE_OFF.has(x.key)).map((x) => x.name)); return new Set([...names].filter((n) => !off.has(n))); };
 
@@ -142,6 +143,8 @@ for (const f of files) {
   let rec;
   try { rec = JSON.parse(readFileSync(join(dir, f), "utf8")); } catch { continue; }
   if (!Array.isArray(rec?.steps)) continue;
+  // 画面の猿 (goalUi がある記録) で、完成の MOD にフラクチャーの印を付けていない木
+  const noFrac = Array.isArray(rec.goalUi) && !rec.goalUi.some((g) => g.want === "フラクチャー" && g.ok);
   const outSteps = [];
   for (const st of rec.steps) {
     if (!st.card || !Array.isArray(st.shelf)) { outSteps.push(st); continue; }
@@ -156,7 +159,7 @@ for (const f of files) {
     const raw = st.boxItem?.raw;
     if (raw?.base && raw.cls) {
       base = raw.base;
-      const shelf = E.shelfOf(raw, allTiers), eng = usableEng(shelf);
+      const shelf = E.shelfOf(raw, allTiers), eng = usableEng(shelf, noFrac);
       const d = { 猿だけ: setDiff(withoutOff(monkey, shelf), eng), エンジンだけ: setDiff(eng, withoutOff(monkey, shelf)) };
       best = { rarity: raw.rarity, item: raw, shelf, d, n: d.猿だけ.length + d.エンジンだけ.length };
     } else {
@@ -174,7 +177,7 @@ for (const f of files) {
       for (const [rarity, item] of Object.entries(E.itemsFor(base, ms.map((m) => m.hit), st.card))) {
         if (!item || (st.rarity && st.rarity !== rarity)) continue;
         const shelf = E.shelfOf(item, allTiers);
-        const eng = usableEng(shelf);
+        const eng = usableEng(shelf, noFrac);
         const d = { 猿だけ: setDiff(withoutOff(monkey, shelf), eng), エンジンだけ: setDiff(eng, withoutOff(monkey, shelf)) };
         const n = d.猿だけ.length + d.エンジンだけ.length;
         if (!best || n < best.n) best = { rarity, item, shelf, d, n };
