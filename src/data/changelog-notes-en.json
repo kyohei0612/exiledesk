@@ -1,4 +1,7 @@
 {
+  "0.1.599": [
+    "Craft stage: reloading the page now starts over from base selection (coming back from an article still keeps your item)"
+  ],
   "0.1.598": [
     "Cosmetics: added a list of PoE1 skins (MTX) usable in PoE2 (rightmost tab at the top; based on poe2db, with sets, source tags and shop prices; not guaranteed to work in game)"
   ],

@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.599",
+  "date": "2026-10-25",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "クラフト台: ページを読み直すと、ベース選びから始まるように (記事などから戻った時は前の画面のまま)",
+    "en": "Craft stage: reloading the page now starts over from base selection (coming back from an article still keeps your item)"
+   }
+  ]
+ },
+ {
   "v": "0.1.598",
   "date": "2026-10-25",
   "items": [
@@ -733,18 +745,6 @@
     "area": "",
     "text": "チュートリアルに中級「カタリストと品質を学ぶ」を追加: 品質を 20% まで上げて変わる MOD を見比べる・13 種類のカタリスト・別の種類は 0 から・触媒の高貴のお告げ (偉大なると重ねる)",
     "en": "Tutorial: added the Medium course “Learn catalysts and quality”: raise quality to 20% and compare the mods it changes, the 13 catalysts, a new type restarts from 0, Omen of Catalysing Exaltation (stacked with Greater)"
-   }
-  ]
- },
- {
-  "v": "0.1.559",
-  "date": "2026-10-18",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "カオススパム計算機の X シェアの URL を短く (exiledesk.com/s/ + 7 文字)。前の長い URL もそのまま開けます",
-    "en": "Chaos spam calculator: the Share on X link is now short (exiledesk.com/s/ + 7 characters). Old long links still work"
    }
   ]
  }
