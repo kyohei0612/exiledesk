@@ -269,6 +269,8 @@ function splitImplicits(data: PatchData, out: ItemTextResult, body: Body[], gran
  * 表示 = floor(素 × (1 + (品質 + 反対側の「側の効果」) / 100))。品質が効くかはクラフト台の catalystBoosts (指輪・アミュレットは MOD のタグ、ジュエルは中身のタグ)。
  */
 function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
+  // MOD の id の頭 (置き場の名前)。out.cls は部位の名前で、手袋・靴などは置き場が能力値ごとに分かれ (Gloves → Gloves_str/…) 一致しない (10-26、手袋のクラフト MOD が読めなかった)
+  const modCls = classOfBase(data, out.base!.en)?.id ?? out.cls;
   const lines: PastedLine[] = [];
   const used: Body[] = [];
   for (const b of rows) {
@@ -309,7 +311,7 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
     if (!t.skipped.includes(b.text)) { out.skipped.push(skip(b.line, "hybridPart")); continue; }
     // 置き場の索引に無い (液化した感情の MOD など、プールではなく別の表で付く物)。同じクラスのエンジンの MOD を文で引く
     const k = matchKey(b.template!);
-    const any = out.cls ? [...data.mods.values()].find((m) => m.id.startsWith(out.cls + "/") && matchKey(m.text ?? "") === k) : undefined;
+    const any = modCls ? [...data.mods.values()].find((m) => m.id.startsWith(modCls + "/") && matchKey(m.text ?? "") === k) : undefined;
     if (any) picked.push({ b, mod: any });
     else if (out.corrupted > 0) {
       // コラプトした物: コラプトの表にあれば暗黙側 (コラプトの行)、無ければ不明
@@ -350,7 +352,7 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
   // 能力値 (段の stats)。エッセンスの MOD は stats を持たないので、同じクラスの同じ文の MOD から借りる
   const ownStats = (m: Mod): readonly string[] => (m.tiers[0] as { stats?: string[] } | undefined)?.stats ?? [];
   const byText = new Map<string, readonly string[]>();
-  for (const m of data.mods.values()) if (out.cls && m.id.startsWith(out.cls + "/") && m.text && ownStats(m).length && !byText.has(m.text)) byText.set(m.text, ownStats(m));
+  for (const m of data.mods.values()) if (modCls && m.id.startsWith(modCls + "/") && m.text && ownStats(m).length && !byText.has(m.text)) byText.set(m.text, ownStats(m));
   const statsOf = (m: Mod): readonly string[] => (ownStats(m).length ? ownStats(m) : (m.text && byText.get(m.text)) || []);
   const free =picked.filter((p) => !p.fixed && statsOf(p.mod).length > 0 && statsOf(p.mod).length === p.b.values.length);
   const rest: Entry[] = picked.filter((p) => !free.includes(p)).map((p) => ({ ...p, at: used.indexOf(p.b) }));
@@ -358,7 +360,7 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
   const poolIds = new Set([cls?.pools.normal, cls?.pools.essence, cls?.pools.desecrated, cls?.pools.otherworldly].flatMap((p) => (p ? [...p.prefixes, ...p.suffixes] : [])));
   for (const p of free) poolIds.add(p.mod.id);
   // エッセンス・合金・冒涜の MOD は置き場の池に無い物もある (クラスの表で付く、見本 n1 の火耐性 34% (crafted))。同じクラスの普通でない MOD も足す
-  for (const m of data.mods.values()) if (out.cls && m.id.startsWith(out.cls + "/") && String(m.source ?? "normal") !== "normal") poolIds.add(m.id);
+  for (const m of data.mods.values()) if (modCls && m.id.startsWith(modCls + "/") && String(m.source ?? "normal") !== "normal") poolIds.add(m.id);
   const pool = [...poolIds].map((id) => data.mods.get(id)).filter((m): m is Mod => !!m && !/\/Rune_/.test(m.id) && (m.type === "prefix" || m.type === "suffix"));
   const linePct = (i: number, m: Mod): number => pctOf(boostsFor(m, free[i]!.b));
   const solveIn: SolveLine[] = free.map((p) => ({ stats: statsOf(p.mod), values: p.b.values, note: p.b.note, own: p.mod, ...(p.b.side ? { side: p.b.side } : {}), ...(p.b.tradeTier !== undefined ? { tradeTier: p.b.tradeTier } : {}) }));
