@@ -3,13 +3,8 @@
  * 猿の記録の 1 手 (カードの文・棚に出た札の名前) から、エンジンの入口でアイテムを組み立て、打てる札の名前の集合を出す。
  * 打てるかはエンジンの useReason (クラフト台・ツリーの棚と同じ判定、お告げ無し)。棚の札の並びと名前は for-share の棚と同じ物を読む
  */
-import { indexPatch } from "../src/vendor/poe2htc/engine/indexPatch";
 import type { PatchData } from "../src/vendor/poe2htc/engine/types";
-import { applyExtras, htcBaseInfo } from "../src/services/htc/patch";
-import mods from "../src/vendor/poe2htc/data/mods.json";
-import bases from "../src/vendor/poe2htc/data/base_items.json";
-import extra from "../src/services/htc/extra-bases.json";
-import jewels from "../src/services/htc/jewel-bases.json";
+import { htcBaseInfo, loadHtcPatch } from "../src/services/htc/patch";
 import { aimHits, applyCurrency, baseSocketsOf, forceKey, freshItem, modListFor, mulberry32, omenBlock, omensAllowedFor, runeEffectFor, revealOffers, runeOf, tierIndexOf, tierRankOf, useReason, type StageItem, type StageMod } from "../src/services/craft-stage/engine";
 import { placeMods, stepOutcomesOrTooMany } from "../src/services/craft-stage/engine-sim";
 import { CRAFT_RUNE_KEYS, ORBS, bonesFor, essenceShelf, nameOfKey, runesFor } from "../src/state/for-share/craft-stage-shelf";
@@ -17,9 +12,9 @@ import { SIM_HIDDEN } from "../src/state/for-share/shelf-context";
 import { walkTree as walkTreeOn, type WalkBox, type WalkOpts } from "./_monkey-tree-walk";
 
 let data: PatchData | null = null;
-export function load(): void {
-  const d = indexPatch(mods as unknown as Parameters<typeof indexPatch>[0], bases as unknown as Parameters<typeof indexPatch>[1]);
-  data = applyExtras(d, extra as unknown as Parameters<typeof applyExtras>[1], jewels as unknown as Parameters<typeof applyExtras>[2]);
+/** 目録はアプリと同じ入口で読む (自前で組むと onHtcPatchLoaded が走らず、同期で引く所が空のまま。ジン 10 の目録の付け替え 10-25) */
+export async function load(): Promise<void> {
+  data = await loadHtcPatch();
 }
 
 /** 英語のベース名がエンジンのベースの一覧にあるか */

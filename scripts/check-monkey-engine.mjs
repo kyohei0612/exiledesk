@@ -25,7 +25,7 @@ const outDir = args.includes("--out") ? args[args.indexOf("--out") + 1] : join(d
 mkdirSync(outDir, { recursive: true });
 
 const E = await bundleEntry("scripts/_monkey-engine-entry.ts");
-E.load();
+await E.load();
 
 /** カードの文: 「<ベース> <部位> …プロパティ… 暗黙 … P7 文 S5 文」。MOD は「[PS]数字 文」の並び (MOD なし の時は無い) */
 function parseCard(card) {
