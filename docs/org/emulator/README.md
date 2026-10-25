@@ -19,6 +19,7 @@
 10. 常駐・報告・触るファイル (dev/touching/emulator.md)・push と開発版は dev/README.md の決まり 1・2・5・8 のとおり。本番は最終チェック長。
 
 ## 地図
+- 他の部への窓口の目録: data-catalog.md (データのファイルと入口の関数ごとに、何に答えるか・呼び方・使っている部。10-25)
 - 窓口 src/services/craft-stage/: engine.ts (核、使い方 notes/engine-entry.md)・engine-emu.ts (中身 engine-emu/: preview・spam-race・chaos-spam・route-runes、ほか片方だけが使う核の名前)・engine-sim.ts (中身 engine-sim/: hand-effect の fillCatalyst 一式・magic-odds・spam-counts・outcomes・essence-parts)。打てるかは核の useReason (両方の棚)。分け方と経過は notes/2026-10-22-entry-split-plan.md、シミュの自前の式を寄せた記録は notes/2026-10-22-sim-logic-to-engine.md。
 - 見張り scripts/check-engine-entry.mjs: A 入口の外・B 凍結の htc・C よその窓口 (核→engine-*/、engine-sim/⇄engine-emu/、画面→よその窓口)・D エミュ ⇄ シミュの直の import (例外はチュートリアルの差し込み口 views/tutorial/course-entry.ts だけ)。10-23 に A・C・D とも 0。控え check-engine-entry.baseline.json、減ったら `--head --write`。
 - 核の土台: craft-stage/ の types.ts・run-plan.ts・contract.ts (打つ処理の形)、乱数 htc/rng.ts (`mulberry32`、どの部も同じ乱数)。

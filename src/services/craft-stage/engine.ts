@@ -79,6 +79,9 @@ export type { RuneRow, RuneEffect } from "./stage-runes";
 export { RUNES, runeOf, isRune, runeEffectFor } from "./stage-runes";
 export { withRunes, runeIdByName } from "../../vendor/poe2htc/engine/runes";
 export { ESSENCE_KEYS } from "../htc/essence-key-table";
+// データの表をそのまま (棚の並び・名前。中身は元の JSON、10-25 データの窓口揃え。目録 docs/org/emulator/data-catalog.md)
+export { default as PRICE_KEYS } from "../htc/price-keys.json";
+export { default as ESSENCE_TABLE } from "../../vendor/poe2htc/data/essences.json";
 export { essenceLevelOf } from "../../vendor/poe2htc/optimizer/cost";
 export { CATALYSTS } from "../htc/quality";
 export { isEmotion } from "./apply-emotion";
