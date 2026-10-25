@@ -1,5 +1,42 @@
 [
  {
+  "v": "0.1.604",
+  "date": "2026-10-25",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: スマホでも使えるようになりました。木の代わりに「何を打つ?」「結果ごとにどうする?」に答えて道を組み、全部決まったら 100 人回せます (PC と同じレシピ・共有 URL で行き来できます)",
+    "en": "Simulator: Now works on phones. Instead of drawing the tree, answer “what do you craft?” and “what next for each result?” to build the route, then run 100 crafters once it’s complete (recipes and share URLs work across PC and phone)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ベース選びで、トレード・poe.ninja・ゲームでコピーしたアイテムの文を貼り付けると、ベースと MOD を完成形の狙いとして取り込めるように",
+    "en": "Simulator: On base selection, paste an item copied from the trade site, poe.ninja or the game to import its base and mods as your final-item targets"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 結果の箱に、その手でその結果になる割合を出すように。狙いの MOD を「最大ライフ (85-119)」のように段の数値の幅で出すように",
+    "en": "Simulator: Result boxes now show the chance of each result for that craft, and target mods show their tier value range (e.g. “+(85-119) to maximum Life”) instead of “#”"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ベースを選んだ直後に 1 つ戻す (Ctrl+Z) を押しても、選ぶ前の金の指輪に戻らないように",
+    "en": "Simulator: Undo (Ctrl+Z) right after choosing a base no longer reverts to the placeholder Gold Ring"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "スマホ: MOD の段の表で、文が細切れに折り返さないようボタンを下の段にまとめました",
+    "en": "Phone: In the mod tier tables, the buttons now sit on a second line so the mod text no longer wraps into fragments"
+   }
+  ],
+  "pop": true
+ },
+ {
   "v": "0.1.603",
   "date": "2026-10-25",
   "items": [
@@ -732,18 +769,6 @@
     "area": "",
     "text": "チュートリアルのコース一覧を見やすく (段ごとの見出し・カードにアイコン・クリアの進み具合)",
     "en": "Tutorial course list redesigned (level headers, course icons, cleared progress)"
-   }
-  ]
- },
- {
-  "v": "0.1.564",
-  "date": "2026-10-18",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "冒涜の発現の候補を、ゲームの魂の井戸のように上から順に光って出すように (リロールも同じ。リロールした後は回る矢印を消します)",
-    "en": "Desecration reveal: options now appear one by one with a glow, like the Well of Souls (rerolls too; the reroll arrow disappears after use)"
    }
   ]
  }
