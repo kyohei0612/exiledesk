@@ -124,14 +124,14 @@ const SINGLE_SEEDS = 8;
 
 /**
  * フラクチャーの手で ✦ にするアイテムの MOD (10-24 オーナー「フラクチャーは必ずどれか 1 つを固定」)。選んだ狙い (fractureOf) に当たる付いている MOD、
- * 選んでいない前の木は狙いの札の並びで最初に付いている物。どれも付いていなければ null (エンジンの乱数のまま)
+ * 指名が無い時・付いていない時は null (エンジンの乱数のまま。前は指名が無くても狙いの最初の物を固定し、ツリー 100% / エンジン 25%、
+ * 10-25 モンキー 4 本目の 12 箱・ジン部長の判定。ブラック「自前の判定はエンジンへ」)
  */
 export function fractureTarget(data: PatchData, item: StageItem, h: Hand, aims: readonly Aim[]): string | null {
-  if (effectOf(h.currency) !== "fracture") return null;
+  if (effectOf(h.currency) !== "fracture" || !h.fractureOf) return null;
   const mods = [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured);
-  const want = h.fractureOf ? [{ modId: h.fractureOf, tier: aims.find((a) => a.modId === h.fractureOf)?.tier ?? 99 }, ...aims] : aims;
-  for (const a of want) { const m = mods.find((x) => isAimMod(x, targetsOf(data, [a]), aimOpts(data))); if (m) return m.modId; }
-  return null;
+  const a = { modId: h.fractureOf, tier: aims.find((x) => x.modId === h.fractureOf)?.tier ?? 99 };
+  return mods.find((x) => isAimMod(x, targetsOf(data, [a]), aimOpts(data)))?.modId ?? null;
 }
 
 /** フラクチャーで固定できる MOD の数 (エンジンの stepOutcomes の行き先の数。2 つ以上なら外れうる) */
