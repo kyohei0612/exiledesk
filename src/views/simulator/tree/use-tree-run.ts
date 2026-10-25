@@ -18,8 +18,10 @@ export const RUN_N = 100;
 const EVERY = 2;
 const PACE_MS = 60;
 type Person1 = Parameters<NonNullable<TreeRunOpts["onPerson"]>>[0];
-/** 1 人目の 1 箱の間 (ms)。長い道 (始めに戻るが多い) は全体で 20 秒ほどに縮める、最低 40ms (金の指輪は 540 箱、90ms で 49 秒かかった) */
-const walkMs = (len: number): number => Math.max(40, Math.min(450, Math.round(20000 / Math.max(1, len))));
+/** 1 人目の再生の速さ (前の速さの何倍か。10-25 オーナー「今の3倍速がデフォでいいな」)。3 秒とどまったら早送りの決まりは今のまま */
+const WALK_SPEED = 3;
+/** 1 人目の 1 箱の間 (ms)。長い道 (始めに戻るが多い) は全体で 20 秒ほどに縮める、最低 40ms (金の指輪は 540 箱、90ms で 49 秒かかった)。それを WALK_SPEED 倍の速さに */
+const walkMs = (len: number): number => Math.round(Math.max(40, Math.min(450, 20000 / Math.max(1, len))) / WALK_SPEED);
 /**
  * 1 人目が同じ所に 3 秒とどまったら、そこを抜けるまで早送り (10-25 オーナー「1人目沼ったら長い時間待つ」「3秒同じとこにとどまったら高速化で」)。
  * 同じ所 = 直近 3 秒の手が LOOP_BOXES 箱以内で、どの箱も平均 2 回以上通るくり返し (カオスの外れ → 親の箱、冒涜の外れ → エッセンスの結果 3 つ → 冒涜の輪など)。
