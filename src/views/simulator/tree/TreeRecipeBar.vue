@@ -6,14 +6,13 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
-import { currentTreeRecipe, renameTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
-import { openRecipesPage } from "../../../web/page";
+import { currentTreeRecipe, renameTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
+import { askLeave, openRecipesPage } from "../../../web/page";
 import { fmtDate, treeShareUrl, useRecipeUrl } from "../recipe-share";
 import { useTree } from "./use-tree";
-import { autoName, quickSave } from "./tree-save";
+import { autoName, quickSave, unsaved } from "./tree-save";
 import { usePhone } from "../../../utils/use-phone";
 import { recipeSummary } from "./recipe-summary";
-import { useArmed, ARMED_CLASS } from "../../../utils/use-armed";
 import { track } from "../../../utils/track";
 import { tr } from "../../../i18n/lang";
 
@@ -26,7 +25,8 @@ const props = defineProps<{ menuOnly?: boolean }>();
 const bare = computed(() => t.needBase.value || !!props.menuOnly);
 /** 一覧の 1 行の要約 (ベースの絵・狙い・印) */
 const sum = (r: { tree: Parameters<typeof recipeSummary>[0] }) => recipeSummary(r.tree);
-const dirty = computed(() => (currentTreeRecipe.value ? !sameTree(t.doc.value, currentTreeRecipe.value.tree) : Object.keys(t.doc.value.boxes).length > 1));
+/** 作りかけ (保存していない狙いか手がある、tree-save の unsaved) */
+const dirty = computed(() => unsaved(t.doc.value));
 const defaultName = (): string => autoName(t.doc.value);
 
 const note = ref("");
@@ -60,15 +60,12 @@ function saveAs(): void {
 // 「レシピ ▾」の窓
 const pop = ref(false);
 const root = ref<HTMLElement | null>(null);
-const arm = useArmed();
 const recent = computed(() => [...treeRecipes.value].sort((a, b) => touchedAtTree(b) - touchedAtTree(a)).slice(0, 8));
+/** レシピを開く。今の木が作りかけなら 3 択 (保存して進む = 今の木を保存してから開く。10-26 オーナー「レシピを開いて今の木を替える」も) */
 function open(r: TreeRecipe): void {
-  if (dirty.value && currentTreeRecipe.value?.id !== r.id && !arm.arm(`open:${r.id}`)) return;
-  setCurrentTreeRecipe(r.id);
-  t.open(r.tree);
-  pop.value = false;
-  emit("opened");
-  track("tree-recipe:open");
+  const go = (): void => { setCurrentTreeRecipe(r.id); t.open(r.tree); pop.value = false; emit("opened"); track("tree-recipe:open"); };
+  if (dirty.value && currentTreeRecipe.value?.id !== r.id) { pop.value = false; askLeave(go, () => void quickSave()); }
+  else go();
 }
 const { url, urlNote, openUrl, onPaste } = useRecipeUrl({
   notUrl: ["レシピの URL ではありません", "Not a recipe URL"],
@@ -111,11 +108,11 @@ onBeforeUnmount(() => { window.removeEventListener("pointerdown", onDown, true);
       <p class="opacity-60">{{ tr("保存したレシピから開く", "Open a saved recipe") }}</p>
       <p v-if="!recent.length" class="py-1 opacity-50">{{ tr("まだありません", "None yet") }}</p>
       <!-- 1 行 = ベースの絵 (空の木は空の印)・名前・ベース · 狙いの数と主な狙い · ✦ の数・日時 (10-23 オーナー「視覚的に管理しやすく」、要約は recipe-summary.ts) -->
-      <button v-for="r in recent" :key="r.id" type="button" data-tree-recipe-open class="flex min-h-11 min-w-0 items-center gap-2 rounded px-1.5 py-1 text-left" :class="arm.is(`open:${r.id}`) ? ARMED_CLASS : 'hover:bg-white/[0.06]'" @click="open(r)">
+      <button v-for="r in recent" :key="r.id" type="button" data-tree-recipe-open class="flex min-h-11 min-w-0 items-center gap-2 rounded px-1.5 py-1 text-left hover:bg-white/[0.06]" @click="open(r)">
         <img v-if="sum(r).art" :src="sum(r).art!" alt="" class="size-9 shrink-0 object-contain" draggable="false" />
         <span v-else data-tree-recipe-empty class="flex size-9 shrink-0 items-center justify-center rounded bg-white/[0.06] text-[10px] opacity-60">{{ sum(r).empty ? tr("空", "Empty") : "" }}</span>
         <span class="flex min-w-0 flex-1 flex-col">
-          <span class="truncate" :class="r.id === currentTreeRecipe?.id ? 'font-bold text-amber-200' : ''">{{ arm.is(`open:${r.id}`) ? tr("保存していない変更が消えます。もう一度押すと開く", "Unsaved changes will be lost. Click again") : r.name }}</span>
+          <span class="truncate" :class="r.id === currentTreeRecipe?.id ? 'font-bold text-amber-200' : ''">{{ r.name }}</span>
           <span data-tree-recipe-sum class="truncate text-[11px] opacity-70" :title="sum(r).first">{{ sum(r).empty ? tr("ベースなし", "No base") : [sum(r).base, sum(r).aims ? tr(`狙い ${sum(r).aims}`, `${sum(r).aims} target(s)`) : "", sum(r).first].filter(Boolean).join(" · ") }}</span>
         </span>
         <span class="flex shrink-0 flex-col items-end text-[11px]">

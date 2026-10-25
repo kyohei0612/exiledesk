@@ -33,8 +33,8 @@ import { tr } from "../../../i18n/lang";
 import { pageZoom } from "../../../utils/zoom";
 import { LINE, useTreeEdges } from "./use-tree-edges";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
-import { currentTreeRecipe, sameTree, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
-import { openTreePage, setLeaveGuard, treeStep } from "../../../web/page";
+import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes"; import { quickSave, rememberResume, takeResume, unsaved } from "./tree-save";
+import { askLeave, openTreePage, setLeaveGuard, treeStep } from "../../../web/page";
 import { recipesPage } from "../../../state/web-page";
 import { gesture } from "./use-gesture";
 import { useDismiss } from "../../../utils/use-dismiss";
@@ -131,7 +131,7 @@ const { merged, linesAll, hoverBox, cardBox } = useTreeMerge({ doc, posOf, segs:
 const clearArm = useArmed();
 const clearBtn = ref<HTMLElement | null>(null);
 useDismiss(() => clearArm.is(), [clearBtn], clearArm.clear);
-function onClear(): void { if (clearArm.arm()) { t.reset(); setCurrentTreeRecipe(null); } }
+function onClear(): void { const go = (): void => { t.reset(); setCurrentTreeRecipe(null); }; if (unsaved(doc.value)) askLeave(go, () => void quickSave()); else if (clearArm.arm()) go(); } // 作りかけは 3 択 (10-26 オーナー「ツリー消す作業」)、保存済みは 2 回押し
 /** 戻り先へ寄る (編集のポップアップの札を押した時) */
 function goBack(b: Box): void { const to = backTargetsOf(doc.value, b.id)[0]; if (to) void v.reveal(to, true); }
 
@@ -278,12 +278,11 @@ watch(treeStep, (st, was) => {
 }, { immediate: true });
 /**
  * 離れる時の確かめ (10-24 夜オーナー「誤作動もあるからページを離れる警告もセットで。ツリー作成中の場合、保存せずに終了するか聞く」)。
- * 未保存 = 開いているレシピと木が違う (レシピが無ければ箱が 2 つ以上、TreeRecipeBar の dirty と同じ)。シミュの中 (レシピ・sim-*) へ移る時は聞かない (木はこのブラウザに残る)
+ * 作りかけ = 保存していない狙いか手がある (tree-save の unsaved、10-26)、聞く時は「保存して進む」(名前は聞かず自動の名前) も。シミュの中 (レシピ・sim-*) へ移る時は聞かない (木はこのブラウザに残る)
  */
-const treeDirty = (): boolean => (currentTreeRecipe.value ? !sameTree(doc.value, currentTreeRecipe.value.tree) : Object.keys(doc.value.boxes).length > 1);
-onMounted(() => setLeaveGuard((to) => !(to === "page=recipes" || to.startsWith("page=sim-")) && treeDirty()));
-// シミュの外へ出たら木を白紙に戻す (次に入るとベース選びの空から。レシピのページへ移る時は残す、そこから戻って続ける)
-onBeforeUnmount(() => { setLeaveGuard(null); if (!recipesPage.value) t.resetAll(); });
+onMounted(() => setLeaveGuard((to) => !(to === "page=recipes" || to.startsWith("page=sim-")) && unsaved(doc.value), { save: () => void quickSave() }));
+// シミュの外へ出たら木を白紙に戻す (次に入るとベース選びの空から。レシピのページへ移る時は残す、そこから戻って続ける)。保存したレシピを開いていたら戻った時・読み直した時に開き直す (tree-save の rememberResume)
+onBeforeUnmount(() => { setLeaveGuard(null); window.removeEventListener("pagehide", rememberResume); if (!recipesPage.value) { rememberResume(); t.resetAll(); } }); onMounted(() => window.addEventListener("pagehide", rememberResume));
 const busy = computed((): { text: string; n?: number; of?: number } | null => {
   if (!s.data.value) return { text: tr("読み込み中", "Loading") };
   if (tr100.running.value) return { text: tr("回している", "Running"), n: tr100.result.value?.n ?? 0, of: RUN_N };
@@ -353,6 +352,7 @@ onMounted(() => window.addEventListener("keydown", onKey));
  * 見本の木 (?sample=、tree-samples.ts) は 10-25 に消した (オーナー「古いレシピ全て削除で OK」)
  */
 onMounted(() => {
+  const back = t.doc.value.memoAims?.length || Object.keys(t.doc.value.boxes).length > 1 ? null : takeResume(); if (back) { setCurrentTreeRecipe(back.id); t.open(back.tree); return; }
   if (!t.takeAskBase()) return;
   t.needBase.value = true;
   if (treeStep.value !== "base") {

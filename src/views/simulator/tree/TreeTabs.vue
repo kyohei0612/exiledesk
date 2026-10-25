@@ -9,7 +9,9 @@ import { nextTick, onBeforeUnmount, ref, watch } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
 import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
-import { openTreePage, treeStep } from "../../../web/page";
+import { askLeave, openTreePage, treeStep } from "../../../web/page";
+import { autoName, quickSave, unsaved } from "./tree-save";
+import { saveTreeRecipe } from "../../../state/simulator/tree-recipes";
 
 const emit = defineEmits<{ switched: [] }>();
 const t = useTree();
@@ -21,7 +23,15 @@ function syncStep(): void {
 function go(i: number): void { t.switchTab(i); syncStep(); emit("switched"); }
 function add(): void { t.addTab(); emit("switched"); }
 function copy(): void { t.copyTab(); syncStep(); emit("switched"); }
-function close(i: number): void { t.closeTab(i); syncStep(); emit("switched"); }
+/**
+ * タブを閉じる。そのタブの木が作りかけなら 3 択 (保存して進む = そのタブの木を自動の名前で保存、開いているタブならレシピへ上書き。10-26 オーナー「タブを × で閉じる」も)
+ */
+function close(i: number): void {
+  const go = (): void => { t.closeTab(i); syncStep(); emit("switched"); };
+  const active = i === t.active.value, d = active ? t.doc.value : t.tabDocs.value[i];
+  if (!d || !unsaved(d, active)) { go(); return; }
+  askLeave(go, () => { if (active) quickSave(); else saveTreeRecipe(autoName(d), d); });
+}
 /** 名前を変えているタブ (null = 変えていない) */
 const editing = ref<number | null>(null);
 const input = ref<HTMLInputElement[]>([]);

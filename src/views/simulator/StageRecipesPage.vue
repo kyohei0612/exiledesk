@@ -13,8 +13,9 @@ import Icon from "../../components/ui/Icon.vue";
 import SimPcOnly from "./SimPcOnly.vue";
 import { usePhone } from "../../utils/use-phone";
 import { flag } from "../../web/release-flags";
-import { currentTreeRecipe, currentTreeRecipeId, duplicateTreeRecipe, exportTreeRecipes, importTreeRecipes, overwriteTreeRecipe, removeTreeRecipe, renameTreeRecipe, restoreTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../state/simulator/tree-recipes";
-import { openTreePage, setLeaveGuard } from "../../web/page";
+import { quickSave, unsaved } from "./tree/tree-save";
+import { currentTreeRecipe, currentTreeRecipeId, duplicateTreeRecipe, exportTreeRecipes, importTreeRecipes, overwriteTreeRecipe, removeTreeRecipe, renameTreeRecipe, restoreTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../state/simulator/tree-recipes";
+import { askLeave, openTreePage, setLeaveGuard } from "../../web/page";
 import { treePage } from "../../state/web-page";
 import { fmtDate, treeShareUrl, useRecipeUrl } from "./recipe-share";
 import { useTree } from "./tree/use-tree";
@@ -33,7 +34,8 @@ const countOf = (r: TreeRecipe): { boxes: number; done: number } => {
   return { boxes: bs.length, done: bs.filter((b) => b.done).length };
 };
 /** 今の木に、開いているレシピに無い変更があるか (開いていない時は箱が始まりだけでなければ) */
-const dirty = computed(() => (currentTreeRecipe.value ? !sameTree(t.doc.value, currentTreeRecipe.value.tree) : Object.keys(t.doc.value.boxes).length > 1));
+/** 作りかけ (保存していない狙いか手がある、tree-save の unsaved) */
+const dirty = computed(() => unsaved(t.doc.value));
 
 // 探す・並べ替え (並べ替えは覚える)
 const SORT_KEY = "exiledesk.recipes.sort";
@@ -52,8 +54,12 @@ let noteT = 0;
 function say(text: string, undo?: () => void): void { note.value = { text, undo }; clearTimeout(noteT); noteT = window.setTimeout(() => { note.value = null; }, undo ? 10_000 : 3_000); }
 const arm = useArmed();
 
+/** レシピを開く。今の木が作りかけなら 3 択 (保存して進む = 今の木を保存してから開く、10-26 オーナー) */
 function open(r: TreeRecipe): void {
-  if (dirty.value && currentTreeRecipeId.value !== r.id && !arm.arm(`open:${r.id}`)) return;
+  if (dirty.value && currentTreeRecipeId.value !== r.id) { askLeave(() => openNow(r), () => void quickSave()); return; }
+  openNow(r);
+}
+function openNow(r: TreeRecipe): void {
   track("tree-recipe:open");
   setCurrentTreeRecipe(r.id);
   t.open(r.tree);
@@ -69,9 +75,8 @@ function overwrite(r: TreeRecipe): void {
 function saveNow(): void {
   const r = saveTreeRecipe(`${tr(jaTypeName(t.doc.value.base), t.doc.value.base)} ${fmtDate(Date.now())}`, t.doc.value);
   track("tree-recipe:save");
+  // 名前の欄には入らない (名前は決めなくてよい、後で ✎ で。10-26 オーナー「サクッと保存できるように」)
   say(tr(`「${r.name}」で保存しました (名前は ✎ で変えられる)`, `Saved as "${r.name}" (rename with ✎)`));
-  renaming.value = r.id;
-  void nextTick(() => (document.querySelector(`[data-recipe-rename="${r.id}"]`) as HTMLInputElement | null)?.select());
 }
 function duplicate(r: TreeRecipe): void {
   const x = duplicateTreeRecipe(r.id, tr(" のコピー", " (copy)"));
@@ -127,7 +132,7 @@ let before = 0;
 onMounted(() => { before = window.scrollY; window.scrollTo(0, 0); window.addEventListener("keydown", onKey); });
 // ツリーから来た作りかけの木を、ここからシミュの外へ出る時も聞く (ツリーのページと同じ。ツリーへ戻る時は聞かない。page.ts の mustAsk がツリーのページの間だけなので、今は効かない)。
 // 外へ出たら木を白紙に戻す (10-24 夜、作業中の木は持ち越さない)。ただし聞けていない間は、未保存の変更がある木は黙って消さない
-onMounted(() => setLeaveGuard((to) => !to.startsWith("page=sim-") && dirty.value));
+onMounted(() => setLeaveGuard((to) => !to.startsWith("page=sim-") && dirty.value, { save: () => void quickSave() }));
 onBeforeUnmount(() => { setLeaveGuard(null); if (!treePage.value) t.resetAll(); });
 onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); clearTimeout(noteT); const y = before; requestAnimationFrame(() => window.scrollTo(0, y)); });
 /** スマホ (768px 未満) は「PC で開いてください」だけ (SimPcOnly、10-25)。スイッチ simPhone が入っていれば PC と同じ中身 (縦積みは max-md の寸法) */
@@ -203,7 +208,7 @@ const SIM_PHONE = flag("simPhone");
             <p v-if="sumOf(r).first" class="min-w-0 truncate text-[12px] text-[#c8c8ff]" :title="sumOf(r).first">{{ sumOf(r).first }}</p>
             <p class="text-[11px] opacity-50">{{ tr(`更新 ${fmtDate(touchedAtTree(r))}`, `Updated ${fmtDate(touchedAtTree(r))}`) }}<template v-if="r.updatedAt !== r.savedAt"> · {{ tr(`作成 ${fmtDate(r.savedAt)}`, `Created ${fmtDate(r.savedAt)}`) }}</template></p>
             <div class="mt-2 flex flex-wrap items-center gap-1.5">
-              <button type="button" data-recipe-open class="max-md:min-h-10" :class="arm.is(`open:${r.id}`) ? ARMED_CLASS : 'g-btn sm'" :title="tr('この木をクラフトの道で開く', 'Open this tree in the crafting path')" @click="open(r)">{{ arm.is(`open:${r.id}`) ? tr("保存していない変更が消えます。もう一度押すと開く", "Unsaved changes will be lost. Click again to open") : tr("開く", "Open") }}</button>
+              <button type="button" data-recipe-open class="g-btn sm max-md:min-h-10" :title="tr('この木をクラフトの道で開く', 'Open this tree in the crafting path')" @click="open(r)">{{ tr("開く", "Open") }}</button>
               <button v-if="dirty && r.id === currentTreeRecipeId" type="button" data-recipe-overwrite class="max-md:min-h-10" :class="arm.is(`over:${r.id}`) ? ARMED_CLASS : 'g-btn sm'" :title="tr('今の木でこのレシピを書き換える', 'Replace this recipe with the current tree')" @click="overwrite(r)">{{ arm.is(`over:${r.id}`) ? tr("もう一度押すと上書き", "Click again to overwrite") : tr("今の木で上書き", "Overwrite with current") }}</button>
               <button type="button" data-recipe-duplicate class="g-btn sm inline-flex items-center gap-1 max-md:min-h-10" @click="duplicate(r)"><Icon name="copy" class="size-3.5" />{{ tr("複製", "Duplicate") }}</button>
               <button type="button" data-recipe-copy-url class="g-btn sm inline-flex items-center gap-1 max-md:min-h-10" :title="tr('この木の URL をコピー (URL に木が全部入っている)', 'Copy the URL of this tree (the whole tree is in it)')" @click="copyUrl(r)"><Icon name="link" class="size-3.5" />{{ tr("URL をコピー", "Copy URL") }}</button>

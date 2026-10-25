@@ -12,21 +12,18 @@ import { goalBlock } from "../../../services/craft-stage/engine-sim";
 import { parseItemText } from "../../../services/craft-stage/engine";
 import type { ItemTextMod, ItemTextReading } from "../../../services/craft-stage/engine";
 import { craftStage as s } from "../../../state/craft-stage";
-import { migrateStart, startRarity, type Aim, type TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { currentTreeRecipe, overwriteTreeRecipe, sameTree, saveTreeRecipe, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
-import { jaTypeName } from "../../../i18n/item-names-ja";
-import { openTreePage } from "../../../web/page";
+import { migrateStart, startRarity, type Aim } from "../../../services/simulator/tree/tree-model";
+import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
+import { askLeave, openTreePage } from "../../../web/page";
 import { track } from "../../../utils/track";
 import { tr } from "../../../i18n/lang";
-import { fmtDate } from "../recipe-share";
 import { useTree } from "./use-tree";
+import { quickSave, unsaved } from "./tree-save";
 
 /** 最後に取り込んだ結果 (sim-mods の上に出す。閉じるか次の取り込みまで) */
 export const pasteNote = ref<{ base: string; aims: number; bad: Array<{ line: string; why: string }>; /** 読み方が 2 通り以上の時だけ (先頭 = 仮に選んだ読み) */ readings?: ItemTextReading[]; /** 今の読み方 */ pick: number; /** 段が仮の MOD (1 行に足された値の割り方が決まらない) */ guess: string[] } | null>(null);
 /** 取り込めなかった時の理由 (貼る口の下に出す) */
 export const pasteWhy = ref<string | null>(null);
-/** 貼り付けで置き換えた作りかけの木 (保存していない手のある木)。② から木へ戻る時に保存を聞く。recipeId = 開いていたレシピ (上書き先) */
-export const pastePrev = ref<{ doc: TreeDoc; name: string; recipeId: string | null; boxes: number } | null>(null);
 
 /**
  * 貼った文を取り込む (貼る口から)。読めなければ理由を出して true。
@@ -42,20 +39,11 @@ export function requestPaste(text: string, quiet = false): boolean {
     return true;
   }
   pasteWhy.value = null;
-  const t = useTree(), d = t.doc.value, cur = currentTreeRecipe.value;
-  // 置き換える木が作りかけなら控える (続けて貼った時は最初の木のまま)。保存済みのまま・白紙・新しいツリーのタブは聞かない
-  const dirty = cur ? !sameTree(d, cur.tree) : t.lostOnBase.value > 0;
-  if (dirty && !pastePrev.value) pastePrev.value = { doc: JSON.parse(JSON.stringify(d)) as TreeDoc, name: cur?.name ?? `${tr(jaTypeName(d.base), d.base)} ${fmtDate(Date.now())}`, recipeId: cur?.id ?? null, boxes: t.lostOnBase.value };
-  importPaste(text);
+  // 置き換える木が作りかけなら、置き換える前に 3 択 (保存して進む / 保存せず進む / やめる。10-26 モンキー 6: 前は ② から木へ戻る時に聞く形で、
+  // その間にほかの道 (上のタブ等) で離れると聞かずに消えた)。保存済みのまま・白紙・新しいツリーのタブは聞かない
+  if (unsaved(useTree().doc.value)) askLeave(() => importPaste(text), () => void quickSave());
+  else importPaste(text);
   return true;
-}
-/** 控えた木を保存する (開いていたレシピなら上書き、無ければ新しく)。今の木 (貼った物) は名前なしのまま */
-export function savePrev(): void {
-  const p = pastePrev.value;
-  if (!p) return;
-  if (p.recipeId) overwriteTreeRecipe(p.recipeId, p.doc); else saveTreeRecipe(p.name, p.doc);
-  setCurrentTreeRecipe(null);
-  pastePrev.value = null;
 }
 
 /** 取り込む。貼った文のベースとアイテムレベルへ切り替え、狙いを入れて ② 完成の MOD のページへ */
