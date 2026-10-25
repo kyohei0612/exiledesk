@@ -18,6 +18,8 @@ const PASS_R = 16;
  * (10-25 オーナー「矢印の位置がわるい、そもそもここは枠でしょ」→「ここと同じにしようか」= 箱 → 札の縦の線と同じ形。18 → 34 → 40)。棒は札のすぐ下 (段の間 240 で札の下から 8)
  */
 const BUS_DY = HAND_DY - CHIP_HALF;
+/** 隣の札が無い時の札の幅の上限 (前からの 340) */
+const CHIP_MAX = 340;
 
 export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, posOf: (b: TreeBox) => { x: number; y: number }) {
   /** 箱の真ん中 */
@@ -47,5 +49,17 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     const segs: Seg[] = [{ x0: px, y0: py, x1: px, y1: busY }, ...kids.flatMap((k) => { const cx = midOf(k.id); return [{ x0: px, y0: busY, x1: cx, y1: busY }, { x0: cx, y0: busY, x1: cx, y1: k.q.y }]; })];
     return { id: b.id, hand: b.hand, split: b.split?.length, jx: px, jy, stem: `M ${px} ${py} L ${px} ${busY - 10}`, to, segs };
   }));
-  return { edges };
+  /**
+   * 札の幅の上限 (ツリーの座標): 同じ高さの隣の札の真ん中までの近い方の距離 − 12 (両方がその幅でも重ならない)。隣が無ければ CHIP_MAX。
+   * 隣と重ならないように (10-25 オーナー「こういうところだぶるね」、ルーンの合金と無限のパーフェクトエッセンスの札が重なった)。はみ出す名前は … で切る
+   */
+  const chipRoom = computed(() => {
+    const out = new Map<string, number>();
+    for (const e of edges.value) {
+      const near = Math.min(...edges.value.filter((f) => f !== e && Math.abs(f.jy - e.jy) < CHIP_HALF * 2).map((f) => Math.abs(f.jx - e.jx)));
+      out.set(e.id, Math.min(CHIP_MAX, near - 12));
+    }
+    return out;
+  });
+  return { edges, chipRoom };
 }
