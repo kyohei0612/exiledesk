@@ -13,28 +13,15 @@ import { handLabel } from "../tree/tree-names";
 import { useTree } from "../tree/use-tree";
 import { usePhoneQuiz, type Question } from "./use-phone-quiz";
 import PhoneOutRow from "./PhoneOutRow.vue";
-import { useReason } from "../../../services/craft-stage/engine";
-import { needAimOf, planPick, type PickPlan as Plan } from "../tree/tree-hand-plan";
 import { tr } from "../../../i18n/lang";
 
 const props = defineProps<{ q: Question }>();
-const emit = defineEmits<{ hand: [id: string]; pick: [plan: Plan] }>();
+const emit = defineEmits<{ hand: [id: string] }>();
 const t = useTree();
 const quiz = usePhoneQuiz();
 const box = computed(() => t.doc.value.boxes[props.q.id]);
-const smp = computed(() => (s.data.value && box.value ? sampleOf(s.data.value, t.doc.value, props.q.id, 1) : null));
-const item = computed(() => smp.value?.item ?? null);
+const item = computed(() => (s.data.value && box.value ? sampleOf(s.data.value, t.doc.value, props.q.id, 1).item : null));
 const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.value, t.doc.value, box.value?.unwanted ?? [], item.value) : null));
-/** よく使う手の候補 (オーブの基本の段・フラクチャー。並びは棚と同じ) */
-const QUICK = ["transmute", "augment", "regal", "alchemy", "exalt", "chaos", "annul", "fracture"];
-/** よく使う手 (打てる物だけ。手の一式は棚・猿の口と同じ planPick、当たりの札は付きうる完成の狙い全部) */
-const quick = computed(() => {
-  const d = s.data.value, it = item.value, b = box.value;
-  if (!d || !it || !b || b.hand || needAimOf(t.doc.value, props.q.id, smp.value?.note)) return [];
-  return QUICK.filter((k) => !useReason(d, it, k, [])).map((k) => ({ key: k, plan: planPick(d, t.doc.value, props.q.id, it, k, [], {}, t.goals.value) }))
-    .filter((p) => !p.plan.problem)
-    .map((p) => ({ ...p, sub: p.plan.aims.length ? tr(`当たり: ${p.plan.aims.map((a) => t.aimShort(a)).join("・")}`, `Hits: ${p.plan.aims.map((a) => t.aimShort(a)).join(", ")}`) : p.plan.hand.free ? tr("狙い無し", "No target") : "" }));
-});
 /** カードの幅 =画面の幅 - 左右の余白 (360 まで) */
 const cardW = ref(340);
 const fit = (): void => { cardW.value = Math.min(360, window.innerWidth - 40); };
@@ -71,15 +58,8 @@ function showHand(id: string): void { quiz.focus.value = { kind: "hand", id }; }
         <button type="button" data-phone-hand-now class="rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-left text-[14px] text-amber-50" @click="showOuts(q.id)">{{ handLabel(box.hand) }} <span class="float-right text-[12px] text-amber-200/80">{{ tr("結果 ›", "Results ›") }}</span></button>
         <button type="button" data-phone-hand-change class="g-btn" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
       </template>
-      <template v-else>
-        <!-- よく使う手 (この箱で打てるオーブの基本の段だけ。お告げ無し・当たりは付きうる完成の狙い全部 = 棚で持ってそのまま押した時と同じ) -->
-        <p v-if="quick.length" class="text-[11px] text-[#9a8a70]">{{ tr("よく使う手 (この箱で打てる物だけ)", "Common crafts (usable here)") }}</p>
-        <button v-for="p in quick" :key="p.key" type="button" data-phone-quick :data-key="p.key" class="flex min-w-0 items-center gap-2 rounded-xl border border-[#4a3a24] bg-[#1a140d] px-3 py-2.5 text-left text-[14px] text-[#f0e4c8] active:border-amber-300" @click="emit('pick', p.plan)">
-          <span class="min-w-0 flex-1 truncate">{{ handLabel(p.plan.hand) }}</span>
-          <span class="max-w-[55%] shrink-0 truncate text-right text-[11px] text-[#9a8a70]">{{ p.sub }}</span>
-        </button>
-        <button type="button" data-phone-hand-open class="g-btn py-3 text-[15px]" @click="emit('hand', q.id)">{{ quick.length ? tr("ほかの手・お告げ (棚を開く)", "Other crafts & omens (open the shelf)") : tr("打つ手を選ぶ (棚を開く)", "Choose a craft (open the shelf)") }}</button>
-      </template>
+      <!-- 打つ手は PC と同じ棚で自分で決める (お告げ・当たりの MOD の選び方も同じ。早押しは 10-25 オーナー「よく使う手とかもいらんね PCレベルで自分で決めれるように」で外した) -->
+      <button v-else type="button" data-phone-hand-open class="g-btn py-3 text-[15px]" @click="emit('hand', q.id)">{{ tr("打つ手を選ぶ (棚を開く)", "Choose a craft (open the shelf)") }}</button>
     </template>
     <template v-else>
       <h2 class="text-[16px] font-bold text-[#f0e4c8]">{{ box.hand ? tr(`${handLabel(box.hand)} を打つと…`, `After ${handLabel(box.hand)}…`) : "" }}</h2>

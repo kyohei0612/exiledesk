@@ -149,7 +149,7 @@ export function applyPick(d: TreeDoc, id: string, h: Hand, kind: HandKind, aims:
   return at;
 }
 
-/** 棚に並ぶ物 (CurrencyShelf と同じ: オーブ・骨・エッセンス、ソケットがあればクラフトのルーン。隠すのはツリーの棚と同じ treeHidden。猿の口・スマホの早押し) */
+/** 棚に並ぶ物 (CurrencyShelf と同じ: オーブ・骨・エッセンス、ソケットがあればクラフトのルーン。隠すのはツリーの棚と同じ treeHidden。猿の口) */
 export function shelfKeysOf(data: PatchData, it: StageItem): string[] {
   const sockets = socketCapOf(it.base, it.cls.category) > 0 || (it.sockets ?? 0) > 0;
   const runes = sockets ? runesFor(it).flatMap((g) => g.keys).filter((k) => CRAFT_RUNE_KEYS.includes(k) && runeOf(k)) : [];
@@ -158,7 +158,7 @@ export function shelfKeysOf(data: PatchData, it: StageItem): string[] {
 /** 棚で持った物の残り (お告げ以外)。hitAims = 当たりの箱にする MOD (modId の並び、[] = 狙い無し。渡さないと付きうる狙い全部) */
 export type PickOpt = Omit<HandPick, "held" | "omens"> & { hitAims?: string[] };
 /**
- * 棚で選んだ物 → 手を決める時に渡す物一式 (棚の窓の決め方と同じ。猿の口 sim-monkey の add・スマホの早押しが呼ぶ)。problem があれば確定させない
+ * 棚で選んだ物 → 手を決める時に渡す物一式 (棚の窓の決め方と同じ。猿の口 sim-monkey の add が呼ぶ)。problem があれば確定させない
  */
 export function planPick(data: PatchData, doc: TreeDoc, id: string, it: StageItem, key: string, omens: string[], opt: PickOpt, goals: readonly Aim[]) {
   const afterQ = afterQualityOf(doc, id), autoCat = autoCatOf(data, doc, it);
@@ -171,8 +171,6 @@ export function planPick(data: PatchData, doc: TreeDoc, id: string, it: StageIte
   const only = onlyOf(data, doc, id, hand, preCat, aims);
   return { hand, kind, aims, preCat, only, problem: problemOf(data, it, hand, aims, preCat, preFill) };
 }
-export type PickPlan = ReturnType<typeof planPick>;
-
 // 伸ばすカタリスト (2026-10-23 エンジンの for-sim から戻した。中身はエンジンの核の catalystBoosts を呼ぶだけ)。付きうる狙い reachableAims は精査も使うので tree-aim.ts (10-25)
 /** その MOD を伸ばすカタリスト (keys の並びで最初の物、伸ばす物が無ければ null)。伸びるかはエンジンの catalystBoosts (指輪・アミュレットは MOD の tags、ジュエル・上のベースは中身のタグ) */
 function catalystForMod(data: PatchData, item: StageItem, modId: string, keys: readonly string[]): string | null {
