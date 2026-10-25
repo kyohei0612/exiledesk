@@ -107,13 +107,14 @@ export function hitChoicesOf(data: PatchData, doc: TreeDoc, boxId: string, item:
 }
 /**
  * チェックした狙い (modId) から、手を決める時に渡す当たりの箱と狙い無しを出す (画面と同じ決め方): 付く MOD を選べない手で 1 つ以上チェック = その狙いの当たりの箱、
- * 何もチェックしない = 狙い無し (当たるまで繰り返す時は「どれでも」= 前からの hitAimsOf)。付く MOD を選べない手でなければ null (呼ぶ側の既定のまま)
+ * 何もチェックしない = 狙い無し。当たるまで繰り返す時は狙い無しも「どれでも」も無く、当たりの箱 0 (problemOf が「狙う MOD を選んで」で止める。
+ * 10-25 オーナー「カオススパムするなら狙い MOD は絶対設定しないといけない」)。付く MOD を選べない手でなければ null (呼ぶ側の既定のまま)
  */
 export function pickedHits(choices: readonly Aim[], checked: readonly string[], held: string, spam: boolean): { aims: Aim[]; free: boolean } | null {
   if (!FREE_EFFECTS.includes(effectOf(held))) return null;
   const aims = choices.filter((a) => checked.includes(a.modId));
   if (aims.length) return { aims, free: false };
-  return spam ? null : { aims: [], free: true };
+  return { aims: [], free: !spam };
 }
 /** 結果が 1 通りの手か (この箱の見本 8 つにエンジンで打った行き先を全部たどる。触媒の手は前のカタリストを入れた後で)。✦ にする MOD を選んで、この箱の見本に付いている時は「その狙いが ✦」の 1 通り */
 export function onlyOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, preCat: string | null, hitAims: Aim[]): OnlyOut {
@@ -125,8 +126,8 @@ export function problemOf(data: PatchData, item: StageItem, h: Hand, hitAims: Ai
   // 前に足すカタリストが入らないベース (装飾品だけに入る。前は触媒のお告げの「品質が要る」と出た、10-22 13 通り組んだ #16)
   const full = !!preCat && catalystFull(item, preCat);
   if (preCat && preFill && !preFill.applied && !full) return tr(`前に足すカタリストが入らない: ${preFill.reason ?? ""}`, `The catalyst before this can't be used: ${preFill.reason ?? ""}`);
-  // 当たるまで繰り返すのに狙いが 1 つも無い (まだ付いていない狙いが無い) 時は決めさせない
-  if (kindOf(h) === "spam" && !hitAims.length) return tr("この手で付く狙いが無い (まだ付いていない狙いが無いか、このカレンシーでは付かない。欲しい MOD のメモに足すか、当たりの箱で MOD を選んでから)", "No target this craft can add (none left, or this currency can't add them; add one to the wanted mods memo, or pick a mod in a hit box first)");
+  // 当たるまで繰り返すのに狙いが 1 つも無い時は決めさせない (MOD を選んでいない・まだ付いていない狙いが無い・このカレンシーでは付かない)
+  if (kindOf(h) === "spam" && !hitAims.length) return tr("狙う MOD を選んで (当たるまで繰り返す手は、狙う MOD が要る。候補が無い時は、欲しい MOD のメモに足すか、当たりの箱で MOD を選んでから)", "Pick a target mod (repeating needs one; if there are none, add one to the wanted mods memo, or pick a mod in a hit box first)");
   return handProblem(data, preCat && preFill ? preFill.item : item, h);
 }
 /**

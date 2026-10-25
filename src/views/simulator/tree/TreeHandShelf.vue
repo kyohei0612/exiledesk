@@ -102,8 +102,8 @@ const aimChoices = computed((): Aim[] => {
 const checkedAims = computed((): Aim[] => aimChoices.value.filter((a) => checked.value.includes(aimKey(a))));
 /** チェックの一覧を出す (MOD が付く・入れ替わる手) */
 const showAims = canFree;
-/** 狙い無し = MOD を 1 つもチェックしていない。当たるまで繰り返す時は「どれでも」= 付いていない完成の狙いのどれかが付くまで (前からの当たりの決め方) */
-const freeOn = computed(() => showAims.value && !checkedAims.value.length);
+/** 狙い無し = MOD を 1 つもチェックしていない。当たるまで繰り返す時は狙い無しも「どれでも」も無い (MOD を 1 つ以上チェックするまで確定しない、10-25 オーナー) */
+const freeOn = computed(() => showAims.value && !spam.value && !checkedAims.value.length);
 /** 狙い無しを押す = MOD を全部外す (もう狙い無しの時に押しても外れない。値が同じだと Vue が描き直さず、チェックだけ外れて見えた) */
 function toggleFree(e: Event): void { checked.value = []; (e.target as HTMLInputElement).checked = true; }
 function toggleAim(a: Aim): void {
@@ -134,9 +134,8 @@ const resultText = computed((): [string, string] | null => {
 });
 /** 当たりの箱の既定 (tree-hand-plan の hitAimsOf) */
 const hitAims = computed((): Aim[] => {
-  // チェックした MOD が当たりの箱 (当たるまで繰り返す時は、どれかが付くまで = tree-sample の handAims)。繰り返しで狙い無しなら前からの決め方
-  if (showAims.value && checkedAims.value.length) return checkedAims.value;
-  if (showAims.value && !spam.value) return [];
+  // チェックした MOD が当たりの箱 (当たるまで繰り返す時は、どれかが付くまで = tree-sample の handAims)。何も無ければ 0 (繰り返しなら problemOf が止める)
+  if (showAims.value) return checkedAims.value;
   const d = s.data.value, it = item.value, h = hand.value;
   return d && it && h ? hitAimsOf(d, t.doc.value, props.boxId, it, h, t.goals.value, isFracture.value ? fracPick.value : null) : [];
 });
@@ -202,13 +201,14 @@ function ok(): void {
       </div>
       <!-- 足す手: 当たりの箱にする狙いをチェック (複数可)。チェックした MOD ごとに当たり、どれも付かなければ外れ、0 個 = 狙い無し (10-25 オーナー) -->
       <div v-if="showAims" data-tree-hand-aims class="flex flex-col gap-1 text-[12px]">
-        <span class="opacity-80">{{ tr("当たりの箱にする MOD", "Mods that make a hit box") }}</span>
+        <span v-if="spam && !checkedAims.length" data-tree-hand-aim-need class="text-rose-200/90">{{ tr("狙う MOD を選んで", "Pick a target mod") }}</span>
+        <span v-else class="opacity-80">{{ tr("当たりの箱にする MOD", "Mods that make a hit box") }}</span>
         <label v-for="a in aimChoices" :key="aimKey(a)" data-tree-hand-aim :data-aim="aimKey(a)" class="flex min-h-7 min-w-0 cursor-pointer items-center gap-2">
           <input type="checkbox" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 truncate" :title="t.aimLabel(a)">{{ t.aimLabel(a) }}</span>
         </label>
         <!-- 狙い無し (MOD とは排他。前はお告げの列の札、10-25 オーナー「狙い無しも左のチェックに付けるといいね」) -->
-        <label data-tree-hand-free class="flex min-h-7 cursor-pointer items-center gap-2" :title="tr('狙い無し (空きを 1 つ埋めるだけ。当たり / 外れに分けない)', 'No target (just fill an open slot; no hit / miss split)')">
-          <input type="checkbox" :checked="freeOn" @change="toggleFree($event)" />{{ spam ? tr("どれでも (付いていない狙いのどれかが付くまで)", "Any (until any missing target lands)") : tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}
+        <label v-if="!spam" data-tree-hand-free class="flex min-h-7 cursor-pointer items-center gap-2" :title="tr('狙い無し (空きを 1 つ埋めるだけ。当たり / 外れに分けない)', 'No target (just fill an open slot; no hit / miss split)')">
+          <input type="checkbox" :checked="freeOn" @change="toggleFree($event)" />{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}
         </label>
       </div>
       <label v-if="canSpam(held)" class="flex min-h-7 cursor-pointer flex-wrap items-center gap-2">

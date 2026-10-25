@@ -9,7 +9,7 @@
  *   __simMonkey.shelf(id)                              その箱の棚 [{ key, name, ok, reason }]
  *   __simMonkey.omens(id, key)                         持った物に掛けられるお告げ [{ key, name, ok, reason }]
  *   __simMonkey.add(id, key, omens?, opt?)             次の手の箱を作る → { ok, problem?, at, boxes: [{ id, out, aim, mods: [{ side, modId, tier, text }] }] }
- *   __simMonkey.hitChoices(id, key, omens?)            窓の「当たりの箱にする MOD」の候補 [{ modId, tier, label }]。add の opt.hitAims = [modId…] でチェック (画面と同じ: [] = 狙い無し・当たるまでなら「どれでも」、渡さないと付きうる狙い全部)
+ *   __simMonkey.hitChoices(id, key, omens?)            窓の「当たりの箱にする MOD」の候補 [{ modId, tier, label }]。add の opt.hitAims = [modId…] でチェック (画面と同じ: [] = 狙い無し、当たるまでなら確定しない (problem「狙う MOD を選んで」、10-25 オーナー)、渡さないと付きうる狙い全部)
  *   __simMonkey.boxItem(id)                            その箱でエンジンに渡すアイテム { item, preItem, raw, preRaw, hand } / run(n=300, seed=1) = 画面と同じ tree-run を値段 1 で (費用 = 個数)
  *   __simMonkey.dump()                                 今の木 (JSON、startRarity = スタートの本当のレアリティ)。add の boxes にも rarity
  * 流れの 2・4 (完成形の設定と結果、10-24 ブラックの頼み。中身は完成形の設定の窓・箱の窓・テストラン・「100 人回す」と同じ関数):
