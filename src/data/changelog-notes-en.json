@@ -1,4 +1,22 @@
 {
+  "0.1.598": [
+    "Cosmetics: added a list of PoE1 skins (MTX) usable in PoE2 (rightmost tab at the top; based on poe2db, with sets, source tags and shop prices; not guaranteed to work in game)"
+  ],
+  "0.1.597": [
+    "Craft stage: the omen panel now opens below the held currency's row instead of covering the shelf, and omens that would block the craft or do nothing can no longer be selected",
+    "Craft stage: anything half-picked (held currency, tier tables, pop-ups) now cancels back when you click outside it or press Esc",
+    "Craft stage: mod values are shown without boosts, with the boosted value (quality, Sanctify, etc.) shown small next to them",
+    "Craft stage: set the values of a Sanctified item by hand (multiplier / Min / Max on the Sanctified bar above the card)",
+    "Craft stage: you can now edit a mod's weight in the mod list (affects both rolls and the odds)",
+    "The mod tier table now shows which essence gives each essence tier, and closes after you pick a target or how to add a mod",
+    "Item cards now show mods added by an essence or alloy as P0 / S0, labeled “Essence” or “Alloy”",
+    "Guide & Tips: new “Crafting guides” (build a finished item step by step, starting with +5 to all Spell Skills on an Absent Amulet); course descriptions are collapsed to title and steps",
+    "The base selection page now shows the same tab bar as the other pages, and no longer shows Gold Ring as selected when you haven't picked it",
+    "Spam simulator: pressing Esc in the luck-test panel no longer clears your results. Craft stage: a hint now appears if you try to see the odds without checking a mod to target",
+    "Fixed jumps to another page when double-tapping close or “Back”, misclicks right after opening the base list, and slowdowns at some window sizes. Disabled buttons are now dimmed",
+    "Fixed the maximum Runic Ward modifier showing without its value",
+    "Phone: one-row header, full-width page titles, and a “Back to top” button at the bottom right after scrolling down. On PC the Blog button left the header (posts are in the right column)"
+  ],
   "0.1.596": [
     "Craft stage: Mark of the Abyssal Lord suffixes are now in the pool (matches poe2db)",
     "Craft stage: skill level mods now show “+”",

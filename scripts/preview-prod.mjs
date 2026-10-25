@@ -62,8 +62,8 @@ if (BUILD) {
   if (!DEV) writeFileSync(resolve(OUT, "market-fallback.json"), execFileSync("curl", ["-sf", "https://exiledesk.com/market-fallback.json"], { encoding: "utf8", windowsHide: true, maxBuffer: 1 << 28 }));
   node(["scripts/build-seo-pages.mjs", OUT], { cwd: SRC });
   node(["scripts/build-blog-pages.mjs", OUT, ...(DEV ? ["--drafts"] : [])], { cwd: SRC });
-  // コスメティックのページ (/cosmetics/・/en/cosmetics/、noindex) は開発版だけ。本番の build:web にはオーナーの OK まで入れない (スキン部長 10-25)
-  if (DEV) node(["scripts/build-cosmetics-pages.mjs", OUT], { cwd: SRC });
+  // コスメティックのページ (/cosmetics/・/en/cosmetics/、noindex)。本番の build:web にも入れた (オーナー 10-25 の OK)
+  node(["scripts/build-cosmetics-pages.mjs", OUT], { cwd: SRC });
 }
 
 // 2. 本番の wrangler.jsonc から設定を作る (置き場の道だけ替える。独自ドメインの routes は手元に要らない)

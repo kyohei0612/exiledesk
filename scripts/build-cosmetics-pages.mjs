@@ -10,7 +10,7 @@
  * 見た目と頭・足は読み物のページ (build-seo-pages.mjs) に合わせる。アプリの一覧 (?page=skins) への入口を付ける。
  * 自動で作った一覧なので既定は noindex (10-22 オーナー OK の /bases/ と同じ)。--index で index にしてサイトマップに足す (オーナーの OK の後)。
  *   node scripts/build-cosmetics-pages.mjs [出力先 (既定 dist-web)] [--index]
- * 開発版だけ: 今は手元の開発版の作り (scripts/preview-prod.mjs -- --dev) だけで回す。本番の build:web にはオーナーの OK の後に足す
+ * 本番の build:web と手元の作り (scripts/preview-prod.mjs) の両方で回す (オーナー 10-25 の OK で本番に。noindex のまま)
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";

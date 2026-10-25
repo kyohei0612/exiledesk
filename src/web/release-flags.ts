@@ -44,6 +44,11 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "abyssSuffix", "skillPlus", "talismanWeight", "dntBases",
   // ルーンの「明示 MOD の強さ」は書いてある効果どおり (オーナー 10-24「ルーンも書いてある効果どおりやし出してええよ」)
   "runeMagnitude",
+  // コスメティックのページ (オーナー 10-25「スキン出して OK、本番」。/cosmetics/ は noindex のまま)
+  "skins",
+  // OK 待ちの画面の直しを全部 (オーナー 10-25「全部一緒に出して OK」「ヘッダーのブログ外しも本番出して OK」)。閉じたままは sim・daily・gemCorrupt (内緒)
+  "noHeaderBlog", "modeTabs", "dismiss", "tierClose", "fitZoom", "omenRow", "monkey1023", "baseValues", "weights", "firstVisit1024", "essCard", "essTier",
+  "sanctifyBar", "monkeyEmu1023", "baseChosen", "tutorialUi",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */
