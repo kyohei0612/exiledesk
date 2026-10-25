@@ -9,6 +9,7 @@ import Icon from "../../components/ui/Icon.vue";
 import ModalShell from "../../components/ui/ModalShell.vue";
 import { lang, tr } from "../../i18n/lang";
 import { closeSkinsPage } from "../../web/page";
+import { forget, remember } from "../../web/page-memo";
 import WebFooter from "../../web/WebFooter.vue";
 import SkinCard from "./SkinCard.vue";
 import { loadSkins, SKIN_GROUPS, type Skin, type SkinCardData as Card, type SkinData, type SkinSet } from "./skins";
@@ -18,12 +19,16 @@ const failed = ref(false);
 onMounted(() => { loadSkins().then((x) => { data.value = x; }, () => { failed.value = true; }); });
 
 const en = computed(() => lang.value === "en");
-const query = ref("");
+// 戻る・記事から戻った時は、離れる前の探す・絞る・出した数で (page-memo.ts、スイッチ emuFresh の下。10-25 オーナー「戻るは前の画面」、デザイン 6 本目)
+interface Back { q: string; cat: string; limit: number }
+const back: Back | undefined = remember<Back>("skins", (): Back => ({ q: query.value, cat: cat.value, limit: limit.value }));
+onBeforeUnmount(() => forget("skins"));
+const query = ref(back?.q ?? "");
 /**
  * 絞るまとめの id ("" = すべて)。まとめは groups.json の 9 個 (一式を含む、オーナー 10-25 夜「9 個」)。
  * 「すべて」と「一式」では一式を 1 枚のカードに (部品は出さない、二重にしない)。ほかのまとめでは部品を 1 枚ずつ
  */
-const cat = ref("");
+const cat = ref(back?.cat ?? "");
 /** ショップで買える物も出す (札に値段)。店は PoE1 と PoE2 で共通なので、買える物を外すと PoE1 の物がほぼ消える (オーナー 10-25「ほぼ消えた、ミッドナイトパクトも PoE1 産でしょ」) */
 const setMode = computed(() => cat.value === "" || cat.value === "set");
 const cats = computed(() => SKIN_GROUPS.map((g) => ({ key: g.id, label: en.value ? g.en : g.ja, n: g.id === "set" ? (data.value?.sets ?? []).length : (data.value?.items ?? []).filter((s) => s.group === g).length })));
@@ -64,7 +69,7 @@ const shown = computed((): Card[] => {
  * 押しても足せる。STEP 枚の塊ごとに画面の外では描かない (content-visibility)、絵は見える所だけ読む (loading=lazy)
  */
 const STEP = 30;
-const limit = ref(STEP);
+const limit = ref(back?.limit ?? STEP);
 watch([query, cat, en], () => { limit.value = STEP; });
 /** 出す物を STEP 枚ずつの塊に (塊ごとに画面の外では描かない。1 枚ずつに付けると全部出した後に流し直す時に引っかかった) */
 const chunks = computed(() => {

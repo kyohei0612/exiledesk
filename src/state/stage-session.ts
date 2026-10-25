@@ -10,25 +10,15 @@ import { ref } from "vue";
 import { craftStage as s } from "./craft-stage";
 import type { CraftStagePlan } from "../services/craft-stage/contract";
 import { flag } from "../web/release-flags";
+import { cameBack } from "../web/page-memo";
 
 const KEY = "exiledesk.stage.session.v1";
 
 /**
- * スイッチ emuFresh (10-25 オーナー「エミュもリロードしたら基本最初からのはず」): 写しを戻すのは戻る (back_forward) と同じサイトのリンク (記事のロゴ・ヘッダー) から来た時だけ。
- * リロード・外から来た (referrer が無い / 別の origin) 時は写しを消して初めから
+ * スイッチ emuFresh (10-25 オーナー「エミュもリロードしたら基本最初からのはず」): 写しを戻すのは戻って来た時だけ (見分けは全部のページで共通の page-memo.ts の cameBack:
+ * 戻る・同じサイトのリンク・版替わりの自動の読み直し)。リロード・外から来た時は写しを消して初めから
  */
-function freshLoad(): boolean {
-  if (!flag("emuFresh")) return false;
-  try {
-    const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
-    if (nav?.type === "back_forward") return false;
-    // 版が替わった後の自動の読み直し (web.html の __staleReload、印は 1 分の窓の頭の時刻:回数) は人が押したのではないので作業を残す (デザイン 6 本目)
-    if (nav?.type === "reload") { const [f, n] = (sessionStorage.getItem("exiledesk-stale-reload") ?? "").split(":").map(Number); return !(n && Date.now() - (f ?? 0) < 90_000); }
-    return !document.referrer || new URL(document.referrer).origin !== location.origin;
-  } catch {
-    return false;
-  }
-}
+const freshLoad = (): boolean => flag("emuFresh") && !cameBack();
 
 /** 戻せる写しがあるか (craft-stage.ts が相場を待つ前に見る)。初めからの読み込みなら写しを消して false */
 export function hasUsableSession(): boolean {

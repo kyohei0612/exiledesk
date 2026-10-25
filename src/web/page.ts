@@ -17,10 +17,10 @@
  */
 import { computed, ref, watch } from "vue";
 import { craftStage as s } from "../state/craft-stage";
-import { topic } from "../state/tutorial/craft-topic";
+import { topic, topicAt } from "../state/tutorial/craft-topic";
 import { course } from "../state/tutorial/craft-course";
 import { endLesson, inLesson, startTopicAt } from "../state/tutorial/craft-lesson";
-import { basePage, baseUnpicked, dailyPage, DAILY_ON, type DailyView, feedbackPage, openRoutes, recipesPage, routesOpen, TREE_ON, treePage, routesTarget } from "../state/web-page";
+import { basePage, baseUnpicked, dailyPage, DAILY_ON, type DailyView, feedbackPage, openRoutes, recipesPage, routesOpen, routesRunes, TREE_ON, treePage, routesTarget } from "../state/web-page";
 import { SIM_LOCKED } from "../state/craft-stage";
 import { TOPIC_COURSES } from "../services/tutorial/topic-courses";
 import { courseShown } from "../services/tutorial/course-release";
@@ -28,10 +28,21 @@ import { pageTick } from "../utils/ads";
 import { tr } from "../i18n/lang";
 import { track } from "./track";
 import { flag } from "./release-flags";
+import { remember } from "./page-memo";
 
 /** コスメティック = PoE2 で使える PoE1 のスキンの一覧のページ (?page=skins、views/skins/SkinsPage.vue はスキン部長。2026-10-25 オーナー)。開発版だけ (スイッチ skins) */
 export const skinsPage = ref(false);
 export const SKINS_ON = flag("skins");
+/** ジェムコラプト (?page=gem-corrupt、中身は views/gem-corrupt、タブは CraftStage)。開発版だけ (スイッチ gemCorrupt)。URL に載せてリロードでもジェムコラプトの最初に (10-25 オーナー「リロードはそのページを読み込み直したのと一緒」) */
+export const gemCorruptPage = ref(false);
+const GEM_CORRUPT_ON = flag("gemCorrupt");
+
+/**
+ * 戻って来た時 (戻る・記事から) に前の画面へ戻す写し (page-memo.ts、スイッチ emuFresh の下。10-25 オーナー「戻るは前の画面」)。
+ * スパムシミュは狙いと嵌めるルーン (結果はその狙いで回し直す)、コースは今の段。エミュのアイテムと工程は stage-session.ts
+ */
+let routesBack = remember("routes", () => (routesOpen.value && routesTarget.value ? { target: routesTarget.value, runes: routesRunes.value } : null));
+let courseBack = remember("course", () => (topic.value ? { id: topic.value.id, at: topicAt.value } : null));
 
 /**
  * ツリーのページの中の段 (2026-10-24 オーナー「シミュレーターのタブを押したら最初のベース選択のページへ (オーバーレイでなくページ全体)、MOD も別ページ」)。
@@ -90,6 +101,7 @@ function leaveSubPages(): void {
   routesOpen.value = false;
   routesTarget.value = null;
   basePage.value = false;
+  gemCorruptPage.value = false;
 }
 
 /** 使い方・コツを開く (ヘッダーのボタン)。コースの途中なら抜ける */
@@ -219,6 +231,7 @@ export const page = computed((): string => {
   if (dailyPage.value) return dailyQuery(dailyPage.value);
   if (skinsPage.value) return "page=skins";
   if (routesOpen.value) return "page=routes";
+  if (gemCorruptPage.value && GEM_CORRUPT_ON && !s.replay.value) return "page=gem-corrupt";
   const id = topic.value?.id ?? course.value?.id;
   if (id) return `course=${id}`;
   if (s.mode.value === "tutorial") return "page=guide";
@@ -234,6 +247,7 @@ export const pageTitle = computed((): string => {
   if (p === "page=routes") return tr("スパムシミュレーター — ExileDesk", "Spam simulator — ExileDesk");
   if (p === "page=recipes") return tr("レシピ — シミュレーター — ExileDesk", "Recipes — Simulator — ExileDesk");
   if (p === "page=sim-tree") return tr("クラフトの道 (ツリー) — ExileDesk", "Craft route tree — ExileDesk");
+  if (p === "page=gem-corrupt") return tr("ジェムコラプト — ExileDesk", "Gem Corruption — ExileDesk");
   if (p === "page=skins") return tr("コスメティック (PoE1 の MTX・スキン) — ExileDesk", "Cosmetics (PoE1 MTX & skins) — ExileDesk"); // 検索で「PoE2 MTX」と探す人向け (ブラック 10 代目の呼び名の決め)
   if (p === "page=sim-base") return tr("ベースを選ぶ — シミュレーター — ExileDesk", "Choose a base — Simulator — ExileDesk");
   if (p === "page=sim-mods") return tr("完成の MOD — シミュレーター — ExileDesk", "Target mods — Simulator — ExileDesk");
@@ -246,7 +260,7 @@ export const pageTitle = computed((): string => {
   return tr("ExileDesk — PoE2 クラフトシミュレーター", "ExileDesk — PoE2 Craft Simulator");
 });
 
-const PAGE_KEYS = ["guide", "base", "feedback", "routes", "recipes", "sim-tree", "sim-base", "sim-mods", "skins", "daily", "daily-start"];
+const PAGE_KEYS = ["guide", "base", "feedback", "routes", "recipes", "sim-tree", "sim-base", "sim-mods", "skins", "daily", "daily-start", "gem-corrupt"];
 function urlFor(p: string): string {
   const u = new URL(location.href);
   u.searchParams.delete("page");
@@ -288,14 +302,19 @@ function apply(p: string): void {
     skinsPage.value = false;
     if (p.startsWith("course=")) {
       const c = TOPIC_COURSES.find((x) => x.id === p.slice(7) && courseShown(x));
-      if (c) { if (topic.value?.id !== c.id) { leaveSubPages(); s.hold(null); endLesson(); startTopicAt(c, 0); } return; }
+      if (c) { if (topic.value?.id !== c.id) { leaveSubPages(); s.hold(null); endLesson(); const at = courseBack?.id === c.id ? courseBack.at : 0; courseBack = undefined; startTopicAt(c, at); } return; }
       p = "page=guide";
     }
     if (p === "page=guide") { if (page.value !== p) openGuide(); return; }
     // スパムシミュレーターは URL からも開く (s.ready の後なので今のアイテムで「狙う MOD を選ぶ」から。途中の結果は再読み込みで消える。モンキー 10-23 の 2)
     if (p === "page=routes" && routesOpen.value) return;
     if (s.mode.value === "tutorial" || inLesson.value) { s.hold(null); endLesson(); s.mode.value = "hand"; }
-    if (p === "page=routes" && flag("monkey1023")) { leaveSubPages(); openRoutes(); return; }
+    if (p === "page=routes" && flag("monkey1023")) {
+      leaveSubPages(); openRoutes();
+      if (routesBack) { routesRunes.value = routesBack.runes; routesTarget.value = routesBack.target; routesBack = undefined; }
+      return;
+    }
+    if (p === "page=gem-corrupt" && GEM_CORRUPT_ON) { leaveSubPages(); gemCorruptPage.value = true; return; }
     if (p === "page=base") { openBasePage(); return; }
     leaveSubPages();
     // 旧シミュレーターの工程 (page=sim-<工程>) は 10-22 に消した。古い URL はクラフトのまま開く

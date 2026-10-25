@@ -54,6 +54,7 @@ import Icon from "../../components/ui/Icon.vue";
 import { encodeShare, SHARE_ENABLED, shareUrl, xIntentUrl } from "../../services/craft-stage/share";
 import { openExternal } from "../../services/trade2/open-external";
 import { track } from "../../utils/track";
+import { gemCorruptPage } from "../../web/page";
 
 const s = craftStage;
 /** ルーンを持ってルーンの入ったソケットを押した: そのソケットを置き換える手 (`rune:<名前>@<n>`)。ルーン以外はアイテムを押したのと同じ */
@@ -234,7 +235,8 @@ const subPage = computed(() => PAGES_ON && !s.replay.value && s.mode.value === "
  * 計算はアプリのヴァールの天秤と同じ関数 (views/gem-corrupt/model.ts)、入力は売値 3 つの手入力
  */
 const GemCorruptWebPanel = defineAsyncComponent(() => import("../gem-corrupt/GemCorruptWebPanel.vue"));
-const gemCorruptOn = ref(false);
+// 開いているかは page.ts (?page=gem-corrupt、リロードでもジェムコラプトに。10-25 デザイン 6 本目)
+const gemCorruptOn = gemCorruptPage;
 watch(() => s.mode.value === "tutorial" || inLesson.value, (v) => { if (v) gemCorruptOn.value = false; }); // 使い方・コツを開いたらジェムコラプトは閉じる (web/page.ts)
 /** 本番には出さない (2026-10-16 オーナー「ジェムコラプトは内緒」)。スイッチ gemCorrupt (開発版・手元の dev だけタブを出す) */
 const GEM_CORRUPT_SHOWN = flag("gemCorrupt");
