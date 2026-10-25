@@ -244,3 +244,4 @@ public/robots.txt                    サーバー
 public/sw.js                         デザイン
 scripts/check-monkey-engine.mjs      モンキー
 scripts/_monkey-*.ts                 モンキー
+scripts/check-www-redirect.mjs       サーバー
