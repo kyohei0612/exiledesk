@@ -13,7 +13,7 @@ import { stepOutcomes } from "../../craft-stage/engine-sim";
 import { catalystTagOf } from "../../craft-stage/engine-sim";
 import { aimHeldOn, junkOf, reachableAims } from "./tree-aim";
 import { CATALYSING, effectOf, engineOmens, isCatalyst } from "./tree-hands";
-import { aimKey, fractureMarks, type Aim, type OutKind, type TreeDoc } from "./tree-model";
+import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeDoc } from "./tree-model";
 import { aimOpts, aimsOf, goalsHeld, handAims, handProblem, heldHitOf, outcomeOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
 import { runTreeSteps } from "./tree-run";
 import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapesOf, splitTo } from "./tree-shape";
@@ -264,7 +264,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
       if (w?.spam) { add(id, "stuck", tr(`回すと ${RUN_PEOPLE} 人中 ${n} 人が、当たるまでを ${w.spam} 回打っても当たらず止まる (この形からは狙いが付きにくい・付かない。例: 削減のお告げで満杯の側の入れ替えが続く)。付きやすい狙いを当たりに選ぶか、手・お告げを替える`, `${n} of ${RUN_PEOPLE} runs get no hit in ${w.spam} repeats and stop (the target is unlikely or impossible from this item, e.g. the reduction omen keeps swapping the full side). Pick an easier target or change the craft or omen`)); continue; }
       // 外れを持ったまま戻る「狙いが消えた」の戻り (作り直しでない)。カオスを当たるまでは 1 つしか入れ替えないので、持ち込んだ外れは消えずに先で満杯になる (10-22 靴 b14 → b1、100 人中 63 人)
       const carry = (w?.backs ?? []).filter((x) => doc.boxes[x]?.out === "lost" && doc.boxes[x]?.back !== RESTART);
-      add(id, "stuck", stuckText(data, aims, n, w, carry.length > 0));
+      add(id, "stuck", stuckText(data, aims, n, w, carry.length > 0, doc.boxes[id]?.hand ?? null));
       for (const x of carry) add(x, "carry", tr("ここで戻ると外れを持ったまま進み、先の箱で側が満杯になって止まる (直すのはこの戻り: 戻り先を分かれ目の箱 (打たずに分ける) にして「外れが 2 つ以上なら消去」の行を)", "Returning here keeps the misses, so a later box runs out of room and stops (fix this return: send it to a split box with an \"annul when 2+ misses\" row)"));
     }
     // 回しで結果の箱に無い形になった箱 (5 人の辿りで出なかった物。上限つきの当たるまでが上限で当たらない時など、10-22 13 通り組んだ #13)
@@ -286,7 +286,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
 }
 
 /** 回して止まる箱の文: 何人・どの側が満杯か・外れの MOD (最初の 1 人の形)。理由が側の満杯でなければエンジンの理由をそのまま */
-function stuckText(data: PatchData, aims: readonly Aim[], n: number, w: { reason: string; item: StageItem; noBox?: boolean } | undefined, carry: boolean): string {
+function stuckText(data: PatchData, aims: readonly Aim[], n: number, w: { reason: string; item: StageItem; noBox?: boolean } | undefined, carry: boolean, hand: Hand | null): string {
   const head = tr(`回すと ${RUN_PEOPLE} 人中 ${n} 人がここで止まる`, `${n} of ${RUN_PEOPLE} runs stop here`);
   // 行き先の箱が無くて止まった (10-22 13 通り組んだ #11: 「手・戻り先が無い」だけでどの結果の箱が無いか分からなかった)
   if (w?.noBox) return `${head}: ${w.reason}`;
@@ -294,6 +294,13 @@ function stuckText(data: PatchData, aims: readonly Aim[], n: number, w: { reason
   const full = SIDES.filter((side) => !room(w.item, side));
   if (!full.length) return `${head}: ${w.reason}`;
   const junkAll = junkOf(w.item, targetsOf(data, aims), aimOpts(data));
+  // 満杯の側の外れを外しても打てない時は、満杯が理由ではない (レアに錬金術・マジックに消去 + 外せない側のお告げなど)。エンジンの理由をそのまま
+  // (10-25 指輪の猿 3: 錬金術の外れを始めに戻すと「サフィックスが満杯 → 消去 + お告げが要る」と出て、直しても打てない手を足させていた)
+  if (hand) {
+    const drop = new Set(full.flatMap((side) => junkAll[side]));
+    const cleared: StageItem = { ...w.item, prefixes: w.item.prefixes.filter((m) => !drop.has(m)), suffixes: w.item.suffixes.filter((m) => !drop.has(m)) };
+    if (!drop.size || handProblem(data, cleared, hand)) return `${head}: ${w.reason}`;
+  }
   const parts = full.map((side) => {
     const junk = junkAll[side];
     const name = side === "prefix" ? tr("プレフィックス", "Prefixes") : tr("サフィックス", "Suffixes");

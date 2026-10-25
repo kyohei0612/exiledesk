@@ -322,10 +322,14 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   // 親が品質だけ上げた後の通り抜けなら、その上の箱 (カタリストを入れ直す所) まで上がる (通り抜けへ戻ると品質が空のまま触媒の手を打つ)
   let before = b.out === "junk" ? b.parent : null;
   while (before && d.boxes[before]?.out === "pass") before = d.boxes[before]!.parent;
+  // 道に当たりが 1 つも無い時の形の合う箱は始まり (白) しか無く、マジックで MOD 0 の人まで白のスタートへ戻されて先の手を足せなかった
+  // (10-25 指輪の猿 1: 変成 → 消去 + 右の消去のお告げ、6 本中 6 本)。その時は戻りを付けず、＋ で先を足せる箱のまま
+  let held = false;
+  for (let x: string | null = id; x && !held; x = d.boxes[x]?.parent ?? null) held = d.boxes[x]?.out === "hit" && !!d.boxes[x]?.aim;
   for (const o of b.outs) {
     const c = d.boxes[o]!;
     if (c.out === "lost") c.back = "start";
-    else if (c.out === "junkGone") c.back = before ?? MATCH_BACK;
+    else if (c.out === "junkGone") c.back = before ?? (held ? MATCH_BACK : null);
   }
   spread(d, id);
   makeRoom(d, id);

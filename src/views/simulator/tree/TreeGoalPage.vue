@@ -121,6 +121,11 @@ function blockOf(modId: string, tier: number): string | null {
   if (!blockMemo.has(k)) blockMemo.set(k, goalBlock(d, doc.base, lv, aims, { modId, tier }));
   return blockMemo.get(k) ?? null;
 }
+/** フラクチャーを押せない理由: 冒涜の MOD (アマナム・クルガル・ウラマンなど) はフラクチャーできない (エンジンと同じ。10-25 指輪の猿 4: 押せて、テストで「始まりの形が作れない」) */
+const DESECRATED_NO_FRACTURE = (): string => tr("冒涜の MOD はフラクチャーできない", "Desecrated mods can't be Fractured");
+function fracBlockOf(r: { group?: string }, modId: string, tier: number): string | null {
+  return r.group === "desecrated" || r.group === "otherworldly" ? DESECRATED_NO_FRACTURE() : blockOf(modId, tier);
+}
 /** その行 (系統) の狙い (段ごとに modId が違うまとめ行もあるので、行の段のどれかの modId で引く) */
 const rowGoal = (r: { id: string; tiers: Array<{ modId?: string }> }): Aim | undefined => t.goals.value.find((a) => a.modId === r.id || r.tiers.some((x) => x.modId === a.modId));
 /**
@@ -148,6 +153,8 @@ function onCardRemove(modId: string): void {
 /** カードの行の右クリック = その狙いの段で印を付け外し (狙いでない MOD は来ない) */
 function onCardFracture(m: StageMod): void {
   const g = t.goals.value.find((a) => a.modId === m.modId);
+  // 冒涜の MOD は印を付けられない (付いている印を外すのはよい)
+  if (m.desecrated && !g?.fractured) return;
   if (g) markFracture(g.modId, g.tier);
 }
 /** 完成の MOD の段の説明 (日本語・英語の組、1 つの事 = 1 行) */
@@ -211,7 +218,7 @@ const HELP: Array<[string, string]> = [
             <!-- 選んだ段より上の段は狙いに含まれる印だけ (押すとそこから上に絞る)。ボタンの形にすると狙いが 2 つあるように見えた (10-24 オーナー) -->
             <button v-if="goalAt(tt.modId ?? r.id, tt.tier) === 'in'" type="button" data-mod-included class="px-2 text-[12px] opacity-60 hover:opacity-100" :title="tr(`狙いに含む。押すと ${tt.rank} 以上に絞る`, `Included in the target. Click to narrow to ${tt.rank}+`)" @click.stop="pickGoal.toggle(tt.modId ?? r.id, tt.tier)">{{ tr("含む", "Included") }}</button>
             <button v-else type="button" data-mod-pick class="tbtn" :disabled="!!blockOf(tt.modId ?? r.id, tt.tier)" :class="pickGoal.has(tt.modId ?? r.id, tt.tier) ? 'on' : ''" :title="blockOf(tt.modId ?? r.id, tt.tier) ?? (pickGoal.has(tt.modId ?? r.id, tt.tier) ? tr('もう一度押すと狙いから外す', 'Click again to remove the target') : tr(`${tt.rank} 以上を完成の狙いにする`, `Make ${tt.rank}+ a final target`))" @click.stop="pickGoal.toggle(tt.modId ?? r.id, tt.tier)">{{ pickGoal.has(tt.modId ?? r.id, tt.tier) ? (tt.tier === 1 ? tr("✓ 狙い", "✓ Target") : tr(`✓ 狙い (${tt.rank} 以上)`, `✓ Target (${tt.rank}+)`)) : tr("狙いにする", "Target") }}</button>
-            <button v-if="goalAt(tt.modId ?? r.id, tt.tier) !== 'in'" type="button" data-mod-fracture class="tbtn ml-1" :disabled="!!blockOf(tt.modId ?? r.id, tt.tier)" :class="isFrac(tt.modId ?? r.id, tt.tier) ? 'on !text-mod-fractured' : ''" :title="blockOf(tt.modId ?? r.id, tt.tier) ?? (isFrac(tt.modId ?? r.id, tt.tier) ? tr('もう一度押すとフラクチャーの印を外す', 'Click again to remove the fracture mark') : tr(`${tt.rank} 以上をフラクチャーの候補にする (どれか 1 つが固定されたレアからスタート)`, `Make ${tt.rank}+ a fracture candidate (start from a rare with one of them fractured)`))" @click.stop="markFracture(tt.modId ?? r.id, tt.tier)">{{ isFrac(tt.modId ?? r.id, tt.tier) ? tr("✦ 印", "✦ Marked") : tr("フラクチャー", "Fracture") }}</button>
+            <button v-if="goalAt(tt.modId ?? r.id, tt.tier) !== 'in'" type="button" data-mod-fracture class="tbtn ml-1" :disabled="!!fracBlockOf(r, tt.modId ?? r.id, tt.tier) && !isFrac(tt.modId ?? r.id, tt.tier)" :class="isFrac(tt.modId ?? r.id, tt.tier) ? 'on !text-mod-fractured' : ''" :title="fracBlockOf(r, tt.modId ?? r.id, tt.tier) ?? (isFrac(tt.modId ?? r.id, tt.tier) ? tr('もう一度押すとフラクチャーの印を外す', 'Click again to remove the fracture mark') : tr(`${tt.rank} 以上をフラクチャーの候補にする (どれか 1 つが固定されたレアからスタート)`, `Make ${tt.rank}+ a fracture candidate (start from a rare with one of them fractured)`))" @click.stop="markFracture(tt.modId ?? r.id, tt.tier)">{{ isFrac(tt.modId ?? r.id, tt.tier) ? tr("✦ 印", "✦ Marked") : tr("フラクチャー", "Fracture") }}</button>
           </td>
         </template>
       </ModTable></div>
