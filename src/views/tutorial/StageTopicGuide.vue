@@ -9,7 +9,7 @@ import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
 import { canRetry, lessonJump, quitLesson, prepareStep, prepared, restartCourse, retryStep, rigRare } from "../../state/tutorial/craft-lesson";
 import { topic, topicAt, topicCur, topicSub, topicDone, topicNext, topicReset, topicStep, topicUsed } from "../../state/tutorial/craft-topic";
 import { stageAdds, stageFloor, stageHelp } from "../../state/for-share/craft-stage-help";
-import { factionCandidates, ALL_OMEN_SPECS } from "../../services/craft-stage/engine-sim";
+import { factionCandidates, ALL_OMEN_SPECS } from "../../services/simulator/sim-engine";
 import { currencyHoverOf } from "../../services/currency/currency-hover";
 import { enOf } from "../../state/for-share/craft-stage-shelf";
 import { modText, tr } from "../../i18n/lang";

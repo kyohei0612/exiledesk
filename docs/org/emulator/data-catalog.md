@@ -16,7 +16,7 @@
 | お告げが掛けられるか | `omensAllowedFor(key)` (手に掛かるお告げ)・`omenBlock(data, item, held, omens, omen)` (理由 / null) | シミュ・デザイン・モンキー |
 | 1 手で各 MOD が付く確率 (確率の表) | `heldOdds(data, item, key, omens)` → `byMod`・`heldAnyOf(...)` (選んだどれか) | エミュ・シミュ |
 | 1 手で狙いが付く割合 | `addHitOdds(data, item, key, omens, targets)` → `{ p, n, side, total }`・`fractureHit(data, item, targets)` | シミュ |
-| 1 手の行き先 (枝と確率) | `stepOutcomes(data, item, key, omens?, { merge? })` (engine-sim) → `[{ p, item, added, removed }]` | シミュ・解析 |
+| 1 手の行き先 (枝と確率) | `stepOutcomes(data, item, key, omens?, { merge? })` (シミュの置き場 services/simulator/sim-engine.ts) → `[{ p, item, added, removed }]` | シミュ・解析 |
 | 狙いが付いているか | `aimDone(item, targets)` (全部)・`aimHits(mod, target, { data, sameText })` (1 つの MOD) | エミュ・シミュ・モンキー |
 | 狙いが付くまで打った確率 | `aimOdds(data, item, targets, combo, n, seed)`・`aimChain` | エミュ |
 | MOD 一覧 (段・重み・文) | `modListFor(data, item)` → `ListRow[]`・`tierDisplayRanges`・`fillModText(mod, ranges)` | エミュ・シミュ・デザイン ほか |
@@ -83,14 +83,14 @@
 - QUALITY_CAP[エミュ]・qualityFieldMax[エミュ]・SANCTIFIED_REASON[エミュ]・ITEM_LEVEL_SET[エミュ]・qualityLabelOf[チュートリアル]・boostedMod[チュートリアル]・skillIcon[チュートリアル]・shownTags[チュートリアル]
 - TAG_STYLE[チュートリアル]・SHARDS_PER_ORB[チュートリアル]
 
-### エミュだけ engine-emu.ts (35)
+### エミュだけ services/emulator/emu-engine.ts (35、10-26 にエンジンから出した。持ち主はエミュ部長)
 - UsePreview・previewUse[エミュ]・weightOverrideNote[エミュ]・RaceRow[エミュ]・RaceStats・SharedRace[エミュ]・raceOne[エミュ]・packRace[エミュ]
 - unpackRace[エミュ]・RaceTarget[エミュ]・RoutePrep[エミュ]・RouteRun[エミュ]・routeHitIndex[エミュ]・unsocketKey[エミュ]・PobStat[エミュ]・routeRunesFor[エミュ]
 - routeSocketsOf[エミュ]・runePrep[エミュ]・tierIdOf[エミュ]・monsterAccuracy[エミュ]・SpamStats[エミュ]・medianOf[エミュ]・rankOf[エミュ]・unluckyOf[エミュ]
 - baseArtFile[エミュ]・sanctifySetKey[エミュ]・forcesOf[エミュ]・spamKey[エミュ]・catalystSetKey[エミュ]・implicitSetKey[エミュ]・qualityCapKey[エミュ]・qualitySetKey[エミュ]
 - qualityCapOf[エミュ]・itemLevelKey[エミュ]・REVEAL[エミュ]
 
-### シミュだけ engine-sim.ts (35)
+### シミュだけ services/simulator/sim-engine.ts (10-26 にエンジンから出した。持ち主はシミュ部長)
 - catalystTagOf[シミュ]・catalystFull[シミュ]・fillCatalyst[シミュ]・MagicAddOdds・AddGrade・magicAddOdds・anyOfAddOdds[シミュ]・addGradeFor[シミュ]
 - ADD_GRADES・SpamCounts[シミュ]・SpamTarget・spamCounts[シミュ]・StepOutcome・stepOutcomes[シミュ/解析]・stepOutcomesOrTooMany[モンキー]・STEP_OUTCOMES_MAX
 - essenceNameEn[チュートリアル]・headingHits[チュートリアル]・NEGATIVE_WORDS[チュートリアル]・ALL_OMEN_SPECS[チュートリアル]・factionCandidates[チュートリアル]・armourReduction[チュートリアル]・esTimeline[チュートリアル]・attackRow[チュートリアル]

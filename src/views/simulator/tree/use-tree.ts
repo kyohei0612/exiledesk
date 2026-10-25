@@ -8,7 +8,7 @@ import { priceOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { freshItem, modListFor } from "../../../services/craft-stage/engine";
 import { minIlvlFor, tierRankLabel } from "../../../services/craft-stage/engine";
 import { startItemOf } from "../../../services/simulator/tree/tree-sample";
-import { carryAims, placeMods, retext } from "../../../services/craft-stage/engine-sim";
+import { carryAims, placeMods, retext } from "../../../services/simulator/sim-engine";
 import type { StageItem } from "../../../services/craft-stage/engine";
 import { fractureMarks, migrateStart, newTree, startOf, startRarity, type Aim, type StartFrom, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { treeBaseCost } from "../../../services/simulator/tree/tree-base-cost";

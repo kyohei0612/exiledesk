@@ -5,7 +5,7 @@
  * 割合が出せない手 (繰り返し・狙い無し・エンジンが null・結果の箱が 1 つ) は出さない
  */
 import { computed, type Ref } from "vue";
-import { outcomeOdds } from "../../../services/craft-stage/engine-sim";
+import { outcomeOdds } from "../../../services/simulator/sim-engine";
 import { aimsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { engineOmens } from "../../../services/simulator/tree/tree-hands";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";

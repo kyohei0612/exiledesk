@@ -1,7 +1,7 @@
 /**
  * stage-extra.ts — 動画用の別の画面 (URL の view=) の型。state/craft-stage.ts から分けた (2026-10-16、500 行の決まり)
  */
-import { type PobStat, monsterAccuracy } from "../../services/craft-stage/engine-emu";
+import { type PobStat, monsterAccuracy } from "../../services/emulator/emu-engine";
 import { type CraftStagePlan, type PobBlock, DEF, type DamageKind, type Defender, type Outcome } from "../../services/craft-stage/engine";
 
 /**

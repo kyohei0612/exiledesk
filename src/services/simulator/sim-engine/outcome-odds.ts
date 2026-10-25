@@ -10,11 +10,11 @@
  * void (打ったが当たり所で不成立) の枝は除いて、残りの和が 1 になるように割り直す。
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import type { StageItem, StageMod } from "../types";
-import { kindOf } from "../apply-currency";
-import { unrevealedOf } from "../apply-desecrate";
-import { hits, type AimHitOpts, type AimTarget } from "../aim-odds";
-import { tierIndexOf } from "../tier-rank";
+import type { StageItem, StageMod } from "../../craft-stage/types";
+import { kindOf } from "../../craft-stage/apply-currency";
+import { unrevealedOf } from "../../craft-stage/apply-desecrate";
+import { hits, type AimHitOpts, type AimTarget } from "../../craft-stage/aim-odds";
+import { tierIndexOf } from "../../craft-stage/tier-rank";
 import { stepOutcomesOrTooMany } from "./outcomes";
 
 /** 結果の種類 (ツリーの箱の out と同じ名前) */

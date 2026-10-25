@@ -3,15 +3,15 @@
  * docs/org/simulator/notes/2026-10-23-start-fracture-plan.md)。打つのは全部核の applyCurrency (指名の手 forceKey・素の高貴)、当たりの判定は核の aimHits。
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import { applyCurrency } from "../apply-currency";
-import { craftedLimitOf } from "../apply-essence";
-import { forceKey } from "../apply-force";
-import { hits } from "../aim-odds";
-import { freshItem } from "../run-plan";
-import { baseSocketsOf } from "../stage-runes";
+import { applyCurrency } from "../../craft-stage/apply-currency";
+import { craftedLimitOf } from "../../craft-stage/apply-essence";
+import { forceKey } from "../../craft-stage/apply-force";
+import { hits } from "../../craft-stage/aim-odds";
+import { freshItem } from "../../craft-stage/run-plan";
+import { baseSocketsOf } from "../../craft-stage/stage-runes";
 import { RUNE_BY_ID } from "../../../vendor/poe2htc/engine/runes";
 import { mulberry32 } from "../../htc/rng";
-import type { StageItem, StageMod } from "../types";
+import type { StageItem, StageMod } from "../../craft-stage/types";
 import { tr } from "../../../i18n/lang";
 
 /** 段の名前の T で言う MOD (T1 が一番上)。fractured = ✦ で付ける */

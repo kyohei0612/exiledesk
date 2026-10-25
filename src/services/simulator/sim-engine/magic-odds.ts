@@ -3,9 +3,9 @@
  * sim-own-logic.md の C)。打つ処理と同じ候補 (addOddsBySpec) から出す。数字の正しさは解析君に確かめてもらう (下の pHit と pAny の違い)
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import { addOddsBySpec, hitShare, type OddsTarget } from "../spec/odds";
-import { sideOfMod } from "../stage-core";
-import type { StageItem, StageSide } from "../types";
+import { addOddsBySpec, hitShare, type OddsTarget } from "../../craft-stage/spec/odds";
+import { sideOfMod } from "../../craft-stage/stage-core";
+import type { StageItem, StageSide } from "../../craft-stage/types";
 
 export interface MagicAddOdds {
   /** その側に付いた時に、候補のどれかが当たる割合 (その側の候補の重みの中で) */

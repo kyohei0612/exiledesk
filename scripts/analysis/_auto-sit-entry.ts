@@ -7,6 +7,6 @@ export { situationOf, ruleFor, applyQuizAction, routeDone } from "../../src/serv
 export { startFrom, mulberry32 } from "../../src/services/craft-stage/engine";
 export { Shape, actionsOf } from "../../src/services/simulator/auto/auto-actions";
 export { candidates } from "../../src/services/craft-stage/engine";
-export { stepOutcomes } from "../../src/services/craft-stage/engine-sim";
+export { stepOutcomes } from "../../src/services/simulator/sim-engine";
 export { applyCurrency } from "../../src/services/craft-stage/engine";
 export { revealOffers } from "../../src/services/craft-stage/engine";

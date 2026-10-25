@@ -11,7 +11,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { DEF } from "../../services/craft-stage/engine";
-import { armourReduction } from "../../services/craft-stage/engine-sim";
+import { armourReduction } from "../../services/simulator/sim-engine";
 import { easeOut, useAnim, urlOff } from "./use-anim";
 
 const props = defineProps<{ ar: number[]; labels: string[]; max: number | null; hit: number | null }>();

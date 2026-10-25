@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import { type StageItem, type RouteKind, fillModText, tierDisplayRanges, stageRuneIds } from "../../services/craft-stage/engine";
 import { aimRangeText } from "./aim-text";
-import { runePrep } from "../../services/craft-stage/engine-emu";
+import { runePrep } from "../../services/emulator/emu-engine";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { ROUTES_MAX, ROUTES_MULTI_ON, routesLuck, routesOpen, routesRunes, routesShared, routesTarget } from "../../state/web-page";
@@ -20,7 +20,7 @@ import StageRouteRunes from "./StageRouteRunes.vue";
 import StageRouteLuck from "./StageRouteLuck.vue";
 import { hitItemOf, placeOnStage } from "./route-place";
 import { GRADE_KEY, type Grade } from "../../services/craft-stage/engine";
-import { raceOne, unpackRace, type RaceRow, routeRunesFor } from "../../services/craft-stage/engine-emu";
+import { raceOne, unpackRace, type RaceRow, routeRunesFor } from "../../services/emulator/emu-engine";
 import { displayCurrency } from "../../state/display-currency";
 import { tr } from "../../i18n/lang";
 import { track } from "../../utils/track";

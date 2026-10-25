@@ -3,9 +3,9 @@
  * 「最大まで何個」を数える手は核に無いので engine-sim/ に置く (2026-10-23 オーナー: 元からある物の言い換えは外し、新しい物だけ残す)
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import { applyCurrency } from "../apply-currency";
-import { catalystOf, maxQualityOf } from "../stage-core";
-import type { StageApply, StageItem } from "../types";
+import { applyCurrency } from "../../craft-stage/apply-currency";
+import { catalystOf, maxQualityOf } from "../../craft-stage/stage-core";
+import type { StageApply, StageItem } from "../../craft-stage/types";
 import { tr } from "../../../i18n/lang";
 
 /** カタリストの種類 (タグ)。catalyst_<タグ>・jcatalyst_<タグ> (spec/run-spec と同じ取り方) */

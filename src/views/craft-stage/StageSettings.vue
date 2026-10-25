@@ -3,7 +3,7 @@
   CraftStage.vue から分けた (2026-10-16、500 行の決まり)
 -->
 <script setup lang="ts">
-import { itemLevelKey } from "../../services/craft-stage/engine-emu";
+import { itemLevelKey } from "../../services/emulator/emu-engine";
 import { inGroup, ITEM_LEVEL_SET, SANCTIFIED_REASON } from "../../services/craft-stage/engine";
 import { useFlash } from "../../utils/use-flash";
 import { ARMED_CLASS, useArmed } from "../../utils/use-armed";

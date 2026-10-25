@@ -6,7 +6,7 @@
   宝飾品は品質の種類 (触媒と同じ。選んだ種類のタグの MOD が伸びる)。スキルジェムには出さない (ワンド・スタッフ・セプターは 10-17 から出す)
 -->
 <script setup lang="ts">
-import { qualityCapOf } from "../../services/craft-stage/engine-emu";
+import { qualityCapOf } from "../../services/emulator/emu-engine";
 import { CATALYSTS, maxQualityOf, isGem, type StageItem, inAny, qualityFieldMax, SANCTIFIED_REASON, hasExtraCatalyst } from "../../services/craft-stage/engine";
 import { computed, onBeforeUnmount } from "vue";
 import { tr } from "../../i18n/lang";

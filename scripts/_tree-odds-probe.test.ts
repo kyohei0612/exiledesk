@@ -12,7 +12,7 @@ import fs from "node:fs";
 import { it } from "vitest";
 import { loadPatch } from "../tests/helpers/patch";
 import { mulberry32, type StageItem } from "../src/services/craft-stage/engine";
-import { stepOutcomes } from "../src/services/craft-stage/engine-sim";
+import { stepOutcomes } from "../src/services/simulator/sim-engine";
 import { runTree } from "../src/services/simulator/tree/tree-run";
 import { aimsOf, handAims, outcomeOf, playHand, sampleOf } from "../src/services/simulator/tree/tree-sample";
 import { engineOmens } from "../src/services/simulator/tree/tree-hands";

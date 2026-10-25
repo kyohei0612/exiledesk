@@ -38,7 +38,7 @@ import StageAimPicker from "./StageAimPicker.vue";
 import CurrencyShelf from "../../components/for-share/shelf/CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
 import { forceKey, isRune, type StageMod, isSanctifySet, runeNameOf, RUNE_PREFIX, IMPLICIT_SET, isCatalystSet, isQualitySet, QUALITY_CAP } from "../../services/craft-stage/engine";
-import { previewUse, unsocketKey, sanctifySetKey, catalystSetKey, implicitSetKey, qualityCapKey, qualitySetKey } from "../../services/craft-stage/engine-emu";
+import { previewUse, unsocketKey, sanctifySetKey, catalystSetKey, implicitSetKey, qualityCapKey, qualitySetKey } from "../../services/emulator/emu-engine";
 import { courseActive as inLesson, courseHidesEmulator, courseHidesShelf, endLesson, CourseHost } from "../tutorial/course-entry"; // チュートリアルのコースの間 (2026-10-17)。隠す判定は course-host に 1 か所 (R4 手 2)
 import RevealPanel from "./RevealPanel.vue";
 import { useStageFx } from "../../components/for-share/use-stage-fx";

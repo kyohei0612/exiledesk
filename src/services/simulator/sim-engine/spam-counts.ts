@@ -9,11 +9,11 @@
  * 打って数える (runs 人、既定 300、乱数の種は seed)。平均の使った物は打った人数で割る (着かなかった人の分も入る、route-race の uses と同じ)。
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import { applyCurrency } from "../apply-currency";
-import { limitOf, listOf, sideOfMod } from "../stage-core";
+import { applyCurrency } from "../../craft-stage/apply-currency";
+import { limitOf, listOf, sideOfMod } from "../../craft-stage/stage-core";
 import { mulberry32 } from "../../htc/rng";
-import { GRADE_KEY, routeSeed, type Grade, type RouteKind } from "../route-race";
-import type { StageItem, StageMod } from "../types";
+import { GRADE_KEY, routeSeed, type Grade, type RouteKind } from "../../craft-stage/route-race";
+import type { StageItem, StageMod } from "../../craft-stage/types";
 
 export interface SpamTarget { modId: string; minTierIndex: number }
 export interface SpamCounts {

@@ -6,7 +6,7 @@
 import type { PatchData } from "../src/vendor/poe2htc/engine/types";
 import { htcBaseInfo, loadHtcPatch } from "../src/services/htc/patch";
 import { aimHits, applyCurrency, baseSocketsOf, forceKey, freshItem, modListFor, mulberry32, omenBlock, omensAllowedFor, runeEffectFor, revealOffers, runeOf, tierIndexOf, tierRankOf, useReason, type StageItem, type StageMod } from "../src/services/craft-stage/engine";
-import { placeMods, stepOutcomesOrTooMany } from "../src/services/craft-stage/engine-sim";
+import { placeMods, stepOutcomesOrTooMany } from "../src/services/simulator/sim-engine";
 import { CRAFT_RUNE_KEYS, ORBS, bonesFor, essenceShelf, nameOfKey, runesFor } from "../src/state/for-share/craft-stage-shelf";
 import { SIM_HIDDEN } from "../src/state/for-share/shelf-context";
 import { walkTree as walkTreeOn, type WalkBox, type WalkOpts } from "./_monkey-tree-walk";

@@ -9,8 +9,8 @@
  * 前は戻った先の手が打てるかだけ見て先へ進まず、精査に出なかった
  */
 import { allMods, modBoostsOf, mulberry32, room, SIDES, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
-import { stepOutcomes } from "../../craft-stage/engine-sim";
-import { catalystTagOf } from "../../craft-stage/engine-sim";
+import { stepOutcomes } from "../../simulator/sim-engine";
+import { catalystTagOf } from "../../simulator/sim-engine";
 import { aimHeldOn, junkOf, reachableAims } from "./tree-aim";
 import { CATALYSING, effectOf, engineOmens, isCatalyst } from "./tree-hands";
 import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeDoc } from "./tree-model";

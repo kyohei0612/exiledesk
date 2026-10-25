@@ -11,10 +11,10 @@
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { RUNE_BY_ID } from "../../../vendor/poe2htc/engine/runes";
 import { SERLE_RUNE, socketRunesFor } from "../../htc/sockets";
-import { applyCurrency } from "../apply-currency";
-import { baseSocketsOf, isRune, RUNE_PREFIX } from "../stage-runes";
+import { applyCurrency } from "../../craft-stage/apply-currency";
+import { baseSocketsOf, isRune, RUNE_PREFIX } from "../../craft-stage/stage-runes";
 import { mulberry32 } from "../../htc/rng";
-import type { StageItem } from "../types";
+import type { StageItem } from "../../craft-stage/types";
 
 interface RouteRune { id: string; ja: string; /** 特殊 MOD を足すルーン (false = セールの凱旋) */ pool: boolean }
 

@@ -11,12 +11,12 @@
  * お告げを掛けていない時は何も光らせない (お告げで変わる所を見せる物)
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import { allMods, limitOf, listOf, room, SIDES, unfracturable } from "../stage-core";
-import { whittleTargets } from "../apply-currency";
-import type { StageItem, StageMod, StageSide } from "../types";
-import { planSpec } from "../spec/run-spec";
-import { prepareEssence } from "../spec/essence-specs";
-import { unrevealedPlan } from "../spec/parts-unrevealed";
+import { allMods, limitOf, listOf, room, SIDES, unfracturable } from "../../craft-stage/stage-core";
+import { whittleTargets } from "../../craft-stage/apply-currency";
+import type { StageItem, StageMod, StageSide } from "../../craft-stage/types";
+import { planSpec } from "../../craft-stage/spec/run-spec";
+import { prepareEssence } from "../../craft-stage/spec/essence-specs";
+import { unrevealedPlan } from "../../craft-stage/spec/parts-unrevealed";
 
 export interface UsePreview {
   /** 打つと消える・入れ替わる・数値が変わる・固定される候補の MOD (modId) */

@@ -7,12 +7,12 @@
 -->
 <script setup lang="ts">
 import { mulberry32, type StageItem, type StageMod } from "../../services/craft-stage/engine";
-import { medianOf, type SpamStats } from "../../services/craft-stage/engine-emu";
+import { medianOf, type SpamStats } from "../../services/emulator/emu-engine";
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { usePhone } from "../../utils/use-phone";
 import { craftStage as s, iconOf, nameOf, priceOf } from "../../state/craft-stage";
 import { routeKey, routeRun } from "../../services/craft-stage/engine";
-import { packRace, routeHitIndex, type RaceRow, type RaceTarget, type RoutePrep, type RouteRun, rankOf, unluckyOf, baseArtFile } from "../../services/craft-stage/engine-emu";
+import { packRace, routeHitIndex, type RaceRow, type RaceTarget, type RoutePrep, type RouteRun, rankOf, unluckyOf, baseArtFile } from "../../services/emulator/emu-engine";
 import { displayCurrency } from "../../state/display-currency";
 import { luck, packCard, rankWord, sendShare, shareOrigin, shortIdOf } from "./use-spam-share";
 import { playSfx, playUseSfx } from "../../utils/sfx";

@@ -7,10 +7,10 @@
  * 結果の箱の割合 (outcomeOdds・stepOutcomes・heldOdds) は unboundedBefore を通した形を渡せば、同じルーン込みの答えになる
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import { applyCurrency, kindOf } from "../apply-currency";
-import { craftedLimitOf } from "../apply-essence";
-import { RUNE_PREFIX } from "../stage-runes";
-import type { StageApply, StageItem } from "../types";
+import { applyCurrency, kindOf } from "../../craft-stage/apply-currency";
+import { craftedLimitOf } from "../../craft-stage/apply-essence";
+import { RUNE_PREFIX } from "../../craft-stage/stage-runes";
+import type { StageApply, StageItem } from "../../craft-stage/types";
 
 /** クラフト MOD の上限を +1 するルーン (英語名) */
 const ASTRID = "Astrid's Creativity";

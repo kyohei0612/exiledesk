@@ -10,16 +10,16 @@
  * 付く MOD の数値は段の真ん中 (行き先の区別に数値は使わない)。
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
-import { allMods, candidates, catalystBoosts, catalystOf, hasExtraCatalyst, makeStageMod, overLimit, replaced, room, SIDES, unfracturable, withMod, without } from "../stage-core";
-import { whittleTargets } from "../apply-currency";
-import { infiniteChoices, isInfiniteEssence } from "../apply-essence";
-import { tunedCatalysingMultiplier } from "../stage-tuning";
-import type { StageItem, StageMod, StageSide } from "../types";
-import { planSpec, type SpecPlan } from "../spec/run-spec";
-import { runPart, type PartCtx } from "../spec/parts";
-import { unrevealedMod, unrevealedPlan } from "../spec/parts-unrevealed";
-import { prepareEssence } from "../spec/essence-specs";
-import type { Action } from "../spec/types";
+import { allMods, candidates, catalystBoosts, catalystOf, hasExtraCatalyst, makeStageMod, overLimit, replaced, room, SIDES, unfracturable, withMod, without } from "../../craft-stage/stage-core";
+import { whittleTargets } from "../../craft-stage/apply-currency";
+import { infiniteChoices, isInfiniteEssence } from "../../craft-stage/apply-essence";
+import { tunedCatalysingMultiplier } from "../../craft-stage/stage-tuning";
+import type { StageItem, StageMod, StageSide } from "../../craft-stage/types";
+import { planSpec, type SpecPlan } from "../../craft-stage/spec/run-spec";
+import { runPart, type PartCtx } from "../../craft-stage/spec/parts";
+import { unrevealedMod, unrevealedPlan } from "../../craft-stage/spec/parts-unrevealed";
+import { prepareEssence } from "../../craft-stage/spec/essence-specs";
+import type { Action } from "../../craft-stage/spec/types";
 
 /**
  * 行き先 1 つ。p = この行き先になる割合 (全部の和が 1)。item = 打った後のアイテム。

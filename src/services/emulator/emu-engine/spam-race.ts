@@ -4,8 +4,8 @@
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { mulberry32 } from "../../htc/rng";
-import type { StageItem } from "../types";
-import { routeOff, routeRun, routeSeed, targetSides, type Grade, type RaceTarget, type RouteKind, type RoutePrep } from "../route-race";
+import type { StageItem } from "../../craft-stage/types";
+import { routeOff, routeRun, routeSeed, targetSides, type Grade, type RaceTarget, type RouteKind, type RoutePrep } from "../../craft-stage/route-race";
 
 /**
  * シェアに入れる計算済みの結果 (開いた人は計算せずにこれを出して、すぐ運試し。2026-10-19 オーナー「シェア押したら即運試しのページで計算済みのを出して」)。

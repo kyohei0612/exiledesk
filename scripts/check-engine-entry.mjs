@@ -5,8 +5,8 @@
  * 画面はエンジンのファイルを書き換えない・打つ / 読む / MOD の文や値を作る中身を自前で書かない (無ければジン部長に頼む))。
  * 持ち主は docs/org/owners.txt (scripts/owner-of.mjs) から引く。数えるのは src/ の .ts・.vue。
  *   B 凍結: アプリ専用の services/simulator/htc/ を、その外の Web の物 (アプリの物以外) が読む
- *   C エンジンの中の置き場: 核 (services/craft-stage の engine-sim/・engine-emu/ の外) が engine-sim/ / engine-emu/ を読む、
- *     engine-sim/ と engine-emu/ が互いを読む (2026-10-22 深夜、notes/2026-10-22-entry-split-plan.md。画面から読むのは今は自由)
+ *   C エンジンとシミュ・エミュの置き場: エンジン (services/craft-stage のジンの物) が services/simulator・services/emulator を読む、
+ *     シミュの置き場 (services/simulator/sim-engine) とエミュの置き場 (services/emulator/emu-engine) が互いを読む (2026-10-26 に engine-sim / engine-emu をエンジンから出した)
  *   D 画面の混ざり: エミュの物がシミュ・チュートリアルの物を読む、シミュ・チュートリアルの物がエミュの物を読む (2026-10-22 深夜 オーナー
  *     「コードが混ざらないように」。両方が使う画面の部品は共通 src/components へ)
  *   E 画面の中のエンジンの中身らしき物: 画面 (エミュ・シミュ・チュートリアル・デザインの持ち物、src/utils は除く) の中で
@@ -61,21 +61,22 @@ const OWN_LOGIC = [
   ["自前の乱数 (Math.random)", /Math\.random\(/g],
 ];
 const CS = "src/services/craft-stage/";
-/** C で見る側: エンジンの中の置き場 (core / for-sim / for-emu)・窓口 (win-sim / win-emu)。画面は 10-25 夜から何を読んでもよい */
+/** シミュだけ・エミュだけの、エンジンを使う置き場 (2026-10-26 にエンジンから出した、オーナー「全部それシミュに渡して削除してくれ」) */
+const SIM_ENGINE = ["src/services/simulator/sim-engine.ts", "src/services/simulator/sim-engine/"];
+const EMU_ENGINE = ["src/services/emulator/emu-engine.ts", "src/services/emulator/emu-engine/"];
+const under = (path, list) => list.some((p) => (p.endsWith("/") ? path.startsWith(p) : path === p));
+/** C で見る側: エンジン (core = craft-stage のジンの物)・シミュの置き場 (sim)・エミュの置き場 (emu)。画面は 10-25 夜から何を読んでもよい */
 function sideOfEngine(path, who) {
-  if (path === `${CS}engine-sim.ts`) return "win-sim";
-  if (path === `${CS}engine-emu.ts`) return "win-emu";
-  if (path.startsWith(`${CS}engine-sim/`)) return "for-sim";
-  if (path.startsWith(`${CS}engine-emu/`)) return "for-emu";
-  if (path === `${CS}engine.ts`) return "core-win";
+  if (under(path, SIM_ENGINE)) return "sim";
+  if (under(path, EMU_ENGINE)) return "emu";
   if (who === "ジン" && path.startsWith(CS)) return "core";
   return null;
 }
-/** 読んではいけない向き (読む側 → 読まれる側) */
-function crosses(a, b) {
-  if ((a === "core" || a === "core-win") && (b === "for-sim" || b === "for-emu" || b === "win-sim" || b === "win-emu")) return true;
-  if (a === "for-sim" && (b === "for-emu" || b === "win-emu")) return true;
-  if (a === "for-emu" && (b === "for-sim" || b === "win-sim")) return true;
+/** 読んではいけない向き (読む側 → 読まれる側)。エンジンはシミュ・エミュの物を読まない、シミュの置き場とエミュの置き場は互いを読まない */
+function crosses(a, b, t) {
+  if (a === "core" && (b === "sim" || b === "emu" || t.startsWith("src/services/simulator/") || t.startsWith("src/services/emulator/"))) return true;
+  if (a === "sim" && b === "emu") return true;
+  if (a === "emu" && b === "sim") return true;
   return false;
 }
 const IMPORT_RE = /(?:^|[\s;])(?:import|export)\s[^"'`;]*?from\s*["']([^"']+)["']|import\s*\(\s*["']([^"']+)["']\s*\)|^\s*import\s*["']([^"']+)["']/gm;
@@ -84,12 +85,13 @@ const hits = []; // { rule, file, target }
 for (const f of files) {
   const who = ownerOf(f, rows);
   const text = read(f);
-  const screen = SCREEN.has(who) && !f.startsWith("src/utils/");
+  // シミュ・エミュの置き場 (sim-engine・emu-engine) はエンジンを使うために決めた場所なので E で数えない
+  const screen = SCREEN.has(who) && !f.startsWith("src/utils/") && !under(f, SIM_ENGINE) && !under(f, EMU_ENGINE);
   for (const m of text.matchAll(IMPORT_RE)) {
     const t = resolveSpec(f, m[1] ?? m[2] ?? m[3]);
     if (!t) continue;
     const tw = ownerOf(t, rows);
-    if (sideOfEngine(f, who) && sideOfEngine(t, tw) && crosses(sideOfEngine(f, who), sideOfEngine(t, tw))) hits.push({ rule: "C", file: f, target: t });
+    if (sideOfEngine(f, who) && crosses(sideOfEngine(f, who), sideOfEngine(t, tw), t)) hits.push({ rule: "C", file: f, target: t });
     if (((who === "エミュ" && SIM_SIDE.has(tw)) || (SIM_SIDE.has(who) && tw === "エミュ")) && !D_ALLOW.has(t)) hits.push({ rule: "D", file: f, target: t });
     if (t.startsWith("src/services/simulator/htc/") && !f.startsWith("src/services/simulator/htc/") && who !== "アプリ") hits.push({ rule: "B", file: f, target: t });
     if (screen && RAW_DATA.test(t)) hits.push({ rule: "E", file: f, target: `生のデータ ${t}` });
@@ -102,7 +104,7 @@ const count = {};
 for (const h of hits) count[`${h.rule} ${h.file}`] = (count[`${h.rule} ${h.file}`] ?? 0) + 1;
 const total = (r) => hits.filter((h) => h.rule === r).length;
 const filesOf = (r) => new Set(hits.filter((h) => h.rule === r).map((h) => h.file)).size;
-console.log(`見張り: B 凍結の htc/ ${total("B")} 行・C エンジンの中の置き場 ${total("C")} 行・D エミュ ⇄ シミュ ${total("D")} 行・E 画面の中のエンジンらしき物 ${total("E")} か所 (${filesOf("E")} ファイル) (${head ? "HEAD" : "作業ツリー"})`);
+console.log(`見張り: B 凍結の htc/ ${total("B")} 行・C エンジン ⇄ シミュ・エミュの置き場 ${total("C")} 行・D エミュ ⇄ シミュ ${total("D")} 行・E 画面の中のエンジンらしき物 ${total("E")} か所 (${filesOf("E")} ファイル) (${head ? "HEAD" : "作業ツリー"})`);
 if (args.has("--list")) for (const h of hits) console.log(`${h.rule}\t${h.file}\t→ ${h.target}`);
 
 if (args.has("--write")) {
@@ -118,7 +120,7 @@ const sumOf = (o, r) => Object.entries(o).filter(([k]) => k.startsWith(`${r} `))
 const over = RULES.filter((r) => sumOf(count, r) > sumOf(base, r));
 const WHY = {
   B: "アプリ専用の services/simulator/htc/ は Web から読まない",
-  C: "核は engine-sim/・engine-emu/ を読まない、engine-sim/ と engine-emu/ は互いを読まない",
+  C: "エンジン (craft-stage) はシミュ・エミュの物を読まない、sim-engine と emu-engine は互いを読まない",
   D: "エミュとシミュは互いの物を読まない。両方で使う部品は共通 src/components へ",
   E: "打つ・読む・MOD の文や値を作る中身は画面に書かず、エンジンの関数を呼ぶ (無ければジン部長に頼む)。見せるために読むだけなら --head --write で控えを取り直す",
 };

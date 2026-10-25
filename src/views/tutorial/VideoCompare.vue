@@ -13,7 +13,7 @@ import { computed } from "vue";
 import StageItemCard from "../../components/for-share/item/StageItemCard.vue";
 import { craftStage } from "../../state/craft-stage";
 import { playPlan, type CraftStagePlan, dpsText, type PobBlock } from "../../services/craft-stage/engine";
-import { NEGATIVE_WORDS } from "../../services/craft-stage/engine-sim";
+import { NEGATIVE_WORDS } from "../../services/simulator/sim-engine";
 import { diffItems, splitLine, type DiffLine } from "../../services/tutorial/compare";
 import { easeOut, seg, useAnim, urlOff } from "./use-anim";
 

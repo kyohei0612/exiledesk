@@ -6,8 +6,8 @@
  * 無ければ必要レベルが一番近い段 (同じなら下の段) に読み替える。見つからない物は外す
  */
 import type { Mod, PatchData } from "../../../vendor/poe2htc/engine/types";
-import { modListFor } from "../mod-list";
-import { freshItem } from "../run-plan";
+import { modListFor } from "../../craft-stage/mod-list";
+import { freshItem } from "../../craft-stage/run-plan";
 import { sharesRawFamily } from "../../mods/mod-rules";
 
 /** 読み替えた先 (to は元の印 = fractured などをそのまま持つ) と、新しいベースに無くて外した物 */

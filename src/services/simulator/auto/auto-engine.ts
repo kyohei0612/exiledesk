@@ -12,7 +12,7 @@
  * 近似: 外れの MOD は代表 (狙いとも互いとも系統が重ならない物) で置く。エッセンスの札が付いている時の代表は外れと同じ代わりの MOD
  */
 import { ANCIENT_BONE_FLOOR, startFrom, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
-import { stepOutcomes } from "../../craft-stage/engine-sim";
+import { stepOutcomes } from "../../simulator/sim-engine";
 import type { QuizStart } from "../quiz-recipe";
 import type { AutoModel } from "./auto-types";
 import { actionsOf, engActs, engKey, junkToView, Shape, type EngAct, type State } from "./auto-actions";

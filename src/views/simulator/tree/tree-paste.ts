@@ -8,7 +8,7 @@
  * 貼った時に作りかけ (保存していない手のある木) を置き換えるなら pastePrev に控え、② から木へ戻る時に TreeGoalPage が保存を聞く
  */
 import { onBeforeUnmount, onMounted, ref } from "vue";
-import { goalBlock } from "../../../services/craft-stage/engine-sim";
+import { goalBlock } from "../../../services/simulator/sim-engine";
 import { parseItemText } from "../../../services/craft-stage/engine";
 import type { ItemTextMod, ItemTextReading } from "../../../services/craft-stage/engine";
 import { craftStage as s } from "../../../state/craft-stage";

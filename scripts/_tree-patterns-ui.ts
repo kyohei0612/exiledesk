@@ -3,8 +3,8 @@
  * 台本が 500 行を超えたので分けた (2026-10-24、中身はそのまま)。説明は _tree-patterns-probe.test.ts の頭
  */
 import { applyCurrency, freshItem, modListFor, mulberry32, omensFor, RUNES, socketCapOf, type PatchData } from "../src/services/craft-stage/engine";
-import { stepOutcomes } from "../src/services/craft-stage/engine-sim";
-import { fillCatalyst } from "../src/services/craft-stage/engine-sim";
+import { stepOutcomes } from "../src/services/simulator/sim-engine";
+import { fillCatalyst } from "../src/services/simulator/sim-engine";
 import { aimHeldOn } from "../src/services/simulator/tree/tree-aim";
 import { effectOf } from "../src/services/simulator/tree/tree-hands";
 import { addHit, addSplitRow, aimKey, migrateStart, newTree, setAim, setBack, setDone, setHand, setSplit, setSplitWhen, kindOfHand, type Aim, type Hand, type SplitWhen, type TreeDoc } from "../src/services/simulator/tree/tree-model";
