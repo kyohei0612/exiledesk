@@ -1,7 +1,7 @@
 /**
  * tree-lines.ts — ツリーの線の道筋 (2026-10-21 オーナー 10-22「線が他の線と被ったり…都度調整してあげて」「線を繋げても、その線が出ない」)。
- * - 戻りの線: いつも出すので、箱を横切らない道を通す。箱の下から段の間のすき間へ下り → すき間を横へ → 箱の無い縦の通り道を上 (下) へ →
- *   戻り先の打つ手の札の左の端へ右向きに入る (手が無ければ下の＋、オーナー 10-22)。角は丸める。通り道が無ければ木の左の外側
+ * - 戻りの線: 箱を横切らない道を通す。箱の下から段の間のすき間へ下り → すき間を横へ → 箱の無い縦の通り道を上 (下) へ →
+ *   戻り先の箱の枠の左の辺の真ん中へ右向きに入る (10-25 オーナー「枠に返す」。右の辺へは呼ぶ側が左右を裏返す)。角は丸める。通り道が無ければ木の左の外側
  * - 進む線の横の棒: 同じ段で別の親の棒が横に重なると 1 本に見える (赤と灰が合流して見分けにくい) ので、重なる物は段を 1 つずつ上へずらす
  * 座標は全部ツリーの座標 (Vue Flow の倍率を掛ける前)
  */
@@ -28,23 +28,26 @@ function freeRow(y: number, x0: number, x1: number, boxes: readonly Pos[]): bool
   return boxes.every((b) => y < b.y - CLEAR_Y || y > b.y + (b.h ?? BOX_H) + CLEAR_Y || b.x + (b.w ?? BOX_W) < lo || b.x > hi);
 }
 
-/** 手の札の真ん中 (箱の下から。SimTreePage の札の位置) と、下の＋の真ん中。札の上下の半分は CHIP_HALF (箱 → 札の縦の線 = HAND_DY - CHIP_HALF = 40、10-25 オーナー「長さ十分」の形で 46 → 60) */
+/** 手の札の真ん中 (箱の下から。SimTreePage の札の位置)。札の上下の半分は CHIP_HALF (箱 → 札の縦の線 = HAND_DY - CHIP_HALF = 40、10-25 オーナー「長さ十分」の形で 46 → 60)。
+ * 戻りの線は 10-25 から札でなく行き先の箱の枠へ入る (オーナー「枠に返すような線じゃなかったっけ」、前の handAnchor は消した) */
 export const HAND_DY = 60;
 export const CHIP_HALF = 20;
-const PLUS_DY = 20, PLUS_R = 14;
-/**
- * 戻りの線の行き先 (オーナー 10-22「戻りの線は、戻り先の箱から出る打つ手の札の左の端へ」): 手の札があれば札の左の端、
- * 無ければ箱の下の＋の左の端。chipW = 札の幅 (画面で測った物、倍率の逆数を掛けた後)。null = 手が無い
- */
-export function handAnchor(to: Pos, chipW: number | null): Pos {
-  const cx = to.x + BOX_W / 2;
-  return chipW === null ? { x: cx - PLUS_R - 3, y: to.y + BOX_H + PLUS_DY } : { x: cx - chipW / 2 - 3, y: to.y + BOX_H + HAND_DY };
-}
 
 /** 進む線 (直角の木の線) の 1 本の真っ直ぐな所。戻りの線がこれと交わる所は跨ぐ形にする */
 export interface Seg { x0: number; y0: number; x1: number; y1: number }
-/** 戻りの線 1 本の頼み (id は線の名前。from / to は箱の左上、end は handAnchor。start = 出る所 (無ければ from の箱の下の左寄り)) */
-export interface BackReq { id: string; from: Pos; to: Pos; end: Pos; start?: Pos }
+/** 戻りの線 1 本の頼み (id は線の名前。from / to は箱の左上、end = 入る所 (行き先の箱の左の辺の真ん中)。start = 出る所 (無ければ from の箱の下の左寄り)。flip = 右の辺へ入る (呼ぶ側が左右を裏返して渡す)) */
+export interface BackReq { id: string; from: Pos; to: Pos; end: Pos; start?: Pos; flip?: boolean }
+/** 左右を裏返す (右の辺へ入る線を、左の辺へ入る線と同じ探し方で引くため。x → -x) */
+export const mirrorPos = (p: Pos): Pos => ({ ...p, x: -(p.x + (p.w ?? BOX_W)) });
+export const mirrorSeg = (s: Seg): Seg => ({ x0: -s.x0, y0: s.y0, x1: -s.x1, y1: s.y1 });
+/** 裏返して引いた道 (M・L・Q・A だけの絶対座標) を戻す: x を負に、跨ぐ半円の向き (sweep) を反対に */
+export function mirrorPath(d: string): string {
+  return d.replace(/([MLQA])([^MLQA]*)/g, (_, c: string, args: string) => {
+    const n = args.trim().split(/[\s,]+/).filter(Boolean).map(Number);
+    if (c === "A") return `A ${n[0]} ${n[1]} ${n[2]} ${n[3]} ${1 - n[4]!} ${-n[5]!} ${n[6]} `;
+    return `${c} ${n.map((v, i) => (i % 2 ? v : -v)).join(" ")} `;
+  }).trim();
+}
 /** 平行に走る線どうしの間 */
 const LANE = 7;
 /** 出口の横の線を通す帯 (箱の下 +20〜+34。手の札 +40〜 より上、箱の枠に沿わない高さ) */
@@ -70,8 +73,19 @@ export function routeBacks(reqs: readonly BackReq[], boxes: readonly Pos[], fwd:
   const vBusy = (x: number, y0: number, y1: number, to?: string): boolean => vs.some((v) => (!to || v.to !== to) && Math.abs(v.x - x) < LANE - 0.5 && v.y0 < hi(y0, y1) && v.y1 > lo(y0, y1));
   const hBusy = (y: number, x0: number, x1: number, to?: string): boolean => hs.some((h) => (!to || h.to !== to) && Math.abs(h.y - y) < LANE - 0.5 && h.x0 < hi(x0, x1) && h.x1 > lo(x0, x1));
   for (const r of reqs) {
-    const others = boxes.filter((b) => b !== r.from && b !== r.to);
+    // 出元と行き先の箱は位置で除く (boxes は呼ぶ側が別に作った物で、同じ物かでは除けず、行き先の箱が自分の入口を塞いで木の外を大回りした、10-25)
+    const at = (a: Pos, b: Pos): boolean => a.x === b.x && a.y === b.y;
+    const others = boxes.filter((b) => !at(b, r.from) && !at(b, r.to));
     const all = [...others, r.from, r.to];
+    // 行き先が上にある時は、出元の上の辺の左寄りから真上へ上り、行き先の箱の左の辺へ入る (隣の箱の下と横を回らない、10-25 オーナー「関係ない箱を囲まない」)。
+    // 上の縦と横に箱があれば下の回り道へ
+    const ux = r.from.x + ENTER + 4, uy = r.from.y;
+    if (r.end.y < uy - 16 && ux <= r.end.x - 16 && freeColumn(ux, r.end.y, uy - 1, others) && freeRow(r.end.y, ux, r.end.x, [...others, r.from]) && !vBusy(ux, r.end.y, uy)) {
+      vs.push({ x: ux, y0: r.end.y, y1: uy });
+      hs.push({ y: r.end.y, x0: ux, x1: r.end.x, id: r.id });
+      polys.push({ id: r.id, pts: [{ x: ux, y: uy }, { x: ux, y: r.end.y }, { x: r.end.x, y: r.end.y }] });
+      continue;
+    }
     const sx = r.start?.x ?? r.from.x + ENTER, sy = r.start?.y ?? r.from.y + (r.from.h ?? BOX_H);
     // 横へ出る帯は段の下 (札は箱より背が低いので、札の下からはまだ隣の箱の高さの中。段の下の辺まで下りてから横へ)
     const yb = Math.max(sy, r.from.y + BOX_H);
@@ -88,7 +102,7 @@ export function routeBacks(reqs: readonly BackReq[], boxes: readonly Pos[], fwd:
     search: for (const base of cand) {
       for (let k = 0; k < 6; k++) {
         const x = base - k * LANE;
-        if (x > tx - 16 || !freeColumn(x, yb + BAND[0], ty, all) || !freeRow(ty, x, tx, all) || vBusy(x, yb + BAND[0], ty, to)) continue;
+        if (x > tx - 16 || !freeColumn(x, yb + BAND[0], ty, all) || !freeRow(ty, x, tx, [...others, r.from]) || vBusy(x, yb + BAND[0], ty, to)) continue;
         for (let y = yb + BAND[0]; y <= yb + BAND[1]; y += LANE) {
           if (freeRow(y, sx, x, others) && !hBusy(y, sx, x, to)) { col = x; yS = y; break search; }
         }

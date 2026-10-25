@@ -10,7 +10,7 @@
  */
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { heldSets, MATCH, matchTargets, RESTART } from "../../../services/simulator/tree/tree-shape";
-import { handAnchor, type BackReq, type Pos } from "./tree-lines";
+import type { BackReq, Pos } from "./tree-lines";
 
 /** 戻りの行き先の箱 (決めた箱 1 つ。前の版の形の合う箱へ = 行きうる形の箱を全部、作り直しは無し) */
 export function backTargetsOf(doc: TreeDoc, id: string): string[] {
@@ -45,17 +45,19 @@ function mergeIds(doc: TreeDoc): Set<string> {
 export interface MergeLine { id: string; from: string; to: string; parent: string; kind: "fwd" | "back" }
 
 /**
- * 合流の線の頼み (tree-lines の routeBacks へ)。戻りの矢印だけの箱の下の真ん中から出て、行き先の打つ手の札の左の端へ (手が無ければ下の＋)。
- * pos = 箱の位置と大きさ (引っ張り中はその位置)、chipW = 打つ手の札の幅 (ツリーの座標)
+ * 合流の線の頼み (tree-lines の routeBacks へ)。戻りの矢印だけの箱の下の真ん中から出て、行き先の箱の枠 (横の辺の真ん中) へ入る。
+ * 出元が行き先より右なら右の辺 (flip)、左なら左の辺。10-25 オーナー「枠に返すような線じゃなかったっけ」(前は行き先の打つ手の札の左の端へ入れ、札の高さまで上って箱を囲んで見えた)。
+ * pos = 箱の位置と大きさ (引っ張り中はその位置)
  */
-export function mergeReqs(doc: TreeDoc, pos: (id: string) => Required<Pos>, chipW: (id: string) => number | null): { reqs: BackReq[]; lines: MergeLine[] } {
+export function mergeReqs(doc: TreeDoc, pos: (id: string) => Required<Pos>): { reqs: BackReq[]; lines: MergeLine[] } {
   const reqs: BackReq[] = [], lines: MergeLine[] = [];
   for (const id of mergeIds(doc)) {
     const b = doc.boxes[id]!, p = pos(id);
     for (const t of backTargetsOf(doc, id)) {
       const to = pos(t);
       const lid = `${id}>${t}`;
-      reqs.push({ id: lid, from: p, to, end: handAnchor(to, chipW(t)), start: { x: p.x + p.w / 2, y: p.y + p.h } });
+      const flip = p.x + p.w / 2 > to.x + to.w / 2;
+      reqs.push({ id: lid, from: p, to, end: { x: flip ? to.x + to.w : to.x, y: to.y + to.h / 2 }, start: { x: p.x + p.w / 2, y: p.y + p.h }, flip });
       lines.push({ id: lid, from: id, to: t, parent: b.parent!, kind: b.out === "hit" || b.out === "any" ? "fwd" : "back" });
     }
   }

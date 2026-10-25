@@ -2,22 +2,26 @@
  * use-tree-merge.ts — SimTreePage の戻りの見え方の動き (2026-10-22、SimTreePage が 500 行を超えるので分けた): 戻りの矢印だけの箱から行き先へ流れ込む線
  * (tree-merge.ts の mergeReqs → tree-lines の routeBacks、同じ行き先は束ねる)・&lines=a の「線を全部表示」・乗せている箱とホバーのカード
  */
-import { computed, ref, watch, type ComputedRef, type Ref } from "vue";
+import { computed, ref, watch, type Ref } from "vue";
 import { BOX_H, BOX_W, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { routeBacks, type Seg } from "./tree-lines";
+import { mirrorPath, mirrorPos, mirrorSeg, routeBacks, type Seg } from "./tree-lines";
 import { mergeReqs } from "./tree-merge";
 
 export function useTreeMerge(o: {
   doc: Ref<TreeDoc>; posOf: (b: TreeBox) => { x: number; y: number }; segs: () => Seg[];
-  chipW: Ref<Record<string, number>>; inv: ComputedRef<number>;
   /** カードを出さない・消す時 (引っ張っている・画面が動いた・欄を開いた) */ busy: () => boolean; reset: () => unknown;
 }) {
   const merged = computed(() => {
     const d = o.doc.value;
     const pos = (id: string) => ({ ...o.posOf(d.boxes[id]!), w: BOX_W, h: BOX_H });
-    const chip = (id: string): number | null => { const b = d.boxes[id]!; return b.hand && b.outs.length ? (o.chipW.value[id] ?? 120) * o.inv.value : null; };
-    const { reqs, lines } = mergeReqs(d, pos, chip);
-    return { lines, paths: routeBacks(reqs, Object.keys(d.boxes).map(pos), o.segs(), { bundle: true }) };
+    const { reqs, lines } = mergeReqs(d, pos);
+    // 行き先の箱の左の辺へ入る線はそのまま、右の辺へ入る線 (flip) は左右を裏返して同じ道の探し方で引き、描く時に戻す
+    const bx = Object.keys(d.boxes).map(pos), sg = o.segs();
+    const flip = reqs.filter((r) => r.flip);
+    const back = routeBacks(flip.map((r) => ({ ...r, from: mirrorPos(r.from), to: mirrorPos(r.to), end: { x: -r.end.x, y: r.end.y }, start: r.start && { x: -r.start.x, y: r.start.y } })), bx.map(mirrorPos), sg.map(mirrorSeg), { bundle: true });
+    const paths = routeBacks(reqs.filter((r) => !r.flip), bx, sg, { bundle: true });
+    for (const [id, p] of back) paths.set(id, mirrorPath(p));
+    return { lines, paths };
   });
   /** 帯の「線を全部表示」(このブラウザに覚える) */
   const KEY = "exiledesk.tree.lines-all";

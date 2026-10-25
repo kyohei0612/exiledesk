@@ -25,7 +25,7 @@ import { craftStage as s } from "../../../state/craft-stage";
 import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, removeHit, setAim, setBack, setDone, type Aim, type Hand, type HandKind, type OutKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
 import { handUses } from "../../../services/simulator/tree/tree-memo";
 import { tidy } from "../../../services/simulator/tree/tree-layout";
-import { handLabel, outName } from "./tree-names";
+import { outName } from "./tree-names";
 import { MATCH, RESTART } from "../../../services/simulator/tree/tree-shape";
 import { tr } from "../../../i18n/lang";
 import { pageZoom } from "../../../utils/zoom";
@@ -124,16 +124,7 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResizeH));
 /** 手 (見るだけ): どこを引いても画面が動き、箱は押せない (ComfyUI の手、見本の 6) */
 const hand = ref(false);
 const { edges } = useTreeEdges(doc, boxes, posOf);
-/** 打つ手の札の幅 (画面で測る。戻りの線を札の左の端へ入れる、tree-lines.ts の handAnchor) */
-const chipW = ref<Record<string, number>>({});
-function measureChips(): void {
-  const w: Record<string, number> = {};
-  for (const el of document.querySelectorAll<HTMLElement>("[data-tree-hand], [data-tree-split-chip]")) if (el.dataset.handOf) w[el.dataset.handOf] = el.offsetWidth;
-  if (JSON.stringify(w) !== JSON.stringify(chipW.value)) chipW.value = w;
-}
-watch(() => edges.value.map((e) => `${e.id}:${e.hand ? handLabel(e.hand) : `split${e.split}`}`).join("|"), measureChips, { flush: "post" });
-onMounted(() => { measureChips(); void document.fonts?.ready.then(measureChips); });
-const { merged, linesAll, hoverBox, cardBox } = useTreeMerge({ doc, posOf, segs: () => edges.value.flatMap((e) => e.segs), chipW, inv, busy: () => !!drag.value || !!plus.value, reset: () => [v.flow.viewport.value, panel.value, drag.value] });
+const { merged, linesAll, hoverBox, cardBox } = useTreeMerge({ doc, posOf, segs: () => edges.value.flatMap((e) => e.segs), busy: () => !!drag.value || !!plus.value, reset: () => [v.flow.viewport.value, panel.value, drag.value] });
 /** 白紙に戻す = 2 回押し (本番の「白に戻す」と同じ use-armed、3 秒で戻る)。枠の外・Esc でも戻す (オーナー 10-22「白紙に戻すもあれやな、2 回だな」) */
 const clearArm = useArmed();
 const clearBtn = ref<HTMLElement | null>(null);
