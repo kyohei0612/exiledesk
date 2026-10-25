@@ -336,7 +336,7 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
   for (const m of data.mods.values()) if (out.cls && m.id.startsWith(out.cls + "/") && String(m.source ?? "normal") !== "normal") poolIds.add(m.id);
   const pool = [...poolIds].map((id) => data.mods.get(id)).filter((m): m is Mod => !!m && !/\/Rune_/.test(m.id) && (m.type === "prefix" || m.type === "suffix"));
   const linePct = (i: number, m: Mod): number => pctOf(boostsFor(m, free[i]!.b));
-  const solveIn: SolveLine[] = free.map((p) => ({ stats: statsOf(p.mod), values: p.b.values, note: p.b.note, ...(p.b.side ? { side: p.b.side } : {}), ...(p.b.tradeTier !== undefined ? { tradeTier: p.b.tradeTier } : {}) }));
+  const solveIn: SolveLine[] = free.map((p) => ({ stats: statsOf(p.mod), values: p.b.values, note: p.b.note, own: p.mod, ...(p.b.side ? { side: p.b.side } : {}), ...(p.b.tradeTier !== undefined ? { tradeTier: p.b.tradeTier } : {}) }));
   const sols = free.length ? solveLines({
     lines: solveIn,
     pool, fixed: rest.map((p) => p.mod), limit: out.count.limit,
@@ -375,7 +375,7 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
     // ほかの読み方の候補は、読めない行と和の行の数が一番目と同じで、行の組み方 (どの行どうしが 1 つの MOD か) が違う物だけ。
     // 出どころだけの違い (印の無いコピーの普通の MOD ⇄ エッセンスの MOD) は候補にしない (印が無ければ見分けられず、組み合わせで増える)
     const groups = (s: Solution): string => s.picks.map((p) => [...new Set(p.lines)].sort().join("+")).sort().join(",");
-    const same = sols.filter((s, k) => k === 0 || (s.score[0] === sols[0]!.score[0] && s.score[1] === sols[0]!.score[1] && groups(s) !== groups(sols[0]!)));
+    const same = sols.filter((s, k) => k === 0 || (s.score[0] === sols[0]!.score[0] && s.score[1] === sols[0]!.score[1] && s.score[2] === sols[0]!.score[2] && groups(s) !== groups(sols[0]!)));
     // 出す形 (MOD・段・値) が同じ読み方は 1 つに (コラプトした物は説明できない行を今までどおり出すので、割り当てが違っても同じ形になる)
     const shape = (ms: readonly ItemTextMod[]): string => ms.map((m) => `${m.modId}@${m.tier?.index}:${m.values.join(",")}`).join("|");
     const readings = [{ mods: [...out.mods], skipped: [...first.skipped] }];

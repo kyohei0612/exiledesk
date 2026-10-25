@@ -24,6 +24,8 @@ export interface SolveLine {
   side?: "prefix" | "suffix";
   /** トレードのサイトの段の表記 (0 = エッセンス・合金・冒涜専用) */
   tradeTier?: number;
+  /** 文で引いた MOD (説明できない行もこの MOD の枠と系統を使う) */
+  own?: Mod;
 }
 export interface SolvePick {
   mod: Mod;
@@ -36,7 +38,7 @@ export interface Solution {
   picks: SolvePick[];
   /** どの組み合わせでも説明できなかった行 */
   unexplained: number[];
-  /** 小さいほどもっともらしい (読めない行・和の行・またがる MOD・出どころ) */
+  /** 小さいほどもっともらしい (読めない行・枠に入らない読めない行・和の行・またがる MOD・出どころ) */
   score: number[];
 }
 export interface SolveCtx {
@@ -148,6 +150,8 @@ export function solveLines(ctx: SolveCtx): Solution[] {
   const contrib: number[] = new Array(n).fill(0);
   const picks: Array<SolvePick & { cost: number }> = [];
   const unexplained: number[] = [];
+  /** 説明できない行のうち、枠か系統の都合で 1 つの MOD として数えられなかった数 (少ないほどもっともらしい) */
+  let overflow = 0;
   const count = { prefix: 0, suffix: 0 };
   const taken = new Set<string>();
   for (const m of ctx.fixed) {
@@ -178,7 +182,7 @@ export function solveLines(ctx: SolveCtx): Solution[] {
     const sumLines = contrib.filter((c) => c > 1).length;
     const spans = picks.filter((p) => new Set(p.lines).size > 1).length;
     const cost = picks.reduce((a, p) => a + p.cost, 0);
-    const score = [unexplained.length, sumLines, spans, cost];
+    const score = [unexplained.length, overflow, sumLines, spans, cost];
     const key = picks.map((p) => p.mod.id).sort().join(",") + "|" + [...unexplained].sort().join(",");
     if (seen.has(key)) return;
     seen.add(key);
@@ -215,10 +219,20 @@ export function solveLines(ctx: SolveCtx): Solution[] {
         if (nodes > NODES) return;
       }
     }
-    // この行はどの組み合わせでも説明できない (推し量らない)
+    // この行はどの組み合わせでも説明できない (推し量らない)。途中まで MOD を足した形は数えない。
+    // 説明できない行も 1 つの MOD として文で引いた MOD の枠と系統を使う (見本 t4 10-25 オーナー「ハイブリッドに被ってないMODが残り2枠あったりしたら4MODになるからハイブリッドって気づくよね」)。
+    // 枠が埋まっている・系統がぶつかる時は使わずに (説明できない行どうしの数え過ぎで、どの読み方も無くならないように)
+    if (contrib[i]! > 0) return;
+    const own = lines[i]!.own, side = own?.type;
+    const occupy = !!own && (side === "prefix" || side === "suffix") && count[side] < ctx.limit[side] && !familyBlocked(own, taken);
+    const keys = occupy ? familyKeysOf(own!) : [];
+    if (occupy) { count[side as "prefix" | "suffix"]++; for (const k of keys) taken.add(k); }
+    if (!occupy) overflow++;
     unexplained.push(i);
     dfs();
     unexplained.pop();
+    if (!occupy) overflow--;
+    if (occupy) { count[side as "prefix" | "suffix"]--; for (const k of keys) taken.delete(k); }
   };
   dfs();
   const cmp = (a: Solution, b: Solution): number => { for (let k = 0; k < a.score.length; k++) if (a.score[k] !== b.score[k]) return a.score[k]! - b.score[k]!; return 0; };
