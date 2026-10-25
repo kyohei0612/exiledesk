@@ -213,6 +213,9 @@ for (const f of files) {
   for (const st of rec.steps) {
     if (!st.card || !Array.isArray(st.shelf)) { outSteps.push(st); continue; }
     sum.steps++;
+    // 窓の文が「フラクチャーのオーブ: 先に完成の MOD でフラクチャーを決めて」なら、その木はフラクチャーの印が無い (sim-mods で押した記録があっても画面に従う。数は sum.fracLost、隊長 5 本目)
+    const noFracHere = noFrac || /先に完成の MOD でフラクチャーを決めて/.test(st.heldText ?? "");
+    if (!noFrac && noFracHere) sum.fracLost = (sum.fracLost ?? 0) + 1;
     const monkey = usable(st.shelf);
     // エッセンスの数え方を猿に合わせる: 猿の口の棚 (同じ系統の段が 2 枚以上ある) は段ごと、画面を押す猿の棚 (系統ごとに一番上の段 1 枚) は系統ごと。
     // 一番上がレッサーの系統 (フォーカスの肉体など) もあるので、レッサーの札があるだけでは決めない (隊長 4 本目 10-25)
@@ -223,7 +226,7 @@ for (const f of files) {
     const raw = st.boxItem?.raw;
     if (raw?.base && raw.cls) {
       base = raw.base;
-      const shelf = E.shelfOf(raw, allTiers), eng = usableEng(shelf, noFrac);
+      const shelf = E.shelfOf(raw, allTiers), eng = usableEng(shelf, noFracHere);
       const d = { 猿だけ: setDiff(withoutOff(monkey, shelf), eng), エンジンだけ: setDiff(eng, withoutOff(monkey, shelf)) };
       best = { rarity: raw.rarity, item: raw, shelf, d, n: d.猿だけ.length + d.エンジンだけ.length };
     } else {
@@ -241,7 +244,7 @@ for (const f of files) {
       for (const [rarity, item] of Object.entries(E.itemsFor(base, ms.map((m) => m.hit), st.card))) {
         if (!item || (st.rarity && st.rarity !== rarity)) continue;
         const shelf = E.shelfOf(item, allTiers);
-        const eng = usableEng(shelf, noFrac);
+        const eng = usableEng(shelf, noFracHere);
         const d = { 猿だけ: setDiff(withoutOff(monkey, shelf), eng), エンジンだけ: setDiff(eng, withoutOff(monkey, shelf)) };
         const n = d.猿だけ.length + d.エンジンだけ.length;
         if (!best || n < best.n) best = { rarity, item, shelf, d, n };
@@ -286,7 +289,7 @@ for (const f of files) {
   writeFileSync(join(outDir, f), JSON.stringify({ ...rec, steps: outSteps, ...(treeCheck ? { treeCheck } : {}), ...(walk ? { walk } : {}) }, null, 1));
 }
 writeFileSync(join(outDir, "engine-check.json"), JSON.stringify({ ...sum, tree: treeSum, walk: walkSum, top:[...tally].sort((a, b) => b[1] - a[1]) }, null, 1));
-console.log(`手 ${sum.steps}: 棚が同じ ${sum.shelfSame} / 違う ${sum.shelfDiff} / 比べられない ${sum.skipped}。お告げ (猿が欄を開いた手) 同じ ${sum.omensSame} / 違う ${sum.omensDiff}`);
+console.log(`手 ${sum.steps}: 棚が同じ ${sum.shelfSame} / 違う ${sum.shelfDiff} / 比べられない ${sum.skipped}。お告げ (猿が欄を開いた手) 同じ ${sum.omensSame} / 違う ${sum.omensDiff}${sum.fracLost ? `。完成の MOD でフラクチャーを押したのに窓が「先に決めて」の手 ${sum.fracLost}` : ""}`);
 if (treeSum.trees) console.log(`ツリーの数字 (記録の頭の tree): 木 ${treeSum.trees}、手の箱 ${treeSum.boxes}、ずれのある箱 ${treeSum.off}`);
 if (walkSum.trees) console.log(`完成・個数 (記録の頭の tree.result): 木 ${walkSum.trees}、比べた ${walkSum.compared}、ずれ ${walkSum.off}。比べない: ${Object.entries(walkSum.skipped).map(([k, n]) => `${k} ${n}`).join(" / ") || "無し"}`);
 for (const [w, n] of Object.entries(sum.skipWhy)) console.log(`  比べられない: ${w} ${n}`);
