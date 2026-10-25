@@ -8,7 +8,7 @@
 import { mulberry32, sideOfMod, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { aimHeldOn, isAimMod, junkOf } from "./tree-aim";
 import { effectOf } from "./tree-hands";
-import { aimOpts, aimsOf, essenceBoxFits, fractureChoices, handAims, handProblem, outcomeOf, playHand, startItemOf as startOf, targetsOf } from "./tree-sample";
+import { aimOpts, aimsOf, essenceBoxFits, fractureChoices, handAims, handProblem, outcomeOf, playHand, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
 import { aimKey, MATCH_BACK, type Aim, type Hand, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc } from "./tree-model";
@@ -30,6 +30,11 @@ export interface TreeRunOpts {
   aims?: Aim[];
   /** 始めのアイテム (既定 = sampleOf の始まり: レア + フラクチャーの指名) */
   start?: (rng: () => number) => StageItem;
+  /**
+   * 「当たるまで」(上限無し) の箱 (既定 = repeat.max の無い箱)。見張りの上限 (SPAM_CAP・精査の写しは 1,000) まで当たらなかった人は、形の合う箱へ回し直さずここで止まる
+   * (抜けにくい形: 削減のお告げで満杯の側の入れ替えが続く等。前は形の合う同じ箱へ戻って打ち直し、1 人が数万回回って画面が止まった、10-25 モンキー 4 本目の 12 本)
+   */
+  untilHit?: ReadonlySet<string>;
   /** every 人ごとに途中の結果 */
   onProgress?: (r: TreeRunResult) => void;
   every?: number;
@@ -60,7 +65,7 @@ export interface TreeRunResult {
   stuck: number;
   stuckAt: Record<string, number>;
   /** 手が打てずに止まった箱の、最初の 1 人の理由・着いた形・通った戻りの箱 (古い順、重ねない)。精査がどの外れ・どの戻りが元かを出す (10-22) */
-  stuckWhy: Record<string, { reason: string; item: StageItem; backs: string[]; noBox?: boolean }>;
+  stuckWhy: Record<string, { reason: string; item: StageItem; backs: string[]; noBox?: boolean; /** 当たるまでを この回数打っても当たらずに止まった (untilHit) */ spam?: number }>;
   /** 手の結果に合う結果の箱が無かった人数 (箱ごと。結果が 1 通りとして箱を 1 つにした手で別の結果が出た等。形の合う箱があればそこへ進み、無ければ止まり) */
   unexpected: Record<string, number>;
   /** 着いた箱 (手の結果の箱・戻り先) の形が実物と違い、形の合う箱へ移した人数 (箱ごと、settle。照らしの台本は形合わせを辿らないので、これのある木は比べ方が違う、10-24) */
@@ -82,7 +87,7 @@ export interface TreeRunResult {
 }
 
 export type End = "done" | "capped" | "stuck";
-interface Person { end: End; cost: number; at: string; visits: { box: string; cost: number; pass?: true }[]; uses: Record<string, number>; restarts: number; odd: Set<string>; why?: { reason: string; item: StageItem; noBox?: boolean } }
+interface Person { end: End; cost: number; at: string; visits: { box: string; cost: number; pass?: true }[]; uses: Record<string, number>; restarts: number; odd: Set<string>; why?: { reason: string; item: StageItem; noBox?: boolean; spam?: number } }
 
 const startItemOf = (data: PatchData, doc: TreeDoc, rng: () => number): StageItem => startOf(data, doc, rng).item;
 
@@ -303,7 +308,7 @@ export function outBoxOf(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim
   });
 }
 
-function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: readonly Shape[], rng: () => number, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps">> & Pick<TreeRunOpts, "start">): Person {
+function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: readonly Shape[], rng: () => number, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps" | "untilHit">> & Pick<TreeRunOpts, "start">): Person {
   let item = o.start ? o.start(rng) : startItemOf(data, doc, rng);
   let cost = o.startCost;
   const uses: Record<string, number> = {};
@@ -368,8 +373,13 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     // フラクチャーは必ず狙いを固定し (playHand の fractureTarget)、固定できる MOD が 2 つ以上なら「2 回外れて 1 回当たり」として、ここまでに使った物と
     // 始めの値段を 2 回分足す (外れた時は素材を作り直す。10-24 オーナー、ツリーに買い直しの道は作らない)。作り直しの回数にも 2
     const miss = effectOf(b.hand.currency) === "fracture" && fractureChoices(data, item) >= FRACTURE_PICK ? Object.entries(uses) : null;
-    const r = playHand(data, item, b.hand, rng, handAims(doc, at, aims), use);
+    const tried = uses[b.hand.currency] ?? 0, own = handAims(doc, at, aims);
+    const r = playHand(data, item, b.hand, rng, own, use);
     if (!r.applied) return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: r.reason ?? "", item } };
+    const cap = b.hand.repeat?.max ?? SPAM_CAP;
+    if (o.untilHit.has(at) && (uses[b.hand.currency] ?? 0) - tried >= cap && outcomeOf(data, before, r.item, own, b.hand.currency).out !== "hit") {
+      return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`当たるまでを ${cap} 回打っても当たらない (この形からは狙いが付きにくい・付かない)`, `No hit in ${cap} repeats (the target is unlikely or impossible from this item)`), item: r.item, spam: cap } };
+    }
     if (miss) {
       for (const [k, n] of miss) use(k, FRACTURE_MISS * n);
       use(b.hand.currency, FRACTURE_MISS);
@@ -469,7 +479,8 @@ export function runTree(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): TreeR
  * 木の設定 (tune) は呼ぶ側が next() ごとに withTreeTune で包む (tree-check の checkTreeAsync)
  */
 export function* runTreeSteps(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): Generator<number, TreeRunResult> {
-  const o = { price: opts.price, startCost: opts.startCost ?? 0, capDiv: opts.capDiv ?? 2000, capSteps: opts.capSteps ?? 20000, start: opts.start };
+  const untilHit = opts.untilHit ?? new Set(Object.values(doc.boxes).filter((b) => b.hand?.repeat && b.hand.repeat.max == null).map((b) => b.id));
+  const o = { price: opts.price, startCost: opts.startCost ?? 0, capDiv: opts.capDiv ?? 2000, capSteps: opts.capSteps ?? 20000, start: opts.start, untilHit };
   const aims = opts.aims ?? aimsOf(doc);
   const shapes = shapesOf(doc);
   const rng = mulberry32(opts.seed);
@@ -485,17 +496,8 @@ export function* runTreeSteps(data: PatchData, doc: TreeDoc, opts: TreeRunOpts):
   return summarize(doc, people, o.startCost);
 }
 function runIn(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): TreeRunResult {
-  const o = { price: opts.price, startCost: opts.startCost ?? 0, capDiv: opts.capDiv ?? 2000, capSteps: opts.capSteps ?? 20000, start: opts.start };
-  const aims = opts.aims ?? aimsOf(doc);
-  const shapes = shapesOf(doc);
-  const rng = mulberry32(opts.seed);
-  const every = Math.max(1, opts.every ?? 10);
-  const people: Person[] = [];
-  for (let i = 0; i < opts.n; i++) {
-    const p = runOne(data, doc, aims, shapes, rng, o);
-    people.push(p);
-    opts.onPerson?.(p, i);
-    if (opts.onProgress && (i + 1) % every === 0 && i + 1 < opts.n) opts.onProgress(summarize(doc, people, o.startCost));
-  }
-  return summarize(doc, people, o.startCost);
+  const g = runTreeSteps(data, doc, opts);
+  let s = g.next();
+  while (!s.done) s = g.next();
+  return s.value;
 }

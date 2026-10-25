@@ -138,7 +138,7 @@ export function fractureTarget(data: PatchData, item: StageItem, h: Hand, aims: 
 export const fractureChoices = (data: PatchData, item: StageItem): number => (stepOutcomes(data, item, "fracture") ?? []).filter((o) => !o.void).length;
 
 /** 繰り返し (カオススパム) の上限が無い時の見張り */
-const SPAM_CAP = 5000;
+export const SPAM_CAP = 5000;
 
 /**
  * 箱の手を 1 回打つ (触媒の時はカタリストで品質を上げてから。台本の while と同じ)。

@@ -53,7 +53,7 @@ export async function checkTreeAsync(data: PatchData, doc: TreeDoc, onProgress: 
 }
 /**
  * 精査の中だけの「当たるまで」の上限 (上限無し・これより多い物はここで打ち切る)。付かない狙いの当たるまでが 1 人ごとに 5000 回 (見本の上限) 回り、
- * 30 人回しでページが固まった (10-25 モンキー 3 本目、前に保存した木でも起きる)。打ち切った箱は穴として出す。100 人回しは今までどおり
+ * 30 人回しでページが固まった (10-25 モンキー 3 本目、前に保存した木でも起きる)。打ち切りまで当たらなかった人はその箱で止まる (tree-run の untilHit)、穴として出す。100 人回しの上限は SPAM_CAP (5000)
  */
 const CHECK_SPAM_CAP = 1000;
 /**
@@ -244,7 +244,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
     for (const x of [...cantIssues(), ...oddIssues()]) add(x.boxId, x.kind, x.text);
     for (const [id, c] of waste) add(id, "omenWaste", tr(`お告げが効かない人がいる (${PEOPLE} 人中 ${c.who.size} 人、手は打てる): ${c.reason}`, `The omen is wasted for some runs (${c.who.size} of ${PEOPLE}; the craft still works): ${c.reason}`));
     // 5) 回して止まる箱 (tree-run を 30 人、値段 0)。10-22 靴を白紙から組んで: 100 人中 64 人が止まる箱を上の辿り方では引かなかった
-    const steps = runTreeSteps(data, doc, { n: RUN_PEOPLE, seed: 1, price: () => 0, capSteps: 300 });
+    const steps = runTreeSteps(data, doc, { n: RUN_PEOPLE, seed: 1, price: () => 0, capSteps: 300, untilHit: capped });
     let st = steps.next();
     while (!st.done) { yield { phase: "run", n: st.value, of: RUN_PEOPLE, partial: ranked(out) }; st = steps.next(); }
     const run = st.value;
@@ -255,6 +255,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
       // 手も行き先も決めていない箱は 1) の「決めていない」だけ (何もしないスタートで「30 人中 27 人が止まる」が重なり、残りの人が何か分からなかった。10-24 初めての人の回 5)
       if (dead.has(id) || out.some((x) => x.boxId === id && x.kind === "open")) continue;
       const w = run.stuckWhy[id];
+      if (w?.spam) { add(id, "stuck", tr(`回すと ${RUN_PEOPLE} 人中 ${n} 人が、当たるまでを ${w.spam} 回打っても当たらず止まる (この形からは狙いが付きにくい・付かない。例: 削減のお告げで満杯の側の入れ替えが続く)。付きやすい狙いを当たりに選ぶか、手・お告げを替える`, `${n} of ${RUN_PEOPLE} runs get no hit in ${w.spam} repeats and stop (the target is unlikely or impossible from this item, e.g. the reduction omen keeps swapping the full side). Pick an easier target or change the craft or omen`)); continue; }
       // 外れを持ったまま戻る「狙いが消えた」の戻り (作り直しでない)。カオスを当たるまでは 1 つしか入れ替えないので、持ち込んだ外れは消えずに先で満杯になる (10-22 靴 b14 → b1、100 人中 63 人)
       const carry = (w?.backs ?? []).filter((x) => doc.boxes[x]?.out === "lost" && doc.boxes[x]?.back !== RESTART);
       add(id, "stuck", stuckText(data, aims, n, w, carry.length > 0));
@@ -263,10 +264,6 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
     // 回しで結果の箱に無い形になった箱 (5 人の辿りで出なかった物。上限つきの当たるまでが上限で当たらない時など、10-22 13 通り組んだ #13)
     for (const [id, n] of Object.entries(run.unexpected)) {
       const max = doc.boxes[id]?.hand?.repeat?.max;
-      if (capped.has(id)) {
-        add(id, "unexpected", tr(`この手で付く狙いが無いか、とても付きにくい: 精査では当たるまでを ${CHECK_SPAM_CAP} 回で打ち切り、${RUN_PEOPLE} 人中 ${n} 人が当たらなかった (付く狙いを当たりに選ぶか、手を替える)`, `No target this craft can add, or very unlikely: the check stops repeating at ${CHECK_SPAM_CAP} tries and ${n} of ${RUN_PEOPLE} runs got no hit (pick a target it can add, or change the craft)`));
-        continue;
-      }
       add(id, "unexpected", tr(`回すと ${RUN_PEOPLE} 人中 ${n} 人が結果の箱に無い形になる${max ? ` (${max} 回で当たらなかった)` : ""}。形の合う箱へ進み、無ければ止まる。直すには、その結果の箱を足すか、同じ形で手のある箱を作る`, `${n} of ${RUN_PEOPLE} runs end in a shape with no result box${max ? ` (no hit in ${max} tries)` : ""}. They go to a box of the same shape, or stop. Fix: add a box for that result, or a box with a craft for that shape`));
     }
     // 回しで 1 人でも着いた箱は出さない (5 人の辿りは上限つきの当たるまで・始まりに同じ系統が付いている人で外れた、10-22 13 通り組んだ #9 の誤報 3 本)
