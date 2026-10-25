@@ -9,6 +9,7 @@ import { forceKey } from "../apply-force";
 import { hits } from "../aim-odds";
 import { freshItem } from "../run-plan";
 import { baseSocketsOf } from "../stage-runes";
+import { RUNE_BY_ID } from "../../../vendor/poe2htc/engine/runes";
 import { mulberry32 } from "../../htc/rng";
 import type { StageItem, StageMod } from "../types";
 import { tr } from "../../../i18n/lang";
@@ -77,24 +78,55 @@ export function fractureStart(data: PatchData, base: string, itemLevel: number, 
  * 狙いを付けられる所まで付けた形 (J2、完成形のカード用): 白のベースのレアに mods を順に指名で付け、付けられなかった物は left に理由と返す
  * (MOD の枠を超えた・同じ系統・アイテムレベルが足りない など、核の断りの文)。表示用で、付ける順は渡した順
  */
-export function placeMods(
-  data: PatchData, base: string, itemLevel: number, mods: readonly TierMod[], rng: () => number,
-  room: { runes?: number; crafted?: number } = {},
-): { item: StageItem; left: Array<TierMod & { reason: string }> } {
+/**
+ * 狙いのルーンの MOD のルーンを嵌めた白のレア (オーナー 10-26「完成形でルーンの特殊 MOD を選んだらソケットに嵌まっている扱い、全体％ね」、シミュ部長 29 本目の頼み)。
+ * ツリーにルーンを嵌める手は無いので、完成形の狙いにルーンの MOD があれば、そのルーンが始めから嵌まっている形から始める
+ * (付きやすさの重み・クラフト MOD の上限など、ルーンが変える物は打つ処理 = エンジンのまま木の全体に効く)。
+ * ソケットは規格外 (要るだけある扱い、オーナー 10-26「ソケットだけど規格外で設定」)。クラフト MOD (エッセンス・合金) が 2 つ以上なら上限に届くまでアストリッドの創造性も嵌める
+ * (差す手 rune:… と上限の数え方 craftedLimitOf はエンジンの決まりのまま)。room = goalBlock が「もう 1 つ足せるか」を見る時に空けておくルーンの MOD・クラフト MOD の数。
+ * 狙いにルーンの MOD もクラフト MOD 2 つ目も無ければ、白のレアに規格外のソケットだけ (今までのスタートと同じ)
+ */
+/** 完成形の狙いのために嵌まっている扱いのルーン 1 つ。why = rune-mod (狙いのルーンの特殊 MOD のルーン)・astrid (クラフト MOD 2 つ目からのアストリッドの創造性) */
+export interface RequiredRune { en: string; why: "rune-mod" | "astrid" }
+function socketFor(data: PatchData, base: string, itemLevel: number, aims: readonly TierMod[], rng: () => number, room: { runes?: number; crafted?: number }): { item: StageItem; runes: RequiredRune[] } {
   let item = freshItem(data, base, itemLevel, "rare");
-  // 完成形は規格外 (オーナー 10-26「ソケットだけど規格外で設定、ルーン関係なくMOD選択できるようにしてくれ 特殊モッドが入らないし、アストリッドも入らない 完成形の際」):
-  // ソケットは要るだけある扱い。ルーンの MOD は指名の手がそのルーンを差すので、その数だけソケットを開けておく。
-  // クラフト MOD (エッセンス・合金) が 2 つ以上なら、上限に届くまでアストリッドの創造性を差す (差せる数・上限の数え方はエンジンの決まりのまま: 差す手 rune:…・craftedLimitOf)。
-  // room = goalBlock が「もう 1 つ足せるか」を見る時に空けておくルーンの MOD・クラフト MOD の数
-  const runeNeed = mods.filter((m) => data.mods.get(m.modId)?.rune).length + (room.runes ?? 0);
-  item = { ...item, sockets: Math.max(item.sockets ?? 0, baseSocketsOf(item.base, item.cls.category), runeNeed) };
-  const craftedNeed = mods.filter((m) => isCrafted(data, m)).length + (room.crafted ?? 0);
+  const runes: RequiredRune[] = [];
+  const runeIds = [...new Set(aims.flatMap((m) => { const r = data.mods.get(m.modId)?.rune; return r ? [r] : []; }))];
+  item = { ...item, sockets: Math.max(item.sockets ?? 0, baseSocketsOf(item.base, item.cls.category), runeIds.length + (room.runes ?? 0)) };
+  for (const id of runeIds) {
+    const en = RUNE_BY_ID.get(id)?.name.replace(/’/g, "'");
+    if (!en) continue;
+    const r = applyCurrency(data, item, `rune:${en}`, rng);
+    if (r.applied) { item = r.item; runes.push({ en, why: "rune-mod" }); }
+  }
+  // オーナー 10-26「クラフトMODに関しても2個目選択時からアストリッドを必須ルーンとして設定、要はMOD選んだら自動で設定」
+  const craftedNeed = aims.filter((m) => isCrafted(data, m)).length + (room.crafted ?? 0);
   while (craftedLimitOf(item) < craftedNeed) {
     const before = craftedLimitOf(item);
     const r = applyCurrency(data, { ...item, sockets: (item.sockets ?? 0) + 1 }, `rune:${ASTRID}`, rng);
     if (!r.applied || craftedLimitOf(r.item) <= before) break;
     item = r.item;
+    runes.push({ en: ASTRID, why: "astrid" });
   }
+  return { item, runes };
+}
+/**
+ * 狙いの組に要るルーン (英語名と理由、嵌める順)。完成形のアイテム枠のルーンの行に使う。runeSocketed はこれを嵌めた形 (完成形の判定 goalBlock・placeMods が使う)。
+ * 木の始めから嵌めた形にする (100 人回す・テストランなど打つ計算に効かせる) のは保留 (オーナー 10-26「くくりがカオススパムとかに影響してくるから最初からオンはおかしい」)
+ */
+export function requiredRunes(data: PatchData, base: string, itemLevel: number, aims: readonly TierMod[]): RequiredRune[] {
+  return socketFor(data, base, itemLevel, aims, mulberry32(1), {}).runes;
+}
+export function runeSocketed(data: PatchData, base: string, itemLevel: number, aims: readonly TierMod[], rng: () => number = mulberry32(1), room: { runes?: number; crafted?: number } = {}): StageItem {
+  return socketFor(data, base, itemLevel, aims, rng, room).item;
+}
+
+export function placeMods(
+  data: PatchData, base: string, itemLevel: number, mods: readonly TierMod[], rng: () => number,
+  room: { runes?: number; crafted?: number } = {},
+): { item: StageItem; left: Array<TierMod & { reason: string }> } {
+  // 完成形は規格外でルーンの嵌まった形から (runeSocketed)。ルーンの MOD はそのルーンが嵌まっているので指名の手で付く
+  let item = runeSocketed(data, base, itemLevel, mods, rng, room);
   const left: Array<TierMod & { reason: string }> = [];
   for (const m of mods) {
     const r = applyCurrency(data, item, keyOf(data, m), rng);
