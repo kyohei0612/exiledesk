@@ -174,6 +174,20 @@ export const implicitStatsOf = (base: string): ImplicitStat[] => {
   return order ? order.map((k) => (k == null ? { stats: [], tags: [] } : raw[k] ?? { stats: [], tags: [] })) : raw;
 };
 
+/**
+ * クライアントから足した MOD の文を、同梱の MOD と同じ形 (値は #、印なし) にする (2026-10-26、見本 t1 のタリスマンの要求能力値)。
+ * クライアントの文は「15% reduced [Attributes|Attribute] Requirements」のまま入っていて、① [表示用の鍵|文] の印が英語のカードに残る、
+ * ② 段の値が幅の無い 1 つの数 (-15 など) だと文に値がそのまま入り # が無いので、値を入れ直せず日本語の雛形も引けなかった
+ * (タリスマン・3 属性の防具・キャノンの要求能力値、スキルレベル、移動速度など 23 個)。幅のある文「(6-10)%」はそのまま (値の入れ方は fillEn が読む)
+ */
+function extraModText(m: Mod): Mod["text"] {
+  if (!m.text) return m.text;
+  const text = m.text.replace(/\[([^\]|]*)\|([^\]]*)\]/g, "$2").replace(/\[([^\]]*)\]/g, "$1");
+  const n = m.tiers?.[0]?.ranges?.length ?? 0;
+  if (!n || text.includes("#") || /\(\s*-?\d/.test(text)) return text;
+  let k = 0;
+  return text.replace(/\d+(?:\.\d+)?/g, (d) => (k++ < n ? "#" : d));
+}
 export function applyExtras(data: PatchData, extra: ExtraBases, jewels?: JewelBases): PatchData {
   const mods = new Map(data.mods);
   const bases = new Map(data.bases);
@@ -184,7 +198,7 @@ export function applyExtras(data: PatchData, extra: ExtraBases, jewels?: JewelBa
 
   for (const m of extra.mods) {
     if (mods.has(m.id)) continue;
-    mods.set(m.id, m);
+    mods.set(m.id, { ...m, text: extraModText(m) });
     if ((m as { weightSource?: string }).weightSource === "client-placeholder") placeholder.push(m.id);
   }
   for (const it of extra.items) {
