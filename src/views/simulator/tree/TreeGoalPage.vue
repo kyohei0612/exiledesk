@@ -22,6 +22,8 @@ import TreeRecipeBar from "./TreeRecipeBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue";
 import TreeTabs from "./TreeTabs.vue";
 import TreeFractureAsk from "./TreeFractureAsk.vue";
+import TreePasteBox from "./TreePasteBox.vue";
+import TreePasteNote from "./TreePasteNote.vue";
 import { useTree } from "./use-tree";
 import { openTreePage, treeStep } from "../../../web/page";
 
@@ -104,6 +106,8 @@ function apply(en: string): void {
   dropped.value = t.setBase(en, t.doc.value.itemLevel).map((a) => label.get(a.modId) ?? tr("(名前の無い MOD)", "(unnamed mod)"));
   go(2);
 }
+/** 貼り付けで取り込んだ (ベースと狙いは tree-paste が入れた) = 完成の MOD のページへ */
+function onPasted(): void { asking.value = null; dropped.value = []; unpicked.value = false; t.needBase.value = false; go(2); }
 const pickGoal = { has: t.hasGoal, toggle: t.toggleGoal };
 /**
  * 今の狙いの組にその段を足せない理由 (足せれば null。エンジンの入口 goalBlock: 枠・同じ系統・冒涜 1 つまで・クラフト MOD の上限・アイテムレベル、10-24 オーナー)。
@@ -184,10 +188,13 @@ const HELP: Array<[string, string]> = [
         <span class="min-w-0 truncate">{{ tr(`アイテムレベルを ${t.ilvlNote.value.to} に合わせました (適正)`, `Item level set to ${t.ilvlNote.value.to} (fit)`) }}</span>
         <button type="button" data-tree-ilvl-note-close class="shrink-0 rounded px-1 opacity-60 hover:bg-white/10 hover:opacity-100" :aria-label="tr('閉じる', 'Close')" @click="t.ilvlNote.value = null">×</button>
       </p>
+      <TreePasteNote v-if="step === 2" />
       <p v-if="step === 2 && dropped.length" data-tree-goal-dropped class="min-w-0 truncate px-3 pb-2 text-[12px] text-rose-200/80" :title="dropped.join('\n')">{{ tr(`このベースに付かない狙いを外した: ${dropped.join("・")}`, `Removed targets this base can't roll: ${dropped.join(", ")}`) }}</p>
     </template>
     <div v-if="step === 1" data-tree-goal-base class="flex min-w-0 flex-col gap-3">
       <TreeBasePick />
+      <!-- アイテムを貼り付けて取り込む (一覧の上、目立つ口。10-25 オーナー「ベース一覧の所に分かりやすく出したい」)。取り込めたら完成の MOD へ -->
+      <TreePasteBox @done="onPasted" />
       <!-- ベースを替えると今の木が消える時だけ、1 回確かめる (上に貼り付けて、一覧を送っていても見える所に) -->
       <div v-if="asking" ref="askEl" data-tree-base-ask class="sticky top-0 z-10 flex flex-wrap items-center gap-3 rounded-lg border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-[13px]">
         <p class="min-w-0 flex-1">{{ tr(`${jaTypeName(asking)} の白紙から組み直します。今の木 (箱 ${t.lostOnBase.value} 個) が消えます。完成の狙いは ${jaTypeName(asking)} にも付く物だけ残ります (1 つ戻すで戻せます)。`, `Start over from a blank ${asking}. This tree (${t.lostOnBase.value} box(es)) will be removed. Final targets that ${asking} can roll are kept (Undo brings it back).`) }}</p>
