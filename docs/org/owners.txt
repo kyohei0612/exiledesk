@@ -234,7 +234,7 @@ scripts/build-mtx-web.mjs            スキン
 scripts/build-cosmetics-pages.mjs    スキン
 docs/org/skins/**                    スキン
 
-# 10-25 オーナー「ジンはデータサーバーの管理人」: 共通のうちビルド・出し方・Web の土台・照らしの台本をジン部長から移す
+# 10-25 オーナー「ジンはデータセンター、核の情報をただ持ってるだけ」: 共通のうちビルド・出し方・Web の土台・照らしの台本をジン部長から移す
 vite.web.config.ts                   サーバー
 scripts/build-seo-pages.mjs          サーバー
 scripts/preview-prod.mjs             サーバー
