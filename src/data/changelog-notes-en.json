@@ -1,4 +1,8 @@
 {
+  "0.1.605": [
+    "When pasting an item, a hybrid mod split over two lines (e.g. % increased Spirit and maximum Mana) is now read as one mod",
+    "When pasting an item, the trade site's total lines are no longer mistaken for mods, and +1 Elemental Infusion / +20% maximum Quality no longer show as outside every tier"
+  ],
   "0.1.604": [
     "Simulator: Now works on phones. Instead of drawing the tree, answer “what do you craft?” and “what next for each result?” to build the route, then run 100 crafters once it’s complete (recipes and share URLs work across PC and phone)",
     "Simulator: On base selection, paste an item copied from the trade site, poe.ninja or the game to import its base and mods as your final-item targets",

@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.605",
+  "date": "2026-10-25",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "アイテムの貼り付けで、2 行に分かれたハイブリッドの MOD (スピリット% と最大マナなど) を 1 つの MOD として読むように",
+    "en": "When pasting an item, a hybrid mod split over two lines (e.g. % increased Spirit and maximum Mana) is now read as one mod"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "アイテムの貼り付けで、トレードの「合計」の行を MOD と取り違えないように。エレメンタルインフュージョン +1・品質の最大値 +20% が段に収まらないと出ていたのを直しました",
+    "en": "When pasting an item, the trade site's total lines are no longer mistaken for mods, and +1 Elemental Infusion / +20% maximum Quality no longer show as outside every tier"
+   }
+  ]
+ },
+ {
   "v": "0.1.604",
   "date": "2026-10-25",
   "items": [
@@ -757,18 +775,6 @@
     "area": "",
     "text": "チュートリアルの「お告げを学ぶ」のアイコンをお告げの絵に",
     "en": "Tutorial: the “Learn omens” card now shows an omen icon"
-   }
-  ]
- },
- {
-  "v": "0.1.565",
-  "date": "2026-10-18",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "チュートリアルのコース一覧を見やすく (段ごとの見出し・カードにアイコン・クリアの進み具合)",
-    "en": "Tutorial course list redesigned (level headers, course icons, cleared progress)"
    }
   ]
  }
