@@ -8,7 +8,7 @@
   - その画面だけのタブ (エミュのジェムコラプト・アプリのチュートリアル) は既定の slot で後ろに足す
   - 並びは エミュレーター / シミュレーター / デイリー / (slot = ジェムコラプト) / コスメティック (2026-10-25 オーナー「ここの右端が良いな、目立たんし」「コスメが端かな」
     「デイリーの右に将来追加するジェムコラプト置こうか」、ヘッダーから移した)。デイリー・コスメティックは開発版だけ (スイッチ daily・skins)。
-    スマホは 3 列の格子 (5 つなら 3 + 2)、狭い PC は折り返す
+    スマホは 1 段に 3 つまで折り返して余った段は広げる (2 つなら 2 列・5 つなら 3 + 2)、狭い PC は折り返す
   使い方: <ModeTabs @pick="(m) => …画面の後片付け" ><button class="g-tab">…</button></ModeTabs>
 -->
 <script setup lang="ts">
@@ -38,7 +38,8 @@ const TAB = "g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex
 </script>
 
 <template>
-  <div v-if="shown" data-mode-tabs class="inline-flex flex-wrap gap-1 max-md:w-full" :class="EXTRA ? 'max-md:grid max-md:grid-cols-3' : 'max-md:flex'" role="tablist">
+  <!-- スマホは 1 段に 3 つまで折り返し、余った段は広げて埋める (2 つなら 2 列・5 つなら 3 + 2、空き枠を出さない。オーナー 10-25「2 列にしてから出して」)。slot のタブにも効くよう子に付ける -->
+  <div v-if="shown" data-mode-tabs class="inline-flex flex-wrap gap-1 max-md:flex max-md:w-full" :class="EXTRA ? 'max-md:[&>*]:!grow max-md:[&>*]:!basis-[calc((100%-0.5rem)/3)]' : ''" role="tablist">
     <button type="button" role="tab" data-mode-tab="hand" :aria-selected="on === 'hand'" :class="[TAB, on === 'hand' ? 'on' : '']" @click="pick('hand')">{{ tr("エミュレーター", "Emulator") }}</button>
     <button v-if="TREE_ON" type="button" role="tab" data-mode-tab="sim" :aria-selected="on === 'sim'" :class="[TAB, on === 'sim' ? 'on' : '']" @click="pick('sim')">
       {{ tr("シミュレーター", "Simulator") }}<span class="text-[10px] font-normal opacity-70" :title="tr('作り込み中の機能', 'Still in development')">β</span>
