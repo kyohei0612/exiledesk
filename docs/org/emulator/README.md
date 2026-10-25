@@ -2,26 +2,26 @@
 
 フォルダー名は emulator のまま (2026-10-20 に呼び名をエミュ部長 → ジン部長、エミュ部 → エンジン部に)。
 
-データセンター (オーナー 10-25「核の情報 (データとエンジンの決まり) をただ持ってるだけ」「ジンが動くことやコード書くことはない」)。役はデータと決まりの事実を答える・データの元 (トレードのデータ・poe2db) からの取り込みだけ。ビルド・出し方・Web の土台・照らしの台本などの頼みは受けず、持ち主の部へ回す (`node scripts/owner-of.mjs <パス>`)。
+エンジンの持ち主 (オーナー 10-25 夜「ジンはMOD変更やカレンシールール変更等の修正でやっと動く だからマジで出番ないはずなんだよ想定」)。エンジン = データ (json)・決まりの md・エンジンのコードは全部ジン 1 人 (10-25 夜のエンジン部長は閉じた)。動くのは MOD・カレンシーの決まりの変更とエンジンの不具合の時だけ。画面への指示・表示の決めはしない (画面の部長がエンジンの関数を取りに来る)。ビルド・出し方・Web の土台・照らしの台本などの頼みは受けず、持ち主の部へ回す (`node scripts/owner-of.mjs <パス>`)。
 
 データベース (オーナー 10-23「ジンはデータ管理」): 出どころはトレードのデータ (一番信頼できる) > poe2db。MOD・ベース・重み・段・名前と文・相場のデータと、打った時の決まり = エンジン (クラフトの決まり・カレンシーとお告げの効き目・MOD の置き場/重み/段/文・確率の表・品質と聖別の式・窓口 3 つ)。**画面と部品は持たない** (エミュの画面 = エミュ部長 docs/org/emu/、シミュの画面 = シミュ部長 docs/org/simulator/、両方の画面の部品と見た目 = デザイン部長 docs/org/design/。オーナー 10-22 深夜・10-23)。ほかに持つのはデータの境目 (owners.txt の「共通」: api・data・constants・i18n のゲームのデータ・state 直下の craft-stage.ts・相場 money・prices など、地図は dev/README.md)。画面の挙動 (src/web・composables・utils = ページの移り方・音・クリックの守り) はデザイン部長 (オーナー 10-23「ジンはデータ管理」)。
 
 ## 決まり (docs/org/dev/README.md の決まりが先)
 1. 線引き: 結果が変わる物 (付き方・確率・固定される MOD・打てるか) はエンジン、見え方と操作 (いつ使うか・どう見せるか) は画面 (オーナー 10-23)。
-2. 窓口は核 engine.ts・エミュだけ engine-emu.ts (中身 engine-emu/)・シミュだけ engine-sim.ts (engine-sim/)。核は engine-*/ を読まず、2 つ同士も読まない。
-3. 元からある物はそのまま呼ぶ: 核の関数の写し・言い換え・包み直しを作らない (オーナー 10-23)。窓口の形を変えたら使っている部を報告に書く。
+2. 画面はエンジンの関数を何でも直接呼んでよい・入口 (engine.ts など) を用意しなくてよい (オーナー 10-25 夜)。画面はエンジンのファイルを書き換えない・打つ / 読む / MOD の文や値を作る中身を自前で書かない (無ければジンに頼む)。エンジンの中は核が engine-*/ を読まず、engine-sim/ と engine-emu/ も互いを読まない。見張り check-engine-entry の B・C・D・E。
+3. 元からある物はそのまま呼ぶ: 核の関数の写し・言い換え・包み直しを作らない (オーナー 10-23)。関数の形を変えたら使っている部を報告に書く。
 4. 確かめは小さく: エミュの画面の同じ所と同じ答えか。確率の表を変えたら held-odds-parity で突き合わせ、golden はわざと変えた時だけ書き直す。
 5. ゲームの決まりは書いてある効果どおり。棚の条件は乱数に関係ない物だけ、上限を決めない (オーナー 10-20)。
 6. カレンシー固有の処理を書き足さず、spec/ の部品とお告げの効き目 (`OmenEffect`) で表す (ADR-004)。
 7. MOD の置き場・重み・段はエンジンの行 1 か所 (mods/mod-rules.ts)。`m.family` を直接比べない、段の重みを自分で足さない。固定値は無い (+1 も stat の値)。タグ・品質を触る時は暗黙も。
 8. 出どころはトレード > poe2db > ほか。付く・付かない・ベースの有無は先にトレードのデータで確かめ、それは消さない。エンジンと食い違い写しで決まらない物もこの順に合わせ、聞かない (オーナー 10-20・10-23)。
-9. 画面 (src/views・src/state/emulator・simulator) と部品 (src/components・for-share・見た目) は直さない。要る時はどの部のどのファイルかを書いてブラックへ。
+9. 画面 (src/views・src/state/emulator・simulator) と部品 (src/components・for-share・見た目) は直さない・画面への指示や表示の決めもしない。画面がエンジンの中身を自前で書いていたら (見張りの E)、どの部のどのファイルかを書いてブラックへ。
 10. 常駐・報告・触るファイル (dev/touching/emulator.md)・push と開発版は dev/README.md の決まり 1・2・5・8 のとおり。本番は最終チェック長。
 
 ## 地図
 - 他の部への窓口の目録: data-catalog.md (データのファイルと入口の関数ごとに、何に答えるか・呼び方・使っている部。10-25)
 - 窓口 src/services/craft-stage/: engine.ts (核、使い方 notes/engine-entry.md)・engine-emu.ts (中身 engine-emu/: preview・spam-race・chaos-spam・route-runes、ほか片方だけが使う核の名前)・engine-sim.ts (中身 engine-sim/: hand-effect の fillCatalyst 一式・magic-odds・spam-counts・outcomes・essence-parts)。打てるかは核の useReason (両方の棚)。分け方と経過は notes/2026-10-22-entry-split-plan.md、シミュの自前の式を寄せた記録は notes/2026-10-22-sim-logic-to-engine.md。
-- 見張り scripts/check-engine-entry.mjs: A 入口の外・B 凍結の htc・C よその窓口 (核→engine-*/、engine-sim/⇄engine-emu/、画面→よその窓口)・D エミュ ⇄ シミュの直の import (例外はチュートリアルの差し込み口 views/tutorial/course-entry.ts だけ)。10-23 に A・C・D とも 0。控え check-engine-entry.baseline.json、減ったら `--head --write`。
+- 見張り scripts/check-engine-entry.mjs (10-25 夜に今の決まりへ): B 凍結の htc・C エンジンの中の置き場 (核→engine-*/、engine-sim/⇄engine-emu/)・D エミュ ⇄ シミュの直の import (例外はチュートリアルの差し込み口 views/tutorial/course-entry.ts だけ)・E 画面の中のエンジンらしき物 (段・幅を直に .tiers・.ranges、文の # を自分で埋める、生のデータの JSON の import、Math.random。見せるために読む物もあるので控えから増えた時だけ落ちる、10-25 夜に 96 か所 / 29 ファイルで控え)。A (入口の外) はやめた。控え check-engine-entry.baseline.json、減ったら `--head --write`。核の見分けは owners.txt の部の名前「ジン」を直に見るので、部の名前を替える時は台本と 1 つの commit で (片方だけだと C が素通りになる、エンジン部長の引き継ぎ notes/2026-10-25-engine-lead-handover.md)。
 - 核の土台: craft-stage/ の types.ts・run-plan.ts・contract.ts (打つ処理の形)、乱数 htc/rng.ts (`mulberry32`、どの部も同じ乱数)。
 - 打つ: spec/ (orb・essence・desecrate・other-specs、parts.ts (未発現・発現は parts-unrevealed.ts)、judge.ts、run-spec.ts、odds.ts、1 手の行き先 outcomes.ts)、apply-currency.ts と apply-*.ts・omens.ts・omen-block.ts、土台 stage-core.ts (候補・重みの抽選・足す / 消すは stage-draw.ts)、お告げの下の設定 stage-tuning.ts、上乗せ boosts.ts・defence.ts・skill-quality.ts・element-convert.ts・essence-parts.ts、tier-rank.ts。
 - 確率: held-odds・aim-odds・route-race・spam-counts (始めのアイテムからの平均)・chaos-spam・route-runes。

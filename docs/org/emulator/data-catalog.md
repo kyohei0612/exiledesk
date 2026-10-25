@@ -2,7 +2,7 @@
 
 オーナー 10-25「ジンは全てのデータに他部署からアクセスできるように準備してあげて」。データとエンジンの答えは、ここに載っている入口から取る。自前で写さない・式を書かない (メモ feedback-sim-no-own-logic・mod-engine-single-source)。足りない物はジン部長へ (入口に出すだけで中身は変えない)。
 
-- 入口は 3 つ: 核 `src/services/craft-stage/engine.ts` (どの部も)・`engine-emu.ts` (エミュだけ)・`engine-sim.ts` (シミュだけ)。核は engine-*/ を読まず、エミュとシミュは互いの入口を読まない (見張り `node scripts/check-engine-entry.mjs`)。
+- 画面はエンジンの関数を何でも直接呼んでよい (オーナー 10-25 夜、入口を用意しなくてよい)。下の入口 (核 `src/services/craft-stage/engine.ts`・`engine-emu.ts`・`engine-sim.ts`) は今もある名前の束で、探す時の目安。画面はエンジンのファイルを書き換えず、打つ・読む・MOD の文や値を作る中身を自前で書かない (見張り `node scripts/check-engine-entry.mjs` の E)。
 - 細かい使い方は notes/engine-entry.md、地図は README.md。下の「全部」の表は台本で数えた物 (作り直す時は 10-25 の台本の形で: 入口の export ごとに import している所を owner-of で部に)。
 
 ## よく聞かれる答えと入口 (呼び方 1 行)
