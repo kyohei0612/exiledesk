@@ -122,18 +122,6 @@ const SPLIT_TRIES = 40;
 const SINGLE_SEEDS = 8;
 
 
-/**
- * フラクチャーの手で ✦ にするアイテムの MOD (10-24 オーナー「フラクチャーは必ずどれか 1 つを固定」)。選んだ狙い (fractureOf) に当たる付いている MOD、
- * 指名が無い時・付いていない時は null (エンジンの乱数のまま。前は指名が無くても狙いの最初の物を固定し、ツリー 100% / エンジン 25%、
- * 10-25 モンキー 4 本目の 12 箱・ジン部長の判定。ブラック「自前の判定はエンジンへ」)
- */
-export function fractureTarget(data: PatchData, item: StageItem, h: Hand, aims: readonly Aim[]): string | null {
-  if (effectOf(h.currency) !== "fracture" || !h.fractureOf) return null;
-  const mods = [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured);
-  const a = { modId: h.fractureOf, tier: aims.find((x) => x.modId === h.fractureOf)?.tier ?? 99 };
-  return mods.find((x) => isAimMod(x, targetsOf(data, [a]), aimOpts(data)))?.modId ?? null;
-}
-
 /** フラクチャーで固定できる MOD の数 (エンジンの stepOutcomes の行き先の数。2 つ以上なら外れうる) */
 export const fractureChoices = (data: PatchData, item: StageItem): number => (stepOutcomes(data, item, "fracture") ?? []).filter((o) => !o.void).length;
 
@@ -170,7 +158,7 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
   // フラクチャーで ✦ にする MOD・骨の後はそのまま発現 (反響は骨に掛けず発現で使う)。
   // 発現は当たりの札に合う候補、無ければ 1 つ目 (2026-10-22 オーナー「冒涜は冒涜で付与かな」)。miss = 外れの箱の見本 (狙いでない候補を選ぶ。黒き血は狙いが必ず候補に入り、見本が外れの箱に着かなかった、10-22)
   const ts = targetsOf(data, aims);
-  const r = applyHand(data, item, h.currency, rng, { omens: h.omens, catalyst: h.catalyst, fractureOf: fractureTarget(data, item, h, aims), reveal: (m) => isAimMod(m, ts, aimOpts(data)) !== miss });
+  const r = applyHand(data, item, h.currency, rng, { omens: h.omens, catalyst: h.catalyst, reveal: (m) => isAimMod(m, ts, aimOpts(data)) !== miss });
   if (use) {
     if (r.catalystCount) use(isCatalyst(h.currency) ? h.currency : h.catalyst!, r.catalystCount);
     if (r.applied && !isCatalyst(h.currency)) {
@@ -349,8 +337,6 @@ interface HandSpec {
   omens?: readonly string[];
   /** 触媒の高貴の前に品質を最大まで入れるカタリスト (お告げに触媒の高貴がある時だけ) */
   catalyst?: string | null;
-  /** フラクチャーの手で ✦ にする MOD (付いていれば打った後にそれを固定。付いていない・打てない時はエンジンの乱数のまま) */
-  fractureOf?: string | null;
   /** 未発現が付いた時、そのまま発現で選ぶ候補 (true の候補の最初の物、無ければ 1 つ目)。false = 発現しない。既定 = 1 つ目 */
   reveal?: false | ((m: StageMod) => boolean);
 }
@@ -392,12 +378,7 @@ function applyHand(data: PatchData, item: StageItem, key: string, rng: () => num
     catalystCount = c.count;
     it = c.item;
   }
-  let r = applyCurrency(data, it, key, rng, now);
-  const fo = spec.fractureOf;
-  if (r.applied && fo && effectOf(key) === "fracture" && [...it.prefixes, ...it.suffixes].some((m) => m.modId === fo)) {
-    const f = applyCurrency(data, it, forceKey(fo, "T1", "f"), rng);
-    if (f.applied) r = { ...r, item: f.item, added: f.added, removed: f.removed };
-  }
+  const r = applyCurrency(data, it, key, rng, now);
   const base = { catalystCount, handOmensUsed: r.omensUsed ?? [] };
   if (!r.applied || !unrevealedOf(r.item) || spec.reveal === false) return { ...r, ...base, echoUsed: false };
   const echo = reveal.includes(ABYSSAL_ECHO_OMEN);

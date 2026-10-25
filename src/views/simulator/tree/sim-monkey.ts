@@ -115,7 +115,7 @@ export function installSimMonkey(): () => void {
       // 「当たりの箱にする MOD」のチェック (opt.hitAims = modId の並び、[] = 狙い無し)。渡さない時は前からの既定 (付きうる狙い全部)
       const pick = opt.hitAims ? pickedHits(hitChoicesOf(d, doc, id, it, { held: key, omens, echo: opt.echo }, t.goals.value), opt.hitAims, key, !!opt.spam) : null;
       const h = handOf({ held: key, omens, ...opt, ...(pick ? { free: pick.free } : {}) }), kind = kindOf(h);
-      const hitAims = pick && !pick.free ? pick.aims : hitAimsOf(d, doc, id, it, h, t.goals.value, opt.fractureOf ?? null);
+      const hitAims = pick && !pick.free ? pick.aims : hitAimsOf(d, doc, id, it, h, t.goals.value);
       const preCat = h.omens.includes(CATALYSING) && !afterQ ? autoCat : null;
       const only = onlyOf(d, doc, id, h, preCat, hitAims);
       const problem = problemOf(d, it, h, hitAims, preCat, preFill);

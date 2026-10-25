@@ -3,7 +3,7 @@
   (フラクチャー必ず成功で素材、確率 33% 計算で 3 倍とする) 的な説明の元選ばせる」「まとめて UI 分かりやすく表示して」「後者選んだ場合必ず白からはじまる」)。
   2 枚のカードを横に並べ、同じ並びの行 (始まり・フラクチャーの費用) で見比べる。枠はアイテムの額 (g-item、ゲームの絵)。
   選んだ方は start.from (use-tree の setStartFrom)、スタートの箱に出る。① = フラクチャーの MOD が 1 つ付いたレアから、② = 白 (ノーマル) から木の中でフラクチャー
-  (外れ込みの ×3 は tree-run の FRACTURE_MISS)。Esc・枠の外 = 今のまま閉じる
+  (外れ込みの ×3 は tree-base-cost の four)。Esc・枠の外 = 今のまま閉じる
 -->
 <script setup lang="ts">
 import ModalShell from "../../../components/ui/ModalShell.vue";

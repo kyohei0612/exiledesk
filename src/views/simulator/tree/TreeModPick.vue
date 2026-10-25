@@ -83,7 +83,7 @@ const reach = computed((): Set<string> | null => {
   const d = s.data.value, b = props.boxId ? t.doc.value.boxes[props.boxId] : null, p = b?.parent ? t.doc.value.boxes[b.parent] : null;
   if (!fromGoals.value || !d || !p?.hand || !REACH_KINDS.includes(kindOf(p.hand))) return null;
   const it = sampleOf(d, t.doc.value, p.id, 1).item;
-  return new Set(hitAimsOf(d, t.doc.value, p.id, it, p.hand, t.goals.value, p.hand.fractureOf ?? null).map((a) => a.modId));
+  return new Set(hitAimsOf(d, t.doc.value, p.id, it, p.hand, t.goals.value).map((a) => a.modId));
 });
 const cantReach = (a: Aim): boolean => !!reach.value && !heldBefore.value.has(aimKey(a)) && !reach.value.has(a.modId);
 const tierLabel = (tier: number): string => tierRankLabel(tier, props.mode !== "start");

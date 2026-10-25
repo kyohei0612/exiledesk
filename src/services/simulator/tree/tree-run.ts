@@ -7,8 +7,7 @@
  */
 import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { aimHeldOn, isAimMod } from "./tree-aim";
-import { effectOf } from "./tree-hands";
-import { aimOpts, aimsOf, fractureChoices, handAims, outcomeOf, playHand, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
+import { aimOpts, aimsOf, handAims, outcomeOf, playHand, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
 import { heldSets, MATCH, matchBox, outBoxOf, RESTART, settle, shapesOf, splitTo, type Shape, type SplitBox } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
@@ -94,9 +93,6 @@ interface Person { end: End; cost: number; at: string; visits: { box: string; co
 
 const startItemOf = (data: PatchData, doc: TreeDoc, rng: () => number): StageItem => startOf(data, doc, rng).item;
 
-/** フラクチャーの外れの回数 (10-24 オーナー「2 回外れて 1 回当たり」) と、外れうる固定の候補の数 */
-export const FRACTURE_MISS = 2;
-const FRACTURE_PICK = 2;
 
 function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: readonly Shape[], rng: () => number, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps" | "untilHit">> & Pick<TreeRunOpts, "start" | "onHand">): Person {
   let item = o.start ? o.start(rng) : startItemOf(data, doc, rng);
@@ -160,9 +156,6 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     if (++steps > o.capSteps || cost > o.capDiv) return { end: "capped", cost, at, visits, uses, restarts, odd, why: { reason: tr("打ち止め", "Capped"), item } };
     hops = 0;
     const before = item;
-    // 指名のあるフラクチャーは必ずその狙いを固定し (playHand の fractureTarget、指名が無ければエンジンの乱数のまま)、固定できる MOD が 2 つ以上なら「2 回外れて 1 回当たり」として、ここまでに使った物と
-    // 始めの値段を 2 回分足す (外れた時は素材を作り直す。10-24 オーナー、ツリーに買い直しの道は作らない)。作り直しの回数にも 2
-    const miss = effectOf(b.hand.currency) === "fracture" && !!b.hand.fractureOf && fractureChoices(data, item) >= FRACTURE_PICK ? Object.entries(uses) : null;
     const tried = uses[b.hand.currency] ?? 0, own = handAims(doc, at, aims);
     o.onHand?.(at, item);
     const r = playHand(data, item, b.hand, rng, own, use);
@@ -170,12 +163,6 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     const cap = b.hand.repeat?.max ?? SPAM_CAP;
     if (o.untilHit.has(at) && (uses[b.hand.currency] ?? 0) - tried >= cap && outcomeOf(data, before, r.item, own, b.hand.currency).out !== "hit") {
       return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`当たるまでを ${cap} 回打っても当たらない (この形からは狙いが付きにくい・付かない)`, `No hit in ${cap} repeats (the target is unlikely or impossible from this item)`), item: r.item, spam: cap } };
-    }
-    if (miss) {
-      for (const [k, n] of miss) use(k, FRACTURE_MISS * n);
-      use(b.hand.currency, FRACTURE_MISS);
-      cost += FRACTURE_MISS * o.startCost;
-      restarts += FRACTURE_MISS;
     }
     if (sb.next) { item = r.item; at = sb.next; continue; }
     const oc = outcomeOf(data, before, r.item, aims, b.hand.currency);

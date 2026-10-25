@@ -13,7 +13,7 @@ import { stepOutcomes } from "../../craft-stage/engine-sim";
 import { catalystTagOf } from "../../craft-stage/engine-sim";
 import { aimHeldOn, junkOf, reachableAims } from "./tree-aim";
 import { CATALYSING, effectOf, engineOmens, isCatalyst } from "./tree-hands";
-import { aimKey, type Aim, type OutKind, type TreeDoc } from "./tree-model";
+import { aimKey, fractureMarks, type Aim, type OutKind, type TreeDoc } from "./tree-model";
 import { aimOpts, aimsOf, handAims, handProblem, outcomeOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
 import { runTreeSteps } from "./tree-run";
 import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapesOf, splitTo } from "./tree-shape";
@@ -101,6 +101,8 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
     if (b.split?.some((r) => !r.to)) add(b.id, "open", tr("分かれ目の行き先を決めていない行がある (その形で来た人はここで止まる)", "A split row has no destination (runs of that shape stop here)"));
     if (!b.hand && !b.back && !b.done && !b.split && !dead.has(b.id)) add(b.id, "open", b.out === "start" ? tr("最初の手を決めていない (ここで止まる)", "No first craft yet (stops here)") : tr("行き先を決めていない (ここで止まる)", "No next step yet (stops here)"));
     if (b.out === "hit" && !b.aim) add(b.id, "noAim", tr("付く MOD を選んでいない", "No mod picked for this hit"));
+    // フラクチャーの手は完成の MOD にフラクチャーの印がある木だけ (10-25 オーナー「最初にフラクチャーを決めないとフラクチャーオーブを打てないように」)。前に保存した印の無い木の手は穴に
+    if (b.hand && effectOf(b.hand.currency) === "fracture" && !fractureMarks(doc).length) add(b.id, "cantUse", tr("フラクチャーの印が無い (先に完成の MOD でフラクチャーを決めて)", "No fracture mark (set a fracture on the final mods first)"));
     // 触媒のお告げはカタリストで入れた品質にだけ効く。カタリストを打つ手が無ければ効きは乗らない (10-22 オーナー「ちゃんと打つルートが無いとあかん」)。
     // 品質だけ上げる手 (カタリスト) の後の通り抜けから打つ時は、その手がカタリストを打つ手
     const before = b.out === "pass" && b.parent ? doc.boxes[b.parent]?.hand : null;

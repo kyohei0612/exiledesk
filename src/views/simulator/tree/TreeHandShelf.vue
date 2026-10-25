@@ -12,15 +12,14 @@ import { craftStage as s, iconOf, nameOf } from "../../../state/craft-stage";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import CurrencyShelf from "../../../components/for-share/shelf/CurrencyShelf.vue";
 import HeldOmens from "../../../components/for-share/shelf/HeldOmens.vue";
-import { omensAllowedFor, type StageItem } from "../../../services/craft-stage/engine";
+import { omensAllowedFor, useReason, type StageItem } from "../../../services/craft-stage/engine";
 import { omensFor } from "../../../services/craft-stage/engine";
-import { aimHeldOn } from "../../../services/simulator/tree/tree-aim";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, ECHO, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handLabel, handName, outName } from "./tree-names";
 import { treeRowTags } from "./tree-row-tags";
-import { aimKey, setHand, type Aim, type Hand, type HandKind, type OutKind } from "../../../services/simulator/tree/tree-model";
+import { aimKey, fractureMarks, setHand, type Aim, type Hand, type HandKind, type OutKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { useSimShelf } from "../use-sim-shelf";
 import { afterQualityOf, autoCatOf, FREE_EFFECTS, handOf, hitAimsOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf } from "./tree-hand-plan";
@@ -53,13 +52,7 @@ const checked = ref<string[]>((() => {
   if (!c || c.free) return [];
   return (d.boxes[props.boxId]?.outs ?? []).flatMap((o) => { const x = d.boxes[o]; return x?.out === "hit" && x.aim ? [aimKey(x.aim)] : []; });
 })());
-/** フラクチャーの手で ✦ にする狙い (modId。null = 乱数 = エンジンどおり、10-22 オーナー) */
-const fracOf = ref<string | null>(props.current?.fractureOf ?? null);
 const isFracture = computed(() => !!held.value && effectOf(held.value) === "fracture");
-/** ✦ の候補 = 完成の狙い (この箱の見本に付いていない物はグレー) */
-const fracChoices = computed(() => { const d = s.data.value, it = item.value; return t.goals.value.map((a) => ({ a, on: !!d && !!it && aimHeldOn(d, it, a, { sameText: true }) })); });
-/** ✦ にする狙い (選んでいなければ、この箱で付いている最初の狙い。必ずどれか 1 つを固定、10-24 オーナー) */
-const fracPick = computed(() => fracOf.value ?? fracChoices.value.find((c) => c.on)?.a.modId ?? null);
 /** 骨の手にアビスの反響 (発現の候補を 1 回引き直す)。既定で付ける (10-22 オーナー「お告げは必ず反響を使わんとやばいよ」)。前の手を開いた時はその手のまま */
 const echo = ref(props.current ? props.current.omens.includes(ECHO) : true);
 /** 付く MOD を選べない手 (足す・カオス。当たりの箱にする MOD のチェックと狙い無しを出す) */
@@ -86,7 +79,11 @@ const autoCat = computed((): string | null => { const d = s.data.value, it = ite
 const needPre = computed(() => canCatalyse.value && !afterQuality.value);
 const preFill = computed(() => { const d = s.data.value, it = item.value; return d && it ? preFillOf(d, it, needPre.value, autoCat.value) : null; });
 const shelfItem = computed(() => preFill.value?.item ?? item.value);
-const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens);
+// フラクチャーのオーブは完成の MOD でフラクチャーの印を決めた木でだけ打てる (10-25 オーナー「最初にフラクチャーを決めないとフラクチャーオーブを打てないように」)
+const fractureBlock = (k: string): string | null => (effectOf(k) === "fracture" && !fractureMarks(t.doc.value).length ? tr("先に完成の MOD でフラクチャーを決めて", "Set a fracture on the final mods first") : null);
+const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens, fractureBlock);
+/** ツリーの棚は打てる札だけを出すので、印が無いせいで出ないフラクチャーは窓に理由を 1 行 (アイテムには打てる時だけ) */
+const fracHidden = computed(() => { const d = s.data.value, it = item.value; return !!d && !!it && !!fractureBlock("fracture") && !useReason(d, it, "fracture"); });
 const used = computed(() => (held.value ? omensFor(held.value, omens.value) : []));
 const catalysing = computed(() => used.value.includes(CATALYSING));
 
@@ -110,14 +107,14 @@ function toggleAim(a: Aim): void {
   const k = aimKey(a), cur = checkedAims.value.map(aimKey);
   checked.value = cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k];
 }
-const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, fractureOf: isFracture.value ? fracPick.value : null }) : null));
+const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value }) : null));
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
 const preCat = computed((): string | null => (catalysing.value && !afterQuality.value ? autoCat.value : null));
 const RESULT: Record<HandKind, [string, string]> = {
-  add: ["当たり + 外れ", "Hit + Miss"], remove: ["外れが消えた + 狙いが消えた", "Miss removed + Target lost"], swap: ["当たり + 狙いが消えた + 外れ", "Hit + Target lost + Miss"], spam: ["当たりだけ (当たるまで打つ)", "Hits only (until a hit)"], free: ["打った後 (何が付いても次へ。当たり / 外れに分けない)", "After (anything counts, no hit / miss split)"],
+  add: ["当たり + 外れ", "Hit + Miss"], remove: ["外れが消えた + 狙いが消えた", "Miss removed + Target lost"], swap: ["当たり + 狙いが消えた + 外れ", "Hit + Target lost + Miss"], spam: ["当たりだけ (狙いの側に空きがあれば先に高貴を 1 回、その後は当たるまでカオス)", "Hits only (an Exalted Orb first if the target's side has room, then Chaos until a hit)"], free: ["打った後 (何が付いても次へ。当たり / 外れに分けない)", "After (anything counts, no hit / miss split)"],
   quality: ["無し (品質を最大まで上げて、下の＋で次の手)", "None (raise quality to max, then add the next craft with + below)"],
   essence: ["付いた + 狙いが消えた (付く MOD は必ず付く)", "Added + Target lost (the essence mod always lands)"],
-  fracture: ["狙いが ✦ になった (必ず選んだ狙いを固定)", "The target fractured (always fixes the chosen target)"],
+  fracture: ["印の狙いが ✦ になった + 外れ (ほかが ✦)", "Marked target fractured + Miss (another fractured)"],
 };
 /** 狙いを持って着く人がいない箱では「狙いが消えた」を作らない時の文 (tree-model の setHand、tree-lost.ts) */
 const RESULT_NO_LOST: Partial<Record<HandKind, [string, string]>> = { remove: ["外れが消えた", "Miss removed"], swap: ["当たり + 外れ", "Hit + Miss"], essence: ["付いた (付く MOD は必ず付く)", "Added (the essence mod always lands)"] };
@@ -137,7 +134,7 @@ const hitAims = computed((): Aim[] => {
   // チェックした MOD が当たりの箱 (当たるまで繰り返す時は、どれかが付くまで = tree-sample の handAims)。何も無ければ 0 (繰り返しなら problemOf が止める)
   if (showAims.value) return checkedAims.value;
   const d = s.data.value, it = item.value, h = hand.value;
-  return d && it && h ? hitAimsOf(d, t.doc.value, props.boxId, it, h, t.goals.value, isFracture.value ? fracPick.value : null) : [];
+  return d && it && h ? hitAimsOf(d, t.doc.value, props.boxId, it, h, t.goals.value) : [];
 });
 /** 結果が 1 通りの手か (tree-hand-plan の onlyOf) */
 const only = computed(() => (hand.value && s.data.value ? onlyOf(s.data.value, t.doc.value, props.boxId, hand.value, preCat.value, hitAims.value) : null));
@@ -176,6 +173,7 @@ function ok(): void {
       <div class="flex min-w-0 flex-col gap-1.5">
         <p class="text-[12px] opacity-70">{{ tr("棚から持って、カードを押すとこの箱の次の手になる", "Hold a currency from the shelf and click the item to make it this box's next craft") }}</p>
         <!-- 打たずに分ける (分かれ目) のボタンは 10-25 に外した (オーナー「分かれ道マジでややこしいからボタンいらない」)。分かれ目は見本の木にある物だけ、窓 TreeSplitPick で行を直せる -->
+        <p v-if="fracHidden" data-tree-hand-frac-off class="text-[12px] text-rose-200/90">{{ tr("フラクチャーのオーブ: 先に完成の MOD でフラクチャーを決めて (0 完成形の設定の ✦)", "Fracturing Orb: set a fracture on the final mods first (✦ in 0 Final item)") }}</p>
         <button v-if="t.doc.value.boxes[boxId]?.out !== 'start'" type="button" data-tree-hand-back class="g-btn sm self-start" :title="tr('打たずに既にある箱へ戻す (窓を閉じて、戻り先の箱を押す)', 'Return to an existing box instead (closes this window; click the box)')" @click="emit('back')">↩ {{ tr("既にある箱へ戻す", "Return to a box") }}</button>
         <button v-if="current" type="button" class="g-btn sm self-start" @click="emit('clear')">{{ tr("この手を消す (下も消える)", "Remove this craft (and below)") }}</button>
 
@@ -191,14 +189,8 @@ function ok(): void {
         <button v-for="c in TREE_CATALYSTS" :key="c" type="button" data-tree-hand-cat :data-cat="c" class="min-h-7 rounded-md border px-2 text-[12px]" :class="c === held ? 'border-amber-300 bg-amber-500/20 text-amber-100' : 'border-white/10 hover:bg-white/10'" :title="nameOf(c)" :aria-pressed="c === held" @click="held = c">{{ nameOf(c).replace(/のカタリスト$| Catalyst$/, "") }}</button>
       </div>
       <p v-if="preCat" data-tree-hand-pre-cat class="text-[12px] text-sky-200/90">{{ tr(`前に「${handName(preCat)} (品質を最大まで)」の手を足す (札を押すとカタリストを替えられる)`, `Adds "${handName(preCat)} (to max quality)" before this (click its chip to change the catalyst)`) }}</p>
-      <!-- フラクチャー: ✦ にする MOD を狙いから選ぶ。必ずその狙いを固定し、外れは費用で数える (10-24 オーナー「2 回外れて 1 回当たり」。前の「乱数」の選択肢はやめた) -->
-      <div v-if="isFracture" data-tree-hand-frac class="flex flex-col gap-1 text-[12px]">
-        <div class="flex flex-wrap items-center gap-1">
-          <span class="opacity-80">{{ tr("✦ にする MOD", "Fracture") }}</span>
-          <button v-for="c in fracChoices" :key="c.a.modId" type="button" data-tree-hand-frac-pick :data-frac="c.a.modId" class="min-h-7 max-w-[220px] truncate rounded-md border px-2" :class="[fracPick === c.a.modId ? 'border-amber-300 bg-amber-500/20 text-amber-100' : 'border-white/10 hover:bg-white/10', c.on ? '' : 'opacity-40']" :title="c.on ? t.startModLabel(c.a, true) : tr('この箱の時点では付いていない', 'Not on the item at this box')" @click="fracOf = c.a.modId">✦ {{ t.startModLabel(c.a, true) }}</button>
-        </div>
-        <p data-tree-hand-frac-rule class="opacity-70">{{ tr("固定できる MOD が 2 つ以上なら、2 回外れて 1 回当たりとして、ここまでの費用とフラクチャーを 2 回分足す", "With 2+ mods that could fracture, counts as 2 misses then a hit: adds this point's cost and the Fracturing Orb twice") }}</p>
-      </div>
+      <!-- フラクチャー: どれが ✦ になるかはエンジンのまま。印の狙いが ✦ になれば当たり、ほかは外れ (10-25 オーナー・ブラック) -->
+      <p v-if="isFracture" data-tree-hand-frac-rule class="text-[12px] opacity-70">{{ tr("✦ になる MOD はオーブの乱数のまま。完成の MOD の印の狙いが ✦ になれば当たり、ほかが ✦ になれば外れ", "Which mod fractures is random (the orb as is). The marked final mod fracturing is a hit; any other is a miss") }}</p>
       <!-- 足す手: 当たりの箱にする狙いをチェック (複数可)。チェックした MOD ごとに当たり、どれも付かなければ外れ、0 個 = 狙い無し (10-25 オーナー) -->
       <div v-if="showAims" data-tree-hand-aims class="flex flex-col gap-1 text-[12px]">
         <span v-if="spam && !checkedAims.length" data-tree-hand-aim-need class="text-rose-200/90">{{ tr("狙う MOD を選んで", "Pick a target mod") }}</span>

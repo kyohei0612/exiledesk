@@ -19,7 +19,8 @@ import { tr } from "../../i18n/lang";
 export const TREE_HIDDEN = new Set(["OmenofSanctification", "divine", "OmenoftheBlessed"]);
 export const treeHidden = (key: string): boolean => simHidden(key) || TREE_HIDDEN.has(key) || (key.startsWith("rune:") && !CRAFT_RUNE_KEYS.includes(key));
 
-export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null> = ref(null), omens: Ref<string[]> = ref([])) {
+/** block = 画面の決まりで打たせない理由 (ツリーの「フラクチャーの印が無い」など。null ならエンジンの useReason) */
+export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null> = ref(null), omens: Ref<string[]> = ref([]), block: (key: string) => string | null = () => null) {
   function toggleOmen(id: string): void { omens.value = omens.value.includes(id) ? omens.value.filter((o) => o !== id) : [...omens.value, id]; }
   function release(): void { held.value = null; omens.value = []; }
   function onHold(k: string): void { if (held.value === k) release(); else held.value = k; }
@@ -27,7 +28,7 @@ export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null
   function onShelfDown(e: PointerEvent): void { if (held.value && !(e.target as HTMLElement).closest("button,input,select,label,[data-held-box]")) release(); }
   function usableWith(k: string, om: readonly string[]): string | null {
     const d = s.data.value, it = item.value;
-    return d && it ? useReason(d, it, k, om) : tr("準備中", "Loading");
+    return block(k) ?? (d && it ? useReason(d, it, k, om) : tr("準備中", "Loading"));
   }
   provideShelf({
     data: s.data, item, omens, held,

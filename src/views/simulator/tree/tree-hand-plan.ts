@@ -8,14 +8,14 @@ import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-
 import { canSpam, ECHO, effectOf, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, sampleOf, singleOutOf } from "../../../services/simulator/tree/tree-sample";
 import { linkSameShape } from "../../../services/simulator/tree/tree-shape";
-import { healLost, kindOfHand, setHand, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { fractureMarks, healLost, kindOfHand, setHand, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
 import { tr } from "../../../i18n/lang";
 
 /** 結果が 1 通りの手の結果 (tree-sample の singleOutOf) */
 export type OnlyOut = { out: OutKind; aim: Aim | null } | null;
 /** 棚で選んだ物 (持った物・掛けたお告げ・当たるまで・狙い無し・骨の反響・フラクチャーで ✦ にする狙い) */
-export interface HandPick { held: string; omens: readonly string[]; spam?: boolean; spamMax?: number | null; free?: boolean; echo?: boolean; fractureOf?: string | null }
+export interface HandPick { held: string; omens: readonly string[]; spam?: boolean; spamMax?: number | null; free?: boolean; echo?: boolean }
 
 /**
  * 当たりの MOD が決まっていない当たりの箱は、この箱のアイテムが作れない (当たりの形が引けず、見本が親のまま = 変成の後でも白のまま)。
@@ -57,7 +57,6 @@ export function handOf(p: HandPick): Hand {
     catalyst: null, quality: 0,
     repeat: p.spam && canSpam(p.held) ? { until: "hit", max: p.spamMax && p.spamMax > 0 ? Math.round(p.spamMax) : null } : null,
     ...(p.free && !p.spam && FREE_EFFECTS.includes(effectOf(p.held)) ? { free: true } : {}),
-    ...(effectOf(p.held) === "fracture" && p.fractureOf ? { fractureOf: p.fractureOf } : {}),
   };
 }
 export const kindOf = (h: Hand): HandKind => kindOfHand(h, effectOf(h.currency));
@@ -65,9 +64,9 @@ export const kindOf = (h: Hand): HandKind => kindOfHand(h, effectOf(h.currency))
  * 当たりの箱の既定 = このツリーの狙いのうち、この箱でまだ付いていない物。木にまだ狙いが無ければ欲しい MOD のメモ
  * (10-22 白紙から組んだ手袋: 狙い 0 で当たるまでにすると MOD の空の当たりの箱を見本で引き直し続け、ページが 5 分固まった)。
  * カオススパムはその全部、足す・入れ替える手はこの手で付きうる物だけ (エンジンの heldOdds。10-22 靴・手袋で、当たりの箱が空のまま 1 箱ずつ MOD・行・段を選ぶのが手間だった)。
- * goals = 完成の狙い (フラクチャーの候補)、fracOf = ✦ にする狙い
+ * goals = 完成の狙い
  */
-export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, h: Hand, goals: readonly Aim[], fracOf: string | null): Aim[] {
+export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, h: Hand, goals: readonly Aim[]): Aim[] {
   const kind = kindOf(h);
   // エッセンス = 付く MOD は決まっている。エンジンの結果で新しく付いた MOD を当たりの札に (10-22 オーナー「エッセンスの道」)
   if (kind === "essence") {
@@ -80,12 +79,8 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
     // 出うる MOD ごとに当たりの箱 (前は 1 つ目だけで、ツリーは筋力 100% / エンジンは 1/3 ずつ。10-25 モンキー 4 本目・ジン部長の見立て)
     return out;
   }
-  // フラクチャー: 当たりの札 = この箱で付いている狙い (✦ にする MOD を選んだらその 1 つ)
-  if (kind === "fracture") {
-    const on = [...aimsOf(doc), ...goals].filter((a, i, l) => aimHeldOn(data, item, a, { sameText: true }) && l.findIndex((x) => x.modId === a.modId) === i);
-    // 選んでいなければ付いている最初の狙い (必ずどれか 1 つを固定、回す時の tree-sample の fractureTarget と同じ並び。10-24 オーナー)
-    return fracOf ? on.filter((a) => a.modId === fracOf) : on.slice(0, 1);
-  }
+  // フラクチャー: 当たりの札 = この箱で付いている印の狙い (完成の MOD のフラクチャーの印、10-25)。どれが ✦ になるかはエンジンのまま
+  if (kind === "fracture") return fractureMarks(doc).filter((a) => aimHeldOn(data, item, a, { sameText: true }));
   if (kind !== "spam" && kind !== "add" && kind !== "swap") return [];
   // 候補 = 木で使っている当たりの狙い + 完成形の狙い (memoAims)。前は木に狙いが 1 つでもあると木の分だけで、完成形の残りの狙いが出ず
   // 「どれでも」が空 = 手にならなかった (10-25 モンキー 3 本目 301 の b4: 木の狙いは付いている火耐性貫通だけ、知性・ライフリーチが候補に無い)
@@ -103,7 +98,7 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
  */
 export function hitChoicesOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, p: Pick<HandPick, "held" | "omens" | "echo">, goals: readonly Aim[]): Aim[] {
   if (!FREE_EFFECTS.includes(effectOf(p.held))) return [];
-  return hitAimsOf(data, doc, boxId, item, handOf({ held: p.held, omens: p.omens, echo: p.echo }), goals, null);
+  return hitAimsOf(data, doc, boxId, item, handOf({ held: p.held, omens: p.omens, echo: p.echo }), goals);
 }
 /**
  * チェックした狙い (modId) から、手を決める時に渡す当たりの箱と狙い無しを出す (画面と同じ決め方): 付く MOD を選べない手で 1 つ以上チェック = その狙いの当たりの箱、
@@ -116,9 +111,8 @@ export function pickedHits(choices: readonly Aim[], checked: readonly string[], 
   if (aims.length) return { aims, free: false };
   return { aims: [], free: !spam };
 }
-/** 結果が 1 通りの手か (この箱の見本 8 つにエンジンで打った行き先を全部たどる。触媒の手は前のカタリストを入れた後で)。✦ にする MOD を選んで、この箱の見本に付いている時は「その狙いが ✦」の 1 通り */
+/** 結果が 1 通りの手か (この箱の見本 8 つにエンジンで打った行き先を全部たどる。触媒の手は前のカタリストを入れた後で) (フラクチャーも同じ。✦ になる MOD が 1 つしか無ければ 1 通り) */
 export function onlyOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, preCat: string | null, hitAims: Aim[]): OnlyOut {
-  if (kindOf(h) === "fracture" && hitAims.length) return { out: "hit", aim: hitAims[0]! };
   return singleOutOf(data, doc, boxId, h, preCat, hitAims);
 }
 /** この箱の見本に打てない手は確定させない (お告げが効かない・消せる物が無い等。オーナー 10-22「進行不能」、tree-sample の handProblem) */
