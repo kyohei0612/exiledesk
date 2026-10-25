@@ -97,6 +97,7 @@ export type ItemTextSkipCode =
   | "dropOnly"    // 創生の樹など、クラフトでは付かない MOD (枠は使う)
   | "hybridPart"  // 2 行で 1 つの MOD のもう 1 行 (MOD は 1 つに数えた)
   | "corruptionUnknown" // コラプトした物で、置き場にもコラプトの表にも無い行
+  | "pseudoTotal" // トレードの合計の行 (「最大マナ合計 +160」、MOD ではない)
   | "flaskCharmUnsupported"; // フラスコ・チャーム (エンジンに無い、オーナー 10-20 決定。base は null)
 
 export interface ItemTextSkip { line: string; code: ItemTextSkipCode; reason: ItemTextWords }

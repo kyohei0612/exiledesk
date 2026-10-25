@@ -33,6 +33,7 @@ const REASON: Readonly<Record<ItemTextSkipCode, ItemTextWords>> = {
   hybridPart: { ja: "2 行で 1 つの MOD のもう 1 行 (1 つに数えた)", en: "Second line of a two-line modifier (counted once)" },
   flaskCharmUnsupported: { ja: "フラスコ・チャームは未対応", en: "Flasks and charms are not supported" },
   corruptionUnknown: { ja: "コラプトした物で、クラフトの MOD にも poe2db のコラプトの表にも無い (不明)", en: "Corrupted item: not a craftable modifier and not in poe2db's corruption list (unknown)" },
+  pseudoTotal: { ja: "トレードの合計の行 (MOD ではない)", en: "Trade site total line (not a modifier)" },
 };
 const skip = (line: string, code: ItemTextSkipCode): ItemTextSkip => ({ line, code, reason: REASON[code] });
 
@@ -144,6 +145,8 @@ export function parseItemText(data: PatchData, text: string): ItemTextResult {
     // ベースの後・属性の前の型に当たらない行は種類の名前 (「指輪」「Ring」)
     if (!inBody && !hit && !kind) { kindWords.push(t); continue; }
     inBody = true;
+    // トレードの日本語の合計の行 (「最大マナ合計 +160」、見本 t3 10-25) は MOD ではない
+    if (/合計\s*[+-]?\d/.test(t)) { out.skipped.push(skip(line, "pseudoTotal")); continue; }
     body.push({ line, text: t, note: kind, template: hit?.template ?? null, values: hit?.values ?? [], ...(group ?? {}), ...(tier ?? {}) });
   }
 
@@ -217,7 +220,9 @@ function splitImplicits(data: PatchData, out: ItemTextResult, body: Body[]): Bod
     quota.set(k, left - 1);
     return true;
   });
-  const last = isBase.lastIndexOf(true);
+  // 絆の行 (「絆 …」「Bonded: …」) はルーンの効果。印の無いトレードの日本語でも、最後の絆の行までがルーン側 (見本 t3 10-25: 絆の前の「スピリットが15%増加する」はルーン)
+  const bond = (b: Body): boolean => /^(絆\s|Bonded:)/i.test(b.text);
+  const last = Math.max(isBase.lastIndexOf(true), body.map(bond).lastIndexOf(true));
   // 暗黙より前の行: 差したルーン・ソウルコアの効果 (ソケットの数だけ値が足される) と文が同じなら rune。
   // 残りはコラプトした物ならエンチャント (コラプトの結果は poe2db の Vaal Orb で Corrupted Enchantment)、それ以外は見分けられない (extra)
   const cls = classOfBase(data, out.base!.en);
@@ -225,7 +230,8 @@ function splitImplicits(data: PatchData, out: ItemTextResult, body: Body[]): Bod
   const runeTexts = new Set(cat ? Object.values(RUNES).flatMap((r) => { const e = runeEffectFor(r, cat); return e ? [bare(e.en), bare(e.ja)] : []; }) : []);
   body.forEach((b, i) => {
     if (isBase[i]) implicit(b, "base");
-    else if (i < last) implicit(b, runeTexts.has(bare(b.text)) ? "rune" : out.corrupted > 0 ? "corruption" : "extra");
+    else if (i <= last && bond(b)) implicit(b, "rune");
+    else if (i < last) implicit(b, runeTexts.has(bare(b.text)) || body.slice(i + 1, last + 1).some(bond) ? "rune" : out.corrupted > 0 ? "corruption" : "extra");
     else rest.push(b);
   });
   return rest;
@@ -308,10 +314,11 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
   };
   const pctOf = (bs: readonly ItemTextBoost[]): number => bs.reduce((a, x) => a + x.pct, 0);
   // 「30% 減少する」(reduced) は文では正の数、MOD の段の値は負 (-30)。段の値が全部 0 以下なら文の数を負にして比べる (2026-10-24 タリスマンの要求能力値が段に収まらなかった)
-  const signed = (m: Mod, vs: readonly number[]): number[] => (m.tiers.length && m.tiers.every((t) => t.ranges.every(([, hi]) => hi <= 0)) ? vs.map((v) => (v > 0 ? -v : v)) : [...vs]);
+  const signed = (m: Mod, vs: readonly number[]): number[] => (m.tiers.length && m.tiers.every((t) => t.ranges.length > 0 && t.ranges.every(([, hi]) => hi <= 0)) ? vs.map((v) => (v > 0 ? -v : v)) : [...vs]);
   const tierWith = (m: Mod, b: Body): { index: number; fits: boolean } =>
     // エッセンスの段はエッセンスの強さで決まり、アイテムレベルの縛りは無い (パーフェクトのエッセンスの段も同じ)
     tierOf(m, signed(m, b.values), pctOf(boostsFor(m, b)), /essence/.test(String(m.source)) ? Infinity : level);
+  pairHybrids(data, out, picked, tierWith);
   for (const pk of picked) {
     const { b, fixed } = pk;
     let mod = pk.mod;
@@ -355,6 +362,48 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
       ...(b.tierName ? { pasteTierName: b.tierName } : {}),
       ...(b.tradeTier !== undefined ? { pasteTier: b.tradeTier } : {}),
     });
+  }
+}
+
+/**
+ * ハイブリッド (能力値 2 つで 1 つの MOD、セプターの「スピリット% + 最大マナ」など) が 2 行に分かれて読まれた物を 1 つにまとめる (見本 n6、オーナー 10-25)。
+ * まとめるのは、そのままだと有り得ない形の時だけ: 同じ MOD が 2 行ある・側の枠を超える。別々の 2 つの MOD とも読める時は推し量らない。
+ * 組 = 同じ印 (✦・冒涜など) で同じ側の、能力値 1 つの MOD の 2 行で、両方の値が同じクラスのハイブリッドの同じ段に収まる物。2 行目は hybridPart で飛ばす。
+ * 合算された 1 行 (トレードの日本語の「スピリットが80%増加する」= 素の MOD + ハイブリッドの片割れ、見本 t3) は分けず、段に収まらないの印のまま
+ */
+function pairHybrids(
+  data: PatchData, out: ItemTextResult, picked: { b: Body; mod: Mod; fixed?: { index: number; fits: boolean } }[],
+  tierWith: (m: Mod, b: Body) => { index: number; fits: boolean },
+): void {
+  const statsOf = (m: Mod): readonly string[] => (m.tiers[0] as { stats?: string[] } | undefined)?.stats ?? [];
+  const limit = out.count.limit;
+  const odd = (): boolean => {
+    const free = picked.filter((p) => !p.fixed);
+    const n = (side: string): number => free.filter((p) => p.mod.type === side).length;
+    return free.some((p, i) => free.findIndex((q) => q.mod.id === p.mod.id) !== i) || (!!limit && (n("prefix") > limit.prefix || n("suffix") > limit.suffix));
+  };
+  const cls = out.cls;
+  if (!cls) return;
+  const hybrids = [...data.mods.values()].filter((h) => h.id.startsWith(cls + "/") && statsOf(h).length === 2 && (h.type === "prefix" || h.type === "suffix"));
+  while (odd()) {
+    let done = false;
+    for (let i = 0; i < picked.length && !done; i++) {
+      for (let j = 0; j < picked.length && !done; j++) {
+        const a = picked[i]!, b = picked[j]!;
+        if (i === j || a.fixed || b.fixed || a.b.note !== b.b.note || a.mod.type !== b.mod.type || a.b.values.length !== 1 || b.b.values.length !== 1) continue;
+        const sa = statsOf(a.mod), sb = statsOf(b.mod);
+        if (sa.length !== 1 || sb.length !== 1 || sa[0] === sb[0]) continue;
+        const h = hybrids.find((x) => x.type === a.mod.type && statsOf(x)[0] === sa[0] && statsOf(x)[1] === sb[0]);
+        if (!h) continue;
+        const both: Body = { ...a.b, text: `${a.b.text} / ${b.b.text}`, values: [a.b.values[0]!, b.b.values[0]!] };
+        if (!tierWith(h, both).fits) continue;
+        picked[i] = { b: both, mod: h };
+        picked.splice(j, 1);
+        out.skipped.push(skip(b.b.line, "hybridPart"));
+        done = true;
+      }
+    }
+    if (!done) return;
   }
 }
 
