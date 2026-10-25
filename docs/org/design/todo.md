@@ -1,14 +1,12 @@
 # デザイン部長 のやる事
 
-## 次の部長へ (4 本目 → 5 本目、10-24 夜)
-- 今の状態: 本番は v0.1.596 (main をそのまま出す形)。本番に出していない物は src/web/release-flags.ts のスイッチの下 (使い方 docs/org/dev/notes/2026-10-24-main-release.md)。OK 待ちの一覧と日英の更新内容は docs/pending-release.md。
-- スイッチの下にある私の物: sim・daily・dismiss・tierClose・modeTabs・fitZoom・omenRow・monkey1023・baseValues・weights・essTier (段の表のエッセンスの名前)・essCard (カードの P0 / S0 と「エッセンス」「合金」の札)・firstVisit1024 (ベースの一覧の押しの守り・説明はマウスが動いた時だけ、隊長が本物のマウスで確かめ済み 17e0fbf3)。
-- 裏方で済み・本番待ち: 古い塊の読み直しを静的な版の印 /version.txt に (cd82fc4a)。次の本番と一緒に出す (ブラック 10 代目 10-24 夜、先に deploy:web しない。pending-release.md の 1 行は最終チェック長の持ち物なのでブラックへ返した)。
-- やりかけ: 無し (頼みは全部返した)。public/ui-art/head-l・head-r.webp は残す (ブラック 10 代目 10-24 夜)。
-- 他の部へ渡した物: 段ごとの出やすさが全段同じ (兜など) はエンジンの重みのデータ (ジン)。release-flags の外の開発版の判定 (utils/ads.ts の AD_FRAMES・エミュ CraftStage の GEM_CORRUPT_SHOWN・シミュ use-tree.ts:77) を寄せるかはブラック。
-- 気を付ける事: 共通 (ジン) の hover-stack.ts は触らず、私の側 (ShelfButton・BaseCardGrid・utils) で直す。窓なし Chrome は画面が動いても mouseenter を出さないので、止まったマウスの確かめは本物のマウス (モンキー隊長) に頼む。
-- 気を付ける事 2: 確認用 Chrome は 9333 が他の部長の物 → 自分は 9334 と自分の profile で立て、台本の中で Browser.close。preview:prod は --port で番号を替え、止める時は wrangler と workerd を根から (TaskStop だけでは workerd が残る)。PC の Web はいつもベースのページから (?base= か hands= の録画の口で進める)。
-- 台本: 共有メモ side-session-notes/local_52fe22f9-…/design4/ (stale-ver-check・ess-tier-check・ess-card-check・ess-card-sim・hover-check・still-check・move-probe.mjs)、前の分は local_20eeeb19-… の物。4 本目の詳しい記録と 3 → 4 の引き継ぎは notes/2026-10-24-design4-handover.md。
+## 次の部長へ (5 本目 → 6 本目、10-25)
+- 今の状態: 本番は main をそのまま出す形。出していない物は src/web/release-flags.ts のスイッチの下、OK 待ちと日英の更新内容は docs/pending-release.md。最終チェック長 (local_d3a3659e) がコスメティックの本番を進めている最中。
+- 本番待ちで残っている 2 つ (オーナー 10-25 スマホの見え方、ブラック「同じ本番に」): **スマホの展開の追従**と**スマホはヘッダーのブログを残す**。どちらも 5883ca99 で commit 済み・dev 1440 の 375 日英で確かめ済み (台本 design5/phone-header-follow.mjs)。**まだ最終チェック長へ知らせていない** (送信の上限)。最初に最終チェック長へ 1 行: 「5883ca99 = スマホのヘッダー 1 段・ブログはスマホで残す・ベースの一覧の展開の追従 (開いた時・属性を替えた時・もっと見る / たたむ、帯は上へ戻るに隠れない下 64px)。本番の形での撮り直しを」。同じ本番の 9412354b (タブ 2 列)・5c8f70a6 (題の札・上へ戻る) は送れている。
+- 洗い出しの結果: PC で付いていてスマホで付いていなかった展開の追従はベースの一覧 (BaseCatalog、エミュのベースのページとシミュの完成形の設定で共通) の 3 つだけ。ほかの開く所 (keep-place・revealOpened・revealNext) はスマホも同じ作り。
+- 持ち物の足し: public/sw.js (10-25 にジン部長から、701e97b5。FILE_RE に mtx-art 入り)、src/web/ToTop.vue・LeaveConfirm.vue。コスメティックの中身 (views/skins・データ・絵) はスキン部長、入口・題・page.ts・スイッチ skins はデザイン。スイッチの下の私の物は notes の 4 → 5 の列 (sim・daily・dismiss … firstVisit1024) + skins・noHeaderBlog。
+- 気を付ける事: 題の札の幅は game-ui.css の :has で各画面のファイルに触らず効かせている (h1.g-tabbar.g-brush と、それを包む段)。ヘッダーの間はスマホと PC で分けて書く (共通の gap-3 がスマホの gap-1 に勝っていた)。セッションどうしの送信は、オーナーが打ってから 10 通で止まる。大事な物から送る。
+- 台本: 共有メモ side-session-notes/local_52fe22f9-…/design5/ (leave-check・row-remove-check・tier-check・skins-check・tabs-check・tabs-phone-check・blog-check・phone-title-top・totop-bar・phone-header-follow.mjs、報告の写し report-2026-10-25-skins.md)。ブラックの組の所 local_b4352604-…/design5-handover-skins.md にも同じ報告。5 本目の記録と 4 → 5 の引き継ぎは notes/2026-10-25-design5-handover.md。
 
 ## 済んだ節 (前の版の塊を残す・404 が 3 回・入口の塊の 404・古い塊の読み直し・StageItemCard の D1・D2・エミュ部長の頼み) は notes/2026-10-23-todo-archive.md にそのまま移した。各節の「見ていない」もそこ (10-23 夜 ホワイト)。10-23 夜に 3 本目が fitZoom・先読み・シミュの初手・BasePickBody・ModeTabs・モンキー 4・14・15・モンキー 3・2・9 も移した (OK 待ちは上の引き継ぎに commit で並べてある)
 
