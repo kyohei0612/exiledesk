@@ -26,8 +26,9 @@ function freeRow(y: number, x0: number, x1: number, boxes: readonly Pos[]): bool
   return boxes.every((b) => y < b.y - 2 || y > b.y + (b.h ?? BOX_H) + 2 || b.x + (b.w ?? BOX_W) < lo || b.x > hi);
 }
 
-/** 手の札の真ん中 (箱の下から。SimTreePage の札の位置) と、下の＋の真ん中 */
-export const HAND_DY = 46;
+/** 手の札の真ん中 (箱の下から。SimTreePage の札の位置) と、下の＋の真ん中。札の上下の半分は CHIP_HALF (箱 → 札の縦の線 = HAND_DY - CHIP_HALF = 40、10-25 オーナー「長さ十分」の形で 46 → 60) */
+export const HAND_DY = 60;
+export const CHIP_HALF = 20;
 const PLUS_DY = 20, PLUS_R = 14;
 /**
  * 戻りの線の行き先 (オーナー 10-22「戻りの線は、戻り先の箱から出る打つ手の札の左の端へ」): 手の札があれば札の左の端、

@@ -4,7 +4,7 @@
  */
 import { computed, type ComputedRef, type Ref } from "vue";
 import { BOX_H, BOX_W, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { busLevels, HAND_DY, type Seg } from "./tree-lines";
+import { busLevels, CHIP_HALF, HAND_DY, type Seg } from "./tree-lines";
 
 /**
  * 進む線 (2026-10-22 整列の定義、オーナー「クソ汚い」の後): 普通の木の図と同じ直角の線。親の下から 1 本下りて (途中に手の札)、
@@ -13,8 +13,11 @@ import { busLevels, HAND_DY, type Seg } from "./tree-lines";
 export const LINE = { fwd: "#a39a88", bad: "#c96a72", back: "#5fd0e0" } as const;
 /** 通り抜けの所の札 / ＋の半分の高さ (上から来る矢印の先) */
 const PASS_R = 16;
-/** 横の棒を子の箱の上の辺から離す高さ (▼ が箱の枠に付いて見える長さ。10-25 オーナー「矢印の位置がわるい、そもそもここは枠でしょ」で 18 → 34) */
-const BUS_DY = 34;
+/**
+ * 横の棒を子の箱の上の辺から離す高さ = 箱の下 → 札の上の縦の線と同じ長さ (40)。棒から各箱へは矢印なしで上の縁までまっすぐ
+ * (10-25 オーナー「矢印の位置がわるい、そもそもここは枠でしょ」→「ここと同じにしようか」= 箱 → 札の縦の線と同じ形。18 → 34 → 40)。棒は札のすぐ下 (段の間 240 で札の下から 8)
+ */
+const BUS_DY = HAND_DY - CHIP_HALF;
 
 export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, posOf: (b: TreeBox) => { x: number; y: number }) {
   /** 箱の真ん中 */
@@ -34,7 +37,7 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     // 角丸の段付き (React Flow の smoothstep、見本の 3): 親の下から下りて、角を丸めて横へ、角を丸めて子の上の辺へ。
     // 外れ (赤) を先に描き、進む (灰) を上に重ねる (同じ横の棒を通る所は灰に見える)
     const to = kids.map((k) => {
-      const cx = midOf(k.id), cy = k.q.y - (k.c.out === "pass" ? PASS_R : 3), dx = cx - px, r = Math.min(10, Math.abs(dx) / 2), s = Math.sign(dx);
+      const cx = midOf(k.id), cy = k.q.y - (k.c.out === "pass" ? PASS_R : 0), dx = cx - px, r = Math.min(10, Math.abs(dx) / 2), s = Math.sign(dx);
       const d = !s ? `M ${px} ${busY - 10} L ${cx} ${cy}`
         : `M ${px} ${busY - 10} L ${px} ${busY - r} Q ${px} ${busY} ${px + s * r} ${busY} L ${cx - s * r} ${busY} Q ${cx} ${busY} ${cx} ${busY + r} L ${cx} ${cy}`;
       const bad = k.c.out !== "hit" && k.c.out !== "any" && k.c.out !== "pass" && k.c.out !== "branch";
