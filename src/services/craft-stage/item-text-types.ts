@@ -92,6 +92,13 @@ export interface ItemTextMod {
    * values・shownValues はこの MOD の分 (段の幅に収まるように割った目安)
    */
   summed?: true;
+  /** 和の行でこの MOD が取りうる素の値の幅 (値ごと。ほかの MOD の段の幅を引いた残りと自分の段の幅の重なり、オーナー 10-25「数値のティア幅あるでしょ」) */
+  valueRange?: Array<[number, number]>;
+  /**
+   * 仮: 和の行の分け方 (段の割り方) が 2 通り以上あり、単体 (能力値 1 つ) の MOD を高い段に置いた割り方を選んだ (オーナー 10-25「前提T1に合わせて残った方の単体数値でティア」)。
+   * 段・値は目安 (valueRange の幅のどこか)
+   */
+  guess?: true;
 }
 
 /** 貼り付けの読み方の 1 通り (明示の MOD と、MOD に数えなかった行)。readings の先頭が mods と同じ */

@@ -38,8 +38,10 @@ export interface Solution {
   picks: SolvePick[];
   /** どの組み合わせでも説明できなかった行 */
   unexplained: number[];
-  /** 小さいほどもっともらしい (読めない行・枠に入らない読めない行・和の行・またがる MOD・出どころ) */
+  /** 小さいほどもっともらしい (読めない行・枠に入らない読めない行・和の行・和に足した MOD の数・またがる MOD・出どころ) */
   score: number[];
+  /** 同じ MOD の組で段の割り方が 2 通り以上あった (和の行の分け方は仮。単体の MOD の段が高い割り方を選んだ) */
+  tentative?: true;
 }
 export interface SolveCtx {
   lines: readonly SolveLine[];
@@ -74,12 +76,14 @@ function sourceCost(m: Mod, l: SolveLine): number | null {
 }
 
 /**
- * 和の行 (2 つ以上の MOD が足された行) の値を MOD ごとに割る (素の値)。各 MOD はその段の一番下から始め、足りない分を並びの順に段の上まで足す。
+ * 和の行 (2 つ以上の MOD が足された行) の値を MOD ごとに割る (素の値)。オーナー 10-25「前提単体のが数値高いからそれ引いた値がハイブリッド」
+ * 「数値のティア幅あるでしょ」: 単体 (能力値 1 つ) の MOD を先に段の上まで埋め、残りをハイブリッドなどに渡す (目安の 1 つの値 v)。
+ * 1 つの値に決めつけないよう、ほかの MOD の段の幅から引いた「その MOD が取りうる幅」[lo, hi] も返す (和 − ほかの上限 〜 和 − ほかの下限 と、自分の段の幅の重なり)。
  * 返す鍵は `${picks の位置}:${その MOD の能力値の位置}`。和でない行は入れない (呼ぶ側が今までどおり割り戻す)
  */
-export function splitSums(sol: Solution, lines: readonly SolveLine[], pctOf: (line: number, m: Mod) => number, per: readonly number[], statsOf: (m: Mod) => readonly string[] = ownStats): Map<string, number> {
-  const out = new Map<string, number>();
-  const byLine = new Map<string, Array<{ key: string; lo: number; hi: number; p: number; neg: boolean }>>();
+export function splitSums(sol: Solution, lines: readonly SolveLine[], pctOf: (line: number, m: Mod) => number, per: readonly number[], statsOf: (m: Mod) => readonly string[] = ownStats): Map<string, { v: number; lo: number; hi: number }> {
+  const out = new Map<string, { v: number; lo: number; hi: number }>();
+  const byLine = new Map<string, Array<{ key: string; lo: number; hi: number; p: number; neg: boolean; single: boolean }>>();
   sol.picks.forEach((pk, n) => {
     const ranges = tierDisplayRanges(pk.mod.tiers[pk.tier]!);
     statsOf(pk.mod).forEach((s, j) => {
@@ -90,18 +94,24 @@ export function splitSums(sol: Solution, lines: readonly SolveLine[], pctOf: (li
       // 負の段 (reduced) は向きを反して正の数で割る
       const lo = neg ? -b : a, hi = neg ? -a : b;
       const k = `${i}:${s}`;
-      byLine.set(k, [...(byLine.get(k) ?? []), { key: `${n}:${j}`, lo, hi, p: 1 + pctOf(i, pk.mod) / 100, neg }]);
+      byLine.set(k, [...(byLine.get(k) ?? []), { key: `${n}:${j}`, lo, hi, p: 1 + pctOf(i, pk.mod) / 100, neg, single: statsOf(pk.mod).length === 1 }]);
     });
   });
-  for (const [k, cs] of byLine) {
+  const r2 = (x: number): number => Math.round(x * 100) / 100;
+  for (const [k, cs0] of byLine) {
     const [line, stat] = [Number(k.split(":")[0]), k.slice(k.indexOf(":") + 1)];
     const at = lines[line]?.stats.indexOf(stat) ?? -1;
-    let left = Math.abs(lines[line]?.values[Math.max(0, at)] ?? 0) - cs.reduce((a, c) => a + c.lo * c.p, 0);
+    const total = Math.abs(lines[line]?.values[Math.max(0, at)] ?? 0);
+    const cs = [...cs0].sort((x, y) => Number(y.single) - Number(x.single));
+    let left = total - cs.reduce((a, c) => a + c.lo * c.p, 0);
     for (const c of cs) {
       const add = Math.max(0, Math.min(c.hi - c.lo, left / c.p));
       left -= add * c.p;
-      const raw = Math.round((c.lo + add) * 100) / 100;
-      out.set(c.key, c.neg ? -raw : raw);
+      const othersLo = cs.filter((x) => x !== c).reduce((a, x) => a + x.lo * x.p, 0), othersHi = cs.filter((x) => x !== c).reduce((a, x) => a + x.hi * x.p, 0);
+      const lo = Math.max(c.lo, (total - othersHi) / c.p), hi = Math.min(c.hi, (total - othersLo) / c.p);
+      const sg = c.neg ? -1 : 1;
+      const v = r2(c.lo + add);
+      out.set(c.key, c.neg ? { v: -v, lo: -r2(hi), hi: -r2(lo) } : { v: sg * v, lo: r2(lo), hi: r2(hi) });
     }
   }
   return out;
@@ -159,7 +169,7 @@ export function solveLines(ctx: SolveCtx): Solution[] {
     for (const k of familyKeysOf(m)) taken.add(k);
   }
   const found: Solution[] = [];
-  const seen = new Set<string>();
+  const seen = new Map<string, { at: number; tb: number[]; tiers: Set<string> }>();
   let nodes = 0;
   let best = Infinity;
 
@@ -182,12 +192,27 @@ export function solveLines(ctx: SolveCtx): Solution[] {
     const sumLines = contrib.filter((c) => c > 1).length;
     const spans = picks.filter((p) => new Set(p.lines).size > 1).length;
     const cost = picks.reduce((a, p) => a + p.cost, 0);
-    const score = [unexplained.length, overflow, sumLines, spans, cost];
+    // 和に足した MOD の多さ (1 行を 3 つの MOD の和で読むより 2 つ)
+    const extra = contrib.reduce((a, c) => a + Math.max(0, c - 1), 0);
+    const score = [unexplained.length, overflow, sumLines, extra, spans, cost];
     const key = picks.map((p) => p.mod.id).sort().join(",") + "|" + [...unexplained].sort().join(",");
-    if (seen.has(key)) return;
-    seen.add(key);
+    // 同じ MOD の組で段の割り方が違う物は 1 つに: 和の行の単体 (能力値 1 つ) の MOD の段が高い方、次にほかの MOD の段が高い方 (オーナー 10-25「前提T1に合わせて残った方の単体数値でティア」)
+    const onSum = (p: SolvePick): boolean => p.lines.some((i) => contrib[i]! > 1);
+    const tb = [picks.filter((p) => onSum(p) && statsOf(p.mod).length === 1).reduce((a, p) => a + p.tier, 0), picks.filter(onSum).reduce((a, p) => a + p.tier, 0)];
+    const sol: Solution = { picks: picks.map(({ mod, tier, lines: ls }) => ({ mod, tier, lines: [...ls] })), unexplained: [...unexplained], score };
+    const was = seen.get(key);
+    const tiers = picks.map((p) => `${p.mod.id}@${p.tier}`).sort().join(",");
+    if (was) {
+      if (was.tiers.has(tiers)) return; // 足す順が違うだけの同じ割り方
+      was.tiers.add(tiers);
+      const prev = found[was.at]!;
+      prev.tentative = true;
+      if (tb[0]! > was.tb[0]! || (tb[0] === was.tb[0] && tb[1]! > was.tb[1]!)) { found[was.at] = { ...sol, tentative: true }; was.tb = tb; }
+      return;
+    }
+    seen.set(key, { at: found.length, tb, tiers: new Set([tiers]) });
     best = Math.min(best, unexplained.length);
-    found.push({ picks: picks.map(({ mod, tier, lines: ls }) => ({ mod, tier, lines: [...ls] })), unexplained: [...unexplained], score });
+    found.push(sol);
   };
 
   const dfs = (): void => {

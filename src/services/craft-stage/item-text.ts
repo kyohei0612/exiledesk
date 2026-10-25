@@ -321,7 +321,7 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
     // エッセンスの段はエッセンスの強さで決まり、アイテムレベルの縛りは無い (パーフェクトのエッセンスの段も同じ)
     tierOf(m, signed(m, b.values), pctOf(boostsFor(m, b)), /essence/.test(String(m.source)) ? Infinity : level);
   // 明示の行を池の MOD の組み合わせで説明する (ハイブリッド・同じ能力値の和、item-text-solve.ts)。値の数と能力値の数が合わない行・アルダーの行はそのまま
-  type Entry = { b: Body; mod: Mod; fixed?: { index: number; fits: boolean }; solved?: { index: number; values: number[]; shown: number[]; summed: boolean }; at: number };
+  type Entry = { b: Body; mod: Mod; fixed?: { index: number; fits: boolean }; solved?: { index: number; values: number[]; shown: number[]; summed: boolean; range?: Array<[number, number]>; guess?: boolean }; at: number };
   // 能力値 (段の stats)。エッセンスの MOD は stats を持たないので、同じクラスの同じ文の MOD から借りる
   const ownStats = (m: Mod): readonly string[] => (m.tiers[0] as { stats?: string[] } | undefined)?.stats ?? [];
   const byText = new Map<string, readonly string[]>();
@@ -353,9 +353,12 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
       const vals = statsOf(pk.mod).map((s, j) => { const l = free[pk.lines[j]!]!.b; return l.values[statsOf(free[pk.lines[j]!]!.mod).indexOf(s)] ?? 0; });
       const b: Body = ls.length > 1 ? { ...main, text: ls.map((i) => free[i]!.b.text).join(" / "), values: vals } : { ...main, values: vals };
       const summed = pk.lines.some((i) => per[i]! > 1);
-      const raw = statsOf(pk.mod).map((_, j) => split.get(`${n}:${j}`) ?? unboost(signed(pk.mod, [vals[j]!]), linePct(pk.lines[j]!, pk.mod))[0]!);
+      const one = (j: number): number => unboost(signed(pk.mod, [vals[j]!]), linePct(pk.lines[j]!, pk.mod))[0]!;
+      const raw = statsOf(pk.mod).map((_, j) => split.get(`${n}:${j}`)?.v ?? one(j));
+      // 和の行の分け方は仮: その MOD が取りうる幅 (ほかの MOD の段の幅を引いた残りと自分の段の幅の重なり)。和でない値は [v, v]
+      const range = summed ? statsOf(pk.mod).map((_, j): [number, number] => { const x = split.get(`${n}:${j}`); return x ? [x.lo, x.hi] : [one(j), one(j)]; }) : undefined;
       const shown = summed ? raw.map((v, j) => Math.trunc(v * (1 + linePct(pk.lines[j]!, pk.mod) / 100))).map(Math.abs) : [...vals];
-      list.push({ b, mod: pk.mod, solved: { index: pk.tier, values: raw, shown, summed }, at: used.indexOf(main) });
+      list.push({ b, mod: pk.mod, solved: { index: pk.tier, values: raw, shown, summed, ...(range ? { range } : {}), ...(summed && sol.tentative ? { guess: true } : {}) }, at: used.indexOf(main) });
     }
     const primary = new Set(sol.picks.map((pk) => pk.lines[0]!));
     free.forEach((p, i) => { if (per[i]! > 0 && !primary.has(i)) skipped.push(skip(p.b.line, "hybridPart")); });
@@ -372,10 +375,10 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
     const first = entriesOf(sols[0]!);
     emit(first.list, out.mods);
     out.skipped.push(...first.skipped);
-    // ほかの読み方の候補は、読めない行と和の行の数が一番目と同じで、行の組み方 (どの行どうしが 1 つの MOD か) が違う物だけ。
+    // ほかの読み方の候補は、読めない行・枠に入らない読めない行・和の行・和に足した MOD の数が一番目と同じで、行の組み方 (どの行どうしが 1 つの MOD か) が違う物だけ。
     // 出どころだけの違い (印の無いコピーの普通の MOD ⇄ エッセンスの MOD) は候補にしない (印が無ければ見分けられず、組み合わせで増える)
     const groups = (s: Solution): string => s.picks.map((p) => [...new Set(p.lines)].sort().join("+")).sort().join(",");
-    const same = sols.filter((s, k) => k === 0 || (s.score[0] === sols[0]!.score[0] && s.score[1] === sols[0]!.score[1] && s.score[2] === sols[0]!.score[2] && groups(s) !== groups(sols[0]!)));
+    const same = sols.filter((s, k) => k === 0 || (s.score[0] === sols[0]!.score[0] && s.score[1] === sols[0]!.score[1] && s.score[2] === sols[0]!.score[2] && s.score[3] === sols[0]!.score[3] && groups(s) !== groups(sols[0]!)));
     // 出す形 (MOD・段・値) が同じ読み方は 1 つに (コラプトした物は説明できない行を今までどおり出すので、割り当てが違っても同じ形になる)
     const shape = (ms: readonly ItemTextMod[]): string => ms.map((m) => `${m.modId}@${m.tier?.index}:${m.values.join(",")}`).join("|");
     const readings = [{ mods: [...out.mods], skipped: [...first.skipped] }];
@@ -425,6 +428,8 @@ function readMods(data: PatchData, out: ItemTextResult, rows: Body[]): void {
       tier: { index, of: mod.tiers.length, label: `T${mod.tiers.length - index}`, name: String(mod.tiers[index]?.name ?? ""), fits },
       values: pk.solved?.values ?? unboost(signed(mod, b.values), pctOf(boosts)), shownValues: pk.solved?.shown ?? [...b.values], boosts,
       ...(pk.solved?.summed ? { summed: true as const } : {}),
+      ...(pk.solved?.range ? { valueRange: pk.solved.range } : {}),
+      ...(pk.solved?.guess ? { guess: true as const } : {}),
       fractured: b.note === "fractured", desecrated: b.note === "desecrated" || mod.source === "desecrated", crafted: b.note === "crafted",
       unrevealed: false,
       ...(out.corrupted > 0 && !fits ? { corruption: { status: "unknown" as const } } : {}),
