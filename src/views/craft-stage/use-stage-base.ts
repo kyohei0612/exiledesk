@@ -34,7 +34,8 @@ function create() {
    * スマホは選んだ事のある人だけ今まで通りすぐ打てる形、選んでいない人はベース選びから (2026-10-11 オーナー「初めての人には人気のベースを選択させる」)。
    * ベースの読み物のページから ?base= で来た時は、選ぶ所を飛ばしてそのベースから
    */
-  const handNoBase = ref(!inApp && !URL_BASE && (!phone.value || !picked) && s.mode.value === "hand" && !s.log.value.length);
+  // スイッチ emuFresh (10-25 オーナー「エミュもリロードしたら基本最初から」): スマホの選んだ事のある人もベース選びから (ベースは覚えていないので、前は既定の金の指輪のクラフトの画面になっていた)
+  const handNoBase = ref(!inApp && !URL_BASE && (!phone.value || !picked || flag("emuFresh")) && s.mode.value === "hand" && !s.log.value.length);
   // 共有の URL から開いた時はベースが決まっている (ここから打つ・白から打つで、ベース選びに戻さない)
   watch(() => s.replay.value?.shared, (v) => { if (v) handNoBase.value = false; }, { immediate: true });
   // 録画モードで URL の最初の状態を入れた時もベースは決まっている (POE2Tube 要望 ㊷)
