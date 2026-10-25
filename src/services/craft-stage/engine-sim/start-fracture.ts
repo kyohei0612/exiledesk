@@ -8,6 +8,7 @@ import { craftedLimitOf } from "../apply-essence";
 import { forceKey } from "../apply-force";
 import { hits } from "../aim-odds";
 import { freshItem } from "../run-plan";
+import { baseSocketsOf } from "../stage-runes";
 import { mulberry32 } from "../../htc/rng";
 import type { StageItem, StageMod } from "../types";
 import { tr } from "../../../i18n/lang";
@@ -22,6 +23,10 @@ const flagOf = (data: PatchData, m: TierMod): "f" | "e" | "n" => {
   return src === "essence" || src === "perfect_essence" ? "e" : "n";
 };
 const keyOf = (data: PatchData, m: TierMod): string => forceKey(m.modId, `T${m.tier}`, flagOf(data, m));
+/** クラフト MOD (エッセンス・完全エッセンス・合金で付く物、✦ で付ける物は数えない) */
+const isCrafted = (data: PatchData, m: TierMod): boolean => /essence/.test(String(data.mods.get(m.modId)?.source ?? "")) && !m.fractured;
+/** クラフト MOD の上限を +1 するルーン (英語名、差す手 rune:<英語名>) */
+const ASTRID = "Astrid's Creativity";
 
 /**
  * フラクチャーの候補から始めのアイテム (J1): 候補のどれか 1 つが ✦ で付いたレア + 外れ junk 個 (既定 3 = フラクチャーのオーブを打てる MOD 4 つのレア)。
@@ -72,8 +77,24 @@ export function fractureStart(data: PatchData, base: string, itemLevel: number, 
  * 狙いを付けられる所まで付けた形 (J2、完成形のカード用): 白のベースのレアに mods を順に指名で付け、付けられなかった物は left に理由と返す
  * (MOD の枠を超えた・同じ系統・アイテムレベルが足りない など、核の断りの文)。表示用で、付ける順は渡した順
  */
-export function placeMods(data: PatchData, base: string, itemLevel: number, mods: readonly TierMod[], rng: () => number): { item: StageItem; left: Array<TierMod & { reason: string }> } {
+export function placeMods(
+  data: PatchData, base: string, itemLevel: number, mods: readonly TierMod[], rng: () => number,
+  room: { runes?: number; crafted?: number } = {},
+): { item: StageItem; left: Array<TierMod & { reason: string }> } {
   let item = freshItem(data, base, itemLevel, "rare");
+  // 完成形は規格外 (オーナー 10-26「ソケットだけど規格外で設定、ルーン関係なくMOD選択できるようにしてくれ 特殊モッドが入らないし、アストリッドも入らない 完成形の際」):
+  // ソケットは要るだけある扱い。ルーンの MOD は指名の手がそのルーンを差すので、その数だけソケットを開けておく。
+  // クラフト MOD (エッセンス・合金) が 2 つ以上なら、上限に届くまでアストリッドの創造性を差す (差せる数・上限の数え方はエンジンの決まりのまま: 差す手 rune:…・craftedLimitOf)。
+  // room = goalBlock が「もう 1 つ足せるか」を見る時に空けておくルーンの MOD・クラフト MOD の数
+  const runeNeed = mods.filter((m) => data.mods.get(m.modId)?.rune).length + (room.runes ?? 0);
+  item = { ...item, sockets: Math.max(item.sockets ?? 0, baseSocketsOf(item.base, item.cls.category), runeNeed) };
+  const craftedNeed = mods.filter((m) => isCrafted(data, m)).length + (room.crafted ?? 0);
+  while (craftedLimitOf(item) < craftedNeed) {
+    const before = craftedLimitOf(item);
+    const r = applyCurrency(data, { ...item, sockets: (item.sockets ?? 0) + 1 }, `rune:${ASTRID}`, rng);
+    if (!r.applied || craftedLimitOf(r.item) <= before) break;
+    item = r.item;
+  }
   const left: Array<TierMod & { reason: string }> = [];
   for (const m of mods) {
     const r = applyCurrency(data, item, keyOf(data, m), rng);
@@ -101,14 +122,16 @@ export function goalBlock(data: PatchData, base: string, itemLevel: number, aims
   const fams = (m: TierMod): string[] => { const d = data.mods.get(m.modId); return d ? (d.families?.length ? [...d.families] : [d.family]) : []; };
   const ess = (m: TierMod): boolean => /essence/.test(src(m));
   if (aims.some((a) => ess(a) === ess(add) && fams(a).some((f) => fams(add).includes(f)))) return tr("同じ系統の MOD がもう狙いにある", "A mod of the same family is already a target");
-  const key = `${base}|${itemLevel}|${aims.map((a) => `${a.modId}#${a.tier}${a.fractured ? "f" : ""}`).sort().join(",")}`;
+  // 完成形は規格外 (placeMods): add がルーンの MOD ならソケットを 1 つ、クラフト MOD ならアストリッドの創造性の分を空けておいた形に付けてみる (オーナー 10-26)
+  const room = { runes: data.mods.get(add.modId)?.rune ? 1 : 0, crafted: isCrafted(data, add) ? 1 : 0 };
+  const key = `${base}|${itemLevel}|${room.runes}${room.crafted}|${aims.map((a) => `${a.modId}#${a.tier}${a.fractured ? "f" : ""}`).sort().join(",")}`;
   let item = placedMemo.get(key);
   if (!item) {
-    item = placeMods(data, base, itemLevel, aims, mulberry32(1)).item;
+    item = placeMods(data, base, itemLevel, aims, mulberry32(1), room).item;
     if (placedMemo.size > 200) placedMemo.clear();
     placedMemo.set(key, item);
   }
-  const crafted = (m: TierMod): boolean => /essence/.test(src(m)) && !m.fractured;
+  const crafted = (m: TierMod): boolean => isCrafted(data, m);
   if (crafted(add) && all.filter(crafted).length > craftedLimitOf(item)) return tr(`クラフト MOD (エッセンス・合金) は ${craftedLimitOf(item)} つまで`, `Max ${craftedLimitOf(item)} crafted (Essence / Alloy) mod(s)`);
   const r = applyCurrency(data, item, keyOf(data, add), mulberry32(1));
   return r.applied ? null : r.reason ?? tr("付けられない", "Cannot add");
