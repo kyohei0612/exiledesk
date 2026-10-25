@@ -227,16 +227,37 @@ function splitImplicits(data: PatchData, out: ItemTextResult, body: Body[], gran
   // 絆の行 (「絆 …」「Bonded: …」) はルーンの効果。印の無いトレードの日本語でも、最後の絆の行までがルーン側 (見本 t3 10-25: 絆の前の「スピリットが15%増加する」はルーン)
   const bond = (b: Body): boolean => /^(絆\s|Bonded:)/i.test(b.text);
   // 「スキルを付与」より前の行もルーン側 (絆の行はアイドルなどにしか付かない。poe2db のセプターではめる物 76 のうち 30 は絆が無い、10-25 オーナー「絶対絆ってつくっけ」)
-  const last = Math.max(isBase.lastIndexOf(true), body.map(bond).lastIndexOf(true), grantAt - 1);
   // 暗黙より前の行: 差したルーン・ソウルコアの効果 (ソケットの数だけ値が足される) と文が同じなら rune。
   // 残りはコラプトした物ならエンチャント (コラプトの結果は poe2db の Vaal Orb で Corrupted Enchantment)、それ以外は見分けられない (extra)
   const cls = classOfBase(data, out.base!.en);
   const cat = cls ? runeCategoryOf({ base: out.base!.en, cls }) : null;
-  const runeTexts = new Set(cat ? Object.values(RUNES).flatMap((r) => { const e = runeEffectFor(r, cat); return e ? [bare(e.en), bare(e.ja)] : []; }) : []);
+  const effects = cat ? Object.values(RUNES).flatMap((r) => { const e = runeEffectFor(r, cat); return e ? [e] : []; }) : [];
+  const runeTexts = new Set(effects.flatMap((e) => [bare(e.en), bare(e.ja)]));
+  // 頭から続くルーンの行 (暗黙・絆・スキルを付与の行が無い防具などで、絆の無いルーンだけ差した形。10-25 作った文: 胴の「筋力 +9」が明示に混ざり本物の「筋力 +24」が読めなかった)。
+  // 文がそのベースに差せるルーンの効果と同じで、値がその効果の値の和 (ソケットの数まで、同じ文の行は足して出る) の時だけ (数字も見るので、ルーンの無い明示の「筋力 +24」は巻き込まない)
+  const numOf = (t: string): number | null => { const m = /\d+(?:\.\d+)?/.exec(t); return m ? Number(m[0]) : null; };
+  const sums = (vals: readonly number[], n: number): Set<number> => {
+    let cur = new Set<number>([0]);
+    const all = new Set<number>();
+    for (let k = 0; k < n; k++) { const next = new Set<number>(); for (const c of cur) for (const v of vals) { const x = Math.round((c + v) * 100) / 100; next.add(x); all.add(x); } cur = next; }
+    return all;
+  };
+  const slots = Math.max(1, out.sockets.count ?? 2);
+  const runeLike = (b: Body): boolean => {
+    const k = bare(b.text), v = b.values[0];
+    if (v === undefined || !runeTexts.has(k)) return false;
+    const vals = [...new Set(effects.filter((e) => bare(e.en) === k || bare(e.ja) === k).map((e) => numOf(e.ja) ?? numOf(e.en)).filter((x): x is number => x !== null))];
+    return sums(vals, slots).has(v);
+  };
+  // 頭の 1 行だけで決めると、ルーンの無い明示の「筋力 +24」もルーンの値の和 (12 × 2) に見えるので、同じ文の行が後ろにもある時だけ (ルーンと明示の同じ能力値は分かれて出る、見本 t6 の 15% と 47%)
+  const laterSame = (i: number): boolean => body.slice(i + 1).some((x) => bare(x.text) === bare(body[i]!.text));
+  let lead = 0;
+  while (lead < body.length && (isBase[lead] || bond(body[lead]!) || (runeLike(body[lead]!) && laterSame(lead)))) lead++;
+  const last = Math.max(isBase.lastIndexOf(true), body.map(bond).lastIndexOf(true), grantAt - 1, lead - 1);
   body.forEach((b, i) => {
     if (isBase[i]) implicit(b, "base");
     else if (i <= last && bond(b)) implicit(b, "rune");
-    else if (i <= last && i < grantAt && !isBase.slice(i + 1).some(Boolean)) implicit(b, "rune");
+    else if (i <= last && (i < grantAt || i < lead) && !isBase.slice(i + 1).some(Boolean)) implicit(b, "rune");
     else if (i < last) implicit(b, runeTexts.has(bare(b.text)) || body.slice(i + 1, last + 1).some(bond) ? "rune" : out.corrupted > 0 ? "corruption" : "extra");
     else rest.push(b);
   });
