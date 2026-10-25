@@ -210,7 +210,7 @@ export function linkSameShape(doc: TreeDoc, ids: readonly string[]): void {
     // フラクチャーの結果の箱は、形 (✦ は数えない) が親と同じでも つながない (親へ戻すと ✦ のある品にもう一度フラクチャーを打って止まった、10-24)
     const p = c.parent ? doc.boxes[c.parent] : undefined;
     if (p?.hand && effectOf(p.hand.currency) === "fracture") continue;
-    const to = matchTargets(doc, id).map((m) => m.to).find((x): x is string => !!x && x !== id && (x !== "start" || c.out === "lost")) ?? (c.out === "hit" ? sameHitOf(doc, id) : null);
+    const to = matchTargets(doc, id).map((m) => m.to).find((x): x is string => !!x && x !== id && (x !== "start" || c.out === "lost")) ?? (c.out === "hit" ? sameHitOf(doc, id) : swapJunkOf(c, p));
     if (!to) continue;
     c.back = to;
     c.autoBack = true;
@@ -229,6 +229,14 @@ function sameHitOf(doc: TreeDoc, id: string): string | null {
   // 行き先は先に作った箱だけ (linkSameShape はまだ決めていない古い箱も見直すので、古い箱が新しい箱へつながる逆向きを作らない)
   const older = Object.keys(doc.boxes).slice(0, Object.keys(doc.boxes).indexOf(id));
   return older.find((x) => { const o = doc.boxes[x]!; return o.out === "hit" && !!o.aim && !o.back && !o.split && keyOf(x) === k; }) ?? null;
+}
+
+/**
+ * 入れ替える手 (カオス 1 回ずつ) の外れ = 狙いは親と同じで外れだけ替わった = 親の箱と同じ状態なので、親の箱 (同じ手をもう一度) へ
+ * (10-25 オーナー「これ自動でやんないと分からずに同じツリーを何個も作る羽目になるぞ」)。当たるまでの手 (カオススパムオーブ) は外れの箱を作らない
+ */
+function swapJunkOf(c: TreeBox, p: TreeBox | undefined): string | null {
+  return c.out === "junk" && p?.hand && !p.hand.repeat && effectOf(p.hand.currency) === "swap" ? p.id : null;
 }
 
 /** 手の結果 (outcomeOf) に合う結果の箱 (回す時と精査で同じ)。any = 狙い無しの手の「打った後」、pass = 品質だけ上げた後 */
