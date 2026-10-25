@@ -6,7 +6,7 @@
  * (10-22 オーナー「回す前に 1 人通して木が正しいか確かめる」)
  */
 import { computed, ref, watch, type Ref } from "vue";
-import { runTreeSteps, type TreeRunOpts, type TreeRunResult } from "../../../services/simulator/tree/tree-run";
+import { runTreeSteps, withStartCost, type TreeRunOpts, type TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { withTreeTune } from "../../../services/simulator/tree/tree-tune";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -34,7 +34,9 @@ const FRAME_MS = 30;
 
 /** onHalt = 止まった人が出て止めた時 (その箱へ寄る)。onWalk = 1 人目が箱に着いた時 (i = 何箱目、0 で全体を表示して、後は外れた時だけ見える所へ) */
 export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: (key: string) => number, onHalt: (box: string) => void, onWalk: (box: string, i: number) => void) {
-  const result = ref<TreeRunResult | null>(null);
+  /** 回した結果 (回した時のベースの値段で)。外へは今のベースの値段で足し直した result を渡す (回し直さない、tree-run の withStartCost、10-25 オーナー) */
+  const raw = ref<TreeRunResult | null>(null);
+  const result = computed(() => (raw.value ? withStartCost(raw.value, startCost()) : null));
   const running = ref(false);
   /** 層を出しているか (隠すと今の組む画面のまま) */
   const shown = ref(true);
@@ -46,12 +48,12 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
   let skip = false;
   let token = 0;
   // 組み替えたら結果を消す (回している途中なら止める)
-  watch(() => routeKeyOf(doc.value), () => { token++; result.value = null; running.value = false; halted.value = null; walk.value = null; });
+  watch(() => routeKeyOf(doc.value), () => { token++; raw.value = null; running.value = false; halted.value = null; walk.value = null; });
   async function run(): Promise<void> {
     const data = s.data.value;
     if (!data || running.value) return;
     const my = ++token;
-    running.value = true; shown.value = true; result.value = null; halted.value = null; skip = false;
+    running.value = true; shown.value = true; raw.value = null; halted.value = null; skip = false;
     const d = doc.value;
     // 相場は高貴建て → 神に直す (tree-base-cost と同じ。そのまま渡すと 2000 神の打ち止めに当たって完成 8% になった、10-22 開発版で見た)
     const div = priceOf("divine") || 1;
@@ -63,7 +65,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
     // 1 人目が進む間は層の数字を出さない (光る箱だけ)
     let walking = true;
     const g = runTreeSteps(data, d, { n: RUN_N, seed: 1, price: priceIn, startCost: startCost(), every: 1,
-      onProgress: (r) => { last = r; if (my === token && !walking) result.value = r; },
+      onProgress: (r) => { last = r; if (my === token && !walking) raw.value = r; },
       onPerson: (p, i) => { if (!i) firstOf.p = p; } });
     try {
       // 1 人目: 通った箱を順に光らせる (品質だけ上げた後の箱は絵が無いので飛ばす)
@@ -111,7 +113,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
         since = j;
       }
       walk.value = null; walking = false;
-      result.value = f0.done ? f0.value : last;
+      raw.value = f0.done ? f0.value : last;
       // 1 人目が止まったら残りは回さない (止まった箱を直してから回し直す)
       if (p1.end === "stuck") { halted.value = { box: p1.at, n: 1 }; onHalt(p1.at); return; }
       if (f0.done) return;
@@ -119,7 +121,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
       for (;;) {
         const r = withTreeTune(d, () => g.next());
         if (my !== token) return;
-        if (r.done) { result.value = r.value; break; }
+        if (r.done) { raw.value = r.value; break; }
         // 1 人でも止まったらそこで止める (直してから回し直す)。打ち止め (神・手の上限) は止まりではないので続ける
         const st = last ? Object.keys((last as TreeRunResult).stuckAt)[0] : undefined;
         if (st) { halted.value = { box: st, n: r.value }; onHalt(st); break; }

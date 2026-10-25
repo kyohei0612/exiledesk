@@ -89,6 +89,9 @@ export interface TreeRunResult {
   boxes: Record<string, BoxStat>;
   /** 箱から箱へ移った回数の合計 ("<元>><先>"、進む線も戻りの弧も。回した時の層の線の太さ、10-22 オーナー) */
   edges: Record<string, number>;
+  /** 回した時のベースの値段 (神) と、人ごとの費用・作り直しの回数・完成したか (ベースの値段を替えた時に回し直さず足し直す、withStartCost) */
+  startCost: number;
+  persons: Array<{ cost: number; restarts: number; done: boolean }>;
 }
 
 export type End = "done" | "capped" | "stuck";
@@ -268,6 +271,30 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
     meanFinished: costs.length ? costs.reduce((a, b) => a + b, 0) / costs.length : NaN,
     median: q(0.5), p90: q(0.9), p10: q(0.1), uses, boxes, edges,
     restarts: people.reduce((a, p) => a + p.restarts, 0) / (n || 1),
+    startCost, persons: people.map((p) => ({ cost: p.cost, restarts: p.restarts, done: p.end === "done" })),
+  };
+}
+
+/**
+ * ベースの値段を替えた時に回し直さず数字だけ足し直す (10-25 オーナー「ベースの値段設定したら普通に回しなおさなくてもそのまま追加したらいいのでは」)。
+ * 1 人の費用 = 手の費用 + ベースの値段 × (1 + 作り直しの回数)。作り直しにはフラクチャーの「2 回外れ」(FRACTURE_MISS) も入っている。
+ * 1 個・平均・中央・安い / 高い 10% を出し直す。箱ごとの来た時の費用は、着く前の作り直しを数えていないので、ベースの値段 1 個分だけずらす。
+ * 打ち止め (神の上限) の判定は回した時の値段のまま
+ */
+export function withStartCost(r: TreeRunResult, startCost: number): TreeRunResult {
+  const d = startCost - r.startCost;
+  if (!d || !r.persons) return r;
+  const persons = r.persons.map((p) => ({ ...p, cost: p.cost + d * (1 + p.restarts) }));
+  const total = persons.reduce((a, p) => a + p.cost, 0);
+  const costs = persons.filter((p) => p.done).map((p) => p.cost).sort((a, b) => a - b);
+  const q = (p: number): number => (costs.length ? costs[Math.min(costs.length - 1, Math.floor(p * costs.length))]! : NaN);
+  const boxes: Record<string, BoxStat> = {};
+  for (const [id, b] of Object.entries(r.boxes)) boxes[id] = { ...b, costIn: b.visits ? b.costIn + d : b.costIn };
+  return {
+    ...r, startCost, persons, boxes,
+    perItem: r.finished ? total / r.finished : NaN,
+    meanFinished: costs.length ? costs.reduce((a, b) => a + b, 0) / costs.length : NaN,
+    median: q(0.5), p90: q(0.9), p10: q(0.1),
   };
 }
 
