@@ -5,15 +5,18 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
+import TreeBoxMods from "./TreeBoxMods.vue";
+import { craftStage as s } from "../../../state/craft-stage";
+import { shapeSampleOf } from "../../../services/simulator/tree/tree-sample-shape";
+import { treeRowTags } from "./tree-row-tags";
 import { splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
 import { boxAims, BOX_H, BOX_W, fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type TreeBox } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { useTree } from "./use-tree";
-import { handName, headOf, OUT_LOOK, rarityName, splitWhenText } from "./tree-names";
-import { effectOf } from "../../../services/simulator/tree/tree-hands";
+import { headOf, OUT_LOOK, rarityName, splitWhenText } from "./tree-names";
 import { pctText, useTreeOdds } from "./tree-odds";
-import { orphanHits, routeText } from "./tree-fail";
+import { orphanHits } from "./tree-fail";
 import { joinLook, useTreeJoin } from "./use-tree-join";
 
 const props = defineProps<{ box: TreeBox; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
@@ -36,8 +39,9 @@ const emit = defineEmits<{
   checked: [];
 }>();
 const t = useTree();
-/** 打った後の箱の親の手がエッセンス (狙いで無い MOD が付くだけ、tree-hand-plan の applyPick) なら、その名前で「〜の MOD が付いた」と出す (10-25 オーナー) */
-const essOf = computed((): string | null => { const h = props.box.parent ? t.doc.value.boxes[props.box.parent]?.hand : null; return h && effectOf(h.currency) === "essence" ? handName(h.currency) : null; });
+/** 箱の中の今のアイテムの枠 (乗せた時のカードと同じ部品を縮める。見本は箱の形に合う人、10-26 オーナー「枠は現状のアイテムの枠が表示してあげたら？いまカードで表示してる情報」) */
+const cardItem = computed(() => (s.data.value && props.box.out !== "start" ? shapeSampleOf(s.data.value, t.doc.value, props.box.id) : null));
+const cardTags = computed(() => (s.data.value && cardItem.value ? treeRowTags(s.data.value, t.doc.value, props.box.unwanted ?? [], cardItem.value, props.box) : null));
 /** 要確認 (古い版・壊れたレシピで読めなかった所、tree-migrate) の文 */
 const CHECK_PART = { out: ["結果の種類", "result kind"], aim: ["狙い", "target"], hand: ["打つ手", "craft"], link: ["矢印の先", "link"] } as const;
 const checkTitle = computed(() => (props.box.check ?? []).map((k) => tr(CHECK_PART[k][0], CHECK_PART[k][1])).join(" · "));
@@ -63,14 +67,11 @@ const doneText = computed(() => (props.box.done ? tr("完成", "Done") : tr("完
 /** 下の＋を出す (完成の箱からも伸ばせる。手を付けると完成の印は外れ、同じ形の完成の箱もそこへ戻る、tree-merge の joinSameShape) */
 // 戻りのある箱からも伸ばせる (手を付けると戻りは外れる = setHand。前は × で戻りを外さないと＋が出なかった、10-26 失敗時の挙動の洗い出しの 2)
 const free = computed(() => !props.box.hand && !props.box.split);
-/** 失敗の箱の行き先の文 (tree-fail) と、何が起きたかの文 */
-const route = computed(() => routeText(t.doc.value, props.box.id));
 /** 上の帯の「まとめる」で箱を選んでいる間の見え方 (use-tree-join.ts。箱ごとの「まとめる」は 10-26 に外した = 引いた時に箱の外へ溢れた、オーナー「拡大バグ」) */
 const jl = computed(() => joinLook(t.doc.value, props.box.id));
 const join = useTreeJoin();
 /** 完成の狙いから外した MOD の当たりの箱 (tree-fail の orphanHits) */
 const orphan = computed(() => props.box.out === "hit" && orphanHits(t.doc.value).includes(props.box.id));
-const desc = computed(() => props.box.out === "junk" ? tr("当たり以外が付いた", "Anything but a hit") : props.box.out === "junkGone" ? tr("外れの MOD が消えた", "A miss mod was removed") : props.box.out === "any" ? (essOf.value ? tr(`${essOf.value} の MOD が付いた`, `${essOf.value} mod added`) : tr("何かが 1 つ付いた (狙い無し)", "Something was added (no target)")) : tr("狙いの MOD が消えた", "A target mod was removed"));
 /** 分かれ目の先の箱の文 = 親の分かれ目の行の条件 */
 const branchText = computed(() => { const r = props.box.parent ? t.doc.value.boxes[props.box.parent]?.split?.find((x) => x.to === props.box.id) : null; return r ? splitWhenText(r.when) : ""; });
 /** 押せる物を隠す時 (戻り先を選んでいる・一望) */
@@ -127,7 +128,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     :style="{ ...(x === undefined ? {} : { left: `${x}px`, top: `${y}px` }), width: `${BOX_W}px`, height: `${BOX_H}px`, ...neon }" :title="picking && linkNo ? linkNo : undefined" @pointerdown="down" @pointerenter="emit('hover', true)" @pointerleave="emit('hover', false)">
     <!-- 縮めている時 (k > 1) は押せる物の行を倍率分高くし、まだ「—」だけの数字の行は隠す (箱が小さくても押せる物どうしが重ならない) -->
     <!-- 題は枠の上の線に乗る札 (よくある枠の形。枠の中は割合・中身・戻り方だけ。10-26 オーナー「枠の上のところに●がついた みたいな形でよくある枠の形にしたら枠中ごちゃんなくていいよな」) -->
-    <span data-tree-legend class="pointer-events-none absolute -top-[10px] left-2 flex max-w-[calc(100%-16px)] items-center gap-1 rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="{ color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :title="headTitle"><Icon :name="kind.icon" class="size-3 shrink-0" /><span class="min-w-0 truncate">{{ head }}</span></span>
+    <component :is="box.out === 'hit' && box.aim && !quiet ? 'button' : 'span'" :type="box.out === 'hit' && box.aim && !quiet ? 'button' : undefined" data-tree-legend class="nodrag absolute -top-[10px] left-2 flex max-w-[calc(100%-16px)] items-center gap-1 rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="{ color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :class="box.out === 'hit' && box.aim && !quiet ? 'hover:brightness-125' : 'pointer-events-none'" :title="box.out === 'hit' && box.aim ? tr(`${headTitle} (押すと付く MOD を選び直す)`, `${headTitle} (click to change the mod)`) : headTitle" @click.stop="box.out === 'hit' && box.aim && !quiet && emit('aim')"><Icon :name="kind.icon" class="size-3 shrink-0" /><span class="min-w-0 truncate">{{ head }}</span></component>
     <div class="flex items-center gap-1.5" :style="{ height: `${24 * k}px` }">
       <!-- この結果に着く割合 (親の箱のアイテム × 手、エンジンの outcomeOdds。tree-odds.ts) -->
       <span v-if="odds != null" data-tree-odds class="shrink-0 text-[11px] tabular-nums opacity-80" :title="tr('この手でこの結果になる割合 (1 手分、エンジンから)', 'Chance of this result from the craft (one use, from the engine)')">{{ pctText(odds) }}</span>
@@ -159,13 +160,15 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
         </div>
         <p v-if="startRest" data-tree-start-rest class="truncate text-[12px] opacity-70" :title="t.baseCost.value?.best ? `${tr('一番安い始め方', 'Cheapest start')}: ${t.baseCost.value.best.label} · ${startRest}` : startRest" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }">{{ startRest }}</p>
       </template>
-      <button v-else-if="box.out === 'hit'" type="button" class="nodrag block w-[calc(100%-14px)] truncate text-left text-[13px] hover:underline" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :class="[box.aim ? 'text-[#c8c8ff]' : 'text-amber-300', quiet ? 'pointer-events-none' : '']" :title="t.boxAimLabel(box)" @click.stop="!quiet && emit('aim')">
+      <button v-else-if="box.out === 'hit' && !box.aim" type="button" class="nodrag block w-[calc(100%-14px)] truncate text-left text-[13px] hover:underline" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :class="[box.aim ? 'text-[#c8c8ff]' : 'text-amber-300', quiet ? 'pointer-events-none' : '']" :title="t.boxAimLabel(box)" @click.stop="!quiet && emit('aim')">
         {{ box.aim ? t.boxAimLabel(box) : tr("＋ 付く MOD を選ぶ", "+ Pick the mod") }}
       </button>
       <p v-else-if="box.out === 'branch'" data-tree-branch-text class="truncate leading-6 text-teal-100" :title="branchText">{{ branchText }}</p>
       <!-- 失敗の箱は戻りがあれば「どこへ・なぜ」の文 (tree-fail の routeText、名前は下の札。10-26 オーナー「失敗時の挙動を作りこむ」の案 2)、無ければ何が起きたか -->
-      <p v-else-if="route" data-tree-route class="truncate leading-6 text-cyan-200/90" :title="`${desc} · ${route}`">{{ route }}</p>
-      <p v-else class="truncate leading-6 opacity-60">{{ box.out === "junk" ? tr("当たり以外が付いた", "Anything but a hit") : box.out === "junkGone" ? tr("外れの MOD が消えた", "A miss mod was removed") : box.out === "any" ? (essOf ? tr(`${essOf} の MOD が付いた`, `${essOf} mod added`) : tr("何かが 1 つ付いた (狙い無し)", "Something was added (no target)")) : tr("狙いの MOD が消えた", "A target mod was removed") }}</p>
+    </div>
+    <!-- 今のアイテムに付いている MOD の並び (札と同じ MOD は繰り返さない。10-26 オーナー「枠ない整理しようか被ってるしつくMOD整理してくれ」「スピリットがついたで下にすぐスピリットとか書かんくてええしな」) -->
+    <div v-if="cardItem" data-tree-box-card class="pointer-events-none absolute inset-x-2 overflow-hidden" :style="{ top: `${(box.out === 'branch' || (box.out === 'hit' && !box.aim) ? 48 : 26)}px`, bottom: '32px' }">
+      <TreeBoxMods :item="cardItem" :tags="cardTags" :box="box" />
     </div>
 
 
