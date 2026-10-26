@@ -1,4 +1,7 @@
 {
+  "0.1.629": [
+    "Simulator: In the craft picker, checking even one target mod now also makes hit boxes for the other targets that can roll (so a landed target no longer stops at a hit with nowhere to go). Automatic merging of same-shape hits now includes boxes on earlier steps"
+  ],
   "0.1.628": [
     "Emulator: \"To the simulator →\" now keeps the ✦ mark on fractured mods (when going to the tree, you choose \"From fractured\" or a guaranteed fracture from white for that mod)"
   ],
