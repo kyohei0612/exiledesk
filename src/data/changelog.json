@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.619",
+  "date": "2026-10-26",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "最初の画面がフォントの読み込みを待たずに出るように",
+    "en": "The first screen now shows without waiting for the web fonts to load"
+   }
+  ]
+ },
+ {
   "v": "0.1.618",
   "date": "2026-10-26",
   "items": [
@@ -835,30 +847,6 @@
     "area": "",
     "text": "シェアから開いたスパムシミュレーターで、シェアされた道以外の運試しを押すと順位がいつも上位 1% になっていたのを直しました (運試しはシェアされた道で。自分で計算すると全部の道でできます)",
     "en": "Fixed the Spam simulator opened from a share: luck tests on routes other than the shared one always ranked top 1% (luck tests now use the shared route; calculate yourself to test every route)"
-   }
-  ]
- },
- {
-  "v": "0.1.579",
-  "date": "2026-10-19",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "スパムシミュレーターは狙いを選んでもすぐには計算せず、「計算開始」を押した時に計算するように。計算中は同じボタンで中止できます",
-    "en": "The Spam simulator no longer calculates as soon as you pick a target; press “Start” to run it. The same button stops it while it runs"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "計算中も画面が固まらないように。スマホは 1 通り 10 人で比べます",
-    "en": "The screen no longer freezes while calculating. On phones each route is compared with 10 runs"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "運試しのシェアから開いた人は、シェアした人の計算済みの結果ですぐ運試しができるように",
-    "en": "Opening a shared luck test now shows the sharer’s results right away, ready for your own luck test"
    }
   ]
  }

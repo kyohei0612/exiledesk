@@ -1,4 +1,7 @@
 {
+  "0.1.619": [
+    "The first screen now shows without waiting for the web fonts to load"
+  ],
   "0.1.618": [
     "Simulator: More room for the tree. The finished-item settings panel no longer floats over the tree and now sits at the top of the right column, with the minimap and zoom tools below it. The list of what is missing opens only when you press \"n missing ▾\" in the top bar (click outside or press Esc to close), and the hint strip above the tree is no longer shown"
   ],
