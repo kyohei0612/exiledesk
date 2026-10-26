@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.618",
+  "date": "2026-10-26",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ツリーの枠を広く。完成形の設定の窓は木の上に浮かせず右の列の一番上へ、その下にミニマップと倍率の道具を並べました。足りない所の一覧は上の帯の「足りない所 n ▾」を押した時だけ開く窓に (枠の外を押す・Esc で閉じる)。木の上の案内の帯は出さないようにしました",
+    "en": "Simulator: More room for the tree. The finished-item settings panel no longer floats over the tree and now sits at the top of the right column, with the minimap and zoom tools below it. The list of what is missing opens only when you press \"n missing ▾\" in the top bar (click outside or press Esc to close), and the hint strip above the tree is no longer shown"
+   }
+  ]
+ },
+ {
   "v": "0.1.617",
   "date": "2026-10-26",
   "items": [
@@ -847,36 +859,6 @@
     "area": "",
     "text": "運試しのシェアから開いた人は、シェアした人の計算済みの結果ですぐ運試しができるように",
     "en": "Opening a shared luck test now shows the sharer’s results right away, ready for your own luck test"
-   }
-  ]
- },
- {
-  "v": "0.1.578",
-  "date": "2026-10-19",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "スパムシミュレーターを足しました (カレンシーの見出しのボタンから)。狙う MOD を 1 つ選ぶと、増強・カオス・高貴のスパムをそれぞれ完全・上級・無印で 100 人ずつ打って、どれが一番安く着くかを比べます。「再計算」で別の 100 人にもできます",
-    "en": "Added the Spam simulator (button next to Currency). Pick one target mod and it runs augment, chaos and exalt spam 100 times each at Perfect, Greater and Regular grades to show which gets there cheapest. “Recompute” runs a different 100"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "運試し: 一番安い道 (どの道・等級でも選べます) で自分もスパムして、100 人の中の順位を出します。かなりの強運は特別な演出、結果は X でシェアできます。「ここから開始」でそのアイテムのままエミュレーターへ",
-    "en": "Luck test: spam it yourself on the cheapest route (or any route and grade) and see your rank among the 100. Exceptional luck gets a special effect, and you can share the result on X. “Continue from here” takes that item to the Emulator"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "ルーンを嵌めたまま比べられるように (セールの凱旋・コルの狩りなどの特殊 MOD のルーン)。特殊 MOD も狙えます",
-    "en": "Compare with runes socketed (Serle’s Triumph and special-mod runes like Kolr’s Hunt). Special mods can be targeted too"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "カオススパム計算機はスパムシミュレーターにまとめました (前の計算機のシェアの URL はスパムシミュレーターで開きます)",
-    "en": "The Chaos spam calculator is now part of the Spam simulator (old calculator share links open the Spam simulator)"
    }
   ]
  }
