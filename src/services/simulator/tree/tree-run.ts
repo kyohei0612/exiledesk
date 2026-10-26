@@ -71,6 +71,8 @@ export interface TreeRunResult {
   stuckAt: Record<string, number>;
   /** 手が打てずに止まった箱の、最初の 1 人の理由・着いた形・通った戻りの箱 (古い順、重ねない)。精査がどの外れ・どの戻りが元かを出す (10-22) */
   stuckWhy: Record<string, { reason: string; item: StageItem; backs: string[]; noBox?: boolean; /** 当たるまでを この回数打っても当たらずに止まった (untilHit) */ spam?: number }>;
+  /** 打ち止めの人が最後の方で一番多く通った箱 (輪から出られない所。テスト走行の「どこでループしたか」、10-27 オーナー) */
+  loopAt: Record<string, number>;
   /** 手の結果に合う結果の箱が無かった人数 (箱ごと。結果が 1 通りとして箱を 1 つにした手で別の結果が出た等。形の合う箱があればそこへ進み、無ければ止まり) */
   unexpected: Record<string, number>;
   /** 着いた箱 (手の結果の箱・戻り先) の形が実物と違い、形の合う箱へ移した人数 (箱ごと、settle。照らしの台本は形合わせを辿らないので、これのある木は比べ方が違う、10-24) */
@@ -236,6 +238,14 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
   const stuckAt: Record<string, number> = {};
   const stuckWhy: TreeRunResult["stuckWhy"] = {};
   for (const p of people) if (p.end === "stuck") { stuckAt[p.at] = (stuckAt[p.at] ?? 0) + 1; if (p.why && !stuckWhy[p.at]) stuckWhy[p.at] = { ...p.why, backs: [...new Set(p.visits.map((v) => v.box).filter((id) => doc.boxes[id]?.back))] }; }
+  const loopAt: Record<string, number> = {};
+  for (const p of people) {
+    if (p.end !== "capped") continue;
+    const tally = new Map<string, number>();
+    for (const v of p.visits.slice(-200)) tally.set(v.box, (tally.get(v.box) ?? 0) + 1);
+    const top = [...tally].sort((a, z) => z[1] - a[1])[0]?.[0];
+    if (top) loopAt[top] = (loopAt[top] ?? 0) + 1;
+  }
   const unexpected: Record<string, number> = {};
   for (const p of people) for (const id of p.odd) unexpected[id] = (unexpected[id] ?? 0) + 1;
   const moved: Record<string, number> = {};
@@ -267,7 +277,7 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
     n, finished: fin.length,
     capped: people.filter((p) => p.end === "capped").length,
     stuck: people.filter((p) => p.end === "stuck").length,
-    stuckAt, stuckWhy, unexpected, moved, perItem,
+    stuckAt, stuckWhy, loopAt, unexpected, moved, perItem,
     meanFinished: costs.length ? costs.reduce((a, b) => a + b, 0) / costs.length : NaN,
     median: q(0.5), p90: q(0.9), p10: q(0.1), uses, boxes, edges,
     restarts: people.reduce((a, p) => a + p.restarts, 0) / (n || 1),

@@ -48,7 +48,7 @@ import TreePanelPage from "./TreePanelPage.vue";
 import BusyTag from "../../../components/ui/BusyTag.vue";
 import { useTreeTune } from "./use-tree-tune";
 import { useTreeReveal } from "./use-tree-reveal";
-import { RUN_N, useTreeRun } from "./use-tree-run";
+import { RUN_N, TEST_N, useTreeRun } from "./use-tree-run";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue";
 import { applyPick, type OnlyOut } from "./tree-hand-plan";
@@ -305,7 +305,7 @@ onMounted(() => setLeaveGuard((to) => !(to === "page=recipes" || to.startsWith("
 onBeforeUnmount(() => { setLeaveGuard(null); window.removeEventListener("pagehide", rememberResume); if (!recipesPage.value) { rememberResume(); t.resetAll(); } }); onMounted(() => window.addEventListener("pagehide", rememberResume));
 const busy = computed((): { text: string; n?: number; of?: number } | null => {
   if (!s.data.value) return { text: tr("読み込み中", "Loading") };
-  if (tr100.running.value) return { text: tr("回している", "Running"), n: tr100.result.value?.n ?? 0, of: RUN_N };
+  if (tr100.running.value) return { text: tr("回している", "Running"), n: tr100.result.value?.n ?? 0, of: tr100.test.value ? TEST_N : RUN_N };
   const r = rv.run.value;
   return r ? { text: tr("読み込み中", "Loading"), n: r.n, of: r.of } : t.baseCostBusy.value ? { text: tr("始まりの値段を計算中", "Pricing the start") } : null;
 });
@@ -425,8 +425,8 @@ const phone = usePhone(), simPhone = flag("simPhone");
         <TreeIssues v-if="issues?.length && issuesShown && issuesOpen" class="absolute left-0 top-full z-40 mt-1" :issues="issues" :busy="checkBusy" :lower="false" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" />
         <TreeRecipeBar v-if="t.needBase.value" @opened="v.openView()" />
         <template v-else>
-          <TreeRunBar v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking, passed, holes: issues?.length ?? 0, shown: issuesShown }" :halted="tr100.halted.value" @test="onCheck" @holes="issuesShown = !issuesShown" @holes-on="openIssues" @list="issuesOpen ? (issuesOpen = false) : openIssues()" @run="tr100.run" @go="goIssue" />
-          <TreeRunSum class="max-[1099px]:hidden" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" @go="goIssue" @skip="tr100.skipWalk" />
+          <TreeRunBar v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking, passed, holes: issues?.length ?? 0, shown: issuesShown }" :halted="tr100.halted.value" :drive="tr100.test.value" @test="() => { void onCheck(); void tr100.run({ test: true }); }" @holes="issuesShown = !issuesShown" @holes-on="openIssues" @list="issuesOpen ? (issuesOpen = false) : openIssues()" @run="tr100.run" @go="goIssue" />
+          <TreeRunSum class="max-[1099px]:hidden" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" :test="tr100.test.value" @go="goIssue" @skip="tr100.skipWalk" />
         </template>
         <!-- ベースが無い空の形でも、ほかの木があればタブを出す (前の木へ戻れない行き止まりだった、10-24 夜オーナー「一方通行が多い」) -->
         <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" compact class="min-w-0 flex-1" @switched="v.openView()" />
@@ -512,7 +512,7 @@ const phone = usePhone(), simPhone = flag("simPhone");
             <!-- 名前・保存・レシピ (帯の 1 段目の残り、10-26 夜オーナー「この 1 段目はアイテム欄の下でおけ」)。1100px 未満は回した結果もここ -->
             <div data-tree-side-recipe class="flex min-w-0 shrink-0 flex-wrap items-center gap-2 text-[13px]">
               <TreeRecipeBar @opened="v.openView()" />
-              <TreeRunSum class="basis-full flex-wrap min-[1100px]:hidden" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" @go="goIssue" @skip="tr100.skipWalk" />
+              <TreeRunSum class="basis-full flex-wrap min-[1100px]:hidden" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" :test="tr100.test.value" @go="goIssue" @skip="tr100.skipWalk" />
             </div>
             <TreeCanvasTools v-model:hand="hand" :boxes="rv.visible.value" :view="v.view.value" :zoom="zoom" @center="v.centerOn" @fit="v.fit" @zoom-in="v.zoomIn" @zoom-out="v.zoomOut" @reset="v.resetZoom" />
           </div>

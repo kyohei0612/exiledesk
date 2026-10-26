@@ -15,7 +15,8 @@ import { useTree } from "./use-tree";
 import { handLabel, handName, outName, startName } from "./tree-names";
 import { tr } from "../../../i18n/lang";
 
-const props = defineProps<{ result: TreeRunResult }>();
+/** test = テスト走行の結果 (10-27 オーナー: 足りない所があっても回し、どの箱で何人止まった・どこでループしたか。費用の欄は出さない) */
+const props = defineProps<{ result: TreeRunResult; test?: boolean }>();
 const emit = defineEmits<{ close: []; go: [id: string] }>();
 const t = useTree();
 
@@ -32,6 +33,10 @@ const rest = computed(() => uses.value.slice(SHOW).reduce((a, u) => a + u.div, 0
 /** 一番お金を使った箱 (1 人あたり、上位 3) */
 const spend = computed(() => Object.entries(props.result.boxes).filter(([, b]) => b.spend > 0.005).sort((a, z) => z[1].spend - a[1].spend).slice(0, 3));
 const stuck = computed(() => Object.entries(props.result.stuckAt).sort((a, z) => z[1] - a[1]));
+/** ループ (打ち止めの人が一番回っていた箱、多い順) */
+const loops = computed(() => Object.entries(props.result.loopAt ?? {}).sort((a, z) => z[1] - a[1]));
+/** 止まった理由 (最初の 1 人、tree-run の stuckWhy) */
+const whyOf = (id: string): string => props.result.stuckWhy[id]?.reason ?? "";
 /** 取引所で探す (開くだけ、値段は手で入れる。ノーマル = 白、フラクチャー済み = ✦ の MOD がフラクチャー、ほかは ✦ が無いので探せない) */
 const ts = useTreeSearch();
 const searchKind = computed((): TreeSearchKind | null => (startsFractured(t.doc.value) ? "fractured" : startRarity(t.doc.value) === "normal" ? "white" : null));
@@ -41,10 +46,28 @@ const priceIn = computed(() => startOf(t.doc.value).price ?? null);
 <template>
   <section data-tree-run-report class="nodrag nopan pointer-events-auto absolute right-3 top-3 z-40 flex max-h-[calc(100%-24px)] w-[360px] flex-col overflow-hidden rounded-xl border border-amber-400/40 bg-[#14100b]/[0.97] text-[13px] text-[#e6dcc6] shadow-[0_10px_30px_rgba(0,0,0,0.7)] max-md:inset-x-2 max-md:bottom-2 max-md:top-auto max-md:max-h-[72%] max-md:w-auto">
     <header class="flex items-center gap-2 border-b border-white/10 px-3 py-2">
-      <b class="text-[14px] text-amber-200">{{ tr(`${result.n} 人回した結果`, `Result of ${result.n} runs`) }}</b>
+      <b class="text-[14px] text-amber-200">{{ test ? tr(`テスト走行 ${result.n} 人の結果`, `Test drive: ${result.n} runs`) : tr(`${result.n} 人回した結果`, `Result of ${result.n} runs`) }}</b>
       <button type="button" data-tree-run-report-close class="g-btn sm ml-auto" @click="emit('close')">{{ tr("木に戻る", "Back to tree") }}</button>
     </header>
     <div class="flex min-h-0 flex-col gap-3 overflow-y-auto px-3 py-3">
+      <!-- テスト走行: 完成・止まり・ループの人数と、止まった箱 (理由)・ループの箱。押すとその箱へ -->
+      <div v-if="test" data-tree-test-drive class="flex flex-col gap-2">
+        <div class="flex flex-wrap items-baseline gap-x-3 tabular-nums">
+          <span class="text-[20px] font-bold text-amber-100">{{ tr(`完成 ${result.finished} 人`, `${result.finished} finished`) }}</span>
+          <span :class="result.stuck ? 'text-rose-300' : 'text-[#a99d86]'">{{ tr(`止まり ${result.stuck} 人`, `${result.stuck} stuck`) }}</span>
+          <span :class="result.capped ? 'text-rose-300' : 'text-[#a99d86]'">{{ tr(`ループ ${result.capped} 人`, `${result.capped} looping`) }}</span>
+        </div>
+        <p v-if="!result.stuck && !result.capped" class="text-emerald-300">{{ tr("止まった人・ループした人はいない", "No run got stuck or looped") }}</p>
+        <div v-if="stuck.length" class="rounded-md border border-rose-400/40 bg-rose-900/20 px-2 py-1.5">
+          <h4 class="mb-1 text-[12px] text-rose-200">{{ tr("止まった箱 (直すと先へ進む)", "Where runs got stuck (fix these)") }}</h4>
+          <button v-for="[id, n] in stuck" :key="id" type="button" data-tree-test-drive-stuck class="block w-full break-words py-0.5 text-left text-[12px] text-rose-100 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} で ${n} 人`, `${n} at ${boxName(id)}`) }}<span v-if="whyOf(id)" class="block text-[11px] text-rose-200/70">{{ whyOf(id) }}</span></button>
+        </div>
+        <div v-if="loops.length" class="rounded-md border border-amber-400/40 bg-amber-900/20 px-2 py-1.5">
+          <h4 class="mb-1 text-[12px] text-amber-200">{{ tr("ループした箱 (手の上限まで回っても抜けない)", "Where runs looped (never got out)") }}</h4>
+          <button v-for="[id, n] in loops" :key="id" type="button" data-tree-test-drive-loop class="block w-full break-words py-0.5 text-left text-[12px] text-amber-100 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} の辺りで ${n} 人`, `${n} around ${boxName(id)}`) }}</button>
+        </div>
+      </div>
+      <template v-else>
       <!-- 1 個の平均・完成率 -->
       <div class="flex items-baseline gap-3">
         <span class="text-[26px] font-bold tabular-nums text-amber-100">{{ div(result.perItem) }}<small class="ml-1 text-[14px] font-normal">{{ tr("神 / 1 個", "div / item") }}</small></span>
@@ -72,15 +95,16 @@ const priceIn = computed(() => startOf(t.doc.value).price ?? null);
         <div class="text-rose-200">{{ tr(`止まり ${result.stuck} 人 · 打ち止め ${result.capped} 人`, `${result.stuck} stuck · ${result.capped} capped`) }}</div>
         <button v-for="[id, n] in stuck" :key="id" type="button" class="block w-full truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words text-left text-[12px] text-rose-100 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} で ${n} 人`, `${n} at ${boxName(id)}`) }}</button>
       </div>
+      </template>
       <!-- 一番お金を使った箱 -->
-      <div v-if="spend.length">
+      <div v-if="spend.length && !test">
         <h4 class="mb-1 text-[12px] text-[#a99d86]">{{ tr("一番お金を使った箱 (1 人あたり)", "Most expensive boxes (per run)") }}</h4>
         <button v-for="([id, b], i) in spend" :key="id" type="button" data-tree-run-report-spend class="flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left hover:bg-white/[0.06]" @click="emit('go', id)">
           <span class="w-4 shrink-0 text-amber-300">{{ i + 1 }}</span><span class="min-w-0 flex-1 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words">{{ boxName(id) }}</span><span class="shrink-0 tabular-nums text-amber-100">{{ div(b.spend) }} {{ tr("神", "div") }}</span>
         </button>
       </div>
       <!-- カレンシー別 -->
-      <div>
+      <div v-if="!test">
         <h4 class="mb-1 text-[12px] text-[#a99d86]">{{ tr("使った物 (1 人あたり)", "Used (per run)") }}</h4>
         <div v-for="u in uses.slice(0, SHOW)" :key="u.k" class="flex items-center gap-2 py-0.5">
           <span class="min-w-0 flex-1 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words">{{ u.name }}</span>

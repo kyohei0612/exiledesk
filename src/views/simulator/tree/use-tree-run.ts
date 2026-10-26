@@ -15,6 +15,11 @@ import { track } from "../../../utils/track";
 
 /** 回す人数 (帯の「100 人回した時」と同じ)。seed は台本・解析君と同じ 1 */
 export const RUN_N = 100;
+/**
+ * テスト走行の人数 (10-27 オーナー「テストで回す」: 足りない所があっても断らず回し、どの箱で何人止まったか・どこでループしたかを出す。
+ * 「変な作りでも普通にカレンシーを付けた時の動きだから止まる事は無いでしょ、ループはあると思うけど。それで止まる所が分かる」)。1 人目の歩きは見せず、止まった人が出ても止めない
+ */
+export const TEST_N = 30;
 /** 途中の結果を出す間隔 (人) と、その間の最低の間 (ms)。速い木でも 3 秒ほどかけて数字が増えていくのが見える (オーナー「ヌルヌルとカウントアップ」) */
 const EVERY = 2;
 const PACE_MS = 60;
@@ -45,20 +50,23 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
   const shown = ref(true);
   /** 止まった人が出て途中で止めた時の箱と人数 (10-22 オーナー「止まった瞬間 100 人回すの止めて修正しなよ」) */
   const halted = ref<{ box: string; n: number } | null>(null);
+  /** 今の結果がテスト走行か (帯・まとめの文と、費用を出さない) */
+  const test = ref(false);
   /** 1 人目が進んでいる所 (今いる箱・何手目 / 全部・着いた時の費用 神・早送り中か) */
   const walk = ref<{ box: string; step: number; total: number; cost: number; ms: number; trail: ReadonlySet<string>; fast: boolean } | null>(null);
   /** 1 人目を飛ばす (帯の「飛ばす」) */
   let skip = false;
   let token = 0;
   // 組み替えたら結果を消す (回している途中なら止める)
-  watch(() => routeKeyOf(doc.value), () => { token++; raw.value = null; running.value = false; halted.value = null; walk.value = null; });
-  async function run(): Promise<void> {
+  watch(() => routeKeyOf(doc.value), () => { token++; raw.value = null; running.value = false; halted.value = null; walk.value = null; test.value = false; });
+  /** opt.test = テスト走行 (TEST_N 人、1 人目の歩きは飛ばす、止まった人が出ても止めない) */
+  async function run(opt: { test?: boolean } = {}): Promise<void> {
     const data = s.data.value;
     if (!data || running.value) return;
     // 記録の印 (1 押し 1 回、PC・スマホとも。画面を離れる時にまとめて POST /log、10-25 オーナー「回すボタンに記録足して」)
-    track("sim:run");
+    track(opt.test ? "sim:test" : "sim:run");
     const my = ++token;
-    running.value = true; shown.value = true; raw.value = null; halted.value = null; skip = false;
+    running.value = true; shown.value = true; raw.value = null; halted.value = null; test.value = !!opt.test; skip = !!opt.test;
     const d = doc.value;
     // 相場は高貴建て → 神に直す (tree-base-cost と同じ。そのまま渡すと 2000 神の打ち止めに当たって完成 8% になった、10-22 開発版で見た)
     const div = priceOf("divine") || 1;
@@ -69,7 +77,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
     const firstOf: { p: Person1 | null } = { p: null };
     // 1 人目が進む間は層の数字を出さない (光る箱だけ)
     let walking = true;
-    const g = runTreeSteps(data, d, { n: RUN_N, seed: 1, price: priceIn, startCost: startCost(), every: 1,
+    const g = runTreeSteps(data, d, { n: opt.test ? TEST_N : RUN_N, seed: 1, price: priceIn, startCost: startCost(), every: 1,
       onProgress: (r) => { last = r; if (my === token && !walking) raw.value = r; },
       onPerson: (p, i) => { if (!i) firstOf.p = p; } });
     try {
@@ -120,7 +128,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
       walk.value = null; walking = false;
       raw.value = f0.done ? f0.value : last;
       // 1 人目が止まったら残りは回さない (止まった箱を直してから回し直す)
-      if (p1.end === "stuck") { halted.value = { box: p1.at, n: 1 }; onHalt(p1.at); return; }
+      if (p1.end === "stuck" && !opt.test) { halted.value = { box: p1.at, n: 1 }; onHalt(p1.at); return; }
       if (f0.done) return;
       let t0 = performance.now();
       for (;;) {
@@ -129,7 +137,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
         if (r.done) { raw.value = r.value; break; }
         // 1 人でも止まったらそこで止める (直してから回し直す)。打ち止め (神・手の上限) は止まりではないので続ける
         const st = last ? Object.keys((last as TreeRunResult).stuckAt)[0] : undefined;
-        if (st) { halted.value = { box: st, n: r.value }; onHalt(st); break; }
+        if (st && !opt.test) { halted.value = { box: st, n: r.value }; onHalt(st); break; }
         // 飛ばした後は数字をゆっくり増やす間を取らず、30ms 計算するごとに画面を返すだけ
         // (前は飛ばしても 2 人ごとに間を取り、見本のアミュで結果まで 19 秒かかった。計算だけなら 100 人で 2 秒ほど、10-23 モンキー 7)
         if (skip) { if (performance.now() - t0 < 30) continue; await new Promise((res) => setTimeout(res, 0)); t0 = performance.now(); continue; }
@@ -141,5 +149,5 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
   }
   /** 止まり・打ち止めの箱 (多い順) */
   const stuckBoxes = computed(() => Object.entries(result.value?.stuckAt ?? {}).sort((a, z) => z[1] - a[1]));
-  return { result, running, shown, halted, walk, run, skipWalk: (): void => { skip = true; }, stuckBoxes };
+  return { result, running, shown, halted, walk, test, run, skipWalk: (): void => { skip = true; }, stuckBoxes };
 }
