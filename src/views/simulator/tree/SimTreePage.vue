@@ -66,7 +66,8 @@ const doc = t.doc;
 useTreeTune(doc, t.edit);
 
 /** 右の欄 (箱を選んだ時だけ) */
-const panel = ref<{ kind: "hand" | "aim" | "start" | "note" | "base" | "split"; id: string } | null>(null);
+/** add = 横の ＋ で開いた選ぶ窓 (id は押した横の箱。選んで決めた時に初めて箱を足す、at = 引っ張って置いた所) */
+const panel = ref<{ kind: "hand" | "aim" | "start" | "note" | "base" | "split"; id: string; add?: { at?: { x: number; y: number } } } | null>(null);
 /** 戻りの矢印の先を選んでいる箱 */
 const picking = ref<string | null>(null);
 /** メモの窓を開いているか (このブラウザに覚える。無くても使える) */
@@ -236,22 +237,28 @@ useDismiss(() => !!panel.value, [], closeHand, { swallow: false, keep: "[data-tr
 function clearHandOf(): void { const id = panel.value!.id; t.edit((d) => clearHand(d, id)); panel.value = null; }
 function pickAim(a: Aim): void {
   const p = panel.value!;
-  t.edit((d) => setAim(d, p.id, a));
   panel.value = null;
+  if (p.add) { const at = p.add.at, b = doc.value.boxes[p.id]; if (b) addHitWith(b, a, at); return; }
+  t.edit((d) => setAim(d, p.id, a));
+}
+/** 横の ＋ で選んで決めた狙いの当たりの箱を足す。押した側 (この箱のすぐ右) に置き、横の箱はずらして整列まで (10-26 夜オーナー「横の＋置いたら置いた側に即配置で、横はそのままずらして、位置の整頓まで」)。引っ張って置いた所に置く時はその所のまま */
+function addHitWith(b: Box, a: Aim, at?: { x: number; y: number }): void {
+  t.edit((d) => {
+    const made = addHit(d, b.parent!, b.id);
+    if (!made) return;
+    setAim(d, made, a);
+    if (at) moveBox(d, made, at.x - BOX_W / 2, at.y); else tidyOf(d);
+  });
 }
 function onAim(b: Box): void { if (b.out === "start") t.startPage.value = true; else panel.value = { kind: "aim", id: b.id }; }
+/**
+ * 横の ＋: 選ぶ窓を開くだけ。選んで決めた時に初めて箱を足す (pickAim → addHitWith)。閉じる・Esc・枠の外では何も足さない
+ * (10-26 夜オーナー: 押しただけで「＋ 付く MOD を選ぶ」の箱が足され、キャンセルしても残った)。
+ * 引っ張って既にある箱へつないだ時は箱を足してつなぐだけで欄を出さない (オーナー 10-22「つなげた時も…表示される。意味が分からないので出さなくて OK」)
+ */
 function onAddHit(b: Box, at?: { x: number; y: number }, link?: string): void {
-  let made: string | null = null;
-  t.edit((d) => {
-    made = addHit(d, b.parent!, b.id);
-    // 押した側 (この箱のすぐ右) に置き、横の箱はずらして整列まで (10-26 夜オーナー「横の＋置いたら置いた側に即配置で、横はそのままずらして、位置の整頓まで」)。
-    // 引っ張って置いた所に置く時はその所のまま
-    if (made && at) moveBox(d, made, at.x - BOX_W / 2, at.y);
-    else if (made) tidyOf(d);
-    if (made && link) setBack(d, made, link);
-  });
-  // 引っ張って既にある箱へつないだ時は欄を出さない (つなぐだけ。オーナー 10-22「つなげた時も…表示される。意味が分からないので出さなくて OK」)
-  if (made && !link) panel.value = { kind: "aim", id: made };
+  if (!link) { panel.value = { kind: "aim", id: b.id, add: at ? { at } : {} }; return; }
+  t.edit((d) => { const made = addHit(d, b.parent!, b.id); if (made) { tidyOf(d); setBack(d, made, link); } });
 }
 function onDone(b: Box): void { t.edit((d) => setDone(d, b.id, b.done ? null : "main")); }
 /** 戻り先を選んでいる時の札のボタン: ↩ 始めに戻る (10-22 オーナー「選択肢として初めに戻るでいいのでは」。ほかは箱を押して選ぶ、「続きから」は 10-22 に消した) */
@@ -400,7 +407,7 @@ const phone = usePhone(), simPhone = flag("simPhone");
     <!-- エミュレーター / シミュレーター β の切り替え (エミュの画面の帯と同じ共通の部品、10-23 オーナー「帯を 1 つにして両方に」) -->
     <ModeTabs class="mb-3" />
     <TreeOverlays /><TreeHandPage v-if="panel?.kind === 'hand' && panelBox" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" @back="picking = panel!.id; panel = null" @aim="panel = { kind: 'aim', id: panel!.id }" />
-    <TreePanelPage v-else-if="panel && panelBox" :key="`${panel.kind}-${panel.id}`" :kind="panel.kind === 'split' || panel.kind === 'note' ? panel.kind : 'aim'" :box-id="panel.id" :current="panelBox.aim" @pick="pickAim" @close="panel = null" />
+    <TreePanelPage v-else-if="panel && panelBox" :key="`${panel.kind}-${panel.id}`" :kind="panel.kind === 'split' || panel.kind === 'note' ? panel.kind : 'aim'" :box-id="panel.id" :current="panel.add ? null : panelBox.aim" :adding="!!panel.add" @pick="pickAim" @close="panel = null" />
     <div v-show="!t.goalInline.value" class="g-panel flex flex-col gap-2 px-3 py-2 max-md:px-0.5" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
       <!-- 流れの 4 段の帯 (今どこにいるか、10-24 オーナー): 上のタブの下、木の枠の中の一番上に小さく (10-26 夜オーナー「普通出すのはタブの下」「ここは枠内でしょ」)。右上の「← 戻る」は置かない -->
       <div class="flex min-w-0 flex-wrap items-center gap-2 [&_[data-tree-flow-step]]:!min-h-[26px] [&_[data-tree-flow-step]]:!text-[12px]">

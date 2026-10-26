@@ -11,7 +11,8 @@ import TreeModPick from "./TreeModPick.vue";
 import TreeNote from "./TreeNote.vue";
 import TreeSplitPick from "./TreeSplitPick.vue";
 
-const props = defineProps<{ kind: "split" | "note" | "aim"; boxId: string; current: Aim | null }>();
+/** adding = 横の ＋ で開いた (boxId は押した横の箱、選んで決めた時に足す) */
+const props = defineProps<{ kind: "split" | "note" | "aim"; boxId: string; current: Aim | null; adding?: boolean }>();
 const emit = defineEmits<{ pick: [aim: Aim]; close: [] }>();
 const title = computed(() => (props.kind === "split" ? `◇ ${tr("分かれ目 (打たずに分ける)", "Split (no craft)")}` : props.kind === "note" ? tr("この箱のメモ", "Note for this box") : tr("付く MOD (当たり) を選ぶ", "Pick the mod to hit")));
 </script>
@@ -20,6 +21,6 @@ const title = computed(() => (props.kind === "split" ? `◇ ${tr("分かれ目 (
   <ModalShell :open="true" :rec="`tree-${kind}`" :title="title" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" :width="kind === 'split' ? 'w-full max-w-[28rem]' : 'w-full max-w-[24rem]'" full-on-phone body-class="px-3 pb-3" @close="emit('close')">
     <TreeSplitPick v-if="kind === 'split'" :box-id="boxId" embedded @close="emit('close')" />
     <TreeNote v-else-if="kind === 'note'" :box-id="boxId" embedded @close="emit('close')" />
-    <TreeModPick v-else mode="hit" :box-id="boxId" :current="current" embedded @pick="(a) => emit('pick', a)" @close="emit('close')" />
+    <TreeModPick v-else mode="hit" :box-id="boxId" :current="current" :adding="adding" embedded @pick="(a) => emit('pick', a)" @close="emit('close')" />
   </ModalShell>
 </template>

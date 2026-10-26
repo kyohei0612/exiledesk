@@ -9,6 +9,7 @@ import StageItemCard from "../../../components/for-share/item/StageItemCard.vue"
 import { craftStage as s } from "../../../state/craft-stage";
 import { shapeSampleOf } from "../../../services/simulator/tree/tree-sample-shape";
 import { fixedValues } from "./tree-fixed-values";
+import { sideAims } from "./tree-side-aims";
 import { treeRowTags } from "./tree-row-tags";
 import { splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
 import { boxAims, BOX_H, BOX_W, fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type TreeBox } from "../../../services/simulator/tree/tree-model";
@@ -83,7 +84,10 @@ const neon = computed(() => {
 const doneText = computed(() => (props.box.done ? tr("完成", "Done") : tr("完成にする", "Mark done")));
 /** 下の＋を出す (完成の箱からも伸ばせる。手を付けると完成の印は外れ、同じ形の完成の箱もそこへ戻る、tree-merge の joinSameShape) */
 // 戻りのある箱からも伸ばせる (手を付けると戻りは外れる = setHand。前は × で戻りを外さないと＋が出なかった、10-26 失敗時の挙動の洗い出しの 2)
-const free = computed(() => !props.box.hand && !props.box.split);
+// 戻り先 (↩ 戻る・再度挑戦) か「→ 同じ MOD の箱へまとめた」が付いた箱は次の手を付けない = 下と横の ＋ を出さない。× で外すと戻る (10-26 夜オーナー「共存はしないだろここ」)
+const free = computed(() => !props.box.hand && !props.box.split && !props.box.back);
+/** 横の ＋ は足せる別の当たりがある時だけ (tree-side-aims。10-26 夜オーナー: もう付いている MOD しか無い箱が足された) */
+const canSide = computed(() => { const d = s.data.value; if (!d || props.box.back) return false; const r = sideAims(d, t.doc.value, t.goals.value, props.box.id); return r === null || r.length > 0; });
 /** 上の帯の「まとめる」で箱を選んでいる間の見え方 (use-tree-join.ts。箱ごとの「まとめる」は 10-26 に外した = 引いた時に箱の外へ溢れた、オーナー「拡大バグ」) */
 const jl = computed(() => joinLook(t.doc.value, props.box.id));
 const join = useTreeJoin();
@@ -237,7 +241,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
 
     <!-- 動きをまとめる窓 (画面の真ん中の重ね窓。木の中に置くと寄り・位置で完成形の札や枠に隠れた): 同じ側の手の無い横の当たりを選んで、この箱にまとめる (10-26 オーナー「選択した枠にまとめる」) -->
     <!-- 横の＋ = 当たりを足す (どれか 1 つが叶う) -->
-    <button v-if="box.out === 'hit' && !quiet" type="button" data-tree-add-hit :style="k > 1 ? { ...keep('center'), top: 'calc(50% + 4px)' } : {}" class="nodrag absolute -right-4 top-1/2 flex size-7 -translate-y-1/2 touch-none items-center justify-center rounded-full border-2 border-amber-400/70 bg-[#1d1812] text-amber-200 hover:bg-amber-500/30"
+    <button v-if="box.out === 'hit' && !quiet && canSide" type="button" data-tree-add-hit :style="k > 1 ? { ...keep('center'), top: 'calc(50% + 4px)' } : {}" class="nodrag absolute -right-4 top-1/2 flex size-7 -translate-y-1/2 touch-none items-center justify-center rounded-full border-2 border-amber-400/70 bg-[#1d1812] text-amber-200 hover:bg-amber-500/30"
       :title="tr('当たりを横に足す (どれか 1 つが叶えば当たり)。長押しで引っ張り箱の上で離すとその箱へつなぐ', 'Add another hit beside (any one counts). Hold and drag onto a box to link')" @pointerdown.stop="emit('plus', 'side', $event)" @click.stop><Icon name="plus" class="size-4" /></button>
     <!-- 「まとめる」で選んでいる間: 箱の上の押す面 (まとめられる箱は金に光り、ほかは灰色。まとめ先・選んだ = ✓ の札。10-26 オーナー「まとめれる枠光って他グレーアウトで見やすく」、use-tree-join.ts) -->
     <div v-if="jl" data-tree-join-hit :data-join="jl" :title="jl === 'no' ? joinNoWhy(t.doc.value, box.id) : undefined" class="nodrag absolute -inset-px z-20 flex items-start justify-end rounded-xl p-1" :class="jl === 'no' ? 'cursor-not-allowed' : jl === 'can' ? 'cursor-pointer hover:bg-amber-300/15' : 'cursor-pointer bg-amber-300/15 ring-[3px] ring-amber-100'" @pointerdown.stop @click.stop="join.toggle(box.id)">
