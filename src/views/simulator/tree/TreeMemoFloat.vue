@@ -56,6 +56,8 @@ const curChips = computed(() => {
     n: Object.values(d.boxes).filter((b) => handUses(b, k)).length }));
 });
 const memoCurs = computed(() => t.doc.value.memoCurrencies ?? []);
+/** 欲しい MOD・使うカレンシーの札の欄を出すか (10-26 夜オーナー「こんだけ UI あったら、メモの新しい MOD と使うカレンシーいらんから、純粋なメモだけでおけ」で出さない。保存の memoAims・memoCurrencies はそのまま読む) */
+const CHIPS = false;
 
 // ＋で足す (MOD の一覧 / カレンシーの棚)。窓の中に重ねて出す
 const picker = ref<"mod" | "cur" | null>(null);
@@ -266,7 +268,7 @@ const chipCls = (on: boolean, used: boolean): string =>
 
     <!-- 中身: 札 (上、多ければここだけ送る) とメモ欄 (下、残りの高さいっぱい)。選び窓は中身の上に重ねる -->
     <div class="relative flex min-h-0 flex-1 flex-col pt-2">
-      <div data-tree-memo-chips class="flex max-h-[45%] shrink-0 flex-col gap-2 overflow-y-auto px-1 pb-2" :inert="!!picker">
+      <div v-if="CHIPS" data-tree-memo-chips class="flex max-h-[45%] shrink-0 flex-col gap-2 overflow-y-auto px-1 pb-2" :inert="!!picker">
         <section v-for="sec in [{ key: 'mod', title: tr('欲しい MOD', 'Wanted mods'), add: tr('＋ MOD', '+ Mod'), chips: modChips, empty: tr('当たりの箱で選んだ MOD がここに並ぶ', 'Mods picked in hit boxes appear here') },
                                 { key: 'cur', title: tr('使うカレンシー', 'Currency to use'), add: tr('＋ カレンシー', '+ Currency'), chips: curChips, empty: tr('箱の手で使う物がここに並ぶ', 'Crafts used in boxes appear here') }]"
           :key="sec.key" :data-tree-aims="sec.key === 'mod' ? '' : undefined" :data-tree-currencies="sec.key === 'cur' ? '' : undefined">
@@ -293,7 +295,7 @@ const chipCls = (on: boolean, used: boolean): string =>
         </section>
       </div>
       <div class="g-divider mx-1 shrink-0" />
-      <textarea v-model="memo" data-tree-memo-text :inert="!!picker" class="mt-2 min-h-[96px] w-full flex-1 resize-none rounded-md border border-white/15 bg-black/40 px-2.5 py-2 leading-relaxed outline-none focus:border-amber-400/60"
+      <textarea v-model="memo" data-tree-memo-text :inert="!!picker" class="min-h-[96px] w-full flex-1 resize-none rounded-md border border-white/15 bg-black/40 px-2.5 py-2 leading-relaxed outline-none focus:border-amber-400/60"
         :placeholder="tr('このツリーのメモ (狙い・相場・決めた事など)', 'Notes for this tree (goals, prices, decisions…)')" @input="onInput" @blur="saveMemo" />
 
       <!-- 選び窓 (中身の上に重ねる。閉じる・Esc で戻る) -->
