@@ -158,7 +158,8 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = nul
   if (picking.value === id) picking.value = null;
   let at = id;
   // 組み替えは tree-hand-plan の applyPick (猿の口 sim-monkey と同じ)
-  t.edit((d) => { at = applyPick(d, id, h, kind, aims, pre, only); });
+  // 足した直後に重ならないよう整列まで (10-26 夜オーナー「横はそのままずらして、位置の整頓まで」。下の＋も同じ)
+  t.edit((d) => { at = applyPick(d, id, h, kind, aims, pre, only); tidyOf(d); });
   panel.value = null;
   // 出来た結果の箱が枠の外なら寄る (真ん中の箱。10-22 白紙から組んで、出来た箱が下に出て自分で動かさないと見えなかった)
   const kids = doc.value.boxes[at]?.outs ?? [];
@@ -227,7 +228,10 @@ function onAddHit(b: Box, at?: { x: number; y: number }, link?: string): void {
   let made: string | null = null;
   t.edit((d) => {
     made = addHit(d, b.parent!, b.id);
+    // 押した側 (この箱のすぐ右) に置き、横の箱はずらして整列まで (10-26 夜オーナー「横の＋置いたら置いた側に即配置で、横はそのままずらして、位置の整頓まで」)。
+    // 引っ張って置いた所に置く時はその所のまま
     if (made && at) moveBox(d, made, at.x - BOX_W / 2, at.y);
+    else if (made) tidyOf(d);
     if (made && link) setBack(d, made, link);
   });
   // 引っ張って既にある箱へつないだ時は欄を出さない (つなぐだけ。オーナー 10-22「つなげた時も…表示される。意味が分からないので出さなくて OK」)
