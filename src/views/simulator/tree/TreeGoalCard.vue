@@ -16,7 +16,8 @@ import { rarityName } from "./tree-names";
 const t = useTree();
 const RGB = "242,210,122";
 /** カードは内側を広く作って縮めて出す (MOD の文が 1 行で入る幅。10-25 オーナー「アイテム欄やばいよ」: 幅 260 で 2〜4 文字ずつ折り返していた) */
-const CARD_W = 420, ZOOM = 0.84;
+// 右の列 248px に入るよう全体を縮める (今と同じ折り返しの見え方、10-26 夜オーナー「右側もうちょっと細い方が良いな、3 分の 1 削ってほしい」。前は 0.84 で 372px)
+const CARD_W = 420, ZOOM = (248 - 14) / 420;
 /** 枠の中の小さなボタン (g-btn の sm でも幅 70px ほどあり、MOD の文に重なった) */
 const PILL = "rounded-md border border-[#c9a45c]/60 bg-gradient-to-b from-[#3a2c14] to-[#1a1309] px-1.5 text-[11px] font-bold leading-[18px] text-[#f2d27a] shadow-[0_1px_3px_rgba(0,0,0,0.8)] hover:border-[#f2d27a] hover:text-white";
 const FOLD_KEY = "exiledesk.tree.goalFolded";
