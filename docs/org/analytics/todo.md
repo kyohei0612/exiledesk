@@ -22,7 +22,7 @@
 
 ## やる事
 - **AdSense の審査が通ったら戻す** (10-27 ブラック 13 の OK で外した、模擬審査 notes/2026-10-27-adsense-mock-review.md): scripts/build-seo-pages.mjs (ベース 1,576 枚 + 一覧) と scripts/build-cosmetics-pages.mjs (コスメ 20 枚) の `ADS_ON_AUTO_PAGES = false` を true に → 別の出力先で作って adsbygoogle が入るのを見る → commit → ブラックへ hash (出すのは最終チェック長)。記事・FAQ・固定ページ・トップのコードはそのまま。
-- 次の deploy:web の後 (ブラックの合図): デザイン 9 の 29023bd7 (静的なページのフッターのリンクを 40px 以上) で作り直したベース一覧・ブログ・コスメのページを、スマホ 375 でフッターが崩れていないか見る。同じ回で 1cf9d1c9 (/web.html の 301・lastmod)・6369a7f8 (セキュリティのヘッダー)・61eee10e (/r/) も本番で見る。
+- (済み 10-27 v0.1.626) 静的なページのフッター 375 (12 ページ、リンク 44〜46px・はみ出し 0)・/web.html の 301・lastmod 73 件・セキュリティのヘッダー・/r/ を本番で見た。89dec922 (自動ページの広告のコード外し) は次の deploy:web の後に本番で adsbygoogle が 0 か見る
 - デザイン 9 がシミュの記録を track.ts に足す (10-26 夜に OK を出した): screen の to に "tree"・"sim-base"・"sim-mods"、新しい kind "sim_act" {a: hand|save|copy, s}、1 訪問で a ごとに 1 回。出たら scripts/analyze-logs.py の数え方に足す (届いた hash はデザイン 9 から)。
 - 10-27 の朝: 上の「10-27 の朝に見る」の 4 つ。結果はブラックへ 1〜3 行。
 - (済み 10-26: web の Worker の数は 558 に下がった。10-26 の日報の回は 10-25 の回が残っていて始まらず、10-25 の分は手で作った)
