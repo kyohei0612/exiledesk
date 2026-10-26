@@ -187,14 +187,15 @@ const below = computed((): number => {
   return seen.size;
 });
 /**
- * スマホ: 今の手の下に箱がある時、別の札を持った瞬間・狙いを変えた瞬間に「この手以降は削除されます」の警告 (10-27 オーナー)。
- * 「やめる」で元の札・狙いに戻す、「続ける」でこの窓の間は聞かない。PC はまだ (シミュ 32 に揃えてもらう)
+ * スマホと PC: 今の手の下に箱がある時、別の札を持った瞬間・狙いを変えた瞬間に「この手以降は削除されます」の警告 (10-27 オーナー)。
+ * 「やめる」で元の札・狙いに戻す、「続ける」でこの窓の間は聞かない。PC も同じ (10-27 シミュ 32 本目)
  */
 const warnOpen = ref(false);
 let warnAck = false;
 let warnBack: (() => void) | null = null;
 function warnIfBelow(back: () => void): void {
-  if (!phone.value || !props.current || warnAck || !below.value) return;
+  // PC も同じ (10-27 ブラック経由のオーナーの頼み「スマホに揃える」。前はスマホだけで、PC は「替えると下の n 箱が消える」の小さな文だけ)
+  if (!props.current || warnAck || !below.value) return;
   warnBack = back; warnOpen.value = true;
 }
 function warnStop(): void { warnOpen.value = false; const b = warnBack; warnBack = null; reverting = true; b?.(); void nextTick(() => { reverting = false; }); }

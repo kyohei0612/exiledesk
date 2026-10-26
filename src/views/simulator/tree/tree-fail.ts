@@ -4,7 +4,7 @@
  * 木の作りと回し方は変えない (文はどれも今の setBack・autoBack・settle・stuckWhy を読むだけ)。決めは notes/2026-10-26-failure-behavior.md
  */
 import { MATCH, RESTART } from "../../../services/simulator/tree/tree-shape";
-import { boxAims, GAP_Y, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { boxAims, GAP_Y, type Hand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { backTargetsOf } from "./tree-merge";
 import { tr } from "../../../i18n/lang";
@@ -86,4 +86,16 @@ export function orphanHits(doc: TreeDoc): string[] {
   const goals = doc.memoAims ?? [];
   if (!goals.length) return [];
   return Object.values(doc.boxes).filter((b) => b.out === "hit" && b.aim && boxAims(b).every((x) => !goals.some((g) => g.modId === x.modId))).map((b) => b.id);
+}
+
+/**
+ * 外れの箱 (外れ・狙いが消えた) で、打つ前の箱と同じ手 (同じカレンシーとお告げ。狙いの選び方は問わない) を選んだら、新しい箱を作らず打つ前の箱へ戻る (= 再度挑戦)。
+ * 戻り先 (打つ前の箱) を返す、当たらなければ null。10-27 オーナー「カオスオーブ選択で同じ処理扱い、2 段目へ戻るってのと同義としてカウント。
+ * ハズレでかつ同じ MOD 群で 1 段上に進むことはない」(スマホは 5bce52c1 の PhoneTreePage、PC は SimTreePage の pickHand)
+ */
+export function sameHandRetry(doc: TreeDoc, id: string, h: Hand): string | null {
+  const b = doc.boxes[id], p = b?.parent ? doc.boxes[b.parent] : undefined;
+  if (!b || !p?.hand || b.hand || (b.out !== "junk" && b.out !== "lost")) return null;
+  const same = h.currency === p.hand.currency && [...h.omens].sort().join() === [...p.hand.omens].sort().join();
+  return same ? p.id : null;
 }
