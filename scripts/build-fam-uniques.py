@@ -16,20 +16,30 @@ uni = json.load(open(os.path.join(ROOT, "src/i18n/vaal-enchants.json"), encoding
 art = json.load(open(os.path.join(ROOT, "src/services/assets/unique-art.json"), encoding="utf-8"))
 
 
-def glow(stem):
-    im = Image.open(os.path.join(ROOT, "public/unique-art", stem + ".webp")).convert("RGBA").resize((24, 24), Image.BILINEAR)
+def mean(px, mx_min, sat_min):
     r = g = b = w = 0.0
-    for R, G, B, A in im.getdata():
+    for R, G, B, A in px:
         if A < 128: continue
         mx, mn = max(R, G, B), min(R, G, B)
         sat = (mx - mn) / mx if mx else 0
-        if mx < 60 or sat < 0.25: continue
+        if mx < mx_min or sat < sat_min: continue
         k = sat * (mx / 255)
         r += R * k; g += G * k; b += B * k; w += k
-    if w < 1: return None
-    R, G, B = r / w, g / w, b / w
+    return (r / w, g / w, b / w, w) if w else (0, 0, 0, 0)
+
+
+def glow(stem):
+    px = list(Image.open(os.path.join(ROOT, "public/unique-art", stem + ".webp")).convert("RGBA").resize((24, 24), Image.BILINEAR).getdata())
+    R, G, B, w = mean(px, 60, 0.25)
+    loose = w < 1
+    # 暗い絵・色の淡い絵は条件をゆるめて取り直す (v0.1.624 で 408 枚のうち 52 枚が琥珀色のままだった、10-26 夜オーナー「全部に色を」)
+    if loose: R, G, B, w = mean(px, 30, 0.08)
+    if w < 0.3: return None
     up = 235 / max(R, G, B, 1)
-    return ", ".join(str(round(min(255, x * up))) for x in (R, G, B))
+    out = [min(255, x * up) for x in (R, G, B)]
+    # 取り直しても灰色の絵 (持ち上げた後の彩度 0.12 未満) だけは琥珀色のまま (色の薄い絵の決まり)
+    if loose and (max(out) - min(out)) / max(out) < 0.12: return None
+    return ", ".join(str(round(x)) for x in out)
 
 
 fams, colors = {}, {}
