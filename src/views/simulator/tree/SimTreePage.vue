@@ -56,7 +56,6 @@ import { installSimMonkey } from "./sim-monkey";
 import TreeRunLayer from "./TreeRunLayer.vue";
 import TreeHandChip from "./TreeHandChip.vue"; import TreeBandLayer from "./TreeBandLayer.vue"; import TreeTabs from "./TreeTabs.vue";
 import TreeMergeLayer from "./TreeMergeLayer.vue";
-import TreeHoverCard from "./TreeHoverCard.vue";
 import { backTargetsOf } from "./tree-merge";
 import { useTreeMerge } from "./use-tree-merge";
 
@@ -128,7 +127,7 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResizeH));
 /** 手 (見るだけ): どこを引いても画面が動き、箱は押せない (ComfyUI の手、見本の 6) */
 const hand = ref(false);
 const { edges, chipRoom } = useTreeEdges(doc, boxes, posOf);
-const { merged, linesAll, hoverBox, cardBox } = useTreeMerge({ doc, posOf, segs: () => edges.value.flatMap((e) => e.segs), busy: () => !!drag.value || !!plus.value, reset: () => [v.flow.viewport.value, panel.value, drag.value] });
+const { merged, linesAll, hoverBox, cardBox } = useTreeMerge({ doc, posOf, heightOf: (id) => v.flow.findNode(id)?.dimensions.height ?? 0, segs: () => edges.value.flatMap((e) => e.segs), busy: () => !!drag.value || !!plus.value, reset: () => [v.flow.viewport.value, panel.value, drag.value] });
 /** 白紙に戻す = 2 回押し (本番の「白に戻す」と同じ use-armed、3 秒で戻る)。枠の外・Esc でも戻す (オーナー 10-22「白紙に戻すもあれやな、2 回だな」) */
 const clearArm = useArmed();
 const clearBtn = ref<HTMLElement | null>(null);
@@ -355,13 +354,10 @@ function onKey(e: KeyboardEvent): void {
   // 箱の重ね窓は useDismiss が先に閉じる (defaultPrevented)。何も開いていない時の Esc は何もしない
   // (前はページを閉じてクラフトステージへ出た。窓を閉じるつもりの 2 度押しで画面を出てしまう、10-23 モンキー 2。出るのは上の切り替えタブ)
   if (e.key === "Escape" && !e.defaultPrevented) {
-    // 乗せた時のカードは消すだけ。ただし戻り先を選んでいる間・＋を引っ張っている間は同じ 1 回でやめる
-    // (前はカードだけ消えて戻り先選びが残り、ほかの葉の ＋ を押しても窓が出なかった、10-25 モンキー 4 本目)
-    const hadCard = !!cardBox.value;
-    if (hadCard) { cardBox.value = null; hoverBox.value = null; }
+    // 乗せた時の印 (合流の線の光) は消す。カードは出さなくなったので、Esc 1 回はほかの物に使う (10-27 オーナー「ホバーのカードも一旦出さなくていい」)
+    cardBox.value = null; hoverBox.value = null;
     if (plus.value) plus.value = null;
     else if (picking.value) picking.value = null;
-    else if (hadCard) { /* カードだけ */ }
     else if (panel.value) panel.value = null;
     else if (full.value) void v.toggleFull();
   }
@@ -501,7 +497,7 @@ const phone = usePhone(), simPhone = flag("simPhone");
               @note="popDo((id) => (panel = { kind: 'note', id }))" @base="popDo(() => (t.goalPage.value = 1))" @issue="popDo(() => openIssues())" @back-go="popDo((_, b) => goBack(b))" />
           </div>
         </div>
-        <TreeHoverCard v-if="cardBox && doc.boxes[cardBox]" :box-id="cardBox" :rect="v.rectOf(doc.boxes[cardBox]!)" />
+        <!-- 箱に乗せた時のアイテムのカード (TreeHoverCard) は出さない: 箱の中にアイテムの枠があるので意味が無く、浮いて箱を隠した (10-27 オーナー「ホバーのカードも一旦出さなくていい」、モンキー 9) -->
         </div>
         <!-- 木の枠の外の右の列: 上に足りない所の一覧、下にミニマップと倍率の道具 (10-26 夜オーナー「A でいい」。木の上に浮かせると引っ張った・寄った時に箱を隠した、モンキー 8 の 2・4) -->
         <!-- 列は上に 0 完成形の設定 (字を縮めずに入る幅 372px)、その下にミニマップ (残りいっぱい)、一番下に倍率の道具。足りない所は上の帯の落ちる窓 (10-26 夜オーナー「ここ使うなら」)。

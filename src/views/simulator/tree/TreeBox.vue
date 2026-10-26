@@ -84,7 +84,7 @@ const neon = computed(() => {
 const doneText = computed(() => (props.box.done ? tr("完成", "Done") : tr("完成にする", "Mark done")));
 /** 下の＋を出す (完成の箱からも伸ばせる。手を付けると完成の印は外れ、同じ形の完成の箱もそこへ戻る、tree-merge の joinSameShape) */
 // 戻りのある箱からも伸ばせる (手を付けると戻りは外れる = setHand。前は × で戻りを外さないと＋が出なかった、10-26 失敗時の挙動の洗い出しの 2)
-// 戻り先 (↩ 戻る・再度挑戦) か「→ 同じ MOD の箱へまとめた」が付いた箱は次の手を付けない = 下と横の ＋ を出さない。× で外すと戻る (10-26 夜オーナー「共存はしないだろここ」)
+// 戻り先 (↩ 戻る・再度挑戦) か「→ 同じ MOD 群のため統合」が付いた箱は次の手を付けない = 下と横の ＋ を出さない。× で外すと戻る (10-26 夜オーナー「共存はしないだろここ」)
 const free = computed(() => !props.box.hand && !props.box.split && !props.box.back);
 /** 横の ＋ は足せる別の当たりがある時だけ (tree-side-aims。10-26 夜オーナー: もう付いている MOD しか無い箱が足された) */
 const canSide = computed(() => { const d = s.data.value; if (!d || props.box.back) return false; const r = sideAims(d, t.doc.value, t.goals.value, props.box.id); return r === null || r.length > 0; });
@@ -221,7 +221,8 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       </template>
       <template v-else-if="!box.hand && !box.split && box.out !== 'start' && !quiet">
         <!-- 当たりの箱は「↩ 戻る」を出さない (次の手は＋、10-26 オーナー「狙いがついたら再挑戦おかしくね、狙いついたらシンプルにプラスボタンじゃない？」) -->
-        <button v-if="!box.done && box.out !== 'hit'" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-cyan-400/40 px-1.5 text-cyan-200 hover:border-cyan-300" :class="k > 1 ? 'min-w-6' : ''" :title="tr('↩ 戻る (既にある箱を指す)', '↩ Return (point to an existing box)')" @click.stop="emit('back')">{{ k > 1 ? "↩" : tr("↩ 戻る", "↩ Return") }}</button>
+        <!-- 戻り先がまだ無い箱: 押すと戻り先を選ぶ (再度挑戦・n 段目へ戻る・始めに戻るなどは選ぶ帯で)。短い「↩ 戻る」・縮めた時の「↩」だけはやめた (10-27 オーナー「本番でまだ『戻る』になっている」、決まった言い方は選んだ後の札の「↩ n 段目へ戻る」) -->
+        <button v-if="!box.done && box.out !== 'hit'" type="button" data-tree-back-pick class="nodrag min-h-6 shrink-0 rounded border border-cyan-400/40 px-1.5 text-left text-cyan-200 hover:border-cyan-300" :title="tr('戻り先を選ぶ (再度挑戦・既にある箱・始めに戻る)', 'Choose where to return (retry, an existing box, or the start)')" @click.stop="emit('back')">{{ tr("↩ 戻り先を選ぶ", "↩ Choose return") }}</button>
         <!-- 当たりの箱の次どうするか = まとめる (横にまとめられる箱がある時だけ。無ければ＋だけ、10-26 オーナー「そこに表示させるとしたらまとめるボタンかな、まぁ原則プレフィックスとサフィではまとめれないけどこれはルール化してもええよな」) -->
         <button v-if="box.out === 'hit' && canJoin" type="button" data-tree-box-join class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-300/40 px-1.5 text-amber-100 hover:border-amber-200" :title="tr('この箱にまとめる (同じ側の横の当たりを選ぶ。プレとサフィはまとめない)', 'Merge into this box (pick same-side hits beside it; prefixes and suffixes are never merged)')" @click.stop="startJoin">{{ tr("まとめる", "Merge") }}</button>
         <button v-if="box.out === 'hit' || box.out === 'branch'" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" @click.stop="emit('done')" :title="doneText">{{ (k > 1 || (box.anyOf?.length ?? 0) > 1) && !box.done ? tr("完成", "Done") : doneText }}</button>

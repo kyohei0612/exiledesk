@@ -8,18 +8,27 @@ import { computed } from "vue";
 import type { MergeLine } from "./tree-merge";
 
 const props = defineProps<{ lines: readonly MergeLine[]; paths: ReadonlyMap<string, string>; hover: string | null; /** 選んだ箱 (窓を開いている箱) */ sel: string | null; showAll: boolean }>();
-const COLOR = { fwd: "#a39a88", back: "#5fd0e0" } as const;
+const COLOR = { fwd: "#a39a88", back: "#5fd0e0", join: "#d4a94a" } as const;
 
 /** 乗せた箱・選んだ箱に関わる線 (出元の箱・行き先・出元の親) */
 const on = (l: MergeLine, id: string | null): boolean => !!id && (l.from === id || l.to === id || l.parent === id);
 const hot = (l: MergeLine): boolean => on(l, props.hover) || on(l, props.sel);
-const shown = computed(() => props.lines.filter((l) => props.showAll || hot(l)));
-const opacity = (l: MergeLine): number => (hot(l) ? 1 : l.kind === "fwd" ? 0.85 : 0.55);
+// 統合 (同じ MOD 群のため統合) の線はいつも出す (10-27 オーナー「実線で常に出す。普通の線だとなんでつながってるのか分からん」)
+const shown = computed(() => props.lines.filter((l) => props.showAll || hot(l) || l.kind === "join"));
+const joins = computed(() => props.lines.filter((l) => l.kind === "join" && l.mark));
+const opacity = (l: MergeLine): number => (hot(l) || l.kind === "join" ? 1 : l.kind === "fwd" ? 0.85 : 0.55);
 </script>
 
 <template>
   <svg data-tree-merge-lines class="pointer-events-none absolute left-0 top-0 overflow-visible" width="1" height="1" style="z-index: -1">
     <path v-for="l in shown.filter((x) => !hot(x))" :key="l.id" data-tree-merge-line :data-kind="l.kind" :d="paths.get(l.id)" :stroke="COLOR[l.kind]" :stroke-opacity="opacity(l)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  </svg>
+  <!-- 統合の線のつながりの印 (鎖、Craft of Exile の連結の印のように。10-27 オーナー「つながりのある特殊なマークを付けた方が良い」)。箱の前に出す -->
+  <svg class="pointer-events-none absolute left-0 top-0 z-10 overflow-visible" width="1" height="1">
+    <g v-for="l in joins" :key="l.id" data-tree-join-mark :transform="`translate(${l.mark!.x} ${l.mark!.y})`">
+      <circle r="11" fill="#1a140c" :stroke="COLOR.join" stroke-width="2" />
+      <g transform="rotate(-45)" :stroke="COLOR.join" stroke-width="1.8" fill="none"><rect x="-7.5" y="-3" width="8" height="6" rx="3" /><rect x="-0.5" y="-3" width="8" height="6" rx="3" /></g>
+    </g>
   </svg>
   <!-- 乗せた物の線は箱の前に濃く -->
   <svg v-if="hover || sel" class="pointer-events-none absolute left-0 top-0 z-10 overflow-visible" width="1" height="1">
