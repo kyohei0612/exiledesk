@@ -1,4 +1,7 @@
 {
+  "0.1.613": [
+    "Simulator: The mod list inside tree boxes now looks like the finished item (separator art, centered text). Tags such as Alloy or Essence sit on the same line as the mod when they fit"
+  ],
   "0.1.612": [
     "Simulator: The start box now stays at the top center of the tree frame even for wide trees or after returning from the finished-item settings, so it no longer slips under the finished-item panel in the top left",
     "Simulator: The next-craft panel now opens with \"No target (anything counts)\" checked by default (Chaos spam still checks every candidate as before)",

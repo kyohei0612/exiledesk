@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.613",
+  "date": "2026-10-26",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ツリーの箱の中の MOD の表を、完成形のアイテムと同じ形 (区切りの絵・文を真ん中寄せ) に。合金・エッセンスなどの札は入れば MOD の文と同じ行に置きます",
+    "en": "Simulator: The mod list inside tree boxes now looks like the finished item (separator art, centered text). Tags such as Alloy or Essence sit on the same line as the mod when they fit"
+   }
+  ]
+ },
+ {
   "v": "0.1.612",
   "date": "2026-10-26",
   "items": [
@@ -853,30 +865,6 @@
     "area": "",
     "text": "カオススパム計算機も別のページに。クラフト画面以外のページ (使い方・ベース選び・計算機・要望) は右のチャンネルの列を外して広く",
     "en": "The Chaos spam calculator is now its own page too. Pages other than the craft screen (guide, base picker, calculator, feedback) no longer show the channel column on the right"
-   }
-  ]
- },
- {
-  "v": "0.1.573",
-  "date": "2026-10-18",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "ベースを選ぶ・カオススパム計算機・要望・バグを送るを別のページにしました (URL が変わり、ブラウザの戻るで前の画面へ)",
-    "en": "Choosing a base, the Chaos spam calculator and Send feedback are now separate pages (the URL changes and the browser Back button returns to the previous screen)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "アイテムレベルを 70〜86 の 1 ずつ選べるように。打った後に変えても最初からやり直さず、そのレベルで付かない MOD だけ消えます",
-    "en": "Item level can now be set to any value from 70 to 86. Changing it mid-craft no longer starts over; only mods that can't roll at that level are removed"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "MOD 一覧で 1 行にまとめた MOD (スキルのレベルなど) の段の表に、段ごとのタグを出すように",
-    "en": "The tier table of grouped mods (e.g. skill levels) in the mod list now shows each tier's tags"
    }
   ]
  }
