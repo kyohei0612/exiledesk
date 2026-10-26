@@ -1,4 +1,7 @@
 {
+  "0.1.626": [
+    "Phone: The links at the bottom of the page (Guide, Bases, Contact and so on) are now easier to tap"
+  ],
   "0.1.625": [
     "Simulator: Fixed return targets such as \"a box of the same shape\" and \"Start over\" being dropped when opening a saved or shared tree",
     "Base selection: The glow on today's unique tiles now matches the art's color even for pale art"

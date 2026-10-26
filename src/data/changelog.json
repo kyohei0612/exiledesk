@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.626",
+  "date": "2026-10-27",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "スマホ: 画面の一番下のリンク (使い方・ベース一覧・お問い合わせなど) を押しやすい高さに",
+    "en": "Phone: The links at the bottom of the page (Guide, Bases, Contact and so on) are now easier to tap"
+   }
+  ]
+ },
+ {
   "v": "0.1.625",
   "date": "2026-10-26",
   "items": [
@@ -581,7 +593,7 @@
  },
  {
   "v": "0.1.597",
-  "date": "2026-10-26",
+  "date": "2026-10-27",
   "items": [
    {
     "kind": "",
@@ -883,18 +895,6 @@
     "area": "",
     "text": "スパムシミュレーターの運試しを X でシェアした時に、結果のカードが出ず、開いても運試しにならなかったのを直しました (10/19〜10/21 のシェアのリンクは直らないので、もう一度シェアしてください)",
     "en": "Fixed Spam Simulator luck shares on X showing the generic site card and not opening the luck run (links shared Oct 19–21 can’t be recovered, please share again)"
-   }
-  ]
- },
- {
-  "v": "0.1.586",
-  "date": "2026-10-20",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "MOD 一覧のタブの呼び方を「一般」「冒涜専用」にそろえました (前は「普通」「冒涜」)",
-    "en": "Mod list tabs are now labeled “Regular” and “Desecrated-only” (were “Normal” and “Desecrated”)"
    }
   ]
  }
