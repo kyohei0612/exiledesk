@@ -131,15 +131,15 @@ onBeforeUnmount(leave);
       <img v-if="iconOf(k)" :src="iconOf(k)" alt="" class="h-9 w-9 object-contain md:h-[42px] md:w-[42px]" draggable="false" />
       <span v-else class="grid h-9 w-9 place-items-center rounded bg-white/10 text-[16px]">◎</span>
     </span>
-    <span class="mt-0.5 flex min-h-[2.5em] items-start justify-center leading-tight"><span class="line-clamp-2 text-center [overflow-wrap:anywhere] [word-break:keep-all]"><template v-for="(p, i) in nameParts(label ?? nameOf(k))" :key="i"><wbr v-if="i" />{{ p }}</template></span></span>
+    <span class="mt-0.5 flex min-h-[2.5em] items-start justify-center leading-tight"><span class="line-clamp-2 max-md:line-clamp-none text-center [overflow-wrap:anywhere] [word-break:keep-all]"><template v-for="(p, i) in nameParts(label ?? nameOf(k))" :key="i"><wbr v-if="i" />{{ p }}</template></span></span>
     <span v-if="corner" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] text-amber-200 max-md:text-[10px]">{{ corner }}</span>
     <span v-if="badge && !nobadge && !corner" class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] max-md:text-[10px]" :class="badge[2]">{{ tr(badge[1][0], badge[1][1]) }}</span>
     <span v-if="omen && on" class="absolute left-0.5 top-0.5 rounded bg-orange-600/80 px-1 text-[9px] max-md:text-[10px] font-bold text-white">{{ tr("有効", "Active") }}</span>
-    <span v-if="omenTag" class="mt-px block w-full line-clamp-2 text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-emerald-300">{{ tr("・", "· ") }}{{ omenTag }}</span>
-    <span v-if="omenWarn" class="block w-full line-clamp-2 text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-amber-300">{{ omenWarn }}</span>
+    <span v-if="omenTag" class="mt-px block w-full line-clamp-2 max-md:line-clamp-none text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-emerald-300">{{ tr("・", "· ") }}{{ omenTag }}</span>
+    <span v-if="omenWarn" class="block w-full line-clamp-2 max-md:line-clamp-none text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-amber-300">{{ omenWarn }}</span>
     <span v-else-if="omenBlocked" class="mt-px block w-full text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-rose-300">{{ tr("お告げで打てない", "Blocked by omen") }}</span>
     <span v-else-if="tag" class="mt-px w-full">
-      <span v-for="(t, i) in tag" :key="i" class="block line-clamp-2 text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-emerald-300" :title="t"><!-- 2 行まで (1 行で「・クリティカ…」と切れていた。2026-10-19 テスト走行) -->{{ tr("・", "· ") }}{{ t }}</span>
+      <span v-for="(t, i) in tag" :key="i" class="block line-clamp-2 max-md:line-clamp-none text-center text-[9px] max-md:text-[10px] font-semibold leading-tight text-emerald-300" :title="t"><!-- PC は 2 行まで (1 行で「・クリティカ…」と切れていた。2026-10-19 テスト走行)、スマホは切らずに全文 (2026-10-26 オーナー「基本スマホは省略したらダメ」) -->{{ tr("・", "· ") }}{{ t }}</span>
     </span>
     <span v-else-if="priceOf(k)" data-rec-part="shelf-price" class="text-[9px] max-md:text-[10px] tabular-nums opacity-60">{{ displayCurrency.money(priceOf(k)) }}</span>
   </button>

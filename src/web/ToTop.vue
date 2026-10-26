@@ -1,6 +1,6 @@
 <!--
   ToTop.vue — スマホの「上へ戻る」ボタン (2026-10-25 オーナーがスマホの見え方を見て)。全部の画面の右下に付いてくる。少し下へ送った時だけ出し、押すと一番上へ。
-  下に固定の帯 (data-bottom-bar・デイリーの data-daily-go) が出ている時はその上に浮かせて重ねない。PC (768px 以上) は出さない。WebApp.vue に 1 つ
+  下に留まる帯 (data-bottom-bar・デイリーの data-daily-go・シミュのスマホの data-phone-bar。fixed か下に貼り付いた sticky) が出ている時はその上に浮かせて重ねない。PC (768px 以上) は出さない。WebApp.vue に 1 つ
 -->
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from "vue";
@@ -17,10 +17,13 @@ const SHOW_AT = 400;
 function update(): void {
   shown.value = window.scrollY > SHOW_AT;
   let h = 0;
-  for (const el of document.querySelectorAll<HTMLElement>("[data-bottom-bar], [data-daily-go]")) {
-    if (getComputedStyle(el).position !== "fixed") continue;
+  // 下に留まる帯 (fixed と、画面の下に貼り付いている sticky。シミュのスマホの data-phone-bar は sticky で「↷ やり直し」に重なっていた、モンキー 10-26 の 15)
+  for (const el of document.querySelectorAll<HTMLElement>("[data-bottom-bar], [data-daily-go], [data-phone-bar]")) {
+    const pos = getComputedStyle(el).position;
+    if (pos !== "fixed" && pos !== "sticky") continue;
     const r = el.getBoundingClientRect();
-    if (r.height && r.bottom >= window.innerHeight - 1) h = Math.max(h, r.height);
+    // sticky は親の余白の分だけ下から浮いて留まる (シミュの帯は 16px) ので、下から 24px までを「下にいる」とし、その分も足す
+    if (r.height && r.bottom >= window.innerHeight - 24) h = Math.max(h, window.innerHeight - r.top);
   }
   lift.value = h;
 }
