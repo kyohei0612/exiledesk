@@ -5,7 +5,7 @@
   木の外の動き (白紙ならベース選びへ・離れる時の確かめ・段の URL) は SimTreePage の script がそのまま受け持つ (スマホでも動いている)
 -->
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import TreeRunReport from "../tree/TreeRunReport.vue";
 import { RUN_N, useTreeRun } from "../tree/use-tree-run";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -68,6 +68,13 @@ function backOf(): void {
 }
 function pickAim(a: Aim): void { const id = aimFor.value!; t.edit((d) => setAim(d, id, a)); aimFor.value = null; }
 const total = computed(() => q.questions.value.length);
+// 完成形の設定へ行く時に送った位置を覚え、戻ったらそこへ (ページの移り変わりで一番上に戻されるので、描き終えてから戻す)
+let keptY = 0;
+watch(() => t.goalInline.value, async (on) => {
+  if (on) { keptY = window.scrollY; return; }
+  await nextTick();
+  requestAnimationFrame(() => window.scrollTo(0, keptY));
+});
 
 // 100 人回す (PC の SimTreePage と同じ use-tree-run。止まった箱・まとめの箱を押すと、その箱の質問へ)
 const run = useTreeRun(t.doc, t.startPrice, t.treePrice, () => {}, () => {});
@@ -107,7 +114,8 @@ function goBox(id: string): void {
   <div data-phone-tree class="flex min-w-0 flex-col gap-3">
     <ModeTabs />
     <TreeOverlays />
-    <template v-if="!t.goalInline.value">
+    <!-- 完成形の設定 (ベース・MOD の表) を見に行く間は外さず隠すだけ (戻ると前の質問・開いていた欄・送った位置のまま。10-26 オーナー「見ようと思ったらリセットされてしまうのいやだね」、メモ feedback-basic-flow「閉じたら前の位置」) -->
+    <div v-show="!t.goalInline.value" data-phone-tree-body class="flex min-w-0 flex-col gap-3">
       <!-- レシピ (保存・開く・共有 URL。PC の帯と同じ部品、木が同じなので PC で開き直せる) -->
       <div data-phone-recipe class="flex min-w-0 flex-wrap items-center gap-2 text-[13px]"><TreeRecipeBar @opened="q.reset()" /></div>
       <!-- 完成形 (上に留める = どこまで送っても狙いを見直せる。畳んだ形: ベースと狙いの MOD の名前、開くと PC の 0 の枠と同じカード) -->
@@ -160,7 +168,7 @@ function goBox(id: string): void {
         <button type="button" data-phone-redo class="g-btn min-h-11 shrink-0 px-3" :disabled="!t.canRedo.value" :aria-label="tr('やり直し', 'Redo')" @click="t.redo">↷</button>
         </div>
       </div>
-    </template>
+    </div>
     <TreeHandPage v-if="handFor && t.doc.value.boxes[handFor]" :key="`h-${handFor}`" :box-id="handFor" :current="t.doc.value.boxes[handFor]!.hand" @pick="pickHand" @clear="clearHandOf" @close="handFor = null" @back="backOf" @aim="aimFor = handFor; handFor = null" />
     <!-- 結果のまとめ (PC と同じ部品。スマホは下から出る形 = TreeRunReport の max-md の置き方) -->
     <div v-if="reportOpen && run.result.value && !run.running.value" data-phone-report class="fixed inset-0 z-50 bg-black/50" @click.self="reportOpen = false">
