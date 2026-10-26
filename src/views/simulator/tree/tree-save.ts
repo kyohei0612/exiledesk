@@ -19,10 +19,15 @@ import { useTree } from "./use-tree";
  * current = この木が今のタブの木か (ほかのタブの木は開いているレシピと比べない)
  */
 export function unsaved(d: TreeDoc, current = true): boolean {
+  // エミュの「シミュレーターへ」で狙いを入れたままなら聞かない (10-26 夜オーナー「狙いを入れただけで戻る時は聞かずに戻す」)
+  if (pristine && pristine === JSON.stringify(d)) return false;
   const cur = current ? currentTreeRecipe.value : null;
   if (cur) return !sameTree(d, cur.tree);
   return !!d.memoAims?.length || Object.keys(d.boxes).length > 1;
 }
+/** エミュから入れた直後の木 (JSON)。そのままなら作りかけに数えない。tree-paste.ts の requestEmuItem が入れる */
+let pristine: string | null = null;
+export function markPristine(d: TreeDoc | null): void { pristine = d ? JSON.stringify(d) : null; }
 /** 自動の名前 (ベースの名前 + 日時) */
 export const autoName = (d: TreeDoc): string => `${tr(jaTypeName(d.base), d.base)} ${fmtDate(Date.now())}`;
 

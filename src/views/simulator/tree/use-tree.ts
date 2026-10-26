@@ -346,7 +346,10 @@ const goalItem = computed((): { item: StageItem; note: string | null; left: Arra
     const v = goals.value.find((a) => a.modId === m.modId && a.values?.length === m.values.length)?.values;
     return v && v.every((x, i) => Math.sign(x) === Math.sign(m.values[i]!) || x === 0) ? { ...m, values: [...v], ...retext(m, v, data) } : m;
   };
-  const item = goals.value.some((a) => a.values) ? { ...r.item, prefixes: r.item.prefixes.map(pasted), suffixes: r.item.suffixes.map(pasted) } : r.item;
+  const item0 = goals.value.some((a) => a.values) ? { ...r.item, prefixes: r.item.prefixes.map(pasted), suffixes: r.item.suffixes.map(pasted) } : r.item;
+  // エミュから来た木は暗黙もエミュの値のまま (振りの種を写す、10-26 夜オーナー)
+  const gi = d.goalImplicit?.base === d.base ? d.goalImplicit : null;
+  const item = gi ? { ...item0, rollSeed: gi.rollSeed, implicitRoll: gi.implicitRoll, implicitFixed: gi.implicitFixed } : item0;
   return { item, note: null, left: r.left.map((x) => ({ modId: x.modId, tier: x.tier, ...(marks.some((a) => a.modId === x.modId) ? { fractured: true as const } : {}), reason: x.reason })) };
 });
 /** 完成形のレアリティ (0 の箱、TreeDoc.goal。無ければレア。1 つ戻すで戻せる) */

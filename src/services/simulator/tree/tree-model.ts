@@ -144,6 +144,11 @@ export interface TreeDoc {
   note?: string;
   /** メモの窓で自由に足した欲しい MOD (ツリーの当たりとは別。オーナー 10-22「メモでは自由に MOD をメモに入れられる」) */
   memoAims?: Aim[];
+  /**
+   * エミュの「シミュレーターへ」で来た時の暗黙の値の振り (エミュのアイテムの rollSeed・implicitRoll・implicitFixed)。完成形のアイテムの暗黙をエミュと同じ値で出す
+   * (10-26 夜オーナー「コピーと同じ挙動ならそのまま出すのが流儀」)。base が今の base と違えば使わない
+   */
+  goalImplicit?: { base: string; rollSeed?: number; implicitRoll?: number; implicitFixed?: Record<number, number[]> };
   /** メモの窓で自由に足した使うカレンシー (値段のキー: カレンシー・お告げ・カタリスト・骨・エッセンス) */
   memoCurrencies?: string[];
 }

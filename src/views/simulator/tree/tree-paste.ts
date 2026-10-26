@@ -13,13 +13,13 @@ import { parseItemText } from "../../../services/simulator/paste/item-text";
 import type { ItemTextMod, ItemTextReading } from "../../../services/simulator/paste/item-text-types";
 import { craftStage as s } from "../../../state/craft-stage";
 import type { StageItem } from "../../../services/craft-stage/types";
-import { migrateStart, startRarity, type Aim } from "../../../services/simulator/tree/tree-model";
+import { migrateStart, startRarity, type Aim, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { askLeave, openTreePage } from "../../../web/page";
 import { track } from "../../../utils/track";
 import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
-import { quickSave, unsaved } from "./tree-save";
+import { markPristine, quickSave, unsaved } from "./tree-save";
 
 /** 最後に取り込んだ結果 (sim-mods の上に出す。閉じるか次の取り込みまで) */
 export const pasteNote = ref<{ base: string; aims: number; bad: Array<{ line: string; why: string }>; /** 読み方が 2 通り以上の時だけ (先頭 = 仮に選んだ読み) */ readings?: ItemTextReading[]; /** 今の読み方 */ pick: number; /** 段が仮の MOD (1 行に足された値の割り方が決まらない) */ guess: string[]; /** エミュの「シミュレーターへ」から */ emu?: true } | null>(null);
@@ -71,14 +71,15 @@ export function requestEmuItem(item: StageItem): void {
     const tier = of && !m.unrevealed ? { index: m.tierIndex, of, label: `T${of - m.tierIndex}`, name: m.affix, fits: true } : null;
     return { text, modId: m.unrevealed ? null : m.modId, source: m.desecrated ? "desecrated" : m.crafted ? "essence" : "normal", side: m.side, sideFrom: "engine", tier, values: [...m.values], shownValues: [...m.values], boosts: [], fractured: false, desecrated: !!m.desecrated, crafted: !!m.crafted, unrevealed: !!m.unrevealed };
   });
-  const go = (): void => { takeReadings({ en: item.base, ja: item.baseJa }, item.itemLevel, [{ mods, skipped: [] }], true); track("sim:fromEmu"); };
+  const go = (): void => { takeReadings({ en: item.base, ja: item.baseJa }, item.itemLevel, [{ mods, skipped: [] }], { base: item.base, rollSeed: item.rollSeed, implicitRoll: item.implicitRoll, implicitFixed: item.implicitFixed }); track("sim:fromEmu"); };
   // 作りかけの木を置き換える時は貼り付けと同じ 3 択
   if (unsaved(useTree().doc.value)) askLeave(go, () => void quickSave());
   else go();
 }
 
 /** 読めたアイテム (ベース・アイテムレベル・読み方) を木に入れて ② 完成の MOD のページへ (貼り付けとエミュの共通) */
-function takeReadings(base: { en: string; ja: string }, itemLevel: number | null | undefined, readings: ItemTextReading[], emu = false): void {
+/** emu = エミュから来た時の暗黙の振り (TreeDoc.goalImplicit)。貼り付けは無し */
+function takeReadings(base: { en: string; ja: string }, itemLevel: number | null | undefined, readings: ItemTextReading[], emu: TreeDoc["goalImplicit"] | null = null): void {
   const t = useTree();
   t.setBase(base.en, itemLevel ?? t.doc.value.itemLevel);
   // 貼った文のアイテムレベルを使う (白紙の木は適正で作られ、狙いに合わせて変わるので外す。文に無ければ今のまま)
@@ -93,8 +94,11 @@ function takeReadings(base: { en: string; ja: string }, itemLevel: number | null
   pasteNote.value = { base: tr(base.ja, base.en), aims: aims.length, bad, readings: readings.length > 1 ? readings : undefined, pick: 0, guess: guessOf(readings[0]!), ...(emu ? { emu: true as const } : {}) };
   // ② 完成の MOD のページへ (どの画面から貼っても同じ。ツリーの窓で開いていた時も)
   t.needBase.value = false;
+  t.edit((d) => { if (emu) d.goalImplicit = emu; else delete d.goalImplicit; });
   openTreePage("mods");
   t.goalPage.value = 2;
+  // エミュから入れたままの木は、戻る時に保存を聞かない (10-26 夜オーナー)
+  markPristine(emu ? t.doc.value : null);
 }
 
 /** 1 通りの読み方 → 完成形の狙いと、狙いにできなかった行 (読めなかった行も) */
