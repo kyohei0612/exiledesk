@@ -16,7 +16,8 @@ import PhoneMap from "./PhoneMap.vue";
 const t = useTree();
 const open = computed(() => !mapFolded.value || !!mapPick.value);
 const marks = computed(() => t.goals.value.filter((a) => a.fractured).map((a) => a.modId));
-const cardW = Math.min(360, (typeof window === "undefined" ? 375 : window.innerWidth) - 40);
+/** カードの幅 = 窓の中いっぱい (左右の余白 12 ずつ)。上限は付けない (10-26 夜オーナー「枠は最大限」) */
+const cardW = (typeof window === "undefined" ? 375 : window.innerWidth) - 24;
 /** 帯の小さなボタン (完成形の札と同じ形、指で押せる高さ 40px) */
 const PILL = "shrink-0 rounded-md border border-[#c9a45c]/60 bg-gradient-to-b from-[#3a2c14] to-[#1a1309] px-3 text-[13px] font-bold leading-[38px] text-[#f2d27a]";
 /** 全体図の所 (戻り先を選ぶ時はここまで送る。320 では完成形のカードの下で窓の外だった) */

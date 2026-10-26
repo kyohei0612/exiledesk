@@ -34,7 +34,8 @@ const noteEdit = ref(false);
 watch(id, () => { noteEdit.value = false; });
 /** 出すカードの MOD の値は木の中で揃える (PC の箱・完成形・手の窓と同じ tree-fixed-values、5f1a5f66。表示だけ、打つ・判定は見本の値のまま) */
 const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it) : it);
-const cardW = Math.min(340, (typeof window === "undefined" ? 375 : window.innerWidth) - 40);
+/** カードの幅 = 窓の中いっぱい (左右の余白 12 ずつ)。上限は付けない (10-26 夜オーナー「枠は最大限」) */
+const cardW = (typeof window === "undefined" ? 375 : window.innerWidth) - 24;
 const name = (x: string): string => q.boxTitle(x);
 const route = computed(() => (box.value ? routeText(t.doc.value, id.value, name) : null));
 const run = computed(() => runText(phoneRun.value, id.value));

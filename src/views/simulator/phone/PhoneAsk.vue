@@ -29,7 +29,8 @@ const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.val
 /** 出すカードの MOD の値は木の中で揃える (PC の箱・完成形・手の窓と同じ tree-fixed-values、5f1a5f66。表示だけ、打つ・判定は見本の値のまま) */
 const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it) : it);
 const cardW = ref(340);
-const fit = (): void => { cardW.value = Math.min(360, window.innerWidth - 40); };
+/** カードの幅 = 画面の幅 - ページの左右の余白 (8px ずつ)。上限は付けない (10-26 夜オーナー「枠は最大限にしてもいいね、空ける必要ない」) */
+const fit = (): void => { cardW.value = window.innerWidth - 16; };
 onMounted(() => { fit(); window.addEventListener("resize", fit); });
 // 出した質問は「次へ」・手を決めるまで留める (② の最後の行に答えた瞬間に次の質問へ飛ばない)
 onMounted(() => { if (!quiz.focus.value) quiz.focus.value = props.q; });
