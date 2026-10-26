@@ -73,7 +73,7 @@ const marks = computed(() => !props.result ? [] : props.boxes.map((b) => {
   const p = props.posOf(b), inKey = b.parent ? `e:${b.parent}>${b.id}` : null;
   const outBack = b.back ? Object.keys(target.value).filter((k) => k.startsWith(`e:${b.id}>`)).reduce((a, k) => a + int(k), 0) : 0;
   const st = props.result!.boxes[b.id];
-  return { b, x: p.x, y: p.y, reach: int(`b:${b.id}`), inN: inKey ? int(inKey) : 0, outBack, stuck: int(`s:${b.id}`), costIn: st?.costIn ?? 0, remain: st?.remain ?? 0 };
+  return { b, x: p.x, y: p.y, reach: int(`b:${b.id}`), inN: inKey ? int(inKey) : 0, outBack, stuck: int(`s:${b.id}`), moved: props.result!.moved[b.id] ?? 0, costIn: st?.costIn ?? 0, remain: st?.remain ?? 0 };
 }));
 const div = (x: number): string => (x >= 100 ? x.toFixed(0) : x.toFixed(1));
 </script>
@@ -99,7 +99,13 @@ const div = (x: number): string => (x >= 100 ? x.toFixed(0) : x.toFixed(1));
       :style="{ left: `${m.x + 6}px`, top: `${m.y}px` }">{{ tr(`${m.inN} 回`, `${m.inN}×`) }}</span>
     <span v-if="m.outBack" data-tree-run-back class="pointer-events-none absolute z-20 -translate-x-1/2 whitespace-nowrap rounded-full bg-black/70 px-1.5 text-[11px] tabular-nums text-cyan-200/90"
       :style="{ left: `${m.x + BOX_W / 2}px`, top: `${m.y + BOX_H + 4}px` }">↩ {{ tr(`${m.outBack} 回`, `${m.outBack}×`) }}</span>
-    <button v-if="m.stuck" type="button" data-tree-run-stuck class="nodrag nopan pointer-events-auto absolute z-20 -translate-x-1/2 whitespace-nowrap rounded-full border border-rose-400/70 bg-rose-700/90 px-2 text-[11px] font-bold tabular-nums text-white shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
-      :style="{ left: `${m.x + BOX_W / 2}px`, top: `${m.y + BOX_H - 10}px` }" :title="result?.stuckWhy[m.b.id]?.reason" @click="emit('go', m.b.id)">{{ tr(`止まり ${m.stuck} 人`, `${m.stuck} stuck`) }}</button>
+    <!-- 止まった人: 理由を箱の上に文で重ねる (前は赤い札の title だけ、10-26 失敗時の挙動の案 2)。押すとその箱へ寄る -->
+    <button v-if="m.stuck" type="button" data-tree-run-stuck :data-box-id="m.b.id" class="nodrag nopan pointer-events-auto absolute z-20 flex flex-col overflow-y-auto rounded-lg border border-rose-400/70 bg-[#2a0d12]/95 px-2 py-1 text-left text-[11px] leading-snug text-rose-50 shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+      :style="{ left: `${m.x + 4}px`, top: `${m.y + 26}px`, width: `${BOX_W - 8}px`, height: `${BOX_H - 30}px` }" :title="result?.stuckWhy[m.b.id]?.reason" @click="emit('go', m.b.id)">
+      <b class="tabular-nums">{{ tr(`止まり ${m.stuck} 人`, `${m.stuck} stuck`) }}</b><span class="break-words">{{ result?.stuckWhy[m.b.id]?.reason }}</span>
+    </button>
+    <!-- 着いてから形の合う別の箱へ移った人 (tree-run の settle。矢印の先と実際に進む箱が違う時) -->
+    <span v-if="m.moved" data-tree-run-moved class="pointer-events-auto absolute z-20 -translate-y-1/2 whitespace-nowrap rounded-full border border-cyan-300/50 bg-[#0d1a1c]/95 px-2 text-[11px] tabular-nums text-cyan-100"
+      :style="{ left: `${m.x + 6}px`, top: `${m.y + BOX_H}px` }" :title="tr('着いた後、狙いの組と外れの有無が合う別の箱へ移った人の数 (矢印の先と違う箱へ進んだ)', 'Runs that arrived here and then moved on to another box with the same targets and misses (not the arrow’s box)')">{{ tr(`↪ ${m.moved} 人は別の箱へ`, `↪ ${m.moved} moved on`) }}</span>
   </template>
 </template>

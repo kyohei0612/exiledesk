@@ -10,7 +10,8 @@ import { useTree } from "../tree/use-tree";
 import { useTreeLink } from "../tree/use-tree-link";
 import { backTargetsOf } from "../tree/tree-merge";
 import { handLabel, OUT_LOOK } from "../tree/tree-names";
-import { mapPick, usePhoneQuiz } from "./use-phone-quiz";
+import { mapPick, phoneRun, usePhoneQuiz } from "./use-phone-quiz";
+import { routeText, runText } from "../tree/tree-fail";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
@@ -46,6 +47,8 @@ function startPick(): void {
 }
 const look = computed(() => OUT_LOOK[box.value?.out ?? "junk"]);
 const backKind = computed(() => (state.value !== "back" ? null : box.value?.back === "start" ? "start" : backTo.value === parent.value ? "retry" : "other"));
+const route = computed(() => routeText(t.doc.value, props.boxId, q.boxTitle));
+const run = computed(() => runText(phoneRun.value, props.boxId));
 const treeOdds = useTreeOdds();
 const odds = computed(() => treeOdds.value.get(props.boxId) ?? null);
 /** この結果のアイテムと、戻り先の箱のアイテム (いつも開いたまま、10-26 オーナー「アイテムは基本展開」) */
@@ -67,11 +70,13 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
       <span v-if="state === 'open'" class="shrink-0 text-[11px] font-normal text-amber-200/80">{{ tr("どうする?", "Then?") }}</span>
     </p>
     <StageItemCard v-if="item" data-phone-out-item class="mt-2" :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tagsOf(boxId, item)" />
+    <!-- 回した結果 (来た人・形の合う別の箱へ移った人・止まった人と理由) -->
+    <p v-if="run" data-phone-out-run class="mt-1 break-words text-[12px]" :class="phoneRun?.stuckAt[boxId] ? 'text-rose-200' : 'text-amber-100/80'">{{ run }}</p>
     <!-- 次の手が付いている箱 (① で答えた) は手の名前。押すとその手を見直す -->
     <button v-if="state === 'hand'" type="button" data-phone-out-hand class="mt-1 block w-full break-words text-left text-[12px] text-[#c8bca4] underline decoration-white/20" @click="emit('hand', boxId)">→ {{ box.hand ? handLabel(box.hand) : tr("分かれ目", "Split") }}</button>
     <template v-else>
-      <p v-if="box.autoBack && backTo" data-phone-out-auto class="mt-1 break-words text-[12px] text-cyan-200/90">{{ tr(`↩ 同じ状態の箱へ自動でつないだ (${q.boxTitle(backTo)})`, `↩ Auto-linked to the same state (${q.boxTitle(backTo)})`) }}</p>
-      <p v-else-if="backKind === 'other' && backTo" class="mt-1 break-words text-[12px] text-cyan-200/90">↩ {{ q.boxTitle(backTo) }}</p>
+      <!-- 行き先の文 (PC の箱と同じ tree-fail の routeText。狙いが消えた → 始め も文で、10-26 失敗時の挙動の案 2) -->
+      <p v-if="route" data-phone-out-route :data-phone-out-auto="box.autoBack ? 1 : undefined" class="mt-1 break-words text-[12px] text-cyan-200/90">{{ route }}</p>
       <p v-else-if="state === 'done' && !box.hand" data-phone-out-done class="mt-1 text-[12px] text-emerald-300">{{ tr("✓ 完成 (狙いが全部そろう)", "✓ Done (all targets)") }}</p>
       <!-- 戻り先の箱のアイテム (その箱に着いた時の形。始めに戻るはベースなので出さない) -->
       <div v-if="backItem && backTo" data-phone-out-back-item class="mt-1 rounded-lg border border-cyan-300/30 bg-black/20 p-1.5">

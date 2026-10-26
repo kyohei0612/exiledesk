@@ -6,7 +6,8 @@
  * 完成の狙いが全部そろう道の箱はスマホだけ自動で完成 (markDone、答えと同じ 1 手 = 1 つ戻すで一緒に戻る)。「次の手を決める」にした箱は自動で完成にしない
  * (完成の後も答え直せる。PC は今のまま枝分かれできる。10-25 にやめた PC の「自動の完成」とは別、決めはメモ sim-decisions)
  */
-import { computed, ref } from "vue";
+import { computed, ref, shallowRef } from "vue";
+import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { aimKey, setBack, setDone, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { heldSets } from "../../../services/simulator/tree/tree-shape";
 import { useTree } from "../tree/use-tree";
@@ -68,6 +69,10 @@ const later = ref<string[]>([]);
 const focus = ref<Question | null>(null);
 /** 全体図 (PhoneMap) で戻り先の箱を選んでいる (② の「ほかの箱へ」。from = 結果の箱、ids = 戻れる箱。10-26 オーナー「どこに戻るか分からない」) */
 export const mapPick = ref<{ from: string; ids: string[] } | null>(null);
+/** 箱の重ね窓 (10-26 オーナーの選んだ案 B: 一覧・全体図・戻り先選びで箱を押すと、移らずに下から窓で中身を全部。pickFrom = 戻り先を選んでいる結果の箱) */
+export const sheet = ref<{ id: string; pickFrom?: string } | null>(null);
+/** 最後に回した 100 人の結果 (PhoneTreePage の use-tree-run を写す。結果の行・重ね窓の「来た人・止まりの理由」) */
+export const phoneRun = shallowRef<TreeRunResult | null>(null);
 
 export function usePhoneQuiz() {
   const t = useTree();

@@ -20,14 +20,16 @@ import { useTree } from "../tree/use-tree";
 import { clearHand, setAim, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { tr } from "../../../i18n/lang";
-import { usePhoneQuiz } from "./use-phone-quiz";
+import { phoneRun, sheet, usePhoneQuiz } from "./use-phone-quiz";
 import PhoneAsk from "./PhoneAsk.vue";
 import PhoneRoutes from "./PhoneRoutes.vue";
 import PhoneMap from "./PhoneMap.vue";
+import PhoneBoxSheet from "./PhoneBoxSheet.vue";
+import PhoneIssues from "./PhoneIssues.vue";
 import { flag } from "../../../web/release-flags";
 
 const t = useTree();
-/** 下の全体図 (スイッチ phoneMap、形はオーナーが案から選ぶ 10-26) */
+/** 下の全体図と箱の重ね窓 (スイッチ phoneMap、10-26 オーナーの選んだ案 B。OK 待ちの間は本番は前の形) */
 const MAP = flag("phoneMap");
 const q = usePhoneQuiz();
 /** 棚を開いている箱 / 当たりの MOD を選んでいる箱 */
@@ -70,6 +72,8 @@ const total = computed(() => q.questions.value.length);
 // 100 人回す (PC の SimTreePage と同じ use-tree-run。止まった箱・まとめの箱を押すと、その箱の質問へ)
 const run = useTreeRun(t.doc, t.startPrice, t.treePrice, () => {}, () => {});
 watch(() => run.walk.value, (w) => { if (w) run.skipWalk(); });
+// 結果の行・重ね窓が読む (来た人・止まりの理由、tree-fail の runText)
+watch(() => run.result.value, (r) => { phoneRun.value = r ?? null; }, { immediate: true });
 const reportOpen = ref(false);
 watch(() => !!run.result.value && !run.running.value && !run.halted.value, (on) => { reportOpen.value = on; });
 /** 止まった理由 (tree-run の stuckWhy: エンジンの断りの文と、そこへ戻ってきた箱) */
@@ -125,6 +129,8 @@ function goBox(id: string): void {
         <div class="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-white/10"><i class="block h-full bg-amber-300" :style="{ width: `${Math.round((100 * q.answered.value) / Math.max(1, q.answered.value + total))}%` }" /></div>
         <button type="button" data-phone-routes class="g-btn sm shrink-0" :aria-pressed="routesOpen" @click="routesOpen = !routesOpen">{{ routesOpen ? tr("質問へ", "Question") : tr("全体を見る", "Overview") }}</button>
       </div>
+      <!-- 足りない所 (PC と同じ精査、自動で回る。10-26 案 2) -->
+      <PhoneIssues />
       <PhoneRoutes v-if="routesOpen" @pick="routesOpen = false" />
       <PhoneAsk v-else-if="q.current.value" :key="`${q.current.value.kind}-${q.current.value.id}`" :q="q.current.value" @hand="(id) => (handFor = id)" />
       <!-- 全部の道が決まった (残りの道 0) -->
@@ -146,7 +152,7 @@ function goBox(id: string): void {
       <!-- 下の帯 (親指の届く所): 1 つ戻す・今の質問の主な操作 (① 打つ手を選ぶ / ② 決めた / 全部決まったら 100 人回す)・やり直し -->
       <!-- 上にツリーの全体図 (常に出す。今の箱が光る・押すとその箱へ・② の「ほかの箱へ」は図で戻り先を選ぶ。10-26 オーナー) -->
       <div data-phone-bar class="sticky bottom-0 z-10 -mx-2 flex flex-col gap-2 border-t border-white/10 bg-[#0c0a08] px-2 py-2">
-        <PhoneMap v-if="MAP" @go="(id) => { routesOpen = false; goBox(id); }" />
+        <PhoneMap v-if="MAP" />
         <div class="flex gap-2">
         <button type="button" data-phone-undo class="g-btn min-h-11 shrink-0 px-3" :disabled="!t.canUndo.value" :title="tr('1 つ戻す', 'Undo')" @click="t.undo">↶<span class="ml-1 text-[12px]">{{ tr("戻す", "Undo") }}</span></button>
         <button v-if="main" type="button" data-phone-main :data-main="main.kind" class="g-btn-red min-h-11 min-w-0 flex-1 truncate px-2 text-[15px]" :disabled="main.off" @click="main.go">{{ main.text }}</button>
@@ -160,6 +166,8 @@ function goBox(id: string): void {
     <div v-if="reportOpen && run.result.value && !run.running.value" data-phone-report class="fixed inset-0 z-50 bg-black/50" @click.self="reportOpen = false">
       <TreeRunReport :result="run.result.value" @close="reportOpen = false" @go="(id) => { reportOpen = false; goBox(id); }" />
     </div>
+    <!-- 箱の重ね窓 (全体図・一覧・戻り先選びで押した箱。移らずに中身を全部、10-26 案 B) -->
+    <PhoneBoxSheet v-if="MAP && sheet" />
     <TreePanelPage v-if="aimFor && t.doc.value.boxes[aimFor]" :key="`a-${aimFor}`" kind="aim" :box-id="aimFor" :current="t.doc.value.boxes[aimFor]!.aim" @pick="pickAim" @close="aimFor = null" />
   </div>
 </template>

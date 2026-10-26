@@ -12,6 +12,7 @@ import { useTree } from "./use-tree";
 import { handName, OUT_LOOK, rarityName, splitWhenText } from "./tree-names";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { pctText, useTreeOdds } from "./tree-odds";
+import { routeText } from "./tree-fail";
 
 const props = defineProps<{ box: TreeBox; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
   /** 縮めた時の倍率の逆数 (押せる物だけこれで大きさを戻し、画面の上で 24px 以上を保つ。オーナー 10-22「縮めても押せる物は小さくならない」) */ inv?: number;
@@ -56,7 +57,11 @@ const doneText = computed(() => (props.box.done ? tr("完成", "Done") : tr("完
 /** 下の＋を出す (完成の箱からも伸ばせる。手を付けると完成の印は外れ、同じ形の完成の箱もそこへ戻る、tree-merge の joinSameShape) */
 /** 戻り先 = 狙いの MOD が同じ箱 (自動でつないだ矢印。行き先はいつも箱、狙い以外の MOD は違ってよい。10-25 オーナー「なら箱にしようか基本的に戻るとかの挙動」) */
 const sameAim = computed(() => !!props.box.autoBack && props.box.back !== "start");
-const free = computed(() => !props.box.hand && !props.box.back && !props.box.split);
+// 戻りのある箱からも伸ばせる (手を付けると戻りは外れる = setHand。前は × で戻りを外さないと＋が出なかった、10-26 失敗時の挙動の洗い出しの 2)
+const free = computed(() => !props.box.hand && !props.box.split);
+/** 失敗の箱の行き先の文 (tree-fail) と、何が起きたかの文 */
+const route = computed(() => routeText(t.doc.value, props.box.id));
+const desc = computed(() => props.box.out === "junk" ? tr("当たり以外が付いた", "Anything but a hit") : props.box.out === "junkGone" ? tr("外れの MOD が消えた", "A miss mod was removed") : props.box.out === "any" ? (essOf.value ? tr(`${essOf.value} の MOD が付いた`, `${essOf.value} mod added`) : tr("何かが 1 つ付いた (狙い無し)", "Something was added (no target)")) : tr("狙いの MOD が消えた", "A target mod was removed"));
 /** 分かれ目の先の箱の文 = 親の分かれ目の行の条件 */
 const branchText = computed(() => { const r = props.box.parent ? t.doc.value.boxes[props.box.parent]?.split?.find((x) => x.to === props.box.id) : null; return r ? splitWhenText(r.when) : ""; });
 /** 押せる物を隠す時 (戻り先を選んでいる・一望) */
@@ -148,6 +153,8 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
         {{ box.aim ? t.aimLabel(box.aim) : tr("＋ 付く MOD を選ぶ", "+ Pick the mod") }}
       </button>
       <p v-else-if="box.out === 'branch'" data-tree-branch-text class="truncate leading-6 text-teal-100" :title="branchText">{{ branchText }}</p>
+      <!-- 失敗の箱は戻りがあれば「どこへ・なぜ」の文 (tree-fail の routeText、名前は下の札。10-26 オーナー「失敗時の挙動を作りこむ」の案 2)、無ければ何が起きたか -->
+      <p v-else-if="route" data-tree-route class="truncate leading-6 text-cyan-200/90" :title="`${desc} · ${route}`">{{ route }}</p>
       <p v-else class="truncate leading-6 opacity-60">{{ box.out === "junk" ? tr("当たり以外が付いた", "Anything but a hit") : box.out === "junkGone" ? tr("外れの MOD が消えた", "A miss mod was removed") : box.out === "any" ? (essOf ? tr(`${essOf} の MOD が付いた`, `${essOf} mod added`) : tr("何かが 1 つ付いた (狙い無し)", "Something was added (no target)")) : tr("狙いの MOD が消えた", "A target mod was removed") }}</p>
     </div>
 
