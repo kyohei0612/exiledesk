@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.625",
+  "date": "2026-10-26",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 保存した木や共有された木を開いた時に、戻り先の「形の合う箱へ」「作り直し」が消えていたのを直しました",
+    "en": "Simulator: Fixed return targets such as \"a box of the same shape\" and \"Start over\" being dropped when opening a saved or shared tree"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "ベース選び: 今日のユニークのタイルの光を、色の薄い絵にも絵に合った色で付けるように",
+    "en": "Base selection: The glow on today's unique tiles now matches the art's color even for pale art"
+   }
+  ]
+ },
+ {
   "v": "0.1.624",
   "date": "2026-10-26",
   "items": [
@@ -877,24 +895,6 @@
     "area": "",
     "text": "MOD 一覧のタブの呼び方を「一般」「冒涜専用」にそろえました (前は「普通」「冒涜」)",
     "en": "Mod list tabs are now labeled “Regular” and “Desecrated-only” (were “Normal” and “Desecrated”)"
-   }
-  ]
- },
- {
-  "v": "0.1.585",
-  "date": "2026-10-19",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "MOD 一覧のタグを色付きの札にし、入らない時は折り返して全部見えるようにしました (長い MOD でタグが消えて見えていたのを直しました)",
-    "en": "Mod list tags are now colored badges and wrap so every tag is visible (long mods no longer hide their tags)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "「付ける」の小窓の外を押した時に、下の MOD 一覧まで押されてたたまれていたのを直しました (外を押すと小窓を閉じるだけに)",
-    "en": "Clicking outside the “Add” popup no longer also clicks the mod list underneath (it just closes the popup)"
    }
   ]
  }
