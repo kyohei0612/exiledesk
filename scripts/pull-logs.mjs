@@ -7,6 +7,8 @@
  *   - 環境変数 EXILEDESK_LIVE_KEY (server/live の REFRESH_KEY と同じ) があれば server/live の /logs/day から
  *   - 無ければ wrangler で D1 を直接読む (2026-10-19、鍵が手元に無かった。wrangler login 済みなら動く)
  * 分析は python scripts/analyze-logs.py data-cache/logs/<日付>.jsonl ...
+ * 最後に scripts/pull-server-notes.mjs も回し、記録の外の材料 (サーバーの異常・要望・Discord の書き込み) を data-cache/logs/<日付>-server.json に置く (2026-10-26)。
+ * 毎朝の AI の評価と見解は、この 2 つ (<日付>.jsonl と <日付>-server.json) を読んで docs/org/analytics/daily/<日付>-ai.md を書き、scripts/post-ai-review.mjs <日付> で #日報 へ
  */
 import { execFileSync } from "node:child_process";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
@@ -62,3 +64,6 @@ for (const day of days) {
   const lines = text ? text.split("\n").length : 0;
   console.log(`${day}: ${lines} まとまり → data-cache/logs/${day}.jsonl${KEY ? "" : " (wrangler)"}`);
 }
+
+// 記録の外にあるその日の材料 (サーバーの異常・要望・Discord の書き込み) も data-cache/logs/<日>-server.json に (2026-10-26、毎朝の AI の評価と見解が読む)
+execFileSync(process.execPath, [resolve(ROOT, "scripts/pull-server-notes.mjs"), ...days], { stdio: "inherit", windowsHide: true });
