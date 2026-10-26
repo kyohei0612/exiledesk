@@ -61,7 +61,7 @@ function importPaste(text: string): void {
 /**
  * エミュで持っているアイテムを取り込む (エミュの「シミュレーターへ」、sim-links.ts の openSimWithItem。2026-10-26 夜オーナー「忍者コピーに似てる」)。
  * 付いている MOD を全部、貼り付けと同じ読み方で完成形の狙い (その段以上) に入れて ② へ。段は MOD 自身の段の並びから (エッセンスの MOD もエッセンス自身の段、表と同じ)。
- * フラクチャーの印は付けない (オーナー「フラクチャーはオフで渡す」、ツリーへ行く時に決める)
+ * エミュでフラクチャー済みの MOD は ✦ の印を付けたまま (貼り付けと同じ。10-27 オーナー「ツリーへ行く時に選べるようにしたから、フラクチャー MOD を付けた状態で」、10-26 夜の「オフで渡す」は取り消し)
  */
 export function requestEmuItem(item: StageItem): void {
   const data = s.data.value;
@@ -69,7 +69,7 @@ export function requestEmuItem(item: StageItem): void {
   const mods: ItemTextMod[] = [...item.prefixes, ...item.suffixes].map((m) => {
     const of = data.mods.get(m.modId)?.tiers.length ?? 0, text = tr(m.textJa, m.textEn);
     const tier = of && !m.unrevealed ? { index: m.tierIndex, of, label: `T${of - m.tierIndex}`, name: m.affix, fits: true } : null;
-    return { text, modId: m.unrevealed ? null : m.modId, source: m.desecrated ? "desecrated" : m.crafted ? "essence" : "normal", side: m.side, sideFrom: "engine", tier, values: [...m.values], shownValues: [...m.values], boosts: [], fractured: false, desecrated: !!m.desecrated, crafted: !!m.crafted, unrevealed: !!m.unrevealed };
+    return { text, modId: m.unrevealed ? null : m.modId, source: m.desecrated ? "desecrated" : m.crafted ? "essence" : "normal", side: m.side, sideFrom: "engine", tier, values: [...m.values], shownValues: [...m.values], boosts: [], fractured: !!m.fractured, desecrated: !!m.desecrated, crafted: !!m.crafted, unrevealed: !!m.unrevealed };
   });
   const go = (): void => { takeReadings({ en: item.base, ja: item.baseJa }, item.itemLevel, [{ mods, skipped: [] }], { base: item.base, rollSeed: item.rollSeed, implicitRoll: item.implicitRoll, implicitFixed: item.implicitFixed }); track("sim:fromEmu"); };
   // 作りかけの木を置き換える時は貼り付けと同じ 3 択
