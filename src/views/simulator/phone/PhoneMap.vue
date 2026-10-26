@@ -9,7 +9,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { BOX_H, BOX_W, boundsOf } from "../../../services/simulator/tree/tree-model";
 import { backTargetsOf } from "../tree/tree-merge";
-import { OUT_LOOK } from "../tree/tree-names";
+import { OUT_LOOK, outName } from "../tree/tree-names";
 import { mapPick, sheet, usePhoneQuiz } from "./use-phone-quiz";
 import { tr } from "../../../i18n/lang";
 import { iconOf } from "../../../state/craft-stage";
@@ -61,6 +61,10 @@ function look(id: string): { fill: string; stroke: string; sw: number; op: numbe
 /** 箱の短い名前 (図が大きく箱が 28px 以上の時だけ箱の中に出す) */
 const SHORT: Record<string, [string, string]> = { start: ["始め", "Start"], hit: ["当たり", "Hit"], junk: ["外れ", "Miss"], junkGone: ["外れ消", "Gone"], lost: ["消えた", "Lost"], any: ["打後", "After"], pass: ["品質", "Qual"], branch: ["分岐", "Split"] };
 const shortOf = (id: string): string => { const s = SHORT[q.doc.value.boxes[id]?.out ?? ""]; return s ? tr(s[0], s[1]) : ""; };
+/**
+ * 色の見方 (大きく開いた時だけ図の下に。木が横に広いと箱が 22px ほどで中の字が出せないので、木にある結果の種類を色と名前で並べる。10-26 夜オーナー OK の 7)
+ */
+const legend = computed(() => [...new Set(Object.values(q.doc.value.boxes).map((b) => b.out))].map((o) => ({ o, c: OUT_LOOK[o].c, name: outName(o) })));
 /** 手のある箱の次の手の絵 (カレンシーの絵が無ければ無し) */
 const handIcon = (id: string): string | null => { const h = q.doc.value.boxes[id]?.hand; return h ? iconOf(h.currency) || null : null; };
 /** 線 (親 → 結果の箱) */
@@ -105,6 +109,10 @@ watch(() => q.doc.value, (d) => { const pk = mapPick.value; if (pk && !d.boxes[p
         </template>
       </svg>
     </div>
+    <p v-if="tall && !mapPick" data-phone-map-legend class="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-[#d8ccb4]">
+      <span v-for="x in legend" :key="x.o" class="inline-flex items-center gap-1"><i class="inline-block h-2.5 w-4 rounded-sm" :style="{ background: `rgba(${x.c},0.6)`, border: `1.5px solid rgb(${x.c})` }" />{{ x.name }}</span>
+      <span class="inline-flex items-center gap-1"><i class="inline-block h-2.5 w-4 rounded-sm border-2 border-[rgb(253,230,138)]" />{{ tr("今の質問", "Current") }}</span>
+    </p>
   </div>
 </template>
 

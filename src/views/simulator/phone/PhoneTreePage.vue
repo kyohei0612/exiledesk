@@ -149,8 +149,11 @@ function goBox(id: string): void {
             <span class="flex min-w-0 items-center gap-2"><span class="shrink-0 font-bold text-[#f2d27a]">{{ tr("完成形", "Final item") }}</span><span class="min-w-0 flex-1 break-words text-[#d8ccb4]">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}</span><span class="shrink-0 text-[11px] opacity-70">{{ goalOpen ? "▾" : "▸" }}</span></span>
             <span data-phone-goal-aims class="break-words text-[11px] text-[#c8c8ff]">{{ goalText || tr("MOD はまだ (右の MOD で決める)", "No mods yet (set them with Mods)") }}</span>
           </button>
-          <button type="button" data-phone-goal-open="base" :class="PILL" @click="t.goalPage.value = 1">{{ tr("ベース", "Base") }}</button>
-          <button type="button" data-phone-goal-open="mods" :class="PILL" @click="t.goalPage.value = 2">MOD</button>
+          <!-- 360px 未満はボタンを縦に重ねて、名前の行を広く (320 で「不在のアミュレッ/ト」と 1 字だけ落ちた) -->
+          <span class="flex shrink-0 gap-2 max-[359px]:flex-col">
+            <button type="button" data-phone-goal-open="base" :class="PILL" @click="t.goalPage.value = 1">{{ tr("ベース", "Base") }}</button>
+            <button type="button" data-phone-goal-open="mods" :class="PILL" @click="t.goalPage.value = 2">MOD</button>
+          </span>
         </div>
         <div v-if="goalOpen && t.goalItem.value" class="mt-2 max-h-[55vh] overflow-y-auto pb-1"><StageItemCard :item="t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :fracture-group="marks" tier-at-least /></div>
       </div>

@@ -76,7 +76,7 @@ const itemOf = (id: string | null) => (s.data.value && id && t.doc.value.boxes[i
 const item = computed(() => itemOf(props.boxId));
 const backItem = computed(() => (backTo.value && backTo.value !== "start" ? itemOf(backTo.value) : null));
 const tagsOf = (id: string, it: ReturnType<typeof itemOf>) => (s.data.value && it ? treeRowTags(s.data.value, t.doc.value, t.doc.value.boxes[id]?.unwanted ?? [], it, t.doc.value.boxes[id]) : null);
-const cardW = Math.min(340, (typeof window === "undefined" ? 375 : window.innerWidth) - 60);
+const cardW = Math.min(340, (typeof window === "undefined" ? 375 : window.innerWidth) - 46);
 const CHIP = "inline-flex min-h-10 items-center rounded-full border px-3 py-1.5 text-[13px] leading-tight";
 const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-amber-500/20 text-amber-50" : "border-white/15 bg-white/[0.03] text-[#d8ccb4]"}`;
 </script>
