@@ -266,7 +266,8 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
       // 外れを持ったまま戻る「狙いが消えた」の戻り (作り直しでない)。カオスを当たるまでは 1 つしか入れ替えないので、持ち込んだ外れは消えずに先で満杯になる (10-22 靴 b14 → b1、100 人中 63 人)
       const carry = (w?.backs ?? []).filter((x) => doc.boxes[x]?.out === "lost" && doc.boxes[x]?.back !== RESTART);
       add(id, "stuck", stuckText(data, aims, n, w, carry.length > 0, doc.boxes[id]?.hand ?? null));
-      for (const x of carry) add(x, "carry", tr("ここで戻ると外れを持ったまま進み、先の箱で側が満杯になって止まる (直すのはこの戻り: 戻り先を分かれ目の箱 (打たずに分ける) にして「外れが 2 つ以上なら消去」の行を)", "Returning here keeps the misses, so a later box runs out of room and stops (fix this return: send it to a split box with an \"annul when 2+ misses\" row)"));
+      // 10-26: 前は「戻り先を分かれ目の箱に」と勧めていたが、分かれ目を作るボタンは 10-25 に外した (画面でできない直し方だった)
+      for (const x of carry) add(x, "carry", tr("ここで戻ると外れを持ったまま進み、先の箱で側が満杯になって止まる (直すのはこの戻り: × で戻りを外し、＋で外れを消す手 (消去 + 満杯の側のお告げなど) を足して、その結果から戻す)", "Returning here keeps the misses, so a later box runs out of room and stops (fix this return: remove it with ×, add a craft that removes the misses with + (e.g. Annulment with the omen for the full side), and return from its result)"));
     }
     // 回しで結果の箱に無い形になった箱 (5 人の辿りで出なかった物。上限つきの当たるまでが上限で当たらない時など、10-22 13 通り組んだ #13)
     for (const [id, n] of Object.entries(run.unexpected)) {
