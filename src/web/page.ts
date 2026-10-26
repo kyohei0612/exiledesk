@@ -395,7 +395,8 @@ export function startPages(): void {
     leaveAsk.value = () => { popThrough = true; history.go(-step); };
   });
   // 閉じる・読み直す・外のリンク (ブログなど) はブラウザの確かめ
-  window.addEventListener("beforeunload", (e) => { if (mustAsk("unload")) e.preventDefault(); });
+  // 新しい版の直後の自動の読み直し (web.html の __staleReload が __staleGo を立てる) では聞かない。作りかけの木はシミュが pagehide で取っておき、読み直した後に戻す (2026-10-26 オーナー「A で」、シミュ部長 30)
+  window.addEventListener("beforeunload", (e) => { if (!(window as { __staleGo?: unknown }).__staleGo && mustAsk("unload")) e.preventDefault(); });
   // ページが替わった直後 (0.5 秒) のクリックは受けない (「← 戻る」のダブルクリックの 2 回目が、移った先の同じ位置のヘッダーの「ブログ」に当たって /blog/ へ飛んだ。モンキーテスト 10-23 の 3)
   // 比べるのは押された時刻 (e.timeStamp)。移った先の描画が重いと 2 回目のクリックが待たされ、配られる時には 300ms を過ぎていた (10-23 シミュ部長の確かめ)
   // 守っている間のクリックは守りを延ばす (8 連打だと 0.5 秒を過ぎた後ろのクリックがブログに当たった。10-23 ジン部長の確かめ)
