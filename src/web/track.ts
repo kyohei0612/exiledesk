@@ -84,6 +84,10 @@ export function track(name: string, extra?: string): void {
   if (name === "page:skins") screen("skins"); // PoE2 で使える PoE1 のスキンの一覧 (2026-10-25、開発版だけ)
   if (name === "page:craft") screen("craft");
   if (name === "page:sim") screen(`sim:${extra ?? ""}`); // シミュレーターの工程のページ (2026-10-19、sim:mods / start / order / play / result)
+  // 今のシミュのページ (ツリー・ベース・完成の MOD。2026-10-26 夜、前は Analytics Engine だけで D1 に来ていなかった)
+  if (name === "page:tree") screen("tree");
+  if (name === "page:sim-base") screen("sim-base");
+  if (name === "page:sim-mods") screen("sim-mods");
   if (name === "sim:run" || name === "sim:test") screen(name); // シミュの「100 人回す」・テストランの 1 押し (2026-10-25 オーナー「回すボタンに記録足して」、日報で数える)
   buf.push({ n: name, ...(extra ? { x: extra.slice(0, 120) } : {}), s: Math.round((Date.now() - t0) / 1000) });
   trail.push({ n: name, t: Date.now() });
@@ -95,6 +99,15 @@ export function trackOnce(name: string): void {
   if (once.has(name)) return;
   once.add(name);
   track(name);
+}
+/**
+ * シミュで手を足した・保存した・URL をコピーした (2026-10-26 夜、使われ方を D1 で数える)。1 訪問で種類ごとに 1 回だけ D1 の sim_act に
+ * (記録は離れる時の 1 便に乗るので D1 の書き込みは増えない)。呼ぶのはシミュの画面 (pickHand・保存・recipe-share のコピー)
+ */
+export function trackSim(a: "hand" | "save" | "copy"): void {
+  if (once.has(`sim:${a}`)) return;
+  trackOnce(`sim:${a}`);
+  if (!noLog()) logRecord("sim_act", { a, s: Math.round((Date.now() - t0) / 1000) });
 }
 /** 要望・バグに付ける「直前の流れ」(何秒前か) */
 export function trailNow(): Array<{ n: string; ago: number }> {
