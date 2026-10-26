@@ -88,18 +88,18 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
 </script>
 
 <template>
-  <div v-if="box" data-phone-out :data-box-id="boxId" class="rounded-xl border bg-[#1a140d] px-3 py-2" :style="{ borderColor: `rgba(${look.c},${state === 'open' ? 0.75 : 0.35})` }">
+  <div v-if="box" data-phone-out :data-box-id="boxId" class="rounded-xl border bg-[#1a140d] px-3 py-2 text-center" :style="{ borderColor: `rgba(${look.c},${state === 'open' ? 0.75 : 0.35})` }">
     <p class="flex min-w-0 items-start gap-2 text-[14px] font-bold" :style="{ color: `rgb(${look.c})` }">
-      <span class="min-w-0 flex-1 break-words">{{ q.boxTitle(boxId) }}</span>
+      <span class="min-w-0 flex-1 break-words text-center">{{ q.boxTitle(boxId) }}</span>
       <!-- この結果になる割合 (PC の箱と同じ、エンジンの outcomeOdds) -->
       <span v-if="odds != null" data-phone-odds class="shrink-0 text-[12px] font-normal tabular-nums text-[#d8ccb4]">{{ pctText(odds) }}</span>
       <span v-if="state === 'open'" class="shrink-0 text-[11px] font-normal text-amber-200/80">{{ tr("どうする?", "Then?") }}</span>
     </p>
-    <StageItemCard v-if="item" data-phone-out-item class="mt-2" :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tagsOf(boxId, item)" />
+    <StageItemCard v-if="item" data-phone-out-item class="mx-auto mt-2" :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tagsOf(boxId, item)" />
     <!-- 回した結果 (来た人・形の合う別の箱へ移った人・止まった人と理由) -->
     <p v-if="run" data-phone-out-run class="mt-1 break-words text-[12px]" :class="phoneRun?.stuckAt[boxId] ? 'text-rose-200' : 'text-amber-100/80'">{{ run }}</p>
     <!-- 次の手が付いている箱 (① で答えた) は手の名前。押すとその手を見直す -->
-    <button v-if="state === 'hand'" type="button" data-phone-out-hand class="mt-1 block min-h-10 w-full break-words py-2 text-left text-[13px] text-[#c8bca4] underline decoration-white/20" @click="emit('hand', boxId)">→ {{ box.hand ? handLabel(box.hand) : tr("分かれ目", "Split") }}</button>
+    <button v-if="state === 'hand'" type="button" data-phone-out-hand class="mt-1 block min-h-10 w-full break-words py-2 text-center text-[13px] text-[#c8bca4] underline decoration-white/20" @click="emit('hand', boxId)">→ {{ box.hand ? handLabel(box.hand) : tr("分かれ目", "Split") }}</button>
     <template v-else>
       <!-- 行き先の文 (PC の箱と同じ tree-fail の routeText。狙いが消えた → 始め も文で、10-26 失敗時の挙動の案 2) -->
       <p v-if="route" data-phone-out-route :data-phone-out-auto="box.autoBack ? 1 : undefined" class="mt-1 break-words text-[12px] text-cyan-200/90">{{ route }}</p>
@@ -107,9 +107,9 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
       <!-- 戻り先の箱のアイテム (その箱に着いた時の形。始めに戻るはベースなので出さない) -->
       <div v-if="backItem && backTo" data-phone-out-back-item class="mt-1 rounded-lg border border-cyan-300/30 bg-black/20 p-1.5">
         <p class="mb-1 break-words text-[11px] text-cyan-200/80">{{ tr(`戻り先: ${q.pathText(backTo)}`, `Returns to: ${q.pathText(backTo)}`) }}</p>
-        <StageItemCard :item="backItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW - 12" compact :row-tags="tagsOf(backTo, backItem)" />
+        <StageItemCard class="mx-auto" :item="backItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW - 12" compact :row-tags="tagsOf(backTo, backItem)" />
       </div>
-      <div class="mt-2 flex flex-wrap gap-1.5">
+      <div class="mt-2 flex flex-wrap justify-center gap-1.5">
         <button type="button" data-phone-ans="later" :class="chipClass(state === 'later')" @click="q.setLater(boxId)">{{ tr("次の手を決める", "Next craft") }}</button>
         <button v-if="canRetry" type="button" data-phone-ans="retry" :class="[chipClass(backKind === 'retry'), defRetry === 'retry' ? DEF : '']" @click="q.setReturn(boxId, parent!)">{{ retryText }}<span v-if="defRetry === 'retry'" class="ml-1.5 rounded bg-amber-300/25 px-1 text-[11px] text-amber-100">{{ tr("既定", "Default") }}</span></button>
         <button type="button" data-phone-ans="start" :class="[chipClass(backKind === 'start'), startNo ? 'opacity-40' : '', defRetry === 'start' ? DEF : '']" :disabled="!!startNo" @click="q.setReturn(boxId, 'start')">{{ parent === "start" ? retryText : `↩ ${stepBackText(t.doc.value, "start")}` }}<span v-if="defRetry === 'start'" class="ml-1.5 rounded bg-amber-300/25 px-1 text-[11px] text-amber-100">{{ tr("既定", "Default") }}</span></button>

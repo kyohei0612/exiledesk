@@ -47,7 +47,7 @@ const routesOpen = ref(false);
 // 重ね窓の「この回の質問へ」・足りない所の「直しに行く」で質問を替えたら、全体を見るの一覧は閉じて質問を出す (開いたままで質問が見えなかった、10-26)
 watch(() => q.focus.value, () => { routesOpen.value = false; });
 /** 完成形のカードを開いている */
-const goalOpen = ref(false);
+const goalOpen = ref(true);
 /** ツリーのメモを書いている (PhoneMemo) */
 const memoEdit = ref(false);
 /** 白紙に戻す = PC と同じ (SimTreePage の onClear): スタートと完成形を残して下を消す。作りかけは 3 択、保存済みは 2 回押し */
@@ -105,13 +105,12 @@ watch(() => !!run.result.value && !run.running.value && !run.halted.value, (on) 
 const haltWhy = computed(() => { const h = run.halted.value; return h ? run.result.value?.stuckWhy?.[h.box] ?? null : null; });
 const donePct = computed(() => Math.round(((run.result.value?.finished ?? 0) / (run.result.value?.n || 1)) * 100));
 const fmt = (x: number): string => (!Number.isFinite(x) ? "—" : x >= 100 ? x.toFixed(0) : x.toFixed(1));
-/** 畳んだ完成形の帯の狙いの名前 (✦ = フラクチャーの印) */
-const goalText = computed(() => t.goals.value.map((a) => `${a.fractured ? "✦ " : ""}${t.aimShort(a)}`).join(tr(" ・ ", " · ")));
 /** 下の帯の主な操作 (今の質問ごと。一覧を出している間は無し) */
 const main = computed((): { kind: string; text: string; off?: boolean; go: () => void } | null => {
   if (routesOpen.value) return null;
   const c = q.current.value, b = c ? t.doc.value.boxes[c.id] : null;
-  if (c && b && c.kind === "hand" && !b.hand) return { kind: "hand", text: tr("打つ手を選ぶ", "Choose a craft"), go: () => { handFor.value = c.id; } };
+  // 一番最初 (始まりの箱) は「始める」(10-26 夜オーナー「スマホの最初の質問『打つ手を選ぶ』は嫌、一番最初は始めるでいい」)。押すと同じく棚
+  if (c && b && c.kind === "hand" && !b.hand) return { kind: "hand", text: b.out === "start" ? tr("始める", "Start") : tr("打つ手を選ぶ", "Choose a craft"), go: () => { handFor.value = c.id; } };
   if (c && c.kind === "outs") {
     const left = q.outsOf(c.id).filter((id) => q.stateOf(id) === "open").length;
     return { kind: "decide", text: left ? tr(`次へ (未定 ${left})`, `Next (${left} open)`) : tr("次へ", "Next"), go: () => q.decide(c.id) };
@@ -136,28 +135,25 @@ function goBox(id: string): void {
     <div v-show="!t.goalInline.value" data-phone-tree-body class="flex min-w-0 flex-col gap-3">
       <!-- レシピ (保存・開く・共有 URL。PC の帯と同じ部品、木が同じなので PC で開き直せる) -->
       <!-- レシピの帯の中身とメモ・白紙を 1 つの並びで折り返す (帯の枠を contents にして、レシピ ▾ の行に並べる。落ちる窓はこの行が基準) -->
-      <div data-phone-recipe class="relative flex min-w-0 flex-wrap items-center gap-2 text-[13px]">
+      <div data-phone-recipe class="relative flex min-w-0 flex-wrap items-center justify-center gap-2 text-[13px]">
         <TreeRecipeBar class="!contents" @opened="q.reset()" />
         <button type="button" data-phone-memo-open class="g-btn sm !min-h-10 shrink-0" :aria-pressed="memoEdit" @click="memoEdit = !memoEdit">✎ {{ tr("メモ", "Note") }}</button>
         <button type="button" data-phone-clear class="!min-h-10 shrink-0" :class="clearArm.is() ? 'g-btn-red sm' : 'g-btn sm'" @click="onClear">{{ clearArm.is() ? tr("もう一度押すと白紙に戻す", "Tap again to clear") : tr("白紙", "Clear") }}</button>
       </div>
       <!-- ツリーのメモ (文だけ、書いてあれば全文) -->
       <PhoneMemo v-model:editing="memoEdit" />
-      <!-- 完成形 (上に留める = どこまで送っても狙いを見直せる。畳んだ形: ベースと狙いの MOD の名前、開くと PC の 0 の枠と同じカード) -->
-      <div data-phone-goal class="sticky top-0 z-20 -mx-2 border-b border-[#c9a45c]/50 bg-[#1a140d]/[0.97] px-3 py-1.5 shadow-[0_4px_12px_rgba(0,0,0,0.6)]">
-        <div class="flex min-w-0 items-center gap-2 text-[13px]">
-          <button type="button" data-phone-goal-fold class="flex min-w-0 flex-1 flex-col text-left" :aria-expanded="goalOpen" @click="goalOpen = !goalOpen">
-            <span class="flex min-w-0 items-center gap-2"><span class="shrink-0 font-bold text-[#f2d27a]">{{ tr("完成形", "Final item") }}</span><span class="min-w-0 flex-1 break-words text-[#d8ccb4]">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}</span><span class="shrink-0 text-[11px] opacity-70">{{ goalOpen ? "▾" : "▸" }}</span></span>
-            <span data-phone-goal-aims class="break-words text-[11px] text-[#c8c8ff]">{{ goalText || tr("MOD はまだ (右の MOD で決める)", "No mods yet (set them with Mods)") }}</span>
-          </button>
-          <!-- 360px 未満はボタンを縦に重ねて、名前の行を広く (320 で「不在のアミュレッ/ト」と 1 字だけ落ちた) -->
-          <span class="flex shrink-0 gap-2 max-[359px]:flex-col">
-            <button type="button" data-phone-goal-open="base" :class="PILL" @click="t.goalPage.value = 1">{{ tr("ベース", "Base") }}</button>
-            <button type="button" data-phone-goal-open="mods" :class="PILL" @click="t.goalPage.value = 2">MOD</button>
-          </span>
-        </div>
-        <div v-if="goalOpen && t.goalItem.value" class="mt-2 max-h-[55vh] overflow-y-auto pb-1"><StageItemCard :item="t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :fracture-group="marks" tier-at-least /></div>
-      </div>
+      <!-- 完成形 = PC と同じく完成形の MOD をアイテムの枠で (10-26 夜オーナー「まず情報過多」: 上に留める文字の帯と狙いの丸い札をやめた)。中央揃え、見出しを押すと畳める -->
+      <section data-phone-goal class="flex min-w-0 flex-col items-center gap-2 text-center">
+        <button type="button" data-phone-goal-fold class="flex min-h-10 max-w-full items-center justify-center gap-2 text-[14px]" :aria-expanded="goalOpen" @click="goalOpen = !goalOpen">
+          <b class="shrink-0 text-[#f2d27a]">{{ tr("完成形", "Final item") }}</b><span class="min-w-0 break-words text-[#d8ccb4]">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}</span><span class="shrink-0 text-[11px] opacity-70">{{ goalOpen ? "▾" : "▸" }}</span>
+        </button>
+        <StageItemCard v-if="goalOpen && t.goalItem.value && t.goals.value.length" data-phone-goal-card :item="t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :fracture-group="marks" tier-at-least />
+        <p v-else-if="goalOpen && !t.goals.value.length" class="text-[12px] text-[#9a8a70]">{{ tr("MOD はまだ (下の MOD で決める)", "No mods yet (set them with Mods)") }}</p>
+        <span class="flex justify-center gap-2">
+          <button type="button" data-phone-goal-open="base" :class="PILL" @click="t.goalPage.value = 1">{{ tr("ベース", "Base") }}</button>
+          <button type="button" data-phone-goal-open="mods" :class="PILL" @click="t.goalPage.value = 2">MOD</button>
+        </span>
+      </section>
       <!-- 進み (残りの道・答えた数) と、残りの道の一覧の切り替え -->
       <div data-phone-progress class="flex items-center gap-2 text-[12px] text-[#d8ccb4]">
         <span>{{ tr("残りの道", "Open paths") }} <b class="text-[15px] text-amber-200">{{ total }}</b></span>
@@ -166,7 +162,7 @@ function goBox(id: string): void {
         <button type="button" data-phone-routes class="g-btn sm !min-h-10 shrink-0" :aria-pressed="routesOpen" @click="routesOpen = !routesOpen">{{ routesOpen ? tr("質問へ", "Question") : tr("全体を見る", "Overview") }}</button>
       </div>
       <!-- 道が残っている間は 100 人回すの場所を先に知らせる (10-26 モンキー 7 の 7「100 人・テストがどこにも無い」) -->
-      <p v-if="total" data-phone-run-hint class="text-[11px] text-[#9a8a70]">{{ tr("残りの道を全部決めると、下の帯で 100 人回せる (足りない所は先に直す)", "Decide every open path and the bar below lets you run 100 (fix anything missing first)") }}</p>
+      <p v-if="total" data-phone-run-hint class="text-center text-[11px] text-[#9a8a70]">{{ tr("残りの道を全部決めると、下の帯で 100 人回せる (足りない所は先に直す)", "Decide every open path and the bar below lets you run 100 (fix anything missing first)") }}</p>
       <!-- 足りない所 (PC と同じ精査、自動で回る。10-26 案 2) -->
       <PhoneIssues />
       <PhoneRoutes v-if="routesOpen" @pick="routesOpen = false" />

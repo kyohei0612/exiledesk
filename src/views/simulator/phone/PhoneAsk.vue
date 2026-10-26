@@ -9,7 +9,6 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
-import { aimHeldOn } from "../../../services/simulator/tree/tree-aim";
 import { treeRowTags } from "../tree/tree-row-tags";
 import { handLabel } from "../tree/tree-names";
 import { useTree } from "../tree/use-tree";
@@ -24,11 +23,6 @@ const quiz = usePhoneQuiz();
 const box = computed(() => t.doc.value.boxes[props.q.id]);
 const item = computed(() => (s.data.value && box.value ? sampleOf(s.data.value, t.doc.value, props.q.id, 1).item : null));
 const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.value, t.doc.value, box.value?.unwanted ?? [], item.value, box.value) : null));
-/** 完成の狙いごとに、今のアイテムに付いているか (付け忘れ・残りが一目で分かるように。判定はエンジンの aimHeldOn) */
-const goalState = computed(() => {
-  const d = s.data.value, it = item.value;
-  return d && it ? t.goals.value.map((a) => ({ key: `${a.modId}:${a.tier}`, label: t.aimShort(a), held: aimHeldOn(d, it, a, { sameText: true }), fractured: !!a.fractured })) : [];
-});
 /** カードの幅 = 画面の幅 - 左右の余白 (360 まで) */
 const cardW = ref(340);
 const fit = (): void => { cardW.value = Math.min(360, window.innerWidth - 40); };
@@ -44,26 +38,24 @@ function showHand(id: string): void { quiz.focus.value = { kind: "hand", id }; }
 </script>
 
 <template>
-  <div v-if="box" data-phone-ask :data-ask="q.kind" :data-box-id="q.id" class="flex min-w-0 flex-col gap-2">
-    <p class="break-words text-[11px] text-[#9a8a70]">{{ quiz.pathText(q.id) }}</p>
+  <!-- スマホなので中央揃え (見出し・カード・ボタン。10-26 夜オーナー) -->
+  <div v-if="box" data-phone-ask :data-ask="q.kind" :data-box-id="q.id" class="flex min-w-0 flex-col items-center gap-2 text-center">
+    <p v-if="!(q.kind === 'hand' && box.out === 'start' && !box.hand)" class="break-words text-[11px] text-[#9a8a70]">{{ quiz.pathText(q.id) }}</p>
     <template v-if="q.kind === 'hand'">
-      <h2 class="text-[17px] font-bold text-[#f0e4c8]">{{ box.hand ? tr("この箱で打つ手", "Craft from this box") : tr("次に何を打つ?", "What do you craft next?") }}</h2>
-      <!-- 今のアイテム (この箱に着いた時の形) と、完成の狙いの残り (✓ = もう付いている) -->
+      <h2 class="text-[17px] font-bold text-[#f0e4c8]">{{ box.hand ? tr("この箱で打つ手", "Craft from this box") : box.out === "start" ? tr("スタート", "Start") : tr("次に何を打つ?", "What do you craft next?") }}</h2>
+      <!-- 今のアイテム (この箱に着いた時の形)。完成の狙いの丸い札の並びは 10-26 夜にやめた (オーナー「要らない、頭が痛くなる」。完成形は上のアイテムの枠で見る) -->
       <p class="text-[11px] font-bold text-[#c9b48a]">{{ tr("今のアイテム", "Current item") }}</p>
       <StageItemCard v-if="item" :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
-      <div v-if="goalState.length" data-phone-goal-left class="flex flex-wrap gap-1.5 text-[12px]">
-        <span v-for="g in goalState" :key="g.key" class="rounded-full border px-2 py-0.5" :class="g.held ? 'border-emerald-400/50 text-emerald-200' : 'border-amber-300/50 text-amber-100'">{{ g.held ? "✓" : "・" }} {{ g.fractured ? "✦ " : "" }}{{ g.label }}</span>
-      </div>
       <template v-if="box.hand">
-        <button type="button" data-phone-hand-now class="rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-left text-[14px] text-amber-50" @click="showOuts(q.id)">{{ handLabel(box.hand) }} <span class="float-right text-[12px] text-amber-200/80">{{ tr("結果 ›", "Results ›") }}</span></button>
+        <button type="button" data-phone-hand-now class="w-full rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-center text-[14px] text-amber-50" @click="showOuts(q.id)">{{ handLabel(box.hand) }} <span class="ml-2 text-[12px] text-amber-200/80">{{ tr("結果 ›", "Results ›") }}</span></button>
         <button type="button" data-phone-hand-change class="g-btn !min-h-10" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
       </template>
     </template>
     <template v-else>
       <h2 class="text-[16px] font-bold text-[#f0e4c8]">{{ box.hand ? tr(`${handLabel(box.hand)} を打つと…`, `After ${handLabel(box.hand)}…`) : "" }}</h2>
       <p class="text-[12px] text-[#9a8a70]">{{ tr("外れから先に並べています。決めなかった外れは「次へ」で「↩ 再度挑戦」、当たりは次の手を 1 つずつ聞きます", "Misses are listed first. Open misses get \"↩ Retry\" on Next; for hits you pick the next craft one by one") }}</p>
-      <PhoneOutRow v-for="id in outs" :key="id" :box-id="id" @hand="showHand" />
-      <button type="button" data-phone-hand-change class="g-btn !min-h-10 self-start" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
+      <PhoneOutRow v-for="id in outs" :key="id" class="w-full" :box-id="id" @hand="showHand" />
+      <button type="button" data-phone-hand-change class="g-btn !min-h-10" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
     </template>
   </div>
 </template>

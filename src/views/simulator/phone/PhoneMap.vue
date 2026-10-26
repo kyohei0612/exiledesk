@@ -35,7 +35,8 @@ const view = computed(() => {
   const d = q.doc.value, bs = Object.values(d.boxes);
   if (!bs.length) return null;
   const bd = boundsOf(d);
-  const s = Math.min((cw.value - PAD * 2) / Math.max(1, bd.w), (ch.value - PAD * 2) / Math.max(1, bd.h));
+  // 箱が少ない木で箱が枠いっぱいに膨らまないよう、描く大きさは幅 64px まで (10-26 夜オーナー「始めの箱がばかでかい」、1 つで 264×92 になっていた)
+  const s = Math.min((cw.value - PAD * 2) / Math.max(1, bd.w), (ch.value - PAD * 2) / Math.max(1, bd.h), 64 / BOX_W);
   const ox = (cw.value - bd.w * s) / 2 - bd.x * s, oy = (ch.value - bd.h * s) / 2 - bd.y * s;
   const w = Math.max(10, BOX_W * s), h = Math.max(7, BOX_H * s);
   const at = new Map(bs.map((b) => [b.id, { x: b.x * s + ox + (BOX_W * s) / 2, y: b.y * s + oy + (BOX_H * s) / 2 }]));

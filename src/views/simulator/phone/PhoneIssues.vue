@@ -37,7 +37,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
 
 <template>
   <button v-if="checking || issues.length" type="button" data-phone-issues :disabled="checking && !issues.length" class="flex min-h-10 w-full min-w-0 items-center gap-2 rounded-xl border border-rose-400/40 bg-[#1d0f10] px-3 py-1.5 text-left text-[13px] font-bold text-rose-200" :aria-expanded="listOpen" @click="listOpen = true">
-    <span class="min-w-0 flex-1 break-words">{{ checking ? tr(`足りない所を調べている${progress ? ` ${progress.n}/${progress.of}` : ""}`, `Checking${progress ? ` ${progress.n}/${progress.of}` : ""}`) : tr(`足りない所 ${issues.length} 件`, `${issues.length} missing`) }}</span>
+    <span class="min-w-0 flex-1 break-words text-center">{{ checking ? tr(`足りない所を調べている${progress ? ` ${progress.n}/${progress.of}` : ""}`, `Checking${progress ? ` ${progress.n}/${progress.of}` : ""}`) : tr(`足りない所 ${issues.length} 件`, `${issues.length} missing`) }}</span>
     <span v-if="issues.length" class="shrink-0 text-[12px] font-normal text-rose-100/80">{{ tr("見る ▾", "View ▾") }}</span>
   </button>
   <!-- 一覧の重ね窓 (閉じれば元の場所・スクロールのまま) -->
