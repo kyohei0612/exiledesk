@@ -39,5 +39,5 @@ PoE2 のクラフトのエミュレーター (Web が本番、アプリは当分
 - 版上げ: `node scripts/bump-version.mjs patch` → `cd src-tauri && cargo check -q` → commit → push → `pnpm deploy:web`。
 - 手元の開発版 (シミュレーター・チュートリアルが開く、本番と同じ Worker で): `pnpm preview:prod -- --dev` → http://dev.exiledesk.localhost:1461/ 。本番そのままは `pnpm preview:prod` → http://exiledesk.localhost:1460/ 。オーナーの確かめはふだん dev サーバー (http://localhost:1440/web.html、ブラックが立ち上げてから渡す)。手元の開発版 (ビルドあり) はリリースの指示の時だけ、最終チェック長が使う。
 - Bash では `\` が 1 段消える。正規表現や `\` の入る物は Write / Edit で書く。
-- Bash で `cd <リポジトリの外>; …` とつながない (bypass でも毎回許可が出てオーナーの手が止まる)。scratchpad の台本は絶対パスで呼び、書き換えは Edit / Write で。
+- Bash で `cd …; …` / `cd … && …` とつながない。リポジトリの中への cd でも bypass で許可の窓が出て、夜中に止まる (10-27 `cd /c/Users/kyohei/ExileDesk; git add … && git commit` で止まった)。作業場所は最初からリポジトリなので cd は書かず、外は `git -C <path>` や絶対パスで。scratchpad の台本は絶対パスで呼び、書き換えは Edit / Write で。
 - sleep で待つ Bash の繰り返しをしない (1 回ごとに cmd の窓がちらつく)。待つ物は run_in_background で 1 回立てて知らせを待つか、台本の中で待つ。
