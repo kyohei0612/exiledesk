@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.614",
+  "date": "2026-10-26",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 「全体を表示」で下の段の箱が枠の外に切れていたのを、全部の箱が入るように。完成形の設定の「MOD」の札が見出しの下にもぐる・箱を押した時の窓が右下の倍率の道具にかかる・お告げの絵どうしが重なるのも直しました",
+    "en": "Simulator: \"Fit all\" now fits every box instead of cutting off the bottom rows. Also fixed the \"MOD\" tag in the finished-item settings slipping under its header, the box popup running into the zoom tools at the bottom right, and omen icons overlapping each other"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 「白紙に戻す」はスタートの箱 (付けた MOD) と完成形の設定を残し、スタートから下の箱と手だけを消すように",
+    "en": "Simulator: \"Clear\" now keeps the start box (with its mods) and the finished-item settings, and removes only the boxes and crafts below the start"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ツリーのメモは文だけに (欲しい MOD・使うカレンシーの欄を外しました。前に書いたメモはそのまま読めます)",
+    "en": "Simulator: Tree notes are now text only (the desired-mod and currency fields were removed; existing notes still load)"
+   }
+  ]
+ },
+ {
   "v": "0.1.613",
   "date": "2026-10-26",
   "items": [
@@ -853,18 +877,6 @@
     "area": "",
     "text": "使い方・コツとコースのページは「← クラフトへ戻る」で戻れるように",
     "en": "The Guide & Tips and course pages now have a “← Back to craft” button"
-   }
-  ]
- },
- {
-  "v": "0.1.574",
-  "date": "2026-10-18",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "カオススパム計算機も別のページに。クラフト画面以外のページ (使い方・ベース選び・計算機・要望) は右のチャンネルの列を外して広く",
-    "en": "The Chaos spam calculator is now its own page too. Pages other than the craft screen (guide, base picker, calculator, feedback) no longer show the channel column on the right"
    }
   ]
  }
