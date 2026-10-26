@@ -51,13 +51,14 @@ const btn = "flex h-8 min-w-8 items-center justify-center rounded-md px-1.5 text
 </script>
 
 <template>
-  <div class="pointer-events-none absolute bottom-3 right-3 z-20 flex flex-col items-end gap-2" data-tree-tools>
+  <!-- 木の枠の外の右の列の下 (10-26 夜オーナー「A でいい」: 木の上に浮かせると寄った・引っ張った後に箱を隠した、モンキー 8 の 4) -->
+  <div class="mt-auto flex flex-col items-end gap-2" data-tree-tools>
     <svg v-if="showMap" data-tree-minimap class="pointer-events-auto cursor-pointer rounded-lg border border-white/10 bg-[#0d0b08] shadow-[0_6px_20px_rgba(0,0,0,0.6)]" :width="MAP_W" :height="MAP_H" :aria-label="tr('ミニマップ (押すとそこへ)', 'Minimap (click to jump)')" @pointerdown="go">
       <rect v-for="b in boxes" :key="b.id" :x="mx(b.x)" :y="my(b.y)" :width="Math.max(3, BOX_W * box.k)" :height="Math.max(2, BOX_H * box.k)" rx="2" :fill="fill(b)" fill-opacity="0.75" />
       <rect :x="mx(view.x)" :y="my(view.y)" :width="view.w * box.k" :height="view.h * box.k" rx="3" fill="rgba(255,236,190,0.06)" stroke="rgba(255,220,150,0.7)" stroke-width="2" />
     </svg>
     <!-- スマホ (768px 未満) は区切りを隠し % を細くして木の枠 (375 幅で 281px) に収める (帯が 286px で左の「選択」が枠の外に切れた、10-23 モンキー 5) -->
-    <div class="pointer-events-auto flex items-center gap-0.5 rounded-lg border border-white/10 bg-[#15110c]/95 p-1 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.6)]" role="toolbar" :aria-label="tr('見え方', 'View')">
+    <div class="pointer-events-auto flex max-w-full flex-wrap items-center justify-end gap-0.5 rounded-lg border border-white/10 bg-[#15110c]/95 p-1 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.6)]" role="toolbar" :aria-label="tr('見え方', 'View')">
       <button type="button" data-tree-tool-select :class="[btn, !hand ? 'bg-amber-400/20 text-amber-100' : '']" :aria-pressed="!hand" :title="tr('選択 (箱を組む)', 'Select (edit boxes)')" :aria-label="tr('選択', 'Select')" @click="hand = false">
         <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 3l7 17 2.5-7.5L21 10z" /></svg>
       </button>

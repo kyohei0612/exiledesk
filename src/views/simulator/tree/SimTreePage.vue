@@ -212,7 +212,8 @@ const popStyle = computed(() => {
   let left = Math.max(8, Math.min(W / Z - pw - 8, ((b.x + BOX_W / 2) * z + x) / Z - BOX_W / 2 - 12));
   let top = Math.max(8, Math.min(top0 + H / Z - ph - 8, ((b.y + BOX_H / 2) * z + y) / Z - BOX_H / 2 - 12));
   // 右下の道具 (ミニマップ・倍率) にかかる時は道具の上へ、上に入らなければ左へ
-  const tools = document.querySelector<HTMLElement>("[data-tree-tools]");
+  // (道具は 10-26 夜から木の枠の外の右の列。枠の中に戻した時のために残す)
+  const tools = document.querySelector<HTMLElement>("[data-tree-frame] [data-tree-tools]");
   if (tools) {
     const tl = tools.offsetLeft, tt = tools.offsetTop;
     if (left + pw > tl && top + ph > tt) { if (tt - ph - 8 >= 8) top = tt - ph - 8; else left = Math.max(8, tl - pw - 8); }
@@ -484,7 +485,6 @@ const phone = usePhone(), simPhone = flag("simPhone");
           <button v-if="retryOf(doc, picking, link)" type="button" data-tree-pick-retry class="g-btn sm pointer-events-auto" :title="tr('再度挑戦: 打つ前の箱へ戻って、同じ手をもう一度打つ', 'Retry: go back to the box before it and use the same craft again')" @click="pickBack(retryOf(doc, picking, link)!)">↩ {{ tr("再度挑戦", "Retry") }} · {{ stepBackText(doc, retryOf(doc, picking, link)!) }}</button>
           <button v-if="picking && picking !== 'start'" type="button" data-tree-pick-start class="g-btn sm pointer-events-auto" :disabled="!!link.get('start')" :title="link.get('start') ?? tr('このアイテムのまま始まりの箱へ戻り、始めの手から打ち直す', 'Go back to the start box with this item and craft again from the first craft')" @click="pickBack('start')">↩ {{ stepBackText(doc, "start") }}</button>
         </p>
-        <TreeIssues v-if="issues?.length && issuesShown && issuesOpen" v-model:fold="issuesFold" :issues="issues" :busy="checkBusy" :lower="!!(picking || hand || viewOnly)" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" />
         <!-- 縮めて見ている時の箱の編集 (等倍。枠の外・Esc で閉じる) -->
         <div v-if="pop && doc.boxes[pop]" ref="popEl" data-tree-pop class="absolute z-30 w-max rounded-2xl border border-white/10 bg-[#0c0a08]/95 p-3 pb-12 pr-7 shadow-[0_10px_30px_rgba(0,0,0,0.7)]" :style="popStyle">
           <div class="relative" :style="{ width: `${BOX_W}px`, height: `${BOX_H}px` }">
@@ -495,8 +495,12 @@ const phone = usePhone(), simPhone = flag("simPhone");
           </div>
         </div>
         <TreeHoverCard v-if="cardBox && doc.boxes[cardBox]" :box-id="cardBox" :rect="v.rectOf(doc.boxes[cardBox]!)" />
-        <TreeCanvasTools v-model:hand="hand" :boxes="rv.visible.value" :view="v.view.value" :zoom="zoom" @center="v.centerOn" @fit="v.fit" @zoom-in="v.zoomIn" @zoom-out="v.zoomOut" @reset="v.resetZoom" />
         </div>
+        <!-- 木の枠の外の右の列: 上に足りない所の一覧、下にミニマップと倍率の道具 (10-26 夜オーナー「A でいい」。木の上に浮かせると引っ張った・寄った時に箱を隠した、モンキー 8 の 2・4) -->
+        <aside v-if="!t.needBase.value" data-tree-side class="flex min-h-0 w-[250px] shrink-0 flex-col gap-2">
+          <TreeIssues v-if="issues?.length && issuesShown && issuesOpen" v-model:fold="issuesFold" :issues="issues" :busy="checkBusy" :lower="false" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" />
+          <TreeCanvasTools v-model:hand="hand" :boxes="rv.visible.value" :view="v.view.value" :zoom="zoom" @center="v.centerOn" @fit="v.fit" @zoom-in="v.zoomIn" @zoom-out="v.zoomOut" @reset="v.resetZoom" />
+        </aside>
       </div>
     </div>
     <!-- 欲しい MOD とメモの浮かぶ窓 (ページの中で一番上、ツリーを押しても閉じない) -->

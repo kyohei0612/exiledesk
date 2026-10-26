@@ -19,8 +19,9 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
 </script>
 
 <template>
-  <div data-tree-issues class="absolute right-3 z-20 flex max-h-[45%] max-w-[calc(100%-24px)] flex-col gap-1 overflow-y-auto rounded-lg border px-2 py-1.5 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.6)]"
-    :class="[fold || (busy && !issues.length) ? 'w-max' : 'w-[min(420px,calc(100%-24px))]', issues.length ? 'border-rose-500/40 bg-[#1c0f10]/95' : busy ? 'border-white/10 bg-[#15110c]/95' : 'border-emerald-500/40 bg-[#0d1a12]/95', lower ? 'top-12' : 'top-3']">
+  <!-- 木の枠の外の右の列の上 (10-26 夜オーナー「A でいい」: 木の上に浮かせると引っ張った時に箱を隠した、モンキー 8 の 2) -->
+  <div data-tree-issues class="flex max-h-[60%] min-h-0 w-full shrink-0 flex-col gap-1 overflow-y-auto rounded-lg border px-2 py-1.5 text-[12px]"
+    :class="[issues.length ? 'border-rose-500/40 bg-[#1c0f10]/95' : busy ? 'border-white/10 bg-[#15110c]/95' : 'border-emerald-500/40 bg-[#0d1a12]/95']">
     <div class="flex items-center gap-2">
       <b :class="issues.length ? 'text-rose-200' : busy ? 'text-[#d8ccb4]' : 'text-emerald-200'">{{ issues.length ? tr(`足りない所 ${issues.length} 件`, `${issues.length} missing`) : busy ? tr("精査中", "Checking") : tr("足りない所は無かった (5 人で全部の枝を通した)", "Nothing missing (all branches walked by 5 runs)") }}</b>
       <!-- 穴と箱の赤い「!」の意味 (10-24 モンキー初めての人の回 5: 書いていなかった) -->
