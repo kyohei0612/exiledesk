@@ -10,6 +10,9 @@ import { noLog } from "../utils/no-log";
 import { randId } from "../utils/rand-id";
 import { lang } from "../i18n/lang";
 import { logRecord } from "../utils/log-record";
+import { onSim, simLeave, simOp, simPage } from "./sim-trail";
+/** シミュの画面はここから simOp (操作の流れ) を呼ぶ (入口を track.ts 1 つに) */
+export { simOp };
 
 const UID_KEY = "exiledesk.web.uid";
 /**
@@ -89,6 +92,10 @@ export function track(name: string, extra?: string): void {
   if (name === "page:sim-base") screen("sim-base");
   if (name === "page:sim-mods") screen("sim-mods");
   if (name === "sim:run" || name === "sim:test") screen(name); // シミュの「100 人回す」・テストランの 1 押し (2026-10-25 オーナー「回すボタンに記録足して」、日報で数える)
+  // シミュの操作の流れ (sim-trail.ts): ページの出入り・回す・テスト・エラー (シミュの画面にいる時の物)
+  if (name.startsWith("page:")) simPage(name, extra);
+  else if (name === "sim:run" || name === "sim:test" || name === "sim:paste") simOp(name.slice(4));
+  else if (name === "error" && onSim()) simOp("error", extra);
   buf.push({ n: name, ...(extra ? { x: extra.slice(0, 120) } : {}), s: Math.round((Date.now() - t0) / 1000) });
   trail.push({ n: name, t: Date.now() });
   if (trail.length > 40) trail.shift();
@@ -108,6 +115,11 @@ export function trackSim(a: "hand" | "save" | "copy"): void {
   if (once.has(`sim:${a}`)) return;
   trackOnce(`sim:${a}`);
   if (!noLog()) logRecord("sim_act", { a, s: Math.round((Date.now() - t0) / 1000) });
+}
+/** 手を足した・保存・コピーは押すたびに流れ (sim_trail) へ。sim_act は上の trackSim で 1 訪問 1 回 */
+export function simAct(a: "hand" | "save" | "copy", detail?: string): void {
+  trackSim(a);
+  simOp(a === "hand" ? "add-hand" : a, detail);
 }
 /** 要望・バグに付ける「直前の流れ」(何秒前か) */
 export function trailNow(): Array<{ n: string; ago: number }> {
@@ -135,6 +147,8 @@ let sentAny = false;
 function pull(): string | null {
   // この端末は記録しない (no-log.ts)。直前の流れ (trail) は要望・バグの添付用に残す
   if (noLog()) { buf.length = 0; return null; }
+  // タブを隠した・閉じた時はシミュの操作の流れを 1 件 (logRecord した物はこの後で log-sender が同じ便に入れる)
+  if (document.visibilityState === "hidden") simLeave();
   // 見ていた秒数の合計 (増えていれば)。開いてから何秒目かではなく、見ていた秒数そのもの
   const stay = Math.round(activeMs / 1000);
   if (stay > staySent) { buf.push({ n: "stay", s: stay }); staySent = stay; }
