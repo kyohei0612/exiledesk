@@ -9,6 +9,7 @@ import StageItemCard from "../../../components/for-share/item/StageItemCard.vue"
 import { craftStage as s } from "../../../state/craft-stage";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { treeRowTags } from "./tree-row-tags";
+import { fixedValues } from "./tree-fixed-values";
 import { routeText } from "./tree-fail";
 import { useTree } from "./use-tree";
 import { tr } from "../../../i18n/lang";
@@ -16,7 +17,8 @@ import { tr } from "../../../i18n/lang";
 const props = defineProps<{ boxId: string; rect: { left: number; top: number; right: number; bottom: number; W: number; H: number } }>();
 const t = useTree();
 const CARD_W = 300, GAP = 12;
-const item = computed(() => (s.data.value ? sampleOf(s.data.value, t.doc.value, props.boxId, 1).item : null));
+/** MOD の値は箱と同じく木の中で揃える (tree-fixed-values、10-26 夜) */
+const item = computed(() => (s.data.value ? fixedValues(s.data.value, t.doc.value, sampleOf(s.data.value, t.doc.value, props.boxId, 1).item) : null));
 const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.value, t.doc.value, t.doc.value.boxes[props.boxId]?.unwanted ?? [], item.value, t.doc.value.boxes[props.boxId]) : null));
 const el = ref<HTMLElement | null>(null);
 const style = computed(() => {

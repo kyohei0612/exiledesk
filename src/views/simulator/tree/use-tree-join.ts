@@ -7,7 +7,7 @@
 import { ref } from "vue";
 import { absorbOuts, joinableOf, joinSide } from "../../../services/simulator/tree/tree-model-ops";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { joinableShapeOf } from "../../../services/simulator/tree/tree-shape";
+import { joinableShapeOf, joinSameHit, sameHitsOf } from "../../../services/simulator/tree/tree-shape";
 import { sideGroup } from "./tree-hand-plan";
 import { useTree } from "./use-tree";
 import { tr } from "../../../i18n/lang";
@@ -21,7 +21,8 @@ export function joinCandidates(doc: TreeDoc, id: string): string[] {
   if (!b || b.out === "start") return [];
   if (b.out !== "hit") return joinableShapeOf(doc, id);
   const g = sideGroup();
-  return g ? joinableOf(doc, id, g) : [];
+  // 同じ手の横の同じ側の当たり (「どれか」の 1 箱) と、別の道の同じ状態の当たり (下を消してつなぐ、10-26 夜オーナー「段一緒で形も一緒ならまとめるが出ないと…」)
+  return [...(g ? joinableOf(doc, id, g) : []), ...sameHitsOf(doc, id)];
 }
 
 /** 箱の今の見え方: anchor = まとめ先、picked = 選んだ、can = 押せる、no = 押せない (薄く) */
@@ -39,7 +40,7 @@ export function joinLook(doc: TreeDoc, id: string): JoinLook | null {
 export function joinNoWhy(doc: TreeDoc, id: string): string {
   const a = joinMode.value?.anchor ? doc.boxes[joinMode.value.anchor] : undefined, b = doc.boxes[id], g = sideGroup();
   if (a && b && a.out === "hit" && b.out === "hit" && a.aim && b.aim && g && g(a.aim) !== g(b.aim)) return tr("プレフィックスとサフィックスはまとめられない", "Prefixes and suffixes can't be merged");
-  return a ? tr("まとめられない (同じ手の結果で、同じ側の当たりか、着いた形が同じ箱だけ)", "Can't merge (only results of the same craft: same-side hits, or boxes that land in the same shape)") : tr("この箱にまとめられる横の箱が無い", "Nothing beside this box can be merged into it");
+  return a ? tr("まとめられない (同じ手の結果の同じ側の当たり・着いた形が同じ箱、別の道の付いている MOD が全部同じ当たりの箱だけ)", "Can't merge (only same-side hits or same-shape results of the same craft, or hit boxes from another path with exactly the same mods)") : tr("この箱にまとめられる横の箱が無い", "Nothing beside this box can be merged into it");
 }
 export function useTreeJoin() {
   const t = useTree();
@@ -60,8 +61,8 @@ export function useTreeJoin() {
     const anchor = m.anchor, ok = joinCandidates(t.doc.value, anchor).filter((x) => m.pick.includes(x));
     if (!ok.length) return;
     if (t.doc.value.boxes[anchor]?.out !== "hit") { t.edit((d) => absorbOuts(d, anchor, ok)); return; }
-    const g = sideGroup();
-    if (g) t.edit((d) => joinSide(d, anchor, g, ok));
+    const g = sideGroup(), same = sameHitsOf(t.doc.value, anchor).filter((x) => ok.includes(x)), side = ok.filter((x) => !same.includes(x));
+    t.edit((d) => { if (g && side.length) joinSide(d, anchor, g, side); if (same.length) joinSameHit(d, anchor, same); });
   }
   return { start, cancel, toggle, apply };
 }

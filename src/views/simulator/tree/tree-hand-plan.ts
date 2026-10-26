@@ -11,7 +11,7 @@ import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
-import { linkSameShape } from "../../../services/simulator/tree/tree-shape";
+import { linkSameHit, linkSameShape } from "../../../services/simulator/tree/tree-shape";
 import { fractureMarks, healLost, kindOfHand, setHand, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
 import { tr } from "../../../i18n/lang";
@@ -160,6 +160,8 @@ export function applyPick(d: TreeDoc, id: string, h: Hand, kind: HandKind, aims:
   setHand(d, at, h, kind, aims, only);
   joinSameShape(d, id);
   linkSameShape(d, Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id));
+  // 新しい当たりの箱が別の道の同じ状態の箱と同じなら、先にあった箱へつなぐ (10-26 夜オーナー「形は一緒ならこのツリー組んだ瞬間まとまってくれるよね」)
+  linkSameHit(d, Object.values(d.boxes).filter((b) => !had.has(b.id)).map((b) => b.id));
   // 自動でつないだ戻りで狙いを持って着く道ができた箱に「狙いが消えた」を足す (tree-model の healLost)
   healLost(d);
   return at;

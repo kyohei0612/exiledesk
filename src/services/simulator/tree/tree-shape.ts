@@ -6,7 +6,7 @@ import { mulberry32, sideOfMod, type PatchData, type StageItem } from "../../cra
 import { aimHeldOn, junkOf } from "./tree-aim";
 import { effectOf } from "./tree-hands";
 import { aimOpts, aimsOf, essenceBoxFits, handProblem, playHand, targetsOf } from "./tree-sample";
-import { aimKey, MATCH_BACK, type Aim, type Hand, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
+import { aimKey, MATCH_BACK, type Aim, type Hand, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc, boxAims, drop, subtree } from "./tree-model";
 
 /**
  * 形の合う箱へ (設計の「消去の後は 形の合う箱へ」、back: "match")。形 = 付いている狙いの組 + 外れがあるか。
@@ -238,6 +238,53 @@ export function linkSameShape(doc: TreeDoc, ids: readonly string[]): void {
     c.back = to;
     c.autoBack = true;
     c.done = null;
+  }
+}
+
+/** 当たりの箱のアイテムの状態の鍵 = 付いていうる狙いの組 (heldSets) の全部。同じなら同じ MOD が付いた同じ段の箱 (値の差は段の中の差) */
+const hitStateKey = (doc: TreeDoc, id: string): string => heldSets(doc, id).map((h) => [...h].sort().join(",")).sort().join("|");
+/**
+ * 別の道からできた、付いている MOD が全部同じ当たりの箱 (10-26 夜オーナー「段一緒で形も一緒ならまとめるが出ないと挙動的におかしい」
+ * 「形は一緒ならこのツリー組んだ瞬間まとまってくれるよね」)。同じ親の横の箱 (joinableOf の「どれか」) と、自分の上・下の箱は除く。
+ * 戻りの矢印を持つ箱 (もうどこかへつないだ箱) と分かれ目も除く。並びは先に作った箱から
+ */
+export function sameHitsOf(doc: TreeDoc, id: string): string[] {
+  const b = doc.boxes[id];
+  if (!b || b.out !== "hit" || !b.aim || b.back || b.split) return [];
+  const up = new Set<string>();
+  for (let x = b.parent; x; x = doc.boxes[x]?.parent ?? null) up.add(x);
+  const down = new Set(subtree(doc, id)), k = hitStateKey(doc, id);
+  return Object.values(doc.boxes).filter((c) => c.id !== id && c.out === "hit" && !!c.aim && !c.back && !c.split && c.parent !== b.parent && !up.has(c.id) && !down.has(c.id) && hitStateKey(doc, c.id) === k).map((c) => c.id);
+}
+/**
+ * 同じ状態の当たりの箱をまとめる: 選んだ箱 (picks) の下を消し、まとめ先 (to) へ戻りの矢印でつなぐ (木は親が 1 つなので 1 箱にはせず、合流の線で見せる)。
+ * 完成の印はまとめ先へ。auto = 手を足した時に自動でつないだ (印 autoBack)
+ */
+export function joinSameHit(doc: TreeDoc, to: string, picks: readonly string[], auto = false): void {
+  const t = doc.boxes[to];
+  if (!t) return;
+  for (const id of picks) {
+    const c = doc.boxes[id];
+    if (!c || id === to) continue;
+    for (const o of c.outs) drop(doc, subtree(doc, o));
+    c.outs = [];
+    c.hand = null;
+    if (c.done && !t.done) t.done = c.done;
+    c.done = null;
+    c.back = to;
+    if (auto) c.autoBack = true; else delete c.autoBack;
+  }
+}
+/**
+ * 手を足してできた当たりの箱 (ids) のうち、別の道に同じ状態の当たりの箱があれば、先にあった箱へ自動でつなぐ (10-26 夜オーナー「組んだ瞬間まとまってくれる」)。
+ * 中身 (次の手) がある箱どうしは自動でせず人が「まとめる」(use-tree-join)。× で外した箱 (noAutoBack) はつながない
+ */
+export function linkSameHit(doc: TreeDoc, ids: readonly string[]): void {
+  for (const id of ids) {
+    const c = doc.boxes[id];
+    if (!c || c.out !== "hit" || c.hand || c.noAutoBack) continue;
+    const to = sameHitsOf(doc, id)[0];
+    if (to) joinSameHit(doc, to, [id], true);
   }
 }
 
