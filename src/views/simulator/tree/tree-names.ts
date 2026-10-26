@@ -44,6 +44,8 @@ export function splitWhenText(w: SplitWhen): string {
 
 /** 箱の種類の名前 (始まり・当たり・外れ…。一覧・戻り先の札・まとめた札で同じ) */
 export const outName = (out: TreeBox["out"]): string => tr(OUT_LOOK[out].ja, OUT_LOOK[out].en);
+/** 箱の結果の名前 (同じ形でまとめた箱は「外れ・狙いが消えた」) */
+export const outsName = (b: { out: TreeBox["out"]; mergedOuts?: Array<TreeBox["out"]> }): string => [b.out, ...(b.mergedOuts ?? [])].map(outName).join(tr("・", " / "));
 
 /** 値段のキー (カレンシー・お告げ・骨・エッセンス・カタリスト) → 画面の言語の名前 (クラフト台の棚と同じ) */
 export const handName = (key: string): string => nameOfKey(key, baseItem.value);

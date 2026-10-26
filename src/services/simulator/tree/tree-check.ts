@@ -222,7 +222,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
           // もう付いている狙いの当たりの箱には着かない (打ち直しても付かないので飛ばす。始めに戻った人で当たるまでを 1200 回打ち直し、精査が 13 秒かかった、10-22 金の指輪)
           if (ob.out === "hit" && ob.aim && boxAims(ob).some((a) => aimHeldOn(data, item, a, { sameText: true }))) continue;
           let got: StageItem | null = null;
-          const fits = (res: { out: OutKind; hits: Aim[] }): boolean => (res.out === ob.out || ob.out === "any" || ob.out === "pass") && (ob.out !== "hit" || !ob.aim || boxAims(ob).some((x) => res.hits.some((h) => h.modId === x.modId && h.tier === x.tier)) || res.hits.some((a: Aim) => aimKey(a) === aimKey(ob.aim!)));
+          const fits = (res: { out: OutKind; hits: Aim[] }): boolean => (res.out === ob.out || !!ob.mergedOuts?.includes(res.out) || ob.out === "any" || ob.out === "pass") && (ob.out !== "hit" || !ob.aim || boxAims(ob).some((x) => res.hits.some((h) => h.modId === x.modId && h.tier === x.tier)) || res.hits.some((a: Aim) => aimKey(a) === aimKey(ob.aim!)));
           // 出ない結果の箱は打ち直さない: 当たるまでの手は当たりしか返さない (外れ・消えたは下の break で必ず着かない)、ほかはエンジンの起こりうる結果に無い物
           // (10-25 不在のアミュ B: カオスの当たるまで →「狙いが消えた」と完璧なエッセンス → 当たり・消えたを 1 箱 1,200 回ずつ打ち、開くたび画面が 17 秒固まった)
           const impossible = b.hand.repeat ? ob.out !== "hit" && ob.out !== "any" && ob.out !== "pass" : !!canBe && !canBe.some(fits);

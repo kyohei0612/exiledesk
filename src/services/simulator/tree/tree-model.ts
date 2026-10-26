@@ -29,6 +29,8 @@ export interface Aim { modId: string; tier: number; /** フラクチャーの印
 export interface Repeat { until: "hit"; max: number | null }
 /** 当たりの箱の狙いの一覧 (「どれか」の箱は anyOf、ほかは aim 1 つ) */
 export const boxAims = (b: { aim: Aim | null; anyOf?: Aim[] }): Aim[] => (b.anyOf?.length ? b.anyOf : b.aim ? [b.aim] : []);
+/** その箱が受ける結果の種類 (まとめた種類も) */
+export const boxOuts = (b: { out: TreeBox["out"]; mergedOuts?: OutKind[] }): Array<TreeBox["out"]> => [b.out, ...(b.mergedOuts ?? [])];
 /** 札の鍵 (同じ MOD + 同じ段以上 = 同じ札) */
 export const aimKey = (a: Aim): string => `${a.modId}|${a.tier}`;
 /** 打つ手: カレンシー + お告げ + (触媒の時) カタリストで品質を上げてから。repeat があれば当たるまで繰り返す */
@@ -56,6 +58,11 @@ export interface TreeBox {
    * 付いた物ごとの出方の違いは回す時にエンジンが見る (tree-run は実物のアイテムで進む)
    */
   anyOf?: Aim[];
+  /**
+   * 同じ形の結果をまとめた箱が、ほかにも受ける結果の種類 (10-26 オーナー「同じ形ってのでハズレMODもまとめれるようにしようよ」)。
+   * 例: 外れの箱に「狙いが消えた」をまとめる (着いた形が外れと同じ)。既定はまとめない。人が「まとめる」で選んだ時だけ (absorbOuts)
+   */
+  mergedOuts?: OutKind[];
   /** この箱から打つ次の手 (矢印) */
   hand: Hand | null;
   /** 矢印の先の結果の箱 (並び順 = 画面の左から) */
@@ -415,6 +422,35 @@ export function splitAny(d: TreeDoc, id: string): string[] {
   const made: string[] = [];
   let after = id;
   for (const a of rest) { const n = addHit(d, b.parent, after); if (!n) continue; d.boxes[n]!.aim = { ...a }; made.push(n); after = n; }
+  return made;
+}
+/** 同じ形の横の結果の箱 (ids、呼ぶ側が tree-shape の joinableShapeOf で選んだ物) をこの箱へまとめる: 受ける結果の種類を足して、その箱は消す */
+export function absorbOuts(d: TreeDoc, id: string, ids: readonly string[]): void {
+  const b = d.boxes[id], p = b?.parent ? d.boxes[b.parent] : undefined;
+  if (!b || !p || !ids.length) return;
+  const outs = new Set<OutKind>((b.mergedOuts ?? []) as OutKind[]);
+  for (const o of ids) { const c = d.boxes[o]; if (!c) continue; for (const k of boxOuts(c)) if (k !== b.out) outs.add(k as OutKind); drop(d, subtree(d, o)); }
+  p.outs = p.outs.filter((o) => !ids.includes(o));
+  if (outs.size) b.mergedOuts = [...outs]; else delete b.mergedOuts;
+  // 消えた箱の所を詰める (横の箱を並べ直す、healLost と同じ)
+  spread(d, p.id);
+}
+/** まとめた結果の箱を種類ごとの箱に戻す (この箱は元の種類のまま、ほかの種類は横に。狙いが消えたは今までどおり始めに戻る) */
+export function splitOuts(d: TreeDoc, id: string): string[] {
+  const b = d.boxes[id], p = b?.parent ? d.boxes[b.parent] : undefined;
+  if (!b || !p || !b.mergedOuts?.length) return [];
+  const made: string[] = [];
+  let after = id;
+  for (const k of b.mergedOuts) {
+    const n = mk(d, k, p.id);
+    if (k === "lost") n.back = "start";
+    p.outs.splice(p.outs.indexOf(after) + 1, 0, n.id);
+    const left = d.boxes[after]!;
+    n.x = left.x + BOX_W + ROOM + 4; n.y = left.y;
+    made.push(n.id); after = n.id;
+  }
+  delete b.mergedOuts;
+  pushRight(d);
   return made;
 }
 /** 同じ側で手も戻りも完成も無い横の当たりの箱 (動きをまとめられる相手)。groupOf = 狙いの側。プレとサフィはまとめない */

@@ -27,7 +27,8 @@ export function oddsOfHand(doc: TreeDoc, id: string): Map<string, number> | null
     // 「どれか」の当たりの箱 (anyOf) は一覧のどれかの割合を足す (10-26)
     const hit = o.out === "hit" && o.aim ? kids.find((k) => k.out === "hit" && boxAims(k).some((a) => a.modId === o.aim!.modId && a.tier === o.aim!.tier)) : undefined;
     // 当たりの箱の無い狙いが付いた = 外れの箱
-    const to = hit ?? kids.find((k) => k.out === (o.out === "hit" ? "junk" : o.out));
+    const kind = o.out === "hit" ? "junk" : o.out;
+    const to = hit ?? kids.find((k) => k.out === kind || !!k.mergedOuts?.includes(kind));
     if (to) out.set(to.id, (out.get(to.id) ?? 0) + o.p);
   }
   return out.size ? out : null;

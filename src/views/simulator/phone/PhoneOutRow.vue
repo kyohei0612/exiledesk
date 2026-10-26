@@ -13,7 +13,8 @@ import { handLabel, OUT_LOOK } from "../tree/tree-names";
 import { mapPick, phoneRun, usePhoneQuiz } from "./use-phone-quiz";
 import { routeText, runText } from "../tree/tree-fail";
 import { sideGroup } from "../tree/tree-hand-plan";
-import { joinableOf, joinSide, splitAny } from "../../../services/simulator/tree/tree-model";
+import { absorbOuts, joinableOf, joinSide, splitAny, splitOuts } from "../../../services/simulator/tree/tree-model";
+import { joinableShapeOf } from "../../../services/simulator/tree/tree-shape";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
@@ -37,12 +38,20 @@ const backTo = computed(() => (box.value?.back ? backTargetsOf(t.doc.value, prop
 /** 同じ手をもう一度 = 打つ前の箱へ戻る (始まりの手の結果は「始めから」と同じなので出さない) */
 const canRetry = computed(() => !!parent.value && parent.value !== "start" && link.value.get(parent.value) === null);
 /** まとめられる同じ側の横の当たり (tree-model の joinableOf) */
-const joinable = computed(() => { const g = sideGroup(); return g && box.value?.out === "hit" ? joinableOf(t.doc.value, props.boxId, g) : []; });
+/** まとめられる横の箱: 当たりは同じ側の当たり、外れ・狙いが消えたなどは同じ形の箱 (10-26) */
+const joinable = computed(() => { if (box.value && box.value.out !== "hit") return joinableShapeOf(t.doc.value, props.boxId); const g = sideGroup(); return g ? joinableOf(t.doc.value, props.boxId, g) : []; });
 /** 動きをまとめる一覧 (同じ側の横の当たりにチェック、既定は全部) */
 const joinOpen = ref(false);
 const joinPick = ref<string[]>([]);
 function openJoin(): void { joinPick.value = [...joinable.value]; joinOpen.value = !joinOpen.value; }
-function mergeSide(): void { const g = sideGroup(), pick = [...joinPick.value]; joinOpen.value = false; if (g && pick.length) t.edit((d) => joinSide(d, props.boxId, g, pick)); }
+function mergeSide(): void {
+  const pick = [...joinPick.value];
+  joinOpen.value = false;
+  if (!pick.length) return;
+  if (box.value?.out !== "hit") { const ok = joinable.value.filter((x) => pick.includes(x)); t.edit((d) => absorbOuts(d, props.boxId, ok)); return; }
+  const g = sideGroup();
+  if (g) t.edit((d) => joinSide(d, props.boxId, g, pick));
+}
 /** 始めに戻れない理由 (use-tree-link、始めの手がこのアイテムに打てない) */
 const startNo = computed(() => link.value.get("start") ?? null);
 const canDone = computed(() => box.value?.out === "hit" || box.value?.out === "branch");
@@ -99,7 +108,7 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
         <button v-if="canRetry" type="button" data-phone-ans="retry" :class="chipClass(backKind === 'retry')" @click="q.setReturn(boxId, parent!)">{{ tr("同じ手をもう一度", "Same craft again") }}</button>
         <button type="button" data-phone-ans="start" :class="[chipClass(backKind === 'start'), startNo ? 'opacity-40' : '']" :disabled="!!startNo" @click="q.setReturn(boxId, 'start')">{{ tr("↩ 始めに戻る", "↩ Back to start") }}</button>
         <!-- 同じ側の「どれか」の当たりを MOD ごとに分ける / 分けた箱をまとめる (10-26 オーナー) -->
-        <button v-if="box.anyOf && box.anyOf.length > 1" type="button" data-phone-split-any :class="chipClass(false)" @click="t.edit((d) => splitAny(d, boxId))">{{ tr("MOD ごとに分ける", "Split by mod") }}</button>
+        <button v-if="(box.anyOf?.length ?? 0) > 1 || (box.mergedOuts?.length ?? 0) > 0" type="button" data-phone-split-any :class="chipClass(false)" @click="t.edit((d) => (box!.anyOf?.length ? splitAny(d, boxId) : splitOuts(d, boxId)))">{{ box.anyOf?.length ? tr("MOD ごとに分ける", "Split by mod") : tr("分ける", "Split") }}</button>
         <button v-else-if="joinable.length" type="button" data-phone-join-side :class="chipClass(joinOpen)" @click="openJoin">{{ tr("動きをまとめる", "Merge the path") }}</button>
         <button v-if="canDone" type="button" data-phone-ans="done" :class="chipClass(state === 'done')" @click="q.setFinished(boxId)">{{ tr("完成", "Done") }}</button>
         <button v-if="others.length" type="button" data-phone-ans="other" :class="chipClass(backKind === 'other' || pickOther)" @click="startPick">{{ MAP ? (pickOther ? tr("全体図で選ぶ ↓", "Pick on the map ↓") : tr("ほかの箱へ", "Other box")) : tr("ほかの箱へ ▾", "Other box ▾") }}</button>

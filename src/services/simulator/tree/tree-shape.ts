@@ -73,6 +73,8 @@ export function heldSets(doc: TreeDoc, id: string | null): string[][] {
       const ess = p?.hand && effectOf(p.hand.currency) === "essence" ? p.outs.map((o) => doc.boxes[o]).find((x) => x?.out === "hit" && x.aim)?.aim : undefined;
       if (ess) { const k = aimKey(ess); sets = sets.map((h) => (h.includes(k) ? h : [...h, k])); }
     }
+    // 「狙いが消えた」をまとめた箱 (mergedOuts) は、消えた組と消えていない組の両方 (10-26)
+    if (c.out !== "lost" && c.mergedOuts?.includes("lost")) sets = [...sets, ...sets.flatMap((h) => h.map((k) => h.filter((x) => x !== k)))];
     const seen = new Set<string>();
     sets = sets.map((h) => [...h].sort()).filter((h) => { const k = h.join(","); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 64);
   }
@@ -225,6 +227,19 @@ export function linkSameShape(doc: TreeDoc, ids: readonly string[]): void {
 }
 
 /**
+ * 同じ形の横の結果の箱 (外れ・狙いが消えた・外れが消えた・打った後。手も分かれ目も完成も無い物) = 「まとめる」の相手 (10-26 オーナー
+ * 「同じ形ってのでハズレMODもまとめれるようにしようよ」)。形 = matchTargets の鍵 (付いている狙いの組 + 外れの有無) の一覧がそっくり同じ。既定はまとめない
+ */
+export function joinableShapeOf(doc: TreeDoc, id: string): string[] {
+  const b = doc.boxes[id], p = b?.parent ? doc.boxes[b.parent] : undefined;
+  const plain = (c: TreeBox | undefined): boolean => !!c && c.out !== "hit" && c.out !== "start" && c.out !== "pass" && c.out !== "branch";
+  if (!b || !p || !plain(b)) return [];
+  const keyOf = (x: string): string => [...new Set(matchTargets(doc, x).map((m) => m.key))].sort().join("|");
+  const k = keyOf(id);
+  return p.outs.filter((o) => { const c = doc.boxes[o]; return o !== id && plain(c) && !c!.hand && !c!.split && !c!.done && keyOf(o) === k; });
+}
+
+/**
  * 道の札 (付いている狙いの組) が同じ、既にある当たりの箱 (手が無くても = 狙いが揃った箱・まだ決めていない箱も)。順番違いで同じ状態になった当たりは
  * 木を伸ばさずそこへ合流させる (10-25 オーナー「自動で同じ形のツリーまで引っ張ってほしいな矢印そしたら解決でしょ」、notes/2026-10-25-auto-close.md の B)
  */
@@ -262,7 +277,8 @@ export function outBoxOf(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim
 }
 function outBoxOfRaw(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[] }, after?: StageItem): string | undefined {
   // 種類がぴったり合う箱を先に (打った後の箱と狙いが消えたの箱が並ぶ時、狙いが消えた人を打った後へ入れない。10-25 起こりうる結果の箱 possibleOutsOf)
-  const exact = b.outs.find((id) => { const c = doc.boxes[id]; return !!c && c.out === oc.out && c.out !== "hit"; });
+  // まとめた結果の箱 (mergedOuts) はまとめた種類も受ける (10-26)
+  const exact = b.outs.find((id) => { const c = doc.boxes[id]; return !!c && (c.out === oc.out || !!c.mergedOuts?.includes(oc.out)) && c.out !== "hit"; });
   if (exact) return exact;
   return b.outs.find((id) => {
     const c = doc.boxes[id];
