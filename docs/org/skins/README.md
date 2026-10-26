@@ -8,7 +8,7 @@ PoE2 で使える PoE1 のスキン (コスメティック) の一覧のペー�
 3. 名前・種類の英語は poe2db の表記だけ。英語名の無い種類は英語の画面で「Other」にまとめる (推測で訳さない、メモ feedback-no-guessed-terms)。
 4. 絵は public/mtx-art/<a>.webp を 1 枚ずつ、遅れて読む (loading=lazy)。Web のビルドには一覧に出す分だけ残す (vite.web.config.ts)。
 5. 1 日 10 万の枠: 静的な絵は数えない (サーバー管理人 10-25)。ページで Worker を通る取り物を足さない。入口を /web.html 以外の新しい道にする時はサーバー管理人に聞く。
-6. 開発版だけ (release-flags の skins)。本番はオーナーの OK の後。広告ありきの別ページ・両脇に縦長の枠 (メモ ads-page-model)。
+6. 本番に出した (10-25、release-flags の skins)。見た目・操作の変更はオーナーの OK の後。広告ありきの別ページ・両脇に縦長の枠 (メモ ads-page-model)。
 7. 日英セット (?lang=en)。確かめは手元 1440 で PC 1660×860・スマホ・英語を撮る。
 
 ## 地図
