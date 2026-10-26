@@ -5,7 +5,7 @@
   見出しの行で畳める (畳んだかは見る人の手元だけ)
 -->
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { jaTypeName } from "../../../i18n/item-names-ja";
@@ -35,6 +35,8 @@ const baseTop = ref<number | null>(null);
 const modTop = ref<number | null>(null);
 function place(): void {
   const w = wrap.value, card = w?.querySelector<HTMLElement>("[data-stage-card]");
+  // 隠れていて大きさ 0 の間は測らない (0 で測ると札が見出しの帯の上に乗った、10-26 モンキー 8 の 3。見えたら下の ResizeObserver で測り直す)
+  if (!card || !card.getBoundingClientRect().height) return;
   // 縮めたカードの中の行も見た目の位置で測る (getBoundingClientRect)
   const mid = (e: Element | null | undefined): number | null => {
     if (!w || !e) return null;
@@ -49,6 +51,10 @@ function place(): void {
 }
 onMounted(place);
 watch([() => t.goalItem.value, folded], () => void nextTick(place));
+// カードの大きさが変わったら (字の読み込み・見えるようになった時) 測り直す
+const ro = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => place());
+watch(wrap, (el, old) => { if (old) ro?.unobserve(old); if (el) ro?.observe(el); }, { immediate: true });
+onBeforeUnmount(() => ro?.disconnect());
 </script>
 
 <template>

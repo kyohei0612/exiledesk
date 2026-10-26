@@ -49,7 +49,7 @@ const maxW = computed(() => `${Math.round(props.room / props.inv)}px`);
   <button v-else type="button" data-tree-hand :data-hand-of="id" class="nodrag nopan pointer-events-auto absolute z-[5] flex w-max -translate-x-1/2 items-center gap-1.5 py-0.5 pl-1.5 pr-3 -translate-y-1/2 rounded-full border border-amber-400/60 bg-[#1a140d] text-[12px] font-semibold text-amber-100 shadow-[0_2px_10px_rgba(0,0,0,0.6)] hover:border-amber-300 hover:bg-[#2a2014]"
     :class="off ? '!pointer-events-none' : ''" :style="{ left: `${x}px`, top: `${y}px`, scale: String(inv), maxWidth: maxW }" :title="handLabel(hand)" @click="$emit('open')">
     <span v-if="cat" data-tree-hand-catalyst class="flex min-w-0 shrink items-center gap-0.5 text-sky-200"><img v-if="iconOf(cat)" :src="iconOf(cat)" alt="" class="size-6 object-contain" />{{ handName(cat) }}<span aria-hidden="true" class="opacity-70">→</span></span>
-    <span class="flex shrink-0 items-center -space-x-1"><img v-for="k in icons" :key="k" :src="iconOf(k)" alt="" class="size-6 object-contain" /></span>
+    <span class="flex shrink-0 items-center gap-0.5"><img v-for="k in icons" :key="k" :src="iconOf(k)" alt="" class="size-6 object-contain" /></span>
     <!-- お告げも文字で (10-26 モンキー 7 の 24: 絵だけでアビスの反響が読めなかった)。全文は乗せた時の title -->
     <span class="min-w-0 truncate">{{ hand.repeat ? tr("カオススパムオーブ", "Chaos Spam Orb") : [hand.currency, ...hand.omens].map((k) => handName(k)).join(" + ") }}</span>
     <!-- カオススパムオーブ (当たるまで) は横にカオスの段の名前 -->

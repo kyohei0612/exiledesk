@@ -17,9 +17,10 @@ import { pageZoom } from "../../../utils/zoom";
 export const FLOW_ID = "sim-tree";
 /**
  * 倍率は決まった段だけ (10-22 オーナー: 自由な値だと 76% で札がくっついて重なった)。ホイール・＋−・全体表示・幅が変わった時もこの段に吸い付く。
- * 75% は縮めたまま組める一番下の段 (VIEW_ONLY)、それ未満は見るだけ。20% は見本の木にプレフィックスをつないで 25% でも収まらなくなった分 (10-22)
+ * 75% は縮めたまま組める一番下の段 (VIEW_ONLY)、それ未満は見るだけ。20% は見本の木にプレフィックスをつないで 25% でも収まらなくなった分 (10-22)。
+ * 15%・10% は箱の中のアイテムの枠で箱が高くなり、1660×860 の全体表示でアミュ B の下の段が 20% でも枠の外に切れた分 (10-26 モンキー 8 の 1。完成形の窓と段の目印を避けて下げると 15% でも切れた)
  */
-const ZOOM_LEVELS = [0.2, 0.25, 0.33, 0.5, 0.67, 0.75, 1, 1.25, 1.5] as const;
+const ZOOM_LEVELS = [0.1, 0.15, 0.2, 0.25, 0.33, 0.5, 0.67, 0.75, 1, 1.25, 1.5] as const;
 const ZOOM_MIN = ZOOM_LEVELS[0];
 const ZOOM_MAX = ZOOM_LEVELS[ZOOM_LEVELS.length - 1]!;
 /** 一番近い段 */
@@ -37,6 +38,8 @@ const PHONE_MIN = 0.5;
 const OPEN_MIN = VIEW_ONLY;
 /** 全体に合わせる時の余白の下限 */
 const PAD_MIN = 12;
+/** 箱の下の外の＋ (TreeBox の data-tree-next、-bottom-[34px]・28px) の分 */
+const NEXT_H = 40;
 
 export function useTreeFlow(doc: Ref<TreeDoc>) {
   const f = useVueFlow(FLOW_ID);
@@ -83,6 +86,11 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
    * 始まりの箱を枠の横の真ん中に置いた時、木全体が収まる一番大きい段 (上は topY、下は余白だけ。100% まで)。
    * 左右は始まりの箱の真ん中から遠い方の端まで (始まりを真ん中に置くので、片側に伸びた木はその側の分を両側に取る)
    */
+  /**
+   * 木の下の端 (ツリーの座標)。箱の高さは Vue Flow が測った物 (中のアイテムの枠で BOX_H より高い) + 下の＋の分
+   * (前は BOX_H で数え、全体表示でも下の段の箱が枠の外に 124px 切れた、10-26 モンキー 8 の 1)
+   */
+  const treeBottom = (): number => Math.max(...Object.values(doc.value.boxes).map((b) => b.y + (f.findNode(b.id)?.dimensions.height || BOX_H) + NEXT_H));
   function fitLevel(): number | null {
     const b = bounds.value, st = doc.value.boxes.start, w = f.dimensions.value.width, h = f.dimensions.value.height;
     if (!w || !h) return null;
@@ -90,7 +98,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     const half = Math.max(sx - b.x, b.x + b.w - sx);
     // 木の左の外の段の目印 (TreeBandLayer、画面の上で約 110px × ページの zoom) の分も左を空ける (1280 で目印が枠の外に切れた、10-22)
     const left = bandsOf(doc.value).length ? Math.round(110 * pageZ.value) : 0;
-    const fz = Math.min((w / 2 - left - PAD_MIN) / half, (h - topY() - PAD_MIN) / b.h) / pageZ.value;
+    const fz = Math.min((w / 2 - left - PAD_MIN) / half, (h - topY() - PAD_MIN) / (treeBottom() - b.y)) / pageZ.value;
     return [...ZOOM_LEVELS].reverse().find((l) => l <= Math.min(1, fz) + 1e-6) ?? ZOOM_MIN;
   }
   /**
@@ -99,7 +107,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
    * (10-26 オーナー「スタートと完成形のアイテムと被ってめんどくさい。スタートは必ずツリーを真ん中に配置して開始、それも一番上ね」。
    * 前は木の囲みの真ん中を枠の真ん中にしていて、右へ伸びた木では始まりの箱が左上の窓の下に入った)
    */
-  async function startTop(lv: number): Promise<void> {
+  function placeOf(lv: number): { x: number; y: number; z: number } {
     const b = bounds.value, st = doc.value.boxes.start, w = f.dimensions.value.width;
     const z = lv * pageZ.value, sx = st ? st.x + BOX_W / 2 : b.x + b.w / 2;
     const x = w / 2 - sx * z;
@@ -108,17 +116,28 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     if (card && pane && card.height > 0) {
       // 窓の右・下の端 (枠の左上が 0 の座標)。箱の上の端が窓の下の端より上で、横が窓に掛かる箱を探す
       const right = card.right - pane.left + PAD_MIN, bottom = card.bottom - pane.top + PAD_MIN;
-      const hit = Object.values(doc.value.boxes).filter((bx) => bx.x * z + x < right && bx.y * z + y < bottom);
-      if (hit.length) y += bottom - Math.min(...hit.map((bx) => bx.y * z + y));
+      // 箱 (左の端・上の端) と、木の左の外の段の目印 (TreeBandLayer、右の端が木の一番左 − 28、幅 約 90px・高さ 約 24px。10-26 モンキー 8 の 1 の後に窓とかぶった)
+      const boxes = Object.values(doc.value.boxes), minX = Math.min(...boxes.map((bx) => bx.x));
+      const items = [...boxes.map((bx) => ({ l: bx.x * z + x, t: bx.y * z + y })), ...bandsOf(doc.value).map((bd) => ({ l: (minX - 28) * z + x - 90 * pageZ.value, t: (bd.y + BOX_H / 2) * z + y - 12 * pageZ.value }))];
+      const hit = items.filter((it) => it.l < right && it.t < bottom);
+      if (hit.length) y += bottom - Math.min(...hit.map((it) => it.t));
     }
-    await f.setViewport({ x, y, zoom: z });
+    return { x, y, z };
+  }
+  /** fitAll = 窓を避けて下げた分で下の段が枠の外に出るなら、収まるまで倍率を 1 段ずつ下げる (全体表示) */
+  async function startTop(lv: number, fitAll = false): Promise<void> {
+    let p = placeOf(lv);
+    const h = f.dimensions.value.height;
+    for (let i = ZOOM_LEVELS.indexOf(lv as (typeof ZOOM_LEVELS)[number]); fitAll && i > 0 && treeBottom() * p.z + p.y > h - PAD_MIN; i--) p = placeOf(ZOOM_LEVELS[i - 1]!);
+    await f.setViewport({ x: p.x, y: p.y, zoom: p.z });
   }
   /** 全体に合わせる (整列の後・「1」・右下の道具)。whole = スマホでも 50% の下限を使わず木の全体 (回すの 1 人目が歩く時。光る枠を画面の外へ出さない) */
   async function fit(whole = false): Promise<void> {
     const lv = fitLevel();
     if (lv == null) return;
     // スマホ (768px 未満) は 50% より小さくしない (20% で箱の字が読めなかった、10-22)
-    await startTop(!whole && innerWidth < 768 ? Math.max(lv, PHONE_MIN) : lv);
+    if (!whole && innerWidth < 768) await startTop(Math.max(lv, PHONE_MIN));
+    else await startTop(lv, true);
   }
   /**
    * 開いた時の見え方 (10-25 オーナー「任せる」、23 本目の決め): 木全体が収まる段 (100% まで)。

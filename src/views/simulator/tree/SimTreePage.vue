@@ -207,9 +207,23 @@ const popStyle = computed(() => {
   const { x, y, zoom: z } = v.flow.viewport.value, Z = pageZ.value;
   // 枠の中に収める (ポップアップの大きさ = 箱 + 余白 12・右 28・下 48)
   const { width: W, height: H } = v.flow.dimensions.value;
-  const left = Math.min(W / Z - BOX_W - 48, ((b.x + BOX_W / 2) * z + x) / Z - BOX_W / 2 - 12), top = Math.min(H / Z - BOX_H - 68, ((b.y + BOX_H / 2) * z + y) / Z - BOX_H / 2 - 12);
-  return { left: `${Math.max(8, left)}px`, top: `${Math.max(8, top)}px` };
+  // 大きさは測った物 (中のアイテムの枠で箱より高い。前は箱の最低の高さで見積もり、下の端が右下の倍率の道具にかかった、10-26 モンキー 8 の 5)
+  const pw = popSize.value.w || BOX_W + 40, ph = popSize.value.h || BOX_H + 60, top0 = 44 / Z;
+  let left = Math.max(8, Math.min(W / Z - pw - 8, ((b.x + BOX_W / 2) * z + x) / Z - BOX_W / 2 - 12));
+  let top = Math.max(8, Math.min(top0 + H / Z - ph - 8, ((b.y + BOX_H / 2) * z + y) / Z - BOX_H / 2 - 12));
+  // 右下の道具 (ミニマップ・倍率) にかかる時は道具の上へ、上に入らなければ左へ
+  const tools = document.querySelector<HTMLElement>("[data-tree-tools]");
+  if (tools) {
+    const tl = tools.offsetLeft, tt = tools.offsetTop;
+    if (left + pw > tl && top + ph > tt) { if (tt - ph - 8 >= 8) top = tt - ph - 8; else left = Math.max(8, tl - pw - 8); }
+  }
+  return { left: `${left}px`, top: `${top}px` };
 });
+/** 浮き窓の大きさ (ページの CSS ピクセル) */
+const popSize = ref({ w: 0, h: 0 });
+const popRo = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => { const e = popEl.value; if (e) popSize.value = { w: e.offsetWidth, h: e.offsetHeight }; });
+watch(popEl, (el, old) => { if (old) popRo?.unobserve(old); if (el) popRo?.observe(el); else popSize.value = { w: 0, h: 0 }; });
+onBeforeUnmount(() => popRo?.disconnect());
 /** ポップアップの中で押した物は、閉じてからいつもの動きへ */
 function popDo(f: (id: string, b: Box) => void): void { const id = pop.value, b = id ? doc.value.boxes[id] : null; pop.value = null; if (id && b) f(id, b); }
 /**
