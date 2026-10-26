@@ -1,5 +1,10 @@
 # サーバー管理人 のやる事
 
+## 4 → 5 の引き継ぎ (10-26 夜、オーナー「立て直し」で入れ替え。4 本目は着任だけで作業なし)
+- 報告の宛先はブラック 13 代目 (local_526b63a7)。予定のタスク 2 つの通知も 13 代目に付け直し済み。
+- 10-27 の朝に見る 3 つ (結果は 13 代目へ 1〜3 行): ① exiledesk-daily-summary の 10-27 の回が通ったか (10-25 の回 local_e1184968 の残りが片付いたかを list_task_runs で) ② #日報 に AI の見解が流れたか (D1 ai_review の posted_at)、#分析ログファイル管理 に書き込みが無いか ③ Discord の Bot の 9:03 の回 (discord_daily の 10-27 の行に人の書き込みが本文つきで入ったか)。
+- やりかけは下の 3 → 4 のまま (ツリーの短い URL・要望 91832821 の返事の書き直し・サファイア 170 回空振りの疑いはジン部長待ち)。
+
 ## 次の管理人へ (10-26、3 本目 → 4 本目。前の 2 → 3 は notes/2026-10-26-todo-archive.md、1 本目からの長い物は notes/2026-10-24-handoff.md)
 - 先に README の決まり 10 個と notes/daily-report-task.md (毎朝 9 時の AI の評価と見解の流れ) を読む。報告はブラック (dev/todo.md の宛先の表、今は 12 代目 local_feea72b4)。セッション同士の送信はオーナーの書き込みの間に 10 回まで、止まったら共有メモ (side-session-notes/<ブラックの id>/) に書く。
 - **毎朝の形が変わった (10-26 オーナー「既定の報告はいらなくなった」)**: 予定のタスク exiledesk-daily-summary が 9 時に pull-logs.mjs (D1 の記録 + pull-server-notes.mjs の異常・要望・Discord = <日>-server.json) → <日>-ai.md (見本 daily/2026-10-25-ai.md、git に入れない) → post-ai-review.mjs で #日報 に全文。数字の日報 (daily-summary.mjs・サーバーの dailyReport・GET /report) と #分析ログファイル管理 への書き込みは消した (71d1a969)。
