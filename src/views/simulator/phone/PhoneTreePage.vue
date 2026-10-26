@@ -128,6 +128,8 @@ const main = computed((): { kind: string; text: string; off?: boolean; go: () =>
   const c = q.current.value, b = c ? t.doc.value.boxes[c.id] : null;
   // 一番最初 (始まりの箱) は「始める」(10-26 夜オーナー「スマホの最初の質問『打つ手を選ぶ』は嫌、一番最初は始めるでいい」)。押すと同じく棚
   if (c && b && c.kind === "hand" && !b.hand) return { kind: "hand", text: b.out === "start" ? tr("始める", "Start") : tr("打つ手を選ぶ", "Choose a craft"), go: () => { handFor.value = c.id; } };
+  // 手のある箱 (ここで打った手を見ている所) も下は「次へ」= その手の結果へ (10-27 オーナー「画面の下はいつもどおりの次へのまま、UI の統一感」)
+  if (c && b && c.kind === "hand" && b.hand) return { kind: "next", text: tr("次へ", "Next"), go: () => { q.focus.value = { kind: "outs", id: c.id }; window.scrollTo(0, 0); } };
   if (c && c.kind === "outs") {
     // 結果は 1 つずつ 1 画面 (10-26 夜オーナー「スマホだとレベルが高すぎる」)。「次へ」= 今の結果を既定の答えで決めて次の結果へ、最後で次の段へ
     const outs = q.outsOf(c.id), k = Math.min(outStep.value, Math.max(0, outs.length - 1));

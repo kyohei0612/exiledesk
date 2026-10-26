@@ -42,8 +42,6 @@ const outs = computed(() => quiz.outsOf(props.q.id));
 const k = computed(() => Math.min(props.step, Math.max(0, outs.value.length - 1)));
 /** 段 (PC の画面の段と同じ stepOf)。見出しは質問でなくツリーの段として出す (10-26 夜オーナー「質問と思わせない」) */
 const step = computed(() => stepOf(t.doc.value, props.q.kind === "outs" ? outs.value[0] ?? props.q.id : props.q.id));
-/** ① で次の手が付いている箱を押した = その手の結果を見る */
-function showOuts(id: string): void { quiz.focus.value = { kind: "outs", id }; }
 /** ② の行の「→ 次の手」= その箱の ① */
 function showHand(id: string): void { quiz.focus.value = { kind: "hand", id }; }
 </script>
@@ -57,8 +55,9 @@ function showHand(id: string): void { quiz.focus.value = { kind: "hand", id }; }
       <!-- 今のアイテム (この箱に着いた時の形)。完成の狙いの丸い札の並びは 10-26 夜にやめた (オーナー「要らない、頭が痛くなる」。完成形は上のアイテムの枠で見る) -->
       <StageItemCard v-if="item" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
       <template v-if="box.hand">
-        <button type="button" data-phone-hand-now class="w-full rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-center text-[14px] text-amber-50" @click="showOuts(q.id)">{{ tr("次の手", "Next craft") }}: {{ handLabel(box.hand) }} <span class="ml-2 text-[12px] text-amber-200/80">{{ tr("結果 ›", "Results ›") }}</span></button>
-        <button type="button" data-phone-hand-change class="min-h-10 text-[12px] text-[#9a8a70] underline decoration-white/20" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
+        <!-- ここで打った手 (10-27 オーナー「カオスオーブを選択とだけ出し、押したらカレンシーの選択画面へ」)。結果へは下の帯の「次へ」 -->
+        <button type="button" data-phone-hand-now class="w-full rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-center text-[14px] text-amber-50" @click="emit('hand', q.id)">{{ tr(`${handLabel(box.hand)}を選択`, `Selected: ${handLabel(box.hand)}`) }}</button>
+        <button type="button" data-phone-hand-change class="g-btn !min-h-11 px-4" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
       </template>
     </template>
     <template v-else>
@@ -69,7 +68,7 @@ function showHand(id: string): void { quiz.focus.value = { kind: "hand", id }; }
         <span>{{ tr(`結果 ${k + 1} / ${outs.length}`, `Result ${k + 1} / ${outs.length}`) }}</span>
       </p>
       <PhoneOutRow v-if="outs[k]" :key="outs[k]" :box-id="outs[k]!" @hand="showHand" />
-      <button type="button" data-phone-hand-change class="min-h-10 text-[12px] text-[#9a8a70] underline decoration-white/20" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
+      <button type="button" data-phone-hand-change class="g-btn !min-h-11 px-4" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
     </template>
   </div>
 </template>

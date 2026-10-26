@@ -166,12 +166,38 @@ const showAims = canFree;
 /** 狙い無し = MOD を 1 つもチェックしていない。当たるまで繰り返す時は狙い無しも「どれでも」も無い (MOD を 1 つ以上チェックするまで確定しない、10-25 オーナー) */
 const freeOn = computed(() => showAims.value && !spam.value && !checkedAims.value.length);
 /** 狙い無しを押す = MOD を全部外す (もう狙い無しの時に押しても外れない。値が同じだと Vue が描き直さず、チェックだけ外れて見えた) */
-function toggleFree(e: Event): void { touched = true; checked.value = []; (e.target as HTMLInputElement).checked = true; }
+function toggleFree(e: Event): void { const was = [...checked.value]; touched = true; checked.value = []; (e.target as HTMLInputElement).checked = true; warnIfBelow(() => { checked.value = was; }); }
 function toggleAim(a: Aim): void {
-  const k = aimKey(a), cur = checkedAims.value.map(aimKey);
+  const k = aimKey(a), cur = checkedAims.value.map(aimKey), was = [...checked.value];
   touched = true;
   checked.value = cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k];
+  warnIfBelow(() => { checked.value = was; });
 }
+/** この箱から下の箱の数 (今の手の結果から先。手を替える・狙いを変えると消える) */
+const below = computed((): number => {
+  const d = t.doc.value, seen = new Set<string>(), q = [...(d.boxes[props.boxId]?.outs ?? [])];
+  while (q.length) { const id = q.shift()!; if (seen.has(id) || !d.boxes[id]) continue; seen.add(id); q.push(...d.boxes[id]!.outs); }
+  return seen.size;
+});
+/**
+ * スマホ: 今の手の下に箱がある時、別の札を持った瞬間・狙いを変えた瞬間に「この手以降は削除されます」の警告 (10-27 オーナー)。
+ * 「やめる」で元の札・狙いに戻す、「続ける」でこの窓の間は聞かない。PC はまだ (シミュ 32 に揃えてもらう)
+ */
+const warnOpen = ref(false);
+let warnAck = false;
+let warnBack: (() => void) | null = null;
+function warnIfBelow(back: () => void): void {
+  if (!phone.value || !props.current || warnAck || !below.value) return;
+  warnBack = back; warnOpen.value = true;
+}
+function warnStop(): void { warnOpen.value = false; const b = warnBack; warnBack = null; reverting = true; b?.(); void nextTick(() => { reverting = false; }); }
+function warnGo(): void { warnOpen.value = false; warnAck = true; warnBack = null; }
+let reverting = false;
+watch(held, (k, old) => {
+  if (reverting || !k || !props.current || k === props.current.currency) return;
+  const was = old ?? props.current.currency, wasOmens = old ? [...omens.value] : [...props.current.omens];
+  warnIfBelow(() => { held.value = was; omens.value = wasOmens; });
+});
 const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value }) : null));
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
 const preCat = computed((): string | null => (catalysing.value && !afterQuality.value ? autoCat.value : null));
@@ -316,8 +342,9 @@ function ok(): void {
       <p v-if="heldHelp.length" data-tree-hand-held-help class="mb-2 break-words text-[12px] leading-snug text-[#d8ccb4]">{{ heldHelp.join(" ") }}</p>
       <!-- 狙いを選べる手は 2 つ: 狙い無し (今のチェック) のまま決める / 2 段目で狙いを選ぶ。繰り返しの手は 2 段目だけ -->
       <div v-if="showAims" class="flex gap-2">
-        <button v-if="!spam" type="button" data-tree-hand-use class="g-btn !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" :disabled="!!problem" @click="ok">{{ freeOn ? tr("狙い無しで決める", "Decide with no target") : tr("このまま決める", "Decide as is") }}</button>
-        <button type="button" data-tree-hand-aim-step class="g-btn-red !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="aimStep = true">{{ tr("狙いを選ぶ ›", "Pick targets ›") }}</button>
+        <!-- 左は普通の「キャンセル」(持った札を離す)、右は狙いを選ぶ (今の手を直す時は「狙いを再度選ぶ」)。10-27 オーナー「このまま決めるは日本語として変」 -->
+        <button type="button" data-tree-hand-cancel class="g-btn !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="release()">{{ tr("キャンセル", "Cancel") }}</button>
+        <button type="button" data-tree-hand-aim-step class="g-btn-red !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="aimStep = true">{{ current ? tr("狙いを再度選ぶ ›", "Pick targets again ›") : tr("狙いを選ぶ ›", "Pick targets ›") }}</button>
       </div>
       <button v-else type="button" data-tree-hand-use class="g-btn-red min-h-11 w-full text-[15px]" :disabled="!!problem" @click="ok">{{ tr("使う (この手にする)", "Use (make it this craft)") }}</button>
     </div>
@@ -344,6 +371,17 @@ function ok(): void {
           <button type="button" data-tree-hand-aim-go class="g-btn-red !min-h-11 min-w-0 flex-1 text-[15px]" :disabled="!!problem" @click="ok">{{ tr("決める", "Decide") }}</button>
         </div>
       </div>
+    <!-- 「この手以降は削除されます」(スマホ、別の札を持った・狙いを変えた瞬間) -->
+    <div v-if="warnOpen" data-tree-hand-warn class="fixed inset-0 z-[330] flex items-center justify-center bg-black/60 px-4" @click.self="warnStop">
+      <div class="w-full max-w-sm rounded-xl border border-rose-400/60 bg-[#1d0f10] px-4 py-3 text-center">
+        <p class="text-[16px] font-bold text-rose-100">{{ tr("この手以降は削除されます", "Everything after this craft will be removed") }}</p>
+        <p class="mt-1 break-words text-[13px] text-[#e8d8c8]">{{ tr(`この箱から下の ${below} 箱が消えます (1 つ戻すで戻せる)`, `The ${below} box(es) below this one will be removed (Undo restores them)`) }}</p>
+        <div class="mt-3 flex gap-2">
+          <button type="button" data-tree-hand-warn-stop class="g-btn !min-h-11 flex-1" @click="warnStop">{{ tr("やめる", "Cancel") }}</button>
+          <button type="button" data-tree-hand-warn-go class="g-btn-red !min-h-11 flex-1" @click="warnGo">{{ tr("続ける", "Continue") }}</button>
+        </div>
+      </div>
+    </div>
     <!-- 持っている物の絵をカーソルに付ける (エミュと同じ共有の部品、スマホは出ない。10-26 オーナー「パソコン版持ってるかわからんから…エミュと同じ仕様で」) -->
     <HeldCursor :src="held ? iconOf(held) : null" />
   </div>
