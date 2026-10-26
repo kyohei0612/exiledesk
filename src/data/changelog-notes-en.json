@@ -1,4 +1,7 @@
 {
+  "0.1.620": [
+    "Simulator: The top of the tree page was reworked. The title strip is gone, the step strip sits at the top inside the frame, and the toolbar fits on one line (shorter labels or icons only on narrow screens). Name, Save and Recipes moved under the finished-item panel in the right column, and the minimap starts closed. After \"Clear\", the start box is placed at the top center like when the tree opens"
+  ],
   "0.1.619": [
     "The first screen now shows without waiting for the web fonts to load"
   ],
