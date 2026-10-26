@@ -10,7 +10,7 @@ import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { logRecord } from "../../utils/log-record";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { migrateTreeDoc } from "../../services/simulator/tree/tree-migrate";
-import { addTreeRecipe, setCurrentTreeRecipe, treeRecipes } from "../../state/simulator/tree-recipes";
+import { addTreeRecipe, removeTreeRecipe, sameTree, setCurrentTreeRecipe, treeRecipes } from "../../state/simulator/tree-recipes";
 import { DEV_BUILD } from "../../web/release-flags";
 import { DEV_RECIPES } from "./dev-recipes";
 import { useTree } from "./tree/use-tree";
@@ -31,14 +31,21 @@ export async function treeShareUrl(r: { name: string; tree: TreeDoc }): Promise<
 
 
 /** 開発版だけ: 見本のレシピを保存したレシピに足す (dev-recipes。同じ名前があれば足さない。10-26 モンキー 7 の 23) */
+/** 開発版の見本の名前 (「見本: …」「見本 2: …」) */
+const DEV_NAME = /^見本( \d+)?: /;
 export async function seedDevRecipes(): Promise<void> {
   if (!DEV_BUILD || SIM_LOCKED) return;
   for (const r of DEV_RECIPES) {
-    if (treeRecipes.value.some((x) => x.name === r.name)) continue;
     try {
       const p = (await unpackJson(r.code)) as Partial<PackedTree>;
       const t = p?.v === 2 ? migrateTreeDoc(p.t)?.doc : null;
-      if (t) addTreeRecipe(r.name, t);
+      if (!t) continue;
+      // 同じ名前・同じ中身ならそのまま。違えば前の見本 (「見本:」「見本 2:」… の名前) を全部消して入れ直す。人が別の名前で保存したレシピは触らない
+      // (10-26 オーナー「一旦整理して」: 見本 1・2・3 が並んでいた)
+      const same = treeRecipes.value.find((x) => x.name === r.name);
+      if (same && sameTree(same.tree, t)) continue;
+      for (const x of treeRecipes.value.filter((y) => DEV_NAME.test(y.name))) removeTreeRecipe(x.id);
+      addTreeRecipe(r.name, t);
     } catch { /* 読めない見本は足さない */ }
   }
 }

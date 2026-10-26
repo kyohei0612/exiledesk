@@ -41,11 +41,12 @@ const maxW = computed(() => `${Math.round(props.room / props.inv)}px`);
 </script>
 
 <template>
-  <button v-if="!hand" type="button" data-tree-split-chip :data-hand-of="id" class="nodrag nopan pointer-events-auto absolute z-[5] flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border border-teal-400/60 bg-[#0f1a18] px-3 py-0.5 text-[12px] font-semibold text-teal-100 shadow-[0_2px_10px_rgba(0,0,0,0.6)] hover:border-teal-300"
+  <!-- w-max: 札は文の幅で広がる (absolute の幅は left から入れ物の右の端までに縮み、右の方の札が「カオス…」と切れた、10-26。上限は room) -->
+  <button v-if="!hand" type="button" data-tree-split-chip :data-hand-of="id" class="nodrag nopan pointer-events-auto absolute z-[5] flex w-max -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border border-teal-400/60 bg-[#0f1a18] px-3 py-0.5 text-[12px] font-semibold text-teal-100 shadow-[0_2px_10px_rgba(0,0,0,0.6)] hover:border-teal-300"
     :class="off ? '!pointer-events-none' : ''" :style="{ left: `${x}px`, top: `${y}px`, scale: String(inv) }" :title="tr('打たずに分ける: 上の行から見て、合った行の箱へ進む (押すと行を替える)', 'Split without crafting: go to the first matching row (click to edit rows)')" @click="$emit('open')">
     ◇ {{ tr(`分かれ目 (${split ?? 0} 行)`, `Split (${split ?? 0} rows)`) }}
   </button>
-  <button v-else type="button" data-tree-hand :data-hand-of="id" class="nodrag nopan pointer-events-auto absolute z-[5] flex -translate-x-1/2 items-center gap-1.5 py-0.5 pl-1.5 pr-3 -translate-y-1/2 rounded-full border border-amber-400/60 bg-[#1a140d] text-[12px] font-semibold text-amber-100 shadow-[0_2px_10px_rgba(0,0,0,0.6)] hover:border-amber-300 hover:bg-[#2a2014]"
+  <button v-else type="button" data-tree-hand :data-hand-of="id" class="nodrag nopan pointer-events-auto absolute z-[5] flex w-max -translate-x-1/2 items-center gap-1.5 py-0.5 pl-1.5 pr-3 -translate-y-1/2 rounded-full border border-amber-400/60 bg-[#1a140d] text-[12px] font-semibold text-amber-100 shadow-[0_2px_10px_rgba(0,0,0,0.6)] hover:border-amber-300 hover:bg-[#2a2014]"
     :class="off ? '!pointer-events-none' : ''" :style="{ left: `${x}px`, top: `${y}px`, scale: String(inv), maxWidth: maxW }" :title="handLabel(hand)" @click="$emit('open')">
     <span v-if="cat" data-tree-hand-catalyst class="flex min-w-0 shrink items-center gap-0.5 text-sky-200"><img v-if="iconOf(cat)" :src="iconOf(cat)" alt="" class="size-6 object-contain" />{{ handName(cat) }}<span aria-hidden="true" class="opacity-70">→</span></span>
     <span class="flex shrink-0 items-center -space-x-1"><img v-for="k in icons" :key="k" :src="iconOf(k)" alt="" class="size-6 object-contain" /></span>

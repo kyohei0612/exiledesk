@@ -9,7 +9,7 @@
  * 結果の見せ方は 10-22 オーナーが「全部普通の箱」を選んだ (前は箱を描かず小さな札にしていた。「何で表示が違うんですか」で札を消した)
  */
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { heldSets, MATCH, matchTargets, RESTART } from "../../../services/simulator/tree/tree-shape";
+import { MATCH, matchTargets, RESTART } from "../../../services/simulator/tree/tree-shape";
 import type { BackReq, Pos } from "./tree-lines";
 
 /** 戻りの行き先の箱 (決めた箱 1 つ。前の版の形の合う箱へ = 行きうる形の箱を全部、作り直しは無し) */
@@ -29,11 +29,8 @@ export function joinSameShape(doc: TreeDoc, id: string): void {
   const b = doc.boxes[id];
   // 完成だった当たりの箱から伸ばした時だけ (前はどの箱に手を付けても動き、消去を付けた外れの箱へ完成の箱が黙ってつながった、10-22 靴・手袋を白紙から組んで見つけた)
   if (!b?.hand || !b.done || b.out !== "hit") return;
-  const key = (x: string): string | null => { const s = heldSets(doc, x); return s.length === 1 ? s[0]!.join(",") : null; };
-  const k = key(id);
+  // 完成の印を外すだけ。同じ形の完成の箱をここへつなぐのはやめた (当たりの箱には自動の矢印を引かない、10-26 オーナー「狙いがついたら再挑戦おかしくね、狙いついたらシンプルにプラスボタンじゃない？」)
   b.done = null;
-  if (!k) return;
-  for (const o of Object.values(doc.boxes)) if (o.id !== id && o.done && !o.hand && !o.back && key(o.id) === k) { o.back = id; o.done = null; }
 }
 
 /** 戻りの矢印だけの箱 (始まりは除く)。合流の線の出元 */

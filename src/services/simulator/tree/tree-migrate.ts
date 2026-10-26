@@ -10,6 +10,8 @@ const SCHEMA = (n: number): string => `exiledesk-tree/${n}`;
 const MIGRATIONS: Record<number, (d: Record<string, unknown>) => void> = {
   // 0 → 1 (10-25 オーナー「オーブから枠までとかが長さ短すぎる」): 段の間を 200 → 240 にしたので、箱の縦の位置を 1.2 倍 (手で置いた所の並びもそのまま広がる)
   0: (d) => { for (const b of Object.values((d.boxes ?? {}) as Record<string, { y?: unknown }>)) if (typeof b?.y === "number") b.y = Math.round(b.y * 1.2); },
+  // 1 → 2 (10-26 オーナー「アイテム枠は個人的に好きやからそのままがいいなさっきの」): 箱の中にアイテムの枠を出して箱が高くなったので、段の間を 240 → 360 にした。縦の位置を 1.5 倍、箱の幅を広げたので横を 340/220 倍
+  1: (d) => { for (const b of Object.values((d.boxes ?? {}) as Record<string, { x?: unknown; y?: unknown }>)) { if (typeof b?.y === "number") b.y = Math.round(b.y * 1.5); if (typeof b?.x === "number") b.x = Math.round((b.x * 340) / 220); } },
 };
 
 const OUTS: ReadonlySet<string> = new Set<OutKind | "start">(["hit", "junk", "junkGone", "lost", "any", "pass", "branch", "start"]);

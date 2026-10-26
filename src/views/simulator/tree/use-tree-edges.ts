@@ -33,8 +33,9 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
   const edges = computed(() => boxes.value.filter((b) => (b.hand || b.split) && b.outs.length).map((b) => {
     const p = posOf(b), pass = b.out === "pass";
     // 通り抜けは箱が無いので、手の札を箱の上の端の所に置き、そこから下りる
-    const px = p.x + BOX_W / 2, py = pass ? p.y : p.y + BOX_H, jy = pass ? p.y : py + HAND_DY;
     const kids = b.outs.map((o) => ({ id: o, c: doc.value.boxes[o]!, q: posOf(doc.value.boxes[o]!) }));
+    // 札は子の箱の上の辺から測る (横の棒の上、前と同じ 68)。箱の中にアイテムの枠を出して箱の高さが中身で伸びるので、親の下 (y + BOX_H) から測ると背の高い親の中に札が入った (10-26)
+    const px = p.x + BOX_W / 2, py = pass ? p.y : p.y + BOX_H, jy = pass ? p.y : Math.min(...kids.map((k) => k.q.y)) - BUS_DY - CHIP_HALF - 8;
     const busY = Math.min(...kids.map((k) => k.q.y)) - BUS_DY - (busShift.value.get(b.id) ?? 0);
     // 角丸の段付き (React Flow の smoothstep、見本の 3): 親の下から下りて、角を丸めて横へ、角を丸めて子の上の辺へ。
     // 外れ (赤) を先に描き、進む (灰) を上に重ねる (同じ横の棒を通る所は灰に見える)

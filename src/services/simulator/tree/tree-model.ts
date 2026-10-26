@@ -148,18 +148,19 @@ export interface TreeDoc {
   memoCurrencies?: string[];
 }
 
-export const BOX_W = 196;
-// 箱の中に今のアイテムの枠 (乗せた時のカードと同じ StageItemCard を縮めて) を出すので 112 → 150 (10-26 オーナー「枠は現状のアイテムの枠が表示してあげたら？いまカードで表示してる情報」。段の間 GAP_Y は変えない)
-export const BOX_H = 150;
-const GAP_X = 220;
+// アイテムの枠を縮めずに箱の幅いっぱいに出す (乗せた時のカードと同じ 300 + 余白、10-26 オーナー「枠いっぱいに表示していいのにこれ縮小してるから？拡大も欲しいんだけどそこ」) ので 196 → 316、横の間も 220 → 340
+export const BOX_W = 316;
+// 箱の高さは中身 (アイテムの枠・次どうするか・操作) に合わせて伸びる。これは最低の高さと、重なり・線の目安 (10-26 オーナー「枠は現状のアイテムの枠」)
+export const BOX_H = 110;
+const GAP_X = 340;
 /**
  * 段の間 (親の下 → 手の札 → 横の棒 → 子の上。直角の木の線が手の札と重ならない広さ、10-22)。10-22 オーナー「少し詰める」で 210 → 200:
  * 見本の木 (11 行) で 1920 の全体表示が 20 → 25% に乗る一番ゆとりのある値 (201 以下で 25%)。札の下と子の箱の間は 1920 で約 27px・1280 で約 24px。
  * 10-25 オーナー「オーブから枠までとかが長さ短すぎる」で 200 → 240 (横の棒は子の 34px 上、use-tree-edges の BUS_DY)
  */
-export const GAP_Y = 240;
-/** 今の木の形の番号 (schema の exiledesk-tree/N)。1 = 10-25 に段の間を 200 → 240 にした (tree-migrate で古い木の縦を 1.2 倍) */
-export const TREE_SCHEMA_N = 1;
+export const GAP_Y = 360;
+/** 今の木の形の番号 (schema の exiledesk-tree/N)。1 = 10-25 に段の間を 200 → 240 にした (tree-migrate で古い木の縦を 1.2 倍)。2 = 10-26 に箱の中にアイテムの枠を出して段の間を 240 → 360 (縦を 1.5 倍)・横の間を 220 → 340 (横を 340/220 倍) */
+export const TREE_SCHEMA_N = 2;
 
 /** 始まりの形 (前の版の fracture だけの木はフラクチャー 1 つのレア) */
 export const startOf = (d: TreeDoc): TreeStart => d.start ?? { rarity: "rare", mods: d.fracture ? [{ ...d.fracture, fractured: true }] : [] };

@@ -10,6 +10,7 @@ import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinableShapeOf } from "../../../services/simulator/tree/tree-shape";
 import { sideGroup } from "./tree-hand-plan";
 import { useTree } from "./use-tree";
+import { tr } from "../../../i18n/lang";
 
 /** 選んでいる間だけ (anchor = まとめ先、pick = 一緒にまとめる箱) */
 export const joinMode = ref<{ anchor: string | null; pick: string[] } | null>(null);
@@ -34,6 +35,12 @@ export function joinLook(doc: TreeDoc, id: string): JoinLook | null {
   return joinCandidates(doc, m.anchor).includes(id) ? "can" : "no";
 }
 
+/** 選べない箱の理由 (乗せた時の文)。プレとサフィの当たりはまとめない決まり (10-26 オーナー「そこに表示させるとしたらまとめるボタンかな、まぁ原則プレフィックスとサフィではまとめれないけどこれはルール化してもええよな」) */
+export function joinNoWhy(doc: TreeDoc, id: string): string {
+  const a = joinMode.value?.anchor ? doc.boxes[joinMode.value.anchor] : undefined, b = doc.boxes[id], g = sideGroup();
+  if (a && b && a.out === "hit" && b.out === "hit" && a.aim && b.aim && g && g(a.aim) !== g(b.aim)) return tr("プレフィックスとサフィックスはまとめられない", "Prefixes and suffixes can't be merged");
+  return a ? tr("まとめられない (同じ手の結果で、同じ側の当たりか、着いた形が同じ箱だけ)", "Can't merge (only results of the same craft: same-side hits, or boxes that land in the same shape)") : tr("この箱にまとめられる横の箱が無い", "Nothing beside this box can be merged into it");
+}
 export function useTreeJoin() {
   const t = useTree();
   const start = (): void => { joinMode.value = { anchor: null, pick: [] }; };
