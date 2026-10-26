@@ -98,7 +98,7 @@ onBeforeUnmount(() => { window.removeEventListener("pointerdown", onDown, true);
   <span ref="root" data-tree-recipe-bar class="relative flex min-w-0 flex-wrap items-center gap-1.5">
     <input v-if="renaming && !bare" ref="nameInput" data-tree-recipe-name-input :value="currentTreeRecipe?.name ?? defaultName()" class="h-8 w-56 max-md:order-last max-md:w-full rounded border border-amber-400/60 bg-black/50 px-1.5 text-[13px] font-bold outline-none" @keydown.enter.prevent="($event.target as HTMLInputElement).blur()" @keydown.esc.stop="renaming = false" @blur="endRename(($event.target as HTMLInputElement).value)" />
     <button v-else-if="!bare" type="button" data-tree-recipe-name class="flex h-8 min-w-0 max-w-[240px] items-center gap-1.5 rounded px-1.5 text-[13px] hover:bg-white/[0.06]" :title="tr('名前を変える', 'Rename')" @click="startRename">
-      <b class="min-w-0 truncate max-[1099px]:overflow-visible max-[1099px]:whitespace-normal max-[1099px]:break-words">{{ currentTreeRecipe?.name ?? tr("名前なし", "Untitled") }}</b>
+      <b class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words">{{ currentTreeRecipe?.name ?? tr("名前なし", "Untitled") }}</b>
       <span v-if="dirty" data-tree-recipe-dirty class="size-2 shrink-0 rounded-full bg-amber-400" :title="tr('保存していない変更がある', 'Unsaved changes')" />
     </button>
     <button v-if="!bare" type="button" data-tree-recipe-save class="g-btn sm shrink-0" :title="currentTreeRecipe ? tr('開いているレシピに上書き保存 (Ctrl+S)', 'Save to the open recipe (Ctrl+S)') : tr('新しく保存 (名前は自動、後で変えられる。Ctrl+S)', 'Save as a new recipe (auto-named, rename later. Ctrl+S)')" @click="save">{{ tr("保存", "Save") }}</button>

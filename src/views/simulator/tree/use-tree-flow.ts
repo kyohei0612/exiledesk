@@ -105,17 +105,29 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   }
   /**
    * 始まりの箱を枠の横の真ん中・木の一番上を上の端 (topY) に、段 lv で。
-   * (10-26 オーナー「スタートは必ずツリーを真ん中に配置して開始、それも一番上ね」)。完成形の窓は右の列へ移したので、窓を避けて下げる処理は外した (10-26 夜ブラック 13)
+   * 左上に浮かぶ完成形の窓 ([data-tree-goal-float]) にかぶる箱があれば、かぶらない所まで木を下げる
+   * (10-26 オーナー「スタートと完成形のアイテムと被ってめんどくさい。スタートは必ずツリーを真ん中に配置して開始、それも一番上ね」。
+   * 前は木の囲みの真ん中を枠の真ん中にしていて、右へ伸びた木では始まりの箱が左上の窓の下に入った)
    */
   function placeOf(lv: number): { x: number; y: number; z: number } {
     const b = bounds.value, st = doc.value.boxes.start, w = f.dimensions.value.width;
     const z = lv * pageZ.value, sx = st ? st.x + BOX_W / 2 : b.x + b.w / 2;
     const x = w / 2 - sx * z;
-    const y = topY() - b.y * z;
+    let y = topY() - b.y * z;
+    const card = document.querySelector("[data-tree-goal-float]")?.getBoundingClientRect(), pane = document.querySelector("[data-tree-canvas]")?.getBoundingClientRect();
+    if (card && pane && card.height > 0) {
+      // 窓の右・下の端 (枠の左上が 0 の座標)。箱の上の端が窓の下の端より上で、横が窓に掛かる箱を探す
+      const right = card.right - pane.left + PAD_MIN, bottom = card.bottom - pane.top + PAD_MIN;
+      // 箱 (左の端・上の端) と、木の左の外の段の目印 (TreeBandLayer、右の端が木の一番左 − 28、幅 約 90px・高さ 約 24px。10-26 モンキー 8 の 1 の後に窓とかぶった)
+      const boxes = Object.values(doc.value.boxes), minX = Math.min(...boxes.map((bx) => bx.x));
+      const items = [...boxes.map((bx) => ({ l: bx.x * z + x, t: bx.y * z + y })), ...bandsOf(doc.value).map((bd) => ({ l: (minX - 28) * z + x - 90 * pageZ.value, t: (bd.y + BOX_H / 2) * z + y - 12 * pageZ.value }))];
+      const hit = items.filter((it) => it.l < right && it.t < bottom);
+      if (hit.length) y += bottom - Math.min(...hit.map((it) => it.t));
+    }
     return { x, y, z };
   }
   /**
-   * fitAll = 下の段が枠の外に出るなら、収まるまで倍率を 1 段ずつ下げる (全体表示だけ、FIT_MIN まで)。
+   * fitAll = 窓を避けて下げた分で下の段が枠の外に出るなら、収まるまで倍率を 1 段ずつ下げる (全体表示だけ、FIT_MIN まで)。
    * 開いた時・整列の後は下げるだけで縮めない (10-26 夜ブラック 13: 縮めて 10% になった)
    */
   async function startTop(lv: number, fitAll = false): Promise<void> {
