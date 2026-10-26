@@ -3,8 +3,9 @@
   当たりは押すと MOD を選ぶ、横の＋で当たりを足す、下の＋で次の手。外れ・消えたの箱は消せない。見出しの鉛筆でメモ (10-22 試し打ちの欄を消したのでここから)。数字 (通った人数・ここまでの費用) は計算を繋ぐまで出さない
 -->
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
+import ModalShell from "../../../components/ui/ModalShell.vue";
 import { BOX_H, BOX_W, fractureMarks, joinableOf, joinSide, splitAny, START_JUNK, startOf, startRarity, startsFractured, type TreeBox } from "../../../services/simulator/tree/tree-model";
 import { sideGroup } from "./tree-hand-plan";
 import { tr } from "../../../i18n/lang";
@@ -64,7 +65,11 @@ const free = computed(() => !props.box.hand && !props.box.split);
 const route = computed(() => routeText(t.doc.value, props.box.id));
 /** まとめられる同じ側の横の当たりの箱 (tree-model の joinableOf) */
 const joinable = computed(() => { const g = sideGroup(); return g && props.box.out === "hit" ? joinableOf(t.doc.value, props.box.id, g) : []; });
-function mergeSide(): void { const g = sideGroup(); if (g) t.edit((d) => joinSide(d, props.box.id, g)); }
+/** 動きをまとめる窓 (同じ側の横の当たりにチェック、既定は全部) */
+const joinOpen = ref(false);
+const joinPick = ref<string[]>([]);
+function openJoin(): void { joinPick.value = [...joinable.value]; joinOpen.value = true; }
+function mergeSide(): void { const g = sideGroup(), pick = [...joinPick.value]; joinOpen.value = false; if (g && pick.length) t.edit((d) => joinSide(d, props.box.id, g, pick)); }
 /** 完成の狙いから外した MOD の当たりの箱 (tree-fail の orphanHits) */
 const orphan = computed(() => props.box.out === "hit" && orphanHits(t.doc.value).includes(props.box.id));
 const desc = computed(() => props.box.out === "junk" ? tr("当たり以外が付いた", "Anything but a hit") : props.box.out === "junkGone" ? tr("外れの MOD が消えた", "A miss mod was removed") : props.box.out === "any" ? (essOf.value ? tr(`${essOf.value} の MOD が付いた`, `${essOf.value} mod added`) : tr("何かが 1 つ付いた (狙い無し)", "Something was added (no target)")) : tr("狙いの MOD が消えた", "A target mod was removed"));
@@ -170,7 +175,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     <div class="pointer-events-none absolute inset-x-2 bottom-1 flex h-6 items-center gap-1 text-[11px] *:pointer-events-auto" :style="k > 1 ? { right: 'auto', width: `${(BOX_W - 16 - (box.out === 'hit' ? 22 : 0)) / k}px`, ...keep('left bottom') } : {}">
       <!-- 同じ側の「どれか」の当たりの箱を MOD ごとに分ける / 分けた箱をまとめる (10-26 オーナー「戻るとかの所に分けるみたいな」) -->
       <button v-if="!quiet && box.anyOf && box.anyOf.length > 1" type="button" data-tree-split-any class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-300/40 px-1.5 text-amber-100 hover:border-amber-200" :title="tr('MOD ごとに当たりの箱を分ける (先頭の MOD はこの箱のまま、続きの手もそのまま。1 つ戻すで戻せる)', 'Split into one hit box per mod (the first mod keeps this box and its next steps; Undo restores)')" @click.stop="t.edit((d) => splitAny(d, box.id))">{{ tr("分ける", "Split") }}</button>
-      <button v-else-if="!quiet && joinable.length" type="button" data-tree-join-side class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-300/40 px-1.5 text-amber-100 hover:border-amber-200" :title="tr('同じ側の横の当たり (手の無い箱) をこの箱にまとめて「どれか」の 1 箱に', 'Merge the same-side hit boxes beside this one (without a craft) into one any-of box')" @click.stop="mergeSide">{{ tr("まとめる", "Merge") }}</button>
+      <button v-else-if="!quiet && joinable.length" type="button" data-tree-join-side class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-300/40 px-1.5 text-amber-100 hover:border-amber-200" :aria-expanded="joinOpen" :title="tr('動きをまとめる: どれが付いても後の作り方が同じ同じ側の当たりを選んで 1 つの箱に (以後の手は 1 本。「分ける」で戻せる)', 'Merge the craft path: pick same-side hits that need the same next steps whichever lands, into one box (one path after this; Split undoes it)')" @click.stop="joinOpen ? (joinOpen = false) : openJoin()">{{ tr("まとめる", "Merge") }}</button>
       <template v-if="box.back">
         <!-- 戻り先の札: 乗せると戻りの線が出て戻り先が光る、押すとそこへ寄る (線は既定で引かない、10-22) -->
         <button type="button" data-tree-back-tag class="nodrag flex h-6 min-w-0 flex-1 items-center truncate rounded px-1 text-left text-cyan-200 hover:bg-cyan-400/15" :class="quiet ? '!pointer-events-none' : ''" :title="sameAim ? tr(`戻り先: ${backLabel} (狙いの MOD が同じ箱。狙い以外の MOD は違ってよい。押すとそこへ寄る)`, `Returns to: ${backLabel} (a box with the same target mods; other mods may differ. Click to go there)`) : tr(`戻り先: ${backLabel} (押すとそこへ寄る)`, `Returns to: ${backLabel} (click to go there)`)"
@@ -179,11 +184,20 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       </template>
       <template v-else-if="!box.hand && !box.split && box.out !== 'start' && !quiet">
         <button v-if="!box.done" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-cyan-400/40 px-1.5 text-cyan-200 hover:border-cyan-300" :class="k > 1 ? 'min-w-6' : ''" :title="tr('↩ 戻る (既にある箱を指す)', '↩ Return (point to an existing box)')" @click.stop="emit('back')">{{ k > 1 ? "↩" : tr("↩ 戻る", "↩ Return") }}</button>
-        <button v-if="box.out === 'hit' || box.out === 'branch'" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" @click.stop="emit('done')" :title="doneText">{{ (k > 1 || (box.anyOf?.length ?? 0) > 1) && !box.done ? tr("完成", "Done") : doneText }}</button>
+        <button v-if="box.out === 'hit' || box.out === 'branch'" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" @click.stop="emit('done')" :title="doneText">{{ (k > 1 || (box.anyOf?.length ?? 0) > 1 || joinable.length > 0) && !box.done ? tr("完成", "Done") : doneText }}</button>
         <!-- 外れ・狙いが消えたの行き先に一番使う手 (オーナー 10-22): 当たりのどれかが付くまでカオス -->
       </template>
     </div>
 
+    <!-- 動きをまとめる窓 (画面の真ん中の重ね窓。木の中に置くと寄り・位置で完成形の札や枠に隠れた): 同じ側の手の無い横の当たりを選んで、この箱にまとめる (10-26 オーナー「選択した枠にまとめる」) -->
+    <ModalShell v-if="joinOpen" :open="true" rec="tree-join" :title="tr('動きをまとめる', 'Merge the craft path')" width="w-[380px] max-w-full" @close="joinOpen = false">
+      <div data-tree-join-pick class="flex flex-col gap-1.5 py-1 text-[13px]">
+        <p class="text-[12px] opacity-80">{{ tr("どれが付いても後の作り方が同じ当たりを選ぶ。選んだ箱はこの箱にまとまり、以後の手は 1 本 (「分ける」で戻せる)。プレとサフィはまとめられない", "Pick the hits that need the same next steps whichever lands. They merge into this box with one path after this (Split undoes it). Prefix and suffix can't be merged") }}</p>
+        <label class="flex min-h-8 items-center gap-2 opacity-80"><input type="checkbox" checked disabled />{{ t.boxAimLabel(box) }}</label>
+        <label v-for="o in joinable" :key="o" data-tree-join-row class="flex min-h-8 cursor-pointer items-center gap-2"><input v-model="joinPick" type="checkbox" :value="o" />{{ t.boxAimLabel(t.doc.value.boxes[o]!) }}</label>
+        <div class="mt-1 flex gap-2"><button type="button" data-tree-join-go class="g-btn-red min-h-9 flex-1" :disabled="!joinPick.length" @click="mergeSide">{{ tr("まとめる", "Merge") }}</button><button type="button" class="g-btn min-h-9 flex-1" @click="joinOpen = false">{{ tr("やめる", "Cancel") }}</button></div>
+      </div>
+    </ModalShell>
     <!-- 横の＋ = 当たりを足す (どれか 1 つが叶う) -->
     <button v-if="box.out === 'hit' && !quiet" type="button" data-tree-add-hit :style="k > 1 ? { ...keep('center'), top: 'calc(50% + 4px)' } : {}" class="nodrag absolute -right-4 top-1/2 flex size-7 -translate-y-1/2 touch-none items-center justify-center rounded-full border-2 border-amber-400/70 bg-[#1d1812] text-amber-200 hover:bg-amber-500/30"
       :title="tr('当たりを横に足す (どれか 1 つが叶えば当たり)。長押しで引っ張り箱の上で離すとその箱へつなぐ', 'Add another hit beside (any one counts). Hold and drag onto a box to link')" @pointerdown.stop="emit('plus', 'side', $event)" @click.stop><Icon name="plus" class="size-4" /></button>

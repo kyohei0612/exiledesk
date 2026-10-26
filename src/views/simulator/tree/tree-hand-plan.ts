@@ -155,7 +155,7 @@ export function applyPick(d: TreeDoc, id: string, h: Hand, kind: HandKind, aims:
   const had = new Set(Object.keys(d.boxes));
   let at = id;
   if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
-  setHand(d, at, h, kind, aims, only, sideGroup());
+  setHand(d, at, h, kind, aims, only);
   joinSameShape(d, id);
   linkSameShape(d, Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id));
   // 自動でつないだ戻りで狙いを持って着く道ができた箱に「狙いが消えた」を足す (tree-model の healLost)

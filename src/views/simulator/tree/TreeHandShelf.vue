@@ -22,7 +22,7 @@ import { treeRowTags } from "./tree-row-tags";
 import { aimKey, fractureMarks, setHand, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { TREE_SPAM_ORB, useSimShelf } from "../use-sim-shelf";
-import { afterQualityOf, autoCatOf, sideGroup, FREE_EFFECTS, handOf, hitAimsOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan";
+import { afterQualityOf, autoCatOf, FREE_EFFECTS, handOf, hitAimsOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan";
 import { tr } from "../../../i18n/lang";
 
 const props = defineProps<{ boxId: string; current: Hand | null }>();
@@ -163,7 +163,7 @@ const resultText = computed((): [string, string] | null => {
   const alt = RESULT_NO_LOST[k];
   if (!alt) return RESULT[k];
   const d = structuredClone(toRaw(t.doc.value));
-  setHand(d, props.boxId, h, k, hitAims.value, null, sideGroup());
+  setHand(d, props.boxId, h, k, hitAims.value, null);
   return d.boxes[props.boxId]?.outs.some((o) => d.boxes[o]?.out === "lost") ? RESULT[k] : alt;
 });
 /** 当たりの箱の既定 (tree-hand-plan の hitAimsOf) */
@@ -181,7 +181,7 @@ const gone = computed((): number => {
   if (!props.current || !h || !k) return 0;
   const d = structuredClone(toRaw(t.doc.value));
   const before = Object.keys(d.boxes).length;
-  setHand(d, props.boxId, h, k, hitAims.value, only.value, sideGroup());
+  setHand(d, props.boxId, h, k, hitAims.value, only.value);
   const kept = new Set(Object.keys(d.boxes));
   return before - Object.keys(t.doc.value.boxes).filter((id) => kept.has(id)).length;
 });

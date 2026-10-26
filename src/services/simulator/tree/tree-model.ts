@@ -307,7 +307,7 @@ export const kindOfHand = (h: Hand, base: HandKind): HandKind => (h.repeat ? "sp
  */
 /** 同じ当たりの箱にまとめる手 (付く MOD を選べない手。エッセンスは付く MOD ごと・フラクチャーは印ごとの箱のまま) */
 const GROUPED: readonly HandKind[] = ["add", "swap", "spam"];
-/** groupOf = 狙いの側 (同じ側の狙いは 1 つの当たりの箱、anyOf)。渡さなければ今までどおり狙いごと */
+/** groupOf = 狙いの側 (渡すと同じ側の狙いは 1 つの当たりの箱、anyOf)。既定は渡さない = 狙いごと (10-26 オーナー「デフォではまとめないほうね」) */
 export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims: readonly Aim[] = [], only: ReadonlyArray<{ out: OutKind; aim: Aim | null }> | null = null, groupOf?: (a: Aim) => string): void {
   const b = d.boxes[id];
   if (!b) return;
@@ -330,15 +330,14 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   delete b.autoBack;
   if (same) return;
   for (const o of b.outs) drop(d, subtree(d, o));
-  // 同じ側の狙いは 1 つの当たりの箱 (anyOf)。側の並びは狙いの並び (完成の狙いの順) のまま
+  // 当たりの箱は MOD ごと (10-26 オーナー「デフォではまとめないほうね」。まとめるのは人が「動きをまとめる」で選んだ箱だけ、joinSide)。
+  // 前に「動きをまとめる」の箱 (anyOf) を通った道では、どれが付いているかが人ごとに違う (見本 1 人の付いていない狙いだけだと、別の物で着いた人の当たりに箱が無い)。
+  // その一覧の狙いも当たりの箱に足す (もう付いている物は回す時に当たりに数えない = aimDiff は新しく付いた物だけ)。groupOf を渡した時だけ同じ側を 1 箱に
+  const all = [...aims];
+  if (all.length && GROUPED.includes(kind)) for (let x: string | null = id; x; x = d.boxes[x]?.parent ?? null) for (const a of d.boxes[x]?.anyOf ?? []) if (!all.some((y) => y.modId === a.modId)) all.push({ ...a });
+  all.sort((x, y) => order(x) - order(y));
   const groups: Aim[][] = [];
-  for (const a of aims) { const g = groupOf && GROUPED.includes(kind) ? groups.find((x) => groupOf(x[0]!) === groupOf(a)) : undefined; if (g) g.push(a); else groups.push([a]); }
-  // 前に「どれか」の箱を通った道では、どれが付いているかが人ごとに違う (見本 1 つの付いていない狙いだけだと、別の物で着いた人の当たりに箱が無い)。
-  // 同じ側の「どれか」の一覧を全部足す (もう付いている物は回す時に当たりに数えない = aimDiff は新しく付いた物だけ)
-  if (groupOf && GROUPED.includes(kind)) for (let x: string | null = id; x; x = d.boxes[x]?.parent ?? null) for (const a of d.boxes[x]?.anyOf ?? []) {
-    const g = groups.find((y) => groupOf(y[0]!) === groupOf(a));
-    if (g && !g.some((y) => y.modId === a.modId)) g.push({ ...a });
-  }
+  for (const a of all) { const g = groupOf && GROUPED.includes(kind) ? groups.find((x) => groupOf(x[0]!) === groupOf(a)) : undefined; if (g) g.push(a); else groups.push([a]); }
   for (const g of groups) g.sort((x, y) => order(x) - order(y));
   b.outs = want.flatMap((k) => (k === "hit" && groups.length ? groups.map((g) => { const h = mk(d, "hit", id); h.aim = { ...g[0]! }; if (g.length > 1) h.anyOf = g.map((a) => ({ ...a })); return h.id; }) : [mk(d, k, id).id]));
   // 消えた箱は初めからつないでおく (オーナー 10-22「狙いが消えた…などは自動でつないでおく」。× で外せる)。行き先は人が選ぶのと同じ具体的な箱
@@ -418,15 +417,18 @@ export function splitAny(d: TreeDoc, id: string): string[] {
   for (const a of rest) { const n = addHit(d, b.parent, after); if (!n) continue; d.boxes[n]!.aim = { ...a }; made.push(n); after = n; }
   return made;
 }
-/** 同じ側で手も戻りも完成も無い横の当たりの箱 (まとめられる相手)。groupOf = 狙いの側 */
+/** 同じ側で手も戻りも完成も無い横の当たりの箱 (動きをまとめられる相手)。groupOf = 狙いの側。プレとサフィはまとめない */
 export function joinableOf(d: TreeDoc, id: string, groupOf: (a: Aim) => string): string[] {
   const b = d.boxes[id], p = b?.parent ? d.boxes[b.parent] : undefined;
   if (!b || !p || b.out !== "hit" || !b.aim) return [];
   return p.outs.filter((o) => { const c = d.boxes[o]; return o !== id && !!c && c.out === "hit" && !!c.aim && !c.hand && !c.back && !c.split && !c.done && groupOf(c.aim) === groupOf(b.aim!); });
 }
-/** 分けた箱を「どれか」の 1 箱にまとめ直す (joinableOf の箱の狙いを足して、その箱は消す) */
-export function joinSide(d: TreeDoc, id: string, groupOf: (a: Aim) => string): void {
-  const b = d.boxes[id], ids = joinableOf(d, id, groupOf);
+/**
+ * 動きをまとめる (10-26 オーナー「動きが一緒なら動きが一緒って設定を置いた方が良い」「まとめたかったら挙動をまとめるボタンみたいなの作って選択した枠にまとめる」):
+ * 人が選んだ同じ側の横の当たりの箱 (pick、joinableOf の中だけ) の狙いをこの箱へ足して「どれか」の 1 箱に、選んだ箱は消す。以後の手は 1 本。1 つ戻す・「分ける」で戻せる
+ */
+export function joinSide(d: TreeDoc, id: string, groupOf: (a: Aim) => string, pick?: readonly string[]): void {
+  const ok = joinableOf(d, id, groupOf), b = d.boxes[id], ids = pick ? ok.filter((x) => pick.includes(x)) : ok;
   if (!b?.aim || !ids.length) return;
   const all = [...boxAims(b)];
   for (const o of ids) { for (const a of boxAims(d.boxes[o]!)) if (!all.some((x) => x.modId === a.modId)) all.push({ ...a }); drop(d, subtree(d, o)); }

@@ -38,7 +38,11 @@ const backTo = computed(() => (box.value?.back ? backTargetsOf(t.doc.value, prop
 const canRetry = computed(() => !!parent.value && parent.value !== "start" && link.value.get(parent.value) === null);
 /** まとめられる同じ側の横の当たり (tree-model の joinableOf) */
 const joinable = computed(() => { const g = sideGroup(); return g && box.value?.out === "hit" ? joinableOf(t.doc.value, props.boxId, g) : []; });
-function mergeSide(): void { const g = sideGroup(); if (g) t.edit((d) => joinSide(d, props.boxId, g)); }
+/** 動きをまとめる一覧 (同じ側の横の当たりにチェック、既定は全部) */
+const joinOpen = ref(false);
+const joinPick = ref<string[]>([]);
+function openJoin(): void { joinPick.value = [...joinable.value]; joinOpen.value = !joinOpen.value; }
+function mergeSide(): void { const g = sideGroup(), pick = [...joinPick.value]; joinOpen.value = false; if (g && pick.length) t.edit((d) => joinSide(d, props.boxId, g, pick)); }
 /** 始めに戻れない理由 (use-tree-link、始めの手がこのアイテムに打てない) */
 const startNo = computed(() => link.value.get("start") ?? null);
 const canDone = computed(() => box.value?.out === "hit" || box.value?.out === "branch");
@@ -96,9 +100,15 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
         <button type="button" data-phone-ans="start" :class="[chipClass(backKind === 'start'), startNo ? 'opacity-40' : '']" :disabled="!!startNo" @click="q.setReturn(boxId, 'start')">{{ tr("↩ 始めに戻る", "↩ Back to start") }}</button>
         <!-- 同じ側の「どれか」の当たりを MOD ごとに分ける / 分けた箱をまとめる (10-26 オーナー) -->
         <button v-if="box.anyOf && box.anyOf.length > 1" type="button" data-phone-split-any :class="chipClass(false)" @click="t.edit((d) => splitAny(d, boxId))">{{ tr("MOD ごとに分ける", "Split by mod") }}</button>
-        <button v-else-if="joinable.length" type="button" data-phone-join-side :class="chipClass(false)" @click="mergeSide">{{ tr("同じ側をまとめる", "Merge same side") }}</button>
+        <button v-else-if="joinable.length" type="button" data-phone-join-side :class="chipClass(joinOpen)" @click="openJoin">{{ tr("動きをまとめる", "Merge the path") }}</button>
         <button v-if="canDone" type="button" data-phone-ans="done" :class="chipClass(state === 'done')" @click="q.setFinished(boxId)">{{ tr("完成", "Done") }}</button>
         <button v-if="others.length" type="button" data-phone-ans="other" :class="chipClass(backKind === 'other' || pickOther)" @click="startPick">{{ MAP ? (pickOther ? tr("全体図で選ぶ ↓", "Pick on the map ↓") : tr("ほかの箱へ", "Other box")) : tr("ほかの箱へ ▾", "Other box ▾") }}</button>
+      </div>
+      <!-- 動きをまとめる: 同じ側の横の当たりを選んでこの箱にまとめる (10-26 オーナー「選択した枠にまとめる」) -->
+      <div v-if="joinOpen" data-phone-join-pick class="mt-2 flex flex-col gap-1 rounded-lg border border-amber-300/40 bg-black/20 p-2 text-[13px]">
+        <p class="break-words text-[12px] text-amber-100">{{ tr("どれが付いても後の作り方が同じ物を選ぶ (以後の手は 1 本、「MOD ごとに分ける」で戻せる)", "Pick the ones that need the same next steps whichever lands (one path after this; Split by mod undoes it)") }}</p>
+        <label v-for="o in joinable" :key="o" class="flex min-h-9 items-center gap-2 break-words"><input v-model="joinPick" type="checkbox" :value="o" class="size-5" />{{ q.boxTitle(o) }}</label>
+        <div class="flex gap-2"><button type="button" data-phone-join-go class="g-btn-red min-h-10 flex-1" :disabled="!joinPick.length" @click="mergeSide">{{ tr("まとめる", "Merge") }}</button><button type="button" class="g-btn min-h-10 flex-1" @click="joinOpen = false">{{ tr("やめる", "Cancel") }}</button></div>
       </div>
       <!-- 始めに戻れない理由 (始めの手がこのアイテムに打てない。10-26 モンキー 7 の 1) -->
       <p v-if="startNo" data-phone-start-no class="mt-1 break-words text-[11px] text-rose-200/90">{{ startNo }}</p>
