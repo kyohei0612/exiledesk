@@ -282,7 +282,9 @@ function outBoxOfRaw(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[] }
     const c = doc.boxes[id];
     if (!c || (c.out !== oc.out && c.out !== "any" && c.out !== "pass")) return false;
     // 打った後・品質の後の箱はどの結果も受ける (狙い無しの手で狙いが付いても。前は当たりだと狙いを見て外れ、精査の「結果の箱に無い結果」・回しの止まりになった、10-22 靴・手袋)
-    if (c.out === "any" || c.out === "pass") return true;
+    // ただし完成の狙いが新しく付いた人は受けない (当たりの箱へ。無ければ行き先が無い = 精査で出す。10-26 オーナー「当たってたら次の回に消去でそれ決めるんやからおかしい」。
+    // 前は狙い無しの手の打った後に狙い持ちも入り、次のカオスに「狙いが消えた」が並んだ)。エッセンスの打った後 (付く MOD が狙いに無い) は hits が空なのでそのまま
+    if (c.out === "any" || c.out === "pass") return oc.out !== "hit" || !oc.hits.length;
     // エッセンスの当たりの箱は 1 つ (付く MOD は必ず付く)。付く MOD が完成の狙いに無い時は hits が空でもこの箱 (tree-sample の outcomeOf)
     if (oc.out === "hit" && b.hand && effectOf(b.hand.currency) === "essence") return !after || essenceBoxFits(doc, b, c, after);
     // 「どれか」の当たりの箱は、その一覧のどれかが付いたら (anyOf、10-26)

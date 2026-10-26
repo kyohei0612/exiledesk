@@ -88,7 +88,9 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
   }
   // フラクチャー: 当たりの札 = この箱で付いている印の狙い (完成の MOD のフラクチャーの印、10-25)。どれが ✦ になるかはエンジンのまま
   if (kind === "fracture") return fractureMarks(doc).filter((a) => aimHeldOn(data, item, a, { sameText: true }));
-  if (kind !== "spam" && kind !== "add" && kind !== "swap") return [];
+  // 狙い無し (free) も付きうる狙いを出す: 結果は「打った後」+ 付いた狙いの当たりの箱 (10-26 オーナー「当たってたら次の回に消去でそれ決めるんやから」。
+  // 前は打った後の 1 箱で、狙いが付いた人も打った後に入り、次のカオスで「狙いが消えた」が並んだ)
+  if (kind !== "spam" && kind !== "add" && kind !== "swap" && kind !== "free") return [];
   // 候補 = 木で使っている当たりの狙い + 完成形の狙い (memoAims)。前は木に狙いが 1 つでもあると木の分だけで、完成形の残りの狙いが出ず
   // 「どれでも」が空 = 手にならなかった (10-25 モンキー 3 本目 301 の b4: 木の狙いは付いている火耐性貫通だけ、知性・ライフリーチが候補に無い)
   const pool = [...aimsOf(doc), ...(goals.length ? goals : doc.memoAims ?? [])].filter((a, i, l) => l.findIndex((x) => x.modId === a.modId) === i);

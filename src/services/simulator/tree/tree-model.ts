@@ -332,13 +332,14 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   // 起こりうる結果の一覧に「狙いが消えた」が無いのが、まだ誰も狙いを持って着かないからなら印を残す (後で戻りの矢印が付いたら healLost が足す)。
   // 持って着く人がいて無いなら、その手では消えない (右側の結晶化で外れだけ消える等) ので足さない
   if (noLost || (only && !want.includes("lost") && OUTS_OF[kind].includes("lost") && !mayHoldAim(d, id))) b.noLost = true; else delete b.noLost;
-  const same = b.hand && want.every((k) => now.includes(k)) && now.every((k) => k !== "start" && want.includes(k));
+  const same = b.hand && want.every((k) => now.includes(k)) && now.every((k) => k !== "start" && (want.includes(k) || (kind === "free" && k === "hit")));
   b.hand = { ...hand, omens: [...hand.omens], repeat: hand.repeat ? { ...hand.repeat } : null };
   b.back = null;
   delete b.split;
   delete b.autoBack;
   // 同じ手を選び直した時は、今の箱と先はそのままで、箱の無い狙いの当たりだけ足す (後から完成の狙いに足した MOD など。10-26 オーナー「全ての結果を表示して」、外れへ自動で入れない)
-  if (same) { if (want.includes("hit") && GROUPED.includes(kind)) addHits(d, b, aims, order); return; }
+  // 狙い無し (free) も、付きうる狙いの当たりの箱を打った後の横に足す (打った後は狙いが付かなかった人だけ、tree-shape の outBoxOf。10-26 オーナー「当たってたら次の回に消去でそれ決める」)
+  if (same) { if ((want.includes("hit") && GROUPED.includes(kind)) || kind === "free") addHits(d, b, aims, order); return; }
   for (const o of b.outs) drop(d, subtree(d, o));
   // 当たりの箱は MOD ごと (10-26 オーナー「デフォではまとめないほうね」。まとめるのは人が「動きをまとめる」で選んだ箱だけ、joinSide)。
   // 前に「動きをまとめる」の箱 (anyOf) を通った道では、どれが付いているかが人ごとに違う (見本 1 人の付いていない狙いだけだと、別の物で着いた人の当たりに箱が無い)。
@@ -354,6 +355,7 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   // (10-22 オーナー「続きからって選択肢選べんでしょ」): 狙いが消えた = 始めに戻る (10-22「選択肢として初めに戻るでいいのでは」)、
   // 外れが消えた = 外れの前の箱 (外れの箱の親。外れだけ消えたので、その箱と同じ形)。外れの箱の下でない時は形の合う箱へ。
   // 親が品質だけ上げた後の通り抜けなら、その上の箱 (カタリストを入れ直す所) まで上がる (通り抜けへ戻ると品質が空のまま触媒の手を打つ)
+  if (kind === "free") addHits(d, b, aims, order);
   let before = b.out === "junk" ? b.parent : null;
   while (before && d.boxes[before]?.out === "pass") before = d.boxes[before]!.parent;
   // 道に当たりが 1 つも無い時の形の合う箱は始まり (白) しか無く、マジックで MOD 0 の人まで白のスタートへ戻されて先の手を足せなかった
