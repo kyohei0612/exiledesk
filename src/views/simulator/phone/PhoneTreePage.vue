@@ -167,7 +167,7 @@ function goBox(id: string): void {
         <PhoneMap v-if="MAP" />
         <div class="flex gap-2">
         <button type="button" data-phone-undo class="g-btn min-h-11 shrink-0 px-3" :disabled="!t.canUndo.value" :title="tr('1 つ戻す', 'Undo')" @click="t.undo">↶<span class="ml-1 text-[12px]">{{ tr("戻す", "Undo") }}</span></button>
-        <button v-if="main" type="button" data-phone-main :data-main="main.kind" class="g-btn-red min-h-11 min-w-0 flex-1 truncate px-2 text-[15px]" :disabled="main.off" @click="main.go">{{ main.text }}</button>
+        <button v-if="main" type="button" data-phone-main :data-main="main.kind" class="g-btn-red min-h-11 min-w-0 flex-1 whitespace-normal break-words px-2 text-[15px] leading-tight" :disabled="main.off" @click="main.go">{{ main.text }}</button>
         <span v-else class="flex-1" />
         <button type="button" data-phone-redo class="g-btn min-h-11 shrink-0 px-3" :disabled="!t.canRedo.value" :aria-label="tr('やり直し', 'Redo')" @click="t.redo">↷</button>
         </div>

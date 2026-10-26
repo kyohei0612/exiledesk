@@ -58,7 +58,7 @@ const problem = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.v
       <p v-if="st.from === 'four'">{{ tr("白 (ノーマル) のベースから。木の中でフラクチャー (必ず成功、素材 ×3 = 33%)", "From a white (normal) base. Fracture in the tree (sure success, materials ×3 = 33%)") }}</p>
       <p v-else>{{ junkLeft ? tr(`✦ フラクチャーの候補 ${marks.length} つのどれか 1 つが固定されたレア + 外れ ${junkLeft}`, `A rare with one of ${marks.length} ✦ candidates fractured + ${junkLeft} miss mod(s)`) : tr(`✦ フラクチャーの候補 ${marks.length} つのどれか 1 つだけが付いたレア (外れは木の中で付ける)`, `A rare with only one of ${marks.length} ✦ candidates (fractured); add other mods in the tree`) }}</p>
       <ul class="flex flex-col gap-0.5">
-        <li v-for="a in marks" :key="a.modId" data-tree-start-mark class="min-w-0 truncate text-mod-fractured" :title="t.startModLabel(a, true)">✦ {{ t.startModLabel(a, true) }} <span v-if="marks.length > 1" class="text-[11px] opacity-60">{{ tr(`(1/${marks.length})`, `(1/${marks.length})`) }}</span></li>
+        <li v-for="a in marks" :key="a.modId" data-tree-start-mark class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words text-mod-fractured" :title="t.startModLabel(a, true)">✦ {{ t.startModLabel(a, true) }} <span v-if="marks.length > 1" class="text-[11px] opacity-60">{{ tr(`(1/${marks.length})`, `(1/${marks.length})`) }}</span></li>
       </ul>
       <!-- フラクチャーの始め方 (印を付けた時の 2 択と同じ、TreeFractureAsk。10-24 夜オーナー) -->
       <div data-tree-start-from class="flex flex-wrap items-center gap-1">
@@ -74,11 +74,11 @@ const problem = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.v
     <div v-if="!(marks.length && st.from === 'four')" data-tree-start-plus class="flex flex-col gap-1 text-[13px]">
       <p>{{ marks.length ? tr(`＋ 外れを狙いの MOD に差し替える (${st.mods.length} / ${plusMax})`, `+ Replace miss mods with targets (${st.mods.length} / ${plusMax})`) : tr(`＋ 始まりに付いている MOD (${st.mods.length} / ${plusMax})`, `+ Mods already on the start (${st.mods.length} / ${plusMax})`) }}</p>
       <div v-for="(m, i) in st.mods" :key="m.modId" data-tree-start-row class="flex min-w-0 items-center gap-1.5 rounded-md bg-sky-500/15 px-2 py-1">
-        <span class="min-w-0 flex-1 truncate text-[#c8c8ff]" :title="t.startModLabel(m)">{{ t.startModLabel(m) }}</span>
+        <span class="min-w-0 flex-1 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words text-[#c8c8ff]" :title="t.startModLabel(m)">{{ t.startModLabel(m) }}</span>
         <button type="button" data-tree-start-remove class="shrink-0 px-1 opacity-60 hover:opacity-100" :title="tr('外す', 'Remove')" @click="remove(i)">×</button>
       </div>
       <div v-if="st.mods.length < plusMax" class="flex flex-wrap gap-1">
-        <button v-for="a in addable" :key="a.modId" type="button" data-tree-start-add class="g-tab !min-h-[26px] max-w-full !px-2 !text-[12px]" :title="t.startModLabel(a)" @click="add(a)"><span class="truncate">＋ {{ t.startModLabel(a) }}</span></button>
+        <button v-for="a in addable" :key="a.modId" type="button" data-tree-start-add class="g-tab !min-h-[26px] max-w-full !px-2 !text-[12px] max-md:whitespace-normal max-md:text-left" :title="t.startModLabel(a)" @click="add(a)"><span class="truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words">＋ {{ t.startModLabel(a) }}</span></button>
         <span v-if="!addable.length" class="text-[12px] opacity-60">{{ t.goals.value.length ? tr("足せる狙いが無い (印・＋済み)", "No more targets to add") : tr("完成の狙いがまだ無い (0 完成形の設定で決める)", "No final targets yet (set them in 0 Final item)") }}</span>
       </div>
     </div>
@@ -92,7 +92,7 @@ const problem = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.v
         </select>
       </div>
       <div v-for="(en, i) in runes" :key="`${en}-${i}`" data-tree-start-rune class="flex min-w-0 items-center gap-1.5 rounded-md bg-white/[0.04] px-2 py-1">
-        <span class="min-w-0 flex-1 truncate text-violet-200" :title="en">{{ runeName(en) }}</span>
+        <span class="min-w-0 flex-1 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words text-violet-200" :title="en">{{ runeName(en) }}</span>
         <button type="button" class="shrink-0 px-1 opacity-60 hover:opacity-100" :title="tr('外す', 'Remove')" @click="removeRune(i)">×</button>
       </div>
     </div>

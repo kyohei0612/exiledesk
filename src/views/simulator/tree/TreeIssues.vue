@@ -31,10 +31,13 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
     </div>
     <!-- 一覧は木の右に細く (広いとスタートの箱にかぶった、10-26 猿の 6)。説明は見出しの下の 1 行 -->
     <p v-if="issues.length && !fold" data-tree-issues-what class="opacity-70">{{ tr("= 回すと止まる・打てない所 (! の箱)。直すと 100 人回せます。行を押すとその箱へ", "= where runs stop or a craft can't be used (boxes with !). Fix them to run 100. Click a row to go there") }}</p>
-    <button v-for="(x, i) in issues" v-show="!fold" :key="i" type="button" data-tree-issue-row class="flex min-h-7 items-center gap-2 rounded px-1 text-left hover:bg-white/5" @click="fold = true; emit('go', x.boxId)">
-      <span class="shrink-0 rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white">!</span>
-      <span class="max-w-[40%] shrink-0 truncate opacity-70" :title="boxName(x.boxId)">{{ boxName(x.boxId) }}</span>
-      <span class="line-clamp-2 min-w-0" :title="x.text">{{ x.text }}</span>
+    <button v-for="(x, i) in issues" v-show="!fold" :key="i" type="button" data-tree-issue-row class="flex min-h-7 shrink-0 items-start gap-2 rounded px-1 py-0.5 text-left hover:bg-white/5" @click="fold = true; emit('go', x.boxId)">
+      <span class="mt-0.5 shrink-0 rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white">!</span>
+      <!-- 箱の名前と文は縦に積んで折り返し、全文 (右の列 250px で … に切れた、10-26 ブラック 13) -->
+      <span class="flex min-w-0 flex-col">
+        <span class="break-words opacity-70">{{ boxName(x.boxId) }}</span>
+        <span class="break-words">{{ x.text }}</span>
+      </span>
     </button>
   </div>
 </template>

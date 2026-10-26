@@ -154,7 +154,7 @@ const SIM_PHONE = flag("simPhone");
       <!-- 今の木 -->
       <div data-recipes-now class="mb-3 flex flex-wrap items-center gap-2 rounded-md bg-white/[0.04] px-3 py-2">
         <span class="text-[var(--exile-color-text-secondary)]">{{ tr("今の木", "Current tree") }}:</span>
-        <b class="min-w-0 truncate">{{ currentTreeRecipe ? currentTreeRecipe.name : tr("名前なし", "Untitled") }}</b>
+        <b class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words">{{ currentTreeRecipe ? currentTreeRecipe.name : tr("名前なし", "Untitled") }}</b>
         <span v-if="dirty" class="inline-flex items-center gap-1 text-[12px] text-amber-300"><span class="size-1.5 rounded-full bg-amber-400" />{{ tr("未保存の変更あり", "Unsaved changes") }}</span>
         <span v-else-if="currentTreeRecipe" class="text-[12px] text-emerald-300/80">{{ tr("保存済み", "Saved") }}</span>
         <button type="button" data-recipes-save-now class="g-btn sm ml-auto inline-flex items-center gap-1 max-md:min-h-10" @click="saveNow"><Icon name="plus" class="size-4" />{{ tr("今の木を新しく保存", "Save current as new") }}</button>
@@ -172,7 +172,7 @@ const SIM_PHONE = flag("simPhone");
       </div>
       <div class="mt-2 flex flex-wrap items-center gap-2 text-[12px]">
         <span class="flex min-w-0 flex-1 basis-72 items-center gap-1.5">
-          <input v-model="url" data-recipes-url type="text" inputmode="url" spellcheck="false" autocomplete="off" class="h-8 min-w-0 flex-1 rounded-lg border border-white/15 bg-black/40 px-2 outline-none placeholder:opacity-45 focus:border-amber-400/60 max-md:h-11" :placeholder="tr('共有されたレシピの URL を貼る (貼ると開く)', 'Paste a shared recipe URL (opens on paste)')" @paste="onPaste" @keydown.enter.prevent="openUrl" />
+          <input v-model="url" data-recipes-url type="text" inputmode="url" spellcheck="false" autocomplete="off" class="h-8 min-w-0 flex-1 rounded-lg border border-white/15 bg-black/40 px-2 outline-none placeholder:opacity-45 focus:border-amber-400/60 max-md:h-11" :placeholder="tr('共有 URL を貼る', 'Paste shared URL')" :title="tr('共有されたレシピの URL を貼る (貼ると開く)', 'Paste a shared recipe URL (opens on paste)')" @paste="onPaste" @keydown.enter.prevent="openUrl" />
           <button type="button" class="g-btn sm max-md:min-h-10" :disabled="!url.trim()" @click="openUrl">{{ tr("開く", "Open") }}</button>
         </span>
         <button type="button" data-recipes-export class="g-btn sm max-md:min-h-10" :disabled="!treeRecipes.length" :title="tr('全部のレシピを 1 つのファイル (JSON) に書き出す (このブラウザの外の控え)', 'Save all recipes to one file (JSON), a backup outside this browser')" @click="exportFile">{{ tr("書き出す", "Export") }}</button>
@@ -205,7 +205,7 @@ const SIM_PHONE = flag("simPhone");
               <template v-if="sumOf(r).empty">{{ tr("ベースなし", "No base") }}</template>
               <template v-else>{{ baseName(r) }} · {{ tr(`完成の狙い ${sumOf(r).aims} つ`, `${sumOf(r).aims} final target(s)`) }}<span v-if="sumOf(r).marks" class="text-mod-fractured"> · ✦ {{ sumOf(r).marks }}</span> · {{ tr(`箱 ${countOf(r).boxes}`, `${countOf(r).boxes} boxes`) }} · {{ tr(`完成 ${countOf(r).done}`, `${countOf(r).done} done`) }}</template>
             </p>
-            <p v-if="sumOf(r).first" class="min-w-0 truncate text-[12px] text-[#c8c8ff]" :title="sumOf(r).first">{{ sumOf(r).first }}</p>
+            <p v-if="sumOf(r).first" class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words text-[12px] text-[#c8c8ff]" :title="sumOf(r).first">{{ sumOf(r).first }}</p>
             <p class="text-[11px] opacity-50">{{ tr(`更新 ${fmtDate(touchedAtTree(r))}`, `Updated ${fmtDate(touchedAtTree(r))}`) }}<template v-if="r.updatedAt !== r.savedAt"> · {{ tr(`作成 ${fmtDate(r.savedAt)}`, `Created ${fmtDate(r.savedAt)}`) }}</template></p>
             <div class="mt-2 flex flex-wrap items-center gap-1.5">
               <button type="button" data-recipe-open class="g-btn sm max-md:min-h-10" :title="tr('この木をクラフトの道で開く', 'Open this tree in the crafting path')" @click="open(r)">{{ tr("開く", "Open") }}</button>
