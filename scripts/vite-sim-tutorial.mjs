@@ -1,5 +1,5 @@
 /**
- * vite-sim-tutorial.ts — 手元の dev (vite serve) だけ: シミュのチュートリアルの手順と文を src/data/sim-tutorial.json に書く口 (POST /__sim-tutorial)。
+ * vite-sim-tutorial.mjs —手元の dev (vite serve) だけ: シミュのチュートリアルの手順と文を src/data/sim-tutorial.json に書く口 (POST /__sim-tutorial)。
  * オーナーが dev の画面で打って保存する (2026-10-26 夜)。中身の形だけ見て、そのまま整形して書く。本番・ビルドには入らない (apply: "serve")
  */
 /** @typedef {import("vite").Plugin} Plugin */
@@ -14,6 +14,9 @@ export function simTutorialSave() {
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         if (req.url !== "/__sim-tutorial" || req.method !== "POST") return next();
+        // よそのページからの POST (CORS は送信を止めない) は断る: 送り元が手元の dev (localhost / 127.0.0.1) か無しの時だけ (サーバー 5 の提案、10-26 夜)
+        const origin = req.headers.origin;
+        if (origin && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) { res.statusCode = 403; return res.end("手元の dev の画面からだけ"); }
         const chunks = [];
         for await (const c of req) chunks.push(c);
         let body;
