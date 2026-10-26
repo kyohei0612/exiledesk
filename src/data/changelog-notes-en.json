@@ -1,4 +1,7 @@
 {
+  "0.1.615": [
+    "Simulator: The list of what is missing, the minimap and the zoom tools moved to a column outside the tree frame on the right, so they no longer cover boxes or labels in the tree"
+  ],
   "0.1.614": [
     "Simulator: \"Fit all\" now fits every box instead of cutting off the bottom rows. Also fixed the \"MOD\" tag in the finished-item settings slipping under its header, the box popup running into the zoom tools at the bottom right, and omen icons overlapping each other",
     "Simulator: \"Clear\" now keeps the start box (with its mods) and the finished-item settings, and removes only the boxes and crafts below the start",

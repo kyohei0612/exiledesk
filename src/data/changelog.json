@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.615",
+  "date": "2026-10-26",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 足りない所の一覧・ミニマップ・倍率の道具を、ツリーの枠の外の右の列に移しました。木の箱や札の上にかぶらなくなります",
+    "en": "Simulator: The list of what is missing, the minimap and the zoom tools moved to a column outside the tree frame on the right, so they no longer cover boxes or labels in the tree"
+   }
+  ]
+ },
+ {
   "v": "0.1.614",
   "date": "2026-10-26",
   "items": [
@@ -865,18 +877,6 @@
     "area": "",
     "text": "フラクチャーした MOD はもう一度右クリックするとフラクチャーを外せるように",
     "en": "Right-click a fractured mod again to unfracture it"
-   }
-  ]
- },
- {
-  "v": "0.1.575",
-  "date": "2026-10-18",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "使い方・コツとコースのページは「← クラフトへ戻る」で戻れるように",
-    "en": "The Guide & Tips and course pages now have a “← Back to craft” button"
    }
   ]
  }
