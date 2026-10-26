@@ -349,7 +349,8 @@ export default {
       return;
     }
     if (controller.cron === "0 0 * * *") {
-      ctx.waitUntil(dailyReport(env));
+      // 数字の日報を #日報 に流すのは 10-26 にやめた (オーナー「だってもう直で見にいくんでしょ」)。#日報 には AI の評価と見解の全文だけ (ai-review.ts)。
+      // 日報の文は鍵つきの GET /report で今も作れる。サーバーの異常は KV の alertlog に残り、手元の日報の md (scripts/daily-summary.mjs) が読む
       // 前の日の記録の件数を #分析ログファイル管理 に流すのは 10-26 にやめた (オーナー「分析ログファイル管理はいらんね」)。記録は D1 に残り、分析の部が pull-logs.mjs で読む
       if (env.LOGS) ctx.waitUntil(pruneImages(env.LOGS).catch((e) => console.warn("fb images:", String(e).slice(0, 160))));
     } else {

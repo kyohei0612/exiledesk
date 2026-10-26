@@ -42,9 +42,18 @@ try {
   feedback = recent.map((k) => JSON.parse(wr(["kv", "key", "get", "--binding", "LIVE", "--remote", k]))).filter((f) => Date.parse(f.at) >= since);
 } catch (e) { fbError = String(e).slice(0, 200); }
 
+// 3a. サーバーの異常 (server/live の alert が KV の alertlog:<時刻>:<種類> に残す。前は Discord の日報の投稿に載っていたが、10-26 に投稿をやめたのでここへ)
+const hm = (iso) => new Date(Date.parse(iso) + 9 * 3600e3).toISOString().slice(5, 16).replace("T", " ");
+let alertsMd;
+try {
+  const keys = JSON.parse(wr(["kv", "key", "list", "--binding", "LIVE", "--prefix", "alertlog:", "--remote"]));
+  const from = new Date(since).toISOString(), to = new Date(since + 86400e3).toISOString();
+  const hits = keys.map((k) => k.name.slice("alertlog:".length)).filter((n) => n.slice(0, 24) >= from && n.slice(0, 24) < to && !n.slice(25).startsWith("配信の見張り"));
+  alertsMd = hits.length ? hits.map((n) => `- ${hm(n.slice(0, 24))} ${n.slice(25)}`).join("\n") : "(無し)";
+} catch (e) { alertsMd = `読めなかった: ${String(e).slice(0, 200)}`; }
+
 // 3b. Discord の書き込み (server/live の Bot が今朝 9:03 に D1 の discord_daily に置いた 1 日分、src/discord.ts。2026-10-24)
 const today = shift(day, 1);
-const hm = (iso) => new Date(Date.parse(iso) + 9 * 3600e3).toISOString().slice(5, 16).replace("T", " ");
 let discordMd;
 try {
   const rows = JSON.parse(wr(["d1", "execute", "exiledesk-logs", "--remote", "--json", "--command", `SELECT body FROM discord_daily WHERE day = '${today}'`]))[0].results;
@@ -93,6 +102,9 @@ ${cur.sim ? `| 手 | 回数 | 人 | 回数の前の日との差 | 前の週と�
 
 ## コスメティック (静的なページ /cosmetics/、まとめ:言語 ごとの PV。アプリの一覧 ?page=skins は上の画面ごとの skins)
 ${Object.keys(cur.cosmetics ?? {}).length ? `| まとめ:言語 | PV | 前の日との差 | 前の週との差 |\n|---|---|---|---|\n${counts(cur.cosmetics, p1?.cosmetics, p7?.cosmetics)}` : "(記録なし)"}
+
+## サーバーの異常 (${day} の間、種類ごとに 1 日 1 回まで)
+${alertsMd}
 
 ## 要望・バグ (${day} 0 時から今まで ${feedback.length} 件)
 ${fbError ? `読めなかった: ${fbError}` : feedback.map((f) => `- ${f.id} · ${jst(f.at)} · v${f.context?.version ?? "?"} · ${f.context?.lang ?? ""} · ${f.context?.base ?? ""}\n  - ${String(f.text).replace(/\s+/g, " ").slice(0, 400)}\n  - ${(f.context?.summaryJa ?? []).join(" / ").replace(/\s+/g, " ").slice(0, 300)}`).join("\n") || "(無し)"}
