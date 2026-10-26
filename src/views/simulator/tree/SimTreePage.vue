@@ -9,7 +9,7 @@
   線・打つ手の札・引っ張る線・合流の線は Vue Flow の zoom-pane (倍率と移動が掛かる層) に描く。100 人回す計算はまだ繋がない
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { VueFlow, type NodeMouseEvent } from "@vue-flow/core";
 import "@vue-flow/core/dist/style.css";
 import Icon from "../../../components/ui/Icon.vue";
@@ -132,7 +132,8 @@ const { merged, linesAll, hoverBox, cardBox } = useTreeMerge({ doc, posOf, segs:
 const clearArm = useArmed();
 const clearBtn = ref<HTMLElement | null>(null);
 useDismiss(() => clearArm.is(), [clearBtn], clearArm.clear);
-function onClear(): void { const go = (): void => { t.reset(); setCurrentTreeRecipe(null); }; if (unsaved(doc.value)) askLeave(go, () => void quickSave()); else if (clearArm.arm()) go(); } // 作りかけは 3 択 (10-26 オーナー「ツリー消す作業」)、保存済みは 2 回押し
+// 白紙に戻した後は開いた時と同じ寄せ (75%・スタートを横の真ん中の一番上) へカメラも戻す (10-26 夜オーナー「ツリーのどこにあるか分からんからな」)
+function onClear(): void { const go = (): void => { t.reset(); setCurrentTreeRecipe(null); void nextTick(() => v.openView()); }; if (unsaved(doc.value)) askLeave(go, () => void quickSave()); else if (clearArm.arm()) go(); } // 作りかけは 3 択 (10-26 オーナー「ツリー消す作業」)、保存済みは 2 回押し
 /** 戻り先へ寄る (編集のポップアップの札を押した時) */
 function goBack(b: Box): void { const to = backTargetsOf(doc.value, b.id)[0]; if (to) void v.reveal(to, true); }
 
