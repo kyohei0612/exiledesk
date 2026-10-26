@@ -1,4 +1,7 @@
 {
+  "0.1.611": [
+    "Phone: On narrow screens (such as 320px wide), the header's Guide and Feedback buttons were cut off on the right; the header is now tightened so everything fits without hiding anything"
+  ],
   "0.1.610": [
     "Simulator: The start box now sits at the top center of the tree frame when you open a tree, tidy it, or fit it to the view, so it no longer hides under the finished-item panel in the top left"
   ],
