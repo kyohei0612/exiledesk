@@ -245,16 +245,16 @@ export function linkSameShape(doc: TreeDoc, ids: readonly string[]): void {
 const hitStateKey = (doc: TreeDoc, id: string): string => heldSets(doc, id).map((h) => [...h].sort().join(",")).sort().join("|");
 /**
  * 別の道からできた、付いている MOD が全部同じ当たりの箱 (10-26 夜オーナー「段一緒で形も一緒ならまとめるが出ないと挙動的におかしい」
- * 「形は一緒ならこのツリー組んだ瞬間まとまってくれるよね」)。同じ親の横の箱 (joinableOf の「どれか」) と、自分の上・下の箱は除く。
+ * 「形は一緒ならこのツリー組んだ瞬間まとまってくれるよね」)。同じ親の横の箱 (joinableOf の「どれか」) と、自分の下の箱は除く。
+ * 自分の上の箱 (先祖) は入れる = そこへ戻ってやり直す輪 (10-27 オーナーのレシピ: 消去 → カオスでスピリットが付いた箱が、1 段目の同じ形の「スピリットが付いた」と
+ * まとまらなかった。前は上の箱も除いていた。まとめで消すのは自分の下だけなので、上の箱は触らない)。
  * 戻りの矢印を持つ箱 (もうどこかへつないだ箱) と分かれ目も除く。並びは先に作った箱から
  */
 export function sameHitsOf(doc: TreeDoc, id: string): string[] {
   const b = doc.boxes[id];
   if (!b || b.out !== "hit" || !b.aim || b.back || b.split) return [];
-  const up = new Set<string>();
-  for (let x = b.parent; x; x = doc.boxes[x]?.parent ?? null) up.add(x);
   const down = new Set(subtree(doc, id)), k = hitStateKey(doc, id);
-  return Object.values(doc.boxes).filter((c) => c.id !== id && c.out === "hit" && !!c.aim && !c.back && !c.split && c.parent !== b.parent && !up.has(c.id) && !down.has(c.id) && hitStateKey(doc, c.id) === k).map((c) => c.id);
+  return Object.values(doc.boxes).filter((c) => c.id !== id && c.out === "hit" && !!c.aim && !c.back && !c.split && c.parent !== b.parent && !down.has(c.id) && hitStateKey(doc, c.id) === k).map((c) => c.id);
 }
 /**
  * 同じ状態の当たりの箱をまとめる: 選んだ箱 (picks) の下を消し、まとめ先 (to) へ戻りの矢印でつなぐ (木は親が 1 つなので 1 箱にはせず、合流の線で見せる)。

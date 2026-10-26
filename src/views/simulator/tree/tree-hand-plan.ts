@@ -125,7 +125,8 @@ export function hitChoicesOf(data: PatchData, doc: TreeDoc, boxId: string, item:
 export function pickedHits(choices: readonly Aim[], checked: readonly string[], held: string, spam: boolean): { aims: Aim[]; free: boolean } | null {
   if (!FREE_EFFECTS.includes(effectOf(held))) return null;
   const aims = choices.filter((a) => checked.includes(a.modId));
-  if (aims.length) return { aims, free: false };
+  // 1 つでもチェックしたら、繰り返さない手はチェックの無い候補も当たりの箱に (10-27 オーナーの決め (a)、TreeHandShelf の hitAims と同じ)
+  if (aims.length) return { aims: spam ? aims : [...aims, ...choices.filter((a) => !aims.includes(a))], free: false };
   return { aims: [], free: !spam };
 }
 /** 起こりうる結果の一覧 (この箱の見本 8 つにエンジンで打った行き先を全部たどる。触媒の手は前のカタリストを入れた後で。フラクチャーも同じ) */
