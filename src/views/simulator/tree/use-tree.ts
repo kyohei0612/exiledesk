@@ -233,11 +233,16 @@ function open(tree: TreeDoc): void { needBase.value = false; opened.value++; edi
  * 前は上書きだけで、白紙に無い鍵 (乱数の MOD の数 startRandom・完成形のレアリティ goal・完成の狙い memoAims など) が残り、
  * 見本の木から戻すとスタートに乱数の外れの MOD が付いたままだった (10-23 オーナー「スタートは何も設定していないはず」)
  */
+/**
+ * 白紙に戻す = 木を最初からやり直す: スタートの箱 (ベース・Lv・スタートの MOD) と完成形の設定は残し、スタートから下の箱・手だけを消す
+ * (10-26 夜オーナー「スタート以外を消す意味。だけど MOD ごと消してるから直してくれ」。前は newTree で全部作り直し、狙いとスタートの MOD まで消えた)
+ */
 function reset(): void {
   edit((d) => {
-    const { base, itemLevel } = d;
-    for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k];
-    Object.assign(d, newTree(base, itemLevel));
+    const st = d.boxes.start ?? newTree(d.base, d.itemLevel).boxes.start!;
+    st.hand = null; st.outs = []; st.back = null; st.done = null;
+    delete st.split;
+    d.boxes = { start: st };
   });
 }
 /**
