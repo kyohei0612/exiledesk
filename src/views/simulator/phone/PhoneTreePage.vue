@@ -23,6 +23,7 @@ import { tr } from "../../../i18n/lang";
 import { usePhoneQuiz } from "./use-phone-quiz";
 import PhoneAsk from "./PhoneAsk.vue";
 import PhoneRoutes from "./PhoneRoutes.vue";
+import PhoneMap from "./PhoneMap.vue";
 
 const t = useTree();
 const q = usePhoneQuiz();
@@ -140,11 +141,15 @@ function goBox(id: string): void {
         </button>
       </template>
       <!-- 下の帯 (親指の届く所): 1 つ戻す・今の質問の主な操作 (① 打つ手を選ぶ / ② 決めた / 全部決まったら 100 人回す)・やり直し -->
-      <div data-phone-bar class="sticky bottom-0 z-10 -mx-2 flex gap-2 border-t border-white/10 bg-[#0c0a08]/95 px-2 py-2">
+      <!-- 上にツリーの全体図 (常に出す。今の箱が光る・押すとその箱へ・② の「ほかの箱へ」は図で戻り先を選ぶ。10-26 オーナー) -->
+      <div data-phone-bar class="sticky bottom-0 z-10 -mx-2 flex flex-col gap-2 border-t border-white/10 bg-[#0c0a08] px-2 py-2">
+        <PhoneMap @go="(id) => { routesOpen = false; goBox(id); }" />
+        <div class="flex gap-2">
         <button type="button" data-phone-undo class="g-btn min-h-11 shrink-0 px-3" :disabled="!t.canUndo.value" :title="tr('1 つ戻す', 'Undo')" @click="t.undo">↶<span class="ml-1 text-[12px]">{{ tr("戻す", "Undo") }}</span></button>
         <button v-if="main" type="button" data-phone-main :data-main="main.kind" class="g-btn-red min-h-11 min-w-0 flex-1 truncate px-2 text-[15px]" :disabled="main.off" @click="main.go">{{ main.text }}</button>
         <span v-else class="flex-1" />
         <button type="button" data-phone-redo class="g-btn min-h-11 shrink-0 px-3" :disabled="!t.canRedo.value" :aria-label="tr('やり直し', 'Redo')" @click="t.redo">↷</button>
+        </div>
       </div>
     </template>
     <TreeHandPage v-if="handFor && t.doc.value.boxes[handFor]" :key="`h-${handFor}`" :box-id="handFor" :current="t.doc.value.boxes[handFor]!.hand" @pick="pickHand" @clear="clearHandOf" @close="handFor = null" @back="backOf" @aim="aimFor = handFor; handFor = null" />

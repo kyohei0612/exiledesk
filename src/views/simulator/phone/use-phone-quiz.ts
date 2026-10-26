@@ -66,6 +66,8 @@ export function questionsOf(d: TreeDoc, later: ReadonlySet<string>): Question[] 
 const later = ref<string[]>([]);
 /** 一覧から選んで答え直している質問 (無ければ残りの先頭) */
 const focus = ref<Question | null>(null);
+/** 全体図 (PhoneMap) で戻り先の箱を選んでいる (② の「ほかの箱へ」。from = 結果の箱、ids = 戻れる箱。10-26 オーナー「どこに戻るか分からない」) */
+export const mapPick = ref<{ from: string; ids: string[] } | null>(null);
 
 export function usePhoneQuiz() {
   const t = useTree();

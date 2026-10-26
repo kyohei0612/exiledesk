@@ -7,7 +7,7 @@
   骨のアビスの反響はお告げの枠の中 (HeldOmens の slot、お告げと同じ並び)。足す手の「狙い無し」は左の「当たりの箱にする MOD」のチェックの一番下 (10-25)。重ね窓の枠は TreeHandPage
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, toRaw, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, toRaw, watch } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../../state/craft-stage";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import CurrencyShelf from "../../../components/for-share/shelf/CurrencyShelf.vue";
@@ -121,6 +121,15 @@ const checkedAims = computed((): Aim[] => aimChoices.value.filter((a) => checked
 /** チェックを自分で触ったか (新しい手の既定 = 候補に全部チェック、を上書きしない)。持ち替えると既定に戻る */
 let touched = false;
 watch(held, () => { touched = false; });
+/**
+ * スマホ: 持った物のお告げの欄が出たら、欄の下まで自動で送る (10-26 オーナー「右側のお告げが出たのに画面外のまま」。
+ * 欄は棚の途中の持った札の下に出て、下の「使う」の帯に隠れていた。帯の分は scroll-mb で空ける)
+ */
+watch(held, async (k) => {
+  if (!k || window.innerWidth >= 768) return;
+  await nextTick();
+  document.querySelector<HTMLElement>("[data-tree-hand-pick] [data-held-omens]")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+});
 watch(aimChoices, (l) => { if (!props.current && !touched) checked.value = l.map(aimKey); }, { immediate: true });
 /** チェックの一覧を出す (MOD が付く・入れ替わる手) */
 const showAims = canFree;
@@ -258,7 +267,7 @@ function ok(): void {
       <CurrencyShelf @hold="onShelfHold">
         <!-- 持った物に掛けられるお告げ = クラフト台と同じ部品と置き場 (HeldOmens.vue を持ったアイコンのすぐ下に重ねる。inline-held だと棚の一番下で見切れた、10-21 本物のマウス)。
              足す手は同じ欄に「狙い無し」(適当打ち、オーナー 10-22「お告げの欄の中に適当打ちがまだ無い」) -->
-        <template v-if="omensAllowedFor(held).length || (!!held && isBone(held))" #held><HeldOmens>
+        <template v-if="omensAllowedFor(held).length || (!!held && isBone(held))" #held><HeldOmens class="max-md:scroll-mb-20">
           <!-- お告げと同じ並びの札 (10-22 オーナー「狙い無しはお告げの枠の中に」): アビスの反響 (骨) と狙い無し (足す手) -->
           <button v-if="held && isBone(held)" type="button" data-tree-hand-echo :aria-pressed="echo" :class="[OMEN_CHIP, echo ? OMEN_ON : '']" :title="tr('アビスの反響のお告げ (発現の候補を 1 回引き直す)', 'Omen of Abyssal Echoes (reroll the reveal options once)')" @click="echo = !echo">{{ tr("アビスの反響", "Abyssal Echoes") }}</button>
         </HeldOmens></template>

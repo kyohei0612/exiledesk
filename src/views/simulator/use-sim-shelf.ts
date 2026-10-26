@@ -32,8 +32,11 @@ export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null
   function toggleOmen(id: string): void { omens.value = omens.value.includes(id) ? omens.value.filter((o) => o !== id) : [...omens.value, id]; }
   function release(): void { held.value = null; omens.value = []; }
   function onHold(k: string): void { if (held.value === k) release(); else held.value = k; }
-  /** 棚の空いている所を押す = 離す (ボタン・入力・お告げの欄の中は除く) */
-  function onShelfDown(e: PointerEvent): void { if (held.value && !(e.target as HTMLElement).closest("button,input,select,label,[data-held-box]")) release(); }
+  /**
+   * 棚の空いている所を押す = 離す (ボタン・入力・お告げの欄の中は除く)。指 (touch) では離さない: 送ろうと棚に触れただけで持った物とお告げの欄が消えた
+   * (10-26 オーナー「お告げが画面外のままでスクロールしても見られなかった」。スマホは手の窓の × か別の札で持ち替える)
+   */
+  function onShelfDown(e: PointerEvent): void { if (e.pointerType !== "touch" && held.value && !(e.target as HTMLElement).closest("button,input,select,label,[data-held-box]")) release(); }
   function usableWith(k: string, om: readonly string[]): string | null {
     const d = s.data.value, it = item.value;
     return block(k) ?? (d && it ? useReason(d, prepFor(d, it, k), k, om) : tr("準備中", "Loading")); // 規格外の形で聞く (ルーンはソケットを足す・アストリッド、tree-unbounded)

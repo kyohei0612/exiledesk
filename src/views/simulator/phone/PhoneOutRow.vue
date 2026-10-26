@@ -9,7 +9,7 @@ import { useTree } from "../tree/use-tree";
 import { useTreeLink } from "../tree/use-tree-link";
 import { backTargetsOf } from "../tree/tree-merge";
 import { handLabel, OUT_LOOK } from "../tree/tree-names";
-import { usePhoneQuiz } from "./use-phone-quiz";
+import { mapPick, usePhoneQuiz } from "./use-phone-quiz";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
@@ -34,12 +34,17 @@ const canRetry = computed(() => !!parent.value && parent.value !== "start" && li
 const canDone = computed(() => box.value?.out === "hit" || box.value?.out === "branch");
 /** ほかの戻り先 (打つ前の箱・始まり・自分を除いた、戻れる箱) */
 const others = computed(() => [...link.value].filter(([id, why]) => why === null && id !== parent.value && id !== "start" && !!t.doc.value.boxes[id]?.hand).map(([id]) => id));
-const pickOther = ref(false);
+/** 全体図で戻り先を選ぶ (10-26 オーナー「文字だけでどこに戻るか分からない」。前は道の文の一覧。戻れる箱 = ほか + 打つ前の箱 + 始まり) */
+const pickOther = computed(() => mapPick.value?.from === props.boxId);
+function startPick(): void {
+  mapPick.value = pickOther.value ? null : { from: props.boxId, ids: [...others.value, ...(canRetry.value ? [parent.value!] : []), "start"] };
+}
 const look = computed(() => OUT_LOOK[box.value?.out ?? "junk"]);
 const backKind = computed(() => (state.value !== "back" ? null : box.value?.back === "start" ? "start" : backTo.value === parent.value ? "retry" : "other"));
 const treeOdds = useTreeOdds();
 const odds = computed(() => treeOdds.value.get(props.boxId) ?? null);
-const cardOpen = ref(false);
+// 既定で開く (10-26 オーナー「アイテムの今の状態の MOD は既定で開いたまま、ずっと確かめたい」。前は既定で閉じていた)
+const cardOpen = ref(true);
 const item = computed(() => (cardOpen.value && s.data.value && box.value ? sampleOf(s.data.value, t.doc.value, props.boxId, 1).item : null));
 const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.value, t.doc.value, box.value?.unwanted ?? [], item.value) : null));
 const cardW = Math.min(340, (typeof window === "undefined" ? 375 : window.innerWidth) - 60);
@@ -67,12 +72,9 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
         <button v-if="canRetry" type="button" data-phone-ans="retry" :class="chipClass(backKind === 'retry')" @click="q.setReturn(boxId, parent!)">{{ tr("同じ手をもう一度", "Same craft again") }}</button>
         <button type="button" data-phone-ans="start" :class="chipClass(backKind === 'start')" @click="q.setReturn(boxId, 'start')">{{ tr("↩ 始めに戻る", "↩ Back to start") }}</button>
         <button v-if="canDone" type="button" data-phone-ans="done" :class="chipClass(state === 'done')" @click="q.setFinished(boxId)">{{ tr("完成", "Done") }}</button>
-        <button v-if="others.length" type="button" data-phone-ans="other" :class="chipClass(backKind === 'other' || pickOther)" @click="pickOther = !pickOther">{{ tr("ほかの箱へ ▾", "Other box ▾") }}</button>
-        <!-- この結果のアイテム (既定は閉じる。PC の箱に乗せた時のカードと同じ見本) -->
+        <button v-if="others.length" type="button" data-phone-ans="other" :class="chipClass(backKind === 'other' || pickOther)" @click="startPick">{{ pickOther ? tr("全体図で選ぶ ↓", "Pick on the map ↓") : tr("ほかの箱へ", "Other box") }}</button>
+        <!-- この結果のアイテム (既定は開く。PC の箱に乗せた時のカードと同じ見本) -->
         <button type="button" data-phone-out-card class="ml-auto rounded-full border border-white/10 px-2.5 py-1.5 text-[12px] leading-none text-[#c8bca4]" :aria-expanded="cardOpen" @click="cardOpen = !cardOpen">{{ tr("アイテム", "Item") }} {{ cardOpen ? "▾" : "▸" }}</button>
-      </div>
-      <div v-if="pickOther" data-phone-other class="mt-2 flex flex-col gap-1">
-        <button v-for="id in others" :key="id" type="button" class="truncate rounded-lg border border-white/10 bg-black/20 px-2 py-1.5 text-left text-[12px]" :class="backTo === id ? 'border-cyan-300/70 text-cyan-100' : 'text-[#d8ccb4]'" @click="pickOther = false; q.setReturn(boxId, id)">↩ {{ q.pathText(id) }}</button>
       </div>
     </template>
   </div>
