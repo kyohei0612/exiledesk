@@ -15,6 +15,7 @@ import { baseArt } from "../../components/art/base-art";
 import { gemArt } from "../../components/art/skill-art";
 import { uniqueArt } from "../../services/assets/unique-art";
 import FAM_GLOW from "./fam-glow.json";
+import { glowOfStem, stemOf, todayUnique } from "./fam-today";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import popularData from "../../data/popular-bases.json";
 import { flag } from "../../web/release-flags";
@@ -131,9 +132,8 @@ const FAM_UNIQUE: Record<string, string> = {
 function tintGlow(e: Event): void {
   const img = e.target as HTMLImageElement;
   // アプリは絵を画像パック (よそのオリジン) から読むので canvas で色を読めない → 前もって計算した色 (scripts/build-fam-glow.py、2026-10-13 オーナー「アプリだと全部黄色」)
-  // アプリの URL は http://asset.localhost/C%3A%5C…%5C名前.webp (区切りが \ で符号化されている) ので、戻してから / と \ の両方で切る
-  const stem = (decodeURIComponent(img.src.split(/[?#]/)[0]!).split(/[\\/]/).pop() ?? "").replace(/\.webp$/, "");
-  const pre = (FAM_GLOW as Record<string, string>)[stem];
+  const stem = stemOf(img.src);
+  const pre = (FAM_GLOW as Record<string, string>)[stem] ?? glowOfStem(stem);
   if (pre) { (img.parentElement ?? img).style.setProperty("--glow", pre); return; }
   try {
     const c = document.createElement("canvas");
@@ -179,7 +179,9 @@ function risers(name: string): Array<Record<string, string>> {
   }));
 }
 function famArt(f: Family): string | null {
-  const u = !plainArt.value && FAM_UNIQUE[f.name] && uniqueArt(FAM_UNIQUE[f.name]!);
+  // 今日のユニーク (fam-today.ts、毎日 9 時に変わる。スイッチ todayUnique、閉じている間は手で決めた 1 つ)
+  const today = plainArt.value ? null : flag("todayUnique") ? todayUnique(f.name, FAM_UNIQUE[f.name]) : FAM_UNIQUE[f.name] ?? null;
+  const u = today && uniqueArt(today);
   if (u) return u;
   const pin = FAM_ART[f.name] && artOf(FAM_ART[f.name]!);
   if (pin) return pin;
