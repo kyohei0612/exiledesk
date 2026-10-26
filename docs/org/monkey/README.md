@@ -17,5 +17,6 @@
 
 ## 地図・開き方
 - 持ち物: scripts/check-monkey-engine.mjs・_monkey-engine-entry.ts・_monkey-tree-walk.ts (正かの判定はジン部長)。
+- UI の重なりを数える式は docs/org/monkey/overlap.mjs (猿は monkey-scripts/tree-overlap30.mjs、10-26)。
 - データは docs/org/emulator/data-catalog.md のエンジンの関数から。猿の台本は共有メモ local_cbd85ab5…/monkey-scripts/。
 - ふだんは http://localhost:1440/web.html (?page=sim-tree)。本番の前の 1 回だけ 1461 (ブラックが言った時)。
