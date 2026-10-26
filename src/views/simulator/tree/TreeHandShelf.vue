@@ -26,6 +26,7 @@ import { TREE_SPAM_ORB, useSimShelf } from "../use-sim-shelf";
 import { afterQualityOf, autoCatOf, FREE_EFFECTS, handOf, hitAimsOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan";
 import { tr } from "../../../i18n/lang";
 import { stageHelp } from "../../../state/for-share/craft-stage-help";
+import { usePhone } from "../../../utils/use-phone";
 import { simOp } from "../../../web/track";
 import { fixedValues } from "./tree-fixed-values";
 
@@ -202,6 +203,14 @@ const gone = computed((): number => {
 });
 /** この箱の見本に打てない手は確定させない (tree-hand-plan の problemOf) */
 const problem = computed((): string | null => (hand.value && item.value && s.data.value ? problemOf(s.data.value, item.value, hand.value, hitAims.value, preCat.value, preFill.value) : null));
+/**
+ * スマホは手を 2 段の質問で選ぶ (10-26 夜オーナー OK): 1 段目 = 棚でカレンシー・お告げを持つ (狙いのチェックの欄は出さない)、
+ * 2 段目 = 「どれが付いたら当たり?」(付きうる狙い aimChoices だけ、既定は狙い無し)。狙い無しのままなら 1 段目の帯の「狙い無しで決める」ですぐ決める。
+ * 当たるまで繰り返す手は狙い無しが無いので 2 段目だけ。PC は今のまま (チェックの欄は持った物の欄の中)
+ */
+const phone = usePhone();
+const aimStep = ref(false);
+watch(held, () => { aimStep.value = false; });
 function ok(): void {
   const h = hand.value, k = kind.value;
   simOp("hand-decide");
@@ -247,7 +256,7 @@ function ok(): void {
       <!-- フラクチャー: 印の狙いを必ず固定、外れは費用で数える (10-24 オーナー「2 回外れて 1 回当たり」、10-25 に戻した) -->
       <p v-if="isFracture" data-tree-hand-frac-rule class="text-[12px] opacity-70">{{ tr("完成の MOD の印の狙いを必ず ✦ にする。固定できる MOD が 2 つ以上なら、2 回外れて 1 回当たりとして、ここまでの費用とフラクチャーを 2 回分足す", "Always fractures the marked final mod. With 2+ mods that could fracture, counts as 2 misses then a hit: adds this point's cost and the Fracturing Orb twice") }}</p>
       <!-- 足す手: 当たりの箱にする狙いをチェック (複数可)。チェックした MOD ごとに当たり、どれも付かなければ外れ、0 個 = 狙い無し (10-25 オーナー) -->
-      <div v-if="showAims" data-tree-hand-aims class="flex flex-col gap-1 text-[12px]">
+      <div v-if="showAims && !phone" data-tree-hand-aims class="flex flex-col gap-1 text-[12px]">
         <span v-if="spam && !checkedAims.length" data-tree-hand-aim-need class="text-rose-200/90">{{ tr("狙う MOD を選んで", "Pick a target mod") }}</span>
         <span v-else class="opacity-80">{{ tr("狙う MOD (☑ の MOD ごとに当たりの箱を作る。どれか 1 つ付けば当たり)", "Target mods (one hit box per ☑ mod; any one landing is a hit)") }}</span>
         <label v-for="a in aimChoices" :key="aimKey(a)" data-tree-hand-aim :data-aim="aimKey(a)" class="flex min-h-7 min-w-0 cursor-pointer items-center gap-2">
@@ -290,8 +299,37 @@ function ok(): void {
     <div v-if="held" data-tree-hand-use-bar class="sticky bottom-0 z-10 -mx-3 border-t border-white/10 bg-[#0c0a08]/95 px-3 py-2 md:hidden">
       <p class="mb-1 break-words text-[12px] font-bold text-amber-100">{{ tr(`${nameOf(held)} を持っている`, `Holding ${nameOf(held)}`) }}</p>
       <p v-if="heldHelp.length" data-tree-hand-held-help class="mb-2 break-words text-[12px] leading-snug text-[#d8ccb4]">{{ heldHelp.join(" ") }}</p>
-      <button type="button" data-tree-hand-use class="g-btn-red min-h-11 w-full text-[15px]" :disabled="!!problem" @click="ok">{{ tr("使う (この手にする)", "Use (make it this craft)") }}</button>
+      <!-- 狙いを選べる手は 2 つ: 狙い無し (今のチェック) のまま決める / 2 段目で狙いを選ぶ。繰り返しの手は 2 段目だけ -->
+      <div v-if="showAims" class="flex gap-2">
+        <button v-if="!spam" type="button" data-tree-hand-use class="g-btn !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" :disabled="!!problem" @click="ok">{{ freeOn ? tr("狙い無しで決める", "Decide with no target") : tr("このまま決める", "Decide as is") }}</button>
+        <button type="button" data-tree-hand-aim-step class="g-btn-red !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="aimStep = true">{{ tr("狙いを選ぶ ›", "Pick targets ›") }}</button>
+      </div>
+      <button v-else type="button" data-tree-hand-use class="g-btn-red min-h-11 w-full text-[15px]" :disabled="!!problem" @click="ok">{{ tr("使う (この手にする)", "Use (make it this craft)") }}</button>
     </div>
+    <!-- スマホの 2 段目「どれが付いたら当たり?」(画面いっぱい、持った物の手で付きうる狙いだけ) -->
+    <Teleport to="body">
+      <div v-if="phone && aimStep && held && showAims" data-tree-hand-aim-page class="fixed inset-0 z-[320] flex flex-col bg-[#15110c] text-[14px]">
+        <div class="min-h-0 flex-1 overflow-y-auto px-3 pb-3 pt-4 text-center">
+          <p class="break-words text-[12px] text-[#9a8a70]">{{ hand ? handLabel(hand) : nameOf(held) }}</p>
+          <h2 class="mt-1 text-[17px] font-bold text-[#f0e4c8]">{{ tr("どれが付いたら当たり?", "Which mod counts as a hit?") }}</h2>
+          <p class="mt-1 break-words text-[12px] text-[#9a8a70]">{{ spam ? tr("当たるまで繰り返す手は、狙う MOD を 1 つ以上選ぶ", "For a repeat-until-hit craft, pick at least one target") : tr("☑ の MOD ごとに当たりの箱を作る。どれか 1 つ付けば当たり", "One hit box per ☑ mod; any one landing is a hit") }}</p>
+          <div data-tree-hand-aims class="mt-3 flex flex-col gap-1.5 text-left">
+            <label v-for="a in aimChoices" :key="aimKey(a)" data-tree-hand-aim :data-aim="aimKey(a)" class="flex min-h-11 min-w-0 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
+              <input type="checkbox" class="size-5 shrink-0" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 break-words">{{ t.aimLabel(a) }}</span>
+            </label>
+            <label v-if="!spam" data-tree-hand-free class="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
+              <input type="checkbox" class="size-5 shrink-0" :checked="freeOn" @change="toggleFree($event)" /><span class="min-w-0 break-words">{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}</span>
+            </label>
+          </div>
+          <p v-if="kind" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? (only.length === 1 ? tr(`${outName(only[0]!.out)}だけ (結果は 1 通り)`, `${outName(only[0]!.out)} only (one possible result)`) : [...new Set(only.map((o) => outName(o.out)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
+          <p v-if="problem" class="mt-1 break-words text-[12px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</p>
+        </div>
+        <div class="flex gap-2 border-t border-white/10 px-3 py-2">
+          <button type="button" data-tree-hand-aim-back class="g-btn !min-h-11 shrink-0 px-3" @click="aimStep = false">‹ {{ tr("戻る", "Back") }}</button>
+          <button type="button" data-tree-hand-aim-go class="g-btn-red !min-h-11 min-w-0 flex-1 text-[15px]" :disabled="!!problem" @click="ok">{{ tr("決める", "Decide") }}</button>
+        </div>
+      </div>
+    </Teleport>
     <!-- 持っている物の絵をカーソルに付ける (エミュと同じ共有の部品、スマホは出ない。10-26 オーナー「パソコン版持ってるかわからんから…エミュと同じ仕様で」) -->
     <HeldCursor :src="held ? iconOf(held) : null" />
   </div>
