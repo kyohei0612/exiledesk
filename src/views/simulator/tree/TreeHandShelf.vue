@@ -56,8 +56,13 @@ const checked = ref<string[]>((() => {
   return (d.boxes[props.boxId]?.outs ?? []).flatMap((o) => { const x = d.boxes[o]; return x?.out === "hit" && x.aim ? [aimKey(x.aim)] : []; });
 })());
 const isFracture = computed(() => !!held.value && effectOf(held.value) === "fracture");
-/** 骨の手にアビスの反響 (発現の候補を 1 回引き直す)。既定で付ける (10-22 オーナー「お告げは必ず反響を使わんとやばいよ」)。前の手を開いた時はその手のまま */
-const echo = ref(props.current ? props.current.omens.includes(ECHO) : true);
+/**
+ * 骨の手のアビスの反響のお告げ (発現の候補を 1 回引き直す) = お告げの並びの「アビスの反響のお告げ」そのもの (omens に ECHO)。骨を持ったら既定で掛ける
+ * (10-22 オーナー「お告げは必ず反響を使わんとやばいよ」、10-26 夜「オンは嘘だし、でかいアイコンもある」: 前は並びとは別の印と大きな札で、並びの方は掛かっていなかった)。
+ * 前の手を開いた時はその手のまま
+ */
+const echo = computed(() => omens.value.includes(ECHO));
+watch(held, (k, old) => { if (k && k !== old && isBone(k) && !omens.value.includes(ECHO)) omens.value = [...omens.value, ECHO]; }); // 開いた時は動かない = 前の手のまま
 /** 付く MOD を選べない手 (足す・カオス。当たりの箱にする MOD のチェックと狙い無しを出す) */
 const canFree = computed(() => !!held.value && FREE_EFFECTS.includes(effectOf(held.value)));
 /** Esc: 今の手を替えている時は欄ごと取り消す (何も替えない、オーナー 10-22「枠の外・Esc で取り消し」)。新しい手の時は持った物を離す */
@@ -191,9 +196,6 @@ const gone = computed((): number => {
 });
 /** この箱の見本に打てない手は確定させない (tree-hand-plan の problemOf) */
 const problem = computed((): string | null => (hand.value && item.value && s.data.value ? problemOf(s.data.value, item.value, hand.value, hitAims.value, preCat.value, preFill.value) : null));
-/** お告げの並びに置く札 (お告げのボタンと同じ高さ) */
-const OMEN_CHIP = "flex min-h-12 max-w-[96px] items-center justify-center rounded-lg border border-white/15 bg-black/30 px-2 text-center text-[11px] leading-tight hover:border-violet-300/60";
-const OMEN_ON = "!border-violet-300 bg-violet-500/30 text-violet-50";
 function ok(): void {
   const h = hand.value, k = kind.value;
   simOp("hand-decide");
@@ -274,9 +276,7 @@ function ok(): void {
       <CurrencyShelf @hold="onShelfHold">
         <!-- 持った物に掛けられるお告げ = クラフト台と同じ部品と置き場 (HeldOmens.vue を持ったアイコンのすぐ下に重ねる。inline-held だと棚の一番下で見切れた、10-21 本物のマウス)。
              足す手は同じ欄に「狙い無し」(適当打ち、オーナー 10-22「お告げの欄の中に適当打ちがまだ無い」) -->
-        <template v-if="omensAllowedFor(held).length || (!!held && isBone(held))" #held><HeldOmens class="max-md:scroll-mb-20">
-          <!-- お告げと同じ並びの札 (10-22 オーナー「狙い無しはお告げの枠の中に」): アビスの反響 (骨) と狙い無し (足す手) -->
-          <button v-if="held && isBone(held)" type="button" data-tree-hand-echo :aria-pressed="echo" :class="[OMEN_CHIP, echo ? OMEN_ON : '']" :title="tr('アビスの反響のお告げ (発現の候補を 1 回引き直す)', 'Omen of Abyssal Echoes (reroll the reveal options once)')" @click="echo = !echo">{{ tr("アビスの反響", "Abyssal Echoes") }}</button>
+        <template v-if="omensAllowedFor(held).length || (!!held && isBone(held))" #held><HeldOmens class="max-md:scroll-mb-20"><!-- アビスの反響は並びのお告げの 1 つ (骨を持つと既定で掛かる)。前は並びとは別の大きな札「アビスの反響」を置いていた (10-26 夜オーナー「でかいアイコンもある」) -->
         </HeldOmens></template>
       </CurrencyShelf>
     </div>

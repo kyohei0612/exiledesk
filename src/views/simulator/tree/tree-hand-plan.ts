@@ -57,7 +57,8 @@ export const FREE_EFFECTS: readonly string[] = ["add", "swap"];
 export function handOf(p: HandPick): Hand {
   const used = omensFor(p.held, [...p.omens]);
   return {
-    currency: p.held, omens: isBone(p.held) && p.echo !== false ? [...used, ECHO] : used,
+    // 反響はお告げの並びで掛けた物 (used に入る) か、echo の指定。2 つ入れない (10-26 夜、並びの札と別の印が重なった)
+    currency: p.held, omens: isBone(p.held) && p.echo !== false && !used.includes(ECHO) ? [...used, ECHO] : used,
     catalyst: null, quality: 0,
     repeat: p.spam && canSpam(p.held) ? { until: "hit", max: p.spamMax && p.spamMax > 0 ? Math.round(p.spamMax) : null } : null,
     ...(p.free && !p.spam && FREE_EFFECTS.includes(effectOf(p.held)) ? { free: true } : {}),
