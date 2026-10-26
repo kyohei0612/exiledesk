@@ -1,4 +1,10 @@
 {
+  "0.1.621": [
+    "Simulator: Hit boxes on different paths that landed the same mod can now be merged (automatically when you add a craft). Mod values in boxes are kept the same across the tree, using the pasted value or the middle of the tier",
+    "Simulator: The item frame inside each box now has the base name as its title, and the box layout was tidied (the return × sits right next to its text, ✎ and × are at the bottom right, and marks like ! sit beside the label on the top edge)",
+    "Simulator: The side + now adds a box only when you pick a mod (just pressing it or closing the picker adds nothing). Boxes with a return or a merge no longer show +",
+    "Simulator: \"Copy URL\" for recipes now gives a short URL (exiledesk.com/r/…)"
+  ],
   "0.1.620": [
     "Simulator: The top of the tree page was reworked. The title strip is gone, the step strip sits at the top inside the frame, and the toolbar fits on one line (shorter labels or icons only on narrow screens). Name, Save and Recipes moved under the finished-item panel in the right column, and the minimap starts closed. After \"Clear\", the start box is placed at the top center like when the tree opens"
   ],
