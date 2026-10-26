@@ -1,13 +1,14 @@
 /**
  * tree-odds.ts — 結果の箱に起こる割合 (2026-10-25 オーナー「おすすめの2つで進めて」、PC の箱とスマホの ② で同じ)。
- * 割合はシミュで数えず、エンジンの入口 outcomeOdds (engine-sim、ジン部長 695f76c3) に手の箱のアイテム (sampleOf の 1 人目)・手 (お告げ込み)・木の狙いを渡すだけ。
+ * 割合はシミュで数えず、エンジンの入口 outcomeOdds (engine-sim、ジン部長 695f76c3) に手の箱のアイテム (箱の形に合う見本 shapeSampleOf。形違いの戻りで入った人では出さない)・手 (お告げ込み)・木の狙いを渡すだけ。
  * ここでするのは結果の種類 → 木の結果の箱の結び付けだけ: 当たりは同じ狙いの当たりの箱、当たりの箱の無い狙いが付いた分は外れの箱 (tree-hand-plan の onlyOf と同じ)。
  * 割合が出せない手 (繰り返し・狙い無し・エンジンが null・結果の箱が 1 つ) は出さない
  */
 import { computed, type Ref } from "vue";
 import { outcomeOdds } from "../../../services/simulator/sim-engine";
 import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
-import { aimsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { aimsOf } from "../../../services/simulator/tree/tree-sample";
+import { shapeSampleOf } from "../../../services/simulator/tree/tree-sample-shape";
 import { engineOmens } from "../../../services/simulator/tree/tree-hands";
 import { boxAims, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -20,7 +21,7 @@ export function oddsOfHand(doc: TreeDoc, id: string): Map<string, number> | null
   const kids = b.outs.map((o) => doc.boxes[o]!).filter(Boolean);
   const hits = kids.filter((k) => k.out === "hit" && k.aim).flatMap((k) => boxAims(k));
   const aims = [...hits, ...aimsOf(doc).filter((a) => !hits.some((h) => h.modId === a.modId && h.tier === a.tier))];
-  const odds = outcomeOdds(data, prepFor(data, sampleOf(data, doc, id, 1).item, b.hand.currency), b.hand.currency, engineOmens(b.hand), aims, { sameText: true });
+  const odds = outcomeOdds(data, prepFor(data, shapeSampleOf(data, doc, id), b.hand.currency), b.hand.currency, engineOmens(b.hand), aims, { sameText: true });
   if (!odds) return null;
   const out = new Map<string, number>();
   for (const o of odds) {

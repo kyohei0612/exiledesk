@@ -12,9 +12,10 @@ import { catalystFull, catalystTagOf, fillCatalyst } from "../../simulator/sim-e
 import { aimHeldOn, isAimMod, junkOf } from "./tree-aim";
 import { CATALYSING as CATALYSING_OMEN, ECHO, ECHO as ABYSSAL_ECHO_OMEN, effectOf, engineOmens, isCatalyst } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
-import { aimKey, fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
+import { fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
-import { heldSets, splitTo } from "./tree-shape";
+import { splitTo } from "./tree-shape";
+import { shapeFit } from "./tree-sample-shape";
 import { arrivedAt } from "./tree-arrived";
 import { aimsMayHold } from "./tree-lost";
 import { autoRuneKeys, passThrough, prepFor } from "./tree-unbounded";
@@ -112,10 +113,8 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   let unheld = false;
   // 見本 = この箱に着いた人のアイテム (着いた人が SINGLE_SEEDS より少なければ同じ物が回ってくるので 1 回だけ見る)。
   // 箱の形 (道で付いている狙いの組 = heldSets) に合う人だけ (戻ってくる形の違う人の混ざりで結果の箱を増やさない、10-26 オーナー「その選択肢が出てくるのは前提狙いMODの状態でなんかする時やろ」)。合う人がいなければ全員
-  const sets = new Set(heldSets(doc, boxId).map((h) => [...h].sort().join(",")));
   const smps = Array.from({ length: SINGLE_SEEDS }, (_, i) => sampleOf(data, doc, boxId, i + 1)).filter((x) => x.note !== "none" && !x.note?.startsWith("cant:"));
-  const st = startGoalAims(doc), shapeAims = aimsOf(doc).filter((a) => !st.some((x) => x.modId === a.modId && x.tier === a.tier));
-  const fit = smps.filter((x) => sets.has(shapeAims.filter((a) => aimHeldOn(data, x.item, a, { sameText: true })).map(aimKey).sort().join(",")));
+  const fits = shapeFit(data, doc, boxId), fit = smps.filter((x) => fits(x.item));
   const seen = new Set<StageItem>();
   for (const [i, smp] of (fit.length ? fit : smps).entries()) {
     const seed = i + 1;
@@ -159,7 +158,7 @@ export function singleOutOf(data: PatchData, doc: TreeDoc, boxId: string, h: Han
 /** 分かれ目の行の箱の見本を引き直す回数 */
 const SPLIT_TRIES = 40;
 /** 結果が 1 通りかを見る見本の数 */
-const SINGLE_SEEDS = 8;
+export const SINGLE_SEEDS = 8;
 
 
 /**
