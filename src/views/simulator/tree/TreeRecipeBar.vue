@@ -8,7 +8,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
 import { currentTreeRecipe, renameTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
 import { askLeave, openRecipesPage } from "../../../web/page";
-import { fmtDate, seedDevRecipes, treeShareUrl, useRecipeUrl } from "../recipe-share";
+import { copyRecipeUrl, fmtDate, seedDevRecipes, useRecipeUrl } from "../recipe-share";
 import { useTree } from "./use-tree";
 import { autoName, quickSave, unsaved } from "./tree-save";
 import { usePhone } from "../../../utils/use-phone";
@@ -75,10 +75,10 @@ const { url, urlNote, openUrl, onPaste } = useRecipeUrl({
 });
 async function copyUrl(): Promise<void> {
   const name = currentTreeRecipe.value?.name ?? defaultName();
-  const ok = await navigator.clipboard.writeText(await treeShareUrl({ name, tree: t.doc.value })).then(() => true, () => false);
+  const { ok, short } = await copyRecipeUrl({ name, tree: t.doc.value }); // 短い URL (だめなら長い URL、10-26 夜オーナー OK)
   track("tree-recipe:url");
   pop.value = false;
-  say(ok ? tr("今の木の URL をコピーしました (開いた人はこの木で始まる)", "Copied a URL for this tree (opening it starts with this tree)") : tr("コピーできませんでした", "Couldn't copy"));
+  say(!ok ? tr("コピーできませんでした", "Couldn't copy") : short ? tr("今の木の短い URL をコピーしました (開いた人はこの木で始まる)", "Copied a short URL for this tree (opening it starts with this tree)") : tr("今の木の URL をコピーしました (開いた人はこの木で始まる)", "Copied a URL for this tree (opening it starts with this tree)"));
 }
 function onDown(e: PointerEvent): void { if (pop.value && root.value && !root.value.contains(e.target as Node)) pop.value = false; }
 /**

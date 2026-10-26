@@ -17,7 +17,7 @@ import { quickSave, unsaved } from "./tree/tree-save";
 import { currentTreeRecipe, currentTreeRecipeId, duplicateTreeRecipe, exportTreeRecipes, importTreeRecipes, overwriteTreeRecipe, removeTreeRecipe, renameTreeRecipe, restoreTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../state/simulator/tree-recipes";
 import { askLeave, openTreePage, setLeaveGuard } from "../../web/page";
 import { treePage } from "../../state/web-page";
-import { fmtDate, seedDevRecipes, treeShareUrl, useRecipeUrl } from "./recipe-share";
+import { copyRecipeUrl, fmtDate, seedDevRecipes, useRecipeUrl } from "./recipe-share";
 import { useTree } from "./tree/use-tree";
 import { recipeSummary } from "./tree/recipe-summary";
 import { useArmed, ARMED_CLASS } from "../../utils/use-armed";
@@ -97,9 +97,9 @@ function endRename(r: TreeRecipe, v: string): void { if (renaming.value !== r.id
 
 // 共有 = URL をコピー (共有・管理は URL が主、オーナー 10-22「URL で基本、共有・管理だね」。X に投稿は計算を繋いだ後)
 async function copyUrl(r: TreeRecipe): Promise<void> {
-  const ok = await navigator.clipboard.writeText(await treeShareUrl(r)).then(() => true, () => false);
+  const { ok, short } = await copyRecipeUrl(r); // 短い URL (だめなら長い URL、10-26 夜オーナー OK)
   track("tree-recipe:url");
-  say(ok ? tr(`「${r.name}」の URL をコピーしました (URL に木が全部入っている。開いた人はこの木で始まり、その人のレシピにも残る)`, `Copied the URL for "${r.name}" (the whole tree is in it; opening it starts this tree and saves it)`) : tr("コピーできませんでした", "Couldn't copy"));
+  say(!ok ? tr("コピーできませんでした", "Couldn't copy") : short ? tr(`「${r.name}」の短い URL をコピーしました (開いた人はこの木で始まり、その人のレシピにも残る)`, `Copied a short URL for "${r.name}" (opening it starts this tree and saves it)`) : tr(`「${r.name}」の URL をコピーしました (URL に木が全部入っている。開いた人はこの木で始まり、その人のレシピにも残る)`, `Copied the URL for "${r.name}" (the whole tree is in it; opening it starts this tree and saves it)`));
 }
 
 // URL を貼って開く

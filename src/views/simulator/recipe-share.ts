@@ -29,6 +29,41 @@ export async function treeShareUrl(r: { name: string; tree: TreeDoc }): Promise<
   return `${base}${RECIPE_SHARE_PREFIX}${code}`;
 }
 
+/** 短い URL の受け口 (サーバー 5 の server/web/recipe-share.js、10-26 夜オーナー OK)。アプリ・開発版でも本番の住所 (短い URL は本番でしか開かない) */
+const SHORT_HOST = "https://exiledesk.com";
+/**
+ * レシピの短い URL (https://exiledesk.com/r/<id>)。#recipe= の後ろの code をそのまま POST /r/new に送り { id } を受ける。
+ * 届かない・400 (形が違う・長すぎ)・429 (混んでいる) の時は今の長い URL (共有メモ recipe-short-url-api.md)
+ */
+export async function treeShortUrl(r: { name: string; tree: TreeDoc }): Promise<string> {
+  const long = await treeShareUrl(r);
+  const code = long.slice(long.indexOf(RECIPE_SHARE_PREFIX) + RECIPE_SHARE_PREFIX.length);
+  try {
+    const res = await fetch(`${SHORT_HOST}/r/new`, { method: "POST", body: code });
+    if (!res.ok) return long;
+    const id = ((await res.json()) as { id?: unknown }).id;
+    return typeof id === "string" && /^[A-Za-z0-9_-]{1,32}$/.test(id) ? `${SHORT_HOST}/r/${id}` : long;
+  } catch {
+    return long;
+  }
+}
+/**
+ * レシピの URL をクリップボードへ (短い URL、だめなら長い URL)。Safari は await の後の writeText を断るので、押した瞬間に
+ * ClipboardItem に Promise を渡して書く (無ければ・断られたら writeText)。ok = 書けた、short = 短い URL だった
+ */
+export async function copyRecipeUrl(r: { name: string; tree: TreeDoc }): Promise<{ ok: boolean; short: boolean }> {
+  const url = treeShortUrl(r);
+  const short = (u: string): boolean => u.startsWith(`${SHORT_HOST}/r/`);
+  try {
+    if (typeof ClipboardItem === "undefined" || !navigator.clipboard?.write) throw new Error("no ClipboardItem");
+    await navigator.clipboard.write([new ClipboardItem({ "text/plain": url.then((u) => new Blob([u], { type: "text/plain" })) })]);
+    return { ok: true, short: short(await url) };
+  } catch {
+    const u = await url;
+    return navigator.clipboard.writeText(u).then(() => ({ ok: true, short: short(u) }), () => ({ ok: false, short: false }));
+  }
+}
+
 
 /** 開発版だけ: 見本のレシピを保存したレシピに足す (dev-recipes。同じ名前があれば足さない。10-26 モンキー 7 の 23) */
 /** 開発版の見本の名前 (「見本: …」「見本 2: …」) */
