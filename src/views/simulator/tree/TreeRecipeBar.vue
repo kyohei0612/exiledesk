@@ -6,7 +6,7 @@
   「シェアボタンも」(短い URL をコピー・X に出す。窓の中の「URL をコピー」はシェアへ寄せた)「レシピ一覧に行かなくても削除できるように」(窓の行の ×)「(窓が) 切れる。枠内で出すように」
 -->
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
 import { currentTreeRecipe, removeTreeRecipe, renameTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
 import { askLeave, openRecipesPage } from "../../../web/page";
@@ -30,7 +30,20 @@ const props = defineProps<{ menuOnly?: boolean; flat?: string }>();
 const SMALL = "g-plain inline-flex h-8 shrink-0 items-center gap-1 whitespace-nowrap rounded-md border border-white/15 bg-white/[0.04] px-1.5 text-[12px] text-[#d8ccb4] hover:bg-white/10 hover:text-white aria-expanded:border-amber-400/60 aria-expanded:text-amber-100";
 const btn = computed(() => props.flat ?? SMALL);
 /** 小窓の置き場 (完成形の設定の右端は右寄せ 340px、スマホの上の帯は左寄せ 340px、PC の列は帯の幅いっぱい = 列の中) */
-const popPlace = computed(() => (props.menuOnly ? "right-0 w-[340px] max-w-[calc(100vw-2rem)]" : props.flat || bare.value ? "left-0 w-[340px] max-w-[calc(100vw-2rem)]" : "inset-x-0 min-w-0"));
+/**
+ * 小窓の縦の置き場と最大の高さ (開く時に測る)。PC の右の列は overflow-hidden なので、列 (無ければ画面) の下までの空きと上までの空きを比べ、
+ * 広い方へ開いてその空きまで (中は送る)。レシピが 8 つあると窓が 1254px になり、列の下で切れた (10-27 オーナー「切れる。枠内で出すように」)
+ */
+const popV = ref<{ up: boolean; max: number }>({ up: false, max: 9999 });
+function placePop(): void {
+  const r = root.value?.getBoundingClientRect();
+  if (!r) return;
+  const box = root.value?.closest("[data-tree-side]")?.getBoundingClientRect();
+  const bottom = Math.min(box?.bottom ?? innerHeight, innerHeight), top = Math.max(box?.top ?? 0, 0);
+  const below = bottom - r.bottom - 8, above = r.top - top - 8;
+  popV.value = below >= 320 || below >= above ? { up: false, max: Math.max(160, below) } : { up: true, max: Math.max(160, above) };
+}
+const popPlace = computed(() => `${props.menuOnly ? "right-0 w-[340px] max-w-[calc(100vw-2rem)]" : props.flat || bare.value ? "left-0 w-[340px] max-w-[calc(100vw-2rem)]" : "inset-x-0 min-w-0"} ${popV.value.up ? "bottom-full mb-1" : "top-full mt-1"}`);
 /** 開いている木に保存の手が要らない時 (ベースが無い空の形・完成形の設定の右端) */
 const bare = computed(() => t.needBase.value || !!props.menuOnly);
 /** 一覧の 1 行の要約 (ベースの絵・狙い・印) */
@@ -142,6 +155,8 @@ function onKey(e: KeyboardEvent): void {
   if (e.key === "Escape" && (pop.value || naming.value || share.value)) { closeAll(); e.stopImmediatePropagation(); return; }
   if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "s" && !bare.value && !phone.value && !t.goalInline.value && !t.goalPage.value) { e.preventDefault(); save(); }
 }
+// 小窓を開いた時に向きと高さを測る (placePop)
+watch([pop, naming, share], ([a, b, c]) => { if (a || b || c) placePop(); });
 onMounted(() => { window.addEventListener("pointerdown", onDown, true); window.addEventListener("keydown", onKey, true); void seedDevRecipes(); });
 onBeforeUnmount(() => { window.removeEventListener("pointerdown", onDown, true); window.removeEventListener("keydown", onKey, true); clearTimeout(noteT); });
 </script>
@@ -165,7 +180,7 @@ onBeforeUnmount(() => { window.removeEventListener("pointerdown", onDown, true);
 
     <!-- 小窓の置き場: PC の列では帯の幅 (列の 248px) に収める、スマホの上の帯・完成形の設定の右端は前の幅 (10-27 オーナー「切れる。枠内で出すように」) -->
     <!-- 名前を付けて保存 (欄には最初からベースの名前と日時、そのまま保存でその名前) -->
-    <div v-if="naming" data-tree-recipe-save-pop :class="popPlace" class="absolute top-full z-40 mt-1 flex flex-col gap-1.5 rounded-lg border border-[var(--exile-color-border-brass)]/60 bg-[#14110d] p-2 text-[12px] shadow-[0_8px_24px_rgba(0,0,0,0.7)]">
+    <div v-if="naming" data-tree-recipe-save-pop :class="popPlace" :style="{ maxHeight: `${popV.max}px` }" class="absolute z-40 flex flex-col gap-1.5 overflow-y-auto rounded-lg border border-[var(--exile-color-border-brass)]/60 bg-[#14110d] p-2 text-[12px] shadow-[0_8px_24px_rgba(0,0,0,0.7)]">
       <p class="opacity-70">{{ tr("名前を付けて保存", "Save with a name") }}</p>
       <input ref="saveInput" v-model="saveName" data-tree-recipe-save-name type="text" spellcheck="false" autocomplete="off" class="h-8 min-w-0 rounded border border-amber-400/60 bg-black/50 px-2 text-[13px] outline-none" @keydown.enter.prevent="saveNamed" @keydown.esc.stop="naming = false" />
       <span class="flex justify-end gap-1.5">
@@ -174,14 +189,14 @@ onBeforeUnmount(() => { window.removeEventListener("pointerdown", onDown, true);
       </span>
     </div>
     <!-- シェア: 短い URL をコピー・X に出す (窓の中の「URL をコピー」はここへ寄せた) -->
-    <div v-if="share" data-tree-recipe-share-pop :class="popPlace" class="absolute top-full z-40 mt-1 flex flex-col gap-1.5 rounded-lg border border-[var(--exile-color-border-brass)]/60 bg-[#14110d] p-2 text-[12px] shadow-[0_8px_24px_rgba(0,0,0,0.7)]">
+    <div v-if="share" data-tree-recipe-share-pop :class="popPlace" :style="{ maxHeight: `${popV.max}px` }" class="absolute z-40 flex flex-col gap-1.5 overflow-y-auto rounded-lg border border-[var(--exile-color-border-brass)]/60 bg-[#14110d] p-2 text-[12px] shadow-[0_8px_24px_rgba(0,0,0,0.7)]">
       <p class="opacity-70">{{ tr("開いた人はこの木で始まる", "Whoever opens it starts with this tree") }}</p>
       <span class="flex flex-wrap gap-1.5">
         <button type="button" data-tree-recipe-copy-url class="g-btn sm inline-flex items-center gap-1" @click="copyUrl"><Icon name="link" class="size-3.5" />{{ tr("URL をコピー", "Copy URL") }}</button>
         <button type="button" data-tree-recipe-x class="g-btn sm" @click="shareX">{{ tr("X に出す", "Post to X") }}</button>
       </span>
     </div>
-    <div v-if="pop" data-tree-recipe-pop :class="popPlace" class="absolute top-full z-40 mt-1 flex flex-col gap-1.5 rounded-lg border border-[var(--exile-color-border-brass)]/60 bg-[#14110d] p-2 text-[12px] shadow-[0_8px_24px_rgba(0,0,0,0.7)]">
+    <div v-if="pop" data-tree-recipe-pop :class="popPlace" :style="{ maxHeight: `${popV.max}px` }" class="absolute z-40 flex flex-col gap-1.5 overflow-y-auto rounded-lg border border-[var(--exile-color-border-brass)]/60 bg-[#14110d] p-2 text-[12px] shadow-[0_8px_24px_rgba(0,0,0,0.7)]">
       <p class="opacity-60">{{ tr("保存したレシピから開く", "Open a saved recipe") }}</p>
       <p v-if="!recent.length" class="py-1 opacity-50">{{ tr("まだありません", "None yet") }}</p>
       <!-- 1 行 = ベースの絵 (空の木は空の印)・名前・ベース · 狙いの数と主な狙い · ✦ の数・日時 (10-23 オーナー「視覚的に管理しやすく」、要約は recipe-summary.ts)。右の × で消す (その行の中で確かめる) -->
