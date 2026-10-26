@@ -28,6 +28,7 @@ import { craftStage } from "../../../state/craft-stage";
 import { skillQualityOf } from "../../../services/craft-stage/skill-quality";
 import { useDismiss } from "../../../utils/use-dismiss";
 import RichText from "../../decor/RichText.vue";
+import { vFitText } from "../../../utils/fit-text";
 import type { RowTag } from "./stage-item-row-tag";
 
 /**
@@ -276,7 +277,8 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
         <p v-for="(t, i) in implicits" :key="'i' + i" class="flex items-center gap-2 px-2 py-0.5">
           <!-- 下に値の幅 (トレードサイトの「[6–9 から 11–15]」と同じ。暗黙はティアが無いので下限・上限が分かるように。2026-10-12 オーナー) -->
           <span class="shrink-0 text-left leading-tight text-white/45" :class="[tightTier ? 'text-[10px]' : 'text-[11px]', t.ranges.length ? (tightTier ? 'min-w-6' : 'min-w-7') : tightTier ? 'w-6' : 'w-7']">{{ tr("暗黙", "Impl.") }}<span v-if="t.ranges.length" class="block whitespace-nowrap text-[10px] tabular-nums text-white/40">[{{ rangeLabel(t.ranges) }}]</span></span>
-          <span class="min-w-0 flex-1 text-center text-rarity-magic">
+          <!-- 入らなければ字を縮めて 1 行、10px でも入らなければ語の切れ目で折る (fit-text.ts、10-26 夜オーナー) -->
+          <span v-fit-text class="min-w-0 flex-1 text-center text-rarity-magic">
             <span v-if="BASE_VALUES_ON && t.boosted" :title="tr('素の値 (品質で盛る前)。小さい文は品質で盛った値', 'Base value (before quality). The small text is the boosted value')">{{ t.baseText }}<span data-boosted-value class="ml-1 text-[10px] text-[#7ee8ff]">({{ t.text }})</span></span>
             <span v-else :class="t.boosted ? 'text-[#7ee8ff]' : ''" :title="t.boosted ? tr('品質で伸びた数値', 'Boosted by quality') : undefined">{{ t.text }}</span>
             <span v-for="g in t.tags" :key="g" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[g]!.cls">{{ tagLabel(g) }}</span>
@@ -301,7 +303,7 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
         <div v-if="fracRows.length" ref="fracEl" data-fracture-group class="group/fg relative" @mouseenter="hover = 'mod'" @mouseleave="(hover = null), (fracOpen = false)">
           <p class="flex cursor-pointer items-center gap-2 rounded px-2 py-0.5 text-mod-fractured hover:bg-white/[0.04]" @click.stop="fracOpen = !fracOpen">
             <span class="shrink-0 text-left font-bold" :class="[leftColW, tightTier ? 'text-[10px]' : 'text-[12px]']">{{ [...new Set(fracRows.map((r) => (r.side === "プレフィックス" ? "P" : "S")))].join("·") }}</span>
-            <span class="min-w-0 flex-1 text-center">{{ tr(`フラクチャー MOD ×${fracRows.length}`, `Fractured mod ×${fracRows.length}`) }}</span>
+            <span v-fit-text class="min-w-0 flex-1 text-center">{{ tr(`フラクチャー MOD ×${fracRows.length}`, `Fractured mod ×${fracRows.length}`) }}</span>
             <span class="shrink-0" :class="modsOnly ? leftColW : sideColW" />
           </p>
           <div data-fracture-pop class="absolute left-1/2 top-full z-30 w-max min-w-[260px] max-w-[440px] -translate-x-1/2 space-y-0.5 rounded border border-[#7a6a35] bg-[#0b0a08]/95 px-2 py-1.5 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.7)]" :class="fracOpen ? 'visible' : 'invisible group-hover/fg:visible'">
@@ -328,8 +330,8 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
           <span v-if="isRareNew(r.m)" aria-hidden="true" class="stage-rare-beam pointer-events-none absolute bottom-1/2 left-1/2 z-20 w-10" />
           <!-- トレードサイトと同じ: 左端に P1 / S5 (プレ / サフィと段)、真ん中に MOD の文 (長い物は折り返す)、右端に付いた瞬間の確率と × (2026-10-10 オーナーの見本) -->
           <span class="shrink-0 text-left font-bold tabular-nums" :class="[leftColW, tightTier ? 'text-[10px]' : 'text-[12px]', r.side === 'プレフィックス' ? 'text-[#e0846a]' : 'text-[#6aa8e8]']">{{ sideTier(r) }}</span>
-          <!-- modsOnly の札は文の続き: 入れば同じ行、入らない時だけ次の行へ折れ、その行の間を詰める (st-mo-mid。行の余白も詰めて入る幅を広げる。10-26 夜オーナー「フラクチャーと MOD の行間も狭く」「入りそうなら入れていい、臨機応変に」) -->
-          <span class="min-w-0 flex-1 text-center" :class="modsOnly ? 'st-mo-mid' : ''">
+          <!-- 札は文の続き: 入らなければまず字を縮めて 1 行 (v-fit-text)、10px でも入らない時だけ折れ、modsOnly はその行の間を詰める (st-mo-mid。行の余白も詰めて入る幅を広げる。10-26 夜オーナー「フラクチャーと MOD の行間も狭く」「入りそうなら入れていい、臨機応変に」) -->
+          <span v-fit-text class="min-w-0 flex-1 text-center" :class="modsOnly ? 'st-mo-mid' : ''">
             <!-- 消える候補は文字をオレンジに (フラクチャーのくすんだ金色と被らない色。2026-10-07 オーナー「光るの文字にしようか、フラクチャーの色被らんようにオレンジで」) -->
             <!-- 未発現はゲームと同じく緑の崩れた文字 (中身は分からない。ホバーで「未発現の冒涜 MOD (側)」。2026-10-17 オーナー「アイテムについた冒涜未発現はこの感じ、全体的に緑」) -->
             <span v-if="rowTags?.get(r.m.modId)?.replace" data-row-tag-name :class="ROW_TAG_TEXT[rowTags.get(r.m.modId)!.tone]" :title="rowTags.get(r.m.modId)!.title">{{ rowTags.get(r.m.modId)!.text }}</span>
