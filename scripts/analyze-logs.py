@@ -92,30 +92,40 @@ if any(x["n"] for x in SIM.values()):
     print(f"\n== シミュで回した: 100 人回す {SIM['run']['n']} 回 / {SIM['run']['people']} 人・テストラン {SIM['test']['n']} 回 / {SIM['test']['people']} 人")
 
 # ---- シミュの足取り (2026-10-26 オーナー「どこで躓いたか全く分からん、全てにおいて監視」。デザイン 9 の track.ts)。
-# 画面の screen "tree" / "sim-base" / "sim-mods" / "recipes"、操作は kind "sim_trail" {v, from, ops: [[秒, 画面, 操作, 詳しく]], last, end: leave|page|full}
+# 画面の screen "tree" / "sim-base" / "sim-mods" / "recipes" (古い工程は "sim-<工程>")、操作は kind "sim_trail" {v, from, ops: [[秒, 画面, 操作, 詳しく?]], last, end: leave|page|full} (デザイン 9 の c6328eb5)。
+# 画面 "-" はシミュの外。自動の操作 enter・exit / hide (詳しく = その画面にいた秒) は「最後の操作」から外す。手を足した・保存・コピーは sim_act {a: hand|save|copy} にも 1 訪問 1 回
 # 1 訪問の中で何便かに分かれて届く (シミュから出るたび・隠すたび・300 件ごと) ので、訪問 (sid) ごとに ops を繋いで見る ----
 SIM_SCR = ("sim-base", "sim-mods", "tree", "recipes")
+AUTO_OPS = {"enter", "exit", "hide"}
+is_sim = lambda t: t in SIM_SCR or str(t).startswith("sim-")
 trails = collections.defaultdict(list)
 for r in recs["sim_trail"]:
-    trails[r["sid"]] += [op for op in r["d"].get("ops", []) if isinstance(op, list) and len(op) >= 3]
-sim_sess = [(sid, s) for sid, s in sess.items() if trails.get(sid) or any(t in SIM_SCR for t in s["screens"])]
+    trails[r["sid"]] += [op for op in r["d"].get("ops", []) if isinstance(op, list) and len(op) >= 3 and op[1] != "-"]
+sim_sess = [(sid, s) for sid, s in sess.items() if trails.get(sid) or any(is_sim(t) for t in s["screens"])]
 SIM_TRAIL = {"visits": len(sim_sess), "people": len({s["uid"] for _, s in sim_sess})}
 if sim_sess:
     print(f"\n== シミュの足取り: 開いた訪問 {len(sim_sess)} ({SIM_TRAIL['people']} 人、端末 {dict(collections.Counter(s['dev'] for _, s in sim_sess))})")
     # どの画面まで行ったか (訪問ごとに、その画面を 1 度でも見たか) と、最後にいた画面 (= そこで抜けた)
-    reach = collections.Counter(t for sid, s in sim_sess for t in set(s["screens"]) | {op[1] for op in trails.get(sid, [])} if t in SIM_SCR)
-    print("行った画面 (訪問):", " → ".join(f"{t} {reach.get(t, 0)}" for t in SIM_SCR))
-    lastscr = collections.Counter((trails[sid][-1][1] if trails.get(sid) else next((t for t in reversed(s["screens"]) if t in SIM_SCR), "?")) for sid, s in sim_sess)
+    reach = collections.Counter(t for sid, s in sim_sess for t in set(s["screens"]) | {op[1] for op in trails.get(sid, [])} if is_sim(t))
+    print("行った画面 (訪問):", " → ".join(f"{t} {reach.get(t, 0)}" for t in SIM_SCR), "/ 古い工程", sum(v for t, v in reach.items() if t not in SIM_SCR))
+    lastscr = collections.Counter((trails[sid][-1][1] if trails.get(sid) else next((t for t in reversed(s["screens"]) if is_sim(t)), "?")) for sid, s in sim_sess)
     print("最後にいたシミュの画面 (そこで抜けた):", top(lastscr, 6))
     ops = [(sid, op) for sid, o in trails.items() for op in o]
     print(f"操作 {len(ops)} 件:", top(collections.Counter(op[2] for _, op in ops), 15))
-    print("最後の操作 (訪問ごと) の上位:", top(collections.Counter(f"{o[-1][1]}:{o[-1][2]}" for o in trails.values() if o), 10))
+    print("最後の操作 (訪問ごと) の上位:", top(collections.Counter(next((f"{op[1]}:{op[2]}" for op in reversed(o) if op[2] not in AUTO_OPS), "(操作なし)") for o in trails.values() if o), 10))
+    dwell = collections.defaultdict(list)
+    for _, op in ops:
+        if op[2] in ("exit", "hide") and len(op) > 3 and isinstance(op[3], (int, float)): dwell[op[1]].append(op[3])
+    print("画面にいた秒 (exit・hide の中央):", ", ".join(f"{t} {med(v)} 秒 ({len(v)})" for t, v in sorted(dwell.items())) or "—")
+    act = collections.defaultdict(set)
+    for r in recs["sim_act"]: act[r["d"].get("a")].add(r["uid"])
+    print("手を足した / 保存 / コピーした人:", " / ".join(f"{a} {len(act.get(a, ()))}" for a in ("hand", "save", "copy")))
     cancel = collections.Counter(f"{op[1]}:{op[3] if len(op) > 3 else ''}" for _, op in ops if op[2] == "cancel")
     print(f"キャンセル {sum(cancel.values())} 件 (画面:何を):", top(cancel, 10))
     errs = collections.Counter(f"{op[1]}:{str(op[3] if len(op) > 3 else '')[:40]}" for _, op in ops if op[2] == "error")
     print(f"エラー {sum(errs.values())} 件:", top(errs, 10))
     print("便の切れ目 (end):", top(collections.Counter(r["d"].get("end") for r in recs["sim_trail"]), 4), "/ 入った画面 (from):", top(collections.Counter(r["d"].get("from") for r in recs["sim_trail"]), 5))
-    SIM_TRAIL.update(reach=dict(reach), last_screen=dict(lastscr), cancels=sum(cancel.values()), errors=sum(errs.values()))
+    SIM_TRAIL.update(reach=dict(reach), last_screen=dict(lastscr), cancels=sum(cancel.values()), errors=sum(errs.values()), acts={a: len(v) for a, v in act.items()})
 
 # ---- ブログ (2026-10-21〜。画面名 blog:<slug>:<言語>、一覧は blog:index:<言語>) ----
 blog = [r for r in recs["screen"] if str(r["d"].get("to", "")).startswith("blog:")]
