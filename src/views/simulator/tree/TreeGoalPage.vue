@@ -235,9 +235,12 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
     <div v-if="step === 1" data-tree-goal-base class="flex min-w-0 flex-col gap-3">
       <TreeBasePick />
       <!-- チュートリアルの入口 (初回も 2 回目以降もいつも出す、スマホは出さない。10-26 夜オーナー) -->
-      <SimTutorialEntry />
-      <!-- アイテムを貼り付けて取り込む (一覧の上、目立つ口。10-25 オーナー「ベース一覧の所に分かりやすく出したい」)。取り込めたら完成の MOD へ -->
-      <TreePasteBox @done="onPasted" />
+      <!-- PC はチュートリアルの入口と貼り付けを横に並べる (縦に積むとアミュレットの段が 1660×860 で画面の下の外だった、10-26 モンキー 7 の 20) -->
+      <div class="flex min-w-0 gap-3 max-md:flex-col [&>*]:min-w-0 [&>*]:flex-1">
+        <SimTutorialEntry />
+        <!-- アイテムを貼り付けて取り込む (一覧の上、目立つ口。10-25 オーナー「ベース一覧の所に分かりやすく出したい」)。取り込めたら完成の MOD へ -->
+        <TreePasteBox @done="onPasted" />
+      </div>
       <!-- ベースを替えると今の木が消える時だけ、1 回確かめる (上に貼り付けて、一覧を送っていても見える所に) -->
       <div v-if="asking" ref="askEl" data-tree-base-ask class="sticky top-0 z-10 flex flex-wrap items-center gap-3 rounded-lg border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-[13px]">
         <p class="min-w-0 flex-1">{{ tr(`${jaTypeName(asking)} の白紙から組み直します。今の木 (箱 ${t.lostOnBase.value} 個) が消えます。完成の狙いは ${jaTypeName(asking)} にも付く物だけ残ります (1 つ戻すで戻せます)。`, `Start over from a blank ${asking}. This tree (${t.lostOnBase.value} box(es)) will be removed. Final targets that ${asking} can roll are kept (Undo brings it back).`) }}</p>
