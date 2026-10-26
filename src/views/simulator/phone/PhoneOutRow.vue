@@ -74,6 +74,20 @@ const DEF = "!bg-amber-500/15";
 /** 再度挑戦の言い方 (決まり済み「↩ 再度挑戦 · n 段目へ戻る」、メモ sim-decisions。始まりの手の結果も同じ言い方) */
 const retryText = computed(() => (parent.value ? `↩ ${tr("再度挑戦", "Retry")} · ${stepBackText(t.doc.value, parent.value)}` : ""));
 const look = computed(() => OUT_LOOK[box.value?.out ?? "junk"]);
+/** 答えの選びの重ね窓を開いている */
+const pickOpen = ref(false);
+/** 選びの窓で答えを押したら閉じる (まとめる・分けるの一覧を開く押しは閉じない。「ほかの箱へ」は全体図で選ぶので閉じる) */
+function onPickClick(e: MouseEvent): void {
+  const b = (e.target as HTMLElement).closest("[data-phone-ans], [data-phone-join-go], [data-phone-split-any], [data-phone-other] button");
+  if (b) setTimeout(() => { pickOpen.value = false; }, 0);
+}
+/** 今の答えの 1 行 (決めていなければ「次へ」で入る既定、10-26 夜オーナー「『次へ』で基本進行」) */
+const answerText = computed((): string => {
+  if (state.value === "open") return defRetry.value ? tr(`→ ${retryText.value} (既定)`, `→ ${retryText.value} (default)`) : tr("→ 次の手を決める (既定)", "→ Next craft (default)");
+  if (state.value === "later") return tr("→ 次の手を決める", "→ Next craft");
+  if (state.value === "done") return tr("✓ 完成", "✓ Done");
+  return route.value ?? "";
+});
 const backKind = computed(() => (state.value !== "back" ? null : box.value?.back === "start" ? "start" : backTo.value === parent.value ? "retry" : "other"));
 const route = computed(() => routeText(t.doc.value, props.boxId, q.boxTitle));
 const run = computed(() => runText(phoneRun.value, props.boxId));
@@ -93,22 +107,30 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
 </script>
 
 <template>
-  <div v-if="box" data-phone-out :data-box-id="boxId" class="rounded-xl border bg-[#1a140d] px-1.5 py-2 text-center" :style="{ borderColor: `rgba(${look.c},${state === 'open' ? 0.75 : 0.35})` }">
-    <p class="flex min-w-0 items-start gap-2 text-[14px] font-bold" :style="{ color: `rgb(${look.c})` }">
-      <span class="min-w-0 flex-1 break-words text-center">{{ q.boxTitle(boxId) }}</span>
-      <!-- この結果になる割合 (PC の箱と同じ、エンジンの outcomeOdds) -->
-      <span v-if="odds != null" data-phone-odds class="shrink-0 text-[12px] font-normal tabular-nums text-[#d8ccb4]">{{ pctText(odds) }}</span>
-      <span v-if="state === 'open'" class="shrink-0 text-[11px] font-normal text-amber-200/80">{{ tr("どうする?", "Then?") }}</span>
+  <!-- 結果の行 = 題 (と割合) とアイテムの中身だけ (10-26 夜オーナー「枠の中には出さない、ここはあくまでアイテムの中身だけ」「『次へ』で基本進行」)。
+       今の答えはカードの下の小さな 1 行、変えたい時は「答えを変える ▾」で下から選びの窓 -->
+  <div v-if="box" data-phone-out :data-box-id="boxId" class="w-full rounded-xl border bg-[#1a140d] px-1.5 py-2 text-center" :style="{ borderColor: `rgba(${look.c},${state === 'open' ? 0.75 : 0.35})` }">
+    <p class="break-words text-center text-[14px] font-bold" :style="{ color: `rgb(${look.c})` }">
+      {{ q.boxTitle(boxId) }}<!-- この結果になる割合 (PC の箱と同じ、エンジンの outcomeOdds) --><span v-if="odds != null" data-phone-odds class="ml-1.5 text-[12px] font-normal tabular-nums text-[#d8ccb4]">{{ pctText(odds) }}</span>
     </p>
     <StageItemCard v-if="item" data-phone-out-item class="mx-auto mt-2" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tagsOf(boxId, item)" />
     <!-- 回した結果 (来た人・形の合う別の箱へ移った人・止まった人と理由) -->
     <p v-if="run" data-phone-out-run class="mt-1 break-words text-[12px]" :class="phoneRun?.stuckAt[boxId] ? 'text-rose-200' : 'text-amber-100/80'">{{ run }}</p>
-    <!-- 次の手が付いている箱 (① で答えた) は手の名前。押すとその手を見直す -->
-    <button v-if="state === 'hand'" type="button" data-phone-out-hand class="mt-1 block min-h-10 w-full break-words py-2 text-center text-[13px] text-[#c8bca4] underline decoration-white/20" @click="emit('hand', boxId)">→ {{ box.hand ? handLabel(box.hand) : tr("分かれ目", "Split") }}</button>
-    <template v-else>
-      <!-- 行き先の文 (PC の箱と同じ tree-fail の routeText。狙いが消えた → 始め も文で、10-26 失敗時の挙動の案 2) -->
-      <p v-if="route" data-phone-out-route :data-phone-out-auto="box.autoBack ? 1 : undefined" class="mt-1 break-words text-[12px] text-cyan-200/90">{{ route }}</p>
-      <p v-else-if="state === 'done' && !box.hand" data-phone-out-done class="mt-1 text-[12px] text-emerald-300">{{ tr("✓ 完成 (狙いが全部そろう)", "✓ Done (all targets)") }}</p>
+  </div>
+  <!-- 今の答え (カードの外の小さな 1 行) と、答えを変える入口 -->
+  <div v-if="box" data-phone-out-answer :data-box-id="boxId" class="-mt-1 flex w-full min-w-0 flex-wrap items-center justify-center gap-x-2 text-[12px]">
+    <button v-if="state === 'hand'" type="button" data-phone-out-hand class="min-h-10 min-w-0 break-words text-[#c8bca4] underline decoration-white/20" @click="emit('hand', boxId)">→ {{ box.hand ? handLabel(box.hand) : tr("分かれ目", "Split") }}</button>
+    <span v-else data-phone-out-now class="min-w-0 break-words" :class="state === 'open' ? 'text-amber-200/90' : state === 'done' ? 'text-emerald-300' : 'text-cyan-200/90'">{{ answerText }}</span>
+    <button v-if="state !== 'hand'" type="button" data-phone-out-change class="min-h-10 shrink-0 px-1 text-[#9a8a70] underline decoration-white/20" @click="pickOpen = true">{{ tr("答えを変える ▾", "Change ▾") }}</button>
+  </div>
+  <!-- 答えの選び (下から出る重ね窓。閉じれば元の場所のまま) -->
+  <Teleport to="body">
+    <div v-if="box && pickOpen" data-phone-out-pick :data-box-id="boxId" class="fixed inset-0 z-[55] flex flex-col justify-end bg-black/55" @click.self="pickOpen = false">
+      <div class="flex max-h-[88vh] flex-col rounded-t-2xl border-t-2 border-[#b08a3c] bg-[#15110c] shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
+        <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3 pt-2 text-center" @click.capture="onPickClick">
+          <div class="mx-auto mb-2 h-1.5 w-11 rounded-full bg-white/25" />
+          <p class="break-words text-[15px] font-bold" :style="{ color: `rgb(${look.c})` }">{{ q.boxTitle(boxId) }}</p>
+          <p class="mb-1 break-words text-[12px] text-[#9a8a70]">{{ tr("この結果の後どうする?", "What next after this result?") }}</p>
       <!-- 戻り先の箱のアイテム (その箱に着いた時の形。始めに戻るはベースなので出さない) -->
       <div v-if="backItem && backTo" data-phone-out-back-item class="mt-1 rounded-lg border border-cyan-300/30 bg-black/20 p-1.5">
         <p class="mb-1 break-words text-[11px] text-cyan-200/80">{{ tr(`戻り先: ${q.pathText(backTo)}`, `Returns to: ${q.pathText(backTo)}`) }}</p>
@@ -124,7 +146,6 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
         <button v-if="canDone" type="button" data-phone-ans="done" :class="chipClass(state === 'done')" @click="q.setFinished(boxId)">{{ tr("完成", "Done") }}</button>
         <button v-if="others.length" type="button" data-phone-ans="other" :class="chipClass(backKind === 'other' || pickOther)" @click="startPick">{{ MAP ? (pickOther ? tr("全体図で選ぶ ↓", "Pick on the map ↓") : tr("ほかの箱へ", "Other box")) : tr("ほかの箱へ ▾", "Other box ▾") }}</button>
       </div>
-      <p v-if="defRetry" data-phone-out-def class="mt-1 break-words text-[12px] text-amber-200/90">{{ tr(`決めなければ「次へ」で「${retryText}」`, `If left open, Next sets "${retryText}"`) }}</p>
       <!-- 動きをまとめる: 同じ側の横の当たりを選んでこの箱にまとめる (10-26 オーナー「選択した枠にまとめる」) -->
       <div v-if="joinOpen" data-phone-join-pick class="mt-2 flex flex-col gap-1 rounded-lg border border-amber-300/40 bg-black/20 p-2 text-[13px]">
         <p class="break-words text-[12px] text-amber-100">{{ tr("どれが付いても後の作り方が同じ物を選ぶ (以後の手は 1 本、「MOD ごとに分ける」で戻せる)", "Pick the ones that need the same next steps whichever lands (one path after this; Split by mod undoes it)") }}</p>
@@ -136,6 +157,11 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
       <div v-if="!MAP && listOpen" data-phone-other class="mt-2 flex flex-col gap-1">
         <button v-for="id in others" :key="id" type="button" class="min-h-10 break-words rounded-lg border border-white/10 bg-black/20 px-2 py-1.5 text-left text-[13px]" :class="backTo === id ? 'border-cyan-300/70 text-cyan-100' : 'text-[#d8ccb4]'" @click="listOpen = false; q.setReturn(boxId, id)">↩ {{ q.pathText(id) }}</button>
       </div>
-    </template>
-  </div>
+        </div>
+        <div class="flex border-t border-white/10 px-3 py-2">
+          <button type="button" data-phone-out-pick-close class="g-btn !min-h-11 flex-1" @click="pickOpen = false">{{ tr("閉じる", "Close") }}</button>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>

@@ -53,14 +53,14 @@ function showHand(id: string): void { quiz.focus.value = { kind: "hand", id }; }
       <StageItemCard v-if="item" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
       <template v-if="box.hand">
         <button type="button" data-phone-hand-now class="w-full rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-center text-[14px] text-amber-50" @click="showOuts(q.id)">{{ handLabel(box.hand) }} <span class="ml-2 text-[12px] text-amber-200/80">{{ tr("結果 ›", "Results ›") }}</span></button>
-        <button type="button" data-phone-hand-change class="g-btn !min-h-10" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
+        <button type="button" data-phone-hand-change class="min-h-10 text-[12px] text-[#9a8a70] underline decoration-white/20" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
       </template>
     </template>
     <template v-else>
       <h2 class="text-[16px] font-bold text-[#f0e4c8]">{{ box.hand ? tr(`${handLabel(box.hand)} を打つと…`, `After ${handLabel(box.hand)}…`) : "" }}</h2>
       <p class="text-[12px] text-[#9a8a70]">{{ tr("外れから先に並べています。決めなかった外れは「次へ」で「↩ 再度挑戦」、当たりは次の手を 1 つずつ聞きます", "Misses are listed first. Open misses get \"↩ Retry\" on Next; for hits you pick the next craft one by one") }}</p>
-      <PhoneOutRow v-for="id in outs" :key="id" class="w-full" :box-id="id" @hand="showHand" />
-      <button type="button" data-phone-hand-change class="g-btn !min-h-10" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
+      <PhoneOutRow v-for="id in outs" :key="id" :box-id="id" @hand="showHand" />
+      <button type="button" data-phone-hand-change class="min-h-10 text-[12px] text-[#9a8a70] underline decoration-white/20" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
     </template>
   </div>
 </template>
