@@ -1,0 +1,2 @@
+# Cloudflare の静的な置き場の移し替え (2026-10-26 Search Console)。前の Web 版の住所 /web.html は index.html に名前が変わって 404 だった。? の後ろはそのまま付いていく
+/web.html / 301

@@ -13,6 +13,7 @@
  *   ページは残し、ツール・フッターからのリンクも残す (人が使う一覧として)。
  * pnpm build:web の最後に回す (public には置かない。生成物をリポジトリに入れない)。sitemap.xml も出力先の物を書き直す
  */
+import { execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -183,9 +184,15 @@ M.setLang("ja");
 
 // サイトマップ (出力先の物を書き直す)
 const fixed = ["/", "/craft-basics", "/en/craft-basics", "/guide", "/about", "/en/about", "/contact", "/en/contact", "/privacy", "/en/privacy"];
+// lastmod (2026-10-26 Search Console の「クロール済み - インデックス未登録」の手当て): 手書きのページは public/<道>.html の最後の commit の日、トップは出すたびに中身が変わるので作った日
+const today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+const lastmodOf = (u) => {
+  if (u === "/") return today;
+  try { return execFileSync("git", ["log", "-1", "--format=%cs", "--", `public${u}.html`], { cwd: ROOT, encoding: "utf8", windowsHide: true }).trim() || null; } catch { return null; }
+};
 writeFileSync(resolve(OUT, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${fixed.map((u) => `  <url><loc>${SITE}${u}</loc></url>`).join("\n")}
+${fixed.map((u) => { const d = lastmodOf(u); return `  <url><loc>${SITE}${u}</loc>${d ? `<lastmod>${d}</lastmod>` : ""}</url>`; }).join("\n")}
 </urlset>
 `);
 console.log(`sitemap (${fixed.length} URL、ベースのページ ${urls.length} 枚は noindex で入れない) → ${OUT}`);

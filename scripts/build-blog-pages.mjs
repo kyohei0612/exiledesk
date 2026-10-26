@@ -219,6 +219,8 @@ function tagSections(lang, list) {
 }
 
 const urls = [];
+/** サイトマップの lastmod (URL → 日付。記事は更新日、一覧はその言語の一番新しい更新日。2026-10-26 Search Console の「クロール済み - インデックス未登録」の手当て) */
+const lastmod = new Map();
 const index = { ja: [], en: [] };
 /** 記事ごとのサムネ (OGP の絵のパス)。一覧のカードが使う */
 const thumbs = new Map();
@@ -271,7 +273,7 @@ ${others.length ? `<section class="more"><h2>${l.more}</h2><ul class="posts">${o
     mkdirSync(resolve(dir, m.slug), { recursive: true });
     writeFileSync(resolve(dir, m.slug, "index.html"), page(lang, { title: `${m.title} | ExileDesk`, desc: m.description, path, alt: has(m.slug, lang === "ja" ? "en" : "ja"), og: { type: "article", image, published: m.date, modified: m.updated }, ld, body, slug: m.slug }));
     if (!listed(p)) continue;
-    if (!m.draft) urls.push(`${l.prefix}${path}`);
+    if (!m.draft) { urls.push(`${l.prefix}${path}`); lastmod.set(`${l.prefix}${path}`, m.updated || m.date); }
     // 右の列 (src/web/SideReads.vue) が読む: 題・1 行の説明・タグ (関係する記事を選ぶ)・絵 (OGP の絵のパス)
     index[lang].push({ slug: m.slug, title: m.title, date: m.date, href: `${l.prefix}${path}`, draft: m.draft, description: m.description, tags: m.tags, image: image.replace(SITE, "") });
   }
@@ -280,6 +282,8 @@ ${others.length ? `<section class="more"><h2>${l.more}</h2><ul class="posts">${o
   const ld = { "@context": "https://schema.org", "@type": "Blog", name: l.listTitle, url: `${SITE}${l.prefix}/blog/`, inLanguage: lang };
   writeFileSync(resolve(dir, "index.html"), page(lang, { title: l.listTitle, desc: l.listDesc, path: "/blog/", alt: true, og: { type: "website", image: `${SITE}/web/og.png` }, ld, body: `<h1>${l.blog}</h1>\n<p>${l.listIntro}</p>\n${list}${tagSections(lang, shown)}`, wide: true }));
   urls.push(`${l.prefix}/blog/`);
+  const newest = shown.filter((x) => !x.meta.draft).map((x) => x.meta.updated || x.meta.date).sort().at(-1);
+  if (newest) lastmod.set(`${l.prefix}/blog/`, newest);
   console.log(`${lang}: 記事 ${shown.length} 本 + 一覧 (見本 ${mine.length - shown.length})`);
 }
 // よくある質問のページ: 質問 (h2) ごとにページ内リンク #q1… と目次、構造化データ FAQPage (答えは文字だけ)
@@ -296,7 +300,7 @@ for (const p of faqs) {
   const dir = resolve(OUT, l.prefix.slice(1));
   mkdirSync(dir, { recursive: true });
   writeFileSync(resolve(dir, "faq.html"), page(lang, { title: `${p.meta.title} | ExileDesk`, desc: p.meta.description, path: "/faq", alt: hasFaq(lang === "ja" ? "en" : "ja"), og: { type: "website", image: `${SITE}/web/og.png` }, ld, body, slug: "faq" }));
-  if (p.meta.ready && !p.meta.draft) urls.push(`${l.prefix}/faq`);
+  if (p.meta.ready && !p.meta.draft) { urls.push(`${l.prefix}/faq`); if (p.meta.updated || p.meta.date) lastmod.set(`${l.prefix}/faq`, p.meta.updated || p.meta.date); }
   // About (public/ の手書き) のフッターにもリンク
   const about = resolve(dir, "about.html");
   if (existsSync(about)) writeFileSync(about, readFileSync(about, "utf8").replace(/<p class="fnav">[\s\S]*?<\/p>/, (fnav) => fnav.replace(lang === "ja" ? ">ExileDesk について</a>" : ">About</a>", (s) => `${s} · <a href="${l.prefix}/faq">${FAQ_NAME[lang]}</a>`)));
@@ -322,7 +326,7 @@ if (existsSync(top)) {
 const sm = resolve(OUT, "sitemap.xml");
 if (existsSync(sm)) {
   const xml = readFileSync(sm, "utf8");
-  const add = urls.filter((u) => !xml.includes(`<loc>${SITE}${u}</loc>`)).map((u) => `  <url><loc>${SITE}${u}</loc></url>`).join("\n");
+  const add = urls.filter((u) => !xml.includes(`<loc>${SITE}${u}</loc>`)).map((u) => `  <url><loc>${SITE}${u}</loc>${/^\d{4}-\d{2}-\d{2}$/.test(lastmod.get(u) ?? "") ? `<lastmod>${lastmod.get(u)}</lastmod>` : ""}</url>`).join("\n");
   if (add) writeFileSync(sm, xml.replace("</urlset>", `${add}\n</urlset>`));
 }
 console.log(`ブログ → ${OUT}/blog (サイトマップ +${urls.length})`);
