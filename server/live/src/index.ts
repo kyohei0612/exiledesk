@@ -9,7 +9,6 @@
  *   POST /feedback/<id>/images … 後から画像を足す (送った端末だけ)。GET /feedback/image/<画像 id>(ヘッダー x-exiledesk-key) で見る
  *   POST /event            … 操作の印 (Analytics Engine)。日報の「段階と離脱」「どこから」「端末」の元
  *   POST /log              … 分析用の記録 (D1、logs.ts)。GET /logs/day?day= (ヘッダー x-exiledesk-key) で取り出す
- *   GET  /logs/send?day= (ヘッダー x-exiledesk-key) … その日の記録を今すぐ LOGS_WEBHOOK へ (確かめ用。D1 からは消さない)
  *   GET  /report(ヘッダー x-exiledesk-key)     … 日報を今すぐ (確かめ用)
  *   GET  /refresh(ヘッダー x-exiledesk-key)    … 配信の見張りを今すぐ
  *   GET  /health
@@ -25,7 +24,7 @@ import { fetchYoutube, fetchYoutubeAvatars, type Latest, youtubeChannels } from 
 import { getImage, MAX_IMAGES, notifyImagesDiscord, parseImages, pruneImages, saveImages } from "./feedback-images";
 import { allowIp, FEEDBACK_ID_RE, getFeedback, getReplies, listFeedback, notifyDiscord, parseFeedback, saveFeedback, saveReply, type Feedback } from "./feedback";
 import { DATASET, parseBatch, sql, usersBetween, writeEvents } from "./events";
-import { dayLogs, jstDay, saveLog, sendDayLogs } from "./logs";
+import { dayLogs, saveLog } from "./logs";
 import { alert, dailyReport, lastPosted, reqLog, yesterdayJst } from "./monitor";
 import { treeShare } from "./tree-share";
 import { pullDiscord } from "./discord";
@@ -82,18 +81,6 @@ export async function refresh(env: Env, channels: readonly ChannelDef[] = CHANNE
   // 配信 (ライブ) はもう見ていない (最新動画だけ)。取れなかった時はログだけで、異常の通知・日報には出さない (2026-10-11 オーナー)
   if (errors.length) console.warn("exiledesk-live:", errors.join(" | "));
   return state;
-}
-
-/** 毎朝 9 時 (JST): 昨日 (JST) の記録を Discord へ。送れなければ異常として残す (日報に載る) */
-export async function sendYesterdayLogs(env: Env, fetchFn: Fetch = fetch, now = new Date()): Promise<void> {
-  const day = jstDay(new Date(now.getTime() - 24 * 3600e3));
-  try {
-    const r = await sendDayLogs(env, day, fetchFn);
-    console.log(JSON.stringify({ job: "logs-send", day, ...r }));
-    if (!r.ok && env.LOGS_WEBHOOK) await alert(env, "記録の送信", `${day}: ${r.error ?? "?"}`, fetchFn, now);
-  } catch (e) {
-    await alert(env, "記録の送信", `${day}: ${String(e).slice(0, 300)}`, fetchFn, now);
-  }
 }
 
 const CORS = { "access-control-allow-origin": "*", "access-control-allow-methods": "GET, POST, OPTIONS", "access-control-allow-headers": "content-type" };
@@ -288,14 +275,6 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
       if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return json({ error: "day=YYYY-MM-DD" }, 400);
       return new Response(await dayLogs(env, day), { headers: { "content-type": "application/x-ndjson; charset=utf-8", "cache-control": "no-store" } });
     }
-    case "/logs/send": {
-      // その日の記録を今すぐ LOGS_WEBHOOK へ (確かめ用)。D1 からは消さない
-      if (!keyOk(env, req)) return json({ error: "key が違う" }, 403);
-      const day = url.searchParams.get("day") ?? "";
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return json({ error: "day=YYYY-MM-DD" }, 400);
-      const r = await sendDayLogs(env, day);
-      return json(r, r.ok ? 200 : 502, { "cache-control": "no-store" });
-    }
     case "/feedback.json":
       if (!keyOk(env, req)) return json({ error: "key が違う" }, 403);
       return json(await listFeedback(env.LIVE), 200, { "cache-control": "no-store" });
@@ -364,7 +343,6 @@ async function updateVisitors(env: Env, now = new Date()): Promise<void> {
 export default {
   async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
     // 1 時間おきに相場、8 時間おきに配信の見張り (最新動画。2026-10-10 オーナー「5 分監視、8 時間に 1 回でええな」「相場も 1 時間に 1 回」)、毎朝 9 時 (JST = 0:00 UTC) は日報
-    // 同じ時に、昨日 (JST) の分析用の記録をファイルで (日報とは別々に動かす。片方が落ちても、もう片方は送る)
     // 毎朝 9:03 (JST = 0:03 UTC): Discord を読むだけの Bot が前回より後の書き込みを D1 に置く (discord.ts、日報の 9:05 より前)
     if (controller.cron === "3 0 * * *") {
       ctx.waitUntil(pullDiscord(env).then(() => undefined).catch((e) => console.warn("discord:", String(e).slice(0, 200))));
@@ -372,7 +350,7 @@ export default {
     }
     if (controller.cron === "0 0 * * *") {
       ctx.waitUntil(dailyReport(env));
-      ctx.waitUntil(sendYesterdayLogs(env));
+      // 前の日の記録の件数を #分析ログファイル管理 に流すのは 10-26 にやめた (オーナー「分析ログファイル管理はいらんね」)。記録は D1 に残り、分析の部が pull-logs.mjs で読む
       if (env.LOGS) ctx.waitUntil(pruneImages(env.LOGS).catch((e) => console.warn("fb images:", String(e).slice(0, 160))));
     } else {
       // 1 時間おき: 相場を取り直す (全員に同じ物を配る、market.ts)。配信の見張りは 8 時間おき (UTC 0・8・16 時)

@@ -70,7 +70,7 @@ export function splitJsonl(text: string, max = FILE_MAX): string[] {
 }
 
 /**
- * その日の記録のお知らせを Discord (LOGS_WEBHOOK) へ 1 通だけ (毎朝 9 時の cron と GET /logs/send)。D1 からは消さない。
+ * その日の記録のお知らせを Discord (LOGS_WEBHOOK) へ 1 通だけ (10-26 に cron から外した。今は呼ぶ所が無い、テストのために残す)。D1 からは消さない。
  * 2026-10-13 オーナー「日報の送信が変、めちゃくちゃ多重でくる、整理して」: 前はファイルを付けて送り、大きすぎて 413 の時に 1 本ずつ送り直していたので、
  * ファイルの数だけ投稿が来ていた。記録は D1 にあり取り出しは GET /logs/day か scripts/pull-logs.mjs なので、ファイルは付けず行数と大きさの 1 行だけ
  */
