@@ -239,7 +239,8 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       <!-- PC のチャンネルは送っても画面に付いてくる (2026-10-11 オーナー「右のチャンネルは追従型」)。仕切りの線は下まで (aside は伸ばし、中だけ sticky) -->
       <!-- 右クリックは真ん中 (CraftStage.vue) と同じく「持っている物を手放す」。ブラウザのメニュー (コピーなど) は出さない (2026-10-13 オーナー) -->
       <div v-if="textPage && !phone" class="sticky top-3 shrink-0 self-start py-4 pr-4 empty:hidden"><AdSlot id="page-right" :w="sideAdW()" :h="600" :tick="pageTick" /></div>
-      <aside v-show="phone || craftPage" data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : BLOG_ON ? 'w-[324px] border-l' : 'w-[280px] border-l'" @contextmenu.prevent="craftStage.hold(null)">
+      <!-- スマホのシミュ (ツリー) では出さない (空いた所にシミュがツリーの全体図を置く。2026-10-26 オーナー「スマホ版が死ぬほど使いづらい」、シミュ部長 30) -->
+      <aside v-show="(phone && !treePage) || craftPage" data-rec-part="channel" class="shrink-0 border-[var(--exile-color-border-subtle)] p-3" :class="phone ? 'border-t' : BLOG_ON ? 'w-[324px] border-l' : 'w-[280px] border-l'" @contextmenu.prevent="craftStage.hold(null)">
         <div :class="phone ? '' : 'sticky top-3'">
           <!-- 読み物 (関係する記事・新しい記事・使い方) を上、チャンネルを下 (2026-10-22、開発版だけ。右の列の広告の枠は外した) -->
           <SideReads v-if="BLOG_ON" class="mb-3" />
