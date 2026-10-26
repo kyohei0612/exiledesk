@@ -108,10 +108,9 @@ export function tidy(d: TreeDoc, chipW?: (id: string) => number | undefined): vo
   };
   layout("start");
   place("start", 0);
-  // 始まりの箱は木全体 (ほかの箱) の横の真ん中の上に置く (10-26 夜オーナー「真ん中にデフォで置けばいい話」。
-  // 前は真ん中の子の上で、片側へ伸びた木ではミニマップでスタートが左上の角に寄り、左上の完成形の窓の下に入った)
-  const st = d.boxes.start!, rest = Object.values(d.boxes).filter((b) => b !== st);
-  if (rest.length) st.x = Math.round((Math.min(...rest.map((b) => b.x)) + Math.max(...rest.map((b) => b.x + BOX_W))) / 2 - BOX_W / 2);
+  // 始まりの箱も普通の木の並べ方のまま (子たちの真ん中の真上、線はまっすぐ)。前は整列の最後に木全体の横の真ん中へ置き直していて、
+  // 片側へ伸びた木で骨が曲がった (10-26 夜オーナー「整列で骨が曲がってる」)。「スタートは真ん中の一番上」はカメラの寄せ (use-tree-flow の placeOf)
+  const st = d.boxes.start!;
   // 始まりの箱は x = 0 に戻す (木ごとずらす)
   const dx = -st.x;
   for (const b of Object.values(d.boxes)) b.x += dx;
