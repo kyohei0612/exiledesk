@@ -26,6 +26,7 @@ import { TREE_SPAM_ORB, useSimShelf } from "../use-sim-shelf";
 import { afterQualityOf, autoCatOf, FREE_EFFECTS, handOf, hitAimsOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan";
 import { tr } from "../../../i18n/lang";
 import { simOp } from "../../../web/track";
+import { fixedValues } from "./tree-fixed-values";
 
 const props = defineProps<{ boxId: string; current: Hand | null }>();
 /** pick の preCatalyst = 前に足す品質だけ上げる手のカタリスト (触媒のお告げで、まだ品質を上げる手の後でない時) */
@@ -36,6 +37,8 @@ const t = useTree();
 
 const sample = computed(() => (s.data.value ? sampleOf(s.data.value, t.doc.value, props.boxId, 1) : null));
 const item = computed(() => sample.value?.item ?? null);
+/** 出すカードの MOD の値は木の中で揃える (箱・完成形のカードと同じ、tree-fixed-values。10-26 夜 カードが +49・手の窓が +48 で食い違った)。打つ・判定は見本の値のまま */
+const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it) : it);
 /** 狙いに当たらない MOD の行は「外れ MOD」(乗せた時のカードと同じ、10-25 オーナー「プラスで MOD 選んだ時ハズレ MOD の表示が溶けてる」) */
 const rowTags = (it: StageItem | null) => (s.data.value && it ? treeRowTags(s.data.value, t.doc.value, t.doc.value.boxes[props.boxId]?.unwanted ?? [], it, t.doc.value.boxes[props.boxId]) : null);
 /** 当たりの MOD が決まっていない当たりの箱 (棚は出さずに先に MOD を選ばせる、tree-hand-plan の needAimOf) */
@@ -213,7 +216,7 @@ function ok(): void {
     <!-- この箱の時点のアイテム (見本)。持ってカードを押す = この手にする (エミュと同じ操作) -->
     <!-- カードの下はエミュと同じく空ける (持っている間はカードのすぐ下に「押すと使う · 右クリック / Esc で手放す」が重ねて出る) -->
     <div class="flex min-w-0 flex-col gap-8 md:w-[480px]">
-      <div data-tree-hand-card :class="held && problem ? 'cursor-not-allowed opacity-60' : ''" :title="problem ?? undefined"><StageItemCard v-if="shelfItem" :item="preCat ? shelfItem : item ?? shelfItem" :row-tags="rowTags(preCat ? shelfItem : item ?? shelfItem)" :added="[]" :removed="[]" :holding="!!held && !problem" :flash-key="0" @use="ok" /></div>
+      <div data-tree-hand-card :class="held && problem ? 'cursor-not-allowed opacity-60' : ''" :title="problem ?? undefined"><StageItemCard v-if="shelfItem" :item="cardOf(preCat ? shelfItem : item ?? shelfItem)" :row-tags="rowTags(preCat ? shelfItem : item ?? shelfItem)" :added="[]" :removed="[]" :holding="!!held && !problem" :flash-key="0" @use="ok" /></div>
       <div class="flex min-w-0 flex-col gap-1.5">
         <p class="text-[12px] opacity-70">{{ tr("棚から持って、カードを押すとこの箱の次の手になる", "Hold a currency from the shelf and click the item to make it this box's next craft") }}</p>
         <!-- 打たずに分ける (分かれ目) のボタンは 10-25 に外した (オーナー「分かれ道マジでややこしいからボタンいらない」)。分かれ目は見本の木にある物だけ、窓 TreeSplitPick で行を直せる -->
