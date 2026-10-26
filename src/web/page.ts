@@ -48,7 +48,7 @@ let courseBack = remember("course", () => (topic.value ? { id: topic.value.id, a
  * ツリーのページの中の段 (2026-10-24 オーナー「シミュレーターのタブを押したら最初のベース選択のページへ (オーバーレイでなくページ全体)、MOD も別ページ」)。
  * tree = ツリー、base = 最初のベース選び、mods = 完成の MOD。どれも treePage = true で、SimTreePage が見て出し分ける
  */
-export type TreeStep = "tree" | "base" | "mods";
+type TreeStep = "tree" | "base" | "mods";
 export const treeStep = ref<TreeStep>("tree");
 const TREE_PAGES: Record<string, TreeStep> = { "page=sim-tree": "tree", "page=sim-base": "base", "page=sim-mods": "mods" };
 

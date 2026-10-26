@@ -16,7 +16,7 @@ import { ref, watch, type Ref } from "vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { tr } from "../../i18n/lang";
 
-export interface StageFx {
+interface StageFx {
   n: number;
   kind: "hit" | "up" | "shake";
   color: string;
@@ -112,7 +112,7 @@ function vaalText(before: StageItem, after: StageItem, changed: number): string 
 }
 
 /** 演出の元: 手の数 (増えた時だけ動く) と直前の手。既定は手で打つ画面 (動画モードは自分のテープを渡す) */
-export interface FxSource { count: () => number; last: () => PlayedStep | null; quiet?: () => boolean }
+interface FxSource { count: () => number; last: () => PlayedStep | null; quiet?: () => boolean }
 const MANUAL: FxSource = { count: () => craftStage.log.value.length, last: () => craftStage.last.value, quiet: () => !!craftStage.replay.value };
 
 export function useStageFx(mouse: Ref<{ x: number; y: number }>, src: FxSource = MANUAL) {

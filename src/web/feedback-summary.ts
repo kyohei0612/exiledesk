@@ -14,7 +14,7 @@ const modLine = (m: StageMod): string =>
   `${m.side === "prefix" ? "プレフィックス" : "サフィックス"}: ${m.textJa.replace(/\n/g, " / ")}${m.fractured ? " (固定)" : ""}${m.desecrated ? " (冒涜)" : ""}${m.crafted ? (m.modId.includes("/Emotion_") ? " (デリリウム)" : " (エッセンス)") : ""}`;
 
 /** 打った手を続けて同じ物はまとめて (「カオスオーブ ×21 → 完全なカオスオーブ ×33」)。長い時は最後の方だけ */
-export function stepsJa(log: readonly PlayedStep[], max = 14): string {
+function stepsJa(log: readonly PlayedStep[], max = 14): string {
   const groups: Array<{ name: string; n: number }> = [];
   for (const p of log) {
     const o = p.out;

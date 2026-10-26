@@ -7,7 +7,7 @@
  *   10% 以上          → 整数 ("42%")。99.5% 以上は丸めて "100%" (StageAimPanel と同じ)
  * 値の変化 (+12% / 1.16倍) や小数 2 桁が要る賭け (アドニア) は別。null / 数でない物は opts.none ("")
  */
-export interface PctOpts {
+interface PctOpts {
   /** 0 の時 (既定 "0%") */
   zero?: string;
   /** null / NaN の時 (既定 "") */

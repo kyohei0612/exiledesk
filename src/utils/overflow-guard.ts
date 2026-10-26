@@ -16,7 +16,7 @@ function scrollerOf(e: Element): boolean {
 }
 
 /** はみ出した物 (一番外側だけ) */
-export function findOverflow(): Element[] {
+function findOverflow(): Element[] {
   const w = document.documentElement.clientWidth;
   const out: Element[] = [];
   for (const e of document.querySelectorAll("#app *")) {
@@ -59,7 +59,7 @@ export function startOverflowGuard(): void {
  * はみ出し・console.error・NaN / undefined・残った #・日本語の画面の英語の MOD を拾って返す。
  * 取引所・要望・使い方・支援・記録のボタンは押さない (外に出る・送る物)
  */
-export interface MonkeyFound { kind: string; detail: string; act: string; w: number; lang: string }
+interface MonkeyFound { kind: string; detail: string; act: string; w: number; lang: string }
 const errs: string[] = [];
 let hooked = false;
 function hookErrors(): void {

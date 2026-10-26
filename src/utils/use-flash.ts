@@ -6,7 +6,7 @@
  */
 import { getCurrentScope, onScopeDispose, ref, type Ref } from "vue";
 
-export const FLASH_MS = 2500;
+const FLASH_MS = 2500;
 
 export function useFlash<T = string>(ms = FLASH_MS): { msg: Ref<T | null>; flash: (v: T) => void; clear: () => void } {
   const msg = ref(null) as Ref<T | null>;

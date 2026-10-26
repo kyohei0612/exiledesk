@@ -8,7 +8,7 @@ import type { PatchData, StageItem } from "../../services/craft-stage/engine";
 import { inject, provide, type InjectionKey, type Ref } from "vue";
 import { craftStage } from "../craft-stage";
 
-export interface ShelfCtx {
+interface ShelfCtx {
   data: Ref<PatchData | null>;
   item: Ref<StageItem | null>;
   omens: Ref<string[]>;

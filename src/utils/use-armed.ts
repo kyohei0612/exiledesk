@@ -7,7 +7,7 @@
 import { getCurrentScope, onScopeDispose, ref } from "vue";
 
 export const ARMED_CLASS = "g-btn-red sm";
-export const ARMED_MS = 3000;
+const ARMED_MS = 3000;
 
 export function useArmed(ms = ARMED_MS) {
   const armed = ref<string | null>(null);

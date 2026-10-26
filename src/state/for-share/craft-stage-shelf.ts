@@ -25,7 +25,7 @@ type Named = Record<string, { en: string; ja: string }>;
 const KEYS = PRICE_KEYS as unknown as { currency: Named; bones: Named; omens: Named };
 const ESS: Named = ESSENCE_KEYS;
 
-export interface ShelfGroup { kind: string; label: string; keys: string[] }
+interface ShelfGroup { kind: string; label: string; keys: string[] }
 
 /** オーブと、MOD を足し引きしない物 */
 export const ORBS: ShelfGroup[] = [

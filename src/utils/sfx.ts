@@ -30,7 +30,7 @@ export function setSfxOff(v: boolean): void {
  * 専用の音が無い物 (増強・神・熟練工のオーブ・エッセンス・触媒など) は OrbUse_01
  */
 const BONES = 5;
-export function sfxOf(key: string): string {
+function sfxOf(key: string): string {
   if (key.startsWith("transmute")) return "transmute";
   if (key.startsWith("alchemy")) return "alchemy";
   if (key.startsWith("regal")) return "regal";

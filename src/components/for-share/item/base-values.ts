@@ -16,7 +16,7 @@ export const BASE_VALUES_ON = flag("baseValues");
 const valuesText = (vs: readonly number[]): string => vs.join("-");
 
 /** 聖別した MOD は聖別の前の値 (素) の文、それ以外は MOD の文のまま (values は素) */
-export function baseModText(m: StageMod): string {
+function baseModText(m: StageMod): string {
   if (!m.sanctify) return modText(m);
   return modText({ ...m, ...retext(m, m.sanctify.base, craftStage.data.value ?? undefined) });
 }

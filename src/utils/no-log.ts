@@ -8,7 +8,7 @@ import { ref } from "vue";
 import { REC } from "./rec-mode";
 import { isTauriRuntime } from "./isTauriRuntime";
 
-export const NO_LOG_KEY = "exiledesk.noLog";
+const NO_LOG_KEY = "exiledesk.noLog";
 
 function read(): boolean {
   // 開発版 (手元の preview:prod -- --dev) は記録しない
