@@ -25,6 +25,7 @@ import { useTree } from "./use-tree";
 import { TREE_SPAM_ORB, useSimShelf } from "../use-sim-shelf";
 import { afterQualityOf, autoCatOf, FREE_EFFECTS, handOf, hitAimsOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan";
 import { tr } from "../../../i18n/lang";
+import { stageHelp } from "../../../state/for-share/craft-stage-help";
 import { simOp } from "../../../web/track";
 import { fixedValues } from "./tree-fixed-values";
 
@@ -90,6 +91,8 @@ const autoCat = computed((): string | null => { const d = s.data.value, it = ite
 const needPre = computed(() => canCatalyse.value && !afterQuality.value);
 const preFill = computed(() => { const d = s.data.value, it = item.value; return d && it ? preFillOf(d, it, needPre.value, autoCat.value) : null; });
 const shelfItem = computed(() => preFill.value?.item ?? item.value);
+/** スマホの下の帯に出す持った札の説明 (PC は札に乗せると出るカードと同じ文、** の太字の印は外す。省略しない。10-26 夜オーナー「スマホも PC と同じ動きに」) */
+const heldHelp = computed(() => (held.value ? stageHelp(held.value, s.data.value, shelfItem.value).map((l) => l.replace(/\*\*/g, "")) : []));
 // フラクチャーのオーブは完成の MOD でフラクチャーの印を決めた木でだけ打てる (10-25 オーナー「最初にフラクチャーを決めないとフラクチャーオーブを打てないように」)
 const fractureBlock = (k: string): string | null => (effectOf(k) === "fracture" && !fractureMarks(t.doc.value).length ? tr("先に完成の MOD でフラクチャーを決めて", "Set a fracture on the final mods first") : null);
 const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens, fractureBlock);
@@ -112,8 +115,8 @@ function holdSpam(): void {
 function onShelfHold(k: string): void {
   simOp("hold", k);
   if (spam.value) { spam.value = false; held.value = k; return; }
-  // スマホは持っている札をもう一度押しても手放さず、お告げの欄まで送る (10-26 モンキー 7 の 25: 今の手と同じ札を押すと手放され、お告げの欄が消えて窓が上へ飛んだ)
-  if (window.innerWidth < 768 && held.value === k) { void showOmens(); return; }
+  // 同じ札をもう一度押すと離す = PC と同じ (10-26 夜オーナー「スマホも PC と同じ動きに、もう一度押すと閉じる」。前はスマホだけ離さずお告げの欄へ送っていた、モンキー 7 の 25)。
+  // お告げの欄へ送るのは持った時だけ (下の watch)
   onHold(k);
 }
 /** ツリーの棚は打てる札だけを出すので、印が無いせいで出ないフラクチャーは窓に理由を 1 行 (アイテムには打てる時だけ) */
@@ -285,6 +288,8 @@ function ok(): void {
     </div>
     <!-- スマホだけ: 持っている間は下に「使う」の帯 (カードの「下の帯の『使う』でも」の帯。カードまで戻らず親指で決められる、10-25 シミュ 29 の点検) -->
     <div v-if="held" data-tree-hand-use-bar class="sticky bottom-0 z-10 -mx-3 border-t border-white/10 bg-[#0c0a08]/95 px-3 py-2 md:hidden">
+      <p class="mb-1 break-words text-[12px] font-bold text-amber-100">{{ tr(`${nameOf(held)} を持っている`, `Holding ${nameOf(held)}`) }}</p>
+      <p v-if="heldHelp.length" data-tree-hand-held-help class="mb-2 break-words text-[12px] leading-snug text-[#d8ccb4]">{{ heldHelp.join(" ") }}</p>
       <button type="button" data-tree-hand-use class="g-btn-red min-h-11 w-full text-[15px]" :disabled="!!problem" @click="ok">{{ tr("使う (この手にする)", "Use (make it this craft)") }}</button>
     </div>
     <!-- 持っている物の絵をカーソルに付ける (エミュと同じ共有の部品、スマホは出ない。10-26 オーナー「パソコン版持ってるかわからんから…エミュと同じ仕様で」) -->

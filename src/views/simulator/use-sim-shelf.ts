@@ -33,10 +33,19 @@ export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null
   function release(): void { held.value = null; omens.value = []; }
   function onHold(k: string): void { if (held.value === k) release(); else held.value = k; }
   /**
-   * 棚の空いている所を押す = 離す (ボタン・入力・お告げの欄の中は除く)。指 (touch) では離さない: 送ろうと棚に触れただけで持った物とお告げの欄が消えた
-   * (10-26 オーナー「お告げが画面外のままでスクロールしても見られなかった」。スマホは手の窓の × か別の札で持ち替える)
+   * 棚の空いている所を押す = 離す (ボタン・入力・お告げの欄の中は除く)。
+   * 指 (touch) は押した瞬間には離さず、動かさずに押して離した時だけ離す (送ろうと棚に触れただけで持った物とお告げの欄が消えた、10-26 オーナー
+   * 「お告げが画面外のままでスクロールしても見られなかった」。その後 10-26 夜オーナー「スマホも PC と同じ動きに」で、送らずに押した時は離す)
    */
-  function onShelfDown(e: PointerEvent): void { if (e.pointerType !== "touch" && held.value && !(e.target as HTMLElement).closest("button,input,select,label,[data-held-box]")) release(); }
+  function onShelfDown(e: PointerEvent): void {
+    if (!held.value || (e.target as HTMLElement).closest("button,input,select,label,[data-held-box]")) return;
+    if (e.pointerType !== "touch") { release(); return; }
+    const x0 = e.clientX, y0 = e.clientY;
+    const up = (u: PointerEvent): void => { stop(); if (Math.hypot(u.clientX - x0, u.clientY - y0) < 8) release(); };
+    const stop = (): void => { window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", stop); };
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", stop); // 送り始めると指の押しは取り消される (pointercancel) = 離さない
+  }
   function usableWith(k: string, om: readonly string[]): string | null {
     const d = s.data.value, it = item.value;
     return block(k) ?? (d && it ? useReason(d, prepFor(d, it, k), k, om) : tr("準備中", "Loading")); // 規格外の形で聞く (ルーンはソケットを足す・アストリッド、tree-unbounded)
