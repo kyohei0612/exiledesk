@@ -160,10 +160,9 @@ window.visualViewport?.addEventListener("resize", fitZoom);
         <img src="/favicon.png" alt="" class="g-brand-icon shrink-0" :class="phone ? 'size-6' : 'size-8'" draggable="false" />
         <span class="g-brand-word leading-none" :class="phone ? 'text-[12px]' : 'text-[18px]'">EXILEDESK</span>
       </span>
-      <!-- スマホ: 本日の訪問者と版を小さく 2 行に重ねる (押すと更新履歴) -->
-      <button v-if="phone" type="button" data-rec-part="header-version" class="g-plain flex min-w-[3rem] shrink flex-col items-start text-[10px] leading-tight opacity-60 hover:opacity-100" :title="tr('更新履歴を見る', 'View changelog')" @click="changelogOpen = 'all'">
-        <span v-if="visitors" data-rec-part="header-visitors" class="max-w-full truncate">{{ tr(`本日 ${visitors.today.toLocaleString()} 人`, `${visitors.today.toLocaleString()} today`) }}</span>
-        <span class="max-w-full truncate">v{{ pkg.version }}</span>
+      <!-- スマホ: 本日の訪問者だけ (版は出さない、… で切らない。2026-10-26 オーナーの A、1 段の決まりのまま)。押すと更新履歴 -->
+      <button v-if="phone && visitors" type="button" data-rec-part="header-version" class="g-plain flex shrink-0 flex-col items-start whitespace-nowrap text-[10px] leading-tight opacity-60 hover:opacity-100" :title="tr('更新履歴を見る', 'View changelog')" @click="changelogOpen = 'all'">
+        <span data-rec-part="header-visitors">{{ tr(`本日 ${visitors.today.toLocaleString()} 人`, `${visitors.today.toLocaleString()} today`) }}</span>
       </button>
       <span v-if="phone" class="ml-auto shrink-0" data-rec-part="header-lang"><LangSwitch /></span>
       <!-- 1024 px 未満は飾りの札 (画面名・アプリ版) を出さない (768 px で帯が詰まって「日本語」が縦に折れた。2026-10-13) -->
