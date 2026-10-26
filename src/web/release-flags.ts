@@ -74,6 +74,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "emuToSim",
   // ベース選びの部位のタイルの絵を今日のユニークに (オーナー 10-26 夜「今日のユニークも出して」)
   "todayUnique",
+  // AdSense の審査対策: トップの説明文とコスメのタブ外し (オーナー 10-27「AdSense まわりは即リリースで OK」)
+  "adReview",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */
