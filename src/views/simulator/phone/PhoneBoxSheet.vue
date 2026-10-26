@@ -5,7 +5,8 @@
   動くのは下のボタンだけ: 「この回の質問へ」(答え直す) / 戻り先を選んでいる時は「ここへ戻す」
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import TreeNote from "../tree/TreeNote.vue";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
@@ -26,6 +27,9 @@ const look = computed(() => OUT_LOOK[box.value?.out ?? "junk"]);
 const odds = useTreeOdds();
 const item = computed(() => (s.data.value && box.value ? sampleOf(s.data.value, t.doc.value, id.value, 1).item : null));
 const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.value, t.doc.value, box.value?.unwanted ?? [], item.value, box.value) : null));
+/** 箱のメモを書いている (PC の TreeNote をそのまま、文だけ) */
+const noteEdit = ref(false);
+watch(id, () => { noteEdit.value = false; });
 const cardW = Math.min(340, (typeof window === "undefined" ? 375 : window.innerWidth) - 40);
 const name = (x: string): string => q.boxTitle(x);
 const route = computed(() => (box.value ? routeText(t.doc.value, id.value, name) : null));
@@ -75,6 +79,14 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
         <p v-if="route" data-phone-sheet-route class="mt-2 break-words text-[13px] text-cyan-200">{{ route }}</p>
         <p v-else-if="box.done" class="mt-2 text-[13px] text-emerald-300">{{ tr("✓ 完成", "✓ Done") }}</p>
         <p v-if="run" data-phone-sheet-run class="mt-1 break-words text-[12px]" :class="phoneRun?.stuckAt[id] ? 'text-rose-200' : 'text-amber-100/90'">{{ run }}</p>
+        <!-- 箱のメモ (書いてあれば全文、✎ で書く。PC の箱のメモと同じ Box.note) -->
+        <div data-phone-sheet-note class="mt-2">
+          <TreeNote v-if="noteEdit" :key="`n-${id}`" :box-id="id" @close="noteEdit = false" />
+          <button v-else type="button" data-phone-sheet-note-open class="min-h-10 w-full rounded-lg border border-white/10 bg-black/20 px-2 py-1.5 text-left text-[13px]" @click="noteEdit = true">
+            <span class="block text-[11px] font-bold text-[#c9b48a]">{{ box.note ? tr("この箱のメモ ✎", "Note for this box ✎") : tr("✎ この箱にメモを書く", "✎ Write a note for this box") }}</span>
+            <span v-if="box.note" class="block whitespace-pre-wrap break-words text-[#e8d8c8]">{{ box.note }}</span>
+          </button>
+        </div>
         <template v-if="box.hand">
           <p class="mt-2 rounded-lg border border-amber-300/50 bg-[#2a2014] px-2 py-1.5 text-[13px] text-amber-50">{{ tr("この回の手", "Craft here") }}: {{ handLabel(box.hand) }}</p>
           <ul class="mt-1 flex flex-col">

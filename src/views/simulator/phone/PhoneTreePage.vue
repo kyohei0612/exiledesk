@@ -27,7 +27,12 @@ import PhoneMap from "./PhoneMap.vue";
 import PhoneBoxSheet from "./PhoneBoxSheet.vue";
 import PhoneIssues from "./PhoneIssues.vue";
 import { flag } from "../../../web/release-flags";
-import { simAct } from "../../../web/track";
+import { simAct, simOp } from "../../../web/track";
+import PhoneMemo from "./PhoneMemo.vue";
+import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
+import { quickSave, unsaved } from "../tree/tree-save";
+import { askLeave } from "../../../web/page";
+import { useArmed } from "../../../utils/use-armed";
 
 const t = useTree();
 /** 下の全体図と箱の重ね窓 (スイッチ phoneMap、10-26 オーナーの選んだ案 B。OK 待ちの間は本番は前の形) */
@@ -42,6 +47,14 @@ const routesOpen = ref(false);
 watch(() => q.focus.value, () => { routesOpen.value = false; });
 /** 完成形のカードを開いている */
 const goalOpen = ref(false);
+/** ツリーのメモを書いている (PhoneMemo) */
+const memoEdit = ref(false);
+/** 白紙に戻す = PC と同じ (SimTreePage の onClear): スタートと完成形を残して下を消す。作りかけは 3 択、保存済みは 2 回押し */
+const clearArm = useArmed();
+function onClear(): void {
+  const go = (): void => { simOp("clear"); t.reset(); setCurrentTreeRecipe(null); q.reset(); window.scrollTo(0, 0); };
+  if (unsaved(t.doc.value)) askLeave(go, () => void quickSave()); else if (clearArm.arm()) go();
+}
 /** 帯の小さなボタン (PC の 0 の枠 TreeGoalCard の札と同じ形、指で押せる高さ 32px) */
 const PILL = "shrink-0 rounded-md border border-[#c9a45c]/60 bg-gradient-to-b from-[#3a2c14] to-[#1a1309] px-2.5 text-[12px] font-bold leading-[38px] text-[#f2d27a]";
 const marks = computed(() => t.goals.value.filter((a) => a.fractured).map((a) => a.modId));
@@ -121,7 +134,14 @@ function goBox(id: string): void {
     <!-- 完成形の設定 (ベース・MOD の表) を見に行く間は外さず隠すだけ (戻ると前の質問・開いていた欄・送った位置のまま。10-26 オーナー「見ようと思ったらリセットされてしまうのいやだね」、メモ feedback-basic-flow「閉じたら前の位置」) -->
     <div v-show="!t.goalInline.value" data-phone-tree-body class="flex min-w-0 flex-col gap-3">
       <!-- レシピ (保存・開く・共有 URL。PC の帯と同じ部品、木が同じなので PC で開き直せる) -->
-      <div data-phone-recipe class="flex min-w-0 flex-wrap items-center gap-2 text-[13px]"><TreeRecipeBar @opened="q.reset()" /></div>
+      <!-- レシピの帯の中身とメモ・白紙を 1 つの並びで折り返す (帯の枠を contents にして、レシピ ▾ の行に並べる。落ちる窓はこの行が基準) -->
+      <div data-phone-recipe class="relative flex min-w-0 flex-wrap items-center gap-2 text-[13px]">
+        <TreeRecipeBar class="!contents" @opened="q.reset()" />
+        <button type="button" data-phone-memo-open class="g-btn sm !min-h-10 shrink-0" :aria-pressed="memoEdit" @click="memoEdit = !memoEdit">✎ {{ tr("メモ", "Note") }}</button>
+        <button type="button" data-phone-clear class="!min-h-10 shrink-0" :class="clearArm.is() ? 'g-btn-red sm' : 'g-btn sm'" @click="onClear">{{ clearArm.is() ? tr("もう一度押すと白紙に戻す", "Tap again to clear") : tr("白紙", "Clear") }}</button>
+      </div>
+      <!-- ツリーのメモ (文だけ、書いてあれば全文) -->
+      <PhoneMemo v-model:editing="memoEdit" />
       <!-- 完成形 (上に留める = どこまで送っても狙いを見直せる。畳んだ形: ベースと狙いの MOD の名前、開くと PC の 0 の枠と同じカード) -->
       <div data-phone-goal class="sticky top-0 z-20 -mx-2 border-b border-[#c9a45c]/50 bg-[#1a140d]/[0.97] px-3 py-1.5 shadow-[0_4px_12px_rgba(0,0,0,0.6)]">
         <div class="flex min-w-0 items-center gap-2 text-[13px]">
