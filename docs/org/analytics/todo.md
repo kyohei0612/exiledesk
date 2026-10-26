@@ -1,30 +1,22 @@
 # サーバー管理人 のやる事
 
-## 次の管理人へ (10-25、2 本目 → 3 本目。1 本目からの長い物は notes/2026-10-24-handoff.md)
-- 先に README の決まり 10 個と notes/2026-10-24-handoff.md を読む。報告はブラック (dev/todo.md の宛先の表) へ。セッション同士の送信はオーナーの書き込みの間に 10 回までで止まる。止まったらここの「最新の報告」に書いて commit。
-- **明日の朝 (10-26、JST 9 時に UTC の 10-25 が締まった後)**: web の Worker の 1 日の数が 2,000 前後 → 650 前後に下がったかを見てブラックへ 1 行。残りの大半は 404 (/wp-admin/ などを探る Bot、1 日 600 前後) のはず。数え方は notes/2026-10-25-request-inventory.md (ゾーンの集計の台本の形もそこ)。
-- **日報の予定のタスク**: 10-25 の回 (local_e1184968) は D1 の読みがその時だけ落ちた後、Bash の許可待ちで「動いている」のまま止まっている (2 本目は止めていない、立てた人のでないので)。台本は c486b428 で直した (3 回まで読み直し・昨日の分が無ければ訳を書いて止まる)。明日 9:05 の回が通るかを list_task_runs で見る。ブラックへの SendMessage は前から断られるので、ブラックが md を読みに行く形。
-- やりかけ: Discord を読むだけの Bot (1380e836、本番まだ)。オーナーのトークン (secret DISCORD_BOT_TOKEN) と読むチャンネルの ID 待ち。揃ったら vars に DISCORD_CHANNELS → 本番の D1 に migrations 0009 → server/live を deploy → 日報の節を見る (notes/2026-10-24-discord-bot.md)。
-- やりかけ: ツリーの短い URL (/tree/、1e3432b5) は TREE_SHARE=1 の時だけ開く。シミュを本番に出す時に表 (0008) と一緒に。
-- **持ち物が増えた (10-25、701e97b5)**: vite.web.config.ts・public/robots.txt・scripts/build-seo-pages.mjs・preview-prod.mjs・compare-prod-local.mjs・compare-snaps.mjs (README の地図の「Web の作り」)。vite.web.config.ts には dev だけの読み物の差し込み (6a78fe35・6492792a、/blog/ を data-cache/dev-blog から配り、トップへのリンクを /web.html に) がある。足した台本 scripts/check-www-redirect.mjs は owner-of で「共通」のまま (owners.txt に「サーバー」を足すのをブラックに頼んだ)。
-- Cloudflare の見張り: wrangler auth token で GraphQL (Worker ごと workersInvocationsAdaptive、ゾーン exiledesk.com f2abdbdb… の道・UA ごと httpRequestsAdaptiveGroups)。GraphQL は数回続けると 5 分の回数の上限、wrangler の一時の鍵は数分で切れる (待つ台本は鍵を後で取り直す)。1 日 10 万はアカウント全体・JST 9 時に戻る。
-- 照らしの台本: `node scripts/compare-snaps.mjs --local <手元>` (必ず 01 から、--prev で前の撮り物と)。手元は `node scripts/preview-prod.mjs --head --live --port 1462`。
-- 気を付ける: 本番の worker を出すのは OK の後 (出すのは最終チェック長)。src に新しい import.meta.env.* が入ると _bundle-ts.mjs の define に足さないと build:web が落ちる。Node の fetch は sec-fetch-mode を自分で付ける (名乗らないプログラムを試すのは curl で)。
-- 要望は KV の fb:。返事の無い物は 91832821 だけ (シミュを本番に出す時。① 逆算は止めた・② 貼り付けは旧シミュごと消えたので、返事は今の形で書き直す要あり)。
-
-### 今日 (10-25) の済み
-- サイト全体のリクエストの棚卸し (notes/2026-10-25-request-inventory.md): 本番だけなら 1 日 3〜4%、web の Worker の 6〜8 割は Bot のトップ (Applebot・SemrushBot)。1 人 1 訪問 2〜4 回、操作では増えない。
-- トップを Worker の外へ (af0c886c、本番 f3f66871): run_worker_first は /s/*・/og/* だけ、move-gate.js は og-card を返すだけ。www の Bot 向けの 301 はオーナーが作った Cloudflare の Redirect Rule「www bot to apex」(式の直しは 42bd5fab)。本番で check-www-redirect.mjs --share C6RGjvS が 9 件全部 OK。手順・戻し方は notes/2026-10-25-www-redirect-rule.md。
-- /cosmetics/・ある絵 /mtx-art/ は本番で Worker の数に 0 (叩いた 30 回 → 0、比べの /s/ 5 → 5)。**無い道 (404) は 1 回ずつ数える** (無い絵 20 → 20)。
-- 要望 93d00e7c の返事を 0.1.598 の物に置き直した (前の返事をもう見た人には同じ id なので出ない)。
-- 10-24 の日報を作り直した (daily/2026-10-24.md: 訪問 99・人 77・PV 244・要望 0)。スキン部長・デザイン部長への枠の答え、dev のブログの差し込み。
+## 次の管理人へ (10-26、3 本目 → 4 本目。前の 2 → 3 は notes/2026-10-26-todo-archive.md、1 本目からの長い物は notes/2026-10-24-handoff.md)
+- 先に README の決まり 10 個と notes/daily-report-task.md (毎朝 9 時の AI の評価と見解の流れ) を読む。報告はブラック (dev/todo.md の宛先の表、今は 12 代目 local_feea72b4)。セッション同士の送信はオーナーの書き込みの間に 10 回まで、止まったら共有メモ (side-session-notes/<ブラックの id>/) に書く。
+- **毎朝の形が変わった (10-26 オーナー「既定の報告はいらなくなった」)**: 予定のタスク exiledesk-daily-summary が 9 時に pull-logs.mjs (D1 の記録 + pull-server-notes.mjs の異常・要望・Discord = <日>-server.json) → <日>-ai.md (見本 daily/2026-10-25-ai.md、git に入れない) → post-ai-review.mjs で #日報 に全文。数字の日報 (daily-summary.mjs・サーバーの dailyReport・GET /report) と #分析ログファイル管理 への書き込みは消した (71d1a969)。
+- **10-27 の朝に見る**: ① 予定のタスクの 10-27 の回が通ったか (10-25 の回 local_e1184968 が許可待ちで「動いている」のまま残り、10-26 の朝の回が始まらなかった。止めるのはオーナーかブラック、片付いたかを list_task_runs で) ② #日報 に AI の見解が流れたか (D1 の ai_review の posted_at) ③ #分析ログファイル管理 に書き込みが来ていないか ④ Discord の Bot の 9:03 の回 (discord_daily の 10-27 の行、人の書き込みが本文つきで取れたか。オーナーの試しの書き込みが 9:03 より後ならここに入る)。
+- Discord の Bot (本番、0f10e022): vars の DISCORD_GUILD_ID のサーバーの文字・お知らせ・スレッドを毎朝拾って読むだけ。権限の無いチャンネルは飛ばす、1 回 45 回まで叩く、同じ日は前の行に足す。手で起こす口は無い (一時の cron を足して出す台本は scratchpad にあった kick-discord.mjs の形、notes/2026-10-24-discord-bot.md)。
+- AI の見解を #日報 へ (7eea783d): 台本が D1 の ai_review に塊を置き、Worker の POST /ai-review/flush (と毎時の cron) が REPORT_WEBHOOK で流す。URL は手元に無い。同じ日は 1 回だけ。
+- オーナーの記録の外し (734e34e8、pending-release で次の本番): 手元の住所 (localhost・*.localhost) で開いた Web 版とブログは送らない。オーナーの手順は端末・ブラウザごとに https://exiledesk.com/?nolog=1 を 1 回。
+- 数えている物 (10-25〜26): コスメの静的ページ /pv.js (d17fb76f、本番で D1 に入るのを見た)、シミュの「100 人回す」sim:run・テストラン sim:test (集計は e29311c8、D1 の screen への振り分けはデザインの track.ts 待ち)。
+- Worker の数: UTC 10-25 は web 558 (10-24 は 2,471) + live 585 = 1,143 (1 日 10 万の約 1%)。トップを Worker の外に出した効き目。
+- やりかけ: ツリーの短い URL (/tree/、TREE_SHARE=1 の時だけ。本番の D1 に表 0008 は当てた)。要望 91832821 の返事 (シミュを本番に出した後の形で書き直す要あり)。
+- 気になる事 (調べていない): 10-25 に 1 人が MOD 5 つのサファイア (ジュエル) にカオスを 170 回空振り (0.1.596)。上限を超えた形ができる道がエンジンに残っている疑い、ジン部長 11 本目が調べている。
 
 ## 前の報告 (10-24 の手元の開発版・10-22 の要望と /craft-basics) は notes/2026-10-23-todo-archive.md に移した (10-25 ホワイト)
 
 ## やる事
-- 10-26 朝 (UTC の 10-25 が締まった後): web の Worker の数が 2,000 前後 → 650 前後に下がったか (トップを Worker の外に出した f3f66871 と Rule「www bot to apex」の後。10-25 の 9 件 OK は scripts/check-www-redirect.mjs)。ブラックへ 1 行。
-- 10-26 9:05 の日報の予定のタスクが通ったか (list_task_runs)。止まった 10-25 の回 (local_e1184968) の片付けはブラックかオーナーに。
-- Discord の日報は手元から読めない (webhook は書くだけ・Bot 無し・REFRESH_KEY 無し、notes/bunseki-wake-design.md)。中身は D1 から `pull-logs.mjs` + `analyze-logs.py` で作り直す。
+- 10-27 の朝: 上の「10-27 の朝に見る」の 4 つ。結果はブラックへ 1〜3 行。
+- (済み 10-26: web の Worker の数は 558 に下がった。10-26 の日報の回は 10-25 の回が残っていて始まらず、10-25 の分は手で作った)
 
 ## OK 待ち
 
