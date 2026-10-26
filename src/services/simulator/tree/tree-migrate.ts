@@ -3,7 +3,7 @@
  * 決まり (docs/org/simulator/README): 木の形を変える時は schema の番号 (exiledesk-tree/N) を上げ、MIGRATIONS に N → N+1 の読み替えを足す。古い版は消さずに読み替える。
  * 読めない箱・手は捨てずに、その箱に要確認 (check) の印と元の値 (checkRaw) を残して開く。start の箱が無いなど木として読めない物だけ null (呼ぶ側が別の所に取っておく)
  */
-import { migrateStart, TREE_SCHEMA_N, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
+import { MATCH_BACK, migrateStart, TREE_SCHEMA_N, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 
 const SCHEMA = (n: number): string => `exiledesk-tree/${n}`;
 /** N → N+1 の読み替え (形を変えたらここに足す)。番号の無い物 (10-25 までの開発版) は 0 と読む */
@@ -14,6 +14,8 @@ const MIGRATIONS: Record<number, (d: Record<string, unknown>) => void> = {
   1: (d) => { for (const b of Object.values((d.boxes ?? {}) as Record<string, { x?: unknown; y?: unknown }>)) { if (typeof b?.y === "number") b.y = Math.round(b.y * 1.5); if (typeof b?.x === "number") b.x = Math.round((b.x * 340) / 220); } },
 };
 
+/** 箱の id ではない戻り先 (形の合う箱へ・作り直し、tree-shape の MATCH / RESTART)。これも捨てずに読む */
+const BACK_WORDS: ReadonlySet<string> = new Set([MATCH_BACK, "restart"]);
 const OUTS: ReadonlySet<string> = new Set<OutKind | "start">(["hit", "junk", "junkGone", "lost", "any", "pass", "branch", "start"]);
 const obj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 const str = (v: unknown): v is string => typeof v === "string" && !!v;
@@ -41,7 +43,7 @@ function healBox(id: string, raw: unknown, ids: ReadonlySet<string>): TreeBox {
   const outsRaw = Array.isArray(b.outs) ? b.outs : [];
   const outs = outsRaw.filter((x): x is string => str(x) && ids.has(x));
   if (outs.length !== outsRaw.length) bad("link", "outs");
-  const link = (field: "back" | "parent"): string | null => { const v = b[field] ?? null; if (v === null || (str(v) && ids.has(v))) return v as string | null; bad("link", field); return null; };
+  const link = (field: "back" | "parent"): string | null => { const v = b[field] ?? null; if (v === null || (str(v) && (ids.has(v) || (field === "back" && BACK_WORDS.has(v))))) return v as string | null; bad("link", field); return null; };
   const box: TreeBox = { ...(b as Partial<TreeBox>), id, x: num(b.x, 0), y: num(b.y, 0), out, aim, hand, outs, back: link("back"), done: b.done === "main" ? "main" : null, parent: id === "start" ? null : link("parent") };
   if (check.size) { box.check = [...check]; box.checkRaw = keep; } else { delete box.check; delete box.checkRaw; }
   return box;
