@@ -45,8 +45,8 @@ const spam = ref(!!props.current?.repeat);
 const spamMax = ref<number | null>(props.current?.repeat?.max ?? null);
 /**
  * 足す手で当たりの箱にする狙い (aimKey)。チェックした MOD ごとに当たりの箱、どれも付かなければ外れの箱。1 つも無い = 狙い無し (何も無い状態は作らない)。
- * 既定は完成形で狙いにした MOD のうちその手で付きうる物 (候補) に全部チェック、候補が無ければ狙い無し (10-26 オーナー「両方おｋ」、猿の 2: 前の既定の
- * 「狙い無し ☑」は狙いを決めたのに当たり・外れに分かれなかった。10-25 の「デフォは狙い無し」を置き換え)。MOD を押すと狙い無しが外れ、全部外すと狙い無しに戻る、
+ * 既定は狙い無し (10-26 夜オーナー「デフォルトは狙い無しでチェック付けといてくれ」。その前の 10-26 昼は候補に全部チェックだった)。
+ * 当たるまで繰り返す手だけは候補に全部チェック (狙い無しが無い)。MOD を押すと狙い無しが外れ、全部外すと狙い無しに戻る、
  * 狙い無しを押すと MOD が全部外れる。自分で触ったら、その持った物の間はそのまま (持ち替えると既定に戻る)。前に開いた手はその当たりの箱の MOD
  */
 const checked = ref<string[]>((() => {
@@ -121,7 +121,7 @@ const aimChoices = computed((): Aim[] => {
 });
 /** チェックした狙い (候補にある物だけ) */
 const checkedAims = computed((): Aim[] => aimChoices.value.filter((a) => checked.value.includes(aimKey(a))));
-/** チェックを自分で触ったか (新しい手の既定 = 候補に全部チェック、を上書きしない)。持ち替えると既定に戻る */
+/** チェックを自分で触ったか (新しい手の既定 = 狙い無し、を上書きしない)。持ち替えると既定に戻る */
 let touched = false;
 watch(held, () => { touched = false; });
 /**
@@ -133,7 +133,8 @@ async function showOmens(): Promise<void> {
   document.querySelector<HTMLElement>("[data-tree-hand-pick] [data-held-omens]")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
 }
 watch(held, (k) => { if (k && window.innerWidth < 768) void showOmens(); });
-watch(aimChoices, (l) => { if (!props.current && !touched) checked.value = l.map(aimKey); }, { immediate: true });
+// 新しい手の既定 = 狙い無し (10-26 夜オーナー「デフォルトは狙い無しでチェック付けといてくれ」)。当たるまで繰り返す手は狙い無しが無いので候補に全部チェック
+watch([aimChoices, spam], ([l, sp]) => { if (!props.current && !touched) checked.value = sp ? l.map(aimKey) : []; }, { immediate: true });
 /** チェックの一覧を出す (MOD が付く・入れ替わる手) */
 const showAims = canFree;
 /** 狙い無し = MOD を 1 つもチェックしていない。当たるまで繰り返す時は狙い無しも「どれでも」も無い (MOD を 1 つ以上チェックするまで確定しない、10-25 オーナー) */
