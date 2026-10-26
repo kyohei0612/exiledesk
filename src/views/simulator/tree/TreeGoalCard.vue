@@ -69,7 +69,7 @@ onBeforeUnmount(() => ro?.disconnect());
       <span class="shrink-0 text-[10px] opacity-70">{{ folded ? "▸" : "▾" }}</span>
     </button>
     <div v-if="!folded" ref="wrap" class="relative mt-1 max-h-[calc(100vh-14rem)] overflow-y-auto overflow-x-hidden">
-      <div :style="{ zoom: ZOOM }"><StageItemCard v-if="t.goalItem.value" :item="t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact :fracture-group="marks" :tier-at-least="atLeast" /></div>
+      <div :style="{ zoom: ZOOM }"><StageItemCard v-if="t.goalItem.value" :item="t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact tight-tier :fracture-group="marks" :tier-at-least="atLeast" /></div>
       <!-- ベースは名前の帯のすぐ下の種類の行の右、MOD は最初の MOD の行の右の空いた列 (10-25 オーナー「ベースのとこにベースボタン、その下に MOD ボタン」)。文字に重ならない小さな札 -->
       <button v-if="baseTop != null" type="button" data-tree-goal-open="base" class="absolute right-2 z-10 -translate-y-1/2" :class="PILL" :style="{ top: `${baseTop ?? 0}px` }" :title="tr('ベース・レアリティ・アイテムレベルを選ぶ', 'Choose the base, rarity and item level') + ` (${rarity})`" @click="t.goalPage.value = 1">{{ tr("ベース", "Base") }}</button>
       <button v-if="modTop != null" type="button" data-tree-goal-open="mods" class="absolute right-2 z-10 -translate-y-1/2" :class="PILL" :style="{ top: `${modTop}px` }" :title="tr('完成の MOD を決める (狙いにする・フラクチャーの印)', 'Set the final mods (targets and fracture marks)')" @click="t.goalPage.value = 2">{{ tr("MOD", "Mods") }}</button>
