@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.616",
+  "date": "2026-10-26",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 長い手の札・スマホの狭い画面 (320 など) の下の帯とレシピのページ・右の列の足りない所の一覧で、… で切れていた文を折り返して全文を出すように。スマホのレシピのページではブログ・チャンネルの欄を出さないようにしました",
+    "en": "Simulator: Text that was cut off with \"…\" now wraps to show in full: long craft tags, the bottom bar and recipes page on narrow phones (such as 320px), and the list of what is missing in the right column. The blog and channel section is no longer shown on the recipes page on phones"
+   }
+  ]
+ },
+ {
   "v": "0.1.615",
   "date": "2026-10-26",
   "items": [
@@ -865,18 +877,6 @@
     "area": "",
     "text": "エッセンスは使える段だけを出すように (レアはパーフェクトだけで、段を選ばずにそのまま持てます。ノーマル・マジックにはパーフェクトを出しません)",
     "en": "Essences now show only the tiers you can use: Perfect for Rare items (picked directly, no tier menu), non-Perfect for Normal and Magic items"
-   }
-  ]
- },
- {
-  "v": "0.1.576",
-  "date": "2026-10-18",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "フラクチャーした MOD はもう一度右クリックするとフラクチャーを外せるように",
-    "en": "Right-click a fractured mod again to unfracture it"
    }
   ]
  }

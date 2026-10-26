@@ -1,4 +1,7 @@
 {
+  "0.1.616": [
+    "Simulator: Text that was cut off with \"…\" now wraps to show in full: long craft tags, the bottom bar and recipes page on narrow phones (such as 320px), and the list of what is missing in the right column. The blog and channel section is no longer shown on the recipes page on phones"
+  ],
   "0.1.615": [
     "Simulator: The list of what is missing, the minimap and the zoom tools moved to a column outside the tree frame on the right, so they no longer cover boxes or labels in the tree"
   ],
