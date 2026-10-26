@@ -78,6 +78,8 @@ export interface TreeBox {
   unwanted?: string[];
   /** 戻りの矢印を同じ形の箱へ自動でつないだ (tree-run の linkSameShape。手で替えると外す) */
   autoBack?: true;
+  /** 人が戻りの矢印を × で外した (自動の矢印を付け直さない。10-26 オーナー「処理は当人が決めれるように」、前は別の箱に手を置くたび linkSameShape が付け直した) */
+  noAutoBack?: true;
   /** 分かれ目 (打たずに分ける、10-22 オーナー OK): 行を上から見て最初に合った行の箱へ進む。hand・back・done・outs とは一緒に持たない。最後の行は「それ以外」(when が空) */
   split?: SplitRule[];
   /** 狙いを持って着く人がいないので「狙いが消えた」の結果の箱を作らなかった (tree-lost.ts。持って着く道ができたら healLost が足す) */
@@ -447,6 +449,8 @@ export function setBack(d: TreeDoc, id: string, to: string | null): void {
   const b = d.boxes[id];
   if (!b || b.out === "start" || b.hand) return;
   if (to && (to === id || !d.boxes[to])) return;
+  if (!to && b.back) b.noAutoBack = true;
+  if (to) delete b.noAutoBack;
   b.back = to;
   delete b.autoBack;
   if (to) { b.done = null; delete b.split; healLost(d); }

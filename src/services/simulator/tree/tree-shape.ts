@@ -210,7 +210,8 @@ export function linkSameShape(doc: TreeDoc, ids: readonly string[]): void {
   for (const id of ids) {
     const c = doc.boxes[id];
     // 分かれ目の行の箱 (branch) は人が手を決める所 (分かれ目の箱も行き先になったので、つなぐと自分の分かれ目へ戻る輪になる)
-    if (!c || c.hand || c.out === "pass" || c.out === "any" || c.out === "branch") continue;
+    // 人が × で外した箱はつながない (noAutoBack)
+    if (!c || c.noAutoBack || c.hand || c.out === "pass" || c.out === "any" || c.out === "branch") continue;
     if ((c.out === "hit" && !c.aim) || (c.back && c.back !== MATCH && !(c.out === "lost" && c.back === "start"))) continue;
     // フラクチャーの結果の箱は、形 (✦ は数えない) が親と同じでも つながない (親へ戻すと ✦ のある品にもう一度フラクチャーを打って止まった、10-24)
     const p = c.parent ? doc.boxes[c.parent] : undefined;
