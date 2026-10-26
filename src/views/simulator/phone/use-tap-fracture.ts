@@ -1,21 +1,22 @@
 /**
- * use-tap-fracture.ts — スマホの形 (767px 以下) で「フラクチャーから」始める時、完成形のカードの MOD を押すとフラクチャー (✦) にする
+ * use-tap-fracture.ts — スマホの形 (767px 以下) では、② 完成の MOD のカードの MOD を押すとフラクチャー (✦) を付け外す (PC の右クリックの代わり)
  * (10-26 夜オーナー「スマホ版はフラクチャーのホットキー (右クリック) が無いから、MOD を押したらフラクチャーさせよう」
  * 「PC からもそういう挙動にできるようにしてくれ。スマホ仕様になったらクリックでフラクチャー」= 指の端末かどうかでなく画面の幅で決める)。
- * 印は 1 つだけ (押した MOD だけに付け、ほかは外す)。もう一度押すと外す。決め方は PC の TreeStartAsk の decide と同じ形 (1 回の編集、1 つ戻すで戻せる)
+ * 印は 1 つだけ (押した MOD だけに付け、ほかは外す。10-26 夜オーナー「PC もスマホも 1 つだけ」)。もう一度押すと外す。始め方 (済みから / 白から) はツリーへ行く時の窓 (TreeStartAsk) で決める。
+ * 1 回の編集 (1 つ戻すで戻せる)
  */
 import { computed } from "vue";
 import { usePhone } from "../../../utils/use-phone";
 import { tr } from "../../../i18n/lang";
-import { migrateStart, startRarity, startsFractured, type Aim } from "../../../services/simulator/tree/tree-model";
+import { migrateStart, startRarity, type Aim } from "../../../services/simulator/tree/tree-model";
 import type { StageMod } from "../../../services/craft-stage/engine";
 import { useTree } from "../tree/use-tree";
 
 export function useTapFracture() {
   const t = useTree();
   const phone = usePhone();
-  /** 押すとフラクチャーになる形 (スマホの幅で、スタートが「フラクチャーから」= 印があって 4 MOD からでない、か印を全部外した後も from が fractured) */
-  const on = computed(() => phone.value && (startsFractured(t.doc.value) || t.doc.value.start?.from === "fractured"));
+  /** 押すとフラクチャーになる形 = スマホの幅ならいつでも (PC の右クリックと同じ。始め方はツリーへ行く時の窓で決める、10-26 夜オーナー) */
+  const on = computed(() => phone.value);
   const marked = computed(() => t.goals.value.find((a) => a.fractured) ?? null);
   /** カードの上の案内の 1 行 */
   const note = computed(() => {
@@ -34,7 +35,6 @@ export function useTapFracture() {
       for (const a of list) { if (!off && a.modId === modId) a.fractured = true; else delete a.fractured; }
       d.memoAims = list;
       migrateStart(d);
-      d.start!.from = "fractured";
       d.start!.mods = d.start!.mods.filter((x) => !list.some((a) => a.fractured && a.modId === x.modId));
       d.start!.rarity = startRarity(d);
     });
