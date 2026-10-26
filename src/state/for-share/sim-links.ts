@@ -4,6 +4,7 @@
  */
 import { openTreePage } from "../../web/page";
 import { flag } from "../../web/release-flags";
+import type { StageItem } from "../../services/craft-stage/types";
 
 /** 今のベースとアイテムレベルで白紙のツリーを開く (前の木は 1 つ戻すで戻せる) */
 export async function openTreeWith(base: string, itemLevel: number): Promise<void> {
@@ -11,6 +12,13 @@ export async function openTreeWith(base: string, itemLevel: number): Promise<voi
   const { useTree } = await import("../../views/simulator/tree/use-tree");
   useTree().startTreeWith(base, itemLevel);
   openTreePage();
+}
+
+/** エミュで持っているアイテム (ベース・アイテムレベル・MOD 全部) をシミュへ渡し、② 完成の MOD のページを開く (スイッチ emuToSim、2026-10-26 夜オーナー) */
+export async function openSimWithItem(item: StageItem): Promise<void> {
+  if (!flag("sim")) return;
+  const { requestEmuItem } = await import("../../views/simulator/tree/tree-paste");
+  requestEmuItem(item);
 }
 
 /** 共有のレシピの URL (#recipe=、views/simulator/recipe-share.ts) から来た時に、そのレシピを開く */

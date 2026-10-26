@@ -12,6 +12,7 @@ import { goalBlock } from "../../../services/simulator/sim-engine";
 import { parseItemText } from "../../../services/simulator/paste/item-text";
 import type { ItemTextMod, ItemTextReading } from "../../../services/simulator/paste/item-text-types";
 import { craftStage as s } from "../../../state/craft-stage";
+import type { StageItem } from "../../../services/craft-stage/types";
 import { migrateStart, startRarity, type Aim } from "../../../services/simulator/tree/tree-model";
 import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { askLeave, openTreePage } from "../../../web/page";
@@ -21,7 +22,7 @@ import { useTree } from "./use-tree";
 import { quickSave, unsaved } from "./tree-save";
 
 /** 最後に取り込んだ結果 (sim-mods の上に出す。閉じるか次の取り込みまで) */
-export const pasteNote = ref<{ base: string; aims: number; bad: Array<{ line: string; why: string }>; /** 読み方が 2 通り以上の時だけ (先頭 = 仮に選んだ読み) */ readings?: ItemTextReading[]; /** 今の読み方 */ pick: number; /** 段が仮の MOD (1 行に足された値の割り方が決まらない) */ guess: string[] } | null>(null);
+export const pasteNote = ref<{ base: string; aims: number; bad: Array<{ line: string; why: string }>; /** 読み方が 2 通り以上の時だけ (先頭 = 仮に選んだ読み) */ readings?: ItemTextReading[]; /** 今の読み方 */ pick: number; /** 段が仮の MOD (1 行に足された値の割り方が決まらない) */ guess: string[]; /** エミュの「シミュレーターへ」から */ emu?: true } | null>(null);
 /** 取り込めなかった時の理由 (貼る口の下に出す) */
 export const pasteWhy = ref<string | null>(null);
 
@@ -52,21 +53,44 @@ function importPaste(text: string): void {
   if (!data) return;
   const r = parseItemText(data, text);
   if (!r.base) return;
+  // 読み方 (ジン部長の parseItemText の readings。無ければ mods の 1 通り)。先頭 = 一番もっともらしい読み
+  takeReadings(r.base, r.itemLevel, r.readings?.length ? r.readings : [{ mods: r.mods, skipped: r.skipped }]);
+  track("sim:paste");
+}
+
+/**
+ * エミュで持っているアイテムを取り込む (エミュの「シミュレーターへ」、sim-links.ts の openSimWithItem。2026-10-26 夜オーナー「忍者コピーに似てる」)。
+ * 付いている MOD を全部、貼り付けと同じ読み方で完成形の狙い (その段以上) に入れて ② へ。段は MOD 自身の段の並びから (エッセンスの MOD もエッセンス自身の段、表と同じ)。
+ * フラクチャーの印は付けない (オーナー「フラクチャーはオフで渡す」、ツリーへ行く時に決める)
+ */
+export function requestEmuItem(item: StageItem): void {
+  const data = s.data.value;
+  if (!data) return;
+  const mods: ItemTextMod[] = [...item.prefixes, ...item.suffixes].map((m) => {
+    const of = data.mods.get(m.modId)?.tiers.length ?? 0, text = tr(m.textJa, m.textEn);
+    const tier = of && !m.unrevealed ? { index: m.tierIndex, of, label: `T${of - m.tierIndex}`, name: m.affix, fits: true } : null;
+    return { text, modId: m.unrevealed ? null : m.modId, source: m.desecrated ? "desecrated" : m.crafted ? "essence" : "normal", side: m.side, sideFrom: "engine", tier, values: [...m.values], shownValues: [...m.values], boosts: [], fractured: false, desecrated: !!m.desecrated, crafted: !!m.crafted, unrevealed: !!m.unrevealed };
+  });
+  const go = (): void => { takeReadings({ en: item.base, ja: item.baseJa }, item.itemLevel, [{ mods, skipped: [] }], true); track("sim:fromEmu"); };
+  // 作りかけの木を置き換える時は貼り付けと同じ 3 択
+  if (unsaved(useTree().doc.value)) askLeave(go, () => void quickSave());
+  else go();
+}
+
+/** 読めたアイテム (ベース・アイテムレベル・読み方) を木に入れて ② 完成の MOD のページへ (貼り付けとエミュの共通) */
+function takeReadings(base: { en: string; ja: string }, itemLevel: number | null | undefined, readings: ItemTextReading[], emu = false): void {
   const t = useTree();
-  t.setBase(r.base.en, r.itemLevel ?? t.doc.value.itemLevel);
+  t.setBase(base.en, itemLevel ?? t.doc.value.itemLevel);
   // 貼った文のアイテムレベルを使う (白紙の木は適正で作られ、狙いに合わせて変わるので外す。文に無ければ今のまま)
-  const ilvl = r.itemLevel;
+  const ilvl = itemLevel;
   if (ilvl) t.edit((d) => { delete d.ilvlFit; d.itemLevel = ilvl; });
   // 前の木の「適正で合わせました」の一言は消す (貼った値なので)
   t.ilvlNote.value = null;
-  // 読み方 (ジン部長の parseItemText の readings。無ければ mods の 1 通り)。先頭 = 一番もっともらしい読み
-  const readings = r.readings?.length ? r.readings : [{ mods: r.mods, skipped: r.skipped }];
   const { aims, bad } = aimsOfReading(readings[0]!);
   setAims(aims);
   // 貼った木は名前なしの新しい木 (開いていたレシピの続きではない)
   setCurrentTreeRecipe(null);
-  pasteNote.value = { base: tr(r.base.ja, r.base.en), aims: aims.length, bad, readings: readings.length > 1 ? readings : undefined, pick: 0, guess: guessOf(readings[0]!) };
-  track("sim:paste");
+  pasteNote.value = { base: tr(base.ja, base.en), aims: aims.length, bad, readings: readings.length > 1 ? readings : undefined, pick: 0, guess: guessOf(readings[0]!), ...(emu ? { emu: true as const } : {}) };
   // ② 完成の MOD のページへ (どの画面から貼っても同じ。ツリーの窓で開いていた時も)
   t.needBase.value = false;
   openTreePage("mods");
