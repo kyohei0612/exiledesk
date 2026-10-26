@@ -36,13 +36,13 @@ function heldOnPath(d: TreeDoc, id: string): number {
   return n;
 }
 
-/** この箱に、消せる狙いを持って着く人がいうるか (自分の道と、この箱へ戻る箱の道) */
+/** この箱に、消せる狙いを持って着く人がいうるか (自分の道 = 箱の形だけ。戻ってくる人の混ざりでは見ない。10-26 オーナー「その選択肢が出てくるのは前提狙いMODの状態でなんかする時やろ」。
+ * 形の違う箱へ戻す矢印は戻り先の選びで選べず、精査で出す = tree-shape の shapeFits) */
 export function mayHoldAim(d: TreeDoc, id: string): boolean {
-  if (heldOnPath(d, id) > 0) return true;
-  return Object.values(d.boxes).some((b) => b.back === id && heldOnPath(d, b.id) > 0);
+  return heldOnPath(d, id) > 0;
 }
 
-/** この箱に持って着きうる狙い (自分の道と、この箱へ戻る箱の道の当たりの箱の札。✦ のフラクチャーの当たりは消えないので入れない)。起こりうる結果の箱 (tree-sample の possibleOutsOf) が見本に足して打つ */
+/** この箱に持って着きうる狙い (自分の道の当たりの箱の札 = 箱の形。戻ってくる箱の道は見ない、mayHoldAim と同じ。✦ のフラクチャーの当たりは消えないので入れない)。起こりうる結果の箱 (tree-sample の possibleOutsOf) が見本に足して打つ */
 export function aimsMayHold(d: TreeDoc, id: string): Array<{ modId: string; tier: number }> {
   const out = new Map<string, { modId: string; tier: number }>();
   const walk = (from: string): void => {
@@ -54,6 +54,5 @@ export function aimsMayHold(d: TreeDoc, id: string): Array<{ modId: string; tier
   };
   for (const a of startHeld(d)) out.set(keyOf(a), a);
   walk(id);
-  for (const b of Object.values(d.boxes)) if (b.back === id) walk(b.id);
   return [...out.values()];
 }

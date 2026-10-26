@@ -12,9 +12,9 @@ import { catalystFull, catalystTagOf, fillCatalyst } from "../../simulator/sim-e
 import { aimHeldOn, isAimMod, junkOf } from "./tree-aim";
 import { CATALYSING as CATALYSING_OMEN, ECHO, ECHO as ABYSSAL_ECHO_OMEN, effectOf, engineOmens, isCatalyst } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
-import { fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
+import { aimKey, fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
-import { splitTo } from "./tree-shape";
+import { heldSets, splitTo } from "./tree-shape";
 import { arrivedAt } from "./tree-arrived";
 import { aimsMayHold } from "./tree-lost";
 import { autoRuneKeys, passThrough, prepFor } from "./tree-unbounded";
@@ -110,11 +110,16 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   let veiled = false, veiledLost = false;
   /** 見本の中に、まだ付いていない狙いがあるか (外れだけの手でも当たりの箱を作って MOD を選ばせる時の見分け) */
   let unheld = false;
-  // 見本 = この箱に着いた人のアイテム (着いた人が SINGLE_SEEDS より少なければ同じ物が回ってくるので 1 回だけ見る)
+  // 見本 = この箱に着いた人のアイテム (着いた人が SINGLE_SEEDS より少なければ同じ物が回ってくるので 1 回だけ見る)。
+  // 箱の形 (道で付いている狙いの組 = heldSets) に合う人だけ (戻ってくる形の違う人の混ざりで結果の箱を増やさない、10-26 オーナー「その選択肢が出てくるのは前提狙いMODの状態でなんかする時やろ」)。合う人がいなければ全員
+  const sets = new Set(heldSets(doc, boxId).map((h) => [...h].sort().join(",")));
+  const smps = Array.from({ length: SINGLE_SEEDS }, (_, i) => sampleOf(data, doc, boxId, i + 1)).filter((x) => x.note !== "none" && !x.note?.startsWith("cant:"));
+  const st = startGoalAims(doc), shapeAims = aimsOf(doc).filter((a) => !st.some((x) => x.modId === a.modId && x.tier === a.tier));
+  const fit = smps.filter((x) => sets.has(shapeAims.filter((a) => aimHeldOn(data, x.item, a, { sameText: true })).map(aimKey).sort().join(",")));
   const seen = new Set<StageItem>();
-  for (let seed = 1; seed <= SINGLE_SEEDS; seed++) {
-    const smp = sampleOf(data, doc, boxId, seed);
-    if (smp.note === "none" || smp.note?.startsWith("cant:") || seen.has(smp.item)) continue;
+  for (const [i, smp] of (fit.length ? fit : smps).entries()) {
+    const seed = i + 1;
+    if (seen.has(smp.item)) continue;
     seen.add(smp.item);
     if (aims.some((a) => !aimHeldOn(data, smp.item, a, { sameText: true }))) unheld = true;
     const item = pre ? fillCatalyst(data, smp.item, pre, mulberry32(seed)).item : smp.item;

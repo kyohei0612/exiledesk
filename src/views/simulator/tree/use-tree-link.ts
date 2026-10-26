@@ -6,6 +6,7 @@
 import { computed, type Ref } from "vue";
 import { handProblem, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { shapeFits } from "../../../services/simulator/tree/tree-shape";
 import { craftStage as s } from "../../../state/craft-stage";
 import { tr } from "../../../i18n/lang";
 
@@ -28,6 +29,8 @@ export function useTreeLink(doc: Ref<TreeDoc>, from: Ref<string | null>) {
         continue;
       }
       if (!b.hand) { out.set(b.id, tr("この箱にはまだ打つ手が無い", "This box has no craft yet")); continue; }
+      // 形 (付いている狙いの組) が違う箱へは戻せない (10-26 オーナー「その選択肢が出てくるのは前提狙いMODの状態でなんかする時やろ」、tree-shape の shapeFits)
+      if (!shapeFits(doc.value, id, b.id)) { out.set(b.id, tr("形が違う: この箱で付いている狙いの組と、ここから来る人の狙いが違う (同じ狙いの組の箱だけ選べる)", "Different shape: the targets held here differ from the runs coming in (only boxes with the same targets can be picked)")); continue; }
       const why = handProblem(d, item, b.hand);
       out.set(b.id, why ? tr(`この箱の手が打てない: ${why}`, `Its craft can't be used here: ${why}`) : null);
     }

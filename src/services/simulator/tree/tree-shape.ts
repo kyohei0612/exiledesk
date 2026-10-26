@@ -80,6 +80,19 @@ export function heldSets(doc: TreeDoc, id: string | null): string[][] {
   }
   return sets;
 }
+/**
+ * 戻りの矢印の行き先の形が合うか: 戻る箱の狙いの組 (heldSets) が全部、行き先の箱の組にある (10-26 オーナー「その選択肢が出てくるのは前提狙いMODの状態でなんかする時やろ」。
+ * 前は当たりの箱から外れの箱へも戻せて、狙い持ちが「狙い無し」の箱でカオスを打ち、結果に「狙いが消えた」が並んだ)。
+ * 始め (狙いが消えた → 始めに戻る、10-22 オーナーの決め)・形の合う箱へ (MATCH)・分かれ目 (行で分かれる) は見ない
+ */
+export function shapeFits(doc: TreeDoc, from: string, to: string): boolean {
+  if (to === "start" || to === MATCH || to === RESTART) return true;
+  const t = doc.boxes[to];
+  if (!t || t.split) return true;
+  const key = (h: string[]): string => [...h].sort().join(",");
+  const there = new Set(heldSets(doc, to).map(key));
+  return heldSets(doc, from).every((h) => there.has(key(h)));
+}
 /** 行き先になれる箱 (手のある当たり / 外れの箱) とその形 */
 export function shapesOf(doc: TreeDoc): Shape[] {
   const out: Shape[] = [];
@@ -220,7 +233,8 @@ export function linkSameShape(doc: TreeDoc, ids: readonly string[]): void {
     // 「どれか」の当たりの箱 (anyOf) は、どれが付いても同じ箱へ行く時だけつなぐ (付いた物で行き先が分かれるなら、回す時の settle が実物で形の合う箱へ。10-26)
     if (c.anyOf?.length && new Set(targets).size > 1) continue;
     const to = targets.find((x): x is string => !!x && x !== id && (x !== "start" || c.out === "lost")) ?? (c.out === "hit" ? sameHitOf(doc, id) : swapJunkOf(c, p));
-    if (!to) continue;
+    // 形 (付いている狙いの組) が全部合う箱へだけ (狙いが消えた箱は組が何通りかあり、1 つ目の組だけで別の形の箱へつないでいた。10-26 オーナー「前提狙いMODの状態でなんかする時」、shapeFits)
+    if (!to || !shapeFits(doc, id, to)) continue;
     c.back = to;
     c.autoBack = true;
     c.done = null;

@@ -17,11 +17,11 @@ import { CATALYSING, effectOf, engineOmens, isCatalyst } from "./tree-hands";
 import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeDoc, boxAims } from "./tree-model";
 import { aimOpts, aimsOf, goalsHeld, handAims, handProblem, heldHitOf, outcomeOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
 import { runTreeSteps } from "./tree-run";
-import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapesOf, splitTo } from "./tree-shape";
+import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapeFits, shapesOf, splitTo } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
 
-type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry" | "omenWaste";
+type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry" | "omenWaste" | "shape";
 export interface CheckIssue { boxId: string; kind: CheckKind; text: string }
 
 const PEOPLE = 5;
@@ -94,6 +94,10 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
     if (back === MATCH) return matchTargets(doc, id).flatMap((x) => (x.to ? [x.to] : []));
     return [back === RESTART ? "start" : back];
   };
+
+  // 0) 形の違う箱への戻り (10-26 オーナー「その選択肢が出てくるのは前提狙いMODの状態でなんかする時やろ」): 付いている狙いの組が違う人が行き先の箱に入り、
+  // その箱の結果 (狙いが消えた など) が箱の形と合わなくなる。直すのは戻りの箱 (戻り先を同じ形の箱に)
+  for (const b of boxes) if (b.back && !shapeFits(doc, b.id, b.back)) add(b.id, "shape", tr("戻り先の箱と形が違う (付いている狙いの組が違う人が入る)。直し方: 戻り先を同じ狙いの組の箱にする (↩ で選び直す。選べる箱だけ明るくなる) か、ここに次の手を置く", "The return target has a different shape (runs with different targets would enter it). Fix: return to a box with the same targets (pick again with ↩; only valid boxes are lit), or add a next craft here"));
 
   // 1) 形だけで分かる穴: 決めていない芽・MOD を選んでいない当たり
   // 始まりの MOD は自由 (無くてよい、10-22 オーナー)。付けられない時は見本の理由を出す
