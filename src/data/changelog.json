@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.628",
+  "date": "2026-10-27",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター: 「シミュレーターへ →」で、フラクチャー済みの MOD は ✦ の印を付けたまま渡すように (ツリーへ行く時は、その MOD でフラクチャー済みから / 白から確定フラクチャーを選べます)",
+    "en": "Emulator: \"To the simulator →\" now keeps the ✦ mark on fractured mods (when going to the tree, you choose \"From fractured\" or a guaranteed fracture from white for that mod)"
+   }
+  ]
+ },
+ {
   "v": "0.1.627",
   "date": "2026-10-27",
   "items": [
@@ -883,24 +895,6 @@
     "area": "",
     "text": "お告げを掛けた時に名前の下で設定できるようにしました: 触媒の高貴のお告げは品質 1% ごとの倍率 (既定 0.2 = 品質 20% で 5 倍)、聖別のお告げはチェックを入れると倍率 (0.78〜1.22 倍) を自分で決められます",
     "en": "Omens now have settings under their name when applied: Omen of Catalysing Exaltation lets you set the multiplier per 1% quality (default 0.2 = 5x at 20%), and Omen of Sanctification lets you pick the multiplier (0.78–1.22x) with a checkbox"
-   }
-  ]
- },
- {
-  "v": "0.1.588",
-  "date": "2026-10-20",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "ベースの一覧から名前で探す欄を外し、「装備・エフェクトオフ」を一番下に移しました",
-    "en": "Removed the name search from the base list and moved “Plain art, no effects” to the bottom"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "値段を入れる欄の横に、入れた値を見やすい単位でも出すようにしました",
-    "en": "Price fields now also show the entered value in the most readable currency"
    }
   ]
  }

@@ -1,4 +1,7 @@
 {
+  "0.1.628": [
+    "Emulator: \"To the simulator →\" now keeps the ✦ mark on fractured mods (when going to the tree, you choose \"From fractured\" or a guaranteed fracture from white for that mod)"
+  ],
   "0.1.627": [
     "The top page (base selection) now explains what the site does. Cosmetics was removed from the top tabs (the page still opens as before)",
     "Simulator: In the craft picker, pressing Esc while holding a currency now just puts it down (a second Esc closes the window). On PC, the paste box on base selection sits side by side so everything fits on screen"
