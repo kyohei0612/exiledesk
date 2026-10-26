@@ -146,9 +146,19 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     <!-- 縮めている時 (k > 1) は押せる物の行を倍率分高くし、まだ「—」だけの数字の行は隠す (箱が小さくても押せる物どうしが重ならない) -->
     <!-- 題は枠の上の線に乗る札 (よくある枠の形。枠の中は割合・中身・戻り方だけ。10-26 オーナー「枠の上のところに●がついた みたいな形でよくある枠の形にしたら枠中ごちゃんなくていいよな」) -->
     <!-- 札は枠の上辺の横の真ん中 (10-26 夜オーナー「この ◎ が付いたとか外れとかは真ん中が良いな、枠の」。左上だと未定の ! と重なった)。この結果に着く割合 (tree-odds.ts) は乗せた時の説明だけ -->
-    <component :is="box.out === 'hit' && box.aim && !quiet ? 'button' : 'span'" :type="box.out === 'hit' && box.aim && !quiet ? 'button' : undefined" data-tree-legend class="nodrag absolute -top-[10px] left-1/2 flex max-w-[calc(100%-16px)] -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="{ color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :class="box.out === 'hit' && box.aim && !quiet ? 'hover:brightness-125' : 'pointer-events-none'" :title="legendTitle" @click.stop="box.out === 'hit' && box.aim && !quiet && emit('aim')"><Icon :name="kind.icon" class="size-3 shrink-0" /><span class="min-w-0 truncate">{{ head }}</span></component>
-    <!-- 1 行目 (未定の !・✎ ✕) は札の下の端 (枠の中 8px) より下から (札と重ならない) -->
-    <div class="mt-1.5 flex items-center gap-1.5" :style="{ height: `${24 * k}px` }">
+    <!-- 札の横に箱の印 (未定の !・完成・狙いに無い・要らない・要確認)。前は枠の中の 1 行目にあり、その行が枠を下げていた (10-26 夜オーナー「上枠もっと広げれるじゃろ」) -->
+    <div class="absolute -top-[10px] left-1/2 flex max-w-[calc(100%-16px)] -translate-x-1/2 items-center gap-1 whitespace-nowrap">
+    <component :is="box.out === 'hit' && box.aim && !quiet ? 'button' : 'span'" :type="box.out === 'hit' && box.aim && !quiet ? 'button' : undefined" data-tree-legend class="nodrag flex min-w-0 items-center gap-1 whitespace-nowrap rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="{ color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :class="box.out === 'hit' && box.aim && !quiet ? 'hover:brightness-125' : 'pointer-events-none'" :title="legendTitle" @click.stop="box.out === 'hit' && box.aim && !quiet && emit('aim')"><Icon :name="kind.icon" class="size-3 shrink-0" /><span class="min-w-0 truncate">{{ head }}</span></component>
+    <template v-if="box.out !== 'start'">
+      <span v-if="orphan" data-tree-orphan class="shrink-0 rounded-sm bg-[#3a1418] px-1 text-[10px] font-bold leading-[18px] text-rose-200" :title="tr('この当たりの MOD は完成の狙いから外した (木からは消えていない。× で消すか、完成の MOD で狙いに戻す)', 'This hit mod was removed from the final targets (the box stays; remove it with × or add the target back)')">{{ tr("狙いに無い", "Not a target") }}</span>
+      <span v-if="box.done" class="shrink-0 rounded-full bg-[#3a2e14] px-1.5 text-[10px] font-bold leading-[18px] text-amber-100">{{ doneText }}</span>
+      <span v-if="box.unwanted?.length" data-tree-unwanted class="shrink-0 rounded-sm bg-[#3a1418] px-1.5 text-[11px] font-bold leading-[18px] text-rose-200" :title="tr(`× (要らない) の印 ${box.unwanted.length} 個 (前の試し打ちで付けた物)`, `${box.unwanted.length} mod(s) marked × (unwanted, set in the old try-out)`)">× {{ box.unwanted.length }}</span>
+      <button v-if="box.check?.length" type="button" data-tree-check class="nodrag shrink-0 rounded-sm bg-amber-500 px-1.5 text-[11px] font-bold leading-[18px] text-black hover:bg-amber-400" :class="quiet ? 'pointer-events-none' : ''" :title="tr(`読めなかった所: ${checkTitle} (直したら押して印を消す)`, `Couldn’t read: ${checkTitle} (fix it, then click to clear)`)" @click.stop="!quiet && emit('checked')">{{ tr("要確認", "Check") }}</button>
+      <button v-if="issue && !quietOpen" type="button" data-tree-issue class="nodrag shrink-0 whitespace-nowrap rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold leading-[18px] text-white hover:bg-rose-500" :title="tr(`${issue} (押すと足りない所の一覧)`, `${issue} (click for the list of what is missing)`)" @click.stop="emit('issue')">{{ /行き先を決めていない|最初の手を決めていない/.test(issue) && k === 1 ? tr("! 未定", "! Open") : "!" }}</button>
+    </template>
+    </div>
+    <!-- 1 行目 (始まりの箱だけ: Lv・✎)。ほかの箱は 1 行目を無くし、✎ ✕ は下の行の右 (10-26 夜オーナー「今のバツの所にメモマークあれば上枠もっと広げれるじゃろ」) -->
+    <div v-if="box.out === 'start'" class="mt-1.5 flex items-center gap-1.5" :style="{ height: `${24 * k}px` }">
       <!-- 始まりのアイテムレベルは見出しに (ベースの名前が長いと下の行で切れて見えない、10-22 靴) -->
       <span v-if="box.out === 'start'" class="shrink-0 text-[11px] opacity-70">{{ tr(`Lv ${t.doc.value.itemLevel}${t.doc.value.ilvlFit ? " 適正" : ""}`, `ilvl ${t.doc.value.itemLevel}${t.doc.value.ilvlFit ? " fit" : ""}`) }}</span>
       <span v-if="orphan" data-tree-orphan class="shrink-0 rounded-sm bg-rose-400/20 px-1 text-[10px] font-bold text-rose-200" :title="tr('この当たりの MOD は完成の狙いから外した (木からは消えていない。× で消すか、完成の MOD で狙いに戻す)', 'This hit mod was removed from the final targets (the box stays; remove it with × or add the target back)')">{{ tr("狙いに無い", "Not a target") }}</span>
@@ -186,7 +196,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     </div>
     <!-- 今のアイテムの枠 (乗せた時のカードと同じ StageItemCard の MOD の行だけを箱の幅いっぱいに (縮めない)。10-26 オーナー「アイテム枠は個人的に好きやからそのままがいいなさっきの」「枠内はアイテムの形とその下に次どうするかくらいか？まとめるとかも別にアイテム枠の下とかに出したらええんちゃう」) -->
     <!-- 箱の流れの中に置き、MOD が多ければ箱が伸びる (切らない) -->
-    <div v-if="cardItem" data-tree-box-card class="pointer-events-none mt-0.5">
+    <div v-if="cardItem" data-tree-box-card class="pointer-events-none" :class="box.out === 'start' ? 'mt-0.5' : 'mt-3'">
       <div :style="{ width: `${CARD_W}px` }"><StageItemCard :item="cardItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact mods-only :row-tags="cardTags" /></div>
     </div>
 
@@ -200,7 +210,8 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <span v-if="box.hand" data-tree-next-hand class="min-w-0 break-words text-amber-100/90" :title="handLabel(box.hand)">→ {{ handLabel(box.hand) }}</span>
       <template v-if="box.back">
         <!-- 戻り先の札: 乗せると戻りの線が出て戻り先が光る、押すとそこへ寄る (線は既定で引かない、10-22) -->
-        <button type="button" data-tree-back-tag class="nodrag flex min-h-6 min-w-0 flex-1 items-center rounded px-1 text-left text-cyan-200 hover:bg-cyan-400/15" :class="quiet ? '!pointer-events-none' : ''" :title="tr(`${backLabel} (押すとそこへ寄る)`, `${backLabel} (click to go there)`)"
+        <!-- × (戻りを外す) は文のすぐ右隣 (10-26 夜オーナー「バツはその行動のすぐ隣が良いな」。前は札が伸びて × は右端だった) -->
+        <button type="button" data-tree-back-tag class="nodrag flex min-h-6 min-w-0 items-center rounded px-1 text-left text-cyan-200 hover:bg-cyan-400/15" :class="quiet ? '!pointer-events-none' : ''" :title="tr(`${backLabel} (押すとそこへ寄る)`, `${backLabel} (click to go there)`)"
           @pointerenter="emit('backHover', true)" @pointerleave="emit('backHover', false)" @focus="emit('backHover', true)" @blur="emit('backHover', false)" @click.stop="!quiet && emit('backGo')"><span class="min-w-0 break-words">{{ box.out === "hit" && t.doc.value.boxes[box.back]?.out === "hit" ? "→" : "↩" }} {{ backLabel }}</span></button>
         <button v-if="!quiet" type="button" class="nodrag -mr-1 flex size-6 items-center justify-center rounded opacity-60 hover:bg-white/10 hover:opacity-100" :title="tr('戻りの矢印を外す', 'Remove the return arrow')" @click.stop="emit('clearBack')"><Icon name="x" class="size-3" /></button>
       </template>
@@ -212,6 +223,11 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
         <button v-if="box.out === 'hit' || box.out === 'branch'" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" @click.stop="emit('done')" :title="doneText">{{ (k > 1 || (box.anyOf?.length ?? 0) > 1) && !box.done ? tr("完成", "Done") : doneText }}</button>
         <!-- 外れ・狙いが消えたの行き先に一番使う手 (オーナー 10-22): 当たりのどれかが付くまでカオス -->
       </template>
+      <!-- 右下: ✎ (メモ) と この当たりを消す ✕ (前は枠の中の 1 行目、10-26 夜オーナー「今のバツの所にメモマークあれば」) -->
+      <span v-if="box.out !== 'start' && !quiet" class="ml-auto flex items-center" :style="keep('right center')">
+        <button type="button" data-tree-note-mark class="nodrag flex size-6 items-center justify-center rounded hover:bg-white/10" :class="box.note ? 'text-amber-300' : 'text-white/30 hover:text-white/70'" :title="box.note || tr('メモを書く', 'Write a note')" @click.stop="emit('note')"><Icon name="pencil" class="size-3.5" /></button>
+        <button v-if="removable" type="button" class="nodrag -mr-1 flex size-6 items-center justify-center rounded opacity-60 hover:bg-white/10 hover:opacity-100" :title="tr('この当たりを消す', 'Remove this hit')" @click.stop="emit('remove')"><Icon name="x" class="size-3.5" /></button>
+      </span>
     </div>
     <!-- 操作 (分ける・まとめる。箱の一番下、上の帯の「まとめる」と同じ選び方へ入る入口) -->
     <div v-if="!quiet && ((canJoin && box.out !== 'hit') || (box.anyOf?.length ?? 0) > 1 || (box.mergedOuts?.length ?? 0) > 0)" class="mt-1 flex items-center justify-end gap-1 text-[12px]">
