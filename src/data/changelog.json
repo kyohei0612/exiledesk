@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.623",
+  "date": "2026-10-26",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ツリーへ行く時に始め方を選ぶ窓。フラクチャーの印が無ければ、フラクチャーにする MOD を選んで「フラクチャー済みから」か「白から確定フラクチャー」、または白ベースから。印 (✦) があればその MOD で 2 つから選びます。✦ の印は 1 つだけです",
+    "en": "Simulator: A start window when going to the tree. With no fracture mark, pick the mod to fracture and choose \"From fractured\" or a guaranteed fracture from white, or start from a white base. With a mark (✦), choose between the two for that mod. Only one ✦ mark is allowed"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター (スマホ): ② 完成の MOD でカードの MOD を押すとフラクチャー (✦) にできるように (PC の右クリックの代わり、もう一度押すと外す)",
+    "en": "Simulator (phone): On ② Final mods, tap a mod on the card to make it fractured (✦), replacing the right-click on PC (tap again to unmark)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター: 「シミュレーターへ →」で、持っているアイテム (ベース・アイテムレベル・付いている MOD 全部) をそのままシミュの完成の狙いにして ② へ進めるように",
+    "en": "Emulator: \"To the simulator →\" takes the item you are working on (base, item level and all its mods) straight into the simulator as the finished-item targets on ②"
+   }
+  ]
+ },
+ {
   "v": "0.1.622",
   "date": "2026-10-26",
   "items": [
@@ -871,18 +895,6 @@
     "area": "",
     "text": "MOD の段の表を開いた時に、表の全体が見える所まで自動で送るように (MOD 一覧・狙う MOD を選ぶ窓)",
     "en": "Opening a mod’s tier table now scrolls so the whole table is visible (mod list and target picker)"
-   }
-  ]
- },
- {
-  "v": "0.1.583",
-  "date": "2026-10-19",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "初めて開いた時に、何ができるかの一言と「金の指輪ですぐ試す」ボタンを出しました (ベースを選ばずにすぐ打てます)",
-    "en": "First visit now shows a one-line intro and a “Try now with a Gold Ring” button (start crafting without choosing a base)"
    }
   ]
  }

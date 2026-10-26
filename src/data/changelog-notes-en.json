@@ -1,4 +1,9 @@
 {
+  "0.1.623": [
+    "Simulator: A start window when going to the tree. With no fracture mark, pick the mod to fracture and choose \"From fractured\" or a guaranteed fracture from white, or start from a white base. With a mark (✦), choose between the two for that mod. Only one ✦ mark is allowed",
+    "Simulator (phone): On ② Final mods, tap a mod on the card to make it fractured (✦), replacing the right-click on PC (tap again to unmark)",
+    "Emulator: \"To the simulator →\" takes the item you are working on (base, item level and all its mods) straight into the simulator as the finished-item targets on ②"
+  ],
   "0.1.622": [
     "Simulator: Tidy no longer moves the start box, so the tree's spine stays straight. The right column is narrower (372 → 248px); the finished-item panel uses smaller tier tags and larger mod text, and lines that don't fit shrink to one line. The zoom tools fit on one line",
     "Simulator: Mod values on the cards in the craft picker now match the finished item and the boxes. For bone crafts, Abyssal Echoes is now just the \"Omen of Abyssal Echoes\" in the omen row (applied by default when you hold a bone; the separate large tag is gone)",

@@ -68,6 +68,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "phoneMap",
   // エミュのお告げを持った物ごとに覚える (オーナー 10-26 夜 OK、ブラック 13 の「出して」)
   "omenPerHeld",
+  // エミュの「シミュレーターへ」= 持っているアイテムの MOD を完成の狙いにして ② へ (オーナー 10-26 夜「ツリーに行く前まではオール OK」)
+  "emuToSim",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */
