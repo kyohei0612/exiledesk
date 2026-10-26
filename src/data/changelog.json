@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.624",
+  "date": "2026-10-26",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "ベース選び: 部位のタイルの絵が、その部位のユニークから毎日 1 つ替わるように (日本時間 9 時に替わり、その日は誰が開いても同じ絵)",
+    "en": "Base selection: Each item-type tile now shows a unique of that type that changes daily (at 9:00 JST; everyone sees the same art that day)"
+   }
+  ]
+ },
+ {
   "v": "0.1.623",
   "date": "2026-10-26",
   "items": [
@@ -883,18 +895,6 @@
     "area": "",
     "text": "「付ける」の小窓の外を押した時に、下の MOD 一覧まで押されてたたまれていたのを直しました (外を押すと小窓を閉じるだけに)",
     "en": "Clicking outside the “Add” popup no longer also clicks the mod list underneath (it just closes the popup)"
-   }
-  ]
- },
- {
-  "v": "0.1.584",
-  "date": "2026-10-19",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "MOD の段の表を開いた時に、表の全体が見える所まで自動で送るように (MOD 一覧・狙う MOD を選ぶ窓)",
-    "en": "Opening a mod’s tier table now scrolls so the whole table is visible (mod list and target picker)"
    }
   ]
  }

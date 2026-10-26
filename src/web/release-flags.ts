@@ -70,6 +70,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "omenPerHeld",
   // エミュの「シミュレーターへ」= 持っているアイテムの MOD を完成の狙いにして ② へ (オーナー 10-26 夜「ツリーに行く前まではオール OK」)
   "emuToSim",
+  // ベース選びの部位のタイルの絵を今日のユニークに (オーナー 10-26 夜「今日のユニークも出して」)
+  "todayUnique",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */

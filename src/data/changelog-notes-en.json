@@ -1,4 +1,7 @@
 {
+  "0.1.624": [
+    "Base selection: Each item-type tile now shows a unique of that type that changes daily (at 9:00 JST; everyone sees the same art that day)"
+  ],
   "0.1.623": [
     "Simulator: A start window when going to the tree. With no fracture mark, pick the mod to fracture and choose \"From fractured\" or a guaranteed fracture from white, or start from a white base. With a mark (✦), choose between the two for that mod. Only one ✦ mark is allowed",
     "Simulator (phone): On ② Final mods, tap a mod on the card to make it fractured (✦), replacing the right-click on PC (tap again to unmark)",
