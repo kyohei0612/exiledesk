@@ -6,6 +6,7 @@
 -->
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
+import Icon from "../../../components/ui/Icon.vue";
 import TreeRunReport from "../tree/TreeRunReport.vue";
 import { RUN_N, useTreeRun } from "../tree/use-tree-run";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -46,6 +47,8 @@ const routesOpen = ref(false);
 watch(() => q.focus.value, () => { routesOpen.value = false; });
 /** ツリーのメモを書いている (PhoneMemo) */
 const memoEdit = ref(false);
+/** 上の帯の平たいボタン (PC の操作の列 TreeTopTools と同じ形: 枠の絵なし・絵 + 短い名前。押す所は 40px、10-26 夜オーナー「上の帯が太い」) */
+const FLAT = "flex h-10 min-w-10 shrink-0 items-center justify-center gap-0.5 whitespace-nowrap rounded-md bg-white/[0.04] px-1.5 text-[12px] text-[#d8ccb4] hover:bg-white/10 hover:text-white aria-pressed:bg-amber-400/20 aria-pressed:text-amber-100";
 /** 白紙に戻す = PC と同じ (SimTreePage の onClear): スタートと完成形を残して下を消す。作りかけは 3 択、保存済みは 2 回押し */
 const clearArm = useArmed();
 function onClear(): void {
@@ -127,22 +130,24 @@ function goBox(id: string): void {
     <div v-show="!t.goalInline.value" data-phone-tree-body class="flex min-w-0 flex-col gap-3">
       <!-- レシピ (保存・開く・共有 URL。PC の帯と同じ部品、木が同じなので PC で開き直せる) -->
       <!-- レシピの帯の中身とメモ・白紙を 1 つの並びで折り返す (帯の枠を contents にして、レシピ ▾ の行に並べる。落ちる窓はこの行が基準) -->
-      <div data-phone-recipe class="relative flex min-w-0 flex-wrap items-center justify-center gap-2 text-[13px]">
-        <TreeRecipeBar class="!contents" @opened="q.reset()" />
-        <button type="button" data-phone-memo-open class="g-btn sm !min-h-10 shrink-0" :aria-pressed="memoEdit" @click="memoEdit = !memoEdit">✎ {{ tr("メモ", "Note") }}</button>
-        <button type="button" data-phone-clear class="!min-h-10 shrink-0" :class="clearArm.is() ? 'g-btn-red sm' : 'g-btn sm'" @click="onClear">{{ clearArm.is() ? tr("もう一度押すと白紙に戻す", "Tap again to clear") : tr("白紙", "Clear") }}</button>
+      <div data-phone-recipe class="relative flex min-w-0 flex-wrap items-center justify-center gap-1 text-[13px]">
+        <TreeRecipeBar class="!contents" :flat="FLAT" @opened="q.reset()">
+          <template #after>
+        <button type="button" data-phone-memo-open :class="FLAT" :aria-pressed="memoEdit" @click="memoEdit = !memoEdit"><Icon name="pencil" class="size-4" />{{ tr("メモ", "Note") }}</button>
+        <button type="button" data-phone-clear :class="[FLAT, clearArm.is() ? '!bg-rose-700 !text-white' : '']" @click="onClear"><Icon name="trash" class="size-4" />{{ clearArm.is() ? tr("もう一度押すと白紙に戻す", "Tap again to clear") : tr("白紙", "Clear") }}</button>
+          </template>
+        </TreeRecipeBar>
       </div>
       <!-- ツリーのメモ (文だけ、書いてあれば全文) -->
       <PhoneMemo v-model:editing="memoEdit" />
       <!-- 進み (残りの道・答えた数) と、残りの道の一覧の切り替え -->
-      <div data-phone-progress class="flex items-center gap-2 text-[12px] text-[#d8ccb4]">
-        <span>{{ tr("残りの道", "Open paths") }} <b class="text-[15px] text-amber-200">{{ total }}</b></span>
-        <span class="opacity-70">· {{ tr(`答えた ${q.answered.value}`, `${q.answered.value} answered`) }}</span>
+      <div data-phone-progress class="-my-1 flex items-center gap-2 text-[12px] text-[#d8ccb4]">
+        <span class="shrink-0">{{ tr("残りの道", "Open paths") }} <b class="text-[14px] text-amber-200">{{ total }}</b></span>
+        <span class="shrink-0 opacity-70">· {{ tr(`答えた ${q.answered.value}`, `${q.answered.value} answered`) }}</span>
         <div class="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-white/10"><i class="block h-full bg-amber-300" :style="{ width: `${Math.round((100 * q.answered.value) / Math.max(1, q.answered.value + total))}%` }" /></div>
-        <button type="button" data-phone-routes class="g-btn sm !min-h-10 shrink-0" :aria-pressed="routesOpen" @click="routesOpen = !routesOpen">{{ routesOpen ? tr("質問へ", "Question") : tr("全体を見る", "Overview") }}</button>
+        <button type="button" data-phone-routes :class="FLAT" :aria-pressed="routesOpen" @click="routesOpen = !routesOpen">{{ routesOpen ? tr("質問へ", "Question") : tr("全体を見る", "Overview") }}</button>
       </div>
-      <!-- 道が残っている間は 100 人回すの場所を先に知らせる (10-26 モンキー 7 の 7「100 人・テストがどこにも無い」) -->
-      <p v-if="total" data-phone-run-hint class="text-center text-[11px] text-[#9a8a70]">{{ tr("残りの道を全部決めると、下の帯で 100 人回せる (足りない所は先に直す)", "Decide every open path and the bar below lets you run 100 (fix anything missing first)") }}</p>
+      <!-- 「残りの道を全部決めると、下の帯で 100 人回せる」の説明はスマホでは出さない (10-26 夜オーナー「上の帯が太い」。前はモンキー 7 の 7 で足した) -->
       <!-- 足りない所 (PC と同じ精査、自動で回る。10-26 案 2) -->
       <PhoneIssues />
       <PhoneRoutes v-if="routesOpen" @pick="routesOpen = false" />

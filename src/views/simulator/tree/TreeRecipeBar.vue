@@ -21,7 +21,8 @@ const t = useTree();
 /** opened = 別の木を開いた (ツリーの側で全体に合わせる) */
 const emit = defineEmits<{ opened: [] }>();
 /** menuOnly = 「レシピ ▾」だけ (名前・保存・別名で保存・URL をコピーは出さない)。完成形の設定の段のタブの右端で使う (小窓は右寄せ、10-23 オーナー) */
-const props = defineProps<{ menuOnly?: boolean }>();
+/** flat = 保存・レシピ ▾ を絵 + 短い名前の平たいボタンにする時のボタンの class (スマホの上の帯、PC の操作の列 0b131904 と同じ形。10-26 夜オーナー「上の帯が太い」) */
+const props = defineProps<{ menuOnly?: boolean; flat?: string }>();
 /** 開いている木に保存の手が要らない時 (ベースが無い空の形・完成形の設定の右端) */
 const bare = computed(() => t.needBase.value || !!props.menuOnly);
 /** 一覧の 1 行の要約 (ベースの絵・狙い・印) */
@@ -100,12 +101,16 @@ onBeforeUnmount(() => { window.removeEventListener("pointerdown", onDown, true);
 <template>
   <span ref="root" data-tree-recipe-bar class="relative flex min-w-0 flex-wrap items-center gap-1.5">
     <input v-if="renaming && !bare" ref="nameInput" data-tree-recipe-name-input :value="currentTreeRecipe?.name ?? defaultName()" class="h-8 w-56 max-md:order-last max-md:w-full rounded border border-amber-400/60 bg-black/50 px-1.5 text-[13px] font-bold outline-none" @keydown.enter.prevent="($event.target as HTMLInputElement).blur()" @keydown.esc.stop="renaming = false" @blur="endRename(($event.target as HTMLInputElement).value)" />
-    <button v-else-if="!bare" type="button" data-tree-recipe-name class="flex h-8 min-w-0 max-w-[240px] items-center gap-1.5 rounded px-1.5 text-[13px] hover:bg-white/[0.06]" :title="tr('名前を変える', 'Rename')" @click="startRename">
+    <button v-else-if="!bare" type="button" data-tree-recipe-name class="flex min-w-0 max-w-[240px] items-center gap-1.5 rounded px-1.5 text-[13px] hover:bg-white/[0.06]" :class="flat ? 'h-10 max-[359px]:max-w-none max-[359px]:basis-full max-[359px]:justify-center' : 'h-8'" :title="tr('名前を変える', 'Rename')" @click="startRename">
       <b class="min-w-0 truncate max-[1099px]:overflow-visible max-[1099px]:whitespace-normal max-[1099px]:break-words">{{ currentTreeRecipe?.name ?? tr("名前なし", "Untitled") }}</b>
       <span v-if="dirty" data-tree-recipe-dirty class="size-2 shrink-0 rounded-full bg-amber-400" :title="tr('保存していない変更がある', 'Unsaved changes')" />
     </button>
-    <button v-if="!bare" type="button" data-tree-recipe-save class="g-btn sm shrink-0" :title="currentTreeRecipe ? tr('開いているレシピに上書き保存 (Ctrl+S)', 'Save to the open recipe (Ctrl+S)') : tr('新しく保存 (名前は自動、後で変えられる。Ctrl+S)', 'Save as a new recipe (auto-named, rename later. Ctrl+S)')" @click="save">{{ tr("保存", "Save") }}</button>
-    <button type="button" data-tree-recipe-menu class="g-btn sm inline-flex shrink-0 items-center gap-1" :aria-expanded="pop" @click="pop = !pop">{{ tr("レシピ", "Recipes") }} ▾</button>
+    <!-- flat (スマホの上の帯) は保存・レシピ・差し込み (メモ・白紙) を 1 組にして一緒に折り返す (名前が長い・幅が狭い時は名前だけ 1 行目) -->
+    <span :class="flat ? 'flex shrink-0 items-center gap-1' : 'contents'">
+      <button v-if="!bare" type="button" data-tree-recipe-save :class="flat ?? 'g-btn sm shrink-0'" :title="currentTreeRecipe ? tr('開いているレシピに上書き保存 (Ctrl+S)', 'Save to the open recipe (Ctrl+S)') : tr('新しく保存 (名前は自動、後で変えられる。Ctrl+S)', 'Save as a new recipe (auto-named, rename later. Ctrl+S)')" @click="save"><Icon v-if="flat" name="save" class="size-4" />{{ tr("保存", "Save") }}</button>
+      <button type="button" data-tree-recipe-menu :class="flat ?? 'g-btn sm inline-flex shrink-0 items-center gap-1'" :aria-expanded="pop" @click="pop = !pop"><Icon v-if="flat" name="book" class="size-4" />{{ tr("レシピ", "Recipes") }} ▾</button>
+      <slot name="after" />
+    </span>
     <span v-if="note" data-tree-recipe-note class="pointer-events-none min-w-0 max-w-full truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words rounded bg-emerald-900/90 px-2 py-0.5 text-[12px] text-emerald-100">{{ note }}</span>
 
     <div v-if="pop" data-tree-recipe-pop :class="menuOnly ? 'right-0' : 'left-0'" class="absolute top-full z-40 mt-1 flex w-[340px] max-w-[calc(100vw-4rem)] flex-col gap-1.5 rounded-lg border border-[var(--exile-color-border-brass)]/60 bg-[#14110d] p-2 text-[12px] shadow-[0_8px_24px_rgba(0,0,0,0.7)]">
