@@ -19,9 +19,9 @@ import { applyPick, type OnlyOut } from "../tree/tree-hand-plan";
 import { useTree } from "../tree/use-tree";
 import { clearHand, setAim, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
-import { phoneRun, sheet, usePhoneQuiz } from "./use-phone-quiz";
+import { outStep, phoneRun, sheet, usePhoneQuiz, type Question } from "./use-phone-quiz";
+import { stepOf } from "../tree/tree-fail";
 import PhoneAsk from "./PhoneAsk.vue";
-import PhoneRoutes from "./PhoneRoutes.vue";
 import PhoneOverview from "./PhoneOverview.vue";
 import PhoneBoxSheet from "./PhoneBoxSheet.vue";
 import PhoneIssues from "./PhoneIssues.vue";
@@ -41,10 +41,32 @@ const q = usePhoneQuiz();
 /** 棚を開いている箱 / 当たりの MOD を選んでいる箱 */
 const handFor = ref<string | null>(null);
 const aimFor = ref<string | null>(null);
-/** 残りの道の一覧を出している */
-const routesOpen = ref(false);
-// 重ね窓の「この回の質問へ」・足りない所の「直しに行く」で質問を替えたら、全体を見るの一覧は閉じて質問を出す (開いたままで質問が見えなかった、10-26)
-watch(() => q.focus.value, () => { routesOpen.value = false; });
+/**
+ * 見た段の行き来 (10-26 夜オーナー「全体を見るは要らない。1 つ前の手へ戻れて、また進めるボタンに」)。見た所を順に覚え、‹ で 1 つ前、› で戻した所から先へ。
+ * 「全体を見る」の残りの道の一覧 (PhoneRoutes) はやめた (全体図で見られる)
+ */
+const trail = ref<Question[]>([]);
+const trailAt = ref(-1);
+let walking = false;
+const qKey = (x: Question | null): string => (x ? `${x.kind}:${x.id}` : "");
+watch(() => qKey(q.current.value), () => {
+  outStep.value = 0; // 結果は 1 枚目から
+  const c = q.current.value;
+  if (!c || walking) { walking = false; return; }
+  if (qKey(trail.value[trailAt.value] ?? null) === qKey(c)) return;
+  trail.value = [...trail.value.slice(0, trailAt.value + 1), c];
+  trailAt.value = trail.value.length - 1;
+}, { immediate: true });
+function setOutStep(n: number): void { outStep.value = n; }
+function walk(by: number): void {
+  const to = trailAt.value + by, x = trail.value[to];
+  if (!x || !t.doc.value.boxes[x.id]) return;
+  trailAt.value = to; walking = true;
+  q.focus.value = x;
+}
+/** 今の段と全部の段 (PC の画面の段 stepOf と同じ数え方) */
+const stepNow = computed(() => { const c = q.current.value; if (!c) return null; const ids = c.kind === "outs" ? q.outsOf(c.id) : [c.id]; return ids.length ? stepOf(t.doc.value, ids[0]!) : null; });
+const stepAll = computed(() => Math.max(1, ...Object.keys(t.doc.value.boxes).map((id) => stepOf(t.doc.value, id))));
 /** ツリーのメモを書いている (PhoneMemo) */
 const memoEdit = ref(false);
 /** 上の帯の平たいボタン (PC の操作の列 TreeTopTools と同じ形: 枠の絵なし・絵 + 短い名前。押す所は 40px、10-26 夜オーナー「上の帯が太い」) */
@@ -102,13 +124,14 @@ const donePct = computed(() => Math.round(((run.result.value?.finished ?? 0) / (
 const fmt = (x: number): string => (!Number.isFinite(x) ? "—" : x >= 100 ? x.toFixed(0) : x.toFixed(1));
 /** 下の帯の主な操作 (今の質問ごと。一覧を出している間は無し) */
 const main = computed((): { kind: string; text: string; off?: boolean; go: () => void } | null => {
-  if (routesOpen.value) return null;
   const c = q.current.value, b = c ? t.doc.value.boxes[c.id] : null;
   // 一番最初 (始まりの箱) は「始める」(10-26 夜オーナー「スマホの最初の質問『打つ手を選ぶ』は嫌、一番最初は始めるでいい」)。押すと同じく棚
   if (c && b && c.kind === "hand" && !b.hand) return { kind: "hand", text: b.out === "start" ? tr("始める", "Start") : tr("打つ手を選ぶ", "Choose a craft"), go: () => { handFor.value = c.id; } };
   if (c && c.kind === "outs") {
-    const left = q.outsOf(c.id).filter((id) => q.stateOf(id) === "open").length;
-    return { kind: "decide", text: left ? tr(`次へ (未定 ${left})`, `Next (${left} open)`) : tr("次へ", "Next"), go: () => q.decide(c.id) };
+    // 結果は 1 つずつ 1 画面 (10-26 夜オーナー「スマホだとレベルが高すぎる」)。「次へ」= 今の結果を既定の答えで決めて次の結果へ、最後で次の段へ
+    const outs = q.outsOf(c.id), k = Math.min(outStep.value, Math.max(0, outs.length - 1));
+    if (k < outs.length - 1) return { kind: "decide", text: tr(`次へ (${k + 1} / ${outs.length})`, `Next (${k + 1} / ${outs.length})`), go: () => { q.decideOne(outs[k]!); outStep.value = k + 1; window.scrollTo(0, 0); } };
+    return { kind: "decide", text: outs.length > 1 ? tr(`次へ (${outs.length} / ${outs.length})`, `Next (${outs.length} / ${outs.length})`) : tr("次へ", "Next"), go: () => q.decide(c.id) };
   }
   if (c) return null;
   // 全部の道が決まった = 100 人回す (PC と同じ use-tree-run。1 人目が木を進む再生は木が無いので飛ばす)
@@ -140,18 +163,19 @@ function goBox(id: string): void {
       </div>
       <!-- ツリーのメモ (文だけ、書いてあれば全文) -->
       <PhoneMemo v-model:editing="memoEdit" />
-      <!-- 進み (残りの道・答えた数) と、残りの道の一覧の切り替え -->
+      <!-- 進み = 今の段 / 全部の段・未定の道の数と、見た段の行き来 (‹ 1 つ前・先へ ›。ツリーとして見せる、10-26 夜オーナー「質問と思わせない」) -->
       <div data-phone-progress class="-my-1 flex items-center gap-2 text-[12px] text-[#d8ccb4]">
-        <span class="shrink-0">{{ tr("残りの道", "Open paths") }} <b class="text-[14px] text-amber-200">{{ total }}</b></span>
-        <span class="shrink-0 opacity-70">· {{ tr(`答えた ${q.answered.value}`, `${q.answered.value} answered`) }}</span>
-        <div class="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-white/10"><i class="block h-full bg-amber-300" :style="{ width: `${Math.round((100 * q.answered.value) / Math.max(1, q.answered.value + total))}%` }" /></div>
-        <button type="button" data-phone-routes :class="FLAT" :aria-pressed="routesOpen" @click="routesOpen = !routesOpen">{{ routesOpen ? tr("質問へ", "Question") : tr("全体を見る", "Overview") }}</button>
+        <button type="button" data-phone-walk-back :class="FLAT" :disabled="trailAt <= 0" @click="walk(-1)">‹ {{ tr("1 つ前", "Back") }}</button>
+        <span class="min-w-0 flex-1 break-words text-center">
+          <b v-if="stepNow" class="text-[14px] text-amber-200">{{ tr(`${stepNow} 段目`, `Step ${stepNow}`) }}</b><span class="opacity-70"> / {{ tr(`全 ${stepAll} 段`, `${stepAll} steps`) }}</span>
+          <span v-if="total" class="opacity-70"> · {{ tr(`未定 ${total}`, `${total} open`) }}</span>
+        </span>
+        <button type="button" data-phone-walk-fwd :class="FLAT" :disabled="trailAt >= trail.length - 1" @click="walk(1)">{{ tr("先へ", "Forward") }} ›</button>
       </div>
       <!-- 「残りの道を全部決めると、下の帯で 100 人回せる」の説明はスマホでは出さない (10-26 夜オーナー「上の帯が太い」。前はモンキー 7 の 7 で足した) -->
       <!-- 足りない所 (PC と同じ精査、自動で回る。10-26 案 2) -->
       <PhoneIssues />
-      <PhoneRoutes v-if="routesOpen" @pick="routesOpen = false" />
-      <PhoneAsk v-else-if="q.current.value" :key="`${q.current.value.kind}-${q.current.value.id}`" :q="q.current.value" @hand="(id) => (handFor = id)" />
+      <PhoneAsk v-if="q.current.value" :key="`${q.current.value.kind}-${q.current.value.id}`" :q="q.current.value" :step="outStep" @hand="(id) => (handFor = id)" @step="setOutStep" />
       <!-- 全部の道が決まった (残りの道 0) -->
       <template v-else>
         <div data-phone-all-done class="rounded-xl border border-emerald-400/50 bg-[#13190f] px-3 py-4 text-center">

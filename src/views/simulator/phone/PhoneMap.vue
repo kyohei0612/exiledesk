@@ -24,7 +24,8 @@ const big = ref(false);
 const tall = computed(() => !props.mini && (big.value || !!mapPick.value));
 /** 畳んでいる (map-fold.ts、畳んだ時は図も頭の行も出さず、下の帯の「全体図」のボタンで開く)。戻り先を選んでいる間はいつも開く */
 const shut = computed(() => !props.mini && mapFolded.value && !mapPick.value);
-const ch = computed(() => (props.mini ? 120 : tall.value ? Math.round(Math.min(window.innerHeight * 0.45, 420)) : 112));
+// 戻り先を選ぶ時は全体表示で大きく (完成形は隠して窓の高さいっぱい、10-26 夜オーナー)
+const ch = computed(() => (props.mini ? 120 : mapPick.value ? Math.round(window.innerHeight * 0.68) : tall.value ? Math.round(Math.min(window.innerHeight * 0.45, 420)) : 112));
 let ro: ResizeObserver | null = null;
 onMounted(() => { if (wrap.value) { ro = new ResizeObserver(() => { cw.value = wrap.value?.clientWidth ?? 360; }); ro.observe(wrap.value); } });
 onBeforeUnmount(() => ro?.disconnect());

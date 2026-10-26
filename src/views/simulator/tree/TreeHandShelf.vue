@@ -305,12 +305,12 @@ function ok(): void {
       </div>
       <button v-else type="button" data-tree-hand-use class="g-btn-red min-h-11 w-full text-[15px]" :disabled="!!problem" @click="ok">{{ tr("使う (この手にする)", "Use (make it this craft)") }}</button>
     </div>
-    <!-- スマホの 2 段目「どれが付いたら当たり?」(画面いっぱい、持った物の手で付きうる狙いだけ) -->
-    <Teleport to="body">
+    <!-- スマホの 2 段目「当たりにする MOD」(画面いっぱい、持った物の手で付きうる狙いだけ)。手の窓 (スマホは画面いっぱい) の中に重ねる:
+         body へ出すと手の窓から見て枠の外の押しになり、MOD を押すと窓ごと閉じた (10-27) -->
       <div v-if="phone && aimStep && held && showAims" data-tree-hand-aim-page class="fixed inset-0 z-[320] flex flex-col bg-[#15110c] text-[14px]">
         <div class="min-h-0 flex-1 overflow-y-auto px-3 pb-3 pt-4 text-center">
           <p class="break-words text-[12px] text-[#9a8a70]">{{ hand ? handLabel(hand) : nameOf(held) }}</p>
-          <h2 class="mt-1 text-[17px] font-bold text-[#f0e4c8]">{{ tr("どれが付いたら当たり?", "Which mod counts as a hit?") }}</h2>
+          <h2 class="mt-1 text-[17px] font-bold text-[#f0e4c8]">{{ tr("当たりにする MOD", "Mods that count as a hit") }}</h2>
           <p class="mt-1 break-words text-[12px] text-[#9a8a70]">{{ spam ? tr("当たるまで繰り返す手は、狙う MOD を 1 つ以上選ぶ", "For a repeat-until-hit craft, pick at least one target") : tr("☑ の MOD ごとに当たりの箱を作る。どれか 1 つ付けば当たり", "One hit box per ☑ mod; any one landing is a hit") }}</p>
           <div data-tree-hand-aims class="mt-3 flex flex-col gap-1.5 text-left">
             <label v-for="a in aimChoices" :key="aimKey(a)" data-tree-hand-aim :data-aim="aimKey(a)" class="flex min-h-11 min-w-0 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
@@ -328,7 +328,6 @@ function ok(): void {
           <button type="button" data-tree-hand-aim-go class="g-btn-red !min-h-11 min-w-0 flex-1 text-[15px]" :disabled="!!problem" @click="ok">{{ tr("決める", "Decide") }}</button>
         </div>
       </div>
-    </Teleport>
     <!-- 持っている物の絵をカーソルに付ける (エミュと同じ共有の部品、スマホは出ない。10-26 オーナー「パソコン版持ってるかわからんから…エミュと同じ仕様で」) -->
     <HeldCursor :src="held ? iconOf(held) : null" />
   </div>

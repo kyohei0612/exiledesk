@@ -15,11 +15,13 @@ import { useTree } from "../tree/use-tree";
 import { fixedValues } from "../tree/tree-fixed-values";
 import type { StageItem } from "../../../services/craft-stage/types";
 import { usePhoneQuiz, type Question } from "./use-phone-quiz";
+import { stepOf } from "../tree/tree-fail";
 import PhoneOutRow from "./PhoneOutRow.vue";
 import { tr } from "../../../i18n/lang";
 
-const props = defineProps<{ q: Question }>();
-const emit = defineEmits<{ hand: [id: string] }>();
+/** step = 今出している結果の番号 (PhoneTreePage の outStep。下の帯の「次へ」と同じ値を見る) */
+const props = defineProps<{ q: Question; step: number }>();
+const emit = defineEmits<{ hand: [id: string]; step: [n: number] }>();
 const t = useTree();
 const quiz = usePhoneQuiz();
 const box = computed(() => t.doc.value.boxes[props.q.id]);
@@ -36,6 +38,10 @@ onMounted(() => { fit(); window.addEventListener("resize", fit); });
 onMounted(() => { if (!quiz.focus.value) quiz.focus.value = props.q; });
 onBeforeUnmount(() => window.removeEventListener("resize", fit));
 const outs = computed(() => quiz.outsOf(props.q.id));
+/** 結果は 1 つずつ 1 画面 (外れの側から、10-26 夜オーナー「スマホだとレベルが高すぎる」)。今出している結果 (下の帯の「次へ」で次) */
+const k = computed(() => Math.min(props.step, Math.max(0, outs.value.length - 1)));
+/** 段 (PC の画面の段と同じ stepOf)。見出しは質問でなくツリーの段として出す (10-26 夜オーナー「質問と思わせない」) */
+const step = computed(() => stepOf(t.doc.value, props.q.kind === "outs" ? outs.value[0] ?? props.q.id : props.q.id));
 /** ① で次の手が付いている箱を押した = その手の結果を見る */
 function showOuts(id: string): void { quiz.focus.value = { kind: "outs", id }; }
 /** ② の行の「→ 次の手」= その箱の ① */
@@ -43,23 +49,26 @@ function showHand(id: string): void { quiz.focus.value = { kind: "hand", id }; }
 </script>
 
 <template>
-  <!-- スマホなので中央揃え (見出し・カード・ボタン。10-26 夜オーナー) -->
+  <!-- スマホなので中央揃え (見出し・カード・ボタン。10-26 夜オーナー)。見出しは「n 段目 · 〜」(ツリーとして見せる、質問の言い方はしない) -->
   <div v-if="box" data-phone-ask :data-ask="q.kind" :data-box-id="q.id" class="flex min-w-0 flex-col items-center gap-2 text-center">
     <p v-if="!(q.kind === 'hand' && box.out === 'start' && !box.hand)" class="break-words text-[11px] text-[#9a8a70]">{{ quiz.pathText(q.id) }}</p>
     <template v-if="q.kind === 'hand'">
-      <h2 class="text-[17px] font-bold text-[#f0e4c8]">{{ box.hand ? tr("この箱で打つ手", "Craft from this box") : box.out === "start" ? tr("スタート", "Start") : tr("次に何を打つ?", "What do you craft next?") }}</h2>
+      <h2 class="break-words text-[17px] font-bold text-[#f0e4c8]">{{ tr(`${step} 段目`, `Step ${step}`) }} · {{ box.out === "start" ? tr("スタート", "Start") : quiz.boxTitle(q.id) }}</h2>
       <!-- 今のアイテム (この箱に着いた時の形)。完成の狙いの丸い札の並びは 10-26 夜にやめた (オーナー「要らない、頭が痛くなる」。完成形は上のアイテムの枠で見る) -->
-      <p class="text-[11px] font-bold text-[#c9b48a]">{{ tr("今のアイテム", "Current item") }}</p>
       <StageItemCard v-if="item" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
       <template v-if="box.hand">
-        <button type="button" data-phone-hand-now class="w-full rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-center text-[14px] text-amber-50" @click="showOuts(q.id)">{{ handLabel(box.hand) }} <span class="ml-2 text-[12px] text-amber-200/80">{{ tr("結果 ›", "Results ›") }}</span></button>
+        <button type="button" data-phone-hand-now class="w-full rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-center text-[14px] text-amber-50" @click="showOuts(q.id)">{{ tr("次の手", "Next craft") }}: {{ handLabel(box.hand) }} <span class="ml-2 text-[12px] text-amber-200/80">{{ tr("結果 ›", "Results ›") }}</span></button>
         <button type="button" data-phone-hand-change class="min-h-10 text-[12px] text-[#9a8a70] underline decoration-white/20" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
       </template>
     </template>
     <template v-else>
-      <h2 class="text-[16px] font-bold text-[#f0e4c8]">{{ box.hand ? tr(`${handLabel(box.hand)} を打つと…`, `After ${handLabel(box.hand)}…`) : "" }}</h2>
-      <p class="text-[12px] text-[#9a8a70]">{{ tr("外れから先に並べています。決めなかった外れは「次へ」で「↩ 再度挑戦」、当たりは次の手を 1 つずつ聞きます", "Misses are listed first. Open misses get \"↩ Retry\" on Next; for hits you pick the next craft one by one") }}</p>
-      <PhoneOutRow v-for="id in outs" :key="id" :box-id="id" @hand="showHand" />
+      <h2 class="break-words text-[16px] font-bold text-[#f0e4c8]">{{ tr(`${step} 段目`, `Step ${step}`) }} · {{ box.hand ? tr(`${handLabel(box.hand)} を打った後`, `After ${handLabel(box.hand)}`) : "" }}</h2>
+      <!-- 結果は 1 つずつ (k / n)。前の結果へは小さな 1 行で戻れる -->
+      <p v-if="outs.length > 1" data-phone-out-count class="flex items-center gap-3 text-[12px] text-[#9a8a70]">
+        <button v-if="k > 0" type="button" data-phone-out-prev class="min-h-10 underline decoration-white/20" @click="emit('step', k - 1)">‹ {{ tr("前の結果", "Previous result") }}</button>
+        <span>{{ tr(`結果 ${k + 1} / ${outs.length}`, `Result ${k + 1} / ${outs.length}`) }}</span>
+      </p>
+      <PhoneOutRow v-if="outs[k]" :key="outs[k]" :box-id="outs[k]!" @hand="showHand" />
       <button type="button" data-phone-hand-change class="min-h-10 text-[12px] text-[#9a8a70] underline decoration-white/20" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
     </template>
   </div>

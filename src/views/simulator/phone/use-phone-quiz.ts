@@ -79,6 +79,8 @@ const focus = ref<Question | null>(null);
 export const mapPick = ref<{ from: string; ids: string[] } | null>(null);
 /** 箱の重ね窓 (10-26 オーナーの選んだ案 B: 一覧・全体図・戻り先選びで箱を押すと、移らずに下から窓で中身を全部。pickFrom = 戻り先を選んでいる結果の箱) */
 export const sheet = ref<{ id: string; pickFrom?: string; /** 足りない所から開いた時の文 (窓の頭に出す、10-26 モンキー 7 の 22) */ issue?: string } | null>(null);
+/** ② で今出している結果の箱の番号 (結果は 1 つずつ 1 画面、外れの側から。PhoneTreePage が質問が替わったら 0 に戻す) */
+export const outStep = ref(0);
 /** 最後に回した 100 人の結果 (PhoneTreePage の use-tree-run を写す。結果の行・重ね窓の「来た人・止まりの理由」) */
 export const phoneRun = shallowRef<TreeRunResult | null>(null);
 
@@ -148,13 +150,15 @@ export function usePhoneQuiz() {
    * ② の「次へ」= 答えていない結果を 1 手で決めて次の質問へ: 外れの側は ↩ 再度挑戦 (戻れなければ「次の手を決める」)、当たりの側は「次の手を決める」。
    * 質問はスタートから段の順なので、前の段に未定を残さない (後ろの段から前の段へ質問が戻らない)
    */
-  function decide(id: string): void {
-    const open = outsOf(id).filter((o) => stateOf(o) === "open");
+  function decide(id: string): void { decideOuts(outsOf(id)); focus.value = null; }
+  /** 結果の箱を 1 つだけ既定の答えで決める (② を 1 枚ずつ出す時の「次へ」、10-26 夜オーナー「結果を 1 つずつ 1 画面で」) */
+  function decideOne(o: string): void { decideOuts([o]); }
+  function decideOuts(list: string[]): void {
+    const open = list.filter((o) => stateOf(o) === "open");
     const retry = open.flatMap((o) => { const to = isMiss(t.doc.value.boxes[o]) ? canRetry(o) : null; return to ? [[o, to] as const] : []; });
     const rest = open.filter((o) => !retry.some(([x]) => x === o));
     later.value = [...later.value, ...rest.filter((o) => !later.value.includes(o))];
     if (retry.length) answer((d) => { for (const [o, to] of retry) { setDone(d, o, null); setBack(d, o, to); } });
-    focus.value = null;
   }
   /**
    * 箱の名前 (SimTreePage の boxLabel と同じ形)。当たりは道で揃った狙いを全部 (スマホは木が見えないので、同じ MOD の当たりの箱が見分けられるように)、
@@ -182,5 +186,5 @@ export function usePhoneQuiz() {
     });
     return parts.join(" › ");
   }
-  return { doc: t.doc, questions, current, focus, answered, later: laterSet, answer, reset, setLater, unLater, setReturn, setFinished, stateOf, outsOf, decide, canRetry, boxTitle, pathText };
+  return { doc: t.doc, questions, current, focus, answered, later: laterSet, answer, reset, setLater, unLater, setReturn, setFinished, stateOf, outsOf, decide, decideOne, canRetry, boxTitle, pathText };
 }

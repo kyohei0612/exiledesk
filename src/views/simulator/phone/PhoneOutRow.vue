@@ -65,7 +65,7 @@ const listOpen = ref(false);
 const pickOther = computed(() => (MAP ? mapPick.value?.from === props.boxId : listOpen.value));
 function startPick(): void {
   if (!MAP) { listOpen.value = !listOpen.value; return; }
-  mapPick.value = pickOther.value ? null : { from: props.boxId, ids: [...others.value, ...(canRetry.value ? [parent.value!] : []), "start"] };
+  mapPick.value = pickOther.value ? null : { from: props.boxId, ids: pickIds.value };
 }
 /** 決めていない外れの既定 (「次へ」で ↩ 再度挑戦 = 打つ前の箱へ。use-phone-quiz の decide と同じ判定)。"retry" / "start" / null */
 const defRetry = computed(() => (state.value !== "open" || !isMiss(box.value) || !parent.value || link.value.get(parent.value) !== null ? null : parent.value === "start" ? "start" : "retry"));
@@ -74,6 +74,8 @@ const DEF = "!bg-amber-500/15";
 /** 再度挑戦の言い方 (決まり済み「↩ 再度挑戦 · n 段目へ戻る」、メモ sim-decisions。始まりの手の結果も同じ言い方) */
 const retryText = computed(() => (parent.value ? `↩ ${tr("再度挑戦", "Retry")} · ${stepBackText(t.doc.value, parent.value)}` : ""));
 const look = computed(() => OUT_LOOK[box.value?.out ?? "junk"]);
+/** 全体図で選べる戻り先 (ほかの戻れる箱・打つ前の箱・始まり。戻れない物は入れない) */
+const pickIds = computed(() => [...others.value, ...(canRetry.value ? [parent.value!] : []), ...(startNo.value ? [] : ["start"])]);
 /** 答えの選びの重ね窓を開いている */
 const pickOpen = ref(false);
 /** 選びの窓で答えを押したら閉じる (まとめる・分けるの一覧を開く押しは閉じない。「ほかの箱へ」は全体図で選ぶので閉じる) */
@@ -130,7 +132,7 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
         <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3 pt-2 text-center" @click.capture="onPickClick">
           <div class="mx-auto mb-2 h-1.5 w-11 rounded-full bg-white/25" />
           <p class="break-words text-[15px] font-bold" :style="{ color: `rgb(${look.c})` }">{{ q.boxTitle(boxId) }}</p>
-          <p class="mb-1 break-words text-[12px] text-[#9a8a70]">{{ tr("この結果の後どうする?", "What next after this result?") }}</p>
+          <p class="mb-1 break-words text-[12px] text-[#9a8a70]">{{ tr("この結果の次", "After this result") }}</p>
       <!-- 戻り先の箱のアイテム (その箱に着いた時の形。始めに戻るはベースなので出さない) -->
       <div v-if="backItem && backTo" data-phone-out-back-item class="mt-1 rounded-lg border border-cyan-300/30 bg-black/20 p-1.5">
         <p class="mb-1 break-words text-[11px] text-cyan-200/80">{{ tr(`戻り先: ${q.pathText(backTo)}`, `Returns to: ${q.pathText(backTo)}`) }}</p>
@@ -139,12 +141,13 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
       <div class="mt-2 flex flex-wrap justify-center gap-1.5">
         <button type="button" data-phone-ans="later" :class="chipClass(state === 'later')" @click="q.setLater(boxId)">{{ tr("次の手を決める", "Next craft") }}</button>
         <button v-if="canRetry" type="button" data-phone-ans="retry" :class="[chipClass(backKind === 'retry'), defRetry === 'retry' ? DEF : '']" @click="q.setReturn(boxId, parent!)">{{ retryText }}<span v-if="defRetry === 'retry'" class="ml-1.5 rounded bg-amber-300/25 px-1 text-[11px] text-amber-100">{{ tr("既定", "Default") }}</span></button>
-        <button type="button" data-phone-ans="start" :class="[chipClass(backKind === 'start'), startNo ? 'opacity-40' : '', defRetry === 'start' ? DEF : '']" :disabled="!!startNo" @click="q.setReturn(boxId, 'start')">{{ parent === "start" ? retryText : `↩ ${stepBackText(t.doc.value, "start")}` }}<span v-if="defRetry === 'start'" class="ml-1.5 rounded bg-amber-300/25 px-1 text-[11px] text-amber-100">{{ tr("既定", "Default") }}</span></button>
+        <button v-if="parent === 'start'" type="button" data-phone-ans="start" :class="[chipClass(backKind === 'start'), startNo ? 'opacity-40' : '', defRetry === 'start' ? DEF : '']" :disabled="!!startNo" @click="q.setReturn(boxId, 'start')">{{ parent === "start" ? retryText : `↩ ${stepBackText(t.doc.value, "start")}` }}<span v-if="defRetry === 'start'" class="ml-1.5 rounded bg-amber-300/25 px-1 text-[11px] text-amber-100">{{ tr("既定", "Default") }}</span></button>
         <!-- 同じ側の「どれか」の当たりを MOD ごとに分ける / 分けた箱をまとめる (10-26 オーナー) -->
         <button v-if="(box.anyOf?.length ?? 0) > 1 || (box.mergedOuts?.length ?? 0) > 0" type="button" data-phone-split-any :class="chipClass(false)" @click="t.edit((d) => (box!.anyOf?.length ? splitAny(d, boxId) : splitOuts(d, boxId)))">{{ box.anyOf?.length ? tr("MOD ごとに分ける", "Split by mod") : tr("分ける", "Split") }}</button>
         <button v-else-if="joinable.length" type="button" data-phone-join-side :class="chipClass(joinOpen)" @click="openJoin">{{ tr("動きをまとめる", "Merge the path") }}</button>
         <button v-if="canDone" type="button" data-phone-ans="done" :class="chipClass(state === 'done')" @click="q.setFinished(boxId)">{{ tr("完成", "Done") }}</button>
-        <button v-if="others.length" type="button" data-phone-ans="other" :class="chipClass(backKind === 'other' || pickOther)" @click="startPick">{{ MAP ? (pickOther ? tr("全体図で選ぶ ↓", "Pick on the map ↓") : tr("ほかの箱へ", "Other box")) : tr("ほかの箱へ ▾", "Other box ▾") }}</button>
+        <!-- 戻り先は全体図で選ぶ (戻れる箱だけ光る。打つ前の箱・始まりも含む。10-26 夜オーナー「n 段目へ戻るの選び方は全体図で」) -->
+        <button v-if="pickIds.length" type="button" data-phone-ans="other" :class="chipClass(backKind === 'other' || pickOther)" @click="startPick">{{ MAP ? tr("戻り先を全体図で選ぶ", "Pick where to return on the map") : tr("ほかの箱へ ▾", "Other box ▾") }}</button>
       </div>
       <!-- 動きをまとめる: 同じ側の横の当たりを選んでこの箱にまとめる (10-26 オーナー「選択した枠にまとめる」) -->
       <div v-if="joinOpen" data-phone-join-pick class="mt-2 flex flex-col gap-1 rounded-lg border border-amber-300/40 bg-black/20 p-2 text-[13px]">

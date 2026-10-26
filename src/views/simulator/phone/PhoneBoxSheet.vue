@@ -1,6 +1,6 @@
 <!--
   PhoneBoxSheet.vue — スマホ版の箱の重ね窓 (2026-10-26 オーナーの選んだ案 B「タップでその回にワープじゃなくて展開して手を見せる」「やりづらかったらオーバーレイで見させてもおk」)。
-  全体図 (PhoneMap)・「全体を見る」の一覧 (PhoneRoutes)・戻り先選び (mapPick) で箱を押すと、移らずに下から出す。閉じれば元の場所・スクロールのまま。
+  全体図 (PhoneMap)・戻り先選び (mapPick) で箱を押すと、移らずに下から出す。閉じれば元の場所・スクロールのまま。
   中身は省略しない (決まり 10): 箱の名前と道・今のアイテム (開いたまま)・行き先の文 (tree-fail)・回した結果・この回の手と結果ごとの行き先・木の中の位置 (小さな図、線はつながりだけ)。
   動くのは下のボタンだけ: 「この回の質問へ」(答え直す) / 戻り先を選んでいる時は「ここへ戻す」
 -->
@@ -93,7 +93,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
           </button>
         </div>
         <template v-if="box.hand">
-          <p class="mt-2 rounded-lg border border-amber-300/50 bg-[#2a2014] px-2 py-1.5 text-[13px] text-amber-50">{{ tr("この回の手", "Craft here") }}: {{ handLabel(box.hand) }}</p>
+          <p class="mt-2 rounded-lg border border-amber-300/50 bg-[#2a2014] px-2 py-1.5 text-[13px] text-amber-50">{{ tr("この箱から次に打つ", "Next craft from here") }}: {{ handLabel(box.hand) }}</p>
           <ul class="mt-1 flex flex-col">
             <li v-for="o in outs" :key="o.id" data-phone-sheet-out class="border-b border-white/5 py-1.5 text-[12px]">
               <span class="flex items-start gap-2"><b class="min-w-0 flex-1 break-words" :style="{ color: `rgb(${o.c})` }">{{ o.title }}</b><span v-if="o.odds != null" class="shrink-0 tabular-nums text-[#d8ccb4]">{{ pctText(o.odds) }}</span></span>
@@ -105,8 +105,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
         <PhoneMap :mini="id" />
       </div>
       <div class="flex gap-2 border-t border-white/10 px-3 py-2">
-        <button v-if="sheet?.pickFrom" type="button" data-phone-sheet-return class="g-btn-red !min-h-11 flex-1 text-[15px]" @click="returnHere">{{ tr("ここへ戻す", "Return here") }}</button>
-        <button v-else type="button" data-phone-sheet-ask class="g-btn-red !min-h-11 flex-1 text-[15px]" @click="ask">{{ tr("この回の質問へ", "Go to this question") }}</button>
+        <!-- 戻り先を選んでいる時は「ここへ戻る」。普段は閉じるだけ (箱の中身とこの箱からの手を見る窓、10-26 夜オーナー) -->
+        <button v-if="sheet?.pickFrom" type="button" data-phone-sheet-return class="g-btn-red !min-h-11 flex-1 text-[15px]" @click="returnHere">{{ tr("ここへ戻る", "Return here") }}</button>
         <button type="button" data-phone-sheet-close class="g-btn !min-h-11 flex-1" @click="sheet = null">{{ tr("閉じる", "Close") }}</button>
       </div>
     </div>
