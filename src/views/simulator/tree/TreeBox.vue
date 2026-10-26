@@ -64,6 +64,11 @@ const headTitle = computed(() => (props.box.out === "hit" && props.box.aim ? box
 /** この結果の箱に着く割合 (無ければ出さない、tree-odds.ts) */
 const treeOdds = useTreeOdds();
 const odds = computed(() => treeOdds.value.get(props.box.id) ?? null);
+/** 札に乗せた時の説明 (割合は箱の中に出さずここへ、10-26 夜オーナー「ここ 1% と次の手って日本語いらない」) */
+const legendTitle = computed(() => [
+  props.box.out === "hit" && props.box.aim ? tr(`${headTitle.value} (押すと付く MOD を選び直す)`, `${headTitle.value} (click to change the mod)`) : headTitle.value,
+  odds.value != null ? tr(`この手でこの結果になる割合 ${pctText(odds.value)} (1 手分)`, `Chance from the craft: ${pctText(odds.value)} (one use)`) : "",
+].filter(Boolean).join("\n"));
 /** 縁の色 (完成は明るい金) と光り方。選んだ・光らせた時は強く */
 const rgb = computed(() => (props.box.done ? "242,210,122" : kind.value.c));
 const neon = computed(() => {
@@ -135,18 +140,18 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     :style="{ ...(x === undefined ? {} : { left: `${x}px`, top: `${y}px` }), width: `${BOX_W}px`, minHeight: `${BOX_H}px`, ...neon }" :title="picking && linkNo ? linkNo : undefined" @pointerdown="down" @pointerenter="emit('hover', true)" @pointerleave="emit('hover', false)">
     <!-- 縮めている時 (k > 1) は押せる物の行を倍率分高くし、まだ「—」だけの数字の行は隠す (箱が小さくても押せる物どうしが重ならない) -->
     <!-- 題は枠の上の線に乗る札 (よくある枠の形。枠の中は割合・中身・戻り方だけ。10-26 オーナー「枠の上のところに●がついた みたいな形でよくある枠の形にしたら枠中ごちゃんなくていいよな」) -->
-    <component :is="box.out === 'hit' && box.aim && !quiet ? 'button' : 'span'" :type="box.out === 'hit' && box.aim && !quiet ? 'button' : undefined" data-tree-legend class="nodrag absolute -top-[10px] left-2 flex max-w-[calc(100%-16px)] items-center gap-1 rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="{ color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :class="box.out === 'hit' && box.aim && !quiet ? 'hover:brightness-125' : 'pointer-events-none'" :title="box.out === 'hit' && box.aim ? tr(`${headTitle} (押すと付く MOD を選び直す)`, `${headTitle} (click to change the mod)`) : headTitle" @click.stop="box.out === 'hit' && box.aim && !quiet && emit('aim')"><Icon :name="kind.icon" class="size-3 shrink-0" /><span class="min-w-0 truncate">{{ head }}</span></component>
-    <div class="flex items-center gap-1.5" :style="{ height: `${24 * k}px` }">
-      <!-- この結果に着く割合 (親の箱のアイテム × 手、エンジンの outcomeOdds。tree-odds.ts) -->
-      <span v-if="odds != null" data-tree-odds class="shrink-0 text-[11px] tabular-nums opacity-80" :title="tr('この手でこの結果になる割合 (1 手分、エンジンから)', 'Chance of this result from the craft (one use, from the engine)')">{{ pctText(odds) }}</span>
+    <!-- 札は枠の上辺の横の真ん中 (10-26 夜オーナー「この ◎ が付いたとか外れとかは真ん中が良いな、枠の」。左上だと未定の ! と重なった)。この結果に着く割合 (tree-odds.ts) は乗せた時の説明だけ -->
+    <component :is="box.out === 'hit' && box.aim && !quiet ? 'button' : 'span'" :type="box.out === 'hit' && box.aim && !quiet ? 'button' : undefined" data-tree-legend class="nodrag absolute -top-[10px] left-1/2 flex max-w-[calc(100%-16px)] -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="{ color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :class="box.out === 'hit' && box.aim && !quiet ? 'hover:brightness-125' : 'pointer-events-none'" :title="legendTitle" @click.stop="box.out === 'hit' && box.aim && !quiet && emit('aim')"><Icon :name="kind.icon" class="size-3 shrink-0" /><span class="min-w-0 truncate">{{ head }}</span></component>
+    <!-- 1 行目 (未定の !・✎ ✕) は札の下の端 (枠の中 8px) より下から (札と重ならない) -->
+    <div class="mt-1.5 flex items-center gap-1.5" :style="{ height: `${24 * k}px` }">
       <!-- 始まりのアイテムレベルは見出しに (ベースの名前が長いと下の行で切れて見えない、10-22 靴) -->
       <span v-if="box.out === 'start'" class="shrink-0 text-[11px] opacity-70">{{ tr(`Lv ${t.doc.value.itemLevel}${t.doc.value.ilvlFit ? " 適正" : ""}`, `ilvl ${t.doc.value.itemLevel}${t.doc.value.ilvlFit ? " fit" : ""}`) }}</span>
       <span v-if="orphan" data-tree-orphan class="shrink-0 rounded-sm bg-rose-400/20 px-1 text-[10px] font-bold text-rose-200" :title="tr('この当たりの MOD は完成の狙いから外した (木からは消えていない。× で消すか、完成の MOD で狙いに戻す)', 'This hit mod was removed from the final targets (the box stays; remove it with × or add the target back)')">{{ tr("狙いに無い", "Not a target") }}</span>
       <span v-if="box.done" class="shrink-0 rounded-full bg-amber-300/25 px-1.5 text-[10px] font-bold text-amber-100">{{ doneText }}</span>
       <span v-if="box.unwanted?.length" data-tree-unwanted class="shrink-0 rounded-sm bg-rose-400/20 px-1.5 text-[11px] font-bold text-rose-200" :title="tr(`× (要らない) の印 ${box.unwanted.length} 個 (前の試し打ちで付けた物)`, `${box.unwanted.length} mod(s) marked × (unwanted, set in the old try-out)`)">× {{ box.unwanted.length }}</span>
       <button v-if="box.check?.length" type="button" data-tree-check class="nodrag shrink-0 rounded-sm bg-amber-500/80 px-1.5 text-[11px] font-bold text-black hover:bg-amber-400" :class="quiet ? 'pointer-events-none' : ''" :title="tr(`読めなかった所: ${checkTitle} (直したら押して印を消す)`, `Couldn’t read: ${checkTitle} (fix it, then click to clear)`)" @click.stop="!quiet && emit('checked')">{{ tr("要確認", "Check") }}</button>
-      <span v-if="quietOpen" data-tree-quiet-open class="shrink-0 whitespace-nowrap text-[11px] text-white/45" :title="issue ?? undefined">{{ tr("＋ 次の手", "+ Next craft") }}</span>
-      <button v-else-if="issue" type="button" data-tree-issue class="nodrag shrink-0 whitespace-nowrap rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white hover:bg-rose-500" :title="tr(`${issue} (押すと足りない所の一覧)`, `${issue} (click for the list of what is missing)`)" @click.stop="emit('issue')">{{ /行き先を決めていない|最初の手を決めていない/.test(issue) && k === 1 ? tr("! 未定", "! Open") : "!" }}</button>
+      <!-- 当たりの箱の次の手が未定の時は印を出さない (下の＋だけ。前は「<1% ＋ 次の手」の文字が枠の上の札とかぶった、10-26 夜オーナー「ここ 1% と次の手って日本語いらない」) -->
+      <button v-if="issue && !quietOpen" type="button" data-tree-issue class="nodrag shrink-0 whitespace-nowrap rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white hover:bg-rose-500" :title="tr(`${issue} (押すと足りない所の一覧)`, `${issue} (click for the list of what is missing)`)" @click.stop="emit('issue')">{{ /行き先を決めていない|最初の手を決めていない/.test(issue) && k === 1 ? tr("! 未定", "! Open") : "!" }}</button>
       <span class="flex-1" />
       <span class="flex items-center" :style="keep('right center')">
       <button v-if="!quiet" type="button" data-tree-note-mark class="nodrag flex size-6 items-center justify-center rounded hover:bg-white/10" :class="box.note ? 'text-amber-300' : 'text-white/30 hover:text-white/70'" :title="box.note || tr('メモを書く', 'Write a note')" @click.stop="emit('note')"><Icon name="pencil" class="size-3.5" /></button>
