@@ -37,8 +37,6 @@ const PHONE_MIN = 0.5;
 const OPEN_MIN = VIEW_ONLY;
 /** 全体に合わせる時の余白の下限 */
 const PAD_MIN = 12;
-/** 右下に浮かぶ道具とミニマップ (TreeCanvasTools) の幅・高さ (ページの CSS ピクセル) */
-const RIGHT_ROOM = 250, TOOLS_H = 200;
 
 export function useTreeFlow(doc: Ref<TreeDoc>) {
   const f = useVueFlow(FLOW_ID);
@@ -79,63 +77,58 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     wheelAcc = 0;
     void stepZoom(dir, { x: e.clientX, y: e.clientY });
   }
-  /**
-   * 全体に合わせる (大きくはしない。収まる一番大きい段)。右下に浮かぶ道具とミニマップ (TreeCanvasTools、幅 RIGHT_ROOM) の所を空けて収める
-   * (Vue Flow の fitView は浮かぶ物を知らず、右下の箱がミニマップの下に隠れた。10-22 手元で見た)
-   */
   /** 一番上の箱を置く高さ (0 完成形の設定は枠の左上の札、10-23。スマホは札 (高さ約 110px) の下へ) */
   const topY = (): number => (innerWidth < 768 ? 130 : 40);
   /**
-   * 全体に収まる一番大きい段 lv と、左 left・右下 room に空ける幅。top = 上寄せの時 (上は topY、下は余白だけ)
+   * 始まりの箱を枠の横の真ん中に置いた時、木全体が収まる一番大きい段 (上は topY、下は余白だけ。100% まで)。
+   * 左右は始まりの箱の真ん中から遠い方の端まで (始まりを真ん中に置くので、片側に伸びた木はその側の分を両側に取る)
    */
-  function fitPlan(top: boolean): { lv: number; left: number; room: number } | null {
-    const b = bounds.value, w = f.dimensions.value.width, h = f.dimensions.value.height;
+  function fitLevel(): number | null {
+    const b = bounds.value, st = doc.value.boxes.start, w = f.dimensions.value.width, h = f.dimensions.value.height;
     if (!w || !h) return null;
-    const availH = top ? h - topY() - PAD_MIN : h - PAD_MIN * 2;
+    const sx = st ? st.x + BOX_W / 2 : b.x + b.w / 2;
+    const half = Math.max(sx - b.x, b.x + b.w - sx);
     // 木の左の外の段の目印 (TreeBandLayer、画面の上で約 110px × ページの zoom) の分も左を空ける (1280 で目印が枠の外に切れた、10-22)
     const left = bandsOf(doc.value).length ? Math.round(110 * pageZ.value) : 0;
-    /** 幅 avail に収まる一番大きい段 (段を選ぶ時は余白を PAD_MIN まで詰めてよい) */
-    const level = (avail: number): number => {
-      const fz = Math.min((avail - PAD_MIN * 2) / b.w, availH / b.h) / pageZ.value;
-      return [...ZOOM_LEVELS].reverse().find((l) => l <= Math.min(1, fz) + 1e-6) ?? ZOOM_MIN;
-    };
-    // 右下を空けると段が下がる時は空けない (見本の木は 1920 幅で空けると 25%、空けなければ 33%)
-    const room = level(w - left - RIGHT_ROOM) >= level(w - left) ? RIGHT_ROOM : 0;
-    return { lv: level(w - left - room), left, room };
-  }
-  /** 始まりの箱を上の真ん中へ、段 lv で */
-  async function startTop(lv: number): Promise<void> {
-    const st = doc.value.boxes.start;
-    if (!st) return;
-    const z = lv * pageZ.value, w = f.dimensions.value.width;
-    await f.setViewport({ x: w / 2 - (st.x + BOX_W / 2) * z, y: topY() - st.y * z, zoom: z });
-  }
-  /** whole = スマホでも 50% の下限を使わず木の全体 (回すの 1 人目が歩く時。光る枠を画面の外へ出さない) */
-  async function fit(whole = false): Promise<void> {
-    const p = fitPlan(false);
-    if (!p) return;
-    const b = bounds.value, w = f.dimensions.value.width, h = f.dimensions.value.height, PAD = 28;
-    // スマホ (768px 未満) は 50% より小さくしない (20% で箱の字が読めなかった、10-22)。収まらない時は始まりの箱を上の真ん中に
-    if (!whole && innerWidth < 768 && p.lv < PHONE_MIN && doc.value.boxes.start) { await startTop(PHONE_MIN); return; }
-    const z = p.lv * pageZ.value;
-    // 縦は真ん中、上は PAD まで。PAD だと下が切れる時は下を PAD_MIN に (段は PAD_MIN の余白で選ぶので、下の箱が 2px 枠の外に出た、10-25)
-    const y = Math.max(h / 2 - (b.y + b.h / 2) * z, Math.min(PAD - b.y * z, h - PAD_MIN - (b.y + b.h) * z));
-    await f.setViewport({ x: p.left + (w - p.left - p.room) / 2 - (b.x + b.w / 2) * z, y, zoom: z });
+    const fz = Math.min((w / 2 - left - PAD_MIN) / half, (h - topY() - PAD_MIN) / b.h) / pageZ.value;
+    return [...ZOOM_LEVELS].reverse().find((l) => l <= Math.min(1, fz) + 1e-6) ?? ZOOM_MIN;
   }
   /**
-   * 開いた時の見え方 (10-25 オーナー「任せる」、23 本目の決め): 木全体が収まる段 (100% まで) で上寄せ。
-   * 75% (OPEN_MIN) 未満でしか収まらない時は 75% で始まりの箱を上の真ん中 (前は 100% で始まりを上の真ん中にしていて、木の下が枠の外にあった)
+   * 始まりの箱を枠の横の真ん中・木の一番上を上の端 (topY) に、段 lv で。
+   * 左上に浮かぶ完成形の窓 ([data-tree-goal-float]) にかぶる箱があれば、かぶらない所まで木を下げる
+   * (10-26 オーナー「スタートと完成形のアイテムと被ってめんどくさい。スタートは必ずツリーを真ん中に配置して開始、それも一番上ね」。
+   * 前は木の囲みの真ん中を枠の真ん中にしていて、右へ伸びた木では始まりの箱が左上の窓の下に入った)
+   */
+  async function startTop(lv: number): Promise<void> {
+    const b = bounds.value, st = doc.value.boxes.start, w = f.dimensions.value.width;
+    const z = lv * pageZ.value, sx = st ? st.x + BOX_W / 2 : b.x + b.w / 2;
+    const x = w / 2 - sx * z;
+    let y = topY() - b.y * z;
+    const card = document.querySelector("[data-tree-goal-float]")?.getBoundingClientRect(), pane = document.querySelector("[data-tree-canvas]")?.getBoundingClientRect();
+    if (card && pane && card.height > 0) {
+      // 窓の右・下の端 (枠の左上が 0 の座標)。箱の上の端が窓の下の端より上で、横が窓に掛かる箱を探す
+      const right = card.right - pane.left + PAD_MIN, bottom = card.bottom - pane.top + PAD_MIN;
+      const hit = Object.values(doc.value.boxes).filter((bx) => bx.x * z + x < right && bx.y * z + y < bottom);
+      if (hit.length) y += bottom - Math.min(...hit.map((bx) => bx.y * z + y));
+    }
+    await f.setViewport({ x, y, zoom: z });
+  }
+  /** 全体に合わせる (整列の後・「1」・右下の道具)。whole = スマホでも 50% の下限を使わず木の全体 (回すの 1 人目が歩く時。光る枠を画面の外へ出さない) */
+  async function fit(whole = false): Promise<void> {
+    const lv = fitLevel();
+    if (lv == null) return;
+    // スマホ (768px 未満) は 50% より小さくしない (20% で箱の字が読めなかった、10-22)
+    await startTop(!whole && innerWidth < 768 ? Math.max(lv, PHONE_MIN) : lv);
+  }
+  /**
+   * 開いた時の見え方 (10-25 オーナー「任せる」、23 本目の決め): 木全体が収まる段 (100% まで)。
+   * 75% (OPEN_MIN) 未満でしか収まらない時は 75% (前は 100% で始まりを上の真ん中にしていて、木の下が枠の外にあった)。
+   * どちらも始まりの箱は横の真ん中・一番上 (10-26 オーナー)
    */
   async function openView(): Promise<void> {
-    const p = fitPlan(true);
-    if (!p) { await goHome(); return; }
-    if (p.lv < OPEN_MIN) { await startTop(OPEN_MIN); return; }
-    const b = bounds.value, w = f.dimensions.value.width, h = f.dimensions.value.height, z = p.lv * pageZ.value;
-    // 右下の道具に掛からない木は枠の真ん中に (上寄せの小さい木が道具の分だけ左へ寄った、10-25)
-    const mid = p.left + (w - p.left) / 2, Z = pageZ.value;
-    const clear = mid + (b.w * z) / 2 < w - RIGHT_ROOM * Z || topY() + b.h * z < h - TOOLS_H * Z;
-    const cx = clear ? mid : p.left + (w - p.left - p.room) / 2;
-    await f.setViewport({ x: cx - (b.x + b.w / 2) * z, y: topY() - b.y * z, zoom: z });
+    const lv = fitLevel();
+    if (lv == null) { await goHome(); return; }
+    await startTop(Math.max(lv, OPEN_MIN));
   }
   /** 完成形の設定などを見に行く前の寄りと位置 (戻ったらそのまま。10-26 モンキー 7 の 10、メモ feedback-basic-flow「閉じたら前の位置」) */
   let kept: { x: number; y: number; zoom: number } | null = null;
