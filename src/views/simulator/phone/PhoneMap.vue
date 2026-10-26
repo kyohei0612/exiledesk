@@ -10,6 +10,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { BOX_H, BOX_W, boundsOf } from "../../../services/simulator/tree/tree-model";
 import { backTargetsOf } from "../tree/tree-merge";
 import { OUT_LOOK, outName } from "../tree/tree-names";
+import { mapFolded, setMapFold } from "./map-fold";
 import { mapPick, sheet, usePhoneQuiz } from "./use-phone-quiz";
 import { tr } from "../../../i18n/lang";
 import { iconOf } from "../../../state/craft-stage";
@@ -21,6 +22,8 @@ const cw = ref(360);
 /** 大きく開いている (⤢、戻り先を選ぶ間はいつも) */
 const big = ref(false);
 const tall = computed(() => !props.mini && (big.value || !!mapPick.value));
+/** 畳んでいる (map-fold.ts、畳んだ時は図も頭の行も出さず、下の帯の「全体図」のボタンで開く)。戻り先を選んでいる間はいつも開く */
+const shut = computed(() => !props.mini && mapFolded.value && !mapPick.value);
 const ch = computed(() => (props.mini ? 120 : tall.value ? Math.round(Math.min(window.innerHeight * 0.45, 420)) : 112));
 let ro: ResizeObserver | null = null;
 onMounted(() => { if (wrap.value) { ro = new ResizeObserver(() => { cw.value = wrap.value?.clientWidth ?? 360; }); ro.observe(wrap.value); } });
@@ -90,14 +93,15 @@ watch(() => q.doc.value, (d) => { const pk = mapPick.value; if (pk && !d.boxes[p
 </script>
 
 <template>
-  <div data-phone-map :data-mini="mini ? 1 : undefined" class="flex min-w-0 flex-col gap-1">
-    <div v-if="!mini" class="flex min-w-0 items-center gap-2 text-[11px]">
+  <div v-show="!shut" data-phone-map :data-mini="mini ? 1 : undefined" class="flex min-w-0 flex-col gap-1">
+    <div v-if="!mini && !shut" class="flex min-w-0 items-center gap-2 text-[11px]">
       <span v-if="mapPick" data-phone-map-pick class="min-w-0 flex-1 break-words font-bold text-amber-200">{{ tr("戻り先の箱を押す (明るい箱に戻れる。押すと中身を見てから決める)", "Tap the box to return to (bright boxes; check it before you choose)") }}</span>
       <span v-else class="min-w-0 flex-1 break-words text-[#9a8a70]">{{ tr("全体図 · 箱を押すと中身", "Overview · tap a box to see it") }}</span>
       <button v-if="mapPick" type="button" data-phone-map-cancel class="g-btn sm !min-h-10 shrink-0" @click="mapPick = null">{{ tr("やめる", "Cancel") }}</button>
-      <button v-else type="button" data-phone-map-size class="g-btn sm !min-h-10 min-w-11 shrink-0" :aria-pressed="big" :aria-label="tr('全体図の大きさ', 'Overview size')" @click="big = !big">{{ big ? "⤡" : "⤢" }}</button>
+      <button v-if="!mapPick" type="button" data-phone-map-fold class="g-btn sm !min-h-10 shrink-0" @click="setMapFold(true)">{{ tr("畳む ▾", "Hide ▾") }}</button>
+      <button v-if="!mapPick" type="button" data-phone-map-size class="g-btn sm !min-h-10 min-w-11 shrink-0" :aria-pressed="big" :aria-label="tr('全体図の大きさ', 'Overview size')" @click="big = !big">{{ big ? "⤡" : "⤢" }}</button>
     </div>
-    <div ref="wrap" data-phone-map-view class="relative w-full overflow-hidden rounded-lg border border-white/10 bg-[#080706]" :style="{ height: `${ch}px` }" @click="tap">
+    <div v-show="!shut" ref="wrap" data-phone-map-view class="relative w-full overflow-hidden rounded-lg border border-white/10 bg-[#080706]" :style="{ height: `${ch}px` }" @click="tap">
       <svg v-if="view" :width="cw" :height="ch" class="pointer-events-none absolute inset-0">
         <path v-for="l in lines" :key="`l-${l.id}`" :d="`M${l.a.x},${l.a.y + view.h / 2} V${(l.a.y + l.b.y) / 2} H${l.b.x} V${l.b.y - view.h / 2}`" fill="none" stroke="rgba(216,204,180,0.35)" stroke-width="2" />
         <path v-for="x in backs" :key="`b-${x.from}`" :d="`M${view.at.get(x.from)!.x},${view.at.get(x.from)!.y} L${view.at.get(x.to)!.x},${view.at.get(x.to)!.y}`" fill="none" stroke="rgba(103,232,249,0.8)" stroke-width="2" />
@@ -109,7 +113,7 @@ watch(() => q.doc.value, (d) => { const pk = mapPick.value; if (pk && !d.boxes[p
         </template>
       </svg>
     </div>
-    <p v-if="tall && !mapPick" data-phone-map-legend class="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-[#d8ccb4]">
+    <p v-if="tall && !mapPick && !shut" data-phone-map-legend class="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-[#d8ccb4]">
       <span v-for="x in legend" :key="x.o" class="inline-flex items-center gap-1"><i class="inline-block h-2.5 w-4 rounded-sm" :style="{ background: `rgba(${x.c},0.6)`, border: `1.5px solid rgb(${x.c})` }" />{{ x.name }}</span>
       <span class="inline-flex items-center gap-1"><i class="inline-block h-2.5 w-4 rounded-sm border-2 border-[rgb(253,230,138)]" />{{ tr("今の質問", "Current") }}</span>
     </p>

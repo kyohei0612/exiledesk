@@ -29,6 +29,7 @@ import PhoneIssues from "./PhoneIssues.vue";
 import { flag } from "../../../web/release-flags";
 import { simAct, simOp } from "../../../web/track";
 import PhoneMemo from "./PhoneMemo.vue";
+import { mapFolded, setMapFold } from "./map-fold";
 import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { quickSave, unsaved } from "../tree/tree-save";
 import { askLeave } from "../../../web/page";
@@ -188,8 +189,12 @@ function goBox(id: string): void {
       </template>
       <!-- 下の帯 (親指の届く所): 1 つ戻す・今の質問の主な操作 (① 打つ手を選ぶ / ② 決めた / 全部決まったら 100 人回す)・やり直し -->
       <!-- 上にツリーの全体図 (常に出す。今の箱が光る・押すとその箱へ・② の「ほかの箱へ」は図で戻り先を選ぶ。10-26 オーナー) -->
-      <div data-phone-bar class="sticky bottom-0 z-10 -mx-2 flex flex-col gap-2 border-t border-white/10 bg-[#0c0a08] px-2 py-2">
+      <div data-phone-bar class="sticky bottom-0 z-10 -mx-2 flex flex-col gap-1.5 border-t border-white/10 bg-[#0c0a08] px-2 py-1.5">
         <PhoneMap v-if="MAP" />
+        <!-- 全体図を畳んでいる時は細い 1 行 (全幅、押すと開く。高さ 700px 未満は既定で畳む) -->
+        <button v-if="MAP && mapFolded" type="button" data-phone-map-unfold class="flex h-8 w-full items-center gap-2 rounded-md border border-white/10 bg-[#080706] px-3 text-left text-[12px] text-[#d8ccb4]" @click="setMapFold(false)">
+          <span class="min-w-0 flex-1 break-words">{{ tr(`全体図 (箱 ${Object.keys(t.doc.value.boxes).length})`, `Overview (${Object.keys(t.doc.value.boxes).length} boxes)`) }}</span><span class="shrink-0">{{ tr("開く ▴", "Open ▴") }}</span>
+        </button>
         <div class="flex gap-2">
         <button type="button" data-phone-undo class="g-btn !min-h-11 shrink-0 px-3" :disabled="!t.canUndo.value" :title="tr('1 つ戻す', 'Undo')" @click="t.undo">↶<span class="ml-1 text-[12px]">{{ tr("戻す", "Undo") }}</span></button>
         <button v-if="main" type="button" data-phone-main :data-main="main.kind" class="g-btn-red !min-h-11 min-w-0 flex-1 whitespace-normal break-words px-2 text-[15px] leading-tight" :disabled="main.off" @click="main.go">{{ main.text }}</button>
