@@ -70,7 +70,7 @@ watch(feedbackPage, (on) => {
 const craftPage = computed(() => page.value === "");
 /** 広告の枠を置くのは文章のあるページだけ (使い方・コツ、コース、デイリー)。操作の画面 (クラフト台・ベース選び・スパムシミュレーター・要望) には置かない (2026-10-22 AdSense の再申請。デイリーはデイリー部長の頼みで両脇に置く) */
 /** スマホのヘッダーのアイコンのボタン (ブログ・使い方・要望。1 段に収める、2026-10-25)。絵の下に小さな名前 (絵だけだと押すまで分からない、モンキー 10-26 の 14・オーナー「直して」) */
-const PHONE_ICON = "!flex !h-10 !min-h-0 !w-9 !min-w-0 shrink-0 flex-col items-center justify-center !gap-0.5 !p-0"; // 幅は前と同じ決め打ち (g-btn sm の左右の枠 18px ずつで中身の幅は 0、絵と名前は真ん中に寄せてはみ出させる)
+const PHONE_ICON = "!flex !h-10 !min-h-0 !w-9 max-[374px]:!w-[32px] max-[374px]:![border-inline-width:16px] max-[374px]:![border-image-width:0_16px] !min-w-0 shrink-0 flex-col items-center justify-center !gap-0.5 !p-0"; // 幅は前と同じ決め打ち (g-btn sm の左右の枠 18px ずつで中身の幅は 0、絵と名前は真ん中に寄せてはみ出させる)。375 未満は枠を 16px ずつにして 32px (320 で帯からはみ出した、10-26 夜)
 const PHONE_LABEL = "whitespace-nowrap text-[9px] leading-none";
 const textPage = computed(() => page.value === "page=guide" || page.value.startsWith("course=") || !!dailyPage.value || skinsPage.value);
 /**
@@ -154,17 +154,19 @@ window.visualViewport?.addEventListener("resize", fitZoom);
   <!-- 高さを決めず、ページ全体を縦に送る (決まり事の footer も一緒に流れる)。PC も同じ: スクロールの棒は窓の右端の 1 本だけ
        (2026-10-11 オーナー「スクロールはチャンネルの右側でおｋ、全体スクロールだけ」) -->
   <div class="flex flex-col" :style="{ width: phone || !frame.w ? '100%' : `${frame.w}px`, minHeight: `${frame.h}px` }">
-    <header data-rec-part="header" class="flex shrink-0 items-center border-b border-[var(--exile-color-border-subtle)] text-[12px]" :class="phone ? 'h-11 min-w-0 gap-1 px-2' : 'h-10 gap-3 px-4'">
+    <header data-rec-part="header" class="flex shrink-0 items-center border-b border-[var(--exile-color-border-subtle)] text-[12px]" :class="phone ? 'h-11 min-w-0 gap-1 px-2 max-[374px]:gap-0.5 max-[374px]:px-1' : 'h-10 gap-3 px-4'">
       <!-- スマホも 1 段 (ロゴ・本日の訪問者と版を小さく 2 行に重ねて・言語・ブログ / 使い方 / 要望のアイコン。2026-10-25 オーナー「基本あそこは 1 行がいい、段がもったいない」) -->
+      <!-- 375 未満 (320 など) は隠さずに詰める: 余白・すき間・ロゴ・言語・ボタンの幅を少しずつ (max-[374px]:)、人数は足りない時だけ 2 行に折る。375 以上は前のまま (10-26 夜 オーナー「320 で右がはみ出す」) -->
       <span class="flex shrink-0 items-center" :class="phone ? 'gap-1' : 'gap-2'">
-        <img src="/favicon.png" alt="" class="g-brand-icon shrink-0" :class="phone ? 'size-6' : 'size-8'" draggable="false" />
-        <span class="g-brand-word leading-none" :class="phone ? 'text-[12px]' : 'text-[18px]'">EXILEDESK</span>
+        <img src="/favicon.png" alt="" class="g-brand-icon shrink-0" :class="phone ? 'size-6 max-[374px]:size-5' : 'size-8'" draggable="false" />
+        <span class="g-brand-word leading-none" :class="phone ? 'text-[12px] max-[374px]:text-[11px]' : 'text-[18px]'">EXILEDESK</span>
       </span>
       <!-- スマホ: 本日の訪問者だけ (版は出さない、… で切らない。2026-10-26 オーナーの A、1 段の決まりのまま)。押すと更新履歴 -->
-      <button v-if="phone && visitors" type="button" data-rec-part="header-version" class="g-plain flex shrink-0 flex-col items-start whitespace-nowrap text-[10px] leading-tight opacity-60 hover:opacity-100" :title="tr('更新履歴を見る', 'View changelog')" @click="changelogOpen = 'all'">
-        <span data-rec-part="header-visitors">{{ tr(`本日 ${visitors.today.toLocaleString()} 人`, `${visitors.today.toLocaleString()} today`) }}</span>
+      <!-- 375 未満で帯が足りない時だけ縮んで「本日」/「1,234 人」の 2 行に折れる (数と人の間は詰めない空白、10-26 夜) -->
+      <button v-if="phone && visitors" type="button" data-rec-part="header-version" class="g-plain flex shrink-0 flex-col items-start whitespace-nowrap text-left text-[10px] max-[374px]:min-w-0 max-[374px]:shrink max-[374px]:whitespace-normal leading-tight opacity-60 hover:opacity-100" :title="tr('更新履歴を見る', 'View changelog')" @click="changelogOpen = 'all'">
+        <span data-rec-part="header-visitors">{{ tr(`本日 ${visitors.today.toLocaleString()}\u00a0人`, `${visitors.today.toLocaleString()} today`) }}</span>
       </button>
-      <span v-if="phone" class="ml-auto shrink-0" data-rec-part="header-lang"><LangSwitch /></span>
+      <span v-if="phone" class="ml-auto shrink-0 max-[374px]:[&_button]:!px-1.5" data-rec-part="header-lang"><LangSwitch /></span>
       <!-- 1024 px 未満は飾りの札 (画面名・アプリ版) を出さない (768 px で帯が詰まって「日本語」が縦に折れた。2026-10-13) -->
       <span class="whitespace-nowrap rounded border border-white/15 px-1.5 py-0.5 opacity-70 max-lg:hidden" :class="phone ? 'hidden' : ''">{{ tr("クラフトステージ", "Craft Stage") }}</span>
       <!-- 本日の訪問者 (9:00 から、1 時間ごとに数え直す。2026-10-11 オーナー)。数えられていない時は出さない -->
