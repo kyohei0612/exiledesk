@@ -14,6 +14,7 @@ import { autoName, quickSave, unsaved } from "./tree-save";
 import { usePhone } from "../../../utils/use-phone";
 import { recipeSummary } from "./recipe-summary";
 import { track } from "../../../utils/track";
+import { simAct, simOp } from "../../../web/track";
 import { tr } from "../../../i18n/lang";
 
 const t = useTree();
@@ -47,10 +48,12 @@ function endRename(v: string): void {
 }
 /** 保存 = その場で (開いているレシピへ上書き、無ければ自動の名前。名前は聞かない、tree-save.ts) */
 function save(): void {
+  simAct("save");
   const { r, over } = quickSave();
   say(over ? tr(`「${r.name}」に保存しました`, `Saved to "${r.name}"`) : tr(`「${r.name}」で保存しました (名前を押すと変えられる)`, `Saved as "${r.name}" (click the name to rename)`));
 }
 function saveAs(): void {
+  simAct("save");
   const r = saveTreeRecipe(currentTreeRecipe.value ? `${currentTreeRecipe.value.name}${tr(" のコピー", " (copy)")}` : defaultName(), t.doc.value);
   track("tree-recipe:save-as");
   pop.value = false;
@@ -64,7 +67,7 @@ const root = ref<HTMLElement | null>(null);
 const recent = computed(() => [...treeRecipes.value].sort((a, b) => touchedAtTree(b) - touchedAtTree(a)).slice(0, 8));
 /** レシピを開く。今の木が作りかけなら 3 択 (保存して進む = 今の木を保存してから開く。10-26 オーナー「レシピを開いて今の木を替える」も) */
 function open(r: TreeRecipe): void {
-  const go = (): void => { setCurrentTreeRecipe(r.id); t.open(r.tree); pop.value = false; emit("opened"); track("tree-recipe:open"); };
+  const go = (): void => { simOp("open-recipe"); setCurrentTreeRecipe(r.id); t.open(r.tree); pop.value = false; emit("opened"); track("tree-recipe:open"); };
   if (dirty.value && currentTreeRecipe.value?.id !== r.id) { pop.value = false; askLeave(go, () => void quickSave()); }
   else go();
 }

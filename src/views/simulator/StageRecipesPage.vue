@@ -22,6 +22,7 @@ import { useTree } from "./tree/use-tree";
 import { recipeSummary } from "./tree/recipe-summary";
 import { useArmed, ARMED_CLASS } from "../../utils/use-armed";
 import { track } from "../../utils/track";
+import { simAct, simOp } from "../../web/track";
 import { jaTypeName } from "../../services/trade2/localize";
 import { tr } from "../../i18n/lang";
 
@@ -60,6 +61,7 @@ function open(r: TreeRecipe): void {
   openNow(r);
 }
 function openNow(r: TreeRecipe): void {
+  simOp("open-recipe");
   track("tree-recipe:open");
   setCurrentTreeRecipe(r.id);
   t.open(r.tree);
@@ -73,6 +75,7 @@ function overwrite(r: TreeRecipe): void {
   say(tr(`「${r.name}」を今の木で上書きしました`, `Overwrote "${r.name}" with the current tree`));
 }
 function saveNow(): void {
+  simAct("save");
   const r = saveTreeRecipe(`${tr(jaTypeName(t.doc.value.base), t.doc.value.base)} ${fmtDate(Date.now())}`, t.doc.value);
   track("tree-recipe:save");
   // 名前の欄には入らない (名前は決めなくてよい、後で ✎ で。10-26 オーナー「サクッと保存できるように」)

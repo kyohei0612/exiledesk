@@ -16,6 +16,7 @@ import { DEV_RECIPES } from "./dev-recipes";
 import { useTree } from "./tree/use-tree";
 import { openTreePage } from "../../web/page";
 import { tr } from "../../i18n/lang";
+import { simAct } from "../../web/track";
 
 /** URL の # の頭 */
 const RECIPE_SHARE_PREFIX = "#recipe=";
@@ -53,6 +54,7 @@ export async function treeShortUrl(r: { name: string; tree: TreeDoc }): Promise<
  */
 export async function copyRecipeUrl(r: { name: string; tree: TreeDoc }): Promise<{ ok: boolean; short: boolean }> {
   const url = treeShortUrl(r);
+  void url.then((u) => simAct("copy", u.startsWith(`${SHORT_HOST}/r/`) ? "short" : "long")); // シミュの操作の流れ (web/sim-trail)
   const short = (u: string): boolean => u.startsWith(`${SHORT_HOST}/r/`);
   try {
     if (typeof ClipboardItem === "undefined" || !navigator.clipboard?.write) throw new Error("no ClipboardItem");

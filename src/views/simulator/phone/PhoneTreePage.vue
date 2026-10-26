@@ -27,6 +27,7 @@ import PhoneMap from "./PhoneMap.vue";
 import PhoneBoxSheet from "./PhoneBoxSheet.vue";
 import PhoneIssues from "./PhoneIssues.vue";
 import { flag } from "../../../web/release-flags";
+import { simAct } from "../../../web/track";
 
 const t = useTree();
 /** 下の全体図と箱の重ね窓 (スイッチ phoneMap、10-26 オーナーの選んだ案 B。OK 待ちの間は本番は前の形) */
@@ -49,6 +50,7 @@ const cardW = computed(() => Math.min(360, (typeof window === "undefined" ? 375 
 /** 棚で手を決めた = PC の pickHand と同じ組み替え (tree-hand-plan の applyPick)。続けてその手の結果 (②) を出す */
 function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null, only: OnlyOut): void {
   const id = handFor.value!;
+  simAct("hand", kind);
   let at = id;
   q.answer((d) => { at = applyPick(d, id, h, kind, aims, pre, only); });
   handFor.value = null;

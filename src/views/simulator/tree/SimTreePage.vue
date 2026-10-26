@@ -19,7 +19,7 @@ import ModeTabs from "../../../components/for-share/ModeTabs.vue";
 import SimPcOnly from "../SimPcOnly.vue"; import PhoneTreePage from "../phone/PhoneTreePage.vue";
 import { usePhone } from "../../../utils/use-phone";
 import TreeBox from "./TreeBox.vue";
-import TreeOverlays from "./TreeOverlays.vue"; import TreeGoalNode from "./TreeGoalNode.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { flag } from "../../../web/release-flags";
+import TreeOverlays from "./TreeOverlays.vue"; import TreeGoalNode from "./TreeGoalNode.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { flag } from "../../../web/release-flags"; import { simAct, simOp } from "../../../web/track";
 import TreeHandPage from "./TreeHandPage.vue";
 import { useTree } from "./use-tree";
 import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
@@ -134,7 +134,7 @@ const clearArm = useArmed();
 const clearBtn = ref<HTMLElement | null>(null);
 useDismiss(() => clearArm.is(), [clearBtn], clearArm.clear);
 // 白紙に戻した後は開いた時と同じ寄せ (75%・スタートを横の真ん中の一番上) へカメラも戻す (10-26 夜オーナー「ツリーのどこにあるか分からんからな」)
-function onClear(): void { const go = (): void => { t.reset(); setCurrentTreeRecipe(null); void nextTick(() => v.openView()); }; if (unsaved(doc.value)) askLeave(go, () => void quickSave()); else if (clearArm.arm()) go(); } // 作りかけは 3 択 (10-26 オーナー「ツリー消す作業」)、保存済みは 2 回押し
+function onClear(): void { const go = (): void => { simOp("clear"); t.reset(); setCurrentTreeRecipe(null); void nextTick(() => v.openView()); }; if (unsaved(doc.value)) askLeave(go, () => void quickSave()); else if (clearArm.arm()) go(); } // 作りかけは 3 択 (10-26 オーナー「ツリー消す作業」)、保存済みは 2 回押し
 /** 戻り先へ寄る (編集のポップアップの札を押した時) */
 function goBack(b: Box): void { const to = backTargetsOf(doc.value, b.id)[0]; if (to) void v.reveal(to, true); }
 
@@ -157,6 +157,7 @@ function backLabel(b: Box): string {
  */
 function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = null, only: OnlyOut = null): void {
   const id = panel.value!.id;
+  simAct("hand", kind);
   if (picking.value === id) picking.value = null;
   let at = id;
   // 組み替えは tree-hand-plan の applyPick (猿の口 sim-monkey と同じ)
@@ -193,15 +194,17 @@ function startDrag(b: Box, e: PointerEvent): void {
     onCancel: () => { drag.value = null; },
   });
 }
-function closeHand(): void { if (picking.value && picking.value === panel.value?.id) picking.value = null; panel.value = null; }
+function closeHand(): void { simOp("cancel", "hand-pick"); if (picking.value && picking.value === panel.value?.id) picking.value = null; panel.value = null; }
 /** 下の＋を押した = 打つ手の棚を開き、同時にツリーの箱をつなげる / つなげないで色分けする (箱を押せばそこへつなぐ、棚で選べば新しい箱) */
-function startLink(b: Box): void { panel.value = { kind: "hand", id: b.id }; } // 打つ手の重ね窓 (戻り先へは窓の「既にある箱へ戻す」か＋の引っ張り)
+function startLink(b: Box): void { simOp("plus"); panel.value = { kind: "hand", id: b.id }; } // 打つ手の重ね窓 (戻り先へは窓の「既にある箱へ戻す」か＋の引っ張り)
 const link = useTreeLink(doc, picking);
 /** 縮めて見ている時に押した箱の編集のポップアップ (等倍、箱でできる事が全部) */
 const pop = ref<string | null>(null);
 const popEl = ref<HTMLElement | null>(null);
 useDismiss(() => !!pop.value, [popEl], () => { pop.value = null; });
 watch(viewOnly, (on) => { if (!on) pop.value = null; });
+// シミュの操作の流れ (オーナー「シミュは全部監視」、web/sim-trail): 手の窓を開いた (下の ＋・打つ手の札のどちらからでも)
+watch(() => panel.value?.kind, (k) => { if (k === "hand") simOp("hand-open"); });
 /** ポップアップの置き場 (押した箱の真ん中に重ねる。枠はページの zoom を打ち消しているので、実ピクセル ÷ ページの zoom) */
 const popStyle = computed(() => {
   const b = pop.value ? doc.value.boxes[pop.value] : null;
@@ -257,26 +260,27 @@ function onAim(b: Box): void { if (b.out === "start") t.startPage.value = true; 
  * 引っ張って既にある箱へつないだ時は箱を足してつなぐだけで欄を出さない (オーナー 10-22「つなげた時も…表示される。意味が分からないので出さなくて OK」)
  */
 function onAddHit(b: Box, at?: { x: number; y: number }, link?: string): void {
+  simOp(link ? "set-back" : "side-plus");
   if (!link) { panel.value = { kind: "aim", id: b.id, add: at ? { at } : {} }; return; }
   t.edit((d) => { const made = addHit(d, b.parent!, b.id); if (made) { tidyOf(d); setBack(d, made, link); } });
 }
 function onDone(b: Box): void { t.edit((d) => setDone(d, b.id, b.done ? null : "main")); }
 /** 戻り先を選んでいる時の札のボタン: ↩ 始めに戻る (10-22 オーナー「選択肢として初めに戻るでいいのでは」。ほかは箱を押して選ぶ、「続きから」は 10-22 に消した) */
-function pickBack(to: string): void { const from = picking.value; if (!from) return; picking.value = null; if (panel.value?.id === from) panel.value = null; t.edit((d) => setBack(d, from, to)); }
+function pickBack(to: string): void { const from = picking.value; if (!from) return; simOp("set-back"); picking.value = null; if (panel.value?.id === from) panel.value = null; t.edit((d) => setBack(d, from, to)); }
 function onTarget(b: Box): void {
   const from = picking.value;
   // つなげない箱 (灰色、use-tree-link.ts) は押しても何もしない (理由は箱に乗せると出る)
   if (from && link.value.get(b.id)) return;
   picking.value = null;
   if (panel.value?.kind === "hand" && panel.value.id === from) panel.value = null;
-  if (from && from !== b.id) t.edit((d) => setBack(d, from, b.id));
+  if (from && from !== b.id) { simOp("set-back"); t.edit((d) => setBack(d, from, b.id)); }
 }
 // ルート精査 (押した時に始める、use-tree-check.ts)
 const { issues, issuesOpen, shown: issuesShown, issuesFold, checking, progress, passed, onCheck, issueOf } = useTreeCheck(doc, () => !t.needBase.value && !t.goalInline.value);
 // 穴の表示のオフは今のタブの間だけ (タブを替えると見せる、10-25)
 watch(() => t.active.value, () => { issuesShown.value = true; });
 /** 穴の一覧の窓を開く (箱の !・札の横の ▾。光が消えていれば一緒に点ける) */
-function openIssues(): void { issuesShown.value = true; issuesOpen.value = true; issuesFold.value = false; }
+function openIssues(): void { simOp("open-missing"); issuesShown.value = true; issuesOpen.value = true; issuesFold.value = false; }
 /** 待たせている間の小さな札 (題の横。データの読み込み・箱を順に出している間、共通の BusyTag。精査の進みは精査の帯の上) */
 // 100 人回す (結果は木の上に重ねる層だけ、use-tree-run.ts・TreeRunLayer.vue。値段 = 始め方のベースの値段 (結果のまとめで入れる、use-tree の startPrice) + 今の相場)
 /** 0 完成形の設定を完成形のアイテム枠で (スイッチ goalCard、オーナーの OK 待ち) */
@@ -322,6 +326,7 @@ const chipNatural = (id: string): number | undefined => {
 };
 const tidyOf = (d: typeof doc.value): void => tidy(d, chipNatural);
 async function onTidy(): Promise<void> {
+  simOp("tidy");
   t.edit(tidyOf);
   // 整列の後は開いた時と同じ (75% 以上・スタートを上の真ん中、収まらない分は下へ)。全体表示にすると 10% まで縮んだ (10-26 夜オーナー「めっちゃ引き」)
   await v.openView();
@@ -407,7 +412,7 @@ const phone = usePhone(), simPhone = flag("simPhone");
     <!-- エミュレーター / シミュレーター β の切り替え (エミュの画面の帯と同じ共通の部品、10-23 オーナー「帯を 1 つにして両方に」) -->
     <ModeTabs class="mb-3" />
     <TreeOverlays /><TreeHandPage v-if="panel?.kind === 'hand' && panelBox" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" @back="picking = panel!.id; panel = null" @aim="panel = { kind: 'aim', id: panel!.id }" />
-    <TreePanelPage v-else-if="panel && panelBox" :key="`${panel.kind}-${panel.id}`" :kind="panel.kind === 'split' || panel.kind === 'note' ? panel.kind : 'aim'" :box-id="panel.id" :current="panel.add ? null : panelBox.aim" :adding="!!panel.add" @pick="pickAim" @close="panel = null" />
+    <TreePanelPage v-else-if="panel && panelBox" :key="`${panel.kind}-${panel.id}`" :kind="panel.kind === 'split' || panel.kind === 'note' ? panel.kind : 'aim'" :box-id="panel.id" :current="panel.add ? null : panelBox.aim" :adding="!!panel.add" @pick="pickAim" @close="simOp('cancel', panel?.add ? 'side-plus' : panel?.kind === 'aim' ? 'aim-pick' : panel?.kind ?? ''); panel = null" />
     <div v-show="!t.goalInline.value" class="g-panel flex flex-col gap-2 px-3 py-2 max-md:px-0.5" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
       <!-- 流れの 4 段の帯 (今どこにいるか、10-24 オーナー): 上のタブの下、木の枠の中の一番上に小さく (10-26 夜オーナー「普通出すのはタブの下」「ここは枠内でしょ」)。右上の「← 戻る」は置かない -->
       <div class="flex min-w-0 flex-wrap items-center gap-2 [&_[data-tree-flow-step]]:!min-h-[26px] [&_[data-tree-flow-step]]:!text-[12px]">

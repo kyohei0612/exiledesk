@@ -14,6 +14,7 @@ import { fractureMarks, migrateStart, newTree, startOf, startRarity, type Aim, t
 import { treeBaseCost } from "../../../services/simulator/tree/tree-base-cost";
 import { currentTreeRecipeId, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { tr } from "../../../i18n/lang";
+import { simOp } from "../../../web/track";
 
 export type ModRow = ReturnType<typeof modListFor>[number];
 
@@ -251,6 +252,7 @@ function reset(): void {
  * アイテムレベルだけなら木はそのまま。1 つ戻すで戻せる
  */
 function setBase(base: string, itemLevel: number): Aim[] {
+  simOp("pick-base", base);
   // まだベースを選んでいない白紙 (仮の金の指輪) から選んだ時は、ここを履歴の始まりにする (Ctrl+Z で選ぶ前の金の指輪に戻った、10-25 モンキー 6)
   const first = !doc.value.baseChosen && isBlank(doc.value);
   needBase.value = false;
@@ -297,6 +299,7 @@ const goals = computed((): Aim[] => doc.value.memoAims ?? []);
 const hasGoal = (modId: string, tier: number): boolean => goals.value.some((a) => a.modId === modId && a.tier === tier);
 /** 狙いにする / 外す (同じ MOD は段だけ替える。1 つ戻すで戻せる) */
 function toggleGoal(modId: string, tier: number): void {
+  simOp("pick-goal-mod");
   edit((d) => {
     const list = d.memoAims ?? [], same = list.find((a) => a.modId === modId);
     // 段を替えたら貼り付けの値は外す (その段の幅に入らない)

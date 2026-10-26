@@ -8,6 +8,7 @@ import Icon from "../../../components/ui/Icon.vue";
 import TreeJoinBar from "./TreeJoinBar.vue";
 import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
+import { simOp } from "../../../web/track";
 
 /** armed = 白紙に戻すを 1 回押した (もう一度押すと戻す) */
 defineProps<{ linesAll: boolean; memoOpen: boolean; full: boolean; note: boolean; armed: boolean }>();
@@ -21,8 +22,8 @@ const LBL = "hidden @min-[1300px]:inline";
 <template>
   <div data-tree-top-tools role="toolbar" :aria-label="tr('ツリーの道具', 'Tree tools')" class="flex shrink-0 items-center gap-0.5 rounded-lg border border-white/10 bg-[#15110c]/95 p-0.5">
     <template v-if="!t.needBase.value">
-      <button type="button" data-tree-undo :class="BTN" :disabled="!t.canUndo.value" :title="tr('1 つ戻す (Ctrl+Z)', 'Undo (Ctrl+Z)')" :aria-label="tr('1 つ戻す', 'Undo')" @click="t.undo"><Icon name="undo" class="size-4" /><span :class="LBL">{{ tr("戻す", "Undo") }}</span></button>
-      <button type="button" data-tree-redo :class="BTN" :disabled="!t.canRedo.value" :title="tr('やり直し (Ctrl+Shift+Z / Ctrl+Y)', 'Redo (Ctrl+Shift+Z / Ctrl+Y)')" :aria-label="tr('やり直し', 'Redo')" @click="t.redo"><Icon name="undo" class="size-4 -scale-x-100" /></button>
+      <button type="button" data-tree-undo :class="BTN" :disabled="!t.canUndo.value" :title="tr('1 つ戻す (Ctrl+Z)', 'Undo (Ctrl+Z)')" :aria-label="tr('1 つ戻す', 'Undo')" @click="simOp('undo'); t.undo()"><Icon name="undo" class="size-4" /><span :class="LBL">{{ tr("戻す", "Undo") }}</span></button>
+      <button type="button" data-tree-redo :class="BTN" :disabled="!t.canRedo.value" :title="tr('やり直し (Ctrl+Shift+Z / Ctrl+Y)', 'Redo (Ctrl+Shift+Z / Ctrl+Y)')" :aria-label="tr('やり直し', 'Redo')" @click="simOp('redo'); t.redo()"><Icon name="undo" class="size-4 -scale-x-100" /></button>
       <span class="mx-0.5 h-5 w-0.5 rounded bg-white/10 @max-[899px]:hidden" aria-hidden="true" />
       <button type="button" data-tree-tidy :class="BTN" :title="tr('整列: 段ごとに横一列・親は子の並びの真ん中・線は直角の木の線 (1 つ戻すで元の並びへ)', 'Tidy: rows by depth, each parent centered over its children, right-angle tree lines (undo restores)')" :aria-label="tr('整列', 'Tidy')" @click="emit('tidy')">
         <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="4" rx="1" /><rect x="3" y="17" width="6" height="4" rx="1" /><rect x="15" y="17" width="6" height="4" rx="1" /><path d="M12 7v5M6 17v-5h12v5" /></svg><span :class="LBL">{{ tr("整列", "Tidy") }}</span>

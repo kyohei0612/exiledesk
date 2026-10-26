@@ -25,6 +25,7 @@ import { useTree } from "./use-tree";
 import { TREE_SPAM_ORB, useSimShelf } from "../use-sim-shelf";
 import { afterQualityOf, autoCatOf, FREE_EFFECTS, handOf, hitAimsOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan";
 import { tr } from "../../../i18n/lang";
+import { simOp } from "../../../web/track";
 
 const props = defineProps<{ boxId: string; current: Hand | null }>();
 /** pick の preCatalyst = 前に足す品質だけ上げる手のカタリスト (触媒のお告げで、まだ品質を上げる手の後でない時) */
@@ -101,6 +102,7 @@ function holdSpam(): void {
 }
 /** 棚の札を持つ = 普通の手 (スパムを持っていたら外して持ち替える。同じカオスを押した時も普通のカオスへ) */
 function onShelfHold(k: string): void {
+  simOp("hold", k);
   if (spam.value) { spam.value = false; held.value = k; return; }
   // スマホは持っている札をもう一度押しても手放さず、お告げの欄まで送る (10-26 モンキー 7 の 25: 今の手と同じ札を押すと手放され、お告げの欄が消えて窓が上へ飛んだ)
   if (window.innerWidth < 768 && held.value === k) { void showOmens(); return; }
@@ -194,6 +196,7 @@ const OMEN_CHIP = "flex min-h-12 max-w-[96px] items-center justify-center rounde
 const OMEN_ON = "!border-violet-300 bg-violet-500/30 text-violet-50";
 function ok(): void {
   const h = hand.value, k = kind.value;
+  simOp("hand-decide");
   if (h && k && !problem.value) emit("pick", h, k, hitAims.value, preCat.value, only.value);
 }
 </script>

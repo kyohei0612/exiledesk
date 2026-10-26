@@ -11,6 +11,7 @@ import { joinableShapeOf, joinSameHit, sameHitsOf } from "../../../services/simu
 import { sideGroup } from "./tree-hand-plan";
 import { useTree } from "./use-tree";
 import { tr } from "../../../i18n/lang";
+import { simOp } from "../../../web/track";
 
 /** 選んでいる間だけ (anchor = まとめ先、pick = 一緒にまとめる箱) */
 export const joinMode = ref<{ anchor: string | null; pick: string[] } | null>(null);
@@ -61,6 +62,7 @@ export function useTreeJoin() {
     const anchor = m.anchor, ok = joinCandidates(t.doc.value, anchor).filter((x) => m.pick.includes(x));
     if (!ok.length) return;
     if (t.doc.value.boxes[anchor]?.out !== "hit") { t.edit((d) => absorbOuts(d, anchor, ok)); return; }
+    simOp("merge");
     const g = sideGroup(), same = sameHitsOf(t.doc.value, anchor).filter((x) => ok.includes(x)), side = ok.filter((x) => !same.includes(x));
     t.edit((d) => { if (g && side.length) joinSide(d, anchor, g, side); if (same.length) joinSameHit(d, anchor, same); });
   }

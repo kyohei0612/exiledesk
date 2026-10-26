@@ -9,13 +9,17 @@ import TreeRunReport from "./TreeRunReport.vue";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { tr } from "../../../i18n/lang";
 import { RUN_N } from "./use-tree-run";
+import { simOp } from "../../../web/track";
 
 /** test = テストラン (use-tree-check: 回している・今の道で合格・見つけた穴の数)。合格するまで「100 人回す」は押せない (10-24 オーナー)。halted = 止まった人が出て途中で止めた */
 const props = defineProps<{ result: TreeRunResult | null; running: boolean; ready: boolean; test: { busy: boolean; passed: boolean; holes: number; /** 穴を見せている (札が押された状態) */ shown: boolean }; halted?: { box: string; n: number } | null }>();
 const emit = defineEmits<{ run: []; go: [id: string]; test: []; holes: []; holesOn: []; /** 穴の一覧の窓を開く (札の横の ▾) */ list: [] }>();
 /** 回し終えた後の結果のまとめ (TreeRunReport)。回し終えたら開き、止まって止めた時は開かない。TreeRunSum の「結果のまとめ」・流れの帯の 4 でまた開く (開閉は置き場が持つ) */
 const report = defineModel<boolean>("report", { required: true });
-watch(() => props.running, (on, was) => { if (was && !on && props.result && !props.halted) report.value = true; if (on) report.value = false; });
+watch(() => props.running, (on, was) => {
+  if (was && !on && props.result) simOp("run-result", `${Math.round((props.result.finished / (props.result.n || 1)) * 100)}%`); // シミュの操作の流れ (web/sim-trail)
+  if (was && !on && props.result && !props.halted) report.value = true; if (on) report.value = false;
+});
 </script>
 
 <template>
