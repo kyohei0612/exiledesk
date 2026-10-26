@@ -10,7 +10,7 @@ import { useTree } from "../tree/use-tree";
 import { useTreeLink } from "../tree/use-tree-link";
 import { backTargetsOf } from "../tree/tree-merge";
 import { handLabel, OUT_LOOK } from "../tree/tree-names";
-import { mapPick, phoneRun, usePhoneQuiz } from "./use-phone-quiz";
+import { isMiss, mapPick, phoneRun, usePhoneQuiz } from "./use-phone-quiz";
 import { routeText, runText, stepBackText } from "../tree/tree-fail";
 import { sideGroup } from "../tree/tree-hand-plan";
 import { absorbOuts, joinableOf, joinSide, splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
@@ -65,6 +65,9 @@ function startPick(): void {
   if (!MAP) { listOpen.value = !listOpen.value; return; }
   mapPick.value = pickOther.value ? null : { from: props.boxId, ids: [...others.value, ...(canRetry.value ? [parent.value!] : []), "start"] };
 }
+/** 決めていない外れの既定 (「次へ」で ↩ 再度挑戦 = 打つ前の箱へ。use-phone-quiz の decide と同じ判定)。"retry" / "start" / null */
+const defRetry = computed(() => (state.value !== "open" || !isMiss(box.value) || !parent.value || link.value.get(parent.value) !== null ? null : parent.value === "start" ? "start" : "retry"));
+const DEF = "!border-dashed !border-amber-300/80";
 const look = computed(() => OUT_LOOK[box.value?.out ?? "junk"]);
 const backKind = computed(() => (state.value !== "back" ? null : box.value?.back === "start" ? "start" : backTo.value === parent.value ? "retry" : "other"));
 const route = computed(() => routeText(t.doc.value, props.boxId, q.boxTitle));
@@ -105,14 +108,15 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
       </div>
       <div class="mt-2 flex flex-wrap gap-1.5">
         <button type="button" data-phone-ans="later" :class="chipClass(state === 'later')" @click="q.setLater(boxId)">{{ tr("次の手を決める", "Next craft") }}</button>
-        <button v-if="canRetry" type="button" data-phone-ans="retry" :class="chipClass(backKind === 'retry')" @click="q.setReturn(boxId, parent!)">↩ {{ tr("再度挑戦", "Retry") }} · {{ stepBackText(t.doc.value, parent!) }}</button>
-        <button type="button" data-phone-ans="start" :class="[chipClass(backKind === 'start'), startNo ? 'opacity-40' : '']" :disabled="!!startNo" @click="q.setReturn(boxId, 'start')">↩ {{ stepBackText(t.doc.value, "start") }}</button>
+        <button v-if="canRetry" type="button" data-phone-ans="retry" :class="[chipClass(backKind === 'retry'), defRetry === 'retry' ? DEF : '']" @click="q.setReturn(boxId, parent!)">↩ {{ tr("再度挑戦", "Retry") }} · {{ stepBackText(t.doc.value, parent!) }}</button>
+        <button type="button" data-phone-ans="start" :class="[chipClass(backKind === 'start'), startNo ? 'opacity-40' : '', defRetry === 'start' ? DEF : '']" :disabled="!!startNo" @click="q.setReturn(boxId, 'start')">↩ {{ stepBackText(t.doc.value, "start") }}</button>
         <!-- 同じ側の「どれか」の当たりを MOD ごとに分ける / 分けた箱をまとめる (10-26 オーナー) -->
         <button v-if="(box.anyOf?.length ?? 0) > 1 || (box.mergedOuts?.length ?? 0) > 0" type="button" data-phone-split-any :class="chipClass(false)" @click="t.edit((d) => (box!.anyOf?.length ? splitAny(d, boxId) : splitOuts(d, boxId)))">{{ box.anyOf?.length ? tr("MOD ごとに分ける", "Split by mod") : tr("分ける", "Split") }}</button>
         <button v-else-if="joinable.length" type="button" data-phone-join-side :class="chipClass(joinOpen)" @click="openJoin">{{ tr("動きをまとめる", "Merge the path") }}</button>
         <button v-if="canDone" type="button" data-phone-ans="done" :class="chipClass(state === 'done')" @click="q.setFinished(boxId)">{{ tr("完成", "Done") }}</button>
         <button v-if="others.length" type="button" data-phone-ans="other" :class="chipClass(backKind === 'other' || pickOther)" @click="startPick">{{ MAP ? (pickOther ? tr("全体図で選ぶ ↓", "Pick on the map ↓") : tr("ほかの箱へ", "Other box")) : tr("ほかの箱へ ▾", "Other box ▾") }}</button>
       </div>
+      <p v-if="defRetry" data-phone-out-def class="mt-1 break-words text-[12px] text-amber-200/90">{{ tr("決めなければ「次へ」で ↩ 再度挑戦 (同じ手へ)", "If left open, Next sets ↩ Retry (same craft)") }}</p>
       <!-- 動きをまとめる: 同じ側の横の当たりを選んでこの箱にまとめる (10-26 オーナー「選択した枠にまとめる」) -->
       <div v-if="joinOpen" data-phone-join-pick class="mt-2 flex flex-col gap-1 rounded-lg border border-amber-300/40 bg-black/20 p-2 text-[13px]">
         <p class="break-words text-[12px] text-amber-100">{{ tr("どれが付いても後の作り方が同じ物を選ぶ (以後の手は 1 本、「MOD ごとに分ける」で戻せる)", "Pick the ones that need the same next steps whichever lands (one path after this; Split by mod undoes it)") }}</p>

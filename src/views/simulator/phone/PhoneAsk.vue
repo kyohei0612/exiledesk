@@ -61,7 +61,7 @@ function showHand(id: string): void { quiz.focus.value = { kind: "hand", id }; }
     </template>
     <template v-else>
       <h2 class="text-[16px] font-bold text-[#f0e4c8]">{{ box.hand ? tr(`${handLabel(box.hand)} を打つと…`, `After ${handLabel(box.hand)}…`) : "" }}</h2>
-      <p class="text-[12px] text-[#9a8a70]">{{ tr("結果ごとに次をどうするか選ぶ。選ばなかった結果は「次へ」の後で 1 つずつ聞きます", "Pick what to do next for each result. Ones you skip are asked one by one after Next") }}</p>
+      <p class="text-[12px] text-[#9a8a70]">{{ tr("外れから先に並べています。決めなかった外れは「次へ」で ↩ 再度挑戦、当たりは次の手を 1 つずつ聞きます", "Misses are listed first. Open misses become ↩ Retry on Next; for hits you pick the next craft one by one") }}</p>
       <PhoneOutRow v-for="id in outs" :key="id" :box-id="id" @hand="showHand" />
       <button type="button" data-phone-hand-change class="g-btn !min-h-10 self-start" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
     </template>

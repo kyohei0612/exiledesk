@@ -7,6 +7,7 @@
  * (完成の後も答え直せる。PC は今のまま枝分かれできる。10-25 にやめた PC の「自動の完成」とは別、決めはメモ sim-decisions)
  */
 import { computed, ref, shallowRef } from "vue";
+import { useTreeLink } from "../tree/use-tree-link";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { aimKey, setBack, setDone, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { heldSets } from "../../../services/simulator/tree/tree-shape";
@@ -18,6 +19,13 @@ import { tr } from "../../../i18n/lang";
 export function isOpen(b: TreeBox): boolean {
   return b.out !== "start" && b.out !== "pass" && !b.hand && !b.back && !b.done && !b.split;
 }
+/**
+ * 外れの側の結果 (外れ・狙いが消えた)。② では先に並べ、決めていなければ「次へ」で ↩ 再度挑戦 (同じ手へ) にする
+ * (10-26 夜オーナー「スマホ版は外れルートからツリーを完成させるか」「そうしたら順番に戻ることもなく、滞りなく進みそう。スタートから順に」)
+ */
+export const isMiss = (b: TreeBox | undefined): boolean => b?.out === "junk" || b?.out === "lost";
+/** 再度挑戦の戻り先 (打つ前の箱。始まりの手の結果なら始まり) */
+export const retryOf = (d: TreeDoc, id: string): string | null => d.boxes[id]?.parent ?? null;
 /** 始まりから辿った順 (上の段から、同じ段は左から)。質問の順番 */
 export function walkOrder(d: TreeDoc): string[] {
   const out: string[] = [], seen = new Set<string>(), q = ["start"];
@@ -127,11 +135,25 @@ export function usePhoneQuiz() {
     const d = t.doc.value, b = d.boxes[id];
     if (!b) return [];
     const pass = b.outs.length === 1 && d.boxes[b.outs[0]!]?.out === "pass" ? d.boxes[b.outs[0]!]! : null;
-    return pass?.hand ? pass.outs : pass ? [] : b.outs;
+    const list = pass?.hand ? pass.outs : pass ? [] : b.outs;
+    // 外れの側を先に (決める順 = 上から。並びの中は木の順のまま)
+    return [...list.filter((o) => isMiss(d.boxes[o])), ...list.filter((o) => !isMiss(d.boxes[o]))];
   }
-  /** ② の「決めた」= 答えていない結果は「次の手を決める」にして次の質問へ */
+  /** その結果の箱から再度挑戦 (打つ前の箱へ戻る) できるか (PC の戻り先選びと同じ use-tree-link = その手をこの箱のアイテムにエンジンで打てるか) */
+  function canRetry(o: string): string | null {
+    const to = retryOf(t.doc.value, o);
+    return to && useTreeLink(t.doc, ref<string | null>(o)).value.get(to) === null ? to : null;
+  }
+  /**
+   * ② の「次へ」= 答えていない結果を 1 手で決めて次の質問へ: 外れの側は ↩ 再度挑戦 (戻れなければ「次の手を決める」)、当たりの側は「次の手を決める」。
+   * 質問はスタートから段の順なので、前の段に未定を残さない (後ろの段から前の段へ質問が戻らない)
+   */
   function decide(id: string): void {
-    for (const o of outsOf(id)) if (stateOf(o) === "open") setLater(o);
+    const open = outsOf(id).filter((o) => stateOf(o) === "open");
+    const retry = open.flatMap((o) => { const to = isMiss(t.doc.value.boxes[o]) ? canRetry(o) : null; return to ? [[o, to] as const] : []; });
+    const rest = open.filter((o) => !retry.some(([x]) => x === o));
+    later.value = [...later.value, ...rest.filter((o) => !later.value.includes(o))];
+    if (retry.length) answer((d) => { for (const [o, to] of retry) { setDone(d, o, null); setBack(d, o, to); } });
     focus.value = null;
   }
   /**
@@ -160,5 +182,5 @@ export function usePhoneQuiz() {
     });
     return parts.join(" › ");
   }
-  return { doc: t.doc, questions, current, focus, answered, later: laterSet, answer, reset, setLater, unLater, setReturn, setFinished, stateOf, outsOf, decide, boxTitle, pathText };
+  return { doc: t.doc, questions, current, focus, answered, later: laterSet, answer, reset, setLater, unLater, setReturn, setFinished, stateOf, outsOf, decide, canRetry, boxTitle, pathText };
 }
