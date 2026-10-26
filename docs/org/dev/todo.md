@@ -35,6 +35,6 @@
 |---|---|---|
 | devtools の Chrome (chrome-devtools-mcp) | 空き (シミュ部長 30 本目が見本の整理・静かな未定の確かめの後に閉じて返した、10-26) | — |
 | 窓なしの確認用 Chrome (自分の作業場所) | モンキー 8 本目 (10-26 夜、ツリーの重なり 30 手) | シミュ 31 (至急リリースの確かめ) |
-| 手元の本番環境 (pnpm preview:prod。番号を替えても出し先 server/web/.wrangler/preview-dist は 1 つで、立てるたび作り直す。1 人ずつ) | 空き (最終チェック長が v0.1.614 の確かめの後に 1460 の wrangler・workerd を止めて返した、10-26 夜) | — |
+| 手元の本番環境 (pnpm preview:prod。番号を替えても出し先 server/web/.wrangler/preview-dist は 1 つで、立てるたび作り直す。1 人ずつ) | オーナーの確認用に使用中 (10-26 夜、最終チェック長が ExileDesk-preview を origin/main の頭に固定して `pnpm preview:prod -- --dev` の 1461 を立てた。スマホのツリーの画面をオーナーが見終わるまで止めない。止めるのはブラックの合図で最終チェック長) | — |
 | 手元の dev サーバー 1440 | ブラック 13 代目が立てた (10-26 夜に立て直し、.vite も消した。Bash の run_in_background で pnpm dev:web。立てたセッションに付くので入れ替えの時は新しいブラックが立て直す、オーナーが触る用。部長も同じ物を使ってよい、止めるのはブラック) | — |
 | オーナーの普通の Chrome (Claude in Chrome) | 空き (リサーチ長がタブを閉じて返した 10-22) | — |
