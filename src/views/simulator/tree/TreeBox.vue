@@ -3,12 +3,10 @@
   当たりは押すと MOD を選ぶ、横の＋で当たりを足す、下の＋で次の手。外れ・消えたの箱は消せない。見出しの鉛筆でメモ (10-22 試し打ちの欄を消したのでここから)。数字 (通った人数・ここまでの費用) は計算を繋ぐまで出さない
 -->
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
-import ModalShell from "../../../components/ui/ModalShell.vue";
-import { absorbOuts, joinableOf, joinSide, splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
+import { splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
 import { BOX_H, BOX_W, fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type TreeBox } from "../../../services/simulator/tree/tree-model";
-import { sideGroup } from "./tree-hand-plan";
 import { tr } from "../../../i18n/lang";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { useTree } from "./use-tree";
@@ -16,7 +14,7 @@ import { handName, OUT_LOOK, outsName, rarityName, splitWhenText } from "./tree-
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { pctText, useTreeOdds } from "./tree-odds";
 import { orphanHits, routeText } from "./tree-fail";
-import { joinableShapeOf } from "../../../services/simulator/tree/tree-shape";
+import { joinLook, useTreeJoin } from "./use-tree-join";
 
 const props = defineProps<{ box: TreeBox; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
   /** 縮めた時の倍率の逆数 (押せる物だけこれで大きさを戻し、画面の上で 24px 以上を保つ。オーナー 10-22「縮めても押せる物は小さくならない」) */ inv?: number;
@@ -65,22 +63,9 @@ const sameAim = computed(() => !!props.box.autoBack && props.box.back !== "start
 const free = computed(() => !props.box.hand && !props.box.split);
 /** 失敗の箱の行き先の文 (tree-fail) と、何が起きたかの文 */
 const route = computed(() => routeText(t.doc.value, props.box.id));
-/** まとめられる同じ側の横の当たりの箱 (tree-model の joinableOf) */
-/** まとめられる横の箱: 当たりは同じ側の当たり、外れ・狙いが消えたなどは同じ形の箱 (10-26 オーナー「同じ形ってのでハズレMODもまとめれるように」) */
-const joinable = computed(() => { if (props.box.out !== "hit") return joinableShapeOf(t.doc.value, props.box.id); const g = sideGroup(); return g ? joinableOf(t.doc.value, props.box.id, g) : []; });
-const joinLabel = (id: string): string => { const b = t.doc.value.boxes[id]!; return b.out === "hit" ? t.boxAimLabel(b) : outsName(b); };
-/** 動きをまとめる窓 (同じ側の横の当たりにチェック、既定は全部) */
-const joinOpen = ref(false);
-const joinPick = ref<string[]>([]);
-function openJoin(): void { joinPick.value = [...joinable.value]; joinOpen.value = true; }
-function mergeSide(): void {
-  const pick = [...joinPick.value];
-  joinOpen.value = false;
-  if (!pick.length) return;
-  if (props.box.out !== "hit") { const ok = joinable.value.filter((x) => pick.includes(x)); t.edit((d) => absorbOuts(d, props.box.id, ok)); return; }
-  const g = sideGroup();
-  if (g) t.edit((d) => joinSide(d, props.box.id, g, pick));
-}
+/** 上の帯の「まとめる」で箱を選んでいる間の見え方 (use-tree-join.ts。箱ごとの「まとめる」は 10-26 に外した = 引いた時に箱の外へ溢れた、オーナー「拡大バグ」) */
+const jl = computed(() => joinLook(t.doc.value, props.box.id));
+const join = useTreeJoin();
 /** 完成の狙いから外した MOD の当たりの箱 (tree-fail の orphanHits) */
 const orphan = computed(() => props.box.out === "hit" && orphanHits(t.doc.value).includes(props.box.id));
 const desc = computed(() => props.box.out === "junk" ? tr("当たり以外が付いた", "Anything but a hit") : props.box.out === "junkGone" ? tr("外れの MOD が消えた", "A miss mod was removed") : props.box.out === "any" ? (essOf.value ? tr(`${essOf.value} の MOD が付いた`, `${essOf.value} mod added`) : tr("何かが 1 つ付いた (狙い無し)", "Something was added (no target)")) : tr("狙いの MOD が消えた", "A target mod was removed"));
@@ -150,7 +135,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <span v-if="box.done" class="shrink-0 rounded-full bg-amber-300/25 px-1.5 text-[10px] font-bold text-amber-100">{{ doneText }}</span>
       <span v-if="box.unwanted?.length" data-tree-unwanted class="shrink-0 rounded-sm bg-rose-400/20 px-1.5 text-[11px] font-bold text-rose-200" :title="tr(`× (要らない) の印 ${box.unwanted.length} 個 (前の試し打ちで付けた物)`, `${box.unwanted.length} mod(s) marked × (unwanted, set in the old try-out)`)">× {{ box.unwanted.length }}</span>
       <button v-if="box.check?.length" type="button" data-tree-check class="nodrag shrink-0 rounded-sm bg-amber-500/80 px-1.5 text-[11px] font-bold text-black hover:bg-amber-400" :class="quiet ? 'pointer-events-none' : ''" :title="tr(`読めなかった所: ${checkTitle} (直したら押して印を消す)`, `Couldn’t read: ${checkTitle} (fix it, then click to clear)`)" @click.stop="!quiet && emit('checked')">{{ tr("要確認", "Check") }}</button>
-      <button v-if="issue" type="button" data-tree-issue class="nodrag shrink-0 whitespace-nowrap rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white hover:bg-rose-500" :title="tr(`${issue} (押すと足りない所の一覧)`, `${issue} (click for the list of what is missing)`)" @click.stop="emit('issue')">{{ /行き先を決めていない|最初の手を決めていない/.test(issue) ? tr("! 未定", "! Open") : "!" }}</button>
+      <button v-if="issue" type="button" data-tree-issue class="nodrag shrink-0 whitespace-nowrap rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white hover:bg-rose-500" :title="tr(`${issue} (押すと足りない所の一覧)`, `${issue} (click for the list of what is missing)`)" @click.stop="emit('issue')">{{ /行き先を決めていない|最初の手を決めていない/.test(issue) && k === 1 ? tr("! 未定", "! Open") : "!" }}</button>
       <span class="flex-1" />
       <span class="flex items-center" :style="keep('right center')">
       <button v-if="!quiet" type="button" data-tree-note-mark class="nodrag flex size-6 items-center justify-center rounded hover:bg-white/10" :class="box.note ? 'text-amber-300' : 'text-white/30 hover:text-white/70'" :title="box.note || tr('メモを書く', 'Write a note')" @click.stop="emit('note')"><Icon name="pencil" class="size-3.5" /></button>
@@ -184,9 +169,9 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
 
     <!-- 下の行: 戻りの矢印・完成 (下の＋は箱の外なので重ならない) -->
     <div class="pointer-events-none absolute inset-x-2 bottom-1 flex h-6 items-center gap-1 text-[11px] *:pointer-events-auto" :style="k > 1 ? { right: 'auto', width: `${(BOX_W - 16 - (box.out === 'hit' ? 22 : 0)) / k}px`, ...keep('left bottom') } : {}">
+      <!-- 引いた時 (k > 1) は「分ける」を絵 1 つに (行の幅は (箱の幅 − 38) ÷ k で、文字だと「まとめる・↩・完成」が箱の外へ溢れた、10-26 オーナー「拡大バグ」) -->
       <!-- 同じ側の「どれか」の当たりの箱を MOD ごとに分ける / 分けた箱をまとめる (10-26 オーナー「戻るとかの所に分けるみたいな」) -->
-      <button v-if="!quiet && ((box.anyOf?.length ?? 0) > 1 || (box.mergedOuts?.length ?? 0) > 0)" type="button" data-tree-split-any class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-300/40 px-1.5 text-amber-100 hover:border-amber-200" :title="tr('MOD ごとに当たりの箱を分ける (先頭の MOD はこの箱のまま、続きの手もそのまま。1 つ戻すで戻せる)', 'Split into one hit box per mod (the first mod keeps this box and its next steps; Undo restores)')" @click.stop="t.edit((d) => (box.anyOf?.length ? splitAny(d, box.id) : splitOuts(d, box.id)))">{{ tr("分ける", "Split") }}</button>
-      <button v-else-if="!quiet && joinable.length" type="button" data-tree-join-side class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-300/40 px-1.5 text-amber-100 hover:border-amber-200" :aria-expanded="joinOpen" :title="tr('動きをまとめる: どれが付いても後の作り方が同じ同じ側の当たりを選んで 1 つの箱に (以後の手は 1 本。「分ける」で戻せる)', 'Merge the craft path: pick same-side hits that need the same next steps whichever lands, into one box (one path after this; Split undoes it)')" @click.stop="joinOpen ? (joinOpen = false) : openJoin()">{{ tr("まとめる", "Merge") }}</button>
+      <button v-if="!quiet && ((box.anyOf?.length ?? 0) > 1 || (box.mergedOuts?.length ?? 0) > 0)" type="button" data-tree-split-any class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-300/40 px-1.5 text-amber-100 hover:border-amber-200" :title="tr('MOD ごとに当たりの箱を分ける (先頭の MOD はこの箱のまま、続きの手もそのまま。1 つ戻すで戻せる)', 'Split into one hit box per mod (the first mod keeps this box and its next steps; Undo restores)')" @click.stop="t.edit((d) => (box.anyOf?.length ? splitAny(d, box.id) : splitOuts(d, box.id)))"><Icon v-if="k > 1" name="layers" class="size-3.5" /><template v-else>{{ tr("分ける", "Split") }}</template></button>
       <template v-if="box.back">
         <!-- 戻り先の札: 乗せると戻りの線が出て戻り先が光る、押すとそこへ寄る (線は既定で引かない、10-22) -->
         <button type="button" data-tree-back-tag class="nodrag flex h-6 min-w-0 flex-1 items-center truncate rounded px-1 text-left text-cyan-200 hover:bg-cyan-400/15" :class="quiet ? '!pointer-events-none' : ''" :title="sameAim ? tr(`戻り先: ${backLabel} (狙いの MOD が同じ箱。狙い以外の MOD は違ってよい。押すとそこへ寄る)`, `Returns to: ${backLabel} (a box with the same target mods; other mods may differ. Click to go there)`) : tr(`戻り先: ${backLabel} (押すとそこへ寄る)`, `Returns to: ${backLabel} (click to go there)`)"
@@ -195,23 +180,19 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       </template>
       <template v-else-if="!box.hand && !box.split && box.out !== 'start' && !quiet">
         <button v-if="!box.done" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-cyan-400/40 px-1.5 text-cyan-200 hover:border-cyan-300" :class="k > 1 ? 'min-w-6' : ''" :title="tr('↩ 戻る (既にある箱を指す)', '↩ Return (point to an existing box)')" @click.stop="emit('back')">{{ k > 1 ? "↩" : tr("↩ 戻る", "↩ Return") }}</button>
-        <button v-if="box.out === 'hit' || box.out === 'branch'" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" @click.stop="emit('done')" :title="doneText">{{ (k > 1 || (box.anyOf?.length ?? 0) > 1 || joinable.length > 0) && !box.done ? tr("完成", "Done") : doneText }}</button>
+        <button v-if="box.out === 'hit' || box.out === 'branch'" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" @click.stop="emit('done')" :title="doneText">{{ (k > 1 || (box.anyOf?.length ?? 0) > 1) && !box.done ? tr("完成", "Done") : doneText }}</button>
         <!-- 外れ・狙いが消えたの行き先に一番使う手 (オーナー 10-22): 当たりのどれかが付くまでカオス -->
       </template>
     </div>
 
     <!-- 動きをまとめる窓 (画面の真ん中の重ね窓。木の中に置くと寄り・位置で完成形の札や枠に隠れた): 同じ側の手の無い横の当たりを選んで、この箱にまとめる (10-26 オーナー「選択した枠にまとめる」) -->
-    <ModalShell v-if="joinOpen" :open="true" rec="tree-join" :title="tr('動きをまとめる', 'Merge the craft path')" width="w-[380px] max-w-full" @close="joinOpen = false">
-      <div data-tree-join-pick class="flex flex-col gap-1.5 py-1 text-[13px]">
-        <p class="text-[12px] opacity-80">{{ box.out === "hit" ? tr("どれが付いても後の作り方が同じ当たりを選ぶ。選んだ箱はこの箱にまとまり、以後の手は 1 本 (「分ける」で戻せる)。プレとサフィはまとめられない", "Pick the hits that need the same next steps whichever lands. They merge into this box with one path after this (Split undoes it). Prefix and suffix can't be merged") : tr("着いた形 (付いている狙い・外れの側) が同じ結果だけが出る。選んだ箱はこの箱にまとまり、以後の手・戻りは 1 本 (「分ける」で戻せる)", "Only results that land in the same shape (targets held, side of the misses) are listed. They merge into this box with one path after this (Split undoes it)") }}</p>
-        <label class="flex min-h-8 items-center gap-2 opacity-80"><input type="checkbox" checked disabled />{{ joinLabel(box.id) }}</label>
-        <label v-for="o in joinable" :key="o" data-tree-join-row class="flex min-h-8 cursor-pointer items-center gap-2"><input v-model="joinPick" type="checkbox" :value="o" />{{ joinLabel(o) }}</label>
-        <div class="mt-1 flex gap-2"><button type="button" data-tree-join-go class="g-btn-red min-h-9 flex-1" :disabled="!joinPick.length" @click="mergeSide">{{ tr("まとめる", "Merge") }}</button><button type="button" class="g-btn min-h-9 flex-1" @click="joinOpen = false">{{ tr("やめる", "Cancel") }}</button></div>
-      </div>
-    </ModalShell>
     <!-- 横の＋ = 当たりを足す (どれか 1 つが叶う) -->
     <button v-if="box.out === 'hit' && !quiet" type="button" data-tree-add-hit :style="k > 1 ? { ...keep('center'), top: 'calc(50% + 4px)' } : {}" class="nodrag absolute -right-4 top-1/2 flex size-7 -translate-y-1/2 touch-none items-center justify-center rounded-full border-2 border-amber-400/70 bg-[#1d1812] text-amber-200 hover:bg-amber-500/30"
       :title="tr('当たりを横に足す (どれか 1 つが叶えば当たり)。長押しで引っ張り箱の上で離すとその箱へつなぐ', 'Add another hit beside (any one counts). Hold and drag onto a box to link')" @pointerdown.stop="emit('plus', 'side', $event)" @click.stop><Icon name="plus" class="size-4" /></button>
+    <!-- 「まとめる」で選んでいる間: 箱の上の押す面 (まとめ先 = 金の枠、選んだ = ✓、押せない箱は薄く。use-tree-join.ts) -->
+    <div v-if="jl" data-tree-join-hit :data-join="jl" class="nodrag absolute -inset-px z-20 flex items-start justify-end rounded-xl p-1" :class="jl === 'no' ? 'cursor-not-allowed bg-black/60' : jl === 'can' ? 'cursor-pointer ring-2 ring-amber-300/60 hover:bg-amber-300/10' : 'cursor-pointer bg-amber-300/10 ring-[3px] ring-amber-200'" @pointerdown.stop @click.stop="join.toggle(box.id)">
+      <span v-if="jl === 'anchor' || jl === 'picked'" class="rounded-full bg-amber-300 px-1.5 text-[11px] font-bold text-black" :style="keep('right top')">{{ jl === "anchor" ? tr("まとめ先", "Into") : "✓" }}</span>
+    </div>
     <!-- 下の＋ = 次に打つ手 (箱の下の外。完成・戻るのボタンと重ならない) -->
     <button v-if="free && !quiet" type="button" data-tree-next :style="keep('center')" class="nodrag absolute -bottom-[34px] left-1/2 flex size-7 -translate-x-1/2 touch-none items-center justify-center rounded-full border-2 border-amber-400/70 bg-[#1d1812] text-amber-200 hover:bg-amber-500/30"
       :title="tr('次に打つ手を足す。長押しで引っ張り箱の上で離すとその箱へ戻る', 'Add the next craft. Hold and drag onto a box to return there')" @pointerdown.stop="emit('plus', 'next', $event)" @click.stop><Icon name="plus" class="size-4" /></button>
