@@ -19,7 +19,7 @@ import { applyPick, type OnlyOut } from "../tree/tree-hand-plan";
 import { useTree } from "../tree/use-tree";
 import { clearHand, setAim, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
-import { outStep, phoneRun, sheet, testedKey, usePhoneQuiz, type Question } from "./use-phone-quiz";
+import { isMiss, outStep, phoneRun, sheet, testedKey, usePhoneQuiz, type Question } from "./use-phone-quiz";
 import { routeKeyOf } from "../tree/use-tree-check";
 import { stepOf } from "../tree/tree-fail";
 import PhoneAsk from "./PhoneAsk.vue";
@@ -83,11 +83,24 @@ function onClear(): void {
 function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null, only: OnlyOut): void {
   const id = handFor.value!;
   simAct("hand", kind);
+  /*
+   * 外れの箱で、打つ前の箱と同じ手 (例 外れ MOD が付いた後のカオス) を選んだ = 打つ前の箱へ戻るのと同じ (別の箱を作らない)。
+   * 10-27 オーナー「カオスオーブ選択で同じ処理扱い、2 段目へ戻るってのと同義としてカウント。ハズレでかつ同じ MOD 群で 1 段上に進むことはない」
+   */
+  const b = t.doc.value.boxes[id], par = b?.parent ? t.doc.value.boxes[b.parent] : null;
+  if (b && par?.hand && isMiss(b) && !b.hand && sameHand(h, par.hand)) {
+    handFor.value = null;
+    q.setReturn(id, par.id);
+    q.focus.value = { kind: "outs", id: par.id };
+    return;
+  }
   let at = id;
   q.answer((d) => { at = applyPick(d, id, h, kind, aims, pre, only); });
   handFor.value = null;
   q.focus.value = { kind: "outs", id: at };
 }
+/** 同じ手か (カレンシーとお告げ。狙いの選び方は問わない) */
+const sameHand = (x: Hand, y: Hand): boolean => x.currency === y.currency && [...x.omens].sort().join() === [...y.omens].sort().join();
 function clearHandOf(): void {
   const id = handFor.value!;
   q.answer((d) => clearHand(d, id));

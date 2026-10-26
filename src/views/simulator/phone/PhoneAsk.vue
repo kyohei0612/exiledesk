@@ -56,7 +56,7 @@ function showHand(id: string): void { quiz.focus.value = { kind: "hand", id }; }
       <StageItemCard v-if="item" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
       <template v-if="box.hand">
         <!-- ここで打った手 (10-27 オーナー「カオスオーブを選択とだけ出し、押したらカレンシーの選択画面へ」)。結果へは下の帯の「次へ」 -->
-        <button type="button" data-phone-hand-now class="w-full rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-center text-[14px] text-amber-50" @click="emit('hand', q.id)">{{ tr(`${handLabel(box.hand)}を選択`, `Selected: ${handLabel(box.hand)}`) }}</button>
+        <button type="button" data-phone-hand-now class="w-full rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-center text-[14px] text-amber-50" @click="emit('hand', q.id)">{{ tr(`${handLabel(box.hand)}${/\)$/.test(handLabel(box.hand)) ? " " : ""}を選択`, `Selected: ${handLabel(box.hand)}`) }}</button>
         <button type="button" data-phone-hand-change class="g-btn !min-h-11 px-4" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
       </template>
     </template>
@@ -67,7 +67,7 @@ function showHand(id: string): void { quiz.focus.value = { kind: "hand", id }; }
         <button v-if="k > 0" type="button" data-phone-out-prev class="min-h-10 underline decoration-white/20" @click="emit('step', k - 1)">‹ {{ tr("前の結果", "Previous result") }}</button>
         <span>{{ tr(`結果 ${k + 1} / ${outs.length}`, `Result ${k + 1} / ${outs.length}`) }}</span>
       </p>
-      <PhoneOutRow v-if="outs[k]" :key="outs[k]" :box-id="outs[k]!" @hand="showHand" />
+      <PhoneOutRow v-if="outs[k]" :key="outs[k]" :box-id="outs[k]!" @hand="showHand" @pick="(id) => emit('hand', id)" />
       <button type="button" data-phone-hand-change class="g-btn !min-h-11 px-4" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
     </template>
   </div>

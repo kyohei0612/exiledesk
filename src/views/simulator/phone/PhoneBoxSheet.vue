@@ -12,7 +12,6 @@ import { craftStage as s } from "../../../state/craft-stage";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { treeRowTags } from "../tree/tree-row-tags";
 import { handLabel, OUT_LOOK } from "../tree/tree-names";
-import { pctText, useTreeOdds } from "../tree/tree-odds";
 import { routeText, runText } from "../tree/tree-fail";
 import { useTree } from "../tree/use-tree";
 import { fixedValues } from "../tree/tree-fixed-values";
@@ -26,7 +25,6 @@ const q = usePhoneQuiz();
 const id = computed(() => sheet.value?.id ?? "");
 const box = computed(() => t.doc.value.boxes[id.value]);
 const look = computed(() => OUT_LOOK[box.value?.out ?? "junk"]);
-const odds = useTreeOdds();
 const item = computed(() => (s.data.value && box.value ? sampleOf(s.data.value, t.doc.value, id.value, 1).item : null));
 const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.value, t.doc.value, box.value?.unwanted ?? [], item.value, box.value) : null));
 /** 箱のメモを書いている (PC の TreeNote をそのまま、文だけ) */
@@ -43,7 +41,7 @@ const run = computed(() => runText(phoneRun.value, id.value));
 const outs = computed(() => (box.value?.hand ? box.value.outs : []).map((o) => {
   const b = t.doc.value.boxes[o]!;
   const next = b.hand ? `→ ${handLabel(b.hand)}` : b.done ? tr("✓ 完成", "✓ Done") : routeText(t.doc.value, o, name) ?? tr("まだ決めていない", "Not decided yet");
-  return { id: o, title: name(o), c: OUT_LOOK[b.out].c, odds: odds.value.get(o) ?? null, next };
+  return { id: o, title: name(o), c: OUT_LOOK[b.out].c, next };
 }));
 /** この回の質問へ (手のある箱は ②、無ければ親の ②、始まりは ①。PhoneTreePage の goBox と同じ) */
 function ask(): void {
@@ -77,7 +75,6 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
         </div>
         <p class="flex items-start gap-2 text-[15px] font-bold" :style="{ color: `rgb(${look.c})` }">
           <span class="min-w-0 flex-1 break-words">{{ q.boxTitle(id) }}</span>
-          <span v-if="odds.get(id) != null" class="shrink-0 text-[12px] font-normal tabular-nums text-[#d8ccb4]">{{ pctText(odds.get(id)!) }}</span>
         </p>
         <p class="break-words text-[11px] text-[#9a8a70]">{{ q.pathText(id) }}</p>
         <StageItemCard v-if="item" class="mt-2" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
@@ -96,7 +93,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
           <p class="mt-2 rounded-lg border border-amber-300/50 bg-[#2a2014] px-2 py-1.5 text-[13px] text-amber-50">{{ tr("この箱から次に打つ", "Next craft from here") }}: {{ handLabel(box.hand) }}</p>
           <ul class="mt-1 flex flex-col">
             <li v-for="o in outs" :key="o.id" data-phone-sheet-out class="border-b border-white/5 py-1.5 text-[12px]">
-              <span class="flex items-start gap-2"><b class="min-w-0 flex-1 break-words" :style="{ color: `rgb(${o.c})` }">{{ o.title }}</b><span v-if="o.odds != null" class="shrink-0 tabular-nums text-[#d8ccb4]">{{ pctText(o.odds) }}</span></span>
+              <span class="flex items-start gap-2"><b class="min-w-0 flex-1 break-words" :style="{ color: `rgb(${o.c})` }">{{ o.title }}</b></span>
               <span class="block break-words text-cyan-100/90">{{ o.next }}</span>
             </li>
           </ul>

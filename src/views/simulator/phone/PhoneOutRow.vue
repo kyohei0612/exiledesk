@@ -21,12 +21,12 @@ import StageItemCard from "../../../components/for-share/item/StageItemCard.vue"
 import { craftStage as s } from "../../../state/craft-stage";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { treeRowTags } from "../tree/tree-row-tags";
-import { pctText, useTreeOdds } from "../tree/tree-odds";
 import { flag } from "../../../web/release-flags";
 import { tr } from "../../../i18n/lang";
 
 const props = defineProps<{ boxId: string }>();
-const emit = defineEmits<{ hand: [id: string] }>();
+/** hand = その箱の ① へ、pick = その箱の手を選ぶ (カレンシーの選択) */
+const emit = defineEmits<{ hand: [id: string]; pick: [id: string] }>();
 const t = useTree();
 const q = usePhoneQuiz();
 const box = computed(() => t.doc.value.boxes[props.boxId]);
@@ -85,16 +85,36 @@ function onPickClick(e: MouseEvent): void {
 }
 /** 今の答えの 1 行 (決めていなければ「次へ」で入る既定、10-26 夜オーナー「『次へ』で基本進行」) */
 const answerText = computed((): string => {
-  if (state.value === "open") return defRetry.value ? tr(`→ ${retryText.value} (既定)`, `→ ${retryText.value} (default)`) : tr("→ 次の手を決める (既定)", "→ Next craft (default)");
-  if (state.value === "later") return tr("→ 次の手を決める", "→ Next craft");
-  if (state.value === "done") return tr("✓ 完成", "✓ Done");
-  return route.value ?? "";
+  if (state.value === "open") return defRetry.value ? retrySay.value : tr("この場合は次の手を選ぶ", "Then pick the next craft"); // (既定) は折れないよう別に出す
+  if (state.value === "later") return tr("この場合は次の手を選ぶ", "Then pick the next craft");
+  if (state.value === "done") return tr("この場合は完成", "Then it's done");
+  if (backKind.value === "retry" || (backKind.value === "start" && parent.value === "start")) return retrySay.value;
+  return route.value ? tr(`この場合は ${route.value.replace(/^↩\s*/, "")}`, `Then ${route.value.replace(/^↩\s*/, "")}`) : "";
+});
+/**
+ * 再度挑戦を文で (10-27 オーナー「↩ 再度挑戦 · 2 段目へ戻る: 打った後 は不親切すぎる、何が起こったのか分からん」)。
+ * 例「この場合はカオスオーブをもう一度打つ (2 段目へ戻る)」
+ */
+const retrySay = computed((): string => {
+  const p = parent.value ? t.doc.value.boxes[parent.value] : null, n = parent.value ? stepBackText(t.doc.value, parent.value) : "";
+  return p?.hand ? tr(`この場合は${handLabel(p.hand)}をもう一度打つ (${n})`, `Then use ${handLabel(p.hand)} again (${n})`) : retryText.value;
+});
+/**
+ * 結果の頭 = どういう場合か (10-27 オーナー「ハズレってだけ出しても分かりづらいし、99% とかもいらない情報。ハズレた場合の処理として記載」)。
+ * 確率はスマホでは出さない。当たりは何が付いたかを下の行に
+ */
+const sit = computed((): [string, string] => {
+  const o = box.value?.out;
+  if (o === "junk") return [tr("外れた場合", "If it misses"), tr("狙いの MOD は付かず、外れ MOD が付いた", "No target mod; a miss mod was added")];
+  if (o === "lost") return [tr("狙いが消えた場合", "If a target is lost"), tr("付いていた狙いの MOD が消えた", "A target mod that was on the item was removed")];
+  if (o === "junkGone") return [tr("外れが消えた場合", "If a miss is removed"), q.boxTitle(props.boxId)];
+  if (o === "hit") return [tr("当たった場合", "If it hits"), q.boxTitle(props.boxId)];
+  if (o === "any") return [tr("打った後", "After the craft"), tr("何が付いても次へ (狙い無し)", "Anything counts (no target)")];
+  return [q.boxTitle(props.boxId), ""];
 });
 const backKind = computed(() => (state.value !== "back" ? null : box.value?.back === "start" ? "start" : backTo.value === parent.value ? "retry" : "other"));
 const route = computed(() => routeText(t.doc.value, props.boxId, q.boxTitle));
 const run = computed(() => runText(phoneRun.value, props.boxId));
-const treeOdds = useTreeOdds();
-const odds = computed(() => treeOdds.value.get(props.boxId) ?? null);
 /** この結果のアイテムと、戻り先の箱のアイテム (いつも開いたまま、10-26 オーナー「アイテムは基本展開」) */
 const itemOf = (id: string | null) => (s.data.value && id && t.doc.value.boxes[id] ? sampleOf(s.data.value, t.doc.value, id, 1).item : null);
 const item = computed(() => itemOf(props.boxId));
@@ -113,17 +133,18 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
        今の答えはカードの下の小さな 1 行、変えたい時は「答えを変える ▾」で下から選びの窓 -->
   <div v-if="box" data-phone-out :data-box-id="boxId" class="w-full rounded-xl border bg-[#1a140d] px-1.5 py-2 text-center" :style="{ borderColor: `rgba(${look.c},${state === 'open' ? 0.75 : 0.35})` }">
     <p class="break-words text-center text-[14px] font-bold" :style="{ color: `rgb(${look.c})` }">
-      {{ q.boxTitle(boxId) }}<!-- この結果になる割合 (PC の箱と同じ、エンジンの outcomeOdds) --><span v-if="odds != null" data-phone-odds class="ml-1.5 text-[12px] font-normal tabular-nums text-[#d8ccb4]">{{ pctText(odds) }}</span>
+      {{ sit[0] }}
     </p>
+    <p v-if="sit[1]" data-phone-out-sit class="break-words text-center text-[12px] text-[#d8ccb4]">{{ sit[1] }}</p>
     <StageItemCard v-if="item" data-phone-out-item class="mx-auto mt-2" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tagsOf(boxId, item)" />
     <!-- 回した結果 (来た人・形の合う別の箱へ移った人・止まった人と理由) -->
     <p v-if="run" data-phone-out-run class="mt-1 break-words text-[12px]" :class="phoneRun?.stuckAt[boxId] ? 'text-rose-200' : 'text-amber-100/80'">{{ run }}</p>
   </div>
-  <!-- 今の答え (カードの外の小さな 1 行) と、答えを変える入口 -->
-  <div v-if="box" data-phone-out-answer :data-box-id="boxId" class="-mt-1 flex w-full min-w-0 flex-wrap items-center justify-center gap-x-2 text-[12px]">
-    <button v-if="state === 'hand'" type="button" data-phone-out-hand class="min-h-10 min-w-0 break-words text-[#c8bca4] underline decoration-white/20" @click="emit('hand', boxId)">→ {{ box.hand ? handLabel(box.hand) : tr("分かれ目", "Split") }}</button>
-    <span v-else data-phone-out-now class="min-w-0 break-words" :class="state === 'open' ? 'text-amber-200/90' : state === 'done' ? 'text-emerald-300' : 'text-cyan-200/90'">{{ answerText }}</span>
-    <button v-if="state !== 'hand'" type="button" data-phone-out-change class="min-h-10 shrink-0 px-1 text-[#9a8a70] underline decoration-white/20" @click="pickOpen = true">{{ tr("答えを変える ▾", "Change ▾") }}</button>
+  <!-- この場合どうするか (カードの外。文で書く) と、答えを変えるボタン。次の手が付いている時は「○○を選択」の枠 (押すとカレンシーの選択、10-27 オーナー) -->
+  <div v-if="box" data-phone-out-answer :data-box-id="boxId" class="flex w-full min-w-0 flex-col items-center gap-2 text-[13px]">
+    <button v-if="state === 'hand'" type="button" data-phone-out-hand class="w-full rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-center text-[14px] text-amber-50" @click="emit('pick', boxId)">{{ box.hand ? tr(`${handLabel(box.hand)}${/\)$/.test(handLabel(box.hand)) ? " " : ""}を選択`, `Selected: ${handLabel(box.hand)}`) : tr("分かれ目", "Split") }}</button>
+    <p v-else data-phone-out-now class="min-w-0 break-words font-bold" :class="state === 'open' ? 'text-amber-200' : state === 'done' ? 'text-emerald-300' : 'text-cyan-200'">{{ answerText }}<span v-if="state === 'open'" class="ml-1 whitespace-nowrap">{{ tr("(既定)", "(default)") }}</span></p>
+    <button type="button" data-phone-out-change class="g-btn !min-h-11 px-4" @click="pickOpen = true">{{ tr("答えを変える", "Change the answer") }}</button>
   </div>
   <!-- 答えの選び (下から出る重ね窓。閉じれば元の場所のまま) -->
   <Teleport to="body">
