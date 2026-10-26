@@ -1,5 +1,35 @@
 [
  {
+  "v": "0.1.612",
+  "date": "2026-10-26",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 木が横に広い時や完成形の設定から戻った時も、スタートの箱が枠の横の真ん中・一番上に来て、左上の完成形の窓の下に入らないように",
+    "en": "Simulator: The start box now stays at the top center of the tree frame even for wide trees or after returning from the finished-item settings, so it no longer slips under the finished-item panel in the top left"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 次に打つ手の窓は、最初から「狙い無し」にチェックした形で開くように (カオスのスパムは今どおり候補に全部チェック)",
+    "en": "Simulator: The next-craft panel now opens with \"No target (anything counts)\" checked by default (Chaos spam still checks every candidate as before)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 箱の札 (◎ 〜が付いた・外れ など) を枠の上辺の真ん中に置き、未定の ! と重ならないように。箱の中の「<1% ＋ 次の手」の文字は消しました",
+    "en": "Simulator: Box labels (e.g. \"◎ … added\", \"Miss\") now sit at the top center of the frame and no longer overlap the undecided \"!\". The \"<1% + next craft\" text inside boxes was removed"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 横の ＋・下の ＋ で箱を足すと、押した側に置いて横の箱をずらし、そのまま整列するように",
+    "en": "Simulator: Adding a box with the side or bottom + now places it on the side you pressed, shifts neighboring boxes over, and tidies the tree right away"
+   }
+  ]
+ },
+ {
   "v": "0.1.611",
   "date": "2026-10-26",
   "items": [
@@ -847,18 +877,6 @@
     "area": "",
     "text": "MOD 一覧で 1 行にまとめた MOD (スキルのレベルなど) の段の表に、段ごとのタグを出すように",
     "en": "The tier table of grouped mods (e.g. skill levels) in the mod list now shows each tier's tags"
-   }
-  ]
- },
- {
-  "v": "0.1.572",
-  "date": "2026-10-18",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "MOD のタグと冒涜の陣営 (アマナム・ウラマン・カーガル) を poe2db に合わせました (93 MOD)。メイスの余震・亀裂などの陣営が違っていて、陣営のお告げの結果に効いていました",
-    "en": "Mod tags and Desecrated factions (Amanamu / Ulaman / Kurgal) now match poe2db (93 mods). Some faction tags, such as Aftershock and Fissure on maces, were wrong and affected faction omens"
    }
   ]
  }

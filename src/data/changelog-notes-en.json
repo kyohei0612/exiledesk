@@ -1,4 +1,10 @@
 {
+  "0.1.612": [
+    "Simulator: The start box now stays at the top center of the tree frame even for wide trees or after returning from the finished-item settings, so it no longer slips under the finished-item panel in the top left",
+    "Simulator: The next-craft panel now opens with \"No target (anything counts)\" checked by default (Chaos spam still checks every candidate as before)",
+    "Simulator: Box labels (e.g. \"◎ … added\", \"Miss\") now sit at the top center of the frame and no longer overlap the undecided \"!\". The \"<1% + next craft\" text inside boxes was removed",
+    "Simulator: Adding a box with the side or bottom + now places it on the side you pressed, shifts neighboring boxes over, and tidies the tree right away"
+  ],
   "0.1.611": [
     "Phone: On narrow screens (such as 320px wide), the header's Guide and Feedback buttons were cut off on the right; the header is now tightened so everything fits without hiding anything"
   ],
