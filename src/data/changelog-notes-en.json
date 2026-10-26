@@ -1,4 +1,7 @@
 {
+  "0.1.617": [
+    "Simulator: The tree no longer zooms out too far when you open or tidy it. It now stays at 75% or more with the start box at the top center, and \"Fit all\" zooms out no further than 25%"
+  ],
   "0.1.616": [
     "Simulator: Text that was cut off with \"…\" now wraps to show in full: long craft tags, the bottom bar and recipes page on narrow phones (such as 320px), and the list of what is missing in the right column. The blog and channel section is no longer shown on the recipes page on phones"
   ],

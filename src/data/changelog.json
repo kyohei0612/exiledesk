@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.617",
+  "date": "2026-10-26",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ツリーを開いた時・整列の後に木が小さく引きすぎていたのを、75% 以上でスタートを上の真ん中に置くように。「全体を表示」で縮めるのは 25% までにしました",
+    "en": "Simulator: The tree no longer zooms out too far when you open or tidy it. It now stays at 75% or more with the start box at the top center, and \"Fit all\" zooms out no further than 25%"
+   }
+  ]
+ },
+ {
   "v": "0.1.616",
   "date": "2026-10-26",
   "items": [
@@ -865,18 +877,6 @@
     "area": "",
     "text": "カオススパム計算機はスパムシミュレーターにまとめました (前の計算機のシェアの URL はスパムシミュレーターで開きます)",
     "en": "The Chaos spam calculator is now part of the Spam simulator (old calculator share links open the Spam simulator)"
-   }
-  ]
- },
- {
-  "v": "0.1.577",
-  "date": "2026-10-18",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "エッセンスは使える段だけを出すように (レアはパーフェクトだけで、段を選ばずにそのまま持てます。ノーマル・マジックにはパーフェクトを出しません)",
-    "en": "Essences now show only the tiers you can use: Perfect for Rare items (picked directly, no tier menu), non-Perfect for Normal and Magic items"
    }
   ]
  }
