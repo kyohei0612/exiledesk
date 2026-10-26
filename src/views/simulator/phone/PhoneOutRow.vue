@@ -77,7 +77,7 @@ const item = computed(() => itemOf(props.boxId));
 const backItem = computed(() => (backTo.value && backTo.value !== "start" ? itemOf(backTo.value) : null));
 const tagsOf = (id: string, it: ReturnType<typeof itemOf>) => (s.data.value && it ? treeRowTags(s.data.value, t.doc.value, t.doc.value.boxes[id]?.unwanted ?? [], it, t.doc.value.boxes[id]) : null);
 const cardW = Math.min(340, (typeof window === "undefined" ? 375 : window.innerWidth) - 60);
-const CHIP ="rounded-full border px-3 py-1.5 text-[13px] leading-none";
+const CHIP = "inline-flex min-h-10 items-center rounded-full border px-3 py-1.5 text-[13px] leading-tight";
 const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-amber-500/20 text-amber-50" : "border-white/15 bg-white/[0.03] text-[#d8ccb4]"}`;
 </script>
 
@@ -93,7 +93,7 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
     <!-- 回した結果 (来た人・形の合う別の箱へ移った人・止まった人と理由) -->
     <p v-if="run" data-phone-out-run class="mt-1 break-words text-[12px]" :class="phoneRun?.stuckAt[boxId] ? 'text-rose-200' : 'text-amber-100/80'">{{ run }}</p>
     <!-- 次の手が付いている箱 (① で答えた) は手の名前。押すとその手を見直す -->
-    <button v-if="state === 'hand'" type="button" data-phone-out-hand class="mt-1 block w-full break-words text-left text-[12px] text-[#c8bca4] underline decoration-white/20" @click="emit('hand', boxId)">→ {{ box.hand ? handLabel(box.hand) : tr("分かれ目", "Split") }}</button>
+    <button v-if="state === 'hand'" type="button" data-phone-out-hand class="mt-1 block min-h-10 w-full break-words py-2 text-left text-[13px] text-[#c8bca4] underline decoration-white/20" @click="emit('hand', boxId)">→ {{ box.hand ? handLabel(box.hand) : tr("分かれ目", "Split") }}</button>
     <template v-else>
       <!-- 行き先の文 (PC の箱と同じ tree-fail の routeText。狙いが消えた → 始め も文で、10-26 失敗時の挙動の案 2) -->
       <p v-if="route" data-phone-out-route :data-phone-out-auto="box.autoBack ? 1 : undefined" class="mt-1 break-words text-[12px] text-cyan-200/90">{{ route }}</p>
@@ -122,7 +122,7 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
       <!-- 始めに戻れない理由 (始めの手がこのアイテムに打てない。10-26 モンキー 7 の 1) -->
       <p v-if="startNo" data-phone-start-no class="mt-1 break-words text-[11px] text-rose-200/90">{{ startNo }}</p>
       <div v-if="!MAP && listOpen" data-phone-other class="mt-2 flex flex-col gap-1">
-        <button v-for="id in others" :key="id" type="button" class="break-words rounded-lg border border-white/10 bg-black/20 px-2 py-1.5 text-left text-[12px]" :class="backTo === id ? 'border-cyan-300/70 text-cyan-100' : 'text-[#d8ccb4]'" @click="listOpen = false; q.setReturn(boxId, id)">↩ {{ q.pathText(id) }}</button>
+        <button v-for="id in others" :key="id" type="button" class="min-h-10 break-words rounded-lg border border-white/10 bg-black/20 px-2 py-1.5 text-left text-[13px]" :class="backTo === id ? 'border-cyan-300/70 text-cyan-100' : 'text-[#d8ccb4]'" @click="listOpen = false; q.setReturn(boxId, id)">↩ {{ q.pathText(id) }}</button>
       </div>
     </template>
   </div>

@@ -56,14 +56,14 @@ function showHand(id: string): void { quiz.focus.value = { kind: "hand", id }; }
       </div>
       <template v-if="box.hand">
         <button type="button" data-phone-hand-now class="rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-left text-[14px] text-amber-50" @click="showOuts(q.id)">{{ handLabel(box.hand) }} <span class="float-right text-[12px] text-amber-200/80">{{ tr("結果 ›", "Results ›") }}</span></button>
-        <button type="button" data-phone-hand-change class="g-btn" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
+        <button type="button" data-phone-hand-change class="g-btn !min-h-10" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
       </template>
     </template>
     <template v-else>
       <h2 class="text-[16px] font-bold text-[#f0e4c8]">{{ box.hand ? tr(`${handLabel(box.hand)} を打つと…`, `After ${handLabel(box.hand)}…`) : "" }}</h2>
       <p class="text-[12px] text-[#9a8a70]">{{ tr("結果ごとに次をどうするか選ぶ。選ばなかった結果は「次へ」の後で 1 つずつ聞きます", "Pick what to do next for each result. Ones you skip are asked one by one after Next") }}</p>
       <PhoneOutRow v-for="id in outs" :key="id" :box-id="id" @hand="showHand" />
-      <button type="button" data-phone-hand-change class="g-btn self-start" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
+      <button type="button" data-phone-hand-change class="g-btn !min-h-10 self-start" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
     </template>
   </div>
 </template>

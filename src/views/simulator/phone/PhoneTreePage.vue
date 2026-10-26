@@ -43,7 +43,7 @@ watch(() => q.focus.value, () => { routesOpen.value = false; });
 /** 完成形のカードを開いている */
 const goalOpen = ref(false);
 /** 帯の小さなボタン (PC の 0 の枠 TreeGoalCard の札と同じ形、指で押せる高さ 32px) */
-const PILL = "shrink-0 rounded-md border border-[#c9a45c]/60 bg-gradient-to-b from-[#3a2c14] to-[#1a1309] px-2.5 text-[12px] font-bold leading-[30px] text-[#f2d27a]";
+const PILL = "shrink-0 rounded-md border border-[#c9a45c]/60 bg-gradient-to-b from-[#3a2c14] to-[#1a1309] px-2.5 text-[12px] font-bold leading-[38px] text-[#f2d27a]";
 const marks = computed(() => t.goals.value.filter((a) => a.fractured).map((a) => a.modId));
 const cardW = computed(() => Math.min(360, (typeof window === "undefined" ? 375 : window.innerWidth) - 40));
 
@@ -139,7 +139,7 @@ function goBox(id: string): void {
         <span>{{ tr("残りの道", "Open paths") }} <b class="text-[15px] text-amber-200">{{ total }}</b></span>
         <span class="opacity-70">· {{ tr(`答えた ${q.answered.value}`, `${q.answered.value} answered`) }}</span>
         <div class="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-white/10"><i class="block h-full bg-amber-300" :style="{ width: `${Math.round((100 * q.answered.value) / Math.max(1, q.answered.value + total))}%` }" /></div>
-        <button type="button" data-phone-routes class="g-btn sm shrink-0" :aria-pressed="routesOpen" @click="routesOpen = !routesOpen">{{ routesOpen ? tr("質問へ", "Question") : tr("全体を見る", "Overview") }}</button>
+        <button type="button" data-phone-routes class="g-btn sm !min-h-10 shrink-0" :aria-pressed="routesOpen" @click="routesOpen = !routesOpen">{{ routesOpen ? tr("質問へ", "Question") : tr("全体を見る", "Overview") }}</button>
       </div>
       <!-- 道が残っている間は 100 人回すの場所を先に知らせる (10-26 モンキー 7 の 7「100 人・テストがどこにも無い」) -->
       <p v-if="total" data-phone-run-hint class="text-[11px] text-[#9a8a70]">{{ tr("残りの道を全部決めると、下の帯で 100 人回せる (足りない所は先に直す)", "Decide every open path and the bar below lets you run 100 (fix anything missing first)") }}</p>
@@ -168,10 +168,10 @@ function goBox(id: string): void {
       <div data-phone-bar class="sticky bottom-0 z-10 -mx-2 flex flex-col gap-2 border-t border-white/10 bg-[#0c0a08] px-2 py-2">
         <PhoneMap v-if="MAP" />
         <div class="flex gap-2">
-        <button type="button" data-phone-undo class="g-btn min-h-11 shrink-0 px-3" :disabled="!t.canUndo.value" :title="tr('1 つ戻す', 'Undo')" @click="t.undo">↶<span class="ml-1 text-[12px]">{{ tr("戻す", "Undo") }}</span></button>
-        <button v-if="main" type="button" data-phone-main :data-main="main.kind" class="g-btn-red min-h-11 min-w-0 flex-1 whitespace-normal break-words px-2 text-[15px] leading-tight" :disabled="main.off" @click="main.go">{{ main.text }}</button>
+        <button type="button" data-phone-undo class="g-btn !min-h-11 shrink-0 px-3" :disabled="!t.canUndo.value" :title="tr('1 つ戻す', 'Undo')" @click="t.undo">↶<span class="ml-1 text-[12px]">{{ tr("戻す", "Undo") }}</span></button>
+        <button v-if="main" type="button" data-phone-main :data-main="main.kind" class="g-btn-red !min-h-11 min-w-0 flex-1 whitespace-normal break-words px-2 text-[15px] leading-tight" :disabled="main.off" @click="main.go">{{ main.text }}</button>
         <span v-else class="flex-1" />
-        <button type="button" data-phone-redo class="g-btn min-h-11 shrink-0 px-3" :disabled="!t.canRedo.value" :aria-label="tr('やり直し', 'Redo')" @click="t.redo">↷</button>
+        <button type="button" data-phone-redo class="g-btn !min-h-11 shrink-0 px-3" :disabled="!t.canRedo.value" :aria-label="tr('やり直し', 'Redo')" @click="t.redo">↷</button>
         </div>
       </div>
     </div>

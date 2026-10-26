@@ -90,8 +90,8 @@ watch(() => q.doc.value, (d) => { const pk = mapPick.value; if (pk && !d.boxes[p
     <div v-if="!mini" class="flex min-w-0 items-center gap-2 text-[11px]">
       <span v-if="mapPick" data-phone-map-pick class="min-w-0 flex-1 break-words font-bold text-amber-200">{{ tr("戻り先の箱を押す (明るい箱に戻れる。押すと中身を見てから決める)", "Tap the box to return to (bright boxes; check it before you choose)") }}</span>
       <span v-else class="min-w-0 flex-1 break-words text-[#9a8a70]">{{ tr("全体図 · 箱を押すと中身", "Overview · tap a box to see it") }}</span>
-      <button v-if="mapPick" type="button" data-phone-map-cancel class="g-btn sm shrink-0" @click="mapPick = null">{{ tr("やめる", "Cancel") }}</button>
-      <button v-else type="button" data-phone-map-size class="g-btn sm shrink-0" :aria-pressed="big" :aria-label="tr('全体図の大きさ', 'Overview size')" @click="big = !big">{{ big ? "⤡" : "⤢" }}</button>
+      <button v-if="mapPick" type="button" data-phone-map-cancel class="g-btn sm !min-h-10 shrink-0" @click="mapPick = null">{{ tr("やめる", "Cancel") }}</button>
+      <button v-else type="button" data-phone-map-size class="g-btn sm !min-h-10 min-w-11 shrink-0" :aria-pressed="big" :aria-label="tr('全体図の大きさ', 'Overview size')" @click="big = !big">{{ big ? "⤡" : "⤢" }}</button>
     </div>
     <div ref="wrap" data-phone-map-view class="relative w-full overflow-hidden rounded-lg border border-white/10 bg-[#080706]" :style="{ height: `${ch}px` }" @click="tap">
       <svg v-if="view" :width="cw" :height="ch" class="pointer-events-none absolute inset-0">

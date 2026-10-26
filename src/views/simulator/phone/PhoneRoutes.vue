@@ -37,7 +37,7 @@ const what = (id: string): string => {
       <span class="block break-words text-[11px] text-[#9a8a70]">{{ q.pathText(x.id) }}</span>
     </button>
     <p class="mt-2 text-[12px] font-bold text-emerald-300">{{ tr("決めた道", "Decided") }}</p>
-    <button v-for="b in decided" :key="b.id" type="button" data-phone-route-done :data-box-id="b.id" class="rounded-lg border border-white/10 bg-black/20 px-3 py-1.5 text-left text-[12px]" @click="go(b.hand ? { kind: 'outs', id: b.id } : { kind: 'outs', id: b.parent ?? 'start' }, b.id)">
+    <button v-for="b in decided" :key="b.id" type="button" data-phone-route-done :data-box-id="b.id" class="min-h-10 rounded-lg border border-white/10 bg-black/20 px-3 py-1.5 text-left text-[13px]" @click="go(b.hand ? { kind: 'outs', id: b.id } : { kind: 'outs', id: b.parent ?? 'start' }, b.id)">
       <span class="block break-words text-[#d8ccb4]"><b :style="{ color: `rgb(${OUT_LOOK[b.out].c})` }">{{ q.boxTitle(b.id) }}</b> {{ what(b.id) }}</span>
     </button>
   </div>

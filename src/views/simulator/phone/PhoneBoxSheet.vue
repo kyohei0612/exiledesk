@@ -88,9 +88,9 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
         <PhoneMap :mini="id" />
       </div>
       <div class="flex gap-2 border-t border-white/10 px-3 py-2">
-        <button v-if="sheet?.pickFrom" type="button" data-phone-sheet-return class="g-btn-red min-h-11 flex-1 text-[15px]" @click="returnHere">{{ tr("ここへ戻す", "Return here") }}</button>
-        <button v-else type="button" data-phone-sheet-ask class="g-btn-red min-h-11 flex-1 text-[15px]" @click="ask">{{ tr("この回の質問へ", "Go to this question") }}</button>
-        <button type="button" data-phone-sheet-close class="g-btn min-h-11 flex-1" @click="sheet = null">{{ tr("閉じる", "Close") }}</button>
+        <button v-if="sheet?.pickFrom" type="button" data-phone-sheet-return class="g-btn-red !min-h-11 flex-1 text-[15px]" @click="returnHere">{{ tr("ここへ戻す", "Return here") }}</button>
+        <button v-else type="button" data-phone-sheet-ask class="g-btn-red !min-h-11 flex-1 text-[15px]" @click="ask">{{ tr("この回の質問へ", "Go to this question") }}</button>
+        <button type="button" data-phone-sheet-close class="g-btn !min-h-11 flex-1" @click="sheet = null">{{ tr("閉じる", "Close") }}</button>
       </div>
     </div>
   </div>
