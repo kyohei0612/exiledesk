@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.611",
+  "date": "2026-10-26",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "スマホ: 幅の狭い画面 (320 など) でヘッダーの右の「使い方」「要望」が切れていたのを、何も隠さずに収まるよう詰めました",
+    "en": "Phone: On narrow screens (such as 320px wide), the header's Guide and Feedback buttons were cut off on the right; the header is now tightened so everything fits without hiding anything"
+   }
+  ]
+ },
+ {
   "v": "0.1.610",
   "date": "2026-10-26",
   "items": [
@@ -847,18 +859,6 @@
     "area": "",
     "text": "MOD のタグと冒涜の陣営 (アマナム・ウラマン・カーガル) を poe2db に合わせました (93 MOD)。メイスの余震・亀裂などの陣営が違っていて、陣営のお告げの結果に効いていました",
     "en": "Mod tags and Desecrated factions (Amanamu / Ulaman / Kurgal) now match poe2db (93 mods). Some faction tags, such as Aftershock and Fissure on maces, were wrong and affected faction omens"
-   }
-  ]
- },
- {
-  "v": "0.1.571",
-  "date": "2026-10-18",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "MOD 一覧の「付ける」で、マジックに MOD が付かないベース (不在のアミュレットなど) に付けた時に反応しなかったのを直しました (付けられるレアにして付けます)",
-    "en": "Fixed “Add” in the mod list doing nothing on bases that can't hold mods as Magic (e.g. Absent Amulet). It now makes the item Rare and adds the mod"
    }
   ]
  }
