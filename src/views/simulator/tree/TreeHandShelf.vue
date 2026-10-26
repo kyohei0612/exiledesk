@@ -12,6 +12,7 @@ import { craftStage as s, iconOf, nameOf } from "../../../state/craft-stage";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import CurrencyShelf from "../../../components/for-share/shelf/CurrencyShelf.vue";
 import HeldOmens from "../../../components/for-share/shelf/HeldOmens.vue";
+import HeldCursor from "../../../components/for-share/shelf/HeldCursor.vue";
 import { omensAllowedFor, useReason, type StageItem } from "../../../services/craft-stage/engine";
 import { omensFor } from "../../../services/craft-stage/engine";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
@@ -279,5 +280,7 @@ function ok(): void {
     <div v-if="held" data-tree-hand-use-bar class="sticky bottom-0 z-10 -mx-3 border-t border-white/10 bg-[#0c0a08]/95 px-3 py-2 md:hidden">
       <button type="button" data-tree-hand-use class="g-btn-red min-h-11 w-full text-[15px]" :disabled="!!problem" @click="ok">{{ tr("使う (この手にする)", "Use (make it this craft)") }}</button>
     </div>
+    <!-- 持っている物の絵をカーソルに付ける (エミュと同じ共有の部品、スマホは出ない。10-26 オーナー「パソコン版持ってるかわからんから…エミュと同じ仕様で」) -->
+    <HeldCursor :src="held ? iconOf(held) : null" />
   </div>
 </template>
