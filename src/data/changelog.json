@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.610",
+  "date": "2026-10-26",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ツリーを開いた時・整列・全体表示で、スタートの箱を枠の横の真ん中・一番上に置くように。左上の完成形の設定の窓と箱がかぶらなくなりました",
+    "en": "Simulator: The start box now sits at the top center of the tree frame when you open a tree, tidy it, or fit it to the view, so it no longer hides under the finished-item panel in the top left"
+   }
+  ]
+ },
+ {
   "v": "0.1.609",
   "date": "2026-10-26",
   "items": [
@@ -847,18 +859,6 @@
     "area": "",
     "text": "MOD 一覧の「付ける」で、マジックに MOD が付かないベース (不在のアミュレットなど) に付けた時に反応しなかったのを直しました (付けられるレアにして付けます)",
     "en": "Fixed “Add” in the mod list doing nothing on bases that can't hold mods as Magic (e.g. Absent Amulet). It now makes the item Rare and adds the mod"
-   }
-  ]
- },
- {
-  "v": "0.1.570",
-  "date": "2026-10-18",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "使い方のページ (/guide) から「使い方・コツ」(チュートリアル) へ行けるように",
-    "en": "The guide page (/guide) now links to “Guide & Tips” (tutorials)"
    }
   ]
  }
