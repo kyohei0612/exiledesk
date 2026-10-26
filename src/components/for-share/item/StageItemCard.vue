@@ -46,7 +46,7 @@ const rowX = (m: StageMod): boolean => !!props.rowRemove && !props.removable && 
 const ROW_X = "rounded px-1 text-[12px] leading-none text-rose-300/80 opacity-0 transition-opacity hover:bg-rose-500/20 hover:text-rose-200 focus-visible:opacity-100 max-md:px-2 max-md:py-1 max-md:text-[15px] max-md:opacity-50";
 /** 行の左 (P / S) と右 (↓・確率・×) の枠は同じ幅。MOD の文がカードの真ん中に来る (2026-10-17 オーナー「全体的に左に寄ってる、MOD は真ん中、→ に %、← に P,S」) */
 const sideColW = computed(() => (props.removable ? "w-[4.5rem] max-md:w-[5.25rem]" : props.tierAtLeast ? "w-[4.25rem] max-md:w-[3.5rem] whitespace-nowrap" : "w-[3rem] max-md:w-[3rem]")); // ↓ を外した分 (2026-10-17) 細く
-/** modsOnly (シミュのツリーの箱の中の小さなカード) は左の列を P1 が入る幅に (右の列は確率・× のある行だけ。2026-10-26 オーナー「枠両端余ってんね空白なんで？」) */
+/** modsOnly (シミュのツリーの箱の中の小さなカード) は左の列を P1 が入る幅に (2026-10-26 オーナー「枠両端余ってんね空白なんで？」)。右にも同じ幅の空きを置いて文をカードの真ん中に (完成形のアイテムと同じ形、10-26 夜オーナー「ここだけアイテムの形にして」) */
 const leftColW = computed(() => (props.modsOnly && !props.removable && !props.tierAtLeast ? "w-7" : sideColW.value));
 /** 未発現の行の崩れた文字。どの行も同じ並び・同じフォント (行ごとに変えると形がばらばらで気持ち悪い。2026-10-17 オーナー) */
 const UNREVEALED_GLYPHS = "ʘɿɕʞɞ ʖɷɦɕɷʞ";
@@ -238,7 +238,7 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
       <p class="st-name" :class="tone.name" data-rec="item-name">{{ baseNameOf(item) }}</p>
     </div>
     <!-- 解呪 / サルベージで崩れる (要望 ⑰-21) -->
-    <div class="space-y-1 px-4 text-center text-[13px]" :class="[modsOnly ? '!px-1 pt-1' : '', compact ? 'pb-2' : 'pb-4', item.disposed ? 'stage-crumble' : '']">
+    <div class="space-y-1 px-4 text-center text-[13px]" :class="[modsOnly ? '!px-2' : '', compact ? 'pb-2' : 'pb-4', item.disposed ? 'stage-crumble' : '']">
       <template v-if="!modsOnly">
       <!-- 種類 → アイテムレベル (英語のベース名は出さない、2026-10-10 オーナー)。要求レベル・能力値は出さない (2026-10-10 オーナー「邪魔、出さなくていい」) -->
       <p class="pt-1 text-[12px] text-white/50">{{ kindJa }}</p>
@@ -291,6 +291,8 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
       </template>
       <div v-if="!isFlask(item.cls.category) && !isGem(item.cls.category)" class="st-sep" :class="[`st-sep-${item.rarity}`, compact ? 'my-0.5' : 'my-1.5']" />
       </template>
+      <!-- modsOnly も MOD の上にゲームの区切りの絵 (完成形のアイテムと同じ形) -->
+      <div v-else class="st-sep my-1" :class="`st-sep-${item.rarity}`" />
       <!-- 未鑑定: MOD を隠す (ゲームと同じく赤い「未鑑定」) -->
       <p v-if="hidden" class="py-1 font-bold text-[#d20000]">{{ tr("未鑑定", "Unidentified") }}</p>
       <!-- MOD (冒涜の MOD の行はゲームと同じ緑がかった暗い帯と枠。2026-10-07 オーナー「アイテムに出る時ゲーム仕様に、色だけ、冒涜 MOD のみ」。付いた物は光る。キーを手ごとに変えて光らせ直す。TransitionGroup は leave が光の animation 待ちで残るので使わない) -->
@@ -300,7 +302,7 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
           <p class="flex cursor-pointer items-center gap-2 rounded px-2 py-0.5 text-mod-fractured hover:bg-white/[0.04]" @click.stop="fracOpen = !fracOpen">
             <span class="shrink-0 text-left text-[12px] font-bold" :class="leftColW">{{ [...new Set(fracRows.map((r) => (r.side === "プレフィックス" ? "P" : "S")))].join("·") }}</span>
             <span class="min-w-0 flex-1 text-center">{{ tr(`フラクチャー MOD ×${fracRows.length}`, `Fractured mod ×${fracRows.length}`) }}</span>
-            <span v-if="!modsOnly" class="shrink-0" :class="sideColW" />
+            <span class="shrink-0" :class="modsOnly ? leftColW : sideColW" />
           </p>
           <div data-fracture-pop class="absolute left-1/2 top-full z-30 w-max min-w-[260px] max-w-[440px] -translate-x-1/2 space-y-0.5 rounded border border-[#7a6a35] bg-[#0b0a08]/95 px-2 py-1.5 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.7)]" :class="fracOpen ? 'visible' : 'invisible group-hover/fg:visible'">
             <p class="pb-0.5 text-[11px] text-white/45">{{ tr("この中のどれか 1 つが固定される", "One of these gets fractured") }}</p>
@@ -318,7 +320,7 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
           @mouseleave="hover = null"
           :key="isNew(r.m) ? `${r.key}#${flashKey}` : r.key"
           class="group/row relative flex items-center gap-2 rounded py-0.5"
-          :class="[modsOnly ? 'px-1' : 'px-2', r.m.desecrated ? 'g-abyss-row' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? (isRareNew(r.m) ? 'stage-mod-new-rare' : tierLabel(r.m) === 'T1' ? 'stage-mod-new-top' : 'stage-mod-new') : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
+          :class="[modsOnly ? '!gap-1 px-1' : 'px-2', r.m.desecrated ? 'g-abyss-row' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? (isRareNew(r.m) ? 'stage-mod-new-rare' : tierLabel(r.m) === 'T1' ? 'stage-mod-new-top' : 'stage-mod-new') : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
           :title="isDoomed(r.m) ? (doomed!.length > 1 ? tr(`この手で変わる候補 (${doomed!.length} つ)`, `May change with this use (${doomed!.length} candidates)`) : tr('この手で変わる', 'Changes with this use')) : canFracture(r.m) ? (r.m.fractured ? tr('右クリックでフラクチャーを外す', 'Right-click to unfracture') : tr('右クリックでフラクチャー (この MOD を固定)', 'Right-click to fracture this mod')) : undefined"
           @contextmenu="onFracture($event, r.m)"
         >
@@ -326,14 +328,15 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
           <span v-if="isRareNew(r.m)" aria-hidden="true" class="stage-rare-beam pointer-events-none absolute bottom-1/2 left-1/2 z-20 w-10" />
           <!-- トレードサイトと同じ: 左端に P1 / S5 (プレ / サフィと段)、真ん中に MOD の文 (長い物は折り返す)、右端に付いた瞬間の確率と × (2026-10-10 オーナーの見本) -->
           <span class="shrink-0 text-left text-[12px] font-bold tabular-nums" :class="[leftColW, r.side === 'プレフィックス' ? 'text-[#e0846a]' : 'text-[#6aa8e8]']">{{ sideTier(r) }}</span>
-          <span class="min-w-0 flex-1 text-center">
+          <!-- modsOnly は文と札を横並びに (札だけが次の行へ落ちて箱が 1 行高くならない。10-26 夜オーナー「そこだけ小さく 2 行にするか」) -->
+          <span class="min-w-0 flex-1 text-center" :class="modsOnly ? 'flex items-center justify-center gap-0.5' : ''">
             <!-- 消える候補は文字をオレンジに (フラクチャーのくすんだ金色と被らない色。2026-10-07 オーナー「光るの文字にしようか、フラクチャーの色被らんようにオレンジで」) -->
             <!-- 未発現はゲームと同じく緑の崩れた文字 (中身は分からない。ホバーで「未発現の冒涜 MOD (側)」。2026-10-17 オーナー「アイテムについた冒涜未発現はこの感じ、全体的に緑」) -->
             <span v-if="rowTags?.get(r.m.modId)?.replace" data-row-tag-name :class="ROW_TAG_TEXT[rowTags.get(r.m.modId)!.tone]" :title="rowTags.get(r.m.modId)!.title">{{ rowTags.get(r.m.modId)!.text }}</span>
             <span v-else-if="r.m.unrevealed" data-unrevealed class="font-sans tracking-wider text-[#a6e05c] [text-shadow:0_0_6px_rgba(140,220,80,0.75)]" :title="r.text">{{ UNREVEALED_GLYPHS }}</span>
             <span v-else-if="r.shown" :class="isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : ''" :title="tr('素の値 (上乗せを抜いた値)。小さい数字は品質・効果・聖別で盛った値', 'Base value (without boosts). The small number is the boosted value')">{{ r.text }}<span data-boosted-value class="ml-1 text-[10px] tabular-nums text-[#7ee8ff]">({{ r.shown }})</span></span>
             <span v-else :class="[isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : r.boosted ? 'text-[#7ee8ff]' : '']" :title="r.boosted ? tr(`品質で伸びた数値 (素は ${modText(r.m)})`, `Boosted by quality (base: ${modText(r.m)})`) : undefined">{{ r.text }}</span>
-            <span v-if="look(r.m).tag" class="ml-1.5 whitespace-nowrap align-middle text-[10px] opacity-80">{{ look(r.m).tag }}</span>
+            <span v-if="look(r.m).tag" class="opacity-80" :class="modsOnly ? 'w-[3em] shrink-0 break-all text-left text-[9px] leading-[1.1]' : 'ml-1.5 whitespace-nowrap align-middle text-[10px]'">{{ look(r.m).tag }}</span>
             <span v-for="t in r.tags" :key="t" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[t]!.cls">{{ tagLabel(t) }}</span>
             <span v-if="rowTags?.get(r.m.modId) && !rowTags.get(r.m.modId)!.replace" data-row-tag class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] font-sans not-italic" :class="ROW_TAG_TONE[rowTags.get(r.m.modId)!.tone]" :title="rowTags.get(r.m.modId)!.title">{{ rowTags.get(r.m.modId)!.text }}</span>
           </span>
@@ -343,6 +346,7 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
             <span v-if="chanceOf(r.m) != null" data-rec-part="odds" class="w-11 text-right text-[11px] tabular-nums" :class="isRareChance(chanceOf(r.m)!) ? 'font-bold text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'" :title="tr('付いた瞬間に、この段が付く確率 (その段の重み ÷ この手で付きうる全部の重み)', 'Chance this tier rolled when it was added (tier weight ÷ total weight of everything that step could add)')">{{ fmtChance(chanceOf(r.m)!) }}</span>
             <button v-if="removable && !r.m.unrevealed" type="button" class="rounded px-1 text-[12px] leading-none text-rose-300/70 hover:bg-rose-500/20 hover:text-rose-200 max-md:px-2 max-md:py-1 max-md:text-[16px]" :title="tr('この MOD を外す (費用 0、1 手戻すで戻る)', 'Remove this mod (free, Undo brings it back)')" @click.stop="emit('remove', r.m.modId)">×</button>
           </span>
+          <span v-else class="shrink-0" :class="leftColW" />
           <!-- rowRemove の × は右端に重ねる (列の幅・真ん中の文字の位置を変えない) -->
           <button v-if="rowX(r.m)" type="button" data-row-remove class="absolute right-1 top-1/2 -translate-y-1/2 bg-[#050506]/80 group-hover/row:opacity-100" :class="ROW_X" :title="tr('この MOD を外す', 'Remove this mod')" @click.stop="emit('remove', r.m.modId)">×</button>
         </p>
