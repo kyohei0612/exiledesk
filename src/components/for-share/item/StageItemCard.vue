@@ -367,7 +367,7 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
     </div>
     <!-- 今できることの帯 (カードのすぐ下、場所は固定)。持っている時・MOD / ルーンに乗せた時・何もしていない時で出し分ける
          (2026-10-10 オーナー「持った時右クリで解除とか出してくれてるのめっちゃ親切、できること全部その欄に、MOD にカーソル合わしたら右クリックでフラクチャーとか」) -->
-    <p v-if="hint" data-rec-part="card-hint" class="absolute -bottom-6 left-0 right-0 truncate text-center text-[11px]" :class="holding ? 'text-amber-200/90' : 'text-white/45'">{{ hint }}</p>
+    <p v-if="hint" data-rec-part="card-hint" class="absolute -bottom-6 left-0 right-0 truncate text-center text-[11px] max-md:static max-md:mt-1 max-md:overflow-visible max-md:whitespace-normal" :class="holding ? 'text-amber-200/90' : 'text-white/45'">{{ hint }}</p>
   </div>
 </template>
 

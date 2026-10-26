@@ -184,11 +184,14 @@ const otherSecs = computed(() => {
     { label: tr("アイドル", "Idols"), keys: of(["idol"]), kind: "idol" },
   ].filter((x) => x.keys.length);
 });
-/** 開いている畳んだ節 */
-const foldOpen = ref(new Set<string>());
+/** スマホは畳んだ節も開いた状態から (押すと畳める。2026-10-26 オーナー「基本スマホは省略したらダメ」)。PC は今どおり閉じた状態から。「今のアイテムには使えない物」は両方とも畳んだまま */
+const FOLD_PHONE = typeof window !== "undefined" && window.innerWidth < 768;
+/** 押して開け閉めした節 (PC = 開いた物、スマホ = 畳んだ物) */
+const foldFlip = ref(new Set<string>());
+const foldOpen = (kind: string): boolean => foldFlip.value.has(kind) !== FOLD_PHONE;
 /** その他のルーン (外側) を開いているか */
-const otherOpen = ref(false);
-const toggleFold = (kind: string): void => { const n = new Set(foldOpen.value); if (n.has(kind)) n.delete(kind); else n.add(kind); foldOpen.value = n; };
+const otherOpen = ref(FOLD_PHONE);
+const toggleFold = (kind: string): void => { const n = new Set(foldFlip.value); if (n.has(kind)) n.delete(kind); else n.add(kind); foldFlip.value = n; };
 /** ルーンの段をまとめる: 英語名から Lesser / Greater / Perfect を外した物が同じなら同じ種類 */
 const RUNE_TIER = /^(Lesser|Greater|Perfect) /;
 const runeFam = (k: string): string => `rf:${k.slice("rune:".length).replace(RUNE_TIER, "")}`;
@@ -273,10 +276,10 @@ const TABS = computed(() => (!props.full ? [] : [
       <div v-for="sec in usableAll.filter((x) => !x.fold)" :key="sec.kind ?? sec.label">
         <p class="mb-0.5 flex items-center gap-2 text-[10px]">
           <span class="opacity-60">{{ sec.label }} ({{ secItems(sec).length }})</span>
-          <Disclosure v-if="sec.fold" :open="foldOpen.has(sec.kind ?? '')" class="text-[10px]" @update:open="toggleFold(sec.kind ?? '')" />
+          <Disclosure v-if="sec.fold" :open="foldOpen(sec.kind ?? '')" class="text-[10px]" @update:open="toggleFold(sec.kind ?? '')" />
         </p>
         <!-- PC は升目で横幅いっぱいに均等に (右に空きを残さない。2026-10-11 オーナー「間空くぐらいなら調整して」) -->
-        <div v-if="!sec.fold || foldOpen.has(sec.kind ?? '')" class="flex flex-wrap gap-1.5 max-md:gap-x-1.5 md:grid md:grid-cols-[repeat(auto-fill,minmax(84px,1fr))] md:justify-items-center">
+        <div v-if="!sec.fold || foldOpen(sec.kind ?? '')" class="flex flex-wrap gap-1.5 max-md:gap-x-1.5 md:grid md:grid-cols-[repeat(auto-fill,minmax(84px,1fr))] md:justify-items-center">
           <template v-if="isGroup(sec)">
             <template v-for="id in secItems(sec)" :key="id">
               <span v-if="groupKeys(id).length > 1" :data-ess-keys="groupKeys(id).join(' ')" @click.capture.stop="openEss(id, $event)">
@@ -300,9 +303,9 @@ const TABS = computed(() => (!props.full ? [] : [
           <div v-for="sec in usableAll.filter((x) => x.fold)" :key="sec.kind ?? sec.label">
             <p class="mb-0.5 flex items-center gap-2 text-[10px]">
               <span class="opacity-60">{{ sec.label }} ({{ secItems(sec).length }})</span>
-              <Disclosure :open="foldOpen.has(sec.kind ?? '')" class="text-[10px]" @update:open="toggleFold(sec.kind ?? '')" />
+              <Disclosure :open="foldOpen(sec.kind ?? '')" class="text-[10px]" @update:open="toggleFold(sec.kind ?? '')" />
             </p>
-            <div v-if="foldOpen.has(sec.kind ?? '')" class="flex flex-wrap gap-1.5 max-md:gap-x-1.5 md:grid md:grid-cols-[repeat(auto-fill,minmax(84px,1fr))] md:justify-items-center">
+            <div v-if="foldOpen(sec.kind ?? '')" class="flex flex-wrap gap-1.5 max-md:gap-x-1.5 md:grid md:grid-cols-[repeat(auto-fill,minmax(84px,1fr))] md:justify-items-center">
               <template v-if="isGroup(sec)">
                 <template v-for="id in secItems(sec)" :key="id">
                   <span v-if="groupKeys(id).length > 1" :data-ess-keys="groupKeys(id).join(' ')" @click.capture.stop="openEss(id, $event)">

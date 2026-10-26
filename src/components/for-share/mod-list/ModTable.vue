@@ -118,18 +118,18 @@ const sectionEls = new Map<string, HTMLElement>();
 const active = ref<string>("normal");
 function jump(g: string): void {
   active.value = g;
-  if (phone && !secOpen.value.has(g)) toggleSec(g);
+  if (phone && secClosed.value.has(g)) toggleSec(g);
   void nextTick(() => scrollToTop(sectionEls.get(g)));
 }
-/** スマホ: 種類の節は見出しを押して開く。普通だけ開いた状態が既定、検索中は全部開く (2026-10-08 オーナー) */
+/** スマホ: 種類の節は見出しを押して畳める。全部開いた状態が既定 (2026-10-26 オーナー「基本スマホは省略したらダメ」。前は普通だけ開いていた)、検索中は全部開く */
 const phone = typeof window !== "undefined" && window.innerWidth < 768;
-const secOpen = ref(new Set<string>(["normal"]));
+const secClosed = ref(new Set<string>());
 function toggleSec(sid: string): void {
-  const n = new Set(secOpen.value);
+  const n = new Set(secClosed.value);
   if (n.has(sid)) n.delete(sid); else n.add(sid);
-  secOpen.value = n;
+  secClosed.value = n;
 }
-const secShown = (sid: string): boolean => !phone || !!query.value.trim() || secOpen.value.has(sid);
+const secShown = (sid: string): boolean => !phone || !!query.value.trim() || !secClosed.value.has(sid);
 let io: IntersectionObserver | null = null;
 function observe(): void {
   io?.disconnect();
@@ -167,7 +167,7 @@ function jumpTo(modId: string, rank: string | null): boolean {
   const hit = sections.value.flatMap((sec) => sec.columns.flatMap((c) => c.items.map((r) => ({ sec, r })))).find(({ r }) => r.id === modId || r.tiers.some((t) => (t.modId ?? r.id) === modId));
   if (!hit) return false;
   const key = `${hit.sec.sid}:${hit.r.id}`;
-  if (phone && !secOpen.value.has(hit.sec.sid)) toggleSec(hit.sec.sid);
+  if (phone && secClosed.value.has(hit.sec.sid)) toggleSec(hit.sec.sid);
   active.value = hit.sec.sid;
   expanded.value = key;
   jumped.value = { key, modId, rank };
@@ -261,7 +261,7 @@ defineExpose({ jumpTo, counts, sections });
                     <td v-if="ESS_TIER && t.essence" class="py-0.5 pl-2 whitespace-nowrap opacity-70 max-md:hidden" data-ess-tier>{{ tr(t.essence.ja, t.essence.en) }}</td>
                     <td v-else-if="r.group === 'essence' || r.group === 'perfect_essence'" class="py-0.5 pl-2 opacity-60 max-md:hidden">{{ tierName(r, t.name) }}</td>
                     <td class="w-14 py-0.5 text-right tabular-nums opacity-70 max-md:shrink-0">Lv {{ t.ilvl }}</td>
-                    <td data-tier-end class="w-16 py-0.5 text-right tabular-nums opacity-70 max-md:hidden" :class="props.tone === 'sky' ? 'text-sky-200' : ''" :title="t.weight ? tr(`重み ${t.weight}`, `Weight ${t.weight}`) : undefined">{{ tierShareText(r, t) }}</td>
+                    <td data-tier-end class="w-16 py-0.5 text-right tabular-nums opacity-70 max-md:shrink-0" :class="props.tone === 'sky' ? 'text-sky-200' : ''" :title="t.weight ? tr(`重み ${t.weight}`, `Weight ${t.weight}`) : undefined">{{ tierShareText(r, t) }}</td>
                     <!-- スマホは行を折り返し、tier-actions の td (data-tier-end より後ろ) は 2 段目いっぱいに (MOD の文が 1〜3 文字ずつ縦に折れた、シミュ部長 29 10-25) -->
                     <slot name="tier-actions" :row="r" :tier="t" />
                   </tr>

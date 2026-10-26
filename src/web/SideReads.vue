@@ -31,8 +31,8 @@ const latest = computed(() => posts.value.slice(0, 3));
           <a :href="p.href" class="flex gap-2 rounded-lg p-1 hover:bg-black/40" :title="p.title">
             <img v-if="p.image" :src="p.image" alt="" loading="lazy" class="aspect-[1200/630] w-[88px] shrink-0 self-start rounded object-cover" />
             <span class="min-w-0">
-              <span class="line-clamp-2 font-bold leading-snug text-[var(--exile-color-text-primary)]">{{ p.title }}</span>
-              <span v-if="p.description" class="mt-0.5 line-clamp-2 leading-snug opacity-60">{{ p.description }}</span>
+              <span class="line-clamp-2 max-md:line-clamp-none font-bold leading-snug text-[var(--exile-color-text-primary)]">{{ p.title }}</span>
+              <span v-if="p.description" class="mt-0.5 line-clamp-2 max-md:line-clamp-none leading-snug opacity-60">{{ p.description }}</span>
               <span class="text-[10px] opacity-40">{{ p.date }}<template v-if="p.draft"> · {{ tr("下書き", "Draft") }}</template></span>
             </span>
           </a>

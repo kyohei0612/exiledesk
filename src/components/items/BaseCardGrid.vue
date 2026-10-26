@@ -51,13 +51,15 @@ onBeforeUnmount(leave);
  */
 const grid = ref<HTMLElement | null>(null);
 const cols = ref(4);
-const more = ref(false);
+/** スマホは全部出した状態から (2026-10-26 オーナー「基本スマホは省略したらダメ」、PC は 2 行まで) */
+const FOLD_PHONE = typeof window !== "undefined" && window.innerWidth < 768;
+const more = ref(FOLD_PHONE);
 let ro: ResizeObserver | null = null;
 const measure = (): void => { const w = grid.value?.clientWidth ?? 0; if (w) cols.value = window.innerWidth < 768 ? 2 : Math.max(1, Math.floor((w + 8) / (260 + 8))); };
 onMounted(() => { measure(); if (grid.value) { ro = new ResizeObserver(measure); ro.observe(grid.value); } });
 onBeforeUnmount(() => ro?.disconnect());
 // 種類が変わったら畳む。今のベースが 3 行目より下なら開いておく (選んだ物が見えないと困る)
-watch(() => props.list, () => { more.value = props.list.findIndex((b) => b.en === props.selected) >= cols.value * 2; }, { immediate: true });
+watch(() => props.list, () => { more.value = FOLD_PHONE || props.list.findIndex((b) => b.en === props.selected) >= cols.value * 2; }, { immediate: true });
 const limit = computed(() => (props.fold && !more.value ? cols.value * 2 : Infinity));
 const shown = computed(() => props.list.slice(0, limit.value));
 const rest = computed(() => Math.max(0, props.list.length - shown.value.length));
@@ -80,17 +82,17 @@ const rest = computed(() => Math.max(0, props.list.length - shown.value.length))
       <img v-if="artOf(b.en)" :src="artOf(b.en)!" alt="" loading="lazy" class="h-12 w-12 shrink-0 object-contain md:h-16 md:w-16" draggable="false" />
       <span v-else class="h-12 w-12 shrink-0 md:h-16 md:w-16" />
       <span class="min-w-0 flex-1 max-md:w-full">
-        <!-- 名前は 1 行 (入らなければ … で切り、全部は title)。狭い窓で「アミュレ / ット」と折れて下が切れていた (2026-10-23 モンキー 15) -->
+        <!-- 名前・能力値・暗黙・注は PC は 1 行 (入らなければ … で切り、全部は title)、スマホは折り返して全文 (2026-10-26 オーナー)。狭い窓で「アミュレ / ット」と折れて下が切れていた (2026-10-23 モンキー 15) -->
         <span class="flex items-baseline gap-2 max-md:flex-col max-md:items-center max-md:gap-0" :class="ONE_LINE ? 'min-w-0' : ''">
-          <b class="text-[13px] md:text-[15px]" :class="[b.en === selected ? 'text-amber-100' : '', ONE_LINE ? 'min-w-0 truncate max-md:max-w-full' : '']" :title="ONE_LINE ? nameOf(b) : undefined">{{ nameOf(b) }}</b>
+          <b class="text-[13px] md:text-[15px]" :class="[b.en === selected ? 'text-amber-100' : '', ONE_LINE ? 'min-w-0 truncate max-md:max-w-full max-md:overflow-visible max-md:whitespace-normal' : '']" :title="ONE_LINE ? nameOf(b) : undefined">{{ nameOf(b) }}</b>
           <span v-if="hot?.has(b.en)" class="shrink-0 rounded bg-amber-500/25 px-1 text-[9.5px] font-bold leading-[14px] text-amber-200 md:text-[10.5px]">{{ tr("人気", "Popular") }}</span>
           <!-- ジュエルはレベルを出さない (付く物がアイテムレベルで変わらない。2026-10-12 オーナー「ジュエルはベースからも」) -->
           <span v-if="b.lvl && !inGroup(b.cls, 'jewel')" class="ml-auto shrink-0 text-[10px] opacity-50 max-md:ml-0 md:text-[12px]">Lv {{ b.lvl }}</span>
         </span>
         <span v-if="showCls" class="block text-[10px] opacity-50">{{ classLabel(b.cls) }}</span>
-        <span v-if="b.stats" class="block truncate text-[11px] text-rarity-magic md:text-[13px]">{{ b.stats }}</span>
-        <span v-if="b.implicit" class="block truncate text-[11px] text-rarity-magic md:text-[13px]">{{ b.implicit }}</span>
-        <span v-if="note?.(b.en)" class="block truncate text-[10.5px] text-sky-300">{{ note(b.en) }}</span>
+        <span v-if="b.stats" class="block truncate max-md:overflow-visible max-md:whitespace-normal text-[11px] text-rarity-magic md:text-[13px]">{{ b.stats }}</span>
+        <span v-if="b.implicit" class="block truncate max-md:overflow-visible max-md:whitespace-normal text-[11px] text-rarity-magic md:text-[13px]">{{ b.implicit }}</span>
+        <span v-if="note?.(b.en)" class="block truncate max-md:overflow-visible max-md:whitespace-normal text-[10.5px] text-sky-300">{{ note(b.en) }}</span>
       </span>
     </button>
     <p v-if="!list.length" class="col-span-full py-4 text-center opacity-50">{{ tr("見つかりません", "No matches") }}</p>
