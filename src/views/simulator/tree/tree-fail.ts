@@ -17,6 +17,17 @@ export function stepOf(doc: TreeDoc, id: string): number {
 }
 /** 「n 段目へ戻る」(英語は GLOSSARY に無いので案 Back to step n、notes/2026-10-26-failure-behavior.md) */
 export const stepBackText = (doc: TreeDoc, to: string): string => { const n = stepOf(doc, to); return tr(`${n} 段目へ戻る`, `Back to step ${n}`); };
+/** 再度挑戦 = 戻り先の箱の手が、この箱を出した手と同じ (同じ手をもう一度打ちに戻る。外れのカオスを打ち直す・狙いが残った消去など。10-26 オーナー「狙い残った時とかの日本語は、再度挑戦にしたら分かりやすいかな」) */
+export function isRetry(doc: TreeDoc, id: string): boolean {
+  const b = doc.boxes[id], p = b?.parent ? doc.boxes[b.parent] : undefined;
+  const to = b?.back ? doc.boxes[b.back] : undefined;
+  return !!p?.hand && !!to?.hand && to.hand.currency === p.hand.currency;
+}
+/** 戻りの札の文: 「n 段目へ戻る」、再度挑戦なら「再度挑戦 · n 段目へ戻る」(英語の案は Retry · Back to step n、notes/2026-10-26-failure-behavior.md) */
+export function backText(doc: TreeDoc, id: string, to: string): string {
+  const step = stepBackText(doc, to);
+  return isRetry(doc, id) ? tr(`再度挑戦 · ${step}`, `Retry · ${step}`) : step;
+}
 /** 戻りの種類 (戻り方 5 つのうち戻る 3 つと、自動・形の合う箱。次の手・完成は戻りでない) */
 export type RouteKind = "retry" | "start" | "auto" | "other" | "match" | "restart" | "none";
 export function routeKind(doc: TreeDoc, id: string): RouteKind {
@@ -42,7 +53,8 @@ export function routeText(doc: TreeDoc, id: string, name?: (id: string) => strin
   // 戻り方の文は全部「n 段目へ戻る」(同じ手をもう一度・始め・自動・選んだ箱も。どの箱かは矢印で分かる)。スマホは矢印が無いので行き先の名前を添える
   const steps = [...new Set(to.map((x) => stepOf(doc, x)))].sort((a, b) => a - b);
   const names = name ? `: ${to.map(name).join(tr("・", ", "))}` : "";
-  return tr(`↩ ${steps.join("・")} 段目へ戻る${names}`, `↩ Back to step ${steps.join(", ")}${names}`);
+  const head = isRetry(doc, id) ? tr("再度挑戦 · ", "Retry · ") : "";
+  return tr(`↩ ${head}${steps.join("・")} 段目へ戻る${names}`, `↩ ${head}Back to step ${steps.join(", ")}${names}`);
 }
 
 /**

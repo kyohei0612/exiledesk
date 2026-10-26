@@ -57,8 +57,6 @@ const neon = computed(() => {
 });
 const doneText = computed(() => (props.box.done ? tr("完成", "Done") : tr("完成にする", "Mark done")));
 /** 下の＋を出す (完成の箱からも伸ばせる。手を付けると完成の印は外れ、同じ形の完成の箱もそこへ戻る、tree-merge の joinSameShape) */
-/** 戻り先 = 狙いの MOD が同じ箱 (自動でつないだ矢印。行き先はいつも箱、狙い以外の MOD は違ってよい。10-25 オーナー「なら箱にしようか基本的に戻るとかの挙動」) */
-const sameAim = computed(() => !!props.box.autoBack && props.box.back !== "start");
 // 戻りのある箱からも伸ばせる (手を付けると戻りは外れる = setHand。前は × で戻りを外さないと＋が出なかった、10-26 失敗時の挙動の洗い出しの 2)
 const free = computed(() => !props.box.hand && !props.box.split);
 /** 失敗の箱の行き先の文 (tree-fail) と、何が起きたかの文 */
@@ -174,7 +172,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <button v-if="!quiet && ((box.anyOf?.length ?? 0) > 1 || (box.mergedOuts?.length ?? 0) > 0)" type="button" data-tree-split-any class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-300/40 px-1.5 text-amber-100 hover:border-amber-200" :title="tr('MOD ごとに当たりの箱を分ける (先頭の MOD はこの箱のまま、続きの手もそのまま。1 つ戻すで戻せる)', 'Split into one hit box per mod (the first mod keeps this box and its next steps; Undo restores)')" @click.stop="t.edit((d) => (box.anyOf?.length ? splitAny(d, box.id) : splitOuts(d, box.id)))"><Icon v-if="k > 1" name="layers" class="size-3.5" /><template v-else>{{ tr("分ける", "Split") }}</template></button>
       <template v-if="box.back">
         <!-- 戻り先の札: 乗せると戻りの線が出て戻り先が光る、押すとそこへ寄る (線は既定で引かない、10-22) -->
-        <button type="button" data-tree-back-tag class="nodrag flex h-6 min-w-0 flex-1 items-center truncate rounded px-1 text-left text-cyan-200 hover:bg-cyan-400/15" :class="quiet ? '!pointer-events-none' : ''" :title="sameAim ? tr(`戻り先: ${backLabel} (狙いの MOD が同じ箱。狙い以外の MOD は違ってよい。押すとそこへ寄る)`, `Returns to: ${backLabel} (a box with the same target mods; other mods may differ. Click to go there)`) : tr(`戻り先: ${backLabel} (押すとそこへ寄る)`, `Returns to: ${backLabel} (click to go there)`)"
+        <button type="button" data-tree-back-tag class="nodrag flex h-6 min-w-0 flex-1 items-center truncate rounded px-1 text-left text-cyan-200 hover:bg-cyan-400/15" :class="quiet ? '!pointer-events-none' : ''" :title="tr(`${backLabel} (押すとそこへ寄る)`, `${backLabel} (click to go there)`)"
           @pointerenter="emit('backHover', true)" @pointerleave="emit('backHover', false)" @focus="emit('backHover', true)" @blur="emit('backHover', false)" @click.stop="!quiet && emit('backGo')"><span class="min-w-0 truncate">↩ {{ backLabel }}</span></button>
         <button v-if="!quiet" type="button" class="nodrag -mr-1 flex size-6 items-center justify-center rounded opacity-60 hover:bg-white/10 hover:opacity-100" :title="tr('戻りの矢印を外す', 'Remove the return arrow')" @click.stop="emit('clearBack')"><Icon name="x" class="size-3" /></button>
       </template>

@@ -26,7 +26,7 @@ export function useTreeLink(doc: Ref<TreeDoc>, from: Ref<string | null>) {
       if (b.out === "start") {
         if (!shapeFits(doc.value, id, b.id)) { out.set(b.id, tr("形が違う: 1 段目は狙いが付いていない形 (ここから来る人は狙いを持っている)", "Different shape: step 1 holds no targets (runs coming in hold some)")); continue; }
         const why = b.hand ? handProblem(d, item, b.hand) : null;
-        out.set(b.id, why ? tr(`このアイテムのまま始めに戻ると、始めの手が打てない: ${why}`, `Going back to the start with this item, the first craft can't be used: ${why}`) : null);
+        out.set(b.id, why ? tr(`1 段目へ戻ると、1 段目の手が打てない: ${why}`, `Back to step 1, its craft can't be used: ${why}`) : null);
         continue;
       }
       if (!b.hand) { out.set(b.id, tr("この箱にはまだ打つ手が無い", "This box has no craft yet")); continue; }
