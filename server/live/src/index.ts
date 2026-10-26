@@ -29,6 +29,7 @@ import { dayLogs, jstDay, saveLog, sendDayLogs } from "./logs";
 import { alert, dailyReport, lastPosted, reqLog, yesterdayJst } from "./monitor";
 import { treeShare } from "./tree-share";
 import { pullDiscord } from "./discord";
+import { flushAiReview } from "./ai-review";
 import { MARKET_KEY, refreshMarket } from "./market";
 import { compare, exportSessions } from "./sim";
 import type { ChannelDef, Env, Fetch, LiveState } from "./types";
@@ -148,6 +149,8 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
     const tree = await treeShare(req, env, url, json);
     if (tree) return tree;
   }
+  // AI の評価と見解の全文を #日報 へ (ai-review.ts)。D1 に置いた物を流すだけで中身は受け取らない
+  if (url.pathname === "/ai-review/flush" && req.method === "POST") return json(await flushAiReview(env));
   // 窓なしの Chrome (部長たちの確かめ) の分析の記録は置かない (10-24 オーナー「2 で」。記録に UA が無く後から見分けられないため、受ける時に外す)
   if ((url.pathname === "/log" || url.pathname === "/event") && req.method === "POST" && /HeadlessChrome/.test(req.headers.get("user-agent") ?? "")) return json({ ok: true, n: 0 });
   // 操作の印 (Web 版の track.ts が sendBeacon でまとめて送る)
@@ -376,6 +379,8 @@ export default {
       ctx.waitUntil(refreshMarket(env).catch((e) => alert(env, "相場の取得", `poe2scout から取れない: ${String(e).slice(0, 200)}`)));
       if (new Date(controller.scheduledTime).getUTCHours() % 8 === 0) ctx.waitUntil(refresh(env));
       ctx.waitUntil(updateVisitors(env, new Date(controller.scheduledTime)).catch((e) => console.warn("visitors:", String(e).slice(0, 160))));
+      // 流しそびれた AI の評価と見解があれば流す (台本の flush が落ちた時の拾い)
+      ctx.waitUntil(flushAiReview(env).then(() => undefined).catch((e) => console.warn("ai-review:", String(e).slice(0, 160))));
     }
   },
 
