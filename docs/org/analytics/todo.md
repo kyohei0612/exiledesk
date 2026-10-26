@@ -21,6 +21,7 @@
 ## 前の報告 (10-24 の手元の開発版・10-22 の要望と /craft-basics) は notes/2026-10-23-todo-archive.md に移した (10-25 ホワイト)
 
 ## やる事
+- デザイン 9 がシミュの記録を track.ts に足す (10-26 夜に OK を出した): screen の to に "tree"・"sim-base"・"sim-mods"、新しい kind "sim_act" {a: hand|save|copy, s}、1 訪問で a ごとに 1 回。出たら scripts/analyze-logs.py の数え方に足す (届いた hash はデザイン 9 から)。
 - 10-27 の朝: 上の「10-27 の朝に見る」の 4 つ。結果はブラックへ 1〜3 行。
 - (済み 10-26: web の Worker の数は 558 に下がった。10-26 の日報の回は 10-25 の回が残っていて始まらず、10-25 の分は手で作った)
 
