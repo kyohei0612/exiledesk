@@ -22,7 +22,7 @@ const { checking, progress } = check;
 const issues = computed(() => (check.issues.value ?? []).filter((x) => !(x.kind === "open" && !t.doc.value.boxes[x.boxId]?.split) && !(x.kind === "noDone" && x.boxId === "start" && q.questions.value.length > 0)));
 const MAP = flag("phoneMap");
 function open(id: string): void {
-  if (MAP) { sheet.value = { id }; return; }
+  if (MAP) { sheet.value = { id, issue: issues.value.filter((x) => x.boxId === id).map((x) => x.text).join(" / ") }; return; }
   const b = t.doc.value.boxes[id];
   q.focus.value = b?.hand ? { kind: "outs", id } : b?.parent ? { kind: "outs", id: b.parent } : { kind: "hand", id };
 }

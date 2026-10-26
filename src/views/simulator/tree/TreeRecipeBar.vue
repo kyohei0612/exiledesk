@@ -8,7 +8,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
 import { currentTreeRecipe, renameTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
 import { askLeave, openRecipesPage } from "../../../web/page";
-import { fmtDate, treeShareUrl, useRecipeUrl } from "../recipe-share";
+import { fmtDate, seedDevRecipes, treeShareUrl, useRecipeUrl } from "../recipe-share";
 import { useTree } from "./use-tree";
 import { autoName, quickSave, unsaved } from "./tree-save";
 import { usePhone } from "../../../utils/use-phone";
@@ -90,7 +90,7 @@ function onKey(e: KeyboardEvent): void {
   if (e.key === "Escape" && pop.value) { pop.value = false; e.stopImmediatePropagation(); return; }
   if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "s" && !bare.value && !phone.value && !t.goalInline.value && !t.goalPage.value) { e.preventDefault(); save(); }
 }
-onMounted(() => { window.addEventListener("pointerdown", onDown, true); window.addEventListener("keydown", onKey, true); });
+onMounted(() => { window.addEventListener("pointerdown", onDown, true); window.addEventListener("keydown", onKey, true); void seedDevRecipes(); });
 onBeforeUnmount(() => { window.removeEventListener("pointerdown", onDown, true); window.removeEventListener("keydown", onKey, true); clearTimeout(noteT); });
 </script>
 

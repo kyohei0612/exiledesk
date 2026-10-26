@@ -10,7 +10,9 @@ import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { logRecord } from "../../utils/log-record";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { migrateTreeDoc } from "../../services/simulator/tree/tree-migrate";
-import { addTreeRecipe, setCurrentTreeRecipe } from "../../state/simulator/tree-recipes";
+import { addTreeRecipe, setCurrentTreeRecipe, treeRecipes } from "../../state/simulator/tree-recipes";
+import { DEV_BUILD } from "../../web/release-flags";
+import { DEV_RECIPES } from "./dev-recipes";
 import { useTree } from "./tree/use-tree";
 import { openTreePage } from "../../web/page";
 import { tr } from "../../i18n/lang";
@@ -27,6 +29,19 @@ export async function treeShareUrl(r: { name: string; tree: TreeDoc }): Promise<
   return `${base}${RECIPE_SHARE_PREFIX}${code}`;
 }
 
+
+/** 開発版だけ: 見本のレシピを保存したレシピに足す (dev-recipes。同じ名前があれば足さない。10-26 モンキー 7 の 23) */
+export async function seedDevRecipes(): Promise<void> {
+  if (!DEV_BUILD || SIM_LOCKED) return;
+  for (const r of DEV_RECIPES) {
+    if (treeRecipes.value.some((x) => x.name === r.name)) continue;
+    try {
+      const p = (await unpackJson(r.code)) as Partial<PackedTree>;
+      const t = p?.v === 2 ? migrateTreeDoc(p.t)?.doc : null;
+      if (t) addTreeRecipe(r.name, t);
+    } catch { /* 読めない見本は足さない */ }
+  }
+}
 
 /** 今の URL の # にレシピがあれば、保存したレシピに足して (同じ中身があればそれを使う)、そのレシピでシミュレーターを始める */
 export async function openSharedRecipe(): Promise<void> {

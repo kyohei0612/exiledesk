@@ -403,6 +403,40 @@ export function addHit(d: TreeDoc, parentId: string, after?: string): string | n
   return b.id;
 }
 
+/**
+ * 「どれか」の当たりの箱を MOD ごとの箱に分ける (10-26 オーナー「デフォで一緒にして一応MOD分けるボタンもあった方が良いかもな」)。
+ * 先頭の MOD は今の箱のまま (続きの手・戻り・完成もそのまま)、残りは横に手の無い当たりの箱を作る。返すのは作った箱。1 つ戻すで戻せる
+ */
+export function splitAny(d: TreeDoc, id: string): string[] {
+  const b = d.boxes[id];
+  if (!b?.parent || b.out !== "hit" || !b.anyOf || b.anyOf.length < 2) return [];
+  const [first, ...rest] = b.anyOf;
+  b.aim = { ...first! };
+  delete b.anyOf;
+  const made: string[] = [];
+  let after = id;
+  for (const a of rest) { const n = addHit(d, b.parent, after); if (!n) continue; d.boxes[n]!.aim = { ...a }; made.push(n); after = n; }
+  return made;
+}
+/** 同じ側で手も戻りも完成も無い横の当たりの箱 (まとめられる相手)。groupOf = 狙いの側 */
+export function joinableOf(d: TreeDoc, id: string, groupOf: (a: Aim) => string): string[] {
+  const b = d.boxes[id], p = b?.parent ? d.boxes[b.parent] : undefined;
+  if (!b || !p || b.out !== "hit" || !b.aim) return [];
+  return p.outs.filter((o) => { const c = d.boxes[o]; return o !== id && !!c && c.out === "hit" && !!c.aim && !c.hand && !c.back && !c.split && !c.done && groupOf(c.aim) === groupOf(b.aim!); });
+}
+/** 分けた箱を「どれか」の 1 箱にまとめ直す (joinableOf の箱の狙いを足して、その箱は消す) */
+export function joinSide(d: TreeDoc, id: string, groupOf: (a: Aim) => string): void {
+  const b = d.boxes[id], ids = joinableOf(d, id, groupOf);
+  if (!b?.aim || !ids.length) return;
+  const all = [...boxAims(b)];
+  for (const o of ids) { for (const a of boxAims(d.boxes[o]!)) if (!all.some((x) => x.modId === a.modId)) all.push({ ...a }); drop(d, subtree(d, o)); }
+  const p = d.boxes[b.parent!]!;
+  p.outs = p.outs.filter((o) => !ids.includes(o));
+  const order = (a: Aim): number => { const i = (d.memoAims ?? []).findIndex((g) => g.modId === a.modId); return i < 0 ? 999 : i; };
+  all.sort((x, y) => order(x) - order(y));
+  b.aim = { ...all[0]! };
+  if (all.length > 1) b.anyOf = all; else delete b.anyOf;
+}
 /** 消せる箱 = 当たりの箱で、同じ矢印に当たりがほかにもある時だけ (外れ・消えたの箱は消せない) */
 export function canRemove(d: TreeDoc, id: string): boolean {
   const b = d.boxes[id];

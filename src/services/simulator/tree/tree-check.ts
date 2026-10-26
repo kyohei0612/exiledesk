@@ -161,7 +161,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
     const waste = new Map<string, { who: Set<number>; reason: string }>();
     const shapes = shapesOf(doc);
     const cantIssues = (): CheckIssue[] => [...cant].map(([id, c]) => ({ boxId: id, kind: "cantUse" as const, text: tr(`この箱に着いた状態では手が打てない (${PEOPLE} 人中 ${c.who.size} 人): ${c.reason}`, `The craft can't be used here (${c.who.size} of ${PEOPLE}): ${c.reason}`) }));
-    const oddIssues = (): CheckIssue[] => [...odd].map(([id, c]) => ({ boxId: id, kind: "unexpected" as const, text: tr(`結果の箱に無い結果も出る (${PEOPLE} 人中 ${c.who.size} 人): ${[...c.outs].join("・")}。回すと形の合う箱へ進み、無ければ止まる。直すには、その結果の箱を足すか、同じ形で手のある箱を作る`, `Results with no box can happen (${c.who.size} of ${PEOPLE}): ${[...c.outs].join(", ")}. Runs go to a box of the same shape, or stop. Fix: add a box for that result, or a box with a craft for that shape`) }));
+    const oddIssues = (): CheckIssue[] => [...odd].map(([id, c]) => ({ boxId: id, kind: "unexpected" as const, text: tr(`この手で「${[...c.outs].join("・")}」になる人がいるのに、行く箱が無い (${PEOPLE} 人中 ${c.who.size} 人、回すと同じ状態の箱があればそこへ、無ければ止まる)。直し方: この手を選び直して結果の箱に足す (PC は当たりの箱の横の ＋ でも足せる)`, `Some runs (${c.who.size} of ${PEOPLE}) end up as "${[...c.outs].join(", ")}" from this craft, but there is no box for it (runs go to a box in the same state, or stop). Fix: pick the craft again so that result gets a box (on PC, the + beside a hit box also adds one)`) }));
     for (let person = 1; person <= PEOPLE; person++) {
       const rng = mulberry32(7919 * person);
       const start = sampleOf(data, doc, "start", person).item;

@@ -25,7 +25,7 @@ const box = computed(() => t.doc.value.boxes[id.value]);
 const look = computed(() => OUT_LOOK[box.value?.out ?? "junk"]);
 const odds = useTreeOdds();
 const item = computed(() => (s.data.value && box.value ? sampleOf(s.data.value, t.doc.value, id.value, 1).item : null));
-const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.value, t.doc.value, box.value?.unwanted ?? [], item.value) : null));
+const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.value, t.doc.value, box.value?.unwanted ?? [], item.value, box.value) : null));
 const cardW = Math.min(340, (typeof window === "undefined" ? 375 : window.innerWidth) - 40);
 const name = (x: string): string => q.boxTitle(x);
 const route = computed(() => (box.value ? routeText(t.doc.value, id.value, name) : null));
@@ -61,6 +61,11 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
     <div class="flex max-h-[88vh] flex-col rounded-t-2xl border-t-2 border-[#b08a3c] bg-[#15110c] shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
       <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3 pt-2">
         <div class="mx-auto mb-2 h-1.5 w-11 rounded-full bg-white/25" />
+        <!-- 足りない所から開いた時: 何が足りないかと直しに行くボタン (10-26 モンキー 7 の 22「押した先で何も直せず行き止まり」) -->
+        <div v-if="sheet?.issue" data-phone-sheet-issue class="mb-2 rounded-lg border border-rose-400/50 bg-[#2a1416] px-2 py-1.5 text-[12px] text-rose-100">
+          <p class="break-words">{{ sheet.issue }}</p>
+          <button type="button" data-phone-sheet-fix class="g-btn-red mt-1.5 min-h-10 w-full text-[14px]" @click="ask">{{ tr("直しに行く (この箱の質問へ)", "Go fix it (this box's question)") }}</button>
+        </div>
         <p class="flex items-start gap-2 text-[15px] font-bold" :style="{ color: `rgb(${look.c})` }">
           <span class="min-w-0 flex-1 break-words">{{ q.boxTitle(id) }}</span>
           <span v-if="odds.get(id) != null" class="shrink-0 text-[12px] font-normal tabular-nums text-[#d8ccb4]">{{ pctText(odds.get(id)!) }}</span>

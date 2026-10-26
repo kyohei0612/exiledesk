@@ -12,6 +12,7 @@ import { backTargetsOf } from "../tree/tree-merge";
 import { OUT_LOOK } from "../tree/tree-names";
 import { mapPick, sheet, usePhoneQuiz } from "./use-phone-quiz";
 import { tr } from "../../../i18n/lang";
+import { iconOf } from "../../../state/craft-stage";
 
 const props = defineProps<{ /** 重ね窓の中の小さな図: その箱を光らせ、押せない */ mini?: string }>();
 const q = usePhoneQuiz();
@@ -60,6 +61,8 @@ function look(id: string): { fill: string; stroke: string; sw: number; op: numbe
 /** 箱の短い名前 (図が大きく箱が 28px 以上の時だけ箱の中に出す) */
 const SHORT: Record<string, [string, string]> = { start: ["始め", "Start"], hit: ["当たり", "Hit"], junk: ["外れ", "Miss"], junkGone: ["外れ消", "Gone"], lost: ["消えた", "Lost"], any: ["打後", "After"], pass: ["品質", "Qual"], branch: ["分岐", "Split"] };
 const shortOf = (id: string): string => { const s = SHORT[q.doc.value.boxes[id]?.out ?? ""]; return s ? tr(s[0], s[1]) : ""; };
+/** 手のある箱の次の手の絵 (カレンシーの絵が無ければ無し) */
+const handIcon = (id: string): string | null => { const h = q.doc.value.boxes[id]?.hand; return h ? iconOf(h.currency) || null : null; };
 /** 線 (親 → 結果の箱) */
 const lines = computed(() => {
   const v = view.value;
@@ -96,7 +99,9 @@ watch(() => q.doc.value, (d) => { const pk = mapPick.value; if (pk && !d.boxes[p
         <path v-for="x in backs" :key="`b-${x.from}`" :d="`M${view.at.get(x.from)!.x},${view.at.get(x.from)!.y} L${view.at.get(x.to)!.x},${view.at.get(x.to)!.y}`" fill="none" stroke="rgba(103,232,249,0.8)" stroke-width="2" />
         <rect v-for="b in view.boxes" :key="b.id" :data-map-box="b.id" :x="view.at.get(b.id)!.x - view.w / 2" :y="view.at.get(b.id)!.y - view.h / 2" :width="view.w" :height="view.h" rx="3" v-bind="{ fill: look(b.id).fill, stroke: look(b.id).stroke, 'stroke-width': look(b.id).sw, opacity: look(b.id).op }" :class="b.id === cur && (!mapPick || mini) ? 'phone-map-now' : ''" />
         <template v-if="view.w >= 28">
-          <text v-for="b in view.boxes" :key="`t-${b.id}`" :x="view.at.get(b.id)!.x" :y="view.at.get(b.id)!.y + 3.5" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.9)" :opacity="look(b.id).op">{{ shortOf(b.id) }}</text>
+          <text v-for="b in view.boxes" :key="`t-${b.id}`" :x="view.at.get(b.id)!.x - (handIcon(b.id) ? 8 : 0)" :y="view.at.get(b.id)!.y + 3.5" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.9)" :opacity="look(b.id).op">{{ shortOf(b.id) }}</text>
+          <!-- 手のある箱は次の手のカレンシーの絵 (「打後」が幾つも並んでも見分けられる、10-26 モンキー 7 の 26) -->
+          <template v-for="b in view.boxes" :key="`i-${b.id}`"><image v-if="handIcon(b.id)" :href="handIcon(b.id)!" :x="view.at.get(b.id)!.x + view.w / 2 - 17" :y="view.at.get(b.id)!.y - 8" width="16" height="16" :opacity="look(b.id).op" /></template>
         </template>
       </svg>
     </div>

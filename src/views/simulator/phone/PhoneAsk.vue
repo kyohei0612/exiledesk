@@ -23,7 +23,7 @@ const t = useTree();
 const quiz = usePhoneQuiz();
 const box = computed(() => t.doc.value.boxes[props.q.id]);
 const item = computed(() => (s.data.value && box.value ? sampleOf(s.data.value, t.doc.value, props.q.id, 1).item : null));
-const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.value, t.doc.value, box.value?.unwanted ?? [], item.value) : null));
+const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.value, t.doc.value, box.value?.unwanted ?? [], item.value, box.value) : null));
 /** 完成の狙いごとに、今のアイテムに付いているか (付け忘れ・残りが一目で分かるように。判定はエンジンの aimHeldOn) */
 const goalState = computed(() => {
   const d = s.data.value, it = item.value;

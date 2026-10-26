@@ -49,7 +49,8 @@ const maxW = computed(() => `${Math.round(props.room / props.inv)}px`);
     :class="off ? '!pointer-events-none' : ''" :style="{ left: `${x}px`, top: `${y}px`, scale: String(inv), maxWidth: maxW }" :title="handLabel(hand)" @click="$emit('open')">
     <span v-if="cat" data-tree-hand-catalyst class="flex min-w-0 shrink items-center gap-0.5 text-sky-200"><img v-if="iconOf(cat)" :src="iconOf(cat)" alt="" class="size-6 object-contain" />{{ handName(cat) }}<span aria-hidden="true" class="opacity-70">→</span></span>
     <span class="flex shrink-0 items-center -space-x-1"><img v-for="k in icons" :key="k" :src="iconOf(k)" alt="" class="size-6 object-contain" /></span>
-    <span class="min-w-0 truncate">{{ hand.repeat ? tr("カオススパムオーブ", "Chaos Spam Orb") : handName(hand.currency) }}</span>
+    <!-- お告げも文字で (10-26 モンキー 7 の 24: 絵だけでアビスの反響が読めなかった)。全文は乗せた時の title -->
+    <span class="min-w-0 truncate">{{ hand.repeat ? tr("カオススパムオーブ", "Chaos Spam Orb") : [hand.currency, ...hand.omens].map((k) => handName(k)).join(" + ") }}</span>
     <!-- カオススパムオーブ (当たるまで) は横にカオスの段の名前 -->
     <span v-if="hand.repeat" class="shrink-0 rounded-sm bg-rose-400/20 px-1 text-[10px]">{{ handName(hand.currency) }}</span>
     <!-- 狙い無しの手 (結果は「打った後」の箱 1 つ。札が高貴だけで狙い無しと分からなかった、10-22 白紙から組んだ試し) -->

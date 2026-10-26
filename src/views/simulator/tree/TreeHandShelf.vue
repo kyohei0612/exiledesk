@@ -35,7 +35,7 @@ const t = useTree();
 const sample = computed(() => (s.data.value ? sampleOf(s.data.value, t.doc.value, props.boxId, 1) : null));
 const item = computed(() => sample.value?.item ?? null);
 /** 狙いに当たらない MOD の行は「外れ MOD」(乗せた時のカードと同じ、10-25 オーナー「プラスで MOD 選んだ時ハズレ MOD の表示が溶けてる」) */
-const rowTags = (it: StageItem | null) => (s.data.value && it ? treeRowTags(s.data.value, t.doc.value, t.doc.value.boxes[props.boxId]?.unwanted ?? [], it) : null);
+const rowTags = (it: StageItem | null) => (s.data.value && it ? treeRowTags(s.data.value, t.doc.value, t.doc.value.boxes[props.boxId]?.unwanted ?? [], it, t.doc.value.boxes[props.boxId]) : null);
 /** 当たりの MOD が決まっていない当たりの箱 (棚は出さずに先に MOD を選ばせる、tree-hand-plan の needAimOf) */
 const needAim = computed(() => needAimOf(t.doc.value, props.boxId, sample.value?.note));
 const held = ref<string | null>(props.current?.currency ?? null);
@@ -101,6 +101,8 @@ function holdSpam(): void {
 /** 棚の札を持つ = 普通の手 (スパムを持っていたら外して持ち替える。同じカオスを押した時も普通のカオスへ) */
 function onShelfHold(k: string): void {
   if (spam.value) { spam.value = false; held.value = k; return; }
+  // スマホは持っている札をもう一度押しても手放さず、お告げの欄まで送る (10-26 モンキー 7 の 25: 今の手と同じ札を押すと手放され、お告げの欄が消えて窓が上へ飛んだ)
+  if (window.innerWidth < 768 && held.value === k) { void showOmens(); return; }
   onHold(k);
 }
 /** ツリーの棚は打てる札だけを出すので、印が無いせいで出ないフラクチャーは窓に理由を 1 行 (アイテムには打てる時だけ) */
@@ -125,11 +127,11 @@ watch(held, () => { touched = false; });
  * スマホ: 持った物のお告げの欄が出たら、欄の下まで自動で送る (10-26 オーナー「右側のお告げが出たのに画面外のまま」。
  * 欄は棚の途中の持った札の下に出て、下の「使う」の帯に隠れていた。帯の分は scroll-mb で空ける)
  */
-watch(held, async (k) => {
-  if (!k || window.innerWidth >= 768) return;
+async function showOmens(): Promise<void> {
   await nextTick();
   document.querySelector<HTMLElement>("[data-tree-hand-pick] [data-held-omens]")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-});
+}
+watch(held, (k) => { if (k && window.innerWidth < 768) void showOmens(); });
 watch(aimChoices, (l) => { if (!props.current && !touched) checked.value = l.map(aimKey); }, { immediate: true });
 /** チェックの一覧を出す (MOD が付く・入れ替わる手) */
 const showAims = canFree;
@@ -216,7 +218,7 @@ function ok(): void {
     <div v-if="held" class="flex flex-col gap-1.5 rounded-md bg-white/[0.04] p-2">
       <div class="flex min-w-0 items-center gap-1.5">
         <span class="flex shrink-0 items-center -space-x-1"><img v-for="ic in [held, ...used].filter((x) => !!iconOf(x))" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
-        <b class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="hand ? handLabel(hand) : ''">{{ spamOn ? `${tr("カオススパムオーブ", "Chaos Spam Orb")} (${[nameOf(held), ...used.map(nameOf)].join(" + ")})` : [nameOf(held), ...used.map(nameOf)].join(" + ") }}</b>
+        <b class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="hand ? handLabel(hand) : ''">{{ spamOn ? `${tr("カオススパムオーブ", "Chaos Spam Orb")} (${[nameOf(held), ...used.map(nameOf)].join(" + ")})` : [nameOf(held), ...used.map(nameOf), ...(echo && isBone(held) ? [nameOf(ECHO)] : [])].join(" + ") }}</b>
       </div>
       <!-- カオススパムオーブ: カオスの段を替える (カタリストの札と同じ形) と上限 -->
       <div v-if="spamOn" data-tree-hand-spam-tiers class="flex flex-wrap items-center gap-1">

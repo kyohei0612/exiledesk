@@ -16,7 +16,7 @@ const props = defineProps<{ boxId: string; rect: { left: number; top: number; ri
 const t = useTree();
 const CARD_W = 300, GAP = 12;
 const item = computed(() => (s.data.value ? sampleOf(s.data.value, t.doc.value, props.boxId, 1).item : null));
-const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.value, t.doc.value, t.doc.value.boxes[props.boxId]?.unwanted ?? [], item.value) : null));
+const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.value, t.doc.value, t.doc.value.boxes[props.boxId]?.unwanted ?? [], item.value, t.doc.value.boxes[props.boxId]) : null));
 const el = ref<HTMLElement | null>(null);
 const style = computed(() => {
   const r = props.rect, h = el.value?.offsetHeight ?? 260;

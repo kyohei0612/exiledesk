@@ -37,6 +37,8 @@ const handFor = ref<string | null>(null);
 const aimFor = ref<string | null>(null);
 /** 残りの道の一覧を出している */
 const routesOpen = ref(false);
+// 重ね窓の「この回の質問へ」・足りない所の「直しに行く」で質問を替えたら、全体を見るの一覧は閉じて質問を出す (開いたままで質問が見えなかった、10-26)
+watch(() => q.focus.value, () => { routesOpen.value = false; });
 /** 完成形のカードを開いている */
 const goalOpen = ref(false);
 /** 帯の小さなボタン (PC の 0 の枠 TreeGoalCard の札と同じ形、指で押せる高さ 32px) */
