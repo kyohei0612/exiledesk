@@ -138,12 +138,25 @@ const checkedAims = computed((): Aim[] => aimChoices.value.filter((a) => checked
 let touched = false;
 watch(held, () => { touched = false; });
 /**
- * スマホ: 持った物のお告げの欄が出たら、欄の下まで自動で送る (10-26 オーナー「右側のお告げが出たのに画面外のまま」。
- * 欄は棚の途中の持った札の下に出て、下の「使う」の帯に隠れていた。帯の分は scroll-mb で空ける)
+ * スマホ: 持ったら、お告げの欄 (無ければ持った札) の下の端が下の帯の上の端より 12px 上に来る所まで送る
+ * (10-26 オーナー「右側のお告げが出たのに画面外のまま」。10-27 オーナー「めっちゃ下までスクロールされてる、下の枠は下のバーの上の枠を下限として少し px を空けて」)。
+ * 持った札が窓の上へ隠れるほどは送らない (札とお告げの欄が両方見える位置)
  */
 async function showOmens(): Promise<void> {
   await nextTick();
-  document.querySelector<HTMLElement>("[data-tree-hand-pick] [data-held-omens]")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))); // 下の帯 (持った物の説明つき) の高さが決まってから
+  const root = document.querySelector<HTMLElement>("[data-tree-hand-pick]");
+  const card = held.value ? root?.querySelector<HTMLElement>(`[data-shelf][data-key="${held.value}"]`) : null;
+  const el = root?.querySelector<HTMLElement>("[data-held-omens]") ?? card;
+  const bar = root?.querySelector<HTMLElement>("[data-tree-hand-use-bar]");
+  if (!root || !el || !bar) return;
+  let sc: HTMLElement | null = root.parentElement;
+  while (sc && !(/(auto|scroll)/.test(getComputedStyle(sc).overflowY) && sc.scrollHeight > sc.clientHeight)) sc = sc.parentElement;
+  if (!sc) return;
+  const down = el.getBoundingClientRect().bottom - (bar.getBoundingClientRect().top - 12);
+  const room = card ? card.getBoundingClientRect().top - (sc.getBoundingClientRect().top + 8) : Infinity;
+  const dy = Math.min(Math.max(down, 0), room);
+  if (Math.abs(dy) > 1) sc.scrollBy({ top: dy, behavior: "smooth" });
 }
 watch(held, (k) => { if (k && window.innerWidth < 768) void showOmens(); });
 // 新しい手の既定 = 狙い無し (10-26 夜オーナー「デフォルトは狙い無しでチェック付けといてくれ」)。当たるまで繰り返す手は狙い無しが無いので候補に全部チェック
@@ -225,7 +238,7 @@ function ok(): void {
     <p>{{ tr("この当たりの箱は、まだ当たりの MOD が決まっていません。先に MOD を選ぶと、この箱のアイテムができて次の手を選べます", "This hit box has no target mod yet. Pick the mod first; then the item at this box exists and you can choose the next craft") }}</p>
     <button type="button" data-tree-hand-pick-aim class="g-btn-red min-h-10 px-4" @click="emit('aim')">{{ tr("当たりの MOD を選ぶ", "Pick the hit mod") }}</button>
   </div>
-  <div v-else data-tree-hand-pick class="grid min-h-0 items-start gap-4 text-[13px] md:grid-cols-[auto_minmax(0,1fr)]" @contextmenu="held && ($event.preventDefault(), release())">
+  <div v-else data-tree-hand-pick class="grid min-h-0 items-start gap-4 text-[13px] max-md:grid-cols-[minmax(0,1fr)] md:grid-cols-[auto_minmax(0,1fr)]" @contextmenu="held && ($event.preventDefault(), release())">
     <!-- この箱の時点のアイテム (見本)。持ってカードを押す = この手にする (エミュと同じ操作) -->
     <!-- カードの下はエミュと同じく空ける (持っている間はカードのすぐ下に「押すと使う · 右クリック / Esc で手放す」が重ねて出る) -->
     <div class="flex min-w-0 flex-col gap-8 md:w-[480px]">
@@ -292,12 +305,13 @@ function ok(): void {
       <CurrencyShelf @hold="onShelfHold">
         <!-- 持った物に掛けられるお告げ = クラフト台と同じ部品と置き場 (HeldOmens.vue を持ったアイコンのすぐ下に重ねる。inline-held だと棚の一番下で見切れた、10-21 本物のマウス)。
              足す手は同じ欄に「狙い無し」(適当打ち、オーナー 10-22「お告げの欄の中に適当打ちがまだ無い」) -->
-        <template v-if="omensAllowedFor(held).length || (!!held && isBone(held))" #held><HeldOmens class="max-md:scroll-mb-20"><!-- アビスの反響は並びのお告げの 1 つ (骨を持つと既定で掛かる)。前は並びとは別の大きな札「アビスの反響」を置いていた (10-26 夜オーナー「でかいアイコンもある」) -->
+        <template v-if="omensAllowedFor(held).length || (!!held && isBone(held))" #held><HeldOmens><!-- アビスの反響は並びのお告げの 1 つ (骨を持つと既定で掛かる)。前は並びとは別の大きな札「アビスの反響」を置いていた (10-26 夜オーナー「でかいアイコンもある」) -->
         </HeldOmens></template>
       </CurrencyShelf>
     </div>
     <!-- スマホだけ: 持っている間は下に「使う」の帯 (カードの「下の帯の『使う』でも」の帯。カードまで戻らず親指で決められる、10-25 シミュ 29 の点検) -->
-    <div v-if="held" data-tree-hand-use-bar class="sticky bottom-0 z-10 -mx-3 border-t border-white/10 bg-[#0c0a08]/95 px-3 py-2 md:hidden">
+    <!-- 320 で帯の右が切れた (棚の並びの最小の幅で枠ごと広がった) ので、スマホの並びの列は最小 0。帯は窓の下の余白 (12px) まで下げて、下に棚が覗かないように -->
+    <div v-if="held" data-tree-hand-use-bar class="sticky -bottom-3 z-10 -mx-3 -mb-3 border-t border-white/10 bg-[#0c0a08]/95 px-3 pb-5 pt-2 md:hidden">
       <p class="mb-1 break-words text-[12px] font-bold text-amber-100">{{ tr(`${nameOf(held)} を持っている`, `Holding ${nameOf(held)}`) }}</p>
       <p v-if="heldHelp.length" data-tree-hand-held-help class="mb-2 break-words text-[12px] leading-snug text-[#d8ccb4]">{{ heldHelp.join(" ") }}</p>
       <!-- 狙いを選べる手は 2 つ: 狙い無し (今のチェック) のまま決める / 2 段目で狙いを選ぶ。繰り返しの手は 2 段目だけ -->
