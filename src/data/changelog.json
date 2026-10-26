@@ -1,5 +1,54 @@
 [
  {
+  "v": "0.1.609",
+  "date": "2026-10-26",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター (スマホ): 画面の下にツリーの全体図 (今の箱が光る、線はつながりだけ)。全体図や一覧で箱を押すと、移らずに下から窓で箱の中身 (道・今のアイテム・行き先・回した結果) を出し、戻り先は窓の「ここへ戻す」で決められるように。結果のアイテムは最初から開いた形、お告げの欄が出たら自動でそこまで送ります",
+    "en": "Simulator (phone): A tree overview at the bottom (the current box glows; lines show connections only). Tapping a box on the overview or the list opens a sheet with its contents (route, current item, where runs go, run results) without leaving the question, and you can set a return target with \"Return here\". Result items start expanded, and the page scrolls to the omens when they appear"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 外れ・狙いが消えた などの箱に「どこへ戻るか」を文で出し、戻り先の選び方に「同じ手をもう一度」を足しました。100 人回して止まった人がいれば、理由を箱の上に出します",
+    "en": "Simulator: Miss and lost-target boxes now say where runs go next, and \"Same craft again\" was added to the return choices. When some of the 100 runs get stuck, the reason is shown on the box"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: どれが付いても後の作り方が同じ当たりや、着いた形が同じ結果 (外れと狙いが消えた など) を選んで 1 つの箱にまとめる「まとめる」を足しました (既定はまとめず、「分ける」で戻せます)",
+    "en": "Simulator: Added \"Merge\" to put hits that need the same next steps, or results that land in the same shape (such as a miss and a lost target), into one box (off by default; \"Split\" undoes it)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 打てない道 (始めに戻ると始めの手が打てない) を選べないようにし、完成の MOD から外した狙いの箱に印、選べない MOD の行を開くと理由を出すように。完成の MOD を見に行って戻った時は前の見え方のまま続けられます",
+    "en": "Simulator: Return choices that would make the first craft unusable are now blocked with the reason, boxes whose target was removed from the final mods are marked, and opening a mod you can't pick in the final-mod table shows why. Coming back from the final mods keeps your previous view"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 途中で完成の MOD を足した時は、前の手を選び直すと足りない当たりの箱だけ足すように (今の箱と先の手はそのまま)。× で外した戻りの矢印が勝手に付き直らないように",
+    "en": "Simulator: After adding a final mod midway, picking an earlier craft again adds only the missing hit boxes (existing boxes and later crafts stay). Return arrows removed with × no longer come back by themselves"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: テストランで「外れを持ったまま戻ると止まる」と出た時の直し方を、今の画面でできる手順に直しました",
+    "en": "Simulator: When the test run says a return carries misses and gets stuck, the suggested fix now uses steps you can actually do on the current screen"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "スマホ: 文を途中で切らずに全部出し (棚の名前・ベースの一覧・カードの一言など)、MOD の一覧やベースの一覧は最初から開いた形に。シミュレーターのツリーでは下の記事・チャンネルの欄を出さず、「上へ戻る」が下のボタンに重ならないように",
+    "en": "Phone: Text is no longer cut off (shelf names, base list, card notes and more), and the mod and base lists start fully expanded. The Simulator tree no longer shows the articles / channel section at the bottom, and the \"Back to top\" button no longer covers its bottom buttons"
+   }
+  ],
+  "pop": true
+ },
+ {
   "v": "0.1.608",
   "date": "2026-10-26",
   "items": [
@@ -804,18 +853,6 @@
     "area": "",
     "text": "使い方のページ (/guide) から「使い方・コツ」(チュートリアル) へ行けるように",
     "en": "The guide page (/guide) now links to “Guide & Tips” (tutorials)"
-   }
-  ]
- },
- {
-  "v": "0.1.569",
-  "date": "2026-10-18",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "チュートリアルを上の「使い方・コツ」にまとめました (使い方の動画とコースの一覧)。コースはページごとに URL が変わり、戻るボタンで前に戻れます",
-    "en": "Tutorials now live under “Guide & Tips” at the top (how-to video and course list). Each course has its own URL, and the back button works"
    }
   ]
  }

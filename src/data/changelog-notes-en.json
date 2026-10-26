@@ -1,4 +1,13 @@
 {
+  "0.1.609": [
+    "Simulator (phone): A tree overview at the bottom (the current box glows; lines show connections only). Tapping a box on the overview or the list opens a sheet with its contents (route, current item, where runs go, run results) without leaving the question, and you can set a return target with \"Return here\". Result items start expanded, and the page scrolls to the omens when they appear",
+    "Simulator: Miss and lost-target boxes now say where runs go next, and \"Same craft again\" was added to the return choices. When some of the 100 runs get stuck, the reason is shown on the box",
+    "Simulator: Added \"Merge\" to put hits that need the same next steps, or results that land in the same shape (such as a miss and a lost target), into one box (off by default; \"Split\" undoes it)",
+    "Simulator: Return choices that would make the first craft unusable are now blocked with the reason, boxes whose target was removed from the final mods are marked, and opening a mod you can't pick in the final-mod table shows why. Coming back from the final mods keeps your previous view",
+    "Simulator: After adding a final mod midway, picking an earlier craft again adds only the missing hit boxes (existing boxes and later crafts stay). Return arrows removed with × no longer come back by themselves",
+    "Simulator: When the test run says a return carries misses and gets stuck, the suggested fix now uses steps you can actually do on the current screen",
+    "Phone: Text is no longer cut off (shelf names, base list, card notes and more), and the mod and base lists start fully expanded. The Simulator tree no longer shows the articles / channel section at the bottom, and the \"Back to top\" button no longer covers its bottom buttons"
+  ],
   "0.1.608": [
     "Simulator: Fixed crafted mods (Essence / Alloy) not being read when pasting gloves, boots, helmets, body armours or shields"
   ],

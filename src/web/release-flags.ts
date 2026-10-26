@@ -61,6 +61,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "goalCard",
   // シミュのスマホ版 (質問で進める形。オーナー 10-25 夜「おけ、見た目OK 本番出して」)
   "simPhone",
+  // シミュのスマホの全体図と箱の重ね窓 (案 B、線はつながりだけ。オーナー 10-26「本番に出して」)
+  "phoneMap",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */
