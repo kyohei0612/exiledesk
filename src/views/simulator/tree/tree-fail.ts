@@ -4,11 +4,19 @@
  * 木の作りと回し方は変えない (文はどれも今の setBack・autoBack・settle・stuckWhy を読むだけ)。決めは notes/2026-10-26-failure-behavior.md
  */
 import { MATCH, RESTART } from "../../../services/simulator/tree/tree-shape";
-import { boxAims, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { boxAims, GAP_Y, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { backTargetsOf } from "./tree-merge";
 import { tr } from "../../../i18n/lang";
 
+/** 箱の段 (始まり = 1 段目、画面の段の並び。戻り方の文は全部「n 段目へ戻る」、10-26 オーナー「始めに戻るはなんかややこしい話だから普通にどこに戻るかいつも通り書く」「1段目へ戻るとかにするか？全て、矢印は違うから段が同じもどり方でも」) */
+export function stepOf(doc: TreeDoc, id: string): number {
+  // 画面の段 (箱の高さ ÷ 段の間)。親をたどる深さではない (整列は揃った狙いの数で段を分けるので、深さ 2 の箱が 3 段目に並ぶ)
+  const b = doc.boxes[id], s = doc.boxes.start;
+  return b && s ? Math.max(1, Math.round((b.y - s.y) / GAP_Y) + 1) : 1;
+}
+/** 「n 段目へ戻る」(英語は GLOSSARY に無いので案 Back to step n、notes/2026-10-26-failure-behavior.md) */
+export const stepBackText = (doc: TreeDoc, to: string): string => { const n = stepOf(doc, to); return tr(`${n} 段目へ戻る`, `Back to step ${n}`); };
 /** 戻りの種類 (戻り方 5 つのうち戻る 3 つと、自動・形の合う箱。次の手・完成は戻りでない) */
 export type RouteKind = "retry" | "start" | "auto" | "other" | "match" | "restart" | "none";
 export function routeKind(doc: TreeDoc, id: string): RouteKind {
@@ -23,20 +31,18 @@ export function routeKind(doc: TreeDoc, id: string): RouteKind {
 
 /**
  * 箱の行き先の文 (戻りがある箱だけ。無ければ null)。名前は渡した name で (PC は箱の札の名前、スマホは道の名前)。
- * name を渡さなければ行き先の名前を省く (PC の箱は下の札に名前がある)。例: 「↩ 同じ手をもう一度 (打つ前の箱へ)」「↩ 狙いが消えたので始めから」「↩ 同じ状態の箱へ自動: 当たり ライフ」
+ * name を渡さなければ行き先の名前を省く (PC の箱は下の札に名前がある)。例: 「↩ 3 段目へ戻る」(スマホは「↩ 3 段目へ戻る: 当たり ライフ」)
  */
 export function routeText(doc: TreeDoc, id: string, name?: (id: string) => string): string | null {
   const b = doc.boxes[id], k = routeKind(doc, id);
   if (!b || k === "none") return null;
   const to = backTargetsOf(doc, id);
   if (k === "restart") return tr("↩ ベースから作り直し", "↩ Start over from a new base");
-  // このアイテムのまま始めの箱へ戻る (新しいベースからではない。10-26 モンキー 7 の 1「新しい白のベースから打ち直すと読める」)
-  if (k === "start") return b.out === "lost" ? tr("↩ 狙いが消えたので、このアイテムのまま始めの箱へ戻る", "↩ A target was lost: back to the start box with this item") : tr("↩ このアイテムのまま始めの箱へ戻る", "↩ Back to the start box with this item");
-  if (k === "match") return to.length ? (name ? tr(`↩ 形の合う箱へ: ${to.map(name).join("・")}`, `↩ To the box of the same shape: ${to.map(name).join(", ")}`) : tr(`↩ 形の合う箱へ (${to.length} か所)`, `↩ To the box of the same shape (${to.length})`)) : tr("↩ 形の合う箱が無い (回すとここで止まる)", "↩ No box of the same shape (runs stop here)");
-  const n = name && to[0] ? name(to[0]) : "", ja = n ? `: ${n}` : "", en = n ? `: ${n}` : "";
-  if (k === "retry") return tr(`↩ 同じ手をもう一度 (打つ前の箱へ)${ja}`, `↩ Same craft again (back to the box before it)${en}`);
-  if (k === "auto") return tr(`↩ 同じ状態の箱へ自動 (狙いの MOD が同じ)${ja}`, `↩ Auto-linked to the same state (same target mods)${en}`);
-  return tr(`↩ 選んだ箱へ${ja}`, `↩ To the chosen box${en}`);
+  if (!to.length) return tr("↩ 形の合う箱が無い (回すとここで止まる)", "↩ No box of the same shape (runs stop here)");
+  // 戻り方の文は全部「n 段目へ戻る」(同じ手をもう一度・始め・自動・選んだ箱も。どの箱かは矢印で分かる)。スマホは矢印が無いので行き先の名前を添える
+  const steps = [...new Set(to.map((x) => stepOf(doc, x)))].sort((a, b) => a - b);
+  const names = name ? `: ${to.map(name).join(tr("・", ", "))}` : "";
+  return tr(`↩ ${steps.join("・")} 段目へ戻る${names}`, `↩ Back to step ${steps.join(", ")}${names}`);
 }
 
 /**

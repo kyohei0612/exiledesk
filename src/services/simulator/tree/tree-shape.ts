@@ -83,10 +83,10 @@ export function heldSets(doc: TreeDoc, id: string | null): string[][] {
 /**
  * 戻りの矢印の行き先の形が合うか: 戻る箱の狙いの組 (heldSets) が全部、行き先の箱の組にある (10-26 オーナー「その選択肢が出てくるのは前提狙いMODの状態でなんかする時やろ」。
  * 前は当たりの箱から外れの箱へも戻せて、狙い持ちが「狙い無し」の箱でカオスを打ち、結果に「狙いが消えた」が並んだ)。
- * 始め (狙いが消えた → 始めに戻る、10-22 オーナーの決め)・形の合う箱へ (MATCH)・分かれ目 (行で分かれる) は見ない
+ * 形の合う箱へ (MATCH)・分かれ目 (行で分かれる) は見ない。始めの箱もほかの箱と同じに見る (10-26 オーナー「始めに戻るはなんかややこしい話だから普通にどこに戻るかいつも通り書く」)
  */
 export function shapeFits(doc: TreeDoc, from: string, to: string): boolean {
-  if (to === "start" || to === MATCH || to === RESTART) return true;
+  if (to === MATCH || to === RESTART) return true;
   const t = doc.boxes[to];
   if (!t || t.split) return true;
   const key = (h: string[]): string => [...h].sort().join(",");

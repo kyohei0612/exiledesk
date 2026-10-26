@@ -24,6 +24,7 @@ export function useTreeLink(doc: Ref<TreeDoc>, from: Ref<string | null>) {
       // 始まりの箱は帯の「↩ 始めに戻る」と同じ (setBack の "start")。箱だけ手の打てる / 打てないで灰色にしていて、押しても黙って何も起きなかった (10-25 モンキー 4 本目)
       // 10-26 モンキー 7 の 1: 始めの手がこのアイテムに打てない (レアのまま錬金術の箱へ戻る等) なら理由付きでつなげない。「↩ 始めに戻る」も同じ理由で押せない形に (黙って何も起きない、は理由の文で避ける)
       if (b.out === "start") {
+        if (!shapeFits(doc.value, id, b.id)) { out.set(b.id, tr("形が違う: 1 段目は狙いが付いていない形 (ここから来る人は狙いを持っている)", "Different shape: step 1 holds no targets (runs coming in hold some)")); continue; }
         const why = b.hand ? handProblem(d, item, b.hand) : null;
         out.set(b.id, why ? tr(`このアイテムのまま始めに戻ると、始めの手が打てない: ${why}`, `Going back to the start with this item, the first craft can't be used: ${why}`) : null);
         continue;

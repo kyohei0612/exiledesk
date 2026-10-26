@@ -11,7 +11,7 @@ import { useTreeLink } from "../tree/use-tree-link";
 import { backTargetsOf } from "../tree/tree-merge";
 import { handLabel, OUT_LOOK } from "../tree/tree-names";
 import { mapPick, phoneRun, usePhoneQuiz } from "./use-phone-quiz";
-import { routeText, runText } from "../tree/tree-fail";
+import { routeText, runText, stepBackText } from "../tree/tree-fail";
 import { sideGroup } from "../tree/tree-hand-plan";
 import { absorbOuts, joinableOf, joinSide, splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
 import { joinableShapeOf } from "../../../services/simulator/tree/tree-shape";
@@ -105,8 +105,8 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
       </div>
       <div class="mt-2 flex flex-wrap gap-1.5">
         <button type="button" data-phone-ans="later" :class="chipClass(state === 'later')" @click="q.setLater(boxId)">{{ tr("次の手を決める", "Next craft") }}</button>
-        <button v-if="canRetry" type="button" data-phone-ans="retry" :class="chipClass(backKind === 'retry')" @click="q.setReturn(boxId, parent!)">{{ tr("同じ手をもう一度", "Same craft again") }}</button>
-        <button type="button" data-phone-ans="start" :class="[chipClass(backKind === 'start'), startNo ? 'opacity-40' : '']" :disabled="!!startNo" @click="q.setReturn(boxId, 'start')">{{ tr("↩ 始めに戻る", "↩ Back to start") }}</button>
+        <button v-if="canRetry" type="button" data-phone-ans="retry" :class="chipClass(backKind === 'retry')" @click="q.setReturn(boxId, parent!)">↩ {{ stepBackText(t.doc.value, parent!) }}</button>
+        <button type="button" data-phone-ans="start" :class="[chipClass(backKind === 'start'), startNo ? 'opacity-40' : '']" :disabled="!!startNo" @click="q.setReturn(boxId, 'start')">↩ {{ stepBackText(t.doc.value, "start") }}</button>
         <!-- 同じ側の「どれか」の当たりを MOD ごとに分ける / 分けた箱をまとめる (10-26 オーナー) -->
         <button v-if="(box.anyOf?.length ?? 0) > 1 || (box.mergedOuts?.length ?? 0) > 0" type="button" data-phone-split-any :class="chipClass(false)" @click="t.edit((d) => (box!.anyOf?.length ? splitAny(d, boxId) : splitOuts(d, boxId)))">{{ box.anyOf?.length ? tr("MOD ごとに分ける", "Split by mod") : tr("分ける", "Split") }}</button>
         <button v-else-if="joinable.length" type="button" data-phone-join-side :class="chipClass(joinOpen)" @click="openJoin">{{ tr("動きをまとめる", "Merge the path") }}</button>

@@ -364,8 +364,8 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   for (let x: string | null = id; x && !held; x = d.boxes[x]?.parent ?? null) held = d.boxes[x]?.out === "hit" && !!d.boxes[x]?.aim;
   for (const o of b.outs) {
     const c = d.boxes[o]!;
-    if (c.out === "lost") c.back = "start";
-    else if (c.out === "junkGone") c.back = before ?? (held ? MATCH_BACK : null);
+    // 狙いが消えたは戻り先を決めない (人が箱を選ぶ。10-26 オーナー「始めに戻るはなんかややこしい話だから普通にどこに戻るかいつも通り書く」。前は始めに戻る)
+    if (c.out === "junkGone") c.back = before ?? (held ? MATCH_BACK : null);
   }
   spread(d, id);
   makeRoom(d, id);
@@ -383,7 +383,7 @@ function addHits(d: TreeDoc, b: TreeBox, aims: readonly Aim[], order: (a: Aim) =
   makeRoom(d, b.id);
 }
 
-/** 「狙いが消えた」を作らなかった箱に、狙いを持って着く道ができたら足す (外れの箱の前・始めに戻る。足した箱が始めへ戻るので、増えなくなるまで) */
+/** 「狙いが消えた」を作らなかった箱に、狙いを持って着く道ができたら足す (外れの箱の前。戻り先は人が選ぶ、増えなくなるまで) */
 export function healLost(d: TreeDoc): void {
   for (let more = true, n = 0; more && n < 20; n++) {
     more = false;
@@ -391,7 +391,6 @@ export function healLost(d: TreeDoc): void {
       if (!b.noLost || !b.hand || !mayHoldAim(d, b.id)) continue;
       delete b.noLost;
       const c = mk(d, "lost", b.id);
-      c.back = "start";
       const j = b.outs.findIndex((o) => d.boxes[o]?.out === "junk");
       b.outs.splice(j < 0 ? b.outs.length : j, 0, c.id);
       spread(d, b.id);

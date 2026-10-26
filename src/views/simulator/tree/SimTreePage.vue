@@ -40,7 +40,7 @@ import { gesture } from "./use-gesture";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { ARMED_CLASS, useArmed } from "../../../utils/use-armed";
 import { useTreeLink } from "./use-tree-link";
-import { retryOf } from "./tree-fail";
+import { retryOf, stepBackText } from "./tree-fail";
 import { useTreePlus } from "./use-tree-plus";
 import { useTreeCheck } from "./use-tree-check";
 import TreeIssues from "./TreeIssues.vue";
@@ -136,19 +136,8 @@ function onClear(): void { const go = (): void => { t.reset(); setCurrentTreeRec
 /** 戻り先へ寄る (編集のポップアップの札を押した時) */
 function goBack(b: Box): void { const to = backTargetsOf(doc.value, b.id)[0]; if (to) void v.reveal(to, true); }
 
-/** 戻り先の箱の名前 (始めに戻る・当たりは付く MOD・ほかは結果の名前) */
-function boxLabel(id: string): string {
-  const to = doc.value.boxes[id];
-  if (!to) return "";
-  if (to.out === "start") return tr("始めに戻る", "Back to start");
-  // 分かれ目の箱へ戻る札は分かれ目の札と同じ ◇ を添える (当たりの箱の名前だけでは分かれ目と分からなかった、10-22 オーナー OK)
-  if (to.split) return `◇ ${to.out === "hit" && to.aim ? t.aimLabel(to.aim) : outName(to.out)}`;
-  if (to.out === "hit" && to.aim) return t.boxAimLabel(to);
-  // 外れ・消えたの箱は、道で付いている狙いの MOD を添える (「↩ 外れ」だけではどの外れか分からなかった、10-22 靴・手袋を白紙から組んで)
-  const held: string[] = [];
-  for (let x: Box | undefined = to; x; x = x.parent ? doc.value.boxes[x.parent] : undefined) if (x.out === "hit" && x.aim) held.unshift(t.aimShort(x.aim));
-  return held.length ? tr(`${outName(to.out)} (${[...new Set(held)].join("・")})`, `${outName(to.out)} (${[...new Set(held)].join(", ")})`) : tr(`${outName(to.out)} (狙い無し)`, `${outName(to.out)} (no target)`);
-}
+/** 戻り先の札の文 = 「n 段目へ戻る」(どの箱かは矢印で分かる。10-26 オーナー「1段目へ戻るとかにするか？全て、矢印は違うから段が同じもどり方でも」。前は戻り先の箱の名前) */
+const boxLabel = (id: string): string => (doc.value.boxes[id] ? stepBackText(doc.value, id) : "");
 /**
  * 戻りの箱の下の行 = いつも行き先の箱の名前 (10-22 オーナー「続きからって選択肢選べんでしょ、そもそも白紙の状態からこうなるはず」)。
  * 前の版の「形の合う箱へ」(MATCH) も行きうる箱の名前で出す (複数なら「○○ ほか n か所」)
@@ -475,8 +464,8 @@ const phone = usePhone(), simPhone = flag("simPhone");
           {{ picking && panel?.kind === "hand" && panel.id === picking ? tr("右の棚で次に打つ手を選ぶ / 箱を押すとそこへ戻る (Esc でやめる)", "Pick the next craft on the right, or click a box to return to it (Esc cancels)") : picking ? tr("戻り先の箱を押す (Esc でやめる)", "Click the box to return to (Esc cancels)") : hand ? tr("手: 見るだけ (選択に戻すと組める)", "Hand: view only (switch to Select to edit)") : tr("縮めて見ている間は箱を押すとその箱の編集が開く", "Zoomed out: click a box to edit it") }}
           <!-- 完成の箱からつなぐと完成の印は外れる (黙って外れていた、10-22 白紙から組んだ試し #19) -->
           <b v-if="picking && doc.boxes[picking]?.done" data-tree-pick-undone class="text-amber-200">{{ tr("(この箱の完成の印は外れる)", "(this box's done mark will be removed)") }}</b>
-          <button v-if="retryOf(doc, picking, link)" type="button" data-tree-pick-retry class="g-btn sm pointer-events-auto" :title="tr('打つ前の箱へ戻って、同じ手をもう一度打つ', 'Go back to the box before it and use the same craft again')" @click="pickBack(retryOf(doc, picking, link)!)">{{ tr("↩ 同じ手をもう一度", "↩ Same craft again") }}</button>
-          <button v-if="picking && picking !== 'start'" type="button" data-tree-pick-start class="g-btn sm pointer-events-auto" :disabled="!!link.get('start')" :title="link.get('start') ?? tr('このアイテムのまま始まりの箱へ戻り、始めの手から打ち直す', 'Go back to the start box with this item and craft again from the first craft')" @click="pickBack('start')">{{ link.get('start') ? tr("↩ 始めに戻る (始めの手が打てない)", "↩ Back to start (first craft can't be used)") : tr("↩ 始めに戻る", "↩ Back to start") }}</button>
+          <button v-if="retryOf(doc, picking, link)" type="button" data-tree-pick-retry class="g-btn sm pointer-events-auto" :title="tr('打つ前の箱へ戻って、同じ手をもう一度打つ', 'Go back to the box before it and use the same craft again')" @click="pickBack(retryOf(doc, picking, link)!)">↩ {{ stepBackText(doc, retryOf(doc, picking, link)!) }}</button>
+          <button v-if="picking && picking !== 'start'" type="button" data-tree-pick-start class="g-btn sm pointer-events-auto" :disabled="!!link.get('start')" :title="link.get('start') ?? tr('このアイテムのまま始まりの箱へ戻り、始めの手から打ち直す', 'Go back to the start box with this item and craft again from the first craft')" @click="pickBack('start')">↩ {{ stepBackText(doc, "start") }}</button>
         </p>
         <TreeIssues v-if="issues?.length && issuesShown && issuesOpen" v-model:fold="issuesFold" :issues="issues" :busy="checkBusy" :lower="!!(picking || hand || viewOnly)" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" />
         <!-- 縮めて見ている時の箱の編集 (等倍。枠の外・Esc で閉じる) -->

@@ -38,7 +38,6 @@ export function splitOuts(d: TreeDoc, id: string): string[] {
   let after = id;
   for (const k of b.mergedOuts) {
     const n = mk(d, k, p.id);
-    if (k === "lost") n.back = "start";
     p.outs.splice(p.outs.indexOf(after) + 1, 0, n.id);
     const left = d.boxes[after]!;
     n.x = left.x + BOX_W + ROOM + 4; n.y = left.y;
