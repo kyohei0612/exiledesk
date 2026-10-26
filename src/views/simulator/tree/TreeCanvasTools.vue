@@ -1,10 +1,10 @@
 <!--
   TreeCanvasTools.vue — ツリーの右下に浮かぶ道具 (2026-10-22 見た目の作り直し、research/notes/2026-10-22-tree-ui-references.md の 6・7・16):
   ミニマップ (箱は結果の色、今見ている所の枠。押す / 引っ張るとそこへ送る) と、ComfyUI の並びのツールバー
-  (選択 / 手 = 見るだけで画面を動かす・全体表示・− 倍率 ＋・ミニマップの切り替え)。ミニマップを出すかはこのブラウザに覚える
+  (選択 / 手 = 見るだけで画面を動かす・全体表示・− 倍率 ＋)。ミニマップは右の列の残りいっぱいに常に出す (10-26 夜)
 -->
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { BOX_H, BOX_W, type TreeBox } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { toCss } from "../../../utils/zoom";
@@ -15,21 +15,27 @@ const props = defineProps<{ boxes: TreeBox[]; view: { x: number; y: number; w: n
 const hand = defineModel<boolean>("hand", { default: false });
 const emit = defineEmits<{ fit: []; zoomIn: []; zoomOut: []; reset: []; center: [x: number, y: number] }>();
 
-const MAP_KEY = "exiledesk.tree.minimap";
-// 既定はスマホ (768px 未満) では閉じる (375 幅で枠の大半を覆った、10-22)。押して開けば覚える
-const showMap = ref((() => { try { const v = localStorage.getItem(MAP_KEY); return v ? v !== "0" : innerWidth >= 768; } catch { return innerWidth >= 768; } })());
-watch(showMap, (v) => { try { localStorage.setItem(MAP_KEY, v ? "1" : "0"); } catch { /* 覚えられなくても使える */ } });
-
 const view = computed(() => props.view);
 
-/** ミニマップの広さ (箱の並びと今見ている所の両方が入るように) */
-const MAP_W = 200, MAP_H = 128, MAP_PAD = 60;
+/**
+ * ミニマップの広さ = 右の列の残りいっぱい (10-26 夜オーナー「ここ使うなら」: 列の中に黒い空きを残さない)。
+ * 入れ物の大きさを測って合わせる (ページの zoom の前の CSS ピクセル)。出し入れのボタンは外した (列に常に出す)
+ */
+const mapBox = ref<HTMLElement | null>(null);
+const MAP_W = ref(200), MAP_H = ref(128);
+const MAP_PAD = 60;
+const ro = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => {
+  const el = mapBox.value;
+  if (el && el.clientWidth && el.clientHeight) { MAP_W.value = el.clientWidth; MAP_H.value = el.clientHeight; }
+});
+watch(mapBox, (el, old) => { if (old) ro?.unobserve(old); if (el) ro?.observe(el); }, { immediate: true });
+onBeforeUnmount(() => ro?.disconnect());
 const box = computed(() => {
-  const bs = props.boxes, v = view.value;
+  const bs = props.boxes, v = view.value, W = MAP_W.value, H = MAP_H.value;
   const x0 = Math.min(...bs.map((b) => b.x), v.x) - MAP_PAD, y0 = Math.min(...bs.map((b) => b.y), v.y) - MAP_PAD;
   const x1 = Math.max(...bs.map((b) => b.x + BOX_W), v.x + v.w) + MAP_PAD, y1 = Math.max(...bs.map((b) => b.y + BOX_H), v.y + v.h) + MAP_PAD;
-  const k = Math.min(MAP_W / (x1 - x0), MAP_H / (y1 - y0));
-  return { x0, y0, k, dx: (MAP_W - (x1 - x0) * k) / 2, dy: (MAP_H - (y1 - y0) * k) / 2 };
+  const k = Math.min(W / (x1 - x0), H / (y1 - y0));
+  return { x0, y0, k, dx: (W - (x1 - x0) * k) / 2, dy: (H - (y1 - y0) * k) / 2 };
 });
 const mx = (x: number): number => (x - box.value.x0) * box.value.k + box.value.dx;
 const my = (y: number): number => (y - box.value.y0) * box.value.k + box.value.dy;
@@ -51,12 +57,14 @@ const btn = "flex h-8 min-w-8 items-center justify-center rounded-md px-1.5 text
 </script>
 
 <template>
-  <!-- 木の枠の外の右の列の下 (10-26 夜オーナー「A でいい」: 木の上に浮かせると寄った・引っ張った後に箱を隠した、モンキー 8 の 4) -->
-  <div class="mt-auto flex flex-col items-end gap-2" data-tree-tools>
-    <svg v-if="showMap" data-tree-minimap class="pointer-events-auto cursor-pointer rounded-lg border border-white/10 bg-[#0d0b08] shadow-[0_6px_20px_rgba(0,0,0,0.6)]" :width="MAP_W" :height="MAP_H" :aria-label="tr('ミニマップ (押すとそこへ)', 'Minimap (click to jump)')" @pointerdown="go">
+  <!-- 木の枠の外の右の列の完成形の窓の下: ミニマップ (残りの高さいっぱい) と、一番下に倍率の道具 (10-26 夜オーナー「A でいい」「ここ使うなら」: 木の上に浮かせると寄った・引っ張った後に箱を隠した、モンキー 8 の 4) -->
+  <div class="flex min-h-0 min-w-0 flex-1 flex-col items-end gap-2" data-tree-tools>
+    <div ref="mapBox" class="min-h-[96px] w-full flex-1 overflow-hidden rounded-lg border border-white/10 bg-[#0d0b08]">
+    <svg data-tree-minimap class="pointer-events-auto block cursor-pointer" :width="MAP_W" :height="MAP_H" :aria-label="tr('ミニマップ (押すとそこへ)', 'Minimap (click to jump)')" @pointerdown="go">
       <rect v-for="b in boxes" :key="b.id" :x="mx(b.x)" :y="my(b.y)" :width="Math.max(3, BOX_W * box.k)" :height="Math.max(2, BOX_H * box.k)" rx="2" :fill="fill(b)" fill-opacity="0.75" />
       <rect :x="mx(view.x)" :y="my(view.y)" :width="view.w * box.k" :height="view.h * box.k" rx="3" fill="rgba(255,236,190,0.06)" stroke="rgba(255,220,150,0.7)" stroke-width="2" />
     </svg>
+    </div>
     <!-- スマホ (768px 未満) は区切りを隠し % を細くして木の枠 (375 幅で 281px) に収める (帯が 286px で左の「選択」が枠の外に切れた、10-23 モンキー 5) -->
     <div class="pointer-events-auto flex max-w-full flex-wrap items-center justify-end gap-0.5 rounded-lg border border-white/10 bg-[#15110c]/95 p-1 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.6)]" role="toolbar" :aria-label="tr('見え方', 'View')">
       <button type="button" data-tree-tool-select :class="[btn, !hand ? 'bg-amber-400/20 text-amber-100' : '']" :aria-pressed="!hand" :title="tr('選択 (箱を組む)', 'Select (edit boxes)')" :aria-label="tr('選択', 'Select')" @click="hand = false">
@@ -72,10 +80,6 @@ const btn = "flex h-8 min-w-8 items-center justify-center rounded-md px-1.5 text
       <button type="button" data-tree-zoom-out :class="btn" :title="tr('縮める (ホイールでも)', 'Zoom out (also mouse wheel)')" :aria-label="tr('縮める', 'Zoom out')" @click="emit('zoomOut')">−</button>
       <button type="button" data-tree-zoom-reset :class="[btn, 'w-12 tabular-nums max-md:w-10']" :title="tr('等倍に戻す', 'Reset to 100%')" @click="emit('reset')">{{ Math.round(zoom * 100) }}%</button>
       <button type="button" data-tree-zoom-in :class="btn" :title="tr('広げる (ホイールでも)', 'Zoom in (also mouse wheel)')" :aria-label="tr('広げる', 'Zoom in')" @click="emit('zoomIn')">＋</button>
-      <span class="mx-1 h-5 w-0.5 rounded bg-white/10 max-md:hidden" />
-      <button type="button" data-tree-tool-map :class="[btn, showMap ? 'bg-amber-400/20 text-amber-100' : '']" :aria-pressed="showMap" :title="tr('ミニマップ', 'Minimap')" :aria-label="tr('ミニマップ', 'Minimap')" @click="showMap = !showMap">
-        <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z" /><path d="M9 3v15M15 6v15" /></svg>
-      </button>
     </div>
   </div>
 </template>

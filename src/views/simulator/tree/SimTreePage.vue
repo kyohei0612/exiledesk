@@ -396,7 +396,7 @@ const phone = usePhone(), simPhone = flag("simPhone");
     <PhoneTreePage v-else-if="phone" />
     <template v-else>
     <div class="mb-3 flex flex-wrap items-center gap-3">
-      <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center gap-3 px-8 text-[22px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)] max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-1 max-md:px-4 max-md:py-2 max-md:text-[17px] max-md:tracking-[0.08em]"><span class="whitespace-nowrap">{{ tr("クラフトの道 (ツリー)", "Craft route tree") }}</span><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" /></h1>
+      <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center gap-3 px-8 max-[1099px]:basis-full text-[22px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)] max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-1 max-md:px-4 max-md:py-2 max-md:text-[17px] max-md:tracking-[0.08em]"><span class="whitespace-nowrap">{{ tr("クラフトの道 (ツリー)", "Craft route tree") }}</span><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" /></h1>
       <!-- 流れの 4 段の帯 (今どこにいるか。完成形の設定の窓と同じ部品、10-24 オーナー)。初手のページの間は窓の側に出る。右上の「← 戻る」は置かない (上の切り替えタブで行き来する、10-24 オーナー「意味が分からない、要らない」) -->
       <TreeFlowSteps v-if="!t.goalInline.value" class="max-md:basis-full" :current="t.reportOpen.value ? 4 : 3" :no-base="t.needBase.value" @go="onFlow" />
     </div>
@@ -407,18 +407,20 @@ const phone = usePhone(), simPhone = flag("simPhone");
     <div v-show="!t.goalInline.value" class="g-panel flex flex-col gap-2 px-3 py-2 max-md:px-0.5" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
       <!-- 帯: 全体の数字 (まだ) ・1 つ戻す・拡大縮小・全画面。ベースが無い空の形 (t.needBase) の間は「レシピ ▾」と「メモ」だけ (今押しても意味の無い物は出さない、10-23 オーナー) -->
       <!-- 折り返さない (回した結果の文で 1 行と 2 行の境目になり、木の枠が上下して箱の × が押せなかった、10-22)。左は狭ければ … で切る。768px 未満は左と右を 2 段に (右が画面より広く左が潰れて「回す」が押せなかった、10-22) -->
-      <div class="flex flex-wrap items-center gap-2 text-[13px] md:flex-nowrap">
+      <div class="relative flex flex-wrap items-center gap-2 text-[13px] md:flex-nowrap">
+        <!-- 足りない所の一覧 = 「足りない所 n ▾」を押した時だけ帯の下に落ちる窓 (枠の外・Esc で閉じる、10-26 夜オーナー) -->
+        <TreeIssues v-if="issues?.length && issuesShown && issuesOpen" class="absolute left-0 top-full z-40 mt-1" :issues="issues" :busy="checkBusy" :lower="false" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" />
         <span class="flex min-w-0 flex-1 basis-full items-center gap-2 max-md:flex-wrap md:basis-auto">
         <TreeRecipeBar @opened="v.openView()" />
-        <TreeRunBar v-if="!t.needBase.value" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking, passed, holes: issues?.length ?? 0, shown: issuesShown }" @test="onCheck" @holes="issuesShown = !issuesShown" @holes-on="openIssues" @list="openIssues" :stuck="tr100.stuckBoxes.value" @run="tr100.run" @go="goIssue" :halted="tr100.halted.value" :walk="tr100.walk.value" @skip="tr100.skipWalk" />
+        <TreeRunBar v-if="!t.needBase.value" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking, passed, holes: issues?.length ?? 0, shown: issuesShown }" @test="onCheck" @holes="issuesShown = !issuesShown" @holes-on="openIssues" @list="issuesOpen ? (issuesOpen = false) : openIssues()" :stuck="tr100.stuckBoxes.value" @run="tr100.run" @go="goIssue" :halted="tr100.halted.value" :walk="tr100.walk.value" @skip="tr100.skipWalk" />
         </span>
       </div>
 
       <!-- ベースが無い空の形でも、ほかの木があればタブを出す (前の木へ戻れない行き止まりだった、10-24 夜オーナー「一方通行が多い」) -->
       <!-- ツリーのタブと、右に道具 (1 つ戻す・整列・線・メモ・全画面・白紙)。前は上の帯の右にあり、100 人回した後に帯の左 (レシピ・回す・結果) が足りず重なった (10-25 英語の通しで見つけた、日本語も同じ) -->
-      <div class="flex flex-wrap items-center gap-2 text-[13px] md:flex-nowrap">
+      <div class="flex flex-wrap items-center gap-2 text-[13px] min-[1100px]:flex-nowrap"><!-- 1100px 未満は道具を次の行へ (768 で画面の右へはみ出した、10-26 夜) -->
         <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" class="min-w-0 flex-1" @switched="v.openView()" />
-        <span class="ml-auto flex shrink-0 flex-wrap items-center gap-1 max-md:ml-0 max-md:min-w-0 max-md:shrink max-md:basis-full max-md:flex-nowrap max-md:overflow-x-auto max-md:pb-1 max-md:[&>*]:shrink-0 max-md:[&>*]:whitespace-nowrap md:flex-nowrap">
+        <span class="ml-auto flex shrink-0 flex-wrap items-center gap-1 max-md:ml-0 max-md:min-w-0 max-md:shrink max-md:basis-full max-md:flex-nowrap max-md:overflow-x-auto max-md:pb-1 max-md:[&>*]:shrink-0 max-md:[&>*]:whitespace-nowrap max-[1099px]:max-w-full min-[1100px]:flex-nowrap">
           <button v-if="!t.needBase.value" type="button" data-tree-undo class="g-btn sm inline-flex items-center gap-1" :disabled="!t.canUndo.value" :title="tr('1 つ戻す (Ctrl+Z)', 'Undo (Ctrl+Z)')" @click="t.undo"><Icon name="undo" class="size-4" /><span class="max-md:hidden">{{ tr("1 つ戻す", "Undo") }}</span></button>
           <button v-if="!t.needBase.value" type="button" data-tree-redo class="g-btn sm inline-flex items-center" :disabled="!t.canRedo.value" :title="tr('やり直し (Ctrl+Shift+Z / Ctrl+Y)', 'Redo (Ctrl+Shift+Z / Ctrl+Y)')" :aria-label="tr('やり直し', 'Redo')" @click="t.redo"><Icon name="undo" class="size-4 -scale-x-100" /></button>
           <button v-if="!t.needBase.value" type="button" data-tree-tidy class="g-btn sm" :title="tr('段ごとに横一列・親は子の並びの真ん中・線は直角の木の線 (1 つ戻すで元の並びへ)', 'Rows by depth, each parent centered over its children, right-angle tree lines (undo restores)')" @click="onTidy">{{ tr("整列", "Tidy") }}</button>
@@ -428,17 +430,17 @@ const phone = usePhone(), simPhone = flag("simPhone");
           <button v-if="!t.needBase.value" ref="clearBtn" type="button" data-tree-clear :class="clearArm.is() ? ARMED_CLASS : 'g-btn sm'" :title="tr('始まりの箱だけに戻す (1 つ戻すで戻せる)', 'Back to just the start box (undo restores it)')" @click="onClear">{{ clearArm.is() ? tr("もう一度押すと白紙に戻す", "Click again to clear") : tr("白紙に戻す", "Clear") }}</button>
         </span>
       </div>
-      <div ref="row" class="flex min-h-0 gap-2" :class="full ? 'flex-1' : ''" :style="full ? {} : { height: `${rowH}px` }">
-        <!-- ツリー (暗い地 + ドットの格子、見本の 1。右下に浮かぶ道具とミニマップ、左上に今の状態の札) -->
-        <div data-tree-frame class="relative min-w-0 flex-1 overflow-hidden rounded-lg border border-white/[0.06] bg-[#0c0a08]">
+      <!-- 1100px 未満 (768〜1099) は右の列を木の下へ。木の枠に今までの高さを渡し、列はその下 (ページを送って見る) -->
+      <div ref="row" class="flex min-h-0 gap-2 min-[1100px]:h-[var(--row-h)] max-[1099px]:flex-col" :class="full ? 'flex-1' : ''" :style="full ? { '--frame-h': 'calc(100% - 308px)' } : { '--row-h': `${rowH}px`, '--frame-h': `${rowH}px` }">
+        <!-- ツリー (暗い地 + ドットの格子、見本の 1)。枠の上・左に浮かぶ物は置かない (完成形の窓・道具・ミニマップは右の列、10-26 夜オーナー) -->
+        <div data-tree-frame class="relative min-w-0 flex-1 overflow-hidden max-[1099px]:h-[var(--frame-h)] max-[1099px]:flex-none rounded-lg border border-white/[0.06] bg-[#0c0a08]">
         <!-- ベースが無い時の空の形 (白紙の木でベースを選ばずに閉じた時): 木は出さず真ん中に「ベースを選ぶ」1 つ (10-23 オーナー、use-tree の needBase) -->
         <div v-if="t.needBase.value" data-tree-need-base class="absolute inset-0 z-30 flex items-center justify-center bg-[#0c0a08]">
           <button type="button" data-tree-pick-base class="g-btn" @click="t.goalPage.value = 1">{{ tr("ベースを選ぶ", "Choose a base") }}</button>
         </div>
         <!-- 0 完成形の設定の札 (木の箱にせず、木を送っても見える左上。10-23 オーナー)。スイッチ goalCard で完成形のアイテム枠 (10-25 オーナー)。木は札 1 本分 (44px) 下から描く (畳んだ札が下の箱を隠した、10-26 ブラック 12 代目) -->
-        <div v-if="!t.needBase.value" data-tree-goal-float class="pointer-events-none absolute left-2 top-2 z-20"><TreeGoalCard v-if="goalCard" /><TreeGoalNode v-else /></div>
         <!-- ページの zoom を枠だけ打ち消す (中は実質 1 倍。Vue Flow の座標とマウスが揃う、use-tree-flow.ts)。格子は Vue Flow の送りと倍率に合わせる。ホイールは決まった段へ 1 段ずつ (use-tree-flow の onWheel) -->
-        <div data-tree-canvas data-overflow-ok class="absolute inset-x-0 bottom-0 top-[44px]" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid }" @wheel="v.onWheel">
+        <div data-tree-canvas data-overflow-ok class="absolute inset-0" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid }" @wheel="v.onWheel">
           <VueFlow :id="FLOW_ID" :default-viewport="{ x: 0, y: 0, zoom: pageZ }" :min-zoom="v.minZoom.value" :max-zoom="v.maxZoom.value"
             :nodes-draggable="false" :nodes-connectable="false" :elements-selectable="false"
             :pan-on-drag="true" :pan-on-scroll="false" :zoom-on-scroll="false" :zoom-activation-key-code="null" :zoom-on-double-click="false" :zoom-on-pinch="false"
@@ -478,9 +480,10 @@ const phone = usePhone(), simPhone = flag("simPhone");
           </VueFlow>
         </div>
         <!-- 今の状態の札 (左上に浮かべる。ツリーを押し下げない) -->
-        <p v-if="picking || hand || viewOnly" data-tree-mode-pill class="pointer-events-none absolute left-1/2 top-3 z-20 -translate-x-1/2 flex items-center gap-2 rounded-full border px-3 py-1 text-[12px] shadow-[0_4px_14px_rgba(0,0,0,0.6)]"
-          :class="[picking ? 'border-cyan-400/50 bg-[#0d1a1c]/95 text-cyan-100' : 'border-white/10 bg-[#15110c]/95 text-[#d8ccb4]', picking || hand ? '' : 'max-md:hidden']">
-          {{ picking && panel?.kind === "hand" && panel.id === picking ? tr("右の棚で次に打つ手を選ぶ / 箱を押すとそこへ戻る (Esc でやめる)", "Pick the next craft on the right, or click a box to return to it (Esc cancels)") : picking ? tr("戻り先の箱を押す (Esc でやめる)", "Click the box to return to (Esc cancels)") : hand ? tr("手: 見るだけ (選択に戻すと組める)", "Hand: view only (switch to Select to edit)") : tr("縮めて見ている間は箱を押すとその箱の編集が開く", "Zoomed out: click a box to edit it") }}
+        <!-- 縮めて見ている間の案内 (「縮めて見ている間は箱を押すと…」) は出さない (10-26 夜オーナー「上の黒い表示欄…視認性が悪い」)。戻り先を選ぶ・手の時だけ -->
+        <p v-if="picking || hand" data-tree-mode-pill class="pointer-events-none absolute left-1/2 top-3 z-20 -translate-x-1/2 flex items-center gap-2 rounded-full border px-3 py-1 text-[12px] shadow-[0_4px_14px_rgba(0,0,0,0.6)]"
+          :class="picking ? 'border-cyan-400/50 bg-[#0d1a1c]/95 text-cyan-100' : 'border-white/10 bg-[#15110c]/95 text-[#d8ccb4]'">
+          {{ picking && panel?.kind === "hand" && panel.id === picking ? tr("右の棚で次に打つ手を選ぶ / 箱を押すとそこへ戻る (Esc でやめる)", "Pick the next craft on the right, or click a box to return to it (Esc cancels)") : picking ? tr("戻り先の箱を押す (Esc でやめる)", "Click the box to return to (Esc cancels)") : tr("手: 見るだけ (選択に戻すと組める)", "Hand: view only (switch to Select to edit)") }}
           <!-- 完成の箱からつなぐと完成の印は外れる (黙って外れていた、10-22 白紙から組んだ試し #19) -->
           <b v-if="picking && doc.boxes[picking]?.done" data-tree-pick-undone class="text-amber-200">{{ tr("(この箱の完成の印は外れる)", "(this box's done mark will be removed)") }}</b>
           <button v-if="retryOf(doc, picking, link)" type="button" data-tree-pick-retry class="g-btn sm pointer-events-auto" :title="tr('再度挑戦: 打つ前の箱へ戻って、同じ手をもう一度打つ', 'Retry: go back to the box before it and use the same craft again')" @click="pickBack(retryOf(doc, picking, link)!)">↩ {{ tr("再度挑戦", "Retry") }} · {{ stepBackText(doc, retryOf(doc, picking, link)!) }}</button>
@@ -498,8 +501,10 @@ const phone = usePhone(), simPhone = flag("simPhone");
         <TreeHoverCard v-if="cardBox && doc.boxes[cardBox]" :box-id="cardBox" :rect="v.rectOf(doc.boxes[cardBox]!)" />
         </div>
         <!-- 木の枠の外の右の列: 上に足りない所の一覧、下にミニマップと倍率の道具 (10-26 夜オーナー「A でいい」。木の上に浮かせると引っ張った・寄った時に箱を隠した、モンキー 8 の 2・4) -->
-        <aside v-if="!t.needBase.value" data-tree-side class="flex min-h-0 w-[250px] shrink-0 flex-col gap-2">
-          <TreeIssues v-if="issues?.length && issuesShown && issuesOpen" v-model:fold="issuesFold" :issues="issues" :busy="checkBusy" :lower="false" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" />
+        <!-- 列は上に 0 完成形の設定 (字を縮めずに入る幅 372px)、その下にミニマップ (残りいっぱい)、一番下に倍率の道具。足りない所は上の帯の落ちる窓 (10-26 夜オーナー「ここ使うなら」)。
+             1100px 未満は木の下に横並び -->
+        <aside v-if="!t.needBase.value" data-tree-side class="flex min-h-0 w-[372px] shrink-0 flex-col gap-2 overflow-hidden max-[1099px]:h-[300px] max-[1099px]:w-full max-[1099px]:flex-row">
+          <div data-tree-goal-side class="min-h-0 shrink-0 overflow-y-auto max-[1099px]:h-full min-[1100px]:max-h-[60%]"><TreeGoalCard v-if="goalCard" /><TreeGoalNode v-else /></div>
           <TreeCanvasTools v-model:hand="hand" :boxes="rv.visible.value" :view="v.view.value" :zoom="zoom" @center="v.centerOn" @fit="v.fit" @zoom-in="v.zoomIn" @zoom-out="v.zoomOut" @reset="v.resetZoom" />
         </aside>
       </div>
