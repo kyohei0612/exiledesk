@@ -201,7 +201,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     <!-- 今のアイテムの枠 (乗せた時のカードと同じ StageItemCard の MOD の行だけを箱の幅いっぱいに (縮めない)。10-26 オーナー「アイテム枠は個人的に好きやからそのままがいいなさっきの」「枠内はアイテムの形とその下に次どうするかくらいか？まとめるとかも別にアイテム枠の下とかに出したらええんちゃう」) -->
     <!-- 箱の流れの中に置き、MOD が多ければ箱が伸びる (切らない) -->
     <div v-if="cardItem" data-tree-box-card class="pointer-events-none" :class="box.out === 'start' ? 'mt-0.5' : 'mt-3'">
-      <div :style="{ width: `${CARD_W}px` }"><StageItemCard :item="cardItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact mods-only :row-tags="cardTags" /></div>
+      <div :style="{ width: `${CARD_W}px` }"><StageItemCard :item="cardItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact mods-only with-title :row-tags="cardTags" /></div>
     </div>
 
 
