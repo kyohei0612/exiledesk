@@ -413,6 +413,8 @@ function aimText(a: Aim): string {
 const NOT_ON_BASE = (): string => tr("(このベースに無い MOD)", "(mod not on this base)");
 /** 狙いの MOD の短い名前 (戻り先の札で、どの狙いの所の箱かを添える) */
 const aimShort = (a: Aim): string => aimText(a);
+/** 当たりの箱の名前 (「どれか」の箱 = 同じ側の狙いの一覧、anyOf。10-26) */
+const boxAimLabel = (b: { aim: Aim | null; anyOf?: Aim[] }): string => (b.anyOf && b.anyOf.length > 1 ? tr(`どれか: ${b.anyOf.map(aimShort).join("・")}`, `Any of: ${b.anyOf.map(aimShort).join(", ")}`) : aimLabel(b.aim));
 /** 始まりの MOD の文 (その段の数値で埋めた文 + 段)。atLeast = 完成の狙い (✦ の印など) で段を「T2 以上」と言う (10-24 オーナー「T2 を選んだら T2 以上」) */
 function startModLabel(a: Aim | StartMod | null, atLeast = false): string {
   if (!a) return "";
@@ -469,5 +471,5 @@ const baseCost = computed(() => {
 const baseCostBusy = computed(() => !!s.data.value && !costReady.value);
 
 export function useTree() {
-  return { tabDocs, active, switchTab, addTab, closeTab, resetAll, tabLabel, renameTab, copyTab, leaveNewTab, ilvlNote, startPrice, setStartPrice, startChoice, setStartFrom, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
+  return { tabDocs, active, switchTab, addTab, closeTab, resetAll, tabLabel, renameTab, copyTab, leaveNewTab, ilvlNote, startPrice, setStartPrice, startChoice, setStartFrom, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, boxAimLabel, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
 }

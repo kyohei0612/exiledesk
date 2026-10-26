@@ -143,7 +143,7 @@ export function usePhoneQuiz() {
     if (!b) return "";
     if (b.out === "start") return outName("start");
     const held: string[] = [];
-    for (let x: TreeBox | undefined = b; x; x = x.parent ? t.doc.value.boxes[x.parent] : undefined) if (x.out === "hit" && x.aim) held.unshift(t.aimShort(x.aim));
+    for (let x: TreeBox | undefined = b; x; x = x.parent ? t.doc.value.boxes[x.parent] : undefined) if (x.out === "hit" && x.aim) held.unshift(x.anyOf && x.anyOf.length > 1 ? tr(`${x.anyOf.map(t.aimShort).join(" / ")} のどれか`, `any of ${x.anyOf.map(t.aimShort).join(" / ")}`) : t.aimShort(x.aim));
     const list = [...new Set(held)].join(tr("・", ", "));
     if (b.out === "hit") return `${outName("hit")} ${list}`;
     return held.length ? `${outName(b.out)} (${list})` : outName(b.out);

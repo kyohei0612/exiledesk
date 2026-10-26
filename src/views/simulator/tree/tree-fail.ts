@@ -4,7 +4,7 @@
  * 木の作りと回し方は変えない (文はどれも今の setBack・autoBack・settle・stuckWhy を読むだけ)。決めは notes/2026-10-26-failure-behavior.md
  */
 import { MATCH, RESTART } from "../../../services/simulator/tree/tree-shape";
-import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { boxAims, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { backTargetsOf } from "./tree-merge";
 import { tr } from "../../../i18n/lang";
@@ -64,5 +64,5 @@ export function retryOf(doc: TreeDoc, id: string | null, link: ReadonlyMap<strin
 export function orphanHits(doc: TreeDoc): string[] {
   const goals = doc.memoAims ?? [];
   if (!goals.length) return [];
-  return Object.values(doc.boxes).filter((b) => b.out === "hit" && b.aim && !goals.some((g) => g.modId === b.aim!.modId)).map((b) => b.id);
+  return Object.values(doc.boxes).filter((b) => b.out === "hit" && b.aim && boxAims(b).every((x) => !goals.some((g) => g.modId === x.modId))).map((b) => b.id);
 }

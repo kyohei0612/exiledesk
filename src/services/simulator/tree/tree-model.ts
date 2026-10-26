@@ -27,6 +27,8 @@ export interface Aim { modId: string; tier: number; /** フラクチャーの印
  * max = 打つ回数の上限 (null = 上限なし)。今はカオススパムだけ画面に出すが、高貴をもう一度・消去にも同じ形で付けられる
  */
 export interface Repeat { until: "hit"; max: number | null }
+/** 当たりの箱の狙いの一覧 (「どれか」の箱は anyOf、ほかは aim 1 つ) */
+export const boxAims = (b: { aim: Aim | null; anyOf?: Aim[] }): Aim[] => (b.anyOf?.length ? b.anyOf : b.aim ? [b.aim] : []);
 /** 札の鍵 (同じ MOD + 同じ段以上 = 同じ札) */
 export const aimKey = (a: Aim): string => `${a.modId}|${a.tier}`;
 /** 打つ手: カレンシー + お告げ + (触媒の時) カタリストで品質を上げてから。repeat があれば当たるまで繰り返す */
@@ -46,8 +48,14 @@ export interface TreeBox {
   x: number;
   y: number;
   out: OutKind | "start";
-  /** 当たりの箱の狙い (選ぶまでは null) */
+  /** 当たりの箱の狙い (選ぶまでは null)。「どれか」の箱は anyOf の先頭 */
   aim: Aim | null;
+  /**
+   * 同じ側の狙いの「どれか」で 1 つの当たりの箱 (10-26 オーナー「狙いモッドがプレフィックスの場合カオススパムで仮に２MODプレフィックス当たり引いたら別に作る方法変わらなくね」、
+   * メモ sim-split-by-side「1 つの側の中の『どれか』はパターンがあまり変わらない」)。2 つ以上の時だけ持つ。側が違う狙いは今までどおり別の箱。
+   * 付いた物ごとの出方の違いは回す時にエンジンが見る (tree-run は実物のアイテムで進む)
+   */
+  anyOf?: Aim[];
   /** この箱から打つ次の手 (矢印) */
   hand: Hand | null;
   /** 矢印の先の結果の箱 (並び順 = 画面の左から) */
@@ -297,7 +305,10 @@ export const kindOfHand = (h: Hand, base: HandKind): HandKind => (h.repeat ? "sp
  * only = 起こりうる結果の一覧 (tree-sample の possibleOutsOf。光のお告げ + 消去 = 外れが消えただけ、お告げ無しのエッセンス = 付いた・狙いが消えた など) があれば、その箱だけ。
  * 当たりの箱は一覧の札だけ。一覧が無ければ手の種類ごとの箱 (OUTS_OF)
  */
-export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims: readonly Aim[] = [], only: ReadonlyArray<{ out: OutKind; aim: Aim | null }> | null = null): void {
+/** 同じ当たりの箱にまとめる手 (付く MOD を選べない手。エッセンスは付く MOD ごと・フラクチャーは印ごとの箱のまま) */
+const GROUPED: readonly HandKind[] = ["add", "swap", "spam"];
+/** groupOf = 狙いの側 (同じ側の狙いは 1 つの当たりの箱、anyOf)。渡さなければ今までどおり狙いごと */
+export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims: readonly Aim[] = [], only: ReadonlyArray<{ out: OutKind; aim: Aim | null }> | null = null, groupOf?: (a: Aim) => string): void {
   const b = d.boxes[id];
   if (!b) return;
   const now = b.outs.map((o) => d.boxes[o]!.out);
@@ -319,7 +330,17 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   delete b.autoBack;
   if (same) return;
   for (const o of b.outs) drop(d, subtree(d, o));
-  b.outs = want.flatMap((k) => (k === "hit" && aims.length ? aims.map((a) => { const h = mk(d, "hit", id); h.aim = { ...a }; return h.id; }) : [mk(d, k, id).id]));
+  // 同じ側の狙いは 1 つの当たりの箱 (anyOf)。側の並びは狙いの並び (完成の狙いの順) のまま
+  const groups: Aim[][] = [];
+  for (const a of aims) { const g = groupOf && GROUPED.includes(kind) ? groups.find((x) => groupOf(x[0]!) === groupOf(a)) : undefined; if (g) g.push(a); else groups.push([a]); }
+  // 前に「どれか」の箱を通った道では、どれが付いているかが人ごとに違う (見本 1 つの付いていない狙いだけだと、別の物で着いた人の当たりに箱が無い)。
+  // 同じ側の「どれか」の一覧を全部足す (もう付いている物は回す時に当たりに数えない = aimDiff は新しく付いた物だけ)
+  if (groupOf && GROUPED.includes(kind)) for (let x: string | null = id; x; x = d.boxes[x]?.parent ?? null) for (const a of d.boxes[x]?.anyOf ?? []) {
+    const g = groups.find((y) => groupOf(y[0]!) === groupOf(a));
+    if (g && !g.some((y) => y.modId === a.modId)) g.push({ ...a });
+  }
+  for (const g of groups) g.sort((x, y) => order(x) - order(y));
+  b.outs = want.flatMap((k) => (k === "hit" && groups.length ? groups.map((g) => { const h = mk(d, "hit", id); h.aim = { ...g[0]! }; if (g.length > 1) h.anyOf = g.map((a) => ({ ...a })); return h.id; }) : [mk(d, k, id).id]));
   // 消えた箱は初めからつないでおく (オーナー 10-22「狙いが消えた…などは自動でつないでおく」。× で外せる)。行き先は人が選ぶのと同じ具体的な箱
   // (10-22 オーナー「続きからって選択肢選べんでしょ」): 狙いが消えた = 始めに戻る (10-22「選択肢として初めに戻るでいいのでは」)、
   // 外れが消えた = 外れの前の箱 (外れの箱の親。外れだけ消えたので、その箱と同じ形)。外れの箱の下でない時は形の合う箱へ。
@@ -399,7 +420,8 @@ export function removeHit(d: TreeDoc, id: string): void {
 
 export function setAim(d: TreeDoc, id: string, aim: Aim | null): void {
   const b = d.boxes[id];
-  if (b && b.out === "hit") b.aim = aim ? { ...aim } : null;
+  // MOD を選び直したら「どれか」は外す (その MOD 1 つの当たりの箱、10-26)
+  if (b && b.out === "hit") { b.aim = aim ? { ...aim } : null; delete b.anyOf; }
 }
 
 /** 戻りの矢印 (to = null で外す)。次の手のある箱・自分自身へは張らない */

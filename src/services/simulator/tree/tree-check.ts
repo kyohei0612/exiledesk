@@ -14,7 +14,7 @@ import { prepFor } from "./tree-unbounded";
 import { catalystTagOf } from "../../simulator/sim-engine";
 import { aimHeldOn, junkOf, reachableAims } from "./tree-aim";
 import { CATALYSING, effectOf, engineOmens, isCatalyst } from "./tree-hands";
-import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeDoc } from "./tree-model";
+import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeDoc, boxAims } from "./tree-model";
 import { aimOpts, aimsOf, goalsHeld, handAims, handProblem, heldHitOf, outcomeOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
 import { runTreeSteps } from "./tree-run";
 import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapesOf, splitTo } from "./tree-shape";
@@ -138,7 +138,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
   const pathAims = (id: string): string => {
     const ks = new Set<string>();
     for (let b: TreeDoc["boxes"][string] | undefined = doc.boxes[id]; b; b = b.parent ? doc.boxes[b.parent] : undefined) {
-      if (b.out === "hit" && b.aim) ks.add(aimKey(b.aim));
+      if (b.out === "hit" && b.aim) for (const a of boxAims(b)) ks.add(aimKey(a));
       // 分かれ目の行の「付いている狙い」も道の札 (10-24 不在のアミュ B: 負けの後のカオスでキャスト・ルーンワードが残った人の完成の行が「狙い 2 つ」と出た)
       const p = b.parent ? doc.boxes[b.parent] : undefined;
       for (const k of p?.split?.find((r) => r.to === b!.id)?.when.has ?? []) ks.add(k);
@@ -220,9 +220,9 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
         for (const o of b.outs) {
           const ob = doc.boxes[o]!;
           // もう付いている狙いの当たりの箱には着かない (打ち直しても付かないので飛ばす。始めに戻った人で当たるまでを 1200 回打ち直し、精査が 13 秒かかった、10-22 金の指輪)
-          if (ob.out === "hit" && ob.aim && aimHeldOn(data, item, ob.aim, { sameText: true })) continue;
+          if (ob.out === "hit" && ob.aim && boxAims(ob).some((a) => aimHeldOn(data, item, a, { sameText: true }))) continue;
           let got: StageItem | null = null;
-          const fits = (res: { out: OutKind; hits: Aim[] }): boolean => (res.out === ob.out || ob.out === "any" || ob.out === "pass") && (ob.out !== "hit" || !ob.aim || res.hits.some((a: Aim) => aimKey(a) === aimKey(ob.aim!)));
+          const fits = (res: { out: OutKind; hits: Aim[] }): boolean => (res.out === ob.out || ob.out === "any" || ob.out === "pass") && (ob.out !== "hit" || !ob.aim || boxAims(ob).some((x) => res.hits.some((h) => h.modId === x.modId && h.tier === x.tier)) || res.hits.some((a: Aim) => aimKey(a) === aimKey(ob.aim!)));
           // 出ない結果の箱は打ち直さない: 当たるまでの手は当たりしか返さない (外れ・消えたは下の break で必ず着かない)、ほかはエンジンの起こりうる結果に無い物
           // (10-25 不在のアミュ B: カオスの当たるまで →「狙いが消えた」と完璧なエッセンス → 当たり・消えたを 1 箱 1,200 回ずつ打ち、開くたび画面が 17 秒固まった)
           const impossible = b.hand.repeat ? ob.out !== "hit" && ob.out !== "any" && ob.out !== "pass" : !!canBe && !canBe.some(fits);
@@ -241,7 +241,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
           }
           if (got) walk(settle(data, doc, shapes, o, got, aims), got, viaBack);
           // もう付いているかもしれない狙い (狙いが消えた後の取り直し、heldSets) は、付いていない人だけが着くので数えない
-          else if (ob.out === "hit" && ob.aim && !viaBack && !heldSets(doc, id).some((h) => h.includes(aimKey(ob.aim!)))) never.add(o);
+          else if (ob.out === "hit" && ob.aim && !viaBack && !heldSets(doc, id).some((h) => boxAims(ob).some((a) => h.includes(aimKey(a))))) never.add(o);
         }
         if (tag && hits && !boosted) add(id, "quality", tr("触媒で入れる品質が、この手の当たりの MOD のどれにも効かない (カタリストの種類を確かめる)", "The catalysed quality boosts none of this craft's target mods (check the catalyst type)"));
       };

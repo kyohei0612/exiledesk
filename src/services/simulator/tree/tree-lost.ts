@@ -5,7 +5,7 @@
  * 数え方は tree-run の heldSets と同じ: 道の当たりの箱で 1 つ増え、狙いが消えた箱を通ると 1 つ減る (エッセンスの消えたは付いた MOD が残る)
  */
 import { effectOf } from "./tree-hands";
-import type { TreeDoc } from "./tree-model";
+import { boxAims, type TreeDoc } from "./tree-model";
 
 const keyOf = (a: { modId: string; tier: number }): string => `${a.modId}/${a.tier}`;
 /** 始めのアイテムに付いている完成の狙い (どの道でも持って着く。tree-sample の startGoalAims と同じ、循環を避けて木の形から直に読む) */
@@ -49,7 +49,7 @@ export function aimsMayHold(d: TreeDoc, id: string): Array<{ modId: string; tier
     for (let x: string | null = from; x; x = d.boxes[x]?.parent ?? null) {
       const c = d.boxes[x];
       const fr = c?.parent ? d.boxes[c.parent]?.hand : null;
-      if (c?.out === "hit" && c.aim && !(fr && effectOf(fr.currency) === "fracture")) out.set(keyOf(c.aim), { modId: c.aim.modId, tier: c.aim.tier });
+      if (c?.out === "hit" && c.aim && !(fr && effectOf(fr.currency) === "fracture")) for (const a of boxAims(c)) out.set(keyOf(a), { modId: a.modId, tier: a.tier });
     }
   };
   for (const a of startHeld(d)) out.set(keyOf(a), a);

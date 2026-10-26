@@ -143,7 +143,7 @@ function boxLabel(id: string): string {
   if (to.out === "start") return tr("始めに戻る", "Back to start");
   // 分かれ目の箱へ戻る札は分かれ目の札と同じ ◇ を添える (当たりの箱の名前だけでは分かれ目と分からなかった、10-22 オーナー OK)
   if (to.split) return `◇ ${to.out === "hit" && to.aim ? t.aimLabel(to.aim) : outName(to.out)}`;
-  if (to.out === "hit" && to.aim) return t.aimLabel(to.aim);
+  if (to.out === "hit" && to.aim) return t.boxAimLabel(to);
   // 外れ・消えたの箱は、道で付いている狙いの MOD を添える (「↩ 外れ」だけではどの外れか分からなかった、10-22 靴・手袋を白紙から組んで)
   const held: string[] = [];
   for (let x: Box | undefined = to; x; x = x.parent ? doc.value.boxes[x.parent] : undefined) if (x.out === "hit" && x.aim) held.unshift(t.aimShort(x.aim));
@@ -368,7 +368,7 @@ watch(() => t.goalInline.value, (on) => { if (on) v.keepView(); else setTimeout(
 
 const panelBox = computed(() => (panel.value ? doc.value.boxes[panel.value.id] ?? null : null));
 /** 一覧に出す箱の名前 (種類 + 当たりの札) */
-function boxName(id: string): string { const b = doc.value.boxes[id]; return !b ? id : b.out === "hit" && b.aim ? `${outName("hit")} ${t.aimLabel(b.aim)}` : outName(b.out); }
+function boxName(id: string): string { const b = doc.value.boxes[id]; return !b ? id : b.out === "hit" && b.aim ? `${outName("hit")} ${t.boxAimLabel(b)}` : outName(b.out); }
 /** 光る箱: MOD の札 = その札の当たりの箱、カレンシーの札 ("cur:" + キー) = その手を使っている箱 */
 const glowOf = (b: Box): boolean => {
   const g = glowAim.value;

@@ -12,7 +12,7 @@ import { catalystFull, catalystTagOf, fillCatalyst } from "../../simulator/sim-e
 import { aimHeldOn, isAimMod, junkOf } from "./tree-aim";
 import { CATALYSING as CATALYSING_OMEN, ECHO, ECHO as ABYSSAL_ECHO_OMEN, effectOf, engineOmens, isCatalyst } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
-import { fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
+import { fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-shape";
 import { arrivedAt } from "./tree-arrived";
@@ -35,7 +35,7 @@ export const aimOpts = (data: PatchData): AimHitOpts => ({ data, sameText: true 
 export function handAims(doc: TreeDoc, id: string, aims: readonly Aim[]): readonly Aim[] {
   const b = doc.boxes[id];
   if (!b?.hand?.repeat) return aims;
-  const own = b.outs.flatMap((o) => { const c = doc.boxes[o]; return c?.out === "hit" && c.aim ? [c.aim] : []; });
+  const own = b.outs.flatMap((o) => { const c = doc.boxes[o]; return c?.out === "hit" && c.aim ? boxAims(c) : []; });
   return own.length ? own : aims;
 }
 /**
@@ -51,7 +51,7 @@ export function aimsOf(doc: TreeDoc): Aim[] {
     const h = b.parent ? doc.boxes[b.parent]?.hand : null;
     return byGoals && !!h && effectOf(h.currency) === "essence" && !goals.some((g) => g.modId === b.aim!.modId);
   };
-  for (const b of Object.values(doc.boxes)) if (b.out === "hit" && b.aim && !label(b) && !out.some((x) => x.modId === b.aim!.modId && x.tier === b.aim!.tier)) out.push(b.aim);
+  for (const b of Object.values(doc.boxes)) if (b.out === "hit" && b.aim && !label(b)) for (const a of boxAims(b)) if (!out.some((x) => x.modId === a.modId && x.tier === a.tier)) out.push(a);
   // 始めから付いている完成の狙い (スタートの窓の「＋ 外れを狙いに差し替える」)。前は当たりの箱の札だけで、始めの狙いが消える結果を「外れが消えた」と数え、
   // 「狙いが消えた」の箱も作らなかった (10-25 シミュ 28 の洗い出し: 始めにスピリット・キャストを付けた形で、消去・カオス・パーフェクトの全部)
   for (const m of startGoalAims(doc)) if (!out.some((x) => x.modId === m.modId && x.tier === m.tier)) out.push(m);
@@ -292,7 +292,7 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
     if (b.out !== "any" && o.out !== b.out) continue;
     // エッセンスの当たりの箱は札が付いた MOD の名前 (tree-run の outBoxOf と同じ)。無限のエッセンスで箱が 2 つ以上なら付いた MOD の箱
     if (b.out === "hit" && b.aim && effectOf(p.hand.currency) === "essence" && !essenceBoxFits(doc, p, b, r.item)) continue;
-    if (b.out === "hit" && b.aim && effectOf(p.hand.currency) !== "essence" && !o.hits.some((a) => a.modId === b.aim!.modId && a.tier === b.aim!.tier)) continue;
+    if (b.out === "hit" && b.aim && effectOf(p.hand.currency) !== "essence" && !boxAims(b).some((x) => o.hits.some((a) => a.modId === x.modId && a.tier === x.tier))) continue;
     return { item: r.item, note: null };
   }
   if (last && !last.applied) return { item: base.item, note: `cant:${last.reason ?? ""}` };

@@ -8,7 +8,7 @@
 import { kindOf, mulberry32, room, RUNE_PREFIX, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { unboundedBefore } from "../sim-engine";
 import { aimHeldOn } from "./tree-aim";
-import type { Hand, TreeBox, TreeDoc } from "./tree-model";
+import { boxAims, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
 
 /** その手 (カレンシーの key) を打つ前のアイテム。要らなければそのまま */
 export const prepFor = (data: PatchData, item: StageItem, key: string): StageItem => unboundedBefore(data, item, key, mulberry32(1));
@@ -28,7 +28,7 @@ export function goalsHeld(data: PatchData, doc: TreeDoc, item: StageItem): boole
   return !!goals.length && goals.every((a) => aimHeldOn(data, item, a, { sameText: true }));
 }
 export function heldHitOf(data: PatchData, doc: TreeDoc, b: TreeBox, item: StageItem): string | null {
-  return b.outs.find((id) => { const o = doc.boxes[id]; return o?.out === "hit" && !!o.aim && aimHeldOn(data, item, o.aim, { sameText: true }); }) ?? null;
+  return b.outs.find((id) => { const o = doc.boxes[id]; return o?.out === "hit" && !!o.aim && boxAims(o).some((a) => aimHeldOn(data, item, a, { sameText: true })); }) ?? null;
 }
 /** 狙い無しの埋めるだけの高貴で、もう両側満杯 (打たずに通す。playHand・handProblem) */
 const fillDone = (item: StageItem, h: Hand): boolean => !!h.free && kindOf(h.currency) === "exalt" && !room(item, "prefix") && !room(item, "suffix");

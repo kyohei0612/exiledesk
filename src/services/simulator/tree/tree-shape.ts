@@ -6,7 +6,7 @@ import { mulberry32, sideOfMod, type PatchData, type StageItem } from "../../cra
 import { aimHeldOn, junkOf } from "./tree-aim";
 import { effectOf } from "./tree-hands";
 import { aimOpts, aimsOf, essenceBoxFits, handProblem, playHand, targetsOf } from "./tree-sample";
-import { aimKey, MATCH_BACK, type Aim, type Hand, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc } from "./tree-model";
+import { aimKey, MATCH_BACK, type Aim, type Hand, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
 
 /**
  * 形の合う箱へ (設計の「消去の後は 形の合う箱へ」、back: "match")。形 = 付いている狙いの組 + 外れがあるか。
@@ -43,14 +43,17 @@ export function splitTo(data: PatchData, rules: readonly SplitRule[], item: Stag
  */
 const shapeKey = (held: readonly string[], junk: boolean): string => `${[...new Set(held)].sort().join(",")}#${junk ? 1 : 0}`;
 export type Shape = { key: string; box: string; hand?: Hand | null };
-/** 箱の道の札 (始まりから親をたどった当たりの札、aimKey) */
-function pathHeld(doc: TreeDoc, id: string | null): string[] {
-  const held: string[] = [];
+/**
+ * 箱の道の札の組 (始まりから親をたどった当たりの札、aimKey)。「どれか」の当たりの箱 (anyOf、同じ側の狙いのどれか 1 つ) を通ると、
+ * どれが付いたかで組が分かれる (10-26)。組は 64 で打ち切る
+ */
+function pathHelds(doc: TreeDoc, id: string | null): string[][] {
+  let sets: string[][] = [[]];
   for (let x = id; x; x = doc.boxes[x]?.parent ?? null) {
     const c = doc.boxes[x];
-    if (c?.out === "hit" && c.aim) held.push(aimKey(c.aim));
+    if (c?.out === "hit" && c.aim) { const ks = boxAims(c).map(aimKey); sets = sets.flatMap((h) => ks.map((k) => (h.includes(k) ? h : [...h, k]))).slice(0, 64); }
   }
-  return [...new Set(held)];
+  return sets;
 }
 /**
  * 箱の時点で付いていうる狙いの組 (始まりから親をたどる。狙いが消えた箱を通ると、その時の組から 1 つ欠けた組のどれか。10-22 見本の
@@ -61,7 +64,8 @@ export function heldSets(doc: TreeDoc, id: string | null): string[][] {
   for (let x = id; x; x = doc.boxes[x]?.parent ?? null) { const c = doc.boxes[x]; if (c) path.unshift(c); }
   let sets: string[][] = [[]];
   for (const c of path) {
-    if (c.out === "hit" && c.aim) { const k = aimKey(c.aim); sets = sets.map((h) => (h.includes(k) ? h : [...h, k])); }
+    // 「どれか」の当たりの箱はどれが付いたかで組が分かれる (anyOf、10-26)
+    if (c.out === "hit" && c.aim) { const ks = boxAims(c).map(aimKey); sets = sets.flatMap((h) => ks.map((k) => (h.includes(k) ? h : [...h, k]))); }
     else if (c.out === "lost") {
       sets = sets.flatMap((h) => (h.length ? h.map((k) => h.filter((x) => x !== k)) : [h]));
       // エッセンスの「狙いが消えた」は、エッセンスで付いた MOD (同じ手の当たりの箱の札) は付いている
@@ -79,13 +83,12 @@ export function shapesOf(doc: TreeDoc): Shape[] {
   const out: Shape[] = [];
   for (const b of Object.values(doc.boxes)) {
     if (!b.hand || (b.out !== "hit" && b.out !== "junk")) continue;
-    out.push({ key: shapeKey(pathHeld(doc, b.out === "junk" ? b.parent : b.id), b.out === "junk"), box: b.id, hand: b.hand });
+    for (const held of pathHelds(doc, b.out === "junk" ? b.parent : b.id)) out.push({ key: shapeKey(held, b.out === "junk"), box: b.id, hand: b.hand });
   }
   // 分かれ目の箱も行き先に (外れの有無は行で分けるので両方の形を受ける。手のある箱が先、10-22 13 通り組んだ #14: 分かれ目の下の消去の「外れが消えた」に行き先が無かった)
   for (const b of Object.values(doc.boxes)) {
     if (!b.split || b.hand) continue;
-    const held = pathHeld(doc, b.id);
-    for (const junk of [false, true]) out.push({ key: shapeKey(held, junk), box: b.id });
+    for (const held of pathHelds(doc, b.id)) for (const junk of [false, true]) out.push({ key: shapeKey(held, junk), box: b.id });
   }
   return out;
 }
@@ -109,7 +112,7 @@ function boxOfShape(shapes: readonly Shape[], key: string, at?: { data: PatchDat
 /** 手も戻りもまだ決めていない当たり (MOD を選んだ物) / 外れの箱で、その形の物 (始めに戻った人の行き先が無い時。settle) */
 function openOfShape(doc: TreeDoc, key: string): string | null {
   const open = (c: TreeBox): boolean => !c.hand && !c.back && !c.split && !c.done && ((c.out === "hit" && !!c.aim) || c.out === "junk");
-  return Object.values(doc.boxes).find((c) => open(c) && shapeKey(pathHeld(doc, c.out === "junk" ? c.parent : c.id), c.out === "junk") === key)?.id ?? null;
+  return Object.values(doc.boxes).find((c) => open(c) && pathHelds(doc, c.out === "junk" ? c.parent : c.id).some((h) => shapeKey(h, c.out === "junk") === key))?.id ?? null;
 }
 /** 回す時に手が打てるか (playHand。乱数の当たり所で弾かれる物は打てる扱い) */
 const canPlay = (data: PatchData, item: StageItem, h: Hand): boolean => { const r = playHand(data, item, { ...h, repeat: null }, mulberry32(1)); return r.applied || !!r.random; };
@@ -210,7 +213,10 @@ export function linkSameShape(doc: TreeDoc, ids: readonly string[]): void {
     // フラクチャーの結果の箱は、形 (✦ は数えない) が親と同じでも つながない (親へ戻すと ✦ のある品にもう一度フラクチャーを打って止まった、10-24)
     const p = c.parent ? doc.boxes[c.parent] : undefined;
     if (p?.hand && effectOf(p.hand.currency) === "fracture") continue;
-    const to = matchTargets(doc, id).map((m) => m.to).find((x): x is string => !!x && x !== id && (x !== "start" || c.out === "lost")) ?? (c.out === "hit" ? sameHitOf(doc, id) : swapJunkOf(c, p));
+    const targets = matchTargets(doc, id).map((m) => m.to);
+    // 「どれか」の当たりの箱 (anyOf) は、どれが付いても同じ箱へ行く時だけつなぐ (付いた物で行き先が分かれるなら、回す時の settle が実物で形の合う箱へ。10-26)
+    if (c.anyOf?.length && new Set(targets).size > 1) continue;
+    const to = targets.find((x): x is string => !!x && x !== id && (x !== "start" || c.out === "lost")) ?? (c.out === "hit" ? sameHitOf(doc, id) : swapJunkOf(c, p));
     if (!to) continue;
     c.back = to;
     c.autoBack = true;
@@ -223,7 +229,13 @@ export function linkSameShape(doc: TreeDoc, ids: readonly string[]): void {
  * 木を伸ばさずそこへ合流させる (10-25 オーナー「自動で同じ形のツリーまで引っ張ってほしいな矢印そしたら解決でしょ」、notes/2026-10-25-auto-close.md の B)
  */
 function sameHitOf(doc: TreeDoc, id: string): string | null {
-  const keyOf = (x: string): string | null => { const s = heldSets(doc, x); return s.length === 1 ? s[0]!.join(",") : null; };
+  // 組が 1 通りの箱か、「どれか」の当たりの箱 (anyOf、10-26) を通って組が分かれる箱 (組の一覧がそっくり同じなら同じ状態)。狙いが消えた箱の下 (どれが消えたか) は合流しない
+  const keyOf = (x: string): string | null => {
+    const sets = heldSets(doc, x);
+    if (sets.length === 1) return sets[0]!.join(",");
+    const viaAny = (() => { for (let y: string | null = x; y; y = doc.boxes[y]?.parent ?? null) { const c = doc.boxes[y]; if (c?.out === "lost") return false; } return Object.values(doc.boxes).some((c) => c.anyOf?.length); })();
+    return viaAny ? sets.map((h) => h.join(",")).sort().join("|") : null;
+  };
   const k = keyOf(id);
   if (k === null) return null;
   // 行き先は先に作った箱だけ (linkSameShape はまだ決めていない古い箱も見直すので、古い箱が新しい箱へつながる逆向きを作らない)
@@ -252,6 +264,7 @@ export function outBoxOf(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim
     if (c.out === "any" || c.out === "pass") return true;
     // エッセンスの当たりの箱は 1 つ (付く MOD は必ず付く)。付く MOD が完成の狙いに無い時は hits が空でもこの箱 (tree-sample の outcomeOf)
     if (oc.out === "hit" && b.hand && effectOf(b.hand.currency) === "essence") return !after || essenceBoxFits(doc, b, c, after);
-    return oc.out !== "hit" || (!!c.aim && oc.hits.some((a) => a.modId === c.aim!.modId && a.tier === c.aim!.tier));
+    // 「どれか」の当たりの箱は、その一覧のどれかが付いたら (anyOf、10-26)
+    return oc.out !== "hit" || boxAims(c).some((x) => oc.hits.some((a) => a.modId === x.modId && a.tier === x.tier));
   });
 }

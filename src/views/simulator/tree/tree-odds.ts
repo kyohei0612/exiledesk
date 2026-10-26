@@ -9,7 +9,7 @@ import { outcomeOdds } from "../../../services/simulator/sim-engine";
 import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { aimsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { engineOmens } from "../../../services/simulator/tree/tree-hands";
-import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { boxAims, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { craftStage as s } from "../../../state/craft-stage";
 import { useTree } from "./use-tree";
 
@@ -18,13 +18,14 @@ export function oddsOfHand(doc: TreeDoc, id: string): Map<string, number> | null
   const data = s.data.value, b = doc.boxes[id];
   if (!data || !b?.hand || b.hand.repeat || b.hand.free || b.outs.length < 2) return null;
   const kids = b.outs.map((o) => doc.boxes[o]!).filter(Boolean);
-  const hits = kids.filter((k) => k.out === "hit" && k.aim).map((k) => k.aim!);
+  const hits = kids.filter((k) => k.out === "hit" && k.aim).flatMap((k) => boxAims(k));
   const aims = [...hits, ...aimsOf(doc).filter((a) => !hits.some((h) => h.modId === a.modId && h.tier === a.tier))];
   const odds = outcomeOdds(data, prepFor(data, sampleOf(data, doc, id, 1).item, b.hand.currency), b.hand.currency, engineOmens(b.hand), aims, { sameText: true });
   if (!odds) return null;
   const out = new Map<string, number>();
   for (const o of odds) {
-    const hit = o.out === "hit" && o.aim ? kids.find((k) => k.out === "hit" && k.aim?.modId === o.aim!.modId && k.aim.tier === o.aim!.tier) : undefined;
+    // 「どれか」の当たりの箱 (anyOf) は一覧のどれかの割合を足す (10-26)
+    const hit = o.out === "hit" && o.aim ? kids.find((k) => k.out === "hit" && boxAims(k).some((a) => a.modId === o.aim!.modId && a.tier === o.aim!.tier)) : undefined;
     // 当たりの箱の無い狙いが付いた = 外れの箱
     const to = hit ?? kids.find((k) => k.out === (o.out === "hit" ? "junk" : o.out));
     if (to) out.set(to.id, (out.get(to.id) ?? 0) + o.p);
