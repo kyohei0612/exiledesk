@@ -11,7 +11,7 @@ import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { aimKey, setBack, setDone, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { heldSets } from "../../../services/simulator/tree/tree-shape";
 import { useTree } from "../tree/use-tree";
-import { handLabel, outName, outsName } from "../tree/tree-names";
+import { handLabel, headOf, outName, outsName } from "../tree/tree-names";
 import { tr } from "../../../i18n/lang";
 
 /** 答えの要る結果の箱か (手も戻りも完成も分かれ目も無い。始まり・品質だけの通り抜けは ① で聞く) */
@@ -145,7 +145,8 @@ export function usePhoneQuiz() {
     const held: string[] = [];
     for (let x: TreeBox | undefined = b; x; x = x.parent ? t.doc.value.boxes[x.parent] : undefined) if (x.out === "hit" && x.aim) held.unshift(x.anyOf && x.anyOf.length > 1 ? tr(`${x.anyOf.map(t.aimShort).join(" / ")} のどれか`, `any of ${x.anyOf.map(t.aimShort).join(" / ")}`) : t.aimShort(x.aim));
     const list = [...new Set(held)].join(tr("・", ", "));
-    if (b.out === "hit") return `${outName("hit")} ${list}`;
+    // 当たりは PC の枠の札と同じ「スピリットが付いた」(10-26 オーナー「枠の上のところに●がついた みたいな形でよくある枠の形にしたら枠中ごちゃんなくていいよな」)
+    if (b.out === "hit") return headOf(b, t.aimShort);
     return held.length ? `${outsName(b)} (${list})` : outsName(b);
   }
   /** 道の短い 1 行 (始まり › 手 › 結果 …) */

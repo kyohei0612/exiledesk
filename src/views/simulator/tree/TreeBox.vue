@@ -6,11 +6,11 @@
 import { computed } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
 import { splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
-import { BOX_H, BOX_W, fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type TreeBox } from "../../../services/simulator/tree/tree-model";
+import { boxAims, BOX_H, BOX_W, fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type TreeBox } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { useTree } from "./use-tree";
-import { handName, OUT_LOOK, outsName, rarityName, splitWhenText } from "./tree-names";
+import { handName, headOf, OUT_LOOK, rarityName, splitWhenText } from "./tree-names";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { pctText, useTreeOdds } from "./tree-odds";
 import { orphanHits, routeText } from "./tree-fail";
@@ -46,6 +46,10 @@ const checkTitle = computed(() => (props.box.check ?? []).map((k) => tr(CHECK_PA
 
 /** 結果ごとの名前・色・印 (tree-names.ts の OUT_LOOK、まとめた札と同じ) */
 const kind = computed(() => OUT_LOOK[props.box.out]);
+/** 枠の上の線に乗る題 (tree-names の headOf) */
+const head = computed(() => headOf(props.box, t.aimShort));
+/** 乗せた時の題の全文 (当たりは MOD の文そのまま) */
+const headTitle = computed(() => (props.box.out === "hit" && props.box.aim ? boxAims(props.box).map(t.aimShort).join(" / ") : head.value));
 /** この結果の箱に着く割合 (無ければ出さない、tree-odds.ts) */
 const treeOdds = useTreeOdds();
 const odds = computed(() => treeOdds.value.get(props.box.id) ?? null);
@@ -122,9 +126,9 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     :class="[x === undefined ? 'relative' : 'absolute', picking || viewOnly ? 'cursor-pointer' : 'cursor-grab', picking ? (linkNo ? 'cursor-not-allowed opacity-35 grayscale' : 'ring-2 ring-cyan-400/70 hover:ring-cyan-300') : '', glow ? 'ring-2 ring-amber-200/70' : '', issue && !jl ? '!border-rose-500 !shadow-[0_0_16px_rgba(244,63,94,0.55)]' : '', jl === 'no' ? 'opacity-25 grayscale' : jl ? '!border-amber-200 !shadow-[0_0_24px_rgba(252,211,77,0.8)]' : '']"
     :style="{ ...(x === undefined ? {} : { left: `${x}px`, top: `${y}px` }), width: `${BOX_W}px`, height: `${BOX_H}px`, ...neon }" :title="picking && linkNo ? linkNo : undefined" @pointerdown="down" @pointerenter="emit('hover', true)" @pointerleave="emit('hover', false)">
     <!-- 縮めている時 (k > 1) は押せる物の行を倍率分高くし、まだ「—」だけの数字の行は隠す (箱が小さくても押せる物どうしが重ならない) -->
+    <!-- 題は枠の上の線に乗る札 (よくある枠の形。枠の中は割合・中身・戻り方だけ。10-26 オーナー「枠の上のところに●がついた みたいな形でよくある枠の形にしたら枠中ごちゃんなくていいよな」) -->
+    <span data-tree-legend class="pointer-events-none absolute -top-[10px] left-2 flex max-w-[calc(100%-16px)] items-center gap-1 rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="{ color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :title="headTitle"><Icon :name="kind.icon" class="size-3 shrink-0" /><span class="min-w-0 truncate">{{ head }}</span></span>
     <div class="flex items-center gap-1.5" :style="{ height: `${24 * k}px` }">
-      <span class="flex size-5 shrink-0 items-center justify-center rounded-md" :style="{ background: `rgba(${rgb},0.18)`, color: `rgb(${rgb})` }"><Icon :name="kind.icon" class="size-3.5" /></span>
-      <span class="truncate text-[11px] font-bold tracking-wide" :style="{ color: `rgb(${rgb})` }">{{ outsName(box) }}</span>
       <!-- この結果に着く割合 (親の箱のアイテム × 手、エンジンの outcomeOdds。tree-odds.ts) -->
       <span v-if="odds != null" data-tree-odds class="shrink-0 text-[11px] tabular-nums opacity-80" :title="tr('この手でこの結果になる割合 (1 手分、エンジンから)', 'Chance of this result from the craft (one use, from the engine)')">{{ pctText(odds) }}</span>
       <!-- 始まりのアイテムレベルは見出しに (ベースの名前が長いと下の行で切れて見えない、10-22 靴) -->

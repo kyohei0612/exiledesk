@@ -8,7 +8,7 @@ import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { craftStage as s } from "../../../state/craft-stage";
 import { freshItem } from "../../../services/craft-stage/engine";
 import { CATALYSING, isCatalyst } from "../../../services/simulator/tree/tree-hands";
-import { fractureMarks, startRarity, startsFractured, type Hand, type SplitWhen, type TreeBox, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
+import { boxAims, fractureMarks, startRarity, startsFractured, type Hand, type SplitWhen, type TreeBox, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { tr } from "../../../i18n/lang";
 
@@ -47,6 +47,16 @@ export const outName = (out: TreeBox["out"]): string => tr(OUT_LOOK[out].ja, OUT
 /** 箱の結果の名前 (同じ形でまとめた箱は「外れ・狙いが消えた」) */
 export const outsName = (b: { out: TreeBox["out"]; mergedOuts?: Array<TreeBox["out"]> }): string => [b.out, ...(b.mergedOuts ?? [])].map(outName).join(tr("・", " / "));
 
+/** MOD の文から数字・括弧・「が増加する」を除いた短い名前 (枠の札で「キャストスピードが(25-28)%増加するが付いた」と長くなった。全文は乗せた時の文で) */
+export const modShort = (text: string): string => text.replace(/\([^)]*\)/g, "").replace(/[+-]?\d+(\.\d+)?%?/g, "").replace(/%/g, "").replace(/が(増加|減少)する$/, "").replace(/\s+/g, " ").trim() || text;
+/**
+ * 箱の題 (枠の上の線に乗る札、スマホの行の題)。当たりは「スピリットが付いた」(どれかの箱は「スピリットかライフが付いた」)、ほかは結果の名前 (外れ・狙いが消えた・打った後…)。
+ * 「当たり」とは書かない (狙い無しの手の下でも付いた MOD が分かるように、狙いのある手も同じ言い方に揃えた。10-26 オーナー「枠の上のところに●がついた みたいな形でよくある枠の形にしたら枠中ごちゃんなくていいよな」)
+ */
+export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts">, aimShort: (a: NonNullable<TreeBox["aim"]>) => string): string {
+  if (b.out === "hit" && b.aim) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")); return tr(`${n}が付いた`, `${n} added`); }
+  return outsName(b);
+}
 /** 値段のキー (カレンシー・お告げ・骨・エッセンス・カタリスト) → 画面の言語の名前 (クラフト台の棚と同じ) */
 export const handName = (key: string): string => nameOfKey(key, baseItem.value);
 
