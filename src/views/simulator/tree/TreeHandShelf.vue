@@ -29,6 +29,7 @@ import { stageHelp } from "../../../state/for-share/craft-stage-help";
 import { usePhone } from "../../../utils/use-phone";
 import { simOp } from "../../../web/track";
 import { fixedValues } from "./tree-fixed-values";
+import { previewUse } from "../../../services/emulator/emu-engine";
 import { useDismiss } from "../../../utils/use-dismiss";
 
 const props = defineProps<{ boxId: string; current: Hand | null }>();
@@ -41,6 +42,12 @@ const t = useTree();
 const sample = computed(() => (s.data.value ? sampleOf(s.data.value, t.doc.value, props.boxId, 1) : null));
 const item = computed(() => sample.value?.item ?? null);
 /** 出すカードの MOD の値は木の中で揃える (箱・完成形のカードと同じ、tree-fixed-values。10-26 夜 カードが +49・手の窓が +48 で食い違った)。打つ・判定は見本の値のまま */
+/**
+ * 持った物を打つ前に光らせる: 消える・入れ替わる候補の MOD (オレンジの文字) と付く空き (緑の枠)。エミュの CraftStage と同じエンジンの previewUse
+ * (10-27 オーナー「削減やらエッセンスやら、エミュだと消す候補の MOD の色を変えるよね。それをシミュにも同じのを導入しよう」)。打てない時は出さない。
+ * 木の箱のカードには出さない (10-27 に箱へも出す書き換えをオーナーが止めた)
+ */
+const preview = computed(() => { const d = s.data.value, it = preCat.value ? shelfItem.value : item.value ?? shelfItem.value, h = held.value; return d && it && h && !problem.value ? previewUse(d, it, h, omens.value) : null; });
 const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it) : it);
 /** 狙いに当たらない MOD の行は「外れ MOD」(乗せた時のカードと同じ、10-25 オーナー「プラスで MOD 選んだ時ハズレ MOD の表示が溶けてる」) */
 const rowTags = (it: StageItem | null) => (s.data.value && it ? treeRowTags(s.data.value, t.doc.value, t.doc.value.boxes[props.boxId]?.unwanted ?? [], it, t.doc.value.boxes[props.boxId]) : null);
@@ -268,7 +275,7 @@ function ok(): void {
     <!-- この箱の時点のアイテム (見本)。持ってカードを押す = この手にする (エミュと同じ操作) -->
     <!-- カードの下はエミュと同じく空ける (持っている間はカードのすぐ下に「押すと使う · 右クリック / Esc で手放す」が重ねて出る) -->
     <div class="flex min-w-0 flex-col gap-8 md:w-[480px]">
-      <div data-tree-hand-card :class="held && problem ? 'cursor-not-allowed opacity-60' : ''" :title="problem ?? undefined"><StageItemCard v-if="shelfItem" :item="cardOf(preCat ? shelfItem : item ?? shelfItem)" :row-tags="rowTags(preCat ? shelfItem : item ?? shelfItem)" :added="[]" :removed="[]" :holding="!!held && !problem" :flash-key="0" @use="ok" /></div>
+      <div data-tree-hand-card :class="held && problem ? 'cursor-not-allowed opacity-60' : ''" :title="problem ?? undefined"><StageItemCard v-if="shelfItem" :item="cardOf(preCat ? shelfItem : item ?? shelfItem)" :row-tags="rowTags(preCat ? shelfItem : item ?? shelfItem)" :added="[]" :removed="[]" :holding="!!held && !problem" :flash-key="0" :doomed="preview?.change ?? []" :open="preview?.open ?? null" @use="ok" /></div>
       <div class="flex min-w-0 flex-col gap-1.5">
         <p class="text-[12px] opacity-70">{{ tr("棚から持って、カードを押すとこの箱の次の手になる", "Hold a currency from the shelf and click the item to make it this box's next craft") }}</p>
         <!-- 打たずに分ける (分かれ目) のボタンは 10-25 に外した (オーナー「分かれ道マジでややこしいからボタンいらない」)。分かれ目は見本の木にある物だけ、窓 TreeSplitPick で行を直せる -->

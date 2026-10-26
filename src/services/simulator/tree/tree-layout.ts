@@ -68,9 +68,13 @@ export function tidy(d: TreeDoc, chipW?: (id: string) => number | undefined): vo
     const ks = kids(id), me = row.get(id)!;
     const acc: Contour = new Map();
     const offs: number[] = [], cs: Contour[] = [];
-    for (const k of ks) {
-      const c = layout(k);
-      for (let r = me + 1; r < row.get(k)!; r++) put(c, r, BOX_W / 2 - STEM, BOX_W / 2 + STEM);
+    // 兄弟の組の一番深い行まで、子の無い行にも箱の幅の列を取る = 箱の真下に別の親の子 (隣の兄弟の子孫) が入らない
+    // (10-27 オーナー「ツリーとして下の枠に被るんだったら、下を基準に、上の狙いが付いた時の枠を横にずらしてあげてくれ」: 当たりの箱の真下に、隣の「狙いが消えた」の子が来ていた)
+    const subs = ks.map((k) => { const c = layout(k); for (let r = me + 1; r < row.get(k)!; r++) put(c, r, BOX_W / 2 - STEM, BOX_W / 2 + STEM); return c; });
+    const deepest = Math.max(me, ...subs.flatMap((c) => [...c.keys()]));
+    // 子の無い行は、すぐ上の行の輪郭をそのまま下へ伸ばす (孫の段で開いた所にも別の枝が入らない)
+    subs.forEach((c, i) => { for (let r = row.get(ks[i]!)! + 1; r <= deepest; r++) if (!c.has(r)) { const up = c.get(r - 1) ?? [0, BOX_W]; put(c, r, up[0], up[1]); } });
+    for (const c of subs) {
       cs.push(c);
       let off = 0;
       if (offs.length) {

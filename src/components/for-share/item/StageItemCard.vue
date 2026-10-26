@@ -334,7 +334,8 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
           <span v-fit-text="!modsOnly" class="min-w-0 flex-1 text-center" :class="modsOnly ? 'st-mo-mid' : ''">
             <!-- 消える候補は文字をオレンジに (フラクチャーのくすんだ金色と被らない色。2026-10-07 オーナー「光るの文字にしようか、フラクチャーの色被らんようにオレンジで」) -->
             <!-- 未発現はゲームと同じく緑の崩れた文字 (中身は分からない。ホバーで「未発現の冒涜 MOD (側)」。2026-10-17 オーナー「アイテムについた冒涜未発現はこの感じ、全体的に緑」) -->
-            <span v-if="rowTags?.get(r.m.modId)?.replace" data-row-tag-name :class="ROW_TAG_TEXT[rowTags.get(r.m.modId)!.tone]" :title="rowTags.get(r.m.modId)!.title">{{ rowTags.get(r.m.modId)!.text }}</span>
+            <!-- 札で名前を替えた行 (外れ MOD など) も、消える候補ならオレンジ (10-27 シミュの手の窓で消去を持った時に外れの行だけ色が付かなかった) -->
+            <span v-if="rowTags?.get(r.m.modId)?.replace" data-row-tag-name :class="isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : ROW_TAG_TEXT[rowTags.get(r.m.modId)!.tone]" :title="rowTags.get(r.m.modId)!.title">{{ rowTags.get(r.m.modId)!.text }}</span>
             <span v-else-if="r.m.unrevealed" data-unrevealed class="font-sans tracking-wider text-[#a6e05c] [text-shadow:0_0_6px_rgba(140,220,80,0.75)]" :title="r.text">{{ UNREVEALED_GLYPHS }}</span>
             <span v-else-if="r.shown" :class="isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : ''" :title="tr('素の値 (上乗せを抜いた値)。小さい数字は品質・効果・聖別で盛った値', 'Base value (without boosts). The small number is the boosted value')">{{ r.text }}<span data-boosted-value class="ml-1 text-[10px] tabular-nums text-[#7ee8ff]">({{ r.shown }})</span></span>
             <span v-else :class="[isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : r.boosted ? 'text-[#7ee8ff]' : '']" :title="r.boosted ? tr(`品質で伸びた数値 (素は ${modText(r.m)})`, `Boosted by quality (base: ${modText(r.m)})`) : undefined">{{ r.text }}</span>

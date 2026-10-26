@@ -11,6 +11,7 @@ import StageItemCard from "../../../components/for-share/item/StageItemCard.vue"
 import { craftStage as s } from "../../../state/craft-stage";
 import { shapeSampleOf } from "../../../services/simulator/tree/tree-sample-shape";
 import { fixedValues } from "./tree-fixed-values";
+import { previewUse } from "../../../services/emulator/emu-engine";
 import { sideAims } from "./tree-side-aims";
 import { treeRowTags } from "./tree-row-tags";
 import { splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
@@ -63,6 +64,8 @@ const canJoin = computed(() => (!props.box.hand && !props.box.done ? joinCandida
 const startJoin = (): void => { joinMode.value = { anchor: props.box.id, pick: [] }; };
 /** MOD の値は木の中で揃える (貼った値か段の真ん中、tree-fixed-values。10-26 夜オーナー「ツリー内で同じ MOD じゃないと混乱する」) */
 const sample = computed(() => (s.data.value && props.box.out !== "start" ? shapeSampleOf(s.data.value, t.doc.value, props.box.id) : null));
+/** この箱の手で消える・入れ替わる候補の MOD (オレンジの文字。手の窓・エミュと同じエンジンの previewUse、10-27 オーナー「打つ前の箱のカード」も)。手の無い箱・打てない手は無し */
+const cardDoomed = computed((): readonly string[] => { const d = s.data.value, it = sample.value, h = props.box.hand; if (!d || !it || !h) return []; try { return previewUse(d, it, h.currency, h.omens)?.change ?? []; } catch { return []; } });
 const cardItem = computed(() => (s.data.value && sample.value ? fixedValues(s.data.value, t.doc.value, sample.value) : null));
 const cardTags = computed(() => (s.data.value && cardItem.value ? treeRowTags(s.data.value, t.doc.value, props.box.unwanted ?? [], cardItem.value, props.box) : null));
 /** 要確認 (古い版・壊れたレシピで読めなかった所、tree-migrate) の文 */
@@ -211,7 +214,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     <!-- 今のアイテムの枠 (乗せた時のカードと同じ StageItemCard の MOD の行だけを箱の幅いっぱいに (縮めない)。10-26 オーナー「アイテム枠は個人的に好きやからそのままがいいなさっきの」「枠内はアイテムの形とその下に次どうするかくらいか？まとめるとかも別にアイテム枠の下とかに出したらええんちゃう」) -->
     <!-- 箱の流れの中に置き、MOD が多ければ箱が伸びる (切らない) -->
     <div v-if="cardItem" data-tree-box-card class="pointer-events-none" :class="box.out === 'start' ? 'mt-0.5' : 'mt-3'">
-      <div :style="{ width: `${CARD_W}px` }"><StageItemCard :item="cardItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact mods-only with-title :row-tags="cardTags" /></div>
+      <div :style="{ width: `${CARD_W}px` }"><StageItemCard :item="cardItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact mods-only with-title :row-tags="cardTags" :doomed="cardDoomed" /></div>
     </div>
 
 
