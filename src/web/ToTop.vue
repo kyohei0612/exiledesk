@@ -1,9 +1,10 @@
 <!--
   ToTop.vue — スマホの「上へ戻る」ボタン (2026-10-25 オーナーがスマホの見え方を見て)。全部の画面の右下に付いてくる。少し下へ送った時だけ出し、押すと一番上へ。
   下に留まる帯 (data-bottom-bar・デイリーの data-daily-go・シミュのスマホの data-phone-bar。fixed か下に貼り付いた sticky) が出ている時はその上に浮かせて重ねない。PC (768px 以上) は出さない。WebApp.vue に 1 つ
+  重ね窓 (ModalShell などの role=dialog・シミュのスマホの箱の窓 data-phone-sheet・結果のまとめ data-phone-report) が開いている間は出さない (中のカードを隠していた、10-26 夜シミュのスマホ版)
 -->
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import Icon from "../components/ui/Icon.vue";
 import { tr } from "../i18n/lang";
 import { usePhone } from "../utils/use-phone";
@@ -14,8 +15,10 @@ const shown = ref(false);
 const lift = ref(0);
 /** これより下へ送ったら出す (画面の半分くらい) */
 const SHOW_AT = 400;
+/** 開いている間は出さない重ね窓 */
+const OVERLAY = "[role=dialog], [data-phone-sheet], [data-phone-report]";
 function update(): void {
-  shown.value = window.scrollY > SHOW_AT;
+  shown.value = window.scrollY > SHOW_AT && !document.querySelector(OVERLAY);
   let h = 0;
   // 下に留まる帯 (fixed と、画面の下に貼り付いている sticky。シミュのスマホの data-phone-bar は sticky で「↷ やり直し」に重なっていた、モンキー 10-26 の 15)
   for (const el of document.querySelectorAll<HTMLElement>("[data-bottom-bar], [data-daily-go], [data-phone-bar]")) {
@@ -30,8 +33,11 @@ function update(): void {
 const toTop = (): void => window.scrollTo({ top: 0, behavior: "smooth" });
 let raf = 0;
 const onScroll = (): void => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; update(); }); };
+// 重ね窓の開け閉めはスクロールが起きないので、要素の出入りで見直す (スマホだけ。1 コマに 1 回)
+const mo = typeof MutationObserver !== "undefined" ? new MutationObserver(onScroll) : null;
 onMounted(() => { window.addEventListener("scroll", onScroll, { passive: true }); window.addEventListener("resize", onScroll); update(); });
-onBeforeUnmount(() => { window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onScroll); cancelAnimationFrame(raf); });
+watch(phone, (p) => { mo?.disconnect(); if (p) mo?.observe(document.body, { childList: true, subtree: true }); }, { immediate: true });
+onBeforeUnmount(() => { window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onScroll); mo?.disconnect(); cancelAnimationFrame(raf); });
 </script>
 
 <template>
