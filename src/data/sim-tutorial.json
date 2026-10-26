@@ -1,0 +1,67 @@
+{
+  "v": 1,
+  "course": "absent-amulet",
+  "steps": [
+    {
+      "id": "start-exalt",
+      "kind": "hand",
+      "box": "start",
+      "key": "exalt",
+      "omens": [
+        "OmenofSinistralExaltation"
+      ],
+      "aim": "Amulets/BaseSpirit"
+    },
+    {
+      "id": "miss-ward",
+      "kind": "hand",
+      "box": "x1",
+      "key": "essence:perfect:Amulets/PerfectEssence_RunicWardPercent",
+      "omens": []
+    },
+    {
+      "id": "ward-exalt",
+      "kind": "hand",
+      "box": "r",
+      "key": "exalt",
+      "omens": [
+        "OmenofSinistralExaltation"
+      ],
+      "aim": "Amulets/BaseSpirit"
+    },
+    {
+      "id": "miss-annul",
+      "kind": "hand",
+      "box": "rj",
+      "key": "annul",
+      "omens": []
+    },
+    {
+      "id": "spirit-exalt",
+      "kind": "hand",
+      "box": "rs",
+      "key": "exalt",
+      "omens": [],
+      "aim": "Amulets/IncreasedCastSpeed"
+    },
+    {
+      "id": "done",
+      "kind": "done",
+      "box": "d"
+    },
+    {
+      "id": "auto",
+      "kind": "auto"
+    },
+    {
+      "id": "run",
+      "kind": "run"
+    },
+    {
+      "id": "end",
+      "kind": "end"
+    }
+  ],
+  "texts": {},
+  "targets": {}
+}
