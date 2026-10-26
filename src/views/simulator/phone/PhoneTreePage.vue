@@ -19,7 +19,8 @@ import { applyPick, type OnlyOut } from "../tree/tree-hand-plan";
 import { useTree } from "../tree/use-tree";
 import { clearHand, setAim, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
-import { outStep, phoneRun, sheet, usePhoneQuiz, type Question } from "./use-phone-quiz";
+import { outStep, phoneRun, sheet, testedKey, usePhoneQuiz, type Question } from "./use-phone-quiz";
+import { routeKeyOf } from "../tree/use-tree-check";
 import { stepOf } from "../tree/tree-fail";
 import PhoneAsk from "./PhoneAsk.vue";
 import PhoneOverview from "./PhoneOverview.vue";
@@ -168,7 +169,7 @@ function goBox(id: string): void {
         <button type="button" data-phone-walk-back :class="FLAT" :disabled="trailAt <= 0" @click="walk(-1)">‹ {{ tr("1 つ前", "Back") }}</button>
         <span class="min-w-0 flex-1 break-words text-center">
           <b v-if="stepNow" class="text-[14px] text-amber-200">{{ tr(`${stepNow} 段目`, `Step ${stepNow}`) }}</b><span class="opacity-70"> / {{ tr(`全 ${stepAll} 段`, `${stepAll} steps`) }}</span>
-          <span v-if="total" class="opacity-70"> · {{ tr(`未定 ${total}`, `${total} open`) }}</span>
+          <span v-if="total && testedKey === routeKeyOf(t.doc.value)" class="opacity-70"> · {{ tr(`未定 ${total}`, `${total} open`) }}</span>
         </span>
         <button type="button" data-phone-walk-fwd :class="FLAT" :disabled="trailAt >= trail.length - 1" @click="walk(1)">{{ tr("先へ", "Forward") }} ›</button>
       </div>

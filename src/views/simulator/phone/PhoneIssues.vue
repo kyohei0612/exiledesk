@@ -7,8 +7,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useTree } from "../tree/use-tree";
-import { useTreeCheck } from "../tree/use-tree-check";
-import { sheet, usePhoneQuiz } from "./use-phone-quiz";
+import { routeKeyOf, useTreeCheck } from "../tree/use-tree-check";
+import { sheet, testedKey, usePhoneQuiz } from "./use-phone-quiz";
 import { flag } from "../../../web/release-flags";
 import { tr } from "../../../i18n/lang";
 
@@ -22,6 +22,9 @@ const { checking, progress } = check;
  */
 const issues = computed(() => (check.issues.value ?? []).filter((x) => !(x.kind === "open" && !t.doc.value.boxes[x.boxId]?.split) && !(x.kind === "noDone" && x.boxId === "start" && q.questions.value.length > 0)));
 const MAP = flag("phoneMap");
+/** テストで回した後 (木の形がその時のまま) だけ結果を出す */
+const tested = computed(() => testedKey.value === routeKeyOf(t.doc.value));
+function test(): void { testedKey.value = routeKeyOf(t.doc.value); void check.runCheck(); }
 /** 一覧の重ね窓を開いている */
 const listOpen = ref(false);
 function open(id: string): void {
@@ -36,8 +39,11 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
 </script>
 
 <template>
-  <button v-if="checking || issues.length" type="button" data-phone-issues :disabled="checking && !issues.length" class="flex min-h-10 w-full min-w-0 items-center gap-2 rounded-xl border border-rose-400/40 bg-[#1d0f10] px-3 py-1.5 text-left text-[13px] font-bold text-rose-200" :aria-expanded="listOpen" @click="listOpen = true">
-    <span class="min-w-0 flex-1 break-words text-center">{{ checking ? tr(`足りない所を調べている${progress ? ` ${progress.n}/${progress.of}` : ""}`, `Checking${progress ? ` ${progress.n}/${progress.of}` : ""}`) : tr(`足りない所 ${issues.length} 件`, `${issues.length} missing`) }}</span>
+  <!-- テストで回す (PC の帯と同じ言い方)。押す前は足りない所を出さない -->
+  <button v-if="!tested" type="button" data-phone-test class="flex min-h-10 w-full items-center justify-center gap-2 rounded-md bg-white/[0.06] px-3 text-[13px] text-[#d8ccb4] hover:bg-white/10" @click="test">{{ tr("テストで回す", "Test run") }}</button>
+  <p v-else-if="!checking && !issues.length" data-phone-test-ok class="flex min-h-10 items-center justify-center gap-2 text-[13px] font-bold text-emerald-300">{{ q.questions.value.length ? tr(`✓ 止まる所なし · 未定 ${q.questions.value.length}`, `✓ No dead ends · ${q.questions.value.length} open`) : tr("✓ 合格", "✓ Passed") }} <button type="button" class="min-h-10 px-1 text-[12px] font-normal text-[#9a8a70] underline decoration-white/20" @click="test">{{ tr("もう一度テスト", "Test again") }}</button></p>
+  <button v-else type="button" data-phone-issues :disabled="checking && !issues.length" class="flex min-h-10 w-full min-w-0 items-center gap-2 rounded-xl border border-rose-400/40 bg-[#1d0f10] px-3 py-1.5 text-left text-[13px] font-bold text-rose-200" :aria-expanded="listOpen" @click="listOpen = true">
+    <span class="min-w-0 flex-1 break-words text-center">{{ checking ? tr(`テスト中…${progress ? ` ${progress.n}/${progress.of}` : ""}`, `Testing…${progress ? ` ${progress.n}/${progress.of}` : ""}`) : tr(`足りない所 ${issues.length} 件`, `${issues.length} missing`) }}</span>
     <span v-if="issues.length" class="shrink-0 text-[12px] font-normal text-rose-100/80">{{ tr("見る ▾", "View ▾") }}</span>
   </button>
   <!-- 一覧の重ね窓 (閉じれば元の場所・スクロールのまま) -->
