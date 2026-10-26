@@ -10,7 +10,6 @@ import TreeRunReport from "../tree/TreeRunReport.vue";
 import { RUN_N, useTreeRun } from "../tree/use-tree-run";
 import { craftStage as s } from "../../../state/craft-stage";
 import ModeTabs from "../../../components/for-share/ModeTabs.vue";
-import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import TreeOverlays from "../tree/TreeOverlays.vue";
 import TreeHandPage from "../tree/TreeHandPage.vue";
 import TreePanelPage from "../tree/TreePanelPage.vue";
@@ -18,18 +17,17 @@ import TreeRecipeBar from "../tree/TreeRecipeBar.vue";
 import { applyPick, type OnlyOut } from "../tree/tree-hand-plan";
 import { useTree } from "../tree/use-tree";
 import { clearHand, setAim, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
-import { jaTypeName } from "../../../i18n/item-names-ja";
 import { tr } from "../../../i18n/lang";
 import { phoneRun, sheet, usePhoneQuiz } from "./use-phone-quiz";
 import PhoneAsk from "./PhoneAsk.vue";
 import PhoneRoutes from "./PhoneRoutes.vue";
-import PhoneMap from "./PhoneMap.vue";
+import PhoneOverview from "./PhoneOverview.vue";
 import PhoneBoxSheet from "./PhoneBoxSheet.vue";
 import PhoneIssues from "./PhoneIssues.vue";
 import { flag } from "../../../web/release-flags";
 import { simAct, simOp } from "../../../web/track";
 import PhoneMemo from "./PhoneMemo.vue";
-import { mapFolded, setMapFold } from "./map-fold";
+import { setMapFold } from "./map-fold";
 import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { quickSave, unsaved } from "../tree/tree-save";
 import { askLeave } from "../../../web/page";
@@ -46,8 +44,6 @@ const aimFor = ref<string | null>(null);
 const routesOpen = ref(false);
 // 重ね窓の「この回の質問へ」・足りない所の「直しに行く」で質問を替えたら、全体を見るの一覧は閉じて質問を出す (開いたままで質問が見えなかった、10-26)
 watch(() => q.focus.value, () => { routesOpen.value = false; });
-/** 完成形のカードを開いている */
-const goalOpen = ref(true);
 /** ツリーのメモを書いている (PhoneMemo) */
 const memoEdit = ref(false);
 /** 白紙に戻す = PC と同じ (SimTreePage の onClear): スタートと完成形を残して下を消す。作りかけは 3 択、保存済みは 2 回押し */
@@ -56,10 +52,6 @@ function onClear(): void {
   const go = (): void => { simOp("clear"); t.reset(); setCurrentTreeRecipe(null); q.reset(); window.scrollTo(0, 0); };
   if (unsaved(t.doc.value)) askLeave(go, () => void quickSave()); else if (clearArm.arm()) go();
 }
-/** 帯の小さなボタン (PC の 0 の枠 TreeGoalCard の札と同じ形、指で押せる高さ 32px) */
-const PILL = "shrink-0 rounded-md border border-[#c9a45c]/60 bg-gradient-to-b from-[#3a2c14] to-[#1a1309] px-2.5 text-[12px] font-bold leading-[38px] text-[#f2d27a]";
-const marks = computed(() => t.goals.value.filter((a) => a.fractured).map((a) => a.modId));
-const cardW = computed(() => Math.min(360, (typeof window === "undefined" ? 375 : window.innerWidth) - 40));
 
 /** 棚で手を決めた = PC の pickHand と同じ組み替え (tree-hand-plan の applyPick)。続けてその手の結果 (②) を出す */
 function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null, only: OnlyOut): void {
@@ -142,18 +134,6 @@ function goBox(id: string): void {
       </div>
       <!-- ツリーのメモ (文だけ、書いてあれば全文) -->
       <PhoneMemo v-model:editing="memoEdit" />
-      <!-- 完成形 = PC と同じく完成形の MOD をアイテムの枠で (10-26 夜オーナー「まず情報過多」: 上に留める文字の帯と狙いの丸い札をやめた)。中央揃え、見出しを押すと畳める -->
-      <section data-phone-goal class="flex min-w-0 flex-col items-center gap-2 text-center">
-        <button type="button" data-phone-goal-fold class="flex min-h-10 max-w-full items-center justify-center gap-2 text-[14px]" :aria-expanded="goalOpen" @click="goalOpen = !goalOpen">
-          <b class="shrink-0 text-[#f2d27a]">{{ tr("完成形", "Final item") }}</b><span class="min-w-0 break-words text-[#d8ccb4]">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}</span><span class="shrink-0 text-[11px] opacity-70">{{ goalOpen ? "▾" : "▸" }}</span>
-        </button>
-        <StageItemCard v-if="goalOpen && t.goalItem.value && t.goals.value.length" data-phone-goal-card :item="t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :fracture-group="marks" tier-at-least />
-        <p v-else-if="goalOpen && !t.goals.value.length" class="text-[12px] text-[#9a8a70]">{{ tr("MOD はまだ (下の MOD で決める)", "No mods yet (set them with Mods)") }}</p>
-        <span class="flex justify-center gap-2">
-          <button type="button" data-phone-goal-open="base" :class="PILL" @click="t.goalPage.value = 1">{{ tr("ベース", "Base") }}</button>
-          <button type="button" data-phone-goal-open="mods" :class="PILL" @click="t.goalPage.value = 2">MOD</button>
-        </span>
-      </section>
       <!-- 進み (残りの道・答えた数) と、残りの道の一覧の切り替え -->
       <div data-phone-progress class="flex items-center gap-2 text-[12px] text-[#d8ccb4]">
         <span>{{ tr("残りの道", "Open paths") }} <b class="text-[15px] text-amber-200">{{ total }}</b></span>
@@ -186,10 +166,9 @@ function goBox(id: string): void {
       <!-- 下の帯 (親指の届く所): 1 つ戻す・今の質問の主な操作 (① 打つ手を選ぶ / ② 決めた / 全部決まったら 100 人回す)・やり直し -->
       <!-- 上にツリーの全体図 (常に出す。今の箱が光る・押すとその箱へ・② の「ほかの箱へ」は図で戻り先を選ぶ。10-26 オーナー) -->
       <div data-phone-bar class="sticky bottom-0 z-10 -mx-2 flex flex-col gap-1.5 border-t border-white/10 bg-[#0c0a08] px-2 py-1.5">
-        <PhoneMap v-if="MAP" />
-        <!-- 全体図を畳んでいる時は細い 1 行 (全幅、押すと開く。高さ 700px 未満は既定で畳む) -->
-        <button v-if="MAP && mapFolded" type="button" data-phone-map-unfold class="flex h-8 w-full items-center gap-2 rounded-md border border-white/10 bg-[#080706] px-3 text-left text-[12px] text-[#d8ccb4]" @click="setMapFold(false)">
-          <span class="min-w-0 flex-1 break-words">{{ tr(`全体図 (箱 ${Object.keys(t.doc.value.boxes).length})`, `Overview (${Object.keys(t.doc.value.boxes).length} boxes)`) }}</span><span class="shrink-0">{{ tr("開く ▴", "Open ▴") }}</span>
+        <!-- 完成形と全体図は重ね窓 (PhoneOverview、10-26 夜オーナー「完成図は表に出さない」)。ここは開く 1 行だけ (全幅) -->
+        <button v-if="MAP" type="button" data-phone-map-unfold class="flex h-8 w-full items-center gap-2 rounded-md border border-white/10 bg-[#080706] px-3 text-left text-[12px] text-[#d8ccb4]" @click="setMapFold(false)">
+          <span class="min-w-0 flex-1 break-words">{{ tr(`完成形と全体図 (箱 ${Object.keys(t.doc.value.boxes).length})`, `Final item & overview (${Object.keys(t.doc.value.boxes).length} boxes)`) }}</span><span class="shrink-0">{{ tr("開く ▴", "Open ▴") }}</span>
         </button>
         <div class="flex gap-2">
         <button type="button" data-phone-undo class="g-btn !min-h-11 shrink-0 px-3" :disabled="!t.canUndo.value" :title="tr('1 つ戻す', 'Undo')" @click="t.undo">↶<span class="ml-1 text-[12px]">{{ tr("戻す", "Undo") }}</span></button>
@@ -205,6 +184,8 @@ function goBox(id: string): void {
       <TreeRunReport :result="run.result.value" @close="reportOpen = false" @go="(id) => { reportOpen = false; goBox(id); }" />
     </div>
     <!-- 箱の重ね窓 (全体図・一覧・戻り先選びで押した箱。移らずに中身を全部、10-26 案 B) -->
+    <!-- 完成形と全体図 (下の帯の 1 行で開く・戻り先を選ぶ間はいつも) -->
+    <PhoneOverview v-if="MAP" />
     <PhoneBoxSheet v-if="MAP && sheet" />
     <TreePanelPage v-if="aimFor && t.doc.value.boxes[aimFor]" :key="`a-${aimFor}`" kind="aim" :box-id="aimFor" :current="t.doc.value.boxes[aimFor]!.aim" @pick="pickAim" @close="aimFor = null" />
   </div>
