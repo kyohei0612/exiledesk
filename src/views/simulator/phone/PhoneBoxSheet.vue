@@ -15,6 +15,8 @@ import { handLabel, OUT_LOOK } from "../tree/tree-names";
 import { pctText, useTreeOdds } from "../tree/tree-odds";
 import { routeText, runText } from "../tree/tree-fail";
 import { useTree } from "../tree/use-tree";
+import { fixedValues } from "../tree/tree-fixed-values";
+import type { StageItem } from "../../../services/craft-stage/types";
 import { mapPick, phoneRun, sheet, usePhoneQuiz } from "./use-phone-quiz";
 import PhoneMap from "./PhoneMap.vue";
 import { tr } from "../../../i18n/lang";
@@ -30,6 +32,8 @@ const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.val
 /** 箱のメモを書いている (PC の TreeNote をそのまま、文だけ) */
 const noteEdit = ref(false);
 watch(id, () => { noteEdit.value = false; });
+/** 出すカードの MOD の値は木の中で揃える (PC の箱・完成形・手の窓と同じ tree-fixed-values、5f1a5f66。表示だけ、打つ・判定は見本の値のまま) */
+const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it) : it);
 const cardW = Math.min(340, (typeof window === "undefined" ? 375 : window.innerWidth) - 40);
 const name = (x: string): string => q.boxTitle(x);
 const route = computed(() => (box.value ? routeText(t.doc.value, id.value, name) : null));
@@ -75,7 +79,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
           <span v-if="odds.get(id) != null" class="shrink-0 text-[12px] font-normal tabular-nums text-[#d8ccb4]">{{ pctText(odds.get(id)!) }}</span>
         </p>
         <p class="break-words text-[11px] text-[#9a8a70]">{{ q.pathText(id) }}</p>
-        <StageItemCard v-if="item" class="mt-2" :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
+        <StageItemCard v-if="item" class="mt-2" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
         <p v-if="route" data-phone-sheet-route class="mt-2 break-words text-[13px] text-cyan-200">{{ route }}</p>
         <p v-else-if="box.done" class="mt-2 text-[13px] text-emerald-300">{{ tr("✓ 完成", "✓ Done") }}</p>
         <p v-if="run" data-phone-sheet-run class="mt-1 break-words text-[12px]" :class="phoneRun?.stuckAt[id] ? 'text-rose-200' : 'text-amber-100/90'">{{ run }}</p>

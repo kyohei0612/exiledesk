@@ -12,6 +12,8 @@ import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { treeRowTags } from "../tree/tree-row-tags";
 import { handLabel } from "../tree/tree-names";
 import { useTree } from "../tree/use-tree";
+import { fixedValues } from "../tree/tree-fixed-values";
+import type { StageItem } from "../../../services/craft-stage/types";
 import { usePhoneQuiz, type Question } from "./use-phone-quiz";
 import PhoneOutRow from "./PhoneOutRow.vue";
 import { tr } from "../../../i18n/lang";
@@ -24,6 +26,8 @@ const box = computed(() => t.doc.value.boxes[props.q.id]);
 const item = computed(() => (s.data.value && box.value ? sampleOf(s.data.value, t.doc.value, props.q.id, 1).item : null));
 const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.value, t.doc.value, box.value?.unwanted ?? [], item.value, box.value) : null));
 /** カードの幅 = 画面の幅 - 左右の余白 (360 まで) */
+/** 出すカードの MOD の値は木の中で揃える (PC の箱・完成形・手の窓と同じ tree-fixed-values、5f1a5f66。表示だけ、打つ・判定は見本の値のまま) */
+const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it) : it);
 const cardW = ref(340);
 const fit = (): void => { cardW.value = Math.min(360, window.innerWidth - 40); };
 onMounted(() => { fit(); window.addEventListener("resize", fit); });
@@ -45,7 +49,7 @@ function showHand(id: string): void { quiz.focus.value = { kind: "hand", id }; }
       <h2 class="text-[17px] font-bold text-[#f0e4c8]">{{ box.hand ? tr("この箱で打つ手", "Craft from this box") : box.out === "start" ? tr("スタート", "Start") : tr("次に何を打つ?", "What do you craft next?") }}</h2>
       <!-- 今のアイテム (この箱に着いた時の形)。完成の狙いの丸い札の並びは 10-26 夜にやめた (オーナー「要らない、頭が痛くなる」。完成形は上のアイテムの枠で見る) -->
       <p class="text-[11px] font-bold text-[#c9b48a]">{{ tr("今のアイテム", "Current item") }}</p>
-      <StageItemCard v-if="item" :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
+      <StageItemCard v-if="item" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
       <template v-if="box.hand">
         <button type="button" data-phone-hand-now class="w-full rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-center text-[14px] text-amber-50" @click="showOuts(q.id)">{{ handLabel(box.hand) }} <span class="ml-2 text-[12px] text-amber-200/80">{{ tr("結果 ›", "Results ›") }}</span></button>
         <button type="button" data-phone-hand-change class="g-btn !min-h-10" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>

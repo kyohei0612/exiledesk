@@ -7,6 +7,8 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useTree } from "../tree/use-tree";
+import { fixedValues } from "../tree/tree-fixed-values";
+import type { StageItem } from "../../../services/craft-stage/types";
 import { useTreeLink } from "../tree/use-tree-link";
 import { backTargetsOf } from "../tree/tree-merge";
 import { handLabel, OUT_LOOK } from "../tree/tree-names";
@@ -82,6 +84,8 @@ const itemOf = (id: string | null) => (s.data.value && id && t.doc.value.boxes[i
 const item = computed(() => itemOf(props.boxId));
 const backItem = computed(() => (backTo.value && backTo.value !== "start" ? itemOf(backTo.value) : null));
 const tagsOf = (id: string, it: ReturnType<typeof itemOf>) => (s.data.value && it ? treeRowTags(s.data.value, t.doc.value, t.doc.value.boxes[id]?.unwanted ?? [], it, t.doc.value.boxes[id]) : null);
+/** 出すカードの MOD の値は木の中で揃える (PC の箱・完成形・手の窓と同じ tree-fixed-values、5f1a5f66。表示だけ、打つ・判定は見本の値のまま) */
+const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it) : it);
 const cardW = Math.min(340, (typeof window === "undefined" ? 375 : window.innerWidth) - 46);
 const CHIP = "inline-flex min-h-10 items-center rounded-full border px-3 py-1.5 text-[13px] leading-tight";
 const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-amber-500/20 text-amber-50" : "border-white/15 bg-white/[0.03] text-[#d8ccb4]"}`;
@@ -95,7 +99,7 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
       <span v-if="odds != null" data-phone-odds class="shrink-0 text-[12px] font-normal tabular-nums text-[#d8ccb4]">{{ pctText(odds) }}</span>
       <span v-if="state === 'open'" class="shrink-0 text-[11px] font-normal text-amber-200/80">{{ tr("どうする?", "Then?") }}</span>
     </p>
-    <StageItemCard v-if="item" data-phone-out-item class="mx-auto mt-2" :item="item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tagsOf(boxId, item)" />
+    <StageItemCard v-if="item" data-phone-out-item class="mx-auto mt-2" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tagsOf(boxId, item)" />
     <!-- 回した結果 (来た人・形の合う別の箱へ移った人・止まった人と理由) -->
     <p v-if="run" data-phone-out-run class="mt-1 break-words text-[12px]" :class="phoneRun?.stuckAt[boxId] ? 'text-rose-200' : 'text-amber-100/80'">{{ run }}</p>
     <!-- 次の手が付いている箱 (① で答えた) は手の名前。押すとその手を見直す -->
@@ -107,7 +111,7 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
       <!-- 戻り先の箱のアイテム (その箱に着いた時の形。始めに戻るはベースなので出さない) -->
       <div v-if="backItem && backTo" data-phone-out-back-item class="mt-1 rounded-lg border border-cyan-300/30 bg-black/20 p-1.5">
         <p class="mb-1 break-words text-[11px] text-cyan-200/80">{{ tr(`戻り先: ${q.pathText(backTo)}`, `Returns to: ${q.pathText(backTo)}`) }}</p>
-        <StageItemCard class="mx-auto" :item="backItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW - 12" compact :row-tags="tagsOf(backTo, backItem)" />
+        <StageItemCard class="mx-auto" :item="cardOf(backItem)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW - 12" compact :row-tags="tagsOf(backTo, backItem)" />
       </div>
       <div class="mt-2 flex flex-wrap justify-center gap-1.5">
         <button type="button" data-phone-ans="later" :class="chipClass(state === 'later')" @click="q.setLater(boxId)">{{ tr("次の手を決める", "Next craft") }}</button>
