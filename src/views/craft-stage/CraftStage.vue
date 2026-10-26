@@ -48,6 +48,7 @@ import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import HeldOmens from "../../components/for-share/shelf/HeldOmens.vue";
+import HeldCursor from "../../components/for-share/shelf/HeldCursor.vue";
 import { heldOmensOf } from "../../components/for-share/shelf/held-omens";
 import ModalShell from "../../components/ui/ModalShell.vue";
 import Icon from "../../components/ui/Icon.vue";
@@ -420,15 +421,8 @@ function setGemCorrupt(v: boolean): void { if (v && !gemCorruptOn.value) track("
       <span :key="'r' + fx.n" class="stage-ripple" :style="{ left: `${fx.x}px`, top: `${fx.y}px`, '--fx': fx.color }" />
       <img v-if="fx.icon" :key="'d' + fx.n" :src="fx.icon" alt="" class="stage-drop object-contain" :style="{ left: `${fx.x}px`, top: `${fx.y}px` }" />
     </template>
-    <!-- カーソルに付いたカレンシー -->
-    <img
-      v-if="s.held.value && iconOf(s.held.value) && !phone"
-      :src="iconOf(s.held.value)"
-      alt=""
-      data-rec-part="held-icon"
-      class="pointer-events-none fixed z-[200] h-10 w-10 object-contain drop-shadow-[0_0_6px_rgba(250,204,21,0.8)]"
-      :style="{ left: `${mouse.x + 8}px`, top: `${mouse.y + 8}px` }"
-    />
+    <!-- カーソルに付いたカレンシー (共有の部品、シミュの棚も同じ物) -->
+    <HeldCursor :src="s.held.value ? iconOf(s.held.value) : null" />
     <!-- 動画モードと動画用の別の画面 (CourseHost.vue) -->
     <CourseHost part="overlay" />
     <!-- ページの一番下に置く物 (Web の決まり事の footer。2026-10-10 オーナー「固定バーは許されん、一番下に動かさず」) -->
