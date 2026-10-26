@@ -38,6 +38,8 @@
   footer { border-top: 1px solid var(--line); color: var(--sub); font-size: 12px; }
   footer .in { padding-top: 14px; padding-bottom: 20px; }
   footer .fnav { margin: 0 0 6px; } footer .fnav a { color: var(--sub); }
+/* スマホのフッターのリンクは押せる高さを 40px に (字の大きさはそのまま。10-26 夜 AdSense の点検) */
+@media (max-width:767px){footer a{display:inline-block;padding:12px 2px}}
 </style>
 <!-- Google AdSense (2026-10-13、審査とサイトの紐付け。自動広告は AdSense の画面で切る) -->
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1993030721214430" crossorigin="anonymous"></script>

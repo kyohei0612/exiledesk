@@ -100,7 +100,7 @@ ul.posts a.t{font-size:17px;font-weight:700;text-decoration:none;color:var(--ink
 ul.posts p{margin:6px 0 0;color:var(--sub);font-size:14px}
 #comments{margin-top:32px}
 .faq-toc{margin:0 0 2em;padding:16px 20px 16px 2.6em;background:var(--soft);border-radius:8px;font-size:16px;line-height:1.8}.faq-toc a{color:var(--ink);text-decoration:none}.faq-toc a:hover{color:var(--link)}h2[id^=q]{scroll-margin-top:16px}
-footer{border-top:1px solid var(--line);color:var(--sub);font-size:12px;line-height:1.7;background:#fafafa}footer .in{max-width:960px;margin:0 auto;padding:16px 20px 24px}footer .fnav{margin:0 0 6px}footer .fnav a{color:var(--sub)}
+footer{border-top:1px solid var(--line);color:var(--sub);font-size:12px;line-height:1.7;background:#fafafa}footer .in{max-width:960px;margin:0 auto;padding:16px 20px 24px}footer .fnav{margin:0 0 6px}footer .fnav a{color:var(--sub)}@media (max-width:767px){footer a{display:inline-block;padding:12px 2px}}
 @media (max-width:767px){body{font-size:16px;line-height:1.9}main{padding:28px 22px 48px}h1{font-size:24px}h2{font-size:21px;margin-top:44px}h3{font-size:18px}.say img{flex-basis:44px;width:44px;height:44px}}`;
 
 const L = {

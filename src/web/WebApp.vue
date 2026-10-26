@@ -203,8 +203,8 @@ window.visualViewport?.addEventListener("resize", fitZoom);
     <ToTop /><!-- スマホの「上へ戻る」(全部の画面の右下) -->
     <!-- スマホの広告の枠: 上の帯の下に 1 つ。棚・「ベースを変える」から指 1 本分離す (誤タップは規約違反。utils/ads.ts) -->
     <div v-if="phone && textPage" class="mb-4 flex justify-center pt-2 empty:hidden"><AdSlot id="phone-top" :w="320" :h="100" :tick="pageTick" /></div>
-    <!-- スマホは縦に積む: ステージ → チャンネル (横スクロールは出さない) -->
-    <div class="flex min-h-0 flex-1" :class="phone ? 'flex-col' : ''">
+    <!-- スマホは縦に積む: ステージ → チャンネル (横スクロールは出さない)。中身の入れ物は <main> (画面の main の印、見た目は変えない。10-26 夜 AdSense の点検) -->
+    <main class="flex min-h-0 flex-1" :class="phone ? 'flex-col' : ''">
       <!-- クラフト画面以外のページ: 両脇に縦長の枠 (ページを移るたびに出し直す、60 秒に 1 回まで) -->
       <div v-if="textPage && !phone" class="sticky top-3 shrink-0 self-start py-4 pl-4 empty:hidden"><AdSlot id="page-left" :w="sideAdW()" :h="600" :tick="pageTick" /></div>
       <!-- 要望・バグを送るのページ (両脇の枠の間の真ん中にフォーム) -->
@@ -249,6 +249,6 @@ window.visualViewport?.addEventListener("resize", fitZoom);
           <LivePanel />
         </div>
       </aside>
-    </div>
+    </main>
   </div>
 </template>

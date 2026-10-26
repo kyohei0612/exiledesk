@@ -60,7 +60,7 @@ table{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0 10px}th,td
 .card{display:flex;flex-direction:column;align-items:center;min-width:0;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--fg);text-decoration:none;text-align:center;line-height:1.35}.card:hover{border-color:#8a6a32}
 .card img,.card .ph{width:128px;height:128px;max-width:100%;object-fit:contain}
 .card b{margin-top:6px;font-weight:400;font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;width:100%}.card span{color:var(--sub);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%}
-footer{border-top:1px solid var(--line);color:var(--sub);font-size:12px}footer .fnav{margin:0 0 6px}footer .fnav a{color:var(--sub)}footer .in{padding-top:14px;padding-bottom:20px}`;
+footer{border-top:1px solid var(--line);color:var(--sub);font-size:12px}footer .fnav{margin:0 0 6px}footer .fnav a{color:var(--sub)}@media (max-width:767px){footer a{display:inline-block;padding:12px 2px}}footer .in{padding-top:14px;padding-bottom:20px}`;
 
 const LANGS = {
   ja: {

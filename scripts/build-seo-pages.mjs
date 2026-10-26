@@ -43,7 +43,7 @@ table{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0 10px}th,td
 th{color:var(--sub);font-weight:400}td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.mod{color:var(--mod)}
 details summary{cursor:pointer}details table{margin:4px 0 8px 12px;width:calc(100% - 12px)}.note{color:var(--sub);font-size:13px}
 .kv td:first-child{color:var(--sub);width:9em}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:4px 16px}
-.crumb{font-size:12px;color:var(--sub);margin-bottom:8px}footer{border-top:1px solid var(--line);color:var(--sub);font-size:12px}footer .fnav{margin:0 0 6px}footer .fnav a{color:var(--sub)}footer .in{padding-top:14px;padding-bottom:20px}`;
+.crumb{font-size:12px;color:var(--sub);margin-bottom:8px}footer{border-top:1px solid var(--line);color:var(--sub);font-size:12px}footer .fnav{margin:0 0 6px}footer .fnav a{color:var(--sub)}@media (max-width:767px){footer a{display:inline-block;padding:12px 2px}}footer .in{padding-top:14px;padding-bottom:20px}`;
 
 /** 言語ごとの決まった言葉。en は英語のページ (パスの頭に /en) */
 const LANGS = {
