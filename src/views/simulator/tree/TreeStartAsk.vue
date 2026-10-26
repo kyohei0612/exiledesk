@@ -1,54 +1,64 @@
 <!--
-  TreeStartAsk.vue — ② 完成の MOD から ③ ツリーへ行く時の「フラクチャーから始めるか、白ベースから始めるか」(10-26 夜オーナー「ツリーへ行くボタンを押した時に、
-  『フラクチャーから始めるか、白ベースから始めるか』を選ぶポップアップを出して、そこで決める形に統一」)。どの入口 (普通・貼り付け・エミュから) でも同じ。
-  フラクチャーから = 完成の狙いから 1 つ選び、その MOD が ✦ のレアから (start.from fractured)。白ベースから = フラクチャーの印を全部外す (白 = ノーマル)。
-  前に選んでいた方 (印のある狙い) に既定の印。Esc・枠の外・× = 何も変えず ② に残る。前の「印を付けた時の 2 択」(TreeFractureAsk) はこれにまとめた
+  TreeStartAsk.vue — ② 完成の MOD から ③ ツリーへ行く時の始め方 (10-26 夜オーナー「ツリーへ行くボタンを押した時に…ポップアップを出して、そこで決める形に統一」、最終形「OK それで作って」)。
+  パターン 1 (✦ の印が無い): 「フラクチャーから」= 完成の狙いから MOD を 1 つ選ぶ → (a) フラクチャー済みから / (b) 白から確定フラクチャーのコース + 費用、と「白ベースから (フラクチャー無し)」。
+  パターン 2 (② で ✦ を付けてある)・3 (貼り付け / エミュから ✦ 付きで来た): MOD 選びは飛ばし (a) / (b) だけ。白ベースは出さない。
+  決める中身は tree-start-choice.ts (スマホと共用)。やめる・Esc・枠の外 = 何も変えず ② に残る
 -->
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import ModalShell from "../../../components/ui/ModalShell.vue";
 import { tr } from "../../../i18n/lang";
-import { aimKey, migrateStart, startRarity, type Aim } from "../../../services/simulator/tree/tree-model";
+import { aimKey, type StartFrom } from "../../../services/simulator/tree/tree-model";
+import { applyStartChoice, markedGoal } from "./tree-start-choice";
 import { useTree } from "./use-tree";
 
 const emit = defineEmits<{ done: []; close: [] }>();
 const t = useTree();
-/** 今の選び (印のある狙いの 1 つ目。無ければ白) */
-const pick = ref<string | null>((() => { const m = t.goals.value.find((a) => a.fractured); return m ? aimKey(m) : null; })());
 const goals = computed(() => t.goals.value);
-/** 決める: 選んだ狙いだけに印 (ほかの印は外す)、白なら印を全部外す。1 回の編集 (1 つ戻すで戻せる) */
+/** パターン 2・3: 印のある狙い (MOD 選びを飛ばす) */
+const marked = markedGoal(t.goals.value);
+/** 選んだ狙い (aimKey、null = 白ベースから) と始め方 (a) / (b) */
+const pick = ref<string | null>(marked ? aimKey(marked) : null);
+const from = ref<StartFrom>(t.doc.value.start?.from ?? "fractured");
+type Pair = [string, string];
+const FROMS: Array<{ k: StartFrom; title: Pair; sub: Pair }> = [
+  { k: "fractured", title: ["(a) フラクチャー済みから", "(a) From fractured"], sub: ["その MOD が ✦ で付いたレアから始める (フラクチャーの費用は無し)", "Start from a rare with that mod fractured (no fracture cost)"] },
+  { k: "four", title: ["(b) 白から確定フラクチャーのコース", "(b) From white, sure fracture"], sub: ["白 (ノーマル) のベースから始め、木の中でフラクチャー (必ず成功、素材 ×3 = 33% の費用込み)", "Start from a white (normal) base and fracture in the tree (sure success, materials ×3 = 33% cost included)"] },
+];
+const pickedGoal = computed(() => goals.value.find((a) => aimKey(a) === pick.value) ?? null);
 function decide(): void {
-  const k = pick.value;
-  t.edit((d) => {
-    const list: Aim[] = d.memoAims ?? [];
-    for (const a of list) { if (k && aimKey(a) === k) a.fractured = true; else delete a.fractured; }
-    d.memoAims = list;
-    migrateStart(d);
-    if (k) d.start!.from = "fractured";
-    d.start!.mods = d.start!.mods.filter((m) => !list.some((a) => a.fractured && a.modId === m.modId));
-    d.start!.rarity = startRarity(d);
-  });
+  const k = pick.value, f = from.value;
+  t.edit((d) => applyStartChoice(d, k, f));
   emit("done");
 }
 </script>
 
 <template>
-  <ModalShell :open="true" layer="confirm" rec="tree-start-ask" :title="tr('どこから始める?', 'Where to start?')" width="w-full max-w-xl" body-class="px-4 py-3" @close="emit('close')">
-    <div data-tree-start-ask class="flex flex-col gap-3 text-[13px]">
-      <!-- フラクチャーから: 完成の狙いから 1 つ -->
-      <section class="g-item flex flex-col gap-2 bg-black/50 px-3 py-2.5">
+  <ModalShell :open="true" layer="confirm" rec="tree-start-ask" :title="tr('どこから始める?', 'Where to start?')" width="w-full max-w-xl" full-on-phone body-class="px-4 py-3" @close="emit('close')">
+    <div data-tree-start-ask :data-pattern="marked ? 2 : 1" class="flex flex-col gap-3 text-[13px]">
+      <!-- パターン 1: フラクチャーから (MOD を 1 つ選ぶ) -->
+      <section v-if="!marked" class="g-item flex flex-col gap-2 bg-black/50 px-3 py-2.5">
         <b class="text-[15px] text-[var(--exile-color-text-title)]">{{ tr("フラクチャーから", "From a fractured mod") }}</b>
-        <p class="text-[12px] opacity-70">{{ tr("選んだ MOD が ✦ (フラクチャー) で付いたレアから始める", "Start from a rare with the picked mod fractured (✦)") }}</p>
+        <p class="text-[12px] opacity-70">{{ tr("フラクチャー (✦) にする MOD を 1 つ選ぶ", "Pick the one mod to fracture (✦)") }}</p>
         <label v-for="a in goals" :key="aimKey(a)" data-tree-start-ask-mod class="flex min-w-0 cursor-pointer items-start gap-2 rounded px-1.5 py-1 hover:bg-white/[0.06]" :class="pick === aimKey(a) ? 'bg-[rgba(163,52,42,0.35)]' : ''">
           <input v-model="pick" type="radio" name="tree-start-ask" :value="aimKey(a)" class="mt-1 shrink-0" />
           <span class="min-w-0 break-words" :class="pick === aimKey(a) ? 'text-mod-fractured' : 'text-[#c8c8ff]'">{{ pick === aimKey(a) ? "✦ " : "" }}{{ t.aimLabel(a) }}</span>
         </label>
       </section>
-      <!-- 白ベースから -->
-      <label data-tree-start-ask-white class="g-item flex cursor-pointer items-start gap-2 bg-black/50 px-3 py-2.5 hover:bg-white/[0.06]" :class="pick === null ? 'bg-[rgba(163,52,42,0.35)]' : ''">
+      <!-- パターン 2・3: ✦ の付いた MOD (選び直しは ② で) -->
+      <p v-else data-tree-start-ask-marked class="g-item break-words bg-black/50 px-3 py-2.5 text-mod-fractured">✦ {{ t.aimLabel(marked) }}</p>
+      <!-- (a) / (b): MOD が決まっている時だけ -->
+      <div v-if="pickedGoal" data-tree-start-ask-from class="flex flex-col gap-1.5" :class="marked ? '' : 'pl-4'">
+        <label v-for="o in FROMS" :key="o.k" :data-tree-start-ask-from-k="o.k" class="g-item flex cursor-pointer items-start gap-2 bg-black/50 px-3 py-2 hover:bg-white/[0.06]" :class="from === o.k ? 'bg-[rgba(163,52,42,0.35)]' : ''">
+          <input v-model="from" type="radio" name="tree-start-ask-from" :value="o.k" class="mt-1 shrink-0" />
+          <span class="flex min-w-0 flex-col gap-0.5"><b class="text-[var(--exile-color-text-title)]">{{ tr(...o.title) }}</b><span class="break-words text-[12px] opacity-75">{{ tr(...o.sub) }}</span></span>
+        </label>
+      </div>
+      <!-- パターン 1: 白ベースから (フラクチャー無し、オーナー「普通にフラクチャー無しで行く人もいる」) -->
+      <label v-if="!marked" data-tree-start-ask-white class="g-item flex cursor-pointer items-start gap-2 bg-black/50 px-3 py-2.5 hover:bg-white/[0.06]" :class="pick === null ? 'bg-[rgba(163,52,42,0.35)]' : ''">
         <input v-model="pick" type="radio" name="tree-start-ask" :value="null" class="mt-1.5 shrink-0" />
         <span class="flex min-w-0 flex-col gap-1">
-          <b class="text-[15px] text-[var(--exile-color-text-title)]">{{ tr("白ベースから", "From a white base") }}</b>
+          <b class="text-[15px] text-[var(--exile-color-text-title)]">{{ tr("白ベースから (フラクチャー無し)", "From a white base (no fracture)") }}</b>
           <span class="text-[12px] opacity-70">{{ tr("フラクチャー無しの白 (ノーマル) のベースから始める", "Start from a white (normal) base without a fracture") }}</span>
         </span>
       </label>
