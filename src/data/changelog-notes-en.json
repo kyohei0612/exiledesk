@@ -1,4 +1,8 @@
 {
+  "0.1.627": [
+    "The top page (base selection) now explains what the site does. Cosmetics was removed from the top tabs (the page still opens as before)",
+    "Simulator: In the craft picker, pressing Esc while holding a currency now just puts it down (a second Esc closes the window). On PC, the paste box on base selection sits side by side so everything fits on screen"
+  ],
   "0.1.626": [
     "Phone: The links at the bottom of the page (Guide, Bases, Contact and so on) are now easier to tap"
   ],
