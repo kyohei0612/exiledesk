@@ -1,0 +1,7 @@
+# Cloudflare の静的な置き場が付けるヘッダー (2026-10-26 AdSense の審査向けの点検、サーバー管理人)。Worker を通る /s/*・/og/*・/r/* には付かない
+# HSTS は https だけで開く印 (Always Use HTTPS は 10-26 にオーナーが On)。サブドメインと preload は付けない (戻せなくなるので)
+/*
+  Strict-Transport-Security: max-age=31536000
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: SAMEORIGIN
