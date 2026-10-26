@@ -216,7 +216,7 @@ function ok(): void {
     <div v-if="held" class="flex flex-col gap-1.5 rounded-md bg-white/[0.04] p-2">
       <div class="flex min-w-0 items-center gap-1.5">
         <span class="flex shrink-0 items-center -space-x-1"><img v-for="ic in [held, ...used].filter((x) => !!iconOf(x))" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
-        <b class="min-w-0 truncate" :title="hand ? handLabel(hand) : ''">{{ spamOn ? `${tr("カオススパムオーブ", "Chaos Spam Orb")} (${[nameOf(held), ...used.map(nameOf)].join(" + ")})` : [nameOf(held), ...used.map(nameOf)].join(" + ") }}</b>
+        <b class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="hand ? handLabel(hand) : ''">{{ spamOn ? `${tr("カオススパムオーブ", "Chaos Spam Orb")} (${[nameOf(held), ...used.map(nameOf)].join(" + ")})` : [nameOf(held), ...used.map(nameOf)].join(" + ") }}</b>
       </div>
       <!-- カオススパムオーブ: カオスの段を替える (カタリストの札と同じ形) と上限 -->
       <div v-if="spamOn" data-tree-hand-spam-tiers class="flex flex-wrap items-center gap-1">
@@ -236,7 +236,7 @@ function ok(): void {
         <span v-if="spam && !checkedAims.length" data-tree-hand-aim-need class="text-rose-200/90">{{ tr("狙う MOD を選んで", "Pick a target mod") }}</span>
         <span v-else class="opacity-80">{{ tr("狙う MOD (付いたら当たりの箱)", "Target mods (a hit box when one lands)") }}</span>
         <label v-for="a in aimChoices" :key="aimKey(a)" data-tree-hand-aim :data-aim="aimKey(a)" class="flex min-h-7 min-w-0 cursor-pointer items-center gap-2">
-          <input type="checkbox" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 truncate" :title="t.aimLabel(a)">{{ t.aimLabel(a) }}</span>
+          <input type="checkbox" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="t.aimLabel(a)">{{ t.aimLabel(a) }}</span>
         </label>
         <!-- 狙い無し (MOD とは排他。前はお告げの列の札、10-25 オーナー「狙い無しも左のチェックに付けるといいね」) -->
         <label v-if="!spam" data-tree-hand-free class="flex min-h-7 cursor-pointer items-center gap-2" :title="tr('狙い無し (空きを 1 つ埋めるだけ。当たり / 外れに分けない)', 'No target (just fill an open slot; no hit / miss split)')">

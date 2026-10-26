@@ -98,12 +98,12 @@ onBeforeUnmount(() => { window.removeEventListener("pointerdown", onDown, true);
   <span ref="root" data-tree-recipe-bar class="relative flex min-w-0 flex-wrap items-center gap-1.5">
     <input v-if="renaming && !bare" ref="nameInput" data-tree-recipe-name-input :value="currentTreeRecipe?.name ?? defaultName()" class="h-8 w-56 max-md:order-last max-md:w-full rounded border border-amber-400/60 bg-black/50 px-1.5 text-[13px] font-bold outline-none" @keydown.enter.prevent="($event.target as HTMLInputElement).blur()" @keydown.esc.stop="renaming = false" @blur="endRename(($event.target as HTMLInputElement).value)" />
     <button v-else-if="!bare" type="button" data-tree-recipe-name class="flex h-8 min-w-0 max-w-[240px] items-center gap-1.5 rounded px-1.5 text-[13px] hover:bg-white/[0.06]" :title="tr('名前を変える', 'Rename')" @click="startRename">
-      <b class="min-w-0 truncate">{{ currentTreeRecipe?.name ?? tr("名前なし", "Untitled") }}</b>
+      <b class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words">{{ currentTreeRecipe?.name ?? tr("名前なし", "Untitled") }}</b>
       <span v-if="dirty" data-tree-recipe-dirty class="size-2 shrink-0 rounded-full bg-amber-400" :title="tr('保存していない変更がある', 'Unsaved changes')" />
     </button>
     <button v-if="!bare" type="button" data-tree-recipe-save class="g-btn sm shrink-0" :title="currentTreeRecipe ? tr('開いているレシピに上書き保存 (Ctrl+S)', 'Save to the open recipe (Ctrl+S)') : tr('新しく保存 (名前は自動、後で変えられる。Ctrl+S)', 'Save as a new recipe (auto-named, rename later. Ctrl+S)')" @click="save">{{ tr("保存", "Save") }}</button>
     <button type="button" data-tree-recipe-menu class="g-btn sm inline-flex shrink-0 items-center gap-1" :aria-expanded="pop" @click="pop = !pop">{{ tr("レシピ", "Recipes") }} ▾</button>
-    <span v-if="note" data-tree-recipe-note class="pointer-events-none min-w-0 max-w-full truncate rounded bg-emerald-900/90 px-2 py-0.5 text-[12px] text-emerald-100">{{ note }}</span>
+    <span v-if="note" data-tree-recipe-note class="pointer-events-none min-w-0 max-w-full truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words rounded bg-emerald-900/90 px-2 py-0.5 text-[12px] text-emerald-100">{{ note }}</span>
 
     <div v-if="pop" data-tree-recipe-pop :class="menuOnly ? 'right-0' : 'left-0'" class="absolute top-full z-40 mt-1 flex w-[340px] max-w-[calc(100vw-4rem)] flex-col gap-1.5 rounded-lg border border-[var(--exile-color-border-brass)]/60 bg-[#14110d] p-2 text-[12px] shadow-[0_8px_24px_rgba(0,0,0,0.7)]">
       <p class="opacity-60">{{ tr("保存したレシピから開く", "Open a saved recipe") }}</p>
@@ -113,8 +113,8 @@ onBeforeUnmount(() => { window.removeEventListener("pointerdown", onDown, true);
         <img v-if="sum(r).art" :src="sum(r).art!" alt="" class="size-9 shrink-0 object-contain" draggable="false" />
         <span v-else data-tree-recipe-empty class="flex size-9 shrink-0 items-center justify-center rounded bg-white/[0.06] text-[10px] opacity-60">{{ sum(r).empty ? tr("空", "Empty") : "" }}</span>
         <span class="flex min-w-0 flex-1 flex-col">
-          <span class="truncate" :class="r.id === currentTreeRecipe?.id ? 'font-bold text-amber-200' : ''">{{ r.name }}</span>
-          <span data-tree-recipe-sum class="truncate text-[11px] opacity-70" :title="sum(r).first">{{ sum(r).empty ? tr("ベースなし", "No base") : [sum(r).base, sum(r).aims ? tr(`狙い ${sum(r).aims}`, `${sum(r).aims} target(s)`) : "", sum(r).first].filter(Boolean).join(" · ") }}</span>
+          <span class="truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :class="r.id === currentTreeRecipe?.id ? 'font-bold text-amber-200' : ''">{{ r.name }}</span>
+          <span data-tree-recipe-sum class="truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words text-[11px] opacity-70" :title="sum(r).first">{{ sum(r).empty ? tr("ベースなし", "No base") : [sum(r).base, sum(r).aims ? tr(`狙い ${sum(r).aims}`, `${sum(r).aims} target(s)`) : "", sum(r).first].filter(Boolean).join(" · ") }}</span>
         </span>
         <span class="flex shrink-0 flex-col items-end text-[11px]">
           <span v-if="sum(r).marks" class="text-mod-fractured">✦ {{ sum(r).marks }}</span>

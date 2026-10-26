@@ -204,11 +204,11 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       <TreeTabs v-if="t.tabDocs.value.length > 1" class="px-3 pb-2" />
       <!-- 適正でアイテムレベルを変えた時の一言 (10-24 オーナー: 黙って変わると気づかない、文字は最低限で閉じられる形) -->
       <p v-if="t.ilvlNote.value" data-tree-ilvl-note class="flex min-w-0 items-center gap-2 px-3 pb-2 text-[12px] text-amber-200/90">
-        <span class="min-w-0 truncate">{{ tr(`アイテムレベルを ${t.ilvlNote.value.to} に合わせました (適正)`, `Item level set to ${t.ilvlNote.value.to} (fit)`) }}</span>
+        <span class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words">{{ tr(`アイテムレベルを ${t.ilvlNote.value.to} に合わせました (適正)`, `Item level set to ${t.ilvlNote.value.to} (fit)`) }}</span>
         <button type="button" data-tree-ilvl-note-close class="shrink-0 rounded px-1 opacity-60 hover:bg-white/10 hover:opacity-100" :aria-label="tr('閉じる', 'Close')" @click="t.ilvlNote.value = null">×</button>
       </p>
       <TreePasteNote v-if="step === 2" />
-      <p v-if="step === 2 && dropped.length" data-tree-goal-dropped class="min-w-0 truncate px-3 pb-2 text-[12px] text-rose-200/80" :title="dropped.join('\n')">{{ tr(`このベースに付かない狙いを外した: ${dropped.join("・")}`, `Removed targets this base can't roll: ${dropped.join(", ")}`) }}</p>
+      <p v-if="step === 2 && dropped.length" data-tree-goal-dropped class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words px-3 pb-2 text-[12px] text-rose-200/80" :title="dropped.join('\n')">{{ tr(`このベースに付かない狙いを外した: ${dropped.join("・")}`, `Removed targets this base can't roll: ${dropped.join(", ")}`) }}</p>
     </template>
     <div v-if="step === 1" data-tree-goal-base class="flex min-w-0 flex-col gap-3">
       <TreeBasePick />
@@ -259,7 +259,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <!-- 枠を超えた狙い (10-23 オーナー「欲しい物を全部選ぶので枠を超えてよい」): 止めずにカードの下に並べる -->
         <div v-if="t.goalItem.value?.left.length" data-tree-goal-over class="flex flex-col gap-0.5 rounded-md bg-white/[0.04] px-2 py-1 text-[12px]">
           <p class="opacity-70">{{ tr(`カードに乗らない狙い ${t.goalItem.value.left.length} つ (枠の外。どれかが付けば当たり)`, `${t.goalItem.value.left.length} target(s) beyond the slots (a hit if any rolls)`) }}</p>
-          <p v-for="a in t.goalItem.value.left" :key="a.modId" data-tree-goal-over-row class="min-w-0 truncate" :class="a.fractured ? 'text-mod-fractured' : 'text-[#c8c8ff]'" :title="a.reason">{{ a.fractured ? "✦ " : "" }}{{ t.startModLabel(a, true) }}</p>
+          <p v-for="a in t.goalItem.value.left" :key="a.modId" data-tree-goal-over-row class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :class="a.fractured ? 'text-mod-fractured' : 'text-[#c8c8ff]'" :title="a.reason">{{ a.fractured ? "✦ " : "" }}{{ t.startModLabel(a, true) }}</p>
         </div>
         <p v-if="t.goalItem.value?.note" data-tree-goal-problem class="rounded-md border border-rose-400/50 bg-[#2a1416] px-2 py-1 text-[12px] text-rose-100">{{ tr(`付けられない狙いがある: ${t.goalItem.value.note}`, `A target can't be added: ${t.goalItem.value.note}`) }}</p>
         <!-- 説明は 1 つの事 = 1 行 (10-24 オーナー「・で区切って行で分ける、1 行は折り返して OK」) -->

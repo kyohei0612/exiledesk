@@ -45,7 +45,7 @@ function showHand(id: string): void { quiz.focus.value = { kind: "hand", id }; }
 
 <template>
   <div v-if="box" data-phone-ask :data-ask="q.kind" :data-box-id="q.id" class="flex min-w-0 flex-col gap-2">
-    <p class="truncate text-[11px] text-[#9a8a70]">{{ quiz.pathText(q.id) }}</p>
+    <p class="break-words text-[11px] text-[#9a8a70]">{{ quiz.pathText(q.id) }}</p>
     <template v-if="q.kind === 'hand'">
       <h2 class="text-[17px] font-bold text-[#f0e4c8]">{{ box.hand ? tr("この箱で打つ手", "Craft from this box") : tr("次に何を打つ?", "What do you craft next?") }}</h2>
       <!-- 今のアイテム (この箱に着いた時の形) と、完成の狙いの残り (✓ = もう付いている) -->

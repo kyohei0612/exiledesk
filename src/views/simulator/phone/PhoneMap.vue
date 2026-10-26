@@ -85,8 +85,8 @@ watch(() => q.doc.value, (d) => { const pk = mapPick.value; if (pk && !d.boxes[p
 <template>
   <div data-phone-map class="flex min-w-0 flex-col gap-1">
     <div class="flex min-w-0 items-center gap-2 text-[11px]">
-      <span v-if="mapPick" data-phone-map-pick class="min-w-0 flex-1 truncate font-bold text-amber-200">{{ tr("戻り先の箱を押す (明るい箱に戻れる)", "Tap the box to return to (bright boxes)") }}</span>
-      <span v-else class="min-w-0 flex-1 truncate text-[#9a8a70]">{{ tr("全体図 · 押すとその箱へ", "Overview · tap a box to go there") }}</span>
+      <span v-if="mapPick" data-phone-map-pick class="min-w-0 flex-1 break-words font-bold text-amber-200">{{ tr("戻り先の箱を押す (明るい箱に戻れる)", "Tap the box to return to (bright boxes)") }}</span>
+      <span v-else class="min-w-0 flex-1 break-words text-[#9a8a70]">{{ tr("全体図 · 押すとその箱へ", "Overview · tap a box to go there") }}</span>
       <button v-if="mapPick" type="button" data-phone-map-cancel class="g-btn sm shrink-0" @click="mapPick = null">{{ tr("やめる", "Cancel") }}</button>
       <button v-else type="button" data-phone-map-size class="g-btn sm shrink-0" :aria-pressed="big" :aria-label="tr('全体図の大きさ', 'Overview size')" @click="big = !big">{{ big ? "⤡" : "⤢" }}</button>
     </div>

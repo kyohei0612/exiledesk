@@ -15,13 +15,13 @@ const readOpen = ref(false);
 <template>
   <div v-if="pasteNote" data-tree-paste-note class="mx-3 mb-2 rounded-lg border border-emerald-400/40 bg-emerald-950/40 px-3 py-1.5 text-[12px]">
     <p class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-      <span class="min-w-0 flex-1 basis-48 truncate text-emerald-100">{{ tr(`貼り付けから取り込んだ: ${pasteNote.base} · 狙い ${pasteNote.aims} つ (ここで直せる)`, `Imported from paste: ${pasteNote.base} · ${pasteNote.aims} target(s) (edit them here)`) }}</span>
+      <span class="min-w-0 flex-1 basis-48 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words text-emerald-100">{{ tr(`貼り付けから取り込んだ: ${pasteNote.base} · 狙い ${pasteNote.aims} つ (ここで直せる)`, `Imported from paste: ${pasteNote.base} · ${pasteNote.aims} target(s) (edit them here)`) }}</span>
       <button v-if="pasteNote.readings" type="button" data-tree-paste-readings class="shrink-0 rounded border border-amber-300/60 px-1.5 text-amber-100 hover:bg-white/10" :aria-expanded="readOpen" :title="tr('1 行に足された数値の分け方が何通りもあるので、段を仮に決めた。押すとほかの読み方に替えられる', 'A summed line can be split several ways, so the tiers are a guess. Click to pick another reading')" @click="readOpen = !readOpen">{{ tr(`仮の読み (${pasteNote.readings.length} 通り)`, `Guessed reading (${pasteNote.readings.length})`) }} {{ readOpen ? "▾" : "▸" }}</button>
       <button v-if="pasteNote.bad.length" type="button" data-tree-paste-bad class="shrink-0 rounded px-1.5 text-amber-200 hover:bg-white/10" :aria-expanded="open" @click="open = !open">{{ tr(`読めなかった行 ${pasteNote.bad.length}`, `${pasteNote.bad.length} line(s) not used`) }} {{ open ? "▾" : "▸" }}</button>
       <button type="button" class="shrink-0 rounded px-1 opacity-60 hover:bg-white/10 hover:opacity-100" :aria-label="tr('閉じる', 'Close')" @click="pasteNote = null">×</button>
     </p>
     <!-- 段が仮の MOD (1 行に足された値の割り方が決まらず、単体の MOD を高い段に置いた。読み方の候補が無い時もここで分かる) -->
-    <p v-if="pasteNote.guess.length" data-tree-paste-guess class="mt-1 min-w-0 truncate text-amber-200/90" :title="pasteNote.guess.join('\n')">{{ tr(`段は目安 (1 行に足された値から): ${pasteNote.guess.join("・")}`, `Tiers are a guess (from a summed line): ${pasteNote.guess.join(", ")}`) }}</p>
+    <p v-if="pasteNote.guess.length" data-tree-paste-guess class="mt-1 min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words text-amber-200/90" :title="pasteNote.guess.join('\n')">{{ tr(`段は目安 (1 行に足された値から): ${pasteNote.guess.join("・")}`, `Tiers are a guess (from a summed line): ${pasteNote.guess.join(", ")}`) }}</p>
     <!-- 候補 (1 押しで切り替え。見出しはほかの読み方と違う MOD だけ、? = 段は目安) -->
     <div v-if="readOpen && pasteNote.readings" data-tree-paste-reading-list class="mt-1 flex flex-col gap-1">
       <button v-for="(_, i) in pasteNote.readings" :key="i" type="button" data-tree-paste-reading :data-i="i" class="min-w-0 rounded-md border px-2 py-1 text-left" :class="i === pasteNote.pick ? 'border-amber-300/80 bg-amber-500/15 text-amber-50' : 'border-white/10 text-[#d8ccb4] hover:bg-white/[0.06]'" :aria-pressed="i === pasteNote.pick" @click="pickReading(i)">

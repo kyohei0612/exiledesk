@@ -99,7 +99,7 @@ const tierLabel = (tier: number): string => tierRankLabel(tier, props.mode !== "
     <ul v-if="fromGoals" data-tree-goal-aims class="flex flex-col gap-1">
       <li v-for="a in t.goals.value" :key="aimKey(a)"><button type="button" data-tree-goal-aim class="flex w-full min-w-0 items-center gap-2 rounded-md border px-2 py-1.5 text-left text-[13px]"
         :class="[current && aimKey(current) === aimKey(a) ? 'border-amber-400/80 bg-amber-500/20 text-amber-100' : 'border-white/10 bg-white/[0.04] text-[#c8c8ff] hover:border-amber-400/60', heldBefore.has(aimKey(a)) || cantReach(a) ? 'opacity-40' : '']" :disabled="cantReach(a)"
-        :title="heldBefore.has(aimKey(a)) ? tr('この箱の前でもう付いている', 'Already on the item before this box') : cantReach(a) ? tr('この手では付かない', 'This craft can’t roll it') : t.aimLabel(a)" @click="emit('pick', a)"><span class="min-w-0 flex-1 truncate">{{ t.aimLabel(a) }}</span><span v-if="heldBefore.has(aimKey(a))" class="shrink-0 text-[11px]">{{ tr("付いている", "On item") }}</span><span v-else-if="cantReach(a)" data-tree-goal-aim-cant class="shrink-0 text-[11px]">{{ tr("この手では付かない", "Can’t roll") }}</span></button></li>
+        :title="heldBefore.has(aimKey(a)) ? tr('この箱の前でもう付いている', 'Already on the item before this box') : cantReach(a) ? tr('この手では付かない', 'This craft can’t roll it') : t.aimLabel(a)" @click="emit('pick', a)"><span class="min-w-0 flex-1 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words">{{ t.aimLabel(a) }}</span><span v-if="heldBefore.has(aimKey(a))" class="shrink-0 text-[11px]">{{ tr("付いている", "On item") }}</span><span v-else-if="cantReach(a)" data-tree-goal-aim-cant class="shrink-0 text-[11px]">{{ tr("この手では付かない", "Can’t roll") }}</span></button></li>
       <li class="pt-1 text-[12px] opacity-60">{{ tr("狙いは 0 完成形の設定で決める。狙い以外は外れ MOD", "Targets are set in 0 Final item. Anything else is a miss mod") }}</li>
     </ul>
     <template v-else>
@@ -109,14 +109,14 @@ const tierLabel = (tier: number): string => tierRankLabel(tier, props.mode !== "
         <p class="mb-1 text-[12px] font-bold text-[var(--exile-color-text-secondary)]">{{ sec.title }}</p>
         <div v-for="r in sec.rows" :key="r.id" :data-row-key="r.id" class="mb-1 rounded-md bg-white/[0.04]">
           <button type="button" data-tree-mod-row class="flex w-full min-w-0 items-center gap-2 px-2 py-1.5 text-left" :aria-expanded="open === r.id" @click="toggle(r.id, $event)">
-            <span class="min-w-0 flex-1 truncate text-[13px] text-[#c8c8ff]" :title="r.text">{{ r.template }}</span>
+            <span class="min-w-0 flex-1 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words text-[13px] text-[#c8c8ff]" :title="r.text">{{ r.template }}</span>
             <span v-if="r.group === 'essence'" class="shrink-0 rounded-sm bg-sky-500/25 px-1 text-[10px] text-sky-100">{{ tr("エッセンス", "Essence") }}</span>
             <span v-else-if="r.group === 'special'" class="shrink-0 rounded-sm bg-teal-500/25 px-1 text-[10px] text-teal-100">{{ tr("創生の樹など", "Genesis Tree etc.") }}</span>
-            <span v-else-if="r.group === 'rune'" class="max-w-[40%] shrink-0 truncate rounded-sm bg-violet-500/25 px-1 text-[10px] text-violet-100" :title="r.runeJa">{{ tr(`ルーン ${r.runeJa ?? ""}`, `Rune ${r.runeJa ?? ""}`) }}</span>
+            <span v-else-if="r.group === 'rune'" class="max-w-[40%] shrink-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words rounded-sm bg-violet-500/25 px-1 text-[10px] text-violet-100" :title="r.runeJa">{{ tr(`ルーン ${r.runeJa ?? ""}`, `Rune ${r.runeJa ?? ""}`) }}</span>
             <span class="shrink-0 rounded-sm bg-emerald-600/80 px-1 text-[11px] font-bold text-white">{{ r.tiers.length }}</span>
           </button>
           <div v-if="open === r.id" class="flex flex-wrap gap-1 px-2 pb-2">
-            <button v-for="tt in r.tiers" :key="`${tt.modId ?? r.id}|${tt.rank}`" type="button" class="max-w-full truncate rounded-md border px-2 py-1 text-[12px]"
+            <button v-for="tt in r.tiers" :key="`${tt.modId ?? r.id}|${tt.rank}`" type="button" class="max-w-full truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words rounded-md border px-2 py-1 text-[12px]"
               :class="isCurrent(r, tt) ? 'border-amber-400/80 bg-amber-500/20 text-amber-100' : 'border-white/15 hover:border-amber-400/60'"
               :title="`${tt.text} (Lv ${tt.ilvl})`" @click="emit('pick', aimOf(r, tt))">{{ tierLabel(aimOf(r, tt).tier) }}{{ tt.modId ? ` ${tt.text}` : "" }}</button>
           </div>

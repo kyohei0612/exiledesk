@@ -24,8 +24,11 @@ import { usePhoneQuiz } from "./use-phone-quiz";
 import PhoneAsk from "./PhoneAsk.vue";
 import PhoneRoutes from "./PhoneRoutes.vue";
 import PhoneMap from "./PhoneMap.vue";
+import { flag } from "../../../web/release-flags";
 
 const t = useTree();
+/** 下の全体図 (スイッチ phoneMap、形はオーナーが案から選ぶ 10-26) */
+const MAP = flag("phoneMap");
 const q = usePhoneQuiz();
 /** 棚を開いている箱 / 当たりの MOD を選んでいる箱 */
 const handFor = ref<string | null>(null);
@@ -107,8 +110,8 @@ function goBox(id: string): void {
       <div data-phone-goal class="sticky top-0 z-20 -mx-2 border-b border-[#c9a45c]/50 bg-[#1a140d]/[0.97] px-3 py-1.5 shadow-[0_4px_12px_rgba(0,0,0,0.6)]">
         <div class="flex min-w-0 items-center gap-2 text-[13px]">
           <button type="button" data-phone-goal-fold class="flex min-w-0 flex-1 flex-col text-left" :aria-expanded="goalOpen" @click="goalOpen = !goalOpen">
-            <span class="flex min-w-0 items-center gap-2"><span class="shrink-0 font-bold text-[#f2d27a]">{{ tr("完成形", "Final item") }}</span><span class="min-w-0 flex-1 truncate text-[#d8ccb4]">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}</span><span class="shrink-0 text-[11px] opacity-70">{{ goalOpen ? "▾" : "▸" }}</span></span>
-            <span data-phone-goal-aims class="truncate text-[11px] text-[#c8c8ff]">{{ goalText || tr("MOD はまだ (右の MOD で決める)", "No mods yet (set them with Mods)") }}</span>
+            <span class="flex min-w-0 items-center gap-2"><span class="shrink-0 font-bold text-[#f2d27a]">{{ tr("完成形", "Final item") }}</span><span class="min-w-0 flex-1 break-words text-[#d8ccb4]">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}</span><span class="shrink-0 text-[11px] opacity-70">{{ goalOpen ? "▾" : "▸" }}</span></span>
+            <span data-phone-goal-aims class="break-words text-[11px] text-[#c8c8ff]">{{ goalText || tr("MOD はまだ (右の MOD で決める)", "No mods yet (set them with Mods)") }}</span>
           </button>
           <button type="button" data-phone-goal-open="base" :class="PILL" @click="t.goalPage.value = 1">{{ tr("ベース", "Base") }}</button>
           <button type="button" data-phone-goal-open="mods" :class="PILL" @click="t.goalPage.value = 2">MOD</button>
@@ -143,7 +146,7 @@ function goBox(id: string): void {
       <!-- 下の帯 (親指の届く所): 1 つ戻す・今の質問の主な操作 (① 打つ手を選ぶ / ② 決めた / 全部決まったら 100 人回す)・やり直し -->
       <!-- 上にツリーの全体図 (常に出す。今の箱が光る・押すとその箱へ・② の「ほかの箱へ」は図で戻り先を選ぶ。10-26 オーナー) -->
       <div data-phone-bar class="sticky bottom-0 z-10 -mx-2 flex flex-col gap-2 border-t border-white/10 bg-[#0c0a08] px-2 py-2">
-        <PhoneMap @go="(id) => { routesOpen = false; goBox(id); }" />
+        <PhoneMap v-if="MAP" @go="(id) => { routesOpen = false; goBox(id); }" />
         <div class="flex gap-2">
         <button type="button" data-phone-undo class="g-btn min-h-11 shrink-0 px-3" :disabled="!t.canUndo.value" :title="tr('1 つ戻す', 'Undo')" @click="t.undo">↶<span class="ml-1 text-[12px]">{{ tr("戻す", "Undo") }}</span></button>
         <button v-if="main" type="button" data-phone-main :data-main="main.kind" class="g-btn-red min-h-11 min-w-0 flex-1 truncate px-2 text-[15px]" :disabled="main.off" @click="main.go">{{ main.text }}</button>
