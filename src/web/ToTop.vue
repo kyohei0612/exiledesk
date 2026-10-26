@@ -1,7 +1,7 @@
 <!--
   ToTop.vue — スマホの「上へ戻る」ボタン (2026-10-25 オーナーがスマホの見え方を見て)。全部の画面の右下に付いてくる。少し下へ送った時だけ出し、押すと一番上へ。
   下に留まる帯 (data-bottom-bar・デイリーの data-daily-go・シミュのスマホの data-phone-bar。fixed か下に貼り付いた sticky) が出ている時はその上に浮かせて重ねない。PC (768px 以上) は出さない。WebApp.vue に 1 つ
-  重ね窓 (ModalShell などの role=dialog・シミュのスマホの箱の窓 data-phone-sheet・結果のまとめ data-phone-report) が開いている間は出さない (中のカードを隠していた、10-26 夜シミュのスマホ版)
+  重ね窓 (ModalShell などの role=dialog・シミュのスマホの箱の窓 data-phone-sheet・結果のまとめ data-phone-report・足りない所の窓 data-phone-issues-sheet) が開いている間は出さない (中のカードを隠していた、10-26 夜シミュのスマホ版)
 -->
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -16,7 +16,7 @@ const lift = ref(0);
 /** これより下へ送ったら出す (画面の半分くらい) */
 const SHOW_AT = 400;
 /** 開いている間は出さない重ね窓 */
-const OVERLAY = "[role=dialog], [data-phone-sheet], [data-phone-report]";
+const OVERLAY = "[role=dialog], [data-phone-sheet], [data-phone-report], [data-phone-issues-sheet]";
 function update(): void {
   shown.value = window.scrollY > SHOW_AT && !document.querySelector(OVERLAY);
   let h = 0;
