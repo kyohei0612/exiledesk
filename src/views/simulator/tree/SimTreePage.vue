@@ -24,7 +24,7 @@ import TreeHandPage from "./TreeHandPage.vue";
 import { useTree } from "./use-tree";
 import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
 import { craftStage as s } from "../../../state/craft-stage";
-import { addHit, aimKey, BOX_H, BOX_W, canRemove, clearHand, moveBox, removeHit, setAim, setBack, setDone, type Aim, type Hand, type HandKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
+import { addHit, aimKey, BOX_H, BOX_W, clearHand, moveBox, setAim, setBack, setDone, type Aim, type Hand, type HandKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
 import { handUses } from "../../../services/simulator/tree/tree-memo";
 import { tidy } from "../../../services/simulator/tree/tree-layout";
 import { outName } from "./tree-names";
@@ -195,6 +195,8 @@ function startDrag(b: Box, e: PointerEvent): void {
 }
 function closeHand(): void { simOp("cancel", "hand-pick"); if (picking.value && picking.value === panel.value?.id) picking.value = null; panel.value = null; }
 /** 下の＋を押した = 打つ手の棚を開き、同時にツリーの箱をつなげる / つなげないで色分けする (箱を押せばそこへつなぐ、棚で選べば新しい箱) */
+/** 箱の × = この箱を作った手 (親の手) を消す。結果の箱すべてとその下も消え、親は手を選び直せる形に (10-27 オーナー、TreeBox の rm) */
+function removeHandOf(id: string): void { const p = doc.value.boxes[id]?.parent; if (!p) return; simOp("remove-hand"); t.edit((d) => clearHand(d, p)); }
 function startLink(b: Box): void { simOp("plus"); panel.value = { kind: "hand", id: b.id }; } // 打つ手の重ね窓 (戻り先へは窓の「既にある箱へ戻す」か＋の引っ張り)
 const link = useTreeLink(doc, picking);
 /** 縮めて見ている時に押した箱の編集のポップアップ (等倍、箱でできる事が全部) */
@@ -446,9 +448,9 @@ const phone = usePhone(), simPhone = flag("simPhone");
             :delete-key-code="null" :selection-key-code="null" :multi-selection-key-code="null" :auto-pan-on-node-drag="true"
             @pane-click="onPaneClick" @node-click="onNodeClick">
             <template #node-box="{ id }">
-              <TreeBox v-if="doc.boxes[id]" :box="doc.boxes[id]!" :removable="canRemove(doc, id)" :picking="!!picking && picking !== id"
+              <TreeBox v-if="doc.boxes[id]" :box="doc.boxes[id]!" :removable="!!doc.boxes[id]?.parent" :picking="!!picking && picking !== id"
                 :selected="panel?.id === id || picking === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand" :glow="glowOf(doc.boxes[id]!) || plus?.target === id" :issue="issueOf(doc.boxes[id]!)" :inv="inv" :link-no="picking ? link.get(id) ?? null : null"
-                @drag="startDrag(doc.boxes[id]!, $event)" @aim="onAim(doc.boxes[id]!)" @plus="(k, e) => onPlus(doc.boxes[id]!, k, e)" @remove="t.edit((d) => removeHit(d, id))"
+                @drag="startDrag(doc.boxes[id]!, $event)" @aim="onAim(doc.boxes[id]!)" @plus="(k, e) => onPlus(doc.boxes[id]!, k, e)" @remove="removeHandOf(id)"
                 @back="picking = id" @clear-back="t.edit((d) => setBack(d, id, null))" @done="onDone(doc.boxes[id]!)"
                 @note="panel = { kind: 'note', id }" @base="t.goalPage.value = 1" @issue="openIssues" @back-go="goBack(doc.boxes[id]!)" @checked="t.edit((d) => { delete d.boxes[id]!.check; })" @hover="(on) => (hoverBox = on ? id : hoverBox === id ? null : hoverBox)" />
             </template>
@@ -491,8 +493,8 @@ const phone = usePhone(), simPhone = flag("simPhone");
         <!-- 縮めて見ている時の箱の編集 (等倍。枠の外・Esc で閉じる) -->
         <div v-if="pop && doc.boxes[pop]" ref="popEl" data-tree-pop class="absolute z-30 w-max rounded-2xl border border-white/10 bg-[#0c0a08]/95 p-3 pb-12 pr-7 shadow-[0_10px_30px_rgba(0,0,0,0.7)]" :style="popStyle">
           <div class="relative" :style="{ width: `${BOX_W}px`, height: `${BOX_H}px` }">
-            <TreeBox :box="doc.boxes[pop]!" :x="0" :y="0" :removable="canRemove(doc, pop)" :picking="false" :selected="true" :back-label="backLabel(doc.boxes[pop]!)" :issue="issueOf(doc.boxes[pop]!)"
-              @drag="() => {}" @aim="popDo((_, b) => onAim(b))" @plus="(k) => popDo((_, b) => (k === 'side' ? onAddHit(b) : startLink(b)))" @remove="popDo((id) => t.edit((d) => removeHit(d, id)))"
+            <TreeBox :box="doc.boxes[pop]!" :x="0" :y="0" :removable="!!doc.boxes[pop]?.parent" :picking="false" :selected="true" :back-label="backLabel(doc.boxes[pop]!)" :issue="issueOf(doc.boxes[pop]!)"
+              @drag="() => {}" @aim="popDo((_, b) => onAim(b))" @plus="(k) => popDo((_, b) => (k === 'side' ? onAddHit(b) : startLink(b)))" @remove="popDo((id) => removeHandOf(id))"
               @back="popDo((id) => (picking = id))" @clear-back="t.edit((d) => setBack(d, pop!, null))" @done="onDone(doc.boxes[pop!]!)"
               @note="popDo((id) => (panel = { kind: 'note', id }))" @base="popDo(() => (t.goalPage.value = 1))" @issue="popDo(() => openIssues())" @back-go="popDo((_, b) => goBack(b))" />
           </div>
