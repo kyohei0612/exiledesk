@@ -23,6 +23,7 @@ import TreeFlowSteps from "./TreeFlowSteps.vue";
 import TreeTabs from "./TreeTabs.vue";
 import TreeStartAsk from "./TreeStartAsk.vue";
 import TreePasteBox from "./TreePasteBox.vue";
+import SimTutorialEntry from "../tutorial/SimTutorialEntry.vue";
 import TreePasteNote from "./TreePasteNote.vue";
 import { pasteNote } from "./tree-paste";
 import { quickSave, unsaved } from "./tree-save";
@@ -233,6 +234,8 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
     </template>
     <div v-if="step === 1" data-tree-goal-base class="flex min-w-0 flex-col gap-3">
       <TreeBasePick />
+      <!-- チュートリアルの入口 (初回も 2 回目以降もいつも出す、スマホは出さない。10-26 夜オーナー) -->
+      <SimTutorialEntry />
       <!-- アイテムを貼り付けて取り込む (一覧の上、目立つ口。10-25 オーナー「ベース一覧の所に分かりやすく出したい」)。取り込めたら完成の MOD へ -->
       <TreePasteBox @done="onPasted" />
       <!-- ベースを替えると今の木が消える時だけ、1 回確かめる (上に貼り付けて、一覧を送っていても見える所に) -->
