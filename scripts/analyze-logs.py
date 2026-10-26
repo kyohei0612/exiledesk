@@ -91,6 +91,32 @@ SIM = {k: {"n": len(v), "people": len({r["uid"] for r in v})} for k, v in simrun
 if any(x["n"] for x in SIM.values()):
     print(f"\n== シミュで回した: 100 人回す {SIM['run']['n']} 回 / {SIM['run']['people']} 人・テストラン {SIM['test']['n']} 回 / {SIM['test']['people']} 人")
 
+# ---- シミュの足取り (2026-10-26 オーナー「どこで躓いたか全く分からん、全てにおいて監視」。デザイン 9 の track.ts)。
+# 画面の screen "tree" / "sim-base" / "sim-mods" / "recipes"、操作は kind "sim_trail" {v, from, ops: [[秒, 画面, 操作, 詳しく]], last, end: leave|page|full}
+# 1 訪問の中で何便かに分かれて届く (シミュから出るたび・隠すたび・300 件ごと) ので、訪問 (sid) ごとに ops を繋いで見る ----
+SIM_SCR = ("sim-base", "sim-mods", "tree", "recipes")
+trails = collections.defaultdict(list)
+for r in recs["sim_trail"]:
+    trails[r["sid"]] += [op for op in r["d"].get("ops", []) if isinstance(op, list) and len(op) >= 3]
+sim_sess = [(sid, s) for sid, s in sess.items() if trails.get(sid) or any(t in SIM_SCR for t in s["screens"])]
+SIM_TRAIL = {"visits": len(sim_sess), "people": len({s["uid"] for _, s in sim_sess})}
+if sim_sess:
+    print(f"\n== シミュの足取り: 開いた訪問 {len(sim_sess)} ({SIM_TRAIL['people']} 人、端末 {dict(collections.Counter(s['dev'] for _, s in sim_sess))})")
+    # どの画面まで行ったか (訪問ごとに、その画面を 1 度でも見たか) と、最後にいた画面 (= そこで抜けた)
+    reach = collections.Counter(t for sid, s in sim_sess for t in set(s["screens"]) | {op[1] for op in trails.get(sid, [])} if t in SIM_SCR)
+    print("行った画面 (訪問):", " → ".join(f"{t} {reach.get(t, 0)}" for t in SIM_SCR))
+    lastscr = collections.Counter((trails[sid][-1][1] if trails.get(sid) else next((t for t in reversed(s["screens"]) if t in SIM_SCR), "?")) for sid, s in sim_sess)
+    print("最後にいたシミュの画面 (そこで抜けた):", top(lastscr, 6))
+    ops = [(sid, op) for sid, o in trails.items() for op in o]
+    print(f"操作 {len(ops)} 件:", top(collections.Counter(op[2] for _, op in ops), 15))
+    print("最後の操作 (訪問ごと) の上位:", top(collections.Counter(f"{o[-1][1]}:{o[-1][2]}" for o in trails.values() if o), 10))
+    cancel = collections.Counter(f"{op[1]}:{op[3] if len(op) > 3 else ''}" for _, op in ops if op[2] == "cancel")
+    print(f"キャンセル {sum(cancel.values())} 件 (画面:何を):", top(cancel, 10))
+    errs = collections.Counter(f"{op[1]}:{str(op[3] if len(op) > 3 else '')[:40]}" for _, op in ops if op[2] == "error")
+    print(f"エラー {sum(errs.values())} 件:", top(errs, 10))
+    print("便の切れ目 (end):", top(collections.Counter(r["d"].get("end") for r in recs["sim_trail"]), 4), "/ 入った画面 (from):", top(collections.Counter(r["d"].get("from") for r in recs["sim_trail"]), 5))
+    SIM_TRAIL.update(reach=dict(reach), last_screen=dict(lastscr), cancels=sum(cancel.values()), errors=sum(errs.values()))
+
 # ---- ブログ (2026-10-21〜。画面名 blog:<slug>:<言語>、一覧は blog:index:<言語>) ----
 blog = [r for r in recs["screen"] if str(r["d"].get("to", "")).startswith("blog:")]
 if blog:
@@ -196,6 +222,6 @@ if AS_JSON:
         "first": sum(1 for s in sessions if (s["visit"] or {}).get("first")), "ref": dict(collections.Counter(v.get("ref") for v in vis).most_common(8)),
         "screens": dict(scr.most_common()), "blog": dict(collections.Counter(r["d"]["to"][5:] for r in blog).most_common()),
         "cosmetics": dict(collections.Counter(r["d"]["to"][10:] for r in cosm).most_common()),
-        "sim": SIM,
+        "sim": SIM, "sim_trail": SIM_TRAIL,
         "uses": len(uses), "users": len({u["uid"] for u in uses}), "used_visits": sum(1 for s in sessions if s["uses"]),
     }, ensure_ascii=False) + "\n")
