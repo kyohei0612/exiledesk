@@ -4,6 +4,7 @@
 -->
 <script setup lang="ts">
 import type { CheckIssue } from "../../../services/simulator/tree/tree-check";
+import { onBeforeUnmount, onMounted } from "vue";
 import { tr } from "../../../i18n/lang";
 import BusyTag from "../../../components/ui/BusyTag.vue";
 
@@ -11,6 +12,10 @@ import BusyTag from "../../../components/ui/BusyTag.vue";
 defineProps<{ issues: CheckIssue[]; lower: boolean; boxName: (id: string) => string; busy?: { text: string; n?: number; of?: number } | null }>();
 const fold = defineModel<boolean>("fold", { required: true });
 const emit = defineEmits<{ go: [id: string]; close: [] }>();
+// Esc で閉じる (10-26 モンキー 7 の 19、メモ feedback-click-outside-cancel)
+const onKey = (e: KeyboardEvent): void => { if (e.key === "Escape") emit("close"); };
+onMounted(() => window.addEventListener("keydown", onKey));
+onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
 </script>
 
 <template>

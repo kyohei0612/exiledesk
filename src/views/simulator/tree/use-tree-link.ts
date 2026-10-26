@@ -21,7 +21,12 @@ export function useTreeLink(doc: Ref<TreeDoc>, from: Ref<string | null>) {
       // 分かれ目 (打たずに分ける) は手が無くてもつなげる (どの形でも行の箱へ分かれる、10-22)
       if (b.split) { out.set(b.id, null); continue; }
       // 始まりの箱は帯の「↩ 始めに戻る」と同じ (setBack の "start")。箱だけ手の打てる / 打てないで灰色にしていて、押しても黙って何も起きなかった (10-25 モンキー 4 本目)
-      if (b.out === "start") { out.set(b.id, null); continue; }
+      // 10-26 モンキー 7 の 1: 始めの手がこのアイテムに打てない (レアのまま錬金術の箱へ戻る等) なら理由付きでつなげない。「↩ 始めに戻る」も同じ理由で押せない形に (黙って何も起きない、は理由の文で避ける)
+      if (b.out === "start") {
+        const why = b.hand ? handProblem(d, item, b.hand) : null;
+        out.set(b.id, why ? tr(`このアイテムのまま始めに戻ると、始めの手が打てない: ${why}`, `Going back to the start with this item, the first craft can't be used: ${why}`) : null);
+        continue;
+      }
       if (!b.hand) { out.set(b.id, tr("この箱にはまだ打つ手が無い", "This box has no craft yet")); continue; }
       const why = handProblem(d, item, b.hand);
       out.set(b.id, why ? tr(`この箱の手が打てない: ${why}`, `Its craft can't be used here: ${why}`) : null);

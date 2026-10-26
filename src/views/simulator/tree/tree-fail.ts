@@ -30,7 +30,8 @@ export function routeText(doc: TreeDoc, id: string, name?: (id: string) => strin
   if (!b || k === "none") return null;
   const to = backTargetsOf(doc, id);
   if (k === "restart") return tr("↩ ベースから作り直し", "↩ Start over from a new base");
-  if (k === "start") return b.out === "lost" ? tr("↩ 狙いが消えたので始めから打ち直す", "↩ A target was lost, so craft again from the start") : tr("↩ 始めから打ち直す", "↩ Craft again from the start");
+  // このアイテムのまま始めの箱へ戻る (新しいベースからではない。10-26 モンキー 7 の 1「新しい白のベースから打ち直すと読める」)
+  if (k === "start") return b.out === "lost" ? tr("↩ 狙いが消えたので、このアイテムのまま始めの箱へ戻る", "↩ A target was lost: back to the start box with this item") : tr("↩ このアイテムのまま始めの箱へ戻る", "↩ Back to the start box with this item");
   if (k === "match") return to.length ? (name ? tr(`↩ 形の合う箱へ: ${to.map(name).join("・")}`, `↩ To the box of the same shape: ${to.map(name).join(", ")}`) : tr(`↩ 形の合う箱へ (${to.length} か所)`, `↩ To the box of the same shape (${to.length})`)) : tr("↩ 形の合う箱が無い (回すとここで止まる)", "↩ No box of the same shape (runs stop here)");
   const n = name && to[0] ? name(to[0]) : "", ja = n ? `: ${n}` : "", en = n ? `: ${n}` : "";
   if (k === "retry") return tr(`↩ 同じ手をもう一度 (打つ前の箱へ)${ja}`, `↩ Same craft again (back to the box before it)${en}`);
@@ -57,4 +58,11 @@ export function runText(r: TreeRunResult | null | undefined, id: string): string
 export function retryOf(doc: TreeDoc, id: string | null, link: ReadonlyMap<string, string | null>): string | null {
   const p = id ? doc.boxes[id]?.parent ?? null : null;
   return p && p !== "start" && link.get(p) === null ? p : null;
+}
+
+/** 完成の狙い (memoAims) に無い MOD を当たりにしている箱 (完成の MOD で狙いを外しても箱は残る。知らせと箱の札、10-26 モンキー 7 の 5)。完成の狙いが無い木は数えない */
+export function orphanHits(doc: TreeDoc): string[] {
+  const goals = doc.memoAims ?? [];
+  if (!goals.length) return [];
+  return Object.values(doc.boxes).filter((b) => b.out === "hit" && b.aim && !goals.some((g) => g.modId === b.aim!.modId)).map((b) => b.id);
 }

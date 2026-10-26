@@ -33,7 +33,7 @@ const what = (id: string): string => {
     <p class="text-[12px] font-bold text-amber-200">{{ tr("残りの道", "Open paths") }}</p>
     <p v-if="!q.questions.value.length" class="text-[12px] text-[#9a8a70]">{{ tr("無し", "None") }}</p>
     <button v-for="x in q.questions.value" :key="`${x.kind}-${x.id}`" type="button" data-phone-route-open :data-box-id="x.id" class="rounded-xl border border-amber-300/50 bg-[#1a140d] px-3 py-2 text-left" @click="go(x)">
-      <span class="flex items-center gap-2 text-[13px] font-bold" :style="{ color: `rgb(${OUT_LOOK[q.doc.value.boxes[x.id]!.out].c})` }"><span class="min-w-0 flex-1 break-words">{{ q.boxTitle(x.id) }}</span><span class="shrink-0 text-[11px] font-normal text-amber-200/80">{{ x.kind === "hand" ? tr("次の手は?", "Next craft?") : tr("結果は?", "Results?") }}</span></span>
+      <span class="flex items-center gap-2 text-[13px] font-bold" :style="{ color: `rgb(${OUT_LOOK[q.doc.value.boxes[x.id]!.out].c})` }"><span class="min-w-0 flex-1 break-words">{{ q.boxTitle(x.id) }}{{ x.kind === "outs" && q.doc.value.boxes[x.id]?.hand ? ` → ${handLabel(q.doc.value.boxes[x.id]!.hand!)}` : "" }}</span><span class="shrink-0 text-[11px] font-normal text-amber-200/80">{{ x.kind === "hand" ? tr("次の手は?", "Next craft?") : tr("結果は?", "Results?") }}</span></span>
       <span class="block break-words text-[11px] text-[#9a8a70]">{{ q.pathText(x.id) }}</span>
     </button>
     <p class="mt-2 text-[12px] font-bold text-emerald-300">{{ tr("決めた道", "Decided") }}</p>

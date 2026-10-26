@@ -12,7 +12,7 @@ import { useTree } from "./use-tree";
 import { handName, OUT_LOOK, rarityName, splitWhenText } from "./tree-names";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { pctText, useTreeOdds } from "./tree-odds";
-import { routeText } from "./tree-fail";
+import { orphanHits, routeText } from "./tree-fail";
 
 const props = defineProps<{ box: TreeBox; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
   /** 縮めた時の倍率の逆数 (押せる物だけこれで大きさを戻し、画面の上で 24px 以上を保つ。オーナー 10-22「縮めても押せる物は小さくならない」) */ inv?: number;
@@ -61,6 +61,8 @@ const sameAim = computed(() => !!props.box.autoBack && props.box.back !== "start
 const free = computed(() => !props.box.hand && !props.box.split);
 /** 失敗の箱の行き先の文 (tree-fail) と、何が起きたかの文 */
 const route = computed(() => routeText(t.doc.value, props.box.id));
+/** 完成の狙いから外した MOD の当たりの箱 (tree-fail の orphanHits) */
+const orphan = computed(() => props.box.out === "hit" && orphanHits(t.doc.value).includes(props.box.id));
 const desc = computed(() => props.box.out === "junk" ? tr("当たり以外が付いた", "Anything but a hit") : props.box.out === "junkGone" ? tr("外れの MOD が消えた", "A miss mod was removed") : props.box.out === "any" ? (essOf.value ? tr(`${essOf.value} の MOD が付いた`, `${essOf.value} mod added`) : tr("何かが 1 つ付いた (狙い無し)", "Something was added (no target)")) : tr("狙いの MOD が消えた", "A target mod was removed"));
 /** 分かれ目の先の箱の文 = 親の分かれ目の行の条件 */
 const branchText = computed(() => { const r = props.box.parent ? t.doc.value.boxes[props.box.parent]?.split?.find((x) => x.to === props.box.id) : null; return r ? splitWhenText(r.when) : ""; });
@@ -124,6 +126,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <span v-if="odds != null" data-tree-odds class="shrink-0 text-[11px] tabular-nums opacity-80" :title="tr('この手でこの結果になる割合 (1 手分、エンジンから)', 'Chance of this result from the craft (one use, from the engine)')">{{ pctText(odds) }}</span>
       <!-- 始まりのアイテムレベルは見出しに (ベースの名前が長いと下の行で切れて見えない、10-22 靴) -->
       <span v-if="box.out === 'start'" class="shrink-0 text-[11px] opacity-70">{{ tr(`Lv ${t.doc.value.itemLevel}${t.doc.value.ilvlFit ? " 適正" : ""}`, `ilvl ${t.doc.value.itemLevel}${t.doc.value.ilvlFit ? " fit" : ""}`) }}</span>
+      <span v-if="orphan" data-tree-orphan class="shrink-0 rounded-sm bg-rose-400/20 px-1 text-[10px] font-bold text-rose-200" :title="tr('この当たりの MOD は完成の狙いから外した (木からは消えていない。× で消すか、完成の MOD で狙いに戻す)', 'This hit mod was removed from the final targets (the box stays; remove it with × or add the target back)')">{{ tr("狙いに無い", "Not a target") }}</span>
       <span v-if="box.done" class="shrink-0 rounded-full bg-amber-300/25 px-1.5 text-[10px] font-bold text-amber-100">{{ doneText }}</span>
       <span v-if="box.unwanted?.length" data-tree-unwanted class="shrink-0 rounded-sm bg-rose-400/20 px-1.5 text-[11px] font-bold text-rose-200" :title="tr(`× (要らない) の印 ${box.unwanted.length} 個 (前の試し打ちで付けた物)`, `${box.unwanted.length} mod(s) marked × (unwanted, set in the old try-out)`)">× {{ box.unwanted.length }}</span>
       <button v-if="box.check?.length" type="button" data-tree-check class="nodrag shrink-0 rounded-sm bg-amber-500/80 px-1.5 text-[11px] font-bold text-black hover:bg-amber-400" :class="quiet ? 'pointer-events-none' : ''" :title="tr(`読めなかった所: ${checkTitle} (直したら押して印を消す)`, `Couldn’t read: ${checkTitle} (fix it, then click to clear)`)" @click.stop="!quiet && emit('checked')">{{ tr("要確認", "Check") }}</button>

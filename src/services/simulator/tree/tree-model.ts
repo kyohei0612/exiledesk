@@ -306,6 +306,9 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   const noLost = !only && OUTS_OF[kind].includes("lost") && OUTS_OF[kind].length > 1 && !kept && !mayHoldAim(d, id);
   const want = only ? OUT_ORDER.filter((k) => only.some((o) => o.out === k)) : noLost ? OUTS_OF[kind].filter((k) => k !== "lost") : OUTS_OF[kind];
   if (only) { const hs = only.flatMap((o) => (o.out === "hit" && o.aim ? [o.aim] : [])); if (hs.length) aims = hs; }
+  // 当たりの箱は完成の狙いの順に並べる (手ごとに順が違った、10-26 モンキー 7 の 17)。完成の狙いに無い物は後ろ
+  const order = (a: Aim): number => { const i = (d.memoAims ?? []).findIndex((g) => g.modId === a.modId); return i < 0 ? 999 : i; };
+  aims = [...aims].sort((x, y) => order(x) - order(y));
   // 起こりうる結果の一覧に「狙いが消えた」が無いのが、まだ誰も狙いを持って着かないからなら印を残す (後で戻りの矢印が付いたら healLost が足す)。
   // 持って着く人がいて無いなら、その手では消えない (右側の結晶化で外れだけ消える等) ので足さない
   if (noLost || (only && !want.includes("lost") && OUTS_OF[kind].includes("lost") && !mayHoldAim(d, id))) b.noLost = true; else delete b.noLost;

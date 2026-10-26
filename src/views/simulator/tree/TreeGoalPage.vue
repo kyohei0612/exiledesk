@@ -28,6 +28,7 @@ import { pasteNote } from "./tree-paste";
 import { quickSave, unsaved } from "./tree-save";
 import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { useTree } from "./use-tree";
+import { orphanHits } from "./tree-fail";
 import { openTreePage, treeStep } from "../../../web/page";
 
 const t = useTree();
@@ -123,6 +124,9 @@ function apply(en: string): void {
 /** 貼り付けで取り込んだ (ベースと狙いは tree-paste が入れた) = 完成の MOD のページへ */
 function onPasted(): void { asking.value = null; dropped.value = []; unpicked.value = false; t.needBase.value = false; go(2); }
 const pickGoal = { has: t.hasGoal, toggle: t.toggleGoal };
+/** 完成の狙いに無い MOD を当たりにしている箱 (狙いを外した後も木に残る。tree-model の orphanHits) */
+const orphans = computed(() => orphanHits(t.doc.value));
+const orphanNames = computed(() => [...new Set(orphans.value.map((id) => t.aimShort(t.doc.value.boxes[id]!.aim!)))].join(tr("・", ", ")));
 /**
  * 今の狙いの組にその段を足せない理由 (足せれば null。エンジンの入口 goalBlock: 枠・同じ系統・冒涜 1 つまで・クラフト MOD の上限・アイテムレベル、10-24 オーナー)。
  * 同じ MOD の段の替えは見ない (その MOD を除いた組で聞く)。適正の間はアイテムレベルが狙いに合わせて上がるので、レベルでは断らない。組・ベース・レベルが変わるまで覚える
@@ -208,6 +212,11 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <button type="button" data-tree-ilvl-note-close class="shrink-0 rounded px-1 opacity-60 hover:bg-white/10 hover:opacity-100" :aria-label="tr('閉じる', 'Close')" @click="t.ilvlNote.value = null">×</button>
       </p>
       <TreePasteNote v-if="step === 2" />
+      <!-- 外した狙いを使う当たりの箱が木に残っている (箱は消さない。木で × か、1 つ戻す。10-26 モンキー 7 の 5) -->
+      <p v-if="step === 2 && orphans.length" data-tree-goal-orphans class="flex min-w-0 flex-wrap items-center gap-2 px-3 pb-2 text-[12px] text-rose-200/90">
+        <span class="min-w-0 flex-1 break-words">{{ tr(`完成の狙いに無い当たりの箱が木に ${orphans.length} 個残っている: ${orphanNames}`, `${orphans.length} hit box(es) in the tree use a target that is no longer final: ${orphanNames}`) }}</span>
+        <button type="button" data-tree-goal-undo class="g-btn sm shrink-0" :disabled="!t.canUndo.value" @click="t.undo">{{ tr("1 つ戻す", "Undo") }}</button>
+      </p>
       <p v-if="step === 2 && dropped.length" data-tree-goal-dropped class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words px-3 pb-2 text-[12px] text-rose-200/80" :title="dropped.join('\n')">{{ tr(`このベースに付かない狙いを外した: ${dropped.join("・")}`, `Removed targets this base can't roll: ${dropped.join(", ")}`) }}</p>
     </template>
     <div v-if="step === 1" data-tree-goal-base class="flex min-w-0 flex-col gap-3">

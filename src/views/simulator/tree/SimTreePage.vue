@@ -364,7 +364,7 @@ onMounted(() => {
 });
 onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); });
 // 完成形の設定をページで出していた間はツリーを隠していたので (大きさ 0)、戻ったら開いた時の見え方 (全体・上寄せ) に合わせ直す
-watch(() => t.goalInline.value, (on) => { if (!on) setTimeout(() => { measureRow(); void v.openView(); }, 0); });
+watch(() => t.goalInline.value, (on) => { if (on) v.keepView(); else setTimeout(() => { measureRow(); void v.backView(); }, 0); });
 
 const panelBox = computed(() => (panel.value ? doc.value.boxes[panel.value.id] ?? null : null));
 /** 一覧に出す箱の名前 (種類 + 当たりの札) */
@@ -476,7 +476,7 @@ const phone = usePhone(), simPhone = flag("simPhone");
           <!-- 完成の箱からつなぐと完成の印は外れる (黙って外れていた、10-22 白紙から組んだ試し #19) -->
           <b v-if="picking && doc.boxes[picking]?.done" data-tree-pick-undone class="text-amber-200">{{ tr("(この箱の完成の印は外れる)", "(this box's done mark will be removed)") }}</b>
           <button v-if="retryOf(doc, picking, link)" type="button" data-tree-pick-retry class="g-btn sm pointer-events-auto" :title="tr('打つ前の箱へ戻って、同じ手をもう一度打つ', 'Go back to the box before it and use the same craft again')" @click="pickBack(retryOf(doc, picking, link)!)">{{ tr("↩ 同じ手をもう一度", "↩ Same craft again") }}</button>
-          <button v-if="picking && picking !== 'start'" type="button" data-tree-pick-start class="g-btn sm pointer-events-auto" :title="tr('始まりの箱の手から打ち直す', 'Craft again from the start box')" @click="pickBack('start')">{{ tr("↩ 始めに戻る", "↩ Back to start") }}</button>
+          <button v-if="picking && picking !== 'start'" type="button" data-tree-pick-start class="g-btn sm pointer-events-auto" :disabled="!!link.get('start')" :title="link.get('start') ?? tr('このアイテムのまま始まりの箱へ戻り、始めの手から打ち直す', 'Go back to the start box with this item and craft again from the first craft')" @click="pickBack('start')">{{ link.get('start') ? tr("↩ 始めに戻る (始めの手が打てない)", "↩ Back to start (first craft can't be used)") : tr("↩ 始めに戻る", "↩ Back to start") }}</button>
         </p>
         <TreeIssues v-if="issues?.length && issuesShown && issuesOpen" v-model:fold="issuesFold" :issues="issues" :busy="checkBusy" :lower="!!(picking || hand || viewOnly)" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" />
         <!-- 縮めて見ている時の箱の編集 (等倍。枠の外・Esc で閉じる) -->

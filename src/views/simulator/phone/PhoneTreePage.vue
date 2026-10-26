@@ -137,6 +137,8 @@ function goBox(id: string): void {
         <div class="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-white/10"><i class="block h-full bg-amber-300" :style="{ width: `${Math.round((100 * q.answered.value) / Math.max(1, q.answered.value + total))}%` }" /></div>
         <button type="button" data-phone-routes class="g-btn sm shrink-0" :aria-pressed="routesOpen" @click="routesOpen = !routesOpen">{{ routesOpen ? tr("質問へ", "Question") : tr("全体を見る", "Overview") }}</button>
       </div>
+      <!-- 道が残っている間は 100 人回すの場所を先に知らせる (10-26 モンキー 7 の 7「100 人・テストがどこにも無い」) -->
+      <p v-if="total" data-phone-run-hint class="text-[11px] text-[#9a8a70]">{{ tr("残りの道を全部決めると、下の帯で 100 人回せる (足りない所は先に直す)", "Decide every open path and the bar below lets you run 100 (fix anything missing first)") }}</p>
       <!-- 足りない所 (PC と同じ精査、自動で回る。10-26 案 2) -->
       <PhoneIssues />
       <PhoneRoutes v-if="routesOpen" @pick="routesOpen = false" />

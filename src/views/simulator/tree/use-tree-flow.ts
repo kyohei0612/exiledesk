@@ -137,6 +137,11 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     const cx = clear ? mid : p.left + (w - p.left - p.room) / 2;
     await f.setViewport({ x: cx - (b.x + b.w / 2) * z, y: topY() - b.y * z, zoom: z });
   }
+  /** 完成形の設定などを見に行く前の寄りと位置 (戻ったらそのまま。10-26 モンキー 7 の 10、メモ feedback-basic-flow「閉じたら前の位置」) */
+  let kept: { x: number; y: number; zoom: number } | null = null;
+  const keepView = (): void => { const v = f.getViewport(); kept = { x: v.x, y: v.y, zoom: v.zoom }; };
+  /** 覚えた寄りへ戻す (覚えていなければ開いた時の寄り) */
+  async function backView(): Promise<void> { const k = kept; kept = null; if (k) await f.setViewport(k); else await openView(); }
   /** 始まりの箱を上の真ん中へ、等倍で (一望から等倍に戻した時。真ん中を軸にすると枝の間の空き所に出た、10-22) */
   const goHome = (): Promise<void> => startTop(1);
   /** 等倍に戻す。一望 (VIEW_ONLY 未満) からは始まりへ、75% 以上の時は今見ている真ん中を軸に */
@@ -187,5 +192,5 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     void f.setViewport({ x: vp.x + (w - old) / 2, y: vp.y, zoom: vp.zoom });
   });
 
-  return { flow: f, pageZ, zoom, viewOnly, minZoom, maxZoom, full, bounds, view, setZoom, zoomIn, zoomOut, onWheel, fit, openView, goHome, resetZoom, toWorld, reveal, toggleFull, centerOn, rectOf, dispose: () => window.removeEventListener("resize", onResize) };
+  return { flow: f, pageZ, zoom, viewOnly, minZoom, maxZoom, full, bounds, view, setZoom, zoomIn, zoomOut, onWheel, fit, openView, keepView, backView, goHome, resetZoom, toWorld, reveal, toggleFull, centerOn, rectOf, dispose: () => window.removeEventListener("resize", onResize) };
 }
