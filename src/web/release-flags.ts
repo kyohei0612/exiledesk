@@ -66,6 +66,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "simPhone",
   // シミュのスマホの全体図と箱の重ね窓 (案 B、線はつながりだけ。オーナー 10-26「本番に出して」)
   "phoneMap",
+  // エミュのお告げを持った物ごとに覚える (オーナー 10-26 夜 OK、ブラック 13 の「出して」)
+  "omenPerHeld",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */

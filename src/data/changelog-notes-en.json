@@ -1,4 +1,10 @@
 {
+  "0.1.622": [
+    "Simulator: Tidy no longer moves the start box, so the tree's spine stays straight. The right column is narrower (372 → 248px); the finished-item panel uses smaller tier tags and larger mod text, and lines that don't fit shrink to one line. The zoom tools fit on one line",
+    "Simulator: Mod values on the cards in the craft picker now match the finished item and the boxes. For bone crafts, Abyssal Echoes is now just the \"Omen of Abyssal Echoes\" in the omen row (applied by default when you hold a bone; the separate large tag is gone)",
+    "Simulator (phone): The missing list folds into one line and opens in a sheet when tapped (so the question fits on the first screen). Buttons are at least 40px tall. Note and Clear are in the top bar (Clear keeps the start and the finished item), notes can also be opened from a box's sheet, and \"Back to top\" is hidden while a sheet is open",
+    "Emulator: Omens are now remembered per held currency (switching currencies drops the previous omens, and holding it again brings them back)"
+  ],
   "0.1.621": [
     "Simulator: Hit boxes on different paths that landed the same mod can now be merged (automatically when you add a craft). Mod values in boxes are kept the same across the tree, using the pasted value or the middle of the tier",
     "Simulator: The item frame inside each box now has the base name as its title, and the box layout was tidied (the return × sits right next to its text, ✎ and × are at the bottom right, and marks like ! sit beside the label on the top edge)",

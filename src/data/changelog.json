@@ -1,5 +1,35 @@
 [
  {
+  "v": "0.1.622",
+  "date": "2026-10-26",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 整列でスタートの箱を動かさず、木の骨がまっすぐ並ぶように。右の列を細く (372 → 248px) し、完成形の窓は段の札を小さく・MOD の文を大きく、入らない行は字を縮めて 1 行に。倍率の道具は 1 行にしました",
+    "en": "Simulator: Tidy no longer moves the start box, so the tree's spine stays straight. The right column is narrower (372 → 248px); the finished-item panel uses smaller tier tags and larger mod text, and lines that don't fit shrink to one line. The zoom tools fit on one line"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 打つ手の窓のカードの MOD の値も、完成形・箱と同じ値に揃えました。骨の手のアビスの反響は、お告げの並びの「アビスの反響のお告げ」1 つに (骨を持つと最初から掛かる・別の大きな札は無くしました)",
+    "en": "Simulator: Mod values on the cards in the craft picker now match the finished item and the boxes. For bone crafts, Abyssal Echoes is now just the \"Omen of Abyssal Echoes\" in the omen row (applied by default when you hold a bone; the separate large tag is gone)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター (スマホ): 足りない所は 1 行に畳み、押すと窓で一覧 (最初の画面に質問が入るように)。ボタンは高さ 40px 以上に。上の帯に ✎ メモと白紙に戻す (スタートと完成形は残す)、箱の窓からもメモ。窓が開いている間は「上へ戻る」を出さないようにしました",
+    "en": "Simulator (phone): The missing list folds into one line and opens in a sheet when tapped (so the question fits on the first screen). Buttons are at least 40px tall. Note and Clear are in the top bar (Clear keeps the start and the finished item), notes can also be opened from a box's sheet, and \"Back to top\" is hidden while a sheet is open"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター: お告げを持ったカレンシーごとに覚えるように (持ち替えると前のお告げは外れ、持ち直すと戻ります)",
+    "en": "Emulator: Omens are now remembered per held currency (switching currencies drops the previous omens, and holding it again brings them back)"
+   }
+  ]
+ },
+ {
   "v": "0.1.621",
   "date": "2026-10-26",
   "items": [
@@ -853,18 +883,6 @@
     "area": "",
     "text": "初めて開いた時に、何ができるかの一言と「金の指輪ですぐ試す」ボタンを出しました (ベースを選ばずにすぐ打てます)",
     "en": "First visit now shows a one-line intro and a “Try now with a Gold Ring” button (start crafting without choosing a base)"
-   }
-  ]
- },
- {
-  "v": "0.1.582",
-  "date": "2026-10-19",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "開いた時の読み込みを速くしました (特にスマホ)。最初に読む量を半分にして、読み込み中もすぐ画面が出るように",
-    "en": "Faster first load, especially on phones: the initial download is about half the size and a loading screen shows right away"
    }
   ]
  }
