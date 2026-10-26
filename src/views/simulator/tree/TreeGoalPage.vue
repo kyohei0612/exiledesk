@@ -21,7 +21,7 @@ import TreeBasePick from "./TreeBasePick.vue";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue";
 import TreeTabs from "./TreeTabs.vue";
-import TreeFractureAsk from "./TreeFractureAsk.vue";
+import TreeStartAsk from "./TreeStartAsk.vue";
 import TreePasteBox from "./TreePasteBox.vue";
 import TreePasteNote from "./TreePasteNote.vue";
 import { pasteNote } from "./tree-paste";
@@ -96,7 +96,7 @@ function toMods(): void { unpicked.value = false; t.chooseBase(); go(2); }
 function onFlow(n: 1 | 2 | 3 | 4): void {
   if (n === 1) go(1);
   else if (n === 2) toMods();
-  else { close(); if (n === 4) t.reportOpen.value = true; }
+  else toTree(n === 4 ? () => { t.reportOpen.value = true; } : undefined);
 }
 function pick(en: string): void {
   unpicked.value = false;
@@ -168,12 +168,13 @@ function goalAt(modId: string, tier: number): "pick" | "in" | null {
 /** その段の狙いにフラクチャーの印があるか */
 const isFrac = (modId: string, tier: number): boolean => t.goals.value.some((a) => a.modId === modId && a.tier === tier && a.fractured);
 const marks = computed(() => t.goals.value.filter((a) => a.fractured).map((a) => a.modId));
-/** 印を付け外す。印が無い所から付けたら、フラクチャーの始め方 (済みから / 前から) を聞く (TreeFractureAsk、10-24 夜オーナー) */
-const fracAsk = ref(false);
-function markFracture(modId: string, tier: number): void {
-  const had = marks.value.length;
-  t.toggleFracture(modId, tier);
-  if (!had && marks.value.length) fracAsk.value = true;
+/** 印を付け外す (始め方はツリーへ行く時の窓 TreeStartAsk でまとめて決める、10-26 夜オーナー「そこで決める形に統一」。前は印を付けた時に 2 択を聞いた) */
+function markFracture(modId: string, tier: number): void { t.toggleFracture(modId, tier); }
+/** ツリーへ (「決めた」・流れの帯の 3 / 4): 完成の狙いがあれば「フラクチャーから / 白ベースから」の窓を出してから (どの入口から来ても同じ) */
+const startAsk = ref<null | (() => void)>(null);
+function toTree(after?: () => void): void {
+  const go = (): void => { close(); after?.(); };
+  if (t.goals.value.length) startAsk.value = go; else go();
 }
 /** カードの行の × = 一覧で外したのと同じ (狙いから外す、印も一緒に外れる。10-24 夜オーナー「アイテムにつく UI からもバツで消したい」) */
 function onCardRemove(modId: string): void {
@@ -290,10 +291,10 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
           </ul>
         </details>
         <!-- 次へ (決めた) はカードと説明の下 (10-24 オーナー)。列ごと上に留めるので一覧を送っても見える。スマホは列が上に積まれるので下の帯に出す -->
-        <div class="max-md:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="close">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
+        <div class="max-md:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="toTree()">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
       </div>
       <!-- スマホはカードの列が上に積まれるので、「決めた」は一覧の下に貼り付ける (一覧を送っている間は画面の下に見える) -->
-      <div class="sticky bottom-0 z-10 bg-[#120d08]/90 py-2 md:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="close">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
+      <div class="sticky bottom-0 z-10 bg-[#120d08]/90 py-2 md:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="toTree()">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
     </div>
     <!-- 下の帯は 2 完成の MOD の段だけで「← ベース」を控えめに。ベースの段の「次へ」は出さない (ベースを押すと 2 へ進む。10-23 オーナー「ベース決めないと進めないし、どのみち」)。
          「決めた」(決める手の赤 g-btn-red、1 画面 1 つ) はカードと説明の下へ移した (10-24 オーナー) -->
@@ -302,6 +303,6 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <button type="button" class="g-btn sm" @click="go(1)">{{ tr("← ベース", "← Base") }}</button>
       </div>
     </template>
-    <TreeFractureAsk v-if="fracAsk" @close="fracAsk = false" />
+    <TreeStartAsk v-if="startAsk" @done="() => { const go = startAsk; startAsk = null; go?.(); }" @close="startAsk = null" />
   </ModalShell>
 </template>
