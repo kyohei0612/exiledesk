@@ -1,19 +1,13 @@
 # デザイン部長 のやる事
 
-## 次の部長へ (6 本目 → 7 本目、10-25 夜)
-- 今の状態: 本番は main をそのまま出す形 (v0.1.598 まで出た)。出していない物は src/web/release-flags.ts のスイッチの下、OK 待ちと日英の更新内容は docs/pending-release.md。手で止めた物・立てっぱなしの物は無し (確かめの Chrome 9334〜9337 は台本の中で止めた、dev 1440 はブラックの物)。
-- 今日の済み (6 本目):
-  - 5883ca99 (スマホのヘッダー 1 段・ブログはスマホで残す・ベースの一覧の展開の追従) を 375 日英で撮り直し、最終チェック長 2 本目へ知らせた → v0.1.598 で本番。
-  - aecc19d4: ジン 10 の目録の付け替え (craft-stage-shelf → PRICE_KEYS・ESSENCE_TABLE、stage-mod-list-look → ESSENCE_KEYS を入口から。値は前の JSON と同じ)。
-  - 8b145a7e・3784372b・4c5711b1: 「開き直し・ブクマ・打ち直し = そのページの最初 / リロード = 同じページの最初 / 戻る・記事から戻る・版替わりの自動の読み直し = 前の画面」(オーナー 10-25) を全部のページで。どれもスイッチ emuFresh の下 (本番は切れたまま、出すのはオーナーの OK の後)。洗い出しの表は共有メモ local_b4352604-…/design6-fresh-pages.md。
-- 持ち物の増えた物:
-  - public/sw.js (10-25 にジン部長から、701e97b5)。
-  - src/state/stage-session.ts (エミュの作業中のアイテムの写し。29e4068a はジン 10 が入れた hasUsableSession、見分けは page-memo の cameBack に寄せた)。
-  - src/web/page-memo.ts (新しい、3784372b): cameBack() = 戻る・同じサイトのリンク・版替わりの自動の読み直し (印 exiledesk-stale-reload の 1 分の窓)。remember(name, get) / forget(name) = 離れる時に各ページの要る物だけ sessionStorage へ写し、同じ URL に戻った時だけ 1 回返す。使っている所: page.ts (スパムシミュの狙いとルーン・コースの段)、SkinsPage (探す・絞る・出した数)、GemCorruptWebPanel (入力は cameBack の時も読む)。
-  - page.ts の gemCorruptPage (?page=gem-corrupt、CraftStage はそれを見る)。
-- 残り (頼まれていない・決めてほしい物): 戻るで画面の送りの位置 (スクロール) は戻さない、スパムシミュの結果の数字は同じ狙いで回し直すので変わる、要望の書きかけ・デイリーの中の選び (見本の作り) は写さない。シミュは cede3e93 の決め (戻るでも空から) のまま。MOD 表などの開いた段を見せる送り (keep-place の revealNext) はスマホの下の固定の帯の高さを数えていない (症状の報告は無い)。
-- 台本: 共有メモ local_b4352604-…/design6/ (back-check = 4 ページの戻る / リロード / 打ち直し、NOBF=1 で bfcache を切る・fresh-check = エミュの写しの 6 通り・pages-check = 11 の URL の開く / リロード・catalog-check = 目録の値の比べと棚・段の表・gem-check)。どれも dev 1440 に窓なし Chrome (9335〜9337) を立てて最後に止める。
-- 6 本目の記録と 5 → 6 の引き継ぎの写しは notes/2026-10-25-design6-handover.md。
+## 次の部長へ (7 本目 → 8 本目、10-26 夜、全セッションの切り替え)
+- 今の状態: 7 本目の commit は全部 push 済みで、v0.1.609 までに本番に出た (OK 待ちの残り無し)。手で止めた物・立てっぱなしの物は無し (確かめの Chrome 9338 は台本の中で止め、使用表は空き。dev 1440 はブラックの物)。作業場所の書きかけはほかの部長の物だけ。
+- 7 本目の済み (詳しくは notes/2026-10-26-design7-handover.md): ModeTabs のシミュのタブ (スマホ / simPhone)・ModTable の段の行のスマホの折り返し・離れる時の 3 択 (setLeaveGuard の save・askLeave)・自動の読み直しで「離れますか」を出さない・スマホのヘッダーの名前つきボタン / 版を消して人数だけ・スマホは省略しない (棚・ベースの一覧・カードの一言・記事・配信・MOD 表の節・棚の畳み・持ったカレンシーの説明)・共有の部品 HeldCursor.vue・StageItemCard の modsOnly。
+- 決め (オーナー 10-26): スマホは省略しない・タップで別のページへ飛ばさない (メモ feedback-phone-no-truncate、例外は MOD の「n つ」のまとめ、エッセンスの段の名前は今の形)。前 / 後のスナップは共有メモ local_feea72b4…/design7-phone-omit/。
+- 持ち物の増えた物: src/components/for-share/shelf/HeldCursor.vue (エミュの CraftStage・シミュの TreeHandShelf が使う)、StageItemCard の modsOnly (シミュのツリーの箱)、page.ts の askLeave・leaveCanSave、LeaveConfirm の 3 つのボタン。
+- 残り (頼まれていない): 320 幅のスマホはヘッダーの右がはみ出す (361/320、前から)。相場のエラーの文の折り返しは画面で見ていない。
+- 気を付ける: 本体の作業場所にはほかの部長の書きかけがいつもある。commit は自分のファイルだけ、pull で止まっても stash・--autostash は使わない (メモ feedback-no-autostash)。表 (pending-release・dev/todo) にほかの人の書きかけの行がある時は、自分の行だけを commit に入れる。
+- 台本: 共有メモ local_b4352604…/design7/ (一覧は notes の記録)。6 → 7 の引き継ぎの写しも notes/2026-10-26-design7-handover.md の末尾。
 
 ## 済んだ節 (前の版の塊を残す・404 が 3 回・入口の塊の 404・古い塊の読み直し・StageItemCard の D1・D2・エミュ部長の頼み) は notes/2026-10-23-todo-archive.md にそのまま移した。各節の「見ていない」もそこ (10-23 夜 ホワイト)。10-23 夜に 3 本目が fitZoom・先読み・シミュの初手・BasePickBody・ModeTabs・モンキー 4・14・15・モンキー 3・2・9 も移した (OK 待ちは上の引き継ぎに commit で並べてある)
 
