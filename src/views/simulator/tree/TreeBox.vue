@@ -6,7 +6,8 @@
 import { computed, ref } from "vue";
 import Icon from "../../../components/ui/Icon.vue";
 import ModalShell from "../../../components/ui/ModalShell.vue";
-import { BOX_H, BOX_W, fractureMarks, absorbOuts, joinableOf, joinSide, splitAny, splitOuts, START_JUNK, startOf, startRarity, startsFractured, type TreeBox } from "../../../services/simulator/tree/tree-model";
+import { absorbOuts, joinableOf, joinSide, splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
+import { BOX_H, BOX_W, fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type TreeBox } from "../../../services/simulator/tree/tree-model";
 import { sideGroup } from "./tree-hand-plan";
 import { tr } from "../../../i18n/lang";
 import { jaTypeName } from "../../../i18n/item-names-ja";

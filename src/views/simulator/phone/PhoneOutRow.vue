@@ -13,7 +13,7 @@ import { handLabel, OUT_LOOK } from "../tree/tree-names";
 import { mapPick, phoneRun, usePhoneQuiz } from "./use-phone-quiz";
 import { routeText, runText } from "../tree/tree-fail";
 import { sideGroup } from "../tree/tree-hand-plan";
-import { absorbOuts, joinableOf, joinSide, splitAny, splitOuts } from "../../../services/simulator/tree/tree-model";
+import { absorbOuts, joinableOf, joinSide, splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
 import { joinableShapeOf } from "../../../services/simulator/tree/tree-shape";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";

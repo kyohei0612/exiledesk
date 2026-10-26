@@ -5,7 +5,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import NumStep from "../../../components/NumStep.vue";
-import { addSplitRow, clearSplit, removeSplitRow, setSplitWhen, type SplitWhen } from "../../../services/simulator/tree/tree-model";
+import { addSplitRow, clearSplit, removeSplitRow, setSplitWhen } from "../../../services/simulator/tree/tree-model-ops";
+import type { SplitWhen } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
 import { splitWhenText } from "./tree-names";

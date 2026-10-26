@@ -269,11 +269,8 @@ function swapJunkOf(c: TreeBox, p: TreeBox | undefined): string | null {
 /** 手の結果 (outcomeOf) に合う結果の箱 (回す時と精査で同じ)。any = 狙い無しの手の「打った後」、pass = 品質だけ上げた後 */
 /** after = 打った後のアイテム (無限のエッセンスで当たりの箱が 2 つ以上の時、付いた MOD の箱を選ぶ。無ければ 1 つ目) */
 export function outBoxOf(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[] }, after?: StageItem): string | undefined {
-  const to = outBoxOfRaw(doc, b, oc, after);
-  if (to || oc.out !== "hit") return to;
-  // この手で当たりにしていない狙いが付いた (後から完成の狙いに足した物など) = 外れの箱へ。手の窓の「チェックしていない狙いの当たりは外れ」(tree-hand-plan の onlyOf) と同じ。
-  // 10-26 モンキー 7 の 21: 冒涜で狙うためにキャストスピードを足すと、前の高貴・カオスで「当たり キャスト の箱が無い」と止まり、作り直しを迫られた
-  return b.outs.find((id) => doc.boxes[id]?.out === "junk");
+  // 行き先の箱が無い結果を外れなどへ自動で寄せない (オーナー 10-26「ツリーは全ての結果を表示してそれをどう処理するかは当人が決めれるように」)。精査の unexpected で知らせ、箱を足す・まとめるは人が決める
+  return outBoxOfRaw(doc, b, oc, after);
 }
 function outBoxOfRaw(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[] }, after?: StageItem): string | undefined {
   // 種類がぴったり合う箱を先に (打った後の箱と狙いが消えたの箱が並ぶ時、狙いが消えた人を打った後へ入れない。10-25 起こりうる結果の箱 possibleOutsOf)
