@@ -41,6 +41,7 @@ import { forceKey, isRune, type StageMod, isSanctifySet, runeNameOf, RUNE_PREFIX
 import { previewUse, unsocketKey, sanctifySetKey, catalystSetKey, implicitSetKey, qualityCapKey, qualitySetKey } from "../../services/emulator/emu-engine";
 import { courseActive as inLesson, courseHidesEmulator, courseHidesShelf, endLesson, CourseHost } from "../tutorial/course-entry"; // チュートリアルのコースの間 (2026-10-17)。隠す判定は course-host に 1 か所 (R4 手 2)
 import RevealPanel from "./RevealPanel.vue";
+import { useOmenMemory } from "../../state/emulator/omen-memory";
 import { useStageFx } from "../../components/for-share/use-stage-fx";
 import StageModList from "./StageModList.vue";
 // 部ごとの差し込み口 (2026-10-20 R4): シミュレーターと使い方・コースの中身は各部の部品が持つ
@@ -58,6 +59,8 @@ import { track } from "../../utils/track";
 import { gemCorruptPage } from "../../web/page";
 
 const s = craftStage;
+// お告げは持った物ごとに覚える (持ち替えで前の物のお告げは外れる。スイッチ omenPerHeld、オーナー 10-26 夜)
+useOmenMemory(() => !!inLesson.value);
 /** ルーンを持ってルーンの入ったソケットを押した: そのソケットを置き換える手 (`rune:<名前>@<n>`)。ルーン以外はアイテムを押したのと同じ */
 function useAtSocket(n: number): void {
   const k = s.held.value;

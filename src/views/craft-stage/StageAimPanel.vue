@@ -123,8 +123,9 @@ function pick(r: AimOdd): void {
   }
   const kinds = [kindOf(r.currency), ...(kindOf(r.currency) === "desecrate" ? ["reveal"] : [])];
   const mine = new Set(kinds.flatMap((k) => OMEN_FOR[k] ?? []));
-  s.omens.value = [...s.omens.value.filter((o) => !mine.has(o)), ...r.omens];
+  // 先に持ってからお告げを揃える (持ち替えでお告げを入れ替える omen-memory.ts が後から上書きしないように)
   s.hold(r.currency);
+  s.omens.value = [...s.omens.value.filter((o) => !mine.has(o)), ...r.omens];
 }
 /**
  * 回す (2026-10-09 オーナー「ここでも回したいよね、何回やったら何回付くのか」): その打ち方を今の状態から N 回 (毎回今の状態から) 打って、付いた回数。
