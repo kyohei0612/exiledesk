@@ -1,5 +1,35 @@
 [
  {
+  "v": "0.1.621",
+  "date": "2026-10-26",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 別の道で同じ MOD が付いた当たりの箱を「まとめる」でまとめられるように (手を足した時は自動)。箱の MOD の値は木の中で揃え、貼った値か段の真ん中で出します",
+    "en": "Simulator: Hit boxes on different paths that landed the same mod can now be merged (automatically when you add a craft). Mod values in boxes are kept the same across the tree, using the pasted value or the middle of the tier"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 箱の中のアイテムの枠にベース名の題を付け、並びを整理 (戻りの × は文のすぐ隣、✎ と × は右下、! などの印は上辺の札の横)",
+    "en": "Simulator: The item frame inside each box now has the base name as its title, and the box layout was tidied (the return × sits right next to its text, ✎ and × are at the bottom right, and marks like ! sit beside the label on the top edge)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 横の ＋ は MOD を選んで決めた時だけ箱を足すように (押しただけ・閉じただけでは増えない)。戻りやまとめが付いた箱には ＋ を出しません",
+    "en": "Simulator: The side + now adds a box only when you pick a mod (just pressing it or closing the picker adds nothing). Boxes with a return or a merge no longer show +"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: レシピの「URL をコピー」が短い URL (exiledesk.com/r/…) になりました",
+    "en": "Simulator: \"Copy URL\" for recipes now gives a short URL (exiledesk.com/r/…)"
+   }
+  ]
+ },
+ {
   "v": "0.1.620",
   "date": "2026-10-26",
   "items": [
@@ -835,18 +865,6 @@
     "area": "",
     "text": "開いた時の読み込みを速くしました (特にスマホ)。最初に読む量を半分にして、読み込み中もすぐ画面が出るように",
     "en": "Faster first load, especially on phones: the initial download is about half the size and a loading screen shows right away"
-   }
-  ]
- },
- {
-  "v": "0.1.581",
-  "date": "2026-10-19",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "スマホのスパムシミュレーターを使いやすく (次に押す所へ自動で送る・押すボタンを画面の下に固定・長押しで文字が選ばれない・10 人で比べた時は「11 人中 3 位」のように何位で表示)",
-    "en": "Spam simulator on phones: scrolls to the next thing to press, the hold button stays fixed at the bottom, long-press no longer selects text, and with 10 runs your result shows as a place (e.g. 3rd of 11)"
    }
   ]
  }
