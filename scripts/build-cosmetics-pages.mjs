@@ -16,6 +16,10 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+// AdSense のコード。審査中はこの自動ページには置かない (2026-10-27 模擬審査 docs/org/analytics/notes/2026-10-27-adsense-mock-review.md:
+// ゲームのデータ・借り物の一覧に広告のコードが付いていると「有用性の低いコンテンツ」に見られやすい)。審査が通ったら true に戻す (docs/org/analytics/todo.md)
+const ADS_ON_AUTO_PAGES = false;
+const AD_TAG = ADS_ON_AUTO_PAGES ? `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1993030721214430" crossorigin="anonymous"></script>\n` : "";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
 const INDEX = args.includes("--index");
@@ -112,8 +116,7 @@ ${alt ? `<link rel="alternate" hreflang="${other}" href="${SITE}${LANGS[other].p
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet" />
 <style>${CSS}</style>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1993030721214430" crossorigin="anonymous"></script>
-<script defer src="/pv.js" data-screen="cosmetics:${esc(path.replace(/^\/cosmetics\/?/, "") || "index")}:${code}" data-lang="${code}" data-v="${VERSION}"${PV_API ? ` data-api="${esc(PV_API)}"` : ""}></script>
+${AD_TAG}<script defer src="/pv.js" data-screen="cosmetics:${esc(path.replace(/^\/cosmetics\/?/, "") || "index")}:${code}" data-lang="${code}" data-v="${VERSION}"${PV_API ? ` data-api="${esc(PV_API)}"` : ""}></script>
 </head>
 <body>
 <header><div class="in"><a href="${L.app}">ExileDesk</a><nav>${L.nav}</nav></div></header>

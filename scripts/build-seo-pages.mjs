@@ -22,6 +22,10 @@ import { bundleEntry } from "./_bundle-ts.mjs";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = resolve(ROOT, process.argv[2] ?? "dist-web");
 const SITE = "https://exiledesk.com";
+// AdSense のコード。審査中はこの自動ページには置かない (2026-10-27 模擬審査 docs/org/analytics/notes/2026-10-27-adsense-mock-review.md:
+// ゲームのデータ・借り物の一覧に広告のコードが付いていると「有用性の低いコンテンツ」に見られやすい)。審査が通ったら true に戻す (docs/org/analytics/todo.md)
+const ADS_ON_AUTO_PAGES = false;
+const AD_TAG = ADS_ON_AUTO_PAGES ? `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1993030721214430" crossorigin="anonymous"></script>\n` : "";
 const M = await bundleEntry("scripts/_seo-entry.ts");
 const data = M.loadPatchSync();
 
@@ -101,8 +105,7 @@ for (const [code, L] of Object.entries(LANGS)) {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" /><noscript><link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet" /></noscript>
 <style>${CSS}</style>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1993030721214430" crossorigin="anonymous"></script>
-</head>
+${AD_TAG}</head>
 <body>
 <header><div class="in"><a href="${L.app}">ExileDesk</a><nav>${L.nav}</nav></div></header>
 <main>`;
