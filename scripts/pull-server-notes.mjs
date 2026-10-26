@@ -8,7 +8,7 @@
  *   discord:  Discord の書き込み (D1 の discord_daily の次の日の行 = その朝 9:03 に Bot が取った分、src/discord.ts) か null
  *   errors:   読めなかった物の訳
  * }
- * 前は scripts/daily-summary.mjs の md にだけ載っていた (数字の日報は 10-26 にやめた)
+ * 前は数字の日報 (daily-summary.mjs、10-26 に消した) の md にだけ載っていた
  */
 import { execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";

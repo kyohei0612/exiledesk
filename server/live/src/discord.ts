@@ -3,8 +3,8 @@
  * 毎朝 9:03 (JST = UTC 0:03) の cron で、サーバー (vars の DISCORD_GUILD_ID) の文字のチャンネル・お知らせ・動いているスレッドを毎回拾い
  * (10-26 オーナー「全部読んで」。DISCORD_CHANNELS に id をカンマで書けばそれだけ)、それぞれの前回より後の書き込みを
  * Discord の REST (GET /channels/<id>/messages、Bot のトークン = secret の DISCORD_BOT_TOKEN) で取り、D1 の discord_daily に 1 日 1 行で置く。
- * 書くのは置くだけ (Discord には何も書かない)。scripts/daily-summary.mjs が読み、9:05 の日報の md に「Discord の書き込み」の節として載せる。
- * トークンかチャンネルが無い時は status "未設定" の行を置く (日報には「Bot 未設定」の 1 行)。初めての回は 24 時間前までに絞る。
+ * 書くのは置くだけ (Discord には何も書かない)。scripts/pull-server-notes.mjs が毎朝 data-cache/logs/<日>-server.json に写し、9 時の AI の評価と見解が読む。
+ * トークンかチャンネルが無い時は status "未設定" の行を置く (読む側には「Bot 未設定」)。初めての回は 24 時間前までに絞る。
  */
 import type { Env, Fetch } from "./types";
 

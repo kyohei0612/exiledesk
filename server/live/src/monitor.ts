@@ -1,31 +1,16 @@
 /**
- * 見張り (2026-10-07 オーナー「色々監視できる？報告もディスコに来たりできる？サーバーログは細かく見たい」「毎朝 9 時に報告」)。
- *   - alert():       異常をすぐ Discord に (同じ物は 6 時間に 1 回まで。KV に印、日報用に 2 日残す)
- *   - dailyReport(): 毎朝 9 時 (JST) の日報 = 昨日の 人・どこから・端末・使い方・段階と離脱・品質・要望・配信・異常・週
- *   - reqLog():      1 回ごとの記録 (ダッシュボードの「ログ」で見る。path・status・ms・国)
- * 訪問数などは Analytics Engine (events.ts) と Cloudflare の GraphQL (Web Analytics / Workers)。CF_ANALYTICS_TOKEN (Account Analytics: Read) が要る
+ * 見張り (2026-10-07 オーナー「色々監視できる？」)。数字の日報を Discord に流すのは 10-26 にやめた (オーナー「既定の報告はいらなくなった」、毎朝 9 時の AI の評価と見解だけ #日報 へ = ai-review.ts)。
+ *   - alert():  異常を控える (同じ物は 6 時間に 1 回まで。KV の alertlog: に 2 日残し、手元の scripts/pull-server-notes.mjs が毎朝読む)
+ *   - reqLog(): 1 回ごとの記録 (ダッシュボードの「ログ」で見る。path・status・ms・国)
  */
-import { FUNNEL_SIM, STEP_JA, summarize, type Dwell, type Summary } from "./events";
-import { listFeedback } from "./feedback";
-import { countBetween } from "./logs";
-import type { Env, Fetch, LiveState } from "./types";
+import type { Env, Fetch } from "./types";
 
 const ALERT_TTL = 6 * 3600;
 const ALERT_LOG_TTL = 2 * 86400;
 
-/** Discord に 1 本 (webhook が無ければ何もしない) */
-export async function postDiscord(webhook: string | undefined, content: string, fetchFn: Fetch = fetch): Promise<boolean> {
-  if (!webhook) return false;
-  try {
-    const r = await fetchFn(webhook, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ content: content.slice(0, 1950), allowed_mentions: { parse: [] } }) });
-    return r.ok;
-  } catch { return false; }
-}
-
 /**
- * 異常を控える。同じ key は ALERT_TTL の間は 1 回だけ。日報 (毎朝 9 時) の「異常の通知」に載せるために alertlog: に残すだけで、
- * Discord にはすぐには送らない (2026-10-08 オーナー「配信の見張り通知はいらん、定時報告とバグのリアルタイム通知のみでおｋ」。
- * 前は 🚨 で即時に送っていた)。すぐ送るのは要望・バグ (feedback.ts) だけ
+ * 異常を控える。同じ key は ALERT_TTL の間は 1 回だけ。alertlog: に残すだけで Discord には送らない (2026-10-08 オーナー「定時報告とバグのリアルタイム通知のみ」)。
+ * 前は毎朝の日報の投稿に載せていた。今は毎朝の AI の評価と見解の材料 (scripts/pull-server-notes.mjs が data-cache/logs/<日>-server.json に)
  */
 export async function alert(env: Env, key: string, text: string, _fetchFn: Fetch = fetch, now = new Date()): Promise<boolean> {
   const k = `alert:${key}`;
@@ -34,13 +19,6 @@ export async function alert(env: Env, key: string, text: string, _fetchFn: Fetch
   await env.LIVE.put(`alertlog:${now.toISOString()}:${key}`, text.slice(0, 200), { expirationTtl: ALERT_LOG_TTL });
   console.warn(JSON.stringify({ alert: key, text: text.slice(0, 200) }));
   return true;
-}
-
-/** 昨日 (since〜until) に出た異常の一覧 */
-export async function alertsBetween(env: Env, since: string, until: string): Promise<string[]> {
-  const l = await env.LIVE.list({ prefix: "alertlog:", limit: 200 });
-  // 配信の見張りはもう通知しない (2026-10-11)。前に残った分も出さない
-  return l.keys.map((k) => k.name).filter((n) => { const t = n.slice("alertlog:".length, "alertlog:".length + 24); return t >= since && t < until; }).map((n) => n.split(":").slice(4).join(":")).filter((x) => !x.startsWith("配信の見張り"));
 }
 
 /** 1 回ごとの記録 (JSON 1 行。ダッシュボードのログで絞り込める) */
@@ -57,220 +35,3 @@ export function yesterdayJst(now = new Date(), today = false): { since: string; 
   const since = new Date(today ? nine : nine - 86400e3), until = today ? now : new Date(nine), weekSince = new Date(until.getTime() - 7 * 86400e3);
   return { since: since.toISOString(), until: until.toISOString(), weekSince: weekSince.toISOString(), label: today ? "今日のここまで" : "この 24 時間" };
 }
-
-export interface Usage { visits: number | null; pageViews: number | null; liveRequests: number | null; liveErrors: number | null; why?: string }
-
-/** Cloudflare の集計 (GraphQL): Web Analytics の訪問とページ、サーバー (exiledesk-live) の回数とエラー */
-export async function fetchUsage(env: Env, since: string, until: string, fetchFn: Fetch = fetch): Promise<Usage> {
-  const out: Usage = { visits: null, pageViews: null, liveRequests: null, liveErrors: null };
-  if (!env.CF_ANALYTICS_TOKEN || !env.CF_ACCOUNT_ID) { out.why = "CF_ANALYTICS_TOKEN が無い"; return out; }
-  const query = `query($acc: String!, $since: Time!, $until: Time!, $site: String!, $script: String!) {
-    viewer { accounts(filter: { accountTag: $acc }) {
-      rum: rumPageloadEventsAdaptiveGroups(limit: 1, filter: { datetime_geq: $since, datetime_lt: $until, siteTag: $site }) { count sum { visits } }
-      wk: workersInvocationsAdaptive(limit: 1, filter: { datetime_geq: $since, datetime_lt: $until, scriptName: $script }) { sum { requests errors } }
-    } }
-  }`;
-  try {
-    const r = await fetchFn("https://api.cloudflare.com/client/v4/graphql", {
-      method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${env.CF_ANALYTICS_TOKEN}` },
-      body: JSON.stringify({ query, variables: { acc: env.CF_ACCOUNT_ID, since, until, site: env.WEB_ANALYTICS_SITE ?? "", script: "exiledesk-live" } }),
-    });
-    const j = (await r.json()) as { data?: { viewer?: { accounts?: Array<{ rum?: Array<{ count: number; sum: { visits: number } }>; wk?: Array<{ sum: { requests: number; errors: number } }> }> } }; errors?: Array<{ message: string }> };
-    if (j.errors?.length) { out.why = j.errors.map((e) => e.message).join("; ").slice(0, 200); return out; }
-    const a = j.data?.viewer?.accounts?.[0];
-    const rum = a?.rum?.[0], wk = a?.wk?.[0];
-    out.pageViews = rum?.count ?? 0; out.visits = rum?.sum?.visits ?? 0;
-    out.liveRequests = wk?.sum?.requests ?? 0; out.liveErrors = wk?.sum?.errors ?? 0;
-  } catch (e) { out.why = String(e).slice(0, 200); }
-  return out;
-}
-
-const n = (v: number | null | undefined): string => (v == null ? "不明" : Math.round(v).toLocaleString("ja-JP"));
-
-/**
- * 日報の文面 (文章で。2026-10-07 オーナー「数字の羅列は分かりづらい、文章で教えて」)。
- * 人が 0 の日は短く、来た日は 何人・どこから・端末・何をしたか・どこで減ったか・品質・要望・配信・異常・週 を段落で
- */
-/** 使われ方に出す印の名前 (人数が 1 以上の物を全部、この順で。開いた・滞在・エラー・最初の画面は出さない) */
-const USE_JA: Array<[string, string]> = [
-  ["hand:base", "エミュレーター: ベースを選んだ"], ["hand:use", "エミュレーター"], ["mode:sim", "シミュレーションを開いた"], ["sim:base", "シミュレーション: ベースを選んだ"], ["sim:targets", "シミュレーション: 狙いを決めた"],
-  ["sim:order", "シミュレーション: 順番を決めた"], ["sim:pattern", "シミュレーション: 手順を組んだ"], ["sim:run", "シミュレーションを回した"], ["sim:done", "シミュレーションで完成まで出た"],
-  ["trade:open", "取引所を開いた"], ["recipe:save", "レシピを保存した"], ["feedback:open", "要望・バグの窓を開いた"], ["feedback:sent", "要望・バグを送った"],
-  // 手順の共有 (2026-10-12)。URL の # に全部入れるのでサーバーは数えない。押した・共有のリンクから開いたを印で数える
-  ["share:copy", "手順を共有した"], ["share:open", "共有の手順から来た人"],
-];
-/** 分 → 「4 分」「1 時間 20 分」 */
-export const dur = (min: number): string => {
-  const m = Math.round(min);
-  if (m < 1) return "1 分未満";
-  if (m < 60) return `${m} 分`;
-  return `${Math.floor(m / 60)} 時間${m % 60 ? ` ${m % 60} 分` : ""}`;
-};
-/** 来た道の名前 (t.co は X) */
-// 前のアドレス (web.exiledesk.workers.dev) から来た = 古いリンク (X の投稿など) を押して exiledesk.com に移ってきた人 (2026-10-12 オーナー)
-const fromJa = (k: string): string => (k === "direct" ? "URL から直接開いた人" : k === "share" ? "シェアのカードから来た人 (元の場所は不明)" : k === "t.co" || /(^|\.)(x|twitter)\.com$/.test(k) ? "X から来た人" : k === "web.exiledesk.workers.dev" ? "前の URL (X のリンクなど) から移ってきた人" : `${k.replace(/^www\./, "")} から来た人`);
-
-export function reportText(label: string, sum: Summary | null, usage: Usage, feedback: { requests: number; bugs: number }, live: LiveState | null, alerts: string[], records?: number | null): string {
-  // 2026-10-10 オーナーの書いた形: 見出しごとの短い箇条書き。人は訪問と使った時間だけ、使われ方は 1 以上の物を全部、要望とバグはまとめて
-  const out: string[] = [`📊 **ExileDesk 日報 ${label}**`];
-  const sec = (title: string, lines: Array<string | null | false>): void => {
-    const ls = lines.filter((x): x is string => !!x);
-    if (ls.length) out.push("", `**${title}**`, ...ls.map((x) => `・${x}`));
-  };
-  const today = label.includes("今日");
-  // 要望とバグは仕分けしていないのでまとめて (オーナー 2026-10-10)
-  const fbCount = feedback.requests + feedback.bugs;
-  if (!sum) {
-    sec("人数", [`訪問の集計は取れませんでした (${usage.why ?? "集計の設定が無い"})`]);
-  } else if (!sum.sessions) {
-    sec("人数", [today ? "今日はまだ誰も来ていません" : "誰も来ていません"]);
-  } else {
-    sec("人数", [
-      // 人を先に (2026-10-10 記録を 1 時間に 1 回まとめて送る形にしたので、同じ人の 1 時間以内の再訪は次の回に回る。人数はほぼ正確)
-      `来た人 ${n(sum.users)} 人 (初めて ${n(sum.newSessions)} 人 · また来てくれた人 ${n(Math.max(0, sum.users - sum.newSessions))} 人)`,
-      `訪問 ${n(sum.sessions)} 回`,
-      sum.dwell ? null : sum.medianMinutes == null ? null : sum.medianMinutes < 1 ? "半分の人は 1 分未満で閉じた" : `半分の人が ${sum.medianMinutes.toFixed(0)} 分以上使った`,
-    ]);
-    // 滞在時間 (2026-10-12 オーナー): 1 人ずつ、開いてから最後の操作か「表示中」(画面が見えていて 5 分以内に触った時に 1 分おき) まで。広告の見込みの元にもなる
-    if (sum.dwell && (sum.dwell.pc || sum.dwell.mobile)) {
-      const d = sum.dwell;
-      const one = (name: string, x: Dwell | null): string | null => (x ? `${name}: 1 分未満 ${n(x.under1)} 人 · 5 分以上 ${n(x.over5)} 人 · 30 分以上 ${n(x.over30)} 人` : null);
-      const pct = (x: Dwell): number => Math.round(((x.people - x.under1) / x.people) * 100);
-      sec("滞在時間 (画面を見ていた時間)", [
-        one("PC", d.pc),
-        one("スマホ", d.mobile),
-        `1 分以上使ってくれた人: ${[d.pc ? `PC ${pct(d.pc)}%` : "", d.mobile ? `スマホ ${pct(d.mobile)}%` : ""].filter(Boolean).join(" / ")}`,
-        `合計: ${[d.pc ? `PC ${dur(d.pc.totalMin)}` : "", d.mobile ? `スマホ ${dur(d.mobile.totalMin)}` : ""].filter(Boolean).join(" / ")}`,
-      ]);
-    }
-    const devMobile = sum.devices.find(([k]) => k === "mobile")?.[1] ?? 0;
-    const devAll = sum.devices.reduce((a, [, v]) => a + v, 0) || 1;
-    const jp = sum.countries.find(([k]) => k === "JP")?.[1] ?? 0;
-    // localhost は開発の確認 (自分) なので出さない (2026-10-08 オーナー「ガチで 13 人来たの？」)
-    const refs = sum.refs.filter(([k]) => !/^localhost|127\.0\.0\.1/.test(k)).sort((a, b) => (a[0] === "direct" ? -1 : b[0] === "direct" ? 1 : 0));
-    sec("どこから", [
-      // 1 行ずつ (2026-10-10 オーナー「訪問リストは改行してリストで表示」)
-      ...refs.slice(0, 6).map(([k, v]) => `${fromJa(k)} ${v} 人`),
-      // 入口 (src/web/track.ts の entry:<…>、2026-10-16)。シェアのカード・utm・?base= のリンク
-      ...[...sum.byEvent].filter(([k]) => k.startsWith("entry:") && k !== "entry:top").sort((a, b) => b[1].users - a[1].users).slice(0, 5)
-        .map(([k, v]) => `入口 ${k === "entry:share" ? "シェアのカード" : k === "entry:base" ? "ベースを指定したリンク" : k.slice(6)}: ${n(v.users)} 人`),
-      sum.peakHours?.length ? `人が多かった時間: ${sum.peakHours.map(([h, v]) => `${h} 時台 ${v} 回`).join(" · ")}` : null,
-      `PC ${Math.round(((devAll - devMobile) / devAll) * 100)}% / スマホ ${Math.round((devMobile / devAll) * 100)}%${sum.countries.length ? ` · ${jp / devAll >= 0.9 ? "ほぼ日本" : sum.countries.slice(0, 3).map(([k, v]) => `${k} ${v}`).join("、")}` : ""}`,
-    ]);
-    // エミュレーターはベースを選ぶのが当たり前なので、打った人・順位・最大の手数・一番長くいた人で (2026-10-12 オーナー)
-    // 要望・バグは「送った」の 1 行だけで、数はサーバーに届いた実物 (正確)。印の方は 1 時間に 1 回まとめて送るので遅れ・漏れがあり、数が合わなかった。
-    // 「届いた物」の節もやめた (2026-10-12 オーナー「正確にできるなら送ったの数字だけで分かる」)
-    const used = USE_JA.filter(([k]) => !k.startsWith("hand:") && !k.startsWith("feedback:")).map(([k, ja]) => [ja, sum.byEvent.get(k)?.sessions ?? 0] as const).filter(([, v]) => v > 0);
-    const emu = sum.emu;
-    const maxMin = Math.max(sum.dwell?.pc?.maxMin ?? 0, sum.dwell?.mobile?.maxMin ?? 0);
-    sec("使われ方", [
-      `エミュレーターで 1 手以上打った人 ${n(sum.byEvent.get("hand:use")?.users ?? 0)} 人`,
-      // カオススパム確率機は回した回数で (中で打ったカオスは手数に数えない、2026-10-16 オーナー)
-      sum.byEvent.get("spam:run") ? `カオススパム確率機: ${n(sum.byEvent.get("spam:run")!.users)} 人が ${n(sum.byEvent.get("spam:run")!.count)} 回` : null,
-      emu?.maxSteps ? `一番たくさん打った人: ${n(emu.maxSteps)} 手` : null,
-      sum.steps ? `1 人の手数: 半分の人が ${n(sum.steps.median)} 手まで · 4 人に 1 人 ${n(sum.steps.p75)} 手以上` : null,
-      sum.steps && (sum.steps.pc != null || sum.steps.mobile != null) ? `1 人あたり: ${[sum.steps.pc != null ? `PC ${n(sum.steps.pc)} 手` : "", sum.steps.mobile != null ? `スマホ ${n(sum.steps.mobile)} 手` : ""].filter(Boolean).join(" / ")}` : null,
-      maxMin >= 1 ? `一番長くいた人: ${dur(maxMin)}` : null,
-      ...used.map(([ja, v]) => `${ja} ${v} 人`),
-      (sum.byEvent.get("lang:en")?.users ?? 0) > 0 ? `英語の画面で使った人 ${n(sum.byEvent.get("lang:en")!.users)} 人` : null,
-      fbCount ? `要望・バグを送った ${fbCount} 件` : null,
-    ]);
-    if (emu?.bases.length) sec("よく使われたベース (人数)", emu.bases.map(([k, v], i) => `${i + 1}. ${k} ${v} 人`));
-    if (emu?.currencies.length) sec("よく使われたカレンシー (回数)", emu.currencies.map(([k, v], i) => `${i + 1}. ${k} ${n(v)} 回`));
-  }
-  // 誰も来ていない日でも要望が届いていれば出す
-  if ((!sum || !sum.sessions) && fbCount) sec("使われ方", [`要望・バグを送った ${fbCount} 件`]);
-  const err = sum?.byEvent.get("error");
-  // 中身の見えないエラー (外のスクリプト) は分けて、直す対象から外す (2026-10-10)
-  const ext = sum?.extErrors ?? null;
-  const own = err && err.count - (ext?.count ?? 0) > 0 ? { count: err.count - (ext?.count ?? 0), sessions: Math.max(1, err.sessions - (ext?.sessions ?? 0)) } : null;
-  // 問題は本当にある物だけ (無ければ節ごと出さない)。外のスクリプトのエラー・配信の見張り・「なし」の行・記録の件数は出さない
-  // (2026-10-11 オーナー「無駄な報告は削ぎ落して、不具合じゃないのに不具合と出るのはおかしい、無かったら不具合報告いらん、配信はもう取ってない」)
-  void live; void records; void ext;
-  sec("問題", [
-    own ? `画面のエラー ${own.count} 件 (${own.sessions} 人)${sum!.errors.length ? `: ${sum!.errors[0]![0].slice(0, 80)}` : ""}` : null,
-    usage.liveErrors ? `サーバーのエラー ${n(usage.liveErrors)} 回 (${n(usage.liveRequests)} 回のうち)` : null,
-    alerts.length ? `異常の通知 ${alerts.length} 回: ${alerts.slice(0, 5).join(" / ")}` : null,
-    sum?.warnings.length ? `集計で取れなかった所: ${sum.warnings.join(" / ")}` : null,
-  ]);
-  // 結果を踏まえたアドバイス (2026-10-10 オーナー「最後に結果踏まえたアドバイス」)。数字の決まりで出し分け、多くて 3 つ
-  sec("アドバイス", adviceOf(sum, feedback, alerts, usage.liveRequests ?? 0));
-  return out.join("\n");
-}
-
-/** 日報の最後のアドバイス (大事な順に 3 つまで。当てはまる物が無ければ「様子見で OK」) */
-export function adviceOf(sum: Summary | null, feedback: { requests: number; bugs: number }, alerts: string[], liveRequests = 0): string[] {
-  const out: string[] = [];
-  // 無料枠 (1 日 10 万回) の半分を超えたら有料 (月 5 ドル、月 1,000 万回込み) を考える時 (2026-10-10 オーナーと決めた目安)
-  if (liveRequests >= 50_000) out.push(`サーバーへの問い合わせが ${liveRequests.toLocaleString("en-US")} 回で、無料枠 (1 日 10 万回) の半分を超えました。Cloudflare の有料プラン (月 5 ドル) を考える時です`);
-  const err = sum?.byEvent.get("error");
-  // 中身の見えないエラー (外のスクリプト) は分けて、直す対象から外す (2026-10-10)
-  const ext = sum?.extErrors ?? null;
-  const own = err && err.count - (ext?.count ?? 0) > 0 ? { count: err.count - (ext?.count ?? 0), sessions: Math.max(1, err.sessions - (ext?.sessions ?? 0)) } : null;
-  if (own) out.push(`画面のエラーが出ています。${sum!.errors.length ? `多い「${sum!.errors[0]![0].slice(0, 40)}」から` : "多い物から"}直すと良さそうです`);
-  const fb = feedback.requests + feedback.bugs;
-  if (fb) out.push(`要望・バグ報告が ${fb} 件あります。中身を見て、バグは再現できるか、要望はすぐできる物から`);
-  if (alerts.length) out.push("異常の通知が出ています。サーバーや相場の取得が止まっていないか確認を");
-  if (sum && sum.sessions >= 5) {
-    if (sum.bounce != null && sum.bounce >= 0.5) out.push("半分以上が何もせずに閉じています。最初の画面で何をすればいいか分かりにくい可能性。最初の 1 手を目立たせると良さそうです");
-    const hand = sum.byEvent.get("hand:use")?.sessions ?? 0;
-    if (hand / sum.sessions < 0.3) out.push(`開いても実際に打った人が ${Math.round((hand / sum.sessions) * 100)}% だけです。「まずこれを押す」の案内を足すと良さそうです`);
-    const f = (sum.byEvent.get("mode:sim")?.sessions ?? 0) > 0 ? funnelDrop(sum, FUNNEL_SIM.filter((x) => x !== "open")) : null;
-    if (f && f.pct >= 50) out.push(`シミュレーションの「${f.from} → ${f.to}」で半分以上がやめています。この段を見直す価値があります`);
-    const mobile = sum.devices.find(([k]) => k === "mobile")?.[1] ?? 0;
-    const all = sum.devices.reduce((a, [, v]) => a + v, 0) || 1;
-    if (mobile / all >= 0.4) out.push(`スマホが ${Math.round((mobile / all) * 100)}% あります。スマホの使い心地を優先すると効きそうです`);
-    if (sum.sessions >= 10 && (sum.sessions - sum.newSessions) / sum.sessions < 0.2) out.push("また来た人が 2 割未満です。保存・お気に入りなど、もう一度来るきっかけを作ると良さそうです");
-  }
-  return out.length ? out.slice(0, 3) : ["大きな問題は見当たりません。このまま様子見で OK です"];
-}
-
-/** 段階で一番減った所 (前の段が 5 人以上で 3 割以上減った時だけ) */
-function funnelDrop(sum: Summary, steps: readonly string[]): { from: string; to: string; before: number; after: number; pct: number } | null {
-  const c = steps.map((s) => sum.byEvent.get(s)?.sessions ?? 0);
-  let best: { from: string; to: string; before: number; after: number; pct: number } | null = null;
-  for (let i = 1; i < c.length; i++) {
-    const prev = c[i - 1]!, cur = c[i]!;
-    if (prev < 5) continue;
-    const drop = 1 - cur / prev;
-    if (drop >= 0.3 && (!best || drop > best.pct / 100)) best = { from: STEP_JA[steps[i - 1]!] ?? steps[i - 1]!, to: STEP_JA[steps[i]!] ?? steps[i]!, before: prev, after: cur, pct: Math.round(drop * 100) };
-  }
-  return best;
-}
-
-/** 日報を組んで Discord に (無ければ文面だけ返す) */
-export async function dailyReport(env: Env, fetchFn: Fetch = fetch, now = new Date(), today = false): Promise<string> {
-  const y = yesterdayJst(now, today);
-  const { until, label } = y;
-  // 数え始め (STATS_SINCE) より前は数えない (消せない Analytics Engine / Web Analytics にも線を引く)。日付が全部前なら 0 件
-  const floor = env.STATS_SINCE ?? "";
-  const since = y.since < floor ? (floor < until ? floor : until) : y.since;
-  // 数え始めで途中から数えた時はそう書く (2026-10-10: 3 時間分だけなのに 1 日分に見えた)
-  const cut = since > y.since ? (() => { const j = new Date(new Date(since).getTime() + 9 * 3600e3); return ` (${j.getUTCMonth() + 1}/${j.getUTCDate()} ${j.getUTCHours()}:${String(j.getUTCMinutes()).padStart(2, "0")} から数えています)`; })() : "";
-  const weekSince = y.weekSince < floor ? (floor < until ? floor : until) : y.weekSince;
-  const [sum, usage, fb, alerts] = await Promise.all([
-    env.CF_ANALYTICS_TOKEN ? summarize(env, since, until, weekSince, fetchFn).catch((e) => { console.warn("summarize failed", String(e)); return null; }) : Promise.resolve(null),
-    fetchUsage(env, since, until, fetchFn),
-    listFeedback(env.LIVE, 200),
-    alertsBetween(env, since, until),
-  ]);
-  const day = fb.filter((x) => x.at >= since && x.at < until);
-  const live = (await env.LIVE.get("state", "json")) as LiveState | null;
-  const lc = await countBetween(env, since, until).catch(() => null);
-  const base = reportText(label + cut, sum, usage, { requests: day.filter((x) => x.kind === "request").length, bugs: day.filter((x) => x.kind === "bug").length }, live, alerts, lc?.records ?? null);
-  const text = base;
-  // 日報は専用のチャンネル (REPORT_WEBHOOK) があればそこへ。要望・異常の通知は今まで通り DISCORD_WEBHOOK
-  // 専用の送り先が URL の形でない (登録で貼り損ねた等) か、送れなかった時は今までの送り先へ (2026-10-12: 1 文字だけ登録されて送れなかった)
-  const report = (env.REPORT_WEBHOOK ?? "").trim();
-  const hook = /^https:\/\//.test(report) ? report : env.DISCORD_WEBHOOK;
-  let posted = await postDiscord(hook, text, fetchFn);
-  if (!posted && hook !== env.DISCORD_WEBHOOK) posted = await postDiscord(env.DISCORD_WEBHOOK, text, fetchFn);
-  if (!posted) console.warn("dailyReport: Discord に送れなかった", hook ? "(送り先あり)" : "(送り先なし)");
-  lastPosted = posted;
-  return text;
-}
-/** 直前の日報を Discord に送れたか (/report の x-discord に出す。手で送った時の確かめ用、2026-10-11) */
-export let lastPosted = false;
-
-export { STEP_JA };

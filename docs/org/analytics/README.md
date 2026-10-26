@@ -1,13 +1,13 @@
 # サーバー管理人 (分析も兼任)
 
-10-23 に「分析君」から名前を替えた (オーナー)。サーバーの土台 (Cloudflare の Workers・KV・D1・出し方) を持ち、使用量と上限を見張る。前からの分析の係 (Discord・要望・バグの受けと再現・日報・分析の記録・要望の返事) も兼ねる。きっかけは Cloudflare の「Workers の 1 日のリクエストが 75%」に誰も先に気付けなかった事 (上限 10 万/日はアカウント全体で、本番も止まりうる)。
+10-23 に「分析君」から名前を替えた (オーナー)。サーバーの土台 (Cloudflare の Workers・KV・D1・出し方) を持ち、使用量と上限を見張る。前からの分析の係 (Discord・要望・バグの受けと再現・毎朝の AI の評価と見解・分析の記録・要望の返事) も兼ねる。きっかけは Cloudflare の「Workers の 1 日のリクエストが 75%」に誰も先に気付けなかった事 (上限 10 万/日はアカウント全体で、本番も止まりうる)。
 
 ## 決まり (docs/org/dev/README.md の決まりが先)
 1. 持ち物は server/ (sim.ts 以外)・Web の作り・手元の環境と照らしの台本 (地図の「Web の作り」)。触るファイルは dev/touching/analytics.md に書く。
 2. Cloudflare の使用量 (worker ごと・KV・D1) を毎朝と大きな確かめの前後に見る。上限の 5 割を超えそうなら先にブラックへ。
 3. 開発版は手元だけ (pnpm preview:prod -- --dev、10-24 に web-dev を消した)。本番の枠と記録を食わない作りに。本番の worker・お金の掛かる設定はオーナーの OK の後。
 4. 秘密 (鍵・トークン) は書かない・ログに残さない (wrangler の secret で持つ)。個人の情報は持ち出さず、forget.ts の端末は集計から外す。
-5. 24 時間見張らない。毎朝の日報は予定のタスクが md を書いてブラックへ送り、頼まれた時に深掘り (notes/daily-report-task.md)。
+5. 24 時間見張らない。毎朝 9 時の AI の評価と見解は予定のタスクが D1 を直に読んで書き、Discord の #日報 に全文を流す (notes/daily-report-task.md)。数字だけの日報は 10-26 にやめた (オーナー「既定の報告はいらなくなった」)。頼まれた時に深掘り。
 6. バグは即調べ、再現手順とどの部か (black/README.md の振り先) をブラックへ。直すのはサーバーのバグだけ。
 7. 「おかしい」と言われたら先に記録 (D1・画面のエラーの全文・history) を読む。
 8. 記録を足す時は画面から `logRecord` を呼ぶだけ。KV は増やさない (メモ analytics-logs)。
@@ -15,10 +15,10 @@
 10. 確かめは台本の中で待つ (sleep の繰り返し・PowerShell は使わない)。報告はブラックへ 1〜3 行。
 
 ## 地図
-- サーバー: server/web (本番の Web の worker。手元の本番・開発版と同じ環境は notes/2026-10-24-local-prod-env.md)・server/live (README.md、src/index.ts = 入口・cron の 1 時間おきの相場と毎朝 9 時 JST の日報、monitor.ts `dailyReport`、events.ts、logs.ts → D1、feedback.ts・feedback-images.ts、forget.ts、migrations/ = D1 `exiledesk-logs`)。日報を今すぐ `GET /report` (ヘッダー x-exiledesk-key)。
+- サーバー: server/web (本番の Web の worker。手元の本番・開発版と同じ環境は notes/2026-10-24-local-prod-env.md)・server/live (README.md、src/index.ts = 入口・cron の 1 時間おきの相場と 9:03 の Discord の Bot、monitor.ts = 異常を KV の alertlog に控える `alert`、ai-review.ts = AI の評価と見解を #日報 へ、discord.ts = 読むだけの Bot、events.ts、logs.ts → D1、feedback.ts・feedback-images.ts、forget.ts、migrations/ = D1 `exiledesk-logs`)。
 - 使用量: Cloudflare のダッシュボードの Workers & Pages。無料の枠は 1 日 10 万リクエスト (UTC 0:00 = 日本時間 9:00 に戻る)。
 - 画面の側 (持ち主はデザイン部長、送る口だけ): src/utils/log-record.ts (`logRecord`)・no-log.ts、src/services/telemetry/log-sender.ts、src/web/track.ts、要望 src/web/FeedbackDialog.vue・feedback-images.ts・feedback-summary.ts、返事 src/state/feedback-replies.ts。
 - Web の作り (10-25 に共通から移った、701e97b5): vite.web.config.ts (mtx-art・stub を外す)・public/robots.txt・scripts/build-seo-pages.mjs (読み物のページ)。手元の本番環境 preview-prod.mjs・返りの比べ compare-prod-local.mjs・照らし compare-snaps.mjs。
 - 静的なページを数える JS: scripts/_pv-client.js (→ /pv.js、コスメの build-cosmetics-pages.mjs が写して head に札を置く。visit + screen "cosmetics:<まとめ>:<言語>"、1 時間に 1 回・ロボットと exiledesk.com の外は送らない、PV_API=<手元の server/live> で確かめ。10-25)。ブログは別の _blog-client.js。
-- 台本 scripts/: post-ai-review.mjs <日> (AI の評価と見解 <日>-ai.md の全文を #日報 へ。D1 の ai_review に置いて Worker が REPORT_WEBHOOK で流す、同じ日は 1 回、--dry で切り方だけ。10-26)・pull-logs.mjs <日> (D1 の記録を data-cache/logs/<日>.jsonl に、最後に pull-server-notes.mjs で異常・要望・Discord を <日>-server.json に。毎朝の AI の評価と見解はこの 2 つを読む、10-26)・analyze-logs.py (`--json` で数字だけ)・daily-summary.mjs・sim-telemetry.mjs・check-www-redirect.mjs (www の Bot の 301 とトップ・シェア、本番で見るだけ)。テスト tests/: live-worker・log-sender-throttle。
+- 台本 scripts/: post-ai-review.mjs <日> (AI の評価と見解 <日>-ai.md の全文を #日報 へ。D1 の ai_review に置いて Worker が REPORT_WEBHOOK で流す、同じ日は 1 回、--dry で切り方だけ。10-26)・pull-logs.mjs <日> (D1 の記録を data-cache/logs/<日>.jsonl に、最後に pull-server-notes.mjs で異常・要望・Discord を <日>-server.json に。毎朝の AI の評価と見解はこの 2 つを読む、10-26)・pull-server-notes.mjs <日> (異常・要望・Discord だけ、pull-logs が最後に回す)・analyze-logs.py (記録の集計の道具、`--json` で数字だけ)・sim-telemetry.mjs・check-www-redirect.mjs (www の Bot の 301 とトップ・シェア、本番で見るだけ)。テスト tests/: live-worker・log-sender-throttle。
 - メモ: analytics-logs (決着済み: D1 の visit・screen)・feedback-replies (`wrangler kv key put fbr:<id>`)・history-logs・roadmap-2026-10 (月 10 万 PV)・ads-page-model。docs: roadmap-2026-10.md、pending-release.md。

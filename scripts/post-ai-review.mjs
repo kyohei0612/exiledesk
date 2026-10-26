@@ -63,7 +63,7 @@ const chunks = chunk(toDiscord(md));
 console.log(`${day}: ${chunks.length} 回に分けて流す (${chunks.map((c) => c.length).join("・")} 字)`);
 if (DRY) { for (const c of chunks) console.log(`----\n${c}`); process.exit(0); }
 
-// wrangler は node で直に (daily-summary.mjs と同じ。shell を通すと SQL の空白で引数が崩れる)
+// wrangler は node で直に (shell を通すと SQL の空白で引数が崩れる)
 const WRANGLER = resolve(LIVE, "node_modules/wrangler/bin/wrangler.js");
 const wr = (a) => execFileSync(process.execPath, [WRANGLER, ...a], { windowsHide: true, cwd: LIVE, encoding: "utf8", maxBuffer: 1 << 26, stdio: ["ignore", "pipe", "pipe"] });
 const q = (sql) => { const s = wr(["d1", "execute", "exiledesk-logs", "--remote", "--json", "--command", sql]); return JSON.parse(s.slice(s.indexOf("[")))[0].results; };

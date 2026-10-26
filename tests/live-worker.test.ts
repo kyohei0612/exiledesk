@@ -231,8 +231,8 @@ describe("操作の印と日報 (events / monitor)", () => {
     expect(t).toContain("開いた 50 → シミュレーション 30");
     expect(t).toContain("一番減った所: 狙い→順番 (-60%)");
   });
-  it("日本時間の昨日と、直前の流れの文、日報の文面", async () => {
-    const { yesterdayJst, reportText } = await import("../server/live/src/monitor");
+  it("日本時間の昨日と、直前の流れの文", async () => {
+    const { yesterdayJst } = await import("../server/live/src/monitor");
     const { trailText, deviceJa, stateLine } = await import("../server/live/src/feedback");
     expect(deviceJa({ viewport: "1707x807" })).toBe("PC");
     expect(deviceJa({ viewport: "390x844" })).toBe("スマホ");
@@ -242,25 +242,6 @@ describe("操作の印と日報 (events / monitor)", () => {
     expect(y.since).toBe("2026-10-06T00:00:00.000Z"); expect(y.until).toBe("2026-10-07T00:00:00.000Z"); expect(y.label).toBe("この 24 時間");
     expect(yesterdayJst(new Date("2026-10-07T03:30:00Z"), true).label).toBe("今日のここまで");
     expect(trailText({ trail: [{ n: "open", ago: 130 }, { n: "mode:sim", ago: 40 }, { n: "sim:base", ago: 3 }] })).toBe("開いた (2分前) → シミュレーターに切り替え (40秒前) → ベースを選んだ (シミュレーター) (3秒前)");
-    const text = reportText("10/6", null, { visits: null, pageViews: null, liveRequests: null, liveErrors: null, why: "CF_ANALYTICS_TOKEN が無い" }, { requests: 1, bugs: 2 }, null, ["相場の中継"]);
-    expect(text).toContain("日報 10/6"); expect(text).toContain("訪問の集計は取れませんでした (CF_ANALYTICS_TOKEN が無い)"); expect(text).toContain("要望・バグを送った 3 件"); expect(text).not.toContain("届いた物"); expect(text).toContain("異常の通知 1 回: 相場の中継");
-    // 人が来た日は見出しごとの箇条書き (2026-10-10 オーナー「報告の文章わかりづらい」)
-    const byEvent = new Map([["open", 42], ["mode:sim", 25], ["mode:hand", 18], ["sim:base", 24], ["sim:targets", 20], ["sim:order", 8], ["sim:pattern", 7], ["sim:run", 6], ["sim:done", 5], ["trade:open", 3], ["share:copy", 4], ["share:open", 9]].map(([k, v]) => [k as string, { sessions: v as number, users: v as number, count: v as number }]));
-    const full = reportText("10/6", { sessions: 42, users: 40, newSessions: 30, bounce: 0.48, medianMinutes: 6.2, byEvent, refs: [["www.youtube.com", 20], ["direct", 15], ["t.co", 5]], devices: [["pc", 38], ["mobile", 4]], countries: [["JP", 41], ["US", 1]], errors: [], wau: 120, warnings: [] }, { visits: 40, pageViews: 60, liveRequests: 1200, liveErrors: 0 }, { requests: 0, bugs: 0 }, null, []);
-    expect(full).toContain("・訪問 42 回");
-    expect(full).toContain("・半分の人が 6 分以上使った");
-    expect(full).toContain("・URL から直接開いた人 15 人\n・youtube.com から来た人 20 人\n・X から来た人 5 人");
-    expect(full).toContain("・PC 90% / スマホ 10% · ほぼ日本");
-    expect(full).toContain("・シミュレーションを開いた 25");
-    expect(full).not.toContain("レシピを保存した");
-    // 手順の共有 (2026-10-12、URL の # で渡すのでサーバーは使わず、印だけで数える)
-    expect(full).toContain("・手順を共有した 4 人");
-    expect(full).toContain("・共有の手順から来た人 9 人");
-    // 最後のアドバイス (数字の決まりで 3 つまで、無ければ様子見)
-    expect(full).toContain("**アドバイス**");
-    const { adviceOf } = await import("../server/live/src/monitor");
-    expect(adviceOf(null, { requests: 0, bugs: 0 }, [])).toEqual(["大きな問題は見当たりません。このまま様子見で OK です"]);
-    expect(adviceOf(null, { requests: 1, bugs: 2 }, ["x"])).toEqual(["要望・バグ報告が 3 件あります。中身を見て、バグは再現できるか、要望はすぐできる物から", "異常の通知が出ています。サーバーや相場の取得が止まっていないか確認を"]);
   });
   it("異常は控えるだけで Discord には送らない (同じ物は 6 時間に 1 回)、要望は 1 分に 1 件", async () => {
     const { alert } = await import("../server/live/src/monitor");
@@ -271,38 +252,12 @@ describe("操作の印と日報 (events / monitor)", () => {
     const env: Env = { LIVE: kv, DISCORD_WEBHOOK: "https://discord/hook" };
     expect(await alert(env, "相場の中継", "落ちた", f)).toBe(true);
     expect(await alert(env, "相場の中継", "また落ちた", f)).toBe(false);
-    // 2026-10-08 オーナー「定時報告とバグのリアルタイム通知のみ」: 異常は日報に載せるだけで、すぐには送らない
+    // 2026-10-08 オーナー「定時報告とバグのリアルタイム通知のみ」: 異常は控えるだけで、すぐには送らない (毎朝 pull-server-notes.mjs が読む)
     expect(posts).toBe(0);
     expect((await kv.list({ prefix: "alertlog:" })).keys.length).toBe(1);
     expect(await allowIp(kv, "9.9.9.9", 1_000_000)).toBeNull();
     expect(await allowIp(kv, "9.9.9.9", 1_010_000)).toMatch(/1 分に 1 件/);
     expect(await allowIp(kv, "9.9.9.9", 1_070_000)).toBeNull();
-  });
-});
-
-describe("分析用の記録を Discord へ (logs.ts)", () => {
-  it("JSONL は行の切れ目で上限バイト以下に分ける (日本語は UTF-8 で数える)", async () => {
-    const { splitJsonl } = await import("../server/live/src/logs");
-    expect(splitJsonl("")).toEqual([]);
-    const lines = ["{\"a\":\"あいう\"}", "{\"b\":1}", "{\"c\":2}"];
-    const parts = splitJsonl(lines.join("\n"), 20);
-    expect(parts.join("\n")).toBe(lines.join("\n"));
-    for (const p of parts) expect(new TextEncoder().encode(p).length).toBeLessThanOrEqual(20);
-    expect(parts.length).toBe(2);
-  });
-  it("昨日の分は 1 通のお知らせだけ (ファイルは付けない。2026-10-13 多重に来ていた)、D1 には DELETE を出さない", async () => {
-    const { sendDayLogs } = await import("../server/live/src/logs");
-    const sqls: string[] = [];
-    const rows = [0, 1, 2].map((i) => ({ at: `2026-10-08T0${i}:00:00.000Z`, country: "JP", body: `{"app":"web","n":1}` }));
-    const LOGS = { prepare(sql: string) { sqls.push(sql); return { bind: () => ({ all: async () => ({ results: rows }) }) }; } } as unknown as D1Database;
-    const posts: string[] = [];
-    const f = (async (_u: string, init: RequestInit) => { posts.push(String(init.body)); return new Response(null, { status: 200 }); }) as unknown as typeof fetch;
-    const r = await sendDayLogs({ LIVE: fakeKv(), LOGS, LOGS_WEBHOOK: "https://discord/logs" }, "2026-10-08", f);
-    expect(r).toMatchObject({ ok: true, files: 0, lines: 3 });
-    expect(posts).toHaveLength(1);
-    expect(posts[0]).toContain("3 行");
-    expect(sqls.every((s) => s.startsWith("SELECT"))).toBe(true);
-    expect((await sendDayLogs({ LIVE: fakeKv(), LOGS }, "2026-10-08", f)).ok).toBe(false);
   });
 });
 

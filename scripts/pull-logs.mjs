@@ -54,7 +54,7 @@ for (const day of days) {
     text = await r.text();
   } else {
     try { text = viaWrangler(day); } catch (e) {
-      // 前に取った途中の物で日報を作らないよう、その日のファイルは消す (daily-summary.mjs が「昨日の記録が無い」で止まる)
+      // 前に取った途中の物で日報を作らないよう、その日のファイルは消す (毎朝の AI の評価と見解が「昨日の記録が無い」と分かるように)
       rmSync(resolve(out, `${day}.jsonl`), { force: true });
       console.error(day, "wrangler で読めない (code 7403 なら wrangler login が要る):", String(e.message ?? e).slice(0, 400));
       continue;

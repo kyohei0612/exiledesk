@@ -59,10 +59,8 @@ export interface Env {
   REFRESH_KEY?: string;
   /** 要望・バグ・異常・日報を流す Discord のウェブフック URL (無ければ保存だけ) */
   DISCORD_WEBHOOK?: string;
-  /** 日報だけの送り先 (2026-10-12 オーナー「日報だけ違うチャンネルに」)。無ければ DISCORD_WEBHOOK */
+  /** #日報 の送り先 (日報報告君、2026-10-12)。今は AI の評価と見解の全文だけ (ai-review.ts、10-26)。無ければ DISCORD_WEBHOOK */
   REPORT_WEBHOOK?: string;
-  /** 分析用の記録 (JSONL) を毎朝ファイルで送る Discord のウェブフック URL (secret。無ければ送らない) */
-  LOGS_WEBHOOK?: string;
   /** 日報の集計に使う Cloudflare の API トークン (Account Analytics: Read)。無ければ訪問数などは出ない */
   CF_ANALYTICS_TOKEN?: string;
   /** wrangler.jsonc の vars */

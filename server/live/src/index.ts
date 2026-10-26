@@ -2,14 +2,14 @@
  * exiledesk-live: Web 版のサーバー (Cloudflare Worker、無料枠)。
  *
  *   scheduled (1 時間おき) … 相場 (poe2scout → KV "market")。8 時間おきに YouTube / Twitch に問い合わせ → KV "state" に LiveState を書く (配信の見張り)
- *   scheduled (毎朝 9 時 JST) … 日報を Discord に (monitor.ts)・昨日の分析用の記録を JSONL ファイルで LOGS_WEBHOOK に (logs.ts)
+ *   scheduled (毎朝 9:03 JST) … Discord を読むだけの Bot (discord.ts)。数字の日報・記録の件数を Discord に流すのは 10-26 にやめた (#日報 は AI の評価と見解の全文だけ = ai-review.ts)
  *   GET  /live.json        … 配信の状態 (CORS 許可、60 秒キャッシュ)。サイトはこれを読むだけ
  *   GET  /api/poe2scout/…  … 相場の中継 (端のキャッシュ 10 分)
  *   POST /feedback         … 要望・バグ (KV に 90 日 + Discord、画像は D1)。GET /feedback.json(ヘッダー x-exiledesk-key) で一覧
  *   POST /feedback/<id>/images … 後から画像を足す (送った端末だけ)。GET /feedback/image/<画像 id>(ヘッダー x-exiledesk-key) で見る
  *   POST /event            … 操作の印 (Analytics Engine)。日報の「段階と離脱」「どこから」「端末」の元
  *   POST /log              … 分析用の記録 (D1、logs.ts)。GET /logs/day?day= (ヘッダー x-exiledesk-key) で取り出す
- *   GET  /report(ヘッダー x-exiledesk-key)     … 日報を今すぐ (確かめ用)
+ *   POST /ai-review/flush  … D1 の ai_review に置かれた AI の評価と見解を #日報 へ流す (ai-review.ts)
  *   GET  /refresh(ヘッダー x-exiledesk-key)    … 配信の見張りを今すぐ
  *   GET  /health
  *
@@ -25,7 +25,7 @@ import { getImage, MAX_IMAGES, notifyImagesDiscord, parseImages, pruneImages, sa
 import { allowIp, FEEDBACK_ID_RE, getFeedback, getReplies, listFeedback, notifyDiscord, parseFeedback, saveFeedback, saveReply, type Feedback } from "./feedback";
 import { DATASET, parseBatch, sql, usersBetween, writeEvents } from "./events";
 import { dayLogs, saveLog } from "./logs";
-import { alert, dailyReport, lastPosted, reqLog, yesterdayJst } from "./monitor";
+import { alert, reqLog, yesterdayJst } from "./monitor";
 import { treeShare } from "./tree-share";
 import { pullDiscord } from "./discord";
 import { flushAiReview } from "./ai-review";
@@ -299,11 +299,6 @@ async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): 
       const r = await fetch("https://api.cloudflare.com/client/v4/graphql", { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${env.CF_ANALYTICS_TOKEN ?? ""}` }, body: JSON.stringify({ query, variables: { acc: env.CF_ACCOUNT_ID, since } }) });
       return json(await r.json(), 200, { "cache-control": "no-store" });
     }
-    case "/report":
-      if (!keyOk(env, req)) return json({ error: "key が違う" }, 403);
-      // &today=1 で「今日のここまで」(集計が通っているかの確かめ用)
-      { const text = await dailyReport(env, fetch, new Date(), url.searchParams.get("today") === "1");
-        return new Response(text, { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store", "x-discord": lastPosted ? "ok" : "ng" } }); }
     // 新しい送り方の再現の確かめ (sim.ts)。wrangler.sim.jsonc で動かした時だけ
     case "/__sim/export":
       if (env.SIM !== "1" || !keyOk(env, req)) return json({ error: "not found" }, 404);
@@ -342,15 +337,14 @@ async function updateVisitors(env: Env, now = new Date()): Promise<void> {
 
 export default {
   async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
-    // 1 時間おきに相場、8 時間おきに配信の見張り (最新動画。2026-10-10 オーナー「5 分監視、8 時間に 1 回でええな」「相場も 1 時間に 1 回」)、毎朝 9 時 (JST = 0:00 UTC) は日報
-    // 毎朝 9:03 (JST = 0:03 UTC): Discord を読むだけの Bot が前回より後の書き込みを D1 に置く (discord.ts、日報の 9:05 より前)
+    // 1 時間おきに相場、8 時間おきに配信の見張り (最新動画。2026-10-10 オーナー「5 分監視、8 時間に 1 回でええな」「相場も 1 時間に 1 回」)、毎朝 9 時 (JST = 0:00 UTC) は画像の掃除
+    // 毎朝 9:03 (JST = 0:03 UTC): Discord を読むだけの Bot が前回より後の書き込みを D1 に置く (discord.ts、毎朝 9 時の AI の評価と見解が読む)
     if (controller.cron === "3 0 * * *") {
       ctx.waitUntil(pullDiscord(env).then(() => undefined).catch((e) => console.warn("discord:", String(e).slice(0, 200))));
       return;
     }
     if (controller.cron === "0 0 * * *") {
-      // 数字の日報を #日報 に流すのは 10-26 にやめた (オーナー「だってもう直で見にいくんでしょ」)。#日報 には AI の評価と見解の全文だけ (ai-review.ts)。
-      // 日報の文は鍵つきの GET /report で今も作れる。サーバーの異常は KV の alertlog に残り、手元の日報の md (scripts/daily-summary.mjs) が読む
+      // 数字の日報を #日報 に流すのは 10-26 にやめた (オーナー「既定の報告はいらなくなった」)。サーバーの異常は KV の alertlog に残り、scripts/pull-server-notes.mjs が毎朝読む
       // 前の日の記録の件数を #分析ログファイル管理 に流すのは 10-26 にやめた (オーナー「分析ログファイル管理はいらんね」)。記録は D1 に残り、分析の部が pull-logs.mjs で読む
       if (env.LOGS) ctx.waitUntil(pruneImages(env.LOGS).catch((e) => console.warn("fb images:", String(e).slice(0, 160))));
     } else {

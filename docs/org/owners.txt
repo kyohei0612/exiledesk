@@ -204,6 +204,8 @@ server/live/src/events.ts            分析
 server/live/src/feedback*.ts         分析
 server/live/src/forget.ts            分析
 scripts/pull-logs.mjs                分析
+scripts/pull-server-notes.mjs        分析
+scripts/post-ai-review.mjs           分析
 scripts/analyze-logs.py              分析
 
 # 動画編集長 (部の名前は「動画」のまま、台本・見張りが読む)

@@ -6,7 +6,7 @@ import collections, glob, json, statistics, sys
 from datetime import datetime, timedelta, timezone
 
 sys.stdout.reconfigure(encoding="utf-8")
-AS_JSON = "--json" in sys.argv  # 数字だけを JSON で (scripts/daily-summary.mjs が日ごとに比べる、2026-10-21)
+AS_JSON = "--json" in sys.argv  # 数字だけを JSON で (日ごとに比べる時に。2026-10-21)
 if AS_JSON: print = lambda *a, **k: None
 paths = [p for a in ([a for a in sys.argv[1:] if a != "--json"] or ["data-cache/logs/*.jsonl"]) for p in sorted(glob.glob(a))]
 JST = timezone(timedelta(hours=9))

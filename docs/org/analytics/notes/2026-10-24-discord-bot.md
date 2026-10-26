@@ -38,3 +38,4 @@
 - Bot (server/live の Worker) = 渡すだけ。毎朝 9:00 に前の日の記録を数え、#分析ログファイル管理 に「分析用の記録 <日> N 行」を流し (sendDayLogs)、9:03 に Discord の書き込みを discord_daily へ。分析しない・Discord に人向けの文は書かない (流すのは前からの通知の 1 行だけ)。
 - ログの本体は添付ではなく D1 の logs (10-10 に添付をやめた。行数は書き込みの「N 行」と同じ)。分析の部は `node scripts/pull-logs.mjs <日>` で data-cache/logs/<日>.jsonl に受け取る。
 - 分析の部 (サーバー管理人) = 受け取ったログを全部読み、日報 (docs/org/analytics/daily/<日>.md) と AI の評価と見解 (<日>-ai.md、見本 2026-10-25-ai.md) を書き、ブラックへ要点 3〜5 行。毎朝の予定のタスクに足すかはオーナーの OK 待ち。
+- 10-26 の整理: 上の「9:05 の日報 (daily-summary.mjs) が節に載せる」は終わり (台本ごと消した)。discord_daily は scripts/pull-server-notes.mjs が毎朝 <日>-server.json に写し、9 時の AI の評価と見解が読む。#分析ログファイル管理 への書き込みも 10-26 にやめた (チャンネルが消えても Bot は落ちない)。

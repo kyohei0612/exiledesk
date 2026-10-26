@@ -37,15 +37,14 @@ Cloudflare Workers (無料枠) で動き、**ドメインは要らない** (`exi
 - `GET /feedback.json (ヘッダー x-exiledesk-key: <REFRESH_KEY>)` で新しい順の一覧 (添付 = 送った人の画面の状態: ベース・狙い・パターン)
 - Discord にも流すなら: Discord のサーバー設定 → 連携サービス → ウェブフック → 新しいウェブフック → 「ウェブフック URL をコピー」→ `npx wrangler secret put DISCORD_WEBHOOK` に貼る → `pnpm run deploy`
 
-## 見張りと日報 (2026-10-07)
+## 見張りと毎朝の AI の評価と見解 (2026-10-07、10-26 に今の形)
 
 - **操作の印** (`POST /event`): Web 版が「開いた → 手で打つ / シミュレーション → ベース → 狙い → 順番 → 手順 → 回した → 完成 → 取引所」などの印を送る (cookie なし、名前や IP は無い)。Analytics Engine に 3 か月残る (無料 10 万/日)。ダッシュボードの Workers → Analytics Engine で「有効にする」が 1 回要る
-- **日報**: 毎朝 9 時 (JST) に Discord へ。昨日の 訪問 (新規 / 再訪)・ユーザー・直帰・滞在の中央・どこから・端末 (PC / スマホ)・国・使い方・段階と一番減った所・JS エラー・サーバーの回数とエラー・要望 / バグ・配信の見張り・異常・7 日のユーザー。
-  訪問数などは `CF_ANALYTICS_TOKEN` (Cloudflare の API トークン、権限は Account Analytics: Read だけ) が要る。`GET /report (ヘッダー x-exiledesk-key: <REFRESH_KEY>)` で今すぐ見られる
-- **異常の通知**: 相場の中継が落ちた・配信の見張りが失敗した・サーバーのエラー、を Discord にすぐ (同じ物は 6 時間に 1 回)
+- **毎朝 9 時の AI の評価と見解** (10-26 オーナー「既定の報告はいらなくなった」): 予定のタスクが手元で `scripts/pull-logs.mjs` (D1 の記録 + `pull-server-notes.mjs` の異常・要望・Discord) を読んで `docs/org/analytics/daily/<日>-ai.md` を書き、`scripts/post-ai-review.mjs` で D1 の `ai_review` に置く → Worker が `POST /ai-review/flush` (と毎時の cron) で #日報 に全文を流す (src/ai-review.ts、secret の `REPORT_WEBHOOK`)。数字の日報 (前の `dailyReport`・`GET /report`) と #分析ログファイル管理 への記録の件数は 10-26 に消した
+- **異常**: 相場の中継が落ちた・サーバーのエラーなどを KV の `alertlog:` に控えるだけ (同じ物は 6 時間に 1 回、2 日残す)。Discord にはすぐ送らない。毎朝の AI の評価と見解の材料
 - **ログ**: ダッシュボードの Workers → exiledesk-live → ログ に 1 回ごとの記録 (path・status・ms・国。無料は 3 日分)。手元で見るなら `pnpm tail`
 
-- **Discord を読むだけの Bot** (2026-10-24): 毎朝 9:03 (JST、cron `3 0 * * *`) に、`DISCORD_CHANNELS` (vars、チャンネルの id をカンマで) の前回より後の書き込みを Discord の REST で取り、D1 の `discord_daily` に 1 日 1 行 (src/discord.ts、migrations/0009)。9:05 の日報のまとめ (scripts/daily-summary.mjs) が「Discord の書き込み」の節に載せる。トークンは secret の `DISCORD_BOT_TOKEN` (オーナーが入れる)。無ければ「Bot 未設定」。Bot は何も書かない。作り方は docs/org/analytics/notes/2026-10-24-discord-bot.md。
+- **Discord を読むだけの Bot** (2026-10-24、10-26 に本番): 毎朝 9:03 (JST、cron `3 0 * * *`) に、サーバー (vars の `DISCORD_GUILD_ID`) の文字のチャンネル・お知らせ・スレッドを拾い、それぞれ前回より後の書き込みを D1 の `discord_daily` に 1 日 1 行 (src/discord.ts、migrations/0009)。見る権限の無いチャンネルは飛ばす、1 回 45 回まで叩く。トークンは secret の `DISCORD_BOT_TOKEN`。Bot は何も書かない。作り方は docs/org/analytics/notes/2026-10-24-discord-bot.md
 
 ## オーナーがやること (初回だけ、全部無料)
 
