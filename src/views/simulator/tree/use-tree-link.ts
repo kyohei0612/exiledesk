@@ -38,3 +38,15 @@ export function useTreeLink(doc: Ref<TreeDoc>, from: Ref<string | null>) {
     return out;
   });
 }
+
+/**
+ * 戻せる箱が 1 つも無い時の理由 (10-27 モンキー 9 の 4: 白 → 変成の外れの ↩ で全部灰色なのに理由が出ず、帯は「戻り先の箱を押す」のままだった)。
+ * 箱ごとの理由 (useTreeLink) のうち多い物から 2 つ。戻せる箱があれば null
+ */
+export function noTargetText(link: ReadonlyMap<string, string | null>, picking: string | null): string | null {
+  if (!picking || [...link.values()].some((v) => v === null)) return null;
+  const count = new Map<string, number>();
+  for (const [id, why] of link) if (why && id !== picking) count.set(why, (count.get(why) ?? 0) + 1);
+  const top = [...count].sort((a, z) => z[1] - a[1]).slice(0, 2).map(([w]) => w);
+  return tr(`戻せる箱が無い: ${top.join(" / ") || "ほかに箱が無い"}。Esc でやめて、＋ で次の手を足す`, `No box to return to: ${top.join(" / ") || "there are no other boxes"}. Press Esc and add the next craft with +`);
+}

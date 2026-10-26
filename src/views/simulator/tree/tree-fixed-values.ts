@@ -15,11 +15,22 @@ export function fixedValues(data: PatchData, doc: TreeDoc, item: StageItem): Sta
   const fix = (m: StageMod): StageMod => {
     const def = data.mods.get(m.modId);
     if (!def?.tiers[m.tierIndex]) return m;
+    // フラクチャーした MOD は木の中で 1 つ (印の段。「T5 以上」なら T5)。前は箱ごとの見本で段が違い、22% と 19% が並んだ (10-27 モンキー 9 の 8)
+    const mark = m.fractured ? goals.find((a) => a.fractured && a.modId === m.modId) : undefined;
+    const ti = mark ? tierIndexOf(data, mark.modId, mark.tier) : -1;
+    if (mark && ti >= 0 && def.tiers[ti] && ti !== m.tierIndex) {
+      const mt = makeStageMod(def, m.side, ti, MID_ROLL);
+      const pv = mark.values?.length === mt.values.length ? mark.values : null;
+      return pv ? { ...m, tierIndex: ti, values: [...pv], ...retext({ ...m, tierIndex: ti }, pv, data) } : { ...m, tierIndex: ti, values: mt.values, textJa: mt.textJa, textEn: mt.textEn };
+    }
     // 貼った値 (同じ MOD・同じ段・数の向きが合う時だけ、goalItem の pasted と同じ確かめ)
     const v = goals.find((a) => a.modId === m.modId && a.values?.length === m.values.length && tierIndexOf(data, a.modId, a.tier) === m.tierIndex)?.values;
     if (v && v.every((x, i) => Math.sign(x) === Math.sign(m.values[i]!) || x === 0)) return { ...m, values: [...v], ...retext(m, v, data) };
     const mid = makeStageMod(def, m.side, m.tierIndex, MID_ROLL);
     return { ...m, values: mid.values, textJa: mid.textJa, textEn: mid.textEn };
   };
-  return { ...item, prefixes: item.prefixes.map(fix), suffixes: item.suffixes.map(fix) };
+  // エミュから来た木は暗黙もエミュの振りのまま (完成形の窓 use-tree の goalItem と同じ。前は手の窓のカードだけ 5% → 4%、10-27 モンキー 9 の 9)
+  const gi = doc.goalImplicit?.base === doc.base ? doc.goalImplicit : null;
+  const imp = gi ? { rollSeed: gi.rollSeed, implicitRoll: gi.implicitRoll, implicitFixed: gi.implicitFixed } : {};
+  return { ...item, ...imp, prefixes: item.prefixes.map(fix), suffixes: item.suffixes.map(fix) };
 }

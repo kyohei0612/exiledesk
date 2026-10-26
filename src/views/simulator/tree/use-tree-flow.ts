@@ -8,7 +8,7 @@
  * そのままだと箱が 1/Z に小さく見えるので、Vue Flow の倍率は Z 倍で持つ: 画面の「100%」= Vue Flow の zoom Z。
  * (Vue Flow 1.48.2 の pointer() と getEventPosition() を読んで確かめた: 枠の BCR とマウスの clientX はどちらも拡大後のピクセル)
  */
-import { computed, ref, watch, type Ref } from "vue";
+import { computed, ref, watch, type Ref, nextTick } from "vue";
 import { useVueFlow } from "@vue-flow/core";
 import { BOX_H, BOX_W, boundsOf, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { bandsOf } from "../../../services/simulator/tree/tree-layout";
@@ -169,6 +169,37 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     const out = sx < m || sy < m || sx + sw > w - m || sy + sh > h - m;
     if (center || out) await f.setCenter(b.x + BOX_W / 2, b.y + BOX_H / 2, { zoom: z });
   }
+  /**
+   * 箱の数が変わった時 (横の ＋・手を足す・戻す・やり直し) に、新しく出た箱とそれと同じ段の箱のどれかが枠の外なら、開いた時の寄りに合わせ直す
+   * (10-27 モンキー 9 の 6・7: 横の ＋ の後に左右の箱が枠の外、白紙 → 戻すで左右がはみ出したまま)。消えただけの時は動かさない
+   */
+  let seen = new Set(Object.keys(doc.value.boxes));
+  watch(() => Object.keys(doc.value.boxes).length, async () => {
+    const now = Object.keys(doc.value.boxes), fresh = now.filter((id) => !seen.has(id));
+    seen = new Set(now);
+    if (!fresh.length) return;
+    await nextTick(); await nextTick();
+    // 箱がまとめて戻った (白紙 → 戻す・レシピを開いた等、4 つ以上) は整列の後と同じ見え方 (開いた時の寄り、モンキー 9 の 7)
+    if (fresh.length > 3) { await openView(); return; }
+    const ys = new Set(fresh.map((id) => doc.value.boxes[id]?.y));
+    const { x, y, zoom: z } = f.viewport.value, w = f.dimensions.value.width, h = f.dimensions.value.height, m = 8;
+    const row = Object.values(doc.value.boxes).filter((b) => ys.has(b.y));
+    const l = Math.min(...row.map((b) => b.x)), r = Math.max(...row.map((b) => b.x + BOX_W)), t0 = Math.min(...row.map((b) => b.y)), b0 = Math.max(...row.map((b) => b.y + (f.findNode(b.id)?.dimensions.height || BOX_H)));
+    const out = l * z + x < m || t0 * z + y < m || r * z + x > w - m || b0 * z + y > h - m;
+    if (!out) return;
+    // 今の倍率で入るなら、入る所まで最小限だけ動かす (手を足すたびに上へ戻すと組んでいる所を見失う)。入らない時だけ開いた時の寄りへ
+    if ((r - l) * z > w - 2 * m || (b0 - t0) * z > h - 2 * m) {
+      // 今の倍率で入らない: 開いた時の下限 (OPEN_MIN) 以上で入るならそこまで縮めて段の真ん中へ、入らなければ新しい箱を真ん中に (段は送って見る)
+      const z2 = Math.min(z, (w - 2 * m) / (r - l), (h - 2 * m) / (b0 - t0));
+      if (z2 >= OPEN_MIN) await f.setCenter((l + r) / 2, (t0 + b0) / 2, { zoom: z2 });
+      else { const nb = doc.value.boxes[fresh[0]!]!; await f.setCenter(nb.x + BOX_W / 2, nb.y + BOX_H / 2, { zoom: z }); }
+      return;
+    }
+    let nx = x, ny = y;
+    if (l * z + nx < m) nx = m - l * z; else if (r * z + nx > w - m) nx = w - m - r * z;
+    if (t0 * z + ny < m) ny = m - t0 * z; else if (b0 * z + ny > h - m) ny = h - m - b0 * z;
+    await f.setViewport({ x: nx, y: ny, zoom: z });
+  });
   async function toggleFull(): Promise<void> { full.value = !full.value; }
   /** 箱の枠の上の位置 (ページの CSS ピクセル = 実ピクセル ÷ ページの zoom。ポップアップ・ホバーのカードの置き場)。W・H = 枠の大きさ */
   function rectOf(b: { x: number; y: number }, w = BOX_W, h = BOX_H): { left: number; top: number; right: number; bottom: number; W: number; H: number } {
