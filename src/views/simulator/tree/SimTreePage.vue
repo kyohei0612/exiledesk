@@ -315,7 +315,8 @@ const chipNatural = (id: string): number | undefined => {
 const tidyOf = (d: typeof doc.value): void => tidy(d, chipNatural);
 async function onTidy(): Promise<void> {
   t.edit(tidyOf);
-  await v.fit();
+  // 整列の後は開いた時と同じ (75% 以上・スタートを上の真ん中、収まらない分は下へ)。全体表示にすると 10% まで縮んだ (10-26 夜オーナー「めっちゃ引き」)
+  await v.openView();
 }
 
 // ＋を引っ張ってつなぐ (use-tree-plus.ts)

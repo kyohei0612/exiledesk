@@ -18,9 +18,9 @@ export const FLOW_ID = "sim-tree";
 /**
  * 倍率は決まった段だけ (10-22 オーナー: 自由な値だと 76% で札がくっついて重なった)。ホイール・＋−・全体表示・幅が変わった時もこの段に吸い付く。
  * 75% は縮めたまま組める一番下の段 (VIEW_ONLY)、それ未満は見るだけ。20% は見本の木にプレフィックスをつないで 25% でも収まらなくなった分 (10-22)。
- * 15%・10% は箱の中のアイテムの枠で箱が高くなり、1660×860 の全体表示でアミュ B の下の段が 20% でも枠の外に切れた分 (10-26 モンキー 8 の 1。完成形の窓と段の目印を避けて下げると 15% でも切れた)
+ * 15%・10% は 10-26 に全体表示のために足したが、本番で木が 10% の点になったので外した (10-26 夜オーナー「なんでこうしたの、めっちゃ引きのやつ」)
  */
-const ZOOM_LEVELS = [0.1, 0.15, 0.2, 0.25, 0.33, 0.5, 0.67, 0.75, 1, 1.25, 1.5] as const;
+const ZOOM_LEVELS = [0.2, 0.25, 0.33, 0.5, 0.67, 0.75, 1, 1.25, 1.5] as const;
 const ZOOM_MIN = ZOOM_LEVELS[0];
 const ZOOM_MAX = ZOOM_LEVELS[ZOOM_LEVELS.length - 1]!;
 /** 一番近い段 */
@@ -36,6 +36,8 @@ const PHONE_MIN = 0.5;
  * (50% にしていた時は 5 箱の木でも 67% = 見るだけで開き、箱の ＋ が隠れた。10-25 ブラック「＋ が隠れない事を優先」)
  */
 const OPEN_MIN = VIEW_ONLY;
+/** 「全体を表示」の一番小さい段 (これより大きい木は下が枠の外に出てよい。10-26 夜ブラック 13「全体表示は下限 25%」) */
+const FIT_MIN = 0.25;
 /** 全体に合わせる時の余白の下限 */
 const PAD_MIN = 12;
 /** 箱の下の外の＋ (TreeBox の data-tree-next、-bottom-[34px]・28px) の分 */
@@ -124,20 +126,23 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     }
     return { x, y, z };
   }
-  /** fitAll = 窓を避けて下げた分で下の段が枠の外に出るなら、収まるまで倍率を 1 段ずつ下げる (全体表示) */
+  /**
+   * fitAll = 窓を避けて下げた分で下の段が枠の外に出るなら、収まるまで倍率を 1 段ずつ下げる (全体表示だけ、FIT_MIN まで)。
+   * 開いた時・整列の後は下げるだけで縮めない (10-26 夜ブラック 13: 縮めて 10% になった)
+   */
   async function startTop(lv: number, fitAll = false): Promise<void> {
     let p = placeOf(lv);
     const h = f.dimensions.value.height;
-    for (let i = ZOOM_LEVELS.indexOf(lv as (typeof ZOOM_LEVELS)[number]); fitAll && i > 0 && treeBottom() * p.z + p.y > h - PAD_MIN; i--) p = placeOf(ZOOM_LEVELS[i - 1]!);
+    for (let i = ZOOM_LEVELS.indexOf(lv as (typeof ZOOM_LEVELS)[number]); fitAll && i > 0 && ZOOM_LEVELS[i - 1]! >= FIT_MIN && treeBottom() * p.z + p.y > h - PAD_MIN; i--) p = placeOf(ZOOM_LEVELS[i - 1]!);
     await f.setViewport({ x: p.x, y: p.y, zoom: p.z });
   }
-  /** 全体に合わせる (整列の後・「1」・右下の道具)。whole = スマホでも 50% の下限を使わず木の全体 (回すの 1 人目が歩く時。光る枠を画面の外へ出さない) */
+  /** 全体に合わせる (「1」・右下の道具)。下限 25%。whole = スマホでも 50% の下限を使わず木の全体 (回すの 1 人目が歩く時。光る枠を画面の外へ出さない) */
   async function fit(whole = false): Promise<void> {
     const lv = fitLevel();
     if (lv == null) return;
     // スマホ (768px 未満) は 50% より小さくしない (20% で箱の字が読めなかった、10-22)
     if (!whole && innerWidth < 768) await startTop(Math.max(lv, PHONE_MIN));
-    else await startTop(lv, true);
+    else await startTop(Math.max(lv, FIT_MIN), true);
   }
   /**
    * 開いた時の見え方 (10-25 オーナー「任せる」、23 本目の決め): 木全体が収まる段 (100% まで)。
