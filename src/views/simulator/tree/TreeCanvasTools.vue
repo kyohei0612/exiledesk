@@ -1,7 +1,7 @@
 <!--
   TreeCanvasTools.vue — ツリーの右下に浮かぶ道具 (2026-10-22 見た目の作り直し、research/notes/2026-10-22-tree-ui-references.md の 6・7・16):
   ミニマップ (箱は結果の色、今見ている所の枠。押す / 引っ張るとそこへ送る) と、ComfyUI の並びのツールバー
-  (選択 / 手 = 見るだけで画面を動かす・全体表示・− 倍率 ＋)。ミニマップは右の列の残りいっぱいに常に出す (10-26 夜)
+  (選択 / 手 = 見るだけで画面を動かす・全体表示・− 倍率 ＋・ミニマップの切り替え)。ミニマップは既定で閉じ、開くと右の列の残りいっぱい (10-26 夜)
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
@@ -16,10 +16,14 @@ const hand = defineModel<boolean>("hand", { default: false });
 const emit = defineEmits<{ fit: []; zoomIn: []; zoomOut: []; reset: []; center: [x: number, y: number] }>();
 
 const view = computed(() => props.view);
+/** ミニマップは既定で閉じ、道具のボタンで出し入れ (10-26 夜オーナー「ミニマップいらんわ、デフォで閉じで必要な時出す形でおけ」)。開いたかはこのブラウザに覚える */
+const MAP_KEY = "exiledesk.tree.minimap2";
+const showMap = ref((() => { try { return localStorage.getItem(MAP_KEY) === "1"; } catch { return false; } })());
+watch(showMap, (v) => { try { localStorage.setItem(MAP_KEY, v ? "1" : "0"); } catch { /* 覚えられなくても使える */ } });
 
 /**
- * ミニマップの広さ = 右の列の残りいっぱい (10-26 夜オーナー「ここ使うなら」: 列の中に黒い空きを残さない)。
- * 入れ物の大きさを測って合わせる (ページの zoom の前の CSS ピクセル)。出し入れのボタンは外した (列に常に出す)
+ * ミニマップの広さ = 開いた時は右の列の残りいっぱい (10-26 夜オーナー「ここ使うなら」)。
+ * 入れ物の大きさを測って合わせる (ページの zoom の前の CSS ピクセル)
  */
 const mapBox = ref<HTMLElement | null>(null);
 const MAP_W = ref(200), MAP_H = ref(128);
@@ -57,9 +61,9 @@ const btn = "flex h-8 min-w-8 items-center justify-center rounded-md px-1.5 text
 </script>
 
 <template>
-  <!-- 木の枠の外の右の列の完成形の窓の下: ミニマップ (残りの高さいっぱい) と、一番下に倍率の道具 (10-26 夜オーナー「A でいい」「ここ使うなら」: 木の上に浮かせると寄った・引っ張った後に箱を隠した、モンキー 8 の 4) -->
-  <div class="flex min-h-0 min-w-0 flex-1 flex-col items-end gap-2" data-tree-tools>
-    <div ref="mapBox" class="min-h-[96px] w-full flex-1 overflow-hidden rounded-lg border border-white/10 bg-[#0d0b08]">
+  <!-- 木の枠の外の右の列の下: ミニマップ (開いた時だけ、残りの高さいっぱい) と、一番下に倍率の道具 (10-26 夜オーナー「A でいい」「ここ使うなら」: 木の上に浮かせると寄った・引っ張った後に箱を隠した、モンキー 8 の 4) -->
+  <div class="mt-auto flex min-h-0 min-w-0 flex-col items-end gap-2" :class="showMap ? 'flex-1' : ''" data-tree-tools>
+    <div v-if="showMap" ref="mapBox" class="min-h-[96px] w-full flex-1 overflow-hidden rounded-lg border border-white/10 bg-[#0d0b08]">
     <svg data-tree-minimap class="pointer-events-auto block cursor-pointer" :width="MAP_W" :height="MAP_H" :aria-label="tr('ミニマップ (押すとそこへ)', 'Minimap (click to jump)')" @pointerdown="go">
       <rect v-for="b in boxes" :key="b.id" :x="mx(b.x)" :y="my(b.y)" :width="Math.max(3, BOX_W * box.k)" :height="Math.max(2, BOX_H * box.k)" rx="2" :fill="fill(b)" fill-opacity="0.75" />
       <rect :x="mx(view.x)" :y="my(view.y)" :width="view.w * box.k" :height="view.h * box.k" rx="3" fill="rgba(255,236,190,0.06)" stroke="rgba(255,220,150,0.7)" stroke-width="2" />
@@ -80,6 +84,10 @@ const btn = "flex h-8 min-w-8 items-center justify-center rounded-md px-1.5 text
       <button type="button" data-tree-zoom-out :class="btn" :title="tr('縮める (ホイールでも)', 'Zoom out (also mouse wheel)')" :aria-label="tr('縮める', 'Zoom out')" @click="emit('zoomOut')">−</button>
       <button type="button" data-tree-zoom-reset :class="[btn, 'w-12 tabular-nums max-md:w-10']" :title="tr('等倍に戻す', 'Reset to 100%')" @click="emit('reset')">{{ Math.round(zoom * 100) }}%</button>
       <button type="button" data-tree-zoom-in :class="btn" :title="tr('広げる (ホイールでも)', 'Zoom in (also mouse wheel)')" :aria-label="tr('広げる', 'Zoom in')" @click="emit('zoomIn')">＋</button>
+      <span class="mx-1 h-5 w-0.5 rounded bg-white/10 max-md:hidden" />
+      <button type="button" data-tree-tool-map :class="[btn, showMap ? 'bg-amber-400/20 text-amber-100' : '']" :aria-pressed="showMap" :title="tr('ミニマップ', 'Minimap')" :aria-label="tr('ミニマップ', 'Minimap')" @click="showMap = !showMap">
+        <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z" /><path d="M9 3v15M15 6v15" /></svg>
+      </button>
     </div>
   </div>
 </template>

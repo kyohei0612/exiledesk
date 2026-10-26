@@ -14,6 +14,9 @@ import { autoName, quickSave, unsaved } from "./tree-save";
 import { saveTreeRecipe } from "../../../state/simulator/tree-recipes";
 
 const emit = defineEmits<{ switched: [] }>();
+/** compact = 木の枠の上の 1 行の帯の中 (SimTreePage、10-26 夜オーナー「1 行で」): 新しいツリー・コピーを道具の列と同じ平たいボタンにし、名前は帯が広い時だけ */
+defineProps<{ compact?: boolean }>();
+const FLAT = "flex h-8 min-w-8 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md bg-[#15110c]/95 px-1.5 ring-1 ring-white/10 text-[12px] text-[#d8ccb4] hover:bg-white/10 hover:text-white";
 const t = useTree();
 /** タブを替えた後の段の URL を画面に合わせる (完成形の設定のページから替えて木へ戻った時に sim-base のまま残らない。ベース選びの白紙のタブは sim-base) */
 function syncStep(): void {
@@ -62,15 +65,24 @@ onBeforeUnmount(() => document.removeEventListener("pointerdown", onDocDown, tru
 </script>
 
 <template>
-  <div data-tree-tabs class="flex min-w-0 items-center gap-1.5 overflow-x-auto">
+  <div data-tree-tabs class="flex min-w-0 items-center gap-1.5 @max-[899px]:gap-1">
+    <!-- タブだけを横に送る (新しいツリー・コピーは送りの外。768 の帯で送りの奥に隠れた、10-26 夜) -->
+    <span class="flex min-w-0 items-center gap-1.5 overflow-x-auto [scrollbar-width:none]">
     <!-- 文は中の span で右を … で切る (g-tab は真ん中寄せなので、ボタンで切ると頭と終わりが両側から切れた。タブは縮めて「新しいツリー」を押し出さない、10-23 モンキー 6) -->
-    <span v-for="(_, i) in t.tabDocs.value" :key="i" class="flex min-w-[96px] shrink items-center">
+    <span v-for="(_, i) in t.tabDocs.value" :key="i" class="flex min-w-[96px] shrink items-center @max-[899px]:min-w-0">
       <input v-if="editing === i" ref="input" data-tree-tab-name-input :value="t.tabLabel(i)" class="h-[30px] w-40 rounded border border-amber-400/60 bg-black/50 px-2 text-[13px] outline-none"
         @keydown.enter.prevent="endRename(($event.target as HTMLInputElement).value)" @keydown.esc.stop.prevent="endRename(null)" @blur="endRename(($event.target as HTMLInputElement).value)" />
       <button v-else type="button" data-tree-tab :data-tab-i="i" class="g-tab !min-h-[30px] min-w-0 max-w-[320px] !px-3 !text-[13px] max-md:max-w-full max-md:whitespace-normal" :class="i === t.active.value ? 'on' : ''" :title="tr(`${t.tabLabel(i)} (ダブルクリックで名前を変える)`, `${t.tabLabel(i)} (double-click to rename)`)" @click="go(i)" @dblclick="startRename(i)"><span class="block min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words">{{ t.tabLabel(i) }}</span></button>
       <button v-if="t.tabDocs.value.length > 1" type="button" data-tree-tab-close class="-ml-1 flex size-6 shrink-0 items-center justify-center rounded opacity-50 hover:bg-white/10 hover:opacity-100" :title="tr('このタブの木を閉じる', 'Close this tab’s tree')" @click="close(i)"><Icon name="x" class="size-3.5" /></button>
     </span>
-    <button type="button" data-tree-tab-add class="g-btn sm inline-flex shrink-0 items-center gap-1" :aria-label="tr('新しいツリー', 'New tree')" :title="tr('新しいツリーを白紙から作る (ベース選びから)', 'Start a new tree from scratch (choose a base first)')" @click="add"><Icon name="plus" class="size-3.5" /><span class="max-md:hidden">{{ tr("新しいツリー", "New tree") }}</span></button>
-    <button type="button" data-tree-tab-copy class="g-btn sm shrink-0" :title="tr('今のツリーを丸ごと写して新しいタブで開く (元は変わらない)', 'Copy this whole tree into a new tab (the original stays)')" @click="copy">{{ tr("コピー", "Copy") }}</button>
+    </span>
+    <template v-if="compact">
+      <button type="button" data-tree-tab-add :class="FLAT" :aria-label="tr('新しいツリー', 'New tree')" :title="tr('新しいツリーを白紙から作る (ベース選びから)', 'Start a new tree from scratch (choose a base first)')" @click="add"><Icon name="plus" class="size-4" /><span class="hidden @min-[1300px]:inline">{{ tr("新規", "New") }}</span></button>
+      <button type="button" data-tree-tab-copy :class="FLAT" :aria-label="tr('コピー', 'Copy')" :title="tr('今のツリーを丸ごと写して新しいタブで開く (元は変わらない)', 'Copy this whole tree into a new tab (the original stays)')" @click="copy"><Icon name="copy" class="size-4" /><span class="hidden @min-[1300px]:inline">{{ tr("コピー", "Copy") }}</span></button>
+    </template>
+    <template v-else>
+      <button type="button" data-tree-tab-add class="g-btn sm inline-flex shrink-0 items-center gap-1" :aria-label="tr('新しいツリー', 'New tree')" :title="tr('新しいツリーを白紙から作る (ベース選びから)', 'Start a new tree from scratch (choose a base first)')" @click="add"><Icon name="plus" class="size-3.5" /><span class="max-md:hidden">{{ tr("新しいツリー", "New tree") }}</span></button>
+      <button type="button" data-tree-tab-copy class="g-btn sm shrink-0" :title="tr('今のツリーを丸ごと写して新しいタブで開く (元は変わらない)', 'Copy this whole tree into a new tab (the original stays)')" @click="copy">{{ tr("コピー", "Copy") }}</button>
+    </template>
   </div>
 </template>

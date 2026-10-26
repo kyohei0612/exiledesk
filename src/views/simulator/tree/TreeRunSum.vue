@@ -1,0 +1,39 @@
+<!--
+  TreeRunSum.vue — 100 人回した結果のまとまり (結果の文・早送り・飛ばす・止まり・打ち止め・結果のまとめ・結果を出す / 隠す)。TreeRunBar から分けた (10-26 夜):
+  1100px 以上は上の帯の 1 行に、1100px 未満は木の下の右の列 (名前・保存・レシピの下) に置く (オーナー「1 行で表示させてくれ」)。置き場が 2 つ出して幅で片方を隠す
+-->
+<script setup lang="ts">
+import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
+import { tr } from "../../../i18n/lang";
+import { RUN_N } from "./use-tree-run";
+
+/** halted = 止まった人が出て途中で止めた (何人目)。walk = 1 人目が進んでいる所 */
+defineProps<{ result: TreeRunResult | null; running: boolean; stuck: [string, number][]; halted?: { box: string; n: number } | null; walk?: { step: number; total: number; cost: number; fast: boolean } | null }>();
+const shown = defineModel<boolean>("shown", { required: true });
+const report = defineModel<boolean>("report", { required: true });
+const emit = defineEmits<{ go: [id: string]; skip: [] }>();
+const pct = (r: TreeRunResult): string => `${Math.round((r.finished / (r.n || 1)) * 100)}`;
+const div = (x: number): string => (Number.isFinite(x) ? (x >= 100 ? x.toFixed(0) : x.toFixed(1)) : "—");
+/** 帯の中の小さなボタン (ゲームの絵の枠は 1 つ 58px あり 1 行に入らなかった) */
+const MINI = "shrink-0 whitespace-nowrap rounded-md border border-white/15 bg-white/[0.04] px-2 py-0.5 text-[12px] text-[#d8ccb4] hover:bg-white/10 hover:text-white aria-pressed:border-amber-400/60 aria-pressed:text-amber-100";
+</script>
+
+<template>
+  <span class="flex min-w-0 items-center gap-1.5">
+    <!-- 一番大事な数字なので切らない (縮めるのはレシピの名前、10-22 金の指輪の録画で完成 % が … で切れた) -->
+    <span data-tree-run-sum class="shrink-0 whitespace-nowrap tabular-nums" :class="result && !running ? '' : 'opacity-70'">
+      <template v-if="walk">{{ tr(`1 人目が進んでいる ${walk.step}/${walk.total} 箱 · ${div(walk.cost)} 神`, `Run 1 walking ${walk.step}/${walk.total} boxes · ${div(walk.cost)} div`) }}</template>
+      <template v-else-if="result && halted && halted.n === 1">{{ tr("1 人目が止まったので止めた (止まった箱を直して回し直す)", "Run 1 got stuck, stopped (fix the box and run again)") }}</template>
+      <template v-else-if="result && halted">{{ tr(`${halted.n} 人目で止まったので止めた (止まった箱を直して回し直す)`, `Stopped at run ${halted.n}: a run got stuck (fix the box and run again)`) }}</template>
+      <template v-else-if="result">{{ tr(`${result.n} 人: 1 個 ${div(result.perItem)} 神 · 完成 ${pct(result)}%`, `${result.n} runs: ${div(result.perItem)} div/item · ${pct(result)}% done`) }}</template>
+      <template v-else>{{ tr(`${RUN_N} 人: 1 個 — 神 · 完成 —%`, `${RUN_N} runs: — div/item · —% done`) }}</template>
+    </span>
+    <!-- 同じ所に 3 秒とどまって早送りしている間だけ見える (場所は取ったまま、帯が揺れないように) -->
+    <span v-if="walk" :data-tree-run-fast="walk.fast ? '' : undefined" class="shrink-0 rounded bg-amber-400/20 px-1.5 text-[11px] font-bold text-amber-200" :class="walk.fast ? '' : 'invisible'" :title="tr('同じ所に 3 秒とどまったので、抜けるまで早送り', 'Stayed in one place for 3 s, fast-forwarding until it moves on')">{{ tr("▶▶ 早送り", "▶▶ Fast") }}</span>
+    <button v-if="walk" type="button" data-tree-run-skip :class="MINI" :title="tr('1 人目を見ずに残りを回す', 'Skip run 1 and play the rest')" @click="emit('skip')">{{ tr("飛ばす", "Skip") }}</button>
+    <button v-for="[id, n] in running ? [] : stuck.slice(0, 1)" :key="id" type="button" data-tree-run-stuck-sum class="shrink-0 whitespace-nowrap rounded-full bg-rose-700/90 px-2 text-[12px] font-bold text-white hover:bg-rose-600" :title="tr('止まった箱へ寄る', 'Go to the stuck box')" @click="emit('go', id)">{{ tr(`止まり ${result?.stuck ?? n} 人`, `${result?.stuck ?? n} stuck`) }}</button>
+    <span v-if="result && !running && result.capped" class="shrink-0 whitespace-nowrap rounded-full bg-rose-900/80 px-2 text-[12px] text-rose-100">{{ tr(`打ち止め ${result.capped} 人`, `${result.capped} capped`) }}</span>
+    <button v-if="result && !running && !halted" type="button" data-tree-run-report-open :class="MINI" :aria-pressed="report" @click="report = !report">{{ tr("結果のまとめ", "Summary") }}</button>
+    <button v-if="result && !running" type="button" data-tree-run-toggle :class="MINI" :aria-pressed="shown" @click="shown = !shown">{{ shown ? tr("結果を隠す", "Hide results") : tr("結果を出す", "Show results") }}</button>
+  </span>
+</template>

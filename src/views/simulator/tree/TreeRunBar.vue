@@ -1,6 +1,7 @@
 <!--
-  TreeRunBar.vue — 帯の「100 人回す」と、回した結果のまとめ (完成率・1 個あたり・止まり) と、結果の層を出す / 隠す (2026-10-22 オーナー「回すボタンもやろ？」)。
-  回す状態は use-tree-run.ts、木の上の層は TreeRunLayer.vue、回し終えた後のまとめは TreeRunReport.vue (木の枠へ Teleport)。回すとまず 1 人目が木を進む (その間は「1 人目 n/m 手」と「飛ばす」)
+  TreeRunBar.vue — 帯の「テストで回す」「足りない所 n ▾」「100 人回す」(2026-10-22 オーナー「回すボタンもやろ？」)。回した結果のまとまりは TreeRunSum.vue (10-26 夜に分けた)。
+  回す状態は use-tree-run.ts、木の上の層は TreeRunLayer.vue、回し終えた後のまとめは TreeRunReport.vue (木の枠へ Teleport)。回すとまず 1 人目が木を進む。
+  帯の幅が狭い時は字を短く (帯の @container、オーナー 10-26 夜「1 行で表示させてくれ」。切らない・… にしない)
 -->
 <script setup lang="ts">
 import { watch } from "vue";
@@ -9,40 +10,24 @@ import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { tr } from "../../../i18n/lang";
 import { RUN_N } from "./use-tree-run";
 
-/** halted = 止まった人が出て途中で止めた (何人目)。walk = 1 人目が進んでいる所 */
-/** test = テストラン (use-tree-check: 回している・今の道で合格・見つけた穴の数)。合格するまで「100 人回す」は押せない (10-24 オーナー) */
-const props = defineProps<{ result: TreeRunResult | null; running: boolean; ready: boolean; test: { busy: boolean; passed: boolean; holes: number; /** 穴を見せている (札が押された状態) */ shown: boolean }; stuck: [string, number][]; halted?: { box: string; n: number } | null; walk?: { step: number; total: number; cost: number; fast: boolean } | null }>();
-const shown = defineModel<boolean>("shown", { required: true });
-const emit = defineEmits<{ run: []; go: [id: string]; skip: []; test: []; holes: []; holesOn: []; /** 穴の一覧の窓を開く (札の横の ▾) */ list: [] }>();
-const pct = (r: TreeRunResult): string => `${Math.round((r.finished / (r.n || 1)) * 100)}`;
-/** 回し終えた後の結果のまとめ (TreeRunReport)。回し終えたら開き、止まって止めた時は開かない。帯の「結果のまとめ」・流れの帯の 4 でまた開く (開閉は置き場が持つ) */
+/** test = テストラン (use-tree-check: 回している・今の道で合格・見つけた穴の数)。合格するまで「100 人回す」は押せない (10-24 オーナー)。halted = 止まった人が出て途中で止めた */
+const props = defineProps<{ result: TreeRunResult | null; running: boolean; ready: boolean; test: { busy: boolean; passed: boolean; holes: number; /** 穴を見せている (札が押された状態) */ shown: boolean }; halted?: { box: string; n: number } | null }>();
+const emit = defineEmits<{ run: []; go: [id: string]; test: []; holes: []; holesOn: []; /** 穴の一覧の窓を開く (札の横の ▾) */ list: [] }>();
+/** 回し終えた後の結果のまとめ (TreeRunReport)。回し終えたら開き、止まって止めた時は開かない。TreeRunSum の「結果のまとめ」・流れの帯の 4 でまた開く (開閉は置き場が持つ) */
 const report = defineModel<boolean>("report", { required: true });
 watch(() => props.running, (on, was) => { if (was && !on && props.result && !props.halted) report.value = true; if (on) report.value = false; });
-const div = (x: number): string => (Number.isFinite(x) ? (x >= 100 ? x.toFixed(0) : x.toFixed(1)) : "—");
 </script>
 
 <template>
   <!-- テストで回す (木を変えるたびに自動でも回る) → 合格 / 穴 n → 100 人回す。テストの中身はルート精査 (5 人を辿り 30 人を回して穴を探す、費用は出さない) -->
-  <button type="button" data-tree-test class="g-btn sm shrink-0" :disabled="test.busy || running" :title="tr('テストで回す: 5 人をエンジンで辿り 30 人を回して、止まる所・打てない手・付かない当たり・完成に着かない道を探す (費用は出さない)。木を変えるたびに自動でも回る', 'Test run: walk 5 runs and play 30 runs with the engine to find dead ends, unusable crafts, unreachable hits and paths that never finish (no costs). Also runs by itself after each change')" @click="emit('test')">{{ test.busy ? tr("テスト中…", "Testing…") : tr("テストで回す", "Test run") }}</button>
+  <button type="button" data-tree-test class="g-btn sm shrink-0 whitespace-nowrap" :disabled="test.busy || running" :title="tr('テストで回す: 5 人をエンジンで辿り 30 人を回して、止まる所・打てない手・付かない当たり・完成に着かない道を探す (費用は出さない)。木を変えるたびに自動でも回る', 'Test run: walk 5 runs and play 30 runs with the engine to find dead ends, unusable crafts, unreachable hits and paths that never finish (no costs). Also runs by itself after each change')" @click="emit('test')">
+    <template v-if="test.busy">{{ tr("テスト中…", "Testing…") }}</template>
+    <template v-else><span class="@max-[899px]:hidden">{{ tr("テストで回す", "Test run") }}</span><span class="hidden @max-[899px]:inline">{{ tr("テスト", "Test") }}</span></template>
+  </button>
   <span v-if="test.passed && !test.busy" data-tree-test-ok class="shrink-0 whitespace-nowrap rounded-full bg-emerald-700/80 px-2 text-[12px] font-bold text-white">{{ tr("✓ 合格", "✓ Passed") }}</span>
   <!-- 穴の札はスイッチ (10-25 オーナー「クリックでオンオフ」): 既定はオン (赤い札・箱の !・一覧)、押すとオフで数だけ灰色、もう一度でオン。オフは組み替えてもそのまま (10-25 オーナー「デフォで赤、押したらオフ」) -->
-  <button v-else-if="test.holes && !test.busy" type="button" data-tree-test-holes :aria-pressed="test.shown" class="shrink-0 whitespace-nowrap rounded-full border px-2 text-[12px] transition-colors" :class="test.shown ? 'border-rose-400 bg-rose-700/90 font-bold text-white shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)]' : 'border-white/15 bg-white/[0.04] text-white/55 hover:text-white/80'" :title="test.shown ? tr('足りない所の表示を消す (箱の ! と一覧)', 'Hide what is missing (box marks and list)') : tr('足りない所を見る (箱の ! と一覧を出す、直すと次のテストで消える)', 'Show what is missing (box marks and list; they clear on the next test once fixed)')" @click="emit('holes')">{{ tr(`足りない所 ${test.holes}`, `${test.holes} missing`) }}</button>
-  <button v-if="test.holes && !test.busy" type="button" data-tree-test-list class="-ml-1.5 shrink-0 rounded px-1 text-[12px] text-white/50 hover:bg-white/10 hover:text-white/85" :title="tr('足りない所の一覧を開く', 'Open the list of what is missing')" @click="emit('list')">▾</button>
-  <button type="button" data-tree-run class="g-btn sm shrink-0" :disabled="running || !ready" :class="test.passed ? '' : 'opacity-60'" :title="test.passed ? tr(`${RUN_N} 人をエンジンで回し、通った道と人数を木の上に重ねて出す (値段は結果のまとめで入れたベースの値段と今の相場)`, `Run ${RUN_N} times with the engine and overlay the paths taken (prices: the base price from the summary + current market)`) : tr('足りない所を直すと回せる。押すと一覧を開く', 'Fix what is missing to run. Click to open the list')" @click="test.passed ? emit('run') : emit('holesOn')">{{ tr(`${RUN_N} 人回す`, `Run ${RUN_N}`) }}</button>
-  <!-- 一番大事な数字なので切らない (縮めるのはレシピの名前、10-22 金の指輪の録画で完成 % が … で切れた) -->
-  <span data-tree-run-sum class="shrink-0 whitespace-nowrap tabular-nums" :class="result && !running ? '' : 'opacity-70'">
-    <template v-if="walk">{{ tr(`1 人目が進んでいる ${walk.step}/${walk.total} 箱 · ${div(walk.cost)} 神`, `Run 1 walking ${walk.step}/${walk.total} boxes · ${div(walk.cost)} div`) }}</template>
-    <template v-else-if="result && halted && halted.n === 1">{{ tr("1 人目が止まったので止めた (止まった箱を直して回し直す)", "Run 1 got stuck, stopped (fix the box and run again)") }}</template>
-    <template v-else-if="result && halted">{{ tr(`${halted.n} 人目で止まったので止めた (止まった箱を直して回し直す)`, `Stopped at run ${halted.n}: a run got stuck (fix the box and run again)`) }}</template>
-    <template v-else-if="result">{{ tr(`${result.n} 人: 1 個 ${div(result.perItem)} 神 · 完成 ${pct(result)}%`, `${result.n} runs: ${div(result.perItem)} div/item · ${pct(result)}% done`) }}</template>
-    <template v-else>{{ tr(`${RUN_N} 人: 1 個 — 神 · 完成 —%`, `${RUN_N} runs: — div/item · —% done`) }}</template>
-  </span>
-  <!-- 同じ所に 3 秒とどまって早送りしている間だけ見える (場所は取ったまま、帯が揺れないように) -->
-  <span v-if="walk" :data-tree-run-fast="walk.fast ? '' : undefined" class="shrink-0 rounded bg-amber-400/20 px-1.5 text-[11px] font-bold text-amber-200" :class="walk.fast ? '' : 'invisible'" :title="tr('同じ所に 3 秒とどまったので、抜けるまで早送り', 'Stayed in one place for 3 s, fast-forwarding until it moves on')">{{ tr("▶▶ 早送り", "▶▶ Fast") }}</span>
-  <button v-if="walk" type="button" data-tree-run-skip class="g-btn sm shrink-0" :title="tr('1 人目を見ずに残りを回す', 'Skip run 1 and play the rest')" @click="emit('skip')">{{ tr("飛ばす", "Skip") }}</button>
-  <button v-for="[id, n] in running ? [] : stuck.slice(0, 1)" :key="id" type="button" data-tree-run-stuck-sum class="shrink-0 rounded-full bg-rose-700/90 px-2 text-[12px] font-bold text-white hover:bg-rose-600" :title="tr('止まった箱へ寄る', 'Go to the stuck box')" @click="emit('go', id)">{{ tr(`止まり ${result?.stuck ?? n} 人`, `${result?.stuck ?? n} stuck`) }}</button>
-  <span v-if="result && !running && result.capped" class="shrink-0 rounded-full bg-rose-900/80 px-2 text-[12px] text-rose-100">{{ tr(`打ち止め ${result.capped} 人`, `${result.capped} capped`) }}</span>
-  <button v-if="result && !running && !halted" type="button" data-tree-run-report-open class="g-btn sm shrink-0" :aria-pressed="report" @click="report = !report">{{ tr("結果のまとめ", "Summary") }}</button>
+  <button v-else-if="test.holes && !test.busy" type="button" data-tree-test-holes :aria-pressed="test.shown" class="shrink-0 whitespace-nowrap rounded-full border px-2 text-[12px] transition-colors" :class="test.shown ? 'border-rose-400 bg-rose-700/90 font-bold text-white shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)]' : 'border-white/15 bg-white/[0.04] text-white/55 hover:text-white/80'" :title="test.shown ? tr('足りない所の表示を消す (箱の ! と一覧)', 'Hide what is missing (box marks and list)') : tr('足りない所を見る (箱の ! と一覧を出す、直すと次のテストで消える)', 'Show what is missing (box marks and list; they clear on the next test once fixed)')" @click="emit('holes')"><span class="@max-[759px]:hidden">{{ tr(`足りない所 ${test.holes}`, `${test.holes} missing`) }}</span><span class="hidden @max-[759px]:inline">! {{ test.holes }}</span></button>
+  <button v-if="test.holes && !test.busy" type="button" data-tree-test-list class="-ml-1 shrink-0 rounded px-1 text-[12px] text-white/50 hover:bg-white/10 hover:text-white/85" :title="tr('足りない所の一覧を開く', 'Open the list of what is missing')" @click="emit('list')">▾</button>
+  <button type="button" data-tree-run class="g-btn sm shrink-0 whitespace-nowrap" :disabled="running || !ready" :class="test.passed ? '' : 'opacity-60'" :title="test.passed ? tr(`${RUN_N} 人をエンジンで回し、通った道と人数を木の上に重ねて出す (値段は結果のまとめで入れたベースの値段と今の相場)`, `Run ${RUN_N} times with the engine and overlay the paths taken (prices: the base price from the summary + current market)`) : tr('足りない所を直すと回せる。押すと一覧を開く', 'Fix what is missing to run. Click to open the list')" @click="test.passed ? emit('run') : emit('holesOn')"><span class="@max-[899px]:hidden">{{ tr(`${RUN_N} 人回す`, `Run ${RUN_N}`) }}</span><span class="hidden @max-[899px]:inline">{{ tr(`${RUN_N} 人`, `${RUN_N}×`) }}</span></button>
   <Teleport defer to="[data-tree-frame]"><TreeRunReport v-if="report && result && !running" :result="result" @close="report = false" @go="(id) => emit('go', id)" /></Teleport>
-  <button v-if="result && !running" type="button" data-tree-run-toggle class="g-btn sm shrink-0" :aria-pressed="shown" @click="shown = !shown">{{ shown ? tr("結果を隠す", "Hide results") : tr("結果を出す", "Show results") }}</button>
 </template>

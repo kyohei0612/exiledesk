@@ -14,7 +14,7 @@ import { VueFlow, type NodeMouseEvent } from "@vue-flow/core";
 import "@vue-flow/core/dist/style.css";
 import Icon from "../../../components/ui/Icon.vue";
 import TreeMemoFloat from "./TreeMemoFloat.vue";
-import TreeCanvasTools from "./TreeCanvasTools.vue"; import TreeJoinBar from "./TreeJoinBar.vue";
+import TreeCanvasTools from "./TreeCanvasTools.vue"; import TreeTopTools from "./TreeTopTools.vue"; import TreeRunSum from "./TreeRunSum.vue";
 import ModeTabs from "../../../components/for-share/ModeTabs.vue";
 import SimPcOnly from "../SimPcOnly.vue"; import PhoneTreePage from "../phone/PhoneTreePage.vue";
 import { usePhone } from "../../../utils/use-phone";
@@ -38,7 +38,7 @@ import { askLeave, openTreePage, setLeaveGuard, treeStep } from "../../../web/pa
 import { recipesPage } from "../../../state/web-page";
 import { gesture } from "./use-gesture";
 import { useDismiss } from "../../../utils/use-dismiss";
-import { ARMED_CLASS, useArmed } from "../../../utils/use-armed";
+import { useArmed } from "../../../utils/use-armed";
 import { useTreeLink } from "./use-tree-link";
 import { backText, retryOf, stepBackText } from "./tree-fail";
 import { useTreePlus } from "./use-tree-plus";
@@ -395,40 +395,30 @@ const phone = usePhone(), simPhone = flag("simPhone");
     <SimPcOnly v-if="phone && !simPhone" />
     <PhoneTreePage v-else-if="phone" />
     <template v-else>
-    <div class="mb-3 flex flex-wrap items-center gap-3">
-      <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center gap-3 px-8 max-[1099px]:basis-full text-[22px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)] max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-1 max-md:px-4 max-md:py-2 max-md:text-[17px] max-md:tracking-[0.08em]"><span class="whitespace-nowrap">{{ tr("クラフトの道 (ツリー)", "Craft route tree") }}</span><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" /></h1>
-      <!-- 流れの 4 段の帯 (今どこにいるか。完成形の設定の窓と同じ部品、10-24 オーナー)。初手のページの間は窓の側に出る。右上の「← 戻る」は置かない (上の切り替えタブで行き来する、10-24 オーナー「意味が分からない、要らない」) -->
-      <TreeFlowSteps v-if="!t.goalInline.value" class="max-md:basis-full" :current="t.reportOpen.value ? 4 : 3" :no-base="t.needBase.value" @go="onFlow" />
-    </div>
+    <!-- 題の帯「クラフトの道 (ツリー)」はツリーのページでは出さない (10-26 夜オーナー「いらんわ」)。流れの帯は木の枠の中の一番上 -->
     <!-- エミュレーター / シミュレーター β の切り替え (エミュの画面の帯と同じ共通の部品、10-23 オーナー「帯を 1 つにして両方に」) -->
     <ModeTabs class="mb-3" />
     <TreeOverlays /><TreeHandPage v-if="panel?.kind === 'hand' && panelBox" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" @back="picking = panel!.id; panel = null" @aim="panel = { kind: 'aim', id: panel!.id }" />
     <TreePanelPage v-else-if="panel && panelBox" :key="`${panel.kind}-${panel.id}`" :kind="panel.kind === 'split' || panel.kind === 'note' ? panel.kind : 'aim'" :box-id="panel.id" :current="panelBox.aim" @pick="pickAim" @close="panel = null" />
     <div v-show="!t.goalInline.value" class="g-panel flex flex-col gap-2 px-3 py-2 max-md:px-0.5" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
-      <!-- 帯: 全体の数字 (まだ) ・1 つ戻す・拡大縮小・全画面。ベースが無い空の形 (t.needBase) の間は「レシピ ▾」と「メモ」だけ (今押しても意味の無い物は出さない、10-23 オーナー) -->
-      <!-- 折り返さない (回した結果の文で 1 行と 2 行の境目になり、木の枠が上下して箱の × が押せなかった、10-22)。左は狭ければ … で切る。768px 未満は左と右を 2 段に (右が画面より広く左が潰れて「回す」が押せなかった、10-22) -->
-      <div class="relative flex flex-wrap items-center gap-2 text-[13px] md:flex-nowrap">
+      <!-- 流れの 4 段の帯 (今どこにいるか、10-24 オーナー): 上のタブの下、木の枠の中の一番上に小さく (10-26 夜オーナー「普通出すのはタブの下」「ここは枠内でしょ」)。右上の「← 戻る」は置かない -->
+      <div class="flex min-w-0 flex-wrap items-center gap-2 [&_[data-tree-flow-step]]:!min-h-[26px] [&_[data-tree-flow-step]]:!text-[12px]">
+        <TreeFlowSteps :current="t.reportOpen.value ? 4 : 3" :no-base="t.needBase.value" @go="onFlow" /><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" />
+      </div>
+      <!-- 帯は 1 行 (10-26 夜オーナー「1 行で表示させてくれ」「必要なのは下段」「テストで回すと 100 人で回すは上の枠内上部でおけ」): テスト・足りない所・100 人回す・結果、タブ、道具。
+           狭ければ字を短く・道具は絵だけ (帯の @container、切らない・… にしない)。名前・保存・レシピは右の列の完成形の窓の下。ベースが無い空の形の間は「レシピ ▾」と「メモ」だけ (10-23 オーナー) -->
+      <div class="@container relative flex min-w-0 flex-nowrap items-center gap-1.5 text-[13px]">
         <!-- 足りない所の一覧 = 「足りない所 n ▾」を押した時だけ帯の下に落ちる窓 (枠の外・Esc で閉じる、10-26 夜オーナー) -->
         <TreeIssues v-if="issues?.length && issuesShown && issuesOpen" class="absolute left-0 top-full z-40 mt-1" :issues="issues" :busy="checkBusy" :lower="false" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" />
-        <span class="flex min-w-0 flex-1 basis-full items-center gap-2 max-md:flex-wrap md:basis-auto">
-        <TreeRecipeBar @opened="v.openView()" />
-        <TreeRunBar v-if="!t.needBase.value" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking, passed, holes: issues?.length ?? 0, shown: issuesShown }" @test="onCheck" @holes="issuesShown = !issuesShown" @holes-on="openIssues" @list="issuesOpen ? (issuesOpen = false) : openIssues()" :stuck="tr100.stuckBoxes.value" @run="tr100.run" @go="goIssue" :halted="tr100.halted.value" :walk="tr100.walk.value" @skip="tr100.skipWalk" />
-        </span>
-      </div>
-
-      <!-- ベースが無い空の形でも、ほかの木があればタブを出す (前の木へ戻れない行き止まりだった、10-24 夜オーナー「一方通行が多い」) -->
-      <!-- ツリーのタブと、右に道具 (1 つ戻す・整列・線・メモ・全画面・白紙)。前は上の帯の右にあり、100 人回した後に帯の左 (レシピ・回す・結果) が足りず重なった (10-25 英語の通しで見つけた、日本語も同じ) -->
-      <div class="flex flex-wrap items-center gap-2 text-[13px] min-[1100px]:flex-nowrap"><!-- 1100px 未満は道具を次の行へ (768 で画面の右へはみ出した、10-26 夜) -->
-        <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" class="min-w-0 flex-1" @switched="v.openView()" />
-        <span class="ml-auto flex shrink-0 flex-wrap items-center gap-1 max-md:ml-0 max-md:min-w-0 max-md:shrink max-md:basis-full max-md:flex-nowrap max-md:overflow-x-auto max-md:pb-1 max-md:[&>*]:shrink-0 max-md:[&>*]:whitespace-nowrap max-[1099px]:max-w-full min-[1100px]:flex-nowrap">
-          <button v-if="!t.needBase.value" type="button" data-tree-undo class="g-btn sm inline-flex items-center gap-1" :disabled="!t.canUndo.value" :title="tr('1 つ戻す (Ctrl+Z)', 'Undo (Ctrl+Z)')" @click="t.undo"><Icon name="undo" class="size-4" /><span class="max-md:hidden">{{ tr("1 つ戻す", "Undo") }}</span></button>
-          <button v-if="!t.needBase.value" type="button" data-tree-redo class="g-btn sm inline-flex items-center" :disabled="!t.canRedo.value" :title="tr('やり直し (Ctrl+Shift+Z / Ctrl+Y)', 'Redo (Ctrl+Shift+Z / Ctrl+Y)')" :aria-label="tr('やり直し', 'Redo')" @click="t.redo"><Icon name="undo" class="size-4 -scale-x-100" /></button>
-          <button v-if="!t.needBase.value" type="button" data-tree-tidy class="g-btn sm" :title="tr('段ごとに横一列・親は子の並びの真ん中・線は直角の木の線 (1 つ戻すで元の並びへ)', 'Rows by depth, each parent centered over its children, right-angle tree lines (undo restores)')" @click="onTidy">{{ tr("整列", "Tidy") }}</button>
-          <TreeJoinBar v-if="!t.needBase.value" /><button v-if="!t.needBase.value" type="button" data-tree-lines-all class="g-btn sm" :aria-pressed="linesAll" :title="tr('戻りの線を全部出す (もう一度押すと、乗せた箱の線だけ)', 'Show all return lines (click again to show only the hovered box’s lines)')" @click="linesAll = !linesAll">{{ linesAll ? tr("線を隠す", "Hide lines") : tr("線を全部表示", "Show all lines") }}</button>
-          <button type="button" data-tree-memo class="g-btn sm inline-flex items-center gap-1" :aria-pressed="memoOpen" :title="tr('欲しい MOD とメモの窓 (ツリーを押しても閉じない)', 'Wanted mods & notes window (stays open while you edit)')" @click="memoOpen = !memoOpen"><Icon name="pencil" class="size-4" />{{ tr("メモ", "Notes") }}<span v-if="doc.note" class="size-1.5 rounded-full bg-amber-400" /></button>
-          <button v-if="!t.needBase.value" type="button" data-tree-full class="g-btn sm" :aria-pressed="full" @click="v.toggleFull">{{ full ? tr("全画面を閉じる", "Exit full screen") : tr("全画面に広げる", "Full screen") }}</button>
-          <button v-if="!t.needBase.value" ref="clearBtn" type="button" data-tree-clear :class="clearArm.is() ? ARMED_CLASS : 'g-btn sm'" :title="tr('始まりの箱だけに戻す (1 つ戻すで戻せる)', 'Back to just the start box (undo restores it)')" @click="onClear">{{ clearArm.is() ? tr("もう一度押すと白紙に戻す", "Click again to clear") : tr("白紙に戻す", "Clear") }}</button>
-        </span>
+        <TreeRecipeBar v-if="t.needBase.value" @opened="v.openView()" />
+        <template v-else>
+          <TreeRunBar v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking, passed, holes: issues?.length ?? 0, shown: issuesShown }" :halted="tr100.halted.value" @test="onCheck" @holes="issuesShown = !issuesShown" @holes-on="openIssues" @list="issuesOpen ? (issuesOpen = false) : openIssues()" @run="tr100.run" @go="goIssue" />
+          <TreeRunSum class="max-[1099px]:hidden" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" @go="goIssue" @skip="tr100.skipWalk" />
+        </template>
+        <!-- ベースが無い空の形でも、ほかの木があればタブを出す (前の木へ戻れない行き止まりだった、10-24 夜オーナー「一方通行が多い」) -->
+        <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" compact class="min-w-0 flex-1" @switched="v.openView()" />
+        <span v-else class="flex-1" />
+        <span ref="clearBtn" class="ml-auto shrink-0"><TreeTopTools :lines-all="linesAll" :memo-open="memoOpen" :full="full" :note="!!doc.note" :armed="clearArm.is()" @tidy="onTidy" @lines="linesAll = !linesAll" @memo="memoOpen = !memoOpen" @full="v.toggleFull" @clear="onClear" /></span>
       </div>
       <!-- 1100px 未満 (768〜1099) は右の列を木の下へ。木の枠に今までの高さを渡し、列はその下 (ページを送って見る) -->
       <div ref="row" class="flex min-h-0 gap-2 min-[1100px]:h-[var(--row-h)] max-[1099px]:flex-col" :class="full ? 'flex-1' : ''" :style="full ? { '--frame-h': 'calc(100% - 308px)' } : { '--row-h': `${rowH}px`, '--frame-h': `${rowH}px` }">
@@ -505,7 +495,14 @@ const phone = usePhone(), simPhone = flag("simPhone");
              1100px 未満は木の下に横並び -->
         <aside v-if="!t.needBase.value" data-tree-side class="flex min-h-0 w-[372px] shrink-0 flex-col gap-2 overflow-hidden max-[1099px]:h-[300px] max-[1099px]:w-full max-[1099px]:flex-row">
           <div data-tree-goal-side class="min-h-0 shrink-0 overflow-y-auto max-[1099px]:h-full min-[1100px]:max-h-[60%]"><TreeGoalCard v-if="goalCard" /><TreeGoalNode v-else /></div>
-          <TreeCanvasTools v-model:hand="hand" :boxes="rv.visible.value" :view="v.view.value" :zoom="zoom" @center="v.centerOn" @fit="v.fit" @zoom-in="v.zoomIn" @zoom-out="v.zoomOut" @reset="v.resetZoom" />
+          <div class="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
+            <!-- 名前・保存・レシピ (帯の 1 段目の残り、10-26 夜オーナー「この 1 段目はアイテム欄の下でおけ」)。1100px 未満は回した結果もここ -->
+            <div data-tree-side-recipe class="flex min-w-0 shrink-0 flex-wrap items-center gap-2 text-[13px]">
+              <TreeRecipeBar @opened="v.openView()" />
+              <TreeRunSum class="basis-full flex-wrap min-[1100px]:hidden" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" @go="goIssue" @skip="tr100.skipWalk" />
+            </div>
+            <TreeCanvasTools v-model:hand="hand" :boxes="rv.visible.value" :view="v.view.value" :zoom="zoom" @center="v.centerOn" @fit="v.fit" @zoom-in="v.zoomIn" @zoom-out="v.zoomOut" @reset="v.resetZoom" />
+          </div>
         </aside>
       </div>
     </div>

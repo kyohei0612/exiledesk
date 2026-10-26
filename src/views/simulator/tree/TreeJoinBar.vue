@@ -11,6 +11,8 @@ import { outsName } from "./tree-names";
 
 const t = useTree();
 const j = useTreeJoin();
+/** 帯の道具の列に合わせたボタンの形と、短い名前の出し方 (TreeTopTools、10-26 夜) */
+defineProps<{ btnClass?: string; labelClass?: string }>();
 /** まとめられる箱が 1 つも無ければ押せない */
 const any = computed(() => Object.keys(t.doc.value.boxes).some((id) => joinCandidates(t.doc.value, id).length > 0));
 const name = (id: string): string => { const b = t.doc.value.boxes[id]; return !b ? "" : b.out === "hit" ? t.boxAimLabel(b) : outsName(b); };
@@ -30,7 +32,7 @@ onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); window.rem
 </script>
 
 <template>
-  <button type="button" data-tree-join-btn class="g-btn sm" :aria-pressed="!!joinMode" :disabled="!any && !joinMode" :title="any ? tr('どれが付いても後の作り方が同じ箱を選んで 1 つにまとめる (押してから箱を選ぶ)', 'Merge boxes that need the same next steps into one (click, then pick boxes)') : tr('まとめられる箱が無い (同じ側の当たり・同じ形の外れなどが横に並んだ時)', 'Nothing to merge (needs same-side hits or same-shape results side by side)')" @click="joinMode ? j.cancel() : j.start()">{{ tr("まとめる", "Merge") }}</button>
+  <button type="button" data-tree-join-btn :class="btnClass ?? 'g-btn sm'" :aria-label="tr('まとめる', 'Merge')" :aria-pressed="!!joinMode" :disabled="!any && !joinMode" :title="any ? tr('どれが付いても後の作り方が同じ箱を選んで 1 つにまとめる (押してから箱を選ぶ)', 'Merge boxes that need the same next steps into one (click, then pick boxes)') : tr('まとめられる箱が無い (同じ側の当たり・同じ形の外れなどが横に並んだ時)', 'Nothing to merge (needs same-side hits or same-shape results side by side)')" @click="joinMode ? j.cancel() : j.start()"><svg v-if="labelClass" viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4v5a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V4M12 12v8" /></svg><span :class="labelClass">{{ tr("まとめる", "Merge") }}</span></button>
   <div v-if="joinMode" data-tree-join-bar class="fixed left-1/2 top-3 z-[70] flex w-[min(640px,calc(100vw-32px))] -translate-x-1/2 flex-col gap-1.5 rounded-xl border-2 border-amber-300/70 bg-[#17120b]/95 px-4 py-3 text-[13px] shadow-[0_8px_30px_rgba(0,0,0,0.8)]">
     <p class="font-bold text-amber-100">{{ step }}</p>
     <p class="break-words text-[12px] text-[#d8ccb4]">{{ tr("まとめると: 選んだ箱が 1 つの箱になり、以後の手・戻り・完成は 1 本 (どれで着いても同じ作り方)。選べるのは同じ手の結果で、同じ側の当たりか、着いた形が同じ箱だけ。「分ける」で戻せる", "Merging: the picked boxes become one box with a single path (same next steps, return and done whichever you land in). Only results of the same craft can be picked: same-side hits, or boxes that land in the same shape. Split undoes it") }}</p>
