@@ -131,10 +131,15 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     await startTop(Math.max(lv, OPEN_MIN));
   }
   /** 完成形の設定などを見に行く前の寄りと位置 (戻ったらそのまま。10-26 モンキー 7 の 10、メモ feedback-basic-flow「閉じたら前の位置」) */
-  let kept: { x: number; y: number; zoom: number } | null = null;
-  const keepView = (): void => { const v = f.getViewport(); kept = { x: v.x, y: v.y, zoom: v.zoom }; };
-  /** 覚えた寄りへ戻す (覚えていなければ開いた時の寄り) */
-  async function backView(): Promise<void> { const k = kept; kept = null; if (k) await f.setViewport(k); else await openView(); }
+  let kept: { x: number; y: number; zoom: number; key: string } | null = null;
+  /** 木の中身の目印 (ベースと箱の数。変わっていたら前の寄りは別の木の物) */
+  const docKey = (): string => `${doc.value.base}|${Object.keys(doc.value.boxes).length}`;
+  const keepView = (): void => { const v = f.getViewport(); kept = { x: v.x, y: v.y, zoom: v.zoom, key: docKey() }; };
+  /**
+   * 覚えた寄りへ戻す。覚えていない・木が変わった (新しいツリーでベースを選んだ等) 時は開いた時の寄り
+   * (前は新しい木でも開く前の寄り (0, 0) へ戻し、スタートの箱が左上の完成形の窓の下に入った、10-26 夜オーナー「めっちゃかぶるやん」)
+   */
+  async function backView(): Promise<void> { const k = kept; kept = null; if (k && k.key === docKey()) await f.setViewport({ x: k.x, y: k.y, zoom: k.zoom }); else await openView(); }
   /** 始まりの箱を上の真ん中へ、等倍で (一望から等倍に戻した時。真ん中を軸にすると枝の間の空き所に出た、10-22) */
   const goHome = (): Promise<void> => startTop(1);
   /** 等倍に戻す。一望 (VIEW_ONLY 未満) からは始まりへ、75% 以上の時は今見ている真ん中を軸に */
