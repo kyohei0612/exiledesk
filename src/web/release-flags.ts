@@ -23,6 +23,7 @@ export const FLAGS = {
   skins: "コスメティック = PoE2 で使える PoE1 のスキンの一覧のページ (?page=skins・ヘッダーの「コスメティック」、views/skins/SkinsPage.vue = スキン部長)",
   essTier:"段の表のエッセンス・合金の行の各段に、付けるアイテムの名前 (例 T1 断熱のグレーターエッセンス。ModTable、口はジン部長の ListTier.essence 3cfe3123)",
   todayUnique: "ベース選びの部位のタイルの絵を今日のユニークに (同じ種類のユニークから毎日 9 時に替わる、光の色は表に前もって。components/items/fam-today.ts・scripts/build-fam-uniques.py、オーナー 10-26 夜「ランダムに」「1 日ごと、9 時」)。閉じている間は前の手で決めた 1 つ",
+  adReview: "AdSense の審査対策 (オーナー 10-27「トップの説明文とコスメのリンク外し」): ベース選びの上の帯に何のサイトかの 2〜3 行 (BasePickBody)・上の切り替えタブからコスメティックを外す (ModeTabs、ページは ?page=skins で開ける)。戻す段取りは docs/org/design/todo.md",
   // ここから下はエミュ部長の物 (エミュの画面の OK 待ち)
   sanctifyBar: "クラフト台の聖別の帯 (e61bb9ab)",
   monkeyEmu1023: "モンキーテスト 10-23 のエミュの直し (スパムシミュの Esc・運試しの間の戻る・札の折り返し・狙いの文 c069970b、品質の帯のカーソル 5ff2778a・9eae3311・0beb110a、狙いの窓の一言 f261b842)",

@@ -8,6 +8,10 @@
 import BaseCatalog from "../items/BaseCatalog.vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { tr } from "../../i18n/lang";
+import { flag } from "../../web/release-flags";
+
+/** 何のサイトかの説明 (スイッチ adReview、閉じている間は前の題と 1 行) */
+const AD_REVIEW = flag("adReview");
 
 withDefaults(defineProps<{
   /** 今のベース (未選択は "") */
@@ -31,7 +35,9 @@ const emit = defineEmits<{ pick: [en: string]; quick: [] }>();
     <!-- 初めて来た人へ: 一言と「すぐ試す」(2026-10-19 スマホ強化。来た人の半分がベースを選ばずに帰っていた。何のサイトか・何をすると何が起きるかが無かった) -->
     <div v-if="intro" data-base-intro class="mb-3 flex items-center gap-4 rounded-lg border border-[var(--exile-color-border-brass)]/40 bg-black/40 px-4 py-3 max-md:flex-col max-md:gap-2 max-md:px-3 max-md:text-center">
       <div class="min-w-0 flex-1">
-        <p class="g-antique text-[15px] leading-snug text-[var(--exile-color-text-title)] max-md:text-[14px]">{{ title ?? tr("PoE2 のクラフトを、ゲームと同じ決まりで 1 手ずつ試せます", "Try PoE2 crafting one step at a time, with the same rules as the game") }}</p>
+        <p class="g-antique text-[15px] leading-snug text-[var(--exile-color-text-title)] max-md:text-[14px]">{{ title ?? (AD_REVIEW ? tr("ExileDesk は PoE2 のクラフトを無料で試せるエミュレーターです", "ExileDesk is a free crafting emulator for Path of Exile 2") : tr("PoE2 のクラフトを、ゲームと同じ決まりで 1 手ずつ試せます", "Try PoE2 crafting one step at a time, with the same rules as the game")) }}</p>
+        <!-- 何のサイトか (2026-10-27 オーナー「トップの説明文」、AdSense の模擬審査 docs/org/analytics/notes/2026-10-27-adsense-mock-review.md の 3。web.html の最初の説明と同じ中身) -->
+        <p v-if="!title && AD_REVIEW" data-base-about class="mt-1 text-[12px] leading-snug text-[var(--exile-color-text-secondary)]">{{ tr("ゲームと同じ決まりでカレンシーを 1 手ずつ打ち、付いた MOD と確率を見られます。シミュレーターでは手順をツリーで組み、100 人で回した時の費用と完成率を出します。", "Use currencies one step at a time with the game's rules and see the mods and chances. In the Simulator, build your steps as a tree and see the cost and % done over 100 runs.") }}</p>
         <p class="mt-1 text-[12px] leading-snug text-[var(--exile-color-text-secondary)]">{{ lead ?? tr("ベースを選んで、カレンシーを押して持ち、アイテムを押すと 1 回使います。タダで何回でも", "Pick a base, tap a currency to hold it, then tap the item to use it. Free, as many times as you like") }}</p>
       </div>
       <button v-if="quick" type="button" data-base-quick class="g-btn-red min-h-11 shrink-0 px-2 text-[14px] max-md:w-full" @click="emit('quick')">{{ tr("金の指輪ですぐ試す", "Try now with a Gold Ring") }}</button>

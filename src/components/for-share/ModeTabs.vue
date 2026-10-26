@@ -31,8 +31,14 @@ function pick(m: Mode): void {
     emit("pick", m);
   } else closeTreePage(() => emit("pick", m));
 }
+/**
+ * AdSense の審査が終わるまでコスメティックのタブを出さない (2026-10-27 オーナー「コスメのリンク外し」、模擬審査の 5「写した中身」に近い)。
+ * ページ自体は ?page=skins を直に開けば見られる。スイッチ adReview (オーナーが見てから本番)。審査が通ったら戻す (段取りは docs/org/design/todo.md)
+ */
+const SKINS_TAB_HIDDEN = flag("adReview");
+const SKINS_TAB = SKINS_ON && !SKINS_TAB_HIDDEN;
 /** 右端の小さいタブ (コスメティック・デイリー)。Web だけ */
-const EXTRA = PAGES_ON && (SKINS_ON || DAILY_ON);
+const EXTRA = PAGES_ON && (SKINS_TAB || DAILY_ON);
 /** シミュのスマホ版 (スイッチ simPhone) が入っている時だけ、スマホでもシミュレーターのタブを出す */
 const SIM_PHONE = flag("simPhone");
 const TAB_S = "g-tab min-w-[120px] !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]";
@@ -48,6 +54,6 @@ const TAB = "g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex
     </button>
     <button v-if="EXTRA && DAILY_ON" type="button" role="tab" data-mode-tab="daily" :aria-selected="false" :class="TAB_S" @click="openDailyPage()">{{ tr("デイリー", "Daily") }}</button>
     <slot />
-    <button v-if="EXTRA && SKINS_ON" type="button" role="tab" data-mode-tab="skins" :aria-selected="false" :class="TAB_S" @click="openSkinsPage">{{ tr("コスメティック", "Cosmetics") }}</button>
+    <button v-if="EXTRA && SKINS_TAB" type="button" role="tab" data-mode-tab="skins" :aria-selected="false" :class="TAB_S" @click="openSkinsPage">{{ tr("コスメティック", "Cosmetics") }}</button>
   </div>
 </template>

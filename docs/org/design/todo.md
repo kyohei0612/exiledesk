@@ -5,6 +5,10 @@
 - 宿題 (急がない、ブラック 13): ToTop.vue の重ね窓の印が増えるたびに OVERLAY に足している (10-26 夜に [data-phone-issues-sheet] が抜けて最終チェック長が足した)。重ね窓が共通の印 1 つ (例 data-overlay、ModalShell と各窓に付ける) を付ければ ToTop が拾える形に寄せる。窓はシミュの持ち物が多いので、印の名前を決めてシミュに 1 行ずつ頼む。
 - 確かめの台本: 共有メモ local_526b63a7…/design9/ (box-card-shot・goal-shot・sim-track-check・totop-check・today-unique.mjs、窓なし Chrome 9339)。
 
+## AdSense の審査の間だけコスメの入口を隠す (10-27、スイッチ adReview) — 戻す段取り
+- 隠したのは上の切り替えタブの「コスメティック」だけ (ModeTabs.vue の SKINS_TAB_HIDDEN)。静的なページ (build-seo・build-blog・public) にコスメへのリンクは元から無く、コスメのページは noindex・sitemap 外。?page=skins と /cosmetics/ は直に開ける。
+- 審査が通ったら: ModeTabs.vue の `const SKINS_TAB_HIDDEN = flag("adReview");` を `false` に (説明の 2〜3 行はそのまま残す)。オーナーの OK の後で。
+
 ## 次の部長へ (8 本目 → 9 本目、10-26 夜、ブラック 13 の下に揃える入れ替え)
 - 8 本目の仕事は 1 つ: 320 幅のスマホでヘッダーの右がはみ出す件 (オーナー 10-26 夜、ブラック 13 経由)。src/web/WebApp.vue の書き換えは済み、オーナーの OK も出た。**commit とリリースは最終チェック長が v0.1.611 で出す** (8 本目は WebApp.vue を commit していない)。9 本目は手を出さず、出た後に本番の 320 で帯を見るだけでよい。
 - 直した形: 375 未満の幅 (`max-[374px]:`) だけ、隠さずに詰める。帯の余白 px-2→1・すき間 gap-1→0.5、ロゴの絵 size-6→5・字 12→11px、言語の切り替えのボタンの余白 px-2→1.5、3 つのボタン (ブログ・使い方・要望) 36→32px (g-btn sm の左右の枠の絵が 18px ずつで 36 より細くならないので、枠を 16px ずつに)、本日の人数は足りない時だけ「本日」/「48 人」の 2 行に折れる (数と人の間は ` `)。375 以上は前のまま (375 の日本語は元から帯の中身が 1px 多く、375 で縮めると人数が折れるので 375 未満だけにした)。
