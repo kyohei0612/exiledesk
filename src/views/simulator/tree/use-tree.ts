@@ -12,7 +12,7 @@ import { carryAims, placeMods, retext } from "../../../services/simulator/sim-en
 import type { StageItem } from "../../../services/craft-stage/engine";
 import { fractureMarks, migrateStart, newTree, startOf, startRarity, type Aim, type StartFrom, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { treeBaseCost } from "../../../services/simulator/tree/tree-base-cost";
-import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
+import { currentTreeRecipeId, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { tr } from "../../../i18n/lang";
 
 export type ModRow = ReturnType<typeof modListFor>[number];
@@ -42,10 +42,35 @@ try { for (const k of [KEY, TABS_KEY, BEFORE_SAMPLE_KEY, "exiledesk.tree.reset-2
 // 開いていたレシピの印も持ち越さない (木は白紙なので、残すと一覧で「開いている」と出て、空の木が未保存の扱いになり離れる時に聞いた)
 setCurrentTreeRecipe(null);
 
-const doc = shallowRef<TreeDoc>(load());
+/**
+ * 新しい版を出した直後の自動の読み直し (web.html の __staleReload。読めない部品があると window.__staleGo を立ててから読み直す) の時だけ、
+ * 作業中の木 (タブ全部・今のタブ・開いていたレシピの印) をこのタブの sessionStorage に取っておき、読み直した後にそのまま戻す
+ * (10-26 オーナー「A で」。人の読み直し・離れる時は今までどおり持ち越さない)。取っておくのは 10 分まで、読んだら消す
+ */
+const STALE_KEY = "exiledesk.tree.stale-draft";
+type StaleDraft = { tabs: TreeDoc[]; active: number; recipe: string | null; at: number };
+function takeStaleDraft(): StaleDraft | null {
+  try {
+    const raw = sessionStorage.getItem(STALE_KEY);
+    sessionStorage.removeItem(STALE_KEY);
+    const v = raw ? (JSON.parse(raw) as StaleDraft) : null;
+    return v && Array.isArray(v.tabs) && v.tabs.length && Date.now() - v.at < 10 * 60_000 ? v : null;
+  } catch { return null; }
+}
+const stale = takeStaleDraft();
+const doc = shallowRef<TreeDoc>(stale ? stale.tabs[Math.min(stale.active, stale.tabs.length - 1)]! : load());
 /** 木のタブ (タブごとに別の木、10-24 オーナー)。今のタブの木は doc、全部のタブは tabDocs。このページを開いている間だけ (持ち越さない) */
-const active = ref(0);
-const tabDocs = shallowRef<TreeDoc[]>([doc.value]);
+const active = ref(stale ? Math.min(stale.active, stale.tabs.length - 1) : 0);
+const tabDocs = shallowRef<TreeDoc[]>(stale ? stale.tabs : [doc.value]);
+if (stale?.recipe) setCurrentTreeRecipe(stale.recipe);
+try {
+  addEventListener("pagehide", () => {
+    if (!(window as unknown as { __staleGo?: unknown }).__staleGo) return;
+    const tabs = [...tabDocs.value];
+    tabs[active.value] = doc.value;
+    try { sessionStorage.setItem(STALE_KEY, JSON.stringify({ tabs, active: active.value, recipe: currentTreeRecipeId.value, at: Date.now() } satisfies StaleDraft)); } catch { /* 取っておけなくても読み直す */ }
+  });
+} catch { /* 窓の無い所 (台本) では付けない */ }
 /** 木を全部白紙に戻す (タブも 1 つ)。シミュの外へ出た時 (SimTreePage・レシピのページ)、次にシミュへ入るとベース選びの空から (10-24 夜オーナー) */
 function resetAll(): void {
   const d = load();
