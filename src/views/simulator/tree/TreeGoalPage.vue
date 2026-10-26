@@ -143,6 +143,14 @@ function blockOf(modId: string, tier: number): string | null {
   if (!blockMemo.has(k)) blockMemo.set(k, goalBlock(d, doc.base, lv, aims, { modId, tier }));
   return blockMemo.get(k) ?? null;
 }
+/** 開いた行の頭に出す押せない理由 (理由ごとに段をまとめる。全部の段が押せる・もう狙いの行は無し。10-26 モンキー 7 の 6「灰色のボタンが並ぶだけで理由が見えない、スマホは乗せる事もできない」) */
+function rowBlocks(r: { id: string; tiers: Array<{ modId?: string; tier: number; rank: string }> }): Array<{ why: string; ranks: string }> {
+  if (rowGoal(r)) return [];
+  const by = new Map<string, string[]>();
+  for (const x of r.tiers) { const w = blockOf(x.modId ?? r.id, x.tier); if (w) by.set(w, [...(by.get(w) ?? []), x.rank]); }
+  const n = r.tiers.length;
+  return [...by].map(([why, rs]) => ({ why, ranks: rs.length === n ? "" : rs.length > 2 ? `${rs[0]}〜${rs[rs.length - 1]}` : rs.join(tr("・", ", ")) }));
+}
 /** フラクチャーを押せない理由: 冒涜の MOD (アマナム・クルガル・ウラマンなど) はフラクチャーできない (エンジンと同じ。10-25 指輪の猿 4: 押せて、テストで「始まりの形が作れない」) */
 const DESECRATED_NO_FRACTURE = (): string => tr("冒涜の MOD はフラクチャーできない", "Desecrated mods can't be Fractured");
 function fracBlockOf(r: { group?: string }, modId: string, tier: number): string | null {
@@ -246,6 +254,9 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <!-- 狙いの MOD の行に札 (印ありは ✦ の色)、段の表では狙いの段の左に色の帯 (行の色、10-24 オーナー「フラクチャーにした行は色を変えて」) -->
         <template #row-badge="{ row: r }">
           <span v-if="rowGoal(r)" data-mod-goal-badge class="whitespace-nowrap rounded-sm px-1 py-px text-[10px] leading-none" :class="rowGoal(r)!.fractured ? 'bg-mod-fractured/25 text-mod-fractured' : 'bg-amber-400/20 text-amber-100'">{{ rowGoal(r)!.fractured ? "✦ " : "" }}{{ tierRankLabel(rowGoal(r)!.tier) }}</span>
+        </template>
+        <template #row-open="{ row: r }">
+          <p v-for="b in rowBlocks(r)" :key="b.why" data-mod-block-why class="mt-1 break-words rounded-md bg-rose-500/10 px-2 py-1 text-[12px] text-rose-100">{{ b.ranks ? `${b.ranks}: ` : "" }}{{ tr(`押せない: ${b.why}。替えるなら完成形のカードの × で外す`, `Can't pick: ${b.why}. To swap, remove one with × on the final item card`) }}</p>
         </template>
         <template #tier-lead="{ row: r, tier: tt }">
           <td class="w-1 p-0" :class="goalAt(tt.modId ?? r.id, tt.tier) ? (rowGoal(r)?.fractured ? 'bg-mod-fractured/70' : 'bg-amber-300/50') : ''" />
