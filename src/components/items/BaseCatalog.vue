@@ -19,6 +19,7 @@ import { glowOfStem, stemOf, todayUnique } from "./fam-today";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import popularData from "../../data/popular-bases.json";
 import { flag } from "../../web/release-flags";
+import { vFitText } from "../../utils/fit-text";
 /** 開く・畳むの揃え (データが後から届いた時・スマホの頭)。本番は OK 待ち。開いた時に今の部位まで送るのは本番でも同じ (前は StageBasePage が呼んでいた) */
 const OPEN_FIX = flag("monkey1023");
 
@@ -198,6 +199,12 @@ const family = ref<Family | null>(phone.value ? null : familyOfCls(cls.value));
  * (2026-10-10 オーナー「選んだアイコンの 1 行下に表示すべき、同じアイコンクリックでたたむ、他のベースなら別の一覧がアイコンの下に」)。
  * 段 (片手武器・両手武器…) は横に流れて 2 つ並ぶ行があるので、押した段と同じ高さにある最後の段の後ろに入れる
  */
+/**
+ * PC の部位の並びは幅で流さず固定 (オーナー 10-27 夜「Windows のフル画面だと横に流れて見づらい、この形で固定」): 1 段目 片手武器 / 2 段目 両手武器 /
+ * 3 段目 防具 + オフハンド / 4 段目 宝飾品・その他。タイルも大きく (1280 幅で防具 4 + オフハンド 4 が 1 行に入るまで)。スイッチ baseTiles
+ */
+const TILES = flag("baseTiles");
+const FULL_ROW = new Set(TILES ? ["片手武器", "両手武器", "宝飾品・その他"] : ["宝飾品・その他"]);
 const groupEls = new Map<string, HTMLElement>();
 const setGroupEl = (ja: string) => (el: unknown): void => { if (el instanceof HTMLElement) groupEls.set(ja, el); else groupEls.delete(ja); };
 const insertAfter = ref<string | null>(null);
@@ -387,21 +394,22 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
       <!-- PC は段を横に流して 2 行ほどに (縦に 1 段ずつだと、押した後の属性とベースが画面の下に押し出された) -->
       <div v-if="!phone || !family" class="mb-3" :class="phone ? 'space-y-3' : 'flex flex-wrap gap-x-5 gap-y-2'">
         <template v-for="r in families" :key="r.ja">
-          <!-- 宝飾品・その他は PC では最後の行に (防具・オフハンドの行に詰めない) -->
-          <div :ref="setGroupEl(r.ja)" :class="!phone && r.ja === '宝飾品・その他' ? 'basis-full' : ''">
+          <!-- 行いっぱいの段 (FULL_ROW): 宝飾品・その他は PC では最後の行に (防具・オフハンドの行に詰めない)。baseTiles では片手・両手も 1 段ずつ -->
+          <div :ref="setGroupEl(r.ja)" :class="!phone && FULL_ROW.has(r.ja) ? 'basis-full' : ''">
             <p class="mb-0.5 text-[11px] opacity-50 md:text-[12px]">{{ tr(r.ja, r.en) }}</p>
             <!-- 部位のタイル: ゲームの絵 + 名前 (スマホ 3 列。2026-10-09 オーナー「各種武器はアイコン出してもいいね、装備もほかの」) -->
             <div :class="phone ? 'grid grid-cols-3 gap-x-1 gap-y-0.5' : 'flex flex-wrap gap-1'">
-              <button v-for="f in r.fams" :key="f.name" type="button" :data-rec="`family:${f.variants[0]?.cls.replace(/_(str_dex|str_int|dex_int|str|dex|int|fire|cold|lightning|chaos|physical)$/, '') ?? f.name}`" class="g-plain flex flex-col items-center gap-0.5 px-1 pb-1.5 pt-1 text-center active:scale-95" :class="phone ? '' : ['w-[112px] rounded', family?.name === f.name ? 'bg-[rgba(163,52,42,0.35)] ring-1 ring-[var(--exile-color-border-brass)]' : 'hover:bg-white/5']" :aria-expanded="!phone ? family?.name === f.name : undefined" @click="pickFamily(f)">
+              <button v-for="f in r.fams" :key="f.name" type="button" :data-rec="`family:${f.variants[0]?.cls.replace(/_(str_dex|str_int|dex_int|str|dex|int|fire|cold|lightning|chaos|physical)$/, '') ?? f.name}`" class="g-plain flex flex-col items-center gap-0.5 px-1 pb-1.5 pt-1 text-center active:scale-95" :class="phone ? '' : [TILES ? 'w-[136px] rounded' : 'w-[112px] rounded', family?.name === f.name ? 'bg-[rgba(163,52,42,0.35)] ring-1 ring-[var(--exile-color-border-brass)]' : 'hover:bg-white/5']" :aria-expanded="!phone ? family?.name === f.name : undefined" @click="pickFamily(f)">
                 <!-- ユニークの絵はゆっくり光る (脈打つ光 + 乗せると光が走る。2026-10-13 オーナー「光らせることできる？動きのある感じで」)。タイルごとに少しずらして一斉に光らない -->
-                <span class="grid place-items-center" :class="[phone ? 'relative aspect-square w-full' : 'size-16 md:size-20', family?.name === f.name && !phone ? 'g-slot on' : 'g-slot', plainArt ? '' : 'fam-slot']">
+                <span class="grid place-items-center" :class="[phone ? 'relative aspect-square w-full' : TILES ? 'size-16 md:size-24' : 'size-16 md:size-20', family?.name === f.name && !phone ? 'g-slot on' : 'g-slot', plainArt ? '' : 'fam-slot']">
                   <template v-if="!plainArt">
                     <span class="fam-aura" aria-hidden="true" />
                     <span v-for="(m, k) in risers(f.name)" :key="k" class="fam-rise" :style="m" aria-hidden="true" />
                   </template>
-                  <img v-if="famArt(f)" :key="famArt(f)!" :src="famArt(f)!" alt="" loading="lazy" class="object-contain" :class="[phone ? 'fam-ph' : 'max-h-12 max-w-12 md:max-h-16 md:max-w-16', plainArt ? '' : 'fam-art']" draggable="false" @load="tintGlow" />
+                  <img v-if="famArt(f)" :key="famArt(f)!" :src="famArt(f)!" alt="" loading="lazy" class="object-contain" :class="[phone ? 'fam-ph' : TILES ? 'max-h-12 max-w-12 md:max-h-20 md:max-w-20' : 'max-h-12 max-w-12 md:max-h-16 md:max-w-16', plainArt ? '' : 'fam-art']" draggable="false" @load="tintGlow" />
                 </span>
-                <span class="g-antique leading-tight text-[var(--exile-color-text-primary)]" :class="phone ? 'text-[13px]' : 'text-[15px]'">{{ famLabel(f) }}</span>
+                <!-- baseTiles の PC は名前を字を縮めて 1 行 (クォータースタッフが語の途中で折れた) -->
+                <span v-fit-text="TILES && !phone" class="g-antique leading-tight text-[var(--exile-color-text-primary)]" :class="phone ? 'text-[13px]' : TILES ? 'w-full text-[16px]' : 'text-[15px]'">{{ famLabel(f) }}</span>
                 <span v-if="f.variants.length > 1 && !JOINED.has(f.name)" class="text-[10px] leading-none opacity-50 md:text-[11px]">{{ tr(`${f.variants.length} 種`, `${f.variants.length} types`) }}</span>
               </button>
             </div>
