@@ -24,7 +24,7 @@ import { aimKey, fractureMarks, setHand, type Aim, type Hand, type HandKind } fr
 import { useTree } from "./use-tree";
 import { TREE_SPAM_ORB, useSimShelf } from "../use-sim-shelf";
 import { infiniteAim } from "../../../services/simulator/tree/tree-outcome";
-import { afterQualityOf, autoCatOf, essenceAimsOf, FREE_EFFECTS, handOf, hitAimsOf, hitChoicesOf, keepChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan";
+import { afterQualityOf, autoCatOf, FREE_EFFECTS, handOf, hitAimsOf, hitChoicesOf, keepChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan";
 import { modText, tr } from "../../../i18n/lang";
 import { stageHelp } from "../../../state/for-share/craft-stage-help";
 import { usePhone } from "../../../utils/use-phone";
@@ -144,11 +144,14 @@ const catalysing = computed(() => used.value.includes(CATALYSING));
  * 当たりの箱にできる狙い = この手で付きうる完成の狙い (tree-hand-plan の hitAimsOf、狙い無しでも繰り返しでもない形で聞く)。
  * 付く MOD を選べない手だけ (足す・カオス。10-25 オーナー「全カレンシーで上記の表示して、カオスとか対応してない」、エッセンス・合金は出さない)
  */
-/** 無限のエッセンス (筋力・器用さ・知性のどれかがランダム) = 付きうる能力値を ☑ で当たりにする (10-27 オーナー、スイッチ goalShape。☑ の無い能力値は外れ MOD) */
+/**
+ * 無限のエッセンス (筋力・器用さ・知性のどれかがランダム) = 付きうる能力値のうち完成の狙いにある物を ☑ で当たりにする (10-27 オーナー、スイッチ goalShape。
+ * ☑ の無い能力値は外れ MOD)。完成の狙いに 1 つも無ければ欄を出さず、結果は外れだけ (オーナー「狙い MOD に無いなら全部等しく外れ。ここは外れ MOD をただ付ける作業」)
+ */
 const isInfinite = computed(() => !!held.value && infiniteAim(held.value));
 const aimChoices = computed((): Aim[] => {
   const d = s.data.value, it = item.value;
-  if (d && it && held.value && isInfinite.value) return essenceAimsOf(d, it, handOf({ held: held.value, omens: omens.value, spam: false, spamMax: null, free: false, echo: echo.value }));
+  if (d && it && held.value && isInfinite.value) return hitAimsOf(d, t.doc.value, props.boxId, it, handOf({ held: held.value, omens: omens.value, spam: false, spamMax: null, free: false, echo: echo.value }), t.goals.value);
   return d && it && held.value ? hitChoicesOf(d, t.doc.value, props.boxId, it, { held: held.value, omens: omens.value, echo: echo.value }, t.goals.value) : [];
 });
 /** チェックした狙い (候補にある物だけ) */
@@ -181,7 +184,7 @@ watch(held, (k) => { if (k && window.innerWidth < 768) void showOmens(); });
 // 新しい手の既定 = 狙い無し (10-26 夜オーナー「デフォルトは狙い無しでチェック付けといてくれ」)。当たるまで繰り返す手は狙い無しが無いので候補に全部チェック
 watch([aimChoices, spam], ([l, sp]) => { if (!props.current && !touched) checked.value = sp ? l.map(aimKey) : []; }, { immediate: true });
 /** チェックの一覧を出す (MOD が付く・入れ替わる手) */
-const showAims = computed(() => canFree.value || isInfinite.value);
+const showAims = computed(() => canFree.value || (isInfinite.value && aimChoices.value.length > 0));
 /** 狙い無し = MOD を 1 つもチェックしていない。当たるまで繰り返す時は狙い無しも「どれでも」も無い (MOD を 1 つ以上チェックするまで確定しない、10-25 オーナー) */
 const freeOn = computed(() => showAims.value && !spam.value && !checkedAims.value.length);
 /** 狙い無しを押す = MOD を全部外す (もう狙い無しの時に押しても外れない。値が同じだと Vue が描き直さず、チェックだけ外れて見えた) */
