@@ -114,9 +114,11 @@ export const SINGLE_SEEDS = 8;
  * フラクチャーの手で ✦ にするアイテムの MOD (10-24 オーナー「フラクチャーは必ずどれか 1 つを固定」、10-25 オーナーが 10-24 の決めに戻した)。
  * aims = この手の当たりの箱の札 (= この箱で付いている完成の MOD の印の狙い、tree-hand-plan の hitAimsOf) のうち、付いている最初の物。無ければ null (エンジンの乱数のまま)
  */
-export function fractureTarget(data: PatchData, item: StageItem, h: Hand, aims: readonly Aim[]): string | null {
+export function fractureTarget(data: PatchData, item: StageItem, h: Hand, aims: readonly Aim[], rng?: () => number): string | null {
   if (effectOf(h.currency) !== "fracture" || h.pick === "random") return null;
   const mods = [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured);
+  // ✦ が複数なら、付いている ✦ のどれかを等しく (どの ✦ が固定されても当たり。前は付いている最初の ✦ だけ、スイッチ fracMulti、S-42)
+  if (flag("fracMulti") && rng) { const c = aims.flatMap((a) => mods.filter((x) => isAimMod(x, targetsOf(data, [a]), aimOpts(data))).slice(0, 1)); const u = [...new Map(c.map((m) => [m.modId, m])).values()]; return u.length ? u[Math.floor(rng() * u.length)]!.modId : null; }
   for (const a of aims) { const m = mods.find((x) => isAimMod(x, targetsOf(data, [a]), aimOpts(data))); if (m) return m.modId; }
   return null;
 }
@@ -172,7 +174,7 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
   // 骨を未発現のまま次へ (veil keep) は発現しない。未発現を持ったまま打つほかの手 (フラクチャー・カオスなど) も発現しない = 未発現のまま (スイッチ boneLater。
   // 前は手の後に未発現があれば必ず発現まで打っていた = 骨の手の後だけだった)
   const keepVeil = veilKeep(h) || (flag("boneLater") && !isBone(h.currency) && !isRevealHand(h.currency));
-  const r = applyHand(data, item, h.currency, rng, { omens: h.omens, catalyst: h.catalyst, fractureOf: fractureTarget(data, item, h, aims), reveal: keepVeil ? false : (m) => isAimMod(m, ts, aimOpts(data)) !== miss });
+  const r = applyHand(data, item, h.currency, rng, { omens: h.omens, catalyst: h.catalyst, fractureOf: fractureTarget(data, item, h, aims, rng), reveal: keepVeil ? false : (m) => isAimMod(m, ts, aimOpts(data)) !== miss });
   if (use) {
     if (r.applied) for (const k of autoRuneKeys(before, item)) use(k);
     if (r.catalystCount) use(isCatalyst(h.currency) ? h.currency : h.catalyst!, r.catalystCount);

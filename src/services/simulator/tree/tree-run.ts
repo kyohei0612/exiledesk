@@ -15,7 +15,8 @@ import { flag } from "../../../web/release-flags";
 import { heldSets, MATCH, matchBox, outBoxOf, RESTART, settle, shapesOf, splitTo, type Shape, type SplitBox } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
-import { type Aim, type OutKind, type TreeDoc } from "./tree-model";
+import { fractureMarks, type Aim, type OutKind, type TreeDoc } from "./tree-model";
+import { stepOutcomes } from "../sim-engine";
 
 export interface TreeRunOpts {
   /** 人数 (裏は 100、確かめは 300) */
@@ -109,6 +110,16 @@ const startItemOf = (data: PatchData, doc: TreeDoc, rng: () => number): StageIte
 /** フラクチャーの外れの回数 (10-24 オーナー「2 回外れて 1 回当たり」、10-25 に戻した) と、外れうる固定の候補の数 */
 export const FRACTURE_MISS = 2;
 const FRACTURE_PICK = 2;
+/**
+ * ✦ の木の確定フラクチャーで外れた分の回数 (S-43): 固定されうる MOD n のうち ✦ が k なら n ÷ k − 1 回 (✦ 1 つ・3 MOD = 2 回、2 つ = 0.5 回、3 つ = 0 回)。
+ * スイッチ fracMulti が閉じている間・✦ が付いていない時は FRACTURE_MISS (10-24 オーナー「2 回外れて 1 回当たり」)
+ */
+function fractureMiss(data: PatchData, doc: TreeDoc, item: StageItem): number {
+  if (!flag("fracMulti")) return FRACTURE_MISS;
+  const outs = (stepOutcomes(data, item, "fracture") ?? []).filter((o) => !o.void), marks = new Set(fractureMarks(doc).map((a) => a.modId));
+  const k = outs.filter((o) => [...o.item.prefixes, ...o.item.suffixes].some((m) => m.fractured && marks.has(m.modId))).length;
+  return k ? outs.length / k - 1 : FRACTURE_MISS;
+}
 
 
 function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: readonly Shape[], rng: () => number, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps" | "untilHit">> & Pick<TreeRunOpts, "start" | "onHand" | "onArrive">): Person {
@@ -198,10 +209,11 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
       return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`当たるまでを ${cap} 回打っても当たらない (この形からは狙いが付きにくい・付かない)`, `No hit in ${cap} repeats (the target is unlikely or impossible from this item)`), item: r.item, spam: cap } };
     }
     if (miss) {
-      for (const [k, n] of miss) use(k, FRACTURE_MISS * n);
-      use(b.hand.currency, FRACTURE_MISS);
-      cost += FRACTURE_MISS * o.startCost;
-      restarts += FRACTURE_MISS;
+      const mx = fractureMiss(data, doc, item);
+      for (const [k, n] of miss) use(k, mx * n);
+      use(b.hand.currency, mx);
+      cost += mx * o.startCost;
+      restarts += mx;
     }
     if (sb.next) { item = r.item; at = sb.next; continue; }
     const oc = boxOutcomeOf(data, doc, b, before, r.item, aims);

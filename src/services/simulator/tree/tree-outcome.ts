@@ -7,7 +7,7 @@ import { fillCatalyst, stepOutcomes } from "../../simulator/sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { effectOf, engineOmens, isCatalyst } from "./tree-hands";
 import { aimsMayHold } from "./tree-lost";
-import { aimKey, boxAims, subtree, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
+import { aimKey, boxAims, fractureMarks, subtree, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { aimDiff, aimsOf, outcomeOf, sampleOf, SINGLE_SEEDS } from "./tree-sample";
 import { shapeFit } from "./tree-sample-shape";
 import { prepFor } from "./tree-unbounded";
@@ -142,7 +142,11 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   if (veiled && flag("boneLater") && !veiledKeep) return [{ out: "lost", aim: null }];
   if (veiled && veilKeep(h)) return [{ out: "any", aim: null }, ...(veiledLost ? [{ out: "lost" as OutKind, aim: null }] : [])];
   if (veiled) return [...extra.map((a) => ({ out: "hit" as OutKind, aim: a })), { out: "junk", aim: null }, ...(veiledLost ? [{ out: "lost" as OutKind, aim: null }] : [])];
-  const list = [...found.values()];
+  // ✦ の木の確定フラクチャーは必ず ✦ のどれかを固定する (外れた分は費用に足す、S-43)。外れの箱は誰も着かないので作らない (スイッチ fracMulti)
+  // ✦ の無い MOD (完成の狙いでも) が固定される結果も起こらない (回す時は必ず ✦ を固定する、tree-sample の fractureTarget)
+  const marks = new Set(fractureMarks(doc).map((a) => a.modId));
+  const sure = flag("fracMulti") && k === "fracture" && h.pick !== "random" && marks.size > 0 && [...found.values()].some((e) => e.out === "hit" && !!e.aim && marks.has(e.aim.modId));
+  const list = [...found.values()].filter((e) => !sure || (e.out === "hit" && !!e.aim && marks.has(e.aim.modId)));
   // 足す・入れ替える手が外れだけの時は、まだ付いていない狙いがある時だけ手の種類の箱へ (当たりの箱を作って MOD を選ばせる)。
   // 狙いが全部付いていれば外れ (と消えた) だけ (10-25 シミュ 28 の洗い出し: 満杯で削減のお告げのカオスに、起こりえない当たりの箱が出た)
   if (!list.length || ((k === "add" || k === "swap") && unheld && list.every((e) => e.out === "junk"))) return null;

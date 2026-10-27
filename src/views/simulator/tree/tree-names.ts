@@ -69,7 +69,8 @@ export const modShort = (text: string): string => text.replace(/\([^)]*\)/g, "")
 export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> & { parent?: string | null }, aimShort: (a: NonNullable<TreeBox["aim"]>) => string): string {
   // ✦ の印の無い木の乱数のフラクチャーの結果は「〜が固定された」「外れ MOD が固定された」(付いたのではない。10-27 夜、要望 8a159e29、スイッチ fracRandom)
   const ph = flag("fracRandom") && b.parent ? useTree().doc.value.boxes[b.parent]?.hand : null;
-  const fixed = ph?.pick === "random";
+  // ✦ の木のフラクチャー (どの ✦ が固定されても当たり) も「〜が固定された」(スイッチ fracMulti、S-42)
+  const fixed = ph?.pick === "random" || (flag("fracMulti") && !!ph && effectOf(ph.currency) === "fracture");
   const free = fixed && !!ph?.free && flag("fracPick");
   if (b.out === "hit" && b.aim) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")); return free ? tr(`${n}がフラクチャーされた場合`, `If ${n} is fractured`) : fixed ? tr(`${n}が固定された`, `${n} fractured`) : tr(`${n}が付いた`, `${n} added`); }
   if (free && b.out === "junk") {
@@ -82,6 +83,14 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   // 骨を未発現のまま次へ (スイッチ boneLater)
   if (b.out === "any" && b.parent && veilKeep(useTree().doc.value.boxes[b.parent]?.hand)) return tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added");
   return outsName(b);
+}
+/**
+ * 確定フラクチャーの素材の倍と当たり (S-43・S-44): ✦ の数 k (3 まで) で ×(3 ÷ k)・k/3。スイッチ fracMulti が閉じている間は ×3 = 33%。
+ * 文は「×3 = 33%」の形 (日本語・英語で同じ)
+ */
+export function sureFracText(k: number): string {
+  const n = flag("fracMulti") ? Math.min(3, Math.max(1, k)) : 1, x = 3 / n;
+  return `×${Number.isInteger(x) ? x : x.toFixed(1)} = ${Math.round((n / 3) * 100)}%`;
 }
 /** 値段のキー (カレンシー・お告げ・骨・エッセンス・カタリスト) → 画面の言語の名前 (クラフト台の棚と同じ) */
 export const handName = (key: string): string => nameOfKey(key, baseItem.value);

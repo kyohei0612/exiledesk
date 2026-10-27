@@ -21,7 +21,7 @@ import { boxAims, BOX_H, BOX_W, fractureMarks, START_JUNK, startOf, startRarity,
 import { tr } from "../../../i18n/lang";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { useTree } from "./use-tree";
-import { handLabel, headOf, OUT_LOOK, rarityName, splitWhenText } from "./tree-names";
+import { handLabel, headOf, OUT_LOOK, rarityName, splitWhenText, sureFracText } from "./tree-names";
 import { pctText, useTreeOdds } from "./tree-odds";
 import { orphanHits } from "./tree-fail";
 import { joinCandidates, joinLook, joinMode, joinNoWhy, useTreeJoin } from "./use-tree-join";
@@ -145,7 +145,7 @@ const costLine = computed(() => {
   // フラクチャーの始め方を決めていれば必ず出す (済みから / 前から ×3、10-24 夜オーナー「選んだ方はスタートの箱に見える形で」)
   const f = fractureMarks(t.doc.value).length ? startOf(t.doc.value).from : undefined;
   const b = t.baseCost.value?.best, c = t.startChoice.value;
-  const name = f === "four" ? tr("フラクチャー前から ×3", "pre-fracture ×3") : f === "fractured" ? tr("フラクチャー済みから", "fractured") : b?.short ?? "";
+  const name = f === "four" ? tr(`フラクチャー前から ${sureFracText(fractureMarks(t.doc.value).length).split(" ")[0]}`, `pre-fracture ${sureFracText(fractureMarks(t.doc.value).length).split(" ")[0]}`) : f === "fractured" ? tr("フラクチャー済みから", "fractured") : b?.short ?? "";
   const cost = f ? c?.cost ?? null : b?.cost ?? null;
   if (cost == null) return name;
   const n = cost >= 100 ? cost.toFixed(0) : cost >= 10 ? cost.toFixed(1) : cost.toFixed(2);
