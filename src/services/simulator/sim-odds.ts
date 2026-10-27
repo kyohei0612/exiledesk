@@ -52,13 +52,15 @@ export function chaosAfterFix(data: PatchData, blank: StageItem, key: string, fi
  * 狙い (fracture 候補の 1 つ目) + ほかの MOD (others 個) + 骨の壁 (未発現 1 つ) のレアにフラクチャーを 1 回打った時、狙いのどれかが固定される割合。
  * ③ の道は どれも「3 MOD + 壁」(白から: 狙い・反対側・王者 / 高貴、グレーター: 狙い・残す MOD・エッセンス、買う: 4 MOD の壁つき)
  */
-export function fractureOdds(data: PatchData, blank: StageItem, targets: readonly OddsTarget[], others = 2): number {
+/** all = 候補を全部置く (✦ が複数の木の「4 MOD を買ってフラクチャー」= ✦ の MOD を全部持つベースを買う。3 つまで、残りがほかの MOD。10-28 オーナー、スイッチ fracMulti) */
+export function fractureOdds(data: PatchData, blank: StageItem, targets: readonly OddsTarget[], others = 2, all0 = false): number {
   const t = targets[0];
   if (!t) return 0;
   const hit = modFor(data, t.modId, t.minTierIndex);
-  const filler = Array.from({ length: others }, (_, i) => ({ ...modFor(data, `(ほか ${i + 1})`, 0), family: `(ほか ${i + 1})`, side: (i % 2 ? hit.side : hit.side === "prefix" ? "suffix" : "prefix") as StageSide }));
+  const more = all0 ? targets.slice(1, 1 + others).map((x) => modFor(data, x.modId, x.minTierIndex)) : [];
+  const filler = Array.from({ length: others - more.length }, (_, i) => ({ ...modFor(data, `(ほか ${i + 1})`, 0), family: `(ほか ${i + 1})`, side: (i % 2 ? hit.side : hit.side === "prefix" ? "suffix" : "prefix") as StageSide }));
   const wall: StageMod = { ...modFor(data, "(壁)", 0), family: "(壁)", side: hit.side === "prefix" ? "suffix" : "prefix", desecrated: true, unrevealed: { floor: 0, altered: false, faction: null } };
-  const all = [hit, ...filler, wall];
+  const all = [hit, ...more, ...filler, wall];
   const item: StageItem = { ...blank, rarity: "rare", prefixes: all.filter((m) => m.side === "prefix"), suffixes: all.filter((m) => m.side === "suffix") };
   return fractureHit(data, item, targets).p;
 }

@@ -232,7 +232,9 @@ function onCardFracture(m: StageMod): void {
 const HELP: Array<[string, string, boolean?]> = [
   ["狙いにする: その段以上が付けば当たり (狙いは MOD 1 つ、上の段は「含む」)", "Target: a hit if that tier or better rolls (one target per mod; higher tiers are included)"],
   ["後の箱の当たりは、この狙いから選ぶ", "Later hit boxes pick from these targets"],
-  ["フラクチャー (✦) = 完成品に残す MOD の印。1 つだけ (付けるとほかの印は外れる)。始め方 (フラクチャー済みから / 白から確定フラクチャー) は「決めた」の後の窓で選ぶ", "Fracture (✦) = marks the one mod the finished item keeps (marking another moves it). How to start (already fractured / sure fracture from white) is chosen after Done"],
+  flag("fracMulti")
+    ? ["フラクチャー (✦) = 固定してよい MOD の印。いくつでも付けられ、フラクチャーでどれか 1 つが固定されれば当たり。始め方 (フラクチャー済みから / 白から確定フラクチャー) は「決めた」の後の窓で選ぶ", "Fracture (✦) = marks mods that may be fixed. Mark any number; a fracture is a hit if any one of them is fixed. How to start (already fractured / sure fracture from white) is chosen after Done"]
+    : ["フラクチャー (✦) = 完成品に残す MOD の印。1 つだけ (付けるとほかの印は外れる)。始め方 (フラクチャー済みから / 白から確定フラクチャー) は「決めた」の後の窓で選ぶ", "Fracture (✦) = marks the one mod the finished item keeps (marking another moves it). How to start (already fractured / sure fracture from white) is chosen after Done"],
   ["カードの行の右クリックでも印を付け外し", "Right-click a row on the card to toggle the mark too", true],
   ["印が無ければ「決めた」の後の窓で、フラクチャーにする MOD を選ぶか白ベース (フラクチャー無し) から", "No mark: after Done, pick the mod to fracture or start from a white base (no fracture)"],
 ];

@@ -13,6 +13,7 @@ import type { SimTargetIn } from "../quiz-build";
 import { startCalc, startCostOf } from "../start-cost";
 import { fractureMarks, startOf, type TreeBasePrices, type TreeDoc } from "./tree-model";
 import { tr } from "../../../i18n/lang";
+import { flag } from "../../../web/release-flags";
 
 type TreeStartKind = Extract<SimStartKind, "white" | "four" | "fractured">;
 interface TreeBaseCost {
@@ -29,19 +30,20 @@ export function treeBaseCost(data: PatchData, doc: TreeDoc, prices: TreeBasePric
   const marks = fractureMarks(doc), fr = marks[0];
   const none = (note: string): TreeBaseCost => ({ kinds: [], best: null, note });
   if (!fr) return none(tr("✦ (フラクチャー) の MOD が無いので比べない", "No ✦ (fractured) mod, nothing to compare"));
-  if (marks.length > 1) return none(tr("✦ の候補が 2 つ以上は比べない (前の ③ は 1 つ)", "Can't compare with 2+ ✦ candidates (step 3 had one)"));
+  if (marks.length > 1 && !flag("fracMulti")) return none(tr("✦ の候補が 2 つ以上は比べない (前の ③ は 1 つ)", "Can't compare with 2+ ✦ candidates (step 3 had one)"));
   const others = st.mods;
   if (others.length > 1) return none(tr("反対側の狙いが 2 つ以上は比べられない (前の ③ と同じく 1 つまで)", "Can't compare with 2+ other mods (one at most, as in step 3)"));
   const div = price("divine") || 1;
   const ex = (v: number | undefined): number | null => (v != null && Number.isFinite(v) && v >= 0 ? v * div : null);
   const ixOf = (modId: string, tier: number): number => tierIndexOf(data, modId, tier);
   const item = freshItem(data, doc.base, doc.itemLevel, "normal");
-  const fracMembers = [{ modId: fr.modId, minTierIndex: ixOf(fr.modId, fr.tier), text: fr.modId, rank: `T${fr.tier}` }];
+  // ✦ が複数なら全部を候補に (どれか 1 つが固定されれば良い = start-cost の anyOf・fractureOdds が候補の数で確率を数える、スイッチ fracMulti)
+  const fracMembers = (flag("fracMulti") ? marks : [fr]).map((a) => ({ modId: a.modId, minTierIndex: ixOf(a.modId, a.tier), text: a.modId, rank: `T${a.tier}` }));
   const targets: SimTargetIn[] = [
     { modId: fr.modId, minTierIndex: ixOf(fr.modId, fr.tier), method: "fracture" },
     ...others.map((o): SimTargetIn => ({ modId: o.modId, minTierIndex: ixOf(o.modId, o.tier), method: methodsFor(data, o.modId)[0]! })),
   ];
-  const c = startCalc({ data, item, itemLevel: doc.itemLevel, fracModId: fr.modId, fracMembers, allTargets: targets, targets, white: ex(prices.white), four: ex(prices.four), price, name });
+  const c = startCalc({ data, item, itemLevel: doc.itemLevel, fracModId: fr.modId, fracMembers, allTargets: targets, targets, white: ex(prices.white), four: ex(prices.four), price, name, fracMulti: flag("fracMulti") && marks.length > 1 });
   if (!c) return none(tr("計算できない形", "Can't calculate this shape"));
   // 反対側でない MOD (フラクチャーと同じ側) は ③ でも費用に入らない
   const sameSide = !c.greater && others.some((o) => sideOfMod(data, o.modId) === sideOfMod(data, fr.modId));

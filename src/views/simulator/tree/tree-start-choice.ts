@@ -8,13 +8,13 @@ import { aimKey, migrateStart, startRarity, type Aim, type StartFrom, type TreeD
 /** 窓の形: marked = 印のある狙い (② で ✦ を付けた・貼り付け / エミュから ✦ 付きで来た) があれば MOD 選びを飛ばして (a) / (b) だけ (パターン 2・3)。無ければ MOD 選び + 白ベース (パターン 1) */
 export const markedGoal = (goals: readonly Aim[]): Aim | null => goals.find((a) => a.fractured) ?? null;
 
-/** 決める: key = ✦ にする狙い (aimKey、null = 白ベースから)、from = (a) / (b) */
-export function applyStartChoice(d: TreeDoc, key: string | null, from: StartFrom): void {
-  const list: Aim[] = d.memoAims ?? [];
-  for (const a of list) { if (key && aimKey(a) === key) a.fractured = true; else delete a.fractured; }
+/** 決める: key = ✦ にする狙い (aimKey。複数可 = スイッチ fracMulti、null・空 = 白ベースから)、from = (a) / (b) */
+export function applyStartChoice(d: TreeDoc, key: string | readonly string[] | null, from: StartFrom): void {
+  const list: Aim[] = d.memoAims ?? [], keys = key == null ? [] : typeof key === "string" ? [key] : key;
+  for (const a of list) { if (keys.includes(aimKey(a))) a.fractured = true; else delete a.fractured; }
   d.memoAims = list;
   migrateStart(d);
-  if (key) d.start!.from = from;
+  if (keys.length) d.start!.from = from;
   d.start!.mods = d.start!.mods.filter((m) => !list.some((a) => a.fractured && a.modId === m.modId));
   d.start!.rarity = startRarity(d);
 }

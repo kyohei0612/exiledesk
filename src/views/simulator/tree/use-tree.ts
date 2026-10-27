@@ -320,7 +320,8 @@ function toggleFracture(modId: string, tier: number): void {
   edit((d) => {
     const list = d.memoAims ?? [], g = list.find((a) => a.modId === modId);
     // 印は 1 つだけ: 付けるとほかの印は外れる (10-26 夜オーナー「PC もスマホも 1 つだけ」。始め方はツリーへ行く時の窓 TreeStartAsk)
-    if (!(g?.fractured && g.tier === tier)) for (const a of list) if (a.modId !== modId) delete a.fractured;
+    // 複数付けられる時は外さない (10-28 オーナー「✦ を複数設定してよい」、スイッチ fracMulti)
+    if (!flag("fracMulti") && !(g?.fractured && g.tier === tier)) for (const a of list) if (a.modId !== modId) delete a.fractured;
     if (!g) list.push({ modId, tier, fractured: true });
     else if (g.fractured && g.tier === tier) delete g.fractured;
     else { if (g.tier !== tier) delete g.values; g.tier = tier; g.fractured = true; }

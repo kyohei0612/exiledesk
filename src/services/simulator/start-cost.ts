@@ -48,6 +48,8 @@ interface StartCalcIn {
   four: number | null;
   price: (key: string) => number;
   name: (key: string) => string;
+  /** ✦ が複数 (候補は全部 ✦)。4 MOD を買う道はその MOD を全部持つベースを買う = 当たりは候補の数で変わる (スイッチ fracMulti) */
+  fracMulti?: boolean;
 }
 
 /**
@@ -123,7 +125,8 @@ export function startCalc(o: StartCalcIn) {
   const fourB = fourN;
   const buyOnce = fourB != null ? fourB + buyRest : null;
   /** 4 MOD を買う道の 1 個 (フラクチャー済みになるまで) = (ベース代 + フラクチャー) ÷ フラクチャーの当たり */
-  const fourTotal = buyOnce != null && fracP > 0 ? buyOnce / fracP : null;
+  const fracPFour = o.fracMulti ? fractureOdds(d, blank, o.fracMembers.map((r) => ({ modId: r.modId, minTierIndex: r.minTierIndex })), 2, true) : fracP;
+  const fourTotal = buyOnce != null && fracPFour > 0 ? buyOnce / fracPFour : null;
   // 適当なレアを消去で 1 MOD → カオスの道は 2026-10-21 に外した (オーナー「誤差やろもはや消してくれ」。白からは増強スパムの道だけ)
   const g = greaterRouteCost({ data: d, targets: o.targets, fracSide: sideOfMod(d, m.id), p: pHit, grade: gr, odds: gr.odds, white, runeLines, price: priceOf, name: nameOf });
   if (g) {
