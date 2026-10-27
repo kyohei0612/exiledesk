@@ -24,7 +24,10 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   // 消去の直線の箱 (全部消えてよい消去の手の箱) は、フラクチャー以外の MOD を全部「外れ MOD」で出す (手の窓で消去を持った時と同じ考え。10-27 夜オーナー、スイッチ heldTags)
   // 直線の途中の箱だけ (消去を打ち始める元の箱は普段の札。子に消去の手を足すと親の ES・未発現まで「外れ MOD」に変わった、10-28 モンキー 1。未発現の枠も替えない。スイッチ boneLater)
   const chainBox = !flag("boneLater") || (!!box?.id && stripHand(doc.boxes[doc.boxes[box.id]?.parent ?? ""]?.hand));
-  if (flag("heldTags") && stripHand(box?.hand) && chainBox) {
+  // スイッチ boxShape: 箱の表示はその箱の見本と、その箱を作った手 (親の手) だけから (この箱に置いた手 = 子を作る手では変えない。10-28 オーナー OK の対策 2)。
+  // 全部消えてよい消去で作られた箱 (直線の途中と終わり) が「外れ MOD」
+  const strip = flag("boxShape") ? chainBox && !!box?.id && flag("boneLater") : stripHand(box?.hand) && chainBox;
+  if (flag("heldTags") && strip) {
     for (const m of [...it.prefixes, ...it.suffixes]) if (!m.fractured && !(m.unrevealed && flag("boneLater"))) out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`全部消えてよい消去で消えうる MOD: ${modText(m)}`, `May be removed by the clear-all Annulment: ${modText(m)}`) });
     return out;
   }
