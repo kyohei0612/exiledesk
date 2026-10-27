@@ -92,7 +92,9 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null, only
    * 10-27 オーナー「カオスオーブ選択で同じ処理扱い、2 段目へ戻るってのと同義としてカウント。ハズレでかつ同じ MOD 群で 1 段上に進むことはない」
    */
   const b = t.doc.value.boxes[id], par = b?.parent ? t.doc.value.boxes[b.parent] : null;
-  if (b && par?.hand && isMiss(b) && !b.hand && sameHand(h, par.hand)) {
+  // 結果の画面で棚から選ぶ形 (phoneResult1027) は、一番初めの狙い無しの手の結果 (打った後) も同じ (10-27 昼オーナー「同じ挙動でいい」)。その手をこの箱に打てる時だけ
+  const missLike = !!b && (isMiss(b) || (RES27 && b.out === "any")) && (!RES27 || !!q.canRetry(id));
+  if (b && par?.hand && missLike && !b.hand && sameHand(h, par.hand)) {
     handFor.value = null;
     q.setReturn(id, par.id);
     q.focus.value = { kind: "outs", id: par.id };
@@ -150,9 +152,9 @@ const main = computed((): { kind: string; text: string; off?: boolean; go: () =>
   if (c && c.kind === "outs") {
     // 結果は 1 つずつ 1 画面 (10-26 夜オーナー「スマホだとレベルが高すぎる」)。「次へ」= 今の結果を既定の答えで決めて次の結果へ、最後で次の段へ
     const outs = q.outsOf(c.id), k = Math.min(outStep.value, Math.max(0, outs.length - 1));
-    // 当たりはその場で次の手を選ぶ (10-27 昼オーナー「当たりの結果なのに次の手を選ぶ (既定) + 次へ になっている」)。完成・次の手の付いた当たりは今まで通り「次へ」
-    const o = outs[k], ob = o ? t.doc.value.boxes[o] : null;
-    if (RES27 && o && ob?.out === "hit" && ["open", "later"].includes(q.stateOf(o))) return { kind: "hand", text: tr("打つ手を選ぶ", "Choose a craft"), go: () => { handFor.value = o; } };
+    // 既定の答えは無い: 外れも当たりも、次に打つカレンシーを選ぶ (か × で消す) まで「次へ」で進めない (10-27 昼オーナー「脳死で次へとかさせちゃう」)
+    const o = outs[k];
+    if (RES27 && o && ["open", "later"].includes(q.stateOf(o))) return { kind: "hand", text: tr("次に打つカレンシーを選ぶ", "Choose the next currency"), go: () => { handFor.value = o; } };
     if (k < outs.length - 1) return { kind: "decide", text: tr(`次へ (${k + 1} / ${outs.length})`, `Next (${k + 1} / ${outs.length})`), go: () => { q.decideOne(outs[k]!); outStep.value = k + 1; window.scrollTo(0, 0); } };
     return { kind: "decide", text: outs.length > 1 ? tr(`次へ (${outs.length} / ${outs.length})`, `Next (${outs.length} / ${outs.length})`) : tr("次へ", "Next"), go: () => q.decide(c.id) };
   }
