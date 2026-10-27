@@ -35,6 +35,7 @@ import { useTapFracture } from "../phone/use-tap-fracture";
 import TreeGoalQuality from "./TreeGoalQuality.vue";
 import { useGoalShown } from "./use-goal-shown";
 import HelpTip from "../../../components/ui/HelpTip.vue";
+import type { RowToggle } from "../../../components/for-share/item/stage-item-row-tag";
 import { dropWay, inWay, isCraftAim, toggleWay, wayUndecided, WAY_ORDER } from "./tree-way-mods";
 import { flag } from "../../../web/release-flags";
 
@@ -149,6 +150,12 @@ const crafts = computed(() => {
   const list = [...t.goals.value.filter((a) => isCraftAim(d, a)).map((a) => ({ a, way: false })), ...(doc.wayMods ?? []).map((a) => ({ a, way: true }))];
   return list.length >= 2 ? list : [];
 });
+/** 「途中で消える」の切り替えをカードの MOD の行の右に置く (デザインの口 rowToggles、10-27 夜オーナー。goalQuality と rowToggle の両方の時だけ、片方ならカードの下の欄) */
+const inRow = computed(() => flag("goalQuality") && flag("rowToggle"));
+const wayToggles = computed((): Map<string, RowToggle> | null => (inRow.value && crafts.value.length ? new Map(crafts.value.map((c) => [c.a.modId, { text: tr("途中で消える", "Removed on the way"), on: c.way, title: `${c.way ? tr("押すと残す (完成の狙いへ戻す)", "Click to keep it (back to the final targets)") : tr("押すと途中で消える物にする (完成の狙い・枠・完成の判定に数えない)", "Click to mark it removed on the way (not counted as a final target, slot or for completion)")}
+${WAY_ORDER()}` }])) : null));
+/** カードの札: 行の右に切り替えがある行は「途中で消える」の札を外す (押された切り替えと同じ言葉が 2 つ並ぶので) */
+const cardTags = computed(() => { const tg = shown.tags.value, tv = wayToggles.value; if (!tg || !tv) return tg; const m = new Map(tg); for (const k of tv.keys()) m.delete(k); return m; });
 /** 残るクラフト MOD が上限を超えている間の「決めた」を押せない理由 */
 const undecided = computed(() => (flag("goalQuality") && s.data.value ? wayUndecided(s.data.value, t.doc.value, t.goalItem.value?.item ?? null) : null));
 /** 完成の狙いに無い MOD を当たりにしている箱 (狙いを外した後も木に残る。tree-model の orphanHits) */
@@ -313,13 +320,15 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       <!-- カードはエミュと同じ既定の幅 (480、スマホは全幅。10-24 オーナー「アイテム絵はシミュと同じ」) -->
       <div data-tree-goal-card class="sticky top-0 flex shrink-0 flex-col gap-2 max-md:static max-md:order-first md:w-[480px]">
         <p v-if="tapFrac.on.value" data-tree-goal-tap-frac class="break-words rounded border border-[#a3342a]/60 bg-[rgba(163,52,42,0.25)] px-2 py-1.5 text-[13px] text-mod-fractured">{{ tapFrac.note.value }}</p>
-        <StageItemCard v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="shown.tags.value" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable row-remove tier-at-least @fracture="onCardFracture" @remove="onCardRemove" @jump="(id) => tapFrac.on.value && tapFrac.tap(id, [...(t.goalItem.value?.item.prefixes ?? []), ...(t.goalItem.value?.item.suffixes ?? [])].find((x) => x.modId === id))" />
+        <StageItemCard v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="cardTags" :row-toggles="wayToggles" @toggle="(id: string) => t.edit((d) => toggleWay(d, id))" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable row-remove tier-at-least @fracture="onCardFracture" @remove="onCardRemove" @jump="(id) => tapFrac.on.value && tapFrac.tap(id, [...(t.goalItem.value?.item.prefixes ?? []), ...(t.goalItem.value?.item.suffixes ?? [])].find((x) => x.modId === id))" />
         <!-- 完成形の品質 (20% を超えるとブリーチのエッセンスの MOD が要る、10-27 夕オーナー、スイッチ goalQuality) -->
         <TreeGoalQuality v-if="flag('goalQuality') && t.goalItem.value" />
         <!-- クラフト MOD が 2 つ以上: どれを途中で消すか (完成の狙い・枠・完成の判定に数えない)。残るのはクラフト MOD の上限まで (10-27 夜オーナー、スイッチ goalQuality) -->
         <div v-if="crafts.length" data-tree-goal-ways class="flex flex-col gap-1 px-1 text-[12px]">
-          <span class="opacity-80">{{ tr("クラフト MOD (途中で消える物は完成の狙いに数えない)", "Crafted mods (ones removed on the way don't count as final targets)") }}</span>
-          <div v-for="c in crafts" :key="c.a.modId" data-tree-goal-way :data-mod="c.a.modId" class="flex min-w-0 flex-wrap items-center gap-2">
+          <span v-if="!inRow" class="opacity-80">{{ tr("クラフト MOD (途中で消える物は完成の狙いに数えない)", "Crafted mods (ones removed on the way don't count as final targets)") }}</span>
+          <!-- 行の右に置いた時: 打つ順の文はカードの札に乗せると出る。スマホは乗せられないので ? を 1 つ -->
+          <span v-else class="flex items-center gap-1 opacity-80 md:hidden">{{ tr("「途中で消える」の打つ順", "Order for \"removed on the way\"") }}<HelpTip :text="WAY_ORDER()" /></span>
+          <div v-for="c in inRow ? [] : crafts" :key="c.a.modId" data-tree-goal-way :data-mod="c.a.modId" class="flex min-w-0 flex-wrap items-center gap-2">
             <span class="min-w-0 break-words" :class="c.way ? 'text-amber-200/80 line-through decoration-amber-200/40' : 'text-[#c8c8ff]'">{{ t.aimLabel(c.a) }}</span>
             <button type="button" data-tree-goal-way-toggle class="tbtn ml-auto shrink-0" :class="c.way ? 'on' : ''" :aria-pressed="c.way" @click="t.edit((d) => toggleWay(d, c.a.modId))">{{ tr("途中で消える", "Removed on the way") }}</button><HelpTip v-if="c.way" :text="WAY_ORDER()" />
           </div>
