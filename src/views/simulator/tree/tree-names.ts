@@ -65,8 +65,8 @@ export function handLabel(h: Hand): string {
   const cat = h.catalyst && h.omens.includes(CATALYSING)
     ? `${h.catalystCount ? tr(`${handName(h.catalyst)} ${h.quality}% (${h.catalystCount} 個)`, `${handName(h.catalyst)} ${h.quality}% (×${h.catalystCount})`) : `${handName(h.catalyst)} ${tr("最大まで", "to max")}`} → `
     : "";
-  // 消去の残したい MOD (10-27 オーナー): 全部消えてよい = 消せなくなるまで繰り返す、☑ があれば残す数
-  const keep = h.keep ? (h.keep.length ? tr(` (${h.keep.length} MOD 残す)`, ` (keep ${h.keep.length})`) : tr(" (全部消えるまで)", " (until all gone)")) : "";
+  // 消去の残したい MOD (10-27 オーナー): 全部消えてよい = 1 回ずつ箱を並べる、☑ があれば残す数
+  const keep = h.keep ? (h.keep.length ? tr(` (${h.keep.length} MOD 残す)`, ` (keep ${h.keep.length})`) : tr(" (どれが消えてもよい)", " (any mod may go)")) : "";
   const label = cat + [handName(h.currency), ...h.omens.map(handName)].join(" + ") + keep + (h.free ? tr(" (狙い無し)", " (no target)") : "") + (isCatalyst(h.currency) ? tr(" (品質を最大まで)", " (to max quality)") : "");
   if (!h.repeat) return label;
   // 当たるまで = カオススパムオーブ (10-25 オーナー。前に保存した木の「カオスの当たるまで」も同じ手として読む)

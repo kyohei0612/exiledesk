@@ -103,7 +103,7 @@ export function singleOutOf(data: PatchData, doc: TreeDoc, boxId: string, h: Han
 }
 
 /** ✦ 以外の MOD の数 (全部消えてよい消去では全部外れ MOD) */
-const looseOf = (it: StageItem): number => [...it.prefixes, ...it.suffixes].filter((m) => !m.fractured).length;
+export const looseOf = (it: StageItem): number => [...it.prefixes, ...it.suffixes].filter((m) => !m.fractured).length;
 const isStrip = (b: TreeBox | undefined): boolean => !!b?.hand?.keep && !b.hand.keep.length && effectOf(b.hand.currency) === "remove";
 const stopMemo = new WeakMap<TreeDoc, { sig: string; at: Map<string, Map<number, string>> }>();
 let stopBusy = false;

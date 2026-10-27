@@ -12,7 +12,8 @@ import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { linkSameHit, linkSameShape, linkShapeHit } from "../../../services/simulator/tree/tree-shape";
-import { fractureMarks, healLost, kindOfHand, setHand, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { looseOf, stripStops } from "../../../services/simulator/tree/tree-outcome";
+import { drop, fractureMarks, healLost, kindOfHand, setHand, subtree, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
 import { tr } from "../../../i18n/lang";
 
@@ -164,6 +165,7 @@ export function applyPick(d: TreeDoc, id: string, h: Hand, kind: HandKind, aims:
   let at = id;
   if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
   setHand(d, at, h, kind, aims, only);
+  if (kind === "strip") stripChain(d, at, h);
   joinSameShape(d, id);
   linkSameShape(d, Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id));
   // 新しい当たりの箱が別の道の同じ状態の箱と同じなら、先にあった箱へつなぐ (10-26 夜オーナー「形は一緒ならこのツリー組んだ瞬間まとまってくれるよね」)
@@ -175,6 +177,27 @@ export function applyPick(d: TreeDoc, id: string, h: Hand, kind: HandKind, aims:
   return at;
 }
 
+/**
+ * 全部消えてよい消去 (10-27 オーナー「スピリットが消えた時点で破綻…直線になるはず…同じ箱になるまで消去ツリーが生成されるはず」): 消去 1 回ごとの箱を直線に並べ
+ * (☑ が無いので全部外れ MOD、消えた / 残ったで分けない)、木の狙い無しの手のある箱と同じ形 (外れの数、tree-outcome の stripStops) になった所で ↩ その箱。
+ * 数はこの箱の見本の外れの数から。初めから同じ形なら消去は打たずに ↩ その箱。同じ形の箱が無ければ全部消した所で戻り先を決めずに置く (足りない所)
+ */
+function stripChain(d: TreeDoc, id: string, h: Hand): void {
+  const data = craftStage.data.value, b = d.boxes[id];
+  if (!data || !b) return;
+  const n = looseOf(sampleOf(data, d, id, 1).item), stops = stripStops(data, d, id);
+  const s = Math.max(-1, ...[...stops.keys()].filter((k) => k <= n));
+  const to = s >= 0 ? stops.get(s)! : null;
+  if (to && s === n) {
+    for (const o of b.outs) drop(d, subtree(d, o));
+    b.outs = []; b.hand = null; b.back = to; b.autoBack = true;
+    return;
+  }
+  let at = id;
+  for (let i = 1; i < n - Math.max(s, 0); i++) { const c = d.boxes[at]?.outs[0]; if (!c) return; setHand(d, c, h, "strip"); at = c; }
+  const last = d.boxes[d.boxes[at]?.outs[0] ?? ""];
+  if (last) { last.back = to; if (to) last.autoBack = true; else delete last.autoBack; }
+}
 /** 棚に並ぶ物 (CurrencyShelf と同じ: オーブ・骨・エッセンス、ソケットがあればクラフトのルーン。隠すのはツリーの棚と同じ treeHidden。猿の口) */
 export function shelfKeysOf(data: PatchData, it: StageItem): string[] {
   const sockets = socketCapOf(it.base, it.cls.category) > 0 || (it.sockets ?? 0) > 0;

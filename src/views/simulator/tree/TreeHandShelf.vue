@@ -208,7 +208,7 @@ watch(held, (k, old) => {
 });
 /**
  * 消去の「残したい MOD」(10-27 オーナー): 今付いている MOD を並べて ☑ で残したい物を選ぶ。既定 = 全部消えてよい (どれも残さない) =
- * ✦ 以外は「n MOD 外れ MOD」、消せなくなるまで消去を繰り返す 1 手。☑ があればその MOD が消えた / 残ったで箱を分ける (☑ の無い MOD は外れ MOD)
+ * ✦ 以外は「n MOD 外れ MOD」、消去 1 回ごとの箱を同じ形の箱になるまで直線に並べる (tree-hand-plan の stripChain)。☑ があればその MOD が消えた / 残ったで箱を分ける (☑ の無い MOD は外れ MOD)
  */
 const isRemove = computed(() => !!held.value && effectOf(held.value) === "remove");
 const keepChoices = computed(() => { const d = s.data.value, it = item.value; return d && it ? keepChoicesOf(d, it) : []; });
@@ -228,7 +228,7 @@ const RESULT: Record<HandKind, [string, string]> = {
   quality: ["無し (品質を最大まで上げて、下の＋で次の手)", "None (raise quality to max, then add the next craft with + below)"],
   essence: ["付いた + 狙いが消えた (付く MOD は必ず付く)", "Added + Target lost (the essence mod always lands)"],
   fracture: ["印の狙いが ✦ になった (必ず印の狙いを固定)", "The marked target fractured (always fixes it)"],
-  strip: ["外れが消えた (消せなくなるまで消去を繰り返す)", "Miss removed (annul until nothing more can be removed)"],
+  strip: ["外れが消えた (消去 1 回ごとに箱を並べ、木の箱と同じ形になった所でその段へ戻る)", "Miss removed (one box per annul, back to the step whose box has the same shape)"],
 };
 /** 狙いを持って着く人がいない箱では「狙いが消えた」を作らない時の文 (tree-model の setHand、tree-lost.ts) */
 const RESULT_NO_LOST: Partial<Record<HandKind, [string, string]>> = { remove: ["外れが消えた", "Miss removed"], swap: ["当たり + 外れ", "Hit + Miss"], essence: ["付いた (付く MOD は必ず付く)", "Added (the essence mod always lands)"] };
@@ -329,11 +329,11 @@ function ok(): void {
           <input type="checkbox" :checked="freeOn" @change="toggleFree($event)" />{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}
         </label>
       </div>
-      <!-- 消去: 残したい MOD (10-27 オーナー)。既定は全部消えてよい = ✦ 以外は「n MOD 外れ MOD」、消せなくなるまで繰り返す -->
+      <!-- 消去: 残したい MOD (10-27 オーナー)。既定は全部消えてよい = ✦ 以外は「n MOD 外れ MOD」、同じ形の箱になるまで消去の箱を並べる -->
       <div v-if="isRemove" data-tree-hand-keep class="flex flex-col gap-1 text-[12px]">
         <span class="opacity-80">{{ tr("残したい MOD (☑ の MOD が消えたら「狙いが消えた」。☑ の無い MOD は外れ MOD)", "Mods to keep (a ☑ mod removed = Target lost; unchecked mods are misses)") }}</span>
         <label data-tree-hand-keep-none class="flex min-h-7 cursor-pointer items-center gap-2 max-md:min-h-11">
-          <input type="checkbox" :checked="!keepAims.length" @change="keepNone($event)" />{{ tr("全部消えてよい (消せなくなるまで消去を繰り返す)", "Anything may go (annul until nothing more can be removed)") }}
+          <input type="checkbox" :checked="!keepAims.length" @change="keepNone($event)" />{{ tr("全部消えてよい (同じ形の箱になるまで消去の箱を並べる)", "Anything may go (annul boxes until a box of the same shape)") }}
         </label>
         <span v-if="!keepAims.length" data-tree-hand-keep-junk class="pl-6 text-[#e0a060]">{{ tr(`${keepChoices.length} MOD 外れ MOD`, `${keepChoices.length} mods: misses`) }}</span>
         <label v-for="c in keepChoices" :key="aimKey(c.aim)" data-tree-hand-keep-mod :data-mod="aimKey(c.aim)" class="flex min-h-7 min-w-0 cursor-pointer items-center gap-2 max-md:min-h-11">

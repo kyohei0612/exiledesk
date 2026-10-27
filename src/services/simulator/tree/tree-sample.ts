@@ -121,18 +121,11 @@ export const SPAM_CAP = 5000;
  * use を渡すと使った物 (カタリストの数・カレンシー・お告げ) を数える (100 人回し tree-run)
  */
 export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => number, aims: readonly Aim[] = [], use?: (key: string, n?: number) => void, miss = false, stop?: (it: StageItem) => boolean): StageApply {
-  // 消去で全部消えてよい (残したい MOD の ☑ が 0、10-27 オーナー): 1 回ずつエンジンの消去を、木の箱と同じ形 (stop、tree-outcome の stripStop) になるか
-  // 打てなくなる (消せる物が無い) まで。初めから同じ形・もう消せない形なら打たずに通す (オーナー「消去 1 つ損する」)
+  // 消去で全部消えてよい (残したい MOD の ☑ が 0、10-27 オーナー): 消去 1 回ごとに箱を直線に並べる (tree-hand-plan の stripChain)。1 箱でエンジンの消去を 1 回、
+  // もう木の箱と同じ形 (stop、tree-outcome の stripStop) か消せる物が無ければ打たずに通す (オーナー「消去 1 つ損する」)
   if (h.keep && !h.keep.length && effectOf(h.currency) === "remove") {
-    let it = item;
-    const removed: StageApply["removed"] = [];
-    for (let i = 0; i < SPAM_CAP && !stop?.(it); i++) {
-      const c = playHand(data, it, { ...h, keep: undefined }, rng, aims, use, miss);
-      if (!c.applied || c.item === it) break;
-      removed.push(...c.removed);
-      it = c.item;
-    }
-    return { applied: true, item: it, added: [], removed };
+    const c = stop?.(item) ? null : playHand(data, item, { ...h, keep: undefined }, rng, aims, use, miss);
+    return c?.applied ? c : { applied: true, item, added: [], removed: [] };
   }
   if (h.repeat) {
     // カオススパム = まとめた設定 (10-25 オーナー・ブラック): 狙いの側に空きがあれば高貴を 1 回 → カオス (お告げ込み) を 1 回ずつ、選んだ狙いのどれかが付いたら当たり。
