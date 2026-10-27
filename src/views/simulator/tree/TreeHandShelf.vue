@@ -230,20 +230,17 @@ const keepChoices = computed(() => { const d = s.data.value, it = item.value; re
 const keepChecked = ref<string[]>((props.current?.keep ?? []).map(aimKey));
 const keepAims = computed((): Aim[] => keepChoices.value.filter((c) => keepChecked.value.includes(aimKey(c.aim))).map((c) => c.aim));
 function toggleKeep(a: Aim): void {
-  keepTouched = true;
   const k = aimKey(a), was = [...keepChecked.value];
   keepChecked.value = was.includes(k) ? was.filter((x) => x !== k) : [...was, k];
   warnIfBelow(() => { keepChecked.value = was; });
 }
 /**
- * 既定の ☑ = 今付いている完成形の MOD (☑ の無い MOD は外れ MOD の決めに揃える。10-27 夕モンキー 9: 完成形のスピリットに ☑ が無く「全部消えてよい」が ☑ だった、スイッチ goalShape)。
- * 自分で触ったら、その持った物の間はそのまま。行の名前は完成形でない MOD を「外れ MOD」と頭に付けてカードと揃える
+ * 行の名前は完成形でない MOD を「外れ MOD (名前)」と頭に付けてカードと揃える (10-27 夕モンキー 9、スイッチ goalShape)。
+ * 既定は「全部消えてよい」オンのまま (10-27 昼オーナー「全部消えるは一番下でデフォでオン、その上に残す MOD のチェック」= 決め済み)
  */
-let keepTouched = false;
 const isGoalMod = (a: Aim): boolean => (t.doc.value.memoAims ?? []).some((g) => g.modId === a.modId);
-watch([isRemove, keepChoices], ([on, l]) => { if (!flag("goalShape") || !on || props.current || keepTouched) return; keepChecked.value = l.filter((c) => isGoalMod(c.aim)).map((c) => aimKey(c.aim)); }, { immediate: true });
 const keepLabel = (c: { aim: Aim; mod: StageMod }): string => (flag("goalShape") && !isGoalMod(c.aim) ? tr(`外れ MOD (${modText(c.mod)})`, `Miss mod (${modText(c.mod)})`) : modText(c.mod));
-function keepNone(e: Event): void { keepTouched = true; const was = [...keepChecked.value]; keepChecked.value = []; (e.target as HTMLInputElement).checked = true; warnIfBelow(() => { keepChecked.value = was; }); }
+function keepNone(e: Event): void { const was = [...keepChecked.value]; keepChecked.value = []; (e.target as HTMLInputElement).checked = true; warnIfBelow(() => { keepChecked.value = was; }); }
 const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, ...(isRemove.value ? { keep: keepAims.value } : {}) }) : null));
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
 const preCat = computed((): string | null => (catalysing.value && !afterQuality.value ? autoCat.value : null));
