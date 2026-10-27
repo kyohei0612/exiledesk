@@ -7,7 +7,7 @@
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
 import { aimDone, aimHits as hits, applyCurrency, room, sideOfMod, baseSocketsOf, catalystOf, forceKey, freshItem, kindOf, mulberry32, omenBlock, OMEN_FOR, revealOffers, runeIdByName, tierIndexOf, unrevealedOf, useReason, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
-import { fractureStart, stepOutcomes } from "../../simulator/sim-engine";
+import { fractureStart } from "../../simulator/sim-engine";
 import { catalystFull, catalystTagOf, fillCatalyst } from "../../simulator/sim-engine";
 import { aimHeldOn, isAimMod, junkOf } from "./tree-aim";
 import { flag } from "../../../web/release-flags";
@@ -20,11 +20,12 @@ import { boxOutcomeOf, stripStop } from "./tree-outcome";
 import { arrivedAt } from "./tree-arrived";
 import { autoRuneKeys, passThrough, prepFor } from "./tree-unbounded";
 import { isRevealHand, veilKeep, veilPick } from "./tree-veil";
-import { fracFree, junkKeyOf } from "./tree-frac-pick";
+import { fracFree, fractureTarget, junkKeyOf } from "./tree-frac-pick";
+export { fractureChoices, fractureTarget } from "./tree-frac-pick"; // フラクチャーの小物は tree-frac-pick へ (1 ファイル 500 行まで、10-28)
+import { shapeFit } from "./tree-sample-shape";
 export { goalsHeld, heldHitOf } from "./tree-unbounded";
 
 const TRIES = 3000;
-
 export interface Sample { item: StageItem; note: string | null }
 
 /** 木の狙い (段 T) → エンジンの入口の狙いの形 (段の位置)。当たりの判定はエンジンの入口 (aimHeldOn・isAimMod・junkOf) に sameText で聞く (決まり 8) */
@@ -109,22 +110,6 @@ let altDeep = false;
 /** 結果が 1 通りかを見る見本の数 */
 export const SINGLE_SEEDS = 8;
 
-
-/**
- * フラクチャーの手で ✦ にするアイテムの MOD (10-24 オーナー「フラクチャーは必ずどれか 1 つを固定」、10-25 オーナーが 10-24 の決めに戻した)。
- * aims = この手の当たりの箱の札 (= この箱で付いている完成の MOD の印の狙い、tree-hand-plan の hitAimsOf) のうち、付いている最初の物。無ければ null (エンジンの乱数のまま)
- */
-export function fractureTarget(data: PatchData, item: StageItem, h: Hand, aims: readonly Aim[], rng?: () => number): string | null {
-  if (effectOf(h.currency) !== "fracture" || h.pick === "random") return null;
-  const mods = [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured);
-  // ✦ が複数なら、付いている ✦ のどれかを等しく (どの ✦ が固定されても当たり。前は付いている最初の ✦ だけ、スイッチ fracMulti、S-42)
-  if (flag("fracMulti") && rng) { const c = aims.flatMap((a) => mods.filter((x) => isAimMod(x, targetsOf(data, [a]), aimOpts(data))).slice(0, 1)); const u = [...new Map(c.map((m) => [m.modId, m])).values()]; return u.length ? u[Math.floor(rng() * u.length)]!.modId : null; }
-  for (const a of aims) { const m = mods.find((x) => isAimMod(x, targetsOf(data, [a]), aimOpts(data))); if (m) return m.modId; }
-  return null;
-}
-
-/** フラクチャーで固定できる MOD の数 (エンジンの stepOutcomes の行き先の数。2 つ以上なら外れうる) */
-export const fractureChoices = (data: PatchData, item: StageItem): number => (stepOutcomes(data, item, "fracture") ?? []).filter((o) => !o.void).length;
 
 /** 繰り返し (カオススパム) の上限が無い時の見張り */
 export const SPAM_CAP = 5000;
@@ -227,7 +212,7 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
   if (!b) return { item: freshItem(data, doc.base, doc.itemLevel, "rare"), note: null };
   if (b.out === "start") return startItemOf(data, doc, mulberry32(seed));
   // 回して実際にこの箱に着いた人のアイテム (seed 番目、tree-arrived)。誰も着かない箱だけ下の作り方 (引き直し・指名で付ける)
-  // スイッチ boxShape: 見本はその箱までの道 (始まり → 親の手の並び) だけで決める。ほかの枝に手を足しても変わらない (S-74 仮、G-04・見張り R-31、10-28 ブラックの仮決め)
+  // boxShape: 見本は道 (始まり → 親の手の並び、種は見本の番号と箱の id 全体) だけで決め、ほかの枝に手を足しても変わらない (S-74 仮、10-28)
   const got = flag("boxShape") ? [] : arrivedAt(data, doc, boxId);
   if (got.length) return { item: got[(Math.max(1, seed) - 1) % got.length]!, note: null };
   const p = doc.boxes[b.parent!]!;
@@ -269,14 +254,20 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
       }
     } finally { altDeep = false; }
   }
-  return sampleFrom(data, doc, b, p, base, seed, boxId, aims);
+  const r0 = sampleFrom(data, doc, b, p, base, seed, boxId, aims);
+  // boxShape: 親の見本からこの箱の結果が作れない (枠が埋まっている等) 時は、親の見本を別の種で引き直す (道だけの見本は 1 つの乱数、10-28 見張り アミュ B b31)
+  if (!flag("boxShape") || !r0.note || r0.note === "forced" || altDeep) return r0;
+  altDeep = true;
+  try { for (let k = 1; k < HIT_TRIES; k++) { const r = sampleFrom(data, doc, b, p, sampleIn(data, doc, p.id, seed + 7919 * k), seed, boxId, aims); if (!r.note) return r; } } finally { altDeep = false; }
+  return r0;
 }
 /** 親の見本 base に親の手を打って、この箱の見本を作る */
 function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox, base: Sample, seed: number, boxId: string, aims: Aim[]): Sample {
   if (!p.hand) return base;
-  // 種は見本の番号と箱の id (道は親をたどって決まる。boxShape の間は id 全体、前は id の長さだけ)
   const rng = mulberry32(seed ^ 0x5eed ^ (flag("boxShape") ? [...boxId].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7) : boxId.length * 7919));
   let last: StageApply | null = null;
+  // 箱の形 (道の狙いの組) に合う結果だけ、無ければ合わなかった最初の結果 (途中で狙いが消えた結果が当たりの見本になった、10-28 見張り。boxShape)
+  const fits = flag("boxShape") ? shapeFit(data, doc, boxId) : null; let loose: Sample | null = null;
   for (let i = 0; i < TRIES; i++) {
     const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims), undefined, b.out === "junk" || b.out === "lost", stripStop(data, doc, p));
     if (!r.applied) { last = r; break; }
@@ -290,8 +281,10 @@ function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox, base:
     // エッセンスの当たりの箱は札が付いた MOD の名前 (tree-run の outBoxOf と同じ)。無限のエッセンスで箱が 2 つ以上なら付いた MOD の箱
     if (b.out === "hit" && b.aim && effectOf(p.hand.currency) === "essence" && !essenceBoxFits(doc, p, b, r.item)) continue;
     if (b.out === "hit" && b.aim && effectOf(p.hand.currency) !== "essence" && !boxAims(b).some((x) => o.hits.some((a) => a.modId === x.modId && a.tier === x.tier))) continue;
+    if (fits && !fits(r.item)) { loose ??= { item: r.item, note: null }; continue; }
     return { item: r.item, note: null };
   }
+  if (loose) return loose;
   if (last && !last.applied) return { item: base.item, note: `cant:${last.reason ?? ""}` };
   if (b.out === "hit" && b.aim) {
     const r = applyCurrency(data, base.item, forceKey(b.aim.modId, `T${b.aim.tier}`, "n"), rng);

@@ -7,8 +7,10 @@
  *   - ☑ あり: ☑ の MOD が固定された = 当たり、ほかが固定された = 外れ (今までの fracRandom の形)
  */
 import { aimHits, craftedKindOf, tierIndexOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
-import { aimHeldOn } from "./tree-aim";
+import { aimHeldOn, isAimMod } from "./tree-aim";
 import { effectOf } from "./tree-hands";
+import { aimOpts, targetsOf } from "./tree-sample";
+import { stepOutcomes } from "../sim-engine";
 import { fractureMarks, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { flag } from "../../../web/release-flags";
 
@@ -46,3 +48,19 @@ export function fracFreeHit(data: PatchData, m: StageMod | null, own: readonly A
   if (!m) return null;
   return own.find((a) => aimHits(m, { modId: a.modId, minTierIndex: tierIndexOf(data, a.modId, a.tier) }, { data, sameText: true })) ?? null;
 }
+
+/**
+ * フラクチャーの手で ✦ にするアイテムの MOD (10-24 オーナー「フラクチャーは必ずどれか 1 つを固定」、10-25 オーナーが 10-24 の決めに戻した)。
+ * aims = この手の当たりの箱の札 (= この箱で付いている完成の MOD の印の狙い、tree-hand-plan の hitAimsOf) のうち、付いている最初の物。無ければ null (エンジンの乱数のまま)
+ */
+export function fractureTarget(data: PatchData, item: StageItem, h: Hand, aims: readonly Aim[], rng?: () => number): string | null {
+  if (effectOf(h.currency) !== "fracture" || h.pick === "random") return null;
+  const mods = [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured);
+  // ✦ が複数なら、付いている ✦ のどれかを等しく (どの ✦ が固定されても当たり。前は付いている最初の ✦ だけ、スイッチ fracMulti、S-42)
+  if (flag("fracMulti") && rng) { const c = aims.flatMap((a) => mods.filter((x) => isAimMod(x, targetsOf(data, [a]), aimOpts(data))).slice(0, 1)); const u = [...new Map(c.map((m) => [m.modId, m])).values()]; return u.length ? u[Math.floor(rng() * u.length)]!.modId : null; }
+  for (const a of aims) { const m = mods.find((x) => isAimMod(x, targetsOf(data, [a]), aimOpts(data))); if (m) return m.modId; }
+  return null;
+}
+
+/** フラクチャーで固定できる MOD の数 (エンジンの stepOutcomes の行き先の数。2 つ以上なら外れうる) */
+export const fractureChoices = (data: PatchData, item: StageItem): number => (stepOutcomes(data, item, "fracture") ?? []).filter((o) => !o.void).length;
