@@ -248,7 +248,13 @@ export function matchTargets(doc: TreeDoc, id: string): { key: string; to: strin
  * MOD をまだ選んでいない当たりの箱、狙い 0 の形 (始まりへ送るのは狙いが消えた箱だけ)、setHand が決めた戻り先 (外れが消えた → 外れの前の箱など。
  * 形の合う箱へと、狙いが消えた → 始まりは同じ形の箱へ付け替える)
  */
-export function linkSameShape(doc: TreeDoc, ids: readonly string[]): void {
+/**
+ * loose = 箱の見本の消せる MOD の数 (applyPick がエンジンの見本で渡す。スイッチ goalShape)。形の鍵は外れの有無だけなので、外れの数が違う箱 (高貴の外れの外れなど) へは
+ * つながない・戻らない (10-27 夕モンキー 8: 外れ 2 つの箱が外れ 1 つの箱へ自動で戻り、回すたびにプレの外れが増えて 30 人中 29 人が満杯で止まった)
+ */
+export type LooseOf = (id: string) => number | null;
+const sameLoose = (loose: LooseOf | undefined, a: string, b: string): boolean => { if (!loose || b === "start") return true; const x = loose(a), y = loose(b); return x === null || y === null || x === y; };
+export function linkSameShape(doc: TreeDoc, ids: readonly string[], loose?: LooseOf): void {
   for (const id of ids) {
     const c = doc.boxes[id];
     // 分かれ目の行の箱 (branch) は人が手を決める所 (分かれ目の箱も行き先になったので、つなぐと自分の分かれ目へ戻る輪になる)
@@ -263,7 +269,7 @@ export function linkSameShape(doc: TreeDoc, ids: readonly string[]): void {
     if (c.anyOf?.length && new Set(targets).size > 1) continue;
     const to = targets.find((x): x is string => !!x && x !== id && (x !== "start" || c.out === "lost")) ?? swapJunkOf(c, p);
     // 形 (付いている狙いの組) が全部合う箱へだけ (狙いが消えた箱は組が何通りかあり、1 つ目の組だけで別の形の箱へつないでいた。10-26 オーナー「前提狙いMODの状態でなんかする時」、shapeFits)
-    if (!to || !shapeFits(doc, id, to)) continue;
+    if (!to || !shapeFits(doc, id, to) || !sameLoose(loose, id, to)) continue;
     c.back = to;
     c.autoBack = true;
     c.done = null;
@@ -385,15 +391,17 @@ function outBoxOfRaw(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[] }
  * ② 木の中でこの箱と同じ形 (形の鍵 = 狙いの組 + 外れの有無、shapeFits も合う) で同じ手の箱 (候補が幾つもあれば上の段。r/okPcmPyY: 冒涜の外れで、同じ形の外れのエッセンスと同じ手)。
  * 自分と自分の下は除く。同じ手 = 同じカレンシーとお告げ (狙いの選び方は問わない)。無ければ null = 今までどおり新しい段
  */
-export function sameHandReturn(doc: TreeDoc, id: string, h: Hand): string | null {
+export function sameHandReturn(doc: TreeDoc, id: string, h: Hand, loose?: LooseOf): string | null {
   const b = doc.boxes[id];
   if (!b || !(b.out === "junk" || b.out === "lost" || b.out === "any" || b.out === "hit")) return null;
   const same = (x: Hand | null | undefined): boolean => !!x && x.currency === h.currency && [...x.omens].sort().join() === [...h.omens].sort().join();
   const p = b.parent ? doc.boxes[b.parent] : undefined;
-  if (p && same(p.hand) && shapeFits(doc, id, p.id)) return p.id;
   const keys = new Set(matchTargets(doc, id).map((m) => m.key));
+  // 打つ前の箱へも、形の鍵 (狙いの組 + 外れの有無) が同じ時だけ (10-27 夕モンキー 8: スタート (外れ 0) で高貴を打った外れ (外れ 1) に同じ高貴を選ぶとスタートへ戻り、
+  // 回すたびにプレの外れが増えて 30 人中 29 人が満杯で止まった。カオスのように外れの数が変わらない手は今まで通り戻る)
+  if (p && same(p.hand) && shapeFits(doc, id, p.id) && matchTargets(doc, p.id).some((m) => keys.has(m.key)) && sameLoose(loose, id, p.id)) return p.id;
   const under = (x: string): boolean => { for (let y: string | null = x; y; y = doc.boxes[y]?.parent ?? null) if (y === id) return true; return false; };
   const depth = (x: string): number => { let n = 0; for (let y = doc.boxes[x]?.parent ?? null; y; y = doc.boxes[y]?.parent ?? null) n++; return n; };
-  const cands = [...new Set(shapesOf(doc).filter((s) => keys.has(s.key) && same(s.hand) && !under(s.box)).map((s) => s.box))].filter((x) => shapeFits(doc, id, x));
+  const cands = [...new Set(shapesOf(doc).filter((s) => keys.has(s.key) && same(s.hand) && !under(s.box)).map((s) => s.box))].filter((x) => shapeFits(doc, id, x) && sameLoose(loose, id, x));
   return cands.sort((x, y) => depth(x) - depth(y))[0] ?? null;
 }

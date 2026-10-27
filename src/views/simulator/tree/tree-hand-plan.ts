@@ -171,7 +171,10 @@ export function applyPick(d: TreeDoc, id: string, h: Hand, kind: HandKind, aims:
   // 外れで、打つ前の箱・同じ形の箱と同じ手 = 新しい段を作らずその箱へ戻る (シミュのルール、PC・スマホ共通。tree-shape の sameHandReturn、スイッチ goalShape)。
   // 外れに手がもう付いていれば下を消してから (前に同じ手で段を足して伸びた木)。戻ったかは呼ぶ側が箱の back で見る
   // 触媒 (pre) 付きの手も同じ判定 (PC・スマホで 1 つ、10-27 夕ブラックの決め B4。前は PC が pre のある時は見ず、スマホは pre を見ずに戻っていた)
-  const to = flag("goalShape") ? sameHandReturn(d, id, h) : null;
+  const data = craftStage.data.value;
+  // 箱の見本の消せる MOD の数 (外れの数が違う箱へは戻らない・つながない。スイッチ goalShape)
+  const loose = flag("goalShape") && data ? (x: string): number | null => { const s = sampleOf(data, d, x, 1); return s.note === "none" || s.note?.startsWith("cant:") ? null : looseOf(s.item); } : undefined;
+  const to = flag("goalShape") ? sameHandReturn(d, id, h, loose) : null;
   if (to) { if (d.boxes[id]?.hand) clearHand(d, id); setBack(d, id, to); return id; }
   const had = new Set(Object.keys(d.boxes));
   let at = id;
@@ -179,7 +182,7 @@ export function applyPick(d: TreeDoc, id: string, h: Hand, kind: HandKind, aims:
   setHand(d, at, h, kind, aims, only);
   if (kind === "strip") stripChain(d, at, h);
   joinSameShape(d, id);
-  linkSameShape(d, Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id));
+  linkSameShape(d, Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id), loose);
   // 新しい当たりの箱が別の道の同じ状態の箱と同じなら、先にあった箱へつなぐ (10-26 夜オーナー「形は一緒ならこのツリー組んだ瞬間まとまってくれるよね」)
   linkSameHit(d, Object.values(d.boxes).filter((b) => !had.has(b.id)).map((b) => b.id));
   // まとめられない当たりの箱 (来た道で狙いの組が何通りかある) は形の合う箱へ (10-27 オーナーの決め (a))。前からある手も戻りも無い箱も
