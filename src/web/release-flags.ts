@@ -106,6 +106,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   // シミュの完成形の品質・クラフト MOD の途中で消える・消去を持った時のカード・フラクチャーを先に・ベース選びの 4 段・モンキー 2 回目の直し (オーナー 10-27 夜「修正後出しておけ、リリースじゃ」)。閉じたままは daily・gemCorrupt・simTutorial
   "goalQuality", "heldTags", "fracFirst", "rowToggle", "baseTiles", "viewFromZero", "armKeep", "hitNew", "backSameHand", "omenReach",
   "barUse", "phoneTestDone", "phoneNextDown", "pickTidy", "qualityLimit", "qualityFit", "junkByCheck",
+  // ✦ の無い木のフラクチャー (要望 8a159e29)・整列の詰め直しと結果の箱を親のすぐ下に (精査の fixedFull も) (オーナー 10-27 夜 OK)
+  "fracRandom", "tidyTight", "tidyUnder",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */

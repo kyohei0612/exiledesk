@@ -1,4 +1,9 @@
 {
+  "0.1.636": [
+    "Simulator: You can now use a Fracturing Orb in trees with no fracture mark (✦), such as ones from a white base or after Desecration. The tree branches by which mod got fractured",
+    "Simulator: \"Tidy\" now always places result boxes on the row right below their parent, and no longer spreads boxes far apart next to a deep branch on one side (tier markers only appear when hits with the same count line up on one row)",
+    "Simulator: The check now flags boxes where a fractured miss mod leaves too few slots on that side for the final targets"
+  ],
   "0.1.635": [
     "Simulator: You can now aim for quality on the final item. Check \"Also aim for quality\" in the final item settings and runs and checks will look at the quality of the finished box. Quality above the cap needs an Essence of the Breach on the way, shown on the final item card as \"Removed on the way\" (the cap is the same as the emulator's, plus +20% from the Breach)",
     "Simulator: You can add a second and further crafted mods in the final item's mod list. Mods set to \"Removed on the way\" with the toggle at the right of their row on the final item card are not counted as goals or slots",

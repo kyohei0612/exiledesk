@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.636",
+  "date": "2026-10-27",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: フラクチャーの印 (✦) を決めていない木 (白ベースから・冒涜の後など) でも、フラクチャーのオーブを打てるように。どの MOD が固定されたかで枝分かれします",
+    "en": "Simulator: You can now use a Fracturing Orb in trees with no fracture mark (✦), such as ones from a white base or after Desecration. The tree branches by which mod got fractured"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 整列で、結果の箱をいつも親のすぐ下の行に置くように。片側だけ深い木の横の箱が離れすぎていたのも詰めました (段の目印は、同じ数の当たりの箱が 1 行に揃う時だけ出ます)",
+    "en": "Simulator: \"Tidy\" now always places result boxes on the row right below their parent, and no longer spreads boxes far apart next to a deep branch on one side (tier markers only appear when hits with the same count line up on one row)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 固定された外れ MOD で枠が足りず、その側の完成の狙いが入りきらない箱を精査で知らせるように",
+    "en": "Simulator: The check now flags boxes where a fractured miss mod leaves too few slots on that side for the final targets"
+   }
+  ]
+ },
+ {
   "v": "0.1.635",
   "date": "2026-10-27",
   "items": [
@@ -913,48 +937,6 @@
     "area": "",
     "text": "スマホ: ヘッダーを 1 段に、ページの題を横幅いっぱいに、下へ送った時は右下に「上へ戻る」ボタン。PC はヘッダーの「ブログ」を外しました (記事は右の欄から)",
     "en": "Phone: one-row header, full-width page titles, and a “Back to top” button at the bottom right after scrolling down. On PC the Blog button left the header (posts are in the right column)"
-   }
-  ]
- },
- {
-  "v": "0.1.596",
-  "date": "2026-10-24",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "クラフト台: アビサルロードの紋章のサフィックスも付くように (poe2db に合わせた)",
-    "en": "Craft stage: Mark of the Abyssal Lord suffixes are now in the pool (matches poe2db)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "クラフト台: スキルのレベルの MOD に「+」を付けた",
-    "en": "Craft stage: skill level mods now show “+”"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "クラフト台: タリスマンのアタックスピードの出やすさを poe2db に合わせた",
-    "en": "Craft stage: talisman attack speed weight now matches poe2db"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "クラフト台: ゲームに無いベース 3 つを一覧から外した",
-    "en": "Craft stage: removed 3 bases that are not in the game"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "クラフト台: ルーンの「明示 MOD の強さ」が MOD の値に効くように",
-    "en": "Craft stage: rune “explicit modifier magnitude” now applies to mod values"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "ブラウザの戻る・音の鳴り始め・URL の言語の指定・アプリ版の読み込みの細かい不具合を直した",
-    "en": "Small fixes for browser Back, sound start-up, the language in the URL and the app manifest"
    }
   ]
  }
