@@ -28,7 +28,7 @@ const FROMS: Array<{ k: StartFrom; title: Pair; sub: Pair }> = [
 const pickedGoal = computed(() => goals.value.find((a) => aimKey(a) === pick.value) ?? null);
 function decide(): void {
   const k = pick.value, f = from.value;
-  t.edit((d) => applyStartChoice(d, k, f));
+  t.edit((d) => { applyStartChoice(d, k, f); d.fracAsked = true; });
   emit("done");
 }
 </script>

@@ -97,7 +97,8 @@ function takeReadings(base: { en: string; ja: string }, itemLevel: number | null
   pasteNote.value = { base: tr(base.ja, base.en), aims: aims.length, bad, readings: readings.length > 1 ? readings : undefined, pick: 0, guess: guessOf(readings[0]!), ...(emu ? { emu: true as const } : {}) };
   // ② 完成の MOD のページへ (どの画面から貼っても同じ。ツリーの窓で開いていた時も)
   t.needBase.value = false;
-  t.edit((d) => { if (emu) d.goalImplicit = emu; else delete d.goalImplicit; });
+  // 新しく取り込んだ完成形は、フラクチャーの設定をまだ答えていない扱い (スイッチ fracFirst)
+  t.edit((d) => { if (emu) d.goalImplicit = emu; else delete d.goalImplicit; delete d.fracAsked; });
   if (flag("goalQuality")) {
     const g = t.goalItem.value?.item;
     t.edit((d) => {

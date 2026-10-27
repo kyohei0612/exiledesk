@@ -87,6 +87,11 @@ watch(() => t.needBase.value, (v) => { if (v) unpicked.value = true; });
 /** 手の入った木 (始まりの箱に手がある) */
 const hasHand = (d: TreeDoc): boolean => Object.keys(d.boxes).length > 1 || !!d.boxes.start?.hand;
 /**
+ * フラクチャーの設定が済んだか (「決めた」の後の窓で答えた = fracAsked。前に組んだ手のある木も済んだ扱い)。済むまでこの窓は × ・枠の外・Esc で閉じず、
+ * 進むのは「決めた (ツリーへ)」だけ (10-27 夜オーナー「フラクチャー設定を素通りするから、絶対に MOD 一覧で × はない」「フラクチャー無しでも一旦どうする?って聞く」、スイッチ fracFirst)
+ */
+const fracDone = computed(() => !!t.doc.value.fracAsked || hasHand(t.doc.value));
+/**
  * 戻れる木がある: ほかのタブに手か狙いの入った木、または今のタブに手が入っている (木で打ってから MOD のページへ来た)。
  * 初めての時のベース選び・ベースを選んだ後の MOD のページ (狙いだけ) には出さない (10-25 オーナー「ベース決めるところでツリーへ戻るはないでしょ」「残さないで」)
  */
@@ -183,7 +188,8 @@ function markFracture(modId: string, tier: number): void { t.toggleFracture(modI
 const startAsk = ref<null | (() => void)>(null);
 function toTree(after?: () => void): void {
   const go = (): void => { close(); after?.(); };
-  if (t.goals.value.length) startAsk.value = go; else go();
+  // 狙いが無い時はフラクチャーにする物が無いので聞かずに進む (答えた扱い)
+  if (t.goals.value.length) startAsk.value = go; else { t.edit((d) => { d.fracAsked = true; }); go(); }
 }
 /** カードの行の × = 一覧で外したのと同じ (狙いから外す、印も一緒に外れる。10-24 夜オーナー「アイテムにつく UI からもバツで消したい」) */
 function onCardRemove(modId: string): void {
@@ -213,7 +219,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
 
 <template>
   <!-- ページで出している間は高さを決めず、本文の送りの箱も外す (ページごと送る。1 の段 = 10-23 オーナー「エミュと同じ展開時の表示の仕方」、2 の段 = 10-24 オーナー「一覧の中に別のスクロールの箱を作らない」)。窓の時は窓の本文 1 つで送る -->
-  <ModalShell :open="true" :inline="asPage" :closable="!(asPage && unpicked)" rec="tree-goal" :title="tr('0 完成形の設定', '0 Final item')" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" :width="asPage ? (step === 1 ? 'w-full max-md:!border-0 max-md:[border-image:none] max-md:!bg-none max-md:!p-0' : 'w-full') : 'w-[88%] h-[86%] max-md:h-full'" full-on-phone :body-class="asPage ? (step === 1 ? 'px-3 pb-3 max-md:px-2 !overflow-visible' : 'px-3 pb-3 !overflow-visible') : 'px-3 pb-3'" @close="close">
+  <ModalShell :open="true" :inline="asPage" :closable="!(asPage && unpicked) && !(flag('fracFirst') && !fracDone)" rec="tree-goal" :title="tr('0 完成形の設定', '0 Final item')" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" :width="asPage ? (step === 1 ? 'w-full max-md:!border-0 max-md:[border-image:none] max-md:!bg-none max-md:!p-0' : 'w-full') : 'w-[88%] h-[86%] max-md:h-full'" full-on-phone :body-class="asPage ? (step === 1 ? 'px-3 pb-3 max-md:px-2 !overflow-visible' : 'px-3 pb-3 !overflow-visible') : 'px-3 pb-3'" @close="close">
     <template #subheader>
       <!-- 流れの 4 段の帯 (ツリーのページの上と同じ部品 TreeFlowSteps、10-24 オーナー)。初手 (ベース未選択) の間は 2 から先は押せない。右端に保存したレシピから開く -->
       <div data-tree-goal-steps class="flex flex-wrap items-center gap-2 px-3 pb-2">

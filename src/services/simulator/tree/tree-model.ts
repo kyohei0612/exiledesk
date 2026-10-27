@@ -159,6 +159,8 @@ export interface TreeDoc {
   /** 完成形の品質の上限 (エミュの品質の帯の「上限」と同じ。無ければ足し算の上限) と種類 (アクセサリーの品質の種類のタグ) */
   goalQualityCap?: number;
   goalQualityTag?: string;
+  /** フラクチャーの設定 (「決めた」の後の窓 TreeStartAsk でフラクチャーにする MOD / 白ベースからのどれか) を答えた。済むまで完成形の窓は × で閉じない (10-27 夜オーナー、スイッチ fracFirst) */
+  fracAsked?: true;
   /**
    * エミュの「シミュレーターへ」で来た時の暗黙の値の振り (エミュのアイテムの rollSeed・implicitRoll・implicitFixed)。完成形のアイテムの暗黙をエミュと同じ値で出す
    * (10-26 夜オーナー「コピーと同じ挙動ならそのまま出すのが流儀」)。base が今の base と違えば使わない
