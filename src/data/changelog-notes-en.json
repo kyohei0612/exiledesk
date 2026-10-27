@@ -1,4 +1,7 @@
 {
+  "0.1.630": [
+    "Simulator: Fixed unchecked target mods also becoming hit boxes in the craft picker (only ☑ mods get hit boxes again; reverts the v0.1.629 change)"
+  ],
   "0.1.629": [
     "Simulator: In the craft picker, checking even one target mod now also makes hit boxes for the other targets that can roll (so a landed target no longer stops at a hit with nowhere to go). Automatic merging of same-shape hits now includes boxes on earlier steps"
   ],
