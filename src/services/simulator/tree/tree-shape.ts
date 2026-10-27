@@ -6,6 +6,7 @@ import { mulberry32, sideOfMod, type PatchData, type StageItem } from "../../cra
 import { aimHeldOn, junkOf } from "./tree-aim";
 import { effectOf } from "./tree-hands";
 import { aimOpts, aimsOf, essenceBoxFits, handProblem, playHand, targetsOf } from "./tree-sample";
+import { flag } from "../../../web/release-flags";
 import { aimKey, keepCut, MATCH_BACK, type Aim, type Hand, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc, boxAims, drop, subtree } from "./tree-model";
 
 /**
@@ -47,11 +48,24 @@ export type Shape = { key: string; box: string; hand?: Hand | null };
  * 箱の道の札の組 (始まりから親をたどった当たりの札、aimKey)。「どれか」の当たりの箱 (anyOf、同じ側の狙いのどれか 1 つ) を通ると、
  * どれが付いたかで組が分かれる (10-26)。組は 64 で打ち切る
  */
+/**
+ * 形に数える当たりの札 (スイッチ goalShape): 完成の狙い (memoAims) にある物だけ。エッセンス・冒涜で付いた狙いでない MOD は外れ MOD と同じで形に数えない
+ * (10-27 昼オーナー「指定 (☑) の MOD 以外はいらない MOD なので、何が付いても外れ MOD として付ける形」、メモ feedback-unchecked-is-junk と同じ)。完成の狙いが無い木は今まで通り全部
+ */
+function hitKeys(doc: TreeDoc, c: TreeBox): string[] {
+  const ks = boxAims(c).map(aimKey);
+  const goals = doc.memoAims ?? [];
+  if (!flag("goalShape") || !goals.length) return ks;
+  const g = new Set(goals.map(aimKey));
+  return ks.filter((k) => g.has(k));
+}
+/** 完成の狙いに無い MOD だけが付いた当たりの箱 = 外れの箱と同じ形 (スイッチ goalShape) */
+const junkLike = (doc: TreeDoc, b: TreeBox): boolean => b.out === "hit" && !!b.aim && flag("goalShape") && !!(doc.memoAims ?? []).length && !hitKeys(doc, b).length;
 function pathHelds(doc: TreeDoc, id: string | null): string[][] {
   let sets: string[][] = [[]];
   for (let x = id; x; x = doc.boxes[x]?.parent ?? null) {
     const c = doc.boxes[x];
-    if (c?.out === "hit" && c.aim) { const ks = boxAims(c).map(aimKey); sets = sets.flatMap((h) => ks.map((k) => (h.includes(k) ? h : [...h, k]))).slice(0, 64); }
+    if (c?.out === "hit" && c.aim && hitKeys(doc, c).length) { const ks = hitKeys(doc, c); sets = sets.flatMap((h) => ks.map((k) => (h.includes(k) ? h : [...h, k]))).slice(0, 64); }
     // 残したい MOD を決めた消去の後は、その MOD だけ持っている (ほかは外れ MOD。上はたどらない、10-27)
     const keep = c ? keepCut(doc, c) : null;
     if (keep) { const ks = keep.map(aimKey); return sets.map((h) => [...new Set([...h, ...ks])]); }
@@ -71,13 +85,13 @@ export function heldSets(doc: TreeDoc, id: string | null): string[][] {
     const keep = keepCut(doc, c);
     if (keep) { const ks = keep.map(aimKey); sets = c.out === "lost" && ks.length ? ks.map((k) => ks.filter((x) => x !== k)) : [ks]; continue; }
     // 「どれか」の当たりの箱はどれが付いたかで組が分かれる (anyOf、10-26)
-    if (c.out === "hit" && c.aim) { const ks = boxAims(c).map(aimKey); sets = sets.flatMap((h) => ks.map((k) => (h.includes(k) ? h : [...h, k]))); }
+    if (c.out === "hit" && c.aim && hitKeys(doc, c).length) { const ks = hitKeys(doc, c); sets = sets.flatMap((h) => ks.map((k) => (h.includes(k) ? h : [...h, k]))); }
     else if (c.out === "lost") {
       sets = sets.flatMap((h) => (h.length ? h.map((k) => h.filter((x) => x !== k)) : [h]));
       // エッセンスの「狙いが消えた」は、エッセンスで付いた MOD (同じ手の当たりの箱の札) は付いている
       const p = c.parent ? doc.boxes[c.parent] : undefined;
       const ess = p?.hand && effectOf(p.hand.currency) === "essence" ? p.outs.map((o) => doc.boxes[o]).find((x) => x?.out === "hit" && x.aim)?.aim : undefined;
-      if (ess) { const k = aimKey(ess); sets = sets.map((h) => (h.includes(k) ? h : [...h, k])); }
+      if (ess && (!flag("goalShape") || !(doc.memoAims ?? []).length || (doc.memoAims ?? []).some((g) => aimKey(g) === aimKey(ess)))) { const k = aimKey(ess); sets = sets.map((h) => (h.includes(k) ? h : [...h, k])); }
     }
     // 「狙いが消えた」をまとめた箱 (mergedOuts) は、消えた組と消えていない組の両方 (10-26)
     if (c.out !== "lost" && c.mergedOuts?.includes("lost")) sets = [...sets, ...sets.flatMap((h) => h.map((k) => h.filter((x) => x !== k)))];
@@ -104,7 +118,7 @@ export function shapesOf(doc: TreeDoc): Shape[] {
   const out: Shape[] = [];
   for (const b of Object.values(doc.boxes)) {
     if (!b.hand || (b.out !== "hit" && b.out !== "junk")) continue;
-    for (const held of pathHelds(doc, b.out === "junk" ? b.parent : b.id)) out.push({ key: shapeKey(held, b.out === "junk"), box: b.id, hand: b.hand });
+    for (const held of pathHelds(doc, b.out === "junk" ? b.parent : b.id)) out.push({ key: shapeKey(held, b.out === "junk" || junkLike(doc, b)), box: b.id, hand: b.hand });
   }
   // 分かれ目の箱も行き先に (外れの有無は行で分けるので両方の形を受ける。手のある箱が先、10-22 13 通り組んだ #14: 分かれ目の下の消去の「外れが消えた」に行き先が無かった)
   for (const b of Object.values(doc.boxes)) {
@@ -210,7 +224,7 @@ export function matchTargets(doc: TreeDoc, id: string): { key: string; to: strin
   const shapes = shapesOf(doc);
   const one = (held: string[], junk: boolean): { key: string; to: string | null } => { const key = shapeKey(held, junk); return { key, to: boxOfShape(shapes, key) }; };
   const p = b.out === "lost" && b.parent ? doc.boxes[b.parent] : undefined;
-  const junk = b.out === "lost" ? p?.out === "junk" || (!!p?.hand && effectOf(p.hand.currency) !== "remove") : b.out === "junk" || b.out === "any";
+  const junk = b.out === "lost" ? p?.out === "junk" || (!!p?.hand && effectOf(p.hand.currency) !== "remove") : b.out === "junk" || b.out === "any" || junkLike(doc, b);
   // 付いていうる組ごとに 1 つ (狙いが消えた箱はどれが消えたかで、その下の当たりは消えた後の組で分かれる、heldSets)
   const out = heldSets(doc, b.id).map((h) => one(h, junk));
   return out.filter((x, i) => out.findIndex((y) => y.key === x.key) === i);
@@ -230,7 +244,7 @@ export function linkSameShape(doc: TreeDoc, ids: readonly string[]): void {
     const c = doc.boxes[id];
     // 分かれ目の行の箱 (branch) は人が手を決める所 (分かれ目の箱も行き先になったので、つなぐと自分の分かれ目へ戻る輪になる)
     // 人が × で外した箱はつながない (noAutoBack)
-    if (!c || c.noAutoBack || c.hand || c.out === "hit" || c.out === "pass" || c.out === "any" || c.out === "branch") continue;
+    if (!c || c.noAutoBack || c.hand || (c.out === "hit" && !junkLike(doc, c)) || c.out === "pass" || c.out === "any" || c.out === "branch") continue;
     if (c.back && c.back !== MATCH && !(c.out === "lost" && c.back === "start")) continue;
     // フラクチャーの結果の箱は、形 (✦ は数えない) が親と同じでも つながない (親へ戻すと ✦ のある品にもう一度フラクチャーを打って止まった、10-24)
     const p = c.parent ? doc.boxes[c.parent] : undefined;
