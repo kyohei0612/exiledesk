@@ -11,13 +11,15 @@ import { useTree } from "./use-tree";
 import { aimOpts, aimsOf, targetsOf } from "../../../services/simulator/tree/tree-sample";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { modText, tr } from "../../../i18n/lang";
+import { flag } from "../../../web/release-flags";
 
 export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly string[], it: StageItem, box?: { anyOf?: Aim[] } | null): Map<string, RowTag> {
   const out = new Map<string, RowTag>();
   const any = box?.anyOf && box.anyOf.length > 1 ? box.anyOf : null;
   const anyT = any ? targetsOf(d, any) : [];
   const anyText = any ? any.map(useTree().aimShort).join(tr(" か ", " or ")) : "";
-  const aims = targetsOf(d, aimsOf(doc)), bad = targetsOf(d, unwanted.map((u) => ({ modId: u, tier: 99 }))), o = aimOpts(d);
+  // 完成の狙い (完成形の MOD) も狙いに数える (スイッチ goalShape、10-27 夕モンキー 1: エッセンスで付いた完成形の MOD が「外れ MOD」と出た)
+  const aims = targetsOf(d, flag("goalShape") ? [...aimsOf(doc), ...(doc.memoAims ?? [])] : aimsOf(doc)), bad = targetsOf(d, unwanted.map((u) => ({ modId: u, tier: 99 }))), o = aimOpts(d);
   for (const m of [...it.prefixes, ...it.suffixes]) {
     if (m.fractured) continue;
     if (any && isAimMod(m, anyT, o)) out.set(m.modId, { text: anyText, tone: "info", replace: true, title: tr(`どれか 1 つが付けば当たり (この見本は ${modText(m)})`, `Any one of these is a hit (this sample has ${modText(m)})`) });

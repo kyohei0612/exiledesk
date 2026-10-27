@@ -90,7 +90,12 @@ export function heldSets(doc: TreeDoc, id: string | null): string[][] {
       sets = sets.flatMap((h) => (h.length ? h.map((k) => h.filter((x) => x !== k)) : [h]));
       // エッセンスの「狙いが消えた」は、エッセンスで付いた MOD (同じ手の当たりの箱の札) は付いている
       const p = c.parent ? doc.boxes[c.parent] : undefined;
-      const ess = p?.hand && effectOf(p.hand.currency) === "essence" ? p.outs.map((o) => doc.boxes[o]).find((x) => x?.out === "hit" && x.aim)?.aim : undefined;
+      // 当たりの箱が無い時 (結果が「狙いが消えた」1 通り) も、手のエッセンスの MOD が完成の狙いにあれば付いている (10-27 夕モンキー 1: スピリット + ✦ だけの箱で
+      // 強化のエッセンスを打つとスピリットが消えてグローバル防御が付くのに、狙い 0 の形に見えて始まりへ戻り、エッセンスを持ったまま回って止まった。スイッチ goalShape)
+      const essKey = p?.hand && effectOf(p.hand.currency) === "essence" ? p.hand.currency.split(":").slice(2).join(":") : null;
+      const ess = p?.hand && effectOf(p.hand.currency) === "essence"
+        ? p.outs.map((o) => doc.boxes[o]).find((x) => x?.out === "hit" && x.aim)?.aim ?? (flag("goalShape") ? (doc.memoAims ?? []).find((g) => g.modId === essKey) : undefined)
+        : undefined;
       if (ess && (!flag("goalShape") || !(doc.memoAims ?? []).length || (doc.memoAims ?? []).some((g) => aimKey(g) === aimKey(ess)))) { const k = aimKey(ess); sets = sets.map((h) => (h.includes(k) ? h : [...h, k])); }
     }
     // 「狙いが消えた」をまとめた箱 (mergedOuts) は、消えた組と消えていない組の両方 (10-26)
