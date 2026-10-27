@@ -15,6 +15,7 @@ import { useTree } from "../tree/use-tree";
 import { handLabel, headOf, outName, outsName } from "../tree/tree-names";
 import { tr } from "../../../i18n/lang";
 import { retryOf as sharedRetryOf } from "../tree/tree-fail";
+import { flag } from "../../../web/release-flags";
 
 /** 答えの要る結果の箱か (手も戻りも完成も分かれ目も無い。始まり・品質だけの通り抜けは ① で聞く) */
 export function isOpen(b: TreeBox): boolean {
@@ -189,7 +190,18 @@ export function usePhoneQuiz() {
    * ② の「次へ」= 答えていない結果を 1 手で決めて次の質問へ: 外れの側は ↩ 再度挑戦 (戻れなければ「次の手を決める」)、当たりの側は「次の手を決める」。
    * 質問はスタートから段の順なので、前の段に未定を残さない (後ろの段から前の段へ質問が戻らない)
    */
-  function decide(id: string): void { decideOuts(outsOf(id)); focus.value = null; }
+  function decide(id: string): void {
+    decideOuts(outsOf(id));
+    focus.value = null;
+    // 次の質問は、決めた箱の下 (先の段) にある物から。無ければ今の段以降、それも無ければ先頭 (前は先頭へ移り、3 段目の「次へ」で 2 段目へ戻った、
+    // 10-27 夜モンキー 2 回目 9。スイッチ phoneNextDown)
+    if (!flag("phoneNextDown")) return;
+    const d = t.doc.value, qs = questions.value;
+    const under = (x: string): boolean => { for (let y: string | null = d.boxes[x]?.parent ?? null; y; y = d.boxes[y]?.parent ?? null) if (y === id) return true; return false; };
+    const depth = (x: string): number => { let n = 0; for (let y = d.boxes[x]?.parent ?? null; y; y = d.boxes[y]?.parent ?? null) n++; return n; };
+    const next = qs.find((x) => under(x.id)) ?? qs.find((x) => depth(x.id) >= depth(id));
+    if (next) focus.value = next;
+  }
   /** 結果の箱を 1 つだけ既定の答えで決める (② を 1 枚ずつ出す時の「次へ」、10-26 夜オーナー「結果を 1 つずつ 1 画面で」) */
   function decideOne(o: string): void { decideOuts([o]); }
   function decideOuts(list: string[]): void {
