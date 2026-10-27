@@ -78,6 +78,8 @@ export interface TreeBox {
    * 例: 外れの箱に「狙いが消えた」をまとめる (着いた形が外れと同じ)。既定はまとめない。人が「まとめる」で選んだ時だけ (absorbOuts)
    */
   mergedOuts?: OutKind[];
+  /** 狙い無しの乱数のフラクチャーの外れの枝の鍵 (固定された外れ MOD の側と種類、"suffix|normal" など。固定後の形が同じ外れは 1 枝。スイッチ fracPick) */
+  junkKey?: string;
   /** この箱から打つ次の手 (矢印) */
   hand: Hand | null;
   /** 矢印の先の結果の箱 (並び順 = 画面の左から) */
@@ -360,7 +362,7 @@ export const kindOfHand = (h: Hand, base: HandKind): HandKind => (h.repeat ? "sp
 /** 同じ当たりの箱にまとめる手 (付く MOD を選べない手。エッセンスは付く MOD ごと・フラクチャーは印ごとの箱のまま) */
 const GROUPED: readonly HandKind[] = ["add", "swap", "spam"];
 /** groupOf = 狙いの側 (渡すと同じ側の狙いは 1 つの当たりの箱、anyOf)。既定は渡さない = 狙いごと (10-26 オーナー「デフォではまとめないほうね」) */
-export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims: readonly Aim[] = [], only: ReadonlyArray<{ out: OutKind; aim: Aim | null }> | null = null, groupOf?: (a: Aim) => string): void {
+export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims: readonly Aim[] = [], only: ReadonlyArray<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null = null, groupOf?: (a: Aim) => string): void {
   const b = d.boxes[id];
   if (!b) return;
   const now = b.outs.map((o) => d.boxes[o]!.out);
@@ -394,7 +396,9 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   const groups: Aim[][] = [];
   for (const a of all) { const g = groupOf && GROUPED.includes(kind) ? groups.find((x) => groupOf(x[0]!) === groupOf(a)) : undefined; if (g) g.push(a); else groups.push([a]); }
   for (const g of groups) g.sort((x, y) => order(x) - order(y));
-  b.outs = want.flatMap((k) => (k === "hit" && groups.length ? groups.map((g) => { const h = mk(d, "hit", id); h.aim = { ...g[0]! }; if (g.length > 1) h.anyOf = g.map((a) => ({ ...a })); return h.id; }) : [mk(d, k, id).id]));
+  // 外れの枝の鍵 (狙い無しの乱数のフラクチャー: 固定された外れの側と種類ごとに外れの箱。スイッチ fracPick)
+  const junkKeys = (only ?? []).flatMap((o) => (o.out === "junk" && o.junkKey ? [o.junkKey] : []));
+  b.outs = want.flatMap((k) => (k === "hit" && groups.length ? groups.map((g) => { const h = mk(d, "hit", id); h.aim = { ...g[0]! }; if (g.length > 1) h.anyOf = g.map((a) => ({ ...a })); return h.id; }) : k === "junk" && junkKeys.length ? junkKeys.map((jk) => { const j = mk(d, "junk", id); j.junkKey = jk; return j.id; }) : [mk(d, k, id).id]));
   // 消えた箱は初めからつないでおく (オーナー 10-22「狙いが消えた…などは自動でつないでおく」。× で外せる)。行き先は人が選ぶのと同じ具体的な箱
   // (10-22 オーナー「続きからって選択肢選べんでしょ」): 狙いが消えた = 始めに戻る (10-22「選択肢として初めに戻るでいいのでは」)、
   // 外れが消えた = 外れの前の箱 (外れの箱の親。外れだけ消えたので、その箱と同じ形)。外れの箱の下でない時は形の合う箱へ。

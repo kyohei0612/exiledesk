@@ -20,7 +20,7 @@ import { boxOutcomeOf, stripStop } from "./tree-outcome";
 import { arrivedAt } from "./tree-arrived";
 import { autoRuneKeys, passThrough, prepFor } from "./tree-unbounded";
 import { isRevealHand, veilKeep, veilPick } from "./tree-veil";
-import { fracFree } from "./tree-frac-pick";
+import { fracFree, junkKeyOf } from "./tree-frac-pick";
 export { goalsHeld, heldHitOf } from "./tree-unbounded";
 
 const TRIES = 3000;
@@ -246,12 +246,14 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
   // 引き直しは一番下の箱の 1 回だけ (親をたどる中でも引き直すと、深い木で数が掛け算になりページが固まった)
   // フラクチャーの当たりは、もう付いている狙いが ✦ になる物なので引き直さない
   // 狙い無しの乱数のフラクチャーの箱 (「〇〇がフラクチャーされた場合」): その MOD が固定できる形で付いた親の見本を引く (まれな MOD の箱で、見本に ✦ が付かず親のままだった。スイッチ fracPick)
-  if (fracFree(doc, p.hand) && !altDeep && b.out === "hit" && b.aim) {
+  if (fracFree(doc, p.hand) && !altDeep && ((b.out === "hit" && b.aim) || b.junkKey)) {
     altDeep = true;
     try {
+      const goals = doc.memoAims ?? [];
       for (let k = 0; k < FRAC_TRIES; k++) {
         const alt = k ? sampleIn(data, doc, p.id, seed + 7919 * k) : base;
-        if ([...alt.item.prefixes, ...alt.item.suffixes].some((m) => m.modId === b.aim!.modId && !m.fractured && !m.desecrated && !m.unrevealed)) return sampleFrom(data, doc, b, p, alt, seed, boxId, aims);
+        const ok = (m: StageMod): boolean => !m.fractured && !m.desecrated && !m.unrevealed && (b.aim ? m.modId === b.aim.modId : junkKeyOf(data, m) === b.junkKey && !goals.some((g) => g.modId === m.modId));
+        if ([...alt.item.prefixes, ...alt.item.suffixes].some(ok)) return sampleFrom(data, doc, b, p, alt, seed, boxId, aims);
       }
     } finally { altDeep = false; }
   }
@@ -280,6 +282,7 @@ function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox, base:
     if (p.hand.repeat && o.out !== "hit") break;
     if (b.out === "pass") return { item: r.item, note: null };
     if (b.out !== "any" && o.out !== b.out && !b.mergedOuts?.includes(o.out)) continue;
+    if (b.junkKey && o.junkKey !== b.junkKey) continue; // 外れの枝の鍵 (狙い無しの乱数のフラクチャー、スイッチ fracPick)
     // エッセンスの当たりの箱は札が付いた MOD の名前 (tree-run の outBoxOf と同じ)。無限のエッセンスで箱が 2 つ以上なら付いた MOD の箱
     if (b.out === "hit" && b.aim && effectOf(p.hand.currency) === "essence" && !essenceBoxFits(doc, p, b, r.item)) continue;
     if (b.out === "hit" && b.aim && effectOf(p.hand.currency) !== "essence" && !boxAims(b).some((x) => o.hits.some((a) => a.modId === x.modId && a.tier === x.tier))) continue;

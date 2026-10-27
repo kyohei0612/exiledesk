@@ -11,6 +11,7 @@ import { CATALYSING, effectOf, isCatalyst } from "../../../services/simulator/tr
 import { boxAims, fractureMarks, startRarity, startsFractured, type Hand, type SplitWhen, type TreeBox, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { veilKeep } from "../../../services/simulator/tree/tree-veil";
+import { junkKeyLabel } from "../../../services/simulator/tree/tree-frac-pick";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 
@@ -71,7 +72,12 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   const fixed = ph?.pick === "random";
   const free = fixed && !!ph?.free && flag("fracPick");
   if (b.out === "hit" && b.aim) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")); return free ? tr(`${n}がフラクチャーされた場合`, `If ${n} is fractured`) : fixed ? tr(`${n}が固定された`, `${n} fractured`) : tr(`${n}が付いた`, `${n} added`); }
-  if (free && b.out === "junk") return tr("外れ MOD がフラクチャーされた場合", "If a miss mod is fractured");
+  if (free && b.out === "junk") {
+    // 外れの枝が 2 つ以上 (側・種類が違う) の時だけ、どの外れかを付ける
+    const many = (useTree().doc.value.boxes[b.parent!]?.outs ?? []).filter((o) => useTree().doc.value.boxes[o]?.junkKey).length > 1, k = (b as { junkKey?: string }).junkKey;
+    if (many && k) { const [ja, en] = junkKeyLabel(k); return tr(`外れ MOD (${ja}) がフラクチャーされた場合`, `If a miss mod (${en}) is fractured`); }
+    return tr("外れ MOD がフラクチャーされた場合", "If a miss mod is fractured");
+  }
   if (fixed && b.out === "junk") return tr("外れ MOD が固定された", "A miss mod fractured");
   // 骨を未発現のまま次へ (スイッチ boneLater)
   if (b.out === "any" && b.parent && veilKeep(useTree().doc.value.boxes[b.parent]?.hand)) return tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added");
