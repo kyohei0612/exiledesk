@@ -1,4 +1,17 @@
 {
+  "0.1.635": [
+    "Simulator: You can now aim for quality on the final item. Check \"Also aim for quality\" in the final item settings and runs and checks will look at the quality of the finished box. Quality above the cap needs an Essence of the Breach on the way, shown on the final item card as \"Removed on the way\" (the cap is the same as the emulator's, plus +20% from the Breach)",
+    "Simulator: You can add a second and further crafted mods in the final item's mod list. Mods set to \"Removed on the way\" with the toggle at the right of their row on the final item card are not counted as goals or slots",
+    "Simulator: For an Orb of Annulment where any mod may be removed, the box card now shows every mod except the fractured one as \"Miss\". Boxes in the middle of an annul line no longer draw a return link",
+    "Simulator: On miss-side boxes, the preview now shows every mod other than the targets gained on the way there (including unchecked final item mods) as \"Miss\"",
+    "Simulator: The first final item settings window can no longer be closed until you answer the fracture settings (continue with \"Done (back to the tree)\")",
+    "Base selection (PC): Item class tiles no longer flow with the width. They are fixed in 4 rows (one-handed weapons, two-handed weapons, armour and off-hands, jewellery and others) and are larger",
+    "Simulator: Fixed the tree starting at the top left instead of centring the start when opened from the emulator's \"To the simulator\"",
+    "Simulator: Hits made from a merged box no longer count routes that add a target you already have (two hits became \"Retry\"). Boxes where a miss mod was removed now also return to the current return target when you pick the same move",
+    "Simulator: Fixed suffixes appearing as target choices (and no hit box being made when checked) for moves with both Omen of Sinistral Exaltation and Omen of Catalysing Exaltation",
+    "Simulator: \"Delete with the boxes below\" from a box's × no longer reverts after a few seconds; cancel by clicking outside the × or pressing Esc. While choosing a return target on PC, it now just says there is no box to return to when none is available",
+    "Simulator (phone): After deciding with \"Next\", the next question now comes from below the decided box (it used to jump back a tier). Test runs say when there is no finished box yet, and the target-picking bar button now reads \"Use (pick targets) ›\""
+  ],
   "0.1.634": [
     "Simulator (phone): Redesigned the result screen. Tap the answer text to change it, and pick the next move for both hits and misses from \"Choose the currency to use in this state\". Currency descriptions are collapsed by default, and the bottom bar now steps through tiers",
     "Simulator: On a miss, choosing the same move as before now returns to the box with the same shape and move instead of making a new box (PC and phone). Also fixed tiers growing endlessly when repeating Desecration or Essences",

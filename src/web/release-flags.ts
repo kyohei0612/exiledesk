@@ -100,6 +100,9 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "adReview",
   // シミュのスマホの直し・結果の画面・箱の形・カオススパムの札外し・段の表の狭い列 (オーナー 10-27 夕「品質関係以外一旦リリース」「まとめて入れて、ポップアップも出して」)。閉じたままは goalQuality・heldTags
   "phone1027", "phoneResult1027", "goalShape", "noSpam", "tierNarrow",
+  // シミュの完成形の品質・クラフト MOD の途中で消える・消去を持った時のカード・フラクチャーを先に・ベース選びの 4 段・モンキー 2 回目の直し (オーナー 10-27 夜「修正後出しておけ、リリースじゃ」)。閉じたままは daily・gemCorrupt・simTutorial
+  "goalQuality", "heldTags", "fracFirst", "rowToggle", "baseTiles", "viewFromZero", "armKeep", "hitNew", "backSameHand", "omenReach",
+  "barUse", "phoneTestDone", "phoneNextDown", "pickTidy", "qualityLimit", "qualityFit", "junkByCheck",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */

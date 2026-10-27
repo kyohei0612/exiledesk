@@ -1,5 +1,77 @@
 [
  {
+  "v": "0.1.635",
+  "date": "2026-10-27",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成形の品質を狙えるように。完成形の設定の「品質も狙う」を ☑ でオンにすると、回す時と精査で完成の箱の品質を見ます。上限を超える品質はブリーチのエッセンスを途中で付ける形になり、その行は完成形のカードに「途中で消える」で出します (品質の上限はエミュと同じ出し方 + ブリーチの +20% まで)",
+    "en": "Simulator: You can now aim for quality on the final item. Check \"Also aim for quality\" in the final item settings and runs and checks will look at the quality of the finished box. Quality above the cap needs an Essence of the Breach on the way, shown on the final item card as \"Removed on the way\" (the cap is the same as the emulator's, plus +20% from the Breach)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成形の MOD 一覧でクラフト MOD を 2 つ目以降も足せるように。完成形のカードの MOD の行の右の札で「途中で消える」にした物は、完成の狙い・枠に数えません",
+    "en": "Simulator: You can add a second and further crafted mods in the final item's mod list. Mods set to \"Removed on the way\" with the toggle at the right of their row on the final item card are not counted as goals or slots"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 全部消えてよい消去の箱のカードは、フラクチャー以外の MOD を「外れ MOD」で出すように。消去の直線の途中の箱には戻りの線を出しません",
+    "en": "Simulator: For an Orb of Annulment where any mod may be removed, the box card now shows every mod except the fractured one as \"Miss\". Boxes in the middle of an annul line no longer draw a return link"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 外れの側の箱の見本で、その箱まで来た道で付いた狙い以外の MOD (☑ していない完成形の MOD も) を「外れ MOD」と出すように",
+    "en": "Simulator: On miss-side boxes, the preview now shows every mod other than the targets gained on the way there (including unchecked final item mods) as \"Miss\""
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 最初の完成形の設定の窓は、フラクチャーの設定を答えるまで閉じられないように (進むのは「決めた (ツリーへ)」から)",
+    "en": "Simulator: The first final item settings window can no longer be closed until you answer the fracture settings (continue with \"Done (back to the tree)\")"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "ベース選び (PC): 部位のタイルを幅で横に流さず、片手武器・両手武器・防具とオフハンド・宝飾品とその他の 4 段に固定し、タイルを大きくしました",
+    "en": "Base selection (PC): Item class tiles no longer flow with the width. They are fixed in 4 rows (one-handed weapons, two-handed weapons, armour and off-hands, jewellery and others) and are larger"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: エミュの「シミュレーターへ」から開いた時に、ツリーがスタートを真ん中にせず左上から始まっていたのを直しました",
+    "en": "Simulator: Fixed the tree starting at the top left instead of centring the start when opened from the emulator's \"To the simulator\""
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: まとめた箱から打った当たりで、もう持っている狙いがもう一度付く道を数えないように (当たり 2 つが「再度挑戦」になっていました)。「外れが消えた」の箱でも、同じ手を選べば今の戻り先へそのまま戻ります",
+    "en": "Simulator: Hits made from a merged box no longer count routes that add a target you already have (two hits became \"Retry\"). Boxes where a miss mod was removed now also return to the current return target when you pick the same move"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 左側の高貴なお告げと触媒の高貴のお告げを一緒に掛けた手で、付かないサフィックスが狙いの候補に出て、☑ しても当たりの箱ができなかったのを直しました",
+    "en": "Simulator: Fixed suffixes appearing as target choices (and no hit box being made when checked) for moves with both Omen of Sinistral Exaltation and Omen of Catalysing Exaltation"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 箱の × の「下の箱ごと消す」は時間で戻らず、× の外を押すか Esc で取り消すように。PC で戻り先を選んでいる間、戻せる箱が無い時は「戻せる箱が無い」とだけ出します",
+    "en": "Simulator: \"Delete with the boxes below\" from a box's × no longer reverts after a few seconds; cancel by clicking outside the × or pressing Esc. While choosing a return target on PC, it now just says there is no box to return to when none is available"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター (スマホ): 「次へ」で決めた後は、決めた箱の下の質問から順に出すように (前の段へ戻っていました)。テストで完成の箱がまだ無い時はそう出し、狙いを選ぶ手の帯のボタンを「使う (狙いを選ぶ) ›」に",
+    "en": "Simulator (phone): After deciding with \"Next\", the next question now comes from below the decided box (it used to jump back a tier). Test runs say when there is no finished box yet, and the target-picking bar button now reads \"Use (pick targets) ›\""
+   }
+  ]
+ },
+ {
   "v": "0.1.634",
   "date": "2026-10-27",
   "items": [
@@ -883,30 +955,6 @@
     "area": "",
     "text": "ブラウザの戻る・音の鳴り始め・URL の言語の指定・アプリ版の読み込みの細かい不具合を直した",
     "en": "Small fixes for browser Back, sound start-up, the language in the URL and the app manifest"
-   }
-  ]
- },
- {
-  "v": "0.1.595",
-  "date": "2026-10-24",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "クラフト台: ベースの暗黙を poe2db に合わせました (ベルトのチャームスロットなど 35 ベース)",
-    "en": "Craft stage: base implicits now match poe2db (charm slots on belts and 34 other bases)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "クラフト台: 英語の暗黙の文を足し、憤怒の 1 段の値を poe2db に合わせました",
-    "en": "Craft stage: missing English implicit texts added, and one Rage tier value now matches poe2db"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "クラフト台: 前兆・歪んだ・悲嘆・捻じれたアミュレットの暗黙に出ていた「0個」の行を出さないようにしました (poe2db に合わせました)",
-    "en": "Craft stage: Portent, Distorted, Lament and Twisted Amulets no longer show a “0” modifier line in their implicit (matches poe2db)"
    }
   ]
  }
