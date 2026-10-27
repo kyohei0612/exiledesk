@@ -4,6 +4,7 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
+import { flag } from "../../../web/release-flags";
 import { useArmed } from "../../../utils/use-armed";
 import { subtree } from "../../../services/simulator/tree/tree-model";
 import Icon from "../../../components/ui/Icon.vue";
@@ -50,7 +51,8 @@ const t = useTree();
  * 3 秒のうちにもう一度で消す (1 つ戻すで戻せる)。どの箱にも (スタートは除く)。前の「この当たりを消す」(当たりの箱 1 つだけ) はこれにまとめた
  * (10-27 オーナー「途中で狙いの MOD を変えたい時の挙動が分かりづらい。枠の × ボタンを押して消せるように。消したら作ったカレンシーごと消える感じ」)
  */
-const rm = useArmed();
+/** 「下の n 箱ごと消す」は 8 秒待つ (3 秒では押す前に × に戻った、10-27 夕モンキー 5。スイッチ goalShape) */
+const rm = useArmed(flag("goalShape") ? 8000 : undefined);
 const rmCount = computed(() => { const d = t.doc.value, p = props.box.parent ? d.boxes[props.box.parent] : undefined; return p ? p.outs.reduce((n, o) => n + subtree(d, o).length, 0) : 0; });
 const rmTitle = computed(() => tr(`この箱を作った手 (${(() => { const h = props.box.parent ? t.doc.value.boxes[props.box.parent]?.hand : null; return h ? handLabel(h) : ""; })()}) と、その結果の箱 ${rmCount.value} 個を消す (手を選び直せる)`, `Remove the craft that made this box and its ${rmCount.value} result box(es) (pick the craft again)`));
 /** 箱の中の今のアイテムの枠 (乗せた時のカードと同じ部品を縮める。見本は箱の形に合う人、10-26 オーナー「枠は現状のアイテムの枠が表示してあげたら？いまカードで表示してる情報」) */

@@ -150,7 +150,8 @@ const cardW = (typeof window === "undefined" ? 375 : window.innerWidth) - 30;
  * 「答えを変える」「打つ手を替える」と選択肢の窓は外した。枠の右上の × = PC の箱の × と同じ (この結果を作った手を消す。1 回目で赤く「下の n 箱ごと消す」、もう一度で消す)
  */
 const P27 = flag("phoneResult1027");
-const rm = useArmed();
+/** 「下の n 箱ごと消す」は 8 秒待つ (3 秒では押す前に × に戻った、10-27 夕モンキー 5。スイッチ goalShape) */
+const rm = useArmed(flag("goalShape") ? 8000 : undefined);
 const rmCount = computed(() => { const d = t.doc.value, p = parent.value ? d.boxes[parent.value] : undefined; return p ? p.outs.reduce((n, o) => n + subtree(d, o).length, 0) : 0; });
 function removeHand(): void {
   const p = parent.value;
