@@ -33,9 +33,12 @@ import { orphanHits } from "./tree-fail";
 import { openTreePage, treeStep } from "../../../web/page";
 import { useTapFracture } from "../phone/use-tap-fracture";
 import TreeGoalQuality from "./TreeGoalQuality.vue";
+import { useGoalShown } from "./use-goal-shown";
 import { flag } from "../../../web/release-flags";
 
 const t = useTree();
+/** 完成形のカード (品質・ブリーチの「途中で消える」の行、スイッチ goalQuality) */
+const shown = useGoalShown();
 const step = computed(() => t.goalPage.value);
 const asking = ref<string | null>(null);
 /** ベースを替えて外した狙いの文 (新しいベースに付かない物、2 の段の上に 1 行。次にベースを替える・閉じるまで) */
@@ -286,7 +289,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       <!-- カードはエミュと同じ既定の幅 (480、スマホは全幅。10-24 オーナー「アイテム絵はシミュと同じ」) -->
       <div data-tree-goal-card class="sticky top-0 flex shrink-0 flex-col gap-2 max-md:static max-md:order-first md:w-[480px]">
         <p v-if="tapFrac.on.value" data-tree-goal-tap-frac class="break-words rounded border border-[#a3342a]/60 bg-[rgba(163,52,42,0.25)] px-2 py-1.5 text-[13px] text-mod-fractured">{{ tapFrac.note.value }}</p>
-        <StageItemCard v-if="t.goalItem.value" :item="flag('goalQuality') && t.doc.value.goalQualityOn && t.doc.value.goalQuality ? { ...t.goalItem.value.item, quality: t.doc.value.goalQuality } : t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable row-remove tier-at-least @fracture="onCardFracture" @remove="onCardRemove" @jump="(id) => tapFrac.on.value && tapFrac.tap(id, [...(t.goalItem.value?.item.prefixes ?? []), ...(t.goalItem.value?.item.suffixes ?? [])].find((x) => x.modId === id))" />
+        <StageItemCard v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="shown.tags.value" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable row-remove tier-at-least @fracture="onCardFracture" @remove="onCardRemove" @jump="(id) => tapFrac.on.value && tapFrac.tap(id, [...(t.goalItem.value?.item.prefixes ?? []), ...(t.goalItem.value?.item.suffixes ?? [])].find((x) => x.modId === id))" />
         <!-- 完成形の品質 (20% を超えるとブリーチのエッセンスの MOD が要る、10-27 夕オーナー、スイッチ goalQuality) -->
         <TreeGoalQuality v-if="flag('goalQuality') && t.goalItem.value" />
         <!-- 自動で嵌めた扱いのルーン (TreeGoalCard と同じ、10-26 オーナー) -->

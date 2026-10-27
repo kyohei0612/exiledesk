@@ -6,6 +6,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
+import { useGoalShown } from "../tree/use-goal-shown";
 import { useTree } from "../tree/use-tree";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { tr } from "../../../i18n/lang";
@@ -14,6 +15,7 @@ import { mapFolded, setMapFold } from "./map-fold";
 import PhoneMap from "./PhoneMap.vue";
 
 const t = useTree();
+const shown = useGoalShown();
 const open = computed(() => !mapFolded.value || !!mapPick.value);
 const marks = computed(() => t.goals.value.filter((a) => a.fractured).map((a) => a.modId));
 /** カードの幅 = 窓の中いっぱい (左右の余白 12 ずつ)。上限は付けない (10-26 夜オーナー「枠は最大限」) */
@@ -37,7 +39,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
         <!-- 完成形 (PC の右の列の一番上と同じ、アイテムの枠) -->
         <section v-if="!mapPick" data-phone-goal class="flex min-w-0 flex-col items-center gap-2 text-center">
           <p class="flex max-w-full items-center justify-center gap-2 text-[14px]"><b class="shrink-0 text-[#f2d27a]">{{ tr("完成形", "Final item") }}</b><span class="min-w-0 break-words text-[#d8ccb4]">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}</span></p>
-          <StageItemCard v-if="t.goalItem.value && t.goals.value.length" data-phone-goal-card :item="t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :fracture-group="marks" tier-at-least />
+          <StageItemCard v-if="t.goalItem.value && t.goals.value.length" data-phone-goal-card :item="shown.item.value ?? t.goalItem.value.item" :row-tags="shown.tags.value" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :fracture-group="marks" tier-at-least />
           <p v-else class="text-[12px] text-[#9a8a70]">{{ tr("MOD はまだ (MOD で決める)", "No mods yet (set them with Mods)") }}</p>
           <span class="flex justify-center gap-2">
             <button type="button" data-phone-goal-open="base" :class="PILL" @click="t.goalPage.value = 1">{{ tr("ベース", "Base") }}</button>

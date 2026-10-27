@@ -13,6 +13,7 @@ import { maxQualityOf, type StageItem } from "../../../services/craft-stage/engi
 import { essenceTarget } from "../../../services/craft-stage/apply-essence";
 import { useTree } from "./use-tree";
 import { tr } from "../../../i18n/lang";
+import { BREACH_OVER } from "./use-goal-shown";
 
 const t = useTree();
 const on = computed(() => !!t.doc.value.goalQualityOn);
@@ -26,6 +27,8 @@ const baseMax = computed(() => (t.goalItem.value ? maxQualityOf(t.goalItem.value
 /** このベースにブリーチのエッセンスの MOD があるか (エンジンの essenceTarget) */
 const hasBreach = computed(() => { const d = s.data.value, it = t.goalItem.value?.item; if (!d || !it) return false; try { return !!essenceTarget(d, it, "essence:breach"); } catch { return false; } });
 const over = computed(() => on.value && (t.doc.value.goalQuality ?? 0) > baseMax.value);
+/** 上限を 11% 以上超える = ブリーチのエッセンスが要る (+10 まではヴァールのインフューザーで届く、10-27 夜オーナー) */
+const needBreach = computed(() => over.value && (t.doc.value.goalQuality ?? 0) - baseMax.value >= BREACH_OVER);
 /** ☑ 品質も狙う (前の作りで狙いに足したブリーチの MOD があれば外す) */
 function setOn(v: boolean): void {
   t.edit((d) => {
@@ -43,7 +46,8 @@ function setCap(n: number): void { t.edit((d) => { d.goalQualityCap = n; if ((d.
       <input data-tree-goal-quality-on type="checkbox" :checked="on" @change="setOn(($event.target as HTMLInputElement).checked)" />{{ tr("品質も狙う", "Also aim for quality") }}
     </label>
     <StageQualityBar v-if="on && item" :item="item" @quality="setQuality" @cap="setCap" @catalyst="() => {}" />
-    <p v-if="over && hasBreach" data-tree-goal-quality-breach class="break-words text-amber-200/90">{{ tr(`${baseMax}% を超えるには、途中でブリーチのエッセンス (品質の最大値 +20%) を付けて品質を上げる。その後でブリーチの MOD が消えても品質は残る (完成形の MOD の枠は使わない)`, `Above ${baseMax}% needs a Perfect Essence of the Breach (+20% to Maximum Quality) on the way to raise quality. The quality stays even if that mod is removed later (no final mod slot used)`) }}</p>
-    <p v-else-if="over" data-tree-goal-quality-cant class="break-words text-rose-200/90">{{ tr(`このベースでは ${baseMax}% を超えられない (ブリーチのエッセンスが付かない)`, `This base can't go above ${baseMax}% (no Essence of the Breach)`) }}</p>
+    <p v-if="over && !needBreach" data-tree-goal-quality-infuser class="break-words text-amber-200/90">{{ tr(`${baseMax}% を超える分 (+10% まで) はヴァールのインフューザーで届く`, `Up to +10% above ${baseMax}% is reachable with an Infuser`) }}</p>
+    <p v-else-if="needBreach && hasBreach" data-tree-goal-quality-breach class="break-words text-amber-200/90">{{ tr(`${baseMax + 10}% を超えるには、途中でブリーチのエッセンス (品質の最大値 +20%) を付けて品質を上げる。その後でブリーチの MOD が消えても品質は残る (完成形のカードの「途中で消える」の行。完成の MOD の枠には数えない)`, `Above ${baseMax + 10}% needs a Perfect Essence of the Breach (+20% to Maximum Quality) on the way. The quality stays even if that mod is removed later (the "Removed on the way" row on the final item; not counted as a final mod slot)`) }}</p>
+    <p v-else-if="needBreach" data-tree-goal-quality-cant class="break-words text-rose-200/90">{{ tr(`このベースでは ${baseMax + 10}% を超えられない (ブリーチのエッセンスが付かない)`, `This base can't go above ${baseMax + 10}% (no Essence of the Breach)`) }}</p>
   </div>
 </template>

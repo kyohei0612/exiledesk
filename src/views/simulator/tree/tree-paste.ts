@@ -19,6 +19,8 @@ import { askLeave, openTreePage } from "../../../web/page";
 import { track } from "../../../utils/track";
 import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
+import { maxQualityOf } from "../../../services/craft-stage/engine";
+import { flag } from "../../../web/release-flags";
 import { markPristine, quickSave, unsaved } from "./tree-save";
 
 /** 最後に取り込んだ結果 (sim-mods の上に出す。閉じるか次の取り込みまで) */
@@ -54,7 +56,7 @@ function importPaste(text: string): void {
   const r = parseItemText(data, text);
   if (!r.base) return;
   // 読み方 (ジン部長の parseItemText の readings。無ければ mods の 1 通り)。先頭 = 一番もっともらしい読み
-  takeReadings(r.base, r.itemLevel, r.readings?.length ? r.readings : [{ mods: r.mods, skipped: r.skipped }]);
+  takeReadings(r.base, r.itemLevel, r.readings?.length ? r.readings : [{ mods: r.mods, skipped: r.skipped }], null, r.quality ? { value: r.quality.value, tag: r.quality.tag ?? null } : null);
   track("sim:paste");
 }
 
@@ -71,7 +73,7 @@ export function requestEmuItem(item: StageItem): void {
     const tier = of && !m.unrevealed ? { index: m.tierIndex, of, label: `T${of - m.tierIndex}`, name: m.affix, fits: true } : null;
     return { text, modId: m.unrevealed ? null : m.modId, source: m.desecrated ? "desecrated" : m.crafted ? "essence" : "normal", side: m.side, sideFrom: "engine", tier, values: [...m.values], shownValues: [...m.values], boosts: [], fractured: !!m.fractured, desecrated: !!m.desecrated, crafted: !!m.crafted, unrevealed: !!m.unrevealed };
   });
-  const go = (): void => { takeReadings({ en: item.base, ja: item.baseJa }, item.itemLevel, [{ mods, skipped: [] }], { base: item.base, rollSeed: item.rollSeed, implicitRoll: item.implicitRoll, implicitFixed: item.implicitFixed }); track("sim:fromEmu"); };
+  const go = (): void => { takeReadings({ en: item.base, ja: item.baseJa }, item.itemLevel, [{ mods, skipped: [] }], { base: item.base, rollSeed: item.rollSeed, implicitRoll: item.implicitRoll, implicitFixed: item.implicitFixed }, item.quality ? { value: item.quality, tag: item.qualityTag ?? null } : null); track("sim:fromEmu"); };
   // 作りかけの木を置き換える時は貼り付けと同じ 3 択
   if (unsaved(useTree().doc.value)) askLeave(go, () => void quickSave());
   else go();
@@ -79,7 +81,8 @@ export function requestEmuItem(item: StageItem): void {
 
 /** 読めたアイテム (ベース・アイテムレベル・読み方) を木に入れて ② 完成の MOD のページへ (貼り付けとエミュの共通) */
 /** emu = エミュから来た時の暗黙の振り (TreeDoc.goalImplicit)。貼り付けは無し */
-function takeReadings(base: { en: string; ja: string }, itemLevel: number | null | undefined, readings: ItemTextReading[], emu: TreeDoc["goalImplicit"] | null = null): void {
+/** quality = 貼った文・エミュのアイテムの品質と種類。完成形の品質の欄に入れておき、「品質も狙う」☑ をオンにした時にその値で出す (☑ は既定オフのまま。10-27 夜オーナー、スイッチ goalQuality) */
+function takeReadings(base: { en: string; ja: string }, itemLevel: number | null | undefined, readings: ItemTextReading[], emu: TreeDoc["goalImplicit"] | null = null, quality: { value: number; tag: string | null } | null = null): void {
   const t = useTree();
   t.setBase(base.en, itemLevel ?? t.doc.value.itemLevel);
   // 貼った文のアイテムレベルを使う (白紙の木は適正で作られ、狙いに合わせて変わるので外す。文に無ければ今のまま)
@@ -95,6 +98,17 @@ function takeReadings(base: { en: string; ja: string }, itemLevel: number | null
   // ② 完成の MOD のページへ (どの画面から貼っても同じ。ツリーの窓で開いていた時も)
   t.needBase.value = false;
   t.edit((d) => { if (emu) d.goalImplicit = emu; else delete d.goalImplicit; });
+  if (flag("goalQuality")) {
+    const g = t.goalItem.value?.item;
+    t.edit((d) => {
+      delete d.goalQualityOn; delete d.goalQuality; delete d.goalQualityTag; delete d.goalQualityCap;
+      if (!quality || quality.value <= 0) return;
+      d.goalQuality = quality.value;
+      if (quality.tag) d.goalQualityTag = quality.tag;
+      // ベースの上限を超える品質は、品質の帯の上限もその値まで上げておく
+      if (g && quality.value > maxQualityOf(g)) d.goalQualityCap = quality.value;
+    });
+  }
   openTreePage("mods");
   t.goalPage.value = 2;
   // エミュから入れたままの木は、戻る時に保存を聞かない (10-26 夜オーナー)
