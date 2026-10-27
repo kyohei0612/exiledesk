@@ -2,6 +2,7 @@
  * tree-layout.ts — ツリーの整列 (tidy) と段の札の高さ (bandsOf)。tree-model.ts から分けた (2026-10-24、500 行の決まり。中身は前のまま)
  */
 import { aimKey, BOX_W, GAP_Y, type TreeBox, type TreeDoc } from "./tree-model";
+import { flag } from "../../../web/release-flags";
 
 /** 整列で兄弟を並べる順 (当たり → 狙いが消えた → 外れが消えた → 外れ。外れは一番右) */
 const OUT_ORDER: Record<TreeBox["out"], number> = { start: 0, hit: 0, any: 0, pass: 0, branch: 0, lost: 1, junkGone: 2, junk: 3 };
@@ -73,7 +74,13 @@ export function tidy(d: TreeDoc, chipW?: (id: string) => number | undefined): vo
     const subs = ks.map((k) => { const c = layout(k); for (let r = me + 1; r < row.get(k)!; r++) put(c, r, BOX_W / 2 - STEM, BOX_W / 2 + STEM); return c; });
     const deepest = Math.max(me, ...subs.flatMap((c) => [...c.keys()]));
     // 子の無い行は、すぐ上の行の輪郭をそのまま下へ伸ばす (孫の段で開いた所にも別の枝が入らない)
-    subs.forEach((c, i) => { for (let r = row.get(ks[i]!)! + 1; r <= deepest; r++) if (!c.has(r)) { const up = c.get(r - 1) ?? [0, BOX_W]; put(c, r, up[0], up[1]); } });
+    // 伸ばすのは、子の無い当たりの箱 (次の手を＋で足す所) と子のある部分木だけ。子の無い外れ・打った後などは伸ばさない
+    // (外れの箱が一番下の段まで 1 列ずつ場所を取り、深い部分木の横で兄弟が大きく離れた。10-27 夜オーナー、カマサのティアラ。スイッチ tidyTight)
+    subs.forEach((c, i) => {
+      const k = d.boxes[ks[i]!]!;
+      if (flag("tidyTight") && !k.outs.length && k.out !== "hit") return;
+      for (let r = row.get(ks[i]!)! + 1; r <= deepest; r++) if (!c.has(r)) { const up = c.get(r - 1) ?? [0, BOX_W]; put(c, r, up[0], up[1]); }
+    });
     for (const c of subs) {
       cs.push(c);
       let off = 0;
@@ -89,7 +96,8 @@ export function tidy(d: TreeDoc, chipW?: (id: string) => number | undefined): vo
     // 前は一番左と一番右の子の真ん中で、幅の違う兄弟だと真ん中の子が 163px までずれた)。端までの長さが左右で違えば、短い側の兄弟を組ごと外へ押して左右対称に (外へ押すだけなので重ならない、行はそのまま)
     const n = ks.length, half = Math.floor(n / 2);
     const px = !n ? 0 : n % 2 ? offs[half]! : (offs[half - 1]! + offs[half]!) / 2;
-    if (n > 1) {
+    // 左右の長さを揃える押し出しはしない (片側に深い部分木があると、短い側の兄弟が大きく離れた。10-27 夜オーナー、スイッチ tidyTight。親の線は真ん中の子へまっすぐのまま)
+    if (n > 1 && !flag("tidyTight")) {
       const l = px - offs[0]!, r = offs[n - 1]! - px;
       if (l < r) for (let i = 0; i < half; i++) offs[i]! -= r - l;
       else if (r < l) for (let i = n - half; i < n; i++) offs[i]! += l - r;
