@@ -18,6 +18,8 @@ import { modText, tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 
+/** 箱 boxId の見本 it の札 (手の窓のカード・消去の残したい MOD の欄で同じ物) */
+export const boxTagsOf = (d: PatchData, doc: TreeDoc, boxId: string, it: StageItem): Map<string, RowTag> => { const b = doc.boxes[boxId]; return treeRowTags(d, doc, b?.unwanted ?? [], it, { anyOf: b?.anyOf, id: boxId, out: b?.out }); };
 /** 全部消えてよい消去の手の箱 (消去の直線の箱。☑ が無い = 消えうる MOD は全部外れ MOD) */
 const stripHand = (h: Hand | null | undefined): boolean => !!h && effectOf(h.currency) === "remove" && !!h.keep && !h.keep.length;
 export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly string[], it: StageItem, box?: { id?: string; out?: OutKind | "start"; anyOf?: Aim[]; hand?: Hand | null } | null): Map<string, RowTag> {

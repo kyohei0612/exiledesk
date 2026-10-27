@@ -22,7 +22,7 @@ import { handIcon as iconOf, handLabel, handName, outNameOf } from "./tree-names
 import TreeVeilCheck from "./TreeVeilCheck.vue";
 import TreeRevealCard from "./TreeRevealCard.vue";
 import { RESULT, RESULT_NO_LOST } from "./tree-hand-result";
-import { treeRowTags } from "./tree-row-tags";
+import { boxTagsOf } from "./tree-row-tags";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { aimKey, fractureMarks, setHand, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
@@ -56,7 +56,7 @@ const item = computed(() => sample.value?.item ?? null);
 const preview = computed(() => { const d = s.data.value, it = preCat.value ? shelfItem.value : item.value ?? shelfItem.value, h = held.value; return d && it && h && !problem.value ? previewUse(d, it, h, omens.value) : null; });
 const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it) : it);
 /** 狙いに当たらない MOD の行は「外れ MOD」(乗せた時のカードと同じ、10-25 オーナー「プラスで MOD 選んだ時ハズレ MOD の表示が溶けてる」) */
-const rowTags = (it: StageItem | null) => (s.data.value && it ? removeTags(it, treeRowTags(s.data.value, t.doc.value, t.doc.value.boxes[props.boxId]?.unwanted ?? [], it, { anyOf: t.doc.value.boxes[props.boxId]?.anyOf, id: props.boxId, out: t.doc.value.boxes[props.boxId]?.out })) : null);
+const rowTags = (it: StageItem | null) => (s.data.value && it ? removeTags(it, boxTagsOf(s.data.value, t.doc.value, props.boxId, it)) : null);
 /**
  * 消去を持った時は、フラクチャー以外で ☑ の無い MOD を全部「外れ MOD」と出し、☑ の MOD はふだんの表示 (狙い) に戻す。☑ を変えるとすぐ変わる
  * (10-27 夜オーナー「全部消えてよいなら持った瞬間に外れ MOD 表示、残したい MOD に ☑ で狙い表示」。スイッチ heldTags)
@@ -249,10 +249,7 @@ watch(held, (k, old) => {
   const was = old ?? props.current.currency, wasOmens = old ? [...omens.value] : [...props.current.omens];
   warnIfBelow(() => { held.value = was; omens.value = wasOmens; });
 });
-/**
- * 消去の「残したい MOD」(10-27 オーナー): 今付いている MOD を並べて ☑ で残したい物を選ぶ。既定 = 全部消えてよい (どれも残さない) =
- * ✦ 以外は「n MOD 外れ MOD」、消去 1 回ごとの箱を同じ形の箱になるまで直線に並べる (tree-hand-plan の stripChain)。☑ があればその MOD が消えた / 残ったで箱を分ける (☑ の無い MOD は外れ MOD)
- */
+/** 消去の「残したい MOD」(10-27 オーナー): ☑ で残したい物を選ぶ。既定 = 全部消えてよい = 消去の箱を同じ形の箱になるまで直線に (stripChain)。☑ があれば消えた / 残ったで分ける */
 const isRemove = computed(() => !!held.value && effectOf(held.value) === "remove");
 const keepChoices = computed(() => { const d = s.data.value, it = item.value; return d && it ? keepChoicesOf(d, it) : []; });
 const keepChecked = ref<string[]>((props.current?.keep ?? []).map(aimKey));
@@ -262,12 +259,11 @@ function toggleKeep(a: Aim): void {
   keepChecked.value = was.includes(k) ? was.filter((x) => x !== k) : [...was, k];
   warnIfBelow(() => { keepChecked.value = was; });
 }
-/**
- * 行の名前は完成形でない MOD を「外れ MOD (名前)」と頭に付けてカードと揃える (10-27 夕モンキー 9、スイッチ goalShape)。
- * 既定は「全部消えてよい」オンのまま (10-27 昼オーナー「全部消えるは一番下でデフォでオン、その上に残す MOD のチェック」= 決め済み)
- */
+/** 行の名前は外れの MOD を「外れ MOD (名前)」とカードと揃える (10-27 夕モンキー 9)。決め方もカードの札と同じ (完成の狙いの範囲の値でも道で付いていなければ外れ、10-28 モンキー 7、スイッチ boxShape) */
 const isGoalMod = (a: Aim): boolean => (t.doc.value.memoAims ?? []).some((g) => g.modId === a.modId);
-const keepLabel = (c: { aim: Aim; mod: StageMod }): string => (flag("goalShape") && !isGoalMod(c.aim) ? tr(`外れ MOD (${modText(c.mod)})`, `Miss mod (${modText(c.mod)})`) : modText(c.mod));
+const keepJunk = (c: { aim: Aim; mod: StageMod }): boolean => (flag("boxShape") && s.data.value && item.value ? boxTagsOf(s.data.value, t.doc.value, props.boxId, item.value).get(c.mod.modId)?.tone === "bad" : !isGoalMod(c.aim));
+const keepText = (m: StageMod): string => { const it = item.value ? cardOf(item.value) : null; return modText((it ? [...it.prefixes, ...it.suffixes].find((x) => x.modId === m.modId) : null) ?? m); }; // 値はカードと同じ (cardOf、10-28 モンキー見た目 1: 欄 94% / カード 96%)
+const keepLabel = (c: { aim: Aim; mod: StageMod }): string => (flag("goalShape") && keepJunk(c) ? tr(`外れ MOD (${keepText(c.mod)})`, `Miss mod (${keepText(c.mod)})`) : keepText(c.mod));
 function keepNone(e: Event): void { const was = [...keepChecked.value]; keepChecked.value = []; (e.target as HTMLInputElement).checked = true; warnIfBelow(() => { keepChecked.value = was; }); }
 const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, ...(isRemove.value ? { keep: keepAims.value } : {}) }) : null));
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
