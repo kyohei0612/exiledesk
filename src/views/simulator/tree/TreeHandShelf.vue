@@ -231,9 +231,8 @@ const resultText = computed((): [string, string] | null => {
 /** 当たりの箱の既定 (tree-hand-plan の hitAimsOf) */
 const hitAims = computed((): Aim[] => {
   // チェックした MOD が当たりの箱 (当たるまで繰り返す時は、どれかが付くまで = tree-sample の handAims)。何も無ければ 0 (繰り返しなら problemOf が止める)
-  // 当たるまで繰り返さない手で 1 つでもチェックしたら、チェックの無い狙いも付きうるなら当たりの箱 (10-27 オーナーの決め (a): 回すと付いた狙いは当たりなので、
-  // チェックした物だけだと行き先の無い当たりで止まった。r/ibMlQuAV のカオスで 30 人中 28 人)。チェックした物が先
-  if (showAims.value) return spam.value || !checkedAims.value.length ? checkedAims.value : [...checkedAims.value, ...aimChoices.value.filter((a) => !checkedAims.value.includes(a))];
+  // チェックの無い狙いは当たりの箱にしない (10-27 朝オーナー「チェックしてないものまで勝手につく」= バグ。f468861b の (a) を戻した)
+  if (showAims.value) return checkedAims.value;
   const d = s.data.value, it = item.value, h = hand.value;
   return d && it && h ? hitAimsOf(d, t.doc.value, props.boxId, it, h, t.goals.value) : [];
 });
@@ -306,7 +305,7 @@ function ok(): void {
       <!-- 足す手: 当たりの箱にする狙いをチェック (複数可)。チェックした MOD ごとに当たり、どれも付かなければ外れ、0 個 = 狙い無し (10-25 オーナー) -->
       <div v-if="showAims && !phone" data-tree-hand-aims class="flex flex-col gap-1 text-[12px]">
         <span v-if="spam && !checkedAims.length" data-tree-hand-aim-need class="text-rose-200/90">{{ tr("狙う MOD を選んで", "Pick a target mod") }}</span>
-        <span v-else class="opacity-80">{{ tr("狙う MOD (☑ を付けると、付きうる狙いごとに当たりの箱を作る。どれか 1 つ付けば当たり)", "Target mods (with a ☑, every target this can roll gets a hit box; any one landing is a hit)") }}</span>
+        <span v-else class="opacity-80">{{ tr("狙う MOD (☑ の MOD ごとに当たりの箱を作る。どれか 1 つ付けば当たり)", "Target mods (one hit box per ☑ mod; any one landing is a hit)") }}</span>
         <label v-for="a in aimChoices" :key="aimKey(a)" data-tree-hand-aim :data-aim="aimKey(a)" class="flex min-h-7 min-w-0 cursor-pointer items-center gap-2">
           <input type="checkbox" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="t.aimLabel(a)">{{ t.aimLabel(a) }}</span>
         </label>
@@ -362,7 +361,7 @@ function ok(): void {
         <div class="min-h-0 flex-1 overflow-y-auto px-3 pb-3 pt-4 text-center">
           <p class="break-words text-[12px] text-[#9a8a70]">{{ hand ? handLabel(hand) : nameOf(held) }}</p>
           <h2 class="mt-1 text-[17px] font-bold text-[#f0e4c8]">{{ tr("当たりにする MOD", "Mods that count as a hit") }}</h2>
-          <p class="mt-1 break-words text-[12px] text-[#9a8a70]">{{ spam ? tr("当たるまで繰り返す手は、狙う MOD を 1 つ以上選ぶ", "For a repeat-until-hit craft, pick at least one target") : tr("☑ を付けると、付きうる狙いごとに当たりの箱を作る。どれか 1 つ付けば当たり", "With a ☑, every target this can roll gets a hit box; any one landing is a hit") }}</p>
+          <p class="mt-1 break-words text-[12px] text-[#9a8a70]">{{ spam ? tr("当たるまで繰り返す手は、狙う MOD を 1 つ以上選ぶ", "For a repeat-until-hit craft, pick at least one target") : tr("☑ の MOD ごとに当たりの箱を作る。どれか 1 つ付けば当たり", "One hit box per ☑ mod; any one landing is a hit") }}</p>
           <div data-tree-hand-aims class="mt-3 flex flex-col gap-1.5 text-left">
             <label v-for="a in aimChoices" :key="aimKey(a)" data-tree-hand-aim :data-aim="aimKey(a)" class="flex min-h-11 min-w-0 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
               <input type="checkbox" class="size-5 shrink-0" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 break-words">{{ t.aimLabel(a) }}</span>
