@@ -178,7 +178,7 @@ const outOf = (o: Parameters<typeof outNameOf>[1], a?: Aim | null): string => ou
 const aimChoices = computed((): Aim[] => {
   const d = s.data.value, it = item.value;
   if (d && it && held.value && isInfinite.value) return hitAimsOf(d, t.doc.value, props.boxId, it, handOf({ held: held.value, omens: omens.value, spam: false, spamMax: null, free: false, echo: echo.value }), t.goals.value);
-  return d && it && held.value ? hitChoicesOf(d, t.doc.value, props.boxId, it, { held: held.value, omens: omens.value, echo: echo.value, veil: veil.value }, t.goals.value) : [];
+  return d && it && held.value ? hitChoicesOf(d, t.doc.value, props.boxId, it, { held: held.value, omens: omens.value, echo: echo.value, veil: boneVeil.value ? "pick" : veil.value }, t.goals.value) : []; // 骨は発現させない時も候補 = 発現で出うる MOD (☑ で発現させるがオン)
 });
 /** チェックした狙い (候補にある物だけ) */
 const checkedAims = computed((): Aim[] => aimChoices.value.filter((a) => checked.value.includes(aimKey(a))));
@@ -210,16 +210,16 @@ watch(held, (k) => { if (k && window.innerWidth < 768) void showOmens(); });
 // 新しい手の既定 = 狙い無し (10-26 夜オーナー「デフォルトは狙い無しでチェック付けといてくれ」)。当たるまで繰り返す手は狙い無しが無いので候補に全部チェック
 watch([aimChoices, spam], ([l, sp]) => { if (!props.current && !touched) checked.value = sp ? l.map(aimKey) : []; }, { immediate: true });
 /** チェックの一覧を出す (MOD が付く・入れ替わる手) */
-const showAims = computed(() => (canFree.value && !(boneVeil.value && !veilOn.value)) || (isInfinite.value && aimChoices.value.length > 0));
+const showAims = computed(() => canFree.value || (isInfinite.value && aimChoices.value.length > 0));
 /** 狙い無し = MOD を 1 つもチェックしていない。当たるまで繰り返す時は狙い無しも「どれでも」も無い (MOD を 1 つ以上チェックするまで確定しない、10-25 オーナー) */
 const freeOn = computed(() => showAims.value && !spam.value && !checkedAims.value.length);
 /** 狙い無しを押す = MOD を全部外す (もう狙い無しの時に押しても外れない。値が同じだと Vue が描き直さず、チェックだけ外れて見えた) */
 function toggleFree(e: Event): void { const was = [...checked.value]; touched = true; checked.value = []; (e.target as HTMLInputElement).checked = true; warnIfBelow(() => { checked.value = was; }); }
 function toggleAim(a: Aim): void {
-  const k = aimKey(a), cur = checkedAims.value.map(aimKey), was = [...checked.value];
-  touched = true;
+  const k = aimKey(a), cur = checkedAims.value.map(aimKey), was = [...checked.value]; touched = true;
   checked.value = cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k];
-  warnIfBelow(() => { checked.value = was; });
+  const vWas = veilOn.value, om = [...omens.value]; if (boneVeil.value && !vWas && !cur.includes(k)) { veilOn.value = true; if (!om.includes(ECHO)) omens.value = [...om, ECHO]; } // 骨で ☑ = 発現させる (10-28 オーナー)
+  warnIfBelow(() => { checked.value = was; veilOn.value = vWas; omens.value = om; });
 }
 /** この箱から下の箱の数 (今の手の結果から先。手を替える・狙いを変えると消える) */
 const below = computed((): number => {
