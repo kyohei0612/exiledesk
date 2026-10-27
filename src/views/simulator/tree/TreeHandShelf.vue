@@ -424,7 +424,7 @@ function ok(): void {
       <div v-if="showAims" class="flex gap-2">
         <!-- 左は普通の「キャンセル」(持った札を離す)、右は狙いを選ぶ (今の手を直す時は「狙いを再度選ぶ」)。10-27 オーナー「このまま決めるは日本語として変」 -->
         <button type="button" data-tree-hand-cancel class="g-btn !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="release()">{{ tr("キャンセル", "Cancel") }}</button>
-        <button type="button" data-tree-hand-aim-step class="g-btn-red !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="aimStep = true">{{ current ? tr("狙いを再度選ぶ ›", "Pick targets again ›") : tr("狙いを選ぶ ›", "Pick targets ›") }}</button>
+        <button type="button" data-tree-hand-aim-step class="g-btn-red !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="aimStep = true">{{ flag("barUse") ? (current ? tr("使う (狙いを選び直す) ›", "Use (pick targets again) ›") : tr("使う (狙いを選ぶ) ›", "Use (pick targets) ›")) : current ? tr("狙いを再度選ぶ ›", "Pick targets again ›") : tr("狙いを選ぶ ›", "Pick targets ›") }}</button>
       </div>
       <div v-else-if="isRemove && P27" class="flex gap-2">
         <button type="button" data-tree-hand-cancel class="g-btn !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="release()">{{ tr("キャンセル", "Cancel") }}</button>
