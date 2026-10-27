@@ -370,7 +370,7 @@ function outBoxOfRaw(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[] }
 }
 
 /**
- * 外れの側の箱 (外れ・狙いが消えた・打った後、狙いに無い MOD だけの当たり) で手 h を選んだ時の戻り先 (シミュのルール = PC・スマホ共通、tree-hand-plan の applyPick が呼ぶ。
+ * 結果の箱 (外れ・狙いが消えた・打った後・当たり) で手 h を選んだ時の戻り先 (当たりも同じ、10-27 夕オーナー「同じ手・同じ狙い・同じ挙動の箱を自動で見つける話」) (シミュのルール = PC・スマホ共通、tree-hand-plan の applyPick が呼ぶ。
  * 10-27 オーナー「ここの挙動はシミュのルールだから共通でしょ」、スイッチ goalShape)。新しい段は作らずその箱へ戻る:
  * ① 打つ前の箱 (親) と同じ手 = 再度挑戦 (10-27 オーナー「ハズレでかつ同じ MOD 群で 1 段上に進むことはない」)
  * ② 木の中でこの箱と同じ形 (形の鍵 = 狙いの組 + 外れの有無、shapeFits も合う) で同じ手の箱 (候補が幾つもあれば上の段。r/okPcmPyY: 冒涜の外れで、同じ形の外れのエッセンスと同じ手)。
@@ -378,7 +378,7 @@ function outBoxOfRaw(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[] }
  */
 export function sameHandReturn(doc: TreeDoc, id: string, h: Hand): string | null {
   const b = doc.boxes[id];
-  if (!b || !(b.out === "junk" || b.out === "lost" || b.out === "any" || junkLike(doc, b))) return null;
+  if (!b || !(b.out === "junk" || b.out === "lost" || b.out === "any" || b.out === "hit")) return null;
   const same = (x: Hand | null | undefined): boolean => !!x && x.currency === h.currency && [...x.omens].sort().join() === [...h.omens].sort().join();
   const p = b.parent ? doc.boxes[b.parent] : undefined;
   if (p && same(p.hand) && shapeFits(doc, id, p.id)) return p.id;
