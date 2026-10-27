@@ -82,11 +82,22 @@ function hitKeys(doc: TreeDoc, c: TreeBox): string[] {
 }
 /** 完成の狙いに無い MOD だけが付いた当たりの箱 = 外れの箱と同じ形 (スイッチ goalShape) */
 const junkLike = (doc: TreeDoc, b: TreeBox): boolean => b.out === "hit" && !!b.aim && flag("goalShape") && !!(doc.memoAims ?? []).length && !hitKeys(doc, b).length;
+/**
+ * 当たりの箱を通った組 = 今の組に、その箱で新しく付いた狙い (ks のどれか) を足した物。当たりは新しく付いた物なので、もう持っている狙いが
+ * もう一度付く組 (まとめた箱「アーマーかライフ」のアーマーの道で、次の当たり「アーマーが付いた」) はありえない。その組は落とす
+ * (10-27 夜モンキー 2 回目 1: 落とさないと当たりの箱の組が 2 通りになり、自動で「形の合う箱へ」の戻りが付いて「再度挑戦」になった。全部落ちる時は前のまま。スイッチ hitNew)
+ */
+function addHit(sets: string[][], ks: readonly string[]): string[][] {
+  const old = sets.flatMap((h) => ks.map((k) => (h.includes(k) ? h : [...h, k])));
+  if (!flag("hitNew")) return old;
+  const fresh = sets.flatMap((h) => ks.filter((k) => !h.includes(k)).map((k) => [...h, k]));
+  return fresh.length ? fresh : old;
+}
 function pathHelds(doc: TreeDoc, id: string | null): string[][] {
   let sets: string[][] = [[]];
   for (let x = id; x; x = doc.boxes[x]?.parent ?? null) {
     const c = doc.boxes[x];
-    if (c?.out === "hit" && c.aim && hitKeys(doc, c).length) { const ks = hitKeys(doc, c); sets = sets.flatMap((h) => ks.map((k) => (h.includes(k) ? h : [...h, k]))).slice(0, 64); }
+    if (c?.out === "hit" && c.aim && hitKeys(doc, c).length) sets = addHit(sets, hitKeys(doc, c)).slice(0, 64);
     // 残したい MOD を決めた消去の後は、その MOD だけ持っている (ほかは外れ MOD。上はたどらない、10-27)
     const keep = c ? keepCut(doc, c) : null;
     if (keep) { const ks = keep.map(aimKey); return sets.map((h) => [...new Set([...h, ...ks])]); }
@@ -106,7 +117,7 @@ export function heldSets(doc: TreeDoc, id: string | null): string[][] {
     const keep = keepCut(doc, c);
     if (keep) { const ks = keep.map(aimKey); sets = c.out === "lost" && ks.length ? ks.map((k) => ks.filter((x) => x !== k)) : [ks]; continue; }
     // 「どれか」の当たりの箱はどれが付いたかで組が分かれる (anyOf、10-26)
-    if (c.out === "hit" && c.aim && hitKeys(doc, c).length) { const ks = hitKeys(doc, c); sets = sets.flatMap((h) => ks.map((k) => (h.includes(k) ? h : [...h, k]))); }
+    if (c.out === "hit" && c.aim && hitKeys(doc, c).length) sets = addHit(sets, hitKeys(doc, c));
     else if (c.out === "lost") {
       sets = sets.flatMap((h) => (h.length ? h.map((k) => h.filter((x) => x !== k)) : [h]));
       // エッセンスの「狙いが消えた」は、エッセンスで付いた MOD (同じ手の当たりの箱の札) は付いている

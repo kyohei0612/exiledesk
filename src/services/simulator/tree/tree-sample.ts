@@ -9,7 +9,8 @@
 import { aimDone, aimHits as hits, applyCurrency, room, sideOfMod, baseSocketsOf, catalystOf, forceKey, freshItem, kindOf, mulberry32, omenBlock, OMEN_FOR, revealOffers, runeIdByName, tierIndexOf, unrevealedOf, useReason, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { fractureStart, stepOutcomes } from "../../simulator/sim-engine";
 import { catalystFull, catalystTagOf, fillCatalyst } from "../../simulator/sim-engine";
-import { isAimMod, junkOf } from "./tree-aim";
+import { aimHeldOn, isAimMod, junkOf } from "./tree-aim";
+import { flag } from "../../../web/release-flags";
 import { CATALYSING as CATALYSING_OMEN, ECHO, ECHO as ABYSSAL_ECHO_OMEN, effectOf, isCatalyst } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import { fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
@@ -226,6 +227,19 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
   }
   if (!p.hand) return base;
   const aims = aimsOf(doc);
+  // 当たりの箱の狙いを親の見本がもう持っている (まとめた箱「アーマーかライフ」のアーマーの道で、次の当たり「アーマーが付いた」) 時は、
+  // 持っていない親の見本を引き直す (付け直せず親の見本のまま「アーマーだけ」が出た、10-27 夜モンキー 2 回目 1。スイッチ hitNew)
+  if (flag("hitNew") && b.out === "hit" && b.aim && aimHeldOn(data, base.item, b.aim, { sameText: true })) {
+    for (let k = 1; k < SPLIT_TRIES; k++) {
+      const alt = sampleIn(data, doc, p.id, seed + 7919 * k);
+      if (!aimHeldOn(data, alt.item, b.aim, { sameText: true })) return sampleFrom(data, doc, b, p, alt, seed, boxId, aims);
+    }
+  }
+  return sampleFrom(data, doc, b, p, base, seed, boxId, aims);
+}
+/** 親の見本 base に親の手を打って、この箱の見本を作る */
+function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox, base: Sample, seed: number, boxId: string, aims: Aim[]): Sample {
+  if (!p.hand) return base;
   const rng = mulberry32(seed ^ 0x5eed ^ boxId.length * 7919);
   let last: StageApply | null = null;
   for (let i = 0; i < TRIES; i++) {
