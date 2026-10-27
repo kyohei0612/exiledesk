@@ -13,9 +13,7 @@ import type { RowTag } from "../../../components/for-share/item/stage-item-row-t
 import { modText, tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 
-export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly string[], it: StageItem, box?: { anyOf?: Aim[]; out?: string } | null): Map<string, RowTag> {
-  // 狙い無しの手の「打った後」の箱は当たり・外れに分けないので「外れ MOD」と書かない (MOD の名前のまま。10-27 夕モンキー 4、スイッチ goalShape)
-  const noJunk = flag("goalShape") && box?.out === "any";
+export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly string[], it: StageItem, box?: { anyOf?: Aim[] } | null): Map<string, RowTag> {
   const out = new Map<string, RowTag>();
   const any = box?.anyOf && box.anyOf.length > 1 ? box.anyOf : null;
   const anyT = any ? targetsOf(d, any) : [];
@@ -26,7 +24,7 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
     if (m.fractured) continue;
     if (any && isAimMod(m, anyT, o)) out.set(m.modId, { text: anyText, tone: "info", replace: true, title: tr(`どれか 1 つが付けば当たり (この見本は ${modText(m)})`, `Any one of these is a hit (this sample has ${modText(m)})`) });
     else if (isAimMod(m, bad, o)) out.set(m.modId, { text: tr("× 要らない", "× Unwanted"), tone: "bad" });
-    else if (!noJunk && !isAimMod(m, aims, o)) out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`このツリーの狙いに当たらない MOD: ${modText(m)}`, `Not one of this tree's target mods: ${modText(m)}`) });
+    else if (!isAimMod(m, aims, o)) out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`このツリーの狙いに当たらない MOD: ${modText(m)}`, `Not one of this tree's target mods: ${modText(m)}`) });
   }
   return out;
 }
