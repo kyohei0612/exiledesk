@@ -13,7 +13,7 @@ import StageItemCard from "../../../components/for-share/item/StageItemCard.vue"
 import CurrencyShelf from "../../../components/for-share/shelf/CurrencyShelf.vue";
 import HeldOmens from "../../../components/for-share/shelf/HeldOmens.vue";
 import HeldCursor from "../../../components/for-share/shelf/HeldCursor.vue";
-import { omensAllowedFor, useReason, type StageItem } from "../../../services/craft-stage/engine";
+import { ESSENCE_KEYS, omensAllowedFor, useReason, type StageItem } from "../../../services/craft-stage/engine";
 import { omensFor } from "../../../services/craft-stage/engine";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
@@ -103,7 +103,12 @@ const shelfItem = computed(() => preFill.value?.item ?? item.value);
 const heldHelp = computed(() => (held.value ? stageHelp(held.value, s.data.value, shelfItem.value).map((l) => l.replace(/\*\*/g, "")) : []));
 // フラクチャーのオーブは完成の MOD でフラクチャーの印を決めた木でだけ打てる (10-25 オーナー「最初にフラクチャーを決めないとフラクチャーオーブを打てないように」)
 const fractureBlock = (k: string): string | null => (effectOf(k) === "fracture" && !fractureMarks(t.doc.value).length ? tr("先に完成の MOD でフラクチャーを決めて", "Set a fracture on the final mods first") : null);
-const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens, fractureBlock);
+/**
+ * 錯乱のエッセンス (付くノータブルがランダム) はシミュでは選べない (10-27 昼オーナー。エミュには残す)。灰色で理由を短く、スイッチ noSpam と同じ扱い。
+ * 前の木に入っている錯乱の手は開けば今まで通り (持ち直さなければ替わらない)
+ */
+const deliriumBlock = (k: string): string | null => (flag("noSpam") && ESSENCE_KEYS[k]?.en === "Essence of Delirium" ? tr("シミュでは使えない", "Not usable in the simulator") : null);
+const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens, (k) => fractureBlock(k) ?? deliriumBlock(k));
 /**
  * カオススパムオーブ (10-25 オーナー「レア状態のアイテムになら特別にカオススパムオーブを実装しよう」): 棚の上のシミュだけの札。レアの時だけ出す。
  * 持つ = カオス (段は持った物の欄で普通・上級・完全) を当たるまで (spam)。狙う MOD は必ず選ぶ、お告げはカオスと同じ。前は普通のカオスの窓の「当たるまで繰り返す」のチェックだった (消した)
@@ -129,6 +134,8 @@ function onShelfHold(k: string): void {
 }
 /** ツリーの棚は打てる札だけを出すので、印が無いせいで出ないフラクチャーは窓に理由を 1 行 (アイテムには打てる時だけ) */
 const fracHidden = computed(() => { const d = s.data.value, it = item.value; return !!d && !!it && !!fractureBlock("fracture") && !useReason(d, it, "fracture"); });
+/** 錯乱のエッセンスがこのアイテムに打てるのに棚から外している時は、窓に理由を 1 行 (シミュの棚は打てる札だけを出すので灰色の札は出ない) */
+const delirHidden = computed(() => { const d = s.data.value, it = item.value; return !!d && !!it && flag("noSpam") && Object.keys(ESSENCE_KEYS).some((k) => ESSENCE_KEYS[k]?.en === "Essence of Delirium" && !useReason(d, it, k)); });
 const used = computed(() => (held.value ? omensFor(held.value, omens.value) : []));
 const catalysing = computed(() => used.value.includes(CATALYSING));
 
@@ -305,6 +312,7 @@ function ok(): void {
         <p class="text-[12px] opacity-70">{{ tr("棚から持って、カードを押すとこの箱の次の手になる", "Hold a currency from the shelf and click the item to make it this box's next craft") }}</p>
         <!-- 打たずに分ける (分かれ目) のボタンは 10-25 に外した (オーナー「分かれ道マジでややこしいからボタンいらない」)。分かれ目は見本の木にある物だけ、窓 TreeSplitPick で行を直せる -->
         <p v-if="fracHidden" data-tree-hand-frac-off class="text-[12px] text-rose-200/90">{{ tr("フラクチャーのオーブ: 先に完成の MOD でフラクチャーを決めて (0 完成形の設定の ✦)", "Fracturing Orb: set a fracture on the final mods first (✦ in 0 Final item)") }}</p>
+        <p v-if="delirHidden" data-tree-hand-delirium-off class="text-[12px] text-rose-200/90">{{ tr("錯乱のエッセンス: シミュでは使えない (付くノータブルがランダム)", "Essence of Delirium: not usable in the simulator (the notable is random)") }}</p>
         <button v-if="t.doc.value.boxes[boxId]?.out !== 'start'" type="button" data-tree-hand-back class="g-btn sm self-start" :title="tr('打たずに既にある箱へ戻す (窓を閉じて、戻り先の箱を押す)', 'Return to an existing box instead (closes this window; click the box)')" @click="emit('back')">↩ {{ tr("既にある箱へ戻す", "Return to a box") }}</button>
         <button v-if="current" type="button" class="g-btn sm self-start" @click="emit('clear')">{{ tr("この手を消す (下も消える)", "Remove this craft (and below)") }}</button>
 
