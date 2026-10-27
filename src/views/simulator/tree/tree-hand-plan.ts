@@ -102,8 +102,10 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
   if (kind === "fracture") {
     // ✦ の印の無い木 (白ベースから・フラクチャー無し) は乱数で固定: 当たりの札 = アイテムに付いている完成の狙い (未発現・冒涜の MOD は固定されない。スイッチ fracRandom)
     if (flag("fracRandom") && !fractureMarks(doc).length) {
-      const mods = [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured && !m.unrevealed && !m.desecrated);
-      return (doc.memoAims ?? []).filter((a) => aimHeldOn(data, { ...item, prefixes: mods.filter((m) => m.side === "prefix"), suffixes: mods.filter((m) => m.side === "suffix") }, a, { sameText: true })).map((a) => ({ modId: a.modId, tier: a.tier }));
+      // 見本を幾つか見て、どれかに付いている完成の狙いは全部札に (見本 1 つだと、そこで冒涜で付いていた冷気耐性が札に入らず、ほかの人で固定された冷気耐性が外れの箱に入った、10-27 夜)
+      const items = [item, ...[2, 3, 4].map((seed) => sampleOf(data, doc, boxId, seed).item)];
+      const fixable = (it: StageItem): StageItem => { const ms = [...it.prefixes, ...it.suffixes].filter((m) => !m.fractured && !m.unrevealed && !m.desecrated); return { ...it, prefixes: ms.filter((m) => m.side === "prefix"), suffixes: ms.filter((m) => m.side === "suffix") }; };
+      return (doc.memoAims ?? []).filter((a) => items.some((it) => aimHeldOn(data, fixable(it), a, { sameText: true }))).map((a) => ({ modId: a.modId, tier: a.tier }));
     }
     return fractureMarks(doc).filter((a) => aimHeldOn(data, item, a, { sameText: true }));
   }
