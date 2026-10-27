@@ -22,8 +22,10 @@ const stripHand = (h: Hand | null | undefined): boolean => !!h && effectOf(h.cur
 export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly string[], it: StageItem, box?: { id?: string; out?: OutKind | "start"; anyOf?: Aim[]; hand?: Hand | null } | null): Map<string, RowTag> {
   const out = new Map<string, RowTag>();
   // 消去の直線の箱 (全部消えてよい消去の手の箱) は、フラクチャー以外の MOD を全部「外れ MOD」で出す (手の窓で消去を持った時と同じ考え。10-27 夜オーナー、スイッチ heldTags)
-  if (flag("heldTags") && stripHand(box?.hand)) {
-    for (const m of [...it.prefixes, ...it.suffixes]) if (!m.fractured) out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`全部消えてよい消去で消えうる MOD: ${modText(m)}`, `May be removed by the clear-all Annulment: ${modText(m)}`) });
+  // 直線の途中の箱だけ (消去を打ち始める元の箱は普段の札。子に消去の手を足すと親の ES・未発現まで「外れ MOD」に変わった、10-28 モンキー 1。未発現の枠も替えない。スイッチ boneLater)
+  const chainBox = !flag("boneLater") || (!!box?.id && stripHand(doc.boxes[doc.boxes[box.id]?.parent ?? ""]?.hand));
+  if (flag("heldTags") && stripHand(box?.hand) && chainBox) {
+    for (const m of [...it.prefixes, ...it.suffixes]) if (!m.fractured && !(m.unrevealed && flag("boneLater"))) out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`全部消えてよい消去で消えうる MOD: ${modText(m)}`, `May be removed by the clear-all Annulment: ${modText(m)}`) });
     return out;
   }
   const any = box?.anyOf && box.anyOf.length > 1 ? box.anyOf : null;
