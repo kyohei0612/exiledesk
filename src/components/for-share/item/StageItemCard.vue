@@ -29,14 +29,17 @@ import { skillQualityOf } from "../../../services/craft-stage/skill-quality";
 import { useDismiss } from "../../../utils/use-dismiss";
 import RichText from "../../decor/RichText.vue";
 import { vFitText } from "../../../utils/fit-text";
-import type { RowTag } from "./stage-item-row-tag";
+import type { RowTag, RowToggle } from "./stage-item-row-tag";
 
 /**
  * minH: 枠の最低の高さ (px)。動画モードの撮影用で、一番長い時の高さを確保して中身は上詰めにする (手ごとに枠が伸び縮みしない)。
  * compact: 撮影用。英語のベース名を出さず、区切りの余白を詰める (詰めた分だけ拡大できる。MOD の文字を 1080p で 32px 以上に)
  */
 /** doomed: 今持っている物を打つと消える・入れ替わる・数値が変わる・固定される候補 (ゲームと同じく打つ前に色を付ける。2026-10-04 削減、2026-10-17 全部の手に) */
-const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[]; /** 付く空き (側ごとに光らせる枠の数。spec/preview.ts) */ open?: Record<"prefix" | "suffix", number> | null; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean; /** 付いた瞬間の確率 (無ければステージの工程から。スパムシミュレーターの運試しは自分の物を渡す) */ chances?: ReadonlyMap<string, number> | null; /** MOD の行ごとの札 (modId → 文と色。シミュの「外れ MOD」など。渡さなければ出ない) */ rowTags?: ReadonlyMap<string, RowTag> | null; /** フラクチャーの印の MOD (modId)。2 つ以上付いていれば 1 行「フラクチャー MOD ×n」にまとめ、ホバーで中身 (シミュの完成形、2026-10-23 オーナー) */ fractureGroup?: readonly string[] | null; /** × を出さずに、MOD の行の右クリックで fracture を出す (シミュの完成形。removable なら言わなくても出る) */ fracturable?: boolean; /** 明示の MOD の行にホバーした時だけ小さな × (remove を出す)。ルーン・暗黙・列の幅は変えない (シミュの完成形、2026-10-24 オーナー「アイテムにつく UI から × で消したい」) */ rowRemove?: boolean; /** 段を「S2 以上」(英語 S2+) と出す。狙いの段 (シミュの完成形、2026-10-24 オーナー「S2 なら S2 以上って書かんと」)。一番上の段 (1) には付けない */ tierAtLeast?: boolean; /** MOD の行だけ (題の帯・種類・アイテムレベル・品質・ベースの値・ソケット・ルーン・エンチャント・暗黙を出さない。シミュのツリーの箱の中の小さなカード、2026-10-26 オーナー「枠は現状のアイテムの枠」) */ modsOnly?: boolean; /** 左の段の札 (P1・S2 以上・暗黙) の列と右の空きを半分ほどに・字を 10px に、空いた分 MOD の文を 16px に (シミュの細い右の列の完成形、10-26 夜オーナー「ティアの表示は小さくていいから、その分文字大きく」) */ tightTier?: boolean; /** modsOnly でも題の帯 (ベース名) だけは出す (シミュのツリーの箱、10-26 夜オーナー「『不在のアミュレット』っていう感じで枠作ってほしい」) */ withTitle?: boolean}>();
+const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[]; /** 付く空き (側ごとに光らせる枠の数。spec/preview.ts) */ open?: Record<"prefix" | "suffix", number> | null; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean; /** 付いた瞬間の確率 (無ければステージの工程から。スパムシミュレーターの運試しは自分の物を渡す) */ chances?: ReadonlyMap<string, number> | null; /** MOD の行ごとの札 (modId → 文と色。シミュの「外れ MOD」など。渡さなければ出ない) */ rowTags?: ReadonlyMap<string, RowTag> | null; /** フラクチャーの印の MOD (modId)。2 つ以上付いていれば 1 行「フラクチャー MOD ×n」にまとめ、ホバーで中身 (シミュの完成形、2026-10-23 オーナー) */ fractureGroup?: readonly string[] | null; /** × を出さずに、MOD の行の右クリックで fracture を出す (シミュの完成形。removable なら言わなくても出る) */ fracturable?: boolean; /** 明示の MOD の行にホバーした時だけ小さな × (remove を出す)。ルーン・暗黙・列の幅は変えない (シミュの完成形、2026-10-24 オーナー「アイテムにつく UI から × で消したい」) */ rowRemove?: boolean; /** 段を「S2 以上」(英語 S2+) と出す。狙いの段 (シミュの完成形、2026-10-24 オーナー「S2 なら S2 以上って書かんと」)。一番上の段 (1) には付けない */ tierAtLeast?: boolean; /** MOD の行だけ (題の帯・種類・アイテムレベル・品質・ベースの値・ソケット・ルーン・エンチャント・暗黙を出さない。シミュのツリーの箱の中の小さなカード、2026-10-26 オーナー「枠は現状のアイテムの枠」) */ modsOnly?: boolean; /** 左の段の札 (P1・S2 以上・暗黙) の列と右の空きを半分ほどに・字を 10px に、空いた分 MOD の文を 16px に (シミュの細い右の列の完成形、10-26 夜オーナー「ティアの表示は小さくていいから、その分文字大きく」) */ tightTier?: boolean; /** modsOnly でも題の帯 (ベース名) だけは出す (シミュのツリーの箱、10-26 夜オーナー「『不在のアミュレット』っていう感じで枠作ってほしい」) */ withTitle?: boolean; /** MOD の行の札の後ろに押せる札 (modId → 文字・押された状態。押すと toggle)。渡さなければ出ない (シミュの完成形の「途中で消える」、オーナー 10-27 夜) */ rowToggles?: ReadonlyMap<string, RowToggle> | null}>();
+/** 行の押せる札 (rowToggles)。スイッチ rowToggle が切れている間は渡されても出さない */
+const ROW_TOGGLE = flag("rowToggle");
+const toggleOf = (m: StageMod): RowToggle | null => (ROW_TOGGLE && !m.unrevealed ? props.rowToggles?.get(m.modId) ?? null : null);
 /** 行の札の色 */
 const ROW_TAG_TONE: Record<RowTag["tone"], string> = { bad: "bg-rose-500/25 text-rose-200", warn: "bg-amber-500/25 text-amber-100", good: "bg-emerald-500/25 text-emerald-200", info: "bg-sky-500/20 text-sky-100" };
 /** replace の札を行の名前にする時の文字の色 */
@@ -60,7 +63,7 @@ const openTitle = computed(() => ((props.open?.prefix ?? 0) && (props.open?.suff
  */
 const isFocus = (m: StageMod): boolean => !!props.focus && (m.modId === props.focus || m.modId.endsWith(`/${props.focus}`) || m.family === props.focus);
 const anyFocus = computed(() => !!props.focus && [...props.item.prefixes, ...props.item.suffixes].some(isFocus));
-const emit = defineEmits<{ use: []; socket: [n: number]; unsocket: [n: number]; remove: [modId: string]; fracture: [m: StageMod]; jump: [modId: string]; implicit: [line: number, values: number[]] }>();
+const emit = defineEmits<{ use: []; socket: [n: number]; unsocket: [n: number]; remove: [modId: string]; fracture: [m: StageMod]; jump: [modId: string]; toggle: [modId: string]; implicit: [line: number, values: number[]] }>();
 /** 暗黙の値の幅 (「6–9 から 11–15」、英語は「6–9 to 11–15」) */
 const rangeLabel = (rs: Array<[number, number, number]>): string => rs.map(([lo, hi, d]) => (lo === hi ? lo.toFixed(d) : `${lo.toFixed(d)}–${hi.toFixed(d)}`)).join(tr(" から ", " to "));
 /** 暗黙の値を 1 刻み上下した値 (範囲の中だけ。範囲が 2 つ以上なら全部を同じ向きに)。動かせなければ null */
@@ -341,6 +344,8 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
             <span v-else :class="[isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : r.boosted ? 'text-[#7ee8ff]' : '']" :title="r.boosted ? tr(`品質で伸びた数値 (素は ${modText(r.m)})`, `Boosted by quality (base: ${modText(r.m)})`) : undefined">{{ r.text }}</span>
             <span v-if="look(r.m).tag" class="whitespace-nowrap align-middle text-[10px] opacity-80" :class="modsOnly ? 'st-mo-tag ml-1' : 'ml-1.5'">{{ look(r.m).tag }}</span>
             <span v-for="t in r.tags" :key="t" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[t]!.cls">{{ tagLabel(t) }}</span>
+            <!-- 押せる札 (rowToggles): 文の続きなので、入らなければ v-fit-text が文と一緒に字を縮め、下限でも入らなければ行の下へ折る (メモ feedback-shrink-then-wrap) -->
+            <button v-if="toggleOf(r.m)" type="button" data-row-toggle :aria-pressed="toggleOf(r.m)!.on" :disabled="toggleOf(r.m)!.disabled" class="g-plain ml-1.5 inline-block whitespace-nowrap rounded border px-1.5 py-px align-middle font-sans text-[10px] leading-[1.4] not-italic transition disabled:cursor-not-allowed disabled:opacity-35 max-md:px-2 max-md:py-0.5 max-md:text-[11px]" :class="toggleOf(r.m)!.on ? 'border-amber-300/70 bg-amber-500/25 text-amber-100' : 'border-white/20 bg-black/40 text-white/70 hover:border-amber-300/50 hover:text-white/90'" :title="toggleOf(r.m)!.title" @click.stop="emit('toggle', r.m.modId)" @contextmenu.stop>{{ toggleOf(r.m)!.text }}</button>
             <span v-if="rowTags?.get(r.m.modId) && !rowTags.get(r.m.modId)!.replace" data-row-tag class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] font-sans not-italic" :class="ROW_TAG_TONE[rowTags.get(r.m.modId)!.tone]" :title="rowTags.get(r.m.modId)!.title">{{ rowTags.get(r.m.modId)!.text }}</span>
           </span>
           <!-- 右端 (↓・確率・×) は行ごとに中身が違うので枠の幅を決めておき、真ん中の文字をどの行もそろえる (2026-10-17 オーナー「% が無いからずれた、枠幅決めて中央ぞろえ」) -->
