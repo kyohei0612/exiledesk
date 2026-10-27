@@ -25,8 +25,8 @@ const props = defineProps<{ q: Question; step: number }>();
 const emit = defineEmits<{ hand: [id: string]; step: [n: number] }>();
 const t = useTree();
 const quiz = usePhoneQuiz();
-/** 「打つ手を替える」を外す (10-27 昼オーナー「意味が分からない」。手は「○○を選択」の枠で替え、消すのは結果の枠の右上の ×。スイッチ phone1027) */
-const P27 = flag("phone1027");
+/** 「打つ手を替える」を外す (10-27 昼オーナー「意味が分からない」。手は「○○を選択」の枠で替え、消すのは結果の枠の右上の ×。スイッチ phoneResult1027) */
+const P27 = flag("phoneResult1027");
 const box = computed(() => t.doc.value.boxes[props.q.id]);
 const item = computed(() => (s.data.value && box.value ? sampleOf(s.data.value, t.doc.value, props.q.id, 1).item : null));
 const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.value, t.doc.value, box.value?.unwanted ?? [], item.value, box.value) : null));

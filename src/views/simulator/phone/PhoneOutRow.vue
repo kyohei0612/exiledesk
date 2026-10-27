@@ -127,10 +127,10 @@ const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.
 /** カードの幅 = 行の中いっぱい (ページの余白 16 + 行の枠 2 + 行の左右の余白 12)。上限は付けない (10-26 夜オーナー「枠は最大限」) */
 const cardW = (typeof window === "undefined" ? 375 : window.innerWidth) - 30;
 /**
- * 10-27 昼の直し (スイッチ phone1027): 「答えを変える」「打つ手を替える」を外し、答えの文を押すと選択肢 (PC と同じ「↩ 再度挑戦 · n 段目へ戻る」)、
+ * 10-27 昼の直し (スイッチ phoneResult1027): 「答えを変える」「打つ手を替える」を外し、答えの文を押すと選択肢 (PC と同じ「↩ 再度挑戦 · n 段目へ戻る」)、
  * 枠の右上の × = PC の箱の × と同じ (この結果を作った手を消す。1 回目で赤く「下の n 箱ごと消す」、もう一度で消す)。当たりは「(既定)」を出さない (下の帯で打つ手を選ぶ)
  */
-const P27 = flag("phone1027");
+const P27 = flag("phoneResult1027");
 const rm = useArmed();
 const rmCount = computed(() => { const d = t.doc.value, p = parent.value ? d.boxes[parent.value] : undefined; return p ? p.outs.reduce((n, o) => n + subtree(d, o).length, 0) : 0; });
 function removeHand(): void {

@@ -38,8 +38,10 @@ import { useArmed } from "../../../utils/use-armed";
 const t = useTree();
 /** 下の全体図と箱の重ね窓 (スイッチ phoneMap、10-26 オーナーの選んだ案 B。OK 待ちの間は本番は前の形) */
 const MAP = flag("phoneMap");
-/** 10-27 昼の直し 6 件 (スイッチ phone1027): 段送りは下の帯へ (上は消す)・↶ 戻すを外す・当たりはその場で次の手 */
+/** 10-27 昼の直し 6 件 (スイッチ phone1027): 段送りは下の帯へ (上は消す)・↶ 戻すを外す */
 const P27 = flag("phone1027");
+/** 当たりはその場で次の手 (同じ予約の 3、結果の画面の作りが決まるまで保留。スイッチ phoneResult1027) */
+const RES27 = flag("phoneResult1027");
 const q = usePhoneQuiz();
 /** 棚を開いている箱 / 当たりの MOD を選んでいる箱 */
 const handFor = ref<string | null>(null);
@@ -150,7 +152,7 @@ const main = computed((): { kind: string; text: string; off?: boolean; go: () =>
     const outs = q.outsOf(c.id), k = Math.min(outStep.value, Math.max(0, outs.length - 1));
     // 当たりはその場で次の手を選ぶ (10-27 昼オーナー「当たりの結果なのに次の手を選ぶ (既定) + 次へ になっている」)。完成・次の手の付いた当たりは今まで通り「次へ」
     const o = outs[k], ob = o ? t.doc.value.boxes[o] : null;
-    if (P27 && o && ob?.out === "hit" && ["open", "later"].includes(q.stateOf(o))) return { kind: "hand", text: tr("打つ手を選ぶ", "Choose a craft"), go: () => { handFor.value = o; } };
+    if (RES27 && o && ob?.out === "hit" && ["open", "later"].includes(q.stateOf(o))) return { kind: "hand", text: tr("打つ手を選ぶ", "Choose a craft"), go: () => { handFor.value = o; } };
     if (k < outs.length - 1) return { kind: "decide", text: tr(`次へ (${k + 1} / ${outs.length})`, `Next (${k + 1} / ${outs.length})`), go: () => { q.decideOne(outs[k]!); outStep.value = k + 1; window.scrollTo(0, 0); } };
     return { kind: "decide", text: outs.length > 1 ? tr(`次へ (${outs.length} / ${outs.length})`, `Next (${outs.length} / ${outs.length})`) : tr("次へ", "Next"), go: () => q.decide(c.id) };
   }
