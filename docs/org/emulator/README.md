@@ -7,16 +7,14 @@
 データベース (オーナー 10-23「ジンはデータ管理」): 出どころはトレードのデータ (一番信頼できる) > poe2db。MOD・ベース・重み・段・名前と文・相場のデータと、打った時の決まり = エンジン (クラフトの決まり・カレンシーとお告げの効き目・MOD の置き場/重み/段/文・確率の表・品質と聖別の式・窓口 3 つ)。**画面と部品は持たない** (エミュの画面 = エミュ部長 docs/org/emu/、シミュの画面 = シミュ部長 docs/org/simulator/、両方の画面の部品と見た目 = デザイン部長 docs/org/design/。オーナー 10-22 深夜・10-23)。ほかに持つのはデータの境目 (owners.txt の「共通」: api・data・constants・i18n のゲームのデータ・state 直下の craft-stage.ts・相場 money・prices など、地図は dev/README.md)。画面の挙動 (src/web・composables・utils = ページの移り方・音・クリックの守り) はデザイン部長 (オーナー 10-23「ジンはデータ管理」)。
 
 ## 決まり (docs/org/dev/README.md の決まりが先)
-1. 線引き: 結果が変わる物 (付き方・確率・固定される MOD・打てるか) はエンジン、見え方と操作 (いつ使うか・どう見せるか) は画面 (オーナー 10-23)。
-2. 画面はエンジンの関数を入口なしで直に呼ぶ (10-25 夜)。エンジンの書き換えと中身 (打つ・読む・MOD の文や値) の自作はしない、無ければジンへ。シミュ・エミュだけの物は各置き場、エンジンは読まない (見張り B〜E)。
+エンジンの決まりの正は **`docs/spec/engine.md` (E-xx)**。大本は `docs/spec/README.md` (G-xx)。ここには部の動き方だけを書き、中身は番号で指す。決まりを変えたら同じ commit で engine.md を直す (G-20)。
+1. 線引き: 結果が変わる物 (付き方・確率・固定される MOD・打てるか) はエンジン、見え方と操作は画面 (G-06、オーナー 10-23)。
+2. 画面はエンジンの関数を入口なしで直に呼ぶ (10-25 夜)。中身 (打つ・読む・MOD の文や値・名前) の自作はさせない、無ければジンへ (G-06・E-91・E-92、見張り B〜E)。シミュ・エミュだけの物は各置き場、エンジンは読まない。
 3. 元からある物はそのまま呼ぶ: 核の関数の写し・言い換え・包み直しを作らない (オーナー 10-23)。関数の形を変えたら使っている部を報告に書く。
-4. 確かめは小さく: エミュの画面の同じ所と同じ答えか。確率の表を変えたら held-odds-parity で突き合わせ、golden はわざと変えた時だけ書き直す。
-5. ゲームの決まりは書いてある効果どおり。棚の条件は乱数に関係ない物だけ、上限を決めない (オーナー 10-20)。
-6. カレンシー固有の処理を書き足さず、spec/ の部品とお告げの効き目 (`OmenEffect`) で表す (ADR-004)。
-7. MOD の置き場・重み・段はエンジンの行 1 か所 (mods/mod-rules.ts)。`m.family` を直接比べない、段の重みを自分で足さない。固定値は無い (+1 も stat の値)。タグ・品質を触る時は暗黙も。
-8. 出どころはトレード > poe2db > ほか。付く・付かない・ベースの有無は先にトレードのデータで確かめ、それは消さない。エンジンと食い違い写しで決まらない物もこの順に合わせ、聞かない (オーナー 10-20・10-23)。
-9. 画面 (views・state/emulator・simulator) と部品 (components・for-share・見た目) は直さず、指示も表示の決めもしない。画面の中身の自作 (見張り E) は部とファイルをブラックへ。
-10. 常駐しない (要る時にブラックが立て、済んだら閉じる)。報告・触るファイル (dev/touching/emulator.md)・push は dev の決まり 2・5・8。
+4. 確かめ: E-80・E-81 と engine.md ⑤ の見張り。合格の基準は G-22。
+5. 決まりの中身: 出どころ E-01〜04、MOD E-10〜19、カレンシー全般 E-20〜29、オーブ E-30〜36、フラクチャー E-40〜42、エッセンス E-50〜54、骨・冒涜 E-60〜69、品質ほか E-70〜74、名前 E-90〜93。新しい物は engine.md ⑥ の手順、仮・未決は ⑦。
+6. 画面 (views・state/emulator・simulator) と部品 (components・for-share・見た目) は直さず、指示も表示の決めもしない。画面の中身の自作 (見張り E) は部とファイルをブラックへ。
+7. 常駐しない (要る時にブラックが立て、済んだら閉じる)。報告・触るファイル (dev/touching/emulator.md)・push は dev の決まり 2・5・8。
 
 ## 地図
 - 他の部への窓口の目録: data-catalog.md (データのファイルと入口の関数ごとに、何に答えるか・呼び方・使っている部。10-25)
@@ -33,4 +31,4 @@
 - テスト tests/: currency-spec-*・held-odds-parity・engine-emulator-parity・desecrate-*・coe-rules-2026-10-16・mod-*・item-classes。
 - 画面・部品の地図はここに置かない: エミュ docs/org/emu/README.md、シミュ docs/org/simulator/README.md、部品 docs/org/design/README.md。
 - メモ: CLAUDE.md の表 (エンジン・MOD・確率の行) + no-vaal-chance・mod-kind-labels・grasping-mail-ring-mods・poe2tube-handoff。
-- 決着済み: docs/reviews/2026-10-17-rule-checklist.md・2026-10-16-coe-rule-check.md・2026-10-18-tag-audit.md、メモ poe2-craft-rules-confirmed。docs/decisions/001・004。
+- 決着済み: docs/spec/engine.md (E-xx、10-28 にここへ集めた)。元の記録は docs/reviews/2026-10-17-rule-checklist.md・2026-10-16-coe-rule-check.md・2026-10-18-tag-audit.md、docs/decisions/001・004。
