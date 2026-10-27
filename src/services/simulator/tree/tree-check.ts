@@ -25,7 +25,9 @@ import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 
-type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry" | "omenWaste" | "shape" | "fixedFull";
+type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry" | "omenWaste" | "shape" | "fixedFull" | "shapeBody";
+/** 合格を止めない知らせ (shapeBody = 戻り先と外れの数・側だけが違う。回す時は実物で形の合う箱へ移る、S-62・S-73、10-28 仮) */
+export const NOTICE_KINDS: readonly CheckKind[] = ["shapeBody"];
 export interface CheckIssue { boxId: string; kind: CheckKind; text: string }
 
 const PEOPLE = 5;
@@ -114,7 +116,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
       // スイッチ boxShape: 自動のつなぎと同じ比べ (tree-box-shape の sameBody = 外れの側・種類・数、✦ の側、レアリティ)。閉じている間は外れの種類だけ
       const a = sigOf(b.id), z = sigOf(to);
       // 見本ごとに外れの種類が違う箱 (mixed) は分からない扱い (自動ではつながないが、前につないだ戻りは回すと進める。精査で知らせると古い木で増えた)
-      if (flag("boxShape") ? !a?.startsWith("mixed") && !z?.startsWith("mixed") && !sameBody(sigOf, b.id, to) && !bodyVaries(data, doc, b.id) && !bodyVaries(data, doc, to) : a !== null && z !== null && bodyKinds(a) !== bodyKinds(z)) add(b.id, "shape", tr("戻り先の箱と外れ MOD の種類が違う (普通 / エッセンスのクラフト MOD / 冒涜の外れ MOD のどれがあるかが違う人が入る)。直し方: 戻り先を外れの種類も同じ箱にする (↩ で選び直す) か、外れを消す手を挟む", "The return target has different kinds of miss mods (which of normal / essence crafted / desecrated misses it has differs). Fix: return to a box with the same kinds of misses (pick again with ↩), or add a step that removes the misses"));
+      if (flag("boxShape") ? !a?.startsWith("mixed") && !z?.startsWith("mixed") && !sameBody(sigOf, b.id, to) && !bodyVaries(data, doc, b.id) && !bodyVaries(data, doc, to) : a !== null && z !== null && bodyKinds(a) !== bodyKinds(z)) add(b.id, flag("boxShape") ? "shapeBody" : "shape", tr("戻り先の箱と外れ MOD の種類が違う (普通 / エッセンスのクラフト MOD / 冒涜の外れ MOD のどれがあるかが違う人が入る)。直し方: 戻り先を外れの種類も同じ箱にする (↩ で選び直す) か、外れを消す手を挟む", "The return target has different kinds of miss mods (which of normal / essence crafted / desecrated misses it has differs). Fix: return to a box with the same kinds of misses (pick again with ↩), or add a step that removes the misses"));
     }
   }
 

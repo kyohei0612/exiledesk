@@ -2,7 +2,7 @@
  * use-tree-check.ts — ツリーのルート精査の状態 (SimTreePage から分けた、2026-10-22)。精査そのものは services/simulator/tree/tree-check.ts
  */
 import { computed, ref, watch, type Ref } from "vue";
-import { checkTreeAsync, type CheckIssue, type CheckProgress } from "../../../services/simulator/tree/tree-check";
+import { checkTreeAsync, NOTICE_KINDS, type CheckIssue, type CheckProgress } from "../../../services/simulator/tree/tree-check";
 import { fractureMarks, startOf, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { craftStage as s } from "../../../state/craft-stage";
 import { track } from "../../../utils/track";
@@ -49,7 +49,8 @@ export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean) {
     try {
       const now = await checkTreeAsync(d, doc.value, (p) => { progress.value = p; issues.value = p.partial; });
       issues.value = now;
-      if (!now.length && key === routeKey.value) passedKey.value = key;
+      // 合格を止めない知らせ (NOTICE_KINDS) は数えない (S-73)
+      if (!now.filter((x) => !NOTICE_KINDS.includes(x.kind)).length && key === routeKey.value) passedKey.value = key;
     } finally {
       checking.value = false; progress.value = null;
       // 回している間に組み替えた = 今の形でもう 1 回
