@@ -15,6 +15,7 @@ import { treeBaseCost } from "../../../services/simulator/tree/tree-base-cost";
 import { currentTreeRecipeId, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { tr } from "../../../i18n/lang";
 import { simOp } from "../../../web/track";
+import { flag } from "../../../web/release-flags";
 
 export type ModRow = ReturnType<typeof modListFor>[number];
 
@@ -260,9 +261,11 @@ function setBase(base: string, itemLevel: number): Aim[] {
   const dropped: Aim[] = [];
   edit((d) => {
     if (d.base === base) { d.itemLevel = itemLevel; d.baseChosen = true; return; }
-    const { memoAims = [], goal } = d, mods = startOf(d).mods;
+    const { memoAims = [], goal } = d, mods = startOf(d).mods, fit = d.ilvlFit;
     for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k];
     Object.assign(d, newTree(base, itemLevel), { baseChosen: true });
+    // 手で入れたアイテムレベル (適正を外した) はベースを替えても外したまま (10-27 夕モンキー 6: スマホで 80 にしてからベースを選ぶと適正に戻り、狙いを足すと 75 になった。スイッチ goalShape)
+    if (flag("goalShape") && !fit) delete d.ilvlFit;
     if (!data) return;
     const aims = carryAims(data, base, itemLevel, memoAims);
     dropped.push(...aims.dropped);
