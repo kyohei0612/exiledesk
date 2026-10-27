@@ -2,17 +2,17 @@
 
 デザイン面の核の持ち主: エミュの画面とシミュの画面で**一緒の部品の核** (共通管理 for-share。棚・アイテムのカード・MOD 表の土台など、見た目と操作が同じ所) と、ほかの共通の部品・見た目の決まり、両方の画面で同じに動くべき**画面の挙動** (ページの入口・移り方・Esc・枠の外で取り消す・連打の守り・戻る・音・スマホ判定)。10-23 にジン部長から分けた (オーナー「ジンはデータ管理」)。データとエンジン (結果の核) はジン部長 (データベース)、各画面の違う所はエミュ部長・シミュ部長。
 
-## 決まり (docs/org/dev/README.md の決まりが先)
-1. **エンジンには触れない** (中身を変えない)。部品が見せる中身はエンジンの関数を直に呼んで取る (10-25〜26 の決め、docs/org/emulator/README.md)。結果が変わる物はエンジン、見え方と操作は画面 (線引き、オーナー 10-23)。
-2. for-share に入れるのはエミュとシミュで**同じ所だけ**。画面ごとの違い (持った時の %・「狙いにする」など) は各画面の特化部品で、核を包む / slot で足せる形に (オーナー 10-23)。
-3. for-share を直すのはデザイン部長だけ。エミュ部長・シミュ部長からの直しの頼みは直接受け、結果はブラックへ 1 行。直す時は両方の画面が落ちない・見た目が崩れないことを確かめる。
-4. 本番に出るエミュの画面にも効くので、見た目・操作の変更はオーナーの OK の後 (メモ ui-try-before-release)。
-5. UI の決まりは MEMORY.md「UI の決まり」、要望は共通の側へ (feedback-global-requests)、画面だけの挙動は各部長。スマホは省略・飛ばしなし (feedback-phone-no-truncate)。
-6. 用語は src/i18n/GLOSSARY.md、推測で訳さない (メモ feedback-no-guessed-terms)。出す物は英語もセット。
+## 決まり (docs/org/dev/README.md の決まりが先。中身の正は設計図 docs/spec/shared-ui.md の U-xx、ここは番号を指すだけ)
+1. **エンジンには触れない** (中身を変えない)。部品の中身はエンジンの関数を呼ぶ (G-06・U-02)。
+2. 共有にする線と、画面ごとの違いの入れ方は U-01・U-03。
+3. for-share・決まった挙動・見た目の決まりを直すのはデザイン部長だけ (U-04)。エミュ部長・シミュ部長からの直しの頼みは直接受け、結果はブラックへ 1 行。
+4. 見た目・操作の変更はオーナーの OK の後、スイッチの下で (G-08・U-70〜73)。
+5. 部品は U-10〜16、決まった挙動は U-20〜30、見た目は U-40〜47、スマホは U-50〜52、要望は全部に (U-05)。
+6. 英語と用語は U-60〜62 (GLOSSARY)。名前の出し方は engine.md と G-05。
 7. 常駐・報告・触るファイル・使用表は dev の決まり 1・2・8。push は自分で、本番は最終チェック長。Cloudflare の開発版は無い (10-24 に消した)。
-8. 確かめは手元 (dev 1440・開発版 1461) を本物のマウスで。両方の画面で同じ操作 (開く・閉じる・送る・Esc・選ぶ) を並べ比べ (PC 1660×860・スマホ)、何で確かめたか書く。
+8. 確かめは手元 (dev 1440・開発版 1461)。足す手順と確かめの並べ比べは shared-ui.md の ⑥、成り立つべき事は ⑤ (U-80〜85)。何で確かめたか書く (G-22)。
 9. 1 ファイル 500 行まで。AdSense の再審査中は、読み物・AdSense のコード・ads.txt を壊さない。
-10. 共有 = 人がどの画面でも同じと感じる物 (ページの枠: ヘッダー・上のタブ・戻る・広告の枠 / 決まった挙動 / カード・MOD 表・棚・ベース選び)。迷えば画面で作り、2 つ目の画面で要ったら共有へ (10-23)。
+10. 決まりが変わる直しは、同じ commit で shared-ui.md を直す (G-20)。仮・未決は shared-ui.md の ⑦。
 
 ## 地図
 - データとエンジンの答え (呼び方・使っている部) は docs/org/emulator/data-catalog.md から。JSON を直に読まず入口から (直に読んでよい表は目録に書いてある物だけ)。
@@ -22,4 +22,4 @@
 - 見た目 src/style.css → src/styles/game-ui.css (@import、全部の画面)、route-rule.css・spam-lucky.css (エミュのスパムシミュ、`<style src>`)、poe-card.css (アプリ)。owners.txt はどちらもデザイン (b27e7213)。言語の切り替え src/i18n/lang.ts、用語集 src/i18n/GLOSSARY.md。i18n のゲームのデータ (名前・MOD の文の JSON) はジン部長の「共通」のまま。
 - 画面の挙動 (10-23 にジン部長から): src/web/ (WebApp.vue・page.ts = ページの入口と移り方 (ツリーの中の段 treeStep = sim-tree / sim-base / sim-mods、離れる時の確かめ setLeaveGuard(to => bool) と窓 LeaveConfirm.vue、戻るは history.state の edIdx で元の位置へ戻して聞く。10-24、確かめの台本は共有メモ design5/leave-check*.mjs)・boot.ts・main.ts・track.ts・広告の枠・pwa.ts = 古い塊の読み直し)、public/sw.js (サービスワーカー。HTML は通信が先・/assets/ と絵・音・フォントは一度取った物を使う (FILE_RE、mtx-art 入り)・/s/・/og/・?k= には触らない。10-25 にジン部長から、701e97b5)、web.html (ページの入口、頭に入口の塊の読み直し。AdSense のコードは触らない、10-23 にデザインへ)、1 つ前の版の塊を残す本番の案は notes/2026-10-23-keep-prev-assets.md、src/composables/ (useKeyboardShortcuts など)、src/utils/ (use-dismiss = 枠の外・Esc で取り消す、swallow-click・use-armed = 連打の守り、pointer-moved = 説明のカードはマウスが実際に動いた時だけ (10-24)、keep-place、use-phone、sfx = 音、zoom、ads.ts、format-pct など)。rec-mode.ts は動画との受け渡し (`?rec=1`) なので、変える時は動画編集長と同じ commit で (メモ poe2tube-handoff)。境目なので、型が落ちる変更は commit の前にブラックへ (dev の決まり 7)。
 - 見張り scripts/check-engine-entry.mjs (エミュ ⇄ シミュの直の import を落とす D、ジン部長の台本)。
-- 決めた事: メモ game-ui-art-direction・ui-one-frame-rule・ui-no-break-rules・feedback-minimal-text-ui・feedback-no-flicker-lines・web-phone-layout。
+- 決めた事: docs/spec/shared-ui.md (U-xx)。元のメモ (game-ui-art-direction・ui-one-frame-rule・ui-no-break-rules・feedback-minimal-text-ui・feedback-no-flicker-lines・web-phone-layout ほか) は出どころの記録。
