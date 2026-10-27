@@ -285,6 +285,21 @@ export function joinSameHit(doc: TreeDoc, to: string, picks: readonly string[], 
  * 手を足してできた当たりの箱 (ids) のうち、別の道に同じ状態の当たりの箱があれば、先にあった箱へ自動でつなぐ (10-26 夜オーナー「組んだ瞬間まとまってくれる」)。
  * 中身 (次の手) がある箱どうしは自動でせず人が「まとめる」(use-tree-join)。× で外した箱 (noAutoBack) はつながない
  */
+/**
+ * 来た道で付いている狙いの組が何通りかある当たりの箱 (heldSets が 2 つ以上。消去・狙いが消えたの後のカオスなど) は、同じ状態の箱へまとめられないので、
+ * 「形の合う箱へ」を自動で付ける (10-27 オーナーの決め (a)、r/SitMjgNY の「スピリットが付いた」)。回す時は実物の形の箱へ (tree-run の matchBox)、
+ * 合う箱が無い組は精査の足りない所。手・戻り・完成を決めていない箱だけ、人が × で外した箱は触らない。自分の下の箱しか合わなければ付けない
+ */
+export function linkShapeHit(doc: TreeDoc, ids: readonly string[]): void {
+  for (const id of ids) {
+    const c = doc.boxes[id];
+    if (!c || c.out !== "hit" || !c.aim || c.hand || c.back || c.done || c.split || c.noAutoBack || heldSets(doc, id).length < 2) continue;
+    const down = new Set(subtree(doc, id));
+    if (!matchTargets(doc, id).some((m) => !!m.to && !down.has(m.to))) continue;
+    c.back = MATCH;
+    c.autoBack = true;
+  }
+}
 export function linkSameHit(doc: TreeDoc, ids: readonly string[]): void {
   for (const id of ids) {
     const c = doc.boxes[id];

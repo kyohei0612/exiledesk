@@ -20,13 +20,15 @@ export const stepBackText = (doc: TreeDoc, to: string): string => { const n = st
 /** 再度挑戦 = 戻り先の箱の手が、この箱を出した手と同じ (同じ手をもう一度打ちに戻る。外れのカオスを打ち直す・狙いが残った消去など。10-26 オーナー「狙い残った時とかの日本語は、再度挑戦にしたら分かりやすいかな」) */
 export function isRetry(doc: TreeDoc, id: string): boolean {
   const b = doc.boxes[id], p = b?.parent ? doc.boxes[b.parent] : undefined;
+  // 形の合う箱へ (10-27 オーナーの決め (a)) は、行きうる箱が全部同じ手の時
+  if (b?.back === MATCH) { const to = backTargetsOf(doc, id).map((x) => doc.boxes[x]); return !!p?.hand && !!to.length && to.every((x) => x?.hand?.currency === p.hand!.currency); }
   const to = b?.back ? doc.boxes[b.back] : undefined;
   return !!p?.hand && !!to?.hand && to.hand.currency === p.hand.currency;
 }
 /** 戻りの札の文: 「n 段目へ戻る」、再度挑戦なら「再度挑戦 · n 段目へ戻る」(英語の案は Retry · Back to step n、notes/2026-10-26-failure-behavior.md) */
 export function backText(doc: TreeDoc, id: string, to: string): string {
   // 当たりの箱を別の道の同じ状態の当たりの箱へまとめた (tree-shape の joinSameHit、10-26 夜) は戻りでなく合流
-  if (doc.boxes[id]?.out === "hit" && doc.boxes[to]?.out === "hit") { const n = stepOf(doc, to); return tr(`同じ MOD 群のため統合 (${n} 段目)`, `Merged: same mod group (step ${n})`); } // 10-27 オーナー「文言は『同じ MOD 群のため統合』と出そうか」
+  if (doc.boxes[id]?.out === "hit" && doc.boxes[id]?.back !== MATCH && doc.boxes[to]?.out === "hit") { const n = stepOf(doc, to); return tr(`同じ MOD 群のため統合 (${n} 段目)`, `Merged: same mod group (step ${n})`); } // 10-27 オーナー「文言は『同じ MOD 群のため統合』と出そうか」
   const step = stepBackText(doc, to);
   return isRetry(doc, id) ? tr(`再度挑戦 · ${step}`, `Retry · ${step}`) : step;
 }
@@ -52,7 +54,8 @@ export function routeText(doc: TreeDoc, id: string, name?: (id: string) => strin
   const to = backTargetsOf(doc, id);
   if (k === "restart") return tr("↩ ベースから作り直し", "↩ Start over from a new base");
   if (!to.length) return tr("↩ 形の合う箱が無い (回すとここで止まる)", "↩ No box of the same shape (runs stop here)");
-  if (b.out === "hit" && to.every((x) => doc.boxes[x]?.out === "hit")) return `→ ${backText(doc, id, to[0]!)}${name ? `: ${to.map(name).join(tr("・", ", "))}` : ""}`;
+  // 形の合う箱へ (10-27 (a)) は統合でなく「n 段目へ戻る」(来た道で形が違い、同じ MOD 群とは限らない)
+  if (b.out === "hit" && k !== "match" && to.every((x) => doc.boxes[x]?.out === "hit")) return `→ ${backText(doc, id, to[0]!)}${name ? `: ${to.map(name).join(tr("・", ", "))}` : ""}`;
   // 戻り方の文は全部「n 段目へ戻る」(同じ手をもう一度・始め・自動・選んだ箱も。どの箱かは矢印で分かる)。スマホは矢印が無いので行き先の名前を添える
   const steps = [...new Set(to.map((x) => stepOf(doc, x)))].sort((a, b) => a - b);
   const names = name ? `: ${to.map(name).join(tr("・", ", "))}` : "";

@@ -40,7 +40,7 @@ import { gesture } from "./use-gesture";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { useArmed } from "../../../utils/use-armed";
 import { noTargetText, useTreeLink } from "./use-tree-link";
-import { backText, retryOf, sameHandRetry, stepBackText } from "./tree-fail";
+import { backText, retryOf, routeText, sameHandRetry, stepBackText } from "./tree-fail";
 import { useTreePlus } from "./use-tree-plus";
 import { useTreeCheck } from "./use-tree-check";
 import TreeIssues from "./TreeIssues.vue";
@@ -145,6 +145,8 @@ function backLabel(b: Box): string {
   if (b.back === RESTART) return tr("作り直し", "Start over");
   const to = backTargetsOf(doc.value, b.id);
   if (!to.length) return b.back === MATCH ? tr("行き先の箱が無い", "No box to go to") : "";
+  // 形の合う箱へで行き先が幾つか = 段を並べる (「1・2 段目へ戻る」、tree-fail の routeText と同じ文。10-27 オーナーの決め (a))
+  if (b.back === MATCH && to.length > 1) return (routeText(doc.value, b.id) ?? "").replace(/^↩ /, "");
   const one = backText(doc.value, b.id, to[0]!);
   return to.length > 1 ? tr(`${one} ほか ${to.length - 1} か所`, `${one} +${to.length - 1} more`) : one;
 }
