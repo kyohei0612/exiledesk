@@ -9,6 +9,7 @@ import { kindOf, mulberry32, room, RUNE_PREFIX, type PatchData, type StageItem }
 import { unboundedBefore } from "../sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { boxAims, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
+import { flag } from "../../../web/release-flags";
 
 /** その手 (カレンシーの key) を打つ前のアイテム。要らなければそのまま */
 export const prepFor = (data: PatchData, item: StageItem, key: string): StageItem => unboundedBefore(data, item, key, mulberry32(1));
@@ -24,7 +25,9 @@ export const autoRuneKeys = (before: StageItem, after: StageItem): string[] =>
  * heldHitOf = 手が打てない時、その手の当たりの箱の狙いがもう付いていれば打たずにその箱へ進む (合金の負けで冒涜のキャストを持ったまま戻った人など)
  */
 export function goalsHeld(data: PatchData, doc: TreeDoc, item: StageItem): boolean {
-  const goals = doc.memoAims ?? [];
+  // 完成形の品質を決めていれば品質の値も見る (ブリーチの MOD の有無ではなく値。10-27 夕オーナー「一度付けた品質は消えない」、スイッチ goalShape)
+  if (flag("goalShape") && doc.goalQuality && (item.quality ?? 0) < doc.goalQuality) return false;
+  const goals = (doc.memoAims ?? []).filter((a) => !(flag("goalShape") && a.forQuality));
   return !!goals.length && goals.every((a) => aimHeldOn(data, item, a, { sameText: true }));
 }
 export function heldHitOf(data: PatchData, doc: TreeDoc, b: TreeBox, item: StageItem): string | null {
