@@ -9,12 +9,13 @@ import type { OnlyOut } from "./tree-hand-plan";
 import { tr } from "../../../i18n/lang";
 import TreeHandShelf from "./TreeHandShelf.vue";
 
-defineProps<{ boxId: string; current: Hand | null }>();
+/** hint = 光らせる札 (スマホの外れの結果で打つ前と同じ手、TreeHandShelf の hint) */
+defineProps<{ boxId: string; current: Hand | null; hint?: Hand | null }>();
 const emit = defineEmits<{ pick: [hand: Hand, kind: HandKind, aims: Aim[], preCatalyst: string | null, only: OnlyOut]; clear: []; close: []; back: []; aim: [] }>();
 </script>
 
 <template>
   <ModalShell :open="true" rec="tree-hand" :title="current ? tr('打つ手を替える', 'Change the craft') : tr('次に打つ手', 'Next craft')" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" width="w-[94%] max-w-[1500px] max-md:w-full md:h-[88%]" full-on-phone body-class="px-3 pb-3" @close="emit('close')">
-    <TreeHandShelf :box-id="boxId" :current="current" @pick="(...a) => emit('pick', ...a)" @clear="emit('clear')" @close="emit('close')" @back="emit('back')" @aim="emit('aim')" />
+    <TreeHandShelf :box-id="boxId" :current="current" :hint="hint ?? null" @pick="(...a) => emit('pick', ...a)" @clear="emit('clear')" @close="emit('close')" @back="emit('back')" @aim="emit('aim')" />
   </ModalShell>
 </template>

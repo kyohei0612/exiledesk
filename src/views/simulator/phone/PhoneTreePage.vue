@@ -105,6 +105,11 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null, only
   handFor.value = null;
   q.focus.value = { kind: "outs", id: at };
 }
+/** 棚で光らせる札 = 外れ (と一番初めの狙い無しの手の結果) の時の打つ前と同じ手 (持たせない、押すのはその人。10-27 昼オーナー。当たりは光らせない) */
+const hintHand = computed((): Hand | null => {
+  const id = handFor.value, b = id ? t.doc.value.boxes[id] : null, par = b?.parent ? t.doc.value.boxes[b.parent] : null;
+  return RES27 && b && !b.hand && par?.hand && (isMiss(b) || b.out === "any") ? par.hand : null;
+});
 /** 同じ手か (カレンシーとお告げ。狙いの選び方は問わない) */
 const sameHand = (x: Hand, y: Hand): boolean => x.currency === y.currency && [...x.omens].sort().join() === [...y.omens].sort().join();
 function clearHandOf(): void {
@@ -244,7 +249,7 @@ function goBox(id: string): void {
         </div>
       </div>
     </div>
-    <TreeHandPage v-if="handFor && t.doc.value.boxes[handFor]" :key="`h-${handFor}`" :box-id="handFor" :current="t.doc.value.boxes[handFor]!.hand" @pick="pickHand" @clear="clearHandOf" @close="handFor = null" @back="backOf" @aim="aimFor = handFor; handFor = null" />
+    <TreeHandPage v-if="handFor && t.doc.value.boxes[handFor]" :key="`h-${handFor}`" :box-id="handFor" :current="t.doc.value.boxes[handFor]!.hand" :hint="hintHand" @pick="pickHand" @clear="clearHandOf" @close="handFor = null" @back="backOf" @aim="aimFor = handFor; handFor = null" />
     <!-- 結果のまとめ (PC と同じ部品。スマホは下から出る形 = TreeRunReport の max-md の置き方) -->
     <div v-if="reportOpen && run.result.value && !run.running.value" data-phone-report class="fixed inset-0 z-50 bg-black/50" @click.self="reportOpen = false">
       <TreeRunReport :result="run.result.value" @close="reportOpen = false" @go="(id) => { reportOpen = false; goBox(id); }" />

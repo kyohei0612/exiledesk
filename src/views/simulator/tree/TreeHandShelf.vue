@@ -7,7 +7,7 @@
   骨のアビスの反響はお告げの枠の中 (HeldOmens の slot、お告げと同じ並び)。足す手の「狙い無し」は左の「当たりの箱にする MOD」のチェックの一番下 (10-25)。重ね窓の枠は TreeHandPage
 -->
 <script setup lang="ts">
-import { computed, nextTick, ref, toRaw, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, toRaw, watch } from "vue";
 import { craftStage as s, iconOf, nameOf } from "../../../state/craft-stage";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import CurrencyShelf from "../../../components/for-share/shelf/CurrencyShelf.vue";
@@ -33,7 +33,8 @@ import { previewUse } from "../../../services/emulator/emu-engine";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { flag } from "../../../web/release-flags";
 
-const props = defineProps<{ boxId: string; current: Hand | null }>();
+/** hint = 持たせずに光らせるだけの札 (スマホの外れの結果で打つ前と同じ手。10-27 昼オーナー「光らせる、押すのはその人」) */
+const props = defineProps<{ boxId: string; current: Hand | null; hint?: Hand | null }>();
 /** pick の preCatalyst = 前に足す品質だけ上げる手のカタリスト (触媒のお告げで、まだ品質を上げる手の後でない時) */
 /** only = 結果が 1 通りの手の結果 (tree-sample の singleOutOf、光のお告げ + 消去など) */
 /** back = 打たずに既にある箱へ戻す (重ね窓を閉じて箱を押して選ぶ) */
@@ -279,6 +280,23 @@ const aimStep = ref(false);
  */
 const P27 = computed(() => phone.value && flag("phone1027"));
 const helpOpen = ref(false);
+/** 光らせる札 (何も持っていない間だけ。チュートリアルの「次に押す物を光らせる」と同じ光 .shelf-hint)。当たるまで = カオススパムオーブの札 (棚に無ければ元のカレンシーの札) */
+async function glowHint(): Promise<void> {
+  await nextTick();
+  document.querySelectorAll(".shelf-hint").forEach((e) => e.classList.remove("shelf-hint"));
+  const h = props.hint;
+  if (!h || held.value) return;
+  // 棚の札は値段・データが揃ってから描かれるので、見つかるまで少し待つ (60 フレームまで)
+  for (let i = 0; i < 60; i++) {
+    if (held.value) return;
+    const el = (h.repeat ? document.querySelector("[data-tree-spam-orb]") : null) ?? document.querySelector(`[data-tree-shelf] [data-shelf][data-key="${CSS.escape(h.currency)}"]`);
+    if (el) { el.classList.add("shelf-hint"); return; }
+    await new Promise((r) => requestAnimationFrame(r));
+  }
+}
+watch([held, () => props.hint], () => void glowHint());
+onMounted(() => void glowHint());
+onBeforeUnmount(() => document.querySelectorAll(".shelf-hint").forEach((e) => e.classList.remove("shelf-hint")));
 const keepStep = ref(false);
 watch(held, () => { aimStep.value = false; keepStep.value = false; helpOpen.value = false; });
 function ok(): void {
@@ -454,3 +472,10 @@ function ok(): void {
     <HeldCursor :src="held ? iconOf(held) : null" />
   </div>
 </template>
+
+<style>
+/* 光らせる札 (チュートリアルの .tut-ring と同じ光、SimTutorialGuide) */
+.shelf-hint { border-radius: 8px; box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.95), 0 0 18px 4px rgba(251, 191, 36, 0.55); animation: shelf-hint-pulse 1.4s ease-in-out infinite; }
+@keyframes shelf-hint-pulse { 50% { box-shadow: 0 0 0 3px rgba(253, 230, 138, 1), 0 0 26px 8px rgba(251, 191, 36, 0.75); } }
+@media (prefers-reduced-motion: reduce) { .shelf-hint { animation: none; } }
+</style>
