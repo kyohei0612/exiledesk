@@ -6,7 +6,10 @@
  */
 import { type PatchData, type StageItem } from "../../../services/craft-stage/engine";
 import { isAimMod } from "../../../services/simulator/tree/tree-aim";
-import type { Aim, Hand, TreeDoc } from "../../../services/simulator/tree/tree-model";
+import type { Aim, Hand, OutKind, TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { heldSets } from "../../../services/simulator/tree/tree-shape";
+/** 外れの側の箱 (道で付いた狙いだけを狙いに数える) */
+const MISS_OUTS: readonly OutKind[] = ["junk", "lost", "junkGone", "any"];
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { useTree } from "./use-tree";
 import { aimOpts, aimsOf, targetsOf } from "../../../services/simulator/tree/tree-sample";
@@ -16,7 +19,7 @@ import { flag } from "../../../web/release-flags";
 
 /** 全部消えてよい消去の手の箱 (消去の直線の箱。☑ が無い = 消えうる MOD は全部外れ MOD) */
 const stripHand = (h: Hand | null | undefined): boolean => !!h && effectOf(h.currency) === "remove" && !!h.keep && !h.keep.length;
-export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly string[], it: StageItem, box?: { anyOf?: Aim[]; hand?: Hand | null } | null): Map<string, RowTag> {
+export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly string[], it: StageItem, box?: { id?: string; out?: OutKind | "start"; anyOf?: Aim[]; hand?: Hand | null } | null): Map<string, RowTag> {
   const out = new Map<string, RowTag>();
   // 消去の直線の箱 (全部消えてよい消去の手の箱) は、フラクチャー以外の MOD を全部「外れ MOD」で出す (手の窓で消去を持った時と同じ考え。10-27 夜オーナー、スイッチ heldTags)
   if (flag("heldTags") && stripHand(box?.hand)) {
@@ -27,7 +30,11 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   const anyT = any ? targetsOf(d, any) : [];
   const anyText = any ? any.map(useTree().aimShort).join(tr(" か ", " or ")) : "";
   // 完成の狙い (完成形の MOD) も狙いに数える (スイッチ goalShape、10-27 夕モンキー 1: エッセンスで付いた完成形の MOD が「外れ MOD」と出た)
-  const aims = targetsOf(d, flag("goalShape") ? [...aimsOf(doc), ...(doc.memoAims ?? [])] : aimsOf(doc)), bad = targetsOf(d, unwanted.map((u) => ({ modId: u, tier: 99 }))), o = aimOpts(d);
+  // 外れの箱 (外れ・狙いが消えた・外れが消えた・打った後) は、その箱まで来た道で付いている狙いだけを狙いに数える。☑ の無い MOD はそのカレンシーでは外れ扱いなので、
+  // ☑ していない完成形の MOD が付いていても「外れ MOD」(10-27 夜オーナー、モンキー 2 回目 7。スイッチ junkByCheck)
+  const missBox = flag("junkByCheck") && !!box?.id && !!box.out && box.out !== "start" && MISS_OUTS.includes(box.out);
+  const held = missBox ? [...new Map(heldSets(doc, box!.id!).flat().map((k) => { const [modId, tier] = k.split("|"); return [modId!, { modId: modId!, tier: Number(tier) }] as const; })).values()] : [];
+  const aims = targetsOf(d, missBox ? held : flag("goalShape") ? [...aimsOf(doc), ...(doc.memoAims ?? [])] : aimsOf(doc)), bad = targetsOf(d, unwanted.map((u) => ({ modId: u, tier: 99 }))), o = aimOpts(d);
   for (const m of [...it.prefixes, ...it.suffixes]) {
     if (m.fractured) continue;
     if (any && isAimMod(m, anyT, o)) out.set(m.modId, { text: anyText, tone: "info", replace: true, title: tr(`どれか 1 つが付けば当たり (この見本は ${modText(m)})`, `Any one of these is a hit (this sample has ${modText(m)})`) });
