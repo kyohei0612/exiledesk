@@ -19,9 +19,9 @@ import { applyPick, type OnlyOut } from "../tree/tree-hand-plan";
 import { useTree } from "../tree/use-tree";
 import { clearHand, setAim, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
-import { isMiss, outStep, phoneRun, sheet, testedKey, usePhoneQuiz, type Question } from "./use-phone-quiz";
+import { outStep, phoneRun, sheet, testedKey, usePhoneQuiz, type Question } from "./use-phone-quiz";
 import { routeKeyOf } from "../tree/use-tree-check";
-import { sameShapeReturn, stepOf } from "../tree/tree-fail";
+import { stepOf } from "../tree/tree-fail";
 import PhoneAsk from "./PhoneAsk.vue";
 import PhoneOverview from "./PhoneOverview.vue";
 import PhoneBoxSheet from "./PhoneBoxSheet.vue";
@@ -89,41 +89,20 @@ function onClear(): void {
 function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null, only: OnlyOut): void {
   const id = handFor.value!;
   simAct("hand", kind);
-  /*
-   * 外れの箱で、打つ前の箱と同じ手 (例 外れ MOD が付いた後のカオス) を選んだ = 打つ前の箱へ戻るのと同じ (別の箱を作らない)。
-   * 10-27 オーナー「カオスオーブ選択で同じ処理扱い、2 段目へ戻るってのと同義としてカウント。ハズレでかつ同じ MOD 群で 1 段上に進むことはない」
-   */
-  const b = t.doc.value.boxes[id], par = b?.parent ? t.doc.value.boxes[b.parent] : null;
-  // 結果の画面で棚から選ぶ形 (phoneResult1027) は、一番初めの狙い無しの手の結果 (打った後) も同じ (10-27 昼オーナー「同じ挙動でいい」)。その手をこの箱に打てる時だけ
-  const missLike = !!b && (isMiss(b) || (RES27 && b.out === "any")) && (!RES27 || !!q.canRetry(id));
-  if (b && par?.hand && missLike && (!b.hand || RES27) && sameHand(h, par.hand)) {
-    handFor.value = null;
-    // 外れにもう手が付いていた (前に打つ前と同じ手で段を足して伸びた木) も、同じ手を選び直したら下を消して打つ前の箱へ戻す (10-27 昼オーナー「同じ動きだから 2 回目で止まるはず」)
-    if (b.hand) q.answer((d) => clearHand(d, id));
-    q.setReturn(id, par.id);
-    q.focus.value = { kind: "outs", id: par.id };
-    return;
-  }
-  // 外れの箱と同じ形の箱 (木の全部の箱から、tree-fail の sameShapeReturn) の手と同じ手を選んだ = その箱へ戻る (親の手と違っても。10-27 オーナーの r/okPcmPyY:
-  // 冒涜の外れ b8 は同じ形の外れ b5 (エッセンスの手) へつながっていたのに、b8 でエッセンスを選ぶと親 b6 (冒涜) と比べて別の手になり、段が伸び続けた)
-  const same = b && RES27 && (isMiss(b) || b.out === "any") ? sameShapeReturn(t.doc.value, id, h) : null;
-  if (same && b) {
-    handFor.value = null;
-    if (b.hand) q.answer((d) => clearHand(d, id));
-    q.setReturn(id, same);
-    q.focus.value = { kind: "outs", id: b.parent ?? same };
-    return;
-  }
   let at = id;
   const before = new Set(Object.keys(t.doc.value.boxes));
   q.answer((d) => { at = applyPick(d, id, h, kind, aims, pre, only); });
+  handFor.value = null;
+  /*
+   * 外れで、打つ前の箱・同じ形の箱と同じ手を選んだ = 共通の applyPick (tree-shape の sameHandReturn) が新しい段を作らずその箱へ戻した。
+   * 画面は「選んだ」印を付けて同じ結果の画面のまま (表示は「○○を選択」の枠、PhoneOutRow)
+   */
+  const nb = t.doc.value.boxes[id];
+  if (nb && !nb.hand && nb.back) { q.setPicked(id); q.focus.value = { kind: "outs", id: nb.parent ?? id }; return; }
   // この手でできた箱 = 選ぶまで待つ外れ (開いた木の箱は選んだ状態のまま。use-phone-quiz の awaitsPick)
   q.addFresh(Object.keys(t.doc.value.boxes).filter((x) => !before.has(x)));
-  handFor.value = null;
   q.focus.value = { kind: "outs", id: at };
 }
-/** 同じ手か (カレンシーとお告げ。狙いの選び方は問わない) */
-const sameHand = (x: Hand, y: Hand): boolean => x.currency === y.currency && [...x.omens].sort().join() === [...y.omens].sort().join();
 function clearHandOf(): void {
   const id = handFor.value!;
   q.answer((d) => clearHand(d, id));

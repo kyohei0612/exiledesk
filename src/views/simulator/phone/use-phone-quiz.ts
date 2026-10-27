@@ -218,5 +218,7 @@ export function usePhoneQuiz() {
   const pickedSet = computed(() => new Set(picked.value));
   const freshSet = computed(() => new Set(fresh.value));
   const awaits = (id: string): boolean => awaitsPick(t.doc.value, id, pickedSet.value, freshSet.value);
-  return { awaits, addFresh, doc: t.doc, questions, current, focus, answered, later: laterSet, answer, reset, setLater, unLater, setReturn, setFinished, stateOf, outsOf, decide, decideOne, canRetry, boxTitle, pathText };
+  /** 答えを選んだ印だけ付ける (共通の applyPick が戻りを付けた時) */
+  const setPicked = (id: string): void => { later.value = later.value.filter((x) => x !== id); pick(id); };
+  return { awaits, addFresh, setPicked, doc: t.doc, questions, current, focus, answered, later: laterSet, answer, reset, setLater, unLater, setReturn, setFinished, stateOf, outsOf, decide, decideOne, canRetry, boxTitle, pathText };
 }

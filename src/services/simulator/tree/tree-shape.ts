@@ -368,3 +368,23 @@ function outBoxOfRaw(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[] }
     return oc.out !== "hit" || boxAims(c).some((x) => oc.hits.some((a) => a.modId === x.modId && a.tier === x.tier));
   });
 }
+
+/**
+ * 外れの側の箱 (外れ・狙いが消えた・打った後、狙いに無い MOD だけの当たり) で手 h を選んだ時の戻り先 (シミュのルール = PC・スマホ共通、tree-hand-plan の applyPick が呼ぶ。
+ * 10-27 オーナー「ここの挙動はシミュのルールだから共通でしょ」、スイッチ goalShape)。新しい段は作らずその箱へ戻る:
+ * ① 打つ前の箱 (親) と同じ手 = 再度挑戦 (10-27 オーナー「ハズレでかつ同じ MOD 群で 1 段上に進むことはない」)
+ * ② 木の中でこの箱と同じ形 (形の鍵 = 狙いの組 + 外れの有無、shapeFits も合う) で同じ手の箱 (候補が幾つもあれば上の段。r/okPcmPyY: 冒涜の外れで、同じ形の外れのエッセンスと同じ手)。
+ * 自分と自分の下は除く。同じ手 = 同じカレンシーとお告げ (狙いの選び方は問わない)。無ければ null = 今までどおり新しい段
+ */
+export function sameHandReturn(doc: TreeDoc, id: string, h: Hand): string | null {
+  const b = doc.boxes[id];
+  if (!b || !(b.out === "junk" || b.out === "lost" || b.out === "any" || junkLike(doc, b))) return null;
+  const same = (x: Hand | null | undefined): boolean => !!x && x.currency === h.currency && [...x.omens].sort().join() === [...h.omens].sort().join();
+  const p = b.parent ? doc.boxes[b.parent] : undefined;
+  if (p && same(p.hand) && shapeFits(doc, id, p.id)) return p.id;
+  const keys = new Set(matchTargets(doc, id).map((m) => m.key));
+  const under = (x: string): boolean => { for (let y: string | null = x; y; y = doc.boxes[y]?.parent ?? null) if (y === id) return true; return false; };
+  const depth = (x: string): number => { let n = 0; for (let y = doc.boxes[x]?.parent ?? null; y; y = doc.boxes[y]?.parent ?? null) n++; return n; };
+  const cands = [...new Set(shapesOf(doc).filter((s) => keys.has(s.key) && same(s.hand) && !under(s.box)).map((s) => s.box))].filter((x) => shapeFits(doc, id, x));
+  return cands.sort((x, y) => depth(x) - depth(y))[0] ?? null;
+}

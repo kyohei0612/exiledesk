@@ -161,7 +161,8 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = nul
   simAct("hand", kind);
   if (picking.value === id) picking.value = null;
   // 外れの箱で打つ前の箱と同じ手 = 新しい箱を作らず打つ前の箱へ戻る (再度挑戦、tree-fail の sameHandRetry。スマホと同じ)
-  const retry = pre ? null : sameHandRetry(doc.value, id, h);
+  // スイッチ goalShape の間は applyPick (tree-shape の sameHandReturn) が同じ形の箱も含めて戻すので、前の判定は閉じている時だけ
+  const retry = pre || flag("goalShape") ? null : sameHandRetry(doc.value, id, h);
   if (retry) { panel.value = null; t.edit((d) => setBack(d, id, retry)); return; }
   let at = id;
   // 組み替えは tree-hand-plan の applyPick (猿の口 sim-monkey と同じ)
