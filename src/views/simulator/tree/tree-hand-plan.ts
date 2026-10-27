@@ -77,15 +77,20 @@ export const kindOf = (h: Hand): HandKind => kindOfHand(h, effectOf(h.currency))
  * カオススパムはその全部、足す・入れ替える手はこの手で付きうる物だけ (エンジンの heldOdds。10-22 靴・手袋で、当たりの箱が空のまま 1 箱ずつ MOD・行・段を選ぶのが手間だった)。
  * goals = 完成の狙い
  */
+/** エッセンスで付きうる MOD (エンジンの結果で新しく付いた MOD、段はエッセンス自身の段)。無限のエッセンスは筋力・器用さ・知性のうち付きうる物 (棚で ☑ させる、10-27 オーナー) */
+export function essenceAimsOf(data: PatchData, item: StageItem, h: Hand): Aim[] {
+  const before = new Set([...item.prefixes, ...item.suffixes].map((m) => m.modId));
+  const got = (stepOutcomes(data, prepFor(data, item, h.currency), h.currency, engineOmens(h)) ?? []).filter((o) => !o.void).flatMap((o) => [...o.item.prefixes, ...o.item.suffixes].filter((m) => !before.has(m.modId)));
+  const out: Aim[] = [];
+  // 段はエッセンス自身の段 (T1 = グレーター、完成形の設定の表・poe2db と同じ。10-24 オーナー「エッセンスの MOD と一般 MOD は別物」)
+  for (const m of got) if (!out.some((a) => a.modId === m.modId)) out.push({ modId: m.modId, tier: tierRankOf(data, m.modId, m.tierIndex) });
+  return out;
+}
 export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, h: Hand, goals: readonly Aim[]): Aim[] {
   const kind = kindOf(h);
   // エッセンス = 付く MOD は決まっている。エンジンの結果で新しく付いた MOD を当たりの札に (10-22 オーナー「エッセンスの道」)
   if (kind === "essence") {
-    const before = new Set([...item.prefixes, ...item.suffixes].map((m) => m.modId));
-    const got = (stepOutcomes(data, prepFor(data, item, h.currency), h.currency, engineOmens(h)) ?? []).filter((o) => !o.void).flatMap((o) => [...o.item.prefixes, ...o.item.suffixes].filter((m) => !before.has(m.modId)));
-    const out: Aim[] = [];
-    // 段はエッセンス自身の段 (T1 = グレーター、完成形の設定の表・poe2db と同じ。10-24 オーナー「エッセンスの MOD と一般 MOD は別物」)
-    for (const m of got) if (!out.some((a) => a.modId === m.modId)) out.push({ modId: m.modId, tier: tierRankOf(data, m.modId, m.tierIndex) });
+    const out = essenceAimsOf(data, item, h);
     // 付く MOD が 1 つに決まらないエッセンス (無限のエッセンス = 筋力・器用さ・知性のうち付いていない系統から等しく 1 つ、エンジンの infiniteChoices) は
     // 出うる MOD ごとに当たりの箱 (前は 1 つ目だけで、ツリーは筋力 100% / エンジンは 1/3 ずつ。10-25 モンキー 4 本目・ジン部長の見立て)。
     // 当たりにするのは完成の狙いの MOD だけ。狙いで無い MOD が付くだけのエッセンス (冒涜の外れを無限のエッセンスで置き換える等) は当たりを作らず、

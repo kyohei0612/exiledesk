@@ -11,6 +11,14 @@ import { aimKey, boxAims, subtree, type Aim, type Hand, type OutKind, type TreeB
 import { aimDiff, aimsOf, outcomeOf, sampleOf, SINGLE_SEEDS } from "./tree-sample";
 import { shapeFit } from "./tree-sample-shape";
 import { prepFor } from "./tree-unbounded";
+import { isInfiniteEssence } from "../../craft-stage/apply-essence";
+import { flag } from "../../../web/release-flags";
+
+/**
+ * 無限のエッセンス (筋力・器用さ・知性のどれかがランダム) は ☑ した能力値だけ当たり、ほかが付いたら外れ MOD (10-27 オーナー「知性を選んだら知性が付いた = 当たり、
+ * 筋力・器用さが付いた = 外れ MOD の 2 枝」、スイッチ goalShape)。ほかのエッセンスは付く MOD が決まっているので今のまま
+ */
+export const infiniteAim = (key: string | undefined): boolean => !!key && flag("goalShape") && isInfiniteEssence(key);
 import { heldSets } from "./tree-shape";
 
 /**
@@ -20,6 +28,13 @@ import { heldSets } from "./tree-shape";
  */
 export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageItem, after: StageItem, aims: readonly Aim[]): { out: OutKind; hits: Aim[] } {
   const key = b.hand?.currency;
+  if (key && infiniteAim(key)) {
+    const oc = outcomeOf(data, before, after, aims, key);
+    if (oc.out !== "hit") return oc;
+    const own = b.outs.flatMap((id) => { const c = doc.boxes[id]; return c?.out === "hit" && c.aim ? boxAims(c) : []; });
+    const hits = oc.hits.filter((a) => own.some((x) => x.modId === a.modId && x.tier === a.tier));
+    return hits.length ? { out: "hit", hits } : { out: "junk", hits: [] };
+  }
   if (!key || effectOf(key) === "essence" || effectOf(key) === "fracture") return outcomeOf(data, before, after, aims, key);
   // 消去の残したい MOD (10-27 オーナー): 全部消えてよい = 外れが消えた 1 つ。☑ があればその MOD だけで消えた / 外れが消えたを分ける (ほかは外れ MOD)
   const keep = effectOf(key) === "remove" ? b.hand?.keep : undefined;
@@ -83,7 +98,8 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
       for (const o of outs) {
         const r = outcomeOf(data, it, o.item, aims, h.currency);
         if (r.hits.length > 1) return null;
-        const e = r.out === "hit" && !r.hits.length ? { out: "any" as OutKind, aim: null } : { out: r.out, aim: r.hits[0] ?? null };
+        // 無限のエッセンスで ☑ していない能力値が付いた = 外れ (infiniteAim)。ほかの狙いの付かない当たりは「打った後」
+        const e = r.out === "hit" && (!r.hits.length || (infiniteAim(h.currency) && !extra.some((a) => a.modId === r.hits[0]!.modId && a.tier === r.hits[0]!.tier))) ? { out: (infiniteAim(h.currency) ? "junk" : "any") as OutKind, aim: null } : { out: r.out, aim: r.hits[0] ?? null };
         found.set(`${e.out}:${e.aim ? `${e.aim.modId}/${e.aim.tier}` : ""}`, e);
       }
     }
