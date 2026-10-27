@@ -19,6 +19,13 @@ const BAND: "all" | "path" = "path";
  * 狙いが消えた後の当たりなど、揃った数が親の段以下の時は親の段の次 (高さは揃わない)
  */
 function rowsOf(d: TreeDoc, kids: (id: string) => string[]): Map<string, number> {
+  // 結果の箱はいつも親のすぐ下の行 (10-27 夜オーナー: 当たりを揃った狙いの数の段へ下げると、王者の当たりなどが親から離れた。スイッチ tidyUnder)
+  if (flag("tidyUnder")) {
+    const rows = new Map<string, number>();
+    const down = (id: string, r: number): void => { rows.set(id, r); for (const k of kids(id)) down(k, r + 1); };
+    down("start", 0);
+    return rows;
+  }
   const band = new Map<string, number>(), sub = new Map<string, number>(), held = new Map<string, Set<string>>();
   const walk = (id: string, parent: string | null): void => {
     const b = d.boxes[id]!;
@@ -131,6 +138,7 @@ export function tidy(d: TreeDoc, chipW?: (id: string) => number | undefined): vo
 /**
  * 段の目印 (10-22 オーナー「段ごとに 1 つ揃った / 2 つ揃った…」): 当たりの箱の揃った狙いの数 n → その段の y (箱の上の辺)。
  * 手で動かして同じ数の当たりの箱の高さが揃っていない段は出さない (整列の後だけ出る)。
+ * 整列が親のすぐ下に置く形 (スイッチ tidyUnder) でも同じ: 同じ数の当たりが 1 つの行に揃う時だけ出るので、目印の文と箱の位置は食い違わない。
  * 0 (狙いをまだ選んでいない当たりの箱だけ) は出さない (白に変成を足すと「0 つ揃った」と出て迷わせた、10-23 モンキー 3 回目)
  */
 export function bandsOf(d: TreeDoc): { n: number; y: number }[] {

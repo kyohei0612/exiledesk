@@ -8,11 +8,11 @@
  * 10-22 靴を白紙から組んで: 狙いが消えて外れを持ったまま始めに戻り、カオスで当たるとサフィックスが満杯で次の高貴が打てず 100 人中 64 人止まるのに、
  * 前は戻った先の手が打てるかだけ見て先へ進まず、精査に出なかった
  */
-import { allMods, modBoostsOf, mulberry32, room, SIDES, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { allMods, limitOf, modBoostsOf, mulberry32, room, sideOfMod, SIDES, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomes } from "../../simulator/sim-engine";
 import { prepFor } from "./tree-unbounded";
 import { catalystTagOf } from "../../simulator/sim-engine";
-import { aimHeldOn, junkOf, reachableAims } from "./tree-aim";
+import { aimHeldOn, isAimMod, junkOf, reachableAims } from "./tree-aim";
 import { CATALYSING, effectOf, engineOmens, isCatalyst } from "./tree-hands";
 import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeDoc, boxAims } from "./tree-model";
 import { aimOpts, aimsOf, goalsHeld, handAims, handProblem, heldHitOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
@@ -23,7 +23,7 @@ import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 
-type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry" | "omenWaste" | "shape";
+type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry" | "omenWaste" | "shape" | "fixedFull";
 export interface CheckIssue { boxId: string; kind: CheckKind; text: string }
 
 const PEOPLE = 5;
@@ -127,6 +127,28 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
     const before = b.out === "pass" && b.parent ? doc.boxes[b.parent]?.hand : null;
     const afterCat = !!before && isCatalyst(before.currency);
     if (b.hand?.omens.includes(CATALYSING) && !b.hand.catalyst && !afterCat) add(b.id, "noCatalyst", tr("触媒のお告げなのにカタリストを打つ手が無い (手の札でカタリストを選ぶ)", "Omen of Catalysing Exaltation without a catalyst craft (pick a catalyst in the craft)"));
+  }
+
+  // 1a) 固定された外れ MOD (フラクチャーで外れが固定された・始めから固定の外れ) で、その側の完成の狙いが枠に入りきらない = この枝は完成できない
+  // (10-27 夜オーナー、カマサのティアラの「外れ MOD が固定された」の箱。スイッチ tidyUnder)。固定は消せないので、レアの枠 − 固定の外れ < その側の狙いの数なら届かない。枝の一番上の箱だけに出す
+  if (flag("tidyUnder")) {
+    const ts = targetsOf(data, aims), opts = aimOpts(data), stuckFix = new Set<string>();
+    for (const b of boxes) {
+      if (b.parent && stuckFix.has(b.parent)) { stuckFix.add(b.id); continue; }
+      if (b.done) continue;
+      let item: StageItem;
+      try { item = sampleOf(data, doc, b.id, 1).item; } catch { continue; }
+      const rare = { ...item, rarity: "rare" as const };
+      for (const side of SIDES) {
+        const fixed = (side === "prefix" ? item.prefixes : item.suffixes).filter((m) => m.fractured && !isAimMod(m, ts, opts));
+        const want = aims.filter((a) => sideOfMod(data, a.modId) === side).length;
+        if (!fixed.length || limitOf(rare, side) - fixed.length >= want) continue;
+        stuckFix.add(b.id);
+        const sideJa = side === "prefix" ? "プレフィックス" : "サフィックス", sideEn = side === "prefix" ? "prefix" : "suffix";
+        add(b.id, "fixedFull", tr(`固定された外れ MOD (${fixed.map(modText).join("・")}) で${sideJa}の枠が足りず、完成の狙い ${want} つが入りきらない (固定は消せないので、この枝は完成できない)`, `A fixed (fractured) miss mod (${fixed.map(modText).join(", ")}) leaves too few ${sideEn} slots for the ${want} final target(s) (fractured mods can't be removed, so this branch can never finish)`));
+        break;
+      }
+    }
   }
 
   // 1b) 形の合う箱へ: 行きうる形の箱がツリーに無い (tree-run の matchTargets、回す時と同じ判定)
