@@ -433,8 +433,11 @@ function outBoxOfRaw(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[] }
  */
 export function sameHandReturn(doc: TreeDoc, id: string, h: Hand, loose?: LooseOf): string | null {
   const b = doc.boxes[id];
-  if (!b || !(b.out === "junk" || b.out === "lost" || b.out === "any" || b.out === "hit")) return null;
+  // 「外れが消えた」の箱も同じ (10-27 夜モンキー 2 回目 2: 「1 段目へ戻る」の外れが消えたの箱でスタートと同じ手を選ぶと、戻りが消えて新しい段ができた。スイッチ backSameHand)
+  if (!b || !(b.out === "junk" || b.out === "lost" || b.out === "any" || b.out === "hit" || (flag("backSameHand") && b.out === "junkGone"))) return null;
   const same = (x: Hand | null | undefined): boolean => !!x && x.currency === h.currency && [...x.omens].sort().join() === [...h.omens].sort().join();
+  // ⓪ 今の戻り先 (人が選んだ / 自動の) の箱がこの手と同じなら、そのまま戻り先へ (戻り先がスタートの時は、スタートは形の合う箱の候補に入らないので、ここで見る)
+  if (flag("backSameHand") && b.back && b.back !== MATCH && b.back !== RESTART && same(doc.boxes[b.back]?.hand)) return b.back;
   const p = b.parent ? doc.boxes[b.parent] : undefined;
   const keys = new Set(matchTargets(doc, id).map((m) => m.key));
   // 打つ前の箱へも、形の鍵 (狙いの組 + 外れの有無) が同じ時だけ (10-27 夕モンキー 8: スタート (外れ 0) で高貴を打った外れ (外れ 1) に同じ高貴を選ぶとスタートへ戻り、
