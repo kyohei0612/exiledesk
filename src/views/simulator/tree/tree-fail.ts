@@ -3,7 +3,7 @@
  * (2026-10-26 オーナー「失敗時の挙動をかなりしっかり作りこまないとダメだね」の案 2。PC の箱・スマホの結果の行と重ね窓で同じ文)。
  * 木の作りと回し方は変えない (文はどれも今の setBack・autoBack・settle・stuckWhy を読むだけ)。決めは notes/2026-10-26-failure-behavior.md
  */
-import { MATCH, RESTART } from "../../../services/simulator/tree/tree-shape";
+import { MATCH, matchTargets, RESTART, shapeFits, shapesOf } from "../../../services/simulator/tree/tree-shape";
 import { boxAims, GAP_Y, type Hand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { backTargetsOf } from "./tree-merge";
@@ -101,4 +101,19 @@ export function sameHandRetry(doc: TreeDoc, id: string, h: Hand): string | null 
   if (!b || !p?.hand || b.hand || (b.out !== "junk" && b.out !== "lost")) return null;
   const same = h.currency === p.hand.currency && [...h.omens].sort().join() === [...p.hand.omens].sort().join();
   return same ? p.id : null;
+}
+/**
+ * 外れの側の箱 (外れ・狙いが消えた・打った後) で手 h を選んだ時、木の中でこの箱と同じ形 (形の鍵 = 付いている狙いの組 + 外れの有無、shapeFits も合う) で
+ * 同じ手 (カレンシーとお告げ) の箱。候補が幾つもあれば上の段 (始まりに近い) の物。自分と自分の下は除く。無ければ null = 新しい段
+ * (10-27 オーナー r/okPcmPyY「同じ形の箱が 2 つ以上あって、先頭が別の手だと見つからず段が足される」。前は形の合う箱の先頭 1 つと今の戻り先だけ見ていた)
+ */
+export function sameShapeReturn(doc: TreeDoc, id: string, h: Hand): string | null {
+  const b = doc.boxes[id];
+  if (!b || (b.out !== "junk" && b.out !== "lost" && b.out !== "any")) return null;
+  const keys = new Set(matchTargets(doc, id).map((m) => m.key));
+  const under = (x: string): boolean => { for (let y: string | null = x; y; y = doc.boxes[y]?.parent ?? null) if (y === id) return true; return false; };
+  const depth = (x: string): number => { let n = 0; for (let y = doc.boxes[x]?.parent ?? null; y; y = doc.boxes[y]?.parent ?? null) n++; return n; };
+  const same = (x: Hand): boolean => x.currency === h.currency && [...x.omens].sort().join() === [...h.omens].sort().join();
+  const cands = [...new Set(shapesOf(doc).filter((s) => keys.has(s.key) && !!s.hand && same(s.hand) && !under(s.box)).map((s) => s.box))].filter((x) => shapeFits(doc, id, x));
+  return cands.sort((x, y) => depth(x) - depth(y))[0] ?? null;
 }

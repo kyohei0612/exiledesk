@@ -18,12 +18,10 @@ import TreeRecipeBar from "../tree/TreeRecipeBar.vue";
 import { applyPick, type OnlyOut } from "../tree/tree-hand-plan";
 import { useTree } from "../tree/use-tree";
 import { clearHand, setAim, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
-import { matchTargets, shapeFits } from "../../../services/simulator/tree/tree-shape";
-import { backTargetsOf } from "../tree/tree-merge";
 import { tr } from "../../../i18n/lang";
 import { isMiss, outStep, phoneRun, sheet, testedKey, usePhoneQuiz, type Question } from "./use-phone-quiz";
 import { routeKeyOf } from "../tree/use-tree-check";
-import { stepOf } from "../tree/tree-fail";
+import { sameShapeReturn, stepOf } from "../tree/tree-fail";
 import PhoneAsk from "./PhoneAsk.vue";
 import PhoneOverview from "./PhoneOverview.vue";
 import PhoneBoxSheet from "./PhoneBoxSheet.vue";
@@ -106,9 +104,9 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null, only
     q.focus.value = { kind: "outs", id: par.id };
     return;
   }
-  // 外れの箱と同じ形の箱 (自動の戻り先・形の合う箱) の手と同じ手を選んだ = その箱へ戻る (親の手と違っても。10-27 オーナーの r/okPcmPyY:
+  // 外れの箱と同じ形の箱 (木の全部の箱から、tree-fail の sameShapeReturn) の手と同じ手を選んだ = その箱へ戻る (親の手と違っても。10-27 オーナーの r/okPcmPyY:
   // 冒涜の外れ b8 は同じ形の外れ b5 (エッセンスの手) へつながっていたのに、b8 でエッセンスを選ぶと親 b6 (冒涜) と比べて別の手になり、段が伸び続けた)
-  const same = b && RES27 && (isMiss(b) || b.out === "any") ? sameShapeBox(id, h) : null;
+  const same = b && RES27 && (isMiss(b) || b.out === "any") ? sameShapeReturn(t.doc.value, id, h) : null;
   if (same && b) {
     handFor.value = null;
     if (b.hand) q.answer((d) => clearHand(d, id));
@@ -123,13 +121,6 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null, only
   q.addFresh(Object.keys(t.doc.value.boxes).filter((x) => !before.has(x)));
   handFor.value = null;
   q.focus.value = { kind: "outs", id: at };
-}
-/** id の箱と同じ形で、手 h を持つ箱 (今の戻り先・形の合う箱の順。自分と自分の下は除く) */
-function sameShapeBox(id: string, h: Hand): string | null {
-  const d = t.doc.value;
-  const ids = [...backTargetsOf(d, id), ...matchTargets(d, id).flatMap((m) => (m.to ? [m.to] : []))];
-  const under = (x: string): boolean => { for (let y: string | null = x; y; y = d.boxes[y]?.parent ?? null) if (y === id) return true; return false; };
-  return [...new Set(ids)].find((x) => { const tb = d.boxes[x]; return !!tb?.hand && !under(x) && sameHand(h, tb.hand) && shapeFits(d, id, x); }) ?? null;
 }
 /** 同じ手か (カレンシーとお告げ。狙いの選び方は問わない) */
 const sameHand = (x: Hand, y: Hand): boolean => x.currency === y.currency && [...x.omens].sort().join() === [...y.omens].sort().join();
