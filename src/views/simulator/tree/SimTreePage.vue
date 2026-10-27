@@ -23,6 +23,8 @@ import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../
 import TreeHandPage from "./TreeHandPage.vue";
 import { useTree } from "./use-tree";
 import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
+import { useTreePop } from "./use-tree-pop";
+import { openTreeFirst } from "./tree-open-first";
 import { craftStage as s } from "../../../state/craft-stage";
 import { addHit, aimKey, BOX_H, BOX_W, clearHand, moveBox, setAim, setBack, setDone, type Aim, type Hand, type HandKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
 import { handUses } from "../../../services/simulator/tree/tree-memo";
@@ -33,7 +35,7 @@ import { tr } from "../../../i18n/lang";
 import { pageZoom } from "../../../utils/zoom";
 import { LINE, useTreeEdges } from "./use-tree-edges";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
-import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes"; import { quickSave, rememberResume, resumeTree, unsaved } from "./tree-save";
+import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes"; import { quickSave, rememberResume, unsaved } from "./tree-save";
 import { askLeave, openTreePage, setLeaveGuard, treeStep } from "../../../web/page";
 import { recipesPage } from "../../../state/web-page";
 import { gesture } from "./use-gesture";
@@ -206,40 +208,10 @@ function removeHandOf(id: string): void { const p = doc.value.boxes[id]?.parent;
 function startLink(b: Box): void { simOp("plus"); panel.value = { kind: "hand", id: b.id }; } // 打つ手の重ね窓 (戻り先へは窓の「既にある箱へ戻す」か＋の引っ張り)
 const link = useTreeLink(doc, picking);
 const noTarget = computed(() => noTargetText(link.value, picking.value));
-/** 縮めて見ている時に押した箱の編集のポップアップ (等倍、箱でできる事が全部) */
-const pop = ref<string | null>(null);
-const popEl = ref<HTMLElement | null>(null);
-useDismiss(() => !!pop.value, [popEl], () => { pop.value = null; });
-watch(viewOnly, (on) => { if (!on) pop.value = null; });
+/** 縮めて見ている時に押した箱の編集のポップアップ (use-tree-pop.ts) */
+const { pop, popEl, popStyle, popDo } = useTreePop(doc, v);
 // シミュの操作の流れ (オーナー「シミュは全部監視」、web/sim-trail): 手の窓を開いた (下の ＋・打つ手の札のどちらからでも)
 watch(() => panel.value?.kind, (k) => { if (k === "hand") simOp("hand-open"); });
-/** ポップアップの置き場 (押した箱の真ん中に重ねる。枠はページの zoom を打ち消しているので、実ピクセル ÷ ページの zoom) */
-const popStyle = computed(() => {
-  const b = pop.value ? doc.value.boxes[pop.value] : null;
-  if (!b) return {};
-  const { x, y, zoom: z } = v.flow.viewport.value, Z = pageZ.value;
-  // 枠の中に収める (ポップアップの大きさ = 箱 + 余白 12・右 28・下 48)
-  const { width: W, height: H } = v.flow.dimensions.value;
-  // 大きさは測った物 (中のアイテムの枠で箱より高い。前は箱の最低の高さで見積もり、下の端が右下の倍率の道具にかかった、10-26 モンキー 8 の 5)
-  const pw = popSize.value.w || BOX_W + 40, ph = popSize.value.h || BOX_H + 60, top0 = 44 / Z;
-  let left = Math.max(8, Math.min(W / Z - pw - 8, ((b.x + BOX_W / 2) * z + x) / Z - BOX_W / 2 - 12));
-  let top = Math.max(8, Math.min(top0 + H / Z - ph - 8, ((b.y + BOX_H / 2) * z + y) / Z - BOX_H / 2 - 12));
-  // 右下の道具 (ミニマップ・倍率) にかかる時は道具の上へ、上に入らなければ左へ
-  // (道具は 10-26 夜から木の枠の外の右の列。枠の中に戻した時のために残す)
-  const tools = document.querySelector<HTMLElement>("[data-tree-frame] [data-tree-tools]");
-  if (tools) {
-    const tl = tools.offsetLeft, tt = tools.offsetTop;
-    if (left + pw > tl && top + ph > tt) { if (tt - ph - 8 >= 8) top = tt - ph - 8; else left = Math.max(8, tl - pw - 8); }
-  }
-  return { left: `${left}px`, top: `${top}px` };
-});
-/** 浮き窓の大きさ (ページの CSS ピクセル) */
-const popSize = ref({ w: 0, h: 0 });
-const popRo = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => { const e = popEl.value; if (e) popSize.value = { w: e.offsetWidth, h: e.offsetHeight }; });
-watch(popEl, (el, old) => { if (old) popRo?.unobserve(old); if (el) popRo?.observe(el); else popSize.value = { w: 0, h: 0 }; });
-onBeforeUnmount(() => popRo?.disconnect());
-/** ポップアップの中で押した物は、閉じてからいつもの動きへ */
-function popDo(f: (id: string, b: Box) => void): void { const id = pop.value, b = id ? doc.value.boxes[id] : null; pop.value = null; if (id && b) f(id, b); }
 /**
  * 箱の重ね窓 (打つ手・分かれ目・MOD を選ぶ・メモ) は、窓の外を押す / Esc で何も変えずに閉じる (オーナー 10-22「枠の外・Esc で選ぶ前に戻す」、共通の useDismiss)。
  * 押した物には届ける。ツリーの枠の中は数えない (空き所は押した時だけ閉じ、引っ張って画面を動かしても閉じない = onPaneClick、箱・札は開き直す)。メモの窓・窓から出した小窓も中に数える
@@ -372,22 +344,7 @@ function onKey(e: KeyboardEvent): void {
   }
 }
 onMounted(() => window.addEventListener("keydown", onKey));
-/**
- * 白紙ならベース選びのページ (?page=sim-base) から。ベースはまだ選んでいない扱い (use-tree の needBase)。
- * ?page=sim-tree / sim-mods を直に開いて木が無い時も sim-base へ (10-24 夜オーナー「エミュレーターみたいにベースから開始」)。
- * URL は先に置き換える (page.ts は URL と同じページへの移りを履歴に積まない。積むと戻るでまた白紙の sim-tree へ来て、ここから出られなくなる)。
- * 見本の木 (?sample=、tree-samples.ts) は 10-25 に消した (オーナー「古いレシピ全て削除で OK」)
- */
-onMounted(() => {
-  if (resumeTree()) return; // 保存したレシピを開いていた時はそれを開き直してツリーへ (tree-save)
-  if (!t.takeAskBase()) return;
-  t.needBase.value = true;
-  if (treeStep.value !== "base") {
-    try { const u = new URL(location.href); u.searchParams.set("page", "sim-base"); history.replaceState(history.state, "", u.pathname + u.search + u.hash); } catch { /* 置き換えられなくても開く */ }
-    openTreePage("base");
-  }
-  t.goalPage.value = 1;
-});
+onMounted(openTreeFirst); // 白紙ならベース選びのページから (tree-open-first.ts)
 onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); });
 // 完成形の設定をページで出していた間はツリーを隠していたので (大きさ 0)、戻ったら開いた時の見え方 (全体・上寄せ) に合わせ直す
 watch(() => t.goalInline.value, (on) => { if (on) v.keepView(); else setTimeout(() => { measureRow(); void v.backView(); }, 0); });
