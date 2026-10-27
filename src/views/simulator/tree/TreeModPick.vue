@@ -21,7 +21,7 @@ import { hitAimsOf, kindOf } from "./tree-hand-plan";
 import { takenBeside } from "./tree-side-aims";
 
 /** title: 見出しを替える (メモの窓では「欲しい MOD を足す」)。autofocus: 開いたら探す欄に入る */
-const props = defineProps<{ mode: "hit" | "start"; current: Aim | null; title?: string; autofocus?: boolean; embedded?: boolean; /** 当たりの箱 (前の箱で付いている狙いをグレーに) */ boxId?: string; /** 横の ＋ で足す (boxId は押した横の箱) */ adding?: boolean }>();
+const props = defineProps<{ mode: "hit" | "start"; current: Aim | null; title?: string; autofocus?: boolean; embedded?: boolean; /** 当たりの箱 (前の箱で付いている狙いをグレーに) */ boxId?: string; /** 横の ＋ で足す (boxId は押した横の箱) */ adding?: boolean; /** この MOD だけの全部の一覧 (完成の狙いの一覧にしない。骨の手の置き石、スイッチ boneLater) */ allow?: readonly string[] }>();
 const emit = defineEmits<{ pick: [aim: Aim]; close: [] }>();
 const t = useTree();
 
@@ -49,7 +49,7 @@ useDismiss(() => !!open.value, [() => (open.value ? listEl.value?.querySelector<
  * 並びは群れの順 → 出やすさ (普通の MOD が先、10-22)。一覧はエンジンの modListFor、木のベースのレアで
  */
 const GROUPS_OF: Record<"hit" | "start", readonly ModGroup[]> = { hit: ["normal", "desecrated", "essence"], start: ["normal", "essence", "special", "rune"] };
-const listed = computed(() => { const d = s.data.value; const gs = GROUPS_OF[props.mode]; return d ? modListFor(d, freshItem(d, t.doc.value.base, t.doc.value.itemLevel, "rare")).filter((r) => gs.includes(r.group)).sort((a, b) => gs.indexOf(a.group) - gs.indexOf(b.group) || b.share - a.share) : []; });
+const listed = computed(() => { const d = s.data.value; const gs = GROUPS_OF[props.mode]; return d ? modListFor(d, freshItem(d, t.doc.value.base, t.doc.value.itemLevel, "rare")).filter((r) => gs.includes(r.group) && (!props.allow || props.allow.includes(r.id))).sort((a, b) => gs.indexOf(a.group) - gs.indexOf(b.group) || b.share - a.share) : []; });
 const sections = computed(() => {
   // 「移動速度」でも「移動スピード」(MOD の文) に当たる (10-22 白紙から組んで 0 件だった)
   const qs = [...new Set([query.value.trim().toLowerCase()].flatMap((q) => [q, q.replace(/速度/g, "スピード"), q.replace(/スピード/g, "速度")]))];
@@ -67,7 +67,7 @@ const sections = computed(() => {
 const aimOf = (r: ModRow, tt: ModRow["tiers"][number]): Aim => ({ modId: tt.modId ?? r.id, tier: tt.tier });
 const isCurrent = (r: ModRow, tt: ModRow["tiers"][number]): boolean => { const a = aimOf(r, tt); return props.current?.modId === a.modId && props.current.tier === a.tier; };
 /** 完成の狙いから選ぶ (当たりで、狙いがある時) */
-const fromGoals = computed(() => props.mode === "hit" && t.goals.value.length > 0);
+const fromGoals = computed(() => props.mode === "hit" && !props.allow && t.goals.value.length > 0);
 /** この箱の前 (親の箱) で付いている狙い */
 const heldBefore = computed(() => {
   const d = s.data.value, p = props.boxId ? t.doc.value.boxes[props.boxId]?.parent : null;

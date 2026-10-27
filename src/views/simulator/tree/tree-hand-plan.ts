@@ -97,7 +97,8 @@ export function essenceAimsOf(data: PatchData, item: StageItem, h: Hand): Aim[] 
 export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, h: Hand, goals: readonly Aim[]): Aim[] {
   // 骨を未発現のまま = 当たりは無し (結果は未発現の冒涜が付いた 1 つ)。発現で選ぶ手 = 発現で出うる MOD 全部 (置き石も。スイッチ boneLater)
   if (veilKeep(h) || fracFree(doc, h)) return [];
-  if (veilPick(h)) return revealAimsOf(data, doc, boxId, item, h);
+  // 窓の ☑ は完成の狙いだけ (高貴の窓と同じ。置き石は TreeVeilCheck の「ほかの MOD を選ぶ」、10-28 オーナー)
+  if (veilPick(h)) return revealAimsOf(data, doc, boxId, item, h).filter((a) => (doc.memoAims ?? []).some((g) => g.modId === a.modId));
   const kind = kindOf(h);
   // エッセンス = 付く MOD は決まっている。エンジンの結果で新しく付いた MOD を当たりの札に (10-22 オーナー「エッセンスの道」)
   if (kind === "essence") {

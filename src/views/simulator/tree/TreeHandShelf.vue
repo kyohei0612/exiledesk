@@ -172,13 +172,13 @@ const veilOn = ref(!!props.current && isBone(props.current.currency) && props.cu
 const boneVeil = computed(() => flag("boneLater") && !!held.value && isBone(held.value));
 const veil = computed(() => (boneVeil.value ? (veilOn.value ? "pick" as const : "keep" as const) : undefined));
 function setVeil(v: boolean): void { const was = veilOn.value, had = [...checked.value], om = [...omens.value]; veilOn.value = v; checked.value = []; omens.value = v ? [...om.filter((o) => o !== ECHO), ECHO] : om.filter((o) => o !== ECHO); warnIfBelow(() => { veilOn.value = was; checked.value = had; omens.value = om; }); } // 反響は発現させる時だけ
-/** 未発現の冒涜が付いた箱は棚に「発現」の札 (TreeRevealCard) */
-const revealable = computed(() => flag("boneLater") && !!item.value && !!unrevealedOf(item.value));
+const extraAims = ref<Aim[]>(!props.current ? [] : (t.doc.value.boxes[props.boxId]?.outs ?? []).flatMap((o) => { const x = t.doc.value.boxes[o]; return x?.out === "hit" && x.aim && !(t.doc.value.memoAims ?? []).some((g) => g.modId === x.aim!.modId) ? [x.aim] : []; })); // 発現で選ぶ置き石 (TreeVeilCheck の「ほかの MOD を選ぶ」)
+const revealable = computed(() => flag("boneLater") && !!item.value && !!unrevealedOf(item.value)); // 未発現の冒涜が付いた箱は棚に「発現」の札 (TreeRevealCard)
 const outOf = (o: Parameters<typeof outNameOf>[1], a?: Aim | null): string => outNameOf(hand.value, o, a);
 const aimChoices = computed((): Aim[] => {
   const d = s.data.value, it = item.value;
   if (d && it && held.value && isInfinite.value) return hitAimsOf(d, t.doc.value, props.boxId, it, handOf({ held: held.value, omens: omens.value, spam: false, spamMax: null, free: false, echo: echo.value }), t.goals.value);
-  return d && it && held.value ? hitChoicesOf(d, t.doc.value, props.boxId, it, { held: held.value, omens: omens.value, echo: echo.value, veil: boneVeil.value ? "pick" : veil.value }, t.goals.value) : []; // 骨は発現させない時も候補 = 発現で出うる MOD (☑ で発現させるがオン)
+  return d && it && held.value ? hitChoicesOf(d, t.doc.value, props.boxId, it, { held: held.value, omens: omens.value, echo: echo.value, veil: boneVeil.value ? "pick" : veil.value }, t.goals.value).concat(boneVeil.value || held.value === "reveal" ? extraAims.value.filter((x) => !t.goals.value.some((g) => g.modId === x.modId)) : []) : []; // 骨・発現: 完成の狙い + 選んだ置き石
 });
 /** チェックした狙い (候補にある物だけ) */
 const checkedAims = computed((): Aim[] => aimChoices.value.filter((a) => checked.value.includes(aimKey(a))));
@@ -365,7 +365,6 @@ function ok(): void {
       <p v-if="preCat" data-tree-hand-pre-cat class="text-[12px] text-sky-200/90">{{ tr(`前に「${handName(preCat)} (品質を最大まで)」の手を足す (札を押すとカタリストを替えられる)`, `Adds "${handName(preCat)} (to max quality)" before this (click its chip to change the catalyst)`) }}</p>
       <!-- フラクチャー: 印の狙いを必ず固定、外れは費用で数える (10-24 オーナー「2 回外れて 1 回当たり」、10-25 に戻した) -->
       <p v-if="isFracture" data-tree-hand-frac-rule class="text-[12px] opacity-70">{{ tr("完成の MOD の印の狙いを必ず ✦ にする。固定できる MOD が 2 つ以上なら、2 回外れて 1 回当たりとして、ここまでの費用とフラクチャーを 2 回分足す", "Always fractures the marked final mod. With 2+ mods that could fracture, counts as 2 misses then a hit: adds this point's cost and the Fracturing Orb twice") }}</p>
-      <TreeVeilCheck v-if="boneVeil && !phone" :model-value="veilOn" @update:model-value="setVeil" />
       <!-- 足す手: 当たりの箱にする狙いをチェック (複数可)。チェックした MOD ごとに当たり、どれも付かなければ外れ、0 個 = 狙い無し (10-25 オーナー) -->
       <div v-if="showAims && !phone" data-tree-hand-aims class="flex flex-col gap-1 text-[12px]">
         <span v-if="spam && !checkedAims.length" data-tree-hand-aim-need class="text-rose-200/90">{{ tr("狙う MOD を選んで", "Pick a target mod") }}</span>
@@ -374,6 +373,7 @@ function ok(): void {
           <input type="checkbox" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="t.aimLabel(a)">{{ t.aimLabel(a) }}</span>
         </label>
         <!-- 狙い無し (MOD とは排他。前はお告げの列の札、10-25 オーナー「狙い無しも左のチェックに付けるといいね」) -->
+        <TreeVeilCheck v-if="boneVeil || held === 'reveal'" :no-check="held === 'reveal'" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" @update:model-value="setVeil" @add="(a) => { extraAims.push(a); toggleAim(a); }" />
         <label v-if="!spam && !isInfinite" data-tree-hand-free class="flex min-h-7 cursor-pointer items-center gap-2" :title="tr('狙い無し (空きを 1 つ埋めるだけ。当たり / 外れに分けない)', 'No target (just fill an open slot; no hit / miss split)')">
           <input type="checkbox" :checked="freeOn" @change="toggleFree($event)" />{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}
         </label>
@@ -424,7 +424,6 @@ function ok(): void {
       <p class="mb-1 break-words text-[12px] font-bold text-amber-100">{{ tr(`${nameOf(held)} を持っている`, `Holding ${nameOf(held)}`) }}</p>
       <button v-if="heldHelp.length && P27" type="button" data-tree-hand-help-toggle class="mb-1 min-h-9 text-[12px] text-[#c9b48a] underline decoration-white/20" :aria-expanded="helpOpen" @click="helpOpen = !helpOpen">{{ helpOpen ? tr("説明を閉じる ▴", "Hide details ▴") : tr("説明 ▾", "Details ▾") }}</button>
       <p v-if="heldHelp.length && (!P27 || helpOpen)" data-tree-hand-held-help class="mb-2 break-words text-[12px] leading-snug text-[#d8ccb4]">{{ heldHelp.join(" ") }}</p>
-      <TreeVeilCheck v-if="boneVeil" big class="mb-1" :model-value="veilOn" @update:model-value="setVeil" />
       <!-- 狙いを選べる手は 2 つ: 狙い無し (今のチェック) のまま決める / 2 段目で狙いを選ぶ。繰り返しの手は 2 段目だけ -->
       <div v-if="showAims" class="flex gap-2">
         <!-- 左は普通の「キャンセル」(持った札を離す)、右は狙いを選ぶ (今の手を直す時は「狙いを再度選ぶ」)。10-27 オーナー「このまま決めるは日本語として変」 -->
@@ -448,6 +447,7 @@ function ok(): void {
             <label v-for="a in aimChoices" :key="aimKey(a)" data-tree-hand-aim :data-aim="aimKey(a)" class="flex min-h-11 min-w-0 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
               <input type="checkbox" class="size-5 shrink-0" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 break-words">{{ t.aimLabel(a) }}</span>
             </label>
+            <TreeVeilCheck v-if="boneVeil || held === 'reveal'" big :no-check="held === 'reveal'" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" @update:model-value="setVeil" @add="(a) => { extraAims.push(a); toggleAim(a); }" />
             <label v-if="!spam && !isInfinite" data-tree-hand-free class="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
               <input type="checkbox" class="size-5 shrink-0" :checked="freeOn" @change="toggleFree($event)" /><span class="min-w-0 break-words">{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}</span>
             </label>
