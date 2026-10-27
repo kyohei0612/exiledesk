@@ -2,15 +2,15 @@
 
 エミュの画面 (本番のエミュレーター: ベースを選び、棚からカレンシーを持って打つ画面・スパムシミュレーター) の UI/UX の持ち主。10-22 深夜にジン部長から分けた (オーナー)。エンジンはジン部長、シミュの画面はシミュ部長。
 
-## 決まり (docs/org/dev/README.md の決まりが先)
-1. エンジンの関数は直に呼ぶ (入口は要らない、10-25 夜)。エンジンの書き換えと中身 (打つ・確率・打てるか・MOD の文や値) の自作はしない、無ければジンへ。
-2. 線引き: 結果が変わる物はエンジン、見え方と操作は画面。エミュが足すのは UI/UX と、エミュだけの扱い (services/emulator/emu-engine)。
-3. 部品の核は for-share (デザイン部長) を使い、直に書き換えない。エミュだけの違い (持った時の % など) は包む / slot で足す。
-4. シミュの画面のコードは import しない (見張り D)。他の部の持ち物は持ち主に直接頼み、結果はブラックへ 1 行。
-5. 本番に出る画面なので、見た目・操作の変更はオーナーの OK の後 (メモ ui-try-before-release)。出していない物はスイッチ (release-flags) の下に。
-6. 確かめは手元の dev サーバー (1440) を本物のマウスで (PC 1660×860・スマホは mobile preset)。報告に何で確かめたかを書く。
-7. スマホは省略しない (… や畳みで切らず折り返す)・見るためのタップで別ページへ飛ばさない (メモ feedback-phone-no-truncate)。
-8. UI の決まりはメモ MEMORY.md の「UI の決まり」の節。出す物は英語もセット (メモ feedback-english-with-every-feature)。
+## 決まり (docs/org/dev/README.md の決まりが先。画面の決まりの正は docs/spec/emu.md の M-xx、ここは番号を指すだけ)
+1. 中身はエンジンの関数を直に呼ぶ、自作しない・無ければジンへ (G-06、emu.md ①・M-01)。
+2. 線引き: 結果が変わる物は engine.md、見え方と操作は emu.md、エミュだけの扱いは services/emulator/emu-engine (emu.md ①)。
+3. 部品の核は for-share (デザイン部長) を使い、違いは包む / slot で (shared-ui.md)。
+4. シミュの画面のコードは import しない (M-92、見張り D)。他の部の持ち物は持ち主に直接頼み、結果はブラックへ 1 行。
+5. 見た目・操作の変更はオーナーの OK の後、出していない物はスイッチの下 (G-08、shared-ui.md)。
+6. 足す手順と確かめは emu.md ⑥ (手元 1440 を本物のマウスで、報告に何で確かめたか)。合格の基準は G-22。
+7. スマホはエミュでの当て方が M-70〜72、省略しない・並びの土台は shared-ui.md。
+8. UI の決まり・英語のセットは shared-ui.md。決まりが変わったら同じ commit で emu.md を直す (G-20)。
 9. AdSense の再審査中は、読み物・AdSense のコード・ads.txt を壊さない。
 
 ## 地図
@@ -22,4 +22,4 @@
 - エンジン: 核 src/services/craft-stage/ (よく使う名前の束 engine.ts、打てるかは useReason)。チュートリアルの差し込み口は views/tutorial/course-entry.ts だけ。
 - 共有と各画面 (オーナー 10-23、docs/org/README.md の「流れ」): どの画面でも同じ物はデザイン部長、エミュの流れにしか無い物 (持つ・次の手で狙う・スパムの計算) はここ。迷ったらここで作り、2 つ目の画面で要った時に共有へ。
 - 前の記録 (ジン部長の時代の画面の仕事) は docs/org/emulator/todo.md・notes/。画面の残りはここの todo.md に移す。
-- 決めた事: docs/decisions/001-craft-stage.md、メモ craft-stage-feature・ui-one-frame-rule・ui-no-break-rules・feedback-basic-flow・feedback-minimal-text-ui・game-ui-art-direction・web-phone-layout・chaos-spam-and-sfx。
+- 決めた事: 画面の決まりは docs/spec/emu.md (M-xx、残っている仮は ⑦)。経緯は docs/decisions/001-craft-stage.md・notes/。
