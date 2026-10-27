@@ -69,7 +69,8 @@ export function handOf(p: HandPick): Hand {
     // 反響はお告げの並びで掛けた物 (used に入る) か、echo の指定。2 つ入れない (10-26 夜、並びの札と別の印が重なった)
     // 後から打つ発現の手も反響を既定で (骨と同じ。スイッチ boneLater)
     // 未発現のまま次へ (veil keep) は発現しないので反響を既定で付けない
-    currency: p.held, omens: ((isBone(p.held) && p.veil !== "keep") || isRevealHand(p.held)) && p.echo !== false && !used.includes(ECHO) ? [...used, ECHO] : used,
+    // boneLater の木は反響を任意 (手の窓の ☑ か棚のお告げで付けた時だけ、10-28 オーナー「そこまで必須って感じで出したくない」)
+    currency: p.held, omens: ((isBone(p.held) && p.veil !== "keep") || isRevealHand(p.held)) && (flag("boneLater") ? p.echo === true : p.echo !== false) && !used.includes(ECHO) ? [...used, ECHO] : used,
     catalyst: null, quality: 0,
     repeat: p.spam && canSpam(p.held) ? { until: "hit", max: p.spamMax && p.spamMax > 0 ? Math.round(p.spamMax) : null } : null,
     // 乱数のフラクチャーの狙い無し (固定されうる MOD ごとの箱。印の無い木だけ、applyPick が pick を付ける。スイッチ fracPick)

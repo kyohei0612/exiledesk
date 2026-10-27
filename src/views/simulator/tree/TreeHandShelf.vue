@@ -95,7 +95,7 @@ const isFracture = computed(() => !!held.value && effectOf(held.value) === "frac
  * 前の手を開いた時はその手のまま
  */
 const echo = computed(() => omens.value.includes(ECHO));
-watch(held, (k, old) => { if (k && k !== old && ((isBone(k) && (!flag("boneLater") || veilOn.value)) || k === "reveal") && !omens.value.includes(ECHO)) omens.value = [...omens.value, ECHO]; }); // 開いた時は動かない = 前の手のまま
+watch(held, (k, old) => { if (k && k !== old && isBone(k) && !flag("boneLater") && !omens.value.includes(ECHO)) omens.value = [...omens.value, ECHO]; }); // 開いた時は動かない = 前の手のまま。boneLater では反響は任意の ☑ (TreeVeilCheck、10-28 オーナー「そこまで必須って感じで出したくない」)
 /** 付く MOD を選べない手 (足す・カオス。当たりの箱にする MOD のチェックと狙い無しを出す) */
 const canFree = computed(() => !!held.value && (FREE_EFFECTS.includes(effectOf(held.value)) || (flag("fracPick") && effectOf(held.value) === "fracture" && !fractureMarks(t.doc.value).length)));
 /**
@@ -171,7 +171,7 @@ const isInfinite = computed(() => !!held.value && infiniteAim(held.value));
 const veilOn = ref(!!props.current && isBone(props.current.currency) && props.current.veil !== "keep"); // 前の版の骨の手 (veil 無し) は同じ手で発現 = ☑ あり
 const boneVeil = computed(() => flag("boneLater") && !!held.value && isBone(held.value));
 const veil = computed(() => (boneVeil.value ? (veilOn.value ? "pick" as const : "keep" as const) : undefined));
-function setVeil(v: boolean): void { const was = veilOn.value, had = [...checked.value], om = [...omens.value]; veilOn.value = v; checked.value = []; omens.value = v ? [...om.filter((o) => o !== ECHO), ECHO] : om.filter((o) => o !== ECHO); warnIfBelow(() => { veilOn.value = was; checked.value = had; omens.value = om; }); } // 反響は発現させる時だけ
+function setVeil(v: boolean): void { const was = veilOn.value, had = [...checked.value], om = [...omens.value]; veilOn.value = v; checked.value = []; if (!v) omens.value = om.filter((o) => o !== ECHO); warnIfBelow(() => { veilOn.value = was; checked.value = had; omens.value = om; }); } // 反響は外す時だけ外す (付けるのは任意の ☑)
 const extraAims = ref<Aim[]>(!props.current ? [] : (t.doc.value.boxes[props.boxId]?.outs ?? []).flatMap((o) => { const x = t.doc.value.boxes[o]; return x?.out === "hit" && x.aim && !(t.doc.value.memoAims ?? []).some((g) => g.modId === x.aim!.modId) ? [x.aim] : []; })); // 発現で選ぶ置き石 (TreeVeilCheck の「ほかの MOD を選ぶ」)
 const revealable = computed(() => flag("boneLater") && !!item.value && !!unrevealedOf(item.value)); // 未発現の冒涜が付いた箱は棚に「発現」の札 (TreeRevealCard)
 const outOf = (o: Parameters<typeof outNameOf>[1], a?: Aim | null): string => outNameOf(hand.value, o, a);
@@ -218,7 +218,7 @@ function toggleFree(e: Event): void { const was = [...checked.value], vWas = vei
 function toggleAim(a: Aim): void {
   const k = aimKey(a), cur = checkedAims.value.map(aimKey), was = [...checked.value]; touched = true;
   checked.value = cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k];
-  const vWas = veilOn.value, om = [...omens.value]; if (boneVeil.value && !vWas && !cur.includes(k)) { veilOn.value = true; if (!om.includes(ECHO)) omens.value = [...om, ECHO]; } else if (boneVeil.value && vWas && !checked.value.length) { veilOn.value = false; omens.value = om.filter((o) => o !== ECHO); } // 骨で ☑ = 発現させる、最後の ☑ を外したら未発現のまま (10-28 オーナー)
+  const vWas = veilOn.value, om = [...omens.value]; if (boneVeil.value && !vWas && !cur.includes(k)) { veilOn.value = true; } else if (boneVeil.value && vWas && !checked.value.length) { veilOn.value = false; omens.value = om.filter((o) => o !== ECHO); } // 骨で ☑ = 発現させる、最後の ☑ を外したら未発現のまま (10-28 オーナー)
   warnIfBelow(() => { checked.value = was; veilOn.value = vWas; omens.value = om; });
 }
 /** この箱から下の箱の数 (今の手の結果から先。手を替える・狙いを変えると消える) */
@@ -373,7 +373,7 @@ function ok(): void {
           <input type="checkbox" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="t.aimLabel(a)">{{ t.aimLabel(a) }}</span>
         </label>
         <!-- 狙い無し (MOD とは排他。前はお告げの列の札、10-25 オーナー「狙い無しも左のチェックに付けるといいね」) -->
-        <TreeVeilCheck v-if="boneVeil || held === 'reveal'" :no-check="held === 'reveal'" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" @update:model-value="setVeil" @add="(a) => { extraAims.push(a); toggleAim(a); }" />
+        <TreeVeilCheck v-if="boneVeil || held === 'reveal'" :no-check="held === 'reveal'" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" @update:model-value="setVeil" @add="(a) => { extraAims.push(a); toggleAim(a); }" :echo="echo" @echo="(v) => (omens = v ? [...omens.filter((o) => o !== ECHO), ECHO] : omens.filter((o) => o !== ECHO))" />
         <label v-if="!spam && !isInfinite" data-tree-hand-free class="flex min-h-7 cursor-pointer items-center gap-2" :title="tr('狙い無し (空きを 1 つ埋めるだけ。当たり / 外れに分けない)', 'No target (just fill an open slot; no hit / miss split)')">
           <input type="checkbox" :checked="freeOn" @change="toggleFree($event)" />{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}
         </label>
@@ -447,7 +447,7 @@ function ok(): void {
             <label v-for="a in aimChoices" :key="aimKey(a)" data-tree-hand-aim :data-aim="aimKey(a)" class="flex min-h-11 min-w-0 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
               <input type="checkbox" class="size-5 shrink-0" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 break-words">{{ t.aimLabel(a) }}</span>
             </label>
-            <TreeVeilCheck v-if="boneVeil || held === 'reveal'" big :no-check="held === 'reveal'" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" @update:model-value="setVeil" @add="(a) => { extraAims.push(a); toggleAim(a); }" />
+            <TreeVeilCheck v-if="boneVeil || held === 'reveal'" big :no-check="held === 'reveal'" :box-id="boxId" :item="item" :hand="hand" :model-value="veilOn || held === 'reveal'" @update:model-value="setVeil" @add="(a) => { extraAims.push(a); toggleAim(a); }" :echo="echo" @echo="(v) => (omens = v ? [...omens.filter((o) => o !== ECHO), ECHO] : omens.filter((o) => o !== ECHO))" />
             <label v-if="!spam && !isInfinite" data-tree-hand-free class="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
               <input type="checkbox" class="size-5 shrink-0" :checked="freeOn" @change="toggleFree($event)" /><span class="min-w-0 break-words">{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}</span>
             </label>

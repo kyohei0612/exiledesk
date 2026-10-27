@@ -6,20 +6,23 @@
  *     (出ない MOD は灰色で選べない。選んだ物は ☑ の一覧に足して当たり、選ばずに閉じたら ☑ は外れたまま。10-28 オーナー「発現させるチェックで MOD を選ばせよう」)。
  * スマホ (big): ☑ を付けた時点で、いつもの MOD を選ぶ窓 (TreeModPick) を開く。オンの時は「ほかの MOD を選ぶ」で置き石を足せる。
  * 発現させると狙い無しは同時にオンにならない (狙い無し = 未発現のまま次へ、最後の ☑ を外すと発現させるも外れる。TreeHandShelf、10-28 オーナー)。
- * noCheck = 後から打つ発現の手 (☑ は出さず、選ぶボタンだけ)
+ * noCheck = 後から打つ発現の手 (☑ は出さず、選ぶボタンだけ)。
+ * 「発現させる」の下にアビスの反響のお告げの任意の ☑ (既定は無し。10-28 オーナー「発現させるの下に付ける感じで」)
  */
 import { computed, ref } from "vue";
 import ModTable from "../../../components/for-share/mod-list/ModTable.vue";
 import TreeModPick from "./TreeModPick.vue";
 import { revealAimsOf } from "./tree-reveal-aims";
 import { useTree } from "./use-tree";
-import { craftStage as s } from "../../../state/craft-stage";
+import { craftStage as s, nameOf } from "../../../state/craft-stage";
+import { ECHO } from "../../../services/simulator/tree/tree-hands";
 import type { Aim, Hand } from "../../../services/simulator/tree/tree-model";
 import type { ListRow, StageItem } from "../../../services/craft-stage/engine";
 import { tr } from "../../../i18n/lang";
 
-const props = defineProps<{ modelValue: boolean; big?: boolean; noCheck?: boolean; boxId: string; item: StageItem | null; hand: Hand | null }>();
-const emit = defineEmits<{ "update:modelValue": [boolean]; add: [Aim] }>();
+/** echo = アビスの反響のお告げが手に付いているか (任意の ☑、発現させるがオンの時だけ出す。棚のお告げの欄と同じ omens を見る) */
+const props = defineProps<{ modelValue: boolean; big?: boolean; noCheck?: boolean; boxId: string; item: StageItem | null; hand: Hand | null; echo?: boolean }>();
+const emit = defineEmits<{ "update:modelValue": [boolean]; add: [Aim]; echo: [boolean] }>();
 const t = useTree();
 const picking = ref(false);
 /** 発現で出うる MOD (完成の狙いは窓の ☑ にもあるが、窓では全部から選べる) */
@@ -40,6 +43,10 @@ function onCheck(e: Event): void {
   <label v-if="!noCheck" data-tree-hand-veil class="flex cursor-pointer items-center" :class="big ? 'min-h-11 gap-3 rounded-lg border border-white/10 bg-black/20 px-3' : 'min-h-7 gap-2'">
     <input type="checkbox" class="shrink-0" :class="big ? 'size-5' : ''" :checked="modelValue" @change="onCheck" />
     <span class="min-w-0 break-words">{{ tr("発現させる (無しなら未発現のまま次へ)", "Reveal it now (off = leave it unrevealed)") }}</span>
+  </label>
+  <label v-if="modelValue || noCheck" data-tree-hand-veil-echo class="flex cursor-pointer items-center" :class="big ? 'min-h-11 gap-3 rounded-lg border border-white/10 bg-black/20 px-3' : 'min-h-7 gap-2 pl-5'">
+    <input type="checkbox" class="shrink-0" :class="big ? 'size-5' : ''" :checked="!!echo" @change="emit('echo', ($event.target as HTMLInputElement).checked)" />
+    <span class="min-w-0 break-words">{{ nameOf(ECHO) }} ({{ tr("候補を 1 回引き直す", "reroll the options once") }})</span>
   </label>
   <button v-if="(big && modelValue) || noCheck" type="button" data-tree-hand-veil-more class="g-btn sm self-start" :class="big ? '!min-h-11' : ''" @click="picking = true">{{ tr("ほかの MOD を選ぶ (完成形に無い MOD)", "Pick another mod (not in the final item)") }}</button>
   <div v-if="picking" data-tree-hand-veil-pick class="fixed inset-0 z-[340] flex items-center justify-center bg-black/60 p-3" @click.self="picking = false">
