@@ -252,7 +252,7 @@ export function matchTargets(doc: TreeDoc, id: string): { key: string; to: strin
  * loose = 箱の見本の消せる MOD の数 (applyPick がエンジンの見本で渡す。スイッチ goalShape)。形の鍵は外れの有無だけなので、外れの数が違う箱 (高貴の外れの外れなど) へは
  * つながない・戻らない (10-27 夕モンキー 8: 外れ 2 つの箱が外れ 1 つの箱へ自動で戻り、回すたびにプレの外れが増えて 30 人中 29 人が満杯で止まった)
  */
-export type LooseOf = (id: string) => number | null;
+export type LooseOf = (id: string) => number | string | null;
 const sameLoose = (loose: LooseOf | undefined, a: string, b: string): boolean => { if (!loose || b === "start") return true; const x = loose(a), y = loose(b); return x === null || y === null || x === y; };
 export function linkSameShape(doc: TreeDoc, ids: readonly string[], loose?: LooseOf): void {
   for (const id of ids) {
