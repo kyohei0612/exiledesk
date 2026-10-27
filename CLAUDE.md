@@ -11,6 +11,9 @@ PoE2 のクラフトのエミュレーター (Web が本番、アプリは当分
 - 1 ファイル 500 行まで (超えるなら分ける)。全体の地図は docs/ARCHITECTURE.md、計画は docs/roadmap-2026-10.md。
 - AI の組織 (司令塔ブラック・部長・係) = docs/org/。部長・係のセッションは自分の部の docs/org/<部>/README.md を先に読む (記録は notes/、やる事は todo.md)。
 
+## 決まりの正 = 設計図 `docs/spec/` (10-28 から)
+全体 README.md (G-xx・進め方・オーナーの指示の言葉 G-25)・system.md (Y)・engine.md (E)・emu.md (M)・sim-tree.md (S)・shared-ui.md (U)・release.md (R)。新しい事は「設計図に書く → オーナーの OK → 作る → 同じ commit で設計図を直す」(G-20)。メモ・docs/org は経緯、食い違ったら設計図が正。
+
 ## 作業 → 先に読む物
 | 作業 | 読む物 |
 |---|---|
@@ -37,7 +40,7 @@ PoE2 のクラフトのエミュレーター (Web が本番、アプリは当分
 - 型: `pnpm -s exec vue-tsc --noEmit -p tsconfig.json`。テストはオーナーが言った時だけ (確かめは手元の dev サーバーの画面のスナップ。メモ feedback-test-strategy)。
 - 作る・確かめる・モンキーは手元の dev サーバー (`pnpm dev:web`、1440、直しが数秒で入る)。ビルドに関わる物 (部品の分け方・先読み・古い塊の読み直し・SW) と本番の前の確かめは、手元の本番と同じ環境で (Cloudflare の開発版 web-dev は 10-24 に消した。1 日 10 万リクエストの枠を本番と共有していて、10-23 に開発版だけで 11.9 万回)。手元で出せない物 (端のキャッシュ・出した直後の版の入れ替わり・独自ドメインの https) は本番に出した直後にサーバー管理人が見る。
 - 版上げ: `node scripts/bump-version.mjs patch` → `cd src-tauri && cargo check -q` → commit → push → `pnpm deploy:web`。
-- 手元の開発版 (シミュレーター・チュートリアルが開く、本番と同じ Worker で): `pnpm preview:prod -- --dev` → http://dev.exiledesk.localhost:1461/ 。本番そのままは `pnpm preview:prod` → http://exiledesk.localhost:1460/ 。オーナーの確かめはふだん dev サーバー (http://localhost:1440/web.html、ブラックが立ち上げてから渡す)。手元の開発版 (ビルドあり) はリリースの指示の時だけ、最終チェック長が使う。
+- 手元の開発版 (シミュレーター・チュートリアルが開く、本番と同じ Worker で): `pnpm preview:prod -- --dev` → http://dev.exiledesk.localhost:1461/ 。本番そのままは `pnpm preview:prod` → http://exiledesk.localhost:1460/ 。オーナーが触って確かめるのは固定の版 1461 (直しで勝手に読み直されない、立て直しは最終チェック長。設計図 R-13)。1440 は部長の確かめ用。
 - Bash では `\` が 1 段消える。正規表現や `\` の入る物は Write / Edit で書く。
 - Bash で `cd …; …` / `cd … && …` とつながない。リポジトリの中への cd でも bypass で許可の窓が出て、夜中に止まる (10-27 `cd /c/Users/kyohei/ExileDesk; git add … && git commit` で止まった)。作業場所は最初からリポジトリなので cd は書かず、外は `git -C <path>` や絶対パスで。scratchpad の台本は絶対パスで呼び、書き換えは Edit / Write で。
 - sleep で待つ Bash の繰り返しをしない (1 回ごとに cmd の窓がちらつく)。待つ物は run_in_background で 1 回立てて知らせを待つか、台本の中で待つ。

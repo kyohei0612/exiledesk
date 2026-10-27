@@ -1,7 +1,7 @@
 # ExileDesk の全体の地図
 
 PoE2 のクラフトのエミュレーター。**本番は Web** (https://exiledesk.com/、2026-10 から当分は Web だけを更新)。デスクトップアプリ (Tauri 2) もあるが今は触らない (下の「アプリ」)。
-ここは「どこに何があって、どう繋がっていて、何を正として扱うか」の地図。細かい経緯は各ファイルの頭のコメントと `docs/decisions/` (ADR)。作業ごとに読む物は `CLAUDE.md`。
+ここは「どこに何があって、どう繋がっていて、何を正として扱うか」の地図。「どう動くべきか」の決まりの正は設計図 `docs/spec/` (10-28 から、食い違ったら設計図が正)。細かい経緯は各ファイルの頭のコメントと `docs/decisions/` (ADR)。作業ごとに読む物は `CLAUDE.md`。
 
 ```
 Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
@@ -21,8 +21,8 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 |---|---|---|
 | エミュレーター | `views/craft-stage/CraftStage.vue` | ベース選び → 棚 (`CurrencyShelf.vue`) から持って打つ。アイテム (`StageItemCard.vue`)・工程・MOD 一覧 (`StageModList.vue`)・次の手で狙う (`StageAimPanel.vue`)・スパムシミュレーター (別ページ `StageRoutesPage.vue`、運試し `StageRouteLuck.vue`、計算は `services/craft-stage/route-race.ts`。旧カオススパム計算機は 2026-10-19 に消した) |
 | ジェムコラプト | `views/gem-corrupt/GemCorruptWebPanel.vue` (計算は views/gem-corrupt/model.ts。Web では広告と一緒に出す予定) | 売値 3 つを入れて収支 |
-| チュートリアル (開発版だけ) | `views/tutorial/StageCourses.vue`・`StageTopicGuide.vue`・`StageCourseGuide.vue` | 動作を学ぶコース (`services/tutorial/topic-courses.ts`)・実践 (`course-recipes.ts`) |
-| シミュレーター (開発版だけ) | `views/simulator/tree/SimTreePage.vue` (ページは `?page=sim-base` ベース → `sim-mods` 完成の MOD → `sim-tree` クラフトの道 = ツリー、10-24 夜に分けた。段は web/page.ts の treeStep) | 打ち方を組んで何百人分作る (ADR-002・003)。回し方は `services/simulator/tree/` |
+| チュートリアル (使い方・コツは本番、シミュのチュートリアルは開発版だけ) | `views/tutorial/StageCourses.vue`・`StageTopicGuide.vue`・`StageCourseGuide.vue` | 動作を学ぶコース (`services/tutorial/topic-courses.ts`)・実践 (`course-recipes.ts`) |
+| シミュレーター (10-26 v0.1.601 から本番。決まりの正は docs/spec/sim-tree.md) | `views/simulator/tree/SimTreePage.vue` (ページは `?page=sim-base` ベース → `sim-mods` 完成の MOD → `sim-tree` クラフトの道 = ツリー、10-24 夜に分けた。段は web/page.ts の treeStep) | 打ち方を組んで何百人分作る (ADR-002・003)。回し方は `services/simulator/tree/` |
 
 開発版だけの物は `state/craft-stage.ts` の `SIM_LOCKED` と `src/web/release-flags.ts` のスイッチで本番から隠す (手元の開発版 `pnpm preview:prod -- --dev` と dev サーバー 1440 では開く。Cloudflare の開発版 web-dev は 10-24 に消した)。
 
