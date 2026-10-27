@@ -51,12 +51,18 @@ export type Shape = { key: string; box: string; hand?: Hand | null; sig?: string
  */
 export function junkSig(data: PatchData, d: TreeDoc, it: StageItem): string {
   const goals = new Set((d.memoAims ?? []).map((a) => a.modId));
+  // boneLater: 冒涜は発現済み (x) と未発現 (u) を分け、✦ は完成の狙いを MOD の名前で・外れを数で足す (未発現の箱へ発現済みの箱が統合された、
+  // ✦ の違う箱へ消去の直線が戻った。10-28 モンキー 2・3・4)
+  const split = flag("boneLater");
   const side = (ms: readonly StageMod[]): string => {
-    let n = 0, c = 0, x = 0;
-    for (const m of ms) { if (m.fractured || goals.has(m.modId)) continue; if (m.desecrated || m.unrevealed) x++; else if (m.crafted || craftedKindOf(data, m)) c++; else n++; }
-    return `${n}.${c}.${x}`;
+    let n = 0, c = 0, x = 0, u = 0;
+    for (const m of ms) { if (m.fractured || goals.has(m.modId)) continue; if (m.unrevealed && split) u++; else if (m.desecrated || m.unrevealed) x++; else if (m.crafted || craftedKindOf(data, m)) c++; else n++; }
+    return split ? `${n}.${c}.${x}.${u}` : `${n}.${c}.${x}`;
   };
-  return `${side(it.prefixes)}|${side(it.suffixes)}`;
+  if (!split) return `${side(it.prefixes)}|${side(it.suffixes)}`;
+  const fr = [...it.prefixes, ...it.suffixes].filter((m) => m.fractured);
+  const frKey = [...fr.filter((m) => goals.has(m.modId)).map((m) => m.modId).sort(), `j${fr.filter((m) => !goals.has(m.modId)).length}`].join(",");
+  return `${side(it.prefixes)}|${side(it.suffixes)}|✦${frKey}`;
 }
 /** 外れの種類があるかだけ (数は見ない)。箱の見本は 1 つの乱数の見本で、数は同じ状態の箱でも見本ごとに違う (精査・回す時の 2 番目の比べ) */
 export const sigKinds = (sig: string): string => sig.replace(/\d+/g, (n) => (n === "0" ? "0" : "1"));
@@ -294,7 +300,7 @@ export function matchTargets(doc: TreeDoc, id: string): { key: string; to: strin
  */
 export type LooseOf = (id: string) => number | string | null;
 /** 冒涜 (未発現・発現済み) の外れを持つ形か (外れの種類の鍵の 3 つ目の数) */
-const hasDesecrated = (sig: number | string | null): boolean => typeof sig === "string" && (sig.startsWith("mixed") || sig.split("|").some((s) => Number(s.split(".")[2] ?? 0) > 0)); // mixed = 見本ごとに外れの種類が違う箱 (tree-hand-plan)
+const hasDesecrated = (sig: number | string | null): boolean => typeof sig === "string" && (sig.startsWith("mixed") || sig.split("|").slice(0, 2).some((s) => Number(s.split(".")[2] ?? 0) > 0 || Number(s.split(".")[3] ?? 0) > 0)); // mixed = 見本ごとに外れの種類が違う箱 (tree-hand-plan)
 const sameLoose = (loose: LooseOf | undefined, a: string, b: string): boolean => {
   if (!loose) return true;
   // 始まりへは形を比べない (前から)。ただ冒涜を持つ箱は始まりへつながない (始まりに冒涜は無く、戻っても骨が打てない。10-28 冒涜まわりの確かめ、スイッチ boneLater)

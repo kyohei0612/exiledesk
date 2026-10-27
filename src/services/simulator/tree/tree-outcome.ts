@@ -92,6 +92,8 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   const k = effectOf(h.currency);
   const found = new Map<string, { out: OutKind; aim: Aim | null }>();
   const hold = aimsMayHold(doc, boxId);
+  const onPath = new Set(heldSets(doc, boxId).flat());
+  const mayLose = (a: Aim): boolean => onPath.has(aimKey(a)) || hold.some((x) => x.modId === a.modId && x.tier === a.tier);
   /** 未発現が付く手 (冒涜の骨): 当たり / 外れは発現で選ぶ候補で分かれるので見ない。消える側 (狙いが消えた) だけ発現の前の形で見る */
   let veiled = false, veiledLost = false, veiledKeep = false;
   /** 見本の中に、まだ付いていない狙いがあるか (外れだけの手でも当たりの箱を作って MOD を選ばせる時の見分け) */
@@ -117,9 +119,12 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
       // 未発現が新しく付く手だけ (前から未発現を持ったまま打つフラクチャー・カオスなどは普通に分ける。スイッチ boneLater)
       if (outs.some((o) => unrevealedOf(o.item)) && !(flag("boneLater") && unrevealedOf(it))) {
         veiled = true;
-        if (outs.some((o) => aimDiff(data, it, o.item, aims, { sameText: true }).lost.length)) veiledLost = true;
+        // 消えて「狙いが消えた」になるのは道で持っている狙い・持って着きうる狙いだけ (☑ の無い手で付いた完成形の MOD は外れ MOD = boxOutcomeOf と同じ。
+        // 狙い無しの錬金術の打った後に付いたキャストを骨が消すと「狙いが消えた」が出た、10-28 モンキー 6。スイッチ boneLater)
+        const lostOf = (o: { item: StageItem }): number => aimDiff(data, it, o.item, aims, { sameText: true }).lost.filter((a) => !flag("boneLater") || mayLose(a)).length;
+        if (outs.some((o) => lostOf(o))) veiledLost = true;
         // 狙いを消さない結果があるか (満杯の側で全部が狙いなら、骨は必ず狙いを消す = 当たり・外れ・打った後の箱は起こらない。10-28 冒涜まわりの確かめ)
-        if (outs.some((o) => !aimDiff(data, it, o.item, aims, { sameText: true }).lost.length)) veiledKeep = true;
+        if (outs.some((o) => !lostOf(o))) veiledKeep = true;
         continue;
       }
       for (const o of outs) {
@@ -159,14 +164,19 @@ let stopBusy = false;
  * 同じ数は先の箱 (木の並びで上)。self = 消去の手の箱 (自分と下は入れない)
  */
 /** rarity = 止まる所をそのレアリティの箱だけに (MOD 0 まで消えたレアを白の始まりへ戻さない。ゲームでは MOD 0 のレアに変成は打てない、10-28 オーナー、スイッチ stripRarity) */
-export function stripStops(data: PatchData, doc: TreeDoc, self: string, rarity?: string): Map<number, string> {
+export function stripStops(data: PatchData, doc: TreeDoc, self: string, like?: StageItem): Map<number, string> {
+  // 比べる形: レアリティ (スイッチ stripRarity) と ✦ の形 (どの狙いに ✦、外れの ✦ の数。✦ の違う箱へ戻った、10-28 モンキー 3、スイッチ boneLater)
+  const goals = new Set((doc.memoAims ?? []).map((a) => a.modId));
+  const frKey = (it: StageItem): string => { const fr = [...it.prefixes, ...it.suffixes].filter((m) => m.fractured); return [...fr.filter((m) => goals.has(m.modId)).map((m) => m.modId).sort(), fr.filter((m) => !goals.has(m.modId)).length].join(","); };
+  const likeKey = (it: StageItem): string => `${flag("stripRarity") ? it.rarity : ""}|${flag("boneLater") ? frKey(it) : ""}`;
+  const rarity = like ? likeKey(like) : undefined;
   // 覚えの鍵 = 木の箱・手・戻り (組み替えたら引き直す。回す 1 手ごとに呼ぶので文字は作らず数で)
   let h = doc.seq;
   for (const b of Object.values(doc.boxes)) { const k = `${b.id}${b.hand?.currency ?? ""}${b.hand?.omens.join() ?? ""}${b.back ?? ""}`; for (let i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) | 0; }
   const sig = String(h);
   let m = stopMemo.get(doc);
   if (!m || m.sig !== sig) stopMemo.set(doc, (m = { sig, at: new Map() }));
-  const memoKey = rarity && flag("stripRarity") ? `${self}|${rarity}` : self;
+  const memoKey = rarity !== undefined ? `${self}|${rarity}` : self;
   const had = m.at.get(memoKey);
   if (had) return had;
   // 見本を引く間にまた呼ばれた (見本の道に全部消す消去がある) 時は止まる所無し = 消せなくなるまで
@@ -179,7 +189,7 @@ export function stripStops(data: PatchData, doc: TreeDoc, self: string, rarity?:
       if (!b.hand || below.has(b.id) || isStrip(b) || !heldSets(doc, b.id).some((h) => !h.length)) continue;
       const s = sampleOf(data, doc, b.id, 1);
       if (s.note === "none" || s.note?.startsWith("cant:")) continue;
-      if (rarity && flag("stripRarity") && s.item.rarity !== rarity) continue;
+      if (rarity !== undefined && likeKey(s.item) !== rarity) continue;
       const n = looseOf(s.item);
       if (!out.has(n)) out.set(n, b.id);
     }
@@ -190,12 +200,12 @@ export function stripStops(data: PatchData, doc: TreeDoc, self: string, rarity?:
 /** 全部消えてよい消去の手なら、止める形か (playHand の stop)。違う手は undefined */
 export function stripStop(data: PatchData, doc: TreeDoc, b: TreeBox): ((it: StageItem) => boolean) | undefined {
   if (!isStrip(b)) return undefined;
-  return (it) => stripStops(data, doc, b.id, it.rarity).has(looseOf(it));
+  return (it) => stripStops(data, doc, b.id, it).has(looseOf(it));
 }
 /** 全部消えてよい消去の結果の箱から戻る箱 (止まった形の箱。無ければ null = 形の合う箱が無い) */
 export function stripBackOf(data: PatchData, doc: TreeDoc, id: string, item: StageItem): string | null {
   const p = doc.boxes[id]?.parent;
-  return p && isStrip(doc.boxes[p]) ? stripStops(data, doc, p, item.rarity).get(looseOf(item)) ?? null : null;
+  return p && isStrip(doc.boxes[p]) ? stripStops(data, doc, p, item).get(looseOf(item)) ?? null : null;
 }
 /** 全部消えてよい消去の結果の箱か (回す時、止まる所が無ければ形の合う箱を探さず行き先未定。スイッチ stripRarity) */
 export const fromStrip = (doc: TreeDoc, id: string): boolean => { const p = doc.boxes[id]?.parent; return !!p && isStrip(doc.boxes[p]); };

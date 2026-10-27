@@ -217,7 +217,7 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
     let s = boxSig(data, d, x);
     if (s !== null && flag("boneLater") && x !== "start") {
       // 比べるのは外れの種類 (普通 / エッセンス / 冒涜) の有無だけ (側は見本ごとに違うのが普通 = 王者の外れはプレにもサフィにも付く)
-      const kindsOf = (sig: string): string => { const [p, q] = sig.split("|").map((x2) => x2.split(".").map(Number)); return [0, 1, 2].map((i) => ((p![i]! + q![i]!) > 0 ? 1 : 0)).join(""); };
+      const kindsOf = (sig: string): string => { const [p, q] = sig.split("|").map((x2) => x2.split(".").map(Number)); return [0, 1, 2, 3].map((i) => (((p![i] ?? 0) + (q![i] ?? 0)) > 0 ? 1 : 0)).join(""); };
       const kinds = new Set([1, 2, 3, 4].flatMap((k) => { const m = sampleOf(data, d, x, k); return m.note === "none" || m.note?.startsWith("cant:") ? [] : [kindsOf(junkSig(data, d, m.item))]; }));
       if (kinds.size > 1) s = `mixed:${x}`;
     }
@@ -251,7 +251,7 @@ function stripChain(d: TreeDoc, id: string, h: Hand): void {
   const data = craftStage.data.value, b = d.boxes[id];
   if (!data || !b) return;
   if (flag("goalShape") && stripToShape(data, d, id, h)) return;
-  const it0 = sampleOf(data, d, id, 1).item, n = looseOf(it0), stops = stripStops(data, d, id, it0.rarity);
+  const it0 = sampleOf(data, d, id, 1).item, n = looseOf(it0), stops = stripStops(data, d, id, it0);
   const s = Math.max(-1, ...[...stops.keys()].filter((k) => k <= n));
   const to = s >= 0 ? stops.get(s)! : null;
   if (to && s === n) {
@@ -269,6 +269,8 @@ function stripChain(d: TreeDoc, id: string, h: Hand): void {
  * その箱へ ↩ (狙いを持つ箱も。10-27 夕モンキー 2: キャストの外れ (スピリット + ✦ + 外れ) に右側の消去で、1 回目でスピリットの箱と同じ形になったのに
  * 消去がもう 1 回並んだ。前の stripStops は狙いを持たない箱だけを止まる所にしていた)。見つからなければ false (前の作り)
  */
+/** 外れの形の鍵の ✦ の所 (どの狙いに ✦、外れの ✦ の数。✦ の違う箱へ消去の直線が戻った、10-28 モンキー 3) */
+const frPart = (sig: string | null): string | undefined => sig?.split("|")[2];
 function stripToShape(data: PatchData, d: TreeDoc, id: string, h: Hand): boolean {
   let it = sampleOf(data, d, id, 1).item;
   const n = looseOf(it), below = new Set(subtree(d, id));
@@ -278,7 +280,7 @@ function stripToShape(data: PatchData, d: TreeDoc, id: string, h: Hand): boolean
     const tos = new Set(outs.map((x) => matchItem(data, d, x)));
     const to = tos.size === 1 ? [...tos][0] : null;
     // 戻る箱は同じレアリティ (MOD 0 まで消えたレアを白の箱へ戻さない、スイッチ stripRarity)
-    if (to && to !== "start" && d.boxes[to]?.hand && !below.has(to) && to !== id && (!flag("stripRarity") || sampleOf(data, d, to, 1).item.rarity === outs[0]!.rarity)) {
+    if (to && to !== "start" && d.boxes[to]?.hand && !below.has(to) && to !== id && (!flag("stripRarity") || sampleOf(data, d, to, 1).item.rarity === outs[0]!.rarity) && (!flag("boneLater") || frPart(junkSig(data, d, outs[0]!)) === frPart(boxSig(data, d, to)))) {
       let at = id;
       for (let k = 0; k < i; k++) { const c = d.boxes[at]?.outs[0]; if (!c) return false; setHand(d, c, h, "strip"); at = c; }
       const last = d.boxes[d.boxes[at]?.outs[0] ?? ""];
