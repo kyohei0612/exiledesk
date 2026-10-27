@@ -391,15 +391,15 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
           <div :ref="setGroupEl(r.ja)" :class="!phone && r.ja === '宝飾品・その他' ? 'basis-full' : ''">
             <p class="mb-0.5 text-[11px] opacity-50 md:text-[12px]">{{ tr(r.ja, r.en) }}</p>
             <!-- 部位のタイル: ゲームの絵 + 名前 (スマホ 3 列。2026-10-09 オーナー「各種武器はアイコン出してもいいね、装備もほかの」) -->
-            <div :class="phone ? 'grid grid-cols-3 gap-1.5' : 'flex flex-wrap gap-1'">
+            <div :class="phone ? 'grid grid-cols-3 gap-x-1 gap-y-0.5' : 'flex flex-wrap gap-1'">
               <button v-for="f in r.fams" :key="f.name" type="button" :data-rec="`family:${f.variants[0]?.cls.replace(/_(str_dex|str_int|dex_int|str|dex|int|fire|cold|lightning|chaos|physical)$/, '') ?? f.name}`" class="g-plain flex flex-col items-center gap-0.5 px-1 pb-1.5 pt-1 text-center active:scale-95" :class="phone ? '' : ['w-[112px] rounded', family?.name === f.name ? 'bg-[rgba(163,52,42,0.35)] ring-1 ring-[var(--exile-color-border-brass)]' : 'hover:bg-white/5']" :aria-expanded="!phone ? family?.name === f.name : undefined" @click="pickFamily(f)">
                 <!-- ユニークの絵はゆっくり光る (脈打つ光 + 乗せると光が走る。2026-10-13 オーナー「光らせることできる？動きのある感じで」)。タイルごとに少しずらして一斉に光らない -->
-                <span class="grid size-16 place-items-center md:size-20" :class="[family?.name === f.name && !phone ? 'g-slot on' : 'g-slot', plainArt ? '' : 'fam-slot']">
+                <span class="grid place-items-center" :class="[phone ? 'aspect-square w-full' : 'size-16 md:size-20', family?.name === f.name && !phone ? 'g-slot on' : 'g-slot', plainArt ? '' : 'fam-slot']">
                   <template v-if="!plainArt">
                     <span class="fam-aura" aria-hidden="true" />
                     <span v-for="(m, k) in risers(f.name)" :key="k" class="fam-rise" :style="m" aria-hidden="true" />
                   </template>
-                  <img v-if="famArt(f)" :key="famArt(f)!" :src="famArt(f)!" alt="" loading="lazy" class="max-h-12 max-w-12 object-contain md:max-h-16 md:max-w-16" :class="plainArt ? '' : 'fam-art'" draggable="false" @load="tintGlow" />
+                  <img v-if="famArt(f)" :key="famArt(f)!" :src="famArt(f)!" alt="" loading="lazy" class="object-contain" :class="[phone ? 'max-h-[78%] max-w-[78%]' : 'max-h-12 max-w-12 md:max-h-16 md:max-w-16', plainArt ? '' : 'fam-art']" draggable="false" @load="tintGlow" />
                 </span>
                 <span class="g-antique leading-tight text-[var(--exile-color-text-primary)]" :class="phone ? 'text-[13px]' : 'text-[15px]'">{{ famLabel(f) }}</span>
                 <span v-if="f.variants.length > 1 && !JOINED.has(f.name)" class="text-[10px] leading-none opacity-50 md:text-[11px]">{{ tr(`${f.variants.length} 種`, `${f.variants.length} types`) }}</span>
