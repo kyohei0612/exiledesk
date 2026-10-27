@@ -26,6 +26,7 @@ import { pctText, useTreeOdds } from "./tree-odds";
 import { orphanHits } from "./tree-fail";
 import { joinCandidates, joinLook, joinMode, joinNoWhy, useTreeJoin } from "./use-tree-join";
 import { sameHitsOf } from "../../../services/simulator/tree/tree-shape";
+import { hitLoose } from "./tree-hand-plan";
 
 const props = defineProps<{ box: TreeBox; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
   /** 縮めた時の倍率の逆数 (押せる物だけこれで大きさを戻し、画面の上で 24px 以上を保つ。オーナー 10-22「縮めても押せる物は小さくならない」) */ inv?: number;
@@ -65,7 +66,7 @@ const CARD_W = BOX_W - 16;
 /** 当たりの箱の「次の手が未定」は赤くせず静かな印だけ (足りない所には数える。10-26 オーナー「一旦整理してA」) */
 const quietOpen = computed(() => props.box.out === "hit" && !!props.issue && /行き先を決めていない|Not decided|No next/.test(props.issue));
 // 別の道の同じ状態の当たり (sameHitsOf) は、完成・次の手がある箱どうしでもまとめられる (10-26 夜オーナー「中身がある箱どうしは自動でせずまとめる」)
-const canJoin = computed(() => (!props.box.hand && !props.box.done ? joinCandidates(t.doc.value, props.box.id).length > 0 : sameHitsOf(t.doc.value, props.box.id).length > 0));
+const canJoin = computed(() => (!props.box.hand && !props.box.done ? joinCandidates(t.doc.value, props.box.id).length > 0 : sameHitsOf(t.doc.value, props.box.id, hitLoose(t.doc.value)).length > 0));
 const startJoin = (): void => { joinMode.value = { anchor: props.box.id, pick: [] }; };
 /** MOD の値は木の中で揃える (貼った値か段の真ん中、tree-fixed-values。10-26 夜オーナー「ツリー内で同じ MOD じゃないと混乱する」) */
 const sample = computed(() => (s.data.value && props.box.out !== "start" ? shapeSampleOf(s.data.value, t.doc.value, props.box.id) : null));

@@ -190,6 +190,11 @@ export function problemOf(data: PatchData, item: StageItem, h: Hand, hitAims: Ai
  * 手を決めた時の組み替え (SimTreePage の pickHand と猿の口で同じ)。pre = 前に足す品質だけ上げる手のカタリスト (触媒のお告げ、10-22 オーナーの案 A)。
  * 完成の箱に手を付けたら同じ形の完成の箱もここへ (joinSameShape)。前に作ってまだ行き先も手も無い箱も、今手を付けた箱と同じ形ならつなぐ。返すのは手を付けた箱 (前のカタリストがあればその次)
  */
+/** 当たりのまとめ・形の合う箱へで比べる箱の外れの種類と数 (boxSig、置き石も冒涜の外れ MOD。手で「まとめる」の候補も同じ。スイッチ boneLater) */
+export function hitLoose(d: TreeDoc): ((id: string) => string | null) | undefined {
+  const data = craftStage.data.value;
+  return flag("boneLater") && data ? (x) => boxSig(data, d, x) : undefined;
+}
 /** 同じ当たりの箱にまとめる鍵 = 狙いの側 (エンジンの sideOfMod。setHand の groupOf、10-26 オーナーの決め「同じ側の狙いは当たりの箱 1 つ」) */
 export function sideGroup(): ((a: Aim) => string) | undefined {
   const data = craftStage.data.value;
@@ -215,9 +220,9 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   joinSameShape(d, id);
   linkSameShape(d, Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id), loose);
   // 新しい当たりの箱が別の道の同じ状態の箱と同じなら、先にあった箱へつなぐ (10-26 夜オーナー「形は一緒ならこのツリー組んだ瞬間まとまってくれるよね」)
-  linkSameHit(d, Object.values(d.boxes).filter((b) => !had.has(b.id)).map((b) => b.id));
+  linkSameHit(d, Object.values(d.boxes).filter((b) => !had.has(b.id)).map((b) => b.id), flag("boneLater") ? loose : undefined);
   // まとめられない当たりの箱 (来た道で狙いの組が何通りかある) は形の合う箱へ (10-27 オーナーの決め (a))。前からある手も戻りも無い箱も
-  linkShapeHit(d, Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id));
+  linkShapeHit(d, Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id), flag("boneLater") ? loose : undefined);
   // 自動でつないだ戻りで狙いを持って着く道ができた箱に「狙いが消えた」を足す (tree-model の healLost)
   healLost(d);
   return at;

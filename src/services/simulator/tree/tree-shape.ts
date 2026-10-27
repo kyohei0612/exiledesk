@@ -325,7 +325,8 @@ const hitStateKey = (doc: TreeDoc, id: string): string => heldSets(doc, id).map(
  * まとまらなかった。前は上の箱も除いていた。まとめで消すのは自分の下だけなので、上の箱は触らない)。
  * 戻りの矢印を持つ箱 (もうどこかへつないだ箱) と分かれ目も除く。並びは先に作った箱から
  */
-export function sameHitsOf(doc: TreeDoc, id: string): string[] {
+/** loose = 箱の見本の外れの種類と数 (boxSig)。渡すと外れの側・種類・数まで同じ箱だけ (置き石も冒涜の外れ MOD に数える。10-28 オーナー「全く = じゃないのに、なんでつながってる」、スイッチ boneLater) */
+export function sameHitsOf(doc: TreeDoc, id: string, loose?: LooseOf): string[] {
   const b = doc.boxes[id];
   if (!b || b.out !== "hit" || !b.aim || b.back || b.split) return [];
   const down = new Set(subtree(doc, id)), k = hitStateKey(doc, id);
@@ -333,7 +334,7 @@ export function sameHitsOf(doc: TreeDoc, id: string): string[] {
   // (印の無い木の乱数のフラクチャーで「キャストスピードが固定された」が上の「キャストスピードが付いた」へ自動で統合された、10-27 夜。スイッチ fracRandom)
   const fr = (x: string): boolean => { for (let y: string | null = doc.boxes[x]?.parent ?? null; y; y = doc.boxes[y]?.parent ?? null) { const h = doc.boxes[y]?.hand; if (h && effectOf(h.currency) === "fracture" && h.pick === "random") return true; } return false; };
   const f0 = flag("fracRandom") ? fr(id) : false;
-  return Object.values(doc.boxes).filter((c) => c.id !== id && c.out === "hit" && !!c.aim && !c.back && !c.split && c.parent !== b.parent && !down.has(c.id) && hitStateKey(doc, c.id) === k && (!flag("fracRandom") || fr(c.id) === f0)).map((c) => c.id);
+  return Object.values(doc.boxes).filter((c) => c.id !== id && c.out === "hit" && !!c.aim && !c.back && !c.split && c.parent !== b.parent && !down.has(c.id) && hitStateKey(doc, c.id) === k && (!flag("fracRandom") || fr(c.id) === f0) && sameLoose(loose, id, c.id)).map((c) => c.id);
 }
 /**
  * 同じ状態の当たりの箱をまとめる: 選んだ箱 (picks) の下を消し、まとめ先 (to) へ戻りの矢印でつなぐ (木は親が 1 つなので 1 箱にはせず、合流の線で見せる)。
@@ -363,21 +364,21 @@ export function joinSameHit(doc: TreeDoc, to: string, picks: readonly string[], 
  * 「形の合う箱へ」を自動で付ける (10-27 オーナーの決め (a)、r/SitMjgNY の「スピリットが付いた」)。回す時は実物の形の箱へ (tree-run の matchBox)、
  * 合う箱が無い組は精査の足りない所。手・戻り・完成を決めていない箱だけ、人が × で外した箱は触らない。自分の下の箱しか合わなければ付けない
  */
-export function linkShapeHit(doc: TreeDoc, ids: readonly string[]): void {
+export function linkShapeHit(doc: TreeDoc, ids: readonly string[], loose?: LooseOf): void {
   for (const id of ids) {
     const c = doc.boxes[id];
     if (!c || c.out !== "hit" || !c.aim || c.hand || c.back || c.done || c.split || c.noAutoBack || heldSets(doc, id).length < 2) continue;
     const down = new Set(subtree(doc, id));
-    if (!matchTargets(doc, id).some((m) => !!m.to && !down.has(m.to))) continue;
+    if (!matchTargets(doc, id).some((m) => !!m.to && !down.has(m.to) && sameLoose(loose, id, m.to))) continue;
     c.back = MATCH;
     c.autoBack = true;
   }
 }
-export function linkSameHit(doc: TreeDoc, ids: readonly string[]): void {
+export function linkSameHit(doc: TreeDoc, ids: readonly string[], loose?: LooseOf): void {
   for (const id of ids) {
     const c = doc.boxes[id];
     if (!c || c.out !== "hit" || c.hand || c.noAutoBack) continue;
-    const to = sameHitsOf(doc, id)[0];
+    const to = sameHitsOf(doc, id, loose)[0];
     if (to) joinSameHit(doc, to, [id], true);
   }
 }
