@@ -10,7 +10,8 @@ import { aimHeldOn, isAimMod } from "./tree-aim";
 import { effectOf } from "./tree-hands";
 import { qualityOk } from "./tree-unbounded";
 import { aimOpts, aimsOf, fractureChoices, goalsHeld, handAims, heldHitOf, outcomeOf, playHand, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
-import { boxOutcomeOf, stripBackOf, stripStop } from "./tree-outcome";
+import { boxOutcomeOf, fromStrip, stripBackOf, stripStop } from "./tree-outcome";
+import { flag } from "../../../web/release-flags";
 import { heldSets, MATCH, matchBox, outBoxOf, RESTART, settle, shapesOf, splitTo, type Shape, type SplitBox } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
@@ -157,7 +158,8 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
         at = "start";
         continue;
       }
-      const to = b.back === MATCH ? stripBackOf(data, doc, at, item) ?? matchBox(data, shapes, item, aims, doc) : settle(data, doc, shapes, b.back, item, aims);
+      // 全部消えてよい消去の直線は、止まる所 (同じレアリティ・同じ外れの数の箱) が無ければ形の合う箱を探さない = 行き先未定 (スイッチ stripRarity)
+      const to = b.back === MATCH ? stripBackOf(data, doc, at, item) ?? (flag("stripRarity") && fromStrip(doc, at) ? null : matchBox(data, shapes, item, aims, doc)) : settle(data, doc, shapes, b.back, item, aims);
       if (!to) return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("戻り先の「形の合う箱」が無い", "No box matches the shape to return to"), item, noBox: true } };
       // 戻り先に着いてから形の合う箱へ移った時も、結果の箱と同じく戻り先の来訪を pass で残す (moved に数える)
       if (b.back !== MATCH && to !== b.back) visits.push({ box: b.back, cost, pass: true });

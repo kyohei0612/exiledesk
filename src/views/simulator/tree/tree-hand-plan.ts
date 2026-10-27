@@ -251,7 +251,7 @@ function stripChain(d: TreeDoc, id: string, h: Hand): void {
   const data = craftStage.data.value, b = d.boxes[id];
   if (!data || !b) return;
   if (flag("goalShape") && stripToShape(data, d, id, h)) return;
-  const n = looseOf(sampleOf(data, d, id, 1).item), stops = stripStops(data, d, id);
+  const it0 = sampleOf(data, d, id, 1).item, n = looseOf(it0), stops = stripStops(data, d, id, it0.rarity);
   const s = Math.max(-1, ...[...stops.keys()].filter((k) => k <= n));
   const to = s >= 0 ? stops.get(s)! : null;
   if (to && s === n) {
@@ -277,7 +277,8 @@ function stripToShape(data: PatchData, d: TreeDoc, id: string, h: Hand): boolean
     if (!outs.length) return false;
     const tos = new Set(outs.map((x) => matchItem(data, d, x)));
     const to = tos.size === 1 ? [...tos][0] : null;
-    if (to && to !== "start" && d.boxes[to]?.hand && !below.has(to) && to !== id) {
+    // 戻る箱は同じレアリティ (MOD 0 まで消えたレアを白の箱へ戻さない、スイッチ stripRarity)
+    if (to && to !== "start" && d.boxes[to]?.hand && !below.has(to) && to !== id && (!flag("stripRarity") || sampleOf(data, d, to, 1).item.rarity === outs[0]!.rarity)) {
       let at = id;
       for (let k = 0; k < i; k++) { const c = d.boxes[at]?.outs[0]; if (!c) return false; setHand(d, c, h, "strip"); at = c; }
       const last = d.boxes[d.boxes[at]?.outs[0] ?? ""];

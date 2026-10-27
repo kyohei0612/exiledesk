@@ -158,14 +158,16 @@ let stopBusy = false;
  * そこへ戻す)。狙いを持たない手のある箱 (heldSets に空の組がある。始め = 外れ 0、狙い無しの高貴の打った後 = 外れ 1 など) の見本の外れの数。
  * 同じ数は先の箱 (木の並びで上)。self = 消去の手の箱 (自分と下は入れない)
  */
-export function stripStops(data: PatchData, doc: TreeDoc, self: string): Map<number, string> {
+/** rarity = 止まる所をそのレアリティの箱だけに (MOD 0 まで消えたレアを白の始まりへ戻さない。ゲームでは MOD 0 のレアに変成は打てない、10-28 オーナー、スイッチ stripRarity) */
+export function stripStops(data: PatchData, doc: TreeDoc, self: string, rarity?: string): Map<number, string> {
   // 覚えの鍵 = 木の箱・手・戻り (組み替えたら引き直す。回す 1 手ごとに呼ぶので文字は作らず数で)
   let h = doc.seq;
   for (const b of Object.values(doc.boxes)) { const k = `${b.id}${b.hand?.currency ?? ""}${b.hand?.omens.join() ?? ""}${b.back ?? ""}`; for (let i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) | 0; }
   const sig = String(h);
   let m = stopMemo.get(doc);
   if (!m || m.sig !== sig) stopMemo.set(doc, (m = { sig, at: new Map() }));
-  const had = m.at.get(self);
+  const memoKey = rarity && flag("stripRarity") ? `${self}|${rarity}` : self;
+  const had = m.at.get(memoKey);
   if (had) return had;
   // 見本を引く間にまた呼ばれた (見本の道に全部消す消去がある) 時は止まる所無し = 消せなくなるまで
   if (stopBusy) return new Map();
@@ -177,24 +179,26 @@ export function stripStops(data: PatchData, doc: TreeDoc, self: string): Map<num
       if (!b.hand || below.has(b.id) || isStrip(b) || !heldSets(doc, b.id).some((h) => !h.length)) continue;
       const s = sampleOf(data, doc, b.id, 1);
       if (s.note === "none" || s.note?.startsWith("cant:")) continue;
+      if (rarity && flag("stripRarity") && s.item.rarity !== rarity) continue;
       const n = looseOf(s.item);
       if (!out.has(n)) out.set(n, b.id);
     }
   } finally { stopBusy = false; }
-  m.at.set(self, out);
+  m.at.set(memoKey, out);
   return out;
 }
 /** 全部消えてよい消去の手なら、止める形か (playHand の stop)。違う手は undefined */
 export function stripStop(data: PatchData, doc: TreeDoc, b: TreeBox): ((it: StageItem) => boolean) | undefined {
   if (!isStrip(b)) return undefined;
-  const stops = stripStops(data, doc, b.id);
-  return (it) => stops.has(looseOf(it));
+  return (it) => stripStops(data, doc, b.id, it.rarity).has(looseOf(it));
 }
 /** 全部消えてよい消去の結果の箱から戻る箱 (止まった形の箱。無ければ null = 形の合う箱が無い) */
 export function stripBackOf(data: PatchData, doc: TreeDoc, id: string, item: StageItem): string | null {
   const p = doc.boxes[id]?.parent;
-  return p && isStrip(doc.boxes[p]) ? stripStops(data, doc, p).get(looseOf(item)) ?? null : null;
+  return p && isStrip(doc.boxes[p]) ? stripStops(data, doc, p, item.rarity).get(looseOf(item)) ?? null : null;
 }
+/** 全部消えてよい消去の結果の箱か (回す時、止まる所が無ければ形の合う箱を探さず行き先未定。スイッチ stripRarity) */
+export const fromStrip = (doc: TreeDoc, id: string): boolean => { const p = doc.boxes[id]?.parent; return !!p && isStrip(doc.boxes[p]); };
 /** 全部消えてよい消去の結果の箱の戻り先の候補 (札・線・精査。違えば null) */
 export function stripTargetsOf(data: PatchData, doc: TreeDoc, id: string): string[] | null {
   const p = doc.boxes[id]?.parent;

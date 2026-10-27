@@ -106,7 +106,8 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
     const sigs = new Map<string, string | null>(), sigOf = (id: string): string | null => { if (!sigs.has(id)) sigs.set(id, boxSig(data, doc, id)); return sigs.get(id)!; };
     for (const b of boxes) {
       const to = b.back, tb = to ? doc.boxes[to] : undefined, p = b.parent ? doc.boxes[b.parent] : undefined;
-      if (!to || !tb || to === "start" || (b.out === "hit" && tb.out === "hit") || out.some((x) => x.boxId === b.id && x.kind === "shape")) continue;
+      // 当たりどうしの統合も比べる (置き石の冒涜の外れを持つ当たりが、外れの無い当たりへ統合されていた。10-28 オーナー「精査で出してアミュ B のつなぎも直して」、スイッチ boneLater)
+      if (!to || !tb || to === "start" || (b.out === "hit" && tb.out === "hit" && !flag("boneLater")) || out.some((x) => x.boxId === b.id && x.kind === "shape")) continue;
       if (b.autoBack && p?.hand && effectOf(p.hand.currency) === "remove" && p.hand.keep && !p.hand.keep.length) continue;
       const a = sigOf(b.id), z = sigOf(to);
       if (a !== null && z !== null && sigKinds(a) !== sigKinds(z)) add(b.id, "shape", tr("戻り先の箱と外れ MOD の種類が違う (普通 / エッセンスのクラフト MOD / 冒涜の外れ MOD のどれがあるかが違う人が入る)。直し方: 戻り先を外れの種類も同じ箱にする (↩ で選び直す) か、外れを消す手を挟む", "The return target has different kinds of miss mods (which of normal / essence crafted / desecrated misses it has differs). Fix: return to a box with the same kinds of misses (pick again with ↩), or add a step that removes the misses"));
