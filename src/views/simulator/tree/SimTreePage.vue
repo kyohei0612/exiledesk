@@ -42,7 +42,7 @@ import { gesture } from "./use-gesture";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { useArmed } from "../../../utils/use-armed";
 import { noTargetText, useTreeLink } from "./use-tree-link";
-import { backText, retryOf, routeText, sameHandRetry, stepBackText } from "./tree-fail";
+import { backText, retryOf, routeText, stepBackText } from "./tree-fail";
 import { useTreePlus } from "./use-tree-plus";
 import { useTreeCheck } from "./use-tree-check";
 import TreeIssues from "./TreeIssues.vue";
@@ -162,10 +162,7 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = nul
   const id = panel.value!.id;
   simAct("hand", kind);
   if (picking.value === id) picking.value = null;
-  // 外れの箱で打つ前の箱と同じ手 = 新しい箱を作らず打つ前の箱へ戻る (再度挑戦、tree-fail の sameHandRetry。スマホと同じ)
-  // スイッチ goalShape の間は applyPick (tree-shape の sameHandReturn) が同じ形の箱も含めて戻すので、前の判定は閉じている時だけ
-  const retry = pre || flag("goalShape") ? null : sameHandRetry(doc.value, id, h);
-  if (retry) { panel.value = null; t.edit((d) => setBack(d, id, retry)); return; }
+  // 外れの箱で打つ前の箱・同じ形の箱と同じ手は applyPick (tree-shape の sameHandReturn) が戻す (S-51。前の sameHandRetry は本番の goalShape で使われなくなったので消した)
   let at = id;
   // 組み替えは tree-hand-plan の applyPick (猿の口 sim-monkey と同じ)
   // 足した直後に重ならないよう整列まで (10-26 夜オーナー「横はそのままずらして、位置の整頓まで」。下の＋も同じ)
