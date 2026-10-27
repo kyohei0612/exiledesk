@@ -227,7 +227,8 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
   if (!b) return { item: freshItem(data, doc.base, doc.itemLevel, "rare"), note: null };
   if (b.out === "start") return startItemOf(data, doc, mulberry32(seed));
   // 回して実際にこの箱に着いた人のアイテム (seed 番目、tree-arrived)。誰も着かない箱だけ下の作り方 (引き直し・指名で付ける)
-  const got = arrivedAt(data, doc, boxId);
+  // スイッチ boxShape: 見本はその箱までの道 (始まり → 親の手の並び) だけで決める。ほかの枝に手を足しても変わらない (S-74 仮、G-04・見張り R-31、10-28 ブラックの仮決め)
+  const got = flag("boxShape") ? [] : arrivedAt(data, doc, boxId);
   if (got.length) return { item: got[(Math.max(1, seed) - 1) % got.length]!, note: null };
   const p = doc.boxes[b.parent!]!;
   const base = sampleIn(data, doc, p.id, seed);
@@ -273,7 +274,8 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
 /** 親の見本 base に親の手を打って、この箱の見本を作る */
 function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox, base: Sample, seed: number, boxId: string, aims: Aim[]): Sample {
   if (!p.hand) return base;
-  const rng = mulberry32(seed ^ 0x5eed ^ boxId.length * 7919);
+  // 種は見本の番号と箱の id (道は親をたどって決まる。boxShape の間は id 全体、前は id の長さだけ)
+  const rng = mulberry32(seed ^ 0x5eed ^ (flag("boxShape") ? [...boxId].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7) : boxId.length * 7919));
   let last: StageApply | null = null;
   for (let i = 0; i < TRIES; i++) {
     const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims), undefined, b.out === "junk" || b.out === "lost", stripStop(data, doc, p));

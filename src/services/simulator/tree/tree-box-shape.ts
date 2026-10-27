@@ -55,6 +55,11 @@ export function boxBody(data: PatchData, d: TreeDoc, id: string, one = false): s
   const kinds = new Set([body, ...[2, 3, 4].flatMap((k) => { const m = sampleOf(data, d, id, k); return m.note === "none" || m.note?.startsWith("cant:") ? [] : [bodyOf(data, d, m.item)]; })].map(bodyKinds));
   return kinds.size > 1 ? `mixed:${id}` : body;
 }
+/** 見本 4 つで体が揃わない箱 (外れの付く側・数が乱数で変わる)。精査の戻り先の比べでは分からない扱い (見本 1 つの側で偶然違って見えた、10-28 見本を道だけで決めた後のアミュ B b31・b32) */
+export function bodyVaries(data: PatchData, d: TreeDoc, id: string): boolean {
+  const bs = new Set([1, 2, 3, 4].flatMap((k) => { const m = sampleOf(data, d, id, k); return m.note === "none" || m.note?.startsWith("cant:") ? [] : [bodyOf(data, d, m.item)]; }));
+  return bs.size > 1;
+}
 /** 箱の体を引く関数 (1 回の組み替え・精査の中で覚える。木を替えたら作り直す) */
 export type BodyOf = (id: string) => string | null;
 export function bodyMemo(data: PatchData, d: TreeDoc): BodyOf {

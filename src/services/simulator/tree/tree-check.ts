@@ -20,7 +20,7 @@ import { aimOpts, aimsOf, goalsHeld, handAims, handProblem, heldHitOf, playHand,
 import { boxOutcomeOf, stripBackOf, stripStop, stripTargetsOf } from "./tree-outcome";
 import { runTreeSteps } from "./tree-run";
 import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapeFits, shapesOf, splitTo } from "./tree-shape";
-import { bodyKinds, bodyMemo, sameBody } from "./tree-box-shape";
+import { bodyKinds, bodyMemo, bodyVaries, sameBody } from "./tree-box-shape";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
@@ -114,7 +114,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
       // スイッチ boxShape: 自動のつなぎと同じ比べ (tree-box-shape の sameBody = 外れの側・種類・数、✦ の側、レアリティ)。閉じている間は外れの種類だけ
       const a = sigOf(b.id), z = sigOf(to);
       // 見本ごとに外れの種類が違う箱 (mixed) は分からない扱い (自動ではつながないが、前につないだ戻りは回すと進める。精査で知らせると古い木で増えた)
-      if (flag("boxShape") ? !a?.startsWith("mixed") && !z?.startsWith("mixed") && !sameBody(sigOf, b.id, to) : a !== null && z !== null && bodyKinds(a) !== bodyKinds(z)) add(b.id, "shape", tr("戻り先の箱と外れ MOD の種類が違う (普通 / エッセンスのクラフト MOD / 冒涜の外れ MOD のどれがあるかが違う人が入る)。直し方: 戻り先を外れの種類も同じ箱にする (↩ で選び直す) か、外れを消す手を挟む", "The return target has different kinds of miss mods (which of normal / essence crafted / desecrated misses it has differs). Fix: return to a box with the same kinds of misses (pick again with ↩), or add a step that removes the misses"));
+      if (flag("boxShape") ? !a?.startsWith("mixed") && !z?.startsWith("mixed") && !sameBody(sigOf, b.id, to) && !bodyVaries(data, doc, b.id) && !bodyVaries(data, doc, to) : a !== null && z !== null && bodyKinds(a) !== bodyKinds(z)) add(b.id, "shape", tr("戻り先の箱と外れ MOD の種類が違う (普通 / エッセンスのクラフト MOD / 冒涜の外れ MOD のどれがあるかが違う人が入る)。直し方: 戻り先を外れの種類も同じ箱にする (↩ で選び直す) か、外れを消す手を挟む", "The return target has different kinds of miss mods (which of normal / essence crafted / desecrated misses it has differs). Fix: return to a box with the same kinds of misses (pick again with ↩), or add a step that removes the misses"));
     }
   }
 
