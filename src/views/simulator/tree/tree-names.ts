@@ -54,8 +54,12 @@ export const modShort = (text: string): string => text.replace(/\([^)]*\)/g, "")
  * 箱の題 (枠の上の線に乗る札、スマホの行の題)。当たりは「スピリットが付いた」(どれかの箱は「スピリットかライフが付いた」)、ほかは結果の名前 (外れ・狙いが消えた・打った後…)。
  * 「当たり」とは書かない (狙い無しの手の下でも付いた MOD が分かるように、狙いのある手も同じ言い方に揃えた。10-26 オーナー「枠の上のところに●がついた みたいな形でよくある枠の形にしたら枠中ごちゃんなくていいよな」)
  */
-export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts">, aimShort: (a: NonNullable<TreeBox["aim"]>) => string): string {
-  if (b.out === "hit" && b.aim) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")); return tr(`${n}が付いた`, `${n} added`); }
+export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> & { parent?: string | null }, aimShort: (a: NonNullable<TreeBox["aim"]>) => string): string {
+  // ✦ の印の無い木の乱数のフラクチャーの結果は「〜が固定された」「外れ MOD が固定された」(付いたのではない。10-27 夜、要望 8a159e29、スイッチ fracRandom)
+  const ph = flag("fracRandom") && b.parent ? useTree().doc.value.boxes[b.parent]?.hand : null;
+  const fixed = ph?.pick === "random";
+  if (b.out === "hit" && b.aim) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")); return fixed ? tr(`${n}が固定された`, `${n} fractured`) : tr(`${n}が付いた`, `${n} added`); }
+  if (fixed && b.out === "junk") return tr("外れ MOD が固定された", "A miss mod fractured");
   return outsName(b);
 }
 /** 値段のキー (カレンシー・お告げ・骨・エッセンス・カタリスト) → 画面の言語の名前 (クラフト台の棚と同じ) */

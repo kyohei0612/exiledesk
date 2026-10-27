@@ -329,7 +329,11 @@ export function sameHitsOf(doc: TreeDoc, id: string): string[] {
   const b = doc.boxes[id];
   if (!b || b.out !== "hit" || !b.aim || b.back || b.split) return [];
   const down = new Set(subtree(doc, id)), k = hitStateKey(doc, id);
-  return Object.values(doc.boxes).filter((c) => c.id !== id && c.out === "hit" && !!c.aim && !c.back && !c.split && c.parent !== b.parent && !down.has(c.id) && hitStateKey(doc, c.id) === k).map((c) => c.id);
+  // 道の途中でフラクチャーを打った箱とそうでない箱は、同じ狙いの組でも ✦ の有無が違うのでまとめない
+  // (印の無い木の乱数のフラクチャーで「キャストスピードが固定された」が上の「キャストスピードが付いた」へ自動で統合された、10-27 夜。スイッチ fracRandom)
+  const fr = (x: string): boolean => { for (let y: string | null = doc.boxes[x]?.parent ?? null; y; y = doc.boxes[y]?.parent ?? null) { const h = doc.boxes[y]?.hand; if (h && effectOf(h.currency) === "fracture" && h.pick === "random") return true; } return false; };
+  const f0 = flag("fracRandom") ? fr(id) : false;
+  return Object.values(doc.boxes).filter((c) => c.id !== id && c.out === "hit" && !!c.aim && !c.back && !c.split && c.parent !== b.parent && !down.has(c.id) && hitStateKey(doc, c.id) === k && (!flag("fracRandom") || fr(c.id) === f0)).map((c) => c.id);
 }
 /**
  * 同じ状態の当たりの箱をまとめる: 選んだ箱 (picks) の下を消し、まとめ先 (to) へ戻りの矢印でつなぐ (木は親が 1 つなので 1 箱にはせず、合流の線で見せる)。

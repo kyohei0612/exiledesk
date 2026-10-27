@@ -118,7 +118,7 @@ const shelfItem = computed(() => preFill.value?.item ?? item.value);
 /** スマホの下の帯に出す持った札の説明 (PC は札に乗せると出るカードと同じ文、** の太字の印は外す。省略しない。10-26 夜オーナー「スマホも PC と同じ動きに」) */
 const heldHelp = computed(() => (held.value ? stageHelp(held.value, s.data.value, shelfItem.value).map((l) => l.replace(/\*\*/g, "")) : []));
 // フラクチャーのオーブは完成の MOD でフラクチャーの印を決めた木でだけ打てる (10-25 オーナー「最初にフラクチャーを決めないとフラクチャーオーブを打てないように」)
-const fractureBlock = (k: string): string | null => (effectOf(k) === "fracture" && !fractureMarks(t.doc.value).length ? tr("先に完成の MOD でフラクチャーを決めて", "Set a fracture on the final mods first") : null);
+const fractureBlock = (k: string): string | null => (effectOf(k) === "fracture" && !flag("fracRandom") && !fractureMarks(t.doc.value).length ? tr("先に完成の MOD でフラクチャーを決めて", "Set a fracture on the final mods first") : null);
 /**
  * 錯乱のエッセンス (付くノータブルがランダム) はシミュでは選べない (10-27 昼オーナー。エミュには残す)。灰色で理由を短く、スイッチ noSpam と同じ扱い。
  * 前の木に入っている錯乱の手は開けば今まで通り (持ち直さなければ替わらない)

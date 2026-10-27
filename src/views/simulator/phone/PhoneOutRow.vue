@@ -113,6 +113,8 @@ const sit = computed((): [string, string] => {
   const ph = parent.value ? t.doc.value.boxes[parent.value]?.hand : null;
   if (P27 && ph) {
     const n = handLabel(ph);
+    // 印の無い木の乱数のフラクチャーは「固定された」(付いたのではない、10-27 夜、要望 8a159e29、スイッチ fracRandom)
+    if (o === "junk" && ph.pick === "random") return [tr(`${n}で外れた場合`, `If ${n} misses`), tr("狙いでない MOD が固定された (外れ MOD が固定された)", "A non-target mod was fractured (a miss mod fractured)")];
     if (o === "junk") return [tr(`${n}で外れた場合`, `If ${n} misses`), tr("狙いの MOD は付かず、外れ MOD が付いた", "No target mod; a miss mod was added")];
     if (o === "lost") return [tr(`${n}で狙いが消えた場合`, `If ${n} removes a target`), tr("付いていた狙いの MOD が消えた", "A target mod that was on the item was removed")];
     if (o === "junkGone") return [tr(`${n}で外れが消えた場合`, `If ${n} removes a miss`), q.boxTitle(props.boxId)];

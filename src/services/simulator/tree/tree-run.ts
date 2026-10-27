@@ -176,7 +176,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     const before = item;
     // フラクチャーは必ず印の狙いを固定し (playHand の fractureTarget)、固定できる MOD が 2 つ以上なら「2 回外れて 1 回当たり」として、ここまでに使った物と
     // 始めの値段を 2 回分足す (外れた時は素材を作り直す。10-24 オーナー、ツリーに買い直しの道は作らない。10-25 オーナーが戻した)。作り直しの回数にも 2
-    const miss = effectOf(b.hand.currency) === "fracture" && fractureChoices(data, item) >= FRACTURE_PICK ? Object.entries(uses) : null;
+    const miss = effectOf(b.hand.currency) === "fracture" && b.hand.pick !== "random" && fractureChoices(data, item) >= FRACTURE_PICK ? Object.entries(uses) : null;
     const tried = uses[b.hand.currency] ?? 0, own = handAims(doc, at, aims);
     o.onHand?.(at, item);
     const r = playHand(data, item, b.hand, rng, own, use, false, stripStop(data, doc, b));

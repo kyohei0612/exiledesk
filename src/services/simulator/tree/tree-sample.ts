@@ -107,7 +107,7 @@ export const SINGLE_SEEDS = 8;
  * aims = この手の当たりの箱の札 (= この箱で付いている完成の MOD の印の狙い、tree-hand-plan の hitAimsOf) のうち、付いている最初の物。無ければ null (エンジンの乱数のまま)
  */
 export function fractureTarget(data: PatchData, item: StageItem, h: Hand, aims: readonly Aim[]): string | null {
-  if (effectOf(h.currency) !== "fracture") return null;
+  if (effectOf(h.currency) !== "fracture" || h.pick === "random") return null;
   const mods = [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured);
   for (const a of aims) { const m = mods.find((x) => isAimMod(x, targetsOf(data, [a]), aimOpts(data))); if (m) return m.modId; }
   return null;
@@ -233,7 +233,8 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
   // 当たりの箱の狙いを親の見本がもう持っている (まとめた箱「アーマーかライフ」のアーマーの道で、次の当たり「アーマーが付いた」) 時は、
   // 持っていない親の見本を引き直す (付け直せず親の見本のまま「アーマーだけ」が出た、10-27 夜モンキー 2 回目 1。スイッチ hitNew)
   // 引き直しは一番下の箱の 1 回だけ (親をたどる中でも引き直すと、深い木で数が掛け算になりページが固まった)
-  if (flag("hitNew") && !altDeep && b.out === "hit" && b.aim && aimHeldOn(data, base.item, b.aim, { sameText: true })) {
+  // フラクチャーの当たりは、もう付いている狙いが ✦ になる物なので引き直さない
+  if (flag("hitNew") && !altDeep && b.out === "hit" && b.aim && !(p.hand && effectOf(p.hand.currency) === "fracture") && aimHeldOn(data, base.item, b.aim, { sameText: true })) {
     altDeep = true;
     try {
       for (let k = 1; k < HIT_TRIES; k++) {

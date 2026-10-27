@@ -99,7 +99,14 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
     return out.filter((a) => goals.some((g) => g.modId === a.modId));
   }
   // フラクチャー: 当たりの札 = この箱で付いている印の狙い (完成の MOD のフラクチャーの印、10-25)。どれが ✦ になるかはエンジンのまま
-  if (kind === "fracture") return fractureMarks(doc).filter((a) => aimHeldOn(data, item, a, { sameText: true }));
+  if (kind === "fracture") {
+    // ✦ の印の無い木 (白ベースから・フラクチャー無し) は乱数で固定: 当たりの札 = アイテムに付いている完成の狙い (未発現・冒涜の MOD は固定されない。スイッチ fracRandom)
+    if (flag("fracRandom") && !fractureMarks(doc).length) {
+      const mods = [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured && !m.unrevealed && !m.desecrated);
+      return (doc.memoAims ?? []).filter((a) => aimHeldOn(data, { ...item, prefixes: mods.filter((m) => m.side === "prefix"), suffixes: mods.filter((m) => m.side === "suffix") }, a, { sameText: true })).map((a) => ({ modId: a.modId, tier: a.tier }));
+    }
+    return fractureMarks(doc).filter((a) => aimHeldOn(data, item, a, { sameText: true }));
+  }
   // 狙い無し (free) も付きうる狙いを出す: 結果は「打った後」+ 付いた狙いの当たりの箱 (10-26 オーナー「当たってたら次の回に消去でそれ決めるんやから」。
   // 前は打った後の 1 箱で、狙いが付いた人も打った後に入り、次のカオスで「狙いが消えた」が並んだ)
   if (kind !== "spam" && kind !== "add" && kind !== "swap" && kind !== "free") return [];
@@ -171,7 +178,9 @@ export function sideGroup(): ((a: Aim) => string) | undefined {
   const data = craftStage.data.value;
   return data ? (a) => sideOfMod(data, a.modId) : undefined;
 }
-export function applyPick(d: TreeDoc, id: string, h: Hand, kind: HandKind, aims: Aim[], pre: string | null, only: OnlyOut): string {
+export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims: Aim[], pre: string | null, only: OnlyOut): string {
+  // ✦ の印の無い木のフラクチャーは乱数で固定する手 (スイッチ fracRandom)
+  const h: Hand = flag("fracRandom") && effectOf(h0.currency) === "fracture" && !fractureMarks(d).length ? { ...h0, pick: "random" } : h0;
   // 外れで、打つ前の箱・同じ形の箱と同じ手 = 新しい段を作らずその箱へ戻る (シミュのルール、PC・スマホ共通。tree-shape の sameHandReturn、スイッチ goalShape)。
   // 外れに手がもう付いていれば下を消してから (前に同じ手で段を足して伸びた木)。戻ったかは呼ぶ側が箱の back で見る
   // 触媒 (pre) 付きの手も同じ判定 (PC・スマホで 1 つ、10-27 夕ブラックの決め B4。前は PC が pre のある時は見ず、スマホは pre を見ずに戻っていた)

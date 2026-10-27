@@ -121,7 +121,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
     if (!b.hand && !b.back && !b.done && !b.split && !dead.has(b.id)) add(b.id, "open", b.out === "start" ? tr("最初の手を決めていない (ここで止まる)", "No first craft yet (stops here)") : tr("行き先を決めていない (ここで止まる)", "No next step yet (stops here)"));
     if (b.out === "hit" && !b.aim) add(b.id, "noAim", tr("付く MOD を選んでいない", "No mod picked for this hit"));
     // フラクチャーの手は完成の MOD にフラクチャーの印がある木だけ (10-25 オーナー「最初にフラクチャーを決めないとフラクチャーオーブを打てないように」)。前に保存した印の無い木の手は穴に
-    if (b.hand && effectOf(b.hand.currency) === "fracture" && !fractureMarks(doc).length) add(b.id, "cantUse", tr("フラクチャーの印が無い (先に完成の MOD でフラクチャーを決めて)", "No fracture mark (set a fracture on the final mods first)"));
+    if (b.hand && effectOf(b.hand.currency) === "fracture" && b.hand.pick !== "random" && !fractureMarks(doc).length) add(b.id, "cantUse", tr("フラクチャーの印が無い (先に完成の MOD でフラクチャーを決めて)", "No fracture mark (set a fracture on the final mods first)"));
     // 触媒のお告げはカタリストで入れた品質にだけ効く。カタリストを打つ手が無ければ効きは乗らない (10-22 オーナー「ちゃんと打つルートが無いとあかん」)。
     // 品質だけ上げる手 (カタリスト) の後の通り抜けから打つ時は、その手がカタリストを打つ手
     const before = b.out === "pass" && b.parent ? doc.boxes[b.parent]?.hand : null;
