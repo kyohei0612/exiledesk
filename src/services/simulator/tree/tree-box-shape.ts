@@ -43,14 +43,15 @@ export const hasDesecrated = (body: string | null): boolean => !!body && (body.s
 export const likeOf = (data: PatchData, d: TreeDoc, it: StageItem): string => `${flag("stripRarity") ? it.rarity : ""}|${flag("boxShape") ? partsOf(bodyOf(data, d, it)).fr : ""}`;
 
 /**
+ * one = 見本 1 つだけ (回す時の「形の合う箱へ」の並べ替え。前の boxSig と同じで、見本 4 つの mixed にすると行き先が変わった、10-28 見張り)。
  * 箱の体 (見本から。作れない箱は null = 比べない)。見本 4 つで外れの種類が違う箱 (未発現の箱にカオスの外れ: 未発現が消えた人と残った人が同じ箱) は
  * `mixed:<id>` = どの箱とも同じにならない (片方の形の箱へつなぐと、もう片方の人がその箱の手を打てない。10-28 冒涜まわりの確かめ)。始まりは見本 1 つ
  */
-export function boxBody(data: PatchData, d: TreeDoc, id: string): string | null {
+export function boxBody(data: PatchData, d: TreeDoc, id: string, one = false): string | null {
   const s = sampleOf(data, d, id, 1);
   if (s.note === "none" || s.note?.startsWith("cant:")) return null;
   const body = bodyOf(data, d, s.item);
-  if (!flag("boxShape") || id === "start") return body;
+  if (!flag("boxShape") || id === "start" || one) return body;
   const kinds = new Set([body, ...[2, 3, 4].flatMap((k) => { const m = sampleOf(data, d, id, k); return m.note === "none" || m.note?.startsWith("cant:") ? [] : [bodyOf(data, d, m.item)]; })].map(bodyKinds));
   return kinds.size > 1 ? `mixed:${id}` : body;
 }

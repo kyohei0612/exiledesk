@@ -150,7 +150,7 @@ export function shapesOf(doc: TreeDoc, data?: PatchData): Shape[] {
   // 手のある箱に見本の外れの種類を付ける (回す時の「形の合う箱へ」で、同じ形の箱が幾つかあれば種類も合う箱を先に。分かれ目の箱は外れを行で分けるので付けない)
   if (data && flag("goalShape")) {
     const sigs = new Map<string, string | null>();
-    for (const s of out) if (s.hand) { if (!sigs.has(s.box)) sigs.set(s.box, boxBody(data, doc, s.box)); s.sig = sigs.get(s.box)!; }
+    for (const s of out) if (s.hand) { if (!sigs.has(s.box)) sigs.set(s.box, boxBody(data, doc, s.box, true)); s.sig = sigs.get(s.box)!; }
   }
   return out;
 }
