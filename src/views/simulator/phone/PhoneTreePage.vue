@@ -96,8 +96,10 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null, only
   const b = t.doc.value.boxes[id], par = b?.parent ? t.doc.value.boxes[b.parent] : null;
   // 結果の画面で棚から選ぶ形 (phoneResult1027) は、一番初めの狙い無しの手の結果 (打った後) も同じ (10-27 昼オーナー「同じ挙動でいい」)。その手をこの箱に打てる時だけ
   const missLike = !!b && (isMiss(b) || (RES27 && b.out === "any")) && (!RES27 || !!q.canRetry(id));
-  if (b && par?.hand && missLike && !b.hand && sameHand(h, par.hand)) {
+  if (b && par?.hand && missLike && (!b.hand || RES27) && sameHand(h, par.hand)) {
     handFor.value = null;
+    // 外れにもう手が付いていた (前に打つ前と同じ手で段を足して伸びた木) も、同じ手を選び直したら下を消して打つ前の箱へ戻す (10-27 昼オーナー「同じ動きだから 2 回目で止まるはず」)
+    if (b.hand) q.answer((d) => clearHand(d, id));
     q.setReturn(id, par.id);
     q.focus.value = { kind: "outs", id: par.id };
     return;
