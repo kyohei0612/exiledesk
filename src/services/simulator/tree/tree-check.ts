@@ -18,7 +18,7 @@ import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeDoc,
 import { aimOpts, aimsOf, goalsHeld, handAims, handProblem, heldHitOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
 import { boxOutcomeOf, stripBackOf, stripStop, stripTargetsOf } from "./tree-outcome";
 import { runTreeSteps } from "./tree-run";
-import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapeFits, shapesOf, splitTo } from "./tree-shape";
+import { boxSig, heldSets, sigKinds, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapeFits, shapesOf, splitTo } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
@@ -100,6 +100,18 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
   // 0) 形の違う箱への戻り (10-26 オーナー「その選択肢が出てくるのは前提狙いMODの状態でなんかする時やろ」): 付いている狙いの組が違う人が行き先の箱に入り、
   // その箱の結果 (狙いが消えた など) が箱の形と合わなくなる。直すのは戻りの箱 (戻り先を同じ形の箱に)
   for (const b of boxes) if (b.back && !shapeFits(doc, b.id, b.back)) add(b.id, "shape", tr("戻り先の箱と形が違う (付いている狙いの組が違う人が入る)。直し方: 戻り先を同じ狙いの組の箱にする (↩ で選び直す。選べる箱だけ明るくなる) か、ここに次の手を置く", "The return target has a different shape (runs with different targets would enter it). Fix: return to a box with the same targets (pick again with ↩; only valid boxes are lit), or add a next craft here"));
+  // 外れの種類 (普通 / エッセンスのクラフト MOD / 冒涜) が戻り先の箱の見本と違う戻り (10-27 夕オーナー「冒涜で付けた外れ MOD とエッセンスで付けた外れ MOD」は形の違い。スイッチ goalShape)。
+  // 前に組んだ木の自動の戻りも付け替えずにここで知らせる。始まりへの戻り・当たりどうしの統合・全部消えてよい消去の自動の戻り (戻り先は打った結果の形で選んでいる) は見ない
+  if (flag("goalShape")) {
+    const sigs = new Map<string, string | null>(), sigOf = (id: string): string | null => { if (!sigs.has(id)) sigs.set(id, boxSig(data, doc, id)); return sigs.get(id)!; };
+    for (const b of boxes) {
+      const to = b.back, tb = to ? doc.boxes[to] : undefined, p = b.parent ? doc.boxes[b.parent] : undefined;
+      if (!to || !tb || to === "start" || (b.out === "hit" && tb.out === "hit") || out.some((x) => x.boxId === b.id && x.kind === "shape")) continue;
+      if (b.autoBack && p?.hand && effectOf(p.hand.currency) === "remove" && p.hand.keep && !p.hand.keep.length) continue;
+      const a = sigOf(b.id), z = sigOf(to);
+      if (a !== null && z !== null && sigKinds(a) !== sigKinds(z)) add(b.id, "shape", tr("戻り先の箱と外れ MOD の種類が違う (普通 / エッセンスのクラフト MOD / 冒涜の外れ MOD のどれがあるかが違う人が入る)。直し方: 戻り先を外れの種類も同じ箱にする (↩ で選び直す) か、外れを消す手を挟む", "The return target has different kinds of miss mods (which of normal / essence crafted / desecrated misses it has differs). Fix: return to a box with the same kinds of misses (pick again with ↩), or add a step that removes the misses"));
+    }
+  }
 
   // 1) 形だけで分かる穴: 決めていない芽・MOD を選んでいない当たり
   // 始まりの MOD は自由 (無くてよい、10-22 オーナー)。付けられない時は見本の理由を出す
@@ -165,7 +177,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
     const odd = new Map<string, { who: Set<number>; outs: Set<string> }>();
     /** お告げが効かない (無駄になる) 人がいる箱 */
     const waste = new Map<string, { who: Set<number>; reason: string }>();
-    const shapes = shapesOf(doc);
+    const shapes = shapesOf(doc, data);
     const cantIssues = (): CheckIssue[] => [...cant].map(([id, c]) => ({ boxId: id, kind: "cantUse" as const, text: tr(`この箱に着いた状態では手が打てない (${PEOPLE} 人中 ${c.who.size} 人): ${c.reason}`, `The craft can't be used here (${c.who.size} of ${PEOPLE}): ${c.reason}`) }));
     const oddIssues = (): CheckIssue[] => [...odd].map(([id, c]) => ({ boxId: id, kind: "unexpected" as const, text: tr(`この手で「${[...c.outs].join("・")}」になる人がいるのに、行く箱が無い (${PEOPLE} 人中 ${c.who.size} 人、回すと同じ状態の箱があればそこへ、無ければ止まる)。直し方: この手を選び直して結果の箱に足す (PC は当たりの箱の横の ＋ でも足せる)`, `Some runs (${c.who.size} of ${PEOPLE}) end up as "${[...c.outs].join(", ")}" from this craft, but there is no box for it (runs go to a box in the same state, or stop). Fix: pick the craft again so that result gets a box (on PC, the + beside a hit box also adds one)`) }));
     for (let person = 1; person <= PEOPLE; person++) {

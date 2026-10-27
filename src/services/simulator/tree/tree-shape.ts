@@ -2,10 +2,10 @@
  * tree-shape.ts — ツリーの形合わせ (形の合う箱・分かれ目・結果の箱)。tree-run.ts から分けた (シミュ部長 25 本目、2026-10-25、1 ファイル 500 行まで)。
  * 回す所 (tree-run)・精査 (tree-check)・画面 (つなぐ・まとめる) が同じ物を読む。中身は前のまま
  */
-import { mulberry32, sideOfMod, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { craftedKindOf, mulberry32, sideOfMod, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { aimHeldOn, junkOf } from "./tree-aim";
 import { effectOf } from "./tree-hands";
-import { aimOpts, aimsOf, essenceBoxFits, handProblem, playHand, targetsOf } from "./tree-sample";
+import { aimOpts, aimsOf, essenceBoxFits, handProblem, playHand, sampleOf, targetsOf } from "./tree-sample";
 import { flag } from "../../../web/release-flags";
 import { aimKey, keepCut, MATCH_BACK, type Aim, type Hand, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc, boxAims, drop, subtree } from "./tree-model";
 
@@ -43,7 +43,28 @@ export function splitTo(data: PatchData, rules: readonly SplitRule[], item: Stag
  * 形の鍵 = 付いている狙いの組 + 外れがあるか (空きの数は、側の決まった狙いと外れの有無で決まる)
  */
 const shapeKey = (held: readonly string[], junk: boolean): string => `${[...new Set(held)].sort().join(",")}#${junk ? 1 : 0}`;
-export type Shape = { key: string; box: string; hand?: Hand | null };
+/** sig = その箱の見本の外れの種類 (junkSig。shapesOf に data を渡した時だけ、スイッチ goalShape) */
+export type Shape = { key: string; box: string; hand?: Hand | null; sig?: string | null };
+/**
+ * 外れの種類の鍵: 側ごとに、完成の狙いに無い MOD を 普通.クラフト (エッセンス).冒涜 (発現・未発現) で数えた物 (フラクチャー済みは数えない)。
+ * 種類が違えば次に打てる手が変わるので形の違い (10-27 夕オーナー「これは冒涜で付けた外れ MOD、これはエッセンスで付けた外れ MOD」。スイッチ goalShape)
+ */
+export function junkSig(data: PatchData, d: TreeDoc, it: StageItem): string {
+  const goals = new Set((d.memoAims ?? []).map((a) => a.modId));
+  const side = (ms: readonly StageMod[]): string => {
+    let n = 0, c = 0, x = 0;
+    for (const m of ms) { if (m.fractured || goals.has(m.modId)) continue; if (m.desecrated || m.unrevealed) x++; else if (m.crafted || craftedKindOf(data, m)) c++; else n++; }
+    return `${n}.${c}.${x}`;
+  };
+  return `${side(it.prefixes)}|${side(it.suffixes)}`;
+}
+/** 外れの種類があるかだけ (数は見ない)。箱の見本は 1 つの乱数の見本で、数は同じ状態の箱でも見本ごとに違う (精査・回す時の 2 番目の比べ) */
+export const sigKinds = (sig: string): string => sig.replace(/\d+/g, (n) => (n === "0" ? "0" : "1"));
+/** 箱の見本の外れの種類 (見本が作れない箱は null = 比べない) */
+export function boxSig(data: PatchData, d: TreeDoc, id: string): string | null {
+  const s = sampleOf(data, d, id, 1);
+  return s.note === "none" || s.note?.startsWith("cant:") ? null : junkSig(data, d, s.item);
+}
 /**
  * 箱の道の札の組 (始まりから親をたどった当たりの札、aimKey)。「どれか」の当たりの箱 (anyOf、同じ側の狙いのどれか 1 つ) を通ると、
  * どれが付いたかで組が分かれる (10-26)。組は 64 で打ち切る
@@ -123,7 +144,7 @@ export function shapeFits(doc: TreeDoc, from: string, to: string): boolean {
   return heldSets(doc, from).every((h) => there.has(key(h)));
 }
 /** 行き先になれる箱 (手のある当たり / 外れの箱) とその形 */
-export function shapesOf(doc: TreeDoc): Shape[] {
+export function shapesOf(doc: TreeDoc, data?: PatchData): Shape[] {
   const out: Shape[] = [];
   for (const b of Object.values(doc.boxes)) {
     if (!b.hand || (b.out !== "hit" && b.out !== "junk")) continue;
@@ -134,6 +155,11 @@ export function shapesOf(doc: TreeDoc): Shape[] {
     if (!b.split || b.hand) continue;
     for (const held of pathHelds(doc, b.id)) for (const junk of [false, true]) out.push({ key: shapeKey(held, junk), box: b.id });
   }
+  // 手のある箱に見本の外れの種類を付ける (回す時の「形の合う箱へ」で、同じ形の箱が幾つかあれば種類も合う箱を先に。分かれ目の箱は外れを行で分けるので付けない)
+  if (data && flag("goalShape")) {
+    const sigs = new Map<string, string | null>();
+    for (const s of out) if (s.hand) { if (!sigs.has(s.box)) sigs.set(s.box, boxSig(data, doc, s.box)); s.sig = sigs.get(s.box)!; }
+  }
   return out;
 }
 /**
@@ -141,8 +167,11 @@ export function shapesOf(doc: TreeDoc): Shape[] {
  * (10-22 解析君の 13 本の突き合わせ: 外れを持ったまま始めの高貴へ戻り、外れを先に消す打ち方より 48〜81% 高かった)。
  * at = 今のアイテム (あればその箱の手が打てる時だけ。光 + 消去の箱は普通の MOD の外れを消せず、兜で 93 人止まった)
  */
-function boxOfShape(shapes: readonly Shape[], key: string, at?: { data: PatchData; item: StageItem }): string | null {
-  const same = shapes.filter((s) => s.key === key);
+function boxOfShape(shapes: readonly Shape[], key: string, at?: { data: PatchData; item: StageItem; doc?: TreeDoc }): string | null {
+  // 同じ形の箱が幾つかあれば、外れの種類と数 (junkSig) も合う箱 → 種類が合う箱 → 前のとおり形だけ の順で見る (スイッチ goalShape。合う箱が無くても止まりは増やさない)
+  const all = shapes.filter((s) => s.key === key), sig = at?.doc && flag("goalShape") ? junkSig(at.data, at.doc, at.item) : null;
+  const exact = sig ? all.filter((s) => s.sig == null || s.sig === sig) : [], kinds = sig ? all.filter((s) => s.sig == null || sigKinds(s.sig) === sigKinds(sig)) : [];
+  const same = exact.length ? exact : kinds.length ? kinds : all;
   // 同じ形の箱が幾つかあれば、手が打てる箱を先に (光 + 消去の箱へ普通の MOD の外れを持って来ても打てない、10-22 金の指輪の見本)
   const playable = (s: Shape): boolean => !at || !s.hand || !handProblem(at.data, at.item, s.hand);
   const ok = at ? same.find(playable) : same[0];
@@ -173,8 +202,8 @@ function itemKey(data: PatchData, item: StageItem, aims: readonly Aim[]): string
   const junkOn = (side: "prefix" | "suffix"): boolean => (!open.size || open.has(side)) && junk[side].length > 0;
   return shapeKey(held.map(aimKey), junkOn("prefix") || junkOn("suffix"));
 }
-export function matchBox(data: PatchData, shapes: readonly Shape[], item: StageItem, aims: readonly Aim[]): string | null {
-  return boxOfShape(shapes, itemKey(data, item, aims), { data, item });
+export function matchBox(data: PatchData, shapes: readonly Shape[], item: StageItem, aims: readonly Aim[], doc?: TreeDoc): string | null {
+  return boxOfShape(shapes, itemKey(data, item, aims), { data, item, doc });
 }
 /**
  * 着いた箱の形と実物のアイテムの形が違う時は、続きから (形の合う箱) で進む (10-22。回す時と精査で同じ)。
@@ -192,10 +221,10 @@ export function settle(data: PatchData, doc: TreeDoc, shapes: readonly Shape[], 
     const cant = !!h && !!handProblem(data, item, h);
     // 始まりの手が打てず形の合う手のある箱も無い時は、同じ形の手をまだ決めていない箱へ (止まりをその箱の「決めていない」にまとめる。
     // 10-25 シミュ 27: 錬金術のスタートで狙いが消えて始めに戻った人が、外れの箱に手が無いうちは始まりで「ノーマルかマジックにだけ」と止まり、戻りの箱に持ち越しの穴が出た)
-    if (key === JUNK_ONLY) { const to = boxOfShape(shapes, JUNK_ONLY, { data, item }) ?? id; return to === id && cant ? openOfShape(doc, key) ?? id : to; }
+    if (key === JUNK_ONLY) { const to = boxOfShape(shapes, JUNK_ONLY, { data, item, doc }) ?? id; return to === id && cant ? openOfShape(doc, key) ?? id : to; }
     // 始まりの手が打てない (エッセンスの MOD が既に付いている等) 時は、形の合う打てる箱へ (10-22 解析君 body-essence-path: 狙いが消えて始めに戻り 49 人止まった)
     if (!cant) return id;
-    const to = boxOfShape(shapes, key, { data, item });
+    const to = boxOfShape(shapes, key, { data, item, doc });
     const th = to ? doc.boxes[to]?.hand : null;
     return to && (!th || canPlay(data, item, th)) ? to : openOfShape(doc, key) ?? id;
   }
@@ -203,7 +232,7 @@ export function settle(data: PatchData, doc: TreeDoc, shapes: readonly Shape[], 
   // 「打った後」の箱 (見本の頭で外れを付けた後 = 前の始まり、10-25) へ戻って手が打てない時も、始まりと同じく形の合う打てる箱へ
   if (b?.hand && b.out === "any") {
     if (!handProblem(data, item, b.hand)) return id;
-    const to = boxOfShape(shapes, itemKey(data, item, aims), { data, item });
+    const to = boxOfShape(shapes, itemKey(data, item, aims), { data, item, doc });
     const th = to ? doc.boxes[to]?.hand : null;
     return to && (!th || canPlay(data, item, th)) ? to : id;
   }
@@ -211,7 +240,7 @@ export function settle(data: PatchData, doc: TreeDoc, shapes: readonly Shape[], 
   const key = itemKey(data, item, aims);
   // 形が合っても手が打てない (外れが消去の届かない側にある等) 時は、形の合う打てる箱へ (10-22 解析君 body-essence-path、狙いが消えた → 外れの箱の戻り)
   if (heldSets(doc, b.out === "junk" ? b.parent : id).some((h) => shapeKey(h, b.out === "junk") === key) && canPlay(data, item, b.hand)) return id;
-  const to = boxOfShape(shapes, key, { data, item }) ?? id;
+  const to = boxOfShape(shapes, key, { data, item, doc }) ?? id;
   // 形の合う箱の手が打てず、この箱の手は打てる時はこの箱のまま (10-24 モンキー 7 回目: 始めのルーンの外れは MOD が増えず「外れ無し」の形で始めへ戻され、
   // 同じルーンをもう差せずに 100 人とも止まった。外れの箱の変成はそのまま打てる)
   const th = to !== id ? doc.boxes[to]?.hand : null;
@@ -219,7 +248,7 @@ export function settle(data: PatchData, doc: TreeDoc, shapes: readonly Shape[], 
 }
 /** アイテムから行き先 (ルート精査が回す時と同じ道を辿る用) */
 export function matchItem(data: PatchData, doc: TreeDoc, item: StageItem, aims: readonly Aim[] = aimsOf(doc)): string | null {
-  return matchBox(data, shapesOf(doc), item, aims);
+  return matchBox(data, shapesOf(doc, data), item, aims, doc);
 }
 /**
  * 「形の合う箱へ」の箱が、アイテムを見ずに行きうる形と行き先 (画面の線・ルート精査の「形の合う箱が無い」)。

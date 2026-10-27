@@ -135,7 +135,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
       if (doneOk(data, doc, at, item, aims) && !qualityOk(doc, item)) return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`完成の箱に着いたが、品質が足りない (${item.quality ?? 0}% / 完成形 ${doc.goalQuality}%)`, `Reached a done box without enough quality (${item.quality ?? 0}% / final ${doc.goalQuality}%)`), item } };
       if (doneOk(data, doc, at, item, aims)) return { end: "done", cost, at, visits, uses, restarts, odd, why: { reason: tr("完成", "Done"), item } };
       odd.add(at);
-      const to = ++hops > 1000 ? null : matchBox(data, shapes, item, aims);
+      const to = ++hops > 1000 ? null : matchBox(data, shapes, item, aims, doc);
       if (!to || to === at) return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("完成の箱に着いたが、狙いが揃っていない (形の合う箱も無い)", "Reached a done box without all its targets (and no box matches the shape)"), item } };
       at = to;
       continue;
@@ -157,7 +157,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
         at = "start";
         continue;
       }
-      const to = b.back === MATCH ? stripBackOf(data, doc, at, item) ?? matchBox(data, shapes, item, aims) : settle(data, doc, shapes, b.back, item, aims);
+      const to = b.back === MATCH ? stripBackOf(data, doc, at, item) ?? matchBox(data, shapes, item, aims, doc) : settle(data, doc, shapes, b.back, item, aims);
       if (!to) return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("戻り先の「形の合う箱」が無い", "No box matches the shape to return to"), item, noBox: true } };
       // 戻り先に着いてから形の合う箱へ移った時も、結果の箱と同じく戻り先の来訪を pass で残す (moved に数える)
       if (b.back !== MATCH && to !== b.back) visits.push({ box: b.back, cost, pass: true });
@@ -202,7 +202,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     if (!next) {
       // 合う結果の箱が無い (10-22 ブラック「1 箱にした手で別の結果が出た時に黙って止まらない」): 形の合う箱があればそこへ、無ければ止まり。どちらも想定外として数える
       odd.add(at);
-      const to = matchBox(data, shapes, r.item, aims);
+      const to = matchBox(data, shapes, r.item, aims, doc);
       if (!to) return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`この手の結果「${outcomeText(data, r.item, oc)}」の箱が無く、形の合う箱も無い`, `No box for this craft's result "${outcomeText(data, r.item, oc)}", and no box matches the shape`), item: r.item, noBox: true } };
       item = r.item;
       at = to;
@@ -324,7 +324,7 @@ export function* runTreeSteps(data: PatchData, doc: TreeDoc, opts: TreeRunOpts):
   const untilHit = opts.untilHit ?? new Set(Object.values(doc.boxes).filter((b) => b.hand?.repeat && b.hand.repeat.max == null).map((b) => b.id));
   const o = { price: opts.price, startCost: opts.startCost ?? 0, capDiv: opts.capDiv ?? 2000, capSteps: opts.capSteps ?? 20000, start: opts.start, untilHit, onHand: opts.onHand, onArrive: opts.onArrive };
   const aims = opts.aims ?? aimsOf(doc);
-  const shapes = shapesOf(doc);
+  const shapes = shapesOf(doc, data);
   const rng = mulberry32(opts.seed);
   const people: Person[] = [];
   const every = Math.max(1, opts.every ?? 10);

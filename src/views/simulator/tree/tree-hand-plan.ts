@@ -2,7 +2,7 @@
  * tree-hand-plan.ts — 箱の次に打つ手の決め方 (TreeHandShelf.vue から分けた、2026-10-24)。棚の画面 (TreeHandShelf)・手を決めた時の組み替え (SimTreePage の pickHand)・
  * 開発の時だけの猿の口 (sim-monkey.ts) が同じ関数を呼ぶ (別の打ち方を作らない、メモ feedback-sim-no-own-logic)。中身はエンジンの入口と木の関数を呼ぶだけ
  */
-import { catalystBoosts, craftedKindOf, mulberry32, omensAllowedFor, omensFor, runeOf, sideOfMod, socketCapOf, tierRankOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { catalystBoosts, mulberry32, omensAllowedFor, omensFor, runeOf, sideOfMod, socketCapOf, tierRankOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { craftStage } from "../../../state/craft-stage";
 import { bonesFor, essenceShelf, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
 import { treeHidden } from "../use-sim-shelf";
@@ -11,7 +11,7 @@ import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
-import { linkSameHit, linkSameShape, linkShapeHit, matchItem, sameHandReturn } from "../../../services/simulator/tree/tree-shape";
+import { boxSig, linkSameHit, linkSameShape, linkShapeHit, matchItem, sameHandReturn } from "../../../services/simulator/tree/tree-shape";
 import { looseOf, stripStops } from "../../../services/simulator/tree/tree-outcome";
 import { clearHand, drop, fractureMarks, healLost, kindOfHand, setBack, setHand, subtree, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
@@ -174,7 +174,7 @@ export function applyPick(d: TreeDoc, id: string, h: Hand, kind: HandKind, aims:
   const data = craftStage.data.value;
   // 箱の見本の外れの形 = 側ごとに、完成の狙いに無い MOD を種類 (普通 / 冒涜 (発現・未発現) / エッセンスのクラフト MOD) ごとに数えた物。
   // 違う箱へは戻らない・つながない (10-27 夕オーナー「これは冒涜で付けた外れ MOD、これはエッセンスで付けた外れ MOD」= 次に打てる手が変わる違いは形の違い。スイッチ goalShape)
-  const loose = flag("goalShape") && data ? (x: string): string | null => { const s = sampleOf(data, d, x, 1); return s.note === "none" || s.note?.startsWith("cant:") ? null : junkSig(data, d, s.item); } : undefined;
+  const loose = flag("goalShape") && data ? (x: string): string | null => boxSig(data, d, x) : undefined;
   const to = flag("goalShape") ? sameHandReturn(d, id, h, loose) : null;
   if (to) { if (d.boxes[id]?.hand) clearHand(d, id); setBack(d, id, to); return id; }
   const had = new Set(Object.keys(d.boxes));
@@ -214,16 +214,6 @@ function stripChain(d: TreeDoc, id: string, h: Hand): void {
   for (let i = 1; i < n - Math.max(s, 0); i++) { const c = d.boxes[at]?.outs[0]; if (!c) return; setHand(d, c, h, "strip"); at = c; }
   const last = d.boxes[d.boxes[at]?.outs[0] ?? ""];
   if (last) { last.back = to; if (to) last.autoBack = true; else delete last.autoBack; }
-}
-/** 外れの形の鍵 (側ごとに 普通.クラフト.冒涜 の数。フラクチャー済みと完成の狙いの MOD は数えない。見本の比べ、applyPick の loose) */
-function junkSig(data: PatchData, d: TreeDoc, it: StageItem): string {
-  const goals = new Set((d.memoAims ?? []).map((a) => a.modId));
-  const side = (ms: readonly StageMod[]): string => {
-    let n = 0, c = 0, x = 0;
-    for (const m of ms) { if (m.fractured || goals.has(m.modId)) continue; if (m.desecrated || m.unrevealed) x++; else if (m.crafted || craftedKindOf(data, m)) c++; else n++; }
-    return `${n}.${c}.${x}`;
-  };
-  return `${side(it.prefixes)}|${side(it.suffixes)}`;
 }
 /**
  * 全部消えてよい消去の直線を、消去 1 回ごとの結果をエンジンで打って (stepOutcomes、お告げ込み) 全部の結果が同じ形の手のある箱 (matchItem = 形の鍵) に当たる所で止め、
