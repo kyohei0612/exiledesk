@@ -14,11 +14,14 @@ import CurrencyShelf from "../../../components/for-share/shelf/CurrencyShelf.vue
 import HeldOmens from "../../../components/for-share/shelf/HeldOmens.vue";
 import HeldCursor from "../../../components/for-share/shelf/HeldCursor.vue";
 import { ESSENCE_KEYS, omensAllowedFor, useReason, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
-import { omensFor } from "../../../services/craft-stage/engine";
+import { omensFor, unrevealedOf } from "../../../services/craft-stage/engine";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, ECHO, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
-import { handLabel, handName, outName } from "./tree-names";
+import { handLabel, handName, outNameOf } from "./tree-names";
+import TreeVeilCheck from "./TreeVeilCheck.vue";
+import TreeRevealCard from "./TreeRevealCard.vue";
+import { RESULT, RESULT_NO_LOST } from "./tree-hand-result";
 import { treeRowTags } from "./tree-row-tags";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { aimKey, fractureMarks, setHand, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
@@ -92,7 +95,7 @@ const isFracture = computed(() => !!held.value && effectOf(held.value) === "frac
  * 前の手を開いた時はその手のまま
  */
 const echo = computed(() => omens.value.includes(ECHO));
-watch(held, (k, old) => { if (k && k !== old && isBone(k) && !omens.value.includes(ECHO)) omens.value = [...omens.value, ECHO]; }); // 開いた時は動かない = 前の手のまま
+watch(held, (k, old) => { if (k && k !== old && ((isBone(k) && (!flag("boneLater") || veilOn.value)) || k === "reveal") && !omens.value.includes(ECHO)) omens.value = [...omens.value, ECHO]; }); // 開いた時は動かない = 前の手のまま
 /** 付く MOD を選べない手 (足す・カオス。当たりの箱にする MOD のチェックと狙い無しを出す) */
 const canFree = computed(() => !!held.value && FREE_EFFECTS.includes(effectOf(held.value)));
 /**
@@ -164,10 +167,18 @@ const catalysing = computed(() => used.value.includes(CATALYSING));
  * ☑ の無い能力値は外れ MOD)。完成の狙いに 1 つも無ければ欄を出さず、結果は外れだけ (オーナー「狙い MOD に無いなら全部等しく外れ。ここは外れ MOD をただ付ける作業」)
  */
 const isInfinite = computed(() => !!held.value && infiniteAim(held.value));
+/** 骨の手の「発現させる」☑ (既定は無し = 未発現のまま次へ。スイッチ boneLater、TreeVeilCheck)。発現させる時は発現で出うる MOD 全部が狙いの候補 */
+const veilOn = ref(!!props.current && isBone(props.current.currency) && props.current.veil !== "keep"); // 前の版の骨の手 (veil 無し) は同じ手で発現 = ☑ あり
+const boneVeil = computed(() => flag("boneLater") && !!held.value && isBone(held.value));
+const veil = computed(() => (boneVeil.value ? (veilOn.value ? "pick" as const : "keep" as const) : undefined));
+function setVeil(v: boolean): void { const was = veilOn.value, had = [...checked.value], om = [...omens.value]; veilOn.value = v; checked.value = []; omens.value = v ? [...om.filter((o) => o !== ECHO), ECHO] : om.filter((o) => o !== ECHO); warnIfBelow(() => { veilOn.value = was; checked.value = had; omens.value = om; }); } // 反響は発現させる時だけ
+/** 未発現の冒涜が付いた箱は棚に「発現」の札 (TreeRevealCard) */
+const revealable = computed(() => flag("boneLater") && !!item.value && !!unrevealedOf(item.value));
+const outOf = (o: Parameters<typeof outNameOf>[1]): string => outNameOf(hand.value, o);
 const aimChoices = computed((): Aim[] => {
   const d = s.data.value, it = item.value;
   if (d && it && held.value && isInfinite.value) return hitAimsOf(d, t.doc.value, props.boxId, it, handOf({ held: held.value, omens: omens.value, spam: false, spamMax: null, free: false, echo: echo.value }), t.goals.value);
-  return d && it && held.value ? hitChoicesOf(d, t.doc.value, props.boxId, it, { held: held.value, omens: omens.value, echo: echo.value }, t.goals.value) : [];
+  return d && it && held.value ? hitChoicesOf(d, t.doc.value, props.boxId, it, { held: held.value, omens: omens.value, echo: echo.value, veil: veil.value }, t.goals.value) : [];
 });
 /** チェックした狙い (候補にある物だけ) */
 const checkedAims = computed((): Aim[] => aimChoices.value.filter((a) => checked.value.includes(aimKey(a))));
@@ -199,7 +210,7 @@ watch(held, (k) => { if (k && window.innerWidth < 768) void showOmens(); });
 // 新しい手の既定 = 狙い無し (10-26 夜オーナー「デフォルトは狙い無しでチェック付けといてくれ」)。当たるまで繰り返す手は狙い無しが無いので候補に全部チェック
 watch([aimChoices, spam], ([l, sp]) => { if (!props.current && !touched) checked.value = sp ? l.map(aimKey) : []; }, { immediate: true });
 /** チェックの一覧を出す (MOD が付く・入れ替わる手) */
-const showAims = computed(() => canFree.value || (isInfinite.value && aimChoices.value.length > 0));
+const showAims = computed(() => (canFree.value && !(boneVeil.value && !veilOn.value)) || (isInfinite.value && aimChoices.value.length > 0));
 /** 狙い無し = MOD を 1 つもチェックしていない。当たるまで繰り返す時は狙い無しも「どれでも」も無い (MOD を 1 つ以上チェックするまで確定しない、10-25 オーナー) */
 const freeOn = computed(() => showAims.value && !spam.value && !checkedAims.value.length);
 /** 狙い無しを押す = MOD を全部外す (もう狙い無しの時に押しても外れない。値が同じだと Vue が描き直さず、チェックだけ外れて見えた) */
@@ -256,18 +267,9 @@ function toggleKeep(a: Aim): void {
 const isGoalMod = (a: Aim): boolean => (t.doc.value.memoAims ?? []).some((g) => g.modId === a.modId);
 const keepLabel = (c: { aim: Aim; mod: StageMod }): string => (flag("goalShape") && !isGoalMod(c.aim) ? tr(`外れ MOD (${modText(c.mod)})`, `Miss mod (${modText(c.mod)})`) : modText(c.mod));
 function keepNone(e: Event): void { const was = [...keepChecked.value]; keepChecked.value = []; (e.target as HTMLInputElement).checked = true; warnIfBelow(() => { keepChecked.value = was; }); }
-const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, ...(isRemove.value ? { keep: keepAims.value } : {}) }) : null));
+const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, ...(isRemove.value ? { keep: keepAims.value } : {}) }) : null));
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
 const preCat = computed((): string | null => (catalysing.value && !afterQuality.value ? autoCat.value : null));
-const RESULT: Record<HandKind, [string, string]> = {
-  add: ["当たり + 外れ", "Hit + Miss"], remove: ["外れが消えた + 狙いが消えた", "Miss removed + Target lost"], swap: ["当たり + 狙いが消えた + 外れ", "Hit + Target lost + Miss"], spam: ["当たりだけ (狙いの側に空きがあれば先に高貴を 1 回、その後は当たるまでカオス)", "Hits only (an Exalted Orb first if the target's side has room, then Chaos until a hit)"], free: ["打った後 (何が付いても次へ。当たり / 外れに分けない)", "After (anything counts, no hit / miss split)"],
-  quality: ["無し (品質を最大まで上げて、下の＋で次の手)", "None (raise quality to max, then add the next craft with + below)"],
-  essence: ["付いた + 狙いが消えた (付く MOD は必ず付く)", "Added + Target lost (the essence mod always lands)"],
-  fracture: ["印の狙いが ✦ になった (必ず印の狙いを固定)", "The marked target fractured (always fixes it)"],
-  strip: ["外れが消えた (消去 1 回ごとに箱を並べ、木の箱と同じ形になった所でその段へ戻る)", "Miss removed (one box per annul, back to the step whose box has the same shape)"],
-};
-/** 狙いを持って着く人がいない箱では「狙いが消えた」を作らない時の文 (tree-model の setHand、tree-lost.ts) */
-const RESULT_NO_LOST: Partial<Record<HandKind, [string, string]>> = { remove: ["外れが消えた", "Miss removed"], swap: ["当たり + 外れ", "Hit + Miss"], essence: ["付いた (付く MOD は必ず付く)", "Added (the essence mod always lands)"] };
 const kind = computed((): HandKind | null => (hand.value ? kindOf(hand.value) : null));
 /** 結果の箱の文 (写しに手を付けて「狙いが消えた」が出来るかを見る) */
 const resultText = computed((): [string, string] | null => {
@@ -363,6 +365,7 @@ function ok(): void {
       <p v-if="preCat" data-tree-hand-pre-cat class="text-[12px] text-sky-200/90">{{ tr(`前に「${handName(preCat)} (品質を最大まで)」の手を足す (札を押すとカタリストを替えられる)`, `Adds "${handName(preCat)} (to max quality)" before this (click its chip to change the catalyst)`) }}</p>
       <!-- フラクチャー: 印の狙いを必ず固定、外れは費用で数える (10-24 オーナー「2 回外れて 1 回当たり」、10-25 に戻した) -->
       <p v-if="isFracture" data-tree-hand-frac-rule class="text-[12px] opacity-70">{{ tr("完成の MOD の印の狙いを必ず ✦ にする。固定できる MOD が 2 つ以上なら、2 回外れて 1 回当たりとして、ここまでの費用とフラクチャーを 2 回分足す", "Always fractures the marked final mod. With 2+ mods that could fracture, counts as 2 misses then a hit: adds this point's cost and the Fracturing Orb twice") }}</p>
+      <TreeVeilCheck v-if="boneVeil && !phone" :model-value="veilOn" @update:model-value="setVeil" />
       <!-- 足す手: 当たりの箱にする狙いをチェック (複数可)。チェックした MOD ごとに当たり、どれも付かなければ外れ、0 個 = 狙い無し (10-25 オーナー) -->
       <div v-if="showAims && !phone" data-tree-hand-aims class="flex flex-col gap-1 text-[12px]">
         <span v-if="spam && !checkedAims.length" data-tree-hand-aim-need class="text-rose-200/90">{{ tr("狙う MOD を選んで", "Pick a target mod") }}</span>
@@ -386,7 +389,7 @@ function ok(): void {
           <input type="checkbox" :checked="keepChecked.includes(aimKey(c.aim))" @change="toggleKeep(c.aim)" /><span class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="modText(c.mod)">{{ keepLabel(c) }}</span>
         </label>
       </div>
-      <p v-if="kind" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? (only.length === 1 ? tr(`${outName(only[0]!.out)}だけ (結果は 1 通り)`, `${outName(only[0]!.out)} only (one possible result)`) : [...new Set(only.map((o) => outName(o.out)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
+      <p v-if="kind" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? (only.length === 1 ? tr(`${outOf(only[0]!.out)}だけ (結果は 1 通り)`, `${outOf(only[0]!.out)} only (one possible result)`) : [...new Set(only.map((o) => outOf(o.out)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
       <!-- 替える時は、消える箱の数を先に小さく (オーナー 10-22。1 つ戻す / Ctrl+Z で戻せる)。持ち直しは棚で別の物を押すだけ。決めるのはカードを押す -->
       <div class="flex flex-wrap items-center gap-1.5">
         <span v-if="problem" data-tree-hand-problem class="text-[11px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</span>
@@ -399,6 +402,7 @@ function ok(): void {
     <div data-tree-shelf @pointerdown="onShelfDown">
       <!-- カオススパムオーブ (シミュだけの札、レアの時だけ)。棚の札と同じ形 (ShelfButton の枠・絵・名前)、絵はカオスオーブそのまま、
            右上に「上級」「完全」と同じ形の札で「スパム」、見分けは札と枠の色だけ (10-25 オーナー、前の ↻ の印はこれに置き換え) -->
+      <TreeRevealCard v-if="revealable" :on="held === 'reveal'" @hold="onShelfHold('reveal')" />
       <button v-if="!NS && ((TREE_SPAM_ORB && isRare) || spamOn)" type="button" data-tree-spam-orb :aria-pressed="spamOn" :disabled="!!spamWhy && !spamOn"
         class="group relative mb-2 flex w-[74px] flex-col items-center px-0.5 pb-1 text-[10px] transition disabled:cursor-not-allowed disabled:opacity-35 md:w-[80px] md:text-[11px]"
         :class="spamOn ? 'text-[var(--exile-color-text-title)]' : ''"
@@ -420,6 +424,7 @@ function ok(): void {
       <p class="mb-1 break-words text-[12px] font-bold text-amber-100">{{ tr(`${nameOf(held)} を持っている`, `Holding ${nameOf(held)}`) }}</p>
       <button v-if="heldHelp.length && P27" type="button" data-tree-hand-help-toggle class="mb-1 min-h-9 text-[12px] text-[#c9b48a] underline decoration-white/20" :aria-expanded="helpOpen" @click="helpOpen = !helpOpen">{{ helpOpen ? tr("説明を閉じる ▴", "Hide details ▴") : tr("説明 ▾", "Details ▾") }}</button>
       <p v-if="heldHelp.length && (!P27 || helpOpen)" data-tree-hand-held-help class="mb-2 break-words text-[12px] leading-snug text-[#d8ccb4]">{{ heldHelp.join(" ") }}</p>
+      <TreeVeilCheck v-if="boneVeil" big class="mb-1" :model-value="veilOn" @update:model-value="setVeil" />
       <!-- 狙いを選べる手は 2 つ: 狙い無し (今のチェック) のまま決める / 2 段目で狙いを選ぶ。繰り返しの手は 2 段目だけ -->
       <div v-if="showAims" class="flex gap-2">
         <!-- 左は普通の「キャンセル」(持った札を離す)、右は狙いを選ぶ (今の手を直す時は「狙いを再度選ぶ」)。10-27 オーナー「このまま決めるは日本語として変」 -->
@@ -447,7 +452,7 @@ function ok(): void {
               <input type="checkbox" class="size-5 shrink-0" :checked="freeOn" @change="toggleFree($event)" /><span class="min-w-0 break-words">{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}</span>
             </label>
           </div>
-          <p v-if="kind" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? (only.length === 1 ? tr(`${outName(only[0]!.out)}だけ (結果は 1 通り)`, `${outName(only[0]!.out)} only (one possible result)`) : [...new Set(only.map((o) => outName(o.out)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
+          <p v-if="kind" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? (only.length === 1 ? tr(`${outOf(only[0]!.out)}だけ (結果は 1 通り)`, `${outOf(only[0]!.out)} only (one possible result)`) : [...new Set(only.map((o) => outOf(o.out)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
           <p v-if="problem" class="mt-1 break-words text-[12px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</p>
         </div>
         <div class="flex gap-2 border-t border-white/10 px-3 py-2">
@@ -469,7 +474,7 @@ function ok(): void {
               <input type="checkbox" class="size-5 shrink-0" :checked="!keepAims.length" @change="keepNone($event)" /><span class="min-w-0 break-words">{{ tr("全部消えてよい (同じ形の箱になるまで消去の箱を並べる)", "Anything may go (annul boxes until a box of the same shape)") }}</span>
             </label>
           </div>
-          <p v-if="kind" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? (only.length === 1 ? tr(`${outName(only[0]!.out)}だけ (結果は 1 通り)`, `${outName(only[0]!.out)} only (one possible result)`) : [...new Set(only.map((o) => outName(o.out)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
+          <p v-if="kind" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? (only.length === 1 ? tr(`${outOf(only[0]!.out)}だけ (結果は 1 通り)`, `${outOf(only[0]!.out)} only (one possible result)`) : [...new Set(only.map((o) => outOf(o.out)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
           <p v-if="problem" class="mt-1 break-words text-[12px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</p>
         </div>
         <div class="flex gap-2 border-t border-white/10 px-3 py-2">

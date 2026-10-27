@@ -245,7 +245,9 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
         let canBe: { out: OutKind; hits: Aim[] }[] | null = null;
         if (!b.hand.repeat && effectOf(b.hand.currency) !== "fracture") {
           const all = stepOutcomes(data, prepFor(data, item, b.hand.currency), b.hand.currency, engineOmens(b.hand)) ?? []; // 規格外の形で (tree-unbounded)
-          const shown = all.filter((o) => !o.void && !unrevealedOf(o.item)).map((o) => boxOutcomeOf(data, doc, b, item, o.item, aims));
+          // 未発現が新しく付く結果だけ見ない (前から未発現を持ったまま打つ手は見る。スイッチ boneLater)
+          const veiled = (o: { item: StageItem }): boolean => !!unrevealedOf(o.item) && !(flag("boneLater") && unrevealedOf(item));
+          const shown = all.filter((o) => !o.void && !veiled(o)).map((o) => boxOutcomeOf(data, doc, b, item, o.item, aims));
           const miss = shown.filter((oc) => !outBoxOf(doc, b, oc));
           if (miss.length) { const c = odd.get(id) ?? { who: new Set<number>(), outs: new Set<string>() }; c.who.add(person); for (const oc of miss) c.outs.add(outName(oc.out)); odd.set(id, c); }
           if (all.length && shown.length === all.length) canBe = shown;

@@ -20,6 +20,7 @@ import { flag } from "../../../web/release-flags";
  */
 export const infiniteAim = (key: string | undefined): boolean => !!key && flag("goalShape") && isInfiniteEssence(key);
 import { heldSets } from "./tree-shape";
+import { isRevealHand, revealedOf, revealHitOf, veilKeep, veilPick } from "./tree-veil";
 
 /**
  * 箱 b の手の結果 (回す・見本・精査で同じ)。☑ の無い MOD は外れ MOD (10-27 オーナー「チェックなしは外れ MOD 扱いでしょ」): 当たりはこの手の当たりの箱の札 (☑) だけ、
@@ -34,6 +35,16 @@ export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: 
     const own = b.outs.flatMap((id) => { const c = doc.boxes[id]; return c?.out === "hit" && c.aim ? boxAims(c) : []; });
     const hits = oc.hits.filter((a) => own.some((x) => x.modId === a.modId && x.tier === a.tier));
     return hits.length ? { out: "hit", hits } : { out: "junk", hits: [] };
+  }
+  // 骨を未発現のまま (スイッチ boneLater): 未発現の冒涜が付いた (打った後) 1 つ。満杯の側で狙いが消えた時だけ狙いが消えた
+  if (veilKeep(b.hand)) { const oc = outcomeOf(data, before, after, aims, key); return oc.out === "lost" ? oc : { out: "any", hits: [] }; }
+  // 発現で選ぶ手: 発現した MOD が ☑ の札 (この手の当たりの箱) に当たれば当たり、ほかは外れ (狙いが消えたは前のまま)
+  if (veilPick(b.hand)) {
+    const oc = outcomeOf(data, before, after, aims, key);
+    if (oc.out === "lost") return oc;
+    const own = b.outs.flatMap((id) => { const c = doc.boxes[id]; return c?.out === "hit" && c.aim ? boxAims(c) : []; });
+    const hit = revealHitOf(data, revealedOf(before, after), own);
+    return hit ? { out: "hit", hits: [hit] } : { out: "junk", hits: [] };
   }
   if (!key || effectOf(key) === "essence" || effectOf(key) === "fracture") return outcomeOf(data, before, after, aims, key);
   // 消去の残したい MOD (10-27 オーナー): 全部消えてよい = 外れが消えた 1 つ。☑ があればその MOD だけで消えた / 外れが消えたを分ける (ほかは外れ MOD)
@@ -63,6 +74,8 @@ export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: 
  */
 export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, pre: string | null = null, extra: readonly Aim[] = []): Array<{ out: OutKind; aim: Aim | null }> | null {
   if (h.repeat || h.free || isCatalyst(h.currency) || (h.keep && !h.keep.length)) return null;
+  // 後から打つ発現の手: ☑ の札ごとの当たり + 外れ (発現は MOD を消さない。スイッチ boneLater)
+  if (isRevealHand(h.currency)) return [...extra.map((a) => ({ out: "hit" as OutKind, aim: a })), { out: "junk", aim: null }];
   // 消去の残したい MOD があれば、その MOD だけを狙いとして見る (ほかは外れ MOD、boxOutcomeOf と同じ)
   const aims = h.keep?.length && effectOf(h.currency) === "remove" ? h.keep : [...aimsOf(doc), ...extra.filter((a) => !aimsOf(doc).some((x) => x.modId === a.modId && x.tier === a.tier))];
   const k = effectOf(h.currency);
@@ -90,7 +103,8 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
     for (const it of forms) {
       const outs = stepOutcomes(data, prepFor(data, it, h.currency), h.currency, engineOmens(h))?.filter((o) => !o.void);
       if (!outs?.length) return null;
-      if (outs.some((o) => unrevealedOf(o.item))) {
+      // 未発現が新しく付く手だけ (前から未発現を持ったまま打つフラクチャー・カオスなどは普通に分ける。スイッチ boneLater)
+      if (outs.some((o) => unrevealedOf(o.item)) && !(flag("boneLater") && unrevealedOf(it))) {
         veiled = true;
         if (outs.some((o) => aimDiff(data, it, o.item, aims, { sameText: true }).lost.length)) veiledLost = true;
         continue;
@@ -105,6 +119,8 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
     }
   }
   // 冒涜: 当たり (この手の札) と外れはいつも、狙いが消えたは消える側で狙いを失いうる時だけ (10-25 シミュ 28 の洗い出し: 満杯の側に死霊術で打つと 13〜14% 狙いが消えるのに箱が無く、回すと止まった)
+  // 骨を未発現のまま: 未発現の冒涜が付いた (打った後) 1 つ + 狙いが消えうる時は狙いが消えた
+  if (veiled && veilKeep(h)) return [{ out: "any", aim: null }, ...(veiledLost ? [{ out: "lost" as OutKind, aim: null }] : [])];
   if (veiled) return [...extra.map((a) => ({ out: "hit" as OutKind, aim: a })), { out: "junk", aim: null }, ...(veiledLost ? [{ out: "lost" as OutKind, aim: null }] : [])];
   const list = [...found.values()];
   // 足す・入れ替える手が外れだけの時は、まだ付いていない狙いがある時だけ手の種類の箱へ (当たりの箱を作って MOD を選ばせる)。

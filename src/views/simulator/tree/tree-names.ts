@@ -10,6 +10,7 @@ import { freshItem } from "../../../services/craft-stage/engine";
 import { CATALYSING, isCatalyst } from "../../../services/simulator/tree/tree-hands";
 import { boxAims, fractureMarks, startRarity, startsFractured, type Hand, type SplitWhen, type TreeBox, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
+import { veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 
@@ -45,6 +46,8 @@ export function splitWhenText(w: SplitWhen): string {
 
 /** 箱の種類の名前 (始まり・当たり・外れ…。一覧・戻り先の札・まとめた札で同じ) */
 export const outName = (out: TreeBox["out"]): string => tr(OUT_LOOK[out].ja, OUT_LOOK[out].en);
+/** 手の窓の「結果の箱」の名前 (骨を未発現のまま次へは「未発現の冒涜が付いた」、スイッチ boneLater) */
+export const outNameOf = (h: Hand | null | undefined, out: TreeBox["out"]): string => (out === "any" && veilKeep(h) ? tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added") : outName(out));
 /** 箱の結果の名前 (同じ形でまとめた箱は「外れ・狙いが消えた」) */
 export const outsName = (b: { out: TreeBox["out"]; mergedOuts?: Array<TreeBox["out"]> }): string => [b.out, ...(b.mergedOuts ?? [])].map(outName).join(tr("・", " / "));
 
@@ -60,6 +63,8 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   const fixed = ph?.pick === "random";
   if (b.out === "hit" && b.aim) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")); return fixed ? tr(`${n}が固定された`, `${n} fractured`) : tr(`${n}が付いた`, `${n} added`); }
   if (fixed && b.out === "junk") return tr("外れ MOD が固定された", "A miss mod fractured");
+  // 骨を未発現のまま次へ (スイッチ boneLater)
+  if (b.out === "any" && b.parent && veilKeep(useTree().doc.value.boxes[b.parent]?.hand)) return tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added");
   return outsName(b);
 }
 /** 値段のキー (カレンシー・お告げ・骨・エッセンス・カタリスト) → 画面の言語の名前 (クラフト台の棚と同じ) */
@@ -72,7 +77,7 @@ export function handLabel(h: Hand): string {
     : "";
   // 消去の残したい MOD (10-27 オーナー): 全部消えてよい = 1 回ずつ箱を並べる、☑ があれば残す数
   const keep = h.keep ? (h.keep.length ? tr(` (${h.keep.length} MOD 残す)`, ` (keep ${h.keep.length})`) : tr(" (どれが消えてもよい)", " (any mod may go)")) : "";
-  const label = cat + [handName(h.currency), ...h.omens.map(handName)].join(" + ") + keep + (h.free ? tr(" (狙い無し)", " (no target)") : "") + (isCatalyst(h.currency) ? tr(" (品質を最大まで)", " (to max quality)") : "");
+  const label = cat + [handName(h.currency), ...h.omens.map(handName)].join(" + ") + keep + (h.free ? tr(" (狙い無し)", " (no target)") : "") + (veilKeep(h) ? tr(" (未発現のまま)", " (left unrevealed)") : "") + (isCatalyst(h.currency) ? tr(" (品質を最大まで)", " (to max quality)") : "");
   // 「スパム」の呼び名は出さない = 設定したカレンシーの名前のまま (10-27 昼オーナー「普通に設定したどおり出せばおｋ」、スイッチ noSpam。中は今まで通り当たるまで)
   if (!h.repeat || flag("noSpam")) return label;
   // 当たるまで = カオススパムオーブ (10-25 オーナー。前に保存した木の「カオスの当たるまで」も同じ手として読む)

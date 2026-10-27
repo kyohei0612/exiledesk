@@ -34,9 +34,12 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   // ☑ していない完成形の MOD が付いていても「外れ MOD」(10-27 夜オーナー、モンキー 2 回目 7。スイッチ junkByCheck)
   const missBox = flag("junkByCheck") && !!box?.id && !!box.out && box.out !== "start" && MISS_OUTS.includes(box.out);
   const held = missBox ? [...new Map(heldSets(doc, box!.id!).flat().map((k) => { const [modId, tier] = k.split("|"); return [modId!, { modId: modId!, tier: Number(tier) }] as const; })).values()] : [];
-  const aims = targetsOf(d, missBox ? held : flag("goalShape") ? [...aimsOf(doc), ...(doc.memoAims ?? [])] : aimsOf(doc)), bad = targetsOf(d, unwanted.map((u) => ({ modId: u, tier: 99 }))), o = aimOpts(d);
+  // 当たりの箱の札の MOD は、その箱では狙い (発現で選んだ置き石も。以降の箱では外れ MOD。スイッチ boneLater)
+  const ownAim = flag("boneLater") && box?.id && box.out === "hit" ? doc.boxes[box.id]?.aim : null;
+  const aims = targetsOf(d, [...(missBox ? held : flag("goalShape") ? [...aimsOf(doc), ...(doc.memoAims ?? [])] : aimsOf(doc)), ...(ownAim ? [ownAim] : [])]), bad = targetsOf(d, unwanted.map((u) => ({ modId: u, tier: 99 }))), o = aimOpts(d);
   for (const m of [...it.prefixes, ...it.suffixes]) {
-    if (m.fractured) continue;
+    // 未発現の枠は元の文 (未発現の冒涜 MOD) のまま (スイッチ boneLater)
+    if (m.fractured || (m.unrevealed && flag("boneLater"))) continue;
     if (any && isAimMod(m, anyT, o)) out.set(m.modId, { text: anyText, tone: "info", replace: true, title: tr(`どれか 1 つが付けば当たり (この見本は ${modText(m)})`, `Any one of these is a hit (this sample has ${modText(m)})`) });
     else if (isAimMod(m, bad, o)) out.set(m.modId, { text: tr("× 要らない", "× Unwanted"), tone: "bad" });
     else if (!isAimMod(m, aims, o)) out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`このツリーの狙いに当たらない MOD: ${modText(m)}`, `Not one of this tree's target mods: ${modText(m)}`) });

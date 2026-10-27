@@ -54,6 +54,11 @@ export interface Hand {
   fractureOf?: string;
   /** フラクチャーの手を ✦ の印の無い木で打った = どの MOD が固定されるかはエンジンの乱数のまま (当たり = 完成の狙いが固定された、外れ = ほかが固定された。10-27 夜オーナー、要望 8a159e29、スイッチ fracRandom) */
   pick?: "random";
+  /**
+   * 骨 (冒涜) の手の発現 (10-27 夜オーナー、スイッチ boneLater): keep = 発現させない (未発現のまま次へ、結果は「未発現の冒涜が付いた」)、
+   * pick = 発現させる (発現で出うる MOD から ☑ の物が出て選べたら当たり、ほかは外れ)。無い (前の版の木) = 前のまま同じ手で発現 (完成の狙いの候補を選ぶ)
+   */
+  veil?: "keep" | "pick";
 }
 export interface TreeBox {
   id: string;

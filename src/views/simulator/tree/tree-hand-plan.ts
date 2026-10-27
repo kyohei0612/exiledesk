@@ -15,13 +15,16 @@ import { boxSig, linkSameHit, linkSameShape, linkShapeHit, matchItem, sameHandRe
 import { looseOf, stripStops } from "../../../services/simulator/tree/tree-outcome";
 import { clearHand, drop, fractureMarks, healLost, kindOfHand, setBack, setHand, subtree, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
+import { revealAimsOf } from "./tree-reveal-aims";
+import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 
 /** 起こりうる結果の一覧 (tree-sample の possibleOutsOf)。null = 手の種類ごとの箱 */
 export type OnlyOut = ReadonlyArray<{ out: OutKind; aim: Aim | null }> | null;
 /** 棚で選んだ物 (持った物・掛けたお告げ・当たるまで・狙い無し・骨の反響・フラクチャーで ✦ にする狙い) */
-export interface HandPick { held: string; omens: readonly string[]; spam?: boolean; spamMax?: number | null; free?: boolean; echo?: boolean; /** 消去の残したい MOD ([] = 全部消えてよい、tree-model の Hand.keep) */ keep?: readonly Aim[] }
+export interface HandPick { held: string; omens: readonly string[]; spam?: boolean; spamMax?: number | null; free?: boolean; echo?: boolean; /** 消去の残したい MOD ([] = 全部消えてよい、tree-model の Hand.keep) */ keep?: readonly Aim[];
+  /** 骨の手の発現 (keep = 未発現のまま次へ、pick = 発現させる。tree-model の Hand.veil、スイッチ boneLater) */ veil?: "keep" | "pick" }
 
 /**
  * 当たりの MOD が決まっていない当たりの箱は、この箱のアイテムが作れない (当たりの形が引けず、見本が親のまま = 変成の後でも白のまま)。
@@ -63,11 +66,14 @@ export function handOf(p: HandPick): Hand {
   const used = omensFor(p.held, [...p.omens]);
   return {
     // 反響はお告げの並びで掛けた物 (used に入る) か、echo の指定。2 つ入れない (10-26 夜、並びの札と別の印が重なった)
-    currency: p.held, omens: isBone(p.held) && p.echo !== false && !used.includes(ECHO) ? [...used, ECHO] : used,
+    // 後から打つ発現の手も反響を既定で (骨と同じ。スイッチ boneLater)
+    // 未発現のまま次へ (veil keep) は発現しないので反響を既定で付けない
+    currency: p.held, omens: ((isBone(p.held) && p.veil !== "keep") || isRevealHand(p.held)) && p.echo !== false && !used.includes(ECHO) ? [...used, ECHO] : used,
     catalyst: null, quality: 0,
     repeat: p.spam && canSpam(p.held) ? { until: "hit", max: p.spamMax && p.spamMax > 0 ? Math.round(p.spamMax) : null } : null,
     ...(p.free && !p.spam && FREE_EFFECTS.includes(effectOf(p.held)) ? { free: true } : {}),
     ...(p.keep && effectOf(p.held) === "remove" ? { keep: p.keep.map((a) => ({ modId: a.modId, tier: a.tier })) } : {}),
+    ...(p.veil && flag("boneLater") && isBone(p.held) ? { veil: p.veil } : {}),
   };
 }
 export const kindOf = (h: Hand): HandKind => kindOfHand(h, effectOf(h.currency));
@@ -87,6 +93,9 @@ export function essenceAimsOf(data: PatchData, item: StageItem, h: Hand): Aim[] 
   return out;
 }
 export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, h: Hand, goals: readonly Aim[]): Aim[] {
+  // 骨を未発現のまま = 当たりは無し (結果は未発現の冒涜が付いた 1 つ)。発現で選ぶ手 = 発現で出うる MOD 全部 (置き石も。スイッチ boneLater)
+  if (veilKeep(h)) return [];
+  if (veilPick(h)) return revealAimsOf(data, doc, boxId, item, h);
   const kind = kindOf(h);
   // エッセンス = 付く MOD は決まっている。エンジンの結果で新しく付いた MOD を当たりの札に (10-22 オーナー「エッセンスの道」)
   if (kind === "essence") {
@@ -137,9 +146,9 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
  * 次に打つ手の窓の「当たりの箱にする MOD」の候補 = 付く MOD を選べない手 (FREE_EFFECTS) で付きうる完成の狙い (狙い無しでも繰り返しでもない形で hitAimsOf に聞く)。
  * 画面 (TreeHandShelf) と猿の口 (sim-monkey の hitChoices・add の opt.hitAims) が同じ物を呼ぶ
  */
-export function hitChoicesOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, p: Pick<HandPick, "held" | "omens" | "echo">, goals: readonly Aim[]): Aim[] {
+export function hitChoicesOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, p: Pick<HandPick, "held" | "omens" | "echo" | "veil">, goals: readonly Aim[]): Aim[] {
   if (!FREE_EFFECTS.includes(effectOf(p.held))) return [];
-  return hitAimsOf(data, doc, boxId, item, handOf({ held: p.held, omens: p.omens, echo: p.echo }), goals);
+  return hitAimsOf(data, doc, boxId, item, handOf({ held: p.held, omens: p.omens, echo: p.echo, veil: p.veil }), goals);
 }
 /**
  * チェックした狙い (modId) から、手を決める時に渡す当たりの箱と狙い無しを出す (画面と同じ決め方): 付く MOD を選べない手で 1 つ以上チェック = その狙いの当たりの箱、
@@ -270,7 +279,7 @@ export function planPick(data: PatchData, doc: TreeDoc, id: string, it: StageIte
   const afterQ = afterQualityOf(doc, id), autoCat = autoCatOf(data, doc, it);
   const needPre = omensAllowedFor(key).includes(CATALYSING) && !afterQ;
   const preFill = preFillOf(data, it, needPre, autoCat);
-  const pick = opt.hitAims ? pickedHits(hitChoicesOf(data, doc, id, it, { held: key, omens, echo: opt.echo }, goals), opt.hitAims, key, !!opt.spam) : null;
+  const pick = opt.hitAims ? pickedHits(hitChoicesOf(data, doc, id, it, { held: key, omens, echo: opt.echo, veil: opt.veil }, goals), opt.hitAims, key, !!opt.spam) : null;
   const hand = handOf({ held: key, omens, ...opt, ...(pick ? { free: pick.free } : {}) }), kind = kindOf(hand);
   const aims = pick && !pick.free ? pick.aims : hitAimsOf(data, doc, id, it, hand, goals);
   const preCat = hand.omens.includes(CATALYSING) && !afterQ ? autoCat : null;
