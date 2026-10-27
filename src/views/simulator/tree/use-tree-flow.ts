@@ -13,6 +13,7 @@ import { useVueFlow } from "@vue-flow/core";
 import { BOX_H, BOX_W, boundsOf, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { bandsOf } from "../../../services/simulator/tree/tree-layout";
 import { pageZoom } from "../../../utils/zoom";
+import { flag } from "../../../web/release-flags";
 
 export const FLOW_ID = "sim-tree";
 /**
@@ -146,7 +147,8 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   let kept: { x: number; y: number; zoom: number; key: string } | null = null;
   /** 木の中身の目印 (ベースと箱の数。変わっていたら前の寄りは別の木の物) */
   const docKey = (): string => `${doc.value.base}|${Object.keys(doc.value.boxes).length}`;
-  const keepView = (): void => { const v = f.getViewport(); kept = { x: v.x, y: v.y, zoom: v.zoom, key: docKey() }; };
+  // 木の枠が隠れて幅 0 の間の寄りは覚えない (開いた時の寄せが効いていない寄りを、戻った時にそのまま戻してしまう。スイッチ viewFromZero)
+  const keepView = (): void => { if (flag("viewFromZero") && !f.dimensions.value.width) { kept = null; return; } const v = f.getViewport(); kept = { x: v.x, y: v.y, zoom: v.zoom, key: docKey() }; };
   /**
    * 覚えた寄りへ戻す。覚えていない・木が変わった (新しいツリーでベースを選んだ等) 時は開いた時の寄り
    * (前は新しい木でも開く前の寄り (0, 0) へ戻し、スタートの箱が左上の完成形の窓の下に入った、10-26 夜オーナー「めっちゃかぶるやん」)
@@ -228,6 +230,9 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   f.onPaneReady(() => { void openView(); });
   // 右の欄を開いた時など、枠の幅が変わっても見ている真ん中は動かさない (Vue Flow は左上を軸にするので、何もしなければ左上が残る)
   watch(() => f.dimensions.value.width, (w, old) => {
+    // 幅 0 (木の枠が隠れていた) から幅が出た = 開いた時の寄せをやり直す。隠れたまま組まれると寄せが効かず、スタートが枠の左上に出た
+    // (10-27 夜オーナー r/C6YHoWk2、本番 v0.1.634。エミュの「シミュレーターへ」→ 完成形のページ → 決めた で同じ形を作れた。スイッチ viewFromZero)
+    if (flag("viewFromZero") && !old && w) { void nextTick(() => openView()); return; }
     if (!old || !w) return;
     const vp = f.viewport.value;
     void f.setViewport({ x: vp.x + (w - old) / 2, y: vp.y, zoom: vp.zoom });
