@@ -21,6 +21,8 @@ const { checking, progress } = check;
  * (10-26 組みかけの指輪で 4 件中 4 件がこれで、質問と同じ事を赤で繰り返していた)。分かれ目の行の行き先が無いのは質問に無いので出す
  */
 const issues = computed(() => (check.issues.value ?? []).filter((x) => !(x.kind === "open" && !t.doc.value.boxes[x.boxId]?.split) && !(x.kind === "noDone" && x.boxId === "start" && q.questions.value.length > 0)));
+/** 隠している「完成の箱が無い」がある (未定の質問が残っている間)。緑の「止まる所なし」だけだと完成の箱が無いのに合格に見えた (10-27 夜モンキー 2 回目 8、スイッチ phoneTestDone) */
+const noDoneYet = computed(() => flag("phoneTestDone") && (check.issues.value ?? []).some((x) => x.kind === "noDone"));
 const MAP = flag("phoneMap");
 /** テストで回した後 (木の形がその時のまま) だけ結果を出す */
 const tested = computed(() => testedKey.value === routeKeyOf(t.doc.value));
@@ -41,7 +43,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
 <template>
   <!-- テストで回す (PC の帯と同じ言い方)。押す前は足りない所を出さない -->
   <button v-if="!tested" type="button" data-phone-test class="flex min-h-10 w-full items-center justify-center gap-2 rounded-md bg-white/[0.06] px-3 text-[13px] text-[#d8ccb4] hover:bg-white/10" @click="test">{{ tr("テストで回す", "Test run") }}</button>
-  <p v-else-if="!checking && !issues.length" data-phone-test-ok class="flex min-h-10 items-center justify-center gap-2 text-[13px] font-bold text-emerald-300">{{ q.questions.value.length ? tr(`✓ 止まる所なし · 未定 ${q.questions.value.length}`, `✓ No dead ends · ${q.questions.value.length} open`) : tr("✓ 合格", "✓ Passed") }} <button type="button" class="min-h-10 px-1 text-[12px] font-normal text-[#9a8a70] underline decoration-white/20" @click="test">{{ tr("もう一度テスト", "Test again") }}</button></p>
+  <p v-else-if="!checking && !issues.length" data-phone-test-ok class="flex min-h-10 flex-wrap items-center justify-center gap-x-2 text-center text-[13px] font-bold" :class="noDoneYet ? 'text-amber-200' : 'text-emerald-300'">{{ q.questions.value.length ? tr(`✓ 止まる所なし · 未定 ${q.questions.value.length}${noDoneYet ? " · 完成の箱がまだ無い" : ""}`, `✓ No dead ends · ${q.questions.value.length} open${noDoneYet ? " · no done box yet" : ""}`) : tr("✓ 合格", "✓ Passed") }} <button type="button" class="min-h-10 px-1 text-[12px] font-normal text-[#9a8a70] underline decoration-white/20" @click="test">{{ tr("もう一度テスト", "Test again") }}</button></p>
   <button v-else type="button" data-phone-issues :disabled="checking && !issues.length" class="flex min-h-10 w-full min-w-0 items-center gap-2 rounded-xl border border-rose-400/40 bg-[#1d0f10] px-3 py-1.5 text-left text-[13px] font-bold text-rose-200" :aria-expanded="listOpen" @click="listOpen = true">
     <span class="min-w-0 flex-1 break-words text-center">{{ checking ? tr(`テスト中…${progress ? ` ${progress.n}/${progress.of}` : ""}`, `Testing…${progress ? ` ${progress.n}/${progress.of}` : ""}`) : tr(`足りない所 ${issues.length} 件`, `${issues.length} missing`) }}</span>
     <span v-if="issues.length" class="shrink-0 text-[12px] font-normal text-rose-100/80">{{ tr("見る ▾", "View ▾") }}</span>
