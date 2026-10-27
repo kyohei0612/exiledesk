@@ -20,12 +20,16 @@
  *   __simMonkey.setDone(id, on = true)               完成の印 (当たり・分かれ目の行の、次の手も戻りも無い箱だけ)
  *   await __simMonkey.check()                          テストラン (ルート精査) → { passed, done: [完成の箱], issues: [{ boxId, kind, text }] }
  *   await __simMonkey.result(n = 100, seed = 1)        画面の「100 人回す」と同じ値段 (相場、神建て) と始めの値段で回す → { finished, perItem, median, … }
+ * 見張りの「つながった箱どうしは同じ形」(10-28 最終チェック長の頼み。中身は自動のつなぎと同じ tree-box-shape):
+ *   __simMonkey.shapeOf(id)                            箱の形 { held: [狙いの組…], body: 体の鍵 (外れの側・種類・数、✦ の側、レアリティ。見本が作れない箱は null、見本ごとに外れの種類が違う箱は "mixed:<id>") } (箱が無ければ null)
+ *   __simMonkey.sameShape(from, to)                    from の人が to へ行けるか (狙いの組が全部 to にある + 体が同じ。始まりへは冒涜を持たなければ true、"match"・"restart" は true)
  */
 import { baseCatalog, omenBlock, omensAllowedFor, useReason, type StageItem } from "../../../services/craft-stage/engine";
 import { CATALYSING } from "../../../services/simulator/tree/tree-hands";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { runTree } from "../../../services/simulator/tree/tree-run";
 import { checkTreeAsync } from "../../../services/simulator/tree/tree-check";
+import { boxShape, sameShape } from "../../../services/simulator/tree/tree-box-shape";
 import { setAim, setBack, setDone } from "../../../services/simulator/tree/tree-model";
 import { RUN_N } from "./use-tree-run";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
@@ -191,6 +195,8 @@ export function installSimMonkey(): () => void {
         // 照らしの台本が同じ打ち止めで辿れるよう、使った手の神建ての値段と打ち止め (runTree の既定、画面と同じ)
         prices: Object.fromEntries(memo), capDiv: 2000, capSteps: 20000 };
     },
+    shapeOf(id: string) { const d = s.data.value; return d ? boxShape(d, t.doc.value, id) : null; },
+    sameShape(from: string, to: string) { const d = s.data.value; return d ? sameShape(d, t.doc.value, from, to) : null; },
     /** 今の木。startRarity = スタートの本当のレアリティ (start.rarity は保存の形の値で、印も＋の MOD も無い時の白とずれる事がある) */
     dump(): unknown { return { ...JSON.parse(JSON.stringify(t.doc.value)), startRarity: sample("start")?.item.rarity ?? null }; },
   };

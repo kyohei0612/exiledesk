@@ -18,7 +18,8 @@ import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeDoc,
 import { aimOpts, aimsOf, goalsHeld, handAims, handProblem, heldHitOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
 import { boxOutcomeOf, stripBackOf, stripStop, stripTargetsOf } from "./tree-outcome";
 import { runTreeSteps } from "./tree-run";
-import { boxSig, heldSets, sigKinds, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapeFits, shapesOf, splitTo } from "./tree-shape";
+import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapeFits, shapesOf, splitTo } from "./tree-shape";
+import { bodyKinds, bodyMemo, sameBody } from "./tree-box-shape";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
@@ -103,14 +104,15 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
   // 外れの種類 (普通 / エッセンスのクラフト MOD / 冒涜) が戻り先の箱の見本と違う戻り (10-27 夕オーナー「冒涜で付けた外れ MOD とエッセンスで付けた外れ MOD」は形の違い。スイッチ goalShape)。
   // 前に組んだ木の自動の戻りも付け替えずにここで知らせる。始まりへの戻り・当たりどうしの統合・全部消えてよい消去の自動の戻り (戻り先は打った結果の形で選んでいる) は見ない
   if (flag("goalShape")) {
-    const sigs = new Map<string, string | null>(), sigOf = (id: string): string | null => { if (!sigs.has(id)) sigs.set(id, boxSig(data, doc, id)); return sigs.get(id)!; };
+    const sigOf = bodyMemo(data, doc);
     for (const b of boxes) {
       const to = b.back, tb = to ? doc.boxes[to] : undefined, p = b.parent ? doc.boxes[b.parent] : undefined;
       // 当たりどうしの統合も比べる (置き石の冒涜の外れを持つ当たりが、外れの無い当たりへ統合されていた。10-28 オーナー「精査で出してアミュ B のつなぎも直して」、スイッチ boneLater)
       if (!to || !tb || to === "start" || (b.out === "hit" && tb.out === "hit" && !flag("boneLater")) || out.some((x) => x.boxId === b.id && x.kind === "shape")) continue;
       if (b.autoBack && p?.hand && effectOf(p.hand.currency) === "remove" && p.hand.keep && !p.hand.keep.length) continue;
+      // スイッチ boxShape: 自動のつなぎと同じ比べ (tree-box-shape の sameBody = 外れの側・種類・数、✦ の側、レアリティ)。閉じている間は外れの種類だけ
       const a = sigOf(b.id), z = sigOf(to);
-      if (a !== null && z !== null && sigKinds(a) !== sigKinds(z)) add(b.id, "shape", tr("戻り先の箱と外れ MOD の種類が違う (普通 / エッセンスのクラフト MOD / 冒涜の外れ MOD のどれがあるかが違う人が入る)。直し方: 戻り先を外れの種類も同じ箱にする (↩ で選び直す) か、外れを消す手を挟む", "The return target has different kinds of miss mods (which of normal / essence crafted / desecrated misses it has differs). Fix: return to a box with the same kinds of misses (pick again with ↩), or add a step that removes the misses"));
+      if (flag("boxShape") ? !sameBody(sigOf, b.id, to) : a !== null && z !== null && bodyKinds(a) !== bodyKinds(z)) add(b.id, "shape", tr("戻り先の箱と外れ MOD の種類が違う (普通 / エッセンスのクラフト MOD / 冒涜の外れ MOD のどれがあるかが違う人が入る)。直し方: 戻り先を外れの種類も同じ箱にする (↩ で選び直す) か、外れを消す手を挟む", "The return target has different kinds of miss mods (which of normal / essence crafted / desecrated misses it has differs). Fix: return to a box with the same kinds of misses (pick again with ↩), or add a step that removes the misses"));
     }
   }
 

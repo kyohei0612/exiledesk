@@ -20,6 +20,7 @@ import { flag } from "../../../web/release-flags";
  */
 export const infiniteAim = (key: string | undefined): boolean => !!key && flag("goalShape") && isInfiniteEssence(key);
 import { heldSets } from "./tree-shape";
+import { likeOf } from "./tree-box-shape";
 import { isRevealHand, revealedOf, revealHitOf, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, fracFreeHit, fracFreeOuts, junkKeyOf, newlyFractured } from "./tree-frac-pick";
 
@@ -165,10 +166,8 @@ let stopBusy = false;
  */
 /** rarity = 止まる所をそのレアリティの箱だけに (MOD 0 まで消えたレアを白の始まりへ戻さない。ゲームでは MOD 0 のレアに変成は打てない、10-28 オーナー、スイッチ stripRarity) */
 export function stripStops(data: PatchData, doc: TreeDoc, self: string, like?: StageItem): Map<number, string> {
-  // 比べる形: レアリティ (スイッチ stripRarity) と ✦ の形 (どの狙いに ✦、外れの ✦ の数。✦ の違う箱へ戻った、10-28 モンキー 3、スイッチ boneLater)
-  const goals = new Set((doc.memoAims ?? []).map((a) => a.modId));
-  const frKey = (it: StageItem): string => { const fr = [...it.prefixes, ...it.suffixes].filter((m) => m.fractured); return [...fr.filter((m) => goals.has(m.modId)).map((m) => m.modId).sort(), fr.filter((m) => !goals.has(m.modId)).length].join(","); };
-  const likeKey = (it: StageItem): string => `${flag("stripRarity") ? it.rarity : ""}|${flag("boneLater") ? frKey(it) : ""}`;
+  // 比べる形: 箱の体のレアリティと ✦ の側 (tree-box-shape の likeOf。✦ の違う箱へ戻った、10-28 モンキー 3、スイッチ boxShape・stripRarity)。外れの数は下の looseOf で段ごと
+  const likeKey = (it: StageItem): string => likeOf(data, doc, it);
   const rarity = like ? likeKey(like) : undefined;
   // 覚えの鍵 = 木の箱・手・戻り (組み替えたら引き直す。回す 1 手ごとに呼ぶので文字は作らず数で)
   let h = doc.seq;

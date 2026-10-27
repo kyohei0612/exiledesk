@@ -11,7 +11,8 @@ import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
-import { boxSig, junkSig, linkSameHit, linkSameShape, linkShapeHit, matchItem, sameHandReturn } from "../../../services/simulator/tree/tree-shape";
+import { linkSameHit, linkSameShape, linkShapeHit, matchItem, sameHandReturn } from "../../../services/simulator/tree/tree-shape";
+import { bodyMemo, likeOf, type BodyOf } from "../../../services/simulator/tree/tree-box-shape";
 import { looseOf, stripStops } from "../../../services/simulator/tree/tree-outcome";
 import { clearHand, drop, fractureMarks, healLost, kindOfHand, setBack, setHand, subtree, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
@@ -190,10 +191,10 @@ export function problemOf(data: PatchData, item: StageItem, h: Hand, hitAims: Ai
  * 手を決めた時の組み替え (SimTreePage の pickHand と猿の口で同じ)。pre = 前に足す品質だけ上げる手のカタリスト (触媒のお告げ、10-22 オーナーの案 A)。
  * 完成の箱に手を付けたら同じ形の完成の箱もここへ (joinSameShape)。前に作ってまだ行き先も手も無い箱も、今手を付けた箱と同じ形ならつなぐ。返すのは手を付けた箱 (前のカタリストがあればその次)
  */
-/** 当たりのまとめ・形の合う箱へで比べる箱の外れの種類と数 (boxSig、置き石も冒涜の外れ MOD。手で「まとめる」の候補も同じ。スイッチ boneLater) */
-export function hitLoose(d: TreeDoc): ((id: string) => string | null) | undefined {
+/** 当たりのまとめ・形の合う箱へで比べる箱の体 (tree-box-shape の bodyMemo、置き石も冒涜の外れ MOD。手で「まとめる」の候補も同じ。スイッチ boxShape) */
+export function hitLoose(d: TreeDoc): BodyOf | undefined {
   const data = craftStage.data.value;
-  return flag("boneLater") && data ? (x) => boxSig(data, d, x) : undefined;
+  return flag("boxShape") && data ? bodyMemo(data, d) : undefined;
 }
 /** 同じ当たりの箱にまとめる鍵 = 狙いの側 (エンジンの sideOfMod。setHand の groupOf、10-26 オーナーの決め「同じ側の狙いは当たりの箱 1 つ」) */
 export function sideGroup(): ((a: Aim) => string) | undefined {
@@ -207,23 +208,9 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   // 外れに手がもう付いていれば下を消してから (前に同じ手で段を足して伸びた木)。戻ったかは呼ぶ側が箱の back で見る
   // 触媒 (pre) 付きの手も同じ判定 (PC・スマホで 1 つ、10-27 夕ブラックの決め B4。前は PC が pre のある時は見ず、スマホは pre を見ずに戻っていた)
   const data = craftStage.data.value;
-  // 箱の見本の外れの形 = 側ごとに、完成の狙いに無い MOD を種類 (普通 / 冒涜 (発現・未発現) / エッセンスのクラフト MOD) ごとに数えた物。
-  // 違う箱へは戻らない・つながない (10-27 夕オーナー「これは冒涜で付けた外れ MOD、これはエッセンスで付けた外れ MOD」= 次に打てる手が変わる違いは形の違い。スイッチ goalShape)
-  // 見本ごとに外れの種類が違う箱 (未発現の箱にカオス: 未発現が消えた人と残った人が同じ外れの箱に入る) は、どの形の箱へもつながない
-  // (片方の形の箱へつなぐと、もう片方の人がその箱の手を打てない。10-28 冒涜まわりの確かめ、スイッチ boneLater)
-  const sigMemo = new Map<string, string | null>();
-  const loose = flag("goalShape") && data ? (x: string): string | null => {
-    if (sigMemo.has(x)) return sigMemo.get(x)!;
-    let s = boxSig(data, d, x);
-    if (s !== null && flag("boneLater") && x !== "start") {
-      // 比べるのは外れの種類 (普通 / エッセンス / 冒涜) の有無だけ (側は見本ごとに違うのが普通 = 王者の外れはプレにもサフィにも付く)
-      const kindsOf = (sig: string): string => { const [p, q] = sig.split("|").map((x2) => x2.split(".").map(Number)); return [0, 1, 2, 3].map((i) => (((p![i] ?? 0) + (q![i] ?? 0)) > 0 ? 1 : 0)).join(""); };
-      const kinds = new Set([1, 2, 3, 4].flatMap((k) => { const m = sampleOf(data, d, x, k); return m.note === "none" || m.note?.startsWith("cant:") ? [] : [kindsOf(junkSig(data, d, m.item))]; }));
-      if (kinds.size > 1) s = `mixed:${x}`;
-    }
-    sigMemo.set(x, s);
-    return s;
-  } : undefined;
+  // 箱の体 (tree-box-shape: 外れの側・種類・数、✦ の側、レアリティ) の違う箱へは戻らない・つながない (10-27 夕オーナー「これは冒涜で付けた外れ MOD、これはエッセンスで付けた外れ MOD」
+  // = 次に打てる手が変わる違いは形の違い。スイッチ goalShape)。見本ごとに外れの種類が違う箱はどの箱へもつながない (boxBody の mixed)
+  const loose = flag("goalShape") && data ? bodyMemo(data, d) : undefined;
   const to = flag("goalShape") ? sameHandReturn(d, id, h, loose) : null;
   if (to) { if (d.boxes[id]?.hand) clearHand(d, id); setBack(d, id, to); return id; }
   const had = new Set(Object.keys(d.boxes));
@@ -234,9 +221,9 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   joinSameShape(d, id);
   linkSameShape(d, Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id), loose);
   // 新しい当たりの箱が別の道の同じ状態の箱と同じなら、先にあった箱へつなぐ (10-26 夜オーナー「形は一緒ならこのツリー組んだ瞬間まとまってくれるよね」)
-  linkSameHit(d, Object.values(d.boxes).filter((b) => !had.has(b.id)).map((b) => b.id), flag("boneLater") ? loose : undefined);
+  linkSameHit(d, Object.values(d.boxes).filter((b) => !had.has(b.id)).map((b) => b.id), flag("boxShape") ? loose : undefined);
   // まとめられない当たりの箱 (来た道で狙いの組が何通りかある) は形の合う箱へ (10-27 オーナーの決め (a))。前からある手も戻りも無い箱も
-  linkShapeHit(d, Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id), flag("boneLater") ? loose : undefined);
+  linkShapeHit(d, Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id), flag("boxShape") ? loose : undefined);
   // 自動でつないだ戻りで狙いを持って着く道ができた箱に「狙いが消えた」を足す (tree-model の healLost)
   healLost(d);
   return at;
@@ -269,8 +256,6 @@ function stripChain(d: TreeDoc, id: string, h: Hand): void {
  * その箱へ ↩ (狙いを持つ箱も。10-27 夕モンキー 2: キャストの外れ (スピリット + ✦ + 外れ) に右側の消去で、1 回目でスピリットの箱と同じ形になったのに
  * 消去がもう 1 回並んだ。前の stripStops は狙いを持たない箱だけを止まる所にしていた)。見つからなければ false (前の作り)
  */
-/** 外れの形の鍵の ✦ の所 (どの狙いに ✦、外れの ✦ の数。✦ の違う箱へ消去の直線が戻った、10-28 モンキー 3) */
-const frPart = (sig: string | null): string | undefined => sig?.split("|")[2];
 function stripToShape(data: PatchData, d: TreeDoc, id: string, h: Hand): boolean {
   let it = sampleOf(data, d, id, 1).item;
   const n = looseOf(it), below = new Set(subtree(d, id));
@@ -279,8 +264,8 @@ function stripToShape(data: PatchData, d: TreeDoc, id: string, h: Hand): boolean
     if (!outs.length) return false;
     const tos = new Set(outs.map((x) => matchItem(data, d, x)));
     const to = tos.size === 1 ? [...tos][0] : null;
-    // 戻る箱は同じレアリティ (MOD 0 まで消えたレアを白の箱へ戻さない、スイッチ stripRarity)
-    if (to && to !== "start" && d.boxes[to]?.hand && !below.has(to) && to !== id && (!flag("stripRarity") || sampleOf(data, d, to, 1).item.rarity === outs[0]!.rarity) && (!flag("boneLater") || frPart(junkSig(data, d, outs[0]!)) === frPart(boxSig(data, d, to)))) {
+    // 戻る箱は同じレアリティ・✦ の側 (MOD 0 まで消えたレアを白の箱へ戻さない、✦ の違う箱へ戻らない。tree-box-shape の likeOf、スイッチ stripRarity・boxShape)
+    if (to && to !== "start" && d.boxes[to]?.hand && !below.has(to) && to !== id && likeOf(data, d, sampleOf(data, d, to, 1).item) === likeOf(data, d, outs[0]!)) {
       let at = id;
       for (let k = 0; k < i; k++) { const c = d.boxes[at]?.outs[0]; if (!c) return false; setHand(d, c, h, "strip"); at = c; }
       const last = d.boxes[d.boxes[at]?.outs[0] ?? ""];
