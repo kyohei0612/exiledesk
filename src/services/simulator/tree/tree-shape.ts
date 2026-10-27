@@ -293,7 +293,14 @@ export function matchTargets(doc: TreeDoc, id: string): { key: string; to: strin
  * つながない・戻らない (10-27 夕モンキー 8: 外れ 2 つの箱が外れ 1 つの箱へ自動で戻り、回すたびにプレの外れが増えて 30 人中 29 人が満杯で止まった)
  */
 export type LooseOf = (id: string) => number | string | null;
-const sameLoose = (loose: LooseOf | undefined, a: string, b: string): boolean => { if (!loose || b === "start") return true; const x = loose(a), y = loose(b); return x === null || y === null || x === y; };
+/** 冒涜 (未発現・発現済み) の外れを持つ形か (外れの種類の鍵の 3 つ目の数) */
+const hasDesecrated = (sig: number | string | null): boolean => typeof sig === "string" && (sig.startsWith("mixed") || sig.split("|").some((s) => Number(s.split(".")[2] ?? 0) > 0)); // mixed = 見本ごとに外れの種類が違う箱 (tree-hand-plan)
+const sameLoose = (loose: LooseOf | undefined, a: string, b: string): boolean => {
+  if (!loose) return true;
+  // 始まりへは形を比べない (前から)。ただ冒涜を持つ箱は始まりへつながない (始まりに冒涜は無く、戻っても骨が打てない。10-28 冒涜まわりの確かめ、スイッチ boneLater)
+  if (b === "start") return !(flag("boneLater") && hasDesecrated(loose(a)));
+  const x = loose(a), y = loose(b); return x === null || y === null || x === y;
+};
 export function linkSameShape(doc: TreeDoc, ids: readonly string[], loose?: LooseOf): void {
   for (const id of ids) {
     const c = doc.boxes[id];

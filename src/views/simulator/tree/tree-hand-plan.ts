@@ -11,7 +11,7 @@ import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
-import { boxSig, linkSameHit, linkSameShape, linkShapeHit, matchItem, sameHandReturn } from "../../../services/simulator/tree/tree-shape";
+import { boxSig, junkSig, linkSameHit, linkSameShape, linkShapeHit, matchItem, sameHandReturn } from "../../../services/simulator/tree/tree-shape";
 import { looseOf, stripStops } from "../../../services/simulator/tree/tree-outcome";
 import { clearHand, drop, fractureMarks, healLost, kindOfHand, setBack, setHand, subtree, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
@@ -209,7 +209,21 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   const data = craftStage.data.value;
   // 箱の見本の外れの形 = 側ごとに、完成の狙いに無い MOD を種類 (普通 / 冒涜 (発現・未発現) / エッセンスのクラフト MOD) ごとに数えた物。
   // 違う箱へは戻らない・つながない (10-27 夕オーナー「これは冒涜で付けた外れ MOD、これはエッセンスで付けた外れ MOD」= 次に打てる手が変わる違いは形の違い。スイッチ goalShape)
-  const loose = flag("goalShape") && data ? (x: string): string | null => boxSig(data, d, x) : undefined;
+  // 見本ごとに外れの種類が違う箱 (未発現の箱にカオス: 未発現が消えた人と残った人が同じ外れの箱に入る) は、どの形の箱へもつながない
+  // (片方の形の箱へつなぐと、もう片方の人がその箱の手を打てない。10-28 冒涜まわりの確かめ、スイッチ boneLater)
+  const sigMemo = new Map<string, string | null>();
+  const loose = flag("goalShape") && data ? (x: string): string | null => {
+    if (sigMemo.has(x)) return sigMemo.get(x)!;
+    let s = boxSig(data, d, x);
+    if (s !== null && flag("boneLater") && x !== "start") {
+      // 比べるのは外れの種類 (普通 / エッセンス / 冒涜) の有無だけ (側は見本ごとに違うのが普通 = 王者の外れはプレにもサフィにも付く)
+      const kindsOf = (sig: string): string => { const [p, q] = sig.split("|").map((x2) => x2.split(".").map(Number)); return [0, 1, 2].map((i) => ((p![i]! + q![i]!) > 0 ? 1 : 0)).join(""); };
+      const kinds = new Set([1, 2, 3, 4].flatMap((k) => { const m = sampleOf(data, d, x, k); return m.note === "none" || m.note?.startsWith("cant:") ? [] : [kindsOf(junkSig(data, d, m.item))]; }));
+      if (kinds.size > 1) s = `mixed:${x}`;
+    }
+    sigMemo.set(x, s);
+    return s;
+  } : undefined;
   const to = flag("goalShape") ? sameHandReturn(d, id, h, loose) : null;
   if (to) { if (d.boxes[id]?.hand) clearHand(d, id); setBack(d, id, to); return id; }
   const had = new Set(Object.keys(d.boxes));

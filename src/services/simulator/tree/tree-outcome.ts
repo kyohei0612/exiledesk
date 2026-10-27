@@ -93,7 +93,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   const found = new Map<string, { out: OutKind; aim: Aim | null }>();
   const hold = aimsMayHold(doc, boxId);
   /** 未発現が付く手 (冒涜の骨): 当たり / 外れは発現で選ぶ候補で分かれるので見ない。消える側 (狙いが消えた) だけ発現の前の形で見る */
-  let veiled = false, veiledLost = false;
+  let veiled = false, veiledLost = false, veiledKeep = false;
   /** 見本の中に、まだ付いていない狙いがあるか (外れだけの手でも当たりの箱を作って MOD を選ばせる時の見分け) */
   let unheld = false;
   // 見本 = この箱に着いた人のアイテム (着いた人が SINGLE_SEEDS より少なければ同じ物が回ってくるので 1 回だけ見る)。
@@ -118,6 +118,8 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
       if (outs.some((o) => unrevealedOf(o.item)) && !(flag("boneLater") && unrevealedOf(it))) {
         veiled = true;
         if (outs.some((o) => aimDiff(data, it, o.item, aims, { sameText: true }).lost.length)) veiledLost = true;
+        // 狙いを消さない結果があるか (満杯の側で全部が狙いなら、骨は必ず狙いを消す = 当たり・外れ・打った後の箱は起こらない。10-28 冒涜まわりの確かめ)
+        if (outs.some((o) => !aimDiff(data, it, o.item, aims, { sameText: true }).lost.length)) veiledKeep = true;
         continue;
       }
       for (const o of outs) {
@@ -131,6 +133,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   }
   // 冒涜: 当たり (この手の札) と外れはいつも、狙いが消えたは消える側で狙いを失いうる時だけ (10-25 シミュ 28 の洗い出し: 満杯の側に死霊術で打つと 13〜14% 狙いが消えるのに箱が無く、回すと止まった)
   // 骨を未発現のまま: 未発現の冒涜が付いた (打った後) 1 つ + 狙いが消えうる時は狙いが消えた
+  if (veiled && flag("boneLater") && !veiledKeep) return [{ out: "lost", aim: null }];
   if (veiled && veilKeep(h)) return [{ out: "any", aim: null }, ...(veiledLost ? [{ out: "lost" as OutKind, aim: null }] : [])];
   if (veiled) return [...extra.map((a) => ({ out: "hit" as OutKind, aim: a })), { out: "junk", aim: null }, ...(veiledLost ? [{ out: "lost" as OutKind, aim: null }] : [])];
   const list = [...found.values()];
