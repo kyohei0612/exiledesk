@@ -126,7 +126,11 @@ const sit = computed((): [string, string] => {
   return [q.boxTitle(props.boxId), ""];
 });
 /** 再度挑戦 (打つ前の箱・始まりの手の結果なら始まりへ戻る) にした時の、打つ前の手 (「○○を選択」に出す) */
-const retryHand = computed(() => (backKind.value === "retry" || (backKind.value === "start" && parent.value === "start") ? (parent.value ? t.doc.value.boxes[parent.value]?.hand ?? null : null) : null));
+const retryHand = computed(() => {
+  if (backKind.value === "retry" || (backKind.value === "start" && parent.value === "start")) return parent.value ? t.doc.value.boxes[parent.value]?.hand ?? null : null;
+  // 同じ形の別の箱へ戻る (その箱と同じ手を選んだ、PhoneTreePage の sameShapeBox) も、その箱の手で「○○を選択」(10-27 オーナー r/okPcmPyY)
+  return backKind.value === "other" && backTo.value && (isMiss(box.value) || box.value?.out === "any") ? t.doc.value.boxes[backTo.value]?.hand ?? null : null;
+});
 const backKind = computed(() => (state.value !== "back" ? null : box.value?.back === "start" ? "start" : backTo.value === parent.value ? "retry" : "other"));
 const route = computed(() => routeText(t.doc.value, props.boxId, q.boxTitle));
 const run = computed(() => runText(phoneRun.value, props.boxId));
