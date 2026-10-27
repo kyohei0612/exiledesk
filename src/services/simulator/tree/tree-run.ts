@@ -8,7 +8,8 @@
 import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { effectOf } from "./tree-hands";
-import { aimOpts, aimsOf, boxOutcomeOf, fractureChoices, goalsHeld, handAims, heldHitOf, outcomeOf, playHand, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
+import { aimOpts, aimsOf, fractureChoices, goalsHeld, handAims, heldHitOf, outcomeOf, playHand, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
+import { boxOutcomeOf } from "./tree-outcome";
 import { heldSets, MATCH, matchBox, outBoxOf, RESTART, settle, shapesOf, splitTo, type Shape, type SplitBox } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";

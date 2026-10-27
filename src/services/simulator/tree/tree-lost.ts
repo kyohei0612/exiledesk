@@ -5,7 +5,7 @@
  * 数え方は tree-run の heldSets と同じ: 道の当たりの箱で 1 つ増え、狙いが消えた箱を通ると 1 つ減る (エッセンスの消えたは付いた MOD が残る)
  */
 import { effectOf } from "./tree-hands";
-import { boxAims, type TreeDoc } from "./tree-model";
+import { boxAims, keepCut, type TreeDoc } from "./tree-model";
 
 const keyOf = (a: { modId: string; tier: number }): string => `${a.modId}/${a.tier}`;
 /** 始めのアイテムに付いている完成の狙い (どの道でも持って着く。tree-sample の startGoalAims と同じ、循環を避けて木の形から直に読む) */
@@ -22,6 +22,9 @@ function heldOnPath(d: TreeDoc, id: string): number {
   let n = seen.size;
   for (const x of path) {
     const c = d.boxes[x];
+    // 残したい MOD を決めた消去の後は、その MOD だけ持っている (ほかは外れ MOD、10-27)
+    const keep = c ? keepCut(d, c) : null;
+    if (keep) { seen.clear(); for (const a of keep) seen.add(keyOf(a)); n = c!.out === "lost" ? Math.max(0, keep.length - 1) : keep.length; continue; }
     // フラクチャーの手の当たりは ✦ (消えない) なので数えない
     const fr = c?.parent ? d.boxes[c.parent]?.hand : null;
     if (c?.out === "hit" && c.aim && !seen.has(keyOf(c.aim)) && !(fr && effectOf(fr.currency) === "fracture")) { seen.add(keyOf(c.aim)); n++; }
@@ -45,14 +48,17 @@ export function mayHoldAim(d: TreeDoc, id: string): boolean {
 /** この箱に持って着きうる狙い (自分の道の当たりの箱の札 = 箱の形。戻ってくる箱の道は見ない、mayHoldAim と同じ。✦ のフラクチャーの当たりは消えないので入れない)。起こりうる結果の箱 (tree-sample の possibleOutsOf) が見本に足して打つ */
 export function aimsMayHold(d: TreeDoc, id: string): Array<{ modId: string; tier: number }> {
   const out = new Map<string, { modId: string; tier: number }>();
-  const walk = (from: string): void => {
+  const walk = (from: string): boolean => {
     for (let x: string | null = from; x; x = d.boxes[x]?.parent ?? null) {
       const c = d.boxes[x];
       const fr = c?.parent ? d.boxes[c.parent]?.hand : null;
       if (c?.out === "hit" && c.aim && !(fr && effectOf(fr.currency) === "fracture")) for (const a of boxAims(c)) out.set(keyOf(a), { modId: a.modId, tier: a.tier });
+      // 残したい MOD を決めた消去の後は、その MOD だけ (上と始めの狙いはたどらない、10-27)
+      const keep = c ? keepCut(d, c) : null;
+      if (keep) { for (const a of keep) out.set(keyOf(a), { modId: a.modId, tier: a.tier }); return true; }
     }
+    return false;
   };
-  for (const a of startHeld(d)) out.set(keyOf(a), a);
-  walk(id);
+  if (!walk(id)) for (const a of startHeld(d)) out.set(keyOf(a), a);
   return [...out.values()];
 }

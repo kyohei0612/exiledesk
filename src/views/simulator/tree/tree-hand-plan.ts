@@ -2,7 +2,7 @@
  * tree-hand-plan.ts — 箱の次に打つ手の決め方 (TreeHandShelf.vue から分けた、2026-10-24)。棚の画面 (TreeHandShelf)・手を決めた時の組み替え (SimTreePage の pickHand)・
  * 開発の時だけの猿の口 (sim-monkey.ts) が同じ関数を呼ぶ (別の打ち方を作らない、メモ feedback-sim-no-own-logic)。中身はエンジンの入口と木の関数を呼ぶだけ
  */
-import { catalystBoosts, mulberry32, omensAllowedFor, omensFor, runeOf, sideOfMod, socketCapOf, tierRankOf, type PatchData, type StageApply, type StageItem } from "../../../services/craft-stage/engine";
+import { catalystBoosts, mulberry32, omensAllowedFor, omensFor, runeOf, sideOfMod, socketCapOf, tierRankOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { craftStage } from "../../../state/craft-stage";
 import { bonesFor, essenceShelf, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
 import { treeHidden } from "../use-sim-shelf";
@@ -19,7 +19,7 @@ import { tr } from "../../../i18n/lang";
 /** 起こりうる結果の一覧 (tree-sample の possibleOutsOf)。null = 手の種類ごとの箱 */
 export type OnlyOut = ReadonlyArray<{ out: OutKind; aim: Aim | null }> | null;
 /** 棚で選んだ物 (持った物・掛けたお告げ・当たるまで・狙い無し・骨の反響・フラクチャーで ✦ にする狙い) */
-export interface HandPick { held: string; omens: readonly string[]; spam?: boolean; spamMax?: number | null; free?: boolean; echo?: boolean }
+export interface HandPick { held: string; omens: readonly string[]; spam?: boolean; spamMax?: number | null; free?: boolean; echo?: boolean; /** 消去の残したい MOD ([] = 全部消えてよい、tree-model の Hand.keep) */ keep?: readonly Aim[] }
 
 /**
  * 当たりの MOD が決まっていない当たりの箱は、この箱のアイテムが作れない (当たりの形が引けず、見本が親のまま = 変成の後でも白のまま)。
@@ -53,6 +53,9 @@ export const preFillOf = (data: PatchData, item: StageItem, needPre: boolean, au
  * エッセンス・合金 (キーは同じ essence:) は付く MOD がそれ自身の 1 つに決まっているので入れない (オーナー「エッセンスではエッセンスでしか付かんでしょうに」)
  */
 export const FREE_EFFECTS: readonly string[] = ["add", "swap"];
+/** 消去の「残したい MOD」の候補 = この箱のアイテムに付いている MOD (✦ は消えないので出さない。10-27 オーナー「手の窓に今付いている MOD を全部並べる」) */
+export const keepChoicesOf = (data: PatchData, item: StageItem): Array<{ aim: Aim; mod: StageMod }> =>
+  [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured).map((m) => ({ aim: { modId: m.modId, tier: tierRankOf(data, m.modId, m.tierIndex) }, mod: m }));
 /** 棚で選んだ物 → 箱の手 */
 export function handOf(p: HandPick): Hand {
   const used = omensFor(p.held, [...p.omens]);
@@ -62,6 +65,7 @@ export function handOf(p: HandPick): Hand {
     catalyst: null, quality: 0,
     repeat: p.spam && canSpam(p.held) ? { until: "hit", max: p.spamMax && p.spamMax > 0 ? Math.round(p.spamMax) : null } : null,
     ...(p.free && !p.spam && FREE_EFFECTS.includes(effectOf(p.held)) ? { free: true } : {}),
+    ...(p.keep && effectOf(p.held) === "remove" ? { keep: p.keep.map((a) => ({ modId: a.modId, tier: a.tier })) } : {}),
   };
 }
 export const kindOf = (h: Hand): HandKind => kindOfHand(h, effectOf(h.currency));

@@ -23,8 +23,8 @@ import { treeRowTags } from "./tree-row-tags";
 import { aimKey, fractureMarks, setHand, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { TREE_SPAM_ORB, useSimShelf } from "../use-sim-shelf";
-import { afterQualityOf, autoCatOf, FREE_EFFECTS, handOf, hitAimsOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan";
-import { tr } from "../../../i18n/lang";
+import { afterQualityOf, autoCatOf, FREE_EFFECTS, handOf, hitAimsOf, hitChoicesOf, keepChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan";
+import { modText, tr } from "../../../i18n/lang";
 import { stageHelp } from "../../../state/for-share/craft-stage-help";
 import { usePhone } from "../../../utils/use-phone";
 import { simOp } from "../../../web/track";
@@ -206,7 +206,21 @@ watch(held, (k, old) => {
   const was = old ?? props.current.currency, wasOmens = old ? [...omens.value] : [...props.current.omens];
   warnIfBelow(() => { held.value = was; omens.value = wasOmens; });
 });
-const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value }) : null));
+/**
+ * 消去の「残したい MOD」(10-27 オーナー): 今付いている MOD を並べて ☑ で残したい物を選ぶ。既定 = 全部消えてよい (どれも残さない) =
+ * ✦ 以外は「n MOD 外れ MOD」、消せなくなるまで消去を繰り返す 1 手。☑ があればその MOD が消えた / 残ったで箱を分ける (☑ の無い MOD は外れ MOD)
+ */
+const isRemove = computed(() => !!held.value && effectOf(held.value) === "remove");
+const keepChoices = computed(() => { const d = s.data.value, it = item.value; return d && it ? keepChoicesOf(d, it) : []; });
+const keepChecked = ref<string[]>((props.current?.keep ?? []).map(aimKey));
+const keepAims = computed((): Aim[] => keepChoices.value.filter((c) => keepChecked.value.includes(aimKey(c.aim))).map((c) => c.aim));
+function toggleKeep(a: Aim): void {
+  const k = aimKey(a), was = [...keepChecked.value];
+  keepChecked.value = was.includes(k) ? was.filter((x) => x !== k) : [...was, k];
+  warnIfBelow(() => { keepChecked.value = was; });
+}
+function keepNone(e: Event): void { const was = [...keepChecked.value]; keepChecked.value = []; (e.target as HTMLInputElement).checked = true; warnIfBelow(() => { keepChecked.value = was; }); }
+const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, ...(isRemove.value ? { keep: keepAims.value } : {}) }) : null));
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
 const preCat = computed((): string | null => (catalysing.value && !afterQuality.value ? autoCat.value : null));
 const RESULT: Record<HandKind, [string, string]> = {
@@ -214,6 +228,7 @@ const RESULT: Record<HandKind, [string, string]> = {
   quality: ["無し (品質を最大まで上げて、下の＋で次の手)", "None (raise quality to max, then add the next craft with + below)"],
   essence: ["付いた + 狙いが消えた (付く MOD は必ず付く)", "Added + Target lost (the essence mod always lands)"],
   fracture: ["印の狙いが ✦ になった (必ず印の狙いを固定)", "The marked target fractured (always fixes it)"],
+  strip: ["外れが消えた (消せなくなるまで消去を繰り返す)", "Miss removed (annul until nothing more can be removed)"],
 };
 /** 狙いを持って着く人がいない箱では「狙いが消えた」を作らない時の文 (tree-model の setHand、tree-lost.ts) */
 const RESULT_NO_LOST: Partial<Record<HandKind, [string, string]>> = { remove: ["外れが消えた", "Miss removed"], swap: ["当たり + 外れ", "Hit + Miss"], essence: ["付いた (付く MOD は必ず付く)", "Added (the essence mod always lands)"] };
@@ -312,6 +327,17 @@ function ok(): void {
         <!-- 狙い無し (MOD とは排他。前はお告げの列の札、10-25 オーナー「狙い無しも左のチェックに付けるといいね」) -->
         <label v-if="!spam" data-tree-hand-free class="flex min-h-7 cursor-pointer items-center gap-2" :title="tr('狙い無し (空きを 1 つ埋めるだけ。当たり / 外れに分けない)', 'No target (just fill an open slot; no hit / miss split)')">
           <input type="checkbox" :checked="freeOn" @change="toggleFree($event)" />{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}
+        </label>
+      </div>
+      <!-- 消去: 残したい MOD (10-27 オーナー)。既定は全部消えてよい = ✦ 以外は「n MOD 外れ MOD」、消せなくなるまで繰り返す -->
+      <div v-if="isRemove" data-tree-hand-keep class="flex flex-col gap-1 text-[12px]">
+        <span class="opacity-80">{{ tr("残したい MOD (☑ の MOD が消えたら「狙いが消えた」。☑ の無い MOD は外れ MOD)", "Mods to keep (a ☑ mod removed = Target lost; unchecked mods are misses)") }}</span>
+        <label data-tree-hand-keep-none class="flex min-h-7 cursor-pointer items-center gap-2 max-md:min-h-11">
+          <input type="checkbox" :checked="!keepAims.length" @change="keepNone($event)" />{{ tr("全部消えてよい (消せなくなるまで消去を繰り返す)", "Anything may go (annul until nothing more can be removed)") }}
+        </label>
+        <span v-if="!keepAims.length" data-tree-hand-keep-junk class="pl-6 text-[#e0a060]">{{ tr(`${keepChoices.length} MOD 外れ MOD`, `${keepChoices.length} mods: misses`) }}</span>
+        <label v-for="c in keepChoices" :key="aimKey(c.aim)" data-tree-hand-keep-mod :data-mod="aimKey(c.aim)" class="flex min-h-7 min-w-0 cursor-pointer items-center gap-2 max-md:min-h-11">
+          <input type="checkbox" :checked="keepChecked.includes(aimKey(c.aim))" @change="toggleKeep(c.aim)" /><span class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="modText(c.mod)">{{ modText(c.mod) }}</span>
         </label>
       </div>
       <p v-if="kind" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? (only.length === 1 ? tr(`${outName(only[0]!.out)}だけ (結果は 1 通り)`, `${outName(only[0]!.out)} only (one possible result)`) : [...new Set(only.map((o) => outName(o.out)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>

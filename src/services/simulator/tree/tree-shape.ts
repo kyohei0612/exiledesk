@@ -6,7 +6,7 @@ import { mulberry32, sideOfMod, type PatchData, type StageItem } from "../../cra
 import { aimHeldOn, junkOf } from "./tree-aim";
 import { effectOf } from "./tree-hands";
 import { aimOpts, aimsOf, essenceBoxFits, handProblem, playHand, targetsOf } from "./tree-sample";
-import { aimKey, MATCH_BACK, type Aim, type Hand, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc, boxAims, drop, subtree } from "./tree-model";
+import { aimKey, keepCut, MATCH_BACK, type Aim, type Hand, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc, boxAims, drop, subtree } from "./tree-model";
 
 /**
  * 形の合う箱へ (設計の「消去の後は 形の合う箱へ」、back: "match")。形 = 付いている狙いの組 + 外れがあるか。
@@ -52,6 +52,9 @@ function pathHelds(doc: TreeDoc, id: string | null): string[][] {
   for (let x = id; x; x = doc.boxes[x]?.parent ?? null) {
     const c = doc.boxes[x];
     if (c?.out === "hit" && c.aim) { const ks = boxAims(c).map(aimKey); sets = sets.flatMap((h) => ks.map((k) => (h.includes(k) ? h : [...h, k]))).slice(0, 64); }
+    // 残したい MOD を決めた消去の後は、その MOD だけ持っている (ほかは外れ MOD。上はたどらない、10-27)
+    const keep = c ? keepCut(doc, c) : null;
+    if (keep) { const ks = keep.map(aimKey); return sets.map((h) => [...new Set([...h, ...ks])]); }
   }
   return sets;
 }
@@ -64,6 +67,9 @@ export function heldSets(doc: TreeDoc, id: string | null): string[][] {
   for (let x = id; x; x = doc.boxes[x]?.parent ?? null) { const c = doc.boxes[x]; if (c) path.unshift(c); }
   let sets: string[][] = [[]];
   for (const c of path) {
+    // 残したい MOD を決めた消去の後 = その MOD だけ持っている (☑ の無い MOD は外れ MOD、10-27)。狙いが消えたは 1 つ欠けた組
+    const keep = keepCut(doc, c);
+    if (keep) { const ks = keep.map(aimKey); sets = c.out === "lost" && ks.length ? ks.map((k) => ks.filter((x) => x !== k)) : [ks]; continue; }
     // 「どれか」の当たりの箱はどれが付いたかで組が分かれる (anyOf、10-26)
     if (c.out === "hit" && c.aim) { const ks = boxAims(c).map(aimKey); sets = sets.flatMap((h) => ks.map((k) => (h.includes(k) ? h : [...h, k]))); }
     else if (c.out === "lost") {

@@ -10,6 +10,7 @@
 
 import type { TreeTune } from "./tree-tune";
 import { mayHoldAim } from "./tree-lost";
+import { effectOf } from "./tree-hands";
 
 /**
  * any = 狙い無しの手の結果 (何が付いても次へ進む「打った後」、オーナー 10-22 の適当打ち)。
@@ -18,7 +19,8 @@ import { mayHoldAim } from "./tree-lost";
  */
 export type OutKind = "hit" | "junk" | "junkGone" | "lost" | "any" | "pass" | "branch";
 /** fracture = フラクチャーのオーブ (10-22 オーナー「フラクチャーする所から回す」。結果 = 狙いが ✦ になった / 外れが ✦ になった) */
-export type HandKind = "add" | "remove" | "swap" | "spam" | "free" | "quality" | "essence" | "fracture";
+/** strip = 消去で「全部消えてよい」(残したい MOD の ☑ が 0、10-27 オーナー): 消せなくなるまで消去を繰り返す 1 手 */
+export type HandKind = "add" | "remove" | "swap" | "spam" | "free" | "quality" | "essence" | "fracture" | "strip";
 /** 狙い: MOD と段 (tier = T 何以上、1 = T1 だけ)。フラクチャーの時は「その段」 */
 export interface Aim { modId: string; tier: number; /** フラクチャーの印 (完成の狙いだけ。印の MOD のどれか 1 つが ✦ のレアからスタート、10-23 オーナー) */ fractured?: true;
   /** 貼り付けで取り込んだ素の値 (完成の狙いだけ。完成形のカードにそのまま出す、段の中央でなく。段を替えたら外す、10-25 オーナー「コピペした時数値の変更が若干ある」) */ values?: number[] }
@@ -41,6 +43,11 @@ export interface Hand {
   /** 狙い無し (何が付いてもよい、空きを 1 つ埋めるだけ。結果は「打った後」の 1 つ、オーナー 10-22「適当打ちで MOD をただ追加する手」) */
   free?: boolean;
   repeat?: Repeat | null;
+  /**
+   * 消去の「残したい MOD」(手の窓の ☑、10-27 オーナー)。[] = 全部消えてよい = フラクチャー以外は外れ MOD、消せなくなるまで消去を繰り返す (strip)。
+   * ☑ があればその MOD が消えた = 狙いが消えた、残った = 外れが消えた (☑ の無い MOD は外れ MOD)。無い (前の版の木) = 木の狙いで分ける
+   */
+  keep?: Aim[];
   /** フラクチャーの手で ✦ にする MOD (狙いの modId。10-22 オーナー「設定次第でどの MOD がフラクチャーされるか選べる」)。無ければ乱数 = エンジンどおり。その MOD が付いていない時も乱数 */
   /** 前の版の「✦ にする MOD の指名」(10-25 にやめた。読み込んだ木に残っていても使わない) */
   fractureOf?: string;
@@ -232,7 +239,19 @@ const OUTS_OF: Record<HandKind, OutKind[]> = {
   // エッセンス (10-22 オーナー「エッセンスの道」): 付く MOD は必ず付く (当たりの箱の札 = その MOD)。分けるのは何が消えたか =
   // 付いた (何も消えない・外れが消えた) / 狙いが消えた (付いた MOD はある)。消えない種類は 1 通りの判定で箱 1 つ
   essence: ["hit", "lost"],
+  // 消去で全部消えてよい: 消せなくなるまで繰り返すので、結果は外れが消えた (フラクチャーだけ・+ 外れ 1 など) の 1 つ
+  strip: ["junkGone"],
 };
+/**
+ * 残したい MOD を決めた消去の結果の箱なら、その時点で持っている狙い = 残したい MOD (☑ の無い MOD は外れ MOD、全部消えてよいなら []。10-27 オーナー)。
+ * 道の狙いの数え (tree-shape の heldSets・pathHelds、tree-lost) はここで数え直す。そうでなければ null
+ */
+export function keepCut(d: TreeDoc, c: TreeBox): Aim[] | null {
+  const h = c.parent ? d.boxes[c.parent]?.hand : null;
+  return h?.keep && h.currency && effectOf(h.currency) === "remove" ? h.keep : null;
+}
+/** 始めのアイテムが ✦ だけ (消去で全部消した形と同じ = 始めに戻る、10-27 オーナー) */
+const startBare = (d: TreeDoc): boolean => (d.start?.mods ?? []).every((m) => m.fractured);
 
 export function mk(d: TreeDoc, out: OutKind, parent: string): TreeBox {
   const id = `b${++d.seq}`;
@@ -313,7 +332,7 @@ export function shift(d: TreeDoc, id: string, dx: number, dy: number): void {
 /** 結果の箱の並び (起こりうる結果の一覧から作る時) */
 const OUT_ORDER: OutKind[] = ["hit", "any", "pass", "branch", "lost", "junkGone", "junk"];
 /** 手の種類 (繰り返しの手は spam) */
-export const kindOfHand = (h: Hand, base: HandKind): HandKind => (h.repeat ? "spam" : h.free ? "free" : base);
+export const kindOfHand = (h: Hand, base: HandKind): HandKind => (h.repeat ? "spam" : h.free ? "free" : base === "remove" && h.keep && !h.keep.length ? "strip" : base);
 
 /**
  * 箱の次の手を決める。手の種類が同じなら結果の箱はそのまま、違えば作り直す。
@@ -340,7 +359,7 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   // 持って着く人がいて無いなら、その手では消えない (右側の結晶化で外れだけ消える等) ので足さない
   if (noLost || (only && !want.includes("lost") && OUTS_OF[kind].includes("lost") && !mayHoldAim(d, id))) b.noLost = true; else delete b.noLost;
   const same = b.hand && want.every((k) => now.includes(k)) && now.every((k) => k !== "start" && (want.includes(k) || (kind === "free" && k === "hit")));
-  b.hand = { ...hand, omens: [...hand.omens], repeat: hand.repeat ? { ...hand.repeat } : null };
+  b.hand = { ...hand, omens: [...hand.omens], repeat: hand.repeat ? { ...hand.repeat } : null, ...(hand.keep ? { keep: hand.keep.map((a) => ({ ...a })) } : {}) };
   b.back = null;
   delete b.split;
   delete b.autoBack;
@@ -373,6 +392,8 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
     const c = d.boxes[o]!;
     // 狙いが消えたは戻り先を決めない (人が箱を選ぶ。10-26 オーナー「始めに戻るはなんかややこしい話だから普通にどこに戻るかいつも通り書く」。前は始めに戻る)
     if (c.out === "junkGone") c.back = before ?? (held ? MATCH_BACK : null);
+    // 全部消した形が始めの形 (✦ だけ) と同じなら、新しい箱を作らず始めに戻る (10-27 オーナー)。違えば人が決める
+    if (kind === "strip") c.back = startBare(d) ? "start" : null;
   }
   spread(d, id);
   makeRoom(d, id);
