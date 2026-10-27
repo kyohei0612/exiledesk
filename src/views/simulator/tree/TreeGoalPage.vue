@@ -34,6 +34,7 @@ import { openTreePage, treeStep } from "../../../web/page";
 import { useTapFracture } from "../phone/use-tap-fracture";
 import TreeGoalQuality from "./TreeGoalQuality.vue";
 import { useGoalShown } from "./use-goal-shown";
+import { dropWay, inWay, isCraftAim, toggleWay, wayUndecided } from "./tree-way-mods";
 import { flag } from "../../../web/release-flags";
 
 const t = useTree();
@@ -135,7 +136,20 @@ function apply(en: string): void {
 }
 /** 貼り付けで取り込んだ (ベースと狙いは tree-paste が入れた) = 完成の MOD のページへ */
 function onPasted(): void { asking.value = null; dropped.value = []; unpicked.value = false; t.needBase.value = false; go(2); }
-const pickGoal = { has: t.hasGoal, toggle: t.toggleGoal };
+/** 途中で消えるクラフト MOD (tree-way-mods) も一覧では狙いと同じに光り、押すと外れる (スイッチ goalQuality) */
+const pickGoal = {
+  has: (modId: string, tier: number): boolean => t.hasGoal(modId, tier) || (flag("goalQuality") && (t.doc.value.wayMods ?? []).some((a) => a.modId === modId && a.tier === tier)),
+  toggle: (modId: string, tier: number): void => { if (flag("goalQuality") && inWay(t.doc.value, modId)) t.edit((d) => dropWay(d, modId)); else t.toggleGoal(modId, tier); },
+};
+/** カードの下の「途中で消える」の切り替えに並べるクラフト MOD (残る物 + 途中で消える物。2 つ以上の時だけ出す) */
+const crafts = computed(() => {
+  const d = s.data.value, doc = t.doc.value;
+  if (!flag("goalQuality") || !d) return [];
+  const list = [...t.goals.value.filter((a) => isCraftAim(d, a)).map((a) => ({ a, way: false })), ...(doc.wayMods ?? []).map((a) => ({ a, way: true }))];
+  return list.length >= 2 ? list : [];
+});
+/** 残るクラフト MOD が上限を超えている間の「決めた」を押せない理由 */
+const undecided = computed(() => (flag("goalQuality") && s.data.value ? wayUndecided(s.data.value, t.doc.value, t.goalItem.value?.item ?? null) : null));
 /** 完成の狙いに無い MOD を当たりにしている箱 (狙いを外した後も木に残る。tree-model の orphanHits) */
 const orphans = computed(() => orphanHits(t.doc.value));
 const orphanNames = computed(() => [...new Set(orphans.value.map((id) => t.aimShort(t.doc.value.boxes[id]!.aim!)))].join(tr("・", ", ")));
@@ -148,8 +162,10 @@ let blockMemo = new Map<string, string | null>(), blockFor = "";
 function blockOf(modId: string, tier: number): string | null {
   const d = s.data.value, doc = t.doc.value;
   if (!d) return null;
-  const lv = doc.ilvlFit ? FIT_ILVL : doc.itemLevel, aims = t.goals.value.filter((a) => a.modId !== modId).map((a) => ({ modId: a.modId, tier: a.tier }));
-  const key = `${doc.base}|${lv}|${JSON.stringify(aims)}`;
+  // クラフト MOD は 2 つ目以降も足せる (残すか途中で消えるかはカードの下で決める、スイッチ goalQuality)。ほかのクラフト MOD を除いた組で聞く
+  const craft = flag("goalQuality") && isCraftAim(d, { modId });
+  const lv = doc.ilvlFit ? FIT_ILVL : doc.itemLevel, aims = t.goals.value.filter((a) => a.modId !== modId && !(craft && isCraftAim(d, a))).map((a) => ({ modId: a.modId, tier: a.tier }));
+  const key = `${doc.base}|${lv}|${craft ? 1 : 0}|${JSON.stringify(aims)}`;
   if (key !== blockFor) { blockFor = key; blockMemo = new Map(); }
   const k = `${modId}|${tier}`;
   if (!blockMemo.has(k)) blockMemo.set(k, goalBlock(d, doc.base, lv, aims, { modId, tier }));
@@ -187,6 +203,7 @@ function markFracture(modId: string, tier: number): void { t.toggleFracture(modI
 /** ツリーへ (「決めた」・流れの帯の 3 / 4): 完成の狙いがあれば「フラクチャーから / 白ベースから」の窓を出してから (どの入口から来ても同じ) */
 const startAsk = ref<null | (() => void)>(null);
 function toTree(after?: () => void): void {
+  if (undecided.value) return;
   const go = (): void => { close(); after?.(); };
   // 狙いが無い時はフラクチャーにする物が無いので聞かずに進む (答えた扱い)
   if (t.goals.value.length) startAsk.value = go; else { t.edit((d) => { d.fracAsked = true; }); go(); }
@@ -298,6 +315,15 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <StageItemCard v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="shown.tags.value" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable row-remove tier-at-least @fracture="onCardFracture" @remove="onCardRemove" @jump="(id) => tapFrac.on.value && tapFrac.tap(id, [...(t.goalItem.value?.item.prefixes ?? []), ...(t.goalItem.value?.item.suffixes ?? [])].find((x) => x.modId === id))" />
         <!-- 完成形の品質 (20% を超えるとブリーチのエッセンスの MOD が要る、10-27 夕オーナー、スイッチ goalQuality) -->
         <TreeGoalQuality v-if="flag('goalQuality') && t.goalItem.value" />
+        <!-- クラフト MOD が 2 つ以上: どれを途中で消すか (完成の狙い・枠・完成の判定に数えない)。残るのはクラフト MOD の上限まで (10-27 夜オーナー、スイッチ goalQuality) -->
+        <div v-if="crafts.length" data-tree-goal-ways class="flex flex-col gap-1 px-1 text-[12px]">
+          <span class="opacity-80">{{ tr("クラフト MOD (途中で消える物は完成の狙いに数えない)", "Crafted mods (ones removed on the way don't count as final targets)") }}</span>
+          <div v-for="c in crafts" :key="c.a.modId" data-tree-goal-way :data-mod="c.a.modId" class="flex min-w-0 flex-wrap items-center gap-2">
+            <span class="min-w-0 break-words" :class="c.way ? 'text-amber-200/80 line-through decoration-amber-200/40' : 'text-[#c8c8ff]'">{{ t.aimLabel(c.a) }}</span>
+            <button type="button" data-tree-goal-way-toggle class="tbtn ml-auto shrink-0" :class="c.way ? 'on' : ''" :aria-pressed="c.way" @click="t.edit((d) => toggleWay(d, c.a.modId))">{{ tr("途中で消える", "Removed on the way") }}</button>
+          </div>
+          <p v-if="undecided" data-tree-goal-way-undecided class="break-words text-rose-200/90">{{ undecided }}</p>
+        </div>
         <!-- 自動で嵌めた扱いのルーン (TreeGoalCard と同じ、10-26 オーナー) -->
         <p v-if="t.goalItem.value?.item.augments?.length" data-tree-goal-runes class="px-1 text-[11px] text-[#9fd3ff]/80" :title="tr('完成の狙いに要るルーン (特殊 MOD の分・クラフト MOD 2 つ目のアストリッドの創造性) を自動で嵌めた扱い。ツリーではそのルーンの手・2 つ目のクラフト MOD の手から効く', 'Runes the targets need (for special mods, and Astrid’s Creativity for a 2nd crafted mod) are socketed automatically. In the tree they apply from that rune or crafted-mod step')">◇ {{ tr("ルーン (自動)", "Runes (auto)") }}: {{ t.goalItem.value.item.augments.map((a) => tr(a.ja, a.en)).join(tr("・", ", ")) }}</p>
         <!-- 枠を超えた狙い (10-23 オーナー「欲しい物を全部選ぶので枠を超えてよい」): 止めずにカードの下に並べる -->
@@ -314,10 +340,10 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
           </ul>
         </details>
         <!-- 次へ (決めた) はカードと説明の下 (10-24 オーナー)。列ごと上に留めるので一覧を送っても見える。スマホは列が上に積まれるので下の帯に出す -->
-        <div class="max-md:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="toTree()">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
+        <div class="max-md:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" :disabled="!!undecided" :title="undecided ?? undefined" @click="toTree()">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
       </div>
       <!-- スマホはカードの列が上に積まれるので、「決めた」は一覧の下に貼り付ける (一覧を送っている間は画面の下に見える) -->
-      <div class="sticky bottom-0 z-10 bg-[#120d08]/90 py-2 md:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" @click="toTree()">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
+      <div class="sticky bottom-0 z-10 bg-[#120d08]/90 py-2 md:hidden"><button type="button" data-tree-goal-done class="g-btn-red min-h-11 w-full px-4 text-[14px]" :disabled="!!undecided" :title="undecided ?? undefined" @click="toTree()">{{ tr("決めた (ツリーへ)", "Done (back to the tree)") }}</button></div>
     </div>
     <!-- 下の帯は 2 完成の MOD の段だけで「← ベース」を控えめに。ベースの段の「次へ」は出さない (ベースを押すと 2 へ進む。10-23 オーナー「ベース決めないと進めないし、どのみち」)。
          「決めた」(決める手の赤 g-btn-red、1 画面 1 つ) はカードと説明の下へ移した (10-24 オーナー) -->

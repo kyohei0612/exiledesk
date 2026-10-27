@@ -9,6 +9,7 @@ import { applyCurrency, maxQualityOf, mulberry32, type StageItem, type StageMod 
 import { craftStage as s } from "../../../state/craft-stage";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { useTree } from "./use-tree";
+import { wayRows } from "./tree-way-mods";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 
@@ -21,21 +22,30 @@ export function useGoalShown() {
   const breach = computed((): StageMod | null => {
     const d = s.data.value, g = t.goalItem.value?.item, doc = t.doc.value;
     if (!flag("goalQuality") || !d || !g || !doc.goalQualityOn || (doc.goalQuality ?? 0) - maxQualityOf(g) < BREACH_OVER) return null;
+    // ブリーチのエッセンスを MOD 一覧で足してある時は、その行で足りる (同じ行を 2 つ出さない)
+    if ([...(doc.wayMods ?? []), ...(doc.memoAims ?? [])].some((a) => /LocalMaximumQuality/.test(a.modId))) return null;
     // 完成形に既にエッセンスの MOD があると「エッセンスの MOD は 1 つまで」で打てないので、エッセンスの MOD を除いた写しに打つ (途中で付けて消える物なので、完成形と同時には付かない)
     const bare = { ...g, prefixes: g.prefixes.filter((m) => !m.crafted), suffixes: g.suffixes.filter((m) => !m.crafted) };
     try { return applyCurrency(d, bare, "essence:breach", mulberry32(1)).added?.[0] ?? null; } catch { return null; }
   });
+  /** 途中で消える行 = MOD 一覧で「途中で消える」にしたクラフト MOD (tree-way-mods) + 品質で自動で出るブリーチ */
+  const ways = computed((): StageMod[] => {
+    const d = s.data.value;
+    if (!flag("goalQuality") || !d) return [];
+    return [...wayRows(d, t.doc.value), ...(breach.value ? [breach.value] : [])];
+  });
   const item = computed((): StageItem | null => {
     const g = t.goalItem.value?.item, doc = t.doc.value;
     if (!g) return null;
-    if (!flag("goalQuality") || !doc.goalQualityOn || !doc.goalQuality) return g;
-    const b = breach.value, q = { ...g, quality: doc.goalQuality, ...(doc.goalQualityTag ? { qualityTag: doc.goalQualityTag } : {}) };
-    return b ? { ...q, [b.side === "prefix" ? "prefixes" : "suffixes"]: [...(b.side === "prefix" ? g.prefixes : g.suffixes), b] } : q;
+    if (!flag("goalQuality")) return g;
+    const q = doc.goalQualityOn && doc.goalQuality ? { ...g, quality: doc.goalQuality, ...(doc.goalQualityTag ? { qualityTag: doc.goalQualityTag } : {}) } : g;
+    const ws = ways.value;
+    return ws.length ? { ...q, prefixes: [...q.prefixes, ...ws.filter((m) => m.side === "prefix")], suffixes: [...q.suffixes, ...ws.filter((m) => m.side === "suffix")] } : q;
   });
-  /** ブリーチの行の札 */
+  /** 途中で消える行の札 (どれも同じ「途中で消える」) */
   const tags = computed((): Map<string, RowTag> | null => {
-    const b = breach.value;
-    return b ? new Map([[b.modId, { text: tr("途中で消える", "Removed on the way"), tone: "warn" as const, title: tr("品質を上げるために途中で付けて、その後で消えてよい MOD (品質は残る)。完成の MOD の枠には数えない", "Added on the way to raise quality, then may be removed (the quality stays). Not counted as a final mod slot") }]]) : null;
+    const ws = ways.value;
+    return ws.length ? new Map(ws.map((m) => [m.modId, { text: tr("途中で消える", "Removed on the way"), tone: "warn" as const, title: tr("途中で付けて、その後で消えてよい MOD (品質は残る)。完成の狙い・MOD の枠・完成の判定には数えない", "Added on the way, then may be removed (quality stays). Not counted as a final target, mod slot or for completion") }])) : null;
   });
   return { item, tags, breach };
 }
