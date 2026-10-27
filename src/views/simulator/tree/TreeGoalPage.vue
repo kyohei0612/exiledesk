@@ -32,6 +32,8 @@ import { useTree } from "./use-tree";
 import { orphanHits } from "./tree-fail";
 import { openTreePage, treeStep } from "../../../web/page";
 import { useTapFracture } from "../phone/use-tap-fracture";
+import TreeGoalQuality from "./TreeGoalQuality.vue";
+import { flag } from "../../../web/release-flags";
 
 const t = useTree();
 const step = computed(() => t.goalPage.value);
@@ -284,7 +286,9 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       <!-- カードはエミュと同じ既定の幅 (480、スマホは全幅。10-24 オーナー「アイテム絵はシミュと同じ」) -->
       <div data-tree-goal-card class="sticky top-0 flex shrink-0 flex-col gap-2 max-md:static max-md:order-first md:w-[480px]">
         <p v-if="tapFrac.on.value" data-tree-goal-tap-frac class="break-words rounded border border-[#a3342a]/60 bg-[rgba(163,52,42,0.25)] px-2 py-1.5 text-[13px] text-mod-fractured">{{ tapFrac.note.value }}</p>
-        <StageItemCard v-if="t.goalItem.value" :item="t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable row-remove tier-at-least @fracture="onCardFracture" @remove="onCardRemove" @jump="(id) => tapFrac.on.value && tapFrac.tap(id, [...(t.goalItem.value?.item.prefixes ?? []), ...(t.goalItem.value?.item.suffixes ?? [])].find((x) => x.modId === id))" />
+        <StageItemCard v-if="t.goalItem.value" :item="flag('goalShape') && t.doc.value.goalQuality ? { ...t.goalItem.value.item, quality: t.doc.value.goalQuality } : t.goalItem.value.item" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable row-remove tier-at-least @fracture="onCardFracture" @remove="onCardRemove" @jump="(id) => tapFrac.on.value && tapFrac.tap(id, [...(t.goalItem.value?.item.prefixes ?? []), ...(t.goalItem.value?.item.suffixes ?? [])].find((x) => x.modId === id))" />
+        <!-- 完成形の品質 (20% を超えるとブリーチのエッセンスの MOD が要る、10-27 夕オーナー、スイッチ goalShape) -->
+        <TreeGoalQuality v-if="flag('goalShape') && t.goalItem.value" />
         <!-- 自動で嵌めた扱いのルーン (TreeGoalCard と同じ、10-26 オーナー) -->
         <p v-if="t.goalItem.value?.item.augments?.length" data-tree-goal-runes class="px-1 text-[11px] text-[#9fd3ff]/80" :title="tr('完成の狙いに要るルーン (特殊 MOD の分・クラフト MOD 2 つ目のアストリッドの創造性) を自動で嵌めた扱い。ツリーではそのルーンの手・2 つ目のクラフト MOD の手から効く', 'Runes the targets need (for special mods, and Astrid’s Creativity for a 2nd crafted mod) are socketed automatically. In the tree they apply from that rune or crafted-mod step')">◇ {{ tr("ルーン (自動)", "Runes (auto)") }}: {{ t.goalItem.value.item.augments.map((a) => tr(a.ja, a.en)).join(tr("・", ", ")) }}</p>
         <!-- 枠を超えた狙い (10-23 オーナー「欲しい物を全部選ぶので枠を超えてよい」): 止めずにカードの下に並べる -->

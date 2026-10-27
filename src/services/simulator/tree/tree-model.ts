@@ -23,6 +23,7 @@ export type OutKind = "hit" | "junk" | "junkGone" | "lost" | "any" | "pass" | "b
 export type HandKind = "add" | "remove" | "swap" | "spam" | "free" | "quality" | "essence" | "fracture" | "strip";
 /** 狙い: MOD と段 (tier = T 何以上、1 = T1 だけ)。フラクチャーの時は「その段」 */
 export interface Aim { modId: string; tier: number; /** フラクチャーの印 (完成の狙いだけ。印の MOD のどれか 1 つが ✦ のレアからスタート、10-23 オーナー) */ fractured?: true;
+  /** 完成形の品質のために自動で足したブリーチのエッセンスの MOD (品質の欄、TreeGoalQuality。品質を 20% 以下に戻すと外す) */ forQuality?: true;
   /** 貼り付けで取り込んだ素の値 (完成の狙いだけ。完成形のカードにそのまま出す、段の中央でなく。段を替えたら外す、10-25 オーナー「コピペした時数値の変更が若干ある」) */ values?: number[] }
 /**
  * 繰り返し (2026-10-22 オーナー「外れ・狙いが消えたの行き先に一番使うのがカオススパム」): 当たりのどれかが付くまで同じ手を打ち続ける。
@@ -151,6 +152,8 @@ export interface TreeDoc {
   note?: string;
   /** メモの窓で自由に足した欲しい MOD (ツリーの当たりとは別。オーナー 10-22「メモでは自由に MOD をメモに入れられる」) */
   memoAims?: Aim[];
+  /** 完成形の品質 % (無ければ決めていない。ベースの最大 (20%) を超えるとブリーチのエッセンスの MOD が要る、10-27 夕オーナー、TreeGoalQuality) */
+  goalQuality?: number;
   /**
    * エミュの「シミュレーターへ」で来た時の暗黙の値の振り (エミュのアイテムの rollSeed・implicitRoll・implicitFixed)。完成形のアイテムの暗黙をエミュと同じ値で出す
    * (10-26 夜オーナー「コピーと同じ挙動ならそのまま出すのが流儀」)。base が今の base と違えば使わない
