@@ -8,7 +8,7 @@
 import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { effectOf } from "./tree-hands";
-import { aimOpts, aimsOf, fractureChoices, goalsHeld, handAims, heldHitOf, outcomeOf, playHand, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
+import { aimOpts, aimsOf, boxOutcomeOf, fractureChoices, goalsHeld, handAims, heldHitOf, outcomeOf, playHand, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
 import { heldSets, MATCH, matchBox, outBoxOf, RESTART, settle, shapesOf, splitTo, type Shape, type SplitBox } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
@@ -193,7 +193,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
       restarts += FRACTURE_MISS;
     }
     if (sb.next) { item = r.item; at = sb.next; continue; }
-    const oc = outcomeOf(data, before, r.item, aims, b.hand.currency);
+    const oc = boxOutcomeOf(data, doc, b, before, r.item, aims);
     const next = outBoxOf(doc, b, oc, r.item);
     if (!next) {
       // 合う結果の箱が無い (10-22 ブラック「1 箱にした手で別の結果が出た時に黙って止まらない」): 形の合う箱があればそこへ、無ければ止まり。どちらも想定外として数える

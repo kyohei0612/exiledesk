@@ -15,7 +15,7 @@ import { catalystTagOf } from "../../simulator/sim-engine";
 import { aimHeldOn, junkOf, reachableAims } from "./tree-aim";
 import { CATALYSING, effectOf, engineOmens, isCatalyst } from "./tree-hands";
 import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeDoc, boxAims } from "./tree-model";
-import { aimOpts, aimsOf, goalsHeld, handAims, handProblem, heldHitOf, outcomeOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
+import { aimOpts, aimsOf, boxOutcomeOf, goalsHeld, handAims, handProblem, heldHitOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
 import { runTreeSteps } from "./tree-run";
 import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapeFits, shapesOf, splitTo } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
@@ -209,7 +209,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
         let canBe: { out: OutKind; hits: Aim[] }[] | null = null;
         if (!b.hand.repeat && effectOf(b.hand.currency) !== "fracture") {
           const all = stepOutcomes(data, prepFor(data, item, b.hand.currency), b.hand.currency, engineOmens(b.hand)) ?? []; // 規格外の形で (tree-unbounded)
-          const shown = all.filter((o) => !o.void && !unrevealedOf(o.item)).map((o) => outcomeOf(data, item, o.item, aims, b.hand!.currency));
+          const shown = all.filter((o) => !o.void && !unrevealedOf(o.item)).map((o) => boxOutcomeOf(data, doc, b, item, o.item, aims));
           const miss = shown.filter((oc) => !outBoxOf(doc, b, oc));
           if (miss.length) { const c = odd.get(id) ?? { who: new Set<number>(), outs: new Set<string>() }; c.who.add(person); for (const oc of miss) c.outs.add(outName(oc.out)); odd.set(id, c); }
           if (all.length && shown.length === all.length) canBe = shown;
@@ -233,7 +233,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
           for (let i = 0; i < (impossible ? 0 : TRIES) && !got; i++) {
             const r = i === 0 ? first : playHand(data, item, b.hand, rng, handAims(doc, b.id, aims));
             if (!r.applied) break;
-            const res = outcomeOf(data, item, r.item, aims, b.hand.currency);
+            const res = boxOutcomeOf(data, doc, b, item, r.item, aims);
             // 当たるまでの手が上限まで打っても当たらない = 付かない狙いだけ。打ち直しても同じなのでやめる (1 回 5000 回 × 1200 で固まった、10-22)
             if (b.hand.repeat && res.out !== "hit") break;
             if (fits(res)) got = r.item;

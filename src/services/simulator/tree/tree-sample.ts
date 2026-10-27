@@ -91,6 +91,24 @@ export function outcomeOf(data: PatchData, before: StageItem, after: StageItem, 
   if (d.junkGone) return { out: "junkGone", hits: [] };
   return { out: "junk", hits: [] };
 }
+/**
+ * 箱 b の手の結果 (回す・見本・精査で同じ)。☑ の無い MOD は外れ MOD (10-27 オーナー「チェックなしは外れ MOD 扱いでしょ」): 当たりはこの手の当たりの箱の札 (☑) だけ、
+ * 狙いが消えたはこの箱に持って着きうる狙い (道の当たりの札、tree-lost の aimsMayHold) だけで数え、木のほかの箱の狙いは外れ MOD として外れ・外れが消えたに入れる。
+ * 前は木全部の狙いで数え、☑ の無いキャストスピードが付いた・消えた人に行き先が無く止まった (r/ibMlQuAV の 2 段目のカオスで 30 人中 28 人)。aims は木の狙い (エッセンス・フラクチャーはそのまま)
+ */
+export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageItem, after: StageItem, aims: readonly Aim[]): { out: OutKind; hits: Aim[] } {
+  const key = b.hand?.currency;
+  if (!key || effectOf(key) === "essence" || effectOf(key) === "fracture") return outcomeOf(data, before, after, aims, key);
+  const same = (x: { modId: string; tier: number }, a: { modId: string; tier: number }): boolean => x.modId === a.modId && x.tier === a.tier;
+  const own = b.outs.flatMap((id) => { const c = doc.boxes[id]; return c?.out === "hit" && c.aim ? boxAims(c) : []; });
+  const held = aimsMayHold(doc, b.id);
+  // ☑ の札でも、道で持って着かずに先に付いていた物 (☑ の無い手で付いた = 外れ MOD) は消えても外れ
+  const mine = aims.filter((a) => held.some((x) => same(x, a)) || (own.some((x) => same(x, a)) && !aimHeldOn(data, before, a, { sameText: true })));
+  const oc = outcomeOf(data, before, after, mine, key);
+  if (oc.out !== "hit") return oc;
+  const hits = oc.hits.filter((a) => own.some((x) => same(x, a)));
+  return hits.length ? { out: "hit", hits } : { out: "junk", hits: [] };
+}
 
 /**
  * 起こりうる結果の箱 (10-25 オーナー「結局 例えばプレフィックスに付いたらどか考えられるでしょ」、前は手の種類ごとの決め打ち OUTS_OF と「1 通りなら 1 つ」だけ):
@@ -289,7 +307,7 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
     const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims), undefined, b.out === "junk" || b.out === "lost");
     if (!r.applied) { last = r; break; }
     last = r;
-    const o = outcomeOf(data, base.item, r.item, aims, p.hand.currency);
+    const o = boxOutcomeOf(data, doc, p, base.item, r.item, aims);
     // 当たるまでの手が上限まで打っても当たらない = 付かない狙いだけ。引き直しても同じなのでやめる (1 回 5000 回 × 3000 で画面が固まった、10-22)
     if (p.hand.repeat && o.out !== "hit") break;
     if (b.out === "pass") return { item: r.item, note: null };

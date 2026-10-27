@@ -9,7 +9,7 @@ import { aimHeldOn } from "../src/services/simulator/tree/tree-aim";
 import { effectOf } from "../src/services/simulator/tree/tree-hands";
 import { addHit, addSplitRow, aimKey, migrateStart, newTree, setAim, setBack, setDone, setHand, setSplit, setSplitWhen, kindOfHand, type Aim, type Hand, type SplitWhen, type TreeDoc } from "../src/services/simulator/tree/tree-model";
 import { toggleMemoAim } from "../src/services/simulator/tree/tree-memo";
-import { aimsOf, handAims, handProblem, outcomeOf, playHand, sampleOf, singleOutOf, startItemOf } from "../src/services/simulator/tree/tree-sample";
+import { aimsOf, boxOutcomeOf, handAims, handProblem, playHand, sampleOf, singleOutOf, startItemOf } from "../src/services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, ECHO, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../src/services/simulator/tree/tree-hands";
 import { linkSameShape, MATCH, matchItem, outBoxOf, RESTART, settle, shapesOf, splitTo } from "../src/services/simulator/tree/tree-shape";
 import { joinSameShape } from "../src/views/simulator/tree/tree-merge";
@@ -198,7 +198,7 @@ export function doneHeld(data: PatchData, doc: TreeDoc, n = 100, seed = 1): Reco
         hops = 0;
         const r = playHand(data, item, b.hand, rng, handAims(doc, at, aims));
         if (!r.applied) break;
-        const next = outBoxOf(doc, b, outcomeOf(data, item, r.item, aims));
+        const next = outBoxOf(doc, b, boxOutcomeOf(data, doc, b, item, r.item, aims));
         if (!next) { const to = matchItem(data, doc, r.item, aims); if (!to) break; item = r.item; at = to; continue; }
         item = r.item;
         at = settle(data, doc, shapes, next, item, aims);
