@@ -20,6 +20,7 @@ import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, ECHO, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handLabel, handName, outName } from "./tree-names";
 import { treeRowTags } from "./tree-row-tags";
+import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { aimKey, fractureMarks, setHand, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { TREE_SPAM_ORB, useSimShelf } from "../use-sim-shelf";
@@ -52,7 +53,21 @@ const item = computed(() => sample.value?.item ?? null);
 const preview = computed(() => { const d = s.data.value, it = preCat.value ? shelfItem.value : item.value ?? shelfItem.value, h = held.value; return d && it && h && !problem.value ? previewUse(d, it, h, omens.value) : null; });
 const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it) : it);
 /** 狙いに当たらない MOD の行は「外れ MOD」(乗せた時のカードと同じ、10-25 オーナー「プラスで MOD 選んだ時ハズレ MOD の表示が溶けてる」) */
-const rowTags = (it: StageItem | null) => (s.data.value && it ? treeRowTags(s.data.value, t.doc.value, t.doc.value.boxes[props.boxId]?.unwanted ?? [], it, t.doc.value.boxes[props.boxId]) : null);
+const rowTags = (it: StageItem | null) => (s.data.value && it ? removeTags(it, treeRowTags(s.data.value, t.doc.value, t.doc.value.boxes[props.boxId]?.unwanted ?? [], it, t.doc.value.boxes[props.boxId])) : null);
+/**
+ * 消去を持った時は、フラクチャー以外で ☑ の無い MOD を全部「外れ MOD」と出し、☑ の MOD はふだんの表示 (狙い) に戻す。☑ を変えるとすぐ変わる
+ * (10-27 夜オーナー「全部消えてよいなら持った瞬間に外れ MOD 表示、残したい MOD に ☑ で狙い表示」。スイッチ goalShape)
+ */
+function removeTags(it: StageItem, tags: Map<string, RowTag>): Map<string, RowTag> {
+  if (!flag("goalShape") || !isRemove.value) return tags;
+  const keep = new Set(keepAims.value.map((a) => a.modId)), out = new Map(tags);
+  for (const m of [...it.prefixes, ...it.suffixes]) {
+    if (m.fractured) continue;
+    if (keep.has(m.modId)) out.delete(m.modId);
+    else out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`消えてよい MOD (☑ で残したい MOD にできる): ${modText(m)}`, `May be removed (☑ to keep it): ${modText(m)}`) });
+  }
+  return out;
+}
 /** 当たりの MOD が決まっていない当たりの箱 (棚は出さずに先に MOD を選ばせる、tree-hand-plan の needAimOf) */
 const needAim = computed(() => needAimOf(t.doc.value, props.boxId, sample.value?.note));
 const held = ref<string | null>(props.current?.currency ?? null);
