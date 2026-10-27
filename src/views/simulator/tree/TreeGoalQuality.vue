@@ -9,7 +9,8 @@
 import { computed } from "vue";
 import StageQualityBar from "../../craft-stage/StageQualityBar.vue";
 import { craftStage as s } from "../../../state/craft-stage";
-import { maxQualityOf, type StageItem } from "../../../services/craft-stage/engine";
+import { maxQualityOf, qualityFieldMax, type StageItem } from "../../../services/craft-stage/engine";
+import { flag } from "../../../web/release-flags";
 import { essenceTarget } from "../../../services/craft-stage/apply-essence";
 import { useTree } from "./use-tree";
 import { tr } from "../../../i18n/lang";
@@ -36,12 +37,18 @@ function setOn(v: boolean): void {
     if ((d.memoAims ?? []).some((a) => a.forQuality)) d.memoAims = (d.memoAims ?? []).filter((a) => !a.forQuality);
   });
 }
-function setQuality(n: number, tag?: string): void { t.edit((d) => { if (n > 0) d.goalQuality = n; else delete d.goalQuality; if (tag) d.goalQualityTag = tag; }); }
-function setCap(n: number): void { t.edit((d) => { d.goalQualityCap = n; if ((d.goalQuality ?? 0) > n) d.goalQuality = n; }); }
+/**
+ * 完成形で届く品質の上限 = エミュのクラフト台と同じ出し方 (qualityFieldMax: ベース + 暗黙などの「品質の最大値」) + 途中で付けるブリーチのエッセンスの +20 (付くベースだけ)。
+ * 帯の上限のプルダウン (80% まで) で上げても、この値より上にはしない (指輪で上限 80% にすると +41% にできた、10-27 夜モンキー 2 回目 11。スイッチ qualityLimit)
+ */
+const limit = computed(() => (t.goalItem.value ? qualityFieldMax(t.goalItem.value.item) + (hasBreach.value ? 20 : 0) : 100));
+const clampQ = (n: number): number => (flag("qualityLimit") ? Math.min(n, limit.value) : n);
+function setQuality(n: number, tag?: string): void { const q = clampQ(n); t.edit((d) => { if (q > 0) d.goalQuality = q; else delete d.goalQuality; if (tag) d.goalQualityTag = tag; }); }
+function setCap(n: number): void { const c = clampQ(n); t.edit((d) => { d.goalQualityCap = c; if ((d.goalQuality ?? 0) > c) d.goalQuality = c; }); }
 </script>
 
 <template>
-  <div data-tree-goal-quality class="flex flex-col gap-1 px-1 text-[12px]">
+  <div data-tree-goal-quality class="flex flex-col gap-1 px-1 text-[12px]" :class="flag('qualityFit') ? 'goal-q-fit' : ''">
     <label class="flex min-h-7 cursor-pointer items-center gap-2 text-[#d8ccb4]">
       <input data-tree-goal-quality-on type="checkbox" :checked="on" @change="setOn(($event.target as HTMLInputElement).checked)" />{{ tr("品質も狙う", "Also aim for quality") }}
     </label>
@@ -51,3 +58,8 @@ function setCap(n: number): void { t.edit((d) => { d.goalQualityCap = n; if ((d.
     <p v-else-if="needBreach" data-tree-goal-quality-cant class="break-words text-rose-200/90">{{ tr(`このベースでは ${baseMax + 10}% を超えられない (ブリーチのエッセンスが付かない)`, `This base can't go above ${baseMax + 10}% (no Essence of the Breach)`) }}</p>
   </div>
 </template>
+
+<style>
+/* 品質の種類の欄を文字の幅より狭くしない (スマホで「品質 (マナモ」で切れた、10-27 夜モンキー 2 回目 12)。帯は折り返すので、入らなければ次の行へ */
+.goal-q-fit select { min-width: max-content; }
+</style>
