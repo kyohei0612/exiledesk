@@ -116,6 +116,7 @@ const sit = computed((): [string, string] => {
     const n = handLabel(ph);
     // 印の無い木の乱数のフラクチャーは「固定された」(付いたのではない、10-27 夜、要望 8a159e29、スイッチ fracRandom)
     // 狙い無しの乱数のフラクチャーは MOD ごとの箱「〇〇がフラクチャーされた場合」(外れとは言わない、スイッチ fracPick)
+    if (o === "junk" && ph.pick === "random" && ph.free && flag("fracPick")) return [tr("外れ MOD がフラクチャーされた場合", "If a miss mod is fractured"), tr("どの MOD が固定されるかは等しく乱数", "Which mod gets fractured is equally random")];
     if (o === "hit" && ph.pick === "random" && ph.free && flag("fracPick")) return [q.boxTitle(props.boxId), tr("どの MOD が固定されるかは等しく乱数", "Which mod gets fractured is equally random")];
     // 骨を未発現のまま次へ (スイッチ boneLater)
     if (o === "any" && veilKeep(ph)) return [tr(`${n}を打った後`, `After ${n}`), tr("未発現の冒涜が付いた (発現は次の手で)", "An unrevealed desecrated mod was added (reveal it with a later craft)")];

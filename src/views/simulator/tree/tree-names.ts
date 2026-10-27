@@ -50,7 +50,10 @@ export const outName = (out: TreeBox["out"]): string => tr(OUT_LOOK[out].ja, OUT
 export function outNameOf(h: Hand | null | undefined, out: TreeBox["out"], aim?: TreeBox["aim"]): string {
   if (out === "any" && veilKeep(h)) return tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added");
   // 印の無い木の狙い無しのフラクチャー (スイッチ fracPick)
-  if (out === "hit" && aim && h?.free && flag("fracPick") && effectOf(h.currency) === "fracture") { const n = modShort(useTree().aimShort(aim)); return tr(`${n}がフラクチャーされた場合`, `If ${n} is fractured`); }
+  if (h?.free && flag("fracPick") && effectOf(h.currency) === "fracture") {
+    if (out === "hit" && aim) { const n = modShort(useTree().aimShort(aim)); return tr(`${n}がフラクチャーされた場合`, `If ${n} is fractured`); }
+    if (out === "junk") return tr("外れ MOD がフラクチャーされた場合", "If a miss mod is fractured");
+  }
   return outName(out);
 }
 /** 箱の結果の名前 (同じ形でまとめた箱は「外れ・狙いが消えた」) */
@@ -68,6 +71,7 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   const fixed = ph?.pick === "random";
   const free = fixed && !!ph?.free && flag("fracPick");
   if (b.out === "hit" && b.aim) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")); return free ? tr(`${n}がフラクチャーされた場合`, `If ${n} is fractured`) : fixed ? tr(`${n}が固定された`, `${n} fractured`) : tr(`${n}が付いた`, `${n} added`); }
+  if (free && b.out === "junk") return tr("外れ MOD がフラクチャーされた場合", "If a miss mod is fractured");
   if (fixed && b.out === "junk") return tr("外れ MOD が固定された", "A miss mod fractured");
   // 骨を未発現のまま次へ (スイッチ boneLater)
   if (b.out === "any" && b.parent && veilKeep(useTree().doc.value.boxes[b.parent]?.hand)) return tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added");

@@ -21,7 +21,7 @@ import { flag } from "../../../web/release-flags";
 export const infiniteAim = (key: string | undefined): boolean => !!key && flag("goalShape") && isInfiniteEssence(key);
 import { heldSets } from "./tree-shape";
 import { isRevealHand, revealedOf, revealHitOf, veilKeep, veilPick } from "./tree-veil";
-import { fracFree, fracFreeAims, newlyFractured } from "./tree-frac-pick";
+import { fracFree, fracFreeHit, fracFreeOuts, newlyFractured } from "./tree-frac-pick";
 
 /**
  * 箱 b の手の結果 (回す・見本・精査で同じ)。☑ の無い MOD は外れ MOD (10-27 オーナー「チェックなしは外れ MOD 扱いでしょ」): 当たりはこの手の当たりの箱の札 (☑) だけ、
@@ -41,7 +41,7 @@ export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: 
   if (fracFree(doc, b.hand)) {
     const m = newlyFractured(before, after);
     const own = b.outs.flatMap((id) => { const c = doc.boxes[id]; return c?.out === "hit" && c.aim ? boxAims(c) : []; });
-    const hit = m ? own.find((a) => a.modId === m.modId) : null;
+    const hit = fracFreeHit(data, m, own);
     return hit ? { out: "hit", hits: [hit] } : { out: "junk", hits: [] };
   }
   // 骨を未発現のまま (スイッチ boneLater): 未発現の冒涜が付いた (打った後) 1 つ。満杯の側で狙いが消えた時だけ狙いが消えた
@@ -82,7 +82,7 @@ export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: 
  */
 export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, pre: string | null = null, extra: readonly Aim[] = []): Array<{ out: OutKind; aim: Aim | null }> | null {
   // 印の無い木の狙い無しのフラクチャー: 固定されうる MOD ごとの箱 (「〇〇がフラクチャーされた場合」。スイッチ fracPick)
-  if (fracFree(doc, h)) { const a = fracFreeAims(data, doc, Array.from({ length: SINGLE_SEEDS }, (_, i) => sampleOf(data, doc, boxId, i + 1).item)); return a.length ? a.map((x) => ({ out: "hit" as OutKind, aim: x })) : null; }
+  if (fracFree(doc, h)) { const f = fracFreeOuts(data, doc, Array.from({ length: SINGLE_SEEDS }, (_, i) => sampleOf(data, doc, boxId, i + 1).item)); const l = [...f.aims.map((x) => ({ out: "hit" as OutKind, aim: x })), ...(f.junk ? [{ out: "junk" as OutKind, aim: null }] : [])]; return l.length ? l : null; }
   if (h.repeat || h.free || isCatalyst(h.currency) || (h.keep && !h.keep.length)) return null;
   // 後から打つ発現の手: ☑ の札ごとの当たり + 外れ (発現は MOD を消さない。スイッチ boneLater)
   if (isRevealHand(h.currency)) return [...extra.map((a) => ({ out: "hit" as OutKind, aim: a })), { out: "junk", aim: null }];
