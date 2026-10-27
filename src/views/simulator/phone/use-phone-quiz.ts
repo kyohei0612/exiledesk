@@ -57,14 +57,15 @@ export function markDone(d: TreeDoc, later: ReadonlySet<string>): void {
 
 /**
  * 結果の画面で、まだ打つカレンシーを選んでいない扱いか (スイッチ phoneResult1027)。決めていない・次の手を決めるにした箱に加え、
- * 外れの側で自動でつないだ戻り (autoBack、同じ形の箱へ) も選ぶ前は答えを出さない (10-27 昼オーナー「外れた場合なんだから一旦ここ自動で何も表示させずに打つカレンシー決めさす」)。
- * 同じ手を持つと setReturn (setBack が autoBack を外す) で初めて「↩ 再度挑戦 · n 段目へ戻る」
+ * 外れの側は戻り (自動でつないだ物も、前から付いていた物も) があっても、このページで棚から手を選ぶ (picked) までは答えも「次へ」も出さない
+ * (10-27 昼オーナー「外れた場合なんだから一旦ここ自動で何も表示させずに打つカレンシー決めさす」「決めてないのに次へいかせる UI もおかしい」)。
+ * 同じ手を持つと setReturn で戻り (中の処理)、表示は「○○を選択」の枠
  */
-export function awaitsPick(d: TreeDoc, id: string, later: ReadonlySet<string>): boolean {
+export function awaitsPick(d: TreeDoc, id: string, picked: ReadonlySet<string>): boolean {
   const b = d.boxes[id];
   if (!b || b.hand || b.split || b.done) return false;
   if (!b.back) return true;
-  return !!b.autoBack && (isMiss(b) || b.out === "any") && !later.has(id);
+  return (isMiss(b) || b.out === "any") && !picked.has(id);
 }
 
 export type Question = { kind: "hand"; id: string } | { kind: "outs"; id: string };
@@ -85,6 +86,8 @@ export function questionsOf(d: TreeDoc, later: ReadonlySet<string>): Question[] 
 
 /** 「次の手を決める」にした箱 (木の外、このページの間だけ。開き直すと答えていない結果は ② でもう一度聞く) */
 const later = ref<string[]>([]);
+/** このページで答えを選んだ結果の箱 (棚で手を選んだ・戻り先を選んだ。木の外、別の木を開くと空。awaitsPick) */
+const picked = ref<string[]>([]);
 /** 一覧から選んで答え直している質問 (無ければ残りの先頭) */
 const focus = ref<Question | null>(null);
 /** 全体図 (PhoneMap) で戻り先の箱を選んでいる (② の「ほかの箱へ」。from = 結果の箱、ids = 戻れる箱。10-26 オーナー「どこに戻るか分からない」) */
@@ -127,16 +130,19 @@ export function usePhoneQuiz() {
     if (b && (b.back || b.done)) answer((d) => { setBack(d, id, null); setDone(d, id, null); });
   }
   /** 別の木を開いた = 木の外の印 (次の手を決める・一覧で選んだ質問) を空に */
-  function reset(): void { later.value = []; focus.value = null; }
+  function reset(): void { later.value = []; focus.value = null; picked.value = []; }
+  const pick = (id: string): void => { if (!picked.value.includes(id)) picked.value = [...picked.value, id]; };
   /** 「次の手を決める」を外す (② でもう一度聞く) */
   function unLater(id: string): void { later.value = later.value.filter((x) => x !== id); }
   /** 戻りの矢印 (同じ手をもう一度 = 親の箱・始めから = start・ほかの箱) */
   function setReturn(id: string, to: string): void {
     later.value = later.value.filter((x) => x !== id);
+    pick(id);
     answer((d) => { setDone(d, id, null); setBack(d, id, to); });
   }
   function setFinished(id: string): void {
     later.value = later.value.filter((x) => x !== id);
+    pick(id);
     answer((d) => { setBack(d, id, null); setDone(d, id, "main"); });
   }
   /** 結果の箱の今の答え */
@@ -204,6 +210,7 @@ export function usePhoneQuiz() {
     return parts.join(" › ");
   }
   /** 結果の画面でまだ選んでいない (awaitsPick) */
-  const awaits = (id: string): boolean => awaitsPick(t.doc.value, id, laterSet.value);
+  const pickedSet = computed(() => new Set(picked.value));
+  const awaits = (id: string): boolean => awaitsPick(t.doc.value, id, pickedSet.value);
   return { awaits, doc: t.doc, questions, current, focus, answered, later: laterSet, answer, reset, setLater, unLater, setReturn, setFinished, stateOf, outsOf, decide, decideOne, canRetry, boxTitle, pathText };
 }
