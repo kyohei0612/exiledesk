@@ -21,6 +21,7 @@ import { runTreeSteps } from "./tree-run";
 import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapeFits, shapesOf, splitTo } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
+import { flag } from "../../../web/release-flags";
 
 type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry" | "omenWaste" | "shape";
 export interface CheckIssue { boxId: string; kind: CheckKind; text: string }
@@ -298,6 +299,8 @@ function stuckText(data: PatchData, aims: readonly Aim[], n: number, w: { reason
   // 行き先の箱が無くて止まった (10-22 13 通り組んだ #11: 「手・戻り先が無い」だけでどの結果の箱が無いか分からなかった)
   if (w?.noBox) return `${head}: ${w.reason}`;
   if (!w) return tr(`${head} (手・戻り先が無い、または分かれ目のどの行にも合わない)`, `${head} (no craft or return, or no split row matches)`);
+  // 手の無い箱 (完成の箱など) は「この手が打てない」ではない。回した時の理由をそのまま (完成の箱で品質が足りない など。10-27 夕、スイッチ goalShape)
+  if (!hand && flag("goalShape")) return `${head}: ${w.reason}`;
   const full = SIDES.filter((side) => !room(w.item, side));
   if (!full.length) return `${head}: ${w.reason}`;
   const junkAll = junkOf(w.item, targetsOf(data, aims), aimOpts(data));

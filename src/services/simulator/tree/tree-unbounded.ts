@@ -24,9 +24,13 @@ export const autoRuneKeys = (before: StageItem, after: StageItem): string[] =>
  * goalsHeld = 完成の狙いが全部そろった人は、どの箱に着いてもその場で完成として数える (100 人回し・テストラン・精査)。
  * heldHitOf = 手が打てない時、その手の当たりの箱の狙いがもう付いていれば打たずにその箱へ進む (合金の負けで冒涜のキャストを持ったまま戻った人など)
  */
+/**
+ * 完成形の品質が足りているか (「品質も狙う」☑ の時だけ見る。値で見て、ブリーチの MOD の有無では見ない。
+ * 10-27 夕オーナー「一度付けた品質は消えない」「オフなら品質は見ない」、スイッチ goalShape)
+ */
+export const qualityOk = (doc: TreeDoc, item: StageItem): boolean => !(flag("goalShape") && doc.goalQualityOn && doc.goalQuality && (item.quality ?? 0) < doc.goalQuality);
 export function goalsHeld(data: PatchData, doc: TreeDoc, item: StageItem): boolean {
-  // 完成形の品質を決めていれば品質の値も見る (ブリーチの MOD の有無ではなく値。10-27 夕オーナー「一度付けた品質は消えない」、スイッチ goalShape)
-  if (flag("goalShape") && doc.goalQuality && (item.quality ?? 0) < doc.goalQuality) return false;
+  if (!qualityOk(doc, item)) return false;
   const goals = (doc.memoAims ?? []).filter((a) => !(flag("goalShape") && a.forQuality));
   return !!goals.length && goals.every((a) => aimHeldOn(data, item, a, { sameText: true }));
 }

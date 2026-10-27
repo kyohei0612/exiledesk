@@ -154,6 +154,11 @@ export interface TreeDoc {
   memoAims?: Aim[];
   /** 完成形の品質 % (無ければ決めていない。ベースの最大 (20%) を超えるとブリーチのエッセンスの MOD が要る、10-27 夕オーナー、TreeGoalQuality) */
   goalQuality?: number;
+  /** 品質も狙う (☑、既定はオフ = 品質は見ない。10-27 夕オーナー)。オンの時だけ完成の箱でも品質を見る (足りない人は止まり) */
+  goalQualityOn?: true;
+  /** 完成形の品質の上限 (エミュの品質の帯の「上限」と同じ。無ければ足し算の上限) と種類 (アクセサリーの品質の種類のタグ) */
+  goalQualityCap?: number;
+  goalQualityTag?: string;
   /**
    * エミュの「シミュレーターへ」で来た時の暗黙の値の振り (エミュのアイテムの rollSeed・implicitRoll・implicitFixed)。完成形のアイテムの暗黙をエミュと同じ値で出す
    * (10-26 夜オーナー「コピーと同じ挙動ならそのまま出すのが流儀」)。base が今の base と違えば使わない
