@@ -11,7 +11,7 @@ import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
-import { linkSameHit, linkSameShape, linkShapeHit, sameHandReturn } from "../../../services/simulator/tree/tree-shape";
+import { linkSameHit, linkSameShape, linkShapeHit, matchItem, sameHandReturn } from "../../../services/simulator/tree/tree-shape";
 import { looseOf, stripStops } from "../../../services/simulator/tree/tree-outcome";
 import { clearHand, drop, fractureMarks, healLost, kindOfHand, setBack, setHand, subtree, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
@@ -197,6 +197,7 @@ export function applyPick(d: TreeDoc, id: string, h: Hand, kind: HandKind, aims:
 function stripChain(d: TreeDoc, id: string, h: Hand): void {
   const data = craftStage.data.value, b = d.boxes[id];
   if (!data || !b) return;
+  if (flag("goalShape") && stripToShape(data, d, id, h)) return;
   const n = looseOf(sampleOf(data, d, id, 1).item), stops = stripStops(data, d, id);
   const s = Math.max(-1, ...[...stops.keys()].filter((k) => k <= n));
   const to = s >= 0 ? stops.get(s)! : null;
@@ -209,6 +210,31 @@ function stripChain(d: TreeDoc, id: string, h: Hand): void {
   for (let i = 1; i < n - Math.max(s, 0); i++) { const c = d.boxes[at]?.outs[0]; if (!c) return; setHand(d, c, h, "strip"); at = c; }
   const last = d.boxes[d.boxes[at]?.outs[0] ?? ""];
   if (last) { last.back = to; if (to) last.autoBack = true; else delete last.autoBack; }
+}
+/**
+ * 全部消えてよい消去の直線を、消去 1 回ごとの結果をエンジンで打って (stepOutcomes、お告げ込み) 全部の結果が同じ形の手のある箱 (matchItem = 形の鍵) に当たる所で止め、
+ * その箱へ ↩ (狙いを持つ箱も。10-27 夕モンキー 2: キャストの外れ (スピリット + ✦ + 外れ) に右側の消去で、1 回目でスピリットの箱と同じ形になったのに
+ * 消去がもう 1 回並んだ。前の stripStops は狙いを持たない箱だけを止まる所にしていた)。見つからなければ false (前の作り)
+ */
+function stripToShape(data: PatchData, d: TreeDoc, id: string, h: Hand): boolean {
+  let it = sampleOf(data, d, id, 1).item;
+  const n = looseOf(it), below = new Set(subtree(d, id));
+  for (let i = 0; i < n; i++) {
+    const outs = (stepOutcomes(data, prepFor(data, it, h.currency), h.currency, engineOmens(h)) ?? []).filter((o) => !o.void).map((o) => o.item);
+    if (!outs.length) return false;
+    const tos = new Set(outs.map((x) => matchItem(data, d, x)));
+    const to = tos.size === 1 ? [...tos][0] : null;
+    if (to && to !== "start" && d.boxes[to]?.hand && !below.has(to) && to !== id) {
+      let at = id;
+      for (let k = 0; k < i; k++) { const c = d.boxes[at]?.outs[0]; if (!c) return false; setHand(d, c, h, "strip"); at = c; }
+      const last = d.boxes[d.boxes[at]?.outs[0] ?? ""];
+      if (!last) return false;
+      last.back = to; last.autoBack = true;
+      return true;
+    }
+    it = outs[0]!;
+  }
+  return false;
 }
 /** 棚に並ぶ物 (CurrencyShelf と同じ: オーブ・骨・エッセンス、ソケットがあればクラフトのルーン。隠すのはツリーの棚と同じ treeHidden。猿の口) */
 export function shelfKeysOf(data: PatchData, it: StageItem): string[] {

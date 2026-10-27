@@ -112,6 +112,10 @@ export function heldSets(doc: TreeDoc, id: string | null): string[][] {
  */
 export function shapeFits(doc: TreeDoc, from: string, to: string): boolean {
   if (to === MATCH || to === RESTART) return true;
+  // 全部消えてよい消去の後の自動の戻りは、戻り先をエンジンで打った結果の形で選んでいる (tree-hand-plan の stripToShape)。この箱の組は「狙い 0」と数える作りなので比べない
+  // (10-27 夕モンキー 2、スイッチ goalShape)
+  const fb = doc.boxes[from], fp = fb?.parent ? doc.boxes[fb.parent] : undefined;
+  if (flag("goalShape") && fb?.autoBack && fp?.hand && effectOf(fp.hand.currency) === "remove" && fp.hand.keep && !fp.hand.keep.length) return true;
   const t = doc.boxes[to];
   if (!t || t.split) return true;
   const key = (h: string[]): string => [...h].sort().join(",");
