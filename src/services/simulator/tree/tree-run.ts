@@ -9,7 +9,7 @@ import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/en
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { effectOf } from "./tree-hands";
 import { aimOpts, aimsOf, fractureChoices, goalsHeld, handAims, heldHitOf, outcomeOf, playHand, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
-import { boxOutcomeOf } from "./tree-outcome";
+import { boxOutcomeOf, stripBackOf, stripStop } from "./tree-outcome";
 import { heldSets, MATCH, matchBox, outBoxOf, RESTART, settle, shapesOf, splitTo, type Shape, type SplitBox } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
@@ -154,7 +154,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
         at = "start";
         continue;
       }
-      const to = b.back === MATCH ? matchBox(data, shapes, item, aims) : settle(data, doc, shapes, b.back, item, aims);
+      const to = b.back === MATCH ? stripBackOf(data, doc, at, item) ?? matchBox(data, shapes, item, aims) : settle(data, doc, shapes, b.back, item, aims);
       if (!to) return { end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("戻り先の「形の合う箱」が無い", "No box matches the shape to return to"), item, noBox: true } };
       // 戻り先に着いてから形の合う箱へ移った時も、結果の箱と同じく戻り先の来訪を pass で残す (moved に数える)
       if (b.back !== MATCH && to !== b.back) visits.push({ box: b.back, cost, pass: true });
@@ -176,7 +176,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     const miss = effectOf(b.hand.currency) === "fracture" && fractureChoices(data, item) >= FRACTURE_PICK ? Object.entries(uses) : null;
     const tried = uses[b.hand.currency] ?? 0, own = handAims(doc, at, aims);
     o.onHand?.(at, item);
-    const r = playHand(data, item, b.hand, rng, own, use);
+    const r = playHand(data, item, b.hand, rng, own, use, false, stripStop(data, doc, b));
     if (!r.applied) {
       // 打てないが、この手の当たりの狙いがもう付いている = 打たずにその当たりの箱へ (tree-sample の heldHitOf)
       const held = heldHitOf(data, doc, b, item);

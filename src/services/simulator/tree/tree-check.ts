@@ -16,7 +16,7 @@ import { aimHeldOn, junkOf, reachableAims } from "./tree-aim";
 import { CATALYSING, effectOf, engineOmens, isCatalyst } from "./tree-hands";
 import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeDoc, boxAims } from "./tree-model";
 import { aimOpts, aimsOf, goalsHeld, handAims, handProblem, heldHitOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
-import { boxOutcomeOf } from "./tree-outcome";
+import { boxOutcomeOf, stripBackOf, stripStop, stripTargetsOf } from "./tree-outcome";
 import { runTreeSteps } from "./tree-run";
 import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapeFits, shapesOf, splitTo } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
@@ -92,7 +92,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
     if (split) return split.flatMap((r) => (r.to ? [r.to] : []));
     const back = doc.boxes[id]?.back;
     if (!back) return [];
-    if (back === MATCH) return matchTargets(doc, id).flatMap((x) => (x.to ? [x.to] : []));
+    if (back === MATCH) return stripTargetsOf(data, doc, id) ?? matchTargets(doc, id).flatMap((x) => (x.to ? [x.to] : []));
     return [back === RESTART ? "start" : back];
   };
 
@@ -191,7 +191,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
         }
         if (b.back && !viaBack) {
           // 形の合う箱へ = 回す時と同じく今のアイテムの形で行き先を決める (tree-run の matchItem)。作り直し = 始めのアイテムで始まりへ
-          const to = b.back === MATCH ? matchItem(data, doc, item, aims) : b.back === RESTART ? "start" : settle(data, doc, shapes, b.back, item, aims);
+          const to = b.back === MATCH ? stripBackOf(data, doc, id, item) ?? matchItem(data, doc, item, aims) : b.back === RESTART ? "start" : settle(data, doc, shapes, b.back, item, aims);
           if (!to) { add(id, "noMatch", tr("この形の箱が無い (回すとここで止まる)", "No box has this shape (runs stop here)")); return; }
           walk(to, b.back === RESTART ? start : item, true);
           return;
@@ -199,7 +199,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
         if (!b.hand) return;
         // 打てない手 (効かない・消せる物が無いお告げも。tree-sample の handProblem、オーナー 10-22「進行不能」)
         const why = handProblem(data, item, b.hand);
-        const first = playHand(data, item, b.hand, rng, handAims(doc, b.id, aims));
+        const first = playHand(data, item, b.hand, rng, handAims(doc, b.id, aims), undefined, false, stripStop(data, doc, b));
         // お告げが効かないだけ (回すと打って進む) は止まりと分ける (10-22 13 通り組んだ #12: 「手が打てない」と出たのに 100 人とも進んだ)
         if (why && first.applied) { const c = waste.get(id) ?? { who: new Set<number>(), reason: why }; c.who.add(person); waste.set(id, c); }
         else if (!first.applied && heldHitOf(data, doc, b, item)) { walk(heldHitOf(data, doc, b, item)!, item, viaBack); return; }
@@ -232,7 +232,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
           // (10-25 不在のアミュ B: カオスの当たるまで →「狙いが消えた」と完璧なエッセンス → 当たり・消えたを 1 箱 1,200 回ずつ打ち、開くたび画面が 17 秒固まった)
           const impossible = b.hand.repeat ? ob.out !== "hit" && ob.out !== "any" && ob.out !== "pass" : !!canBe && !canBe.some(fits);
           for (let i = 0; i < (impossible ? 0 : TRIES) && !got; i++) {
-            const r = i === 0 ? first : playHand(data, item, b.hand, rng, handAims(doc, b.id, aims));
+            const r = i === 0 ? first : playHand(data, item, b.hand, rng, handAims(doc, b.id, aims), undefined, false, stripStop(data, doc, b));
             if (!r.applied) break;
             const res = boxOutcomeOf(data, doc, b, item, r.item, aims);
             // 当たるまでの手が上限まで打っても当たらない = 付かない狙いだけ。打ち直しても同じなのでやめる (1 回 5000 回 × 1200 で固まった、10-22)

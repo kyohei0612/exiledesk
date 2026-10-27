@@ -250,8 +250,6 @@ export function keepCut(d: TreeDoc, c: TreeBox): Aim[] | null {
   const h = c.parent ? d.boxes[c.parent]?.hand : null;
   return h?.keep && h.currency && effectOf(h.currency) === "remove" ? h.keep : null;
 }
-/** 始めのアイテムが ✦ だけ (消去で全部消した形と同じ = 始めに戻る、10-27 オーナー) */
-const startBare = (d: TreeDoc): boolean => (d.start?.mods ?? []).every((m) => m.fractured);
 
 export function mk(d: TreeDoc, out: OutKind, parent: string): TreeBox {
   const id = `b${++d.seq}`;
@@ -392,8 +390,8 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
     const c = d.boxes[o]!;
     // 狙いが消えたは戻り先を決めない (人が箱を選ぶ。10-26 オーナー「始めに戻るはなんかややこしい話だから普通にどこに戻るかいつも通り書く」。前は始めに戻る)
     if (c.out === "junkGone") c.back = before ?? (held ? MATCH_BACK : null);
-    // 全部消した形が始めの形 (✦ だけ) と同じなら、新しい箱を作らず始めに戻る (10-27 オーナー)。違えば人が決める
-    if (kind === "strip") c.back = startBare(d) ? "start" : null;
+    // 全部消えてよい消去は、消していく途中で木の箱と同じ形になった所で止めてそこへ戻る (回す時に形で決める、tree-outcome の stripBackOf。10-27 オーナー)
+    if (kind === "strip") c.back = MATCH_BACK;
   }
   spread(d, id);
   makeRoom(d, id);

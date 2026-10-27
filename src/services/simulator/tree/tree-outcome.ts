@@ -7,7 +7,7 @@ import { fillCatalyst, stepOutcomes } from "../../simulator/sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { effectOf, engineOmens, isCatalyst } from "./tree-hands";
 import { aimsMayHold } from "./tree-lost";
-import { aimKey, boxAims, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
+import { aimKey, boxAims, subtree, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { aimDiff, aimsOf, outcomeOf, sampleOf, SINGLE_SEEDS } from "./tree-sample";
 import { shapeFit } from "./tree-sample-shape";
 import { prepFor } from "./tree-unbounded";
@@ -100,4 +100,57 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
 export function singleOutOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, pre: string | null = null, extra: readonly Aim[] = []): { out: OutKind; aim: Aim | null } | null {
   const l = possibleOutsOf(data, doc, boxId, h, pre, extra);
   return l?.length === 1 ? l[0]! : null;
+}
+
+/** ✦ 以外の MOD の数 (全部消えてよい消去では全部外れ MOD) */
+const looseOf = (it: StageItem): number => [...it.prefixes, ...it.suffixes].filter((m) => !m.fractured).length;
+const isStrip = (b: TreeBox | undefined): boolean => !!b?.hand?.keep && !b.hand.keep.length && effectOf(b.hand.currency) === "remove";
+const stopMemo = new WeakMap<TreeDoc, { sig: string; at: Map<string, Map<number, string>> }>();
+let stopBusy = false;
+/**
+ * 全部消えてよい消去の止まる所 = 外れの数 → 戻る箱 (10-27 オーナー「消去で全部消したら…消去 1 つ損する」: 消していく途中で木の箱と同じ形になったら止めて
+ * そこへ戻す)。狙いを持たない手のある箱 (heldSets に空の組がある。始め = 外れ 0、狙い無しの高貴の打った後 = 外れ 1 など) の見本の外れの数。
+ * 同じ数は先の箱 (木の並びで上)。self = 消去の手の箱 (自分と下は入れない)
+ */
+export function stripStops(data: PatchData, doc: TreeDoc, self: string): Map<number, string> {
+  // 覚えの鍵 = 木の箱・手・戻り (組み替えたら引き直す。回す 1 手ごとに呼ぶので文字は作らず数で)
+  let h = doc.seq;
+  for (const b of Object.values(doc.boxes)) { const k = `${b.id}${b.hand?.currency ?? ""}${b.hand?.omens.join() ?? ""}${b.back ?? ""}`; for (let i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) | 0; }
+  const sig = String(h);
+  let m = stopMemo.get(doc);
+  if (!m || m.sig !== sig) stopMemo.set(doc, (m = { sig, at: new Map() }));
+  const had = m.at.get(self);
+  if (had) return had;
+  // 見本を引く間にまた呼ばれた (見本の道に全部消す消去がある) 時は止まる所無し = 消せなくなるまで
+  if (stopBusy) return new Map();
+  stopBusy = true;
+  const out = new Map<number, string>();
+  try {
+    const below = new Set(subtree(doc, self));
+    for (const b of Object.values(doc.boxes)) {
+      if (!b.hand || below.has(b.id) || isStrip(b) || !heldSets(doc, b.id).some((h) => !h.length)) continue;
+      const s = sampleOf(data, doc, b.id, 1);
+      if (s.note === "none" || s.note?.startsWith("cant:")) continue;
+      const n = looseOf(s.item);
+      if (!out.has(n)) out.set(n, b.id);
+    }
+  } finally { stopBusy = false; }
+  m.at.set(self, out);
+  return out;
+}
+/** 全部消えてよい消去の手なら、止める形か (playHand の stop)。違う手は undefined */
+export function stripStop(data: PatchData, doc: TreeDoc, b: TreeBox): ((it: StageItem) => boolean) | undefined {
+  if (!isStrip(b)) return undefined;
+  const stops = stripStops(data, doc, b.id);
+  return (it) => stops.has(looseOf(it));
+}
+/** 全部消えてよい消去の結果の箱から戻る箱 (止まった形の箱。無ければ null = 形の合う箱が無い) */
+export function stripBackOf(data: PatchData, doc: TreeDoc, id: string, item: StageItem): string | null {
+  const p = doc.boxes[id]?.parent;
+  return p && isStrip(doc.boxes[p]) ? stripStops(data, doc, p).get(looseOf(item)) ?? null : null;
+}
+/** 全部消えてよい消去の結果の箱の戻り先の候補 (札・線・精査。違えば null) */
+export function stripTargetsOf(data: PatchData, doc: TreeDoc, id: string): string[] | null {
+  const p = doc.boxes[id]?.parent;
+  return p && isStrip(doc.boxes[p]) ? [...new Set(stripStops(data, doc, p).values())] : null;
 }

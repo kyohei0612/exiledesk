@@ -15,7 +15,7 @@ import { tr } from "../../../i18n/lang";
 import { fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-shape";
-import { boxOutcomeOf } from "./tree-outcome";
+import { boxOutcomeOf, stripStop } from "./tree-outcome";
 import { arrivedAt } from "./tree-arrived";
 import { autoRuneKeys, passThrough, prepFor } from "./tree-unbounded";
 export { goalsHeld, heldHitOf } from "./tree-unbounded";
@@ -120,12 +120,13 @@ export const SPAM_CAP = 5000;
  * 繰り返しの手 (repeat) は、当たりの札 (aims) のどれかが新しく付くまで (か上限まで) 打ち続けた結果を 1 回分として返す。
  * use を渡すと使った物 (カタリストの数・カレンシー・お告げ) を数える (100 人回し tree-run)
  */
-export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => number, aims: readonly Aim[] = [], use?: (key: string, n?: number) => void, miss = false): StageApply {
-  // 消去で全部消えてよい (残したい MOD の ☑ が 0、10-27 オーナー): 1 回ずつエンジンの消去を、打てなくなる (消せる物が無い) まで。もう消せない形なら打たずに通す
+export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => number, aims: readonly Aim[] = [], use?: (key: string, n?: number) => void, miss = false, stop?: (it: StageItem) => boolean): StageApply {
+  // 消去で全部消えてよい (残したい MOD の ☑ が 0、10-27 オーナー): 1 回ずつエンジンの消去を、木の箱と同じ形 (stop、tree-outcome の stripStop) になるか
+  // 打てなくなる (消せる物が無い) まで。初めから同じ形・もう消せない形なら打たずに通す (オーナー「消去 1 つ損する」)
   if (h.keep && !h.keep.length && effectOf(h.currency) === "remove") {
     let it = item;
     const removed: StageApply["removed"] = [];
-    for (let i = 0; i < SPAM_CAP; i++) {
+    for (let i = 0; i < SPAM_CAP && !stop?.(it); i++) {
       const c = playHand(data, it, { ...h, keep: undefined }, rng, aims, use, miss);
       if (!c.applied || c.item === it) break;
       removed.push(...c.removed);
@@ -235,7 +236,7 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
   const rng = mulberry32(seed ^ 0x5eed ^ boxId.length * 7919);
   let last: StageApply | null = null;
   for (let i = 0; i < TRIES; i++) {
-    const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims), undefined, b.out === "junk" || b.out === "lost");
+    const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims), undefined, b.out === "junk" || b.out === "lost", stripStop(data, doc, p));
     if (!r.applied) { last = r; break; }
     last = r;
     const o = boxOutcomeOf(data, doc, p, base.item, r.item, aims);

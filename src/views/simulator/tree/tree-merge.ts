@@ -10,13 +10,17 @@
  */
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { MATCH, matchTargets, RESTART } from "../../../services/simulator/tree/tree-shape";
+import { stripTargetsOf } from "../../../services/simulator/tree/tree-outcome";
+import { craftStage } from "../../../state/craft-stage";
 import type { BackReq, Pos, Seg } from "./tree-lines";
 
 /** 戻りの行き先の箱 (決めた箱 1 つ。前の版の形の合う箱へ = 行きうる形の箱を全部、作り直しは無し) */
 export function backTargetsOf(doc: TreeDoc, id: string): string[] {
   const b = doc.boxes[id];
   if (!b?.back || b.back === RESTART) return [];
-  const to = b.back === MATCH ? matchTargets(doc, id).flatMap((x) => (x.to ? [x.to] : [])) : [b.back];
+  // 全部消えてよい消去の後は、止まりうる形の箱 (tree-outcome の stripStops、10-27 オーナー)
+  const data = craftStage.data.value, strip = b.back === MATCH && data ? stripTargetsOf(data, doc, id) : null;
+  const to = strip ?? (b.back === MATCH ? matchTargets(doc, id).flatMap((x) => (x.to ? [x.to] : [])) : [b.back]);
   return [...new Set(to)].filter((x) => !!doc.boxes[x]);
 }
 
