@@ -111,7 +111,10 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
   // 当たるまで (どれでも) も同じ絞り: 前は付いていない狙い全部で、カオスで付かない狙い (冒涜の MOD・アイテムレベルの足りない段) だけが残ると
   // 当たるまでが毎回 5000 回の上限まで回り、精査の 30 人回しでページが固まった (10-25 モンキー 3 本目、クォータースタッフの外れの箱に 2 つ目のカオススパム)
   const items = [1, 2, 3, 4].map((seed) => (seed === 1 ? item : sampleOf(data, doc, boxId, seed).item));
-  const reach = reachableAims(data, items, h.currency, engineOmens(h), open, { sameText: true });
+  let reach = reachableAims(data, items, h.currency, engineOmens(h), open, { sameText: true });
+  // 触媒の高貴のお告げは品質の無い見本では打てず、表が無い (null) になって狙いが全部並び、左側の高貴なお告げでも付かないサフィが出た
+  // (10-27 夜モンキー 2 回目 4)。触媒のお告げは付く MOD の重みを変えるだけで付きうる範囲は変えないので、抜いて聞き直す (スイッチ omenReach)
+  if (!reach && flag("omenReach") && h.omens.includes(CATALYSING)) reach = reachableAims(data, items, h.currency, engineOmens(h).filter((o) => o !== CATALYSING), open, { sameText: true });
   if (reach) return reach;
   // 確率の表が無い時 (null): エンジンの起こりうる結果のどれでも MOD が増えないなら当たりは無し (10-26 モンキー 7 の 4: 不在のアミュレットに変成 = MOD 0 のマジック、
   // 前は狙い全部を当たりにして、何も付かない当たりの箱と「外れ 100%」ができた)。結果は打った後の箱 1 つ
