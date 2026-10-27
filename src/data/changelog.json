@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.631",
+  "date": "2026-10-27",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ☑ を付けていない MOD は外れ MOD として扱うように (テスト走行・100 人で、☑ 以外の狙いが付いても止まらず外れの箱へ進みます)",
+    "en": "Simulator: Unchecked mods now count as misses (in test runs and 100-run simulations, landing a target without a ☑ goes to the miss box instead of getting stuck)"
+   }
+  ]
+ },
+ {
   "v": "0.1.630",
   "date": "2026-10-27",
   "items": [
@@ -840,18 +852,6 @@
     "area": "",
     "text": "スパムシミュレーターで回す順と道のカードの並びを 無印 → 上級 → 完全 にしました",
     "en": "The Spam Simulator now runs and lists the routes in the order Regular → Greater → Perfect"
-   }
-  ]
- },
- {
-  "v": "0.1.591",
-  "date": "2026-10-21",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "「よくある質問」のページを足しました (確率・お告げ・計算の仕方など 23 問)。ブログ・About の下のリンクから開けます。About とプライバシーポリシーの説明も今の中身に合わせました",
-    "en": "New FAQ page (23 questions on odds, omens, how the numbers are calculated and more), linked from the blog and About pages. Also updated the About and Privacy Policy pages to match how the site works today"
    }
   ]
  }

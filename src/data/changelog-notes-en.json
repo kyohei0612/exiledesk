@@ -1,4 +1,7 @@
 {
+  "0.1.631": [
+    "Simulator: Unchecked mods now count as misses (in test runs and 100-run simulations, landing a target without a ☑ goes to the miss box instead of getting stuck)"
+  ],
   "0.1.630": [
     "Simulator: Fixed unchecked target mods also becoming hit boxes in the craft picker (only ☑ mods get hit boxes again; reverts the v0.1.629 change)"
   ],
