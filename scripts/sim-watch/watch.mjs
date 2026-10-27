@@ -14,6 +14,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { openChrome, sleep } from "./cdp.mjs";
 import { MISS_OUTS, expectBack, isStrip, missBoxes, pathAims, sameHand, stepOf, stepsInText, stripMiddles } from "./doc.mjs";
+import { DISPLAY, makeRules } from "./rules.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
@@ -39,6 +40,9 @@ const norm = (s) => String(s ?? "").replace(/\s+/g, " ").trim();
 const c = await openChrome(Number(process.env.WATCH_PORT ?? 9371));
 const { ev, until, size, go } = c;
 const snap = async (name) => { if (SHOTS) await c.shot(join(SHOTS, `${name}.png`)); };
+// どの木でも成り立つ決まり (rules.mjs)。openTree は下で定義する関数を後から呼ぶ
+const ruleBad = (...a) => { bad(...a); found.at(-1).rule = true; };
+const rules = makeRules({ ev, sleep, count, bad: ruleBad, note, openTree: (...a) => openTree(...a), mode: MODE });
 
 /** 木を新しく開く (手元の保存を消してから #recipe= で)。開いたらその木 (画面が保存した形) を返す */
 async function openTree(t, w, h, mobile) {
@@ -276,16 +280,30 @@ try {
     await snap(`${t.key}-pc`);
     const { hands: pcHands, issues } = await checkPc(t, doc);
     const cards = await checkCards(t, doc);
+    const view = await ev(DISPLAY); // 箱ごとの題・戻りの札・次の手の札・カードの行 (整理の前後で比べる、10-28)
+    await rules.checkHeads(t);
+    const handNames = await rules.checkHandNames(t, doc);
+    await rules.checkLinkShape(t, doc);
     await checkStripLines(t, doc);
     const r = await runs(t);
     const goal = doc.goalQualityOn || doc.wayMods?.length ? { goal: await checkGoal(t, doc) } : {};
     now[t.key] = { boxes: Object.keys(doc.boxes).length, issues, ...r, cards, ...goal };
     await checkHeldAnnul(t);
+    if (await openTree(t, 1660, 860, false)) await rules.checkShelfNames(t, doc, handNames);
+    await rules.checkParentStable(t);
+    // 決まり (rules.mjs) の合わない所も前と比べる (整理で増えた / 消えたが分かる)
+    now[t.key].rules = found.filter((f) => f.tree === t.key && f.rule).map((f) => `${f.where}: ${f.what} | ${f.text}`).sort();
+    now[t.key].view = view;
     // 開発版の基準が無ければ本番の作りの基準 (出した版) と比べる = 出した後に変わった所が出る。前の基準に無い欄 (後から足した見る物) は比べない
     const was = baseline[MODE]?.[t.key] ?? baseline.prod?.[t.key];
-    if (was && !UPDATE) for (const k of ["boxes", "issues", "test", "testStuck", "run", "runStuck", "cards", "goal"]) {
+    if (was && !UPDATE) for (const k of ["boxes", "issues", "test", "testStuck", "run", "runStuck", "cards", "goal", "rules"]) {
       if (!(k in was)) continue;
       if (JSON.stringify(was[k]) !== JSON.stringify(now[t.key][k])) bad(t.key, `回し ${k}`, "前 (baseline) と違う", JSON.stringify(now[t.key][k]), JSON.stringify(was[k]));
+    }
+    // 箱ごとの表示は箱ごとに違う所だけ出す
+    if (was?.view && !UPDATE) for (const id of new Set([...Object.keys(was.view), ...Object.keys(view)])) {
+      const a = was.view[id], b = view[id];
+      if (JSON.stringify(a) !== JSON.stringify(b)) bad(t.key, `表示 ${id}`, "前 (baseline) と箱の表示が違う", JSON.stringify(b ?? "(箱なし)"), JSON.stringify(a ?? "(箱なし)"));
     }
     const pdoc = await openTree(t, 390, 844, true);
     if (!pdoc) { bad(t.key, "スマホ", "スマホで木が開かない", "", ""); continue; }
@@ -294,9 +312,10 @@ try {
     await openTree(t, 390, 844, true);
     await checkPhone(t, pdoc, pcHands);
     if (t.sameHand) await checkSameHand(t);
-    console.log(`  ${t.key}: 合わない所 ${found.filter((f) => f.tree === t.key).length} / 比べた数 ${JSON.stringify(seenN[t.key] ?? {})} / 回し ${JSON.stringify(now[t.key])}`);
+    console.log(`  ${t.key}: 合わない所 ${found.filter((f) => f.tree === t.key).length} / 比べた数 ${JSON.stringify(seenN[t.key] ?? {})} / 回し ${JSON.stringify({ ...now[t.key], view: undefined, cards: undefined })}`);
   }
-  if (UPDATE) { baseline[MODE] = { ...(baseline[MODE] ?? {}), ...now, _at: new Date().toISOString(), _origin: ORIGIN }; writeFileSync(BASE_PATH, JSON.stringify(baseline, null, 1) + "\n"); console.log(`baseline.json の ${MODE} を書いた`); }
+  // 書く直前に読み直す (1460 と 1461 を同時に回すと、後から書いた方が先の分を消す)
+  if (UPDATE) { const baseline = existsSync(BASE_PATH) ? JSON.parse(readFileSync(BASE_PATH, "utf8")) : {}; baseline[MODE] = { ...(baseline[MODE] ?? {}), ...now, _at: new Date().toISOString(), _origin: ORIGIN }; writeFileSync(BASE_PATH, JSON.stringify(baseline, null, 1) + "\n"); console.log(`baseline.json の ${MODE} を書いた`); }
   if (c.errors.length) for (const e of [...new Set(c.errors)]) bad("(全体)", "ページ", "JS のエラー", e, "0 件");
   console.log(`\n合わない所: ${found.length}`);
   for (const f of found) console.log(`- [${f.tree}] ${f.where}: ${f.what}\n    画面: ${f.text}${f.want ? `\n    木・前: ${f.want}` : ""}`);
