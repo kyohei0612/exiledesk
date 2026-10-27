@@ -55,6 +55,18 @@ export function markDone(d: TreeDoc, later: ReadonlySet<string>): void {
   for (const b of Object.values(d.boxes)) if ((b.out === "hit" || b.out === "branch") && isOpen(b) && !later.has(b.id) && completes(d, b.id)) setDone(d, b.id, "main");
 }
 
+/**
+ * 結果の画面で、まだ打つカレンシーを選んでいない扱いか (スイッチ phoneResult1027)。決めていない・次の手を決めるにした箱に加え、
+ * 外れの側で自動でつないだ戻り (autoBack、同じ形の箱へ) も選ぶ前は答えを出さない (10-27 昼オーナー「外れた場合なんだから一旦ここ自動で何も表示させずに打つカレンシー決めさす」)。
+ * 同じ手を持つと setReturn (setBack が autoBack を外す) で初めて「↩ 再度挑戦 · n 段目へ戻る」
+ */
+export function awaitsPick(d: TreeDoc, id: string, later: ReadonlySet<string>): boolean {
+  const b = d.boxes[id];
+  if (!b || b.hand || b.split || b.done) return false;
+  if (!b.back) return true;
+  return !!b.autoBack && (isMiss(b) || b.out === "any") && !later.has(id);
+}
+
 export type Question = { kind: "hand"; id: string } | { kind: "outs"; id: string };
 /** ① で聞く箱か (手がまだ無い始まり・品質だけの通り抜け・「次の手を決める」にした結果の箱) */
 const needsHand = (b: TreeBox, later: ReadonlySet<string>): boolean => !b.hand && !b.split && (b.out === "start" || (b.out === "pass" && !b.back) || (later.has(b.id) && isOpen(b)));
@@ -191,5 +203,7 @@ export function usePhoneQuiz() {
     });
     return parts.join(" › ");
   }
-  return { doc: t.doc, questions, current, focus, answered, later: laterSet, answer, reset, setLater, unLater, setReturn, setFinished, stateOf, outsOf, decide, decideOne, canRetry, boxTitle, pathText };
+  /** 結果の画面でまだ選んでいない (awaitsPick) */
+  const awaits = (id: string): boolean => awaitsPick(t.doc.value, id, laterSet.value);
+  return { awaits, doc: t.doc, questions, current, focus, answered, later: laterSet, answer, reset, setLater, unLater, setReturn, setFinished, stateOf, outsOf, decide, decideOne, canRetry, boxTitle, pathText };
 }

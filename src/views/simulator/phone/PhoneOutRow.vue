@@ -36,7 +36,8 @@ const parent = computed(() => box.value?.parent ?? null);
 const from = computed(() => props.boxId);
 /** 箱ごとの戻れる / 戻れない (null = 戻れる) */
 const link = useTreeLink(t.doc, from);
-const state = computed(() => q.stateOf(props.boxId));
+/** 今の答え。結果の画面の形 (phoneResult1027) では、まだ選んでいない箱は自動でつないだ戻りがあっても open */
+const state = computed(() => (P27 && q.awaits(props.boxId) ? "open" : q.stateOf(props.boxId)));
 /** 戻り先の箱 (自動でつないだ・選んだ) */
 const backTo = computed(() => (box.value?.back ? backTargetsOf(t.doc.value, props.boxId)[0] ?? null : null));
 /** 同じ手をもう一度 = 打つ前の箱へ戻る (始まりの手の結果は「始めから」と同じなので出さない) */
@@ -107,6 +108,16 @@ const retrySay = computed((): string => {
  */
 const sit = computed((): [string, string] => {
   const o = box.value?.out;
+  // 打ったカレンシーの名前入り (10-27 昼オーナー「カオスオーブで外れた場合」。枠の外の見出しを外したので枠に書く)
+  const ph = parent.value ? t.doc.value.boxes[parent.value]?.hand : null;
+  if (P27 && ph) {
+    const n = handLabel(ph);
+    if (o === "junk") return [tr(`${n}で外れた場合`, `If ${n} misses`), tr("狙いの MOD は付かず、外れ MOD が付いた", "No target mod; a miss mod was added")];
+    if (o === "lost") return [tr(`${n}で狙いが消えた場合`, `If ${n} removes a target`), tr("付いていた狙いの MOD が消えた", "A target mod that was on the item was removed")];
+    if (o === "junkGone") return [tr(`${n}で外れが消えた場合`, `If ${n} removes a miss`), q.boxTitle(props.boxId)];
+    if (o === "hit") return [tr(`${n}で当たった場合`, `If ${n} hits`), q.boxTitle(props.boxId)];
+    if (o === "any") return [tr(`${n}を打った後`, `After ${n}`), tr("何が付いても次へ (狙い無し)", "Anything counts (no target)")];
+  }
   if (o === "junk") return [tr("外れた場合", "If it misses"), tr("狙いの MOD は付かず、外れ MOD が付いた", "No target mod; a miss mod was added")];
   if (o === "lost") return [tr("狙いが消えた場合", "If a target is lost"), tr("付いていた狙いの MOD が消えた", "A target mod that was on the item was removed")];
   if (o === "junkGone") return [tr("外れが消えた場合", "If a miss is removed"), q.boxTitle(props.boxId)];

@@ -64,6 +64,8 @@ watch(() => qKey(q.current.value), () => {
 }, { immediate: true });
 function setOutStep(n: number): void { outStep.value = n; }
 function walk(by: number): void {
+  // 結果の画面の見出し (‹ 前の結果) を外したので、‹ 1 つ前は同じ手の前の結果から戻す (スイッチ phoneResult1027)
+  if (RES27 && by < 0 && q.current.value?.kind === "outs" && outStep.value > 0) { outStep.value--; window.scrollTo(0, 0); return; }
   const to = trailAt.value + by, x = trail.value[to];
   if (!x || !t.doc.value.boxes[x.id]) return;
   trailAt.value = to; walking = true;
@@ -159,7 +161,7 @@ const main = computed((): { kind: string; text: string; off?: boolean; go: () =>
     const outs = q.outsOf(c.id), k = Math.min(outStep.value, Math.max(0, outs.length - 1));
     // 既定の答えは無い: 外れも当たりも、次に打つカレンシーを選ぶ (か × で消す) まで「次へ」で進めない (10-27 昼オーナー「脳死で次へとかさせちゃう」)
     const o = outs[k];
-    if (RES27 && o && ["open", "later"].includes(q.stateOf(o))) return { kind: "hand", text: tr("次に打つカレンシーを選ぶ", "Choose the next currency"), go: () => { handFor.value = o; } };
+    if (RES27 && o && q.awaits(o)) return { kind: "hand", text: tr("次に打つカレンシーを選ぶ", "Choose the next currency"), go: () => { handFor.value = o; } };
     if (k < outs.length - 1) return { kind: "decide", text: tr(`次へ (${k + 1} / ${outs.length})`, `Next (${k + 1} / ${outs.length})`), go: () => { q.decideOne(outs[k]!); outStep.value = k + 1; window.scrollTo(0, 0); } };
     return { kind: "decide", text: outs.length > 1 ? tr(`次へ (${outs.length} / ${outs.length})`, `Next (${outs.length} / ${outs.length})`) : tr("次へ", "Next"), go: () => q.decide(c.id) };
   }
@@ -231,7 +233,7 @@ function goBox(id: string): void {
         </button>
         <!-- 段送り (10-27 昼オーナー「上の段送りを下の帯に、上は消す」。↶ 戻す・↷ は外した = 「↶ 戻すは要らない」) -->
         <div v-if="P27" data-phone-progress class="flex items-center gap-2 text-[12px] text-[#d8ccb4]">
-          <button type="button" data-phone-walk-back :class="FLAT" :disabled="trailAt <= 0" @click="walk(-1)">‹ {{ tr("1 つ前", "Back") }}</button>
+          <button type="button" data-phone-walk-back :class="FLAT" :disabled="trailAt <= 0 && !(RES27 && q.current.value?.kind === 'outs' && outStep > 0)" @click="walk(-1)">‹ {{ tr("1 つ前", "Back") }}</button>
           <span class="min-w-0 flex-1 break-words text-center">
             <b v-if="stepNow" class="text-[14px] text-amber-200">{{ tr(`${stepNow} 段目`, `Step ${stepNow}`) }}</b><span class="opacity-70"> / {{ tr(`全 ${stepAll} 段`, `${stepAll} steps`) }}</span>
             <span v-if="total && testedKey === routeKeyOf(t.doc.value)" class="opacity-70"> · {{ tr(`未定 ${total}`, `${total} open`) }}</span>
