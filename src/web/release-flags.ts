@@ -83,6 +83,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "todayUnique",
   // AdSense の審査対策: トップの説明文とコスメのタブ外し (オーナー 10-27「AdSense まわりは即リリースで OK」)
   "adReview",
+  // シミュのスマホの直し・結果の画面・箱の形・カオススパムの札外し・段の表の狭い列 (オーナー 10-27 夕「品質関係以外一旦リリース」「まとめて入れて、ポップアップも出して」)。閉じたままは goalQuality・heldTags
+  "phone1027", "phoneResult1027", "goalShape", "noSpam", "tierNarrow",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */

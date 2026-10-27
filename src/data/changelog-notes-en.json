@@ -1,4 +1,18 @@
 {
+  "0.1.634": [
+    "Simulator (phone): Redesigned the result screen. Tap the answer text to change it, and pick the next move for both hits and misses from \"Choose the currency to use in this state\". Currency descriptions are collapsed by default, and the bottom bar now steps through tiers",
+    "Simulator: On a miss, choosing the same move as before now returns to the box with the same shape and move instead of making a new box (PC and phone). Also fixed tiers growing endlessly when repeating Desecration or Essences",
+    "Simulator: Mods not in your goal (unchecked ones, or ones added by Essences or Desecration) now count as miss mods, compared by kind (regular / Essence crafted mod / Desecrated). Boxes with a different kind are no longer linked automatically, and when several boxes share the shape, the one whose miss mods match in kind and count is chosen",
+    "Simulator: Essence of the Infinite lets you ☑ the attributes in your goal as hits (unchecked attributes are miss mods). Essence of Delirium (random notable) can no longer be picked in the Simulator (the emulator is unchanged)",
+    "Simulator: Removed the dedicated \"reroll with Chaos Orbs until hit\" card from the shelf. Previously saved reroll-until-hit moves still open as Chaos Orb moves",
+    "Simulator: Orb of Annulment now lets you choose the \"Mods to keep\". When any mod may be removed, each annul is laid out as a box in a straight line and returns to the matching box in the tree once the shape matches",
+    "Simulator: \"Test run\" now runs 30 crafters even when parts of the route are missing, and shows how many got stuck at which box and where loops happen",
+    "Simulator: Every box now has an ×, which removes the move that made it along with the boxes below so you can pick a new move. Changing a move warns that everything after it will be deleted",
+    "Simulator: The recipe bar fits on one line, with Save with a name, Share (short URL / X) and × to delete entries in the list",
+    "Simulator: Mods that may be removed are highlighted in the craft picker and on box cards, and Tidy no longer places a box from another branch directly under a box",
+    "Simulator: Links between boxes are now drawn from the middle of where the facing edges overlap, as a single straight line when no box is in between",
+    "Tier table: mod text no longer squeezes into a vertical column when space is narrow (essence names move under the text)"
+  ],
   "0.1.633": [
     "Phone: The item class tiles on the base picker now fill the column width with tighter spacing, and tall icons are centered in the frame, overflowing evenly above and below"
   ],

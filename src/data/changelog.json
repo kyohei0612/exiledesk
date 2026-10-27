@@ -1,5 +1,84 @@
 [
  {
+  "v": "0.1.634",
+  "date": "2026-10-27",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター (スマホ): 結果の画面を作り直しました。答えの文を押すと選び直せ、外れも当たりも「この状態で打つカレンシーを選ぶ」から次の手を決めます。カレンシーの説明は既定で閉じ、下の帯は段送りに",
+    "en": "Simulator (phone): Redesigned the result screen. Tap the answer text to change it, and pick the next move for both hits and misses from \"Choose the currency to use in this state\". Currency descriptions are collapsed by default, and the bottom bar now steps through tiers"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 外れで打つ前と同じ手を選ぶと、新しい箱を作らずに同じ形・同じ手の箱へ戻るように (PC・スマホ)。冒涜やエッセンスを繰り返すと段が伸び続けた所も直しました",
+    "en": "Simulator: On a miss, choosing the same move as before now returns to the box with the same shape and move instead of making a new box (PC and phone). Also fixed tiers growing endlessly when repeating Desecration or Essences"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成の狙いに無い MOD (☑ の無い物・エッセンスや冒涜で付いた物) は外れ MOD として数え、外れ MOD は種類 (普通・エッセンスのクラフト MOD・冒涜) ごとに分けて比べるように。種類が違う箱へは自動でつながず、同じ形の箱が幾つかあれば種類と数も合う箱へ戻します",
+    "en": "Simulator: Mods not in your goal (unchecked ones, or ones added by Essences or Desecration) now count as miss mods, compared by kind (regular / Essence crafted mod / Desecrated). Boxes with a different kind are no longer linked automatically, and when several boxes share the shape, the one whose miss mods match in kind and count is chosen"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 無限のエッセンスは付きうる能力値のうち完成の狙いにある物を ☑ で当たりに選べるように (☑ の無い能力値は外れ MOD)。錯乱のエッセンス (付くノータブルがランダム) はシミュでは選べないように (エミュはそのまま)",
+    "en": "Simulator: Essence of the Infinite lets you ☑ the attributes in your goal as hits (unchecked attributes are miss mods). Essence of Delirium (random notable) can no longer be picked in the Simulator (the emulator is unchanged)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 手の棚から「カオスオーブで当たるまで振り直す」専用の札を外しました。前に保存した当たるまでの手は、カオスオーブの手としてそのまま開けます",
+    "en": "Simulator: Removed the dedicated \"reroll with Chaos Orbs until hit\" card from the shelf. Previously saved reroll-until-hit moves still open as Chaos Orb moves"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 消去で「残したい MOD」を選べるように。全部消えてよい消去は消去 1 回ごとの箱を縦に並べ、木の同じ形の箱になった所でその箱へ戻ります",
+    "en": "Simulator: Orb of Annulment now lets you choose the \"Mods to keep\". When any mod may be removed, each annul is laid out as a box in a straight line and returns to the matching box in the tree once the shape matches"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 「テストで回す」は足りない所があっても 30 人を回し、どの箱で何人止まったか・どこでループしたかを出すように",
+    "en": "Simulator: \"Test run\" now runs 30 crafters even when parts of the route are missing, and shows how many got stuck at which box and where loops happen"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: どの箱にも × を付け、その箱を作った手と下の箱をまとめて消して手を選び直せるように。手を替える時は「この手以降は削除されます」と出します",
+    "en": "Simulator: Every box now has an ×, which removes the move that made it along with the boxes below so you can pick a new move. Changing a move warns that everything after it will be deleted"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: レシピの帯を 1 行にまとめ、名前を付けて保存・シェア (短い URL・X)・一覧の × で消せるように",
+    "en": "Simulator: The recipe bar fits on one line, with Save with a name, Share (short URL / X) and × to delete entries in the list"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 手の窓と箱のカードで消える候補の MOD に色を付け、整列で箱の真下に別の枝の箱を置かないように",
+    "en": "Simulator: Mods that may be removed are highlighted in the craft picker and on box cards, and Tidy no longer places a box from another branch directly under a box"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 箱どうしのつながりの線を、向き合う辺の重なる所の真ん中から結び、間に箱が無ければ 1 本の直線にするように",
+    "en": "Simulator: Links between boxes are now drawn from the middle of where the facing edges overlap, as a single straight line when no box is in between"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "段の表: 幅が狭い時に MOD の文が縦に潰れないように (エッセンスの名前は文の下へ)",
+    "en": "Tier table: mod text no longer squeezes into a vertical column when space is narrow (essence names move under the text)"
+   }
+  ],
+  "pop": true
+ },
+ {
   "v": "0.1.633",
   "date": "2026-10-27",
   "items": [
@@ -828,18 +907,6 @@
     "area": "",
     "text": "クラフト台: 前兆・歪んだ・悲嘆・捻じれたアミュレットの暗黙に出ていた「0個」の行を出さないようにしました (poe2db に合わせました)",
     "en": "Craft stage: Portent, Distorted, Lament and Twisted Amulets no longer show a “0” modifier line in their implicit (matches poe2db)"
-   }
-  ]
- },
- {
-  "v": "0.1.594",
-  "date": "2026-10-22",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "スパムシミュレーター: 計算中や「当たった形でクラフト台に戻る」で回している間に、進み具合の小さな表示 (くるくると「100 人ずつ計算中 n/900」など) を出すようにしました。クラフト台の始めの読み込みも同じ表示です",
-    "en": "Spam simulator: a small progress indicator (a spinner with “Calculating 100 people each n/900” etc.) now shows while calculating or rolling for “Back to the craft stage with a hit”. The first load of the craft stage shows it too"
    }
   ]
  }
