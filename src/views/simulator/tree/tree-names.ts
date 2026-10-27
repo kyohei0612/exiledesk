@@ -11,6 +11,7 @@ import { CATALYSING, isCatalyst } from "../../../services/simulator/tree/tree-ha
 import { boxAims, fractureMarks, startRarity, startsFractured, type Hand, type SplitWhen, type TreeBox, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { tr } from "../../../i18n/lang";
+import { flag } from "../../../web/release-flags";
 
 /** 名前を引く時のアイテム (ツリーのベース。骨・エッセンスの名前が部位で変わる) */
 const t = useTree();
@@ -68,7 +69,8 @@ export function handLabel(h: Hand): string {
   // 消去の残したい MOD (10-27 オーナー): 全部消えてよい = 1 回ずつ箱を並べる、☑ があれば残す数
   const keep = h.keep ? (h.keep.length ? tr(` (${h.keep.length} MOD 残す)`, ` (keep ${h.keep.length})`) : tr(" (どれが消えてもよい)", " (any mod may go)")) : "";
   const label = cat + [handName(h.currency), ...h.omens.map(handName)].join(" + ") + keep + (h.free ? tr(" (狙い無し)", " (no target)") : "") + (isCatalyst(h.currency) ? tr(" (品質を最大まで)", " (to max quality)") : "");
-  if (!h.repeat) return label;
+  // 「スパム」の呼び名は出さない = 設定したカレンシーの名前のまま (10-27 昼オーナー「普通に設定したどおり出せばおｋ」、スイッチ noSpam。中は今まで通り当たるまで)
+  if (!h.repeat || flag("noSpam")) return label;
   // 当たるまで = カオススパムオーブ (10-25 オーナー。前に保存した木の「カオスの当たるまで」も同じ手として読む)
   const spam = tr("カオススパムオーブ", "Chaos Spam Orb");
   return h.repeat.max ? tr(`${spam} (${label}、${h.repeat.max} 回まで)`, `${spam} (${label}, max ${h.repeat.max})`) : `${spam} (${label})`;

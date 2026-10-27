@@ -279,6 +279,8 @@ const aimStep = ref(false);
  * 消去は高貴・カオスと同じく、まず持って「使う ›」→ 次のページで残したい MOD (上に ☑ の並び、一番下に全部消えてよい、既定オン。「n MOD 外れ MOD」は出さない)
  */
 const P27 = computed(() => phone.value && flag("phone1027"));
+/** カオススパムオーブの札と呼び名を出さない (スイッチ noSpam、10-27 昼オーナー「特殊過ぎて逆に困る」)。前に保存した当たるまでの手は開けば今まで通り (spam のまま決められる) */
+const NS = flag("noSpam");
 const helpOpen = ref(false);
 /** 光らせる札 (何も持っていない間だけ。チュートリアルの「次に押す物を光らせる」と同じ光 .shelf-hint)。当たるまで = カオススパムオーブの札 (棚に無ければ元のカレンシーの札) */
 async function glowHint(): Promise<void> {
@@ -289,7 +291,7 @@ async function glowHint(): Promise<void> {
   // 棚の札は値段・データが揃ってから描かれるので、見つかるまで少し待つ (60 フレームまで)
   for (let i = 0; i < 60; i++) {
     if (held.value) return;
-    const el = (h.repeat ? document.querySelector("[data-tree-spam-orb]") : null) ?? document.querySelector(`[data-tree-shelf] [data-shelf][data-key="${CSS.escape(h.currency)}"]`);
+    const el = (h.repeat && !NS ? document.querySelector("[data-tree-spam-orb]") : null) ?? document.querySelector(`[data-tree-shelf] [data-shelf][data-key="${CSS.escape(h.currency)}"]`);
     if (el) { el.classList.add("shelf-hint"); return; }
     await new Promise((r) => requestAnimationFrame(r));
   }
@@ -328,10 +330,10 @@ function ok(): void {
     <div v-if="held" class="flex flex-col gap-1.5 rounded-md bg-white/[0.04] p-2">
       <div class="flex min-w-0 items-center gap-1.5">
         <span class="flex shrink-0 items-center -space-x-1"><img v-for="ic in [held, ...used].filter((x) => !!iconOf(x))" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
-        <b class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="hand ? handLabel(hand) : ''">{{ spamOn ? `${tr("カオススパムオーブ", "Chaos Spam Orb")} (${[nameOf(held), ...used.map(nameOf)].join(" + ")})` : [nameOf(held), ...used.map(nameOf), ...(echo && isBone(held) ? [nameOf(ECHO)] : [])].join(" + ") }}</b>
+        <b class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="hand ? handLabel(hand) : ''">{{ spamOn && !NS ? `${tr("カオススパムオーブ", "Chaos Spam Orb")} (${[nameOf(held), ...used.map(nameOf)].join(" + ")})` : [nameOf(held), ...used.map(nameOf), ...(echo && isBone(held) ? [nameOf(ECHO)] : [])].join(" + ") }}</b>
       </div>
       <!-- カオススパムオーブ: カオスの段を替える (カタリストの札と同じ形) と上限 -->
-      <div v-if="spamOn" data-tree-hand-spam-tiers class="flex flex-wrap items-center gap-1">
+      <div v-if="spamOn && !NS" data-tree-hand-spam-tiers class="flex flex-wrap items-center gap-1">
         <button v-for="c in SPAM_TIERS" :key="c" type="button" data-tree-hand-spam-tier :data-tier="c" class="flex min-h-7 items-center gap-1 rounded-md border px-2 text-[12px]" :class="c === held ? 'border-amber-300 bg-amber-500/20 text-amber-100' : 'border-white/10 hover:bg-white/10'" :aria-pressed="c === held" @click="held = c"><img v-if="iconOf(c)" :src="iconOf(c)" alt="" class="size-5 object-contain" />{{ nameOf(c) }}</button>
         <span class="ml-1 flex items-center gap-1 text-[12px] opacity-80">{{ tr("上限", "Max") }}<input v-model.number="spamMax" type="number" min="1" class="h-7 w-16 rounded-md border border-white/15 bg-black/40 px-1 text-right" :placeholder="tr('なし', 'none')" />{{ tr("回", "") }}</span>
       </div>
@@ -379,7 +381,7 @@ function ok(): void {
     <div data-tree-shelf @pointerdown="onShelfDown">
       <!-- カオススパムオーブ (シミュだけの札、レアの時だけ)。棚の札と同じ形 (ShelfButton の枠・絵・名前)、絵はカオスオーブそのまま、
            右上に「上級」「完全」と同じ形の札で「スパム」、見分けは札と枠の色だけ (10-25 オーナー、前の ↻ の印はこれに置き換え) -->
-      <button v-if="(TREE_SPAM_ORB && isRare) || spamOn" type="button" data-tree-spam-orb :aria-pressed="spamOn" :disabled="!!spamWhy && !spamOn"
+      <button v-if="!NS && ((TREE_SPAM_ORB && isRare) || spamOn)" type="button" data-tree-spam-orb :aria-pressed="spamOn" :disabled="!!spamWhy && !spamOn"
         class="group relative mb-2 flex w-[74px] flex-col items-center px-0.5 pb-1 text-[10px] transition disabled:cursor-not-allowed disabled:opacity-35 md:w-[80px] md:text-[11px]"
         :class="spamOn ? 'text-[var(--exile-color-text-title)]' : ''"
         :title="spamWhy ?? tr('狙う MOD が付くまでカオスを打ち続ける (狙いの側に空きがあれば先に高貴を 1 回)。レアの時だけ', 'Keep using Chaos until a target mod lands (an Exalted Orb first if the target side has room). Rare only')" @click="holdSpam">

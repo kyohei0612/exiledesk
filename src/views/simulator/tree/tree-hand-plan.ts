@@ -16,6 +16,7 @@ import { looseOf, stripStops } from "../../../services/simulator/tree/tree-outco
 import { drop, fractureMarks, healLost, kindOfHand, setHand, subtree, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
 import { tr } from "../../../i18n/lang";
+import { flag } from "../../../web/release-flags";
 
 /** 起こりうる結果の一覧 (tree-sample の possibleOutsOf)。null = 手の種類ごとの箱 */
 export type OnlyOut = ReadonlyArray<{ out: OutKind; aim: Aim | null }> | null;
@@ -148,6 +149,7 @@ export function problemOf(data: PatchData, item: StageItem, h: Hand, hitAims: Ai
   const full = !!preCat && catalystFull(item, preCat);
   if (preCat && preFill && !preFill.applied && !full) return tr(`前に足すカタリストが入らない: ${preFill.reason ?? ""}`, `The catalyst before this can't be used: ${preFill.reason ?? ""}`);
   // 当たるまで繰り返すのに狙いが 1 つも無い時は決めさせない (MOD を選んでいない・まだ付いていない狙いが無い・このカレンシーでは付かない)
+  if (kindOf(h) === "spam" && !hitAims.length && flag("noSpam")) return tr("狙う MOD を選んで (当たるまで繰り返す手は狙う MOD が要る。候補が無い時は、完成の MOD に足してから)", "Pick a target mod (a repeat-until-hit craft needs one; if there are none, add one to the final mods first)");
   if (kindOf(h) === "spam" && !hitAims.length) return tr("狙う MOD を選んで (カオススパムオーブは狙う MOD が要る。候補が無い時は、完成の MOD に足してから)", "Pick a target mod (the Chaos Spam Orb needs one; if there are none, add one to the final mods first)");
   return handProblem(data, preCat && preFill ? preFill.item : item, h);
 }

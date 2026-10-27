@@ -10,6 +10,9 @@ import { CATALYSING } from "../../../services/simulator/tree/tree-hands";
 import type { Hand } from "../../../services/simulator/tree/tree-model";
 import { handLabel, handName } from "./tree-names";
 import { tr } from "../../../i18n/lang";
+import { flag } from "../../../web/release-flags";
+/** 「スパム」の呼び名を出さない (スイッチ noSpam、10-27 昼オーナー) */
+const SPAM = !flag("noSpam");
 import { craftStage as s } from "../../../state/craft-stage";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { autoRuneKeys, prepFor } from "../../../services/simulator/tree/tree-unbounded";
@@ -51,9 +54,9 @@ const maxW = computed(() => `${Math.round(props.room / props.inv)}px`);
     <span v-if="cat" data-tree-hand-catalyst class="flex min-w-0 shrink items-center gap-0.5 text-sky-200"><img v-if="iconOf(cat)" :src="iconOf(cat)" alt="" class="size-6 object-contain" />{{ handName(cat) }}<span aria-hidden="true" class="opacity-70">→</span></span>
     <span class="flex shrink-0 items-center gap-0.5"><img v-for="k in icons" :key="k" :src="iconOf(k)" alt="" class="size-6 object-contain" /></span>
     <!-- お告げも文字で (10-26 モンキー 7 の 24: 絵だけでアビスの反響が読めなかった)。全文は乗せた時の title -->
-    <span data-tree-hand-name class="min-w-0 whitespace-normal break-words leading-tight">{{ hand.repeat ? tr("カオススパムオーブ", "Chaos Spam Orb") : [hand.currency, ...hand.omens].map((k) => handName(k)).join(" + ") }}</span>
+    <span data-tree-hand-name class="min-w-0 whitespace-normal break-words leading-tight">{{ hand.repeat && SPAM ? tr("カオススパムオーブ", "Chaos Spam Orb") : [hand.currency, ...hand.omens].map((k) => handName(k)).join(" + ") }}</span>
     <!-- カオススパムオーブ (当たるまで) は横にカオスの段の名前 -->
-    <span v-if="hand.repeat" class="shrink-0 rounded-sm bg-rose-400/20 px-1 text-[10px]">{{ handName(hand.currency) }}</span>
+    <span v-if="hand.repeat && SPAM" class="shrink-0 rounded-sm bg-rose-400/20 px-1 text-[10px]">{{ handName(hand.currency) }}</span>
     <!-- 狙い無しの手 (結果は「打った後」の箱 1 つ。札が高貴だけで狙い無しと分からなかった、10-22 白紙から組んだ試し) -->
     <span v-if="hand.free" class="shrink-0 rounded-sm bg-white/15 px-1 text-[10px]">{{ tr("狙い無し", "no target") }}</span>
     <span v-if="runeOn" data-tree-hand-rune class="shrink-0 rounded-sm bg-sky-400/20 px-1 text-[10px] text-sky-100" :title="tr(`この手でルーンが嵌まる: ${runeOn} (一度嵌まったら戻っても嵌まったまま)`, `A rune is socketed at this step: ${runeOn} (stays socketed on return paths)`)">{{ tr("ルーン", "Rune") }}</span>
