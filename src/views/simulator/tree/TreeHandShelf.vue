@@ -53,7 +53,7 @@ const item = computed(() => sample.value?.item ?? null);
 const preview = computed(() => { const d = s.data.value, it = preCat.value ? shelfItem.value : item.value ?? shelfItem.value, h = held.value; return d && it && h && !problem.value ? previewUse(d, it, h, omens.value) : null; });
 const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it) : it);
 /** 狙いに当たらない MOD の行は「外れ MOD」(乗せた時のカードと同じ、10-25 オーナー「プラスで MOD 選んだ時ハズレ MOD の表示が溶けてる」) */
-const rowTags = (it: StageItem | null) => (s.data.value && it ? removeTags(it, treeRowTags(s.data.value, t.doc.value, t.doc.value.boxes[props.boxId]?.unwanted ?? [], it, t.doc.value.boxes[props.boxId])) : null);
+const rowTags = (it: StageItem | null) => (s.data.value && it ? removeTags(it, treeRowTags(s.data.value, t.doc.value, t.doc.value.boxes[props.boxId]?.unwanted ?? [], it, { anyOf: t.doc.value.boxes[props.boxId]?.anyOf })) : null);
 /**
  * 消去を持った時は、フラクチャー以外で ☑ の無い MOD を全部「外れ MOD」と出し、☑ の MOD はふだんの表示 (狙い) に戻す。☑ を変えるとすぐ変わる
  * (10-27 夜オーナー「全部消えてよいなら持った瞬間に外れ MOD 表示、残したい MOD に ☑ で狙い表示」。スイッチ heldTags)

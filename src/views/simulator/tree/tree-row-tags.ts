@@ -6,15 +6,23 @@
  */
 import { type PatchData, type StageItem } from "../../../services/craft-stage/engine";
 import { isAimMod } from "../../../services/simulator/tree/tree-aim";
-import type { Aim, TreeDoc } from "../../../services/simulator/tree/tree-model";
+import type { Aim, Hand, TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { useTree } from "./use-tree";
 import { aimOpts, aimsOf, targetsOf } from "../../../services/simulator/tree/tree-sample";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { modText, tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 
-export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly string[], it: StageItem, box?: { anyOf?: Aim[] } | null): Map<string, RowTag> {
+/** 全部消えてよい消去の手の箱 (消去の直線の箱。☑ が無い = 消えうる MOD は全部外れ MOD) */
+const stripHand = (h: Hand | null | undefined): boolean => !!h && effectOf(h.currency) === "remove" && !!h.keep && !h.keep.length;
+export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly string[], it: StageItem, box?: { anyOf?: Aim[]; hand?: Hand | null } | null): Map<string, RowTag> {
   const out = new Map<string, RowTag>();
+  // 消去の直線の箱 (全部消えてよい消去の手の箱) は、フラクチャー以外の MOD を全部「外れ MOD」で出す (手の窓で消去を持った時と同じ考え。10-27 夜オーナー、スイッチ heldTags)
+  if (flag("heldTags") && stripHand(box?.hand)) {
+    for (const m of [...it.prefixes, ...it.suffixes]) if (!m.fractured) out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`全部消えてよい消去で消えうる MOD: ${modText(m)}`, `May be removed by the clear-all Annulment: ${modText(m)}`) });
+    return out;
+  }
   const any = box?.anyOf && box.anyOf.length > 1 ? box.anyOf : null;
   const anyT = any ? targetsOf(d, any) : [];
   const anyText = any ? any.map(useTree().aimShort).join(tr(" か ", " or ")) : "";

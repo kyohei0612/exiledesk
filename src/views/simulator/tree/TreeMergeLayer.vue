@@ -6,12 +6,14 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { MergeLine } from "./tree-merge";
+import { flag } from "../../../web/release-flags";
 
 const props = defineProps<{ lines: readonly MergeLine[]; paths: ReadonlyMap<string, string>; hover: string | null; /** 選んだ箱 (窓を開いている箱) */ sel: string | null; showAll: boolean }>();
 const COLOR = { fwd: "#a39a88", back: "#5fd0e0", join: "#d4a94a" } as const;
 
 /** 乗せた箱・選んだ箱に関わる線 (出元の箱・行き先・出元の親) */
-const on = (l: MergeLine, id: string | null): boolean => !!id && (l.from === id || l.to === id || l.parent === id);
+// 全部消えてよい消去の直線の途中の箱 (出元の親) に乗せても線は出さない。動きは次の箱へ進むだけで、上へつながる線は誤解される (10-27 夜オーナー「何も線表示させないでおｋ」、スイッチ heldTags)
+const on = (l: MergeLine, id: string | null): boolean => !!id && (l.from === id || l.to === id || (l.parent === id && !(flag("heldTags") && l.viaStrip)));
 const hot = (l: MergeLine): boolean => on(l, props.hover) || on(l, props.sel);
 // 統合 (同じ MOD 群のため統合) の線はいつも出す (10-27 オーナー「実線で常に出す。普通の線だとなんでつながってるのか分からん」)
 const shown = computed(() => props.lines.filter((l) => props.showAll || hot(l) || l.kind === "join"));

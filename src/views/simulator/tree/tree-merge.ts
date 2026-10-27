@@ -11,6 +11,7 @@
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { MATCH, matchTargets, RESTART } from "../../../services/simulator/tree/tree-shape";
 import { stripTargetsOf } from "../../../services/simulator/tree/tree-outcome";
+import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { craftStage } from "../../../state/craft-stage";
 import type { BackReq, Pos, Seg } from "./tree-lines";
 import { flag } from "../../../web/release-flags";
@@ -47,7 +48,7 @@ function mergeIds(doc: TreeDoc): Set<string> {
  * 合流の線 1 本 (箱 → 行き先)。fwd = 当たりの箱 (進む色)、back = 外れ・消えたの箱 (戻りの色)、
  * join = 当たりの箱を同じ状態の当たりの箱へまとめた「同じ MOD 群のため統合」(いつも実線・つながりの印、道は joinPath。10-27 オーナー)
  */
-export interface MergeLine { id: string; from: string; to: string; parent: string; kind: "fwd" | "back" | "join"; /** join の印を置く所 */ mark?: { x: number; y: number } }
+export interface MergeLine { id: string; from: string; to: string; parent: string; kind: "fwd" | "back" | "join"; /** join の印を置く所 */ mark?: { x: number; y: number }; /** 出元の親が全部消えてよい消去の手の箱 (消去の直線の途中。親に乗せても光らせない) */ viaStrip?: boolean }
 
 /**
  * 合流の線の頼み (tree-lines の routeBacks へ)。戻りの矢印だけの箱の下の真ん中から出て、行き先の箱の枠 (横の辺の真ん中) へ入る。
@@ -65,7 +66,8 @@ export function mergeReqs(doc: TreeDoc, pos: (id: string) => Required<Pos>): { r
       if (b.out === "hit" && doc.boxes[t]?.out === "hit") { lines.push({ id: lid, from: id, to: t, parent: b.parent!, kind: "join" }); continue; }
       const flip = p.x + p.w / 2 > to.x + to.w / 2;
       reqs.push({ id: lid, from: p, to, end: { x: flip ? to.x + to.w : to.x, y: to.y + to.h / 2 }, start: { x: p.x + p.w / 2, y: p.y + p.h }, flip });
-      lines.push({ id: lid, from: id, to: t, parent: b.parent!, kind: b.out === "hit" || b.out === "any" ? "fwd" : "back" });
+      const ph = doc.boxes[b.parent!]?.hand;
+      lines.push({ id: lid, from: id, to: t, parent: b.parent!, kind: b.out === "hit" || b.out === "any" ? "fwd" : "back", ...(ph && effectOf(ph.currency) === "remove" && ph.keep && !ph.keep.length ? { viaStrip: true } : {}) });
     }
   }
   return { reqs, lines };
