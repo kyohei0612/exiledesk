@@ -41,7 +41,7 @@ export function splitTo(data: PatchData, rules: readonly SplitRule[], item: Stag
 }
 /**
  * 形の合う箱の判定 (回す時・ルート精査・画面の線で同じ物を使う。シミュ部長 10-21 オーナー「↩ 形の合う箱へは自動で探して線を引いた状態に」)。
- * 形の鍵 = 付いている狙いの組 + 外れがあるか (空きの数は、側の決まった狙いと外れの有無で決まる)
+ * 形の鍵 = 付いている狙いの組 + 外れがあるか。外れの側・種類・数・✦・レアリティ (体) は tree-box-shape で比べる (決まりは docs/spec/sim-tree.md の S-60〜S-64)
  */
 const shapeKey = (held: readonly string[], junk: boolean): string => `${[...new Set(held)].sort().join(",")}#${junk ? 1 : 0}`;
 /** sig = その箱の体 (tree-box-shape の boxBody。shapesOf に data を渡した時だけ、スイッチ goalShape) */
