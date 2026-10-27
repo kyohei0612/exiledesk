@@ -170,7 +170,8 @@ export function sideGroup(): ((a: Aim) => string) | undefined {
 export function applyPick(d: TreeDoc, id: string, h: Hand, kind: HandKind, aims: Aim[], pre: string | null, only: OnlyOut): string {
   // 外れで、打つ前の箱・同じ形の箱と同じ手 = 新しい段を作らずその箱へ戻る (シミュのルール、PC・スマホ共通。tree-shape の sameHandReturn、スイッチ goalShape)。
   // 外れに手がもう付いていれば下を消してから (前に同じ手で段を足して伸びた木)。戻ったかは呼ぶ側が箱の back で見る
-  const to = !pre && flag("goalShape") ? sameHandReturn(d, id, h) : null;
+  // 触媒 (pre) 付きの手も同じ判定 (PC・スマホで 1 つ、10-27 夕ブラックの決め B4。前は PC が pre のある時は見ず、スマホは pre を見ずに戻っていた)
+  const to = flag("goalShape") ? sameHandReturn(d, id, h) : null;
   if (to) { if (d.boxes[id]?.hand) clearHand(d, id); setBack(d, id, to); return id; }
   const had = new Set(Object.keys(d.boxes));
   let at = id;

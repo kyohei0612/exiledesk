@@ -91,7 +91,7 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null, only
   simAct("hand", kind);
   let at = id;
   const before = new Set(Object.keys(t.doc.value.boxes));
-  q.answer((d) => { at = applyPick(d, id, h, kind, aims, pre, only); });
+  q.answer((d) => { at = applyPick(d, id, h, kind, aims, pre, only); }, [id]);
   handFor.value = null;
   /*
    * 外れで、打つ前の箱・同じ形の箱と同じ手を選んだ = 共通の applyPick (tree-shape の sameHandReturn) が新しい段を作らずその箱へ戻した。
@@ -105,7 +105,7 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null, only
 }
 function clearHandOf(): void {
   const id = handFor.value!;
-  q.answer((d) => clearHand(d, id));
+  q.answer((d) => clearHand(d, id), [id]);
   handFor.value = null;
   q.focus.value = { kind: "hand", id };
 }

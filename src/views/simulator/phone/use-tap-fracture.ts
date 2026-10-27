@@ -8,7 +8,6 @@
 import { computed } from "vue";
 import { usePhone } from "../../../utils/use-phone";
 import { tr } from "../../../i18n/lang";
-import { migrateStart, startRarity, type Aim } from "../../../services/simulator/tree/tree-model";
 import type { StageMod } from "../../../services/craft-stage/engine";
 import { useTree } from "../tree/use-tree";
 
@@ -29,15 +28,8 @@ export function useTapFracture() {
   function tap(modId: string, m?: StageMod): void {
     const g = t.goals.value.find((a) => a.modId === modId);
     if (!g || (m?.desecrated && !g.fractured)) return;
-    const off = !!g.fractured;
-    t.edit((d) => {
-      const list: Aim[] = d.memoAims ?? [];
-      for (const a of list) { if (!off && a.modId === modId) a.fractured = true; else delete a.fractured; }
-      d.memoAims = list;
-      migrateStart(d);
-      d.start!.mods = d.start!.mods.filter((x) => !list.some((a) => a.fractured && a.modId === x.modId));
-      d.start!.rarity = startRarity(d);
-    });
+    // 付け外しは PC の右クリックと同じ use-tree の toggleFracture (印は 1 つだけ・始めの形も直す。前はここに写しがあった、B6)
+    t.toggleFracture(g.modId, g.tier);
   }
   return { on, note, tap };
 }

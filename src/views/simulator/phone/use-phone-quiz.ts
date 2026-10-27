@@ -14,6 +14,7 @@ import { heldSets } from "../../../services/simulator/tree/tree-shape";
 import { useTree } from "../tree/use-tree";
 import { handLabel, headOf, outName, outsName } from "../tree/tree-names";
 import { tr } from "../../../i18n/lang";
+import { retryOf as sharedRetryOf } from "../tree/tree-fail";
 
 /** 答えの要る結果の箱か (手も戻りも完成も分かれ目も無い。始まり・品質だけの通り抜けは ① で聞く) */
 export function isOpen(b: TreeBox): boolean {
@@ -24,8 +25,6 @@ export function isOpen(b: TreeBox): boolean {
  * (10-26 夜オーナー「スマホ版は外れルートからツリーを完成させるか」「そうしたら順番に戻ることもなく、滞りなく進みそう。スタートから順に」)
  */
 export const isMiss = (b: TreeBox | undefined): boolean => b?.out === "junk" || b?.out === "lost";
-/** 再度挑戦の戻り先 (打つ前の箱。始まりの手の結果なら始まり) */
-export const retryOf = (d: TreeDoc, id: string): string | null => d.boxes[id]?.parent ?? null;
 /** 始まりから辿った順 (上の段から、同じ段は左から)。質問の順番 */
 export function walkOrder(d: TreeDoc): string[] {
   const out: string[] = [], seen = new Set<string>(), q = ["start"];
@@ -50,9 +49,12 @@ export function pathOf(d: TreeDoc, id: string): string[] {
   for (let x: string | null = id; x; x = d.boxes[x]?.parent ?? null) p.unshift(x);
   return p;
 }
-/** 自動で完成 (スマホだけ、補助): 答えの要る箱のうち、完成の狙いが全部そろう当たりの箱に完成の印。later = 「次の手を決める」にした箱 (付けない) */
-export function markDone(d: TreeDoc, later: ReadonlySet<string>): void {
-  for (const b of Object.values(d.boxes)) if ((b.out === "hit" || b.out === "branch") && isOpen(b) && !later.has(b.id) && completes(d, b.id)) setDone(d, b.id, "main");
+/**
+ * 自動で完成 (スマホだけ、補助): 答えの要る箱のうち、完成の狙いが全部そろう当たりの箱に完成の印。later = 「次の手を決める」にした箱 (付けない)。
+ * scope = 印を付けてよい箱 (今答えた道 = 答えた箱から始まりまでと、その答えで新しくできた箱。PC で作った木の関係ない枝に完成が付かないように、10-27 夕ブラックの決め B5)
+ */
+export function markDone(d: TreeDoc, later: ReadonlySet<string>, scope: ReadonlySet<string>): void {
+  for (const b of Object.values(d.boxes)) if (scope.has(b.id) && (b.out === "hit" || b.out === "branch") && isOpen(b) && !later.has(b.id) && completes(d, b.id)) setDone(d, b.id, "main");
 }
 
 /**
@@ -121,16 +123,22 @@ export function usePhoneQuiz() {
   });
   /** 答えた箱の数 (手・戻り・完成のどれかがある箱) */
   const answered = computed(() => Object.values(t.doc.value.boxes).filter((b) => !!b.hand || !!b.back || !!b.done).length);
-  /** 答える = 木を 1 手で組み替え、同じ 1 手で自動の完成も付ける (1 つ戻すで一緒に戻る) */
-  function answer(fn: (d: TreeDoc) => void): void {
-    t.edit((d) => { fn(d); markDone(d, laterSet.value); });
+  /** 答える = 木を 1 手で組み替え、同じ 1 手で自動の完成も付ける (1 つ戻すで一緒に戻る)。ats = 答えた箱 (自動の完成はその道と新しくできた箱だけ、B5) */
+  function answer(fn: (d: TreeDoc) => void, ats: readonly string[] = []): void {
+    t.edit((d) => {
+      const had = new Set(Object.keys(d.boxes));
+      fn(d);
+      const scope = new Set(Object.keys(d.boxes).filter((x) => !had.has(x)));
+      for (const a of ats) for (const x of pathOf(d, a)) scope.add(x);
+      markDone(d, laterSet.value, scope);
+    });
     later.value = later.value.filter((id) => !!t.doc.value.boxes[id] && isOpen(t.doc.value.boxes[id]!));
   }
   /** 結果の箱を「次の手を決める」にする (戻り・完成は外す。後で ① で聞く) */
   function setLater(id: string): void {
     if (!later.value.includes(id)) later.value = [...later.value, id];
     const b = t.doc.value.boxes[id];
-    if (b && (b.back || b.done)) answer((d) => { setBack(d, id, null); setDone(d, id, null); });
+    if (b && (b.back || b.done)) answer((d) => { setBack(d, id, null); setDone(d, id, null); }, [id]);
   }
   /** 別の木を開いた = 木の外の印 (次の手を決める・一覧で選んだ質問) を空に */
   function reset(): void { later.value = []; focus.value = null; picked.value = []; fresh.value = []; }
@@ -143,12 +151,12 @@ export function usePhoneQuiz() {
   function setReturn(id: string, to: string): void {
     later.value = later.value.filter((x) => x !== id);
     pick(id);
-    answer((d) => { setDone(d, id, null); setBack(d, id, to); });
+    answer((d) => { setDone(d, id, null); setBack(d, id, to); }, [id]);
   }
   function setFinished(id: string): void {
     later.value = later.value.filter((x) => x !== id);
     pick(id);
-    answer((d) => { setBack(d, id, null); setDone(d, id, "main"); });
+    answer((d) => { setBack(d, id, null); setDone(d, id, "main"); }, [id]);
   }
   /** 結果の箱の今の答え */
   function stateOf(id: string): "later" | "back" | "done" | "hand" | "open" {
@@ -169,10 +177,13 @@ export function usePhoneQuiz() {
     // 外れの側を先に (決める順 = 上から。並びの中は木の順のまま)
     return [...list.filter((o) => isMiss(d.boxes[o])), ...list.filter((o) => !isMiss(d.boxes[o]))];
   }
-  /** その結果の箱から再度挑戦 (打つ前の箱へ戻る) できるか (PC の戻り先選びと同じ use-tree-link = その手をこの箱のアイテムにエンジンで打てるか) */
+  /**
+   * その結果の箱から再度挑戦 (打つ前の箱へ戻る) できるか = 共通の tree-fail の retryOf (PC の戻り先選びと同じ use-tree-link = その手をこの箱のアイテムにエンジンで打てるか)。
+   * 始まりの手の結果は始まりへ (共通の retryOf は始まりを除くので、ここで同じ判定で足す。前はスマホだけの写しで始まりも含めていた、B6)
+   */
   function canRetry(o: string): string | null {
-    const to = retryOf(t.doc.value, o);
-    return to && useTreeLink(t.doc, ref<string | null>(o)).value.get(to) === null ? to : null;
+    const link = useTreeLink(t.doc, ref<string | null>(o)).value;
+    return sharedRetryOf(t.doc.value, o, link) ?? (t.doc.value.boxes[o]?.parent === "start" && link.get("start") === null ? "start" : null);
   }
   /**
    * ② の「次へ」= 答えていない結果を 1 手で決めて次の質問へ: 外れの側は ↩ 再度挑戦 (戻れなければ「次の手を決める」)、当たりの側は「次の手を決める」。
@@ -186,7 +197,7 @@ export function usePhoneQuiz() {
     const retry = open.flatMap((o) => { const to = isMiss(t.doc.value.boxes[o]) ? canRetry(o) : null; return to ? [[o, to] as const] : []; });
     const rest = open.filter((o) => !retry.some(([x]) => x === o));
     later.value = [...later.value, ...rest.filter((o) => !later.value.includes(o))];
-    if (retry.length) answer((d) => { for (const [o, to] of retry) { setDone(d, o, null); setBack(d, o, to); } });
+    if (retry.length) answer((d) => { for (const [o, to] of retry) { setDone(d, o, null); setBack(d, o, to); } }, retry.map(([o]) => o));
   }
   /**
    * 箱の名前 (SimTreePage の boxLabel と同じ形)。当たりは道で揃った狙いを全部 (スマホは木が見えないので、同じ MOD の当たりの箱が見分けられるように)、

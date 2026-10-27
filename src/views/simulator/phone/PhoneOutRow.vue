@@ -13,7 +13,7 @@ import { useTreeLink } from "../tree/use-tree-link";
 import { backTargetsOf } from "../tree/tree-merge";
 import { handLabel, OUT_LOOK } from "../tree/tree-names";
 import { isMiss, mapPick, phoneRun, usePhoneQuiz } from "./use-phone-quiz";
-import { routeText, runText, stepBackText } from "../tree/tree-fail";
+import { retryOf, routeText, runText, stepBackText } from "../tree/tree-fail";
 import { sideGroup } from "../tree/tree-hand-plan";
 import { absorbOuts, joinableOf, joinSide, splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
 import { joinableShapeOf } from "../../../services/simulator/tree/tree-shape";
@@ -41,7 +41,7 @@ const state = computed(() => (P27 && q.awaits(props.boxId) ? "open" : q.stateOf(
 /** 戻り先の箱 (自動でつないだ・選んだ) */
 const backTo = computed(() => (box.value?.back ? backTargetsOf(t.doc.value, props.boxId)[0] ?? null : null));
 /** 同じ手をもう一度 = 打つ前の箱へ戻る (始まりの手の結果は「始めから」と同じなので出さない) */
-const canRetry = computed(() => !!parent.value && parent.value !== "start" && link.value.get(parent.value) === null);
+const canRetry = computed(() => !!retryOf(t.doc.value, props.boxId, link.value));
 /** まとめられる同じ側の横の当たり (tree-model の joinableOf) */
 /** まとめられる横の箱: 当たりは同じ側の当たり、外れ・狙いが消えたなどは同じ形の箱 (10-26) */
 const joinable = computed(() => { if (box.value && box.value.out !== "hit") return joinableShapeOf(t.doc.value, props.boxId); const g = sideGroup(); return g ? joinableOf(t.doc.value, props.boxId, g) : []; });
@@ -71,7 +71,7 @@ function startPick(): void {
   mapPick.value = pickOther.value ? null : { from: props.boxId, ids: pickIds.value };
 }
 /** 決めていない外れの既定 (「次へ」で ↩ 再度挑戦 = 打つ前の箱へ。use-phone-quiz の decide と同じ判定)。"retry" / "start" / null */
-const defRetry = computed(() => (state.value !== "open" || !isMiss(box.value) || !parent.value || link.value.get(parent.value) !== null ? null : parent.value === "start" ? "start" : "retry"));
+const defRetry = computed(() => { const to = state.value === "open" && isMiss(box.value) ? q.canRetry(props.boxId) : null; return !to ? null : to === "start" ? "start" : "retry"; });
 /** 既定の答えの見た目 = 薄い塗り (点線・1px の線は並べない決まり、メモ feedback-no-flicker-lines) + 札「既定」 */
 const DEF = "!bg-amber-500/15";
 /** 再度挑戦の言い方 (決まり済み「↩ 再度挑戦 · n 段目へ戻る」、メモ sim-decisions。始まりの手の結果も同じ言い方) */
