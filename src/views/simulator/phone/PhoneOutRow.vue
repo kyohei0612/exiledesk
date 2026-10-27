@@ -25,6 +25,7 @@ import { flag } from "../../../web/release-flags";
 import { tr } from "../../../i18n/lang";
 import { clearHand, subtree } from "../../../services/simulator/tree/tree-model";
 import { useArmed } from "../../../utils/use-armed";
+import { useDismiss } from "../../../utils/use-dismiss";
 
 const props = defineProps<{ boxId: string }>();
 /** hand = その箱の ① へ、pick = その箱の手を選ぶ (カレンシーの選択) */
@@ -151,7 +152,9 @@ const cardW = (typeof window === "undefined" ? 375 : window.innerWidth) - 30;
  */
 const P27 = flag("phoneResult1027");
 /** 「下の n 箱ごと消す」は 8 秒待つ (3 秒では押す前に × に戻った、10-27 夕モンキー 5。スイッチ goalShape) */
-const rm = useArmed(flag("goalShape") ? 8000 : undefined);
+// 時間では戻さず、× の外を押すか Esc で戻す (10-27 夜モンキー 2 回目 3、PC の箱の × と同じ。スイッチ armKeep)
+const rm = useArmed(flag("armKeep") ? 2147483647 : flag("goalShape") ? 8000 : undefined);
+if (flag("armKeep")) useDismiss(() => rm.is(props.boxId), [], rm.clear, { swallow: false, keep: "[data-phone-out-remove]" });
 const rmCount = computed(() => { const d = t.doc.value, p = parent.value ? d.boxes[parent.value] : undefined; return p ? p.outs.reduce((n, o) => n + subtree(d, o).length, 0) : 0; });
 function removeHand(): void {
   const p = parent.value;

@@ -6,6 +6,7 @@
 import { computed } from "vue";
 import { flag } from "../../../web/release-flags";
 import { useArmed } from "../../../utils/use-armed";
+import { useDismiss } from "../../../utils/use-dismiss";
 import { subtree } from "../../../services/simulator/tree/tree-model";
 import Icon from "../../../components/ui/Icon.vue";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
@@ -52,7 +53,9 @@ const t = useTree();
  * (10-27 オーナー「途中で狙いの MOD を変えたい時の挙動が分かりづらい。枠の × ボタンを押して消せるように。消したら作ったカレンシーごと消える感じ」)
  */
 /** 「下の n 箱ごと消す」は 8 秒待つ (3 秒では押す前に × に戻った、10-27 夕モンキー 5。スイッチ goalShape) */
-const rm = useArmed(flag("goalShape") ? 8000 : undefined);
+// 時間では戻さず、枠 (この箱の ×) の外を押すか Esc で戻す (8 秒でもモンキーの台本の間に戻った、10-27 夜モンキー 2 回目 3。スイッチ armKeep)
+const rm = useArmed(flag("armKeep") ? 2147483647 : flag("goalShape") ? 8000 : undefined);
+if (flag("armKeep")) useDismiss(() => rm.is(props.box.id), [], rm.clear, { swallow: false, keep: `[data-box-id="${props.box.id}"] [data-tree-box-remove]` });
 const rmCount = computed(() => { const d = t.doc.value, p = props.box.parent ? d.boxes[props.box.parent] : undefined; return p ? p.outs.reduce((n, o) => n + subtree(d, o).length, 0) : 0; });
 const rmTitle = computed(() => tr(`この箱を作った手 (${(() => { const h = props.box.parent ? t.doc.value.boxes[props.box.parent]?.hand : null; return h ? handLabel(h) : ""; })()}) と、その結果の箱 ${rmCount.value} 個を消す (手を選び直せる)`, `Remove the craft that made this box and its ${rmCount.value} result box(es) (pick the craft again)`));
 /** 箱の中の今のアイテムの枠 (乗せた時のカードと同じ部品を縮める。見本は箱の形に合う人、10-26 オーナー「枠は現状のアイテムの枠が表示してあげたら？いまカードで表示してる情報」) */
