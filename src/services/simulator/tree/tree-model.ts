@@ -362,7 +362,8 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   // 消せる狙いを持って着く人がいなければ「狙いが消えた」は起きない (10-24 モンキー初めての人の回 6)。前から箱がある木は替えない (同じ手を選び直して下が消えないように)
   const kept = !!b.hand && now.includes("lost") && now.every((k) => k !== "start" && OUTS_OF[kind].includes(k));
   const noLost = !only && OUTS_OF[kind].includes("lost") && OUTS_OF[kind].length > 1 && !kept && !mayHoldAim(d, id);
-  const want = only ? OUT_ORDER.filter((k) => only.some((o) => o.out === k)) : noLost ? OUTS_OF[kind].filter((k) => k !== "lost") : OUTS_OF[kind];
+  // 印の無い木の乱数のフラクチャー (hand.pick) は当たり + 外れ (どの MOD が固定されるかは乱数。起こりうる結果が取れない時の既定、要望 8a159e29)
+  const want = only ? OUT_ORDER.filter((k) => only.some((o) => o.out === k)) : hand.pick === "random" ? (["hit", "junk"] as OutKind[]) : noLost ? OUTS_OF[kind].filter((k) => k !== "lost") : OUTS_OF[kind];
   if (only) { const hs = only.flatMap((o) => (o.out === "hit" && o.aim ? [o.aim] : [])); if (hs.length) aims = hs; }
   // 当たりの箱は完成の狙いの順に並べる (手ごとに順が違った、10-26 モンキー 7 の 17)。完成の狙いに無い物は後ろ
   const order = (a: Aim): number => { const i = (d.memoAims ?? []).findIndex((g) => g.modId === a.modId); return i < 0 ? 999 : i; };
