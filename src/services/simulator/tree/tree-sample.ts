@@ -95,6 +95,9 @@ export function outcomeOf(data: PatchData, before: StageItem, after: StageItem, 
 export { possibleOutsOf, singleOutOf } from "./tree-outcome";
 /** 分かれ目の行の箱の見本を引き直す回数 */
 const SPLIT_TRIES = 40;
+/** 当たりの箱の狙いを持っていない親の見本を引き直す回数 (hitNew) と、引き直しの中か (入れ子で引き直さない) */
+const HIT_TRIES = 8;
+let altDeep = false;
 /** 結果が 1 通りかを見る見本の数 */
 export const SINGLE_SEEDS = 8;
 
@@ -229,11 +232,15 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
   const aims = aimsOf(doc);
   // 当たりの箱の狙いを親の見本がもう持っている (まとめた箱「アーマーかライフ」のアーマーの道で、次の当たり「アーマーが付いた」) 時は、
   // 持っていない親の見本を引き直す (付け直せず親の見本のまま「アーマーだけ」が出た、10-27 夜モンキー 2 回目 1。スイッチ hitNew)
-  if (flag("hitNew") && b.out === "hit" && b.aim && aimHeldOn(data, base.item, b.aim, { sameText: true })) {
-    for (let k = 1; k < SPLIT_TRIES; k++) {
-      const alt = sampleIn(data, doc, p.id, seed + 7919 * k);
-      if (!aimHeldOn(data, alt.item, b.aim, { sameText: true })) return sampleFrom(data, doc, b, p, alt, seed, boxId, aims);
-    }
+  // 引き直しは一番下の箱の 1 回だけ (親をたどる中でも引き直すと、深い木で数が掛け算になりページが固まった)
+  if (flag("hitNew") && !altDeep && b.out === "hit" && b.aim && aimHeldOn(data, base.item, b.aim, { sameText: true })) {
+    altDeep = true;
+    try {
+      for (let k = 1; k < HIT_TRIES; k++) {
+        const alt = sampleIn(data, doc, p.id, seed + 7919 * k);
+        if (!aimHeldOn(data, alt.item, b.aim, { sameText: true })) return sampleFrom(data, doc, b, p, alt, seed, boxId, aims);
+      }
+    } finally { altDeep = false; }
   }
   return sampleFrom(data, doc, b, p, base, seed, boxId, aims);
 }
