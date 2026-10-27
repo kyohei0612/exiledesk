@@ -40,6 +40,8 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   // ☑ していない完成形の MOD が付いていても「外れ MOD」(10-27 夜オーナー、モンキー 2 回目 7。スイッチ junkByCheck)
   const missBox = flag("junkByCheck") && !!box?.id && !!box.out && box.out !== "start" && MISS_OUTS.includes(box.out);
   const held = missBox ? [...new Map(heldSets(doc, box!.id!).flat().map((k) => { const [modId, tier] = k.split("|"); return [modId!, { modId: modId!, tier: Number(tier) }] as const; })).values()] : [];
+  // 始まりから付いている完成の狙いも狙い (道の当たりの札には無い。外れが固定された箱で始まりの ES が「外れ MOD」と出た、10-28。スイッチ boxShape)
+  if (missBox && flag("boxShape")) for (const m of doc.start?.mods ?? []) if ((doc.memoAims ?? []).some((g) => g.modId === m.modId) && !held.some((h) => h.modId === m.modId)) held.push({ modId: m.modId, tier: 99 });
   // 当たりの箱の札の MOD は、その箱では狙い (発現で選んだ置き石も。以降の箱では外れ MOD。スイッチ boneLater)
   const ownAim = flag("boneLater") && box?.id && box.out === "hit" ? doc.boxes[box.id]?.aim : null;
   const aims = targetsOf(d, [...(missBox ? held : flag("goalShape") ? [...aimsOf(doc), ...(doc.memoAims ?? [])] : aimsOf(doc)), ...(ownAim ? [ownAim] : [])]), bad = targetsOf(d, unwanted.map((u) => ({ modId: u, tier: 99 }))), o = aimOpts(d);
