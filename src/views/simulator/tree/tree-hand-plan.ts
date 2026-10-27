@@ -17,6 +17,7 @@ import { clearHand, drop, fractureMarks, healLost, kindOfHand, setBack, setHand,
 import { joinSameShape } from "./tree-merge";
 import { revealAimsOf } from "./tree-reveal-aims";
 import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
+import { fracFree } from "../../../services/simulator/tree/tree-frac-pick";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 
@@ -71,7 +72,8 @@ export function handOf(p: HandPick): Hand {
     currency: p.held, omens: ((isBone(p.held) && p.veil !== "keep") || isRevealHand(p.held)) && p.echo !== false && !used.includes(ECHO) ? [...used, ECHO] : used,
     catalyst: null, quality: 0,
     repeat: p.spam && canSpam(p.held) ? { until: "hit", max: p.spamMax && p.spamMax > 0 ? Math.round(p.spamMax) : null } : null,
-    ...(p.free && !p.spam && FREE_EFFECTS.includes(effectOf(p.held)) ? { free: true } : {}),
+    // 乱数のフラクチャーの狙い無し (固定されうる MOD ごとの箱。印の無い木だけ、applyPick が pick を付ける。スイッチ fracPick)
+    ...(p.free && !p.spam && (FREE_EFFECTS.includes(effectOf(p.held)) || (flag("fracPick") && effectOf(p.held) === "fracture")) ? { free: true } : {}),
     ...(p.keep && effectOf(p.held) === "remove" ? { keep: p.keep.map((a) => ({ modId: a.modId, tier: a.tier })) } : {}),
     ...(p.veil && flag("boneLater") && isBone(p.held) ? { veil: p.veil } : {}),
   };
@@ -94,7 +96,7 @@ export function essenceAimsOf(data: PatchData, item: StageItem, h: Hand): Aim[] 
 }
 export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, h: Hand, goals: readonly Aim[]): Aim[] {
   // 骨を未発現のまま = 当たりは無し (結果は未発現の冒涜が付いた 1 つ)。発現で選ぶ手 = 発現で出うる MOD 全部 (置き石も。スイッチ boneLater)
-  if (veilKeep(h)) return [];
+  if (veilKeep(h) || fracFree(doc, h)) return [];
   if (veilPick(h)) return revealAimsOf(data, doc, boxId, item, h);
   const kind = kindOf(h);
   // エッセンス = 付く MOD は決まっている。エンジンの結果で新しく付いた MOD を当たりの札に (10-22 オーナー「エッセンスの道」)
@@ -147,6 +149,8 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
  * 画面 (TreeHandShelf) と猿の口 (sim-monkey の hitChoices・add の opt.hitAims) が同じ物を呼ぶ
  */
 export function hitChoicesOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, p: Pick<HandPick, "held" | "omens" | "echo" | "veil">, goals: readonly Aim[]): Aim[] {
+  // 印の無い木の乱数のフラクチャーも ☑ で狙いを選べる (候補 = 見本に付いている完成の狙い。スイッチ fracPick)
+  if (flag("fracPick") && effectOf(p.held) === "fracture" && !fractureMarks(doc).length) return hitAimsOf(data, doc, boxId, item, { ...handOf({ held: p.held, omens: p.omens }), pick: "random" }, goals);
   if (!FREE_EFFECTS.includes(effectOf(p.held))) return [];
   return hitAimsOf(data, doc, boxId, item, handOf({ held: p.held, omens: p.omens, echo: p.echo, veil: p.veil }), goals);
 }

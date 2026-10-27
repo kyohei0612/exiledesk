@@ -7,7 +7,7 @@ import { computed } from "vue";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { craftStage as s } from "../../../state/craft-stage";
 import { freshItem } from "../../../services/craft-stage/engine";
-import { CATALYSING, isCatalyst } from "../../../services/simulator/tree/tree-hands";
+import { CATALYSING, effectOf, isCatalyst } from "../../../services/simulator/tree/tree-hands";
 import { boxAims, fractureMarks, startRarity, startsFractured, type Hand, type SplitWhen, type TreeBox, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { veilKeep } from "../../../services/simulator/tree/tree-veil";
@@ -47,7 +47,12 @@ export function splitWhenText(w: SplitWhen): string {
 /** 箱の種類の名前 (始まり・当たり・外れ…。一覧・戻り先の札・まとめた札で同じ) */
 export const outName = (out: TreeBox["out"]): string => tr(OUT_LOOK[out].ja, OUT_LOOK[out].en);
 /** 手の窓の「結果の箱」の名前 (骨を未発現のまま次へは「未発現の冒涜が付いた」、スイッチ boneLater) */
-export const outNameOf = (h: Hand | null | undefined, out: TreeBox["out"]): string => (out === "any" && veilKeep(h) ? tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added") : outName(out));
+export function outNameOf(h: Hand | null | undefined, out: TreeBox["out"], aim?: TreeBox["aim"]): string {
+  if (out === "any" && veilKeep(h)) return tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added");
+  // 印の無い木の狙い無しのフラクチャー (スイッチ fracPick)
+  if (out === "hit" && aim && h?.free && flag("fracPick") && effectOf(h.currency) === "fracture") { const n = modShort(useTree().aimShort(aim)); return tr(`${n}がフラクチャーされた場合`, `If ${n} is fractured`); }
+  return outName(out);
+}
 /** 箱の結果の名前 (同じ形でまとめた箱は「外れ・狙いが消えた」) */
 export const outsName = (b: { out: TreeBox["out"]; mergedOuts?: Array<TreeBox["out"]> }): string => [b.out, ...(b.mergedOuts ?? [])].map(outName).join(tr("・", " / "));
 
@@ -61,7 +66,8 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   // ✦ の印の無い木の乱数のフラクチャーの結果は「〜が固定された」「外れ MOD が固定された」(付いたのではない。10-27 夜、要望 8a159e29、スイッチ fracRandom)
   const ph = flag("fracRandom") && b.parent ? useTree().doc.value.boxes[b.parent]?.hand : null;
   const fixed = ph?.pick === "random";
-  if (b.out === "hit" && b.aim) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")); return fixed ? tr(`${n}が固定された`, `${n} fractured`) : tr(`${n}が付いた`, `${n} added`); }
+  const free = fixed && !!ph?.free && flag("fracPick");
+  if (b.out === "hit" && b.aim) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")); return free ? tr(`${n}がフラクチャーされた場合`, `If ${n} is fractured`) : fixed ? tr(`${n}が固定された`, `${n} fractured`) : tr(`${n}が付いた`, `${n} added`); }
   if (fixed && b.out === "junk") return tr("外れ MOD が固定された", "A miss mod fractured");
   // 骨を未発現のまま次へ (スイッチ boneLater)
   if (b.out === "any" && b.parent && veilKeep(useTree().doc.value.boxes[b.parent]?.hand)) return tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added");

@@ -88,7 +88,7 @@ const checked = ref<string[]>((() => {
   if (!c || c.free) return [];
   return (d.boxes[props.boxId]?.outs ?? []).flatMap((o) => { const x = d.boxes[o]; return x?.out === "hit" && x.aim ? [aimKey(x.aim)] : []; });
 })());
-const isFracture = computed(() => !!held.value && effectOf(held.value) === "fracture");
+const isFracture = computed(() => !!held.value && effectOf(held.value) === "fracture" && !(flag("fracPick") && !fractureMarks(t.doc.value).length)); // 印の無い木の乱数は狙いの欄 (fracPick)
 /**
  * 骨の手のアビスの反響のお告げ (発現の候補を 1 回引き直す) = お告げの並びの「アビスの反響のお告げ」そのもの (omens に ECHO)。骨を持ったら既定で掛ける
  * (10-22 オーナー「お告げは必ず反響を使わんとやばいよ」、10-26 夜「オンは嘘だし、でかいアイコンもある」: 前は並びとは別の印と大きな札で、並びの方は掛かっていなかった)。
@@ -97,7 +97,7 @@ const isFracture = computed(() => !!held.value && effectOf(held.value) === "frac
 const echo = computed(() => omens.value.includes(ECHO));
 watch(held, (k, old) => { if (k && k !== old && ((isBone(k) && (!flag("boneLater") || veilOn.value)) || k === "reveal") && !omens.value.includes(ECHO)) omens.value = [...omens.value, ECHO]; }); // 開いた時は動かない = 前の手のまま
 /** 付く MOD を選べない手 (足す・カオス。当たりの箱にする MOD のチェックと狙い無しを出す) */
-const canFree = computed(() => !!held.value && FREE_EFFECTS.includes(effectOf(held.value)));
+const canFree = computed(() => !!held.value && (FREE_EFFECTS.includes(effectOf(held.value)) || (flag("fracPick") && effectOf(held.value) === "fracture" && !fractureMarks(t.doc.value).length)));
 /**
  * Esc: 新しい手で持っている時は持った物を離すだけ (窓は閉じない)。2 回目の Esc・今の手を替えている時は窓 (ModalShell) が閉じる = 何も替えない
  * (オーナー 10-22「枠の外・Esc で取り消し」)。前は window の捕まえる段で聞いていたが、窓の Esc が先に受けて持ったまま窓ごと閉じていた (10-27 モンキー 7 の残り)。
@@ -174,7 +174,7 @@ const veil = computed(() => (boneVeil.value ? (veilOn.value ? "pick" as const : 
 function setVeil(v: boolean): void { const was = veilOn.value, had = [...checked.value], om = [...omens.value]; veilOn.value = v; checked.value = []; omens.value = v ? [...om.filter((o) => o !== ECHO), ECHO] : om.filter((o) => o !== ECHO); warnIfBelow(() => { veilOn.value = was; checked.value = had; omens.value = om; }); } // 反響は発現させる時だけ
 /** 未発現の冒涜が付いた箱は棚に「発現」の札 (TreeRevealCard) */
 const revealable = computed(() => flag("boneLater") && !!item.value && !!unrevealedOf(item.value));
-const outOf = (o: Parameters<typeof outNameOf>[1]): string => outNameOf(hand.value, o);
+const outOf = (o: Parameters<typeof outNameOf>[1], a?: Aim | null): string => outNameOf(hand.value, o, a);
 const aimChoices = computed((): Aim[] => {
   const d = s.data.value, it = item.value;
   if (d && it && held.value && isInfinite.value) return hitAimsOf(d, t.doc.value, props.boxId, it, handOf({ held: held.value, omens: omens.value, spam: false, spamMax: null, free: false, echo: echo.value }), t.goals.value);
@@ -389,7 +389,7 @@ function ok(): void {
           <input type="checkbox" :checked="keepChecked.includes(aimKey(c.aim))" @change="toggleKeep(c.aim)" /><span class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="modText(c.mod)">{{ keepLabel(c) }}</span>
         </label>
       </div>
-      <p v-if="kind" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? (only.length === 1 ? tr(`${outOf(only[0]!.out)}だけ (結果は 1 通り)`, `${outOf(only[0]!.out)} only (one possible result)`) : [...new Set(only.map((o) => outOf(o.out)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
+      <p v-if="kind" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? (only.length === 1 ? tr(`${outOf(only[0]!.out, only[0]!.aim)}だけ (結果は 1 通り)`, `${outOf(only[0]!.out, only[0]!.aim)} only (one possible result)`) : [...new Set(only.map((o) => outOf(o.out, o.aim)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
       <!-- 替える時は、消える箱の数を先に小さく (オーナー 10-22。1 つ戻す / Ctrl+Z で戻せる)。持ち直しは棚で別の物を押すだけ。決めるのはカードを押す -->
       <div class="flex flex-wrap items-center gap-1.5">
         <span v-if="problem" data-tree-hand-problem class="text-[11px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</span>
@@ -452,7 +452,7 @@ function ok(): void {
               <input type="checkbox" class="size-5 shrink-0" :checked="freeOn" @change="toggleFree($event)" /><span class="min-w-0 break-words">{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}</span>
             </label>
           </div>
-          <p v-if="kind" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? (only.length === 1 ? tr(`${outOf(only[0]!.out)}だけ (結果は 1 通り)`, `${outOf(only[0]!.out)} only (one possible result)`) : [...new Set(only.map((o) => outOf(o.out)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
+          <p v-if="kind" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? (only.length === 1 ? tr(`${outOf(only[0]!.out, only[0]!.aim)}だけ (結果は 1 通り)`, `${outOf(only[0]!.out, only[0]!.aim)} only (one possible result)`) : [...new Set(only.map((o) => outOf(o.out, o.aim)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
           <p v-if="problem" class="mt-1 break-words text-[12px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</p>
         </div>
         <div class="flex gap-2 border-t border-white/10 px-3 py-2">
@@ -474,7 +474,7 @@ function ok(): void {
               <input type="checkbox" class="size-5 shrink-0" :checked="!keepAims.length" @change="keepNone($event)" /><span class="min-w-0 break-words">{{ tr("全部消えてよい (同じ形の箱になるまで消去の箱を並べる)", "Anything may go (annul boxes until a box of the same shape)") }}</span>
             </label>
           </div>
-          <p v-if="kind" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? (only.length === 1 ? tr(`${outOf(only[0]!.out)}だけ (結果は 1 通り)`, `${outOf(only[0]!.out)} only (one possible result)`) : [...new Set(only.map((o) => outOf(o.out)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
+          <p v-if="kind" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? (only.length === 1 ? tr(`${outOf(only[0]!.out, only[0]!.aim)}だけ (結果は 1 通り)`, `${outOf(only[0]!.out, only[0]!.aim)} only (one possible result)`) : [...new Set(only.map((o) => outOf(o.out, o.aim)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
           <p v-if="problem" class="mt-1 break-words text-[12px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</p>
         </div>
         <div class="flex gap-2 border-t border-white/10 px-3 py-2">

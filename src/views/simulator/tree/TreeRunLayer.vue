@@ -11,6 +11,10 @@ import { BOX_H, BOX_W, type TreeBox } from "../../../services/simulator/tree/tre
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import type { MergeLine } from "./tree-merge";
 import { tr } from "../../../i18n/lang";
+import { flag } from "../../../web/release-flags";
+
+/** 止まりの札をカードに被せない (スイッチ stopPill) */
+const STOP_PILL = flag("stopPill");
 
 interface Edge { id: string; stem: string; to: { id: string; d: string }[] }
 const props = defineProps<{
@@ -100,7 +104,13 @@ const div = (x: number): string => (x >= 100 ? x.toFixed(0) : x.toFixed(1));
     <span v-if="m.outBack" data-tree-run-back class="pointer-events-none absolute z-20 -translate-x-1/2 whitespace-nowrap rounded-full bg-black/70 px-1.5 text-[11px] tabular-nums text-cyan-200/90"
       :style="{ left: `${m.x + BOX_W / 2}px`, top: `${m.y + BOX_H + 4}px` }">↩ {{ tr(`${m.outBack} 回`, `${m.outBack}×`) }}</span>
     <!-- 止まった人: 理由を箱の上に文で重ねる (前は赤い札の title だけ、10-26 失敗時の挙動の案 2)。押すとその箱へ寄る -->
-    <button v-if="m.stuck" type="button" data-tree-run-stuck :data-box-id="m.b.id" class="nodrag nopan pointer-events-auto absolute z-20 flex flex-col overflow-y-auto rounded-lg border border-rose-400/70 bg-[#2a0d12]/95 px-2 py-1 text-left text-[11px] leading-snug text-rose-50 shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+    <!-- 止まりの札はカードに被せない (10-27 夜オーナー「カードに被ったまま消えない」= バグ。スイッチ stopPill): 箱のすぐ下に「止まり n 人」だけを常に出し、理由は乗せた時・押した時だけ広げる -->
+    <button v-if="m.stuck && STOP_PILL" type="button" data-tree-run-stuck data-tree-run-stuck-pill :data-box-id="m.b.id" class="nodrag nopan group pointer-events-auto absolute z-20 whitespace-nowrap rounded-full border border-rose-400/70 bg-[#2a0d12]/95 px-2 text-left text-[11px] font-bold tabular-nums text-rose-50 shadow-[0_2px_8px_rgba(0,0,0,0.6)] hover:z-30 focus:z-30"
+      :style="{ left: `${m.x + 6}px`, top: `${m.y + BOX_H + 4}px` }" @click="emit('go', m.b.id)">
+      {{ tr(`止まり ${m.stuck} 人`, `${m.stuck} stuck`) }}
+      <span class="absolute left-0 top-full mt-1 hidden w-[260px] whitespace-normal break-words rounded-lg border border-rose-400/70 bg-[#2a0d12] px-2 py-1 font-normal leading-snug group-hover:block group-focus:block">{{ result?.stuckWhy[m.b.id]?.reason }}</span>
+    </button>
+    <button v-else-if="m.stuck" type="button" data-tree-run-stuck :data-box-id="m.b.id" class="nodrag nopan pointer-events-auto absolute z-20 flex flex-col overflow-y-auto rounded-lg border border-rose-400/70 bg-[#2a0d12]/95 px-2 py-1 text-left text-[11px] leading-snug text-rose-50 shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
       :style="{ left: `${m.x + 4}px`, top: `${m.y + 26}px`, width: `${BOX_W - 8}px`, height: `${BOX_H - 30}px` }" :title="result?.stuckWhy[m.b.id]?.reason" @click="emit('go', m.b.id)">
       <b class="tabular-nums">{{ tr(`止まり ${m.stuck} 人`, `${m.stuck} stuck`) }}</b><span class="break-words">{{ result?.stuckWhy[m.b.id]?.reason }}</span>
     </button>

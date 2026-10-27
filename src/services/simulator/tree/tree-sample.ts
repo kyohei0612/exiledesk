@@ -20,6 +20,7 @@ import { boxOutcomeOf, stripStop } from "./tree-outcome";
 import { arrivedAt } from "./tree-arrived";
 import { autoRuneKeys, passThrough, prepFor } from "./tree-unbounded";
 import { isRevealHand, veilKeep, veilPick } from "./tree-veil";
+import { fracFree } from "./tree-frac-pick";
 export { goalsHeld, heldHitOf } from "./tree-unbounded";
 
 const TRIES = 3000;
@@ -54,7 +55,7 @@ export function aimsOf(doc: TreeDoc): Aim[] {
   const label = (b: TreeBox): boolean => {
     const h = b.parent ? doc.boxes[b.parent]?.hand : null;
     // 発現で選んだ置き石 (完成の狙いに無い MOD) は、その手の時だけ当たり。以降の手では冒涜の外れ MOD (10-27 夜オーナー、スイッチ boneLater)
-    if (veilPick(h) && !goals.some((g) => g.modId === b.aim!.modId)) return true;
+    if ((veilPick(h) || fracFree(doc, h)) && !goals.some((g) => g.modId === b.aim!.modId)) return true;
     return byGoals && !!h && effectOf(h.currency) === "essence" && !goals.some((g) => g.modId === b.aim!.modId);
   };
   for (const b of Object.values(doc.boxes)) if (b.out === "hit" && b.aim && !label(b)) for (const a of boxAims(b)) if (!out.some((x) => x.modId === a.modId && x.tier === a.tier)) out.push(a);
@@ -102,6 +103,8 @@ export { possibleOutsOf, singleOutOf } from "./tree-outcome";
 const SPLIT_TRIES = 40;
 /** 当たりの箱の狙いを持っていない親の見本を引き直す回数 (hitNew) と、引き直しの中か (入れ子で引き直さない) */
 const HIT_TRIES = 8;
+/** 狙い無しの乱数のフラクチャーの箱で、その MOD の付いた親の見本を探す回数 (着いた人を順に見る) */
+const FRAC_TRIES = 24;
 let altDeep = false;
 /** 結果が 1 通りかを見る見本の数 */
 export const SINGLE_SEEDS = 8;
@@ -242,6 +245,16 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
   // 持っていない親の見本を引き直す (付け直せず親の見本のまま「アーマーだけ」が出た、10-27 夜モンキー 2 回目 1。スイッチ hitNew)
   // 引き直しは一番下の箱の 1 回だけ (親をたどる中でも引き直すと、深い木で数が掛け算になりページが固まった)
   // フラクチャーの当たりは、もう付いている狙いが ✦ になる物なので引き直さない
+  // 狙い無しの乱数のフラクチャーの箱 (「〇〇がフラクチャーされた場合」): その MOD が固定できる形で付いた親の見本を引く (まれな MOD の箱で、見本に ✦ が付かず親のままだった。スイッチ fracPick)
+  if (fracFree(doc, p.hand) && !altDeep && b.out === "hit" && b.aim) {
+    altDeep = true;
+    try {
+      for (let k = 0; k < FRAC_TRIES; k++) {
+        const alt = k ? sampleIn(data, doc, p.id, seed + 7919 * k) : base;
+        if ([...alt.item.prefixes, ...alt.item.suffixes].some((m) => m.modId === b.aim!.modId && !m.fractured && !m.desecrated && !m.unrevealed)) return sampleFrom(data, doc, b, p, alt, seed, boxId, aims);
+      }
+    } finally { altDeep = false; }
+  }
   if (flag("hitNew") && !altDeep && b.out === "hit" && b.aim && !(p.hand && effectOf(p.hand.currency) === "fracture") && aimHeldOn(data, base.item, b.aim, { sameText: true })) {
     altDeep = true;
     try {

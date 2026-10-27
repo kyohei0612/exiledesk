@@ -22,6 +22,7 @@ import { craftStage as s } from "../../../state/craft-stage";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { treeRowTags } from "../tree/tree-row-tags";
 import { flag } from "../../../web/release-flags";
+import { veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { tr } from "../../../i18n/lang";
 import { clearHand, subtree } from "../../../services/simulator/tree/tree-model";
 import { useArmed } from "../../../utils/use-armed";
@@ -114,6 +115,10 @@ const sit = computed((): [string, string] => {
   if (P27 && ph) {
     const n = handLabel(ph);
     // 印の無い木の乱数のフラクチャーは「固定された」(付いたのではない、10-27 夜、要望 8a159e29、スイッチ fracRandom)
+    // 狙い無しの乱数のフラクチャーは MOD ごとの箱「〇〇がフラクチャーされた場合」(外れとは言わない、スイッチ fracPick)
+    if (o === "hit" && ph.pick === "random" && ph.free && flag("fracPick")) return [q.boxTitle(props.boxId), tr("どの MOD が固定されるかは等しく乱数", "Which mod gets fractured is equally random")];
+    // 骨を未発現のまま次へ (スイッチ boneLater)
+    if (o === "any" && veilKeep(ph)) return [tr(`${n}を打った後`, `After ${n}`), tr("未発現の冒涜が付いた (発現は次の手で)", "An unrevealed desecrated mod was added (reveal it with a later craft)")];
     if (o === "junk" && ph.pick === "random") return [tr(`${n}で外れた場合`, `If ${n} misses`), tr("狙いでない MOD が固定された (外れ MOD が固定された)", "A non-target mod was fractured (a miss mod fractured)")];
     if (o === "junk") return [tr(`${n}で外れた場合`, `If ${n} misses`), tr("狙いの MOD は付かず、外れ MOD が付いた", "No target mod; a miss mod was added")];
     if (o === "lost") return [tr(`${n}で狙いが消えた場合`, `If ${n} removes a target`), tr("付いていた狙いの MOD が消えた", "A target mod that was on the item was removed")];
