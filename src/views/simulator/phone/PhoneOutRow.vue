@@ -178,7 +178,8 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
     <template v-else-if="P27">
       <!-- 決まった答え (完成・ほかの箱へ) だけ文で。まだなら何も出さない (既定は無い) -->
       <p v-if="state === 'back' || state === 'done'" data-phone-out-now class="min-w-0 break-words font-bold" :class="state === 'done' ? 'text-emerald-300' : 'text-cyan-200'">{{ answerText }}</p>
-      <button type="button" data-phone-out-pick-hand class="w-full rounded-xl border px-3 py-3 text-center text-[14px]" :class="state === 'open' || state === 'later' ? 'border-amber-300 bg-[#3a2a12] font-bold text-amber-100' : 'border-white/15 bg-white/[0.04] text-[#d8ccb4]'" @click="emit('pick', boxId)">{{ tr("次に打つカレンシーを選ぶ", "Choose the next currency") }}</button>
+      <!-- まだ答えの無い結果は下の赤い帯「次に打つカレンシーを選ぶ」だけ (真ん中に同じ枠を重ねない、10-27 昼オーナー)。完成・ほかの箱へにした結果は、ここから手に替えられる -->
+      <button v-if="state !== 'open' && state !== 'later'" type="button" data-phone-out-pick-hand class="w-full rounded-xl border border-white/15 bg-white/[0.04] px-3 py-3 text-center text-[14px] text-[#d8ccb4]" @click="emit('pick', boxId)">{{ tr("次に打つカレンシーを選ぶ", "Choose the next currency") }}</button>
     </template>
     <p v-else data-phone-out-now class="min-w-0 break-words font-bold" :class="state === 'open' ? 'text-amber-200' : state === 'done' ? 'text-emerald-300' : 'text-cyan-200'">{{ answerText }}<span v-if="state === 'open'" class="ml-1 whitespace-nowrap">{{ tr("(既定)", "(default)") }}</span></p>
     <button v-if="!P27" type="button" data-phone-out-change class="g-btn !min-h-11 px-4" @click="pickOpen = true">{{ tr("答えを変える", "Change the answer") }}</button>
