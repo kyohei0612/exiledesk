@@ -47,6 +47,30 @@ export function stepsInText(s) {
   return m ? m[1].split(/[・,\s]+/).filter(Boolean).map(Number) : [];
 }
 
+/** 全部消えてよい消去の手の箱 (消去の直線の箱。消去の手だけが keep を持つ、tree-model の keepCut) */
+export const isStrip = (b) => Array.isArray(b?.hand?.keep) && b.hand.keep.length === 0;
+/** 外れの側の箱 (tree-row-tags の MISS_OUTS) */
+export const MISS_OUTS = ["junk", "lost", "junkGone", "any"];
+/** 消去の直線の途中の箱 = 直線の箱で、自分に戻りが無く、どの箱も自分へ戻らない (乗せても線が出ないはず) */
+export const stripMiddles = (doc) => Object.values(doc.boxes).filter((b) => isStrip(b) && !b.back && !Object.values(doc.boxes).some((x) => x.back === b.id));
+/**
+ * その箱へ来られる道の上の狙い (親と、その箱・上の箱へ戻ってくる箱をたどる。道の狙いより広め)。
+ * 外れの箱の見本で「外れ MOD」でない行は、この中の狙いのはず (junkByCheck: ☑ していない完成形の MOD も外れ MOD)
+ */
+export function pathAims(doc, id) {
+  const seen = new Set(), aims = new Set(), todo = [id];
+  while (todo.length) {
+    const x = todo.pop();
+    if (!x || seen.has(x) || !doc.boxes[x]) continue;
+    seen.add(x);
+    const b = doc.boxes[x];
+    if (x !== id && b.aim?.modId) aims.add(b.aim.modId);
+    for (const a of b.anyOf ?? []) if (x !== id) aims.add(a.modId);
+    todo.push(b.parent, ...Object.values(doc.boxes).filter((y) => y.back === x).map((y) => y.id));
+  }
+  return aims;
+}
+
 /** 外れの箱 (外れ・狙いが消えた) で、親の手と同じ手を選べば戻るはずの箱 (見張りの (6) で手を足す所) */
 export function missBoxes(doc) {
   return Object.values(doc.boxes).filter((b) => (b.out === "junk" || b.out === "lost") && b.parent && doc.boxes[b.parent]?.hand);

@@ -13,7 +13,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { openChrome, sleep } from "./cdp.mjs";
-import { expectBack, missBoxes, sameHand, stepOf, stepsInText } from "./doc.mjs";
+import { MISS_OUTS, expectBack, isStrip, missBoxes, pathAims, sameHand, stepOf, stepsInText, stripMiddles } from "./doc.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
@@ -88,6 +88,77 @@ async function checkPc(t, doc) {
     }
   }
   return { hands, issues: issues.sort() };
+}
+
+const MISS = "外れ MOD";
+/**
+ * (7) PC の箱の中のアイテム枠の札 (見本は種 1 で決まる。フラクチャーの行は数えない)。消去の直線の箱はフラクチャー以外が全部「外れ MOD」(heldTags)、
+ * 外れの側の箱は外れ MOD でない行が道の上の狙いの数まで (junkByCheck)。箱ごとの札の並びを返す (前と比べる)
+ */
+async function checkCards(t, doc) {
+  const rows = await ev(`Object.fromEntries([...document.querySelectorAll("[data-tree-box]")].map((b) => [b.getAttribute("data-box-id"), [...b.querySelectorAll("p.group\\\\/row")].filter((p) => !p.classList.contains("text-mod-fractured")).map((p) => p.querySelector("[data-row-tag-name]")?.innerText.trim() ?? "")]))`);
+  const sig = {};
+  for (const [id, tags] of Object.entries(rows)) {
+    const b = doc.boxes[id];
+    if (!b || !tags.length) continue;
+    sig[id] = tags.map((x) => x || "-").join("|");
+    const ok = tags.filter((x) => x !== MISS).length;
+    if (isStrip(b)) {
+      count(t.key, "消去の箱のカード");
+      if (ok) bad(t.key, `PC ${id} のカード`, "全部消えてよい消去の箱なのに外れ MOD でない行がある", sig[id], `全部 ${MISS}`);
+    } else if (b.out && MISS_OUTS.includes(b.out)) {
+      count(t.key, "外れの箱のカード");
+      const n = pathAims(doc, id).size;
+      if (ok > n) bad(t.key, `PC ${id} のカード`, "外れの箱で、道の上の狙いより多くの行が外れ MOD でない (☑ の無い MOD が狙いに見える)", sig[id], `外れ MOD でない行は ${n} まで`);
+    }
+  }
+  return sig;
+}
+/** (8) 消去の直線の途中の箱に乗せても線が出ない (heldTags)。比べのため直線の終わりの箱 (戻りあり) では線が出るのも見る */
+async function checkStripLines(t, doc) {
+  const hover = async (id) => {
+    await ev(`(() => { document.querySelectorAll("[data-tree-box]").forEach((b) => b.dispatchEvent(new PointerEvent("pointerleave"))); document.querySelector('[data-box-id="${id}"]')?.dispatchEvent(new PointerEvent("pointerenter")); return 1; })()`);
+    await sleep(500);
+    const n = await ev(`document.querySelectorAll("[data-tree-merge-hot]").length`);
+    await ev(`document.querySelector('[data-box-id="${id}"]')?.dispatchEvent(new PointerEvent("pointerleave")), 1`);
+    return n;
+  };
+  for (const b of stripMiddles(doc)) {
+    count(t.key, "消去の途中の箱の線");
+    const n = await hover(b.id);
+    if (n) bad(t.key, `PC ${b.id} に乗せる`, "消去の直線の途中の箱に乗せたのに線が出た", `線 ${n} 本`, "0 本");
+  }
+  const end = Object.values(doc.boxes).find((b) => b.back && isStrip(doc.boxes[b.parent]));
+  if (end && stripMiddles(doc).length && !(await hover(end.id))) note.push(`${t.key}: 直線の終わりの箱 ${end.id} に乗せても線が出ない (乗せ方が効いていないかも)`);
+}
+/** (8) 手の窓で消去を持った時 (既定は全部消えてよい) のカードは、フラクチャー以外が全部「外れ MOD」(heldTags)。手の無い箱 1 つで ＋ → 棚の消去 */
+async function checkHeldAnnul(t) {
+  const doc = await openTree(t, 1660, 860, false);
+  const box = doc && Object.values(doc.boxes).find((b) => !b.hand && b.out !== "start" && !isStrip(doc.boxes[b.parent]));
+  if (!box) { note.push(`${t.key}: 消去を持てる手の無い箱が無い`); return; }
+  await ev(`document.querySelector('[data-box-id="${box.id}"] button[title="戻りの矢印を外す"]')?.click()`); await sleep(600);
+  await ev(`(() => { const x = document.querySelector('[data-box-id="${box.id}"] [data-tree-next]'); if (!x) return false; const o = { bubbles: true, pointerId: 1, isPrimary: true, button: 0 }; x.dispatchEvent(new PointerEvent("pointerdown", o)); window.dispatchEvent(new PointerEvent("pointerup", o)); document.dispatchEvent(new PointerEvent("pointerup", o)); return true; })()`);
+  await sleep(1200);
+  const held = await ev(`(() => { const b = document.querySelector('[data-tree-shelf] [data-key="annul"]'); b?.click(); return !!b; })()`);
+  await sleep(800);
+  const tags = held && await ev(`[...document.querySelectorAll("[data-tree-hand-card] p.group\\\\/row")].filter((p) => !p.classList.contains("text-mod-fractured")).map((p) => p.querySelector("[data-row-tag-name]")?.innerText.trim() ?? "")`);
+  if (!tags?.length) { note.push(`${t.key}: ${box.id} で消去を持ったカードが読めない (棚 ${!!held})`); return; }
+  count(t.key, "消去を持った時のカード");
+  if (tags.some((x) => x !== MISS)) bad(t.key, `PC ${box.id} で消去を持つ`, "全部消えてよい消去を持ったのに外れ MOD でない行がある", tags.map((x) => x || "-").join("|"), `全部 ${MISS}`);
+}
+/** (9) 完成形の窓: 品質の ☑・品質の %・「途中で消える」の札 (押された数 = 木の途中で消える MOD の数)。札の並びを返す */
+async function checkGoal(t, doc) {
+  await ev(`document.querySelector("[data-tree-goal-open='mods']")?.click(), 1`);
+  if (!(await until(`!!document.querySelector("[data-tree-goal-card]")`, 10000))) { note.push(`${t.key}: 完成形の窓が開かない`); return null; }
+  await sleep(800);
+  const g = await ev(`(() => { const q = document.querySelector("[data-tree-goal-quality-on]"); return { on: q ? q.checked : null, card: document.querySelector("[data-tree-goal-card] [data-stage-card]")?.innerText ?? document.querySelector("[data-tree-goal-card]").innerText, toggles: [...document.querySelectorAll("[data-tree-goal-card] [data-row-toggle]")].map((b) => ({ on: b.getAttribute("aria-pressed") === "true", row: b.closest("p")?.innerText.replace(/\\s+/g, " ").trim() ?? "" })) }; })()`);
+  count(t.key, "完成形の窓");
+  if (g.on !== null && g.on !== !!doc.goalQualityOn) bad(t.key, "完成形の窓", "品質の ☑ が木と違う", g.on ? "☑ あり" : "☑ なし", doc.goalQualityOn ? "☑ あり" : "☑ なし");
+  if (doc.goalQualityOn && doc.goalQuality && !norm(g.card).includes(`+${doc.goalQuality}%`)) bad(t.key, "完成形の窓", "カードの品質が木の品質と違う", norm(g.card).slice(0, 120), `+${doc.goalQuality}%`);
+  const way = doc.wayMods?.length ?? 0, pressed = g.toggles.filter((x) => x.on).length;
+  if (pressed !== way) bad(t.key, "完成形の窓", "「途中で消える」が押された行の数が木の途中で消える MOD の数と違う", `${pressed} 行`, `${way} 個`);
+  if (way && g.toggles.length < 2) bad(t.key, "完成形の窓", "途中で消える MOD があるのにカードの行に札が 2 つ未満 (クラフト MOD 2 つ以上で出る)", `${g.toggles.length} 個`, "2 個以上");
+  return g.toggles.map((x) => `${x.on ? "消える" : "残る"} ${x.row}`);
 }
 
 /** (2) テスト走行と 100 人回す (どちらも種 1 で決まる)。数の文と止まった箱を返す */
@@ -203,11 +274,16 @@ try {
     if (!doc) { bad(t.key, "開く", "木が開かない", "", ""); continue; }
     await snap(`${t.key}-pc`);
     const { hands: pcHands, issues } = await checkPc(t, doc);
+    const cards = await checkCards(t, doc);
+    await checkStripLines(t, doc);
     const r = await runs(t);
-    now[t.key] = { boxes: Object.keys(doc.boxes).length, issues, ...r };
-    // 開発版の基準が無ければ本番の作りの基準 (出した版) と比べる = 出した後に変わった所が出る
+    const goal = doc.goalQualityOn || doc.wayMods?.length ? { goal: await checkGoal(t, doc) } : {};
+    now[t.key] = { boxes: Object.keys(doc.boxes).length, issues, ...r, cards, ...goal };
+    await checkHeldAnnul(t);
+    // 開発版の基準が無ければ本番の作りの基準 (出した版) と比べる = 出した後に変わった所が出る。前の基準に無い欄 (後から足した見る物) は比べない
     const was = baseline[MODE]?.[t.key] ?? baseline.prod?.[t.key];
-    if (was && !UPDATE) for (const k of ["boxes", "issues", "test", "testStuck", "run", "runStuck"]) {
+    if (was && !UPDATE) for (const k of ["boxes", "issues", "test", "testStuck", "run", "runStuck", "cards", "goal"]) {
+      if (!(k in was)) continue;
       if (JSON.stringify(was[k]) !== JSON.stringify(now[t.key][k])) bad(t.key, `回し ${k}`, "前 (baseline) と違う", JSON.stringify(now[t.key][k]), JSON.stringify(was[k]));
     }
     const pdoc = await openTree(t, 390, 844, true);
