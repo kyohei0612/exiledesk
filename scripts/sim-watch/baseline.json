@@ -1,0 +1,36 @@
+{
+ "prod": {
+  "amuB": {
+   "boxes": 10,
+   "issues": [],
+   "test": "✓ 合格",
+   "testStuck": [],
+   "run": "100 人: 完成 99%",
+   "runStuck": []
+  },
+  "okPcmPyY": {
+   "boxes": 15,
+   "issues": [
+    "start 完成の箱が無い (当たりの箱で「完成にする」)"
+   ],
+   "test": "足りない所 2",
+   "testStuck": [
+    "b4"
+   ],
+   "run": "テスト走行 30 人: 完成 0 人",
+   "runStuck": [
+    "b4 "
+   ]
+  },
+  "fg0BCVYy": {
+   "boxes": 14,
+   "issues": [],
+   "test": "✓ 合格",
+   "testStuck": [],
+   "run": "100 人: 完成 100%",
+   "runStuck": []
+  },
+  "_at": "2026-10-27T10:02:58.756Z",
+  "_origin": "http://127.0.0.1:1460"
+ }
+}
