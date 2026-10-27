@@ -1,4 +1,7 @@
 {
+  "0.1.633": [
+    "Phone: The item class tiles on the base picker now fill the column width with tighter spacing, and tall icons are centered in the frame, overflowing evenly above and below"
+  ],
   "0.1.632": [
     "Simulator: Fixed a v0.1.631 issue where a target added by an Essence and then removed by an Orb of Annulment was counted as \"miss removed\", getting runs stuck in test runs"
   ],
