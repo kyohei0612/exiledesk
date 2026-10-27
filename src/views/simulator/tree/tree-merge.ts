@@ -14,7 +14,6 @@ import { stripTargetsOf } from "../../../services/simulator/tree/tree-outcome";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { craftStage } from "../../../state/craft-stage";
 import type { BackReq, Pos, Seg } from "./tree-lines";
-import { flag } from "../../../web/release-flags";
 
 /** 戻りの行き先の箱 (決めた箱 1 つ。前の版の形の合う箱へ = 行きうる形の箱を全部、作り直しは無し) */
 export function backTargetsOf(doc: TreeDoc, id: string): string[] {
@@ -101,7 +100,7 @@ export function joinPath(from: Box, to: Box, others0: readonly Box[], segs: read
   // 2 つの箱が横に並ぶ (高さが重なる) 時は左右の辺を重なる高さの真ん中から、縦に並ぶ (幅が重なる) 時は上下の辺を重なる幅の真ん中から出す。
   // 間に箱が無ければ 1 本の直線になる (10-27 オーナー images 22「マークの所で線が段違い」。前は辺の真ん中どうしで、高さの違う箱だと段が付いた。スイッチ goalShape)
   const sy0 = Math.max(from.y, to.y), sy1 = Math.min(from.y + from.h, to.y + to.h), sx0 = Math.max(from.x, to.x), sx1 = Math.min(from.x + from.w, to.x + to.w);
-  const shareY = flag("goalShape") && sy1 - sy0 >= 8 ? (sy0 + sy1) / 2 : null, shareX = flag("goalShape") && sx1 - sx0 >= 8 ? (sx0 + sx1) / 2 : null;
+  const shareY = sy1 - sy0 >= 8 ? (sy0 + sy1) / 2 : null, shareX = sx1 - sx0 >= 8 ? (sx0 + sx1) / 2 : null;
   const ports = (r: Box): Array<{ p: Pos; q: Pos }> => {
     const cx = shareX ?? r.x + r.w / 2, cy = shareY ?? r.y + r.h / 2;
     // p = 辺の真ん中、q = そこから外へ M 出た所 (格子に乗る所)

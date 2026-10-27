@@ -259,7 +259,7 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
       }
     } finally { altDeep = false; }
   }
-  if (flag("hitNew") && !altDeep && b.out === "hit" && b.aim && !(p.hand && effectOf(p.hand.currency) === "fracture") && aimHeldOn(data, base.item, b.aim, { sameText: true })) {
+  if (!altDeep && b.out === "hit" && b.aim && !(p.hand && effectOf(p.hand.currency) === "fracture") && aimHeldOn(data, base.item, b.aim, { sameText: true })) {
     altDeep = true;
     try {
       for (let k = 1; k < HIT_TRIES; k++) {

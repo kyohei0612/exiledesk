@@ -62,7 +62,7 @@ const rowTags = (it: StageItem | null) => (s.data.value && it ? removeTags(it, b
  * (10-27 夜オーナー「全部消えてよいなら持った瞬間に外れ MOD 表示、残したい MOD に ☑ で狙い表示」。スイッチ heldTags)
  */
 function removeTags(it: StageItem, tags: Map<string, RowTag>): Map<string, RowTag> {
-  if (!flag("heldTags") || !isRemove.value) return tags;
+  if (!isRemove.value) return tags;
   const keep = new Set(keepAims.value.map((a) => a.modId)), out = new Map(tags);
   for (const m of [...it.prefixes, ...it.suffixes]) {
     if (m.fractured) continue;
@@ -120,16 +120,14 @@ const preFill = computed(() => { const d = s.data.value, it = item.value; return
 const shelfItem = computed(() => preFill.value?.item ?? item.value);
 /** スマホの下の帯に出す持った札の説明 (PC は札に乗せると出るカードと同じ文、** の太字の印は外す。省略しない。10-26 夜オーナー「スマホも PC と同じ動きに」) */
 const heldHelp = computed(() => (held.value ? stageHelp(held.value, s.data.value, shelfItem.value).map((l) => l.replace(/\*\*/g, "")) : []));
-// フラクチャーのオーブは完成の MOD でフラクチャーの印を決めた木でだけ打てる (10-25 オーナー「最初にフラクチャーを決めないとフラクチャーオーブを打てないように」)
-const fractureBlock = (k: string): string | null => (effectOf(k) === "fracture" && !flag("fracRandom") && !fractureMarks(t.doc.value).length ? tr("先に完成の MOD でフラクチャーを決めて", "Set a fracture on the final mods first") : null);
 /**
  * 錯乱のエッセンス (付くノータブルがランダム) はシミュでは選べない (10-27 昼オーナー。エミュには残す)。灰色で理由を短く、スイッチ noSpam と同じ扱い。
  * 前の木に入っている錯乱の手は開けば今まで通り (持ち直さなければ替わらない)
  */
 /** 錯乱のエッセンスの鍵 (名前はデータから handName で引く) */
 const DELIRIUM = Object.keys(ESSENCE_KEYS).find((k) => ESSENCE_KEYS[k]?.en === "Essence of Delirium") ?? "";
-const deliriumBlock = (k: string): string | null => (flag("noSpam") && ESSENCE_KEYS[k]?.en === "Essence of Delirium" ? tr("シミュでは使えない", "Not usable in the simulator") : null);
-const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens, (k) => fractureBlock(k) ?? deliriumBlock(k));
+const deliriumBlock = (k: string): string | null => (ESSENCE_KEYS[k]?.en === "Essence of Delirium" ? tr("シミュでは使えない", "Not usable in the simulator") : null);
+const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens, (k) => deliriumBlock(k));
 /**
  * カオススパムオーブ (10-25 オーナー「レア状態のアイテムになら特別にカオススパムオーブを実装しよう」): 棚の上のシミュだけの札。レアの時だけ出す。
  * 持つ = カオス (段は持った物の欄で普通・上級・完全) を当たるまで (spam)。狙う MOD は必ず選ぶ、お告げはカオスと同じ。前は普通のカオスの窓の「当たるまで繰り返す」のチェックだった (消した)
@@ -154,9 +152,8 @@ function onShelfHold(k: string): void {
   onHold(k);
 }
 /** ツリーの棚は打てる札だけを出すので、印が無いせいで出ないフラクチャーは窓に理由を 1 行 (アイテムには打てる時だけ) */
-const fracHidden = computed(() => { const d = s.data.value, it = item.value; return !!d && !!it && !!fractureBlock("fracture") && !useReason(d, it, "fracture"); });
 /** 錯乱のエッセンスがこのアイテムに打てるのに棚から外している時は、窓に理由を 1 行 (シミュの棚は打てる札だけを出すので灰色の札は出ない) */
-const delirHidden = computed(() => { const d = s.data.value, it = item.value; return !!d && !!it && flag("noSpam") && Object.keys(ESSENCE_KEYS).some((k) => ESSENCE_KEYS[k]?.en === "Essence of Delirium" && !useReason(d, it, k)); });
+const delirHidden = computed(() => { const d = s.data.value, it = item.value; return !!d && !!it && Object.keys(ESSENCE_KEYS).some((k) => ESSENCE_KEYS[k]?.en === "Essence of Delirium" && !useReason(d, it, k)); });
 const used = computed(() => (held.value ? omensFor(held.value, omens.value) : []));
 const catalysing = computed(() => used.value.includes(CATALYSING));
 
@@ -263,7 +260,7 @@ function toggleKeep(a: Aim): void {
 const isGoalMod = (a: Aim): boolean => (t.doc.value.memoAims ?? []).some((g) => g.modId === a.modId);
 const keepJunk = (c: { aim: Aim; mod: StageMod }): boolean => (flag("boxShape") && s.data.value && item.value ? boxTagsOf(s.data.value, t.doc.value, props.boxId, item.value).get(c.mod.modId)?.tone === "bad" : !isGoalMod(c.aim));
 const keepText = (m: StageMod): string => { const it = item.value ? cardOf(item.value) : null; return modText((it ? [...it.prefixes, ...it.suffixes].find((x) => x.modId === m.modId) : null) ?? m); }; // 値はカードと同じ (cardOf、10-28 モンキー見た目 1: 欄 94% / カード 96%)
-const keepLabel = (c: { aim: Aim; mod: StageMod }): string => (flag("goalShape") && keepJunk(c) ? tr(`外れ MOD (${keepText(c.mod)})`, `Miss mod (${keepText(c.mod)})`) : keepText(c.mod));
+const keepLabel = (c: { aim: Aim; mod: StageMod }): string => (keepJunk(c) ? tr(`外れ MOD (${keepText(c.mod)})`, `Miss mod (${keepText(c.mod)})`) : keepText(c.mod));
 function keepNone(e: Event): void { const was = [...keepChecked.value]; keepChecked.value = []; (e.target as HTMLInputElement).checked = true; warnIfBelow(() => { keepChecked.value = was; }); }
 const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, ...(isRemove.value ? { keep: keepAims.value } : {}) }) : null));
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
@@ -312,7 +309,7 @@ const aimStep = ref(false);
  * スマホの 10-27 昼の直し (スイッチ phone1027): 持った物の説明は既定で閉じる (開くのは任意)。
  * 消去は高貴・カオスと同じく、まず持って「使う ›」→ 次のページで残したい MOD (上に ☑ の並び、一番下に全部消えてよい、既定オン。「n MOD 外れ MOD」は出さない)
  */
-const P27 = computed(() => phone.value && flag("phone1027"));
+const P27 = computed(() => phone.value);
 /** カオススパムオーブの札と呼び名を出さない (スイッチ noSpam、10-27 昼オーナー「特殊過ぎて逆に困る」)。前に保存した当たるまでの手は開けば今まで通り (spam のまま決められる) */
 const NS = flag("noSpam");
 const helpOpen = ref(false);
@@ -339,7 +336,6 @@ function ok(): void {
       <div class="flex min-w-0 flex-col gap-1.5">
         <p class="text-[12px] opacity-70">{{ tr("棚から持って、カードを押すとこの箱の次の手になる", "Hold a currency from the shelf and click the item to make it this box's next craft") }}</p>
         <!-- 打たずに分ける (分かれ目) のボタンは 10-25 に外した (オーナー「分かれ道マジでややこしいからボタンいらない」)。分かれ目は見本の木にある物だけ、窓 TreeSplitPick で行を直せる -->
-        <p v-if="fracHidden" data-tree-hand-frac-off class="text-[12px] text-rose-200/90">{{ handName("fracture") }}: {{ tr("先に完成の MOD でフラクチャーを決めて (0 完成形の設定の ✦)", "set a fracture on the final mods first (✦ in 0 Final item)") }}</p>
         <p v-if="delirHidden" data-tree-hand-delirium-off class="text-[12px] text-rose-200/90">{{ handName(DELIRIUM) }}: {{ tr("シミュでは使えない (付くノータブルがランダム)", "not usable in the simulator (the notable is random)") }}</p>
         <button v-if="t.doc.value.boxes[boxId]?.out !== 'start'" type="button" data-tree-hand-back class="g-btn sm self-start" :title="tr('打たずに既にある箱へ戻す (窓を閉じて、戻り先の箱を押す)', 'Return to an existing box instead (closes this window; click the box)')" @click="emit('back')">↩ {{ tr("既にある箱へ戻す", "Return to a box") }}</button>
         <button v-if="current" type="button" class="g-btn sm self-start" @click="emit('clear')">{{ tr("この手を消す (下も消える)", "Remove this craft (and below)") }}</button>

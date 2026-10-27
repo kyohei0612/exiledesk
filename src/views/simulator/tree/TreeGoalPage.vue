@@ -140,24 +140,24 @@ function apply(en: string): void {
 function onPasted(): void { asking.value = null; dropped.value = []; unpicked.value = false; t.needBase.value = false; go(2); }
 /** 途中で消えるクラフト MOD (tree-way-mods) も一覧では狙いと同じに光り、押すと外れる (スイッチ goalQuality) */
 const pickGoal = {
-  has: (modId: string, tier: number): boolean => t.hasGoal(modId, tier) || (flag("goalQuality") && (t.doc.value.wayMods ?? []).some((a) => a.modId === modId && a.tier === tier)),
-  toggle: (modId: string, tier: number): void => { if (flag("goalQuality") && inWay(t.doc.value, modId)) t.edit((d) => dropWay(d, modId)); else t.toggleGoal(modId, tier); },
+  has: (modId: string, tier: number): boolean => t.hasGoal(modId, tier) || ((t.doc.value.wayMods ?? []).some((a) => a.modId === modId && a.tier === tier)),
+  toggle: (modId: string, tier: number): void => { if (inWay(t.doc.value, modId)) t.edit((d) => dropWay(d, modId)); else t.toggleGoal(modId, tier); },
 };
 /** カードの下の「途中で消える」の切り替えに並べるクラフト MOD (残る物 + 途中で消える物。2 つ以上の時だけ出す) */
 const crafts = computed(() => {
   const d = s.data.value, doc = t.doc.value;
-  if (!flag("goalQuality") || !d) return [];
+  if (!d) return [];
   const list = [...t.goals.value.filter((a) => isCraftAim(d, a)).map((a) => ({ a, way: false })), ...(doc.wayMods ?? []).map((a) => ({ a, way: true }))];
   return list.length >= 2 ? list : [];
 });
 /** 「途中で消える」の切り替えをカードの MOD の行の右に置く (デザインの口 rowToggles、10-27 夜オーナー。goalQuality と rowToggle の両方の時だけ、片方ならカードの下の欄) */
-const inRow = computed(() => flag("goalQuality") && flag("rowToggle"));
+const inRow = computed(() => flag("rowToggle"));
 const wayToggles = computed((): Map<string, RowToggle> | null => (inRow.value && crafts.value.length ? new Map(crafts.value.map((c) => [c.a.modId, { text: tr("途中で消える", "Removed on the way"), on: c.way, title: `${c.way ? tr("押すと残す (完成の狙いへ戻す)", "Click to keep it (back to the final targets)") : tr("押すと途中で消える物にする (完成の狙い・枠・完成の判定に数えない)", "Click to mark it removed on the way (not counted as a final target, slot or for completion)")}
 ${WAY_ORDER()}` }])) : null));
 /** カードの札: 行の右に切り替えがある行は「途中で消える」の札を外す (押された切り替えと同じ言葉が 2 つ並ぶので) */
 const cardTags = computed(() => { const tg = shown.tags.value, tv = wayToggles.value; if (!tg || !tv) return tg; const m = new Map(tg); for (const k of tv.keys()) m.delete(k); return m; });
 /** 残るクラフト MOD が上限を超えている間の「決めた」を押せない理由 */
-const undecided = computed(() => (flag("goalQuality") && s.data.value ? wayUndecided(s.data.value, t.doc.value, t.goalItem.value?.item ?? null) : null));
+const undecided = computed(() => (s.data.value ? wayUndecided(s.data.value, t.doc.value, t.goalItem.value?.item ?? null) : null));
 /** 完成の狙いに無い MOD を当たりにしている箱 (狙いを外した後も木に残る。tree-model の orphanHits) */
 const orphans = computed(() => orphanHits(t.doc.value));
 const orphanNames = computed(() => [...new Set(orphans.value.map((id) => t.aimShort(t.doc.value.boxes[id]!.aim!)))].join(tr("・", ", ")));
@@ -171,7 +171,7 @@ function blockOf(modId: string, tier: number): string | null {
   const d = s.data.value, doc = t.doc.value;
   if (!d) return null;
   // クラフト MOD は 2 つ目以降も足せる (残すか途中で消えるかはカードの下で決める、スイッチ goalQuality)。ほかのクラフト MOD を除いた組で聞く
-  const craft = flag("goalQuality") && isCraftAim(d, { modId });
+  const craft = isCraftAim(d, { modId });
   const lv = doc.ilvlFit ? FIT_ILVL : doc.itemLevel, aims = t.goals.value.filter((a) => a.modId !== modId && !(craft && isCraftAim(d, a))).map((a) => ({ modId: a.modId, tier: a.tier }));
   const key = `${doc.base}|${lv}|${craft ? 1 : 0}|${JSON.stringify(aims)}`;
   if (key !== blockFor) { blockFor = key; blockMemo = new Map(); }

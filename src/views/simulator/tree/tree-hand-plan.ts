@@ -115,7 +115,7 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
   // フラクチャー: 当たりの札 = この箱で付いている印の狙い (完成の MOD のフラクチャーの印、10-25)。どれが ✦ になるかはエンジンのまま
   if (kind === "fracture") {
     // ✦ の印の無い木 (白ベースから・フラクチャー無し) は乱数で固定: 当たりの札 = アイテムに付いている完成の狙い (未発現・冒涜の MOD は固定されない。スイッチ fracRandom)
-    if (flag("fracRandom") && !fractureMarks(doc).length) {
+    if (!fractureMarks(doc).length) {
       // 見本を幾つか見て、どれかに付いている完成の狙いは全部札に (見本 1 つだと、そこで冒涜で付いていた冷気耐性が札に入らず、ほかの人で固定された冷気耐性が外れの箱に入った、10-27 夜)
       const items = [item, ...[2, 3, 4].map((seed) => sampleOf(data, doc, boxId, seed).item)];
       const fixable = (it: StageItem): StageItem => { const ms = [...it.prefixes, ...it.suffixes].filter((m) => !m.fractured && !m.unrevealed && !m.desecrated); return { ...it, prefixes: ms.filter((m) => m.side === "prefix"), suffixes: ms.filter((m) => m.side === "suffix") }; };
@@ -137,7 +137,7 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
   let reach = reachableAims(data, items, h.currency, engineOmens(h), open, { sameText: true });
   // 触媒の高貴のお告げは品質の無い見本では打てず、表が無い (null) になって狙いが全部並び、左側の高貴なお告げでも付かないサフィが出た
   // (10-27 夜モンキー 2 回目 4)。触媒のお告げは付く MOD の重みを変えるだけで付きうる範囲は変えないので、抜いて聞き直す (スイッチ omenReach)
-  if (!reach && flag("omenReach") && h.omens.includes(CATALYSING)) reach = reachableAims(data, items, h.currency, engineOmens(h).filter((o) => o !== CATALYSING), open, { sameText: true });
+  if (!reach && h.omens.includes(CATALYSING)) reach = reachableAims(data, items, h.currency, engineOmens(h).filter((o) => o !== CATALYSING), open, { sameText: true });
   if (reach) return reach;
   // 確率の表が無い時 (null): エンジンの起こりうる結果のどれでも MOD が増えないなら当たりは無し (10-26 モンキー 7 の 4: 不在のアミュレットに変成 = MOD 0 のマジック、
   // 前は狙い全部を当たりにして、何も付かない当たりの箱と「外れ 100%」ができた)。結果は打った後の箱 1 つ
@@ -183,7 +183,7 @@ export function problemOf(data: PatchData, item: StageItem, h: Hand, hitAims: Ai
   const full = !!preCat && catalystFull(item, preCat);
   if (preCat && preFill && !preFill.applied && !full) return tr(`前に足すカタリストが入らない: ${preFill.reason ?? ""}`, `The catalyst before this can't be used: ${preFill.reason ?? ""}`);
   // 当たるまで繰り返すのに狙いが 1 つも無い時は決めさせない (MOD を選んでいない・まだ付いていない狙いが無い・このカレンシーでは付かない)
-  if (kindOf(h) === "spam" && !hitAims.length && flag("noSpam")) return tr("狙う MOD を選んで (当たるまで繰り返す手は狙う MOD が要る。候補が無い時は、完成の MOD に足してから)", "Pick a target mod (a repeat-until-hit craft needs one; if there are none, add one to the final mods first)");
+  if (kindOf(h) === "spam" && !hitAims.length) return tr("狙う MOD を選んで (当たるまで繰り返す手は狙う MOD が要る。候補が無い時は、完成の MOD に足してから)", "Pick a target mod (a repeat-until-hit craft needs one; if there are none, add one to the final mods first)");
   if (kindOf(h) === "spam" && !hitAims.length) return tr("狙う MOD を選んで (カオススパムオーブは狙う MOD が要る。候補が無い時は、完成の MOD に足してから)", "Pick a target mod (the Chaos Spam Orb needs one; if there are none, add one to the final mods first)");
   return handProblem(data, preCat && preFill ? preFill.item : item, h);
 }
@@ -203,14 +203,14 @@ export function sideGroup(): ((a: Aim) => string) | undefined {
 }
 export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims: Aim[], pre: string | null, only: OnlyOut): string {
   // ✦ の印の無い木のフラクチャーは乱数で固定する手 (スイッチ fracRandom)
-  const h: Hand = flag("fracRandom") && effectOf(h0.currency) === "fracture" && !fractureMarks(d).length ? { ...h0, pick: "random" } : h0;
+  const h: Hand = effectOf(h0.currency) === "fracture" && !fractureMarks(d).length ? { ...h0, pick: "random" } : h0;
   // 外れで、打つ前の箱・同じ形の箱と同じ手 = 新しい段を作らずその箱へ戻る (シミュのルール、PC・スマホ共通。tree-shape の sameHandReturn、スイッチ goalShape)。
   // 外れに手がもう付いていれば下を消してから (前に同じ手で段を足して伸びた木)。戻ったかは呼ぶ側が箱の back で見る
   // 触媒 (pre) 付きの手も同じ判定 (PC・スマホで 1 つ、10-27 夕ブラックの決め B4。前は PC が pre のある時は見ず、スマホは pre を見ずに戻っていた)
   const data = craftStage.data.value;
   // 箱の体 (tree-box-shape: 外れの側・種類・数、✦ の側、レアリティ) の違う箱へは戻らない・つながない (10-27 夕オーナー「これは冒涜で付けた外れ MOD、これはエッセンスで付けた外れ MOD」
   // = 次に打てる手が変わる違いは形の違い。スイッチ goalShape)。見本ごとに外れの種類が違う箱はどの箱へもつながない (boxBody の mixed)
-  const loose = flag("goalShape") && data ? bodyMemo(data, d) : undefined;
+  const loose = data ? bodyMemo(data, d) : undefined;
   const to = flag("goalShape") ? sameHandReturn(d, id, h, loose) : null;
   if (to) { if (d.boxes[id]?.hand) clearHand(d, id); setBack(d, id, to); return id; }
   const had = new Set(Object.keys(d.boxes));
@@ -237,7 +237,7 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
 function stripChain(d: TreeDoc, id: string, h: Hand): void {
   const data = craftStage.data.value, b = d.boxes[id];
   if (!data || !b) return;
-  if (flag("goalShape") && stripToShape(data, d, id, h)) return;
+  if (stripToShape(data, d, id, h)) return;
   const it0 = sampleOf(data, d, id, 1).item, n = looseOf(it0), stops = stripStops(data, d, id, it0);
   const s = Math.max(-1, ...[...stops.keys()].filter((k) => k <= n));
   const to = s >= 0 ? stops.get(s)! : null;

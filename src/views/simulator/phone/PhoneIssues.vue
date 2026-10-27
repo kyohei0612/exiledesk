@@ -22,7 +22,7 @@ const { checking, progress } = check;
  */
 const issues = computed(() => (check.issues.value ?? []).filter((x) => !(x.kind === "open" && !t.doc.value.boxes[x.boxId]?.split) && !(x.kind === "noDone" && x.boxId === "start" && q.questions.value.length > 0)));
 /** 隠している「完成の箱が無い」がある (未定の質問が残っている間)。緑の「止まる所なし」だけだと完成の箱が無いのに合格に見えた (10-27 夜モンキー 2 回目 8、スイッチ phoneTestDone) */
-const noDoneYet = computed(() => flag("phoneTestDone") && (check.issues.value ?? []).some((x) => x.kind === "noDone"));
+const noDoneYet = computed(() => (check.issues.value ?? []).some((x) => x.kind === "noDone"));
 const MAP = flag("phoneMap");
 /** テストで回した後 (木の形がその時のまま) だけ結果を出す */
 const tested = computed(() => testedKey.value === routeKeyOf(t.doc.value));

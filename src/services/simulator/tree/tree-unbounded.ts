@@ -9,7 +9,6 @@ import { kindOf, mulberry32, room, RUNE_PREFIX, type PatchData, type StageItem }
 import { unboundedBefore } from "../sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { boxAims, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
-import { flag } from "../../../web/release-flags";
 
 /** その手 (カレンシーの key) を打つ前のアイテム。要らなければそのまま */
 export const prepFor = (data: PatchData, item: StageItem, key: string): StageItem => unboundedBefore(data, item, key, mulberry32(1));
@@ -28,10 +27,10 @@ export const autoRuneKeys = (before: StageItem, after: StageItem): string[] =>
  * 完成形の品質が足りているか (「品質も狙う」☑ の時だけ見る。値で見て、ブリーチの MOD の有無では見ない。
  * 10-27 夕オーナー「一度付けた品質は消えない」「オフなら品質は見ない」、スイッチ goalQuality)
  */
-export const qualityOk = (doc: TreeDoc, item: StageItem): boolean => !(flag("goalQuality") && doc.goalQualityOn && doc.goalQuality && (item.quality ?? 0) < doc.goalQuality);
+export const qualityOk = (doc: TreeDoc, item: StageItem): boolean => !(doc.goalQualityOn && doc.goalQuality && (item.quality ?? 0) < doc.goalQuality);
 export function goalsHeld(data: PatchData, doc: TreeDoc, item: StageItem): boolean {
   if (!qualityOk(doc, item)) return false;
-  const goals = (doc.memoAims ?? []).filter((a) => !(flag("goalQuality") && a.forQuality));
+  const goals = (doc.memoAims ?? []).filter((a) => !(a.forQuality));
   return !!goals.length && goals.every((a) => aimHeldOn(data, item, a, { sameText: true }));
 }
 export function heldHitOf(data: PatchData, doc: TreeDoc, b: TreeBox, item: StageItem): string | null {

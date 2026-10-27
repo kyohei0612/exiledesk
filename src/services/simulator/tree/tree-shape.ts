@@ -57,12 +57,12 @@ export type Shape = { key: string; box: string; hand?: Hand | null; sig?: string
 function hitKeys(doc: TreeDoc, c: TreeBox): string[] {
   const ks = boxAims(c).map(aimKey);
   const goals = doc.memoAims ?? [];
-  if (!flag("goalShape") || !goals.length) return ks;
+  if (!goals.length) return ks;
   const g = new Set(goals.map(aimKey));
   return ks.filter((k) => g.has(k));
 }
 /** 完成の狙いに無い MOD だけが付いた当たりの箱 = 外れの箱と同じ形 (スイッチ goalShape) */
-const junkLike = (doc: TreeDoc, b: TreeBox): boolean => b.out === "hit" && !!b.aim && flag("goalShape") && !!(doc.memoAims ?? []).length && !hitKeys(doc, b).length;
+const junkLike = (doc: TreeDoc, b: TreeBox): boolean => b.out === "hit" && !!b.aim && !!(doc.memoAims ?? []).length && !hitKeys(doc, b).length;
 /**
  * 当たりの箱を通った組 = 今の組に、その箱で新しく付いた狙い (ks のどれか) を足した物。当たりは新しく付いた物なので、もう持っている狙いが
  * もう一度付く組 (まとめた箱「アーマーかライフ」のアーマーの道で、次の当たり「アーマーが付いた」) はありえない。その組は落とす
@@ -70,7 +70,6 @@ const junkLike = (doc: TreeDoc, b: TreeBox): boolean => b.out === "hit" && !!b.a
  */
 function addHit(sets: string[][], ks: readonly string[]): string[][] {
   const old = sets.flatMap((h) => ks.map((k) => (h.includes(k) ? h : [...h, k])));
-  if (!flag("hitNew")) return old;
   const fresh = sets.flatMap((h) => ks.filter((k) => !h.includes(k)).map((k) => [...h, k]));
   return fresh.length ? fresh : old;
 }
@@ -109,7 +108,7 @@ export function heldSets(doc: TreeDoc, id: string | null): string[][] {
       const ess = p?.hand && effectOf(p.hand.currency) === "essence"
         ? p.outs.map((o) => doc.boxes[o]).find((x) => x?.out === "hit" && x.aim)?.aim ?? (flag("goalShape") ? (doc.memoAims ?? []).find((g) => g.modId === essKey) : undefined)
         : undefined;
-      if (ess && (!flag("goalShape") || !(doc.memoAims ?? []).length || (doc.memoAims ?? []).some((g) => aimKey(g) === aimKey(ess)))) { const k = aimKey(ess); sets = sets.map((h) => (h.includes(k) ? h : [...h, k])); }
+      if (ess && (!(doc.memoAims ?? []).length || (doc.memoAims ?? []).some((g) => aimKey(g) === aimKey(ess)))) { const k = aimKey(ess); sets = sets.map((h) => (h.includes(k) ? h : [...h, k])); }
     }
     // 「狙いが消えた」をまとめた箱 (mergedOuts) は、消えた組と消えていない組の両方 (10-26)
     if (c.out !== "lost" && c.mergedOuts?.includes("lost")) sets = [...sets, ...sets.flatMap((h) => h.map((k) => h.filter((x) => x !== k)))];
@@ -128,7 +127,7 @@ export function shapeFits(doc: TreeDoc, from: string, to: string): boolean {
   // 全部消えてよい消去の後の自動の戻りは、戻り先をエンジンで打った結果の形で選んでいる (tree-hand-plan の stripToShape)。この箱の組は「狙い 0」と数える作りなので比べない
   // (10-27 夕モンキー 2、スイッチ goalShape)
   const fb = doc.boxes[from], fp = fb?.parent ? doc.boxes[fb.parent] : undefined;
-  if (flag("goalShape") && fb?.autoBack && fp?.hand && effectOf(fp.hand.currency) === "remove" && fp.hand.keep && !fp.hand.keep.length) return true;
+  if (fb?.autoBack && fp?.hand && effectOf(fp.hand.currency) === "remove" && fp.hand.keep && !fp.hand.keep.length) return true;
   const t = doc.boxes[to];
   if (!t || t.split) return true;
   const key = (h: string[]): string => [...h].sort().join(",");
@@ -148,7 +147,7 @@ export function shapesOf(doc: TreeDoc, data?: PatchData): Shape[] {
     for (const held of pathHelds(doc, b.id)) for (const junk of [false, true]) out.push({ key: shapeKey(held, junk), box: b.id });
   }
   // 手のある箱に見本の外れの種類を付ける (回す時の「形の合う箱へ」で、同じ形の箱が幾つかあれば種類も合う箱を先に。分かれ目の箱は外れを行で分けるので付けない)
-  if (data && flag("goalShape")) {
+  if (data) {
     const sigs = new Map<string, string | null>();
     for (const s of out) if (s.hand) { if (!sigs.has(s.box)) sigs.set(s.box, boxBody(data, doc, s.box, true)); s.sig = sigs.get(s.box)!; }
   }
@@ -163,7 +162,7 @@ function boxOfShape(shapes: readonly Shape[], key: string, at?: { data: PatchDat
   // 同じ形の箱が幾つかあれば、体 (tree-box-shape の bodyOf) も合う箱 → 種類が合う箱 → 前のとおり形だけ の順で見る (スイッチ goalShape。合う箱が無くても止まりは増やさない)
   // ✦ の側とレアリティが違う箱へは行かない (✦ は消せない。外れが固定された枝の箱に狙いが固定された人が入り、見本の ✦ が箱ごとに変わった、10-28 モンキー 7。スイッチ boxShape)
   const fixed = at?.doc && flag("boxShape") ? bodyFixed(bodyOf(at.data, at.doc, at.item)) : "";
-  const all = shapes.filter((s) => s.key === key && (!fixed || s.sig == null || s.sig.startsWith("mixed") || bodyFixed(s.sig) === fixed)), sig = at?.doc && flag("goalShape") ? bodyOf(at.data, at.doc, at.item) : null;
+  const all = shapes.filter((s) => s.key === key && (!fixed || s.sig == null || s.sig.startsWith("mixed") || bodyFixed(s.sig) === fixed)), sig = at?.doc ? bodyOf(at.data, at.doc, at.item) : null;
   const exact = sig ? all.filter((s) => s.sig == null || s.sig === sig) : [], kinds = sig ? all.filter((s) => s.sig == null || bodyKinds(s.sig) === bodyKinds(sig)) : [];
   const same = exact.length ? exact : kinds.length ? kinds : all;
   // 同じ形の箱が幾つかあれば、手が打てる箱を先に (光 + 消去の箱へ普通の MOD の外れを持って来ても打てない、10-22 金の指輪の見本)
@@ -315,7 +314,7 @@ export function sameHitsOf(doc: TreeDoc, id: string, loose?: BodyOf): string[] {
   // (印の無い木の乱数のフラクチャーで「キャストスピードが固定された」が上の「キャストスピードが付いた」へ自動で統合された、10-27 夜。スイッチ fracRandom)
   const fr = (x: string): boolean => { for (let y: string | null = doc.boxes[x]?.parent ?? null; y; y = doc.boxes[y]?.parent ?? null) { const h = doc.boxes[y]?.hand; if (h && effectOf(h.currency) === "fracture" && h.pick === "random") return true; } return false; };
   const f0 = flag("fracRandom") ? fr(id) : false;
-  return Object.values(doc.boxes).filter((c) => c.id !== id && c.out === "hit" && !!c.aim && !c.back && !c.split && c.parent !== b.parent && !down.has(c.id) && hitStateKey(doc, c.id) === k && (!flag("fracRandom") || (flag("boxShape") && loose) || fr(c.id) === f0) && sameBody(loose, id, c.id)).map((c) => c.id);
+  return Object.values(doc.boxes).filter((c) => c.id !== id && c.out === "hit" && !!c.aim && !c.back && !c.split && c.parent !== b.parent && !down.has(c.id) && hitStateKey(doc, c.id) === k && ((flag("boxShape") && loose) || fr(c.id) === f0) && sameBody(loose, id, c.id)).map((c) => c.id);
 }
 /**
  * 同じ状態の当たりの箱をまとめる: 選んだ箱 (picks) の下を消し、まとめ先 (to) へ戻りの矢印でつなぐ (木は親が 1 つなので 1 箱にはせず、合流の線で見せる)。
@@ -422,10 +421,10 @@ function outBoxOfRaw(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[]; 
 export function sameHandReturn(doc: TreeDoc, id: string, h: Hand, loose?: BodyOf): string | null {
   const b = doc.boxes[id];
   // 「外れが消えた」の箱も同じ (10-27 夜モンキー 2 回目 2: 「1 段目へ戻る」の外れが消えたの箱でスタートと同じ手を選ぶと、戻りが消えて新しい段ができた。スイッチ backSameHand)
-  if (!b || !(b.out === "junk" || b.out === "lost" || b.out === "any" || b.out === "hit" || (flag("backSameHand") && b.out === "junkGone"))) return null;
+  if (!b || !(b.out === "junk" || b.out === "lost" || b.out === "any" || b.out === "hit" || (b.out === "junkGone"))) return null;
   const same = (x: Hand | null | undefined): boolean => !!x && x.currency === h.currency && [...x.omens].sort().join() === [...h.omens].sort().join();
   // ⓪ 今の戻り先 (人が選んだ / 自動の) の箱がこの手と同じなら、そのまま戻り先へ (戻り先がスタートの時は、スタートは形の合う箱の候補に入らないので、ここで見る)
-  if (flag("backSameHand") && b.back && b.back !== MATCH && b.back !== RESTART && same(doc.boxes[b.back]?.hand)) return b.back;
+  if (b.back && b.back !== MATCH && b.back !== RESTART && same(doc.boxes[b.back]?.hand)) return b.back;
   const p = b.parent ? doc.boxes[b.parent] : undefined;
   const keys = new Set(matchTargets(doc, id).map((m) => m.key));
   // 打つ前の箱へも、形の鍵 (狙いの組 + 外れの有無) が同じ時だけ (10-27 夕モンキー 8: スタート (外れ 0) で高貴を打った外れ (外れ 1) に同じ高貴を選ぶとスタートへ戻り、

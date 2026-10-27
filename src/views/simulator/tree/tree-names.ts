@@ -68,7 +68,7 @@ export const modShort = (text: string): string => text.replace(/\([^)]*\)/g, "")
  */
 export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> & { parent?: string | null }, aimShort: (a: NonNullable<TreeBox["aim"]>) => string): string {
   // ✦ の印の無い木の乱数のフラクチャーの結果は「〜が固定された」「外れ MOD が固定された」(付いたのではない。10-27 夜、要望 8a159e29、スイッチ fracRandom)
-  const ph = flag("fracRandom") && b.parent ? useTree().doc.value.boxes[b.parent]?.hand : null;
+  const ph = b.parent ? useTree().doc.value.boxes[b.parent]?.hand : null;
   // ✦ の木のフラクチャー (どの ✦ が固定されても当たり) も「〜が固定された」(スイッチ fracMulti、S-42)
   const fixed = ph?.pick === "random" || (flag("fracMulti") && !!ph && effectOf(ph.currency) === "fracture");
   const free = fixed && !!ph?.free && flag("fracPick");

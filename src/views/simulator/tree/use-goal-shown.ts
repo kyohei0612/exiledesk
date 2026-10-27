@@ -11,7 +11,6 @@ import type { RowTag } from "../../../components/for-share/item/stage-item-row-t
 import { useTree } from "./use-tree";
 import { wayRows, WAY_ORDER } from "./tree-way-mods";
 import { tr } from "../../../i18n/lang";
-import { flag } from "../../../web/release-flags";
 
 /** ベースの上限をこれ以上超えたらブリーチのエッセンスが要る (+10 まではインフューザー) */
 export const BREACH_OVER = 11;
@@ -21,7 +20,7 @@ export function useGoalShown() {
   /** 足すブリーチのエッセンスの MOD (要らない時・付かないベースは null)。エンジンで完成形にブリーチのエッセンスを打って、付いた MOD を取る */
   const breach = computed((): StageMod | null => {
     const d = s.data.value, g = t.goalItem.value?.item, doc = t.doc.value;
-    if (!flag("goalQuality") || !d || !g || !doc.goalQualityOn || (doc.goalQuality ?? 0) - maxQualityOf(g) < BREACH_OVER) return null;
+    if (!d || !g || !doc.goalQualityOn || (doc.goalQuality ?? 0) - maxQualityOf(g) < BREACH_OVER) return null;
     // ブリーチのエッセンスを MOD 一覧で足してある時は、その行で足りる (同じ行を 2 つ出さない)
     if ([...(doc.wayMods ?? []), ...(doc.memoAims ?? [])].some((a) => /LocalMaximumQuality/.test(a.modId))) return null;
     // 完成形に既にエッセンスの MOD があると「エッセンスの MOD は 1 つまで」で打てないので、エッセンスの MOD を除いた写しに打つ (途中で付けて消える物なので、完成形と同時には付かない)
@@ -31,13 +30,12 @@ export function useGoalShown() {
   /** 途中で消える行 = MOD 一覧で「途中で消える」にしたクラフト MOD (tree-way-mods) + 品質で自動で出るブリーチ */
   const ways = computed((): StageMod[] => {
     const d = s.data.value;
-    if (!flag("goalQuality") || !d) return [];
+    if (!d) return [];
     return [...wayRows(d, t.doc.value), ...(breach.value ? [breach.value] : [])];
   });
   const item = computed((): StageItem | null => {
     const g = t.goalItem.value?.item, doc = t.doc.value;
     if (!g) return null;
-    if (!flag("goalQuality")) return g;
     const q = doc.goalQualityOn && doc.goalQuality ? { ...g, quality: doc.goalQuality, ...(doc.goalQualityTag ? { qualityTag: doc.goalQualityTag } : {}) } : g;
     const ws = ways.value;
     return ws.length ? { ...q, prefixes: [...q.prefixes, ...ws.filter((m) => m.side === "prefix")], suffixes: [...q.suffixes, ...ws.filter((m) => m.side === "suffix")] } : q;

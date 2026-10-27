@@ -344,7 +344,7 @@ function stuckText(data: PatchData, aims: readonly Aim[], n: number, w: { reason
   if (w?.noBox) return `${head}: ${w.reason}`;
   if (!w) return tr(`${head} (手・戻り先が無い、または分かれ目のどの行にも合わない)`, `${head} (no craft or return, or no split row matches)`);
   // 手の無い箱 (完成の箱など) は「この手が打てない」ではない。回した時の理由をそのまま (完成の箱で品質が足りない など。10-27 夕、スイッチ goalShape)
-  if (!hand && flag("goalQuality")) return `${head}: ${w.reason}`;
+  if (!hand) return `${head}: ${w.reason}`;
   const full = SIDES.filter((side) => !room(w.item, side));
   if (!full.length) return `${head}: ${w.reason}`;
   const junkAll = junkOf(w.item, targetsOf(data, aims), aimOpts(data));

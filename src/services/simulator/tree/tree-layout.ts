@@ -85,7 +85,7 @@ export function tidy(d: TreeDoc, chipW?: (id: string) => number | undefined): vo
     // (外れの箱が一番下の段まで 1 列ずつ場所を取り、深い部分木の横で兄弟が大きく離れた。10-27 夜オーナー、カマサのティアラ。スイッチ tidyTight)
     subs.forEach((c, i) => {
       const k = d.boxes[ks[i]!]!;
-      if (flag("tidyTight") && !k.outs.length && k.out !== "hit") return;
+      if (!k.outs.length && k.out !== "hit") return;
       for (let r = row.get(ks[i]!)! + 1; r <= deepest; r++) if (!c.has(r)) { const up = c.get(r - 1) ?? [0, BOX_W]; put(c, r, up[0], up[1]); }
     });
     for (const c of subs) {

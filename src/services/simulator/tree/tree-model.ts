@@ -11,6 +11,7 @@
 import type { TreeTune } from "./tree-tune";
 import { mayHoldAim } from "./tree-lost";
 import { effectOf } from "./tree-hands";
+import { makeRoom, pushRight, ROOM, spread } from "./tree-model-layout";
 
 /**
  * any = 狙い無しの手の結果 (何が付いても次へ進む「打った後」、オーナー 10-22 の適当打ち)。
@@ -186,7 +187,7 @@ export interface TreeDoc {
 export const BOX_W = 316;
 // 箱の高さは中身 (アイテムの枠・次どうするか・操作) に合わせて伸びる。これは最低の高さと、重なり・線の目安 (10-26 オーナー「枠は現状のアイテムの枠」)
 export const BOX_H = 110;
-const GAP_X = 340;
+export const GAP_X = 340;
 /**
  * 段の間 (親の下 → 手の札 → 横の棒 → 子の上。直角の木の線が手の札と重ならない広さ、10-22)。10-22 オーナー「少し詰める」で 210 → 200:
  * 見本の木 (11 行) で 1920 の全体表示が 20 → 25% に乗る一番ゆとりのある値 (201 以下で 25%)。札の下と子の箱の間は 1920 で約 27px・1280 で約 24px。
@@ -295,58 +296,6 @@ export function drop(d: TreeDoc, ids: readonly string[]): void {
     if (b.back && gone.has(b.back)) b.back = null;
     for (const r of b.split ?? []) if (r.to && gone.has(r.to)) r.to = null;
   }
-}
-
-/** 矢印の先の箱を親の下に並べ直す (子の下の箱も一緒に動かす) */
-export function spread(d: TreeDoc, parentId: string): void {
-  const p = d.boxes[parentId];
-  if (!p) return;
-  const n = p.outs.length;
-  p.outs.forEach((id, i) => {
-    const b = d.boxes[id]!;
-    const x = p.x + (i - (n - 1) / 2) * GAP_X, y = p.y + GAP_Y;
-    shift(d, id, x - b.x, y - b.y);
-  });
-}
-
-/** 重なりとみなす箱の間 (横の＋が 14px はみ出すので、それより広く) */
-export const ROOM = 24;
-/**
- * 足した結果の箱 (親の下の並び) が既にある箱と重なる時は、足した側の並びだけを横にずらして空いた所へ置く (オーナー 10-22
- * 「箱を追加した時に枠が他の箱とかぶったりするから、都度調整してあげて」)。既にある箱 (手で動かした物も) は動かさない
- */
-export function makeRoom(d: TreeDoc, parentId: string): void {
-  const p = d.boxes[parentId];
-  if (!p?.outs.length) return;
-  const mine = new Set(p.outs.flatMap((o) => subtree(d, o)));
-  const others = Object.values(d.boxes).filter((b) => !mine.has(b.id));
-  const hit = (dx: number): boolean => [...mine].some((id) => {
-    const b = d.boxes[id]!;
-    return others.some((o) => Math.abs(b.x + dx - o.x) < BOX_W + ROOM && Math.abs(b.y - o.y) < BOX_H + ROOM);
-  });
-  if (!hit(0)) return;
-  for (let k = 1; k <= 200; k++) for (const dx of [k * 20, -k * 20]) if (!hit(dx)) { for (const id of p.outs) shift(d, id, dx, 0); return; }
-}
-
-/**
- * 重なっている箱を右へ押す (押すのは重なった右側の箱とその下だけ、ほかは動かさない)。横に当たりを足した時 (オーナー 10-22「箱を追加した時に枠が他の箱とかぶる」)
- */
-export function pushRight(d: TreeDoc): void {
-  for (let n = 0; n < 400; n++) {
-    const bs = Object.values(d.boxes);
-    let moved = false;
-    for (const a of bs) {
-      const b = bs.find((x) => x !== a && (x.x > a.x || (x.x === a.x && x.id > a.id)) && x.x - a.x < BOX_W + ROOM && Math.abs(x.y - a.y) < BOX_H + ROOM);
-      if (b) { shift(d, b.id, a.x + BOX_W + ROOM - b.x, 0); moved = true; break; }
-    }
-    if (!moved) return;
-  }
-}
-
-/** 箱とその下を一緒にずらす */
-export function shift(d: TreeDoc, id: string, dx: number, dy: number): void {
-  if (!dx && !dy) return;
-  for (const x of subtree(d, id)) { const b = d.boxes[x]!; b.x += dx; b.y += dy; }
 }
 
 /** 結果の箱の並び (起こりうる結果の一覧から作る時) */
@@ -517,15 +466,5 @@ export function setDone(d: TreeDoc, id: string, v: TreeBox["done"]): void {
   b.done = v;
 }
 
-export function moveBox(d: TreeDoc, id: string, x: number, y: number): void {
-  const b = d.boxes[id];
-  if (b) { b.x = Math.round(x); b.y = Math.round(y); }
-}
-
-/** 箱の並びの外枠 (画面の広さ・一望の縮め方) */
-export function boundsOf(d: TreeDoc): { x: number; y: number; w: number; h: number } {
-  const bs = Object.values(d.boxes);
-  const x0 = Math.min(...bs.map((b) => b.x)), y0 = Math.min(...bs.map((b) => b.y));
-  const x1 = Math.max(...bs.map((b) => b.x + BOX_W)), y1 = Math.max(...bs.map((b) => b.y + BOX_H));
-  return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
-}
+// 箱の配置の小物 (並べ直す・空ける・押す・ずらす・外枠) は tree-model-layout.ts に分けた (1 ファイル 500 行まで、10-28)。呼ぶ所はここから
+export { boundsOf, makeRoom, moveBox, pushRight, ROOM, shift, spread } from "./tree-model-layout";

@@ -4,14 +4,14 @@
  */
 import { computed, ref, shallowRef, watch } from "vue";
 import { craftStage as s } from "../../../state/craft-stage";
-import { nameOfKey, priceOfKey } from "../../../state/for-share/craft-stage-shelf";
+import { priceOfKey } from "../../../state/for-share/craft-stage-shelf";
+import { makeBaseCost } from "./use-tree-cost";
 import { freshItem, modListFor } from "../../../services/craft-stage/engine";
 import { minIlvlFor, tierRankLabel } from "../../../services/craft-stage/engine";
 import { startItemOf } from "../../../services/simulator/tree/tree-sample";
 import { carryAims, placeMods, retext } from "../../../services/simulator/sim-engine";
 import type { StageItem } from "../../../services/craft-stage/engine";
 import { fractureMarks, migrateStart, newTree, startOf, startRarity, type Aim, type StartFrom, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
-import { treeBaseCost } from "../../../services/simulator/tree/tree-base-cost";
 import { currentTreeRecipeId, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { tr } from "../../../i18n/lang";
 import { simOp } from "../../../web/track";
@@ -265,7 +265,7 @@ function setBase(base: string, itemLevel: number): Aim[] {
     for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k];
     Object.assign(d, newTree(base, itemLevel), { baseChosen: true });
     // 手で入れたアイテムレベル (適正を外した) はベースを替えても外したまま (10-27 夕モンキー 6: スマホで 80 にしてからベースを選ぶと適正に戻り、狙いを足すと 75 になった。スイッチ goalShape)
-    if (flag("goalShape") && !fit) delete d.ilvlFit;
+    if (!fit) delete d.ilvlFit;
     if (!data) return;
     const aims = carryAims(data, base, itemLevel, memoAims);
     dropped.push(...aims.dropped);
@@ -478,39 +478,10 @@ const treePrice = (key: string): number => priceOfKey(key, treeItem.value);
  * なので (1) 値段に関わる物 (ベース・アイテムレベル・始まりの形と値段) だけを鍵にし、箱を足しても計算し直さない (前は木を替えるたびに計算した)
  * (2) 最初の計算は箱を全部出し終えて描いた後に回す (allowCost、計算中は題の横の札) (3) 同じ鍵と相場の答えは覚える
  */
-// 印 (✦) は memoAims にある (10-23 に start から移した)。前は鍵にも渡す木にも入れず、比べがいつも「✦ が無い」で止まり値段が 0 だった (10-24 夜 21 本目)
-const costKey = computed(() => JSON.stringify({ b: doc.value.base, l: doc.value.itemLevel, s: startOf(doc.value), m: fractureMarks(doc.value) }));
-const costReady = ref(false);
-let costAsked = false;
-/** 始まりの値段の計算を始めてよい (ツリーのページが箱を全部出し終えた時、use-tree-reveal)。描いてから (2 フレーム待って) 計算する */
-export function allowCost(): void {
-  if (costReady.value || costAsked) return;
-  costAsked = true;
-  requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => { costReady.value = true; }, 0)));
-}
-/**
- * 箱を出し終えた合図が来ない時の逃げ道: データが来て COST_WAIT_MS たっても来なければ計算を始める (題の横の「始まりの値段を計算中」が消えない、
- * 10-25 オーナー「このリロードなんだ」。手元 1440 の読み直しの重なりで use-tree が 2 つの版になり、合図が別の版へ行って出たままだった)
- */
-const COST_WAIT_MS = 5000;
-watch(() => !!s.data.value, (ok) => { if (ok) setTimeout(allowCost, COST_WAIT_MS); }, { immediate: true });
-const costMemo = new Map<string, ReturnType<typeof treeBaseCost>>();
-const baseCost = computed(() => {
-  const d = s.data.value;
-  if (!d) return null;
-  if (!costReady.value) return null;
-  const key = costKey.value;
-  const { b, l, s: st, m } = JSON.parse(key) as { b: string; l: number; s: ReturnType<typeof startOf>; m: Aim[] };
-  // 相場 (神の値段と骨・オーブの値段) も鍵に。ここで読むので相場が変われば計算し直す
-  const mk = `${key}|${treePrice("divine")}|${treePrice("exalt")}|${treePrice("chaos")}|${treePrice("exalt_greater")}`;
-  const hit = costMemo.get(mk);
-  if (hit) return hit;
-  const r = treeBaseCost(d, { ...newTree(b, l), start: st, memoAims: m }, st.prices ?? {}, treePrice, (k) => nameOfKey(k, freshItem(d, b, l, "rare"))); // 名前はそのベースで引く (骨の名前が部位で変わる。前はクラフト台のアイテムで引いていた)
-  costMemo.set(mk, r);
-  return r;
-});
-/** 始まりの値段をまだ計算していない (題の横の札) */
-const baseCostBusy = computed(() => !!s.data.value && !costReady.value);
+// 費用の計算は use-tree-cost.ts (1 ファイル 500 行まで、10-28)
+const { baseCost, baseCostBusy, allowCost: allow } = makeBaseCost(doc, treePrice);
+/** 始まりの値段の計算を始めてよい (ツリーのページが箱を全部出し終えた時、use-tree-reveal) */
+export const allowCost = allow;
 
 export function useTree() {
   return { tabDocs, active, switchTab, addTab, closeTab, resetAll, tabLabel, renameTab, copyTab, leaveNewTab, ilvlNote, startPrice, setStartPrice, startChoice, setStartFrom, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, boxAimLabel, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
