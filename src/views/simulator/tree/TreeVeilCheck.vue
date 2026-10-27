@@ -4,7 +4,8 @@
  * 高貴・カオスの窓と同じ並び (狙う MOD の ☑ = 完成の狙い → これ → 狙い無し、10-28 オーナー「誰がそこに表示しろって」)。
  * PC: ☑ を付けた時点で「このベースに付く MOD」の窓 (共通の ModTable、完成形の設定と同じ表) を開き、発現で出うる MOD の段から選ばせる
  *     (出ない MOD は灰色で選べない。選んだ物は ☑ の一覧に足して当たり、選ばずに閉じたら ☑ は外れたまま。10-28 オーナー「発現させるチェックで MOD を選ばせよう」)。
- * スマホ (big): ☑ はそのまま切り替え、オンの時に「ほかの MOD を選ぶ」(TreeModPick の窓) で置き石を足す (オーナー「スマホは今のままで OK」)。
+ * スマホ (big): ☑ を付けた時点で、いつもの MOD を選ぶ窓 (TreeModPick) を開く。オンの時は「ほかの MOD を選ぶ」で置き石を足せる。
+ * 発現させると狙い無しは同時にオンにならない (狙い無し = 未発現のまま次へ、最後の ☑ を外すと発現させるも外れる。TreeHandShelf、10-28 オーナー)。
  * noCheck = 後から打つ発現の手 (☑ は出さず、選ぶボタンだけ)
  */
 import { computed, ref } from "vue";
@@ -28,7 +29,8 @@ function pick(a: Aim): void { picking.value = false; emit("add", a); }
 /** PC は ☑ を付けた時点で窓を開く (選ぶまで ☑ は付けない)。外すのはそのまま */
 function onCheck(e: Event): void {
   const on = (e.target as HTMLInputElement).checked;
-  if (on && !props.big) { (e.target as HTMLInputElement).checked = false; picking.value = true; return; }
+  // 発現させるなら必ず MOD を選ぶ (スマホも、10-28 オーナー「発現させるオンで狙い無しは無し」)
+  if (on) { (e.target as HTMLInputElement).checked = false; picking.value = true; return; }
   emit("update:modelValue", on);
 }
 </script>
