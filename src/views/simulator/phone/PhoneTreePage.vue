@@ -72,7 +72,18 @@ function walk(by: number): void {
   q.focus.value = x;
 }
 /** 今の段と全部の段 (PC の画面の段 stepOf と同じ数え方) */
-const stepNow = computed(() => { const c = q.current.value; if (!c) return null; const ids = c.kind === "outs" ? q.outsOf(c.id) : [c.id]; return ids.length ? stepOf(t.doc.value, ids[0]!) : null; });
+/**
+ * 結果の画面は今出している結果の箱の段 (PC の木の行と同じ数え方。外れは 2 段目・当たりは 3 段目のように、統合の文「(n 段目)」・「n 段目へ戻る」と揃う。
+ * 10-27 夕オーナー OK、スイッチ phoneResult1027。前は画面の先頭の結果 = 外れの側の段で、同じ画面の当たりへ戻る文と 1 段ずれた)
+ */
+const stepNow = computed(() => {
+  const c = q.current.value;
+  if (!c) return null;
+  const ids = c.kind === "outs" ? q.outsOf(c.id) : [c.id];
+  if (!ids.length) return null;
+  const k = RES27 && c.kind === "outs" ? Math.min(outStep.value, ids.length - 1) : 0;
+  return stepOf(t.doc.value, ids[k]!);
+});
 const stepAll = computed(() => Math.max(1, ...Object.keys(t.doc.value.boxes).map((id) => stepOf(t.doc.value, id))));
 /** ツリーのメモを書いている (PhoneMemo) */
 const memoEdit = ref(false);
