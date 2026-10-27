@@ -23,6 +23,8 @@ import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { treeRowTags } from "../tree/tree-row-tags";
 import { flag } from "../../../web/release-flags";
 import { tr } from "../../../i18n/lang";
+import { clearHand, subtree } from "../../../services/simulator/tree/tree-model";
+import { useArmed } from "../../../utils/use-armed";
 
 const props = defineProps<{ boxId: string }>();
 /** hand = その箱の ① へ、pick = その箱の手を選ぶ (カレンシーの選択) */
@@ -124,6 +126,20 @@ const tagsOf = (id: string, it: ReturnType<typeof itemOf>) => (s.data.value && i
 const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it) : it);
 /** カードの幅 = 行の中いっぱい (ページの余白 16 + 行の枠 2 + 行の左右の余白 12)。上限は付けない (10-26 夜オーナー「枠は最大限」) */
 const cardW = (typeof window === "undefined" ? 375 : window.innerWidth) - 30;
+/**
+ * 10-27 昼の直し (スイッチ phone1027): 「答えを変える」「打つ手を替える」を外し、答えの文を押すと選択肢 (PC と同じ「↩ 再度挑戦 · n 段目へ戻る」)、
+ * 枠の右上の × = PC の箱の × と同じ (この結果を作った手を消す。1 回目で赤く「下の n 箱ごと消す」、もう一度で消す)。当たりは「(既定)」を出さない (下の帯で打つ手を選ぶ)
+ */
+const P27 = flag("phone1027");
+const rm = useArmed();
+const rmCount = computed(() => { const d = t.doc.value, p = parent.value ? d.boxes[parent.value] : undefined; return p ? p.outs.reduce((n, o) => n + subtree(d, o).length, 0) : 0; });
+function removeHand(): void {
+  const p = parent.value;
+  if (!p || !rm.arm(props.boxId)) return;
+  t.edit((d) => clearHand(d, p));
+  q.focus.value = { kind: "hand", id: p };
+}
+const hitOpen = computed(() => P27 && box.value?.out === "hit" && (state.value === "open" || state.value === "later"));
 const CHIP = "inline-flex min-h-10 items-center rounded-full border px-3 py-1.5 text-[13px] leading-tight";
 const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-amber-500/20 text-amber-50" : "border-white/15 bg-white/[0.03] text-[#d8ccb4]"}`;
 </script>
@@ -131,8 +147,9 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
 <template>
   <!-- 結果の行 = 題 (と割合) とアイテムの中身だけ (10-26 夜オーナー「枠の中には出さない、ここはあくまでアイテムの中身だけ」「『次へ』で基本進行」)。
        今の答えはカードの下の小さな 1 行、変えたい時は「答えを変える ▾」で下から選びの窓 -->
-  <div v-if="box" data-phone-out :data-box-id="boxId" class="w-full rounded-xl border bg-[#1a140d] px-1.5 py-2 text-center" :style="{ borderColor: `rgba(${look.c},${state === 'open' ? 0.75 : 0.35})` }">
-    <p class="break-words text-center text-[14px] font-bold" :style="{ color: `rgb(${look.c})` }">
+  <div v-if="box" data-phone-out :data-box-id="boxId" class="relative w-full rounded-xl border bg-[#1a140d] px-1.5 py-2 text-center" :style="{ borderColor: `rgba(${look.c},${state === 'open' ? 0.75 : 0.35})` }">
+    <button v-if="P27 && parent" type="button" data-phone-out-remove class="absolute right-1 top-1 z-10 flex min-h-10 min-w-10 items-center justify-center rounded-md" :class="rm.is(boxId) ? 'bg-rose-700 px-2 text-[12px] font-bold text-white' : 'text-[18px] text-[#d8ccb4]/70'" :aria-label="tr('この結果を作った手を消す', 'Remove the craft that made this result')" @click="removeHand">{{ rm.is(boxId) ? tr(`下の ${rmCount} 箱ごと消す`, `Remove ${rmCount} box(es)`) : "×" }}</button>
+    <p class="break-words px-10 text-center text-[14px] font-bold" :style="{ color: `rgb(${look.c})` }">
       {{ sit[0] }}
     </p>
     <p v-if="sit[1]" data-phone-out-sit class="break-words text-center text-[12px] text-[#d8ccb4]">{{ sit[1] }}</p>
@@ -143,8 +160,9 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
   <!-- この場合どうするか (カードの外。文で書く) と、答えを変えるボタン。次の手が付いている時は「○○を選択」の枠 (押すとカレンシーの選択、10-27 オーナー) -->
   <div v-if="box" data-phone-out-answer :data-box-id="boxId" class="flex w-full min-w-0 flex-col items-center gap-2 text-[13px]">
     <button v-if="state === 'hand'" type="button" data-phone-out-hand class="w-full rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-center text-[14px] text-amber-50" @click="emit('pick', boxId)">{{ box.hand ? tr(`${handLabel(box.hand)}${/\)$/.test(handLabel(box.hand)) ? " " : ""}を選択`, `Selected: ${handLabel(box.hand)}`) : tr("分かれ目", "Split") }}</button>
+    <button v-else-if="P27" type="button" data-phone-out-now class="min-h-11 w-full min-w-0 break-words rounded-xl border border-white/15 bg-white/[0.04] px-3 py-2 font-bold" :class="state === 'open' ? 'text-amber-200' : state === 'done' ? 'text-emerald-300' : 'text-cyan-200'" @click="pickOpen = true">{{ answerText }}<span v-if="state === 'open' && !hitOpen" class="ml-1 whitespace-nowrap">{{ tr("(既定)", "(default)") }}</span><span class="ml-1.5 whitespace-nowrap text-[11px] opacity-70">▾</span></button>
     <p v-else data-phone-out-now class="min-w-0 break-words font-bold" :class="state === 'open' ? 'text-amber-200' : state === 'done' ? 'text-emerald-300' : 'text-cyan-200'">{{ answerText }}<span v-if="state === 'open'" class="ml-1 whitespace-nowrap">{{ tr("(既定)", "(default)") }}</span></p>
-    <button type="button" data-phone-out-change class="g-btn !min-h-11 px-4" @click="pickOpen = true">{{ tr("答えを変える", "Change the answer") }}</button>
+    <button v-if="!P27" type="button" data-phone-out-change class="g-btn !min-h-11 px-4" @click="pickOpen = true">{{ tr("答えを変える", "Change the answer") }}</button>
   </div>
   <!-- 答えの選び (下から出る重ね窓。閉じれば元の場所のまま) -->
   <Teleport to="body">

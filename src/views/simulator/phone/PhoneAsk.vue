@@ -18,12 +18,15 @@ import { usePhoneQuiz, type Question } from "./use-phone-quiz";
 import { stepOf } from "../tree/tree-fail";
 import PhoneOutRow from "./PhoneOutRow.vue";
 import { tr } from "../../../i18n/lang";
+import { flag } from "../../../web/release-flags";
 
 /** step = 今出している結果の番号 (PhoneTreePage の outStep。下の帯の「次へ」と同じ値を見る) */
 const props = defineProps<{ q: Question; step: number }>();
 const emit = defineEmits<{ hand: [id: string]; step: [n: number] }>();
 const t = useTree();
 const quiz = usePhoneQuiz();
+/** 「打つ手を替える」を外す (10-27 昼オーナー「意味が分からない」。手は「○○を選択」の枠で替え、消すのは結果の枠の右上の ×。スイッチ phone1027) */
+const P27 = flag("phone1027");
 const box = computed(() => t.doc.value.boxes[props.q.id]);
 const item = computed(() => (s.data.value && box.value ? sampleOf(s.data.value, t.doc.value, props.q.id, 1).item : null));
 const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.value, t.doc.value, box.value?.unwanted ?? [], item.value, box.value) : null));
@@ -57,7 +60,7 @@ function showHand(id: string): void { quiz.focus.value = { kind: "hand", id }; }
       <template v-if="box.hand">
         <!-- ここで打った手 (10-27 オーナー「カオスオーブを選択とだけ出し、押したらカレンシーの選択画面へ」)。結果へは下の帯の「次へ」 -->
         <button type="button" data-phone-hand-now class="w-full rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-center text-[14px] text-amber-50" @click="emit('hand', q.id)">{{ tr(`${handLabel(box.hand)}${/\)$/.test(handLabel(box.hand)) ? " " : ""}を選択`, `Selected: ${handLabel(box.hand)}`) }}</button>
-        <button type="button" data-phone-hand-change class="g-btn !min-h-11 px-4" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
+        <button v-if="!P27" type="button" data-phone-hand-change class="g-btn !min-h-11 px-4" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
       </template>
     </template>
     <template v-else>
@@ -68,7 +71,7 @@ function showHand(id: string): void { quiz.focus.value = { kind: "hand", id }; }
         <span>{{ tr(`結果 ${k + 1} / ${outs.length}`, `Result ${k + 1} / ${outs.length}`) }}</span>
       </p>
       <PhoneOutRow v-if="outs[k]" :key="outs[k]" :box-id="outs[k]!" @hand="showHand" @pick="(id) => emit('hand', id)" />
-      <button type="button" data-phone-hand-change class="g-btn !min-h-11 px-4" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
+      <button v-if="!P27" type="button" data-phone-hand-change class="g-btn !min-h-11 px-4" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
     </template>
   </div>
 </template>

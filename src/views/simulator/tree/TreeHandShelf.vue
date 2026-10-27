@@ -31,6 +31,7 @@ import { simOp } from "../../../web/track";
 import { fixedValues } from "./tree-fixed-values";
 import { previewUse } from "../../../services/emulator/emu-engine";
 import { useDismiss } from "../../../utils/use-dismiss";
+import { flag } from "../../../web/release-flags";
 
 const props = defineProps<{ boxId: string; current: Hand | null }>();
 /** pick の preCatalyst = 前に足す品質だけ上げる手のカタリスト (触媒のお告げで、まだ品質を上げる手の後でない時) */
@@ -272,7 +273,14 @@ const problem = computed((): string | null => (hand.value && item.value && s.dat
  */
 const phone = usePhone();
 const aimStep = ref(false);
-watch(held, () => { aimStep.value = false; });
+/**
+ * スマホの 10-27 昼の直し (スイッチ phone1027): 持った物の説明は既定で閉じる (開くのは任意)。
+ * 消去は高貴・カオスと同じく、まず持って「使う ›」→ 次のページで残したい MOD (上に ☑ の並び、一番下に全部消えてよい、既定オン。「n MOD 外れ MOD」は出さない)
+ */
+const P27 = computed(() => phone.value && flag("phone1027"));
+const helpOpen = ref(false);
+const keepStep = ref(false);
+watch(held, () => { aimStep.value = false; keepStep.value = false; helpOpen.value = false; });
 function ok(): void {
   const h = hand.value, k = kind.value;
   simOp("hand-decide");
@@ -330,7 +338,7 @@ function ok(): void {
         </label>
       </div>
       <!-- 消去: 残したい MOD (10-27 オーナー)。既定は全部消えてよい = ✦ 以外は「n MOD 外れ MOD」、同じ形の箱になるまで消去の箱を並べる -->
-      <div v-if="isRemove" data-tree-hand-keep class="flex flex-col gap-1 text-[12px]">
+      <div v-if="isRemove && !P27" data-tree-hand-keep class="flex flex-col gap-1 text-[12px]">
         <span class="opacity-80">{{ tr("残したい MOD (☑ の MOD が消えたら「狙いが消えた」。☑ の無い MOD は外れ MOD)", "Mods to keep (a ☑ mod removed = Target lost; unchecked mods are misses)") }}</span>
         <label data-tree-hand-keep-none class="flex min-h-7 cursor-pointer items-center gap-2 max-md:min-h-11">
           <input type="checkbox" :checked="!keepAims.length" @change="keepNone($event)" />{{ tr("全部消えてよい (同じ形の箱になるまで消去の箱を並べる)", "Anything may go (annul boxes until a box of the same shape)") }}
@@ -372,12 +380,17 @@ function ok(): void {
     <!-- 320 で帯の右が切れた (棚の並びの最小の幅で枠ごと広がった) ので、スマホの並びの列は最小 0。帯は窓の下の余白 (12px) まで下げて、下に棚が覗かないように -->
     <div v-if="held" data-tree-hand-use-bar class="sticky -bottom-3 z-10 -mx-3 -mb-3 border-t border-white/10 bg-[#0c0a08]/95 px-3 pb-5 pt-2 md:hidden">
       <p class="mb-1 break-words text-[12px] font-bold text-amber-100">{{ tr(`${nameOf(held)} を持っている`, `Holding ${nameOf(held)}`) }}</p>
-      <p v-if="heldHelp.length" data-tree-hand-held-help class="mb-2 break-words text-[12px] leading-snug text-[#d8ccb4]">{{ heldHelp.join(" ") }}</p>
+      <button v-if="heldHelp.length && P27" type="button" data-tree-hand-help-toggle class="mb-1 min-h-9 text-[12px] text-[#c9b48a] underline decoration-white/20" :aria-expanded="helpOpen" @click="helpOpen = !helpOpen">{{ helpOpen ? tr("説明を閉じる ▴", "Hide details ▴") : tr("説明 ▾", "Details ▾") }}</button>
+      <p v-if="heldHelp.length && (!P27 || helpOpen)" data-tree-hand-held-help class="mb-2 break-words text-[12px] leading-snug text-[#d8ccb4]">{{ heldHelp.join(" ") }}</p>
       <!-- 狙いを選べる手は 2 つ: 狙い無し (今のチェック) のまま決める / 2 段目で狙いを選ぶ。繰り返しの手は 2 段目だけ -->
       <div v-if="showAims" class="flex gap-2">
         <!-- 左は普通の「キャンセル」(持った札を離す)、右は狙いを選ぶ (今の手を直す時は「狙いを再度選ぶ」)。10-27 オーナー「このまま決めるは日本語として変」 -->
         <button type="button" data-tree-hand-cancel class="g-btn !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="release()">{{ tr("キャンセル", "Cancel") }}</button>
         <button type="button" data-tree-hand-aim-step class="g-btn-red !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="aimStep = true">{{ current ? tr("狙いを再度選ぶ ›", "Pick targets again ›") : tr("狙いを選ぶ ›", "Pick targets ›") }}</button>
+      </div>
+      <div v-else-if="isRemove && P27" class="flex gap-2">
+        <button type="button" data-tree-hand-cancel class="g-btn !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="release()">{{ tr("キャンセル", "Cancel") }}</button>
+        <button type="button" data-tree-hand-keep-step class="g-btn-red !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="keepStep = true">{{ tr("使う ›", "Use ›") }}</button>
       </div>
       <button v-else type="button" data-tree-hand-use class="g-btn-red min-h-11 w-full text-[15px]" :disabled="!!problem" @click="ok">{{ tr("使う (この手にする)", "Use (make it this craft)") }}</button>
     </div>
@@ -402,6 +415,28 @@ function ok(): void {
         <div class="flex gap-2 border-t border-white/10 px-3 py-2">
           <button type="button" data-tree-hand-aim-back class="g-btn !min-h-11 shrink-0 px-3" @click="aimStep = false">‹ {{ tr("戻る", "Back") }}</button>
           <button type="button" data-tree-hand-aim-go class="g-btn-red !min-h-11 min-w-0 flex-1 text-[15px]" :disabled="!!problem" @click="ok">{{ tr("決める", "Decide") }}</button>
+        </div>
+      </div>
+    <!-- スマホの消去の 2 ページ目「残したい MOD」(aimStep のページと同じ形。上に ☑ の並び、一番下に全部消えてよい。10-27 昼オーナー) -->
+      <div v-if="P27 && keepStep && held && isRemove" data-tree-hand-keep-page class="fixed inset-0 z-[320] flex flex-col bg-[#15110c] text-[14px]">
+        <div class="min-h-0 flex-1 overflow-y-auto px-3 pb-3 pt-4 text-center">
+          <p class="break-words text-[12px] text-[#9a8a70]">{{ hand ? handLabel(hand) : nameOf(held) }}</p>
+          <h2 class="mt-1 text-[17px] font-bold text-[#f0e4c8]">{{ tr("残したい MOD", "Mods to keep") }}</h2>
+          <p class="mt-1 break-words text-[12px] text-[#9a8a70]">{{ tr("☑ の MOD が消えたら「狙いが消えた」。☑ の無い MOD は外れ MOD", "A ☑ mod removed = Target lost; unchecked mods are misses") }}</p>
+          <div data-tree-hand-keep class="mt-3 flex flex-col gap-1.5 text-left">
+            <label v-for="c in keepChoices" :key="aimKey(c.aim)" data-tree-hand-keep-mod :data-mod="aimKey(c.aim)" class="flex min-h-11 min-w-0 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
+              <input type="checkbox" class="size-5 shrink-0" :checked="keepChecked.includes(aimKey(c.aim))" @change="toggleKeep(c.aim)" /><span class="min-w-0 break-words">{{ modText(c.mod) }}</span>
+            </label>
+            <label data-tree-hand-keep-none class="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
+              <input type="checkbox" class="size-5 shrink-0" :checked="!keepAims.length" @change="keepNone($event)" /><span class="min-w-0 break-words">{{ tr("全部消えてよい (同じ形の箱になるまで消去の箱を並べる)", "Anything may go (annul boxes until a box of the same shape)") }}</span>
+            </label>
+          </div>
+          <p v-if="kind" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? (only.length === 1 ? tr(`${outName(only[0]!.out)}だけ (結果は 1 通り)`, `${outName(only[0]!.out)} only (one possible result)`) : [...new Set(only.map((o) => outName(o.out)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
+          <p v-if="problem" class="mt-1 break-words text-[12px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</p>
+        </div>
+        <div class="flex gap-2 border-t border-white/10 px-3 py-2">
+          <button type="button" data-tree-hand-keep-back class="g-btn !min-h-11 shrink-0 px-3" @click="keepStep = false">‹ {{ tr("戻る", "Back") }}</button>
+          <button type="button" data-tree-hand-keep-go class="g-btn-red !min-h-11 min-w-0 flex-1 text-[15px]" :disabled="!!problem" @click="ok">{{ tr("決める", "Decide") }}</button>
         </div>
       </div>
     <!-- 「この手以降は削除されます」(スマホ、別の札を持った・狙いを変えた瞬間) -->

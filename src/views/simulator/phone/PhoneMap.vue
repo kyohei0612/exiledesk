@@ -15,7 +15,9 @@ import { mapPick, sheet, usePhoneQuiz } from "./use-phone-quiz";
 import { tr } from "../../../i18n/lang";
 import { iconOf } from "../../../state/craft-stage";
 
-const props = defineProps<{ /** 重ね窓の中の小さな図: その箱を光らせ、押せない */ mini?: string }>();
+const props = defineProps<{ /** 重ね窓の中の小さな図: その箱を光らせ、押せない (peek を聞く時だけ押すと peek) */ mini?: string; peek?: boolean }>();
+/** 小さな図で押した箱 (10-27 昼オーナー「小さい箱を押したらモーダルでその箱のアイテム枠とカレンシー」、スイッチ phone1027) */
+const emit = defineEmits<{ peek: [id: string] }>();
 const q = usePhoneQuiz();
 const wrap = ref<HTMLElement | null>(null);
 const cw = ref(360);
@@ -81,12 +83,13 @@ const lines = computed(() => {
 /** 押した所に一番近い箱 (小さい箱でも指で押せるよう、28px まで) */
 function tap(e: MouseEvent): void {
   const v = view.value, el = wrap.value;
-  if (!v || !el || props.mini) return;
+  if (!v || !el || (props.mini && !props.peek)) return;
   const r = el.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top;
-  const pool = mapPick.value ? v.boxes.filter((b) => pickable.value.has(b.id)) : v.boxes;
+  const pool = mapPick.value && !props.mini ? v.boxes.filter((b) => pickable.value.has(b.id)) : v.boxes;
   let best: string | null = null, bd = Infinity;
   for (const b of pool) { const p = v.at.get(b.id)!; const dd = Math.hypot(Math.max(0, Math.abs(p.x - px) - v.w / 2), Math.max(0, Math.abs(p.y - py) - v.h / 2)); if (dd < bd) { bd = dd; best = b.id; } }
   if (!best || bd > 28) return;
+  if (props.mini) { emit("peek", best); return; }
   // 移らずに重ね窓で中身を見せる (戻り先を選んでいる時は窓の「ここへ戻す」で決める)
   sheet.value = mapPick.value ? { id: best, pickFrom: mapPick.value.from } : { id: best };
 }

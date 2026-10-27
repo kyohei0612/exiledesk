@@ -19,6 +19,9 @@ import type { StageItem } from "../../../services/craft-stage/types";
 import { mapPick, phoneRun, sheet, usePhoneQuiz } from "./use-phone-quiz";
 import PhoneMap from "./PhoneMap.vue";
 import { tr } from "../../../i18n/lang";
+import { flag } from "../../../web/release-flags";
+import { stepOf } from "../tree/tree-fail";
+import PhoneBoxPeek from "./PhoneBoxPeek.vue";
 
 const t = useTree();
 const q = usePhoneQuiz();
@@ -58,7 +61,12 @@ function returnHere(): void {
   mapPick.value = null;
   sheet.value = null;
 }
-const onKey = (e: KeyboardEvent): void => { if (e.key === "Escape") sheet.value = null; };
+/** 木の中の位置: 今の段を横に書き、小さい箱を押すとその箱のアイテムと打つカレンシーの窓 (10-27 昼オーナー、スイッチ phone1027) */
+const P27 = flag("phone1027");
+const peek = ref<string | null>(null);
+watch(id, () => { peek.value = null; });
+// Esc は上の窓から 1 つずつ (アイテムの窓が開いていればそれだけ閉じる)
+const onKey = (e: KeyboardEvent): void => { if (e.key !== "Escape") return; if (peek.value) peek.value = null; else sheet.value = null; };
 onMounted(() => window.addEventListener("keydown", onKey));
 onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
 </script>
@@ -98,8 +106,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
             </li>
           </ul>
         </template>
-        <p class="mt-2 text-[11px] text-[#9a8a70]">{{ tr("木の中の位置", "Where it is in the tree") }}</p>
-        <PhoneMap :mini="id" />
+        <p class="mt-2 text-[11px] text-[#9a8a70]">{{ tr("木の中の位置", "Where it is in the tree") }}<template v-if="P27"> · <b data-phone-sheet-step class="text-[13px] text-amber-200">{{ tr(`${stepOf(t.doc.value, id)} 段目`, `Step ${stepOf(t.doc.value, id)}`) }}</b> <span class="opacity-80">{{ tr("(箱を押すと中身)", "(tap a box to see it)") }}</span></template></p>
+        <PhoneMap :mini="id" :peek="P27" @peek="(x) => (peek = x)" />
       </div>
       <div class="flex gap-2 border-t border-white/10 px-3 py-2">
         <!-- 戻り先を選んでいる時は「ここへ戻る」。普段は閉じるだけ (箱の中身とこの箱からの手を見る窓、10-26 夜オーナー) -->
@@ -107,5 +115,6 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
         <button type="button" data-phone-sheet-close class="g-btn !min-h-11 flex-1" @click="sheet = null">{{ tr("閉じる", "Close") }}</button>
       </div>
     </div>
+    <PhoneBoxPeek v-if="peek" :id="peek" @close="peek = null" />
   </div>
 </template>

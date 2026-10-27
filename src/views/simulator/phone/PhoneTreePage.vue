@@ -38,6 +38,8 @@ import { useArmed } from "../../../utils/use-armed";
 const t = useTree();
 /** 下の全体図と箱の重ね窓 (スイッチ phoneMap、10-26 オーナーの選んだ案 B。OK 待ちの間は本番は前の形) */
 const MAP = flag("phoneMap");
+/** 10-27 昼の直し 6 件 (スイッチ phone1027): 段送りは下の帯へ (上は消す)・↶ 戻すを外す・当たりはその場で次の手 */
+const P27 = flag("phone1027");
 const q = usePhoneQuiz();
 /** 棚を開いている箱 / 当たりの MOD を選んでいる箱 */
 const handFor = ref<string | null>(null);
@@ -146,6 +148,9 @@ const main = computed((): { kind: string; text: string; off?: boolean; go: () =>
   if (c && c.kind === "outs") {
     // 結果は 1 つずつ 1 画面 (10-26 夜オーナー「スマホだとレベルが高すぎる」)。「次へ」= 今の結果を既定の答えで決めて次の結果へ、最後で次の段へ
     const outs = q.outsOf(c.id), k = Math.min(outStep.value, Math.max(0, outs.length - 1));
+    // 当たりはその場で次の手を選ぶ (10-27 昼オーナー「当たりの結果なのに次の手を選ぶ (既定) + 次へ になっている」)。完成・次の手の付いた当たりは今まで通り「次へ」
+    const o = outs[k], ob = o ? t.doc.value.boxes[o] : null;
+    if (P27 && o && ob?.out === "hit" && ["open", "later"].includes(q.stateOf(o))) return { kind: "hand", text: tr("打つ手を選ぶ", "Choose a craft"), go: () => { handFor.value = o; } };
     if (k < outs.length - 1) return { kind: "decide", text: tr(`次へ (${k + 1} / ${outs.length})`, `Next (${k + 1} / ${outs.length})`), go: () => { q.decideOne(outs[k]!); outStep.value = k + 1; window.scrollTo(0, 0); } };
     return { kind: "decide", text: outs.length > 1 ? tr(`次へ (${outs.length} / ${outs.length})`, `Next (${outs.length} / ${outs.length})`) : tr("次へ", "Next"), go: () => q.decide(c.id) };
   }
@@ -180,7 +185,7 @@ function goBox(id: string): void {
       <!-- ツリーのメモ (文だけ、書いてあれば全文) -->
       <PhoneMemo v-model:editing="memoEdit" />
       <!-- 進み = 今の段 / 全部の段・未定の道の数と、見た段の行き来 (‹ 1 つ前・先へ ›。ツリーとして見せる、10-26 夜オーナー「質問と思わせない」) -->
-      <div data-phone-progress class="-my-1 flex items-center gap-2 text-[12px] text-[#d8ccb4]">
+      <div v-if="!P27" data-phone-progress class="-my-1 flex items-center gap-2 text-[12px] text-[#d8ccb4]">
         <button type="button" data-phone-walk-back :class="FLAT" :disabled="trailAt <= 0" @click="walk(-1)">‹ {{ tr("1 つ前", "Back") }}</button>
         <span class="min-w-0 flex-1 break-words text-center">
           <b v-if="stepNow" class="text-[14px] text-amber-200">{{ tr(`${stepNow} 段目`, `Step ${stepNow}`) }}</b><span class="opacity-70"> / {{ tr(`全 ${stepAll} 段`, `${stepAll} steps`) }}</span>
@@ -215,7 +220,19 @@ function goBox(id: string): void {
         <button v-if="MAP" type="button" data-phone-map-unfold class="flex h-8 w-full items-center gap-2 rounded-md border border-white/10 bg-[#080706] px-3 text-left text-[12px] text-[#d8ccb4]" @click="setMapFold(false)">
           <span class="min-w-0 flex-1 break-words">{{ tr(`完成形と全体図 (箱 ${Object.keys(t.doc.value.boxes).length})`, `Final item & overview (${Object.keys(t.doc.value.boxes).length} boxes)`) }}</span><span class="shrink-0">{{ tr("開く ▴", "Open ▴") }}</span>
         </button>
-        <div class="flex gap-2">
+        <!-- 段送り (10-27 昼オーナー「上の段送りを下の帯に、上は消す」。↶ 戻す・↷ は外した = 「↶ 戻すは要らない」) -->
+        <div v-if="P27" data-phone-progress class="flex items-center gap-2 text-[12px] text-[#d8ccb4]">
+          <button type="button" data-phone-walk-back :class="FLAT" :disabled="trailAt <= 0" @click="walk(-1)">‹ {{ tr("1 つ前", "Back") }}</button>
+          <span class="min-w-0 flex-1 break-words text-center">
+            <b v-if="stepNow" class="text-[14px] text-amber-200">{{ tr(`${stepNow} 段目`, `Step ${stepNow}`) }}</b><span class="opacity-70"> / {{ tr(`全 ${stepAll} 段`, `${stepAll} steps`) }}</span>
+            <span v-if="total && testedKey === routeKeyOf(t.doc.value)" class="opacity-70"> · {{ tr(`未定 ${total}`, `${total} open`) }}</span>
+          </span>
+          <button type="button" data-phone-walk-fwd :class="FLAT" :disabled="trailAt >= trail.length - 1" @click="walk(1)">{{ tr("先へ", "Forward") }} ›</button>
+        </div>
+        <div v-if="P27" class="flex">
+          <button v-if="main" type="button" data-phone-main :data-main="main.kind" class="g-btn-red !min-h-11 min-w-0 flex-1 whitespace-normal break-words px-2 text-[15px] leading-tight" :disabled="main.off" @click="main.go">{{ main.text }}</button>
+        </div>
+        <div v-else class="flex gap-2">
         <button type="button" data-phone-undo class="g-btn !min-h-11 shrink-0 px-3" :disabled="!t.canUndo.value" :title="tr('1 つ戻す', 'Undo')" @click="t.undo">↶<span class="ml-1 text-[12px]">{{ tr("戻す", "Undo") }}</span></button>
         <button v-if="main" type="button" data-phone-main :data-main="main.kind" class="g-btn-red !min-h-11 min-w-0 flex-1 whitespace-normal break-words px-2 text-[15px] leading-tight" :disabled="main.off" @click="main.go">{{ main.text }}</button>
         <span v-else class="flex-1" />
