@@ -125,6 +125,8 @@ const sit = computed((): [string, string] => {
   if (o === "any") return [tr("打った後", "After the craft"), tr("何が付いても次へ (狙い無し)", "Anything counts (no target)")];
   return [q.boxTitle(props.boxId), ""];
 });
+/** 再度挑戦 (打つ前の箱・始まりの手の結果なら始まりへ戻る) にした時の、打つ前の手 (「○○を選択」に出す) */
+const retryHand = computed(() => (backKind.value === "retry" || (backKind.value === "start" && parent.value === "start") ? (parent.value ? t.doc.value.boxes[parent.value]?.hand ?? null : null) : null));
 const backKind = computed(() => (state.value !== "back" ? null : box.value?.back === "start" ? "start" : backTo.value === parent.value ? "retry" : "other"));
 const route = computed(() => routeText(t.doc.value, props.boxId, q.boxTitle));
 const run = computed(() => runText(phoneRun.value, props.boxId));
@@ -171,9 +173,11 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
   <!-- この場合どうするか (カードの外。文で書く) と、答えを変えるボタン。次の手が付いている時は「○○を選択」の枠 (押すとカレンシーの選択、10-27 オーナー) -->
   <div v-if="box" data-phone-out-answer :data-box-id="boxId" class="flex w-full min-w-0 flex-col items-center gap-2 text-[13px]">
     <button v-if="state === 'hand'" type="button" data-phone-out-hand class="w-full rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-center text-[14px] text-amber-50" @click="emit('pick', boxId)">{{ box.hand ? tr(`${handLabel(box.hand)}${/\)$/.test(handLabel(box.hand)) ? " " : ""}を選択`, `Selected: ${handLabel(box.hand)}`) : tr("分かれ目", "Split") }}</button>
+    <!-- 外れで打つ前と同じ手を選んだ (中は ↩ 再度挑戦 = 打つ前の箱へ戻る) も、表示はふつうの手と同じ「○○を選択」の枠 (10-27 昼オーナー「戻るとかは内部処理でしたらいいだけ」) -->
+    <button v-else-if="P27 && retryHand" type="button" data-phone-out-hand class="w-full rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-center text-[14px] text-amber-50" @click="emit('pick', boxId)">{{ tr(`${handLabel(retryHand)}${/\)$/.test(handLabel(retryHand)) ? " " : ""}を選択`, `Selected: ${handLabel(retryHand)}`) }}</button>
     <template v-else-if="P27">
-      <!-- 決まった答え (再度挑戦・完成など) だけ文で。まだなら何も出さない (既定は無い) -->
-      <p v-if="state === 'back' || state === 'done'" data-phone-out-now class="min-w-0 break-words font-bold" :class="state === 'done' ? 'text-emerald-300' : 'text-cyan-200'">{{ backKind === "retry" || (backKind === "start" && parent === "start") ? retryText : answerText }}</p>
+      <!-- 決まった答え (完成・ほかの箱へ) だけ文で。まだなら何も出さない (既定は無い) -->
+      <p v-if="state === 'back' || state === 'done'" data-phone-out-now class="min-w-0 break-words font-bold" :class="state === 'done' ? 'text-emerald-300' : 'text-cyan-200'">{{ answerText }}</p>
       <button type="button" data-phone-out-pick-hand class="w-full rounded-xl border px-3 py-3 text-center text-[14px]" :class="state === 'open' || state === 'later' ? 'border-amber-300 bg-[#3a2a12] font-bold text-amber-100' : 'border-white/15 bg-white/[0.04] text-[#d8ccb4]'" @click="emit('pick', boxId)">{{ tr("次に打つカレンシーを選ぶ", "Choose the next currency") }}</button>
     </template>
     <p v-else data-phone-out-now class="min-w-0 break-words font-bold" :class="state === 'open' ? 'text-amber-200' : state === 'done' ? 'text-emerald-300' : 'text-cyan-200'">{{ answerText }}<span v-if="state === 'open'" class="ml-1 whitespace-nowrap">{{ tr("(既定)", "(default)") }}</span></p>
