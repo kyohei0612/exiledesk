@@ -14,6 +14,7 @@ import { prepFor } from "./tree-unbounded";
 import { catalystTagOf } from "../../simulator/sim-engine";
 import { aimHeldOn, isAimMod, junkOf, reachableAims } from "./tree-aim";
 import { CATALYSING, effectOf, engineOmens, isCatalyst } from "./tree-hands";
+import { nameOfKey } from "../../../state/for-share/craft-stage-shelf"; // 名前はクラフト台の棚と同じ (データの名前、10-28 オーナー「名前はエンジンのデータベース参照で固定」)
 import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeDoc, boxAims } from "./tree-model";
 import { aimOpts, aimsOf, goalsHeld, handAims, handProblem, heldHitOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
 import { boxOutcomeOf, stripBackOf, stripStop, stripTargetsOf } from "./tree-outcome";
@@ -129,7 +130,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
     // 品質だけ上げる手 (カタリスト) の後の通り抜けから打つ時は、その手がカタリストを打つ手
     const before = b.out === "pass" && b.parent ? doc.boxes[b.parent]?.hand : null;
     const afterCat = !!before && isCatalyst(before.currency);
-    if (b.hand?.omens.includes(CATALYSING) && !b.hand.catalyst && !afterCat) add(b.id, "noCatalyst", tr("触媒のお告げなのにカタリストを打つ手が無い (手の札でカタリストを選ぶ)", "Omen of Catalysing Exaltation without a catalyst craft (pick a catalyst in the craft)"));
+    if (b.hand?.omens.includes(CATALYSING) && !b.hand.catalyst && !afterCat) add(b.id, "noCatalyst", tr(`${nameOfKey(CATALYSING, null)}なのにカタリストを打つ手が無い (手の札でカタリストを選ぶ)`, `${nameOfKey(CATALYSING, null)} without a catalyst craft (pick a catalyst in the craft)`));
   }
 
   // 1a) 固定された外れ MOD (フラクチャーで外れが固定された・始めから固定の外れ) で、その側の完成の狙いが枠に入りきらない = この枝は完成できない
@@ -312,7 +313,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
       const carry = (w?.backs ?? []).filter((x) => doc.boxes[x]?.out === "lost" && doc.boxes[x]?.back !== RESTART);
       add(id, "stuck", stuckText(data, aims, n, w, carry.length > 0, doc.boxes[id]?.hand ?? null));
       // 10-26: 前は「戻り先を分かれ目の箱に」と勧めていたが、分かれ目を作るボタンは 10-25 に外した (画面でできない直し方だった)
-      for (const x of carry) add(x, "carry", tr("ここで戻ると外れを持ったまま進み、先の箱で側が満杯になって止まる (直すのはこの戻り: 戻りをやめて外れを消す手 (消去 + 満杯の側のお告げなど) を次の手にし、その結果から戻す。PC は × で外して＋、スマホは「次の手を決める」)", "Returning here keeps the misses, so a later box runs out of room and stops (fix this return: replace it with a craft that removes the misses (e.g. Annulment with the omen for the full side) and return from its result. On PC remove it with × and use +; on a phone choose \"Next craft\")"));
+      for (const x of carry) add(x, "carry", tr(`ここで戻ると外れを持ったまま進み、先の箱で側が満杯になって止まる (直すのはこの戻り: 戻りをやめて外れを消す手 (${nameOfKey("annul", null)} + 満杯の側のお告げなど) を次の手にし、その結果から戻す。PC は × で外して＋、スマホは「次の手を決める」)`, `Returning here keeps the misses, so a later box runs out of room and stops (fix this return: replace it with a craft that removes the misses (e.g. ${nameOfKey("annul", null)} with the omen for the full side) and return from its result. On PC remove it with × and use +; on a phone choose "Next craft")`));
     }
     // 回しで結果の箱に無い形になった箱 (5 人の辿りで出なかった物。上限つきの当たるまでが上限で当たらない時など、10-22 13 通り組んだ #13)
     for (const [id, n] of Object.entries(run.unexpected)) {
@@ -357,7 +358,7 @@ function stuckText(data: PatchData, aims: readonly Aim[], n: number, w: { reason
   });
   const fix = carry
     ? tr("。外れを持ったまま戻る「狙いが消えた」の戻りがある (! の付いた戻りの箱)", ". A \"target lost\" return keeps the misses (the return box marked !)")
-    : tr("。この手の前に外れを消す手 (消去 + 満杯の側のお告げ) が要る", ". Remove a miss first (annul + the omen for the full side)");
+    : tr(`。この手の前に外れを消す手 (${nameOfKey("annul", null)} + 満杯の側のお告げ) が要る`, `. Remove a miss first (${nameOfKey("annul", null)} + the omen for the full side)`);
   return tr(`${head}: ${parts.join("・")}で着き、この手が打てない${fix}`, `${head}: ${parts.join(", ")}, so this craft can't be used${fix}`);
 }
 

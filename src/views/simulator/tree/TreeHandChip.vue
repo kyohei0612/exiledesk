@@ -5,10 +5,9 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
-import { iconOf } from "../../../state/craft-stage";
 import { CATALYSING } from "../../../services/simulator/tree/tree-hands";
 import type { Hand } from "../../../services/simulator/tree/tree-model";
-import { handLabel, handName } from "./tree-names";
+import { handIcon as iconOf, handLabel, handName } from "./tree-names";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 /** 「スパム」の呼び名を出さない (スイッチ noSpam、10-27 昼オーナー) */

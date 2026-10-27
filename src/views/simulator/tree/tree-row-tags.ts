@@ -16,6 +16,7 @@ import { aimOpts, aimsOf, targetsOf } from "../../../services/simulator/tree/tre
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { modText, tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
+import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 
 /** 全部消えてよい消去の手の箱 (消去の直線の箱。☑ が無い = 消えうる MOD は全部外れ MOD) */
 const stripHand = (h: Hand | null | undefined): boolean => !!h && effectOf(h.currency) === "remove" && !!h.keep && !h.keep.length;
@@ -28,7 +29,7 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   // 全部消えてよい消去で作られた箱 (直線の途中と終わり) が「外れ MOD」
   const strip = flag("boxShape") ? chainBox && !!box?.id && flag("boneLater") : stripHand(box?.hand) && chainBox;
   if (flag("heldTags") && strip) {
-    for (const m of [...it.prefixes, ...it.suffixes]) if (!m.fractured && !(m.unrevealed && flag("boneLater"))) out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`全部消えてよい消去で消えうる MOD: ${modText(m)}`, `May be removed by the clear-all Annulment: ${modText(m)}`) });
+    for (const m of [...it.prefixes, ...it.suffixes]) if (!m.fractured && !(m.unrevealed && flag("boneLater"))) out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`全部消えてよい${nameOfKey("annul", null)}で消えうる MOD: ${modText(m)}`, `May be removed by the clear-all ${nameOfKey("annul", null)}: ${modText(m)}`) });
     return out;
   }
   const any = box?.anyOf && box.anyOf.length > 1 ? box.anyOf : null;

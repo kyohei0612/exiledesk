@@ -3,8 +3,8 @@
  * MOD の一覧はエンジンの入口の modListFor (クラフト台の MOD 一覧と同じ行。自前の表は作らない)。ベースとアイテムレベルは木の base・itemLevel (始まりの箱で選ぶ、10-22。前は金の指輪 ilvl 82 に固定)
  */
 import { computed, ref, shallowRef, watch } from "vue";
-import { craftStage as s, nameOf } from "../../../state/craft-stage";
-import { priceOfKey } from "../../../state/for-share/craft-stage-shelf";
+import { craftStage as s } from "../../../state/craft-stage";
+import { nameOfKey, priceOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { freshItem, modListFor } from "../../../services/craft-stage/engine";
 import { minIlvlFor, tierRankLabel } from "../../../services/craft-stage/engine";
 import { startItemOf } from "../../../services/simulator/tree/tree-sample";
@@ -504,7 +504,7 @@ const baseCost = computed(() => {
   const mk = `${key}|${treePrice("divine")}|${treePrice("exalt")}|${treePrice("chaos")}|${treePrice("exalt_greater")}`;
   const hit = costMemo.get(mk);
   if (hit) return hit;
-  const r = treeBaseCost(d, { ...newTree(b, l), start: st, memoAims: m }, st.prices ?? {}, treePrice, nameOf);
+  const r = treeBaseCost(d, { ...newTree(b, l), start: st, memoAims: m }, st.prices ?? {}, treePrice, (k) => nameOfKey(k, freshItem(d, b, l, "rare"))); // 名前はそのベースで引く (骨の名前が部位で変わる。前はクラフト台のアイテムで引いていた)
   costMemo.set(mk, r);
   return r;
 });

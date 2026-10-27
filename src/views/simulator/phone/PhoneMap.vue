@@ -13,7 +13,7 @@ import { OUT_LOOK, outName } from "../tree/tree-names";
 import { mapFolded } from "./map-fold";
 import { mapPick, sheet, usePhoneQuiz } from "./use-phone-quiz";
 import { tr } from "../../../i18n/lang";
-import { iconOf } from "../../../state/craft-stage";
+import { handIcon as iconOf } from "../tree/tree-names";
 import { flag } from "../../../web/release-flags";
 
 const props = defineProps<{ /** 重ね窓の中の小さな図: その箱を光らせ、押せない (peek を聞く時だけ押すと peek) */ mini?: string; peek?: boolean }>();

@@ -8,7 +8,7 @@
 -->
 <script setup lang="ts">
 import { computed, nextTick, ref, toRaw, watch } from "vue";
-import { craftStage as s, iconOf } from "../../../state/craft-stage"; // 名前は木のベースで引く handName (骨の名前が部位で変わる。窓だけ「鎖骨」になった、10-28 モンキー 8)
+import { craftStage as s } from "../../../state/craft-stage"; // 名前・絵は木のベースで引く handName・handIcon (骨の名前が部位で変わる。窓だけ「鎖骨」になった、10-28 モンキー 8)
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import CurrencyShelf from "../../../components/for-share/shelf/CurrencyShelf.vue";
 import HeldOmens from "../../../components/for-share/shelf/HeldOmens.vue";
@@ -18,7 +18,7 @@ import { omensFor, unrevealedOf } from "../../../services/craft-stage/engine";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, ECHO, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
-import { handLabel, handName, outNameOf } from "./tree-names";
+import { handIcon as iconOf, handLabel, handName, outNameOf } from "./tree-names";
 import TreeVeilCheck from "./TreeVeilCheck.vue";
 import TreeRevealCard from "./TreeRevealCard.vue";
 import { RESULT, RESULT_NO_LOST } from "./tree-hand-result";
@@ -126,6 +126,8 @@ const fractureBlock = (k: string): string | null => (effectOf(k) === "fracture" 
  * 錯乱のエッセンス (付くノータブルがランダム) はシミュでは選べない (10-27 昼オーナー。エミュには残す)。灰色で理由を短く、スイッチ noSpam と同じ扱い。
  * 前の木に入っている錯乱の手は開けば今まで通り (持ち直さなければ替わらない)
  */
+/** 錯乱のエッセンスの鍵 (名前はデータから handName で引く) */
+const DELIRIUM = Object.keys(ESSENCE_KEYS).find((k) => ESSENCE_KEYS[k]?.en === "Essence of Delirium") ?? "";
 const deliriumBlock = (k: string): string | null => (flag("noSpam") && ESSENCE_KEYS[k]?.en === "Essence of Delirium" ? tr("シミュでは使えない", "Not usable in the simulator") : null);
 const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens, (k) => fractureBlock(k) ?? deliriumBlock(k));
 /**
@@ -341,8 +343,8 @@ function ok(): void {
       <div class="flex min-w-0 flex-col gap-1.5">
         <p class="text-[12px] opacity-70">{{ tr("棚から持って、カードを押すとこの箱の次の手になる", "Hold a currency from the shelf and click the item to make it this box's next craft") }}</p>
         <!-- 打たずに分ける (分かれ目) のボタンは 10-25 に外した (オーナー「分かれ道マジでややこしいからボタンいらない」)。分かれ目は見本の木にある物だけ、窓 TreeSplitPick で行を直せる -->
-        <p v-if="fracHidden" data-tree-hand-frac-off class="text-[12px] text-rose-200/90">{{ tr("フラクチャーのオーブ: 先に完成の MOD でフラクチャーを決めて (0 完成形の設定の ✦)", "Fracturing Orb: set a fracture on the final mods first (✦ in 0 Final item)") }}</p>
-        <p v-if="delirHidden" data-tree-hand-delirium-off class="text-[12px] text-rose-200/90">{{ tr("錯乱のエッセンス: シミュでは使えない (付くノータブルがランダム)", "Essence of Delirium: not usable in the simulator (the notable is random)") }}</p>
+        <p v-if="fracHidden" data-tree-hand-frac-off class="text-[12px] text-rose-200/90">{{ handName("fracture") }}: {{ tr("先に完成の MOD でフラクチャーを決めて (0 完成形の設定の ✦)", "set a fracture on the final mods first (✦ in 0 Final item)") }}</p>
+        <p v-if="delirHidden" data-tree-hand-delirium-off class="text-[12px] text-rose-200/90">{{ handName(DELIRIUM) }}: {{ tr("シミュでは使えない (付くノータブルがランダム)", "not usable in the simulator (the notable is random)") }}</p>
         <button v-if="t.doc.value.boxes[boxId]?.out !== 'start'" type="button" data-tree-hand-back class="g-btn sm self-start" :title="tr('打たずに既にある箱へ戻す (窓を閉じて、戻り先の箱を押す)', 'Return to an existing box instead (closes this window; click the box)')" @click="emit('back')">↩ {{ tr("既にある箱へ戻す", "Return to a box") }}</button>
         <button v-if="current" type="button" class="g-btn sm self-start" @click="emit('clear')">{{ tr("この手を消す (下も消える)", "Remove this craft (and below)") }}</button>
 
@@ -382,7 +384,7 @@ function ok(): void {
       <div v-if="isRemove && !P27" data-tree-hand-keep class="flex flex-col gap-1 text-[12px]">
         <span class="opacity-80">{{ tr("残したい MOD (☑ の MOD が消えたら「狙いが消えた」。☑ の無い MOD は外れ MOD)", "Mods to keep (a ☑ mod removed = Target lost; unchecked mods are misses)") }}</span>
         <label data-tree-hand-keep-none class="flex min-h-7 cursor-pointer items-center gap-2 max-md:min-h-11">
-          <input type="checkbox" :checked="!keepAims.length" @change="keepNone($event)" />{{ tr("全部消えてよい (同じ形の箱になるまで消去の箱を並べる)", "Anything may go (annul boxes until a box of the same shape)") }}
+          <input type="checkbox" :checked="!keepAims.length" @change="keepNone($event)" />{{ tr(`全部消えてよい (同じ形の箱になるまで${handName("annul")}の箱を並べる)`, `Anything may go (${handName("annul")} boxes until a box of the same shape)`) }}
         </label>
         <span v-if="!keepAims.length && !flag('goalShape')" data-tree-hand-keep-junk class="pl-6 text-[#e0a060]">{{ tr(`${keepChoices.length} MOD 外れ MOD`, `${keepChoices.length} mods: misses`) }}</span>
         <label v-for="c in keepChoices" :key="aimKey(c.aim)" data-tree-hand-keep-mod :data-mod="aimKey(c.aim)" class="flex min-h-7 min-w-0 cursor-pointer items-center gap-2 max-md:min-h-11">
@@ -471,7 +473,7 @@ function ok(): void {
               <input type="checkbox" class="size-5 shrink-0" :checked="keepChecked.includes(aimKey(c.aim))" @change="toggleKeep(c.aim)" /><span class="min-w-0 break-words">{{ keepLabel(c) }}</span>
             </label>
             <label data-tree-hand-keep-none class="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
-              <input type="checkbox" class="size-5 shrink-0" :checked="!keepAims.length" @change="keepNone($event)" /><span class="min-w-0 break-words">{{ tr("全部消えてよい (同じ形の箱になるまで消去の箱を並べる)", "Anything may go (annul boxes until a box of the same shape)") }}</span>
+              <input type="checkbox" class="size-5 shrink-0" :checked="!keepAims.length" @change="keepNone($event)" /><span class="min-w-0 break-words">{{ tr(`全部消えてよい (同じ形の箱になるまで${handName("annul")}の箱を並べる)`, `Anything may go (${handName("annul")} boxes until a box of the same shape)`) }}</span>
             </label>
           </div>
           <p v-if="kind" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? (only.length === 1 ? tr(`${outOf(only[0]!.out, only[0]!.aim)}だけ (結果は 1 通り)`, `${outOf(only[0]!.out, only[0]!.aim)} only (one possible result)`) : [...new Set(only.map((o) => outOf(o.out, o.aim)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>

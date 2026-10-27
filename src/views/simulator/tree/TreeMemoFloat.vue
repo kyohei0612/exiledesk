@@ -16,7 +16,8 @@ import Icon from "../../../components/ui/Icon.vue";
 import CurrencyShelf from "../../../components/for-share/shelf/CurrencyShelf.vue";
 import ShelfButton from "../../../components/for-share/shelf/ShelfButton.vue";
 import TreeModPick from "./TreeModPick.vue";
-import { craftStage as s, iconOf, nameOf } from "../../../state/craft-stage";
+import { craftStage as s } from "../../../state/craft-stage";
+import { handIcon as iconOf, handName as nameOf } from "./tree-names"; // 名前は木のベースで引く (骨の名前が部位で変わる。前はクラフト台のアイテムで引いていた)
 import { provideShelf, simHidden } from "../../../state/for-share/shelf-context";
 import { aimKey, type Aim, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { handKeysOf, handUses, toggleMemoAim, toggleMemoCurrency } from "../../../services/simulator/tree/tree-memo";

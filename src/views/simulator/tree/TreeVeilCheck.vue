@@ -14,7 +14,8 @@ import ModTable from "../../../components/for-share/mod-list/ModTable.vue";
 import TreeModPick from "./TreeModPick.vue";
 import { revealAimsOf } from "./tree-reveal-aims";
 import { useTree } from "./use-tree";
-import { craftStage as s, nameOf } from "../../../state/craft-stage";
+import { craftStage as s } from "../../../state/craft-stage";
+import { handName } from "./tree-names";
 import { ECHO } from "../../../services/simulator/tree/tree-hands";
 import type { Aim, Hand } from "../../../services/simulator/tree/tree-model";
 import type { ListRow, StageItem } from "../../../services/craft-stage/engine";
@@ -46,7 +47,7 @@ function onCheck(e: Event): void {
   </label>
   <label v-if="modelValue || noCheck" data-tree-hand-veil-echo class="flex cursor-pointer items-center" :class="big ? 'min-h-11 gap-3 rounded-lg border border-white/10 bg-black/20 px-3' : 'min-h-7 gap-2 pl-5'">
     <input type="checkbox" class="shrink-0" :class="big ? 'size-5' : ''" :checked="!!echo" @change="emit('echo', ($event.target as HTMLInputElement).checked)" />
-    <span class="min-w-0 break-words">{{ nameOf(ECHO) }} ({{ tr("候補を 1 回引き直す", "reroll the options once") }})</span>
+    <span class="min-w-0 break-words">{{ handName(ECHO) }} ({{ tr("候補を 1 回引き直す", "reroll the options once") }})</span>
   </label>
   <button v-if="(big && modelValue) || noCheck" type="button" data-tree-hand-veil-more class="g-btn sm self-start" :class="big ? '!min-h-11' : ''" @click="picking = true">{{ tr("ほかの MOD を選ぶ (完成形に無い MOD)", "Pick another mod (not in the final item)") }}</button>
   <div v-if="picking" data-tree-hand-veil-pick class="fixed inset-0 z-[340] flex items-center justify-center bg-black/60 p-3" @click.self="picking = false">

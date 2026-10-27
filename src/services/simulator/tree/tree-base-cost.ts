@@ -47,7 +47,7 @@ export function treeBaseCost(data: PatchData, doc: TreeDoc, prices: TreeBasePric
   const sameSide = !c.greater && others.some((o) => sideOfMod(data, o.modId) === sideOfMod(data, fr.modId));
   const label = (k: TreeStartKind): string => k === "fractured" ? tr("フラクチャー済みを買う", "Buy fractured")
     : k === "four" ? tr("4 MOD を買ってフラクチャー (壁を作ってから 1/3)", "Buy a 4-mod rare and fracture (after a blocker, 1/3)")
-    : c.greater ? tr("白から自作・グレーターの道", "Craft from white (Greater Essence route)") : tr("白から自作・増強の道", "Craft from white (Augmentation route)");
+    : c.greater ? tr("白から自作・グレーターの道", "Craft from white (Greater Essence route)") : tr(`白から自作・${name("augment")}の道`, `Craft from white (${name("augment")} route)`);
   const base = (k: TreeStartKind): number | null => ex(k === "white" ? prices.white : k === "four" ? prices.four : prices.fractured);
   // グレーターの道はフラクチャーを自前でするだけ (買う始め方は無し、③ と同じ 10-20)
   const ks: TreeStartKind[] = c.greater ? ["white"] : ["fractured", "four", "white"];
@@ -64,6 +64,6 @@ export function treeBaseCost(data: PatchData, doc: TreeDoc, prices: TreeBasePric
   });
   const ok = kinds.filter((x): x is typeof x & { cost: number } => x.cost != null && !x.why);
   const best = ok.length ? ok.reduce((a, x) => (x.cost < a.cost ? x : a)) : null;
-  const short = (k: TreeStartKind): string => k === "fractured" ? tr("済みを買う", "buy fractured") : k === "four" ? tr("4 MOD 買い", "4-mod buy") : c.greater ? tr("白からグレーター", "white, Greater") : tr("白から増強", "white, Augment");
+  const short = (k: TreeStartKind): string => k === "fractured" ? tr("済みを買う", "buy fractured") : k === "four" ? tr("4 MOD 買い", "4-mod buy") : c.greater ? tr("白からグレーター", "white, Greater") : tr(`白から${name("augment")}`, `white, ${name("augment")}`);
   return { kinds, best: best ? { k: best.k, label: best.label, short: short(best.k), cost: best.cost } : null, note: sameSide ? tr("フラクチャーと同じ側の MOD は費用に入らない (③ と同じ)", "A mod on the fractured side isn't costed (as in step 3)") : null };
 }

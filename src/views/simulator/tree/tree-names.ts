@@ -4,7 +4,7 @@
  * 前は price-keys.json を自前で引いていた (tree-hands.ts の nameOfKey、消した)
  */
 import { computed } from "vue";
-import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
+import { iconOfKey, nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { craftStage as s } from "../../../state/craft-stage";
 import { freshItem } from "../../../services/craft-stage/engine";
 import { CATALYSING, effectOf, isCatalyst } from "../../../services/simulator/tree/tree-hands";
@@ -85,6 +85,8 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
 }
 /** 値段のキー (カレンシー・お告げ・骨・エッセンス・カタリスト) → 画面の言語の名前 (クラフト台の棚と同じ) */
 export const handName = (key: string): string => nameOfKey(key, baseItem.value);
+/** 値段のキー → 絵 (骨の絵も部位で変わるので木のベースで引く。前はクラフト台のアイテムで引いていた、10-28) */
+export const handIcon = (key: string): string => iconOfKey(key, baseItem.value);
 
 /** 矢印に出す 1 行 (触媒の時は先にカタリスト → カレンシー + お告げ、繰り返しは「当たるまで」。10-22 オーナー「カタリストを打つルートが無い」で先に出す) */
 export function handLabel(h: Hand): string {
