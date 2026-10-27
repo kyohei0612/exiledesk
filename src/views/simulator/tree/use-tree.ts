@@ -483,6 +483,11 @@ const { baseCost, baseCostBusy, allowCost: allow } = makeBaseCost(doc, treePrice
 /** 始まりの値段の計算を始めてよい (ツリーのページが箱を全部出し終えた時、use-tree-reveal) */
 export const allowCost = allow;
 
+/**
+ * 手元の dev サーバーで、木の中身 (use-tree とその下の services/simulator/tree) が HMR で差し替わる時はページを読み直す
+ * (木の状態の版が 2 つになって箱の見本の回しが重なり、ページが固まった。10-28 シミュ部長、3 回。読み直せば直っていた)
+ */
+if (import.meta.hot) import.meta.hot.dispose(() => location.reload());
 export function useTree() {
   return { tabDocs, active, switchTab, addTab, closeTab, resetAll, tabLabel, renameTab, copyTab, leaveNewTab, ilvlNote, startPrice, setStartPrice, startChoice, setStartFrom, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, boxAimLabel, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
 }
