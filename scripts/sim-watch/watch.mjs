@@ -96,13 +96,14 @@ const MISS = "外れ MOD";
  * 外れの側の箱は外れ MOD でない行が道の上の狙いの数まで (junkByCheck)。箱ごとの札の並びを返す (前と比べる)
  */
 async function checkCards(t, doc) {
-  const rows = await ev(`Object.fromEntries([...document.querySelectorAll("[data-tree-box]")].map((b) => [b.getAttribute("data-box-id"), [...b.querySelectorAll("p.group\\\\/row")].filter((p) => !p.classList.contains("text-mod-fractured")).map((p) => p.querySelector("[data-row-tag-name]")?.innerText.trim() ?? "")]))`);
+  // 札の無い未発現の行 (開発版の boneLater は緑の崩れた文字のまま) は中身が分からないので「未発現」と書き、外れ MOD でない行に数えない
+  const rows = await ev(`Object.fromEntries([...document.querySelectorAll("[data-tree-box]")].map((b) => [b.getAttribute("data-box-id"), [...b.querySelectorAll("p.group\\\\/row")].filter((p) => !p.classList.contains("text-mod-fractured")).map((p) => p.querySelector("[data-row-tag-name]")?.innerText.trim() ?? (p.querySelector("[data-unrevealed]") ? "未発現" : ""))]))`);
   const sig = {};
   for (const [id, tags] of Object.entries(rows)) {
     const b = doc.boxes[id];
     if (!b || !tags.length) continue;
     sig[id] = tags.map((x) => x || "-").join("|");
-    const ok = tags.filter((x) => x !== MISS).length;
+    const ok = tags.filter((x) => x !== MISS && x !== "未発現").length;
     if (isStrip(b)) {
       count(t.key, "消去の箱のカード");
       if (ok) bad(t.key, `PC ${id} のカード`, "全部消えてよい消去の箱なのに外れ MOD でない行がある", sig[id], `全部 ${MISS}`);
