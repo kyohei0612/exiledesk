@@ -58,7 +58,10 @@ export const stripMiddles = (doc) => Object.values(doc.boxes).filter((b) => isSt
  * 外れの箱の見本で「外れ MOD」でない行は、この中の狙いのはず (junkByCheck: ☑ していない完成形の MOD も外れ MOD)
  */
 export function pathAims(doc, id) {
-  const seen = new Set(), aims = new Set(), todo = [id];
+  const seen = new Set(), todo = [id];
+  // 始まりから付いている完成の狙いも狙い (外れの箱の札で「外れ MOD」と出さない、a1abbf41)
+  const goals = new Set((doc.memoAims ?? []).map((a) => a.modId));
+  const aims = new Set((doc.start?.mods ?? []).map((m) => m.modId).filter((m) => goals.has(m)));
   while (todo.length) {
     const x = todo.pop();
     if (!x || seen.has(x) || !doc.boxes[x]) continue;
