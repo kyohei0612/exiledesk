@@ -304,11 +304,11 @@ function amulet(): QuizTutorial {
   ] as const;
   return {
     id: "amulet", level: 4, part: ["アミュレット", "Amulet"],
-    learn: ["未発現で 3 分の 1 のフラクチャー・光のお告げで壁を外す・カオススパム・冒涜と反響・固定を盾に結晶化でエッセンス", "1-in-3 Fracture with an unrevealed wall, Omen of Light to drop the wall, chaos spam, desecration + Echoes, essence with Crystallisation behind the fractured mod"],
+    learn: ["未発現で 3 分の 1 のフラクチャー・光のお告げで壁を外す・カオスオーブで振り直し続ける・冒涜と反響・固定を盾に結晶化でエッセンス", "1-in-3 Fracture with an unrevealed wall, Omen of Light to drop the wall, rerolling with Chaos Orbs, desecration + Echoes, essence with Crystallisation behind the fractured mod"],
     source: "メモ recipe-showcase (オーナー「基礎が詰まって殿堂入り」「ガチ構築クラフト」)",
     seed: 4,
     assumed: [
-      ["固定する MOD はスピリット、冒涜の狙いは「全てのスキルのレベル +1」、カオススパムの狙いは全元素耐性 (エッセンスはオーナーの指定でグローバル防御、不在のアミュレットはプレフィックス 2 つまでなのでカオススパムはサフィックス)", "Spirit as the fractured mod, “+1 to Level of all Skills” as the desecration target, all Elemental Resistances for the chaos spam (the Global Defences essence is the owner's pick; Absent Amulet has only 2 prefixes, so the chaos spam is on a suffix)"],
+      ["固定する MOD はスピリット、冒涜の狙いは「全てのスキルのレベル +1」、カオスオーブで振り直し続ける狙いは全元素耐性 (エッセンスはオーナーの指定でグローバル防御、不在のアミュレットはプレフィックス 2 つまでなのでカオスオーブで振り直すのはサフィックス)", "Spirit as the fractured mod, “+1 to Level of all Skills” as the desecration target, all Elemental Resistances as the target for the Chaos Orb rerolls (the Global Defences essence is the owner's pick; Absent Amulet has only 2 prefixes, so the Chaos Orb rerolls are on a suffix)"],
     ],
     recipe: {
       v: 3, name: "Absent Amulet", base: "Absent Amulet", itemLevel: 82,
@@ -335,13 +335,13 @@ function amulet(): QuizTutorial {
             ["次のベースを買う", "Buy the next base"],
             [ANNUL_FRACTURED, FRACTURE_TWICE]),
           rule({ A: 3, S: 0, "s.hid": 1 }, use("annul", "OmenofLight"),
-            ["壁の役目は終わった。サフィックスをカオススパムするために、未発現の冒涜だけ外すには?", "The wall has done its job. Remove only the unrevealed mod so the suffix can be chaos spammed?"],
+            ["壁の役目は終わった。サフィックスをカオスオーブで振り直し続けるために、未発現の冒涜だけ外すには?", "The wall has done its job. Remove only the unrevealed mod so the suffix can be rerolled with Chaos Orbs?"],
             ["光のお告げ + 消去で冒涜の MOD だけ消す。冒涜が残っているとカオスで消えることもあり、狙いの冒涜は後で付け直す", "Omen of Light + Annulment removes only the desecrated mod; the real desecration comes later"],
-            [d({ reveal: { echoes: true } }, "発現するとサフィックスが 2 つ埋まり、カオススパムで当たりも消える", "Revealing fills both suffixes, and the chaos spam would hit it"),
+            [d({ reveal: { echoes: true } }, "発現するとサフィックスが 2 つ埋まり、カオスオーブで振り直すと当たりも消える", "Revealing fills both suffixes, and a Chaos Orb reroll could remove it too"),
               d(use("annul"), "お告げ無しの消去はプレフィックスやサフィックスの外れを消すこともあり、壁が残る", "Plain Annulment may hit a junk prefix or suffix and leave the wall")]),
           rule({ A: 3, S: 0, "s.hid": 0, "s.bad": 0, des: 0 }, use("chaos", "OmenofDextralErasure"),
             ["サフィックスの外れを全元素耐性に変えるには?", "Turn the junk suffix into all Elemental Resistances?"],
-            ["右の抹消のお告げ + カオスでサフィックスだけ振り直す (カオススパム)。プレフィックスは満杯なので、足される MOD もサフィックス", "Dextral Erasure + Chaos rerolls only a suffix (chaos spam); prefixes are full, so the new mod is a suffix too"],
+            ["右の抹消のお告げ + カオスオーブでサフィックスだけ振り直す。プレフィックスは満杯なので、足される MOD もサフィックス", "Omen of Dextral Erasure + Chaos Orb rerolls only a suffix; prefixes are full, so the new mod is a suffix too"],
             [d(use("chaos"), "お告げ無しのカオスはプレフィックスの外れも消す。プレフィックスは後でエッセンスの置き場", "Chaos without an omen may hit the prefix, which is saved for the essence"),
               d(use("chaos", "OmenofSinistralErasure"), "左の抹消はプレフィックスを消す", "Sinistral Erasure removes a prefix")]),
           rule({ A: 3, S: 2, "s.hid": 1 }, { reveal: { echoes: true } },

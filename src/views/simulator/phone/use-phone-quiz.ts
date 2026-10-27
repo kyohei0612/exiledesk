@@ -57,15 +57,16 @@ export function markDone(d: TreeDoc, later: ReadonlySet<string>): void {
 
 /**
  * 結果の画面で、まだ打つカレンシーを選んでいない扱いか (スイッチ phoneResult1027)。決めていない・次の手を決めるにした箱に加え、
- * 外れの側は戻り (自動でつないだ物も、前から付いていた物も) があっても、このページで棚から手を選ぶ (picked) までは答えも「次へ」も出さない
+ * このページで手を選んで新しくできた外れの側の箱 (fresh) は、自動でつないだ戻りがあっても、棚から手を選ぶ (picked) までは答えも「次へ」も出さない
  * (10-27 昼オーナー「外れた場合なんだから一旦ここ自動で何も表示させずに打つカレンシー決めさす」「決めてないのに次へいかせる UI もおかしい」)。
+ * 開いた木 (保存した木・レシピ) で戻り・手がもう付いている外れは選んだ状態のまま (選び直さなくても次へで進める、10-27 昼オーナー)。
  * 同じ手を持つと setReturn で戻り (中の処理)、表示は「○○を選択」の枠
  */
-export function awaitsPick(d: TreeDoc, id: string, picked: ReadonlySet<string>): boolean {
+export function awaitsPick(d: TreeDoc, id: string, picked: ReadonlySet<string>, fresh: ReadonlySet<string>): boolean {
   const b = d.boxes[id];
   if (!b || b.hand || b.split || b.done) return false;
   if (!b.back) return true;
-  return (isMiss(b) || b.out === "any") && !picked.has(id);
+  return (isMiss(b) || b.out === "any") && fresh.has(id) && !picked.has(id);
 }
 
 export type Question = { kind: "hand"; id: string } | { kind: "outs"; id: string };
@@ -88,6 +89,8 @@ export function questionsOf(d: TreeDoc, later: ReadonlySet<string>): Question[] 
 const later = ref<string[]>([]);
 /** このページで答えを選んだ結果の箱 (棚で手を選んだ・戻り先を選んだ。木の外、別の木を開くと空。awaitsPick) */
 const picked = ref<string[]>([]);
+/** このページで手を選んで新しくできた箱 (PhoneTreePage の pickHand が足す。開いた木の箱は入らない。awaitsPick) */
+const fresh = ref<string[]>([]);
 /** 一覧から選んで答え直している質問 (無ければ残りの先頭) */
 const focus = ref<Question | null>(null);
 /** 全体図 (PhoneMap) で戻り先の箱を選んでいる (② の「ほかの箱へ」。from = 結果の箱、ids = 戻れる箱。10-26 オーナー「どこに戻るか分からない」) */
@@ -130,7 +133,9 @@ export function usePhoneQuiz() {
     if (b && (b.back || b.done)) answer((d) => { setBack(d, id, null); setDone(d, id, null); });
   }
   /** 別の木を開いた = 木の外の印 (次の手を決める・一覧で選んだ質問) を空に */
-  function reset(): void { later.value = []; focus.value = null; picked.value = []; }
+  function reset(): void { later.value = []; focus.value = null; picked.value = []; fresh.value = []; }
+  /** 新しくできた箱を覚える (pickHand の前後の箱の差) */
+  function addFresh(ids: string[]): void { if (ids.length) fresh.value = [...new Set([...fresh.value, ...ids])]; }
   const pick = (id: string): void => { if (!picked.value.includes(id)) picked.value = [...picked.value, id]; };
   /** 「次の手を決める」を外す (② でもう一度聞く) */
   function unLater(id: string): void { later.value = later.value.filter((x) => x !== id); }
@@ -211,6 +216,7 @@ export function usePhoneQuiz() {
   }
   /** 結果の画面でまだ選んでいない (awaitsPick) */
   const pickedSet = computed(() => new Set(picked.value));
-  const awaits = (id: string): boolean => awaitsPick(t.doc.value, id, pickedSet.value);
-  return { awaits, doc: t.doc, questions, current, focus, answered, later: laterSet, answer, reset, setLater, unLater, setReturn, setFinished, stateOf, outsOf, decide, decideOne, canRetry, boxTitle, pathText };
+  const freshSet = computed(() => new Set(fresh.value));
+  const awaits = (id: string): boolean => awaitsPick(t.doc.value, id, pickedSet.value, freshSet.value);
+  return { awaits, addFresh, doc: t.doc, questions, current, focus, answered, later: laterSet, answer, reset, setLater, unLater, setReturn, setFinished, stateOf, outsOf, decide, decideOne, canRetry, boxTitle, pathText };
 }

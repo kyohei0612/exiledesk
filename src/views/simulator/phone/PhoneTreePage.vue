@@ -103,7 +103,10 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null, only
     return;
   }
   let at = id;
+  const before = new Set(Object.keys(t.doc.value.boxes));
   q.answer((d) => { at = applyPick(d, id, h, kind, aims, pre, only); });
+  // この手でできた箱 = 選ぶまで待つ外れ (開いた木の箱は選んだ状態のまま。use-phone-quiz の awaitsPick)
+  q.addFresh(Object.keys(t.doc.value.boxes).filter((x) => !before.has(x)));
   handFor.value = null;
   q.focus.value = { kind: "outs", id: at };
 }

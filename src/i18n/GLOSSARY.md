@@ -64,8 +64,7 @@
 | 回す / N 人回す / 回している | Run / Run N / Running (「Play」は使わない) |
 | 止まり / 打ち止め | stuck / capped |
 | 欲しい MOD のメモ | wanted mods memo (見出しは Notes) |
-| カオススパム | Chaos spam |
-| カオススパムオーブ (シミュだけの札、右上の札は「スパム」) | Chaos Spam Orb (badge: Spam) |
+| カオスオーブで振り直し続ける (前の「カオススパム」、10-27 オーナー「スパムとかっていうけどそういうのいらない」) | reroll with Chaos Orbs (「chaos spam」は使わない) |
 | 触媒のお告げ (= 触媒の高貴のお告げ) | Omen of Catalysing Exaltation (poe2db、items-ja-poe2db.json)。「Catalysing omen」と縮めない |
 | 区切りの「・」 | 英語は ", " |
 
