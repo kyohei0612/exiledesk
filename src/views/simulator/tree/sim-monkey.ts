@@ -17,7 +17,7 @@
  *   __simMonkey.setGoal([{ modId, tier, fractured? }])  完成の MOD を決め直す (tier = 表の段の番号、その段以上が当たり。fractured = フラクチャーの印) → { ok, goals, left, unknown }
  *   __simMonkey.setAim(id, modId, tier)                当たりの箱の MOD を選ぶ (完成の MOD があればその中から、画面の MOD を選ぶ窓と同じ)
  *   __simMonkey.setBack(id, to)                        戻り先 (箱の id、"start" = 始めに戻る、null で外す。画面と同じく作り直し・形の合う箱は無し)
- *   __simMonkey.setDone(id, on = true)               完成の印 (当たり・分かれ目の行の、次の手も戻りも無い箱だけ)
+ *   __simMonkey.setDone(id, on = true)               完成の印 (当たり・分かれ目の行の、次の手も戻りも無い箱だけ)。on = "fail" で失敗 (ここで終わり、結果の箱ならどれでも。スイッチ failEnd)
  *   await __simMonkey.check()                          テストラン (ルート精査) → { passed, done: [完成の箱], issues: [{ boxId, kind, text }] }
  *   await __simMonkey.result(n = 100, seed = 1)        画面の「100 人回す」と同じ値段 (相場、神建て) と始めの値段で回す → { finished, perItem, median, … }
  * 見張りの「つながった箱どうしは同じ形」(10-28 最終チェック長の頼み。中身は自動のつなぎと同じ tree-box-shape):
@@ -174,9 +174,10 @@ export function installSimMonkey(): () => void {
       t.edit((d) => setBack(d, id, to));
       return { ok: (t.doc.value.boxes[id]?.back ?? null) === to };
     },
-    setDone(id: string, on = true) {
-      t.edit((d) => setDone(d, id, on ? "main" : null));
-      return { ok: (t.doc.value.boxes[id]?.done === "main") === on };
+    setDone(id: string, on: boolean | "fail" = true) {
+      const v = on === "fail" ? "fail" : on ? "main" : null;
+      t.edit((d) => setDone(d, id, v));
+      return { ok: (t.doc.value.boxes[id]?.done ?? null) === v };
     },
     async check() {
       const d = s.data.value;
@@ -191,7 +192,7 @@ export function installSimMonkey(): () => void {
       const div = t.treePrice("divine") || 1, memo = new Map<string, number>();
       const price = (k: string): number => { let v = memo.get(k); if (v === undefined) { v = t.treePrice(k) / div; memo.set(k, v); } return v; };
       const r = runTree(d, t.doc.value, { n, seed, price, startCost: t.startPrice() });
-      return { n: r.n, finished: r.finished, capped: r.capped, stuck: r.stuck, stuckAt: r.stuckAt, unexpected: r.unexpected, moved: r.moved, perItem: r.perItem, meanFinished: r.meanFinished, median: r.median, p10: r.p10, p90: r.p90, restarts: r.restarts, startCost: t.startPrice(), divinePrice: div, uses: r.uses,
+      return { n: r.n, finished: r.finished, capped: r.capped, stuck: r.stuck, stuckAt: r.stuckAt, failed: r.failed, failAt: r.failAt, unexpected: r.unexpected, moved: r.moved, perItem: r.perItem, meanFinished: r.meanFinished, median: r.median, p10: r.p10, p90: r.p90, restarts: r.restarts, startCost: t.startPrice(), divinePrice: div, uses: r.uses,
         // 照らしの台本が同じ打ち止めで辿れるよう、使った手の神建ての値段と打ち止め (runTree の既定、画面と同じ)
         prices: Object.fromEntries(memo), capDiv: 2000, capSteps: 20000 };
     },

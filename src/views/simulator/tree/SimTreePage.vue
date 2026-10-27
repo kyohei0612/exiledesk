@@ -245,6 +245,8 @@ function onAddHit(b: Box, at?: { x: number; y: number }, link?: string): void {
   t.edit((d) => { const made = addHit(d, b.parent!, b.id); if (made) { tidyOf(d); setBack(d, made, link); } });
 }
 function onDone(b: Box): void { t.edit((d) => setDone(d, b.id, b.done ? null : "main")); }
+/** 失敗 (ここで終わり) の印を付ける・外す (スイッチ failEnd) */
+function onFail(b: Box): void { t.edit((d) => setDone(d, b.id, b.done === "fail" ? null : "fail")); }
 /** 戻り先を選んでいる時の札のボタン: ↩ 始めに戻る (10-22 オーナー「選択肢として初めに戻るでいいのでは」。ほかは箱を押して選ぶ、「続きから」は 10-22 に消した) */
 function pickBack(to: string): void { const from = picking.value; if (!from) return; simOp("set-back"); picking.value = null; if (panel.value?.id === from) panel.value = null; t.edit((d) => setBack(d, from, to)); }
 function onTarget(b: Box): void {
@@ -415,7 +417,7 @@ const phone = usePhone(), simPhone = flag("simPhone");
               <TreeBox v-if="doc.boxes[id]" :box="doc.boxes[id]!" :removable="!!doc.boxes[id]?.parent" :picking="!!picking && picking !== id"
                 :selected="panel?.id === id || picking === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand" :glow="glowOf(doc.boxes[id]!) || plus?.target === id" :issue="issueOf(doc.boxes[id]!)" :inv="inv" :link-no="picking ? link.get(id) ?? null : null"
                 @drag="startDrag(doc.boxes[id]!, $event)" @aim="onAim(doc.boxes[id]!)" @plus="(k, e) => onPlus(doc.boxes[id]!, k, e)" @remove="removeHandOf(id)"
-                @back="picking = id" @clear-back="t.edit((d) => setBack(d, id, null))" @done="onDone(doc.boxes[id]!)"
+                @back="picking = id" @clear-back="t.edit((d) => setBack(d, id, null))" @done="onDone(doc.boxes[id]!)" @fail="onFail(doc.boxes[id]!)"
                 @note="panel = { kind: 'note', id }" @base="t.goalPage.value = 1" @issue="openIssues" @back-go="goBack(doc.boxes[id]!)" @checked="t.edit((d) => { delete d.boxes[id]!.check; })" @hover="(on) => (hoverBox = on ? id : hoverBox === id ? null : hoverBox)" />
             </template>
             <!-- Vue Flow の倍率と移動が掛かる層: 線は箱の後ろ (z-index -1)、打つ手の札・引っ張る線・戻りの弧は箱の前 -->
@@ -460,7 +462,7 @@ const phone = usePhone(), simPhone = flag("simPhone");
           <div class="relative" :style="{ width: `${BOX_W}px`, height: `${BOX_H}px` }">
             <TreeBox :box="doc.boxes[pop]!" :x="0" :y="0" :removable="!!doc.boxes[pop]?.parent" :picking="false" :selected="true" :back-label="backLabel(doc.boxes[pop]!)" :issue="issueOf(doc.boxes[pop]!)"
               @drag="() => {}" @aim="popDo((_, b) => onAim(b))" @plus="(k) => popDo((_, b) => (k === 'side' ? onAddHit(b) : startLink(b)))" @remove="popDo((id) => removeHandOf(id))"
-              @back="popDo((id) => (picking = id))" @clear-back="t.edit((d) => setBack(d, pop!, null))" @done="onDone(doc.boxes[pop!]!)"
+              @back="popDo((id) => (picking = id))" @clear-back="t.edit((d) => setBack(d, pop!, null))" @done="onDone(doc.boxes[pop!]!)" @fail="onFail(doc.boxes[pop!]!)"
               @note="popDo((id) => (panel = { kind: 'note', id }))" @base="popDo(() => (t.goalPage.value = 1))" @issue="popDo(() => openIssues())" @back-go="popDo((_, b) => goBack(b))" />
           </div>
         </div>

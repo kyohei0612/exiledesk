@@ -56,6 +56,8 @@ const priceIn = computed(() => startOf(t.doc.value).price ?? null);
           <span class="text-[20px] font-bold text-amber-100">{{ tr(`完成 ${result.finished} 人`, `${result.finished} finished`) }}</span>
           <span :class="result.stuck ? 'text-rose-300' : 'text-[#a99d86]'">{{ tr(`止まり ${result.stuck} 人`, `${result.stuck} stuck`) }}</span>
           <span :class="result.capped ? 'text-rose-300' : 'text-[#a99d86]'">{{ tr(`ループ ${result.capped} 人`, `${result.capped} looping`) }}</span>
+          <!-- 失敗 (ここで終わり) の箱で止めた人 (止まりとは別、スイッチ failEnd) -->
+          <span v-if="result.failed" data-tree-run-failed class="text-rose-200/80">{{ tr(`失敗 ${result.failed} 人`, `${result.failed} failed`) }}</span>
         </div>
         <p v-if="!result.stuck && !result.capped" class="text-emerald-300">{{ tr("止まった人・ループした人はいない", "No run got stuck or looped") }}</p>
         <div v-if="stuck.length" class="rounded-md border border-rose-400/40 bg-rose-900/20 px-2 py-1.5">

@@ -159,11 +159,19 @@ export function usePhoneQuiz() {
     pick(id);
     answer((d) => { setBack(d, id, null); setDone(d, id, "main"); }, [id]);
   }
+  /** 失敗 (ここで終わり)。もう一度押すと外す (スイッチ failEnd) */
+  function setFailed(id: string): void {
+    later.value = later.value.filter((x) => x !== id);
+    pick(id);
+    const on = t.doc.value.boxes[id]?.done === "fail";
+    answer((d) => { setBack(d, id, null); setDone(d, id, on ? null : "fail"); }, [id]);
+  }
   /** 結果の箱の今の答え */
-  function stateOf(id: string): "later" | "back" | "done" | "hand" | "open" {
+  function stateOf(id: string): "later" | "back" | "done" | "fail" | "hand" | "open" {
     const b = t.doc.value.boxes[id];
     if (!b) return "open";
     if (b.hand || b.split) return "hand";
+    if (b.done === "fail") return "fail";
     if (b.done) return "done";
     if (b.back) return "back";
     return laterSet.value.has(id) ? "later" : "open";
@@ -243,5 +251,5 @@ export function usePhoneQuiz() {
   const awaits = (id: string): boolean => awaitsPick(t.doc.value, id, pickedSet.value, freshSet.value);
   /** 答えを選んだ印だけ付ける (共通の applyPick が戻りを付けた時) */
   const setPicked = (id: string): void => { later.value = later.value.filter((x) => x !== id); pick(id); };
-  return { awaits, addFresh, setPicked, doc: t.doc, questions, current, focus, answered, later: laterSet, answer, reset, setLater, unLater, setReturn, setFinished, stateOf, outsOf, decide, decideOne, canRetry, boxTitle, pathText };
+  return { awaits, addFresh, setPicked, doc: t.doc, questions, current, focus, answered, later: laterSet, answer, reset, setLater, unLater, setReturn, setFinished, setFailed, stateOf, outsOf, decide, decideOne, canRetry, boxTitle, pathText };
 }

@@ -35,7 +35,7 @@ const emit = defineEmits<{
   /** 箱を引っ張り始めた (押した所から。判定はページの use-gesture.ts) */
   drag: [e: PointerEvent]; aim: [];
   /** 穴の ! を押した (穴の一覧の窓を開く、10-25 オーナー) */
-  issue: []; remove: []; back: []; clearBack: []; done: []; note: [];
+  issue: []; remove: []; back: []; clearBack: []; done: []; fail: []; note: [];
   /** 始まりの箱のベースを押した (ベースとアイテムレベルを選ぶ欄) */
   base: [];
   /** マウスを乗せた / 外した (その箱の線を濃く・乗せた時のカード) */
@@ -95,12 +95,14 @@ const legendTitle = computed(() => [
   odds.value != null ? tr(`この手でこの結果になる割合 ${pctText(odds.value)} (1 手分)`, `Chance from the craft: ${pctText(odds.value)} (one use)`) : "",
 ].filter(Boolean).join("\n"));
 /** 縁の色 (完成は明るい金) と光り方。選んだ・光らせた時は強く */
-const rgb = computed(() => (props.box.done ? "242,210,122" : kind.value.c));
+/** 失敗 (ここで終わり) の答え (スイッチ failEnd) */
+const FAIL = flag("failEnd");
+const rgb = computed(() => (props.box.done === "fail" ? "224,112,122" : props.box.done ? "242,210,122" : kind.value.c));
 const neon = computed(() => {
   const strong = props.glow || props.selected || !!props.box.done;
   return { borderColor: `rgba(${rgb.value},${strong ? 0.95 : 0.55})`, boxShadow: `0 0 0 1px rgba(${rgb.value},${strong ? 0.5 : 0.18}), 0 0 ${strong ? 22 : 12}px rgba(${rgb.value},${strong ? 0.45 : 0.16})` };
 });
-const doneText = computed(() => (props.box.done ? tr("完成", "Done") : tr("完成にする", "Mark done")));
+const doneText = computed(() => (props.box.done === "fail" ? tr("失敗 (ここで終わり)", "Failed (ends here)") : props.box.done ? tr("完成", "Done") : tr("完成にする", "Mark done")));
 /** 下の＋を出す (完成の箱からも伸ばせる。手を付けると完成の印は外れ、同じ形の完成の箱もそこへ戻る、tree-merge の joinSameShape) */
 // 戻りのある箱からも伸ばせる (手を付けると戻りは外れる = setHand。前は × で戻りを外さないと＋が出なかった、10-26 失敗時の挙動の洗い出しの 2)
 // 戻り先 (↩ 戻る・再度挑戦) か「→ 同じ MOD 群のため統合」が付いた箱は次の手を付けない = 下と横の ＋ を出さない。× で外すと戻る (10-26 夜オーナー「共存はしないだろここ」)
@@ -174,7 +176,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     <component :is="box.out === 'hit' && box.aim && !quiet ? 'button' : 'span'" :type="box.out === 'hit' && box.aim && !quiet ? 'button' : undefined" data-tree-legend class="nodrag flex min-w-0 items-center gap-1 whitespace-nowrap rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="{ color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :class="box.out === 'hit' && box.aim && !quiet ? 'hover:brightness-125' : 'pointer-events-none'" :title="legendTitle" @click.stop="box.out === 'hit' && box.aim && !quiet && emit('aim')"><Icon :name="kind.icon" class="size-3 shrink-0" /><span class="min-w-0 truncate">{{ head }}</span></component>
     <template v-if="box.out !== 'start'">
       <span v-if="orphan" data-tree-orphan class="shrink-0 rounded-sm bg-[#3a1418] px-1 text-[10px] font-bold leading-[18px] text-rose-200" :title="tr('この当たりの MOD は完成の狙いから外した (木からは消えていない。× で消すか、完成の MOD で狙いに戻す)', 'This hit mod was removed from the final targets (the box stays; remove it with × or add the target back)')">{{ tr("狙いに無い", "Not a target") }}</span>
-      <span v-if="box.done" class="shrink-0 rounded-full bg-[#3a2e14] px-1.5 text-[10px] font-bold leading-[18px] text-amber-100">{{ doneText }}</span>
+      <span v-if="box.done" class="shrink-0 rounded-full px-1.5 text-[10px] font-bold leading-[18px]" :class="box.done === 'fail' ? 'bg-rose-900/70 text-rose-100' : 'bg-[#3a2e14] text-amber-100'">{{ doneText }}</span>
       <span v-if="box.unwanted?.length" data-tree-unwanted class="shrink-0 rounded-sm bg-[#3a1418] px-1.5 text-[11px] font-bold leading-[18px] text-rose-200" :title="tr(`× (要らない) の印 ${box.unwanted.length} 個 (前の試し打ちで付けた物)`, `${box.unwanted.length} mod(s) marked × (unwanted, set in the old try-out)`)">× {{ box.unwanted.length }}</span>
       <button v-if="box.check?.length" type="button" data-tree-check class="nodrag shrink-0 rounded-sm bg-amber-500 px-1.5 text-[11px] font-bold leading-[18px] text-black hover:bg-amber-400" :class="quiet ? 'pointer-events-none' : ''" :title="tr(`読めなかった所: ${checkTitle} (直したら押して印を消す)`, `Couldn’t read: ${checkTitle} (fix it, then click to clear)`)" @click.stop="!quiet && emit('checked')">{{ tr("要確認", "Check") }}</button>
       <button v-if="issue && !quietOpen" type="button" data-tree-issue class="nodrag shrink-0 whitespace-nowrap rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold leading-[18px] text-white hover:bg-rose-500" :title="tr(`${issue} (押すと足りない所の一覧)`, `${issue} (click for the list of what is missing)`)" @click.stop="emit('issue')">{{ /行き先を決めていない|最初の手を決めていない/.test(issue) && k === 1 ? tr("! 未定", "! Open") : "!" }}</button>
@@ -185,7 +187,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <!-- 始まりのアイテムレベルは見出しに (ベースの名前が長いと下の行で切れて見えない、10-22 靴) -->
       <span v-if="box.out === 'start'" class="shrink-0 text-[11px] opacity-70">{{ tr(`Lv ${t.doc.value.itemLevel}${t.doc.value.ilvlFit ? " 適正" : ""}`, `ilvl ${t.doc.value.itemLevel}${t.doc.value.ilvlFit ? " fit" : ""}`) }}</span>
       <span v-if="orphan" data-tree-orphan class="shrink-0 rounded-sm bg-rose-400/20 px-1 text-[10px] font-bold text-rose-200" :title="tr('この当たりの MOD は完成の狙いから外した (木からは消えていない。× で消すか、完成の MOD で狙いに戻す)', 'This hit mod was removed from the final targets (the box stays; remove it with × or add the target back)')">{{ tr("狙いに無い", "Not a target") }}</span>
-      <span v-if="box.done" class="shrink-0 rounded-full bg-amber-300/25 px-1.5 text-[10px] font-bold text-amber-100">{{ doneText }}</span>
+      <span v-if="box.done" class="shrink-0 rounded-full px-1.5 text-[10px] font-bold" :class="box.done === 'fail' ? 'bg-rose-400/25 text-rose-100' : 'bg-amber-300/25 text-amber-100'">{{ doneText }}</span>
       <span v-if="box.unwanted?.length" data-tree-unwanted class="shrink-0 rounded-sm bg-rose-400/20 px-1.5 text-[11px] font-bold text-rose-200" :title="tr(`× (要らない) の印 ${box.unwanted.length} 個 (前の試し打ちで付けた物)`, `${box.unwanted.length} mod(s) marked × (unwanted, set in the old try-out)`)">× {{ box.unwanted.length }}</span>
       <button v-if="box.check?.length" type="button" data-tree-check class="nodrag shrink-0 rounded-sm bg-amber-500/80 px-1.5 text-[11px] font-bold text-black hover:bg-amber-400" :class="quiet ? 'pointer-events-none' : ''" :title="tr(`読めなかった所: ${checkTitle} (直したら押して印を消す)`, `Couldn’t read: ${checkTitle} (fix it, then click to clear)`)" @click.stop="!quiet && emit('checked')">{{ tr("要確認", "Check") }}</button>
       <!-- 当たりの箱の次の手が未定の時は印を出さない (下の＋だけ。前は「<1% ＋ 次の手」の文字が枠の上の札とかぶった、10-26 夜オーナー「ここ 1% と次の手って日本語いらない」) -->
@@ -245,6 +247,8 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
         <!-- 当たりの箱の次どうするか = まとめる (横にまとめられる箱がある時だけ。無ければ＋だけ、10-26 オーナー「そこに表示させるとしたらまとめるボタンかな、まぁ原則プレフィックスとサフィではまとめれないけどこれはルール化してもええよな」) -->
         <button v-if="box.out === 'hit' && canJoin" type="button" data-tree-box-join class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-300/40 px-1.5 text-amber-100 hover:border-amber-200" :title="tr('この箱にまとめる (同じ側の横の当たりを選ぶ。プレとサフィはまとめない)', 'Merge into this box (pick same-side hits beside it; prefixes and suffixes are never merged)')" @click.stop="startJoin">{{ tr("まとめる", "Merge") }}</button>
         <button v-if="box.out === 'hit' || box.out === 'branch'" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" @click.stop="emit('done')" :title="doneText">{{ (k > 1 || (box.anyOf?.length ?? 0) > 1) && !box.done ? tr("完成", "Done") : doneText }}</button>
+        <!-- 失敗 (ここで終わり): 外れ MOD が固定された枝など、続けない結果の箱 (10-28 オーナー、スイッチ failEnd) -->
+        <button v-if="FAIL && box.done !== 'main' && box.out !== 'hit' && box.out !== 'branch'" type="button" data-tree-box-fail class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-rose-400/40 px-1.5 text-rose-200 hover:border-rose-300" :title="tr('ここで終わり (回す時はここに着いた人を失敗と数える)', 'End here (runs that arrive here count as failed)')" @click.stop="emit('fail')">{{ box.done === "fail" ? tr("失敗を外す", "Undo fail") : tr("失敗", "Fail") }}</button>
         <!-- 外れ・狙いが消えたの行き先に一番使う手 (オーナー 10-22): 当たりのどれかが付くまでカオス -->
       </template>
       <!-- 右下: ✎ (メモ) と この当たりを消す ✕ (前は枠の中の 1 行目、10-26 夜オーナー「今のバツの所にメモマークあれば」) -->

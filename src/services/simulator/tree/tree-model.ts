@@ -87,7 +87,8 @@ export interface TreeBox {
   /** 戻りの矢印の先 (hand と一緒には持たない) */
   back: string | null;
   /** 完成の印 (前の版の "compromise" = 妥協は読む時に null = 未完成へ、use-tree の load) */
-  done: "main" | null;
+  /** fail = 失敗 (ここで終わり)。回す時はそこで止めた人を失敗と数える (結果の箱ならどれでも、スイッチ failEnd) */
+  done: "main" | "fail" | null;
   parent: string | null;
   /** 箱ごとの短いメモ (オーナー 10-22、既定は閉じる) */
   note?: string;
@@ -511,7 +512,8 @@ export function setBack(d: TreeDoc, id: string, to: string | null): void {
 export function setDone(d: TreeDoc, id: string, v: TreeBox["done"]): void {
   const b = d.boxes[id];
   // 分かれ目の行の箱 (branch) も完成にできる (「狙いが 2 つ以上 → 完成」)
-  if (!b || (b.out !== "hit" && b.out !== "branch") || b.hand || b.back || b.split) return;
+  if (!b || b.hand || b.back || b.split) return;
+  if (v === "fail" ? b.out === "start" : v && b.out !== "hit" && b.out !== "branch") return;
   b.done = v;
 }
 

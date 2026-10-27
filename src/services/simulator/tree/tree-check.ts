@@ -162,9 +162,10 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
   }
 
   // 2) 完成に着かない道・抜けられない輪 (矢印を逆に辿って、完成の箱へ行ける箱を集める)
-  const done = boxes.filter((b) => b.done);
+  // 失敗 (ここで終わり) の箱も道の終わり (完成の箱が無いかは完成だけで見る、スイッチ failEnd)
+  const done = boxes.filter((b) => b.done === "main");
   if (!done.length) add("start", "noDone", tr("完成の箱が無い (当たりの箱で「完成にする」)", "No done box yet (mark a hit as done)"));
-  const reach = new Set(done.map((b) => b.id));
+  const reach = new Set(boxes.filter((b) => b.done).map((b) => b.id));
   for (let changed = true; changed;) {
     changed = false;
     for (const b of boxes) {
@@ -218,7 +219,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
         if (goalsHeld(data, doc, item)) return;
         // × (要らない) の印の MOD が残ったまま完成 (印はこの箱と上の箱で付けた物、段は問わない)
         if (b.done === "main") { const n = aims.filter((a) => aimHeldOn(data, item, a, { sameText: true })).length; heldAtDone.set(id, Math.min(heldAtDone.get(id) ?? n, n)); }
-        if (b.done) for (let x: typeof b | undefined = b; x; x = x.parent ? doc.boxes[x.parent] : undefined) for (const m of x.unwanted ?? []) {
+        if (b.done === "main") for (let x: typeof b | undefined = b; x; x = x.parent ? doc.boxes[x.parent] : undefined) for (const m of x.unwanted ?? []) {
           if (aimHeldOn(data, item, { modId: m, tier: 99 }, { sameText: true })) add(id, "unwanted", tr("× (要らない) の印の MOD が残ったまま完成", "A mod marked × (unwanted) is still on the done item"));
         }
         // 分かれ目: 今のアイテムの形で合う行の箱へ (回す時と同じ splitTo)。合う行が無い・行き先が無い時は止まる

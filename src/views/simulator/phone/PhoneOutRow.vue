@@ -62,6 +62,8 @@ function mergeSide(): void {
 }
 /** 始めに戻れない理由 (use-tree-link、始めの手がこのアイテムに打てない) */
 const startNo = computed(() => link.value.get("start") ?? null);
+/** 失敗 (ここで終わり) の答え (スイッチ failEnd) */
+const FAIL = flag("failEnd");
 const canDone = computed(() => box.value?.out === "hit" || box.value?.out === "branch");
 /** ほかの戻り先 (打つ前の箱・始まり・自分を除いた、戻れる箱) */
 const others = computed(() => [...link.value].filter(([id, why]) => why === null && id !== parent.value && id !== "start" && !!t.doc.value.boxes[id]?.hand).map(([id]) => id));
@@ -223,6 +225,8 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
         <button v-if="(box.anyOf?.length ?? 0) > 1 || (box.mergedOuts?.length ?? 0) > 0" type="button" data-phone-split-any :class="chipClass(false)" @click="t.edit((d) => (box!.anyOf?.length ? splitAny(d, boxId) : splitOuts(d, boxId)))">{{ box.anyOf?.length ? tr("MOD ごとに分ける", "Split by mod") : tr("分ける", "Split") }}</button>
         <button v-else-if="joinable.length" type="button" data-phone-join-side :class="chipClass(joinOpen)" @click="openJoin">{{ tr("動きをまとめる", "Merge the path") }}</button>
         <button v-if="canDone" type="button" data-phone-ans="done" :class="chipClass(state === 'done')" @click="q.setFinished(boxId)">{{ tr("完成", "Done") }}</button>
+        <!-- 失敗 (ここで終わり): 外れ MOD が固定された枝など (10-28 オーナー、スイッチ failEnd) -->
+        <button v-if="FAIL && !canDone" type="button" data-phone-ans="fail" :class="chipClass(state === 'fail')" @click="q.setFailed(boxId)">{{ tr("失敗 (ここで終わり)", "Fail (ends here)") }}</button>
         <!-- 戻り先は全体図で選ぶ (戻れる箱だけ光る。打つ前の箱・始まりも含む。10-26 夜オーナー「n 段目へ戻るの選び方は全体図で」) -->
         <button v-if="pickIds.length" type="button" data-phone-ans="other" :class="chipClass(backKind === 'other' || pickOther)" @click="startPick">{{ MAP ? tr("戻り先を全体図で選ぶ", "Pick where to return on the map") : tr("ほかの箱へ ▾", "Other box ▾") }}</button>
       </div>
