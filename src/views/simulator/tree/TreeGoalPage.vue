@@ -34,7 +34,8 @@ import { openTreePage, treeStep } from "../../../web/page";
 import { useTapFracture } from "../phone/use-tap-fracture";
 import TreeGoalQuality from "./TreeGoalQuality.vue";
 import { useGoalShown } from "./use-goal-shown";
-import { dropWay, inWay, isCraftAim, toggleWay, wayUndecided } from "./tree-way-mods";
+import HelpTip from "../../../components/ui/HelpTip.vue";
+import { dropWay, inWay, isCraftAim, toggleWay, wayUndecided, WAY_ORDER } from "./tree-way-mods";
 import { flag } from "../../../web/release-flags";
 
 const t = useTree();
@@ -320,7 +321,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
           <span class="opacity-80">{{ tr("クラフト MOD (途中で消える物は完成の狙いに数えない)", "Crafted mods (ones removed on the way don't count as final targets)") }}</span>
           <div v-for="c in crafts" :key="c.a.modId" data-tree-goal-way :data-mod="c.a.modId" class="flex min-w-0 flex-wrap items-center gap-2">
             <span class="min-w-0 break-words" :class="c.way ? 'text-amber-200/80 line-through decoration-amber-200/40' : 'text-[#c8c8ff]'">{{ t.aimLabel(c.a) }}</span>
-            <button type="button" data-tree-goal-way-toggle class="tbtn ml-auto shrink-0" :class="c.way ? 'on' : ''" :aria-pressed="c.way" @click="t.edit((d) => toggleWay(d, c.a.modId))">{{ tr("途中で消える", "Removed on the way") }}</button>
+            <button type="button" data-tree-goal-way-toggle class="tbtn ml-auto shrink-0" :class="c.way ? 'on' : ''" :aria-pressed="c.way" @click="t.edit((d) => toggleWay(d, c.a.modId))">{{ tr("途中で消える", "Removed on the way") }}</button><HelpTip v-if="c.way" :text="WAY_ORDER()" />
           </div>
           <p v-if="undecided" data-tree-goal-way-undecided class="break-words text-rose-200/90">{{ undecided }}</p>
         </div>

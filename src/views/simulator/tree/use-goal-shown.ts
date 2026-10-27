@@ -9,7 +9,7 @@ import { applyCurrency, maxQualityOf, mulberry32, type StageItem, type StageMod 
 import { craftStage as s } from "../../../state/craft-stage";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { useTree } from "./use-tree";
-import { wayRows } from "./tree-way-mods";
+import { wayRows, WAY_ORDER } from "./tree-way-mods";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 
@@ -45,7 +45,8 @@ export function useGoalShown() {
   /** 途中で消える行の札 (どれも同じ「途中で消える」) */
   const tags = computed((): Map<string, RowTag> | null => {
     const ws = ways.value;
-    return ws.length ? new Map(ws.map((m) => [m.modId, { text: tr("途中で消える", "Removed on the way"), tone: "warn" as const, title: tr("途中で付けて、その後で消えてよい MOD (品質は残る)。完成の狙い・MOD の枠・完成の判定には数えない", "Added on the way, then may be removed (quality stays). Not counted as a final target, mod slot or for completion") }])) : null;
+    return ws.length ? new Map(ws.map((m) => [m.modId, { text: tr("途中で消える", "Removed on the way"), tone: "warn" as const, title: `${tr("途中で付けて、その後で消えてよい MOD (品質は残る)。完成の狙い・MOD の枠・完成の判定には数えない", "Added on the way, then may be removed (quality stays). Not counted as a final target, mod slot or for completion")}
+${WAY_ORDER()}` }])) : null;
   });
   return { item, tags, breach };
 }

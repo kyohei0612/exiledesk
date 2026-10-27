@@ -11,6 +11,8 @@ import { placeMods } from "../../../services/simulator/sim-engine";
 import type { Aim, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 
+/** 途中で消える物の打つ順 (札の横の ? と、カードの札に乗せた時の説明。10-27 夜オーナー) */
+export const WAY_ORDER = (): string => tr("ほかのエッセンスより先に打って品質などを上げ、消してから次のエッセンス (クラフト MOD が付いている間はほかのエッセンスは打てない)", "Use it before the other essences to raise quality etc., remove it, then use the next essence (other essences can't be used while a crafted mod is on the item)");
 /** クラフト MOD (エッセンス・合金) か */
 export const isCraftAim = (data: PatchData, a: Pick<Aim, "modId">): boolean => !!craftedKindOf(data, a);
 /** 途中で消える物にあるか (段は見ない。同じ MOD は 1 つ) */

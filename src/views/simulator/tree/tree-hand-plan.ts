@@ -2,7 +2,7 @@
  * tree-hand-plan.ts — 箱の次に打つ手の決め方 (TreeHandShelf.vue から分けた、2026-10-24)。棚の画面 (TreeHandShelf)・手を決めた時の組み替え (SimTreePage の pickHand)・
  * 開発の時だけの猿の口 (sim-monkey.ts) が同じ関数を呼ぶ (別の打ち方を作らない、メモ feedback-sim-no-own-logic)。中身はエンジンの入口と木の関数を呼ぶだけ
  */
-import { catalystBoosts, mulberry32, omensAllowedFor, omensFor, runeOf, sideOfMod, socketCapOf, tierRankOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { catalystBoosts, craftedKindOf, mulberry32, omensAllowedFor, omensFor, runeOf, sideOfMod, socketCapOf, tierRankOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { craftStage } from "../../../state/craft-stage";
 import { bonesFor, essenceShelf, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
 import { treeHidden } from "../use-sim-shelf";
@@ -118,7 +118,8 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
   const had = new Set([...item.prefixes, ...item.suffixes].map((m) => m.modId));
   const outs = stepOutcomes(data, prepFor(data, item, h.currency), h.currency, engineOmens(h))?.filter((o) => !o.void);
   if (outs?.length && outs.every((o) => [...o.item.prefixes, ...o.item.suffixes].every((m) => had.has(m.modId)))) return [];
-  return open;
+  // エッセンスの MOD (クラフト MOD) は付く MOD を選べない手では付かないので出さない (この箱で打てない手を持った時に、確率の表が無くて狙いが全部並び、合金の MOD まで ☑ に出た。10-27 夜)
+  return open.filter((a) => !craftedKindOf(data, a));
 }
 /**
  * 次に打つ手の窓の「当たりの箱にする MOD」の候補 = 付く MOD を選べない手 (FREE_EFFECTS) で付きうる完成の狙い (狙い無しでも繰り返しでもない形で hitAimsOf に聞く)。
