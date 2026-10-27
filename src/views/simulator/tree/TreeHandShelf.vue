@@ -56,10 +56,10 @@ const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.
 const rowTags = (it: StageItem | null) => (s.data.value && it ? removeTags(it, treeRowTags(s.data.value, t.doc.value, t.doc.value.boxes[props.boxId]?.unwanted ?? [], it, t.doc.value.boxes[props.boxId])) : null);
 /**
  * 消去を持った時は、フラクチャー以外で ☑ の無い MOD を全部「外れ MOD」と出し、☑ の MOD はふだんの表示 (狙い) に戻す。☑ を変えるとすぐ変わる
- * (10-27 夜オーナー「全部消えてよいなら持った瞬間に外れ MOD 表示、残したい MOD に ☑ で狙い表示」。スイッチ goalShape)
+ * (10-27 夜オーナー「全部消えてよいなら持った瞬間に外れ MOD 表示、残したい MOD に ☑ で狙い表示」。スイッチ heldTags)
  */
 function removeTags(it: StageItem, tags: Map<string, RowTag>): Map<string, RowTag> {
-  if (!flag("goalShape") || !isRemove.value) return tags;
+  if (!flag("heldTags") || !isRemove.value) return tags;
   const keep = new Set(keepAims.value.map((a) => a.modId)), out = new Map(tags);
   for (const m of [...it.prefixes, ...it.suffixes]) {
     if (m.fractured) continue;

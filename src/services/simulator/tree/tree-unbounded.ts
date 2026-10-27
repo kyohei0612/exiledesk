@@ -26,12 +26,12 @@ export const autoRuneKeys = (before: StageItem, after: StageItem): string[] =>
  */
 /**
  * 完成形の品質が足りているか (「品質も狙う」☑ の時だけ見る。値で見て、ブリーチの MOD の有無では見ない。
- * 10-27 夕オーナー「一度付けた品質は消えない」「オフなら品質は見ない」、スイッチ goalShape)
+ * 10-27 夕オーナー「一度付けた品質は消えない」「オフなら品質は見ない」、スイッチ goalQuality)
  */
-export const qualityOk = (doc: TreeDoc, item: StageItem): boolean => !(flag("goalShape") && doc.goalQualityOn && doc.goalQuality && (item.quality ?? 0) < doc.goalQuality);
+export const qualityOk = (doc: TreeDoc, item: StageItem): boolean => !(flag("goalQuality") && doc.goalQualityOn && doc.goalQuality && (item.quality ?? 0) < doc.goalQuality);
 export function goalsHeld(data: PatchData, doc: TreeDoc, item: StageItem): boolean {
   if (!qualityOk(doc, item)) return false;
-  const goals = (doc.memoAims ?? []).filter((a) => !(flag("goalShape") && a.forQuality));
+  const goals = (doc.memoAims ?? []).filter((a) => !(flag("goalQuality") && a.forQuality));
   return !!goals.length && goals.every((a) => aimHeldOn(data, item, a, { sameText: true }));
 }
 export function heldHitOf(data: PatchData, doc: TreeDoc, b: TreeBox, item: StageItem): string | null {
