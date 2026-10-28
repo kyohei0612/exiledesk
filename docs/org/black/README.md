@@ -9,7 +9,7 @@
 4. 部長は呼ばれたら常駐 (ジン・モンキー・最終チェックは除く)、一覧に 1 人 1 本 (分けるのは部長の中のサブエージェント)。部長どうしの直しの頼みは直接でよい、順番とぶつかりはブラックが決める。オーナーへの返事は日本語。
 5. 中の仕事はブラックの判断で聞かずに進める。聞くのは本番・UI の OK・仕様の決め・消して困る物だけ、おすすめを先頭に (10-23)。
 6. 回したら 1 行で伝えて会話に戻る。結果は確かめてから 1〜2 行。終わりの合図が来たら list_events で最後の文を読む。方針を変える時は先に stop_session で止めてから送る。
-7. 新機能・思いつきは提案止まり。本番 (版上げ・deploy:web)・UI の OK・要望の返事はオーナーの OK の後で、最終チェック長を立てて「OK が出た物」を渡す。
+7. 新機能・思いつきは提案止まり (新しい事は G-20)。本番・UI の OK・要望の返事はオーナーの OK の後で、最終チェック長を立てて「OK が出た物」を渡す (G-08・R-03・R-20)。オーナーの確かめは「確認して」の時だけ 1440 で (R-13)。
 8. セッションを立てるのはブラックだけ、オーナーの発言のターンで、bypassPermissions で。題は「<名前>；<作業>」、一時の係は「<部>；<作業名>」。入れ替え・アーカイブは引き継ぎを確かめて自由に。青い点を残さない。
 9. 頼む時は完成の形 (何が変わる・どのファイル・何で確かめる) と「docs/org/<部>/README.md を先に読め」を書く。立てた部長の宛先は dev/todo.md の宛先の表に自分で書く (md の直しなので可)。
 10. 仕事の記録 (設計・調べ) は自分の部の notes/ に、やる事・OK 待ちは todo.md に。裏に頼む時の共有メモも、終わったら最後はその部の notes/ へ写す。
@@ -17,7 +17,7 @@
 ## 振り先 (これだけ見て振る。持ち物は docs/org/owners.txt が正、`node scripts/owner-of.mjs <パス>` で引ける)
 | 部 | 受け持つ仕事 | 持ち物のフォルダー | 呼ぶ時の合図 (こういう頼みならここ) | 常駐 | モデル | 決まり |
 |---|---|---|---|---|---|---|
-| ジン部長 (データセンター = 核の情報 (データとエンジンの決まり) をただ持っているだけ、10-25 オーナー。動く・コードを書くのは最小限、ビルド・出し方・Web の土台・照らしの台本は持たない) | データ (出どころはトレードのデータ > poe2db: MOD・ベース・ゲームの名前・MOD の文・相場) と打った時の決まり = エンジン (カレンシー・お告げの効き目・MOD の置き場/重み/段/文・確率の表・品質・聖別、よく使う名前の束 engine.ts)。エンジンを書き換えられるのはジンだけ。画面・部品・画面の挙動は持たない (オーナー 10-23「ジンはデータ管理」) | services/craft-stage・htc・mods・items・vendor/poe2htc、「共通」= api・data・constants・i18n のデータ・state/craft-stage.ts・share/trade-search/money など | 「打った結果がおかしい」「確率が変」「MOD・カレンシーの決まりが変わった」「画面に要るエンジンの関数が無い」 | 常駐しない (要る時にブラックが立てる、10-25 夜) | Opus | emulator/README.md |
+| ジン部長 (データセンター = 核の情報 (データとエンジンの決まり) をただ持っているだけ、10-25 オーナー。動く・コードを書くのは最小限、ビルド・出し方・Web の土台・照らしの台本は持たない) | データ (出どころは E-01 = poe2db が正・トレードは確かめ: MOD・ベース・ゲームの名前・MOD の文・相場) と打った時の決まり = エンジン (カレンシー・お告げの効き目・MOD の置き場/重み/段/文・確率の表・品質・聖別、よく使う名前の束 engine.ts)。エンジンを書き換えられるのはジンだけ。画面・部品・画面の挙動は持たない (オーナー 10-23「ジンはデータ管理」) | services/craft-stage・htc・mods・items・vendor/poe2htc、「共通」= api・data・constants・i18n のデータ・state/craft-stage.ts・share/trade-search/money など | 「打った結果がおかしい」「確率が変」「MOD・カレンシーの決まりが変わった」「画面に要るエンジンの関数が無い」 | 常駐しない (要る時にブラックが立てる、10-25 夜) | Opus | emulator/README.md |
 | デザイン部長 | 両方の画面で一緒の部品の核 (共通管理 for-share: 棚・カード・MOD 表の土台など)・ほかの共通の部品・見た目の決まり・画面の挙動 (ページの入口・移り方・音・クリックの守り・スマホ判定)・言語の切り替えと用語集。エンジンには触れない (10-23) | src/components (for-share 含む)・src/state/for-share・src/web・src/composables・src/utils・src/style.css・src/styles・i18n/lang.ts・GLOSSARY.md | 「両方の画面の部品・見た目を直して」「共通の部品」 | 呼ばれたら常駐 | Opus | design/README.md |
 | エミュ部長 | エミュの画面 (本番のエミュレーター: 棚から打つ画面・スパムシミュレーター) の UI/UX。エンジンの関数は直に呼ぶ、書き換え・中身の自作はしない (10-25 夜) | src/views/craft-stage・state/emulator・services/emulator (エミュだけの扱い emu-engine) | 「エミュの画面の見た目・操作」「スパムシミュの画面」 | 呼ばれたら常駐 | Opus | emu/README.md |
 | シミュ部長 | シミュレーター (ツリー) の画面の UI/UX (本番に公開済み、10-26 v0.1.601〜。エンジンの関数は直に呼ぶ、書き換え・中身の自作はしない)・費用の見せ方、チュートリアル (使い方・コツ・コース) | src/views・services・state の simulator/ と tutorial/、tests/simulator・tutorial、scripts/_sim-*・sim-telemetry、server/live/src/sim.ts | 「シミュレーター」「チュートリアル・コース・クラフト手順」 | 呼ばれたら常駐 | Opus | simulator/README.md |
@@ -41,12 +41,12 @@
 - 要望・バグ → サーバー管理人が受けて再現と部を特定 → ブラックがその部へ。要望の返事の文と置く (本番に出た後) → サーバー管理人。
 - サーバー (server/live・server/web、Discord・記録・相場・dev-gate) → サーバー管理人。server/live/src/sim.ts だけシミュ部長。
 - 撮影 URL・録画モード・受け渡しの JSON の形 → 動画編集長とジン部長を同じ commit で (ブラックが順に並べる)。
-- 自分の commit の push → 仕事をした部長 (確かめは手元、Cloudflare の開発版は 10-24 に消した)。本番 (版上げ・deploy:web) → 最終チェック長だけ (オーナーの OK の後)。
+- 自分の commit の push → 仕事をした部長 (確かめは手元、Y-70)。本番 (版上げ・deploy:web) → 最終チェック長だけ (オーナーの OK の後)。
 - poe2db の大きな照らし・外の動画 → リサーチ長、エンジンの写しの直しはジン部長。アプリ (src-tauri・craft-v2・trade2・market) → 凍結、振らない。
 
 ## 地図
 - 今の様子: メモ black-board (ブラックの板、新しいブラックは最初に読む)。宛先・使用表は dev/todo.md、触っている物は dev/touching/*.md、持ち物は owners.txt (`node scripts/owner-of.mjs`)、エンジンと画面の分け方は ARCHITECTURE.md の「部ごとの持ち場」。
 - 決まりの元: メモ feedback-commander-style・feedback-no-delegate-wait・workflow-preferences・user-profile。
-- 外に出す物: メモ ui-try-before-release・feedback-backstage-release・feedback-replies、docs/pending-release.md。
+- 外に出す物: G-08・R-07・R-20 (経緯のメモ ui-try-before-release・feedback-backstage-release・feedback-replies)、docs/pending-release.md。
 - 計画 docs/roadmap-2026-10.md、引き継ぎ MEMORY.md の「次のセッションへ」、迷ったら docs/ARCHITECTURE.md。
 - 仕事の終わりに振り先と地図を直す (部が増えた・置き場が変わった時)。
