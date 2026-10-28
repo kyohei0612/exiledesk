@@ -111,7 +111,8 @@ export function joinPath(from: Box, to: Box, others0: readonly Box[], segs: read
   const ports = (r: Box): Array<{ p: Pos; q: Pos }> => {
     const cx = shareX ?? r.x + r.w / 2, cy = shareY ?? r.y + r.h / 2;
     // p = 辺の真ん中、q = そこから外へ M 出た所 (格子に乗る所)
-    return [{ p: { x: cx, y: r.y - CHIP }, q: { x: cx, y: r.y - CHIP - M } }, { p: { x: cx, y: r.y + r.h }, q: { x: cx, y: r.y + r.h + M } }, { p: { x: r.x, y: cy }, q: { x: r.x - M, y: cy } }, { p: { x: r.x + r.w, y: cy }, q: { x: r.x + r.w + M, y: cy } }];
+    // 上の辺は箱の上の縁から出す (札は箱の上 10px に乗るだけで、出口の真上に無い時は 14px の空中から出て見えた。線の見張り L1、10-28 深夜)
+    return [{ p: { x: cx, y: r.y }, q: { x: cx, y: r.y - CHIP - M } }, { p: { x: cx, y: r.y + r.h }, q: { x: cx, y: r.y + r.h + M } }, { p: { x: r.x, y: cy }, q: { x: r.x - M, y: cy } }, { p: { x: r.x + r.w, y: cy }, q: { x: r.x + r.w + M, y: cy } }];
   };
   const A = ports(from), Z = ports(to);
   const block = [...others, { ...from, y: from.y - CHIP, h: from.h + CHIP }, { ...to, y: to.y - CHIP, h: to.h + CHIP }];

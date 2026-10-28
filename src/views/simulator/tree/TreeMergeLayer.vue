@@ -27,17 +27,17 @@ const opacity = (l: MergeLine): number => (HOVER ? (busy.value ? 0.25 : l.kind =
 
 <template>
   <svg data-tree-merge-lines class="pointer-events-none absolute left-0 top-0 overflow-visible" width="1" height="1" style="z-index: -1">
-    <path v-for="l in shown.filter((x) => !hot(x))" :key="l.id" data-tree-merge-line :data-kind="l.kind" :d="paths.get(l.id)" :stroke="COLOR[l.kind]" :stroke-opacity="opacity(l)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    <path v-for="l in shown.filter((x) => !hot(x))" :key="l.id" data-tree-merge-line :data-kind="l.kind" :data-from="l.from" :data-to="l.to" :d="paths.get(l.id)" :stroke="COLOR[l.kind]" :stroke-opacity="opacity(l)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
   </svg>
   <!-- 統合の線のつながりの印 (鎖、Craft of Exile の連結の印のように。10-27 オーナー「つながりのある特殊なマークを付けた方が良い」)。箱の前に出す -->
   <svg class="pointer-events-none absolute left-0 top-0 z-10 overflow-visible" width="1" height="1">
-    <g v-for="l in joins" :key="l.id" data-tree-join-mark :transform="`translate(${l.mark!.x} ${l.mark!.y})`" :class="HOVER ? 'pointer-events-auto cursor-pointer' : ''" @pointerenter="HOVER && emit('hover', l.from)" @pointerleave="HOVER && emit('hover', null)">
+    <g v-for="l in joins" :key="l.id" data-tree-join-mark :data-from="l.from" :data-to="l.to" :transform="`translate(${l.mark!.x} ${l.mark!.y})`" :class="HOVER ? 'pointer-events-auto cursor-pointer' : ''" @pointerenter="HOVER && emit('hover', l.from)" @pointerleave="HOVER && emit('hover', null)">
       <circle r="11" fill="#1a140c" :stroke="COLOR.join" stroke-width="2" />
       <g transform="rotate(-45)" :stroke="COLOR.join" stroke-width="1.8" fill="none"><rect x="-7.5" y="-3" width="8" height="6" rx="3" /><rect x="-0.5" y="-3" width="8" height="6" rx="3" /></g>
     </g>
   </svg>
   <!-- 乗せた物の線は箱の前に濃く -->
   <svg v-if="hover || sel" class="pointer-events-none absolute left-0 top-0 z-10 overflow-visible" width="1" height="1">
-    <path v-for="l in shown.filter(hot)" :key="l.id" data-tree-merge-hot :d="paths.get(l.id)" :stroke="COLOR[l.kind]" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    <path v-for="l in shown.filter(hot)" :key="l.id" data-tree-merge-hot :data-kind="l.kind" :data-from="l.from" :data-to="l.to" :d="paths.get(l.id)" :stroke="COLOR[l.kind]" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" />
   </svg>
 </template>

@@ -15,6 +15,7 @@ import { fileURLToPath } from "node:url";
 import { openChrome, sleep } from "./cdp.mjs";
 import { MISS_OUTS, expectBack, isStrip, missBoxes, pathAims, sameHand, setDepthSteps, stepOf, stepsInText, stripMiddles } from "./doc.mjs";
 import { DISPLAY, makeRules } from "./rules.mjs";
+import { makeLineRules } from "./lines.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
@@ -43,6 +44,8 @@ const snap = async (name) => { if (SHOTS) await c.shot(join(SHOTS, `${name}.png`
 // どの木でも成り立つ決まり (rules.mjs)。openTree は下で定義する関数を後から呼ぶ
 const ruleBad = (...a) => { bad(...a); found.at(-1).rule = true; };
 const rules = makeRules({ ev, sleep, count, bad: ruleBad, note, openTree: (...a) => openTree(...a), mode: MODE });
+// 線の見張り (lines.mjs、10-28 深夜): 線の両端・札のある箱の線・箱や札の横切り・木の外
+const lineRules = makeLineRules({ ev, sleep, count, bad: ruleBad, note });
 
 /** 木を新しく開く (手元の保存を消してから #recipe= で)。開いたらその木 (画面が保存した形) を返す */
 async function openTree(t, w, h, mobile) {
@@ -287,6 +290,7 @@ try {
     const handNames = await rules.checkHandNames(t, doc);
     await rules.checkLinkShape(t, doc);
     await checkStripLines(t, doc);
+    await lineRules.checkLines(t);
     const r = await runs(t);
     const goal = doc.goalQualityOn || doc.wayMods?.length ? { goal: await checkGoal(t, doc) } : {};
     now[t.key] = { boxes: Object.keys(doc.boxes).length, issues, ...r, cards, ...goal };

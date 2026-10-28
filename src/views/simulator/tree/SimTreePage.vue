@@ -134,7 +134,7 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResizeH));
 /** 手 (見るだけ): どこを引いても画面が動き、箱は押せない (ComfyUI の手、見本の 6) */
 const hand = ref(false);
 const { edges, chipRoom } = useTreeEdges(doc, boxes, posOf, () => rowL.value);
-const { merged, linesAll, hoverBox, cardBox } = useTreeMerge({ doc, posOf, heightOf: (id) => v.flow.findNode(id)?.dimensions.height ?? 0, segs: () => edges.value.flatMap((e) => e.segs), busy: () => !!drag.value || !!plus.value, reset: () => [v.flow.viewport.value, panel.value, drag.value], lanes: () => (rowL.value ? laneYs(rowL.value) : []) });
+const { merged, linesAll, hoverBox, cardBox } = useTreeMerge({ doc, posOf, heightOf: (id) => v.flow.findNode(id)?.dimensions.height ?? 0, segs: () => edges.value.flatMap((e) => e.segs), busy: () => !!drag.value || !!plus.value, reset: () => [v.flow.viewport.value, panel.value, drag.value], lanes: () => (rowL.value ? laneYs(rowL.value) : []), chips: () => edges.value.filter((e) => e.hand).map((e) => ({ x: e.jx, y: e.jy })) });
 /** 白紙に戻す = 2 回押し (本番の「白に戻す」と同じ use-armed、3 秒で戻る)。枠の外・Esc でも戻す (オーナー 10-22「白紙に戻すもあれやな、2 回だな」) */
 const clearArm = useArmed();
 const clearBtn = ref<HTMLElement | null>(null);
@@ -433,7 +433,7 @@ const phone = usePhone(), simPhone = flag("simPhone");
             <template #zoom-pane>
               <svg data-tree-lines class="pointer-events-none absolute left-0 top-0 overflow-visible" width="1" height="1" style="z-index: -1">
                 <!-- 札 → 下の箱は矢印なしで箱の上の縁までまっすぐ (箱 → 札の線と同じ形、10-25 オーナー「ここと同じにしようか」) -->
-                <g v-for="e in shownEdges" :key="e.id" data-tree-edge :data-hot="edgeHot(e) || undefined" :opacity="flag('hoverLines') && hoverBox && !edgeHot(e) ? 0.3 : 1" :filter="edgeHot(e) ? 'drop-shadow(0 0 4px rgba(243,194,107,0.9))' : undefined">
+                <g v-for="e in shownEdges" :key="e.id" data-tree-edge :data-edge-id="e.id" :data-hot="edgeHot(e) || undefined" :opacity="flag('hoverLines') && hoverBox && !edgeHot(e) ? 0.3 : 1" :filter="edgeHot(e) ? 'drop-shadow(0 0 4px rgba(243,194,107,0.9))' : undefined">
                   <path :d="e.stem" :stroke="LINE.fwd" :stroke-width="edgeHot(e) ? 3.5 : 2" fill="none" />
                   <path v-for="o in e.to" :key="o.id" :d="o.d" :stroke="o.color" :stroke-width="edgeHot(e) && (edgeHot(e) === 'parent' || o.id === hoverBox) ? 3.5 : 2" stroke-linejoin="round" fill="none" />
                 </g>
