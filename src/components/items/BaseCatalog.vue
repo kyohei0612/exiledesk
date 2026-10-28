@@ -91,7 +91,7 @@ const families = computed((): Array<{ ja: string; en: string; fams: Family[] }> 
       const name = m ? m[1]! : ja;
       const raw = m ? m[2]! : "";
       const label = raw ? (ATTR_JA[raw] ?? raw) : (m ? "無印" : name);
-      const v = c.match(/_(str_dex|str_int|dex_int|str|dex|int|fire|cold|lightning|chaos|physical)$/)?.[1];
+      const v = c.match(/_(str_dex_int|str_dex|str_int|dex_int|str|dex|int|fire|cold|lightning|chaos|physical)$/)?.[1];
       let f = fams.find((x) => x.name === name);
       if (!f) { f = { name, en: classEn(c, false), variants: [] }; fams.push(f); }
       f.variants.push({ cls: c, label: raw ? label : "無印", en: raw && v ? VARIANT_EN[v]! : NO_ATTR_EN });
@@ -399,7 +399,7 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
             <p class="mb-0.5 text-[11px] opacity-50 md:text-[12px]">{{ tr(r.ja, r.en) }}</p>
             <!-- 部位のタイル: ゲームの絵 + 名前 (スマホ 3 列。2026-10-09 オーナー「各種武器はアイコン出してもいいね、装備もほかの」) -->
             <div :class="phone ? 'grid grid-cols-3 gap-x-1 gap-y-0.5' : 'flex flex-wrap gap-1'">
-              <button v-for="f in r.fams" :key="f.name" type="button" :data-rec="`family:${f.variants[0]?.cls.replace(/_(str_dex|str_int|dex_int|str|dex|int|fire|cold|lightning|chaos|physical)$/, '') ?? f.name}`" class="g-plain flex flex-col items-center gap-0.5 px-1 pb-1.5 pt-1 text-center active:scale-95" :class="phone ? '' : [TILES ? 'tile-w rounded' : 'w-[112px] rounded', family?.name === f.name ? 'bg-[rgba(163,52,42,0.35)] ring-1 ring-[var(--exile-color-border-brass)]' : 'hover:bg-white/5']" :aria-expanded="!phone ? family?.name === f.name : undefined" @click="pickFamily(f)">
+              <button v-for="f in r.fams" :key="f.name" type="button" :data-rec="`family:${f.variants[0]?.cls.replace(/_(str_dex_int|str_dex|str_int|dex_int|str|dex|int|fire|cold|lightning|chaos|physical)$/, '') ?? f.name}`" class="g-plain flex flex-col items-center gap-0.5 px-1 pb-1.5 pt-1 text-center active:scale-95" :class="phone ? '' : [TILES ? 'tile-w rounded' : 'w-[112px] rounded', family?.name === f.name ? 'bg-[rgba(163,52,42,0.35)] ring-1 ring-[var(--exile-color-border-brass)]' : 'hover:bg-white/5']" :aria-expanded="!phone ? family?.name === f.name : undefined" @click="pickFamily(f)">
                 <!-- ユニークの絵はゆっくり光る (脈打つ光 + 乗せると光が走る。2026-10-13 オーナー「光らせることできる？動きのある感じで」)。タイルごとに少しずらして一斉に光らない -->
                 <span class="grid place-items-center" :class="[phone ? 'relative aspect-square w-full' : TILES ? 'tile-slot' : 'size-16 md:size-20', family?.name === f.name && !phone ? 'g-slot on' : 'g-slot', plainArt ? '' : 'fam-slot']">
                   <template v-if="!plainArt">
