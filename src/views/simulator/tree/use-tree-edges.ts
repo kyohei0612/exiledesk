@@ -5,6 +5,8 @@
 import { computed, type ComputedRef, type Ref } from "vue";
 import { BOX_H, BOX_W, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { busLevels, CHIP_HALF, HAND_DY, type Seg } from "./tree-lines";
+import { flag } from "../../../web/release-flags";
+import { LINE_Y } from "../../../services/simulator/tree/tree-row-tops";
 
 /**
  * 進む線 (2026-10-22 整列の定義、オーナー「クソ汚い」の後): 普通の木の図と同じ直角の線。親の下から 1 本下りて (途中に手の札)、
@@ -18,6 +20,7 @@ const PASS_R = 16;
  * (10-25 オーナー「矢印の位置がわるい、そもそもここは枠でしょ」→「ここと同じにしようか」= 箱 → 札の縦の線と同じ形。18 → 34 → 40)。棒は札のすぐ下 (段の間 240 で札の下から 8)
  */
 const BUS_DY = HAND_DY - CHIP_HALF;
+const SHORT = flag("lineShort");
 /** 隣の札が無い時の札の幅の上限 (前からの 340) */
 const CHIP_MAX = 340;
 
@@ -35,7 +38,8 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     // 通り抜けは箱が無いので、手の札を箱の上の端の所に置き、そこから下りる
     const kids = b.outs.map((o) => ({ id: o, c: doc.value.boxes[o]!, q: posOf(doc.value.boxes[o]!) }));
     // 札は子の箱の上の辺から測る (横の棒の上、前と同じ 68)。箱の中にアイテムの枠を出して箱の高さが中身で伸びるので、親の下 (y + BOX_H) から測ると背の高い親の中に札が入った (10-26)
-    const px = p.x + BOX_W / 2, py = pass ? p.y : p.y + BOX_H, jy = pass ? p.y : Math.min(...kids.map((k) => k.q.y)) - BUS_DY - CHIP_HALF - 8;
+    // スイッチ lineShort: 札 → 枝分かれも同じ長さ (LINE_Y) に (前は札のすぐ下 8 で分かれて詰まって見えた、10-28 夜オーナー「えだわかれするところもいっしょのながさに」)
+    const px = p.x + BOX_W / 2, py = pass ? p.y : p.y + BOX_H, jy = pass ? p.y : Math.min(...kids.map((k) => k.q.y)) - BUS_DY - CHIP_HALF - (SHORT ? LINE_Y : 8);
     const busY = Math.min(...kids.map((k) => k.q.y)) - BUS_DY - (busShift.value.get(b.id) ?? 0);
     // 角丸の段付き (React Flow の smoothstep、見本の 3): 親の下から下りて、角を丸めて横へ、角を丸めて子の上の辺へ。
     // 外れ (赤) を先に描き、進む (灰) を上に重ねる (同じ横の棒を通る所は灰に見える)
