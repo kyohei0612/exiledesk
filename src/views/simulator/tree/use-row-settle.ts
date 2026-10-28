@@ -9,6 +9,7 @@ import { flag } from "../../../web/release-flags";
 import { tidy } from "../../../services/simulator/tree/tree-layout";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { BOX_W } from "../../../services/simulator/tree/tree-model";
+import { slideAll } from "../../../services/simulator/tree/tree-model-layout";
 
 /** 描く箱どうしが同じ段で横に重なっているか (開いた木の横の位置は前の並べ方のままで、段を揃えると重なった。スイッチ backRoute の時だけ整列し直す) */
 function overlaps(d: TreeDoc): boolean {
@@ -24,5 +25,8 @@ export function useRowSettle(doc: Ref<TreeDoc>, measure: (id: string) => number 
   if (!flag("lineShort")) return;
   const heightOf = boxHeightOf(measure);
   // 開いた時・手を足した時・箱の高さが変わった時 (箱が描かれた・カードの行が増えた) に、いつも縦の置き場を掛け直す (整列の前から、S-68)
-  watch(() => Object.values(doc.value.boxes).map((b) => `${b.id}:${Math.round(measure(b.id) ?? 0)}:${b.outs.join("+")}:${b.back ?? ""}:${b.id === "start" ? b.y : Math.round(b.y)}:${Math.round(b.x)}`).join(","), () => { const y = settleRows(doc.value, heightOf), x = centerMerged(doc.value); const o = flag("backRoute") && overlaps(doc.value) ? (tidy(doc.value), settleRows(doc.value, heightOf), true) : false; if (y || x || o) triggerRef(doc); }, { flush: "post", immediate: true });
+  watch(() => Object.values(doc.value.boxes).map((b) => `${b.id}:${Math.round(measure(b.id) ?? 0)}:${b.outs.join("+")}:${b.back ?? ""}:${b.id === "start" ? b.y : Math.round(b.y)}:${Math.round(b.x)}`).join(","), () => { const y = settleRows(doc.value, heightOf), x = centerMerged(doc.value); const o = flag("backRoute") && overlaps(doc.value) ? (tidy(doc.value), settleRows(doc.value, heightOf), true) : false;
+    // 親の段の箱が別の親の子の真上に来ていたら横へ滑らせる (開いた時・整列の後も。S-68b、スイッチ slideSibling)
+    const sl = flag("slideSibling") && slideAll(doc.value, (b) => b.out === "pass" || mergedAway(doc.value, b));
+    if (y || x || o || sl) triggerRef(doc); }, { flush: "post", immediate: true });
 }

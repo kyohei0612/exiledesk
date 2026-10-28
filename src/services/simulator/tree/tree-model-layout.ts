@@ -1,7 +1,7 @@
 /**
  * tree-model-layout.ts — 箱の配置の小物 (tree-model.ts から分けた、1 ファイル 500 行まで、10-28)。中身は前のまま。呼ぶ所は tree-model の出し直しから
  */
-import { BOX_H, BOX_W, GAP_X, GAP_Y, subtree, type TreeDoc } from "./tree-model";
+import { BOX_H, BOX_W, GAP_X, GAP_Y, subtree, type TreeBox, type TreeDoc } from "./tree-model";
 import { flag } from "../../../web/release-flags";
 
 /** 矢印の先の箱を親の下に並べ直す (子の下の箱も一緒に動かす) */
@@ -39,14 +39,14 @@ export function makeRoom(d: TreeDoc, parentId: string): void {
  * 子の並びの真上 (親の段) に別の箱があれば、その箱とその下を横へ滑らせる (右の箱は右へ、左の箱は左へ。その先の同じ段の箱も一緒に)。
  * 親の真下に別の親の箱を置かない (S-68b、スイッチ slideSibling、10-28 深夜オーナー「右のハズレMDOｓ１は下の縦ラインにかさなっちゃだめだよね」)
  */
-function slideSiblings(d: TreeDoc, parentId: string): void {
+function slideSiblings(d: TreeDoc, parentId: string, hidden: (b: TreeBox) => boolean = () => false): boolean {
   const p = d.boxes[parentId]!;
-  if (!p.outs.length) return;
-  const kids = p.outs.map((o) => d.boxes[o]!);
+  const kids = p.outs.map((o) => d.boxes[o]!).filter((k) => k && !hidden(k));
+  if (!kids.length) return false;
   const x0 = Math.min(...kids.map((k) => k.x)) - ROOM, x1 = Math.max(...kids.map((k) => k.x)) + BOX_W + ROOM;
   const up = new Set<string>();
   for (let x: string | null = parentId; x; x = d.boxes[x]?.parent ?? null) up.add(x);
-  const row = Object.values(d.boxes).filter((b) => b.id !== parentId && !up.has(b.id) && Math.abs(b.y - p.y) < BOX_H);
+  const row = Object.values(d.boxes).filter((b) => b.id !== parentId && !up.has(b.id) && !hidden(b) && Math.abs(b.y - p.y) < BOX_H);
   const right = row.filter((b) => b.x > p.x).sort((a, z) => a.x - z.x), left = row.filter((b) => b.x < p.x).sort((a, z) => z.x - a.x);
   const r = right[0], l = left[0];
   const dr = r && r.x < x1 ? x1 - r.x : 0, dl = l && l.x + BOX_W > x0 ? l.x + BOX_W - x0 : 0;
@@ -54,6 +54,21 @@ function slideSiblings(d: TreeDoc, parentId: string): void {
   if (dr) for (const b of right) shift(d, b.id, dr, 0);
   if (dl) for (const b of left) shift(d, b.id, -dl, 0);
   if (dr || dl) pushRight(d);
+  return !!(dr || dl);
+}
+/**
+ * 開いた時・段を揃えた時・整列の後にも、全部の親で slideSiblings を掛ける (手を足した時だけでは、開いた木・まとめ・整列で兄弟が子の真上に戻った。
+ * 10-28 深夜オーナー「なおってないなー…下の縦ラインに被ってる」、S-68b)。上の段の親から順に、動かなくなるまで。hidden = 描かない箱 (まとめた箱・品質だけの箱)
+ */
+export function slideAll(d: TreeDoc, hidden: (b: TreeBox) => boolean): boolean {
+  let any = false;
+  for (let n = 0; n < 20; n++) {
+    let moved = false;
+    for (const p of Object.values(d.boxes).filter((b) => b.outs.length && !hidden(b)).sort((a, z) => a.y - z.y || a.x - z.x)) if (slideSiblings(d, p.id, hidden)) moved = true;
+    if (!moved) break;
+    any = true;
+  }
+  return any;
 }
 
 /**
