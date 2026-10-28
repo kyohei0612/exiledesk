@@ -1,6 +1,6 @@
 <!--
   TreeUnsetBar.vue — 木の枠の下の真ん中の帯「! 未設定 n つ ▸ 次へ」(案 B、S-89b、スイッチ unsetMark。10-28 深夜オーナー「未設定は穴と同意義で赤枠でいいと思うわ。Bで」)。
-  未設定 = 手・戻り・完成・失敗・自動のつなぎ / まとめのどれも無い箱 (＋ が出ている箱、足りない所の「行き先を決めていない」= tree-check の open)。
+  数は箱の右上の「!」の数 = 決める事が残っている箱 (足りない所に何か出ている箱。10-28 深夜オーナー「この未定ってマーク共通にして全体」)。
   押すと上から順に 1 つずつその箱へ寄る (最後の次は最初へ)。色は足りない所と同じ赤 (未設定と穴を別の色にしない)
 -->
 <script setup lang="ts">
@@ -14,7 +14,7 @@ const emit = defineEmits<{ go: [id: string] }>();
 /** 未設定の箱 (上の段から、同じ段は左から) */
 const ids = computed(() => {
   const d = props.doc;
-  const set = [...new Set((props.issues ?? []).filter((x) => x.kind === "open" && d.boxes[x.boxId]).map((x) => x.boxId))];
+  const set = [...new Set((props.issues ?? []).filter((x) => d.boxes[x.boxId]).map((x) => x.boxId))];
   return set.sort((a, z) => d.boxes[a]!.y - d.boxes[z]!.y || d.boxes[a]!.x - d.boxes[z]!.x);
 });
 const at = ref(-1);

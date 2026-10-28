@@ -128,7 +128,9 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
     if (b.split?.some((r) => !r.to)) add(b.id, "open", tr("分かれ目の行き先を決めていない行がある (その形で来た人はここで止まる)", "A split row has no destination (runs of that shape stop here)"));
     // 完成の狙いが全部そろう箱 (見本で全部付いている) は未定に数えない (回す時はその場で完成、S-77。スイッチ boxShape)
     const fin = (): boolean => { if (!flag("boxShape") || b.out === "start") return false; const s = sampleOf(data, doc, b.id, 1); return s.note !== "none" && !s.note?.startsWith("cant:") && goalsHeld(data, doc, s.item); };
-    if (!b.hand && !b.back && !b.done && !b.split && !dead.has(b.id) && !fin()) add(b.id, "open", b.out === "start" ? tr("最初の手を決めていない (ここで止まる)", "No first craft yet (stops here)") : tr("行き先を決めていない (ここで止まる)", "No next step yet (stops here)"));
+    // スイッチ unsetMark の下では完成にしていない完成の箱も決めていない箱 (S-77・S-89b、10-28 深夜オーナー「どこに完成するかそもそも設定どこにしたらいいかわからんから固定で赤枠がイイ」)
+    if (flag("unsetMark") && !b.hand && !b.back && !b.done && !b.split && !dead.has(b.id) && fin()) add(b.id, "open", tr("完成にしていない (完成の狙いが全部そろっている。「完成」を押す)", "Not marked finished (all final mods are here; press Finish)"));
+    else if (!b.hand && !b.back && !b.done && !b.split && !dead.has(b.id) && !fin()) add(b.id, "open", b.out === "start" ? tr("最初の手を決めていない (ここで止まる)", "No first craft yet (stops here)") : tr("行き先を決めていない (ここで止まる)", "No next step yet (stops here)"));
     if (b.out === "hit" && !b.aim) add(b.id, "noAim", tr("付く MOD を選んでいない", "No mod picked for this hit"));
     // フラクチャーの手は完成の MOD にフラクチャーの印がある木だけ (10-25 オーナー「最初にフラクチャーを決めないとフラクチャーオーブを打てないように」)。前に保存した印の無い木の手は穴に
     if (b.hand && effectOf(b.hand.currency) === "fracture" && b.hand.pick !== "random" && !fractureMarks(doc).length) add(b.id, "cantUse", tr("フラクチャーの印が無い (先に完成の MOD でフラクチャーを決めて)", "No fracture mark (set a fracture on the final mods first)"));

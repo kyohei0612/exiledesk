@@ -65,9 +65,10 @@ const rmTitle = computed(() => tr(`この箱を作った手 (${(() => { const h 
 const CARD_W = BOX_W - 16;
 /** この箱からまとめられるか (下の操作の行の「まとめる」の入口。押すとこの箱をまとめ先にして上の帯の「まとめる」と同じ選び方へ) */
 /** 当たりの箱の「次の手が未定」は赤くせず静かな印だけ (足りない所には数える。10-26 オーナー「一旦整理してA」) */
-/** 未設定 (＋ が出ている、手も戻りも完成も決めていない箱 = 足りない所の「決めていない」)。右上の角に丸い赤の「!」(当たりの箱も。S-89b、スイッチ unsetMark) */
-const unset = computed(() => flag("unsetMark") && !!props.issue && /決めていない|No next|No first craft|no destination/.test(props.issue));
-const quietOpen = computed(() => props.box.out === "hit" && !!props.issue && /行き先を決めていない|Not decided|No next/.test(props.issue));
+/** 決める事が残っている箱 (足りない所に何か出ている箱) は全部、右上の角の丸い赤の「!」の 1 つの印 + 赤枠。題の横の「! 未定」は出さない (S-89b、スイッチ unsetMark、10-28 深夜オーナー「この未定ってマーク共通にして全体」) */
+const UNSET = flag("unsetMark");
+const unset = computed(() => UNSET && !!props.issue);
+const quietOpen = computed(() => !UNSET && props.box.out === "hit" && !!props.issue && /行き先を決めていない|Not decided|No next/.test(props.issue));
 // 別の道の同じ状態の当たり (sameHitsOf) は、完成・次の手がある箱どうしでもまとめられる (10-26 夜オーナー「中身がある箱どうしは自動でせずまとめる」)
 const canJoin = computed(() => (!props.box.hand && !props.box.done ? joinCandidates(t.doc.value, props.box.id).length > 0 : sameHitsOf(t.doc.value, props.box.id, hitLoose(t.doc.value)).length > 0));
 const startJoin = (): void => { joinMode.value = { anchor: props.box.id, pick: [] }; };
@@ -180,7 +181,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     <!-- 題は枠の上の線に乗る札 (よくある枠の形。枠の中は割合・中身・戻り方だけ。10-26 オーナー「枠の上のところに●がついた みたいな形でよくある枠の形にしたら枠中ごちゃんなくていいよな」) -->
     <!-- 札は枠の上辺の横の真ん中 (10-26 夜オーナー「この ◎ が付いたとか外れとかは真ん中が良いな、枠の」。左上だと未定の ! と重なった)。この結果に着く割合 (tree-odds.ts) は乗せた時の説明だけ -->
     <!-- 札の横に箱の印 (未定の !・完成・狙いに無い・要らない・要確認)。前は枠の中の 1 行目にあり、その行が枠を下げていた (10-26 夜オーナー「上枠もっと広げれるじゃろ」) -->
-    <span v-if="unset" data-tree-unset class="pointer-events-none absolute -right-2.5 -top-2.5 z-10 flex size-5 items-center justify-center rounded-full bg-rose-600 text-[12px] font-bold text-white shadow-[0_0_8px_rgba(244,63,94,0.7)]" :title="tr('未設定 (手・戻り・完成のどれも決めていない)', 'Unset (no next step, return or finish yet)')">!</span>
+    <button v-if="unset" type="button" data-tree-unset data-tree-issue class="nodrag absolute -right-2.5 -top-2.5 z-10 flex size-5 items-center justify-center rounded-full bg-rose-600 text-[12px] font-bold text-white shadow-[0_0_8px_rgba(244,63,94,0.7)] hover:bg-rose-500" :title="tr(`${issue} (押すと足りない所の一覧)`, `${issue} (click for the list of what is missing)`)" @click.stop="emit('issue')">!</button>
     <div class="absolute -top-[10px] left-1/2 flex max-w-[calc(100%-16px)] -translate-x-1/2 items-center gap-1 whitespace-nowrap">
     <component :is="box.out === 'hit' && box.aim && !quiet ? 'button' : 'span'" :type="box.out === 'hit' && box.aim && !quiet ? 'button' : undefined" data-tree-legend class="nodrag flex min-w-0 items-center gap-1 whitespace-nowrap rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="{ color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :class="box.out === 'hit' && box.aim && !quiet ? 'hover:brightness-125' : 'pointer-events-none'" :title="legendTitle" @click.stop="box.out === 'hit' && box.aim && !quiet && emit('aim')"><Icon :name="kind.icon" class="size-3 shrink-0" /><span class="min-w-0 truncate">{{ head }}</span></component>
     <!-- まとめた箱がある = 線が何本か入る (案 A、S-66、スイッチ mergeOpen) -->
@@ -190,7 +191,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <span v-if="box.done" class="shrink-0 rounded-full px-1.5 text-[10px] font-bold leading-[18px]" :class="box.done === 'fail' ? 'bg-rose-900/70 text-rose-100' : 'bg-[#3a2e14] text-amber-100'">{{ doneText }}</span>
       <span v-if="box.unwanted?.length" data-tree-unwanted class="shrink-0 rounded-sm bg-[#3a1418] px-1.5 text-[11px] font-bold leading-[18px] text-rose-200" :title="tr(`× (要らない) の印 ${box.unwanted.length} 個 (前の試し打ちで付けた物)`, `${box.unwanted.length} mod(s) marked × (unwanted, set in the old try-out)`)">× {{ box.unwanted.length }}</span>
       <button v-if="box.check?.length" type="button" data-tree-check class="nodrag shrink-0 rounded-sm bg-amber-500 px-1.5 text-[11px] font-bold leading-[18px] text-black hover:bg-amber-400" :class="quiet ? 'pointer-events-none' : ''" :title="tr(`読めなかった所: ${checkTitle} (直したら押して印を消す)`, `Couldn’t read: ${checkTitle} (fix it, then click to clear)`)" @click.stop="!quiet && emit('checked')">{{ tr("要確認", "Check") }}</button>
-      <button v-if="issue && !quietOpen" type="button" data-tree-issue class="nodrag shrink-0 whitespace-nowrap rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold leading-[18px] text-white hover:bg-rose-500" :title="tr(`${issue} (押すと足りない所の一覧)`, `${issue} (click for the list of what is missing)`)" @click.stop="emit('issue')">{{ /行き先を決めていない|最初の手を決めていない/.test(issue) && k === 1 ? tr("! 未定", "! Open") : "!" }}</button>
+      <button v-if="issue && !quietOpen && !UNSET" type="button" data-tree-issue class="nodrag shrink-0 whitespace-nowrap rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold leading-[18px] text-white hover:bg-rose-500" :title="tr(`${issue} (押すと足りない所の一覧)`, `${issue} (click for the list of what is missing)`)" @click.stop="emit('issue')">{{ /行き先を決めていない|最初の手を決めていない/.test(issue) && k === 1 ? tr("! 未定", "! Open") : "!" }}</button>
     </template>
     </div>
     <!-- 1 行目 (始まりの箱だけ: Lv・✎)。ほかの箱は 1 行目を無くし、✎ ✕ は下の行の右 (10-26 夜オーナー「今のバツの所にメモマークあれば上枠もっと広げれるじゃろ」) -->
@@ -202,7 +203,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <span v-if="box.unwanted?.length" data-tree-unwanted class="shrink-0 rounded-sm bg-rose-400/20 px-1.5 text-[11px] font-bold text-rose-200" :title="tr(`× (要らない) の印 ${box.unwanted.length} 個 (前の試し打ちで付けた物)`, `${box.unwanted.length} mod(s) marked × (unwanted, set in the old try-out)`)">× {{ box.unwanted.length }}</span>
       <button v-if="box.check?.length" type="button" data-tree-check class="nodrag shrink-0 rounded-sm bg-amber-500/80 px-1.5 text-[11px] font-bold text-black hover:bg-amber-400" :class="quiet ? 'pointer-events-none' : ''" :title="tr(`読めなかった所: ${checkTitle} (直したら押して印を消す)`, `Couldn’t read: ${checkTitle} (fix it, then click to clear)`)" @click.stop="!quiet && emit('checked')">{{ tr("要確認", "Check") }}</button>
       <!-- 当たりの箱の次の手が未定の時は印を出さない (下の＋だけ。前は「<1% ＋ 次の手」の文字が枠の上の札とかぶった、10-26 夜オーナー「ここ 1% と次の手って日本語いらない」) -->
-      <button v-if="issue && !quietOpen" type="button" data-tree-issue class="nodrag shrink-0 whitespace-nowrap rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white hover:bg-rose-500" :title="tr(`${issue} (押すと足りない所の一覧)`, `${issue} (click for the list of what is missing)`)" @click.stop="emit('issue')">{{ /行き先を決めていない|最初の手を決めていない/.test(issue) && k === 1 ? tr("! 未定", "! Open") : "!" }}</button>
+      <button v-if="issue && !quietOpen && !UNSET" type="button" data-tree-issue class="nodrag shrink-0 whitespace-nowrap rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white hover:bg-rose-500" :title="tr(`${issue} (押すと足りない所の一覧)`, `${issue} (click for the list of what is missing)`)" @click.stop="emit('issue')">{{ /行き先を決めていない|最初の手を決めていない/.test(issue) && k === 1 ? tr("! 未定", "! Open") : "!" }}</button>
       <span class="flex-1" />
       <span class="flex items-center" :style="keep('right center')">
       <button v-if="!quiet" type="button" data-tree-note-mark class="nodrag flex size-6 items-center justify-center rounded hover:bg-white/10" :class="box.note ? 'text-amber-300' : 'text-white/30 hover:text-white/70'" :title="box.note || tr('メモを書く', 'Write a note')" @click.stop="emit('note')"><Icon name="pencil" class="size-3.5" /></button>
