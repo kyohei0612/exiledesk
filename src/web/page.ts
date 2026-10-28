@@ -29,7 +29,7 @@ import { markTabArrive } from "../utils/tab-arrive";
 import { tr } from "../i18n/lang";
 import { track } from "./track";
 import { flag } from "./release-flags";
-import { remember } from "./page-memo";
+import { backNav, remember } from "./page-memo";
 
 /** コスメティック = PoE2 で使える PoE1 のスキンの一覧のページ (?page=skins、views/skins/SkinsPage.vue はスキン部長。2026-10-25 オーナー)。開発版だけ (スイッチ skins) */
 export const skinsPage = ref(false);
@@ -379,7 +379,7 @@ export function startPages(): void {
     stop();
     if (first) apply(first);
     else syncUrl();
-    placeAt(yBack); // 記事などから戻った読み込みは離れた時の位置へ (backPlace)
+    if (backNav()) placeAt(yBack); // ブラウザの戻る・進むで来た読み込みだけ離れた時の位置へ。記事のロゴなどリンクで来た時は一番上 (backPlace)
     yBack = undefined;
   }, { immediate: true });
   // ページと「自分で出たベース選びか」を組で見る。auto = 移る直前のページが自分で出たベース選びだったか

@@ -27,6 +27,19 @@ export function cameBack(): boolean {
   }
 }
 
+/**
+ * ブラウザの戻る・進む (と版替わりの自動の読み直し) で来たか。送りの位置はこれの時だけ戻す (backPlace)。サイトの中のリンク (記事のロゴ・ヘッダー) は
+ * 中身は cameBack で戻すが、位置は一番上から (オーナー 10-28「ちなみにまだエミュレーターではMODから開始されるするクロール」= ロゴで来ると MOD の所だった)
+ */
+export function backNav(): boolean {
+  try {
+    const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+    return nav?.type === "back_forward" || (nav?.type === "reload" && cameBack());
+  } catch {
+    return false;
+  }
+}
+
 interface Memo { search: string; data: Record<string, unknown> }
 const ON = typeof window !== "undefined" && flag("emuFresh");
 /** 読み込んだ時に返せる写し (戻って来た時・同じ URL の時だけ)。返したら消す */
