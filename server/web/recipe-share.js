@@ -26,14 +26,14 @@ export async function recipeIdOf(code) {
   return out;
 }
 
-/** code (deflate-raw + base64url の JSON、src/services/craft-stage/share.ts の packJson) → ツリーのレシピの名前とベースの英語名。形が違えば例外 */
+/** code (deflate-raw + base64url の JSON、src/services/craft-stage/share.ts の packJson) → ツリーのレシピの名前と木 (カード絵の影絵とベースの英語名に使う)。形が違えば例外 */
 async function recipeOf(code) {
   const bin = atob(code.replace(/-/g, "+").replace(/_/g, "/"));
   const bytes = Uint8Array.from(bin, (ch) => ch.charCodeAt(0));
   const v = JSON.parse(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text());
   // ツリーのレシピは { v: 2, n: 名前, t: 木 } (src/views/simulator/recipe-share.ts の PackedTree)
   if (!v || v.v !== 2 || !v.t || typeof v.t !== "object") throw new Error("form");
-  return { name: typeof v.n === "string" && v.n.trim() ? v.n.trim().slice(0, 80) : null, base: typeof v.t.base === "string" ? v.t.base.slice(0, 60) : null };
+  return { name: typeof v.n === "string" && v.n.trim() ? v.n.trim().slice(0, 80) : null, tree: v.t };
 }
 /**
  * カード絵のスイッチ (Y-35、オーナーの OK 待ち)。false の間は今までどおり: card の列 (0013) に触らず、og:image はサイト共通の /web/og.png。
@@ -45,9 +45,9 @@ const parseCard = (s) => { try { return s ? JSON.parse(String(s)) : null; } catc
 /** カード絵の道 (card のある行は -c。後から card が足されても前の絵のキャッシュを使わない) */
 const picPath = (id, card) => `/og/r/${id}${card ? "-c" : ""}.png`;
 async function renderCard(url, env, row) {
-  let base = null;
-  try { base = (await recipeOf(String(row.code))).base; } catch { /* 名前だけ */ }
-  return new Response(await recipeCardImage(url, env, readRecipeCard(row.name ? String(row.name) : null, parseCard(row.card), base)), { headers: PNG_HEADERS });
+  let tree = null;
+  try { tree = (await recipeOf(String(row.code))).tree; } catch { /* 名前だけ */ }
+  return new Response(await recipeCardImage(url, env, readRecipeCard(row.name ? String(row.name) : null, parseCard(row.card), tree)), { headers: PNG_HEADERS });
 }
 
 function recipePage(url, id, code, c, img) {
@@ -140,10 +140,10 @@ export async function recipeShare(request, env, ctx, now = Date.now()) {
   if (hit) return hit;
   const row = await env.LOGS.prepare(`SELECT code, name${RECIPE_CARD ? ", card" : ""} FROM recipe_shares WHERE id = ?`).bind(m[1]).first();
   if (!row) return Response.redirect(`${url.origin}/`, 302);
-  let base = null;
-  try { base = (await recipeOf(String(row.code))).base; } catch { /* 名前だけ */ }
+  let tree = null;
+  try { tree = (await recipeOf(String(row.code))).tree; } catch { /* 名前だけ */ }
   const card = parseCard(row.card);
-  const res = recipePage(url, m[1], String(row.code), readRecipeCard(row.name ? String(row.name) : null, card, RECIPE_CARD ? base : null), RECIPE_CARD ? `${url.origin}${picPath(m[1], card)}` : `${url.origin}/web/og.png`);
+  const res = recipePage(url, m[1], String(row.code), readRecipeCard(row.name ? String(row.name) : null, card, RECIPE_CARD ? tree : null), RECIPE_CARD ? `${url.origin}${picPath(m[1], card)}` : `${url.origin}/web/og.png`);
   ctx?.waitUntil?.(caches.default.put(key, res.clone()));
   return res;
 }
