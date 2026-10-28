@@ -21,7 +21,8 @@ const hot = (l: MergeLine): boolean => on(l, props.hover) || on(l, props.sel);
 // 統合 (同じ MOD 群のため統合) の線はいつも出す (10-27 オーナー「実線で常に出す。普通の線だとなんでつながってるのか分からん」)
 // 再挑戦・戻りの線 (back) は「線を全部表示」でも出さず、乗せた時だけ (案 ①、S-87c、スイッチ retryHover。10-28 深夜オーナー「P１は案①だな」。全部出すと木を囲む四角になった)
 const RETRY = flag("retryHover");
-const shown = computed(() => props.lines.filter((l) => (props.showAll && !(RETRY && l.kind === "back")) || hot(l) || l.kind === "join"));
+// 灰の ↩ (当たり・打った後の戻り、fwd) も乗せた時だけ (S-145、⑦10 → ブラック案・オーナー「進めてくれ」10-28)
+const shown = computed(() => props.lines.filter((l) => (props.showAll && !(RETRY && l.kind !== "join")) || hot(l) || l.kind === "join"));
 const joins = computed(() => props.lines.filter((l) => l.kind === "join" && l.mark));
 const busy = computed(() => !!(props.hover || props.sel));
 const opacity = (l: MergeLine): number => (HOVER ? (busy.value ? 0.25 : l.kind === "join" ? 0.6 : 0.5) : hot(l) || l.kind === "join" ? 1 : l.kind === "fwd" ? 0.85 : 0.55);

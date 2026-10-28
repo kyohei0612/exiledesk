@@ -62,9 +62,10 @@ const OUT = 24;
  * 左右の組み 4 通りのうち、boxes (出元・行き先を除いた箱と手の札) を通らず、縦の列が木の中 (x0〜x1 = 全部の箱の左端〜右端) に収まる一番短い折れ線。
  * どれも無ければ null (一番端の箱の外側の辺から出ると木の外を回る = 線の見張り L4)
  */
-export function sideRoute(from: P, to: P, boxes: readonly P[], x0: number, x1: number): P[] | null {
+/** dy = 同じ辺に 2 本以上入る時に辺の真ん中からずらす量 (出元 / 行き先、S-144) */
+export function sideRoute(from: P, to: P, boxes: readonly P[], x0: number, x1: number, dy: { from?: number; to?: number } = {}): P[] | null {
   const right = (b: P): number => b.x + (b.w ?? BOX_W), mid = (b: P): number => b.y + (b.h ?? BOX_H) / 2;
-  const sy = mid(from), ty = mid(to);
+  const sy = mid(from) + (dy.from ?? 0), ty = mid(to) + (dy.to ?? 0);
   const vFree = (x: number, a: number, z: number): boolean => boxes.every((b) => x <= b.x - GAP || x >= right(b) + GAP || b.y + (b.h ?? BOX_H) + GAP <= Math.min(a, z) || b.y - GAP >= Math.max(a, z));
   const hFree = (y: number, a: number, z: number): boolean => boxes.every((b) => y <= b.y - GAP || y >= b.y + (b.h ?? BOX_H) + GAP || right(b) + GAP <= Math.min(a, z) || b.x - GAP >= Math.max(a, z));
   const ok = (pts: P[]): boolean => pts.every((p, i) => i === 0 || (p.x === pts[i - 1]!.x ? vFree(p.x, pts[i - 1]!.y, p.y) : hFree(p.y, pts[i - 1]!.x, p.x)));

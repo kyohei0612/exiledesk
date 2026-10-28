@@ -25,9 +25,24 @@ export function useTreeMerge(o: {
     // 手の札は幅が名前で変わるので広めに見る (札の幅の多くは 200 より狭い)
     const chipBoxes = (o.chips?.() ?? []).map((c) => ({ x: c.x - 100, y: c.y - CHIP_HALF, w: 200, h: CHIP_HALF * 2 }));
     const treeSegs = o.segs();
-    for (const l of lines) {
-      if (l.kind !== "join") continue;
+    // スイッチ retryHover: 統合の線も横の辺の真ん中どうしを最短で (S-144・S-145)。同じ箱へ 2 本以上入る時は辺の真ん中から 8 ずつずらす。通れなければ前の道 (joinPath)
+    const SIDE = flag("retryHover"), allX = Object.keys(d.boxes).map(pos);
+    const X0 = Math.min(...allX.map((b) => b.x)), X1 = Math.max(...allX.map((b) => b.x + b.w));
+    const joins = lines.filter((l) => l.kind === "join"), nth = new Map<string, number>();
+    for (const l of joins) {
       const others = [...Object.keys(d.boxes).filter((x) => x !== l.from && x !== l.to).map(pos), ...chipBoxes];
+      if (SIDE) {
+        const n = joins.filter((x) => x.to === l.to).length, i = nth.get(l.to) ?? 0;
+        nth.set(l.to, i + 1);
+        const side = sideRoute(pos(l.from), pos(l.to), others, X0, X1, { to: (i - (n - 1) / 2) * 8 });
+        if (side) {
+          joinPaths.set(l.id, roundPath(side));
+          // 鎖の印は道の真ん中の区間の真ん中
+          const a = side[Math.floor((side.length - 1) / 2)]!, z = side[Math.floor((side.length - 1) / 2) + 1] ?? a;
+          l.mark = { x: (a.x + z.x) / 2, y: (a.y + z.y) / 2 };
+          continue;
+        }
+      }
       const j = joinPath(pos(l.from), pos(l.to), others, treeSegs, o.lanes?.() ?? []);
       joinPaths.set(l.id, j.d); l.mark = j.mark;
     }
@@ -45,7 +60,8 @@ export function useTreeMerge(o: {
       const mir = (r: BackReq): BackReq => ({ ...r, from: mirrorPos(r.from), to: mirrorPos(r.to), end: { x: -r.end.x, y: r.end.y }, start: r.start && { x: -r.start.x, y: r.start.y } });
       const other = (r: BackReq): BackReq => ({ ...r, flip: !r.flip, end: { x: r.flip ? r.to.x + 24 : r.to.x + r.to.w! - 24, y: r.end.y } });
       for (const r of reqs) {
-        if (kinds.get(r.id) !== "back") continue;
+        // 再挑戦 (back) も灰の ↩ (fwd) も乗せた時だけ 1 本ずつ (S-145)
+        if (kinds.get(r.id) === "join") continue;
         // まず横の辺の真ん中どうしを最短で (S-87c、10-28 深夜オーナー「枠の横枠空いてるから最短距離で…その枠の真ん中に付ける」)。箱の上の縁へ下ろす足し (backRoute) はしない
         const others = bx.filter((b) => !(b.x === r.from.x && b.y === r.from.y) && !(b.x === r.to.x && b.y === r.to.y));
         const side = sideRoute(r.from, r.to, [...others, ...chipBoxes], Math.min(...bx.map((b) => b.x)), Math.max(...bx.map((b) => b.x + b.w)));
