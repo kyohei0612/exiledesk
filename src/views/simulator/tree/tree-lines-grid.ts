@@ -54,3 +54,30 @@ export function gridRoute(s: P, e: P, boxes: readonly P[], x0: number, x1: numbe
   }
   return null;
 }
+
+/** 横の辺から出る時に箱から離す幅 */
+const OUT = 24;
+/**
+ * 出元の箱の横の辺の真ん中 → 戻り先の箱の横の辺の真ん中 (S-87c、10-28 深夜オーナー「枠の横枠空いてるから最短距離でその枠の線が無い方の枠へ伸ばしてその枠の真ん中に付ける」)。
+ * 左右の組み 4 通りのうち、boxes (出元・行き先を除いた箱と手の札) を通らず、縦の列が木の中 (x0〜x1 = 全部の箱の左端〜右端) に収まる一番短い折れ線。
+ * どれも無ければ null (一番端の箱の外側の辺から出ると木の外を回る = 線の見張り L4)
+ */
+export function sideRoute(from: P, to: P, boxes: readonly P[], x0: number, x1: number): P[] | null {
+  const right = (b: P): number => b.x + (b.w ?? BOX_W), mid = (b: P): number => b.y + (b.h ?? BOX_H) / 2;
+  const sy = mid(from), ty = mid(to);
+  const vFree = (x: number, a: number, z: number): boolean => boxes.every((b) => x <= b.x - GAP || x >= right(b) + GAP || b.y + (b.h ?? BOX_H) + GAP <= Math.min(a, z) || b.y - GAP >= Math.max(a, z));
+  const hFree = (y: number, a: number, z: number): boolean => boxes.every((b) => y <= b.y - GAP || y >= b.y + (b.h ?? BOX_H) + GAP || right(b) + GAP <= Math.min(a, z) || b.x - GAP >= Math.max(a, z));
+  const ok = (pts: P[]): boolean => pts.every((p, i) => i === 0 || (p.x === pts[i - 1]!.x ? vFree(p.x, pts[i - 1]!.y, p.y) : hFree(p.y, pts[i - 1]!.x, p.x)));
+  const len = (pts: P[]): number => pts.reduce((n, p, i) => n + (i ? Math.abs(p.x - pts[i - 1]!.x) + Math.abs(p.y - pts[i - 1]!.y) : 0), 0);
+  const cands: P[][] = [];
+  for (const fs of ["L", "R"] as const) for (const ts of ["L", "R"] as const) {
+    const sx = fs === "L" ? from.x : right(from), tx = ts === "L" ? to.x : right(to);
+    // 縦の列: 同じ向きの辺なら両方の外、向き合う辺なら間の真ん中
+    const col = fs === ts ? (fs === "L" ? Math.min(sx, tx) - OUT : Math.max(sx, tx) + OUT) : (sx + tx) / 2;
+    // 向き合う辺は、出る向きと列の側が合う時だけ (左の辺から出て右へ戻らない)
+    if (fs !== ts && (fs === "L" ? col > sx - OUT || col < tx + OUT : col < sx + OUT || col > tx - OUT)) continue;
+    if (col < x0 || col > x1) continue;
+    cands.push(sy === ty ? [{ x: sx, y: sy }, { x: tx, y: ty }] : [{ x: sx, y: sy }, { x: col, y: sy }, { x: col, y: ty }, { x: tx, y: ty }]);
+  }
+  return cands.filter(ok).sort((a, z) => len(a) - len(z))[0] ?? null;
+}

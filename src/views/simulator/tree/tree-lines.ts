@@ -148,6 +148,9 @@ export function routeBacks(reqs: readonly BackReq[], boxes: readonly Pos[], fwd:
   return out;
 }
 
+/** 角を丸めた折れ線 (跨ぐ所無し。乗せた時だけの再挑戦の線、S-87c) */
+export const roundPath = (pts: readonly Pos[]): string => hopped(pts, () => []);
+
 /** 角を丸めた折れ線。hops(a, b) = その真っ直ぐな所で跨ぐ位置 (横なら x、縦なら y)。跨ぐ形は上 (縦は右) へふくらむ半円 */
 function hopped(pts: readonly Pos[], hops: (a: Pos, b: Pos) => number[]): string {
   let d = `M ${pts[0]!.x} ${pts[0]!.y}`;

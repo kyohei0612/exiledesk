@@ -4,7 +4,8 @@
  */
 import { computed, ref, watch, type Ref } from "vue";
 import { BOX_H, BOX_W, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { CHIP_HALF, mirrorPath, mirrorPos, mirrorSeg, routeBacks, type BackReq, type Seg } from "./tree-lines";
+import { CHIP_HALF, mirrorPath, mirrorPos, mirrorSeg, roundPath, routeBacks, type BackReq, type Seg } from "./tree-lines";
+import { sideRoute } from "./tree-lines-grid";
 import { joinPath, mergeReqs } from "./tree-merge";
 import { flag } from "../../../web/release-flags";
 
@@ -38,12 +39,17 @@ export function useTreeMerge(o: {
     for (const [id, p] of back) paths.set(id, mirrorPath(p));
     // スイッチ retryHover: 再挑戦の線は乗せた時に 1 本だけ光るので、ほかの線を避けず 1 本ずつ引く。今の向きで木の中に通り道が無ければ反対の辺から、
     // どちらも無い時だけ前の道 (木の外の列)。全部を一緒に引くと先に引いた線に押されて外の列を回り、木を囲む四角になった (S-87c、10-28 深夜オーナー「P１は案①だな」)
+    const sideIds = new Set<string>();
     if (flag("retryHover") && flag("backRoute")) {
       const kinds = new Map(lines.map((l) => [l.id, l.kind]));
       const mir = (r: BackReq): BackReq => ({ ...r, from: mirrorPos(r.from), to: mirrorPos(r.to), end: { x: -r.end.x, y: r.end.y }, start: r.start && { x: -r.start.x, y: r.start.y } });
       const other = (r: BackReq): BackReq => ({ ...r, flip: !r.flip, end: { x: r.flip ? r.to.x + 24 : r.to.x + r.to.w! - 24, y: r.end.y } });
       for (const r of reqs) {
         if (kinds.get(r.id) !== "back") continue;
+        // まず横の辺の真ん中どうしを最短で (S-87c、10-28 深夜オーナー「枠の横枠空いてるから最短距離で…その枠の真ん中に付ける」)。箱の上の縁へ下ろす足し (backRoute) はしない
+        const others = bx.filter((b) => !(b.x === r.from.x && b.y === r.from.y) && !(b.x === r.to.x && b.y === r.to.y));
+        const side = sideRoute(r.from, r.to, [...others, ...chipBoxes], Math.min(...bx.map((b) => b.x)), Math.max(...bx.map((b) => b.x + b.w)));
+        if (side) { paths.set(r.id, roundPath(side)); sideIds.add(r.id); continue; }
         const one = (q: BackReq): string | undefined => q.flip ? (() => { const p = routeBacks([mir(q)], bx.map(mirrorPos), sg.map(mirrorSeg), { inside: true, avoid: chipBoxes.map(mirrorPos) }).get(q.id); return p && mirrorPath(p); })() : routeBacks([q], bx, sg, { inside: true, avoid: chipBoxes }).get(q.id);
         const o2 = other(r), p = one(r) ?? one(o2);
         if (!p) continue;
@@ -52,7 +58,7 @@ export function useTreeMerge(o: {
       }
     }
     // スイッチ backRoute: 道は箱の上 24 の段の間で終わるので、そこから箱の上の縁まで下ろす (空中で止まって見えた、10-28 深夜オーナー「途中で終わってる奴もある」。線の見張り L1)
-    if (flag("backRoute")) for (const r of reqs) { const p = paths.get(r.id); if (p) paths.set(r.id, `${p} L ${r.end.x} ${r.to.y}`); }
+    if (flag("backRoute")) for (const r of reqs) { if (sideIds.has(r.id)) continue; const p = paths.get(r.id); if (p) paths.set(r.id, `${p} L ${r.end.x} ${r.to.y}`); }
     for (const [id, p] of joinPaths) paths.set(id, p);
     return { lines, paths };
   });
