@@ -38,9 +38,9 @@ PoE2 のクラフトのエミュレーター (Web が本番、アプリは当分
 ## 動かし方
 - 開発: `pnpm dev:web` は preview_start の "web" (port 1440)。Web 版は http://localhost:1440/web.html (`/` はアプリの入口)。
 - 型: `pnpm -s exec vue-tsc --noEmit -p tsconfig.json`。テストはオーナーが言った時だけ (確かめは手元の dev サーバーの画面のスナップ。メモ feedback-test-strategy)。
-- 作る・確かめる・モンキーは手元の dev サーバー (`pnpm dev:web`、1440、直しが数秒で入る)。ビルドに関わる物 (部品の分け方・先読み・古い塊の読み直し・SW) と本番の前の確かめは、手元の本番と同じ環境で (Cloudflare の開発版 web-dev は 10-24 に消した。1 日 10 万リクエストの枠を本番と共有していて、10-23 に開発版だけで 11.9 万回)。手元で出せない物 (端のキャッシュ・出した直後の版の入れ替わり・独自ドメインの https) は本番に出した直後にサーバー管理人が見る。
-- 版上げ: `node scripts/bump-version.mjs patch` → `cd src-tauri && cargo check -q` → commit → push → `pnpm deploy:web`。
-- 手元の開発版 (シミュレーター・チュートリアルが開く、本番と同じ Worker で): `pnpm preview:prod -- --dev` → http://dev.exiledesk.localhost:1461/ 。本番そのままは `pnpm preview:prod` → http://exiledesk.localhost:1460/ 。オーナーの確かめは、ブラックが「確認して」と言った時だけ dev の 1440 で (固定版 1461 を毎回立てるのは 10-28 夜にやめた、設計図 R-13)。1460・1461 は出す前の見張り用。
+- 環境は設計図 Y-70 (作る・確かめる・モンキーは手元の dev 1440 = `pnpm dev:web`、ビルドに関わる物と出す前の確かめは手元の本番の作り 1460 / 1461、Cloudflare に開発版は置かない)。オーナーの確かめは R-13 (ブラックが「確認して」と言った時だけ 1440)。
+- 版上げと出し方は設計図 R-06・R-08 (`node scripts/bump-version.mjs patch` → Cargo.lock を合わせる → 型チェック → commit → `pnpm deploy:web` → main へ push)。
+- 手元の本番の作り: `pnpm preview:prod -- --dev` → http://dev.exiledesk.localhost:1461/ (開発版の作り)、`pnpm preview:prod` → http://exiledesk.localhost:1460/ (本番そのまま)。見張り用。
 - Bash では `\` が 1 段消える。正規表現や `\` の入る物は Write / Edit で書く。
 - Bash で `cd …; …` / `cd … && …` とつながない。リポジトリの中への cd でも bypass で許可の窓が出て、夜中に止まる (10-27 `cd /c/Users/kyohei/ExileDesk; git add … && git commit` で止まった)。作業場所は最初からリポジトリなので cd は書かず、外は `git -C <path>` や絶対パスで。scratchpad の台本は絶対パスで呼び、書き換えは Edit / Write で。
 - sleep で待つ Bash の繰り返しをしない (1 回ごとに cmd の窓がちらつく)。待つ物は run_in_background で 1 回立てて知らせを待つか、台本の中で待つ。
