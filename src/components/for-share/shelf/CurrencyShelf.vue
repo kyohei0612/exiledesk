@@ -23,6 +23,7 @@ import { useShelf } from "../../../state/for-share/shelf-context";
 import { bonesFor, CRAFT_RUNE_KEYS, essenceShelf, nameOfKey, OMEN_GROUPS, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
+import { TIER } from "../../../state/for-share/tier-word";
 
 const emit = defineEmits<{ hold: [key: string] }>();
 type ShelfTab = "usable" | "orb" | "essence" | "rune" | "omen";
@@ -283,7 +284,7 @@ const TABS = computed(() => (!props.full ? [] : [
           <template v-if="isGroup(sec)">
             <template v-for="id in secItems(sec)" :key="id">
               <span v-if="groupKeys(id).length > 1" :data-ess-keys="groupKeys(id).join(' ')" @click.capture.stop="openEss(id, $event)">
-                <ShelfButton :k="groupRep(id)" :label="nameOf(groupRep(id))" :corner="tr(`全 ${groupKeys(id).length} 段`, `${groupKeys(id).length} tiers`)" />
+                <ShelfButton :k="groupRep(id)" :label="nameOf(groupRep(id))" :corner="tr(`全 ${groupKeys(id).length} ${TIER}`, `${groupKeys(id).length} tiers`)" />
               </span>
               <ShelfButton v-else :k="groupKeys(id)[0] ?? id" @pick="emit('hold', $event)" />
             </template>
@@ -309,7 +310,7 @@ const TABS = computed(() => (!props.full ? [] : [
               <template v-if="isGroup(sec)">
                 <template v-for="id in secItems(sec)" :key="id">
                   <span v-if="groupKeys(id).length > 1" :data-ess-keys="groupKeys(id).join(' ')" @click.capture.stop="openEss(id, $event)">
-                    <ShelfButton :k="groupRep(id)" :label="nameOf(groupRep(id))" :corner="tr(`全 ${groupKeys(id).length} 段`, `${groupKeys(id).length} tiers`)" />
+                    <ShelfButton :k="groupRep(id)" :label="nameOf(groupRep(id))" :corner="tr(`全 ${groupKeys(id).length} ${TIER}`, `${groupKeys(id).length} tiers`)" />
                   </span>
                   <ShelfButton v-else :k="groupKeys(id)[0] ?? id" @pick="emit('hold', $event)" />
                 </template>

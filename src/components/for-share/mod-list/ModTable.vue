@@ -16,6 +16,7 @@ import { useDismiss } from "../../../utils/use-dismiss";
 import Disclosure from "../../ui/Disclosure.vue";
 import { flag } from "../../../web/release-flags";
 import { essName, tierName, toneOf, weightNote } from "./stage-mod-list-look";
+import { TIER } from "../../../state/for-share/tier-word";
 
 export interface ModSection { g: ModGroup; sid: string; label: string; rune: string | null; socketed: boolean; count: number; columns: Array<{ side: "prefix" | "suffix"; title: string; items: ListRow[]; top: number }> }
 
@@ -209,7 +210,7 @@ defineExpose({ jumpTo, counts, sections });
         <span v-if="sec.rune" class="font-normal opacity-60">{{ sec.socketed ? tr("はめている", "Socketed") : tr("差していないので 0% (付ければルーンも差す)", "Not socketed, so 0% (adding one also sockets the rune)") }}</span>
         <!-- 重みが公開されていない欄は、こちらが入れた重みの出どころを短く (2026-10-09 オーナー) -->
         <span v-if="weightNote()[sec.rune ? 'rune' : sec.g]" class="g-hover-name font-normal opacity-60" :title="weightNote()[sec.rune ? 'rune' : sec.g]">{{ tr("· 重みはコミュニティのデータから参照", "· Weights from community data") }}</span>
-        <span v-else-if="sec.g === 'special'" class="font-normal opacity-60">{{ tr("創生の樹・ハンドラップ専用の MOD · カレンシーでは付かない · 段の表の「付ける」で手で付けるだけ", "Mods exclusive to the Genesis Tree and Wraps · Cannot roll from currency · Add them manually with “Add” in the tier table") }}</span>
+        <span v-else-if="sec.g === 'special'" class="font-normal opacity-60">{{ tr(`創生の樹・ハンドラップ専用の MOD · カレンシーでは付かない · ${TIER}の表の「付ける」で手で付けるだけ`, "Mods exclusive to the Genesis Tree and Wraps · Cannot roll from currency · Add them manually with “Add” in the tier table") }}</span>
         <Disclosure tag="span" kind="section" :open="secShown(sec.sid)" class="ml-auto font-normal md:hidden" />
       </h3>
       <!-- プレ・サフィの左右は一覧の幅で決める (窓が狭い小さいパソコンは縦に積む。2026-10-11 オーナー) -->
@@ -219,7 +220,7 @@ defineExpose({ jumpTo, counts, sections });
             <slot name="col-lead" :col="col" />
             <b class="whitespace-nowrap text-[var(--exile-color-text-primary)]">{{ col.title }}</b>
             <span class="whitespace-nowrap text-[var(--exile-color-text-tertiary)]">{{ col.items.length }} {{ tr("系統", "groups") }}</span>
-            <span class="ml-auto flex gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]"><span class="w-14 whitespace-nowrap text-right" :class="props.tone === 'sky' ? 'text-sky-200' : ''">{{ props.shareHead ?? tr("出やすさ", "Weight") }}</span><span class="w-6 text-right">{{ tr("段", "T") }}</span><span class="w-7 text-right">Lv</span></span>
+            <span class="ml-auto flex gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]"><span class="w-14 whitespace-nowrap text-right" :class="props.tone === 'sky' ? 'text-sky-200' : ''">{{ props.shareHead ?? tr("出やすさ", "Weight") }}</span><span class="w-6 text-right">{{ tr(TIER, "T") }}</span><span class="w-7 text-right">Lv</span></span>
           </p>
           <p v-if="!col.items.length" class="py-2 opacity-40">{{ tr("無し", "None") }}</p>
           <div v-for="r in col.items" :key="r.id" class="mb-1" :data-row-key="`${sec.sid}:${r.id}`" :class="[flashKey === `${sec.sid}:${r.id}` ? 'row-jump' : '']">
@@ -248,7 +249,7 @@ defineExpose({ jumpTo, counts, sections });
                 <span class="flex shrink-0 items-center gap-1 tabular-nums">
                   <slot name="row-badge" :row="r" />
                   <span class="w-14 text-right text-[13px] font-bold" :class="props.tone === 'sky' ? 'text-sky-200' : 'text-amber-100'" :title="props.shareTitle ? props.shareTitle(r) : (r.group === 'desecrated' || r.group === 'otherworldly') ? tr('骨を使わないと付かない', 'Only rolls via a Bone') : tr('出やすさ (同じ側の重みの割合)', 'Chance (share of weight on the same side)')">{{ pct(shareOf(r)) }}</span>
-                  <span class="w-6 text-right text-[12px] text-[var(--exile-color-text-secondary)]" :title="tr(`段の数 ${r.tiers.length}`, `Tiers: ${r.tiers.length}`)">{{ r.tiers.length }}</span>
+                  <span class="w-6 text-right text-[12px] text-[var(--exile-color-text-secondary)]" :title="tr(`${TIER}の数 ${r.tiers.length}`, `Tiers: ${r.tiers.length}`)">{{ r.tiers.length }}</span>
                   <span class="w-7 text-right text-[12px] text-[var(--exile-color-text-tertiary)]" :title="tr(`T1 の MOD レベル ${r.topLevel}`, `T1 mod level: ${r.topLevel}`)">{{ r.topLevel }}</span>
                 </span>
               </span>

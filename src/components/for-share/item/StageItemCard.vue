@@ -30,6 +30,7 @@ import { useDismiss } from "../../../utils/use-dismiss";
 import RichText from "../../decor/RichText.vue";
 import { vFitText } from "../../../utils/fit-text";
 import type { RowTag, RowToggle } from "./stage-item-row-tag";
+import { TIER } from "../../../state/for-share/tier-word";
 
 /**
  * minH: 枠の最低の高さ (px)。動画モードの撮影用で、一番長い時の高さを確保して中身は上詰めにする (手ごとに枠が伸び縮みしない)。
@@ -351,7 +352,7 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
           <!-- 右端 (↓・確率・×) は行ごとに中身が違うので枠の幅を決めておき、真ん中の文字をどの行もそろえる (2026-10-17 オーナー「% が無いからずれた、枠幅決めて中央ぞろえ」) -->
           <span v-if="!modsOnly || removable || chanceOf(r.m) != null" class="flex shrink-0 items-center justify-end gap-1" :class="sideColW">
             <!-- ↓ (MOD 一覧のこの行へ) は外した。行を押すと MOD 一覧のその行を枠で囲んで見せる (2026-10-17 オーナー「この矢印めっちゃ気になる、MOD クリックでその挙動に」) -->
-            <span v-if="chanceOf(r.m) != null" data-rec-part="odds" class="w-11 text-right text-[11px] tabular-nums" :class="isRareChance(chanceOf(r.m)!) ? 'font-bold text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'" :title="tr('付いた瞬間に、この段が付く確率 (その段の重み ÷ この手で付きうる全部の重み)', 'Chance this tier rolled when it was added (tier weight ÷ total weight of everything that step could add)')">{{ fmtChance(chanceOf(r.m)!) }}</span>
+            <span v-if="chanceOf(r.m) != null" data-rec-part="odds" class="w-11 text-right text-[11px] tabular-nums" :class="isRareChance(chanceOf(r.m)!) ? 'font-bold text-amber-300' : 'text-[var(--exile-color-text-tertiary)]'" :title="tr(`付いた瞬間に、この${TIER}が付く確率 (その${TIER}の重み ÷ この手で付きうる全部の重み)`, 'Chance this tier rolled when it was added (tier weight ÷ total weight of everything that step could add)')">{{ fmtChance(chanceOf(r.m)!) }}</span>
             <button v-if="removable && !r.m.unrevealed" type="button" class="rounded px-1 text-[12px] leading-none text-rose-300/70 hover:bg-rose-500/20 hover:text-rose-200 max-md:px-2 max-md:py-1 max-md:text-[16px]" :title="tr('この MOD を外す (費用 0、1 手戻すで戻る)', 'Remove this mod (free, Undo brings it back)')" @click.stop="emit('remove', r.m.modId)">×</button>
           </span>
           <span v-else class="shrink-0" :class="leftColW" />

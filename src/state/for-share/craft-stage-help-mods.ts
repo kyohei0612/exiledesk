@@ -8,6 +8,7 @@ import { enOf } from "./craft-stage-shelf";
 import { lang, tr } from "../../i18n/lang";
 import { emotionNameOf } from "../../services/craft-stage/apply-emotion";
 import { jewelEmotionsOf } from "../../services/htc/patch";
+import { TIER } from "./tier-word";
 
 /** エッセンスで付く段 (完全は一番上、ほかはエッセンスの等級の段。無ければ一番上)。craft-stage-help.ts も使う */
 export const essenceTierOf = (t: { level: string; mod: Mod }): Mod["tiers"][number] | undefined =>
@@ -42,10 +43,10 @@ function essenceTierSpan(data: PatchData, item: StageItem, mod: Mod, range: read
     });
     if (!hit.length) {
       const top = m.tiers[n - 1]!.ranges[0];
-      return top && lo > Math.max(top[0]!, top[1]!) ? tr(`普通の MOD の T1 (全 ${n} 段) より上`, `Above normal T1 (of ${n} tiers)`) : null;
+      return top && lo > Math.max(top[0]!, top[1]!) ? tr(`普通の MOD の T1 (全 ${n} ${TIER}) より上`, `Above normal T1 (of ${n} tiers)`) : null;
     }
     const best = Math.min(...hit), worst = Math.max(...hit);
-    return tr(`普通の MOD の ${best === worst ? `T${best}` : `T${worst}〜T${best}`} 相当 (全 ${n} 段)`, `≈ normal ${best === worst ? `T${best}` : `T${worst}-T${best}`} (of ${n} tiers)`);
+    return tr(`普通の MOD の ${best === worst ? `T${best}` : `T${worst}〜T${best}`} 相当 (全 ${n} ${TIER})`, `≈ normal ${best === worst ? `T${best}` : `T${worst}-T${best}`} (of ${n} tiers)`);
   }
   return null;
 }
