@@ -159,7 +159,7 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
   // 骨を未発現のまま次へ (veil keep) は発現しない。未発現を持ったまま打つほかの手 (フラクチャー・カオスなど) も発現しない = 未発現のまま (スイッチ boneLater。
   // 前は手の後に未発現があれば必ず発現まで打っていた = 骨の手の後だけだった)
   const keepVeil = veilKeep(h) || (flag("boneLater") && !isBone(h.currency) && !isRevealHand(h.currency));
-  const r = applyHand(data, item, h.currency, rng, { omens: h.omens, catalyst: h.catalyst, fractureOf: fractureTarget(data, item, h, aims, rng), reveal: keepVeil ? false : (m) => isAimMod(m, ts, aimOpts(data)) !== miss });
+  const r = applyHand(data, item, h.currency, rng, { qualityTo: h.quality || undefined, omens: h.omens, catalyst: h.catalyst, fractureOf: fractureTarget(data, item, h, aims, rng), reveal: keepVeil ? false : (m) => isAimMod(m, ts, aimOpts(data)) !== miss });
   if (use) {
     if (r.applied) for (const k of autoRuneKeys(before, item)) use(k);
     if (r.catalystCount) use(isCatalyst(h.currency) ? h.currency : h.catalyst!, r.catalystCount);
@@ -411,6 +411,8 @@ interface HandSpec {
   fractureOf?: string | null;
   /** 未発現が付いた時、そのまま発現で選ぶ候補 (true の候補の最初の物、無ければ 1 つ目)。false = 発現しない。既定 = 1 つ目 */
   reveal?: false | ((m: StageMod) => boolean);
+  /** カタリストの手の「何 % まで」(S-31b、無ければ最大まで) */
+  qualityTo?: number;
 }
 interface HandResult extends StageApply {
   /** 触媒の前 (かカタリストの手そのもの) で打ったカタリストの個数 */
@@ -439,8 +441,8 @@ function revealBy(data: PatchData, r: StageApply, rng: () => number, want: (m: S
 /** 手を 1 回打つ (上の HandSpec の順)。カタリストの手は品質を今の最大まで (もう最大なら打てた扱いで何もしない) */
 function applyHand(data: PatchData, item: StageItem, key: string, rng: () => number, spec: HandSpec = {}): HandResult {
   if (kindOf(key) === "catalyst") {
-    const r = fillCatalyst(data, item, key, rng);
-    return { ...r, applied: r.applied || r.count > 0 || catalystFull(item, key), catalystCount: r.count, handOmensUsed: [], echoUsed: false };
+    const r = fillCatalyst(data, item, key, rng, spec.qualityTo);
+    return { ...r, applied: r.applied || r.count > 0 || catalystFull(item, key) || (!!spec.qualityTo && catalystOf(item).pct >= spec.qualityTo), catalystCount: r.count, handOmensUsed: [], echoUsed: false };
   }
   const { now, reveal } = handOmens(key, spec.omens ?? []);
   // 後から打つ発現の手 (スイッチ boneLater): 候補 3 つから ☑ の物 (無ければ 1 つ目)。反響はこの手のお告げ

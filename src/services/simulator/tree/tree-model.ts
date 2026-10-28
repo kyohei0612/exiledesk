@@ -326,19 +326,21 @@ const GROUPED: readonly HandKind[] = ["add", "swap", "spam"];
 export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims: readonly Aim[] = [], only: ReadonlyArray<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null = null, groupOf?: (a: Aim) => string): void {
   const b = d.boxes[id];
   if (!b) return;
+  // カタリストの手で「何 % まで」を決めた物は見える「打った後」の箱 1 つ (S-31b、スイッチ catHand。0 = 前の「最大まで」の通り抜け)
+  const outsOf: OutKind[] = kind === "quality" && (hand.quality ?? 0) > 0 && flag("catHand") ? ["any"] : OUTS_OF[kind];
   const now = b.outs.map((o) => d.boxes[o]!.out);
   // 消せる狙いを持って着く人がいなければ「狙いが消えた」は起きない (10-24 モンキー初めての人の回 6)。前から箱がある木は替えない (同じ手を選び直して下が消えないように)
-  const kept = !!b.hand && now.includes("lost") && now.every((k) => k !== "start" && OUTS_OF[kind].includes(k));
-  const noLost = !only && OUTS_OF[kind].includes("lost") && OUTS_OF[kind].length > 1 && !kept && !mayHoldAim(d, id);
+  const kept = !!b.hand && now.includes("lost") && now.every((k) => k !== "start" && outsOf.includes(k));
+  const noLost = !only && outsOf.includes("lost") && outsOf.length > 1 && !kept && !mayHoldAim(d, id);
   // 印の無い木の乱数のフラクチャー (hand.pick) は当たり + 外れ (どの MOD が固定されるかは乱数。起こりうる結果が取れない時の既定、要望 8a159e29)
-  const want = only ? OUT_ORDER.filter((k) => only.some((o) => o.out === k)) : hand.pick === "random" ? (["hit", "junk"] as OutKind[]) : noLost ? OUTS_OF[kind].filter((k) => k !== "lost") : OUTS_OF[kind];
+  const want = only ? OUT_ORDER.filter((k) => only.some((o) => o.out === k)) : hand.pick === "random" ? (["hit", "junk"] as OutKind[]) : noLost ? outsOf.filter((k) => k !== "lost") : outsOf;
   if (only) { const hs = only.flatMap((o) => (o.out === "hit" && o.aim ? [o.aim] : [])); if (hs.length) aims = hs; }
   // 当たりの箱は完成の狙いの順に並べる (手ごとに順が違った、10-26 モンキー 7 の 17)。完成の狙いに無い物は後ろ
   const order = (a: Aim): number => { const i = (d.memoAims ?? []).findIndex((g) => g.modId === a.modId); return i < 0 ? 999 : i; };
   aims = [...aims].sort((x, y) => order(x) - order(y));
   // 起こりうる結果の一覧に「狙いが消えた」が無いのが、まだ誰も狙いを持って着かないからなら印を残す (後で戻りの矢印が付いたら healLost が足す)。
   // 持って着く人がいて無いなら、その手では消えない (右側の結晶化で外れだけ消える等) ので足さない
-  if (noLost || (only && !want.includes("lost") && OUTS_OF[kind].includes("lost") && !mayHoldAim(d, id))) b.noLost = true; else delete b.noLost;
+  if (noLost || (only && !want.includes("lost") && outsOf.includes("lost") && !mayHoldAim(d, id))) b.noLost = true; else delete b.noLost;
   // 外れの枝の鍵 (狙い無しの乱数のフラクチャー = 固定された外れの側と種類、スイッチ fracPick。外れ・打った後・外れが消えたの側 = S-65、スイッチ junkSide)
   const keysOf = (k: OutKind): string[] => (only ?? []).flatMap((o) => (o.out === k && o.junkKey ? [o.junkKey] : []));
   const keySig = (l: ReadonlyArray<{ out: string; junkKey?: string }>): string => l.filter((o) => o.junkKey).map((o) => `${o.out}:${o.junkKey}`).sort().join();

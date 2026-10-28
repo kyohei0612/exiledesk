@@ -19,7 +19,7 @@ import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, ECHO, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handIcon as iconOf, handLabel, handName, outNameOf } from "./tree-names";
-import TreeVeilCheck from "./TreeVeilCheck.vue";
+import TreeVeilCheck from "./TreeVeilCheck.vue"; import TreeCatPick from "./TreeCatPick.vue";
 import TreeRevealCard from "./TreeRevealCard.vue";
 import { RESULT, RESULT_NO_LOST } from "./tree-hand-result";
 import { boxTagsOf } from "./tree-row-tags";
@@ -74,7 +74,7 @@ function removeTags(it: StageItem, tags: Map<string, RowTag>): Map<string, RowTa
 }
 /** 当たりの MOD が決まっていない当たりの箱 (棚は出さずに先に MOD を選ばせる、tree-hand-plan の needAimOf) */
 const needAim = computed(() => needAimOf(t.doc.value, props.boxId, sample.value?.note));
-const held = ref<string | null>(props.current?.currency ?? null);
+const held = ref<string | null>(props.current?.currency ?? null); /** カタリストの手の「何 % まで」(S-31b、スイッチ catHand) */ const catTo = ref(props.current?.quality ?? 0);
 const omens = ref<string[]>(props.current ? [...props.current.omens] : []);
 const spam = ref(!!props.current?.repeat);
 const spamMax = ref<number | null>(props.current?.repeat?.max ?? null);
@@ -264,7 +264,7 @@ const keepText = (m: StageMod): string => { const it = item.value ? cardOf(item.
 // 外れは「外れ MOD」だけ (中身は教えない、S-82。10-28 夜オーナー「別にここのチェックでも教えなくていいハズレはハズレよ」、スイッチ boxShape)
 const keepLabel = (c: { aim: Aim; mod: StageMod }): string => (keepJunk(c) ? (flag("boxShape") ? tr("外れ MOD", "Miss mod") : tr(`外れ MOD (${keepText(c.mod)})`, `Miss mod (${keepText(c.mod)})`)) : keepText(c.mod));
 function keepNone(e: Event): void { const was = [...keepChecked.value]; keepChecked.value = []; (e.target as HTMLInputElement).checked = true; warnIfBelow(() => { keepChecked.value = was; }); }
-const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, ...(isRemove.value ? { keep: keepAims.value } : {}) }) : null));
+const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, qualityTo: catTo.value, ...(isRemove.value ? { keep: keepAims.value } : {}) }) : null));
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
 const preCat = computed((): string | null => (catalysing.value && !afterQuality.value ? autoCat.value : null));
 const kind = computed((): HandKind | null => (hand.value ? kindOf(hand.value) : null));
@@ -407,7 +407,7 @@ function ok(): void {
         <span class="mt-0.5 min-h-[2.5em] text-center leading-tight">{{ tr("カオススパムオーブ", "Chaos Spam Orb") }}</span>
         <span class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] text-rose-300">{{ tr("スパム", "Spam") }}</span>
       </button>
-      <CurrencyShelf @hold="onShelfHold">
+      <TreeCatPick v-if="flag('catHand')" v-model="catTo" :item="shelfItem" :held="held" @hold="onShelfHold" /><CurrencyShelf @hold="onShelfHold">
         <!-- 持った物に掛けられるお告げ = クラフト台と同じ部品と置き場 (HeldOmens.vue を持ったアイコンのすぐ下に重ねる。inline-held だと棚の一番下で見切れた、10-21 本物のマウス)。
              足す手は同じ欄に「狙い無し」(適当打ち、オーナー 10-22「お告げの欄の中に適当打ちがまだ無い」) -->
         <template v-if="omensAllowedFor(held).length || (!!held && isBone(held))" #held><HeldOmens><!-- アビスの反響は並びのお告げの 1 つ (骨を持つと既定で掛かる)。前は並びとは別の大きな札「アビスの反響」を置いていた (10-26 夜オーナー「でかいアイコンもある」) -->

@@ -21,9 +21,11 @@ const CAT_MAX = 200;
  * カタリストを品質が最大になるまで打つ (1 回 = 1 個、oneCatalyst)。別の種類が入っていれば 0 から (エンジンどおり)。count = 打った個数 (費用はこの分)。
  * 1 個も打てなければ count 0 と、その理由 (もう最大なら「品質はもう最大」)
  */
-export function fillCatalyst(data: PatchData, item: StageItem, key: string, rng: () => number): StageApply & { count: number } {
+/** to = 「何 % まで」(S-31b、無ければ最大まで) */
+export function fillCatalyst(data: PatchData, item: StageItem, key: string, rng: () => number, to?: number): StageApply & { count: number } {
   let it = item, count = 0, last: StageApply = { applied: false, item, added: [], removed: [] };
-  for (let i = 0; i < CAT_MAX && !catalystFull(it, key); i++) {
+  const reached = (x: StageItem): boolean => !!to && catalystOf(x).tag === catalystTagOf(key) && catalystOf(x).pct >= to;
+  for (let i = 0; i < CAT_MAX && !catalystFull(it, key) && !reached(it); i++) {
     last = applyCurrency(data, it, key, rng, [], { oneCatalyst: true });
     if (!last.applied) break;
     it = last.item;

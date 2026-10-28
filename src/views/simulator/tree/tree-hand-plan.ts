@@ -27,7 +27,8 @@ import { flag } from "../../../web/release-flags";
 export type OnlyOut = ReadonlyArray<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null;
 /** 棚で選んだ物 (持った物・掛けたお告げ・当たるまで・狙い無し・骨の反響・フラクチャーで ✦ にする狙い) */
 export interface HandPick { held: string; omens: readonly string[]; spam?: boolean; spamMax?: number | null; free?: boolean; echo?: boolean; /** 消去の残したい MOD ([] = 全部消えてよい、tree-model の Hand.keep) */ keep?: readonly Aim[];
-  /** 骨の手の発現 (keep = 未発現のまま次へ、pick = 発現させる。tree-model の Hand.veil、スイッチ boneLater) */ veil?: "keep" | "pick" }
+  /** 骨の手の発現 (keep = 未発現のまま次へ、pick = 発現させる。tree-model の Hand.veil、スイッチ boneLater) */ veil?: "keep" | "pick";
+  /** カタリストの手の「何 % まで」(S-31b、スイッチ catHand。0 = 前の「最大まで」の通り抜け) */ qualityTo?: number }
 
 /**
  * 当たりの MOD が決まっていない当たりの箱は、この箱のアイテムが作れない (当たりの形が引けず、見本が親のまま = 変成の後でも白のまま)。
@@ -73,7 +74,7 @@ export function handOf(p: HandPick): Hand {
     // 未発現のまま次へ (veil keep) は発現しないので反響を既定で付けない
     // boneLater の木は反響を任意 (手の窓の ☑ か棚のお告げで付けた時だけ、10-28 オーナー「そこまで必須って感じで出したくない」)
     currency: p.held, omens: ((isBone(p.held) && p.veil !== "keep") || isRevealHand(p.held)) && (flag("boneLater") ? p.echo === true : p.echo !== false) && !used.includes(ECHO) ? [...used, ECHO] : used,
-    catalyst: null, quality: 0,
+    catalyst: null, quality: flag("catHand") && isCatalyst(p.held) && p.qualityTo ? Math.round(p.qualityTo) : 0,
     repeat: p.spam && canSpam(p.held) ? { until: "hit", max: p.spamMax && p.spamMax > 0 ? Math.round(p.spamMax) : null } : null,
     // 乱数のフラクチャーの狙い無し (固定されうる MOD ごとの箱。印の無い木だけ、applyPick が pick を付ける。スイッチ fracPick)
     ...(p.free && !p.spam && (FREE_EFFECTS.includes(effectOf(p.held)) || (flag("fracPick") && effectOf(p.held) === "fracture")) ? { free: true } : {}),

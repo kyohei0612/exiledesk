@@ -289,6 +289,8 @@ export function linkSameShape(doc: TreeDoc, ids: readonly string[], loose?: Body
     // フラクチャーの結果の箱は、形 (✦ は数えない) が親と同じでも つながない (親へ戻すと ✦ のある品にもう一度フラクチャーを打って止まった、10-24)
     const p = c.parent ? doc.boxes[c.parent] : undefined;
     if (p?.hand && effectOf(p.hand.currency) === "fracture") continue;
+    // カタリストの手の結果の箱も (品質は形に入らないので親と同じ形になり、親へ戻すと品質を上げる手の輪になる。S-31b、スイッチ catHand)
+    if (p?.hand && effectOf(p.hand.currency) === "quality") continue;
     const matched = matchTargets(doc, id), targets = matched.map((m) => m.to);
     // 「どれか」の当たりの箱 (anyOf) は、どれが付いても同じ箱へ行く時だけつなぐ (付いた物で行き先が分かれるなら、回す時の settle が実物で形の合う箱へ。10-26)
     if (c.anyOf?.length && new Set(targets).size > 1) continue;
