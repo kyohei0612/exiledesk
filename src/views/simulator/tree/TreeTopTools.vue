@@ -20,6 +20,8 @@ const BTN = "flex h-8 min-w-8 shrink-0 items-center justify-center gap-1 whitesp
 const LBL = "hidden @min-[1300px]:inline";
 /** 再挑戦の線は乗せた時だけ (S-87c、スイッチ retryHover) */
 const RETRY = flag("retryHover");
+/** 人が選ぶ「まとめる」は無い (S-52b、スイッチ pickOff) */
+const PICK_OFF = flag("pickOff");
 </script>
 
 <template>
@@ -31,7 +33,7 @@ const RETRY = flag("retryHover");
       <button type="button" data-tree-tidy :class="BTN" :title="tr('整列: 段ごとに横一列・親は子の並びの真ん中・線は直角の木の線 (1 つ戻すで元の並びへ)', 'Tidy: rows by depth, each parent centered over its children, right-angle tree lines (undo restores)')" :aria-label="tr('整列', 'Tidy')" @click="emit('tidy')">
         <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="4" rx="1" /><rect x="3" y="17" width="6" height="4" rx="1" /><rect x="15" y="17" width="6" height="4" rx="1" /><path d="M12 7v5M6 17v-5h12v5" /></svg><span :class="LBL">{{ tr("整列", "Tidy") }}</span>
       </button>
-      <TreeJoinBar :btn-class="BTN" :label-class="LBL" />
+      <TreeJoinBar v-if="!PICK_OFF" :btn-class="BTN" :label-class="LBL" />
       <button type="button" data-tree-lines-all :class="BTN" :aria-pressed="linesAll" :title="RETRY ? (linesAll ? tr('合流の線を隠す (再挑戦の線はいつも乗せた箱だけ)', 'Hide merge lines (retry lines always show only for the hovered box)') : tr('合流の線を全部出す (再挑戦の線はいつも乗せた箱だけ)', 'Show all merge lines (retry lines always show only for the hovered box)')) : linesAll ? tr('戻りの線を隠す (乗せた箱の線だけ)', 'Hide return lines (only the hovered box’s lines)') : tr('戻りの線を全部出す (もう一度押すと、乗せた箱の線だけ)', 'Show all return lines (click again to show only the hovered box’s lines)')" :aria-label="tr('線を全部表示', 'Show all lines')" @click="emit('lines')"><Icon name="link" class="size-4" /><span :class="LBL">{{ tr("線", "Lines") }}</span></button>
     </template>
     <button type="button" data-tree-memo :class="BTN" :aria-pressed="memoOpen" :title="tr('欲しい MOD とメモの窓 (ツリーを押しても閉じない)', 'Wanted mods & notes window (stays open while you edit)')" :aria-label="tr('メモ', 'Notes')" @click="emit('memo')"><Icon name="pencil" class="size-4" /><span :class="LBL">{{ tr("メモ", "Notes") }}</span><span v-if="note" class="size-1.5 rounded-full bg-amber-400" /></button>

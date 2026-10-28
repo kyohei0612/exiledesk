@@ -16,7 +16,7 @@ import { catalystTagOf } from "../../simulator/sim-engine";
 import { aimHeldOn, isAimMod, junkOf, reachableAims } from "./tree-aim";
 import { CATALYSING, effectOf, engineOmens, isCatalyst } from "./tree-hands";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf"; // 名前はクラフト台の棚と同じ (データの名前、10-28 オーナー「名前はエンジンのデータベース参照で固定」)
-import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeDoc, boxAims } from "./tree-model";
+import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
 import { aimOpts, aimsOf, goalsHeld, handAims, handProblem, heldHitOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
 import { boxOutcomeOf, stripBackOf, stripStop, stripTargetsOf } from "./tree-outcome";
 import { runTreeSteps } from "./tree-run";
@@ -26,9 +26,10 @@ import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 
-type CheckKind = "open" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry" | "omenWaste" | "shape" | "fixedFull" | "shapeBody";
+type CheckKind = "open" | "unfinished" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry" | "omenWaste" | "shape" | "fixedFull" | "shapeBody";
 /** 合格を止めない知らせ (shapeBody = 戻り先と外れの数・側だけが違う。回す時は実物で形の合う箱へ移る、S-62・S-73、10-28 仮) */
-export const NOTICE_KINDS: readonly CheckKind[] = ["shapeBody"];
+/** 合格を止めない知らせ: 戻り先と外れの体だけ違う (S-73)・完成にしていない完成の箱 (S-77、印は付けるが止めない) */
+export const NOTICE_KINDS: readonly CheckKind[] = ["shapeBody", "unfinished"];
 export interface CheckIssue { boxId: string; kind: CheckKind; text: string }
 
 const PEOPLE = 5;
@@ -129,7 +130,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
     // 完成の狙いが全部そろう箱 (見本で全部付いている) は未定に数えない (回す時はその場で完成、S-77。スイッチ boxShape)
     const fin = (): boolean => { if (!flag("boxShape") || b.out === "start") return false; const s = sampleOf(data, doc, b.id, 1); return s.note !== "none" && !s.note?.startsWith("cant:") && goalsHeld(data, doc, s.item); };
     // スイッチ unsetMark の下では完成にしていない完成の箱も決めていない箱 (S-77・S-89b、10-28 深夜オーナー「どこに完成するかそもそも設定どこにしたらいいかわからんから固定で赤枠がイイ」)
-    if (flag("unsetMark") && !b.hand && !b.back && !b.done && !b.split && !dead.has(b.id) && fin()) add(b.id, "open", tr("完成にしていない (完成の狙いが全部そろっている。「完成」を押す)", "Not marked finished (all final mods are here; press Finish)"));
+    if (flag("unsetMark") && !b.hand && !b.back && !b.done && !b.split && !dead.has(b.id) && fin()) add(b.id, "unfinished", tr("完成にしていない (完成の狙いが全部そろっている。「完成」を押す)", "Not marked finished (all final mods are here; press Finish)"));
     else if (!b.hand && !b.back && !b.done && !b.split && !dead.has(b.id) && !fin()) add(b.id, "open", b.out === "start" ? tr("最初の手を決めていない (ここで止まる)", "No first craft yet (stops here)") : tr("行き先を決めていない (ここで止まる)", "No next step yet (stops here)"));
     if (b.out === "hit" && !b.aim) add(b.id, "noAim", tr("付く MOD を選んでいない", "No mod picked for this hit"));
     // フラクチャーの手は完成の MOD にフラクチャーの印がある木だけ (10-25 オーナー「最初にフラクチャーを決めないとフラクチャーオーブを打てないように」)。前に保存した印の無い木の手は穴に
@@ -172,7 +173,17 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
   // 2) 完成に着かない道・抜けられない輪 (矢印を逆に辿って、完成の箱へ行ける箱を集める)
   // 失敗 (ここで終わり) の箱も道の終わり (完成の箱が無いかは完成だけで見る、スイッチ failEnd)
   const done = boxes.filter((b) => b.done === "main");
-  if (!done.length) add("start", "noDone", tr("完成の箱が無い (当たりの箱で「完成にする」)", "No done box yet (mark a hit as done)"));
+  // 完成にしていない完成の箱 (unfinished) があれば、回す時はそこで完成する (S-54) ので「完成の箱が無い」で合格を止めない (⑦12 → ブラック案・オーナー「進めてくれ」10-28)
+  if (!done.length && !out.some((x) => x.kind === "unfinished")) {
+    const msg = tr("完成の箱が無い (当たりの箱で「完成にする」)", "No done box yet (mark a hit as done)");
+    // スイッチ unsetMark: 印は原因の末端の箱に (手・戻り・完成の無い当たり → 無ければほかの末端の箱)。スタートには付けない、スタートしか無い時だけスタート
+    // (S-89b・S-77、10-28 深夜オーナー「末端の枠のせいだからスタートに出したら行かんでしょそもそも」「スタートの枠しかない時は勿論枠はあると思うが」)
+    const tip = (b: TreeBox): boolean => b.id !== "start" && !b.hand && !b.back && !b.done && !b.split;
+    const ends = flag("unsetMark") ? boxes.filter((b) => tip(b) && b.out === "hit") : [];
+    const tips = ends.length ? ends : flag("unsetMark") ? boxes.filter(tip) : [];
+    if (tips.length) for (const b of tips) add(b.id, "noDone", msg);
+    else add("start", "noDone", msg);
+  }
   const reach = new Set(boxes.filter((b) => b.done).map((b) => b.id));
   for (let changed = true; changed;) {
     changed = false;
