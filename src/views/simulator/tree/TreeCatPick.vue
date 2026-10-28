@@ -11,6 +11,7 @@ import { craftStage as s } from "../../../state/craft-stage";
 import { TREE_CATALYSTS, isCatalyst } from "../../../services/simulator/tree/tree-hands";
 import { handName } from "./tree-names";
 import { tr } from "../../../i18n/lang";
+import { shelfCardOff, shelfCardOn } from "./use-shelf-card";
 
 const props = defineProps<{ item: StageItem | null; held: string | null }>();
 const to = defineModel<number>({ required: true });
@@ -20,14 +21,14 @@ const usable = computed(() => { const d = s.data.value, it = props.item; return 
 const max = computed(() => (props.item ? maxQualityOf(props.item) : 0));
 const now = computed(() => props.item?.catalystQuality ?? 0);
 // 持った時は既定で上限まで (0 のままだと前の「最大まで」の通り抜けの手になる)
-watch(() => [props.held, max.value] as const, () => { if (isCatalyst(props.held ?? "") && !to.value) to.value = max.value; }, { immediate: true });
+watch(() => `${props.held}|${max.value}|${to.value}`, () => { if (isCatalyst(props.held ?? "") && !to.value && max.value > 0) to.value = max.value; }, { immediate: true });
 </script>
 
 <template>
   <div v-if="isCatalyst(held ?? '')" data-tree-cat-to class="flex flex-wrap items-center gap-1.5 text-[12px]">
     <span>{{ tr("品質を", "Raise quality to") }}</span>
-    <input v-model.number="to" data-tree-cat-pct type="number" :min="1" :max="max" class="h-7 w-16 rounded-md border border-white/15 bg-black/40 px-1 text-right" @change="to = Math.max(1, Math.min(max, Math.round(to || max)))" />
+    <input data-tree-cat-pct type="number" :min="1" :max="max" :value="to || max" class="h-7 w-16 rounded-md border border-white/15 bg-black/40 px-1 text-right" @change="to = Math.max(1, Math.min(max, Math.round(Number(($event.target as HTMLInputElement).value) || max)))" />
     <span>{{ tr(`% まで (上限 ${max}%、今 ${now}%)`, `% (max ${max}%, now ${now}%)`) }}</span>
   </div>
-  <button v-else-if="usable.length" type="button" data-tree-cat-hold class="g-btn sm self-start" :title="tr(`カタリストで品質を指定の % まで上げる (結果は 1 箱、費用は打った個数)。種類: ${usable.map(handName).join(' / ')}`, `Raise quality with a catalyst to a set % (one result box; cost = catalysts used)`)" @click="emit('hold', usable[0]!)">{{ tr("カタリスト (品質を上げる)", "Catalyst (raise quality)") }}</button>
+  <button v-else-if="usable.length" type="button" data-tree-cat-hold class="g-btn sm self-start" :aria-label="tr(`カタリストで品質を指定の % まで上げる (結果は 1 箱、費用は打った個数)。種類: ${usable.map(handName).join(' / ')}`, `Raise quality with a catalyst to a set % (one result box; cost = catalysts used)`)" @mouseenter="shelfCardOn($event, usable[0]!, item)" @mouseleave="shelfCardOff()" @click="shelfCardOff(); emit('hold', usable[0]!)">{{ tr("カタリスト (品質を上げる)", "Catalyst (raise quality)") }}</button>
 </template>

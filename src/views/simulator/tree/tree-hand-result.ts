@@ -10,5 +10,7 @@ export const RESULT: Record<HandKind, [string, string]> = {
   fracture: ["印の狙いが ✦ になった (必ず印の狙いを固定)", "The marked target fractured (always fixes it)"],
   strip: ["外れが消えた (消去 1 回ごとに箱を並べ、木の箱と同じ形になった所でその段へ戻る)", "Miss removed (one box per annul, back to the step whose box has the same shape)"],
 };
+/** カタリストの手で「何 % まで」を決めた時 (S-31b、スイッチ catHand) */
+export const RESULT_CAT: [string, string] = ["打った後 1 つ (品質を指定の % まで上げた箱)", "One result box (quality raised to the set %)"];
 /** 狙いを持って着く人がいない箱では「狙いが消えた」を作らない時の文 (tree-model の setHand、tree-lost.ts) */
 export const RESULT_NO_LOST: Partial<Record<HandKind, [string, string]>> = { remove: ["外れが消えた", "Miss removed"], swap: ["当たり + 外れ", "Hit + Miss"], essence: ["付いた (付く MOD は必ず付く)", "Added (the essence mod always lands)"] };

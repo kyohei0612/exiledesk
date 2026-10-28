@@ -19,9 +19,9 @@ import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { CATALYSING, canSpam, ECHO, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handIcon as iconOf, handLabel, handName, outNameOf } from "./tree-names";
-import TreeVeilCheck from "./TreeVeilCheck.vue"; import TreeCatPick from "./TreeCatPick.vue";
+import TreeVeilCheck from "./TreeVeilCheck.vue"; import TreeCatPick from "./TreeCatPick.vue"; import { shelfCardOff, shelfCardOn } from "./use-shelf-card";
 import TreeRevealCard from "./TreeRevealCard.vue";
-import { RESULT, RESULT_NO_LOST } from "./tree-hand-result";
+import { RESULT, RESULT_CAT, RESULT_NO_LOST } from "./tree-hand-result";
 import { boxTagsOf } from "./tree-row-tags";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { aimKey, fractureMarks, setHand, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
@@ -273,6 +273,7 @@ const resultText = computed((): [string, string] | null => {
   const h = hand.value, k = kind.value;
   if (!h || !k) return null;
   const alt = RESULT_NO_LOST[k];
+  if (k === "quality" && (h.quality ?? 0) > 0) return RESULT_CAT;
   if (!alt) return RESULT[k];
   const d = structuredClone(toRaw(t.doc.value));
   setHand(d, props.boxId, h, k, hitAims.value, null);
@@ -356,7 +357,7 @@ function ok(): void {
       <!-- カタリストの手はここで種類を替える (棚にカタリストが無い、10-22 13 通り組んだ #7) -->
       <div v-if="isCatalyst(held)" data-tree-hand-cats class="flex flex-wrap gap-1">
         <!-- 絵は相場に無く出ないので名前 (「のカタリスト」を省く、10-22 開発版で空の四角が並んだ) -->
-        <button v-for="c in TREE_CATALYSTS" :key="c" type="button" data-tree-hand-cat :data-cat="c" class="min-h-7 rounded-md border px-2 text-[12px]" :class="c === held ? 'border-amber-300 bg-amber-500/20 text-amber-100' : 'border-white/10 hover:bg-white/10'" :title="handName(c)" :aria-pressed="c === held" @click="held = c">{{ handName(c).replace(/のカタリスト$| Catalyst$/, "") }}</button>
+        <button v-for="c in TREE_CATALYSTS" :key="c" type="button" data-tree-hand-cat :data-cat="c" class="min-h-7 rounded-md border px-2 text-[12px]" :class="c === held ? 'border-amber-300 bg-amber-500/20 text-amber-100' : 'border-white/10 hover:bg-white/10'" :aria-label="handName(c)" :aria-pressed="c === held" @mouseenter="shelfCardOn($event, c, shelfItem)" @mouseleave="shelfCardOff()" @click="held = c">{{ handName(c).replace(/のカタリスト$| Catalyst$/, "") }}</button>
       </div>
       <p v-if="preCat" data-tree-hand-pre-cat class="text-[12px] text-sky-200/90">{{ tr(`前に「${handName(preCat)} (品質を最大まで)」の手を足す (札を押すとカタリストを替えられる)`, `Adds "${handName(preCat)} (to max quality)" before this (click its chip to change the catalyst)`) }}</p>
       <!-- フラクチャー: 印の狙いを必ず固定、外れは費用で数える (10-24 オーナー「2 回外れて 1 回当たり」、10-25 に戻した) -->
