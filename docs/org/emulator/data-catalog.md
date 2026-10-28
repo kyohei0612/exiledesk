@@ -33,7 +33,7 @@
 - シミュの「当たるまで」はスパムシミュレーターを参照しない (オーナー 10-25)。`applyCurrency` を 1 手ずつ繰り返す。
 - `reachableAims` はシミュの持ち物 (services/simulator/tree/tree-aim.ts)、エンジンの入口ではない。
 
-## データのファイル (持ち主はジン = 共通。出どころはトレードのデータ > poe2db)
+## データのファイル (持ち主はジン = 共通。出どころの正は poe2db、トレードは確かめ = engine.md E-01、10-28)
 | データ | ファイル | 入口・読み方 |
 |---|---|---|
 | MOD (置き場・重み・段・文) | src/vendor/poe2htc/data/mods.json + services/htc/ の直し (poe2db-*-fixes・weight-overrides) | `loadHtcPatch()` の PatchData (直に読まない。直しが入らない) |
@@ -41,7 +41,7 @@
 | エッセンスの鍵と名前 | htc/essence-keys.json + poe2db-pool-fixes.json の essenceKeys | `ESSENCE_KEYS` (json だけ読むと写した鍵が抜ける)・`ESSENCE_TABLE` |
 | カレンシー・骨・お告げの名前 | htc/price-keys.json | `PRICE_KEYS`・`jaOfOmen` |
 | ルーン | craft-stage/stage-runes・htc/rune-weights.json | `RUNES`・`runeOf` |
-| トレードのデータ (一番信頼できる) | services/items/tradeable-bases.json・i18n/trade2-*.json・constants/trade2.ts | 検索の URL は craft-stage/trade-search.ts |
+| トレードのデータ (照らすだけ、食い違っても poe2db が正。E-01) | services/items/tradeable-bases.json・i18n/trade2-*.json・constants/trade2.ts | 検索の URL は craft-stage/trade-search.ts |
 | MOD の文の日本語 | i18n/mod-text-ja.json・mod-text-ja-htc.json | `fillModText` (入口に無い文の引き方が要る時はジンへ) |
 | 名前 (アイテム・ジェム・パッシブ) | i18n/items-ja-*.json・gems-client.json・passives-ja-client.json | i18n/lang.ts の `nameOf` (デザイン部長) |
 | コラプト | services/mods/corruption-mods.json | `corruptionRowsFor`・`matchCorruption` |

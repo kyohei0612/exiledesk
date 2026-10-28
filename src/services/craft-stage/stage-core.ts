@@ -205,7 +205,13 @@ const signsOf = (text: string): string[] => [...text.matchAll(/([+-]?)#/g)].map(
  */
 const RANGE = /#|\(-?\d+(?:\.\d+)?--?\d+(?:\.\d+)?\)/g;
 const SLOT = /#|\(-?\d+(?:\.\d+)?--?\d+(?:\.\d+)?\)|\d+(?:\.\d+)?/g;
+/**
+ * 英語の「reduced」「less」の文も日本語 (NEGATIVE_WORDS) と同じく数字を正で出す (ゲームの表示は「24% reduced Flask Charges used」)。
+ * 2026-10-28 engine.md ⑦8: 「-24% reduced」と二重に負になっていた (81 MOD、セプターも)
+ */
+export const NEGATIVE_WORDS_EN = /\b(reduced|less)\b/;
 function fillEn(text: string, values: readonly number[]): string {
+  if (NEGATIVE_WORDS_EN.test(text)) values = values.map((v) => Math.abs(v));
   // 「(41-59)% … in the last 8 seconds」のように固定の数値が混ざる物は、範囲と「#」だけで数が合えばそこを埋める
   const re = [RANGE, SLOT].find((r) => (text.match(r) ?? []).length === values.length);
   if (!re) return fillValues(text, values);
