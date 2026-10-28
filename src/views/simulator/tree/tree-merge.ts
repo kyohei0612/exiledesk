@@ -83,6 +83,8 @@ const BEND = 60;
 const CHIP = 14;
 /** 木の線 (進む線) の上を同じ向きに走る時の重さ (1 区間ごと。重なると統合の線と見分けられない) */
 const ALONG = 600;
+/** 統合の線の縦の区間の一番短い長さ (段の間の高さへ寄せる時、これより短くなるなら寄せない) */
+const MIN_V = 16;
 /** 線の 1 本 (縦か横) がほかの箱 (周りを M - 2 空ける) を通るか */
 function hits(ax: number, ay: number, bx: number, by: number, boxes: readonly Box[]): boolean {
   const x0 = Math.min(ax, bx), x1 = Math.max(ax, bx), y0 = Math.min(ay, by), y1 = Math.max(ay, by), m = M - 2;
@@ -93,7 +95,8 @@ function hits(ax: number, ay: number, bx: number, by: number, boxes: readonly Bo
  * どれかへ入る、縦と横だけの道のうち、ほかの箱を通らずに一番短い物 (折れ目 1 つを BEND px と数える)。通り道は箱の辺から M 離した縦横の線の格子。
  * mark = つながりの印を置く所 (一番長い区間の真ん中)。どうしても無ければ真っすぐ (null にはしない)
  */
-export function joinPath(from: Box, to: Box, others0: readonly Box[], segs: readonly Seg[] = []): { d: string; mark: Pos } {
+/** lanes = 横の区間を通す高さ (段の間の決まった所、tree-row-tops の laneYs。スイッチ lineShort) */
+export function joinPath(from: Box, to: Box, others0: readonly Box[], segs: readonly Seg[] = [], lanes: readonly number[] = []): { d: string; mark: Pos } {
   const others = others0.map((r) => ({ ...r, y: r.y - CHIP, h: r.h + CHIP }));
   /** この区間が木の線の上を同じ向きに走るか */
   const along = (ax: number, ay: number, bx: number, by: number): boolean => segs.some((g) => ay === by
@@ -146,6 +149,20 @@ export function joinPath(from: Box, to: Box, others0: readonly Box[], segs: read
     pts = [s0, ...cells, goal.get(ix.get(last.x)! * Y.length + iy.get(last.y)!)!];
     // まっすぐ続く点を間引く
     pts = pts.filter((p, n) => n === 0 || n === pts.length - 1 || !((pts[n - 1]!.x === p.x && p.x === pts[n + 1]!.x) || (pts[n - 1]!.y === p.y && p.y === pts[n + 1]!.y)));
+  }
+  // 横の区間を段の間の決まった高さへ寄せる (横切る縦の線の上下を揃える、10-28 夜オーナー「線がぶつかる時の上と下の線の長さが違うじゃんね…〇px以下になる線があったら長くする」)。
+  // 箱や札を横切る・縦の線が MIN_V より短くなる時は寄せない
+  if (lanes.length) {
+    for (let n = 1; n + 2 < pts.length; n++) {
+      const a = pts[n]!, b = pts[n + 1]!;
+      if (a.y !== b.y) continue;
+      const lane = lanes.reduce((x, y) => (Math.abs(y - a.y) < Math.abs(x - a.y) ? y : x), lanes[0]!);
+      if (lane === a.y) continue;
+      const pa = pts[n - 1]!, nb = pts[n + 2]!;
+      if (Math.abs(lane - pa.y) < MIN_V || Math.abs(nb.y - lane) < MIN_V) continue;
+      if (hits(pa.x, pa.y, a.x, lane, others) || hits(a.x, lane, b.x, lane, others) || hits(b.x, lane, nb.x, nb.y, others)) continue;
+      pts[n] = { x: a.x, y: lane }; pts[n + 1] = { x: b.x, y: lane };
+    }
   }
   let best = 0, mark: Pos = pts[0]!;
   for (let n = 1; n < pts.length; n++) { const p = pts[n - 1]!, q = pts[n]!, L = Math.abs(q.x - p.x) + Math.abs(q.y - p.y); if (L > best) { best = L; mark = { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 }; } }

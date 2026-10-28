@@ -21,6 +21,7 @@ import { usePhone } from "../../../utils/use-phone";
 import TreeBox from "./TreeBox.vue";
 import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../tutorial/SimTutorialGuide.vue"; import TreeGoalNode from "./TreeGoalNode.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { flag } from "../../../web/release-flags"; import { simAct, simOp } from "../../../web/track";
 import { boxHeightOf, useRowSettle } from "./use-row-settle";
+import { laneYs, rowLayout } from "../../../services/simulator/tree/tree-row-tops";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 /** 右の列の完成形の窓を 1.2 倍 (列も 298px、スイッチ goalBig) */
 const GOAL_BIG = flag("goalBig");
@@ -132,8 +133,8 @@ onMounted(() => { window.addEventListener("resize", onResizeH); onResizeH(); });
 onBeforeUnmount(() => window.removeEventListener("resize", onResizeH));
 /** 手 (見るだけ): どこを引いても画面が動き、箱は押せない (ComfyUI の手、見本の 6) */
 const hand = ref(false);
-const { edges, chipRoom } = useTreeEdges(doc, boxes, posOf);
-const { merged, linesAll, hoverBox, cardBox } = useTreeMerge({ doc, posOf, heightOf: (id) => v.flow.findNode(id)?.dimensions.height ?? 0, segs: () => edges.value.flatMap((e) => e.segs), busy: () => !!drag.value || !!plus.value, reset: () => [v.flow.viewport.value, panel.value, drag.value] });
+const { edges, chipRoom } = useTreeEdges(doc, boxes, posOf, () => rowL.value);
+const { merged, linesAll, hoverBox, cardBox } = useTreeMerge({ doc, posOf, heightOf: (id) => v.flow.findNode(id)?.dimensions.height ?? 0, segs: () => edges.value.flatMap((e) => e.segs), busy: () => !!drag.value || !!plus.value, reset: () => [v.flow.viewport.value, panel.value, drag.value], lanes: () => (rowL.value ? laneYs(rowL.value) : []) });
 /** 白紙に戻す = 2 回押し (本番の「白に戻す」と同じ use-armed、3 秒で戻る)。枠の外・Esc でも戻す (オーナー 10-22「白紙に戻すもあれやな、2 回だな」) */
 const clearArm = useArmed();
 const clearBtn = ref<HTMLElement | null>(null);
@@ -311,6 +312,8 @@ const chipNatural = (id: string): number | undefined => {
 const measureBox = (id: string): number | undefined => v.flow.findNode(id)?.dimensions.height || undefined;
 const tidyOf = (d: typeof doc.value): void => tidy(d, chipNatural, boxHeightOf(measureBox));
 useRowSettle(doc, measureBox);
+/** 段の決め (札・枝分かれ・統合の線の高さを段で揃える、S-68) */
+const rowL = computed(() => (flag("lineShort") ? rowLayout(doc.value, boxHeightOf(measureBox)) : null));
 async function onTidy(): Promise<void> {
   simOp("tidy");
   t.edit(tidyOf);

@@ -11,6 +11,7 @@ export function useTreeMerge(o: {
   doc: Ref<TreeDoc>; posOf: (b: TreeBox) => { x: number; y: number }; segs: () => Seg[];
   /** 箱の今の高さ (アイテムの枠で BOX_H より高い。測れなければ BOX_H。線がほかの箱を横切っていた、10-27 オーナーの絵) */ heightOf?: (id: string) => number;
   /** カードを出さない・消す時 (引っ張っている・画面が動いた・欄を開いた) */ busy: () => boolean; reset: () => unknown;
+  /** 統合の線の横の区間を通す高さ (段の間、tree-row-tops の laneYs。スイッチ lineShort) */ lanes?: () => number[];
 }) {
   const merged = computed(() => {
     const d = o.doc.value;
@@ -22,7 +23,7 @@ export function useTreeMerge(o: {
     for (const l of lines) {
       if (l.kind !== "join") continue;
       const others = Object.keys(d.boxes).filter((x) => x !== l.from && x !== l.to).map(pos);
-      const j = joinPath(pos(l.from), pos(l.to), others, treeSegs);
+      const j = joinPath(pos(l.from), pos(l.to), others, treeSegs, o.lanes?.() ?? []);
       joinPaths.set(l.id, j.d); l.mark = j.mark;
     }
     // 行き先の箱の左の辺へ入る線はそのまま、右の辺へ入る線 (flip) は左右を裏返して同じ道の探し方で引き、描く時に戻す

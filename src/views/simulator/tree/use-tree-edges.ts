@@ -7,7 +7,7 @@ import { BOX_H, BOX_W, type TreeBox, type TreeDoc } from "../../../services/simu
 import { busLevels, CHIP_HALF, HAND_DY, type Seg } from "./tree-lines";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { flag } from "../../../web/release-flags";
-import { LINE_Y } from "../../../services/simulator/tree/tree-row-tops";
+import { LINE_Y, type RowLayout } from "../../../services/simulator/tree/tree-row-tops";
 
 /**
  * 進む線 (2026-10-22 整列の定義、オーナー「クソ汚い」の後): 普通の木の図と同じ直角の線。親の下から 1 本下りて (途中に手の札)、
@@ -25,7 +25,8 @@ const SHORT = flag("lineShort");
 /** 隣の札が無い時の札の幅の上限 (前からの 340) */
 const CHIP_MAX = 340;
 
-export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, posOf: (b: TreeBox) => { x: number; y: number }) {
+/** layout = 段の決め (スイッチ lineShort、tree-row-tops の rowLayout)。渡すと札と枝分かれを段で揃える */
+export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, posOf: (b: TreeBox) => { x: number; y: number }, layout?: () => RowLayout | null) {
   /** 箱の真ん中 */
   const midOf = (id: string): number => posOf(doc.value.boxes[id]!).x + BOX_W / 2;
   /** 横の棒が同じ高さで横に重なる親どうしは段をずらす (tree-lines.ts の busLevels) */
@@ -44,8 +45,11 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     // 縦の線は全部 LINE_Y (tree-row-tops の settleRows と同じ式): 枝分かれがあれば 箱 → 札・札 → 枝分かれ・枝分かれ → 箱、無ければ 箱 → 札・札 → 箱 (S-68)
     const top = Math.min(...kids.map((k) => k.q.y)), multi = kids.length > 1;
     const px = p.x + BOX_W / 2, py = pass ? p.y : p.y + BOX_H;
-    const jy = pass ? p.y : SHORT ? top - (multi ? 2 : 1) * LINE_Y - CHIP_HALF : top - BUS_DY - CHIP_HALF - 8;
-    const busY = (SHORT ? top - (multi ? LINE_Y : LINE_Y / 2) : top - BUS_DY) - (busShift.value.get(b.id) ?? 0);
+    // 段を揃える (S-68): 札はその段の一番下の枠 + LINE_Y、枝分かれは札の下 + LINE_Y (同じ段の札・枝分かれは同じ高さ)
+    const Lr = SHORT ? layout?.() ?? null : null, r = Lr?.rows.get(b.id);
+    const rowJy = Lr && r != null && !pass ? Lr.bottom[r]! + LINE_Y + CHIP_HALF : null;
+    const jy = pass ? p.y : rowJy ?? (SHORT ? top - (multi ? 2 : 1) * LINE_Y - CHIP_HALF : top - BUS_DY - CHIP_HALF - 8);
+    const busY = (rowJy != null ? (multi ? rowJy + CHIP_HALF + LINE_Y : (rowJy + CHIP_HALF + top) / 2) : SHORT ? top - (multi ? LINE_Y : LINE_Y / 2) : top - BUS_DY) - (busShift.value.get(b.id) ?? 0);
     // 角丸の段付き (React Flow の smoothstep、見本の 3): 親の下から下りて、角を丸めて横へ、角を丸めて子の上の辺へ。
     // 外れ (赤) を先に描き、進む (灰) を上に重ねる (同じ横の棒を通る所は灰に見える)
     const to = kids.map((k) => {

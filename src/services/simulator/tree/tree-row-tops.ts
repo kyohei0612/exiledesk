@@ -44,27 +44,39 @@ export function rowTops(rows: ReadonlyMap<string, number>, heightOf: (id: string
 }
 /** 前の作りの名残 (整列が呼ぶ。今は何もしない) */
 export function noteLaid(_start: number, _tops: number[]): void { /* settleRows が親ごとに掛け直す */ }
+/** 段ごとの決め: 上の枠の高さ・一番下の枠・枝分かれがあるか (同じ段の札も揃える) */
+export interface RowLayout { rows: Map<string, number>; top: number[]; bottom: number[]; branch: boolean[] }
 /**
- * 箱の縦の置き場を掛け直す: 子の上端 = 親の下端 + gapBelow (始まりの箱の y は動かさない、x は触らない)。
- * 品質だけ上げた後 (pass) は箱が無いので、その下は札の所から。動かしたら true
+ * 段を揃える (10-28 夜オーナー「段を合わせて欲しいな今横のラインが気持ちよくない…一番下枠が出ているものに合わせてそこを起点として次の段の位置を決める。
+ * 決め方は枠の上枠で決めて線を調整・オーブの位置までそろえたい」): 同じ段 (深さ) の箱は上の枠を揃え、次の段の上の枠 = その段の一番下の枠 + 48 + 札 + 48
+ * (+ その段に枝分かれがあれば 48)。札もその段の一番下の枠 + 48 に揃う (背の低い箱から札までは長くなってよい)
+ */
+export function rowLayout(d: TreeDoc, heightOf: (id: string) => number): RowLayout {
+  const rows = depthRows(d), top: number[] = [], bottom: number[] = [], branch: boolean[] = [];
+  const by: string[][] = [];
+  for (const [id, r] of rows) (by[r] ??= []).push(id);
+  top[0] = d.boxes.start?.y ?? 0;
+  for (let r = 0; r < by.length; r++) {
+    const ids = by[r] ?? [];
+    bottom[r] = Math.max(top[r]!, ...ids.map((id) => top[r]! + (d.boxes[id]!.out === "pass" ? 0 : heightOf(id))));
+    branch[r] = ids.some((id) => d.boxes[id]!.out !== "pass" && branches(d, d.boxes[id]!));
+    top[r + 1] = Math.round(bottom[r]! + LINE_Y + CHIP_Y + LINE_Y + (branch[r] ? LINE_Y : 0));
+  }
+  return { rows, top, bottom, branch };
+}
+/** 統合の線の横の区間を通す高さ (段の一番下の枠と札の間の真ん中。どの段も同じ形なので、線を横切る縦の線の上下が揃う) */
+export const laneYs = (L: RowLayout): number[] => L.bottom.map((b, r) => (L.top[r + 1] != null ? b + LINE_Y / 2 : NaN)).filter((y) => Number.isFinite(y));
+/**
+ * 箱の縦の置き場を掛け直す: 同じ段の上の枠を揃える (rowLayout、始まりの箱の y は動かさない、x は触らない)。動かしたら true
  */
 export function settleRows(d: TreeDoc, heightOf: (id: string) => number): boolean {
   if (!d.boxes.start) return false;
+  const L = rowLayout(d, heightOf);
   let moved = false;
-  const seen = new Set<string>();
-  const walk = (id: string): void => {
-    if (seen.has(id)) return;
-    seen.add(id);
-    const b = d.boxes[id]!;
-    if (!b.outs.length) return;
-    const pass = b.out === "pass";
-    const y = Math.round(pass ? b.y + LINE_Y : b.y + heightOf(id) + gapBelow(d, b));
-    for (const k of drawnKids(d, b)) {
-      const c = d.boxes[k]!;
-      if (Math.abs(c.y - y) > 0.5) { c.y = y; moved = true; }
-      walk(k);
-    }
-  };
-  walk("start");
+  for (const [id, r] of L.rows) {
+    if (id === "start") continue;
+    const b = d.boxes[id]!, y = L.top[r]!;
+    if (Math.abs(b.y - y) > 0.5) { b.y = y; moved = true; }
+  }
   return moved;
 }
