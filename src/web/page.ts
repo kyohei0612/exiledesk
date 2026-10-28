@@ -25,6 +25,7 @@ import { SIM_LOCKED } from "../state/craft-stage";
 import { TOPIC_COURSES } from "../services/tutorial/topic-courses";
 import { courseShown } from "../services/tutorial/course-release";
 import { pageTick } from "../utils/ads";
+import { markTabArrive } from "../utils/tab-arrive";
 import { tr } from "../i18n/lang";
 import { track } from "./track";
 import { flag } from "./release-flags";
@@ -69,6 +70,7 @@ export function topOfPage(): void {
   if (!BACK_PLACE) return;
   window.scrollTo(0, 0);
   lastY = 0;
+  markTabArrive();
 }
 
 /**

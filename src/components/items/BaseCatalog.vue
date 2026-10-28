@@ -19,6 +19,7 @@ import { glowOfStem, stemOf, todayUnique } from "./fam-today";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import popularData from "../../data/popular-bases.json";
 import { flag } from "../../web/release-flags";
+import { cameByTab } from "../../utils/tab-arrive";
 import { vFitText } from "../../utils/fit-text";
 /** 開く・畳むの揃え (データが後から届いた時・スマホの頭)。本番は OK 待ち。開いた時に今の部位まで送るのは本番でも同じ (前は StageBasePage が呼んでいた) */
 const OPEN_FIX = flag("monkey1023");
@@ -331,7 +332,8 @@ function revealPanel(bottomFirst = false): void {
 }
 // 今のベースがある時 (選び直し) は、開いた時にその部位の一覧が全部見えるまで送る。エミュのベースのページもシミュの完成形の設定も同じ (2026-10-23 オーナー
 // 「展開した時の動きをエミュとシミュで一緒に」。前はエミュのページだけが自分で reveal を呼んでいた)。送る先は一番近い送りの箱 (ページ / 窓の本文)
-onMounted(() => { void nextTick(() => { if (props.selected && family.value) reveal(); else placeUnder(family.value); }); });
+// 上のタブで来た直後は送らない (cameByTab、スイッチ backPlace)
+onMounted(() => { void nextTick(() => { if (props.selected && family.value && !cameByTab()) reveal(); else placeUnder(family.value); }); });
 // データや今のベースが後から届いた時 (?page=base を直に開く・再読み込み。最初は未選択の "" で作られる): 両方そろった最初の時に、
 // 今のベースの種類と部位を決め直し、開いた時と同じに送る (前は何も開かなかった、2026-10-23)
 const known = (): boolean => all.value.length > 0 && !!all.value.find((b) => b.en === props.selected);
@@ -341,7 +343,7 @@ watch(known, (now, was) => {
   if (phone.value || family.value) return;
   cls.value = all.value.find((b) => b.en === props.selected)!.cls;
   family.value = familyOfCls(cls.value);
-  void nextTick(() => { if (family.value) reveal(); });
+  void nextTick(() => { if (family.value && !cameByTab()) reveal(); });
 });
 /**
  * 「もっと見る」で広げた時: 伸びた一覧の下 (たたむの帯 + 少し) が切れていれば、そこまで送る (一覧の上は画面から出さない)。
