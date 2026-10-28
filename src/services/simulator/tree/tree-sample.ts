@@ -287,6 +287,9 @@ function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox, base:
   }
   if (loose) return loose;
   if (last && !last.applied) return { item: base.item, note: `cant:${last.reason ?? ""}` };
+  // boxShape: 狙いを手で付ける (forceKey) のはやめる。手で付けるのはエミュの「付ける」の親切 (マジックの埋まった側ならレアにして付ける) で、エンジンの手の結果ではない
+  // (増強の当たりの箱の見本がレアになった、10-28 夜オーナー「これはエンジンを参照した動きになってないのと同義では」)。作れない印を返し、親の見本を引き直す (S-74)
+  if (b.out === "hit" && b.aim && flag("boxShape")) return { item: base.item, note: "cant:unreachable" };
   if (b.out === "hit" && b.aim) {
     const r = applyCurrency(data, base.item, forceKey(b.aim.modId, `T${b.aim.tier}`, "n"), rng);
     return { item: r.item, note: r.applied ? "forced" : r.reason ?? null };
@@ -439,8 +442,14 @@ function applyHand(data: PatchData, item: StageItem, key: string, rng: () => num
   let r = applyCurrency(data, it, key, rng, now);
   const fo = spec.fractureOf;
   if (r.applied && fo && effectOf(key) === "fracture" && [...it.prefixes, ...it.suffixes].some((m) => m.modId === fo)) {
-    const f = applyCurrency(data, it, forceKey(fo, "T1", "f"), rng);
-    if (f.applied) r = { ...r, item: f.item, added: f.added, removed: f.removed };
+    // 決めた MOD が固定された結果を、エンジンのフラクチャーを打ち直して取る (確定フラクチャーの外れは費用に回る、S-43)。手で固定し直すのは出なかった時だけ
+    // (10-28 夜オーナー「エンジンを参照した動きになってない」、スイッチ boxShape)
+    const fixedOn = (x: StageItem): boolean => [...x.prefixes, ...x.suffixes].some((m) => m.fractured && m.modId === fo);
+    for (let k = 0; flag("boxShape") && k < 64 && !fixedOn(r.item); k++) { const x = applyCurrency(data, it, key, rng, now); if (x.applied) r = x; }
+    if (!fixedOn(r.item)) {
+      const f = applyCurrency(data, it, forceKey(fo, "T1", "f"), rng);
+      if (f.applied) r = { ...r, item: f.item, added: f.added, removed: f.removed };
+    }
   }
   const base = { catalystCount, handOmensUsed: r.omensUsed ?? [] };
   if (!r.applied || !unrevealedOf(r.item) || spec.reveal === false) return { ...r, ...base, echoUsed: false };
