@@ -4,7 +4,7 @@
  */
 import { triggerRef, watch, type Ref } from "vue";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { EST_H, settleRows } from "../../../services/simulator/tree/tree-row-tops";
+import { centerMerged, EST_H, settleRows } from "../../../services/simulator/tree/tree-row-tops";
 import { flag } from "../../../web/release-flags";
 
 /** 箱の高さ (画面が測った値、まだなら見込み) */
@@ -14,5 +14,5 @@ export function useRowSettle(doc: Ref<TreeDoc>, measure: (id: string) => number 
   if (!flag("lineShort")) return;
   const heightOf = boxHeightOf(measure);
   // 開いた時・手を足した時・箱の高さが変わった時 (箱が描かれた・カードの行が増えた) に、いつも縦の置き場を掛け直す (整列の前から、S-68)
-  watch(() => Object.values(doc.value.boxes).map((b) => `${b.id}:${Math.round(measure(b.id) ?? 0)}:${b.outs.join("+")}:${b.back ?? ""}:${b.id === "start" ? b.y : Math.round(b.y)}`).join(","), () => { if (settleRows(doc.value, heightOf)) triggerRef(doc); }, { flush: "post", immediate: true });
+  watch(() => Object.values(doc.value.boxes).map((b) => `${b.id}:${Math.round(measure(b.id) ?? 0)}:${b.outs.join("+")}:${b.back ?? ""}:${b.id === "start" ? b.y : Math.round(b.y)}:${Math.round(b.x)}`).join(","), () => { const y = settleRows(doc.value, heightOf), x = centerMerged(doc.value); if (y || x) triggerRef(doc); }, { flush: "post", immediate: true });
 }

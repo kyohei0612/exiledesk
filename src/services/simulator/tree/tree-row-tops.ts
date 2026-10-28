@@ -6,7 +6,7 @@
  * 子の箱の上端 = 親の箱の本当の下端 + LINE_Y (箱 → 手の札) + 札 + LINE_Y (札 → 枝分かれ、枝分かれが無ければ札 → 箱) + (枝分かれがあれば) LINE_Y (枝分かれ → 箱)。
  * 札と枝分かれの高さは use-tree-edges が同じ式で引く。画面は木を開いた時・手を足した時・箱の高さが変わった時にいつも掛け直す (use-row-settle、1 つ戻すには入れない)
  */
-import type { TreeBox, TreeDoc } from "./tree-model";
+import { BOX_W, type TreeBox, type TreeDoc } from "./tree-model";
 import { flag } from "../../../web/release-flags";
 
 /** 縦の線 1 本の長さ (箱 → 札・札 → 枝分かれ・枝分かれ → 箱、枝分かれの無い時は札 → 箱) */
@@ -77,6 +77,32 @@ export function settleRows(d: TreeDoc, heightOf: (id: string) => number): boolea
     if (id === "start") continue;
     const b = d.boxes[id]!, y = L.top[r]!;
     if (Math.abs(b.y - y) > 0.5) { b.y = y; moved = true; }
+  }
+  return moved;
+}
+
+/** 箱どうしの横の間 (重なりとみなす) */
+const ROOM_X = 24;
+/**
+ * 合流した箱を合流した親たちの真ん中へ (10-28 夜オーナー「この場合真ん中が良いなスタートと同じ立てれるがいいその方が綺麗」、S-66)。
+ * 親たち = 合流した箱の親とまとめた箱の親。その横の範囲の真ん中に置き、下の箱も一緒に動かす。
+ * 真ん中に同じ段のほかの箱があってぶつかる時は動かさない (今の位置のまま)。動かしたら true
+ */
+export function centerMerged(d: TreeDoc): boolean {
+  let moved = false;
+  for (const t of Object.values(d.boxes)) {
+    const into = Object.values(d.boxes).filter((b) => b.back === t.id && away(d, b));
+    if (!into.length || !t.parent) continue;
+    const ps = [t.parent, ...into.map((b) => b.parent!)].map((id) => d.boxes[id]).filter((p): p is TreeBox => !!p);
+    const cs = ps.map((p) => p.x + BOX_W / 2), x = Math.round((Math.min(...cs) + Math.max(...cs)) / 2 - BOX_W / 2), dx = x - t.x;
+    if (Math.abs(dx) < 1) continue;
+    const sub = new Set<string>();
+    const down = (id: string): void => { if (sub.has(id)) return; sub.add(id); for (const k of drawnKids(d, d.boxes[id]!)) down(k); };
+    down(t.id);
+    const hit = Object.values(d.boxes).some((o) => !sub.has(o.id) && !away(d, o) && sub.has(o.id) === false && [...sub].some((id) => { const b = d.boxes[id]!; return Math.abs(o.y - b.y) < 2 && o.x < b.x + dx + BOX_W + ROOM_X && b.x + dx < o.x + BOX_W + ROOM_X; }));
+    if (hit) continue;
+    for (const id of sub) d.boxes[id]!.x += dx;
+    moved = true;
   }
   return moved;
 }
