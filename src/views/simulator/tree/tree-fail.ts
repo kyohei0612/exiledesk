@@ -8,10 +8,14 @@ import { boxAims, GAP_Y, type TreeDoc } from "../../../services/simulator/tree/t
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { backTargetsOf } from "./tree-merge";
 import { tr } from "../../../i18n/lang";
+import { flag } from "../../../web/release-flags";
+import { depthRows } from "../../../services/simulator/tree/tree-row-tops";
 
 /** 箱の段 (始まり = 1 段目、画面の段の並び。戻り方の文は全部「n 段目へ戻る」、10-26 オーナー「始めに戻るはなんかややこしい話だから普通にどこに戻るかいつも通り書く」「1段目へ戻るとかにするか？全て、矢印は違うから段が同じもどり方でも」) */
 export function stepOf(doc: TreeDoc, id: string): number {
   // 画面の段 (箱の高さ ÷ 段の間)。親をたどる深さではない (整列は揃った狙いの数で段を分けるので、深さ 2 の箱が 3 段目に並ぶ)
+  // 行の高さを詰めた後 (スイッチ lineShort) は高さで割れないので、親からの深さ (行は深さ = tidyUnder) で数える
+  if (flag("lineShort")) { const r = depthRows(doc).get(id); if (r != null) return r + 1; }
   const b = doc.boxes[id], s = doc.boxes.start;
   return b && s ? Math.max(1, Math.round((b.y - s.y) / GAP_Y) + 1) : 1;
 }

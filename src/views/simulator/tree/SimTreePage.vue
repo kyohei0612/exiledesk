@@ -20,6 +20,7 @@ import SimPcOnly from "../SimPcOnly.vue"; import PhoneTreePage from "../phone/Ph
 import { usePhone } from "../../../utils/use-phone";
 import TreeBox from "./TreeBox.vue";
 import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../tutorial/SimTutorialGuide.vue"; import TreeGoalNode from "./TreeGoalNode.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { flag } from "../../../web/release-flags"; import { simAct, simOp } from "../../../web/track";
+import { boxHeightOf, useRowSettle } from "./use-row-settle";
 /** 右の列の完成形の窓を 1.2 倍 (列も 298px、スイッチ goalBig) */
 const GOAL_BIG = flag("goalBig");
 import TreeHandPage from "./TreeHandPage.vue";
@@ -305,7 +306,10 @@ const chipNatural = (id: string): number | undefined => {
   const name = el.querySelector<HTMLElement>(".truncate");
   return (el.offsetWidth + (name ? name.scrollWidth - name.clientWidth : 0)) * Math.max(1, inv.value);
 };
-const tidyOf = (d: typeof doc.value): void => tidy(d, chipNatural);
+// 行の高さは箱の本当の高さで詰める (描く前は見込み、描いた後に use-row-settle が直す。スイッチ lineShort)
+const measureBox = (id: string): number | undefined => v.flow.findNode(id)?.dimensions.height || undefined;
+const tidyOf = (d: typeof doc.value): void => tidy(d, chipNatural, boxHeightOf(measureBox));
+useRowSettle(doc, measureBox);
 async function onTidy(): Promise<void> {
   simOp("tidy");
   t.edit(tidyOf);

@@ -3,6 +3,7 @@
  */
 import { aimKey, BOX_W, GAP_Y, type TreeBox, type TreeDoc } from "./tree-model";
 import { flag } from "../../../web/release-flags";
+import { noteLaid, rowTops } from "./tree-row-tops";
 
 /** 整列で兄弟を並べる順 (当たり → 狙いが消えた → 外れが消えた → 外れ。外れは一番右) */
 const OUT_ORDER: Record<TreeBox["out"], number> = { start: 0, hit: 0, any: 0, pass: 0, branch: 0, lost: 1, junkGone: 2, junk: 3 };
@@ -57,7 +58,7 @@ function rowsOf(d: TreeDoc, kids: (id: string) => string[]): Map<string, number>
  * chipW = 箱の下の手の札の幅 (ツリーの座標、名前を切らない幅。画面で測って渡す)。札も行の輪郭に入れて、同じ高さに並ぶ札どうしも TIDY_GAP 空ける
  * (10-25 オーナー「ここが詰まるな」= ルーンの合金と無限のパーフェクトエッセンスの札が並んで名前が切れた。前は箱だけで寄せていた)
  */
-export function tidy(d: TreeDoc, chipW?: (id: string) => number | undefined): void {
+export function tidy(d: TreeDoc, chipW?: (id: string) => number | undefined, heightOf?: (id: string) => number): void {
   const kids = (id: string): string[] => {
     const b = d.boxes[id]!;
     b.outs = b.outs.map((o, i) => ({ o, i })).sort((a, z) => OUT_ORDER[d.boxes[a.o]!.out] - OUT_ORDER[d.boxes[z.o]!.out] || a.i - z.i).map((x) => x.o);
@@ -119,10 +120,12 @@ export function tidy(d: TreeDoc, chipW?: (id: string) => number | undefined): vo
     for (const [r, [l, rr]] of acc) put(out, r, l - px, rr - px);
     return out;
   };
+  // 行の高さを箱の本当の高さで詰める (スイッチ lineShort、tree-row-tops)。行は深さ (tidyUnder) の時だけ
+  const tops = flag("lineShort") && flag("tidyUnder") && heightOf ? rowTops(row, heightOf) : null;
   const place = (id: string, x: number): void => {
     const b = d.boxes[id]!;
     b.x = Math.round(x);
-    b.y = row.get(id)! * GAP_Y;
+    b.y = tops ? tops[row.get(id)!]! : row.get(id)! * GAP_Y;
     for (const k of b.outs) place(k, x + rel.get(k)!);
   };
   layout("start");
@@ -132,6 +135,7 @@ export function tidy(d: TreeDoc, chipW?: (id: string) => number | undefined): vo
   const st = d.boxes.start!;
   // 始まりの箱は x = 0 に戻す (木ごとずらす)
   const dx = -st.x;
+  if (tops) noteLaid(d.boxes.start!.y, tops);
   for (const b of Object.values(d.boxes)) b.x += dx;
 }
 
