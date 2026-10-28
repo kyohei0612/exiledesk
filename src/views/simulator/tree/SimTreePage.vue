@@ -20,7 +20,7 @@ import SimPcOnly from "../SimPcOnly.vue"; import PhoneTreePage from "../phone/Ph
 import { usePhone } from "../../../utils/use-phone";
 import TreeBox from "./TreeBox.vue";
 import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../tutorial/SimTutorialGuide.vue"; import TreeGoalNode from "./TreeGoalNode.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { flag } from "../../../web/release-flags"; import { simAct, simOp } from "../../../web/track";
-import { boxHeightOf, useRowSettle } from "./use-row-settle";
+import { boxHeightOf, useRowSettle } from "./use-row-settle"; import { placeTree } from "../../../services/simulator/tree/tree-place";
 import { laneYs, rowLayout } from "../../../services/simulator/tree/tree-row-tops";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 /** 右の列の完成形の窓を 1.2 倍 (列も 298px、スイッチ goalBig) */
@@ -310,8 +310,8 @@ const chipNatural = (id: string): number | undefined => {
 };
 // 行の高さは箱の本当の高さで詰める (描く前は見込み、描いた後に use-row-settle が直す。スイッチ lineShort)
 const measureBox = (id: string): number | undefined => v.flow.findNode(id)?.dimensions.height || undefined;
-const tidyOf = (d: typeof doc.value): void => tidy(d, chipNatural, boxHeightOf(measureBox));
-useRowSettle(doc, measureBox);
+const tidyOf = (d: typeof doc.value): void => void (flag("layoutOne") ? placeTree(d, boxHeightOf(measureBox), chipNatural) : tidy(d, chipNatural, boxHeightOf(measureBox)));
+useRowSettle(doc, measureBox, chipNatural);
 /** 段の決め (札・枝分かれ・統合の線の高さを段で揃える、S-68) */
 /** 乗せた箱につながる木の線 (parent = その箱の手から子へ、child = 親の手からその箱へ。スイッチ hoverLines、S-85b) */
 const edgeHot = (e: { id: string; to: Array<{ id: string }> }): "parent" | "child" | null => (!flag("hoverLines") || !hoverBox.value ? null : e.id === hoverBox.value ? "parent" : e.to.some((o) => o.id === hoverBox.value) ? "child" : null);
