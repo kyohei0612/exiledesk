@@ -38,7 +38,7 @@
 
 ### データの出どころ
 
-- **E-01 出どころの正は poe2db。トレード (取引所のデータ) は確かめに使う。その次が Craft of Exile・オーナーのゲームでの確認。** 付く・付かない・段・ベースの有無は poe2db に合わせ、トレードのデータ (`services/items/tradeable-bases.json`・`i18n/trade2-*.json`、消さない) は照らすだけ。食い違ってもトレードに合わせて直さない (例: タリスマンの物理の段はトレードが P6、poe2db とデータは 9 段で T5 → データのまま)。クライアントは根拠にしない (今ある JSON の出どころの記録だけ、ARCHITECTURE の「データの出どころ」)。PoB は使わない。 — 有効 / G-01、オーナー 10-09・10-17「db 見ときゃいい」・10-28「やっぱりdbにしようかトレードは確認くらいでおk」(10-23「トレードは 1 番信頼できる」の順は 10-28 で置き換え) / 外の正解: `scripts/audit-poe2db-mods.mjs`・`audit-poe2db-tags.mjs` が 0
+- **E-01 出どころの正は poe2db。トレード (取引所のデータ) は確かめに使う。その次が Craft of Exile・オーナーのゲームでの確認。** 付く・付かない・段・ベースの有無は poe2db に合わせ、トレードのデータ (`services/items/tradeable-bases.json`・`i18n/trade2-*.json`、消さない) は照らすだけ。食い違ってもトレードに合わせて直さない (例: タリスマンの物理の段はトレードが P6、poe2db とデータは 9 段で T5 → データのまま)。クライアントは根拠にしない (今ある JSON の出どころの記録だけ、ARCHITECTURE の「データの出どころ」)。PoB は使わない。 — 有効 / G-01、オーナー 10-09・10-17「db 見ときゃいい」・10-28「やっぱりdbにしようかトレードは確認くらいでおk」・同日「全体の順でおｋ」(タリスマンだけでなく全体、10-23「トレードは 1 番信頼できる」の順は 10-28 で置き換え) / 外の正解: `scripts/audit-poe2db-mods.mjs`・`audit-poe2db-tags.mjs` が 0
 - **E-02 写しどうしが食い違って決まらない値は poe2db に合わせる。聞かない。** (例: 兜の憤怒 45 段目の秒) — 有効 / オーナー 10-20・10-23 / 外の正解: poe2db の部位のページ
 - **E-03 公開値の無い重み・割合は Craft of Exile (beta) のデータと動きを正にする。** ルーンの特殊 MOD は CoE (Krakenbul の実測) → `htc/rune-weights.json`。冒涜専用 MOD どうしの重みは全部同じ。出どころの当て先はメモ craft-weight-sources。 — 有効 / ADR-004 の 4、v0.1.528 / 外の正解: `data-cache/coe-beta-data.json`・`scripts/check-htc-odds-vs-coe`
 - **E-04 こちらで決めた値には出どころと日付を付ける。** spec の `source` (client / poe2db / coe / owner / community / assumed) に書く。 — 有効 / ADR-004 / 確かめ: spec を読む
