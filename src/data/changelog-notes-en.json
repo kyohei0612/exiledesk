@@ -1,4 +1,15 @@
 {
+  "0.1.637": [
+    "Emulator: click a mod on the item to fracture it (right-click still works). The same works on the simulator's final item card",
+    "Japanese UI: \"段\" is now \"ティア\" to match the game (English stays \"Tier\")",
+    "Emulator: redo an undone step with Ctrl+Shift+Z / Ctrl+Y",
+    "Emulator (phone): currency details now show only when you tap “Details ▾”",
+    "Target next move: the button stays greyed out until you check a mod",
+    "“Click again to …” buttons no longer time out; click elsewhere or press Esc to cancel",
+    "Going back now returns you to where you were on the page",
+    "Helmets, Body Armours, Gloves and Boots now have a Strength/Dexterity/Intelligence tab in the base picker, so Grasping Mail and other tri-attribute bases can be picked from the tiles",
+    "Fixed mods with \"reduced\" or \"less\" showing a negative number in English (e.g. \"-24% reduced\")"
+  ],
   "0.1.636": [
     "Simulator: You can now use a Fracturing Orb in trees with no fracture mark (✦), such as ones from a white base or after Desecration. The tree branches by which mod got fractured",
     "Simulator: \"Tidy\" now always places result boxes on the row right below their parent, and no longer spreads boxes far apart next to a deep branch on one side (tier markers only appear when hits with the same count line up on one row)",
