@@ -2,6 +2,7 @@
  * tree-hand-plan.ts — 箱の次に打つ手の決め方 (TreeHandShelf.vue から分けた、2026-10-24)。棚の画面 (TreeHandShelf)・手を決めた時の組み替え (SimTreePage の pickHand)・
  * 開発の時だけの猿の口 (sim-monkey.ts) が同じ関数を呼ぶ (別の打ち方を作らない、メモ feedback-sim-no-own-logic)。中身はエンジンの入口と木の関数を呼ぶだけ
  */
+import { mergeOpenSame } from "../../../services/simulator/tree/tree-merge-open";
 import { catalystBoosts, craftedKindOf, mulberry32, omensAllowedFor, omensFor, runeOf, sideOfMod, socketCapOf, tierRankOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { craftStage } from "../../../state/craft-stage";
 import { bonesFor, essenceShelf, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
@@ -220,6 +221,8 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   if (kind === "strip") stripChain(d, at, h);
   joinSameShape(d, id);
   linkSameShape(d, Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id), loose);
+  // まだ手の無い同じ形の外れ・打った後の箱も、先に作った箱へまとめる (S-66、スイッチ mergeOpen)
+  mergeOpenSame(d, Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id), loose);
   // 新しい当たりの箱が別の道の同じ状態の箱と同じなら、先にあった箱へつなぐ (10-26 夜オーナー「形は一緒ならこのツリー組んだ瞬間まとまってくれるよね」)
   linkSameHit(d, Object.values(d.boxes).filter((b) => !had.has(b.id)).map((b) => b.id), flag("boxShape") ? loose : undefined);
   // まとめられない当たりの箱 (来た道で狙いの組が何通りかある) は形の合う箱へ (10-27 オーナーの決め (a))。前からある手も戻りも無い箱も
