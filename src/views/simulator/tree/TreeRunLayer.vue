@@ -20,6 +20,8 @@ interface Edge { id: string; stem: string; to: { id: string; d: string }[] }
 const props = defineProps<{
   result: TreeRunResult | null; walk?: { box: string; ms: number; trail: ReadonlySet<string> } | null; k?: number; boxes: readonly TreeBox[]; posOf: (b: TreeBox) => { x: number; y: number };
   edges: readonly Edge[]; lines: readonly MergeLine[]; paths: ReadonlyMap<string, string>;
+  /** 箱の本当の高さ (札・ボタンの行で BOX_H より高くなる。止まりの札を箱の下に置く) */
+  heightOf?: (id: string) => number;
 }>();
 const emit = defineEmits<{ go: [id: string] }>();
 
@@ -77,7 +79,7 @@ const marks = computed(() => !props.result ? [] : props.boxes.map((b) => {
   const p = props.posOf(b), inKey = b.parent ? `e:${b.parent}>${b.id}` : null;
   const outBack = b.back ? Object.keys(target.value).filter((k) => k.startsWith(`e:${b.id}>`)).reduce((a, k) => a + int(k), 0) : 0;
   const st = props.result!.boxes[b.id];
-  return { b, x: p.x, y: p.y, reach: int(`b:${b.id}`), inN: inKey ? int(inKey) : 0, outBack, stuck: int(`s:${b.id}`), moved: props.result!.moved[b.id] ?? 0, costIn: st?.costIn ?? 0, remain: st?.remain ?? 0 };
+  return { b, x: p.x, y: p.y, h: Math.max(BOX_H, props.heightOf?.(b.id) || 0), reach: int(`b:${b.id}`), inN: inKey ? int(inKey) : 0, outBack, stuck: int(`s:${b.id}`), moved: props.result!.moved[b.id] ?? 0, costIn: st?.costIn ?? 0, remain: st?.remain ?? 0 };
 }));
 const div = (x: number): string => (x >= 100 ? x.toFixed(0) : x.toFixed(1));
 </script>
@@ -106,7 +108,7 @@ const div = (x: number): string => (x >= 100 ? x.toFixed(0) : x.toFixed(1));
     <!-- 止まった人: 理由を箱の上に文で重ねる (前は赤い札の title だけ、10-26 失敗時の挙動の案 2)。押すとその箱へ寄る -->
     <!-- 止まりの札はカードに被せない (10-27 夜オーナー「カードに被ったまま消えない」= バグ。スイッチ stopPill): 箱のすぐ下に「止まり n 人」だけを常に出し、理由は乗せた時・押した時だけ広げる -->
     <button v-if="m.stuck && STOP_PILL" type="button" data-tree-run-stuck data-tree-run-stuck-pill :data-box-id="m.b.id" class="nodrag nopan group pointer-events-auto absolute z-20 whitespace-nowrap rounded-full border border-rose-400/70 bg-[#2a0d12]/95 px-2 text-left text-[11px] font-bold tabular-nums text-rose-50 shadow-[0_2px_8px_rgba(0,0,0,0.6)] hover:z-30 focus:z-30"
-      :style="{ left: `${m.x + 6}px`, top: `${m.y + BOX_H + 4}px` }" @click="emit('go', m.b.id)">
+      :style="{ left: `${m.x + 6}px`, top: `${m.y + m.h + 4}px` }" @click="emit('go', m.b.id)">
       {{ tr(`止まり ${m.stuck} 人`, `${m.stuck} stuck`) }}
       <span class="absolute left-0 top-full mt-1 hidden w-[260px] whitespace-normal break-words rounded-lg border border-rose-400/70 bg-[#2a0d12] px-2 py-1 font-normal leading-snug group-hover:block group-focus:block">{{ result?.stuckWhy[m.b.id]?.reason }}</span>
     </button>
