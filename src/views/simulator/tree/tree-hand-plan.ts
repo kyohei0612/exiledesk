@@ -12,7 +12,7 @@ import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
-import { linkSameHit, linkSameShape, linkShapeHit, matchItem, sameHandReturn } from "../../../services/simulator/tree/tree-shape";
+import { linkSameHit, linkSameShape, linkShapeHit, matchItem, pruneBacks, sameHandReturn } from "../../../services/simulator/tree/tree-shape";
 import { bodyMemo, likeOf, type BodyOf } from "../../../services/simulator/tree/tree-box-shape";
 import { looseOf, stripStops } from "../../../services/simulator/tree/tree-outcome";
 import { clearHand, drop, fractureMarks, healLost, kindOfHand, setBack, setHand, subtree, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -228,6 +228,8 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   linkSameHit(d, Object.values(d.boxes).filter((b) => !had.has(b.id)).map((b) => b.id), flag("boxShape") ? loose : undefined);
   // まとめられない当たりの箱 (来た道で狙いの組が何通りかある) は形の合う箱へ (10-27 オーナーの決め (a))。前からある手も戻りも無い箱も
   linkShapeHit(d, Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id), flag("boxShape") ? loose : undefined);
+  // 戻り先の 1 か所の判定で、自動の ↩ を全部見直す (合わない物は外して未設定、S-50b・スイッチ bodyStrict)
+  if (data) pruneBacks(data, d);
   // 自動でつないだ戻りで狙いを持って着く道ができた箱に「狙いが消えた」を足す (tree-model の healLost)
   healLost(d);
   return at;

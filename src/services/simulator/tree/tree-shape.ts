@@ -306,7 +306,7 @@ export function linkSameShape(doc: TreeDoc, ids: readonly string[], loose?: Body
       to = shapesOf(doc).filter((sh) => keys.has(sh.key) && sh.box !== id).map((sh) => sh.box).find((x) => shapeFits(doc, id, x) && backBody(loose, id, x)) ?? to;
     }
     // 形 (付いている狙いの組) が全部合う箱へだけ (狙いが消えた箱は組が何通りかあり、1 つ目の組だけで別の形の箱へつないでいた。10-26 オーナー「前提狙いMODの状態でなんかする時」、shapeFits)
-    if (!to || !shapeFits(doc, id, to) || !backBody(loose, id, to)) continue;
+    if (!to || !returnFits(doc, id, to, loose)) continue;
     c.back = to;
     c.autoBack = true;
     // まとめの印は tree-merge-open だけが付ける (ここでつないだ箱は描く)
@@ -450,13 +450,21 @@ export function sameHandReturn(doc: TreeDoc, id: string, h: Hand, loose?: BodyOf
   const keys = new Set(matchTargets(doc, id).map((m) => m.key));
   // 打つ前の箱へも、形の鍵 (狙いの組 + 外れの有無) が同じ時だけ (10-27 夕モンキー 8: スタート (外れ 0) で高貴を打った外れ (外れ 1) に同じ高貴を選ぶとスタートへ戻り、
   // 回すたびにプレの外れが増えて 30 人中 29 人が満杯で止まった。カオスのように外れの数が変わらない手は今まで通り戻る)
-  if (p && same(p.hand) && shapeFits(doc, id, p.id) && matchTargets(doc, p.id).some((m) => keys.has(m.key)) && sameBody(loose, id, p.id)) return p.id;
+  if (p && same(p.hand) && matchTargets(doc, p.id).some((m) => keys.has(m.key)) && (flag("bodyStrict") ? returnFits(doc, id, p.id, loose) : shapeFits(doc, id, p.id) && sameBody(loose, id, p.id))) return p.id;
   const under = (x: string): boolean => { for (let y: string | null = x; y; y = doc.boxes[y]?.parent ?? null) if (y === id) return true; return false; };
   const depth = (x: string): number => { let n = 0; for (let y = doc.boxes[x]?.parent ?? null; y; y = doc.boxes[y]?.parent ?? null) n++; return n; };
-  const cands = [...new Set(shapesOf(doc).filter((s) => keys.has(s.key) && same(s.hand) && !under(s.box)).map((s) => s.box))].filter((x) => shapeFits(doc, id, x) && sameBody(loose, id, x));
+  const cands = [...new Set(shapesOf(doc).filter((s) => keys.has(s.key) && same(s.hand) && !under(s.box)).map((s) => s.box))].filter((x) => (flag("bodyStrict") ? returnFits(doc, id, x, loose) : shapeFits(doc, id, x) && sameBody(loose, id, x)));
   return cands.sort((x, y) => depth(x) - depth(y))[0] ?? null;
 }
 
+/**
+ * 戻り先にしてよいか = 戻り先を決める 1 か所の判定 (S-50b、スイッチ bodyStrict。10-29 オーナー「何で同じ形からズレたツリーがあったのか / なんでそれが重なったのそもそも」):
+ * 狙いの組が全部ある (shapeFits) + 体 (外れの側・種類・数、S-60) が両方分かって同じ (backBody)。自動のつなぎ・同じ手なら戻る・外れが消えたの既定の戻り・
+ * 古い自動の ↩ の見直しがこれを呼ぶ。前はこの比べが所ごとに違い (体を見ない・分からない体を同じ扱い)、形の比べを変えるたびに古い道が残った
+ */
+export function returnFits(doc: TreeDoc, from: string, to: string, loose?: BodyOf): boolean {
+  return to !== from && !!doc.boxes[to] && shapeFits(doc, from, to) && backBody(loose, from, to);
+}
 /**
  * 保存してある自動の ↩ (再挑戦・外れが消えたの戻り・まとめなど、autoBack) のうち、体 (外れの側・種類・数) が同じと分からない物を外す = 未設定の箱に戻す
  * (S-50、スイッチ bodyStrict。前の版の木・見本が変わった木の古いつなぎ)。人が付けた ↩ は触らない。外したら true
@@ -468,7 +476,7 @@ export function pruneBacks(data: PatchData, doc: TreeDoc): boolean {
   for (const b of Object.values(doc.boxes)) {
     // 当たりの箱どうしの統合 (同じ MOD 群) は別の物なので見ない
     if (!b.autoBack || !b.back || b.back === MATCH || b.back === RESTART || !doc.boxes[b.back] || (b.out === "hit" && doc.boxes[b.back]!.out === "hit")) continue;
-    if (backBody(loose, b.id, b.back)) continue;
+    if (returnFits(doc, b.id, b.back, loose)) continue;
     b.back = null; delete b.autoBack; delete b.merged;
     changed = true;
   }
