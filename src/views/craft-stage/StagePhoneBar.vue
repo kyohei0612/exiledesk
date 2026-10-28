@@ -8,6 +8,7 @@ import { craftStage as s, iconOf, nameOf } from "../../state/craft-stage";
 import { stageAdds, stageHelp } from "../../state/for-share/craft-stage-help";
 import { tr } from "../../i18n/lang";
 import { stageModText } from "../../components/for-share/item/base-values";
+import { flag } from "../../web/release-flags";
 
 const emit = defineEmits<{ scrollToReveal: [] }>();
 
@@ -46,7 +47,10 @@ function useFromBar(): void {
   // 2 行まで出して、次の操作 (持つ / 離す) か 5 秒で消す (1 行 1.8 秒だとカオスの ＋/－ が読めなかった。2026-10-08 レビュー)
   barTimer = setTimeout(() => { barMsg.value = null; }, 5000);
 }
-watch(() => s.held.value, () => { barMsg.value = null; });
+/** 説明は既定で閉じて「説明 ▾」で開く (スイッチ phoneHelp、U-29・U-51、オーナー 10-28「スマホはすべて任意のが情報量少なくていい」「aで合ってる」。シミュの TreeHandShelf と同じ形)。開いたら全文 */
+const HELP_FOLD = flag("phoneHelp");
+const helpOpen = ref(false);
+watch(() => s.held.value, () => { barMsg.value = null; helpOpen.value = false; });
 // 発現 (3 つから選ぶ) で付いた物も帯に出す (帯から打った時しか出ていなかった)
 watch(() => s.log.value[s.log.value.length - 1]?.out.index ?? 0, (n, o) => {
   const last = s.last.value;
@@ -70,7 +74,9 @@ watch(() => s.log.value[s.log.value.length - 1]?.out.index ?? 0, (n, o) => {
       <!-- 結果を出している間も、次が打てない理由は出す (「使う」が灰色の訳が見えなかった。2026-10-08 使い倒しテスト) -->
       <p v-if="heldWhy" class="mb-1 text-[12px] text-rose-300">{{ heldWhy }}</p>
       <!-- 持っている物の説明 (箇条書き、全部の行を折り返して出す。画面の 4 割を超える時だけ中で送る) -->
+      <button v-else-if="heldHelp.length && !barMsg && HELP_FOLD && !helpOpen" type="button" data-held-help-toggle class="mb-1 min-h-9 text-[12px] text-[#c9b48a] underline decoration-white/20" :aria-expanded="false" @click="helpOpen = true">{{ tr("説明 ▾", "Details ▾") }}</button>
       <div v-else-if="heldHelp.length && !barMsg" data-held-help class="mb-1 max-h-[40vh] overflow-y-auto">
+        <button v-if="HELP_FOLD" type="button" data-held-help-toggle class="mb-1 min-h-9 text-[12px] text-[#c9b48a] underline decoration-white/20" :aria-expanded="true" @click="helpOpen = false">{{ tr("説明を閉じる ▴", "Hide details ▴") }}</button>
         <ul class="list-disc pl-4 text-[11px] leading-snug text-white/70">
           <li v-for="(l, i) in heldHelp" :key="i" class="pr-1">{{ l }}</li>
         </ul>

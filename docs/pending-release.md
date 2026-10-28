@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| エミュ: スマホの下の帯の持ったカレンシーの説明を既定で閉じて「説明 ▾」で開く (開いたら全文、持ち替えで閉じる。シミュのスマホと同じ形、U-29・U-51、オーナー 10-28「スマホはすべて任意のが情報量少なくていい」「aで合ってる」、デザイン部長、StagePhoneBar.vue)。**本番の作りではスイッチ phoneHelp で隠す** (閉じている間は全文) | (この commit) | エミュレーター (スマホ): カレンシーの説明は「説明 ▾」を押した時だけ出すように | Emulator (phone): currency details now show only when you tap “Details ▾” |
 | 共通: 2 回押し (白に戻す・レシピの上書き / 消す・白紙に戻す など) を全部の画面で、時間で戻さず押したボタンの外を押すか Esc で戻す (U-23、オーナー 10-28「ここは統一させたいな。案でおｋ」、デザイン部長、utils/use-armed.ts)。**本番の作りではスイッチ armAll で隠す** (閉じている間は 3 秒で戻る) | (この commit) | 「もう一度押すと…」のボタンは時間で戻らず、外を押すか Esc で戻るように | “Click again to …” buttons no longer time out; click elsewhere or press Esc to cancel |
 | エミュ: やり直し Ctrl+Shift+Z・Ctrl+Y (1 手戻した手をその結果のまま打ち直す。シミュのツリーと同じ鍵、U-25、オーナー 10-28「統一で」、デザイン部長)。**本番の作りではスイッチ emuRedo で隠す** | (この commit) | エミュレーター: Ctrl+Shift+Z / Ctrl+Y で戻した手をやり直せるように | Emulator: redo an undone step with Ctrl+Shift+Z / Ctrl+Y |
 | 共通: 戻る (ブラウザの戻る・進む・記事から戻る) で前に見ていたスクロールの位置へ戻し、上の切り替えタブを押した時は一番上から (U-27、オーナー 10-28「戻るボタンだからね」、デザイン部長、web/page.ts・ModeTabs)。タブで状態も最初からはまだ (エミュ・シミュの state)。**本番の作りではスイッチ backPlace で隠す** | (この commit) | 戻るで前に見ていた位置へ戻るように | Going back now returns you to where you were on the page |
