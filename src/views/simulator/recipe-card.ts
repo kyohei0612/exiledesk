@@ -15,7 +15,7 @@ import { routeKeyOf } from "./tree/use-tree-check";
 import { useTree } from "./tree/use-tree";
 
 /** POST /r/new の card (どれも無くてよい) */
-export interface RecipeCard { l: "ja" | "en"; bn?: string; a?: string; m?: Array<[string, 0 | 1]>; p?: number; n?: number; c?: number; o?: string; s?: number }
+export interface RecipeCard { l: "ja" | "en"; bn?: string; a?: string; m?: Array<[string, 0 | 1]>; p?: number; n?: number; c?: number; o?: string }
 
 /** 最後に 100 人回した結果 (木の鍵つき。use-tree-run が回し終えた時に入れる) */
 const lastRun = ref<{ key: string; p: number; n: number; c: number } | null>(null);
@@ -37,6 +37,5 @@ export function recipeCardOf(tree: TreeDoc): RecipeCard {
     ...(mine && tree.memoAims?.length ? { m: tree.memoAims.slice(0, 8).map((a): [string, 0 | 1] => [t.aimShort(a).slice(0, 80), a.fractured ? 1 : 0]) } : {}),
     ...(run ? { p: Math.round(run.p), n: run.n, ...(Number.isFinite(run.c) ? { c: Math.round(run.c * 10) / 10 } : {}) } : {}),
     ...(orb.startsWith("https://web.poecdn.com/") ? { o: orb } : {}),
-    s: Object.values(tree.boxes).filter((b) => b.hand).length,
   };
 }
