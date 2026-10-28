@@ -18,7 +18,8 @@ import { tr } from "../../i18n/lang";
 
 /** 能力値の要求 (ゲームの言葉で。2026-10-09 初見レビュー「手袋(dex_int) が読めない」) */
 const ATTR_JA: Record<string, string> = { str: "筋力", dex: "器用", int: "知性", str_dex: "筋力・器用", str_int: "筋力・知性", dex_int: "器用・知性", str_dex_int: "筋力・器用・知性" };
-const A = (k: string, ja: string): Array<[string, string]> => ["str", "dex", "int", "str_dex", "str_int", "dex_int"].map((x) => [`${k}_${x}`, `${ja} (${ATTR_JA[x]})`]);
+// 3 属性 (str_dex_int) は 7 つ目の札 (スイッチ triAttr、10-28 オーナー「直し方は１案１で」。前は札が無くタイルから選べなかった)
+const A = (k: string, ja: string): Array<[string, string]> => ["str", "dex", "int", "str_dex", "str_int", "dex_int", ...(flag("triAttr") ? ["str_dex_int"] : [])].map((x) => [`${k}_${x}`, `${ja} (${ATTR_JA[x]})`]);
 const EL = (k: string, ja: string): Array<[string, string]> => [[k, ja], ...([["fire", "火"], ["cold", "冷気"], ["lightning", "雷"], ["chaos", "混沌"], ["physical", "物理"]] as const).map(([x, j]): [string, string] => [`${k}_${x}`, `${ja} (${j})`])];
 /** 種類の段 */
 export const CATALOG_ROWS: Array<{ ja: string; cls: Array<[string, string]> }> = [
@@ -112,13 +113,20 @@ function baseStatLine(en: string): string {
   return out.join(" · ");
 }
 
+/** cls は並べる札 (エンジンの行とは限らない。行は classOfBase から引く) */
 export interface CatalogRow { en: string; ja: string; cls: string; lvl: number; implicit: string; stats: string }
+
+/**
+ * 札の上の置き場: グラスピングメイルの行 (Body_Armours_ring_str_dex_int、指輪の MOD も付く) は 3 属性の鎧と同じ札に並べる
+ * (スイッチ triAttr、10-28 オーナー案 1)。MOD の置き場は classOfBase の行のまま
+ */
+const shelfCls = (row: string): string => (flag("triAttr") ? row.replace(/_ring_str_dex_int$/, "_str_dex_int") : row);
 
 /** 全ベース (extras: フラスコ・スキルジェムも) */
 export function baseCatalog(d: PatchData, extras: boolean): CatalogRow[] {
   const out: CatalogRow[] = Object.entries(htcBaseInfo()).flatMap(([en, i]): CatalogRow[] => {
     const row = RUNE_MADE.test(en) || REMOVED.has(en) ? null : classOfBase(d, en);
-    return row ? [{ en, ja: i.ja, cls: row.id, lvl: i.lvl, implicit: (i.implicits ?? []).map((x) => tr(x.ja, x.en || x.ja)).join(" / "), stats: baseStatLine(en) }] : [];
+    return row ? [{ en, ja: i.ja, cls: shelfCls(row.id), lvl: i.lvl, implicit: (i.implicits ?? []).map((x) => tr(x.ja, x.en || x.ja)).join(" / "), stats: baseStatLine(en) }] : [];
   });
   if (extras) {
     for (const f of FLASK_BASES) out.push({ en: f.en, ja: jaTypeName(f.en), cls: f.cls, lvl: f.lvl, implicit: "", stats: baseStatLine(f.en) });

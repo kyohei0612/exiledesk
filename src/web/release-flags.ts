@@ -85,6 +85,7 @@ export const FLAGS = {
   talismanWeight: "タリスマンのアタックスピード 30 段目の重みを poe2db の 1000 に (ef57fece)",
   dntBases: "ゲームに無い [DNT] のベース 3 つを一覧から外す (c3a915a8)",
   runeMagnitude: "ルーンの「明示 MOD の強さが N% 増加」を MOD の値に掛ける (dc3e219a)",
+  triAttr: "ベースの選び画面の兜・鎧・手袋・靴に 7 つ目の札「筋力・器用・知性」(ガーメント・グランドレガリアなど 3 属性のベース。鎧はグラスピングメイルも同じ札に。engine.md ⑦12、10-28 オーナー「直し方は１案１で」)。閉じている間は検索でしか出ない",
 } as const;
 export type Flag = keyof typeof FLAGS;
 

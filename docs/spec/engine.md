@@ -167,7 +167,7 @@
 
 | # | 何 | 今のコード | 待っている物 |
 |---|---|---|---|
-| 12 | 3 属性 (筋力・器用さ・知性) の兜・鎧・手袋・靴 (Garment・Grand Regalia・Sacrificial Regalia・Grasping Mail・Grand Visage・Grand Manchettes・Grand Cuisses) がベースの選び画面のタイル → 属性の札に出ない (検索なら出る)。`base-catalog.ts` の `CATALOG_ROWS` の `A()` が 6 属性だけで、`*_str_dex_int` と `Body_Armours_ring_str_dex_int` の札が無い | エンジンの行・打つ処理は正しい | 札を足す案 (画面の並びが変わる) をブラックへ → オーナー OK (10-28) |
+| 12 | 3 属性 (筋力・器用さ・知性) の兜・鎧・手袋・靴 (Garment・Grand Regalia・Sacrificial Regalia・Grasping Mail・Grand Visage・Grand Manchettes・Grand Cuisses) がベースの選び画面のタイル → 属性の札に出ない (検索なら出る)。`base-catalog.ts` の `CATALOG_ROWS` の `A()` が 6 属性だけで、`*_str_dex_int` と `Body_Armours_ring_str_dex_int` の札が無い | エンジンの行・打つ処理は正しい。案 1 (オーナー 10-28「直し方は１案１で」) をスイッチ `triAttr` の下で作った: 4 部位に 7 つ目の札「筋力・器用・知性」、グラスピングメイルは一覧の札 (`CatalogRow.cls`) だけ 3 属性の鎧に寄せる (置き場は指輪の行のまま)。札の英語の正規表現はデザイン (BaseCatalog.vue) | 触ってもらってからスイッチを開ける (オーナー OK) |
 | 13 | `tests/currency-spec-golden.test.ts` が 6 つとも控えと違う。控えは 10-21 から取り直しておらず、その後エンジンに 85 commit (10-28 の英語の reduced の直しの前から赤) | ― | どの commit で変わったかを洗ってから取り直す (ジン) |
 
 10-28 にオーナーの答え・ブラック任せで片付けた物 (前の ⑦ 1〜11): 1 → E-42 (有効)・2 → E-71 (種類のタグの MOD 全部)・3 → E-13 (創生の樹のタグは足さない)・4 → E-01 (poe2db が正、タリスマンはデータのまま)・5 → E-24 (ジュエル 2 / 2)・6 貼り付けの段 0 は今のまま (エッセンス → 冒涜専用の順の候補に並べる、トレードの画面の見本が来たら照らす)・7 パペットマスター +6 はデータが poe2db と同じ (合金 +(4—5)) で直さない、貼り付けは読めない行のまま (推し量らない)・8 → E-92 (英語も正の数)・9 → E-91 (見出しは直書きのまま)・10 `QUALITY_SOURCE` のコメントを 1〜2 に・11 チェックリストの 2 行に E-65・E-52 を指す注。
