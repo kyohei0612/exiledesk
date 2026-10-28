@@ -40,6 +40,7 @@ import HelpTip from "../../../components/ui/HelpTip.vue";
 import type { RowToggle } from "../../../components/for-share/item/stage-item-row-tag";
 import { dropWay, inWay, isCraftAim, toggleWay, wayUndecided, WAY_ORDER } from "./tree-way-mods";
 import { flag } from "../../../web/release-flags";
+import { useEditReset } from "./use-edit-reset";
 
 const t = useTree();
 /** 完成形のカード (品質・ブリーチの「途中で消える」の行、スイッチ goalQuality) */
@@ -81,12 +82,16 @@ watch(pasteNote, (v) => { if (v) { asking.value = null; dropped.value = []; unpi
  * 閉じる (× / Esc / 枠の外)。ベースをまだ選んでいない白紙の木では、既定のベースで木を始めず、シミュの画面に残ってベースが無い時の空の形を出す
  * (use-tree の needBase。10-23 オーナー「ベースが無いとツリーもくそもない」「× 押したらシミュレーターが消え失せる」)
  */
-function close(): void {
+function close(): void { edits.leave(closeNow); }
+function closeNow(): void {
   asking.value = null;
   dropped.value = [];
   t.needBase.value = unpicked.value;
   go(0);
 }
+/** 今ある木の前提を変えたら木はスタートだけに (出る時に保存を聞く。S-67、スイッチ resetOnEdit) */
+const edits = useEditReset(t);
+watch(() => t.goalPage.value, (v, o) => { if (v && !o) edits.remember(); else if (!v) edits.forgetIfClosed(); }, { immediate: true });
 // URL から先にページが開き、白紙の判定 (SimTreePage の onMounted の needBase) が後から立つ時も「まだ選んでいない」にする (初めての sim-base で戻り先の無い「← ツリーに戻る」が出ていた)
 watch(() => t.needBase.value, (v) => { if (v) unpicked.value = true; });
 /** 手の入った木 (始まりの箱に手がある) */
@@ -105,7 +110,7 @@ function backToTree(): void {
   asking.value = null;
   dropped.value = [];
   if (unpicked.value && t.leaveNewTab()) { if (treeStep.value !== "tree") openTreePage("tree"); return; }
-  go(0);
+  edits.leave(() => go(0));
 }
 /** 2 へ進む (段のタブ・「次へ」)。今のベースで決めた扱い (白紙のまま 2 を開いてから閉じても空の形にはしない) */
 function toMods(): void { unpicked.value = false; t.chooseBase(); go(2); }
@@ -215,7 +220,7 @@ function markFracture(modId: string, tier: number): void { t.toggleFracture(modI
 const startAsk = ref<null | (() => void)>(null);
 function toTree(after?: () => void): void {
   if (undecided.value) return;
-  const go = (): void => { close(); after?.(); };
+  const go = (): void => edits.leave(() => { closeNow(); after?.(); });
   // 狙いが無い時はフラクチャーにする物が無いので聞かずに進む (答えた扱い)
   if (t.goals.value.length) startAsk.value = go; else { t.edit((d) => { d.fracAsked = true; }); go(); }
 }
@@ -266,6 +271,13 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <span class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words">{{ tr(`アイテムレベルを ${t.ilvlNote.value.to} に合わせました (適正)`, `Item level set to ${t.ilvlNote.value.to} (fit)`) }}</span>
         <button type="button" data-tree-ilvl-note-close class="shrink-0 rounded px-1 opacity-60 hover:bg-white/10 hover:opacity-100" :aria-label="tr('閉じる', 'Close')" @click="t.ilvlNote.value = null">×</button>
       </p>
+      <!-- 今ある木の前提を変えた: 木はスタートだけに戻る (S-67、スイッチ resetOnEdit) -->
+      <div v-if="edits.ask.value" data-tree-edit-reset-ask class="sticky top-0 z-10 mx-3 mb-2 flex flex-wrap items-center gap-3 rounded-lg border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-[13px]">
+        <p class="min-w-0 flex-1 break-words">{{ tr(`この変更で今の木 (箱 ${edits.ask.value.boxes} 個) は消え、スタートからやり直します。保存しますか?`, `This change clears the current tree (${edits.ask.value.boxes} boxes) and starts over from the start. Save it first?`) }}</p>
+        <button type="button" data-tree-edit-reset-save class="g-btn sm" @click="edits.answer('save')">{{ tr("保存して変える", "Save and change") }}</button>
+        <button type="button" data-tree-edit-reset-ok class="g-btn sm" @click="edits.answer('drop')">{{ tr("保存せず変える", "Change without saving") }}</button>
+        <button type="button" data-tree-edit-reset-cancel class="g-btn sm" @click="edits.answer('cancel')">{{ tr("やめる (変更を戻す)", "Cancel (undo the change)") }}</button>
+      </div>
       <TreePasteNote v-if="step === 2" />
       <!-- 外した狙いを使う当たりの箱が木に残っている (箱は消さない。木で × か、1 つ戻す。10-26 モンキー 7 の 5) -->
       <p v-if="step === 2 && orphans.length" data-tree-goal-orphans class="flex min-w-0 flex-wrap items-center gap-2 px-3 pb-2 text-[12px] text-rose-200/90">
