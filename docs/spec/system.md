@@ -55,7 +55,7 @@
 - **Y-10 クラフト台は `/`、ほかの画面は別のページ**: エミュのクラフト台は `/`、それ以外は `?page=<名前>` (base・routes・feedback・guide・recipes・sim-base / sim-mods / sim-tree・daily・skins)、コースは `?course=<id>`。ページごとに URL と題を変え、履歴に積む (戻るで前のページ)。
   - 有効。出どころ: オーナー 10-18 (メモ ads-page-model)、10-22〜25 (web/page.ts の頭)。確かめ: `src/web/page.ts` の表と画面。
 - **Y-17 ジェムコラプトは Web に出さない**: Web 版からジェムコラプトの入口 (スイッチ gemCorrupt・`?page=gem-corrupt`・track の `mode:gem-corrupt`・Web 専用の `GemCorruptWebPanel.vue`・`web-materials.ts`) を外す。開発版にも出さない。アプリと共有のコード (`views/gem-corrupt/` のアプリが使う物・gem-watch) は消さずに残し、Web から読まれないだけにする (Y-03)。
-  - 一部 (コードを外すのはデザイン部長・エミュ部長、10-28 に頼んだ)。出どころ: オーナー 10-28「ジェムコラ一旦コードからも非表示でおｋかなり先になる」(前は 10-16「ジェムコラプトは内緒」でスイッチの下)。確かめ: `grep -rn "gem-corrupt\|gemCorrupt" src/web src/views/craft-stage` が 0、Web の入口から `views/gem-corrupt/` への import が無い。
+  - 有効 (10-28 に外した: エミュ部長 75151d72b がクラフト台のタブ、デザイン部長が page.ts・track.ts・release-flags.ts の gemCorrupt と Web 専用の `GemCorruptWebPanel.vue`・`web-materials.ts`・`tests/gem-corrupt-web.test.ts` を消した。戻す時は git の 23f1d1d9 の頃から)。出どころ: オーナー 10-28「ジェムコラ一旦コードからも非表示でおｋかなり先になる」(前は 10-16「ジェムコラプトは内緒」でスイッチの下)。確かめ: `grep -rn "gem-corrupt\|gemCorrupt" src/web src/views/craft-stage` が 0、Web の入口から `views/gem-corrupt/` への import が無い。
 - **Y-11 新しい機能はページを移る形で作る**: 新しい機能・チュートリアルは「1 つの画面の中の切り替え」でなく、ページを移る形 (URL・題が変わる) で考える。MOD 一覧は重ねる窓のまま (M-17)。
   - 有効。出どころ: オーナー 10-18「チュートリアルも今後の実装もなにかとページ変える形にする」(メモ ads-page-model)。確かめ: 画面。
 - **Y-12 ページの入口は page.ts 1 か所**: ページの URL・題・履歴・離れる時の確かめは `src/web/page.ts` (デザイン部長) だけが持つ。各部 (デイリー・スキン・シミュ) はページの中身だけを持ち、入口・タブはデザイン部長に頼む。移り方の決まりは U-27・U-28。

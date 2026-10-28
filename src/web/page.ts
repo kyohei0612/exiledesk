@@ -33,9 +33,6 @@ import { remember } from "./page-memo";
 /** コスメティック = PoE2 で使える PoE1 のスキンの一覧のページ (?page=skins、views/skins/SkinsPage.vue はスキン部長。2026-10-25 オーナー)。開発版だけ (スイッチ skins) */
 export const skinsPage = ref(false);
 export const SKINS_ON = flag("skins");
-/** ジェムコラプト (?page=gem-corrupt、中身は views/gem-corrupt、タブは CraftStage)。開発版だけ (スイッチ gemCorrupt)。URL に載せてリロードでもジェムコラプトの最初に (10-25 オーナー「リロードはそのページを読み込み直したのと一緒」) */
-export const gemCorruptPage = ref(false);
-const GEM_CORRUPT_ON = flag("gemCorrupt");
 
 /**
  * 戻って来た時 (戻る・記事から) に前の画面へ戻す写し (page-memo.ts、スイッチ emuFresh の下。10-25 オーナー「戻るは前の画面」)。
@@ -153,7 +150,6 @@ function leaveSubPages(): void {
   routesOpen.value = false;
   routesTarget.value = null;
   basePage.value = false;
-  gemCorruptPage.value = false;
 }
 
 /** 使い方・コツを開く (ヘッダーのボタン)。コースの途中なら抜ける */
@@ -283,7 +279,6 @@ export const page = computed((): string => {
   if (dailyPage.value) return dailyQuery(dailyPage.value);
   if (skinsPage.value) return "page=skins";
   if (routesOpen.value) return "page=routes";
-  if (gemCorruptPage.value && GEM_CORRUPT_ON && !s.replay.value) return "page=gem-corrupt";
   const id = topic.value?.id ?? course.value?.id;
   if (id) return `course=${id}`;
   if (s.mode.value === "tutorial") return "page=guide";
@@ -299,7 +294,6 @@ export const pageTitle = computed((): string => {
   if (p === "page=routes") return tr("スパムシミュレーター — ExileDesk", "Spam simulator — ExileDesk");
   if (p === "page=recipes") return tr("レシピ — シミュレーター — ExileDesk", "Recipes — Simulator — ExileDesk");
   if (p === "page=sim-tree") return tr("クラフトの道 (ツリー) — ExileDesk", "Craft route tree — ExileDesk");
-  if (p === "page=gem-corrupt") return tr("ジェムコラプト — ExileDesk", "Gem Corruption — ExileDesk");
   if (p === "page=skins") return tr("コスメティック (PoE1 の MTX・スキン) — ExileDesk", "Cosmetics (PoE1 MTX & skins) — ExileDesk"); // 検索で「PoE2 MTX」と探す人向け (ブラック 10 代目の呼び名の決め)
   if (p === "page=sim-base") return tr("ベースを選ぶ — シミュレーター — ExileDesk", "Choose a base — Simulator — ExileDesk");
   if (p === "page=sim-mods") return tr("完成の MOD — シミュレーター — ExileDesk", "Target mods — Simulator — ExileDesk");
@@ -312,7 +306,7 @@ export const pageTitle = computed((): string => {
   return tr("ExileDesk — PoE2 クラフトシミュレーター", "ExileDesk — PoE2 Craft Simulator");
 });
 
-const PAGE_KEYS = ["guide", "base", "feedback", "routes", "recipes", "sim-tree", "sim-base", "sim-mods", "skins", "daily", "daily-start", "gem-corrupt"];
+const PAGE_KEYS = ["guide", "base", "feedback", "routes", "recipes", "sim-tree", "sim-base", "sim-mods", "skins", "daily", "daily-start"];
 function urlFor(p: string): string {
   const u = new URL(location.href);
   u.searchParams.delete("page");
@@ -366,7 +360,6 @@ function apply(p: string): void {
       if (routesBack) { routesRunes.value = routesBack.runes; routesTarget.value = routesBack.target; routesBack = undefined; }
       return;
     }
-    if (p === "page=gem-corrupt" && GEM_CORRUPT_ON) { leaveSubPages(); gemCorruptPage.value = true; return; }
     if (p === "page=base") { openBasePage(); return; }
     leaveSubPages();
     // 旧シミュレーターの工程 (page=sim-<工程>) は 10-22 に消した。古い URL はクラフトのまま開く

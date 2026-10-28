@@ -20,7 +20,6 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 | タブ | 入口 | 中身 |
 |---|---|---|
 | エミュレーター | `views/craft-stage/CraftStage.vue` | ベース選び → 棚 (`CurrencyShelf.vue`) から持って打つ。アイテム (`StageItemCard.vue`)・工程・MOD 一覧 (`StageModList.vue`)・次の手で狙う (`StageAimPanel.vue`)・スパムシミュレーター (別ページ `StageRoutesPage.vue`、運試し `StageRouteLuck.vue`、計算は `services/craft-stage/route-race.ts`。旧カオススパム計算機は 2026-10-19 に消した) |
-| ジェムコラプト | `views/gem-corrupt/GemCorruptWebPanel.vue` (計算は views/gem-corrupt/model.ts。Web では広告と一緒に出す予定) | 売値 3 つを入れて収支 |
 | チュートリアル (使い方・コツは本番、シミュのチュートリアルは開発版だけ) | `views/tutorial/StageCourses.vue`・`StageTopicGuide.vue`・`StageCourseGuide.vue` | 動作を学ぶコース (`services/tutorial/topic-courses.ts`)・実践 (`course-recipes.ts`) |
 | シミュレーター (10-26 v0.1.601 から本番。決まりの正は docs/spec/sim-tree.md) | `views/simulator/tree/SimTreePage.vue` (ページは `?page=sim-base` ベース → `sim-mods` 完成の MOD → `sim-tree` クラフトの道 = ツリー、10-24 夜に分けた。段は web/page.ts の treeStep) | 打ち方を組んで何百人分作る (ADR-002・003)。回し方は `services/simulator/tree/` |
 

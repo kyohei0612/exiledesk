@@ -33,7 +33,6 @@ export const FLAGS = {
   baseChosen: "ベースのページは人が選んだベースだけ選んだ見た目・帯とすぐ試す・入口の行き先を同じ印で (2aa2d268・3cbda7e4)",
   emuFresh: "エミュはリロード・開き直しのたびにベース選びの空から (作業中のアイテムの写しは記事などから戻った時だけ使う。オーナー 10-25「エミュもリロードしたら基本最初からのはず」)",
   tierWord: "エミュの画面に出る「段」をゲームの言葉の「ティア」に (次の手で狙うの窓・MOD 一覧の説明・工程の % の説明・聖別の帯・シミュレーターへ・取引所・重み・スパムシミュの理由。views/craft-stage/tier-word.ts、M-49。オーナー 10-28「おｋ」)。英語は Tier のまま。閉じている間は「段」",
-  gemCorrupt: "クラフト台のジェムコラプトのタブ (収支の画面 GemCorruptWebPanel、23f1d1d9。オーナー 10-16「ジェムコラプトは内緒」、出す時期はオーナー)",
   // ここから下はシミュ部長の物 (使い方・コツの OK 待ち。段 5 のクラフト手順のコース 04ad4147・d1e7c664 は course-release.ts の REVIEW で開発版の印の時だけ)
   tutorialUi: "使い方・コツ: コース一覧の説明は既定で閉じる・段 5 で次に押す物を光らせ説明は 1 文 + 詳しく・進み n / m (d1c97969)",
   simTutorial: "シミュのチュートリアル「不在のアミュレット (フラクチャー済み) から作る」(ベース選びの入口と、押す所を光らせる一手ずつの案内。views/simulator/tutorial/、オーナー 10-26 夜)",
@@ -98,7 +97,7 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "runeMagnitude",
   // コスメティックのページ (オーナー 10-25「スキン出して OK、本番」。/cosmetics/ は noindex のまま)
   "skins",
-  // OK 待ちの画面の直しを全部 (オーナー 10-25「全部一緒に出して OK」「ヘッダーのブログ外しも本番出して OK」)。閉じたままは sim・daily・gemCorrupt (内緒)
+  // OK 待ちの画面の直しを全部 (オーナー 10-25「全部一緒に出して OK」「ヘッダーのブログ外しも本番出して OK」)。閉じたままは sim・daily
   "noHeaderBlog", "modeTabs", "dismiss", "tierClose", "fitZoom", "omenRow", "monkey1023", "baseValues", "weights", "firstVisit1024", "essCard", "essTier",
   "sanctifyBar", "monkeyEmu1023", "baseChosen", "tutorialUi",
   // エミュはリロードでベース選びの空から (オーナー 10-25「emuFresh も本番出して OK」)
@@ -121,7 +120,7 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "adReview",
   // シミュのスマホの直し・結果の画面・箱の形・カオススパムの札外し・段の表の狭い列 (オーナー 10-27 夕「品質関係以外一旦リリース」「まとめて入れて、ポップアップも出して」)。閉じたままは goalQuality・heldTags
   "phone1027", "phoneResult1027", "goalShape", "noSpam", "tierNarrow",
-  // シミュの完成形の品質・クラフト MOD の途中で消える・消去を持った時のカード・フラクチャーを先に・ベース選びの 4 段・モンキー 2 回目の直し (オーナー 10-27 夜「修正後出しておけ、リリースじゃ」)。閉じたままは daily・gemCorrupt・simTutorial
+  // シミュの完成形の品質・クラフト MOD の途中で消える・消去を持った時のカード・フラクチャーを先に・ベース選びの 4 段・モンキー 2 回目の直し (オーナー 10-27 夜「修正後出しておけ、リリースじゃ」)。閉じたままは daily・simTutorial
   "goalQuality", "heldTags", "fracFirst", "rowToggle", "baseTiles", "viewFromZero", "armKeep", "hitNew", "backSameHand", "omenReach",
   "barUse", "phoneTestDone", "phoneNextDown", "pickTidy", "qualityLimit", "qualityFit", "junkByCheck",
   // ✦ の無い木のフラクチャー (要望 8a159e29)・整列の詰め直しと結果の箱を親のすぐ下に (精査の fixedFull も) (オーナー 10-27 夜 OK)
