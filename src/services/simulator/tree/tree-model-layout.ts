@@ -2,6 +2,7 @@
  * tree-model-layout.ts — 箱の配置の小物 (tree-model.ts から分けた、1 ファイル 500 行まで、10-28)。中身は前のまま。呼ぶ所は tree-model の出し直しから
  */
 import { BOX_H, BOX_W, GAP_X, GAP_Y, subtree, type TreeDoc } from "./tree-model";
+import { flag } from "../../../web/release-flags";
 
 /** 矢印の先の箱を親の下に並べ直す (子の下の箱も一緒に動かす) */
 export function spread(d: TreeDoc, parentId: string): void {
@@ -30,8 +31,29 @@ export function makeRoom(d: TreeDoc, parentId: string): void {
     const b = d.boxes[id]!;
     return others.some((o) => Math.abs(b.x + dx - o.x) < BOX_W + ROOM && Math.abs(b.y - o.y) < BOX_H + ROOM);
   });
-  if (!hit(0)) return;
-  for (let k = 1; k <= 200; k++) for (const dx of [k * 20, -k * 20]) if (!hit(dx)) { for (const id of p.outs) shift(d, id, dx, 0); return; }
+  if (hit(0)) for (let k = 1, done = false; k <= 200 && !done; k++) for (const dx of [k * 20, -k * 20]) if (!hit(dx)) { for (const id of p.outs) shift(d, id, dx, 0); done = true; break; }
+  if (flag("slideSibling")) slideSiblings(d, parentId);
+}
+
+/**
+ * 子の並びの真上 (親の段) に別の箱があれば、その箱とその下を横へ滑らせる (右の箱は右へ、左の箱は左へ。その先の同じ段の箱も一緒に)。
+ * 親の真下に別の親の箱を置かない (S-68b、スイッチ slideSibling、10-28 深夜オーナー「右のハズレMDOｓ１は下の縦ラインにかさなっちゃだめだよね」)
+ */
+function slideSiblings(d: TreeDoc, parentId: string): void {
+  const p = d.boxes[parentId]!;
+  if (!p.outs.length) return;
+  const kids = p.outs.map((o) => d.boxes[o]!);
+  const x0 = Math.min(...kids.map((k) => k.x)) - ROOM, x1 = Math.max(...kids.map((k) => k.x)) + BOX_W + ROOM;
+  const up = new Set<string>();
+  for (let x: string | null = parentId; x; x = d.boxes[x]?.parent ?? null) up.add(x);
+  const row = Object.values(d.boxes).filter((b) => b.id !== parentId && !up.has(b.id) && Math.abs(b.y - p.y) < BOX_H);
+  const right = row.filter((b) => b.x > p.x).sort((a, z) => a.x - z.x), left = row.filter((b) => b.x < p.x).sort((a, z) => z.x - a.x);
+  const r = right[0], l = left[0];
+  const dr = r && r.x < x1 ? x1 - r.x : 0, dl = l && l.x + BOX_W > x0 ? l.x + BOX_W - x0 : 0;
+  // 同じ段のその先の箱も同じだけ (間を変えない)。下の段は箱ごと一緒に動く (shift)
+  if (dr) for (const b of right) shift(d, b.id, dr, 0);
+  if (dl) for (const b of left) shift(d, b.id, -dl, 0);
+  if (dr || dl) pushRight(d);
 }
 
 /**
