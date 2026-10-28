@@ -45,12 +45,27 @@ export function treeShape(tree) {
   return { boxes, edges };
 }
 
+/**
+ * 題に出すレシピの名前 (10-28 オーナー「あと、時間日付は不要ね」)。保存の既定の名前「<ベース> 10/27 16:15」(tree-save.ts の autoName) の日付・時刻を消し、
+ * 頭がベースの名前で後ろに人の付けた言葉があれば言葉の部分だけ。何も残らなければベースの名前
+ */
+export function titleOf(name, bases) {
+  // 時刻の付いた日付はどこでも消す。時刻の無い日付 (人が時刻だけ消した物) はベースの名前のすぐ後ろの時だけ (「1/2 の確率」などを消さない)
+  let t = String(name ?? "").replace(/(^|\s)(\d{4}\/)?\d{1,2}\/\d{1,2}\s+\d{1,2}:\d{2}(?=\s|$)/g, " ").replace(/\s+/g, " ").trim();
+  for (const b of bases) {
+    if (!b || (t !== b && !t.startsWith(b + " "))) continue;
+    t = t.slice(b.length).replace(/^\s*(\d{4}\/)?\d{1,2}\/\d{1,2}(?=\s|$)/, "").trim();
+    return t || b;
+  }
+  return t || bases.find(Boolean) || null;
+}
+
 /** D1 の行 → カードの中身。card は cleanCard を通した JSON (無ければ null)、tree は code の中の木 (無ければ null) */
 export function readRecipeCard(name, card, tree) {
   const c = card ?? {};
   return {
     en: c.l === "en",
-    name: name || null,
+    name: titleOf(name, [c.bn, typeof tree?.base === "string" ? tree.base : null]),
     baseName: c.bn ?? (typeof tree?.base === "string" ? tree.base.slice(0, 60) : null),
     art: c.a ?? null,
     mods: c.m ?? [],
