@@ -11,6 +11,7 @@
 import { allMods, limitOf, modBoostsOf, mulberry32, room, sideOfMod, SIDES, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomes } from "../../simulator/sim-engine";
 import { prepFor } from "./tree-unbounded";
+import { TIER } from "../../../state/for-share/tier-word";
 import { catalystTagOf } from "../../simulator/sim-engine";
 import { aimHeldOn, isAimMod, junkOf, reachableAims } from "./tree-aim";
 import { CATALYSING, effectOf, engineOmens, isCatalyst } from "./tree-hands";
@@ -327,7 +328,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
       add(id, "unexpected", tr(`回すと ${RUN_PEOPLE} 人中 ${n} 人が結果の箱に無い形になる${max ? ` (${max} 回で当たらなかった)` : ""}。形の合う箱へ進み、無ければ止まる。直すには、その結果の箱を足すか、同じ形で手のある箱を作る`, `${n} of ${RUN_PEOPLE} runs end in a shape with no result box${max ? ` (no hit in ${max} tries)` : ""}. They go to a box of the same shape, or stop. Fix: add a box for that result, or a box with a craft for that shape`));
     }
     // 回しで 1 人でも着いた箱は出さない (5 人の辿りは上限つきの当たるまで・始まりに同じ系統が付いている人で外れた、10-22 13 通り組んだ #9 の誤報 3 本)
-    for (const id of never) if (!run.boxes[id]?.reach) add(id, "neverHit", tr("上の手を打ち直してもこの札が付かなかった (側・段・手を確かめる)", "This mod never hit when the craft above was retried (check side, tier and craft)"));
+    for (const id of never) if (!run.boxes[id]?.reach) add(id, "neverHit", tr(`上の手を打ち直してもこの札が付かなかった (側・${TIER}・手を確かめる)`, "This mod never hit when the craft above was retried (check side, tier and craft)"));
   }
   // 3 の続き) 完成の形の食い違い (揃った狙いの数)
   // 一番多く揃う完成の数より少ない形で着く人がいる完成の箱に ! (前は 1 つ目の完成の箱と比べ、どちらが組み違いか分からなかった)

@@ -6,6 +6,7 @@
 import { ref } from "vue";
 import NumStep from "../../../components/NumStep.vue";
 import HelpTip from "../../../components/ui/HelpTip.vue";
+import { TIER } from "../../../state/for-share/tier-word";
 import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
 import RarityTabs from "./TreeRarityTabs.vue";
@@ -33,9 +34,9 @@ function useFit(): void { t.setFit(true); ilvl.value = t.doc.value.itemLevel; }
       <RarityTabs :model-value="t.goalRarity.value" @update:model-value="t.setRarity" />
     </span>
     <label class="flex items-center gap-2">
-      <span class="flex items-center gap-1">{{ tr("アイテムレベル", "Item level") }}<HelpTip :text="tr('適正 = 完成の狙い (と当たりの箱・始まりの MOD) の段が全部付く一番低いアイテムレベル。狙いを足す・替えるたびに自動で変わる (新しいツリーは適正から)。数字を入れるとその数で決まり、適正は外れる。もう一度「適正」を押すと自動に戻る', 'Fit = the lowest item level where every final target tier (and hit boxes, starting mods) can roll. It updates as you add or change targets (new trees start on Fit). Typing a number sets it and turns Fit off; press “Fit” again to go back to automatic')" /></span>
+      <span class="flex items-center gap-1">{{ tr("アイテムレベル", "Item level") }}<HelpTip :text="tr(`適正 = 完成の狙い (と当たりの箱・始まりの MOD) の${TIER}が全部付く一番低いアイテムレベル。狙いを足す・替えるたびに自動で変わる (新しいツリーは適正から)。数字を入れるとその数で決まり、適正は外れる。もう一度「適正」を押すと自動に戻る`, 'Fit = the lowest item level where every final target tier (and hit boxes, starting mods) can roll. It updates as you add or change targets (new trees start on Fit). Typing a number sets it and turns Fit off; press “Fit” again to go back to automatic')" /></span>
       <!-- 左端に適正、数字は常に出す (適正の間は自動の値)。数字を触ったらその数で決まり、適正は外れる (オーナー 10-22) -->
-      <button type="button" data-tree-ilvl-fit class="g-tab !min-h-[28px] !px-2.5 !text-[12px]" :class="t.doc.value.ilvlFit ? 'on' : ''" :title="tr('狙いの MOD の段が全部付く一番低いレベルに自動で合わせる (狙いを足すたびに変わる)', 'Follow the lowest level where every target tier can roll (updates as you add targets)')" @click="useFit">{{ tr("適正", "Fit") }}</button>
+      <button type="button" data-tree-ilvl-fit class="g-tab !min-h-[28px] !px-2.5 !text-[12px]" :class="t.doc.value.ilvlFit ? 'on' : ''" :title="tr(`狙いの MOD の${TIER}が全部付く一番低いレベルに自動で合わせる (狙いを足すたびに変わる)`, 'Follow the lowest level where every target tier can roll (updates as you add targets)')" @click="useFit">{{ tr("適正", "Fit") }}</button>
       <NumStep :model-value="t.doc.value.ilvlFit ? t.doc.value.itemLevel : ilvl" integer width="w-20" :placeholder-value="t.doc.value.itemLevel" @update:model-value="setIlvl" />
     </label>
   </div>

@@ -18,6 +18,7 @@ import { tierRankLabel, type StageMod } from "../../../services/craft-stage/engi
 import type { Aim, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { goalBlock } from "../../../services/simulator/sim-engine";
 import { goalBlockLoose } from "./tree-goal-cap";
+import { TIER } from "../../../state/for-share/tier-word";
 import TreeBasePick from "./TreeBasePick.vue";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue";
@@ -232,7 +233,7 @@ function onCardFracture(m: StageMod): void {
 }
 /** 完成の MOD の段の説明 (日本語・英語の組、1 つの事 = 1 行。3 つ目が true の行は PC だけ = スマホに右クリックは無い、10-26 猿の 9) */
 const HELP: Array<[string, string, boolean?]> = [
-  ["狙いにする: その段以上が付けば当たり (狙いは MOD 1 つ、上の段は「含む」)", "Target: a hit if that tier or better rolls (one target per mod; higher tiers are included)"],
+  [`狙いにする: その${TIER}以上が付けば当たり (狙いは MOD 1 つ、上の${TIER}は「含む」)`, "Target: a hit if that tier or better rolls (one target per mod; higher tiers are included)"],
   ["後の箱の当たりは、この狙いから選ぶ", "Later hit boxes pick from these targets"],
   flag("fracMulti")
     ? ["フラクチャー (✦) = 固定してよい MOD の印。いくつでも付けられ、フラクチャーでどれか 1 つが固定されれば当たり。始め方 (フラクチャー済みから / 白から確定フラクチャー) は「決めた」の後の窓で選ぶ", "Fracture (✦) = marks mods that may be fixed. Mark any number; a fracture is a hit if any one of them is fixed. How to start (already fractured / sure fracture from white) is chosen after Done"]
