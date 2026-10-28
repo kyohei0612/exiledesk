@@ -138,7 +138,8 @@ export function shapeFits(doc: TreeDoc, from: string, to: string): boolean {
 export function shapesOf(doc: TreeDoc, data?: PatchData): Shape[] {
   const out: Shape[] = [];
   for (const b of Object.values(doc.boxes)) {
-    if (!b.hand || (b.out !== "hit" && b.out !== "junk")) continue;
+    // 打った後 (狙い無し) の箱も外れの形の行き先に (消去の「狙いが消えた」(マジック・外れ 1) が上の変成の「打った後」でなく白のスタートへ戻った、10-28 夜オーナー。スイッチ boxShape)
+    if (!b.hand || (b.out !== "hit" && b.out !== "junk" && !(b.out === "any" && flag("boxShape")))) continue;
     for (const held of pathHelds(doc, b.out === "junk" ? b.parent : b.id)) out.push({ key: shapeKey(held, b.out === "junk" || junkLike(doc, b)), box: b.id, hand: b.hand });
   }
   // 分かれ目の箱も行き先に (外れの有無は行で分けるので両方の形を受ける。手のある箱が先、10-22 13 通り組んだ #14: 分かれ目の下の消去の「外れが消えた」に行き先が無かった)
@@ -284,10 +285,16 @@ export function linkSameShape(doc: TreeDoc, ids: readonly string[], loose?: Body
     // フラクチャーの結果の箱は、形 (✦ は数えない) が親と同じでも つながない (親へ戻すと ✦ のある品にもう一度フラクチャーを打って止まった、10-24)
     const p = c.parent ? doc.boxes[c.parent] : undefined;
     if (p?.hand && effectOf(p.hand.currency) === "fracture") continue;
-    const targets = matchTargets(doc, id).map((m) => m.to);
+    const matched = matchTargets(doc, id), targets = matched.map((m) => m.to);
     // 「どれか」の当たりの箱 (anyOf) は、どれが付いても同じ箱へ行く時だけつなぐ (付いた物で行き先が分かれるなら、回す時の settle が実物で形の合う箱へ。10-26)
     if (c.anyOf?.length && new Set(targets).size > 1) continue;
-    const to = targets.find((x): x is string => !!x && x !== id && (x !== "start" || c.out === "lost")) ?? swapJunkOf(c, p);
+    let to = targets.find((x): x is string => !!x && x !== id && (x !== "start" || c.out === "lost")) ?? swapJunkOf(c, p);
+    // 同じ鍵の箱が幾つかある時は、体 (側・種類・数・レアリティ) まで合う箱を順に探す (変成の「打った後」がプレとサフィの 2 つあり、1 つ目のプレだけ見て
+    // サフィの外れの「狙いが消えた」がどこへもつながらなかった、10-28 夜オーナー「自動で箱違うとこにつくな」。スイッチ boxShape)
+    if (flag("boxShape") && loose && (!to || !sameBody(loose, id, to))) {
+      const keys = new Set(matched.map((m) => m.key));
+      to = shapesOf(doc).filter((sh) => keys.has(sh.key) && sh.box !== id).map((sh) => sh.box).find((x) => shapeFits(doc, id, x) && sameBody(loose, id, x)) ?? to;
+    }
     // 形 (付いている狙いの組) が全部合う箱へだけ (狙いが消えた箱は組が何通りかあり、1 つ目の組だけで別の形の箱へつないでいた。10-26 オーナー「前提狙いMODの状態でなんかする時」、shapeFits)
     if (!to || !shapeFits(doc, id, to) || !sameBody(loose, id, to)) continue;
     c.back = to;

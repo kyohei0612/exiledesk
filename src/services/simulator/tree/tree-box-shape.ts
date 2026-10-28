@@ -72,7 +72,8 @@ export function bodyMemo(data: PatchData, d: TreeDoc): BodyOf {
  */
 export function sameBody(body: BodyOf | undefined, from: string, to: string): boolean {
   if (!body) return true;
-  if (to === "start") return !(flag("boneLater") && hasDesecrated(body(from)));
+  // 始まりへも体 (レアリティ・外れの数) を比べる (マジックの外れ 1 つの箱が白のスタートへ戻った、10-28 夜オーナー「色々挙動があやしい」。スイッチ boxShape)
+  if (to === "start" && !flag("boxShape")) return !(flag("boneLater") && hasDesecrated(body(from)));
   const x = body(from), y = body(to);
   return x === null || y === null || x === y;
 }

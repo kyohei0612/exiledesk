@@ -255,8 +255,9 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
     } finally { altDeep = false; }
   }
   const r0 = sampleFrom(data, doc, b, p, base, seed, boxId, aims);
-  // boxShape: 親の見本からこの箱の結果が作れない (枠が埋まっている等) 時は、親の見本を別の種で引き直す (道だけの見本は 1 つの乱数、10-28 見張り アミュ B b31)
-  if (!flag("boxShape") || !r0.note || r0.note === "forced" || altDeep) return r0;
+  // boxShape: 親の見本からこの箱の結果が作れない (枠が埋まっている等) 時は、親の見本を別の種で引き直す (道だけの見本は 1 つの乱数、10-28 見張り アミュ B b31)。
+  // 狙いを無理に付けた見本 (forced) も引き直す: マジックの埋まった側に付けてレアに上がり、増強の当たりの箱のカードがレアの枠になった (10-28 夜オーナー「増強だっつーのにアイテムカードがレアになってんなバグだね」)
+  if (!flag("boxShape") || !r0.note || altDeep) return r0;
   altDeep = true;
   try { for (let k = 1; k < HIT_TRIES; k++) { const r = sampleFrom(data, doc, b, p, sampleIn(data, doc, p.id, seed + 7919 * k), seed, boxId, aims); if (!r.note) return r; } } finally { altDeep = false; }
   return r0;
