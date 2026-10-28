@@ -23,12 +23,17 @@ const marked = markedGoal(t.goals.value);
 /** 選んだ狙い (aimKey、null = 白ベースから) と始め方 (a) / (b) */
 /**
  * フラクチャーから始められるのは ✦ が 1 つの時だけ (S-13・S-14、10-28 オーナー「単発のみフラクチャースタートできるようにさせるか」、スイッチ fracOne):
- * ✦ が 2 つ以上 = 白ベースからだけ (印は残して木の中でフラクチャー)。1 つ以下 = ✦ を 1 つ選ぶ。既定は印、無ければ完成の狙いの先頭のフラクチャーできる MOD (冒涜は飛ばす)
+ * ✦ にする MOD は ☑ で選ぶ (10-28 夜オーナー「ここは複数選択かってのでチェックボックスに変更」)。☑ が 2 つ以上 = 白ベースからだけ (印は残して木の中でフラクチャー)、
+ * 1 つ = (a) / (b)、0 = 白ベースから。既定は印、無ければ完成の狙いの先頭のフラクチャーできる MOD (冒涜は飛ばす)。
+ * 「(おすすめ)」は完成形の設定で ✦ を付けていない時だけ (10-28 夜オーナー「フラクチャーしてんだからフラチャーお勧めっておかしい」)
  */
 const ONE = flag("fracOne");
-const multiWhite = ONE && goals.value.filter((a) => a.fractured).length > 1;
 const firstFrac = (): string | null => { const g = goals.value.find((a) => s.data.value?.mods.get(a.modId)?.source !== "desecrated"); return g ? aimKey(g) : null; };
-const pick = ref<string | null>(marked ? aimKey(marked) : ONE ? firstFrac() : null);
+const hasMarks = goals.value.some((a) => a.fractured);
+const pick = ref<string | null>(marked ? aimKey(marked) : null);
+/** fracOne の ☑ (既定は印の付いた MOD 全部、無ければ先頭の 1 つ) */
+const onePicks = ref<string[]>(hasMarks ? goals.value.filter((a) => a.fractured).map(aimKey) : [firstFrac()].filter((k): k is string => !!k));
+const multiWhite = computed(() => ONE && onePicks.value.length > 1);
 const from = ref<StartFrom>(t.doc.value.start?.from ?? "fractured");
 type Pair = [string, string];
 const FROMS = computed((): Array<{ k: StartFrom; title: Pair; sub: Pair }> => { const x = sureFracText(MULTI ? picks.value.length : 1); return [ // 素材の倍は ✦ の数で (S-43)
@@ -41,9 +46,9 @@ const FROMS = computed((): Array<{ k: StartFrom; title: Pair; sub: Pair }> => { 
  */
 const MULTI = flag("fracMulti") && !ONE;
 const picks = ref<string[]>(goals.value.some((a) => a.fractured) ? goals.value.filter((a) => a.fractured).map(aimKey) : goals.value.map(aimKey));
-const pickedGoal = computed(() => (MULTI ? (picks.value.length ? goals.value[0] ?? null : null) : goals.value.find((a) => aimKey(a) === pick.value) ?? null));
+const pickedGoal = computed(() => (ONE ? (onePicks.value.length === 1 ? goals.value.find((a) => aimKey(a) === onePicks.value[0]) ?? null : null) : MULTI ? (picks.value.length ? goals.value[0] ?? null : null) : goals.value.find((a) => aimKey(a) === pick.value) ?? null));
 function decide(): void {
-  const k = multiWhite ? goals.value.filter((a) => a.fractured).map(aimKey) : MULTI ? picks.value : pick.value, f = multiWhite ? "four" : from.value;
+  const k = ONE ? (onePicks.value.length > 1 ? onePicks.value : onePicks.value[0] ?? null) : MULTI ? picks.value : pick.value, f = multiWhite.value ? "four" : from.value;
   t.edit((d) => { applyStartChoice(d, k, f); d.fracAsked = true; });
   emit("done");
 }
@@ -52,11 +57,15 @@ function decide(): void {
 <template>
   <ModalShell :open="true" layer="confirm" rec="tree-start-ask" :title="tr('どこから始める?', 'Where to start?')" width="w-full max-w-xl" full-on-phone body-class="px-4 py-3" @close="emit('close')">
     <div data-tree-start-ask :data-pattern="multiWhite ? 'multi-white' : marked && !ONE ? 2 : 1" class="flex flex-col gap-3 text-[13px]">
-      <!-- ✦ が 2 つ以上: 白ベースからだけ (スイッチ fracOne) -->
-      <section v-if="multiWhite" data-tree-start-ask-multi-white class="g-item flex flex-col gap-2 bg-black/50 px-3 py-2.5">
-        <b class="text-[15px] text-[var(--exile-color-text-title)]">{{ tr("白ベースから", "From a white base") }}</b>
-        <p v-for="a in goals.filter((x) => x.fractured)" :key="aimKey(a)" class="break-words text-mod-fractured">✦ {{ t.aimLabel(a) }}</p>
-        <p class="text-[12px] opacity-75">{{ tr("✦ が 2 つ以上なので、白 (ノーマル) のベースから始め、フラクチャーは木の中で打つ (どの ✦ が固定されても当たり)。フラクチャー済みから始めるなら、完成形の設定で ✦ を 1 つにする", "With 2 or more ✦ marks you start from a white (normal) base and fracture in the tree (a hit if any ✦ is fixed). To start from a fractured item, keep just one ✦ in the final item settings") }}</p>
+      <!-- ✦ にする MOD を ☑ で (スイッチ fracOne)。☑ が 2 つ以上なら白ベースからだけ、「(おすすめ)」は ✦ を付けていない時だけ -->
+      <section v-if="ONE" data-tree-start-ask-one class="g-item flex flex-col gap-2 bg-black/50 px-3 py-2.5">
+        <b class="text-[15px] text-[var(--exile-color-text-title)]">{{ hasMarks ? tr("フラクチャーから", "From a fractured mod") : tr("フラクチャーから (おすすめ)", "From a fractured mod (recommended)") }}</b>
+        <p class="text-[12px] opacity-70">{{ tr("フラクチャー (✦) にする MOD を選ぶ (1 つならフラクチャー済みからも始められる。2 つ以上は白ベースから)", "Pick the mods to fracture (✦) (with one you can also start from a fractured item; with two or more you start from a white base)") }}</p>
+        <label v-for="a in goals" :key="aimKey(a)" data-tree-start-ask-mod class="flex min-w-0 cursor-pointer items-start gap-2 rounded px-1.5 py-1 hover:bg-white/[0.06]" :class="onePicks.includes(aimKey(a)) ? 'bg-[rgba(163,52,42,0.35)]' : ''">
+          <input v-model="onePicks" type="checkbox" :value="aimKey(a)" class="mt-1 shrink-0" />
+          <span class="min-w-0 break-words" :class="onePicks.includes(aimKey(a)) ? 'text-mod-fractured' : 'text-[#c8c8ff]'">{{ onePicks.includes(aimKey(a)) ? "✦ " : "" }}{{ t.aimLabel(a) }}</span>
+        </label>
+        <p v-if="multiWhite" data-tree-start-ask-multi-white class="break-words text-[12px] text-amber-200/90">{{ tr("✦ が 2 つ以上なので、白 (ノーマル) のベースから始め、フラクチャーは木の中で打つ (どの ✦ が固定されても当たり)。フラクチャー済みから始めるなら ✦ を 1 つにする", "With 2 or more ✦ marks you start from a white (normal) base and fracture in the tree (a hit if any ✦ is fixed). To start from a fractured item, keep just one ✦") }}</p>
       </section>
       <!-- ✦ を複数 (スイッチ fracMulti): ☑ で選ぶ。既定は ✦ 付き、おすすめの一言 -->
       <section v-else-if="MULTI" data-tree-start-ask-multi class="g-item flex flex-col gap-2 bg-black/50 px-3 py-2.5">
@@ -68,8 +77,8 @@ function decide(): void {
         </label>
       </section>
       <!-- パターン 1: フラクチャーから (MOD を 1 つ選ぶ) -->
-      <section v-else-if="!marked || ONE" class="g-item flex flex-col gap-2 bg-black/50 px-3 py-2.5">
-        <b class="text-[15px] text-[var(--exile-color-text-title)]">{{ ONE ? tr("フラクチャーから (おすすめ)", "From a fractured mod (recommended)") : tr("フラクチャーから", "From a fractured mod") }}</b>
+      <section v-else-if="!marked" class="g-item flex flex-col gap-2 bg-black/50 px-3 py-2.5">
+        <b class="text-[15px] text-[var(--exile-color-text-title)]">{{ tr("フラクチャーから", "From a fractured mod") }}</b>
         <p class="text-[12px] opacity-70">{{ tr("フラクチャー (✦) にする MOD を 1 つ選ぶ", "Pick the one mod to fracture (✦)") }}</p>
         <label v-for="a in goals" :key="aimKey(a)" data-tree-start-ask-mod class="flex min-w-0 cursor-pointer items-start gap-2 rounded px-1.5 py-1 hover:bg-white/[0.06]" :class="pick === aimKey(a) ? 'bg-[rgba(163,52,42,0.35)]' : ''">
           <input v-model="pick" type="radio" name="tree-start-ask" :value="aimKey(a)" class="mt-1 shrink-0" />
@@ -93,11 +102,18 @@ function decide(): void {
           <span class="text-[12px] opacity-70">{{ tr("✦ を付けない。狙いが全部ランダムで付くまで回すので、ふつうは高くつく", "No ✦. Every target has to roll at random, so it usually costs more") }}</span>
         </span>
       </label>
-      <label v-else-if="(!marked || ONE) && !multiWhite" data-tree-start-ask-white class="g-item flex cursor-pointer items-start gap-2 bg-black/50 px-3 py-2.5 hover:bg-white/[0.06]" :class="pick === null ? 'bg-[rgba(163,52,42,0.35)]' : ''">
+      <label v-else-if="ONE && !multiWhite" data-tree-start-ask-white class="g-item flex cursor-pointer items-start gap-2 bg-black/50 px-3 py-2.5 hover:bg-white/[0.06]" :class="!onePicks.length ? 'bg-[rgba(163,52,42,0.35)]' : ''">
+        <input type="radio" :checked="!onePicks.length" class="mt-1.5 shrink-0" @change="onePicks = []" />
+        <span class="flex min-w-0 flex-col gap-1">
+          <b class="text-[15px] text-[var(--exile-color-text-title)]">{{ tr("白ベースから (フラクチャー無し)", "From a white base (no fracture)") }}</b>
+          <span class="text-[12px] opacity-70">{{ tr("✦ を付けない。狙いが全部ランダムで付くまで回すので、ふつうは高くつく", "No ✦. Every target has to roll at random, so it usually costs more") }}</span>
+        </span>
+      </label>
+      <label v-else-if="!marked" data-tree-start-ask-white class="g-item flex cursor-pointer items-start gap-2 bg-black/50 px-3 py-2.5 hover:bg-white/[0.06]" :class="pick === null ? 'bg-[rgba(163,52,42,0.35)]' : ''">
         <input v-model="pick" type="radio" name="tree-start-ask" :value="null" class="mt-1.5 shrink-0" />
         <span class="flex min-w-0 flex-col gap-1">
           <b class="text-[15px] text-[var(--exile-color-text-title)]">{{ tr("白ベースから (フラクチャー無し)", "From a white base (no fracture)") }}</b>
-          <span class="text-[12px] opacity-70">{{ ONE ? tr("✦ を付けない。狙いが全部ランダムで付くまで回すので、ふつうは高くつく", "No ✦. Every target has to roll at random, so it usually costs more") : tr("フラクチャー無しの白 (ノーマル) のベースから始める", "Start from a white (normal) base without a fracture") }}</span>
+          <span class="text-[12px] opacity-70">{{ tr("フラクチャー無しの白 (ノーマル) のベースから始める", "Start from a white (normal) base without a fracture") }}</span>
         </span>
       </label>
       <div class="flex justify-end gap-2">
