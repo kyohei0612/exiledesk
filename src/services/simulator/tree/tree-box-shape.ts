@@ -16,12 +16,15 @@ import type { TreeDoc } from "./tree-model";
  * 10-28 オーナー「プレ 3 MOD どれがフラクチャーでも同一と扱う、サフィも同様、ただしプレとサフィは明確に別」)、最後にレアリティ。
  * 例 `1.0.0.1|0.0.0.0|✦g1j0.g0j0|rare`。スイッチ boxShape が閉じている間は前の外れの鍵 (`n.c.x|n.c.x`、10-27 夕 goalShape)
  */
-export function bodyOf(data: PatchData, d: TreeDoc, it: StageItem): string {
+export function bodyOf(data: PatchData, d: TreeDoc, it: StageItem, held?: ReadonlySet<string>): string {
   const goals = new Set((d.memoAims ?? []).map((a) => a.modId));
   const on = flag("boxShape");
+  // held = その箱 (その人) が道で持っている狙いの MOD。渡すと、持っていない完成形の MOD は外れに数える (☑ の無い狙いは外れ、S-22・S-82。
+  // 数えないと、カオスの外れの見本のうち完成形の MOD を引いた見本だけ体が変わり mixed になって、同じ形の箱へつながらなかった、10-28 夜オーナー「一緒のMODがふくすうあるけど認識されない」)
+  const aim = (id: string): boolean => goals.has(id) && (!held || !on || held.has(id));
   const side = (ms: readonly StageMod[]): string => {
     let n = 0, c = 0, x = 0, u = 0;
-    for (const m of ms) { if (m.fractured || goals.has(m.modId)) continue; if (m.unrevealed && on) u++; else if (m.desecrated || m.unrevealed) x++; else if (m.crafted || craftedKindOf(data, m)) c++; else n++; }
+    for (const m of ms) { if (m.fractured || aim(m.modId)) continue; if (m.unrevealed && on) u++; else if (m.desecrated || m.unrevealed) x++; else if (m.crafted || craftedKindOf(data, m)) c++; else n++; }
     return on ? `${n}.${c}.${x}.${u}` : `${n}.${c}.${x}`;
   };
   if (!on) return `${side(it.prefixes)}|${side(it.suffixes)}`;
@@ -47,17 +50,28 @@ export const likeOf = (data: PatchData, d: TreeDoc, it: StageItem): string => `$
  * 箱の体 (見本から。作れない箱は null = 比べない)。見本 4 つで外れの種類が違う箱 (未発現の箱にカオスの外れ: 未発現が消えた人と残った人が同じ箱) は
  * `mixed:<id>` = どの箱とも同じにならない (片方の形の箱へつなぐと、もう片方の人がその箱の手を打てない。10-28 冒涜まわりの確かめ)。始まりは見本 1 つ
  */
+/** 箱が道で持っている狙いの MOD (道の当たりの札の組の全部 + 始まりから付いている完成の狙い) */
+export function heldOn(d: TreeDoc, id: string): Set<string> {
+  const out = new Set<string>(heldSets(d, id).flat().map((k) => k.split("|")[0]!));
+  const goals = new Set((d.memoAims ?? []).map((a) => a.modId));
+  for (const m of d.start?.mods ?? []) if (goals.has(m.modId)) out.add(m.modId);
+  return out;
+}
+/** 形の鍵 (tree-shape の shapeKey「modId|tier,…#外れ」) から持っている狙いの MOD */
+export const heldOfKey = (key: string): Set<string> => new Set(key.split("#")[0]!.split(",").filter(Boolean).map((k) => k.split("|")[0]!));
 export function boxBody(data: PatchData, d: TreeDoc, id: string, one = false): string | null {
   const s = sampleOf(data, d, id, 1);
   if (s.note === "none" || s.note?.startsWith("cant:")) return null;
-  const body = bodyOf(data, d, s.item);
+  const held = heldOn(d, id);
+  const body = bodyOf(data, d, s.item, held);
   if (!flag("boxShape") || id === "start" || one) return body;
-  const kinds = new Set([body, ...[2, 3, 4].flatMap((k) => { const m = sampleOf(data, d, id, k); return m.note === "none" || m.note?.startsWith("cant:") ? [] : [bodyOf(data, d, m.item)]; })].map(bodyKinds));
+  const kinds = new Set([body, ...[2, 3, 4].flatMap((k) => { const m = sampleOf(data, d, id, k); return m.note === "none" || m.note?.startsWith("cant:") ? [] : [bodyOf(data, d, m.item, held)]; })].map(bodyKinds));
   return kinds.size > 1 ? `mixed:${id}` : body;
 }
 /** 見本 4 つで体が揃わない箱 (外れの付く側・数が乱数で変わる)。精査の戻り先の比べでは分からない扱い (見本 1 つの側で偶然違って見えた、10-28 見本を道だけで決めた後のアミュ B b31・b32) */
 export function bodyVaries(data: PatchData, d: TreeDoc, id: string): boolean {
-  const bs = new Set([1, 2, 3, 4].flatMap((k) => { const m = sampleOf(data, d, id, k); return m.note === "none" || m.note?.startsWith("cant:") ? [] : [bodyOf(data, d, m.item)]; }));
+  const held = heldOn(d, id);
+  const bs = new Set([1, 2, 3, 4].flatMap((k) => { const m = sampleOf(data, d, id, k); return m.note === "none" || m.note?.startsWith("cant:") ? [] : [bodyOf(data, d, m.item, held)]; }));
   return bs.size > 1;
 }
 /** 箱の体を引く関数 (1 回の組み替え・精査の中で覚える。木を替えたら作り直す) */

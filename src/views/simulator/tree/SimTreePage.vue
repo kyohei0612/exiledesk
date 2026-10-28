@@ -313,6 +313,8 @@ const measureBox = (id: string): number | undefined => v.flow.findNode(id)?.dime
 const tidyOf = (d: typeof doc.value): void => tidy(d, chipNatural, boxHeightOf(measureBox));
 useRowSettle(doc, measureBox);
 /** 段の決め (札・枝分かれ・統合の線の高さを段で揃える、S-68) */
+/** 乗せた箱につながる木の線 (parent = その箱の手から子へ、child = 親の手からその箱へ。スイッチ hoverLines、S-85b) */
+const edgeHot = (e: { id: string; to: Array<{ id: string }> }): "parent" | "child" | null => (!flag("hoverLines") || !hoverBox.value ? null : e.id === hoverBox.value ? "parent" : e.to.some((o) => o.id === hoverBox.value) ? "child" : null);
 const rowL = computed(() => (flag("lineShort") ? rowLayout(doc.value, boxHeightOf(measureBox)) : null));
 async function onTidy(): Promise<void> {
   simOp("tidy");
@@ -431,9 +433,9 @@ const phone = usePhone(), simPhone = flag("simPhone");
             <template #zoom-pane>
               <svg data-tree-lines class="pointer-events-none absolute left-0 top-0 overflow-visible" width="1" height="1" style="z-index: -1">
                 <!-- 札 → 下の箱は矢印なしで箱の上の縁までまっすぐ (箱 → 札の線と同じ形、10-25 オーナー「ここと同じにしようか」) -->
-                <g v-for="e in shownEdges" :key="e.id" data-tree-edge :opacity="flag('hoverLines') && hoverBox ? (e.id === hoverBox || e.to.some((o) => o.id === hoverBox) ? 1 : 0.3) : 1">
-                  <path :d="e.stem" :stroke="LINE.fwd" stroke-width="2" fill="none" />
-                  <path v-for="o in e.to" :key="o.id" :d="o.d" :stroke="o.color" stroke-width="2" stroke-linejoin="round" fill="none" />
+                <g v-for="e in shownEdges" :key="e.id" data-tree-edge :data-hot="edgeHot(e) || undefined" :opacity="flag('hoverLines') && hoverBox && !edgeHot(e) ? 0.3 : 1" :filter="edgeHot(e) ? 'drop-shadow(0 0 4px rgba(243,194,107,0.9))' : undefined">
+                  <path :d="e.stem" :stroke="LINE.fwd" :stroke-width="edgeHot(e) ? 3.5 : 2" fill="none" />
+                  <path v-for="o in e.to" :key="o.id" :d="o.d" :stroke="o.color" :stroke-width="edgeHot(e) && (edgeHot(e) === 'parent' || o.id === hoverBox) ? 3.5 : 2" stroke-linejoin="round" fill="none" />
                 </g>
               </svg>
               <!-- 矢印の上の札 = 打つ手 (押すと替える・消す)。戻りの矢印だけの箱から流れ込む線 -->

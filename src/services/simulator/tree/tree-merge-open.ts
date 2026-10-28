@@ -50,3 +50,4 @@ export function mergeOpenSame(doc: TreeDoc, ids: readonly string[], body: BodyOf
 export const mergedAway = (d: TreeDoc, b: TreeBox): boolean => flag("mergeOpen") && !!b.merged && !!b.autoBack && !b.hand && !!b.back && !!d.boxes[b.back] && depthOf(d, b.id) === depthOf(d, b.back); // 違う段へまとめた古い箱は普通の箱 (↩) で描く
 /** その箱へまとめた (描かない) 箱の数 */
 export const mergedInto = (d: TreeDoc, id: string): number => Object.values(d.boxes).filter((b) => b.back === id && mergedAway(d, b)).length;
+

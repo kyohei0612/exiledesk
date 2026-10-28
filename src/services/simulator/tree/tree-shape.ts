@@ -3,7 +3,7 @@
  * 回す所 (tree-run)・精査 (tree-check)・画面 (つなぐ・まとめる) が同じ物を読む。中身は前のまま
  */
 import { mulberry32, sideOfMod, type PatchData, type StageItem } from "../../craft-stage/engine";
-import { bodyFixed, bodyKinds, bodyOf, boxBody, sameBody, type BodyOf } from "./tree-box-shape";
+import { bodyFixed, bodyKinds, bodyOf, boxBody, heldOfKey, sameBody, type BodyOf } from "./tree-box-shape";
 import { aimHeldOn, junkOf } from "./tree-aim";
 import { effectOf } from "./tree-hands";
 import { aimOpts, aimsOf, essenceBoxFits, handProblem, playHand, targetsOf } from "./tree-sample";
@@ -164,8 +164,9 @@ export function shapesOf(doc: TreeDoc, data?: PatchData): Shape[] {
 function boxOfShape(shapes: readonly Shape[], key: string, at?: { data: PatchData; item: StageItem; doc?: TreeDoc }): string | null {
   // 同じ形の箱が幾つかあれば、体 (tree-box-shape の bodyOf) も合う箱 → 種類が合う箱 → 前のとおり形だけ の順で見る (スイッチ goalShape。合う箱が無くても止まりは増やさない)
   // ✦ の側とレアリティが違う箱へは行かない (✦ は消せない。外れが固定された枝の箱に狙いが固定された人が入り、見本の ✦ が箱ごとに変わった、10-28 モンキー 7。スイッチ boxShape)
-  const fixed = at?.doc && flag("boxShape") ? bodyFixed(bodyOf(at.data, at.doc, at.item)) : "";
-  const all = shapes.filter((s) => s.key === key && (!fixed || s.sig == null || s.sig.startsWith("mixed") || bodyFixed(s.sig) === fixed)), sig = at?.doc ? bodyOf(at.data, at.doc, at.item) : null;
+  const held = heldOfKey(key);
+  const fixed = at?.doc && flag("boxShape") ? bodyFixed(bodyOf(at.data, at.doc, at.item, held)) : "";
+  const all = shapes.filter((s) => s.key === key && (!fixed || s.sig == null || s.sig.startsWith("mixed") || bodyFixed(s.sig) === fixed)), sig = at?.doc ? bodyOf(at.data, at.doc, at.item, held) : null;
   const exact = sig ? all.filter((s) => s.sig == null || s.sig === sig) : [], kinds = sig ? all.filter((s) => s.sig == null || bodyKinds(s.sig) === bodyKinds(sig)) : [];
   const same = exact.length ? exact : kinds.length ? kinds : all;
   // 同じ形の箱が幾つかあれば、手が打てる箱を先に (光 + 消去の箱へ普通の MOD の外れを持って来ても打てない、10-22 金の指輪の見本)
@@ -282,7 +283,8 @@ export function linkSameShape(doc: TreeDoc, ids: readonly string[], loose?: Body
     const c = doc.boxes[id];
     // 分かれ目の行の箱 (branch) は人が手を決める所 (分かれ目の箱も行き先になったので、つなぐと自分の分かれ目へ戻る輪になる)
     // 人が × で外した箱はつながない (noAutoBack)
-    if (!c || c.noAutoBack || c.hand || (c.out === "hit" && !junkLike(doc, c)) || c.out === "pass" || c.out === "any" || c.out === "branch") continue;
+    // 打った後 (狙い無し) の箱も、同じ形の手のある箱へつなぐ (スイッチ boxShape。カオスの「打った後 (同じ側)」が親と同じ形なのに未定のままだった、10-28 夜オーナー「一緒のMODがふくすうあるけど認識されない」)
+    if (!c || c.noAutoBack || c.hand || (c.out === "hit" && !junkLike(doc, c)) || c.out === "pass" || (c.out === "any" && !flag("boxShape")) || c.out === "branch") continue;
     if (c.back && c.back !== MATCH && !(c.out === "lost" && c.back === "start")) continue;
     // フラクチャーの結果の箱は、形 (✦ は数えない) が親と同じでも つながない (親へ戻すと ✦ のある品にもう一度フラクチャーを打って止まった、10-24)
     const p = c.parent ? doc.boxes[c.parent] : undefined;
