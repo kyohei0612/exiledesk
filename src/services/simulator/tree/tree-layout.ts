@@ -63,7 +63,8 @@ export function tidy(d: TreeDoc, chipW?: (id: string) => number | undefined, hei
     const b = d.boxes[id]!;
     b.outs = b.outs.map((o, i) => ({ o, i })).sort((a, z) => OUT_ORDER[d.boxes[a.o]!.out] - OUT_ORDER[d.boxes[z.o]!.out] || a.i - z.i).map((x) => x.o);
     // まとめて描かない箱 (案 A、tree-merge-open の mergedAway と同じ判定) は場所を取らない
-    return b.outs.filter((o) => { const c = d.boxes[o]!; return !(flag("mergeOpen") && c.merged && c.autoBack && !c.hand && c.back && d.boxes[c.back]); });
+    const dep = (x: string): number => { let n = 0; for (let q = d.boxes[x]; q?.parent; q = d.boxes[q.parent]) n++; return n; };
+    return b.outs.filter((o) => { const c = d.boxes[o]!; return !(flag("mergeOpen") && c.merged && c.autoBack && !c.hand && c.back && d.boxes[c.back] && dep(o) === dep(c.back)); });
   };
   const row = rowsOf(d, kids);
   /**

@@ -8,6 +8,7 @@
  * そのままだと箱が 1/Z に小さく見えるので、Vue Flow の倍率は Z 倍で持つ: 画面の「100%」= Vue Flow の zoom Z。
  * (Vue Flow 1.48.2 の pointer() と getEventPosition() を読んで確かめた: 枠の BCR とマウスの clientX はどちらも拡大後のピクセル)
  */
+import { flag } from "../../../web/release-flags";
 import { computed, ref, watch, type Ref, nextTick } from "vue";
 import { useVueFlow } from "@vue-flow/core";
 import { BOX_H, BOX_W, boundsOf, type TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -99,7 +100,8 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     const sx = st ? st.x + BOX_W / 2 : b.x + b.w / 2;
     const half = Math.max(sx - b.x, b.x + b.w - sx);
     // 木の左の外の段の目印 (TreeBandLayer、画面の上で約 110px × ページの zoom) の分も左を空ける (1280 で目印が枠の外に切れた、10-22)
-    const left = bandsOf(doc.value).length ? Math.round(110 * pageZ.value) : 0;
+    // 段の目印を出さない時 (スイッチ noBand、10-28 夜オーナー「これいらんなもう　消してくれわかりづらいし」) は左を空けない
+    const left = !flag("noBand") && bandsOf(doc.value).length ? Math.round(110 * pageZ.value) : 0;
     const fz = Math.min((w / 2 - left - PAD_MIN) / half, (h - topY() - PAD_MIN) / (treeBottom() - b.y)) / pageZ.value;
     return [...ZOOM_LEVELS].reverse().find((l) => l <= Math.min(1, fz) + 1e-6) ?? ZOOM_MIN;
   }

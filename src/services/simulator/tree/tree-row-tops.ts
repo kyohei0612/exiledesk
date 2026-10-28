@@ -19,7 +19,8 @@ export const LINK_Y = LINE_Y * 3 + CHIP_Y;
 export const EST_H = 230;
 
 /** まとめて描かない箱 (案 A、tree-merge-open の mergedAway と同じ判定) */
-const away = (d: TreeDoc, c: TreeBox | undefined): boolean => !!c && flag("mergeOpen") && !!c.merged && !!c.autoBack && !c.hand && !!c.back && !!d.boxes[c.back];
+const depthOf = (d: TreeDoc, id: string): number => { let n = 0; for (let b = d.boxes[id]; b?.parent; b = d.boxes[b.parent]) n++; return n; };
+const away = (d: TreeDoc, c: TreeBox | undefined): boolean => !!c && flag("mergeOpen") && !!c.merged && !!c.autoBack && !c.hand && !!c.back && !!d.boxes[c.back] && depthOf(d, c.id) === depthOf(d, c.back);
 /** 描く子 (まとめた箱はまとめ先へ線が行くので数えない) */
 export const drawnKids = (d: TreeDoc, b: TreeBox): string[] => b.outs.filter((o) => d.boxes[o] && !away(d, d.boxes[o]));
 /** 横の枝分かれを描くか (線の行き先が 2 つ以上、まとめ先への線を含む) */

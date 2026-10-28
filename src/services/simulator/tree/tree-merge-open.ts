@@ -13,6 +13,8 @@ import { heldSets } from "./tree-shape";
 const OPEN_OUTS: ReadonlySet<OutKind | "start"> = new Set(["junk", "any", "junkGone"]);
 /** 作った順 (箱の id は b<番号>) */
 const seqOf = (id: string): number => Number(/\d+$/.exec(id)?.[0] ?? 0);
+/** 親からの深さ (段) */
+const depthOf = (doc: TreeDoc, id: string): number => { let n = 0; for (let b = doc.boxes[id]; b?.parent; b = doc.boxes[b.parent]) n++; return n; };
 const setKey = (doc: TreeDoc, id: string): string => heldSets(doc, id).map((h) => [...h].sort().join(",")).sort().join("|");
 
 export function mergeOpenSame(doc: TreeDoc, ids: readonly string[], body: BodyOf | undefined): void {
@@ -26,9 +28,11 @@ export function mergeOpenSame(doc: TreeDoc, ids: readonly string[], body: BodyOf
     const mine = body(id);
     // 体の分からない箱・見本ごとに外れの種類が違う箱 (mixed) はまとめない
     if (!mine || mine.startsWith("mixed")) continue;
-    const key = setKey(doc, id), below = new Set(subtree(doc, id));
+    const key = setKey(doc, id), below = new Set(subtree(doc, id)), dep = depthOf(doc, id);
+    // まとめるのは同じ段 (親からの深さが同じ) の箱どうしだけ。違う段の箱へまとめると、その手の線が上の段の決めていない箱へ伸びて線がぐちゃっとなった
+    // (10-28 夜オーナー「まだ決めてない＋が出てるのに勝手に線につながれた」)。違う段の同じ形は戻りの自動のつなぎ (S-50) に任せる
     const to = Object.values(doc.boxes)
-      .filter((t) => t.id !== id && !below.has(t.id) && seqOf(t.id) < seqOf(id) && OPEN_OUTS.has(t.out) && !t.back && !t.done && !t.split)
+      .filter((t) => t.id !== id && !below.has(t.id) && seqOf(t.id) < seqOf(id) && OPEN_OUTS.has(t.out) && !t.back && !t.done && !t.split && depthOf(doc, t.id) === dep)
       .sort((a, b) => seqOf(a.id) - seqOf(b.id))
       .find((t) => body(t.id) === mine && sameBody(body, id, t.id) && setKey(doc, t.id) === key);
     if (!to) continue;
@@ -43,6 +47,6 @@ export function mergeOpenSame(doc: TreeDoc, ids: readonly string[], body: BodyOf
  * まとめた箱 = 描かない箱 (案 A、10-28 夜オーナー「N1の案Aだな」): 親の線はまとめ先の箱へ直に入り、まとめ先の題の横に「n 本から合流」。
  * 戻り先を手で替える・× で外す (autoBack が消える)・手を足すと、また普通の箱として描く
  */
-export const mergedAway = (d: TreeDoc, b: TreeBox): boolean => flag("mergeOpen") && !!b.merged && !!b.autoBack && !b.hand && !!b.back && !!d.boxes[b.back];
+export const mergedAway = (d: TreeDoc, b: TreeBox): boolean => flag("mergeOpen") && !!b.merged && !!b.autoBack && !b.hand && !!b.back && !!d.boxes[b.back] && depthOf(d, b.id) === depthOf(d, b.back); // 違う段へまとめた古い箱は普通の箱 (↩) で描く
 /** その箱へまとめた (描かない) 箱の数 */
 export const mergedInto = (d: TreeDoc, id: string): number => Object.values(d.boxes).filter((b) => b.back === id && mergedAway(d, b)).length;
