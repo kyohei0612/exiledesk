@@ -2,9 +2,9 @@
  * use-sim-shelf.ts — シミュの画面で見本のアイテムにクラフト台の棚 (CurrencyShelf) を出す時の共通の部品 (2026-10-22 code-audit 2 節。
  * 木の手を選ぶ TreeHandShelf・シミュのクイズ StageQuizEditor の写しをまとめた。ツリーの試し打ち TreeTrial は 10-22 に消した)。
  * provideShelf で見本を棚に渡し、打てるか (当たり所で弾かれるだけの物は打てる扱い、オーナーの方針 2026-10-12) とお告げの付け外しを決める。
- * 持つ / 離すはクラフト台と同じ: 同じ物をもう一度押す・棚の空いている所を押す = 離す (お告げも外す、オーナー 10-22)
+ * 持つ / 離すはクラフト台と同じ: 同じ物をもう一度押す・棚の空いている所を押す・どこでも右クリック = 離す (お告げも外す、オーナー 10-22)
  */
-import { ref, type Ref } from "vue";
+import { onBeforeUnmount, onMounted, ref, type Ref } from "vue";
 import { craftStage as s } from "../../state/craft-stage";
 import { provideShelf, simHidden } from "../../state/for-share/shelf-context";
 import { useReason, type StageItem } from "../../services/craft-stage/engine";
@@ -32,6 +32,13 @@ export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null
   function toggleOmen(id: string): void { omens.value = omens.value.includes(id) ? omens.value.filter((o) => o !== id) : [...omens.value, id]; }
   function release(): void { held.value = null; omens.value = []; }
   function onHold(k: string): void { if (held.value === k) release(); else held.value = k; }
+  /**
+   * 右クリックはどこでも持った物を離す (窓の中・窓の外の暗い所・題・木の上。持っている間だけ、ブラウザのメニューも出さない)。
+   * 前は手の窓の中の欄の右クリックだけで、窓の文「右クリック / Esc で手放す」どおりに効かない所があった (10-28 深夜オーナー「シミュもアイテムもって右クリで持つのキャンセルしてくれ」)
+   */
+  const onContext = (e: MouseEvent): void => { if (!held.value) return; e.preventDefault(); e.stopPropagation(); release(); };
+  onMounted(() => window.addEventListener("contextmenu", onContext, true));
+  onBeforeUnmount(() => window.removeEventListener("contextmenu", onContext, true));
   /**
    * 棚の空いている所を押す = 離す (ボタン・入力・お告げの欄の中は除く)。
    * 指 (touch) は押した瞬間には離さず、動かさずに押して離した時だけ離す (送ろうと棚に触れただけで持った物とお告げの欄が消えた、10-26 オーナー
