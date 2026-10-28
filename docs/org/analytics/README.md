@@ -6,14 +6,14 @@
 
 ## 決まり (docs/org/dev/README.md の決まりが先)
 1. 持ち物は server/ (sim.ts 以外)・Web の作り・手元の環境と照らしの台本 (地図の「Web の作り」)。触るファイルは dev/touching/analytics.md に書く。
-2. Cloudflare の使用量 (worker ごと・KV・D1) を毎朝と大きな確かめの前後に見る。上限の 5 割を超えそうなら先にブラックへ。
-3. 開発版は手元だけ (pnpm preview:prod -- --dev、10-24 に web-dev を消した)。本番の枠と記録を食わない作りに。本番の worker・お金の掛かる設定はオーナーの OK の後。
-4. 秘密 (鍵・トークン) は書かない・ログに残さない (wrangler の secret で持つ)。個人の情報は持ち出さず、forget.ts の端末は集計から外す。
-5. 24 時間見張らない。毎朝 9 時の AI の評価と見解は予定のタスクが書き #日報 へ (notes/daily-report-task.md)。数字だけの日報は 10-26 にやめた。
+2. Cloudflare の使用量は Y-73・Y-74 (毎朝と大きな確かめの前後に見て、5 割で先にブラックへ)。Workers は無料のまま Y-76。
+3. 開発版は手元だけ Y-70・本番に書かない Y-71・確かめの記録を混ぜない Y-64。本番の worker・お金の掛かる設定はオーナーの OK の後 Y-75。
+4. 鍵は Y-90〜95、人が分かる物を記録しない Y-62、記録しない端末 (forget.ts) Y-63。
+5. 24 時間見張らない Y-47、#日報 は毎朝の AI の評価と見解だけ Y-45 (流れは notes/daily-report-task.md)。
 6. バグは即調べ、再現手順とどの部か (black/README.md の振り先) をブラックへ。直すのはサーバーのバグだけ。
 7. 「おかしい」と言われたら先に記録 (D1・画面のエラーの全文・history) を読む。
-8. 記録を足す時は画面から `logRecord` を呼ぶだけ。KV は増やさない (メモ analytics-logs)。
-9. 要望・バグの返事は本番に出たのを確かめてから、ブラック経由でオーナーの OK の後に置く (メモ feedback-replies)。
+8. 記録を足す時は Y-60 (画面は `logRecord` を呼ぶだけ)・Y-02 (新しい物は D1、KV は増やさない)。
+9. 要望・バグの返事は R-20 (本番に出たのを確かめてから、ブラック経由でオーナーの OK の後に置く)。
 10. 確かめは台本の中で待つ (sleep の繰り返し・PowerShell は使わない)。報告はブラックへ 1〜3 行。
 
 ## 地図
@@ -23,4 +23,4 @@
 - Web の作り (10-25 に共通から移った、701e97b5): vite.web.config.ts (mtx-art・stub を外す)・public/robots.txt・scripts/build-seo-pages.mjs (読み物のページ)。手元の本番環境 preview-prod.mjs・返りの比べ compare-prod-local.mjs・照らし compare-snaps.mjs。
 - 静的なページを数える JS: scripts/_pv-client.js (→ /pv.js、コスメの build-cosmetics-pages.mjs が写して head に札を置く。visit + screen "cosmetics:<まとめ>:<言語>"、1 時間に 1 回・ロボットと exiledesk.com の外は送らない、PV_API=<手元の server/live> で確かめ。10-25)。ブログは別の _blog-client.js。
 - 台本 scripts/: post-ai-review.mjs <日> (AI の評価と見解 <日>-ai.md の全文を #日報 へ。D1 の ai_review に置いて Worker が REPORT_WEBHOOK で流す、同じ日は 1 回、--dry で切り方だけ。10-26)・pull-logs.mjs <日> (D1 の記録を data-cache/logs/<日>.jsonl に、最後に pull-server-notes.mjs で異常・要望・Discord を <日>-server.json に。毎朝の AI の評価と見解はこの 2 つを読む、10-26)・pull-server-notes.mjs <日> (異常・要望・Discord だけ、pull-logs が最後に回す)・analyze-logs.py (記録の集計の道具、`--json` で数字だけ)・sim-telemetry.mjs・check-www-redirect.mjs (www の Bot の 301 とトップ・シェア、本番で見るだけ)。テスト tests/: live-worker・log-sender-throttle。
-- メモ: analytics-logs (決着済み: D1 の visit・screen)・feedback-replies (`wrangler kv key put fbr:<id>`)・history-logs・roadmap-2026-10 (月 10 万 PV)・ads-page-model。docs: roadmap-2026-10.md、pending-release.md。
+- 決まりは system.md (記録 Y-60〜66・受け口 Y-40〜47・枠 Y-70〜76) と R-20。経緯のメモ analytics-logs・feedback-replies・history-logs・ads-page-model は記録。docs: roadmap-2026-10.md、pending-release.md。
