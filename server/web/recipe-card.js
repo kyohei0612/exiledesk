@@ -67,17 +67,25 @@ const T = (c, ja, en) => (c.en ? en : ja);
 const fmtPct = (p) => (p > 0 && p < 1 ? p.toFixed(1) : String(Math.round(p)));
 const fmtCost = (v) => (v < 10 ? (Math.round(v * 10) / 10).toString() : Math.round(v).toLocaleString("en-US"));
 
-/** 難しさの格 (額の飾り)。0 = 値が無い、1 定番、2 上級 (割合 40% 以下か費用 10 神以上)、3 至難 (10% 以下か 50 神以上) */
+/**
+ * 額の格と札。frame = 額の飾り (0 値が無い・1 定番・2 上級・3 至難・4 沼)、badges = 額の上の札 (両方当たれば 至難 と 沼 を並べ、額は至難)。
+ * 至難 = 完成の割合が 10% 以下、沼 = 平均の費用が 50 神以上 (10-28 オーナー「99%はぬまが絶対あるってわけね」「沼やな」)、上級 = 割合 40% 以下か 10 神以上
+ */
 export function tierOf(c) {
-  if (c.pct == null && c.cost == null) return 0;
+  if (c.pct == null && c.cost == null) return { frame: 0, badges: [] };
   const p = c.pct ?? 100, cost = c.cost ?? 0;
-  return p <= 10 || cost >= 50 ? 3 : p <= 40 || cost >= 10 ? 2 : 1;
+  const hard = c.pct != null && p <= 10, pit = c.cost != null && cost >= 50;
+  if (hard || pit) return { frame: hard ? 3 : 4, badges: [hard && 3, pit && 4].filter(Boolean) };
+  const f = p <= 40 || cost >= 10 ? 2 : 1;
+  return { frame: f, badges: [f] };
 }
 const TIERS = [
   { line: "rgba(150,110,60,0.45)", inner: "rgba(150,110,60,0.2)", glow: "rgba(255,170,70,0.10)", ink: "#b9a07a" },
   { line: "rgba(185,160,122,0.70)", inner: "rgba(185,160,122,0.3)", glow: "rgba(255,180,90,0.14)", ink: "#cdb88f", ja: "定番", en: "STANDARD" },
   { line: "rgba(226,184,92,0.90)", inner: "rgba(226,184,92,0.4)", glow: "rgba(255,190,90,0.24)", ink: "#f0cf86", ja: "上級", en: "ADVANCED", double: true, corners: true },
-  { line: "rgba(224,164,110,1)", inner: "rgba(224,164,110,0.45)", glow: "rgba(255,140,60,0.38)", ink: "#f0b47e", ja: "至難", en: "LEGENDARY", double: true, corners: true },
+  { line: "rgba(224,164,110,1)", inner: "rgba(224,164,110,0.45)", glow: "rgba(255,140,60,0.38)", ink: "#f0b47e", ja: "至難", en: "LEGENDARY", double: true, corners: true, sil: "224,164,110", big: "#f0b47e", bg: "#4a2a12" },
+  // 沼 = 濁った緑 (至難の銅色と見分ける)。英語は仮 (ゲームの用語ではない、案はブラックへ)
+  { line: "rgba(128,170,104,1)", inner: "rgba(128,170,104,0.45)", glow: "rgba(90,150,70,0.36)", ink: "#a9d38f", ja: "沼", en: "MONEY PIT", double: true, corners: true, sil: "150,196,120", big: "#a9d38f", bg: "#1f2c14" },
 ];
 
 /** og:title・og:description の文 */
@@ -95,7 +103,7 @@ export function recipeDesc(c) {
 }
 
 /** 木の影絵 (箱と直角の線)。w×h の中に収めて真ん中に置く。当たりの箱は明るく、外れ・消えた箱は暗く */
-function silhouette(shape, w, h, tier) {
+function silhouette(shape, w, h, TI) {
   if (!shape.boxes.length) return "";
   const BW = 316, BH = 200;
   const xs = shape.boxes.map((b) => b.x), ys = shape.boxes.map((b) => b.y);
@@ -104,7 +112,7 @@ function silhouette(shape, w, h, tier) {
   const ox = (w - (maxX - minX) * k) / 2 - minX * k, oy = (h - (maxY - minY) * k) / 2 - minY * k;
   const r1 = (v) => Math.round(v * 10) / 10;
   const X = (v) => r1(ox + v * k), Y = (v) => r1(oy + v * k);
-  const ink = tier >= 3 ? "224,164,110" : "232,205,130";
+  const ink = TI.sil ?? "232,205,130";
   const t = Math.max(1.5, Math.min(3, BW * k * 0.03));
   const at = new Map(shape.boxes.map((b) => [b.id, b]));
   const line = (x, y, lw, lh) => `<div style="display:flex;position:absolute;left:${r1(x)}px;top:${r1(y)}px;width:${r1(Math.max(t, lw))}px;height:${r1(Math.max(t, lh))}px;background:rgba(${ink},0.32)"></div>`;
@@ -124,7 +132,7 @@ function silhouette(shape, w, h, tier) {
 
 /** カードの絵 (PNG のバイト列)。1200×630 を PC・スマホ共通で。X は下の端に題を重ねるので大事な字は 560px より上 */
 export async function recipeCardImage(url, env, c) {
-  const tier = tierOf(c), TI = TIERS[tier];
+  const { frame: tier, badges } = tierOf(c), TI = TIERS[tier];
   const art = c.art ? await dataUrl(env, url, `/og-art/${c.art}.png`) : null;
   const size = c.art ? await pngSize(env, url, `/og-art/${c.art}.png`) : null;
   const k = size ? Math.min(1.8, 160 / size.w, 180 / size.h) : 1;
@@ -143,7 +151,8 @@ export async function recipeCardImage(url, env, c) {
   const mods = c.mods.slice(0, SHOW_MODS);
   const more = c.mods.length - mods.length;
   const moreText = more > 0 ? T(c, `ほか ${more} 個`, `+${more} more`) : "";
-  const tierWord = tier ? T(c, TI.ja, TI.en) : "";
+  const badgeWords = badges.map((b) => ({ w: T(c, TIERS[b].ja, TIERS[b].en), ink: TIERS[b].ink }));
+  const tierWord = badgeWords.map((b) => b.w).join("");
   const noStats = T(c, "開くと、そのまま 100 人回せます", "Open it and run 100 crafters as is");
   const pctLabel = T(c, `${c.people} 人で完成`, `of ${c.people} finish`), costLabel = T(c, "平均の費用", "avg cost"), handsLabel = T(c, "手", "steps");
   // 字の大きさは幅から (全角 1・半角 0.55 で数える)
@@ -172,7 +181,7 @@ export async function recipeCardImage(url, env, c) {
   // 右の額 (x 750〜1166、y 30〜600)。上の 300px に木の影絵とベースの絵、下に割合・費用・手
   const PX = 750, PY = 30, PW = 416, PH = 570, SH = 300;
   const corner = (img, x, y) => (img ? `<img src="${img}" width="40" height="40" style="position:absolute;left:${x}px;top:${y}px" />` : "");
-  const big = tier >= 3 ? "#f0b47e" : "#6ee7b7";
+  const big = TI.big ?? "#6ee7b7";
   const stats = c.pct != null || c.cost != null || c.hands != null;
   const statsHtml = stats ? `
       <div style="display:flex;flex-direction:column;align-items:center;width:${PW}px">
@@ -184,12 +193,12 @@ export async function recipeCardImage(url, env, c) {
         </div>
       </div>` : `<span style="font-size:24px;font-weight:500;color:#cfc3aa;width:${PW - 30}px;text-align:center;justify-content:center">${esc(noStats)}</span>`;
   const html = `
-<div style="display:flex;width:1200px;height:630px;position:relative;background-image:radial-gradient(ellipse at 80% 40%, ${tier >= 3 ? "#4a2a12" : "#3a2a10"} 0%, #160f08 42%, #050403 78%);font-family:'Noto Sans JP';color:#efe6d2">
+<div style="display:flex;width:1200px;height:630px;position:relative;background-image:radial-gradient(ellipse at 80% 40%, ${TI.bg ?? "#3a2a10"} 0%, #160f08 42%, #050403 78%);font-family:'Noto Sans JP';color:#efe6d2">
   <div style="display:flex;position:absolute;left:${PX}px;top:${PY}px;width:${PW}px;height:${PH}px;background:rgba(10,8,5,0.55);border:${TI.double ? 3 : 2}px solid ${TI.line}"></div>
   ${TI.double ? `<div style="display:flex;position:absolute;left:${PX + 9}px;top:${PY + 9}px;width:${PW - 18}px;height:${PH - 18}px;border:1px solid ${TI.inner}"></div>` : ""}
   <div style="display:flex;position:absolute;left:${PX + 40}px;top:${PY + 30}px;width:${PW - 80}px;height:${SH}px;border-radius:${SH / 2}px;background-image:radial-gradient(circle, ${TI.glow} 0%, rgba(0,0,0,0) 70%)"></div>
-  <div style="display:flex;position:absolute;left:${PX + 24}px;top:${PY + 40}px;width:${PW - 48}px;height:${SH - 10}px">${silhouette(c.shape, PW - 48, SH - 10, tier)}</div>
-  ${tierWord ? `<div style="display:flex;position:absolute;left:${PX}px;top:${PY + 14}px;width:${PW}px;justify-content:center"><span style="font-family:'${serif}';font-size:26px;letter-spacing:${c.en ? 6 : 14}px;color:${TI.ink};padding:2px 18px;background:rgba(5,4,3,0.8)">${esc(tierWord)}</span></div>` : ""}
+  <div style="display:flex;position:absolute;left:${PX + 24}px;top:${PY + 40}px;width:${PW - 48}px;height:${SH - 10}px">${silhouette(c.shape, PW - 48, SH - 10, TI)}</div>
+  ${badgeWords.length ? `<div style="display:flex;position:absolute;left:${PX}px;top:${PY + 14}px;width:${PW}px;justify-content:center">${badgeWords.map((b, i) => `<span style="font-family:'${serif}';font-size:${badgeWords.length > 1 && c.en ? 18 : 28}px;letter-spacing:${badgeWords.length > 1 && c.en ? 2 : c.en ? 4 : 14}px;color:${b.ink};padding:2px ${badgeWords.length > 1 && c.en ? 10 : 16}px;margin-left:${i ? 10 : 0}px;background:rgba(5,4,3,0.82);border:1px solid ${b.ink}">${esc(b.w)}</span>`).join("")}</div>` : ""}
   ${TI.corners ? corner(ctl, PX - 4, PY - 4) + corner(ctr, PX + PW - 36, PY - 4) + corner(cbl, PX - 4, PY + PH - 36) + corner(cbr, PX + PW - 36, PY + PH - 36) : ""}
   <div style="display:flex;position:absolute;left:${PX}px;top:${PY + 40 + SH + 8}px;width:${PW}px;justify-content:center">${statsHtml}</div>
   <div style="display:flex;position:absolute;left:56px;top:34px;align-items:flex-end">
