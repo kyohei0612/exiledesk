@@ -205,9 +205,26 @@ export function handProblem(data: PatchData, item: StageItem, h: Hand): string |
 
 /** 箱の見本 (seed が同じなら同じ物。木の設定 tune で打つ) */
 export function sampleOf(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
+  // 見本は道だけで決まる (S-74、スイッチ boxShape) ので、木の中身 (位置を除く) が同じなら覚えた見本を返す。
+  // 整列・段揃え・引っ張るなど位置だけの変化で全部の箱をエンジンで作り直し、整列が毎回約 1 秒かかった (10-28 夜オーナー「サイトが重い」)
+  if (!flag("boxShape")) return withTreeTune(doc, () => sampleIn(data, doc, boxId, seed));
+  const sig = docSig(doc);
+  if (sig !== memoSig || data !== memoData) { memo.clear(); memoSig = sig; memoData = data; }
   return withTreeTune(doc, () => sampleIn(data, doc, boxId, seed));
 }
+/** 覚えた見本 (木の中身の鍵が変わったら全部捨てる) */
+const memo = new Map<string, Sample>();
+let memoSig = "", memoData: PatchData | null = null;
+/** 木の中身の鍵 (位置 x・y と、見本に効かないメモの文を除く) */
+const docSig = (doc: TreeDoc): string => JSON.stringify(doc, (k, v) => (k === "x" || k === "y" || k === "note" ? undefined : v));
 function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
+  if (!flag("boxShape")) return sampleRaw(data, doc, boxId, seed);
+  const k = `${boxId}|${seed}|${altDeep ? 1 : 0}`;
+  let r = memo.get(k);
+  if (!r) { r = sampleRaw(data, doc, boxId, seed); memo.set(k, r); }
+  return r;
+}
+function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
   const b = doc.boxes[boxId];
   if (!b) return { item: freshItem(data, doc.base, doc.itemLevel, "rare"), note: null };
   if (b.out === "start") return startItemOf(data, doc, mulberry32(seed));

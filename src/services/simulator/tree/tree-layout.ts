@@ -3,7 +3,7 @@
  */
 import { aimKey, BOX_W, GAP_Y, type TreeBox, type TreeDoc } from "./tree-model";
 import { flag } from "../../../web/release-flags";
-import { noteLaid, rowTops } from "./tree-row-tops";
+import { centerMerged, noteLaid, rowTops, settleRows } from "./tree-row-tops";
 
 /** 整列で兄弟を並べる順 (当たり → 狙いが消えた → 外れが消えた → 外れ。外れは一番右) */
 const OUT_ORDER: Record<TreeBox["out"], number> = { start: 0, hit: 0, any: 0, pass: 0, branch: 0, lost: 1, junkGone: 2, junk: 3 };
@@ -138,6 +138,8 @@ export function tidy(d: TreeDoc, chipW?: (id: string) => number | undefined, hei
   // 始まりの箱は x = 0 に戻す (木ごとずらす)
   const dx = -st.x;
   if (tops) noteLaid(d.boxes.start!.y, tops);
+  // 段を揃える・合流を真ん中へ、まで整列の中で済ませる (後から use-row-settle が揃え直すと木が 2 回変わり、重い作り直しが 2 回走った、10-28 夜)
+  if (tops && heightOf) { settleRows(d, heightOf); centerMerged(d); }
   for (const b of Object.values(d.boxes)) b.x += dx;
 }
 
