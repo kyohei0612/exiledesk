@@ -301,6 +301,8 @@ export function linkSameShape(doc: TreeDoc, ids: readonly string[], loose?: Body
     if (!to || !shapeFits(doc, id, to) || !sameBody(loose, id, to)) continue;
     c.back = to;
     c.autoBack = true;
+    // まとめの印は tree-merge-open だけが付ける (ここでつないだ箱は描く)
+    delete c.merged;
     c.done = null;
   }
 }
@@ -361,6 +363,7 @@ export function linkShapeHit(doc: TreeDoc, ids: readonly string[], loose?: BodyO
     if (!matchTargets(doc, id).some((m) => !!m.to && !down.has(m.to) && sameBody(loose, id, m.to))) continue;
     c.back = MATCH;
     c.autoBack = true;
+    delete c.merged;
   }
 }
 export function linkSameHit(doc: TreeDoc, ids: readonly string[], loose?: BodyOf): void {

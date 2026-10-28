@@ -80,7 +80,7 @@ export function setSplit(d: TreeDoc, id: string): void {
   for (const o of b.outs) drop(d, subtree(d, o));
   b.hand = null;
   b.back = null;
-  delete b.autoBack;
+  delete b.autoBack; delete b.merged;
   b.done = null;
   const c = mk(d, "branch", id);
   b.outs = [c.id];

@@ -303,7 +303,8 @@ export function drop(d: TreeDoc, ids: readonly string[]): void {
   const gone = new Set(ids);
   for (const id of ids) delete d.boxes[id];
   for (const b of Object.values(d.boxes)) {
-    if (b.back && gone.has(b.back)) b.back = null;
+    // 消した箱へまとめていた・つないでいた箱は、戻り先と一緒に自動の印・まとめの印も外す (印だけ残り、後で別の箱へつながった時に描かれず数えられた、10-28 夜オーナー「3 本から合流」)
+    if (b.back && gone.has(b.back)) { b.back = null; delete b.autoBack; delete b.merged; }
     for (const r of b.split ?? []) if (r.to && gone.has(r.to)) r.to = null;
   }
 }
@@ -347,7 +348,7 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   b.hand = { ...hand, omens: [...hand.omens], repeat: hand.repeat ? { ...hand.repeat } : null, ...(hand.keep ? { keep: hand.keep.map((a) => ({ ...a })) } : {}) };
   b.back = null;
   delete b.split;
-  delete b.autoBack;
+  delete b.autoBack; delete b.merged;
   // 同じ手を選び直した時は、今の箱と先はそのままで、箱の無い狙いの当たりだけ足す (後から完成の狙いに足した MOD など。10-26 オーナー「全ての結果を表示して」、外れへ自動で入れない)
   // 狙い無し (free) も、付きうる狙いの当たりの箱を打った後の横に足す (打った後は狙いが付かなかった人だけ、tree-shape の outBoxOf。10-26 オーナー「当たってたら次の回に消去でそれ決める」)
   if (same) { if ((want.includes("hit") && GROUPED.includes(kind)) || kind === "free") addHits(d, b, aims, order); return; }
@@ -466,7 +467,7 @@ export function setBack(d: TreeDoc, id: string, to: string | null): void {
   if (!to && b.back) b.noAutoBack = true;
   if (to) delete b.noAutoBack;
   b.back = to;
-  delete b.autoBack;
+  delete b.autoBack; delete b.merged;
   if (to) { b.done = null; delete b.split; healLost(d); }
 }
 
