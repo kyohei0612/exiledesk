@@ -11,6 +11,7 @@ import { withTreeTune } from "../../../services/simulator/tree/tree-tune";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { craftStage as s } from "../../../state/craft-stage";
 import { routeKeyOf } from "./use-tree-check";
+import { noteCardRun } from "../recipe-card";
 import { track } from "../../../utils/track";
 
 /** 回す人数 (帯の「100 人回した時」と同じ)。seed は台本・解析君と同じ 1 */
@@ -134,7 +135,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
       for (;;) {
         const r = withTreeTune(d, () => g.next());
         if (my !== token) return;
-        if (r.done) { raw.value = r.value; break; }
+        if (r.done) { raw.value = r.value; if (!opt.test) noteCardRun(d, withStartCost(r.value, startCost())); break; }
         // 1 人でも止まったらそこで止める (直してから回し直す)。打ち止め (神・手の上限) は止まりではないので続ける
         const st = last ? Object.keys((last as TreeRunResult).stuckAt)[0] : undefined;
         if (st && !opt.test) { halted.value = { box: st, n: r.value }; onHalt(st); break; }

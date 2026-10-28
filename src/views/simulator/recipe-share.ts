@@ -11,7 +11,8 @@ import { logRecord } from "../../utils/log-record";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { migrateTreeDoc } from "../../services/simulator/tree/tree-migrate";
 import { addTreeRecipe, removeTreeRecipe, sameTree, setCurrentTreeRecipe, treeRecipes } from "../../state/simulator/tree-recipes";
-import { DEV_BUILD } from "../../web/release-flags";
+import { DEV_BUILD, flag } from "../../web/release-flags";
+import { recipeCardOf } from "./recipe-card";
 import { DEV_RECIPES } from "./dev-recipes";
 import { useTree } from "./tree/use-tree";
 import { openTreePage } from "../../web/page";
@@ -40,7 +41,10 @@ export async function treeShortUrl(r: { name: string; tree: TreeDoc }): Promise<
   const long = await treeShareUrl(r);
   const code = long.slice(long.indexOf(RECIPE_SHARE_PREFIX) + RECIPE_SHARE_PREFIX.length);
   try {
-    const res = await fetch(`${SHORT_HOST}/r/new`, { method: "POST", body: code });
+    // カード絵の値も一緒に (JSON { code, card }、スイッチ recipeCard。閉じている間はただの code)
+    let card: ReturnType<typeof recipeCardOf> | null = null;
+    if (flag("recipeCard")) try { card = recipeCardOf(r.tree); } catch { card = null; }
+    const res = await fetch(`${SHORT_HOST}/r/new`, { method: "POST", body: card ? JSON.stringify({ code, card }) : code }); // ヘッダーは付けない (サーバーは本文の頭の { で見分ける。付けると別の住所からは事前の問い合わせが要る)
     if (!res.ok) return long;
     const id = ((await res.json()) as { id?: unknown }).id;
     return typeof id === "string" && /^[A-Za-z0-9_-]{1,32}$/.test(id) ? `${SHORT_HOST}/r/${id}` : long;
