@@ -5,3 +5,8 @@
 let at = -Infinity;
 export const markTabArrive = (): void => { at = performance.now(); };
 export const cameByTab = (): boolean => performance.now() - at < 2000;
+
+/** ベースを押した直後か (1.5 秒)。ベース選びの部品 (BaseCatalog) はどの置き場の物もこの間は一覧へ送らない (オーナー 10-28「ベースを選んで、最初の挙動でスクロールがMODから始まる」) */
+let picked = -Infinity;
+export const markBasePick = (): void => { picked = performance.now(); };
+export const justPickedBase = (): boolean => performance.now() - picked < 1500;

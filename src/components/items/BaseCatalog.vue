@@ -19,7 +19,7 @@ import { glowOfStem, stemOf, todayUnique } from "./fam-today";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import popularData from "../../data/popular-bases.json";
 import { flag } from "../../web/release-flags";
-import { cameByTab } from "../../utils/tab-arrive";
+import { cameByTab, justPickedBase, markBasePick } from "../../utils/tab-arrive";
 import { vFitText } from "../../utils/fit-text";
 /** 開く・畳むの揃え (データが後から届いた時・スマホの頭)。本番は OK 待ち。開いた時に今の部位まで送るのは本番でも同じ (前は StageBasePage が呼んでいた) */
 const OPEN_FIX = flag("monkey1023");
@@ -310,8 +310,17 @@ function onClickCapture(e: MouseEvent): void {
  */
 /** bottomFirst: 一覧が画面より高い時も下 (帯 + 24px) を見せる (「もっと見る」で広げた時。2026-10-14 オーナー「下 24px あけるんじゃねえの」) */
 /** 開いた一覧 (PC は部位の下に差し込む枠、スマホは 1 段ずつの最後のカードの一覧) */
+/**
+ * ベースを押した直後 (1.5 秒) は一覧へ送らない (スイッチ backPlace)。押した時の今のベースの変わりで送りが走り、エミュの画面に替わった後に
+ * MOD の所まで滑っていた (オーナー 10-28「ベースを選んで、最初の挙動でスクロールがMODから始まる」)
+ */
+function onPick(en: string): void {
+  if (flag("backPlace")) markBasePick();
+  emit("pick", en);
+}
 const panelEl = (): HTMLElement | null => rootEl.value?.querySelector<HTMLElement>("[data-base-panel], [data-base-phone-list]") ?? null;
 function revealPanel(bottomFirst = false): void {
+  if (justPickedBase()) return;
   const el = panelEl();
   if (!el) return;
   const box = scrollBoxOf(el);
@@ -389,7 +398,7 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
     <!-- 人気のベース (初めての人のベース選び): 部位をまたいだ上位。押せばそのまま始まる -->
     <div v-if="popular && !query.trim() && popularTop.length && (!phone || !family)" class="mb-4">
       <p class="mb-1 text-[12px] text-amber-200/90 md:text-[13px]">{{ tr("人気のベース", "Popular bases") }}<span class="ml-2 text-[11px] opacity-60">{{ tr("みんながよく作っているベース", "What people craft most") }}</span></p>
-      <BaseCardGrid :list="popularTop" :selected="selected" :note="note" show-cls fold @pick="(en) => emit('pick', en)" />
+      <BaseCardGrid :list="popularTop" :selected="selected" :note="note" show-cls fold @pick="onPick" />
     </div>
     <!-- 部位 → 属性 / 元素 → ベース。スマホは 1 段ずつ、PC は部位のタイルを並べたまま、押したタイルの行の下に属性とベースを出す -->
     <template v-if="!query.trim()">
@@ -423,7 +432,7 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
             </div>
             <p v-if="!cls" class="py-1 text-[12px] opacity-60">{{ tr("属性を選ぶ", "Choose an attribute") }}</p>
             <!-- 開き直す・部位を選び直すたびに畳んだ状態 (2 行 + もっと見る) から (2026-10-13 オーナー「もっと見るは一番下に来るでしょ」: 前に広げたまま開いていた) -->
-            <BaseCardGrid v-else :key="openSeq" :list="list" :selected="selected" :note="note" :hot="hot" fold @pick="(en) => emit('pick', en)" @expand="revealMore" @collapse="foldMore" />
+            <BaseCardGrid v-else :key="openSeq" :list="list" :selected="selected" :note="note" :hot="hot" fold @pick="onPick" @expand="revealMore" @collapse="foldMore" />
           </div>
         </template>
       </div>
@@ -441,7 +450,7 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
     </template>
     <!-- ② ベースのカード: スマホ (1 段ずつの最後) と名前で探す時はここ -->
     <!-- スマホの一覧も PC と同じに、出た時・「もっと見る」で広げた時は下が切れていれば送り、「たたむ」で元の位置へ (2026-10-25 オーナー「スマホ版って展開したらスクロール追従無かったよね」) -->
-    <BaseCardGrid v-if="query.trim() || (phone && cls)" :data-base-phone-list="phone && !query.trim() ? '' : undefined" :list="list" :selected="selected" :note="note" :hot="hot" :show-cls="!!query.trim()" :fold="!query.trim()" @pick="(en) => emit('pick', en)" @expand="revealMore" @collapse="foldMore" />
+    <BaseCardGrid v-if="query.trim() || (phone && cls)" :data-base-phone-list="phone && !query.trim() ? '' : undefined" :list="list" :selected="selected" :note="note" :hot="hot" :show-cls="!!query.trim()" :fold="!query.trim()" @pick="onPick" @expand="revealMore" @collapse="foldMore" />
     <!-- 名前で探す欄は外した (2026-10-18 オーナー「ここで探すことは無い」)。装備 (ユニークの絵)・エフェクトを切るチェックは一番下 (同)。
          タイルを元のベースの絵にして、光と粒も出さない。このブラウザに覚える (2026-10-13 オーナー) -->
     <label class="mt-3 flex w-fit cursor-pointer items-center gap-1.5 text-[12px] text-[var(--exile-color-text-secondary)] md:text-[13px]" :title="tr('部位のタイルを元のベースの絵にして、光と動きを止める', 'Show the plain base art on the category tiles, without glow or motion')">
