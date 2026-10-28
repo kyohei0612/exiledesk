@@ -3,7 +3,8 @@
   当たりは押すと MOD を選ぶ、横の＋で当たりを足す、下の＋で次の手。外れ・消えたの箱は消せない。見出しの鉛筆でメモ (10-22 試し打ちの欄を消したのでここから)。数字 (通った人数・ここまでの費用) は計算を繋ぐまで出さない
 -->
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { rowFitOf, setNatural } from "./use-row-fit";
 import { flag } from "../../../web/release-flags";
 import { useArmed } from "../../../utils/use-armed";
 import { useDismiss } from "../../../utils/use-dismiss";
@@ -65,6 +66,13 @@ const rmTitle = computed(() => tr(`この箱を作った手 (${(() => { const h 
 const CARD_W = BOX_W - 16;
 /** この箱からまとめられるか (下の操作の行の「まとめる」の入口。押すとこの箱をまとめ先にして上の帯の「まとめる」と同じ選び方へ) */
 /** 当たりの箱の「次の手が未定」は赤くせず静かな印だけ (足りない所には数える。10-26 オーナー「一旦整理してA」) */
+/** 同じ段の箱は縦の大きさも揃える: 中身は上詰め、下の行は下の辺へ (S-141b、スイッチ rowFit)。中身だけの高さ = 箱の高さ − 伸ばした分 (fill) を測って use-row-fit へ */
+const FIT = flag("rowFit");
+const rootEl = ref<HTMLElement>(), fillEl = ref<HTMLElement>();
+const fitH = computed(() => (FIT && props.x === undefined && props.box.out !== "pass" ? rowFitOf(t.doc.value, props.box.id) : 0));
+let ro: ResizeObserver | null = null;
+onMounted(() => { if (!FIT || props.x !== undefined || !rootEl.value) return; ro = new ResizeObserver(() => { const r = rootEl.value; if (r) setNatural(props.box.id, Math.round(r.offsetHeight - (fillEl.value?.offsetHeight ?? 0))); }); ro.observe(rootEl.value); });
+onBeforeUnmount(() => ro?.disconnect());
 /** 決める事が残っている箱 (足りない所に何か出ている箱) は全部、右上の角の丸い赤の「!」の 1 つの印 + 赤枠。題の横の「! 未定」は出さない (S-89b、スイッチ unsetMark、10-28 深夜オーナー「この未定ってマーク共通にして全体」) */
 const UNSET = flag("unsetMark");
 const unset = computed(() => UNSET && !!props.issue);
@@ -174,9 +182,9 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
   <!-- 押せる物は全部 24px 以上 (2026-10-22 押しにくい所の洗い出し、notes/2026-10-22-tree-ui-click-audit.md) -->
   <!-- 押すは Vue Flow の箱の node-click、引っ張るは use-gesture.ts (Vue Flow の引っ張りは遊びの 5px 分が動きから抜けた)。
        引っ張りは pointerdown の既定の動きを止めるので Vue Flow の画面の送りは始まらない。nopan は付けない (付けると箱の上のホイールで拡大縮小されなかった)、中のボタンは nodrag -->
-  <div data-tree-box :data-box-id="box.id" :data-sample-note="sampled?.note || undefined" class="select-none rounded-xl border-[1.5px] bg-gradient-to-b from-[#1d1812] to-[#110e0a] px-2 py-1 text-[12px] transition-shadow"
-    :class="[x === undefined ? 'relative' : 'absolute', picking || viewOnly ? 'cursor-pointer' : 'cursor-grab', picking ? (linkNo ? 'cursor-not-allowed opacity-35 grayscale' : 'ring-2 ring-cyan-400/70 hover:ring-cyan-300') : '', glow ? 'ring-2 ring-amber-200/70' : '', issue && !jl && !quietOpen ? '!border-rose-500 !shadow-[0_0_16px_rgba(244,63,94,0.55)]' : '', jl === 'no' ? 'opacity-25 grayscale' : jl ? '!border-amber-200 !shadow-[0_0_24px_rgba(252,211,77,0.8)]' : '']"
-    :style="{ ...(x === undefined ? {} : { left: `${x}px`, top: `${y}px` }), width: `${BOX_W}px`, minHeight: `${BOX_H}px`, ...neon }" :title="picking && linkNo ? linkNo : undefined" @pointerdown="down" @pointerenter="emit('hover', true)" @pointerleave="emit('hover', false)">
+  <div ref="rootEl" data-tree-box :data-box-id="box.id" :data-sample-note="sampled?.note || undefined" class="select-none rounded-xl border-[1.5px] bg-gradient-to-b from-[#1d1812] to-[#110e0a] px-2 py-1 text-[12px] transition-shadow"
+    :class="[x === undefined ? 'relative' : 'absolute', FIT ? 'flex flex-col' : '', picking || viewOnly ? 'cursor-pointer' : 'cursor-grab', picking ? (linkNo ? 'cursor-not-allowed opacity-35 grayscale' : 'ring-2 ring-cyan-400/70 hover:ring-cyan-300') : '', glow ? 'ring-2 ring-amber-200/70' : '', issue && !jl && !quietOpen ? '!border-rose-500 !shadow-[0_0_16px_rgba(244,63,94,0.55)]' : '', jl === 'no' ? 'opacity-25 grayscale' : jl ? '!border-amber-200 !shadow-[0_0_24px_rgba(252,211,77,0.8)]' : '']"
+    :style="{ ...(x === undefined ? {} : { left: `${x}px`, top: `${y}px` }), width: `${BOX_W}px`, minHeight: `${Math.max(BOX_H, fitH)}px`, ...neon }" :title="picking && linkNo ? linkNo : undefined" @pointerdown="down" @pointerenter="emit('hover', true)" @pointerleave="emit('hover', false)">
     <!-- 縮めている時 (k > 1) は押せる物の行を倍率分高くし、まだ「—」だけの数字の行は隠す (箱が小さくても押せる物どうしが重ならない) -->
     <!-- 題は枠の上の線に乗る札 (よくある枠の形。枠の中は割合・中身・戻り方だけ。10-26 オーナー「枠の上のところに●がついた みたいな形でよくある枠の形にしたら枠中ごちゃんなくていいよな」) -->
     <!-- 札は枠の上辺の横の真ん中 (10-26 夜オーナー「この ◎ が付いたとか外れとかは真ん中が良いな、枠の」。左上だと未定の ! と重なった)。この結果に着く割合 (tree-odds.ts) は乗せた時の説明だけ -->
@@ -248,6 +256,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     <!-- 下の行: 戻りの矢印・完成 (下の＋は箱の外なので重ならない) -->
     <!-- 次どうするか (10-26 オーナー「アイテム枠は個人的に好きやからそのままがいいなさっきの」「枠内はアイテムの形とその下に次どうするかくらいか？まとめるとかも別にアイテム枠の下とかに出したらええんちゃう」) -->
     <!-- 切らずに折り返す (10-26 オーナー「枠いっぱいに表示していいのにこれ縮小してるから？拡大も欲しいんだけどそこ」「↩ 再度挑戦 · 3 …」が切れていた) -->
+    <div v-if="FIT" ref="fillEl" class="flex-1" />
     <div class="mt-1 flex flex-wrap items-center gap-1 text-[12px]">
       <!-- 引いた時 (k > 1) は「分ける」を絵 1 つに (行の幅は (箱の幅 − 38) ÷ k で、文字だと「まとめる・↩・完成」が箱の外へ溢れた、10-26 オーナー「拡大バグ」) -->
       <!-- 同じ側の「どれか」の当たりの箱を MOD ごとに分ける / 分けた箱をまとめる (10-26 オーナー「戻るとかの所に分けるみたいな」) -->
