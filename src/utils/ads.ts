@@ -9,11 +9,12 @@
  *   - MOD 一覧は重ねる窓のまま・広告なし・開け閉めで出し直さない
  */
 import { reactive, ref } from "vue";
+import { DEV_BUILD } from "../web/release-flags";
 
 /** 本物の広告を出す (AdSense の審査が通ったら true) */
 export const ADS_LIVE = false;
-/** 枠を見せる (本物か、開発版の場所だけの枠) */
-export const AD_FRAMES: boolean = ADS_LIVE || import.meta.env.DEV || import.meta.env.VITE_DEV_PREVIEW === "1";
+/** 枠を見せる (本物か、開発版の場所だけの枠)。開発版の印は release-flags の DEV_BUILD 1 つ (system.md Y-72) */
+export const AD_FRAMES: boolean = ADS_LIVE || DEV_BUILD;
 
 /** 同じ枠を出し直すまでの最短 (秒) */
 export const AD_MIN_GAP_S = 60;
