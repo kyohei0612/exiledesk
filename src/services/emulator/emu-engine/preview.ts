@@ -27,11 +27,12 @@ export interface UsePreview {
 
 const fixedRng = (): number => 0.5;
 
-export function previewUse(data: PatchData, item: StageItem, key: string, omens: readonly string[]): UsePreview | null {
+/** o.essence = エッセンスはお告げが無くても光らせる (シミュの手の窓・打つ前の箱、10-28 深夜オーナー「エッセンス持ってもどこをMODが消えるか表示されてないね」。エミュは前のまま) */
+export function previewUse(data: PatchData, item: StageItem, key: string, omens: readonly string[], o: { essence?: boolean } = {}): UsePreview | null {
   const plan = planSpec(data, item, key, omens);
   if (!plan || plan.block) return null;
   // 光らせるのは、この手に効くお告げを掛けている時だけ (2026-10-17 オーナー「お告げオンの時にカレンシー持ったらで限定、お告げオフは何でもいい」。フラクチャーは完全ランダムなので光らない)
-  if (!plan.used.length) return null;
+  if (!plan.used.length && !(o.essence && plan.actions.some((a) => "addEssence" in a))) return null;
   const { mods, actions } = plan;
   const change = new Set<string>();
   const open: Record<StageSide, number> = { prefix: 0, suffix: 0 };

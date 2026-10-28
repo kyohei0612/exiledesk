@@ -53,7 +53,7 @@ const item = computed(() => sample.value?.item ?? null);
  * (10-27 オーナー「削減やらエッセンスやら、エミュだと消す候補の MOD の色を変えるよね。それをシミュにも同じのを導入しよう」)。打てない時は出さない。
  * 木の箱のカードには出さない (10-27 に箱へも出す書き換えをオーナーが止めた)
  */
-const preview = computed(() => { const d = s.data.value, it = preCat.value ? shelfItem.value : item.value ?? shelfItem.value, h = held.value; return d && it && h && !problem.value ? previewUse(d, it, h, omens.value) : null; });
+const preview = computed(() => { const d = s.data.value, it = preCat.value ? shelfItem.value : item.value ?? shelfItem.value, h = held.value; return d && it && h && !problem.value ? previewUse(d, it, h, omens.value, { essence: flag("essencePreview") }) : null; });
 const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it) : it);
 /** 狙いに当たらない MOD の行は「外れ MOD」(乗せた時のカードと同じ、10-25 オーナー「プラスで MOD 選んだ時ハズレ MOD の表示が溶けてる」) */
 const rowTags = (it: StageItem | null) => (s.data.value && it ? removeTags(it, boxTagsOf(s.data.value, t.doc.value, props.boxId, it)) : null);

@@ -75,7 +75,7 @@ const START_CARD = flag("startCard");
 const sampled = computed(() => (s.data.value && (props.box.out !== "start" || START_CARD) ? shapeSampleWithNote(s.data.value, t.doc.value, props.box.id) : null));
 const sample = computed(() => sampled.value?.item ?? null);
 /** この箱の手で消える・入れ替わる候補の MOD (オレンジの文字。手の窓・エミュと同じエンジンの previewUse、10-27 オーナー「打つ前の箱のカード」も)。手の無い箱・打てない手は無し */
-const cardDoomed = computed((): readonly string[] => { const d = s.data.value, it = sample.value, h = props.box.hand; if (!d || !it || !h) return []; try { return previewUse(d, it, h.currency, h.omens)?.change ?? []; } catch { return []; } });
+const cardDoomed = computed((): readonly string[] => { const d = s.data.value, it = sample.value, h = props.box.hand; if (!d || !it || !h) return []; try { return previewUse(d, it, h.currency, h.omens, { essence: flag("essencePreview") })?.change ?? []; } catch { return []; } });
 const cardItem = computed(() => (s.data.value && sample.value ? fixedValues(s.data.value, t.doc.value, sample.value) : null));
 const cardTags = computed(() => (s.data.value && cardItem.value ? treeRowTags(s.data.value, t.doc.value, props.box.unwanted ?? [], cardItem.value, props.box) : null));
 /** 要確認 (古い版・壊れたレシピで読めなかった所、tree-migrate) の文 */
