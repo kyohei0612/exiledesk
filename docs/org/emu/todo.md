@@ -14,7 +14,9 @@
 
 ## OK 待ち (エミュの画面の物。行は docs/pending-release.md、出し方もそこ)
 本番の作りでは src/web/release-flags.ts のスイッチで隠し、OK が出たら RELEASED に名前を 1 行 (revert・v-show で抜く旧手順はやめた、10-24)。
-- gemCorrupt: ジェムコラプトのタブ (23f1d1d9、オーナー 10-16「内緒」、OK 待ちではなく出す時期はオーナー)。使う所 CraftStage.vue の GEM_CORRUPT_SHOWN。
+- tierWord: 画面の「段」→「ティア」(M-49)。**OK 済み 10-28 (スナップ)、本番待ち** = オーナーの「出して」で RELEASED に足す。
+- スイッチ無しで次の deploy:web に乗る物 (OK 済み 10-28 スナップ): 狙い 0 個の灰色 (M-60)・工程の共有を消した (M-65、見た目は同じ)。
+- 外した: gemCorrupt (ジェムコラプトのタブはコードから外した、M-08 撤回 10-28)。
 - 済み (本番に出た): baseChosen・monkeyEmu1023・sanctifyBar (v0.1.598)、emuFresh (v0.1.599)。他の部のスイッチでエミュの画面に出る物 (omenRow・dismiss・tierClose・modeTabs・monkey1023・fitZoom・baseValues・weights) も v0.1.598 で出た。
 
 ## 済み (ジン部長の時代、画面の物) は notes/2026-10-23-todo-archive.md に移した
