@@ -20,6 +20,7 @@ const { chosenBase, markChosen, pickSimBase } = useStageBase();
 function back(): void { basePage.value = false; }
 function pick(en: string): void {
   const first = baseUnpicked.value;
+  picked = true;
   basePage.value = false;
   if (first || en !== s.base.value) pickSimBase(en);
   else markChosen(en); // 今のベースを押し直した時はアイテムはそのまま、自分で選んだ物にだけする
@@ -31,6 +32,9 @@ const shown = computed(() => (!baseUnpicked.value && (!CHOSEN_ON || chosenBase.v
 const intro = computed(() => baseUnpicked.value && (!CHOSEN_ON || !chosenBase.value) && s.mode.value === "hand");
 // 開いたら一番上から、戻ったら前の位置へ (ページを移ったのと同じに。2026-10-12 広告のお試しと同じ)
 let before = 0;
+// ベースを選んで戻った時は一番上 (題・タブ・アイテムの行) から。選ばずに戻る (Esc・戻る) は前の位置 (スイッチ backPlace、U-27。オーナー 10-28「エミュは相変わらずMODから開始になるけどベース選んだらそこは？」)
+const PICK_TOP = flag("backPlace");
+let picked = false;
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && !baseUnpicked.value) back(); }
 onMounted(() => {
   before = window.scrollY;
@@ -39,7 +43,7 @@ onMounted(() => {
 });
 onBeforeUnmount(() => {
   window.removeEventListener("keydown", onKey);
-  const y = baseUnpicked.value ? 0 : before;
+  const y = baseUnpicked.value || (PICK_TOP && picked) ? 0 : before;
   void nextTick(() => window.scrollTo(0, y));
 });
 </script>
