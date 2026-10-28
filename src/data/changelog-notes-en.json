@@ -1,5 +1,5 @@
 {
-  "0.1.637": [
+  "0.1.638": [
     "Emulator: click a mod on the item to fracture it (right-click still works). The same works on the simulator's final item card",
     "Japanese UI: \"段\" is now \"ティア\" to match the game (English stays \"Tier\")",
     "Emulator: redo an undone step with Ctrl+Shift+Z / Ctrl+Y",
