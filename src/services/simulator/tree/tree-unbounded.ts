@@ -5,7 +5,7 @@
  * その手より前には効かない。一度嵌まったルーンはアイテムに残るので、戻りの道でまた来ても嵌まったまま (同じルーンの手は打たずに通す、費用も数えない)。
  * ほかの「打たずに通す」回し方だけの扱い (10-25) もここ (tree-sample から分けた、500 行を超えた)
  */
-import { kindOf, mulberry32, room, RUNE_PREFIX, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { catalystOf, kindOf, mulberry32, room, RUNE_PREFIX, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { unboundedBefore } from "../sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { boxAims, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
@@ -27,7 +27,16 @@ export const autoRuneKeys = (before: StageItem, after: StageItem): string[] =>
  * 完成形の品質が足りているか (「品質も狙う」☑ の時だけ見る。値で見て、ブリーチの MOD の有無では見ない。
  * 10-27 夕オーナー「一度付けた品質は消えない」「オフなら品質は見ない」、スイッチ goalQuality)
  */
-export const qualityOk = (doc: TreeDoc, item: StageItem): boolean => !(doc.goalQualityOn && doc.goalQuality && (item.quality ?? 0) < doc.goalQuality);
+/**
+ * 「品質も狙う」の完成の判定 (S-31)。品質の % は品質の欄 (指輪・アミュレット・ジュエルはカタリストの品質そのもの、別欄のカタリストを持つベースは基本の品質)。
+ * 完成形に品質の種類を決めてあれば、カタリストの種類 (エンジンの catalystOf = 別欄のベースは別欄の種類) も同じ時だけ数える
+ * (10-29 オーナーの問い「中身の確率触媒はちゃんと機能してるか問題」で、前は % だけを見て違う種類のカタリストでも完成に数えていた)
+ */
+export const qualityOk = (doc: TreeDoc, item: StageItem): boolean => {
+  if (!(doc.goalQualityOn && doc.goalQuality)) return true;
+  if ((item.quality ?? 0) < doc.goalQuality) return false;
+  return !doc.goalQualityTag || catalystOf(item).tag === doc.goalQualityTag;
+};
 export function goalsHeld(data: PatchData, doc: TreeDoc, item: StageItem): boolean {
   if (!qualityOk(doc, item)) return false;
   const goals = (doc.memoAims ?? []).filter((a) => !(a.forQuality));
