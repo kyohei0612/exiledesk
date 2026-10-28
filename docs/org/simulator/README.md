@@ -7,6 +7,11 @@
 - よく指す番号: 打つ手は自由・☑ だけ当たり (G-03・S-20・S-22)、起こりうる結果を全部箱で (S-21)、同じ形 (S-60〜S-64)、表示はその箱の見本と作った手から (S-81)、名前はエンジン参照 (G-05・S-84)、シミュに自我はいらない (S-110)、スマホ (S-90〜S-93)、レシピは消さない (S-100)、ツリーの体験は妥協しない (S-88)。
 - 触るファイルは dev/README.md と dev/touching/simulator.md。
 
+## 今 (10-28 夜、シミュ部長 34)
+- 開発版だけのスイッチは全部オーナー OK 済み (10-28 夜、スナップ ok-snaps/sim-*.png に「OK。変性とか増強とかのあの例の枝くらいかな実戦で試すの。、他OKでいいよ」)、本番待ち: goalTen・fracOne・tierWord (シミュの文)・recipeJump・failEnd・fracMulti・boneLater・fracPick・stopPill・stripRarity・boxShape・recipeCard。junkSide だけは 1461 でオーナーが変成・増強の外れの枝を触って確かめてから。出すのは「出して」と最終チェック長の見張りの後 (表は docs/pending-release.md)。
+- 10-28 に足した作り: 外れの側の鍵 services/simulator/tree/tree-junk-side.ts (S-65)・候補 10 の断り views/simulator/tree/tree-goal-cap.ts (S-04)・レシピのカード絵の値 views/simulator/recipe-card.ts (S-102、POST /r/new の { code, card })・共有 URL からスマホは全体図を開く (recipe-share.ts の openSharedRecipe、S-103)・止まりの札は箱の本当の下端の下 (TreeRunLayer の heightOf)。
+- 前と後のスナップ: 開発版だけ URL に `?off=<スイッチ名>` でそのスイッチを閉じて開ける (release-flags.ts、本番の作りでは空)。
+
 ## 地図
 - データとエンジンの答え (呼び方・使っている部) は docs/org/emulator/data-catalog.md から。JSON を直に読まずエンジンの関数で (直に読んでよい表は目録に書いてある物だけ)。
 - 見本のレシピ (TreeShowcase.vue、e6127a62) は 10-24 夜に外した (オーナー「見本はいらんわ」)。見本の木 tree-samples.ts (?sample=、動画の撮影の分も) と古い工程式のレシピ (exiledesk.craftStageSim.*、読み込んだ時にブラウザから消す) は 10-25 に消した (オーナー「古いレシピ全て削除で OK」「動画のは要らんから消してええよ」、2d492b9d)。見本を読んでいた台本は消すか直した (777b38fb ほか: シミュの probe 13 本を消し、解析君の scripts/analysis の入口 2 本と check-tree-patterns の SAMPLES=1 から見本を外した)。分かれ目 (split の箱) の作りは木・回す所・精査に残る (人が作るボタンは無い、整理の一覧は共有メモ sim23-cleanup-list.md)。

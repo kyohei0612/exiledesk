@@ -2,6 +2,13 @@
 
 前の引き継ぎ (1〜3 本目、10-21〜23) と止めている物 (①〜⑥・自動・④ の物・OK 待ちの一覧) は notes/2026-10-22-todo-archive.md にそのまま移した。
 
+## 34 本目 (10-28 夜、宛先はブラック 15 代目 local_a9a41698-a5c0-419d-9f97-76524dfbeddf)
+- 済み・push 済み: ⑦ の答えを設計図へ (S-43・S-74・S-82・⑦4 外し)・junkSide 11cd74f3f (S-65)・goalTen / fracOne e70defdbc (S-04・S-05・S-13・S-14)・tierWord のシミュの文 ba72d3838 (S-79)・レシピのカード絵の値 96416a8c6・f2b926175 (S-102、手の数は送らない)・recipeJump 311b9e37a (S-103)・`?off=` 607442f29・止まりの札の重なり 155bb36e9。
+- オーナー 10-28 夜 (スナップ「他OKでいいよ」): 上のスイッチと boxShape・failEnd・fracMulti・boneLater・stripRarity・fracPick・stopPill は全部 OK 済み・本番待ち。junkSide だけは 1461 で変成・増強の枝を実地で (「変性とか増強とかのあの例の枝くらいかな実戦で試すの」)。recipeCard はサーバーの JSON の版が本番に出た後に開く。
+- オーナーに聞く事 = sim-tree.md ⑦ の 3 (印が無い時の始め方の既定、まだ見せていない)・5。
+- 気付き (直していない): bodyOf は ☑ していない完成の MOD を外れに数えないので、変成の外れ (サフィ) の形が mixed になる (S-60 の決め、ブラックへ伝え済み)。見張りの木には ✦ 2 つ以上・狙い 5 つ以上の物が無い (goalTen・fracOne の動きは見張りに出ない)。
+- 残り = 33 本目の締めの「スマホの画面の別名の分かれ道 34 か所」・決まりだけの S-38・S-57・S-58・S-59・S-89・SimTreePage の 500 行超え。
+
 ## 33 本目の締め (10-28 夜、ブラック 15 代目へ入れ替え) → 次の部長は notes/2026-10-28-sim33-handoff.md を先に読む
 - main の頭 = 84b8e8d7。見張りの比べは基準と同じ (アミュ B ✓・99%、言っていない違い 0)
 - スイッチ boxShape・failEnd・fracMulti・boneLater・stripRarity・fracPick・stopPill・simTutorial は全部閉じたまま (本番に出していない、OK 待ち)
