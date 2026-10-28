@@ -7,7 +7,7 @@
   置き場所: ステージの下 (カレンシーを打ちながら見られる)。見出しを押すと畳める。overlay = 手で打つ画面の重ね (MOD 一覧のボタン・Tab) の中
 -->
 <script setup lang="ts">
-import { TIER } from "./tier-word";
+import { TIER } from "../../state/for-share/tier-word";
 import { computed, nextTick, ref, watch } from "vue";
 import { aimTierKey, heldAnyOf, heldOdds, type ListRow, type ListTier } from "../../services/craft-stage/engine";
 import { fmtPct } from "../../utils/format-pct";

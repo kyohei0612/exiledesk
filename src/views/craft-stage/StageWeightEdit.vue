@@ -5,7 +5,7 @@
   値はエンジンの入口に渡すだけ (state/emulator/stage-tuning.ts → services/craft-stage/stage-tuning.ts、打つ結果と確率の表の両方に効く)。
 -->
 <script setup lang="ts">
-import { TIER } from "./tier-word";
+import { TIER } from "../../state/for-share/tier-word";
 import { computed } from "vue";
 import { tr } from "../../i18n/lang";
 import { craftStage } from "../../state/craft-stage";

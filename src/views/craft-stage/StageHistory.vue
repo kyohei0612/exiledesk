@@ -5,7 +5,7 @@
   打てなかった手は理由を薄く出す。手を押すとその手を打った直後に戻る (craftStage.goTo、この後に打てば先の手は捨てる)。先頭の「始め」は 1 手も打っていない状態へ (goToStart)。
 -->
 <script setup lang="ts">
-import { TIER } from "./tier-word";
+import { TIER } from "../../state/for-share/tier-word";
 import { fmtChance, isRareChance } from "../../utils/format-pct";
 import { computed } from "vue";
 import { modText, tr } from "../../i18n/lang";

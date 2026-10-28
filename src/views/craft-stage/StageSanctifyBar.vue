@@ -5,7 +5,7 @@
   最大 = 段の最大 × 1.22、最小 = 段の最小 × 0.78。運の結果のように MOD ごとに倍率が違う時はプルダウンが「MOD ごと」
 -->
 <script setup lang="ts">
-import { TIER } from "./tier-word";
+import { TIER } from "../../state/for-share/tier-word";
 import { allMods, type StageItem } from "../../services/craft-stage/engine";
 import { computed } from "vue";
 import { tr } from "../../i18n/lang";

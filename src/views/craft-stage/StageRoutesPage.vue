@@ -8,7 +8,7 @@
   値段は今の相場 (priceOf)、ベース代と始めの状態 (増強は白、カオスは MOD 1 つのレア、高貴は MOD 0 のレア。2026-10-19 オーナー) を作る費用は入れない。広告ありきの別のページ (WebApp.vue が両脇の枠を置く)
 -->
 <script setup lang="ts">
-import { TIER } from "./tier-word";
+import { TIER } from "../../state/for-share/tier-word";
 import { type StageItem, type RouteKind, fillModText, tierDisplayRanges, stageRuneIds } from "../../services/craft-stage/engine";
 import { aimRangeText } from "./aim-text";
 import { runePrep } from "../../services/emulator/emu-engine";

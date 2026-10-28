@@ -8,7 +8,7 @@
   決めるまでは s.aims を触らない (やめるで元のまま)。
 -->
 <script setup lang="ts">
-import { TIER } from "./tier-word";
+import { TIER } from "../../state/for-share/tier-word";
 import { tierIdOf } from "../../services/emulator/emu-engine";
 import { aimRangeText } from "./aim-text";
 import { modListFor, type ListRow, type ListTier, type ModGroup, aimLabel, groupLabelOf } from "../../services/craft-stage/engine";

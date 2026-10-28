@@ -6,7 +6,7 @@
   計算は aim-odds.ts (ステージで打つのと同じ処理を何百回も試す)。行を押すとそのカレンシーを持ってお告げを掛ける。打ったら今の状態で出し直す。
 -->
 <script setup lang="ts">
-import { TIER } from "./tier-word";
+import { TIER } from "../../state/for-share/tier-word";
 import { REVEAL } from "../../services/emulator/emu-engine";
 import { OMEN_FOR, kindOf, aimChain, aimCombos, aimDone, type AimCombo, type AimOdd, aimLabel } from "../../services/craft-stage/engine";
 import { recNext } from "../../utils/rec-mode";
