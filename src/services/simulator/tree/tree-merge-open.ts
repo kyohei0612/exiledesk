@@ -7,7 +7,7 @@
  */
 import { flag } from "../../../web/release-flags";
 import { sameBody, type BodyOf } from "./tree-box-shape";
-import { subtree, type OutKind, type TreeDoc } from "./tree-model";
+import { subtree, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { heldSets } from "./tree-shape";
 
 const OPEN_OUTS: ReadonlySet<OutKind | "start"> = new Set(["junk", "any", "junkGone"]);
@@ -35,6 +35,14 @@ export function mergeOpenSame(doc: TreeDoc, ids: readonly string[], body: BodyOf
     const c = doc.boxes[id]!;
     c.back = to.id;
     c.autoBack = true;
+    c.merged = true;
     c.done = null;
   }
 }
+/**
+ * まとめた箱 = 描かない箱 (案 A、10-28 夜オーナー「N1の案Aだな」): 親の線はまとめ先の箱へ直に入り、まとめ先の題の横に「n 本から合流」。
+ * 戻り先を手で替える・× で外す (autoBack が消える)・手を足すと、また普通の箱として描く
+ */
+export const mergedAway = (d: TreeDoc, b: TreeBox): boolean => flag("mergeOpen") && !!b.merged && !!b.autoBack && !b.hand && !!b.back && !!d.boxes[b.back];
+/** その箱へまとめた (描かない) 箱の数 */
+export const mergedInto = (d: TreeDoc, id: string): number => Object.values(d.boxes).filter((b) => b.back === id && mergedAway(d, b)).length;

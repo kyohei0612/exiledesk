@@ -99,6 +99,8 @@ export interface TreeBox {
   unwanted?: string[];
   /** 戻りの矢印を同じ形の箱へ自動でつないだ (tree-run の linkSameShape。手で替えると外す) */
   autoBack?: true;
+  /** まだ手の無い同じ形の箱としてまとめた (tree-merge-open。箱は描かず、親の線をまとめ先へ直に引く = 案 A。戻り先を手で替えると autoBack と一緒に効かなくなる) */
+  merged?: true;
   /** 人が戻りの矢印を × で外した (自動の矢印を付け直さない。10-26 オーナー「処理は当人が決めれるように」、前は別の箱に手を置くたび linkSameShape が付け直した) */
   noAutoBack?: true;
   /** 分かれ目 (打たずに分ける、10-22 オーナー OK): 行を上から見て最初に合った行の箱へ進む。hand・back・done・outs とは一緒に持たない。最後の行は「それ以外」(when が空) */

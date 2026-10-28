@@ -9,6 +9,7 @@ import { useArmed } from "../../../utils/use-armed";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { subtree } from "../../../services/simulator/tree/tree-model";
 import Icon from "../../../components/ui/Icon.vue";
+import { mergedInto } from "../../../services/simulator/tree/tree-merge-open";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { shapeSampleOf } from "../../../services/simulator/tree/tree-sample-shape";
@@ -86,6 +87,8 @@ const checkTitle = computed(() => (props.box.check ?? []).map((k) => tr(CHECK_PA
 const kind = computed(() => OUT_LOOK[props.box.out]);
 /** 枠の上の線に乗る題 (tree-names の headOf) */
 const head = computed(() => headOf(props.box, t.aimShort));
+/** ここへまとめた (描かない) 箱の数 (案 A、tree-merge-open の mergedInto) */
+const joinedIn = computed(() => mergedInto(t.doc.value, props.box.id));
 /** 乗せた時の題の全文 (当たりは MOD の文そのまま) */
 const headTitle = computed(() => (props.box.out === "hit" && props.box.aim ? boxAims(props.box).map(t.aimShort).join(" / ") : head.value));
 /** この結果の箱に着く割合 (無ければ出さない、tree-odds.ts) */
@@ -176,6 +179,8 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     <!-- 札の横に箱の印 (未定の !・完成・狙いに無い・要らない・要確認)。前は枠の中の 1 行目にあり、その行が枠を下げていた (10-26 夜オーナー「上枠もっと広げれるじゃろ」) -->
     <div class="absolute -top-[10px] left-1/2 flex max-w-[calc(100%-16px)] -translate-x-1/2 items-center gap-1 whitespace-nowrap">
     <component :is="box.out === 'hit' && box.aim && !quiet ? 'button' : 'span'" :type="box.out === 'hit' && box.aim && !quiet ? 'button' : undefined" data-tree-legend class="nodrag flex min-w-0 items-center gap-1 whitespace-nowrap rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="{ color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :class="box.out === 'hit' && box.aim && !quiet ? 'hover:brightness-125' : 'pointer-events-none'" :title="legendTitle" @click.stop="box.out === 'hit' && box.aim && !quiet && emit('aim')"><Icon :name="kind.icon" class="size-3 shrink-0" /><span class="min-w-0 truncate">{{ head }}</span></component>
+    <!-- まとめた箱がある = 線が何本か入る (案 A、S-66、スイッチ mergeOpen) -->
+    <span v-if="joinedIn" data-tree-merged-in class="shrink-0 rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="{ color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :title="tr('同じ形の結果の箱をここへまとめた (線が何本かこの箱へ入る)', 'Results with the same shape were merged into this box')">{{ tr(`${joinedIn + 1} 本から合流`, `Merged from ${joinedIn + 1}`) }}</span>
     <template v-if="box.out !== 'start'">
       <span v-if="orphan" data-tree-orphan class="shrink-0 rounded-sm bg-[#3a1418] px-1 text-[10px] font-bold leading-[18px] text-rose-200" :title="tr('この当たりの MOD は完成の狙いから外した (木からは消えていない。× で消すか、完成の MOD で狙いに戻す)', 'This hit mod was removed from the final targets (the box stays; remove it with × or add the target back)')">{{ tr("狙いに無い", "Not a target") }}</span>
       <span v-if="box.done" class="shrink-0 rounded-full px-1.5 text-[10px] font-bold leading-[18px]" :class="box.done === 'fail' ? 'bg-rose-900/70 text-rose-100' : 'bg-[#3a2e14] text-amber-100'">{{ doneText }}</span>

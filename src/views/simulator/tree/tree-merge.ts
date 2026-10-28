@@ -9,6 +9,7 @@
  * 結果の見せ方は 10-22 オーナーが「全部普通の箱」を選んだ (前は箱を描かず小さな札にしていた。「何で表示が違うんですか」で札を消した)
  */
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { MATCH, matchTargets, RESTART } from "../../../services/simulator/tree/tree-shape";
 import { stripTargetsOf } from "../../../services/simulator/tree/tree-outcome";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
@@ -40,7 +41,8 @@ export function joinSameShape(doc: TreeDoc, id: string): void {
 
 /** 戻りの矢印だけの箱 (始まりは除く)。合流の線の出元 */
 function mergeIds(doc: TreeDoc): Set<string> {
-  return new Set(Object.values(doc.boxes).filter((b) => b.back && !b.hand && !b.outs.length && b.parent).map((b) => b.id));
+  // まとめて描かない箱 (案 A、tree-merge-open の mergedAway) からは引かない (親の線がまとめ先へ直に入る)
+  return new Set(Object.values(doc.boxes).filter((b) => b.back && !b.hand && !b.outs.length && b.parent && !mergedAway(doc, b)).map((b) => b.id));
 }
 
 /**

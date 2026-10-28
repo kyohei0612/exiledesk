@@ -5,6 +5,7 @@
 import { computed, type ComputedRef, type Ref } from "vue";
 import { BOX_H, BOX_W, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { busLevels, CHIP_HALF, HAND_DY, type Seg } from "./tree-lines";
+import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { flag } from "../../../web/release-flags";
 import { LINE_Y } from "../../../services/simulator/tree/tree-row-tops";
 
@@ -36,7 +37,8 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
   const edges = computed(() => boxes.value.filter((b) => (b.hand || b.split) && b.outs.length).map((b) => {
     const p = posOf(b), pass = b.out === "pass";
     // 通り抜けは箱が無いので、手の札を箱の上の端の所に置き、そこから下りる
-    const kids = b.outs.map((o) => ({ id: o, c: doc.value.boxes[o]!, q: posOf(doc.value.boxes[o]!) }));
+    // まとめて描かない箱 (案 A) は、まとめ先の箱へ直に線を引く (同じまとめ先が 2 つあれば 1 本)
+    const kids = [...new Map(b.outs.map((o) => { const c0 = doc.value.boxes[o]!, to = mergedAway(doc.value, c0) ? c0.back! : o; return [to, { id: to, c: doc.value.boxes[to]!, q: posOf(doc.value.boxes[to]!) }] as const; })).values()];
     // 札は子の箱の上の辺から測る (横の棒の上、前と同じ 68)。箱の中にアイテムの枠を出して箱の高さが中身で伸びるので、親の下 (y + BOX_H) から測ると背の高い親の中に札が入った (10-26)
     // スイッチ lineShort: 札 → 枝分かれも同じ長さ (LINE_Y) に (前は札のすぐ下 8 で分かれて詰まって見えた、10-28 夜オーナー「えだわかれするところもいっしょのながさに」)
     const px = p.x + BOX_W / 2, py = pass ? p.y : p.y + BOX_H, jy = pass ? p.y : Math.min(...kids.map((k) => k.q.y)) - BUS_DY - CHIP_HALF - (SHORT ? LINE_Y : 8);

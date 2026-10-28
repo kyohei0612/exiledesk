@@ -7,6 +7,7 @@
  * 行は親からの深さ (結果の箱はいつも親のすぐ下の行 = tidyUnder)。まだ描いていない箱の高さは見込み (画面が測ったら settleRows で行だけ直す)
  */
 import type { TreeDoc } from "./tree-model";
+import { flag } from "../../../web/release-flags";
 
 /** 縦の線 1 本の長さ (箱 → 札・札 → 枝分かれ・枝分かれ → 箱) */
 export const LINE_Y = 40;
@@ -17,7 +18,9 @@ export const EST_H = 230;
 /** 箱ごとの行 (深さ) */
 export function depthRows(d: TreeDoc): Map<string, number> {
   const rows = new Map<string, number>();
-  const down = (id: string, r: number): void => { if (rows.has(id) || !d.boxes[id]) return; rows.set(id, r); for (const k of d.boxes[id]!.outs) down(k, r + 1); };
+  // まとめて描かない箱 (案 A、tree-merge-open の mergedAway と同じ判定) は行に数えない
+  const away = (id: string): boolean => { const c = d.boxes[id]; return !!c && flag("mergeOpen") && !!c.merged && !!c.autoBack && !c.hand && !!c.back && !!d.boxes[c.back]; };
+  const down = (id: string, r: number): void => { if (rows.has(id) || !d.boxes[id] || away(id)) return; rows.set(id, r); for (const k of d.boxes[id]!.outs) down(k, r + 1); };
   down("start", 0);
   return rows;
 }

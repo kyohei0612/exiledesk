@@ -21,6 +21,7 @@ import { usePhone } from "../../../utils/use-phone";
 import TreeBox from "./TreeBox.vue";
 import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../tutorial/SimTutorialGuide.vue"; import TreeGoalNode from "./TreeGoalNode.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { flag } from "../../../web/release-flags"; import { simAct, simOp } from "../../../web/track";
 import { boxHeightOf, useRowSettle } from "./use-row-settle";
+import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 /** 右の列の完成形の窓を 1.2 倍 (列も 298px、スイッチ goalBig) */
 const GOAL_BIG = flag("goalBig");
 import TreeHandPage from "./TreeHandPage.vue";
@@ -96,7 +97,7 @@ const drag = ref<{ id: string; x: number; y: number } | null>(null);
 const posOf = (b: Box): { x: number; y: number } => (drag.value?.id === b.id ? { x: drag.value.x, y: drag.value.y } : { x: b.x, y: b.y });
 const boxes = computed(() => Object.values(doc.value.boxes));
 /** 描く箱 (品質だけ上げた後の通り抜け pass は箱を描かず、打つ手の札の下に次の札か＋、tree-model の OutKind) */
-const shown = computed(() => boxes.value.filter((b) => b.out !== "pass"));
+const shown = computed(() => boxes.value.filter((b) => b.out !== "pass" && !mergedAway(doc.value, b)));
 const passes = computed(() => boxes.value.filter((b) => b.out === "pass"));
 /** 開いた時は箱を上の段から順に出す (データが来てから。use-tree-reveal.ts) */
 const rv = useTreeReveal(shown, () => !!s.data.value, t.opened);

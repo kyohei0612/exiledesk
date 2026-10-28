@@ -62,7 +62,8 @@ export function tidy(d: TreeDoc, chipW?: (id: string) => number | undefined, hei
   const kids = (id: string): string[] => {
     const b = d.boxes[id]!;
     b.outs = b.outs.map((o, i) => ({ o, i })).sort((a, z) => OUT_ORDER[d.boxes[a.o]!.out] - OUT_ORDER[d.boxes[z.o]!.out] || a.i - z.i).map((x) => x.o);
-    return b.outs;
+    // まとめて描かない箱 (案 A、tree-merge-open の mergedAway と同じ判定) は場所を取らない
+    return b.outs.filter((o) => { const c = d.boxes[o]!; return !(flag("mergeOpen") && c.merged && c.autoBack && !c.hand && c.back && d.boxes[c.back]); });
   };
   const row = rowsOf(d, kids);
   /**
@@ -126,7 +127,7 @@ export function tidy(d: TreeDoc, chipW?: (id: string) => number | undefined, hei
     const b = d.boxes[id]!;
     b.x = Math.round(x);
     b.y = tops ? tops[row.get(id)!]! : row.get(id)! * GAP_Y;
-    for (const k of b.outs) place(k, x + rel.get(k)!);
+    for (const k of b.outs) if (rel.has(k)) place(k, x + rel.get(k)!);
   };
   layout("start");
   place("start", 0);
