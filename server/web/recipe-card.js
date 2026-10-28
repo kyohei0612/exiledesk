@@ -83,25 +83,26 @@ const fmtPct = (p) => (p > 0 && p < 1 ? p.toFixed(1) : String(Math.round(p)));
 const fmtCost = (v) => (v < 10 ? (Math.round(v * 10) / 10).toString() : Math.round(v).toLocaleString("en-US"));
 
 /**
- * 額の格と札。frame = 額の飾り (0 値が無い・1 定番・2 上級・3 至難・4 沼)、badges = 額の上の札 (両方当たれば 至難 と 沼 を並べ、額は至難)。
- * 至難 = 完成の割合が 10% 以下、沼 = 平均の費用が 50 神以上 (10-28 オーナー「99%はぬまが絶対あるってわけね」「沼やな」)、上級 = 割合 40% 以下か 10 神以上
+ * 額の格と札 (10-28 オーナー「達成率低い方がレア演出やけど100%に近い方がええに決まっとるやろ」)。
+ * frame = 額の豪華さは完成の割合が高いほど上: 3 = 90% 以上 (金の二重枠・角の飾り・強い光)、2 = 50〜89% (金の二重枠)、1 = それ未満 (細い枠)、0 = 割合が無い。
+ * badges = 注意の札 (額の上、両方なら並べる): 至難 = 割合 10% 以下、沼 = 平均の費用 50 神以上 (オーナー「99%はぬまが絶対あるってわけね」「沼やな」)
  */
 export function tierOf(c) {
-  if (c.pct == null && c.cost == null) return { frame: 0, badges: [] };
-  const p = c.pct ?? 100, cost = c.cost ?? 0;
-  const hard = c.pct != null && p <= 10, pit = c.cost != null && cost >= 50;
-  if (hard || pit) return { frame: hard ? 3 : 4, badges: [hard && 3, pit && 4].filter(Boolean) };
-  const f = p <= 40 || cost >= 10 ? 2 : 1;
-  return { frame: f, badges: [f] };
+  const frame = c.pct == null ? 0 : c.pct >= 90 ? 3 : c.pct >= 50 ? 2 : 1;
+  const badges = [c.pct != null && c.pct <= 10 && "hard", c.cost != null && c.cost >= 50 && "pit"].filter(Boolean);
+  return { frame, badges };
 }
 const TIERS = [
-  { line: "rgba(150,110,60,0.45)", inner: "rgba(150,110,60,0.2)", glow: "rgba(255,170,70,0.10)", ink: "#b9a07a" },
-  { line: "rgba(185,160,122,0.70)", inner: "rgba(185,160,122,0.3)", glow: "rgba(255,180,90,0.14)", ink: "#cdb88f", ja: "定番", en: "STANDARD" },
-  { line: "rgba(226,184,92,0.90)", inner: "rgba(226,184,92,0.4)", glow: "rgba(255,190,90,0.24)", ink: "#f0cf86", ja: "上級", en: "ADVANCED", double: true, corners: true },
-  { line: "rgba(224,164,110,1)", inner: "rgba(224,164,110,0.45)", glow: "rgba(255,140,60,0.38)", ink: "#f0b47e", ja: "至難", en: "LEGENDARY", double: true, corners: true, sil: "224,164,110", big: "#f0b47e", bg: "#4a2a12" },
-  // 沼 = 濁った緑 (至難の銅色と見分ける)。英語は仮 (ゲームの用語ではない、案はブラックへ)
-  { line: "rgba(128,170,104,1)", inner: "rgba(128,170,104,0.45)", glow: "rgba(90,150,70,0.36)", ink: "#a9d38f", ja: "沼", en: "MONEY PIT", double: true, corners: true, sil: "150,196,120", big: "#a9d38f", bg: "#1f2c14" },
+  { line: "rgba(150,110,60,0.45)", inner: "rgba(150,110,60,0.2)", glow: "rgba(255,170,70,0.10)" },
+  { line: "rgba(170,140,100,0.60)", inner: "rgba(170,140,100,0.25)", glow: "rgba(255,170,70,0.12)", big: "#e6d8bb" },
+  { line: "rgba(226,184,92,0.85)", inner: "rgba(226,184,92,0.4)", glow: "rgba(255,190,90,0.22)", big: "#6ee7b7", double: true },
+  { line: "rgba(246,208,120,1)", inner: "rgba(246,208,120,0.5)", glow: "rgba(255,196,96,0.40)", big: "#ffe08a", double: true, corners: true, bg: "#4a3410" },
 ];
+// 注意の札。英語は仮 (ゲームの用語ではない、案はブラックへ)。至難は銅色、沼は濁った緑で見分ける
+const BADGES = {
+  hard: { ja: "至難", en: "LEGENDARY", ink: "#f0b47e" },
+  pit: { ja: "沼", en: "MONEY PIT", ink: "#a9d38f" },
+};
 
 /** og:title・og:description の文 */
 export function recipeTitle(c) {
@@ -127,7 +128,7 @@ function silhouette(shape, w, h, TI) {
   const ox = (w - (maxX - minX) * k) / 2 - minX * k, oy = (h - (maxY - minY) * k) / 2 - minY * k;
   const r1 = (v) => Math.round(v * 10) / 10;
   const X = (v) => r1(ox + v * k), Y = (v) => r1(oy + v * k);
-  const ink = TI.sil ?? "232,205,130";
+  const ink = "232,205,130";
   const t = Math.max(1.5, Math.min(3, BW * k * 0.03));
   const at = new Map(shape.boxes.map((b) => [b.id, b]));
   const line = (x, y, lw, lh) => `<div style="display:flex;position:absolute;left:${r1(x)}px;top:${r1(y)}px;width:${r1(Math.max(t, lw))}px;height:${r1(Math.max(t, lh))}px;background:rgba(${ink},0.32)"></div>`;
@@ -150,7 +151,7 @@ export async function recipeCardImage(url, env, c) {
   const { frame: tier, badges } = tierOf(c), TI = TIERS[tier];
   const art = c.art ? await dataUrl(env, url, `/og-art/${c.art}.png`) : null;
   const size = c.art ? await pngSize(env, url, `/og-art/${c.art}.png`) : null;
-  const k = size ? Math.min(1.8, 160 / size.w, 180 / size.h) : 1;
+  const k = size ? Math.min(2.2, 200 / size.w, 230 / size.h) : 1;
   const aw = size ? Math.round(size.w * k) : 0, ah = size ? Math.round(size.h * k) : 0;
   const [logo, hl, hm, hr, sep, orb, ctl, ctr, cbl, cbr] = await Promise.all([
     dataUrl(env, url, "/web/icon-192.png"),
@@ -166,21 +167,22 @@ export async function recipeCardImage(url, env, c) {
   const mods = c.mods.slice(0, SHOW_MODS);
   const more = c.mods.length - mods.length;
   const moreText = more > 0 ? T(c, `ほか ${more} 個`, `+${more} more`) : "";
-  const badgeWords = badges.map((b) => ({ w: T(c, TIERS[b].ja, TIERS[b].en), ink: TIERS[b].ink }));
+  const badgeWords = badges.map((b) => ({ w: T(c, BADGES[b].ja, BADGES[b].en), ink: BADGES[b].ink }));
   const tierWord = badgeWords.map((b) => b.w).join("");
   const noStats = T(c, "開くと、そのまま 100 人回せます", "Open it and run 100 crafters as is");
   const pctLabel = T(c, `${c.people} 人で完成`, `of ${c.people} finish`), costLabel = T(c, "平均の費用", "avg cost"), handsLabel = T(c, "手", "steps");
   // 字の大きさは幅から (全角 1・半角 0.55 で数える)
   const units = (t) => [...t].reduce((a, ch) => a + (ch.charCodeAt(0) > 0xff ? 1 : 0.55), 0);
   const fit = (t, room, max, min) => Math.max(min, Math.min(max, Math.floor(room / Math.max(1, units(t)))));
-  const LW = 660, CAP = 64, H = 80, AW = 176, IW = LW - AW;
+  // 左を大きく広く、右の額は細く (10-28 オーナー「あとこのカードなら左側は大きくしたいツリーが軽く出るのはいいね」)
+  const LW = 790, CAP = 72, H = 92, AW = 220, IW = LW - AW;
   // 題は 1 行。最小の大きさでも入らなければ後ろを「…」で切る
-  const titleSize = fit(title, LW, 58, 30);
+  const titleSize = fit(title, LW, 68, 34);
   let titleText = title;
   while (units(titleText) * titleSize > LW && titleText.length > 4) titleText = titleText.slice(0, -2) + "…";
-  const baseSize = c.baseName ? fit(c.baseName, IW - CAP * 2 - 20, 28, 16) : 24;
+  const baseSize = c.baseName ? fit(c.baseName, IW - CAP * 2 - 20, 34, 18) : 28;
   // MOD は折り返してよい (1 行に入らない長い MOD は小さめの字で 2 行)
-  const modSize = mods.some((m) => units(m[0]) * 27 > IW - 30) ? 22 : 27;
+  const modSize = mods.some((m) => units(m[0]) * 31 > IW - 30) ? 26 : 31;
   const allText = ["ExileDesk", kicker, titleText, c.baseName ?? "", ...mods.map((m) => m[0]), moreText, tierWord, noStats, pctLabel, costLabel, handsLabel, T(c, "神", "div"), "exiledesk.com", "0123456789%.,"].join("");
   const [bold, regular, antique, cinzel] = await Promise.all([
     font(allText, 800),
@@ -194,39 +196,44 @@ export async function recipeCardImage(url, env, c) {
     ? `<div style="display:flex;align-items:center;justify-content:center;width:${IW - 24}px;margin-top:6px"><div style="display:flex;flex-shrink:0;width:${dot}px;height:${dot}px;margin-right:10px;background:#c8a86a;transform:rotate(45deg)"></div><span style="font-size:${modSize}px;font-weight:500;line-height:1.25;color:#c8a86a;text-align:center">${esc(m[0])}</span></div>`
     : `<div style="display:flex;justify-content:center;width:${IW - 24}px;margin-top:6px"><span style="font-size:${modSize}px;font-weight:500;line-height:1.25;color:#8888ff;text-align:center">${esc(m[0])}</span></div>`;
   // 右の額 (x 750〜1166、y 30〜600)。上の 300px に木の影絵とベースの絵、下に割合・費用・手
-  const PX = 750, PY = 30, PW = 416, PH = 570, SH = 300;
+  const PX = 868, PY = 30, PW = 300, PH = 570, SH = 250;
   const corner = (img, x, y) => (img ? `<img src="${img}" width="40" height="40" style="position:absolute;left:${x}px;top:${y}px" />` : "");
-  const big = TI.big ?? "#6ee7b7";
+  const big = TI.big ?? "#e6d8bb";
   const stats = c.pct != null || c.cost != null || c.hands != null;
+  const small = (v, unit, label, color) => `
+          <div style="display:flex;flex-direction:column;align-items:center;margin:0 14px">
+            <div style="display:flex;align-items:center"><span style="font-size:46px;font-weight:800;line-height:1.1;color:${color}">${v}</span>${unit}</div>
+            <span style="font-size:20px;font-weight:500;color:#b9a98a">${esc(label)}</span>
+          </div>`;
   const statsHtml = stats ? `
       <div style="display:flex;flex-direction:column;align-items:center;width:${PW}px">
-        ${c.pct != null ? `<div style="display:flex;align-items:flex-end"><span style="font-size:96px;font-weight:800;line-height:1;color:${big}">${fmtPct(c.pct)}</span><span style="font-size:48px;font-weight:800;color:${big};margin-left:2px;margin-bottom:6px">%</span></div>
+        ${c.pct != null ? `<div style="display:flex;align-items:flex-end"><span style="font-size:100px;font-weight:800;line-height:1;color:${big}">${fmtPct(c.pct)}</span><span style="font-size:50px;font-weight:800;color:${big};margin-left:2px;margin-bottom:6px">%</span></div>
         <span style="font-size:24px;font-weight:500;color:#cfc3aa;margin-top:2px">${esc(pctLabel)}</span>` : ""}
-        <div style="display:flex;align-items:center;margin-top:16px">
-          ${c.cost != null ? `<span style="font-size:44px;font-weight:800;color:#f2c96b">${fmtCost(c.cost)}</span>${orb ? `<img src="${orb}" width="44" height="44" style="margin-left:4px" />` : `<span style="font-size:26px;font-weight:800;color:#f2c96b;margin-left:4px">${esc(T(c, "神", "div"))}</span>`}<span style="font-size:20px;font-weight:500;color:#b9a98a;margin-left:6px">${esc(costLabel)}</span>` : ""}
-          ${c.hands != null ? `<span style="font-size:44px;font-weight:800;color:#efe6d2;margin-left:${c.cost != null ? 26 : 0}px">${c.hands}</span><span style="font-size:20px;font-weight:500;color:#b9a98a;margin-left:6px">${esc(handsLabel)}</span>` : ""}
+        <div style="display:flex;align-items:flex-start;margin-top:14px">
+          ${c.cost != null ? small(fmtCost(c.cost), orb ? `<img src="${orb}" width="42" height="42" style="margin-left:4px" />` : `<span style="font-size:24px;font-weight:800;color:#f2c96b;margin-left:4px">${esc(T(c, "神", "div"))}</span>`, costLabel, "#f2c96b") : ""}
+          ${c.hands != null ? small(String(c.hands), "", handsLabel, "#efe6d2") : ""}
         </div>
       </div>` : `<span style="font-size:24px;font-weight:500;color:#cfc3aa;width:${PW - 30}px;text-align:center;justify-content:center">${esc(noStats)}</span>`;
   const html = `
 <div style="display:flex;width:1200px;height:630px;position:relative;background-image:radial-gradient(ellipse at 80% 40%, ${TI.bg ?? "#3a2a10"} 0%, #160f08 42%, #050403 78%);font-family:'Noto Sans JP';color:#efe6d2">
   <div style="display:flex;position:absolute;left:${PX}px;top:${PY}px;width:${PW}px;height:${PH}px;background:rgba(10,8,5,0.55);border:${TI.double ? 3 : 2}px solid ${TI.line}"></div>
   ${TI.double ? `<div style="display:flex;position:absolute;left:${PX + 9}px;top:${PY + 9}px;width:${PW - 18}px;height:${PH - 18}px;border:1px solid ${TI.inner}"></div>` : ""}
-  <div style="display:flex;position:absolute;left:${PX + 40}px;top:${PY + 30}px;width:${PW - 80}px;height:${SH}px;border-radius:${SH / 2}px;background-image:radial-gradient(circle, ${TI.glow} 0%, rgba(0,0,0,0) 70%)"></div>
-  <div style="display:flex;position:absolute;left:${PX + 24}px;top:${PY + 40}px;width:${PW - 48}px;height:${SH - 10}px">${silhouette(c.shape, PW - 48, SH - 10, TI)}</div>
-  ${badgeWords.length ? `<div style="display:flex;position:absolute;left:${PX}px;top:${PY + 14}px;width:${PW}px;justify-content:center">${badgeWords.map((b, i) => `<span style="font-family:'${serif}';font-size:${badgeWords.length > 1 && c.en ? 18 : 28}px;letter-spacing:${badgeWords.length > 1 && c.en ? 2 : c.en ? 4 : 14}px;color:${b.ink};padding:2px ${badgeWords.length > 1 && c.en ? 10 : 16}px;margin-left:${i ? 10 : 0}px;background:rgba(5,4,3,0.82);border:1px solid ${b.ink}">${esc(b.w)}</span>`).join("")}</div>` : ""}
+  <div style="display:flex;position:absolute;left:${PX + 20}px;top:${PY + 30}px;width:${PW - 40}px;height:${SH}px;border-radius:${SH / 2}px;background-image:radial-gradient(circle, ${TI.glow} 0%, rgba(0,0,0,0) 70%)"></div>
+  <div style="display:flex;position:absolute;left:${PX + 24}px;top:${PY + 50}px;width:${PW - 48}px;height:${SH - 20}px;opacity:0.85">${silhouette(c.shape, PW - 48, SH - 20, TI)}</div>
+  ${badgeWords.length ? `<div style="display:flex;position:absolute;left:${PX}px;top:${PY + 14}px;width:${PW}px;justify-content:center">${badgeWords.map((b, i) => `<span style="font-family:'${serif}';font-size:${c.en ? (badgeWords.length > 1 ? 15 : 20) : 26}px;letter-spacing:${c.en ? 2 : 12}px;color:${b.ink};padding:2px ${c.en ? 8 : 14}px;margin-left:${i ? 10 : 0}px;background:rgba(5,4,3,0.82);border:1px solid ${b.ink}">${esc(b.w)}</span>`).join("")}</div>` : ""}
   ${TI.corners ? corner(ctl, PX - 4, PY - 4) + corner(ctr, PX + PW - 36, PY - 4) + corner(cbl, PX - 4, PY + PH - 36) + corner(cbr, PX + PW - 36, PY + PH - 36) : ""}
-  <div style="display:flex;position:absolute;left:${PX}px;top:${PY + 40 + SH + 8}px;width:${PW}px;justify-content:center">${statsHtml}</div>
-  <div style="display:flex;position:absolute;left:56px;top:34px;align-items:flex-end">
+  <div style="display:flex;position:absolute;left:${PX}px;top:${PY + 40 + SH + 6}px;width:${PW}px;justify-content:center">${statsHtml}</div>
+  <div style="display:flex;position:absolute;left:40px;top:30px;align-items:flex-end">
     ${logo ? `<img src="${logo}" width="44" height="44" style="margin-right:10px;margin-bottom:2px" />` : ""}
     <span style="font-family:${cinzel ? "Cinzel" : "Noto Sans JP"};font-size:32px;font-weight:${cinzel ? 600 : 800};letter-spacing:3px;background-image:linear-gradient(180deg, #fff3cf 0%, #f0cf86 38%, #b8873c 62%, #7a5320 100%);background-clip:text;color:transparent">EXILEDESK</span>
     <span style="font-size:22px;font-weight:500;color:#b9a98a;margin-left:14px;margin-bottom:4px">${esc(kicker)}</span>
   </div>
-  <div style="display:flex;position:absolute;left:54px;top:96px;width:${LW + 20}px">
+  <div style="display:flex;position:absolute;left:38px;top:88px;width:${LW + 20}px">
     <span style="font-family:'${serif}';font-size:${titleSize}px;line-height:1.2;white-space:nowrap;background-image:linear-gradient(180deg, #fff6dc 0%, #f3d690 45%, #c7953f 100%);background-clip:text;color:transparent">${esc(titleText)}</span>
   </div>
-  <div style="display:flex;position:absolute;left:56px;top:${96 + Math.round(titleSize * 1.2) + 18}px;width:${LW}px">
-    <div style="display:flex;position:relative;width:${AW}px;height:200px;align-items:center;justify-content:center">
-      <div style="display:flex;position:absolute;left:0;top:10px;width:${AW - 10}px;height:180px;border-radius:90px;background-image:radial-gradient(circle, ${TI.glow} 0%, rgba(0,0,0,0) 70%)"></div>
+  <div style="display:flex;position:absolute;left:40px;top:${88 + Math.round(titleSize * 1.2) + 14}px;width:${LW}px">
+    <div style="display:flex;position:relative;width:${AW}px;height:250px;align-items:center;justify-content:center">
+      <div style="display:flex;position:absolute;left:0;top:10px;width:${AW - 10}px;height:230px;border-radius:115px;background-image:radial-gradient(circle, ${TI.glow} 0%, rgba(0,0,0,0) 70%)"></div>
       ${art ? `<img src="${art}" width="${aw}" height="${ah}" />` : ""}
     </div>
     <div style="display:flex;flex-direction:column;width:${IW}px">
@@ -240,12 +247,12 @@ export async function recipeCardImage(url, env, c) {
     </div>
     <div style="display:flex;flex-direction:column;align-items:center;width:${IW}px;padding:8px 0 14px;background:rgba(6,5,4,0.88)">
       ${mods.map(modRow).join("")}
-      ${moreText ? `<span style="font-size:20px;font-weight:500;color:#8f8775;margin-top:6px">${esc(moreText)}</span>` : ""}
+      ${moreText ? `<span style="font-size:22px;font-weight:500;color:#8f8775;margin-top:6px">${esc(moreText)}</span>` : ""}
       ${sep ? `<img src="${sep}" width="${IW - 40}" height="16" style="margin-top:${mods.length ? 12 : 4}px" />` : ""}
     </div>
   </div>
   </div>
-  <div style="display:flex;position:absolute;left:58px;top:560px;font-size:24px;font-weight:800;color:#f2c96b">exiledesk.com</div>
+  <div style="display:flex;position:absolute;left:42px;top:566px;font-size:24px;font-weight:800;color:#f2c96b">exiledesk.com</div>
 </div>`;
   return new ImageResponse(html, {
     width: 1200,
