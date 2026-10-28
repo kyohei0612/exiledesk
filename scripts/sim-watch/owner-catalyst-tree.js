@@ -21,7 +21,7 @@
   const q1 = r4.boxes?.[0]?.id;
   log.push({ q1Item: q1 && JSON.stringify((({ quality, catalystQuality, qualityTag }) => ({ quality, catalystQuality, qualityTag }))(M.boxItem(q1).item)) });
   // 5 削減のお告げ + カオス (回避を狙う)
-  log.push({ whittle: M.omens(q1, "chaos").map((o) => o.key + " " + o.ok) });
+  log.push({ whittle: M.omens(q1, "chaos").map((o) => o.key + " " + o.ok), q1mods: [...M.boxItem(q1).item.prefixes ?? [], ...M.boxItem(q1).item.suffixes ?? []].map((m) => m.modId + " " + m.tierName + " lv" + m.level) });
   const r5 = step("削減 + カオス (回避)", q1, "chaos", ["OmenofWhittling"], { hitAims: ["Rings/EvasionRating"] });
   const ev = r5.boxes?.find((b) => b.out === "hit")?.id;
   // 6 回避の後にもう一度カタリスト
@@ -34,12 +34,12 @@
   }
   const d = M.dump();
   // カオスの外れは打つ前の箱へ戻って当たるまで (再挑戦)
-  for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && b.out === "junk" && d.boxes[b.parent]?.hand?.currency === "chaos") { log.push({ back: b.id, to: b.parent, r: M.setBack(b.id, b.parent) }); }
+  for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && b.out === "junk" && d.boxes[b.parent]?.hand?.currency === "chaos" && !d.boxes[b.parent].hand.omens.length) { log.push({ back: b.id, to: b.parent, r: M.setBack(b.id, b.parent) }); }
   const d2 = M.dump();
   for (const b of Object.values(d2.boxes)) if (!b.hand && !b.back && !b.done && b.id !== "start") log.push({ close: b.id, out: b.out, r: b.out === "hit" ? M.setDone(b.id, true) : M.setDone(b.id, "fail") });
   } catch (e) { log.push({ error: String(e) }); }
   const chk = await M.check();
-  log.push({ passed: chk.passed, issues: chk.issues.map((x) => `${x.boxId} ${x.kind} ${x.text.slice(0, 60)}`) });
+  log.push({ passed: chk.passed, issues: chk.issues.map((x) => `${x.boxId} ${x.kind} ${x.text}`) });
   const res = await M.result(100, 1);
   log.push({ result: JSON.stringify(res).slice(0, 300) });
   return log;
