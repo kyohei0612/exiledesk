@@ -19,6 +19,8 @@ import { essName, tierName, toneOf, weightNote } from "./stage-mod-list-look";
 import { TIER } from "../../../state/for-share/tier-word";
 /** ティアの列の幅: 「ティア」が 1 行で入る分 (段・英語の T は前のまま) */
 const tierW = tr(TIER.length > 1 ? "w-9" : "w-6", "w-6");
+/** 右の 3 列 (出やすさ・ティア・Lv) は見出しと値を真ん中揃えに (オーナー 10-28「真ん中ぞろえにしてくれるかズレてる」、tierWord と同じスイッチ) */
+const COL = flag("tierWord") ? "text-center" : "text-right";
 
 export interface ModSection { g: ModGroup; sid: string; label: string; rune: string | null; socketed: boolean; count: number; columns: Array<{ side: "prefix" | "suffix"; title: string; items: ListRow[]; top: number }> }
 
@@ -222,7 +224,7 @@ defineExpose({ jumpTo, counts, sections });
             <slot name="col-lead" :col="col" />
             <b class="whitespace-nowrap text-[var(--exile-color-text-primary)]">{{ col.title }}</b>
             <span class="whitespace-nowrap text-[var(--exile-color-text-tertiary)]">{{ col.items.length }} {{ tr("系統", "groups") }}</span>
-            <span class="ml-auto flex gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]"><span class="w-14 whitespace-nowrap text-right" :class="props.tone === 'sky' ? 'text-sky-200' : ''">{{ props.shareHead ?? tr("出やすさ", "Weight") }}</span><span class="whitespace-nowrap text-right" :class="tierW">{{ tr(TIER, "T") }}</span><span class="w-7 text-right">Lv</span></span>
+            <span class="ml-auto flex gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]"><span class="w-14 whitespace-nowrap" :class="[COL, props.tone === 'sky' ? 'text-sky-200' : '']">{{ props.shareHead ?? tr("出やすさ", "Weight") }}</span><span class="whitespace-nowrap" :class="[COL, tierW]">{{ tr(TIER, "T") }}</span><span class="w-7" :class="COL">Lv</span></span>
           </p>
           <p v-if="!col.items.length" class="py-2 opacity-40">{{ tr("無し", "None") }}</p>
           <div v-for="r in col.items" :key="r.id" class="mb-1" :data-row-key="`${sec.sid}:${r.id}`" :class="[flashKey === `${sec.sid}:${r.id}` ? 'row-jump' : '']">
@@ -250,9 +252,9 @@ defineExpose({ jumpTo, counts, sections });
                 </span>
                 <span class="flex shrink-0 items-center gap-1 tabular-nums">
                   <slot name="row-badge" :row="r" />
-                  <span class="w-14 text-right text-[13px] font-bold" :class="props.tone === 'sky' ? 'text-sky-200' : 'text-amber-100'" :title="props.shareTitle ? props.shareTitle(r) : (r.group === 'desecrated' || r.group === 'otherworldly') ? tr('骨を使わないと付かない', 'Only rolls via a Bone') : tr('出やすさ (同じ側の重みの割合)', 'Chance (share of weight on the same side)')">{{ pct(shareOf(r)) }}</span>
-                  <span class="text-right text-[12px] text-[var(--exile-color-text-secondary)]" :class="tierW" :title="tr(`${TIER}の数 ${r.tiers.length}`, `Tiers: ${r.tiers.length}`)">{{ r.tiers.length }}</span>
-                  <span class="w-7 text-right text-[12px] text-[var(--exile-color-text-tertiary)]" :title="tr(`T1 の MOD レベル ${r.topLevel}`, `T1 mod level: ${r.topLevel}`)">{{ r.topLevel }}</span>
+                  <span class="w-14 text-[13px] font-bold" :class="[COL, props.tone === 'sky' ? 'text-sky-200' : 'text-amber-100']" :title="props.shareTitle ? props.shareTitle(r) : (r.group === 'desecrated' || r.group === 'otherworldly') ? tr('骨を使わないと付かない', 'Only rolls via a Bone') : tr('出やすさ (同じ側の重みの割合)', 'Chance (share of weight on the same side)')">{{ pct(shareOf(r)) }}</span>
+                  <span class="text-[12px] text-[var(--exile-color-text-secondary)]" :class="[COL, tierW]" :title="tr(`${TIER}の数 ${r.tiers.length}`, `Tiers: ${r.tiers.length}`)">{{ r.tiers.length }}</span>
+                  <span class="w-7 text-[12px] text-[var(--exile-color-text-tertiary)]" :class="COL" :title="tr(`T1 の MOD レベル ${r.topLevel}`, `T1 mod level: ${r.topLevel}`)">{{ r.topLevel }}</span>
                 </span>
               </span>
             </button>
