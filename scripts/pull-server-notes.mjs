@@ -6,6 +6,7 @@
  *   alerts:   サーバーの異常 (KV alertlog:<時刻>:<種類>、相場が取れない・サーバーのエラー等。配信の見張りは除く) [{ at, kind, text }]
  *   feedback: 要望・バグ (KV fb:、その日の 0 時から今まで) [{ id, at, kind, text, version, lang, base, summary }]。連絡先・uid・IP は持ち出さない
  *   discord:  Discord の書き込み (D1 の discord_daily の次の日の行 = その朝 9:03 に Bot が取った分、src/discord.ts) か null
+ *   d1:       D1 の今の大きさ { bytes, limit } (wrangler d1 info。3 GB を超えると毎朝の cron が古い日の記録から消す = Y-66、server/live/src/logs-prune.ts) か null
  *   errors:   読めなかった物の訳
  * }
  * 前は数字の日報 (daily-summary.mjs、10-26 に消した) の md にだけ載っていた
@@ -27,7 +28,7 @@ mkdirSync(out, { recursive: true });
 
 for (const day of days) {
   const since = Date.parse(`${day}T00:00:00+09:00`);
-  const note = { day, alerts: [], feedback: [], discord: null, errors: [] };
+  const note = { day, alerts: [], feedback: [], discord: null, d1: null, errors: [] };
   try {
     const from = new Date(since).toISOString(), to = new Date(since + 86400e3).toISOString();
     note.alerts = JSON.parse(wr(["kv", "key", "list", "--binding", "LIVE", "--remote", "--prefix", "alertlog:"]))
@@ -47,6 +48,9 @@ for (const day of days) {
     const row = JSON.parse(s)[0].results[0];
     note.discord = row ? JSON.parse(row.body) : null;
   } catch (e) { note.errors.push(`Discord: ${String(e).slice(0, 200)}`); }
+  try {
+    note.d1 = { bytes: JSON.parse(wr(["d1", "info", "exiledesk-logs", "--json"])).database_size, limit: 3e9 };
+  } catch (e) { note.errors.push(`D1 の大きさ: ${String(e).slice(0, 200)}`); }
   writeFileSync(resolve(out, `${day}-server.json`), JSON.stringify(note, null, 1));
-  console.log(`${day}: 異常 ${note.alerts.length}・要望 ${note.feedback.length}・Discord ${note.discord ? note.discord.channels.reduce((a, c) => a + c.messages.length, 0) + " 件" : "無し"}${note.errors.length ? `・読めなかった ${note.errors.length}` : ""} → data-cache/logs/${day}-server.json`);
+  console.log(`${day}: 異常 ${note.alerts.length}・要望 ${note.feedback.length}・Discord ${note.discord ? note.discord.channels.reduce((a, c) => a + c.messages.length, 0) + " 件" : "無し"}・D1 ${note.d1 ? (note.d1.bytes / 1e6).toFixed(0) + " MB" : "?"}${note.errors.length ? `・読めなかった ${note.errors.length}` : ""} → data-cache/logs/${day}-server.json`);
 }

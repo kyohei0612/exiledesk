@@ -44,6 +44,7 @@ Cloudflare Workers (無料枠) で動き、**ドメインは要らない** (`exi
 - **異常**: 相場の中継が落ちた・サーバーのエラーなどを KV の `alertlog:` に控えるだけ (同じ物は 6 時間に 1 回、2 日残す)。Discord にはすぐ送らない。毎朝の AI の評価と見解の材料
 - **ログ**: ダッシュボードの Workers → exiledesk-live → ログ に 1 回ごとの記録 (path・status・ms・国。無料は 3 日分)。手元で見るなら `pnpm tail`
 
+- **D1 の記録の整理** (2026-10-28 オーナー「３ＧＢ上限で設定あふっれたら古い奴から整理」、設計図 Y-66): 毎朝 9:00 (JST、cron `0 0 * * *`) に D1 の大きさが 3 GB を超え、中身 (logs + 要望の画像) も 3 GB を超えていたら、logs を古い日から 2.7 GB まで消す (src/logs-prune.ts)。消したら alertlog の `記録の整理`。今の大きさは `pull-server-notes.mjs` の `d1`
 - **Discord を読むだけの Bot** (2026-10-24、10-26 に本番): 毎朝 9:03 (JST、cron `3 0 * * *`) に、サーバー (vars の `DISCORD_GUILD_ID`) の文字のチャンネル・お知らせ・スレッドを拾い、それぞれ前回より後の書き込みを D1 の `discord_daily` に 1 日 1 行 (src/discord.ts、migrations/0009)。見る権限の無いチャンネルは飛ばす、1 回 45 回まで叩く。トークンは secret の `DISCORD_BOT_TOKEN`。Bot は何も書かない。作り方は docs/org/analytics/notes/2026-10-24-discord-bot.md
 
 ## オーナーがやること (初回だけ、全部無料)

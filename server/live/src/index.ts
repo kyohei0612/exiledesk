@@ -2,6 +2,7 @@
  * exiledesk-live: Web 版のサーバー (Cloudflare Worker、無料枠)。
  *
  *   scheduled (1 時間おき) … 相場 (poe2scout → KV "market")。8 時間おきに YouTube / Twitch に問い合わせ → KV "state" に LiveState を書く (配信の見張り)
+ *   scheduled (毎朝 9:00 JST) … 要望の画像の掃除 (90 日)・D1 が 3 GB を超えたら古い日の記録から消す (logs-prune.ts)
  *   scheduled (毎朝 9:03 JST) … Discord を読むだけの Bot (discord.ts)。数字の日報・記録の件数を Discord に流すのは 10-26 にやめた (#日報 は AI の評価と見解の全文だけ = ai-review.ts)
  *   GET  /live.json        … 配信の状態 (CORS 許可、60 秒キャッシュ)。サイトはこれを読むだけ
  *   GET  /api/poe2scout/…  … 相場の中継 (端のキャッシュ 10 分)
@@ -25,8 +26,8 @@ import { getImage, MAX_IMAGES, notifyImagesDiscord, parseImages, pruneImages, sa
 import { allowIp, FEEDBACK_ID_RE, getFeedback, getReplies, listFeedback, notifyDiscord, parseFeedback, saveFeedback, saveReply, type Feedback } from "./feedback";
 import { DATASET, parseBatch, sql, usersBetween, writeEvents } from "./events";
 import { dayLogs, saveLog } from "./logs";
+import { pruneLogsDaily } from "./logs-prune";
 import { alert, reqLog, yesterdayJst } from "./monitor";
-import { treeShare } from "./tree-share";
 import { pullDiscord } from "./discord";
 import { flushAiReview } from "./ai-review";
 import { MARKET_KEY, refreshMarket } from "./market";
@@ -131,11 +132,6 @@ const keyOk = (env: Env, req: Request): boolean => {
 
 async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): Promise<Response> {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
-  // シミュレーターのツリーのレシピの短い URL (POST /tree/new・GET /tree/<id>、tree-share.ts)。TREE_SHARE=1 の時だけ (本番はシミュレーターを出すまで閉じる)
-  if (env.TREE_SHARE === "1") {
-    const tree = await treeShare(req, env, url, json);
-    if (tree) return tree;
-  }
   // AI の評価と見解の全文を #日報 へ (ai-review.ts)。D1 に置いた物を流すだけで中身は受け取らない
   if (url.pathname === "/ai-review/flush" && req.method === "POST") return json(await flushAiReview(env));
   // 窓なしの Chrome (部長たちの確かめ) の分析の記録は置かない (10-24 オーナー「2 で」。記録に UA が無く後から見分けられないため、受ける時に外す)
@@ -347,6 +343,8 @@ export default {
       // 数字の日報を #日報 に流すのは 10-26 にやめた (オーナー「既定の報告はいらなくなった」)。サーバーの異常は KV の alertlog に残り、scripts/pull-server-notes.mjs が毎朝読む
       // 前の日の記録の件数を #分析ログファイル管理 に流すのは 10-26 にやめた (オーナー「分析ログファイル管理はいらんね」)。記録は D1 に残り、分析の部が pull-logs.mjs で読む
       if (env.LOGS) ctx.waitUntil(pruneImages(env.LOGS).catch((e) => console.warn("fb images:", String(e).slice(0, 160))));
+      // D1 が 3 GB を超えたら古い日の記録から消す (logs-prune.ts、10-28 オーナー「３ＧＢ上限で設定あふっれたら古い奴から整理」)
+      ctx.waitUntil(pruneLogsDaily(env, new Date(controller.scheduledTime)).catch((e) => alert(env, "記録の整理", `消せなかった: ${String(e).slice(0, 200)}`)));
     } else {
       // 1 時間おき: 相場を取り直す (全員に同じ物を配る、market.ts)。配信の見張りは 8 時間おき (UTC 0・8・16 時)
       ctx.waitUntil(refreshMarket(env).catch((e) => alert(env, "相場の取得", `poe2scout から取れない: ${String(e).slice(0, 200)}`)));

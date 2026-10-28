@@ -3,7 +3,7 @@
 ## 4 → 5 の引き継ぎ (10-26 夜、オーナー「立て直し」で入れ替え。4 本目は着任だけで作業なし)
 - 報告の宛先はブラック 13 代目 (local_526b63a7)。予定のタスク 2 つの通知も 13 代目に付け直し済み。
 - 10-27 の朝に見る 3 つ (結果は 13 代目へ 1〜3 行): ① exiledesk-daily-summary の 10-27 の回が通ったか (10-25 の回 local_e1184968 の残りが片付いたかを list_task_runs で) ② #日報 に AI の見解が流れたか (D1 ai_review の posted_at)、#分析ログファイル管理 に書き込みが無いか ③ Discord の Bot の 9:03 の回 (discord_daily の 10-27 の行に人の書き込みが本文つきで入ったか)。
-- 10-26 夜 (5 本目): レシピの短い URL exiledesk.com/r/<id> を server/web に作った (61eee10e、表 recipe_shares 0011 は本番に当て済み、Worker は次の deploy:web で出る)。仕様は共有メモ side-session-notes/local_526b63a7…/recipe-short-url-api.md、画面のコピーはシミュ 32。live の /tree/ (TREE_SHARE) は使わないので、出た後に外す。
+- 10-26 夜 (5 本目): レシピの短い URL exiledesk.com/r/<id> を server/web に作った (61eee10e、表 recipe_shares 0011 は本番に当て済み、Worker は次の deploy:web で出る)。仕様は共有メモ side-session-notes/local_526b63a7…/recipe-short-url-api.md、画面のコピーはシミュ 32。live の /tree/ (TREE_SHARE) は 10-28 に外した (オーナー「消す」、表は 0012 で次の出しの時に落とす)。
 - やりかけは下の 3 → 4 のまま (ツリーの短い URL は上で別の形に・要望 91832821 の返事の書き直し・サファイア 170 回空振りの疑いはジン部長待ち)。
 
 ## 次の管理人へ (10-26、3 本目 → 4 本目。前の 2 → 3 は notes/2026-10-26-todo-archive.md、1 本目からの長い物は notes/2026-10-24-handoff.md)
@@ -15,7 +15,7 @@
 - オーナーの記録の外し (734e34e8、pending-release で次の本番): 手元の住所 (localhost・*.localhost) で開いた Web 版とブログは送らない。オーナーの手順は端末・ブラウザごとに https://exiledesk.com/?nolog=1 を 1 回。
 - 数えている物 (10-25〜26): コスメの静的ページ /pv.js (d17fb76f、本番で D1 に入るのを見た)、シミュの「100 人回す」sim:run・テストラン sim:test (集計は e29311c8、D1 の screen への振り分けはデザインの track.ts 待ち)。
 - Worker の数: UTC 10-25 は web 558 (10-24 は 2,471) + live 585 = 1,143 (1 日 10 万の約 1%)。トップを Worker の外に出した効き目。
-- やりかけ: ツリーの短い URL (/tree/、TREE_SHARE=1 の時だけ。本番の D1 に表 0008 は当てた)。要望 91832821 の返事 (シミュを本番に出した後の形で書き直す要あり)。
+- やりかけ: 要望 91832821 の返事 (シミュを本番に出した後の形で書き直す要あり)。
 - 気になる事 (調べていない): 10-25 に 1 人が MOD 5 つのサファイア (ジュエル) にカオスを 170 回空振り (0.1.596)。上限を超えた形ができる道がエンジンに残っている疑い、ジン部長 11 本目が調べている。
 
 ## 前の報告 (10-24 の手元の開発版・10-22 の要望と /craft-basics) は notes/2026-10-23-todo-archive.md に移した (10-25 ホワイト)

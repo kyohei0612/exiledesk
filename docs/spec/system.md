@@ -20,7 +20,7 @@
 | 画面 | `pnpm build:web` が作る静的なファイル (dist-web)。server/web の静的な置き場から配る |
 | web の Worker | server/web (`move-gate.js`)。シェアの /s/・/og/・/r/ だけを受ける |
 | live の Worker | server/live (`exiledesk-live.exiledesk.workers.dev`)。/boot.json・/log・/event・/feedback・cron |
-| D1 | `exiledesk-logs` 1 つ。記録 (logs)・記録しない端末 (nolog)・要望の画像・シェア (shares・recipe_shares・tree_shares)・Discord の写し・AI の評価と見解 |
+| D1 | `exiledesk-logs` 1 つ。記録 (logs)・記録しない端末 (nolog)・要望の画像・シェア (shares・recipe_shares)・Discord の写し・AI の評価と見解 |
 | KV | `LIVE` 1 つ。配信の状態・相場・本日の訪問者・要望 fb:・返事 fbr:・異常 alertlog:・前の nolog のリスト |
 | AE | Analytics Engine `exiledesk_events`。操作の印・画面のエラー (3 か月) |
 | 枠 (1 日) | Cloudflare Workers の無料の上限 1 日 10 万リクエスト。アカウント全体、UTC 0:00 (JST 9:00) に戻る |
@@ -35,7 +35,7 @@
 | /boot.json | 本番の live | 手元の Worker (404 → 相場の控え)。`--live` で本番を読む | 本番の live を読むだけ | 本番の live を読むだけ |
 | 記録 (/log・/event) | 本番の D1・AE | 手元で捨てる | 送らない | 送らない |
 | D1 (シェア) | 本番 | 手元の写し | 手元の写し | — |
-| 要望を送る | 本番 | 手元 | 本番に届く (⑦ の 6) | 本番に届く (⑦ の 6) |
+| 要望を送る | 本番 | 手元 | 本番に届く (Y-71 の例外) | 本番に届く (Y-71 の例外) |
 
 ## ③ 決まり
 
@@ -52,14 +52,16 @@
 
 ### B. 画面の全体 (ページ)
 
-- **Y-10 クラフト台は `/`、ほかの画面は別のページ**: エミュのクラフト台は `/`、それ以外は `?page=<名前>` (base・routes・feedback・guide・recipes・sim-base / sim-mods / sim-tree・daily・skins・gem-corrupt)、コースは `?course=<id>`。ページごとに URL と題を変え、履歴に積む (戻るで前のページ)。
+- **Y-10 クラフト台は `/`、ほかの画面は別のページ**: エミュのクラフト台は `/`、それ以外は `?page=<名前>` (base・routes・feedback・guide・recipes・sim-base / sim-mods / sim-tree・daily・skins)、コースは `?course=<id>`。ページごとに URL と題を変え、履歴に積む (戻るで前のページ)。
   - 有効。出どころ: オーナー 10-18 (メモ ads-page-model)、10-22〜25 (web/page.ts の頭)。確かめ: `src/web/page.ts` の表と画面。
+- **Y-17 ジェムコラプトは Web に出さない**: Web 版からジェムコラプトの入口 (スイッチ gemCorrupt・`?page=gem-corrupt`・track の `mode:gem-corrupt`・Web 専用の `GemCorruptWebPanel.vue`・`web-materials.ts`) を外す。開発版にも出さない。アプリと共有のコード (`views/gem-corrupt/` のアプリが使う物・gem-watch) は消さずに残し、Web から読まれないだけにする (Y-03)。
+  - 一部 (コードを外すのはデザイン部長・エミュ部長、10-28 に頼んだ)。出どころ: オーナー 10-28「ジェムコラ一旦コードからも非表示でおｋかなり先になる」(前は 10-16「ジェムコラプトは内緒」でスイッチの下)。確かめ: `grep -rn "gem-corrupt\|gemCorrupt" src/web src/views/craft-stage` が 0、Web の入口から `views/gem-corrupt/` への import が無い。
 - **Y-11 新しい機能はページを移る形で作る**: 新しい機能・チュートリアルは「1 つの画面の中の切り替え」でなく、ページを移る形 (URL・題が変わる) で考える。MOD 一覧は重ねる窓のまま (M-17)。
   - 有効。出どころ: オーナー 10-18「チュートリアルも今後の実装もなにかとページ変える形にする」(メモ ads-page-model)。確かめ: 画面。
 - **Y-12 ページの入口は page.ts 1 か所**: ページの URL・題・履歴・離れる時の確かめは `src/web/page.ts` (デザイン部長) だけが持つ。各部 (デイリー・スキン・シミュ) はページの中身だけを持ち、入口・タブはデザイン部長に頼む。移り方の決まりは U-27・U-28。
   - 有効。出どころ: 10-23 の線引き (docs/org/daily/README.md 3・docs/org/skins/README.md)。確かめ: コードを読む。
 - **Y-13 ページを移ったら 3 つ揃えて動かす**: ページを移るたびに ① 広告の枠の出し直し (`utils/ads.ts` の pageTick) ② 記録の screen (`track("page:…")`) ③ 題 を動かす。新しい `?page=` を足す時は 3 つとも足す。クラフト台へ戻ったのも 1 ページ。
-  - 有効。出どころ: 10-19 の PV の点検 (craft の抜けを足した、page.ts)、メモ analytics-logs。確かめ: 窓なしで `__exiledeskLog` を横取りして screen が出るか (メモ analytics-logs の形)。gem-corrupt は ⑦ の 4。
+  - 有効。出どころ: 10-19 の PV の点検 (craft の抜けを足した、page.ts)、メモ analytics-logs。確かめ: 窓なしで `__exiledeskLog` を横取りして screen が出るか (メモ analytics-logs の形)。
 - **Y-14 本番で開いているページの正は RELEASED**: 開発版だけのページ・機能はスイッチの下 (R-02)。どれが本番で開いているかは `src/web/release-flags.ts` の RELEASED が正で、地図・コメントの「開発版だけ」は正にしない。
   - 有効。出どころ: オーナー 10-24「今本番に出てるやつそっくり出す」(release-flags.ts の頭)。確かめ: 1460 で開けていないページが出ない (R-09)。
 - **Y-15 読み物は静的な HTML でビルドが作る**: 読み物はビルドの台本 (`build-seo-pages.mjs`・`build-blog-pages.mjs`・`build-cosmetics-pages.mjs`) と public/ の静的な HTML で、JS 無しで読める。生成物はリポジトリに入れない。中身のゲームのデータはエンジンと同じ関数から作り、手で写さない (G-06)。画面からは `<a href>` で行く。
@@ -137,13 +139,16 @@
   - 有効。出どころ: 10-09 (STATS_SINCE)・10-24 (窓なしを外す、preview-prod.mjs)。確かめ: index.ts の HeadlessChrome の行、Y-102。
 - **Y-65 チュートリアルの手は記録しない**: チュートリアルの手は emu_use・履歴に入れず、`tutorial` {c: コース, e: start | clear} だけ残す。
   - 有効。出どころ: オーナー 10-18「チュートリアルの手はいらない」。確かめ: 窓なしで横取り。
+- **Y-66 D1 は 3 GB で古い記録から整理する**: D1 の記録 (`logs`) は期間でなく大きさで持つ。毎朝 9:00 (JST、cron `0 0 * * *`) に `server/live/src/logs-prune.ts` が ① D1 の大きさ (問い合わせの `meta.size_after`) が 3 GB 以下なら何もしない ② 超えていたら中身 (logs の body + 要望の画像) を数え、3 GB 以下なら消さない (SQLite は消しても入れ物が縮まないため) ③ 中身も超えていたら logs を古い日から日ごと消して 2.7 GB まで下げる (今日の分は残す、5,000 行ずつ)。消したら異常の控え `記録の整理` に残す。シェア・記録しない端末の表は消さない。今の大きさは毎朝の材料 (`pull-server-notes.mjs` の `d1`) に出し、AI の評価と見解の終わりに 1 行。
+  - 有効。出どころ: オーナー 10-28「ギガで管理だな３ＧＢ上限で設定あふっれたら古い奴から整理」(D1 の無料の上限は 5 GB)。10-28 の大きさは 79 MB。確かめ: 手元の SQLite で 4 つの場合 (入れ物が以下・入れ物だけ超え・中身も超え・今日だけ残る) を回した (サーバー管理人 10-28)。本番で消えた事はまだ無い。
 
 ### H. 環境・スイッチ・1 日の枠
 
 - **Y-70 開発版は手元だけ**: 環境は 本番・1460・1461・1440 の 4 つ (② の表)。Cloudflare の上に開発版を置かない (web-dev は 10-24 に消した、作り直さない)。作る・確かめる・モンキーは 1440、ビルドに関わる物 (部品の分け方・先読み・古い塊・SW) と出す前は 1460 / 1461、オーナーが触るのは R-13。
   - 有効。出どころ: オーナー 10-23「開発版は絶対ローカル」・10-24 (メモ feedback-local-first)。確かめ: —。
 - **Y-71 手元の環境は本番に書かない**: 1460 / 1461 は本番の wrangler.jsonc のまま workerd で立てるが、D1 は手元の写し、記録は捨てるか送らない。dist-web (本番に出す物) を触らない。
-  - 有効。出どころ: 10-24 (docs/org/analytics/notes/2026-10-24-local-prod-env.md、scripts/preview-prod.mjs)。確かめ: Y-102。要望の送り先は ⑦ の 6。
+  - 有効。出どころ: 10-24 (docs/org/analytics/notes/2026-10-24-local-prod-env.md、scripts/preview-prod.mjs)。確かめ: Y-102。
+  - 例外: 開発版 (1440・1461) から要望を送ると本番に届く (preview-prod.mjs「本番の /boot.json を読むだけ。要望を送ると本番に届く」)。有効。出どころ: オーナー 10-28「おｋ」(今のまま)。
 - **Y-72 本番と開発版の分け目はスイッチ 1 か所**: 本番に出していない物の出し分けは `src/web/release-flags.ts` (FLAGS・RELEASED・`flag()`) 1 か所で、開発版の印は `DEV_BUILD` (`import.meta.env.DEV` か `VITE_DEV_PREVIEW=1`)。書き方は U-70〜73、開け方は R-02。
   - 有効。出どころ: オーナー 10-24「今本番に出てるやつそっくり出す」。確かめ: 1460 と 1461 の照らし (R-09)。広告の印が別の式なのは ⑦ の 5。
 - **Y-73 1 日の枠は Worker の回数で数え、操作で増やさない**: 枠に数えるのは Worker が動いた回数だけ (静的なファイルは数えない)。どの画面でも操作で Worker への取り物を増やさない (Y-01・Y-30・Y-40)。普段は枠の 1 割以下に収める。
@@ -152,6 +157,9 @@
   - 有効。出どころ: docs/org/analytics/README.md 2 (10-23 の 75% の知らせに誰も先に気付けなかった)。確かめ: —。
 - **Y-75 本番の設定・お金の掛かる物はオーナーの OK の後**: 本番の Worker の設定・Cloudflare のダッシュボードの設定 (Redirect Rules など)・お金の掛かる設定は、オーナーの OK の後にだけ変える。
   - 有効。出どころ: docs/org/analytics/README.md 3。確かめ: —。
+
+- **Y-76 Workers は無料のまま**: Workers の有料プラン (月 5 ドル) にしない。枠は作り (Y-30・Y-73) で守る。
+  - 有効。出どころ: オーナー 10-28「無料で頑張る」(10-23 の案 2、docs/org/analytics/notes/2026-10-23-workers-limit.md)。確かめ: —。
 
 ### I. 英語・SEO
 
@@ -174,8 +182,8 @@
   - 有効。出どころ: 10-10 (静的なファイルで相場を配る案を鍵の要る所でやめた、boot.ts の頭)。確かめ: .github/workflows に Cloudflare の鍵が無い。
 - **Y-93 鍵の口はヘッダーだけで受ける**: 鍵の要る口 (/feedback.json・/feedback/<id>.json・/feedback/image/・/feedback/reply・/logs/day・/refresh・/errors.json・/kv-usage.json) は `x-exiledesk-key` のヘッダーだけで受け、URL に鍵を載せない。
   - 有効。出どころ: 10-16 (`?key=` からヘッダーへ、メモ feedback-replies)。確かめ: index.ts の keyOk。
-- **Y-94 人が書ける口は数と大きさを絞る**: 誰でも書ける口 (/feedback・画像・/r/new・/s/new・/tree/new) は IP ごとの数の制限と大きさの上限を持ち、bot よけを置く。
-  - 有効。出どころ: 各ファイルの頭 (feedback 10-07〜14、recipe-share.js 10-26、tree-share.ts 10-22)。確かめ: コードを読む、tests/live-worker.test.ts。
+- **Y-94 人が書ける口は数と大きさを絞る**: 誰でも書ける口 (/feedback・画像・/r/new・/s/new) は IP ごとの数の制限と大きさの上限を持ち、bot よけを置く。
+  - 有効。出どころ: 各ファイルの頭 (feedback 10-07〜14、recipe-share.js 10-26)。確かめ: コードを読む、tests/live-worker.test.ts。
 - **Y-95 秘密でない設定は書いてよい**: アカウント id・Web Analytics のサイト・Discord のサーバー id・KV / D1 の id は秘密ではなく wrangler.jsonc の vars に書く。
   - 有効。出どころ: server/live/wrangler.jsonc の説明。確かめ: —。
 
@@ -209,10 +217,10 @@
 
 ## ⑦ 残っている仮・未決 (オーナー確認待ち)
 
-1. **/tree/ の短いリンク** — 仮。live の `tree-share.ts` (`POST /tree/new`・`GET /tree/<id>`、D1 tree_shares、`TREE_SHARE=1` の時だけ) は閉じたまま。シミュのレシピの短いリンクは 10-26 から web の `/r/` (Y-32)。/tree/ を消すか残すか。
-2. **D1 の記録を残す期間** — 未決。画像・要望は 90 日、返事は 180 日、AE は 3 か月だが、D1 の `logs` は消す決まりが無い (消すのは記録しない端末の分だけ)。無料の上限 5 GB に向けて期間を決めるか。
-3. **Workers の有料プラン (月 5 ドル)** — 未決。10-23 の案 2 (docs/org/analytics/notes/2026-10-23-workers-limit.md)。トップを Worker の外に出した (Y-30) 後は急がない。決めていない。
-4. **ジェムコラプトのページの記録** — 確かめ待ち。`?page=gem-corrupt` は page.ts の `track("page:…")` に無く、track.ts の `mode:gem-corrupt` で screen を出している。スイッチ gemCorrupt を開ける時に Y-13 の形に揃えるか。
-5. **開発版の印の式が 2 か所** — 未決。`release-flags.ts` の `DEV_BUILD` と `utils/ads.ts` の `AD_FRAMES` が同じ式を別に書いている。広告の枠も `DEV_BUILD` を使うように揃えるか (持ち主はデザイン部長)。
-6. **開発版 (1440・1461) から要望を送ると本番に届く** — 仮。1461 は「本番の /boot.json を読むだけ。要望を送ると本番に届く」(preview-prod.mjs)。Y-71「手元の環境は本番に書かない」の例外として残すか、送り先を手元にするか。
-7. **見張りの無い不変条件** — 未決。Y-100・Y-102・Y-105 と鍵がリポジトリに無い事 (Y-90) を確かめる常の見張りが無い。作るかは最終チェック長・サーバー管理人と相談 (release.md)。
+1. ~~/tree/ の短いリンク~~ — 決着 10-28 オーナー「消す」。live の `tree-share.ts`・`TREE_SHARE` を消し、D1 の表は `migrations/0012_drop_tree_shares.sql` で落とす (当てるのは次の server/live の出しの時)。短いリンクは web の `/r/` (Y-32)。
+2. ~~D1 の記録を残す期間~~ — 決着 → Y-66 (10-28 オーナー「ギガで管理」、期間でなく 3 GB)。
+3. ~~Workers の有料プラン~~ — 決着 → Y-76 (10-28 オーナー「無料で頑張る」)。
+4. ~~ジェムコラプトのページの記録~~ — 決着 → Y-17 (10-28 オーナー、Web から外すので記録の形も要らない)。
+5. **開発版の印の式が 2 か所** — 未決。`release-flags.ts` の `DEV_BUILD` と `utils/ads.ts` の `AD_FRAMES` が同じ式を別に書いている。広告の枠も `DEV_BUILD` を使うように揃えるか (持ち主はデザイン部長)。10-28 オーナーはブラック任せ、1 つにまとめる案をデザイン部長へ送った (サーバー管理人)。
+6. ~~開発版から要望を送ると本番に届く~~ — 決着 → Y-71 の例外 (10-28 オーナー「おｋ」、今のまま)。
+7. **見張りの無い不変条件** — 未決。Y-100・Y-102・Y-105 と鍵がリポジトリに無い事 (Y-90) を確かめる常の見張りが無い。作るかは最終チェック長・サーバー管理人と相談 (release.md)。10-28 オーナーはブラック任せ、後で最終チェック長と相談。
