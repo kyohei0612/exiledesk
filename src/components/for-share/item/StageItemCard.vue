@@ -37,7 +37,7 @@ import { TIER } from "../../../state/for-share/tier-word";
  * compact: 撮影用。英語のベース名を出さず、区切りの余白を詰める (詰めた分だけ拡大できる。MOD の文字を 1080p で 32px 以上に)
  */
 /** doomed: 今持っている物を打つと消える・入れ替わる・数値が変わる・固定される候補 (ゲームと同じく打つ前に色を付ける。2026-10-04 削減、2026-10-17 全部の手に) */
-const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[]; /** 付く空き (側ごとに光らせる枠の数。spec/preview.ts) */ open?: Record<"prefix" | "suffix", number> | null; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean; /** 付いた瞬間の確率 (無ければステージの工程から。スパムシミュレーターの運試しは自分の物を渡す) */ chances?: ReadonlyMap<string, number> | null; /** MOD の行ごとの札 (modId → 文と色。シミュの「外れ MOD」など。渡さなければ出ない) */ rowTags?: ReadonlyMap<string, RowTag> | null; /** フラクチャーの印の MOD (modId)。2 つ以上付いていれば 1 行「フラクチャー MOD ×n」にまとめ、ホバーで中身 (シミュの完成形、2026-10-23 オーナー) */ fractureGroup?: readonly string[] | null; /** × を出さずに、MOD の行の右クリックで fracture を出す (シミュの完成形。removable なら言わなくても出る) */ fracturable?: boolean; /** 明示の MOD の行にホバーした時だけ小さな × (remove を出す)。ルーン・暗黙・列の幅は変えない (シミュの完成形、2026-10-24 オーナー「アイテムにつく UI から × で消したい」) */ rowRemove?: boolean; /** 段を「S2 以上」(英語 S2+) と出す。狙いの段 (シミュの完成形、2026-10-24 オーナー「S2 なら S2 以上って書かんと」)。一番上の段 (1) には付けない */ tierAtLeast?: boolean; /** MOD の行だけ (題の帯・種類・アイテムレベル・品質・ベースの値・ソケット・ルーン・エンチャント・暗黙を出さない。シミュのツリーの箱の中の小さなカード、2026-10-26 オーナー「枠は現状のアイテムの枠」) */ modsOnly?: boolean; /** 左の段の札 (P1・S2 以上・暗黙) の列と右の空きを半分ほどに・字を 10px に、空いた分 MOD の文を 16px に (シミュの細い右の列の完成形、10-26 夜オーナー「ティアの表示は小さくていいから、その分文字大きく」) */ tightTier?: boolean; /** modsOnly でも題の帯 (ベース名) だけは出す (シミュのツリーの箱、10-26 夜オーナー「『不在のアミュレット』っていう感じで枠作ってほしい」) */ withTitle?: boolean; /** MOD の行の札の後ろに押せる札 (modId → 文字・押された状態。押すと toggle)。渡さなければ出ない (シミュの完成形の「途中で消える」、オーナー 10-27 夜) */ rowToggles?: ReadonlyMap<string, RowToggle> | null}>();
+const props = defineProps<{ item: StageItem; added: readonly StageMod[]; removed: readonly StageMod[]; holding: boolean; flashKey: number; minH?: number; compact?: boolean; focus?: string | null; width?: number; showTags?: boolean; doomed?: readonly string[]; /** 付く空き (側ごとに光らせる枠の数。spec/preview.ts) */ open?: Record<"prefix" | "suffix", number> | null; /** MOD の行に × を出して外せる (手で打つ画面) */ removable?: boolean; /** 付いた瞬間の確率 (無ければステージの工程から。スパムシミュレーターの運試しは自分の物を渡す) */ chances?: ReadonlyMap<string, number> | null; /** MOD の行ごとの札 (modId → 文と色。シミュの「外れ MOD」など。渡さなければ出ない) */ rowTags?: ReadonlyMap<string, RowTag> | null; /** フラクチャーの印の MOD (modId)。2 つ以上付いていれば 1 行「フラクチャー MOD ×n」にまとめ、ホバーで中身 (シミュの完成形、2026-10-23 オーナー) */ fractureGroup?: readonly string[] | null; /** × を出さずに、MOD の行の右クリックで fracture を出す (シミュの完成形。removable なら言わなくても出る) */ fracturable?: boolean; clickFracture?: boolean; /** 明示の MOD の行にホバーした時だけ小さな × (remove を出す)。ルーン・暗黙・列の幅は変えない (シミュの完成形、2026-10-24 オーナー「アイテムにつく UI から × で消したい」) */ rowRemove?: boolean; /** 段を「S2 以上」(英語 S2+) と出す。狙いの段 (シミュの完成形、2026-10-24 オーナー「S2 なら S2 以上って書かんと」)。一番上の段 (1) には付けない */ tierAtLeast?: boolean; /** MOD の行だけ (題の帯・種類・アイテムレベル・品質・ベースの値・ソケット・ルーン・エンチャント・暗黙を出さない。シミュのツリーの箱の中の小さなカード、2026-10-26 オーナー「枠は現状のアイテムの枠」) */ modsOnly?: boolean; /** 左の段の札 (P1・S2 以上・暗黙) の列と右の空きを半分ほどに・字を 10px に、空いた分 MOD の文を 16px に (シミュの細い右の列の完成形、10-26 夜オーナー「ティアの表示は小さくていいから、その分文字大きく」) */ tightTier?: boolean; /** modsOnly でも題の帯 (ベース名) だけは出す (シミュのツリーの箱、10-26 夜オーナー「『不在のアミュレット』っていう感じで枠作ってほしい」) */ withTitle?: boolean; /** MOD の行の札の後ろに押せる札 (modId → 文字・押された状態。押すと toggle)。渡さなければ出ない (シミュの完成形の「途中で消える」、オーナー 10-27 夜) */ rowToggles?: ReadonlyMap<string, RowToggle> | null}>();
 /** 行の押せる札 (rowToggles)。スイッチ rowToggle が切れている間は渡されても出さない */
 const ROW_TOGGLE = flag("rowToggle");
 const toggleOf = (m: StageMod): RowToggle | null => (ROW_TOGGLE && !m.unrevealed ? props.rowToggles?.get(m.modId) ?? null : null);
@@ -110,8 +110,9 @@ const hint = computed((): string => {
   if (props.holding) return phoneW ? tr("押すと使う (下の帯の「使う」でも)", "Tap to use (or “Use” in the bar below)") : tr("押すと使う · 右クリック / Esc で手放す", "Click to use · Right-click / Esc to drop");
   if (!props.removable) return "";
   if (allMods(props.item).some((m) => m.unrevealed)) return tr("下の候補を選んで「発現」", "Pick an option below, then Reveal");
-  if (hover.value === "mod") return tr("押すと MOD 一覧のその行へ · 右クリックでフラクチャー (もう一度で外す) · × で外す", "Click to find it in the mod list · Right-click to fracture (again to unfracture) · × to remove");
+  if (hover.value === "mod") return props.clickFracture ? tr("押すとフラクチャー (もう一度で外す、右クリックでも) · × で外す", "Click to fracture (again to unfracture, right-click works too) · × to remove") : tr("押すと MOD 一覧のその行へ · 右クリックでフラクチャー (もう一度で外す) · × で外す", "Click to find it in the mod list · Right-click to fracture (again to unfracture) · × to remove");
   if (hover.value === "rune") return tr("右クリックでルーンを外す", "Right-click to remove the rune");
+  if (props.clickFracture) return tr("MOD を押すとフラクチャー · × で外す · R で 1 手戻す", "Click a mod to fracture · × to remove · R to undo");
   return phoneW ? "" : tr("MOD を右クリックでフラクチャー · × で外す · R で 1 手戻す", "Right-click a mod to fracture · × to remove · R to undo");
 });
 /** 名前の枠は 1 行 (ベース名) にそろえる。ユニークだけ 2 行 (名前 + ベース)。2026-10-10 オーナー「1 行でいい、ちゃんとしたベース名で統一」 */
@@ -207,6 +208,13 @@ function onFracture(e: MouseEvent, m: StageMod): void {
   e.preventDefault();
   e.stopPropagation();
   emit("fracture", m);
+}
+/** MOD の行を押した: clickFracture の時は右クリックと同じ手 (PC もスマホも同じ。フラクチャーにできない行だけ MOD 一覧へ、M-18) */
+function onRowClick(e: MouseEvent, m: StageMod): void {
+  if (props.holding || m.unrevealed) return;
+  e.stopPropagation();
+  if (props.clickFracture && canFracture(m)) { emit("fracture", m); return; }
+  emit("jump", m.modId);
 }
 /** フラクチャーの印をまとめた行 (印の MOD が 2 つ以上付いている時だけ)。まとめた MOD は下の行から外す */
 const fracRows = computed(() => {
@@ -321,13 +329,13 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
         </div>
         <p
           v-for="r in plainRows"
-          @click="!holding && !r.m.unrevealed && (($event as MouseEvent).stopPropagation(), emit('jump', r.m.modId))"
+          @click="onRowClick($event, r.m)"
           @mouseenter="hover = r.m.unrevealed ? null : 'mod'"
           @mouseleave="hover = null"
           :key="isNew(r.m) ? `${r.key}#${flashKey}` : r.key"
           class="group/row relative flex items-center gap-2 rounded py-0.5"
           :class="[modsOnly ? '!gap-1 px-1' : 'px-2', r.m.desecrated ? 'g-abyss-row' : '', look(r.m).cls, isNew(r.m) && !(anyFocus && !isFocus(r.m)) ? (isRareNew(r.m) ? 'stage-mod-new-rare' : tierLabel(r.m) === 'T1' ? 'stage-mod-new-top' : 'stage-mod-new') : '', anyFocus ? (isFocus(r.m) ? 'z-10 scale-[1.08] bg-amber-300/20 font-bold ring-2 ring-amber-300 shadow-[0_0_18px_rgba(251,191,36,0.55)] transition' : 'opacity-35 transition') : '']"
-          :title="isDoomed(r.m) ? (doomed!.length > 1 ? tr(`この手で変わる候補 (${doomed!.length} つ)`, `May change with this use (${doomed!.length} candidates)`) : tr('この手で変わる', 'Changes with this use')) : canFracture(r.m) ? (r.m.fractured ? tr('右クリックでフラクチャーを外す', 'Right-click to unfracture') : tr('右クリックでフラクチャー (この MOD を固定)', 'Right-click to fracture this mod')) : undefined"
+          :title="isDoomed(r.m) ? (doomed!.length > 1 ? tr(`この手で変わる候補 (${doomed!.length} つ)`, `May change with this use (${doomed!.length} candidates)`) : tr('この手で変わる', 'Changes with this use')) : canFracture(r.m) ? (clickFracture ? (r.m.fractured ? tr('押すとフラクチャーを外す (右クリックでも)', 'Click to unfracture (right-click works too)') : tr('押すとフラクチャー (この MOD を固定、右クリックでも)', 'Click to fracture this mod (right-click works too)')) : r.m.fractured ? tr('右クリックでフラクチャーを外す', 'Right-click to unfracture') : tr('右クリックでフラクチャー (この MOD を固定)', 'Right-click to fracture this mod')) : undefined"
           @contextmenu="onFracture($event, r.m)"
         >
           <!-- 珍しい段が付いた瞬間の光の柱 (ドロップの光の柱のように、行から上へ伸びて消える) -->

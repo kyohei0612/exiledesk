@@ -165,6 +165,8 @@ function setImplicit(line: number, values: number[]): void {
 /** 聖別の数値 (聖別の帯)。続けて変えた分は 1 手にまとめる (品質と同じ) */
 /** 聖別の帯は本番では OK まで出さない (release-flags の sanctifyBar。v0.1.589 から本番は帯の所だけ隠していた) */
 const SANCTIFY_BAR = flag("sanctifyBar");
+/** カードの MOD を押してもフラクチャー (右クリックと同じ手、M-18。スイッチ clickFracture) */
+const CLICK_FRACTURE = flag("clickFracture");
 function setSanctify(k: number | "max" | "min"): void {
   const last = s.log.value[s.log.value.length - 1];
   if (last && isSanctifySet(last.out.currency)) s.undo();
@@ -180,7 +182,7 @@ function setQualityCap(n: number): void {
 function toModList(): void { s.modOverlay.value = true; }
 watch(() => s.item.value, (it) => { if (!it) s.modOverlay.value = false; });
 function fractureMod(m: StageMod): void {
-  if (m.fractured) { s.use(forceKey(m.modId, null, "u")); return; } // フラクチャー済みは右クリックで外す (2026-10-18 オーナー)
+  if (m.fractured) { s.use(forceKey(m.modId, null, "u")); return; } // フラクチャー済みは右クリック (clickFracture の時は押しても) で外す (2026-10-18 オーナー)
   const n = s.data.value?.mods.get(m.modId)?.tiers.length ?? 0; s.use(forceKey(m.modId, n ? `T${n - m.tierIndex}` : null, "f"));
 }
 /** 発現の候補が出ている時: 帯を「発現する MOD を選ぶ ↑」にしてパネルへ送る (骨 → 発現の流れ。2026-10-08 レビュー A3) */
@@ -280,6 +282,7 @@ function pickMode(m: typeof s.mode.value): void {
           @use="s.use()"
           :removable="!s.replay.value && !courseHidesEmulator"
           @remove="(id: string) => s.use(forceKey(id, null, 'x'))"
+          :click-fracture="CLICK_FRACTURE"
           @fracture="fractureMod"
           @jump="(id: string) => { s.modOverlay.value = true; s.modJump.value = { modId: id, n: (s.modJump.value?.n ?? 0) + 1 }; }"
           @socket="useAtSocket"
