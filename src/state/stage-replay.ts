@@ -1,16 +1,15 @@
 /**
- * stage-replay.ts — クラフトステージの手順 JSON・結果 JSON・共有・再生 (2026-10-20、craft-stage.ts が 500 行を超えたので分けた。割る仕事 R5)。
+ * stage-replay.ts — クラフトステージの手順 JSON・結果 JSON・再生 (2026-10-20、craft-stage.ts が 500 行を超えたので分けた。割る仕事 R5)。
  * 中身は craft-stage.ts にあった時のまま。状態 (ref) は craft-stage.ts が持ち、ここは ctx で受け取って craftStage の中に広げる
  * (呼ぶ側は今まで通り craftStage.plan() / loadReplay() などと呼ぶ)。案は docs/org/dev/notes/2026-10-20-agent-friendly.md の 2。
  */
-import { computed, type Ref, type ShallowRef } from "vue";
+import type { Ref, ShallowRef } from "vue";
 import { recordHistory } from "../services/history";
 import { freshItem, playPlan, resultOf, type PlayedStep, type StartSpec } from "../services/craft-stage/run-plan";
 import type { Force } from "../services/craft-stage/stage-core";
 import type { PatchData } from "../vendor/poe2htc/engine/types";
 import type { StageItem } from "../services/craft-stage/types";
 import type { CraftStagePlan } from "../services/craft-stage/contract";
-import { shareBlock } from "../services/craft-stage/share";
 import { marketStore } from "./market-store";
 import { fullSockets, planStepOf, type PlanStep } from "./for-share/stage-steps";
 
@@ -20,7 +19,7 @@ export interface StageReplayCtx {
   item: Ref<StageItem | null>;
   log: Ref<PlayedStep[]>;
   dropped: Ref<Array<{ step: PlanStep; index: number }>>;
-  replay: Ref<{ plan: CraftStagePlan; step: number; shared?: boolean } | null>;
+  replay: Ref<{ plan: CraftStagePlan; step: number } | null>;
   base: Ref<string>;
   itemLevel: Ref<number>;
   seed: Ref<number>;
@@ -71,25 +70,7 @@ export function stageReplay(c: StageReplayCtx) {
       return Object.fromEntries(c.priceKeysAll().map((k) => [k, c.priceOf(k)]).filter(([, v]) => (v as number) > 0));
     },
     /**
-     * 共有できない理由 (できるなら null)。最初のカレンシーの後に手で MOD を足していたら共有できない ([[share.ts]])。
-     * 再生中 (共有の URL から開いた時も) はその手順をそのまま渡せる
-     */
-    shareWhy: computed((): string | null => (c.replay.value ? null : shareBlock([...c.dropped.value.map((d) => ({ currency: d.step.currency, index: d.index })), ...c.log.value.map((s) => ({ currency: s.out.currency, index: s.out.index }))]))),
-    /** 共有する手順 (再生中はその手順を全部) */
-    sharePlan(): CraftStagePlan {
-      return c.replay.value?.plan ?? api.plan();
-    },
-    /** 再生の手を送る (0 = 始め、手順の手の数まで) */
-    replayTo(step: number): void {
-      const r = c.replay.value;
-      if (!r) return;
-      const all = r.plan.steps.reduce((n, s) => n + (s.times ?? 1), 0);
-      api.loadReplay(r.plan, Math.max(0, Math.min(all, step)), r.shared);
-    },
-    /** 再生の手の数 (times 込み) */
-    replayLength: computed(() => c.replay.value?.plan.steps.reduce((n, s) => n + (s.times ?? 1), 0) ?? 0),
-    /**
-     * 再生している今の手から、手で打つ方へ続ける (共有の手順の続きを自分で打つ)。工程はそのまま残るので 1 手戻す・工程を押して戻るもそのまま使える
+     * 再生している今の手から、手で打つ方へ続ける。工程はそのまま残るので 1 手戻す・工程を押して戻るもそのまま使える
      */
     continueFromReplay(): void {
       const r = c.replay.value;
@@ -101,7 +82,7 @@ export function stageReplay(c: StageReplayCtx) {
       c.replay.value = null;
     },
     /** 再生: 手順 JSON を step 手目まで打った状態 */
-    loadReplay(plan: CraftStagePlan, step: number, shared = false): void {
+    loadReplay(plan: CraftStagePlan, step: number): void {
       if (!c.data.value) return;
       try {
         c.base.value = plan.base;
@@ -110,7 +91,7 @@ export function stageReplay(c: StageReplayCtx) {
         const keys = [...new Set([...plan.steps.flatMap((s) => [s.currency, ...(s.omen ? s.omen.split("+") : [])]), ...c.priceKeysAll()])];
         const prices = Object.fromEntries(keys.map((k) => [k, c.priceOf(k)]));
         const { steps, final } = playPlan(c.data.value, plan, prices, step);
-        c.replay.value = { plan, step, ...(shared ? { shared } : {}) };
+        c.replay.value = { plan, step };
         c.seed.value = plan.seed;
         c.log.value = steps;
         c.dropped.value = [];

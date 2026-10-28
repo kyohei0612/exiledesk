@@ -32,7 +32,6 @@ describe("50 手を超えた手順", () => {
     expect(plan.steps[0]!.currency).toBe("transmute");
     const r = playPlan(data, plan, {});
     expect(look(r.final)).toEqual(look(craftStage.item.value!));
-    expect(craftStage.shareWhy.value).toBeNull();
     // 白に戻すと消した手も忘れる
     craftStage.reset();
     craftStage.use("transmute");

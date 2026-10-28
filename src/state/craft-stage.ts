@@ -49,9 +49,7 @@ import type { StageItem, StageMod } from "../services/craft-stage/types";
 import type { CraftStagePlan } from "../services/craft-stage/contract";
 import type { PobBlock } from "../services/craft-stage/stage-pob";
 import { tr, lang } from "../i18n/lang";
-import { decodeShare, SHARE_ENABLED, shareCodeOf } from "../services/craft-stage/share";
 import { stageReplay } from "./stage-replay";
-import { trackOnce } from "../utils/track";
 
 const data = shallowRef<PatchData | null>(null);
 /**
@@ -97,8 +95,7 @@ export function seedOfRoll(roll: number, key: string): number {
 }
 const error = dual(() => ref<string | null>(null));
 /** 再生モード (URL の手順)。手で打つ操作は止める */
-/** shared = 共有の URL (#share=) から開いた ([[share.ts]])。手を前後に送れて、「ここから打つ」で手で打つ方へ続けられる */
-const replay = ref<{ plan: CraftStagePlan; step: number; shared?: boolean } | null>(null);
+const replay = ref<{ plan: CraftStagePlan; step: number } | null>(null);
 /** 録画モードで URL の最初の状態 (base / ilvl / hands) を入れた (画面はベース選びを開かずに始める。POE2Tube 要望 ㊷) */
 const recPreset = ref(false);
 const base = dual(() => ref("Gold Ring"));
@@ -233,23 +230,10 @@ export const craftStage = {
       const step = Number(q.get("step") ?? "9999");
       const wantVideo = q.get("video") === "1";
       // 動画モードは手順を最後まで打っておき、step の手から見せる (前後に動かせるように)
-      // 共有の URL (#share=…、2026-10-12)。# は読んだら消す (打ち始めた後に読み直して共有の手順に戻らないように)
-      const shared = raw || !SHARE_ENABLED ? null : shareCodeOf(location.hash);
       if (raw) craftStage.loadReplay(JSON.parse(raw) as CraftStagePlan, wantVideo ? 9999 : step);
-      else if (shared) {
-        try { history.replaceState(null, "", location.pathname + location.search); } catch { /* 消せなくても開く */ }
-        craftStage.reset();
-        try {
-          const plan = await decodeShare(shared);
-          await market;
-          craftStage.loadReplay(plan, 9999, true);
-          trackOnce("share:open");
-        } catch (e) {
-          error.value = tr(`共有の手順が読めませんでした (${e instanceof Error ? e.message : String(e)})`, `Couldn't open the shared steps (${e instanceof Error ? e.message : String(e)})`);
-        }
-      } else if (URL_BASE || REC_START || isTauriRuntime() || !(await hasStageSession(market))) craftStage.reset(); // 記事などから戻った時は写しから (stage-session.ts。工程の費用のため相場を少し待つ)
+      else if (URL_BASE || REC_START || isTauriRuntime() || !(await hasStageSession(market))) craftStage.reset(); // 記事などから戻った時は写しから (stage-session.ts。工程の費用のため相場を少し待つ)
       // ベースの読み物のページ (/bases/…) の「エミュレーターで試す」(?base=<英語名>、2026-10-13): そのベースの白から始める
-      if (!raw && !shared && !REC_START && URL_BASE && data.value && htcBaseInfo()[URL_BASE]) {
+      if (!raw && !REC_START && URL_BASE && data.value && htcBaseInfo()[URL_BASE]) {
         base.value = URL_BASE;
         mode.value = "hand";
         craftStage.reset();
@@ -258,7 +242,7 @@ export const craftStage = {
         void import("./emulator/spam-share-open").then((m) => m.openSharedSpam()); // X のシェアから: スパムシミュレーターの運試しを開く (?spam=)
       }
       // 録画モードの最初の状態 (?rec=1&base=&ilvl=&hands=、POE2Tube 要望 ㊷): 準備の手まで URL で済ませる
-      if (!raw && !shared && REC_START && data.value) {
+      if (!raw && REC_START && data.value) {
         if (REC_START.base && htcBaseInfo()[REC_START.base]) base.value = REC_START.base;
         if (REC_START.ilvl) itemLevel.value = REC_START.ilvl;
         craftStage.reset();
