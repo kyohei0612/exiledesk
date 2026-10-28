@@ -1,6 +1,7 @@
 # exiledesk-live — ライブ中のチャンネルを配る小さなサーバー
 
 Web 版の横に「自分のチャンネル・協賛チャンネル」のサムネとリンクを出すための仕組み。
+今は相場・配信・記録・要望・日報・Discord の受け口も持つ。決まりの正は設計図 `docs/spec/system.md` (Y-40〜47・Y-60〜66、10-28 から)。/tree/ の短い URL (tree-share.ts) は 10-28 に消した (表は 0012 で出しの時に落とす)。
 Cloudflare Workers (無料枠) で動き、**ドメインは要らない** (`exiledesk-live.<あなたの名前>.workers.dev` という URL がもらえる)。
 
 ```

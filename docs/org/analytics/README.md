@@ -2,6 +2,8 @@
 
 10-23 に「分析君」から名前を替えた (オーナー)。サーバーの土台 (Cloudflare の Workers・KV・D1・出し方) を持ち、使用量と上限を見張る。前からの分析の係 (Discord・要望・バグの受けと再現・毎朝の AI の評価と見解・分析の記録・要望の返事) も兼ねる。きっかけは Cloudflare の「Workers の 1 日のリクエストが 75%」に誰も先に気付けなかった事 (上限 10 万/日はアカウント全体で、本番も止まりうる)。
 
+決まりの正は設計図 `docs/spec/system.md` (Y-xx、10-28 から)。下とメモは経緯、食い違ったら設計図が正。
+
 ## 決まり (docs/org/dev/README.md の決まりが先)
 1. 持ち物は server/ (sim.ts 以外)・Web の作り・手元の環境と照らしの台本 (地図の「Web の作り」)。触るファイルは dev/touching/analytics.md に書く。
 2. Cloudflare の使用量 (worker ごと・KV・D1) を毎朝と大きな確かめの前後に見る。上限の 5 割を超えそうなら先にブラックへ。
@@ -15,7 +17,7 @@
 10. 確かめは台本の中で待つ (sleep の繰り返し・PowerShell は使わない)。報告はブラックへ 1〜3 行。
 
 ## 地図
-- サーバー: server/web (本番の Web の worker。手元の本番・開発版と同じ環境は notes/2026-10-24-local-prod-env.md)・server/live (README.md、src/index.ts = 入口・cron の 1 時間おきの相場と 9:03 の Discord の Bot、monitor.ts = 異常を KV の alertlog に控える `alert`、ai-review.ts = AI の評価と見解を #日報 へ、discord.ts = 読むだけの Bot、events.ts、logs.ts → D1、feedback.ts・feedback-images.ts、forget.ts、migrations/ = D1 `exiledesk-logs`)。
+- サーバー: server/web (本番の Web の worker = move-gate.js。og-card.js = スパムの運試しのカード /s/・/og/、recipe-share.js = レシピの短い URL /r/、recipe-card.js = レシピのカード絵 /og/r/ (Y-35、スイッチ RECIPE_CARD)。手元の本番・開発版と同じ環境は notes/2026-10-24-local-prod-env.md)・server/live (README.md、src/index.ts = 入口・cron の 1 時間おきの相場と 9:00 の画像の掃除・D1 の整理 (logs-prune.ts、3 GB、Y-66) と 9:03 の Discord の Bot、monitor.ts = 異常を KV の alertlog に控える `alert`、ai-review.ts = AI の評価と見解を #日報 へ、discord.ts = 読むだけの Bot、events.ts、logs.ts → D1、feedback.ts・feedback-images.ts、forget.ts、migrations/ = D1 `exiledesk-logs`)。
 - 使用量: Cloudflare のダッシュボードの Workers & Pages。無料の枠は 1 日 10 万リクエスト (UTC 0:00 = 日本時間 9:00 に戻る)。
 - 画面の側 (持ち主はデザイン部長、送る口だけ): src/utils/log-record.ts (`logRecord`)・no-log.ts、src/services/telemetry/log-sender.ts、src/web/track.ts、要望 src/web/FeedbackDialog.vue・feedback-images.ts・feedback-summary.ts、返事 src/state/feedback-replies.ts。
 - Web の作り (10-25 に共通から移った、701e97b5): vite.web.config.ts (mtx-art・stub を外す)・public/robots.txt・scripts/build-seo-pages.mjs (読み物のページ)。手元の本番環境 preview-prod.mjs・返りの比べ compare-prod-local.mjs・照らし compare-snaps.mjs。

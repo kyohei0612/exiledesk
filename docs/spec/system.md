@@ -2,6 +2,7 @@
 
 持ち主: ブラック。型は `docs/spec/README.md` の「3. 書き方の型」。大本 (G-xx) が先。
 2026-10-28 に、ARCHITECTURE.md・server/live/README.md・server/web の設定と頭の説明・docs/org/analytics/ (README・notes)・docs/org/dev/README.md・各部の README・メモ (analytics-logs・web-ads-domain-plan・ads-page-model・web-english・feedback-local-first・api-probing-policy・feedback-web-only-for-now・feedback-replies ほか) から集めて書いた (オーナー 10-28「あと全体システム」)。
+10-28 夕に今日の直しを入れた (オーナー「全体新しい修正追加に伴い設計図等更新。」): ⑦ の答え (Y-17 ジェムコラプトを Web から外した・Y-66 D1 は 3 GB で整理・Y-71 の例外・Y-76 無料のまま・/tree/ を消した)、Y-35 レシピのカード絵 (OK 済み・出し待ち)。
 地図 (どこに何があるか) は `docs/ARCHITECTURE.md`、持ち主は `docs/org/owners.txt`。この紙は「全体がどう動くべきか・部品どうしの境目の決まり」だけを持つ。
 
 ## ① この紙の範囲
@@ -20,7 +21,7 @@
 | 画面 | `pnpm build:web` が作る静的なファイル (dist-web)。server/web の静的な置き場から配る |
 | web の Worker | server/web (`move-gate.js`)。シェアの /s/・/og/・/r/ だけを受ける |
 | live の Worker | server/live (`exiledesk-live.exiledesk.workers.dev`)。/boot.json・/log・/event・/feedback・cron |
-| D1 | `exiledesk-logs` 1 つ。記録 (logs)・記録しない端末 (nolog)・要望の画像・シェア (shares・recipe_shares)・Discord の写し・AI の評価と見解 |
+| D1 | `exiledesk-logs` 1 つ。記録 (logs)・記録しない端末 (nolog)・要望の画像・シェア (shares・recipe_shares、列 card = レシピのカード絵の値 0013)・Discord の写し・AI の評価と見解。大きさは 10-28 に 79 MB、3 GB を超えたら古い記録から消す (Y-66) |
 | KV | `LIVE` 1 つ。配信の状態・相場・本日の訪問者・要望 fb:・返事 fbr:・異常 alertlog:・前の nolog のリスト |
 | AE | Analytics Engine `exiledesk_events`。操作の印・画面のエラー (3 か月) |
 | 枠 (1 日) | Cloudflare Workers の無料の上限 1 日 10 万リクエスト。アカウント全体、UTC 0:00 (JST 9:00) に戻る |
@@ -101,7 +102,7 @@
   - 割合・費用はサーバーでは回さない (Y-01)。シェアを押した時に画面が持っている値を `POST /r/new` に一緒に送る: 本文を JSON `{ code, card }` にし、card = `{ l: "ja"|"en", bn: ベースの表示名 (40 字), a: ベースの絵のファイル名 (base-art、/og-art/<a>.png), m: [[MOD の文 (80 字), 1 ならフラクチャー]] (8 つまで), p: 完成の割合 % (0〜100), n: 回した人数, c: 平均の費用 (神), o: 神聖のオーブの絵の URL (web.poecdn.com だけ) }。手の数 s は送らない (送られても捨てる)` (どれも無くてよい、変な値は捨てる、JSON は 3,000 字まで)。D1 の `recipe_shares` に列 `card` (0013) で置く。id は今までどおり code だけから決まる (同じ木は同じ id)、card は最初に届いた物 (無い行に後から届けば足す)。本文がただの文字の時 (今の画面・古い形) も受ける。
   - card の無い古いレシピは、名前・code の中のベースの英語名・木の影絵だけのカード (MOD・割合・格は出さない)。
   - 出し分けは `server/web/recipe-share.js` の `RECIPE_CARD` (閉じている間は card の列に触らず og:image は /web/og.png、JSON の本文は受けて card を捨てる)。開ける時は先に 0013 を本番の D1 に当てる。画面が JSON で送るのは、この版の server/web が本番に出た後。
-  - 仮 (オーナーの OK 待ち、10-28 オーナー「レシピのシェア時のカードもみたいなXに流す用のちっさい画像」「レシピ用に魔改造して欲しいなそのカード絵」)。画面の側 (`src/views/simulator/recipe-share.ts`・シェアのボタン) はシミュ部長。確かめ: 本番にシェアされた木と見本の木で、手元の workerd から見本の絵 (90% 以上の豪華な額・細い枠・英語・card の無い古いレシピ) とスマホ幅に縮めた物を作って見た。オーナー 10-28「人によってレシピの内容変わるからさ　特別感出して欲しいんだよな」「PCでもスマホでもここは多分絵は固定だからな。」「99%はぬまが絶対あるってわけね」「沼やな」「あと、時間日付は不要ね」「達成率低い方がレア演出やけど100%に近い方がええに決まっとるやろ」「あとこのカードなら左側は大きくしたいツリーが軽く出るのはいいね」「これならぬまとかしなんとかいらんな、」「手は意味わかんないから無くしていい」「見本はレシピ名を保存してないやつならベースの名前で出してあげて。」
+  - 有効 (OK 済み、10-28 オーナー「カードOK」「ツリーの形出るの神やね」。本番はスイッチ `RECIPE_CARD`・`recipeCard` の下で閉じたまま、出すのはオーナーの「出して」の後 = docs/pending-release.md の行。頼みの言葉: 「レシピのシェア時のカードもみたいなXに流す用のちっさい画像」「レシピ用に魔改造して欲しいなそのカード絵」)。画面の側 (`src/views/simulator/recipe-share.ts`・シェアのボタン) はシミュ部長。確かめ: 本番にシェアされた木と見本の木で、手元の workerd から見本の絵 (90% 以上の豪華な額・細い枠・英語・card の無い古いレシピ) とスマホ幅に縮めた物を作って見た。オーナー 10-28「人によってレシピの内容変わるからさ　特別感出して欲しいんだよな」「PCでもスマホでもここは多分絵は固定だからな。」「99%はぬまが絶対あるってわけね」「沼やな」「あと、時間日付は不要ね」「達成率低い方がレア演出やけど100%に近い方がええに決まっとるやろ」「あとこのカードなら左側は大きくしたいツリーが軽く出るのはいいね」「これならぬまとかしなんとかいらんな、」「手は意味わかんないから無くしていい」「見本はレシピ名を保存してないやつならベースの名前で出してあげて。」
 
 ### E. サーバー: 受け口 (server/live)
 
@@ -223,7 +224,7 @@
 
 ## ⑦ 残っている仮・未決 (オーナー確認待ち)
 
-1. ~~/tree/ の短いリンク~~ — 決着 10-28 オーナー「消す」。live の `tree-share.ts`・`TREE_SHARE` を消し、D1 の表は `migrations/0012_drop_tree_shares.sql` で落とす (当てるのは次の server/live の出しの時)。短いリンクは web の `/r/` (Y-32)。
+1. ~~/tree/ の短いリンク~~ — 決着 10-28 オーナー「消す」。live の `tree-share.ts`・`TREE_SHARE` を消し、コードは消した (672890ee8)。本番の D1 の表は `migrations/0012_drop_tree_shares.sql` で落とす (まだ当てていない。Y-35 の 0013 と一緒に出しの時、docs/pending-release.md)。短いリンクは web の `/r/` (Y-32)。
 2. ~~D1 の記録を残す期間~~ — 決着 → Y-66 (10-28 オーナー「ギガで管理」、期間でなく 3 GB)。
 3. ~~Workers の有料プラン~~ — 決着 → Y-76 (10-28 オーナー「無料で頑張る」)。
 4. ~~ジェムコラプトのページの記録~~ — 決着 → Y-17 (10-28 オーナー、Web から外すので記録の形も要らない)。

@@ -1,5 +1,11 @@
 # サーバー管理人 のやる事
 
+## 10-28 (6 本目、報告はブラック 15 代目 local_a9a41698)
+- system.md ⑦ をオーナーの答えどおりに (672890ee8): /tree/ (tree-share.ts・TREE_SHARE) を消した・D1 は 3 GB を超えたら古い日の記録から消す毎朝 9:00 の cron (server/live/src/logs-prune.ts、Y-66。手元の SQLite で 4 つの場合を回しただけ、本番で消えた事はまだ無い)・日報の材料に D1 の大きさ (pull-server-notes の d1、10-28 は 79 MB)・Workers は無料のまま (Y-76)・開発版の要望は本番へ (Y-71 の例外)。ジェムコラプトを Web から外すのはエミュ部長 75151d72b・デザイン部長 87ea44cb0 が済ませた (Y-17)、開発版の印の式はデザイン部長 410d84e1f (⑦5)。
+- レシピのシェアのカード絵 (Y-35、server/web/recipe-card.js・recipe-share.js、画面はシミュ部長 96416a8c・f2b926175): オーナー OK 済み (「カードOK」「ツリーの形出るの神やね」)、出すのは「出して」の後。出す順は docs/pending-release.md の行と共有メモ side-session-notes/local_c6a769ac…/recipe-card-api.md: ① server/live で `wrangler d1 migrations apply exiledesk-logs --remote` (0012 tree_shares を落とす・0013 recipe_shares に列 card) → ② recipe-share.js の `RECIPE_CARD` を true にして deploy:web → ③ スイッチ recipeCard を RELEASED に。
+- 気になる: 10-28 夕に wrangler から本番の D1 を読もうとして `code: 7403` (アカウントに権限が無い) で断られた。① と毎朝の pull-logs.mjs・pull-server-notes.mjs も同じ login を使うので、出す前と翌朝の日報で確かめる (オーナーの `wrangler login`)。
+- 残り: ⑦7 見張りの無い不変条件 (最終チェック長と後で相談)。要望 91832821 の返事の書き直し・サファイア 170 回空振りの疑い (ジン部長待ち) は下のまま。
+
 ## 4 → 5 の引き継ぎ (10-26 夜、オーナー「立て直し」で入れ替え。4 本目は着任だけで作業なし)
 - 報告の宛先はブラック 13 代目 (local_526b63a7)。予定のタスク 2 つの通知も 13 代目に付け直し済み。
 - 10-27 の朝に見る 3 つ (結果は 13 代目へ 1〜3 行): ① exiledesk-daily-summary の 10-27 の回が通ったか (10-25 の回 local_e1184968 の残りが片付いたかを list_task_runs で) ② #日報 に AI の見解が流れたか (D1 ai_review の posted_at)、#分析ログファイル管理 に書き込みが無いか ③ Discord の Bot の 9:03 の回 (discord_daily の 10-27 の行に人の書き込みが本文つきで入ったか)。
