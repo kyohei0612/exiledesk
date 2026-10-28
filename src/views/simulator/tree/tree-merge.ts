@@ -9,6 +9,7 @@
  * 結果の見せ方は 10-22 オーナーが「全部普通の箱」を選んだ (前は箱を描かず小さな札にしていた。「何で表示が違うんですか」で札を消した)
  */
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { flag } from "../../../web/release-flags";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { MATCH, matchTargets, RESTART } from "../../../services/simulator/tree/tree-shape";
 import { stripTargetsOf } from "../../../services/simulator/tree/tree-outcome";
@@ -66,7 +67,8 @@ export function mergeReqs(doc: TreeDoc, pos: (id: string) => Required<Pos>): { r
       // 統合 (当たり → 当たり) は戻りの線の道でなく、向き合う辺どうしを箱を避けて結ぶ (joinPath を呼ぶ側で)
       if (b.out === "hit" && doc.boxes[t]?.out === "hit") { lines.push({ id: lid, from: id, to: t, parent: b.parent!, kind: "join" }); continue; }
       const flip = p.x + p.w / 2 > to.x + to.w / 2;
-      reqs.push({ id: lid, from: p, to, end: { x: flip ? to.x + to.w : to.x, y: to.y + to.h / 2 }, start: { x: p.x + p.w / 2, y: p.y + p.h }, flip });
+      // スイッチ backRoute: 行き先へは箱の上の札 (「…が付いた」) の高さで入る (前は箱の横の辺の真ん中 = MOD の行に刺さった、10-28 夜オーナー)
+      reqs.push({ id: lid, from: p, to, end: { x: flip ? to.x + to.w : to.x, y: flag("backRoute") ? to.y + 4 : to.y + to.h / 2 }, start: { x: p.x + p.w / 2, y: p.y + p.h }, flip });
       const ph = doc.boxes[b.parent!]?.hand;
       lines.push({ id: lid, from: id, to: t, parent: b.parent!, kind: b.out === "hit" || b.out === "any" ? "fwd" : "back", ...(ph && effectOf(ph.currency) === "remove" && ph.keep && !ph.keep.length ? { viaStrip: true } : {}) });
     }

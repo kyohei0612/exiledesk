@@ -5,6 +5,7 @@
  * - 進む線の横の棒: 同じ段で別の親の棒が横に重なると 1 本に見える (赤と灰が合流して見分けにくい) ので、重なる物は段を 1 つずつ上へずらす
  * 座標は全部ツリーの座標 (Vue Flow の倍率を掛ける前)
  */
+import { flag } from "../../../web/release-flags";
 import { BOX_H, BOX_W } from "../../../services/simulator/tree/tree-model";
 
 /** 箱の左上。w・h が無ければ箱の大きさ (まとめた札は細い、tree-merge.ts) */
@@ -50,6 +51,8 @@ export function mirrorPath(d: string): string {
 }
 /** 平行に走る線どうしの間 */
 const LANE = 7;
+/** 戻りの線の引き方を揃える (S-87b、スイッチ backRoute) */
+const BACK_ROUTE = flag("backRoute");
 /** 出口の横の線を通す帯 (箱の下 +20〜+34。手の札 +40〜 より上、箱の枠に沿わない高さ) */
 const BAND = [CLEAR_Y, 34] as const;
 /** 跨ぐ形の半径 */
@@ -80,7 +83,8 @@ export function routeBacks(reqs: readonly BackReq[], boxes: readonly Pos[], fwd:
     // 行き先が上にある時は、出元の上の辺の左寄りから真上へ上り、行き先の箱の左の辺へ入る (隣の箱の下と横を回らない、10-25 オーナー「関係ない箱を囲まない」)。
     // 上の縦と横に箱があれば下の回り道へ
     const ux = r.from.x + ENTER + 4, uy = r.from.y;
-    if (r.end.y < uy - 16 && ux <= r.end.x - 16 && freeColumn(ux, r.end.y, uy - 1, others) && freeRow(r.end.y, ux, r.end.x, [...others, r.from]) && !vBusy(ux, r.end.y, uy)) {
+    // スイッチ backRoute: この近道は箱の縁ぎりぎりを上ったので使わない (いつも下の帯 → 箱から間を空けた縦の通り道 → 行き先の上の札の高さ、10-28 夜オーナー「こういう線おかしくね右端の」)
+    if (!BACK_ROUTE && r.end.y < uy - 16 && ux <= r.end.x - 16 && freeColumn(ux, r.end.y, uy - 1, others) && freeRow(r.end.y, ux, r.end.x, [...others, r.from]) && !vBusy(ux, r.end.y, uy)) {
       vs.push({ x: ux, y0: r.end.y, y1: uy });
       hs.push({ y: r.end.y, x0: ux, x1: r.end.x, id: r.id });
       polys.push({ id: r.id, pts: [{ x: ux, y: uy }, { x: ux, y: r.end.y }, { x: r.end.x, y: r.end.y }] });
