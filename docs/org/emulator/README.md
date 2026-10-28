@@ -12,7 +12,7 @@
 2. 画面はエンジンの関数を入口なしで直に呼ぶ (10-25 夜)。中身 (打つ・読む・MOD の文や値・名前) の自作はさせない、無ければジンへ (G-06・E-91・E-92、見張り B〜E)。シミュ・エミュだけの物は各置き場、エンジンは読まない。
 3. 元からある物はそのまま呼ぶ: 核の関数の写し・言い換え・包み直しを作らない (オーナー 10-23)。関数の形を変えたら使っている部を報告に書く。
 4. 確かめ: E-80・E-81 と engine.md ⑤ の見張り。合格の基準は G-22。
-5. 決まりの中身: 出どころ E-01〜04、MOD E-10〜19、カレンシー全般 E-20〜29、オーブ E-30〜36、フラクチャー E-40〜42、エッセンス E-50〜54、骨・冒涜 E-60〜69、品質ほか E-70〜74、名前 E-90〜93。新しい物は engine.md ⑥ の手順、仮・未決は ⑦。
+5. 決まりの中身: 出どころ E-01〜04、MOD E-10〜19、カレンシー全般 E-20〜29、オーブ E-30〜36、フラクチャー E-40〜42、エッセンス E-50〜54、骨・冒涜 E-60〜69、品質ほか E-70〜74、名前 E-90〜93、表示 E-95〜98 (ベースの選び画面の札 E-98)。新しい物は engine.md ⑥ の手順、仮・未決は ⑦。
 6. 画面 (views・state/emulator・simulator) と部品 (components・for-share・見た目) は直さず、指示も表示の決めもしない。画面の中身の自作 (見張り E) は部とファイルをブラックへ。
 7. 常駐しない (要る時にブラックが立て、済んだら閉じる)。報告・触るファイル (dev/touching/emulator.md)・push は dev の決まり 2・5・8。
 
@@ -25,7 +25,7 @@
 - 確率: held-odds・aim-odds・route-race (spam-counts はシミュの sim-engine/、chaos-spam・route-runes はエミュの emu-engine/ へ 10-26 に出した)。
 - 読む・並べる: (貼り付けたアイテムの文を読む item-text は 10-26 にシミュの置き場 src/services/simulator/paste/ へ移した、見本と決めは notes/paste-samples/ に残す。絵の材料 base-art・skill-art・rune-art はデザインの src/components/art/ へ)、MOD の並べ mod-list.ts (`modListFor`)・roll-text.ts・text-nums.ts、ベース stage-bases.ts (+ .json)・stage-uniques・stage-runes・stage-props・stage-pob・*-art.ts。境目 (共通) share.ts・trade-search.ts。
 - エンジン・MOD: src/vendor/poe2htc (段の重みの式は engine/pool.ts `modTierWeights` 1 本)、src/services/htc/ (patch.ts `loadHtcPatch()`・bridge.ts・weight-overrides.ts・poe2db-*-fixes・mod-stats.json・rune-weights.json・catalysing*・quality.ts・sockets.ts・名前 game-names.ts。buy-or-craft・prices・paste*・patch-types・labels は共通の境目)、src/services/mods/ (mod-rules・item-classes・tiers・engine-mods・types.ts・コラプトの表 corruption.ts + corruption-mods.json ← scripts/build-corruption-mods.mjs)、ルーンのはめ方 craft-stage/augment-rules.ts、ベースの一覧 services/items/base-catalog.ts。エンジンが読んでよい外は i18n/ (名前 item-names-ja.ts・ジェムの文 gem-hover.ts) と trade-search の trade2/、本番で隠すスイッチ web/release-flags.ts の `flag` だけ (abyssSuffix・skillPlus・talismanWeight・dntBases・runeMagnitude は 10-24 に本番へ出した) (アプリの craft-v2・trade2/localize を読まない)。
-- トレードのデータ (出どころの 1 番、消さない): ベースの一覧 services/items/tradeable-bases.json ← scripts/build-tradeable-bases.mjs、MOD の文と stat の対応 i18n/trade2-stat-text・stat-mapping・stat-kinds・skills.json ← scripts/build-trade2-*.mjs、constants/trade2.ts、検索の URL craft-stage/trade-search.ts。アプリの trade2 (src-tauri・trade2/exchange・open) は凍結で触らない。
+- トレードのデータ (確かめに使う、正は poe2db = E-01。消さない): ベースの一覧 services/items/tradeable-bases.json ← scripts/build-tradeable-bases.mjs、MOD の文と stat の対応 i18n/trade2-stat-text・stat-mapping・stat-kinds・skills.json ← scripts/build-trade2-*.mjs、constants/trade2.ts、検索の URL craft-stage/trade-search.ts。アプリの trade2 (src-tauri・trade2/exchange・open) は凍結で触らない。
 - 台本 scripts/: build-poe2db-fixes・audit-poe2db*.mjs (MOD の段・タグ・暗黙・ルーン、結果は notes/2026-10-20-j4-poe2db-audit.md)・build-corruption-mods、build-htc-bases-from-client (+ _htc-*.mjs)・build-gem-hover-ja (+ _gem-csd.mjs)、build-desecrated-weights・build-rune-weights-coe・check-htc-odds-vs-coe、craft-stage-run・check-craft-stage。猿の照らしの台本 check-monkey-engine.mjs・_monkey-* はモンキー隊長の持ち物 (10-25 に移した)
 - スキンの一覧 (src/data/mtx-poe1-in-poe2.json・scripts/build-mtx-web.mjs) はスキン部長の持ち物 (10-25 に渡した、作ったのはジン 9 本目 d518b552)。
 - テスト tests/: currency-spec-*・held-odds-parity・engine-emulator-parity・desecrate-*・coe-rules-2026-10-16・mod-*・item-classes。

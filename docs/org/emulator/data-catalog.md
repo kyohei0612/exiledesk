@@ -37,7 +37,7 @@
 | データ | ファイル | 入口・読み方 |
 |---|---|---|
 | MOD (置き場・重み・段・文) | src/vendor/poe2htc/data/mods.json + services/htc/ の直し (poe2db-*-fixes・weight-overrides) | `loadHtcPatch()` の PatchData (直に読まない。直しが入らない) |
-| ベース | vendor/poe2htc/data/base_items.json + htc/extra-bases.json・jewel-bases.json、一覧 services/items/base-catalog.ts | `loadHtcPatch()`・`baseCatalog`・`htcBaseInfo()` |
+| ベース | vendor/poe2htc/data/base_items.json + htc/extra-bases.json・jewel-bases.json、一覧 services/items/base-catalog.ts (札は E-98、3 属性の札はスイッチ triAttr) | `loadHtcPatch()`・`baseCatalog`・`htcBaseInfo()` |
 | エッセンスの鍵と名前 | htc/essence-keys.json + poe2db-pool-fixes.json の essenceKeys | `ESSENCE_KEYS` (json だけ読むと写した鍵が抜ける)・`ESSENCE_TABLE` |
 | カレンシー・骨・お告げの名前 | htc/price-keys.json | `PRICE_KEYS`・`jaOfOmen` |
 | ルーン | craft-stage/stage-runes・htc/rune-weights.json | `RUNES`・`runeOf` |

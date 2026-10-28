@@ -10,13 +10,14 @@
   - 10-26 にエンジンから出した物 (もうジンの物ではない): シミュの services/simulator/sim-engine.ts・sim-engine/ (完成形の判定・結果の箱の割合・requiredRunes・規格外の打ち方 applyUnbounded ほか)・services/simulator/paste/ (貼り付けの読み item-text)、エミュの services/emulator/emu-engine.ts・emu-engine/、デザインの src/components/art/ (base・skill・rune-art)。テスト・golden・データの台本は解析・エミュ、見張り check-engine-entry はデザイン。経過は共有メモ side-session-notes/local_cbd85ab5…/jin-split-plan.md。
   - 見張り check-engine-entry (B 凍結の htc・C エンジンはシミュ・エミュ・画面の置き場を読まない・D エミュ ⇄ シミュ・E 画面の中のエンジンらしき物、控えから増えた時だけ落ちる)。
   - 10-25〜26 にジンが入れた物: 目録 data-catalog.md・outcomeOdds・貼り付けの読みの一般の解き方 (決め notes/2026-10-25-paste-hybrid-sum.md、見本 notes/paste-samples/)・足しの MOD の文を整える applyExtras の extraModText (b48d7f18)・完成形の規格外とルーン (93e81540・8824f3ef・403a3de7)。
-  - 残り (データ・決まりの側): 10-28 に engine.md ⑦ で片付けた (タリスマン・段 0・ジュエル・英語の reduced・パペットマスター)。今の残りは engine.md ⑦ 12 (3 属性のベースが選び画面に出ない、案はブラック)・13 (golden の控えが 10-21 のまま)。テストの落ち 5 本はオーナーが言うまで触らない。
+  - 残り (データ・決まりの側): 10-28 に engine.md ⑦ で片付けた (タリスマン・段 0・ジュエル・英語の reduced・パペットマスター)。⑦12 (3 属性のベースが選び画面に出ない) は E-98 に移した (スイッチ triAttr、オーナー OK 済み 10-28・本番待ち)。今の残りは engine.md ⑦ 13 (golden の控えが 10-21 のまま、頼まれたらジンが洗って取り直す) だけ。テストの落ち 5 本はオーナーが言うまで触らない。
   - 送信の上限: ユーザーの書き込みなしで 10 通ほどで止まる。区切りだけ送り、止まったら共有メモに書く (docs/org/README.md)。
 - 9 本目・10 本目への引き継ぎは notes/2026-10-26-todo-archive.md に移した。
 - 済んだ物 (FAQ の入れ物・名前の突き合わせ・お告げの下の設定・golden の取り直し・J11) は notes/2026-10-23-todo-archive.md に移した (本番の OK 待ちは docs/pending-release.md)。
 - 貼り付けの読み取り parseItemText (item-text.ts) の残り: 日本語の Ctrl+Alt+C の見出し・日本語の注記の形 (見本が来たら notes/paste-samples/ に足して対応)。ジュエルの枠 2/2 はエンジンの値で poe2db では確かめていない。
 
 ## OK 待ち
+- 本番待ち (オーナー OK 済み 10-28、出すのはオーナーの「出して」の後): スイッチ triAttr (E-98、3 属性の札) と、英語の reduced / less を正の数で出す直し 0967dfa33 (E-92、スイッチなし = 次の deploy:web で一緒に出る)。行は docs/pending-release.md。
 - サイトの体裁 (1adfb648、開発版。docs/pending-release.md に OK 待ち、【要確認】5 か所はオーナーに)。ブログの部品 (d306fea0、README 4b)。
 - ブログの入れ物 (開発版だけ、notes/2026-10-22-blog.md)。本番は記事を読んでもらってから (build:web に build-blog-pages.mjs を足し、BLOG_ON を外す)。日報の行はサーバー管理人、コメント欄はこれから。
 - MOD の重みを直せる の中身 (stage-tuning.ts の modWeights・defaultWeightOf・OVERRIDDEN) はエンジン、画面 StageWeightEdit と OK 待ちはエミュ部長。
