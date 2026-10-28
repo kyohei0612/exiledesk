@@ -10,7 +10,7 @@ const CHAOS_ICON = "https://web.poecdn.com//gen/image/WzI1LDE0LHsiZiI6IjJESXRlbX
 const PEOPLE = 100;
 
 /** 文字の中身を HTML に入れる時のエスケープ */
-const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+export const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const num = (v, max = 1e7) => { if (v == null || v === "") return null; const n = Math.round(Number(v)); return Number.isFinite(n) && n >= 0 && n <= max ? n : null; };
 const cut = (s, n) => { const t = String(s ?? "").slice(0, n); return t; };
 
@@ -90,7 +90,7 @@ function sharePage(url, c, img, code = null) {
 }
 
 /** 日本語の字は Google Fonts から使う字だけ取る (全部入りは重い) */
-async function font(text, weight, family = "Noto+Sans+JP") {
+export async function font(text, weight, family = "Noto+Sans+JP") {
   const css = await (await fetch(`https://fonts.googleapis.com/css2?family=${family}${weight ? `:wght@${weight}` : ""}&text=${encodeURIComponent(text)}`)).text();
   const src = /src: url\((.+?)\) format\('(opentype|truetype)'\)/.exec(css)?.[1];
   if (!src) throw new Error("font");
@@ -98,7 +98,7 @@ async function font(text, weight, family = "Noto+Sans+JP") {
 }
 
 /** PNG の大きさ (IHDR) */
-async function pngSize(env, url, path) {
+export async function pngSize(env, url, path) {
   try {
     const res = await env.ASSETS.fetch(new Request(new URL(path, url.origin)));
     const b = new Uint8Array(await res.arrayBuffer());
@@ -109,7 +109,7 @@ async function pngSize(env, url, path) {
   }
 }
 /** 絵を data URL に (ASSETS の中の物は Worker から直接読む) */
-async function dataUrl(env, url, path) {
+export async function dataUrl(env, url, path) {
   try {
     const res = path ? await env.ASSETS.fetch(new Request(new URL(path, url.origin))) : await fetch(url);
     if (!res.ok) return null;
