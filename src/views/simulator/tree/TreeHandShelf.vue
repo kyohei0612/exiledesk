@@ -66,7 +66,8 @@ function removeTags(it: StageItem, tags: Map<string, RowTag>): Map<string, RowTa
   const keep = new Set(keepAims.value.map((a) => a.modId)), out = new Map(tags);
   for (const m of [...it.prefixes, ...it.suffixes]) {
     if (m.fractured) continue;
-    if (keep.has(m.modId)) out.delete(m.modId);
+    // 残したい外れも「外れ MOD」のまま (名前・値を出さない、S-82。10-28 夜オーナー「消去でハズレ選んだらアイテム枠のハズレみえなくていいし…ハズレはハズレよ」、スイッチ boxShape)
+    if (keep.has(m.modId)) { if (!(flag("boxShape") && tags.get(m.modId)?.tone === "bad")) out.delete(m.modId); else out.set(m.modId, tags.get(m.modId)!); }
     else out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`消えてよい MOD (☑ で残したい MOD にできる): ${modText(m)}`, `May be removed (☑ to keep it): ${modText(m)}`) });
   }
   return out;
@@ -260,7 +261,8 @@ function toggleKeep(a: Aim): void {
 const isGoalMod = (a: Aim): boolean => (t.doc.value.memoAims ?? []).some((g) => g.modId === a.modId);
 const keepJunk = (c: { aim: Aim; mod: StageMod }): boolean => (flag("boxShape") && s.data.value && item.value ? boxTagsOf(s.data.value, t.doc.value, props.boxId, item.value).get(c.mod.modId)?.tone === "bad" : !isGoalMod(c.aim));
 const keepText = (m: StageMod): string => { const it = item.value ? cardOf(item.value) : null; return modText((it ? [...it.prefixes, ...it.suffixes].find((x) => x.modId === m.modId) : null) ?? m); }; // 値はカードと同じ (cardOf、10-28 モンキー見た目 1: 欄 94% / カード 96%)
-const keepLabel = (c: { aim: Aim; mod: StageMod }): string => (keepJunk(c) ? tr(`外れ MOD (${keepText(c.mod)})`, `Miss mod (${keepText(c.mod)})`) : keepText(c.mod));
+// 外れは「外れ MOD」だけ (中身は教えない、S-82。10-28 夜オーナー「別にここのチェックでも教えなくていいハズレはハズレよ」、スイッチ boxShape)
+const keepLabel = (c: { aim: Aim; mod: StageMod }): string => (keepJunk(c) ? (flag("boxShape") ? tr("外れ MOD", "Miss mod") : tr(`外れ MOD (${keepText(c.mod)})`, `Miss mod (${keepText(c.mod)})`)) : keepText(c.mod));
 function keepNone(e: Event): void { const was = [...keepChecked.value]; keepChecked.value = []; (e.target as HTMLInputElement).checked = true; warnIfBelow(() => { keepChecked.value = was; }); }
 const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, ...(isRemove.value ? { keep: keepAims.value } : {}) }) : null));
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
