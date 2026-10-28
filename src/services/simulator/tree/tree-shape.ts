@@ -138,8 +138,10 @@ export function shapeFits(doc: TreeDoc, from: string, to: string): boolean {
 export function shapesOf(doc: TreeDoc, data?: PatchData): Shape[] {
   const out: Shape[] = [];
   for (const b of Object.values(doc.boxes)) {
-    // 打った後 (狙い無し) の箱も外れの形の行き先に (消去の「狙いが消えた」(マジック・外れ 1) が上の変成の「打った後」でなく白のスタートへ戻った、10-28 夜オーナー。スイッチ boxShape)
-    if (!b.hand || (b.out !== "hit" && b.out !== "junk" && !(b.out === "any" && flag("boxShape")))) continue;
+    // 打った後 (狙い無し) の箱も外れの形の行き先に (消去の「狙いが消えた」(マジック・外れ 1) が上の変成の「打った後」でなく白のスタートへ戻った、10-28 夜オーナー。スイッチ boxShape)。
+    // 自動のつなぎ (data を渡さない呼び方、体は linkSameShape が比べる) の時だけ。回す時・精査の「形の合う箱へ」(data あり) に入れると、打った後の箱の鍵は外れの有無を
+    // 持たないので、外れの側の違う人まで入った (同じ形 2 つの b6 で右手のお告げが効かない人が出た、10-28 夜 最終チェック長)
+    if (!b.hand || (b.out !== "hit" && b.out !== "junk" && !(b.out === "any" && flag("boxShape") && !data))) continue;
     for (const held of pathHelds(doc, b.out === "junk" ? b.parent : b.id)) out.push({ key: shapeKey(held, b.out === "junk" || junkLike(doc, b)), box: b.id, hand: b.hand });
   }
   // 分かれ目の箱も行き先に (外れの有無は行で分けるので両方の形を受ける。手のある箱が先、10-22 13 通り組んだ #14: 分かれ目の下の消去の「外れが消えた」に行き先が無かった)
