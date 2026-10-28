@@ -32,7 +32,7 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 
 | 部 (部長) | 画面 | 仕組み | 状態 | テスト |
 |---|---|---|---|---|
-| データ・エンジン (ジン部長 = データベース、出どころはトレード > poe2db。画面と部品は持たない) | — | `services/craft-stage/` (spec/・入口 `engine.ts` 核 / `engine-sim.ts` / `engine-emu.ts`)・`services/htc/`・`services/mods/`・`services/items/`・`vendor/poe2htc/` | — | `tests/` の直下 |
+| データ・エンジン (ジン部長 = データベース、出どころは poe2db が正・トレードは確かめ。画面と部品は持たない) | — | `services/craft-stage/` (spec/・入口 `engine.ts` 核 / `engine-sim.ts` / `engine-emu.ts`)・`services/htc/`・`services/mods/`・`services/items/`・`vendor/poe2htc/` | — | `tests/` の直下 |
 | エミュの画面 (エミュ部長) | `views/craft-stage/` | エンジンの入口から取る | `state/emulator/` | — |
 | シミュの画面 (シミュ部長) | `views/simulator/` | `services/simulator/` (`htc/` はアプリ専用・凍結) | `state/simulator/` | `tests/simulator/` |
 | チュートリアル (シミュ部長) | `views/tutorial/` (Video*・コース) | `services/tutorial/` | `state/tutorial/` | `tests/tutorial/` |
@@ -64,12 +64,12 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 
 ## データの出どころ
 
-出どころの順: トレード (取引所のデータ) > poe2db > ほか。クライアントは正しさの根拠にしない (メモ feedback-db-only、10-17)。下の表のクライアントの行は、今ある JSON・絵をどこから作ったかの記録。
+出どころの順: poe2db > トレード (取引所のデータ、確かめ) > ほか (10-28 オーナー)。クライアントは正しさの根拠にしない (メモ feedback-db-only、10-17)。下の表のクライアントの行は、今ある JSON・絵をどこから作ったかの記録。
 
 | 何 | どこから | 作り直し |
 |---|---|---|
 | アイテム名・MOD の文面・ジェム・エッセンス・説明文 | ゲームのクライアント (`pathofexile-dat`) | `pnpm data:client` |
-| 付く・付かない・ベースの有無 (一番の出どころ、消さない) | トレードのデータ (`services/items/tradeable-bases.json`・`i18n/trade2-*.json`) | `scripts/build-tradeable-bases.mjs`・`scripts/build-trade2-*.mjs` |
+| 付く・付かない・ベースの有無 (確かめの出どころ、消さない。正は poe2db) | トレードのデータ (`services/items/tradeable-bases.json`・`i18n/trade2-*.json`) | `scripts/build-tradeable-bases.mjs`・`scripts/build-trade2-*.mjs` |
 | MOD の置き場・重み | poe2db (同梱エンジン + `poe2db-pool-fixes.json`)。冒涜専用は全部同じ重み | `scripts/build-poe2db-fixes.mjs`、照合は `scripts/audit-poe2db-mods.mjs` |
 | 付き方の正解 | Craft of Exile の写し (`data-cache/coe-beta-package_poe2.js`) とオーナーのゲームでの確認 | — |
 | ベース・ユニーク・ルーンの絵 | クライアントの DDS → webp (`public/<pack>/`) | `pnpm data:client` |
