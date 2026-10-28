@@ -65,6 +65,8 @@ const rmTitle = computed(() => tr(`この箱を作った手 (${(() => { const h 
 const CARD_W = BOX_W - 16;
 /** この箱からまとめられるか (下の操作の行の「まとめる」の入口。押すとこの箱をまとめ先にして上の帯の「まとめる」と同じ選び方へ) */
 /** 当たりの箱の「次の手が未定」は赤くせず静かな印だけ (足りない所には数える。10-26 オーナー「一旦整理してA」) */
+/** 未設定 (＋ が出ている、手も戻りも完成も決めていない箱 = 足りない所の「決めていない」)。右上の角に丸い赤の「!」(当たりの箱も。S-89b、スイッチ unsetMark) */
+const unset = computed(() => flag("unsetMark") && !!props.issue && /決めていない|No next|No first craft|no destination/.test(props.issue));
 const quietOpen = computed(() => props.box.out === "hit" && !!props.issue && /行き先を決めていない|Not decided|No next/.test(props.issue));
 // 別の道の同じ状態の当たり (sameHitsOf) は、完成・次の手がある箱どうしでもまとめられる (10-26 夜オーナー「中身がある箱どうしは自動でせずまとめる」)
 const canJoin = computed(() => (!props.box.hand && !props.box.done ? joinCandidates(t.doc.value, props.box.id).length > 0 : sameHitsOf(t.doc.value, props.box.id, hitLoose(t.doc.value)).length > 0));
@@ -178,6 +180,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     <!-- 題は枠の上の線に乗る札 (よくある枠の形。枠の中は割合・中身・戻り方だけ。10-26 オーナー「枠の上のところに●がついた みたいな形でよくある枠の形にしたら枠中ごちゃんなくていいよな」) -->
     <!-- 札は枠の上辺の横の真ん中 (10-26 夜オーナー「この ◎ が付いたとか外れとかは真ん中が良いな、枠の」。左上だと未定の ! と重なった)。この結果に着く割合 (tree-odds.ts) は乗せた時の説明だけ -->
     <!-- 札の横に箱の印 (未定の !・完成・狙いに無い・要らない・要確認)。前は枠の中の 1 行目にあり、その行が枠を下げていた (10-26 夜オーナー「上枠もっと広げれるじゃろ」) -->
+    <span v-if="unset" data-tree-unset class="pointer-events-none absolute -right-2.5 -top-2.5 z-10 flex size-5 items-center justify-center rounded-full bg-rose-600 text-[12px] font-bold text-white shadow-[0_0_8px_rgba(244,63,94,0.7)]" :title="tr('未設定 (手・戻り・完成のどれも決めていない)', 'Unset (no next step, return or finish yet)')">!</span>
     <div class="absolute -top-[10px] left-1/2 flex max-w-[calc(100%-16px)] -translate-x-1/2 items-center gap-1 whitespace-nowrap">
     <component :is="box.out === 'hit' && box.aim && !quiet ? 'button' : 'span'" :type="box.out === 'hit' && box.aim && !quiet ? 'button' : undefined" data-tree-legend class="nodrag flex min-w-0 items-center gap-1 whitespace-nowrap rounded-md border px-1.5 text-[11px] font-bold leading-[18px]" :style="{ color: `rgb(${rgb})`, borderColor: `rgba(${rgb},0.55)`, background: '#15110c' }" :class="box.out === 'hit' && box.aim && !quiet ? 'hover:brightness-125' : 'pointer-events-none'" :title="legendTitle" @click.stop="box.out === 'hit' && box.aim && !quiet && emit('aim')"><Icon :name="kind.icon" class="size-3 shrink-0" /><span class="min-w-0 truncate">{{ head }}</span></component>
     <!-- まとめた箱がある = 線が何本か入る (案 A、S-66、スイッチ mergeOpen) -->

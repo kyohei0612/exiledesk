@@ -14,7 +14,7 @@ import { VueFlow, type NodeMouseEvent } from "@vue-flow/core";
 import "@vue-flow/core/dist/style.css";
 import Icon from "../../../components/ui/Icon.vue";
 import TreeMemoFloat from "./TreeMemoFloat.vue";
-import TreeCanvasTools from "./TreeCanvasTools.vue"; import TreeTopTools from "./TreeTopTools.vue"; import TreeRunSum from "./TreeRunSum.vue";
+import TreeCanvasTools from "./TreeCanvasTools.vue"; import TreeTopTools from "./TreeTopTools.vue"; import TreeRunSum from "./TreeRunSum.vue"; import TreeUnsetBar from "./TreeUnsetBar.vue";
 import ModeTabs from "../../../components/for-share/ModeTabs.vue";
 import SimPcOnly from "../SimPcOnly.vue"; import PhoneTreePage from "../phone/PhoneTreePage.vue";
 import { usePhone } from "../../../utils/use-phone";
@@ -413,7 +413,7 @@ const phone = usePhone(), simPhone = flag("simPhone");
         <!-- ベースが無い時の空の形 (白紙の木でベースを選ばずに閉じた時): 木は出さず真ん中に「ベースを選ぶ」1 つ (10-23 オーナー、use-tree の needBase) -->
         <div v-if="t.needBase.value" data-tree-need-base class="absolute inset-0 z-30 flex items-center justify-center bg-[#0c0a08]">
           <button type="button" data-tree-pick-base class="g-btn" @click="t.goalPage.value = 1">{{ tr("ベースを選ぶ", "Choose a base") }}</button>
-        </div>
+        </div><TreeUnsetBar v-if="flag('unsetMark') && !t.needBase.value && issuesShown" :issues="issues" :doc="doc" @go="goIssue" />
         <!-- 0 完成形の設定の札 (木の箱にせず、木を送っても見える左上。10-23 オーナー)。スイッチ goalCard で完成形のアイテム枠 (10-25 オーナー)。木は札 1 本分 (44px) 下から描く (畳んだ札が下の箱を隠した、10-26 ブラック 12 代目) -->
         <!-- ページの zoom を枠だけ打ち消す (中は実質 1 倍。Vue Flow の座標とマウスが揃う、use-tree-flow.ts)。格子は Vue Flow の送りと倍率に合わせる。ホイールは決まった段へ 1 段ずつ (use-tree-flow の onWheel) -->
         <div data-tree-canvas data-overflow-ok class="absolute inset-0" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid }" @wheel="v.onWheel">
