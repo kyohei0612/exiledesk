@@ -104,8 +104,11 @@ function onKey(e: KeyboardEvent): void {
   const otherDialog = document.querySelectorAll("[role=dialog], [aria-modal=true]").length > (s.modOverlay.value ? 1 : 0);
   if (e.key === "Tab" && !e.ctrlKey && !e.altKey && !e.metaKey && !typing && !otherDialog && s.item.value && (s.mode.value === "hand" || s.replay.value) && !phone.value) { e.preventDefault(); s.modOverlay.value = !s.modOverlay.value; return; }
   // 1 手戻す: R (2026-10-11 オーナー「Ctrl+Z はデフォルトみたいな存在だから R でいい」)。Ctrl+Z も残す
-  const undoKey = (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === "r") || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z");
-  if (undoKey && !e.repeat && !typing && !dialog && (s.mode.value === "hand" || s.replay.value)) { e.preventDefault(); if (!inLesson.value) s.undo(); } // コースの間は戻さない (もう一度で)
+  // やり直し: Ctrl+Shift+Z・Ctrl+Y (スイッチ emuRedo、U-25 シミュのツリーと同じ鍵。オーナー 10-28「統一で」)
+  const mod = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
+  const redoKey = flag("emuRedo") && mod && ((e.shiftKey && k === "z") || (!e.shiftKey && k === "y"));
+  const undoKey = !redoKey && ((!mod && !e.altKey && k === "r") || (mod && k === "z"));
+  if ((undoKey || redoKey) && !e.repeat && !typing && !dialog && (s.mode.value === "hand" || s.replay.value)) { e.preventDefault(); if (!inLesson.value) (redoKey ? s.redo() : s.undo()); } // コースの間は戻さない (もう一度で)
 }
 onMounted(() => { window.addEventListener("mousemove", onMove); window.addEventListener("keydown", onKey); });
 onBeforeUnmount(() => { window.removeEventListener("mousemove", onMove); window.removeEventListener("keydown", onKey); s.hold(null); });

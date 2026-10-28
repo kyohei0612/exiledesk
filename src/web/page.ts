@@ -45,6 +45,36 @@ let routesBack = remember("routes", () => (routesOpen.value && routesTarget.valu
 let courseBack = remember("course", () => (topic.value ? { id: topic.value.id, at: topicAt.value } : null));
 
 /**
+ * 送りの位置 (スイッチ backPlace、U-27、オーナー 10-28「戻るボタンだからね上のエミュとかのタブ押したらリセットだけど初めて訪問しましたみたいなくくりにしたい」)。
+ * 履歴の番号 (edIdx) ごとに離れた時の位置を覚え、戻る / 進むで来た時はその位置へ。記事から戻った読み込みは page-memo の写し。上の切り替えタブは一番上から (topOfPage)
+ */
+const BACK_PLACE = typeof window !== "undefined" && flag("backPlace");
+const placeOf = new Map<number, number>();
+let lastY = 0;
+let yBack = BACK_PLACE ? remember("scrollY", () => (lastY > 0 ? lastY : null)) : undefined;
+if (BACK_PLACE) {
+  try { history.scrollRestoration = "manual"; } catch { /* 選べなくてもブラウザの戻し方のまま */ }
+  addEventListener("scroll", () => { lastY = window.scrollY; }, { passive: true });
+}
+/** y へ送る。中身が出来上がって届くまで (最大 1.5 秒) 待つ */
+function placeAt(y: number | undefined): void {
+  if (!BACK_PLACE || y == null) return;
+  const until = performance.now() + 1500;
+  const step = (): void => {
+    const room = document.documentElement.scrollHeight - innerHeight;
+    if (room >= y || performance.now() > until) { window.scrollTo(0, Math.min(y, Math.max(0, room))); lastY = window.scrollY; return; }
+    requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+/** 上の切り替えタブ (ModeTabs) を押した時: 初めて開いたのと同じく一番上から */
+export function topOfPage(): void {
+  if (!BACK_PLACE) return;
+  window.scrollTo(0, 0);
+  lastY = 0;
+}
+
+/**
  * ツリーのページの中の段 (2026-10-24 オーナー「シミュレーターのタブを押したら最初のベース選択のページへ (オーバーレイでなくページ全体)、MOD も別ページ」)。
  * tree = ツリー、base = 最初のベース選び、mods = 完成の MOD。どれも treePage = true で、SimTreePage が見て出し分ける
  */
@@ -354,6 +384,8 @@ export function startPages(): void {
     stop();
     if (first) apply(first);
     else syncUrl();
+    placeAt(yBack); // 記事などから戻った読み込みは離れた時の位置へ (backPlace)
+    yBack = undefined;
   }, { immediate: true });
   // ページと「自分で出たベース選びか」を組で見る。auto = 移る直前のページが自分で出たベース選びだったか
   // (前は移った時にだけ覚え直していたので、?page=base を直に開いた時の「自分で出た → 人が開いた」(ページの文字は同じ) を取りこぼし、戻るで飛ばされていた。2026-10-23)
@@ -380,7 +412,7 @@ export function startPages(): void {
     try {
       // 自分で出たベース選びへ移る時は、クラフトの画面が替わっただけの時 (白に戻した後など) だけ積まない。ツリーなどから出た時は積む (戻るでそのページへ)
       if (auto || (nowAuto && old === "")) history.replaceState(history.state, "", urlFor(p));
-      else history.pushState(stateAt(++histAt), "", urlFor(p));
+      else { placeOf.set(histAt, lastY); history.pushState(stateAt(++histAt), "", urlFor(p)); }
     } catch { /* 積めなくても画面はそのまま */ }
   });
   try { history.replaceState(stateAt(histAt), ""); } catch { /* 番号が無くても戻る / 進むはできる (聞いた時に URL を戻せないだけ) */ }
@@ -388,7 +420,7 @@ export function startPages(): void {
     const to = pageOfUrl(), at = histOf();
     if (popBack) { popBack = false; return; } // 聞くために元の位置へ戻った分
     const step = histAt - at;
-    if (popThrough || !mustAsk(to) || !step) { popThrough = false; histAt = at; apply(to); return; }
+    if (popThrough || !mustAsk(to) || !step) { popThrough = false; placeOf.set(histAt, lastY); histAt = at; apply(to); placeAt(placeOf.get(at)); return; }
     // 保存していない変更がある: 履歴の元の位置 (ツリー) へ戻してから聞く (積み直さないので、やめた後の戻るもすぐ聞く)。「保存せずに終了」なら行こうとした所へ (その 1 回は聞かない)
     popBack = true;
     history.go(step);

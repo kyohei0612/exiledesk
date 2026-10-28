@@ -180,6 +180,11 @@ function usableWith(key: string, om: readonly string[]): string | null {
   if (!data.value || !item.value) return tr("読み込み中…", "Loading…");
   return useReason(data.value, item.value, key, om);
 }
+/** やり直しの手 (後ろが次に打ち直す手)。redoAt・redoLog = 最後に戻した / やり直した時のアイテムと工程 (違えば続きではない) */
+const REDO_ON = flag("emuRedo");
+const redoList: PlayedStep[] = [];
+let redoAt: StageItem | null = null;
+let redoLog: PlayedStep[] | null = null;
 const replayApi = stageReplay({
   data, item, log, dropped, replay, base, itemLevel, seed, startMods, omens, held, rollSeed, error,
   priceOf, priceKeysAll, freshSeed, reset: (): void => craftStage.reset(),
@@ -356,12 +361,25 @@ export const craftStage = {
     }
     if (!l.length || replay.value) return;
     const last = l[l.length - 1]!;
+    if (item.value !== redoAt || l !== redoLog) redoList.length = 0; // 戻した後に打った・変えた = やり直しの続きではない
     item.value = last.before;
     log.value = l.slice(0, -1);
+    if (REDO_ON) { redoList.push(last); redoAt = item.value; redoLog = log.value; }
     // 戻したら次の手は新しい乱数で (同じ手を打ち直しても同じ結果にならない)
     rollSeed.value = freshSeed();
     const ate = last.out.omen ? last.out.omen.split("+") : [];
     omens.value = [...new Set([...omens.value, ...ate])];
+  },
+  /** やり直し (スイッチ emuRedo、U-25): 1 手戻した手をその結果のまま打ち直す (乱数は引き直さない)。戻した後に打つ・変えると消える */
+  redo(): void {
+    if (!REDO_ON || replay.value || !redoList.length) return;
+    if (item.value !== redoAt || log.value !== redoLog) { redoList.length = 0; return; }
+    const p = redoList.pop()!;
+    log.value = [...log.value, p];
+    item.value = p.after;
+    const ate = p.out.omen ? p.out.omen.split("+") : [];
+    if (ate.length && !omenKeep.value) omens.value = omens.value.filter((o) => !ate.includes(o));
+    redoAt = item.value; redoLog = log.value;
   },
   /**
    * 履歴の手 (out.index) を打った直後に戻す (2026-10-09 オーナー「工程クリックしてもそこの工程に戻れない」)。
