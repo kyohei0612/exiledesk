@@ -23,9 +23,9 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 | チュートリアル (使い方・コツは本番、シミュのチュートリアルは開発版だけ) | `views/tutorial/StageCourses.vue`・`StageTopicGuide.vue`・`StageCourseGuide.vue` | 動作を学ぶコース (`services/tutorial/topic-courses.ts`)・実践 (`course-recipes.ts`) |
 | シミュレーター (10-26 v0.1.601 から本番。決まりの正は docs/spec/sim-tree.md) | `views/simulator/tree/SimTreePage.vue` (ページは `?page=sim-base` ベース → `sim-mods` 完成の MOD → `sim-tree` クラフトの道 = ツリー、10-24 夜に分けた。段は web/page.ts の treeStep) | 打ち方を組んで何百人分作る (ADR-002・003)。回し方は `services/simulator/tree/` |
 
-開発版だけの物は `state/craft-stage.ts` の `SIM_LOCKED` と `src/web/release-flags.ts` のスイッチで本番から隠す (手元の開発版 `pnpm preview:prod -- --dev` と dev サーバー 1440 では開く。Cloudflare の開発版 web-dev は 10-24 に消した)。
+開発版だけの物は `state/craft-stage.ts` の `SIM_LOCKED` と `src/web/release-flags.ts` のスイッチで本番から隠す (手元の開発版 `pnpm preview:prod -- --dev` と dev サーバー 1440 では開く。環境の決まりは Y-70・Y-72)。
 
-## 部ごとの持ち場 (2026-10-20 に分け、10-22〜23 に組み替えた。持ち物の正は docs/org/owners.txt (`node scripts/owner-of.mjs <パス>`)、部の決まりは docs/org/<部>/README.md)
+## 部ごとの持ち場 (2026-10-20 に分け、10-22〜23 に組み替えた。持ち物の正は docs/org/owners.txt (`node scripts/owner-of.mjs <パス>`)、部の決まりの正は設計図 docs/spec/、部の動き方は docs/org/<部>/README.md)
 
 線引き: 結果が変わる物 (付き方・確率・固定される MOD・打てるか) はエンジン、見え方と操作は画面。画面の部長はエンジンにも相手の画面のコードにも触れない。どの画面でも同じ物 (ページの枠・決まった挙動・同じゲームの物の部品) は共有 (デザイン部長)、その作業の流れにしか無い物は各画面。迷ったら画面で作り、2 つ目の画面で要った時に共有へ (オーナー 10-23)。
 
@@ -78,14 +78,14 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 
 - **Web**: `node scripts/bump-version.mjs patch` → `cd src-tauri && cargo check -q` → コミット → push → `pnpm deploy:web` (= `pnpm build:web` + `server/web` の deploy)。タグは打たない。
   `pnpm build:web` の最後に `scripts/build-seo-pages.mjs` がベースの読み物のページ (日本語 `/bases/`・英語 `/en/bases/`) と sitemap.xml を作る。
-- **開発版**: 手元だけ。`pnpm preview:prod -- --dev` → http://dev.exiledesk.localhost:1461/ (本番と同じ Worker、チュートリアル・シミュレーターが開く、記録は送らない)。Cloudflare の開発版 web-dev (`deploy:web-dev`・`?k=`) は 10-24 に消した (本番と 1 日 10 万の枠を共有していたため)。
+- **開発版**: 手元だけ。`pnpm preview:prod -- --dev` → http://dev.exiledesk.localhost:1461/ (本番と同じ Worker、チュートリアル・シミュレーターが開く、記録は送らない)。Cloudflare に開発版は置かない (Y-70、web-dev は 10-24 に消した)。オーナーの確かめは 1440 (R-13)、1461 は出す前の見張り用 (R-15)。
 - **サーバー**: `cd server/live && pnpm run deploy` (手順は `server/live/README.md`)。D1 は `exiledesk-logs`、KV は増やさない。
 
 ## テスト
 
 - `pnpm -s exec vitest run <ファイル>` … 触った所だけ。全部は main への push で CI (`tests.yml`) が回す。
 - カレンシーの動きを変えたら `tests/currency-spec-golden.test.ts` (結果の見張り) も。わざと変えた時は `GOLDEN_WRITE=1` で取り直す。
-- 期待値は外の正解 (トレード (取引所のデータ)・poe2db・Craft of Exile・オーナーのゲームでの確認) から。自分のコードの写しでテストを作らない。
+- 期待値は外の正解 (出どころの順は E-01〜04 = poe2db が正・トレードは確かめ・Craft of Exile・オーナーのゲーム) から。自分のコードの写しでテストを作らない (G-22)。
 
 ## 開発を始める
 
