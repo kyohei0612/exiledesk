@@ -21,9 +21,9 @@
 | 枠の上限 | レアリティの上限 + 暗黙の ±N (ジュエル・エッセンスの +1 枠など) | `limitOf` (stage-core.ts) |
 | 上限超え | レアで、ある側の MOD が上限より多い状態 | `overLimit` |
 | 行 | MOD の置き場の単位 (`Gloves_str`・`Wands_fire` など) | `classOfBase` (htc/bridge.ts) |
-| 段 | 同じ MOD の強さの段 (T1 が一番上) | `tierIndex` |
+| 段 | 同じ MOD の強さの段 (T1 が一番上)。画面の言葉は「ティア」(U-62) | `tierIndex` |
 | 系統 | 同時に 1 つしか付かない MOD のまとまり | `family` (直接比べない、E-11) |
-| 一般 MOD / 冒涜専用 MOD / クラフト MOD | MOD の出どころ (E-91) | source `normal` / `desecrated` / `essence`・`perfect_essence` |
+| 一般 MOD / 冒涜専用 MOD / クラフト MOD | MOD の出どころ (言い方は E-95) | source `normal` / `desecrated` / `essence`・`perfect_essence` |
 | 未発現 | 骨で付いた、まだ中身の決まっていない冒涜の枠 | `m.unrevealed` |
 | 発現済みの冒涜 | 発現で決まった冒涜の MOD (一般 MOD のこともある) | `m.desecrated && !m.unrevealed` |
 | 固定 (フラクチャー) | フラクチャーで固定した MOD。消す・振り直すの対象にならない | `m.fractured` |
@@ -38,7 +38,7 @@
 
 ### データの出どころ
 
-- **E-01 出どころの正は poe2db。トレード (取引所のデータ) は確かめに使う。その次が Craft of Exile・オーナーのゲームでの確認。** 付く・付かない・段・ベースの有無は poe2db に合わせ、トレードのデータ (`services/items/tradeable-bases.json`・`i18n/trade2-*.json`、消さない) は照らすだけ。食い違ってもトレードに合わせて直さない (例: タリスマンの物理の段はトレードが P6、poe2db とデータは 9 段で T5 → データのまま)。クライアントは根拠にしない (今ある JSON の出どころの記録だけ、ARCHITECTURE の「データの出どころ」)。PoB は使わない。 — 有効 (オーナー OK 済み 10-28、決めだけでコードの変更なし) / G-01、オーナー 10-09・10-17「db 見ときゃいい」・10-28「やっぱりdbにしようかトレードは確認くらいでおk」・同日「全体の順でおｋ」(タリスマンだけでなく全体、10-23「トレードは 1 番信頼できる」の順は 10-28 で置き換え) / 外の正解: `scripts/audit-poe2db-mods.mjs`・`audit-poe2db-tags.mjs` が 0
+- **E-01 出どころの正は poe2db。トレード (取引所のデータ) は確かめに使う。その次が Craft of Exile・オーナーのゲームでの確認。** 付く・付かない・段・ベースの有無は poe2db に合わせ、トレードのデータ (`services/items/tradeable-bases.json`・`i18n/trade2-*.json`、消さない) は照らすだけ。食い違ってもトレードに合わせて直さない (例: タリスマンの物理の段はトレードが P6、poe2db とデータは 9 段で T5 → データのまま)。クライアントは根拠にしない (今ある JSON の出どころの記録だけ、ARCHITECTURE の「データの出どころ」)。PoB は使わない。 — 有効 (10-28 オーナーの決め、コードの変更なし) / G-01、オーナー 10-09・10-17「db 見ときゃいい」・10-28「やっぱりdbにしようかトレードは確認くらいでおk」・同日「全体の順でおｋ」(タリスマンだけでなく全体、10-23「トレードは 1 番信頼できる」の順は 10-28 で置き換え) / 外の正解: `scripts/audit-poe2db-mods.mjs`・`audit-poe2db-tags.mjs` が 0
 - **E-02 写しどうしが食い違って決まらない値は poe2db に合わせる。聞かない。** (例: 兜の憤怒 45 段目の秒) — 有効 / オーナー 10-20・10-23 / 外の正解: poe2db の部位のページ
 - **E-03 公開値の無い重み・割合は Craft of Exile (beta) のデータと動きを正にする。** ルーンの特殊 MOD は CoE (Krakenbul の実測) → `htc/rune-weights.json`。冒涜専用 MOD どうしの重みは全部同じ。出どころの当て先はメモ craft-weight-sources。 — 有効 / ADR-004 の 4、v0.1.528 / 外の正解: `data-cache/coe-beta-data.json`・`scripts/check-htc-odds-vs-coe`
 - **E-04 こちらで決めた値には出どころと日付を付ける。** spec の `source` (client / poe2db / coe / owner / community / assumed) に書く。 — 有効 / ADR-004 / 確かめ: spec を読む
@@ -48,7 +48,7 @@
 - **E-10 MOD の置き場・重み・段・文はエンジンの行 1 か所から取る。** 読み込みは `services/htc/patch.ts` の `loadHtcPatch()` (同梱 + `extra-bases.json` + `weight-overrides.ts` + `poe2db-pool-fixes.json`)、ベース名 → 行は `bridge.ts` の `classOfBase`、MOD を並べるのは `craft-stage/mod-list.ts` の `modListFor`。自前の表を作らない。 — 有効 / オーナー 09-29・10-05 / 見張り: `check-engine-entry` E (画面の中の .tiers・生の JSON)
 - **E-11 系統・重み・出やすさは `services/mods/mod-rules.ts`。** `m.family` を直接比べない。段の重みは `vendor/poe2htc/engine/pool.ts` の `modTierWeights` 1 本で、自分で足さない。 — 有効 / ARCHITECTURE / 見張り: `check-engine-entry` E
 - **E-12 部位のまとまりは `services/mods/item-classes.ts` から引く** (`inGroup`・`inAny`・`kindOf`・`categoriesIn`・`canFracture`)。部位の名前を手で並べない。カレンシーの使い先は説明文の言葉 (武器・マーシャル武器・ワンド / スタッフ / セプター・防具・宝飾品・指輪かアミュレット・矢筒・ジュエル)。表は poe2db と食い違ったら poe2db に合わせる。 — 有効 / 10-13 総点検 (`docs/archive/2026-10-13-item-class-audit.md`)・10-17 / 見張り: `tests/item-classes.test.ts`
-- **E-13 暗黙が足すタグも置き場に入る。** 例: グラスピングメイルは鎧 (Body Armours、筋力・器用さ・知性の混合 = タグ `str_dex_int_armour`、要求 41 / 41 / 41、レベル 65) だが暗黙の adds_tags = ring で指輪の MOD が付き、カタリストも使える (専用の行 `Body_Armours_ring_str_dex_int`)。暗黙が一緒に足す `genesis_tree_caster`・`genesis_tree_minion` は創生の樹 (落ちる物だけ、`htcDropOnly`) の MOD 用で、クラフトの置き場には足さない。「この部位に◯◯は付かない」と言う前に暗黙を見る。ベースの選び画面の札は E-98。 — 有効 (オーナー OK 済み 10-28、エンジンの変更なし) / 要望 a286ced8・poe2db (10-28 に読み直し)「Can roll Ring Modifiers」「Catalysts can be applied to this item」 / 外の正解: CoE beta の Grasping Mail の表、`tests/grasping-mail.test.ts`
+- **E-13 暗黙が足すタグも置き場に入る。** 例: グラスピングメイルは鎧 (Body Armours、筋力・器用さ・知性の混合 = タグ `str_dex_int_armour`、要求 41 / 41 / 41、レベル 65) だが暗黙の adds_tags = ring で指輪の MOD が付き、カタリストも使える (専用の行 `Body_Armours_ring_str_dex_int`)。暗黙が一緒に足す `genesis_tree_caster`・`genesis_tree_minion` は創生の樹 (落ちる物だけ、`htcDropOnly`) の MOD 用で、クラフトの置き場には足さない。「この部位に◯◯は付かない」と言う前に暗黙を見る。ベースの選び画面の札は E-98。 — 有効 (10-28 オーナーの決め、エンジンの変更なし) / 要望 a286ced8・poe2db (10-28 に読み直し)「Can roll Ring Modifiers」「Catalysts can be applied to this item」 / 外の正解: CoE beta の Grasping Mail の表、`tests/grasping-mail.test.ts`
 - **E-14 MOD の値に固定値は無い。** +1 も stat の値で、品質・ソケットの効果・お告げなどで動く前提で持つ (`stage-runes.json` の effects.stats など)。丸めが分からない時はデータか実測で。 — 有効 / オーナー 10-10「固定値のものなんてのは存在しない」 / 外の正解: 実物 (セールの凱旋 +2)
 - **E-15 暗黙にもタグがあり、カタリストの品質で伸びる。** タグ・品質・上の数値を触る時は暗黙 (`implicitRows`・`htc/implicit-stats.json`) も見る。 — 有効 / オーナー 10-12 / 確かめ: 暗黙の値の表示
 - **E-16 MOD のタグと冒涜の陣営は poe2db に合わせる** (`htc/poe2db-tag-fixes.json`)。poe2db を取り直したら照合を回す。 — 有効 / 10-18 v0.1.572、`docs/reviews/2026-10-18-tag-audit.md` / 外の正解: `audit-poe2db-tags.mjs` が 0
@@ -83,7 +83,7 @@
 
 - **E-40 フラクチャーはレアで MOD 4 つ以上、固定は 1 つ。もう固定がある品・CanBeFractured でない部位には打てない。** (`modsAtLeast` 4・`noFractured`・`fracturableClass`) — 有効 / 説明文、オーナーがゲームで確認 10-08 / 見張り: golden
 - **E-41 選ぶのは対象から等しく 1 つ。未発現の枠と冒涜で付いた MOD (冒涜専用でも一般 MOD でも) は選ばれない。クラフト・エッセンスの MOD は固定できる。** (`unfracturable`) — 有効 / オーナーが 24 回打って 0 回 (10-10)、CoE EmulatorManager.fracture (CoE は発現済みも選ぶので違う) / 外の正解: オーナーのゲーム
-- **E-42 「MOD 4 つ以上」に未発現の枠も発現済みの冒涜も数える。固定は選べる MOD (E-41) から等しく。** 普通 3 + 冒涜 1 (未発現でも発現済みでも) なら打てて、固定は普通 3 つの中から 1/3 ずつ (`modsAtLeast` が `allMods` を見る、選ぶのは `unfracturable` を抜いた物)。 — 有効 (オーナー OK 済み 10-28、前からこの動きでコードの変更なし) / オーナー 10-28「打てる だから33％って話ただ冒涜にはフラクチャーかからないから発言しても未発現でもいっしょ」 / 見張り: `tests/desecrated-fracture.test.ts`、確かめ: 10-28 ジンの台本 (指輪の 3 通り × 6000 回で 0.331〜0.335、冒涜・未発現は 0 回、確率表 `fractureHit` も 0.333)
+- **E-42 「MOD 4 つ以上」に未発現の枠も発現済みの冒涜も数える。固定は選べる MOD (E-41) から等しく。** 普通 3 + 冒涜 1 (未発現でも発現済みでも) なら打てて、固定は普通 3 つの中から 1/3 ずつ (`modsAtLeast` が `allMods` を見る、選ぶのは `unfracturable` を抜いた物)。 — 有効 (10-28 オーナーの決め、前からこの動きでコードの変更なし) / オーナー 10-28「打てる だから33％って話ただ冒涜にはフラクチャーかからないから発言しても未発現でもいっしょ」 / 見張り: `tests/desecrated-fracture.test.ts`、確かめ: 10-28 ジンの台本 (指輪の 3 通り × 6000 回で 0.331〜0.335、冒涜・未発現は 0 回、確率表 `fractureHit` も 0.333)
 
 ### エッセンス
 
@@ -110,7 +110,7 @@
 ### 品質・触媒・その他
 
 - **E-70 装備の品質カレンシーは 1 個で +1% か +2% (半々、アイテムレベルを見ない)。フラスコ +1、ジェム +5、既定の上限 20%。** (`QUALITY_STEP_ITEM_ROLLS` = [1, 2]) — 有効 / オーナー 10-17「1〜2 の完全ランダム」(CoE の ilvl の式とは違う方) / 見張り: golden
-- **E-71 触媒は種類を変えると品質は 0 から (ほかの種類を置き換える)。使えるのは指輪・アミュレット・暗黙で使える物 (E-13) とジュエル (精製されたカタリスト)。** 伸びるのはその種類のタグを持つ MOD 全部 (グラスピングメイルでも指輪の MOD に限らない。説明文は「◯◯の MOD を強化する」で部位の縛りが無い、E-22)。 — 有効 (オーナー OK 済み 10-28、コードの変更なし) / 説明文「Replaces other quality types」、CoE Item.addQuality、グラスピングメイルは 10-28 (poe2db に乗る MOD の記載は無く、説明文どおり) / 見張り: `tests/grasping-mail.test.ts`
+- **E-71 触媒は種類を変えると品質は 0 から (ほかの種類を置き換える)。使えるのは指輪・アミュレット・暗黙で使える物 (E-13) とジュエル (精製されたカタリスト)。** 伸びるのはその種類のタグを持つ MOD 全部 (グラスピングメイルでも指輪の MOD に限らない。説明文は「◯◯の MOD を強化する」で部位の縛りが無い、E-22)。 — 有効 (10-28 オーナーの決め、コードの変更なし) / 説明文「Replaces other quality types」、CoE Item.addQuality、グラスピングメイルは 10-28 (poe2db に乗る MOD の記載は無く、説明文どおり) / 見張り: `tests/grasping-mail.test.ts`
 - **E-72 品質で伸びた整数の値は切り捨て** (`quality.ts displayedValue`)。 — 有効 / オーナーの実物 10-18 (v0.1.567)
 - **E-73 液化した感情は付けられる側から等しくランダム。耐性はフラックスだけが変え、それ以外 (スキルレベル・エッセンスの物も) はアルダーが変える。表に無い MOD も兄弟の同じ段 / 同じ数値の一般 MOD の段として変わる** (`element-convert.ts`)。 — 有効 / オーナー 10-16 (v0.1.533)・10-17 (v0.1.546)
 - **E-74 インフューザーは 25%。** — 有効 / オーナー 10-12
@@ -130,8 +130,8 @@
   - 液化した感情: `craft-stage/apply-emotion.ts` の `emotionNameOf`
   - 手の名前 (指名・発現・品質の欄・ルーンのソケットなど棚に無い手を含む): `craft-stage/run-plan.ts` の `stepJa(key, item)` / `stepEn(key)`
   — 有効 / G-05、オーナー 09-22 (「黒血のお告げ」事故)・10-28「名前はエンジンのデータベース参照で固定」 / 確かめ: 画面
-- **E-91 画面が名前と絵を取る口は `src/state/for-share/craft-stage-shelf.ts` の `nameOfKey(key, item)`・`iconOfKey(key, item)`・`enOf(key, item)`。** E-90 の関数を言語 (`lang`) で振り分ける。シミュ・エミュ・チュートリアルはこれを呼び、カレンシーの名前を直書きしない。棚のまとまりの見出し (変成・高貴・お告げの掛かる手など、`ORBS`・`OMEN_LABEL`) はカレンシーの名前ではないので `tr` の直書きのままでよい (G-05 の外)。 — 有効 (見出しはオーナー OK 済み 10-28) / 0552f988 (10-28)、見出しはオーナー 10-28 ⑦9「今のまま」 / 確かめ: 画面 (英語も)
-- **E-92 MOD の文はエンジンが作る。** `craft-stage/stage-core.ts` の `makeStageMod`・`withValues`・`retext`・`boostedMod` が `textJa`/`textEn` を埋め、画面は `i18n/lang.ts` の `modText(m)` で出す。画面で # を埋めない。値が負の「減少する」「低下する」(日本語) と「reduced」「less」(英語) の文は、ゲームの表示と同じく数字を正で出す (`NEGATIVE_WORDS`・`NEGATIVE_WORDS_EN`、値 `values` は負のまま)。 — 有効、英語はオーナー OK 済み 10-28・本番待ち (0967dfa33、スイッチなし、次の deploy:web で出る) / G-06、日本語 09-30 (要望 ㉑)・英語 10-28 (⑦8、「-24% reduced」が 81 MOD) / 見張り: `check-engine-entry` E (文の # を自分で埋める)、確かめ: 10-28 ジンの台本 (全 MOD × 全段で「-数 reduced / less」が 81 → 0)
+- **E-91 画面が名前と絵を取る口は `src/state/for-share/craft-stage-shelf.ts` の `nameOfKey(key, item)`・`iconOfKey(key, item)`・`enOf(key, item)`。** E-90 の関数を言語 (`lang`) で振り分ける。シミュ・エミュ・チュートリアルはこれを呼び、カレンシーの名前を直書きしない。棚のまとまりの見出し (変成・高貴・お告げの掛かる手など、`ORBS`・`OMEN_LABEL`) はカレンシーの名前ではないので `tr` の直書きのままでよい (G-05 の外)。 — 有効 / 0552f988 (10-28)、見出しの直書きはオーナー 10-28「今のまま」 / 確かめ: 画面 (英語も)
+- **E-92 MOD の文はエンジンが作る。** `craft-stage/stage-core.ts` の `makeStageMod`・`withValues`・`retext`・`boostedMod` が `textJa`/`textEn` を埋め、画面は `i18n/lang.ts` の `modText(m)` で出す。画面で # を埋めない。値が負の「減少する」「低下する」(日本語) と「reduced」「less」(英語) の文は、ゲームの表示と同じく数字を正で出す (`NEGATIVE_WORDS`・`NEGATIVE_WORDS_EN`、値 `values` は負のまま)。 — 有効 (英語の正の数はオーナー OK 済み・本番待ち (スイッチなし、次の deploy:web で出る、0967dfa33)) / G-06、日本語 09-30 (要望 ㉑)・英語 10-28 (⑦8、「-24% reduced」が 81 MOD) / 見張り: `check-engine-entry` E (文の # を自分で埋める)、確かめ: 10-28 ジンの台本 (全 MOD × 全段で「-数 reduced / less」が 81 → 0)
 - **E-93 英語は poe2db の英語のページ (/us/) の同じ物から。推測で訳さない。名前・文が食い違ったら poe2db に合わせる。** — 有効 / オーナー 10-10・10-17 / 外の正解: poe2db
 
 ## ④ 表示の決まり (エンジンが返す物の形)
@@ -139,7 +139,7 @@
 - **E-95 MOD の種類の言い方は 一般 MOD / 冒涜専用 MOD / クラフト MOD (エッセンス)、ルーンの MOD は特殊 MOD。** 付け方の札 (冒涜・エッセンス・フラクチャーなど) とは別。「普通」は使わない。 — 有効 / オーナー 10-21 (v0.1.586)
 - **E-96 MOD の数字は素の値と段で返す。** 品質・ルーン / ソウルコア・側の効果・聖別の上乗せを抜き、割り戻しはエンジンの入口 1 か所。盛った値は要る時だけ添える。防御・DPS の合計は盛ったまま。 — 有効 / オーナー 10-20
 - **E-97 不成立の理由はゲームの文に合わせ、日本語・英語の両方を返す** (`tr(ja, en)`、spec の `reason`)。 — 有効 / E-23・G-04
-- **E-98 ベースの選び画面の札は、兜・鎧・手袋・靴が 7 つ (筋力 / 器用 / 知性 / 筋力・器用 / 筋力・知性 / 器用・知性 / 筋力・器用・知性、英語 Strength/Dexterity/Intelligence ほか)。** 3 属性の札にはガーメント・荘厳なレガリア・生贄のレガリア (鎧)、大いなる顔飾り (兜)、大いなるマンシェット (手袋)、大いなる脛当て (靴) が並び、鎧はグラスピングメイルも同じ札に並べる。札は `services/items/base-catalog.ts` の `baseCatalog()` が返す `CatalogRow.cls` (並べる札で、MOD の置き場の行とは限らない。グラスピングメイルの置き場は `Body_Armours_ring_str_dex_int` のまま、E-13)、札の英語と 2 行を 1 つの札にまとめる所はデザイン (`BaseCatalog.vue`)。 — オーナー OK 済み 10-28 (スナップ「他OKでいいよ」)・本番待ち (スイッチ `triAttr`、bae11b499・ffa30d454・デザイン 2914a46f1) / オーナー 10-28「なんか鎧のどっかにあると思うんだけどベースにないんだがUIに筋力知性器用さの奴がないからかな」「直し方は１案１で」、要求の属性は poe2db (Grasping Mail 41 / 41 / 41) / 確かめ: 画面 (10-28 のスナップ、前 6 つ = 本番の作り 1462・後 7 つ = dev 1440、PC・スマホ・英語)
+- **E-98 ベースの選び画面の札は、兜・鎧・手袋・靴が 7 つ (筋力 / 器用 / 知性 / 筋力・器用 / 筋力・知性 / 器用・知性 / 筋力・器用・知性、英語 Strength/Dexterity/Intelligence ほか)。** 3 属性の札にはガーメント・荘厳なレガリア・生贄のレガリア (鎧)、大いなる顔飾り (兜)、大いなるマンシェット (手袋)、大いなる脛当て (靴) が並び、鎧はグラスピングメイルも同じ札に並べる。札は `services/items/base-catalog.ts` の `baseCatalog()` が返す `CatalogRow.cls` (並べる札で、MOD の置き場の行とは限らない。グラスピングメイルの置き場は `Body_Armours_ring_str_dex_int` のまま、E-13)、札の英語と 2 行を 1 つの札にまとめる所はデザイン (`BaseCatalog.vue`)。 — オーナー OK 済み・本番待ち (スイッチ `triAttr`、bae11b499・ffa30d454・デザイン 2914a46f1。OK は 10-28 のスナップに「他OKでいいよ」) / オーナー 10-28「なんか鎧のどっかにあると思うんだけどベースにないんだがUIに筋力知性器用さの奴がないからかな」「直し方は１案１で」、要求の属性は poe2db (Grasping Mail 41 / 41 / 41) / 確かめ: 画面 (10-28 のスナップ、前 6 つ = 本番の作り 1462・後 7 つ = dev 1440、PC・スマホ・英語)
 
 ## ⑤ 不変条件 (見張りが確かめる)
 
@@ -170,5 +170,5 @@
 |---|---|---|---|
 | 13 | `tests/currency-spec-golden.test.ts` が 6 つとも控えと違う。控えは 10-21 から取り直しておらず、その後エンジンに 85 commit (10-28 の英語の reduced の直しの前から赤) | ― | どの commit で変わったかを洗ってから取り直す (ジン) |
 
-10-28 に片付けた 12 (3 属性のベースが選び画面の札に無い) → E-98 (オーナー OK 済み、スイッチ triAttr で本番待ち)。
-10-28 にオーナーの答え・ブラック任せで片付けた物 (前の ⑦ 1〜11、どれもオーナー OK 済み。コードが変わったのは 8 の英語だけで本番待ち): 1 → E-42 (有効)・2 → E-71 (種類のタグの MOD 全部)・3 → E-13 (創生の樹のタグは足さない)・4 → E-01 (poe2db が正、タリスマンはデータのまま)・5 → E-24 (ジュエル 2 / 2)・6 貼り付けの段 0 は今のまま (エッセンス → 冒涜専用の順の候補に並べる、トレードの画面の見本が来たら照らす)・7 パペットマスター +6 はデータが poe2db と同じ (合金 +(4—5)) で直さない、貼り付けは読めない行のまま (推し量らない)・8 → E-92 (英語も正の数)・9 → E-91 (見出しは直書きのまま)・10 `QUALITY_SOURCE` のコメントを 1〜2 に・11 チェックリストの 2 行に E-65・E-52 を指す注。
+前の ⑦ 1〜12 は 10-28 に片付いた (行き先: 1 → E-42・2 → E-71・3 → E-13・4 → E-01・5 → E-24・8 → E-92・9 → E-91・12 → E-98、10・11 はコメントとチェックリストの注を直して済み)。番号はほかから指されるので付け替えない。
+本文の番号に無い 10-28 の決め (どちらもコードは今のまま): ⑦6 貼り付けの段 0 はエッセンス → 冒涜専用の順の候補に並べる (トレードの画面の見本が来たら照らす)。⑦7 パペットマスター +6 はデータが poe2db と同じ (合金 +(4—5)) で直さず、貼り付けでは読めない行のまま (推し量らない)。
