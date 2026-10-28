@@ -5,8 +5,8 @@
 ## 決まり (docs/org/dev/README.md の決まりが先。触るファイルは dev/touching/math.md)
 1. 計算の数字はエンジンで回した結果と並べて出す (ずれの % も)。片方だけで「合った」と言わない。
 2. 近似を使ったら中身 (何を同じ扱いにしたか) を書く。
-3. 外の正解は CoE (確率)・poe2db (重み・置き場)・実測 (メモ craft-weight-sources)。
-4. 乱数は mulberry32 (LCG は偏る)。自動の打ち方には上限を付ける (堂々巡りで膨らむ)。
+3. 外の正解と出どころの順は E-01〜04 (重み・置き場は poe2db、公開値の無い重みは CoE = E-03、実測の出どころはメモ craft-weight-sources)。合格は G-22。
+4. 乱数は E-82 (mulberry32、LCG は偏る)。自動の打ち方には上限を付ける (堂々巡りで膨らむ)。
 5. 残す台本は scratchpad に置きっぱなしにせず scripts/analysis/ に移すか、メモに場所を書く。
 6. 他の部の持ち物は、頼みに入っていても触る前に `node scripts/owner-of.mjs <パス>` で持ち主を引き、解析でなければ止まってブラックへ 1 行。
 
@@ -22,4 +22,4 @@
 - CoE の写し: data-cache/coe-beta-package_poe2.js。
 - テスト tests/: held-odds-parity・aim-odds・chaos-spam・engine-emulator-parity・desecrate-reveal-rates・mod-weights・catalysing-greater。
 - メモ: optimal-craft-dp (「落とし穴」= 段の下限・乱数・評価の仕方)・handoff-2026-10-22・held-odds-parity・aim-next-move・chaos-spam-and-sfx・craft-weight-sources・mod-engine-single-source・sim-cost-model。
-- 決着済み: docs/reviews/2026-10-17-rule-checklist.md・2026-10-16-coe-rule-check.md、メモ poe2-craft-rules-confirmed・coe-rule-check-2026-10-16。
+- 決着済み: docs/spec/engine.md (E-xx、確率は E-80〜82)。元の記録は docs/reviews/2026-10-17-rule-checklist.md・2026-10-16-coe-rule-check.md、メモ poe2-craft-rules-confirmed・coe-rule-check-2026-10-16。

@@ -12,11 +12,11 @@
 6. 照らし: 箱の手と結果を同じ手のエンジンの関数と比べる (エンジンが正)。✓ 合格の木だけ 100 人で比べる。
 7. ツリーの直しはシミュ部長へ直接 (重さ・手順・エミュでは・回数)。エミュ側が怪しければ直さずブラックへ。
 8. 報告は notes/<日付>-monkey.md に重い順。1 件ごとに手順・期待と実際・回数・場所・エラー文・影響。原因の推測は書かない。
-9. 指示待ち。猿はオーナーの指示の時だけ (数が無ければ 3 匹 × 50 手)。前にブラックへ一言、報告 (件数・上位 3 件) は 10 分以内。
+9. 指示待ち。猿はオーナーの指示の時だけ (R-18。数が無ければ 3 匹 × 50 手)。前にブラックへ一言、報告 (件数・上位 3 件) は 10 分以内。
 10. 回し直しはまず 1 ベース → 結果をブラックへ 1 行 → OK で広げる。
 
 ## 地図・開き方
 - 持ち物: scripts/check-monkey-engine.mjs・_monkey-engine-entry.ts・_monkey-tree-walk.ts (正かの判定はジン部長)。
 - UI の重なりを数える式は docs/org/monkey/overlap.mjs (猿は monkey-scripts/tree-overlap30.mjs、10-26)。
 - データは docs/org/emulator/data-catalog.md のエンジンの関数から。猿の台本は共有メモ local_cbd85ab5…/monkey-scripts/。
-- ふだんは http://localhost:1440/web.html (?page=sim-tree)。本番の前の 1 回だけ 1461 (ブラックが言った時)。
+- ふだんは http://localhost:1440/web.html (?page=sim-tree、Y-70)。1461 はブラックが言った時だけ (出す前の作りで回す時)。
