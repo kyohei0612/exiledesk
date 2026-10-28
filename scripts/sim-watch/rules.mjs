@@ -36,7 +36,7 @@ export function handParts(label) {
 /** 箱ごとの表示 (題・戻りの札・次の手の札・カードの行)。(B) の前後の比べ */
 export const DISPLAY = `Object.fromEntries([...document.querySelectorAll("[data-tree-box]")].map((b) => [b.getAttribute("data-box-id"), { head: b.querySelector("[data-tree-legend]")?.innerText.trim() ?? "", back: b.querySelector("[data-tree-back-tag]")?.innerText.replace(/\\s+/g, " ").trim() ?? "", hand: b.querySelector("[data-tree-next-hand]")?.innerText.replace(/\\s+/g, " ").trim() ?? "", rows: [...b.querySelectorAll("p.group\\\\/row, [data-fracture-member]")].map((p) => p.innerText.replace(/\\s+/g, " ").trim()) }]))`;
 /** 箱ごとの題と行 (側の P / S・フラクチャー・札の名前・未発現・MOD の文)。(C) */
-const HEADS = `Object.fromEntries([...document.querySelectorAll("[data-tree-box]")].map((b) => { const side = (p) => (p.querySelector(".tabular-nums")?.innerText ?? "").trim().slice(0, 1); const text = (p) => (p.querySelector(".min-w-0.flex-1")?.firstElementChild ?? p.querySelector(".min-w-0.flex-1"))?.innerText.trim() ?? ""; return [b.getAttribute("data-box-id"), { head: b.querySelector("[data-tree-legend]")?.innerText.trim() ?? "", rows: [...[...b.querySelectorAll("p.group\\\\/row")].map((p) => ({ side: side(p), frac: p.classList.contains("text-mod-fractured"), tag: p.querySelector("[data-row-tag-name]")?.innerText.trim() ?? "", unrev: !!p.querySelector("[data-unrevealed]"), text: text(p) })), ...[...b.querySelectorAll("[data-fracture-member]")].map((p) => ({ side: side(p), frac: true, tag: "", unrev: false, text: text(p) }))] }]; }))`;
+const HEADS = `Object.fromEntries([...document.querySelectorAll("[data-tree-box]")].map((b) => { const side = (p) => (p.querySelector(".tabular-nums")?.innerText ?? "").trim().slice(0, 1); const text = (p) => (p.querySelector(".min-w-0.flex-1")?.firstElementChild ?? p.querySelector(".min-w-0.flex-1"))?.innerText.trim() ?? ""; return [b.getAttribute("data-box-id"), { head: b.querySelector("[data-tree-legend]")?.innerText.trim() ?? "", cant: b.getAttribute("data-sample-note") === "cant:unreachable", rows: [...[...b.querySelectorAll("p.group\\\\/row")].map((p) => ({ side: side(p), frac: p.classList.contains("text-mod-fractured"), tag: p.querySelector("[data-row-tag-name]")?.innerText.trim() ?? "", unrev: !!p.querySelector("[data-unrevealed]"), text: text(p) })), ...[...b.querySelectorAll("[data-fracture-member]")].map((p) => ({ side: side(p), frac: true, tag: "", unrev: false, text: text(p) }))] }]; }))`;
 /** 棚のボタン [{ key, name }] (aria-label = 名前 — 打てない理由) */
 const SHELF = `[...document.querySelectorAll("[data-tree-shelf] [data-shelf]")].map((b) => ({ key: b.getAttribute("data-key"), name: (b.getAttribute("aria-label") ?? "").split(" — ")[0].trim(), off: !!(b.getAttribute("aria-label") ?? "").includes(" — ") || b.getAttribute("aria-disabled") === "true" }))`;
 /** 手の窓の持っている物の題 (TreeHandShelf の b[title] = 持った物 + お告げ) */
@@ -48,8 +48,10 @@ export function makeRules({ ev, sleep, count, bad, note, openTree, mode }) {
   /** (C) 結果の箱の題と、その箱の見本の行 */
   async function checkHeads(t) {
     const boxes = await ev(HEADS);
-    for (const [id, { head, rows }] of Object.entries(boxes)) {
+    for (const [id, { head, rows, cant }] of Object.entries(boxes)) {
       if (!head || !rows.length) continue;
+      // この道では作れない箱 (見本は親の物のまま、S-74・data-sample-note) は題と見本を比べず、別に数える
+      if (cant) { count(t.key, "作れない箱 (見本の印)"); continue; }
       const frac = rows.filter((r) => r.frac);
       if (/^未発現の冒涜が付いた/.test(head)) {
         count(t.key, "箱の題と見本");

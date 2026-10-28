@@ -13,7 +13,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { openChrome, sleep } from "./cdp.mjs";
-import { MISS_OUTS, expectBack, isStrip, missBoxes, pathAims, sameHand, stepOf, stepsInText, stripMiddles } from "./doc.mjs";
+import { MISS_OUTS, expectBack, isStrip, missBoxes, pathAims, sameHand, setDepthSteps, stepOf, stepsInText, stripMiddles } from "./doc.mjs";
 import { DISPLAY, makeRules } from "./rules.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -53,6 +53,7 @@ async function openTree(t, w, h, mobile) {
   const sel = mobile ? "[data-phone-tree]" : "[data-tree-box]";
   if (!(await until(`document.querySelectorAll(${JSON.stringify(sel)}).length > 0`, 30000))) return null;
   await sleep(2500);
+  setDepthSteps(await ev(`document.documentElement.hasAttribute("data-flag-lineshort")`));
   return readDoc();
 }
 /** 画面が持っている今の木 (保存したレシピの今の物)。保存していない変更は「保存」を押してから読む */
@@ -261,7 +262,8 @@ async function checkSameHand(t) {
     await sleep(2000);
     if (!used) { note.push(`${t.key}: (6) ${p.box} に ${p.hand.currency} を選べなかった (＋ ${!!plus} / 棚 ${!!held})`); continue; }
     const after = await saveAndRead();
-    const n1 = Object.keys(after.boxes).length, b = after.boxes[p.box];
+    if (!after?.boxes) { note.push(`${t.key}: (6) ${p.box} に ${p.hand.currency} を打った後の木を保存から読めなかった`); continue; }
+    const n1 =Object.keys(after.boxes).length, b = after.boxes[p.box];
     const label = `PC ${p.box} に${p.why} ${p.hand.currency}`;
     count(t.key, "同じ手");
     if (n1 > n0) bad(t.key, label, "外れで同じ手を選んだのに箱が増えた (段が伸びる)", `箱 ${n0} → ${n1}`, `箱 ${n0} のまま`);

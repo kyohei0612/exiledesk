@@ -1,6 +1,6 @@
 /**
  * doc.mjs — 見張りが木の中身 (TreeDoc) を読む所。画面の文と比べる「木の側の答え」を、木の数字 (箱の高さ・戻り先・手) だけから出す。
- * 段 = 箱の高さ ÷ 段の間 + 1 (tree-fail の stepOf と同じ決め: 画面の段の並び、親をたどる深さではない)。
+ * 段 = 箱の高さ ÷ 段の間 + 1 (tree-fail の stepOf と同じ決め: 画面の段の並び、親をたどる深さではない)。スイッチ lineShort の作りは親をたどる深さ (S-68)。
  * ここは画面の作りを呼ばない (同じ関数で答えを作ると、関数が間違っていても合ってしまう)。
  */
 import { inflateRawSync } from "node:zlib";
@@ -16,7 +16,16 @@ export function unpackRecipe(code) {
   return { name: String(p.n ?? ""), tree: p.t };
 }
 
+/** スイッチ lineShort の入った作り (画面の <html data-flag-lineshort>) は「n 段目」を親からの深さで数える (S-68)。watch.mjs が木を開くたびに入れる */
+let byDepth = false;
+export const setDepthSteps = (on) => { byDepth = !!on; };
+
 export function stepOf(doc, id) {
+  if (byDepth) {
+    let n = 1, b = doc.boxes[id];
+    for (const seen = new Set(); b?.parent && doc.boxes[b.parent] && !seen.has(b.id); b = doc.boxes[b.parent]) { seen.add(b.id); n++; }
+    return n;
+  }
   const b = doc.boxes[id], s = doc.boxes.start;
   return b && s ? Math.max(1, Math.round((b.y - s.y) / GAP_Y) + 1) : 1;
 }
