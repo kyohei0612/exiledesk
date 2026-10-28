@@ -41,8 +41,11 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
     const kids = [...new Map(b.outs.map((o) => { const c0 = doc.value.boxes[o]!, to = mergedAway(doc.value, c0) ? c0.back! : o; return [to, { id: to, c: doc.value.boxes[to]!, q: posOf(doc.value.boxes[to]!) }] as const; })).values()];
     // 札は子の箱の上の辺から測る (横の棒の上、前と同じ 68)。箱の中にアイテムの枠を出して箱の高さが中身で伸びるので、親の下 (y + BOX_H) から測ると背の高い親の中に札が入った (10-26)
     // スイッチ lineShort: 札 → 枝分かれも同じ長さ (LINE_Y) に (前は札のすぐ下 8 で分かれて詰まって見えた、10-28 夜オーナー「えだわかれするところもいっしょのながさに」)
-    const px = p.x + BOX_W / 2, py = pass ? p.y : p.y + BOX_H, jy = pass ? p.y : Math.min(...kids.map((k) => k.q.y)) - BUS_DY - CHIP_HALF - (SHORT ? LINE_Y : 8);
-    const busY = Math.min(...kids.map((k) => k.q.y)) - BUS_DY - (busShift.value.get(b.id) ?? 0);
+    // 縦の線は全部 LINE_Y (tree-row-tops の settleRows と同じ式): 枝分かれがあれば 箱 → 札・札 → 枝分かれ・枝分かれ → 箱、無ければ 箱 → 札・札 → 箱 (S-68)
+    const top = Math.min(...kids.map((k) => k.q.y)), multi = kids.length > 1;
+    const px = p.x + BOX_W / 2, py = pass ? p.y : p.y + BOX_H;
+    const jy = pass ? p.y : SHORT ? top - (multi ? 2 : 1) * LINE_Y - CHIP_HALF : top - BUS_DY - CHIP_HALF - 8;
+    const busY = (SHORT ? top - (multi ? LINE_Y : LINE_Y / 2) : top - BUS_DY) - (busShift.value.get(b.id) ?? 0);
     // 角丸の段付き (React Flow の smoothstep、見本の 3): 親の下から下りて、角を丸めて横へ、角を丸めて子の上の辺へ。
     // 外れ (赤) を先に描き、進む (灰) を上に重ねる (同じ横の棒を通る所は灰に見える)
     const to = kids.map((k) => {

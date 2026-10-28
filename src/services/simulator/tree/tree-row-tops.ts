@@ -1,30 +1,40 @@
 /**
- * tree-row-tops.ts — 整列の行の高さを箱の本当の高さで詰める (スイッチ lineShort、10-28 夜オーナー「下に伸びる線とかれんしーから伸びる線同じでいいよ
- * 合わせるのはカレンシーから伸びる線の長さがちょうどいいななげーよ」)。前は行 = 深さ × 360 の決まった高さで、背の低い箱 (スタートなど) の下から
- * 手の札までの線が長く、札から下の箱までは短かった。
- * 行 r の上端 = 行 r − 1 の上端 + その行の一番背の高い箱 + LINK_Y (箱の下 → 札の上 40 + 札 40 + 札の下 → 枝分かれ 40 + 枝分かれ → 箱の上 40。
- * 10-28 夜オーナー「えだわかれするところもいっしょのながさにしてあげようかせますぎてもごちゃって見えるだけ」。札と枝分かれの高さは use-tree-edges)。
- * 行は親からの深さ (結果の箱はいつも親のすぐ下の行 = tidyUnder)。まだ描いていない箱の高さは見込み (画面が測ったら settleRows で行だけ直す)
+ * tree-row-tops.ts — 箱の縦の置き場を、縦の線が全部同じ長さになるように決める (スイッチ lineShort、S-68)。
+ * 10-28 夜オーナー「下に伸びる線とかれんしーから伸びる線同じでいいよ…なげーよ」「えだわかれするところもいっしょのながさに」
+ * 「整列前からそもそもそういう普通に設定してくれ。カレンしー、枝、カレンシーから伸びる線全て同じ長さで今のカレンシーから次の枠までの長さに統一せよ」。
+ * 前は行 = 深さ × 360 の決まった高さ (整列の時だけ詰めた) で、開いた木・背の低い箱の下の線が長かった。
+ * 子の箱の上端 = 親の箱の本当の下端 + LINE_Y (箱 → 手の札) + 札 + LINE_Y (札 → 枝分かれ、枝分かれが無ければ札 → 箱) + (枝分かれがあれば) LINE_Y (枝分かれ → 箱)。
+ * 札と枝分かれの高さは use-tree-edges が同じ式で引く。画面は木を開いた時・手を足した時・箱の高さが変わった時にいつも掛け直す (use-row-settle、1 つ戻すには入れない)
  */
-import type { TreeDoc } from "./tree-model";
+import type { TreeBox, TreeDoc } from "./tree-model";
 import { flag } from "../../../web/release-flags";
 
-/** 縦の線 1 本の長さ (箱 → 札・札 → 枝分かれ・枝分かれ → 箱) */
-export const LINE_Y = 40;
-export const LINK_Y = LINE_Y * 3 + 40;
+/** 縦の線 1 本の長さ (箱 → 札・札 → 枝分かれ・枝分かれ → 箱、枝分かれの無い時は札 → 箱) */
+export const LINE_Y = 48;
+/** 手の札の高さ (tree-lines の CHIP_HALF × 2) */
+export const CHIP_Y = 40;
+/** 整列の行の見込みの間 (整列の後に settleRows が親ごとに掛け直す) */
+export const LINK_Y = LINE_Y * 3 + CHIP_Y;
 /** 画面に描く前の箱の高さの見込み (カードに MOD が 2 行の結果の箱くらい) */
 export const EST_H = 230;
 
-/** 箱ごとの行 (深さ) */
+/** まとめて描かない箱 (案 A、tree-merge-open の mergedAway と同じ判定) */
+const away = (d: TreeDoc, c: TreeBox | undefined): boolean => !!c && flag("mergeOpen") && !!c.merged && !!c.autoBack && !c.hand && !!c.back && !!d.boxes[c.back];
+/** 描く子 (まとめた箱はまとめ先へ線が行くので数えない) */
+export const drawnKids = (d: TreeDoc, b: TreeBox): string[] => b.outs.filter((o) => d.boxes[o] && !away(d, d.boxes[o]));
+/** 横の枝分かれを描くか (線の行き先が 2 つ以上、まとめ先への線を含む) */
+export const branches = (d: TreeDoc, b: TreeBox): boolean => new Set(b.outs.map((o) => (away(d, d.boxes[o]) ? d.boxes[o]!.back! : o))).size > 1;
+/** 親の下端から子の上端まで */
+export const gapBelow = (d: TreeDoc, b: TreeBox): number => LINE_Y + CHIP_Y + LINE_Y + (branches(d, b) ? LINE_Y : 0);
+
+/** 箱ごとの行 (深さ)。「n 段目」の数え */
 export function depthRows(d: TreeDoc): Map<string, number> {
   const rows = new Map<string, number>();
-  // まとめて描かない箱 (案 A、tree-merge-open の mergedAway と同じ判定) は行に数えない
-  const away = (id: string): boolean => { const c = d.boxes[id]; return !!c && flag("mergeOpen") && !!c.merged && !!c.autoBack && !c.hand && !!c.back && !!d.boxes[c.back]; };
-  const down = (id: string, r: number): void => { if (rows.has(id) || !d.boxes[id] || away(id)) return; rows.set(id, r); for (const k of d.boxes[id]!.outs) down(k, r + 1); };
+  const down = (id: string, r: number): void => { if (rows.has(id) || !d.boxes[id] || away(d, d.boxes[id])) return; rows.set(id, r); for (const k of d.boxes[id]!.outs) down(k, r + 1); };
   down("start", 0);
   return rows;
 }
-/** 行ごとの上端 (始まりの箱の上端を 0) */
+/** 整列の行ごとの上端の見込み (始まりの箱の上端を 0)。本当の置き場は settleRows が親ごとに掛け直す */
 export function rowTops(rows: ReadonlyMap<string, number>, heightOf: (id: string) => number): number[] {
   const tall: number[] = [];
   for (const [id, r] of rows) tall[r] = Math.max(tall[r] ?? 0, heightOf(id));
@@ -32,24 +42,29 @@ export function rowTops(rows: ReadonlyMap<string, number>, heightOf: (id: string
   for (let r = 1; r < tall.length; r++) tops[r] = tops[r - 1]! + (tall[r - 1] ?? EST_H) + LINK_Y;
   return tops;
 }
-/** 最後に整列で置いた行の上端 (画面が測った高さで直す時に、整列のまま動かしていない箱だけを動かす) */
-let laid: { start: number; tops: number[] } | null = null;
-export function noteLaid(start: number, tops: number[]): void { laid = { start, tops }; }
+/** 前の作りの名残 (整列が呼ぶ。今は何もしない) */
+export function noteLaid(_start: number, _tops: number[]): void { /* settleRows が親ごとに掛け直す */ }
 /**
- * 描いた後の本当の高さで行の上端を直す。整列で置いたままの箱 (その行の上端にいる箱) だけ動かす。動かしたら true。
- * 人が引っ張った箱・整列していない木は触らない
+ * 箱の縦の置き場を掛け直す: 子の上端 = 親の下端 + gapBelow (始まりの箱の y は動かさない、x は触らない)。
+ * 品質だけ上げた後 (pass) は箱が無いので、その下は札の所から。動かしたら true
  */
 export function settleRows(d: TreeDoc, heightOf: (id: string) => number): boolean {
-  if (!laid || !d.boxes.start) return false;
-  const rows = depthRows(d), tops = rowTops(rows, heightOf), base = d.boxes.start.y;
-  if (Math.abs(base - laid.start) > 1) return false;
+  if (!d.boxes.start) return false;
   let moved = false;
-  for (const [id, r] of rows) {
-    const b = d.boxes[id]!, was = laid.tops[r], now = tops[r];
-    if (was == null || now == null || Math.abs(b.y - (base + was)) > 2 || Math.abs(now - was) <= 2) continue;
-    b.y = base + now;
-    moved = true;
-  }
-  laid = { start: base, tops };
+  const seen = new Set<string>();
+  const walk = (id: string): void => {
+    if (seen.has(id)) return;
+    seen.add(id);
+    const b = d.boxes[id]!;
+    if (!b.outs.length) return;
+    const pass = b.out === "pass";
+    const y = Math.round(pass ? b.y + LINE_Y : b.y + heightOf(id) + gapBelow(d, b));
+    for (const k of drawnKids(d, b)) {
+      const c = d.boxes[k]!;
+      if (Math.abs(c.y - y) > 0.5) { c.y = y; moved = true; }
+      walk(k);
+    }
+  };
+  walk("start");
   return moved;
 }
