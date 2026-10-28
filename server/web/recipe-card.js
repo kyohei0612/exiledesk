@@ -2,7 +2,7 @@
 //   GET /og/r/<id>.png (card の無い行) / /og/r/<id>-c.png (card のある行) … 1200×630。作り方はスパムの運試しのカード (og-card.js) と同じ workers-og
 // そのレシピだけの絵に (10-28 オーナー「人によってレシピの内容変わるからさ　特別感出して欲しいんだよな」): ① レシピの名前を大きな題に ② 完成品をゲームのアイテムの札 (レアの見出し =
 // public/og-art/_ui-ihead-rare-*.png、MOD の行、フラクチャーはその色と印) で ③ 右の額にそのレシピの木の形を影絵で敷き (code の中の箱と線、木ごとに違う)、ベースの絵を重ねる
-// ④ 難しさ (完成の割合・平均の費用) で額の格を変える (定番 → 上級 → 至難、至難は銅色の光と角の飾り)。PC・スマホ共通の 1 枚なので、縮んでも題・割合が潰れない大きさ (10-28 オーナー「PCでもスマホでもここは多分絵は固定」)。
+// ④ 完成の割合が高いほど額を豪華に (90% 以上 = 金の二重枠・角の飾り・強い光、50〜89% = 金の二重枠、それ未満 = 細い枠)。左 (題・絵・札) を大きく右の額は細く。PC・スマホ共通の 1 枚なので、縮んでも題・割合が潰れない大きさ (10-28 オーナー「PCでもスマホでもここは多分絵は固定」)。
 // 割合・費用はサーバーで回さない (Y-01): シェアを押した時に画面が POST /r/new に一緒に送った card (recipe-share.js) を D1 の recipe_shares.card から読む。card の無い古い行は名前とベースだけ
 import { ImageResponse } from "workers-og";
 import { dataUrl, esc, font, pngSize } from "./og-card.js";
@@ -83,14 +83,11 @@ const fmtPct = (p) => (p > 0 && p < 1 ? p.toFixed(1) : String(Math.round(p)));
 const fmtCost = (v) => (v < 10 ? (Math.round(v * 10) / 10).toString() : Math.round(v).toLocaleString("en-US"));
 
 /**
- * 額の格と札 (10-28 オーナー「達成率低い方がレア演出やけど100%に近い方がええに決まっとるやろ」)。
- * frame = 額の豪華さは完成の割合が高いほど上: 3 = 90% 以上 (金の二重枠・角の飾り・強い光)、2 = 50〜89% (金の二重枠)、1 = それ未満 (細い枠)、0 = 割合が無い。
- * badges = 注意の札 (額の上、両方なら並べる): 至難 = 割合 10% 以下、沼 = 平均の費用 50 神以上 (オーナー「99%はぬまが絶対あるってわけね」「沼やな」)
+ * 額の格 (10-28 オーナー「達成率低い方がレア演出やけど100%に近い方がええに決まっとるやろ」)。完成の割合が高いほど豪華:
+ * 3 = 90% 以上 (金の二重枠・角の飾り・強い光)、2 = 50〜89% (金の二重枠)、1 = それ未満 (細い枠)、0 = 割合が無い。至難・沼の札は 10-28 に外した (オーナー「これならぬまとかしなんとかいらんな」)
  */
 export function tierOf(c) {
-  const frame = c.pct == null ? 0 : c.pct >= 90 ? 3 : c.pct >= 50 ? 2 : 1;
-  const badges = [c.pct != null && c.pct <= 10 && "hard", c.cost != null && c.cost >= 50 && "pit"].filter(Boolean);
-  return { frame, badges };
+  return c.pct == null ? 0 : c.pct >= 90 ? 3 : c.pct >= 50 ? 2 : 1;
 }
 const TIERS = [
   { line: "rgba(150,110,60,0.45)", inner: "rgba(150,110,60,0.2)", glow: "rgba(255,170,70,0.10)" },
@@ -98,11 +95,6 @@ const TIERS = [
   { line: "rgba(226,184,92,0.85)", inner: "rgba(226,184,92,0.4)", glow: "rgba(255,190,90,0.22)", big: "#6ee7b7", double: true },
   { line: "rgba(246,208,120,1)", inner: "rgba(246,208,120,0.5)", glow: "rgba(255,196,96,0.40)", big: "#ffe08a", double: true, corners: true, bg: "#4a3410" },
 ];
-// 注意の札。英語は仮 (ゲームの用語ではない、案はブラックへ)。至難は銅色、沼は濁った緑で見分ける
-const BADGES = {
-  hard: { ja: "至難", en: "LEGENDARY", ink: "#f0b47e" },
-  pit: { ja: "沼", en: "MONEY PIT", ink: "#a9d38f" },
-};
 
 /** og:title・og:description の文 */
 export function recipeTitle(c) {
@@ -148,7 +140,7 @@ function silhouette(shape, w, h, TI) {
 
 /** カードの絵 (PNG のバイト列)。1200×630 を PC・スマホ共通で。X は下の端に題を重ねるので大事な字は 560px より上 */
 export async function recipeCardImage(url, env, c) {
-  const { frame: tier, badges } = tierOf(c), TI = TIERS[tier];
+  const tier = tierOf(c), TI = TIERS[tier];
   const art = c.art ? await dataUrl(env, url, `/og-art/${c.art}.png`) : null;
   const size = c.art ? await pngSize(env, url, `/og-art/${c.art}.png`) : null;
   const k = size ? Math.min(2.2, 200 / size.w, 230 / size.h) : 1;
@@ -167,8 +159,6 @@ export async function recipeCardImage(url, env, c) {
   const mods = c.mods.slice(0, SHOW_MODS);
   const more = c.mods.length - mods.length;
   const moreText = more > 0 ? T(c, `ほか ${more} 個`, `+${more} more`) : "";
-  const badgeWords = badges.map((b) => ({ w: T(c, BADGES[b].ja, BADGES[b].en), ink: BADGES[b].ink }));
-  const tierWord = badgeWords.map((b) => b.w).join("");
   const noStats = T(c, "開くと、そのまま 100 人回せます", "Open it and run 100 crafters as is");
   const pctLabel = T(c, `${c.people} 人で完成`, `of ${c.people} finish`), costLabel = T(c, "平均の費用", "avg cost"), handsLabel = T(c, "手", "steps");
   // 字の大きさは幅から (全角 1・半角 0.55 で数える)
@@ -183,11 +173,11 @@ export async function recipeCardImage(url, env, c) {
   const baseSize = c.baseName ? fit(c.baseName, IW - CAP * 2 - 20, 34, 18) : 28;
   // MOD は折り返してよい (1 行に入らない長い MOD は小さめの字で 2 行)
   const modSize = mods.some((m) => units(m[0]) * 31 > IW - 30) ? 26 : 31;
-  const allText = ["ExileDesk", kicker, titleText, c.baseName ?? "", ...mods.map((m) => m[0]), moreText, tierWord, noStats, pctLabel, costLabel, handsLabel, T(c, "神", "div"), "exiledesk.com", "0123456789%.,"].join("");
+  const allText = ["ExileDesk", kicker, titleText, c.baseName ?? "", ...mods.map((m) => m[0]), moreText, noStats, pctLabel, costLabel, handsLabel, T(c, "神", "div"), "exiledesk.com", "0123456789%.,"].join("");
   const [bold, regular, antique, cinzel] = await Promise.all([
     font(allText, 800),
     font(allText, 500),
-    font(`${titleText}${c.baseName ?? ""}${kicker}${tierWord}`, 0, "Zen+Antique").catch(() => null),
+    font(`${titleText}${c.baseName ?? ""}${kicker}`, 0, "Zen+Antique").catch(() => null),
     font("EXILEDESK", 600, "Cinzel").catch(() => null),
   ]);
   const serif = antique ? "Zen Antique" : "Noto Sans JP";
@@ -220,7 +210,6 @@ export async function recipeCardImage(url, env, c) {
   ${TI.double ? `<div style="display:flex;position:absolute;left:${PX + 9}px;top:${PY + 9}px;width:${PW - 18}px;height:${PH - 18}px;border:1px solid ${TI.inner}"></div>` : ""}
   <div style="display:flex;position:absolute;left:${PX + 20}px;top:${PY + 30}px;width:${PW - 40}px;height:${SH}px;border-radius:${SH / 2}px;background-image:radial-gradient(circle, ${TI.glow} 0%, rgba(0,0,0,0) 70%)"></div>
   <div style="display:flex;position:absolute;left:${PX + 24}px;top:${PY + 50}px;width:${PW - 48}px;height:${SH - 20}px;opacity:0.85">${silhouette(c.shape, PW - 48, SH - 20, TI)}</div>
-  ${badgeWords.length ? `<div style="display:flex;position:absolute;left:${PX}px;top:${PY + 14}px;width:${PW}px;justify-content:center">${badgeWords.map((b, i) => `<span style="font-family:'${serif}';font-size:${c.en ? (badgeWords.length > 1 ? 15 : 20) : 26}px;letter-spacing:${c.en ? 2 : 12}px;color:${b.ink};padding:2px ${c.en ? 8 : 14}px;margin-left:${i ? 10 : 0}px;background:rgba(5,4,3,0.82);border:1px solid ${b.ink}">${esc(b.w)}</span>`).join("")}</div>` : ""}
   ${TI.corners ? corner(ctl, PX - 4, PY - 4) + corner(ctr, PX + PW - 36, PY - 4) + corner(cbl, PX - 4, PY + PH - 36) + corner(cbr, PX + PW - 36, PY + PH - 36) : ""}
   <div style="display:flex;position:absolute;left:${PX}px;top:${PY + 40 + SH + 6}px;width:${PW}px;justify-content:center">${statsHtml}</div>
   <div style="display:flex;position:absolute;left:40px;top:30px;align-items:flex-end">
