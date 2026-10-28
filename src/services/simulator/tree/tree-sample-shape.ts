@@ -16,11 +16,14 @@ export function shapeFit(data: PatchData, doc: TreeDoc, boxId: string): (item: S
 }
 /** 箱の形に合う見本 (着いた人の 1〜SINGLE_SEEDS 人目のうち最初。合う人がいなければ 1 人目)。結果の割合 (tree-odds) が使う
  *  (10-26: 形違いの戻りで入った人が 1 人目だと、その人のアイテムで割合を出し、キャストの箱のカオスに「狙いが消えた 99%」と出た) */
-export function shapeSampleOf(data: PatchData, doc: TreeDoc, boxId: string): StageItem {
+export function shapeSampleOf(data: PatchData, doc: TreeDoc, boxId: string): StageItem { return shapeSampleWithNote(data, doc, boxId).item; }
+/** 見本と、合う見本が無かった時の印 (cant:unreachable = この道では作れない箱。見張りが箱の data-sample-note で見分ける、10-28 夜 最終チェック長) */
+export function shapeSampleWithNote(data: PatchData, doc: TreeDoc, boxId: string): { item: StageItem; note: string | null } {
   const fits = shapeFit(data, doc, boxId);
   for (let seed = 1; seed <= SINGLE_SEEDS; seed++) {
     const x = sampleOf(data, doc, boxId, seed);
-    if (x.note !== "none" && !x.note?.startsWith("cant:") && fits(x.item)) return x.item;
+    if (x.note !== "none" && !x.note?.startsWith("cant:") && fits(x.item)) return { item: x.item, note: null };
   }
-  return sampleOf(data, doc, boxId, 1).item;
+  const x = sampleOf(data, doc, boxId, 1);
+  return { item: x.item, note: x.note ?? null };
 }

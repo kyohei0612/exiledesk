@@ -12,7 +12,7 @@ import Icon from "../../../components/ui/Icon.vue";
 import { mergedInto } from "../../../services/simulator/tree/tree-merge-open";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
-import { shapeSampleOf } from "../../../services/simulator/tree/tree-sample-shape";
+import { shapeSampleWithNote } from "../../../services/simulator/tree/tree-sample-shape";
 import { fixedValues } from "./tree-fixed-values";
 import { previewUse } from "../../../services/emulator/emu-engine";
 import { sideAims } from "./tree-side-aims";
@@ -72,7 +72,8 @@ const startJoin = (): void => { joinMode.value = { anchor: props.box.id, pick: [
 /** MOD の値は木の中で揃える (貼った値か段の真ん中、tree-fixed-values。10-26 夜オーナー「ツリー内で同じ MOD じゃないと混乱する」) */
 /** スタートの箱も結果の箱と同じアイテムカード (レアリティの色・名前・MOD の行、✦ はフラクチャーの印。10-28 夜オーナー「スタートもアイテムカードで表示させてくれツリー」、スイッチ startCard) */
 const START_CARD = flag("startCard");
-const sample = computed(() => (s.data.value && (props.box.out !== "start" || START_CARD) ? shapeSampleOf(s.data.value, t.doc.value, props.box.id) : null));
+const sampled = computed(() => (s.data.value && (props.box.out !== "start" || START_CARD) ? shapeSampleWithNote(s.data.value, t.doc.value, props.box.id) : null));
+const sample = computed(() => sampled.value?.item ?? null);
 /** この箱の手で消える・入れ替わる候補の MOD (オレンジの文字。手の窓・エミュと同じエンジンの previewUse、10-27 オーナー「打つ前の箱のカード」も)。手の無い箱・打てない手は無し */
 const cardDoomed = computed((): readonly string[] => { const d = s.data.value, it = sample.value, h = props.box.hand; if (!d || !it || !h) return []; try { return previewUse(d, it, h.currency, h.omens)?.change ?? []; } catch { return []; } });
 const cardItem = computed(() => (s.data.value && sample.value ? fixedValues(s.data.value, t.doc.value, sample.value) : null));
@@ -170,7 +171,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
   <!-- 押せる物は全部 24px 以上 (2026-10-22 押しにくい所の洗い出し、notes/2026-10-22-tree-ui-click-audit.md) -->
   <!-- 押すは Vue Flow の箱の node-click、引っ張るは use-gesture.ts (Vue Flow の引っ張りは遊びの 5px 分が動きから抜けた)。
        引っ張りは pointerdown の既定の動きを止めるので Vue Flow の画面の送りは始まらない。nopan は付けない (付けると箱の上のホイールで拡大縮小されなかった)、中のボタンは nodrag -->
-  <div data-tree-box :data-box-id="box.id" class="select-none rounded-xl border-[1.5px] bg-gradient-to-b from-[#1d1812] to-[#110e0a] px-2 py-1 text-[12px] transition-shadow"
+  <div data-tree-box :data-box-id="box.id" :data-sample-note="sampled?.note || undefined" class="select-none rounded-xl border-[1.5px] bg-gradient-to-b from-[#1d1812] to-[#110e0a] px-2 py-1 text-[12px] transition-shadow"
     :class="[x === undefined ? 'relative' : 'absolute', picking || viewOnly ? 'cursor-pointer' : 'cursor-grab', picking ? (linkNo ? 'cursor-not-allowed opacity-35 grayscale' : 'ring-2 ring-cyan-400/70 hover:ring-cyan-300') : '', glow ? 'ring-2 ring-amber-200/70' : '', issue && !jl && !quietOpen ? '!border-rose-500 !shadow-[0_0_16px_rgba(244,63,94,0.55)]' : '', jl === 'no' ? 'opacity-25 grayscale' : jl ? '!border-amber-200 !shadow-[0_0_24px_rgba(252,211,77,0.8)]' : '']"
     :style="{ ...(x === undefined ? {} : { left: `${x}px`, top: `${y}px` }), width: `${BOX_W}px`, minHeight: `${BOX_H}px`, ...neon }" :title="picking && linkNo ? linkNo : undefined" @pointerdown="down" @pointerenter="emit('hover', true)" @pointerleave="emit('hover', false)">
     <!-- 縮めている時 (k > 1) は押せる物の行を倍率分高くし、まだ「—」だけの数字の行は隠す (箱が小さくても押せる物どうしが重ならない) -->
