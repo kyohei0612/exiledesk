@@ -3,7 +3,7 @@
  * 回す所 (tree-run)・精査 (tree-check)・画面 (つなぐ・まとめる) が同じ物を読む。中身は前のまま
  */
 import { mulberry32, sideOfMod, type PatchData, type StageItem } from "../../craft-stage/engine";
-import { bodyFixed, bodyKinds, bodyOf, boxBody, heldOfKey, sameBody, type BodyOf } from "./tree-box-shape";
+import { backBody, bodyFixed, bodyKinds, bodyMemo, bodyOf, boxBody, heldOfKey, sameBody, type BodyOf } from "./tree-box-shape";
 import { aimHeldOn, junkOf } from "./tree-aim";
 import { effectOf } from "./tree-hands";
 import { aimOpts, aimsOf, essenceBoxFits, handProblem, playHand, targetsOf } from "./tree-sample";
@@ -236,7 +236,11 @@ export function settle(data: PatchData, doc: TreeDoc, shapes: readonly Shape[], 
   if (!b?.hand || (b.out !== "hit" && b.out !== "junk")) return id;
   const key = itemKey(data, item, aims);
   // 形が合っても手が打てない (外れが消去の届かない側にある等) 時は、形の合う打てる箱へ (10-22 解析君 body-essence-path、狙いが消えた → 外れの箱の戻り)
-  if (heldSets(doc, b.out === "junk" ? b.parent : id).some((h) => shapeKey(h, b.out === "junk") === key) && canPlay(data, item, b.hand)) return id;
+  // 外れの箱に着いた人で、外れが狙いの無い側にある (形の鍵では「外れ無し」になる) 人も、外れがあればその箱のまま (スイッチ bodyStrict)。
+  // 前は外れ無しの形としてスタートへ移され、スタートの狙い無しの高貴で外れが 1 つずつ増えて、当たりの後のサフィ満杯の箱で止まった
+  // (10-29 オーナーの木 FmNY7Wwv の b13 → スタート → b8。オーナー「結果と箱を設定したはずなのに内部でズレて違う箱としてとらえた」)
+  const junkHere = b.out === "junk" && flag("bodyStrict") && [...item.prefixes, ...item.suffixes].some((m) => !m.fractured && !aims.some((a) => a.modId === m.modId));
+  if (heldSets(doc, b.out === "junk" ? b.parent : id).some((h) => shapeKey(h, b.out === "junk") === key || (junkHere && shapeKey(h, false) === key)) && canPlay(data, item, b.hand)) return id;
   const to = boxOfShape(shapes, key, { data, item, doc }) ?? id;
   // 形の合う箱の手が打てず、この箱の手は打てる時はこの箱のまま (10-24 モンキー 7 回目: 始めのルーンの外れは MOD が増えず「外れ無し」の形で始めへ戻され、
   // 同じルーンをもう差せずに 100 人とも止まった。外れの箱の変成はそのまま打てる)
@@ -297,12 +301,12 @@ export function linkSameShape(doc: TreeDoc, ids: readonly string[], loose?: Body
     let to = targets.find((x): x is string => !!x && x !== id && (x !== "start" || c.out === "lost")) ?? swapJunkOf(c, p);
     // 同じ鍵の箱が幾つかある時は、体 (側・種類・数・レアリティ) まで合う箱を順に探す (変成の「打った後」がプレとサフィの 2 つあり、1 つ目のプレだけ見て
     // サフィの外れの「狙いが消えた」がどこへもつながらなかった、10-28 夜オーナー「自動で箱違うとこにつくな」。スイッチ boxShape)
-    if (flag("boxShape") && loose && (!to || !sameBody(loose, id, to))) {
+    if (flag("boxShape") && loose && (!to || !backBody(loose, id, to))) {
       const keys = new Set(matched.map((m) => m.key));
-      to = shapesOf(doc).filter((sh) => keys.has(sh.key) && sh.box !== id).map((sh) => sh.box).find((x) => shapeFits(doc, id, x) && sameBody(loose, id, x)) ?? to;
+      to = shapesOf(doc).filter((sh) => keys.has(sh.key) && sh.box !== id).map((sh) => sh.box).find((x) => shapeFits(doc, id, x) && backBody(loose, id, x)) ?? to;
     }
     // 形 (付いている狙いの組) が全部合う箱へだけ (狙いが消えた箱は組が何通りかあり、1 つ目の組だけで別の形の箱へつないでいた。10-26 オーナー「前提狙いMODの状態でなんかする時」、shapeFits)
-    if (!to || !shapeFits(doc, id, to) || !sameBody(loose, id, to)) continue;
+    if (!to || !shapeFits(doc, id, to) || !backBody(loose, id, to)) continue;
     c.back = to;
     c.autoBack = true;
     // まとめの印は tree-merge-open だけが付ける (ここでつないだ箱は描く)
@@ -451,4 +455,22 @@ export function sameHandReturn(doc: TreeDoc, id: string, h: Hand, loose?: BodyOf
   const depth = (x: string): number => { let n = 0; for (let y = doc.boxes[x]?.parent ?? null; y; y = doc.boxes[y]?.parent ?? null) n++; return n; };
   const cands = [...new Set(shapesOf(doc).filter((s) => keys.has(s.key) && same(s.hand) && !under(s.box)).map((s) => s.box))].filter((x) => shapeFits(doc, id, x) && sameBody(loose, id, x));
   return cands.sort((x, y) => depth(x) - depth(y))[0] ?? null;
+}
+
+/**
+ * 保存してある自動の ↩ (再挑戦・外れが消えたの戻り・まとめなど、autoBack) のうち、体 (外れの側・種類・数) が同じと分からない物を外す = 未設定の箱に戻す
+ * (S-50、スイッチ bodyStrict。前の版の木・見本が変わった木の古いつなぎ)。人が付けた ↩ は触らない。外したら true
+ */
+export function pruneBacks(data: PatchData, doc: TreeDoc): boolean {
+  if (!flag("bodyStrict") || !flag("boxShape")) return false;
+  const loose = bodyMemo(data, doc);
+  let changed = false;
+  for (const b of Object.values(doc.boxes)) {
+    // 当たりの箱どうしの統合 (同じ MOD 群) は別の物なので見ない
+    if (!b.autoBack || !b.back || b.back === MATCH || b.back === RESTART || !doc.boxes[b.back] || (b.out === "hit" && doc.boxes[b.back]!.out === "hit")) continue;
+    if (backBody(loose, b.id, b.back)) continue;
+    b.back = null; delete b.autoBack; delete b.merged;
+    changed = true;
+  }
+  return changed;
 }

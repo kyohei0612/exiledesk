@@ -91,6 +91,16 @@ export function sameBody(body: BodyOf | undefined, from: string, to: string): bo
   const x = body(from), y = body(to);
   return x === null || y === null || x === y;
 }
+/**
+ * 自動の ↩ (外れ・消えた・打った後の箱から前の箱へ) をつないでよいか: 体が両方分かって同じ時だけ (スイッチ bodyStrict。閉じている間は sameBody)。
+ * 体が分からない箱 (見本が作れない・見本ごとに違う mixed) とはつながない (S-50、10-29 オーナーの木 FmNY7Wwv: 外れを 2 つ持ったまま始めの方のカオスへ戻り、
+ * 当たりを経てサフィ満杯の箱で止まった。オーナー「おけ」= ブラック案 (a))。当たりの箱どうしの統合 (同じ MOD 群) は狙いの組で合わせる別の物なので使わない
+ */
+export function backBody(body: BodyOf | undefined, from: string, to: string): boolean {
+  if (!flag("bodyStrict") || !body) return sameBody(body, from, to);
+  const x = body(from), y = body(to);
+  return x !== null && y !== null && x === y;
+}
 
 /** 箱の形 (猿の口・見張り) */
 export type BoxShape = { held: string[]; body: string | null };

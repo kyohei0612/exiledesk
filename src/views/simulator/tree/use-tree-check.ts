@@ -1,7 +1,8 @@
 /**
  * use-tree-check.ts — ツリーのルート精査の状態 (SimTreePage から分けた、2026-10-22)。精査そのものは services/simulator/tree/tree-check.ts
  */
-import { computed, ref, watch, type Ref } from "vue";
+import { computed, ref, triggerRef, watch, type Ref } from "vue";
+import { pruneBacks } from "../../../services/simulator/tree/tree-shape";
 import { checkTreeAsync, NOTICE_KINDS, type CheckIssue, type CheckProgress } from "../../../services/simulator/tree/tree-check";
 import { fractureMarks, startOf, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { craftStage as s } from "../../../state/craft-stage";
@@ -37,7 +38,8 @@ export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean) {
   const shown = ref(true);
   let timer = 0, again = false;
   // 組み替えたら少し待って (続けて組む間は回さない) テストラン。開いた時も 1 回
-  watch([routeKey, () => !!s.data.value && on()], ([, ok]) => { clearTimeout(timer); if (ok) timer = window.setTimeout(() => void runCheck(), 500); }, { immediate: true });
+  // スイッチ bodyStrict: 回す前に、体の同じと分からない古い自動の ↩ を外す (外すと木が変わって、この watch がもう一度走る。S-50)
+  watch([routeKey, () => !!s.data.value && on()], ([, ok]) => { clearTimeout(timer); if (ok && s.data.value && pruneBacks(s.data.value, doc.value)) { triggerRef(doc); return; } if (ok) timer = window.setTimeout(() => void runCheck(), 500); }, { immediate: true });
   async function runCheck(): Promise<void> {
     const d = s.data.value;
     if (!d) return;
