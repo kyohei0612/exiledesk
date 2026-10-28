@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { applyCurrency, freshItem, limitOf, mulberry32, RUNES, runeEffectFor, socketCapOf } from "../../../services/craft-stage/engine";
-import { fractureMarks, migrateStart, START_JUNK, startOf, startRarity, type Aim, type TreeStart } from "../../../services/simulator/tree/tree-model";
+import { fractureMarks, migrateStart, multiFracWhite, START_JUNK, startOf, startRarity, type Aim, type TreeStart } from "../../../services/simulator/tree/tree-model";
 import { startItemOf } from "../../../services/simulator/tree/tree-sample";
 import { craftStage as s } from "../../../state/craft-stage";
 import { nameOf, tr } from "../../../i18n/lang";
@@ -49,6 +49,8 @@ const addRune = (en: string): void => { if (en) change((x) => { x.runes = [...(x
 const removeRune = (i: number): void => change((x) => { x.runes = (x.runes ?? []).filter((_, j) => j !== i); if (!x.runes.length) delete x.runes; });
 
 /** 作れない時の理由 (エンジンの force・ルーンの理由。枠が足りない・同じ系統・ソケットが足りないなど) */
+/** ✦ が 2 つ以上 = 白ベースからだけ (始め方の切り替えを出さない、S-13・スイッチ fracOne) */
+const multiWhite = computed(() => multiFracWhite(t.doc.value));
 const problem = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.value, mulberry32(1)).note : null));
 </script>
 
@@ -56,13 +58,15 @@ const problem = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.v
   <div data-tree-start-pick class="flex min-h-0 flex-1 flex-col gap-3">
     <!-- 形は印で決まる (10-23 オーナー)。印を変えるのは 0 完成形の設定 -->
     <div v-if="marks.length" data-tree-start-shape="fractured" class="flex flex-col gap-1 rounded-md border border-amber-400/40 bg-amber-500/10 px-2 py-1.5 text-[13px]">
-      <p v-if="st.from === 'four'">{{ tr(`白 (ノーマル) のベースから。木の中でフラクチャー (必ず成功、素材 ${sureFracText(marks.length)})`, `From a white (normal) base. Fracture in the tree (sure success, materials ${sureFracText(marks.length)})`) }}</p>
+      <!-- ✦ が 2 つ以上は白ベースからだけ (S-13、スイッチ fracOne) -->
+      <p v-if="multiWhite" data-tree-start-multi-white>{{ tr(`✦ が ${marks.length} つなので白 (ノーマル) のベースから。フラクチャーは木の中で (どの ✦ が固定されても当たり)。フラクチャー済みから始めるなら ✦ を 1 つに`, `${marks.length} ✦ marks, so start from a white (normal) base. Fracture in the tree (a hit if any ✦ is fixed). To start from a fractured item, keep just one ✦`) }}</p>
+      <p v-else-if="st.from === 'four'">{{ tr(`白 (ノーマル) のベースから。木の中でフラクチャー (必ず成功、素材 ${sureFracText(marks.length)})`, `From a white (normal) base. Fracture in the tree (sure success, materials ${sureFracText(marks.length)})`) }}</p>
       <p v-else>{{ junkLeft ? tr(`✦ フラクチャーの候補 ${marks.length} つのどれか 1 つが固定されたレア + 外れ ${junkLeft}`, `A rare with one of ${marks.length} ✦ candidates fractured + ${junkLeft} miss mod(s)`) : tr(`✦ フラクチャーの候補 ${marks.length} つのどれか 1 つだけが付いたレア (外れは木の中で付ける)`, `A rare with only one of ${marks.length} ✦ candidates (fractured); add other mods in the tree`) }}</p>
       <ul class="flex flex-col gap-0.5">
         <li v-for="a in marks" :key="a.modId" data-tree-start-mark class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words text-mod-fractured" :title="t.startModLabel(a, true)">✦ {{ t.startModLabel(a, true) }} <span v-if="marks.length > 1" class="text-[11px] opacity-60">{{ tr(`(1/${marks.length})`, `(1/${marks.length})`) }}</span></li>
       </ul>
       <!-- フラクチャーの始め方 (前は印を付けた時の 2 択 TreeFractureAsk と同じ、10-26 夜にツリーへ行く時の窓 TreeStartAsk へまとめた。10-24 夜オーナー) -->
-      <div data-tree-start-from class="flex flex-wrap items-center gap-1">
+      <div v-if="!multiWhite" data-tree-start-from class="flex flex-wrap items-center gap-1">
         <button type="button" data-tree-start-from-k="fractured" class="g-tab !min-h-[26px] !px-2 !text-[12px]" :class="st.from === 'fractured' ? 'on' : ''" :title="tr('✦ が付いたレアを買って始める', 'Buy a rare that already has the ✦ mod')" @click="t.setStartFrom('fractured')">{{ tr("フラクチャー済みから", "From fractured") }}</button>
         <button type="button" data-tree-start-from-k="four" class="g-tab !min-h-[26px] !px-2 !text-[12px]" :class="st.from === 'four' ? 'on' : ''" :title="tr(`4 MOD のレアにフラクチャー。必ず成功として、素材とオーブは ${sureFracText(marks.length)}`, `Fracture a 4-mod rare. Counted as a sure success, with materials and orbs ${sureFracText(marks.length)}`)" @click="t.setStartFrom('four')">{{ tr(`フラクチャー前から ${sureFracText(marks.length).split(" ")[0]}`, `Pre-fracture ${sureFracText(marks.length).split(" ")[0]}`) }}</button>
       </div>

@@ -373,7 +373,7 @@ const startChoice = computed((): { k: string; label: string; cost: number | null
   const k = c.kinds.find((x) => x.k === f);
   return k ? { k: k.k, label: k.label, cost: k.cost } : null;
 });
-function setStartFrom(v: StartFrom): void { edit((d) => { migrateStart(d); d.start!.from = v; d.start!.rarity = startRarity(d); }); }
+function setStartFrom(v: StartFrom): void { edit((d) => { migrateStart(d); d.start!.from = v; delete d.start!.autoWhite; d.start!.rarity = startRarity(d); }); }
 function setStartPrice(v: number | null): void { edit((d) => { migrateStart(d); if (v == null || !Number.isFinite(v) || v < 0) delete d.start!.price; else d.start!.price = v; }); }
 /** blank = 始まりの箱に手が無い (白紙) */
 const isBlank = (d: TreeDoc): boolean => !d.boxes.start?.hand && !d.boxes.start?.split && Object.keys(d.boxes).length === 1;

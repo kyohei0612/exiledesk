@@ -17,6 +17,7 @@ import { tr } from "../../../i18n/lang";
 import { tierRankLabel, type StageMod } from "../../../services/craft-stage/engine";
 import type { Aim, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { goalBlock } from "../../../services/simulator/sim-engine";
+import { goalBlockLoose } from "./tree-goal-cap";
 import TreeBasePick from "./TreeBasePick.vue";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue";
@@ -176,7 +177,8 @@ function blockOf(modId: string, tier: number): string | null {
   const key = `${doc.base}|${lv}|${craft ? 1 : 0}|${JSON.stringify(aims)}`;
   if (key !== blockFor) { blockFor = key; blockMemo = new Map(); }
   const k = `${modId}|${tier}`;
-  if (!blockMemo.has(k)) blockMemo.set(k, goalBlock(d, doc.base, lv, aims, { modId, tier }));
+  // 候補は枠に縛らず 10 まで (S-04、スイッチ goalTen): 枠以外の断りだけ
+  if (!blockMemo.has(k)) blockMemo.set(k, flag("goalTen") ? goalBlockLoose(d, doc.base, lv, aims, { modId, tier }, t.goals.value.some((a) => a.modId === modId)) : goalBlock(d, doc.base, lv, aims, { modId, tier }));
   return blockMemo.get(k) ?? null;
 }
 /** 開いた行の頭に出す押せない理由 (理由ごとに段をまとめる。全部の段が押せる・もう狙いの行は無し。10-26 モンキー 7 の 6「灰色のボタンが並ぶだけで理由が見えない、スマホは乗せる事もできない」) */

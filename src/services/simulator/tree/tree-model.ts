@@ -12,6 +12,7 @@ import type { TreeTune } from "./tree-tune";
 import { mayHoldAim } from "./tree-lost";
 import { effectOf } from "./tree-hands";
 import { makeRoom, pushRight, ROOM, spread } from "./tree-model-layout";
+import { flag } from "../../../web/release-flags";
 
 /**
  * any = 狙い無しの手の結果 (何が付いても次へ進む「打った後」、オーナー 10-22 の適当打ち)。
@@ -135,7 +136,8 @@ export type TreeRarity = "normal" | "magic" | "rare";
 /** price = この始め方のベースを取引所で買う値段 (神、手入力。結果のまとめで入れる、10-22 オーナー「どの始め方が安いかは結果のまとめで」)。prices は前の版の始め方ごとの値段 */
 /** フラクチャーの始め方 (10-24 夜オーナー): fractured = フラクチャー済みを買う、four = フラクチャー前 (4 MOD のレア) から。必ず成功として 1/3 で素材とオーブ ×3 (tree-base-cost の four) */
 export type StartFrom = "fractured" | "four";
-export interface TreeStart { rarity: TreeRarity; mods: StartMod[]; runes?: string[]; prices?: TreeBasePrices; price?: number; from?: StartFrom }
+export interface TreeStart { rarity: TreeRarity; mods: StartMod[]; runes?: string[]; prices?: TreeBasePrices; price?: number; from?: StartFrom;
+  /** ✦ が 2 つ以上で白ベースからに自動で替えた (✦ が 1 つに戻ったらフラクチャー済みからへ戻す、スイッチ fracOne) */ autoWhite?: true }
 /** 始め方ごとのベースの値段 (神、手入力。入れていない物は無い)。始まりの箱のベースの値段を比べる tree-base-cost.ts で使う */
 export interface TreeBasePrices { white?: number; four?: number; fractured?: number }
 export interface TreeDoc {
@@ -203,6 +205,8 @@ export const startOf = (d: TreeDoc): TreeStart => d.start ?? { rarity: "rare", m
 /** フラクチャーの印 (完成の狙いのうち ✦ の候補。どれか 1 つが固定されればよい、10-23 オーナー) */
 export const fractureMarks = (d: TreeDoc): Aim[] => (d.memoAims ?? []).filter((a) => a.fractured);
 /** 印があってもフラクチャー前から (start.from four) は白 (ノーマル) から始める (10-24 夜オーナー「後者選んだ場合必ず白からはじまる」)。true = ✦ の付いたレアから */
+/** ✦ が 2 つ以上で、フラクチャーから始められない (白ベースからだけ。10-28 オーナー「単発のみフラクチャースタートできるようにさせるか」、スイッチ fracOne) */
+export const multiFracWhite = (d: TreeDoc): boolean => flag("fracOne") && fractureMarks(d).length > 1;
 export const startsFractured = (d: TreeDoc): boolean => fractureMarks(d).length > 0 && d.start?.from !== "four";
 /**
  * 印ありのスタートの外れの数 (10-25 オーナー「フラクチャーから開始ってのはそのフラクチャーしかない状態で始めて欲しい、外れは自分で付ける」で 3 → 0。
@@ -232,6 +236,9 @@ export function migrateStart(d: TreeDoc): void {
     d.memoAims = list;
   }
   d.start = { ...st, mods: st.mods.filter((m) => !m.fractured) };
+  // ✦ が 2 つ以上なら始まりは白ベースから (フラクチャーは木の中で、S-13、スイッチ fracOne)
+  if (multiFracWhite(d)) { if (d.start.from !== "four") { d.start.from = "four"; d.start.autoWhite = true; } }
+  else if (d.start.autoWhite) { d.start.from = "fractured"; delete d.start.autoWhite; }
   delete d.fracture;
   delete d.startRandom;
   d.start.rarity = startRarity(d);

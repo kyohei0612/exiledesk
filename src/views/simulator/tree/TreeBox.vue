@@ -17,7 +17,7 @@ import { previewUse } from "../../../services/emulator/emu-engine";
 import { sideAims } from "./tree-side-aims";
 import { treeRowTags } from "./tree-row-tags";
 import { splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
-import { boxAims, BOX_H, BOX_W, fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type TreeBox } from "../../../services/simulator/tree/tree-model";
+import { boxAims, BOX_H, BOX_W, fractureMarks, START_JUNK, startOf, startRarity, startsFractured, multiFracWhite, type TreeBox } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { useTree } from "./use-tree";
@@ -145,7 +145,7 @@ const costLine = computed(() => {
   // フラクチャーの始め方を決めていれば必ず出す (済みから / 前から ×3、10-24 夜オーナー「選んだ方はスタートの箱に見える形で」)
   const f = fractureMarks(t.doc.value).length ? startOf(t.doc.value).from : undefined;
   const b = t.baseCost.value?.best, c = t.startChoice.value;
-  const name = f === "four" ? tr(`フラクチャー前から ${sureFracText(fractureMarks(t.doc.value).length).split(" ")[0]}`, `pre-fracture ${sureFracText(fractureMarks(t.doc.value).length).split(" ")[0]}`) : f === "fractured" ? tr("フラクチャー済みから", "fractured") : b?.short ?? "";
+  const name = f === "four" && multiFracWhite(t.doc.value) ? tr("白ベースから", "white base") : f === "four" ? tr(`フラクチャー前から ${sureFracText(fractureMarks(t.doc.value).length).split(" ")[0]}`, `pre-fracture ${sureFracText(fractureMarks(t.doc.value).length).split(" ")[0]}`) : f === "fractured" ? tr("フラクチャー済みから", "fractured") : b?.short ?? "";
   const cost = f ? c?.cost ?? null : b?.cost ?? null;
   if (cost == null) return name;
   const n = cost >= 100 ? cost.toFixed(0) : cost >= 10 ? cost.toFixed(1) : cost.toFixed(2);
