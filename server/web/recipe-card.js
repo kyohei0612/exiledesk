@@ -26,7 +26,7 @@ export function cleanCard(raw) {
   const n = num(raw.n, 100000); if (n != null && n >= 1) c.n = Math.round(n);
   const cost = num(raw.c, 1e7); if (cost != null) c.c = Math.round(cost * 100) / 100;
   if (typeof raw.o === "string" && /^https:\/\/web\.poecdn\.com\/[^"'<>\s]{1,400}$/.test(raw.o)) c.o = raw.o;
-  const s = num(raw.s, 10000); if (s != null) c.s = Math.round(s);
+  // s (手の数) は 10-28 に絵から外した (オーナー「手は意味わかんないから無くしていい」)。送られても捨てる
   return Object.keys(c).length ? c : null;
 }
 
@@ -73,7 +73,6 @@ export function readRecipeCard(name, card, tree) {
     people: c.n ?? 100,
     cost: c.c ?? null,
     orb: c.o ?? null,
-    hands: c.s ?? null,
     shape: tree ? treeShape(tree) : { boxes: [], edges: [] },
   };
 }
@@ -105,7 +104,6 @@ export function recipeDesc(c) {
   if (c.baseName) parts.push(c.baseName);
   if (c.pct != null) parts.push(T(c, `${c.people} 人で完成 ${fmtPct(c.pct)}%`, `${fmtPct(c.pct)}% of ${c.people} finish`));
   if (c.cost != null) parts.push(T(c, `平均 ${fmtCost(c.cost)} 神`, `avg ${fmtCost(c.cost)} div`));
-  if (c.hands != null) parts.push(T(c, `手の数 ${c.hands}`, `${c.hands} steps`));
   parts.push(T(c, "PoE2 のクラフトの道 (シミュレーター) のレシピ。開くとそのまま回せます。", "A PoE2 crafting route (simulator) recipe. Open it and run it as is."));
   return parts.join(" · ");
 }
@@ -160,7 +158,7 @@ export async function recipeCardImage(url, env, c) {
   const more = c.mods.length - mods.length;
   const moreText = more > 0 ? T(c, `ほか ${more} 個`, `+${more} more`) : "";
   const noStats = T(c, "開くと、そのまま 100 人回せます", "Open it and run 100 crafters as is");
-  const pctLabel = T(c, `${c.people} 人で完成`, `of ${c.people} finish`), costLabel = T(c, "平均の費用", "avg cost"), handsLabel = T(c, "手", "steps");
+  const pctLabel = T(c, `${c.people} 人で完成`, `of ${c.people} finish`), costLabel = T(c, "平均の費用", "avg cost");
   // 字の大きさは幅から (全角 1・半角 0.55 で数える)
   const units = (t) => [...t].reduce((a, ch) => a + (ch.charCodeAt(0) > 0xff ? 1 : 0.55), 0);
   const fit = (t, room, max, min) => Math.max(min, Math.min(max, Math.floor(room / Math.max(1, units(t)))));
@@ -173,7 +171,7 @@ export async function recipeCardImage(url, env, c) {
   const baseSize = c.baseName ? fit(c.baseName, IW - CAP * 2 - 20, 34, 18) : 28;
   // MOD は折り返してよい (1 行に入らない長い MOD は小さめの字で 2 行)
   const modSize = mods.some((m) => units(m[0]) * 31 > IW - 30) ? 26 : 31;
-  const allText = ["ExileDesk", kicker, titleText, c.baseName ?? "", ...mods.map((m) => m[0]), moreText, noStats, pctLabel, costLabel, handsLabel, T(c, "神", "div"), "exiledesk.com", "0123456789%.,"].join("");
+  const allText = ["ExileDesk", kicker, titleText, c.baseName ?? "", ...mods.map((m) => m[0]), moreText, noStats, pctLabel, costLabel, T(c, "神", "div"), "exiledesk.com", "0123456789%.,"].join("");
   const [bold, regular, antique, cinzel] = await Promise.all([
     font(allText, 800),
     font(allText, 500),
@@ -189,19 +187,18 @@ export async function recipeCardImage(url, env, c) {
   const PX = 868, PY = 30, PW = 300, PH = 570, SH = 250;
   const corner = (img, x, y) => (img ? `<img src="${img}" width="40" height="40" style="position:absolute;left:${x}px;top:${y}px" />` : "");
   const big = TI.big ?? "#e6d8bb";
-  const stats = c.pct != null || c.cost != null || c.hands != null;
+  const stats = c.pct != null || c.cost != null;
   const small = (v, unit, label, color) => `
           <div style="display:flex;flex-direction:column;align-items:center;margin:0 14px">
-            <div style="display:flex;align-items:center"><span style="font-size:46px;font-weight:800;line-height:1.1;color:${color}">${v}</span>${unit}</div>
-            <span style="font-size:20px;font-weight:500;color:#b9a98a">${esc(label)}</span>
+            <div style="display:flex;align-items:center"><span style="font-size:60px;font-weight:800;line-height:1.1;color:${color}">${v}</span>${unit}</div>
+            <span style="font-size:22px;font-weight:500;color:#b9a98a">${esc(label)}</span>
           </div>`;
   const statsHtml = stats ? `
       <div style="display:flex;flex-direction:column;align-items:center;width:${PW}px">
         ${c.pct != null ? `<div style="display:flex;align-items:flex-end"><span style="font-size:100px;font-weight:800;line-height:1;color:${big}">${fmtPct(c.pct)}</span><span style="font-size:50px;font-weight:800;color:${big};margin-left:2px;margin-bottom:6px">%</span></div>
         <span style="font-size:24px;font-weight:500;color:#cfc3aa;margin-top:2px">${esc(pctLabel)}</span>` : ""}
         <div style="display:flex;align-items:flex-start;margin-top:14px">
-          ${c.cost != null ? small(fmtCost(c.cost), orb ? `<img src="${orb}" width="42" height="42" style="margin-left:4px" />` : `<span style="font-size:24px;font-weight:800;color:#f2c96b;margin-left:4px">${esc(T(c, "神", "div"))}</span>`, costLabel, "#f2c96b") : ""}
-          ${c.hands != null ? small(String(c.hands), "", handsLabel, "#efe6d2") : ""}
+          ${c.cost != null ? small(fmtCost(c.cost), orb ? `<img src="${orb}" width="56" height="56" style="margin-left:6px" />` : `<span style="font-size:30px;font-weight:800;color:#f2c96b;margin-left:4px">${esc(T(c, "神", "div"))}</span>`, costLabel, "#f2c96b") : ""}
         </div>
       </div>` : `<span style="font-size:24px;font-weight:500;color:#cfc3aa;width:${PW - 30}px;text-align:center;justify-content:center">${esc(noStats)}</span>`;
   const html = `
