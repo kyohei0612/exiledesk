@@ -13,7 +13,6 @@ import { applyStartChoice, markedGoal } from "./tree-start-choice";
 import { useTree } from "./use-tree";
 import { sureFracText } from "./tree-names";
 import { flag } from "../../../web/release-flags";
-import { craftStage as s } from "../../../state/craft-stage";
 
 const emit = defineEmits<{ done: []; close: [] }>();
 const t = useTree();
@@ -28,11 +27,13 @@ const marked = markedGoal(t.goals.value);
  * 「(おすすめ)」は完成形の設定で ✦ を付けていない時だけ (10-28 夜オーナー「フラクチャーしてんだからフラチャーお勧めっておかしい」)
  */
 const ONE = flag("fracOne");
-const firstFrac = (): string | null => { const g = goals.value.find((a) => s.data.value?.mods.get(a.modId)?.source !== "desecrated"); return g ? aimKey(g) : null; };
 const hasMarks = goals.value.some((a) => a.fractured);
 const pick = ref<string | null>(marked ? aimKey(marked) : null);
-/** fracOne の ☑ (既定は印の付いた MOD 全部、無ければ先頭の 1 つ) */
-const onePicks = ref<string[]>(hasMarks ? goals.value.filter((a) => a.fractured).map(aimKey) : [firstFrac()].filter((k): k is string => !!k));
+/**
+ * fracOne の ☑ (既定は印の付いた MOD 全部)。印が無ければ勝手に付けない = 全部空 (白ベースから) で開く
+ * (10-28 夜オーナー「印つけないのはわざとのひともいるし」、⑦3。前は完成の狙いの先頭に ✦ を付けて開いた)
+ */
+const onePicks = ref<string[]>(hasMarks ? goals.value.filter((a) => a.fractured).map(aimKey) : []);
 const multiWhite = computed(() => ONE && onePicks.value.length > 1);
 const from = ref<StartFrom>(t.doc.value.start?.from ?? "fractured");
 type Pair = [string, string];
@@ -60,7 +61,7 @@ function decide(): void {
       <!-- ✦ にする MOD を ☑ で (スイッチ fracOne)。☑ が 2 つ以上なら白ベースからだけ、「(おすすめ)」は ✦ を付けていない時だけ -->
       <section v-if="ONE" data-tree-start-ask-one class="g-item flex flex-col gap-2 bg-black/50 px-3 py-2.5">
         <b class="text-[15px] text-[var(--exile-color-text-title)]">{{ hasMarks ? tr("フラクチャーから", "From a fractured mod") : tr("フラクチャーから (おすすめ)", "From a fractured mod (recommended)") }}</b>
-        <p class="text-[12px] opacity-70">{{ tr("フラクチャー (✦) にする MOD を選ぶ (1 つならフラクチャー済みからも始められる。2 つ以上は白ベースから)", "Pick the mods to fracture (✦) (with one you can also start from a fractured item; with two or more you start from a white base)") }}</p>
+        <p class="text-[12px] opacity-70">{{ hasMarks ? tr("フラクチャー (✦) にする MOD を選ぶ (1 つならフラクチャー済みからも始められる。2 つ以上は白ベースから)", "Pick the mods to fracture (✦) (with one you can also start from a fractured item; with two or more you start from a white base)") : tr("✦ を 1 つ選ぶとフラクチャーから始められる (2 つ以上は白ベースから)", "Pick one ✦ to start from a fractured item (two or more start from a white base)") }}</p>
         <label v-for="a in goals" :key="aimKey(a)" data-tree-start-ask-mod class="flex min-w-0 cursor-pointer items-start gap-2 rounded px-1.5 py-1 hover:bg-white/[0.06]" :class="onePicks.includes(aimKey(a)) ? 'bg-[rgba(163,52,42,0.35)]' : ''">
           <input v-model="onePicks" type="checkbox" :value="aimKey(a)" class="mt-1 shrink-0" />
           <span class="min-w-0 break-words" :class="onePicks.includes(aimKey(a)) ? 'text-mod-fractured' : 'text-[#c8c8ff]'">{{ onePicks.includes(aimKey(a)) ? "✦ " : "" }}{{ t.aimLabel(a) }}</span>
