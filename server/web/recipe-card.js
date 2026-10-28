@@ -50,6 +50,8 @@ export function treeShape(tree) {
  * 頭がベースの名前で後ろに人の付けた言葉があれば言葉の部分だけ。何も残らなければベースの名前
  */
 export function titleOf(name, bases) {
+  // 人が付けていない名前はベースの名前 (10-28 オーナー「見本はレシピ名を保存してないやつならベースの名前で出してあげて。」): 開発版の見本の木 (src/views/simulator/dev-recipes.ts、「見本: …」「見本 2: …」)
+  if (/^見本( \d+)?: /.test(String(name ?? ""))) return bases.find(Boolean) || null;
   // 時刻の付いた日付はどこでも消す。時刻の無い日付 (人が時刻だけ消した物) はベースの名前のすぐ後ろの時だけ (「1/2 の確率」などを消さない)
   let t = String(name ?? "").replace(/(^|\s)(\d{4}\/)?\d{1,2}\/\d{1,2}\s+\d{1,2}:\d{2}(?=\s|$)/g, " ").replace(/\s+/g, " ").trim();
   for (const b of bases) {
@@ -109,7 +111,7 @@ export function recipeDesc(c) {
 }
 
 /** 木の影絵 (箱と直角の線)。w×h の中に収めて真ん中に置く。当たりの箱は明るく、外れ・消えた箱は暗く */
-function silhouette(shape, w, h, TI) {
+function silhouette(shape, w, h) {
   if (!shape.boxes.length) return "";
   const BW = 316, BH = 200;
   const xs = shape.boxes.map((b) => b.x), ys = shape.boxes.map((b) => b.y);
@@ -206,7 +208,7 @@ export async function recipeCardImage(url, env, c) {
   <div style="display:flex;position:absolute;left:${PX}px;top:${PY}px;width:${PW}px;height:${PH}px;background:rgba(10,8,5,0.55);border:${TI.double ? 3 : 2}px solid ${TI.line}"></div>
   ${TI.double ? `<div style="display:flex;position:absolute;left:${PX + 9}px;top:${PY + 9}px;width:${PW - 18}px;height:${PH - 18}px;border:1px solid ${TI.inner}"></div>` : ""}
   <div style="display:flex;position:absolute;left:${PX + 20}px;top:${PY + 30}px;width:${PW - 40}px;height:${SH}px;border-radius:${SH / 2}px;background-image:radial-gradient(circle, ${TI.glow} 0%, rgba(0,0,0,0) 70%)"></div>
-  <div style="display:flex;position:absolute;left:${PX + 24}px;top:${PY + 50}px;width:${PW - 48}px;height:${SH - 20}px;opacity:0.85">${silhouette(c.shape, PW - 48, SH - 20, TI)}</div>
+  <div style="display:flex;position:absolute;left:${PX + 24}px;top:${PY + 50}px;width:${PW - 48}px;height:${SH - 20}px;opacity:0.85">${silhouette(c.shape, PW - 48, SH - 20)}</div>
   ${TI.corners ? corner(ctl, PX - 4, PY - 4) + corner(ctr, PX + PW - 36, PY - 4) + corner(cbl, PX - 4, PY + PH - 36) + corner(cbr, PX + PW - 36, PY + PH - 36) : ""}
   <div style="display:flex;position:absolute;left:${PX}px;top:${PY + 40 + SH + 6}px;width:${PW}px;justify-content:center">${statsHtml}</div>
   <div style="display:flex;position:absolute;left:40px;top:30px;align-items:flex-end">
