@@ -132,8 +132,10 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */
 export const DEV_BUILD: boolean = import.meta.env.DEV || import.meta.env.VITE_DEV_PREVIEW === "1";
 
+/** 開発版だけ: URL の ?off=名前,名前 のスイッチを閉じて開く (OK のスナップの前と後を撮る。本番の作りでは空) */
+const OFF: ReadonlySet<string> = DEV_BUILD && typeof location !== "undefined" ? new Set((new URLSearchParams(location.search).get("off") ?? "").split(",").filter(Boolean)) : new Set();
 /** そのスイッチが入っているか */
-export const flag = (f: Flag): boolean => DEV_BUILD || RELEASED.has(f);
+export const flag = (f: Flag): boolean => (DEV_BUILD && !OFF.has(f)) || RELEASED.has(f);
 
 /** 入っているスイッチを <html data-flag-名前> に書く (CSS だけの直しはこの印の下に書く。main.ts が最初に 1 回) */
 export function markFlags(): void {
