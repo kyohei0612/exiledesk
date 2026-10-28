@@ -69,7 +69,9 @@ const quietOpen = computed(() => props.box.out === "hit" && !!props.issue && /�
 const canJoin = computed(() => (!props.box.hand && !props.box.done ? joinCandidates(t.doc.value, props.box.id).length > 0 : sameHitsOf(t.doc.value, props.box.id, hitLoose(t.doc.value)).length > 0));
 const startJoin = (): void => { joinMode.value = { anchor: props.box.id, pick: [] }; };
 /** MOD の値は木の中で揃える (貼った値か段の真ん中、tree-fixed-values。10-26 夜オーナー「ツリー内で同じ MOD じゃないと混乱する」) */
-const sample = computed(() => (s.data.value && props.box.out !== "start" ? shapeSampleOf(s.data.value, t.doc.value, props.box.id) : null));
+/** スタートの箱も結果の箱と同じアイテムカード (レアリティの色・名前・MOD の行、✦ はフラクチャーの印。10-28 夜オーナー「スタートもアイテムカードで表示させてくれツリー」、スイッチ startCard) */
+const START_CARD = flag("startCard");
+const sample = computed(() => (s.data.value && (props.box.out !== "start" || START_CARD) ? shapeSampleOf(s.data.value, t.doc.value, props.box.id) : null));
 /** この箱の手で消える・入れ替わる候補の MOD (オレンジの文字。手の窓・エミュと同じエンジンの previewUse、10-27 オーナー「打つ前の箱のカード」も)。手の無い箱・打てない手は無し */
 const cardDoomed = computed((): readonly string[] => { const d = s.data.value, it = sample.value, h = props.box.hand; if (!d || !it || !h) return []; try { return previewUse(d, it, h.currency, h.omens)?.change ?? []; } catch { return []; } });
 const cardItem = computed(() => (s.data.value && sample.value ? fixedValues(s.data.value, t.doc.value, sample.value) : null));
@@ -201,7 +203,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
 
     <!-- 中身: 始まり = ベースとフラクチャー / 当たり = 付く MOD (右の＋に掛からない幅) -->
     <div class="min-w-0">
-      <template v-if="box.out === 'start'">
+      <template v-if="box.out === 'start' && !START_CARD">
         <!-- ベースとアイテムレベル: 押すと右の欄で選ぶ (10-22、前は金の指輪 ilvl 82 に固定) -->
         <button type="button" data-tree-base class="nodrag block w-full truncate text-left text-[13px] font-bold hover:underline" :class="quiet ? 'pointer-events-none' : ''" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :title="tr('ベースとアイテムレベルを選ぶ', 'Choose the base and item level')" @click.stop="!quiet && emit('base')">
           {{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}
@@ -221,8 +223,15 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     </div>
     <!-- 今のアイテムの枠 (乗せた時のカードと同じ StageItemCard の MOD の行だけを箱の幅いっぱいに (縮めない)。10-26 オーナー「アイテム枠は個人的に好きやからそのままがいいなさっきの」「枠内はアイテムの形とその下に次どうするかくらいか？まとめるとかも別にアイテム枠の下とかに出したらええんちゃう」) -->
     <!-- 箱の流れの中に置き、MOD が多ければ箱が伸びる (切らない) -->
-    <div v-if="cardItem" data-tree-box-card class="pointer-events-none" :class="box.out === 'start' ? 'mt-0.5' : 'mt-3'">
+    <div v-if="cardItem" data-tree-box-card :class="[box.out === 'start' ? 'mt-0.5' : 'mt-3', box.out === 'start' && !quiet ? 'nodrag cursor-pointer rounded-md hover:brightness-110' : 'pointer-events-none']" :title="box.out === 'start' ? startTitle : undefined" @click.stop="box.out === 'start' && !quiet && emit('aim')">
       <div :style="{ width: `${CARD_W}px` }"><StageItemCard :item="cardItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact mods-only with-title :row-tags="cardTags" :doomed="cardDoomed" /></div>
+    </div>
+    <!-- スタートのカードの下: 始め方・ベースの値段の 1 行と ＋MOD (スイッチ startCard。カードを押すと始まりの形の窓、ベースは名前の帯の下の文字から) -->
+    <div v-if="box.out === 'start' && START_CARD" data-tree-start-under class="mt-1 flex min-w-0 items-center gap-1" :style="{ minHeight: `${24 * k}px` }">
+      <button type="button" data-tree-base class="nodrag shrink-0 rounded border border-white/15 px-1 text-[11px] leading-6 hover:bg-white/10" :class="quiet ? 'pointer-events-none' : ''" :style="keep('left center')" :title="tr('ベースとアイテムレベルを選ぶ', 'Choose the base and item level')" @click.stop="!quiet && emit('base')">{{ tr("ベース", "Base") }}</button>
+      <p v-if="startRest" data-tree-start-rest class="min-w-0 flex-1 truncate text-[12px] opacity-70" :title="t.baseCost.value?.best ? `${tr('一番安い始め方', 'Cheapest start')}: ${t.baseCost.value.best.label} · ${startRest}` : startRest">{{ startRest }}</p>
+      <span v-else class="flex-1" />
+      <button v-if="!quiet" type="button" data-tree-start-plus-btn class="nodrag flex h-6 shrink-0 items-center justify-center whitespace-nowrap rounded border border-white/15 px-1 text-[11px] leading-none hover:bg-white/10" :style="keep('right center')" :title="marks.length ? tr('＋ MOD を足す (外れを差し替える)', '+ Add a mod (replaces a miss mod)') : tr('＋ 始まりに付いている MOD を足す', '+ Add a starting mod')" @click.stop="emit('aim')">{{ tr("＋MOD", "+Mod") }}</button>
     </div>
 
 
