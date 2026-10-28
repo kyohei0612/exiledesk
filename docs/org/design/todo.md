@@ -1,5 +1,10 @@
 # デザイン部長 のやる事
 
+## 10 本目の今 (10-28、ブラック 15 の下)
+- 本番待ち (スナップでオーナー OK 済み 10-28、絵は共有メモ local_c6a769ac…/ok-snaps/design-*.png。出すのは最終チェック長): armAll (2 回押しは外・Esc で戻す)・emuRedo (エミュのやり直し)・noCut (… で切らない)・backPlace (戻るで前の位置・タブは一番上)・phoneHelp (エミュのスマホの説明は閉じる)・tierWord (段 → ティア、MOD 表の列は 1 行で入る幅 4702d255c)。commit 047c82462・be79a05e5・2914a46f1・410d84e1f・8c1dd25e2・4702d255c。ジェムコラプトを Web から外した 87ea44cb0。
+- 残り: shared-ui.md ⑦ の 2 (ホットキーの見せ方、案 A+B をオーナーが選ぶ)・3 (品質の帯を共有へ、シミュ部長と分担)・6 (重ね窓の印 data-overlay、下の宿題)。タブで状態も最初からはエミュ部長・シミュ部長の state。
+- 確かめの台本: 共有メモ local_a9a41698…/design10/ (u7-check・phone-help-check・tier-word-check・gem-off-check・ok-snaps・tier-fix.mjs、窓なし Chrome 9340〜9345)。
+
 ## 9 本目の今 (10-26 夜)
 - 済み (どれも hash はブラック 13 へ): 箱の中の MOD の表をアイテムの形に b4d64779・686a7ac2・3a3c08b7・02a8aa75、題の帯の印 withTitle 4d8d8d79、段の札を細く tightTier 3c14f97a、入らなければ縮めて 1 行 utils/fit-text.ts 61f7c1e0 (箱の中は縮めずに折る 02a8aa75)、シミュの記録 7a263e0b・web/sim-trail.ts c6328eb5、スマホの上へ戻るを重ね窓の間は隠す 333f51a7、今日のユニーク 58872a72 (スイッチ todayUnique、オーナーの OK 待ち)。
 - 宿題 (急がない、ブラック 13): ToTop.vue の重ね窓の印が増えるたびに OVERLAY に足している (10-26 夜に [data-phone-issues-sheet] が抜けて最終チェック長が足した)。重ね窓が共通の印 1 つ (例 data-overlay、ModalShell と各窓に付ける) を付ければ ToTop が拾える形に寄せる。窓はシミュの持ち物が多いので、印の名前を決めてシミュに 1 行ずつ頼む。
