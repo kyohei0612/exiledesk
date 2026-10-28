@@ -22,7 +22,7 @@ export async function openChrome(port = 9371) {
   if (!list) { close(); throw new Error("Chrome が立たない"); }
   const ws = new WebSocket(list.find((p) => p.type === "page").webSocketDebuggerUrl);
   await new Promise((r, j) => { ws.onopen = r; ws.onerror = j; });
-  let id = 0; const wait = new Map(); const errors = [];
+  let id = 0; const wait = new Map(); const errors = []; const subs = new Map();
   const send = (method, params = {}) => Promise.race([
     new Promise((r) => { const i = ++id; wait.set(i, r); ws.send(JSON.stringify({ id: i, method, params })); }),
     sleep(30000).then(() => ({})),
@@ -32,7 +32,10 @@ export async function openChrome(port = 9371) {
     if (m.id && wait.has(m.id)) { wait.get(m.id)(m); wait.delete(m.id); }
     if (m.method === "Page.javascriptDialogOpening") send("Page.handleJavaScriptDialog", { accept: true });
     if (m.method === "Runtime.exceptionThrown") errors.push(m.params.exceptionDetails.exception?.description?.split("\n")[0] ?? "error");
+    for (const fn of subs.get(m.method) ?? []) fn(m.params);
   };
+  /** 出来事の受け口 (Network.requestWillBeSent・Runtime.consoleAPICalled など。app-watch が使う) */
+  const on = (method, fn) => subs.set(method, [...(subs.get(method) ?? []), fn]);
   await send("Runtime.enable"); await send("Page.enable");
   /** ページの中で式を評価して値を返す (await できる) */
   const ev = async (x) => {
@@ -45,5 +48,5 @@ export async function openChrome(port = 9371) {
   const size = (w, h, mobile) => send("Emulation.setDeviceMetricsOverride", { width: w, height: h, deviceScaleFactor: mobile ? 2 : 1, mobile });
   const go = async (url) => { await send("Page.navigate", { url }); await sleep(1500); };
   const shot = async (path) => { const s = await send("Page.captureScreenshot", { format: "png" }); if (s.result?.data) writeFileSync(path, Buffer.from(s.result.data, "base64")); };
-  return { send, ev, until, size, go, shot, errors, close: () => { try { ws.close(); } catch { /* 閉じている */ } close(); } };
+  return { send, on, ev, until, size, go, shot, errors, close: () => { try { ws.close(); } catch { /* 閉じている */ } close(); } };
 }

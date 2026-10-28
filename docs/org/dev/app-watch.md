@@ -1,0 +1,55 @@
+# シミュ以外の見張り (scripts/app-watch/、最終チェック長の持ち物)
+
+10-28 夜ブラック 15 代目の頼み (オーナー「おｋ」)。AI の進め方の調べの助言「設計図に書いた守る事 (不変条件) は自動で見張る・確かめは書いた本人と別のセッション」に寄せて、シミュの見張り (sim-watch.md) と同じ形で、エミュ・共通の UI・サーバーの不変条件を数える。
+これは見張り (画面が自分の言った事・決まりと食い違わないか)。外の正解 (poe2db・CoE) と突き合わせる物ではない。画面のコードは直さない。見つけたら持ち主の部長 (owners.txt) へ直接回し、ブラックにも 1 行。決まりの正は docs/spec/release.md の R-35〜R-38、ここは回し方の手引き。
+
+## 回し方
+- 出す前 (R-09 の ③ の隣): 出す中身の 1460 を立てて (`pnpm preview:prod`、作業場なら `node ../ExileDesk-preview/scripts/preview-prod.mjs`) →
+  1. `node scripts/app-watch/static.mjs` (画面を開かない、数秒)
+  2. `node scripts/app-watch/emu.mjs` (クラフト台を 60 手、4〜6 分)
+  3. `node scripts/app-watch/pages.mjs` (7 ページ × 5 幅 × 日英 = 70 回、8〜12 分)
+- 1440 (dev サーバー、スイッチの下も入る) なら `http://localhost:1440` を後ろに渡す。1460 と 1461 と同じく、Chrome の見張りは 1 本ずつ回す (sim-watch と同時に回さない、機械が重いと押下が抜ける)。
+- `--json` で結果を JSON、`--update` で今の数を baseline.json に書く (static は hex の数だけ。減った時・わざと変えた時だけ書いて commit)。emu は `--steps N`・`--seed N`、pages は `--only craft` (ページ 1 つ)。
+- 終わると Chrome ごと閉じる (cdp.mjs、port は static なし・emu 9382・pages 9381。`WATCH_PORT` で替える)。合わない所があれば終わりの値 1。
+
+## 置き場
+- static.mjs (画面を開かない) / emu.mjs (クラフト台の操作) / pages.mjs (全ページ × 幅 × 言語) / lib.mjs (共通: 本物のマウス・キー、ネットワークの数え、結果の出し方) / baseline.json。
+- 窓なし Chrome は sim-watch の cdp.mjs をそのまま使う (出来事の受け口 `on` を 10-28 に足した)。
+
+## 見る物
+| 番号 | 台本 | 何を数えるか |
+|---|---|---|
+| Y-90 | static | 鍵・トークンの形 (Discord の webhook・bot token・Google の API key・秘密鍵・鍵の名前に値・鍵のヘッダーに値) が追跡中 + 追跡していない (無視していない) ファイルに無い。.dev.vars・.env (.example 以外) が入っていない |
+| Y-93 | static | `searchParams.get("key")`・`?key=` で鍵を受ける・送るコードが無い (server/live/src・server/web・scripts・src) |
+| Y-101 | static | トップ・web.html・ads.txt・/assets/・読み物・robots・sitemap・絵が run_worker_first に当たらない |
+| Y-102 | static + emu + pages | no-log.ts の「開発版・dev サーバー・localhost は送らない」の行、log-sender の noLog、preview-prod の送り先が手元。画面では本番のホストへの POST・/log・/event・/forget が 0 |
+| Y-105 | static | page.ts の PAGE_KEYS の全部 + コース + クラフトが、移った時の分かれ道で track("page:…") を呼び、track.ts で screen() に入る (手元は noLog で記録が出ないので画面では数えられない) |
+| M-92 | static | views/craft-stage・state/emulator・services/emulator が views・state・services の simulator を import しない |
+| U-46 | static | lint-hex.mjs の数が基準 (10-28 は 576) より増えない (0 にするのはデザイン部長) |
+| M-91 | emu | 棚から持ち、お告げを 7 割で掛け (色分けはお告げを掛けた時だけ出る作り、preview.ts)、色分けが出た手だけ: オレンジでない行が打った後も残る (素の値で比べる。盛りの括弧・品質の表示は外す)、緑の枠が出ている時は付いた行がその側 (カオスなど消してから付ける手は緑を出さないので側を見ない) |
+| M-90 | emu | 3 手に 1 回 Ctrl+Z で打つ前のカードと同じ。詰まった時と最後に、工程の行 (新しい方から 5 つ) を押すとその手の直後のカードと同じ |
+| U-81 | emu | 持ったまま Tab で MOD 一覧 → Esc 1 回で窓だけ閉じて持ちは残る → もう 1 回で持ちが離れる |
+| U-82 | emu | 2560 / 1920 幅で MOD 一覧を開き、窓の外に見える台のボタン (棚・1 手戻す・白に戻す・今出ていない画面のタブ) を押す → 窓が閉じ、台・URL は前と同じ。対照に、窓が無い時に同じ所を押すと台が変わるのも見る (変わらなければ「見られない」) |
+| U-23 | emu | 白に戻すの 1 回目 → Esc で戻る / 外を押して戻る、アイテムは変わらない |
+| Y-100 | emu | 打つ・戻す・MOD 一覧・窓の外・スパムシミュを開いて回す間、Worker へ行く道 (/api/・/boot.json・/feedback・/forget・/log・/event・/live.json・/s/・/og/・/r/・/tree/・/share) への取り物 0。見張りが自分で開いたページ (Document) は数えない |
+| M-94 | emu | 操作の間の JS の例外・console.error 0 (モンキーの軽い代わり) |
+| U-80 / M-93 | pages | ページの幅 ≦ 窓、overflow-guard と同じ数え方で画面の外へ出た物 0 (本番の作りには __overflow が無いので台本に同じ数え方を持つ) |
+| U-83 | pages | 英語の画面に日本語の文字が無い (「日本語」ボタン・`data-changelog`・`data-lang-ja-ok` の中は除く) |
+| U-84 | pages | スマホ (414・375・320) で text-overflow: ellipsis・line-clamp で実際に切れている物 0 |
+| U-85 / M-94 | pages | 開いた時の JS の例外・console.error 0 (エミュとシミュの両方のページ) |
+
+ページ = クラフト (`?base=Sapphire Ring`)・ベース選び・使い方・要望・スパムシミュ・レシピ・シミュのツリー。幅 = 1660×860・1440×900 (PC)、414・375・320 (スマホ)。
+
+## 自動にできない物 (なぜ・代わり)
+- **M-91 の予見 (ヒネコラの髪束)・発現の候補**: 骨 → 発現の流れと予見の窓の作りを押して読むのがまだ。足せる (読む目印 `data-reveal-panel`・`reveal:N` はある)。今はエンジンの previewUse と打った結果の突き合わせ (engine.md) とモンキー。
+- **M-91 のお告げ無しの手**: 色分けを出さない作り (オーナー 10-17) なので比べる物が無い (見張りの対象外)。
+- **M-93 の全部の欄**: MOD 一覧の窓・スパムシミュの結果などの開いた状態はスマホ幅で回していない (ページを開いた状態だけ)。代わり: 開発版の赤い枠 (overflow-guard) とモンキー。
+- **M-94 (どう押しても)**: 60 手の軽い代わり。長く回すのはモンキー (オーナーの指示の時、R-18)。
+- **U-81・U-82 の全部の窓**: MOD 一覧と持ちの組だけ。ほかの重ね窓は共通の印 (`data-overlay`、shared-ui.md ⑦6) が入ったら台本で全部を回せる。それまではデザイン部長の台本 (共有メモ design5〜9) とモンキー。
+- **U-83 の例外 (配信者名)**: 配信中のチャンネルの名前に目印が無い。出たら `data-lang-ja-ok` を付けてもらう (デザイン部長)。
+- **Y-90 の過去の commit・手元のファイル・ログ・報告**: 今の作業の木だけを見る。過去は `git log -p` を全部なめると重いので、鍵を回した時 (サーバー管理人) に 1 回。手元・ログ・報告は見られない (人の決まり)。
+- **Y-101・Y-102 の本番の数**: 本番の Worker の回数・本番の D1 に手元の記録が無いかは本番を読む必要がある (外の API は叩かない決まり)。代わり: 設定と送り先を static で、手元の画面の送りを emu・pages で。本番の数はサーバー管理人の日報。
+- **Y-103 (/boot.json が無くても動く)**: 1460 は既定で /boot.json が 404 なので、emu・pages が通る = 見られている (別の数は出さない)。
+- **Y-104 (1 つ前の版の /assets/ が 200)**: 出した直後の本番でしか見られない。R-10 の出した後の確かめで curl 1 回 (docs/org/analytics/notes/2026-10-24-local-prod-env.md の (4))。
+- **Y-105 の画面での数**: 手元はどこも noLog (記録しない) なので、screen が実際に出るのは本番だけ。代わり: static でコードの道 (分かれ道 → screen) を数える。本番の数はサーバー管理人の日報の screen。
+- **U-41・U-45・U-47 など見た目**: オーナーの目。

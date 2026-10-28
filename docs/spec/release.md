@@ -1,10 +1,10 @@
 # 設計図: 出し方 (R-xx) — 最終チェック長
 
-型は `docs/spec/README.md` の「3. 書き方の型」。大本は G-xx (同じ紙)。ここは「どう出すか・何を見て出すか」の正。手順の細かい打ち方 (コマンド) は各決まりの「確かめ方」と、見張りは `docs/org/dev/sim-watch.md` (回し方の手引き。決まりの中身はここ)。
+型は `docs/spec/README.md` の「3. 書き方の型」。大本は G-xx (同じ紙)。ここは「どう出すか・何を見て出すか」の正。手順の細かい打ち方 (コマンド) は各決まりの「確かめ方」と、見張りは `docs/org/dev/sim-watch.md` (シミュ)・`docs/org/dev/app-watch.md` (シミュ以外) (回し方の手引き。決まりの中身はここ)。
 初版 2026-10-28 (ブラック 14 代目の頼み、オーナー「大前提、全体及び各項目の設計図がいる。順に決めて全て完了まで行ってくれ」)。
 
 ## ① この紙の範囲
-版上げ・更新内容の日英・ポップアップの出し分け・スイッチ (`src/web/release-flags.ts`) の開け方・見張り用の開発版の作り 1461・見張り (`scripts/sim-watch`、不変条件)・モンキー・合格の基準・要望の返事 (`fbr:`)・止めた後の残りの片付け。
+版上げ・更新内容の日英・ポップアップの出し分け・スイッチ (`src/web/release-flags.ts`) の開け方・見張り用の開発版の作り 1461・見張り (`scripts/sim-watch`・シミュ以外の `scripts/app-watch`、不変条件)・モンキー・合格の基準・要望の返事 (`fbr:`)・止めた後の残りの片付け。
 画面の動きそのもの (シミュの箱・表示) は `sim-tree.md` (S-xx)、共通の部品は `shared-ui.md` (U-xx)。ここはそれを「出す前にどう確かめるか」だけ持つ。
 
 ## ② 用語
@@ -16,7 +16,7 @@
 | 作業場 | `C:/Users/kyohei/ExileDesk-preview` (detached の git worktree)。本体の書きかけを入れずに作る・出す所 |
 | スイッチ | `release-flags.ts` の `FLAGS` (名前 → 中身) と `RELEASED` (本番に入れた名前の一覧) |
 | 裏方 | 利用者の画面・動きが変わらない変更 (録画モード・計測・読み物のページ・絵の差し替え・見張りの台本など) |
-| 見張り | `scripts/sim-watch/watch.mjs`。見本の木を窓なし Chrome で開き、前 (基準) と違う所と、どの木でも成り立つ決まり (⑤) を数える |
+| 見張り | `scripts/sim-watch/watch.mjs`。見本の木を窓なし Chrome で開き、前 (基準) と違う所と、どの木でも成り立つ決まり (⑤) を数える。シミュ以外は `scripts/app-watch/` (static・emu・pages、R-35〜38) |
 | 基準 | `scripts/sim-watch/baseline.json` の `prod` (1460) と `dev` (1461)。前の数・札・表示・決まりの合わない所 |
 | 返事 | 要望 `fb:<id>` への返事。server/live の KV `fbr:<id>` (180 日) |
 
@@ -33,7 +33,7 @@
 - **R-06 版上げの手順**: `node scripts/bump-version.mjs patch` → `src-tauri/Cargo.lock` の ExileDesk の版も合わせる → 型チェック (`pnpm -s exec vue-tsc --noEmit -p tsconfig.json`) → commit (自分のパスだけ) → `pnpm deploy:web` → main へ (R-08)。タグは押さない、アプリは作らない。状態 有効。出どころ G-07、オーナー 10-16 (メモ feedback-web-only-for-now)。確かめ方 本番の入口の塊の版 = 出した版。
 - **R-07 裏方は版を上げない**: 裏方の変更は版を上げず、更新内容にも書かない。Web は `pnpm deploy:web` だけ、サーバーは server/live の deploy だけ。版に乗る時は `"0.1.N": []` で空にする。状態 有効。出どころ オーナー 10-12「裏だから更新通知はいらん」(メモ feedback-backstage-release)。
 - **R-08 main への入れ方**: 版上げの commit は作業場で作り、出した後に main へ入れる。本体に他人の書きかけがあって cherry-pick が止まる時は、stash・`--autostash` を使わず、作業場から `git push origin <commit>:refs/heads/main` で直に送り、本体を使う部長に pull が要ると伝える。状態 有効。出どころ 10-26 (メモ feedback-no-autostash)、10-27 v0.1.636。
-- **R-09 出す前の確かめ**: 出す中身の 1460 で ① 型チェック・ビルド ② 本番との照らし (`node scripts/compare-snaps.mjs`) ③ 見張り (`node scripts/sim-watch/watch.mjs`) を回す。見張りの合わない所が 0 でなければ出さず、シミュ部長とブラックへ (わざと変えた動きなら基準を取り直してから、R-17)。状態 有効。出どころ オーナー 10-24・10-27 夕「リリース時に全部集まるから、決まりつくならコイツ」。
+- **R-09 出す前の確かめ**: 出す中身の 1460 で ① 型チェック・ビルド ② 本番との照らし (`node scripts/compare-snaps.mjs`) ③ 見張り (`node scripts/sim-watch/watch.mjs`) ④ シミュ以外の見張り (R-35) を回す。見張りの合わない所が 0 でなければ出さず、シミュ部長とブラックへ (わざと変えた動きなら基準を取り直してから、R-17)。状態 有効。出どころ オーナー 10-24・10-27 夕「リリース時に全部集まるから、決まりつくならコイツ」。
 - **R-10 出した後の確かめは短く**: 本番で ① 版 ② 開けたスイッチの画面を PC・スマホ (375〜390 幅) で数枚 ③ JS のエラー 0 を見る。開発版と全画面の見比べ・オーナーが見た UI の撮り直しはしない。状態 有効。出どころ docs/org/dev/README.md 決まり 10 (10-26)。
 - **R-11 更新内容は日英セット**: 利用者に見える版は、`src/data/changelog-notes.json` と `changelog-notes-en.json` の同じ版に同じ数の行を書く。英語の用語は poe2db の英語 (`src/i18n/GLOSSARY.md`)。「カオススパム」の呼び名は書かない。状態 有効。出どころ メモ feedback-english-with-every-feature・feedback-no-guessed-terms・feedback-no-chaos-spam-card。確かめ方 2 つの JSON の版の行の数が同じ。
 - **R-12 ポップアップは大型だけ**: 起動時の更新内容の窓は、`src/data/changelog-popup.json` の versions に書いた版だけ出す。ふだんの版では触らない。出した後に足すなら versions に足して `node scripts/build-changelog.mjs <版>` で作り直してから deploy。状態 有効。出どころ オーナー 10-17「細かいリリースはポップアップ不要」(メモ feedback-changelog-popup)。
@@ -64,10 +64,16 @@
 - **R-33 名前はデータと同じで、どこでも同じ**: 箱の次の手の札・棚のカレンシー・お告げ・骨の名前 = `src/services/htc/price-keys.json` (骨は部位で変わるので骨のどれか)。同じ鍵は箱ごと・棚・持った時の手の窓の題で同じ。エッセンス・発現はデータの表が別なので揃っているかだけ。状態 有効。出どころ 同上、G-05。
 - **R-34 外れの箱の札**: 全部消えてよい消去の箱・消去を持った時のカードはフラクチャー以外が全部「外れ MOD」、外れの側の箱は外れ MOD でない行が道の上の狙いの数まで (札の無い未発現の行は数えない)。状態 有効。出どころ オーナー 10-27 (heldTags・junkByCheck、メモ feedback-unchecked-is-junk)。
 
+シミュ以外の見張り (`scripts/app-watch/`、回し方は `docs/org/dev/app-watch.md`。前と比べず、その場で合う / 合わないが決まる。hex の数だけ基準より増えないかを見る):
+- **R-35 シミュ以外の見張りも出す前に回す**: 出す前 (R-09 の ④) に 1460 で `static.mjs` → `emu.mjs` → `pages.mjs` を 1 本ずつ回し、合わない所が 0 でなければ出さず持ち主の部長 (owners.txt) とブラックへ。Chrome の見張りは sim-watch と同時に回さない (R-17 と同じ)。状態 有効。出どころ 10-28 夜ブラック 15 代目の頼み (オーナー「おｋ」)、AI の進め方の調べの助言 (不変条件は自動で見張る・確かめは書いた本人と別)。確かめ方 3 本とも終わりの値 0。
+- **R-36 画面を開かずに見る物 (static)**: Y-90 鍵の形がリポジトリに無い・Y-93 鍵を URL で受けない・Y-101 トップや /assets/ が Worker を通らない (run_worker_first)・Y-102 手元の作りは記録を送らない (no-log.ts と preview-prod の送り先)・Y-105 どのページへ移っても screen に入る (page.ts → track.ts の道)・M-92 エミュがシミュを import しない・U-46 hex が基準 (10-28 は 576) より増えない。状態 有効。出どころ 同上、system.md ⑦7・emu.md M-92・shared-ui.md U-46。
+- **R-37 クラフト台を動かして見る物 (emu)**: 本物のマウス・キーで 60 手 (種で決まる)。M-91 色分けが出た手で、オレンジでない行は残り、緑の枠が出ていれば付いた行はその側・M-90 Ctrl+Z の後 = 打つ前、工程の行 = その手の直後・U-81 持ち + MOD 一覧で Esc 1 回は窓だけ・U-82 窓の外の押下は台に届かない (届けば変わる所を押したかを対照で見る)・U-23 2 回押しの 1 回目は Esc・外で戻る・Y-100 操作の間 Worker への取り物 0・Y-102 本番のホストへ送らない・M-94 例外 0。状態 有効。出どころ 同上、emu.md ⑦2。
+- **R-38 全ページを幅と言語で見る物 (pages)**: クラフト・ベース選び・使い方・要望・スパムシミュ・レシピ・ツリーを 1660・1440・414・375・320 × 日英で開き、U-80 / M-93 横のはみ出し 0・U-83 英語の画面に日本語 0・U-84 スマホで「…」の切れ 0・U-85 / M-94 例外・console.error 0・Y-102。状態 有効。出どころ 同上、shared-ui.md ⑤。
+
 ## ⑥ 新しい物を足す手順
 - 新しい UI: スイッチを `FLAGS` に足す (名前 → 中身の一文) → `docs/pending-release.md` の表に行 (commit・更新内容の日英) → ブラックの「確認して」でオーナーが 1440 で触る (R-13) → OK でブラックの合図 → `RELEASED` に足して R-06 で出す → 表の行を「済み」へ。
 - 新しい見本の木: 1440 の画面で組んで共有の URL の `#recipe=` の後ろを `trees.json` に足す (key・name・from) → 1460 で `--update`・1461 で `--dev --update` → commit。
-- 新しい不変条件: `scripts/sim-watch/rules.mjs` に足し、この紙の ⑤ に番号を足す (同じ commit)。読む画面の目印が無ければ持ち主の部長に `data-` の目印を頼む。
+- 新しい不変条件: シミュは `scripts/sim-watch/rules.mjs`、シミュ以外は `scripts/app-watch/` の 3 本のどれかに足し、この紙の ⑤ に番号を足す (同じ commit)。自動にできない物は app-watch.md の「自動にできない物」に理由と代わりの確かめを書く。読む画面の目印が無ければ持ち主の部長に `data-` の目印を頼む。
 
 ## ⑦ 残っている仮・未決
 - R-14 の台本 `stop-preview.ps1` を scripts/ に置くか (今は scratchpad)。
