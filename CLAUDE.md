@@ -18,7 +18,7 @@ PoE2 のクラフトのエミュレーター (Web が本番、アプリは当分
 | 作業 | 読む物 |
 |---|---|
 | データ・エンジン: カレンシー・お告げの動き (spec/・parts.ts・入口 engine.ts) | docs/org/emulator/README.md (ジン部長 = データベース)、docs/decisions/004-currency-as-description.md、docs/reviews/2026-10-17-rule-checklist.md、メモ poe2-craft-rules-confirmed・feedback-game-rules-as-written・feedback-check-settled-rules |
-| MOD の置き場・重み・段・部位・ベースの有無 (出どころはトレードのデータ > poe2db) | メモ mod-engine-single-source・feedback-verify-with-poe2db・craft-weight-sources・item-classes-from-client・poe2-client-data-source |
+| MOD の置き場・重み・段・部位・ベースの有無 (出どころは poe2db が正、トレードは確かめ。10-28 オーナー) | メモ mod-engine-single-source・feedback-verify-with-poe2db・craft-weight-sources・item-classes-from-client・poe2-client-data-source |
 | 確率の表・次の手で狙う | メモ held-odds-parity・aim-next-move |
 | スパムシミュレーター・音・X シェア | メモ chaos-spam-and-sfx |
 | エミュの画面 (UI、views/craft-stage) | docs/org/emu/README.md (エミュ部長)、docs/decisions/001-craft-stage.md、メモ craft-stage-feature・ui-one-frame-rule・ui-no-break-rules・feedback-basic-flow・feedback-minimal-text-ui・game-ui-art-direction・web-phone-layout・ui-try-before-release |
