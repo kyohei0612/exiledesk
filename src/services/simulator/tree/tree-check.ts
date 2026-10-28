@@ -18,8 +18,8 @@ import { CATALYSING, effectOf, engineOmens, isCatalyst } from "./tree-hands";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf"; // 名前はクラフト台の棚と同じ (データの名前、10-28 オーナー「名前はエンジンのデータベース参照で固定」)
 import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
 import { aimOpts, aimsOf, goalsHeld, handAims, handProblem, heldHitOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
-import { boxOutcomeOf, stripBackOf, stripStop, stripTargetsOf } from "./tree-outcome";
-import { runTreeSteps } from "./tree-run";
+import { boxOutcomeOf, fromStrip, stripBackOf, stripStop, stripTargetsOf } from "./tree-outcome";
+import { runTreeSteps, stuckDetail } from "./tree-run";
 import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapeFits, shapesOf, splitTo } from "./tree-shape";
 import { bodyKinds, bodyMemo, bodyVaries, sameBody } from "./tree-box-shape";
 import { withTreeTune } from "./tree-tune";
@@ -165,6 +165,9 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
   }
 
   // 1b) 形の合う箱へ: 行きうる形の箱がツリーに無い (tree-run の matchTargets、回す時と同じ判定)
+  // 前の版の「形の合う箱へ」(match) は、人が戻り先を選ぶのを無くした今 (S-52b) は決めていない箱 = 未設定の印 (スイッチ settleStrict、10-29 オーナー「直して」)。
+  // 全部消えてよい消去の直線の止まり (fromStrip) が自動で付けた物は除く
+  if (flag("settleStrict")) for (const b of boxes) if (b.back === MATCH && !b.autoBack && !fromStrip(doc, b.id)) add(b.id, "open", tr("前の版の「形の合う箱へ」の戻り (今は選べない)。次の手・完成・失敗を決める", "Old \"go to the matching box\" return (no longer selectable). Pick a next craft, Finish, or Fail"));
   for (const b of boxes) if (b.back === MATCH) {
     const miss = matchTargets(doc, b.id).filter((x) => !x.to);
     if (miss.length) add(b.id, "noMatch", tr(`続きの箱が無い (${miss.length} つの形。その形で手のある箱を作る)`, `No box to continue from (${miss.length} shape(s)); add a box with that shape and a craft`));
@@ -331,7 +334,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
       if (w?.spam) { add(id, "stuck", tr(`回すと ${RUN_PEOPLE} 人中 ${n} 人が、当たるまでを ${w.spam} 回打っても当たらず止まる (この形からは狙いが付きにくい・付かない。例: 削減のお告げで満杯の側の入れ替えが続く)。付きやすい狙いを当たりに選ぶか、手・お告げを替える`, `${n} of ${RUN_PEOPLE} runs get no hit in ${w.spam} repeats and stop (the target is unlikely or impossible from this item, e.g. the reduction omen keeps swapping the full side). Pick an easier target or change the craft or omen`)); continue; }
       // 外れを持ったまま戻る「狙いが消えた」の戻り (作り直しでない)。カオスを当たるまでは 1 つしか入れ替えないので、持ち込んだ外れは消えずに先で満杯になる (10-22 靴 b14 → b1、100 人中 63 人)
       const carry = (w?.backs ?? []).filter((x) => doc.boxes[x]?.out === "lost" && doc.boxes[x]?.back !== RESTART);
-      add(id, "stuck", stuckText(data, aims, n, w, carry.length > 0, doc.boxes[id]?.hand ?? null));
+      add(id, "stuck", stuckText(data, aims, n, w, carry.length > 0, doc.boxes[id]?.hand ?? null) + (flag("settleStrict") && w?.item ? ` (${stuckDetail(doc, w)})` : ""));
       // 10-26: 前は「戻り先を分かれ目の箱に」と勧めていたが、分かれ目を作るボタンは 10-25 に外した (画面でできない直し方だった)
       for (const x of carry) add(x, "carry", tr(`ここで戻ると外れを持ったまま進み、先の箱で側が満杯になって止まる (直すのはこの戻り: 戻りをやめて外れを消す手 (${nameOfKey("annul", null)} + 満杯の側のお告げなど) を次の手にし、その結果から戻す。PC は × で外して＋、スマホは「次の手を決める」)`, `Returning here keeps the misses, so a later box runs out of room and stops (fix this return: replace it with a craft that removes the misses (e.g. ${nameOfKey("annul", null)} with the omen for the full side) and return from its result. On PC remove it with × and use +; on a phone choose "Next craft")`));
     }

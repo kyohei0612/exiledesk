@@ -8,10 +8,14 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { BOX_H, BOX_W, type TreeBox } from "../../../services/simulator/tree/tree-model";
-import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
+import { stuckDetail, type TreeRunResult } from "../../../services/simulator/tree/tree-run";
+import { useTree } from "./use-tree";
 import type { MergeLine } from "./tree-merge";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
+const t = useTree();
+/** 止まりの札に乗せた時、その人の MOD と来た道 (S-72、スイッチ settleStrict) */
+const SETTLE = flag("settleStrict");
 
 /** 止まりの札をカードに被せない (スイッチ stopPill) */
 const STOP_PILL = flag("stopPill");
@@ -110,7 +114,7 @@ const div = (x: number): string => (x >= 100 ? x.toFixed(0) : x.toFixed(1));
     <button v-if="m.stuck && STOP_PILL" type="button" data-tree-run-stuck data-tree-run-stuck-pill :data-box-id="m.b.id" class="nodrag nopan group pointer-events-auto absolute z-20 whitespace-nowrap rounded-full border border-rose-400/70 bg-[#2a0d12]/95 px-2 text-left text-[11px] font-bold tabular-nums text-rose-50 shadow-[0_2px_8px_rgba(0,0,0,0.6)] hover:z-30 focus:z-30"
       :style="{ left: `${m.x + 6}px`, top: `${m.y + m.h + 4}px` }" @click="emit('go', m.b.id)">
       {{ tr(`止まり ${m.stuck} 人`, `${m.stuck} stuck`) }}
-      <span class="absolute left-0 top-full mt-1 hidden w-[260px] whitespace-normal break-words rounded-lg border border-rose-400/70 bg-[#2a0d12] px-2 py-1 font-normal leading-snug group-hover:block group-focus:block">{{ result?.stuckWhy[m.b.id]?.reason }}</span>
+      <span class="absolute left-0 top-full mt-1 hidden w-[260px] whitespace-normal break-words rounded-lg border border-rose-400/70 bg-[#2a0d12] px-2 py-1 font-normal leading-snug group-hover:block group-focus:block">{{ result?.stuckWhy[m.b.id]?.reason }}<template v-if="SETTLE && result?.stuckWhy[m.b.id]?.item"><br />{{ stuckDetail(t.doc.value, result.stuckWhy[m.b.id]!) }}</template></span>
     </button>
     <button v-else-if="m.stuck" type="button" data-tree-run-stuck :data-box-id="m.b.id" class="nodrag nopan pointer-events-auto absolute z-20 flex flex-col overflow-y-auto rounded-lg border border-rose-400/70 bg-[#2a0d12]/95 px-2 py-1 text-left text-[11px] leading-snug text-rose-50 shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
       :style="{ left: `${m.x + 4}px`, top: `${m.y + 26}px`, width: `${BOX_W - 8}px`, height: `${BOX_H - 30}px` }" :title="result?.stuckWhy[m.b.id]?.reason" @click="emit('go', m.b.id)">

@@ -77,7 +77,7 @@ export interface TreeRunResult {
   failed: number;
   failAt: Record<string, number>;
   /** 手が打てずに止まった箱の、最初の 1 人の理由・着いた形・通った戻りの箱 (古い順、重ねない)。精査がどの外れ・どの戻りが元かを出す (10-22) */
-  stuckWhy: Record<string, { reason: string; item: StageItem; backs: string[]; noBox?: boolean; /** 当たるまでを この回数打っても当たらずに止まった (untilHit) */ spam?: number }>;
+  stuckWhy: Record<string, { reason: string; item: StageItem; backs: string[]; /** 着いてから形の合う箱へ移った時の、着いた箱 (古い順、スイッチ settleStrict) */ moved?: string[]; noBox?: boolean; /** 当たるまでを この回数打っても当たらずに止まった (untilHit) */ spam?: number }>;
   /** 打ち止めの人が最後の方で一番多く通った箱 (輪から出られない所。テスト走行の「どこでループしたか」、10-27 オーナー) */
   loopAt: Record<string, number>;
   /** 手の結果に合う結果の箱が無かった人数 (箱ごと。結果が 1 通りとして箱を 1 つにした手で別の結果が出た等。形の合う箱があればそこへ進み、無ければ止まり) */
@@ -236,6 +236,23 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
 }
 
 /** 手の結果の名前 (止まりの文。当たりは付いた MOD の文) */
+/** 箱の呼び名「n 段目の外れ」(止まりの文の来た道。段は深さ、S-141) */
+const BOX_WORD: Partial<Record<OutKind | "start", [string, string]>> = { start: ["スタート", "start"], hit: ["当たり", "hit"], any: ["打った後", "result"], junk: ["外れ", "miss"], junkGone: ["外れが消えた", "miss removed"], lost: ["狙いが消えた", "target lost"], pass: ["品質の後", "after quality"], branch: ["分かれ目", "branch"] };
+function boxWord(doc: TreeDoc, id: string): string {
+  let n = 0;
+  for (let b = doc.boxes[id]; b?.parent; b = doc.boxes[b.parent]) n++;
+  const w = BOX_WORD[doc.boxes[id]?.out ?? "start"] ?? ["箱", "box"];
+  return tr(`${n + 1} 段目の「${w[0]}」`, `step ${n + 1} "${w[1]}"`);
+}
+/**
+ * 止まった人の形と来た道 (10-29 オーナー「これで何で止まるんか不明」、スイッチ settleStrict): この人の MOD (✦ 付き) と、通った戻り (↩) と、着いてから形の合う箱へ移った箱。
+ * 精査の一覧と止まりの札の乗せた時の文が使う
+ */
+export function stuckDetail(doc: TreeDoc, w: { item: StageItem; backs: readonly string[]; moved?: readonly string[] }): string {
+  const mods = [...w.item.prefixes, ...w.item.suffixes].map((m) => `${m.side === "prefix" ? "P" : "S"} ${modText(m)}${m.fractured ? " ✦" : ""}`).join(" / ");
+  const way = [...w.backs.map((id) => `↩ ${boxWord(doc, id)}`), ...(w.moved ?? []).map((id) => tr(`${boxWord(doc, id)} から移った`, `moved from ${boxWord(doc, id)}`))];
+  return tr(`この人の MOD: ${mods || "無し"}${way.length ? `。来た道: ${way.join("・")}` : ""}`, `This run's mods: ${mods || "none"}${way.length ? `. Path: ${way.join(", ")}` : ""}`);
+}
 const OUT_TEXT: Partial<Record<OutKind, [string, string]>> = { junk: ["外れ", "Miss"], junkGone: ["外れが消えた", "Miss removed"], lost: ["狙いが消えた", "Target lost"] };
 function outcomeText(data: PatchData, item: StageItem, oc: { out: OutKind; hits: Aim[] }): string {
   if (oc.out !== "hit") { const n = OUT_TEXT[oc.out]; return n ? tr(n[0], n[1]) : oc.out; }
@@ -261,7 +278,7 @@ function summarize(doc: TreeDoc, people: readonly Person[], startCost: number): 
   const stuckAt: Record<string, number> = {}, failAt: Record<string, number> = {};
   for (const p of people) if (p.end === "failed") failAt[p.at] = (failAt[p.at] ?? 0) + 1;
   const stuckWhy: TreeRunResult["stuckWhy"] = {};
-  for (const p of people) if (p.end === "stuck") { stuckAt[p.at] = (stuckAt[p.at] ?? 0) + 1; if (p.why && !stuckWhy[p.at]) stuckWhy[p.at] = { ...p.why, backs: [...new Set(p.visits.map((v) => v.box).filter((id) => doc.boxes[id]?.back))] }; }
+  for (const p of people) if (p.end === "stuck") { stuckAt[p.at] = (stuckAt[p.at] ?? 0) + 1; if (p.why && !stuckWhy[p.at]) stuckWhy[p.at] = { ...p.why, backs: [...new Set(p.visits.map((v) => v.box).filter((id) => doc.boxes[id]?.back))], moved: [...new Set(p.visits.filter((v) => v.pass).map((v) => v.box))] }; }
   const loopAt: Record<string, number> = {};
   for (const p of people) {
     if (p.end !== "capped") continue;
