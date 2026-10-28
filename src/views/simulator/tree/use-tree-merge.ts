@@ -4,7 +4,7 @@
  */
 import { computed, ref, watch, type Ref } from "vue";
 import { BOX_H, BOX_W, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { CHIP_HALF, mirrorPath, mirrorPos, mirrorSeg, routeBacks, type Seg } from "./tree-lines";
+import { CHIP_HALF, mirrorPath, mirrorPos, mirrorSeg, routeBacks, type BackReq, type Seg } from "./tree-lines";
 import { joinPath, mergeReqs } from "./tree-merge";
 import { flag } from "../../../web/release-flags";
 
@@ -36,6 +36,21 @@ export function useTreeMerge(o: {
     const back = routeBacks(flip.map((r) => ({ ...r, from: mirrorPos(r.from), to: mirrorPos(r.to), end: { x: -r.end.x, y: r.end.y }, start: r.start && { x: -r.start.x, y: r.start.y } })), bx.map(mirrorPos), sg.map(mirrorSeg), { bundle: true });
     const paths = routeBacks(reqs.filter((r) => !r.flip), bx, sg, { bundle: true });
     for (const [id, p] of back) paths.set(id, mirrorPath(p));
+    // スイッチ retryHover: 再挑戦の線は乗せた時に 1 本だけ光るので、ほかの線を避けず 1 本ずつ引く。今の向きで木の中に通り道が無ければ反対の辺から、
+    // どちらも無い時だけ前の道 (木の外の列)。全部を一緒に引くと先に引いた線に押されて外の列を回り、木を囲む四角になった (S-87c、10-28 深夜オーナー「P１は案①だな」)
+    if (flag("retryHover") && flag("backRoute")) {
+      const kinds = new Map(lines.map((l) => [l.id, l.kind]));
+      const mir = (r: BackReq): BackReq => ({ ...r, from: mirrorPos(r.from), to: mirrorPos(r.to), end: { x: -r.end.x, y: r.end.y }, start: r.start && { x: -r.start.x, y: r.start.y } });
+      const other = (r: BackReq): BackReq => ({ ...r, flip: !r.flip, end: { x: r.flip ? r.to.x + 24 : r.to.x + r.to.w! - 24, y: r.end.y } });
+      for (const r of reqs) {
+        if (kinds.get(r.id) !== "back") continue;
+        const one = (q: BackReq): string | undefined => q.flip ? (() => { const p = routeBacks([mir(q)], bx.map(mirrorPos), sg.map(mirrorSeg), { inside: true, avoid: chipBoxes.map(mirrorPos) }).get(q.id); return p && mirrorPath(p); })() : routeBacks([q], bx, sg, { inside: true, avoid: chipBoxes }).get(q.id);
+        const o2 = other(r), p = one(r) ?? one(o2);
+        if (!p) continue;
+        paths.set(r.id, p);
+        if (!one(r)) r.end = o2.end;
+      }
+    }
     // スイッチ backRoute: 道は箱の上 24 の段の間で終わるので、そこから箱の上の縁まで下ろす (空中で止まって見えた、10-28 深夜オーナー「途中で終わってる奴もある」。線の見張り L1)
     if (flag("backRoute")) for (const r of reqs) { const p = paths.get(r.id); if (p) paths.set(r.id, `${p} L ${r.end.x} ${r.to.y}`); }
     for (const [id, p] of joinPaths) paths.set(id, p);

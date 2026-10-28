@@ -6,6 +6,7 @@
  * 座標は全部ツリーの座標 (Vue Flow の倍率を掛ける前)
  */
 import { flag } from "../../../web/release-flags";
+import { gridRoute } from "./tree-lines-grid";
 import { BOX_H, BOX_W } from "../../../services/simulator/tree/tree-model";
 
 /** 箱の左上。w・h が無ければ箱の大きさ (まとめた札は細い、tree-merge.ts) */
@@ -63,7 +64,8 @@ const HOP = 5;
  * 1 本ずつ、箱の下から帯の中の空いた高さへ下り → 横へ → 札より左の箱の無い縦の通り道 (先に引いた線と重ならない所) を上 (下) へ → 札の高さで右へ入る。
  * 同じ札へ入る線は札の高さの中で少しずつずらす。進む線・先に引いた戻りの線と交わる所は跨ぐ。通り道が無ければ木の左の外側
  */
-export function routeBacks(reqs: readonly BackReq[], boxes: readonly Pos[], fwd: readonly Seg[], o: { bundle?: boolean } = {}): Map<string, string> {
+/** avoid = inside の時にほかの箱と同じく避ける物 (手の札、線の見張り L3)。inside = 木の中に縦の通り道が無い線は引かない (返さない。呼ぶ側が左右を替えて引き直す、S-87c スイッチ retryHover) */
+export function routeBacks(reqs: readonly BackReq[], boxes: readonly Pos[], fwd: readonly Seg[], o: { bundle?: boolean; inside?: boolean; avoid?: readonly Pos[] } = {}): Map<string, string> {
   // bundle = 同じ行き先の線を 1 本に束ねる (先に引いた同じ行き先の縦の通り道に合流して、札へは 1 本で入る。10-22 オーナー「線を減らす」)
   const vs: Array<{ x: number; y0: number; y1: number; to?: string }> = [];
   const hs: Array<{ y: number; x0: number; x1: number; id?: string; to?: string }> = [];
@@ -75,10 +77,12 @@ export function routeBacks(reqs: readonly BackReq[], boxes: readonly Pos[], fwd:
   const lo = (a: number, b: number): number => Math.min(a, b), hi = (a: number, b: number): number => Math.max(a, b);
   const vBusy = (x: number, y0: number, y1: number, to?: string): boolean => vs.some((v) => (!to || v.to !== to) && Math.abs(v.x - x) < LANE - 0.5 && v.y0 < hi(y0, y1) && v.y1 > lo(y0, y1));
   const hBusy = (y: number, x0: number, x1: number, to?: string): boolean => hs.some((h) => (!to || h.to !== to) && Math.abs(h.y - y) < LANE - 0.5 && h.x0 < hi(x0, x1) && h.x1 > lo(x0, x1));
+  // inside の時に使ってよい縦の通り道の範囲 (全部の箱の左端〜右端。一番端の箱のすぐ外の列は木の外、線の見張り L4)
+  const X0 = Math.min(...boxes.map((b) => b.x)), X1 = Math.max(...boxes.map((b) => b.x + (b.w ?? BOX_W)));
   for (const r of reqs) {
     // 出元と行き先の箱は位置で除く (boxes は呼ぶ側が別に作った物で、同じ物かでは除けず、行き先の箱が自分の入口を塞いで木の外を大回りした、10-25)
     const at = (a: Pos, b: Pos): boolean => a.x === b.x && a.y === b.y;
-    const others = boxes.filter((b) => !at(b, r.from) && !at(b, r.to));
+    const others = [...boxes.filter((b) => !at(b, r.from) && !at(b, r.to)), ...(o.inside ? o.avoid ?? [] : [])];
     const all = [...others, r.from, r.to];
     // 行き先が上にある時は、出元の上の辺の左寄りから真上へ上り、行き先の箱の左の辺へ入る (隣の箱の下と横を回らない、10-25 オーナー「関係ない箱を囲まない」)。
     // 上の縦と横に箱があれば下の回り道へ
@@ -106,11 +110,17 @@ export function routeBacks(reqs: readonly BackReq[], boxes: readonly Pos[], fwd:
     search: for (const base of cand) {
       for (let k = 0; k < 6; k++) {
         const x = base - k * LANE;
-        if (x > tx - 16 || !freeColumn(x, yb + BAND[0], ty, all) || !freeRow(ty, x, tx, [...others, r.from]) || vBusy(x, yb + BAND[0], ty, to)) continue;
+        if (x > tx - 16 || (o.inside && (x < X0 || x > X1)) || !freeColumn(x, yb + BAND[0], ty, all) || !freeRow(ty, x, tx, [...others, r.from]) || vBusy(x, yb + BAND[0], ty, to)) continue;
         for (let y = yb + BAND[0]; y <= yb + BAND[1]; y += LANE) {
           if (freeRow(y, sx, x, others) && !hBusy(y, sx, x, to)) { col = x; yS = y; break search; }
         }
       }
+    }
+    // inside: まっすぐ上る列が無ければ、箱の間の列と段の間の高さを折れて上る道 (tree-lines-grid)。それも無ければ引かない
+    if (col === null && o.inside) {
+      const g = gridRoute({ x: sx, y: sy }, { x: tx, y: ty }, [...others, r.from, r.to], X0, X1);
+      if (g) polys.push({ id: r.id, pts: g });
+      continue;
     }
     if (col === null) {
       col = Math.min(tx - 24, ...all.map((b) => b.x)) - 30;
