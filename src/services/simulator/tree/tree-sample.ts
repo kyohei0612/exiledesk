@@ -446,7 +446,8 @@ function applyHand(data: PatchData, item: StageItem, key: string, rng: () => num
     // (10-28 夜オーナー「エンジンを参照した動きになってない」、スイッチ boxShape)
     const fixedOn = (x: StageItem): boolean => [...x.prefixes, ...x.suffixes].some((m) => m.fractured && m.modId === fo);
     for (let k = 0; flag("boxShape") && k < 64 && !fixedOn(r.item); k++) { const x = applyCurrency(data, it, key, rng, now); if (x.applied) r = x; }
-    if (!fixedOn(r.item)) {
+    // スイッチを閉じている時は前と同じくいつも固定し直す (乱数の使い方を変えない = 本番の見本を変えない、10-28 夜 最終チェック長の 1460 の見張り)
+    if (!flag("boxShape") || !fixedOn(r.item)) {
       const f = applyCurrency(data, it, forceKey(fo, "T1", "f"), rng);
       if (f.applied) r = { ...r, item: f.item, added: f.added, removed: f.removed };
     }
