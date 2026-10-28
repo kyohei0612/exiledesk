@@ -7,6 +7,7 @@
   置き場所: ステージの下 (カレンシーを打ちながら見られる)。見出しを押すと畳める。overlay = 手で打つ画面の重ね (MOD 一覧のボタン・Tab) の中
 -->
 <script setup lang="ts">
+import { TIER } from "./tier-word";
 import { computed, nextTick, ref, watch } from "vue";
 import { aimTierKey, heldAnyOf, heldOdds, type ListRow, type ListTier } from "../../services/craft-stage/engine";
 import { fmtPct } from "../../utils/format-pct";
@@ -64,7 +65,7 @@ const tierShareOf = (r: ListRow, t: ListTier): string => (!cannow(r) ? "0%" : he
 const rowDim = (r: ListRow): boolean => r.blocked || (!!heldCands.value && !heldShare(r)) || (r.group === "rune" && !r.socketed);
 const rowTitle = (r: ListRow): string | undefined => (r.blocked ? tr("同じ系統の MOD が付いているので、今は付かない", "A mod from the same group is already on the item, so this cannot roll now") : heldCands.value && !heldShare(r) ? tr(`持っている ${heldCands.value.name} では付かない`, `Cannot roll with the held ${heldCands.value.name}`) : undefined);
 const tierDim = (r: ListRow, t: ListTier): boolean => !!heldCands.value && !heldTierShare(r, t);
-const tierTitle = (r: ListRow, t: ListTier): string | undefined => (heldCands.value && !heldTierShare(r, t) ? tr(`持っている ${heldCands.value.name} では付かない段 (強さの下限・アイテムレベル・同じ系統)`, `This tier cannot roll with the held ${heldCands.value.name} (minimum tier, item level, or same group)`) : undefined);
+const tierTitle = (r: ListRow, t: ListTier): string | undefined => (heldCands.value && !heldTierShare(r, t) ? tr(`持っている ${heldCands.value.name} では付かない${TIER} (強さの下限・アイテムレベル・同じ系統)`, `This tier cannot roll with the held ${heldCands.value.name} (minimum tier, item level, or same group)`) : undefined);
 function shareTitle(r: ListRow): string {
   const h = heldCands.value;
   if (h) return "bone" in h ? tr(`持っている ${h.name} の次の発現で、候補 3 つに出る確率 (専用 MOD 1〜3 個 + 残り普通。計算機と同じ)`, `Chance to appear among the 3 options on the next reveal with the held ${h.name} (1-3 desecrated-only mods + the rest normal, same as the calculator)`) : tr(`持っている ${h.name} で次に付く確率`, `Chance to roll next with the held ${h.name}`);
@@ -161,7 +162,7 @@ watch(() => s.modJump.value, (j) => {
     <div v-if="!props.overlay" role="button" tabindex="0" :aria-expanded="open" class="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left" @click="open = !open" @keydown.enter="open = !open">
       <b class="g-sec-title">{{ tr("このベースに付く MOD", "Mods for this base") }}</b>
       <span class="g-sec-sub max-md:hidden">{{ item ? baseNameOf(item) : "" }}</span>
-      <HelpTip :text="tr(`出やすさ = 同じ側の重みの割合 (アイテムレベルは見ない)。段 = 段の数、Lv = T1 の MOD レベル${canStart ? '。段の表の「付ける」で始めの状態を組める' : ''}`, `Chance = share of weight on the same side (ignores item level). T = number of tiers, Lv = mod level of T1${canStart ? '. Use “Add” in the tier table to build the starting item' : ''}`)" @click.stop />
+      <HelpTip :text="tr(`出やすさ = 同じ側の重みの割合 (アイテムレベルは見ない)。${TIER} = ${TIER}の数、Lv = T1 の MOD レベル${canStart ? `。${TIER}の表の「付ける」で始めの状態を組める` : ''}`, `Chance = share of weight on the same side (ignores item level). T = number of tiers, Lv = mod level of T1${canStart ? '. Use “Add” in the tier table to build the starting item' : ''}`)" @click.stop />
       <Disclosure tag="span" kind="section" :open="open" class="ml-auto" />
     </div>
 
@@ -186,10 +187,10 @@ watch(() => s.modJump.value, (j) => {
         </template>
         <!-- チェック欄の上の ? (狙いは複数選べる。要望 c9dee700) -->
         <template #col-lead>
-          <span v-if="heldCands" class="flex w-5 shrink-0 justify-center self-center"><HelpTip :text="tr('狙う MOD は複数選べます (段の表で「その段以上」も)。選んだどれか 1 つでも付く確率を上に出します (打つ・持つ物を変えると外れます)', 'You can tick several target mods (or a tier and better in the tier table). The chance that any one of them rolls is shown at the top (cleared when you use or change the held item)')" /></span>
+          <span v-if="heldCands" class="flex w-5 shrink-0 justify-center self-center"><HelpTip :text="tr(`狙う MOD は複数選べます (${TIER}の表で「その${TIER}以上」も)。選んだどれか 1 つでも付く確率を上に出します (打つ・持つ物を変えると外れます)`, 'You can tick several target mods (or a tier and better in the tier table). The chance that any one of them rolls is shown at the top (cleared when you use or change the held item)')" /></span>
         </template>
         <template #row-lead="{ row: r }">
-          <label v-if="heldCands" class="flex w-5 shrink-0 cursor-pointer justify-center self-stretch" :class="heldShare(r) ? '' : 'pointer-events-none opacity-25'" :title="tr('狙いに入れる (付きうる段を全部。段の表で段ごとにも選べる)', 'Add to targets (all tiers that can roll; pick tiers in the tier table)')">
+          <label v-if="heldCands" class="flex w-5 shrink-0 cursor-pointer justify-center self-stretch" :class="heldShare(r) ? '' : 'pointer-events-none opacity-25'" :title="tr(`狙いに入れる (付きうる${TIER}を全部。${TIER}の表で${TIER}ごとにも選べる)`, 'Add to targets (all tiers that can roll; pick tiers in the tier table)')">
             <input type="checkbox" class="accent-sky-400" :checked="rowAimState(r) === 'all'" :indeterminate="rowAimState(r) === 'some'" :disabled="!heldShare(r)" @change="toggleAimRow(r)" />
           </label>
         </template>

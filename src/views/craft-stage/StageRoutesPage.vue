@@ -8,6 +8,7 @@
   値段は今の相場 (priceOf)、ベース代と始めの状態 (増強は白、カオスは MOD 1 つのレア、高貴は MOD 0 のレア。2026-10-19 オーナー) を作る費用は入れない。広告ありきの別のページ (WebApp.vue が両脇の枠を置く)
 -->
 <script setup lang="ts">
+import { TIER } from "./tier-word";
 import { type StageItem, type RouteKind, fillModText, tierDisplayRanges, stageRuneIds } from "../../services/craft-stage/engine";
 import { aimRangeText } from "./aim-text";
 import { runePrep } from "../../services/emulator/emu-engine";
@@ -84,7 +85,7 @@ const OFF_EN: Record<string, string> = {
   "今のアイテムから始める時はカオスだけ": "Only Chaos when starting from the current item",
   "今のアイテムがレアでない": "The current item isn't rare",
   "今のアイテムにもう狙いが付いている": "The current item already has the target",};
-const offText = (x: string): string => tr(x, OFF_EN[x] ?? x);
+const offText = (x: string): string => tr(x.replace("段かも", `${TIER}かも`), OFF_EN[x] ?? x);
 /** 道のカード (今のアイテムから始める時は、カオスの 1 番目の決まりを差し替える) */
 const FROM_STEP: Step = { k: null, ja: "今のクラフトのアイテムから始める (フラクチャー・品質・ルーンもそのまま。カオスで消えるのはフラクチャー以外。フラクチャーだけなら先に高貴 1 回で 1 つ足す)", en: "Start from the current craft item (fractures, quality and runes kept; Chaos only removes non-fractured mods. If only fractured mods, one Exalted Orb adds a mod first)" };
 const shownRoutes = computed(() => (fromItem.value ? ROUTES.map((r) => (r.route === "chaos" ? { ...r, steps: [FROM_STEP, ...r.steps.slice(1)] } : r)) : ROUTES));

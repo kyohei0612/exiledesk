@@ -8,6 +8,7 @@
   決めるまでは s.aims を触らない (やめるで元のまま)。
 -->
 <script setup lang="ts">
+import { TIER } from "./tier-word";
 import { tierIdOf } from "../../services/emulator/emu-engine";
 import { aimRangeText } from "./aim-text";
 import { modListFor, type ListRow, type ListTier, type ModGroup, aimLabel, groupLabelOf } from "../../services/craft-stage/engine";
@@ -120,7 +121,7 @@ function decide(): void {
       <p v-if="draft.length" class="mt-1 flex flex-wrap gap-1">
         <span v-for="a in draft" :key="a.modId" class="inline-flex items-center gap-1 rounded bg-[rgba(136,136,255,0.14)] py-0.5 pl-1.5 text-[12px] text-[var(--color-rarity-magic)]">{{ chipOf(a) }}<button type="button" class="g-plain grid size-7 place-items-center opacity-60 hover:opacity-100" :title="tr('外す', 'Remove')" @click="draft = draft.filter((x) => x !== a)">×</button></span>
       </p>
-      <p v-else class="mt-1 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("狙う MOD にチェック (名前を押すと段を選べる)", "Check the mods to target (click a name to pick a tier)") }}</p>
+      <p v-else class="mt-1 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr(`狙う MOD にチェック (名前を押すと${TIER}を選べる)`, "Check the mods to target (click a name to pick a tier)") }}</p>
       <nav v-if="groups.length > 1" class="mt-2 flex flex-wrap gap-1">
         <button v-for="g in groups" :key="g" type="button" class="g-tab !min-h-[30px] !px-3 !text-[12px]" :class="group === g ? 'on' : ''" @click="group = g">{{ groupLabelOf(g, s.item.value) }}</button>
       </nav>

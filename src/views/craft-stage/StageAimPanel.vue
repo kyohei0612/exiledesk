@@ -6,6 +6,7 @@
   計算は aim-odds.ts (ステージで打つのと同じ処理を何百回も試す)。行を押すとそのカレンシーを持ってお告げを掛ける。打ったら今の状態で出し直す。
 -->
 <script setup lang="ts">
+import { TIER } from "./tier-word";
 import { REVEAL } from "../../services/emulator/emu-engine";
 import { OMEN_FOR, kindOf, aimChain, aimCombos, aimDone, type AimCombo, type AimOdd, aimLabel } from "../../services/craft-stage/engine";
 import { recNext } from "../../utils/rec-mode";
@@ -181,7 +182,7 @@ const isHeld = (r: AimOdd): boolean => s.held.value === r.currency && r.omens.ev
         <button v-for="n in ROLLS" :key="n" type="button" :data-rec="`aim-n:${n}`" class="g-tab !min-h-[26px] !px-2 !text-[11px]" :class="rollN === n ? 'on' : ''" @click="rollN = n">{{ n.toLocaleString() }}</button>
       </span>
       <HelpTip :title="tr('次の手で狙う', 'Target next move')" :width="320">
-        <p>{{ tr(`今の状態から同じ打ち方 (カレンシーとお告げの組み合わせ) を当たるまで続けた時に、狙いの MOD (その段以上。最大 6 つで、全部揃って当たり) が付く確率。打ち方ごとに ${TRIALS.toLocaleString()} 回打った目安です。`, `The chance that the target mods (that tier or better; up to 6, a hit when all are on) roll when you repeat the same method (currency + omen combo) from the current state until it hits. An estimate from ${TRIALS.toLocaleString()} uses per method.`) }}</p>
+        <p>{{ tr(`今の状態から同じ打ち方 (カレンシーとお告げの組み合わせ) を当たるまで続けた時に、狙いの MOD (その${TIER}以上。最大 6 つで、全部揃って当たり) が付く確率。打ち方ごとに ${TRIALS.toLocaleString()} 回打った目安です。`, `The chance that the target mods (that tier or better; up to 6, a hit when all are on) roll when you repeat the same method (currency + omen combo) from the current state until it hits. An estimate from ${TRIALS.toLocaleString()} uses per method.`) }}</p>
         <p class="mt-1">{{ tr("今付いている MOD が消えたら外れで、今の状態からやり直します。外れても続けられる時 (空きがまだある など) はそのまま続けます。", "If a mod currently on the item is removed, it counts as a miss and restarts from the current state. If a miss still allows continuing (e.g. there is still an open slot), it keeps going.") }}</p>
         <p class="mt-1">{{ tr("冒涜は骨の後の発現の候補 (アビスの反響の引き直しを含む) に出れば当たり。", "Desecrated mods count as a hit if they appear among the reveal options after an Abyssal Bone (including Omen of Abyssal Echoes rerolls).") }}</p>
         <p class="mt-1">{{ tr("並びは付きやすい順。行の下に 1 回の費用と付くまでの平均 (1 回の費用 ÷ 確率、カレンシーとお告げの相場) を出します。", "Sorted by chance. Each row shows the cost per use and the average cost to hit (cost per use ÷ chance, at currency and omen market prices).") }}</p>

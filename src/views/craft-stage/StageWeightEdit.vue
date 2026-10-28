@@ -5,6 +5,7 @@
   値はエンジンの入口に渡すだけ (state/emulator/stage-tuning.ts → services/craft-stage/stage-tuning.ts、打つ結果と確率の表の両方に効く)。
 -->
 <script setup lang="ts">
+import { TIER } from "./tier-word";
 import { computed } from "vue";
 import { tr } from "../../i18n/lang";
 import { craftStage } from "../../state/craft-stage";
@@ -34,7 +35,7 @@ const btn = "g-plain h-6 rounded border border-white/15 px-1.5 text-white/70 hov
     <span v-else-if="est" class="whitespace-nowrap rounded-sm border border-white/20 px-1 py-px text-[10px] leading-none text-[var(--exile-color-text-tertiary)]" :title="weightOverrideNote()">{{ tr("重みは推定", "Est. weight") }}</span>
   </template>
   <div v-else-if="WEIGHTS_ON && mod && base > 0" class="mt-1 flex flex-wrap items-center gap-1 text-[11px] leading-none text-white/60" data-weight-edit @click.stop>
-    <label class="flex items-center gap-1" :title="tr('一番重い段の重み (ほかの段は同じ比で動く)。打つ結果と付く確率の両方に効く', 'Weight of the heaviest tier (other tiers scale with it). Affects both rolls and chances')">
+    <label class="flex items-center gap-1" :title="tr(`一番重い${TIER}の重み (ほかの${TIER}は同じ比で動く)。打つ結果と付く確率の両方に効く`, 'Weight of the heaviest tier (other tiers scale with it). Affects both rolls and chances')">
       <span>{{ tr("重み", "Weight") }}</span>
       <input type="number" min="0" step="10" :value="edited ?? base" class="h-6 w-[6em] rounded border bg-black/60 px-1 tabular-nums" :class="edited != null ? 'border-amber-300/60 text-amber-100' : 'border-white/15 text-white/80'" @change="onInput" />
     </label>

@@ -5,6 +5,7 @@
   最大 = 段の最大 × 1.22、最小 = 段の最小 × 0.78。運の結果のように MOD ごとに倍率が違う時はプルダウンが「MOD ごと」
 -->
 <script setup lang="ts">
+import { TIER } from "./tier-word";
 import { allMods, type StageItem } from "../../services/craft-stage/engine";
 import { computed } from "vue";
 import { tr } from "../../i18n/lang";
@@ -27,11 +28,11 @@ const wbtn = "g-plain h-6 rounded border border-white/15 px-1.5 text-white/70 ho
 <template>
   <div v-if="item.sanctified && mods.length" class="flex w-full flex-wrap items-center justify-end gap-1 text-[11px] leading-none text-white/60" @click.stop>
     <span class="text-amber-200/80">{{ tr("聖別", "Sanctified") }}</span>
-    <button type="button" :class="wbtn" :title="tr('段の最小 × 0.78', 'Tier min × 0.78')" @click="emit('set', 'min')">{{ tr("最小", "Min") }}</button>
+    <button type="button" :class="wbtn" :title="tr(`${TIER}の最小 × 0.78`, 'Tier min × 0.78')" @click="emit('set', 'min')">{{ tr("最小", "Min") }}</button>
     <select :class="sel" :value="common ?? ''" :title="tr('全部の MOD の倍率 (聖別のお告げの 0.78〜1.22)', 'Multiplier for all mods (Omen of Sanctification: 0.78-1.22)')" @change="emit('set', Number(($event.target as HTMLSelectElement).value))">
       <option v-if="common == null" value="" disabled>{{ tr("MOD ごと", "Per mod") }}</option>
       <option v-for="n in steps" :key="n" :value="n">{{ label(n) }}</option>
     </select>
-    <button type="button" :class="wbtn" :title="tr('段の最大 × 1.22', 'Tier max × 1.22')" @click="emit('set', 'max')">{{ tr("最大", "Max") }}</button>
+    <button type="button" :class="wbtn" :title="tr(`${TIER}の最大 × 1.22`, 'Tier max × 1.22')" @click="emit('set', 'max')">{{ tr("最大", "Max") }}</button>
   </div>
 </template>

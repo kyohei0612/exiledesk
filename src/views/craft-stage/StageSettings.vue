@@ -3,6 +3,7 @@
   CraftStage.vue から分けた (2026-10-16、500 行の決まり)
 -->
 <script setup lang="ts">
+import { TIER } from "./tier-word";
 import { itemLevelKey } from "../../services/emulator/emu-engine";
 import { inGroup, ITEM_LEVEL_SET, SANCTIFIED_REASON } from "../../services/craft-stage/engine";
 import { useFlash } from "../../utils/use-flash";
@@ -112,7 +113,7 @@ function armReset(): void {
     <!-- 今のベースとアイテムレベルで白紙のクラフトの道 (ツリー) へ (開発版だけ、10-22 オーナー「全部のベースで使える」案 1) -->
     <button v-if="TREE_ON && !EMU_TO_SIM && s.mode.value === 'hand' && s.item.value" type="button" data-tree-from-stage :class="btn" :title="tr('このベースとアイテムレベルで白紙のクラフトの道 (ツリー) を開く (前の木は 1 つ戻すで戻せる)', 'Open a blank craft route tree with this base and item level (undo restores the previous tree)')" @click="void openTreeWith(s.item.value.base, curIlvl ?? 82)">{{ tr("このベースでクラフトの道へ →", "Craft route tree with this base →") }}</button>
     <!-- 持っているアイテムをそのままシミュへ (MOD を全部その段以上の完成の狙いに、フラクチャー済みは ✦ の印のまま。2026-10-26 夜オーナー「忍者コピーに似てる」、印は 10-27、スイッチ emuToSim) -->
-    <button v-if="TREE_ON && EMU_TO_SIM && s.mode.value === 'hand' && s.item.value" type="button" data-sim-from-stage :class="btn" :title="tr('このアイテム (ベース・アイテムレベル・付いている MOD 全部) をシミュレーターへ。MOD はその段以上の完成の狙いに入る', 'Send this item (base, item level and all its mods) to the simulator. Its mods become final targets at that tier or better')" @click="void openSimWithItem(s.item.value)">{{ tr("シミュレーターへ →", "To the simulator →") }}</button>
+    <button v-if="TREE_ON && EMU_TO_SIM && s.mode.value === 'hand' && s.item.value" type="button" data-sim-from-stage :class="btn" :title="tr(`このアイテム (ベース・アイテムレベル・付いている MOD 全部) をシミュレーターへ。MOD はその${TIER}以上の完成の狙いに入る`, 'Send this item (base, item level and all its mods) to the simulator. Its mods become final targets at that tier or better')" @click="void openSimWithItem(s.item.value)">{{ tr("シミュレーターへ →", "To the simulator →") }}</button>
     <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" :title="tr('打った手を 16:9 の撮影用画面で 1 手ずつ再生 (Space 再生 / ← → 1 手 / Esc 閉じる)', 'Replay each step on a 16:9 recording screen (Space play / ← → step / Esc close)')" @click="s.hold(null); s.video.value = { from: 0, autoplay: false, controls: true }">{{ tr("動画モード", "Video mode") }}</button>
     <span class="ml-auto flex flex-wrap items-center gap-1.5">
       <span v-if="copied" class="text-emerald-300">{{ copied }}</span>
@@ -121,7 +122,7 @@ function armReset(): void {
       <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :title="tr('craft-stage-run.mjs の --prices に渡す相場 (高貴建て)', 'Market prices for craft-stage-run.mjs --prices (in Exalted)')" @click="copy(tr('相場 JSON', 'price JSON'), s.prices())">{{ tr("相場 JSON", "Price JSON") }}</button>
       <!-- 今のアイテムの MOD 群を取引所 (JP) で (シミュレーションと同じ trade-search.ts。2026-10-07 オーナー「ステージでも同じエンジンで実装しておｋ」) -->
       <label class="flex cursor-pointer items-center gap-1 text-[12px] text-[var(--exile-color-text-secondary)]" :title="tr('取引所の検索にベース・アイテムレベル・ソケットも入れる (外すと MOD だけで探す)', 'Also match base, item level and sockets on trade (off = mods only)')"><input v-model="tradeWithBase" type="checkbox" />{{ tr("ベース検索含め", "Include base") }}</label>
-      <button type="button" data-rec-part="trade-search" :class="btn" :disabled="!stageModGroups.length" :title="tradeWithBase ? tr('今のアイテムに付いている MOD の組み合わせで取引所 (JP) を開く (ベース・アイテムレベル・ソケット・段の下限まで)', 'Open the trade site with this item’s mods (base, item level, sockets and minimum tiers included)') : tr('今のアイテムに付いている MOD の組み合わせで取引所 (JP) を開く (段の下限まで、ベースは問わない)', 'Open the trade site with this item’s mods (minimum tiers, any base)')" @click="searchStageMods">{{ tr("今の MOD を取引所で検索 ↗", "Search these mods on trade ↗") }}</button>
+      <button type="button" data-rec-part="trade-search" :class="btn" :disabled="!stageModGroups.length" :title="tradeWithBase ? tr(`今のアイテムに付いている MOD の組み合わせで取引所 (JP) を開く (ベース・アイテムレベル・ソケット・${TIER}の下限まで)`, 'Open the trade site with this item’s mods (base, item level, sockets and minimum tiers included)') : tr(`今のアイテムに付いている MOD の組み合わせで取引所 (JP) を開く (${TIER}の下限まで、ベースは問わない)`, 'Open the trade site with this item’s mods (minimum tiers, any base)')" @click="searchStageMods">{{ tr("今の MOD を取引所で検索 ↗", "Search these mods on trade ↗") }}</button>
       <!-- 検索の仕組みのヒント (2026-10-14 要望 0ce15a82 の返事と同じ中身。オーナー「? でヒント出しておくか取引所の横とかに」) -->
       <HelpTip :text="tr('同じ MOD なら普通・冒涜・フラクチャーどの付き方でも引っかかります。全部の MOD が揃った物はほぼ無いので、取引所で MOD の行のチェックを外して似た物を探すと相場が見やすいです', 'Each mod matches whether it is normal, desecrated or fractured. Items with every mod rarely exist, so untick some mod lines on the trade site to find similar items and see prices')" />
     </span>
