@@ -5,7 +5,10 @@
  * 割合が出せない手 (繰り返し・狙い無し・エンジンが null・結果の箱が 1 つ) は出さない
  */
 import { computed, type Ref } from "vue";
-import { outcomeOdds } from "../../../services/simulator/sim-engine";
+import { outcomeOdds, stepOutcomes } from "../../../services/simulator/sim-engine";
+import { boxOutcomeOf } from "../../../services/simulator/tree/tree-outcome";
+import { outBoxOf } from "../../../services/simulator/tree/tree-shape";
+import { isSideKey } from "../../../services/simulator/tree/tree-junk-side";
 import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { aimsOf } from "../../../services/simulator/tree/tree-sample";
 import { shapeSampleOf } from "../../../services/simulator/tree/tree-sample-shape";
@@ -17,8 +20,11 @@ import { useTree } from "./use-tree";
 /** 手のある箱 1 つ分: 結果の箱の id → 割合 (0〜1)。出せなければ null */
 export function oddsOfHand(doc: TreeDoc, id: string): Map<string, number> | null {
   const data = s.data.value, b = doc.boxes[id];
-  if (!data || !b?.hand || b.hand.repeat || b.hand.free || b.outs.length < 2) return null;
+  if (!data || !b?.hand || b.hand.repeat || b.outs.length < 2) return null;
   const kids = b.outs.map((o) => doc.boxes[o]!).filter(Boolean);
+  // 側で分けた箱 (S-65、スイッチ junkSide。狙い無しの打った後も) は、エンジンの枝ごとに回す時と同じ分け方で箱へ
+  if (kids.some((k) => isSideKey(k.junkKey))) return sideOdds(doc, id);
+  if (b.hand.free) return null;
   const hits = kids.filter((k) => k.out === "hit" && k.aim).flatMap((k) => boxAims(k));
   const aims = [...hits, ...aimsOf(doc).filter((a) => !hits.some((h) => h.modId === a.modId && h.tier === a.tier))];
   const odds = outcomeOdds(data, prepFor(data, shapeSampleOf(data, doc, id), b.hand.currency), b.hand.currency, engineOmens(b.hand), aims, { sameText: true });
@@ -31,6 +37,21 @@ export function oddsOfHand(doc: TreeDoc, id: string): Map<string, number> | null
     const kind = o.out === "hit" ? "junk" : o.out;
     const to = hit ?? kids.find((k) => k.out === kind || !!k.mergedOuts?.includes(kind));
     if (to) out.set(to.id, (out.get(to.id) ?? 0) + o.p);
+  }
+  return out.size ? out : null;
+}
+/** 側で分けた箱のある手の割合: エンジンの stepOutcomes の枝 (void を除いて割り直す) を、回す時と同じ boxOutcomeOf → outBoxOf で結果の箱へ */
+function sideOdds(doc: TreeDoc, id: string): Map<string, number> | null {
+  const data = s.data.value, b = doc.boxes[id];
+  if (!data || !b?.hand) return null;
+  const item = prepFor(data, shapeSampleOf(data, doc, id), b.hand.currency);
+  const live = (stepOutcomes(data, item, b.hand.currency, engineOmens(b.hand)) ?? []).filter((r) => !r.void);
+  const total = live.reduce((n, r) => n + r.p, 0);
+  if (!live.length || total <= 0) return null;
+  const aims = aimsOf(doc), out = new Map<string, number>();
+  for (const r of live) {
+    const to = outBoxOf(doc, b, boxOutcomeOf(data, doc, b, item, r.item, aims), r.item);
+    if (to) out.set(to, (out.get(to) ?? 0) + r.p / total);
   }
   return out.size ? out : null;
 }

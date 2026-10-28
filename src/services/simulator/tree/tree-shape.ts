@@ -391,7 +391,8 @@ export function outBoxOf(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim
   return outBoxOfRaw(doc, b, oc, after);
 }
 function outBoxOfRaw(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[]; junkKey?: string }, after?: StageItem): string | undefined {
-  // 外れの枝が側と種類で分かれている時は鍵の合う箱 (狙い無しの乱数のフラクチャー、スイッチ fracPick)
+  // 外れの枝が側と種類で分かれている時は鍵の合う箱 (狙い無しの乱数のフラクチャー、スイッチ fracPick。外れ・打った後・外れが消えたの側 = S-65、スイッチ junkSide)。
+  // 鍵の合う箱が無ければ (前の版の 1 箱の外れ、見本で出なかった側) 今までどおり種類の合う箱
   if (oc.junkKey) { const k = b.outs.find((id) => doc.boxes[id]?.junkKey === oc.junkKey); if (k) return k; }
   // 種類がぴったり合う箱を先に (打った後の箱と狙いが消えたの箱が並ぶ時、狙いが消えた人を打った後へ入れない。10-25 起こりうる結果の箱 possibleOutsOf)
   // まとめた結果の箱 (mergedOuts) はまとめた種類も受ける (10-26)

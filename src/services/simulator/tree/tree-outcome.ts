@@ -23,13 +23,28 @@ import { heldSets } from "./tree-shape";
 import { likeOf } from "./tree-box-shape";
 import { isRevealHand, revealedOf, revealHitOf, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, fracFreeHit, fracFreeOuts, junkKeyOf, newlyFractured } from "./tree-frac-pick";
+import { sideKeyOf } from "./tree-junk-side";
+
+type Outcome = { out: OutKind; hits: Aim[]; junkKey?: string };
+/** 外れ・打った後・外れが消えたに側の鍵を付ける (S-65、スイッチ junkSide。閉じていれば今のまま) */
+function sided(oc: Outcome, before: StageItem, after: StageItem): Outcome {
+  if (oc.junkKey || (oc.out !== "junk" && oc.out !== "any" && oc.out !== "junkGone")) return oc;
+  const k = sideKeyOf(before, after);
+  return k ? { ...oc, junkKey: k } : oc;
+}
 
 /**
  * 箱 b の手の結果 (回す・見本・精査で同じ)。☑ の無い MOD は外れ MOD (10-27 オーナー「チェックなしは外れ MOD 扱いでしょ」): 当たりはこの手の当たりの箱の札 (☑) だけ、
  * 狙いが消えたはこの箱に持って着きうる狙い (道の当たりの札、tree-lost の aimsMayHold) だけで数え、木のほかの箱の狙いは外れ MOD として外れ・外れが消えたに入れる。
  * 前は木全部の狙いで数え、☑ の無いキャストスピードが付いた・消えた人に行き先が無く止まった (r/ibMlQuAV の 2 段目のカオスで 30 人中 28 人)。aims は木の狙い (エッセンス・フラクチャーはそのまま)
  */
-export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageItem, after: StageItem, aims: readonly Aim[]): { out: OutKind; hits: Aim[]; junkKey?: string } {
+export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageItem, after: StageItem, aims: readonly Aim[]): Outcome {
+  const key = b.hand?.currency;
+  // エッセンス (付く側が決まる)・フラクチャー (S-41 の鍵) は側で分けない
+  if (!key || effectOf(key) === "essence" || effectOf(key) === "fracture") return boxOutcomeRaw(data, doc, b, before, after, aims);
+  return sided(boxOutcomeRaw(data, doc, b, before, after, aims), before, after);
+}
+function boxOutcomeRaw(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageItem, after: StageItem, aims: readonly Aim[]): Outcome {
   const key = b.hand?.currency;
   if (key && infiniteAim(key)) {
     const oc = outcomeOf(data, before, after, aims, key);
@@ -85,18 +100,22 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   // 印の無い木の狙い無しのフラクチャー: 固定されうる MOD ごとの箱 (「〇〇がフラクチャーされた場合」。スイッチ fracPick)
   if (fracFree(doc, h)) { const f = fracFreeOuts(data, doc, Array.from({ length: SINGLE_SEEDS }, (_, i) => sampleOf(data, doc, boxId, i + 1).item)); const l = [...f.aims.map((x) => ({ out: "hit" as OutKind, aim: x })), ...f.junk.map((k) => ({ out: "junk" as OutKind, aim: null, junkKey: k }))]; return l.length ? l : null; }
   // 骨を未発現のまま (狙い無し) は下の未発現の所で「未発現の冒涜が付いた」1 つに (スイッチ boneLater)
-  if (h.repeat || (h.free && !veilKeep(h)) || isCatalyst(h.currency) || (h.keep && !h.keep.length)) return null;
+  // 狙い無しは「打った後」1 つ (手の種類の箱)。スイッチ junkSide の間は付いた側ごとの「打った後」(S-65)
+  const freeSide = !!h.free && !veilKeep(h) && flag("junkSide");
+  if (h.repeat || (h.free && !veilKeep(h) && !freeSide) || isCatalyst(h.currency) || (h.keep && !h.keep.length)) return null;
   // 後から打つ発現の手: ☑ の札ごとの当たり + 外れ (発現は MOD を消さない。スイッチ boneLater)
   if (isRevealHand(h.currency)) return [...extra.map((a) => ({ out: "hit" as OutKind, aim: a })), { out: "junk", aim: null }];
   // 消去の残したい MOD があれば、その MOD だけを狙いとして見る (ほかは外れ MOD、boxOutcomeOf と同じ)
   const aims = h.keep?.length && effectOf(h.currency) === "remove" ? h.keep : [...aimsOf(doc), ...extra.filter((a) => !aimsOf(doc).some((x) => x.modId === a.modId && x.tier === a.tier))];
   const k = effectOf(h.currency);
-  const found = new Map<string, { out: OutKind; aim: Aim | null }>();
+  const found = new Map<string, { out: OutKind; aim: Aim | null; junkKey?: string }>();
   const hold = aimsMayHold(doc, boxId);
   const onPath = new Set(heldSets(doc, boxId).flat());
   const mayLose = (a: Aim): boolean => onPath.has(aimKey(a)) || hold.some((x) => x.modId === a.modId && x.tier === a.tier);
   /** 未発現が付く手 (冒涜の骨): 当たり / 外れは発現で選ぶ候補で分かれるので見ない。消える側 (狙いが消えた) だけ発現の前の形で見る */
   let veiled = false, veiledLost = false, veiledKeep = false;
+  /** 未発現が付く手で、狙いを消さない結果の側の鍵 (S-65、スイッチ junkSide) */
+  const veiledSides = new Set<string>();
   /** 見本の中に、まだ付いていない狙いがあるか (外れだけの手でも当たりの箱を作って MOD を選ばせる時の見分け) */
   let unheld = false;
   // 見本 = この箱に着いた人のアイテム (着いた人が SINGLE_SEEDS より少なければ同じ物が回ってくるので 1 回だけ見る)。
@@ -126,22 +145,30 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
         if (outs.some((o) => lostOf(o))) veiledLost = true;
         // 狙いを消さない結果があるか (満杯の側で全部が狙いなら、骨は必ず狙いを消す = 当たり・外れ・打った後の箱は起こらない。10-28 冒涜まわりの確かめ)
         if (outs.some((o) => !lostOf(o))) veiledKeep = true;
+        for (const o of outs) { const sk = !lostOf(o) ? sideKeyOf(it, o.item) : undefined; if (sk) veiledSides.add(sk); }
         continue;
       }
       for (const o of outs) {
         const r = outcomeOf(data, it, o.item, aims, h.currency);
         if (r.hits.length > 1) return null;
+        // スイッチ junkSide: 狙い無しは狙いが消えた以外全部「打った後」を側ごと。☑ の無い狙いが付いたのは外れ (tree-hand-plan の onlyOf と同じ) を側ごと (S-65)
+        const sk = k === "essence" ? undefined : sideKeyOf(it, o.item);
+        if (freeSide) { const e = r.out === "lost" ? { out: "lost" as OutKind, aim: null } : { out: "any" as OutKind, aim: null, ...(sk ? { junkKey: sk } : {}) }; found.set(`${e.out}:${e.junkKey ?? ""}`, e); continue; }
+        if (sk && extra.length && r.out === "hit" && r.hits[0] && !extra.some((a) => a.modId === r.hits[0]!.modId && a.tier === r.hits[0]!.tier)) { found.set(`junk::${sk}`, { out: "junk", aim: null, junkKey: sk }); continue; }
         // 無限のエッセンスで ☑ していない能力値が付いた = 外れ (infiniteAim)。ほかの狙いの付かない当たりは「打った後」
         const e = r.out === "hit" && (!r.hits.length || (infiniteAim(h.currency) && !extra.some((a) => a.modId === r.hits[0]!.modId && a.tier === r.hits[0]!.tier))) ? { out: (infiniteAim(h.currency) ? "junk" : "any") as OutKind, aim: null } : { out: r.out, aim: r.hits[0] ?? null };
-        found.set(`${e.out}:${e.aim ? `${e.aim.modId}/${e.aim.tier}` : ""}`, e);
+        const ek = sk && (e.out === "junk" || e.out === "any" || e.out === "junkGone") ? { ...e, junkKey: sk } : e;
+        found.set(`${ek.out}:${ek.aim ? `${ek.aim.modId}/${ek.aim.tier}` : ""}:${"junkKey" in ek ? ek.junkKey : ""}`, ek);
       }
     }
   }
   // 冒涜: 当たり (この手の札) と外れはいつも、狙いが消えたは消える側で狙いを失いうる時だけ (10-25 シミュ 28 の洗い出し: 満杯の側に死霊術で打つと 13〜14% 狙いが消えるのに箱が無く、回すと止まった)
   // 骨を未発現のまま: 未発現の冒涜が付いた (打った後) 1 つ + 狙いが消えうる時は狙いが消えた
   if (veiled && flag("boneLater") && !veiledKeep) return [{ out: "lost", aim: null }];
-  if (veiled && veilKeep(h)) return [{ out: "any", aim: null }, ...(veiledLost ? [{ out: "lost" as OutKind, aim: null }] : [])];
-  if (veiled) return [...extra.map((a) => ({ out: "hit" as OutKind, aim: a })), { out: "junk", aim: null }, ...(veiledLost ? [{ out: "lost" as OutKind, aim: null }] : [])];
+  // 側の鍵があれば側ごと (S-65、スイッチ junkSide)
+  const vs = (out: OutKind): Array<{ out: OutKind; aim: Aim | null; junkKey?: string }> => (veiledSides.size ? [...veiledSides].sort().map((junkKey) => ({ out, aim: null, junkKey })) : [{ out, aim: null }]);
+  if (veiled && veilKeep(h)) return [...vs("any"), ...(veiledLost ? [{ out: "lost" as OutKind, aim: null }] : [])];
+  if (veiled) return [...extra.map((a) => ({ out: "hit" as OutKind, aim: a })), ...vs("junk"), ...(veiledLost ? [{ out: "lost" as OutKind, aim: null }] : [])];
   // ✦ の木の確定フラクチャーは必ず ✦ のどれかを固定する (外れた分は費用に足す、S-43)。外れの箱は誰も着かないので作らない (スイッチ fracMulti)
   // ✦ の無い MOD (完成の狙いでも) が固定される結果も起こらない (回す時は必ず ✦ を固定する、tree-sample の fractureTarget)
   const marks = new Set(fractureMarks(doc).map((a) => a.modId));

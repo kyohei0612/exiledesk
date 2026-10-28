@@ -175,7 +175,7 @@ export function onlyOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, pr
   if (!l || !hitAims.length) return l;
   // チェックした狙いでない当たり (木のほかの狙いが付いた) は外れとして数える (当たりの箱はチェックした札だけ)
   const out = l.map((e) => (e.out === "hit" && e.aim && !hitAims.some((a) => a.modId === e.aim!.modId && a.tier === e.aim!.tier) ? { out: "junk" as OutKind, aim: null } : e));
-  return out.filter((e, i) => out.findIndex((x) => x.out === e.out && x.aim?.modId === e.aim?.modId && x.aim?.tier === e.aim?.tier) === i);
+  return out.filter((e, i) => out.findIndex((x) => x.out === e.out && x.aim?.modId === e.aim?.modId && x.aim?.tier === e.aim?.tier && x.junkKey === e.junkKey) === i);
 }
 /** この箱の見本に打てない手は確定させない (お告げが効かない・消せる物が無い等。オーナー 10-22「進行不能」、tree-sample の handProblem) */
 export function problemOf(data: PatchData, item: StageItem, h: Hand, hitAims: Aim[], preCat: string | null, preFill: StageApply | null): string | null {

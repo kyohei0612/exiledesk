@@ -79,7 +79,8 @@ export interface TreeBox {
    * 例: 外れの箱に「狙いが消えた」をまとめる (着いた形が外れと同じ)。既定はまとめない。人が「まとめる」で選んだ時だけ (absorbOuts)
    */
   mergedOuts?: OutKind[];
-  /** 狙い無しの乱数のフラクチャーの外れの枝の鍵 (固定された外れ MOD の側と種類、"suffix|normal" など。固定後の形が同じ外れは 1 枝。スイッチ fracPick) */
+  /** 外れの枝の鍵: 狙い無しの乱数のフラクチャー = 固定された外れ MOD の側と種類 ("suffix|normal" など、固定後の形が同じ外れは 1 枝。スイッチ fracPick)。
+   * 外れ・打った後・外れが消えた = 側ごとの MOD の数の増減 ("s:1|0" など、tree-junk-side。S-65、スイッチ junkSide) */
   junkKey?: string;
   /** この箱から打つ次の手 (矢印) */
   hand: Hand | null;
@@ -328,7 +329,12 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   // 起こりうる結果の一覧に「狙いが消えた」が無いのが、まだ誰も狙いを持って着かないからなら印を残す (後で戻りの矢印が付いたら healLost が足す)。
   // 持って着く人がいて無いなら、その手では消えない (右側の結晶化で外れだけ消える等) ので足さない
   if (noLost || (only && !want.includes("lost") && OUTS_OF[kind].includes("lost") && !mayHoldAim(d, id))) b.noLost = true; else delete b.noLost;
-  const same = b.hand && want.every((k) => now.includes(k)) && now.every((k) => k !== "start" && (want.includes(k) || (kind === "free" && k === "hit")));
+  // 外れの枝の鍵 (狙い無しの乱数のフラクチャー = 固定された外れの側と種類、スイッチ fracPick。外れ・打った後・外れが消えたの側 = S-65、スイッチ junkSide)
+  const keysOf = (k: OutKind): string[] => (only ?? []).flatMap((o) => (o.out === k && o.junkKey ? [o.junkKey] : []));
+  const keySig = (l: ReadonlyArray<{ out: string; junkKey?: string }>): string => l.filter((o) => o.junkKey).map((o) => `${o.out}:${o.junkKey}`).sort().join();
+  // 鍵の組が今の箱と違えば作り直す (前の版の 1 箱の外れに同じ手を選び直すと側ごとに分かれる)
+  const sameKeys = !only || keySig(only) === keySig(b.outs.map((o) => d.boxes[o]!));
+  const same = b.hand && sameKeys && want.every((k) => now.includes(k)) && now.every((k) => k !== "start" && (want.includes(k) || (kind === "free" && k === "hit")));
   b.hand = { ...hand, omens: [...hand.omens], repeat: hand.repeat ? { ...hand.repeat } : null, ...(hand.keep ? { keep: hand.keep.map((a) => ({ ...a })) } : {}) };
   b.back = null;
   delete b.split;
@@ -346,9 +352,7 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   const groups: Aim[][] = [];
   for (const a of all) { const g = groupOf && GROUPED.includes(kind) ? groups.find((x) => groupOf(x[0]!) === groupOf(a)) : undefined; if (g) g.push(a); else groups.push([a]); }
   for (const g of groups) g.sort((x, y) => order(x) - order(y));
-  // 外れの枝の鍵 (狙い無しの乱数のフラクチャー: 固定された外れの側と種類ごとに外れの箱。スイッチ fracPick)
-  const junkKeys = (only ?? []).flatMap((o) => (o.out === "junk" && o.junkKey ? [o.junkKey] : []));
-  b.outs = want.flatMap((k) => (k === "hit" && groups.length ? groups.map((g) => { const h = mk(d, "hit", id); h.aim = { ...g[0]! }; if (g.length > 1) h.anyOf = g.map((a) => ({ ...a })); return h.id; }) : k === "junk" && junkKeys.length ? junkKeys.map((jk) => { const j = mk(d, "junk", id); j.junkKey = jk; return j.id; }) : [mk(d, k, id).id]));
+  b.outs = want.flatMap((k) => (k === "hit" && groups.length ? groups.map((g) => { const h = mk(d, "hit", id); h.aim = { ...g[0]! }; if (g.length > 1) h.anyOf = g.map((a) => ({ ...a })); return h.id; }) : k !== "hit" && keysOf(k).length ? keysOf(k).map((jk) => { const j = mk(d, k, id); j.junkKey = jk; return j.id; }) : [mk(d, k, id).id]));
   // 消えた箱は初めからつないでおく (オーナー 10-22「狙いが消えた…などは自動でつないでおく」。× で外せる)。行き先は人が選ぶのと同じ具体的な箱
   // (10-22 オーナー「続きからって選択肢選べんでしょ」): 狙いが消えた = 始めに戻る (10-22「選択肢として初めに戻るでいいのでは」)、
   // 外れが消えた = 外れの前の箱 (外れの箱の親。外れだけ消えたので、その箱と同じ形)。外れの箱の下でない時は形の合う箱へ。

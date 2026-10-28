@@ -12,6 +12,7 @@ import { boxAims, fractureMarks, startRarity, startsFractured, type Hand, type S
 import { useTree } from "./use-tree";
 import { veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { junkKeyLabel } from "../../../services/simulator/tree/tree-frac-pick";
+import { isSideKey, sideKeyLabel } from "../../../services/simulator/tree/tree-junk-side";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 
@@ -81,8 +82,14 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   }
   if (fixed && b.out === "junk") return tr("外れ MOD が固定された", "A miss mod fractured");
   // 骨を未発現のまま次へ (スイッチ boneLater)
-  if (b.out === "any" && b.parent && veilKeep(useTree().doc.value.boxes[b.parent]?.hand)) return tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added");
-  return outsName(b);
+  const base = b.out === "any" && b.parent && veilKeep(useTree().doc.value.boxes[b.parent]?.hand) ? tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added") : outsName(b);
+  // 側で分けた箱 (S-65、スイッチ junkSide): 同じ種類の箱が側で 2 つ以上の時だけ、どの側かを付ける
+  const k = (b as { junkKey?: string }).junkKey;
+  if (isSideKey(k) && b.parent) {
+    const doc = useTree().doc.value, many = (doc.boxes[b.parent]?.outs ?? []).filter((o) => doc.boxes[o]?.out === b.out && isSideKey(doc.boxes[o]?.junkKey)).length > 1;
+    if (many) { const [ja, en] = sideKeyLabel(k); return tr(`${base} (${ja})`, `${base} (${en})`); }
+  }
+  return base;
 }
 /**
  * 確定フラクチャーの素材の倍と当たり (S-43・S-44): ✦ の数 k (3 まで) で ×(3 ÷ k)・k/3。スイッチ fracMulti が閉じている間は ×3 = 33%。
