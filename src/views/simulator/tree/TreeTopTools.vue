@@ -22,6 +22,7 @@ const LBL = "hidden @min-[1300px]:inline";
 const RETRY = flag("retryHover");
 /** 人が選ぶ「まとめる」は無い (S-52b、スイッチ pickOff) */
 const PICK_OFF = flag("pickOff");
+const LAYOUT_ONE = flag("layoutOne");
 </script>
 
 <template>
@@ -30,7 +31,8 @@ const PICK_OFF = flag("pickOff");
       <button type="button" data-tree-undo :class="BTN" :disabled="!t.canUndo.value" :title="tr('1 つ戻す (Ctrl+Z)', 'Undo (Ctrl+Z)')" :aria-label="tr('1 つ戻す', 'Undo')" @click="simOp('undo'); t.undo()"><Icon name="undo" class="size-4" /><span :class="LBL">{{ tr("戻す", "Undo") }}</span></button>
       <button type="button" data-tree-redo :class="BTN" :disabled="!t.canRedo.value" :title="tr('やり直し (Ctrl+Shift+Z / Ctrl+Y)', 'Redo (Ctrl+Shift+Z / Ctrl+Y)')" :aria-label="tr('やり直し', 'Redo')" @click="simOp('redo'); t.redo()"><Icon name="undo" class="size-4 -scale-x-100" /></button>
       <span class="mx-0.5 h-5 w-0.5 rounded bg-white/10 @max-[899px]:hidden" aria-hidden="true" />
-      <button type="button" data-tree-tidy :class="BTN" :title="tr('整列: 段ごとに横一列・親は子の並びの真ん中・線は直角の木の線 (1 つ戻すで元の並びへ)', 'Tidy: rows by depth, each parent centered over its children, right-angle tree lines (undo restores)')" :aria-label="tr('整列', 'Tidy')" @click="emit('tidy')">
+      <!-- 位置は木から 1 つの計算 (S-140) なので「整列」は出さない (スイッチ layoutOne、10-29 オーナー「この仕組み導入なら整列いらんけどなそもそも」) -->
+      <button v-if="!LAYOUT_ONE" type="button" data-tree-tidy :class="BTN" :title="tr('整列: 段ごとに横一列・親は子の並びの真ん中・線は直角の木の線 (1 つ戻すで元の並びへ)', 'Tidy: rows by depth, each parent centered over its children, right-angle tree lines (undo restores)')" :aria-label="tr('整列', 'Tidy')" @click="emit('tidy')">
         <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="4" rx="1" /><rect x="3" y="17" width="6" height="4" rx="1" /><rect x="15" y="17" width="6" height="4" rx="1" /><path d="M12 7v5M6 17v-5h12v5" /></svg><span :class="LBL">{{ tr("整列", "Tidy") }}</span>
       </button>
       <TreeJoinBar v-if="!PICK_OFF" :btn-class="BTN" :label-class="LBL" />
