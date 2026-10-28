@@ -12,6 +12,7 @@ import { useGoalShown } from "./use-goal-shown";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
+import { flag } from "../../../web/release-flags";
 import { rarityName } from "./tree-names";
 
 const t = useTree();
@@ -19,9 +20,12 @@ const shown = useGoalShown();
 const RGB = "242,210,122";
 /** カードは内側を広く作って縮めて出す (MOD の文が 1 行で入る幅。10-25 オーナー「アイテム欄やばいよ」: 幅 260 で 2〜4 文字ずつ折り返していた) */
 // 右の列 248px に入るよう全体を縮める (今と同じ折り返しの見え方、10-26 夜オーナー「右側もうちょっと細い方が良いな、3 分の 1 削ってほしい」。前は 0.84 で 372px)
-const CARD_W = 420, ZOOM = (248 - 14) / 420;
+// スイッチ goalBig: 列ごと 1.2 倍 (298px、字・MOD の行・ベース / MOD の札も。10-28 夜オーナー「もうちょっと大きく表示したいなみづらい1.2倍くらいかな」「全体横幅もおおきくなるんは承知のうえ」)
+const BIG = flag("goalBig");
+const GOAL_SIDE_W = BIG ? 298 : 248;
+const CARD_W = 420, ZOOM = (GOAL_SIDE_W - 14) / 420;
 /** 枠の中の小さなボタン (g-btn の sm でも幅 70px ほどあり、MOD の文に重なった) */
-const PILL = "rounded-md border border-[#c9a45c]/60 bg-gradient-to-b from-[#3a2c14] to-[#1a1309] px-1.5 text-[11px] font-bold leading-[18px] text-[#f2d27a] shadow-[0_1px_3px_rgba(0,0,0,0.8)] hover:border-[#f2d27a] hover:text-white";
+const PILL = BIG ? "rounded-md border border-[#c9a45c]/60 bg-gradient-to-b from-[#3a2c14] to-[#1a1309] px-2 text-[13px] font-bold leading-[22px] text-[#f2d27a] shadow-[0_1px_3px_rgba(0,0,0,0.8)] hover:border-[#f2d27a] hover:text-white" : "rounded-md border border-[#c9a45c]/60 bg-gradient-to-b from-[#3a2c14] to-[#1a1309] px-1.5 text-[11px] font-bold leading-[18px] text-[#f2d27a] shadow-[0_1px_3px_rgba(0,0,0,0.8)] hover:border-[#f2d27a] hover:text-white";
 const FOLD_KEY = "exiledesk.tree.goalFolded";
 const rarity = computed(() => rarityName(t.goalRarity.value));
 const n = computed(() => t.goals.value.length);
@@ -63,11 +67,11 @@ onBeforeUnmount(() => ro?.disconnect());
 <template>
   <div data-tree-goal class="pointer-events-auto max-w-[calc(100vw-2rem)] select-none rounded-xl border-[1.5px] bg-gradient-to-b from-[#221b10]/95 to-[#120e08]/95 p-1.5 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.6)]"
     :style="{ borderColor: `rgba(${RGB},${t.goalPage.value ? 0.95 : 0.7})`, width: `${Math.round(CARD_W * ZOOM) + 14}px` }">
-    <button type="button" data-tree-goal-fold class="flex h-6 w-full items-center gap-1.5 rounded-md px-0.5 text-left hover:bg-white/[0.04]" :aria-expanded="!folded" :title="folded ? tr('完成形のアイテムを出す', 'Show the final item') : tr('畳む', 'Collapse')" @click="toggleFold">
+    <button type="button" data-tree-goal-fold class="flex w-full items-center gap-1.5 rounded-md px-0.5 text-left hover:bg-white/[0.04]" :class="BIG ? 'h-7' : 'h-6'" :aria-expanded="!folded" :title="folded ? tr('完成形のアイテムを出す', 'Show the final item') : tr('畳む', 'Collapse')" @click="toggleFold">
       <span class="flex size-5 shrink-0 items-center justify-center rounded-md" :style="{ background: `rgba(${RGB},0.18)`, color: `rgb(${RGB})` }"><Icon name="pin" class="size-3.5" /></span>
-      <span class="shrink-0 text-[11px] font-bold tracking-wide" :style="{ color: `rgb(${RGB})` }">{{ tr("0 完成形の設定", "0 Final item") }}</span>
-      <span v-if="folded" class="min-w-0 flex-1 truncate text-[11px] opacity-80">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }} · {{ n ? tr(`狙い ${n} つ`, `${n} target(s)`) : tr("MOD はまだ", "No mods yet") }}</span>
-      <span v-else class="ml-auto shrink-0 text-[11px] opacity-70">{{ tr(`Lv ${t.doc.value.itemLevel}${t.doc.value.ilvlFit ? " 適正" : ""}`, `ilvl ${t.doc.value.itemLevel}${t.doc.value.ilvlFit ? " fit" : ""}`) }}</span>
+      <span class="shrink-0 font-bold tracking-wide" :class="BIG ? 'text-[13px]' : 'text-[11px]'" :style="{ color: `rgb(${RGB})` }">{{ tr("0 完成形の設定", "0 Final item") }}</span>
+      <span v-if="folded" class="min-w-0 flex-1 truncate opacity-80" :class="BIG ? 'text-[13px]' : 'text-[11px]'">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }} · {{ n ? tr(`狙い ${n} つ`, `${n} target(s)`) : tr("MOD はまだ", "No mods yet") }}</span>
+      <span v-else class="ml-auto shrink-0 opacity-70" :class="BIG ? 'text-[13px]' : 'text-[11px]'">{{ tr(`Lv ${t.doc.value.itemLevel}${t.doc.value.ilvlFit ? " 適正" : ""}`, `ilvl ${t.doc.value.itemLevel}${t.doc.value.ilvlFit ? " fit" : ""}`) }}</span>
       <span class="shrink-0 text-[10px] opacity-70">{{ folded ? "▸" : "▾" }}</span>
     </button>
     <div v-if="!folded" ref="wrap" class="relative mt-1 max-h-[calc(100vh-14rem)] overflow-y-auto overflow-x-hidden">
@@ -76,9 +80,9 @@ onBeforeUnmount(() => ro?.disconnect());
       <button v-if="baseTop != null" type="button" data-tree-goal-open="base" class="absolute right-2 z-10 -translate-y-1/2" :class="PILL" :style="{ top: `${baseTop ?? 0}px` }" :title="tr('ベース・レアリティ・アイテムレベルを選ぶ', 'Choose the base, rarity and item level') + ` (${rarity})`" @click="t.goalPage.value = 1">{{ tr("ベース", "Base") }}</button>
       <button v-if="modTop != null" type="button" data-tree-goal-open="mods" class="absolute right-2 z-10 -translate-y-1/2" :class="PILL" :style="{ top: `${modTop}px` }" :title="tr('完成の MOD を決める (狙いにする・フラクチャーの印)', 'Set the final mods (targets and fracture marks)')" @click="t.goalPage.value = 2">{{ tr("MOD", "Mods") }}</button>
       <!-- 自動で嵌めた扱いのルーン (完成形は規格外、10-26 オーナー「MOD選んだら自動で設定って話で、アイテム枠に表示させようか」) -->
-      <p v-if="t.goalItem.value?.item.augments?.length" data-tree-goal-runes class="mt-0.5 px-1 text-[11px] text-[#9fd3ff]/80" :title="tr('完成の狙いに要るルーン (特殊 MOD の分・クラフト MOD 2 つ目のアストリッドの創造性) を自動で嵌めた扱い。ツリーではそのルーンの手・2 つ目のクラフト MOD の手から効く', 'Runes the targets need (for special mods, and Astrid’s Creativity for a 2nd crafted mod) are socketed automatically. In the tree they apply from that rune or crafted-mod step')">◇ {{ tr("ルーン (自動)", "Runes (auto)") }}: {{ t.goalItem.value.item.augments.map((a) => tr(a.ja, a.en)).join(tr("・", ", ")) }}</p>
+      <p v-if="t.goalItem.value?.item.augments?.length" data-tree-goal-runes class="mt-0.5 px-1 text-[#9fd3ff]/80" :class="BIG ? 'text-[13px]' : 'text-[11px]'" :title="tr('完成の狙いに要るルーン (特殊 MOD の分・クラフト MOD 2 つ目のアストリッドの創造性) を自動で嵌めた扱い。ツリーではそのルーンの手・2 つ目のクラフト MOD の手から効く', 'Runes the targets need (for special mods, and Astrid’s Creativity for a 2nd crafted mod) are socketed automatically. In the tree they apply from that rune or crafted-mod step')">◇ {{ tr("ルーン (自動)", "Runes (auto)") }}: {{ t.goalItem.value.item.augments.map((a) => tr(a.ja, a.en)).join(tr("・", ", ")) }}</p>
       <!-- カードの枠に乗らない狙い (TreeGoalPage と同じ。どれかが付けば当たり) -->
-      <p v-for="a in left" :key="a.modId" data-tree-goal-over-row class="mt-0.5 min-w-0 truncate px-1 text-[11px]" :class="a.fractured ? 'text-mod-fractured' : 'text-[#c8c8ff]'" :title="a.reason">+ {{ a.fractured ? "✦ " : "" }}{{ t.startModLabel(a, true) }}</p>
+      <p v-for="a in left" :key="a.modId" data-tree-goal-over-row class="mt-0.5 min-w-0 truncate px-1" :class="[a.fractured ? 'text-mod-fractured' : 'text-[#c8c8ff]', BIG ? 'text-[13px]' : 'text-[11px]']" :title="a.reason">+ {{ a.fractured ? "✦ " : "" }}{{ t.startModLabel(a, true) }}</p>
     </div>
   </div>
 </template>

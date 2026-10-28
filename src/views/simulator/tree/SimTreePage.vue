@@ -20,6 +20,8 @@ import SimPcOnly from "../SimPcOnly.vue"; import PhoneTreePage from "../phone/Ph
 import { usePhone } from "../../../utils/use-phone";
 import TreeBox from "./TreeBox.vue";
 import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../tutorial/SimTutorialGuide.vue"; import TreeGoalNode from "./TreeGoalNode.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { flag } from "../../../web/release-flags"; import { simAct, simOp } from "../../../web/track";
+/** 右の列の完成形の窓を 1.2 倍 (列も 298px、スイッチ goalBig) */
+const GOAL_BIG = flag("goalBig");
 import TreeHandPage from "./TreeHandPage.vue";
 import { useTree } from "./use-tree";
 import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
@@ -468,7 +470,7 @@ const phone = usePhone(), simPhone = flag("simPhone");
         <!-- 木の枠の外の右の列: 上に足りない所の一覧、下にミニマップと倍率の道具 (10-26 夜オーナー「A でいい」。木の上に浮かせると引っ張った・寄った時に箱を隠した、モンキー 8 の 2・4) -->
         <!-- 列は上に 0 完成形の設定 (字を縮めずに入る幅 372px)、その下にミニマップ (残りいっぱい)、一番下に倍率の道具。足りない所は上の帯の落ちる窓 (10-26 夜オーナー「ここ使うなら」)。
              1100px 未満は木の下に横並び -->
-        <aside v-if="!t.needBase.value" data-tree-side class="flex min-h-0 w-[248px] shrink-0 flex-col gap-2 overflow-hidden max-[1099px]:h-[300px] max-[1099px]:w-full max-[1099px]:flex-row">
+        <aside v-if="!t.needBase.value" data-tree-side :class="GOAL_BIG ? 'w-[298px]' : 'w-[248px]'" class="flex min-h-0 shrink-0 flex-col gap-2 overflow-hidden max-[1099px]:h-[300px] max-[1099px]:w-full max-[1099px]:flex-row">
           <div data-tree-goal-side class="min-h-0 shrink-0 overflow-y-auto max-[1099px]:h-full min-[1100px]:max-h-[60%]"><TreeGoalCard v-if="goalCard" /><TreeGoalNode v-else /></div>
           <div class="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
             <!-- 名前・保存・レシピ (帯の 1 段目の残り、10-26 夜オーナー「この 1 段目はアイテム欄の下でおけ」)。1100px 未満は回した結果もここ -->
