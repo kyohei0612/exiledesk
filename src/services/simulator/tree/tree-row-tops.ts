@@ -8,6 +8,7 @@
  */
 import { BOX_W, type TreeBox, type TreeDoc } from "./tree-model";
 import { flag } from "../../../web/release-flags";
+import { foldOuts, stripFolds, stripHidden } from "./tree-strip-fold";
 
 /** 縦の線 1 本の長さ (箱 → 札・札 → 枝分かれ・枝分かれ → 箱、枝分かれの無い時は札 → 箱) */
 export const LINE_Y = 48;
@@ -21,8 +22,8 @@ export const EST_H = 230;
 /** まとめて描かない箱 (案 A、tree-merge-open の mergedAway と同じ判定) */
 const depthOf = (d: TreeDoc, id: string): number => { let n = 0; for (let b = d.boxes[id]; b?.parent; b = d.boxes[b.parent]) n++; return n; };
 const away = (d: TreeDoc, c: TreeBox | undefined): boolean => !!c && flag("mergeOpen") && !!c.merged && !!c.autoBack && !c.hand && !!c.back && !!d.boxes[c.back] && depthOf(d, c.id) === depthOf(d, c.back);
-/** 描く子 (まとめた箱はまとめ先へ線が行くので数えない) */
-export const drawnKids = (d: TreeDoc, b: TreeBox): string[] => b.outs.filter((o) => d.boxes[o] && !away(d, d.boxes[o]));
+/** 描く子 (まとめた箱はまとめ先へ線が行くので数えない。畳んだ消去の直線は札から最後の箱へ、S-28b) */
+export const drawnKids = (d: TreeDoc, b: TreeBox): string[] => foldOuts(d, b).filter((o) => d.boxes[o] && !away(d, d.boxes[o]));
 /** 横の枝分かれを描くか (線の行き先が 2 つ以上、まとめ先への線を含む) */
 export const branches = (d: TreeDoc, b: TreeBox): boolean => new Set(b.outs.map((o) => (away(d, d.boxes[o]) ? d.boxes[o]!.back! : o))).size > 1;
 /** 親の下端から子の上端まで */
@@ -32,6 +33,15 @@ export const gapBelow = (d: TreeDoc, b: TreeBox): number => LINE_Y + CHIP_Y + LI
 export function depthRows(d: TreeDoc): Map<string, number> {
   const rows = new Map<string, number>();
   const down = (id: string, r: number): void => { if (rows.has(id) || !d.boxes[id] || away(d, d.boxes[id])) return; rows.set(id, r); for (const k of d.boxes[id]!.outs) down(k, r + 1); };
+  down("start", 0);
+  return rows;
+}
+/** 描く段 (畳んだ消去の直線の隠した箱は段を取らず、最後の箱は札の次の段、S-28b)。畳んだ物が無ければ depthRows と同じ */
+function drawRows(d: TreeDoc): Map<string, number> {
+  const folds = stripFolds(d);
+  if (!folds.size) return depthRows(d);
+  const hidden = stripHidden(d, folds), rows = new Map<string, number>();
+  const down = (id: string, r: number): void => { if (rows.has(id) || !d.boxes[id] || away(d, d.boxes[id])) return; rows.set(id, r); for (const k of foldOuts(d, d.boxes[id]!, folds, hidden)) down(k, r + 1); };
   down("start", 0);
   return rows;
 }
@@ -53,7 +63,7 @@ export interface RowLayout { rows: Map<string, number>; top: number[]; bottom: n
  * (+ その段に枝分かれがあれば 48)。札もその段の一番下の枠 + 48 に揃う (背の低い箱から札までは長くなってよい)
  */
 export function rowLayout(d: TreeDoc, heightOf: (id: string) => number): RowLayout {
-  const rows = depthRows(d), top: number[] = [], bottom: number[] = [], branch: boolean[] = [];
+  const rows = drawRows(d), top: number[] = [], bottom: number[] = [], branch: boolean[] = [];
   const by: string[][] = [];
   for (const [id, r] of rows) (by[r] ??= []).push(id);
   top[0] = d.boxes.start?.y ?? 0;

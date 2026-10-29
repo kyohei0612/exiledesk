@@ -18,7 +18,7 @@ import TreeCanvasTools from "./TreeCanvasTools.vue"; import TreeTopTools from ".
 import ModeTabs from "../../../components/for-share/ModeTabs.vue";
 import SimPcOnly from "../SimPcOnly.vue"; import PhoneTreePage from "../phone/PhoneTreePage.vue";
 import { isPhoneWidth, usePhone } from "../../../utils/use-phone";
-import TreeBox from "./TreeBox.vue";
+import TreeBox from "./TreeBox.vue"; import TreeStripFold from "./TreeStripFold.vue"; import { useStripFold } from "./use-strip-fold";
 import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../tutorial/SimTutorialGuide.vue"; import TreeGoalNode from "./TreeGoalNode.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { flag } from "../../../web/release-flags"; import { simAct, simOp } from "../../../web/track";
 import { boxHeightOf, useRowSettle } from "./use-row-settle"; import { placeTree } from "../../../services/simulator/tree/tree-place";
 import { laneYs, rowLayout } from "../../../services/simulator/tree/tree-row-tops";
@@ -65,12 +65,10 @@ import TreeHandChip from "./TreeHandChip.vue"; import TreeBandLayer from "./Tree
 import TreeMergeLayer from "./TreeMergeLayer.vue";
 import { backTargetsOf } from "./tree-merge";
 import { useTreeMerge } from "./use-tree-merge";
-
 const t = useTree();
 const doc = t.doc;
 // エンジンの設定 (触媒・聖別の倍率・MOD の重み) は開いている間この木の値 (use-tree-tune.ts)
 useTreeTune(doc, t.edit);
-
 /** 右の欄 (箱を選んだ時だけ) */
 /** add = 横の ＋ で開いた選ぶ窓 (id は押した横の箱。選んで決めた時に初めて箱を足す、at = 引っ張って置いた所) */
 const panel = ref<{ kind: "hand" | "aim" | "start" | "note" | "base" | "split"; id: string; add?: { at?: { x: number; y: number } } } | null>(null);
@@ -98,7 +96,9 @@ const drag = ref<{ id: string; x: number; y: number } | null>(null);
 const posOf = (b: Box): { x: number; y: number } => (drag.value?.id === b.id ? { x: drag.value.x, y: drag.value.y } : { x: b.x, y: b.y });
 const boxes = computed(() => Object.values(doc.value.boxes));
 /** 描く箱 (品質だけ上げた後の通り抜け pass は箱を描かず、打つ手の札の下に次の札か＋、tree-model の OutKind) */
-const shown = computed(() => boxes.value.filter((b) => b.out !== "pass" && !mergedAway(doc.value, b)));
+// 全部消えてよい消去の直線の間を畳む (S-28b、スイッチ stripFold、use-strip-fold.ts): 隠した箱は描かず、間の最初の箱は札 (TreeStripFold)
+const sf = useStripFold(doc, t.opened, t.active, () => issues.value?.map((x) => x.boxId) ?? [], () => tr100.result.value?.stuckAt ?? null);
+const shown = computed(() => boxes.value.filter((b) => b.out !== "pass" && !mergedAway(doc.value, b) && !sf.hidden.value.has(b.id)));
 const passes = computed(() => boxes.value.filter((b) => b.out === "pass"));
 /** 開いた時は箱を上の段から順に出す (データが来てから。use-tree-reveal.ts) */
 const rv = useTreeReveal(shown, () => !!s.data.value, t.opened);
@@ -189,6 +189,7 @@ let dragEndedAt = 0;
 function onNodeClick(e: NodeMouseEvent): void {
   const b = doc.value.boxes[e.node.id];
   if (!b || hand.value || performance.now() - dragEndedAt < 300) return;
+  if (sf.folds.value.has(b.id)) { sf.toggle(b.id); return; }
   if (picking.value) { if (picking.value !== b.id) onTarget(b); return; }
   // 縮めて見ている時は、その箱の編集を等倍のポップアップで (オーナー 10-22「75% 未満の見るだけをやめる」)
   if (viewOnly.value) { pop.value = b.id; return; }
@@ -298,8 +299,7 @@ const checkBusy = computed((): { text: string; n?: number; of?: number } | null 
   const p = progress.value;
   return !p ? { text: tr("精査の準備中", "Preparing") } : p.phase === "walk" ? { text: tr("5 人を辿っている", "Walking runs"), n: p.n, of: p.of } : { text: tr("30 人を回している", "Running"), n: p.n, of: p.of };
 });
-function goIssue(id: string): void { void v.reveal(id, true); }
-
+async function goIssue(id: string): Promise<void> { await sf.openFor(id); void v.reveal(id, true); }
 /** 整列して、全体に合わせる (1 つ戻すで元の並びへ) */
 // 札の幅は名前を切らない幅 (… で切れている分を足す) × 今の倍率で拡げる分 (全体表示で並んでも重ならない)
 const chipNatural = (id: string): number | undefined => {
@@ -423,7 +423,8 @@ const phone = usePhone(), simPhone = flag("simPhone");
             :delete-key-code="null" :selection-key-code="null" :multi-selection-key-code="null" :auto-pan-on-node-drag="true"
             @pane-click="onPaneClick" @node-click="onNodeClick">
             <template #node-box="{ id }">
-              <TreeBox v-if="doc.boxes[id]" :box="doc.boxes[id]!" :removable="!!doc.boxes[id]?.parent" :picking="!!picking && picking !== id"
+              <TreeStripFold v-if="sf.folds.value.has(id)" :head="id" v-bind="sf.countsOf(id)" />
+              <TreeBox v-else-if="doc.boxes[id]" :box="doc.boxes[id]!" :removable="!!doc.boxes[id]?.parent" :picking="!!picking && picking !== id"
                 :selected="panel?.id === id || picking === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand" :glow="glowOf(doc.boxes[id]!) || plus?.target === id" :issue="issueOf(doc.boxes[id]!)" :inv="inv" :link-no="picking ? link.get(id) ?? null : null"
                 @drag="startDrag(doc.boxes[id]!, $event)" @aim="onAim(doc.boxes[id]!)" @plus="(k, e) => onPlus(doc.boxes[id]!, k, e)" @remove="removeHandOf(id)"
                 @back="picking = id" @clear-back="t.edit((d) => setBack(d, id, null))" @done="onDone(doc.boxes[id]!)" @fail="onFail(doc.boxes[id]!)"
@@ -441,6 +442,7 @@ const phone = usePhone(), simPhone = flag("simPhone");
               <!-- 矢印の上の札 = 打つ手 (押すと替える・消す)。戻りの矢印だけの箱から流れ込む線 -->
               <!-- 段の目印 (木の左の外、当たりの箱の揃った狙いの数) -->
               <TreeBandLayer v-if="!flag('noBand')" :doc="doc" :k="1 / zoom" />
+              <TreeStripFold v-for="f in rv.done.value ? sf.opens.value : []" :key="`refold-${f.head}`" :head="f.head" :fold="{ ...posOf(doc.boxes[f.head]!), inv }" @toggle="sf.toggle(f.head)" />
               <TreeHandChip v-for="e in shownEdges" :key="`hand-${e.id}`" :id="e.id" :hand="e.hand" :split="e.split" :x="e.jx" :y="e.jy" :inv="inv" :off="hand" :room="chipRoom.get(e.id) ?? 340" @open="panel = { kind: e.hand ? 'hand' : 'split', id: e.id }" />
               <!-- 品質だけ上げた後 (箱無し) で次の手がまだ無い所の＋ (押すと次の手の棚) -->
               <button v-for="b in rv.done.value ? passes.filter((x) => !x.hand && !x.back) : []" :key="`pass-${b.id}`" type="button" data-tree-pass-next :data-box-id="b.id" class="nodrag nopan pointer-events-auto absolute z-[5] flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-amber-400/70 bg-[#1d1812] text-amber-200 hover:bg-amber-500/30"

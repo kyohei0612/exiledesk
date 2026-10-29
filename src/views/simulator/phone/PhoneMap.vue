@@ -15,6 +15,7 @@ import { mapPick, sheet, usePhoneQuiz } from "./use-phone-quiz";
 import { tr } from "../../../i18n/lang";
 import { handIcon as iconOf } from "../tree/tree-names";
 import { flag } from "../../../web/release-flags";
+import { stripChains, stripFolds, stripHidden, stripOpen, toggleStripFold } from "../../../services/simulator/tree/tree-strip-fold";
 
 const props = defineProps<{ /** 重ね窓の中の小さな図: その箱を光らせ、押せない (peek を聞く時だけ押すと peek) */ mini?: string; peek?: boolean }>();
 /** 小さな図で押した箱 (10-27 昼オーナー「小さい箱を押したらモーダルでその箱のアイテム枠とカレンシー」、スイッチ phone1027) */
@@ -34,9 +35,15 @@ onMounted(() => { if (wrap.value) { ro = new ResizeObserver(() => { cw.value = w
 onBeforeUnmount(() => ro?.disconnect());
 
 const PAD = 10;
+/** 全部消えてよい消去の直線を畳む (S-28b、スイッチ stripFold): 隠した箱は描かず、最後の箱の線は札 (間の最初の箱、点線) から。押すと開く */
+const folds = computed(() => stripFolds(q.doc.value));
+const hidden = computed(() => stripHidden(q.doc.value, folds.value));
+const lastToHead = computed(() => new Map([...folds.value.values()].map((f) => [f.last, f.head])));
+const anyOpen = computed(() => [...stripChains(q.doc.value).keys()].some((k) => stripOpen.value.has(k)));
+const refold = (): void => { for (const k of stripOpen.value) toggleStripFold(k); };
 /** 箱の画面の位置 (中心と描く大きさ)。小さくなりすぎないよう描く大きさだけ下限を持つ */
 const view = computed(() => {
-  const d = q.doc.value, bs = Object.values(d.boxes);
+  const d = q.doc.value, bs = Object.values(d.boxes).filter((b) => !hidden.value.has(b.id));
   if (!bs.length) return null;
   const bd = boundsOf(d);
   // 箱が少ない木で箱が枠いっぱいに膨らまないよう、描く大きさは幅 64px まで (10-26 夜オーナー「始めの箱がばかでかい」、1 つで 264×92 になっていた)
@@ -83,7 +90,7 @@ const handIcon = (id: string): string | null => { const h = q.doc.value.boxes[id
 const lines = computed(() => {
   const v = view.value;
   if (!v) return [];
-  return v.boxes.flatMap((b) => (b.parent && v.at.get(b.parent) ? [{ id: b.id, a: v.at.get(b.parent)!, b: v.at.get(b.id)! }] : []));
+  return v.boxes.flatMap((b) => { const p = lastToHead.value.get(b.id) ?? b.parent; return p && v.at.get(p) ? [{ id: b.id, a: v.at.get(p)!, b: v.at.get(b.id)! }] : []; });
 });
 /** 押した所に一番近い箱 (小さい箱でも指で押せるよう、28px まで) */
 function tap(e: MouseEvent): void {
@@ -95,6 +102,7 @@ function tap(e: MouseEvent): void {
   for (const b of pool) { const p = v.at.get(b.id)!; const dd = Math.hypot(Math.max(0, Math.abs(p.x - px) - v.w / 2), Math.max(0, Math.abs(p.y - py) - v.h / 2)); if (dd < bd) { bd = dd; best = b.id; } }
   if (!best || bd > 28) return;
   if (props.mini) { emit("peek", best); return; }
+  if (folds.value.has(best) && !mapPick.value) { toggleStripFold(best); return; }
   // 移らずに重ね窓で中身を見せる (戻り先を選んでいる時は窓の「ここへ戻す」で決める)
   sheet.value = mapPick.value ? { id: best, pickFrom: mapPick.value.from } : { id: best };
 }
@@ -108,13 +116,15 @@ watch(() => q.doc.value, (d) => { const pk = mapPick.value; if (pk && !d.boxes[p
       <span v-if="mapPick" data-phone-map-pick class="min-w-0 flex-1 break-words font-bold text-amber-200">{{ tr("戻り先の箱を押す (明るい箱に戻れる。押すと中身を見てから決める)", "Tap the box to return to (bright boxes; check it before you choose)") }}</span>
       <span v-else class="min-w-0 flex-1 break-words text-[#9a8a70]">{{ tr("全体図 · 箱を押すと中身", "Overview · tap a box to see it") }}</span>
       <button v-if="mapPick" type="button" data-phone-map-cancel class="g-btn sm !min-h-10 shrink-0" @click="mapPick = null">{{ tr("やめる", "Cancel") }}</button>
+      <button v-if="anyOpen && !mapPick" type="button" data-phone-map-refold class="g-btn sm !min-h-10 shrink-0" @click="refold">≈ {{ tr("畳む", "Fold") }}</button>
       <button v-if="!mapPick" type="button" data-phone-map-size class="g-btn sm !min-h-10 min-w-11 shrink-0" :aria-pressed="big" :aria-label="tr('全体図の大きさ', 'Overview size')" @click="big = !big">{{ big ? "⤡" : "⤢" }}</button>
     </div>
     <div v-show="!shut" ref="wrap" data-phone-map-view class="relative w-full overflow-hidden rounded-lg border border-white/10 bg-[#080706]" :style="{ height: `${ch}px` }" @click="tap">
       <svg v-if="view" :width="cw" :height="ch" class="pointer-events-none absolute inset-0">
         <path v-for="l in lines" :key="`l-${l.id}`" :d="`M${l.a.x},${l.a.y + view.h / 2} V${(l.a.y + l.b.y) / 2} H${l.b.x} V${l.b.y - view.h / 2}`" fill="none" stroke="rgba(216,204,180,0.35)" stroke-width="2" />
         <path v-for="x in backs" :key="`b-${x.from}`" :d="`M${view.at.get(x.from)!.x},${view.at.get(x.from)!.y} L${view.at.get(x.to)!.x},${view.at.get(x.to)!.y}`" fill="none" stroke="rgba(103,232,249,0.8)" stroke-width="2" />
-        <rect v-for="b in view.boxes" :key="b.id" :data-map-box="b.id" :x="view.at.get(b.id)!.x - view.w / 2" :y="view.at.get(b.id)!.y - view.h / 2" :width="view.w" :height="view.h" rx="3" v-bind="{ fill: look(b.id).fill, stroke: look(b.id).stroke, 'stroke-width': look(b.id).sw, opacity: look(b.id).op }" :class="b.id === cur && (!mapPick || mini) ? 'phone-map-now' : ''" />
+        <rect v-for="b in view.boxes" :key="b.id" :data-map-box="b.id" :x="view.at.get(b.id)!.x - view.w / 2" :y="view.at.get(b.id)!.y - view.h / 2" :width="view.w" :height="view.h" rx="3" v-bind="{ fill: look(b.id).fill, stroke: look(b.id).stroke, 'stroke-width': look(b.id).sw, opacity: look(b.id).op }" :class="b.id === cur && (!mapPick || mini) ? 'phone-map-now' : ''" :stroke-dasharray="folds.has(b.id) ? '4 3' : undefined" />
+        <text v-for="b in view.boxes.filter((x) => folds.has(x.id))" :key="`f-${b.id}`" data-map-fold :x="view.at.get(b.id)!.x + view.w / 2 + 4" :y="view.at.get(b.id)!.y + 3.5" text-anchor="start" font-size="10" fill="rgb(125,211,252)">≈ {{ tr(`途中 ${folds.get(b.id)!.mids.length} 箱`, `${folds.get(b.id)!.mids.length} middle`) }}</text>
         <template v-if="view.w >= 28">
           <text v-for="b in view.boxes" :key="`t-${b.id}`" :x="view.at.get(b.id)!.x - (handIcon(b.id) ? 8 : 0)" :y="view.at.get(b.id)!.y + 3.5" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.9)" :opacity="look(b.id).op">{{ shortOf(b.id) }}</text>
           <!-- 手のある箱は次の手のカレンシーの絵 (「打後」が幾つも並んでも見分けられる、10-26 モンキー 7 の 26) -->

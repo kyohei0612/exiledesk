@@ -8,6 +8,7 @@ import { busLevels, CHIP_HALF, HAND_DY, type Seg } from "./tree-lines";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { flag } from "../../../web/release-flags";
 import { LINE_Y, type RowLayout } from "../../../services/simulator/tree/tree-row-tops";
+import { FOLD_H, foldOuts, stripFolds, stripHidden } from "../../../services/simulator/tree/tree-strip-fold";
 
 /**
  * 進む線 (2026-10-22 整列の定義、オーナー「クソ汚い」の後): 普通の木の図と同じ直角の線。親の下から 1 本下りて (途中に手の札)、
@@ -30,21 +31,24 @@ export function useTreeEdges(doc: Ref<TreeDoc>, boxes: ComputedRef<TreeBox[]>, p
   /** 箱の真ん中 */
   const midOf = (id: string): number => posOf(doc.value.boxes[id]!).x + BOX_W / 2;
   /** 横の棒が同じ高さで横に重なる親どうしは段をずらす (tree-lines.ts の busLevels) */
-  const busShift = computed(() => busLevels(boxes.value.filter((b) => (b.hand || b.split) && b.outs.length).map((b) => {
-    const xs = [posOf(b).x + BOX_W / 2, ...b.outs.map(midOf)];
-    return { id: b.id, x0: Math.min(...xs), x1: Math.max(...xs), y: Math.min(...b.outs.map((o) => posOf(doc.value.boxes[o]!).y)) - BUS_DY };
+  // 畳んだ消去の直線 (S-28b、スイッチ stripFold): 札 (間の最初の箱) の線は最後の箱へ、隠した箱からは引かない
+  const fold = computed(() => { const folds = stripFolds(doc.value); return { folds, hidden: stripHidden(doc.value, folds) }; });
+  const outsOf = (b: TreeBox): string[] => foldOuts(doc.value, b, fold.value.folds, fold.value.hidden);
+  const busShift = computed(() => busLevels(boxes.value.filter((b) => (b.hand || b.split) && outsOf(b).length).map((b) => {
+    const xs = [posOf(b).x + BOX_W / 2, ...outsOf(b).map(midOf)];
+    return { id: b.id, x0: Math.min(...xs), x1: Math.max(...xs), y: Math.min(...outsOf(b).map((o) => posOf(doc.value.boxes[o]!).y)) - BUS_DY };
   })));
   // 分かれ目 (手の無い箱) も、札を「分かれ目」にして同じ線で下の行の箱へ
-  const edges = computed(() => boxes.value.filter((b) => (b.hand || b.split) && b.outs.length).map((b) => {
+  const edges = computed(() => boxes.value.filter((b) => (b.hand || b.split) && outsOf(b).length).map((b) => {
     const p = posOf(b), pass = b.out === "pass";
     // 通り抜けは箱が無いので、手の札を箱の上の端の所に置き、そこから下りる
     // まとめて描かない箱 (案 A) は、まとめ先の箱へ直に線を引く (同じまとめ先が 2 つあれば 1 本)
-    const kids = [...new Map(b.outs.map((o) => { const c0 = doc.value.boxes[o]!, to = mergedAway(doc.value, c0) ? c0.back! : o; return [to, { id: to, c: doc.value.boxes[to]!, q: posOf(doc.value.boxes[to]!) }] as const; })).values()];
+    const kids = [...new Map(outsOf(b).map((o) => { const c0 = doc.value.boxes[o]!, to = mergedAway(doc.value, c0) ? c0.back! : o; return [to, { id: to, c: doc.value.boxes[to]!, q: posOf(doc.value.boxes[to]!) }] as const; })).values()];
     // 札は子の箱の上の辺から測る (横の棒の上、前と同じ 68)。箱の中にアイテムの枠を出して箱の高さが中身で伸びるので、親の下 (y + BOX_H) から測ると背の高い親の中に札が入った (10-26)
     // スイッチ lineShort: 札 → 枝分かれも同じ長さ (LINE_Y) に (前は札のすぐ下 8 で分かれて詰まって見えた、10-28 夜オーナー「えだわかれするところもいっしょのながさに」)
     // 縦の線は全部 LINE_Y (tree-row-tops の settleRows と同じ式): 枝分かれがあれば 箱 → 札・札 → 枝分かれ・枝分かれ → 箱、無ければ 箱 → 札・札 → 箱 (S-68)
     const top = Math.min(...kids.map((k) => k.q.y)), multi = kids.length > 1;
-    const px = p.x + BOX_W / 2, py = pass ? p.y : p.y + BOX_H;
+    const px = p.x + BOX_W / 2, py = pass ? p.y : p.y + (fold.value.folds.has(b.id) ? FOLD_H : BOX_H);
     // 段を揃える (S-68): 札はその段の一番下の枠 + LINE_Y、枝分かれは札の下 + LINE_Y (同じ段の札・枝分かれは同じ高さ)
     const Lr = SHORT ? layout?.() ?? null : null, r = Lr?.rows.get(b.id);
     const rowJy = Lr && r != null && !pass ? Lr.bottom[r]! + LINE_Y + CHIP_HALF : null;
