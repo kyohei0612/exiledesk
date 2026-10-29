@@ -229,7 +229,6 @@ docs/org/analytics/**                分析
 docs/org/research/**                 リサーチ
 docs/org/video/**                    動画
 docs/org/blog/**                     記事
-docs/org/white/**                    ブラック
 docs/org/monkey/**                   モンキー
 
 # デイリークラフトチャレンジ (デイリー部長、10-22)

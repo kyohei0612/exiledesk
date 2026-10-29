@@ -40,7 +40,7 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 
 エンジンの核 (ジン部長): `craft-stage/` の `types.ts`・`run-plan.ts`・`contract.ts`、乱数 `htc/rng.ts`。画面 (エミュ・シミュ・チュートリアル)・解析君は入口から取る (核は `engine.ts`、画面の要望の物は出した側だけが `engine-sim.ts` / `engine-emu.ts` から。分け方は org/emulator/notes/2026-10-22-entry-split-plan.md)。`services/simulator/htc/` はアプリ専用・凍結で Web から import しない。craft-stage/ に残した共通の境目: `share.ts`・`trade-search.ts`。htc/ の `buy-or-craft.ts`・`prices.ts`・`paste*.ts` もアプリ・各部がまたがって使うので htc/ に残した。scripts/ は今のまま 1 つのフォルダー。
 
-コードを持たない部 (docs/org/): モンキー隊長 (開発版を何も知らない人として触り notes/ に書くだけ)・リサーチ長・ホワイト。
+コードを持たない部 (docs/org/): モンキー隊長 (開発版を何も知らない人として触り notes/ に書くだけ)・リサーチ長。
 
 ## 何を正とするか (同じ事を 2 か所でやらない)
 
