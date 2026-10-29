@@ -143,11 +143,30 @@ const notClashing = (rest: Candidate[], c: Candidate): Candidate[] => {
  *   - 普通の MOD だけ (腐食) / 冒涜専用の MOD が出せない: 1 つの置き場から重みで
  *   - それ以外: 専用 MOD の個数を EXCLUSIVE_RATES で決め、その数を専用 MOD から重みで、残りを普通の MOD から。並びは混ぜる
  */
-export function drawOffers(data: PatchData, item: StageItem, hidden: StageMod, rng: () => number, offers: number, sets: number): { sets: StageMod[][]; chances: Map<StageMod, number> } {
+/** 発現の候補の置き場 (tag = 勢力、plain = 普通の MOD だけ)。drawOffers と revealPool が同じ物を引く */
+function revealPools(data: PatchData, item: StageItem, hidden: StageMod): (tag: string | null, plain: boolean) => Candidate[] {
   const u = hidden.unrevealed!;
   const pools: ModPool[] = ["normal", "desecrated", ...(u.altered ? (["otherworldly"] as const) : [])];
   const base = { floor: u.floor, exclusiveAnyLevel: !u.gnawed, except: hidden };
-  const P = (tag: string | null, plain: boolean): Candidate[] => pool(data, item, hidden.side, { ...base, pools: plain ? ["normal"] : pools, tag });
+  return (tag, plain) => pool(data, item, hidden.side, { ...base, pools: plain ? ["normal"] : pools, tag });
+}
+/**
+ * 今の未発現の枠の発現に出うる MOD と段 (重みが 0 より大きい段の index)。drawOffers の置き場と同じ (勢力の保証 = 勢力の MOD + 普通の MOD、腐食 = 普通の MOD だけ)。
+ * シミュの発現の MOD の窓で、出ない段・付かない冒涜専用の MOD を灰色にする (S-38、10-30 オーナー「元の形」= % は出さない)。未発現が無ければ空
+ */
+export function revealPool(data: PatchData, item: StageItem): Array<{ modId: string; tiers: number[] }> {
+  const hidden = allMods(item).find((m) => m.unrevealed);
+  const u = hidden?.unrevealed;
+  if (!hidden || !u) return [];
+  const P = revealPools(data, item, hidden);
+  const all = u.faction ? [...P(u.faction, false), ...P(null, true)] : P(null, !!u.plain);
+  const out = new Map<string, Set<number>>();
+  for (const c of all) for (const t of c.tiers) if (t.w > 0) (out.get(c.mod.id) ?? out.set(c.mod.id, new Set()).get(c.mod.id)!).add(t.index);
+  return [...out].map(([modId, s]) => ({ modId, tiers: [...s].sort((a, b) => a - b) }));
+}
+export function drawOffers(data: PatchData, item: StageItem, hidden: StageMod, rng: () => number, offers: number, sets: number): { sets: StageMod[][]; chances: Map<StageMod, number> } {
+  const u = hidden.unrevealed!;
+  const P = revealPools(data, item, hidden);
   // 候補に出た瞬間の確率 = その段の重み ÷ 引いた置き場の全部の重み
   const chances = new Map<StageMod, number>();
   const shareOf = new Map<Candidate, number>();

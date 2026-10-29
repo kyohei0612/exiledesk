@@ -12,7 +12,8 @@
 import { computed, ref } from "vue";
 import ModTable from "../../../components/for-share/mod-list/ModTable.vue";
 import TreeModPick from "./TreeModPick.vue";
-import { revealAimsOf } from "./tree-reveal-aims";
+import { revealAimsOf, revealTiersOf } from "./tree-reveal-aims";
+import { flag } from "../../../web/release-flags";
 import { useTree } from "./use-tree";
 import { craftStage as s } from "../../../state/craft-stage";
 import { handName } from "./tree-names";
@@ -26,9 +27,13 @@ const props = defineProps<{ modelValue: boolean; big?: boolean; noCheck?: boolea
 const emit = defineEmits<{ "update:modelValue": [boolean]; add: [Aim]; echo: [boolean] }>();
 const t = useTree();
 const picking = ref(false);
-/** 発現で出うる MOD (完成の狙いは窓の ☑ にもあるが、窓では全部から選べる) */
-const allow = computed(() => { const d = s.data.value; return picking.value && d && props.item && props.hand ? revealAimsOf(d, t.doc.value, props.boxId, props.item, { ...props.hand, veil: "pick" }).map((a) => a.modId) : []; });
-const can = (r: ListRow, modId?: string): boolean => allow.value.includes(modId ?? r.id);
+/**
+ * 発現で出うる MOD と段 (完成の狙いは窓の ☑ にもあるが、窓では全部から選べる)。スイッチ revealGrey の下はエンジンの revealPool から段ごと (S-38: 出ない段・
+ * 付かない冒涜専用の MOD・付いている MOD は灰色)、閉じている間は乱数で引いて見えた MOD (段は見ない)
+ */
+const tiers = computed((): Map<string, Set<number>> | null => { const d = s.data.value; return flag("revealGrey") && picking.value && d && props.item && props.hand ? revealTiersOf(d, t.doc.value, props.boxId, props.item, { ...props.hand, veil: "pick" }) : null; });
+const allow = computed(() => { if (tiers.value) return [...tiers.value.keys()]; const d = s.data.value; return picking.value && d && props.item && props.hand ? revealAimsOf(d, t.doc.value, props.boxId, props.item, { ...props.hand, veil: "pick" }).map((a) => a.modId) : []; });
+const can = (r: ListRow, modId?: string, tier?: number): boolean => { const id = modId ?? r.id; return tier != null && tiers.value ? !!tiers.value.get(id)?.has(tier) : allow.value.includes(id); };
 function pick(a: Aim): void { picking.value = false; emit("add", a); }
 /** PC は ☑ を付けた時点で窓を開く (選ぶまで ☑ は付けない)。外すのはそのまま */
 function onCheck(e: Event): void {
@@ -63,10 +68,10 @@ function onCheck(e: Event): void {
         <button type="button" data-tree-hand-veil-close class="ml-auto px-2 text-[20px] leading-none opacity-70 hover:opacity-100" :title="tr('閉じる (選ばない)', 'Close (pick nothing)')" @click="picking = false">×</button>
       </div>
       <div class="min-h-0 flex-1 overflow-y-auto">
-        <ModTable overlay :data="s.data.value" :item="item" :row-dim="(r) => !can(r)">
+        <ModTable overlay :data="s.data.value" :item="item" :row-dim="(r) => (tiers ? !r.tiers.some((x) => can(r, x.modId, x.tier)) : !can(r))">
           <template #tier-actions="{ row: r, tier: tt }">
             <td class="w-32 whitespace-nowrap py-0.5 text-right">
-              <button v-if="can(r, tt.modId)" type="button" data-mod-pick data-tree-hand-veil-tier class="tbtn" :title="tr(`${tt.rank} 以上が発現で選べたら当たり`, `A hit if ${tt.rank}+ is revealed`)" @click.stop="pick({ modId: tt.modId ?? r.id, tier: tt.tier })">{{ tr("発現で選ぶ", "Pick") }}</button>
+              <button v-if="can(r, tt.modId, tt.tier)" type="button" data-mod-pick data-tree-hand-veil-tier class="tbtn" :title="tr(`${tt.rank} 以上が発現で選べたら当たり`, `A hit if ${tt.rank}+ is revealed`)" @click.stop="pick({ modId: tt.modId ?? r.id, tier: tt.tier })">{{ tr("発現で選ぶ", "Pick") }}</button>
             </td>
           </template>
         </ModTable>

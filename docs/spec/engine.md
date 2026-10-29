@@ -97,7 +97,7 @@
 
 - **E-60 冒涜の MOD は 1 つまで。冒涜の MOD (未発現・発現済み) がある品には骨は打てない (置き換わらない)。** 先に消去などで消す。 (`oneDesecratedMod`) — 有効 / 説明文、オーナー 10-24「消さんと入れ替わらんやろ」 / 見張り: golden
 - **E-61 骨の側: 両側が空いていれば半々。満杯なら固定以外から等しく 1 つ消して、消した側に付く。** マジックは側 1 つずつ。 — 有効 / CoE poe2_desecrate (10-16)、poe2wiki「If it removes a Prefix, it will add a Prefix」 / 外の正解: CoE
-- **E-62 発現の候補は 3 つ。冒涜専用 MOD の個数は 1 / 2 / 3 個 = 85 / 14 / 1 %、冒涜専用どうしの重みは全部同じ、同じ系統は 2 つ出ない。** 残りは一般 MOD から重みで (同じ系統は抜く)。ルーンの MOD はルーンを差していれば候補に出る。候補を作るのは `drawOffers` 1 つ。 — 有効 / Reddit の指輪 563 回 (他の部位も指輪の比率、オーナー 10-10)、CoE getRevealPicks、オーナーがトレードで確認 10-20 / 見張り: held-odds-parity
+- **E-62 発現の候補は 3 つ。冒涜専用 MOD の個数は 1 / 2 / 3 個 = 85 / 14 / 1 %、冒涜専用どうしの重みは全部同じ、同じ系統は 2 つ出ない。** 残りは一般 MOD から重みで (同じ系統は抜く)。ルーンの MOD はルーンを差していれば候補に出る。候補を作るのは `drawOffers` 1 つ。出うる MOD と段 (重み > 0) の一覧は同じ置き場から `revealPool` (シミュの発現の窓の灰色、S-38、10-30)。 — 有効 / Reddit の指輪 563 回 (他の部位も指輪の比率、オーナー 10-10)、CoE getRevealPicks、オーナーがトレードで確認 10-20 / 見張り: held-odds-parity
 - **E-63 冒涜専用 MOD はアイテムレベルを見ない。噛み切られた骨だけは見る (アイテムレベル 64 以下にだけ打てる、`GNAWED_MAX_ILVL`)。古代の骨はアイテムレベル 40 未満に打てない。** — 有効 / メモ poe2-craft-rules-confirmed、用語集 / 見張り: golden
 - **E-64 骨の部位は item-classes から (`desecrationBoneFor`)。** セプターにも打てる (候補は一般 MOD だけ)。ジュエルは保存された頭蓋骨だけ。変質した鎖骨は装飾品だけ。 — 有効 / poe2wiki「Sceptres do not have exclusive desecrated…」、オーナー 10-11・10-14 / 見張り: `tests/item-classes.test.ts`
 - **E-65 印から打つ骨の段の下限はアイテムレベル × 0.4 の切り捨て (`markFloorOf`)。** 印 (固定していない物) があれば必ず印を置き換える。 — 有効 / CoE poe2_desecrate、10-16 v0.1.531 / 外の正解: CoE
