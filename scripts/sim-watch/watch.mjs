@@ -87,10 +87,17 @@ function makeWatcher(c) {
 
   /** (1)(3) PC: 箱の札・次の手・精査の印を読んで木と比べる。次の手の文を箱ごとに返す (スマホと比べる) */
   async function checkPc(t, doc) {
+    // 消去の直線を畳んだ札 (S-28b、スイッチ stripFold) は全部開いてから読む (畳んだ間の箱は描かないので「木にある箱が画面に無い」と出た、10-29 深夜 v0.1.643 の後)
+    for (let i = 0; i < 20; i++) {
+      const opened = await ev(`(() => { const f = document.querySelector("[data-tree-strip-fold]"); f?.click(); return !!f; })()`);
+      if (!opened) break;
+      await sleep(500);
+    }
     const boxes = await ev(`[...document.querySelectorAll("[data-tree-box]")].map((b) => ({ id: b.getAttribute("data-box-id"), back: b.querySelector("[data-tree-back-tag]")?.innerText ?? null, hand: b.querySelector("[data-tree-next-hand]")?.innerText ?? null, issues: [...b.querySelectorAll("[data-tree-issue]")].map((x) => x.getAttribute("title") || x.innerText) }))`);
     const hands = {}, issues = [];
     const seen = new Set(boxes.map((b) => b.id));
-    for (const id of Object.keys(doc.boxes)) if (!seen.has(id)) bad(t.key, `PC ${id}`, "木にある箱が画面に無い", "", id);
+    // まとめて描かない箱 (S-66 の merged、↩ でまとめ先へ) は画面に無いのが決まり (S-142。v0.1.643 で mergeOpen を出した後に 20 件出た)
+    for (const [id, b] of Object.entries(doc.boxes)) if (!seen.has(id) && !(b.merged && b.back)) bad(t.key, `PC ${id}`, "木にある箱が画面に無い", "", id);
     for (const b of boxes) {
       const d = doc.boxes[b.id];
       if (!d) { bad(t.key, `PC ${b.id}`, "画面の箱が木に無い", b.id, ""); continue; }
@@ -272,7 +279,11 @@ function makeWatcher(c) {
   /** (6) 外れで打つ前と同じ手を選んだら、新しい箱を作らず打つ前 / 同じ形の箱へ戻るか (PC。手は棚で持ってカードを押す) */
   async function checkSameHand(t) {
     const doc = await readDoc();
-    const cands = missBoxes(doc).filter((b) => !b.hand && (doc.boxes[b.parent].hand.omens ?? []).length === 0).slice(0, 2);
+    // 打つ前の箱と中身 (S-60) が同じ外れの箱だけ (S-51 は中身の同じ箱へだけ戻る。狙いが消えた・外れの側や数が変わった箱は戻らないのが決まり。
+    // 前は外れの箱を全部試し、sameShape2 の b14 (スピリットが消えた = 打つ前の b6 と中身が違う) で「箱が増えた・戻りが付かない」と出た、10-29 深夜 最終チェック長 4)
+    const sameAsParent = async (b) => (await ev(`(() => { const M = window.__simMonkey; const a = M?.shapeOf("${b.id}"), p = M?.shapeOf("${b.parent}"); return !!a && !!p && JSON.stringify(a) === JSON.stringify(p); })()`)) === true;
+    const cands = [];
+    for (const b of missBoxes(doc).filter((x) => !x.hand && (doc.boxes[x.parent].hand.omens ?? []).length === 0)) { if (cands.length >= 2) break; if (await sameAsParent(b)) cands.push(b); }
     // 同じ形の箱 (自動の戻り先) と同じ手も 1 つ (cd9e053f): 自動の戻り先に手があり、お告げの無い物
     const auto = missBoxes(doc).find((b) => !b.hand && b.autoBack && doc.boxes[b.back]?.hand && !(doc.boxes[b.back].hand.omens ?? []).length && !cands.includes(b));
     const plans = [...cands.map((b) => ({ box: b.id, hand: doc.boxes[b.parent].hand, why: "打つ前の手" })), ...(auto ? [{ box: auto.id, hand: doc.boxes[auto.back].hand, why: "同じ形の箱 (自動の戻り先) の手" }] : [])];
