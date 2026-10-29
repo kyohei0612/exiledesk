@@ -169,7 +169,8 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     const b = doc.value.boxes[id];
     if (!b) return;
     const { x, y, zoom: z } = f.viewport.value, w = f.dimensions.value.width, h = f.dimensions.value.height, m = 24;
-    const sx = b.x * z + x, sy = b.y * z + y, sw = BOX_W * z, sh = BOX_H * z;
+    // スイッチ nextInView (S-147c): 箱の本当の高さ + 下の ＋ まで (帯「! 未設定」の下に ＋ を隠さない)
+    const sx = b.x * z + x, sy = b.y * z + y, sw = BOX_W * z, sh = (flag("nextInView") ? (f.findNode(id)?.dimensions.height || BOX_H) + NEXT_H : BOX_H) * z;
     const out = sx < m || sy < m || sx + sw > w - m || sy + sh > h - m;
     if (center || out) await f.setCenter(b.x + BOX_W / 2, b.y + BOX_H / 2, { zoom: z });
   }
@@ -183,12 +184,20 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     seen = new Set(now);
     if (!fresh.length) return;
     await nextTick(); await nextTick();
+    // スイッチ nextInView (S-147c): 箱の高さが測れて並べ直し (use-row-settle) が済むまで待つ (新しい箱の位置と高さが 2 コマ続けて同じ、最長 30 コマ)
+    if (flag("nextInView")) {
+      const sig = (): string => fresh.map((id) => { const b = doc.value.boxes[id]; return b ? `${b.x},${b.y},${f.findNode(id)?.dimensions.height ?? 0}` : ""; }).join("|");
+      let last = "", same = 0;
+      for (let i = 0; i < 30 && same < 2; i++) { await new Promise((r) => requestAnimationFrame(r)); const s = sig(); same = s === last ? same + 1 : 0; last = s; }
+    }
     // 箱がまとめて戻った (白紙 → 戻す・レシピを開いた等、4 つ以上) は整列の後と同じ見え方 (開いた時の寄り、モンキー 9 の 7)
     if (fresh.length > 3) { await openView(); return; }
     const ys = new Set(fresh.map((id) => doc.value.boxes[id]?.y));
-    const { x, y, zoom: z } = f.viewport.value, w = f.dimensions.value.width, h = f.dimensions.value.height, m = 8;
+    // nextInView: 帯「! 未設定」(TreeUnsetBar、高さ 44) が数え直しの間だけ消えていても、帯の分を下に空けて数える (新しい箱はたいてい未設定で、帯がすぐ戻る)
+    const barGap = flag("nextInView") && flag("unsetMark") && !document.querySelector("[data-tree-unset-bar]") ? 44 * pageZ.value : 0;
+    const { x, y, zoom: z } = f.viewport.value, w = f.dimensions.value.width, h = f.dimensions.value.height - barGap, m = 8;
     const row = Object.values(doc.value.boxes).filter((b) => ys.has(b.y));
-    const l = Math.min(...row.map((b) => b.x)), r = Math.max(...row.map((b) => b.x + BOX_W)), t0 = Math.min(...row.map((b) => b.y)), b0 = Math.max(...row.map((b) => b.y + (f.findNode(b.id)?.dimensions.height || BOX_H)));
+    const l = Math.min(...row.map((b) => b.x)), r = Math.max(...row.map((b) => b.x + BOX_W)), t0 = Math.min(...row.map((b) => b.y)), b0 = Math.max(...row.map((b) => b.y + (f.findNode(b.id)?.dimensions.height || BOX_H))) + (flag("nextInView") ? NEXT_H : 0);
     const out = l * z + x < m || t0 * z + y < m || r * z + x > w - m || b0 * z + y > h - m;
     if (!out) return;
     // 今の倍率で入るなら、入る所まで最小限だけ動かす (手を足すたびに上へ戻すと組んでいる所を見失う)。入らない時だけ開いた時の寄りへ
