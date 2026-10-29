@@ -127,7 +127,8 @@ async function tab(port, browser, fixed = false) {
     await until(`document.querySelector("#app") && document.querySelector("#app").children.length > 0`, 20000);
     await after(300, 2500);
   };
-  return { send: c.send, on: c.on, ev, until, settle, size, go, click, key, fresh, reqs, errors, consoleErr, close: c.close };
+  const shot = async (path) => { const s = await c.send("Page.captureScreenshot", { format: "png" }); if (s.result?.data) writeFileSync(path, Buffer.from(s.result.data, "base64")); };
+  return { send: c.send, on: c.on, ev, until, settle, size, go, click, key, fresh, shot, reqs, errors, consoleErr, close: c.close };
 }
 
 /** 窓なし Chrome を立て、n 枚のタブ (それぞれ別の部屋) を返す。close で Chrome ごと止める */

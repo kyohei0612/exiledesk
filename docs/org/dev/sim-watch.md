@@ -8,6 +8,7 @@
 - 開発版 (スイッチの下も): `node scripts/sim-watch/watch.mjs --dev` (1461)。開発版の基準が無いので、本番の作りの基準 (出した版) と比べる = 出した後に変わった所が「前と違う」で出る。
 - `--only <key>` で木 1 つ、`--shots <dir>` で絵 (見たらすぐ消す)、`--update` で今の数を baseline.json に書く (わざと動きを変えた時だけ。書いたら commit)。
 - 1 回 5〜8 分 (100 人回す・テスト走行を木ごとに 1 回)。終わると Chrome ごと閉じる。合わない所があれば終わりの値 1。
+- 木はタブ 3 枚 (`--tabs N`、それぞれ別の部屋) で並べて回し、押した後は画面が落ち着くまで待つ (固定の秒では待たない、G-21。道具は app-watch の lib.mjs の openTabs・settle、rules.mjs・lines.mjs にも settle を sleep として渡す)。10-29 の 1461 で 714 → 309 秒 (数えは recipeV1 の保存の形に watch.mjs が合っていないので比べられず、v1 への合わせはシミュ部)。
 
 ## 置き場
 - watch.mjs (本体) / cdp.mjs (窓なし Chrome) / doc.mjs (木の側の答え: 段 = 箱の高さ ÷ 360 + 1 (スイッチ lineShort の作りは親をたどる深さ、S-68。ページの data-flag-lineshort で切り替える)、戻り先、再度挑戦・統合)。doc.mjs は画面の作りの関数を呼ばない (同じ関数で答えを作ると、関数が違っていても合う)。
