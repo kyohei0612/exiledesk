@@ -4,7 +4,7 @@
 // 見本は画面と同じ sampleOf (S-74、箱に描いている物 = S-60 の比べの元)。grow は猿の口で手を乱暴に足す (モンキーの形、R-18)。
 (() => {
   const M = window.__simMonkey;
-  const modOf = (m) => ({ side: m.side, modId: m.modId, tier: m.tierName ?? null, fractured: !!m.fractured, desecrated: !!m.desecrated, unrevealed: !!m.unrevealed });
+  const modOf = (m) => ({ side: m.side, modId: m.modId, tier: m.tierName ?? null, tierIndex: m.tierIndex ?? null, fractured: !!m.fractured, desecrated: !!m.desecrated, unrevealed: !!m.unrevealed });
   /** 木と、箱ごとの見本 1〜4 (作れない見本は null) と描いた箱の位置 */
   async function facts(seeds = 4) {
     const { sampleOf } = await import("/src/services/simulator/tree/tree-sample.ts");
@@ -25,7 +25,10 @@
     const pos = {};
     for (const e of document.querySelectorAll("[data-tree-box]")) { const id = e.getAttribute("data-box-id"), b = d.boxes[id]; if (b) pos[id] = { x: b.x, y: b.y, w: e.offsetWidth, h: e.offsetHeight }; }
     delete d.startRarity;
-    return { doc: d, samples, pos };
+    // 完成形の段の読み方 (データの段の数と MOD の出どころ)。エッセンスの MOD は段の名前の T が普通の MOD の段で数えた物で完成形の段と合わないので、段の番号で比べる (tier-rank の tierIndexOf と同じ数え)
+    const goals = {};
+    for (const a of d.memoAims ?? []) { const mod = data.mods.get(a.modId); goals[a.modId] = { tiers: mod?.tiers.length ?? null, source: mod?.source ?? null }; }
+    return { doc: d, samples, pos, goals };
   }
   /** 回した時の止まり (画面と同じ tree-run を種 1 で)。行き先へ移ろうとして箱が無い (noBox) を数える */
   function stops(n = 30) {
@@ -46,11 +49,13 @@
       const pick = one(cand);
       if (pick.back) M.setBack(pick.id, null);
       if (pick.done) M.setDone(pick.id, false);
+      // 手を足せなかった時は外した決めを戻す (戻さないと人が × で外した箱と同じ = S-50 で付け直さない箱が残り、J2 の読み違いになる、10-30)
+      const undo = () => { if (pick.back) M.setBack(pick.id, pick.back); if (pick.done) M.setDone(pick.id, pick.done === "fail" ? "fail" : true); };
       const open = M.addable().filter((b) => !b.needAim && b.id === pick.id);
-      if (!open.length) { log.push(`${pick.id}: 決めを外しても足せない`); continue; }
+      if (!open.length) { log.push(`${pick.id}: 決めを外しても足せない`); undo(); continue; }
       const at = pick.id;
       const shelf = M.shelf(at).filter((x) => x.ok);
-      if (!shelf.length) { log.push(`${at}: 棚が空`); continue; }
+      if (!shelf.length) { log.push(`${at}: 棚が空`); undo(); continue; }
       const bag = shelf.flatMap((x) => Array(LIKE[x.key] ?? (x.key.startsWith("essence") ? 2 : 1)).fill(x.key));
       const key = one(bag);
       const okOmens = M.omens(at, key).filter((o) => o.ok).map((o) => o.key);
@@ -68,6 +73,7 @@
       }
       const res = M.add(at, key, omens, opt);
       log.push(`${at} ⇒ ${key}${omens.length ? "+" + omens.join("+") : ""}${opt.hitAims ? " ☑" + opt.hitAims.map((x) => x.replace(/^[A-Za-z_]+\//, "")).join("/") : ""}${opt.keep ? " 残す" + opt.keep.map((x) => x.modId.replace(/^[A-Za-z_]+\//, "")).join("/") : ""} → ${res.ok ? (res.boxes ?? []).map((b) => b.id + ":" + b.out).join(" ") : "✗ " + res.problem}`);
+      if (!res.ok) undo();
       // 当たりの箱で MOD の要る物は付きうる狙いの先頭を選ぶ (画面の MOD を選ぶ窓)
       for (const b of M.addable().filter((x) => x.needAim)) { const g = (M.dump().memoAims ?? [])[0]; if (g) M.setAim(b.id, g.modId, g.tier); }
     }

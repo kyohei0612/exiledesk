@@ -46,8 +46,18 @@ const short = (id) => String(id).replace(/^[A-Za-z_]+\//, "");
 export function judgeTree(f, { key, row: rowHook } = {}) {
   const { doc, samples, pos } = f, B = doc.boxes;
   const goals = new Map((doc.memoAims ?? []).map((a) => [a.modId, a]));
-  // 段は完成形の段以上なら狙い (S-60・S-161)。段の数が読めない MOD は狙いの側に倒す
-  const aimTier = (m) => { const g = goals.get(m.modId); if (!g) return false; const n = tierNo(m.tier); return n === null || !g.tier || n <= g.tier; };
+  // 段は完成形の段以上なら狙い (S-60・S-161)。段の数が読めない MOD は狙いの側に倒す。
+  // エッセンスの MOD は段の名前の T が普通の MOD の段で数えた物なので、段の番号 (tierIndex ≥ 段の数 − 完成形の段) で比べる
+  // (前は T の名前で比べ、弱いエッセンスの冷気耐性 T7 を完成形 T3 より下と読んで J5・J1 を出した = 見張りの読み違い、10-30)
+  const ESS = ["essence", "perfect_essence"];
+  const aimTier = (m) => {
+    const g = goals.get(m.modId);
+    if (!g) return false;
+    const gi = f.goals?.[m.modId];
+    if (gi && ESS.includes(gi.source) && gi.tiers && m.tierIndex != null) return !g.tier || m.tierIndex >= gi.tiers - g.tier;
+    const n = tierNo(m.tier);
+    return n === null || !g.tier || n <= g.tier;
+  };
   const present = (s) => new Set(s.mods.filter((m) => !m.fractured && aimTier(m)).map((m) => m.modId));
   const frGoals = (s) => s.mods.filter((m) => m.fractured && goals.has(m.modId)).map((m) => m.modId);
 
@@ -64,7 +74,10 @@ export function judgeTree(f, { key, row: rowHook } = {}) {
       let base;
       if (id === "start" || !b.parent || !B[b.parent]) base = new Set(pr);
       else {
-        const p = heldOf(b.parent, k) ?? heldOf(b.parent, 0) ?? new Set();
+        // 親の見本が作れない箱 (この道では作れない) なら、見本のある一番近い上の箱の印 (前は空にして狙いを全部落とし、J1 を出した = 見張りの読み違い、10-30 pass-armor の猿 b31)
+        let p = null;
+        for (let a = b.parent; a && B[a] && !p; a = B[a].parent) p = heldOf(a, k) ?? heldOf(a, 0);
+        p ??= new Set();
         const ph = B[b.parent].hand;
         if (ph?.currency === "annul" && Array.isArray(ph.keep)) base = new Set(ph.keep.length ? [...p].filter((x) => ph.keep.some((a) => a.modId === x)) : []);
         else base = new Set(p);
@@ -191,6 +204,8 @@ export function judgeTree(f, { key, row: rowHook } = {}) {
     const r = rowOfBox(id);
     look("J6", r);
     if (b.back === "restart") continue;
+    // 見本の無い箱 (中身が分からない) は比べられないので数えない (前は「見本なし」の箱を数えた = 見張りの読み違い、10-30 oWkFcwYX の猿)
+    if (String(b.back).startsWith("match") && !contentSet(id)) continue;
     if (String(b.back).startsWith("match")) { const hit = ids.some((t) => t !== id && (B[t].hand || B[t].done) && same(id, t) === true); if (!hit) bad("J6", r, id, `形の合う箱へ (${b.back}) なのに中身の同じ決めのある箱が無い: ${show(id)}`); continue; }
     if (!B[b.back]) bad("J6", r, id, `↩ の行き先 ${b.back} が木に無い`);
   }
