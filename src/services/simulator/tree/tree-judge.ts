@@ -70,8 +70,12 @@ export function sampleAimed(data: PatchData, doc: TreeDoc, id: string, seed: num
   m.set(id, out);
   return out;
 }
-/** 見本のアイテムの ☑ (sampleAimed で覚えた物。無ければ null) */
-export const aimedOfSample = (id: string, item: StageItem): ReadonlySet<string> | null => AIMED.get(item)?.get(id) ?? null;
+/** 見本を出す時の写し (値を揃えたカード、tree-fixed-values) → 元の見本 */
+const COPY_OF = new WeakMap<StageItem, StageItem>();
+/** copy は sample の写し (☑ は元の見本の物を引く) */
+export const copyOfSample = (copy: StageItem, sample: StageItem): StageItem => { COPY_OF.set(copy, sample); return copy; };
+/** 見本のアイテムの ☑ (sampleAimed で覚えた物。無ければ null)。カードの写しは元の見本で引く (前は引けずに道の当たりの組で数え、エッセンスの狙いが「外れ MOD」と出た、S-82。スイッチ boxShape) */
+export const aimedOfSample = (id: string, item: StageItem): ReadonlySet<string> | null => AIMED.get((flag("boxShape") && COPY_OF.get(item)) || item)?.get(id) ?? null;
 
 export interface Judge {
   /** 箱の見本の中身 (見本ごとに違えば 2 つ以上。見本が作れない箱は null = 分からない) */

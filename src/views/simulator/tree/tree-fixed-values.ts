@@ -7,6 +7,7 @@
 import { makeStageMod, tierIndexOf, type PatchData, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { retext } from "../../../services/simulator/sim-engine";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { copyOfSample } from "../../../services/simulator/tree/tree-judge";
 
 const MID_ROLL = (): number => 0.5;
 
@@ -32,5 +33,6 @@ export function fixedValues(data: PatchData, doc: TreeDoc, item: StageItem): Sta
   // エミュから来た木は暗黙もエミュの振りのまま (完成形の窓 use-tree の goalItem と同じ。前は手の窓のカードだけ 5% → 4%、10-27 モンキー 9 の 9)
   const gi = doc.goalImplicit?.base === doc.base ? doc.goalImplicit : null;
   const imp = gi ? { rollSeed: gi.rollSeed, implicitRoll: gi.implicitRoll, implicitFixed: gi.implicitFixed } : {};
-  return { ...item, ...imp, prefixes: item.prefixes.map(fix), suffixes: item.suffixes.map(fix) };
+  // 写しから元の見本の ☑ を引けるように (カードの「外れ MOD」の札、S-82)
+  return copyOfSample({ ...item, ...imp, prefixes: item.prefixes.map(fix), suffixes: item.suffixes.map(fix) }, item);
 }
