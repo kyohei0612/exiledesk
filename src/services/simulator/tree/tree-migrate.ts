@@ -44,7 +44,7 @@ function healBox(id: string, raw: unknown, ids: ReadonlySet<string>): TreeBox {
   const outs = outsRaw.filter((x): x is string => str(x) && ids.has(x));
   if (outs.length !== outsRaw.length) bad("link", "outs");
   const link = (field: "back" | "parent"): string | null => { const v = b[field] ?? null; if (v === null || (str(v) && (ids.has(v) || (field === "back" && BACK_WORDS.has(v))))) return v as string | null; bad("link", field); return null; };
-  const box: TreeBox = { ...(b as Partial<TreeBox>), id, x: num(b.x, 0), y: num(b.y, 0), out, aim, hand, outs, back: link("back"), done: b.done === "main" ? "main" : null, parent: id === "start" ? null : link("parent") };
+  const box: TreeBox = { ...(b as Partial<TreeBox>), id, x: num(b.x, 0), y: num(b.y, 0), out, aim, hand, outs, back: link("back"), done: b.done === "main" || b.done === "fail" ? b.done : null, parent: id === "start" ? null : link("parent") };
   if (check.size) { box.check = [...check]; box.checkRaw = keep; } else { delete box.check; delete box.checkRaw; }
   return box;
 }
