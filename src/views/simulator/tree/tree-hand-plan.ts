@@ -70,9 +70,16 @@ export const preFillOf = (data: PatchData, item: StageItem, needPre: boolean, au
  * エッセンス・合金 (キーは同じ essence:) は付く MOD がそれ自身の 1 つに決まっているので入れない (オーナー「エッセンスではエッセンスでしか付かんでしょうに」)
  */
 export const FREE_EFFECTS: readonly string[] = ["add", "swap"];
-/** 消去の「残したい MOD」の候補 = この箱のアイテムに付いている MOD (✦ は消えないので出さない。10-27 オーナー「手の窓に今付いている MOD を全部並べる」) */
-export const keepChoicesOf = (data: PatchData, item: StageItem): Array<{ aim: Aim; mod: StageMod }> =>
-  [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured).map((m) => ({ aim: { modId: m.modId, tier: tierRankOf(data, m.modId, m.tierIndex) }, mod: m }));
+/**
+ * 消去の「残したい MOD」の候補 = この箱のアイテムに付いている MOD (✦ は消えないので出さない。10-27 オーナー「手の窓に今付いている MOD を全部並べる」)。
+ * 持った手 (currency・お告げ) があれば、エンジンで打って消えうる MOD だけ (光のお告げなら冒涜だけ。1 つなら確定で消える = 聞かない、S-27b)
+ */
+export function keepChoicesOf(data: PatchData, item: StageItem, currency?: string, omens: readonly string[] = []): Array<{ aim: Aim; mod: StageMod }> {
+  const all = [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured);
+  const outs = currency ? stepOutcomes(data, prepFor(data, item, currency), currency, engineOmens({ omens: omensFor(currency, [...omens]) }))?.filter((o) => !o.void) : null;
+  const gone = outs?.length ? new Set(outs.flatMap((o) => o.removed.map((m) => m.modId))) : null;
+  return all.filter((m) => !gone || gone.has(m.modId)).map((m) => ({ aim: { modId: m.modId, tier: tierRankOf(data, m.modId, m.tierIndex) }, mod: m }));
+}
 /** 棚で選んだ物 → 箱の手 */
 export function handOf(p: HandPick): Hand {
   const used = omensFor(p.held, [...p.omens]);

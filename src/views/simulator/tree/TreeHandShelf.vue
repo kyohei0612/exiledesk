@@ -62,10 +62,11 @@ const rowTags = (it: StageItem | null) => (s.data.value && it ? removeTags(it, b
  * (10-27 夜オーナー「全部消えてよいなら持った瞬間に外れ MOD 表示、残したい MOD に ☑ で狙い表示」。スイッチ heldTags)
  */
 function removeTags(it: StageItem, tags: Map<string, RowTag>): Map<string, RowTag> {
-  if (!isRemove.value) return tags;
-  const keep = new Set(keepAims.value.map((a) => a.modId)), out = new Map(tags);
+  // 確定で消える (候補 1 つ) は聞かないので替えない。替えるのは消えうる候補の MOD だけ (光のお告げなら冒涜だけ、S-27b)
+  if (!keepAsk.value) return tags;
+  const keep = new Set(keepAims.value.map((a) => a.modId)), cand = new Set(keepChoices.value.map((c) => c.mod.modId)), out = new Map(tags);
   for (const m of [...it.prefixes, ...it.suffixes]) {
-    if (m.fractured) continue;
+    if (m.fractured || !cand.has(m.modId)) continue;
     // 残したい外れも「外れ MOD」のまま (名前・値を出さない、S-82。10-28 夜オーナー「消去でハズレ選んだらアイテム枠のハズレみえなくていいし…ハズレはハズレよ」、スイッチ boxShape)
     if (keep.has(m.modId)) { if (!(flag("boxShape") && tags.get(m.modId)?.tone === "bad")) out.delete(m.modId); else out.set(m.modId, tags.get(m.modId)!); }
     else out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`消えてよい MOD (☑ で残したい MOD にできる): ${modText(m)}`, `May be removed (☑ to keep it): ${modText(m)}`) });
@@ -249,7 +250,9 @@ watch(held, (k, old) => {
 });
 /** 消去の「残したい MOD」(10-27 オーナー): ☑ で残したい物を選ぶ。既定 = 全部消えてよい = 消去の箱を同じ形の箱になるまで直線に (stripChain)。☑ があれば消えた / 残ったで分ける */
 const isRemove = computed(() => !!held.value && effectOf(held.value) === "remove");
-const keepChoices = computed(() => { const d = s.data.value, it = item.value; return d && it ? keepChoicesOf(d, it) : []; });
+const keepChoices = computed(() => { const d = s.data.value, it = item.value; return d && it && isRemove.value && held.value ? keepChoicesOf(d, it, held.value, omens.value) : []; });
+/** 残したい MOD を聞くか = 消えうる MOD が 2 つ以上 (1 つ以下は確定で消える = ☑ も 2 ページ目も出さず、結果は 1 箱。光のお告げ + 冒涜 1 つなど、S-27b) */
+const keepAsk = computed(() => isRemove.value && keepChoices.value.length > 1);
 const keepChecked = ref<string[]>((props.current?.keep ?? []).map(aimKey));
 const keepAims = computed((): Aim[] => keepChoices.value.filter((c) => keepChecked.value.includes(aimKey(c.aim))).map((c) => c.aim));
 function toggleKeep(a: Aim): void {
@@ -264,7 +267,7 @@ const keepText = (m: StageMod): string => { const it = item.value ? cardOf(item.
 // 外れは「外れ MOD」だけ (中身は教えない、S-82。10-28 夜オーナー「別にここのチェックでも教えなくていいハズレはハズレよ」、スイッチ boxShape)
 const keepLabel = (c: { aim: Aim; mod: StageMod }): string => (keepJunk(c) ? (flag("boxShape") ? tr("外れ MOD", "Miss mod") : tr(`外れ MOD (${keepText(c.mod)})`, `Miss mod (${keepText(c.mod)})`)) : keepText(c.mod));
 function keepNone(e: Event): void { const was = [...keepChecked.value]; keepChecked.value = []; (e.target as HTMLInputElement).checked = true; warnIfBelow(() => { keepChecked.value = was; }); }
-const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, qualityTo: catTo.value, ...(isRemove.value ? { keep: keepAims.value } : {}) }) : null));
+const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, qualityTo: catTo.value, ...(keepAsk.value ? { keep: keepAims.value } : {}) }) : null));
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
 const preCat = computed((): string | null => (catalysing.value && !afterQuality.value ? autoCat.value : null));
 const kind = computed((): HandKind | null => (hand.value ? kindOf(hand.value) : null));
@@ -376,7 +379,7 @@ function ok(): void {
         </label>
       </div>
       <!-- 消去: 残したい MOD (10-27 オーナー)。既定は全部消えてよい = ✦ 以外は「n MOD 外れ MOD」、同じ形の箱になるまで消去の箱を並べる -->
-      <div v-if="isRemove && !P27" data-tree-hand-keep class="flex flex-col gap-1 text-[12px]">
+      <div v-if="keepAsk && !P27" data-tree-hand-keep class="flex flex-col gap-1 text-[12px]">
         <span class="opacity-80">{{ tr("残したい MOD (☑ の MOD が消えたら「狙いが消えた」。☑ の無い MOD は外れ MOD)", "Mods to keep (a ☑ mod removed = Target lost; unchecked mods are misses)") }}</span>
         <label data-tree-hand-keep-none class="flex min-h-7 cursor-pointer items-center gap-2 max-md:min-h-11">
           <input type="checkbox" :checked="!keepAims.length" @change="keepNone($event)" />{{ tr(`全部消えてよい (同じ形の箱になるまで${handName("annul")}の箱を並べる)`, `Anything may go (${handName("annul")} boxes until a box of the same shape)`) }}
@@ -427,7 +430,7 @@ function ok(): void {
         <button type="button" data-tree-hand-cancel class="g-btn !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="release()">{{ tr("キャンセル", "Cancel") }}</button>
         <button type="button" data-tree-hand-aim-step class="g-btn-red !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="aimStep = true">{{ flag("barUse") ? (current ? tr("使う (狙いを選び直す) ›", "Use (pick targets again) ›") : tr("使う (狙いを選ぶ) ›", "Use (pick targets) ›")) : current ? tr("狙いを再度選ぶ ›", "Pick targets again ›") : tr("狙いを選ぶ ›", "Pick targets ›") }}</button>
       </div>
-      <div v-else-if="isRemove && P27" class="flex gap-2">
+      <div v-else-if="keepAsk && P27" class="flex gap-2">
         <button type="button" data-tree-hand-cancel class="g-btn !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="release()">{{ tr("キャンセル", "Cancel") }}</button>
         <button type="button" data-tree-hand-keep-step class="g-btn-red !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="keepStep = true">{{ tr("使う ›", "Use ›") }}</button>
       </div>
@@ -458,7 +461,7 @@ function ok(): void {
         </div>
       </div>
     <!-- スマホの消去の 2 ページ目「残したい MOD」(aimStep のページと同じ形。上に ☑ の並び、一番下に全部消えてよい。10-27 昼オーナー) -->
-      <div v-if="P27 && keepStep && held && isRemove" data-tree-hand-keep-page class="fixed inset-0 z-[320] flex flex-col bg-[#15110c] text-[14px]">
+      <div v-if="P27 && keepStep && held && keepAsk" data-tree-hand-keep-page class="fixed inset-0 z-[320] flex flex-col bg-[#15110c] text-[14px]">
         <div class="min-h-0 flex-1 overflow-y-auto px-3 pb-3 pt-4 text-center">
           <p class="break-words text-[12px] text-[#9a8a70]">{{ hand ? handLabel(hand) : handName(held) }}</p>
           <h2 class="mt-1 text-[17px] font-bold text-[#f0e4c8]">{{ tr("残したい MOD", "Mods to keep") }}</h2>
