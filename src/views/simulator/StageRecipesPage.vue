@@ -139,7 +139,7 @@ onMounted(() => { before = window.scrollY; window.scrollTo(0, 0); window.addEven
 onMounted(() => setLeaveGuard((to) => !to.startsWith("page=sim-") && dirty.value, { save: () => void quickSave() }));
 onBeforeUnmount(() => { setLeaveGuard(null); if (!treePage.value) t.resetAll(); });
 onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); clearTimeout(noteT); const y = before; requestAnimationFrame(() => window.scrollTo(0, y)); });
-/** スマホ (768px 未満) は「PC で開いてください」だけ (SimPcOnly、10-25)。スイッチ simPhone が入っていれば PC と同じ中身 (縦積みは max-md の寸法) */
+/** スマホの形 (1280 未満、U-53) は「PC で開いてください」だけ (SimPcOnly、10-25)。スイッチ simPhone が入っていれば PC と同じ中身 (縦積みは max-md の寸法) */
 const phone = usePhone();
 const SIM_PHONE = flag("simPhone");
 </script>

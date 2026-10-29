@@ -1,5 +1,5 @@
 <!--
-  PhoneTreePage.vue — シミュのスマホ版のツリーのページ (768px 未満、スイッチ simPhone。2026-10-25 オーナー「その間スマホ版つくるか」、案 sim28-phone-quiz-mock)。
+  PhoneTreePage.vue — シミュのスマホ版のツリーのページ (スマホの形 = 1280 未満 (U-53)、スイッチ simPhone。2026-10-25 オーナー「その間スマホ版つくるか」、案 sim28-phone-quiz-mock)。
   木は描かず質問で進める (use-phone-quiz): ① 何を打つ? → ② 結果ごとにどうする? → 残りの道 → 全部決まったら完成。木は PC と同じ TreeDoc (use-tree) なので PC と行き来できる。
   ベース選び・完成の MOD は PC と同じ TreeGoalPage (TreeOverlays、スマホはページで縦積み)、棚は PC と同じ TreeHandPage。
   木の外の動き (白紙ならベース選びへ・離れる時の確かめ・段の URL) は SimTreePage の script がそのまま受け持つ (スマホでも動いている)

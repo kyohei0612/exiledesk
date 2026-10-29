@@ -316,7 +316,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         :lead="tr('ベースを選び、狙いの MOD を決めると、スタートから完成までの道をツリーで組めます。100 人回して完成の割合と費用を出します', 'Choose a base and your target mods, then lay out the route from the start to the finished item as a tree. Run it 100 times for the finish rate and the cost')"
         @pick="pick" />
     </div>
-    <!-- 768px 未満は縦に積む (完成形のカードが上、表は全部の幅。横に並べると表が 1 文字幅に潰れた、10-23 デザイン部長の気づき・メモ web-phone-layout) -->
+    <!-- スマホの形 (1280 未満、U-53) は縦に積む (完成形のカードが上、表は全部の幅。横に並べると表が 1 文字幅に潰れた、10-23 デザイン部長の気づき・メモ web-phone-layout) -->
     <div v-else data-tree-goal-mods class="flex min-h-0 min-w-0 items-start gap-4 max-md:flex-col max-md:items-stretch">
       <div class="min-w-0 flex-1"><ModTable overlay :data="s.data.value" :item="t.goalItem.value?.item ?? null">
         <!-- 段の行のボタンは「狙いにする」(オーナー 10-22) と、狙いにした段だけその右に「フラクチャー」(印、10-23)。

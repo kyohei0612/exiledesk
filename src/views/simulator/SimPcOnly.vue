@@ -1,5 +1,5 @@
 <!--
-  SimPcOnly.vue — スマホ (768px 未満) でシミュのページを URL で開いた時の一言 (2026-10-25 オーナー「A でいこう」、本番に出す前。
+  SimPcOnly.vue — スマホの形 (1280 未満、U-53) でシミュのページを URL で開いた時の一言 (2026-10-25 オーナー「A でいこう」、本番に出す前。
   ツリーは縦の画面では操作できないので形ごと作り直すまで出さない、メモ sim-decisions の「スマホのツリーは作り直す前提」)。上のタブはデザインの ModeTabs が隠す。
   スイッチ simPhone が入っていれば出さない (ツリーは phone/PhoneTreePage、レシピは PC と同じ中身。SimTreePage・StageRecipesPage が分ける)
 -->

@@ -70,7 +70,7 @@ const btn = "flex h-8 min-w-7 items-center justify-center rounded-md px-1 text-[
       <rect :x="mx(view.x)" :y="my(view.y)" :width="view.w * box.k" :height="view.h * box.k" rx="3" fill="rgba(255,236,190,0.06)" stroke="rgba(255,220,150,0.7)" stroke-width="2" />
     </svg>
     </div>
-    <!-- スマホ (768px 未満) は区切りを隠し % を細くして木の枠 (375 幅で 281px) に収める (帯が 286px で左の「選択」が枠の外に切れた、10-23 モンキー 5) -->
+    <!-- スマホの形 (1280 未満、U-53) は区切りを隠し % を細くして木の枠 (375 幅で 281px) に収める (帯が 286px で左の「選択」が枠の外に切れた、10-23 モンキー 5) -->
     <div class="pointer-events-auto flex max-w-full flex-wrap items-center justify-end gap-0.5 rounded-lg border border-white/10 bg-[#15110c]/95 p-1 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.6)]" role="toolbar" :aria-label="tr('見え方', 'View')">
       <button type="button" data-tree-tool-select :class="[btn, !hand ? 'bg-amber-400/20 text-amber-100' : '']" :aria-pressed="!hand" :title="tr('選択 (箱を組む)', 'Select (edit boxes)')" :aria-label="tr('選択', 'Select')" @click="hand = false">
         <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 3l7 17 2.5-7.5L21 10z" /></svg>

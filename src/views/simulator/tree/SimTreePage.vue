@@ -123,7 +123,7 @@ function measureRow(): void {
   const el = row.value;
   if (!el) return;
   const z = pageZoom();
-  // スマホ (768px 未満) はボタンが何段にも折り返して残りが 240px ほどになり、木がほとんど見えず道具の帯がスタートの箱に重なった (10-23 モンキー 5)。
+  // スマホの形 (1280 未満、U-53) はボタンが何段にも折り返して残りが 240px ほどになり、木がほとんど見えず道具の帯がスタートの箱に重なった (10-23 モンキー 5)。
   // 画面の高さの 7 割は取り、はみ出す分はページを縦に送る
   const phoneMin = isPhoneWidth() ?Math.round((innerHeight / z) * 0.72) : 200;
   rowH.value = Math.max(phoneMin, Math.floor(innerHeight / z - (el.getBoundingClientRect().top + window.scrollY) / z - ROW_BOTTOM));
@@ -370,7 +370,7 @@ const glowOf = (b: Box): boolean => {
   if (g.startsWith("cur:")) return handUses(b, g.slice(4));
   return b.out === "hit" && !!b.aim && aimKey(b.aim) === g;
 };
-/** スマホ (768px 未満) は「PC で開いてください」だけ (SimPcOnly、10-25)。スイッチ simPhone でスマホ版 */
+/** スマホの形 (1280 未満、U-53) は「PC で開いてください」だけ (SimPcOnly、10-25)。スイッチ simPhone でスマホ版 */
 const phone = usePhone(), simPhone = flag("simPhone");
 </script>
 

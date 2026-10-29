@@ -2,7 +2,7 @@
   SimTutorialGuide.vue — シミュのチュートリアルの案内 (2026-10-26 夜オーナー「メモ帳みたいな感じでくっつけて、一緒に進行していく」)。
   押す所を光る枠で囲み (周りは暗くしない・押しは止めない)、そのそばにメモ帳のような小さな札 (文 + n / m・最初から・やめる)。手順が進むと札も一緒に動く。
   文と光らせる所は src/data/sim-tutorial.json (tut-data)。手元の dev だけ札の中で書ける (SimTutorialEditor)。進みは use-sim-tutorial が木の中身と窓から毎回求める。
-  PC だけ (768 未満は出さない)。記録は simOp (tutorial-start / step / done、デザイン部長 9 本目の頼み)
+  PC だけ (スマホの形 (1280 未満、U-53) は出さない)。記録は simOp (tutorial-start / step / done、デザイン部長 9 本目の頼み)
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
