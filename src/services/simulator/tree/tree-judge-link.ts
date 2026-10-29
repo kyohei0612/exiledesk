@@ -7,6 +7,7 @@ import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/en
 import type { Judge } from "./tree-judge";
 import { playHand } from "./tree-sample";
 import { MATCH_BACK, subtree, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
+import { flag } from "../../../web/release-flags";
 
 const RESTART = "restart";
 /** 作った順 (箱の id は b<番号>、始まりが先) */
@@ -86,8 +87,11 @@ const canPlay = (data: PatchData, item: StageItem, h: Hand): boolean => { const 
  */
 export function routeOf(data: PatchData, doc: TreeDoc, j: Judge, at: string | null, item: StageItem, aimed: ReadonlySet<string>): string | null {
   // 完成・失敗の箱に着いた人はそのまま (着いた後に数え直さない、S-05)
-  if (at && (doc.boxes[at]?.done || j.fitsItem(item, aimed, at))) return at;
+  // 決め (手・戻り・完成 / 失敗) の無い箱には留めず、中身の同じ決めのある箱があればそこへ (S-64、古いレシピの組み直しで増えた結果の箱 = 10-29 共有の木 ibMlQuAV・A52PouGg・st0SuDWi。スイッチ recipeV1)
+  const unknownOpen = !!at && flag("recipeV1") && !doc.boxes[at]?.hand && !doc.boxes[at]?.back && !doc.boxes[at]?.split;
+  if (at && (doc.boxes[at]?.done || (j.fitsItem(item, aimed, at) && !unknownOpen))) return at;
   const all = j.boxesOf(item, aimed);
+  if (unknownOpen && !all.length) return at;
   const playable = all.find((id) => { const h = doc.boxes[id]?.hand; return !h || canPlay(data, item, h); });
   return playable ?? all[0] ?? null;
 }

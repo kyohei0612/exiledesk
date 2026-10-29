@@ -13,9 +13,15 @@ import { aimHeldOn, isAimMod } from "./tree-aim";
 import { bodyOf } from "./tree-box-shape";
 import { aimOpts, sampleOf, startGoalAims, targetsOf } from "./tree-sample";
 import { boxAims, fractureMarks, keepCut, type TreeDoc } from "./tree-model";
+import { flag } from "../../../web/release-flags";
 
 /** 箱の中身を見る見本の数 (前の boxBody と同じ 4 つ) */
 const SAMPLES = 4;
+/**
+ * 結果が何通りかある箱 (見本 4 つで中身が 2 通り以上) は、続けて MORE 個新しい中身が出なくなるまで見本を足す (MAX まで。S-74 B、スイッチ recipeV1)。
+ * 4 つだと「狙いが消えた」(どの耐性が消えたか 3 通り) の 2 通りしか拾わず、残りの通りの人が止まった (10-29 bone3 の止まり 26)
+ */
+const MORE = 8, MAX = 32;
 const NONE: ReadonlySet<string> = new Set();
 
 /** アイテムに付いている完成形の狙い (段は完成形以上) の MOD */
@@ -94,10 +100,14 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     if (memo.has(id)) return memo.get(id)!;
     let out: Set<string> | null = null;
     if (doc.boxes[id]) {
-      for (let seed = 1; seed <= SAMPLES; seed++) {
+      const more = flag("recipeV1");
+      for (let seed = 1, last = 0; seed <= (more ? MAX : SAMPLES); seed++) {
+        if (seed > SAMPLES && ((out?.size ?? 0) < 2 || seed - last > MORE)) break;
         const s = sampleOf(data, doc, id, seed);
         if (s.note === "none" || s.note?.startsWith("cant:")) continue;
-        (out ??= new Set()).add(contentOf(data, doc, s.item, sampleAimed(data, doc, id, seed)));
+        const k = contentOf(data, doc, s.item, sampleAimed(data, doc, id, seed));
+        if (!out?.has(k)) last = seed;
+        (out ??= new Set()).add(k);
       }
     }
     memo.set(id, out);

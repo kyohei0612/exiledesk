@@ -17,15 +17,17 @@ export function rebuildTree(data: PatchData, src: TreeDoc): TreeDoc {
   const picks = new Map((rec.picks ?? []).map((p) => [p.at, p]));
   // 保存の札とその上の札の全部 (子の札を探す時に、決めのある道か見る)
   const onPath = new Set([...picks.keys()].flatMap((k) => k.split("/").map((_, i, a) => a.slice(0, i + 1).join("/"))));
-  const used = new Set<string>(), decided: string[] = [];
+  const used = new Set<string>(), decided: string[] = [], idOf = new Map<string, string>(), backs: Array<[string, string, string]> = [];
   // [箱, 今の札, 保存の札]。側の鍵の無い保存の札 (S-65 より前の木) は、側に分かれた箱の全部に同じ決めを付ける (S-106・S-65「両方の側を受ける」)
   const q: Array<[string, string, string]> = [["start", "s", "s"]];
   while (q.length) {
     const [id, key, at] = q.shift()!;
     if (!d.boxes[id]) continue;
     const p = picks.get(at);
+    if (!idOf.has(at)) idOf.set(at, id);
     if (p) {
       used.add(at);
+      if (p.back) backs.push([id, p.back, at]);
       if (p.hand) { const aims = p.aims ?? [], pre = p.pre ?? null; applyPick(d, id, p.hand, kindOf(p.hand), aims, pre, onlyOf(data, d, id, p.hand, pre, aims)); }
       const b = d.boxes[id];
       if (b) {
@@ -36,14 +38,19 @@ export function rebuildTree(data: PatchData, src: TreeDoc): TreeDoc {
         if (p.noAutoBack) b.noAutoBack = true;
       }
     }
-    for (const [cid, ck] of childKeysOf(d, id, key)) {
-      const tail = ck.slice(key.length), cand = at + tail, bare = at + tail.replace(/\[[^\]]*\](~\d+)?$/, "");
-      q.push([cid, ck, onPath.has(cand) || !onPath.has(bare) ? cand : bare]);
-    }
+    const kids = childKeysOf(d, id, key), exact = new Set(kids.map(([, ck]) => at + ck.slice(key.length)));
+    for (const [cid, ck] of kids) q.push([cid, ck, savedKeyOf(at, ck.slice(key.length), onPath, exact)]);
   }
-  if (flag("judgeOne")) mergeIntoDecided(data, d, decided);
+  // 前の版で人が選んだ ↩ は付け直す (S-52b の「読めてそのまま回る」)。行き先の札が今の木に無ければ要確認
+  const lostBacks: RecipeOrphan[] = [];
+  for (const [id, back, at] of backs) {
+    const b = d.boxes[id], to = back === "match" || back === "restart" ? back : idOf.get(back);
+    if (!b || b.hand || !to || to === id) { lostBacks.push({ at, why: "back", raw: { back } }); continue; }
+    b.back = to; b.done = null; delete b.autoBack; delete b.merged;
+  }
+  if (flag("judgeOne")) { mergeIntoDecided(data, d, decided); linkLeftovers(data, d); }
   const gone = [...picks.values()].filter((p) => !used.has(p.at)).map((p): RecipeOrphan => ({ at: p.at, why: "gone", raw: p }));
-  const orphans = [...(rec.orphans ?? []), ...gone];
+  const orphans = [...(rec.orphans ?? []), ...lostBacks, ...gone];
   if (orphans.length) d.orphans = orphans;
   // 前の形の木 (箱を全部持っている) から開いた時だけ、前に無かった札の箱が分かる
   if (!isRecipeV1(src)) {
@@ -51,6 +58,19 @@ export function rebuildTree(data: PatchData, src: TreeDoc): TreeDoc {
     for (const [id, k] of pathKeysOf(d)) if (!before.has(k)) d.boxes[id]!.fresh = true;
   }
   return d;
+}
+
+/**
+ * 子の箱の保存の札 (S-106 の古いレシピの読み方): ぴったり合う札 → 側の鍵の無い札 (S-65 より前、側に分かれた箱の全部へ) →
+ * 結果の種類が「打った後」と「外れ」で替わった札 (今の決まりで同じ結果の種類が替わった箱、当たりの MOD と側は同じ。兄弟がぴったり合う札は取らない)。
+ * 無ければぴったりの札 (決めの無い新しい箱)
+ */
+function savedKeyOf(at: string, tail: string, onPath: ReadonlySet<string>, exact: ReadonlySet<string>): string {
+  const bare = (t: string): string => t.replace(/\[[^\]]*\](~\d+)?$/, "");
+  const swap = (t: string): string | null => (/^\/junk/.test(t) ? t.replace(/^\/junk/, "/any") : /^\/any/.test(t) ? t.replace(/^\/any/, "/junk") : null);
+  const sw = swap(tail);
+  const tries = [at + tail, at + bare(tail), ...(sw ? [at + sw, at + bare(sw)] : [])];
+  return tries.find((k, i) => onPath.has(k) && (i < 2 || !exact.has(k))) ?? at + tail;
 }
 
 /**
@@ -69,6 +89,23 @@ function mergeIntoDecided(data: PatchData, d: TreeDoc, decided: readonly string[
   }
 }
 const OPEN: ReadonlySet<string> = new Set(["junk", "any", "junkGone", "lost"]);
+/**
+ * 組み直した後も決めも ↩ も無い箱は、見本の中身が全部同じ 1 つの箱 (手か完成 / 失敗のある箱、浅い段から) の中身に入るならその箱へ自動の ↩ (S-107 ②)。
+ * 前の木に無かった結果の箱 (今の決まりで増えた結果) に着く人は、前の版では回すと「同じ状態の箱へ」移って進んでいた (10-29 共有の木 ibMlQuAV の b22・b24)
+ */
+function linkLeftovers(data: PatchData, d: TreeDoc): void {
+  const j = judgeMemo(data, d), depth = (id: string): number => { let n = 0; for (let b = d.boxes[id]; b?.parent; b = d.boxes[b.parent]) n++; return n; };
+  const seq = (id: string): number => (id === "start" ? -1 : Number(/\d+$/.exec(id)?.[0] ?? 0));
+  const targets = Object.values(d.boxes).filter((b) => b.hand || b.done).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y));
+  for (const b of Object.values(d.boxes)) {
+    if (b.out === "start" || b.hand || b.back || b.done || b.split || b.noAutoBack) continue;
+    const cs = j.contents(b.id);
+    if (!cs?.size) continue;
+    const tos = new Set([...cs].map((k) => targets.find((t) => t !== b.id && !!j.contents(t)?.has(k)) ?? null));
+    const to = tos.size === 1 ? [...tos][0] : null;
+    if (to) { b.back = to; b.autoBack = true; }
+  }
+}
 
 /** 開く木の形 (use-tree の open): スイッチ recipeV1 の下と v1 の木は組み直す。データがまだ無ければ前提だけ (wait = データが来たら開き直す) */
 export function openForm(tree: TreeDoc, data: PatchData | null | undefined): { doc: TreeDoc; wait: boolean } {

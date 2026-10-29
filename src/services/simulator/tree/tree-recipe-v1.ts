@@ -9,7 +9,8 @@ import { CATALYSING, effectOf } from "./tree-hands";
 
 export const RECIPE_V1 = "exiledesk-recipe/1";
 /** 箱 1 つの人の決め。at = 道の札、hand = 打つ手 (☑ は aims、触媒の前のカタリストは pre)、ほかは箱の印 */
-export interface RecipePick { at: string; hand?: Hand; aims?: Aim[]; pre?: string; done?: "main" | "fail"; note?: string; unwanted?: string[]; noAutoBack?: true }
+/** back = 前の版で人が選んだ ↩ の行き先 (道の札、または形の合う箱へ match・作り直し restart。S-52b の「読めてそのまま回る」、組み直しで付け直す) */
+export interface RecipePick { at: string; hand?: Hand; aims?: Aim[]; pre?: string; done?: "main" | "fail"; note?: string; unwanted?: string[]; noAutoBack?: true; back?: string }
 /** 要確認の一覧 (S-107、⑦20 案 A): 組み直した木に札が無い決め (gone)・前の版の人の ↩ (back)・分かれ目 (split)・読めなかった箱 (check)。保存し直しても持ち越す */
 export interface RecipeOrphan { at: string; why: "gone" | "back" | "split" | "check"; raw: unknown }
 
@@ -27,6 +28,13 @@ export function childKeysOf(d: TreeDoc, id: string, key: string): Array<[string,
     seen.set(k, n);
     return [[o, n > 1 ? `${k}~${n}` : k]];
   });
+}
+/** 箱 1 つの道の札 (親をたどる。見本の種にも使う = S-74、箱の id が組み直しで変わっても同じ見本) */
+export function pathKeyOf(d: TreeDoc, id: string): string {
+  const b = d.boxes[id];
+  if (!b || !b.parent || id === "start") return id === "start" ? "s" : `?${id}`;
+  const pk = pathKeyOf(d, b.parent);
+  return childKeysOf(d, b.parent, pk).find(([c]) => c === id)?.[1] ?? `${pk}/?${id}`;
 }
 /** 木の全部の箱の道の札 (スタート = s、上の段から) */
 export function pathKeysOf(d: TreeDoc): Map<string, string> {
@@ -59,7 +67,8 @@ export function toRecipeV1(d: TreeDoc): TreeDoc {
   const out: Record<string, unknown> = { schema: RECIPE_V1 };
   for (const [k, v] of Object.entries(d)) if (!NOT_KEPT.has(k) && v !== undefined) out[k] = clone(v);
   const picks: RecipePick[] = [], orphans: RecipeOrphan[] = clone(d.orphans ?? []);
-  for (const [id, at] of pathKeysOf(d)) {
+  const keys = pathKeysOf(d);
+  for (const [id, at] of keys) {
     const b = d.boxes[id]!, p: RecipePick = { at };
     const viaPre = b.out === "pass" && !!b.parent && preChildOf(d, d.boxes[b.parent]!) === b;
     const h = b.hand ?? b.handBack ?? null;
@@ -71,7 +80,7 @@ export function toRecipeV1(d: TreeDoc): TreeDoc {
     if (b.note) p.note = b.note;
     if (b.unwanted?.length) p.unwanted = [...b.unwanted];
     if (b.noAutoBack) p.noAutoBack = true;
-    if (b.back && !b.autoBack && !b.handBack) orphans.push({ at, why: "back", raw: { back: b.back } });
+    if (b.back && !b.autoBack && !b.handBack) { const to = b.back === "match" || b.back === "restart" ? b.back : keys.get(b.back); if (to) p.back = to; else orphans.push({ at, why: "back", raw: { back: b.back } }); }
     if (b.split) orphans.push({ at, why: "split", raw: { split: clone(b.split) } });
     if (b.check) orphans.push({ at, why: "check", raw: clone(b.checkRaw ?? null) });
     if (Object.keys(p).length > 1) picks.push(p);

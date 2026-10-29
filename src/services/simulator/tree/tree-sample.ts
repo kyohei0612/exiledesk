@@ -7,8 +7,8 @@
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
 import { aimDone, aimHits as hits, applyCurrency, room, sideOfMod, baseSocketsOf, catalystOf, forceKey, freshItem, kindOf, mulberry32, omenBlock, OMEN_FOR, revealOffers, runeIdByName, tierIndexOf, unrevealedOf, useReason, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
-import { fractureStart } from "../../simulator/sim-engine";
-import { catalystFull, catalystTagOf, fillCatalyst } from "../../simulator/sim-engine";
+import { catalystFull, catalystTagOf, fillCatalyst, fractureStart } from "../../simulator/sim-engine";
+import { pathKeyOf } from "./tree-recipe-v1";
 import { aimHeldOn, isAimMod, junkOf } from "./tree-aim";
 import { flag } from "../../../web/release-flags";
 import { CATALYSING as CATALYSING_OMEN, ECHO, ECHO as ABYSSAL_ECHO_OMEN, effectOf, isBone, isCatalyst } from "./tree-hands";
@@ -282,7 +282,7 @@ function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): 
 /** 親の見本 base に親の手を打って、この箱の見本を作る */
 function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox, base: Sample, seed: number, boxId: string, aims: Aim[]): Sample {
   if (!p.hand) return base;
-  const rng = mulberry32(seed ^ 0x5eed ^ (flag("boxShape") ? [...boxId].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7) : boxId.length * 7919));
+  const rng = mulberry32(seed ^ 0x5eed ^ (flag("boxShape") ? [...(flag("recipeV1") ? pathKeyOf(doc, boxId) : boxId)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7) : boxId.length * 7919)); // 種は見本の番号と道の札 (S-74 A、スイッチ recipeV1。箱の id だと組み直しで振り直されるだけで見本が変わった、bone3 の止まり 0 → 26)
   let last: StageApply | null = null;
   // 箱の形 (道の狙いの組) に合う結果だけ、無ければ合わなかった最初の結果 (途中で狙いが消えた結果が当たりの見本になった、10-28 見張り。boxShape)
   // スイッチ judgeOne: 道の狙いの組 (heldSets) では絞らない。見本 = 親の見本にエンジンで打った結果 (大本 1)
