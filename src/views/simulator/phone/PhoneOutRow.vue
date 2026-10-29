@@ -14,9 +14,8 @@ import { backTargetsOf } from "../tree/tree-merge";
 import { handLabel, OUT_LOOK } from "../tree/tree-names";
 import { isMiss, mapPick, phoneRun, usePhoneQuiz } from "./use-phone-quiz";
 import { retryOf, routeText, runText, stepBackText } from "../tree/tree-fail";
-import { sideGroup } from "../tree/tree-hand-plan";
 import { absorbOuts, joinableOf, joinSide, splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
-import { joinableShapeOf } from "../../../services/simulator/tree/tree-shape";
+import { joinableFor, sideGroup } from "../tree/tree-hand-plan";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
@@ -47,7 +46,7 @@ const backTo = computed(() => (box.value?.back ? backTargetsOf(t.doc.value, prop
 const canRetry = computed(() => !!retryOf(t.doc.value, props.boxId, link.value));
 /** まとめられる同じ側の横の当たり (tree-model の joinableOf) */
 /** まとめられる横の箱: 当たりは同じ側の当たり、外れ・狙いが消えたなどは同じ形の箱 (10-26) */
-const joinable = computed(() => { if (box.value && box.value.out !== "hit") return joinableShapeOf(t.doc.value, props.boxId); const g = sideGroup(); return g ? joinableOf(t.doc.value, props.boxId, g) : []; });
+const joinable = computed(() => { if (box.value && box.value.out !== "hit") return joinableFor(t.doc.value, props.boxId); const g = sideGroup(); return g ? joinableOf(t.doc.value, props.boxId, g) : []; });
 /** 動きをまとめる一覧 (同じ側の横の当たりにチェック、既定は全部) */
 const joinOpen = ref(false);
 const joinPick = ref<string[]>([]);

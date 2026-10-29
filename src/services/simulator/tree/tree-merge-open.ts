@@ -9,32 +9,37 @@ import { flag } from "../../../web/release-flags";
 import { sameBody, type BodyOf } from "./tree-box-shape";
 import { subtree, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { heldSets } from "./tree-shape";
+import type { Judge } from "./tree-judge";
 
 const OPEN_OUTS: ReadonlySet<OutKind | "start"> = new Set(["junk", "any", "junkGone"]);
+/** スイッチ judgeOne: 狙いが消えたの箱もまとめる (S-66) */
+const OPEN_JUDGE: ReadonlySet<OutKind | "start"> = new Set(["junk", "any", "junkGone", "lost"]);
 /** 作った順 (箱の id は b<番号>) */
 const seqOf = (id: string): number => Number(/\d+$/.exec(id)?.[0] ?? 0);
 /** 親からの深さ (段) */
 const depthOf = (doc: TreeDoc, id: string): number => { let n = 0; for (let b = doc.boxes[id]; b?.parent; b = doc.boxes[b.parent]) n++; return n; };
 const setKey = (doc: TreeDoc, id: string): string => heldSets(doc, id).map((h) => [...h].sort().join(",")).sort().join("|");
 
-export function mergeOpenSame(doc: TreeDoc, ids: readonly string[], body: BodyOf | undefined): void {
-  if (!flag("mergeOpen") || !body) return;
+/** j = 判定 (tree-judge、スイッチ judgeOne)。渡すと比べは「箱どうし」の fitsBox だけ */
+export function mergeOpenSame(doc: TreeDoc, ids: readonly string[], body: BodyOf | undefined, j?: Judge | null): void {
+  if (!flag("mergeOpen") || (!body && !j)) return;
+  const outs = j ? OPEN_JUDGE : OPEN_OUTS;
   const open = (id: string): boolean => {
     const b = doc.boxes[id];
-    return !!b && OPEN_OUTS.has(b.out) && !b.hand && !b.back && !b.done && !b.split && !b.noAutoBack;
+    return !!b && outs.has(b.out) && !b.hand && !b.back && !b.done && !b.split && !b.noAutoBack;
   };
   for (const id of [...ids].sort((a, b) => seqOf(a) - seqOf(b))) {
     if (!open(id)) continue;
-    const mine = body(id);
+    const mine = j ? "" : body!(id);
     // 体の分からない箱・見本ごとに外れの種類が違う箱 (mixed) はまとめない
-    if (!mine || mine.startsWith("mixed")) continue;
-    const key = setKey(doc, id), below = new Set(subtree(doc, id)), dep = depthOf(doc, id);
+    if (!j && (!mine || mine.startsWith("mixed"))) continue;
+    const key = j ? "" : setKey(doc, id), below = new Set(subtree(doc, id)), dep = depthOf(doc, id);
     // まとめるのは同じ段 (親からの深さが同じ) の箱どうしだけ。違う段の箱へまとめると、その手の線が上の段の決めていない箱へ伸びて線がぐちゃっとなった
     // (10-28 夜オーナー「まだ決めてない＋が出てるのに勝手に線につながれた」)。違う段の同じ形は戻りの自動のつなぎ (S-50) に任せる
     const to = Object.values(doc.boxes)
-      .filter((t) => t.id !== id && !below.has(t.id) && seqOf(t.id) < seqOf(id) && OPEN_OUTS.has(t.out) && !t.back && !t.done && !t.split && depthOf(doc, t.id) === dep)
+      .filter((t) => t.id !== id && !below.has(t.id) && seqOf(t.id) < seqOf(id) && outs.has(t.out) && !t.back && !t.done && !t.split && depthOf(doc, t.id) === dep)
       .sort((a, b) => seqOf(a.id) - seqOf(b.id))
-      .find((t) => body(t.id) === mine && sameBody(body, id, t.id) && setKey(doc, t.id) === key);
+      .find((t) => (j ? j.fitsBox(id, t.id) : body!(t.id) === mine && sameBody(body, id, t.id) && setKey(doc, t.id) === key));
     if (!to) continue;
     const c = doc.boxes[id]!;
     c.back = to.id;

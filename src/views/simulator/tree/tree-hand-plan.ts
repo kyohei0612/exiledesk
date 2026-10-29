@@ -14,7 +14,10 @@ import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, T
 import { aimsOf, handProblem, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { linkSameHit, linkSameShape, linkShapeHit, matchItem, pruneBacks, sameHandReturn } from "../../../services/simulator/tree/tree-shape";
 import { bodyMemo, likeOf, type BodyOf } from "../../../services/simulator/tree/tree-box-shape";
-import { looseOf, stripStops } from "../../../services/simulator/tree/tree-outcome";
+import { looseOf, stripStopByContent, stripStops, stripTargetsOf } from "../../../services/simulator/tree/tree-outcome";
+import { judgeMemo, type Judge } from "../../../services/simulator/tree/tree-judge";
+import { joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
+import { joinableShapeOf, joinSameHit, sameHitsOf } from "../../../services/simulator/tree/tree-shape";
 import { clearHand, drop, fractureMarks, healLost, kindOfHand, setBack, setHand, subtree, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
 import { revealAimsOf } from "./tree-reveal-aims";
@@ -35,8 +38,13 @@ export interface HandPick { held: string; omens: readonly string[]; spam?: boole
  * 棚は出さずに先に当たりの MOD を選ばせる (10-24 モンキー隊長の 1)
  */
 export const needAimOf = (doc: TreeDoc, boxId: string, note: string | null | undefined): boolean => doc.boxes[boxId]?.out === "hit" && !doc.boxes[boxId]?.aim && note === "none";
-/** この箱が品質だけ上げる手の後 (通り抜け) か */
+/**
+ * この箱が品質を上げた後か (前にカタリストを自動で足さない)。スイッチ judgeOne の下では品質は箱の中身 (S-60) なので、見本のカタリストの品質で見る
+ * (「n % まで」の結果の箱も、S-31b)。閉じている間は品質だけ上げる手の後の通り抜けの箱だけ
+ */
 export function afterQualityOf(doc: TreeDoc, boxId: string): boolean {
+  const data = craftStage.data.value;
+  if (flag("judgeOne") && data && doc.boxes[boxId]) { const it = sampleOf(data, doc, boxId, 1).item; return !!it.qualityTag && (it.catalystQuality ?? it.quality ?? 0) > 0; }
   const b = doc.boxes[boxId], p = b?.out === "pass" && b.parent ? doc.boxes[b.parent] : null;
   return !!p?.hand && isCatalyst(p.hand.currency);
 }
@@ -198,6 +206,15 @@ export function hitLoose(d: TreeDoc): BodyOf | undefined {
   const data = craftStage.data.value;
   return flag("boxShape") && data ? bodyMemo(data, d) : undefined;
 }
+/** 判定 (tree-judge、スイッチ judgeOne の時だけ。閉じていれば null) */
+export function judgeOf(d: TreeDoc): Judge | null {
+  const data = craftStage.data.value;
+  return flag("judgeOne") && data ? judgeMemo(data, d) : null;
+}
+/** 中身の同じ当たりの箱 (手で「まとめる」の候補。judgeOne の下では箱どうしの判定、閉じていれば前の sameHitsOf) */
+export function sameHitsFor(d: TreeDoc, id: string): string[] { const j = judgeOf(d); return j ? sameHitsByContent(d, id, j) : sameHitsOf(d, id, hitLoose(d)); }
+/** 同じ親の横の同じ中身の結果の箱 (手で「まとめる」の相手) */
+export function joinableFor(d: TreeDoc, id: string): string[] { const j = judgeOf(d); return j ? joinableByContent(d, id, j) : joinableShapeOf(d, id); }
 /** 同じ当たりの箱にまとめる鍵 = 狙いの側 (エンジンの sideOfMod。setHand の groupOf、10-26 オーナーの決め「同じ側の狙いは当たりの箱 1 つ」) */
 export function sideGroup(): ((a: Aim) => string) | undefined {
   const data = craftStage.data.value;
@@ -213,7 +230,9 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   // 箱の体 (tree-box-shape: 外れの側・種類・数、✦ の側、レアリティ) の違う箱へは戻らない・つながない (10-27 夕オーナー「これは冒涜で付けた外れ MOD、これはエッセンスで付けた外れ MOD」
   // = 次に打てる手が変わる違いは形の違い。スイッチ goalShape)。見本ごとに外れの種類が違う箱はどの箱へもつながない (boxBody の mixed)
   const loose = data ? bodyMemo(data, d) : undefined;
-  const to = flag("goalShape") ? sameHandReturn(d, id, h, loose) : null;
+  // スイッチ judgeOne: 比べは判定の「箱どうし」だけ (S-50b)
+  const j0 = flag("judgeOne") && data ? judgeMemo(data, d) : null;
+  const to = j0 ? sameHandByContent(d, id, h, j0) : flag("goalShape") ? sameHandReturn(d, id, h, loose) : null;
   if (to) { if (d.boxes[id]?.hand) clearHand(d, id); setBack(d, id, to); return id; }
   const had = new Set(Object.keys(d.boxes));
   let at = id;
@@ -221,6 +240,7 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   setHand(d, at, h, kind, aims, only);
   if (kind === "strip") stripChain(d, at, h);
   joinSameShape(d, id);
+  if (flag("judgeOne") && data) { relinkByContent(data, d, had); healLost(d); return at; }
   linkSameShape(d, Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id), loose);
   // まだ手の無い同じ形の外れ・打った後の箱も、先に作った箱へまとめる (S-66、スイッチ mergeOpen)
   mergeOpenSame(d, Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id), loose);
@@ -236,6 +256,23 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
 }
 
 /**
+ * スイッチ judgeOne の組み替えのつなぎ (S-50・S-50b・S-66): 新しい箱と手も戻りも完成も無い箱を、中身の同じ手のある箱へ自動の ↩ (linkByContent)、
+ * まだ手の無い同じ中身の箱をまとめ (mergeOpenSame)、新しい当たりの箱は中身の同じ当たりの箱へ統合し、最後に自動の ↩ を全部「箱どうし」で見直す
+ */
+function relinkByContent(data: PatchData, d: TreeDoc, had: ReadonlySet<string>): void {
+  const j = judgeMemo(data, d);
+  const loose = Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id);
+  linkByContent(d, loose, j);
+  mergeOpenSame(d, loose, undefined, j);
+  for (const b of Object.values(d.boxes)) {
+    if (had.has(b.id) || b.out !== "hit" || b.hand || b.noAutoBack) continue;
+    const to = sameHitsByContent(d, b.id, j)[0];
+    if (to) joinSameHit(d, to, [b.id], true);
+  }
+  pruneByContent(d, j);
+}
+
+/**
  * 全部消えてよい消去 (10-27 オーナー「スピリットが消えた時点で破綻…直線になるはず…同じ箱になるまで消去ツリーが生成されるはず」): 消去 1 回ごとの箱を直線に並べ
  * (☑ が無いので全部外れ MOD、消えた / 残ったで分けない)、木の狙い無しの手のある箱と同じ形 (外れの数、tree-outcome の stripStops) になった所で ↩ その箱。
  * 数はこの箱の見本の外れの数から。初めから同じ形なら消去は打たずに ↩ その箱。同じ形の箱が無ければ全部消した所で戻り先を決めずに置く (足りない所)
@@ -244,6 +281,16 @@ function stripChain(d: TreeDoc, id: string, h: Hand): void {
   const data = craftStage.data.value, b = d.boxes[id];
   if (!data || !b) return;
   if (stripToShape(data, d, id, h)) return;
+  // スイッチ judgeOne: 止まる所が結果ごとに違う時は、消せる所まで直線を並べ、行き先は回す時に人ごとに中身で決める (stripBackOf)。
+  // 全部消した形の中身の同じ箱も無ければ、前と同じく戻り先を決めずに置く (足りない所、人が次の手を足す)
+  if (flag("judgeOne")) {
+    const it0 = sampleOf(data, d, id, 1).item, n = looseOf(it0);
+    let at = id;
+    for (let i = 1; i < n; i++) { const c = d.boxes[at]?.outs[0]; if (!c) return; setHand(d, c, h, "strip"); at = c; }
+    const last = d.boxes[d.boxes[at]?.outs[0] ?? ""];
+    if (last && !stripTargetsOf(data, d, last.id)?.length) { last.back = null; delete last.autoBack; }
+    return;
+  }
   const it0 = sampleOf(data, d, id, 1).item, n = looseOf(it0), stops = stripStops(data, d, id, it0);
   const s = Math.max(-1, ...[...stops.keys()].filter((k) => k <= n));
   const to = s >= 0 ? stops.get(s)! : null;
@@ -265,10 +312,25 @@ function stripChain(d: TreeDoc, id: string, h: Hand): void {
 function stripToShape(data: PatchData, d: TreeDoc, id: string, h: Hand): boolean {
   let it = sampleOf(data, d, id, 1).item;
   const n = looseOf(it), below = new Set(subtree(d, id));
+  // スイッチ judgeOne: 止まる所は消した後のアイテムと中身の同じ手のある箱 (人と箱の判定、tree-outcome の stripStopByContent)
+  const one = flag("judgeOne");
   for (let i = 0; i < n; i++) {
     const outs = (stepOutcomes(data, prepFor(data, it, h.currency), h.currency, engineOmens(h)) ?? []).filter((o) => !o.void).map((o) => o.item);
     if (!outs.length) return false;
-    const tos = new Set(outs.map((x) => matchItem(data, d, x)));
+    const tos = new Set(outs.map((x) => (one ? stripStopByContent(data, d, id, x) : matchItem(data, d, x))));
+    if (one) {
+      const to1 = tos.size === 1 ? [...tos][0] : null;
+      if (to1) {
+        let at = id;
+        for (let k = 0; k < i; k++) { const c = d.boxes[at]?.outs[0]; if (!c) return false; setHand(d, c, h, "strip"); at = c; }
+        const last = d.boxes[d.boxes[at]?.outs[0] ?? ""];
+        if (!last) return false;
+        last.back = to1; last.autoBack = true;
+        return true;
+      }
+      it = outs[0]!;
+      continue;
+    }
     const to = tos.size === 1 ? [...tos][0] : null;
     // 戻る箱は同じレアリティ・✦ の側 (MOD 0 まで消えたレアを白の箱へ戻さない、✦ の違う箱へ戻らない。tree-box-shape の likeOf、スイッチ stripRarity・boxShape)
     if (to && to !== "start" && d.boxes[to]?.hand && !below.has(to) && to !== id && likeOf(data, d, sampleOf(data, d, to, 1).item) === likeOf(data, d, outs[0]!)) {

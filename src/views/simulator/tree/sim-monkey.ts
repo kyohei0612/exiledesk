@@ -30,7 +30,9 @@ import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { runTree } from "../../../services/simulator/tree/tree-run";
 import { checkTreeAsync, NOTICE_KINDS } from "../../../services/simulator/tree/tree-check";
 import { boxShape, sameShape } from "../../../services/simulator/tree/tree-box-shape";
-import { setAim, setBack, setDone } from "../../../services/simulator/tree/tree-model";
+import { judgeOf } from "./tree-hand-plan";
+import { setAim, setBack, setDone, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { pruneBacks } from "../../../services/simulator/tree/tree-shape";
 import { RUN_N } from "./use-tree-run";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { treeHidden } from "../use-sim-shelf";
@@ -196,8 +198,11 @@ export function installSimMonkey(): () => void {
         // 照らしの台本が同じ打ち止めで辿れるよう、使った手の神建ての値段と打ち止め (runTree の既定、画面と同じ)
         prices: Object.fromEntries(memo), capDiv: 2000, capSteps: 20000 };
     },
-    shapeOf(id: string) { const d = s.data.value; return d ? boxShape(d, t.doc.value, id) : null; },
-    sameShape(from: string, to: string) { const d = s.data.value; return d ? sameShape(d, t.doc.value, from, to) : null; },
+    // スイッチ judgeOne: 箱の中身 (見本の中身の鍵、見本ごとに違えば mixed) と「箱どうし」の判定 (S-50b。見張りが同じ物差しで見る)
+    shapeOf(id: string) { const d = s.data.value, j = judgeOf(t.doc.value); if (j) { const c = [...(j.contents(id) ?? [])].sort(); return t.doc.value.boxes[id] ? { held: c, body: c.length > 1 ? `mixed:${id}` : c[0] ?? null } : null; } return d ? boxShape(d, t.doc.value, id) : null; },
+    sameShape(from: string, to: string) { const d = s.data.value, j = judgeOf(t.doc.value); if (j) return to === "match" || to === "restart" ? true : j.fitsBox(from, to); return d ? sameShape(d, t.doc.value, from, to) : null; },
+    /** 自動の ↩ の見直し (tree-shape の pruneBacks、judgeOne の下では箱どうしの判定) を写しに掛けて、外れる戻りの箱を返す (木は変えない) */
+    prune(): string[] | null { const d = s.data.value; if (!d) return null; const x = JSON.parse(JSON.stringify(t.doc.value)) as TreeDoc; pruneBacks(d, x); return Object.keys(x.boxes).filter((id) => !!t.doc.value.boxes[id]?.back && !x.boxes[id]!.back); },
     /** 今の木。startRarity = スタートの本当のレアリティ (start.rarity は保存の形の値で、印も＋の MOD も無い時の白とずれる事がある) */
     dump(): unknown { return { ...JSON.parse(JSON.stringify(t.doc.value)), startRarity: sample("start")?.item.rarity ?? null }; },
   };

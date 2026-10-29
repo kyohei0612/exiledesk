@@ -7,6 +7,7 @@ import { aimHeldOn } from "./tree-aim";
 import { aimKey, type TreeDoc } from "./tree-model";
 import { aimsOf, sampleOf, SINGLE_SEEDS, startGoalAims } from "./tree-sample";
 import { heldSets } from "./tree-shape";
+import { flag } from "../../../web/release-flags";
 
 /** その箱の形 (道で付いている狙いの組 = heldSets) にアイテムが合うか。始めから付いている狙いは数えない */
 export function shapeFit(data: PatchData, doc: TreeDoc, boxId: string): (item: StageItem) => boolean {
@@ -19,7 +20,8 @@ export function shapeFit(data: PatchData, doc: TreeDoc, boxId: string): (item: S
 export function shapeSampleOf(data: PatchData, doc: TreeDoc, boxId: string): StageItem { return shapeSampleWithNote(data, doc, boxId).item; }
 /** 見本と、合う見本が無かった時の印 (cant:unreachable = この道では作れない箱。見張りが箱の data-sample-note で見分ける、10-28 夜 最終チェック長) */
 export function shapeSampleWithNote(data: PatchData, doc: TreeDoc, boxId: string): { item: StageItem; note: string | null } {
-  const fits = shapeFit(data, doc, boxId);
+  // スイッチ judgeOne: 道の狙いの組で選ばない (着いた見本の最初の 1 つ、大本 1)
+  const fits = flag("judgeOne") ? () => true : shapeFit(data, doc, boxId);
   for (let seed = 1; seed <= SINGLE_SEEDS; seed++) {
     const x = sampleOf(data, doc, boxId, seed);
     if (x.note !== "none" && !x.note?.startsWith("cant:") && fits(x.item)) return { item: x.item, note: null };

@@ -7,6 +7,7 @@ import { computed, type Ref } from "vue";
 import { handProblem, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { shapeFits } from "../../../services/simulator/tree/tree-shape";
+import { judgeOf } from "./tree-hand-plan";
 import { craftStage as s } from "../../../state/craft-stage";
 import { tr } from "../../../i18n/lang";
 
@@ -17,6 +18,10 @@ export function useTreeLink(doc: Ref<TreeDoc>, from: Ref<string | null>) {
     const id = from.value, d = s.data.value;
     if (!id || !d) return out;
     const item = sampleOf(d, doc.value, id, 1).item;
+    // スイッチ judgeOne: 戻せるかは「箱どうし」の判定 (中身が同じ箱だけ、S-50b・S-62)
+    const j = judgeOf(doc.value);
+    const fits = (to: string): boolean => (j ? j.fitsBox(id, to) : shapeFits(doc.value, id, to));
+    const diff = j ? tr("中身が違う: この箱の見本と、ここから来る人の狙いの組・外れ・✦・レアリティ・品質のどれかが違う (同じ中身の箱だけ選べる)", "Different contents: the targets, misses, fractures, rarity or quality differ from the runs coming in (only boxes with the same contents can be picked)") : null;
     for (const b of Object.values(doc.value.boxes)) {
       if (b.id === id) { out.set(b.id, tr("自分の箱", "This box itself")); continue; }
       // 分かれ目 (打たずに分ける) は手が無くてもつなげる (どの形でも行の箱へ分かれる、10-22)
@@ -24,14 +29,14 @@ export function useTreeLink(doc: Ref<TreeDoc>, from: Ref<string | null>) {
       // 始まりの箱は帯の「↩ 始めに戻る」と同じ (setBack の "start")。箱だけ手の打てる / 打てないで灰色にしていて、押しても黙って何も起きなかった (10-25 モンキー 4 本目)
       // 10-26 モンキー 7 の 1: 始めの手がこのアイテムに打てない (レアのまま錬金術の箱へ戻る等) なら理由付きでつなげない。「↩ 始めに戻る」も同じ理由で押せない形に (黙って何も起きない、は理由の文で避ける)
       if (b.out === "start") {
-        if (!shapeFits(doc.value, id, b.id)) { out.set(b.id, tr("形が違う: 1 段目は狙いが付いていない形 (ここから来る人は狙いを持っている)", "Different shape: step 1 holds no targets (runs coming in hold some)")); continue; }
+        if (!fits(b.id)) { out.set(b.id, diff ?? tr("形が違う: 1 段目は狙いが付いていない形 (ここから来る人は狙いを持っている)", "Different shape: step 1 holds no targets (runs coming in hold some)")); continue; }
         const why = b.hand ? handProblem(d, item, b.hand) : null;
         out.set(b.id, why ? tr(`1 段目へ戻ると、1 段目の手が打てない: ${why}`, `Back to step 1, its craft can't be used: ${why}`) : null);
         continue;
       }
       if (!b.hand) { out.set(b.id, tr("この箱にはまだ打つ手が無い", "This box has no craft yet")); continue; }
       // 形 (付いている狙いの組) が違う箱へは戻せない (10-26 オーナー「その選択肢が出てくるのは前提狙いMODの状態でなんかする時やろ」、tree-shape の shapeFits)
-      if (!shapeFits(doc.value, id, b.id)) { out.set(b.id, tr("形が違う: この箱で付いている狙いの組と、ここから来る人の狙いが違う (同じ狙いの組の箱だけ選べる)", "Different shape: the targets held here differ from the runs coming in (only boxes with the same targets can be picked)")); continue; }
+      if (!fits(b.id)) { out.set(b.id, diff ?? tr("形が違う: この箱で付いている狙いの組と、ここから来る人の狙いが違う (同じ狙いの組の箱だけ選べる)", "Different shape: the targets held here differ from the runs coming in (only boxes with the same targets can be picked)")); continue; }
       const why = handProblem(d, item, b.hand);
       out.set(b.id, why ? tr(`この箱の手が打てない: ${why}`, `Its craft can't be used here: ${why}`) : null);
     }

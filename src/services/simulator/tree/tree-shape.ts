@@ -8,6 +8,8 @@ import { aimHeldOn, junkOf } from "./tree-aim";
 import { effectOf } from "./tree-hands";
 import { aimOpts, aimsOf, essenceBoxFits, handProblem, playHand, targetsOf } from "./tree-sample";
 import { flag } from "../../../web/release-flags";
+import { judgeMemo } from "./tree-judge";
+import { pruneByContent } from "./tree-judge-link";
 import { aimKey, keepCut, MATCH_BACK, type Aim, type Hand, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc, boxAims, drop, subtree } from "./tree-model";
 
 /**
@@ -470,6 +472,8 @@ export function returnFits(doc: TreeDoc, from: string, to: string, loose?: BodyO
  * (S-50、スイッチ bodyStrict。前の版の木・見本が変わった木の古いつなぎ)。人が付けた ↩ は触らない。外したら true
  */
 export function pruneBacks(data: PatchData, doc: TreeDoc): boolean {
+  // スイッチ judgeOne: 見直しも「箱どうし」の判定 (S-50b)
+  if (flag("judgeOne")) return pruneByContent(doc, judgeMemo(data, doc));
   if (!flag("bodyStrict") || !flag("boxShape")) return false;
   const loose = bodyMemo(data, doc);
   let changed = false;

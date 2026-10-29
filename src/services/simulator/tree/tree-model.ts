@@ -403,6 +403,8 @@ function addHits(d: TreeDoc, b: TreeBox, aims: readonly Aim[], order: (a: Aim) =
 
 /** 「狙いが消えた」を作らなかった箱に、狙いを持って着く道ができたら足す (外れの箱の前。戻り先は人が選ぶ、増えなくなるまで) */
 export function healLost(d: TreeDoc): void {
+  // スイッチ judgeOne: 人は中身の同じ箱にしか入らないので、持って着く道から「狙いが消えた」を足さない (起こりうる結果は見本から、大本 1)
+  if (flag("judgeOne")) return;
   for (let more = true, n = 0; more && n < 20; n++) {
     more = false;
     for (const b of Object.values(d.boxes)) {

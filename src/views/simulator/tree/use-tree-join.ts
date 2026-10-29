@@ -7,8 +7,8 @@
 import { ref } from "vue";
 import { absorbOuts, joinableOf, joinSide } from "../../../services/simulator/tree/tree-model-ops";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { joinableShapeOf, joinSameHit, sameHitsOf } from "../../../services/simulator/tree/tree-shape";
-import { hitLoose, sideGroup } from "./tree-hand-plan";
+import { joinSameHit } from "../../../services/simulator/tree/tree-shape";
+import { joinableFor, sameHitsFor, sideGroup } from "./tree-hand-plan";
 import { useTree } from "./use-tree";
 import { tr } from "../../../i18n/lang";
 import { simOp } from "../../../web/track";
@@ -20,10 +20,10 @@ export const joinMode = ref<{ anchor: string | null; pick: string[] } | null>(nu
 export function joinCandidates(doc: TreeDoc, id: string): string[] {
   const b = doc.boxes[id];
   if (!b || b.out === "start") return [];
-  if (b.out !== "hit") return joinableShapeOf(doc, id);
+  if (b.out !== "hit") return joinableFor(doc, id);
   const g = sideGroup();
   // 同じ手の横の同じ側の当たり (「どれか」の 1 箱) と、別の道の同じ状態の当たり (下を消してつなぐ、10-26 夜オーナー「段一緒で形も一緒ならまとめるが出ないと…」)
-  return [...(g ? joinableOf(doc, id, g) : []), ...sameHitsOf(doc, id, hitLoose(doc))];
+  return [...(g ? joinableOf(doc, id, g) : []), ...sameHitsFor(doc, id)];
 }
 
 /** 箱の今の見え方: anchor = まとめ先、picked = 選んだ、can = 押せる、no = 押せない (薄く) */
@@ -63,7 +63,7 @@ export function useTreeJoin() {
     if (!ok.length) return;
     if (t.doc.value.boxes[anchor]?.out !== "hit") { t.edit((d) => absorbOuts(d, anchor, ok)); return; }
     simOp("merge");
-    const g = sideGroup(), same = sameHitsOf(t.doc.value, anchor, hitLoose(t.doc.value)).filter((x) => ok.includes(x)), side = ok.filter((x) => !same.includes(x));
+    const g = sideGroup(), same = sameHitsFor(t.doc.value, anchor).filter((x) => ok.includes(x)), side = ok.filter((x) => !same.includes(x));
     t.edit((d) => { if (g && side.length) joinSide(d, anchor, g, side); if (same.length) joinSameHit(d, anchor, same); });
   }
   return { start, cancel, toggle, apply };

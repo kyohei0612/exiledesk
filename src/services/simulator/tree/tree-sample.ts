@@ -285,7 +285,8 @@ function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox, base:
   const rng = mulberry32(seed ^ 0x5eed ^ (flag("boxShape") ? [...boxId].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7) : boxId.length * 7919));
   let last: StageApply | null = null;
   // 箱の形 (道の狙いの組) に合う結果だけ、無ければ合わなかった最初の結果 (途中で狙いが消えた結果が当たりの見本になった、10-28 見張り。boxShape)
-  const fits = flag("boxShape") ? shapeFit(data, doc, boxId) : null; let loose: Sample | null = null;
+  // スイッチ judgeOne: 道の狙いの組 (heldSets) では絞らない。見本 = 親の見本にエンジンで打った結果 (大本 1)
+  const fits = flag("boxShape") && !flag("judgeOne") ? shapeFit(data, doc, boxId) : null; let loose: Sample | null = null;
   for (let i = 0; i < TRIES; i++) {
     const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims), undefined, b.out === "junk" || b.out === "lost", stripStop(data, doc, p));
     if (!r.applied) { last = r; break; }
