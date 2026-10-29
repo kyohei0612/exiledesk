@@ -14,8 +14,9 @@ import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, T
 import { aimsOf, handProblem, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { linkSameHit, linkSameShape, linkShapeHit, matchItem, pruneBacks, sameHandReturn } from "../../../services/simulator/tree/tree-shape";
 import { bodyMemo, likeOf, type BodyOf } from "../../../services/simulator/tree/tree-box-shape";
-import { looseOf, stripKeyOf, stripStopByContent, stripStops } from "../../../services/simulator/tree/tree-outcome";
-import { judgeMemo, type Judge } from "../../../services/simulator/tree/tree-judge";
+import { isKeepAnnul, looseOf, stripKeyOf, stripStopByContent, stripStops } from "../../../services/simulator/tree/tree-outcome";
+import { isStripKey } from "../../../services/simulator/tree/tree-junk-side";
+import { judgeMemo, sampleAimed, type Judge } from "../../../services/simulator/tree/tree-judge";
 import { joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { joinableShapeOf, joinSameHit, sameHitsOf } from "../../../services/simulator/tree/tree-shape";
 import { clearHand, drop, fractureMarks, healLost, kindOfHand, setBack, setHand, subtree, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -262,6 +263,7 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
   setHand(d, at, h, kind, aims, only, undefined, holdsAimOf(d, at));
   if (kind === "strip") stripChain(d, at, h);
+  else if (flag("judgeOne") && data && isKeepAnnul(h)) lostSplit(data, d, at, h);
   joinSameShape(d, id);
   if (flag("judgeOne") && data) { relinkByContent(data, d, had); healLost(d); return at; }
   linkSameShape(d, Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id), loose);
@@ -342,6 +344,24 @@ function stripSplit(data: PatchData, d: TreeDoc, id: string, h: Hand, depth: num
     if (to) { box.autoBack = true; continue; }
     delete box.autoBack;
     if (looseOf(it) > 0 && depth < 12) stripSplit(data, d, c, h, depth + 1);
+  }
+}
+/**
+ * スイッチ judgeOne: 残したい MOD の消去の「狙いが消えた」側も、消した後の中身ごとの箱 (S-28e、tree-outcome の lostKeyed) で、
+ * 箱ごとに中身の同じ手のある箱 (ほかの消去の箱も、自分の下は除く) があれば ↩ その箱、無ければその箱で全部消えてよい消去 (スパム、S-28d)。
+ * 前は手も行き先も無い 1 箱で「失敗」になった (10-29 深夜オーナー「古い仕組みだからかな。消去でもスパムにいかないね」、木 2 本目の b47、予約 K)
+ */
+function lostSplit(data: PatchData, d: TreeDoc, id: string, h: Hand): void {
+  const strip: Hand = { ...h, keep: [] }, j = judgeMemo(data, d);
+  for (const c of [...(d.boxes[id]?.outs ?? [])]) {
+    const box = d.boxes[c];
+    if (!box || box.out !== "lost" || box.hand || box.back || box.done || !isStripKey(box.junkKey)) continue;
+    const s = sampleOf(data, d, c, 1);
+    if (s.note === "none" || s.note?.startsWith("cant:")) continue;
+    const below = new Set(subtree(d, c));
+    const to = j.boxesOf(s.item, sampleAimed(data, d, c, 1), (t) => !!d.boxes[t]?.hand && !below.has(t))[0];
+    if (to) { box.back = to; box.autoBack = true; continue; }
+    if (looseOf(s.item) > 0) stripSplit(data, d, c, strip, 0);
   }
 }
 /**

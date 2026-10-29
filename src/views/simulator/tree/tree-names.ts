@@ -90,7 +90,8 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   // 削減の手で外れの順位で分けた箱 (S-65b、スイッチ whittleRank): 順位の鍵があればいつも付ける
   const rk = k && b.parent ? rankLabel(k) : null;
   // 全部消えてよい消去の結果は中身ごとの箱 (S-28d): 2 つ以上並ぶ時だけ残った外れの数を付ける
-  if (isStripKey(k) && b.parent && (useTree().doc.value.boxes[b.parent]?.outs.length ?? 0) > 1) { const [ja, en] = stripKeyLabel(k); return tr(`${base} (${ja})`, `${base} (${en})`); }
+  // 残したい MOD の消去の「狙いが消えた」(S-28e) も同じ鍵: 同じ種類の箱が 2 つ以上並ぶ時だけ
+  if (isStripKey(k) && b.parent && (useTree().doc.value.boxes[b.parent]?.outs ?? []).filter((o) => useTree().doc.value.boxes[o]?.out === b.out).length > 1) { const [ja, en] = stripKeyLabel(k); return tr(`${base} (${ja})`, `${base} (${en})`); }
   if (isSideKey(k) && b.parent) {
     const doc = useTree().doc.value, many = (doc.boxes[b.parent]?.outs ?? []).filter((o) => doc.boxes[o]?.out === b.out && isSideKey(doc.boxes[o]?.junkKey)).length > 1;
     if (many) { const [ja, en] = sideKeyLabel(k); return rk ? tr(`${base} (${ja}・${rk[0]})`, `${base} (${en}, ${rk[1]})`) : tr(`${base} (${ja})`, `${base} (${en})`); }

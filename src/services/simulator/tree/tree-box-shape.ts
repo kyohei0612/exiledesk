@@ -39,7 +39,12 @@ const partsOf = (body: string): { p: number[]; s: number[]; fr: string; rarity: 
 /** ✦ の側とレアリティ (消せない・戻らない所。回す時の形の合う箱へで、これが違う箱へは行かない) */
 export const bodyFixed = (body: string): string => { if (body.startsWith("mixed") || !flag("boxShape")) return ""; const { fr, rarity } = partsOf(body); return `${fr}|${rarity}`; };
 /** 外れの種類があるかだけ (数・側は見ない)。回す時の 2 番目の比べと、見本ごとに種類が違う箱 (mixed) の見分け */
-export const bodyKinds = (body: string): string => { if (body.startsWith("mixed")) return body; const { p, s } = partsOf(body); return p.map((v, i) => ((v + (s[i] ?? 0)) > 0 ? 1 : 0)).join(""); };
+export const bodyKinds = (body: string): string => {
+  if (body.startsWith("mixed")) return body;
+  const { p, s } = partsOf(body), k = p.map((v, i) => ((v + (s[i] ?? 0)) > 0 ? 1 : 0));
+  // スイッチ judgeOne: 外れは種類を見ない (普通・エッセンス・冒涜の発現済みは 1 つ)。種類が違う (mixed) のは未発現が混ざる時だけ (S-63、10-29 深夜オーナー「未発現のみ別枠として全然おｋ」)
+  return flag("judgeOne") ? `${k.slice(0, 3).some(Boolean) ? 1 : 0}${k[3] ?? 0}` : k.join("");
+};
 /** 冒涜 (発現済み・未発現) の外れがあるか (mixed = 見本ごとに種類が違う箱も含める) */
 export const hasDesecrated = (body: string | null): boolean => !!body && (body.startsWith("mixed") || [partsOf(body).p, partsOf(body).s].some((x) => (x[2] ?? 0) > 0 || (x[3] ?? 0) > 0));
 /** 消去の直線の止まる所で比べる部分 (レアリティ (スイッチ stripRarity) と ✦ の側 (スイッチ boxShape)。外れの数は直線の段で数える、tree-outcome の stripStops) */

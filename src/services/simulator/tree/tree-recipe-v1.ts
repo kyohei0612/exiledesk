@@ -6,6 +6,8 @@
  */
 import { boxAims, kindOfHand, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
 import { CATALYSING, effectOf } from "./tree-hands";
+import { isStripKey } from "./tree-junk-side";
+import { flag } from "../../../web/release-flags";
 
 export const RECIPE_V1 = "exiledesk-recipe/1";
 /** 箱 1 つの人の決め。at = 道の札、hand = 打つ手 (☑ は aims、触媒の前のカタリストは pre)、ほかは箱の印 */
@@ -56,7 +58,9 @@ function preChildOf(d: TreeDoc, b: TreeBox): TreeBox | null {
 /** 全部消えてよい消去の直線の続きの箱 (手は組み直しで付くので決めではない、S-109 の 10) */
 function chainOf(d: TreeDoc, b: TreeBox): boolean {
   const p = b.parent ? d.boxes[b.parent] : null;
-  return !!(b.hand && p?.hand && kind(p.hand) === "strip" && b.out === "junkGone" && p.hand.currency === b.hand.currency);
+  if (!b.hand || !p?.hand || p.hand.currency !== b.hand.currency) return false;
+  // 残したい MOD の消去の「狙いが消えた」に付けた全部消えてよい消去も組み直しで付く (S-28e、スイッチ judgeOne)
+  return (kind(p.hand) === "strip" && b.out === "junkGone") || (flag("judgeOne") && b.out === "lost" && !!p.hand.keep?.length && kind(b.hand) === "strip" && isStripKey(b.junkKey));
 }
 /** 保存しない欄 (箱・番号・形の印・画面だけの物) */
 const NOT_KEPT = new Set(["schema", "boxes", "seq", "picks", "orphans", "startRarity"]);

@@ -52,8 +52,25 @@ export function contentOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: R
   const goals = (doc.memoAims ?? []).filter((a) => aimed.has(a.modId)), opts = aimOpts(data);
   const keys = new Set<string>(), mods = new Set<string>();
   for (const m of [...it.prefixes, ...it.suffixes]) { const g = goals.find((a) => isAimMod(m, targetsOf(data, [a]), opts)); if (g) { keys.add(g.modId); mods.add(m.modId); } }
-  return `${[...keys].sort().join(",")}#${bodyOf(data, doc, it, mods)}${flag("judgeOne") ? "" : `#q${qualityKey(it)}`}`;
+  const body = bodyOf(data, doc, it, mods);
+  return `${[...keys].sort().join(",")}#${flag("judgeOne") ? junkOne(body) : `${body}#q${qualityKey(it)}`}`;
 }
+/**
+ * 外れは種類を見ない (S-60、10-29 深夜オーナー「そもそもハズレMODはどんな形であれハズレMODだからな」): 側ごとの 普通.エッセンス.冒涜の発現済み.未発現 を
+ * 外れ.未発現 の 2 つに (「未発現のみ別枠として全然おｋ」)。冒涜の発現済みの数は最後の `#d<プレ>.<サフィ>` に残し、光のお告げの手のある箱と比べる時だけ見る (looseKey で落とす)
+ */
+function junkOne(body: string): string {
+  if (!flag("boxShape")) return body;
+  const [p = "", s = "", ...rest] = body.split("|");
+  const side = (v: string): [string, number] => { const [n = 0, c = 0, x = 0, u = 0] = v.split(".").map(Number); return [`${n + c + x}.${u}`, x]; };
+  const [pp, px] = side(p), [ss, sx] = side(s);
+  return `${[pp, ss, ...rest].join("|")}#d${px}.${sx}`;
+}
+/** 中身の鍵から冒涜の発現済みの数を落とした物 (ふだんの比べ。光のお告げの手のある箱と比べる時だけ落とさない = needsDesecrated) */
+export const looseKey = (k: string): string => k.replace(/#d\d+\.\d+$/, "");
+/** 光のお告げ (冒涜の MOD しか消さない) を含む手の箱か。その箱へ行く人は冒涜の発現済みの外れの数も合わせる (10-29 深夜オーナー「いいかな　それでなおるなら万々歳」) */
+export const needsDesecrated = (doc: TreeDoc, id: string): boolean => !!doc.boxes[id]?.hand?.omens.includes(LIGHT);
+const LIGHT = "OmenofLight";
 /**
  * 品質は箱の中身に入れない (S-60b、ルーンと同じ。10-29 深夜オーナー「Bでしょ途中で触媒で消える時もあればそのままついたままやり直しのパターンもあるし。品質の件はルーンと扱い同じに」)。
  * 品質はアイテムに残るだけ。前は品質 40 の「最大ライフ + ✦」(木 oWkFcwYX の b11) が品質 0 の同じ箱 b1 と別の中身になり、同じ手の枝がもう 1 本あった。スイッチ judgeOne の外は前のまま
@@ -103,10 +120,20 @@ export interface Judge {
 }
 
 export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
-  const memo = new Map<string, ReadonlySet<string> | null>();
+  const memo = new Map<string, ReadonlySet<string> | null>(), looseMemo = new Map<string, ReadonlySet<string> | null>();
   /** 箱の作れる見本 (seed と item) */
   const samples = (id: string): Array<{ seed: number; item: StageItem }> => (doc.boxes[id] ? [1, 2, 3, 4].slice(0, SAMPLES).flatMap((seed) => { const s = sampleOf(data, doc, id, seed); return s.note === "none" || s.note?.startsWith("cant:") ? [] : [{ seed, item: s.item }]; }) : []);
+  /** 箱の中身 (ふだんの比べ = 冒涜の発現済みの数を落とす。光のお告げの手のある箱と比べる時は full) */
   const contents = (id: string): ReadonlySet<string> | null => {
+    if (looseMemo.has(id)) return looseMemo.get(id)!;
+    const f = full(id), out = f ? new Set([...f].map(looseKey)) : null;
+    looseMemo.set(id, out);
+    return out;
+  };
+  /** to と比べる中身 (to が光のお告げの手のある箱なら冒涜の発現済みの数も) */
+  const keyFor = (to: string, k: string): string => (needsDesecrated(doc, to) ? k : looseKey(k));
+  const setFor = (to: string, id: string): ReadonlySet<string> | null => (needsDesecrated(doc, to) ? full(id) : contents(id));
+  const full = (id: string): ReadonlySet<string> | null => {
     if (memo.has(id)) return memo.get(id)!;
     let out: Set<string> | null = null;
     if (doc.boxes[id]) {
@@ -131,16 +158,16 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     contents,
     fitsBox(from, to) {
       if (from === to || !doc.boxes[from] || !doc.boxes[to]) return false;
-      const a = contents(from), b = contents(to);
+      const a = setFor(to, from), b = setFor(to, to);
       return !!a && !!b && a.size === b.size && [...a].every((k) => b.has(k));
     },
     fitsItem(item, aimed, to) {
-      const b = contents(to);
-      return (!b || b.has(contentOf(data, doc, item, aimed))) && doneOk(doc, to, item);
+      const b = setFor(to, to);
+      return (!b || b.has(keyFor(to, contentOf(data, doc, item, aimed)))) && doneOk(doc, to, item);
     },
     boxesOf(item, aimed, ok) {
       const k = contentOf(data, doc, item, aimed);
-      return targets().filter((id) => !!contents(id)?.has(k) && doneOk(doc, id, item) && (!ok || ok(id)));
+      return targets().filter((id) => !!setFor(id, id)?.has(keyFor(id, k)) && doneOk(doc, id, item) && (!ok || ok(id)));
     },
     aimedOf: (id) => samples(id).map((s) => sampleAimed(data, doc, id, s.seed)),
     holdsAim: (id) => samples(id).some((s) => { const am = sampleAimed(data, doc, id, s.seed); return [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && am.has(m.modId)); }),
