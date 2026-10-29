@@ -1,5 +1,72 @@
 [
  {
+  "v": "0.1.643",
+  "date": "2026-10-29",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成形の候補を枠 (プレフィックス・サフィックスの数) に縛らず 10 まで選べるように。完成は好きな箱で「完成にする」で決めます",
+    "en": "Simulator: you can now pick up to 10 final targets regardless of prefix / suffix slots, and mark any box as done with \"Mark done\""
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: フラクチャーの ✦ の印を複数付けられるように。フラクチャーから始められるのは ✦ が 1 つの時だけ、✦ の無い木でもフラクチャーで狙う MOD を選べます",
+    "en": "Simulator: you can now set several fracture marks (✦). Starting from a fractured item needs exactly one mark, and trees without marks can choose which mod the Fracturing Orb should hit"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 外れを付いた側 (プレフィックス / サフィックス) ごとに分け、削減のお告げを使う手は外れ MOD の MOD レベルで消える MOD が変わる枝を割合つきで出すように",
+    "en": "Simulator: misses are split by the side they land on (prefix / suffix), and crafts with the Omen of Whittling branch by the level of the miss mod, showing which mod is removed and how likely each case is"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 骨 (冒涜) の手に「発現させる」の ☑、カタリストを「品質を n % まで」打つ手、結果の答えに「失敗 (ここで終わり)」を足しました",
+    "en": "Simulator: added a \"Reveal\" checkbox for Desecration crafts, a Catalyst craft that raises quality up to n%, and a \"Fail (stop here)\" answer for result boxes"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 同じ中身になった箱は自動でつなぎ、1 つにまとめて線が合流するように。人が選ぶ「まとめる」「戻り先を選ぶ」は無くしました",
+    "en": "Simulator: boxes with the same contents are now linked and merged automatically, with their lines joining into one box. The manual \"Merge\" and \"Choose return\" buttons are gone"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ツリーの並びを作り直し、段ごとに詰めて同じ段の箱の高さを揃え、線を短くしました。戻りの線は箱や札に乗せた時だけ出し、乗せた箱につながる線を光らせます",
+    "en": "Simulator: the tree layout was rebuilt: rows are packed, boxes in a row share the same height, and lines are shorter. Return lines show only when you hover a box or tag, and the lines of the hovered box light up"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 決める事が残っている箱は赤枠と「!」の印に。木の下の「! 未設定 n つ ▸ 次へ」で順に回れます",
+    "en": "Simulator: boxes that still need a decision get a red frame and a \"!\" mark. \"! Unset n ▸ Next\" under the tree takes you through them"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: スタートの箱もアイテムのカードで出し、完成形の設定の窓を大きくしました。ベースや完成形を変えた時は木をスタートに戻します (保存するか聞きます)",
+    "en": "Simulator: the Start box is now an item card, and the final item panel is larger. Changing the base or final item resets the tree to Start (you are asked whether to save first)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: レシピは打ち方だけを保存し、開くたびに今の決まりで組み直すように (前のレシピもそのまま開けます)。スマホで共有の URL を押すと完成形と全体図で開きます",
+    "en": "Simulator: recipes now save only the crafts and are rebuilt with the current rules each time they open (older recipes still open). On phones, a shared recipe link opens straight to the final item and tree map"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: エッセンスを持った時も消える MOD を色で出し、消去が続く途中の箱は 1 枚に畳み、止まりの札はカードに被せないように。行き先の札は前の段なら「↩ n 段目へ戻る」、ほかは「→ n 段目へ進む」",
+    "en": "Simulator: holding an essence now also highlights the mods it can remove, a run of Orb of Annulment boxes folds into one tag, and stuck tags no longer cover the item card. Destination tags say \"↩ Back to step n\" only for earlier steps and \"Go to step n\" otherwise"
+   }
+  ],
+  "pop": true
+ },
+ {
   "v": "0.1.642",
   "date": "2026-10-29",
   "items": [
@@ -923,36 +990,6 @@
     "area": "",
     "text": "シミュレーター: 消去で外れが消えた後に先の手を足せるように・打てない理由の文を正しく・冒涜の MOD はフラクチャーの印を付けられないように",
     "en": "Simulator: You can now add crafts after an annul removes a miss, the “can’t craft” reason is now accurate, and desecrated mods can no longer be marked for Fracture"
-   }
-  ]
- },
- {
-  "v": "0.1.602",
-  "date": "2026-10-25",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ツリーの左上に完成形のアイテムを出し、見ながら組めるように (畳める)",
-    "en": "Simulator: The final item is now shown as an item card at the top left of the tree, so you can build while looking at it (collapsible)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 手を置いた時の結果の箱を、その時のアイテムとお告げで実際に起こりうる物だけにした (始めから付いている狙いを消しうるエッセンス・消去・カオス・冒涜にも「狙いが消えた」を出す)",
-    "en": "Simulator: The result boxes of a craft now only show outcomes that can actually happen for that item and omens (crafts that can remove a target mod already on the starting item, such as essences, Annulment, Chaos and Desecration, now show the “target lost” result)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 100 人回す時の 1 人目の再生を 3 倍の速さに。一度早送りした所にまた来たらすぐ早送りするように",
-    "en": "Simulator: The first-run replay when running 100 crafters is now 3x faster, and a loop that was already fast-forwarded is skipped right away the next time"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ベースの値段を入れると、回し直さずに 1 個の費用へすぐ足されるように",
-    "en": "Simulator: Entering the base price now adds it to the per-item cost right away, without re-running"
    }
   ]
  }

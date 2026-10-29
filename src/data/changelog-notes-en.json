@@ -1,4 +1,16 @@
 {
+  "0.1.643": [
+    "Simulator: you can now pick up to 10 final targets regardless of prefix / suffix slots, and mark any box as done with \"Mark done\"",
+    "Simulator: you can now set several fracture marks (✦). Starting from a fractured item needs exactly one mark, and trees without marks can choose which mod the Fracturing Orb should hit",
+    "Simulator: misses are split by the side they land on (prefix / suffix), and crafts with the Omen of Whittling branch by the level of the miss mod, showing which mod is removed and how likely each case is",
+    "Simulator: added a \"Reveal\" checkbox for Desecration crafts, a Catalyst craft that raises quality up to n%, and a \"Fail (stop here)\" answer for result boxes",
+    "Simulator: boxes with the same contents are now linked and merged automatically, with their lines joining into one box. The manual \"Merge\" and \"Choose return\" buttons are gone",
+    "Simulator: the tree layout was rebuilt: rows are packed, boxes in a row share the same height, and lines are shorter. Return lines show only when you hover a box or tag, and the lines of the hovered box light up",
+    "Simulator: boxes that still need a decision get a red frame and a \"!\" mark. \"! Unset n ▸ Next\" under the tree takes you through them",
+    "Simulator: the Start box is now an item card, and the final item panel is larger. Changing the base or final item resets the tree to Start (you are asked whether to save first)",
+    "Simulator: recipes now save only the crafts and are rebuilt with the current rules each time they open (older recipes still open). On phones, a shared recipe link opens straight to the final item and tree map",
+    "Simulator: holding an essence now also highlights the mods it can remove, a run of Orb of Annulment boxes folds into one tag, and stuck tags no longer cover the item card. Destination tags say \"↩ Back to step n\" only for earlier steps and \"Go to step n\" otherwise"
+  ],
   "0.1.642": [
     "Simulator: when Orb of Annulment can only remove one mod (Omen of Light with one desecrated mod, one non-fractured mod, etc.), it no longer asks which mods to keep and gives a single result. The keep list now shows only mods the craft can remove, and you can't keep all of them",
     "Simulator: socketing a rune is now a single result (the item with the rune) instead of hit / miss. \"After craft\" boxes (e.g. after socketing a rune) can now be marked as done",
