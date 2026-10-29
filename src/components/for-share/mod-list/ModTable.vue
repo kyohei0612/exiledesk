@@ -192,7 +192,7 @@ function jumpTo(modId: string, rank: string | null): boolean {
   }));
   return true;
 }
-defineExpose({ jumpTo, counts, sections });
+defineExpose({ jumpTo, jump, counts, sections });
 </script>
 
 <template>

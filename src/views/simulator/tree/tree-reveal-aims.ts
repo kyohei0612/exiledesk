@@ -2,9 +2,9 @@
  * tree-reveal-aims.ts — 発現で選べる MOD の候補 (骨の手の「発現させる」☑・後から打つ発現の手。10-27 夜オーナー、スイッチ boneLater)。
  * 完成の狙いだけでなく、発現で出うる MOD 全部 (完成形に無い置き石の MOD も)。候補の組み方はエンジンの revealOffers をこの箱の見本で何度も引いて集めた物
  * (自前の置き場は作らない。アビスの反響があれば引き直しの組も)。段は出た中で一番低い段 = 「その段以上」で全部の段が当たり。
- * 窓の灰色 (S-38) は引いて集めず、エンジンの revealPool (発現に出うる MOD と段、重み > 0) から = revealTiersOf
+ * 窓の % と灰色 (S-38) はここで引かず、エミュと同じ for-share の useHeldShares (エンジンの heldOdds) と revealPool (TreeVeilCheck)
  */
-import { mulberry32, revealOffers, revealPool, tierRankOf, unrevealedOf, type PatchData, type StageItem } from "../../../services/craft-stage/engine";
+import { mulberry32, revealOffers, tierRankOf, unrevealedOf, type PatchData, type StageItem } from "../../../services/craft-stage/engine";
 import { stepOutcomes } from "../../../services/simulator/sim-engine";
 import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { ECHO, engineOmens } from "../../../services/simulator/tree/tree-hands";
@@ -36,15 +36,3 @@ export function revealAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item:
   return out.sort((a, z) => at(a) - at(z));
 }
 
-/**
- * 発現で出うる MOD → 段 (表の段の番号、tierRankOf) の組 (S-38)。この箱の見本で打った後の未発現の枠ごとにエンジンの revealPool を聞いて合わせる
- * (骨は両方の側に付きうるので側ごとの置き場が混ざる)。ここに無い MOD・段は発現で出ない = 窓で灰色
- */
-export function revealTiersOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, h: Hand): Map<string, Set<number>> {
-  const out = new Map<string, Set<number>>();
-  for (const v of veiledOf(data, doc, boxId, item, h)) for (const p of revealPool(data, v)) {
-    const s = out.get(p.modId) ?? out.set(p.modId, new Set()).get(p.modId)!;
-    for (const i of p.tiers) s.add(tierRankOf(data, p.modId, i));
-  }
-  return out;
-}

@@ -9,14 +9,15 @@
 <script setup lang="ts">
 import { TIER } from "../../state/for-share/tier-word";
 import { computed, nextTick, ref, watch } from "vue";
-import { aimTierKey, heldAnyOf, heldOdds, type ListRow, type ListTier } from "../../services/craft-stage/engine";
+import { aimTierKey, heldAnyOf, type ListRow, type ListTier } from "../../services/craft-stage/engine";
 import { fmtPct } from "../../utils/format-pct";
 import { baseNameOf, tr } from "../../i18n/lang";
 import { keepPlace, scrollToTop } from "../../utils/keep-place";
 import { AIM_MAX, craftStage, nameOf } from "../../state/craft-stage";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import Disclosure from "../../components/ui/Disclosure.vue";
-import ModTable, { type ModSection } from "../../components/for-share/mod-list/ModTable.vue";
+import ModTable from "../../components/for-share/mod-list/ModTable.vue";
+import { useHeldShares } from "../../components/for-share/mod-list/use-held-shares";
 import StageWeightEdit from "./StageWeightEdit.vue"; // 重みの札 (推定・直した) と直す 1 行
 import ModAddPicker from "./ModAddPicker.vue";
 
@@ -27,53 +28,13 @@ const table = ref<InstanceType<typeof ModTable> | null>(null);
 /** 始めの状態を組める (まだ打っていない・再生でない) */
 const canStart = computed(() => !s.log.value.length && !s.replay.value);
 /**
- * 持っているカレンシーで次に付く確率 (エミュレーターでカレンシーを持っている時だけ。2026-10-09 オーナー「持った時の挙動が UI 的に全然足りてない」)。
- * 計算はエンジンの heldOdds (打つ処理・計算機と同じ決まり。tests/held-odds-parity.test.ts)。null = 持っていない / MOD を足さない物
+ * 持っているカレンシーで次に付く確率・灰色・札 (エミュレーターでカレンシーを持っている時だけ。2026-10-09 オーナー「持った時の挙動が UI 的に全然足りてない」)。
+ * 中身は for-share の useHeldShares (シミュの発現の MOD の窓も同じ物、S-38)。null = 持っていない / MOD を足さない物
  */
-const heldCands = computed(() => {
+const { heldCands, tierIndexOf, heldShare, heldTierShare, shareOf, tierShareOf, rowDim, rowTitle, tierDim, tierTitle, shareTitle, shareHead, sectionLate } = useHeldShares(() => {
   const k = s.held.value, d = s.data.value, it = item.value;
-  if (!k || !d || !it || s.mode.value !== "hand" || s.replay.value) return null;
-  const h = heldOdds(d, it, k, s.omens.value);
-  return h ? { ...h, name: nameOf(k) } : null;
-});
-/** 段の番号はその MOD の段の表から (同じ系統をまとめた行は段が混ざるので、名前とレベルで引く) */
-function tierIndexOf(modId: string, t: { name: string; ilvl: number }): number {
-  return s.data.value?.mods.get(modId)?.tiers.findIndex((x) => x.name === t.name && x.ilvl === t.ilvl) ?? -1;
-}
-/** その行 (系統) が持っている物で付く確率。0 = 付かない */
-function heldShare(r: ListRow): number {
-  const h = heldCands.value;
-  if (!h || !(h.total > 0)) return 0;
-  const ids = new Set(r.tiers.map((t) => t.modId ?? r.id));
-  let w = 0;
-  for (const id of ids) w += h.byMod.get(id)?.w ?? 0;
-  return w / h.total;
-}
-/** その段が持っている物で付く確率 (下限より下・アイテムレベルが届かない段は 0) */
-function heldTierShare(r: ListRow, t: { name: string; ilvl: number; modId?: string }): number {
-  const h = heldCands.value;
-  if (!h || !(h.total > 0)) return 0;
-  const id = t.modId ?? r.id;
-  const idx = tierIndexOf(id, t);
-  return (h.byMod.get(id)?.tiers.find((x) => x.index === idx)?.w ?? 0) / h.total;
-}
-/** 今は付かない行は 0% (同じ系統が付いている・差していないルーン。冒涜・異界は骨を持っている時だけ。2026-10-09 オーナー) */
-const cannow = (r: ListRow): boolean => !r.blocked && !(r.group === "rune" && !r.socketed) && !((r.group === "desecrated" || r.group === "otherworldly") && !(heldCands.value && "bone" in heldCands.value));
-/** 表の % と棒: 持っている時は付く確率、それ以外は出やすさ (同じ側の重みの割合) */
-const shareOf = (r: ListRow): number => (!cannow(r) ? 0 : heldCands.value ? heldShare(r) : r.share);
-const tierShareOf = (r: ListRow, t: ListTier): string => (!cannow(r) ? "0%" : heldCands.value ? fmtPct(heldTierShare(r, t)) : t.weight && r.weight ? fmtPct((r.share * t.weight) / r.weight) : "");
-const rowDim = (r: ListRow): boolean => r.blocked || (!!heldCands.value && !heldShare(r)) || (r.group === "rune" && !r.socketed);
-const rowTitle = (r: ListRow): string | undefined => (r.blocked ? tr("同じ系統の MOD が付いているので、今は付かない", "A mod from the same group is already on the item, so this cannot roll now") : heldCands.value && !heldShare(r) ? tr(`持っている ${heldCands.value.name} では付かない`, `Cannot roll with the held ${heldCands.value.name}`) : undefined);
-const tierDim = (r: ListRow, t: ListTier): boolean => !!heldCands.value && !heldTierShare(r, t);
-const tierTitle = (r: ListRow, t: ListTier): string | undefined => (heldCands.value && !heldTierShare(r, t) ? tr(`持っている ${heldCands.value.name} では付かない${TIER} (強さの下限・アイテムレベル・同じ系統)`, `This tier cannot roll with the held ${heldCands.value.name} (minimum tier, item level, or same group)`) : undefined);
-function shareTitle(r: ListRow): string {
-  const h = heldCands.value;
-  if (h) return "bone" in h ? tr(`持っている ${h.name} の次の発現で、候補 3 つに出る確率 (専用 MOD 1〜3 個 + 残り普通。計算機と同じ)`, `Chance to appear among the 3 options on the next reveal with the held ${h.name} (1-3 desecrated-only mods + the rest normal, same as the calculator)`) : tr(`持っている ${h.name} で次に付く確率`, `Chance to roll next with the held ${h.name}`);
-  return r.group === "desecrated" || r.group === "otherworldly" ? tr("骨を使わないと付かない (骨を持つと候補に出る確率)", "Only rolls via a Bone (hold a Bone to see the chance to be offered)") : tr("出やすさ (同じ側の重みの割合)", "Chance (share of weight on the same side)");
-}
-const shareHead = computed(() => (heldCands.value ? ("bone" in heldCands.value ? tr("候補に出る", "Offered") : tr("付く確率", "Chance")) : tr("出やすさ", "Weight")));
-/** カレンシーを持っている時は、それで付く節を上に、付かない節を下に (2026-10-11 オーナー)。持っていない時は差していないルーンだけ下 */
-const sectionLate = (sec: ModSection): boolean => (heldCands.value ? !sec.columns.some((c) => c.items.some((r) => heldShare(r) > 0)) : sec.rune != null && !sec.socketed);
+  return k && d && it && s.mode.value === "hand" && !s.replay.value ? { data: d, item: it, key: k, omens: s.omens.value, name: nameOf(k) } : null;
+}, () => s.data.value);
 
 /**
  * 狙う MOD を幾つか選んで「どれか 1 つでも付く確率」(2026-10-12 要望 c9dee700、オーナー「カレンシー持ったら MOD の横にチェック欄、
