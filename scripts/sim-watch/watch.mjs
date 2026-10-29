@@ -33,11 +33,15 @@ const ONLY = opt("--only");
 const PEOPLE = Number(opt("--people") ?? 30);
 const SHOTS = opt("--shots");
 if (SHOTS && !existsSync(SHOTS)) mkdirSync(SHOTS, { recursive: true });
-const TREES = JSON.parse(readFileSync(join(HERE, "trees.json"), "utf8")).trees.filter((t) => !ONLY || t.key === ONLY);
+// 見本の木 (trees) + 合格レシピ 3 本 (pass、R-15)。owner は build.mjs で組み直して確かめる木なので回さない。
+// pass の count: false (オーナーが書き直す前の指輪 FmNY7Wwv) は回して数を出すだけで、合否・合わない所に数えない
+const TREE_SET = JSON.parse(readFileSync(join(HERE, "trees.json"), "utf8"));
+const TREES = [...TREE_SET.trees, ...(TREE_SET.pass ?? []).map((t) => ({ ...t, pass: true }))].filter((t) => !ONLY || t.key === ONLY);
 const BASE_PATH = join(HERE, "baseline.json");
 const baseline = existsSync(BASE_PATH) ? JSON.parse(readFileSync(BASE_PATH, "utf8")) : {};
 
 const found = []; // 合わない所 { tree, where, what, text, want }
+const verdict = {}; // 木ごとの精査の合格 (testOk) と回しの数 (n・finished・stuck)。合格レシピの合否の行に使う
 const note = []; // 見られなかった所 (数えない)
 const seenN = {}; // 比べた数 (木ごと・種類ごと。0 なら見ていない)
 const count = (tree, k) => { (seenN[tree] ??= {})[k] = (seenN[tree][k] ?? 0) + 1; };
@@ -190,6 +194,7 @@ function makeWatcher(c) {
       await until(`!document.querySelector("[data-tree-test]").disabled`, 120000);
       out.test = norm(await ev(`(document.querySelector("[data-tree-test-ok]") ?? document.querySelector("[data-tree-test-holes]"))?.innerText ?? ""`));
       out.testStuck = await ev(`[...document.querySelectorAll("[data-tree-run-stuck]")].map((b) => b.getAttribute("data-box-id")).sort()`);
+      (verdict[t.key] ??= {}).testOk = await ev(`!!document.querySelector("[data-tree-test-ok]")`);
     } else note.push(`${t.key}: テストで回すが押せない`);
     // 100 人でない時は開発版の口で種 1 のまま回す (欄は run30 / runStuck30 = 100 人の前の欄とは比べない)。口の無い本番の作りだけボタンの 100 人
     if (PEOPLE !== 100 && (await ev(`!!window.__simMonkey`))) {
@@ -197,6 +202,7 @@ function makeWatcher(c) {
       if (!r) { note.push(`${t.key}: ${PEOPLE} 人回すが読めない`); return out; }
       out[`run${PEOPLE}`] = `${r.n} 人中 完成 ${r.finished}・失敗 ${r.failed}・打ち止め ${r.capped}`;
       out[`runStuck${PEOPLE}`] = Object.entries(r.stuckAt).map(([id, n]) => `${id} ${n}`).sort();
+      Object.assign(verdict[t.key] ??= {}, { n: r.n, finished: r.finished, stuck: Object.values(r.stuckAt).reduce((a, b) => a + b, 0) });
       return out;
     }
     if (await until(`!!document.querySelector("[data-tree-run]") && !document.querySelector("[data-tree-run]").disabled`, 30000)) {
@@ -356,6 +362,20 @@ try {
   if (UPDATE) { const baseline = existsSync(BASE_PATH) ? JSON.parse(readFileSync(BASE_PATH, "utf8")) : {}; baseline[MODE] = { ...(baseline[MODE] ?? {}), ...now, _at: new Date().toISOString(), _origin: ORIGIN }; writeFileSync(BASE_PATH, JSON.stringify(baseline, null, 1) + "\n"); console.log(`baseline.json の ${MODE} を書いた`); }
   const errors = tabs.flatMap((c) => c.errors);
   if (errors.length) for (const e of [...new Set(errors)]) bad("(全体)", "ページ", "JS のエラー", e, "0 件");
+  // 合格レシピの合否 (R-15): 精査が ✓ 合格・回して止まり 0・完成 1 人以上。落ちたら合わない所に数える。count: false の木は数を出すだけ
+  const passTrees = TREES.filter((t) => t.pass);
+  if (passTrees.length) console.log(`\n合格レシピ (${PEOPLE} 人):`);
+  for (const t of passTrees) {
+    const v = verdict[t.key] ?? {};
+    const why = [v.testOk === false && "精査が合格でない", v.testOk == null && "精査を読めない", v.finished == null ? "回しを読めない" : v.finished === 0 && "完成 0", v.stuck > 0 && `止まり ${v.stuck}`].filter(Boolean);
+    const nums = v.finished == null ? "" : ` (完成 ${v.finished}/${v.n}・止まり ${v.stuck})`;
+    if (t.count === false) { console.log(`- ${t.key}: 数えない (オーナーの書き直し待ち)${nums}${why.length ? ` — ${why.join("・")}` : ""}`); continue; }
+    console.log(`- ${t.key}: ${why.length ? "✗" : "✓"}${nums}${why.length ? ` — ${why.join("・")}` : ""}`);
+    if (why.length) bad(t.key, "合格レシピ", "合格レシピが通らない", why.join("・"), "精査 ✓・止まり 0・完成 1 人以上");
+  }
+  // 数えない木の合わない所は「見られなかった所」へ移す (結果は上の行と木ごとの行に出る)
+  const uncounted = new Set(passTrees.filter((t) => t.count === false).map((t) => t.key));
+  for (let i = found.length - 1; i >= 0; i--) if (uncounted.has(found[i].tree)) { const [f] = found.splice(i, 1); note.unshift(`${f.tree} (数えない): ${f.where}: ${f.what} | ${f.text}`); }
   console.log(`\n合わない所: ${found.length}`);
   for (const f of found) console.log(`- [${f.tree}] ${f.where}: ${f.what}\n    画面: ${f.text}${f.want ? `\n    木・前: ${f.want}` : ""}`);
   if (note.length) { console.log(`\n見られなかった所 (数えない): ${note.length}`); for (const n of note) console.log(`- ${n}`); }
