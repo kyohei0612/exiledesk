@@ -18,6 +18,8 @@ const OPEN_JUDGE: ReadonlySet<OutKind | "start"> = new Set(["junk", "any", "junk
 const seqOf = (id: string): number => Number(/\d+$/.exec(id)?.[0] ?? 0);
 /** 親からの深さ (段) */
 const depthOf = (doc: TreeDoc, id: string): number => { let n = 0; for (let b = doc.boxes[id]; b?.parent; b = doc.boxes[b.parent]) n++; return n; };
+/** 鍵の削減の順位の部分 (`w:`、tree-whittle) */
+const rankPart = (k: string | undefined): string => k?.split(";").find((s) => s.startsWith("w:")) ?? "";
 const setKey = (doc: TreeDoc, id: string): string => heldSets(doc, id).map((h) => [...h].sort().join(",")).sort().join("|");
 
 /** j = 判定 (tree-judge、スイッチ judgeOne)。渡すと比べは「箱どうし」の fitsBox だけ */
@@ -37,7 +39,8 @@ export function mergeOpenSame(doc: TreeDoc, ids: readonly string[], body: BodyOf
     // まとめるのは同じ段 (親からの深さが同じ) の箱どうしだけ。違う段の箱へまとめると、その手の線が上の段の決めていない箱へ伸びて線がぐちゃっとなった
     // (10-28 夜オーナー「まだ決めてない＋が出てるのに勝手に線につながれた」)。違う段の同じ形は戻りの自動のつなぎ (S-50) に任せる
     const to = Object.values(doc.boxes)
-      .filter((t) => t.id !== id && !below.has(t.id) && seqOf(t.id) < seqOf(id) && outs.has(t.out) && !t.back && !t.done && !t.split && depthOf(doc, t.id) === dep)
+      // 削減の手で外れの順位で分けた箱 (S-65b) は、順位の鍵が同じ箱へだけ (中身の比べは MOD レベルを見ないので、分けた兄弟がまたまとまる)
+      .filter((t) => t.id !== id && !below.has(t.id) && seqOf(t.id) < seqOf(id) && outs.has(t.out) && !t.back && !t.done && !t.split && depthOf(doc, t.id) === dep && rankPart(t.junkKey) === rankPart(doc.boxes[id]?.junkKey))
       .sort((a, b) => seqOf(a.id) - seqOf(b.id))
       .find((t) => (j ? j.fitsBox(id, t.id) : body!(t.id) === mine && sameBody(body, id, t.id) && setKey(doc, t.id) === key));
     if (!to) continue;

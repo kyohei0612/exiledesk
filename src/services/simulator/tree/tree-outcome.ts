@@ -24,6 +24,7 @@ import { likeOf } from "./tree-box-shape";
 import { isRevealHand, revealedOf, revealHitOf, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, fracFreeHit, fracFreeOuts, junkKeyOf, newlyFractured } from "./tree-frac-pick";
 import { sideKeyOf } from "./tree-junk-side";
+import { isWhittleHand, joinKeys, rankKeyOf, rankVariants } from "./tree-whittle";
 import { aimedOfSample, judgeMemo, sampleAimed, STRIPPED } from "./tree-judge";
 
 type Outcome = { out: OutKind; hits: Aim[]; junkKey?: string };
@@ -48,7 +49,18 @@ export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: 
   const aims = aimed && flag("judgeOne") ? mineOf(data, before, aims0, aimed) : aims0;
   // エッセンス (付く側が決まる)・フラクチャー (S-41 の鍵) は側で分けない
   if (!key || effectOf(key) === "essence" || effectOf(key) === "fracture") return boxOutcomeRaw(data, doc, b, before, after, aims);
-  return sided(boxOutcomeRaw(data, doc, b, before, after, aims), before, after);
+  return ranked(b.hand, sided(boxOutcomeRaw(data, doc, b, before, after, aims), before, after), before, after, aims);
+}
+/**
+ * 順位の鍵を付ける箱 = 削減で何が消えたかの枝 (S-65b ①「外れが消えた」「○○が消えた」)。外れ・打った後はカオスでまた狙いが付いた等の 1% 未満の組み合わせばかりで、
+ * 付けると 1 手で箱が 13 を超えた (dev 1445、FmNY7Wwv の b16 に削減 + カオス)。そちらは順位を持たず、次の削減はまた付きうる外れ全部から数える
+ */
+const RANKED: ReadonlySet<OutKind> = new Set(["junkGone", "lost"]);
+/** 削減の手の外れが消えた・狙いが消えたに、残った外れの順位の鍵を足す (S-65b、スイッチ whittleRank。閉じていれば今のまま) */
+function ranked<T extends { out: OutKind; junkKey?: string }>(h: Hand | null | undefined, oc: T, before: StageItem, after: StageItem, aims: readonly Aim[]): T {
+  if (!isWhittleHand(h) || !RANKED.has(oc.out)) return oc;
+  const wk = rankKeyOf(before, after, aims);
+  return wk ? { ...oc, junkKey: joinKeys(oc.junkKey, wk) } : oc;
 }
 /** 狙いに数える物 = ☑ で付いている物と、まだ付いていない物 (付いていて ☑ の無い完成形の MOD は外れ MOD) */
 const mineOf = (data: PatchData, before: StageItem, aims: readonly Aim[], aimed: ReadonlySet<string>): Aim[] => aims.filter((a) => aimed.has(a.modId) || !aimHeldOn(data, before, a, { sameText: true }));
@@ -151,7 +163,9 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
     // 前は持って着かない狙いまで足し、右側の結晶化で外れしか消えない手にも「狙いが消えた」が出た、10-25)
     // 足した形がレアリティの変わる物 (マジックの埋まった側に付けてレアに上がる) は見ない: エンジンの手でその箱に着く形ではない (スイッチ boxShape、10-28 夜)
     const forms = [item, ...hold.filter((a) => !aimHeldOn(data, item, a, { sameText: true })).map((a) => applyCurrency(data, item, forceKey(a.modId, `T${a.tier}`, "n"), mulberry32(seed))).filter((r) => r.applied && !(flag("boxShape") && r.item.rarity !== item.rarity)).map((r) => r.item)];
-    for (const it of forms) {
+    // 削減の手は外れを MOD レベルの範囲ごとの代わりに差し替えた形で見る (見本の外れ 1 つの MOD レベルで決めない、S-65b・tree-whittle)
+    const all = isWhittleHand(h) ? forms.flatMap((f) => rankVariants(data, f, aims, doc.boxes[boxId]?.junkKey).map((v) => v.item)) : forms;
+    for (const it of all) {
       const outs = stepOutcomes(data, prepFor(data, it, h.currency), h.currency, engineOmens(h))?.filter((o) => !o.void);
       if (!outs?.length) return null;
       // 未発現が新しく付く手だけ (前から未発現を持ったまま打つフラクチャー・カオスなどは普通に分ける。スイッチ boneLater)
@@ -168,16 +182,18 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
       }
       for (const o of outs) {
         const am = one ? aimedOfSample(boxId, smp.item) : null;
-        const r = outcomeOf(data, it, o.item, am ? aims.filter((a) => am.has(a.modId) || !aimHeldOn(data, it, a, { sameText: true })) : aims, h.currency);
+        const ra = am ? aims.filter((a) => am.has(a.modId) || !aimHeldOn(data, it, a, { sameText: true })) : aims;
+        const r = outcomeOf(data, it, o.item, ra, h.currency);
+        const rk = <T extends { out: OutKind; junkKey?: string }>(e: T): T => ranked(h, e, it, o.item, ra);
         if (r.hits.length > 1) return null;
         // スイッチ junkSide: 狙い無しは狙いが消えた以外全部「打った後」を側ごと。☑ の無い狙いが付いたのは外れ (tree-hand-plan の onlyOf と同じ) を側ごと (S-65)
         // エッセンス・フラクチャーは側で分けない (boxOutcomeOf と同じ、S-65。前はフラクチャーの外れの箱にだけ側の鍵が付き、見本が作れず ✦ の無い親の見本のままだった)
         const sk = k === "essence" || (k === "fracture" && flag("judgeOne")) ? undefined : sideKeyOf(it, o.item);
-        if (freeSide) { const e = r.out === "lost" ? { out: "lost" as OutKind, aim: null } : { out: "any" as OutKind, aim: null, ...(sk ? { junkKey: sk } : {}) }; found.set(`${e.out}:${e.junkKey ?? ""}`, e); continue; }
-        if (sk && extra.length && r.out === "hit" && r.hits[0] && !extra.some((a) => a.modId === r.hits[0]!.modId && a.tier === r.hits[0]!.tier)) { found.set(`junk::${sk}`, { out: "junk", aim: null, junkKey: sk }); continue; }
+        if (freeSide) { const e = rk<{ out: OutKind; aim: null; junkKey?: string }>(r.out === "lost" ? { out: "lost" as OutKind, aim: null } : { out: "any" as OutKind, aim: null, ...(sk ? { junkKey: sk } : {}) }); found.set(`${e.out}:${e.junkKey ?? ""}`, e); continue; }
+        if (sk && extra.length && r.out === "hit" && r.hits[0] && !extra.some((a) => a.modId === r.hits[0]!.modId && a.tier === r.hits[0]!.tier)) { const e = rk<{ out: OutKind; aim: null; junkKey?: string }>({ out: "junk", aim: null, junkKey: sk }); found.set(`junk::${e.junkKey}`, e); continue; }
         // 無限のエッセンスで ☑ していない能力値が付いた = 外れ (infiniteAim)。ほかの狙いの付かない当たりは「打った後」
         const e = r.out === "hit" && (!r.hits.length || (infiniteAim(h.currency) && !extra.some((a) => a.modId === r.hits[0]!.modId && a.tier === r.hits[0]!.tier))) ? { out: (infiniteAim(h.currency) ? "junk" : "any") as OutKind, aim: null } : { out: r.out, aim: r.hits[0] ?? null };
-        const ek = sk && (e.out === "junk" || e.out === "any" || e.out === "junkGone") ? { ...e, junkKey: sk } : e;
+        const ek = rk<{ out: OutKind; aim: Aim | null; junkKey?: string }>(sk && (e.out === "junk" || e.out === "any" || e.out === "junkGone") ? { ...e, junkKey: sk } : e);
         found.set(`${ek.out}:${ek.aim ? `${ek.aim.modId}/${ek.aim.tier}` : ""}:${"junkKey" in ek ? ek.junkKey : ""}`, ek);
       }
     }

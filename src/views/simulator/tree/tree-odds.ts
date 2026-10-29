@@ -9,8 +9,11 @@ import { outcomeOdds, stepOutcomes } from "../../../services/simulator/sim-engin
 import { boxOutcomeOf } from "../../../services/simulator/tree/tree-outcome";
 import { outBoxOf } from "../../../services/simulator/tree/tree-shape";
 import { isSideKey } from "../../../services/simulator/tree/tree-junk-side";
+import { isWhittleHand, rankVariants } from "../../../services/simulator/tree/tree-whittle";
 import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
-import { aimsOf } from "../../../services/simulator/tree/tree-sample";
+import { aimsOf, SINGLE_SEEDS } from "../../../services/simulator/tree/tree-sample";
+import { aimedOfSample, sampleAimed } from "../../../services/simulator/tree/tree-judge";
+import { flag } from "../../../web/release-flags";
 import { shapeSampleOf } from "../../../services/simulator/tree/tree-sample-shape";
 import { engineOmens } from "../../../services/simulator/tree/tree-hands";
 import { boxAims, type TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -23,7 +26,8 @@ export function oddsOfHand(doc: TreeDoc, id: string): Map<string, number> | null
   if (!data || !b?.hand || b.hand.repeat || b.outs.length < 2) return null;
   const kids = b.outs.map((o) => doc.boxes[o]!).filter(Boolean);
   // 側で分けた箱 (S-65、スイッチ junkSide。狙い無しの打った後も) は、エンジンの枝ごとに回す時と同じ分け方で箱へ
-  if (kids.some((k) => isSideKey(k.junkKey))) return sideOdds(doc, id);
+  // 削減の手 (S-65b、スイッチ whittleRank) も同じ形で、外れの MOD レベルの範囲ごとの見本の重みを掛ける
+  if (kids.some((k) => isSideKey(k.junkKey)) || isWhittleHand(b.hand)) return sideOdds(doc, id);
   if (b.hand.free) return null;
   const hits = kids.filter((k) => k.out === "hit" && k.aim).flatMap((k) => boxAims(k));
   const aims = [...hits, ...aimsOf(doc).filter((a) => !hits.some((h) => h.modId === a.modId && h.tier === a.tier))];
@@ -44,14 +48,21 @@ export function oddsOfHand(doc: TreeDoc, id: string): Map<string, number> | null
 function sideOdds(doc: TreeDoc, id: string): Map<string, number> | null {
   const data = s.data.value, b = doc.boxes[id];
   if (!data || !b?.hand) return null;
-  const item = prepFor(data, shapeSampleOf(data, doc, id), b.hand.currency);
-  const live = (stepOutcomes(data, item, b.hand.currency, engineOmens(b.hand)) ?? []).filter((r) => !r.void);
-  const total = live.reduce((n, r) => n + r.p, 0);
-  if (!live.length || total <= 0) return null;
+  const raw = shapeSampleOf(data, doc, id), item0 = prepFor(data, raw, b.hand.currency);
   const aims = aimsOf(doc), out = new Map<string, number>();
-  for (const r of live) {
-    const to = outBoxOf(doc, b, boxOutcomeOf(data, doc, b, item, r.item, aims), r.item);
-    if (to) out.set(to, (out.get(to) ?? 0) + r.p / total);
+  // スイッチ judgeOne: 回す・精査と同じく、見本の ☑ で付いた狙いを渡す (渡さないと付いていて ☑ の無い完成形の MOD も狙いに数え、洗い出しの箱とずれた)
+  if (flag("judgeOne")) for (let k = 1; k <= SINGLE_SEEDS; k++) sampleAimed(data, doc, id, k);
+  const aimed = flag("judgeOne") ? aimedOfSample(id, raw) : null;
+  // 削減の手は外れを MOD レベルの範囲ごとの代わりに差し替えた見本 (割合 = その範囲の重み、tree-whittle)。ほかは見本 1 つ
+  const forms = isWhittleHand(b.hand) ? rankVariants(data, item0, aims, b.junkKey) : [{ p: 1, item: item0 }];
+  for (const f of forms) {
+    const live = (stepOutcomes(data, f.item, b.hand.currency, engineOmens(b.hand)) ?? []).filter((r) => !r.void);
+    const total = live.reduce((n, r) => n + r.p, 0);
+    if (!live.length || total <= 0) continue;
+    for (const r of live) {
+      const to = outBoxOf(doc, b, boxOutcomeOf(data, doc, b, f.item, r.item, aims, aimed), r.item);
+      if (to) out.set(to, (out.get(to) ?? 0) + (f.p * r.p) / total);
+    }
   }
   return out.size ? out : null;
 }

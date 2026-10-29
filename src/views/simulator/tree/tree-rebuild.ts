@@ -61,16 +61,18 @@ export function rebuildTree(data: PatchData, src: TreeDoc): TreeDoc {
 }
 
 /**
- * 子の箱の保存の札 (S-106 の古いレシピの読み方): ぴったり合う札 → 側の鍵の無い札 (S-65 より前、側に分かれた箱の全部へ) →
+ * 子の箱の保存の札 (S-106 の古いレシピの読み方): ぴったり合う札 → 削減の順位の鍵の無い札 (S-65b より前) → 側の鍵の無い札 (S-65 より前、側に分かれた箱の全部へ) →
  * 結果の種類が「打った後」と「外れ」で替わった札 (今の決まりで同じ結果の種類が替わった箱、当たりの MOD と側は同じ。兄弟がぴったり合う札は取らない)。
  * 無ければぴったりの札 (決めの無い新しい箱)
  */
 function savedKeyOf(at: string, tail: string, onPath: ReadonlySet<string>, exact: ReadonlySet<string>): string {
   const bare = (t: string): string => t.replace(/\[[^\]]*\](~\d+)?$/, "");
   const swap = (t: string): string | null => (/^\/junk/.test(t) ? t.replace(/^\/junk/, "/any") : /^\/any/.test(t) ? t.replace(/^\/any/, "/junk") : null);
+  // 削減の順位の鍵 (`;w:`、S-65b より前の保存には無い) を外した札 = 順位で分かれた箱の全部へ (側の鍵の無い札と同じ読み方)
+  const unrank = (t: string): string => t.replace(/;w:[^\]]*\]/, "]");
   const sw = swap(tail);
-  const tries = [at + tail, at + bare(tail), ...(sw ? [at + sw, at + bare(sw)] : [])];
-  return tries.find((k, i) => onPath.has(k) && (i < 2 || !exact.has(k))) ?? at + tail;
+  const tries = [at + tail, at + unrank(tail), at + bare(tail), ...(sw ? [at + sw, at + bare(sw)] : [])];
+  return tries.find((k, i) => onPath.has(k) && (i < 3 || !exact.has(k))) ?? at + tail;
 }
 
 /**

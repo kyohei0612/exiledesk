@@ -17,7 +17,8 @@ export const isSideKey = (k: string | undefined): k is string => !!k && k.starts
 
 /** 箱の題の付け足し (同じ種類の箱が側で 2 つ以上の時だけ)。例「プレフィックス」「プレフィックス → サフィックス」「同じ側」 */
 export function sideKeyLabel(key: string): [string, string] {
-  const [p = 0, s = 0] = key.slice(2).split("|").map(Number);
+  // 削減の順位の鍵 (`;w:`、S-65b) は rankLabel で
+  const [p = 0, s = 0] = (key.split(";")[0] ?? "").slice(2).split("|").map(Number);
   const ja = (x: "p" | "s"): string => (x === "p" ? "プレフィックス" : "サフィックス"), en = (x: "p" | "s"): string => (x === "p" ? "prefix" : "suffix");
   const from = [...(p < 0 ? ["p" as const] : []), ...(s < 0 ? ["s" as const] : [])], to = [...(p > 0 ? ["p" as const] : []), ...(s > 0 ? ["s" as const] : [])];
   if (from.length && to.length) return [`${from.map(ja).join("・")} → ${to.map(ja).join("・")}`, `${from.map(en).join(", ")} → ${to.map(en).join(", ")}`];
