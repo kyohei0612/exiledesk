@@ -112,6 +112,7 @@ export const FLAGS = {
   dntBases: "ゲームに無い [DNT] のベース 3 つを一覧から外す (c3a915a8)",
   runeMagnitude: "ルーンの「明示 MOD の強さが N% 増加」を MOD の値に掛ける (dc3e219a)",
   triAttr: "ベースの選び画面の兜・鎧・手袋・靴に 7 つ目の札「筋力・器用・知性」(ガーメント・荘厳なレガリア・生贄のレガリア・大いなる顔飾り・大いなるマンシェット・大いなる脛当てなど 3 属性のベース。鎧はグラスピングメイルも同じ札に。engine.md E-98、10-28 オーナー「直し方は１案１で」、スナップで OK 済み「他OKでいいよ」)。閉じている間は検索でしか出ない",
+  qualityAsk: "シミュの完成形の品質を 2 択に (S-31c・S-31d): カタリストの部位は「品質を狙う / 狙わない」をどちらか必ず選ぶ・上限を選ぶと値も上限に・カタリストの種類が未選択なら「決めた」で止める・完成形のカードに「完成形の MOD」の見出し (TreeGoalQuality・tree-goal-quality.ts・StageItemCard の modsHead、オーナー 10-29 深夜)",
 } as const;
 export type Flag = keyof typeof FLAGS;
 

@@ -175,6 +175,8 @@ export interface TreeDoc {
   goalQuality?: number;
   /** 品質も狙う (☑、既定はオフ = 品質は見ない。10-27 夕オーナー)。オンの時だけ完成の箱でも品質を見る (足りない人は止まり) */
   goalQualityOn?: true;
+  /** 品質は狙わないを選んだ (カタリストの部位は狙う / 狙わないのどちらかを必ず選ぶ。どちらも無い = 未定で「決めた」を止める、S-31c、スイッチ qualityAsk) */
+  goalQualityNo?: true;
   /** 完成形の品質の上限 (エミュの品質の帯の「上限」と同じ。無ければ足し算の上限) と種類 (アクセサリーの品質の種類のタグ) */
   goalQualityCap?: number;
   goalQualityTag?: string;

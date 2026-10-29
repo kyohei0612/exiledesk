@@ -102,7 +102,7 @@ function takeReadings(base: { en: string; ja: string }, itemLevel: number | null
   if (flag("goalQuality")) {
     const g = t.goalItem.value?.item;
     t.edit((d) => {
-      delete d.goalQualityOn; delete d.goalQuality; delete d.goalQualityTag; delete d.goalQualityCap;
+      delete d.goalQualityOn; delete d.goalQualityNo; delete d.goalQuality; delete d.goalQualityTag; delete d.goalQualityCap;
       if (!quality || quality.value <= 0) return;
       d.goalQuality = quality.value;
       if (quality.tag) d.goalQualityTag = quality.tag;
