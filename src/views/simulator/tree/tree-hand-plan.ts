@@ -347,21 +347,34 @@ function stripSplit(data: PatchData, d: TreeDoc, id: string, h: Hand, depth: num
   }
 }
 /**
- * スイッチ judgeOne: 残したい MOD の消去の「狙いが消えた」側も、消した後の中身ごとの箱 (S-28e、tree-outcome の lostKeyed) で、
- * 箱ごとに中身の同じ手のある箱 (ほかの消去の箱も、自分の下は除く) があれば ↩ その箱、無ければその箱で全部消えてよい消去 (スパム、S-28d)。
- * 前は手も行き先も無い 1 箱で「失敗」になった (10-29 深夜オーナー「古い仕組みだからかな。消去でもスパムにいかないね」、木 2 本目の b47、予約 K)
+ * スイッチ judgeOne: 残したい MOD の消去の結果は全部自動 (S-28e。狙いが消えたは tree-outcome の lostKeyed で消した後の中身ごとの箱、外れが消えたは側ごとの箱)。
+ * 箱ごとに中身の同じ手のある箱 (ほかの消去の箱も、自分の下は除く。打つ前の箱が合えばそこを先に = オーナーが組んだ道) があれば ↩ その箱、無ければ
+ * 狙いが消えた = その箱で全部消えてよい消去 (スパム、S-28d)、外れが消えた = 外れが残っていれば同じ残したい MOD の消去をもう一度。
+ * 前は狙いが消えたが手も行き先も無い 1 箱で「失敗」になり (10-29 深夜オーナー「古い仕組みだからかな。消去でもスパムにいかないね」、木 2 本目の b47)、
+ * 外れが消えたはオーナーが手で同じ消去を打っていた (b30・b44。オーナー「必須ＭＯＤ以外のルートは全部自動で決められるでしょ」)
  */
-function lostSplit(data: PatchData, d: TreeDoc, id: string, h: Hand): void {
-  const strip: Hand = { ...h, keep: [] }, j = judgeMemo(data, d);
+function lostSplit(data: PatchData, d: TreeDoc, id: string, h: Hand, depth = 0): void {
+  const strip: Hand = { ...h, keep: [] };
   for (const c of [...(d.boxes[id]?.outs ?? [])]) {
     const box = d.boxes[c];
-    if (!box || box.out !== "lost" || box.hand || box.back || box.done || !isStripKey(box.junkKey)) continue;
+    // 外れが消えたには setHand が打つ前の箱への自動の ↩ を入れる (tree-model)。中身で決め直す (人が選んだ ↩ はそのまま)
+    if (!box || box.hand || (box.back && !box.autoBack) || box.done || !(box.out === "junkGone" || (box.out === "lost" && isStripKey(box.junkKey)))) continue;
+    const prev = box.back;
+    box.back = null; delete box.autoBack;
     const s = sampleOf(data, d, c, 1);
     if (s.note === "none" || s.note?.startsWith("cant:")) continue;
-    const below = new Set(subtree(d, c));
-    const to = j.boxesOf(s.item, sampleAimed(data, d, c, 1), (t) => !!d.boxes[t]?.hand && !below.has(t))[0];
+    const below = new Set(subtree(d, c)), aimed = sampleAimed(data, d, c, 1);
+    // 木が伸びるので箱ごとに判定を作り直す (前の箱で足した消去の箱も ↩ の行き先に入れる)
+    const tos = judgeMemo(data, d).boxesOf(s.item, aimed, (t) => !!d.boxes[t]?.hand && !below.has(t));
+    const to = prev && tos.includes(prev) ? prev : tos[0];
     if (to) { box.back = to; box.autoBack = true; continue; }
-    if (looseOf(s.item) > 0) stripSplit(data, d, c, strip, 0);
+    if (box.out === "lost") { if (looseOf(s.item) > 0) stripSplit(data, d, c, strip, 0); continue; }
+    // 残したい MOD はこの自動の消去の中では必須、ほかは外れ (S-60 の ☑)。外れが残っていて、この手で打てる時だけ
+    const junk = [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && !aimed.has(m.modId));
+    const outs = junk && depth < 12 ? possibleOutsOf(data, d, c, h) : null;
+    if (!outs?.length) continue;
+    setHand(d, c, h, kindOf(h), [], outs, undefined, holdsAimOf(d, c));
+    lostSplit(data, d, c, h, depth + 1);
   }
 }
 /**

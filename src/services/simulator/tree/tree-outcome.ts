@@ -59,7 +59,8 @@ export const isKeepAnnul = (h: Hand | null | undefined): h is Hand => !!h?.keep?
 const keepAimedOf = (doc: TreeDoc, keep: readonly Aim[]): ReadonlySet<string> => new Set([...keepAims(doc, keep), ...fractureMarks(doc)].map((a) => a.modId));
 /**
  * 残したい MOD の消去の「狙いが消えた」も、消した後の中身ごとの箱 (S-28e、スイッチ judgeOne。全部消えてよい消去の S-28d と同じ鍵 `c:…`)。
- * 前は 1 箱で、中身が人ごとに違って混ざり、手も行き先も無く止まった (木 2 本目の b47、予約 K)
+ * 前は 1 箱で、中身が人ごとに違って混ざり、手も行き先も無く止まった (木 2 本目の b47、予約 K)。
+ * 外れが消えたは側の鍵 `s:…` のまま (残したい MOD が残って外れが 1 つ消えるので、側ごとに中身は 1 つ。鍵を替えると保存の札が合わず要確認が増えた)
  */
 function lostKeyed<T extends { out: OutKind; junkKey?: string }>(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, oc: T, after: StageItem): T {
   if (!flag("judgeOne") || oc.out !== "lost" || !isKeepAnnul(h)) return oc;
