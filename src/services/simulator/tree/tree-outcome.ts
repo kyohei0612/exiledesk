@@ -5,7 +5,7 @@
 import { applyCurrency, forceKey, mulberry32, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { fillCatalyst, stepOutcomes } from "../../simulator/sim-engine";
 import { aimHeldOn } from "./tree-aim";
-import { effectOf, engineOmens, isCatalyst } from "./tree-hands";
+import { effectOf, engineOmens, isCatalyst, isRuneHand } from "./tree-hands";
 import { aimsMayHold } from "./tree-lost";
 import { aimKey, boxAims, fractureMarks, subtree, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { aimDiff, aimsOf, outcomeOf, sampleOf, SINGLE_SEEDS } from "./tree-sample";
@@ -54,6 +54,8 @@ export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: 
 const mineOf = (data: PatchData, before: StageItem, aims: readonly Aim[], aimed: ReadonlySet<string>): Aim[] => aims.filter((a) => aimed.has(a.modId) || !aimHeldOn(data, before, a, { sameText: true }));
 function boxOutcomeRaw(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageItem, after: StageItem, aims: readonly Aim[]): Outcome {
   const key = b.hand?.currency;
+  // ルーンの手は確定の手: はめた人は全員「打った後」の 1 箱へ (当たり / 外れに分けない、S-31e)
+  if (key && isRuneHand(key)) return { out: "any", hits: [] };
   if (key && infiniteAim(key)) {
     const oc = outcomeOf(data, before, after, aims, key);
     if (oc.out !== "hit") return oc;
@@ -112,6 +114,8 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   // 狙い無しは「打った後」1 つ (手の種類の箱)。スイッチ junkSide の間は付いた側ごとの「打った後」(S-65)
   const freeSide = !!h.free && !veilKeep(h) && flag("junkSide");
   if (h.repeat || (h.free && !veilKeep(h) && !freeSide) || isCatalyst(h.currency) || (h.keep && !h.keep.length)) return null;
+  // ルーンの手は確定の手: はめた後のアイテムの「打った後」1 箱 (カタリストと同じ、S-31e。前は当たり (付く MOD 無し) と外れに分かれて輪になった)
+  if (isRuneHand(h.currency)) return [{ out: "any", aim: null }];
   // 後から打つ発現の手: ☑ の札ごとの当たり + 外れ (発現は MOD を消さない。スイッチ boneLater)
   if (isRevealHand(h.currency)) return [...extra.map((a) => ({ out: "hit" as OutKind, aim: a })), { out: "junk", aim: null }];
   // 消去の残したい MOD があれば、その MOD だけを狙いとして見る (ほかは外れ MOD、boxOutcomeOf と同じ)

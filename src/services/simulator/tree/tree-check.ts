@@ -342,12 +342,14 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
     for (const x of [...cantIssues(), ...oddIssues()]) add(x.boxId, x.kind, x.text);
     for (const [id, c] of waste) add(id, "omenWaste", tr(`お告げが効かない人がいる (${PEOPLE} 人中 ${c.who.size} 人、手は打てる): ${c.reason}`, `The omen is wasted for some runs (${c.who.size} of ${PEOPLE}; the craft still works): ${c.reason}`));
     // 5) 回して止まる箱 (tree-run を 30 人、値段 0)。10-22 靴を白紙から組んで: 100 人中 64 人が止まる箱を上の辿り方では引かなかった
-    const steps = runTreeSteps(data, doc, { n: RUN_PEOPLE, seed: 1, price: () => 0, capSteps: 300, untilHit: capped });
+    // 手の上限は「回す」と同じ (runTree の既定 20000)。前は 300 で、消去・増強・カオスの輪の長い木 (完成に 1000 手を超える人がいる) で
+    // 精査は「1 人も完成せず」、回すと完成 9/30 と食い違った (10-29 合格レシピ pass-weapon、S-73)
+    const steps = runTreeSteps(data, doc, { n: RUN_PEOPLE, seed: 1, price: () => 0, untilHit: capped });
     let st = steps.next();
     while (!st.done) { yield { phase: "run", n: st.value, of: RUN_PEOPLE, partial: ranked(out) }; st = steps.next(); }
     const run = st.value;
     // 完成 0 人で半分以上が打ち止め (手の上限) = 完成に着かない (10-22 13 通り組んだ #10: 100 人とも打ち止めの木で精査が何も言わなかった)。
-    // ここの回しは手の上限 300 なので、長いだけの木 (100 人回しでは完成 100%) は完成が 1 人でもいれば出さない
+    // 長いだけの木 (100 人回しでは完成 100%) は完成が 1 人でもいれば出さない
     if (!run.finished && run.capped * 2 >= RUN_PEOPLE) add("start", "noDone", tr(`回すと ${RUN_PEOPLE} 人中 1 人も完成せず、${run.capped} 人が手の上限まで打っても着かない (輪から出られない・狙いが付きにくい道を確かめる)`, `None of ${RUN_PEOPLE} runs finished; ${run.capped} hit the craft limit (check for loops or hard-to-hit paths)`));
     for (const [id, n] of Object.entries(run.stuckAt)) {
       // 手も行き先も決めていない箱は 1) の「決めていない」だけ (何もしないスタートで「30 人中 27 人が止まる」が重なり、残りの人が何か分からなかった。10-24 初めての人の回 5)

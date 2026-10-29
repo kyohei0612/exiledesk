@@ -101,7 +101,10 @@ function linkLeftovers(data: PatchData, d: TreeDoc): void {
     if (b.out === "start" || b.hand || b.back || b.done || b.split || b.noAutoBack) continue;
     const cs = j.contents(b.id);
     if (!cs?.size) continue;
-    const tos = new Set([...cs].map((k) => targets.find((t) => t !== b.id && !!j.contents(t)?.has(k)) ?? null));
+    // 結果が 1 通りの手 (ルーン・品質を最大までなど) の結果を同じ中身の親へ戻すと、打っても変わらない手の輪になる (linkByContent と同じ守り。
+    // ルーンの後の箱が ↩ ルーンの箱になり、同じルーンは通り抜けるので回り続けた、10-29 pass-armor、S-31e)
+    const loop = (t: string): boolean => t === b.parent && (d.boxes[t]?.outs.length ?? 0) <= 1;
+    const tos = new Set([...cs].map((k) => targets.find((t) => t !== b.id && !loop(t) && !!j.contents(t)?.has(k)) ?? null));
     const to = tos.size === 1 ? [...tos][0] : null;
     if (to) { b.back = to; b.autoBack = true; }
   }

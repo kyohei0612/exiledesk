@@ -8,6 +8,8 @@ import { CATALYSTS, kindOf } from "../../craft-stage/engine";
 export const isCatalyst = (key: string): boolean => kindOf(key) === "catalyst";
 /** カオススパムにできる手 (今はカオスだけ出す。同じ形で高貴・消去にも広げられる) */
 export const canSpam = (key: string): boolean => kindOf(key) === "chaos";
+/** ルーンをはめる手 (確定の手 = 結果は打った後の 1 箱、S-31e) */
+export const isRuneHand = (key: string): boolean => key.startsWith("rune:");
 
 /** 触媒の高貴のお告げ */
 export const CATALYSING = "OmenofCatalysingExaltation";

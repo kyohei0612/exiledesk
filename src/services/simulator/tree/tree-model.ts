@@ -489,7 +489,8 @@ export function setDone(d: TreeDoc, id: string, v: TreeBox["done"]): void {
   const b = d.boxes[id];
   // 分かれ目の行の箱 (branch) も完成にできる (「狙いが 2 つ以上 → 完成」)
   if (!b || b.hand || b.back || b.split) return;
-  if (v === "fail" ? b.out === "start" : v && b.out !== "hit" && b.out !== "branch") return;
+  // 打った後の箱 (ルーンで仕上げる・狙い無しの手の後) も完成にできる (S-31e・S-54、スイッチ runeHand)
+  if (v === "fail" ? b.out === "start" : v && b.out !== "hit" && b.out !== "branch" && !(b.out === "any" && flag("runeHand"))) return;
   b.done = v;
 }
 
