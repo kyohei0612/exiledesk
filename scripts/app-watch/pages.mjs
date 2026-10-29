@@ -2,8 +2,8 @@
  * pages.mjs — シミュ以外の見張り: 全部のページを PC・スマホの幅 × 日英で開き、どの画面でも成り立つ決まりを数える (最終チェック長、10-28)。
  * 決まりの正は docs/spec/shared-ui.md ⑤・emu.md ⑤・system.md ⑤、回し方は docs/org/dev/app-watch.md。
  *
- *   node scripts/app-watch/pages.mjs                         … 手元の本番の作り http://127.0.0.1:1460
- *   node scripts/app-watch/pages.mjs http://localhost:1440   … dev サーバー (スイッチの下も入る)
+ *   node scripts/app-watch/pages.mjs                         … dev サーバー (スイッチの下も入る)
+ *   node scripts/app-watch/pages.mjs http://127.0.0.1:1460   … 手元の本番の作り (出す直前の照らしだけ、R-09)
  *   [--only craft] [--tabs 4] [--json] [--update]
  * 70 回 (ページ × 幅 × 言語) をタブ 4 枚 (それぞれ別の部屋 = 保存も別) で並べて開く。待つのは画面が落ち着くまで (lib.mjs の settle、G-21)
  *

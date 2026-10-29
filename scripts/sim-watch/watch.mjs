@@ -4,8 +4,9 @@
  * ツリーの中身は直さない (見つけたらシミュ部長へ)。これは「前と変わっていないか・文と中身が合っているか」の見張りで、外の正解ではない。
  * 回し方と見る物は docs/org/dev/sim-watch.md。
  *
- *   node scripts/sim-watch/watch.mjs                         … 手元の本番の作り http://127.0.0.1:1460 (pnpm preview:prod)
- *   node scripts/sim-watch/watch.mjs --dev                   … 手元の開発版 http://127.0.0.1:1461 (スイッチの下も入る)
+ *   node scripts/sim-watch/watch.mjs                         … dev サーバー http://localhost:1440 (スイッチの下も入る、dev の基準。Y-70・R-15)
+ *   node scripts/sim-watch/watch.mjs http://127.0.0.1:1460   … 手元の本番の作り (pnpm preview:prod、出す直前の照らしだけ R-09。prod の基準)
+ *   node scripts/sim-watch/watch.mjs http://127.0.0.1:1461   … 手元の本番の作りの開発版 (pnpm preview:prod -- --dev、dev の基準)。--dev は前の書き方 (既定の 1440 と同じ)
  *   node scripts/sim-watch/watch.mjs <origin> [--only amuB] [--update] [--shots <dir>]
  *   --people 30: 回す人数 (既定 30。開発版の口 __simMonkey で回す。--people 100 か本番の作りは画面のボタン)
  *   --update で今の数を baseline.json に書く (わざと動きを変えた時だけ。書いたら commit)
@@ -24,8 +25,9 @@ const args = process.argv.slice(2);
 const DEV = args.includes("--dev");
 const UPDATE = args.includes("--update");
 const opt = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
-const ORIGIN = (args.find((a) => /^https?:\/\//.test(a)) ?? (DEV ? "http://127.0.0.1:1461" : "http://127.0.0.1:1460")).replace(/\/$/, "");
-const MODE = DEV || /:1461\b|dev\./.test(ORIGIN) ? "dev" : "prod";
+// 既定は dev 1440 (Y-70。10-29 最終チェック長 3: 前の既定 1460 / --dev 1461 のままだと、1440 を --dev 無しで渡すと prod の基準と比べた)
+const ORIGIN = (args.find((a) => /^https?:\/\//.test(a)) ?? "http://localhost:1440").replace(/\/$/, "");
+const MODE = DEV || /:1440\b|:1461\b|dev\./.test(ORIGIN) ? "dev" : "prod";
 const ONLY = opt("--only");
 // 回す人数 (10-29 オーナー「おｋそれで」で 100 → 30)。画面のボタンは RUN_N (100) 固定なので、30 は開発版の口 __simMonkey.result で回す (下の runs)
 const PEOPLE = Number(opt("--people") ?? 30);

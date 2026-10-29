@@ -14,8 +14,8 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 export const BASE_PATH = join(HERE, "baseline.json");
 export const args = process.argv.slice(2);
 export const opt = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
-/** 既定は手元の本番の作り 1460。1440 (dev サーバー) なら http://localhost:1440 を渡す */
-export const ORIGIN = (args.find((a) => /^https?:\/\//.test(a)) ?? "http://127.0.0.1:1460").replace(/\/$/, "");
+/** 既定は dev サーバー 1440 (Y-70・R-15)。手元の本番の作り 1460 は出す直前の照らしだけ (R-09)、http://127.0.0.1:1460 を渡す */
+export const ORIGIN = (args.find((a) => /^https?:\/\//.test(a)) ?? "http://localhost:1440").replace(/\/$/, "");
 /** 本番のホスト (ここへの記録の送り = Y-102 の違反) */
 export const PROD_HOST = /(^|\.)exiledesk\.com$|^exiledesk-live\.exiledesk\.workers\.dev$/;
 

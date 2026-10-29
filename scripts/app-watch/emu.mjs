@@ -3,8 +3,8 @@
  * 決まりの正は docs/spec/emu.md ⑤・shared-ui.md ③⑤・system.md ⑤、回し方は docs/org/dev/app-watch.md。
  * 外の正解 (ゲームの確率・MOD) とは突き合わせない。「画面が自分の言った事と食い違わないか」の見張り。
  *
- *   node scripts/app-watch/emu.mjs                         … 手元の本番の作り http://127.0.0.1:1460
- *   node scripts/app-watch/emu.mjs http://localhost:1440   … dev サーバー
+ *   node scripts/app-watch/emu.mjs                         … dev サーバー
+ *   node scripts/app-watch/emu.mjs http://127.0.0.1:1460   … 手元の本番の作り (出す直前の照らしだけ、R-09)
  *   [--steps 30] [--seed 1] [--json] [--update]
  *
  * 見る物:
