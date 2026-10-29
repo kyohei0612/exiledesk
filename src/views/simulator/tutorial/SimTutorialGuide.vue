@@ -11,6 +11,7 @@ import { simOp } from "../../../web/track";
 import { markRan, startTutorial, stopTutorial, tutOn, tutTick, useSimTutorial } from "./use-sim-tutorial";
 import { TUT_EDITABLE, tutDirty } from "./tut-data";
 import SimTutorialEditor from "./SimTutorialEditor.vue";
+import { isPhoneWidth } from "../../../utils/use-phone";
 
 const tut = useSimTutorial();
 const ring = ref<{ x: number; y: number; w: number; h: number } | null>(null);
@@ -55,7 +56,7 @@ onMounted(() => {
   raf = requestAnimationFrame(frame);
   // 窓・棚の中の変わり目 (持った・お告げを掛けた) は木の中身に出ないので、刻みで求め直す
   timer = window.setInterval(() => {
-    narrow.value = window.innerWidth < 768;
+    narrow.value = isPhoneWidth();
     if (!tutOn.value) return;
     tutTick.value++;
     if (tut.step.value?.kind === "run" && document.querySelector("[data-tree-run-report]")) markRan();

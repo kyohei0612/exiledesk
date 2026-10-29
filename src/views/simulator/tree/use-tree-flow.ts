@@ -14,6 +14,7 @@ import { useVueFlow } from "@vue-flow/core";
 import { BOX_H, BOX_W, boundsOf, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { bandsOf } from "../../../services/simulator/tree/tree-layout";
 import { pageZoom } from "../../../utils/zoom";
+import { isPhoneWidth } from "../../../utils/use-phone";
 
 export const FLOW_ID = "sim-tree";
 /**
@@ -84,7 +85,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     void stepZoom(dir, { x: e.clientX, y: e.clientY });
   }
   /** 一番上の箱を置く高さ (0 完成形の設定は枠の左上の札、10-23。スマホは札 (高さ約 110px) の下へ) */
-  const topY = (): number => (innerWidth < 768 ? 130 : 40);
+  const topY = (): number => (isPhoneWidth() ? 130 : 40);
   /**
    * 始まりの箱を枠の横の真ん中に置いた時、木全体が収まる一番大きい段 (上は topY、下は余白だけ。100% まで)。
    * 左右は始まりの箱の真ん中から遠い方の端まで (始まりを真ん中に置くので、片側に伸びた木はその側の分を両側に取る)
@@ -130,8 +131,8 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   async function fit(whole = false): Promise<void> {
     const lv = fitLevel();
     if (lv == null) return;
-    // スマホ (768px 未満) は 50% より小さくしない (20% で箱の字が読めなかった、10-22)
-    if (!whole && innerWidth < 768) await startTop(Math.max(lv, PHONE_MIN));
+    // スマホの形 (U-53) は 50% より小さくしない (20% で箱の字が読めなかった、10-22)
+    if (!whole && isPhoneWidth()) await startTop(Math.max(lv, PHONE_MIN));
     else await startTop(Math.max(lv, FIT_MIN), true);
   }
   /**

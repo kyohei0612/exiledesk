@@ -17,7 +17,7 @@ import TreeMemoFloat from "./TreeMemoFloat.vue";
 import TreeCanvasTools from "./TreeCanvasTools.vue"; import TreeTopTools from "./TreeTopTools.vue"; import TreeRunSum from "./TreeRunSum.vue"; import TreeUnsetBar from "./TreeUnsetBar.vue";
 import ModeTabs from "../../../components/for-share/ModeTabs.vue";
 import SimPcOnly from "../SimPcOnly.vue"; import PhoneTreePage from "../phone/PhoneTreePage.vue";
-import { usePhone } from "../../../utils/use-phone";
+import { isPhoneWidth, usePhone } from "../../../utils/use-phone";
 import TreeBox from "./TreeBox.vue";
 import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../tutorial/SimTutorialGuide.vue"; import TreeGoalNode from "./TreeGoalNode.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { flag } from "../../../web/release-flags"; import { simAct, simOp } from "../../../web/track";
 import { boxHeightOf, useRowSettle } from "./use-row-settle"; import { placeTree } from "../../../services/simulator/tree/tree-place";
@@ -125,7 +125,7 @@ function measureRow(): void {
   const z = pageZoom();
   // スマホ (768px 未満) はボタンが何段にも折り返して残りが 240px ほどになり、木がほとんど見えず道具の帯がスタートの箱に重なった (10-23 モンキー 5)。
   // 画面の高さの 7 割は取り、はみ出す分はページを縦に送る
-  const phoneMin = innerWidth < 768 ? Math.round((innerHeight / z) * 0.72) : 200;
+  const phoneMin = isPhoneWidth() ?Math.round((innerHeight / z) * 0.72) : 200;
   rowH.value = Math.max(phoneMin, Math.floor(innerHeight / z - (el.getBoundingClientRect().top + window.scrollY) / z - ROW_BOTTOM));
 }
 const onResizeH = (): void => { requestAnimationFrame(measureRow); };
@@ -399,17 +399,17 @@ const phone = usePhone(), simPhone = flag("simPhone");
         <TreeRecipeBar v-if="t.needBase.value" @opened="v.openView()" />
         <template v-else>
           <TreeRunBar v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking, passed, holes: issues?.length ?? 0, shown: issuesShown }" :halted="tr100.halted.value" :drive="tr100.test.value" @test="() => { void onCheck(); void tr100.run({ test: true }); }" @holes="issuesShown = !issuesShown" @holes-on="openIssues" @list="issuesOpen ? (issuesOpen = false) : openIssues()" @run="tr100.run" @go="goIssue" />
-          <TreeRunSum class="max-[1099px]:hidden" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" :test="tr100.test.value" @go="goIssue" @skip="tr100.skipWalk" />
+          <TreeRunSum v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" :test="tr100.test.value" @go="goIssue" @skip="tr100.skipWalk" />
         </template>
         <!-- ベースが無い空の形でも、ほかの木があればタブを出す (前の木へ戻れない行き止まりだった、10-24 夜オーナー「一方通行が多い」) -->
         <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" compact class="min-w-0 flex-1" @switched="v.openView()" />
         <span v-else class="flex-1" />
         <span ref="clearBtn" class="ml-auto shrink-0"><TreeTopTools :lines-all="linesAll" :memo-open="memoOpen" :full="full" :note="!!doc.note" :armed="clearArm.is()" @tidy="onTidy" @lines="linesAll = !linesAll" @memo="memoOpen = !memoOpen" @full="v.toggleFull" @clear="onClear" /></span>
       </div>
-      <!-- 1100px 未満 (768〜1099) は右の列を木の下へ。木の枠に今までの高さを渡し、列はその下 (ページを送って見る) -->
-      <div ref="row" class="flex min-h-0 gap-2 min-[1100px]:h-[var(--row-h)] max-[1099px]:flex-col" :class="full ? 'flex-1' : ''" :style="full ? { '--frame-h': 'calc(100% - 308px)' } : { '--row-h': `${rowH}px`, '--frame-h': `${rowH}px` }">
+      <!-- PC の形 (1280 以上、U-53) だけ。1100px 未満で右の列を木の下へ回す分かれ道は消した -->
+      <div ref="row" class="flex min-h-0 gap-2 h-[var(--row-h)]" :class="full ? 'flex-1' : ''" :style="full ? {} : { '--row-h': `${rowH}px` }">
         <!-- ツリー (暗い地 + ドットの格子、見本の 1)。枠の上・左に浮かぶ物は置かない (完成形の窓・道具・ミニマップは右の列、10-26 夜オーナー) -->
-        <div data-tree-frame class="relative min-w-0 flex-1 overflow-hidden max-[1099px]:h-[var(--frame-h)] max-[1099px]:flex-none rounded-lg border border-white/[0.06] bg-[#0c0a08]">
+        <div data-tree-frame class="relative min-w-0 flex-1 overflow-hidden rounded-lg border border-white/[0.06] bg-[#0c0a08]">
         <!-- ベースが無い時の空の形 (白紙の木でベースを選ばずに閉じた時): 木は出さず真ん中に「ベースを選ぶ」1 つ (10-23 オーナー、use-tree の needBase) -->
         <div v-if="t.needBase.value" data-tree-need-base class="absolute inset-0 z-30 flex items-center justify-center bg-[#0c0a08]">
           <button type="button" data-tree-pick-base class="g-btn" @click="t.goalPage.value = 1">{{ tr("ベースを選ぶ", "Choose a base") }}</button>
@@ -478,15 +478,13 @@ const phone = usePhone(), simPhone = flag("simPhone");
         <!-- 箱に乗せた時のアイテムのカード (TreeHoverCard) は出さない: 箱の中にアイテムの枠があるので意味が無く、浮いて箱を隠した (10-27 オーナー「ホバーのカードも一旦出さなくていい」、モンキー 9) -->
         </div>
         <!-- 木の枠の外の右の列: 上に足りない所の一覧、下にミニマップと倍率の道具 (10-26 夜オーナー「A でいい」。木の上に浮かせると引っ張った・寄った時に箱を隠した、モンキー 8 の 2・4) -->
-        <!-- 列は上に 0 完成形の設定 (字を縮めずに入る幅 372px)、その下にミニマップ (残りいっぱい)、一番下に倍率の道具。足りない所は上の帯の落ちる窓 (10-26 夜オーナー「ここ使うなら」)。
-             1100px 未満は木の下に横並び -->
-        <aside v-if="!t.needBase.value" data-tree-side :class="GOAL_BIG ? 'w-[298px]' : 'w-[248px]'" class="flex min-h-0 shrink-0 flex-col gap-2 overflow-hidden max-[1099px]:h-[300px] max-[1099px]:w-full max-[1099px]:flex-row">
-          <div data-tree-goal-side class="min-h-0 shrink-0 overflow-y-auto max-[1099px]:h-full min-[1100px]:max-h-[60%]"><TreeGoalCard v-if="goalCard" /><TreeGoalNode v-else /></div>
+        <!-- 列は上に 0 完成形の設定 (字を縮めずに入る幅 372px)、その下にミニマップ (残りいっぱい)、一番下に倍率の道具。足りない所は上の帯の落ちる窓 (10-26 夜オーナー「ここ使うなら」) -->
+        <aside v-if="!t.needBase.value" data-tree-side :class="GOAL_BIG ? 'w-[298px]' : 'w-[248px]'" class="flex min-h-0 shrink-0 flex-col gap-2 overflow-hidden">
+          <div data-tree-goal-side class="min-h-0 shrink-0 overflow-y-auto max-h-[60%]"><TreeGoalCard v-if="goalCard" /><TreeGoalNode v-else /></div>
           <div class="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
-            <!-- 名前・保存・レシピ (帯の 1 段目の残り、10-26 夜オーナー「この 1 段目はアイテム欄の下でおけ」)。1100px 未満は回した結果もここ -->
+            <!-- 名前・保存・レシピ (帯の 1 段目の残り、10-26 夜オーナー「この 1 段目はアイテム欄の下でおけ」) -->
             <div data-tree-side-recipe class="flex min-w-0 shrink-0 flex-wrap items-center gap-2 text-[13px]">
               <TreeRecipeBar @opened="v.openView()" />
-              <TreeRunSum class="basis-full flex-wrap min-[1100px]:hidden" v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" :test="tr100.test.value" @go="goIssue" @skip="tr100.skipWalk" />
             </div>
             <TreeCanvasTools v-model:hand="hand" :boxes="rv.visible.value" :view="v.view.value" :zoom="zoom" @center="v.centerOn" @fit="v.fit" @zoom-in="v.zoomIn" @zoom-out="v.zoomOut" @reset="v.resetZoom" />
           </div>

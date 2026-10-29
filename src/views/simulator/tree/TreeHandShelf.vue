@@ -207,7 +207,7 @@ async function showOmens(): Promise<void> {
   const dy = Math.min(Math.max(down, 0), room);
   if (Math.abs(dy) > 1) sc.scrollBy({ top: dy, behavior: "smooth" });
 }
-watch(held, (k) => { if (k && window.innerWidth < 768) void showOmens(); });
+watch(held, (k) => { if (k && phone.value) void showOmens(); });
 // 新しい手の既定 = 狙い無し (10-26 夜オーナー「デフォルトは狙い無しでチェック付けといてくれ」)。当たるまで繰り返す手は狙い無しが無いので候補に全部チェック
 watch([aimChoices, spam], ([l, sp]) => { if (!props.current && !touched) checked.value = sp ? l.map(aimKey) : []; }, { immediate: true });
 /** チェックの一覧を出す (MOD が付く・入れ替わる手) */

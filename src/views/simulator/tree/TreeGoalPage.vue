@@ -36,6 +36,7 @@ import { openTreePage, treeStep } from "../../../web/page";
 import { useTapFracture } from "../phone/use-tap-fracture";
 import TreeGoalQuality from "./TreeGoalQuality.vue";
 import { qualityUndecided } from "./tree-goal-quality";
+import { isPhoneWidth } from "../../../utils/use-phone";
 import { useGoalShown } from "./use-goal-shown";
 import HelpTip from "../../../components/ui/HelpTip.vue";
 import type { RowToggle } from "../../../components/for-share/item/stage-item-row-tag";
@@ -253,7 +254,7 @@ const HELP: Array<[string, string, boolean?]> = [
   ["印が無ければ「決めた」の後の窓で、フラクチャーにする MOD を選ぶか白ベース (フラクチャー無し) から", "No mark: after Done, pick the mod to fracture or start from a white base (no fracture)"],
 ];
 /** 説明はスマホでは既定で閉じる (カードの下で MOD の行が画面の外へ押し出された、10-26 猿の 10)。PC は開いたまま */
-const helpOpen = ref(typeof matchMedia !== "function" || matchMedia("(min-width: 768px)").matches);
+const helpOpen = ref(!isPhoneWidth());
 // 2 の段に着いたら上から (ベースの一覧を送った位置のまま着き、カードと狙いの行が見えなかった、10-26 猿の 1)
 watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scrollTo(0, 0)); });
 </script>
