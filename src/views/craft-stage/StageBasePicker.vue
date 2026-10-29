@@ -61,7 +61,7 @@ async function choose(en: string): Promise<void> {
       <template v-else>
         <img v-if="baseArt(base)" :src="baseArt(base)!" alt="" class="size-8 shrink-0 object-contain" draggable="false" />
         <!-- 狭い時は種類の字は出さない (2026-10-13 スマホで名前が 1 字ずつ縦に折れていた)。スマホは「…」で切らず折り返す (U-51・U-84、10-29) -->
-        <b class="min-w-0 truncate max-md:flex-auto max-md:whitespace-normal max-md:break-words max-md:py-1 max-md:leading-snug font-display text-[15px] tracking-wide max-md:tracking-normal text-[var(--color-rarity-rare)]">{{ tr(current?.ja ?? base, base) }}</b>
+        <b class="min-w-0 md:truncate max-md:flex-auto max-md:break-words max-md:py-1 max-md:leading-snug font-display text-[15px] tracking-wide max-md:tracking-normal text-[var(--color-rarity-rare)]">{{ tr(current?.ja ?? base, base) }}</b>
         <span v-if="current" class="min-w-0 truncate text-[12px] text-[var(--exile-color-text-secondary)] max-md:hidden">{{ classLabel(current.cls) }}</span>
       </template>
       <!-- ゲームの絵のボタンで目立たせる (2026-10-10 オーナー「ベース変更見づらいよね」: 灰色の小さい「変える」だった) -->

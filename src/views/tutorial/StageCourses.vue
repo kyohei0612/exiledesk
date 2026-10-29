@@ -87,7 +87,7 @@ function stepLabel(c: TopicCourse, st: TopicStep): string {
         <div class="flex items-center gap-3 rounded-md px-3 py-2" :class="lv.band">
           <span class="grid size-7 shrink-0 place-items-center rounded-full font-display text-[15px] font-bold" :class="lv.num">{{ lv.n }}</span>
           <span class="font-display text-[18px] font-bold tracking-wider" :class="lv.text">{{ t2(lv.label) }}</span>
-          <span class="min-w-0 truncate max-md:whitespace-normal text-[12px] text-[var(--exile-color-text-secondary)]">{{ t2(lv.note) }}</span>
+          <span class="min-w-0 md:truncate max-md:break-words text-[12px] text-[var(--exile-color-text-secondary)]">{{ t2(lv.note) }}</span>
         </div>
         <div class="grid grid-cols-2 items-stretch gap-3 max-lg:grid-cols-1">
           <!-- カード: 進めるのは「始める」と「手の一覧」の 2 つだけ (2026-10-17 オーナー「基本その 2 ボタンで進行」) -->
@@ -102,8 +102,8 @@ function stepLabel(c: TopicCourse, st: TopicStep): string {
                 <img v-if="courseIcon(c)" :src="courseIcon(c)" alt="" class="size-11 object-contain" draggable="false" />
               </span>
               <div class="flex min-w-0 flex-1 flex-col gap-1">
-                <span class="flex min-w-0 items-center gap-2">
-                  <b class="min-w-0 truncate max-md:whitespace-normal max-md:leading-snug font-display text-[16px] tracking-wide text-[var(--exile-color-text-title)]">{{ t2(c.title) }}</b>
+                <span class="flex min-w-0 items-center gap-2 max-md:flex-wrap max-md:gap-y-1">
+                  <b class="min-w-0 md:truncate max-md:break-words max-md:leading-snug font-display text-[16px] tracking-wide text-[var(--exile-color-text-title)]">{{ t2(c.title) }}</b>
                   <span class="shrink-0 rounded px-1.5 py-px text-[10px] font-bold" :class="lv.chip">{{ t2(lv.label) }}</span>
                   <span v-if="cleared.has(`topic:${c.id}`)" data-cleared class="shrink-0 rounded bg-amber-400 px-1.5 py-px text-[10px] font-black text-black">{{ tr("クリア", "Cleared") }}</span>
                 </span>
@@ -115,7 +115,7 @@ function stepLabel(c: TopicCourse, st: TopicStep): string {
               </div>
             </div>
             <div class="mt-auto flex flex-wrap items-center gap-2 bg-black/25 py-2 pl-5 pr-3">
-              <span class="min-w-0 truncate max-md:whitespace-normal max-md:w-full text-[11px] text-[var(--exile-color-text-tertiary)]"><template v-if="!learnFold">{{ tr(`${c.steps.length} 手`, `${c.steps.length} steps`) }} · </template>{{ baseName(c.base) }}</span>
+              <span class="min-w-0 md:truncate max-md:break-words max-md:w-full text-[11px] text-[var(--exile-color-text-tertiary)]"><template v-if="!learnFold">{{ tr(`${c.steps.length} 手`, `${c.steps.length} steps`) }} · </template>{{ baseName(c.base) }}</span>
               <span class="ml-auto flex shrink-0 items-center gap-2">
                 <button type="button" data-topic-card-toggle class="g-btn sm inline-flex items-center gap-1" :aria-expanded="openSteps === c.id" @click="toggleSteps(c.id)"><Icon :name="openSteps === c.id ? 'chevron-up' : 'chevron-down'" class="size-3.5" />{{ tr("手の一覧", "Steps") }}</button>
                 <button type="button" data-topic-start class="g-btn-red sm" :disabled="!s.data.value" @click="startTopicAt(c, 0)">{{ tr("始める", "Start") }}</button>
@@ -142,7 +142,7 @@ function stepLabel(c: TopicCourse, st: TopicStep): string {
         <button v-for="c in CRAFT_COURSES" :key="c.id" type="button" data-course-card class="g-plain flex min-w-0 flex-col items-start gap-1.5 rounded-xl border-2 border-violet-400/40 bg-white/[0.03] px-4 py-3 text-left transition hover:border-violet-300 hover:bg-white/[0.06]" :disabled="!s.data.value" @click="startCourse(c)">
           <span class="flex w-full items-center gap-2">
             <span class="rounded bg-violet-500/25 px-2 py-0.5 text-[11px] font-bold text-violet-100">{{ t2(c.part) }}</span>
-            <b class="min-w-0 truncate max-md:whitespace-normal text-[15px] text-[var(--exile-color-text-title)]">{{ baseName(c.recipe.base) }}</b>
+            <b class="min-w-0 md:truncate max-md:break-words text-[15px] text-[var(--exile-color-text-title)]">{{ baseName(c.recipe.base) }}</b>
             <span v-if="cleared.has(`course:${c.id}`)" data-cleared class="shrink-0 rounded bg-amber-400 px-2 py-0.5 text-[11px] font-black text-black">{{ tr("クリア", "Cleared") }}</span>
             <span class="ml-auto shrink-0 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr(`MOD ${courseSlots(c).length} つ`, `${courseSlots(c).length} mods`) }}</span>
           </span>
