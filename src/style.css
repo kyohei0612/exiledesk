@@ -3,6 +3,29 @@
 /* video/ (動画を作る Python、旧 POE2Tube) の文字を class の候補として拾わない */
 @source not "../video";
 
+/* 画面の形の境 (U-53)。スイッチ twoShapes が入っていれば md・lg・xl とその max- は全部 1280 の 1 本 (1280 未満 = スマホの形、以上 = PC の形)。
+   切れていれば今まで通り md 768・lg 1024・xl 1280。並びは Tailwind の既定と同じ順 (max- の大きい方 → 小さい方 → min の小さい方 → 大きい方) で宣言し直す。
+   JS の境は utils/use-phone.ts の PHONE_MAX */
+@custom-variant max-lg {
+  @media (width < 64rem) { &:where(:root:not([data-flag-twoshapes]) *) { @slot; } }
+  @media (width < 80rem) { &:where(:root[data-flag-twoshapes] *) { @slot; } }
+}
+@custom-variant max-md {
+  @media (width < 48rem) { &:where(:root:not([data-flag-twoshapes]) *) { @slot; } }
+  @media (width < 80rem) { &:where(:root[data-flag-twoshapes] *) { @slot; } }
+}
+@custom-variant md {
+  @media (width >= 48rem) { &:where(:root:not([data-flag-twoshapes]) *) { @slot; } }
+  @media (width >= 80rem) { &:where(:root[data-flag-twoshapes] *) { @slot; } }
+}
+@custom-variant lg {
+  @media (width >= 64rem) { &:where(:root:not([data-flag-twoshapes]) *) { @slot; } }
+  @media (width >= 80rem) { &:where(:root[data-flag-twoshapes] *) { @slot; } }
+}
+@custom-variant xl {
+  @media (width >= 80rem) { @slot; }
+}
+
 /* ============================================================
  * ExileDesk Design Tokens (visual-concept.md §4 / §9.1 準拠)
  *
@@ -229,6 +252,15 @@ html.web-page body { overflow-y: visible; }
      text-[12px] などの class に負けないよう !important (2026-10-08 オーナー iPhone「横スクロールはあるんよな」= 表示通貨の選択欄で拡大していた) */
   input, select, textarea { font-size: 16px !important; }
   img { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+}
+/* 同じ物を、スイッチ twoShapes の時は 1280 未満まで (U-53) */
+@media (min-width: 768px) and (max-width: 1279px) {
+  :root[data-flag-twoshapes], :root[data-flag-twoshapes] body, :root[data-flag-twoshapes] #app { height: auto; min-height: 100%; max-width: 100vw; }
+  :root[data-flag-twoshapes], :root[data-flag-twoshapes] body { overflow-x: clip; }
+  :root[data-flag-twoshapes] body { overflow-y: visible; -webkit-overflow-scrolling: touch; }
+  :root[data-flag-twoshapes] #app { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  :root[data-flag-twoshapes] :is(input, select, textarea) { font-size: 16px !important; }
+  :root[data-flag-twoshapes] img { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 }
 
 /* 押せないボタンは指にしない (層の外なので disabled:cursor-* より強く、どの画面でも押せないボタンが指のままだった。2026-10-23 エミュ部長の知らせ) */

@@ -1,5 +1,6 @@
 import { nextTick } from "vue";
 import { pageZoom, toCss } from "./zoom";
+import { isPhoneWidth } from "./use-phone";
 
 /**
  * スクロールまわりの共通の部品 (2026-10-10 オーナー「全体コード整理、スクロール周り余分な奴とか重複」で 1 か所に):
@@ -47,12 +48,12 @@ export function scrollToTop(el: Element | null | undefined, behavior: ScrollBeha
   const box = scrollBoxOf(el);
   const r = el.getBoundingClientRect();
   const view = box ? box.getBoundingClientRect() : { top: 0, bottom: window.innerHeight };
-  const bar = window.innerWidth < 768 ? (document.querySelector("[data-item-mini]") as HTMLElement | null)?.offsetHeight ?? 0 : 0;
+  const bar = isPhoneWidth() ? (document.querySelector("[data-item-mini]") as HTMLElement | null)?.offsetHeight ?? 0 : 0;
   // 固定の見出し (scroll-mt-*) の分は下げる (MOD 一覧の目次で飛ぶと、節の見出しが固定の目次の裏に隠れていた。2026-10-10 点検)
   const mt = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
   const top = view.top + bar + 8 + mt;
   let d: number;
-  if (window.innerWidth < 768 || pcBlock === "start") d = r.top - top;
+  if (isPhoneWidth() || pcBlock === "start") d = r.top - top;
   else if (pcBlock === "center") d = r.top + r.height / 2 - (view.top + view.bottom) / 2;
   else if (pcBlock === "end") d = r.bottom - view.bottom + 8;
   else d = r.top < top ? r.top - top : r.bottom > view.bottom ? r.bottom - view.bottom + 8 : 0; // nearest

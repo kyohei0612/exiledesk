@@ -48,6 +48,7 @@ const dailyFile = Object.values(import.meta.glob<{ default: Component }>("../vie
 const DailyPage = dailyFile ? defineAsyncComponent(dailyFile) : null;
 const StageRecipesPage = defineAsyncComponent(() => import("../views/simulator/StageRecipesPage.vue")); // シミュレーターのレシピのページ (2026-10-21) // 後から読む (2026-10-19 スマホ強化: 最初に読む JS を縮める。その画面・カードを出す時に初めて読む)
 import { inLesson } from "../state/tutorial/craft-lesson";
+import { isPhoneWidth } from "../utils/use-phone";
 
 const guideOn = computed(() => craftStage.mode.value === "tutorial" || inLesson.value);
 
@@ -133,7 +134,7 @@ const SCROLLBAR = ((): number => {
   return w;
 })();
 function fitZoom(): void {
-  phone.value = window.innerWidth < 768;
+  phone.value = isPhoneWidth();
   // iPad など: 縮めると字が 7〜8 px になって読めないので、1280 未満は等倍、それより広くても 0.85 倍より小さくしない (並びは幅に合わせて折り返す。2026-10-10)
   // 幅はいつも「縦のスクロールバーがある時の幅」(innerWidth − スクロールバーの太さ)。innerWidth のままだと外枠が 10 px 横にはみ出し (2026-10-22 はみ出しの見張り)、
   // clientWidth (今バーがあるか次第) だと、高さが画面ぎりぎりのページでバーが出る → 縮む → 消える → 戻る を毎フレームくり返して CPU が回りっぱなしだった (2026-10-23 シミュ部長)

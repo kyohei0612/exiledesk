@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { inGroup } from "../../services/mods/item-classes";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { isTouchOnly } from "../../utils/use-phone";
+import { isPhoneWidth, isTouchOnly } from "../../utils/use-phone";
 import { classLabel, type CatalogRow } from "../../services/items/base-catalog";
 import { nameOf, tr } from "../../i18n/lang";
 import { hoverStack } from "../../state/hover-stack";
@@ -52,10 +52,10 @@ onBeforeUnmount(leave);
 const grid = ref<HTMLElement | null>(null);
 const cols = ref(4);
 /** スマホは全部出した状態から (2026-10-26 オーナー「基本スマホは省略したらダメ」、PC は 2 行まで) */
-const FOLD_PHONE = typeof window !== "undefined" && window.innerWidth < 768;
+const FOLD_PHONE = isPhoneWidth();
 const more = ref(FOLD_PHONE);
 let ro: ResizeObserver | null = null;
-const measure = (): void => { const w = grid.value?.clientWidth ?? 0; if (w) cols.value = window.innerWidth < 768 ? 2 : Math.max(1, Math.floor((w + 8) / (260 + 8))); };
+const measure = (): void => { const w = grid.value?.clientWidth ?? 0; if (w) cols.value = isPhoneWidth() ? 2 : Math.max(1, Math.floor((w + 8) / (260 + 8))); };
 onMounted(() => { measure(); if (grid.value) { ro = new ResizeObserver(measure); ro.observe(grid.value); } });
 onBeforeUnmount(() => ro?.disconnect());
 // 種類が変わったら畳む。今のベースが 3 行目より下なら開いておく (選んだ物が見えないと困る)

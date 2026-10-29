@@ -31,6 +31,7 @@ import RichText from "../../decor/RichText.vue";
 import { vFitText } from "../../../utils/fit-text";
 import type { RowTag, RowToggle } from "./stage-item-row-tag";
 import { TIER } from "../../../state/for-share/tier-word";
+import { isPhoneWidth } from "../../../utils/use-phone";
 
 /**
  * minH: 枠の最低の高さ (px)。動画モードの撮影用で、一番長い時の高さを確保して中身は上詰めにする (手ごとに枠が伸び縮みしない)。
@@ -105,7 +106,7 @@ const TONE = {
 const tone = computed(() => TONE[props.item.rarity]);
 /** カーソルが乗っている物 (今できることの帯の出し分け) */
 const hover = ref<"mod" | "rune" | null>(null);
-const phoneW = typeof window !== "undefined" && window.innerWidth < 768;
+const phoneW = isPhoneWidth();
 const hint = computed((): string => {
   if (props.holding) return phoneW ? tr("押すと使う (下の帯の「使う」でも)", "Tap to use (or “Use” in the bar below)") : tr("押すと使う · 右クリック / Esc で手放す", "Click to use · Right-click / Esc to drop");
   if (!props.removable) return "";

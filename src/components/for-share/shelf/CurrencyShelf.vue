@@ -24,6 +24,7 @@ import { bonesFor, CRAFT_RUNE_KEYS, essenceShelf, nameOfKey, OMEN_GROUPS, ORBS, 
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 import { TIER } from "../../../state/for-share/tier-word";
+import { isPhoneWidth } from "../../../utils/use-phone";
 
 const emit = defineEmits<{ hold: [key: string] }>();
 type ShelfTab = "usable" | "orb" | "essence" | "rune" | "omen";
@@ -99,7 +100,7 @@ function popPlace(r: HTMLElement, btn: HTMLElement, pop?: HTMLElement): Record<s
   const inner = scroller.value;
   const sc = inner && inner.scrollHeight > inner.clientHeight ? inner : scrollBoxOf(r);
   // スマホは画面の下に固定の帯 (持っている物 → 使う) があるので、その上までを見える所とする
-  const bar = window.innerWidth < 768 ? document.querySelector<HTMLElement>(".fixed.bottom-0")?.getBoundingClientRect().height ?? 0 : 0;
+  const bar = isPhoneWidth() ? document.querySelector<HTMLElement>(".fixed.bottom-0")?.getBoundingClientRect().height ?? 0 : 0;
   const viewBottom = Math.min(sc ? sc.getBoundingClientRect().bottom : Infinity, window.innerHeight) - bar;
   const h = pop.getBoundingClientRect().height;
   if (b.bottom + GAP_Y + h <= viewBottom) return below;
@@ -186,7 +187,7 @@ const otherSecs = computed(() => {
   ].filter((x) => x.keys.length);
 });
 /** スマホは畳んだ節も開いた状態から (押すと畳める。2026-10-26 オーナー「基本スマホは省略したらダメ」)。PC は今どおり閉じた状態から。「今のアイテムには使えない物」は両方とも畳んだまま */
-const FOLD_PHONE = typeof window !== "undefined" && window.innerWidth < 768;
+const FOLD_PHONE = isPhoneWidth();
 /** 押して開け閉めした節 (PC = 開いた物、スマホ = 畳んだ物) */
 const foldFlip = ref(new Set<string>());
 const foldOpen = (kind: string): boolean => foldFlip.value.has(kind) !== FOLD_PHONE;

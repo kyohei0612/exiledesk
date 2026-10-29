@@ -149,6 +149,7 @@
 .g-sec-title { font-family: var(--exile-font-family-brush); font-weight: 400; font-size: 20px; letter-spacing: 0.12em; line-height: 1.2; color: var(--exile-color-text-title); text-shadow: 0 2px 0 #000; white-space: nowrap; }
 .g-sec-sub { font-size: 12px; color: var(--exile-color-text-tertiary); }
 @media (max-width: 767px) { .g-sec-title { font-size: 16px; letter-spacing: 0.06em; } }
+@media (min-width: 768px) and (max-width: 1279px) { :root[data-flag-twoshapes] .g-sec-title { font-size: 16px; letter-spacing: 0.06em; } } /* U-53 */
 
 /* ============================================================
  * 全画面の置き換え (2026-10-09 オーナー「アプリ側も頼むわ他の場所も」)
@@ -406,4 +407,10 @@ input[type="checkbox"], input[type="radio"] { accent-color: #b5813a; }
   h1.g-tabbar.g-brush { flex: 1 1 100%; width: 100%; }
   :has(> h1.g-tabbar.g-brush), :has(> * > h1.g-tabbar.g-brush) { flex-wrap: wrap; }
   :has(> * > h1.g-tabbar.g-brush) > :has(> h1.g-tabbar.g-brush) { flex: 1 1 100%; }
+}
+/* 同じ物を、スイッチ twoShapes の時は 1280 未満まで (U-53) */
+@media (min-width: 768px) and (max-width: 1279px) {
+  :root[data-flag-twoshapes] h1.g-tabbar.g-brush { flex: 1 1 100%; width: 100%; }
+  :root[data-flag-twoshapes] :has(> h1.g-tabbar.g-brush), :root[data-flag-twoshapes] :has(> * > h1.g-tabbar.g-brush) { flex-wrap: wrap; }
+  :root[data-flag-twoshapes] :has(> * > h1.g-tabbar.g-brush) > :has(> h1.g-tabbar.g-brush) { flex: 1 1 100%; }
 }

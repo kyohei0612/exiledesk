@@ -17,6 +17,7 @@ import Disclosure from "../../ui/Disclosure.vue";
 import { flag } from "../../../web/release-flags";
 import { essName, tierName, toneOf, weightNote } from "./stage-mod-list-look";
 import { TIER } from "../../../state/for-share/tier-word";
+import { isPhoneWidth } from "../../../utils/use-phone";
 /** ティアの列の幅: 「ティア」が 1 行で入る分 (段・英語の T は前のまま) */
 const tierW = tr(TIER.length > 1 ? "w-9" : "w-6", "w-6");
 /** 右の 3 列 (出やすさ・ティア・Lv) は見出しと値を真ん中揃えに (オーナー 10-28「真ん中ぞろえにしてくれるかズレてる」、tierWord と同じスイッチ) */
@@ -127,7 +128,7 @@ function jump(g: string): void {
   void nextTick(() => scrollToTop(sectionEls.get(g)));
 }
 /** スマホ: 種類の節は見出しを押して畳める。全部開いた状態が既定 (2026-10-26 オーナー「基本スマホは省略したらダメ」。前は普通だけ開いていた)、検索中は全部開く */
-const phone = typeof window !== "undefined" && window.innerWidth < 768;
+const phone = isPhoneWidth();
 const secClosed = ref(new Set<string>());
 function toggleSec(sid: string): void {
   const n = new Set(secClosed.value);
@@ -300,6 +301,7 @@ defineExpose({ jumpTo, counts, sections });
 .tbtn:disabled { opacity: 0.35; cursor: not-allowed; }
 .tbtn.on { border-color: rgba(239, 90, 70, 0.75); background: rgba(160, 40, 30, 0.35); color: #ffd7cf; }
 @media (max-width: 767px) { .tbtn { height: 34px; padding: 0 12px; font-size: 12px; } }
+@media (min-width: 768px) and (max-width: 1279px) { :root[data-flag-twoshapes] .tbtn { height: 34px; padding: 0 12px; font-size: 12px; } } /* U-53 */
 </style>
 
 <style scoped>
