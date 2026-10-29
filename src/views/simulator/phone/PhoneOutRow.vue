@@ -13,7 +13,7 @@ import { useTreeLink } from "../tree/use-tree-link";
 import { backTargetsOf } from "../tree/tree-merge";
 import { handLabel, OUT_LOOK } from "../tree/tree-names";
 import { isMiss, mapPick, phoneRun, usePhoneQuiz } from "./use-phone-quiz";
-import { retryOf, routeText, runText, stepBackText } from "../tree/tree-fail";
+import { retryOf, routeArrow, routeText, runText, stepBackText } from "../tree/tree-fail";
 import { absorbOuts, joinableOf, joinSide, splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
 import { joinableFor, sideGroup } from "../tree/tree-hand-plan";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
@@ -96,7 +96,7 @@ const answerText = computed((): string => {
   if (state.value === "later") return tr("この場合は次の手を選ぶ", "Then pick the next craft");
   if (state.value === "done") return tr("この場合は完成", "Then it's done");
   if (backKind.value === "retry" || (backKind.value === "start" && parent.value === "start")) return retrySay.value;
-  return route.value ? tr(`この場合は ${route.value.replace(/^↩\s*/, "")}`, `Then ${route.value.replace(/^↩\s*/, "")}`) : "";
+  return route.value ? tr(`この場合は ${route.value.replace(/^[↩→]\s*/, "")}`, `Then ${route.value.replace(/^[↩→]\s*/, "")}`) : "";
 });
 /**
  * 再度挑戦を文で (10-27 オーナー「↩ 再度挑戦 · 2 段目へ戻る: 打った後 は不親切すぎる、何が起こったのか分からん」)。
@@ -238,7 +238,7 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
       <!-- 始めに戻れない理由 (始めの手がこのアイテムに打てない。10-26 モンキー 7 の 1) -->
       <p v-if="startNo" data-phone-start-no class="mt-1 break-words text-[11px] text-rose-200/90">{{ startNo }}</p>
       <div v-if="!MAP && listOpen" data-phone-other class="mt-2 flex flex-col gap-1">
-        <button v-for="id in others" :key="id" type="button" class="min-h-10 break-words rounded-lg border border-white/10 bg-black/20 px-2 py-1.5 text-left text-[13px]" :class="backTo === id ? 'border-cyan-300/70 text-cyan-100' : 'text-[#d8ccb4]'" @click="listOpen = false; q.setReturn(boxId, id)">↩ {{ q.pathText(id) }}</button>
+        <button v-for="id in others" :key="id" type="button" class="min-h-10 break-words rounded-lg border border-white/10 bg-black/20 px-2 py-1.5 text-left text-[13px]" :class="backTo === id ? 'border-cyan-300/70 text-cyan-100' : 'text-[#d8ccb4]'" @click="listOpen = false; q.setReturn(boxId, id)">{{ routeArrow(t.doc.value, boxId, [id]) }} {{ q.pathText(id) }}</button>
       </div>
         </div>
         <div class="flex border-t border-white/10 px-3 py-2">

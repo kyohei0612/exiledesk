@@ -10,7 +10,8 @@ import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { logRecord } from "../../utils/log-record";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { migrateTreeDoc } from "../../services/simulator/tree/tree-migrate";
-import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
+import { toRecipeV1, type RecipePick } from "../../services/simulator/tree/tree-recipe-v1";
+import { isCatalyst } from "../../services/simulator/tree/tree-hands";
 import { addTreeRecipe, removeTreeRecipe, sameTree, setCurrentTreeRecipe, treeRecipes } from "../../state/simulator/tree-recipes";
 import { DEV_BUILD, flag } from "../../web/release-flags";
 import { recipeCardOf } from "./recipe-card";
@@ -34,7 +35,7 @@ export async function treeShareUrl(r: { name: string; tree: TreeDoc }): Promise<
   return `${base}${RECIPE_SHARE_PREFIX}${code}`;
 }
 
-/** 短い URL の受け口 (サーバー 5 の server/web/recipe-share.js、10-26 夜オーナー OK)。アプリ・開発版でも本番の住所 (短い URL は本番でしか開かない) */
+/** 短い URL の受け口 (サーバー 5 の server/web/recipe-share.js、10-26 夜オーナー OK)。アプリでも本番の住所 (短い URL は本番でしか開かない。開発版は短くしない = S-103b) */
 const SHORT_HOST = "https://exiledesk.com";
 /**
  * レシピの短い URL (https://exiledesk.com/r/<id>)。#recipe= の後ろの code をそのまま POST /r/new に送り { id } を受ける。
@@ -42,6 +43,8 @@ const SHORT_HOST = "https://exiledesk.com";
  */
 export async function treeShortUrl(r: { name: string; tree: TreeDoc }): Promise<string> {
   const long = await treeShareUrl(r);
+  // 開発版の作りは今の住所の長い URL (短い URL は本番へ飛び、本番に無い手から先を読めず止まる。S-103b、10-29 深夜オーナー「URLから開いたらなんかそこでとまってた」)
+  if (DEV_BUILD && !isTauriRuntime()) return long;
   const code = long.slice(long.indexOf(RECIPE_SHARE_PREFIX) + RECIPE_SHARE_PREFIX.length);
   try {
     // カード絵の値も一緒に (JSON { code, card }、スイッチ recipeCard。閉じている間はただの code)
@@ -94,6 +97,21 @@ export async function seedDevRecipes(): Promise<void> {
   }
 }
 
+/**
+ * 開いたレシピの、今の作りに入っていない手 (スイッチの下の手。名前の一覧、無ければ空)。S-103b: 本番で開くとそこから先を組めず止まるので知らせる。
+ * 今はカタリストの「品質を n % まで」の手 (catHand) だけ。保存の形 v1 は picks、前の形は箱の手を見る
+ */
+export function newerHands(t: TreeDoc): string[] {
+  const hands = [...((t as TreeDoc & { picks?: RecipePick[] }).picks ?? []).map((p) => p.hand), ...Object.values(t.boxes ?? {}).map((b) => b.hand)];
+  const out = new Set<string>();
+  if (!flag("newerNote")) return [];
+  for (const h of hands) if (h && isCatalyst(h.currency) && (h.quality ?? 0) > 0 && !flag("catHand")) out.add(tr("カタリストで品質を n % まで", "Catalyst up to n% quality"));
+  return [...out];
+}
+/** 今開いたレシピの今の作りに無い手 (木の上のレシピの帯に出す。× で閉じる・保存しない、S-103b) */
+export const sharedNewer = ref<string[]>([]);
+export const closeNewer = (): void => { sharedNewer.value = []; };
+
 /** 今の URL の # にレシピがあれば、保存したレシピに足して (同じ中身があればそれを使う)、そのレシピでシミュレーターを始める */
 export async function openSharedRecipe(): Promise<void> {
   const m = /^#recipe=([A-Za-z0-9_-]+)$/.exec(location.hash);
@@ -124,6 +142,7 @@ async function openRecipeCode(code: string): Promise<boolean> {
       // 古い版の木は今の形へ読み替える (読めない箱は要確認の印で残す、tree-migrate)
       const t = migrateTreeDoc((p as PackedTree).t)?.doc;
       if (!t) return false;
+      sharedNewer.value = newerHands(t);
       const tr2 = addTreeRecipe(String((p as PackedTree).n ?? ""), t);
       setCurrentTreeRecipe(tr2.id);
       useTree().open(tr2.tree);

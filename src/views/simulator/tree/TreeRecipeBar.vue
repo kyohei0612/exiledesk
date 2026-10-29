@@ -10,7 +10,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import Icon from "../../../components/ui/Icon.vue";
 import { currentTreeRecipe, removeTreeRecipe, renameTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../../state/simulator/tree-recipes";
 import { askLeave, openRecipesPage } from "../../../web/page";
-import { copyRecipeUrl, fmtDate, seedDevRecipes, treeShortUrl, useRecipeUrl } from "../recipe-share";
+import { copyRecipeUrl, fmtDate, seedDevRecipes, closeNewer, sharedNewer, treeShortUrl, useRecipeUrl } from "../recipe-share";
 import { xIntentUrl } from "../../../services/craft-stage/share";
 import { useTree } from "./use-tree";
 import { autoName, quickSave, unsaved } from "./tree-save";
@@ -176,6 +176,8 @@ onBeforeUnmount(() => { window.removeEventListener("pointerdown", onDown, true);
       <button v-if="!bare" type="button" data-tree-recipe-share :class="btn" :aria-expanded="share" :title="tr('この木を人に見せる (短い URL をコピー・X に出す)', 'Share this tree (copy a short URL or post to X)')" @click="share = !share; pop = false; naming = false"><Icon v-if="flat" name="share" class="size-4" />{{ tr("シェア", "Share") }}</button>
       <slot name="after" />
     </span>
+    <!-- 開いたレシピにこの版に無い手 (本番で開くとそこから先を組めない。× で閉じる、S-103b) -->
+    <span v-if="!bare && sharedNewer.length" data-tree-recipe-newer class="flex min-w-0 max-w-full items-start gap-1 break-words rounded bg-rose-950/90 px-2 py-0.5 text-[12px] text-rose-100">{{ tr(`このレシピにはまだこの版に無い手 (${sharedNewer.join("・")}) があり、そこから先は組めない (次の版で開ける)`, `This recipe uses a craft this version doesn't have yet (${sharedNewer.join(", ")}); the tree stops there (opens in a later version)`) }}<button type="button" data-tree-recipe-newer-close class="shrink-0 px-1 opacity-80 hover:opacity-100" :aria-label="tr('閉じる', 'Close')" @click="closeNewer">×</button></span>
     <span v-if="note" data-tree-recipe-note class="pointer-events-none min-w-0 max-w-full break-words rounded bg-emerald-900/90 px-2 py-0.5 text-[12px] text-emerald-100">{{ note }}</span>
 
     <!-- 小窓の置き場: PC の列では帯の幅 (列の 248px) に収める、スマホの上の帯・完成形の設定の右端は前の幅 (10-27 オーナー「切れる。枠内で出すように」) -->

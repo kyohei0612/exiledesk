@@ -19,8 +19,15 @@ export function stepOf(doc: TreeDoc, id: string): number {
   const b = doc.boxes[id], s = doc.boxes.start;
   return b && s ? Math.max(1, Math.round((b.y - s.y) / GAP_Y) + 1) : 1;
 }
-/** 「n 段目へ戻る」(英語は GLOSSARY に無いので案 Back to step n、notes/2026-10-26-failure-behavior.md) */
-export const stepBackText = (doc: TreeDoc, to: string): string => { const n = stepOf(doc, to); return tr(`${n} 段目へ戻る`, `Back to step ${n}`); };
+/**
+ * 行き先が from の箱より前の段でない (同じ段・後ろの段・別の枝の先) = 「進む」(S-87d、スイッチ goWord。10-29 深夜オーナー「戻るはその段の前へ戻るとき、それ以外は進むだね」)。
+ * from が無い・始まりへ・スイッチが閉じている時は今までどおり「戻る」
+ */
+export const isForward = (doc: TreeDoc, from: string | undefined, to: string): boolean => !!from && flag("goWord") && to !== "start" && stepOf(doc, to) >= stepOf(doc, from);
+/** 行き先の印: 戻る = ↩、進む = → (S-87d) */
+export const routeArrow = (doc: TreeDoc, from: string | undefined, to: readonly string[]): string => (to.length && to.every((x) => isForward(doc, from, x)) ? "→" : "↩");
+/** 「n 段目へ戻る」(英語は GLOSSARY に無いので案 Back to step n、notes/2026-10-26-failure-behavior.md)。from を渡すと前の段でない行き先は「n 段目へ進む」(S-87d) */
+export const stepBackText = (doc: TreeDoc, to: string, from?: string): string => { const n = stepOf(doc, to); return isForward(doc, from, to) ? tr(`${n} 段目へ進む`, `Go to step ${n}`) : tr(`${n} 段目へ戻る`, `Back to step ${n}`); };
 /** 再度挑戦 = 戻り先の箱の手が、この箱を出した手と同じ (同じ手をもう一度打ちに戻る。外れのカオスを打ち直す・狙いが残った消去など。10-26 オーナー「狙い残った時とかの日本語は、再度挑戦にしたら分かりやすいかな」) */
 export function isRetry(doc: TreeDoc, id: string): boolean {
   const b = doc.boxes[id], p = b?.parent ? doc.boxes[b.parent] : undefined;
@@ -33,8 +40,14 @@ export function isRetry(doc: TreeDoc, id: string): boolean {
 export function backText(doc: TreeDoc, id: string, to: string): string {
   // 当たりの箱を別の道の同じ状態の当たりの箱へまとめた (tree-shape の joinSameHit、10-26 夜) は戻りでなく合流
   if (doc.boxes[id]?.out === "hit" && doc.boxes[id]?.back !== MATCH && doc.boxes[to]?.out === "hit") { const n = stepOf(doc, to); return tr(`同じ MOD 群のため統合 (${n} 段目)`, `Merged: same mod group (step ${n})`); } // 10-27 オーナー「文言は『同じ MOD 群のため統合』と出そうか」
-  const step = stepBackText(doc, to);
+  const step = stepBackText(doc, to, id);
   return isRetry(doc, id) ? tr(`再度挑戦 · ${step}`, `Retry · ${step}`) : step;
+}
+/** 箱の行き先の札の印: 当たりどうしの統合と前の段でない行き先は →、ほかは ↩ (PC の箱の札、S-87・S-87d) */
+export function boxArrow(doc: TreeDoc, id: string): string {
+  const b = doc.boxes[id];
+  if (b?.back && b.out === "hit" && doc.boxes[b.back]?.out === "hit") return "→";
+  return b?.back === RESTART ? "↩" : routeArrow(doc, id, backTargetsOf(doc, id));
 }
 /** 戻りの種類 (戻り方 5 つのうち戻る 3 つと、自動・形の合う箱。次の手・完成は戻りでない) */
 export type RouteKind = "retry" | "start" | "auto" | "other" | "match" | "restart" | "none";
@@ -64,6 +77,8 @@ export function routeText(doc: TreeDoc, id: string, name?: (id: string) => strin
   const steps = [...new Set(to.map((x) => stepOf(doc, x)))].sort((a, b) => a - b);
   const names = name ? `: ${to.map(name).join(tr("・", ", "))}` : "";
   const head = isRetry(doc, id) ? tr("再度挑戦 · ", "Retry · ") : "";
+  // 行き先が全部前の段でない時は「→ n 段目へ進む」(S-87d、スイッチ goWord)
+  if (routeArrow(doc, id, to) === "→") return tr(`→ ${head}${steps.join("・")} 段目へ進む${names}`, `→ ${head}Go to step ${steps.join(", ")}${names}`);
   return tr(`↩ ${head}${steps.join("・")} 段目へ戻る${names}`, `↩ ${head}Back to step ${steps.join(", ")}${names}`);
 }
 

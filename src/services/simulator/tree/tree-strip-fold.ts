@@ -1,7 +1,8 @@
 /**
  * tree-strip-fold.ts — 全部消えてよい消去の直線を畳む (S-28b 案 A、スイッチ stripFold。10-29 深夜オーナー「1 それで」)。
- * 直線 = 消去 (全部消えてよい) の手のある箱から結果の箱が 1 つずつ続く所 (tree-hand-plan の stripChain)。最初の結果の箱と最後の箱は今のまま、
- * 間の箱が 2 つ以上なら、間の最初の箱 (head) を「≈ 途中 n 箱」の札に描き、残りの間の箱は描かない。head の線は最後の箱へ直に引く。
+ * 直線 = 消去 (全部消えてよい) の手のある箱から結果の箱が 1 つずつ続く所 (tree-hand-plan の stripChain)。始めの消去の箱と最後の箱は今のまま、
+ * 間の箱 (結果の箱で、また消去を打つ箱) が 2 つ以上なら、間の最初の箱 (head) を「≈ 途中 n 箱」の札に描き、残りの間の箱は描かない。head の線は最後の箱へ直に引く。
+ * (10-29 深夜オーナー「消去でならんくね」: 前は最初の結果の箱も残したので、消去 3 回の直線 (木 oWkFcwYX の b25〜b28) は間が 1 つで畳まれなかった)
  * 畳むのは描く所だけ (並べ方の段と帯・線・箱)。木の中身・回す・精査・保存・「n 段目」の数え (tree-row-tops の depthRows) は触らない。
  * 開いた / 畳んだは覚えない (木を開くたびに畳んだ形、画面が resetStripFolds を呼ぶ)
  */
@@ -37,9 +38,9 @@ export function stripChains(d: TreeDoc): Map<string, StripFold> {
     const line: string[] = [];
     const seen = new Set<string>();
     for (let c: TreeBox | undefined = d.boxes[p.outs[0]!]; c && !seen.has(c.id); c = stripStep(d, c) ? d.boxes[c.outs[0]!] : undefined) { seen.add(c.id); line.push(c.id); }
-    // 最初と最後を除いた間が 2 つ以上の時だけ (S-28b)
-    if (line.length < 4) continue;
-    out.set(line[1]!, { head: line[1]!, mids: line.slice(1, -1), last: line[line.length - 1]! });
+    // 最後を除いた間 (また消去を打つ結果の箱) が 2 つ以上の時だけ (S-28b)
+    if (line.length < 3) continue;
+    out.set(line[0]!, { head: line[0]!, mids: line.slice(0, -1), last: line[line.length - 1]! });
   }
   return out;
 }
