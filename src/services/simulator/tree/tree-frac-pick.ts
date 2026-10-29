@@ -35,8 +35,11 @@ export function fracFreeOuts(data: PatchData, doc: TreeDoc, items: readonly Stag
   for (const it of items) for (const m of fixable(it)) if (!isGoal(m)) junk.add(junkKeyOf(data, m));
   return { aims, junk: [...junk].sort() };
 }
-/** 外れ MOD の枝の鍵 = 側と種類 (普通 / エッセンスのクラフト MOD。冒涜で付いた物は固定されないので無い。形の比べの外れの数え方 tree-shape の boxSig と同じ分け方) */
-export const junkKeyOf = (data: PatchData, m: StageMod): string => `${m.side}|${m.crafted || craftedKindOf(data, m) ? "crafted" : "normal"}`;
+/**
+ * 外れ MOD の枝の鍵 = 側 (S-41。外れは種類を見ない = S-60、10-30 オーナー「プレ１とプレ２はどういつのハズレとして扱うから枝が減る」、スイッチ fracSide)。
+ * 鍵の形は前と同じ `prefix|normal` (保存の札が合うように)。閉じている間は側と種類 (普通 / エッセンスのクラフト MOD) で分ける
+ */
+export const junkKeyOf = (data: PatchData, m: StageMod): string => `${m.side}|${!flag("fracSide") && (m.crafted || craftedKindOf(data, m)) ? "crafted" : "normal"}`;
 /** 外れの枝の名前の付け足し (枝が 2 つ以上の時だけ。例「プレフィックス・エッセンスの MOD」) */
 export function junkKeyLabel(key: string): [string, string] {
   const [side, kind] = key.split("|");

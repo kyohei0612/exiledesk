@@ -103,9 +103,11 @@ function savedKeyOf(at: string, tail: string, onPath: ReadonlySet<string>, exact
   const swap = (t: string): string | null => (/^\/junk/.test(t) ? t.replace(/^\/junk/, "/any") : /^\/any/.test(t) ? t.replace(/^\/any/, "/junk") : null);
   // 削減の順位の鍵 (`;w:`、S-65b より前の保存には無い) を外した札 = 順位で分かれた箱の全部へ (側の鍵の無い札と同じ読み方)
   const unrank = (t: string): string => t.replace(/;w:[^\]]*\]/, "]");
+  // 乱数のフラクチャーの外れの枝の種類 (`|crafted`、S-41 で側だけにした前の保存) = 同じ側の箱 (`|normal`) の決めとして読む (スイッチ fracSide)
+  const recraft = (t: string): string => (flag("fracSide") ? t.replace(/\|normal\]/, "|crafted]") : t);
   const sw = swap(tail);
-  const tries = [at + tail, at + unrank(tail), at + bare(tail), ...(sw ? [at + sw, at + bare(sw)] : [])];
-  return tries.find((k, i) => onPath.has(k) && (i < 3 || !exact.has(k))) ?? at + tail;
+  const tries = [at + tail, at + recraft(tail), at + unrank(tail), at + bare(tail), ...(sw ? [at + sw, at + bare(sw)] : [])];
+  return tries.find((k, i) => onPath.has(k) && (i < 4 || !exact.has(k))) ?? at + tail;
 }
 
 /**
