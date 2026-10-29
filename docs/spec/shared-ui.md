@@ -49,6 +49,8 @@
   - 有効 (スイッチ rowToggle、本番入り)。出どころ: オーナー 10-27 夜。確かめ: 画面 (シミュの完成形)。
 - **U-12 MOD 表の土台**: 「このベースに付く MOD」は `for-share/mod-list/ModTable.vue` で、種類の節 × プレ / サフィの 2 列 × 1 系統 1 行。行を押すと段の表を 1 つだけ開く。% の既定は出やすさ (同じ側の重みの割合、今付かない行は 0%)。差し込みは props と slot 8 つ (toc-extra・notes・col-lead・row-lead・row-badge・row-open・tier-lead・tier-actions)。列の見出しの差し込み口は要望が来たら足す (見た目の変更なので OK の後)。
   - 有効。出どころ: オーナー 10-23、notes/2026-10-23-components-map.md。見出しの口は 10-28 ブラック任せ (前の ⑦10)。確かめ: 画面。
+  - **U-12b 段の行のエッセンス名はチップ**: 段の表の行の付けるエッセンス・合金の名前は、行の札と同じ枠付きのチップ (⚗ 名前) にして MOD の文 (とタグ) の後ろへ続ける。同じ行に入ればそこに並び、入らなければ次の行の頭へ (語の途中で割らない)。PC の広い列でも横の列に分けず同じ形。
+    - 仮 (オーナーの OK 待ち、スイッチ essChip)。出どころ: オーナー 10-29「エッセンスの名前もティアにこいつつけたら別に折り返しが不要ならそのまま入れてくれ…入らなかったら全然今の形でおｋだけど枠は必要だねどのみち」。確かめ: 画面 (375・1660、共有メモ local_94cd3b6a…/essence-chip-*.png)。
 - **U-13 棚**: クラフトに使える物の棚は `for-share/shelf/CurrencyShelf.vue` 1 つ (エミュの CraftStage・シミュの TreeHandShelf・TreeMemoFloat)。操作は Craft of Exile と同じく「押して持つ → アイテムを押して使う」、お告げは「掛ける」、打てない物は灰色。1 つの見た目は ShelfButton。
   - 有効。出どころ: オーナー 09-27〜28 (ADR 001)。確かめ: 画面。
 - **U-14 品質の帯は共有へ上げる**: 品質の帯は今はエミュの `views/craft-stage/StageQualityBar.vue` とシミュの `views/simulator/tree/TreeGoalQuality.vue` に分かれていて、共有の部品ではない。2 つ目の画面で要ったので共有 (for-share) へ上げる (U-01)。見た目は変えない。
