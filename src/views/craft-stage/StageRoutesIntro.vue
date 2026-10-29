@@ -26,7 +26,7 @@ const ilvl = computed(() => s.item.value?.itemLevel ?? s.itemLevel.value);
       <div v-if="art" class="g-item grid size-28 place-items-center bg-black/60"><img :src="art" alt="" class="max-h-full max-w-full object-contain" draggable="false" /></div>
       <div class="text-center">
         <p class="g-antique text-[12px] tracking-[0.3em] text-[var(--exile-color-text-tertiary)]">{{ tr("このアイテムで比べる", "Comparing on") }}</p>
-        <p class="g-brush text-[28px] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000] max-md:text-[21px]">{{ s.item.value?.baseJa ?? s.base.value }}</p>
+        <p class="g-brush text-[28px] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000] max-md:text-[21px]">{{ tr(s.item.value?.baseJa ?? s.base.value, s.item.value?.base ?? s.base.value) }}</p>
         <p class="g-antique text-[14px] text-[var(--exile-color-text-secondary)]">{{ tr("アイテムレベル", "Item level") }}: <span class="text-white">{{ ilvl }}</span></p>
       </div>
     </div>

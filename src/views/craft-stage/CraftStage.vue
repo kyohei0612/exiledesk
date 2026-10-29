@@ -108,7 +108,8 @@ onBeforeUnmount(() => { window.removeEventListener("mousemove", onMove); window.
 function hold(k: string): void { s.hold(s.held.value === k ? null : k); }
 /** カレンシーの枠 (棚)。持っている間に、棚・アイテムのカード・スマホの下の帯・窓・小窓の外を押したら離す (2026-10-22 オーナー「キャンセルは枠の外をクリックで」。押した物には届ける) */
 const shelfEl = ref<HTMLElement | null>(null);
-useDismiss(() => !!s.held.value && !s.replay.value, [shelfEl, () => cardEl.value], () => s.hold(null), { swallow: false, keep: "[data-bottom-bar], [role=dialog], [aria-modal=true], [data-mod-add-menu], [data-helptip-pop], [data-mod-list]" });
+// 「1 手戻す」も外に数えない = 持ったまま戻す (M-14、スイッチ undoKeepHeld。オーナー 10-29「どうせもっかい打つ人多いだろうからね」)
+useDismiss(() => !!s.held.value && !s.replay.value, [shelfEl, () => cardEl.value], () => s.hold(null), { swallow: false, keep: `[data-bottom-bar], [role=dialog], [aria-modal=true], [data-mod-add-menu], [data-helptip-pop], [data-mod-list]${flag("undoKeepHeld") ? ", [data-rec=undo]" : ""}` });
 /** 持っている物に掛けられるお告げ (欄は HeldOmens.vue。ここは slot を出すかだけ) */
 const heldOmens = computed(() => heldOmensOf(s.held.value));
 /** 持っている物を打つ前に光らせる: 変わる候補の MOD (オレンジの文字) と付く空き (緑の枠)。エンジンの previewUse から (2026-10-17 オーナー、前は削減のカオスだけ) */
