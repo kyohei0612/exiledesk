@@ -166,6 +166,11 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "essChip", "twoShapes",
   // 完成形の品質の 2 択・ルーンの後の箱にも完成 (オーナー 10-29 深夜「２おｋ」、ブラック 18 の「進めて」)。boxShape は judgeOne・recipeV1 が閉じた本番の組み合わせで共有の木がスタートだけになる・whittleRank は judgeOne 無しでは枝が出ないので閉じたまま
   "qualityAsk", "runeHand",
+  // シミュの OK 待ちを全部 (オーナー 10-29「次ぎだす時は全部だすぞ」、木の確かめ「いまんところ気になるところない」→ ブラック 19 の準備)。閉じたままは daily・simTutorial (チュートリアル係 T-09 の OK 待ち)
+  "boneLater", "stripRarity", "fracMulti", "failEnd", "boxShape", "fracPick", "whittleRank", "junkSide", "goalTen", "fracOne",
+  "lineShort", "goalBig", "backRoute", "hoverLines", "layoutOne", "rowFit", "pickOff", "catHand", "settleStrict", "recipeV1",
+  "judgeOne", "bodyStrict", "retryHover", "unsetMark", "slideSibling", "essencePreview", "noBand", "resetOnEdit", "startCard", "mergeOpen",
+  "recipeJump", "stopPill", "stripFold", "goWord", "newerNote", "rowPack",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */
