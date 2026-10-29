@@ -113,6 +113,15 @@ export function essenceAimsOf(data: PatchData, item: StageItem, h: Hand): Aim[] 
   for (const m of got) if (!out.some((a) => a.modId === m.modId)) out.push({ modId: m.modId, tier: tierRankOf(data, m.modId, m.tierIndex) });
   return out;
 }
+/**
+ * エッセンスの MOD (クラフト MOD) の ☑ の段を、木の狙いに同じ MOD があればその段にそろえる。エッセンスの MOD は完成形のメモでは一般の段 (T3)、
+ * 木の当たりの箱ではエッセンスの段 (T1、essenceAimsOf) で持つので、☑ の T3 と結果の T1 が合わずに当たりの箱が落ち、固定された人が「結果の箱に無い形」になった
+ * (10-29 合格レシピの武器 pass-weapon の b14、乱数のフラクチャーで物理の追加)。一般の MOD は段を上げて狙う事があるのでそのまま
+ */
+export function alignEssenceAims(data: PatchData, doc: TreeDoc, aims: readonly Aim[]): Aim[] {
+  const tree = aimsOf(doc);
+  return aims.map((a) => (craftedKindOf(data, a) ? tree.find((x) => x.modId === a.modId) ?? a : a));
+}
 export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, h: Hand, goals: readonly Aim[]): Aim[] {
   // 骨を未発現のまま = 当たりは無し (結果は未発現の冒涜が付いた 1 つ)。発現で選ぶ手 = 発現で出うる MOD 全部 (置き石も。スイッチ boneLater)
   if (veilKeep(h) || fracFree(doc, h)) return [];
@@ -136,7 +145,7 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
       // 見本を幾つか見て、どれかに付いている完成の狙いは全部札に (見本 1 つだと、そこで冒涜で付いていた冷気耐性が札に入らず、ほかの人で固定された冷気耐性が外れの箱に入った、10-27 夜)
       const items = [item, ...[2, 3, 4].map((seed) => sampleOf(data, doc, boxId, seed).item)];
       const fixable = (it: StageItem): StageItem => { const ms = [...it.prefixes, ...it.suffixes].filter((m) => !m.fractured && !m.unrevealed && !m.desecrated); return { ...it, prefixes: ms.filter((m) => m.side === "prefix"), suffixes: ms.filter((m) => m.side === "suffix") }; };
-      return (doc.memoAims ?? []).filter((a) => items.some((it) => aimHeldOn(data, fixable(it), a, { sameText: true }))).map((a) => ({ modId: a.modId, tier: a.tier }));
+      return alignEssenceAims(data, doc, (doc.memoAims ?? []).filter((a) => items.some((it) => aimHeldOn(data, fixable(it), a, { sameText: true }))).map((a) => ({ modId: a.modId, tier: a.tier })));
     }
     return fractureMarks(doc).filter((a) => aimHeldOn(data, item, a, { sameText: true }));
   }

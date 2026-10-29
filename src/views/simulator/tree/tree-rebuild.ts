@@ -7,7 +7,7 @@
 import type { PatchData } from "../../../services/craft-stage/engine";
 import { migrateStart, TREE_SCHEMA_N, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
-import { applyPick, kindOf, onlyOf } from "./tree-hand-plan";
+import { alignEssenceAims, applyPick, kindOf, onlyOf } from "./tree-hand-plan";
 import { flag } from "../../../web/release-flags";
 import { judgeMemo } from "../../../services/simulator/tree/tree-judge";
 
@@ -28,7 +28,8 @@ export function rebuildTree(data: PatchData, src: TreeDoc): TreeDoc {
     if (p) {
       used.add(at);
       if (p.back) backs.push([id, p.back, at]);
-      if (p.hand) { const aims = p.aims ?? [], pre = p.pre ?? null; applyPick(d, id, p.hand, kindOf(p.hand), aims, pre, onlyOf(data, d, id, p.hand, pre, aims)); }
+      // エッセンスの MOD の ☑ は木の狙いの段にそろえる (保存した ☑ が一般の段だと当たりの箱が落ちた、alignEssenceAims)
+      if (p.hand) { const aims = alignEssenceAims(data, d, p.aims ?? []), pre = p.pre ?? null; applyPick(d, id, p.hand, kindOf(p.hand), aims, pre, onlyOf(data, d, id, p.hand, pre, aims)); }
       const b = d.boxes[id];
       if (b) {
         if ((p.done || p.noAutoBack) && b.autoBack) { b.back = null; delete b.autoBack; delete b.merged; delete b.handBack; }
