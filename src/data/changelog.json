@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.641",
+  "date": "2026-10-29",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター: 別のカレンシーを持ったまま「1 手戻す」と、戻した手のお告げがそのカレンシーの方へ戻るように",
+    "en": "Emulator: undoing a step while holding another currency now returns that step’s omens to the currency it used"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "画面の幅が 768〜1279 の時、エミュレーターの狙い・ベース選び・スパムシミュレーターもスマホの形に揃えました",
+    "en": "Between 768px and 1279px wide, the emulator’s aim panel, base picker and spam simulator now also use the phone layout"
+   }
+  ]
+ },
+ {
   "v": "0.1.640",
   "date": "2026-10-29",
   "items": [
@@ -926,17 +944,5 @@
    }
   ],
   "pop": true
- },
- {
-  "v": "0.1.600",
-  "date": "2026-10-25",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "ブラウザの戻るで戻った時は、コスメティックの検索・絞り込みやスパムシミュレーターの狙いが前のまま残るように (リロードは最初から)",
-    "en": "Going back with the browser now keeps your Cosmetics search and filters and your spam simulator target (reloading still starts fresh)"
-   }
-  ]
  }
 ]
