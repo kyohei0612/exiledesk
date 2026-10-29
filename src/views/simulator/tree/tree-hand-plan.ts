@@ -43,8 +43,8 @@ export const needAimOf = (doc: TreeDoc, boxId: string, note: string | null | und
  * (「n % まで」の結果の箱も、S-31b)。閉じている間は品質だけ上げる手の後の通り抜けの箱だけ
  */
 export function afterQualityOf(doc: TreeDoc, boxId: string): boolean {
-  const data = craftStage.data.value;
-  if (flag("judgeOne") && data && doc.boxes[boxId]) { const it = sampleOf(data, doc, boxId, 1).item; return !!it.qualityTag && (it.catalystQuality ?? it.quality ?? 0) > 0; }
+  const j = judgeOf(doc);
+  if (j && doc.boxes[boxId]) return j.afterQuality(boxId);
   const b = doc.boxes[boxId], p = b?.out === "pass" && b.parent ? doc.boxes[b.parent] : null;
   return !!p?.hand && isCatalyst(p.hand.currency);
 }
@@ -211,6 +211,11 @@ export function judgeOf(d: TreeDoc): Judge | null {
   const data = craftStage.data.value;
   return flag("judgeOne") && data ? judgeMemo(data, d) : null;
 }
+/** この箱の見本に消せる ☑ の狙い (✦ でない) があるか (スイッチ judgeOne の時だけ、setHand の「狙いが消えた」を作るか。閉じていれば undefined = 前の道の数え) */
+export function holdsAimOf(d: TreeDoc, id: string): boolean | undefined {
+  const j = judgeOf(d);
+  return j && d.boxes[id] ? j.holdsAim(id) : undefined;
+}
 /** 中身の同じ当たりの箱 (手で「まとめる」の候補。judgeOne の下では箱どうしの判定、閉じていれば前の sameHitsOf) */
 export function sameHitsFor(d: TreeDoc, id: string): string[] { const j = judgeOf(d); return j ? sameHitsByContent(d, id, j) : sameHitsOf(d, id, hitLoose(d)); }
 /** 同じ親の横の同じ中身の結果の箱 (手で「まとめる」の相手) */
@@ -233,11 +238,12 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   // スイッチ judgeOne: 比べは判定の「箱どうし」だけ (S-50b)
   const j0 = flag("judgeOne") && data ? judgeMemo(data, d) : null;
   const to = j0 ? sameHandByContent(d, id, h, j0) : flag("goalShape") ? sameHandReturn(d, id, h, loose) : null;
-  if (to) { if (d.boxes[id]?.hand) clearHand(d, id); setBack(d, id, to); return id; }
+  // スイッチ judgeOne: 同じ手の戻り (S-51) も自動の ↩ (中身で決めた物なので、手を決めるたびに pruneByContent が見直す、S-50b)
+  if (to) { if (d.boxes[id]?.hand) clearHand(d, id); setBack(d, id, to); if (j0) d.boxes[id]!.autoBack = true; return id; }
   const had = new Set(Object.keys(d.boxes));
   let at = id;
   if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
-  setHand(d, at, h, kind, aims, only);
+  setHand(d, at, h, kind, aims, only, undefined, holdsAimOf(d, at));
   if (kind === "strip") stripChain(d, at, h);
   joinSameShape(d, id);
   if (flag("judgeOne") && data) { relinkByContent(data, d, had); healLost(d); return at; }

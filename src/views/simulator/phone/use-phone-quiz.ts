@@ -11,6 +11,7 @@ import { useTreeLink } from "../tree/use-tree-link";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { aimKey, setBack, setDone, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { heldSets } from "../../../services/simulator/tree/tree-shape";
+import { judgeOf } from "../tree/tree-hand-plan";
 import { useTree } from "../tree/use-tree";
 import { handLabel, headOf, outName, outsName } from "../tree/tree-names";
 import { tr } from "../../../i18n/lang";
@@ -40,6 +41,9 @@ export function walkOrder(d: TreeDoc): string[] {
 export function completes(d: TreeDoc, id: string): boolean {
   const goals = (d.memoAims ?? []).filter((g) => !g.fractured);
   if (!goals.length) return false;
+  // スイッチ judgeOne: 箱の見本の中身 (☑ で付いた狙い) で見る。見本が全部、完成の狙いを持っている時だけ (道の組では数えない、大本 1)
+  const j = judgeOf(d);
+  if (j) return j.holdsAll(id);
   const sets = heldSets(d, id);
   return sets.length > 0 && sets.every((s) => goals.every((g) => s.includes(aimKey(g))));
 }

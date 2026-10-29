@@ -227,7 +227,8 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     const r = playHand(data, item, b.hand, rng, own, use, false, stripStop(data, doc, b));
     if (!r.applied) {
       // 打てないが、この手の当たりの狙いがもう付いている = 打たずにその当たりの箱へ (tree-sample の heldHitOf)
-      const held = heldHitOf(data, doc, b, item);
+      // スイッチ judgeOne: 打てない手の当たりの箱へ飛ぶ特別扱いはしない (中身の同じ箱へは着いた時に routeOf が移す、大本 2)
+      const held = j ? null : heldHitOf(data, doc, b, item);
       if (held && ++hops <= 1000) { arrive(held, item); at = held; continue; }
       return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: r.reason ?? "", item } });
     }

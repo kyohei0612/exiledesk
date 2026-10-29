@@ -28,7 +28,7 @@ import { aimKey, fractureMarks, setHand, type Aim, type Hand, type HandKind } fr
 import { useTree } from "./use-tree";
 import { TREE_SPAM_ORB, useSimShelf } from "../use-sim-shelf";
 import { infiniteAim } from "../../../services/simulator/tree/tree-outcome";
-import { afterQualityOf, autoCatOf, FREE_EFFECTS, handOf, hitAimsOf, hitChoicesOf, keepChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan";
+import { afterQualityOf, autoCatOf, FREE_EFFECTS, handOf, hitAimsOf, holdsAimOf, hitChoicesOf, keepChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan";
 import { modText, tr } from "../../../i18n/lang";
 import { stageHelp } from "../../../state/for-share/craft-stage-help";
 import { usePhone } from "../../../utils/use-phone";
@@ -276,7 +276,7 @@ const resultText = computed((): [string, string] | null => {
   if (k === "quality" && (h.quality ?? 0) > 0) return RESULT_CAT;
   if (!alt) return RESULT[k];
   const d = structuredClone(toRaw(t.doc.value));
-  setHand(d, props.boxId, h, k, hitAims.value, null);
+  setHand(d, props.boxId, h, k, hitAims.value, null, undefined, holdsAimOf(d, props.boxId));
   return d.boxes[props.boxId]?.outs.some((o) => d.boxes[o]?.out === "lost") ? RESULT[k] : alt;
 });
 /** 当たりの箱の既定 (tree-hand-plan の hitAimsOf) */
@@ -295,7 +295,7 @@ const gone = computed((): number => {
   if (!props.current || !h || !k) return 0;
   const d = structuredClone(toRaw(t.doc.value));
   const before = Object.keys(d.boxes).length;
-  setHand(d, props.boxId, h, k, hitAims.value, only.value);
+  setHand(d, props.boxId, h, k, hitAims.value, only.value, undefined, holdsAimOf(d, props.boxId));
   const kept = new Set(Object.keys(d.boxes));
   return before - Object.keys(t.doc.value.boxes).filter((id) => kept.has(id)).length;
 });

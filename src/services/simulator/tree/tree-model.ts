@@ -323,7 +323,9 @@ export const kindOfHand = (h: Hand, base: HandKind): HandKind => (h.repeat ? "sp
 /** 同じ当たりの箱にまとめる手 (付く MOD を選べない手。エッセンスは付く MOD ごと・フラクチャーは印ごとの箱のまま) */
 const GROUPED: readonly HandKind[] = ["add", "swap", "spam"];
 /** groupOf = 狙いの側 (渡すと同じ側の狙いは 1 つの当たりの箱、anyOf)。既定は渡さない = 狙いごと (10-26 オーナー「デフォではまとめないほうね」) */
-export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims: readonly Aim[] = [], only: ReadonlyArray<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null = null, groupOf?: (a: Aim) => string): void {
+export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims: readonly Aim[] = [], only: ReadonlyArray<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null = null, groupOf?: (a: Aim) => string, holds?: boolean): void {
+  // holds = この箱の見本に消せる ☑ の狙いがあるか (スイッチ judgeOne、tree-hand-plan の holdsAimOf)。渡すと道の数え (mayHoldAim) の代わり (大本 1)
+  const hold = (): boolean => holds ?? mayHoldAim(d, id);
   const b = d.boxes[id];
   if (!b) return;
   // カタリストの手で「何 % まで」を決めた物は見える「打った後」の箱 1 つ (S-31b、スイッチ catHand。0 = 前の「最大まで」の通り抜け)
@@ -331,7 +333,7 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   const now = b.outs.map((o) => d.boxes[o]!.out);
   // 消せる狙いを持って着く人がいなければ「狙いが消えた」は起きない (10-24 モンキー初めての人の回 6)。前から箱がある木は替えない (同じ手を選び直して下が消えないように)
   const kept = !!b.hand && now.includes("lost") && now.every((k) => k !== "start" && outsOf.includes(k));
-  const noLost = !only && outsOf.includes("lost") && outsOf.length > 1 && !kept && !mayHoldAim(d, id);
+  const noLost = !only && outsOf.includes("lost") && outsOf.length > 1 && !kept && !hold();
   // 印の無い木の乱数のフラクチャー (hand.pick) は当たり + 外れ (どの MOD が固定されるかは乱数。起こりうる結果が取れない時の既定、要望 8a159e29)
   const want = only ? OUT_ORDER.filter((k) => only.some((o) => o.out === k)) : hand.pick === "random" ? (["hit", "junk"] as OutKind[]) : noLost ? outsOf.filter((k) => k !== "lost") : outsOf;
   if (only) { const hs = only.flatMap((o) => (o.out === "hit" && o.aim ? [o.aim] : [])); if (hs.length) aims = hs; }
@@ -340,7 +342,7 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   aims = [...aims].sort((x, y) => order(x) - order(y));
   // 起こりうる結果の一覧に「狙いが消えた」が無いのが、まだ誰も狙いを持って着かないからなら印を残す (後で戻りの矢印が付いたら healLost が足す)。
   // 持って着く人がいて無いなら、その手では消えない (右側の結晶化で外れだけ消える等) ので足さない
-  if (noLost || (only && !want.includes("lost") && outsOf.includes("lost") && !mayHoldAim(d, id))) b.noLost = true; else delete b.noLost;
+  if (noLost || (only && !want.includes("lost") && outsOf.includes("lost") && !hold())) b.noLost = true; else delete b.noLost;
   // 外れの枝の鍵 (狙い無しの乱数のフラクチャー = 固定された外れの側と種類、スイッチ fracPick。外れ・打った後・外れが消えたの側 = S-65、スイッチ junkSide)
   const keysOf = (k: OutKind): string[] => (only ?? []).flatMap((o) => (o.out === k && o.junkKey ? [o.junkKey] : []));
   const keySig = (l: ReadonlyArray<{ out: string; junkKey?: string }>): string => l.filter((o) => o.junkKey).map((o) => `${o.out}:${o.junkKey}`).sort().join();

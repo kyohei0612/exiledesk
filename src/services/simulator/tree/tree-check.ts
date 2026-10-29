@@ -140,17 +140,19 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
   for (const b of boxes) {
     if (b.split?.some((r) => !r.to)) add(b.id, "open", tr("分かれ目の行き先を決めていない行がある (その形で来た人はここで止まる)", "A split row has no destination (runs of that shape stop here)"));
     // 完成の狙いが全部そろう箱 (見本で全部付いている) は未定に数えない (回す時はその場で完成、S-77。スイッチ boxShape)
-    const fin = (): boolean => { if (!flag("boxShape") || b.out === "start") return false; const s = sampleOf(data, doc, b.id, 1); return s.note !== "none" && !s.note?.startsWith("cant:") && goalsHeld(data, doc, s.item); };
+    // スイッチ judgeOne: 完成は押した箱だけ (S-05・S-54) なので、そろっていても押していない箱は「行き先を決めていない」(ここで止まる)。知らせの文だけ「完成を押す」に
+    const fin = (): boolean => { if (!flag("boxShape") || b.out === "start" || J) return false; const s = sampleOf(data, doc, b.id, 1); return s.note !== "none" && !s.note?.startsWith("cant:") && goalsHeld(data, doc, s.item); };
     // スイッチ unsetMark の下では完成にしていない完成の箱も決めていない箱 (S-77・S-89b、10-28 深夜オーナー「どこに完成するかそもそも設定どこにしたらいいかわからんから固定で赤枠がイイ」)
     if (flag("unsetMark") && !b.hand && !b.back && !b.done && !b.split && !dead.has(b.id) && fin()) add(b.id, "unfinished", tr("完成にしていない (完成の狙いが全部そろっている。「完成」を押す)", "Not marked finished (all final mods are here; press Finish)"));
-    else if (!b.hand && !b.back && !b.done && !b.split && !dead.has(b.id) && !fin()) add(b.id, "open", b.out === "start" ? tr("最初の手を決めていない (ここで止まる)", "No first craft yet (stops here)") : tr("行き先を決めていない (ここで止まる)", "No next step yet (stops here)"));
+    else if (!b.hand && !b.back && !b.done && !b.split && !dead.has(b.id) && !fin()) add(b.id, "open", J && b.out !== "start" && J.holdsAll(b.id) ? tr("完成にしていない (完成の狙いが全部そろっている。「完成」を押す。押すまでここで止まる)", "Not marked finished (all final mods are here; press Finish — runs stop here until then)") : b.out === "start" ? tr("最初の手を決めていない (ここで止まる)", "No first craft yet (stops here)") : tr("行き先を決めていない (ここで止まる)", "No next step yet (stops here)"));
     if (b.out === "hit" && !b.aim) add(b.id, "noAim", tr("付く MOD を選んでいない", "No mod picked for this hit"));
     // フラクチャーの手は完成の MOD にフラクチャーの印がある木だけ (10-25 オーナー「最初にフラクチャーを決めないとフラクチャーオーブを打てないように」)。前に保存した印の無い木の手は穴に
     if (b.hand && effectOf(b.hand.currency) === "fracture" && b.hand.pick !== "random" && !fractureMarks(doc).length) add(b.id, "cantUse", tr("フラクチャーの印が無い (先に完成の MOD でフラクチャーを決めて)", "No fracture mark (set a fracture on the final mods first)"));
     // 触媒のお告げはカタリストで入れた品質にだけ効く。カタリストを打つ手が無ければ効きは乗らない (10-22 オーナー「ちゃんと打つルートが無いとあかん」)。
     // 品質だけ上げる手 (カタリスト) の後の通り抜けから打つ時は、その手がカタリストを打つ手
     const before = b.out === "pass" && b.parent ? doc.boxes[b.parent]?.hand : null;
-    const afterCat = !!before && isCatalyst(before.currency);
+    // スイッチ judgeOne: 品質を上げた後かは見本の品質 (中身、S-31b。「n % まで」の打った後の箱も)
+    const afterCat = J ? J.afterQuality(b.id) : !!before && isCatalyst(before.currency);
     if (b.hand?.omens.includes(CATALYSING) && !b.hand.catalyst && !afterCat) add(b.id, "noCatalyst", tr(`${nameOfKey(CATALYSING, null)}なのにカタリストを打つ手が無い (手の札でカタリストを選ぶ)`, `${nameOfKey(CATALYSING, null)} without a catalyst craft (pick a catalyst in the craft)`));
   }
 
@@ -189,7 +191,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
   // 失敗 (ここで終わり) の箱も道の終わり (完成の箱が無いかは完成だけで見る、スイッチ failEnd)
   const done = boxes.filter((b) => b.done === "main");
   // 完成にしていない完成の箱 (unfinished) があれば、回す時はそこで完成する (S-54) ので「完成の箱が無い」で合格を止めない (⑦12 → ブラック案・オーナー「進めてくれ」10-28)
-  if (!done.length && !out.some((x) => x.kind === "unfinished")) {
+  if (!done.length && (J || !out.some((x) => x.kind === "unfinished"))) {
     const msg = tr("完成の箱が無い (当たりの箱で「完成にする」)", "No done box yet (mark a hit as done)");
     // スイッチ unsetMark: 印は原因の末端の箱に (手・戻り・完成の無い当たり → 無ければほかの末端の箱)。スタートには付けない、スタートしか無い時だけスタート
     // (S-89b・S-77、10-28 深夜オーナー「末端の枠のせいだからスタートに出したら行かんでしょそもそも」「スタートの枠しかない時は勿論枠はあると思うが」)
@@ -240,7 +242,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
     const waste = new Map<string, { who: Set<number>; reason: string }>();
     const shapes = shapesOf(doc, data);
     /** スイッチ judgeOne: この箱の見本のどれかにもう当たりの狙いが付いている (付いていない人だけが着くので数えない) */
-    const held = (id: string, ob: TreeBox): boolean => [...(J?.contents(id) ?? [])].some((k) => boxAims(ob).some((a) => k.split("#")[0]!.split(",").includes(a.modId)));
+    const held = (id: string, ob: TreeBox): boolean => (J?.aimedOf(id) ?? []).some((am) => boxAims(ob).some((a) => am.has(a.modId)));
     const cantIssues = (): CheckIssue[] => [...cant].map(([id, c]) => ({ boxId: id, kind: "cantUse" as const, text: tr(`この箱に着いた状態では手が打てない (${PEOPLE} 人中 ${c.who.size} 人): ${c.reason}`, `The craft can't be used here (${c.who.size} of ${PEOPLE}): ${c.reason}`) }));
     const oddIssues = (): CheckIssue[] => [...odd].map(([id, c]) => ({ boxId: id, kind: "unexpected" as const, text: tr(`この手で「${[...c.outs].join("・")}」になる人がいるのに、行く箱が無い (${PEOPLE} 人中 ${c.who.size} 人、回すと同じ状態の箱があればそこへ、無ければ止まる)。直し方: この手を選び直して結果の箱に足す (PC は当たりの箱の横の ＋ でも足せる)`, `Some runs (${c.who.size} of ${PEOPLE}) end up as "${[...c.outs].join(", ")}" from this craft, but there is no box for it (runs go to a box in the same state, or stop). Fix: pick the craft again so that result gets a box (on PC, the + beside a hit box also adds one)`) }));
     for (let person = 1; person <= PEOPLE; person++) {
@@ -282,7 +284,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
         const first = playHand(data, item, b.hand, rng, handAims(doc, b.id, aims), undefined, false, stripStop(data, doc, b));
         // お告げが効かないだけ (回すと打って進む) は止まりと分ける (10-22 13 通り組んだ #12: 「手が打てない」と出たのに 100 人とも進んだ)
         if (why && first.applied) { const c = waste.get(id) ?? { who: new Set<number>(), reason: why }; c.who.add(person); waste.set(id, c); }
-        else if (!first.applied && heldHitOf(data, doc, b, item)) { const hb = heldHitOf(data, doc, b, item)!; walk(hb, item, viaBack, J ? nextAimed(data, doc, aimed, hb, item) : aimed); return; }
+        else if (!first.applied && !J && heldHitOf(data, doc, b, item)) { const hb = heldHitOf(data, doc, b, item)!; walk(hb, item, viaBack, J ? nextAimed(data, doc, aimed, hb, item) : aimed); return; }
         else if (why || !first.applied) { const c = cant.get(id) ?? { who: new Set<number>(), reason: why ?? first.reason ?? "" }; c.who.add(person); cant.set(id, c); return; }
         // 結果の箱に無い結果 (エンジンの stepOutcomes で起こりうる枝を全部。未発現が付く手・繰り返しの手は見ない。
         // フラクチャーも見ない: 必ず選んだ狙いを固定し、外れは費用で数える、10-24 オーナー)
@@ -302,7 +304,8 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
         // カタリストは手の札 (前の版) か、前の「カタリストの手」の箱 (品質だけ上げた後の通り抜けの親、今の画面。10-22 13 通り組んだ #6 で見ていなかった)
         const preCat = b.out === "pass" && b.parent ? doc.boxes[b.parent]?.hand : null;
         const cat = b.hand.catalyst ?? (preCat && isCatalyst(preCat.currency) ? preCat.currency : null);
-        const tag = cat && b.hand.omens.includes(CATALYSING) ? catalystTagOf(cat) : null;
+        // スイッチ judgeOne: 触媒の品質の種類はこの人のアイテムの品質の種類 (どの手で上げたかは見ない、S-31b)
+        const tag = J ? (b.hand.omens.includes(CATALYSING) && item.qualityTag && (item.catalystQuality ?? item.quality ?? 0) > 0 ? item.qualityTag : null) : cat && b.hand.omens.includes(CATALYSING) ? catalystTagOf(cat) : null;
         let boosted = false, hits = 0;
         for (const o of b.outs) {
           const ob = doc.boxes[o]!;
@@ -368,9 +371,10 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
   // 3 の続き) 完成の形の食い違い (揃った狙いの数)
   // 一番多く揃う完成の数より少ない形で着く人がいる完成の箱に ! (前は 1 つ目の完成の箱と比べ、どちらが組み違いか分からなかった)
   if (mains.length > 1) {
-    const nOf = (id: string): number => heldAtDone.get(id) ?? nOfPath(id);
-    const most = Math.max(...mains.map((b) => nOf(b.id)));
-    for (const b of mains) if (nOf(b.id) < most) add(b.id, "doneShape", tr(`狙いが ${nOf(b.id)} つしか揃っていない形で着く人がいる (ほかの完成は ${most} つ)`, `Some runs arrive here with only ${nOf(b.id)} target(s) (other done boxes have ${most})`));
+    // スイッチ judgeOne: 着いた人の実物の数だけで比べる (道の札の数で補わない = S-137。着かなかった完成の箱は比べない)
+    const nOf = (id: string): number => heldAtDone.get(id) ?? (J ? NaN : nOfPath(id));
+    const most = Math.max(...mains.map((b) => nOf(b.id)).filter((n) => !Number.isNaN(n)));
+    for (const b of mains) if (!Number.isNaN(nOf(b.id)) && nOf(b.id) < most) add(b.id, "doneShape", tr(`狙いが ${nOf(b.id)} つしか揃っていない形で着く人がいる (ほかの完成は ${most} つ)`, `Some runs arrive here with only ${nOf(b.id)} target(s) (other done boxes have ${most})`));
   }
   return ranked(out);
 }

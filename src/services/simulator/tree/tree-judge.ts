@@ -9,9 +9,9 @@
  * 呼ぶ側は自前の比べを持たない。1 回の組み替え・回し・精査の中で judgeMemo を 1 つ作って使う (木を替えたら作り直す)
  */
 import type { PatchData, StageItem } from "../../craft-stage/engine";
-import { aimHeldOn } from "./tree-aim";
+import { aimHeldOn, isAimMod } from "./tree-aim";
 import { bodyOf } from "./tree-box-shape";
-import { sampleOf, startGoalAims } from "./tree-sample";
+import { aimOpts, sampleOf, startGoalAims, targetsOf } from "./tree-sample";
 import { boxAims, fractureMarks, keepCut, type TreeDoc } from "./tree-model";
 
 /** 箱の中身を見る見本の数 (前の boxBody と同じ 4 つ) */
@@ -38,12 +38,17 @@ export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<strin
 /** 全部消えてよい消去の後 (☑ の無い消去は全部外れ MOD、S-28) */
 export const STRIPPED = NONE;
 
-/** アイテムの中身の鍵 (☑ の狙いの組 # 体 # 品質)。aimed に無い完成形の MOD は外れに数える */
+/**
+ * アイテムの中身の鍵 (☑ の狙いの組 # 体 # 品質)。aimed に無い完成形の MOD は外れに数える。
+ * 狙いに当たる MOD は文が同じなら別の modId でも当たる (エンジンの sameText) ので、体 (bodyOf) から外すのは実物の MOD の modId (前は完成形の modId で外し、同じ文の別 modId が狙いと外れの両方に数わった)
+ */
 export function contentOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: ReadonlySet<string>): string {
-  const on = goalsOn(data, doc, it);
-  const ids = new Set([...aimed].filter((id) => on.has(id)));
-  return `${[...ids].sort().join(",")}#${bodyOf(data, doc, it, ids)}#q${it.quality ?? 0}.${it.catalystQuality ?? 0}.${it.qualityTag ?? ""}`;
+  const goals = (doc.memoAims ?? []).filter((a) => aimed.has(a.modId)), opts = aimOpts(data);
+  const keys = new Set<string>(), mods = new Set<string>();
+  for (const m of [...it.prefixes, ...it.suffixes]) { const g = goals.find((a) => isAimMod(m, targetsOf(data, [a]), opts)); if (g) { keys.add(g.modId); mods.add(m.modId); } }
+  return `${[...keys].sort().join(",")}#${bodyOf(data, doc, it, mods)}#q${qualityKey(it)}`;
 }
+const qualityKey = (it: StageItem): string => `${it.quality ?? 0}.${it.catalystQuality ?? 0}.${it.qualityTag ?? ""}`;
 
 /** 見本の ☑ (見本の item ごと、木を替えて見本が作り直されたら別の物) */
 const AIMED = new WeakMap<StageItem, Map<string, ReadonlySet<string>>>();
@@ -71,10 +76,20 @@ export interface Judge {
   fitsItem(item: StageItem, aimed: ReadonlySet<string>, to: string): boolean;
   /** 中身が item と同じ箱 (手のある箱・完成 / 失敗の箱。浅い段・先に作った箱から。ok で更に絞る) */
   boxesOf(item: StageItem, aimed: ReadonlySet<string>, ok?: (id: string) => boolean): string[];
+  /** 箱の見本ごとの ☑ で付いた狙い (作れない見本は入れない) */
+  aimedOf(id: string): ReadonlySet<string>[];
+  /** 箱の見本に消せる (✦ でない) ☑ の狙いがあるか (「狙いが消えた」の箱を作るか、setHand) */
+  holdsAim(id: string): boolean;
+  /** 箱の見本が全部、完成の狙いを ☑ で持っているか (スマホの自動の完成 S-91) */
+  holdsAll(id: string): boolean;
+  /** 箱の見本にカタリストの品質が入っているか (品質を上げた後、S-31b) */
+  afterQuality(id: string): boolean;
 }
 
 export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
   const memo = new Map<string, ReadonlySet<string> | null>();
+  /** 箱の作れる見本 (seed と item) */
+  const samples = (id: string): Array<{ seed: number; item: StageItem }> => (doc.boxes[id] ? [1, 2, 3, 4].slice(0, SAMPLES).flatMap((seed) => { const s = sampleOf(data, doc, id, seed); return s.note === "none" || s.note?.startsWith("cant:") ? [] : [{ seed, item: s.item }]; }) : []);
   const contents = (id: string): ReadonlySet<string> | null => {
     if (memo.has(id)) return memo.get(id)!;
     let out: Set<string> | null = null;
@@ -107,5 +122,9 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
       const k = contentOf(data, doc, item, aimed);
       return targets().filter((id) => !!contents(id)?.has(k) && (!ok || ok(id)));
     },
+    aimedOf: (id) => samples(id).map((s) => sampleAimed(data, doc, id, s.seed)),
+    holdsAim: (id) => samples(id).some((s) => { const am = sampleAimed(data, doc, id, s.seed); return [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && am.has(m.modId)); }),
+    holdsAll(id) { const goals = doc.memoAims ?? [], ss = samples(id); return goals.length > 0 && ss.length > 0 && ss.every((s) => { const am = sampleAimed(data, doc, id, s.seed); return goals.every((g) => am.has(g.modId)); }); },
+    afterQuality: (id) => samples(id).slice(0, 1).some((s) => !!s.item.qualityTag && (s.item.catalystQuality ?? s.item.quality ?? 0) > 0),
   };
 }

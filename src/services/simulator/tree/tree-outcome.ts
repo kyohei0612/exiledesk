@@ -167,7 +167,8 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
         const r = outcomeOf(data, it, o.item, am ? aims.filter((a) => am.has(a.modId) || !aimHeldOn(data, it, a, { sameText: true })) : aims, h.currency);
         if (r.hits.length > 1) return null;
         // スイッチ junkSide: 狙い無しは狙いが消えた以外全部「打った後」を側ごと。☑ の無い狙いが付いたのは外れ (tree-hand-plan の onlyOf と同じ) を側ごと (S-65)
-        const sk = k === "essence" ? undefined : sideKeyOf(it, o.item);
+        // エッセンス・フラクチャーは側で分けない (boxOutcomeOf と同じ、S-65。前はフラクチャーの外れの箱にだけ側の鍵が付き、見本が作れず ✦ の無い親の見本のままだった)
+        const sk = k === "essence" || (k === "fracture" && flag("judgeOne")) ? undefined : sideKeyOf(it, o.item);
         if (freeSide) { const e = r.out === "lost" ? { out: "lost" as OutKind, aim: null } : { out: "any" as OutKind, aim: null, ...(sk ? { junkKey: sk } : {}) }; found.set(`${e.out}:${e.junkKey ?? ""}`, e); continue; }
         if (sk && extra.length && r.out === "hit" && r.hits[0] && !extra.some((a) => a.modId === r.hits[0]!.modId && a.tier === r.hits[0]!.tier)) { found.set(`junk::${sk}`, { out: "junk", aim: null, junkKey: sk }); continue; }
         // 無限のエッセンスで ☑ していない能力値が付いた = 外れ (infiniteAim)。ほかの狙いの付かない当たりは「打った後」
@@ -261,7 +262,9 @@ const contentMemo = new WeakMap<TreeDoc, { sig: string; j: ReturnType<typeof jud
 /** 覚えの鍵 = 木の箱・手・戻り (stripStops と同じ数の鍵) */
 function docSig(doc: TreeDoc): string {
   let h = doc.seq;
-  for (const b of Object.values(doc.boxes)) { const k = `${b.id}${b.hand?.currency ?? ""}${b.hand?.omens.join() ?? ""}${b.back ?? ""}`; for (let i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) | 0; }
+  // 箱の札 (当たりの MOD)・結果の種類・完成・外れの鍵・残したい MOD と、完成形・始まりも (変えると中身が変わる)
+  const keys = [JSON.stringify([doc.memoAims, doc.start, doc.base, doc.itemLevel, doc.goalQuality]), ...Object.values(doc.boxes).map((b) => `${b.id}${b.out}${b.aim ? `${b.aim.modId}/${b.aim.tier}` : ""}${b.junkKey ?? ""}${b.done ?? ""}${b.hand ? JSON.stringify(b.hand) : ""}${b.back ?? ""}`)];
+  for (const k of keys) for (let i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) | 0;
   return String(h);
 }
 /** 全部消えてよい消去の手なら、止める形か (playHand の stop)。違う手は undefined */
