@@ -1,4 +1,10 @@
 {
+  "0.1.639": [
+    "Shared simulator recipes now show their own preview card on X and other sites (finished item, tree shape, completion rate, average cost)",
+    "Emulator: “Undo” now keeps the currency and omens you are holding",
+    "Phone: base names and course titles now wrap instead of being cut off with “…”",
+    "English UI: the base name under “Comparing on” is now in English"
+  ],
   "0.1.638": [
     "Emulator: click a mod on the item to fracture it (right-click still works). The same works on the simulator's final item card",
     "Japanese UI: \"段\" is now \"ティア\" to match the game (English stays \"Tier\")",

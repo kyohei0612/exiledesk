@@ -152,6 +152,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "fracRandom", "tidyTight", "tidyUnder",
   // シミュ以外の OK 済み: 2 回押しは外・Esc で戻す・やり直し・ボタンの字を切らない・戻るで前の位置・スマホの説明を閉じる・段 → ティア (シミュの文も)・押してフラクチャー (シミュの完成形のカードも)・3 属性のベースの札 (オーナー 10-28「A」= シミュ以外だけ先に、ブラック 15 の「出して」)。シミュのスイッチは閉じたまま
   "armAll", "emuRedo", "noCut", "backPlace", "phoneHelp", "tierWord", "clickFracture", "triAttr",
+  // 1 手戻すでも持ったまま・レシピのカード絵 (オーナー 10-29「全部出して」、ブラック 17 の「出して」。カード絵は D1 0013 と RECIPE_CARD の後)
+  "undoKeepHeld", "recipeCard",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */

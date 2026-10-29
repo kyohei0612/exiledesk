@@ -1,5 +1,35 @@
 [
  {
+  "v": "0.1.639",
+  "date": "2026-10-29",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーターのレシピをシェアすると、X などにそのレシピのカード絵 (完成品・ツリーの形・完成の割合・平均の費用) が出るように",
+    "en": "Shared simulator recipes now show their own preview card on X and other sites (finished item, tree shape, completion rate, average cost)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター: 「1 手戻す」を押しても、持っているカレンシーとお告げはそのまま",
+    "en": "Emulator: “Undo” now keeps the currency and omens you are holding"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "スマホ: ベース名・使い方のコースの題が「…」で切れず折り返すように",
+    "en": "Phone: base names and course titles now wrap instead of being cut off with “…”"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "英語の画面: 「このアイテムで比べる」の題のベース名を英語に",
+    "en": "English UI: the base name under “Comparing on” is now in English"
+   }
+  ]
+ },
+ {
   "v": "0.1.638",
   "date": "2026-10-28",
   "items": [
@@ -902,18 +932,5 @@
     "en": "Craft stage: reloading the page now starts over from base selection (coming back from an article still keeps your item)"
    }
   ]
- },
- {
-  "v": "0.1.598",
-  "date": "2026-10-25",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "コスメティック: PoE2 でも使える PoE1 のスキン (MTX) の一覧を追加 (上のタブの右端。poe2db を元に、一式・出どころの札・ショップの値段つき。動作は保証しません)",
-    "en": "Cosmetics: added a list of PoE1 skins (MTX) usable in PoE2 (rightmost tab at the top; based on poe2db, with sets, source tags and shop prices; not guaranteed to work in game)"
-   }
-  ],
-  "pop": true
  }
 ]

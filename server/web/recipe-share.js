@@ -39,7 +39,7 @@ async function recipeOf(code) {
  * カード絵のスイッチ (Y-35、オーナーの OK 待ち)。false の間は今までどおり: card の列 (0013) に触らず、og:image はサイト共通の /web/og.png。
  * 開ける時は先に `wrangler d1 migrations apply exiledesk-logs --remote` (server/live) で 0013 を当ててから true にして deploy:web
  */
-export const RECIPE_CARD = false;
+export const RECIPE_CARD = true;
 const PNG_HEADERS = { "content-type": "image/png", "cache-control": "public, max-age=31536000, immutable" };
 const parseCard = (s) => { try { return s ? JSON.parse(String(s)) : null; } catch { return null; } };
 /** カード絵の道 (card のある行は -c。後から card が足されても前の絵のキャッシュを使わない) */
