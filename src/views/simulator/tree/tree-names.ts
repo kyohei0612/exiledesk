@@ -13,6 +13,7 @@ import { useTree } from "./use-tree";
 import { veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { junkKeyLabel } from "../../../services/simulator/tree/tree-frac-pick";
 import { isSideKey, sideKeyLabel } from "../../../services/simulator/tree/tree-junk-side";
+import { FRACTURE_POOL } from "../../../services/simulator/sim-odds";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 
@@ -92,12 +93,12 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   return base;
 }
 /**
- * 確定フラクチャーの素材の倍と当たり (S-43・S-44): ✦ の数 k (3 まで) で ×(3 ÷ k)・k/3。スイッチ fracMulti が閉じている間は ×3 = 33%。
+ * 確定フラクチャーの素材の倍と当たり (S-43・S-44): 固定されうる MOD の数 p (費用と同じ FRACTURE_POOL) と ✦ の数 k (p まで) で ×(p ÷ k)・k/p。スイッチ fracMulti が閉じている間は ×3 = 33%。
  * 文は「×3 = 33%」の形 (日本語・英語で同じ)
  */
 export function sureFracText(k: number): string {
-  const n = flag("fracMulti") ? Math.min(3, Math.max(1, k)) : 1, x = 3 / n;
-  return `×${Number.isInteger(x) ? x : x.toFixed(1)} = ${Math.round((n / 3) * 100)}%`;
+  const p = FRACTURE_POOL, n = flag("fracMulti") ? Math.min(p, Math.max(1, k)) : 1, x = p / n;
+  return `×${Number.isInteger(x) ? x : x.toFixed(1)} = ${Math.round((n / p) * 100)}%`;
 }
 /** 値段のキー (カレンシー・お告げ・骨・エッセンス・カタリスト) → 画面の言語の名前 (クラフト台の棚と同じ) */
 export const handName = (key: string): string => nameOfKey(key, baseItem.value);

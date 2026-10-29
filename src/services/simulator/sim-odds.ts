@@ -52,8 +52,10 @@ export function chaosAfterFix(data: PatchData, blank: StageItem, key: string, fi
  * 狙い (fracture 候補の 1 つ目) + ほかの MOD (others 個) + 骨の壁 (未発現 1 つ) のレアにフラクチャーを 1 回打った時、狙いのどれかが固定される割合。
  * ③ の道は どれも「3 MOD + 壁」(白から: 狙い・反対側・王者 / 高貴、グレーター: 狙い・残す MOD・エッセンス、買う: 4 MOD の壁つき)
  */
-/** all = 候補を全部置く (✦ が複数の木の「4 MOD を買ってフラクチャー」= ✦ の MOD を全部持つベースを買う。3 つまで、残りがほかの MOD。10-28 オーナー、スイッチ fracMulti) */
-export function fractureOdds(data: PatchData, blank: StageItem, targets: readonly OddsTarget[], others = 2, all0 = false): number {
+/** 「3 MOD + 壁」で固定されうる MOD の数 (フラクチャーは MOD 4 つから、壁 1 つは固定されない)。S-43・S-44 の文 (sureFracText・tree-base-cost の札) も費用もこの数 */
+export const FRACTURE_POOL = 3;
+/** all = 候補を全部置く (✦ が複数の木の「4 MOD を買ってフラクチャー」= ✦ の MOD を全部持つベースを買う。FRACTURE_POOL まで、残りがほかの MOD。10-28 オーナー、スイッチ fracMulti) */
+export function fractureOdds(data: PatchData, blank: StageItem, targets: readonly OddsTarget[], others = FRACTURE_POOL - 1, all0 = false): number {
   const t = targets[0];
   if (!t) return 0;
   const hit = modFor(data, t.modId, t.minTierIndex);

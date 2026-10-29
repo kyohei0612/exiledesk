@@ -4,7 +4,7 @@
  * ツリーの始まりの箱のベースの値段にも使う)。値段は price (高貴建て)、ベースの値段は引数
  */
 import { runeEnForId } from "./pattern";
-import { blankWith, fractureOdds } from "./sim-odds";
+import { blankWith, FRACTURE_POOL, fractureOdds } from "./sim-odds";
 import { greaterRouteCost, type GreaterRoute } from "./sim-greater";
 import { sideOfMod, type PatchData, type RouteGrade, type StageItem } from "../craft-stage/engine";
 import { spamCounts, type SpamCounts } from "../simulator/sim-engine";
@@ -125,7 +125,7 @@ export function startCalc(o: StartCalcIn) {
   const fourB = fourN;
   const buyOnce = fourB != null ? fourB + buyRest : null;
   /** 4 MOD を買う道の 1 個 (フラクチャー済みになるまで) = (ベース代 + フラクチャー) ÷ フラクチャーの当たり */
-  const fracPFour = o.fracMulti ? fractureOdds(d, blank, o.fracMembers.map((r) => ({ modId: r.modId, minTierIndex: r.minTierIndex })), 2, true) : fracP;
+  const fracPFour = o.fracMulti ? fractureOdds(d, blank, o.fracMembers.map((r) => ({ modId: r.modId, minTierIndex: r.minTierIndex })), FRACTURE_POOL - 1, true) : fracP;
   const fourTotal = buyOnce != null && fracPFour > 0 ? buyOnce / fracPFour : null;
   // 適当なレアを消去で 1 MOD → カオスの道は 2026-10-21 に外した (オーナー「誤差やろもはや消してくれ」。白からは増強スパムの道だけ)
   const g = greaterRouteCost({ data: d, targets: o.targets, fracSide: sideOfMod(d, m.id), p: pHit, grade: gr, odds: gr.odds, white, runeLines, price: priceOf, name: nameOf });
