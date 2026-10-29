@@ -63,7 +63,7 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 
 ## データの出どころ
 
-出どころの順は設計図 E-01 (poe2db が正、トレードは確かめ)。クライアントは正しさの根拠にしない (メモ feedback-db-only、10-17)。下の表のクライアントの行は、今ある JSON・絵をどこから作ったかの記録。
+出どころの順は設計図 E-01 (poe2db が正、トレードは確かめ)。クライアントは正しさの根拠にしない (10-17、E-01〜04)。下の表のクライアントの行は、今ある JSON・絵をどこから作ったかの記録。
 
 | 何 | どこから | 作り直し |
 |---|---|---|
@@ -97,4 +97,4 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 ## アプリ (当分触らない)
 
 画面は Vue、裏は Rust (`src-tauri/src`: 取引所 trade2 の門番・捌き速度の巡回・PoB (Lua)・画像パック・更新)。サイドバーにカレンシーランキング・取引履歴・ヴァールの天秤・クラフト計算機 (廃止予定)・火力チェック・スキン。
-配布は `v*.*.*` のタグで `.github/workflows/release.yml`。取引所の検索は 10 秒間隔・5 分 30 回を守る。手順の詳細は `docs/archive/README-app-2026-10.md` とメモ memory-archive-index。
+配布は `v*.*.*` のタグで `.github/workflows/release.yml`。取引所の検索は 10 秒間隔・5 分 30 回を守る。手順の詳細は `docs/archive/README-app-2026-10.md` とメモの memory-archive-1029 (INDEX.md)。

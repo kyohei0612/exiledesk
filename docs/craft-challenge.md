@@ -144,5 +144,5 @@
 
 ### 始める時の最初の仕事
 - `wip/craft-challenge` に main を取り込む (10-16 から分かれている。`CraftStage.vue`・`WebApp.vue`・`craft-stage.ts` がぶつかる)。
-- ページの作り (`?page=challenge`・両脇の縦長の枠。メモ ads-page-model) に合わせる。
+- ページの作り (`?page=challenge`・両脇の縦長の枠。Y-10・Y-20) に合わせる。
 - 未決の表をオーナーに聞き直す。

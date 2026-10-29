@@ -44,4 +44,4 @@ tabs-check (ModeTabs)・tier-row-check (段の行 375 / 1660)・leave-save-check
   - page.ts の gemCorruptPage (?page=gem-corrupt、CraftStage はそれを見る)。
 - 残り (頼まれていない・決めてほしい物): 戻るで画面の送りの位置 (スクロール) は戻さない、スパムシミュの結果の数字は同じ狙いで回し直すので変わる、要望の書きかけ・デイリーの中の選び (見本の作り) は写さない。シミュは cede3e93 の決め (戻るでも空から) のまま。MOD 表などの開いた段を見せる送り (keep-place の revealNext) はスマホの下の固定の帯の高さを数えていない (症状の報告は無い)。
 - 台本: 共有メモ local_b4352604-…/design6/ (back-check・fresh-check・pages-check・catalog-check・gem-check)。
-- 6 本目の記録と 5 → 6 の引き継ぎの写しは notes/2026-10-25-design6-handover.md。
+- 6 本目の記録と 5 → 6 の引き継ぎの写しは git の履歴 (10-29 の md の整理で消した): 2026-10-25-design6-handover.md。

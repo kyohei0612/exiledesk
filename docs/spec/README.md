@@ -18,7 +18,7 @@
 
 | 紙 | 番号 | 持ち主 | 中身 |
 |---|---|---|---|
-| `README.md` (この紙) | G-xx | ブラック | 大本 G-01〜08・紙の一覧・書き方の型・進め方 G-20〜25 |
+| `README.md` (この紙) | G-xx | ブラック | 大本 G-01〜08・紙の一覧・書き方の型・進め方 G-20〜25・フック済みの決まり G-30〜39 |
 | `system.md` | Y-xx | ブラック | 全体のシステム: 全体の形 Y-01〜04・ページ Y-10〜17・広告の枠 Y-20〜25・配信と短いリンク・レシピのカード絵 Y-30〜35・受け口 (/boot.json・要望・日報・Discord) Y-40〜47・データと相場 Y-50〜52・記録と分析 Y-60〜66・環境とスイッチの境目・1 日の枠 Y-70〜76・英語と SEO Y-80〜83・セキュリティ Y-90〜95・不変条件 Y-100〜105 |
 | `engine.md` | E-xx | ジン部長 | 出どころ E-01〜04・MOD の置き場・重み・段 E-10〜19・カレンシー E-20〜36・フラクチャー E-40〜42・エッセンス E-50〜54・骨と冒涜 E-60〜69・品質 E-70〜74・確率と乱数 E-80〜82・名前 E-90〜93・エンジンが返す形 E-95〜98 (細かい表は spec/ と rule-checklist を指す) |
 | `emu.md` | M-xx | エミュ部長 | エミュの画面: 流れ M-01〜08・操作 M-10〜22・次の手で狙う M-30〜34・表示 M-40〜49・品質の帯 M-50〜55・スパムシミュ M-60〜65・スマホ M-70〜72・不変条件 M-90〜94 |
@@ -55,3 +55,22 @@
 ## 5. 片付け
 
 設計図ができた部から、古い情報を片付ける: docs/org/<部>/README.md の決まりは番号を指す形にする、notes/ の決めは設計図へ写して notes は記録として残す、メモは番号を指す 1 行にする、置き換えた ADR は状態を「置き換え済み」にする、コードの古い説明は番号を指す形に直す。
+10-29 の整理 (オーナー「新しい体制に準じて不要なmdこの機会に消そうか」): 役目は 1 つずつ = 決まりの正はこの設計図、守らせる仕組みはフック (下の ⑥)、メモは設計図に無い経緯・オーナーの好み・外の置き場だけ、CLAUDE.md は地図だけ。消したメモは `~/.claude/projects/C--Users-kyohei-ExileDesk/memory-archive-1029/` (一覧と行き先は INDEX.md)、消した docs は git の履歴。
+
+## 6. フック済みの決まり (AI の癖を止める仕組み、10-28 夜〜10-29)
+
+オーナー 10-29「コードの正しさは見張り、AI の癖はフック」。ここの決まりはフックが毎回守らせるので、メモ・CLAUDE.md に同じ事を書き足さない。フックを足す・変える時はこの表を同じ時に直す。
+登録: `.claude/settings.local.json` (PermissionRequest・PreToolUse・Stop・UserPromptSubmit) と `~/.claude/settings.json` (UserPromptSubmit)。中身: `~/.claude/hooks/`。止める時は理由が Claude に返る (exit 2 / block)。
+
+| 番号 | 決まり | フック (いつ) | 元の決まり |
+|---|---|---|---|
+| G-30 | 毎回のメッセージに 5 つの決まり (書く文は全部日本語・確認はスクリプトで Chrome 1 タブ・リリースの分け方と日英・決着済みを蒸し返さない・自作テストで確かめたと言わない) を差し込む | `ja-reminder.js` (UserPromptSubmit、全プロジェクト) | G-22・R-11・メモ reply-in-japanese・feedback-check-settled-rules |
+| G-31 | Bash / PowerShell の許可の窓を自動で許可する (夜中に止めない)。強制 push・reset --hard・stash / switch・広い rm -rf・node_modules 消しだけは今まで通り聞く | `auto-allow-bash.js` (PermissionRequest) | オーナー 10-27「許可待ちがだるい、どんどん先進めて」 |
+| G-32 | `git stash`・`--autostash`・`git add -A` / `git add .` を止める (自分のファイルだけパスで add) | `exiledesk-guard.js` (PreToolUse) | R-08 |
+| G-33 | `cd … &&` / `cd …;` のつなぎを止める (`git -C` か絶対パスで) | 同上 | CLAUDE.md「動かし方」 |
+| G-34 | 本体での `git reset --hard`・ブランチの切り替え (`switch` / `checkout`) を止める (作業場 ExileDesk-preview への `git -C` は通す) | 同上 | R-01・R-08 |
+| G-35 | エンジン・エミュ・シミュ・共通の部品のコードの commit は、同じ commit に `docs/spec/` か、commit の文に設計図の番号 (S-50b など) が要る | 同上 (`git commit` の時) | G-20 |
+| G-36 | 返事を終える時、このセッションが残したスクリーンショット・確認の Chrome・自分で立てたサーバー (1441〜1445・1460・1461・937x / 938x・9222) を知らせて 1 回止める | `exiledesk-habits.js` (Stop) | R-14・CLAUDE.md「いつも」 |
+| G-37 | セッションが 2,000 件前後になったら、引き継ぎを書いて交代するよう差し込む | 同上 (UserPromptSubmit) | メモ feedback-request-rules の 4 |
+| G-38 | 本番の出し (`deploy:web`・`bump-version.mjs`) は、オーナーの「出して」の後にブラックが置く印 `~/.claude/exiledesk-release-ok` が無ければ止める (`deploy:web-dev` は除く) | `exiledesk-guard.js` (PreToolUse) | G-08・R-02・R-03 |
+| G-39 | `src/web/release-flags.ts` の `RELEASED` の書き足し・消しは、同じ印が無ければ止める | 同上 (Edit / Write) | G-08・R-02 |

@@ -1,6 +1,6 @@
 # 組織の台帳 (宛先・触っている・共有の物)
 
-ここは今の状態だけ。終わった記録・前の順番は notes/2026-10-22-todo-archive.md。OK 待ちは docs/pending-release.md の 1 本。
+ここは今の状態だけ。終わった記録・前の順番は git の履歴 (10-29 の md の整理で消した): 2026-10-22-todo-archive.md。OK 待ちは docs/pending-release.md の 1 本。
 
 ## 常駐の宛先 (SendMessage の to。入れ替えたら直す。立てたブラックが自分で書く)
 | 誰 | session id | 今 |

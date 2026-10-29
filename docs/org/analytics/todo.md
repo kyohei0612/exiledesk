@@ -12,7 +12,7 @@
 - 10-26 夜 (5 本目): レシピの短い URL exiledesk.com/r/<id> を server/web に作った (61eee10e、表 recipe_shares 0011 は本番に当て済み、Worker は次の deploy:web で出る)。仕様は共有メモ side-session-notes/local_526b63a7…/recipe-short-url-api.md、画面のコピーはシミュ 32。live の /tree/ (TREE_SHARE) は 10-28 に外した (オーナー「消す」、表は 0012 で次の出しの時に落とす)。
 - やりかけは下の 3 → 4 のまま (ツリーの短い URL は上で別の形に・要望 91832821 の返事の書き直し・サファイア 170 回空振りの疑いはジン部長待ち)。
 
-## 次の管理人へ (10-26、3 本目 → 4 本目。前の 2 → 3 は notes/2026-10-26-todo-archive.md、1 本目からの長い物は notes/2026-10-24-handoff.md)
+## 次の管理人へ (10-26、3 本目 → 4 本目。前の 2 → 3 は git の履歴 (10-29 の md の整理で消した): 2026-10-26-todo-archive.md、1 本目からの長い物は git の履歴 (10-29 の md の整理で消した): 2026-10-24-handoff.md)
 - 先に README の決まり 10 個と notes/daily-report-task.md (毎朝 9 時の AI の評価と見解の流れ) を読む。報告はブラック (dev/todo.md の宛先の表、今は 12 代目 local_feea72b4)。セッション同士の送信はオーナーの書き込みの間に 10 回まで、止まったら共有メモ (side-session-notes/<ブラックの id>/) に書く。
 - **毎朝の形が変わった (10-26 オーナー「既定の報告はいらなくなった」)**: 予定のタスク exiledesk-daily-summary が 9 時に pull-logs.mjs (D1 の記録 + pull-server-notes.mjs の異常・要望・Discord = <日>-server.json) → <日>-ai.md (見本 daily/2026-10-25-ai.md、git に入れない) → post-ai-review.mjs で #日報 に全文。数字の日報 (daily-summary.mjs・サーバーの dailyReport・GET /report) と #分析ログファイル管理 への書き込みは消した (71d1a969)。
 - **10-27 の朝に見る**: ① 予定のタスクの 10-27 の回が通ったか (10-25 の回 local_e1184968 が許可待ちで「動いている」のまま残り、10-26 の朝の回が始まらなかった。止めるのはオーナーかブラック、片付いたかを list_task_runs で) ② #日報 に AI の見解が流れたか (D1 の ai_review の posted_at) ③ #分析ログファイル管理 に書き込みが来ていないか ④ Discord の Bot の 9:03 の回 (discord_daily の 10-27 の行、人の書き込みが本文つきで取れたか。オーナーの試しの書き込みが 9:03 より後ならここに入る)。
@@ -24,7 +24,7 @@
 - やりかけ: 要望 91832821 の返事 (シミュを本番に出した後の形で書き直す要あり)。
 - 気になる事 (調べていない): 10-25 に 1 人が MOD 5 つのサファイア (ジュエル) にカオスを 170 回空振り (0.1.596)。上限を超えた形ができる道がエンジンに残っている疑い、ジン部長 11 本目が調べている。
 
-## 前の報告 (10-24 の手元の開発版・10-22 の要望と /craft-basics) は notes/2026-10-23-todo-archive.md に移した (10-25 ホワイト)
+## 前の報告 (10-24 の手元の開発版・10-22 の要望と /craft-basics) は git の履歴 (10-29 の md の整理で消した): 2026-10-23-todo-archive.md に移した (10-25 ホワイト)
 
 ## やる事
 - **AdSense の審査が通ったら戻す** (10-27 ブラック 13 の OK で外した、模擬審査 notes/2026-10-27-adsense-mock-review.md): scripts/build-seo-pages.mjs (ベース 1,576 枚 + 一覧) と scripts/build-cosmetics-pages.mjs (コスメ 20 枚) の `ADS_ON_AUTO_PAGES = false` を true に → 別の出力先で作って adsbygoogle が入るのを見る → commit → ブラックへ hash (出すのは最終チェック長)。記事・FAQ・固定ページ・トップのコードはそのまま。
@@ -35,4 +35,4 @@
 
 ## OK 待ち
 
-## 済み は notes/2026-10-23-todo-archive.md に移した
+## 済み は git の履歴 (10-29 の md の整理で消した): 2026-10-23-todo-archive.md に移した

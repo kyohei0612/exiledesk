@@ -47,6 +47,6 @@
 ## 地図
 - 今の様子: メモ black-board (ブラックの板、新しいブラックは最初に読む)。宛先・使用表は dev/todo.md、触っている物は dev/touching/*.md、持ち物は owners.txt (`node scripts/owner-of.mjs`)、エンジンと画面の分け方は ARCHITECTURE.md の「部ごとの持ち場」。
 - 決まりの元: メモ feedback-commander-style・feedback-no-delegate-wait・workflow-preferences・user-profile。
-- 外に出す物: G-08・R-07・R-20 (経緯のメモ ui-try-before-release・feedback-backstage-release・feedback-replies)、docs/pending-release.md。
+- 外に出す物: G-08・R-07・R-20 (経緯のメモ feedback-replies)、docs/pending-release.md。
 - 計画 docs/roadmap-2026-10.md、引き継ぎ MEMORY.md の「次のセッションへ」、迷ったら docs/ARCHITECTURE.md。
 - 仕事の終わりに振り先と地図を直す (部が増えた・置き場が変わった時)。

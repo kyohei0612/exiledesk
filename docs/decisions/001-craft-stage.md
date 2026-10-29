@@ -92,7 +92,7 @@ StageStep { currency: StageCurrency; omen?: string; seed: number;
 ### 5. 表示は公式日本語のみ
 
 - MOD は `jaOfMod` / `fillHashes`、カレンシー・お告げは `jaOfPriceKey` / `jaOfOmen`。自前で訳さない (labels.ts の決まり)。
-- 相場は `market-store` の値を使い、外部 API は叩かない (api-probing-policy)。
+- 相場は `market-store` の値を使い、外部 API は叩かない (Y-52)。
 
 ### 6. 守る決まり
 

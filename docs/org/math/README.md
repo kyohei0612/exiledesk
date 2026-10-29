@@ -22,4 +22,4 @@
 - CoE の写し: data-cache/coe-beta-package_poe2.js。
 - テスト tests/: held-odds-parity・aim-odds・chaos-spam・engine-emulator-parity・desecrate-reveal-rates・mod-weights・catalysing-greater。
 - メモ: optimal-craft-dp (「落とし穴」= 段の下限・乱数・評価の仕方)・handoff-2026-10-22・held-odds-parity・aim-next-move・chaos-spam-and-sfx・craft-weight-sources・mod-engine-single-source・sim-cost-model。
-- 決着済み: docs/spec/engine.md (E-xx、確率は E-80〜82)。元の記録は docs/reviews/2026-10-17-rule-checklist.md・2026-10-16-coe-rule-check.md、メモ poe2-craft-rules-confirmed・coe-rule-check-2026-10-16。
+- 決着済み: docs/spec/engine.md (E-xx、確率は E-80〜82)。元の記録は docs/reviews/2026-10-17-rule-checklist.md・2026-10-16-coe-rule-check.md、メモ poe2-craft-rules-confirmed。

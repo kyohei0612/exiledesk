@@ -26,5 +26,5 @@
 - 動画 (video/、旧 POE2Tube) との受け渡し (動画編集長と): 録画モード src/utils/rec-mode.ts (`?rec=1`・seed・`__rec`)、撮影 URL・`data-rec` の目印、JSON の形 (正は video/contracts/、ExileDesk 側 contract.ts・scripts/craft-stage-run.mjs)。変える時は両方を同じ commit で、メモ poe2tube-handoff。video/ は CI (tests.yml の paths-ignore)・vite の watch・tailwind (@source not) から外してある。
 - 英語: 言語の切り替え src/i18n/lang.ts (`tr`・`modText`・`nameOf`)・GLOSSARY.md はデザイン部長、ゲームのデータ *-client.json などはジン部長。
 - サーバー (サーバー管理人): server/web (og-card.js・dev-gate.js・move-gate.js・wrangler*.jsonc)、server/live (README.md・src/index.ts・market.ts・logs.ts・feedback.ts・monitor.ts・migrations/)。
-- 決まりの番号: 裏方 R-07・ポップアップ R-12・要望の返事 R-20 / UI は shared-ui.md (U-xx) / 英語 Y-80〜83・U-60〜62 / 広告 Y-20〜25 / 合格 G-22・R-19 / 外の API Y-52。経緯のメモ (feedback-backstage-release・feedback-changelog-popup・feedback-replies・web-english・ads-page-model・feedback-verify-by-code・feedback-test-strategy・stop-processes-by-pid・api-probing-policy) は記録。
+- 決まりの番号: 裏方 R-07・ポップアップ R-12・要望の返事 R-20 / UI は shared-ui.md (U-xx) / 英語 Y-80〜83・U-60〜62 / 広告 Y-20〜25 / 合格 G-22・R-19 / 外の API Y-52。経緯のメモ (feedback-replies・web-english・feedback-verify-by-code・feedback-test-strategy) は記録。フックで止める物は設計図 README ⑥ (G-30〜39)。
 - docs: ARCHITECTURE.md・roadmap-2026-10.md・decisions/。決着済み: 設計図 docs/spec/・GLOSSARY.md。
