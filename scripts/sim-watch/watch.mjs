@@ -63,9 +63,12 @@ function makeWatcher(c) {
     setDepthSteps(await ev(`document.documentElement.hasAttribute("data-flag-lineshort")`));
     return readDoc();
   }
-  /** 画面が持っている今の木 (保存したレシピの今の物)。保存していない変更は「保存」を押してから読む */
+  /**
+   * 画面が持っている今の木 (開いた時に組み直した後の木、猿の口の dump)。保存の形 v1 (スイッチ recipeV1、S-104) は打ち方だけで箱を持たないので、保存からは読まない。
+   * 猿の口が無い時だけ前の口 (保存したレシピの木。v1 なら箱が無いので null = 読めない)
+   */
   async function readDoc() {
-    return ev(`(() => { const id = localStorage.getItem("exiledesk.tree.recipes.current"); const list = JSON.parse(localStorage.getItem("exiledesk.tree.recipes") || "[]"); return (list.find((r) => r.id === id) ?? list[0])?.tree ?? null; })()`);
+    return ev(`(() => { const M = window.__simMonkey; if (M) { const { startRarity: _r, ...d } = M.dump(); return d; } const id = localStorage.getItem("exiledesk.tree.recipes.current"); const list = JSON.parse(localStorage.getItem("exiledesk.tree.recipes") || "[]"); const t = (list.find((r) => r.id === id) ?? list[0])?.tree ?? null; return t && Object.keys(t.boxes ?? {}).length ? t : null; })()`);
   }
   async function saveAndRead() {
     await ev(`document.querySelector("[data-tree-recipe-save]")?.click()`); await sleep(800);
