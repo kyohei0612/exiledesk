@@ -37,8 +37,8 @@ try {
       if (!g.b.ok || !g.g.ok) { console.log(`${t.key}: 始まりが作れない ${JSON.stringify(g)}`); continue; }
       await sleep(800);
     }
-    // 完成形と始まりだけ残す (箱は start だけ)
-    await c.ev(`(async () => { const { useTree } = await import("/src/views/simulator/tree/use-tree.ts"); const t = useTree(); const d = JSON.parse(JSON.stringify(t.doc.value)); d.boxes = { start: { ...d.boxes.start, hand: null, outs: [], back: null, done: null } }; delete d.boxes.start.autoBack; t.open(d); return 1; })()`);
+    // 完成形と始まりだけ残す (箱は start だけ)。古い木の要確認 (orphans) も捨てる (残すと組み直した code に前の決めの札が乗り、開き直すと「決めの箱が今の木に無い」で精査が落ちた、pass-armor のルーンの後 10-29)
+    await c.ev(`(async () => { const { useTree } = await import("/src/views/simulator/tree/use-tree.ts"); const t = useTree(); const d = JSON.parse(JSON.stringify(t.doc.value)); d.boxes = { start: { ...d.boxes.start, hand: null, outs: [], back: null, done: null } }; delete d.boxes.start.autoBack; delete d.orphans; t.open(d); return 1; })()`);
     await sleep(500);
     await c.ev(KIT);
     const body = expr(readFileSync(here(`./build/${t.key}.js`), "utf8"));
