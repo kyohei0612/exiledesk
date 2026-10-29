@@ -1,4 +1,8 @@
 {
+  "0.1.640": [
+    "Tier table: essence and alloy names are now framed tags that follow the mod text",
+    "Windows narrower than 1280px now use the phone layout (it switched at 768px before)"
+  ],
   "0.1.639": [
     "Shared simulator recipes now show their own preview card on X and other sites (finished item, tree shape, completion rate, average cost)",
     "Emulator: “Undo” now keeps the currency and omens you are holding",

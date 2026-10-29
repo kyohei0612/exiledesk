@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.640",
+  "date": "2026-10-29",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "段の表: エッセンス・合金の名前を枠付きの札にして、MOD の文の後ろに続けるように",
+    "en": "Tier table: essence and alloy names are now framed tags that follow the mod text"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "画面の幅が 1280 未満の時はスマホの形で表示するように (前は 768 で切り替え)",
+    "en": "Windows narrower than 1280px now use the phone layout (it switched at 768px before)"
+   }
+  ]
+ },
+ {
   "v": "0.1.639",
   "date": "2026-10-29",
   "items": [
@@ -918,18 +936,6 @@
     "area": "",
     "text": "ブラウザの戻るで戻った時は、コスメティックの検索・絞り込みやスパムシミュレーターの狙いが前のまま残るように (リロードは最初から)",
     "en": "Going back with the browser now keeps your Cosmetics search and filters and your spam simulator target (reloading still starts fresh)"
-   }
-  ]
- },
- {
-  "v": "0.1.599",
-  "date": "2026-10-25",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "クラフト台: ページを読み直すと、ベース選びから始まるように (記事などから戻った時は前の画面のまま)",
-    "en": "Craft stage: reloading the page now starts over from base selection (coming back from an article still keeps your item)"
    }
   ]
  }

@@ -155,6 +155,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "armAll", "emuRedo", "noCut", "backPlace", "phoneHelp", "tierWord", "clickFracture", "triAttr",
   // 1 手戻すでも持ったまま・レシピのカード絵 (オーナー 10-29「全部出して」、ブラック 17 の「出して」。カード絵は D1 0013 と RECIPE_CARD の後)
   "undoKeepHeld", "recipeCard",
+  // 段の表のエッセンス・合金のチップと、画面の形をスマホと PC の 2 つに (オーナー 10-29 夕「おすすめ」= この 2 本だけ、ブラック 17 の「出して」)。シミュのスイッチは閉じたまま (古い共有レシピの完成が落ちるため)
+  "essChip", "twoShapes",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */
