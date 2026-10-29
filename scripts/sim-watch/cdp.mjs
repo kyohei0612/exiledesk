@@ -12,7 +12,7 @@ export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export async function openChrome(port = 9371) {
   const prof = mkdtempSync(join(tmpdir(), "sim-watch-"));
-  const chrome = spawn(CHROME, ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${prof}`, "--no-first-run", "--hide-scrollbars", "about:blank"], { stdio: "ignore", windowsHide: true });
+  const chrome = spawn(CHROME, ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${prof}`, "--no-first-run", "--hide-scrollbars", "--mute-audio", "about:blank"], { stdio: "ignore", windowsHide: true });
   const close = () => {
     try { execFileSync("taskkill", ["/PID", String(chrome.pid), "/T", "/F"], { stdio: "ignore", windowsHide: true }); } catch { try { chrome.kill("SIGKILL"); } catch { /* もう無い */ } }
     try { rmSync(prof, { recursive: true, force: true }); } catch { /* 後で消える */ }
