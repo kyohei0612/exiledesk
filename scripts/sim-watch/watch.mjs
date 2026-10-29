@@ -7,6 +7,7 @@
  *   node scripts/sim-watch/watch.mjs                         … 手元の本番の作り http://127.0.0.1:1460 (pnpm preview:prod)
  *   node scripts/sim-watch/watch.mjs --dev                   … 手元の開発版 http://127.0.0.1:1461 (スイッチの下も入る)
  *   node scripts/sim-watch/watch.mjs <origin> [--only amuB] [--update] [--shots <dir>]
+ *   --people 30: 回す人数 (既定 30。開発版の口 __simMonkey で回す。--people 100 か本番の作りは画面のボタン)
  *   --update で今の数を baseline.json に書く (わざと動きを変えた時だけ。書いたら commit)
  *   --tabs 3: 木をタブ 3 枚 (それぞれ別の部屋) で並べて回す。押した後は画面が落ち着くまで待つ (固定の秒では待たない、G-21)
  */
@@ -26,6 +27,8 @@ const opt = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : nu
 const ORIGIN = (args.find((a) => /^https?:\/\//.test(a)) ?? (DEV ? "http://127.0.0.1:1461" : "http://127.0.0.1:1460")).replace(/\/$/, "");
 const MODE = DEV || /:1461\b|dev\./.test(ORIGIN) ? "dev" : "prod";
 const ONLY = opt("--only");
+// 回す人数 (10-29 オーナー「おｋそれで」で 100 → 30)。画面のボタンは RUN_N (100) 固定なので、30 は開発版の口 __simMonkey.result で回す (下の runs)
+const PEOPLE = Number(opt("--people") ?? 30);
 const SHOTS = opt("--shots");
 if (SHOTS && !existsSync(SHOTS)) mkdirSync(SHOTS, { recursive: true });
 const TREES = JSON.parse(readFileSync(join(HERE, "trees.json"), "utf8")).trees.filter((t) => !ONLY || t.key === ONLY);
@@ -56,7 +59,7 @@ function makeWatcher(c) {
     await size(w, h, mobile);
     await go(`${ORIGIN}/web.html`);
     await ev(`(() => { try { localStorage.clear(); sessionStorage.clear(); localStorage.setItem("exiledesk.changelog.seen", "9.9.9"); } catch {} return 1; })()`);
-    await go(`${ORIGIN}/?page=sim-tree#recipe=${t.code}`);
+    await go(`${ORIGIN}/web.html?page=sim-tree#recipe=${t.code}`); // dev サーバーは / がアプリの入口なので Web の入口で開く (本番の作りも web.html がある)
     const sel = mobile ? "[data-phone-tree]" : "[data-tree-box]";
     if (!(await until(`document.querySelectorAll(${JSON.stringify(sel)}).length > 0`, 30000))) return null;
     await c.settle({ quiet: 300 });
@@ -186,6 +189,14 @@ function makeWatcher(c) {
       out.test = norm(await ev(`(document.querySelector("[data-tree-test-ok]") ?? document.querySelector("[data-tree-test-holes]"))?.innerText ?? ""`));
       out.testStuck = await ev(`[...document.querySelectorAll("[data-tree-run-stuck]")].map((b) => b.getAttribute("data-box-id")).sort()`);
     } else note.push(`${t.key}: テストで回すが押せない`);
+    // 100 人でない時は開発版の口で種 1 のまま回す (欄は run30 / runStuck30 = 100 人の前の欄とは比べない)。口の無い本番の作りだけボタンの 100 人
+    if (PEOPLE !== 100 && (await ev(`!!window.__simMonkey`))) {
+      const r = await ev(`window.__simMonkey.result(${PEOPLE}, 1).then((r) => r && { n: r.n, finished: r.finished, failed: r.failed, capped: r.capped, stuckAt: r.stuckAt })`);
+      if (!r) { note.push(`${t.key}: ${PEOPLE} 人回すが読めない`); return out; }
+      out[`run${PEOPLE}`] = `${r.n} 人中 完成 ${r.finished}・失敗 ${r.failed}・打ち止め ${r.capped}`;
+      out[`runStuck${PEOPLE}`] = Object.entries(r.stuckAt).map(([id, n]) => `${id} ${n}`).sort();
+      return out;
+    }
     if (await until(`!!document.querySelector("[data-tree-run]") && !document.querySelector("[data-tree-run]").disabled`, 30000)) {
       await ev(`document.querySelector("[data-tree-run]").click()`); await sleep(1500);
       await ev(`document.querySelector("[data-tree-run-skip]")?.click()`);
@@ -307,7 +318,7 @@ function makeWatcher(c) {
     now[t.key].view = view;
     // 開発版の基準が無ければ本番の作りの基準 (出した版) と比べる = 出した後に変わった所が出る。前の基準に無い欄 (後から足した見る物) は比べない
     const was = baseline[MODE]?.[t.key] ?? baseline.prod?.[t.key];
-    if (was && !UPDATE) for (const k of ["boxes", "issues", "test", "testStuck", "run", "runStuck", "cards", "goal", "rules"]) {
+    if (was && !UPDATE) for (const k of ["boxes", "issues", "test", "testStuck", "run", "runStuck", `run${PEOPLE}`, `runStuck${PEOPLE}`, "cards", "goal", "rules"]) {
       if (!(k in was)) continue;
       if (JSON.stringify(was[k]) !== JSON.stringify(now[t.key][k])) bad(t.key, `回し ${k}`, "前 (baseline) と違う", JSON.stringify(now[t.key][k]), JSON.stringify(was[k]));
     }

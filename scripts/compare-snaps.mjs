@@ -2,7 +2,8 @@
 /**
  * compare-snaps.mjs — 本番 (exiledesk.com) と手元の本番環境を同じページ・同じ操作で撮って見比べる (2026-10-24、main を本番に出す前の照らし)
  *   1. 手元を立てる:   pnpm preview:prod -- --live [--port 1462]   (--live = 相場・訪問者を本番の live から読む。本番と同じに見せるため)
- *   2. 照らす:         node scripts/compare-snaps.mjs [--local http://127.0.0.1:1462] [--cdp 9333] [--only pc|phone] [--steps 01,02]
+ *   2. 照らす:         node scripts/compare-snaps.mjs [--local http://127.0.0.1:1462] [--cdp 9333] [--only pc|phone] [--pages craft,blog] [--steps 01,02]
+ *      (--pages = 出す中身に関係するページだけ撮る。名前の一覧は --help)
  * 出す物: data-cache/snap-compare/<日時>/ に 本番・手元・差 (赤) の PNG と report.md (違いの一覧)。違いが 0 なら「違い 0」。
  * 決まり:
  *   - 本番は撮るだけ。ページの読み込みは 1 回の照らしで PC・スマホ合わせて 40 前後 (絵・JS は静的で Worker を通らない)。
@@ -32,7 +33,7 @@ const VIEWS = {
 const BLOCK = [/exiledesk-live\.[^/]+\/(log|event)\b/, /cloudflareinsights\.com/, /googlesyndication\.com|doubleclick\.net|adtrafficquality\.google/];
 
 // 撮る並び。go = その道を開く (本番を 1 回読む)、それ以外は前の画面のまま操作する。full = 下まで撮る (読み物)
-const STEPS = [
+const ALL_STEPS = [
   { id: "01-base", go: "/", note: "初めて開いた時 (ベースを選ぶ)" },
   // 押す所は録画用の目印 data-rec (普段も付いている、src/utils/rec-mode.ts)。白のベースを選ぶので乱数は入らない
   // PC は部位のタイル (指輪) を押してからベースのカードが出る。スマホは先に出ているので無ければ飛ばす (撮らない)
@@ -56,7 +57,19 @@ const STEPS = [
   { id: "18-en-about", go: "/en/about", full: true },
   { id: "19-en-blog", go: "/en/blog/", full: true },
   { id: "20-en-app", go: "/?lang=en", note: "英語の画面 (最後: 言語を覚えるので)" },
-].filter((s) => !STEPS_ONLY || STEPS_ONLY.some((p) => s.id.startsWith(p)));
+];
+// --pages craft,blog: ページを選んで撮る (照らしは出す中身に関係するページだけ、10-29 オーナー「おｋそれで」)。--steps は id の頭で選ぶ。
+// 選んだ手が前の画面の操作 (go が無い) なら、前の go まで遡って撮らずに踏む (03-hold だけ選んでもクラフト台まで開く)
+const PAGES = { craft: ["01", "02", "03", "04", "05"], routes: ["06"], guide: ["07", "09"], feedback: ["08"], reading: ["10", "11", "12", "15", "16"], blog: ["13", "14"], bases: ["17"], en: ["18", "19", "20"] };
+const PAGES_ONLY = arg("--pages", null)?.split(",").flatMap((p) => PAGES[p] ?? (console.error(`--pages に無い名前: ${p} (あるのは ${Object.keys(PAGES).join("・")})`), process.exit(2)));
+const PICK = STEPS_ONLY || PAGES_ONLY ? [...(STEPS_ONLY ?? []), ...(PAGES_ONLY ?? [])] : null;
+const pickedAt = new Set(ALL_STEPS.flatMap((s, i) => (!PICK || PICK.some((p) => s.id.startsWith(p)) ? [i] : [])));
+const needAt = new Set([...pickedAt].flatMap((i) => { const a = []; for (let k = i; k > 0 && !ALL_STEPS[k].go; ) a.push(--k); return a; }));
+const STEPS = ALL_STEPS.flatMap((s, i) => (pickedAt.has(i) ? [s] : needAt.has(i) ? [{ ...s, noshot: true }] : []));
+if (process.argv.includes("--help")) {
+  console.log(`node scripts/compare-snaps.mjs [--local <origin>] [--only pc|phone] [--pages <名前,…>] [--steps <id の頭,…>] [--prev <前のフォルダー>] [--cdp 9333]\n  --pages: ${Object.entries(PAGES).map(([k, v]) => `${k} (${v.join(",")})`).join("・")}\n  撮る手: ${STEPS.map((s) => s.id + (s.noshot ? " (踏むだけ)" : "")).join(" ")}`);
+  process.exit(0);
+}
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function connect(url, onEvent) {

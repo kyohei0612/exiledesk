@@ -37,9 +37,9 @@ PoE2 のクラフトのエミュレーター (Web が本番、アプリは当分
 ## 動かし方
 - 開発: `pnpm dev:web` は preview_start の "web" (port 1440)。Web 版は http://localhost:1440/web.html (`/` はアプリの入口)。
 - 型: `pnpm -s exec vue-tsc --noEmit -p tsconfig.json`。テストはオーナーが言った時だけ (メモ feedback-test-strategy)。
-- 環境は Y-70 (作る・確かめる・モンキーは dev 1440、出す前の確かめは手元の本番の作り 1460 / 1461)。オーナーの確かめは R-13 (ブラックが「確認して」と言った時だけ 1440)。
+- 環境は Y-70 (作る・確かめる・見張り・モンキーは dev 1440、手元の本番の作り 1460 / 1461 は出す直前の 1 回だけ・同時に 1 つまで)。オーナーの確かめは R-13 (ブラックが「確認して」と言った時だけ 1440)。
 - 版上げと出し方は R-06・R-08。本番の出しは印が無ければフックが止める (G-38)。
-- 手元の本番の作り: `pnpm preview:prod -- --dev` → http://dev.exiledesk.localhost:1461/、`pnpm preview:prod` → http://exiledesk.localhost:1460/。見張り用。
+- 手元の本番の作り: `pnpm preview:prod -- --dev` → http://dev.exiledesk.localhost:1461/、`pnpm preview:prod` → http://exiledesk.localhost:1460/。出す直前の照らし用 (R-09)。
 - Bash では `\` が 1 段消える。正規表現や `\` の入る物は Write / Edit で書く。
 - Bash で `cd` をつながない (許可の窓で夜中に止まる。フックが止める = G-33)。外は `git -C <path>` や絶対パスで。scratchpad の台本は絶対パスで呼び、書き換えは Edit / Write で。
 - sleep で待つ Bash の繰り返しをしない (cmd の窓がちらつく)。待つ物は run_in_background で 1 回立てて知らせを待つか、台本の中で待つ。

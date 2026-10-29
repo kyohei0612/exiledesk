@@ -5,7 +5,7 @@
  *
  *   node scripts/app-watch/emu.mjs                         … 手元の本番の作り http://127.0.0.1:1460
  *   node scripts/app-watch/emu.mjs http://localhost:1440   … dev サーバー
- *   [--steps 60] [--seed 1] [--json] [--update]
+ *   [--steps 30] [--seed 1] [--json] [--update]
  *
  * 見る物:
  *   M-91  持った時のオレンジ・緑と打った結果: オレンジでない MOD は消えも変わりもしない、付いた MOD は緑の枠の側
@@ -18,7 +18,7 @@
  */
 import { opt, open, report, prodWrites, workerHits, ORIGIN, sleep } from "./lib.mjs";
 
-const STEPS = Number(opt("--steps") ?? 60);
+const STEPS = Number(opt("--steps") ?? 30); // 60 → 30 (10-29 オーナー「おｋそれで」、確かめの削り方)
 let seed = Number(opt("--seed") ?? 1) >>> 0;
 const rnd = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
 const BASE = "Sapphire%20Ring";

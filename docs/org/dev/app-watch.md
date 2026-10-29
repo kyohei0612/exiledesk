@@ -4,11 +4,11 @@
 これは見張り (画面が自分の言った事・決まりと食い違わないか)。外の正解 (poe2db・CoE) と突き合わせる物ではない。画面のコードは直さない。見つけたら持ち主の部長 (owners.txt) へ直接回し、ブラックにも 1 行。決まりの正は docs/spec/release.md の R-35〜R-38、ここは回し方の手引き。
 
 ## 回し方
-- 出す前 (R-09 の ③ の隣): 出す中身の 1460 を立てて (`pnpm preview:prod`、作業場なら `node ../ExileDesk-preview/scripts/preview-prod.mjs`) →
+- 出す前 (R-09 の ③、10-29 夜から dev 1440 で。本番の作りでは回さない): `pnpm dev:web` の 1440 を後ろに渡して →
   1. `node scripts/app-watch/static.mjs` (画面を開かない、数秒)
-  2. `node scripts/app-watch/emu.mjs` (クラフト台を 60 手、4〜6 分)
-  3. `node scripts/app-watch/pages.mjs` (7 ページ × 5 幅 × 日英 = 70 回、8〜12 分)
-- 1440 (dev サーバー、スイッチの下も入る) なら `http://localhost:1440` を後ろに渡す。1460 と 1461 と同じく、Chrome の見張りは 1 本ずつ回す (sim-watch と同時に回さない、機械が重いと押下が抜ける)。
+  2. `node scripts/app-watch/emu.mjs http://localhost:1440` (クラフト台を 30 手 = 既定。60 手で 4〜6 分だった)
+  3. `node scripts/app-watch/pages.mjs http://localhost:1440` (7 ページ × 5 幅 × 日英 = 70 回)
+- 既定の宛先は今も 1460 (台本の頭)。宛先を省かない。Chrome の見張りは 1 本ずつ回す (sim-watch と同時に回さない、機械が重いと押下が抜ける)。回し直しはオーナーに聞く (G-21)。
 - `--json` で結果を JSON、`--update` で今の数を baseline.json に書く (static は hex の数だけ。減った時・わざと変えた時だけ書いて commit)。emu は `--steps N`・`--seed N`、pages は `--only craft` (ページ 1 つ)。
 - 時間で待たない (G-21、10-29): 押す・キー・開くの後は lib.mjs の settle (DOM の変化・終わりのある動き・取り物が 0.2 秒静か) で次へ。秒数は止まったと見る上限だけ。pages はタブ 4 枚 (`--tabs N`、それぞれ別の部屋) で並べて開く (10-29 に 477 → 165 秒、数えは同じ)。emu だけは前の固定の待ちのまま (lib.mjs の open = fixed。変化待ちにすると押すたびに説明のカードが開くのを待って 139 → 240 秒に延び、押した後にマウスを空き地へ動かしても 242 秒だった)。フルチェックは大きな変更の後と出す前だけ、1 か所の直しはスナップだけ、回し直しはオーナーに聞く (ブラック経由)。
 - 終わると Chrome ごと閉じる (cdp.mjs、port は static なし・emu 9382・pages 9381。`WATCH_PORT` で替える)。合わない所があれば終わりの値 1。
