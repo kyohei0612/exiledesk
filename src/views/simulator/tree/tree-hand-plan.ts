@@ -418,7 +418,11 @@ export function planPick(data: PatchData, doc: TreeDoc, id: string, it: StageIte
   const afterQ = afterQualityOf(doc, id), autoCat = autoCatOf(data, doc, it);
   const needPre = omensAllowedFor(key).includes(CATALYSING) && !afterQ;
   const preFill = preFillOf(data, it, needPre, autoCat);
-  const pick = opt.hitAims ? pickedHits(hitChoicesOf(data, doc, id, it, { held: key, omens, echo: opt.echo, veil: opt.veil }, goals), opt.hitAims, key, !!opt.spam) : null;
+  // 発現させる手は置き石 (完成形に無い MOD、S-33) も ☑ の候補 = 棚の窓の「ほかの MOD を選ぶ」(TreeHandShelf の extraAims) と同じ。前は完成の狙いだけで、置き石の ☑ が落ちて狙い無しになった (bone2b)
+  const choices = hitChoicesOf(data, doc, id, it, { held: key, omens, echo: opt.echo, veil: opt.veil }, goals);
+  const veilH = handOf({ held: key, omens, echo: opt.echo, veil: opt.veil });
+  const stones = opt.hitAims?.length && veilPick(veilH) ? revealAimsOf(data, doc, id, it, veilH).filter((a) => !choices.some((c) => c.modId === a.modId)) : [];
+  const pick = opt.hitAims ? pickedHits([...choices, ...stones], opt.hitAims, key, !!opt.spam) : null;
   // 消える候補が 1 つ以下の消去は残したい MOD を聞かない (確定で消える、S-27b。棚と同じ)
   const keep = opt.keep && keepChoicesOf(data, it, key, omens).length > 1 ? opt.keep : undefined;
   const hand = handOf({ held: key, omens, ...opt, keep, ...(pick ? { free: pick.free } : {}) }), kind = kindOf(hand);
