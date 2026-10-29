@@ -14,7 +14,7 @@ import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, T
 import { aimsOf, handProblem, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { linkSameHit, linkSameShape, linkShapeHit, matchItem, pruneBacks, sameHandReturn } from "../../../services/simulator/tree/tree-shape";
 import { bodyMemo, likeOf, type BodyOf } from "../../../services/simulator/tree/tree-box-shape";
-import { looseOf, stripStopByContent, stripStops, stripTargetsOf } from "../../../services/simulator/tree/tree-outcome";
+import { looseOf, stripKeyOf, stripStopByContent, stripStops } from "../../../services/simulator/tree/tree-outcome";
 import { judgeMemo, type Judge } from "../../../services/simulator/tree/tree-judge";
 import { joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { joinableShapeOf, joinSameHit, sameHitsOf } from "../../../services/simulator/tree/tree-shape";
@@ -303,17 +303,8 @@ function relinkByContent(data: PatchData, d: TreeDoc, had: ReadonlySet<string>):
 function stripChain(d: TreeDoc, id: string, h: Hand): void {
   const data = craftStage.data.value, b = d.boxes[id];
   if (!data || !b) return;
+  if (flag("judgeOne")) { stripSplit(data, d, id, h, 0); return; }
   if (stripToShape(data, d, id, h)) return;
-  // スイッチ judgeOne: 止まる所が結果ごとに違う時は、消せる所まで直線を並べ、行き先は回す時に人ごとに中身で決める (stripBackOf)。
-  // 全部消した形の中身の同じ箱も無ければ、前と同じく戻り先を決めずに置く (足りない所、人が次の手を足す)
-  if (flag("judgeOne")) {
-    const it0 = sampleOf(data, d, id, 1).item, n = looseOf(it0);
-    let at = id;
-    for (let i = 1; i < n; i++) { const c = d.boxes[at]?.outs[0]; if (!c) return; setHand(d, c, h, "strip"); at = c; }
-    const last = d.boxes[d.boxes[at]?.outs[0] ?? ""];
-    if (last && !stripTargetsOf(data, d, last.id)?.length) { last.back = null; delete last.autoBack; }
-    return;
-  }
   const it0 = sampleOf(data, d, id, 1).item, n = looseOf(it0), stops = stripStops(data, d, id, it0);
   const s = Math.max(-1, ...[...stops.keys()].filter((k) => k <= n));
   const to = s >= 0 ? stops.get(s)! : null;
@@ -328,6 +319,32 @@ function stripChain(d: TreeDoc, id: string, h: Hand): void {
   if (last) { last.back = to; if (to) last.autoBack = true; else delete last.autoBack; }
 }
 /**
+ * スイッチ judgeOne: 全部消えてよい消去の結果は、消した後の中身ごとに箱を分ける (S-28d、10-29 深夜オーナー「消去でも同じ枠なのにな まだ駄目だわ」)。
+ * 結果の箱ごとに、中身の同じ手のある箱 (ほかの全部消す消去の箱も) があれば ↩ その箱、無ければその箱でまた消去 (消せる物が無ければ行き先未定)。
+ * 前は 1 本の直線で、消去 1 回の後の中身が人ごとに違うと箱が混ざり (どれが消えたかで プレ / サフィ)、全員が合う箱に着いた所でも消去を 1 箱足した
+ * (木の b24 → b25 = 誰も来ない止まり、b33 と b37 = 同じ中身の消去が 2 本)。結果はこの箱の見本 4 つにエンジンの stepOutcomes で打った物
+ */
+function stripSplit(data: PatchData, d: TreeDoc, id: string, h: Hand, depth: number): void {
+  const firsts = new Map<string, StageItem>();
+  for (const seed of [1, 2, 3, 4]) {
+    const s = sampleOf(data, d, id, seed);
+    // 打つ前にもう手のある箱と同じ中身の人は打たずにその箱へ行く (回す時の stripStop) ので結果に数えない
+    if (s.note === "none" || s.note?.startsWith("cant:") || stripStopByContent(data, d, id, s.item)) continue;
+    for (const o of stepOutcomes(data, prepFor(data, s.item, h.currency), h.currency, engineOmens(h)) ?? []) { const k = o.void ? null : stripKeyOf(data, d, o.item); if (k && !firsts.has(k)) firsts.set(k, o.item); }
+  }
+  if (!firsts.size) return;
+  setHand(d, id, h, "strip", [], [...firsts.keys()].map((junkKey) => ({ out: "junkGone" as OutKind, aim: null, junkKey })));
+  for (const c of [...(d.boxes[id]?.outs ?? [])]) {
+    const box = d.boxes[c], it = box?.junkKey ? firsts.get(box.junkKey) : undefined;
+    if (!box || !it) continue;
+    const to = stripStopByContent(data, d, id, it, true);
+    box.back = to; box.done = null;
+    if (to) { box.autoBack = true; continue; }
+    delete box.autoBack;
+    if (looseOf(it) > 0 && depth < 12) stripSplit(data, d, c, h, depth + 1);
+  }
+}
+/**
  * 全部消えてよい消去の直線を、消去 1 回ごとの結果をエンジンで打って (stepOutcomes、お告げ込み) 全部の結果が同じ形の手のある箱 (matchItem = 形の鍵) に当たる所で止め、
  * その箱へ ↩ (狙いを持つ箱も。10-27 夕モンキー 2: キャストの外れ (スピリット + ✦ + 外れ) に右側の消去で、1 回目でスピリットの箱と同じ形になったのに
  * 消去がもう 1 回並んだ。前の stripStops は狙いを持たない箱だけを止まる所にしていた)。見つからなければ false (前の作り)
@@ -335,25 +352,10 @@ function stripChain(d: TreeDoc, id: string, h: Hand): void {
 function stripToShape(data: PatchData, d: TreeDoc, id: string, h: Hand): boolean {
   let it = sampleOf(data, d, id, 1).item;
   const n = looseOf(it), below = new Set(subtree(d, id));
-  // スイッチ judgeOne: 止まる所は消した後のアイテムと中身の同じ手のある箱 (人と箱の判定、tree-outcome の stripStopByContent)
-  const one = flag("judgeOne");
   for (let i = 0; i < n; i++) {
     const outs = (stepOutcomes(data, prepFor(data, it, h.currency), h.currency, engineOmens(h)) ?? []).filter((o) => !o.void).map((o) => o.item);
     if (!outs.length) return false;
-    const tos = new Set(outs.map((x) => (one ? stripStopByContent(data, d, id, x) : matchItem(data, d, x))));
-    if (one) {
-      const to1 = tos.size === 1 ? [...tos][0] : null;
-      if (to1) {
-        let at = id;
-        for (let k = 0; k < i; k++) { const c = d.boxes[at]?.outs[0]; if (!c) return false; setHand(d, c, h, "strip"); at = c; }
-        const last = d.boxes[d.boxes[at]?.outs[0] ?? ""];
-        if (!last) return false;
-        last.back = to1; last.autoBack = true;
-        return true;
-      }
-      it = outs[0]!;
-      continue;
-    }
+    const tos = new Set(outs.map((x) => matchItem(data, d, x)));
     const to = tos.size === 1 ? [...tos][0] : null;
     // 戻る箱は同じレアリティ・✦ の側 (MOD 0 まで消えたレアを白の箱へ戻さない、✦ の違う箱へ戻らない。tree-box-shape の likeOf、スイッチ stripRarity・boxShape)
     if (to && to !== "start" && d.boxes[to]?.hand && !below.has(to) && to !== id && likeOf(data, d, sampleOf(data, d, to, 1).item) === likeOf(data, d, outs[0]!)) {

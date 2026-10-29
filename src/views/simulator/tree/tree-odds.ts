@@ -8,7 +8,7 @@ import { computed, type Ref } from "vue";
 import { outcomeOdds, stepOutcomes } from "../../../services/simulator/sim-engine";
 import { boxOutcomeOf } from "../../../services/simulator/tree/tree-outcome";
 import { outBoxOf } from "../../../services/simulator/tree/tree-shape";
-import { isSideKey } from "../../../services/simulator/tree/tree-junk-side";
+import { isSideKey, isStripKey } from "../../../services/simulator/tree/tree-junk-side";
 import { isWhittleHand, rankVariants } from "../../../services/simulator/tree/tree-whittle";
 import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { aimsOf, SINGLE_SEEDS } from "../../../services/simulator/tree/tree-sample";
@@ -27,7 +27,7 @@ export function oddsOfHand(doc: TreeDoc, id: string): Map<string, number> | null
   const kids = b.outs.map((o) => doc.boxes[o]!).filter(Boolean);
   // 側で分けた箱 (S-65、スイッチ junkSide。狙い無しの打った後も) は、エンジンの枝ごとに回す時と同じ分け方で箱へ
   // 削減の手 (S-65b、スイッチ whittleRank) も同じ形で、外れの MOD レベルの範囲ごとの見本の重みを掛ける
-  if (kids.some((k) => isSideKey(k.junkKey)) || isWhittleHand(b.hand)) return sideOdds(doc, id);
+  if (kids.some((k) => isSideKey(k.junkKey) || isStripKey(k.junkKey)) || isWhittleHand(b.hand)) return sideOdds(doc, id);
   if (b.hand.free) return null;
   const hits = kids.filter((k) => k.out === "hit" && k.aim).flatMap((k) => boxAims(k));
   const aims = [...hits, ...aimsOf(doc).filter((a) => !hits.some((h) => h.modId === a.modId && h.tier === a.tier))];

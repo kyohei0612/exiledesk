@@ -5,9 +5,8 @@
  * 札の無くなった決めは要確認 (orphans、⑦20)。前の形の木から開いた時だけ、前に無かった札の箱に「組み直しで増えた」(fresh、⑦19、保存しない)
  */
 import type { PatchData } from "../../../services/craft-stage/engine";
-import { clearHand, MATCH_BACK, migrateStart, setBack, TREE_SCHEMA_N, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { clearHand, migrateStart, setBack, TREE_SCHEMA_N, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
-import { fromStrip } from "../../../services/simulator/tree/tree-outcome";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
 import { alignEssenceAims, applyPick, kindOf, onlyOf } from "./tree-hand-plan";
 import { flag } from "../../../web/release-flags";
@@ -75,8 +74,8 @@ function relinkSameHand(data: PatchData, d: TreeDoc): void {
     if (!hit) return;
     const [id, to] = hit, b = d.boxes[id]!, h = b.hand!;
     clearHand(d, id);
-    // 全部消えてよい消去の結果の箱は「形の合う箱へ」= 一人ずつ止まる所へ (S-28。消した後の中身が人ごとに違う)
-    if (fromStrip(d, id)) { b.back = MATCH_BACK; b.done = null; } else setBack(d, id, to);
+    // 全部消えてよい消去の結果の箱も中身ごとに分かれているので、ほかの箱と同じくその箱へ (S-28d。前は「形の合う箱へ」= 一人ずつ止まる所へ)
+    setBack(d, id, to);
     b.autoBack = true;
     b.handBack = { ...h };
   }

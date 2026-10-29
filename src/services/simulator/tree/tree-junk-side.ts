@@ -26,3 +26,17 @@ export function sideKeyLabel(key: string): [string, string] {
   if (one.length) return [one.map(ja).join("・"), one.map(en).join(", ")];
   return ["同じ側", "same side"];
 }
+
+/** 全部消えてよい消去の結果の中身の鍵か (S-28d、tree-outcome の stripKeyOf `c:<プレ>|<サフィ>~<印>`) */
+export const isStripKey = (k: string | undefined): k is string => !!k && k.startsWith("c:");
+/** 消去の結果の箱の題の付け足し: 残った外れの数 (側ごと、エッセンス・冒涜があれば内訳)。例「残り プレ 1 (エッセンス 1)・サフィ 1」 */
+export function stripKeyLabel(key: string): [string, string] {
+  const [p = "", s = ""] = key.slice(2).split("~")[0]!.split("|");
+  const side = (v: string, ja: string, en: string): [string, string] => {
+    const [n = 0, c = 0, x = 0, u = 0] = v.split(".").map(Number), all = n + c + x + u;
+    const sub: Array<[string, string]> = [...(c ? [[`エッセンス ${c}`, `essence ${c}`] as [string, string]] : []), ...(x + u ? [[`冒涜 ${x + u}`, `desecrated ${x + u}`] as [string, string]] : [])];
+    return [`${ja} ${all}${sub.length ? ` (${sub.map((t) => t[0]).join("・")})` : ""}`, `${en} ${all}${sub.length ? ` (${sub.map((t) => t[1]).join(", ")})` : ""}`];
+  };
+  const a = side(p, "プレ", "prefix"), b = side(s, "サフィ", "suffix");
+  return [`残り ${a[0]}・${b[0]}`, `left: ${a[1]}, ${b[1]}`];
+}

@@ -25,7 +25,7 @@ import { isRevealHand, revealedOf, revealHitOf, veilKeep, veilPick } from "./tre
 import { fracFree, fracFreeHit, fracFreeOuts, junkKeyOf, newlyFractured } from "./tree-frac-pick";
 import { sideKeyOf } from "./tree-junk-side";
 import { isWhittleHand, joinKeys, rankKeyOf, rankVariants } from "./tree-whittle";
-import { aimedOfSample, judgeMemo, sampleAimed, strippedOf } from "./tree-judge";
+import { aimedOfSample, contentOf, judgeMemo, sampleAimed, strippedOf } from "./tree-judge";
 
 type Outcome = { out: OutKind; hits: Aim[]; junkKey?: string };
 /** 外れ・打った後・外れが消えたに側の鍵を付ける (S-65、スイッチ junkSide。閉じていれば今のまま) */
@@ -46,6 +46,8 @@ function sided(oc: Outcome, before: StageItem, after: StageItem): Outcome {
  */
 export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageItem, after: StageItem, aims0: readonly Aim[], aimed?: ReadonlySet<string> | null): Outcome {
   const key = b.hand?.currency;
+  // 全部消えてよい消去は消した後の中身ごとの箱 (S-28d、スイッチ judgeOne)
+  if (flag("judgeOne") && isStrip(b)) return { out: "junkGone", hits: [], junkKey: stripKeyOf(data, doc, after) };
   const aims = aimed && flag("judgeOne") ? mineOf(data, before, aims0, aimed) : aims0;
   // エッセンス (付く側が決まる)・フラクチャー (S-41 の鍵) は側で分けない
   if (!key || effectOf(key) === "essence" || effectOf(key) === "fracture") return boxOutcomeRaw(data, doc, b, before, after, aims);
@@ -244,7 +246,7 @@ export function singleOutOf(data: PatchData, doc: TreeDoc, boxId: string, h: Han
 
 /** ✦ 以外の MOD の数 (全部消えてよい消去では全部外れ MOD) */
 export const looseOf = (it: StageItem): number => [...it.prefixes, ...it.suffixes].filter((m) => !m.fractured).length;
-const isStrip = (b: TreeBox | undefined): boolean => !!b?.hand?.keep && !b.hand.keep.length && effectOf(b.hand.currency) === "remove";
+export const isStrip = (b: TreeBox | undefined): boolean => !!b?.hand?.keep && !b.hand.keep.length && effectOf(b.hand.currency) === "remove";
 const stopMemo = new WeakMap<TreeDoc, { sig: string; at: Map<string, Map<number, string>> }>();
 let stopBusy = false;
 /**
@@ -285,10 +287,22 @@ export function stripStops(data: PatchData, doc: TreeDoc, self: string, like?: S
   return out;
 }
 /**
- * スイッチ judgeOne: 全部消えてよい消去の止まる所 = 消した後のアイテムと中身 (S-60) が同じ手のある箱 (人と箱の判定、S-28・S-50b)。
- * self = 消去の手の箱 (自分と下・ほかの全部消す消去は入れない)。浅い段・先に作った箱から。無ければ null (消せなくなるまで消す・行き先未定)
+ * 全部消えてよい消去の結果の箱の鍵 (S-28d): 消した後の中身 (S-60、✦ の印だけ狙い) の側ごとの外れ `c:<プレ>|<サフィ>~<中身の印>`。
+ * 側の外れは tree-box-shape の bodyOf の 普通.エッセンス.冒涜.未発現 (題に使う)。印は中身の全部 (✦・レアリティ) の数で、道の札に / を入れない
  */
-export function stripStopByContent(data: PatchData, doc: TreeDoc, self: string, it: StageItem): string | null {
+export function stripKeyOf(data: PatchData, doc: TreeDoc, it: StageItem): string {
+  const c = contentOf(data, doc, it, strippedOf(doc)), [p = "", s = ""] = (c.split("#")[1] ?? "").split("|");
+  let h = 7;
+  for (let i = 0; i < c.length; i++) h = (h * 31 + c.charCodeAt(i)) | 0;
+  return `c:${p}|${s}~${(h >>> 0).toString(36)}`;
+}
+/**
+ * スイッチ judgeOne: 全部消えてよい消去の止まる所 = 消した後のアイテムと中身 (S-60) が同じ手のある箱 (人と箱の判定、S-28・S-50b)。
+ * self = 消去の手の箱 (自分と下は入れない)。浅い段・先に作った箱から。無ければ null (消せなくなるまで消す・行き先未定)。
+ * strips = ほかの全部消す消去の箱も止まる所に入れる (消した後の結果の行き先、S-28d。同じ中身の消去の直線を 2 本作らない)。
+ * 打つ前の見直し (stripStop) では入れない (同じ中身の消去の箱どうしで行き来する)
+ */
+export function stripStopByContent(data: PatchData, doc: TreeDoc, self: string, it: StageItem, strips = false): string | null {
   let m = contentMemo.get(doc);
   const sig = docSig(doc);
   if (!m || m.sig !== sig) contentMemo.set(doc, (m = { sig, j: judgeMemo(data, doc) }));
@@ -296,7 +310,7 @@ export function stripStopByContent(data: PatchData, doc: TreeDoc, self: string, 
   stopBusy = true;
   try {
     const below = new Set(subtree(doc, self));
-    return m.j.boxesOf(it, strippedOf(doc), (id) => { const b = doc.boxes[id]; return !!b?.hand && !below.has(id) && !isStrip(b); })[0] ?? null;
+    return m.j.boxesOf(it, strippedOf(doc), (id) => { const b = doc.boxes[id]; return !!b?.hand && !below.has(id) && (strips || !isStrip(b)); })[0] ?? null;
   } finally { stopBusy = false; }
 }
 const contentMemo = new WeakMap<TreeDoc, { sig: string; j: ReturnType<typeof judgeMemo> }>();
@@ -317,7 +331,7 @@ export function stripStop(data: PatchData, doc: TreeDoc, b: TreeBox): ((it: Stag
 /** 全部消えてよい消去の結果の箱から戻る箱 (止まった形の箱。無ければ null = 形の合う箱が無い) */
 export function stripBackOf(data: PatchData, doc: TreeDoc, id: string, item: StageItem): string | null {
   const p = doc.boxes[id]?.parent;
-  if (p && isStrip(doc.boxes[p]) && flag("judgeOne")) return stripStopByContent(data, doc, p, item);
+  if (p && isStrip(doc.boxes[p]) && flag("judgeOne")) return stripStopByContent(data, doc, p, item, true);
   return p && isStrip(doc.boxes[p]) ? stripStops(data, doc, p, item).get(looseOf(item)) ?? null : null;
 }
 /** 全部消えてよい消去の結果の箱か (回す時、止まる所が無ければ形の合う箱を探さず行き先未定。スイッチ stripRarity) */
@@ -326,6 +340,6 @@ export const fromStrip = (doc: TreeDoc, id: string): boolean => { const p = doc.
 export function stripTargetsOf(data: PatchData, doc: TreeDoc, id: string): string[] | null {
   const p = doc.boxes[id]?.parent;
   // スイッチ judgeOne: 見本 (消した後の形) の中身の同じ箱
-  if (p && isStrip(doc.boxes[p]) && flag("judgeOne")) return [...new Set([1, 2, 3, 4].flatMap((k) => { const s = sampleOf(data, doc, id, k); const to = s.note === "none" || s.note?.startsWith("cant:") ? null : stripStopByContent(data, doc, p, s.item); return to ? [to] : []; }))];
+  if (p && isStrip(doc.boxes[p]) && flag("judgeOne")) return [...new Set([1, 2, 3, 4].flatMap((k) => { const s = sampleOf(data, doc, id, k); const to = s.note === "none" || s.note?.startsWith("cant:") ? null : stripStopByContent(data, doc, p, s.item, true); return to ? [to] : []; }))];
   return p && isStrip(doc.boxes[p]) ? [...new Set(stripStops(data, doc, p).values())] : null;
 }
