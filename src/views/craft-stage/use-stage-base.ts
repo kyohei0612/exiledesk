@@ -9,10 +9,11 @@ import { scrollToTop } from "../../utils/keep-place";
 import { course, topic } from "../tutorial/course-entry";
 import { restoredFromSession } from "../../state/stage-session";
 import { flag } from "../../web/release-flags";
+import { isPhoneWidth } from "../../utils/use-phone";
 
 function create() {
   const inApp = isTauriRuntime();
-  const phone = { get value(): boolean { return typeof window !== "undefined" && window.innerWidth < 768; } };
+  const phone = { get value(): boolean { return isPhoneWidth(); } };
   /**
    * 人が自分で選んだベース (ベースのページで押した物・「金の指輪ですぐ試す」)。空 = まだ選んでいない。
    * この 1 つの印で ① ベースのページの選んだ見た目 ② 上の帯とすぐ試す ③ / やエミュのタブで入った時にクラフトの画面かベースのページか、を全部決める

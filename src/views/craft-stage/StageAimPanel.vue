@@ -21,6 +21,7 @@ import HelpTip from "../../components/ui/HelpTip.vue";
 import { logRecord } from "../../utils/log-record";
 import { keepPlace, keepTopOf, scrollToTop } from "../../utils/keep-place";
 import { tr } from "../../i18n/lang";
+import { isPhoneWidth } from "../../utils/use-phone";
 
 /** 分析用の記録 (狙い・今のアイテムの MOD と一緒に) */
 function logAim(kind: string, extra: Record<string, unknown>): void {
@@ -78,7 +79,7 @@ const panel = ref<HTMLElement | null>(null);
 let keepTop: number | null = null;
 watch(() => s.item.value, () => {
   const el = panel.value;
-  if (!el || window.innerWidth >= 768) { keepTop = null; return; }
+  if (!el || !isPhoneWidth()) { keepTop = null; return; }
   const r = el.getBoundingClientRect();
   keepTop = r.bottom > 0 && r.top < window.innerHeight ? r.top : null;
 }, { flush: "pre" });

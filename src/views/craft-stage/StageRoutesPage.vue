@@ -29,10 +29,11 @@ import { logRecord } from "../../utils/log-record";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import BusyTag from "../../components/ui/BusyTag.vue";
 import { flag } from "../../web/release-flags";
+import { isPhoneWidth } from "../../utils/use-phone";
 
 const GRADE_JA: Record<Grade, [string, string]> = { perfect: ["完全", "Perfect"], greater: ["上級", "Greater"], base: ["無印", "Regular"] };
 /** 1 通りの人数。スマホは 10 人 (2026-10-19 スマホ相当で 100 人は 35 秒・画面が最長 9 秒固まった。オーナー「スマホだと 10 人だな規模感的に」) */
-const RUNS = typeof window !== "undefined" && window.innerWidth < 768 ? 10 : 100;
+const RUNS = isPhoneWidth() ? 10 : 100;
 type Step = { k: string | null; ja: string; en: string };
 /** 道ごと: 名前・主のカレンシー・等級・打ち方の決まり (route-race.ts と同じ。絵と文) */
 const ROUTES: Array<{ route: RouteKind; ja: string; en: string; main: string; grades: Grade[]; steps: Step[] }> = [
