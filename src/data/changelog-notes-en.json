@@ -1,4 +1,8 @@
 {
+  "0.1.641": [
+    "Emulator: undoing a step while holding another currency now returns that step’s omens to the currency it used",
+    "Between 768px and 1279px wide, the emulator’s aim panel, base picker and spam simulator now also use the phone layout"
+  ],
   "0.1.640": [
     "Tier table: essence and alloy names are now framed tags that follow the mod text",
     "Windows narrower than 1280px now use the phone layout (it switched at 768px before)"
