@@ -8,7 +8,7 @@
  */
 import { watch } from "vue";
 import { omensAllowedFor } from "../../services/craft-stage/engine";
-import { craftStage as s } from "../craft-stage";
+import { craftStage as s, setUndoOmensTo } from "../craft-stage";
 import { flag } from "../../web/release-flags";
 
 /** カレンシーのキー → そのカレンシーに掛けていたお告げ */
@@ -29,6 +29,12 @@ export function useOmenMemory(lesson: () => boolean): void {
     last = next;
     s.omens.value = [...(memo.get(next) ?? [])];
   }, { flush: "sync" });
+  // 1 手戻した手が別のカレンシーの手なら、食ったお告げは今の物ではなくその手のカレンシーの控えへ戻す (M-14、スイッチ undoKeepHeld)
+  if (flag("undoKeepHeld")) setUndoOmensTo((cur, ate) => {
+    if (cur === last || s.mode.value !== "hand" || s.replay.value || lesson()) return false;
+    memo.set(cur, [...new Set([...(memo.get(cur) ?? []), ...ate])]);
+    return true;
+  });
   // ベースを変えた・白に戻した時は控えを捨てる (前のアイテムのお告げを持ち越さない)
   watch([s.base, () => s.log.value.length === 0 && s.startMods.value.length === 0], ([, fresh], [prevBase]) => { if (fresh || s.base.value !== prevBase) { memo.clear(); last = null; } });
 }

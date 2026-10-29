@@ -69,6 +69,9 @@ const held = dual(() => ref<string | null>(null));
 const omens = dual(() => ref<string[]>([]));
 // 2026-10-18 オーナー「デフォで打ってもお告げは外さない、チェックはもういらない」で既定にした (切り替えの OmenKeepToggle は外した)。外すのはお告げをもう一度押す
 const omenKeep = ref(true);
+/** 1 手戻した手の食ったお告げの戻し先 (omen-memory.ts が入れる。その手のカレンシーの控えへ戻したら true。M-13・M-14) */
+let undoOmensTo: ((currency: string, ate: string[]) => boolean) | null = null;
+export function setUndoOmensTo(fn: typeof undoOmensTo): void { undoOmensTo = fn; }
 const seed = dual(() => ref(0));
 /**
  * 次の手の乱数 (2026-10-09 オーナー「1 戻すと次も同じ。1 戻したら次の MOD はまた新しい変数で」「ヒネコラの予見が固定値」)。
@@ -352,6 +355,7 @@ export const craftStage = {
     // 戻したら次の手は新しい乱数で (同じ手を打ち直しても同じ結果にならない)
     rollSeed.value = freshSeed();
     const ate = last.out.omen ? last.out.omen.split("+") : [];
+    if (ate.length && undoOmensTo?.(last.out.currency, ate)) return;
     omens.value = [...new Set([...omens.value, ...ate])];
   },
   /** やり直し (スイッチ emuRedo、U-25): 1 手戻した手をその結果のまま打ち直す (乱数は引き直さない)。戻した後に打つ・変えると消える */
