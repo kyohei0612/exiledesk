@@ -26,11 +26,13 @@ export function useTreeMerge(o: {
     const chipBoxes = (o.chips?.() ?? []).map((c) => ({ x: c.x - 100, y: c.y - CHIP_HALF, w: 200, h: CHIP_HALF * 2 }));
     const treeSegs = o.segs();
     // スイッチ retryHover: 統合の線も横の辺の真ん中どうしを最短で (S-144・S-145)。同じ箱へ 2 本以上入る時は辺の真ん中から 8 ずつずらす。通れなければ前の道 (joinPath)
-    const SIDE = flag("retryHover"), allX = Object.keys(d.boxes).map(pos);
+    // 描く箱だけ (まとめて描かない箱 = merged、S-66 案 A は位置が古いまま残るので、木の端・避ける箱に入れると木の外を回った。10-29 kamasan の b15→b2・b16→b3、S-145)
+    const ids = Object.keys(d.boxes).filter((id) => !(flag("mergeOpen") && d.boxes[id]!.merged));
+    const SIDE = flag("retryHover"), allX = ids.map(pos);
     const X0 = Math.min(...allX.map((b) => b.x)), X1 = Math.max(...allX.map((b) => b.x + b.w));
     const joins = lines.filter((l) => l.kind === "join"), nth = new Map<string, number>();
     for (const l of joins) {
-      const others = [...Object.keys(d.boxes).filter((x) => x !== l.from && x !== l.to).map(pos), ...chipBoxes];
+      const others = [...ids.filter((x) => x !== l.from && x !== l.to).map(pos), ...chipBoxes];
       if (SIDE) {
         const n = joins.filter((x) => x.to === l.to).length, i = nth.get(l.to) ?? 0;
         nth.set(l.to, i + 1);
@@ -47,7 +49,7 @@ export function useTreeMerge(o: {
       joinPaths.set(l.id, j.d); l.mark = j.mark;
     }
     // 行き先の箱の左の辺へ入る線はそのまま、右の辺へ入る線 (flip) は左右を裏返して同じ道の探し方で引き、描く時に戻す
-    const bx = Object.keys(d.boxes).map(pos), sg = o.segs();
+    const bx = ids.map(pos), sg = o.segs();
     const flip = reqs.filter((r) => r.flip);
     const back = routeBacks(flip.map((r) => ({ ...r, from: mirrorPos(r.from), to: mirrorPos(r.to), end: { x: -r.end.x, y: r.end.y }, start: r.start && { x: -r.start.x, y: r.start.y } })), bx.map(mirrorPos), sg.map(mirrorSeg), { bundle: true });
     const paths = routeBacks(reqs.filter((r) => !r.flip), bx, sg, { bundle: true });
