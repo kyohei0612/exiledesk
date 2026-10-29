@@ -11,6 +11,7 @@
 import { BOX_W, type TreeDoc } from "./tree-model";
 import { centerMerged, drawnKids, rowLayout } from "./tree-row-tops";
 import { OUT_ORDER } from "./tree-layout";
+import { flag } from "../../../web/release-flags";
 
 /** 帯の間: どちらも箱 1 つだけ / どちらかに下の段がある (戻り・再挑戦の線が箱の横へ 24 出て、ほかの箱から 10 以上離れて通れる、S-145) */
 const GAP_LEAF = 24, GAP_DEEP = 72;
@@ -44,7 +45,38 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
     ks.forEach((k, i) => rel.set(k, offs[i]! - px));
     return [Math.min(own[0], -px), Math.max(own[1], cur - px)];
   };
-  strip("start", new Set());
+  /**
+   * スイッチ rowPack (S-142b): 帯を段ごとの左右の端 (箱の x からの差、[k] = k 段下) で取り、兄弟の部分木を同じ段どうしでぶつからない一番左へ寄せる。
+   * 上の段が空いている所へほかの枝が入る。縦の線・枝分かれの横線は自分の部分木の段の範囲の中なので、ほかの枝の箱は乗らない
+   */
+  const rows = (id: string, seen: Set<string>): Array<[number, number]> => {
+    seen.add(id);
+    const ks = kidsOf(id).filter((k) => !seen.has(k));
+    const w = ks.length ? chipW?.(id) ?? 0 : 0;
+    const own: [number, number] = [Math.min(0, BOX_W / 2 - w / 2), Math.max(BOX_W, BOX_W / 2 + w / 2)];
+    if (!ks.length) return [own];
+    const cs = ks.map((k) => rows(k, seen));
+    const offs: number[] = [], acc: Array<[number, number]> = [];
+    ks.forEach((k, i) => {
+      const c = cs[i]!;
+      let off = 0;
+      if (i) {
+        const gap = kidsOf(ks[i - 1]!).length || kidsOf(k).length ? GAP_DEEP : GAP_LEAF;
+        off = -Infinity;
+        for (let r = 0; r < Math.min(acc.length, c.length); r++) off = Math.max(off, acc[r]![1] + gap - c[r]![0]);
+        // 兄弟は左から結果の順 (前の兄弟の箱より左へは置かない)
+        off = Math.max(off, offs[i - 1]! + BOX_W + gap);
+      }
+      offs.push(off);
+      c.forEach(([l, r], j) => { const a = acc[j]; acc[j] = a ? [Math.min(a[0], l + off), Math.max(a[1], r + off)] : [l + off, r + off]; });
+    });
+    const n = ks.length, h = Math.floor(n / 2);
+    const px = n % 2 ? offs[h]! : (offs[h - 1]! + offs[h]!) / 2;
+    ks.forEach((k, i) => rel.set(k, offs[i]! - px));
+    return [[Math.min(own[0], offs[0]! - px), Math.max(own[1], offs[n - 1]! + BOX_W - px)], ...acc.map(([l, r]): [number, number] => [l - px, r - px])];
+  };
+  if (flag("rowPack")) rows("start", new Set());
+  else strip("start", new Set());
   const L = rowLayout(d, heightOf);
   const put = (id: string, x: number): void => {
     const b = d.boxes[id]!, r = L.rows.get(id);
