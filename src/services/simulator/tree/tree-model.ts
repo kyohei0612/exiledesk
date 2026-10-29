@@ -9,6 +9,7 @@
  */
 
 import type { TreeTune } from "./tree-tune";
+import type { RecipeOrphan, RecipePick } from "./tree-recipe-v1";
 import { mayHoldAim } from "./tree-lost";
 import { effectOf } from "./tree-hands";
 import { makeRoom, pushRight, ROOM, spread } from "./tree-model-layout";
@@ -109,6 +110,7 @@ export interface TreeBox {
   noLost?: true;
   /** 要確認 (tree-migrate の読み替えで読めなかった所: out = 結果の種類・aim = 狙い・hand = 打つ手・link = 矢印の先)。checkRaw = 読めなかった元の値 (捨てない) */
   check?: Array<"out" | "aim" | "hand" | "link">; checkRaw?: Record<string, unknown>;
+  /** S-51 の同じ手の戻り: 人が選んだ手 (保存の v1 はこれを打ち方として持つ)・fresh = 組み直しで増えた箱 (開いた時だけ、S-107。スイッチ recipeV1) */ handBack?: Hand; fresh?: true;
 }
 /** 分かれ目の条件の範囲 [下, 上] (上は 99 で「以上」) */
 export type SplitRange = [number, number];
@@ -144,7 +146,8 @@ export interface TreeStart { rarity: TreeRarity; mods: StartMod[]; runes?: strin
 export interface TreeBasePrices { white?: number; four?: number; fractured?: number }
 export interface TreeDoc {
   /** 木の形の番号 (exiledesk-tree/N、上げたら tree-migrate の MIGRATIONS に読み替えを足す) */
-  schema: `exiledesk-tree/${number}`;
+  schema: `exiledesk-tree/${number}` | `exiledesk-recipe/${number}`;
+  /** 保存の形 v1 (exiledesk-recipe/1) の打ち方と要確認の一覧 (tree-recipe-v1.ts、S-104〜S-108)。組み直した木も要確認は持ち越す */ picks?: RecipePick[]; orphans?: RecipeOrphan[];
   base: string;
   itemLevel: number;
   /** 完成形のレアリティ (0 完成形の設定の箱。無ければレア。スタートの箱の start.rarity とは別、10-22 オーナー) */
@@ -352,7 +355,7 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   b.hand = { ...hand, omens: [...hand.omens], repeat: hand.repeat ? { ...hand.repeat } : null, ...(hand.keep ? { keep: hand.keep.map((a) => ({ ...a })) } : {}) };
   b.back = null;
   delete b.split;
-  delete b.autoBack; delete b.merged;
+  delete b.autoBack; delete b.merged; delete b.handBack; delete b.fresh;
   // 同じ手を選び直した時は、今の箱と先はそのままで、箱の無い狙いの当たりだけ足す (後から完成の狙いに足した MOD など。10-26 オーナー「全ての結果を表示して」、外れへ自動で入れない)
   // 狙い無し (free) も、付きうる狙いの当たりの箱を打った後の横に足す (打った後は狙いが付かなかった人だけ、tree-shape の outBoxOf。10-26 オーナー「当たってたら次の回に消去でそれ決める」)
   if (same) { if ((want.includes("hit") && GROUPED.includes(kind)) || kind === "free") addHits(d, b, aims, order); return; }
@@ -475,7 +478,7 @@ export function setBack(d: TreeDoc, id: string, to: string | null): void {
   if (!to && b.back) b.noAutoBack = true;
   if (to) delete b.noAutoBack;
   b.back = to;
-  delete b.autoBack; delete b.merged;
+  delete b.autoBack; delete b.merged; delete b.handBack;
   if (to) { b.done = null; delete b.split; healLost(d); }
 }
 

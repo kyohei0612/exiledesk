@@ -12,6 +12,7 @@ import { startItemOf } from "../../../services/simulator/tree/tree-sample";
 import { carryAims, placeMods, retext } from "../../../services/simulator/sim-engine";
 import type { StageItem } from "../../../services/craft-stage/engine";
 import { fractureMarks, migrateStart, newTree, startOf, startRarity, type Aim, type StartFrom, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
+import { openForm } from "./tree-rebuild";
 import { currentTreeRecipeId, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { tr } from "../../../i18n/lang";
 import { simOp } from "../../../web/track";
@@ -228,8 +229,12 @@ function setTreeNote(text: string): void {
 }
 /** 別の木を開いた回数 (開いた木の箱を上から順に出し直す、use-tree-reveal.ts) */
 const opened = ref(0);
-/** 別の木を開く (レシピ・共有の URL から。1 つ戻すで前の木へ戻せる) */
-function open(tree: TreeDoc): void { needBase.value = false; opened.value++; edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, JSON.parse(JSON.stringify(tree))); migrateStart(d); }); }
+/** 別の木を開く (レシピ・共有の URL から。1 つ戻すで前の木へ戻せる)。スイッチ recipeV1 の下は打ち方から組み直す (S-105、データがまだ無ければ前提だけ開き、来たら組み直す) */
+function open(tree: TreeDoc): void {
+  const f = openForm(tree, s.data.value);
+  if (f.wait) { const stop = watch(() => s.data.value, (x) => { if (x) { stop(); open(tree); } }); }
+  needBase.value = false; opened.value++; edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, JSON.parse(JSON.stringify(f.doc))); migrateStart(d); });
+}
 /**
  * 白紙に戻す (今のベースとアイテムレベルのまま。1 つ戻すで戻せる)。前の木の鍵は先に全部消す (setBase と同じ)。
  * 前は上書きだけで、白紙に無い鍵 (乱数の MOD の数 startRandom・完成形のレアリティ goal・完成の狙い memoAims など) が残り、

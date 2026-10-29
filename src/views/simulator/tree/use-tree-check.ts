@@ -7,6 +7,28 @@ import { checkTreeAsync, NOTICE_KINDS, type CheckIssue, type CheckProgress } fro
 import { fractureMarks, startOf, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { craftStage as s } from "../../../state/craft-stage";
 import { track } from "../../../utils/track";
+import { pathKeysOf, type RecipePick } from "../../../services/simulator/tree/tree-recipe-v1";
+import { handName } from "./tree-names";
+import { tr } from "../../../i18n/lang";
+
+/**
+ * 要確認の一覧 (S-107・⑦20 案 A、スイッチ recipeV1): 組み直した木に札の無い決め・前の版の人の ↩・分かれ目・読めなかった所。
+ * 印は札の残っている一番近い上の箱に付ける (人が一覧で見て、その箱で決め直す)。合格を止める
+ */
+export function orphanIssues(d: TreeDoc): CheckIssue[] {
+  if (!d.orphans?.length) return [];
+  const idOf = new Map([...pathKeysOf(d)].map(([id, k]) => [k, id]));
+  return d.orphans.map((o) => {
+    let k = o.at;
+    while (k.includes("/") && !idOf.has(k)) k = k.slice(0, k.lastIndexOf("/"));
+    const step = o.at.split("/").length - 1, h = (o.raw as RecipePick | null)?.hand;
+    const text = o.why === "gone" ? tr(`要確認: ${step} 段目の決め${h ? ` (${handName(h.currency)})` : ""}の箱が今の木に無い (決まりが変わって結果の箱が替わった。この箱で決め直す)`, `Check: the decision at step ${step}${h ? ` (${handName(h.currency)})` : ""} has no box in the rebuilt tree (the rules changed the results; decide again here)`)
+      : o.why === "back" ? tr(`要確認: ${step} 段目に前の版で人が選んだ戻り先がある (今は自動の ↩ だけ。行き先を決め直す)`, `Check: step ${step} had a hand-picked return from an older version (returns are automatic now; decide again)`)
+      : o.why === "split" ? tr(`要確認: ${step} 段目に前の版の分かれ目がある (今は作れない。手を決め直す)`, `Check: step ${step} had a split from an older version (no longer available; pick a craft again)`)
+      : tr("要確認: 読めなかった所がある (元の値は保存に残っている)", "Check: part of the saved recipe could not be read (the raw value is kept)");
+    return { boxId: idOf.get(k) ?? "start", kind: "orphan" as const, text };
+  });
+}
 
 /**
  * 道の形 (箱の位置・メモ・ベースの値段は入れない)。位置を動かしただけでは精査し直さない・回した結果を消さない
@@ -49,7 +71,7 @@ export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean) {
     issues.value = []; // 穴は辿った人から順に足す (10-22 オーナー「読み込みながら徐々に出す」)
     await new Promise((r) => setTimeout(r, 30)); // 「テスト中」を先に出す
     try {
-      const now = await checkTreeAsync(d, doc.value, (p) => { progress.value = p; issues.value = p.partial; });
+      const now = [...(await checkTreeAsync(d, doc.value, (p) => { progress.value = p; issues.value = p.partial; })), ...orphanIssues(doc.value)];
       issues.value = now;
       // 合格を止めない知らせ (NOTICE_KINDS) は数えない (S-73)
       if (!now.filter((x) => !NOTICE_KINDS.includes(x.kind)).length && key === routeKey.value) passedKey.value = key;

@@ -10,6 +10,7 @@ import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { logRecord } from "../../utils/log-record";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { migrateTreeDoc } from "../../services/simulator/tree/tree-migrate";
+import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import { addTreeRecipe, removeTreeRecipe, sameTree, setCurrentTreeRecipe, treeRecipes } from "../../state/simulator/tree-recipes";
 import { DEV_BUILD, flag } from "../../web/release-flags";
 import { recipeCardOf } from "./recipe-card";
@@ -27,7 +28,8 @@ type PackedTree = { v: 2; n: string; t: TreeDoc };
 
 /** ツリーのレシピの URL (#recipe= の頭は同じ。開くと読む側が v で見分ける) */
 export async function treeShareUrl(r: { name: string; tree: TreeDoc }): Promise<string> {
-  const code = await packJson({ v: 2, n: r.name, t: r.tree } satisfies PackedTree);
+  // スイッチ recipeV1 の下は打ち方だけ (v1、S-104)。開く側は v1 も前の木も migrateTreeDoc で読む
+  const code = await packJson({ v: 2, n: r.name, t: flag("recipeV1") ? toRecipeV1(r.tree) : r.tree } satisfies PackedTree);
   const base = isTauriRuntime() ? "https://exiledesk.com/" : `${location.origin}${location.pathname}`;
   return `${base}${RECIPE_SHARE_PREFIX}${code}`;
 }

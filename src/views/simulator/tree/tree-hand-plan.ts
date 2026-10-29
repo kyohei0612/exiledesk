@@ -239,7 +239,8 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   const j0 = flag("judgeOne") && data ? judgeMemo(data, d) : null;
   const to = j0 ? sameHandByContent(d, id, h, j0) : flag("goalShape") ? sameHandReturn(d, id, h, loose) : null;
   // スイッチ judgeOne: 同じ手の戻り (S-51) も自動の ↩ (中身で決めた物なので、手を決めるたびに pruneByContent が見直す、S-50b)
-  if (to) { if (d.boxes[id]?.hand) clearHand(d, id); setBack(d, id, to); if (j0) d.boxes[id]!.autoBack = true; return id; }
+  // 選んだ手は handBack に残す (保存の v1 はこれを打ち方として持ち、開いた時にまた同じ手で戻る。S-105、スイッチ recipeV1)
+  if (to) { if (d.boxes[id]?.hand) clearHand(d, id); setBack(d, id, to); if (j0) d.boxes[id]!.autoBack = true; if (flag("recipeV1")) d.boxes[id]!.handBack = { ...h }; return id; }
   const had = new Set(Object.keys(d.boxes));
   let at = id;
   if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }

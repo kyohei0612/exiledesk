@@ -31,7 +31,8 @@ const baseName = (r: TreeRecipe): string => tr(jaTypeName(r.tree.base), r.tree.b
 /** 1 枚の要約 (ベースの絵・完成の狙い・印・空の木か。帯の小窓と同じ) */
 const sumOf = (r: TreeRecipe) => recipeSummary(r.tree);
 const countOf = (r: TreeRecipe): { boxes: number; done: number } => {
-  const bs = Object.values(r.tree.boxes);
+  // 保存の形 v1 (打ち方だけ、スイッチ recipeV1) は箱を持たないので、決めた箱の数を数える
+  const bs = r.tree.picks ? r.tree.picks : Object.values(r.tree.boxes);
   return { boxes: bs.length, done: bs.filter((b) => b.done).length };
 };
 /** 今の木に、開いているレシピに無い変更があるか (開いていない時は箱が始まりだけでなければ) */
@@ -206,7 +207,7 @@ const SIM_PHONE = flag("simPhone");
             </p>
             <p data-recipe-sum class="mt-0.5 min-w-0 break-words text-[12px] text-[var(--exile-color-text-secondary)]">
               <template v-if="sumOf(r).empty">{{ tr("ベースなし", "No base") }}</template>
-              <template v-else>{{ baseName(r) }} · {{ tr(`完成の狙い ${sumOf(r).aims} つ`, `${sumOf(r).aims} final target(s)`) }}<span v-if="sumOf(r).marks" class="text-mod-fractured"> · ✦ {{ sumOf(r).marks }}</span> · {{ tr(`箱 ${countOf(r).boxes}`, `${countOf(r).boxes} boxes`) }} · {{ tr(`完成 ${countOf(r).done}`, `${countOf(r).done} done`) }}</template>
+              <template v-else>{{ baseName(r) }} · {{ tr(`完成の狙い ${sumOf(r).aims} つ`, `${sumOf(r).aims} final target(s)`) }}<span v-if="sumOf(r).marks" class="text-mod-fractured"> · ✦ {{ sumOf(r).marks }}</span> · {{ r.tree.picks ? tr(`決めた箱 ${countOf(r).boxes}`, `${countOf(r).boxes} decided boxes`) : tr(`箱 ${countOf(r).boxes}`, `${countOf(r).boxes} boxes`) }} · {{ tr(`完成 ${countOf(r).done}`, `${countOf(r).done} done`) }}</template>
             </p>
             <p v-if="sumOf(r).first" class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words text-[12px] text-[#c8c8ff]" :title="sumOf(r).first">{{ sumOf(r).first }}</p>
             <p class="text-[11px] opacity-50">{{ tr(`更新 ${fmtDate(touchedAtTree(r))}`, `Updated ${fmtDate(touchedAtTree(r))}`) }}<template v-if="r.updatedAt !== r.savedAt"> · {{ tr(`作成 ${fmtDate(r.savedAt)}`, `Created ${fmtDate(r.savedAt)}`) }}</template></p>

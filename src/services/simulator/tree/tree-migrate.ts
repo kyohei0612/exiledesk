@@ -4,6 +4,7 @@
  * 読めない箱・手は捨てずに、その箱に要確認 (check) の印と元の値 (checkRaw) を残して開く。start の箱が無いなど木として読めない物だけ null (呼ぶ側が別の所に取っておく)
  */
 import { MATCH_BACK, migrateStart, TREE_SCHEMA_N, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
+import { healRecipeV1, isRecipeV1 } from "./tree-recipe-v1";
 
 const SCHEMA = (n: number): string => `exiledesk-tree/${n}`;
 /** N → N+1 の読み替え (形を変えたらここに足す)。番号の無い物 (10-25 までの開発版) は 0 と読む */
@@ -51,6 +52,8 @@ function healBox(id: string, raw: unknown, ids: ReadonlySet<string>): TreeBox {
 
 /** 木を今の形へ (読めない箱・手は要確認の印で残す)。木として読めなければ null。fixed = 要確認の印が付いた箱の数 */
 export function migrateTreeDoc(raw: unknown): { doc: TreeDoc; fixed: number } | null {
+  // 保存の形 v1 (打ち方だけ、S-104〜S-108) はそのまま (開く時に組み直す)。v1 の後に形を変えたら v1 → v2 をここに 1 段ずつ
+  if (obj(raw) && isRecipeV1(raw)) { const doc = healRecipeV1(raw); return { doc, fixed: doc.orphans?.length ?? 0 }; }
   let n = versionOf(raw);
   if (n === null || n > TREE_SCHEMA_N) return null;
   const d = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
