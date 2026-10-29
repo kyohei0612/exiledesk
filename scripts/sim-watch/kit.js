@@ -60,14 +60,14 @@
     }
   }
   /** 精査・100 人回す・URL */
-  async function report() {
+  async function report(n = 100) {
     const chk = await M.check();
-    const res = await M.result(100, 1);
+    const res = await M.result(n, 1);
     const { treeShareUrl } = await import("/src/views/simulator/recipe-share.ts");
     const d = M.dump(); delete d.startRarity;
-    const run = M.run(100, 1);
+    const run = M.run(n, 1);
     const code = (await treeShareUrl({ name: "sample", tree: d })).replace(/^.*recipe=/, "");
-    return { boxes: Object.keys(d.boxes).length, passed: chk.passed, issues: chk.issues.map((x) => `${x.boxId} ${x.kind}: ${x.text}`.slice(0, 240)), finished: res.finished, n: res.n, stuck: res.stuck, stuckAt: res.stuckAt, failed: res.failed, failAt: res.failAt, capped: res.capped, stuckWhy: run.stuckWhy, unset: unset().map((b) => b.id), code };
+    return { boxes: Object.keys(d.boxes).length, passed: chk.passed, issues: chk.issues.map((x) => `${x.boxId} ${x.kind}: ${x.text}`.slice(0, 240)), finished: res.finished, n: res.n, stuck: res.stuck, stuckAt: res.stuckAt, failed: res.failed, failAt: res.failAt, capped: res.capped, loopAt: run.loopAt, stuckWhy: run.stuckWhy, unset: unset().map((b) => b.id), code };
   }
   /** 木の中身 (読める形) */
   function tree() {
