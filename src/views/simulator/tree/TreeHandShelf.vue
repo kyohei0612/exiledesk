@@ -267,6 +267,9 @@ const keepText = (m: StageMod): string => { const it = item.value ? cardOf(item.
 // 外れは「外れ MOD」だけ (中身は教えない、S-82。10-28 夜オーナー「別にここのチェックでも教えなくていいハズレはハズレよ」、スイッチ boxShape)
 const keepLabel = (c: { aim: Aim; mod: StageMod }): string => (keepJunk(c) ? (flag("boxShape") ? tr("外れ MOD", "Miss mod") : tr(`外れ MOD (${keepText(c.mod)})`, `Miss mod (${keepText(c.mod)})`)) : keepText(c.mod));
 function keepNone(e: Event): void { const was = [...keepChecked.value]; keepChecked.value = []; (e.target as HTMLInputElement).checked = true; warnIfBelow(() => { keepChecked.value = was; }); }
+/** 全部の候補を残す ☑ はできない (消える MOD が無くなる = 消去が打てない。☑ の無い候補が最後の 1 つなら押せない、S-27b) */
+const keepLast = (a: Aim): boolean => !keepChecked.value.includes(aimKey(a)) && keepAims.value.length >= keepChoices.value.length - 1;
+const keepLastText = tr("全部の MOD は残せない (消える MOD が無くなる)", "You can't keep every mod (nothing would be removed)");
 const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, qualityTo: catTo.value, ...(keepAsk.value ? { keep: keepAims.value } : {}) }) : null));
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
 const preCat = computed((): string | null => (catalysing.value && !afterQuality.value ? autoCat.value : null));
@@ -386,7 +389,7 @@ function ok(): void {
         </label>
         <span v-if="!keepAims.length && !flag('goalShape')" data-tree-hand-keep-junk class="pl-6 text-[#e0a060]">{{ tr(`${keepChoices.length} MOD 外れ MOD`, `${keepChoices.length} mods: misses`) }}</span>
         <label v-for="c in keepChoices" :key="aimKey(c.aim)" data-tree-hand-keep-mod :data-mod="aimKey(c.aim)" class="flex min-h-7 min-w-0 cursor-pointer items-center gap-2 max-md:min-h-11">
-          <input type="checkbox" :checked="keepChecked.includes(aimKey(c.aim))" @change="toggleKeep(c.aim)" /><span class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="modText(c.mod)">{{ keepLabel(c) }}</span>
+          <input type="checkbox" :checked="keepChecked.includes(aimKey(c.aim))" :disabled="keepLast(c.aim)" :title="keepLast(c.aim) ? keepLastText : undefined" @change="toggleKeep(c.aim)" /><span class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="modText(c.mod)">{{ keepLabel(c) }}</span>
         </label>
       </div>
       <p v-if="kind" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? (only.length === 1 ? tr(`${outOf(only[0]!.out, only[0]!.aim)}だけ (結果は 1 通り)`, `${outOf(only[0]!.out, only[0]!.aim)} only (one possible result)`) : [...new Set(only.map((o) => outOf(o.out, o.aim)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
@@ -468,7 +471,7 @@ function ok(): void {
           <p class="mt-1 break-words text-[12px] text-[#9a8a70]">{{ tr("☑ の MOD が消えたら「狙いが消えた」。☑ の無い MOD は外れ MOD", "A ☑ mod removed = Target lost; unchecked mods are misses") }}</p>
           <div data-tree-hand-keep class="mt-3 flex flex-col gap-1.5 text-left">
             <label v-for="c in keepChoices" :key="aimKey(c.aim)" data-tree-hand-keep-mod :data-mod="aimKey(c.aim)" class="flex min-h-11 min-w-0 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
-              <input type="checkbox" class="size-5 shrink-0" :checked="keepChecked.includes(aimKey(c.aim))" @change="toggleKeep(c.aim)" /><span class="min-w-0 break-words">{{ keepLabel(c) }}</span>
+              <input type="checkbox" class="size-5 shrink-0" :checked="keepChecked.includes(aimKey(c.aim))" :disabled="keepLast(c.aim)" :title="keepLast(c.aim) ? keepLastText : undefined" @change="toggleKeep(c.aim)" /><span class="min-w-0 break-words">{{ keepLabel(c) }}</span>
             </label>
             <label data-tree-hand-keep-none class="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
               <input type="checkbox" class="size-5 shrink-0" :checked="!keepAims.length" @change="keepNone($event)" /><span class="min-w-0 break-words">{{ tr(`全部消えてよい (同じ形の箱になるまで${handName("annul")}の箱を並べる)`, `Anything may go (${handName("annul")} boxes until a box of the same shape)`) }}</span>

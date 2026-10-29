@@ -375,7 +375,9 @@ export function planPick(data: PatchData, doc: TreeDoc, id: string, it: StageIte
   const needPre = omensAllowedFor(key).includes(CATALYSING) && !afterQ;
   const preFill = preFillOf(data, it, needPre, autoCat);
   const pick = opt.hitAims ? pickedHits(hitChoicesOf(data, doc, id, it, { held: key, omens, echo: opt.echo, veil: opt.veil }, goals), opt.hitAims, key, !!opt.spam) : null;
-  const hand = handOf({ held: key, omens, ...opt, ...(pick ? { free: pick.free } : {}) }), kind = kindOf(hand);
+  // 消える候補が 1 つ以下の消去は残したい MOD を聞かない (確定で消える、S-27b。棚と同じ)
+  const keep = opt.keep && keepChoicesOf(data, it, key, omens).length > 1 ? opt.keep : undefined;
+  const hand = handOf({ held: key, omens, ...opt, keep, ...(pick ? { free: pick.free } : {}) }), kind = kindOf(hand);
   const aims = pick && !pick.free ? pick.aims : hitAimsOf(data, doc, id, it, hand, goals);
   const preCat = hand.omens.includes(CATALYSING) && !afterQ ? autoCat : null;
   const only = onlyOf(data, doc, id, hand, preCat, aims);
