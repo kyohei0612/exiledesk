@@ -10,7 +10,7 @@ import { freshItem } from "../../../services/craft-stage/engine";
 import { CATALYSING, effectOf, isCatalyst } from "../../../services/simulator/tree/tree-hands";
 import { boxAims, fractureMarks, startRarity, startsFractured, type Hand, type SplitWhen, type TreeBox, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
-import { veilKeep } from "../../../services/simulator/tree/tree-veil";
+import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
 import { junkKeyLabel } from "../../../services/simulator/tree/tree-frac-pick";
 import { isSideKey, isStripKey, sideKeyLabel, stripKeyLabel } from "../../../services/simulator/tree/tree-junk-side";
 import { rankLabel } from "../../../services/simulator/tree/tree-whittle";
@@ -118,7 +118,7 @@ export function handLabel(h: Hand): string {
     : "";
   // 消去の残したい MOD (10-27 オーナー): 全部消えてよい = 1 回ずつ箱を並べる、☑ があれば残す数
   const keep = h.keep ? (h.keep.length ? tr(` (${h.keep.length} MOD 残す)`, ` (keep ${h.keep.length})`) : tr(" (どれが消えてもよい)", " (any mod may go)")) : "";
-  const label = cat + [handName(h.currency), ...h.omens.map(handName)].join(" + ") + keep + (h.free ? tr(" (狙い無し)", " (no target)") : "") + (veilKeep(h) ? tr(" (未発現のまま)", " (left unrevealed)") : flag("boneLater") && h.veil === "pick" ? tr(" (発現させる)", " (reveal now)") : "") + (isCatalyst(h.currency) ? tr(" (品質を最大まで)", " (to max quality)") : "");
+  const label = cat + [handName(h.currency), ...h.omens.map(handName)].join(" + ") + keep + (h.free ? tr(" (狙い無し)", " (no target)") : "") + (veilKeep(h) ? tr(" (未発現のまま)", " (left unrevealed)") : veilPick(h) && !isRevealHand(h.currency) ? tr(" (発現させる)", " (reveal now)") : "") + (isCatalyst(h.currency) ? tr(" (品質を最大まで)", " (to max quality)") : "");
   // 「スパム」の呼び名は出さない = 設定したカレンシーの名前のまま (10-27 昼オーナー「普通に設定したどおり出せばおｋ」、スイッチ noSpam。中は今まで通り当たるまで)
   if (!h.repeat || flag("noSpam")) return label;
   // 当たるまで = カオススパムオーブ (10-25 オーナー。前に保存した木の「カオスの当たるまで」も同じ手として読む)

@@ -13,10 +13,15 @@ import { flag } from "../../../web/release-flags";
 export const REVEAL_KEY = "reveal";
 /** 後から打つ発現の手か */
 export const isRevealHand = (key: string | undefined): boolean => key === REVEAL_KEY;
+/**
+ * 骨の手の発現の読み方。前の版の骨の手 (veil の無い物 = 打ったら発現まで進む) は「発現させる」(pick) として読む = 手の窓 (TreeHandShelf の veilOn) と同じ
+ * (S-59、10-30 オーナー「59は修正で」、スイッチ oldBone)。閉じている間は veil のまま (無ければ前の分け方)
+ */
+const veilOf = (h: Pick<Hand, "currency" | "veil">): Hand["veil"] => h.veil ?? (flag("oldBone") && isBone(h.currency) ? "pick" : undefined);
 /** 骨の手を未発現のまま次へ (結果は「未発現の冒涜が付いた」1 つ) */
-export const veilKeep = (h: Pick<Hand, "currency" | "veil"> | null | undefined): boolean => !!h && flag("boneLater") && isBone(h.currency) && h.veil === "keep";
+export const veilKeep = (h: Pick<Hand, "currency" | "veil"> | null | undefined): boolean => !!h && flag("boneLater") && isBone(h.currency) && veilOf(h) === "keep";
 /** 発現で ☑ の MOD を選ぶ手 (骨の「発現させる」☑・後から打つ発現の手) */
-export const veilPick = (h: Pick<Hand, "currency" | "veil"> | null | undefined): boolean => !!h && flag("boneLater") && (isRevealHand(h.currency) || (isBone(h.currency) && h.veil === "pick"));
+export const veilPick = (h: Pick<Hand, "currency" | "veil"> | null | undefined): boolean => !!h && flag("boneLater") && (isRevealHand(h.currency) || (isBone(h.currency) && veilOf(h) === "pick"));
 
 /** 打った前後で、発現して付いた MOD (前に無く、後で未発現でない冒涜の MOD)。発現していなければ null */
 export function revealedOf(before: StageItem, after: StageItem): StageMod | null {
