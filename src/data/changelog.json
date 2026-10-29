@@ -1,5 +1,41 @@
 [
  {
+  "v": "0.1.642",
+  "date": "2026-10-29",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 消去のオーブで消える MOD が 1 つだけの時 (光のお告げで冒涜 1 つ、フラクチャー以外が 1 つなど) は、残したい MOD を聞かずに結果を 1 つにしました。残したい MOD の候補はお告げで消せる MOD だけになり、全部を残す選び方はできなくなりました",
+    "en": "Simulator: when Orb of Annulment can only remove one mod (Omen of Light with one desecrated mod, one non-fractured mod, etc.), it no longer asks which mods to keep and gives a single result. The keep list now shows only mods the craft can remove, and you can't keep all of them"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ルーンをはめる手は、当たり / 外れに分けずにはめた後のアイテムの箱 1 つにしました。ルーンで仕上げた後などの「打った後」の箱にも「完成にする」を付けられます",
+    "en": "Simulator: socketing a rune is now a single result (the item with the rune) instead of hit / miss. \"After craft\" boxes (e.g. after socketing a rune) can now be marked as done"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: テストで回すの「1 人も完成せず」が、手数の長い木で「100 人回す」と食い違っていたのを直しました",
+    "en": "Simulator: the test run no longer says \"nobody finishes\" on long trees that do finish when you run them"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 指輪・アミュレット・ジュエルの完成形で、品質を狙うか狙わないかを必ず選ぶようにしました。品質を狙う時は上限を選ぶと品質もその値になり、カタリストの種類も選びます。完成形のカードに「完成形の MOD」の見出しを付けました",
+    "en": "Simulator: for rings, amulets and jewels, the final item now asks whether to aim for quality. Picking a cap sets the quality to it, and you choose the catalyst type. The final item card has a \"Target mods\" heading"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 画面の幅が 768〜1279 の時もスマホの形に揃えました",
+    "en": "Simulator: between 768px and 1279px wide, the simulator now also uses the phone layout"
+   }
+  ]
+ },
+ {
   "v": "0.1.641",
   "date": "2026-10-29",
   "items": [
@@ -919,30 +955,5 @@
     "en": "Simulator: Entering the base price now adds it to the per-item cost right away, without re-running"
    }
   ]
- },
- {
-  "v": "0.1.601",
-  "date": "2026-10-25",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター (β) を公開しました: ベースと狙う MOD を決めて、クラフトの道をツリーで組めます (上のタブの「シミュレーター」)",
-    "en": "Simulator (beta) is out: pick a base and target mods, then build your craft route as a tree (the “Simulator” tab at the top)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "組んだ道は 100 人回して、完成率と平均の費用を確かめられます",
-    "en": "Run your route 100 times to see the completion rate and average cost"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "組んだレシピは保存・共有 URL・ファイルの書き出しで残せます。PC だけで、スマホでは「PC で開いてください」と出ます",
-    "en": "Keep your recipes by saving them, sharing a URL or exporting a file. PC only (on phones you'll be asked to open it on a PC)"
-   }
-  ],
-  "pop": true
  }
 ]

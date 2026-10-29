@@ -163,6 +163,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "undoKeepHeld", "recipeCard",
   // 段の表のエッセンス・合金のチップと、画面の形をスマホと PC の 2 つに (オーナー 10-29 夕「おすすめ」= この 2 本だけ、ブラック 17 の「出して」)。シミュのスイッチは閉じたまま (古い共有レシピの完成が落ちるため)
   "essChip", "twoShapes",
+  // 完成形の品質の 2 択・ルーンの後の箱にも完成 (オーナー 10-29 深夜「２おｋ」、ブラック 18 の「進めて」)。boxShape は judgeOne・recipeV1 が閉じた本番の組み合わせで共有の木がスタートだけになる・whittleRank は judgeOne 無しでは枝が出ないので閉じたまま
+  "qualityAsk", "runeHand",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */
