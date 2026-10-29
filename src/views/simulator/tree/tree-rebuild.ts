@@ -53,7 +53,7 @@ export function rebuildTree(data: PatchData, src: TreeDoc): TreeDoc {
   if (flag("judgeOne")) { mergeIntoDecided(data, d, decided); relinkSameHand(data, d); linkLeftovers(data, d); }
   // 決めを打ち直した箱が後の見直しで消えた (同じ手なら戻るで下を畳んだ) 札も要確認
   const gone = [...picks.values()].filter((p) => !used.has(p.at) || !d.boxes[idOf.get(p.at) ?? ""]).map((p): RecipeOrphan => ({ at: p.at, why: "gone", raw: p }));
-  const orphans = [...(rec.orphans ?? []), ...lostBacks, ...gone];
+  const orphans = [...(rec.orphans ?? []), ...lostBacks, ...gone].filter((o) => o.why !== "gone" || !underAutoBack(d, o.at));
   if (orphans.length) d.orphans = orphans;
   // 前の形の木 (箱を全部持っている) から開いた時だけ、前に無かった札の箱が分かる
   if (!isRecipeV1(src)) {
@@ -63,6 +63,18 @@ export function rebuildTree(data: PatchData, src: TreeDoc): TreeDoc {
   return d;
 }
 
+/**
+ * 札の無くなった決めの、札の残る一番近い上の箱 (要確認の印を付ける箱、use-tree-check の orphanIssues と同じ辿り) が自動の ↩ を持つか (S-107 ③、スイッチ judgeOne)。
+ * その箱の人は中身の同じ ↩ 先へ行くので下の決めは使われない。前は ↩ 再度挑戦の箱 (2 本目の木の b29) に要確認の赤い「!」が出た (10-29 深夜オーナー「あとここ再挑戦でもどるくせにない判定かも？」)
+ */
+function underAutoBack(d: TreeDoc, at: string): boolean {
+  if (!flag("judgeOne")) return false;
+  const idOf = new Map([...pathKeysOf(d)].map(([id, k]) => [k, id]));
+  let k = at;
+  while (k.includes("/") && !idOf.has(k)) k = k.slice(0, k.lastIndexOf("/"));
+  const b = d.boxes[idOf.get(k) ?? ""];
+  return k !== at && !!b && !b.hand && !!b.back && !!b.autoBack;
+}
 /**
  * 同じ手なら戻る (S-51) を、組み直しの終わりに全部そろった木で見直す (S-51b)。組み直しの途中は木が半分で見本が違い、✦ だけ残った箱が
  * 同じ手 (左の高貴) のスタートへ戻らず、スタートの下と同じ箱が並んだ (木 oWkFcwYX の b8 → b12・b13)。戻した箱の下の決めは要確認へ (S-107)
