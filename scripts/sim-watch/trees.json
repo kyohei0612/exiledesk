@@ -1,5 +1,5 @@
 {
- "_": "見張りの見本の木 (scripts/sim-watch/watch.mjs が開く)。10-29 に 1 本ずつ台本で組み直した (scripts/sim-watch/build.mjs + build/<key>.js、元の木は trees-old.json)。code は共有 URL の #recipe= の後ろ。sameHand = 外れで同じ手を選んで段が増えないかも見る木。done = 精査の足りない所が 0 の木。owner = オーナーの木 (watch.mjs は見ない、build.mjs で組み直して確かめる)。pass = 合格レシピ 3 本 (10-29 オーナー「合格レシピ3ことかでいいでしょ、武器なんか1つ、防具、指輪」。武器・防具は build.mjs + build/pass-*.js で組む、code の無い時は part・base・goal から。指輪はオーナーの木。watch.mjs は見本の木の後に回し、合否の行を出す (精査 ✓・止まり 0・完成 1 人以上、R-15)。count: false = 数えない (オーナーが書き直すまでの指輪、数だけ出す))",
+ "_": "見張りの見本の木 (scripts/sim-watch/watch.mjs が開く)。10-29 に 1 本ずつ台本で組み直した (scripts/sim-watch/build.mjs + build/<key>.js、元の木は trees-old.json)。code は共有 URL の #recipe= の後ろ。sameHand = 外れで同じ手を選んで段が増えないかも見る木。done = 精査の足りない所が 0 の木。owner = オーナーの木 (watch.mjs は見ない、build.mjs で組み直して確かめる)。pass = 合格レシピ 3 本 (10-29 オーナー「合格レシピ3ことかでいいでしょ、武器なんか1つ、防具、指輪」。武器・防具は build.mjs + build/pass-*.js で組む、code の無い時は part・base・goal から。指輪はオーナーの木。watch.mjs は見本の木の後に回し、合否の行を出す (精査 ✓・止まり 0・完成 1 人以上、R-15)。count: false = 数えない (オーナーが書き直すまでの指輪、数だけ出す)) rules = 決まりの見張り (judge.mjs) だけが回す木 (オーナーの木と S-160 の行の見本、watch.mjs の基準には入れない)。",
  "trees": [
   {
    "key": "amuB",
@@ -144,6 +144,111 @@
    "from": "https://exiledesk.com/r/FmNY7Wwv (10-29 オーナー「指輪に関してはもー決めてるけど昨日の金の指輪にしようかな」)",
    "count": false,
    "code": "1VnLjts2FP2V4K5lRCQl67GbTNJg0BRJJwWyCAYDWqbH6ujhiPLURuJFV9l009_ool_QvylQtH9R8CGb1mNKO84k3Ri2ZFL3HB7eey71Hu4gxg4UEMM_H3_98-ff__rl499__PYIuY9x9Mh1YzcAB2qI3wNP5iynEANbpRmbMn47qivGHmNwYEI5gxiel9n00WVa3IADac3yF-yOZRCH2AFe00pOU9EqrdcQiy8MHMjLKYf47ZUDs6rMIYZZRZN6WbEpbBzg7B3EJHJgUq4Yl2E0E6VTiPUvB1YQuw6s5We5rI07NM0hLpZZ5sCcFlMxMllWFSuStcRCM_GvMmeFDiOhNc3WvG5GvVvSTEbsOlCxBaPbO7OKMYjrask28qliApiMBR8BXAlWktvmv9OyYM33Ba1YoWfZOGJEA0cOXkE8wq6HJR4S-Q0iWqz78Kjv-vHbp8Ikgv6nbpn5cVncfssECzxGH1wx97Iun8jhGtQk2IUWqNAOiGyP6WROS34c0ya7oWBXQJsg14bjXrTuBwQOFOWLUjy8wRrusIYK6xiPJdTADxuo83QrqvdCuxfi_0Ly_PFFzfJvymUxvZQSvyiSilHOXlVslq7ELkpZBTFy4I5mSyHmtyi82ljJEl7mrChnT9mqrmj2TNyldVoWcAK9IiutivXfSOq3JEUtQRgsCbIfShEISTXINISILZa2_Ed9ikDuDi1yFVziRaEt3KGtGQxtzU5g7sC-RMiIDKnIUOCqhUCIuJ9dr0PYwkFsUT8SbCDBLUmZSA4leTD_yTtWJBMjNKJDCwLXOrTPIndPCt2Xn2M7ubcBj1BvAkSegdfTeD2i8fo4-ApFJdelZ-l8A4rfXjoDyulUJSPpSSo9wRkFH-mKTxD69OBkCJbRDYreKPko2K-DpuZtaj7jnBUJixesmrGkjpVEXqlfz9TN6xdlQrPv6CrNl_n3egMMVb7zas1rmmUpP7j87e2h0G7fhD2-QXJkWAXU8grm-ln5Ih3_9ZTNBB-2KcK7D19khw-pmo6Moo6iFpwwGD8EnHvQYDujJ1ZCoMFG0cbuPhqM8da0Lijndv3BtdZvV5bnCk5a3BiezNE3X6dFyo_3a3sUSI-DsSURkSLC8Ai48QhEFVZMxsgimz-7ozwti0taq6ZOZW9iZu_AHfCw7XqnWXkzT-s6E9OdwLti2WxhSweLXcWL4TiwdhwIYbdDjFVZp0WxzI7tIG8ZW0D89sgiurna44JILjxrLrodoGTHMD1Ym56o2T5BSBpyMmEdHoKcfZC-JTyswBiOBnvNFkBeB41g4rmY6ZBqO-wFpKxajkvTaxgT7O_TS7Drf0pA98TT75KwYUTw9ugh6NJjk_m_5EZwLBNXa8fIwwRsWSxlCm07qI1KPzsWtWPySXgUiVaO6Qnl7HJZpMkbWk0_t1cilj1Ghx7ZZEh-DLeEtVsajcXpUUvzD5ZSTpJvicigE4Is6RkrLgyrhbXVQt5h2_-LnRQRS9ssU0kn-4l-86yTgojh1oh2ayOEPJWDyBi5B6njRE02kadJRFZUIhtuYlt4lAklhvciqMmszUIbqI7I8zmtk_lwqm83LdvSQwzfQ3BD9dhXVHuusIZfXX9P-rtUYrgUQhosTWU3sQzJ5vAiOhSK4TGI9hijKOhGcrqjBtI2b0PNPDHcBvGb1Es-PbZ7Tho6wenTpp7oDPtBxvuF00yG98jxPyrj1h_cC8fcz5DTVLRwxoZSTTIxqhgJW5nb2ND_0ypva4K6Z6eqyBOjsJFWYbNMLSdZS62kAWmGXR1u1NvL83nJWaGuOZCzvDxLc27vFczUt3uDqafb5cLxlbVX7TTZx_FlTON5PbMcmdDb05xl2SXjKa-pPvRR47A5DveMe8o4Sypas-n1eVlm0_Kn4pIl5R2r1qbxcuCmpNlFvsjSJJWvf3teOVdllr1mgnYUhaHnj32hFrEaZ_x2txpiJn3Q-LLouXhOF-p4zbjWufADvYEYtodcm82_"
+  }
+ ],
+ "rules": [
+  {
+   "key": "ownerAnnul1",
+   "name": "オーナーの木 1 本目 (金の指輪、全部消えてよい消去の結果が混ざった木、10-29 深夜「消去でも同じ枠なのにな」)",
+   "from": "side-session-notes local_e83e8359-…/owner-tree-annul-1029.md の 1 本目 (r/7VjLbh…)",
+   "code": "7VjLbhMxFP2V6rJ1lQcVD-9KKahSUUtA6qKKqlvPTcfEYwfbExKVLKASZcEGiY9ALNgj8TeVePwFmkfKtM2ENG0iKN2NPHN9H-ec6-vZhy7wOgMNHH4evj969fnbu8MfXz8tHB28OXr95ejg7fcPH4GBB74PToQUIXCgnlQUkGsvWhKyQ5UaMNhFR8DhoVHBQkPqPWAgPUXr1CUF_E6dgfNo040sWun7wJMHAgaRCRzw7SaDljURcGhZFD62FMAg23glNI40cG9jYhBRZJZllNjsJ8ZrAXBIfLrKmqfogYl10Eh9rGlhCR1tWmrJXpKIJAu8NmCnDVe76KTRDfRZ7KUflnj4bcIK4acBn91jWakGOek8akFunLf75EhY9BTsrBijAvNCN0iYLtn-OLNNsi0SftU50oJ27qGjRqyl2EIbFOyaDPYMqrWoo6SQKTYjYLRGqSeUZFO_dffm3Xr9dm2QGT6OUUnf3zhGprC4gh3gS9UTa2cWnuIecAioRXkhktItu_awdAx2TY8c8P0BA0fPgVcZdKRoZ9ijBw6JWYg6SKIXsbWkRT8lKSoPDExEOmeXQI-q7zxwHSvF4PkwqioDSx3C4zctSzQEDzCjWjMpc-axgrq_7XjtZbU52rkI0bjpnP92OC23RwdaCaXnE2x0ozZZPWEjIm1a96nnLarV5C16aTTMqNCVZ7Fubzu-WHtZu4pVz42qpdlRJmbeybTNRyp93QhUj7Anozgaiq4MsxXbdx6Vku7cwP0RrGnSTh5LgM3D2il0iklAXppX2GNCP8XJHIKtUHqvkv46K7lcJJXjpbL-hlrHatrm2ibqXExos099TJdJG-FOrsKzyD6RWrrpW2J5IyqbUGZchMJGJyIoPScmaVOnB5IZNqhpR6MZVzU_zcpHiP9DYuXsKrwZB9nYcWWESi-FQ6Xz-xxZU1HG-dlRZ44UKCaVPD80mtLvF8ta8LU2JtRG4cOTnC2TTTC8b55tyj6kewpFe1cZE1DSK7P15d2-c6hWRWjInW-c6ZJUwNMLHZSrbbI78D8ARk708hH_mtcX53Xh1RjipPwPjE7-dUQoNfzTKZ-bWLl01-Ve6P-Ke9-M5XZ1DstLrsv1eTu_2s6ThM3B4Bc"
+  },
+  {
+   "key": "ownerAnnul2",
+   "name": "オーナーの木 2 本目 (消去でもスパムに行かない、予約 K)",
+   "from": "side-session-notes local_e83e8359-…/owner-tree-annul-1029.md の 2 本目",
+   "code": "7VjLbhMxFP0VdNm6ygPEw7tSSlWpCAhIXVRRdeu56Zh47GB7QqKSBSABCzZIfARiwR6Jv6nE4y_QPNJO20xIUybikd3IM9f3cc65vp4D6ANvMtDA4cfrd4fPP319-_r7l4-XDl--Onzx-fDlm2_vPwADD_wAnAgpQuBAA6koINddsSRkj2oNYLCHjoDDhlHBpZbU-8BAeoq2qE8K-I0mA-fRphtZtNIPgScPBAwiEzjgO20GHWsi4NCxKHxsKYBRtvFaaBxp4N7GxCCiyKzKKLE5SIw3A-CQ-HS1TU_RHRProJX62NTCEjq6b6kjB0kikizwxoidNlzvo5NGt9BnsZd-WOLh2IQVwk8DPrvHqlItctJ51ILcNG-3yZGw6CnYXTNGBeapbpEwfbLDaWb3yXZI-HXnSAvavYWOWrGWYhttULBrM9g3qDajnpJCpthMgNEapR5Skk3z2s0rN5vN641RZvggRiX98N4RMoXFNewBv1o_sXZm4RHuA4eAOpQXIindquuOS8dgzwzIAT8YMXD0BHidQU-KboY9euCQmIWogyR6EVtLWgxTkqLywMBEpHN2CfSohs4D17FSDJ6Mo6ozsNQjPHrTsURj8AAzqrWTMmcea6iHO443ntXbk52LEI2bz_mxw3m5PTnQWig9n2Gjy43Z6gn3ItKmc5sG3qJaT96il0ZDRYWuPY51d8fxlcazxr9Y9dyoXpodZWLmvUzbfKLSt4xAdRcHMoqjsejKMFuzQ-dRKenODdwvwZon7eSxBNg8rN1Cp5gF5KuLCntK6Kc4mUOwHUrvVdJfq5LLRVI5Wirrb6h1rOZtrl2i3sWEVn3qU7pM2gh3cxWeRfah1NLN3xLLG1HZhFJxEQobnYig9JyYpU2dHkgqbFDzjkYVVzU_zcpHiP9DYuXsKryZBtnUcWWCSn8Lh0rn9wWypqaM89VRZ4EUKCaVPG8YTen3K2UteKmNGbVR-PAkZ8tkE4zvm2ebsg_plkLR3VPGBJT0ymx9dW_oHKp1ERpy5xtn-iQV8PRCB-Vqm-0O_BeAkRO9fMRf8vrivC68mkKclP-B0cm_jgilhr865XMTK5fultwP_R9x76tYbv_OYfmb61I4b1eWs2hltV3OMhXzdlnsBRJ5kd20PRr9BA"
+  },
+  {
+   "key": "ownerUnsetRetry",
+   "name": "オーナーの木 (外れが消えた の箱に再挑戦なのに「!」、10-29 深夜)",
+   "from": "side-session-notes local_f0fee26e-…/owner-unset-retry-1029.md",
+   "code": "7VjNbhs3EH6VYHKlop8GacKb47iBARdJlQI5GIIx5o60jLikTHJlCbYCpAGaHnIJ0Icoeui9QN_GQJu8RcHdlbO2taosd4M4MXTQgtwhZ77vm-Fwj2AMvMNAA4cPb96dvPrj77dv3v_1-62T1z-f_PTnyetf_vn1N2DggR-BEzElCBxoIhVF5IYNS0KOqNkGBvvoCDg8Niq61ZV6AAykp2SHxqSA3-8wcB5ttpBFK_0UeHggYJCYyAHf7THoW5MAh75F4VNLEczyhTdj40gD9zYlBgklZkMmweYoGG9HwCHs6ZrbnpLvTKqjbrbHthaW0NFTS305CYFIssDbM3becGuMThrdRZ_7XvlixQ4fTVjJ_czhi2tsKNUlJ51HLcgt2-0RORIWPUV7m8aoyBzqLgkzJjtdZvaUbJ-E33KOtKC9h-iom2opnqONSnY9BgODajsZKSlkxs0CGq1R6hmFaDr3HnzzoNP5tj3LDX9IUUk_fXLKTGlwE0fA77bOjF0Y-BEHwCGiPhVABOg23HAOHYN9MyEH_GjGwNEB8BaDkRTDnHv0wCGYxaij4L1IrSUtpplIUXlgYBLShboEelRT54HrVCkGB3OvWgwsjQhPZ_qWaE4eYC61XoA537GJerrrePu41Vu8uYjRuPU2_7jhutpe7Ggzlp6vsNDt9mp4wpOEtOk_oom3qLbCLHppNNQEdPNFqoe7jjfax-0vEfXCqFUZHeXJzEd5bvOFmb5jBKrvcSKTNJknXRVnm3bqPCol3aWJ-0-y1gk7PFYQW7i1V6oUq5B891O5vcT1c5osKHgeS-9VqK91pctVQjkdqqpvqHWq1i2uQ6LR1RKt_tCXVJmsEO4VWXiR2WdSS7d-SawuRFUdSs0glBY640HlObFKmTrfkNRYoNZtjWpGtTjNqluIryPFqtVVmllG2dJ2ZUGW_i8aquzfP6FqsufHRlP2fqOqWt3IaEUZlV48S2-VwqL51exi_fIxPVQohvvKmIhCWcnHN_anzqHaErEhd7mTf0xSAc_uPlAtzNWui9eAjELo1d3wja6vruvS1BLhZPqPjA6fBRKUGq51yJcWVpG6O3IQ-8_iilRzupXPlcZNe1IbttmZ3VTG-V3BO3da4Xfcyv9f3tMv7EFcI_RnIOwxMHYUoy5_VbtmcDaqeqLDOGA2CPWLgcXDAOaXFeHnnJ2z3mz2Lw"
+  },
+  {
+   "key": "oWkFcwYX",
+   "name": "オーナーの木 r/oWkFcwYX (死ぬほど試した木。完成の箱はオーナー未決 = W1)",
+   "from": "https://exiledesk.com/r/oWkFcwYX",
+   "code": "3VbBTttAEP0VNL0uSuwE2uwNAUVIVLTQG4rQYE-Sbda7YXeNEgUfeuLSS3-jh35B_6ZS1f5FtTYOBgKYkhzS22Y3b_a9ec9jT-ECeMhAAYc_V19_fv7-68vV7x_f1oJmI-ysBR3eagEDB3wKNhpQgsCBxkJSTHa4bigSI2oEwOAMLQGHPS3jtSOh-sBAOEoO6IIk8DchA-vQ5IUMGuEmwP2CgEGiYwv8pMugZ3QCHHoGI5caiiErCm8PtCUF3JmUGCSU6C2ReMzUg_dj4ODvtI19FRlCS_GB6PnSTpABvsHgAmVKHtEOuhm7D3MkpeiTim5QrQoq3JyD8nfsoVAUvzU62VWUTHYI3WBWoV2pEIS5vlJYLmVeyf7AKaH6R2SFdVjlE1RVtLpZl0Ffo9xPRlJEIu_sHBOMlvKY_I3hZqfVCcPXQVYAP6QohZsczvpa2dzGEfB289bevY2P2AcOMfV82ywU8rbssJTH4EyPPd1pxsDSOfAmg5GIhoVz6ICDhw1QxZ59lBpDKprkEUPpgIFOSPl_w2FCSveOhRLWGZS7_hyd0Aq6DCJ0KCfWAVeplAzOS8JNBoZGhNcnGQN8SW7yDBS0GwPh-Bzsq41nCdqh8XLk1MhzVc2nVA1PLA8um935_FGpVFb4_xPNWv27dXIj41XrgcZa64_5iEyPohL5vvi1WxyeHugI5TsciyRNyjQ_5MW2mViHUgr7AkPqKb3uevMyWHzXGQyJRgWVxfS_IbV183mWpE4rw6AO5_aSopJTbaCaLK-t9SZIO3t2-yuhyNd7WtFs8d9Ny6ctnGk_sXz94QG1jAHr32hE5bt6wdG8p8tvPjoNogHquk9WbS-f9cWxfOWPDJm7Dq-CkeXTvB6s0Iyv5dGTaV1Ju-4ou17WnzorLvJJvQsPazfL_gI"
+  },
+  {
+   "key": "rowSideAnnul",
+   "name": "S-160 の見本: 消去 + 側のお告げ (カマサの王者の外れに左の消去 (全部) / 右の消去 (雷耐性を残す))",
+   "from": "scripts/sim-watch/build/rowSideAnnul.js (10-30 見張り部長、⑦ R6)",
+   "part": "兜",
+   "base": "Kamasan Tiara",
+   "goal": [
+    {
+     "modId": "Helmets_int/LocalEnergyShieldPercent",
+     "tier": 1
+    },
+    {
+     "modId": "Helmets_int/FireResistance",
+     "tier": 1
+    },
+    {
+     "modId": "Helmets_int/ColdResistance",
+     "tier": 1
+    },
+    {
+     "modId": "Helmets_int/LightningResistance",
+     "tier": 1
+    }
+   ],
+   "code": "7Zhfb9owFMW_ynT36o6Eh2nyW9Wt2zSkTeveKlRdkgtxsZ3UdhgI0s8-GVKN_6RQyIaqPKAo19Y9v3t8AoxhALzJQAMHiyqTBAwc8DHYKCGFwIGGQlJMtn9hKBIZNUJg0EFLwOEbKrSo3_wSaBAYCEeqRQOSwD80GQg5kNfCAXcmJwbWoZnubdAINwIOOjUKJTBQaWyB37aL2dZXSWpJP61TpNJLoXzB2Fd-jYHDF5KKnL0T2jVaaYTykybTG90kgmT8g0xE2nktggzwsGDrV14LQz_JCutQR7S7_iqV8XPqW6KXOC10b-2iNoNOOiQLfFwwsPQAPGCQiag_04rOjwUYJKhjDy7KjSEdeXTOoLYqd36_VJGe4mMQoUM5sg64zqVk8JCjnLIOGBjKCMsnBQM8EGnbi5612EiE41WWvw3Xq8G8p2a7H0PL9iHMybjPdf_W8nAStIFBnGpv8i4KCatFwSTcUlQdyGrparubsBnqobzLyHQpOhK8Fzsh-9mlHtorVYsUNo2DhiiPNIaXxrofhsUuasCw0Y1HxbAYC-viS-tczimG74p02r0RWlhnUF7659OAewYLBn2irHwrllROIbM8atVlfqTh4SL3jO6TgNmVBlXOSZlcCoWuNbl2m_nsU2wTks3GPwAJg64hmn2Vrcmuy26s1QL1JHhVJOdqgW0p8L-m12uSVcJzrpbelmqvCVcJz7lYY1na51TTbcTDd4G_JuXnYyh_kxKLNcFyTdjpBM3BKX9rzg3jb2f-_iJsN2Rq3ZyUst3HvHn__qRN7hvM5_By-Uf-g6gaeNvabRfFHw"
+  },
+  {
+   "key": "rowFreeSides",
+   "name": "S-160 の見本: 変成・増強・王者を狙い無し (打った後の側分け、S-65)",
+   "from": "scripts/sim-watch/build/rowFreeSides.js (10-30 見張り部長、⑦ R6)",
+   "part": "兜",
+   "base": "Kamasan Tiara",
+   "goal": [
+    {
+     "modId": "Helmets_int/LocalEnergyShieldPercent",
+     "tier": 1
+    },
+    {
+     "modId": "Helmets_int/FireResistance",
+     "tier": 1
+    },
+    {
+     "modId": "Helmets_int/ColdResistance",
+     "tier": 1
+    },
+    {
+     "modId": "Helmets_int/LightningResistance",
+     "tier": 1
+    }
+   ],
+   "code": "7ZhRb9MwEMe_CjpejdrsCfkNTUxD9AEBb1OFbsktsWY7ne1Uq7p8d5QGGKVp4qRNmo49176_73e-_7lZwxL4BQMNHCyqhSRg4ICvwYYJKQQO9CgkRWTv3xkKxYImATC4RUvA4TMqtKjffBdoEBgIR2pGS5LA318wEHIpr4QD7kxGDKxDs4lt0Ai3Ag46NQolMFBpZIHfzPMy9GWSWtK_9ylS6QehigXrYuWnCDhck1Tk7A-h3WSWhig_ajLx6lsiSEZfyISkXZGLIAM8yFn1zith6CtZYR3qkJrXX6YyarN-JuLEaaHjyk1zBrfpI1ng65yBpQfgUwYLEd6XuaIrygIMEtRRAS7MjCEdFuicQW1V5op4qSK9wccgRIdyZR1wnUnJ4CFDuWE9ZWBoQfjnlztDVBLOGeCLxFtsKxlOEuG4T05vg2rcmMWqTLln2ONFtn2yk4PyuJV12WxzO_dsKqp6bimhXt1YHjxN568duIVk-hScGsmht3Ov2XY0GUPx5tnQc9pjGEcdjWsgQm17ZRBCLcxwpJj2XryOhJqM5Nww9P62aZxGAxHr_vQejt2_hnT-7AZ0tSqr-v8AevndM5Wx-NkIAJ1yzu6YpsdTJUp18eHoDoWEgU6x7zkwwFG2GnkwvV99cXy9Hac_Her6oTOYXm-oPQbDsKJHy_Q5nM-fv171evGnGr3-2uMv0SPfkZ3I7S5CjSW2-ybbg1738rfK6rCi10l1KXVzvHYFrjHiXgrcSu8w9HVSXdA3x2tpsg0zohf-jaKd_McvaD2eyuVHYeAX2X96-cXztyfPzNt1Q3VQn-rW7awq4TzPfwI"
+  },
+  {
+   "key": "rowFracStar",
+   "name": "S-160 の見本: フラクチャー (✦ の木、ES% に ✦ の印。4 つそろった当たりにフラクチャー)",
+   "from": "scripts/sim-watch/build/rowFracStar.js (10-30 見張り部長、⑦ R6)",
+   "part": "兜",
+   "base": "Kamasan Tiara",
+   "goal": [
+    {
+     "modId": "Helmets_int/LocalEnergyShieldPercent",
+     "tier": 1,
+     "fractured": true
+    },
+    {
+     "modId": "Helmets_int/FireResistance",
+     "tier": 1
+    },
+    {
+     "modId": "Helmets_int/ColdResistance",
+     "tier": 1
+    },
+    {
+     "modId": "Helmets_int/LightningResistance",
+     "tier": 1
+    }
+   ],
+   "code": "1ZXNbtswEIRfpZheWdjOqeCtCBqkiA9F21sgFBtqLTHmj0NShg1H717QctAGsgIliJHmrOEs59tdaoc15JmAg0QkuzIMgQS5Q1Q1W4IEb7ThkuPyU2ClVzyZQeCGIkPiiixFch9-aQoEAZ3YznnNBvLzmYA2a3OhE2QKDQvERGHvHSjotIWE88GSgYD1ZYS8LgQWwVtILHwT0HaFzmsf2T24WLb-i7ZZvsvnvpWQuGRjOcXf2qXJ3CsyXx2Havuz1mzK7xwUu5STaQ6Qs1yFVGoCl51rK45bXejAPzjqmMgp_mswpD_3pnyOfq6rOjntqqOHCoEbv-EIuWsFIt9BTgVWWi278JRy1yBQkyszV9WEwE5lsimQi7ZJ2c9bdge6ihKZbUyQrjFG4K4hs2_FVCDwiunwpRWg12ZcZArdnSe1TnKM38fZ8XjUVLYrd4pwT3flnxi3jVteRzm7nxYQKL3LS7EgbdAXTe9nT4jGA-lL-9cdwha42q_bCaANrsrL2v421Hqqx6mGsPKGzIlmcfBFeSHWcRhGzfWpqv5nLe8JHrdkaCYeXr_3_v6-FsW3Gamx13pvM_e8H-ghliXt0BZt-wc"
   }
  ]
 }

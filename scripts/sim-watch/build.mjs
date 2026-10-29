@@ -16,7 +16,9 @@ const src = existsSync(here("./trees-old.json")) ? "./trees-old.json" : "./trees
 const list = JSON.parse(readFileSync(here(src), "utf8"));
 const only = opt("--only")?.split(",");
 const OFF = opt("--off") ? `&off=${opt("--off")}` : "";
-const pass = JSON.parse(readFileSync(here("./trees.json"), "utf8")).pass ?? [];
+// 合格レシピと決まりの見張りの木 (rules、judge.mjs。part を持つ物は code があっても part・base・goal から台本で組み直す)
+const cur = JSON.parse(readFileSync(here("./trees.json"), "utf8"));
+const pass = [...(cur.pass ?? []), ...(cur.rules ?? []).filter((t) => t.part).map((t) => ({ ...t, code: undefined }))];
 const N = Number(opt("--n") ?? 100);
 const trees = [...list.trees, ...(list.owner ?? []), ...pass].filter((t) => existsSync(here(`./build/${t.key}.js`)) && (!only || only.includes(t.key)));
 // 長い処理 (精査・100 人) は 30 秒を超えるので、ページに結果を置かせて待つ (cdp の send は 30 秒で諦める)
