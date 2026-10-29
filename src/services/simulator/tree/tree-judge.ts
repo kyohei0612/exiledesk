@@ -13,6 +13,7 @@ import { aimHeldOn, isAimMod } from "./tree-aim";
 import { bodyOf } from "./tree-box-shape";
 import { aimOpts, sampleOf, startGoalAims, targetsOf } from "./tree-sample";
 import { boxAims, fractureMarks, keepCut, type TreeDoc } from "./tree-model";
+import { qualityOk } from "./tree-unbounded";
 import { flag } from "../../../web/release-flags";
 
 /** 箱の中身を見る見本の数 (前の boxBody と同じ 4 つ) */
@@ -22,7 +23,6 @@ const SAMPLES = 4;
  * 4 つだと「狙いが消えた」(どの耐性が消えたか 3 通り) の 2 通りしか拾わず、残りの通りの人が止まった (10-29 bone3 の止まり 26)
  */
 const MORE = 8, MAX = 32;
-const NONE: ReadonlySet<string> = new Set();
 
 /** アイテムに付いている完成形の狙い (段は完成形以上) の MOD */
 const goalsOn = (data: PatchData, doc: TreeDoc, it: StageItem): Set<string> => new Set((doc.memoAims ?? []).filter((a) => aimHeldOn(data, it, a, { sameText: true })).map((a) => a.modId));
@@ -36,14 +36,14 @@ export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<strin
   const b = doc.boxes[boxId];
   if (!b) return prev;
   const keep = keepCut(doc, b);
-  const base = new Set(keep ? keep.map((a) => a.modId) : prev);
+  // 消去の後も ✦ の印の狙いは残る (消去では消えない。S-28b2: 前は全部消えてよい消去の後に ✦ まで外れに数え、✦ だけの箱がスタートと別の中身になった、木 oWkFcwYX の b8)
+  const base = new Set(keep ? [...keep, ...fractureMarks(doc)].map((a) => a.modId) : prev);
   if (b.out === "hit" && b.aim) for (const a of [...boxAims(b), ...(b.anyOf ?? [])]) base.add(a.modId);
   const on = goalsOn(data, doc, item);
   return new Set([...base].filter((id) => on.has(id)));
 }
-/** 全部消えてよい消去の後 (☑ の無い消去は全部外れ MOD、S-28) */
-export const STRIPPED = NONE;
-
+/** 全部消えてよい消去の後 (☑ の無い消去は全部外れ MOD、S-28。✦ の印の狙いは残る) */
+export const strippedOf = (doc: TreeDoc): ReadonlySet<string> => new Set(fractureMarks(doc).map((a) => a.modId));
 /**
  * アイテムの中身の鍵 (☑ の狙いの組 # 体 # 品質)。aimed に無い完成形の MOD は外れに数える。
  * 狙いに当たる MOD は文が同じなら別の modId でも当たる (エンジンの sameText) ので、体 (bodyOf) から外すのは実物の MOD の modId (前は完成形の modId で外し、同じ文の別 modId が狙いと外れの両方に数わった)
@@ -52,9 +52,15 @@ export function contentOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: R
   const goals = (doc.memoAims ?? []).filter((a) => aimed.has(a.modId)), opts = aimOpts(data);
   const keys = new Set<string>(), mods = new Set<string>();
   for (const m of [...it.prefixes, ...it.suffixes]) { const g = goals.find((a) => isAimMod(m, targetsOf(data, [a]), opts)); if (g) { keys.add(g.modId); mods.add(m.modId); } }
-  return `${[...keys].sort().join(",")}#${bodyOf(data, doc, it, mods)}#q${qualityKey(it)}`;
+  return `${[...keys].sort().join(",")}#${bodyOf(data, doc, it, mods)}${flag("judgeOne") ? "" : `#q${qualityKey(it)}`}`;
 }
+/**
+ * 品質は箱の中身に入れない (S-60b、ルーンと同じ。10-29 深夜オーナー「Bでしょ途中で触媒で消える時もあればそのままついたままやり直しのパターンもあるし。品質の件はルーンと扱い同じに」)。
+ * 品質はアイテムに残るだけ。前は品質 40 の「最大ライフ + ✦」(木 oWkFcwYX の b11) が品質 0 の同じ箱 b1 と別の中身になり、同じ手の枝がもう 1 本あった。スイッチ judgeOne の外は前のまま
+ */
 const qualityKey = (it: StageItem): string => `${it.quality ?? 0}.${it.catalystQuality ?? 0}.${it.qualityTag ?? ""}`;
+/** 完成の箱へは、品質を狙う木なら完成形の品質が足りている人だけ (品質を比べから外したので、足りない人が完成の箱に入らないように) */
+const doneOk = (doc: TreeDoc, id: string, it: StageItem): boolean => doc.boxes[id]?.done !== "main" || qualityOk(doc, it);
 
 /** 見本の ☑ (見本の item ごと、木を替えて見本が作り直されたら別の物) */
 const AIMED = new WeakMap<StageItem, Map<string, ReadonlySet<string>>>();
@@ -130,11 +136,11 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     },
     fitsItem(item, aimed, to) {
       const b = contents(to);
-      return !b || b.has(contentOf(data, doc, item, aimed));
+      return (!b || b.has(contentOf(data, doc, item, aimed))) && doneOk(doc, to, item);
     },
     boxesOf(item, aimed, ok) {
       const k = contentOf(data, doc, item, aimed);
-      return targets().filter((id) => !!contents(id)?.has(k) && (!ok || ok(id)));
+      return targets().filter((id) => !!contents(id)?.has(k) && doneOk(doc, id, item) && (!ok || ok(id)));
     },
     aimedOf: (id) => samples(id).map((s) => sampleAimed(data, doc, id, s.seed)),
     holdsAim: (id) => samples(id).some((s) => { const am = sampleAimed(data, doc, id, s.seed); return [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && am.has(m.modId)); }),

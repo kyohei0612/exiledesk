@@ -5,7 +5,9 @@
  * 札の無くなった決めは要確認 (orphans、⑦20)。前の形の木から開いた時だけ、前に無かった札の箱に「組み直しで増えた」(fresh、⑦19、保存しない)
  */
 import type { PatchData } from "../../../services/craft-stage/engine";
-import { migrateStart, TREE_SCHEMA_N, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { clearHand, MATCH_BACK, migrateStart, setBack, TREE_SCHEMA_N, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
+import { fromStrip } from "../../../services/simulator/tree/tree-outcome";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
 import { alignEssenceAims, applyPick, kindOf, onlyOf } from "./tree-hand-plan";
 import { flag } from "../../../web/release-flags";
@@ -49,8 +51,9 @@ export function rebuildTree(data: PatchData, src: TreeDoc): TreeDoc {
     if (!b || b.hand || !to || to === id) { lostBacks.push({ at, why: "back", raw: { back } }); continue; }
     b.back = to; b.done = null; delete b.autoBack; delete b.merged;
   }
-  if (flag("judgeOne")) { mergeIntoDecided(data, d, decided); linkLeftovers(data, d); }
-  const gone = [...picks.values()].filter((p) => !used.has(p.at)).map((p): RecipeOrphan => ({ at: p.at, why: "gone", raw: p }));
+  if (flag("judgeOne")) { mergeIntoDecided(data, d, decided); relinkSameHand(data, d); linkLeftovers(data, d); }
+  // 決めを打ち直した箱が後の見直しで消えた (同じ手なら戻るで下を畳んだ) 札も要確認
+  const gone = [...picks.values()].filter((p) => !used.has(p.at) || !d.boxes[idOf.get(p.at) ?? ""]).map((p): RecipeOrphan => ({ at: p.at, why: "gone", raw: p }));
   const orphans = [...(rec.orphans ?? []), ...lostBacks, ...gone];
   if (orphans.length) d.orphans = orphans;
   // 前の形の木 (箱を全部持っている) から開いた時だけ、前に無かった札の箱が分かる
@@ -59,6 +62,24 @@ export function rebuildTree(data: PatchData, src: TreeDoc): TreeDoc {
     for (const [id, k] of pathKeysOf(d)) if (!before.has(k)) d.boxes[id]!.fresh = true;
   }
   return d;
+}
+
+/**
+ * 同じ手なら戻る (S-51) を、組み直しの終わりに全部そろった木で見直す (S-51b)。組み直しの途中は木が半分で見本が違い、✦ だけ残った箱が
+ * 同じ手 (左の高貴) のスタートへ戻らず、スタートの下と同じ箱が並んだ (木 oWkFcwYX の b8 → b12・b13)。戻した箱の下の決めは要確認へ (S-107)
+ */
+function relinkSameHand(data: PatchData, d: TreeDoc): void {
+  for (let n = 0; n < 16; n++) {
+    const j = judgeMemo(data, d);
+    const hit = Object.values(d.boxes).map((b) => (b.hand && b.out !== "start" && !b.split ? ([b.id, sameHandByContent(d, b.id, b.hand, j)] as const) : null)).find((x) => !!x?.[1]);
+    if (!hit) return;
+    const [id, to] = hit, b = d.boxes[id]!, h = b.hand!;
+    clearHand(d, id);
+    // 全部消えてよい消去の結果の箱は「形の合う箱へ」= 一人ずつ止まる所へ (S-28。消した後の中身が人ごとに違う)
+    if (fromStrip(d, id)) { b.back = MATCH_BACK; b.done = null; } else setBack(d, id, to);
+    b.autoBack = true;
+    b.handBack = { ...h };
+  }
 }
 
 /**

@@ -282,6 +282,8 @@ function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): 
 /** 親の見本 base に親の手を打って、この箱の見本を作る */
 function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox, base: Sample, seed: number, boxId: string, aims: Aim[]): Sample {
   if (!p.hand) return base;
+  // 全部消えてよい消去の直線で止まる形 (もう手のある箱と同じ中身) はこの箱に来ない (回す時はその箱へ行く、S-28。tree-run と同じ。スイッチ judgeOne)
+  if (flag("judgeOne") && stripStop(data, doc, p)?.(base.item)) return { item: base.item, note: "cant:stripStop" };
   const rng = mulberry32(seed ^ 0x5eed ^ (flag("boxShape") ? [...(flag("recipeV1") ? pathKeyOf(doc, boxId) : boxId)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7) : boxId.length * 7919)); // 種は見本の番号と道の札 (S-74 A、スイッチ recipeV1。箱の id だと組み直しで振り直されるだけで見本が変わった、bone3 の止まり 0 → 26)
   let last: StageApply | null = null;
   // 箱の形 (道の狙いの組) に合う結果だけ、無ければ合わなかった最初の結果 (途中で狙いが消えた結果が当たりの見本になった、10-28 見張り。boxShape)

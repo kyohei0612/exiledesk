@@ -10,7 +10,7 @@ import { aimHeldOn, isAimMod } from "./tree-aim";
 import { effectOf } from "./tree-hands";
 import { qualityOk } from "./tree-unbounded";
 import { aimOpts, aimsOf, fractureChoices, goalsHeld, handAims, heldHitOf, outcomeOf, playHand, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
-import { boxOutcomeOf, fromStrip, stripBackOf, stripStop } from "./tree-outcome";
+import { boxOutcomeOf, fromStrip, stripBackOf, stripStop, stripStopByContent } from "./tree-outcome";
 import { flag } from "../../../web/release-flags";
 import { heldSets, MATCH, matchBox, outBoxOf, RESTART, settle, shapesOf, splitTo, type Shape, type SplitBox } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
@@ -223,6 +223,10 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     // 始めの値段を 2 回分足す (外れた時は素材を作り直す。10-24 オーナー、ツリーに買い直しの道は作らない。10-25 オーナーが戻した)。作り直しの回数にも 2
     const miss = effectOf(b.hand.currency) === "fracture" && b.hand.pick !== "random" && fractureChoices(data, item) >= FRACTURE_PICK ? Object.entries(uses) : null;
     const tried = uses[b.hand.currency] ?? 0, own = handAims(doc, at, aims);
+    // 全部消えてよい消去の直線で、もう手のある箱と同じ中身 = 打たずにその箱へ (S-28)。前は打たずに次の箱へ通し、次の箱に人の手があるとその手を打った
+    // (✦ を狙いのまま数えると「最大ライフ (外れ) + ✦」が b2 と同じ中身になり、木 oWkFcwYX の b7 → b8 で起きた。スイッチ judgeOne)
+    const stopAt = j && stripStop(data, doc, b) ? stripStopByContent(data, doc, at, item) : null;
+    if (stopAt) { visits.push({ box: at, cost, pass: true }); at = stopAt; continue; }
     o.onHand?.(at, item);
     const r = playHand(data, item, b.hand, rng, own, use, false, stripStop(data, doc, b));
     if (!r.applied) {
