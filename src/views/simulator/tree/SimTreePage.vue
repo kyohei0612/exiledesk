@@ -56,7 +56,7 @@ import { useTreeReveal } from "./use-tree-reveal";
 import { RUN_N, TEST_N, useTreeRun } from "./use-tree-run";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue";
-import { applyPick, type OnlyOut } from "./tree-hand-plan";
+import { applyPick, type OnlyOut } from "./tree-hand-plan"; import { swapHandIn } from "./tree-swap-hand";
 import { installSimMonkey } from "./sim-monkey";
 import TreeRunLayer from "./TreeRunLayer.vue";
 import TreeHandChip from "./TreeHandChip.vue"; import TreeTabs from "./TreeTabs.vue";
@@ -174,6 +174,14 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = nul
   // 出来た結果の箱が枠の外なら寄る (真ん中の箱。10-22 白紙から組んで、出来た箱が下に出て自分で動かさないと見えなかった)
   const kids = doc.value.boxes[at]?.outs ?? [];
   if (kids.length) void v.reveal(kids[Math.floor(kids.length / 2)]!);
+}
+/** 手だけ替える (S-57c、スイッチ swapHand): 下の箱を同じ結果へ引き継いで組み直し、替える前の 100 人の結果を残す。1 つ戻すで戻せる */
+function swapHandOf(h: Hand, aims: Aim[], pre: string | null): void {
+  const id = panel.value!.id, data = s.data.value; let box: string | null = null;
+  if (!data) return;
+  simAct("hand", "swap"); picking.value = null; tr100.noteSwap();
+  t.edit((d) => { box = swapHandIn(data, d, id, h, aims, pre).box; tidyOf(d); });
+  panel.value = null; if (box) void v.reveal(box);
 }
 /**
  * Vue Flow の出来事: 空き所を押す = 右の欄を閉じる (よくあるモーダルと同じ。オーナー 10-22。引っ張った時は Vue Flow が画面を動かすだけ)。
@@ -375,7 +383,7 @@ const phone = usePhone();
     <!-- 題の帯「クラフトの道 (ツリー)」はツリーのページでは出さない (10-26 夜オーナー「いらんわ」)。流れの帯は木の枠の中の一番上 -->
     <!-- エミュレーター / シミュレーター β の切り替え (エミュの画面の帯と同じ共通の部品、10-23 オーナー「帯を 1 つにして両方に」) -->
     <ModeTabs class="mb-3" />
-    <TreeOverlays /><TreeHandPage v-if="panel?.kind === 'hand' && panelBox" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" @back="picking = panel!.id; panel = null" @aim="panel = { kind: 'aim', id: panel!.id }" />
+    <TreeOverlays /><TreeHandPage v-if="panel?.kind === 'hand' && panelBox" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @swap="swapHandOf" @clear="clearHandOf" @close="closeHand" @back="picking = panel!.id; panel = null" @aim="panel = { kind: 'aim', id: panel!.id }" />
     <TreePanelPage v-else-if="panel && panelBox" :key="`${panel.kind}-${panel.id}`" :kind="panel.kind === 'split' || panel.kind === 'note' ? panel.kind : 'aim'" :box-id="panel.id" :current="panel.add ? null : panelBox.aim" :adding="!!panel.add" @pick="pickAim" @close="simOp('cancel', panel?.add ? 'side-plus' : panel?.kind === 'aim' ? 'aim-pick' : panel?.kind ?? ''); panel = null" />
     <div v-show="!t.goalInline.value" class="g-panel flex flex-col gap-2 px-3 py-2 max-md:px-0.5" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
       <!-- 流れの 4 段の帯 (今どこにいるか、10-24 オーナー): 上のタブの下、木の枠の中の一番上に小さく (10-26 夜オーナー「普通出すのはタブの下」「ここは枠内でしょ」)。右上の「← 戻る」は置かない -->
@@ -390,7 +398,7 @@ const phone = usePhone();
         <TreeRecipeBar v-if="t.needBase.value" @opened="v.openView()" />
         <template v-else>
           <TreeRunBar v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking, passed, holes: issues?.length ?? 0, shown: issuesShown }" :halted="tr100.halted.value" :drive="tr100.test.value" @test="() => { void onCheck(); void tr100.run({ test: true }); }" @holes="issuesShown = !issuesShown" @holes-on="openIssues" @list="issuesOpen ? (issuesOpen = false) : openIssues()" @run="tr100.run" @go="goIssue" />
-          <TreeRunSum v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" :test="tr100.test.value" @go="goIssue" @skip="tr100.skipWalk" />
+          <TreeRunSum v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" :test="tr100.test.value" :before="tr100.before.value" @go="goIssue" @skip="tr100.skipWalk" />
         </template>
         <!-- ベースが無い空の形でも、ほかの木があればタブを出す (前の木へ戻れない行き止まりだった、10-24 夜オーナー「一方通行が多い」) -->
         <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" compact class="min-w-0 flex-1" @switched="v.openView()" />

@@ -8,7 +8,7 @@ import { tr } from "../../../i18n/lang";
 import { RUN_N } from "./use-tree-run";
 
 /** halted = 止まった人が出て途中で止めた (何人目)。walk = 1 人目が進んでいる所 */
-defineProps<{ result: TreeRunResult | null; running: boolean; stuck: [string, number][]; halted?: { box: string; n: number } | null; walk?: { step: number; total: number; cost: number; fast: boolean } | null; /** テスト走行の結果 (費用を出さず人数だけ) */ test?: boolean }>();
+defineProps<{ result: TreeRunResult | null; running: boolean; stuck: [string, number][]; halted?: { box: string; n: number } | null; walk?: { step: number; total: number; cost: number; fast: boolean } | null; /** テスト走行の結果 (費用を出さず人数だけ) */ test?: boolean; /** 手だけ替える前の結果 (S-57c) */ before?: TreeRunResult | null }>();
 const shown = defineModel<boolean>("shown", { required: true });
 const report = defineModel<boolean>("report", { required: true });
 const emit = defineEmits<{ go: [id: string]; skip: [] }>();
@@ -28,6 +28,8 @@ const MINI = "shrink-0 whitespace-nowrap rounded-md border border-white/15 bg-wh
       <template v-else-if="result && halted && halted.n === 1">{{ tr("1 人目が止まったので止めた (止まった箱を直して回し直す)", "Run 1 got stuck, stopped (fix the box and run again)") }}</template>
       <template v-else-if="result && halted">{{ tr(`${halted.n} 人目で止まったので止めた (止まった箱を直して回し直す)`, `Stopped at run ${halted.n}: a run got stuck (fix the box and run again)`) }}</template>
       <template v-else-if="result && test">{{ tr(`テスト走行 ${result.n} 人: 完成 ${result.finished} 人`, `Test drive ${result.n} runs: ${result.finished} finished`) }}</template>
+      <!-- 手だけ替えた後は替える前と今を並べる (S-57c。回す前は今が —) -->
+      <span v-else-if="before && (!result || !running)" data-tree-run-compare>{{ tr(`替える前 1 個 ${div(before.perItem)} 神 · 完成 ${pct(before)}% → 今 ${result ? `1 個 ${div(result.perItem)} 神 · 完成 ${pct(result)}%` : "—"}`, `Before ${div(before.perItem)} div/item · ${pct(before)}% done → Now ${result ? `${div(result.perItem)} div/item · ${pct(result)}% done` : "—"}`) }}</span>
       <template v-else-if="result">{{ tr(`${result.n} 人: 1 個 ${div(result.perItem)} 神 · 完成 ${pct(result)}%`, `${result.n} runs: ${div(result.perItem)} div/item · ${pct(result)}% done`) }}</template>
       <template v-else>{{ tr(`${RUN_N} 人: 1 個 — 神 · 完成 —%`, `${RUN_N} runs: — div/item · —% done`) }}</template>
     </span>

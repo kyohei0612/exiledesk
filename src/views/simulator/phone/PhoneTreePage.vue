@@ -16,6 +16,7 @@ import TreeHandPage from "../tree/TreeHandPage.vue";
 import TreePanelPage from "../tree/TreePanelPage.vue";
 import TreeRecipeBar from "../tree/TreeRecipeBar.vue";
 import { applyPick, type OnlyOut } from "../tree/tree-hand-plan";
+import { swapHandIn } from "../tree/tree-swap-hand";
 import { useTree } from "../tree/use-tree";
 import { clearHand, setAim, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
@@ -114,6 +115,20 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null, only
   q.addFresh(Object.keys(t.doc.value.boxes).filter((x) => !before.has(x)));
   q.focus.value = { kind: "outs", id: at };
 }
+/** 手だけ替える (PC の swapHandOf と同じ、S-57c)。箱の id が振り直されるので、木の外の印は開き直した時と同じく空にする。新しい結果の箱は選ぶまで待つ */
+function swapHandOf(h: Hand, aims: Aim[], pre: string | null): void {
+  const id = handFor.value!, data = s.data.value;
+  if (!data) return;
+  simAct("hand", "swap");
+  run.noteSwap();
+  let r: ReturnType<typeof swapHandIn> | null = null;
+  q.answer((d) => { r = swapHandIn(data, d, id, h, aims, pre); });
+  handFor.value = null;
+  q.reset();
+  const done = r as ReturnType<typeof swapHandIn> | null;
+  q.addFresh(done?.made ?? []);
+  if (done?.box) q.focus.value = t.doc.value.boxes[done.box]?.hand ? { kind: "outs", id: done.box } : { kind: "hand", id: done.box };
+}
 function clearHandOf(): void {
   const id = handFor.value!;
   q.answer((d) => clearHand(d, id), [id]);
@@ -149,7 +164,8 @@ const reportOpen = ref(false);
 watch(() => !!run.result.value && !run.running.value && !run.halted.value, (on) => { reportOpen.value = on; });
 /** 止まった理由 (tree-run の stuckWhy: エンジンの断りの文と、そこへ戻ってきた箱) */
 const haltWhy = computed(() => { const h = run.halted.value; return h ? run.result.value?.stuckWhy?.[h.box] ?? null : null; });
-const donePct = computed(() => Math.round(((run.result.value?.finished ?? 0) / (run.result.value?.n || 1)) * 100));
+const pctOf = (r: { finished: number; n: number }): number => Math.round((r.finished / (r.n || 1)) * 100);
+const donePct = computed(() => pctOf(run.result.value ?? { finished: 0, n: 1 }));
 const fmt = (x: number): string => (!Number.isFinite(x) ? "—" : x >= 100 ? x.toFixed(0) : x.toFixed(1));
 /** 下の帯の主な操作 (今の質問ごと。一覧を出している間は無し) */
 const main = computed((): { kind: string; text: string; off?: boolean; go: () => void } | null => {
@@ -219,6 +235,8 @@ function goBox(id: string): void {
         <button v-if="run.result.value && !run.running.value" type="button" data-phone-run-sum class="rounded-xl border border-amber-300/50 bg-[#1a140d] px-3 py-3 text-left" @click="reportOpen = true">
           <span class="text-[26px] font-bold tabular-nums text-amber-100">{{ fmt(run.result.value.perItem) }}</span><small class="ml-1 text-[13px] text-[#d8ccb4]">{{ tr("神 / 1 個", "div / item") }}</small>
           <span class="float-right mt-2 text-[13px]" :class="donePct < 100 ? 'text-rose-300' : 'text-emerald-300'">{{ tr(`完成 ${donePct}%`, `${donePct}% done`) }}</span>
+          <!-- 手だけ替えた後は替える前と今を並べる (S-57c) -->
+          <span v-if="run.before.value" data-phone-run-before class="block text-[12px] tabular-nums text-sky-200">{{ tr(`替える前 1 個 ${fmt(run.before.value.perItem)} 神 · 完成 ${pctOf(run.before.value)}% → 今 1 個 ${fmt(run.result.value.perItem)} 神 · 完成 ${donePct}%`, `Before ${fmt(run.before.value.perItem)} div/item · ${pctOf(run.before.value)}% done → Now ${fmt(run.result.value.perItem)} div/item · ${donePct}% done`) }}</span>
           <span class="block text-[12px] text-amber-200/80">{{ tr("結果のまとめ ›", "Summary ›") }}</span>
         </button>
         <button v-if="run.halted.value" type="button" data-phone-run-halt class="rounded-xl border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-left text-[13px] text-rose-100" @click="goBox(haltWhy?.backs?.[0] ?? run.halted.value.box)">
@@ -253,7 +271,7 @@ function goBox(id: string): void {
         </div>
       </div>
     </div>
-    <TreeHandPage v-if="handFor && t.doc.value.boxes[handFor]" :key="`h-${handFor}`" :box-id="handFor" :current="t.doc.value.boxes[handFor]!.hand" @pick="pickHand" @clear="clearHandOf" @close="handFor = null" @back="backOf" @aim="aimFor = handFor; handFor = null" />
+    <TreeHandPage v-if="handFor && t.doc.value.boxes[handFor]" :key="`h-${handFor}`" :box-id="handFor" :current="t.doc.value.boxes[handFor]!.hand" @pick="pickHand" @swap="swapHandOf" @clear="clearHandOf" @close="handFor = null" @back="backOf" @aim="aimFor = handFor; handFor = null" />
     <!-- 結果のまとめ (PC と同じ部品。スマホは下から出る形 = TreeRunReport の max-md の置き方) -->
     <div v-if="reportOpen && run.result.value && !run.running.value" data-phone-report class="fixed inset-0 z-50 bg-black/50" @click.self="reportOpen = false">
       <TreeRunReport :result="run.result.value" @close="reportOpen = false" @go="(id) => { reportOpen = false; goBox(id); }" />

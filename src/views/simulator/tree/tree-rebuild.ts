@@ -17,7 +17,8 @@ import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hand
 /** 当たりの箱を作らない手 (狙い無し・ルーン・骨を未発現のまま、S-23・S-31e・S-32。スイッチ freeNoHit)。乱数のフラクチャーの狙い無しは固定されうる狙いごとの箱 (S-41) なので除く */
 const noHitHand = (h: Hand): boolean => flag("freeNoHit") && ((!!h.free && effectOf(h.currency) !== "fracture") || isRuneHand(h.currency) || veilKeep(h));
 
-export function rebuildTree(data: PatchData, src: TreeDoc): TreeDoc {
+/** exactAt = この札の子だけ札がぴったり合う決めを引き継ぐ (手だけ替える S-57c: 同じ結果の種類・☑・側だけ。古いレシピの読み替え savedKeyOf を通さない) */
+export function rebuildTree(data: PatchData, src: TreeDoc, exactAt?: string): TreeDoc {
   const rec = toRecipeV1(src), d = premiseOf(rec, `exiledesk-tree/${TREE_SCHEMA_N}`);
   migrateStart(d);
   const picks = new Map((rec.picks ?? []).map((p) => [p.at, p]));
@@ -48,7 +49,7 @@ export function rebuildTree(data: PatchData, src: TreeDoc): TreeDoc {
       }
     }
     const kids = childKeysOf(d, id, key), exact = new Set(kids.map(([, ck]) => at + ck.slice(key.length)));
-    for (const [cid, ck] of kids) q.push([cid, ck, savedKeyOf(at, ck.slice(key.length), onPath, exact)]);
+    for (const [cid, ck] of kids) q.push([cid, ck, at === exactAt ? at + ck.slice(key.length) : savedKeyOf(at, ck.slice(key.length), onPath, exact)]);
   }
   // 前の版で人が選んだ ↩ は付け直す (S-52b の「読めてそのまま回る」)。行き先の札が今の木に無ければ要確認
   const lostBacks: RecipeOrphan[] = [];
