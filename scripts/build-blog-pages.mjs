@@ -301,9 +301,9 @@ for (const p of faqs) {
   mkdirSync(dir, { recursive: true });
   writeFileSync(resolve(dir, "faq.html"), page(lang, { title: `${p.meta.title} | ExileDesk`, desc: p.meta.description, path: "/faq", alt: hasFaq(lang === "ja" ? "en" : "ja"), og: { type: "website", image: `${SITE}/web/og.png` }, ld, body, slug: "faq" }));
   if (p.meta.ready && !p.meta.draft) { urls.push(`${l.prefix}/faq`); if (p.meta.updated || p.meta.date) lastmod.set(`${l.prefix}/faq`, p.meta.updated || p.meta.date); }
-  // About (public/ の手書き) のフッターにもリンク
+  // About (public/ の手書き) のフッターにもリンク。今の版 (<span data-ver>) は package.json から入れる (手で書かない、10-31 AdSense の洗い直し)
   const about = resolve(dir, "about.html");
-  if (existsSync(about)) writeFileSync(about, readFileSync(about, "utf8").replace(/<p class="fnav">[\s\S]*?<\/p>/, (fnav) => fnav.replace(lang === "ja" ? ">ExileDesk について</a>" : ">About</a>", (s) => `${s} · <a href="${l.prefix}/faq">${FAQ_NAME[lang]}</a>`)));
+  if (existsSync(about)) writeFileSync(about, readFileSync(about, "utf8").replace(/<p class="fnav">[\s\S]*?<\/p>/, (fnav) => fnav.replace(lang === "ja" ? ">ExileDesk について</a>" : ">About</a>", (s) => `${s} · <a href="${l.prefix}/faq">${FAQ_NAME[lang]}</a>`)).replace(/(<span data-ver>)[^<]*(<\/span>)/g, `$1v${VERSION}$2`));
   console.log(`${lang}: よくある質問 ${qs.length} 問 → ${l.prefix}/faq`);
 }
 
