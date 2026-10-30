@@ -1,7 +1,7 @@
 ---
 title: PoE2 Chaos Orb: Can the Removed Mod Roll Right Back?
 description: A PoE2 Chaos Orb can re-add the mod it just removed. On our boots the same tier came back about 1-2.3% of the time, about 9% counting other tiers.
-date: 2026-10-30
+date: 2026-11-02
 tags: Chaos Orb, odds, Greater, Perfect, rules
 craft: /?base=Drakeskin%20Boots
 ready: true

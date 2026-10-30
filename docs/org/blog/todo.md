@@ -5,13 +5,14 @@
 ## 記事の再開 (10-31 オーナー「おけ それでたてて 最近発見した仕組みとかそういう感じの奴で記事の書き方は他と同じような感じで」)
 AdSense 2 回目の不承認 (10-30) の洗い直し = 共有メモ local_e2573db4…/adsense-1031.md の 2 位「更新が止まって見える」への答え。**週 2〜3 本・本当の日付**。再申請は 11 月末か、下の記事を 6〜8 本足した後の早い方 (時期はブラック)。
 - 出し方: 書いたら `ready: true` と `draft: true` を両方付ける (開発版だけに出て、本番の build:web には入らない = build-blog-pages.mjs 133 行)。オーナーが読んで OK → `draft` を外し、`date` を本番に出す日に直す (本当の日付)。
+- 流れ (10-31 ブラック 20): 書く (ready + draft) → ブラックがオーナーに送る → OK → date を出す日に直して commit (draft のまま) → **出す日に draft を外す commit をしてブラックに知らせる** (deploy はブラック)。
 - 確かめ: `node scripts/build-blog-pages.mjs <scratchpad>/blogout --drafts` → 自分の港 1476 で配って窓なしの Chrome (使い捨て profile) で撮る。照らし合わせは記事ごとに部下 1 つ。
 - 種 (最近確かめた仕組み、今の 30 本と主題がかぶらない物。数字は記録のある物だけ):
 
 | # | slug | 主題 | 出どころ | 出す日の目安 | 状態 |
 |---|---|---|---|---|---|
-| 1 | coe-odds-parity | 1 手の確率は CoE と合う？ 高貴 15/15・カオス 11/12、外れた 1 つは偶然 | math/notes/2026-10-23-coe-odds.md・coe-chaos.md | 10-30 | 書いた・照らし合わせ済み・オーナー待ち |
-| 2 | chaos-removed-mod-returns | カオスで消した MOD は同じ 1 回でまた付く (E-30) | research/notes/2026-10-26-chaos-reroll-same-mod.md・math/notes/2026-10-31-chaos-same-mod-back.md (部下が数えた) | 11-02 | 書いた・照らし合わせ済み・オーナー待ち |
+| 1 | coe-odds-parity | 1 手の確率は CoE と合う？ 高貴 15/15・カオス 11/12、外れた 1 つは偶然 | math/notes/2026-10-23-coe-odds.md・coe-chaos.md | 10-31 | 本番 (5214d1b70、0.1.644 の出しに乗せる、オーナー「記事おけ それで出して」) |
+| 2 | chaos-removed-mod-returns | カオスで消した MOD は同じ 1 回でまた付く (E-30) | research/notes/2026-10-26-chaos-reroll-same-mod.md・math/notes/2026-10-31-chaos-same-mod-back.md (部下が数えた) | **11-02** | オーナー OK 10-31「11-02で出して」。date は 11-02 に直した、draft のまま。**11-02 に draft を外す commit → ブラックへ** |
 | 3 | boots-res-craft | 移動速度 T1 固定の靴に耐性 T1 を 2 つ、費用と打ち方 | math/notes/2026-10-23-boots-res.md | 11-04 | 未着手 |
 | 4 | abyss-essence-limits | アビスのエッセンスが打てる部位・打てない状態 (E-52) | research/notes/2026-10-22-abyss-essence-limits.md | 11-07 | 未着手 |
 | 5 | chaos-over-limit-void | 上限を超えた側を消すカオスは不成立・オーブも減らない (E-25) | engine.md E-25、オーナー 10-14、ジン 11 本目の調べ 10-26 | 11-09 | 未着手 (具体の例を記録から探す) |
