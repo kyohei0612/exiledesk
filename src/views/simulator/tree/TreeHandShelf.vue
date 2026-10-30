@@ -102,11 +102,11 @@ const echo = computed(() => omens.value.includes(ECHO));
 /** 付く MOD を選べない手 (足す・カオス。当たりの箱にする MOD のチェックと狙い無しを出す) */
 const canFree = computed(() => !!held.value && (FREE_EFFECTS.includes(effectOf(held.value)) || (effectOf(held.value) === "fracture" && !fractureMarks(t.doc.value).length)));
 /**
- * Esc: 新しい手で持っている時は持った物を離すだけ (窓は閉じない)。2 回目の Esc・今の手を替えている時は窓 (ModalShell) が閉じる = 何も替えない
+ * Esc: 持っている時は持った物を離すだけ (窓は閉じない。手のある箱も右クリックと同じ = 窓の文「Esc で手放す」どおり、10-31 ブラック 22)。2 回目の Esc で窓 (ModalShell) が閉じる = 何も替えない
  * (オーナー 10-22「枠の外・Esc で取り消し」)。前は window の捕まえる段で聞いていたが、窓の Esc が先に受けて持ったまま窓ごと閉じていた (10-27 モンキー 7 の残り)。
  * 共通の useDismiss に載せると、窓は中で開いている物を先に閉じる (cancelTopIn)。窓の中を押しても離さない (離すのは同じ札・右クリック・Esc)
  */
-useDismiss(() => !props.current && !!held.value, [() => document.querySelector<HTMLElement>("[data-tree-shelf]")], () => release(), { swallow: false, keep: '[aria-modal="true"]' });
+useDismiss(() => !!held.value, [() => document.querySelector<HTMLElement>("[data-tree-shelf]")], () => release(), { swallow: false, keep: '[aria-modal="true"]' });
 /** 持つ / 離す (クラフト台と同じ: 同じ物をもう一度押す・右クリック・Esc = 離す。お告げの欄も閉じる、オーナー 10-22) 棚・打てるかは use-sim-shelf */
 /** この箱が品質だけ上げる手の後 (通り抜け) か */
 const afterQuality = computed(() => afterQualityOf(t.doc.value, props.boxId));
