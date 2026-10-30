@@ -32,8 +32,8 @@ import { flag } from "../../web/release-flags";
 import { isPhoneWidth } from "../../utils/use-phone";
 
 const GRADE_JA: Record<Grade, [string, string]> = { perfect: ["完全", "Perfect"], greater: ["上級", "Greater"], base: ["無印", "Regular"] };
-/** 1 通りの人数。スマホは 10 人 (2026-10-19 スマホ相当で 100 人は 35 秒・画面が最長 9 秒固まった。オーナー「スマホだと 10 人だな規模感的に」) */
-const RUNS = isPhoneWidth() ? 10 : 100;
+/** 1 通りの人数。PC は 30 人 (M-61、スイッチ spam30。オーナー 10-31「後エミュのスパムだけど30人にして今100っしょなげーわパソコンでも」)。スマホは 10 人 (2026-10-19 スマホ相当で 100 人は 35 秒・画面が最長 9 秒固まった。オーナー「スマホだと 10 人だな規模感的に」) */
+const RUNS = isPhoneWidth() ? 10 : flag("spam30") ? 30 : 100;
 type Step = { k: string | null; ja: string; en: string };
 /** 道ごと: 名前・主のカレンシー・等級・打ち方の決まり (route-race.ts と同じ。絵と文) */
 const ROUTES: Array<{ route: RouteKind; ja: string; en: string; main: string; grades: Grade[]; steps: Step[] }> = [
@@ -232,7 +232,8 @@ const placeMiss = ref(false);
 const placing = ref(false);
 /** 計算の進み: 終わった人数 (全部の道 × 等級を通して。読み込み中の n/m) */
 const peopleDone = ref(0);
-const placeTitle = computed(() => tr("この道の一番安い等級で 1 人を当たるまで打ち、その形をクラフト台に置く (工程に 1 行、費用は 100 人の平均。1 つ戻す・Ctrl+Z で消える)", "Spam once with this route's cheapest grade until it hits and put that item on the craft stage (one step, cost = average of 100; Undo / Ctrl+Z removes it)"));
+const placePeople = flag("spam30") ? RUNS : 100;
+const placeTitle = computed(() => tr(`この道の一番安い等級で 1 人を当たるまで打ち、その形をクラフト台に置く (工程に 1 行、費用は ${placePeople} 人の平均。1 つ戻す・Ctrl+Z で消える)`, `Spam once with this route's cheapest grade until it hits and put that item on the craft stage (one step, cost = average of ${placePeople}; Undo / Ctrl+Z removes it)`));
 async function placeHit(r: RaceRow | null): Promise<void> {
   const tt = t.value;
   if (!r || !tt || !canLuck(r) || placing.value) return;

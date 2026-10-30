@@ -3,6 +3,7 @@
  * 運試しの欄 (StageRouteLuck.vue) と道のカード (StageRoutesPage.vue) が使う。クラフト台の形が変わるのはこれだけ (「← クラフトへ戻る」は開いた時のまま)。
  * 起点 = スパムシミュを開いた時のクラフト台 (開いている間は変わらない) の後ろに 1 行 (2026-10-22 オーナー)
  */
+import { flag } from "../../web/release-flags";
 import { mulberry32, type StageItem } from "../../services/craft-stage/engine";
 import { craftStage as s, priceOf } from "../../state/craft-stage";
 import { routesLuck, routesOpen, routesTarget } from "../../state/web-page";
@@ -14,10 +15,10 @@ import { type RaceRow, type RaceTarget, type RoutePrep, forcesOf, spamKey } from
  * 暗黙・品質・ソケット・ルーンはクラフト台のまま (apply-spam.ts)。1 つ戻すでこの行ごと消え、再生・手順 JSON でも同じ形に飛ぶ。
  * avg = 道のカードから (費用は 100 人の平均) / 運試しから (その 1 人の費用)。打てなければページを閉じない
  */
-export function placeOnStage(it: StageItem, row: Pick<RaceRow, "route" | "grade">, o: { cost: number; n: number; avg: boolean }): boolean {
+export function placeOnStage(it: StageItem, row: Pick<RaceRow, "route" | "grade" | "people">, o: { cost: number; n: number; avg: boolean }): boolean {
   const before = s.log.value[s.log.value.length - 1];
   s.hold(null);
-  s.use(spamKey({ route: row.route, grade: row.grade, cost: o.cost, n: o.n, avg: o.avg, rarity: it.rarity, mods: forcesOf(it) }));
+  s.use(spamKey({ route: row.route, grade: row.grade, cost: o.cost, n: o.n, avg: o.avg, ...(flag("spam30") ? { people: row.people } : {}), rarity: it.rarity, mods: forcesOf(it) }));
   if (s.log.value[s.log.value.length - 1] === before) return false;
   routesLuck.value = false;
   routesTarget.value = null;

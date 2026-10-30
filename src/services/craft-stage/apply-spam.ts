@@ -11,8 +11,8 @@ import { tr } from "../../i18n/lang";
 
 export const SPAM = "spam:";
 export const isSpam = (key: string): boolean => key.startsWith(SPAM);
-/** 鍵の中身。avg = 道のカードから (費用は 100 人の平均) / 運試しから (その 1 人の費用) */
-interface SpamStep { route: string; grade: string; cost: number; n: number; avg: boolean; rarity: StageItem["rarity"]; mods: Force[] }
+/** 鍵の中身。avg = 道のカードから (費用は people 人の平均) / 運試しから (その 1 人の費用)。people の無い前の手は 100 人 */
+interface SpamStep { route: string; grade: string; cost: number; n: number; avg: boolean; people?: number; rarity: StageItem["rarity"]; mods: Force[] }
 
 export function spamKey(s: SpamStep): string {
   return SPAM + JSON.stringify(s);
@@ -42,10 +42,10 @@ export function applySpam(data: PatchData, item: StageItem, key: string): StageA
 
 const ROUTE_JA: Record<string, [string, string]> = { augment: ["増強スパム", "Augment spam"], chaos: ["カオススパム", "Chaos spam"], exalt: ["高貴スパム", "Exalt spam"] };
 const GRADE_JA: Record<string, [string, string]> = { base: ["無印", "Regular"], greater: ["上級", "Greater"], perfect: ["完全", "Perfect"] };
-/** 工程の 1 行の名前 (例「カオススパム・無印 (100 人の平均、この 1 人は 17 手)」) */
+/** 工程の 1 行の名前 (例「カオススパム・無印 (30 人の平均、この 1 人は 17 手)」) */
 export function spamName(s: SpamStep, en: boolean): string {
   const r = ROUTE_JA[s.route] ?? [s.route, s.route], g = GRADE_JA[s.grade] ?? [s.grade, s.grade];
   return en
-    ? `${r[1]} (${g[1]}) — ${s.avg ? `average of 100, this one hit on use ${s.n}` : `luck test, ${s.n} uses`}`
-    : `${r[0]}・${g[0]} (${s.avg ? `100 人の平均、この 1 人は ${s.n} 手` : `運試し ${s.n} 手`})`;
+    ? `${r[1]} (${g[1]}) — ${s.avg ? `average of ${s.people ?? 100}, this one hit on use ${s.n}` : `luck test, ${s.n} uses`}`
+    : `${r[0]}・${g[0]} (${s.avg ? `${s.people ?? 100} 人の平均、この 1 人は ${s.n} 手` : `運試し ${s.n} 手`})`;
 }
