@@ -15,10 +15,10 @@ AdSense 2 回目の不承認 (10-30) の洗い直し = 共有メモ local_e2573d
 | 2 | chaos-removed-mod-returns | カオスで消した MOD は同じ 1 回でまた付く (E-30) | research/notes/2026-10-26-chaos-reroll-same-mod.md・math/notes/2026-10-31-chaos-same-mod-back.md (部下が数えた) | **11-02** | オーナー OK 10-31「11-02で出して」。date は 11-02 に直した、draft のまま。**11-02 に draft を外す commit → ブラックへ** |
 | 3 | boots-res-craft | 移動速度 T1 固定の靴に耐性 T1 を 2 つ、費用と打ち方 | math/notes/2026-10-23-boots-res.md | **11-04** | オーナー OK 10-31「11-04で出して」。date 11-04・draft のまま。**11-04 にブラックの一言で draft を外す** |
 | 4 | abyss-essence-limits | アビスのエッセンスが打てる部位・打てない状態 (E-52) | research/notes/2026-10-22-abyss-essence-limits.md | **11-07** | オーナー OK 10-31「11-07で出して」。date 11-07・draft のまま。**11-07 にブラックの一言で draft を外す** |
-| 5 | chaos-over-limit-void | 上限を超えた側を消すカオスは不成立・オーブも減らない (E-25) | engine.md E-25、オーナー 10-14、ジン 11 本目の調べ 10-26 | 11-09 | 未着手 (具体の例を記録から探す) |
-| 6 | perfect-essence-full-side | パーフェクトエッセンスは埋まった側から必ず 1 つ消す (E-51) | engine.md E-51、オーナー 10-14 | 11-11 | 未着手 |
-| 7 | bone-needs-clear-desecrated | 冒涜の MOD があると骨は打てない、やり直す順 (E-60) | engine.md E-60、オーナー 10-24 | 11-14 | 未着手 |
-| 8 | fracture-counts-desecrated | フラクチャーの「4 つ以上」に冒涜も数え、固定は普通の MOD から (E-42) | engine.md E-42、オーナー 10-28 | 11-16 | 予備 |
+| 5 | whittling-omen-bait | 削減のお告げはそのままだと 96% 壊れる、エッセンスの餌で左側の抹消より 2 割安い | math/notes/2026-10-22-gold-ring-prefix.md (追記 1〜3) | 11-09 | 書いた・照らし合わせ済み・オーナー待ち |
+| 6 | restart-or-continue | 途中の形から作り直すべきか: 素の消去が一番安い・右側の消去のお告げは損 | math/notes/2026-10-22-gold-ring-midway.md | 11-11 | 未着手 |
+| 7 | amulet-four-aims | アミュレットの狙い 4 つは打つ順で 100 倍違う (約 700 神 / 9 万神) | math/notes/2026-10-22-amulet-4aims.md (外の正解なし、エンジンの見張りだけ) | 11-14 | 未着手 |
+| 予備 | (外した種) | 上限を超えた側のカオス (E-25) は liquid-emotions-jewels と重なる・パーフェクトエッセンスの側 (E-51)・骨と冒涜 (E-60)・フラクチャーの数え方 (E-42) は数字の記録が無い。数字が要るなら部下にエンジンで数えさせて math/notes に残してから | engine.md | — | 外した (10-31) |
 
 ## 今の状態 (10-22 夜)
 - 記事 30 本 (日) / 29 本 (英、x-share-bug は日本語だけ) は合格の形・ready。本番は v0.1.590 (7884f2f6) で公開済み。~~新しい記事は足さない (オーナー「30 本で十分」)~~ → 10-31 に再開 (上)。
