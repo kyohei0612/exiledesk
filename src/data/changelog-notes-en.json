@@ -1,4 +1,9 @@
 {
+  "0.1.645": [
+    "Simulator: in trees without fracture marks, an untargeted Fracturing Orb now splits misses only by side (prefix / suffix), not by whether the mod came from an essence",
+    "Simulator: the mod picker for Reveal now uses the same layout as the emulator's mod list, with the same odds for Bone crafts. Mods and tiers the Bone can't reveal, and mods in the same group as one already on the item, are greyed out",
+    "Simulator: after adding a craft or jumping with \"! Unset ▸ Next\", the view now also brings the + under the box into view (it could be hidden under the bottom bar)"
+  ],
   "0.1.644": [
     "Site: the auto-generated base list pages (/bases/) are closed and the \"Bases\" link is gone from the header and footer. Bases can still be picked in the Emulator",
     "Site: the About page now shows the operator (chocobanana, an individual) with links to X and YouTube",
