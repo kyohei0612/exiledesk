@@ -1,0 +1,70 @@
+{
+ "schema": "ai-tree/1",
+ "name": "gold-ring-mid-from-fractured",
+ "note": "オーナーの完成形。プレのレアリティがフラクチャー (10-31 の言葉)。クールダウンは冒涜の MOD。ベースの代金は後で足す",
+ "base": "Gold Ring",
+ "itemLevel": 82,
+ "basePrice": 0,
+ "aims": {
+  "evasion": {
+   "mods": [
+    "Rings/EvasionRating"
+   ],
+   "tier": 1
+  },
+  "rarityP": {
+   "mods": [
+    "Rings/ItemFoundRarityIncreasePrefix"
+   ],
+   "tier": 1,
+   "fractured": true
+  },
+  "ward": {
+   "mods": [
+    "Rings/PerfectEssence_BaseRunicWard"
+   ]
+  },
+  "rarityS": {
+   "mods": [
+    "Rings/ItemFoundRarityIncrease"
+   ],
+   "tier": 1
+  },
+  "allres": {
+   "mods": [
+    "Rings/AllResistances"
+   ],
+   "tier": 1
+  },
+  "cooldown": {
+   "mods": [
+    "Rings/Desecrated_CooldownRecovery"
+   ]
+  }
+ },
+ "goal": {
+  "evasion": 1,
+  "rarityP": 1,
+  "ward": 1,
+  "rarityS": 1,
+  "allres": 1,
+  "cooldown": 1
+ },
+ "goalQuality": {
+  "min": 40,
+  "tag": "defences"
+ },
+ "start": {
+  "rarity": "rare",
+  "mods": [
+   {
+    "mod": "Rings/ItemFoundRarityIncreasePrefix",
+    "tier": "T1",
+    "fractured": true
+   }
+  ]
+ },
+ "solve": {
+  "opening": true
+ }
+}

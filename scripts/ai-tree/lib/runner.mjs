@@ -19,7 +19,7 @@ export function makeRunner(M, data, r, price, starts) {
   const limits = { ...DEFAULT_LIMITS, ...r.limits };
   const table = new Proxy({}, { get: (_, k) => (k === "divine" ? 1 : k === "base" ? r.basePrice ?? 0 : price(k)) });
   const spentOf = (n) => costOf(n, table);
-  const finished = (it) => targetsDone(M, aims, r.goal, it);
+  const finished = (it) => targetsDone(M, aims, r.goal, it, r.goalQuality);
   // 形で書いた規則 (solve の答え) は引き表で 1 回で引く
   const byState = new Map();
   r.rules.forEach((x, i) => { if (x.if?.state) (byState.get(x.if.state) ?? byState.set(x.if.state, []).get(x.if.state)).push(i); });
@@ -144,6 +144,16 @@ export function makeStarts(M, data, r, save) {
     return (i) => { const s = save.items[i % save.items.length]; return { item: s.item, n: carry ? s.n : {} }; };
   }
   const spec = { ...r.start };
-  delete spec.save; delete spec.carry;
-  return (_i, rng) => ({ item: M.startFrom(data, r.base, r.itemLevel ?? 82, spec, Math.floor(rng() * 2 ** 31)), n: { base: 1 } });
+  delete spec.save; delete spec.carry; delete spec.qualityTag; delete spec.place;
+  const tag = r.start?.qualityTag;
+  return (_i, rng) => {
+    let item = M.startFrom(data, r.base, r.itemLevel ?? 82, spec, Math.floor(rng() * 2 ** 31));
+    // 途中の形を組むだけの手 (エッセンスの MOD は普通の指名で置けない)。打つ手の中では断る (S-173)
+    for (const id of r.start?.place ?? []) {
+      const res = M.applyCurrency(data, item, `force:${id}||e`, rng);
+      if (!res.applied) throw new Error(`始めの形に置けない: ${id} ${res.reason}`);
+      item = res.item;
+    }
+    return { item: tag ? { ...item, qualityTag: tag } : item, n: { base: 1 } };
+  };
 }

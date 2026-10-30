@@ -110,9 +110,10 @@ if (cmd === "hands") {
     const rs = personSeeds(M, seed0 * 1000 + round, trial).map((s, i) => runOne(i, s, rec));
     const x = report(rs, price, recipe, 0);
     const score = objective === "budget" ? -(x.withinBudget ?? x.doneRate) : x.costPerItem == null ? null : objective === "steps" ? x.steps.perItem : x.costPerItem + lambda * x.steps.perItem;
+    if (process.env.AI_TREE_VERBOSE) console.error("回", round, JSON.stringify(x.ends), JSON.stringify(x.stuck).slice(0, 300), JSON.stringify(Object.entries(rec.hits).sort((p, q) => q[1] - p[1]).slice(0, 6).map(([i, n]) => [recipe.rules[i].note, recipe.rules[i].if?.state ?? recipe.rules[i].if?.shape ?? "", n])).slice(0, 700));
     return { score, doneRate: x.doneRate, visits: new Map([...rec.visits].map(([k, v]) => [k, v.items])) };
   };
-  const { recipe, info, think } = solve(M, data, r, price, cls, starts, { seed: seed0, samples: num("samples", 12), reps: num("reps", 6), maxStates: num("max-states", 6000), rounds: num("rounds", 6), top: num("top", 6), lambda, objective, budget, bands: num("bands", 40), startCount: save?.items.length, evaluate });
+  const { recipe, info, think } = solve(M, data, r, price, cls, starts, { seed: seed0, samples: num("samples", 12), reps: num("reps", 6), maxStates: num("max-states", 6000), rounds: num("rounds", 6), top: num("top", 6), lambda, objective, budget, bands: num("bands", 40), startCount: save?.items.length, h: num("h", 0), deadline: flags.time ? Date.now() + num("time", 0) * 1000 : undefined, evaluate });
   if (!recipe) die(`届かない: ${JSON.stringify(info)}`);
   const name = `${r.name}-${objective}${objective === "budget" ? budget : ""}${info.lambda ? `-l${info.lambda}` : ""}`;
   const solved = { ...recipe, name };
@@ -124,7 +125,7 @@ if (cmd === "hands") {
   const res = runRecipe(solved, save, price, `solve ${objective}`, seed0 + 7777, { think: name });
   // 計算とのずれ: 見積もりと、選ぶのに使わなかった種の実測
   const estimate = info.history.at(-1).estimate, realNow = objective === "cost" ? res.costPerItem : objective === "steps" ? res.steps.perItem : res.withinBudget;
-  out({ solved: path, solve: info, gap: { estimate, real: realNow, off: realNow ? +((realNow - estimate) / realNow).toFixed(3) : null }, ...res, solveMs: Date.now() - t0 });
+  out({ solved: path, basePrice: r.basePrice ?? 0, basesPerItem: res.hands.base?.perItem ?? null, solve: info, gap: { estimate, real: realNow, off: realNow ? +((realNow - estimate) / realNow).toFixed(3) : null }, ...res, solveMs: Date.now() - t0 });
 } else if (cmd === "trace") {
   // 1 人の道を再現して見せる (S-172: 頼んだ時だけ)
   const { r, save, price } = mustRun(args[0]);
