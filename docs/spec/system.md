@@ -53,7 +53,7 @@
 
 ### B. 画面の全体 (ページ)
 
-- **Y-10 クラフト台は `/`、ほかの画面は別のページ**: エミュのクラフト台は `/`、それ以外は `?page=<名前>` (base・routes・feedback・guide・recipes・sim-base / sim-mods / sim-tree・daily・skins)、コースは `?course=<id>`。ページごとに URL と題を変え、履歴に積む (戻るで前のページ)。
+- **Y-10 クラフト台は `/`、ほかの画面は別のページ**: エミュのクラフト台は `/`、それ以外は `?page=<名前>` (base・routes・feedback・guide・recipes・sim-base / sim-mods / sim-tree・daily・skins)、コースは `?course=<id>`。ページごとに URL と題を変え、履歴に積む (戻るで前のページ)。daily (デイリーチャレンジ、開発版だけ) の中身は未決で tutorial.md ⑦ の 1 行。
   - 有効。出どころ: オーナー 10-18 (メモ ads-page-model)、10-22〜25 (web/page.ts の頭)。確かめ: `src/web/page.ts` の表と画面。
 - **Y-11 新しい機能はページを移る形で作る**: 新しい機能・チュートリアルは「1 つの画面の中の切り替え」でなく、ページを移る形 (URL・題が変わる) で考える。MOD 一覧は重ねる窓のまま (M-17)。
   - 有効。出どころ: オーナー 10-18「チュートリアルも今後の実装もなにかとページ変える形にする」(メモ ads-page-model)。確かめ: 画面。
