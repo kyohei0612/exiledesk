@@ -176,6 +176,8 @@
   - 有効。出どころ: オーナー OK 10-22 (「有用性の低いコンテンツ」対策、build-seo-pages.mjs)、10-25 (コスメも同じ)。確かめ: dist-web の meta robots と sitemap.xml。
 - **Y-83 検索の入口は人が書いた記事**: 検索に出すページはブログ・FAQ など人が書いて独自の数字のある物 (書き方は docs/org/blog/README.md)。巡回だけの Bot (SemrushBot) は robots.txt で止める。
   - 有効。出どころ: オーナー 10-22 (AdSense 不合格への答え)、10-25 (robots.txt)。確かめ: public/robots.txt、Search Console。
+- **Y-84 ベース一覧 (/bases/) へは固定の導線を置かない**: ヘッダー・フッター (読み物の HTML・ビルドの台本・クラフト台の WebFooter.vue)・トップ (web.html の noscript)・固定ページの本文から /bases/ へのリンクを外す。ページ自体と noindex (Y-82)・各ベースのページどうしのリンク・`/?base=` (Y-16) はそのまま残す。
+  - 仮 (オーナーの OK 待ち、変更は共有メモ blog-unlink-bases.patch・前後の絵 blog-about-before/after.png)。出どころ: オーナー 10-31「おけ それでたてて」(AdSense の洗い直し adsense-1031.md の 3 位 b)。確かめ: dist-web を grep して `href="/bases/"` がベースのページの外に 0。
 
 ### J. セキュリティ
 
