@@ -373,7 +373,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <details data-tree-goal-help-wrap :open="helpOpen" @toggle="helpOpen = ($event.target as HTMLDetailsElement).open">
           <summary class="cursor-pointer text-[12px] opacity-70 md:hidden">{{ tr("狙い・フラクチャーの使い方", "How targets and fracture work") }}</summary>
           <ul data-tree-goal-help class="flex list-disc flex-col gap-0.5 pl-4 text-[12px] opacity-70">
-            <li v-if="ATTACH" data-tree-goal-attach-help>{{ tr("付ける: 付け方 (ふつう・フラクチャー・冒涜・エッセンス) を選ぶ。その付け方で出ない物は灰色で、押すと訳。冒涜・エッセンスは付け方の覚えだけ (何個でも)", "Add: pick how it is added (Normal / Fracture / Desecrate / Essence). Greyed ways can't give that mod; click for why. Desecrate and Essence are only notes (any number)") }}</li>
+            <li v-if="ATTACH" data-tree-goal-attach-help>{{ tr("付ける: 付け方 (ふつう・フラクチャー・冒涜) を選ぶ。その付け方で出ない物は灰色で、押すと訳。冒涜は付け方の覚えだけ (何個でも)。エッセンスの MOD は「ふつう」で付ける", "Add: pick how it is added (Normal / Fracture / Desecrate). Greyed ways can't give that mod; click for why. Desecrate is only a note (any number). Essence mods use Normal") }}</li>
             <li v-for="(line, k) in HELP" :key="k" :class="line[2] ? 'max-md:hidden' : ''">{{ tr(line[0], line[1]) }}</li>
           </ul>
         </details>
