@@ -97,6 +97,7 @@ const answerText = computed((): string => {
   if (state.value === "open") return defRetry.value ? retrySay.value : tr("この場合は次の手を選ぶ", "Then pick the next craft"); // (既定) は折れないよう別に出す
   if (state.value === "later") return tr("この場合は次の手を選ぶ", "Then pick the next craft");
   if (state.value === "done") return tr("この場合は完成", "Then it's done");
+  if (state.value === "fail") return tr("この場合は失敗 (ここで終わり)", "Then it fails (ends here)");
   if (backKind.value === "retry" || (backKind.value === "start" && parent.value === "start")) return retrySay.value;
   return route.value ? tr(`この場合は ${route.value.replace(/^[↩→]\s*/, "")}`, `Then ${route.value.replace(/^[↩→]\s*/, "")}`) : "";
 });
@@ -199,7 +200,7 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
     <button v-else-if="retryHand" type="button" data-phone-out-hand class="w-full rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-center text-[14px] text-amber-50" @click="emit('pick', boxId)">{{ tr(`${handLabel(retryHand)}${/\)$/.test(handLabel(retryHand)) ? " " : ""}を選択`, `Selected: ${handLabel(retryHand)}`) }}</button>
     <template v-else>
       <!-- 決まった答え (完成・ほかの箱へ) だけ文で。まだなら何も出さない (既定は無い) -->
-      <p v-if="state === 'back' || state === 'done'" data-phone-out-now class="min-w-0 break-words font-bold" :class="state === 'done' ? 'text-emerald-300' : 'text-cyan-200'">{{ answerText }}</p>
+      <p v-if="state === 'back' || state === 'done' || state === 'fail'" data-phone-out-now class="min-w-0 break-words font-bold" :class="state === 'done' ? 'text-emerald-300' : state === 'fail' ? 'text-rose-300' : 'text-cyan-200'">{{ answerText }}</p>
       <!-- まだ答えの無い結果は下の赤い帯「この状態で打つカレンシーを選ぶ」だけ (真ん中に同じ枠を重ねない、10-27 昼オーナー)。完成・ほかの箱へにした結果は、ここから手に替えられる -->
       <button v-if="state !== 'open' && state !== 'later'" type="button" data-phone-out-pick-hand class="w-full rounded-xl border border-white/15 bg-white/[0.04] px-3 py-3 text-center text-[14px] text-[#d8ccb4]" @click="emit('pick', boxId)">{{ tr("この状態で打つカレンシーを選ぶ", "Choose the currency to use on this item") }}</button>
     </template>
