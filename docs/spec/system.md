@@ -172,12 +172,12 @@
   - 有効。出どころ: オーナー 10-10 (メモ web-english)、10-17 (?lang=)。確かめ: `src/i18n/lang.ts`、英語の画面で日本語 0 (U-83)。
 - **Y-81 読み物の英語は /en/ の同じ道**: 読み物の英語は `/en/<同じ道>` に置き、hreflang で日英を結ぶ。英語のページからツールへは `/?lang=en&…`。canonical は exiledesk.com。
   - 有効。出どころ: 10-17 (/en/bases/)、10-22 (ブログ、docs/org/blog/README.md 6)。確かめ: dist-web の head。
-- **Y-82 自動で作った一覧は noindex**: データから自動で作った一覧 (/bases/・/cosmetics/) は noindex (follow) にしてサイトマップから外す。ページとリンクは人が使う一覧として残す。index に戻すのはオーナーの OK の後。
-  - 有効。出どころ: オーナー OK 10-22 (「有用性の低いコンテンツ」対策、build-seo-pages.mjs)、10-25 (コスメも同じ)。確かめ: dist-web の meta robots と sitemap.xml。
+- **Y-82 自動で作った一覧は noindex**: データから自動で作った一覧 (/cosmetics/) は noindex (follow) にしてサイトマップから外す。ページとリンクは人が使う一覧として残す。index に戻すのはオーナーの OK の後。ベースの一覧 (/bases/) は 10-31 に撤回して Y-84 へ (ページごと消して 410)。
+  - 有効 (/bases/ の分は撤回、Y-84)。出どころ: オーナー OK 10-22 (「有用性の低いコンテンツ」対策、build-seo-pages.mjs)、10-25 (コスメも同じ)。確かめ: dist-web の meta robots と sitemap.xml。
 - **Y-83 検索の入口は人が書いた記事**: 検索に出すページはブログ・FAQ など人が書いて独自の数字のある物 (書き方は docs/org/blog/README.md)。巡回だけの Bot (SemrushBot) は robots.txt で止める。
   - 有効。出どころ: オーナー 10-22 (AdSense 不合格への答え)、10-25 (robots.txt)。確かめ: public/robots.txt、Search Console。
-- **Y-84 ベース一覧 (/bases/) へは固定の導線を置かない**: ヘッダー・フッター (読み物の HTML・ビルドの台本・クラフト台の WebFooter.vue)・トップ (web.html の noscript)・固定ページの本文から /bases/ へのリンクを外す。ページ自体と noindex (Y-82)・各ベースのページどうしのリンク・`/?base=` (Y-16) はそのまま残す。
-  - 仮 (オーナーの OK 待ち、変更は共有メモ blog-unlink-bases.patch・前後の絵 blog-about-before/after.png)。出どころ: オーナー 10-31「おけ それでたてて」(AdSense の洗い直し adsense-1031.md の 3 位 b)。確かめ: dist-web を grep して `href="/bases/"` がベースのページの外に 0。
+- **Y-84 ベースのページ (/bases/・/en/bases/) は消して 410 を返す**: build-seo-pages.mjs はベースのページを作らず (MAKE_BASES = false、サイトマップだけ書く)、`/bases`・`/bases/*`・`/en/bases`・`/en/bases/*` は Worker (server/web/gone.js) が 410 Gone と小さい案内 (クラフト台・ブログへ) を返す。ヘッダー・フッター (読み物の HTML・ビルドの台本・クラフト台の WebFooter.vue)・トップ (web.html の noscript)・固定ページの本文から「ベース一覧」の導線を日英いっしょに外す。robots.txt では止めない (Googlebot が 410 を見に来られるように)。Search Console の「削除」で接頭辞 `https://exiledesk.com/bases/`・`https://exiledesk.com/en/bases/` を隠すのはオーナー。`/?base=` (Y-16) はそのまま。410 の分だけ Worker を通るのは Y-101 の例外 (Bot の巡回が残る間だけ枠を食う)。
+  - 仮 (オーナー OK「Aで」10-31 済み、導線の見た目の OK 待ち。変更は共有メモ blog-bases-410.patch を 1 つの出しで当てる、前後の絵 blog-about-before/after.png)。出どころ: オーナー 10-31「ベースが消えないんだよな これいみないんじゃないかと思うが」→ 案 A (410 + Search Console の削除)「Aで」(ブラック 20 経由、リサーチ adsense-sc-1031.md)。前の noindex で残す決め (Y-82 の /bases/ の分、10-22) は撤回。確かめ: 出した後に `curl -I https://exiledesk.com/bases/gold-ring` が 410、dist-web に bases/ が無い、sitemap に /bases が無い、scripts/app-watch/static.mjs の Y-101 (/bases/* が run_worker_first にある)。
 
 ### J. セキュリティ
 
