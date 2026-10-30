@@ -8,7 +8,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { tr } from "../../../i18n/lang";
 import { simOp } from "../../../web/track";
-import { markRan, startTutorial, stopTutorial, tutOn, tutTick, useSimTutorial } from "./use-sim-tutorial";
+import { markRan, noteClick, startTutorial, stopTutorial, tutOn, tutPhone, tutTick, useSimTutorial } from "./use-sim-tutorial";
 import { TUT_EDITABLE, tutDirty } from "./tut-data";
 import SimTutorialEditor from "./SimTutorialEditor.vue";
 import { isPhoneWidth } from "../../../utils/use-phone";
@@ -32,7 +32,7 @@ const pos = ref<{ left: number; top: number } | null>(null);
 let raf = 0, timer = 0;
 /** 札の置き場: 光る所の右 → 左 → 下 → 上の順に、画面に収まって重ならない所。光る所が無ければ左下 */
 function place(r: { x: number; y: number; w: number; h: number } | null): void {
-  const W = window.innerWidth, H = window.innerHeight, cw = cardEl.value?.offsetWidth ?? 340, ch = cardEl.value?.offsetHeight ?? 160, g = 14, m = 8;
+  const z = zoomOf(), W = window.innerWidth / z, H = window.innerHeight / z, cw = cardEl.value?.offsetWidth ?? 340, ch = cardEl.value?.offsetHeight ?? 160, g = 14, m = 8;
   if (!r) { pos.value = null; return; }
   const clampY = (y: number): number => Math.min(Math.max(m, y), H - ch - m), clampX = (x: number): number => Math.min(Math.max(m, x), W - cw - m);
   const tries = [
@@ -44,10 +44,12 @@ function place(r: { x: number; y: number; w: number; h: number } | null): void {
   const t = tries.find((x) => x.ok) ?? { left: m, top: H - ch - m };
   pos.value = { left: Math.round(t.left), top: Math.round(t.top) };
 }
+/** 画面の幅で html に掛かる zoom (1440 幅で 0.87 など)。getBoundingClientRect は zoom の後の値なので、fixed の left / top に入れる時は割る */
+const zoomOf = (): number => Number.parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
 function frame(): void {
   const el = tutOn.value && !narrow.value ? targetEl(tut.target.value) : null;
-  const r = el?.getBoundingClientRect();
-  ring.value = r && r.width > 0 ? { x: r.left - 4, y: r.top - 4, w: r.width + 8, h: r.height + 8 } : null;
+  const r = el?.getBoundingClientRect(), z = zoomOf();
+  ring.value = r && r.width > 0 ? { x: r.left / z - 4, y: r.top / z - 4, w: r.width / z + 8, h: r.height / z + 8 } : null;
   // 光る所が動かなければ札も動かない (打っている間も)。書く所を開いて背が伸びた時は画面に収まる所へ
   place(ring.value);
   raf = requestAnimationFrame(frame);
@@ -57,12 +59,15 @@ onMounted(() => {
   // 窓・棚の中の変わり目 (持った・お告げを掛けた) は木の中身に出ないので、刻みで求め直す
   timer = window.setInterval(() => {
     narrow.value = isPhoneWidth();
+    tutPhone.value = narrow.value;
     if (!tutOn.value) return;
     tutTick.value++;
-    if (tut.step.value?.kind === "run" && document.querySelector("[data-tree-run-report]")) markRan();
+    if (tut.step.value?.kind === "run" && document.querySelector("[data-tree-run-report], [data-phone-run-report]")) markRan();
   }, 250);
+  // 帯の「次へ」・テストを押したか (木に出ないので押しを拾う。capture = 押しは止めない)
+  document.addEventListener("click", noteClick, true);
 });
-onBeforeUnmount(() => { cancelAnimationFrame(raf); clearInterval(timer); });
+onBeforeUnmount(() => { cancelAnimationFrame(raf); clearInterval(timer); document.removeEventListener("click", noteClick, true); });
 // 何手目まで進んだかの記録 (1 手進むたびに 1 回)
 watch(() => (tutOn.value ? tut.index.value : -1), (i) => { if (i >= 0) simOp("tutorial-step", i + 1); });
 /** 木がチュートリアルの木でなくなった (別のレシピを開いた・ベースを替えた) */
@@ -74,7 +79,8 @@ function quit(): void { if (tutDirty.value && !window.confirm("保存してい�
 </script>
 
 <template>
-  <template v-if="tutOn && !narrow">
+  <!-- body へ出す (木のページの中は transform のある親があり、fixed の枠が親の分ずれた) -->
+  <Teleport to="body"><template v-if="tutOn && !narrow">
     <div v-if="ring && !off" data-tut-ring aria-hidden="true" class="tut-ring pointer-events-none fixed z-[1200] rounded-lg" :style="{ left: `${ring.x}px`, top: `${ring.y}px`, width: `${ring.w}px`, height: `${ring.h}px` }" />
     <!-- メモ帳の札 (光る所のそばへ動く。無ければ左下) -->
     <section ref="cardEl" data-tut-card class="tut-note fixed z-[1201] flex w-[340px] flex-col gap-1.5 rounded-lg border border-amber-200/50 px-3 py-2 text-[13px] text-[#2b2217] shadow-[0_8px_24px_rgba(0,0,0,0.6)]"
@@ -93,13 +99,12 @@ function quit(): void { if (tutDirty.value && !window.confirm("保存してい�
       <template v-else>
         <p data-tut-say class="whitespace-pre-line break-words text-[14px] font-bold" :class="tut.now.value?.wrong ? 'text-rose-800' : ''">{{ tr(...text.say) }}</p>
         <p v-if="text.why[0] || text.why[1]" data-tut-why class="break-words text-[12px] leading-snug opacity-75">{{ tr(...text.why) }}</p>
-        <button v-if="step?.kind === 'auto'" type="button" data-tut-auto class="tut-ring g-btn-red min-h-9 px-3" @click="tut.autoFill">{{ tr("残りを自動で付ける", "Fill in the rest") }}</button>
         <button v-if="step?.kind === 'note'" type="button" data-tut-next class="tut-ring g-btn-red min-h-9 px-3" @click="tut.nextNote">{{ tr("次へ", "Next") }}</button>
-        <button v-if="step?.kind === 'end'" type="button" data-tut-end class="tut-ring g-btn-red min-h-9 px-3" @click="stopTutorial(true)">{{ tr("終わる", "Finish") }}</button>
+        <button v-if="step?.kind === 'end' || (step?.kind === 'run' && tut.now.value?.key.endsWith('.end'))" type="button" data-tut-end class="tut-ring g-btn-red min-h-9 px-3" @click="stopTutorial(true)">{{ tr("終わる", "Finish") }}</button>
         <SimTutorialEditor v-if="TUT_EDITABLE && editing && tut.now.value && step" :key="tut.now.value.key" :text-key="tut.now.value.key" :step-id="step.id" :box-id="boxId" :draft="[tut.now.value.draft[0], tut.now.value.draft[1]]" />
       </template>
     </section>
-  </template>
+  </template></Teleport>
 </template>
 
 <style scoped>

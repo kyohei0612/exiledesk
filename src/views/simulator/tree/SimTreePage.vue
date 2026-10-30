@@ -368,12 +368,14 @@ const phone = usePhone();
   <!-- スマホは左右の余白を詰める (ページ 16 + 枠の絵 18 + 中 12 で木の枠が 375 中 281px しかなく、左右の箱が切れ上の帯が 6 段になった、10-24 モンキー初めての人の回 3) -->
   <section data-tree-page class="min-w-0 flex-1 p-4 max-md:px-2">
     <!-- スマホは質問で進める形 (phone/PhoneTreePage、木は同じ TreeDoc) -->
+    <!-- チュートリアルの札と光る枠 (PC もスマホも。札は body へ出す) -->
+    <SimTutorialGuide />
     <PhoneTreePage v-if="phone" />
     <template v-else>
     <!-- 題の帯「クラフトの道 (ツリー)」はツリーのページでは出さない (10-26 夜オーナー「いらんわ」)。流れの帯は木の枠の中の一番上 -->
     <!-- エミュレーター / シミュレーター β の切り替え (エミュの画面の帯と同じ共通の部品、10-23 オーナー「帯を 1 つにして両方に」) -->
     <ModeTabs class="mb-3" />
-    <TreeOverlays /><SimTutorialGuide /><TreeHandPage v-if="panel?.kind === 'hand' && panelBox" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" @back="picking = panel!.id; panel = null" @aim="panel = { kind: 'aim', id: panel!.id }" />
+    <TreeOverlays /><TreeHandPage v-if="panel?.kind === 'hand' && panelBox" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" @back="picking = panel!.id; panel = null" @aim="panel = { kind: 'aim', id: panel!.id }" />
     <TreePanelPage v-else-if="panel && panelBox" :key="`${panel.kind}-${panel.id}`" :kind="panel.kind === 'split' || panel.kind === 'note' ? panel.kind : 'aim'" :box-id="panel.id" :current="panel.add ? null : panelBox.aim" :adding="!!panel.add" @pick="pickAim" @close="simOp('cancel', panel?.add ? 'side-plus' : panel?.kind === 'aim' ? 'aim-pick' : panel?.kind ?? ''); panel = null" />
     <div v-show="!t.goalInline.value" class="g-panel flex flex-col gap-2 px-3 py-2 max-md:px-0.5" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
       <!-- 流れの 4 段の帯 (今どこにいるか、10-24 オーナー): 上のタブの下、木の枠の中の一番上に小さく (10-26 夜オーナー「普通出すのはタブの下」「ここは枠内でしょ」)。右上の「← 戻る」は置かない -->

@@ -1,8 +1,10 @@
 /**
  * tut-data.ts — シミュのチュートリアルの手順と文 (src/data/sim-tutorial.json) の読み込みと、手元の dev だけの保存
  * (2026-10-26 夜オーナー「開発版で文字を俺が打つから保存と修正が開発版でできるような構造」)。
- *   steps   = 手順 (種類 hand / done / auto / run / end / note、hand は箱の役・打つ物・お告げ・狙い。進む条件は木の中身を見る use-sim-tutorial)
- *   texts   = 札の文 { 鍵: { ja, en } }。鍵は「手順の id.場面」(hand は plus / hold / omen-off / omen / aim / use / wrong / missing、ほかは main ほか)。空なら下書き (tut-route の既定の文)
+ *   steps   = 手順 (tutorial.md T-21 の 14 段。種類 goal / start / hand / done / unset / test / run / note、hand は箱の役・打つ物・お告げ・狙い・残したい MOD。
+ *             進む条件は木の中身を見る use-sim-tutorial)。スマホの順は持たず、役ごとの手から画面で求める (T-26、use-sim-tutorial-phone)
+ *   texts   = 札の文 { 鍵: { ja, en } }。鍵は「手順の id.場面」(hand は plus / bar / hold / omen-off / omen / aim / aim-off / free / keep / use / wrong / missing、
+ *             スマホだけの場面は p- を頭に付ける。ほかは main ほか)。空なら下書き (tut-route の既定の文)
  *   targets = 光らせる所を人が選び直した物 { 鍵: CSS }。無ければ既定の所
  * 本番・開発版のビルドは JSON を読むだけ。手元の dev (vite serve) だけ POST /__sim-tutorial で JSON を書く (scripts/vite-sim-tutorial.ts)。commit はオーナーかブラック
  */
@@ -12,9 +14,15 @@ import type { Role } from "./tut-route";
 
 export type TutText = { ja: string; en: string };
 export type TutStepDef =
-  | { id: string; kind: "hand"; box: Role; key: string; omens: string[]; /** 窓の「狙う MOD」でチェックする MOD */ aim?: string }
+  | {
+    id: string; kind: "hand"; box: Role; key: string; omens: string[];
+    /** 窓の「狙う MOD」でチェックする MOD */ aim?: string;
+    /** 狙い無し (☑ 無し、結果は「打った後」1 箱、S-23) */ free?: boolean;
+    /** 消去の「残したい MOD」で ☑ する MOD (S-27) */ keep?: string;
+  }
   | { id: string; kind: "done"; box: Role }
-  | { id: string; kind: "auto" | "run" | "end" | "note" };
+  /** goal = 完成形の設定 (✦ と品質の決め)、start = 始め方の窓、unset = 帯「! 未設定 ▸ 次へ」、test = テストの ✓、run = 100 人 → 結果 → 終わる */
+  | { id: string; kind: "goal" | "start" | "unset" | "test" | "run" | "end" | "note" };
 export type TutData = { v: 1; course: string; steps: TutStepDef[]; texts: Record<string, TutText>; targets: Record<string, string> };
 
 const clone = (d: unknown): TutData => JSON.parse(JSON.stringify(d)) as TutData;

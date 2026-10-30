@@ -325,7 +325,7 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
           </p>
           <div data-fracture-pop class="absolute left-1/2 top-full z-30 w-max min-w-[260px] max-w-[440px] -translate-x-1/2 space-y-0.5 rounded border border-[#7a6a35] bg-[#0b0a08]/95 px-2 py-1.5 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.7)]" :class="fracOpen ? 'visible' : 'invisible group-hover/fg:visible'">
             <p class="pb-0.5 text-[11px] text-white/45">{{ tr("この中のどれか 1 つが固定される", "One of these gets fractured") }}</p>
-            <p v-for="r in fracRows" :key="r.key" data-fracture-member class="group/fm flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-mod-fractured hover:bg-white/[0.06]" :title="canFracture(r.m) ? tr('右クリックでフラクチャーの印を外す', 'Right-click to remove the fracture mark') : undefined" @click.stop="emit('jump', r.m.modId)" @contextmenu="onFracture($event, r.m)">
+            <p v-for="r in fracRows" :key="r.key" data-fracture-member :data-card-mod="r.m.modId" class="group/fm flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-mod-fractured hover:bg-white/[0.06]" :title="canFracture(r.m) ? tr('右クリックでフラクチャーの印を外す', 'Right-click to remove the fracture mark') : undefined" @click.stop="emit('jump', r.m.modId)" @contextmenu="onFracture($event, r.m)">
               <span class="min-w-7 shrink-0 whitespace-nowrap text-left font-bold tabular-nums" :class="r.side === 'プレフィックス' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ sideTier(r) }}</span>
               <span class="min-w-0 flex-1">{{ r.text }}</span>
               <button v-if="rowX(r.m)" type="button" data-row-remove :class="[ROW_X, 'group-hover/fm:opacity-100']" :title="tr('この MOD を外す', 'Remove this mod')" @click.stop="emit('remove', r.m.modId)">×</button>
@@ -334,6 +334,7 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
         </div>
         <p
           v-for="r in plainRows"
+          :data-card-mod="r.m.modId"
           @click="onRowClick($event, r.m)"
           @mouseenter="hover = r.m.unrevealed ? null : 'mod'"
           @mouseleave="hover = null"

@@ -3,6 +3,14 @@
   "course": "absent-amulet",
   "steps": [
     {
+      "id": "goal",
+      "kind": "goal"
+    },
+    {
+      "id": "start",
+      "kind": "start"
+    },
+    {
       "id": "start-exalt",
       "kind": "hand",
       "box": "start",
@@ -34,7 +42,8 @@
       "kind": "hand",
       "box": "rj",
       "key": "annul",
-      "omens": []
+      "omens": [],
+      "keep": "Amulets/PerfectEssence_RunicWardPercent"
     },
     {
       "id": "spirit-exalt",
@@ -50,16 +59,42 @@
       "box": "d"
     },
     {
-      "id": "auto",
-      "kind": "auto"
+      "id": "unset",
+      "kind": "unset"
+    },
+    {
+      "id": "cast-annul",
+      "kind": "hand",
+      "box": "dj",
+      "key": "annul",
+      "omens": [
+        "OmenofDextralAnnulment"
+      ]
+    },
+    {
+      "id": "spirit-free",
+      "kind": "hand",
+      "box": "s1",
+      "key": "exalt",
+      "omens": [
+        "OmenofSinistralExaltation"
+      ],
+      "free": true
+    },
+    {
+      "id": "free-ward",
+      "kind": "hand",
+      "box": "s1a",
+      "key": "essence:perfect:Amulets/PerfectEssence_RunicWardPercent",
+      "omens": []
+    },
+    {
+      "id": "test",
+      "kind": "test"
     },
     {
       "id": "run",
       "kind": "run"
-    },
-    {
-      "id": "end",
-      "kind": "end"
     }
   ],
   "texts": {},
