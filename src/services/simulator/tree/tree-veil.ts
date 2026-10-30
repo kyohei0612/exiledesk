@@ -14,10 +14,14 @@ export const REVEAL_KEY = "reveal";
 /** 後から打つ発現の手か */
 export const isRevealHand = (key: string | undefined): boolean => key === REVEAL_KEY;
 /**
- * 骨の手の発現の読み方。前の版の骨の手 (veil の無い物 = 打ったら発現まで進む) は「発現させる」(pick) として読む = 手の窓 (TreeHandShelf の veilOn) と同じ
- * (S-59、10-30 オーナー「59は修正で」、スイッチ oldBone)。閉じている間は veil のまま (無ければ前の分け方)
+ * 骨の手の発現の読み方 (S-59、スイッチ oldBone)。前の版の骨の手 (veil の無い物 = 打ったら発現まで進む) は、☑ (当たりの札) が無ければ「未発現のまま」(keep。
+ * 10-31 朝オーナー決め 4「A 今は違うけど古いやつどーするって話なら」)。☑ のある前の手は開いた時の組み直し (tree-rebuild の oldVeil) が「発現させる」(pick) を付ける
+ * (10-30 オーナー「59は修正で」)。閉じている間は veil のまま (無ければ前の分け方)
  */
-const veilOf = (h: Pick<Hand, "currency" | "veil">): Hand["veil"] => h.veil ?? (flag("oldBone") && isBone(h.currency) ? "pick" : undefined);
+const veilOf = (h: Pick<Hand, "currency" | "veil">): Hand["veil"] => h.veil ?? (flag("oldBone") && isBone(h.currency) ? "keep" : undefined);
+/** 前の版の骨の手 (veil 無し) に、保存の ☑ (aims) の有無で読み方を付ける (S-59、スイッチ oldBone。組み直しの tree-rebuild が呼ぶ) */
+/** ☑ の無い (狙い無し free の印・当たりの札の無い) 前の骨は未発現のまま */
+export const oldVeil = (h: Hand, aims: readonly unknown[]): Hand => (flag("oldBone") && isBone(h.currency) && !h.veil ? { ...h, veil: aims.length && !h.free ? "pick" : "keep" } : h);
 /** 骨の手を未発現のまま次へ (結果は「未発現の冒涜が付いた」1 つ) */
 export const veilKeep = (h: Pick<Hand, "currency" | "veil"> | null | undefined): boolean => !!h && flag("boneLater") && isBone(h.currency) && veilOf(h) === "keep";
 /** 発現で ☑ の MOD を選ぶ手 (骨の「発現させる」☑・後から打つ発現の手) */

@@ -10,7 +10,7 @@ import { treeHidden } from "../use-sim-shelf";
 import { catalystFull, catalystTagOf, fillCatalyst, stepOutcomes } from "../../../services/simulator/sim-engine";
 import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
-import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
+import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isRuneHand, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { linkSameHit, linkSameShape, linkShapeHit, matchItem, pruneBacks, sameHandReturn } from "../../../services/simulator/tree/tree-shape";
 import { bodyMemo, likeOf, type BodyOf } from "../../../services/simulator/tree/tree-box-shape";
@@ -78,9 +78,20 @@ export const FREE_EFFECTS: readonly string[] = ["add", "swap"];
 export function keepChoicesOf(data: PatchData, item: StageItem, currency?: string, omens: readonly string[] = []): Array<{ aim: Aim; mod: StageMod }> {
   const all = [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured);
   const outs = currency ? stepOutcomes(data, prepFor(data, item, currency), currency, engineOmens({ omens: omensFor(currency, [...omens]) }))?.filter((o) => !o.void) : null;
-  const gone = outs?.length ? new Set(outs.flatMap((o) => o.removed.map((m) => m.modId))) : null;
+  // 消去でない手 (S-27d) は打てなければ候補無し (消去は前のまま、打てない時は全部を出す)
+  const gone = outs?.length ? new Set(outs.flatMap((o) => o.removed.map((m) => m.modId))) : currency && effectOf(currency) !== "remove" ? new Set<string>() : null;
   return all.filter((m) => !gone || gone.has(m.modId)).map((m) => ({ aim: { modId: m.modId, tier: tierRankOf(data, m.modId, m.tierIndex) }, mod: m }));
 }
+/**
+ * 残したい MOD を聞く手か = 消えうる MOD が 2 つ以上 (S-27b)。消去と、スイッチ keepAll では消去でない消える手 (カオス・パーフェクトエッセンス・満杯の側の骨、S-27d) も。
+ * 消せる MOD の無い手 (高貴・ふつうのエッセンス・空きのある側の骨) は候補 0 なので聞かない
+ */
+export function keepAskOf(data: PatchData, item: StageItem, currency: string, omens: readonly string[]): boolean {
+  if (effectOf(currency) !== "remove" && !(flag("keepAll") && !isRuneHand(currency) && !isCatalyst(currency) && effectOf(currency) !== "fracture")) return false;
+  return keepChoicesOf(data, item, currency, omens).length > 1;
+}
+/** 消える手 (消去でない) の残したい MOD の既定 = 候補のうち ☑ の印 (持っている狙い) の物 (S-27d) */
+export const keepDefaultOf = (choices: ReadonlyArray<{ aim: Aim }>, aimed: ReadonlySet<string> | null): Aim[] => choices.filter((c) => aimed?.has(c.aim.modId)).map((c) => c.aim);
 /** 棚で選んだ物 → 箱の手 */
 export function handOf(p: HandPick): Hand {
   const used = omensFor(p.held, [...p.omens]);
@@ -94,7 +105,8 @@ export function handOf(p: HandPick): Hand {
     repeat: p.spam && canSpam(p.held) ? { until: "hit", max: p.spamMax && p.spamMax > 0 ? Math.round(p.spamMax) : null } : null,
     // 乱数のフラクチャーの狙い無し (固定されうる MOD ごとの箱。印の無い木だけ、applyPick が pick を付ける。スイッチ fracPick)
     ...(p.free && !p.spam && (FREE_EFFECTS.includes(effectOf(p.held)) || (flag("fracPick") && effectOf(p.held) === "fracture")) ? { free: true } : {}),
-    ...(p.keep && effectOf(p.held) === "remove" ? { keep: p.keep.map((a) => ({ modId: a.modId, tier: a.tier })) } : {}),
+    // 消える手 (カオス・パーフェクトエッセンス・骨) の残したい MOD も (S-27d、スイッチ keepAll。消せる MOD が無い手には呼ぶ側が渡さない)
+    ...(p.keep && (effectOf(p.held) === "remove" || flag("keepAll")) ? { keep: p.keep.map((a) => ({ modId: a.modId, tier: a.tier })) } : {}),
     ...(p.veil && flag("boneLater") && isBone(p.held) ? { veil: p.veil } : {}),
   };
 }
@@ -150,8 +162,9 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
     }
     return fractureMarks(doc).filter((a) => aimHeldOn(data, item, a, { sameText: true }));
   }
-  // 狙い無し (free) も付きうる狙いを出す: 結果は「打った後」+ 付いた狙いの当たりの箱 (10-26 オーナー「当たってたら次の回に消去でそれ決めるんやから」。
-  // 前は打った後の 1 箱で、狙いが付いた人も打った後に入り、次のカオスで「狙いが消えた」が並んだ)
+  // スイッチ freeNoHit: 狙い無しの手・ルーンの手は当たりの箱を出さない (S-23・S-31e、10-31 朝オーナー「狙い無しってことはただ付けて終わりって話だから当たりMODの設定が無い以上でないようにしたいな枝には」)。
+  // 閉じている間は前の形 = 狙い無しも付きうる狙いを出す: 結果は「打った後」+ 付いた狙いの当たりの箱 (10-26 オーナー「当たってたら次の回に消去でそれ決めるんやから」)
+  if (flag("freeNoHit") && (kind === "free" || isRuneHand(h.currency))) return [];
   if (kind !== "spam" && kind !== "add" && kind !== "swap" && kind !== "free") return [];
   // 候補 = 木で使っている当たりの狙い + 完成形の狙い (memoAims)。前は木に狙いが 1 つでもあると木の分だけで、完成形の残りの狙いが出ず
   // 「どれでも」が空 = 手にならなかった (10-25 モンキー 3 本目 301 の b4: 木の狙いは付いている火耐性貫通だけ、知性・ライフリーチが候補に無い)
@@ -181,7 +194,7 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
 export function hitChoicesOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, p: Pick<HandPick, "held" | "omens" | "echo" | "veil">, goals: readonly Aim[]): Aim[] {
   // 印の無い木の乱数のフラクチャーも ☑ で狙いを選べる (候補 = 見本に付いている完成の狙い。スイッチ fracPick)
   if (flag("fracPick") && effectOf(p.held) === "fracture" && !fractureMarks(doc).length) return hitAimsOf(data, doc, boxId, item, { ...handOf({ held: p.held, omens: p.omens }), pick: "random" }, goals);
-  if (!FREE_EFFECTS.includes(effectOf(p.held))) return [];
+  if (!FREE_EFFECTS.includes(effectOf(p.held)) || (flag("freeNoHit") && isRuneHand(p.held))) return [];
   return hitAimsOf(data, doc, boxId, item, handOf({ held: p.held, omens: p.omens, echo: p.echo, veil: p.veil }), goals);
 }
 /**
@@ -423,8 +436,8 @@ export function planPick(data: PatchData, doc: TreeDoc, id: string, it: StageIte
   const veilH = handOf({ held: key, omens, echo: opt.echo, veil: opt.veil });
   const stones = opt.hitAims?.length && veilPick(veilH) ? revealAimsOf(data, doc, id, it, veilH).filter((a) => !choices.some((c) => c.modId === a.modId)) : [];
   const pick = opt.hitAims ? pickedHits([...choices, ...stones], opt.hitAims, key, !!opt.spam) : null;
-  // 消える候補が 1 つ以下の消去は残したい MOD を聞かない (確定で消える、S-27b。棚と同じ)
-  const keep = opt.keep && keepChoicesOf(data, it, key, omens).length > 1 ? opt.keep : undefined;
+  // 消える候補が 1 つ以下の消去は残したい MOD を聞かない (確定で消える、S-27b。棚と同じ)。消える手 (S-27d) も同じ口 (渡さなければ既定 = 持っている狙い)
+  const keep = opt.keep && keepAskOf(data, it, key, omens) ? opt.keep : undefined;
   const hand = handOf({ held: key, omens, ...opt, keep, ...(pick ? { free: pick.free } : {}) }), kind = kindOf(hand);
   const aims = pick && !pick.free ? pick.aims : hitAimsOf(data, doc, id, it, hand, goals);
   const preCat = hand.omens.includes(CATALYSING) && !afterQ ? autoCat : null;

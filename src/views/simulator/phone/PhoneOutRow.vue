@@ -22,6 +22,7 @@ import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { treeRowTags } from "../tree/tree-row-tags";
 import { flag } from "../../../web/release-flags";
 import { veilKeep } from "../../../services/simulator/tree/tree-veil";
+import { hasGot } from "../../../services/simulator/tree/tree-keep";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { tr } from "../../../i18n/lang";
 import { clearHand, subtree } from "../../../services/simulator/tree/tree-model";
@@ -124,6 +125,8 @@ const sit = computed((): [string, string] => {
     if (o === "any" && veilKeep(ph)) return [tr(`${n}を打った後`, `After ${n}`), tr("未発現の冒涜が付いた (発現は次の手で)", "An unrevealed desecrated mod was added (reveal it with a later craft)")];
     if (o === "junk" && (ph.pick === "random" || (flag("boneLater") && effectOf(ph.currency) === "fracture"))) return [tr(`${n}で外れた場合`, `If ${n} misses`), tr("狙いでない MOD が固定された (外れ MOD が固定された)", "A non-target mod was fractured (a miss mod fractured)")];
     if (o === "junk") return [tr(`${n}で外れた場合`, `If ${n} misses`), tr("狙いの MOD は付かず、外れ MOD が付いた", "No target mod; a miss mod was added")];
+    // 狙いが消えた人に付ける狙いが付いた箱 (S-27d、スイッチ keepAll)
+    if (o === "lost" && hasGot(box.value?.junkKey)) return [tr(`${n}で狙いが消えて狙いが付いた場合`, `If ${n} removes a target and adds one`), tr("残したい MOD が消えたが、付ける狙いの MOD は付いた", "A mod to keep was removed, but the target mod was added")];
     if (o === "lost") return [tr(`${n}で狙いが消えた場合`, `If ${n} removes a target`), tr("付いていた狙いの MOD が消えた", "A target mod that was on the item was removed")];
     if (o === "junkGone") return [tr(`${n}で外れが消えた場合`, `If ${n} removes a miss`), q.boxTitle(props.boxId)];
     if (o === "hit") return [tr(`${n}で当たった場合`, `If ${n} hits`), q.boxTitle(props.boxId)];

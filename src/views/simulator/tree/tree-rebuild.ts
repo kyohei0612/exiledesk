@@ -5,12 +5,17 @@
  * 札の無くなった決めは要確認 (orphans、⑦20)。前の形の木から開いた時だけ、前に無かった札の箱に「組み直しで増えた」(fresh、⑦19、保存しない)
  */
 import type { PatchData } from "../../../services/craft-stage/engine";
-import { clearHand, migrateStart, setBack, TREE_SCHEMA_N, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { clearHand, migrateStart, setBack, TREE_SCHEMA_N, type Hand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
 import { alignEssenceAims, applyPick, kindOf, onlyOf } from "./tree-hand-plan";
 import { flag } from "../../../web/release-flags";
 import { judgeMemo } from "../../../services/simulator/tree/tree-judge";
+import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
+import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
+
+/** 当たりの箱を作らない手 (狙い無し・ルーン・骨を未発現のまま、S-23・S-31e・S-32。スイッチ freeNoHit)。乱数のフラクチャーの狙い無しは固定されうる狙いごとの箱 (S-41) なので除く */
+const noHitHand = (h: Hand): boolean => flag("freeNoHit") && ((!!h.free && effectOf(h.currency) !== "fracture") || isRuneHand(h.currency) || veilKeep(h));
 
 export function rebuildTree(data: PatchData, src: TreeDoc): TreeDoc {
   const rec = toRecipeV1(src), d = premiseOf(rec, `exiledesk-tree/${TREE_SCHEMA_N}`);
@@ -30,7 +35,9 @@ export function rebuildTree(data: PatchData, src: TreeDoc): TreeDoc {
       used.add(at);
       if (p.back) backs.push([id, p.back, at]);
       // エッセンスの MOD の ☑ は木の狙いの段にそろえる (保存した ☑ が一般の段だと当たりの箱が落ちた、alignEssenceAims)
-      if (p.hand) { const aims = alignEssenceAims(data, d, p.aims ?? []), pre = p.pre ?? null; applyPick(d, id, p.hand, kindOf(p.hand), aims, pre, onlyOf(data, d, id, p.hand, pre, aims)); }
+      // 前の版の骨の手 (veil 無し) は ☑ があれば発現させる・無ければ未発現のまま (S-59、tree-veil の oldVeil)
+      // 狙い無し・ルーン・未発現のままの手は保存の当たりの札を渡さない (当たりの箱を出さない、S-23・S-31e、スイッチ freeNoHit)
+      if (p.hand) { const h = oldVeil(p.hand, p.aims ?? []), aims = noHitHand(h) ? [] : alignEssenceAims(data, d, p.aims ?? []), pre = p.pre ?? null; applyPick(d, id, h, kindOf(h), aims, pre, onlyOf(data, d, id, h, pre, aims)); }
       const b = d.boxes[id];
       if (b) {
         if ((p.done || p.noAutoBack) && b.autoBack) { b.back = null; delete b.autoBack; delete b.merged; delete b.handBack; }
@@ -102,7 +109,8 @@ function savedKeyOf(at: string, tail: string, onPath: ReadonlySet<string>, exact
   const bare = (t: string): string => t.replace(/\[[^\]]*\](~\d+)?$/, "");
   const swap = (t: string): string | null => (/^\/junk/.test(t) ? t.replace(/^\/junk/, "/any") : /^\/any/.test(t) ? t.replace(/^\/any/, "/junk") : null);
   // 削減の順位の鍵 (`;w:`、S-65b より前の保存には無い) を外した札 = 順位で分かれた箱の全部へ (側の鍵の無い札と同じ読み方)
-  const unrank = (t: string): string => t.replace(/;w:[^\]]*\]/, "]");
+  // 狙いが付いた の鍵 (`;g:`、S-27d より前の保存には無い) も外して同じ読み方 (付いた / 付かないで分かれた狙いが消えたの箱の全部へ、スイッチ keepAll)
+  const unrank = (t: string): string => t.replace(/;w:[^\]]*\]/, "]").replace(/;g:[^\];]*/, "");
   // 乱数のフラクチャーの外れの枝の種類 (`|crafted`、S-41 で側だけにした前の保存) = 同じ側の箱 (`|normal`) の決めとして読む (スイッチ fracSide)
   const recraft = (t: string): string => (flag("fracSide") ? t.replace(/\|normal\]/, "|crafted]") : t);
   const sw = swap(tail);

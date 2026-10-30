@@ -14,6 +14,7 @@ import { bodyOf } from "./tree-box-shape";
 import { aimOpts, sampleOf, startGoalAims, targetsOf } from "./tree-sample";
 import { boxAims, fractureMarks, keepCut, type TreeDoc } from "./tree-model";
 import { qualityOk } from "./tree-unbounded";
+import { gotOf, keptAimsOf } from "./tree-keep";
 import { flag } from "../../../web/release-flags";
 
 /** 箱の中身を見る見本の数 (前の boxBody と同じ 4 つ) */
@@ -35,10 +36,13 @@ export function startAimed(data: PatchData, doc: TreeDoc, it: StageItem): Readon
 export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<string>, boxId: string, item: StageItem): ReadonlySet<string> {
   const b = doc.boxes[boxId];
   if (!b) return prev;
-  const keep = keepCut(doc, b);
+  // 消える手 (カオス・パーフェクトエッセンス・骨) の残したい MOD も消去と同じ (S-27d、スイッチ keepAll)
+  const keep = keepCut(doc, b) ?? keptAimsOf(doc, b.parent ? doc.boxes[b.parent]?.hand : null);
   // 消去の後も ✦ の印の狙いは残る (消去では消えない。S-28b2: 前は全部消えてよい消去の後に ✦ まで外れに数え、✦ だけの箱がスタートと別の中身になった、木 oWkFcwYX の b8)
   const base = new Set(keep ? [...keep, ...fractureMarks(doc)].map((a) => a.modId) : prev);
   if (b.out === "hit" && b.aim) for (const a of [...boxAims(b), ...(b.anyOf ?? [])]) base.add(a.modId);
+  // 狙いが消えた・狙いが付いた の箱は付いた狙いも ☑ (S-27d、ズレ 9)
+  if (b.out === "lost") for (const id of gotOf(b.junkKey)) base.add(id);
   const on = goalsOn(data, doc, item);
   return new Set([...base].filter((id) => on.has(id)));
 }

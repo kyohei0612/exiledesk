@@ -13,7 +13,7 @@ import StageItemCard from "../../../components/for-share/item/StageItemCard.vue"
 import CurrencyShelf from "../../../components/for-share/shelf/CurrencyShelf.vue";
 import HeldOmens from "../../../components/for-share/shelf/HeldOmens.vue";
 import HeldCursor from "../../../components/for-share/shelf/HeldCursor.vue";
-import { ESSENCE_KEYS, omensAllowedFor, useReason, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { ESSENCE_KEYS, omensAllowedFor, useReason, type StageItem } from "../../../services/craft-stage/engine";
 import { omensFor, unrevealedOf } from "../../../services/craft-stage/engine";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
@@ -21,6 +21,8 @@ import { CATALYSING, canSpam, ECHO, isBone, isCatalyst, TREE_CATALYSTS } from ".
 import { handIcon as iconOf, handLabel, handName, outNameOf } from "./tree-names";
 import TreeVeilCheck from "./TreeVeilCheck.vue"; import TreeCatPick from "./TreeCatPick.vue"; import { shelfCardOff, shelfCardOn } from "./use-shelf-card";
 import TreeRevealCard from "./TreeRevealCard.vue";
+import TreeKeepList from "./TreeKeepList.vue";
+import { useHandKeep } from "./use-hand-keep";
 import { RESULT, RESULT_CAT, RESULT_NO_LOST } from "./tree-hand-result";
 import { boxTagsOf } from "./tree-row-tags";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
@@ -28,7 +30,7 @@ import { aimKey, fractureMarks, setHand, type Aim, type Hand, type HandKind } fr
 import { useTree } from "./use-tree";
 import { TREE_SPAM_ORB, useSimShelf } from "../use-sim-shelf";
 import { infiniteAim } from "../../../services/simulator/tree/tree-outcome";
-import { afterQualityOf, autoCatOf, FREE_EFFECTS, handOf, hitAimsOf, holdsAimOf, hitChoicesOf, keepChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan";
+import { afterQualityOf, autoCatOf, FREE_EFFECTS, handOf, hitAimsOf, holdsAimOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan";
 import { modText, tr } from "../../../i18n/lang";
 import { stageHelp } from "../../../state/for-share/craft-stage-help";
 import { usePhone } from "../../../utils/use-phone";
@@ -64,7 +66,7 @@ const rowTags = (it: StageItem | null) => (s.data.value && it ? removeTags(it, b
 function removeTags(it: StageItem, tags: Map<string, RowTag>): Map<string, RowTag> {
   // 確定で消える (候補 1 つ) は聞かないので替えない。替えるのは消えうる候補の MOD だけ (光のお告げなら冒涜だけ、S-27b)
   if (!keepAsk.value) return tags;
-  const keep = new Set(keepAims.value.map((a) => a.modId)), cand = new Set(keepChoices.value.map((c) => c.mod.modId)), out = new Map(tags);
+  const keep = new Set(k.aims.value.map((a) => a.modId)), cand = new Set(k.choices.value.map((c) => c.mod.modId)), out = new Map(tags);
   for (const m of [...it.prefixes, ...it.suffixes]) {
     if (m.fractured || !cand.has(m.modId)) continue;
     // 残したい外れも「外れ MOD」のまま (名前・値を出さない、S-82。10-28 夜オーナー「消去でハズレ選んだらアイテム枠のハズレみえなくていいし…ハズレはハズレよ」、スイッチ boxShape)
@@ -248,29 +250,12 @@ watch(held, (k, old) => {
   const was = old ?? props.current.currency, wasOmens = old ? [...omens.value] : [...props.current.omens];
   warnIfBelow(() => { held.value = was; omens.value = wasOmens; });
 });
-/** 消去の「残したい MOD」(10-27 オーナー): ☑ で残したい物を選ぶ。既定 = 全部消えてよい = 消去の箱を同じ形の箱になるまで直線に (stripChain)。☑ があれば消えた / 残ったで分ける */
-const isRemove = computed(() => !!held.value && effectOf(held.value) === "remove");
-const keepChoices = computed(() => { const d = s.data.value, it = item.value; return d && it && isRemove.value && held.value ? keepChoicesOf(d, it, held.value, omens.value) : []; });
-/** 残したい MOD を聞くか = 消えうる MOD が 2 つ以上 (1 つ以下は確定で消える = ☑ も 2 ページ目も出さず、結果は 1 箱。光のお告げ + 冒涜 1 つなど、S-27b) */
-const keepAsk = computed(() => isRemove.value && keepChoices.value.length > 1);
-const keepChecked = ref<string[]>((props.current?.keep ?? []).map(aimKey));
-const keepAims = computed((): Aim[] => keepChoices.value.filter((c) => keepChecked.value.includes(aimKey(c.aim))).map((c) => c.aim));
-function toggleKeep(a: Aim): void {
-  const k = aimKey(a), was = [...keepChecked.value];
-  keepChecked.value = was.includes(k) ? was.filter((x) => x !== k) : [...was, k];
-  warnIfBelow(() => { keepChecked.value = was; });
-}
-/** 行の名前は外れの MOD を「外れ MOD (名前)」とカードと揃える (10-27 夕モンキー 9)。決め方もカードの札と同じ (完成の狙いの範囲の値でも道で付いていなければ外れ、10-28 モンキー 7、スイッチ boxShape) */
-const isGoalMod = (a: Aim): boolean => (t.doc.value.memoAims ?? []).some((g) => g.modId === a.modId);
-const keepJunk = (c: { aim: Aim; mod: StageMod }): boolean => (flag("boxShape") && s.data.value && item.value ? boxTagsOf(s.data.value, t.doc.value, props.boxId, item.value).get(c.mod.modId)?.tone === "bad" : !isGoalMod(c.aim));
-const keepText = (m: StageMod): string => { const it = item.value ? cardOf(item.value) : null; return modText((it ? [...it.prefixes, ...it.suffixes].find((x) => x.modId === m.modId) : null) ?? m); }; // 値はカードと同じ (cardOf、10-28 モンキー見た目 1: 欄 94% / カード 96%)
-// 外れは「外れ MOD」だけ (中身は教えない、S-82。10-28 夜オーナー「別にここのチェックでも教えなくていいハズレはハズレよ」、スイッチ boxShape)
-const keepLabel = (c: { aim: Aim; mod: StageMod }): string => (keepJunk(c) ? (flag("boxShape") ? tr("外れ MOD", "Miss mod") : tr(`外れ MOD (${keepText(c.mod)})`, `Miss mod (${keepText(c.mod)})`)) : keepText(c.mod));
-function keepNone(e: Event): void { const was = [...keepChecked.value]; keepChecked.value = []; (e.target as HTMLInputElement).checked = true; warnIfBelow(() => { keepChecked.value = was; }); }
-/** 全部の候補を残す ☑ はできない (消える MOD が無くなる = 消去が打てない。☑ の無い候補が最後の 1 つなら押せない、S-27b) */
-const keepLast = (a: Aim): boolean => !keepChecked.value.includes(aimKey(a)) && keepAims.value.length >= keepChoices.value.length - 1;
-const keepLastText = tr("全部の MOD は残せない (消える MOD が無くなる)", "You can't keep every mod (nothing would be removed)");
-const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, qualityTo: catTo.value, ...(keepAsk.value ? { keep: keepAims.value } : {}) }) : null));
+/** 残したい MOD (消去 S-27 と、スイッチ keepAll の消える手 S-27d。use-hand-keep) */
+const k = useHandKeep({ boxId: props.boxId, current: props.current, item, held, omens, cardOf, warnIfBelow });
+const keepAsk = k.ask;
+/** 上の段の「付ける狙い」= エッセンスの MOD (持ったら自動の ☑、S-27d) */
+const addLabels = computed((): string[] => (flag("keepAll") && keepAsk.value && !!held.value && effectOf(held.value) === "essence" ? hitAims.value.map((a) => t.aimLabel(a)) : []));
+const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, qualityTo: catTo.value, ...(keepAsk.value ? { keep: k.aims.value } : {}) }) : null));
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
 const preCat = computed((): string | null => (catalysing.value && !afterQuality.value ? autoCat.value : null));
 const kind = computed((): HandKind | null => (hand.value ? kindOf(hand.value) : null));
@@ -382,16 +367,7 @@ function ok(): void {
         </label>
       </div>
       <!-- 消去: 残したい MOD (10-27 オーナー)。既定は全部消えてよい = ✦ 以外は「n MOD 外れ MOD」、同じ形の箱になるまで消去の箱を並べる -->
-      <div v-if="keepAsk && !P27" data-tree-hand-keep class="flex flex-col gap-1 text-[12px]">
-        <span class="opacity-80">{{ tr("残したい MOD (☑ の MOD が消えたら「狙いが消えた」。☑ の無い MOD は外れ MOD)", "Mods to keep (a ☑ mod removed = Target lost; unchecked mods are misses)") }}</span>
-        <label data-tree-hand-keep-none class="flex min-h-7 cursor-pointer items-center gap-2 max-md:min-h-11">
-          <input type="checkbox" :checked="!keepAims.length" @change="keepNone($event)" />{{ tr(`全部消えてよい (同じ形の箱になるまで${handName("annul")}の箱を並べる)`, `Anything may go (${handName("annul")} boxes until a box of the same shape)`) }}
-        </label>
-        <span v-if="!keepAims.length && !flag('goalShape')" data-tree-hand-keep-junk class="pl-6 text-[#e0a060]">{{ tr(`${keepChoices.length} MOD 外れ MOD`, `${keepChoices.length} mods: misses`) }}</span>
-        <label v-for="c in keepChoices" :key="aimKey(c.aim)" data-tree-hand-keep-mod :data-mod="aimKey(c.aim)" class="flex min-h-7 min-w-0 cursor-pointer items-center gap-2 max-md:min-h-11">
-          <input type="checkbox" :checked="keepChecked.includes(aimKey(c.aim))" :disabled="keepLast(c.aim)" :title="keepLast(c.aim) ? keepLastText : undefined" @change="toggleKeep(c.aim)" /><span class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="modText(c.mod)">{{ keepLabel(c) }}</span>
-        </label>
-      </div>
+      <TreeKeepList v-if="keepAsk && !P27" :k="k" :adds="addLabels" />
       <p v-if="kind" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? (only.length === 1 ? tr(`${outOf(only[0]!.out, only[0]!.aim)}だけ (結果は 1 通り)`, `${outOf(only[0]!.out, only[0]!.aim)} only (one possible result)`) : [...new Set(only.map((o) => outOf(o.out, o.aim)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
       <!-- 替える時は、消える箱の数を先に小さく (オーナー 10-22。1 つ戻す / Ctrl+Z で戻せる)。持ち直しは棚で別の物を押すだけ。決めるのはカードを押す -->
       <div class="flex flex-wrap items-center gap-1.5">
@@ -455,6 +431,7 @@ function ok(): void {
               <input type="checkbox" class="size-5 shrink-0" :checked="freeOn" @change="toggleFree($event)" /><span class="min-w-0 break-words">{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}</span>
             </label>
           </div>
+          <div v-if="keepAsk && !k.isRemove.value" class="mt-3 text-left"><h3 class="mb-1.5 text-[15px] font-bold text-[#f0e4c8]">{{ tr("残したい MOD", "Mods to keep") }}</h3><TreeKeepList big :k="k" /></div>
           <p v-if="kind" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? (only.length === 1 ? tr(`${outOf(only[0]!.out, only[0]!.aim)}だけ (結果は 1 通り)`, `${outOf(only[0]!.out, only[0]!.aim)} only (one possible result)`) : [...new Set(only.map((o) => outOf(o.out, o.aim)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
           <p v-if="problem" class="mt-1 break-words text-[12px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</p>
         </div>
@@ -469,14 +446,7 @@ function ok(): void {
           <p class="break-words text-[12px] text-[#9a8a70]">{{ hand ? handLabel(hand) : handName(held) }}</p>
           <h2 class="mt-1 text-[17px] font-bold text-[#f0e4c8]">{{ tr("残したい MOD", "Mods to keep") }}</h2>
           <p class="mt-1 break-words text-[12px] text-[#9a8a70]">{{ tr("☑ の MOD が消えたら「狙いが消えた」。☑ の無い MOD は外れ MOD", "A ☑ mod removed = Target lost; unchecked mods are misses") }}</p>
-          <div data-tree-hand-keep class="mt-3 flex flex-col gap-1.5 text-left">
-            <label v-for="c in keepChoices" :key="aimKey(c.aim)" data-tree-hand-keep-mod :data-mod="aimKey(c.aim)" class="flex min-h-11 min-w-0 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
-              <input type="checkbox" class="size-5 shrink-0" :checked="keepChecked.includes(aimKey(c.aim))" :disabled="keepLast(c.aim)" :title="keepLast(c.aim) ? keepLastText : undefined" @change="toggleKeep(c.aim)" /><span class="min-w-0 break-words">{{ keepLabel(c) }}</span>
-            </label>
-            <label data-tree-hand-keep-none class="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
-              <input type="checkbox" class="size-5 shrink-0" :checked="!keepAims.length" @change="keepNone($event)" /><span class="min-w-0 break-words">{{ tr(`全部消えてよい (同じ形の箱になるまで${handName("annul")}の箱を並べる)`, `Anything may go (${handName("annul")} boxes until a box of the same shape)`) }}</span>
-            </label>
-          </div>
+          <div class="mt-3"><TreeKeepList big :k="k" :adds="addLabels" /></div>
           <p v-if="kind" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? (only.length === 1 ? tr(`${outOf(only[0]!.out, only[0]!.aim)}だけ (結果は 1 通り)`, `${outOf(only[0]!.out, only[0]!.aim)} only (one possible result)`) : [...new Set(only.map((o) => outOf(o.out, o.aim)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
           <p v-if="problem" class="mt-1 break-words text-[12px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</p>
         </div>

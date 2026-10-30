@@ -17,6 +17,7 @@ import { fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type 
 import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-shape";
 import { boxOutcomeOf, stripStop } from "./tree-outcome";
+import { aimedOfSample, sampleAimed } from "./tree-judge";
 import { arrivedAt } from "./tree-arrived";
 import { autoRuneKeys, passThrough, prepFor } from "./tree-unbounded";
 import { isRevealHand, veilKeep, veilPick } from "./tree-veil";
@@ -293,7 +294,8 @@ function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox, base:
     const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims), undefined, b.out === "junk" || b.out === "lost", stripStop(data, doc, p));
     if (!r.applied) { last = r; break; }
     last = r;
-    const o = boxOutcomeOf(data, doc, p, base.item, r.item, aims);
+    // スイッチ keepAll: 結果の分け方は回す・精査と同じく親の見本の ☑ で (S-60。前は ☑ を渡さず木の狙い全部で数え、☑ の無い狙いが消えた人が「狙いが消えた」の見本になった = 見張り J5)
+    const o = boxOutcomeOf(data, doc, p, base.item, r.item, aims, flag("keepAll") && flag("judgeOne") ? aimedOfSample(p.id, base.item) ?? sampleAimed(data, doc, p.id, seed) : undefined);
     // 当たるまでの手が上限まで打っても当たらない = 付かない狙いだけ。引き直しても同じなのでやめる (1 回 5000 回 × 3000 で画面が固まった、10-22)
     if (p.hand.repeat && o.out !== "hit") break;
     if (b.out === "pass") return { item: r.item, note: null };

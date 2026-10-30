@@ -11,6 +11,7 @@ import { useReason, type StageItem } from "../../services/craft-stage/engine";
 import { CRAFT_RUNE_KEYS, RUNE_GROUPS } from "../../state/for-share/craft-stage-shelf";
 import { prepFor } from "../../services/simulator/tree/tree-unbounded";
 import { tr } from "../../i18n/lang";
+import { flag } from "../../web/release-flags";
 
 /**
  * ツリーの棚だけで出さない物 (10-24 オーナー「要望があれば戻す」温度感。消さずに出さないだけ、戻す時はここ 1 か所):
@@ -25,7 +26,9 @@ export const TREE_SPAM_ORB = false;
 export const TREE_HIDDEN = new Set(["OmenofSanctification", "divine", "OmenoftheBlessed"]);
 /** ツリーの棚に出すルーン: クラフトのルーンと特別なルーン (古代・ウォード・人の名前の物など = ルーンの特殊 MOD を付ける物。10-26 オーナー「特殊ルーンをツリーで選んだ時に自動で付ける」) */
 const SPECIAL_RUNE_KEYS = new Set(RUNE_GROUPS.find((g) => g.kind === "special")?.keys ?? []);
-export const treeHidden = (key: string): boolean => simHidden(key) || TREE_HIDDEN.has(key) || (key.startsWith("rune:") && !CRAFT_RUNE_KEYS.includes(key) && !SPECIAL_RUNE_KEYS.has(key));
+/** フラックス (耐性の変換) は木の枝の決まりが無いのでツリーの棚に出さない (S-20、10-31 朝オーナー決め 5 の B、エミュには残す。スイッチ sim1031) */
+const FLUX_KEYS = new Set(["flux_fire", "flux_cold", "flux_lightning", "flux_chaos"]);
+export const treeHidden = (key: string): boolean => simHidden(key) || TREE_HIDDEN.has(key) || (flag("sim1031") && FLUX_KEYS.has(key)) || (key.startsWith("rune:") && !CRAFT_RUNE_KEYS.includes(key) && !SPECIAL_RUNE_KEYS.has(key));
 
 /** block = 画面の決まりで打たせない理由 (ツリーの「フラクチャーの印が無い」など。null ならエンジンの useReason) */
 export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null> = ref(null), omens: Ref<string[]> = ref([]), block: (key: string) => string | null = () => null) {
