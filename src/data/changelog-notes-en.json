@@ -1,4 +1,14 @@
 {
+  "0.1.646": [
+    "Emulator / Simulator: runes and soul cores made for one specific slot can no longer be socketed into jewellery that counts as gloves, a helmet or boots (Grasping Ring, Corona Amulet, Stalking Belt). Trying it shows why",
+    "Simulator: Chaos Orb, Perfect Essences that remove a mod and Desecration on a full side now let you pick \"Mods to keep\", the same as Annulment. Losing a kept mod goes to a \"Target lost\" box (players who also gain a target get a separate one)",
+    "Simulator: untargeted crafts and socketing a rune no longer make Hit boxes, only the \"After the craft\" box",
+    "Simulator: the mod buttons in the final item settings are now a single \"Add\" dropdown, like the Emulator, to choose how the mod is added (Normal, Fracture, Desecrate) or remove it. Essence and Alloy mods use Normal. Ways that can't add the mod are greyed out and tell you why when pressed",
+    "Simulator: when the final item has more Essence / Alloy mods than can be crafted at once (1, or 2 with Astrid's Creativity), each of them gets an \"Any n stay\" tag on the card, and you can press Done without choosing which ones are removed along the way. Two or more targets added by Desecration are grouped the same way with an \"Any 1\" tag (Desecrated-only mods get the Desecrated frame). On the card, normal mods come first, then Essence / Alloy mods, then Desecrated mods, with each group kept together",
+    "Simulator: the gap between sibling boxes in the tree is now set by that row alone, so branch lines in the rows above no longer stretch out",
+    "Simulator: Bone (Desecration) crafts saved in older versions open as \"Reveal\" crafts with the same name and boxes as new ones when they have a Hit ☑",
+    "Simulator: Flux is no longer on the tree's shelf (it is still in the Emulator). Fixed failed boxes showing \"✓ Done\" in the phone box panel"
+  ],
   "0.1.645": [
     "Simulator: in trees without fracture marks, an untargeted Fracturing Orb now splits misses only by side (prefix / suffix), not by whether the mod came from an essence",
     "Simulator: the mod picker for Reveal now uses the same layout as the emulator's mod list, with the same odds for Bone crafts. Mods and tiers the Bone can't reveal, and mods in the same group as one already on the item, are greyed out",

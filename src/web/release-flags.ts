@@ -182,6 +182,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "recipeJump", "stopPill", "stripFold", "goWord", "newerNote", "rowPack",
   // 乱数のフラクチャーの外れは側だけ・発現の窓の灰色・手を足した後の寄せは ＋ まで (オーナー 10-31「A　ちょくちょくださないとぱんくするよね」、ブラック 20 の頼み)。rowNear は見張りの L3 (線が札を横切る) の直しの後、oldBone は 10-31 に読み方が変わりシミュ部長の直しの後で閉じたまま
   "fracSide", "revealGrey", "nextInView",
+  // 消える手も残したい MOD・狙い無しとルーンは当たりの箱を出さない・「付ける」1 つの付け方・兄弟の間はその段だけ・前の版の骨の手・フラックス外し (オーナー 10-31「確認前はリリース準備で俺がおｋなら即だせるように」→ 1440 の確認で OK)。閉じたままは daily・simTutorial
+  "keepAll", "freeNoHit", "attachWay", "rowNear", "oldBone", "sim1031",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */
