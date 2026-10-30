@@ -9,7 +9,7 @@ import { applyCurrency, maxQualityOf, mulberry32, type StageItem, type StageMod 
 import { craftStage as s } from "../../../state/craft-stage";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { useTree } from "./use-tree";
-import { bundleTag, craftBundle, desecratedBundle, desecratedTag, isCraftAim, wayRows, WAY_ORDER } from "./tree-way-mods";
+import { bundleTag, craftBundle, desecratedBundle, desecratedTag, isCraftAim, isDesecratedAim, wayRows, WAY_ORDER } from "./tree-way-mods";
 import { flag } from "../../../web/release-flags";
 import { tr } from "../../../i18n/lang";
 
@@ -52,7 +52,13 @@ export function useGoalShown() {
     if (!g) return null;
     const q = doc.goalQualityOn && doc.goalQuality ? { ...g, quality: doc.goalQuality, ...(doc.goalQualityTag ? { qualityTag: doc.goalQualityTag } : {}) } : g;
     const ws = [...ways.value, ...bundleRows.value];
-    return ws.length ? { ...q, prefixes: [...q.prefixes, ...ws.filter((m) => m.side === "prefix")], suffixes: [...q.suffixes, ...ws.filter((m) => m.side === "suffix")] } : q;
+    const it = ws.length ? { ...q, prefixes: [...q.prefixes, ...ws.filter((m) => m.side === "prefix")], suffixes: [...q.suffixes, ...ws.filter((m) => m.side === "suffix")] } : q;
+    // 付け方が冒涜の狙いは 1 つ目から冒涜の行 = エミュと同じ枠・一番下 (S-10b、スイッチ goalDesecRow。見せるだけで木の判定は替えない)
+    const d = s.data.value;
+    if (!flag("goalDesecRow") || !d) return it;
+    const ids = new Set((doc.memoAims ?? []).filter((a) => !a.fractured && isDesecratedAim(d, a)).map((a) => a.modId));
+    const mark = (ms: readonly StageMod[]): StageMod[] => ms.map((m) => (ids.has(m.modId) ? { ...m, desecrated: true } : m));
+    return ids.size ? { ...it, prefixes: mark(it.prefixes), suffixes: mark(it.suffixes) } : it;
   });
   /** 途中で消える行の札 (どれも同じ「途中で消える」) */
   const tags = computed((): Map<string, RowTag> | null => {

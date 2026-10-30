@@ -62,9 +62,11 @@ export function craftBundle(data: PatchData, doc: TreeDoc, goal: StageItem | nul
  * 冒涜で付く狙い (冒涜専用 MOD と「冒涜」で付けた狙い) が 2 つ以上なら全部を「どれか 1 つ」の束にする。骨の発現の窓・木の判定は替えない (S-32)
  */
 export function desecratedBundle(data: PatchData, doc: TreeDoc): Aim[] | null {
-  const aims = (doc.memoAims ?? []).filter((a) => a.via === "desecrated" || data.mods.get(a.modId)?.source === "desecrated");
+  const aims = (doc.memoAims ?? []).filter((a) => isDesecratedAim(data, a));
   return aims.length > 1 ? aims : null;
 }
+/** 冒涜で付く狙い (「冒涜」で付けた狙いと冒涜専用 MOD) */
+export const isDesecratedAim = (data: PatchData, a: Aim): boolean => a.via === "desecrated" || data.mods.get(a.modId)?.source === "desecrated";
 /** 冒涜の束の行の札 */
 export const desecratedTag = (): RowTag => ({
   text: tr("どれか 1 つ", "Any 1"),

@@ -6,7 +6,7 @@
  */
 import type { PatchData } from "../../../services/craft-stage/engine";
 import { clearHand, migrateStart, setBack, TREE_SCHEMA_N, type Hand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
+import { offByParent, sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
 import { alignEssenceAims, applyPick, kindOf, onlyOf } from "./tree-hand-plan";
 import { flag } from "../../../web/release-flags";
@@ -142,7 +142,7 @@ function linkLeftovers(data: PatchData, d: TreeDoc): void {
   const seq = (id: string): number => (id === "start" ? -1 : Number(/\d+$/.exec(id)?.[0] ?? 0));
   const targets = Object.values(d.boxes).filter((b) => b.hand || b.done).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y));
   for (const b of Object.values(d.boxes)) {
-    if (b.out === "start" || b.hand || b.back || b.done || b.split || b.noAutoBack) continue;
+    if (b.out === "start" || b.hand || b.back || b.done || b.split || b.noAutoBack || offByParent(d, b.id, j)) continue;
     const cs = j.contents(b.id);
     if (!cs?.size) continue;
     // 結果が 1 通りの手 (ルーン・品質を最大までなど) の結果を同じ中身の親へ戻すと、打っても変わらない手の輪になる (linkByContent と同じ守り。
