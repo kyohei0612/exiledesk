@@ -1,7 +1,7 @@
 ---
 title: PoE2 Omen of Whittling Needs Bait, or 96% of Crafts Break
 description: PoE2 Omen of Whittling removes the lowest-level mod, breaking 96.5% of Gold Ring runs. Essence bait made it 80-120 div cheaper than Sinistral Erasure.
-date: 2026-11-09
+date: 2026-11-04
 tags: Omen of Whittling, Chaos Orb, Gold Ring, Essence, expected cost
 craft: /?base=Gold%20Ring
 ready: true

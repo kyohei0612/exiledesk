@@ -5,19 +5,20 @@
 ## 記事の再開 (10-31 オーナー「おけ それでたてて 最近発見した仕組みとかそういう感じの奴で記事の書き方は他と同じような感じで」)
 AdSense 2 回目の不承認 (10-30) の洗い直し = 共有メモ local_e2573db4…/adsense-1031.md の 2 位「更新が止まって見える」への答え。**週 2〜3 本・本当の日付**。再申請は 11 月末か、下の記事を 6〜8 本足した後の早い方 (時期はブラック)。
 - 出し方: 書いたら `ready: true` と `draft: true` を両方付ける (開発版だけに出て、本番の build:web には入らない = build-blog-pages.mjs 133 行)。オーナーが読んで OK → `draft` を外し、`date` を本番に出す日に直す (本当の日付)。
-- 流れ (10-31 ブラック 20): 書く (ready + draft) → ブラックがオーナーに送る → OK → date を出す日に直して commit (draft のまま) → **出す日に draft を外す commit をしてブラックに知らせる** (deploy はブラック)。
+- 流れ (10-31 オーナー「(1)で」): **書くのは一気に (1 本ずつ照らし合わせ → ブラックに送れると知らせる)、出すのは毎日 1 本 (11-01〜11-07)**。date は出す日にして draft のまま commit。毎朝ブラックが「今日の分の draft を外して」と送る → draft を外して commit・hash を返す → ブラックが deploy。記事どうしのリンクは、出す順で先の記事 (と前からある記事) にだけ張る。
 - 確かめ: `node scripts/build-blog-pages.mjs <scratchpad>/blogout --drafts` → 自分の港 1476 で配って窓なしの Chrome (使い捨て profile) で撮る。照らし合わせは記事ごとに部下 1 つ。
 - 種 (最近確かめた仕組み、今の 30 本と主題がかぶらない物。数字は記録のある物だけ):
 
 | # | slug | 主題 | 出どころ | 出す日の目安 | 状態 |
 |---|---|---|---|---|---|
-| 1 | coe-odds-parity | 1 手の確率は CoE と合う？ 高貴 15/15・カオス 11/12、外れた 1 つは偶然 | math/notes/2026-10-23-coe-odds.md・coe-chaos.md | 10-31 | 本番 (5214d1b70、0.1.644 の出しに乗せる、オーナー「記事おけ それで出して」) |
-| 2 | chaos-removed-mod-returns | カオスで消した MOD は同じ 1 回でまた付く (E-30) | research/notes/2026-10-26-chaos-reroll-same-mod.md・math/notes/2026-10-31-chaos-same-mod-back.md (部下が数えた) | **11-02** | オーナー OK 10-31「11-02で出して」。date は 11-02 に直した、draft のまま。**11-02 に draft を外す commit → ブラックへ** |
-| 3 | boots-res-craft | 移動速度 T1 固定の靴に耐性 T1 を 2 つ、費用と打ち方 | math/notes/2026-10-23-boots-res.md | **11-04** | オーナー OK 10-31「11-04で出して」。date 11-04・draft のまま。**11-04 にブラックの一言で draft を外す** |
-| 4 | abyss-essence-limits | アビスのエッセンスが打てる部位・打てない状態 (E-52) | research/notes/2026-10-22-abyss-essence-limits.md | **11-07** | オーナー OK 10-31「11-07で出して」。date 11-07・draft のまま。**11-07 にブラックの一言で draft を外す** |
-| 5 | whittling-omen-bait | 削減のお告げはそのままだと 96% 壊れる、エッセンスの餌で左側の抹消より 2 割安い | math/notes/2026-10-22-gold-ring-prefix.md (追記 1〜3) | 11-09 | 書いた・照らし合わせ済み・オーナー待ち |
-| 6 | restart-or-continue | 途中の形から作り直すべきか: 素の消去が一番安い・右側の消去のお告げは損 | math/notes/2026-10-22-gold-ring-midway.md | 11-11 | 未着手 |
-| 7 | amulet-four-aims | アミュレットの狙い 4 つは打つ順で 100 倍違う (約 700 神 / 9 万神) | math/notes/2026-10-22-amulet-4aims.md (外の正解なし、エンジンの見張りだけ) | 11-14 | 未着手 |
+| 1 | coe-odds-parity | 1 手の確率は CoE と合う？ 高貴 15/15・カオス 11/12、外れた 1 つは偶然 | math/notes/2026-10-23-coe-odds.md・coe-chaos.md | 10-31 | 本番 (v0.1.644、5214d1b70) |
+| 2 | chaos-removed-mod-returns | カオスで消した MOD は同じ 1 回でまた付く (E-30) | research/notes/2026-10-26-chaos-reroll-same-mod.md・math/notes/2026-10-31-chaos-same-mod-back.md (部下が数えた) | **11-01** | オーナー OK。date 11-01・draft のまま |
+| 3 | boots-res-craft | 移動速度 T1 固定の靴に耐性 T1 を 2 つ、費用と打ち方 | math/notes/2026-10-23-boots-res.md | **11-02** | オーナー OK。date 11-02・draft のまま |
+| 4 | abyss-essence-limits | アビスのエッセンスが打てる部位・打てない状態 (E-52) | research/notes/2026-10-22-abyss-essence-limits.md | **11-03** | オーナー OK。date 11-03・draft のまま |
+| 5 | whittling-omen-bait | 削減のお告げはそのままだと 96% 壊れる、エッセンスの餌で左側の抹消より 2 割安い | math/notes/2026-10-22-gold-ring-prefix.md (追記 1〜3) | **11-04** | オーナー OK 10-31。date 11-04・draft のまま |
+| 6 | restart-or-continue | 途中の形から作り直すべきか: 素の消去が一番安い・右側の消去のお告げは損 | math/notes/2026-10-22-gold-ring-midway.md | 11-05 | 未着手 (先に書き溜める) |
+| 7 | amulet-four-aims | アミュレットの狙い 4 つは打つ順で 100 倍違う (約 700 神 / 9 万神) | math/notes/2026-10-22-amulet-4aims.md (外の正解なし、エンジンの見張りだけ) | 11-06 | 未着手 (先に書き溜める) |
+| 8 | (未定) | 8 本目の種を探す (数字の記録のある物) | — | 11-07 | 未着手 |
 | 予備 | (外した種) | 上限を超えた側のカオス (E-25) は liquid-emotions-jewels と重なる・パーフェクトエッセンスの側 (E-51)・骨と冒涜 (E-60)・フラクチャーの数え方 (E-42) は数字の記録が無い。数字が要るなら部下にエンジンで数えさせて math/notes に残してから | engine.md | — | 外した (10-31) |
 
 ## 今の状態 (10-22 夜)

@@ -1,7 +1,7 @@
 ---
 title: PoE2 Essence of the Abyss: When You Can't Use It
 description: When PoE2's Essence of the Abyss won't apply: 27 item types, blocked by revealed Desecrated mods, swaps with unrevealed ones, and the Mark's tier floor.
-date: 2026-11-07
+date: 2026-11-03
 tags: Essence of the Abyss, Mark of the Abyssal Lord, Desecration, bones, Essence
 craft: /?base=Gold%20Ring
 ready: true

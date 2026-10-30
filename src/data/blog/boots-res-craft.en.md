@@ -1,7 +1,7 @@
 ---
 title: PoE2 Movement Speed Boots with Two T1 Resists: ~30 div
 description: 10,000 runs of PoE2 boots with fractured Movement Speed T1 and two T1 resists: 29.9 div average, 20.4 median. Annulling only when full was 30% cheaper.
-date: 2026-11-04
+date: 2026-11-02
 tags: boots, Movement Speed, resistances, Chaos Orb, Orb of Annulment
 craft: /?base=Drakeskin%20Boots
 ready: true
