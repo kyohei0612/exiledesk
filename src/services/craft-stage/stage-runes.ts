@@ -82,6 +82,7 @@ const isBig = (category: string): boolean => (inGroup(category, "weapon") && han
  * 名前は書かず、ベースの暗黙の文 (クライアント、htcBaseInfo) から読む。2026-10-13 オーナー「ソケット系はデフォで必ず 1 個以上あいてる」
  */
 const AS_THOUGH: Record<string, string> = { Helmet: "Helmets", Gloves: "Gloves", Boots: "Boots", "Body Armour": "Body_Armours", Shield: "Shields" };
+const AS_THOUGH_JA: Record<string, string> = { Helmet: "兜", Gloves: "手袋", Boots: "靴", "Body Armour": "鎧", Shield: "盾" };
 function socketAsOf(base: string): string | null {
   for (const l of htcBaseInfo()[base]?.implicits ?? []) {
     const m = /gains bonuses from Socketed Items as though it was (?:an? )?(.+?)\s*$/i.exec(l.en);
@@ -91,6 +92,28 @@ function socketAsOf(base: string): string | null {
 }
 /** ルーンの効き目・はめられるかを見る部位 (「兜として得る」ベースはその部位) */
 export const runeCategoryOf = (item: { base: string; cls: { category: string } }): string => socketAsOf(item.base) ?? item.cls.category;
+/**
+ * 部位を 1 つに指定した物 (E-75): 効き目の行の区分が 1 種類で、その区分が 1 つの部位だけ (コルの狩り = 手袋 など)。その行を返す。
+ * 名前は書かずデータ (effects の cat、区分の広さは item-classes.ts の soulCoreSize) で決める
+ */
+export function singleSlotEffectOf(rune: RuneRow): RuneEffect | null {
+  const cats = new Set(rune.effects.map((e) => e.cat));
+  if (cats.size !== 1) return null;
+  const e = rune.effects[0]!;
+  return soulCoreSize(e.cat) === 1 ? e : null;
+}
+/**
+ * 「兜 / 手袋 / 靴として得る」宝飾品に、部位を 1 つに指定した物ははめられない (E-75、オーナー 10-31「指定があるルーンは無理だね」)。
+ * 理由の文を返す (はめられるなら null)。抽選はもともと変わらない (vendor の poolsWithRunes は base.pools.rune で見る)
+ */
+export function socketAsBlock(item: { base: string }, rune: RuneRow, en: string): string | null {
+  if (!socketAsOf(item.base)) return null;
+  const e = singleSlotEffectOf(rune);
+  if (!e) return null;
+  // 効き目の区分の日本語 (stage-runes.json の catJa は兜・手袋・靴が英語のまま)
+  const ja = AS_THOUGH_JA[e.cat] ?? e.catJa;
+  return tr(`${rune.ja}は${ja}を指定したルーンなので、${ja}として効く宝飾品にははめられない`, `${en} is restricted to ${e.cat}; it can't be socketed into jewellery that only counts as ${e.cat}`);
+}
 /** 白の時からあるソケットの数 (規格外 = 熟練工の上限 + 1。「兜として得る」ベースは 1、熟練工は宝飾品に使えないので増やせない) */
 export function baseSocketsOf(base: string, category: string): number {
   if (socketAsOf(base)) return 1;
@@ -205,6 +228,8 @@ export function applyRune(item: StageItem, key: string, data?: PatchData): Stage
   if (rune.available === false) return skip(item, tr("今のゲームには無いルーン (相場に無い)", "This rune is no longer in the game"));
   const place = placeBlock(rule, { category: runeCategoryOf(item), rarity: item.rarity, corrupted: item.corrupted, sanctified: item.sanctified }, !!runeEffectFor(rune, runeCategoryOf(item)));
   if (place) return skip(item, place);
+  const asGear = socketAsBlock(item, rune, p.en);
+  if (asGear) return skip(item, asGear);
   if (!sockets) return skip(item, tr("ソケットが無い (先に熟練工のオーブ)", "No sockets (use an Artificer's Orb first)"));
   if (p.socket != null && (p.socket < 1 || p.socket > sockets)) return skip(item, tr(`ソケットは ${sockets} つ (${p.socket} 番目は無い)`, `Only ${sockets} socket${sockets === 1 ? "" : "s"} (no socket ${p.socket})`));
   // どのソケットに: 指した番号 > 空き > 左から最初の置き換えられる物

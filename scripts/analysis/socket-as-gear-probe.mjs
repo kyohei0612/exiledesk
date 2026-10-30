@@ -11,6 +11,7 @@
  *      はめた後の高貴・カオスの候補 (candidates) に特殊 MOD (mod.rune) が混ざるか、混ざるなら重みの割合
  *   3. 高貴を N 回打って、特殊 MOD が付く回数 (候補の割合と合うか)
  *   4. 兜・手袋・靴で効き目を持つルーン・魂の核 (stage-runes.json) のうち、抽選を変える物 (エンジンの RUNES = pool / crafted / suffix / convert)
+ *   5. (10-31 E-75 の後) 宝飾品 3 種 × その部位で効き目のある物の、はめる・はめられないの一覧 (部位を 1 つに指定した物ははめられない)
  *
  * 入口は台本の中で一時フォルダに書いて束ねる (リポジトリに入口のファイルを増やさないため)。打つのはエンジンの入口 (engine.ts) の手
  */
@@ -25,7 +26,7 @@ const entry = join(dir, "entry.ts");
 writeFileSync(entry, [
   `export { loadPatch } from "${ROOT}/tests/helpers/patch";`,
   `export { startFrom, applyCurrency, candidates, effectiveCls, stageRuneIds, baseSocketsOf, htcBaseInfo, RUNES, runeEffectFor, RUNE_BY_ID, mulberry32, limitOf } from "${ROOT}/src/services/craft-stage/engine";`,
-  `export { runeCategoryOf } from "${ROOT}/src/services/craft-stage/stage-runes";`,
+  `export { runeCategoryOf, singleSlotEffectOf } from "${ROOT}/src/services/craft-stage/stage-runes";`,
 ].join("\n"));
 const M = await bundleEntry(entry);
 const N = Number(process.argv[2] ?? 3000);
@@ -94,14 +95,15 @@ for (const c of CASES) {
     socketed = M.startFrom(data, c.base, 82, { sockets: 1, runes: [c.rune] }, 1);
   } catch (e) {
     console.log(`  ${c.rune} をはめる: 断られた — ${e.message}`);
-    continue;
   }
-  const aug = socketed.augments?.[0];
-  console.log(`  ${c.rune} をはめる: 通った。効き目の部位 = ${aug?.cat} / 文 = ${aug?.textEn}`);
-  console.log(`  stageRuneIds = ${JSON.stringify(M.stageRuneIds(socketed))} / effectiveCls の pools は元と同じ物 = ${M.effectiveCls(socketed).pools === socketed.cls.pools}`);
-  printShare("はめた後", runeShare(socketed));
-  const ex = exaltSample(socketed, N, SEED);
-  console.log(`  高貴 ${ex.ok} 回 (白のレアに 1 つ): 特殊 MOD が付いた ${ex.hit} 回 (${ex.ok ? pct(ex.hit / ex.ok) : "-"})`);
+  if (socketed) {
+    const aug = socketed.augments?.[0];
+    console.log(`  ${c.rune} をはめる: 通った。効き目の部位 = ${aug?.cat} / 文 = ${aug?.textEn}`);
+    console.log(`  stageRuneIds = ${JSON.stringify(M.stageRuneIds(socketed))} / effectiveCls の pools は元と同じ物 = ${M.effectiveCls(socketed).pools === socketed.cls.pools}`);
+    printShare("はめた後", runeShare(socketed));
+    const ex = exaltSample(socketed, N, SEED);
+    console.log(`  高貴 ${ex.ok} 回 (白のレアに 1 つ): 特殊 MOD が付いた ${ex.hit} 回 (${ex.ok ? pct(ex.hit / ex.ok) : "-"})`);
+  }
   if (c.ref) {
     const g = M.startFrom(data, c.ref, 82, { sockets: 1, runes: [c.rune] }, 1);
     console.log(`  比べ: ${c.ref} に ${c.rune} (部位 ${g.cls.category}、pools.rune = ${Object.keys(g.cls.pools.rune ?? {}).join(", ")})`);
@@ -130,4 +132,30 @@ for (const cat of ["Helmets", "Gloves", "Boots"]) {
   const rows = Object.entries(M.RUNES).filter(([, r]) => r.available !== false && M.runeEffectFor(r, cat));
   const rule = rows.filter(([en]) => byName.has(en.replace(/[’']/g, "'")));
   console.log(`  ${cat}: 効き目のある物 ${rows.length} 個 (ルーン ${rows.filter(([, r]) => r.kind === "rune").length}・魂の核 ${rows.filter(([, r]) => r.kind === "soulcore").length}・アイドル ${rows.filter(([, r]) => r.kind === "talisman").length})、決まりを変える物 = ${rule.map(([en]) => `${en} (${JSON.stringify(byName.get(en.replace(/[’']/g, "'")).effect)})`).join(" / ") || "無し"}`);
+}
+
+// 5. はめる・はめられないの一覧 (E-75、10-31 オーナー「指定があるルーンは無理だね」): 宝飾品 3 種 × その部位で効き目のある物。
+//    部位を 1 つに指定した物 (singleSlotEffectOf) ははめられない、ほか (全部位・複数の部位) は今どおりはまる
+console.log("\n## はめる・はめられない (E-75、宝飾品 3 種 × その部位で効き目のある物、ソケット 1 つのレアに打つ)");
+for (const base of ["Grasping Ring", "Corona Amulet", "Stalking Belt"]) {
+  const it = M.startFrom(data, base, 82, { rarity: "rare", sockets: 1 }, 1);
+  const cat = M.runeCategoryOf(it);
+  const rows = Object.entries(M.RUNES).filter(([, r]) => r.available !== false && M.runeEffectFor(r, cat));
+  const ok = [], ng = [], other = [], bad = [];
+  for (const [en, r] of rows) {
+    const res = M.applyCurrency(data, it, `rune:${en}`, M.mulberry32(1));
+    const single = !!M.singleSlotEffectOf(r);
+    const why = res.reason ?? res.note ?? "";
+    const byE75 = !res.applied && /を指定したルーンなので|is restricted to/.test(why);
+    (res.applied ? ok : byE75 ? ng : other).push({ en, r, why });
+    if (single ? !byE75 : byE75) bad.push(en); // 指定の物が E-75 で断られなかった / 指定でない物が E-75 で断られた
+  }
+  console.log(`\n### ${base} (${cat}): 効き目のある物 ${rows.length} 個 → はまる ${ok.length}・E-75 ではめられない ${ng.length}・別の理由 ${other.length}・食い違い ${bad.length}`);
+  for (const x of ng) console.log(`  ×  ${x.en} (${x.r.kind}) — ${x.why}`);
+  for (const x of other) console.log(`  -  ${x.en} (別の理由) — ${x.why}`);
+  for (const en of ["Serle's Triumph", "Astrid's Creativity", "Lesser Desert Rune"]) {
+    const x = ok.find((o) => o.en === en);
+    console.log(`  ○  ${en}: ${x ? "はまる" : "はまらない (!)"}`);
+  }
+  if (bad.length) console.log(`  !! 食い違い: ${bad.join(", ")}`);
 }
