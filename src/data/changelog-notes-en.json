@@ -1,4 +1,9 @@
 {
+  "0.1.650": [
+    "Simulator: fixed an Alloy that can't add the target mod making a \"Hit\" box with nothing to pick, which blocked Run 100. It now makes an \"After the craft\" box",
+    "Simulator: fixed Omens staying on when switching to another item in the craft window. Going back to the original craft restores its Omens",
+    "Simulator: fixed the button running off the screen after the first tap on \"Clear\" on phones"
+  ],
   "0.1.649": [
     "Simulator: fixed being unable to choose an answer for a result box (Fail, next craft) or \"Return to a box\" on phones"
   ],
