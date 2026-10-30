@@ -7,7 +7,6 @@
  * 開いた / 畳んだは覚えない (木を開くたびに畳んだ形、画面が resetStripFolds を呼ぶ)
  */
 import { ref } from "vue";
-import { flag } from "../../../web/release-flags";
 import { effectOf } from "./tree-hands";
 import type { TreeBox, TreeDoc } from "./tree-model";
 
@@ -31,7 +30,6 @@ const stripStep = (d: TreeDoc, b: TreeBox | undefined): boolean => !!b?.hand?.ke
 /** 畳める直線を全部 (開いた物も)。head → 畳み */
 export function stripChains(d: TreeDoc): Map<string, StripFold> {
   const out = new Map<string, StripFold>();
-  if (!flag("stripFold") || !flag("layoutOne") || !flag("lineShort")) return out;
   for (const p of Object.values(d.boxes)) {
     // 直線の始まり = 消去の手のある箱で、自分は直線の途中でない (親が 1 つの結果の消去でない)
     if (!stripStep(d, p) || stripStep(d, d.boxes[p.parent ?? ""])) continue;

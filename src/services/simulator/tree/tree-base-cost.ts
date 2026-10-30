@@ -31,7 +31,6 @@ export function treeBaseCost(data: PatchData, doc: TreeDoc, prices: TreeBasePric
   const marks = fractureMarks(doc), fr = marks[0];
   const none = (note: string): TreeBaseCost => ({ kinds: [], best: null, note });
   if (!fr) return none(tr("✦ (フラクチャー) の MOD が無いので比べない", "No ✦ (fractured) mod, nothing to compare"));
-  if (marks.length > 1 && !flag("fracMulti")) return none(tr("✦ の候補が 2 つ以上は比べない (前の ③ は 1 つ)", "Can't compare with 2+ ✦ candidates (step 3 had one)"));
   const others = st.mods;
   if (others.length > 1) return none(tr("反対側の狙いが 2 つ以上は比べられない (前の ③ と同じく 1 つまで)", "Can't compare with 2+ other mods (one at most, as in step 3)"));
   const div = price("divine") || 1;
@@ -39,7 +38,7 @@ export function treeBaseCost(data: PatchData, doc: TreeDoc, prices: TreeBasePric
   const ixOf = (modId: string, tier: number): number => tierIndexOf(data, modId, tier);
   const item = freshItem(data, doc.base, doc.itemLevel, "normal");
   // ✦ が複数なら全部を候補に (どれか 1 つが固定されれば良い = start-cost の anyOf・fractureOdds が候補の数で確率を数える、スイッチ fracMulti)
-  const fracMembers = (flag("fracMulti") ? marks : [fr]).map((a) => ({ modId: a.modId, minTierIndex: ixOf(a.modId, a.tier), text: a.modId, rank: `T${a.tier}` }));
+  const fracMembers = marks.map((a) => ({ modId: a.modId, minTierIndex: ixOf(a.modId, a.tier), text: a.modId, rank: `T${a.tier}` }));
   const targets: SimTargetIn[] = [
     { modId: fr.modId, minTierIndex: ixOf(fr.modId, fr.tier), method: "fracture" },
     ...others.map((o): SimTargetIn => ({ modId: o.modId, minTierIndex: ixOf(o.modId, o.tier), method: methodsFor(data, o.modId)[0]! })),
@@ -49,7 +48,7 @@ export function treeBaseCost(data: PatchData, doc: TreeDoc, prices: TreeBasePric
   // 反対側でない MOD (フラクチャーと同じ側) は ③ でも費用に入らない
   const sameSide = !c.greater && others.some((o) => sideOfMod(data, o.modId) === sideOfMod(data, fr.modId));
   const label = (k: TreeStartKind): string => k === "fractured" ? tr("フラクチャー済みを買う", "Buy fractured")
-    : k === "four" ? tr(`4 MOD を買ってフラクチャー (壁を作ってから ${flag("fracMulti") ? Math.min(FRACTURE_POOL, marks.length) : 1}/${FRACTURE_POOL})`, `Buy a 4-mod rare and fracture (after a blocker, ${flag("fracMulti") ? Math.min(FRACTURE_POOL, marks.length) : 1}/${FRACTURE_POOL})`)
+    : k === "four" ? tr(`4 MOD を買ってフラクチャー (壁を作ってから ${Math.min(FRACTURE_POOL, marks.length)}/${FRACTURE_POOL})`, `Buy a 4-mod rare and fracture (after a blocker, ${Math.min(FRACTURE_POOL, marks.length)}/${FRACTURE_POOL})`)
     : c.greater ? tr("白から自作・グレーターの道", "Craft from white (Greater Essence route)") : tr(`白から自作・${name("augment")}の道`, `Craft from white (${name("augment")} route)`);
   const base = (k: TreeStartKind): number | null => ex(k === "white" ? prices.white : k === "four" ? prices.four : prices.fractured);
   // グレーターの道はフラクチャーを自前でするだけ (買う始め方は無し、③ と同じ 10-20)

@@ -18,12 +18,10 @@ import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-shape";
 import { boxOutcomeOf, stripStop } from "./tree-outcome";
 import { aimedOfSample, sampleAimed } from "./tree-judge";
-import { arrivedAt } from "./tree-arrived";
 import { autoRuneKeys, passThrough, prepFor } from "./tree-unbounded";
 import { isRevealHand, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, fractureTarget, junkKeyOf } from "./tree-frac-pick";
 export { fractureChoices, fractureTarget } from "./tree-frac-pick"; // フラクチャーの小物は tree-frac-pick へ (1 ファイル 500 行まで、10-28)
-import { shapeFit } from "./tree-sample-shape";
 export { goalsHeld, heldHitOf } from "./tree-unbounded";
 
 const TRIES = 3000;
@@ -159,7 +157,7 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
   const ts = targetsOf(data, aims);
   // 骨を未発現のまま次へ (veil keep) は発現しない。未発現を持ったまま打つほかの手 (フラクチャー・カオスなど) も発現しない = 未発現のまま (スイッチ boneLater。
   // 前は手の後に未発現があれば必ず発現まで打っていた = 骨の手の後だけだった)
-  const keepVeil = veilKeep(h) || (flag("boneLater") && !isBone(h.currency) && !isRevealHand(h.currency));
+  const keepVeil = veilKeep(h) || (!isBone(h.currency) && !isRevealHand(h.currency));
   const r = applyHand(data, item, h.currency, rng, { qualityTo: h.quality || undefined, omens: h.omens, catalyst: h.catalyst, fractureOf: fractureTarget(data, item, h, aims, rng), reveal: keepVeil ? false : (m) => isAimMod(m, ts, aimOpts(data)) !== miss });
   if (use) {
     if (r.applied) for (const k of autoRuneKeys(before, item)) use(k);
@@ -208,7 +206,6 @@ export function handProblem(data: PatchData, item: StageItem, h: Hand): string |
 export function sampleOf(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
   // 見本は道だけで決まる (S-74、スイッチ boxShape) ので、木の中身 (位置を除く) が同じなら覚えた見本を返す。
   // 整列・段揃え・引っ張るなど位置だけの変化で全部の箱をエンジンで作り直し、整列が毎回約 1 秒かかった (10-28 夜オーナー「サイトが重い」)
-  if (!flag("boxShape")) return withTreeTune(doc, () => sampleIn(data, doc, boxId, seed));
   const sig = docSig(doc);
   if (sig !== memoSig || data !== memoData) { memo.clear(); memoSig = sig; memoData = data; }
   return withTreeTune(doc, () => sampleIn(data, doc, boxId, seed));
@@ -219,7 +216,6 @@ let memoSig = "", memoData: PatchData | null = null;
 /** 木の中身の鍵 (位置 x・y と、見本に効かないメモの文を除く) */
 const docSig = (doc: TreeDoc): string => JSON.stringify(doc, (k, v) => (k === "x" || k === "y" || k === "note" ? undefined : v));
 function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
-  if (!flag("boxShape")) return sampleRaw(data, doc, boxId, seed);
   const k = `${boxId}|${seed}|${altDeep ? 1 : 0}`;
   let r = memo.get(k);
   if (!r) { r = sampleRaw(data, doc, boxId, seed); memo.set(k, r); }
@@ -229,10 +225,7 @@ function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): 
   const b = doc.boxes[boxId];
   if (!b) return { item: freshItem(data, doc.base, doc.itemLevel, "rare"), note: null };
   if (b.out === "start") return startItemOf(data, doc, mulberry32(seed));
-  // 回して実際にこの箱に着いた人のアイテム (seed 番目、tree-arrived)。誰も着かない箱だけ下の作り方 (引き直し・指名で付ける)
-  // boxShape: 見本は道 (始まり → 親の手の並び、種は見本の番号と箱の id 全体) だけで決め、ほかの枝に手を足しても変わらない (S-74 仮、10-28)
-  const got = flag("boxShape") ? [] : arrivedAt(data, doc, boxId);
-  if (got.length) return { item: got[(Math.max(1, seed) - 1) % got.length]!, note: null };
+  // 見本は道 (始まり → 親の手の並び、種は見本の番号と道の札) だけで決め、ほかの枝に手を足しても変わらない (S-74。前の「回して着いた人」tree-arrived は R5 で外した)
   const p = doc.boxes[b.parent!]!;
   const base = sampleIn(data, doc, p.id, seed);
   // 分かれ目の行の箱: その行に合う形が出るまで親の見本を別の種で引き直す (10-22 13 通り組んだ #8: 「サフィの外れ 1 つ以上」の行の見本がプレに外れの形で、
@@ -275,7 +268,7 @@ function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): 
   const r0 = sampleFrom(data, doc, b, p, base, seed, boxId, aims);
   // boxShape: 親の見本からこの箱の結果が作れない (枠が埋まっている等) 時は、親の見本を別の種で引き直す (道だけの見本は 1 つの乱数、10-28 見張り アミュ B b31)。
   // 狙いを無理に付けた見本 (forced) も引き直す: マジックの埋まった側に付けてレアに上がり、増強の当たりの箱のカードがレアの枠になった (10-28 夜オーナー「増強だっつーのにアイテムカードがレアになってんなバグだね」)
-  if (!flag("boxShape") || !r0.note || altDeep) return r0;
+  if (!r0.note || altDeep) return r0;
   altDeep = true;
   try { for (let k = 1; k < HIT_TRIES; k++) { const r = sampleFrom(data, doc, b, p, sampleIn(data, doc, p.id, seed + 7919 * k), seed, boxId, aims); if (!r.note) return r; } } finally { altDeep = false; }
   return r0;
@@ -284,12 +277,12 @@ function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): 
 function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox, base: Sample, seed: number, boxId: string, aims: Aim[]): Sample {
   if (!p.hand) return base;
   // 全部消えてよい消去の直線で止まる形 (もう手のある箱と同じ中身) はこの箱に来ない (回す時はその箱へ行く、S-28。tree-run と同じ。スイッチ judgeOne)
-  if (flag("judgeOne") && stripStop(data, doc, p)?.(base.item)) return { item: base.item, note: "cant:stripStop" };
-  const rng = mulberry32(seed ^ 0x5eed ^ (flag("boxShape") ? [...(flag("recipeV1") ? pathKeyOf(doc, boxId) : boxId)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7) : boxId.length * 7919)); // 種は見本の番号と道の札 (S-74 A、スイッチ recipeV1。箱の id だと組み直しで振り直されるだけで見本が変わった、bone3 の止まり 0 → 26)
+  if (stripStop(data, doc, p)?.(base.item)) return { item: base.item, note: "cant:stripStop" };
+  const rng = mulberry32(seed ^ 0x5eed ^ [...pathKeyOf(doc, boxId)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7)); // 種は見本の番号と道の札 (S-74 A、スイッチ recipeV1。箱の id だと組み直しで振り直されるだけで見本が変わった、bone3 の止まり 0 → 26)
   let last: StageApply | null = null;
   // 箱の形 (道の狙いの組) に合う結果だけ、無ければ合わなかった最初の結果 (途中で狙いが消えた結果が当たりの見本になった、10-28 見張り。boxShape)
   // スイッチ judgeOne: 道の狙いの組 (heldSets) では絞らない。見本 = 親の見本にエンジンで打った結果 (大本 1)
-  const fits = flag("boxShape") && !flag("judgeOne") ? shapeFit(data, doc, boxId) : null; let loose: Sample | null = null;
+  let loose: Sample | null = null;
   for (let i = 0; i < TRIES; i++) {
     const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims), undefined, b.out === "junk" || b.out === "lost", stripStop(data, doc, p));
     if (!r.applied) { last = r; break; }
@@ -304,18 +297,13 @@ function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox, base:
     // エッセンスの当たりの箱は札が付いた MOD の名前 (tree-run の outBoxOf と同じ)。無限のエッセンスで箱が 2 つ以上なら付いた MOD の箱
     if (b.out === "hit" && b.aim && effectOf(p.hand.currency) === "essence" && !essenceBoxFits(doc, p, b, r.item)) continue;
     if (b.out === "hit" && b.aim && effectOf(p.hand.currency) !== "essence" && !boxAims(b).some((x) => o.hits.some((a) => a.modId === x.modId && a.tier === x.tier))) continue;
-    if (fits && !fits(r.item)) { loose ??= { item: r.item, note: null }; continue; }
     return { item: r.item, note: null };
   }
   if (loose) return loose;
   if (last && !last.applied) return { item: base.item, note: `cant:${last.reason ?? ""}` };
   // boxShape: 狙いを手で付ける (forceKey) のはやめる。手で付けるのはエミュの「付ける」の親切 (マジックの埋まった側ならレアにして付ける) で、エンジンの手の結果ではない
   // (増強の当たりの箱の見本がレアになった、10-28 夜オーナー「これはエンジンを参照した動きになってないのと同義では」)。作れない印を返し、親の見本を引き直す (S-74)
-  if (b.out === "hit" && b.aim && flag("boxShape")) return { item: base.item, note: "cant:unreachable" };
-  if (b.out === "hit" && b.aim) {
-    const r = applyCurrency(data, base.item, forceKey(b.aim.modId, `T${b.aim.tier}`, "n"), rng);
-    return { item: r.item, note: r.applied ? "forced" : r.reason ?? null };
-  }
+  if (b.out === "hit" && b.aim) return { item: base.item, note: "cant:unreachable" };
   return { item: base.item, note: "none" };
 }
 
@@ -469,9 +457,8 @@ function applyHand(data: PatchData, item: StageItem, key: string, rng: () => num
     // 決めた MOD が固定された結果を、エンジンのフラクチャーを打ち直して取る (確定フラクチャーの外れは費用に回る、S-43)。手で固定し直すのは出なかった時だけ
     // (10-28 夜オーナー「エンジンを参照した動きになってない」、スイッチ boxShape)
     const fixedOn = (x: StageItem): boolean => [...x.prefixes, ...x.suffixes].some((m) => m.fractured && m.modId === fo);
-    for (let k = 0; flag("boxShape") && k < 64 && !fixedOn(r.item); k++) { const x = applyCurrency(data, it, key, rng, now); if (x.applied) r = x; }
-    // スイッチを閉じている時は前と同じくいつも固定し直す (乱数の使い方を変えない = 本番の見本を変えない、10-28 夜 最終チェック長の 1460 の見張り)
-    if (!flag("boxShape") || !fixedOn(r.item)) {
+    for (let k = 0; k < 64 && !fixedOn(r.item); k++) { const x = applyCurrency(data, it, key, rng, now); if (x.applied) r = x; }
+    if (!fixedOn(r.item)) {
       const f = applyCurrency(data, it, forceKey(fo, "T1", "f"), rng);
       if (f.applied) r = { ...r, item: f.item, added: f.added, removed: f.removed };
     }

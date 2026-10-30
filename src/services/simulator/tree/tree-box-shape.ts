@@ -7,7 +7,6 @@
 import { craftedKindOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { sampleOf } from "./tree-sample";
 import { heldSets, MATCH, RESTART, shapeFits } from "./tree-shape";
-import { flag } from "../../../web/release-flags";
 import type { TreeDoc } from "./tree-model";
 
 /**
@@ -18,16 +17,14 @@ import type { TreeDoc } from "./tree-model";
  */
 export function bodyOf(data: PatchData, d: TreeDoc, it: StageItem, held?: ReadonlySet<string>): string {
   const goals = new Set((d.memoAims ?? []).map((a) => a.modId));
-  const on = flag("boxShape");
   // held = その箱 (その人) が道で持っている狙いの MOD。渡すと、持っていない完成形の MOD は外れに数える (☑ の無い狙いは外れ、S-22・S-82。
   // 数えないと、カオスの外れの見本のうち完成形の MOD を引いた見本だけ体が変わり mixed になって、同じ形の箱へつながらなかった、10-28 夜オーナー「一緒のMODがふくすうあるけど認識されない」)
-  const aim = (id: string): boolean => goals.has(id) && (!held || !on || held.has(id));
+  const aim = (id: string): boolean => goals.has(id) && (!held || held.has(id));
   const side = (ms: readonly StageMod[]): string => {
     let n = 0, c = 0, x = 0, u = 0;
-    for (const m of ms) { if (m.fractured || aim(m.modId)) continue; if (m.unrevealed && on) u++; else if (m.desecrated || m.unrevealed) x++; else if (m.crafted || craftedKindOf(data, m)) c++; else n++; }
-    return on ? `${n}.${c}.${x}.${u}` : `${n}.${c}.${x}`;
+    for (const m of ms) { if (m.fractured || aim(m.modId)) continue; if (m.unrevealed) u++; else if (m.desecrated || m.unrevealed) x++; else if (m.crafted || craftedKindOf(data, m)) c++; else n++; }
+    return `${n}.${c}.${x}.${u}`;
   };
-  if (!on) return `${side(it.prefixes)}|${side(it.suffixes)}`;
   const fr = (ms: readonly StageMod[]): string => { const f = ms.filter((m) => m.fractured); const g = f.filter((m) => goals.has(m.modId)).length; return `g${g}j${f.length - g}`; };
   return `${side(it.prefixes)}|${side(it.suffixes)}|✦${fr(it.prefixes)}.${fr(it.suffixes)}|${it.rarity}`;
 }
@@ -37,18 +34,18 @@ const partsOf = (body: string): { p: number[]; s: number[]; fr: string; rarity: 
   return { p: p.split(".").map(Number), s: s.split(".").map(Number), fr, rarity };
 };
 /** ✦ の側とレアリティ (消せない・戻らない所。回す時の形の合う箱へで、これが違う箱へは行かない) */
-export const bodyFixed = (body: string): string => { if (body.startsWith("mixed") || !flag("boxShape")) return ""; const { fr, rarity } = partsOf(body); return `${fr}|${rarity}`; };
+export const bodyFixed = (body: string): string => { if (body.startsWith("mixed")) return ""; const { fr, rarity } = partsOf(body); return `${fr}|${rarity}`; };
 /** 外れの種類があるかだけ (数・側は見ない)。回す時の 2 番目の比べと、見本ごとに種類が違う箱 (mixed) の見分け */
 export const bodyKinds = (body: string): string => {
   if (body.startsWith("mixed")) return body;
   const { p, s } = partsOf(body), k = p.map((v, i) => ((v + (s[i] ?? 0)) > 0 ? 1 : 0));
   // スイッチ judgeOne: 外れは種類を見ない (普通・エッセンス・冒涜の発現済みは 1 つ)。種類が違う (mixed) のは未発現が混ざる時だけ (S-63、10-29 深夜オーナー「未発現のみ別枠として全然おｋ」)
-  return flag("judgeOne") ? `${k.slice(0, 3).some(Boolean) ? 1 : 0}${k[3] ?? 0}` : k.join("");
+  return `${k.slice(0, 3).some(Boolean) ? 1 : 0}${k[3] ?? 0}`;
 };
 /** 冒涜 (発現済み・未発現) の外れがあるか (mixed = 見本ごとに種類が違う箱も含める) */
 export const hasDesecrated = (body: string | null): boolean => !!body && (body.startsWith("mixed") || [partsOf(body).p, partsOf(body).s].some((x) => (x[2] ?? 0) > 0 || (x[3] ?? 0) > 0));
 /** 消去の直線の止まる所で比べる部分 (レアリティ (スイッチ stripRarity) と ✦ の側 (スイッチ boxShape)。外れの数は直線の段で数える、tree-outcome の stripStops) */
-export const likeOf = (data: PatchData, d: TreeDoc, it: StageItem): string => `${flag("stripRarity") ? it.rarity : ""}|${flag("boxShape") ? partsOf(bodyOf(data, d, it)).fr : ""}`;
+export const likeOf = (data: PatchData, d: TreeDoc, it: StageItem): string => `${it.rarity}|${partsOf(bodyOf(data, d, it)).fr}`;
 
 /**
  * one = 見本 1 つだけ (回す時の「形の合う箱へ」の並べ替え。前の boxSig と同じで、見本 4 つの mixed にすると行き先が変わった、10-28 見張り)。
@@ -69,7 +66,7 @@ export function boxBody(data: PatchData, d: TreeDoc, id: string, one = false): s
   if (s.note === "none" || s.note?.startsWith("cant:")) return null;
   const held = heldOn(d, id);
   const body = bodyOf(data, d, s.item, held);
-  if (!flag("boxShape") || id === "start" || one) return body;
+  if (id === "start" || one) return body;
   const kinds = new Set([body, ...[2, 3, 4].flatMap((k) => { const m = sampleOf(data, d, id, k); return m.note === "none" || m.note?.startsWith("cant:") ? [] : [bodyOf(data, d, m.item, held)]; })].map(bodyKinds));
   return kinds.size > 1 ? `mixed:${id}` : body;
 }
@@ -92,7 +89,6 @@ export function bodyMemo(data: PatchData, d: TreeDoc): BodyOf {
 export function sameBody(body: BodyOf | undefined, from: string, to: string): boolean {
   if (!body) return true;
   // 始まりへも体 (レアリティ・外れの数) を比べる (マジックの外れ 1 つの箱が白のスタートへ戻った、10-28 夜オーナー「色々挙動があやしい」。スイッチ boxShape)
-  if (to === "start" && !flag("boxShape")) return !(flag("boneLater") && hasDesecrated(body(from)));
   const x = body(from), y = body(to);
   return x === null || y === null || x === y;
 }
@@ -102,7 +98,7 @@ export function sameBody(body: BodyOf | undefined, from: string, to: string): bo
  * 当たりを経てサフィ満杯の箱で止まった。オーナー「おけ」= ブラック案 (a))。当たりの箱どうしの統合 (同じ MOD 群) は狙いの組で合わせる別の物なので使わない
  */
 export function backBody(body: BodyOf | undefined, from: string, to: string): boolean {
-  if (!flag("bodyStrict") || !body) return sameBody(body, from, to);
+  if (!body) return sameBody(body, from, to);
   const x = body(from), y = body(to);
   return x !== null && y !== null && x === y;
 }

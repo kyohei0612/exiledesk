@@ -17,7 +17,7 @@ import { ESSENCE_KEYS, omensAllowedFor, useReason, type StageItem } from "../../
 import { omensFor, unrevealedOf } from "../../../services/craft-stage/engine";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
-import { CATALYSING, canSpam, ECHO, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
+import { CATALYSING, ECHO, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handIcon as iconOf, handLabel, handName, outNameOf } from "./tree-names";
 import TreeVeilCheck from "./TreeVeilCheck.vue"; import TreeCatPick from "./TreeCatPick.vue"; import { shelfCardOff, shelfCardOn } from "./use-shelf-card";
 import TreeRevealCard from "./TreeRevealCard.vue";
@@ -28,7 +28,7 @@ import { boxTagsOf } from "./tree-row-tags";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { aimKey, fractureMarks, setHand, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
-import { TREE_SPAM_ORB, useSimShelf } from "../use-sim-shelf";
+import { useSimShelf } from "../use-sim-shelf";
 import { infiniteAim } from "../../../services/simulator/tree/tree-outcome";
 import { afterQualityOf, autoCatOf, FREE_EFFECTS, handOf, hitAimsOf, holdsAimOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan";
 import { modText, tr } from "../../../i18n/lang";
@@ -55,7 +55,7 @@ const item = computed(() => sample.value?.item ?? null);
  * (10-27 オーナー「削減やらエッセンスやら、エミュだと消す候補の MOD の色を変えるよね。それをシミュにも同じのを導入しよう」)。打てない時は出さない。
  * 木の箱のカードには出さない (10-27 に箱へも出す書き換えをオーナーが止めた)
  */
-const preview = computed(() => { const d = s.data.value, it = preCat.value ? shelfItem.value : item.value ?? shelfItem.value, h = held.value; return d && it && h && !problem.value ? previewUse(d, it, h, omens.value, { essence: flag("essencePreview") }) : null; });
+const preview = computed(() => { const d = s.data.value, it = preCat.value ? shelfItem.value : item.value ?? shelfItem.value, h = held.value; return d && it && h && !problem.value ? previewUse(d, it, h, omens.value, { essence: true }) : null; });
 const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it) : it);
 /** 狙いに当たらない MOD の行は「外れ MOD」(乗せた時のカードと同じ、10-25 オーナー「プラスで MOD 選んだ時ハズレ MOD の表示が溶けてる」) */
 const rowTags = (it: StageItem | null) => (s.data.value && it ? removeTags(it, boxTagsOf(s.data.value, t.doc.value, props.boxId, it)) : null);
@@ -70,7 +70,7 @@ function removeTags(it: StageItem, tags: Map<string, RowTag>): Map<string, RowTa
   for (const m of [...it.prefixes, ...it.suffixes]) {
     if (m.fractured || !cand.has(m.modId)) continue;
     // 残したい外れも「外れ MOD」のまま (名前・値を出さない、S-82。10-28 夜オーナー「消去でハズレ選んだらアイテム枠のハズレみえなくていいし…ハズレはハズレよ」、スイッチ boxShape)
-    if (keep.has(m.modId)) { if (!(flag("boxShape") && tags.get(m.modId)?.tone === "bad")) out.delete(m.modId); else out.set(m.modId, tags.get(m.modId)!); }
+    if (keep.has(m.modId)) { if (tags.get(m.modId)?.tone !== "bad") out.delete(m.modId); else out.set(m.modId, tags.get(m.modId)!); }
     else out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`消えてよい MOD (☑ で残したい MOD にできる): ${modText(m)}`, `May be removed (☑ to keep it): ${modText(m)}`) });
   }
   return out;
@@ -92,16 +92,15 @@ const checked = ref<string[]>((() => {
   if (!c || c.free) return [];
   return (d.boxes[props.boxId]?.outs ?? []).flatMap((o) => { const x = d.boxes[o]; return x?.out === "hit" && x.aim ? [aimKey(x.aim)] : []; });
 })());
-const isFracture = computed(() => !!held.value && effectOf(held.value) === "fracture" && !(flag("fracPick") && !fractureMarks(t.doc.value).length)); // 印の無い木の乱数は狙いの欄 (fracPick)
+const isFracture = computed(() => !!held.value && effectOf(held.value) === "fracture" && !!fractureMarks(t.doc.value).length); // 印の無い木の乱数は狙いの欄
 /**
  * 骨の手のアビスの反響のお告げ (発現の候補を 1 回引き直す) = お告げの並びの「アビスの反響のお告げ」そのもの (omens に ECHO)。骨を持ったら既定で掛ける
  * (10-22 オーナー「お告げは必ず反響を使わんとやばいよ」、10-26 夜「オンは嘘だし、でかいアイコンもある」: 前は並びとは別の印と大きな札で、並びの方は掛かっていなかった)。
  * 前の手を開いた時はその手のまま
  */
 const echo = computed(() => omens.value.includes(ECHO));
-watch(held, (k, old) => { if (k && k !== old && isBone(k) && !flag("boneLater") && !omens.value.includes(ECHO)) omens.value = [...omens.value, ECHO]; }); // 開いた時は動かない = 前の手のまま。boneLater では反響は任意の ☑ (TreeVeilCheck、10-28 オーナー「そこまで必須って感じで出したくない」)
 /** 付く MOD を選べない手 (足す・カオス。当たりの箱にする MOD のチェックと狙い無しを出す) */
-const canFree = computed(() => !!held.value && (FREE_EFFECTS.includes(effectOf(held.value)) || (flag("fracPick") && effectOf(held.value) === "fracture" && !fractureMarks(t.doc.value).length)));
+const canFree = computed(() => !!held.value && (FREE_EFFECTS.includes(effectOf(held.value)) || (effectOf(held.value) === "fracture" && !fractureMarks(t.doc.value).length)));
 /**
  * Esc: 新しい手で持っている時は持った物を離すだけ (窓は閉じない)。2 回目の Esc・今の手を替えている時は窓 (ModalShell) が閉じる = 何も替えない
  * (オーナー 10-22「枠の外・Esc で取り消し」)。前は window の捕まえる段で聞いていたが、窓の Esc が先に受けて持ったまま窓ごと閉じていた (10-27 モンキー 7 の残り)。
@@ -132,21 +131,6 @@ const heldHelp = computed(() => (held.value ? stageHelp(held.value, s.data.value
 const DELIRIUM = Object.keys(ESSENCE_KEYS).find((k) => ESSENCE_KEYS[k]?.en === "Essence of Delirium") ?? "";
 const deliriumBlock = (k: string): string | null => (ESSENCE_KEYS[k]?.en === "Essence of Delirium" ? tr("シミュでは使えない", "Not usable in the simulator") : null);
 const { release, onHold, onShelfDown } = useSimShelf(shelfItem, held, omens, (k) => deliriumBlock(k));
-/**
- * カオススパムオーブ (10-25 オーナー「レア状態のアイテムになら特別にカオススパムオーブを実装しよう」): 棚の上のシミュだけの札。レアの時だけ出す。
- * 持つ = カオス (段は持った物の欄で普通・上級・完全) を当たるまで (spam)。狙う MOD は必ず選ぶ、お告げはカオスと同じ。前は普通のカオスの窓の「当たるまで繰り返す」のチェックだった (消した)
- */
-const SPAM_TIERS = ["chaos", "chaos_greater", "chaos_perfect"] as const;
-const isRare = computed(() => item.value?.rarity === "rare");
-const spamOn = computed(() => spam.value && !!held.value && canSpam(held.value));
-/** 打てない理由 (カオスと同じ。外せる MOD が無い等、エンジンの useReason) */
-const spamWhy = computed((): string | null => { const d = s.data.value, it = item.value; return d && it ? useReason(d, it, "chaos") : null; });
-function holdSpam(): void {
-  if (spamOn.value) { release(); spam.value = false; return; }
-  omens.value = [];
-  held.value = "chaos";
-  spam.value = true;
-}
 /** 棚の札を持つ = 普通の手 (スパムを持っていたら外して持ち替える。同じカオスを押した時も普通のカオスへ) */
 function onShelfHold(k: string): void {
   simOp("hold", k);
@@ -172,11 +156,11 @@ const catalysing = computed(() => used.value.includes(CATALYSING));
 const isInfinite = computed(() => !!held.value && infiniteAim(held.value));
 /** 骨の手の「発現させる」☑ (既定は無し = 未発現のまま次へ。スイッチ boneLater、TreeVeilCheck)。発現させる時は発現で出うる MOD 全部が狙いの候補 */
 const veilOn = ref(!!props.current && isBone(props.current.currency) && props.current.veil !== "keep"); // 前の版の骨の手 (veil 無し) は同じ手で発現 = ☑ あり
-const boneVeil = computed(() => flag("boneLater") && !!held.value && isBone(held.value));
+const boneVeil = computed(() => !!held.value && isBone(held.value));
 const veil = computed(() => (boneVeil.value ? (veilOn.value ? "pick" as const : "keep" as const) : undefined));
 function setVeil(v: boolean): void { const was = veilOn.value, had = [...checked.value], om = [...omens.value]; veilOn.value = v; checked.value = []; if (!v) omens.value = om.filter((o) => o !== ECHO); warnIfBelow(() => { veilOn.value = was; checked.value = had; omens.value = om; }); } // 反響は外す時だけ外す (付けるのは任意の ☑)
 const extraAims = ref<Aim[]>(!props.current ? [] : (t.doc.value.boxes[props.boxId]?.outs ?? []).flatMap((o) => { const x = t.doc.value.boxes[o]; return x?.out === "hit" && x.aim && !(t.doc.value.memoAims ?? []).some((g) => g.modId === x.aim!.modId) ? [x.aim] : []; })); // 発現で選ぶ置き石 (TreeVeilCheck の「ほかの MOD を選ぶ」)
-const revealable = computed(() => flag("boneLater") && !!item.value && !!unrevealedOf(item.value)); // 未発現の冒涜が付いた箱は棚に「発現」の札 (TreeRevealCard)
+const revealable = computed(() => !!item.value && !!unrevealedOf(item.value)); // 未発現の冒涜が付いた箱は棚に「発現」の札 (TreeRevealCard)
 const outOf = (o: Parameters<typeof outNameOf>[1], a?: Aim | null): string => outNameOf(hand.value, o, a);
 const aimChoices = computed((): Aim[] => {
   const d = s.data.value, it = item.value;
@@ -305,7 +289,6 @@ const aimStep = ref(false);
  */
 const P27 = computed(() => phone.value);
 /** カオススパムオーブの札と呼び名を出さない (スイッチ noSpam、10-27 昼オーナー「特殊過ぎて逆に困る」)。前に保存した当たるまでの手は開けば今まで通り (spam のまま決められる) */
-const NS = flag("noSpam");
 const helpOpen = ref(false);
 const keepStep = ref(false);
 watch(held, () => { aimStep.value = false; keepStep.value = false; helpOpen.value = false; });
@@ -338,12 +321,7 @@ function ok(): void {
     <div v-if="held" class="flex flex-col gap-1.5 rounded-md bg-white/[0.04] p-2">
       <div class="flex min-w-0 items-center gap-1.5">
         <span class="flex shrink-0 items-center -space-x-1"><img v-for="ic in [held, ...used].filter((x) => !!iconOf(x))" :key="ic" :src="iconOf(ic)" alt="" class="size-6 object-contain" /></span>
-        <b class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="hand ? handLabel(hand) : ''">{{ spamOn && !NS ? `${tr("カオススパムオーブ", "Chaos Spam Orb")} (${[handName(held), ...used.map(handName)].join(" + ")})` : [handName(held), ...used.map(handName), ...(echo && isBone(held) ? [handName(ECHO)] : [])].join(" + ") }}</b>
-      </div>
-      <!-- カオススパムオーブ: カオスの段を替える (カタリストの札と同じ形) と上限 -->
-      <div v-if="spamOn && !NS" data-tree-hand-spam-tiers class="flex flex-wrap items-center gap-1">
-        <button v-for="c in SPAM_TIERS" :key="c" type="button" data-tree-hand-spam-tier :data-tier="c" class="flex min-h-7 items-center gap-1 rounded-md border px-2 text-[12px]" :class="c === held ? 'border-amber-300 bg-amber-500/20 text-amber-100' : 'border-white/10 hover:bg-white/10'" :aria-pressed="c === held" @click="held = c"><img v-if="iconOf(c)" :src="iconOf(c)" alt="" class="size-5 object-contain" />{{ handName(c) }}</button>
-        <span class="ml-1 flex items-center gap-1 text-[12px] opacity-80">{{ tr("上限", "Max") }}<input v-model.number="spamMax" type="number" min="1" class="h-7 w-16 rounded-md border border-white/15 bg-black/40 px-1 text-right" :placeholder="tr('なし', 'none')" />{{ tr("回", "") }}</span>
+        <b class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :title="hand ? handLabel(hand) : ''">{{ [handName(held), ...used.map(handName), ...(echo && isBone(held) ? [handName(ECHO)] : [])].join(" + ") }}</b>
       </div>
       <!-- カタリストの手はここで種類を替える (棚にカタリストが無い、10-22 13 通り組んだ #7) -->
       <div v-if="isCatalyst(held)" data-tree-hand-cats class="flex flex-wrap gap-1">
@@ -382,15 +360,7 @@ function ok(): void {
       <!-- カオススパムオーブ (シミュだけの札、レアの時だけ)。棚の札と同じ形 (ShelfButton の枠・絵・名前)、絵はカオスオーブそのまま、
            右上に「上級」「完全」と同じ形の札で「スパム」、見分けは札と枠の色だけ (10-25 オーナー、前の ↻ の印はこれに置き換え) -->
       <TreeRevealCard v-if="revealable" :on="held === 'reveal'" @hold="onShelfHold('reveal')" />
-      <button v-if="!NS && ((TREE_SPAM_ORB && isRare) || spamOn)" type="button" data-tree-spam-orb :aria-pressed="spamOn" :disabled="!!spamWhy && !spamOn"
-        class="group relative mb-2 flex w-[74px] flex-col items-center px-0.5 pb-1 text-[10px] transition disabled:cursor-not-allowed disabled:opacity-35 md:w-[80px] md:text-[11px]"
-        :class="spamOn ? 'text-[var(--exile-color-text-title)]' : ''"
-        :title="spamWhy ?? tr('狙う MOD が付くまでカオスを打ち続ける (狙いの側に空きがあれば先に高貴を 1 回)。レアの時だけ', 'Keep using Chaos until a target mod lands (an Exalted Orb first if the target side has room). Rare only')" @click="holdSpam">
-        <span class="g-slot grid size-[52px] place-items-center ring-1 ring-rose-400/50 md:size-[56px]" :class="spamOn ? 'on' : ''"><img v-if="iconOf('chaos')" :src="iconOf('chaos')" alt="" class="h-9 w-9 object-contain md:h-[42px] md:w-[42px]" draggable="false" /></span>
-        <span class="mt-0.5 min-h-[2.5em] text-center leading-tight">{{ tr("カオススパムオーブ", "Chaos Spam Orb") }}</span>
-        <span class="absolute right-0.5 top-0.5 rounded bg-black/60 px-1 text-[9px] text-rose-300">{{ tr("スパム", "Spam") }}</span>
-      </button>
-      <TreeCatPick v-if="flag('catHand')" v-model="catTo" :item="shelfItem" :held="held" @hold="onShelfHold" /><CurrencyShelf @hold="onShelfHold">
+      <TreeCatPick v-model="catTo" :item="shelfItem" :held="held" @hold="onShelfHold" /><CurrencyShelf @hold="onShelfHold">
         <!-- 持った物に掛けられるお告げ = クラフト台と同じ部品と置き場 (HeldOmens.vue を持ったアイコンのすぐ下に重ねる。inline-held だと棚の一番下で見切れた、10-21 本物のマウス)。
              足す手は同じ欄に「狙い無し」(適当打ち、オーナー 10-22「お告げの欄の中に適当打ちがまだ無い」) -->
         <template v-if="omensAllowedFor(held).length || (!!held && isBone(held))" #held><HeldOmens><!-- アビスの反響は並びのお告げの 1 つ (骨を持つと既定で掛かる)。前は並びとは別の大きな札「アビスの反響」を置いていた (10-26 夜オーナー「でかいアイコンもある」) -->
@@ -407,7 +377,7 @@ function ok(): void {
       <div v-if="showAims" class="flex gap-2">
         <!-- 左は普通の「キャンセル」(持った札を離す)、右は狙いを選ぶ (今の手を直す時は「狙いを再度選ぶ」)。10-27 オーナー「このまま決めるは日本語として変」 -->
         <button type="button" data-tree-hand-cancel class="g-btn !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="release()">{{ tr("キャンセル", "Cancel") }}</button>
-        <button type="button" data-tree-hand-aim-step class="g-btn-red !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="aimStep = true">{{ flag("barUse") ? (current ? tr("使う (狙いを選び直す) ›", "Use (pick targets again) ›") : tr("使う (狙いを選ぶ) ›", "Use (pick targets) ›")) : current ? tr("狙いを再度選ぶ ›", "Pick targets again ›") : tr("狙いを選ぶ ›", "Pick targets ›") }}</button>
+        <button type="button" data-tree-hand-aim-step class="g-btn-red !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="aimStep = true">{{ current ? tr("使う (狙いを選び直す) ›", "Use (pick targets again) ›") : tr("使う (狙いを選ぶ) ›", "Use (pick targets) ›") }}</button>
       </div>
       <div v-else-if="keepAsk && P27" class="flex gap-2">
         <button type="button" data-tree-hand-cancel class="g-btn !min-h-11 min-w-0 flex-1 whitespace-normal text-[14px] leading-tight" @click="release()">{{ tr("キャンセル", "Cancel") }}</button>

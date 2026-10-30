@@ -6,16 +6,15 @@
  *     どれが固定されるかはエンジンの乱数のまま (行ごとに等しく、同じ枝の行は足す)
  *   - ☑ あり: ☑ の MOD が固定された = 当たり、ほかが固定された = 外れ (今までの fracRandom の形)
  */
-import { aimHits, craftedKindOf, tierIndexOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimHits, tierIndexOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { effectOf } from "./tree-hands";
 import { aimOpts, targetsOf } from "./tree-sample";
 import { stepOutcomes } from "../sim-engine";
 import { fractureMarks, type Aim, type Hand, type TreeDoc } from "./tree-model";
-import { flag } from "../../../web/release-flags";
 
 /** 印の無い木の、狙い無しの乱数のフラクチャー (カードの行ごとに箱を分ける手) */
-export const fracFree = (doc: TreeDoc, h: Pick<Hand, "currency" | "free"> | null | undefined): boolean => !!h && flag("fracPick") && effectOf(h.currency) === "fracture" && !!h.free && !fractureMarks(doc).length;
+export const fracFree = (doc: TreeDoc, h: Pick<Hand, "currency" | "free"> | null | undefined): boolean => !!h && effectOf(h.currency) === "fracture" && !!h.free && !fractureMarks(doc).length;
 /** 打った前後で新しく ✦ になった MOD (無ければ null) */
 export function newlyFractured(before: StageItem, after: StageItem): StageMod | null {
   const had = new Set([...before.prefixes, ...before.suffixes].filter((m) => m.fractured).map((m) => m.modId));
@@ -39,7 +38,7 @@ export function fracFreeOuts(data: PatchData, doc: TreeDoc, items: readonly Stag
  * 外れ MOD の枝の鍵 = 側 (S-41。外れは種類を見ない = S-60、10-30 オーナー「プレ１とプレ２はどういつのハズレとして扱うから枝が減る」、スイッチ fracSide)。
  * 鍵の形は前と同じ `prefix|normal` (保存の札が合うように)。閉じている間は側と種類 (普通 / エッセンスのクラフト MOD) で分ける
  */
-export const junkKeyOf = (data: PatchData, m: StageMod): string => `${m.side}|${!flag("fracSide") && (m.crafted || craftedKindOf(data, m)) ? "crafted" : "normal"}`;
+export const junkKeyOf = (_data: PatchData, m: StageMod): string => `${m.side}|normal`;
 /** 外れの枝の名前の付け足し (枝が 2 つ以上の時だけ。例「プレフィックス・エッセンスの MOD」) */
 export function junkKeyLabel(key: string): [string, string] {
   const [side, kind] = key.split("|");
@@ -60,7 +59,7 @@ export function fractureTarget(data: PatchData, item: StageItem, h: Hand, aims: 
   if (effectOf(h.currency) !== "fracture" || h.pick === "random") return null;
   const mods = [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured);
   // ✦ が複数なら、付いている ✦ のどれかを等しく (どの ✦ が固定されても当たり。前は付いている最初の ✦ だけ、スイッチ fracMulti、S-42)
-  if (flag("fracMulti") && rng) { const c = aims.flatMap((a) => mods.filter((x) => isAimMod(x, targetsOf(data, [a]), aimOpts(data))).slice(0, 1)); const u = [...new Map(c.map((m) => [m.modId, m])).values()]; return u.length ? u[Math.floor(rng() * u.length)]!.modId : null; }
+  if (rng) { const c = aims.flatMap((a) => mods.filter((x) => isAimMod(x, targetsOf(data, [a]), aimOpts(data))).slice(0, 1)); const u = [...new Map(c.map((m) => [m.modId, m])).values()]; return u.length ? u[Math.floor(rng() * u.length)]!.modId : null; }
   for (const a of aims) { const m = mods.find((x) => isAimMod(x, targetsOf(data, [a]), aimOpts(data))); if (m) return m.modId; }
   return null;
 }

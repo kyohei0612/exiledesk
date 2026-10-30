@@ -14,7 +14,7 @@ export function useTreeMerge(o: {
   /** 箱の今の高さ (アイテムの枠で BOX_H より高い。測れなければ BOX_H。線がほかの箱を横切っていた、10-27 オーナーの絵) */ heightOf?: (id: string) => number;
   /** カードを出さない・消す時 (引っ張っている・画面が動いた・欄を開いた) */ busy: () => boolean; reset: () => unknown;
   /** 統合の線の横の区間を通す高さ (段の間、tree-row-tops の laneYs。スイッチ lineShort) */ lanes?: () => number[];
-  /** 手の札の真ん中 (統合の線が避ける。札を横切っていた、線の見張り L3) */ chips?: () => Array<{ x: number; y: number }>;
+  /** 手の札の真ん中と札の最大の幅 w (統合の線が避ける。札を横切っていた、線の見張り L3) */ chips?: () => Array<{ x: number; y: number; w?: number }>;
 }) {
   const merged = computed(() => {
     const d = o.doc.value;
@@ -22,18 +22,19 @@ export function useTreeMerge(o: {
     const { reqs, lines } = mergeReqs(d, pos);
     // 統合の線 (当たり → 同じ状態の当たり) は向き合う辺どうしを、ほかの箱を避けて結ぶ (tree-merge の joinPath)
     const joinPaths = new Map<string, string>();
-    // 手の札は幅が名前で変わるので広めに見る (札の幅の多くは 200 より狭い)
-    const chipBoxes = (o.chips?.() ?? []).map((c) => ({ x: c.x - 100, y: c.y - CHIP_HALF, w: 200, h: CHIP_HALF * 2 }));
+    // 手の札は幅が名前で変わるので広めに見る (札の幅の多くは 200 より狭い)。札は画面の大きさで一定 (倍率が低いと木の座標で広い) なので、
+    // スイッチ rowNear では札の最大の幅 (chipRoom、TreeHandChip の maxWidth) で見る (全体表示で合流の線が隣の札を横切った、okPcmPyY の b23→b5 と札 b12、線の見張り L3)
+    const chipBoxes = (o.chips?.() ?? []).map((c) => { const w = flag("rowNear") && c.w ? c.w : 200; return { x: c.x - w / 2, y: c.y - CHIP_HALF, w, h: CHIP_HALF * 2 }; });
     const treeSegs = o.segs();
     // スイッチ retryHover: 統合の線も横の辺の真ん中どうしを最短で (S-144・S-145)。同じ箱へ 2 本以上入る時は辺の真ん中から 8 ずつずらす。通れなければ前の道 (joinPath)
     // 描く箱だけ (まとめて描かない箱 = merged、S-66 案 A は位置が古いまま残るので、木の端・避ける箱に入れると木の外を回った。10-29 kamasan の b15→b2・b16→b3、S-145)
-    const ids = Object.keys(d.boxes).filter((id) => !(flag("mergeOpen") && d.boxes[id]!.merged));
-    const SIDE = flag("retryHover"), allX = ids.map(pos);
+    const ids = Object.keys(d.boxes).filter((id) => !d.boxes[id]!.merged);
+    const allX = ids.map(pos);
     const X0 = Math.min(...allX.map((b) => b.x)), X1 = Math.max(...allX.map((b) => b.x + b.w));
     const joins = lines.filter((l) => l.kind === "join"), nth = new Map<string, number>();
     for (const l of joins) {
       const others = [...ids.filter((x) => x !== l.from && x !== l.to).map(pos), ...chipBoxes];
-      if (SIDE) {
+      {
         const n = joins.filter((x) => x.to === l.to).length, i = nth.get(l.to) ?? 0;
         nth.set(l.to, i + 1);
         const side = sideRoute(pos(l.from), pos(l.to), others, X0, X1, { to: (i - (n - 1) / 2) * 8 });
@@ -57,7 +58,7 @@ export function useTreeMerge(o: {
     // スイッチ retryHover: 再挑戦の線は乗せた時に 1 本だけ光るので、ほかの線を避けず 1 本ずつ引く。今の向きで木の中に通り道が無ければ反対の辺から、
     // どちらも無い時だけ前の道 (木の外の列)。全部を一緒に引くと先に引いた線に押されて外の列を回り、木を囲む四角になった (S-87c、10-28 深夜オーナー「P１は案①だな」)
     const sideIds = new Set<string>();
-    if (flag("retryHover") && flag("backRoute")) {
+    {
       const kinds = new Map(lines.map((l) => [l.id, l.kind]));
       const mir = (r: BackReq): BackReq => ({ ...r, from: mirrorPos(r.from), to: mirrorPos(r.to), end: { x: -r.end.x, y: r.end.y }, start: r.start && { x: -r.start.x, y: r.start.y } });
       const other = (r: BackReq): BackReq => ({ ...r, flip: !r.flip, end: { x: r.flip ? r.to.x + 24 : r.to.x + r.to.w! - 24, y: r.end.y } });
@@ -76,7 +77,7 @@ export function useTreeMerge(o: {
       }
     }
     // スイッチ backRoute: 道は箱の上 24 の段の間で終わるので、そこから箱の上の縁まで下ろす (空中で止まって見えた、10-28 深夜オーナー「途中で終わってる奴もある」。線の見張り L1)
-    if (flag("backRoute")) for (const r of reqs) { if (sideIds.has(r.id)) continue; const p = paths.get(r.id); if (p) paths.set(r.id, `${p} L ${r.end.x} ${r.to.y}`); }
+    for (const r of reqs) { if (sideIds.has(r.id)) continue; const p = paths.get(r.id); if (p) paths.set(r.id, `${p} L ${r.end.x} ${r.to.y}`); }
     for (const [id, p] of joinPaths) paths.set(id, p);
     return { lines, paths };
   });

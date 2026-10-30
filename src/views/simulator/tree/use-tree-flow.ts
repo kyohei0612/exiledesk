@@ -8,11 +8,9 @@
  * そのままだと箱が 1/Z に小さく見えるので、Vue Flow の倍率は Z 倍で持つ: 画面の「100%」= Vue Flow の zoom Z。
  * (Vue Flow 1.48.2 の pointer() と getEventPosition() を読んで確かめた: 枠の BCR とマウスの clientX はどちらも拡大後のピクセル)
  */
-import { flag } from "../../../web/release-flags";
 import { computed, ref, watch, type Ref, nextTick } from "vue";
 import { useVueFlow } from "@vue-flow/core";
 import { BOX_H, BOX_W, boundsOf, type TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { bandsOf } from "../../../services/simulator/tree/tree-layout";
 import { pageZoom } from "../../../utils/zoom";
 import { isPhoneWidth } from "../../../utils/use-phone";
 
@@ -102,8 +100,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     const half = Math.max(sx - b.x, b.x + b.w - sx);
     // 木の左の外の段の目印 (TreeBandLayer、画面の上で約 110px × ページの zoom) の分も左を空ける (1280 で目印が枠の外に切れた、10-22)
     // 段の目印を出さない時 (スイッチ noBand、10-28 夜オーナー「これいらんなもう　消してくれわかりづらいし」) は左を空けない
-    const left = !flag("noBand") && bandsOf(doc.value).length ? Math.round(110 * pageZ.value) : 0;
-    const fz = Math.min((w / 2 - left - PAD_MIN) / half, (h - topY() - PAD_MIN) / (treeBottom() - b.y)) / pageZ.value;
+    const fz = Math.min((w / 2 - PAD_MIN) / half, (h - topY() - PAD_MIN) / (treeBottom() - b.y)) / pageZ.value;
     return [...ZOOM_LEVELS].reverse().find((l) => l <= Math.min(1, fz) + 1e-6) ?? ZOOM_MIN;
   }
   /**
@@ -170,7 +167,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     if (!b) return;
     const { x, y, zoom: z } = f.viewport.value, w = f.dimensions.value.width, h = f.dimensions.value.height, m = 24;
     // スイッチ nextInView (S-147c): 箱の本当の高さ + 下の ＋ まで (帯「! 未設定」の下に ＋ を隠さない)
-    const sx = b.x * z + x, sy = b.y * z + y, sw = BOX_W * z, sh = (flag("nextInView") ? (f.findNode(id)?.dimensions.height || BOX_H) + NEXT_H : BOX_H) * z;
+    const sx = b.x * z + x, sy = b.y * z + y, sw = BOX_W * z, sh = ((f.findNode(id)?.dimensions.height || BOX_H) + NEXT_H) * z;
     const out = sx < m || sy < m || sx + sw > w - m || sy + sh > h - m;
     if (center || out) await f.setCenter(b.x + BOX_W / 2, b.y + BOX_H / 2, { zoom: z });
   }
@@ -185,7 +182,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     if (!fresh.length) return;
     await nextTick(); await nextTick();
     // スイッチ nextInView (S-147c): 箱の高さが測れて並べ直し (use-row-settle) が済むまで待つ (新しい箱の位置と高さが 2 コマ続けて同じ、最長 30 コマ)
-    if (flag("nextInView")) {
+    {
       const sig = (): string => fresh.map((id) => { const b = doc.value.boxes[id]; return b ? `${b.x},${b.y},${f.findNode(id)?.dimensions.height ?? 0}` : ""; }).join("|");
       let last = "", same = 0;
       for (let i = 0; i < 30 && same < 2; i++) { await new Promise((r) => requestAnimationFrame(r)); const s = sig(); same = s === last ? same + 1 : 0; last = s; }
@@ -194,10 +191,10 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     if (fresh.length > 3) { await openView(); return; }
     const ys = new Set(fresh.map((id) => doc.value.boxes[id]?.y));
     // nextInView: 帯「! 未設定」(TreeUnsetBar、高さ 44) が数え直しの間だけ消えていても、帯の分を下に空けて数える (新しい箱はたいてい未設定で、帯がすぐ戻る)
-    const barGap = flag("nextInView") && flag("unsetMark") && !document.querySelector("[data-tree-unset-bar]") ? 44 * pageZ.value : 0;
+    const barGap = !document.querySelector("[data-tree-unset-bar]") ? 44 * pageZ.value : 0;
     const { x, y, zoom: z } = f.viewport.value, w = f.dimensions.value.width, h = f.dimensions.value.height - barGap, m = 8;
     const row = Object.values(doc.value.boxes).filter((b) => ys.has(b.y));
-    const l = Math.min(...row.map((b) => b.x)), r = Math.max(...row.map((b) => b.x + BOX_W)), t0 = Math.min(...row.map((b) => b.y)), b0 = Math.max(...row.map((b) => b.y + (f.findNode(b.id)?.dimensions.height || BOX_H))) + (flag("nextInView") ? NEXT_H : 0);
+    const l = Math.min(...row.map((b) => b.x)), r = Math.max(...row.map((b) => b.x + BOX_W)), t0 = Math.min(...row.map((b) => b.y)), b0 = Math.max(...row.map((b) => b.y + (f.findNode(b.id)?.dimensions.height || BOX_H))) + NEXT_H;
     const out = l * z + x < m || t0 * z + y < m || r * z + x > w - m || b0 * z + y > h - m;
     if (!out) return;
     // 今の倍率で入るなら、入る所まで最小限だけ動かす (手を足すたびに上へ戻すと組んでいる所を見失う)。入らない時だけ開いた時の寄りへ

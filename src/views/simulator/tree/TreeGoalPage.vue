@@ -16,7 +16,6 @@ import { jaTypeName } from "../../../i18n/item-names-ja";
 import { tr } from "../../../i18n/lang";
 import { tierRankLabel, type StageMod } from "../../../services/craft-stage/engine";
 import type { Aim, TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { goalBlock } from "../../../services/simulator/sim-engine";
 import { goalBlockLoose } from "./tree-goal-cap";
 import { TIER } from "../../../state/for-share/tier-word";
 import TreeBasePick from "./TreeBasePick.vue";
@@ -160,7 +159,7 @@ const crafts = computed(() => {
   return list.length >= 2 ? list : [];
 });
 /** 「途中で消える」の切り替えをカードの MOD の行の右に置く (デザインの口 rowToggles、10-27 夜オーナー。goalQuality と rowToggle の両方の時だけ、片方ならカードの下の欄) */
-const inRow = computed(() => flag("rowToggle"));
+const inRow = computed(() => true);
 const wayToggles = computed((): Map<string, RowToggle> | null => (inRow.value && crafts.value.length ? new Map(crafts.value.map((c) => [c.a.modId, { text: tr("途中で消える", "Removed on the way"), on: c.way, title: `${c.way ? tr("押すと残す (完成の狙いへ戻す)", "Click to keep it (back to the final targets)") : tr("押すと途中で消える物にする (完成の狙い・枠・完成の判定に数えない)", "Click to mark it removed on the way (not counted as a final target, slot or for completion)")}
 ${WAY_ORDER()}` }])) : null));
 /** カードの札: 行の右に切り替えがある行は「途中で消える」の札を外す (押された切り替えと同じ言葉が 2 つ並ぶので) */
@@ -186,7 +185,7 @@ function blockOf(modId: string, tier: number): string | null {
   if (key !== blockFor) { blockFor = key; blockMemo = new Map(); }
   const k = `${modId}|${tier}`;
   // 候補は枠に縛らず 10 まで (S-04、スイッチ goalTen): 枠以外の断りだけ
-  if (!blockMemo.has(k)) blockMemo.set(k, flag("goalTen") ? goalBlockLoose(d, doc.base, lv, aims, { modId, tier }, t.goals.value.some((a) => a.modId === modId)) : goalBlock(d, doc.base, lv, aims, { modId, tier }));
+  if (!blockMemo.has(k)) blockMemo.set(k, goalBlockLoose(d, doc.base, lv, aims, { modId, tier }, t.goals.value.some((a) => a.modId === modId)));
   return blockMemo.get(k) ?? null;
 }
 /** 開いた行の頭に出す押せない理由 (理由ごとに段をまとめる。全部の段が押せる・もう狙いの行は無し。10-26 モンキー 7 の 6「灰色のボタンが並ぶだけで理由が見えない、スマホは乗せる事もできない」) */
@@ -246,11 +245,9 @@ function onCardFracture(m: StageMod): void {
 const HELP: Array<[string, string, boolean?]> = [
   [`狙いにする: その${TIER}以上が付けば当たり (狙いは MOD 1 つ、上の${TIER}は「含む」)`, "Target: a hit if that tier or better rolls (one target per mod; higher tiers are included)"],
   ["後の箱の当たりは、この狙いから選ぶ", "Later hit boxes pick from these targets"],
-  flag("fracMulti")
-    ? ["フラクチャー (✦) = 固定してよい MOD の印。いくつでも付けられ、フラクチャーでどれか 1 つが固定されれば当たり。始め方 (フラクチャー済みから / 白から確定フラクチャー) は「決めた」の後の窓で選ぶ", "Fracture (✦) = marks mods that may be fixed. Mark any number; a fracture is a hit if any one of them is fixed. How to start (already fractured / sure fracture from white) is chosen after Done"]
-    : ["フラクチャー (✦) = 完成品に残す MOD の印。1 つだけ (付けるとほかの印は外れる)。始め方 (フラクチャー済みから / 白から確定フラクチャー) は「決めた」の後の窓で選ぶ", "Fracture (✦) = marks the one mod the finished item keeps (marking another moves it). How to start (already fractured / sure fracture from white) is chosen after Done"],
+  ["フラクチャー (✦) = 固定してよい MOD の印。いくつでも付けられ、フラクチャーでどれか 1 つが固定されれば当たり。始め方 (フラクチャー済みから / 白から確定フラクチャー) は「決めた」の後の窓で選ぶ", "Fracture (✦) = marks mods that may be fixed. Mark any number; a fracture is a hit if any one of them is fixed. How to start (already fractured / sure fracture from white) is chosen after Done"],
   // カードの MOD を押してもフラクチャー (エミュと同じ、10-28 オーナー「スマホと共有でクリックでもフラクチャーできるようにPCも変えてくれ」、スイッチ clickFracture)
-  flag("clickFracture") ? ["カードの行を押しても印を付け外し (右クリックでも)", "Click a row on the card to toggle the mark too (right-click works too)"] : ["カードの行の右クリックでも印を付け外し", "Right-click a row on the card to toggle the mark too", true],
+  ["カードの行を押しても印を付け外し (右クリックでも)", "Click a row on the card to toggle the mark too (right-click works too)"],
   ["印が無ければ「決めた」の後の窓で、フラクチャーにする MOD を選ぶか白ベース (フラクチャー無し) から", "No mark: after Done, pick the mod to fracture or start from a white base (no fracture)"],
 ];
 /** 説明はスマホでは既定で閉じる (カードの下で MOD の行が画面の外へ押し出された、10-26 猿の 10)。PC は開いたまま */
@@ -261,7 +258,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
 
 <template>
   <!-- ページで出している間は高さを決めず、本文の送りの箱も外す (ページごと送る。1 の段 = 10-23 オーナー「エミュと同じ展開時の表示の仕方」、2 の段 = 10-24 オーナー「一覧の中に別のスクロールの箱を作らない」)。窓の時は窓の本文 1 つで送る -->
-  <ModalShell :open="true" :inline="asPage" :closable="!(asPage && unpicked) && !(flag('fracFirst') && !fracDone)" rec="tree-goal" :title="tr('0 完成形の設定', '0 Final item')" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" :width="asPage ? (step === 1 ? 'w-full max-md:!border-0 max-md:[border-image:none] max-md:!bg-none max-md:!p-0' : 'w-full') : 'w-[88%] h-[86%] max-md:h-full'" full-on-phone :body-class="asPage ? (step === 1 ? 'px-3 pb-3 max-md:px-2 !overflow-visible' : 'px-3 pb-3 !overflow-visible') : 'px-3 pb-3'" @close="close">
+  <ModalShell :open="true" :inline="asPage" :closable="!(asPage && unpicked) && fracDone" rec="tree-goal" :title="tr('0 完成形の設定', '0 Final item')" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" :width="asPage ? (step === 1 ? 'w-full max-md:!border-0 max-md:[border-image:none] max-md:!bg-none max-md:!p-0' : 'w-full') : 'w-[88%] h-[86%] max-md:h-full'" full-on-phone :body-class="asPage ? (step === 1 ? 'px-3 pb-3 max-md:px-2 !overflow-visible' : 'px-3 pb-3 !overflow-visible') : 'px-3 pb-3'" @close="close">
     <template #subheader>
       <!-- 流れの 4 段の帯 (ツリーのページの上と同じ部品 TreeFlowSteps、10-24 オーナー)。初手 (ベース未選択) の間は 2 から先は押せない。右端に保存したレシピから開く -->
       <div data-tree-goal-steps class="flex flex-wrap items-center gap-2 px-3 pb-2">
@@ -346,7 +343,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <p v-if="tapFrac.on.value" data-tree-goal-tap-frac class="break-words rounded border border-[#a3342a]/60 bg-[rgba(163,52,42,0.25)] px-2 py-1.5 text-[13px] text-mod-fractured">{{ tapFrac.note.value }}</p>
         <StageItemCard v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="cardTags" :row-toggles="wayToggles" @toggle="(id: string) => t.edit((d) => toggleWay(d, id))" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable :click-fracture="flag('clickFracture')" row-remove tier-at-least :mods-head="flag('qualityAsk') ? tr('完成形の MOD', 'Target mods') : undefined" @fracture="onCardFracture" @remove="onCardRemove" @jump="(id) => tapFrac.on.value && tapFrac.tap(id, [...(t.goalItem.value?.item.prefixes ?? []), ...(t.goalItem.value?.item.suffixes ?? [])].find((x) => x.modId === id))" />
         <!-- 完成形の品質 (20% を超えるとブリーチのエッセンスの MOD が要る、10-27 夕オーナー、スイッチ goalQuality) -->
-        <TreeGoalQuality v-if="flag('goalQuality') && t.goalItem.value" :warn="qualityWarn" />
+        <TreeGoalQuality v-if="t.goalItem.value" :warn="qualityWarn" />
         <!-- クラフト MOD が 2 つ以上: どれを途中で消すか (完成の狙い・枠・完成の判定に数えない)。残るのはクラフト MOD の上限まで (10-27 夜オーナー、スイッチ goalQuality) -->
         <div v-if="crafts.length" data-tree-goal-ways class="flex flex-col gap-1 px-1 text-[12px]">
           <span v-if="!inRow" class="opacity-80">{{ tr("クラフト MOD (途中で消える物は完成の狙いに数えない)", "Crafted mods (ones removed on the way don't count as final targets)") }}</span>

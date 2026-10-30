@@ -20,13 +20,11 @@ import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeBox,
 import { aimOpts, aimsOf, goalsHeld, handAims, handProblem, heldHitOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
 import { boxOutcomeOf, fromStrip, stripBackOf, stripStop, stripTargetsOf } from "./tree-outcome";
 import { runTreeSteps, stuckDetail } from "./tree-run";
-import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapeFits, shapesOf, splitTo } from "./tree-shape";
-import { bodyKinds, bodyMemo, bodyVaries, sameBody } from "./tree-box-shape";
+import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapesOf, splitTo } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { judgeMemo, nextAimed, startAimed } from "./tree-judge";
 import { routeOf } from "./tree-judge-link";
 import { modText, tr } from "../../../i18n/lang";
-import { flag } from "../../../web/release-flags";
 
 type CheckKind = "open" | "unfinished" | "noAim" | "cantUse" | "neverHit" | "noDone" | "loop" | "doneShape" | "quality" | "unwanted" | "noMatch" | "noCatalyst" | "unexpected" | "stuck" | "carry" | "omenWaste" | "shape" | "fixedFull" | "shapeBody" | "orphan";
 /** 合格を止めない知らせ (shapeBody = 戻り先と外れの数・側だけが違う。回す時は実物で形の合う箱へ移る、S-62・S-73、10-28 仮) */
@@ -96,7 +94,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
   const boxes = Object.values(doc.boxes);
   const aims = aimsOf(doc);
   /** 判定 (スイッチ judgeOne。戻り先の比べ・辿りの行き先はこれだけ、S-50b・S-73) */
-  const J = flag("judgeOne") ? judgeMemo(data, doc) : null;
+  const J = judgeMemo(data, doc);
   /** 戻りの矢印の行き先 (形の合う箱へ = 行きうる全部、作り直し = 始まり) */
   const backTo = (id: string): string[] => {
     const split = doc.boxes[id]?.split;
@@ -117,48 +115,25 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
     if (!J.contents(b.id) || !J.contents(b.back)) continue;
     add(b.id, "shape", tr("戻り先の箱と中身が違う (狙いの組・外れの側と数と種類・✦・レアリティ・品質のどれかが違う人が入る)。直し方: 戻り先を同じ中身の箱にする (↩ で選び直す。選べる箱だけ明るくなる) か、ここに次の手を置く", "The return target holds a different item (targets, misses per side and kind, fractures, rarity or quality differ). Fix: return to a box with the same contents (pick again with ↩; only valid boxes are lit), or add a next craft here"));
   }
-  if (!J) for (const b of boxes) if (b.back && !shapeFits(doc, b.id, b.back)) add(b.id, "shape", tr("戻り先の箱と形が違う (付いている狙いの組が違う人が入る)。直し方: 戻り先を同じ狙いの組の箱にする (↩ で選び直す。選べる箱だけ明るくなる) か、ここに次の手を置く", "The return target has a different shape (runs with different targets would enter it). Fix: return to a box with the same targets (pick again with ↩; only valid boxes are lit), or add a next craft here"));
-  // 外れの種類 (普通 / エッセンスのクラフト MOD / 冒涜) が戻り先の箱の見本と違う戻り (10-27 夕オーナー「冒涜で付けた外れ MOD とエッセンスで付けた外れ MOD」は形の違い。スイッチ goalShape)。
-  // 前に組んだ木の自動の戻りも付け替えずにここで知らせる。始まりへの戻り・当たりどうしの統合・全部消えてよい消去の自動の戻り (戻り先は打った結果の形で選んでいる) は見ない
-  if (flag("goalShape") && !J) {
-    const sigOf = bodyMemo(data, doc);
-    for (const b of boxes) {
-      const to = b.back, tb = to ? doc.boxes[to] : undefined, p = b.parent ? doc.boxes[b.parent] : undefined;
-      // 当たりどうしの統合も比べる (置き石の冒涜の外れを持つ当たりが、外れの無い当たりへ統合されていた。10-28 オーナー「精査で出してアミュ B のつなぎも直して」、スイッチ boneLater)
-      if (!to || !tb || to === "start" || (b.out === "hit" && tb.out === "hit" && !flag("boneLater")) || out.some((x) => x.boxId === b.id && x.kind === "shape")) continue;
-      if (b.autoBack && p?.hand && effectOf(p.hand.currency) === "remove" && p.hand.keep && !p.hand.keep.length) continue;
-      // スイッチ boxShape: 自動のつなぎと同じ比べ (tree-box-shape の sameBody = 外れの側・種類・数、✦ の側、レアリティ)。閉じている間は外れの種類だけ
-      const a = sigOf(b.id), z = sigOf(to);
-      // 見本ごとに外れの種類が違う箱 (mixed) は分からない扱い (自動ではつながないが、前につないだ戻りは回すと進める。精査で知らせると古い木で増えた)
-      if (flag("boxShape") ? !a?.startsWith("mixed") && !z?.startsWith("mixed") && !sameBody(sigOf, b.id, to) && !bodyVaries(data, doc, b.id) && !bodyVaries(data, doc, to) : a !== null && z !== null && bodyKinds(a) !== bodyKinds(z)) add(b.id, flag("boxShape") ? "shapeBody" : "shape", tr("戻り先の箱と外れ MOD の種類が違う (普通 / エッセンスのクラフト MOD / 冒涜の外れ MOD のどれがあるかが違う人が入る)。直し方: 戻り先を外れの種類も同じ箱にする (↩ で選び直す) か、外れを消す手を挟む", "The return target has different kinds of miss mods (which of normal / essence crafted / desecrated misses it has differs). Fix: return to a box with the same kinds of misses (pick again with ↩), or add a step that removes the misses"));
-    }
-  }
 
   // 1) 形だけで分かる穴: 決めていない芽・MOD を選んでいない当たり
   // 始まりの MOD は自由 (無くてよい、10-22 オーナー)。付けられない時は見本の理由を出す
   { const note = startItemOf(data, doc, mulberry32(1)).note; if (note) add("start", "cantUse", tr(`始まりの形が作れない: ${note}`, `Can't make the starting item: ${note}`)); }
   for (const b of boxes) {
     if (b.split?.some((r) => !r.to)) add(b.id, "open", tr("分かれ目の行き先を決めていない行がある (その形で来た人はここで止まる)", "A split row has no destination (runs of that shape stop here)"));
-    // 完成の狙いが全部そろう箱 (見本で全部付いている) は未定に数えない (回す時はその場で完成、S-77。スイッチ boxShape)
-    // スイッチ judgeOne: 完成は押した箱だけ (S-05・S-54) なので、そろっていても押していない箱は「行き先を決めていない」(ここで止まる)。知らせの文だけ「完成を押す」に
-    const fin = (): boolean => { if (!flag("boxShape") || b.out === "start" || J) return false; const s = sampleOf(data, doc, b.id, 1); return s.note !== "none" && !s.note?.startsWith("cant:") && goalsHeld(data, doc, s.item); };
-    // スイッチ unsetMark の下では完成にしていない完成の箱も決めていない箱 (S-77・S-89b、10-28 深夜オーナー「どこに完成するかそもそも設定どこにしたらいいかわからんから固定で赤枠がイイ」)
-    if (flag("unsetMark") && !b.hand && !b.back && !b.done && !b.split && !dead.has(b.id) && fin()) add(b.id, "unfinished", tr("完成にしていない (完成の狙いが全部そろっている。「完成」を押す)", "Not marked finished (all final mods are here; press Finish)"));
-    else if (!b.hand && !b.back && !b.done && !b.split && !dead.has(b.id) && !fin()) add(b.id, "open", J && b.out !== "start" && J.holdsAll(b.id) ? tr("完成にしていない (完成の狙いが全部そろっている。「完成」を押す。押すまでここで止まる)", "Not marked finished (all final mods are here; press Finish — runs stop here until then)") : b.out === "start" ? tr("最初の手を決めていない (ここで止まる)", "No first craft yet (stops here)") : tr("行き先を決めていない (ここで止まる)", "No next step yet (stops here)"));
+    if (!b.hand && !b.back && !b.done && !b.split && !dead.has(b.id)) add(b.id, "open", b.out !== "start" && J.holdsAll(b.id) ? tr("完成にしていない (完成の狙いが全部そろっている。「完成」を押す。押すまでここで止まる)", "Not marked finished (all final mods are here; press Finish — runs stop here until then)") : b.out === "start" ? tr("最初の手を決めていない (ここで止まる)", "No first craft yet (stops here)") : tr("行き先を決めていない (ここで止まる)", "No next step yet (stops here)"));
     if (b.out === "hit" && !b.aim) add(b.id, "noAim", tr("付く MOD を選んでいない", "No mod picked for this hit"));
     // フラクチャーの手は完成の MOD にフラクチャーの印がある木だけ (10-25 オーナー「最初にフラクチャーを決めないとフラクチャーオーブを打てないように」)。前に保存した印の無い木の手は穴に
     if (b.hand && effectOf(b.hand.currency) === "fracture" && b.hand.pick !== "random" && !fractureMarks(doc).length) add(b.id, "cantUse", tr("フラクチャーの印が無い (先に完成の MOD でフラクチャーを決めて)", "No fracture mark (set a fracture on the final mods first)"));
     // 触媒のお告げはカタリストで入れた品質にだけ効く。カタリストを打つ手が無ければ効きは乗らない (10-22 オーナー「ちゃんと打つルートが無いとあかん」)。
-    // 品質だけ上げる手 (カタリスト) の後の通り抜けから打つ時は、その手がカタリストを打つ手
-    const before = b.out === "pass" && b.parent ? doc.boxes[b.parent]?.hand : null;
-    // スイッチ judgeOne: 品質を上げた後かは見本の品質 (中身、S-31b。「n % まで」の打った後の箱も)
-    const afterCat = J ? J.afterQuality(b.id) : !!before && isCatalyst(before.currency);
+    // 品質を上げた後かは見本の品質 (中身、S-31b。品質だけ上げる手の後の通り抜け・「n % まで」の打った後の箱も)
+    const afterCat = J.afterQuality(b.id);
     if (b.hand?.omens.includes(CATALYSING) && !b.hand.catalyst && !afterCat) add(b.id, "noCatalyst", tr(`${nameOfKey(CATALYSING, null)}なのにカタリストを打つ手が無い (手の札でカタリストを選ぶ)`, `${nameOfKey(CATALYSING, null)} without a catalyst craft (pick a catalyst in the craft)`));
   }
 
   // 1a) 固定された外れ MOD (フラクチャーで外れが固定された・始めから固定の外れ) で、その側の完成の狙いが枠に入りきらない = この枝は完成できない
   // (10-27 夜オーナー、カマサのティアラの「外れ MOD が固定された」の箱。スイッチ tidyUnder)。固定は消せないので、レアの枠 − 固定の外れ < その側の狙いの数なら届かない。枝の一番上の箱だけに出す
-  if (flag("tidyUnder")) {
+  {
     const ts = targetsOf(data, aims), opts = aimOpts(data), stuckFix = new Set<string>();
     for (const b of boxes) {
       if (b.parent && stuckFix.has(b.parent)) { stuckFix.add(b.id); continue; }
@@ -181,7 +156,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
   // 1b) 形の合う箱へ: 行きうる形の箱がツリーに無い (tree-run の matchTargets、回す時と同じ判定)
   // 前の版の「形の合う箱へ」(match) は、人が戻り先を選ぶのを無くした今 (S-52b) は決めていない箱 = 未設定の印 (スイッチ settleStrict、10-29 オーナー「直して」)。
   // 全部消えてよい消去の直線の止まり (fromStrip) が自動で付けた物は除く
-  if (flag("settleStrict")) for (const b of boxes) if (b.back === MATCH && !b.autoBack && !fromStrip(doc, b.id)) add(b.id, "open", tr("前の版の「形の合う箱へ」の戻り (今は選べない)。次の手・完成・失敗を決める", "Old \"go to the matching box\" return (no longer selectable). Pick a next craft, Finish, or Fail"));
+  for (const b of boxes) if (b.back === MATCH && !b.autoBack && !fromStrip(doc, b.id)) add(b.id, "open", tr("前の版の「形の合う箱へ」の戻り (今は選べない)。次の手・完成・失敗を決める", "Old \"go to the matching box\" return (no longer selectable). Pick a next craft, Finish, or Fail"));
   if (!J) for (const b of boxes) if (b.back === MATCH) {
     const miss = matchTargets(doc, b.id).filter((x) => !x.to);
     if (miss.length) add(b.id, "noMatch", tr(`続きの箱が無い (${miss.length} つの形。その形で手のある箱を作る)`, `No box to continue from (${miss.length} shape(s)); add a box with that shape and a craft`));
@@ -196,8 +171,8 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
     // スイッチ unsetMark: 印は原因の末端の箱に (手・戻り・完成の無い当たり → 無ければほかの末端の箱)。スタートには付けない、スタートしか無い時だけスタート
     // (S-89b・S-77、10-28 深夜オーナー「末端の枠のせいだからスタートに出したら行かんでしょそもそも」「スタートの枠しかない時は勿論枠はあると思うが」)
     const tip = (b: TreeBox): boolean => b.id !== "start" && !b.hand && !b.back && !b.done && !b.split;
-    const ends = flag("unsetMark") ? boxes.filter((b) => tip(b) && b.out === "hit") : [];
-    const tips = ends.length ? ends : flag("unsetMark") ? boxes.filter(tip) : [];
+    const ends = boxes.filter((b) => tip(b) && b.out === "hit");
+    const tips = ends.length ? ends : boxes.filter(tip);
     if (tips.length) for (const b of tips) add(b.id, "noDone", msg);
     else add("start", "noDone", msg);
   }
@@ -293,7 +268,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
         if (!b.hand.repeat && effectOf(b.hand.currency) !== "fracture") {
           const all = stepOutcomes(data, prepFor(data, item, b.hand.currency), b.hand.currency, engineOmens(b.hand)) ?? []; // 規格外の形で (tree-unbounded)
           // 未発現が新しく付く結果だけ見ない (前から未発現を持ったまま打つ手は見る。スイッチ boneLater)
-          const veiled = (o: { item: StageItem }): boolean => !!unrevealedOf(o.item) && !(flag("boneLater") && unrevealedOf(item));
+          const veiled = (o: { item: StageItem }): boolean => !!unrevealedOf(o.item) && !unrevealedOf(item);
           const shown = all.filter((o) => !o.void && !veiled(o)).map((o) => boxOutcomeOf(data, doc, b, item, o.item, aims, J ? aimed : null));
           const miss = shown.filter((oc) => !outBoxOf(doc, b, oc));
           if (miss.length) { const c = odd.get(id) ?? { who: new Set<number>(), outs: new Set<string>() }; c.who.add(person); for (const oc of miss) c.outs.add(outName(oc.out)); odd.set(id, c); }
@@ -358,7 +333,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
       if (w?.spam) { add(id, "stuck", tr(`回すと ${RUN_PEOPLE} 人中 ${n} 人が、当たるまでを ${w.spam} 回打っても当たらず止まる (この形からは狙いが付きにくい・付かない。例: 削減のお告げで満杯の側の入れ替えが続く)。付きやすい狙いを当たりに選ぶか、手・お告げを替える`, `${n} of ${RUN_PEOPLE} runs get no hit in ${w.spam} repeats and stop (the target is unlikely or impossible from this item, e.g. the reduction omen keeps swapping the full side). Pick an easier target or change the craft or omen`)); continue; }
       // 外れを持ったまま戻る「狙いが消えた」の戻り (作り直しでない)。カオスを当たるまでは 1 つしか入れ替えないので、持ち込んだ外れは消えずに先で満杯になる (10-22 靴 b14 → b1、100 人中 63 人)
       const carry = (w?.backs ?? []).filter((x) => doc.boxes[x]?.out === "lost" && doc.boxes[x]?.back !== RESTART);
-      add(id, "stuck", stuckText(data, aims, n, w, carry.length > 0, doc.boxes[id]?.hand ?? null) + (flag("settleStrict") && w?.item ? ` (${stuckDetail(doc, w)})` : ""));
+      add(id, "stuck", stuckText(data, aims, n, w, carry.length > 0, doc.boxes[id]?.hand ?? null) + (w?.item ? ` (${stuckDetail(doc, w)})` : ""));
       // 10-26: 前は「戻り先を分かれ目の箱に」と勧めていたが、分かれ目を作るボタンは 10-25 に外した (画面でできない直し方だった)
       for (const x of carry) add(x, "carry", tr(`ここで戻ると外れを持ったまま進み、先の箱で側が満杯になって止まる (直すのはこの戻り: 戻りをやめて外れを消す手 (${nameOfKey("annul", null)} + 満杯の側のお告げなど) を次の手にし、その結果から戻す。PC は × で外して＋、スマホは「次の手を決める」)`, `Returning here keeps the misses, so a later box runs out of room and stops (fix this return: replace it with a craft that removes the misses (e.g. ${nameOfKey("annul", null)} with the omen for the full side) and return from its result. On PC remove it with × and use +; on a phone choose "Next craft")`));
     }

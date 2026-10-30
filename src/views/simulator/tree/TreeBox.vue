@@ -21,7 +21,6 @@ import { treeRowTags } from "./tree-row-tags";
 import { splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
 import { boxAims, BOX_H, BOX_W, fractureMarks, START_JUNK, startOf, startRarity, startsFractured, multiFracWhite, type TreeBox } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
-import { jaTypeName } from "../../../i18n/item-names-ja";
 import { useTree } from "./use-tree";
 import { handLabel, headOf, OUT_LOOK, rarityName, splitWhenText, sureFracText } from "./tree-names";
 import { pctText, useTreeOdds } from "./tree-odds";
@@ -56,8 +55,8 @@ const t = useTree();
  */
 /** 「下の n 箱ごと消す」は 8 秒待つ (3 秒では押す前に × に戻った、10-27 夕モンキー 5。スイッチ goalShape) */
 // 時間では戻さず、枠 (この箱の ×) の外を押すか Esc で戻す (8 秒でもモンキーの台本の間に戻った、10-27 夜モンキー 2 回目 3。スイッチ armKeep)
-const rm = useArmed(flag("armKeep") ? 2147483647 : flag("goalShape") ? 8000 : undefined);
-if (flag("armKeep")) useDismiss(() => rm.is(props.box.id), [], rm.clear, { swallow: false, keep: `[data-box-id="${props.box.id}"] [data-tree-box-remove]` });
+const rm = useArmed(2147483647);
+useDismiss(() => rm.is(props.box.id), [], rm.clear, { swallow: false, keep: `[data-box-id="${props.box.id}"] [data-tree-box-remove]` });
 const rmCount = computed(() => { const d = t.doc.value, p = props.box.parent ? d.boxes[props.box.parent] : undefined; return p ? p.outs.reduce((n, o) => n + subtree(d, o).length, 0) : 0; });
 const rmTitle = computed(() => tr(`この箱を作った手 (${(() => { const h = props.box.parent ? t.doc.value.boxes[props.box.parent]?.hand : null; return h ? handLabel(h) : ""; })()}) と、その結果の箱 ${rmCount.value} 個を消す (手を選び直せる)`, `Remove the craft that made this box and its ${rmCount.value} result box(es) (pick the craft again)`));
 /** 箱の中の今のアイテムの枠 (乗せた時のカードと同じ部品を縮める。見本は箱の形に合う人、10-26 オーナー「枠は現状のアイテムの枠が表示してあげたら？いまカードで表示してる情報」) */
@@ -66,16 +65,13 @@ const CARD_W = BOX_W - 16;
 /** この箱からまとめられるか (下の操作の行の「まとめる」の入口。押すとこの箱をまとめ先にして上の帯の「まとめる」と同じ選び方へ) */
 /** 当たりの箱の「次の手が未定」は赤くせず静かな印だけ (足りない所には数える。10-26 オーナー「一旦整理してA」) */
 /** 同じ段の箱は縦の大きさも揃える: 中身は上詰め、下の行は下の辺へ (S-141b、スイッチ rowFit)。中身だけの高さ = 箱の高さ − 伸ばした分 (fill) を測って use-row-fit へ */
-const FIT = flag("rowFit");
 const rootEl = ref<HTMLElement>(), fillEl = ref<HTMLElement>();
-const fitH = computed(() => (FIT && props.x === undefined && props.box.out !== "pass" ? rowFitOf(t.doc.value, props.box.id) : 0));
+const fitH = computed(() => (props.x === undefined && props.box.out !== "pass" ? rowFitOf(t.doc.value, props.box.id) : 0));
 let ro: ResizeObserver | null = null;
-onMounted(() => { if (!FIT || props.x !== undefined || !rootEl.value) return; ro = new ResizeObserver(() => { const r = rootEl.value; if (r) setNatural(props.box.id, Math.round(r.offsetHeight - (fillEl.value?.offsetHeight ?? 0))); }); ro.observe(rootEl.value); });
+onMounted(() => { if (props.x !== undefined || !rootEl.value) return; ro = new ResizeObserver(() => { const r = rootEl.value; if (r) setNatural(props.box.id, Math.round(r.offsetHeight - (fillEl.value?.offsetHeight ?? 0))); }); ro.observe(rootEl.value); });
 onBeforeUnmount(() => ro?.disconnect());
 /** 決める事が残っている箱 (足りない所に何か出ている箱) は全部、右上の角の丸い赤の「!」の 1 つの印 + 赤枠。題の横の「! 未定」は出さない (S-89b、スイッチ unsetMark、10-28 深夜オーナー「この未定ってマーク共通にして全体」) */
-const UNSET = flag("unsetMark");
-const unset = computed(() => UNSET && !!props.issue);
-const quietOpen = computed(() => !UNSET && props.box.out === "hit" && !!props.issue && /行き先を決めていない|Not decided|No next/.test(props.issue));
+const unset = computed(() => !!props.issue);
 // 別の道の同じ状態の当たり (sameHitsOf) は、完成・次の手がある箱どうしでもまとめられる (10-26 夜オーナー「中身がある箱どうしは自動でせずまとめる」)
 /** 人が選ぶ「まとめる」「↩ 戻り先を選ぶ」は出さない (S-52b、スイッチ pickOff。10-28 深夜オーナー「だってなかったら自分でカレンシー足してるじゃんね今　まとめるは消していいわな」)。「分ける」は前の「どれか」の箱にだけ */
 const PICK_OFF = flag("pickOff");
@@ -83,11 +79,10 @@ const canJoin = computed(() => !PICK_OFF && (!props.box.hand && !props.box.done 
 const startJoin = (): void => { joinMode.value = { anchor: props.box.id, pick: [] }; };
 /** MOD の値は木の中で揃える (貼った値か段の真ん中、tree-fixed-values。10-26 夜オーナー「ツリー内で同じ MOD じゃないと混乱する」) */
 /** スタートの箱も結果の箱と同じアイテムカード (レアリティの色・名前・MOD の行、✦ はフラクチャーの印。10-28 夜オーナー「スタートもアイテムカードで表示させてくれツリー」、スイッチ startCard) */
-const START_CARD = flag("startCard");
-const sampled = computed(() => (s.data.value && (props.box.out !== "start" || START_CARD) ? shapeSampleWithNote(s.data.value, t.doc.value, props.box.id) : null));
+const sampled = computed(() => (s.data.value ? shapeSampleWithNote(s.data.value, t.doc.value, props.box.id) : null));
 const sample = computed(() => sampled.value?.item ?? null);
 /** この箱の手で消える・入れ替わる候補の MOD (オレンジの文字。手の窓・エミュと同じエンジンの previewUse、10-27 オーナー「打つ前の箱のカード」も)。手の無い箱・打てない手は無し */
-const cardDoomed = computed((): readonly string[] => { const d = s.data.value, it = sample.value, h = props.box.hand; if (!d || !it || !h) return []; try { return previewUse(d, it, h.currency, h.omens, { essence: flag("essencePreview") })?.change ?? []; } catch { return []; } });
+const cardDoomed = computed((): readonly string[] => { const d = s.data.value, it = sample.value, h = props.box.hand; if (!d || !it || !h) return []; try { return previewUse(d, it, h.currency, h.omens, { essence: true })?.change ?? []; } catch { return []; } });
 const cardItem = computed(() => (s.data.value && sample.value ? fixedValues(s.data.value, t.doc.value, sample.value) : null));
 const cardTags = computed(() => (s.data.value && cardItem.value ? treeRowTags(s.data.value, t.doc.value, props.box.unwanted ?? [], cardItem.value, props.box) : null));
 /** 要確認 (古い版・壊れたレシピで読めなかった所、tree-migrate) の文 */
@@ -114,7 +109,6 @@ const legendTitle = computed(() => [
 ].filter(Boolean).join("\n"));
 /** 縁の色 (完成は明るい金) と光り方。選んだ・光らせた時は強く */
 /** 失敗 (ここで終わり) の答え (スイッチ failEnd) */
-const FAIL = flag("failEnd");
 const rgb = computed(() => (props.box.done === "fail" ? "224,112,122" : props.box.done ? "242,210,122" : kind.value.c));
 const neon = computed(() => {
   const strong = props.glow || props.selected || !!props.box.done;
@@ -146,12 +140,6 @@ const k = computed(() => Math.max(1, props.inv ?? 1));
 // フラクチャー前から (start.from four) は印があっても白から始まるので、スタートの箱には印も＋の MOD も出さない (10-24 夜オーナー)
 const marks = computed(() => (startsFractured(t.doc.value) ? fractureMarks(t.doc.value) : []));
 const plusMods = computed(() => (startsFractured(t.doc.value) || !fractureMarks(t.doc.value).length ? startOf(t.doc.value).mods : []));
-const startHead = computed(() => {
-  const m = marks.value;
-  if (m.length > 1) return tr(`✦ フラクチャー MOD ×${m.length}`, `✦ Fractured mod ×${m.length}`);
-  if (m[0]) return `✦ ${t.startModLabel(m[0], true)}`;
-  return plusMods.value[0] ? t.startModLabel(plusMods.value[0]) : tr("白 (ノーマル)", "White (normal)");
-});
 /** 2 行目: 印あり = ＋の数・外れの数、印なし = ほかの＋の数・レアリティ。ルーン・ベースの値段 */
 const startRest = computed(() => {
   const st = startOf(t.doc.value), n = plusMods.value.length, junk = Math.max(0, START_JUNK - n);
@@ -184,7 +172,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
   <!-- 押すは Vue Flow の箱の node-click、引っ張るは use-gesture.ts (Vue Flow の引っ張りは遊びの 5px 分が動きから抜けた)。
        引っ張りは pointerdown の既定の動きを止めるので Vue Flow の画面の送りは始まらない。nopan は付けない (付けると箱の上のホイールで拡大縮小されなかった)、中のボタンは nodrag -->
   <div ref="rootEl" data-tree-box :data-box-id="box.id" :data-sample-note="sampled?.note || undefined" class="select-none rounded-xl border-[1.5px] bg-gradient-to-b from-[#1d1812] to-[#110e0a] px-2 py-1 text-[12px] transition-shadow"
-    :class="[x === undefined ? 'relative' : 'absolute', FIT ? 'flex flex-col' : '', picking || viewOnly ? 'cursor-pointer' : 'cursor-grab', picking ? (linkNo ? 'cursor-not-allowed opacity-35 grayscale' : 'ring-2 ring-cyan-400/70 hover:ring-cyan-300') : '', glow ? 'ring-2 ring-amber-200/70' : '', issue && !jl && !quietOpen ? '!border-rose-500 !shadow-[0_0_16px_rgba(244,63,94,0.55)]' : '', jl === 'no' ? 'opacity-25 grayscale' : jl ? '!border-amber-200 !shadow-[0_0_24px_rgba(252,211,77,0.8)]' : '']"
+    :class="[x === undefined ? 'relative' : 'absolute', 'flex flex-col', picking || viewOnly ? 'cursor-pointer' : 'cursor-grab', picking ? (linkNo ? 'cursor-not-allowed opacity-35 grayscale' : 'ring-2 ring-cyan-400/70 hover:ring-cyan-300') : '', glow ? 'ring-2 ring-amber-200/70' : '', issue && !jl ? '!border-rose-500 !shadow-[0_0_16px_rgba(244,63,94,0.55)]' : '', jl === 'no' ? 'opacity-25 grayscale' : jl ? '!border-amber-200 !shadow-[0_0_24px_rgba(252,211,77,0.8)]' : '']"
     :style="{ ...(x === undefined ? {} : { left: `${x}px`, top: `${y}px` }), width: `${BOX_W}px`, minHeight: `${Math.max(BOX_H, fitH)}px`, ...neon }" :title="picking && linkNo ? linkNo : undefined" @pointerdown="down" @pointerenter="emit('hover', true)" @pointerleave="emit('hover', false)">
     <!-- 縮めている時 (k > 1) は押せる物の行を倍率分高くし、まだ「—」だけの数字の行は隠す (箱が小さくても押せる物どうしが重ならない) -->
     <!-- 題は枠の上の線に乗る札 (よくある枠の形。枠の中は割合・中身・戻り方だけ。10-26 オーナー「枠の上のところに●がついた みたいな形でよくある枠の形にしたら枠中ごちゃんなくていいよな」) -->
@@ -202,7 +190,6 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <span v-if="box.done" class="shrink-0 rounded-full px-1.5 text-[10px] font-bold leading-[18px]" :class="box.done === 'fail' ? 'bg-rose-900/70 text-rose-100' : 'bg-[#3a2e14] text-amber-100'">{{ doneText }}</span>
       <span v-if="box.unwanted?.length" data-tree-unwanted class="shrink-0 rounded-sm bg-[#3a1418] px-1.5 text-[11px] font-bold leading-[18px] text-rose-200" :title="tr(`× (要らない) の印 ${box.unwanted.length} 個 (前の試し打ちで付けた物)`, `${box.unwanted.length} mod(s) marked × (unwanted, set in the old try-out)`)">× {{ box.unwanted.length }}</span>
       <button v-if="box.check?.length" type="button" data-tree-check class="nodrag shrink-0 rounded-sm bg-amber-500 px-1.5 text-[11px] font-bold leading-[18px] text-black hover:bg-amber-400" :class="quiet ? 'pointer-events-none' : ''" :title="tr(`読めなかった所: ${checkTitle} (直したら押して印を消す)`, `Couldn’t read: ${checkTitle} (fix it, then click to clear)`)" @click.stop="!quiet && emit('checked')">{{ tr("要確認", "Check") }}</button>
-      <button v-if="issue && !quietOpen && !UNSET" type="button" data-tree-issue class="nodrag shrink-0 whitespace-nowrap rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold leading-[18px] text-white hover:bg-rose-500" :title="tr(`${issue} (押すと足りない所の一覧)`, `${issue} (click for the list of what is missing)`)" @click.stop="emit('issue')">{{ /行き先を決めていない|最初の手を決めていない/.test(issue) && k === 1 ? tr("! 未定", "! Open") : "!" }}</button>
     </template>
     </div>
     <!-- 1 行目 (始まりの箱だけ: Lv・✎)。ほかの箱は 1 行目を無くし、✎ ✕ は下の行の右 (10-26 夜オーナー「今のバツの所にメモマークあれば上枠もっと広げれるじゃろ」) -->
@@ -213,8 +200,6 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <span v-if="box.done" class="shrink-0 rounded-full px-1.5 text-[10px] font-bold" :class="box.done === 'fail' ? 'bg-rose-400/25 text-rose-100' : 'bg-amber-300/25 text-amber-100'">{{ doneText }}</span>
       <span v-if="box.unwanted?.length" data-tree-unwanted class="shrink-0 rounded-sm bg-rose-400/20 px-1.5 text-[11px] font-bold text-rose-200" :title="tr(`× (要らない) の印 ${box.unwanted.length} 個 (前の試し打ちで付けた物)`, `${box.unwanted.length} mod(s) marked × (unwanted, set in the old try-out)`)">× {{ box.unwanted.length }}</span>
       <button v-if="box.check?.length" type="button" data-tree-check class="nodrag shrink-0 rounded-sm bg-amber-500/80 px-1.5 text-[11px] font-bold text-black hover:bg-amber-400" :class="quiet ? 'pointer-events-none' : ''" :title="tr(`読めなかった所: ${checkTitle} (直したら押して印を消す)`, `Couldn’t read: ${checkTitle} (fix it, then click to clear)`)" @click.stop="!quiet && emit('checked')">{{ tr("要確認", "Check") }}</button>
-      <!-- 当たりの箱の次の手が未定の時は印を出さない (下の＋だけ。前は「<1% ＋ 次の手」の文字が枠の上の札とかぶった、10-26 夜オーナー「ここ 1% と次の手って日本語いらない」) -->
-      <button v-if="issue && !quietOpen && !UNSET" type="button" data-tree-issue class="nodrag shrink-0 whitespace-nowrap rounded-sm bg-rose-600 px-1.5 text-[11px] font-bold text-white hover:bg-rose-500" :title="tr(`${issue} (押すと足りない所の一覧)`, `${issue} (click for the list of what is missing)`)" @click.stop="emit('issue')">{{ /行き先を決めていない|最初の手を決めていない/.test(issue) && k === 1 ? tr("! 未定", "! Open") : "!" }}</button>
       <span class="flex-1" />
       <span class="flex items-center" :style="keep('right center')">
       <button v-if="!quiet" type="button" data-tree-note-mark class="nodrag flex size-6 items-center justify-center rounded hover:bg-white/10" :class="box.note ? 'text-amber-300' : 'text-white/30 hover:text-white/70'" :title="box.note || tr('メモを書く', 'Write a note')" @click.stop="emit('note')"><Icon name="pencil" class="size-3.5" /></button>
@@ -224,19 +209,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
 
     <!-- 中身: 始まり = ベースとフラクチャー / 当たり = 付く MOD (右の＋に掛からない幅) -->
     <div class="min-w-0">
-      <template v-if="box.out === 'start' && !START_CARD">
-        <!-- ベースとアイテムレベル: 押すと右の欄で選ぶ (10-22、前は金の指輪 ilvl 82 に固定) -->
-        <button type="button" data-tree-base class="nodrag block w-full truncate text-left text-[13px] font-bold hover:underline" :class="quiet ? 'pointer-events-none' : ''" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :title="tr('ベースとアイテムレベルを選ぶ', 'Choose the base and item level')" @click.stop="!quiet && emit('base')">
-          {{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}
-        </button>
-        <!-- 始まりの形 (押すとスタートの重ね窓、10-23 オーナー「印で決まる、スタートの枠に＋」): 1 行目は ✦ の候補 (2 つ以上は ×n、乗せると中身) か白、右の「＋MOD」で MOD を足す・外れを差し替え (手を足す下の丸い＋と見分ける、10-26 猿の 4) -->
-        <div class="flex min-w-0 items-center gap-1" :style="{ height: `${24 * k}px` }">
-          <button type="button" data-tree-start-mods class="nodrag block min-w-0 flex-1 truncate text-left hover:underline" :class="[marks.length ? 'text-mod-fractured' : 'text-[#c8c8ff]', quiet ? 'pointer-events-none' : '']" :style="{ lineHeight: `${24 * k}px` }" :title="startTitle" @click.stop="!quiet && emit('aim')">{{ startHead }}</button>
-          <button v-if="!quiet" type="button" data-tree-start-plus-btn class="nodrag flex h-6 shrink-0 items-center justify-center whitespace-nowrap rounded border border-white/15 px-1 text-[11px] leading-none hover:bg-white/10" :style="keep('right center')" :title="marks.length ? tr('＋ MOD を足す (外れを差し替える)', '+ Add a mod (replaces a miss mod)') : tr('＋ 始まりに付いている MOD を足す', '+ Add a starting mod')" @click.stop="emit('aim')">{{ tr("＋MOD", "+Mod") }}</button>
-        </div>
-        <p v-if="startRest" data-tree-start-rest class="truncate text-[12px] opacity-70" :title="t.baseCost.value?.best ? `${tr('一番安い始め方', 'Cheapest start')}: ${t.baseCost.value.best.label} · ${startRest}` : startRest" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }">{{ startRest }}</p>
-      </template>
-      <button v-else-if="box.out === 'hit' && !box.aim" type="button" class="nodrag block w-[calc(100%-14px)] truncate text-left text-[13px] hover:underline" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :class="[box.aim ? 'text-[#c8c8ff]' : 'text-amber-300', quiet ? 'pointer-events-none' : '']" :title="t.boxAimLabel(box)" @click.stop="!quiet && emit('aim')">
+      <button v-if="box.out === 'hit' && !box.aim" type="button" class="nodrag block w-[calc(100%-14px)] truncate text-left text-[13px] hover:underline" :style="{ height: `${24 * k}px`, lineHeight: `${24 * k}px` }" :class="[box.aim ? 'text-[#c8c8ff]' : 'text-amber-300', quiet ? 'pointer-events-none' : '']" :title="t.boxAimLabel(box)" @click.stop="!quiet && emit('aim')">
         {{ box.aim ? t.boxAimLabel(box) : tr("＋ 付く MOD を選ぶ", "+ Pick the mod") }}
       </button>
       <p v-else-if="box.out === 'branch'" data-tree-branch-text class="truncate leading-6 text-teal-100" :title="branchText">{{ branchText }}</p>
@@ -248,7 +221,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <div :style="{ width: `${CARD_W}px` }"><StageItemCard :item="cardItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact mods-only with-title :row-tags="cardTags" :doomed="cardDoomed" /></div>
     </div>
     <!-- スタートのカードの下: 始め方・ベースの値段の 1 行と ＋MOD (スイッチ startCard。カードを押すと始まりの形の窓、ベースは名前の帯の下の文字から) -->
-    <div v-if="box.out === 'start' && START_CARD" data-tree-start-under class="mt-1 flex min-w-0 items-center gap-1" :style="{ minHeight: `${24 * k}px` }">
+    <div v-if="box.out === 'start'" data-tree-start-under class="mt-1 flex min-w-0 items-center gap-1" :style="{ minHeight: `${24 * k}px` }">
       <button type="button" data-tree-base class="nodrag shrink-0 rounded border border-white/15 px-1 text-[11px] leading-6 hover:bg-white/10" :class="quiet ? 'pointer-events-none' : ''" :style="keep('left center')" :title="tr('ベースとアイテムレベルを選ぶ', 'Choose the base and item level')" @click.stop="!quiet && emit('base')">{{ tr("ベース", "Base") }}</button>
       <p v-if="startRest" data-tree-start-rest class="min-w-0 flex-1 truncate text-[12px] opacity-70" :title="t.baseCost.value?.best ? `${tr('一番安い始め方', 'Cheapest start')}: ${t.baseCost.value.best.label} · ${startRest}` : startRest">{{ startRest }}</p>
       <span v-else class="flex-1" />
@@ -259,7 +232,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     <!-- 下の行: 戻りの矢印・完成 (下の＋は箱の外なので重ならない) -->
     <!-- 次どうするか (10-26 オーナー「アイテム枠は個人的に好きやからそのままがいいなさっきの」「枠内はアイテムの形とその下に次どうするかくらいか？まとめるとかも別にアイテム枠の下とかに出したらええんちゃう」) -->
     <!-- 切らずに折り返す (10-26 オーナー「枠いっぱいに表示していいのにこれ縮小してるから？拡大も欲しいんだけどそこ」「↩ 再度挑戦 · 3 …」が切れていた) -->
-    <div v-if="FIT" ref="fillEl" class="flex-1" />
+    <div ref="fillEl" class="flex-1" />
     <div class="mt-1 flex flex-wrap items-center gap-1 text-[12px]">
       <!-- 引いた時 (k > 1) は「分ける」を絵 1 つに (行の幅は (箱の幅 − 38) ÷ k で、文字だと「まとめる・↩・完成」が箱の外へ溢れた、10-26 オーナー「拡大バグ」) -->
       <!-- 同じ側の「どれか」の当たりの箱を MOD ごとに分ける / 分けた箱をまとめる (10-26 オーナー「戻るとかの所に分けるみたいな」) -->
@@ -277,9 +250,9 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
         <button v-if="!box.done && box.out !== 'hit' && !PICK_OFF" type="button" data-tree-back-pick class="nodrag min-h-6 shrink-0 rounded border border-cyan-400/40 px-1.5 text-left text-cyan-200 hover:border-cyan-300" :title="tr('戻り先を選ぶ (再度挑戦・既にある箱・始めに戻る)', 'Choose where to return (retry, an existing box, or the start)')" @click.stop="emit('back')">{{ tr("↩ 戻り先を選ぶ", "↩ Choose return") }}</button>
         <!-- 当たりの箱の次どうするか = まとめる (横にまとめられる箱がある時だけ。無ければ＋だけ、10-26 オーナー「そこに表示させるとしたらまとめるボタンかな、まぁ原則プレフィックスとサフィではまとめれないけどこれはルール化してもええよな」) -->
         <button v-if="box.out === 'hit' && canJoin" type="button" data-tree-box-join class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-300/40 px-1.5 text-amber-100 hover:border-amber-200" :title="tr('この箱にまとめる (同じ側の横の当たりを選ぶ。プレとサフィはまとめない)', 'Merge into this box (pick same-side hits beside it; prefixes and suffixes are never merged)')" @click.stop="startJoin">{{ tr("まとめる", "Merge") }}</button>
-        <button v-if="box.out === 'hit' || box.out === 'branch' || (box.out === 'any' && flag('runeHand'))" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" @click.stop="emit('done')" :title="doneText">{{ (k > 1 || (box.anyOf?.length ?? 0) > 1) && !box.done ? tr("完成", "Done") : doneText }}</button>
+        <button v-if="box.out === 'hit' || box.out === 'branch' || box.out === 'any'" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" @click.stop="emit('done')" :title="doneText">{{ (k > 1 || (box.anyOf?.length ?? 0) > 1) && !box.done ? tr("完成", "Done") : doneText }}</button>
         <!-- 失敗 (ここで終わり): 外れ MOD が固定された枝など、続けない結果の箱 (10-28 オーナー、スイッチ failEnd) -->
-        <button v-if="FAIL && box.done !== 'main' && box.out !== 'hit' && box.out !== 'branch'" type="button" data-tree-box-fail class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-rose-400/40 px-1.5 text-rose-200 hover:border-rose-300" :title="tr('ここで終わり (回す時はここに着いた人を失敗と数える)', 'End here (runs that arrive here count as failed)')" @click.stop="emit('fail')">{{ box.done === "fail" ? tr("失敗を外す", "Undo fail") : tr("失敗", "Fail") }}</button>
+        <button v-if="box.done !== 'main' && box.out !== 'hit' && box.out !== 'branch'" type="button" data-tree-box-fail class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-rose-400/40 px-1.5 text-rose-200 hover:border-rose-300" :title="tr('ここで終わり (回す時はここに着いた人を失敗と数える)', 'End here (runs that arrive here count as failed)')" @click.stop="emit('fail')">{{ box.done === "fail" ? tr("失敗を外す", "Undo fail") : tr("失敗", "Fail") }}</button>
         <!-- 外れ・狙いが消えたの行き先に一番使う手 (オーナー 10-22): 当たりのどれかが付くまでカオス -->
       </template>
       <!-- 右下: ✎ (メモ) と この当たりを消す ✕ (前は枠の中の 1 行目、10-26 夜オーナー「今のバツの所にメモマークあれば」) -->

@@ -40,7 +40,7 @@ const from = computed(() => props.boxId);
 /** 箱ごとの戻れる / 戻れない (null = 戻れる) */
 const link = useTreeLink(t.doc, from);
 /** 今の答え。結果の画面の形 (phoneResult1027) では、まだ選んでいない箱は自動でつないだ戻りがあっても open */
-const state = computed(() => (P27 && q.awaits(props.boxId) ? "open" : q.stateOf(props.boxId)));
+const state = computed(() => (q.awaits(props.boxId) ? "open" : q.stateOf(props.boxId)));
 /** 戻り先の箱 (自動でつないだ・選んだ) */
 const backTo = computed(() => (box.value?.back ? backTargetsOf(t.doc.value, props.boxId)[0] ?? null : null));
 /** 同じ手をもう一度 = 打つ前の箱へ戻る (始まりの手の結果は「始めから」と同じなので出さない) */
@@ -115,15 +115,15 @@ const sit = computed((): [string, string] => {
   const o = box.value?.out;
   // 打ったカレンシーの名前入り (10-27 昼オーナー「カオスオーブで外れた場合」。枠の外の見出しを外したので枠に書く)
   const ph = parent.value ? t.doc.value.boxes[parent.value]?.hand : null;
-  if (P27 && ph) {
+  if (ph) {
     const n = handLabel(ph);
     // 印の無い木の乱数のフラクチャーは「固定された」(付いたのではない、10-27 夜、要望 8a159e29、スイッチ fracRandom)
     // 狙い無しの乱数のフラクチャーは MOD ごとの箱「〇〇がフラクチャーされた場合」(外れとは言わない、スイッチ fracPick)
-    if (o === "junk" && ph.pick === "random" && ph.free && flag("fracPick")) return [tr("外れ MOD がフラクチャーされた場合", "If a miss mod is fractured"), tr("どの MOD が固定されるかは等しく乱数", "Which mod gets fractured is equally random")];
-    if (o === "hit" && ph.pick === "random" && ph.free && flag("fracPick")) return [q.boxTitle(props.boxId), tr("どの MOD が固定されるかは等しく乱数", "Which mod gets fractured is equally random")];
+    if (o === "junk" && ph.pick === "random" && ph.free) return [tr("外れ MOD がフラクチャーされた場合", "If a miss mod is fractured"), tr("どの MOD が固定されるかは等しく乱数", "Which mod gets fractured is equally random")];
+    if (o === "hit" && ph.pick === "random" && ph.free) return [q.boxTitle(props.boxId), tr("どの MOD が固定されるかは等しく乱数", "Which mod gets fractured is equally random")];
     // 骨を未発現のまま次へ (スイッチ boneLater)
     if (o === "any" && veilKeep(ph)) return [tr(`${n}を打った後`, `After ${n}`), tr("未発現の冒涜が付いた (発現は次の手で)", "An unrevealed desecrated mod was added (reveal it with a later craft)")];
-    if (o === "junk" && (ph.pick === "random" || (flag("boneLater") && effectOf(ph.currency) === "fracture"))) return [tr(`${n}で外れた場合`, `If ${n} misses`), tr("狙いでない MOD が固定された (外れ MOD が固定された)", "A non-target mod was fractured (a miss mod fractured)")];
+    if (o === "junk" && (ph.pick === "random" || effectOf(ph.currency) === "fracture")) return [tr(`${n}で外れた場合`, `If ${n} misses`), tr("狙いでない MOD が固定された (外れ MOD が固定された)", "A non-target mod was fractured (a miss mod fractured)")];
     if (o === "junk") return [tr(`${n}で外れた場合`, `If ${n} misses`), tr("狙いの MOD は付かず、外れ MOD が付いた", "No target mod; a miss mod was added")];
     // 狙いが消えた人に付ける狙いが付いた箱 (S-27d、スイッチ keepAll)
     if (o === "lost" && hasGot(box.value?.junkKey)) return [tr(`${n}で狙いが消えて狙いが付いた場合`, `If ${n} removes a target and adds one`), tr("残したい MOD が消えたが、付ける狙いの MOD は付いた", "A mod to keep was removed, but the target mod was added")];
@@ -163,11 +163,10 @@ const cardW = (typeof window === "undefined" ? 375 : window.innerWidth) - 30;
  * 既定の答えは無く、何か選ぶまで「次へ」で進めない (オーナー「脳死で次へとかさせちゃう」)。外れで打つ前と同じ手を持つと自動で ↩ 再度挑戦 (PhoneTreePage の pickHand)。
  * 「答えを変える」「打つ手を替える」と選択肢の窓は外した。枠の右上の × = PC の箱の × と同じ (この結果を作った手を消す。1 回目で赤く「下の n 箱ごと消す」、もう一度で消す)
  */
-const P27 = flag("phoneResult1027");
 /** 「下の n 箱ごと消す」は 8 秒待つ (3 秒では押す前に × に戻った、10-27 夕モンキー 5。スイッチ goalShape) */
 // 時間では戻さず、× の外を押すか Esc で戻す (10-27 夜モンキー 2 回目 3、PC の箱の × と同じ。スイッチ armKeep)
-const rm = useArmed(flag("armKeep") ? 2147483647 : flag("goalShape") ? 8000 : undefined);
-if (flag("armKeep")) useDismiss(() => rm.is(props.boxId), [], rm.clear, { swallow: false, keep: "[data-phone-out-remove]" });
+const rm = useArmed(2147483647);
+useDismiss(() => rm.is(props.boxId), [], rm.clear, { swallow: false, keep: "[data-phone-out-remove]" });
 const rmCount = computed(() => { const d = t.doc.value, p = parent.value ? d.boxes[parent.value] : undefined; return p ? p.outs.reduce((n, o) => n + subtree(d, o).length, 0) : 0; });
 function removeHand(): void {
   const p = parent.value;
@@ -183,7 +182,7 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
   <!-- 結果の行 = 題 (と割合) とアイテムの中身だけ (10-26 夜オーナー「枠の中には出さない、ここはあくまでアイテムの中身だけ」「『次へ』で基本進行」)。
        今の答えはカードの下の小さな 1 行、変えたい時は「答えを変える ▾」で下から選びの窓 -->
   <div v-if="box" data-phone-out :data-box-id="boxId" class="relative w-full rounded-xl border bg-[#1a140d] px-1.5 py-2 text-center" :style="{ borderColor: `rgba(${look.c},${state === 'open' ? 0.75 : 0.35})` }">
-    <button v-if="P27 && parent" type="button" data-phone-out-remove class="absolute right-1 top-1 z-10 flex min-h-10 min-w-10 items-center justify-center rounded-md" :class="rm.is(boxId) ? 'bg-rose-700 px-2 text-[12px] font-bold text-white' : 'text-[18px] text-[#d8ccb4]/70'" :aria-label="tr('この結果を作った手を消す', 'Remove the craft that made this result')" @click="removeHand">{{ rm.is(boxId) ? tr(`下の ${rmCount} 箱ごと消す`, `Remove ${rmCount} box(es)`) : "×" }}</button>
+    <button v-if="parent" type="button" data-phone-out-remove class="absolute right-1 top-1 z-10 flex min-h-10 min-w-10 items-center justify-center rounded-md" :class="rm.is(boxId) ? 'bg-rose-700 px-2 text-[12px] font-bold text-white' : 'text-[18px] text-[#d8ccb4]/70'" :aria-label="tr('この結果を作った手を消す', 'Remove the craft that made this result')" @click="removeHand">{{ rm.is(boxId) ? tr(`下の ${rmCount} 箱ごと消す`, `Remove ${rmCount} box(es)`) : "×" }}</button>
     <p class="break-words px-10 text-center text-[14px] font-bold" :style="{ color: `rgb(${look.c})` }">
       {{ sit[0] }}
     </p>
@@ -196,15 +195,13 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
   <div v-if="box" data-phone-out-answer :data-box-id="boxId" class="flex w-full min-w-0 flex-col items-center gap-2 text-[13px]">
     <button v-if="state === 'hand'" type="button" data-phone-out-hand class="w-full rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-center text-[14px] text-amber-50" @click="emit('pick', boxId)">{{ box.hand ? tr(`${handLabel(box.hand)}${/\)$/.test(handLabel(box.hand)) ? " " : ""}を選択`, `Selected: ${handLabel(box.hand)}`) : tr("分かれ目", "Split") }}</button>
     <!-- 外れで打つ前と同じ手を選んだ (中は ↩ 再度挑戦 = 打つ前の箱へ戻る) も、表示はふつうの手と同じ「○○を選択」の枠 (10-27 昼オーナー「戻るとかは内部処理でしたらいいだけ」) -->
-    <button v-else-if="P27 && retryHand" type="button" data-phone-out-hand class="w-full rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-center text-[14px] text-amber-50" @click="emit('pick', boxId)">{{ tr(`${handLabel(retryHand)}${/\)$/.test(handLabel(retryHand)) ? " " : ""}を選択`, `Selected: ${handLabel(retryHand)}`) }}</button>
-    <template v-else-if="P27">
+    <button v-else-if="retryHand" type="button" data-phone-out-hand class="w-full rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-center text-[14px] text-amber-50" @click="emit('pick', boxId)">{{ tr(`${handLabel(retryHand)}${/\)$/.test(handLabel(retryHand)) ? " " : ""}を選択`, `Selected: ${handLabel(retryHand)}`) }}</button>
+    <template v-else>
       <!-- 決まった答え (完成・ほかの箱へ) だけ文で。まだなら何も出さない (既定は無い) -->
       <p v-if="state === 'back' || state === 'done'" data-phone-out-now class="min-w-0 break-words font-bold" :class="state === 'done' ? 'text-emerald-300' : 'text-cyan-200'">{{ answerText }}</p>
       <!-- まだ答えの無い結果は下の赤い帯「この状態で打つカレンシーを選ぶ」だけ (真ん中に同じ枠を重ねない、10-27 昼オーナー)。完成・ほかの箱へにした結果は、ここから手に替えられる -->
       <button v-if="state !== 'open' && state !== 'later'" type="button" data-phone-out-pick-hand class="w-full rounded-xl border border-white/15 bg-white/[0.04] px-3 py-3 text-center text-[14px] text-[#d8ccb4]" @click="emit('pick', boxId)">{{ tr("この状態で打つカレンシーを選ぶ", "Choose the currency to use on this item") }}</button>
     </template>
-    <p v-else data-phone-out-now class="min-w-0 break-words font-bold" :class="state === 'open' ? 'text-amber-200' : state === 'done' ? 'text-emerald-300' : 'text-cyan-200'">{{ answerText }}<span v-if="state === 'open'" class="ml-1 whitespace-nowrap">{{ tr("(既定)", "(default)") }}</span></p>
-    <button v-if="!P27" type="button" data-phone-out-change class="g-btn !min-h-11 px-4" @click="pickOpen = true">{{ tr("答えを変える", "Change the answer") }}</button>
   </div>
   <!-- 答えの選び (下から出る重ね窓。閉じれば元の場所のまま) -->
   <Teleport to="body">

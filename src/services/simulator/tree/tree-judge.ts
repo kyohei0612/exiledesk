@@ -15,7 +15,6 @@ import { aimOpts, sampleOf, startGoalAims, targetsOf } from "./tree-sample";
 import { boxAims, fractureMarks, keepCut, type TreeDoc } from "./tree-model";
 import { qualityOk } from "./tree-unbounded";
 import { gotOf, keptAimsOf } from "./tree-keep";
-import { flag } from "../../../web/release-flags";
 
 /** 箱の中身を見る見本の数 (前の boxBody と同じ 4 つ) */
 const SAMPLES = 4;
@@ -57,14 +56,13 @@ export function contentOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: R
   const keys = new Set<string>(), mods = new Set<string>();
   for (const m of [...it.prefixes, ...it.suffixes]) { const g = goals.find((a) => isAimMod(m, targetsOf(data, [a]), opts)); if (g) { keys.add(g.modId); mods.add(m.modId); } }
   const body = bodyOf(data, doc, it, mods);
-  return `${[...keys].sort().join(",")}#${flag("judgeOne") ? junkOne(body) : `${body}#q${qualityKey(it)}`}`;
+  return `${[...keys].sort().join(",")}#${junkOne(body)}`;
 }
 /**
  * 外れは種類を見ない (S-60、10-29 深夜オーナー「そもそもハズレMODはどんな形であれハズレMODだからな」): 側ごとの 普通.エッセンス.冒涜の発現済み.未発現 を
  * 外れ.未発現 の 2 つに (「未発現のみ別枠として全然おｋ」)。冒涜の発現済みの数は最後の `#d<プレ>.<サフィ>` に残し、光のお告げの手のある箱と比べる時だけ見る (looseKey で落とす)
  */
 function junkOne(body: string): string {
-  if (!flag("boxShape")) return body;
   const [p = "", s = "", ...rest] = body.split("|");
   const side = (v: string): [string, number] => { const [n = 0, c = 0, x = 0, u = 0] = v.split(".").map(Number); return [`${n + c + x}.${u}`, x]; };
   const [pp, px] = side(p), [ss, sx] = side(s);
@@ -75,11 +73,6 @@ export const looseKey = (k: string): string => k.replace(/#d\d+\.\d+$/, "");
 /** 光のお告げ (冒涜の MOD しか消さない) を含む手の箱か。その箱へ行く人は冒涜の発現済みの外れの数も合わせる (10-29 深夜オーナー「いいかな　それでなおるなら万々歳」) */
 export const needsDesecrated = (doc: TreeDoc, id: string): boolean => !!doc.boxes[id]?.hand?.omens.includes(LIGHT);
 const LIGHT = "OmenofLight";
-/**
- * 品質は箱の中身に入れない (S-60b、ルーンと同じ。10-29 深夜オーナー「Bでしょ途中で触媒で消える時もあればそのままついたままやり直しのパターンもあるし。品質の件はルーンと扱い同じに」)。
- * 品質はアイテムに残るだけ。前は品質 40 の「最大ライフ + ✦」(木 oWkFcwYX の b11) が品質 0 の同じ箱 b1 と別の中身になり、同じ手の枝がもう 1 本あった。スイッチ judgeOne の外は前のまま
- */
-const qualityKey = (it: StageItem): string => `${it.quality ?? 0}.${it.catalystQuality ?? 0}.${it.qualityTag ?? ""}`;
 /** 完成の箱へは、品質を狙う木なら完成形の品質が足りている人だけ (品質を比べから外したので、足りない人が完成の箱に入らないように) */
 const doneOk = (doc: TreeDoc, id: string, it: StageItem): boolean => doc.boxes[id]?.done !== "main" || qualityOk(doc, it);
 
@@ -102,7 +95,7 @@ const COPY_OF = new WeakMap<StageItem, StageItem>();
 /** copy は sample の写し (☑ は元の見本の物を引く) */
 export const copyOfSample = (copy: StageItem, sample: StageItem): StageItem => { COPY_OF.set(copy, sample); return copy; };
 /** 見本のアイテムの ☑ (sampleAimed で覚えた物。無ければ null)。カードの写しは元の見本で引く (前は引けずに道の当たりの組で数え、エッセンスの狙いが「外れ MOD」と出た、S-82。スイッチ boxShape) */
-export const aimedOfSample = (id: string, item: StageItem): ReadonlySet<string> | null => AIMED.get((flag("boxShape") && COPY_OF.get(item)) || item)?.get(id) ?? null;
+export const aimedOfSample = (id: string, item: StageItem): ReadonlySet<string> | null => AIMED.get(COPY_OF.get(item) ?? item)?.get(id) ?? null;
 
 export interface Judge {
   /** 箱の見本の中身 (見本ごとに違えば 2 つ以上。見本が作れない箱は null = 分からない) */
@@ -141,8 +134,7 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     if (memo.has(id)) return memo.get(id)!;
     let out: Set<string> | null = null;
     if (doc.boxes[id]) {
-      const more = flag("recipeV1");
-      for (let seed = 1, last = 0; seed <= (more ? MAX : SAMPLES); seed++) {
+      for (let seed = 1, last = 0; seed <= MAX; seed++) {
         if (seed > SAMPLES && ((out?.size ?? 0) < 2 || seed - last > MORE)) break;
         const s = sampleOf(data, doc, id, seed);
         if (s.note === "none" || s.note?.startsWith("cant:")) continue;

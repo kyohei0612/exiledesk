@@ -3,11 +3,10 @@
  * 回す所 (tree-run)・精査 (tree-check)・画面 (つなぐ・まとめる) が同じ物を読む。中身は前のまま
  */
 import { mulberry32, sideOfMod, type PatchData, type StageItem } from "../../craft-stage/engine";
-import { backBody, bodyFixed, bodyKinds, bodyMemo, bodyOf, boxBody, heldOfKey, sameBody, type BodyOf } from "./tree-box-shape";
+import { backBody, bodyFixed, bodyKinds, bodyOf, boxBody, heldOfKey, sameBody, type BodyOf } from "./tree-box-shape";
 import { aimHeldOn, junkOf } from "./tree-aim";
 import { effectOf } from "./tree-hands";
 import { aimOpts, aimsOf, essenceBoxFits, handProblem, playHand, targetsOf } from "./tree-sample";
-import { flag } from "../../../web/release-flags";
 import { judgeMemo } from "./tree-judge";
 import { pruneByContent } from "./tree-judge-link";
 import { aimKey, keepCut, MATCH_BACK, type Aim, type Hand, type OutKind, type SplitRange, type SplitRule, type SplitWhen, type TreeBox, type TreeDoc, boxAims, drop, subtree } from "./tree-model";
@@ -108,7 +107,7 @@ export function heldSets(doc: TreeDoc, id: string | null): string[][] {
       // 強化のエッセンスを打つとスピリットが消えてグローバル防御が付くのに、狙い 0 の形に見えて始まりへ戻り、エッセンスを持ったまま回って止まった。スイッチ goalShape)
       const essKey = p?.hand && effectOf(p.hand.currency) === "essence" ? p.hand.currency.split(":").slice(2).join(":") : null;
       const ess = p?.hand && effectOf(p.hand.currency) === "essence"
-        ? p.outs.map((o) => doc.boxes[o]).find((x) => x?.out === "hit" && x.aim)?.aim ?? (flag("goalShape") ? (doc.memoAims ?? []).find((g) => g.modId === essKey) : undefined)
+        ? p.outs.map((o) => doc.boxes[o]).find((x) => x?.out === "hit" && x.aim)?.aim ?? (doc.memoAims ?? []).find((g) => g.modId === essKey)
         : undefined;
       if (ess && (!(doc.memoAims ?? []).length || (doc.memoAims ?? []).some((g) => aimKey(g) === aimKey(ess)))) { const k = aimKey(ess); sets = sets.map((h) => (h.includes(k) ? h : [...h, k])); }
     }
@@ -143,7 +142,7 @@ export function shapesOf(doc: TreeDoc, data?: PatchData): Shape[] {
     // 打った後 (狙い無し) の箱も外れの形の行き先に (消去の「狙いが消えた」(マジック・外れ 1) が上の変成の「打った後」でなく白のスタートへ戻った、10-28 夜オーナー。スイッチ boxShape)。
     // 自動のつなぎ (data を渡さない呼び方、体は linkSameShape が比べる) の時だけ。回す時・精査の「形の合う箱へ」(data あり) に入れると、打った後の箱の鍵は外れの有無を
     // 持たないので、外れの側の違う人まで入った (同じ形 2 つの b6 で右手のお告げが効かない人が出た、10-28 夜 最終チェック長)
-    if (!b.hand || (b.out !== "hit" && b.out !== "junk" && !(b.out === "any" && flag("boxShape") && !data))) continue;
+    if (!b.hand || (b.out !== "hit" && b.out !== "junk" && !(b.out === "any" && !data))) continue;
     for (const held of pathHelds(doc, b.out === "junk" ? b.parent : b.id)) out.push({ key: shapeKey(held, b.out === "junk" || junkLike(doc, b)), box: b.id, hand: b.hand });
   }
   // 分かれ目の箱も行き先に (外れの有無は行で分けるので両方の形を受ける。手のある箱が先、10-22 13 通り組んだ #14: 分かれ目の下の消去の「外れが消えた」に行き先が無かった)
@@ -167,7 +166,7 @@ function boxOfShape(shapes: readonly Shape[], key: string, at?: { data: PatchDat
   // 同じ形の箱が幾つかあれば、体 (tree-box-shape の bodyOf) も合う箱 → 種類が合う箱 → 前のとおり形だけ の順で見る (スイッチ goalShape。合う箱が無くても止まりは増やさない)
   // ✦ の側とレアリティが違う箱へは行かない (✦ は消せない。外れが固定された枝の箱に狙いが固定された人が入り、見本の ✦ が箱ごとに変わった、10-28 モンキー 7。スイッチ boxShape)
   const held = heldOfKey(key);
-  const fixed = at?.doc && flag("boxShape") ? bodyFixed(bodyOf(at.data, at.doc, at.item, held)) : "";
+  const fixed = at?.doc ? bodyFixed(bodyOf(at.data, at.doc, at.item, held)) : "";
   const all = shapes.filter((s) => s.key === key && (!fixed || s.sig == null || s.sig.startsWith("mixed") || bodyFixed(s.sig) === fixed)), sig = at?.doc ? bodyOf(at.data, at.doc, at.item, held) : null;
   const exact = sig ? all.filter((s) => s.sig == null || s.sig === sig) : [], kinds = sig ? all.filter((s) => s.sig == null || bodyKinds(s.sig) === bodyKinds(sig)) : [];
   const same = exact.length ? exact : kinds.length ? kinds : all;
@@ -241,7 +240,7 @@ export function settle(data: PatchData, doc: TreeDoc, shapes: readonly Shape[], 
   // 外れの箱に着いた人で、外れが狙いの無い側にある (形の鍵では「外れ無し」になる) 人も、外れがあればその箱のまま (スイッチ bodyStrict)。
   // 前は外れ無しの形としてスタートへ移され、スタートの狙い無しの高貴で外れが 1 つずつ増えて、当たりの後のサフィ満杯の箱で止まった
   // (10-29 オーナーの木 FmNY7Wwv の b13 → スタート → b8。オーナー「結果と箱を設定したはずなのに内部でズレて違う箱としてとらえた」)
-  const junkHere = b.out === "junk" && flag("bodyStrict") && [...item.prefixes, ...item.suffixes].some((m) => !m.fractured && !aims.some((a) => a.modId === m.modId));
+  const junkHere = b.out === "junk" && [...item.prefixes, ...item.suffixes].some((m) => !m.fractured && !aims.some((a) => a.modId === m.modId));
   if (heldSets(doc, b.out === "junk" ? b.parent : id).some((h) => shapeKey(h, b.out === "junk") === key || (junkHere && shapeKey(h, false) === key)) && canPlay(data, item, b.hand)) return id;
   const to = boxOfShape(shapes, key, { data, item, doc }) ?? id;
   // 形の合う箱の手が打てず、この箱の手は打てる時はこの箱のまま (10-24 モンキー 7 回目: 始めのルーンの外れは MOD が増えず「外れ無し」の形で始めへ戻され、
@@ -290,7 +289,7 @@ export function linkSameShape(doc: TreeDoc, ids: readonly string[], loose?: Body
     // 分かれ目の行の箱 (branch) は人が手を決める所 (分かれ目の箱も行き先になったので、つなぐと自分の分かれ目へ戻る輪になる)
     // 人が × で外した箱はつながない (noAutoBack)
     // 打った後 (狙い無し) の箱も、同じ形の手のある箱へつなぐ (スイッチ boxShape。カオスの「打った後 (同じ側)」が親と同じ形なのに未定のままだった、10-28 夜オーナー「一緒のMODがふくすうあるけど認識されない」)
-    if (!c || c.noAutoBack || c.hand || (c.out === "hit" && !junkLike(doc, c)) || c.out === "pass" || (c.out === "any" && !flag("boxShape")) || c.out === "branch") continue;
+    if (!c || c.noAutoBack || c.hand || (c.out === "hit" && !junkLike(doc, c)) || c.out === "pass"  || c.out === "branch") continue;
     if (c.back && c.back !== MATCH && !(c.out === "lost" && c.back === "start")) continue;
     // フラクチャーの結果の箱は、形 (✦ は数えない) が親と同じでも つながない (親へ戻すと ✦ のある品にもう一度フラクチャーを打って止まった、10-24)
     const p = c.parent ? doc.boxes[c.parent] : undefined;
@@ -303,7 +302,7 @@ export function linkSameShape(doc: TreeDoc, ids: readonly string[], loose?: Body
     let to = targets.find((x): x is string => !!x && x !== id && (x !== "start" || c.out === "lost")) ?? swapJunkOf(c, p);
     // 同じ鍵の箱が幾つかある時は、体 (側・種類・数・レアリティ) まで合う箱を順に探す (変成の「打った後」がプレとサフィの 2 つあり、1 つ目のプレだけ見て
     // サフィの外れの「狙いが消えた」がどこへもつながらなかった、10-28 夜オーナー「自動で箱違うとこにつくな」。スイッチ boxShape)
-    if (flag("boxShape") && loose && (!to || !backBody(loose, id, to))) {
+    if (loose && (!to || !backBody(loose, id, to))) {
       const keys = new Set(matched.map((m) => m.key));
       to = shapesOf(doc).filter((sh) => keys.has(sh.key) && sh.box !== id).map((sh) => sh.box).find((x) => shapeFits(doc, id, x) && backBody(loose, id, x)) ?? to;
     }
@@ -334,8 +333,8 @@ export function sameHitsOf(doc: TreeDoc, id: string, loose?: BodyOf): string[] {
   // 道の途中でフラクチャーを打った箱とそうでない箱は、同じ狙いの組でも ✦ の有無が違うのでまとめない
   // (印の無い木の乱数のフラクチャーで「キャストスピードが固定された」が上の「キャストスピードが付いた」へ自動で統合された、10-27 夜。スイッチ fracRandom)
   const fr = (x: string): boolean => { for (let y: string | null = doc.boxes[x]?.parent ?? null; y; y = doc.boxes[y]?.parent ?? null) { const h = doc.boxes[y]?.hand; if (h && effectOf(h.currency) === "fracture" && h.pick === "random") return true; } return false; };
-  const f0 = flag("fracRandom") ? fr(id) : false;
-  return Object.values(doc.boxes).filter((c) => c.id !== id && c.out === "hit" && !!c.aim && !c.back && !c.split && c.parent !== b.parent && !down.has(c.id) && hitStateKey(doc, c.id) === k && ((flag("boxShape") && loose) || fr(c.id) === f0) && sameBody(loose, id, c.id)).map((c) => c.id);
+  const f0 = fr(id);
+  return Object.values(doc.boxes).filter((c) => c.id !== id && c.out === "hit" && !!c.aim && !c.back && !c.split && c.parent !== b.parent && !down.has(c.id) && hitStateKey(doc, c.id) === k && (!!loose || fr(c.id) === f0) && sameBody(loose, id, c.id)).map((c) => c.id);
 }
 /**
  * 同じ状態の当たりの箱をまとめる: 選んだ箱 (picks) の下を消し、まとめ先 (to) へ戻りの矢印でつなぐ (木は親が 1 つなので 1 箱にはせず、合流の線で見せる)。
@@ -452,10 +451,10 @@ export function sameHandReturn(doc: TreeDoc, id: string, h: Hand, loose?: BodyOf
   const keys = new Set(matchTargets(doc, id).map((m) => m.key));
   // 打つ前の箱へも、形の鍵 (狙いの組 + 外れの有無) が同じ時だけ (10-27 夕モンキー 8: スタート (外れ 0) で高貴を打った外れ (外れ 1) に同じ高貴を選ぶとスタートへ戻り、
   // 回すたびにプレの外れが増えて 30 人中 29 人が満杯で止まった。カオスのように外れの数が変わらない手は今まで通り戻る)
-  if (p && same(p.hand) && matchTargets(doc, p.id).some((m) => keys.has(m.key)) && (flag("bodyStrict") ? returnFits(doc, id, p.id, loose) : shapeFits(doc, id, p.id) && sameBody(loose, id, p.id))) return p.id;
+  if (p && same(p.hand) && matchTargets(doc, p.id).some((m) => keys.has(m.key)) && returnFits(doc, id, p.id, loose)) return p.id;
   const under = (x: string): boolean => { for (let y: string | null = x; y; y = doc.boxes[y]?.parent ?? null) if (y === id) return true; return false; };
   const depth = (x: string): number => { let n = 0; for (let y = doc.boxes[x]?.parent ?? null; y; y = doc.boxes[y]?.parent ?? null) n++; return n; };
-  const cands = [...new Set(shapesOf(doc).filter((s) => keys.has(s.key) && same(s.hand) && !under(s.box)).map((s) => s.box))].filter((x) => (flag("bodyStrict") ? returnFits(doc, id, x, loose) : shapeFits(doc, id, x) && sameBody(loose, id, x)));
+  const cands = [...new Set(shapesOf(doc).filter((s) => keys.has(s.key) && same(s.hand) && !under(s.box)).map((s) => s.box))].filter((x) => returnFits(doc, id, x, loose));
   return cands.sort((x, y) => depth(x) - depth(y))[0] ?? null;
 }
 
@@ -472,17 +471,6 @@ export function returnFits(doc: TreeDoc, from: string, to: string, loose?: BodyO
  * (S-50、スイッチ bodyStrict。前の版の木・見本が変わった木の古いつなぎ)。人が付けた ↩ は触らない。外したら true
  */
 export function pruneBacks(data: PatchData, doc: TreeDoc): boolean {
-  // スイッチ judgeOne: 見直しも「箱どうし」の判定 (S-50b)
-  if (flag("judgeOne")) return pruneByContent(doc, judgeMemo(data, doc));
-  if (!flag("bodyStrict") || !flag("boxShape")) return false;
-  const loose = bodyMemo(data, doc);
-  let changed = false;
-  for (const b of Object.values(doc.boxes)) {
-    // 当たりの箱どうしの統合 (同じ MOD 群) は別の物なので見ない
-    if (!b.autoBack || !b.back || b.back === MATCH || b.back === RESTART || !doc.boxes[b.back] || (b.out === "hit" && doc.boxes[b.back]!.out === "hit")) continue;
-    if (returnFits(doc, b.id, b.back, loose)) continue;
-    b.back = null; delete b.autoBack; delete b.merged;
-    changed = true;
-  }
-  return changed;
+  // 見直しも「箱どうし」の判定 (S-50b)
+  return pruneByContent(doc, judgeMemo(data, doc));
 }

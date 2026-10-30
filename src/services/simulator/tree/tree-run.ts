@@ -11,7 +11,6 @@ import { effectOf } from "./tree-hands";
 import { qualityOk } from "./tree-unbounded";
 import { aimOpts, aimsOf, fractureChoices, goalsHeld, handAims, heldHitOf, outcomeOf, playHand, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
 import { boxOutcomeOf, fromStrip, stripBackOf, stripStop, stripStopByContent } from "./tree-outcome";
-import { flag } from "../../../web/release-flags";
 import { heldSets, MATCH, matchBox, outBoxOf, RESTART, settle, shapesOf, splitTo, type Shape, type SplitBox } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
@@ -118,7 +117,6 @@ const FRACTURE_PICK = 2;
  * スイッチ fracMulti が閉じている間・✦ が付いていない時は FRACTURE_MISS (10-24 オーナー「2 回外れて 1 回当たり」)
  */
 function fractureMiss(data: PatchData, doc: TreeDoc, item: StageItem): number {
-  if (!flag("fracMulti")) return FRACTURE_MISS;
   const outs = (stepOutcomes(data, item, "fracture") ?? []).filter((o) => !o.void), marks = new Set(fractureMarks(doc).map((a) => a.modId));
   const k = outs.filter((o) => [...o.item.prefixes, ...o.item.suffixes].some((m) => m.fractured && marks.has(m.modId))).length;
   return k ? outs.length / k - 1 : FRACTURE_MISS;
@@ -139,7 +137,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
   // (10-29 オーナー「なんか止まり方が戻った先で止まるんだよな。結果を選んでその結果にしたがってるだけなのに」)
   let blame: string | null = null;
   const fin = (p: Person): Person => (blame && p.end === "stuck" ? { ...p, blame } : p);
-  const STRICT = flag("bodyStrict"), boxBodyOf = STRICT ? bodyMemo(data, doc) : null;
+  const boxBodyOf = bodyMemo(data, doc);
   const misfit = (to: string, it: StageItem): boolean => { if (!boxBodyOf || !doc.boxes[to] || to === "start") return false; const y = boxBodyOf(to); return y !== null && !y.startsWith("mixed") && bodyOf(data, doc, it, heldOn(doc, to)) !== y; };
   /** 付いている完成形の狙い (段は完成形以上) の MOD */
   const aimsHeld = (it: StageItem): Set<string> => new Set((doc.memoAims ?? []).filter((a) => aimHeldOn(data, it, a, { sameText: true })).map((a) => a.modId));
@@ -197,13 +195,13 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
       // 全部消えてよい消去の直線は、止まる所 (同じレアリティ・同じ外れの数の箱) が無ければ形の合う箱を探さない = 行き先未定 (スイッチ stripRarity)
       const to = j
         ? (b.back === MATCH ? stripBackOf(data, doc, at, item) ?? (fromStrip(doc, at) ? null : routeOf(data, doc, j, null, item, aimed)) : routeOf(data, doc, j, b.back, item, aimed))
-        : b.back === MATCH ? stripBackOf(data, doc, at, item) ?? (flag("stripRarity") && fromStrip(doc, at) ? null : matchBox(data, shapes, item, aims, doc)) : settle(data, doc, shapes, b.back, item, aims);
+        : b.back === MATCH ? stripBackOf(data, doc, at, item) ?? (fromStrip(doc, at) ? null : matchBox(data, shapes, item, aims, doc)) : settle(data, doc, shapes, b.back, item, aims);
       // 戻り先と中身が違い、中身の同じ箱も無い (S-64、人と箱): この箱で止まる (未設定)
       if (!to && j && b.back !== MATCH) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`戻り先の箱と中身が違い、中身の同じ箱も無い`, `The return target holds a different item, and no box matches it`), item, noBox: true } });
       if (!to) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("戻り先の「形の合う箱」が無い", "No box matches the shape to return to"), item, noBox: true } });
       // 戻り先に着いてから形の合う箱へ移った時も、結果の箱と同じく戻り先の来訪を pass で残す (moved に数える)
       if (b.back !== MATCH && to !== b.back) visits.push({ box: b.back, cost, pass: true });
-      if (!j && STRICT && misfit(to, item)) blame = at;
+      if (!j && misfit(to, item)) blame = at;
       if (j && to !== b.back) blame = at;
       at = to;
       continue;
@@ -272,7 +270,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
       continue;
     }
     const to = settle(data, doc, shapes, next, item, aims);
-    if (to !== next) { visits.push({ box: next, cost, pass: true }); if (STRICT && misfit(to, item)) blame = next; }
+    if (to !== next) { visits.push({ box: next, cost, pass: true }); if (misfit(to, item)) blame = next; }
     at = to;
   }
 }
@@ -407,7 +405,7 @@ export function* runTreeSteps(data: PatchData, doc: TreeDoc, opts: TreeRunOpts):
   const o = { price: opts.price, startCost: opts.startCost ?? 0, capDiv: opts.capDiv ?? 2000, capSteps: opts.capSteps ?? 20000, start: opts.start, untilHit, onHand: opts.onHand, onArrive: opts.onArrive };
   const aims = opts.aims ?? aimsOf(doc);
   const shapes = shapesOf(doc, data);
-  const j = flag("judgeOne") ? judgeMemo(data, doc) : null;
+  const j = judgeMemo(data, doc);
   const rng = mulberry32(opts.seed);
   const people: Person[] = [];
   const every = Math.max(1, opts.every ?? 10);

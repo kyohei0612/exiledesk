@@ -10,10 +10,9 @@ import { isTauriRuntime } from "../../utils/isTauriRuntime";
 import { logRecord } from "../../utils/log-record";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
 import { migrateTreeDoc } from "../../services/simulator/tree/tree-migrate";
-import { toRecipeV1, type RecipePick } from "../../services/simulator/tree/tree-recipe-v1";
-import { isCatalyst } from "../../services/simulator/tree/tree-hands";
+import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import { addTreeRecipe, removeTreeRecipe, sameTree, setCurrentTreeRecipe, treeRecipes } from "../../state/simulator/tree-recipes";
-import { DEV_BUILD, flag } from "../../web/release-flags";
+import { DEV_BUILD } from "../../web/release-flags";
 import { recipeCardOf } from "./recipe-card";
 import { DEV_RECIPES } from "./dev-recipes";
 import { useTree } from "./tree/use-tree";
@@ -30,7 +29,7 @@ type PackedTree = { v: 2; n: string; t: TreeDoc };
 /** ツリーのレシピの URL (#recipe= の頭は同じ。開くと読む側が v で見分ける) */
 export async function treeShareUrl(r: { name: string; tree: TreeDoc }): Promise<string> {
   // スイッチ recipeV1 の下は打ち方だけ (v1、S-104)。開く側は v1 も前の木も migrateTreeDoc で読む
-  const code = await packJson({ v: 2, n: r.name, t: flag("recipeV1") ? toRecipeV1(r.tree) : r.tree } satisfies PackedTree);
+  const code = await packJson({ v: 2, n: r.name, t: toRecipeV1(r.tree) } satisfies PackedTree);
   const base = isTauriRuntime() ? "https://exiledesk.com/" : `${location.origin}${location.pathname}`;
   return `${base}${RECIPE_SHARE_PREFIX}${code}`;
 }
@@ -49,7 +48,7 @@ export async function treeShortUrl(r: { name: string; tree: TreeDoc }): Promise<
   try {
     // カード絵の値も一緒に (JSON { code, card }、スイッチ recipeCard。閉じている間はただの code)
     let card: ReturnType<typeof recipeCardOf> | null = null;
-    if (flag("recipeCard")) try { card = recipeCardOf(r.tree); } catch { card = null; }
+    try { card = recipeCardOf(r.tree); } catch { card = null; }
     const res = await fetch(`${SHORT_HOST}/r/new`, { method: "POST", body: card ? JSON.stringify({ code, card }) : code }); // ヘッダーは付けない (サーバーは本文の頭の { で見分ける。付けると別の住所からは事前の問い合わせが要る)
     if (!res.ok) return long;
     const id = ((await res.json()) as { id?: unknown }).id;
@@ -99,14 +98,10 @@ export async function seedDevRecipes(): Promise<void> {
 
 /**
  * 開いたレシピの、今の作りに入っていない手 (スイッチの下の手。名前の一覧、無ければ空)。S-103b: 本番で開くとそこから先を組めず止まるので知らせる。
- * 今はカタリストの「品質を n % まで」の手 (catHand) だけ。保存の形 v1 は picks、前の形は箱の手を見る
+ * 今は無い (前のカタリストの「品質を n % まで」の手 catHand は本番に出た、R5)。スイッチの下の手が出来たら、保存の形 v1 は picks・前の形は箱の手を見てここに足す
  */
-export function newerHands(t: TreeDoc): string[] {
-  const hands = [...((t as TreeDoc & { picks?: RecipePick[] }).picks ?? []).map((p) => p.hand), ...Object.values(t.boxes ?? {}).map((b) => b.hand)];
-  const out = new Set<string>();
-  if (!flag("newerNote")) return [];
-  for (const h of hands) if (h && isCatalyst(h.currency) && (h.quality ?? 0) > 0 && !flag("catHand")) out.add(tr("カタリストで品質を n % まで", "Catalyst up to n% quality"));
-  return [...out];
+export function newerHands(_t: TreeDoc): string[] {
+  return [];
 }
 /** 今開いたレシピの今の作りに無い手 (木の上のレシピの帯に出す。× で閉じる・保存しない、S-103b) */
 export const sharedNewer = ref<string[]>([]);
@@ -119,7 +114,7 @@ export async function openSharedRecipe(): Promise<void> {
   // 開いた後は URL から外す (読み直すたびに足されないように)
   try { history.replaceState(null, "", location.pathname + location.search); } catch { /* 外せなくても開く */ }
   // タップ 1 回で木まで: スマホは「完成形と全体図」の窓を開いて着く (PC は木のページがそのまま木。S-103、スイッチ recipeJump)
-  if ((await openRecipeCode(m[1]!)) && flag("recipeJump")) setMapFold(false);
+  if (await openRecipeCode(m[1]!)) setMapFold(false);
 }
 
 /** 貼った物からレシピの中身を取り出す (URL の全体でも、#recipe= の後ろだけでも。開発版・本番どちらの URL でも中身は同じ) */

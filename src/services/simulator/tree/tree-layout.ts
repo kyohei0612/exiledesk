@@ -2,7 +2,6 @@
  * tree-layout.ts — ツリーの整列 (tidy) と段の札の高さ (bandsOf)。tree-model.ts から分けた (2026-10-24、500 行の決まり。中身は前のまま)
  */
 import { aimKey, BOX_W, GAP_Y, type TreeBox, type TreeDoc } from "./tree-model";
-import { flag } from "../../../web/release-flags";
 import { centerMerged, noteLaid, rowTops, settleRows } from "./tree-row-tops";
 
 /** 整列で兄弟を並べる順 (当たり → 狙いが消えた → 外れが消えた → 外れ。外れは一番右) */
@@ -11,49 +10,19 @@ export const OUT_ORDER: Record<TreeBox["out"], number> = { start: 0, hit: 0, any
 const TIDY_GAP = 64;
 /** 親から 2 行以上下の子へ降りる縦の線の、輪郭に入れる幅 (箱の真ん中から左右) */
 const STEM = 20;
-/** 段の高さに収める物: "all" = 間の箱を全部 / "path" = 次の当たりへ続く道だけ (戻るだけの箱は次の段の高さまで下がってよい) */
-const BAND: "all" | "path" = "path";
 /**
- * 箱の行 (y = 行 × GAP_Y。10-22 オーナー「2 つ目までしか完成していないのに、3 つ目まで完成している箱と同じ段にいる。整列させるなら MOD の段を合わせて。
- * 当たりの場合だけ気にすればいい」): 当たりの箱は道で揃った狙いの数 n の段 (全部の枝で同じ高さ)、ほかの箱 (外れ・消えた・打った後・品質の後) は
- * 直前の当たり (か始まり) の何手下かで、その段と次の段の間に置く。段 n の高さ = 1 + その段の間の箱の一番深い手数 (BAND)。
- * 狙いが消えた後の当たりなど、揃った数が親の段以下の時は親の段の次 (高さは揃わない)
+ * 箱の行 = 始まりからの深さ (結果の箱はいつも親のすぐ下の行。10-27 夜オーナー: 当たりを揃った狙いの数の段へ下げると、王者の当たりなどが親から離れた。
+ * 前の「当たりは揃った狙いの数の段」の形は R5 で消した、10-31)
  */
-function rowsOf(d: TreeDoc, kids: (id: string) => string[]): Map<string, number> {
-  // 結果の箱はいつも親のすぐ下の行 (10-27 夜オーナー: 当たりを揃った狙いの数の段へ下げると、王者の当たりなどが親から離れた。スイッチ tidyUnder)
-  if (flag("tidyUnder")) {
-    const rows = new Map<string, number>();
-    const down = (id: string, r: number): void => { rows.set(id, r); for (const k of kids(id)) down(k, r + 1); };
-    down("start", 0);
-    return rows;
-  }
-  const band = new Map<string, number>(), sub = new Map<string, number>(), held = new Map<string, Set<string>>();
-  const walk = (id: string, parent: string | null): void => {
-    const b = d.boxes[id]!;
-    const h = new Set(parent ? held.get(parent)! : []);
-    if (b.out === "hit" && b.aim) h.add(aimKey(b.aim));
-    held.set(id, h);
-    if (!parent) { band.set(id, 0); sub.set(id, 0); }
-    else if (b.out === "hit") { band.set(id, Math.max(h.size, band.get(parent)! + 1)); sub.set(id, 0); }
-    else { band.set(id, band.get(parent)!); sub.set(id, sub.get(parent)! + 1); }
-    for (const k of kids(id)) walk(k, id);
-  };
-  walk("start", null);
-  // 段ごとの高さ (BAND = "path" の時は、次の段の当たりの親だけ数える)
-  const deep = new Map<number, number>();
-  for (const [id, n] of band) {
-    const b = d.boxes[id]!;
-    if (BAND === "path" && !b.outs.some((k) => d.boxes[k]!.out === "hit")) continue;
-    deep.set(n, Math.max(deep.get(n) ?? 0, sub.get(id)!));
-  }
-  const top: number[] = [0];
-  const max = Math.max(...band.values());
-  for (let n = 1; n <= max; n++) top[n] = top[n - 1]! + 1 + (deep.get(n - 1) ?? 0);
-  return new Map([...band].map(([id, n]) => [id, top[n]! + sub.get(id)!]));
+function rowsOf(kids: (id: string) => string[]): Map<string, number> {
+  const rows = new Map<string, number>();
+  const down = (id: string, r: number): void => { rows.set(id, r); for (const k of kids(id)) down(k, r + 1); };
+  down("start", 0);
+  return rows;
 }
 /**
  * 整列 (2026-10-22 オーナー「ごちゃっとなってるのを整列。2 段目を合わせる、矢印が重ならない」):
- * 行 (rowsOf: 当たりの箱は揃った狙いの数の段) ごとに横一列、兄弟は親の下に OUT_ORDER の順。行ごとの輪郭で寄せるので箱は重ならない。
+ * 行 (rowsOf: 始まりからの深さ) ごとに横一列、兄弟は親の下に OUT_ORDER の順。行ごとの輪郭で寄せるので箱は重ならない。
  * 始まりの箱は x = 0 のまま。線は直角の木の線、戻りの矢印は既定では引かない (画面の側、SimTreePage の edges・backLine。10-22 整列の定義)。
  * chipW = 箱の下の手の札の幅 (ツリーの座標、名前を切らない幅。画面で測って渡す)。札も行の輪郭に入れて、同じ高さに並ぶ札どうしも TIDY_GAP 空ける
  * (10-25 オーナー「ここが詰まるな」= ルーンの合金と無限のパーフェクトエッセンスの札が並んで名前が切れた。前は箱だけで寄せていた)
@@ -64,9 +33,9 @@ export function tidy(d: TreeDoc, chipW?: (id: string) => number | undefined, hei
     b.outs = b.outs.map((o, i) => ({ o, i })).sort((a, z) => OUT_ORDER[d.boxes[a.o]!.out] - OUT_ORDER[d.boxes[z.o]!.out] || a.i - z.i).map((x) => x.o);
     // まとめて描かない箱 (案 A、tree-merge-open の mergedAway と同じ判定) は場所を取らない
     const dep = (x: string): number => { let n = 0; for (let q = d.boxes[x]; q?.parent; q = d.boxes[q.parent]) n++; return n; };
-    return b.outs.filter((o) => { const c = d.boxes[o]!; return !(flag("mergeOpen") && c.merged && c.autoBack && !c.hand && c.back && d.boxes[c.back] && dep(o) === dep(c.back)); });
+    return b.outs.filter((o) => { const c = d.boxes[o]!; return !(c.merged && c.autoBack && !c.hand && c.back && d.boxes[c.back] && dep(o) === dep(c.back)); });
   };
-  const row = rowsOf(d, kids);
+  const row = rowsOf(kids);
   /**
    * 部分木の輪郭 (行ごとの左端・右端、部分木の頭の箱の x からの差)。兄弟は左から、同じ行で TIDY_GAP 空く所まで寄せる
    * (部分木の幅ごと足すと、深い枝の横の浅い枝の下が空いたまま木が広がった。10-22 見本で全体表示が 25%)。
@@ -78,7 +47,7 @@ export function tidy(d: TreeDoc, chipW?: (id: string) => number | undefined, hei
   const layout = (id: string): Contour => {
     const ks = kids(id), me = row.get(id)!;
     const acc: Contour = new Map();
-    const offs: number[] = [], cs: Contour[] = [];
+    const offs: number[] = [];
     // 兄弟の組の一番深い行まで、子の無い行にも箱の幅の列を取る = 箱の真下に別の親の子 (隣の兄弟の子孫) が入らない
     // (10-27 オーナー「ツリーとして下の枠に被るんだったら、下を基準に、上の狙いが付いた時の枠を横にずらしてあげてくれ」: 当たりの箱の真下に、隣の「狙いが消えた」の子が来ていた)
     const subs = ks.map((k) => { const c = layout(k); for (let r = me + 1; r < row.get(k)!; r++) put(c, r, BOX_W / 2 - STEM, BOX_W / 2 + STEM); return c; });
@@ -92,7 +61,6 @@ export function tidy(d: TreeDoc, chipW?: (id: string) => number | undefined, hei
       for (let r = row.get(ks[i]!)! + 1; r <= deepest; r++) if (!c.has(r)) { const up = c.get(r - 1) ?? [0, BOX_W]; put(c, r, up[0], up[1]); }
     });
     for (const c of subs) {
-      cs.push(c);
       let off = 0;
       if (offs.length) {
         off = -Infinity;
@@ -106,14 +74,7 @@ export function tidy(d: TreeDoc, chipW?: (id: string) => number | undefined, hei
     // 前は一番左と一番右の子の真ん中で、幅の違う兄弟だと真ん中の子が 163px までずれた)。端までの長さが左右で違えば、短い側の兄弟を組ごと外へ押して左右対称に (外へ押すだけなので重ならない、行はそのまま)
     const n = ks.length, half = Math.floor(n / 2);
     const px = !n ? 0 : n % 2 ? offs[half]! : (offs[half - 1]! + offs[half]!) / 2;
-    // 左右の長さを揃える押し出しはしない (片側に深い部分木があると、短い側の兄弟が大きく離れた。10-27 夜オーナー、スイッチ tidyTight。親の線は真ん中の子へまっすぐのまま)
-    if (n > 1 && !flag("tidyTight")) {
-      const l = px - offs[0]!, r = offs[n - 1]! - px;
-      if (l < r) for (let i = 0; i < half; i++) offs[i]! -= r - l;
-      else if (r < l) for (let i = n - half; i < n; i++) offs[i]! += l - r;
-      acc.clear();
-      cs.forEach((c, i) => { for (const [rw, [cl, cr]] of c) put(acc, rw, cl + offs[i]!, cr + offs[i]!); });
-    }
+    // 左右の長さを揃える押し出しはしない (片側に深い部分木があると、短い側の兄弟が大きく離れた。10-27 夜オーナー。親の線は真ん中の子へまっすぐのまま)
     ks.forEach((k, i) => rel.set(k, offs[i]! - px));
     const out: Contour = new Map([[me, [0, BOX_W]]]);
     // 手の札 (箱の下の真ん中、行の間 = me + 0.5)
@@ -122,8 +83,8 @@ export function tidy(d: TreeDoc, chipW?: (id: string) => number | undefined, hei
     for (const [r, [l, rr]] of acc) put(out, r, l - px, rr - px);
     return out;
   };
-  // 行の高さを箱の本当の高さで詰める (スイッチ lineShort、tree-row-tops)。行は深さ (tidyUnder) の時だけ
-  const tops = flag("lineShort") && flag("tidyUnder") && heightOf ? rowTops(row, heightOf) : null;
+  // 行の高さを箱の本当の高さで詰める (tree-row-tops)
+  const tops = heightOf ? rowTops(row, heightOf) : null;
   const place = (id: string, x: number): void => {
     const b = d.boxes[id]!;
     b.x = Math.round(x);

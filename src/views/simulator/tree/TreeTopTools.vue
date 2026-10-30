@@ -5,24 +5,19 @@
 -->
 <script setup lang="ts">
 import Icon from "../../../components/ui/Icon.vue";
-import TreeJoinBar from "./TreeJoinBar.vue";
 import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
 import { simOp } from "../../../web/track";
-import { flag } from "../../../web/release-flags";
 
 /** armed = 白紙に戻すを 1 回押した (もう一度押すと戻す) */
 defineProps<{ linesAll: boolean; memoOpen: boolean; full: boolean; note: boolean; armed: boolean }>();
-const emit = defineEmits<{ tidy: []; lines: []; memo: []; full: []; clear: [] }>();
+const emit = defineEmits<{ lines: []; memo: []; full: []; clear: [] }>();
 const t = useTree();
 const BTN = "flex h-8 min-w-8 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md px-1.5 @max-[899px]:min-w-7 @max-[899px]:px-1 text-[12px] text-[#d8ccb4] hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-35 aria-pressed:bg-amber-400/20 aria-pressed:text-amber-100";
 /** 短い名前 (帯が 1300px 以上の時だけ) */
 const LBL = "hidden @min-[1300px]:inline";
 /** 再挑戦の線は乗せた時だけ (S-87c、スイッチ retryHover) */
-const RETRY = flag("retryHover");
 /** 人が選ぶ「まとめる」は無い (S-52b、スイッチ pickOff) */
-const PICK_OFF = flag("pickOff");
-const LAYOUT_ONE = flag("layoutOne");
 </script>
 
 <template>
@@ -31,12 +26,7 @@ const LAYOUT_ONE = flag("layoutOne");
       <button type="button" data-tree-undo :class="BTN" :disabled="!t.canUndo.value" :title="tr('1 つ戻す (Ctrl+Z)', 'Undo (Ctrl+Z)')" :aria-label="tr('1 つ戻す', 'Undo')" @click="simOp('undo'); t.undo()"><Icon name="undo" class="size-4" /><span :class="LBL">{{ tr("戻す", "Undo") }}</span></button>
       <button type="button" data-tree-redo :class="BTN" :disabled="!t.canRedo.value" :title="tr('やり直し (Ctrl+Shift+Z / Ctrl+Y)', 'Redo (Ctrl+Shift+Z / Ctrl+Y)')" :aria-label="tr('やり直し', 'Redo')" @click="simOp('redo'); t.redo()"><Icon name="undo" class="size-4 -scale-x-100" /></button>
       <span class="mx-0.5 h-5 w-0.5 rounded bg-white/10 @max-[899px]:hidden" aria-hidden="true" />
-      <!-- 位置は木から 1 つの計算 (S-140) なので「整列」は出さない (スイッチ layoutOne、10-29 オーナー「この仕組み導入なら整列いらんけどなそもそも」) -->
-      <button v-if="!LAYOUT_ONE" type="button" data-tree-tidy :class="BTN" :title="tr('整列: 段ごとに横一列・親は子の並びの真ん中・線は直角の木の線 (1 つ戻すで元の並びへ)', 'Tidy: rows by depth, each parent centered over its children, right-angle tree lines (undo restores)')" :aria-label="tr('整列', 'Tidy')" @click="emit('tidy')">
-        <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="4" rx="1" /><rect x="3" y="17" width="6" height="4" rx="1" /><rect x="15" y="17" width="6" height="4" rx="1" /><path d="M12 7v5M6 17v-5h12v5" /></svg><span :class="LBL">{{ tr("整列", "Tidy") }}</span>
-      </button>
-      <TreeJoinBar v-if="!PICK_OFF" :btn-class="BTN" :label-class="LBL" />
-      <button type="button" data-tree-lines-all :class="BTN" :aria-pressed="linesAll" :title="RETRY ? (linesAll ? tr('合流の線を隠す (再挑戦の線はいつも乗せた箱だけ)', 'Hide merge lines (retry lines always show only for the hovered box)') : tr('合流の線を全部出す (再挑戦の線はいつも乗せた箱だけ)', 'Show all merge lines (retry lines always show only for the hovered box)')) : linesAll ? tr('戻りの線を隠す (乗せた箱の線だけ)', 'Hide return lines (only the hovered box’s lines)') : tr('戻りの線を全部出す (もう一度押すと、乗せた箱の線だけ)', 'Show all return lines (click again to show only the hovered box’s lines)')" :aria-label="tr('線を全部表示', 'Show all lines')" @click="emit('lines')"><Icon name="link" class="size-4" /><span :class="LBL">{{ tr("線", "Lines") }}</span></button>
+      <button type="button" data-tree-lines-all :class="BTN" :aria-pressed="linesAll" :title="linesAll ? tr('合流の線を隠す (再挑戦の線はいつも乗せた箱だけ)', 'Hide merge lines (retry lines always show only for the hovered box)') : tr('合流の線を全部出す (再挑戦の線はいつも乗せた箱だけ)', 'Show all merge lines (retry lines always show only for the hovered box)')" :aria-label="tr('線を全部表示', 'Show all lines')" @click="emit('lines')"><Icon name="link" class="size-4" /><span :class="LBL">{{ tr("線", "Lines") }}</span></button>
     </template>
     <button type="button" data-tree-memo :class="BTN" :aria-pressed="memoOpen" :title="tr('欲しい MOD とメモの窓 (ツリーを押しても閉じない)', 'Wanted mods & notes window (stays open while you edit)')" :aria-label="tr('メモ', 'Notes')" @click="emit('memo')"><Icon name="pencil" class="size-4" /><span :class="LBL">{{ tr("メモ", "Notes") }}</span><span v-if="note" class="size-1.5 rounded-full bg-amber-400" /></button>
     <template v-if="!t.needBase.value">

@@ -2,17 +2,14 @@
  * tree-outcome.ts — 箱の手の結果の分け方 (回す tree-run・見本 tree-sample・精査 tree-check・台本で同じ物を呼ぶ。2026-10-27 tree-sample.ts から分けた)。
  * ☑ の無い MOD は外れ MOD (メモ feedback-unchecked-is-junk)、消去の残したい MOD (Hand.keep) もここ。打った前後の比べはエンジンの入口 (outcomeOf の aimDiff)
  */
-import { applyCurrency, forceKey, mulberry32, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { mulberry32, unrevealedOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { fillCatalyst, stepOutcomes } from "../../simulator/sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { effectOf, engineOmens, isCatalyst, isRuneHand } from "./tree-hands";
-import { aimsMayHold } from "./tree-lost";
-import { aimKey, boxAims, fractureMarks, subtree, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
+import { boxAims, fractureMarks, subtree, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { aimDiff, aimsOf, outcomeOf, sampleOf, SINGLE_SEEDS } from "./tree-sample";
-import { shapeFit } from "./tree-sample-shape";
 import { prepFor } from "./tree-unbounded";
 import { isInfiniteEssence } from "../../craft-stage/apply-essence";
-import { flag } from "../../../web/release-flags";
 
 /**
  * 無限のエッセンス (筋力・器用さ・知性のどれかがランダム) は ☑ した能力値だけ当たり、ほかが付いたら外れ MOD (10-27 オーナー「知性を選んだら知性が付いた = 当たり、
@@ -48,10 +45,10 @@ function sided(oc: Outcome, before: StageItem, after: StageItem): Outcome {
 export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageItem, after: StageItem, aims0: readonly Aim[], aimed?: ReadonlySet<string> | null): Outcome {
   const key = b.hand?.currency;
   // 全部消えてよい消去は消した後の中身ごとの箱 (S-28d、スイッチ judgeOne)
-  if (flag("judgeOne") && isStrip(b)) return { out: "junkGone", hits: [], junkKey: stripKeyOf(data, doc, after) };
+  if (isStrip(b)) return { out: "junkGone", hits: [], junkKey: stripKeyOf(data, doc, after) };
   // 消える手の残したい MOD (S-27d、スイッチ keepAll): 打つ前の ☑ の代わりに残したい MOD で数える
   const am = keptAimedOf(doc, b.hand, aimed);
-  const aims = am && flag("judgeOne") ? keptPlus(doc, b.hand, mineOf(data, before, aims0, am)) : aims0;
+  const aims = am ? keptPlus(doc, b.hand, mineOf(data, before, aims0, am)) : aims0;
   const own = b.outs.flatMap((id) => { const c = doc.boxes[id]; return c?.out === "hit" && c.aim ? boxAims(c) : []; });
   // エッセンス (付く側が決まる)・フラクチャー (S-41 の鍵) は側で分けない
   if (!key || effectOf(key) === "essence" || effectOf(key) === "fracture") return withGot(data, boxOutcomeRaw(data, doc, b, before, after, aims), before, after, own);
@@ -69,7 +66,7 @@ const keepAimedOf = (doc: TreeDoc, keep: readonly Aim[]): ReadonlySet<string> =>
  * 外れが消えたは側の鍵 `s:…` のまま (残したい MOD が残って外れが 1 つ消えるので、側ごとに中身は 1 つ。鍵を替えると保存の札が合わず要確認が増えた)
  */
 function lostKeyed<T extends { out: OutKind; junkKey?: string }>(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, oc: T, after: StageItem): T {
-  if (!flag("judgeOne") || oc.out !== "lost" || !isKeepAnnul(h)) return oc;
+  if (oc.out !== "lost" || !isKeepAnnul(h)) return oc;
   return { ...oc, junkKey: joinKeys(stripKeyOf(data, doc, after, keepAimedOf(doc, h.keep!)), oc.junkKey) };
 }
 /**
@@ -99,7 +96,7 @@ function lostFirst<T extends { out: OutKind; hits: Aim[] }>(on: boolean, data: P
  * 消去の残したい MOD (☑) の段は完成形の段で見る (S-27c、スイッチ judgeOne)。保存の ☑ は見本の段 (最大ライフ T4) で、完成形 (T5) の人の最大ライフが消えても
  * 「外れが消えた」になった (木 oWkFcwYX の b9)。完成形に無い MOD はそのまま
  */
-const keepAims = (doc: TreeDoc, keep: readonly Aim[]): Aim[] => (flag("judgeOne") ? keep.map((a) => (doc.memoAims ?? []).find((g) => g.modId === a.modId) ?? a) : [...keep]);
+const keepAims = (doc: TreeDoc, keep: readonly Aim[]): Aim[] => keep.map((a) => (doc.memoAims ?? []).find((g) => g.modId === a.modId) ?? a);
 /** 狙いに数える物 = ☑ で付いている物と、まだ付いていない物 (付いていて ☑ の無い完成形の MOD は外れ MOD) */
 const mineOf = (data: PatchData, before: StageItem, aims: readonly Aim[], aimed: ReadonlySet<string>): Aim[] => aims.filter((a) => aimed.has(a.modId) || !aimHeldOn(data, before, a, { sameText: true }));
 function boxOutcomeRaw(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageItem, after: StageItem, aims: readonly Aim[]): Outcome {
@@ -137,13 +134,9 @@ function boxOutcomeRaw(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageI
   if (keep) return outcomeOf(data, before, after, keepAims(doc, keep), key);
   const same = (x: { modId: string; tier: number }, a: { modId: string; tier: number }): boolean => x.modId === a.modId && x.tier === a.tier;
   const own = b.outs.flatMap((id) => { const c = doc.boxes[id]; return c?.out === "hit" && c.aim ? boxAims(c) : []; });
-  // 道で持って着く狙い。エッセンスの「狙いが消えた」の道はエッセンスで付いた MOD も持っている (heldSets。前は抜けて、消去で消えても外れが消えたになり r/ibMlQuAV の b24 で止まった)
-  // スイッチ judgeOne: どれが狙いかは打つ前のアイテムの中身 (付いている完成形の狙い、S-60・S-29)。道で持って着く狙いの数えは使わない (大本 1)
-  const onPath = flag("judgeOne") ? null : new Set(heldSets(doc, b.id).flat());
-  const held = onPath ? [...aimsMayHold(doc, b.id), ...aims.filter((a) => onPath.has(aimKey(a)))] : aims;
-  // ☑ の札でも、道で持って着かずに先に付いていた物 (☑ の無い手で付いた = 外れ MOD) は消えても外れ
-  const mine0 = aims.filter((a) => held.some((x) => same(x, a)) || (own.some((x) => same(x, a)) && !aimHeldOn(data, before, a, { sameText: true })));
-  const pick = flag("judgeOne") && PICK_EFFECTS.includes(effectOf(key ?? ""));
+  // どれが狙いかは打つ前のアイテムの中身 (付いている完成形の狙い、S-60・S-29)。道で持って着く狙いの数え (heldSets) は使わない (大本 1、R5 で消した)
+  const mine0 = aims;
+  const pick = PICK_EFFECTS.includes(effectOf(key ?? ""));
   const mine = pick ? pickedAims(data, before, mine0, own) : mine0;
   const oc = lostFirst(pick, data, before, after, mine, outcomeOf(data, before, after, mine, key));
   if (oc.out !== "hit") return oc;
@@ -164,7 +157,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   if (fracFree(doc, h)) { const f = fracFreeOuts(data, doc, Array.from({ length: SINGLE_SEEDS }, (_, i) => sampleOf(data, doc, boxId, i + 1).item)); const l = [...f.aims.map((x) => ({ out: "hit" as OutKind, aim: x })), ...f.junk.map((k) => ({ out: "junk" as OutKind, aim: null, junkKey: k }))]; return l.length ? l : null; }
   // 骨を未発現のまま (狙い無し) は下の未発現の所で「未発現の冒涜が付いた」1 つに (スイッチ boneLater)
   // 狙い無しは「打った後」1 つ (手の種類の箱)。スイッチ junkSide の間は付いた側ごとの「打った後」(S-65)
-  const freeSide = !!h.free && !veilKeep(h) && flag("junkSide");
+  const freeSide = !!h.free && !veilKeep(h);
   if (h.repeat || (h.free && !veilKeep(h) && !freeSide) || isCatalyst(h.currency) || (h.keep && !h.keep.length)) return null;
   // ルーンの手は確定の手: はめた後のアイテムの「打った後」1 箱 (カタリストと同じ、S-31e。前は当たり (付く MOD 無し) と外れに分かれて輪になった)
   if (isRuneHand(h.currency)) return [{ out: "any", aim: null }];
@@ -174,11 +167,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   const aims = h.keep?.length && effectOf(h.currency) === "remove" ? keepAims(doc, h.keep) : [...aimsOf(doc), ...extra.filter((a) => !aimsOf(doc).some((x) => x.modId === a.modId && x.tier === a.tier))];
   const k = effectOf(h.currency);
   const found = new Map<string, { out: OutKind; aim: Aim | null; junkKey?: string }>();
-  // スイッチ judgeOne: 見本の中身だけで見る (持って着きうる狙いを足した形は作らない、狙いが消えうるのは見本に付いている狙い。大本 1)
-  const one = flag("judgeOne");
-  const hold = one ? [] : aimsMayHold(doc, boxId);
-  const onPath = one ? null : new Set(heldSets(doc, boxId).flat());
-  const mayLose = (a: Aim): boolean => !onPath || onPath.has(aimKey(a)) || hold.some((x) => x.modId === a.modId && x.tier === a.tier);
+  // 見本の中身だけで見る (持って着きうる狙いを足した形は作らない、狙いが消えうるのは見本に付いている狙い。大本 1)
   /** 未発現が付く手 (冒涜の骨): 当たり / 外れは発現で選ぶ候補で分かれるので見ない。消える側 (狙いが消えた) だけ発現の前の形で見る */
   let veiled = false, veiledLost = false, veiledKeep = false;
   /** 未発現が付く手で、狙いを消さない結果の側の鍵 (S-65、スイッチ junkSide) */
@@ -188,33 +177,28 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   // 見本 = この箱に着いた人のアイテム (着いた人が SINGLE_SEEDS より少なければ同じ物が回ってくるので 1 回だけ見る)。
   // 箱の形 (道で付いている狙いの組 = heldSets) に合う人だけ (戻ってくる形の違う人の混ざりで結果の箱を増やさない、10-26 オーナー「その選択肢が出てくるのは前提狙いMODの状態でなんかする時やろ」)。合う人がいなければ全員
   const smps = Array.from({ length: SINGLE_SEEDS }, (_, i) => sampleOf(data, doc, boxId, i + 1)).filter((x) => x.note !== "none" && !x.note?.startsWith("cant:"));
-  const fits = one ? null : shapeFit(data, doc, boxId), fit = fits ? smps.filter((x) => fits(x.item)) : smps;
-  // スイッチ judgeOne: 見本ごとの ☑ (付いていて ☑ の無い完成形の MOD は外れ MOD、消えても狙いが消えたにしない)
-  if (one) for (let s = 1; s <= SINGLE_SEEDS; s++) sampleAimed(data, doc, boxId, s);
+  // 見本ごとの ☑ (付いていて ☑ の無い完成形の MOD は外れ MOD、消えても狙いが消えたにしない)
+  for (let s = 1; s <= SINGLE_SEEDS; s++) sampleAimed(data, doc, boxId, s);
   const seen = new Set<StageItem>();
-  for (const [i, smp] of (fit.length ? fit : smps).entries()) {
+  for (const [i, smp] of smps.entries()) {
     const seed = i + 1;
     if (seen.has(smp.item)) continue;
     seen.add(smp.item);
     if (aims.some((a) => !aimHeldOn(data, smp.item, a, { sameText: true }))) unheld = true;
     const item = pre ? fillCatalyst(data, smp.item, pre, mulberry32(seed)).item : smp.item;
-    // 見本にまだ無い狙いのうち、この箱に持って着きうる物 (自分の道・戻ってくる箱の道の当たり、tree-lost の aimsMayHold) を 1 つ足した形でも見る
-    // (見本は初めて着いた人の形。戻りで狙いを持って来た人は狙いが消えうる、10-22 #8: 素の消去が「外れが消えた」1 通りにまとまって 96 人止まった。
-    // 前は持って着かない狙いまで足し、右側の結晶化で外れしか消えない手にも「狙いが消えた」が出た、10-25)
-    // 足した形がレアリティの変わる物 (マジックの埋まった側に付けてレアに上がる) は見ない: エンジンの手でその箱に着く形ではない (スイッチ boxShape、10-28 夜)
-    const forms = [item, ...hold.filter((a) => !aimHeldOn(data, item, a, { sameText: true })).map((a) => applyCurrency(data, item, forceKey(a.modId, `T${a.tier}`, "n"), mulberry32(seed))).filter((r) => r.applied && !(flag("boxShape") && r.item.rarity !== item.rarity)).map((r) => r.item)];
+    const forms = [item];
     // 削減の手は外れを MOD レベルの範囲ごとの代わりに差し替えた形で見る (見本の外れ 1 つの MOD レベルで決めない、S-65b・tree-whittle)
     const all = isWhittleHand(h) ? forms.flatMap((f) => rankVariants(data, f, aims, doc.boxes[boxId]?.junkKey).map((v) => v.item)) : forms;
     for (const it of all) {
       const outs = stepOutcomes(data, prepFor(data, it, h.currency), h.currency, engineOmens(h))?.filter((o) => !o.void);
       if (!outs?.length) return null;
       // 未発現が新しく付く手だけ (前から未発現を持ったまま打つフラクチャー・カオスなどは普通に分ける。スイッチ boneLater)
-      if (outs.some((o) => unrevealedOf(o.item)) && !(flag("boneLater") && unrevealedOf(it))) {
+      if (outs.some((o) => unrevealedOf(o.item)) && !unrevealedOf(it)) {
         veiled = true;
         // 消えて「狙いが消えた」になるのは道で持っている狙い・持って着きうる狙いだけ (☑ の無い手で付いた完成形の MOD は外れ MOD = boxOutcomeOf と同じ。
         // 狙い無しの錬金術の打った後に付いたキャストを骨が消すと「狙いが消えた」が出た、10-28 モンキー 6。スイッチ boneLater)
         // 残したい MOD を決めた骨は、その MOD が消えた時だけ狙いが消えた (S-27d、スイッチ keepAll)
-        const lostOf = (o: { item: StageItem }): number => aimDiff(data, it, o.item, keptAimsOf(doc, h) ?? aims, { sameText: true }).lost.filter((a) => !flag("boneLater") || mayLose(a)).length;
+        const lostOf = (o: { item: StageItem }): number => aimDiff(data, it, o.item, keptAimsOf(doc, h) ?? aims, { sameText: true }).lost.length;
         if (outs.some((o) => lostOf(o))) veiledLost = true;
         // 狙いを消さない結果があるか (満杯の側で全部が狙いなら、骨は必ず狙いを消す = 当たり・外れ・打った後の箱は起こらない。10-28 冒涜まわりの確かめ)
         if (outs.some((o) => !lostOf(o))) veiledKeep = true;
@@ -222,16 +206,16 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
         continue;
       }
       for (const o of outs) {
-        const am = one ? keptAimedOf(doc, h, aimedOfSample(boxId, smp.item)) : null;
+        const am = keptAimedOf(doc, h, aimedOfSample(boxId, smp.item));
         const ra0 = am ? keptPlus(doc, h, aims.filter((a) => am.has(a.modId) || !aimHeldOn(data, it, a, { sameText: true }))) : aims;
-        const pick = one && PICK_EFFECTS.includes(k);
+        const pick = PICK_EFFECTS.includes(k);
         const ra = pick ? pickedAims(data, it, ra0, extra) : ra0;
         const r = lostFirst(pick, data, it, o.item, ra, outcomeOf(data, it, o.item, ra, h.currency));
         const rk = <T extends { out: OutKind; junkKey?: string }>(e: T): T => ranked(h, e, it, o.item, ra);
         if (r.hits.length > 1) return null;
         // スイッチ junkSide: 狙い無しは狙いが消えた以外全部「打った後」を側ごと。☑ の無い狙いが付いたのは外れ (tree-hand-plan の onlyOf と同じ) を側ごと (S-65)
         // エッセンス・フラクチャーは側で分けない (boxOutcomeOf と同じ、S-65。前はフラクチャーの外れの箱にだけ側の鍵が付き、見本が作れず ✦ の無い親の見本のままだった)
-        const sk = k === "essence" || (k === "fracture" && flag("judgeOne")) ? undefined : sideKeyOf(it, o.item);
+        const sk = k === "essence" || k === "fracture" ? undefined : sideKeyOf(it, o.item);
         if (freeSide) { const e = rk<{ out: OutKind; aim: null; junkKey?: string }>(r.out === "lost" ? { out: "lost" as OutKind, aim: null } : { out: "any" as OutKind, aim: null, ...(sk ? { junkKey: sk } : {}) }); found.set(`${e.out}:${e.junkKey ?? ""}`, e); continue; }
         if (sk && extra.length && r.out === "hit" && r.hits[0] && !extra.some((a) => a.modId === r.hits[0]!.modId && a.tier === r.hits[0]!.tier)) { const e = rk<{ out: OutKind; aim: null; junkKey?: string }>({ out: "junk", aim: null, junkKey: sk }); found.set(`junk::${e.junkKey}`, e); continue; }
         // 無限のエッセンスで ☑ していない能力値が付いた = 外れ (infiniteAim)。ほかの狙いの付かない当たりは「打った後」
@@ -244,7 +228,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   }
   // 冒涜: 当たり (この手の札) と外れはいつも、狙いが消えたは消える側で狙いを失いうる時だけ (10-25 シミュ 28 の洗い出し: 満杯の側に死霊術で打つと 13〜14% 狙いが消えるのに箱が無く、回すと止まった)
   // 骨を未発現のまま: 未発現の冒涜が付いた (打った後) 1 つ + 狙いが消えうる時は狙いが消えた
-  if (veiled && flag("boneLater") && !veiledKeep) return [{ out: "lost", aim: null }];
+  if (veiled && !veiledKeep) return [{ out: "lost", aim: null }];
   // 側の鍵があれば側ごと (S-65、スイッチ junkSide)
   const vs = (out: OutKind): Array<{ out: OutKind; aim: Aim | null; junkKey?: string }> => (veiledSides.size ? [...veiledSides].sort().map((junkKey) => ({ out, aim: null, junkKey })) : [{ out, aim: null }]);
   if (veiled && veilKeep(h)) return [...vs("any"), ...(veiledLost ? [{ out: "lost" as OutKind, aim: null }] : [])];
@@ -252,7 +236,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   // ✦ の木の確定フラクチャーは必ず ✦ のどれかを固定する (外れた分は費用に足す、S-43)。外れの箱は誰も着かないので作らない (スイッチ fracMulti)
   // ✦ の無い MOD (完成の狙いでも) が固定される結果も起こらない (回す時は必ず ✦ を固定する、tree-sample の fractureTarget)
   const marks = new Set(fractureMarks(doc).map((a) => a.modId));
-  const sure = flag("fracMulti") && k === "fracture" && h.pick !== "random" && marks.size > 0 && [...found.values()].some((e) => e.out === "hit" && !!e.aim && marks.has(e.aim.modId));
+  const sure = k === "fracture" && h.pick !== "random" && marks.size > 0 && [...found.values()].some((e) => e.out === "hit" && !!e.aim && marks.has(e.aim.modId));
   const list = [...found.values()].filter((e) => !sure || (e.out === "hit" && !!e.aim && marks.has(e.aim.modId)));
   // 足す・入れ替える手が外れだけの時は、まだ付いていない狙いがある時だけ手の種類の箱へ (当たりの箱を作って MOD を選ばせる)。
   // 狙いが全部付いていれば外れ (と消えた) だけ (10-25 シミュ 28 の洗い出し: 満杯で削減のお告げのカオスに、起こりえない当たりの箱が出た)
@@ -349,21 +333,19 @@ function docSig(doc: TreeDoc): string {
 /** 全部消えてよい消去の手なら、止める形か (playHand の stop)。違う手は undefined */
 export function stripStop(data: PatchData, doc: TreeDoc, b: TreeBox): ((it: StageItem) => boolean) | undefined {
   if (!isStrip(b)) return undefined;
-  if (flag("judgeOne")) return (it) => !!stripStopByContent(data, doc, b.id, it);
-  return (it) => stripStops(data, doc, b.id, it).has(looseOf(it));
+  return (it) => !!stripStopByContent(data, doc, b.id, it);
 }
 /** 全部消えてよい消去の結果の箱から戻る箱 (止まった形の箱。無ければ null = 形の合う箱が無い) */
 export function stripBackOf(data: PatchData, doc: TreeDoc, id: string, item: StageItem): string | null {
   const p = doc.boxes[id]?.parent;
-  if (p && isStrip(doc.boxes[p]) && flag("judgeOne")) return stripStopByContent(data, doc, p, item, true);
-  return p && isStrip(doc.boxes[p]) ? stripStops(data, doc, p, item).get(looseOf(item)) ?? null : null;
+  return p && isStrip(doc.boxes[p]) ? stripStopByContent(data, doc, p, item, true) : null;
 }
 /** 全部消えてよい消去の結果の箱か (回す時、止まる所が無ければ形の合う箱を探さず行き先未定。スイッチ stripRarity) */
 export const fromStrip = (doc: TreeDoc, id: string): boolean => { const p = doc.boxes[id]?.parent; return !!p && isStrip(doc.boxes[p]); };
 /** 全部消えてよい消去の結果の箱の戻り先の候補 (札・線・精査。違えば null) */
 export function stripTargetsOf(data: PatchData, doc: TreeDoc, id: string): string[] | null {
   const p = doc.boxes[id]?.parent;
-  // スイッチ judgeOne: 見本 (消した後の形) の中身の同じ箱
-  if (p && isStrip(doc.boxes[p]) && flag("judgeOne")) return [...new Set([1, 2, 3, 4].flatMap((k) => { const s = sampleOf(data, doc, id, k); const to = s.note === "none" || s.note?.startsWith("cant:") ? null : stripStopByContent(data, doc, p, s.item, true); return to ? [to] : []; }))];
-  return p && isStrip(doc.boxes[p]) ? [...new Set(stripStops(data, doc, p).values())] : null;
+  // 見本 (消した後の形) の中身の同じ箱
+  if (!p || !isStrip(doc.boxes[p])) return null;
+  return [...new Set([1, 2, 3, 4].flatMap((k) => { const s = sampleOf(data, doc, id, k); const to = s.note === "none" || s.note?.startsWith("cant:") ? null : stripStopByContent(data, doc, p, s.item, true); return to ? [to] : []; }))];
 }

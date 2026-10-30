@@ -16,15 +16,14 @@ import Icon from "../../../components/ui/Icon.vue";
 import TreeMemoFloat from "./TreeMemoFloat.vue";
 import TreeCanvasTools from "./TreeCanvasTools.vue"; import TreeTopTools from "./TreeTopTools.vue"; import TreeRunSum from "./TreeRunSum.vue"; import TreeUnsetBar from "./TreeUnsetBar.vue";
 import ModeTabs from "../../../components/for-share/ModeTabs.vue";
-import SimPcOnly from "../SimPcOnly.vue"; import PhoneTreePage from "../phone/PhoneTreePage.vue";
+import PhoneTreePage from "../phone/PhoneTreePage.vue";
 import { isPhoneWidth, usePhone } from "../../../utils/use-phone";
 import TreeBox from "./TreeBox.vue"; import TreeStripFold from "./TreeStripFold.vue"; import { useStripFold } from "./use-strip-fold";
-import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../tutorial/SimTutorialGuide.vue"; import TreeGoalNode from "./TreeGoalNode.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { flag } from "../../../web/release-flags"; import { simAct, simOp } from "../../../web/track";
+import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../tutorial/SimTutorialGuide.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { simAct, simOp } from "../../../web/track";
 import { boxHeightOf, useRowSettle } from "./use-row-settle"; import { placeTree } from "../../../services/simulator/tree/tree-place";
 import { laneYs, rowLayout } from "../../../services/simulator/tree/tree-row-tops";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 /** 右の列の完成形の窓を 1.2 倍 (列も 298px、スイッチ goalBig) */
-const GOAL_BIG = flag("goalBig");
 import TreeHandPage from "./TreeHandPage.vue";
 import { useTree } from "./use-tree";
 import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
@@ -33,7 +32,6 @@ import { openTreeFirst } from "./tree-open-first";
 import { craftStage as s } from "../../../state/craft-stage";
 import { addHit, aimKey, BOX_H, BOX_W, clearHand, moveBox, setAim, setBack, setDone, type Aim, type Hand, type HandKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
 import { handUses } from "../../../services/simulator/tree/tree-memo";
-import { tidy } from "../../../services/simulator/tree/tree-layout";
 import { outName } from "./tree-names";
 import { MATCH, RESTART } from "../../../services/simulator/tree/tree-shape";
 import { tr } from "../../../i18n/lang";
@@ -61,7 +59,7 @@ import TreeFlowSteps from "./TreeFlowSteps.vue";
 import { applyPick, type OnlyOut } from "./tree-hand-plan";
 import { installSimMonkey } from "./sim-monkey";
 import TreeRunLayer from "./TreeRunLayer.vue";
-import TreeHandChip from "./TreeHandChip.vue"; import TreeBandLayer from "./TreeBandLayer.vue"; import TreeTabs from "./TreeTabs.vue";
+import TreeHandChip from "./TreeHandChip.vue"; import TreeTabs from "./TreeTabs.vue";
 import TreeMergeLayer from "./TreeMergeLayer.vue";
 import { backTargetsOf } from "./tree-merge";
 import { useTreeMerge } from "./use-tree-merge";
@@ -134,7 +132,7 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResizeH));
 /** 手 (見るだけ): どこを引いても画面が動き、箱は押せない (ComfyUI の手、見本の 6) */
 const hand = ref(false);
 const { edges, chipRoom } = useTreeEdges(doc, boxes, posOf, () => rowL.value);
-const { merged, linesAll, hoverBox, cardBox } = useTreeMerge({ doc, posOf, heightOf: (id) => v.flow.findNode(id)?.dimensions.height ?? 0, segs: () => edges.value.flatMap((e) => e.segs), busy: () => !!drag.value || !!plus.value, reset: () => [v.flow.viewport.value, panel.value, drag.value], lanes: () => (rowL.value ? laneYs(rowL.value) : []), chips: () => edges.value.filter((e) => e.hand).map((e) => ({ x: e.jx, y: e.jy })) });
+const { merged, linesAll, hoverBox, cardBox } = useTreeMerge({ doc, posOf, heightOf: (id) => v.flow.findNode(id)?.dimensions.height ?? 0, segs: () => edges.value.flatMap((e) => e.segs), busy: () => !!drag.value || !!plus.value, reset: () => [v.flow.viewport.value, panel.value, drag.value], lanes: () => (rowL.value ? laneYs(rowL.value) : []), chips: () => edges.value.filter((e) => e.hand).map((e) => ({ x: e.jx, y: e.jy, w: chipRoom.value.get(e.id) ?? 340 })) });
 /** 白紙に戻す = 2 回押し (本番の「白に戻す」と同じ use-armed、3 秒で戻る)。枠の外・Esc でも戻す (オーナー 10-22「白紙に戻すもあれやな、2 回だな」) */
 const clearArm = useArmed();
 const clearBtn = ref<HTMLElement | null>(null);
@@ -268,8 +266,6 @@ watch(() => t.active.value, () => { issuesShown.value = true; });
 function openIssues(): void { simOp("open-missing"); issuesShown.value = true; issuesOpen.value = true; issuesFold.value = false; }
 /** 待たせている間の小さな札 (題の横。データの読み込み・箱を順に出している間、共通の BusyTag。精査の進みは精査の帯の上) */
 // 100 人回す (結果は木の上に重ねる層だけ、use-tree-run.ts・TreeRunLayer.vue。値段 = 始め方のベースの値段 (結果のまとめで入れる、use-tree の startPrice) + 今の相場)
-/** 0 完成形の設定を完成形のアイテム枠で (スイッチ goalCard、オーナーの OK 待ち) */
-const goalCard = flag("goalCard");
 const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
 // 流れの帯の 4 (結果) = 100 人回し終えた (止まって止めた時は開かない、帯の「結果のまとめ」と同じ)。帯を押すと 1・2 = 完成形の設定の窓、3 = ツリー、4 = 結果のまとめ
 watch(() => !!tr100.result.value && !tr100.running.value && !tr100.halted.value, (on) => { t.runReady.value = on; if (!on) t.reportOpen.value = false; }, { immediate: true });
@@ -310,18 +306,12 @@ const chipNatural = (id: string): number | undefined => {
 };
 // 行の高さは箱の本当の高さで詰める (描く前は見込み、描いた後に use-row-settle が直す。スイッチ lineShort)
 const measureBox = (id: string): number | undefined => v.flow.findNode(id)?.dimensions.height || undefined;
-const tidyOf = (d: typeof doc.value): void => void (flag("layoutOne") ? placeTree(d, boxHeightOf(measureBox), chipNatural) : tidy(d, chipNatural, boxHeightOf(measureBox)));
+const tidyOf = (d: typeof doc.value): void => void placeTree(d, boxHeightOf(measureBox), chipNatural);
 useRowSettle(doc, measureBox, chipNatural);
 /** 段の決め (札・枝分かれ・統合の線の高さを段で揃える、S-68) */
 /** 乗せた箱につながる木の線 (parent = その箱の手から子へ、child = 親の手からその箱へ。スイッチ hoverLines、S-85b) */
-const edgeHot = (e: { id: string; to: Array<{ id: string }> }): "parent" | "child" | null => (!flag("hoverLines") || !hoverBox.value ? null : e.id === hoverBox.value ? "parent" : e.to.some((o) => o.id === hoverBox.value) ? "child" : null);
-const rowL = computed(() => (flag("lineShort") ? rowLayout(doc.value, boxHeightOf(measureBox)) : null));
-async function onTidy(): Promise<void> {
-  simOp("tidy");
-  t.edit(tidyOf);
-  // 整列の後は開いた時と同じ (75% 以上・スタートを上の真ん中、収まらない分は下へ)。全体表示にすると 10% まで縮んだ (10-26 夜オーナー「めっちゃ引き」)
-  await v.openView();
-}
+const edgeHot = (e: { id: string; to: Array<{ id: string }> }): "parent" | "child" | null => (!hoverBox.value ? null : e.id === hoverBox.value ? "parent" : e.to.some((o) => o.id === hoverBox.value) ? "child" : null);
+const rowL = computed(() => rowLayout(doc.value, boxHeightOf(measureBox)));
 
 // ＋を引っ張ってつなぐ (use-tree-plus.ts)
 const { plus, onPlus, plusLine } = useTreePlus({ doc, posOf, viewOnly, toWorld: v.toWorld, edit: t.edit, onAddHit, startLink });
@@ -370,16 +360,15 @@ const glowOf = (b: Box): boolean => {
   if (g.startsWith("cur:")) return handUses(b, g.slice(4));
   return b.out === "hit" && !!b.aim && aimKey(b.aim) === g;
 };
-/** スマホの形 (1280 未満、U-53) は「PC で開いてください」だけ (SimPcOnly、10-25)。スイッチ simPhone でスマホ版 */
-const phone = usePhone(), simPhone = flag("simPhone");
+/** スマホの形 (1280 未満、U-53) は質問で進める形 (phone/PhoneTreePage)。前の「PC で開いてください」(SimPcOnly) は R5 で外した */
+const phone = usePhone();
 </script>
 
 <template>
   <!-- スマホは左右の余白を詰める (ページ 16 + 枠の絵 18 + 中 12 で木の枠が 375 中 281px しかなく、左右の箱が切れ上の帯が 6 段になった、10-24 モンキー初めての人の回 3) -->
   <section data-tree-page class="min-w-0 flex-1 p-4 max-md:px-2">
-    <!-- スマホはスイッチ simPhone が入っていれば質問で進める形 (phone/PhoneTreePage、木は同じ TreeDoc)、閉じていれば「PC で開いてください」 -->
-    <SimPcOnly v-if="phone && !simPhone" />
-    <PhoneTreePage v-else-if="phone" />
+    <!-- スマホは質問で進める形 (phone/PhoneTreePage、木は同じ TreeDoc) -->
+    <PhoneTreePage v-if="phone" />
     <template v-else>
     <!-- 題の帯「クラフトの道 (ツリー)」はツリーのページでは出さない (10-26 夜オーナー「いらんわ」)。流れの帯は木の枠の中の一番上 -->
     <!-- エミュレーター / シミュレーター β の切り替え (エミュの画面の帯と同じ共通の部品、10-23 オーナー「帯を 1 つにして両方に」) -->
@@ -404,7 +393,7 @@ const phone = usePhone(), simPhone = flag("simPhone");
         <!-- ベースが無い空の形でも、ほかの木があればタブを出す (前の木へ戻れない行き止まりだった、10-24 夜オーナー「一方通行が多い」) -->
         <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" compact class="min-w-0 flex-1" @switched="v.openView()" />
         <span v-else class="flex-1" />
-        <span ref="clearBtn" class="ml-auto shrink-0"><TreeTopTools :lines-all="linesAll" :memo-open="memoOpen" :full="full" :note="!!doc.note" :armed="clearArm.is()" @tidy="onTidy" @lines="linesAll = !linesAll" @memo="memoOpen = !memoOpen" @full="v.toggleFull" @clear="onClear" /></span>
+        <span ref="clearBtn" class="ml-auto shrink-0"><TreeTopTools :lines-all="linesAll" :memo-open="memoOpen" :full="full" :note="!!doc.note" :armed="clearArm.is()" @lines="linesAll = !linesAll" @memo="memoOpen = !memoOpen" @full="v.toggleFull" @clear="onClear" /></span>
       </div>
       <!-- PC の形 (1280 以上、U-53) だけ。1100px 未満で右の列を木の下へ回す分かれ道は消した -->
       <div ref="row" class="flex min-h-0 gap-2 h-[var(--row-h)]" :class="full ? 'flex-1' : ''" :style="full ? {} : { '--row-h': `${rowH}px` }">
@@ -413,10 +402,10 @@ const phone = usePhone(), simPhone = flag("simPhone");
         <!-- ベースが無い時の空の形 (白紙の木でベースを選ばずに閉じた時): 木は出さず真ん中に「ベースを選ぶ」1 つ (10-23 オーナー、use-tree の needBase) -->
         <div v-if="t.needBase.value" data-tree-need-base class="absolute inset-0 z-30 flex items-center justify-center bg-[#0c0a08]">
           <button type="button" data-tree-pick-base class="g-btn" @click="t.goalPage.value = 1">{{ tr("ベースを選ぶ", "Choose a base") }}</button>
-        </div><TreeUnsetBar v-if="flag('unsetMark') && !t.needBase.value && issuesShown" :issues="issues" :doc="doc" @go="goIssue" />
+        </div><TreeUnsetBar v-if="!t.needBase.value && issuesShown" :issues="issues" :doc="doc" @go="goIssue" />
         <!-- 0 完成形の設定の札 (木の箱にせず、木を送っても見える左上。10-23 オーナー)。スイッチ goalCard で完成形のアイテム枠 (10-25 オーナー)。木は札 1 本分 (44px) 下から描く (畳んだ札が下の箱を隠した、10-26 ブラック 12 代目) -->
         <!-- ページの zoom を枠だけ打ち消す (中は実質 1 倍。Vue Flow の座標とマウスが揃う、use-tree-flow.ts)。格子は Vue Flow の送りと倍率に合わせる。ホイールは決まった段へ 1 段ずつ (use-tree-flow の onWheel) -->
-        <div data-tree-canvas data-overflow-ok class="absolute inset-0" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid, ...(flag('unsetMark') && issuesShown && issues?.length ? { bottom: `${44 * pageZ}px` } : {}) }" @wheel="v.onWheel">
+        <div data-tree-canvas data-overflow-ok class="absolute inset-0" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid, ...(issuesShown && issues?.length ? { bottom: `${44 * pageZ}px` } : {}) }" @wheel="v.onWheel">
           <VueFlow :id="FLOW_ID" :default-viewport="{ x: 0, y: 0, zoom: pageZ }" :min-zoom="v.minZoom.value" :max-zoom="v.maxZoom.value"
             :nodes-draggable="false" :nodes-connectable="false" :elements-selectable="false"
             :pan-on-drag="true" :pan-on-scroll="false" :zoom-on-scroll="false" :zoom-activation-key-code="null" :zoom-on-double-click="false" :zoom-on-pinch="false"
@@ -434,14 +423,13 @@ const phone = usePhone(), simPhone = flag("simPhone");
             <template #zoom-pane>
               <svg data-tree-lines class="pointer-events-none absolute left-0 top-0 overflow-visible" width="1" height="1" style="z-index: -1">
                 <!-- 札 → 下の箱は矢印なしで箱の上の縁までまっすぐ (箱 → 札の線と同じ形、10-25 オーナー「ここと同じにしようか」) -->
-                <g v-for="e in shownEdges" :key="e.id" data-tree-edge :data-edge-id="e.id" :data-hot="edgeHot(e) || undefined" :opacity="flag('hoverLines') && hoverBox && !edgeHot(e) ? 0.3 : 1" :filter="edgeHot(e) ? 'drop-shadow(0 0 4px rgba(243,194,107,0.9))' : undefined">
+                <g v-for="e in shownEdges" :key="e.id" data-tree-edge :data-edge-id="e.id" :data-hot="edgeHot(e) || undefined" :opacity="hoverBox && !edgeHot(e) ? 0.3 : 1" :filter="edgeHot(e) ? 'drop-shadow(0 0 4px rgba(243,194,107,0.9))' : undefined">
                   <path :d="e.stem" :stroke="LINE.fwd" :stroke-width="edgeHot(e) ? 3.5 : 2" fill="none" />
                   <path v-for="o in e.to" :key="o.id" :d="o.d" :stroke="o.color" :stroke-width="edgeHot(e) && (edgeHot(e) === 'parent' || o.id === hoverBox) ? 3.5 : 2" stroke-linejoin="round" fill="none" />
                 </g>
               </svg>
               <!-- 矢印の上の札 = 打つ手 (押すと替える・消す)。戻りの矢印だけの箱から流れ込む線 -->
               <!-- 段の目印 (木の左の外、当たりの箱の揃った狙いの数) -->
-              <TreeBandLayer v-if="!flag('noBand')" :doc="doc" :k="1 / zoom" />
               <TreeStripFold v-for="f in rv.done.value ? sf.opens.value : []" :key="`refold-${f.head}`" :head="f.head" :fold="{ ...posOf(doc.boxes[f.head]!), inv }" @toggle="sf.toggle(f.head)" />
               <TreeHandChip v-for="e in shownEdges" :key="`hand-${e.id}`" :id="e.id" :hand="e.hand" :split="e.split" :x="e.jx" :y="e.jy" :inv="inv" :off="hand" :room="chipRoom.get(e.id) ?? 340" @open="panel = { kind: e.hand ? 'hand' : 'split', id: e.id }" />
               <!-- 品質だけ上げた後 (箱無し) で次の手がまだ無い所の＋ (押すと次の手の棚) -->
@@ -466,7 +454,7 @@ const phone = usePhone(), simPhone = flag("simPhone");
           <b v-if="noTarget" data-tree-pick-none class="max-w-[640px] whitespace-normal break-words text-rose-200">{{ noTarget }}</b>
           <b v-if="picking && doc.boxes[picking]?.done" data-tree-pick-undone class="text-amber-200">{{ tr("(この箱の完成の印は外れる)", "(this box's done mark will be removed)") }}</b>
           <button v-if="retryOf(doc, picking, link)" type="button" data-tree-pick-retry class="g-btn sm pointer-events-auto" :title="tr('再度挑戦: 打つ前の箱へ戻って、同じ手をもう一度打つ', 'Retry: go back to the box before it and use the same craft again')" @click="pickBack(retryOf(doc, picking, link)!)">↩ {{ tr("再度挑戦", "Retry") }} · {{ stepBackText(doc, retryOf(doc, picking, link)!) }}</button>
-          <button v-if="picking && picking !== 'start' && !(flag('pickTidy') && noTarget && link.get('start'))" type="button" data-tree-pick-start class="g-btn sm pointer-events-auto" :disabled="!!link.get('start')" :title="link.get('start') ?? tr('このアイテムのまま始まりの箱へ戻り、始めの手から打ち直す', 'Go back to the start box with this item and craft again from the first craft')" @click="pickBack('start')">↩ {{ stepBackText(doc, "start") }}</button>
+          <button v-if="picking && picking !== 'start' && !(noTarget && link.get('start'))" type="button" data-tree-pick-start class="g-btn sm pointer-events-auto" :disabled="!!link.get('start')" :title="link.get('start') ?? tr('このアイテムのまま始まりの箱へ戻り、始めの手から打ち直す', 'Go back to the start box with this item and craft again from the first craft')" @click="pickBack('start')">↩ {{ stepBackText(doc, "start") }}</button>
         </p>
         <!-- 縮めて見ている時の箱の編集 (等倍。枠の外・Esc で閉じる) -->
         <div v-if="pop && doc.boxes[pop]" ref="popEl" data-tree-pop class="absolute z-30 w-max rounded-2xl border border-white/10 bg-[#0c0a08]/95 p-3 pb-12 pr-7 shadow-[0_10px_30px_rgba(0,0,0,0.7)]" :style="popStyle">
@@ -481,8 +469,8 @@ const phone = usePhone(), simPhone = flag("simPhone");
         </div>
         <!-- 木の枠の外の右の列: 上に足りない所の一覧、下にミニマップと倍率の道具 (10-26 夜オーナー「A でいい」。木の上に浮かせると引っ張った・寄った時に箱を隠した、モンキー 8 の 2・4) -->
         <!-- 列は上に 0 完成形の設定 (字を縮めずに入る幅 372px)、その下にミニマップ (残りいっぱい)、一番下に倍率の道具。足りない所は上の帯の落ちる窓 (10-26 夜オーナー「ここ使うなら」) -->
-        <aside v-if="!t.needBase.value" data-tree-side :class="GOAL_BIG ? 'w-[298px]' : 'w-[248px]'" class="flex min-h-0 shrink-0 flex-col gap-2 overflow-hidden">
-          <div data-tree-goal-side class="min-h-0 shrink-0 overflow-y-auto max-h-[60%]"><TreeGoalCard v-if="goalCard" /><TreeGoalNode v-else /></div>
+        <aside v-if="!t.needBase.value" data-tree-side class="w-[298px] flex min-h-0 shrink-0 flex-col gap-2 overflow-hidden">
+          <div data-tree-goal-side class="min-h-0 shrink-0 overflow-y-auto max-h-[60%]"><TreeGoalCard /></div>
           <div class="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
             <!-- 名前・保存・レシピ (帯の 1 段目の残り、10-26 夜オーナー「この 1 段目はアイテム欄の下でおけ」) -->
             <div data-tree-side-recipe class="flex min-w-0 shrink-0 flex-wrap items-center gap-2 text-[13px]">

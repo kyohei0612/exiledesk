@@ -2,7 +2,6 @@
  * tree-model-layout.ts — 箱の配置の小物 (tree-model.ts から分けた、1 ファイル 500 行まで、10-28)。中身は前のまま。呼ぶ所は tree-model の出し直しから
  */
 import { BOX_H, BOX_W, GAP_X, GAP_Y, subtree, type TreeBox, type TreeDoc } from "./tree-model";
-import { flag } from "../../../web/release-flags";
 
 /** 矢印の先の箱を親の下に並べ直す (子の下の箱も一緒に動かす) */
 export function spread(d: TreeDoc, parentId: string): void {
@@ -32,12 +31,12 @@ export function makeRoom(d: TreeDoc, parentId: string): void {
     return others.some((o) => Math.abs(b.x + dx - o.x) < BOX_W + ROOM && Math.abs(b.y - o.y) < BOX_H + ROOM);
   });
   if (hit(0)) for (let k = 1, done = false; k <= 200 && !done; k++) for (const dx of [k * 20, -k * 20]) if (!hit(dx)) { for (const id of p.outs) shift(d, id, dx, 0); done = true; break; }
-  if (flag("slideSibling")) slideSiblings(d, parentId);
+  slideSiblings(d, parentId);
 }
 
 /**
  * 子の並びの真上 (親の段) に別の箱があれば、その箱とその下を横へ滑らせる (右の箱は右へ、左の箱は左へ。その先の同じ段の箱も一緒に)。
- * 親の真下に別の親の箱を置かない (S-68b、スイッチ slideSibling、10-28 深夜オーナー「右のハズレMDOｓ１は下の縦ラインにかさなっちゃだめだよね」)
+ * 親の真下に別の親の箱を置かない (S-68b、10-28 深夜オーナー「右のハズレMDOｓ１は下の縦ラインにかさなっちゃだめだよね」)
  */
 function slideSiblings(d: TreeDoc, parentId: string, hidden: (b: TreeBox) => boolean = () => false): boolean {
   const p = d.boxes[parentId]!;
@@ -56,21 +55,6 @@ function slideSiblings(d: TreeDoc, parentId: string, hidden: (b: TreeBox) => boo
   if (dr || dl) pushRight(d);
   return !!(dr || dl);
 }
-/**
- * 開いた時・段を揃えた時・整列の後にも、全部の親で slideSiblings を掛ける (手を足した時だけでは、開いた木・まとめ・整列で兄弟が子の真上に戻った。
- * 10-28 深夜オーナー「なおってないなー…下の縦ラインに被ってる」、S-68b)。上の段の親から順に、動かなくなるまで。hidden = 描かない箱 (まとめた箱・品質だけの箱)
- */
-export function slideAll(d: TreeDoc, hidden: (b: TreeBox) => boolean): boolean {
-  let any = false;
-  for (let n = 0; n < 20; n++) {
-    let moved = false;
-    for (const p of Object.values(d.boxes).filter((b) => b.outs.length && !hidden(b)).sort((a, z) => a.y - z.y || a.x - z.x)) if (slideSiblings(d, p.id, hidden)) moved = true;
-    if (!moved) break;
-    any = true;
-  }
-  return any;
-}
-
 /**
  * 重なっている箱を右へ押す (押すのは重なった右側の箱とその下だけ、ほかは動かさない)。横に当たりを足した時 (オーナー 10-22「箱を追加した時に枠が他の箱とかぶる」)
  */

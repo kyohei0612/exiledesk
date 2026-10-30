@@ -57,7 +57,7 @@ export function rebuildTree(data: PatchData, src: TreeDoc): TreeDoc {
     if (!b || b.hand || !to || to === id) { lostBacks.push({ at, why: "back", raw: { back } }); continue; }
     b.back = to; b.done = null; delete b.autoBack; delete b.merged;
   }
-  if (flag("judgeOne")) { mergeIntoDecided(data, d, decided); relinkSameHand(data, d); linkLeftovers(data, d); }
+  mergeIntoDecided(data, d, decided); relinkSameHand(data, d); linkLeftovers(data, d);
   // 決めを打ち直した箱が後の見直しで消えた (同じ手なら戻るで下を畳んだ) 札も要確認
   const gone = [...picks.values()].filter((p) => !used.has(p.at) || !d.boxes[idOf.get(p.at) ?? ""]).map((p): RecipeOrphan => ({ at: p.at, why: "gone", raw: p }));
   const orphans = [...(rec.orphans ?? []), ...lostBacks, ...gone].filter((o) => o.why !== "gone" || !underAutoBack(d, o.at));
@@ -75,7 +75,6 @@ export function rebuildTree(data: PatchData, src: TreeDoc): TreeDoc {
  * その箱の人は中身の同じ ↩ 先へ行くので下の決めは使われない。前は ↩ 再度挑戦の箱 (2 本目の木の b29) に要確認の赤い「!」が出た (10-29 深夜オーナー「あとここ再挑戦でもどるくせにない判定かも？」)
  */
 function underAutoBack(d: TreeDoc, at: string): boolean {
-  if (!flag("judgeOne")) return false;
   const idOf = new Map([...pathKeysOf(d)].map(([id, k]) => [k, id]));
   let k = at;
   while (k.includes("/") && !idOf.has(k)) k = k.slice(0, k.lastIndexOf("/"));
@@ -112,7 +111,7 @@ function savedKeyOf(at: string, tail: string, onPath: ReadonlySet<string>, exact
   // 狙いが付いた の鍵 (`;g:`、S-27d より前の保存には無い) も外して同じ読み方 (付いた / 付かないで分かれた狙いが消えたの箱の全部へ、スイッチ keepAll)
   const unrank = (t: string): string => t.replace(/;w:[^\]]*\]/, "]").replace(/;g:[^\];]*/, "");
   // 乱数のフラクチャーの外れの枝の種類 (`|crafted`、S-41 で側だけにした前の保存) = 同じ側の箱 (`|normal`) の決めとして読む (スイッチ fracSide)
-  const recraft = (t: string): string => (flag("fracSide") ? t.replace(/\|normal\]/, "|crafted]") : t);
+  const recraft = (t: string): string => t.replace(/\|normal\]/, "|crafted]");
   const sw = swap(tail);
   const tries = [at + tail, at + recraft(tail), at + unrank(tail), at + bare(tail), ...(sw ? [at + sw, at + bare(sw)] : [])];
   return tries.find((k, i) => onPath.has(k) && (i < 4 || !exact.has(k))) ?? at + tail;
@@ -157,6 +156,5 @@ function linkLeftovers(data: PatchData, d: TreeDoc): void {
 
 /** 開く木の形 (use-tree の open): スイッチ recipeV1 の下と v1 の木は組み直す。データがまだ無ければ前提だけ (wait = データが来たら開き直す) */
 export function openForm(tree: TreeDoc, data: PatchData | null | undefined): { doc: TreeDoc; wait: boolean } {
-  if (!isRecipeV1(tree) && !flag("recipeV1")) return { doc: tree, wait: false };
   return data ? { doc: rebuildTree(data, tree), wait: false } : { doc: premiseOf(toRecipeV1(tree), `exiledesk-tree/${TREE_SCHEMA_N}`), wait: true };
 }

@@ -13,7 +13,6 @@ import type { RecipeOrphan, RecipePick } from "./tree-recipe-v1";
 import { mayHoldAim } from "./tree-lost";
 import { effectOf } from "./tree-hands";
 import { makeRoom, pushRight, ROOM, spread } from "./tree-model-layout";
-import { flag } from "../../../web/release-flags";
 
 /**
  * any = 狙い無しの手の結果 (何が付いても次へ進む「打った後」、オーナー 10-22 の適当打ち)。
@@ -213,7 +212,7 @@ export const startOf = (d: TreeDoc): TreeStart => d.start ?? { rarity: "rare", m
 export const fractureMarks = (d: TreeDoc): Aim[] => (d.memoAims ?? []).filter((a) => a.fractured);
 /** 印があってもフラクチャー前から (start.from four) は白 (ノーマル) から始める (10-24 夜オーナー「後者選んだ場合必ず白からはじまる」)。true = ✦ の付いたレアから */
 /** ✦ が 2 つ以上で、フラクチャーから始められない (白ベースからだけ。10-28 オーナー「単発のみフラクチャースタートできるようにさせるか」、スイッチ fracOne) */
-export const multiFracWhite = (d: TreeDoc): boolean => flag("fracOne") && fractureMarks(d).length > 1;
+export const multiFracWhite = (d: TreeDoc): boolean => fractureMarks(d).length > 1;
 export const startsFractured = (d: TreeDoc): boolean => fractureMarks(d).length > 0 && d.start?.from !== "four";
 /**
  * 印ありのスタートの外れの数 (10-25 オーナー「フラクチャーから開始ってのはそのフラクチャーしかない状態で始めて欲しい、外れは自分で付ける」で 3 → 0。
@@ -334,7 +333,7 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   const b = d.boxes[id];
   if (!b) return;
   // カタリストの手で「何 % まで」を決めた物は見える「打った後」の箱 1 つ (S-31b、スイッチ catHand。0 = 前の「最大まで」の通り抜け)
-  const outsOf: OutKind[] = kind === "quality" && (hand.quality ?? 0) > 0 && flag("catHand") ? ["any"] : OUTS_OF[kind];
+  const outsOf: OutKind[] = kind === "quality" && (hand.quality ?? 0) > 0 ? ["any"] : OUTS_OF[kind];
   const now = b.outs.map((o) => d.boxes[o]!.out);
   // 消せる狙いを持って着く人がいなければ「狙いが消えた」は起きない (10-24 モンキー初めての人の回 6)。前から箱がある木は替えない (同じ手を選び直して下が消えないように)
   const kept = !!b.hand && now.includes("lost") && now.every((k) => k !== "start" && outsOf.includes(k));
@@ -388,7 +387,7 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
     // 狙いが消えたは戻り先を決めない (人が箱を選ぶ。10-26 オーナー「始めに戻るはなんかややこしい話だから普通にどこに戻るかいつも通り書く」。前は始めに戻る)
     // スイッチ bodyStrict: 外れの前の箱への既定の戻りも自動の ↩ として印を付け、戻り先の 1 か所の判定 (tree-shape の returnFits) で見直す (applyPick の pruneBacks)。
     // 形の合う箱へ (MATCH) は人が選べなくなった (S-52b) ので付けない = 未設定 (10-29 FmNY7Wwv の b24 → b19 は体の違う既定の戻りだった)
-    if (c.out === "junkGone") { c.back = before ?? (held && !flag("bodyStrict") ? MATCH_BACK : null); if (flag("bodyStrict") && before) c.autoBack = true; }
+    if (c.out === "junkGone") { c.back = before ?? null; if (before) c.autoBack = true; }
     // 全部消えてよい消去は、消していく途中で木の箱と同じ形になった所で止めてそこへ戻る (回す時に形で決める、tree-outcome の stripBackOf。10-27 オーナー)
     if (kind === "strip") c.back = MATCH_BACK;
   }
@@ -408,24 +407,8 @@ function addHits(d: TreeDoc, b: TreeBox, aims: readonly Aim[], order: (a: Aim) =
   makeRoom(d, b.id);
 }
 
-/** 「狙いが消えた」を作らなかった箱に、狙いを持って着く道ができたら足す (外れの箱の前。戻り先は人が選ぶ、増えなくなるまで) */
-export function healLost(d: TreeDoc): void {
-  // スイッチ judgeOne: 人は中身の同じ箱にしか入らないので、持って着く道から「狙いが消えた」を足さない (起こりうる結果は見本から、大本 1)
-  if (flag("judgeOne")) return;
-  for (let more = true, n = 0; more && n < 20; n++) {
-    more = false;
-    for (const b of Object.values(d.boxes)) {
-      if (!b.noLost || !b.hand || !mayHoldAim(d, b.id)) continue;
-      delete b.noLost;
-      const c = mk(d, "lost", b.id);
-      const j = b.outs.findIndex((o) => d.boxes[o]?.out === "junk");
-      b.outs.splice(j < 0 ? b.outs.length : j, 0, c.id);
-      spread(d, b.id);
-      makeRoom(d, b.id);
-      more = true;
-    }
-  }
-}
+/** 前は「狙いが消えた」を作らなかった箱に、狙いを持って着く道ができたら足していた。人は中身の同じ箱にしか入らない (judgeOne、大本 1) ので何もしない (呼ぶ所が多いので名前だけ残す、R5) */
+export function healLost(_d: TreeDoc): void {}
 
 /** 次の手を消す (結果の箱と、その下も全部) */
 export function clearHand(d: TreeDoc, id: string): void {
@@ -490,7 +473,7 @@ export function setDone(d: TreeDoc, id: string, v: TreeBox["done"]): void {
   // 分かれ目の行の箱 (branch) も完成にできる (「狙いが 2 つ以上 → 完成」)
   if (!b || b.hand || b.back || b.split) return;
   // 打った後の箱 (ルーンで仕上げる・狙い無しの手の後) も完成にできる (S-31e・S-54、スイッチ runeHand)
-  if (v === "fail" ? b.out === "start" : v && b.out !== "hit" && b.out !== "branch" && !(b.out === "any" && flag("runeHand"))) return;
+  if (v === "fail" ? b.out === "start" : v && b.out !== "hit" && b.out !== "branch" && b.out !== "any") return;
   b.done = v;
 }
 

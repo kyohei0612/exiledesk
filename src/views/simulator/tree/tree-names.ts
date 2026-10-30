@@ -17,7 +17,6 @@ import { rankLabel } from "../../../services/simulator/tree/tree-whittle";
 import { hasGot } from "../../../services/simulator/tree/tree-keep";
 import { FRACTURE_POOL } from "../../../services/simulator/sim-odds";
 import { tr } from "../../../i18n/lang";
-import { flag } from "../../../web/release-flags";
 
 /** 名前を引く時のアイテム (ツリーのベース。骨・エッセンスの名前が部位で変わる) */
 const t = useTree();
@@ -55,7 +54,7 @@ export const outName = (out: TreeBox["out"]): string => tr(OUT_LOOK[out].ja, OUT
 export function outNameOf(h: Hand | null | undefined, out: TreeBox["out"], aim?: TreeBox["aim"]): string {
   if (out === "any" && veilKeep(h)) return tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added");
   // 印の無い木の狙い無しのフラクチャー (スイッチ fracPick)
-  if (h?.free && flag("fracPick") && effectOf(h.currency) === "fracture") {
+  if (h?.free && effectOf(h.currency) === "fracture") {
     if (out === "hit" && aim) { const n = modShort(useTree().aimShort(aim)); return tr(`${n}がフラクチャーされた場合`, `If ${n} is fractured`); }
     if (out === "junk") return tr("外れ MOD がフラクチャーされた場合", "If a miss mod is fractured");
   }
@@ -74,8 +73,8 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   // ✦ の印の無い木の乱数のフラクチャーの結果は「〜が固定された」「外れ MOD が固定された」(付いたのではない。10-27 夜、要望 8a159e29、スイッチ fracRandom)
   const ph = b.parent ? useTree().doc.value.boxes[b.parent]?.hand : null;
   // ✦ の木のフラクチャー (どの ✦ が固定されても当たり) も「〜が固定された」(スイッチ fracMulti、S-42)
-  const fixed = ph?.pick === "random" || (flag("fracMulti") && !!ph && effectOf(ph.currency) === "fracture");
-  const free = fixed && !!ph?.free && flag("fracPick");
+  const fixed = ph?.pick === "random" || (!!ph && effectOf(ph.currency) === "fracture");
+  const free = fixed && !!ph?.free;
   if (b.out === "hit" && b.aim) { const n = boxAims(b).map((a) => modShort(aimShort(a))).join(tr("か", " or ")); return free ? tr(`${n}がフラクチャーされた場合`, `If ${n} is fractured`) : fixed ? tr(`${n}が固定された`, `${n} fractured`) : tr(`${n}が付いた`, `${n} added`); }
   if (free && b.out === "junk") {
     // 外れの枝が 2 つ以上 (側・種類が違う) の時だけ、どの外れかを付ける
@@ -105,7 +104,7 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
  * 文は「×3 = 33%」の形 (日本語・英語で同じ)
  */
 export function sureFracText(k: number): string {
-  const p = FRACTURE_POOL, n = flag("fracMulti") ? Math.min(p, Math.max(1, k)) : 1, x = p / n;
+  const p = FRACTURE_POOL, n = Math.min(p, Math.max(1, k)), x = p / n;
   return `×${Number.isInteger(x) ? x : x.toFixed(1)} = ${Math.round((n / p) * 100)}%`;
 }
 /** 値段のキー (カレンシー・お告げ・骨・エッセンス・カタリスト) → 画面の言語の名前 (クラフト台の棚と同じ) */
@@ -122,10 +121,7 @@ export function handLabel(h: Hand): string {
   const keep = h.keep ? (h.keep.length ? tr(` (${h.keep.length} MOD 残す)`, ` (keep ${h.keep.length})`) : tr(" (どれが消えてもよい)", " (any mod may go)")) : "";
   const label = cat + [handName(h.currency), ...h.omens.map(handName)].join(" + ") + keep + (h.free ? tr(" (狙い無し)", " (no target)") : "") + (veilKeep(h) ? tr(" (未発現のまま)", " (left unrevealed)") : veilPick(h) && !isRevealHand(h.currency) ? tr(" (発現させる)", " (reveal now)") : "") + (isCatalyst(h.currency) ? tr(" (品質を最大まで)", " (to max quality)") : "");
   // 「スパム」の呼び名は出さない = 設定したカレンシーの名前のまま (10-27 昼オーナー「普通に設定したどおり出せばおｋ」、スイッチ noSpam。中は今まで通り当たるまで)
-  if (!h.repeat || flag("noSpam")) return label;
-  // 当たるまで = カオススパムオーブ (10-25 オーナー。前に保存した木の「カオスの当たるまで」も同じ手として読む)
-  const spam = tr("カオススパムオーブ", "Chaos Spam Orb");
-  return h.repeat.max ? tr(`${spam} (${label}、${h.repeat.max} 回まで)`, `${spam} (${label}, max ${h.repeat.max})`) : `${spam} (${label})`;
+  return label;
 }
 /** レアリティの名前 (0 の箱・スタートの箱・レアリティの札) */
 export const rarityName = (r: TreeRarity): string => (r === "normal" ? tr("ノーマル", "Normal") : r === "magic" ? tr("マジック", "Magic") : tr("レア", "Rare"));
