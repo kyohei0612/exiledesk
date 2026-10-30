@@ -15,10 +15,12 @@ export const shelfSel = (key: string): string => `[data-tree-shelf] [data-shelf]
 export function shown(sel: string): HTMLElement | null {
   try { return [...document.querySelectorAll<HTMLElement>(sel)].find((e) => e.offsetParent || e.getClientRects().length) ?? null; } catch { return null; }
 }
-/** 要素が画面の中にあるか (上の帯の下に隠れていないかまでは見ない) */
+/** 要素の真ん中が画面の中にあるか (端だけ見えている物は外。上の帯の下に隠れていないかまでは見ない) */
 export function inView(el: HTMLElement | null): boolean {
   const r = el?.getBoundingClientRect();
-  return !!r && r.width > 0 && r.bottom > 0 && r.right > 0 && r.top < window.innerHeight && r.left < window.innerWidth;
+  if (!r || r.width <= 0) return false;
+  const x = r.left + r.width / 2, y = r.top + r.height / 2;
+  return x > 0 && y > 0 && x < window.innerWidth && y < window.innerHeight;
 }
 /** チェックの欄 (label の中の input) が ☑ か */
 export const checked = (sel: string): boolean => !!document.querySelector<HTMLInputElement>(`${sel} input:checked`);

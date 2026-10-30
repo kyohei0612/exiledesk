@@ -16,7 +16,7 @@ import { simOp } from "../../../web/track";
 import { DRAFT_WHY, SPELL, isTutorialDoc, rolesOf, tutorialDoc, type Role, type TutNames } from "./tut-route";
 import { tutData, type TutStepDef } from "./tut-data";
 import { aimSel, aimsChecked, checked, handOpen, holding, inView, keepSel, omenOn, omensOnNow, shelfSel, shown } from "./tut-dom";
-import { phoneNow } from "./use-sim-tutorial-phone";
+import { overviewOpen, phoneIndex, phoneNow } from "./use-sim-tutorial-phone";
 
 /** 案内中か */
 export const tutOn = ref(false);
@@ -28,6 +28,8 @@ export const tutPhone = ref(false);
 const ran = ref(false);
 /** 帯「! 未設定 ▸ 次へ」を押した (手順 8)・テストを押した (手順 12) */
 const barUsed = ref(false), testPressed = ref(false), runPressed = ref(false);
+/** スマホ: 全体図を開いた (P11) */
+const mapSeen = ref(false);
 /** 「次へ」で済ませた文だけの手順 (note) */
 const notesDone = ref<string[]>([]);
 
@@ -53,10 +55,12 @@ export function stepDone(d: TreeDoc, r: Roles, st: TutStepDef): boolean {
   if (st.kind === "goal") return goalOk(d) && (!!d.fracAsked || startAskOpen());
   if (st.kind === "start") return startOk(d);
   if (st.kind === "hand") return !!r[st.box] && handMatches(d, r[st.box]!, st);
-  if (st.kind === "done") return !!r[st.box] && d.boxes[r[st.box]!]?.done === "main";
+  // スマホは完成が自動 (S-91) なので札の「次へ」で済み (P10)、帯の代わりは全体図を開いて閉じる (P11)
+  if (st.kind === "done") return tutPhone.value ? notesDone.value.includes(st.id) : !!r[st.box] && d.boxes[r[st.box]!]?.done === "main";
+  if (st.kind === "unset" && tutPhone.value) return mapSeen.value && !overviewOpen();
   // 帯の「次へ」を押した (または押した先の dj にもう手がある = 前に押した)
   if (st.kind === "unset") return barUsed.value || !!(r.dj && d.boxes[r.dj]?.hand);
-  if (st.kind === "test") return (testPressed.value && !!document.querySelector("[data-tree-test-ok]")) || ran.value;
+  if (st.kind === "test") return (testPressed.value && !!document.querySelector("[data-tree-test-ok], [data-phone-test-ok]")) || ran.value;
   if (st.kind === "note") return notesDone.value.includes(st.id);
   return false;
 }
@@ -64,9 +68,10 @@ export function stepDone(d: TreeDoc, r: Roles, st: TutStepDef): boolean {
 export function noteClick(e: Event): void {
   const el = e.target as Element | null;
   if (!tutOn.value || !el?.closest) return;
-  if (el.closest("[data-tree-unset-bar], [data-phone-next]")) barUsed.value = true;
+  if (el.closest("[data-tree-unset-bar]")) barUsed.value = true;
+  if (el.closest("[data-phone-map-unfold]")) mapSeen.value = true;
   if (el.closest("[data-tree-test], [data-phone-test]")) testPressed.value = true;
-  if (el.closest("[data-tree-run], [data-phone-run]")) runPressed.value = true;
+  if (el.closest(`[data-tree-run], [data-phone-main][data-main="run"]`)) runPressed.value = true;
 }
 
 /**
@@ -169,8 +174,16 @@ export function useSimTutorial() {
   const index = computed(() => {
     void tutTick.value;
     const d = t.doc.value, r = roles.value;
+    if (tutPhone.value) return phoneIndex(steps.value, d, r, (st) => stepDone(d, r, st));
     const i = steps.value.findIndex((st) => !stepDone(d, r, st));
     return i < 0 ? steps.value.length - 1 : i;
+  });
+  /** 札の「n / 14」の n (スマホは聞かれる順が並びと違うので、済んだ手順の数 + 1) */
+  const pos = computed(() => {
+    void tutTick.value;
+    if (!tutPhone.value) return index.value + 1;
+    const d = t.doc.value, r = roles.value;
+    return Math.min(steps.value.length, steps.value.filter((st) => stepDone(d, r, st)).length + 1);
   });
   const step = computed(() => steps.value[index.value] ?? null);
   const boxName = (role: Role, en = false): string => { const id = roles.value[role]; const b = id ? t.doc.value.boxes[id] : null; return !b ? "" : b.out === "start" ? (en ? "Start" : "スタート") : headOf(b as TreeBox, t.aimShort); };
@@ -197,9 +210,9 @@ export function useSimTutorial() {
     if (w && (w.ja || w.en)) return { say: [w.ja, w.en], why: ["", ""], written: true };
     return { say: n.draft, why: DRAFT_WHY[st.id]?.(names) ?? ["", ""], written: false };
   });
-  /** 文だけの手順の「次へ」 */
-  function nextNote(): void { const st = step.value; if (st?.kind === "note" && !notesDone.value.includes(st.id)) notesDone.value = [...notesDone.value, st.id]; }
-  return { names, roles, onRoute, index, step, now, target, text, nextNote, total: computed(() => steps.value.length) };
+  /** 文だけの手順・スマホの自動の完成 (P10) の「次へ」 */
+  function nextNote(): void { const st = step.value; if (st && (st.kind === "note" || st.kind === "done") && !notesDone.value.includes(st.id)) notesDone.value = [...notesDone.value, st.id]; }
+  return { names, roles, onRoute, index, pos, step, now, target, text, nextNote, total: computed(() => steps.value.length) };
 }
 
 /** 始める: チュートリアルの木 (完成形の 4 つだけ入った木) を開いて完成形の設定へ (今の木は 1 つ戻すで戻せる) */
@@ -210,7 +223,7 @@ export function startTutorial(): void {
   // (開いたままのページは開いた時の「まだ選んでいない」を覚えていて、閉じる時に印を立て直し、ツリーの ＋ を幕が覆った)
   t.needBase.value = false;
   t.goalPage.value = 0;
-  ran.value = false; barUsed.value = false; testPressed.value = false; runPressed.value = false;
+  ran.value = false; barUsed.value = false; testPressed.value = false; runPressed.value = false; mapSeen.value = false;
   notesDone.value = [];
   tutOn.value = true;
   void nextTick(() => { t.goalPage.value = 2; openTreePage("mods"); });

@@ -1,7 +1,7 @@
 <!--
   SimTutorialEntry.vue — シミュのベース選び (?page=sim-base) のチュートリアルの入口 (2026-10-26 夜オーナー「初めても 2 回目以降もベースのどこかにチュートリアルを表示」)。
   いつも出す 1 本の帯。押すと不在のアミュレット (✦ スペル +3 のフラクチャー済み) の木を開いて案内を始める (use-sim-tutorial)。
-  スマホの形 (1280 未満、U-53) は木を描かない質問の組み方なので出さない (ブラック 13 代目 案 A)。開発中はスイッチ simTutorial の下
+  PC もスマホも出す (10-31 朝オーナー Q2「Bかなここは」、tutorial.md T-23。前の「PC だけ」は撤回)。開発中はスイッチ simTutorial の下
 -->
 <script setup lang="ts">
 import { tr } from "../../../i18n/lang";
@@ -14,7 +14,7 @@ const on = flag("simTutorial");
 </script>
 
 <template>
-  <div v-if="on" data-tut-entry class="flex min-w-0 items-center gap-3 rounded-lg border border-amber-400/50 bg-amber-500/[0.07] px-3 py-2 max-md:hidden">
+  <div v-if="on" data-tut-entry class="flex min-w-0 items-center gap-3 rounded-lg border border-amber-400/50 bg-amber-500/[0.07] px-3 py-2 max-md:flex-col max-md:items-stretch">
     <p class="min-w-0 flex-1 break-words text-[14px]">
       <b class="text-amber-200">{{ tr("チュートリアル", "Tutorial") }}:</b>
       {{ tr(`${jaTypeName(TUT_BASE)} (フラクチャー済み) から作る`, `Craft from a fractured ${TUT_BASE}`) }}
