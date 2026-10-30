@@ -253,7 +253,7 @@ PoE2 のクラフトの期待値を計算で出すと、**計算の作りの小�
 **関連する記事**
 
 - [PoE2 クラフトの期待値は勘と違う](/blog/optimal-move-vs-intuition/)
-- [PoE2 クラフトの費用と運 (平均・半分の人・10 人に 1 人)](/blog/crafting-cost-variance/)
+- [PoE2 クラフトの予算は平均の何倍？｜2 倍で約 9 割が完成](/blog/crafting-cost-variance/)
 - [PoE2 上級・完全のオーブの違い｜最低モッドレベルの早見表](/blog/greater-perfect-orb-difference/)
 
 VOICEVOX:ずんだもん / 四国めたん

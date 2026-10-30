@@ -264,6 +264,6 @@ On the [crafting bench](/?base=Gold%20Ring), open the spam simulator from the bu
 **Related posts**
 
 - [PoE2 chaos spam odds: how many orbs at 0.3% per try](/en/blog/chaos-spam-odds/)
-- [PoE2 crafting cost variance: average, median and unlucky 10%](/en/blog/crafting-cost-variance/)
+- [PoE2 Crafting Budget: How Many Times the Average?](/en/blog/crafting-cost-variance/)
 
 VOICEVOX: Zundamon / Shikoku Metan

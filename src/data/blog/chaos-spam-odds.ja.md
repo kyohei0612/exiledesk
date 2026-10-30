@@ -175,7 +175,7 @@ PoE2 のカオススパムで、狙いの T1 が 1 回で付く確率は、Exile
 
 **関連する記事**
 
-- [PoE2 クラフトの費用と運｜平均・半分の人・10 人に 1 人](/blog/crafting-cost-variance/)
+- [PoE2 クラフトの予算は平均の何倍？｜2 倍で約 9 割が完成](/blog/crafting-cost-variance/)
 - [PoE2 指輪クラフトのサフィックス｜外れはすぐ消去で半額に](/blog/dont-hoard-misses/)
 
 VOICEVOX:ずんだもん / 四国めたん

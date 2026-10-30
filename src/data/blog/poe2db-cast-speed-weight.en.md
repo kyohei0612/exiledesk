@@ -211,6 +211,6 @@ On ExileDesk's [crafting bench](/?base=Gold%20Ring), you can craft a Gold Ring w
 **Related posts**
 
 - [PoE2 Ring Suffix Craft: Annul Misses Early, 400 → 220 div](/en/blog/dont-hoard-misses/)
-- [PoE2 Crafting Simulator Custom Weights: Edit Mod Weights](/en/blog/custom-mod-weights/)
+- [PoE2 Mod Weights Explained: 5x the Weight Isn't 5x the Odds](/en/blog/custom-mod-weights/)
 
 VOICEVOX: Zundamon / Shikoku Metan

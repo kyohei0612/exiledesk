@@ -87,7 +87,7 @@ Half the runs cost 20, but the average is 30?
 :::
 
 :::metan normal
-The unlucky runs cost a lot, and they pull the average up. We covered how to read that spread in [PoE2 Crafting Cost Variance](/en/blog/crafting-cost-variance/).
+The unlucky runs cost a lot, and they pull the average up. We covered how to read that spread in [PoE2 Crafting Budget](/en/blog/crafting-cost-variance/).
 :::
 
 ## About 70% of the Cost Is Chaos
@@ -156,7 +156,7 @@ Pick Drakeskin Boots on the ExileDesk [crafting bench](/?base=Drakeskin%20Boots)
 **Related posts**
 
 - [PoE2 Ring Suffix Craft: Annul Misses Early, 400 → 220 div](/en/blog/dont-hoard-misses/)
-- [PoE2 Crafting Cost Variance: Average, Median and Unlucky 10%](/en/blog/crafting-cost-variance/)
+- [PoE2 Crafting Budget: How Many Times the Average?](/en/blog/crafting-cost-variance/)
 - [Do PoE2 Crafting Odds Match Craft of Exile? 50k Rolls Each](/en/blog/coe-odds-parity/)
 
 VOICEVOX: Zundamon / Shikoku Metan

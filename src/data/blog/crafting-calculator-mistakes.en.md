@@ -253,7 +253,7 @@ Play a craft one step at a time on the [crafting bench](/), or compare Chaos, Au
 **Related posts**
 
 - [PoE2 crafting expected cost: the cheapest move skips Omens](/en/blog/optimal-move-vs-intuition/)
-- [PoE2 crafting cost variance: average, median and unlucky 10%](/en/blog/crafting-cost-variance/)
+- [PoE2 Crafting Budget: How Many Times the Average?](/en/blog/crafting-cost-variance/)
 - [PoE2 Greater vs Perfect orb difference: min mod levels](/en/blog/greater-perfect-orb-difference/)
 
 VOICEVOX: Zundamon / Shikoku Metan

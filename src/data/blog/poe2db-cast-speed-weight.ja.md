@@ -211,6 +211,6 @@ ExileDesk の [クラフト台](/?base=Gold%20Ring) では、重み 1,000 で付
 **関連する記事**
 
 - [PoE2 指輪クラフトのサフィックス｜外れはすぐ消去で半額に](/blog/dont-hoard-misses/)
-- [PoE2 MOD の重みを変える｜1000→200 で 5.4% が 1.1% に](/blog/custom-mod-weights/)
+- [PoE2 MOD の重みとは｜5 倍にしても確率は 5 倍にならない](/blog/custom-mod-weights/)
 
 VOICEVOX:ずんだもん / 四国めたん

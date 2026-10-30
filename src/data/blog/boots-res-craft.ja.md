@@ -87,7 +87,7 @@ PoE2 で移動速度 T1 を固定した靴に、火・冷気・雷の耐性 T1 �
 :::
 
 :::metan normal
-運の悪い人がとても高くつくから、平均が引き上げられるの。運の幅の読み方は [クラフトの費用と運](/blog/crafting-cost-variance/) に書いたわ。
+運の悪い人がとても高くつくから、平均が引き上げられるの。運の幅の読み方は [クラフトの予算は平均の何倍？](/blog/crafting-cost-variance/) に書いたわ。
 :::
 
 ## 費用の 7 割はカオス
@@ -156,7 +156,7 @@ ExileDesk の [クラフト台](/?base=Drakeskin%20Boots) でドレイクスキ�
 **関連する記事**
 
 - [PoE2 指輪クラフトのサフィックス｜外れはすぐ消去で半額に](/blog/dont-hoard-misses/)
-- [PoE2 クラフトの費用と運｜平均・半分の人・10 人に 1 人](/blog/crafting-cost-variance/)
+- [PoE2 クラフトの予算は平均の何倍？｜2 倍で約 9 割が完成](/blog/crafting-cost-variance/)
 - [PoE2 クラフトの確率は CoE と合う？｜5 万回ずつ照らした](/blog/coe-odds-parity/)
 
 VOICEVOX:ずんだもん / 四国めたん

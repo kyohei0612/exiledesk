@@ -264,6 +264,6 @@ v0.1.578 で、比べる道を増強と高貴にも広げたの。運試しと�
 **関連する記事**
 
 - [PoE2 カオススパムの確率｜1 回 0.3% なら何個かかるか](/blog/chaos-spam-odds/)
-- [PoE2 クラフトの費用と運｜平均・半分の人・10 人に 1 人](/blog/crafting-cost-variance/)
+- [PoE2 クラフトの予算は平均の何倍？｜2 倍で約 9 割が完成](/blog/crafting-cost-variance/)
 
 VOICEVOX:ずんだもん / 四国めたん

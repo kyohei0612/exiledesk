@@ -175,7 +175,7 @@ You can try the spam on a [Gold Ring on the crafting bench](/?base=Gold%20Ring).
 
 **Related posts**
 
-- [PoE2 Crafting Cost Variance: Average, Median and Unlucky 10%](/en/blog/crafting-cost-variance/)
+- [PoE2 Crafting Budget: How Many Times the Average?](/en/blog/crafting-cost-variance/)
 - [PoE2 Ring Suffix Craft: Annul Misses Early, 400 → 220 div](/en/blog/dont-hoard-misses/)
 
 VOICEVOX: Zundamon / Shikoku Metan

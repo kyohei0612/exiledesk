@@ -1,6 +1,6 @@
 ---
 title: PoE2 Mod Weights Explained: 5x the Weight Isn't 5x the Odds
-description: A PoE2 mod's chance is its weight over the total weight. Gold Ring Cast Speed at weight 1, 200, 1,000, 5,000: 0.01%, 1.14%, 5.43%, 22.30%. Why 5x isn't 5x.
+description: A PoE2 mod's chance is its weight over the total weight. Gold Ring Cast Speed at weight 200, 1,000, 5,000: 1.14%, 5.43%, 22.30%. Why 5x the weight isn't 5x the odds.
 date: 2026-10-22
 updated: 2026-10-31
 tags: weight, odds, Cast Speed, Gold Ring, mod list
@@ -22,12 +22,12 @@ Why?
 :::
 
 :::metan happy
-Because the number you divide by grows too. We changed the weight four ways on a Gold Ring and compared the odds table with real rolls.
+Because the number you divide by grows too. We changed the weight three ways on a Gold Ring and compared the odds table with engine rolls.
 :::
 
 :::summary What you'll learn
 - Chance to roll = the mod's weight ÷ the total weight of mods that can roll
-- On a Gold Ring with an Orb of Augmentation, Cast Speed at weight 1, 200, 1,000 and 5,000 rolls 0.01%, 1.14%, 5.43% and 22.30% of the time
+- On a Gold Ring with an Orb of Augmentation, Cast Speed at weight 200, 1,000 and 5,000 rolls 1.14%, 5.43% and 22.30% of the time
 - 5x the weight doesn't give 5x the chance (1,000 → 5,000 is about 4.1x). The bigger the weight, the bigger the gap
 - In the ExileDesk mod list, you can edit a mod's weight yourself and compare the odds
 :::
@@ -58,18 +58,17 @@ Do mods from a group already on the item count in the total?
 No. That group can't roll again, so it leaves the pool. That's why the same weight gives different odds on different items.
 :::
 
-## How Much Does the Weight Change the Odds?
+## The Higher the Weight, the Less Each Step Adds
 
 Here is the chance of Cast Speed when using an Orb of Augmentation on a magic Gold Ring with one prefix. Only Cast Speed's weight changes.
 
-| Cast Speed weight | Odds table | 4,000 real rolls | Versus 5x less weight | How it looks |
+| Cast Speed weight | Odds table | 4,000 engine rolls | Versus 5x less weight | How it looks |
 |---:|---:|---:|---|---|
-| 1 (poe2db's value) | 0.01% | 0.03% | — | Almost never |
 | 200 | **1.14%** | 1.13% | — | Rare |
 | 1,000 (ExileDesk default) | **5.43%** | 5.03% | About 4.8x weight 200 | ExileDesk's current odds |
 | 5,000 | 22.30% | 21.80% | About 4.1x weight 1,000 | More than 1 in 5 |
 
-The odds table and 4,000 real rolls landed close together.
+The odds table and 4,000 engine rolls landed close together.
 
 :::zundamon surprised
 200 → 1,000 is 4.8x, and 1,000 → 5,000 is 4.1x. It drifts further from 5x.
@@ -98,18 +97,19 @@ If you don't know the weight, you don't know the odds or the cost.
 :::
 
 :::metan normal
-That's why ExileDesk sets a default and lets you change it. As the table shows, weight 1 and weight 1,000 differ by hundreds of times.
+That's why ExileDesk sets a default and lets you change it. For Cast Speed, weight 1 and weight 1,000 differ by close to a thousand times in odds.
 :::
 
 ## How to Edit Weights in ExileDesk
 
-Open a row in the mod list on the ExileDesk crafting bench and a weight field appears above its tier table. Type a number and that mod's odds change right away.
+Open a row in the mod list on the ExileDesk crafting bench and a weight field appears above its tier table. Type a number and press Enter (or click outside the field), and that mod's odds change.
 
 | What you want | How | What happens |
 |---|---|---|
 | Change a weight | Type a number (for example 200) | The odds table, mod list and actual crafts all use the new weight |
 | Which tier's weight | Enter the heaviest tier's weight | Other tiers move in the same ratio |
-| Undo | Press "Reset all" | Back to the defaults, and saved values are cleared |
+| Undo one mod | Press the ↺ next to the field | That mod goes back to its default weight |
+| Undo everything | Press "Reset all" (shown only when something is edited) | All weights go back to defaults, and saved values are cleared |
 | Keep it after closing | Nothing to do | Saved in your browser |
 | Share it | Share your craft steps | Each step carries the edited weights and replays with them |
 
@@ -129,7 +129,7 @@ A mod's chance is its weight over the total weight of everything that can roll. 
 ## Where the Numbers Come From
 
 :::fold Show sources (3)
-- Augmentation odds (odds table, 4,000 rolls): ExileDesk engine, check script (2026-10-22, emulator team note 2026-10-22-mod-weight-edit). Engine
+- Augmentation odds (odds table, 4,000 rolls): ExileDesk engine, check script (2026-10-22, engine team (docs/org/emulator) note 2026-10-22-mod-weight-edit). Engine
 - How the weight field behaves (odds change, Reset all, replay and share): the same note and a local check on screen. Engine
 - Where weights come from (poe2db 1, Craft of Exile 1,000, ExileDesk 1,000 since 2026-09-23): the table in [the Cast Speed weight post](/en/blog/poe2db-cast-speed-weight/). poe2db, Craft of Exile
 :::
@@ -146,7 +146,7 @@ Open a Gold Ring on the ExileDesk [crafting bench](/?base=Gold%20Ring), expand t
 
 **Update history**
 
-- 2026-10-31: The weight field went live on 2026-10-25, so we removed "not released yet". We refocused the post on how weights change the odds, shortened the implementation details, and added why 5x the weight isn't 5x the chance. No numbers changed.
+- 2026-10-31: The weight field went live on 2026-10-25, so we removed "not released yet". We refocused the post on how weights change the odds, shortened the implementation details, and added why 5x the weight isn't 5x the chance. We dropped the weight-1 (poe2db) row, which repeats [the Cast Speed weight post](/en/blog/poe2db-cast-speed-weight/). No other numbers changed.
 - 2026-10-22: Published.
 
 VOICEVOX: Zundamon / Shikoku Metan
