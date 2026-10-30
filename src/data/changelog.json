@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.648",
+  "date": "2026-10-30",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成形の設定の「アイテムレベルを n に合わせました」が、ツリーを開き直した後も古い数のまま残るのを直しました",
+    "en": "Simulator: fixed the \"Item level set to n\" message in the final item settings staying on an old number after reopening a tree"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ツリーの上で完成形の設定を開いた時、「決めた」が下へはみ出して下の帯に隠れ、押せないことがあったのを直しました",
+    "en": "Simulator: fixed the \"Done\" button in the final item settings opened over the tree running off the bottom and being hidden by the bottom bar"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 手のある箱の手の窓で Esc を押すと、案内どおり持っている物を手放すようにしました (窓ごと閉じていました)。もう一度 Esc で窓を閉じます",
+    "en": "Simulator: Esc in the craft window of a box that already has a craft now releases the held item as the hint says, instead of closing the window. Press Esc again to close it"
+   }
+  ]
+ },
+ {
   "v": "0.1.647",
   "date": "2026-10-30",
   "items": [
@@ -959,54 +983,6 @@
     "area": "",
     "text": "シミュレーター: 手袋・靴・兜・鎧・盾のアイテムを貼り付けた時、クラフト MOD (エッセンス・合金) が読めなかったのを直しました",
     "en": "Simulator: Fixed crafted mods (Essence / Alloy) not being read when pasting gloves, boots, helmets, body armours or shields"
-   }
-  ]
- },
- {
-  "v": "0.1.607",
-  "date": "2026-10-26",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 作りかけのツリーを離れる・消す時は「保存して進む / 保存せず進む / やめる」を聞くように (ベースと MOD だけの木も)。保存した後の戻る・読み直しでは、そのレシピが開きます",
-    "en": "Simulator: Leaving or clearing an unsaved tree now asks \"Save and continue / Don't save / Cancel\" (also for a tree with only base and mods); after saving, going back or reloading reopens that recipe"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ツリーの画面で Ctrl+S を押すとレシピを保存できるように",
-    "en": "Simulator: Press Ctrl+S on the tree screen to save the recipe"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 完成形でルーンの特殊 MOD と 2 つ目のクラフト MOD (エッセンス・合金) を選べるように (貼り付けでも外れなくなりました)",
-    "en": "Simulator: The final item can now include rune-only mods and a second crafted mod (Essence / Alloy), including when pasting an item"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ツリーで特別なルーンを使えるように。2 つ目のクラフト MOD を付ける手ではアストリッドの創造性を自動で嵌めます",
-    "en": "Simulator: Special runes can now be used in the tree, and Astrid's Creativity is socketed automatically for a second crafted mod"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 手を選ぶ時は完成形で狙いにした MOD に最初からチェック、始めたばかりの木に赤い印を出さない、エミュから戻ると作っていた木に戻るなど、迷いやすい所を直しました",
-    "en": "Simulator: Target mods are pre-checked when choosing a craft, a just-started tree no longer shows red warnings, returning from the emulator brings you back to your tree, and other usability fixes"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "スマホ: ヘッダーの絵だけのボタン (ブログ・使い方・要望) の下に名前を出すように",
-    "en": "Phone: The icon-only header buttons (Blog, Guide, Feedback) now show a small label"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "一部の MOD (タリスマンの要求能力値など) の文が英語のまま出ていたのを直しました",
-    "en": "Fixed some mod texts (e.g. the Talisman attribute requirement) showing in English"
    }
   ]
  }

@@ -1,4 +1,9 @@
 {
+  "0.1.648": [
+    "Simulator: fixed the \"Item level set to n\" message in the final item settings staying on an old number after reopening a tree",
+    "Simulator: fixed the \"Done\" button in the final item settings opened over the tree running off the bottom and being hidden by the bottom bar",
+    "Simulator: Esc in the craft window of a box that already has a craft now releases the held item as the hint says, instead of closing the window. Press Esc again to close it"
+  ],
   "0.1.647": [
     "Simulator: fixed choosing how to add a mod (Normal, Fracture, Desecrate) from \"Add\" in the final item settings not adding the mod"
   ],
