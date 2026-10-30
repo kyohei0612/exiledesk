@@ -106,10 +106,12 @@ export const answerFor = ref<string | null>(null);
 /** 箱の重ね窓 (10-26 オーナーの選んだ案 B: 一覧・全体図・戻り先選びで箱を押すと、移らずに下から窓で中身を全部。pickFrom = 戻り先を選んでいる結果の箱) */
 export const sheet = ref<{ id: string; pickFrom?: string; /** 足りない所から開いた時の文 (窓の頭に出す、10-26 モンキー 7 の 22) */ issue?: string } | null>(null);
 /**
- * テストで回した時の木の形 (use-tree-check の routeKeyOf)。今の形と同じ間だけ、足りない所・未定の数を出す
- * (10-27 オーナー「組んでいる途中なら足りないのはそりゃそうだから、テスト走行をしないと表示しないように」。PC と同じ「テストで回す」)
+ * 穴チェックを押した時の木の形 (use-tree-check の routeKeyOf)。今の形と同じ間だけ、足りない所・未定の数を出す
+ * (10-27 オーナー「組んでいる途中なら足りないのはそりゃそうだから、テスト走行をしないと表示しないように」。PC と同じ「穴チェック」)
  */
 export const testedKey = ref<string | null>(null);
+/** 穴チェックの今 (PhoneIssues が書き、下の帯の「100 人回す」が読む。S-70) */
+export const phoneCheck = ref({ busy: false, passed: false, holes: 0 });
 /** ② で今出している結果の箱の番号 (結果は 1 つずつ 1 画面、外れの側から。PhoneTreePage が質問が替わったら 0 に戻す) */
 export const outStep = ref(0);
 /** 最後に回した 100 人の結果 (PhoneTreePage の use-tree-run を写す。結果の行・重ね窓の「来た人・止まりの理由」) */

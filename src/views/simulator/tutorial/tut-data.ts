@@ -21,7 +21,7 @@ export type TutStepDef =
     /** 消去の「残したい MOD」で ☑ する MOD (S-27) */ keep?: string;
   }
   | { id: string; kind: "done"; box: Role }
-  /** goal = 完成形の設定 (✦ と品質の決め)、start = 始め方の窓、unset = 帯「! 未設定 ▸ 次へ」、test = テストの ✓、run = 100 人 → 結果 → 終わる */
+  /** goal = 完成形の設定 (✦ と品質の決め)、start = 始め方の窓、unset = 帯「! 未設定 ▸ 次へ」、test = 穴チェックの ✓、run = 100 人 → 結果 → 終わる */
   | { id: string; kind: "goal" | "start" | "unset" | "test" | "run" | "end" | "note" };
 export type TutData = { v: 1; course: string; steps: TutStepDef[]; texts: Record<string, TutText>; targets: Record<string, string> };
 

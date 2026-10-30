@@ -20,7 +20,8 @@ import { swapHandIn } from "../tree/tree-swap-hand";
 import { useTree } from "../tree/use-tree";
 import { clearHand, setAim, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
-import { answerFor, outStep, phoneRun, sheet, testedKey, usePhoneQuiz, type Question } from "./use-phone-quiz";
+import { answerFor, outStep, phoneCheck, phoneRun, sheet, testedKey, usePhoneQuiz, type Question } from "./use-phone-quiz";
+import { HOLE_CHECK, runLockedWhy } from "../tree/hole-check";
 import { routeKeyOf } from "../tree/use-tree-check";
 import { stepOf } from "../tree/tree-fail";
 import PhoneAsk from "./PhoneAsk.vue";
@@ -167,6 +168,10 @@ const haltWhy = computed(() => { const h = run.halted.value; return h ? run.resu
 const pctOf = (r: { finished: number; n: number }): number => Math.round((r.finished / (r.n || 1)) * 100);
 const donePct = computed(() => pctOf(run.result.value ?? { finished: 0, n: 1 }));
 const fmt = (x: number): string => (!Number.isFinite(x) ? "—" : x >= 100 ? x.toFixed(0) : x.toFixed(1));
+/** 穴チェックに合格していないので「100 人回す」を止める (S-70) */
+const runLocked = computed(() => HOLE_CHECK && (phoneCheck.value.busy || !phoneCheck.value.passed));
+/** 止めている訳 (スマホは乗せられないので下の帯の上に文で出す) */
+const runWhy = computed(() => (main.value?.kind === "run" && runLocked.value && !run.running.value ? runLockedWhy(phoneCheck.value.busy, phoneCheck.value.holes) : null));
 /** 下の帯の主な操作 (今の質問ごと。一覧を出している間は無し) */
 const main = computed((): { kind: string; text: string; off?: boolean; go: () => void } | null => {
   const c = q.current.value, b = c ? t.doc.value.boxes[c.id] : null;
@@ -185,7 +190,7 @@ const main = computed((): { kind: string; text: string; off?: boolean; go: () =>
   }
   if (c) return null;
   // 全部の道が決まった = 100 人回す (PC と同じ use-tree-run。1 人目が木を進む再生は木が無いので飛ばす)
-  return { kind: "run", text: run.running.value ? tr(`回している ${run.result.value?.n ?? 0} / ${RUN_N}`, `Running ${run.result.value?.n ?? 0} / ${RUN_N}`) : tr(`${RUN_N} 人回す`, `Run ${RUN_N}`), off: !s.data.value || run.running.value, go: () => void run.run() };
+  return { kind: "run", text: run.running.value ? tr(`回している ${run.result.value?.n ?? 0} / ${RUN_N}`, `Running ${run.result.value?.n ?? 0} / ${RUN_N}`) : tr(`${RUN_N} 人回す`, `Run ${RUN_N}`), off: !s.data.value || run.running.value || runLocked.value, go: () => void run.run() };
 });
 /** 箱の質問へ (手のある箱は ②、無ければ親の ②) */
 function goBox(id: string): void {
@@ -260,6 +265,7 @@ function goBox(id: string): void {
           </span>
           <button type="button" data-phone-walk-fwd :class="FLAT" :disabled="trailAt >= trail.length - 1" @click="walk(1)">{{ tr("先へ", "Forward") }} ›</button>
         </div>
+        <p v-if="runWhy" data-phone-run-why data-run-locked class="break-words text-center text-[12px] text-amber-100/90">{{ runWhy }}</p>
         <div v-if="P27" class="flex">
           <button v-if="main" type="button" data-phone-main :data-main="main.kind" class="g-btn-red !min-h-11 min-w-0 flex-1 whitespace-normal break-words px-2 text-[15px] leading-tight" :disabled="main.off" @click="main.go">{{ main.text }}</button>
         </div>

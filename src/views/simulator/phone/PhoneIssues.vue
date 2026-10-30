@@ -5,10 +5,11 @@
   窓の行を押すと、その箱の重ね窓 (案 B、スイッチ phoneMap) か、閉じていればその箱の質問へ
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from "vue";
 import { useTree } from "../tree/use-tree";
 import { routeKeyOf, useTreeCheck } from "../tree/use-tree-check";
-import { sheet, testedKey, usePhoneQuiz } from "./use-phone-quiz";
+import { phoneCheck, sheet, testedKey, usePhoneQuiz } from "./use-phone-quiz";
+import { holeAgain, holeBusy, holeName } from "../tree/hole-check";
 import { flag } from "../../../web/release-flags";
 import { tr } from "../../../i18n/lang";
 
@@ -24,7 +25,9 @@ const issues = computed(() => (check.issues.value ?? []).filter((x) => !(x.kind 
 /** 隠している「完成の箱が無い」がある (未定の質問が残っている間)。緑の「止まる所なし」だけだと完成の箱が無いのに合格に見えた (10-27 夜モンキー 2 回目 8、スイッチ phoneTestDone) */
 const noDoneYet = computed(() => (check.issues.value ?? []).some((x) => x.kind === "noDone"));
 const MAP = flag("phoneMap");
-/** テストで回した後 (木の形がその時のまま) だけ結果を出す */
+// 下の帯の「100 人回す」が読む (合格まで止める、S-70)
+watchEffect(() => { phoneCheck.value = { busy: checking.value, passed: check.passed.value, holes: issues.value.length }; });
+/** 穴チェックを押した後 (木の形がその時のまま) だけ結果を出す */
 const tested = computed(() => testedKey.value === routeKeyOf(t.doc.value));
 function test(): void { testedKey.value = routeKeyOf(t.doc.value); void check.runCheck(); }
 /** 一覧の重ね窓を開いている */
@@ -41,11 +44,11 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
 </script>
 
 <template>
-  <!-- テストで回す (PC の帯と同じ言い方)。押す前は足りない所を出さない -->
-  <button v-if="!tested" type="button" data-phone-test class="flex min-h-10 w-full items-center justify-center gap-2 rounded-md bg-white/[0.06] px-3 text-[13px] text-[#d8ccb4] hover:bg-white/10" @click="test">{{ tr("テストで回す", "Test run") }}</button>
-  <p v-else-if="!checking && !issues.length" data-phone-test-ok class="flex min-h-10 flex-wrap items-center justify-center gap-x-2 text-center text-[13px] font-bold" :class="noDoneYet ? 'text-amber-200' : 'text-emerald-300'">{{ q.questions.value.length ? tr(`✓ 止まる所なし · 未定 ${q.questions.value.length}${noDoneYet ? " · 完成の箱がまだ無い" : ""}`, `✓ No dead ends · ${q.questions.value.length} open${noDoneYet ? " · no done box yet" : ""}`) : tr("✓ 合格", "✓ Passed") }} <button type="button" class="min-h-10 px-1 text-[12px] font-normal text-[#9a8a70] underline decoration-white/20" @click="test">{{ tr("もう一度テスト", "Test again") }}</button></p>
+  <!-- 穴チェック (PC の帯と同じ言い方)。押す前は足りない所を出さない -->
+  <button v-if="!tested" type="button" data-phone-test class="flex min-h-10 w-full items-center justify-center gap-2 rounded-md bg-white/[0.06] px-3 text-[13px] text-[#d8ccb4] hover:bg-white/10" @click="test">{{ holeName() }}</button>
+  <p v-else-if="!checking && !issues.length" data-phone-test-ok class="flex min-h-10 flex-wrap items-center justify-center gap-x-2 text-center text-[13px] font-bold" :class="noDoneYet ? 'text-amber-200' : 'text-emerald-300'">{{ q.questions.value.length ? tr(`✓ 止まる所なし · 未定 ${q.questions.value.length}${noDoneYet ? " · 完成の箱がまだ無い" : ""}`, `✓ No dead ends · ${q.questions.value.length} open${noDoneYet ? " · no done box yet" : ""}`) : tr("✓ 合格", "✓ Passed") }} <button type="button" class="min-h-10 px-1 text-[12px] font-normal text-[#9a8a70] underline decoration-white/20" @click="test">{{ holeAgain() }}</button></p>
   <button v-else type="button" data-phone-issues :disabled="checking && !issues.length" class="flex min-h-10 w-full min-w-0 items-center gap-2 rounded-xl border border-rose-400/40 bg-[#1d0f10] px-3 py-1.5 text-left text-[13px] font-bold text-rose-200" :aria-expanded="listOpen" @click="listOpen = true">
-    <span class="min-w-0 flex-1 break-words text-center">{{ checking ? tr(`テスト中…${progress ? ` ${progress.n}/${progress.of}` : ""}`, `Testing…${progress ? ` ${progress.n}/${progress.of}` : ""}`) : tr(`足りない所 ${issues.length} 件`, `${issues.length} missing`) }}</span>
+    <span class="min-w-0 flex-1 break-words text-center">{{ checking ? `${holeBusy()}${progress ? ` ${progress.n}/${progress.of}` : ""}` : tr(`足りない所 ${issues.length} 件`, `${issues.length} missing`) }}</span>
     <span v-if="issues.length" class="shrink-0 text-[12px] font-normal text-rose-100/80">{{ tr("見る ▾", "View ▾") }}</span>
   </button>
   <!-- 一覧の重ね窓 (閉じれば元の場所・スクロールのまま) -->

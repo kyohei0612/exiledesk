@@ -98,7 +98,7 @@ onMounted(() => {
     tutTick.value++;
     if (tut.step.value?.kind === "run" && document.querySelector("[data-tree-run-report]")) markRan();
   }, 250);
-  // 帯の「次へ」・テストを押したか (木に出ないので押しを拾う。capture = 押しは止めない)
+  // 帯の「次へ」・穴チェックを押したか (木に出ないので押しを拾う。capture = 押しは止めない)
   document.addEventListener("click", noteClick, true);
 });
 onBeforeUnmount(() => { cancelAnimationFrame(raf); clearInterval(timer); document.removeEventListener("click", noteClick, true); });

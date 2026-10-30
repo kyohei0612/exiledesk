@@ -13,6 +13,7 @@ import { headOf, modShort } from "../tree/tree-names";
 import { useTree } from "../tree/use-tree";
 import { openTreePage, treeStep } from "../../../web/page";
 import { simOp } from "../../../web/track";
+import { HOLE_CHECK } from "../tree/hole-check";
 import { DRAFT_WHY, SPELL, isTutorialDoc, rolesOf, tutorialDoc, type Role, type TutNames } from "./tut-route";
 import { tutData, type TutStepDef } from "./tut-data";
 import { aimSel, aimsChecked, checked, handOpen, holding, inView, keepSel, omenOn, omensOnNow, shelfSel, shown } from "./tut-dom";
@@ -154,12 +155,14 @@ export function startScene(c: TutCtx, k: (s: string) => string): TutNow {
   return { key: k("main"), target: "[data-tree-start-ask-go]", draft: say("「これで始める (ツリーへ)」を押す", "Click \"Start (to the tree)\"") };
 }
 export function testScene(c: TutCtx, k: (s: string) => string, btn: string): TutNow {
-  // 木を変えるたびにテストが自動で回る。回っている間はボタンが押せない (押しても数えない) ので待つ
-  if (document.querySelector<HTMLButtonElement>(btn)?.disabled) return { key: k("busy"), target: null, draft: say("テストが回っている。終わるまで待つ", "The test run is going. Wait for it to finish") };
-  if (!c.testPressed) return { key: k("main"), target: btn, draft: say("「テストで回す」を押す (止まる所・打てない手を探す)", "Click the test run (finds dead ends and unusable crafts)") };
-  return { key: k("wait"), target: null, draft: say("テストが終わるのを待つ (✓ 合格が出たら次へ)", "Wait for the test run (✓ Passed)") };
+  // 木を変えるたびに穴チェックが自動で回る。回っている間はボタンが押せない (押しても数えない) ので待つ
+  if (document.querySelector<HTMLButtonElement>(btn)?.disabled) return { key: k("busy"), target: null, draft: HOLE_CHECK ? say("穴チェックが回っている。終わるまで待つ", "The gap check is going. Wait for it to finish") : say("テストが回っている。終わるまで待つ", "The test run is going. Wait for it to finish") };
+  if (!c.testPressed) return { key: k("main"), target: btn, draft: HOLE_CHECK ? say("「穴チェック」を押す (止まる所・打てない手を探す)", "Click \"Gap check\" (finds dead ends and unusable crafts)") : say("「テストで回す」を押す (止まる所・打てない手を探す)", "Click the test run (finds dead ends and unusable crafts)") };
+  return { key: k("wait"), target: null, draft: HOLE_CHECK ? say("穴チェックが終わるのを待つ (✓ 合格が出たら次へ)", "Wait for the gap check (✓ Passed)") : say("テストが終わるのを待つ (✓ 合格が出たら次へ)", "Wait for the test run (✓ Passed)") };
 }
 export function runScene(c: TutCtx, k: (s: string) => string, btn: string): TutNow {
+  // 穴チェックに通っていない間も押せない (S-70)。回している時の文にしない
+  if (document.querySelector("[data-run-locked]")) return { key: k("locked"), target: null, draft: say("穴チェックに合格すると「100 人回す」が押せる。合格を待つ", "\"Run 100\" unlocks when the gap check passes. Wait for it") };
   // 回している間 (ボタンが押せない) は待つだけ (光らせたままだと 2 回押された)
   if (c.ran) return { key: k("end"), target: null, draft: say("結果のまとめを見たら、下の「終わる」を押す", "After reading the summary, click \"Finish\" below") };
   if (document.querySelector<HTMLButtonElement>(btn)?.disabled) return { key: k("running"), target: null, draft: say("100 人を回している。終わるまで待つ", "Running 100 times. Wait for it to finish") };

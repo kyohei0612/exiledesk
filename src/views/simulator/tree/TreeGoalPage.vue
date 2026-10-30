@@ -210,7 +210,7 @@ function rowBlocks(r: { id: string; tiers: Array<{ modId?: string; tier: number;
   const n = r.tiers.length;
   return [...by].map(([why, rs]) => ({ why, ranks: rs.length === n ? "" : rs.length > 2 ? `${rs[0]}〜${rs[rs.length - 1]}` : rs.join(tr("・", ", ")) }));
 }
-/** フラクチャーを押せない理由: 冒涜の MOD (アマナム・クルガル・ウラマンなど) はフラクチャーできない (エンジンと同じ。10-25 指輪の猿 4: 押せて、テストで「始まりの形が作れない」) */
+/** フラクチャーを押せない理由: 冒涜の MOD (アマナム・クルガル・ウラマンなど) はフラクチャーできない (エンジンと同じ。10-25 指輪の猿 4: 押せて、穴チェックで「始まりの形が作れない」) */
 const DESECRATED_NO_FRACTURE = (): string => tr("冒涜の MOD はフラクチャーできない", "Desecrated mods can't be Fractured");
 function fracBlockOf(r: { group?: string }, modId: string, tier: number): string | null {
   return r.group === "desecrated" || r.group === "otherworldly" ? DESECRATED_NO_FRACTURE() : blockOf(modId, tier);

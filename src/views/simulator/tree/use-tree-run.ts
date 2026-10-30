@@ -18,7 +18,7 @@ import { track } from "../../../utils/track";
 /** 回す人数 (帯の「100 人回した時」と同じ)。seed は台本・解析君と同じ 1 */
 export const RUN_N = 100;
 /**
- * テスト走行の人数 (10-27 オーナー「テストで回す」: 足りない所があっても断らず回し、どの箱で何人止まったか・どこでループしたかを出す。
+ * 穴チェックの走行の人数 (10-27 オーナー「テストで回す」: 足りない所があっても断らず回し、どの箱で何人止まったか・どこでループしたかを出す。
  * 「変な作りでも普通にカレンシーを付けた時の動きだから止まる事は無いでしょ、ループはあると思うけど。それで止まる所が分かる」)。1 人目の歩きは見せず、止まった人が出ても止めない
  */
 export const TEST_N = 30;
@@ -52,7 +52,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
   const shown = ref(true);
   /** 止まった人が出て途中で止めた時の箱と人数 (10-22 オーナー「止まった瞬間 100 人回すの止めて修正しなよ」) */
   const halted = ref<{ box: string; n: number } | null>(null);
-  /** 今の結果がテスト走行か (帯・まとめの文と、費用を出さない) */
+  /** 今の結果が穴チェックの走行か (帯・まとめの文と、費用を出さない) */
   const test = ref(false);
   /** 1 人目が進んでいる所 (今いる箱・何手目 / 全部・着いた時の費用 神・早送り中か) */
   const walk = ref<{ box: string; step: number; total: number; cost: number; ms: number; trail: ReadonlySet<string>; fast: boolean } | null>(null);
@@ -70,7 +70,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
   watch(useTree().opened, () => { swapBase.value = null; });
   /** 手だけ替える直前に呼ぶ (今の結果が 100 人を回し切った物なら残す) */
   function noteSwap(): void { if (raw.value && !test.value && !halted.value && !running.value) swapBase.value = { r: toRaw(raw.value), key: routeKeyOf(doc.value) }; }
-  /** opt.test = テスト走行 (TEST_N 人、1 人目の歩きは飛ばす、止まった人が出ても止めない) */
+  /** opt.test = 穴チェックの走行 (TEST_N 人、1 人目の歩きは飛ばす、止まった人が出ても止めない) */
   async function run(opt: { test?: boolean } = {}): Promise<void> {
     const data = s.data.value;
     if (!data || running.value) return;

@@ -14,8 +14,9 @@ import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { useTree } from "./use-tree";
 import { handLabel, handName, outName, startName } from "./tree-names";
 import { tr } from "../../../i18n/lang";
+import { driveHead } from "./hole-check";
 
-/** test = テスト走行の結果 (10-27 オーナー: 足りない所があっても回し、どの箱で何人止まった・どこでループしたか。費用の欄は出さない) */
+/** test = 穴チェックの走行の結果 (10-27 オーナー: 足りない所があっても回し、どの箱で何人止まった・どこでループしたか。費用の欄は出さない) */
 const props = defineProps<{ result: TreeRunResult; test?: boolean }>();
 const emit = defineEmits<{ close: []; go: [id: string] }>();
 const t = useTree();
@@ -46,11 +47,11 @@ const priceIn = computed(() => startOf(t.doc.value).price ?? null);
 <template>
   <section data-tree-run-report class="nodrag nopan pointer-events-auto absolute right-3 top-3 z-40 flex max-h-[calc(100%-24px)] w-[360px] flex-col overflow-hidden rounded-xl border border-amber-400/40 bg-[#14100b]/[0.97] text-[13px] text-[#e6dcc6] shadow-[0_10px_30px_rgba(0,0,0,0.7)] max-md:inset-x-2 max-md:bottom-2 max-md:top-auto max-md:max-h-[72%] max-md:w-auto">
     <header class="flex items-center gap-2 border-b border-white/10 px-3 py-2">
-      <b class="text-[14px] text-amber-200">{{ test ? tr(`テスト走行 ${result.n} 人の結果`, `Test drive: ${result.n} runs`) : tr(`${result.n} 人回した結果`, `Result of ${result.n} runs`) }}</b>
+      <b class="text-[14px] text-amber-200">{{ test ? driveHead(result.n) : tr(`${result.n} 人回した結果`, `Result of ${result.n} runs`) }}</b>
       <button type="button" data-tree-run-report-close class="g-btn sm ml-auto" @click="emit('close')">{{ tr("木に戻る", "Back to tree") }}</button>
     </header>
     <div class="flex min-h-0 flex-col gap-3 overflow-y-auto px-3 py-3">
-      <!-- テスト走行: 完成・止まり・ループの人数と、止まった箱 (理由)・ループの箱。押すとその箱へ -->
+      <!-- 穴チェックの走行: 完成・止まり・ループの人数と、止まった箱 (理由)・ループの箱。押すとその箱へ -->
       <div v-if="test" data-tree-test-drive class="flex flex-col gap-2">
         <div class="flex flex-wrap items-baseline gap-x-3 tabular-nums">
           <span class="text-[20px] font-bold text-amber-100">{{ tr(`完成 ${result.finished} 人`, `${result.finished} finished`) }}</span>

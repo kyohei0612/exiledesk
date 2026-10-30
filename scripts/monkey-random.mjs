@@ -30,7 +30,7 @@ const base = `monkey-${SEED}-${W}`;
 let st = SEED >>> 0;
 const rnd = () => { st = (st + 0x6d2b79f5) >>> 0; let t = st; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 
-const GO = /決めた|次へ|完成|テスト|100 ?人|シェア|共有|付ける|ふつう|フラクチャー|冒涜|カオス|高貴|消去|エッセンス|骨|ルーン|合金|品質|始め|スタート|残したい|ベース|もう一度|回す/;
+const GO = /決めた|次へ|完成|テスト|穴チェック|100 ?人|シェア|共有|付ける|ふつう|フラクチャー|冒涜|カオス|高貴|消去|エッセンス|骨|ルーン|合金|品質|始め|スタート|残したい|ベース|もう一度|回す/;
 const NAV = /エミュ|チュートリアル|更新|要望|ガイド|プライバシー|利用規約|English|X で|ポスト|ツイート|Discord|YouTube|広告/;
 const HEAD = /^(エミュレーター|デイリー|使い方|要望|アプリ版|本日の訪問者)/;
 const CARD = "(手の窓のカード)";
@@ -68,7 +68,7 @@ const weight = (c, url, body) => {
   if (/シェア/.test(t)) return /100 人: \d+ 個 [\d.]+/.test(body) ? 25 : 0.3;
   if (/URL をコピー/.test(t)) return 60;
   if (/100 人回す/.test(t)) return shelfUses >= 3 ? 40 : 1;
-  if (/テストで回す|もう一度テスト/.test(t)) return shelfUses >= 2 ? 20 : 1;
+  if (/テストで回す|もう一度テスト|穴チェック/.test(t)) return shelfUses >= 2 ? 20 : 1;
   if (/完成にする/.test(t)) return 30;
   if (c.shelf) return 25;
   if (c.box) return 15;

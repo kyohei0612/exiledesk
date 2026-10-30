@@ -38,6 +38,7 @@
 | 1 手戻す | Undo |
 | 取引所 | Trade site |
 | 相場 | Market price |
+| 穴チェック (シミュ) | Gap check (S-70、画面の操作の言葉) |
 | 確率 | Chance |
 | 重み | Weight |
 | 狙い | Target |

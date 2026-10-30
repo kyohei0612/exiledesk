@@ -37,9 +37,9 @@ export function orphanIssues(d: TreeDoc): CheckIssue[] {
 export const routeKeyOf = (d: TreeDoc): string => JSON.stringify([(({ price: _p, ...st }) => st)(startOf(d)), fractureMarks(d), Object.values(d.boxes).map(({ x: _x, y: _y, note: _n, ...r }) => r)]);
 
 /**
- * テストラン = ルート精査 (5 人をエンジンで辿り 30 人を回して、止まる所・打てない手・付かない当たり・完成に着かない道などの穴を探す、tree-check.ts)。
- * 道を組み替えるたびに合格を外して自動で回し直す (10-24 オーナー「何かしら変更加えたら即テストラン」)。穴が 0 なら合格で、合格するまで「100 人回す」は押せない。
- * ! は今の道の穴だけ (直せば次のテストランで消える)。一覧を閉じる・箱を押す・動かすでは消さない
+ * 穴チェック (前の名前はテストラン) = ルート精査 (5 人をエンジンで辿り 30 人を回して、止まる所・打てない手・付かない当たり・完成に着かない道などの穴を探す、tree-check.ts)。
+ * 道を組み替えるたびに合格を外して自動で回し直す (10-24 オーナー「何かしら変更加えたら即テストラン」)。穴が 0 なら合格で、合格するまで「100 人回す」は灰色で押せない (S-70。穴チェック自体は足りない所があっても回す)。
+ * ! は今の道の穴だけ (直せば次の穴チェックで消える)。一覧を閉じる・箱を押す・動かすでは消さない
  * 穴 (帯の赤い「穴 n」・一覧・箱の !) は既定で見せ、札を押すと隠す・もう一度で見せる。隠したら組み替えても隠したまま (そのタブの間、タブを替えると見せる)
  * (10-25 オーナー「穴はそもそもずっと赤くて OK よ、デフォで。押したらオフにって UI で変わったら OK」)
  */
@@ -59,7 +59,7 @@ export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean) {
   /** 穴を見せる (帯の札のスイッチ、既定はオン) */
   const shown = ref(true);
   let timer = 0, again = false;
-  // 組み替えたら少し待って (続けて組む間は回さない) テストラン。開いた時も 1 回
+  // 組み替えたら少し待って (続けて組む間は回さない) 穴チェック。開いた時も 1 回
   // スイッチ bodyStrict: 回す前に、体の同じと分からない古い自動の ↩ を外す (外すと木が変わって、この watch がもう一度走る。S-50)
   watch([routeKey, () => !!s.data.value && on()], ([, ok]) => { clearTimeout(timer); if (ok && s.data.value && pruneBacks(s.data.value, doc.value)) { triggerRef(doc); return; } if (ok) timer = window.setTimeout(() => void runCheck(), 500); }, { immediate: true });
   async function runCheck(): Promise<void> {
@@ -69,7 +69,7 @@ export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean) {
     checking.value = true;
     const key = routeKey.value;
     issues.value = []; // 穴は辿った人から順に足す (10-22 オーナー「読み込みながら徐々に出す」)
-    await new Promise((r) => setTimeout(r, 30)); // 「テスト中」を先に出す
+    await new Promise((r) => setTimeout(r, 30)); // 「穴チェック中」を先に出す
     try {
       const now = [...(await checkTreeAsync(d, doc.value, (p) => { progress.value = p; issues.value = p.partial; })), ...orphanIssues(doc.value)];
       issues.value = now;
@@ -81,7 +81,7 @@ export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean) {
       if (again || key !== routeKey.value) { again = false; void runCheck(); }
     }
   }
-  /** テストランのボタン (記録の印は 1 押し 1 回、10-25 オーナー「回すボタンに記録足して」) */
+  /** 穴チェックのボタン (記録の印は 1 押し 1 回、10-25 オーナー「回すボタンに記録足して」) */
   async function onCheck(): Promise<void> { if (!checking.value) track("sim:test"); await runCheck(); }
   /**
    * 始めたばかり (スタートにまだ手も分かれ目も無い) の木では足りない所を見せない (赤い「!」と数で壊れた・間違えたに見えた、10-26 猿の 3。
