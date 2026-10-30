@@ -230,8 +230,11 @@ function warnStop(): void { warnOpen.value = false; const b = warnBack; warnBack
 function warnGo(): void { warnOpen.value = false; warnAck = true; warnBack = null; }
 let reverting = false;
 watch(held, (k, old) => {
+  const om = [...omens.value];
+  // 持ち替えたら前の物のお告げは外す (エミュの M-13。元の手に持ち直したら元のお告げ)
+  if (!reverting && k && old) omens.value = k === props.current?.currency ? [...props.current.omens] : [];
   if (reverting || !k || !props.current || k === props.current.currency) return;
-  const was = old ?? props.current.currency, wasOmens = old ? [...omens.value] : [...props.current.omens];
+  const was = old ?? props.current.currency, wasOmens = old ? om : [...props.current.omens];
   warnIfBelow(() => { held.value = was; omens.value = wasOmens; });
 });
 /** 残したい MOD (消去 S-27 と、スイッチ keepAll の消える手 S-27d。use-hand-keep) */
