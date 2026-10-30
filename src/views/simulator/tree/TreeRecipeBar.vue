@@ -170,7 +170,7 @@ onBeforeUnmount(() => { window.removeEventListener("pointerdown", onDown, true);
       <span v-if="dirty" data-tree-recipe-dirty class="size-2 shrink-0 rounded-full bg-amber-400" :title="tr('保存していない変更がある', 'Unsaved changes')" />
     </button>
     <!-- 保存・レシピ・シェア (スマホは差し込みのメモ・白紙も) を 1 組にして一緒に折り返す (名前が長い・幅が狭い時は名前だけ 1 行目)。PC の列は平たい小さなボタン (SMALL) で 248px に 1 行 -->
-    <span class="flex shrink-0 items-center gap-1">
+    <span class="flex max-w-full shrink-0 flex-wrap items-center justify-center gap-1">
       <button v-if="!bare" type="button" data-tree-recipe-save :class="btn" :aria-expanded="naming" :title="currentTreeRecipe ? tr('開いているレシピに上書き保存 (Ctrl+S)', 'Save to the open recipe (Ctrl+S)') : tr('名前を付けて保存 (Ctrl+S)', 'Save with a name (Ctrl+S)')" @click="save"><Icon v-if="flat" name="save" class="size-4" />{{ tr("保存", "Save") }}</button>
       <button type="button" data-tree-recipe-menu :class="menuOnly ? 'g-btn sm inline-flex shrink-0 items-center gap-1' : btn" :aria-expanded="pop" @click="pop = !pop; naming = false; share = false"><Icon v-if="flat" name="book" class="size-4" />{{ tr("レシピ", "Recipes") }} ▾</button>
       <button v-if="!bare" type="button" data-tree-recipe-share :class="btn" :aria-expanded="share" :title="tr('この木を人に見せる (短い URL をコピー・X に出す)', 'Share this tree (copy a short URL or post to X)')" @click="share = !share; pop = false; naming = false"><Icon v-if="flat" name="share" class="size-4" />{{ tr("シェア", "Share") }}</button>
