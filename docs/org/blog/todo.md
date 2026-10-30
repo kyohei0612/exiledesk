@@ -13,7 +13,7 @@ AdSense 2 回目の不承認 (10-30) の洗い直し = 共有メモ local_e2573d
 |---|---|---|---|---|---|
 | 1 | coe-odds-parity | 1 手の確率は CoE と合う？ 高貴 15/15・カオス 11/12、外れた 1 つは偶然 | math/notes/2026-10-23-coe-odds.md・coe-chaos.md | 10-31 | 本番 (5214d1b70、0.1.644 の出しに乗せる、オーナー「記事おけ それで出して」) |
 | 2 | chaos-removed-mod-returns | カオスで消した MOD は同じ 1 回でまた付く (E-30) | research/notes/2026-10-26-chaos-reroll-same-mod.md・math/notes/2026-10-31-chaos-same-mod-back.md (部下が数えた) | **11-02** | オーナー OK 10-31「11-02で出して」。date は 11-02 に直した、draft のまま。**11-02 に draft を外す commit → ブラックへ** |
-| 3 | boots-res-craft | 移動速度 T1 固定の靴に耐性 T1 を 2 つ、費用と打ち方 | math/notes/2026-10-23-boots-res.md | 11-04 | 未着手 |
+| 3 | boots-res-craft | 移動速度 T1 固定の靴に耐性 T1 を 2 つ、費用と打ち方 | math/notes/2026-10-23-boots-res.md | 11-04 | 書いた・照らし合わせ済み・オーナー待ち |
 | 4 | abyss-essence-limits | アビスのエッセンスが打てる部位・打てない状態 (E-52) | research/notes/2026-10-22-abyss-essence-limits.md | 11-07 | 未着手 |
 | 5 | chaos-over-limit-void | 上限を超えた側を消すカオスは不成立・オーブも減らない (E-25) | engine.md E-25、オーナー 10-14、ジン 11 本目の調べ 10-26 | 11-09 | 未着手 (具体の例を記録から探す) |
 | 6 | perfect-essence-full-side | パーフェクトエッセンスは埋まった側から必ず 1 つ消す (E-51) | engine.md E-51、オーナー 10-14 | 11-11 | 未着手 |
