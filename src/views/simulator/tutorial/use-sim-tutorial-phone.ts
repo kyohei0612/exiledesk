@@ -11,7 +11,7 @@ import { SPELL } from "./tut-route";
 import type { TutStepDef } from "./tut-data";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { handOpen, inView, shown } from "./tut-dom";
-import { MISSING, WRONG, inChecks, inHand, runScene, startScene, testScene, type Roles, type TutCtx, type TutNow } from "./use-sim-tutorial";
+import { MISSING, WRONG, goalPageShown, inChecks, inHand, runScene, startScene, testScene, type Roles, type TutCtx, type TutNow } from "./use-sim-tutorial";
 
 const say = (ja: string, en: string): [string, string] => [ja, en];
 /** 今聞かれている箱 (手の質問はその箱、結果の質問は今出している結果の行の箱) */
@@ -51,7 +51,7 @@ export function phoneNow(c: TutCtx): TutNow {
   const { st, d, r, names } = c;
   const k = (scene: string): string => `${st.id}.p-${scene}`;
   if (st.kind === "goal") {
-    if (!shown("[data-tree-goal-mods]")) return { key: k("open"), target: `[data-phone-goal-open="mods"], [data-tree-goal-open="mods"]`, draft: say("完成形の「MOD」を開く", "Open the final item's \"Mods\"") };
+    if (!goalPageShown()) return { key: k("open"), target: null, act: "goal", draft: say("下の「完成形の設定へ」で完成形の MOD を開く", "Open the final mods with \"Final item\" below") };
     if (!(d.memoAims ?? []).some((a) => a.fractured && a.modId === SPELL)) return { key: k("frac"), target: `[data-tree-goal-card] [data-card-mod="${SPELL}"]`, draft: say(`カードの「${names.mod(SPELL)}」の行を押して ✦ を付ける`, `Tap the "${names.mod(SPELL)}" row on the card to mark it ✦`) };
     const extra = (d.memoAims ?? []).find((a) => a.fractured && a.modId !== SPELL);
     if (extra) return { key: k("frac-off"), target: `[data-tree-goal-card] [data-card-mod="${extra.modId}"]`, draft: say(`「${names.mod(extra.modId)}」の ✦ は外す (もう一度押す)`, `Remove the ✦ from "${names.mod(extra.modId)}" (tap it again)`) };
@@ -61,7 +61,7 @@ export function phoneNow(c: TutCtx): TutNow {
   if (st.kind === "start") return startScene(c, k);
   if (st.kind === "hand") {
     const id = r[st.box];
-    if (!id) return { key: k("missing"), target: null, draft: MISSING };
+    if (!id) return { key: k("missing"), target: null, act: "undo", draft: MISSING };
     const b = d.boxes[id]!;
     const back = returnTo(d);
     if (back?.to === id) {
@@ -71,7 +71,7 @@ export function phoneNow(c: TutCtx): TutNow {
       return { key: kb("main"), target: "[data-phone-main]", draft: say(`この結果は「${c.boxName(st.box)}」と同じ中身。下の「この状態で打つカレンシーを選ぶ」で同じ手を選ぶと、その箱へ戻る`, `This result has the same mods as "${c.boxName(st.box, true)}". Tap "Choose the currency" at the bottom and pick the same craft to go back there`) };
     }
     if (handOpen()) return inHand(st, k, names, () => phoneUse(st, k, names));
-    if (b.hand) return { key: k("wrong"), target: null, wrong: true, draft: WRONG(c.boxName(st.box), c.boxName(st.box, true)) };
+    if (b.hand) return { key: k("wrong"), target: null, wrong: true, act: "undo", draft: WRONG(c.boxName(st.box), c.boxName(st.box, true)) };
     const asked = askedBox(), main = shown("[data-phone-main]");
     // 聞かれている箱がこの手順の箱 = 下の帯の「始める」/「この状態で打つカレンシーを選ぶ」
     if (asked === id && main?.dataset.main === "hand") return { key: k("plus"), target: "[data-phone-main]", draft: say(`下の「${main.textContent?.trim() ?? ""}」を押す`, `Tap "${main.textContent?.trim() ?? ""}" at the bottom`) };

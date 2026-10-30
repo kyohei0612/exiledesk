@@ -11,7 +11,7 @@ import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import type { TreeBox, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { headOf, modShort } from "../tree/tree-names";
 import { useTree } from "../tree/use-tree";
-import { openTreePage } from "../../../web/page";
+import { openTreePage, treeStep } from "../../../web/page";
 import { simOp } from "../../../web/track";
 import { DRAFT_WHY, SPELL, isTutorialDoc, rolesOf, tutorialDoc, type Role, type TutNames } from "./tut-route";
 import { tutData, type TutStepDef } from "./tut-data";
@@ -48,6 +48,8 @@ export function handMatches(d: TreeDoc, id: string, st: HandStep): boolean {
 const goalOk = (d: TreeDoc): boolean => (d.memoAims ?? []).every((a) => !!a.fractured === (a.modId === SPELL)) && !!d.goalQualityNo && !d.goalQualityOn;
 /** 始め方: フラクチャー済みから (✦ の MOD は start.mods でなく完成形の印から読む = tree-start-choice) */
 const startOk = (d: TreeDoc): boolean => !!d.fracAsked && d.start?.from === "fractured" && (d.memoAims ?? []).some((a) => a.fractured && a.modId === SPELL);
+/** 完成形の設定がページで開いている (?page=sim-mods。ツリーの上の窓の形は「決めた」が下の帯に隠れるので数えない) */
+export const goalPageShown = (): boolean => !!shown("[data-tree-goal-mods]") && treeStep.value === "mods";
 /** 始め方の窓が開いている */
 export const startAskOpen = (): boolean => !!document.querySelector("[data-tree-start-ask]");
 /** その一手が済んだか (木の中身で決める。帯・テスト・100 人・文だけの手順は押したか) */
@@ -78,12 +80,14 @@ export function noteClick(e: Event): void {
  * 今の場面: key = 文と光らせる所の鍵 (「手順の id.場面」)、target = 既定の光らせる所 (CSS。{box} = その手順の箱、done:<箱> = 箱の「完成」)、
  * draft = 下書きの一言、wrong = 違う手が付いている
  */
-export type TutNow = { key: string; target: string | null; draft: [string, string]; wrong?: boolean };
+export type TutNow = { key: string; target: string | null; draft: [string, string]; wrong?: boolean;
+  /** 札の中に出すボタン: undo = 1 つ戻す (スマホに Ctrl+Z が無い)、goal = 完成形の設定をページで開く (ツリーの上の窓は「決めた」が下の帯に隠れた、モンキー 7 の 1) */
+  act?: "undo" | "goal" };
 /** 場面を求める口に渡す物 (PC とスマホで同じ) */
 export type TutCtx = { st: TutStepDef; d: TreeDoc; r: Roles; names: TutNames; boxName: (role: Role, en?: boolean) => string; ran: boolean; testPressed: boolean };
 const say = (ja: string, en: string): [string, string] => [ja, en];
-export const WRONG = (bn: string, be: string): [string, string] => say(`「${bn}」の箱に違う手が付いている。1 つ戻す (Ctrl+Z) で戻してください`, `The "${be}" box has a different craft. Undo (Ctrl+Z) to go back`);
-export const MISSING = say("1 つ前の手の結果の箱がまだ無い。1 つ戻す (Ctrl+Z) で戻してください", "The box from the previous step is missing. Undo (Ctrl+Z) to go back");
+export const WRONG = (bn: string, be: string): [string, string] => say(`「${bn}」の箱に違う手が付いている。下の「1 つ戻す」で戻してください`, `The "${be}" box has a different craft. Use "Undo" below to go back`);
+export const MISSING = say("1 つ前の手の結果の箱がまだ無い。下の「1 つ戻す」で戻してください", "The box from the previous step is missing. Use \"Undo\" below to go back");
 
 /** 手の窓の中 (持つ → お告げ → ☑ → 残したい MOD) で、まだの所を 1 つ (PC とスマホで同じ。スマホは use で先へ進む所だけ違う) */
 export function inHand(st: HandStep, k: (s: string) => string, names: TutNames, use: () => TutNow): TutNow {
@@ -109,7 +113,7 @@ function pcNow(c: TutCtx): TutNow {
   const { st, d, r, names } = c;
   const k = (scene: string): string => `${st.id}.${scene}`;
   if (st.kind === "goal") {
-    if (!shown("[data-tree-goal-mods]")) return { key: k("open"), target: `[data-tree-goal-open="mods"]`, draft: say("完成形の「MOD」を開く", "Open the final item's \"Mods\"") };
+    if (!goalPageShown()) return { key: k("open"), target: null, act: "goal", draft: say("下の「完成形の設定へ」で完成形の MOD を開く", "Open the final mods with \"Final item\" below") };
     const extra = (d.memoAims ?? []).find((a) => a.fractured && a.modId !== SPELL);
     if (extra) return { key: k("frac-off"), target: `[data-tree-goal-card] [data-card-mod="${extra.modId}"]`, draft: say(`「${names.mod(extra.modId)}」の ✦ は外す (もう一度押す)`, `Remove the ✦ from "${names.mod(extra.modId)}" (click it again)`) };
     if (!(d.memoAims ?? []).some((a) => a.fractured && a.modId === SPELL)) return { key: k("frac"), target: `[data-tree-goal-card] [data-card-mod="${SPELL}"]`, draft: say(`カードの「${names.mod(SPELL)}」の行を押して ✦ を付ける`, `Click the "${names.mod(SPELL)}" row on the card to mark it ✦`) };
@@ -119,9 +123,9 @@ function pcNow(c: TutCtx): TutNow {
   if (st.kind === "start") return startScene(c, k);
   if (st.kind === "hand") {
     const id = r[st.box];
-    if (!id) return { key: k("missing"), target: null, draft: MISSING };
+    if (!id) return { key: k("missing"), target: null, act: "undo", draft: MISSING };
     const b = d.boxes[id]!;
-    if (b.hand && !handOpen()) return { key: k("wrong"), target: `[data-box-id="{box}"]`, wrong: true, draft: WRONG(c.boxName(st.box), c.boxName(st.box, true)) };
+    if (b.hand && !handOpen()) return { key: k("wrong"), target: `[data-box-id="{box}"]`, wrong: true, act: "undo", draft: WRONG(c.boxName(st.box), c.boxName(st.box, true)) };
     if (!handOpen()) {
       // 箱が画面の外 (帯の「次へ」で寄っていない) なら帯を指す
       if (!inView(shown(`[data-box-id="${CSS.escape(id)}"]`)) && shown("[data-tree-unset-bar]")) return { key: k("bar"), target: "[data-tree-unset-bar]", draft: say(`帯の「次へ」で「${c.boxName(st.box)}」の箱へ寄る`, `Use the bar's "Next" to go to the "${c.boxName(st.box, true)}" box`) };
@@ -139,8 +143,9 @@ function pcNow(c: TutCtx): TutNow {
 /** 始め方の窓 (PC・スマホ共通の窓 TreeStartAsk) */
 export function startScene(c: TutCtx, k: (s: string) => string): TutNow {
   if (!startAskOpen()) {
-    if (c.d.fracAsked) return { key: k("wrong"), target: null, wrong: true, draft: say("始め方が「フラクチャー済みから」でない。1 つ戻す (Ctrl+Z) で戻してください", "The start isn't \"From fractured\". Undo (Ctrl+Z) to go back") };
-    return { key: k("reopen"), target: "[data-tree-goal-done]", draft: say("「決めた (ツリーへ)」をもう一度押す", "Click \"Done (back to the tree)\" again") };
+    // 始め方を選び直す = 完成形の設定 (ページ) の「決めた」から始め方の窓をもう一度 (窓の形は「決めた」が下の帯に隠れるのでページで開く)
+    if (!goalPageShown()) return { key: k(c.d.fracAsked ? "wrong" : "reopen"), target: null, wrong: !!c.d.fracAsked, act: "goal", draft: c.d.fracAsked ? say("始め方が「フラクチャー済みから」でない。下の「完成形の設定へ」から選び直す", "The start isn't \"From fractured\". Pick it again from \"Final item\" below") : say("下の「完成形の設定へ」から始め方の窓を開く", "Open the start window from \"Final item\" below") };
+    return { key: k("reopen"), target: "[data-tree-goal-done]", draft: say("「決めた (ツリーへ)」を押して始め方を選ぶ", "Click \"Done (back to the tree)\" to pick the start") };
   }
   const mods = [...document.querySelectorAll<HTMLElement>("[data-tree-start-ask-mod]")];
   const on = mods.filter((l) => !!l.querySelector("input:checked"));
@@ -229,6 +234,16 @@ export function startTutorial(): void {
   void nextTick(() => { t.goalPage.value = 2; openTreePage("mods"); });
   simOp("tutorial-start", tutData.value.course);
 }
+/** 完成形の設定をページで開く (ツリーの上の窓で開いていても開き直す。札の「完成形の設定へ」) */
+export function openGoalPage(): void {
+  const t = useTree();
+  t.goalPage.value = 0;
+  void nextTick(() => { t.goalPage.value = 2; openTreePage("mods"); });
+}
+/** 札の「1 つ戻す」(画面の 1 つ戻すと同じ。スマホには Ctrl+Z が無い、モンキー 7 の 2) */
+export function undoOne(): void { useTree().undo(); }
+/** 進みがあるか (「最初から」で消える物。始め方を決めた・手を足した) */
+export function tutHasProgress(): boolean { const d = useTree().doc.value; return !!d.fracAsked || Object.keys(d.boxes).length > 1; }
 /** やめる (木はそのまま)。done = 最後まで進んで「終わる」を押した */
 export function stopTutorial(done = false): void {
   if (done) simOp("tutorial-done", tutData.value.course);
