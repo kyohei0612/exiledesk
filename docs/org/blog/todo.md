@@ -2,8 +2,25 @@
 
 終わった事・古い引き継ぎ・記事ごとの進みは git の履歴 (10-29 の md の整理で消した): 2026-10-22-todo-archive.md (そのまま移した)。
 
+## 記事の再開 (10-31 オーナー「おけ それでたてて 最近発見した仕組みとかそういう感じの奴で記事の書き方は他と同じような感じで」)
+AdSense 2 回目の不承認 (10-30) の洗い直し = 共有メモ local_e2573db4…/adsense-1031.md の 2 位「更新が止まって見える」への答え。**週 2〜3 本・本当の日付**。再申請は 11 月末か、下の記事を 6〜8 本足した後の早い方 (時期はブラック)。
+- 出し方: 書いたら `ready: true` と `draft: true` を両方付ける (開発版だけに出て、本番の build:web には入らない = build-blog-pages.mjs 133 行)。オーナーが読んで OK → `draft` を外し、`date` を本番に出す日に直す (本当の日付)。
+- 確かめ: `node scripts/build-blog-pages.mjs <scratchpad>/blogout --drafts` → 自分の港 1476 で配って窓なしの Chrome (使い捨て profile) で撮る。照らし合わせは記事ごとに部下 1 つ。
+- 種 (最近確かめた仕組み、今の 30 本と主題がかぶらない物。数字は記録のある物だけ):
+
+| # | slug | 主題 | 出どころ | 出す日の目安 | 状態 |
+|---|---|---|---|---|---|
+| 1 | coe-odds-parity | 1 手の確率は CoE と合う？ 高貴 15/15・カオス 11/12、外れた 1 つは偶然 | math/notes/2026-10-23-coe-odds.md・coe-chaos.md | 10-30 | 書いた・照らし合わせ済み・オーナー待ち |
+| 2 | chaos-removed-mod-returns | カオスで消した MOD は同じ 1 回でまた付く (E-30) | research/notes/2026-10-26-chaos-reroll-same-mod.md。**例の割合 (消した物が戻る %) は記録に無い → 解析君に 1 つ頼む** | 11-02 | 数字待ち |
+| 3 | boots-res-craft | 移動速度 T1 固定の靴に耐性 T1 を 2 つ、費用と打ち方 | math/notes/2026-10-23-boots-res.md | 11-04 | 未着手 |
+| 4 | abyss-essence-limits | アビスのエッセンスが打てる部位・打てない状態 (E-52) | research/notes/2026-10-22-abyss-essence-limits.md | 11-07 | 未着手 |
+| 5 | chaos-over-limit-void | 上限を超えた側を消すカオスは不成立・オーブも減らない (E-25) | engine.md E-25、オーナー 10-14、ジン 11 本目の調べ 10-26 | 11-09 | 未着手 (具体の例を記録から探す) |
+| 6 | perfect-essence-full-side | パーフェクトエッセンスは埋まった側から必ず 1 つ消す (E-51) | engine.md E-51、オーナー 10-14 | 11-11 | 未着手 |
+| 7 | bone-needs-clear-desecrated | 冒涜の MOD があると骨は打てない、やり直す順 (E-60) | engine.md E-60、オーナー 10-24 | 11-14 | 未着手 |
+| 8 | fracture-counts-desecrated | フラクチャーの「4 つ以上」に冒涜も数え、固定は普通の MOD から (E-42) | engine.md E-42、オーナー 10-28 | 11-16 | 予備 |
+
 ## 今の状態 (10-22 夜)
-- 記事 30 本 (日) / 29 本 (英、x-share-bug は日本語だけ) は合格の形・ready。本番は v0.1.590 (7884f2f6) で公開済み。新しい記事は足さない (オーナー「30 本で十分」)。
+- 記事 30 本 (日) / 29 本 (英、x-share-bug は日本語だけ) は合格の形・ready。本番は v0.1.590 (7884f2f6) で公開済み。~~新しい記事は足さない (オーナー「30 本で十分」)~~ → 10-31 に再開 (上)。
 - 仕上げの頼みの文: 日本語 notes/finish-brief.md → 照らし合わせ notes/finish-checker-brief.md → 英語 notes/finish-en-brief.md → 照らし合わせ notes/finish-en-checker-brief.md。新しく書く時は notes/writer-brief.md・checker-brief.md、配信の跡を消す時は notes/destream-brief.md。
 - 合格の形: 頭に分かる事 3 行と言葉の説明・ずんだもん / めたんの掛け合いで進む短文・文の途中で改行しない・英語の添え書き無し・図は使わず言葉の入った表・出どころと未確認は畳む (:::fold・:::note fold)。
 - 本番で開かないリンク: ?page=sim-tree と ?page=routes は URL から開かない (src/web/page.ts)。記事・FAQ では使わず、スパムシミュレーターは「クラフトステージのカレンシーの見出しのボタンから」と書く (15fbc24d)。
