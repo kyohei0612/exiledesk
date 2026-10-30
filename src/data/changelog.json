@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.644",
+  "date": "2026-10-30",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "サイト: 自動で作っていたベースの一覧のページ (/bases/) を閉じ、ヘッダー・フッターの「ベース一覧」を外しました。ベースはエミュレーターで選べます",
+    "en": "Site: the auto-generated base list pages (/bases/) are closed and the \"Bases\" link is gone from the header and footer. Bases can still be picked in the Emulator"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "サイト: About に運営者 (チョコバナナ、個人) と X・YouTube のリンクを載せました",
+    "en": "Site: the About page now shows the operator (chocobanana, an individual) with links to X and YouTube"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "ブログ: 記事「PoE2 クラフトの確率は CoE と合う？」を載せました",
+    "en": "Blog: new article \"Do PoE2 Crafting Odds Match Craft of Exile?\""
+   }
+  ]
+ },
+ {
   "v": "0.1.643",
   "date": "2026-10-29",
   "items": [
@@ -980,17 +1004,5 @@
    }
   ],
   "pop": true
- },
- {
-  "v": "0.1.603",
-  "date": "2026-10-25",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 消去で外れが消えた後に先の手を足せるように・打てない理由の文を正しく・冒涜の MOD はフラクチャーの印を付けられないように",
-    "en": "Simulator: You can now add crafts after an annul removes a miss, the “can’t craft” reason is now accurate, and desecrated mods can no longer be marked for Fracture"
-   }
-  ]
  }
 ]
