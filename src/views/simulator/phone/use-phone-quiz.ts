@@ -10,6 +10,7 @@ import { computed, ref, shallowRef } from "vue";
 import { useTreeLink } from "../tree/use-tree-link";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { aimKey, setBack, setDone, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { hasGot } from "../../../services/simulator/tree/tree-keep";
 import { heldSets } from "../../../services/simulator/tree/tree-shape";
 import { judgeOf } from "../tree/tree-hand-plan";
 import { useTree } from "../tree/use-tree";
@@ -234,7 +235,9 @@ export function usePhoneQuiz() {
     const list = [...new Set(held)].join(tr("・", ", "));
     // 当たりは PC の枠の札と同じ「スピリットが付いた」(10-26 オーナー「枠の上のところに●がついた みたいな形でよくある枠の形にしたら枠中ごちゃんなくていいよな」)
     if (b.out === "hit") return headOf(b, t.aimShort);
-    return held.length ? `${outsName(b)} (${list})` : outsName(b);
+    // 狙いが消えた人に付ける狙いが付いた箱は PC の枠の札と同じ「狙いが消えた・狙いが付いた」(S-27d、スイッチ keepAll)
+    const name = b.out === "lost" && hasGot(b.junkKey) ? tr("狙いが消えた・狙いが付いた", "Target lost · target added") : outsName(b);
+    return held.length ? `${name} (${list})` : name;
   }
   /** 道の短い 1 行 (始まり › 手 › 結果 …) */
   function pathText(id: string): string {
