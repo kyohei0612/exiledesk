@@ -4,7 +4,6 @@
  * エッセンスは付け方に出さない (エッセンスで付く MOD は「ふつう」で付ける。オーナー「エッセンスは関係ないね…付け方に表示はしなくていい」)。
  * 出ない付け方の訳は MOD の出どころ (一覧の行の群れ) から: 冒涜専用は骨だけ、クラフト MOD は骨・フラクチャーの外 (E-41・E-62・E-95)
  */
-import { ref } from "vue";
 import { tr } from "../../../i18n/lang";
 import { migrateStart, startRarity, type Aim, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 
@@ -56,5 +55,3 @@ export function detachIn(d: TreeDoc, modId: string): void {
   d.start!.rarity = startRarity(d);
 }
 
-/** 4 択を開いている段 (`modId|tier`、一度に 1 つ) */
-export const attachOpen = ref<string | null>(null);
