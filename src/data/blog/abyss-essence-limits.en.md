@@ -155,3 +155,5 @@ On the ExileDesk [crafting bench](/?base=Gold%20Ring), use an Essence of the Aby
 - [PoE2 Gnawed, Preserved, Ancient Bone: Which to Use](/en/blog/desecration-bone-types/)
 - [PoE2 Desecration: Which Side Does a Bone Land On?](/en/blog/desecration-bone-sides/)
 - [PoE2 Fracturing Orb: Desecrated Mods Can't Be Fractured](/en/blog/fracture-desecrated/)
+
+VOICEVOX: Zundamon / Shikoku Metan

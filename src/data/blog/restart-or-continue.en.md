@@ -144,3 +144,5 @@ Pick a Gold Ring on the ExileDesk [crafting bench](/?base=Gold%20Ring) and try d
 - [PoE2 Ring Suffix Craft: Annul Misses Early, 400 → 220 div](/en/blog/dont-hoard-misses/)
 - [PoE2 Omens Worth It? When a Plain Annul Is Enough](/en/blog/are-omens-worth-it/)
 - [PoE2 Omen of Whittling Needs Bait, or 96% of Crafts Break](/en/blog/whittling-omen-bait/)
+
+VOICEVOX: Zundamon / Shikoku Metan

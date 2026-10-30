@@ -155,3 +155,5 @@ ExileDesk の [クラフト台](/?base=Gold%20Ring) で、未発現の冒涜が�
 - [PoE2 冒涜の骨の種類｜噛み切られた・保存された・古代の使い分け](/blog/desecration-bone-types/)
 - [PoE2 冒涜の骨は左右どっち？｜半々に直した話](/blog/desecration-bone-sides/)
 - [PoE2 フラクチャーの勘違い｜冒涜の MOD は固定できない](/blog/fracture-desecrated/)
+
+VOICEVOX:ずんだもん / 四国めたん

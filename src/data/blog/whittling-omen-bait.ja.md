@@ -157,3 +157,5 @@ ExileDesk の [クラフト台](/?base=Gold%20Ring) で金の指輪を選び、M
 - [PoE2 お告げは高い？使うべきか｜消去 0.44 神で足りる場面](/blog/are-omens-worth-it/)
 - [PoE2 上級・完全のオーブの違い｜最低モッドレベルの早見表](/blog/greater-perfect-orb-difference/)
 - [PoE2 アビスのエッセンスが打てない時｜冒涜と紋章の決まり](/blog/abyss-essence-limits/)
+
+VOICEVOX:ずんだもん / 四国めたん

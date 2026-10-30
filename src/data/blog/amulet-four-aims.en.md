@@ -151,3 +151,5 @@ Pick a Stellar Amulet on the ExileDesk [crafting bench](/?base=Stellar%20Amulet)
 - [PoE2 Crafting Order Cost: 58.7 to 249 div by Order](/en/blog/crafting-order-cost/)
 - [PoE2 Gnawed, Preserved, Ancient Bone: Which to Use](/en/blog/desecration-bone-types/)
 - [PoE2 Omens Worth It? When a Plain Annul Is Enough](/en/blog/are-omens-worth-it/)
+
+VOICEVOX: Zundamon / Shikoku Metan

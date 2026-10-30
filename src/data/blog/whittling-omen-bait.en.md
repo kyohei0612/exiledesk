@@ -157,3 +157,5 @@ Pick a Gold Ring on the ExileDesk [crafting bench](/?base=Gold%20Ring) and try O
 - [PoE2 Omens Worth It? When a Plain Annul Is Enough](/en/blog/are-omens-worth-it/)
 - [PoE2 Greater vs Perfect Orb Difference: Min Mod Levels](/en/blog/greater-perfect-orb-difference/)
 - [PoE2 Essence of the Abyss: When You Can't Use It](/en/blog/abyss-essence-limits/)
+
+VOICEVOX: Zundamon / Shikoku Metan

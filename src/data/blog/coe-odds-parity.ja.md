@@ -184,3 +184,5 @@ ExileDesk の [クラフト台](/?base=Gold%20Ring) で金の指輪を選ぶと�
 - [PoE2 キャストスピードの重み｜poe2db は 1、CoE は 1,000](/blog/poe2db-cast-speed-weight/)
 - [PoE2 上級・完全のオーブの違い｜最低モッドレベルの早見表](/blog/greater-perfect-orb-difference/)
 - [PoE2 カオススパムの確率｜1 回 0.3% なら何個かかるか](/blog/chaos-spam-odds/)
+
+VOICEVOX:ずんだもん / 四国めたん

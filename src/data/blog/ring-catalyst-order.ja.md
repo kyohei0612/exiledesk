@@ -159,3 +159,5 @@ ExileDesk の [クラフト台](/?base=Gold%20Ring) で金の指輪を選ぶと�
 - [PoE2 触媒の高貴のお告げの倍率｜公式の数字は誰も知らない](/blog/catalysing-exaltation-multiplier/)
 - [PoE2 ES 手袋のクラフト｜高貴は完全より上級が安い](/blog/es-gloves-greater-exalt/)
 - [PoE2 途中の指輪は作り直すべき？｜続けても戻っても差は小さい](/blog/restart-or-continue/)
+
+VOICEVOX:ずんだもん / 四国めたん

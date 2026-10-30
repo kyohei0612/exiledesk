@@ -158,3 +158,5 @@ ExileDesk の [クラフト台](/?base=Drakeskin%20Boots) でドレイクスキ�
 - [PoE2 指輪クラフトのサフィックス｜外れはすぐ消去で半額に](/blog/dont-hoard-misses/)
 - [PoE2 クラフトの費用と運｜平均・半分の人・10 人に 1 人](/blog/crafting-cost-variance/)
 - [PoE2 クラフトの確率は CoE と合う？｜5 万回ずつ照らした](/blog/coe-odds-parity/)
+
+VOICEVOX:ずんだもん / 四国めたん

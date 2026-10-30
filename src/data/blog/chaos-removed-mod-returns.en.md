@@ -157,3 +157,5 @@ Use Chaos Orbs on Drakeskin Boots on the ExileDesk [crafting bench](/?base=Drake
 - [Do PoE2 Crafting Odds Match Craft of Exile? 50k Rolls Each](/en/blog/coe-odds-parity/)
 - [PoE2 Chaos Spam Odds: How Many Orbs at 0.3% per Try](/en/blog/chaos-spam-odds/)
 - [PoE2 Chaos Orb Reroll vs Restart: 31 div vs 580 div](/en/blog/chaos-reroll-vs-restart/)
+
+VOICEVOX: Zundamon / Shikoku Metan

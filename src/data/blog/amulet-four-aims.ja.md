@@ -151,3 +151,5 @@ ExileDesk の [クラフト台](/?base=Stellar%20Amulet) で星のアミュレ�
 - [PoE2 クラフトの順番と費用｜記録した順番で 58.7〜249 神](/blog/crafting-order-cost/)
 - [PoE2 冒涜の骨の種類｜噛み切られた・保存された・古代の使い分け](/blog/desecration-bone-types/)
 - [PoE2 お告げは高い？使うべきか｜消去 0.44 神で足りる場面](/blog/are-omens-worth-it/)
+
+VOICEVOX:ずんだもん / 四国めたん

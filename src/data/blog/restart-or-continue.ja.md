@@ -144,3 +144,5 @@ ExileDesk の [クラフト台](/?base=Gold%20Ring) で金の指輪を選ぶと�
 - [PoE2 指輪クラフトのサフィックス｜外れはすぐ消去で半額に](/blog/dont-hoard-misses/)
 - [PoE2 お告げは高い？使うべきか｜消去 0.44 神で足りる場面](/blog/are-omens-worth-it/)
 - [PoE2 削減のお告げは餌と使う｜そのままだと 96% 壊れる](/blog/whittling-omen-bait/)
+
+VOICEVOX:ずんだもん / 四国めたん

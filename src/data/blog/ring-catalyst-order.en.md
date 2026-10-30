@@ -159,3 +159,5 @@ Pick a Gold Ring on the ExileDesk [crafting bench](/?base=Gold%20Ring) and compa
 - [PoE2 Catalysing Exaltation Multiplier: No One Knows It](/en/blog/catalysing-exaltation-multiplier/)
 - [PoE2 Energy Shield Gloves Craft: Greater Exalt Beats Perfect](/en/blog/es-gloves-greater-exalt/)
 - [PoE2 Restart a Half-Done Ring? The Gap Is Small Either Way](/en/blog/restart-or-continue/)
+
+VOICEVOX: Zundamon / Shikoku Metan

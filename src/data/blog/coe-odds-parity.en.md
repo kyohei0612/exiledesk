@@ -184,3 +184,5 @@ Pick a Gold Ring on the ExileDesk [crafting bench](/?base=Gold%20Ring) and the m
 - [PoE2 Cast Speed Weight: 1 on poe2db, 1,000 in CoE](/en/blog/poe2db-cast-speed-weight/)
 - [PoE2 Greater vs Perfect Orb Difference: Min Mod Levels](/en/blog/greater-perfect-orb-difference/)
 - [PoE2 Chaos Spam Odds: How Many Orbs at 0.3% per Try](/en/blog/chaos-spam-odds/)
+
+VOICEVOX: Zundamon / Shikoku Metan

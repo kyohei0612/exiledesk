@@ -157,3 +157,5 @@ ExileDesk の [クラフト台](/?base=Drakeskin%20Boots) でドレイクスキ�
 - [PoE2 クラフトの確率は CoE と合う？｜5 万回ずつ照らした](/blog/coe-odds-parity/)
 - [PoE2 カオススパムの確率｜1 回 0.3% なら何個かかるか](/blog/chaos-spam-odds/)
 - [PoE2 カオスオーブで付け直すか作り直すか｜31 神と 580 神](/blog/chaos-reroll-vs-restart/)
+
+VOICEVOX:ずんだもん / 四国めたん
