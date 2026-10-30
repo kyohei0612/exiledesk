@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.649",
+  "date": "2026-10-30",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: スマホで、結果の箱の答え (失敗・次の手) と「既にある箱へ戻す」が選べなかったのを直しました",
+    "en": "Simulator: fixed being unable to choose an answer for a result box (Fail, next craft) or \"Return to a box\" on phones"
+   }
+  ]
+ },
+ {
   "v": "0.1.648",
   "date": "2026-10-30",
   "items": [
@@ -973,17 +985,5 @@
    }
   ],
   "pop": true
- },
- {
-  "v": "0.1.608",
-  "date": "2026-10-26",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 手袋・靴・兜・鎧・盾のアイテムを貼り付けた時、クラフト MOD (エッセンス・合金) が読めなかったのを直しました",
-    "en": "Simulator: Fixed crafted mods (Essence / Alloy) not being read when pasting gloves, boots, helmets, body armours or shields"
-   }
-  ]
  }
 ]

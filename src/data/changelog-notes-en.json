@@ -1,4 +1,7 @@
 {
+  "0.1.649": [
+    "Simulator: fixed being unable to choose an answer for a result box (Fail, next craft) or \"Return to a box\" on phones"
+  ],
   "0.1.648": [
     "Simulator: fixed the \"Item level set to n\" message in the final item settings staying on an old number after reopening a tree",
     "Simulator: fixed the \"Done\" button in the final item settings opened over the tree running off the bottom and being hidden by the bottom bar",
