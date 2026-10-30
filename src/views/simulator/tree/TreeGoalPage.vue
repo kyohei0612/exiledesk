@@ -42,6 +42,7 @@ import type { RowToggle } from "../../../components/for-share/item/stage-item-ro
 import { dropWay, inWay, isBreachAim, isCraftAim, toggleWay, wayUndecided, WAY_ORDER } from "./tree-way-mods";
 import { flag } from "../../../web/release-flags";
 import { useEditReset } from "./use-edit-reset";
+import { useDismiss } from "../../../utils/use-dismiss";
 import TreeAttachPick from "./TreeAttachPick.vue";
 import { wayName } from "./tree-attach";
 /** 段の行のボタンを「付ける」1 つに (S-10b) */
@@ -79,6 +80,12 @@ function go(n: 0 | 1 | 2): void {
 /** 「替える」の確かめが出たら見える所へ送る (一覧を下まで送っていると上の帯が見えず、ベースを押しても進まないように見えた、10-23 オーナー) */
 const askEl = ref<HTMLElement | null>(null);
 watch(asking, (v) => { if (v) void nextTick(() => askEl.value?.scrollIntoView({ block: "nearest" })); });
+if (flag("goalAskFix")) {
+  // 帯が出ている時の Esc 1 回は帯だけ閉じる (U-21 の積み。一覧を押して別のベースへ替えられるよう、外を押しても閉じない、S-06)
+  useDismiss(() => !!asking.value, [askEl], () => { asking.value = null; }, { escOnly: true });
+  // 帯は今の段の今の木の確かめ。段やタブが替わったら外す (今のベースを押して 2 へ進んで戻ると古い帯が残った、S-06)
+  watch([step, t.active], () => { asking.value = null; });
+}
 /** 段のタブの右端のレシピから別の木を開いた = 窓を閉じてその木へ */
 function onRecipe(): void { asking.value = null; dropped.value = []; go(0); }
 /** 貼り付けで取り込んだ (どの画面から貼っても。ベースと狙いを入れて ② へ移すのは tree-paste) = この窓の「まだ選んでいない」と確かめを外す */

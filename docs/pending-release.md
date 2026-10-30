@@ -7,6 +7,7 @@
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
 | エミュ: スパムシミュレーターの PC の人数を 100 → 30 に (スイッチ spam30、M-61、ブラック 24 の頼みでデザイン部長が代わりに。オーナーの OK 待ち。出す時に記事 spam-simulator の「100 人」を記事編集長へ) | スイッチ spam30 の commit | スパムシミュレーターの計算を 1 通り 30 人にして速くしました | The spam simulator now runs 30 people per route, so it finishes much faster |
+| シミュ: 完成形の設定の直し 3 つ (スイッチ goalAskFix、S-06・S-31、R10〜R12。オーナーの確かめ待ち) | (このスイッチを足した commit) | シミュの完成形の設定: ベースを替える確かめの帯は Esc で帯だけ閉じ、段を移ると消えるように。品質の上限のプルダウンは届く値だけ出すように | Simulator final item: Esc now closes only the change-base prompt, and it no longer lingers after moving between steps. The max quality dropdown only lists values you can reach |
 | エミュ: 次の手で狙うの選ぶ窓の MOD の表を共通の ModTable に (スイッチ aimTable、U-12c・M-30、デザイン部長。オーナーの OK 待ち) | 4f7e48a14 | 「次の手で狙う」の MOD の表を MOD 一覧と同じ形にしました。開いても列が揃い、ティアごとの出やすさも出ます | The Target next move mod table now matches the mod list: columns stay aligned when a row opens, and each tier shows its chance |
 | (並びとコスメティックは 0.1.598 で出た、残りはデイリー) 共通: 上の切り替えタブの並びを エミュレーター / シミュレーター / デイリー / ジェムコラプト / コスメティック に (ジェムコラプトは 10-28 に外した、Y-17)。デイリー・コスメティックの入口をヘッダーから移した (ModeTabs、デザイン部長 5 本目、オーナー 10-25「ここの右端が良いな、目立たんし」)。スマホは 3 列の格子。中身はスイッチ daily・skins の下 (本番ではデイリー・コスメティックは出ない、並びはジェムコラプトの位置だけ同じ) | 2758a5ca・b26c850b・e160608e | (デイリー・コスメティックと一緒に出す時に書く) | (written with Daily / Cosmetics) |
 

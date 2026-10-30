@@ -12,7 +12,8 @@ import { computed, onBeforeUnmount } from "vue";
 import { tr } from "../../i18n/lang";
 import { flag } from "../../web/release-flags";
 
-const props = defineProps<{ item: StageItem }>();
+/** capLimit: 上限のプルダウンに出す値の上まで (シミュの完成形 = 届く上限、S-31)。エミュは渡さない (上限を手で広げて試す) */
+const props = defineProps<{ item: StageItem; capLimit?: number }>();
 const emit = defineEmits<{ quality: [n: number, tag?: string]; cap: [n: number]; catalyst: [n: number, tag: string] }>();
 
 /** 品質の上限 (手で決めた値 or 足し算)。品質の − / + / 最大はここまで */
@@ -47,7 +48,7 @@ function hold(d: number): void {
 }
 onBeforeUnmount(stop);
 /** 上限のプルダウン: 足し算の上限と、20 から 10 きざみ (今の上限も入れる)。2026-10-10 オーナー「プルダウンで上限上げてね、20 以降 10 ずつ」 */
-const caps = computed(() => [...new Set([natural.value, 20, 30, 40, 50, 60, 70, 80, maxQ.value])].sort((a, b) => a - b));
+const caps = computed(() => { const top = props.capLimit; return [...new Set([natural.value, 20, 30, 40, 50, 60, 70, 80, maxQ.value])].filter((q) => top === undefined || q <= top || q === maxQ.value).sort((a, b) => a - b); });
 // 帯の中は全部 24px の高さに揃える (2026-10-18 オーナーの UI 点検「品質の行が浮いている」。高さと字の大きさがばらばらで 2 段に折れていた)
 // 押せない時は光らせない (モンキーテスト 10-23 の 8)。本番は OK まで前の形 (release-flags の monkeyEmu1023)
 const hover = flag("monkeyEmu1023") ? "enabled:hover:bg-white/10" : "hover:bg-white/10";

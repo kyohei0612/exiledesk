@@ -32,15 +32,15 @@ export function cancelTopIn(el: HTMLElement | null | undefined): boolean {
 }
 
 /**
- * opts.swallow: false で押した物にも届ける (別の行を押したらそのまま開く時など)。opts.keep: 中に数える場所の CSS (窓・body に出した小窓など)。
+ * opts.escOnly: Esc の積みにだけ載せる (外を押しても閉じない。一覧を押しながら見る確かめの帯など)。opts.swallow: false で押した物にも届ける (別の行を押したらそのまま開く時など)。opts.keep: 中に数える場所の CSS (窓・body に出した小窓など)。
  * 本番ではスイッチ dismiss (release-flags.ts) が入るまで何もしない。opts.always: 本番でも前から外で閉じていた物 (説明の ? など) はいつも動く
  */
-export function useDismiss(active: () => boolean, inside: El[], cancel: () => void, opts: { swallow?: boolean; keep?: string; always?: boolean } = {}): void {
+export function useDismiss(active: () => boolean, inside: El[], cancel: () => void, opts: { swallow?: boolean; keep?: string; always?: boolean; escOnly?: boolean } = {}): void {
   if (!opts.always && !flag("dismiss")) return;
   const keep = opts.keep ? `[data-dismiss-keep], ${opts.keep}` : "[data-dismiss-keep]";
   const els = (): HTMLElement[] => inside.map((e) => (typeof e === "function" ? e() : e.value)).filter((e): e is HTMLElement => !!e);
   const onDown = (e: PointerEvent): void => {
-    if (e.button !== 0 || !active()) return;
+    if (opts.escOnly || e.button !== 0 || !active()) return;
     const t = e.target as Node | null;
     if (!t || !t.isConnected) return;
     if (els().some((el) => el.contains(t)) || (t instanceof Element && t.closest(keep))) return;

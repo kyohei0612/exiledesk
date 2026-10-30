@@ -103,7 +103,7 @@ function setCap(n: number): void { const c = clampQ(n); t.edit((d) => { d.goalQu
     <label class="flex min-h-7 cursor-pointer items-center gap-2 text-[#d8ccb4]">
       <input data-tree-goal-quality-on type="checkbox" :checked="on" @change="setOn(($event.target as HTMLInputElement).checked)" />{{ tr("品質も狙う", "Also aim for quality") }}
     </label>
-    <StageQualityBar v-if="on && item" :item="item" @quality="setQuality" @cap="setCap" @catalyst="() => {}" />
+    <StageQualityBar v-if="on && item" :item="item" :cap-limit="flag('goalAskFix') ? limit : undefined" @quality="setQuality" @cap="setCap" @catalyst="() => {}" />
     </template>
     <p v-if="over && !needBreach" data-tree-goal-quality-infuser class="break-words text-amber-200/90">{{ tr(`${baseMax}% を超える分 (+10% まで) はヴァールのインフューザーで届く`, `Up to +10% above ${baseMax}% is reachable with an Infuser`) }}</p>
     <p v-else-if="needBreach && hasBreach" data-tree-goal-quality-breach class="break-words text-amber-200/90">{{ tr(`${baseMax + 10}% を超えるには、途中でブリーチのエッセンス (品質の最大値 +20%) を付けて品質を上げる。その後でブリーチの MOD が消えても品質は残る (完成形のカードの「途中で消える」の行。完成の MOD の枠には数えない)`, `Above ${baseMax + 10}% needs a Perfect Essence of the Breach (+20% to Maximum Quality) on the way. The quality stays even if that mod is removed later (the "Removed on the way" row on the final item; not counted as a final mod slot)`) }}</p>
