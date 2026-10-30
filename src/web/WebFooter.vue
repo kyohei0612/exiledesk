@@ -16,7 +16,6 @@ import { tr } from "../i18n/lang";
            スマホは押せる高さを 40px に (字の大きさはそのまま、上下の余白で。10-26 夜 AdSense の点検、Lighthouse の target-size は 24px 以上) -->
       <a href="/guide" class="underline max-md:inline-block max-md:py-[13px]">{{ tr("使い方", "Guide") }}</a>
       <a :href="tr('/craft-basics', '/en/craft-basics')" class="underline max-md:inline-block max-md:py-[13px]">{{ tr("クラフト入門", "Crafting basics") }}</a>
-      <a :href="tr('/bases/', '/en/bases/')" class="underline max-md:inline-block max-md:py-[13px]">{{ tr("ベース一覧", "Bases") }}</a>
       <a :href="tr('/about', '/en/about')" class="underline max-md:inline-block max-md:py-[13px]">{{ tr("ExileDesk について", "About") }}</a>
       <a :href="tr('/contact', '/en/contact')" class="underline max-md:inline-block max-md:py-[13px]">{{ tr("お問い合わせ", "Contact") }}</a>
       <a :href="tr('/privacy', '/en/privacy')" class="underline max-md:inline-block max-md:py-[13px]">{{ tr("プライバシーポリシー", "Privacy Policy") }}</a>

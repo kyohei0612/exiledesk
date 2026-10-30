@@ -21,7 +21,8 @@
     // Worker を通すのはシェアだけ。ページ・絵・JS・CSS は直接 (1 日 10 万の枠を食わない、越えても止まらない)。
     // 2026-10-25 トップを外した (巡回の Bot が web の Worker の 6〜8 割。docs/org/analytics/notes/2026-10-25-request-inventory.md)
     // /r/* はシミュのレシピの短い URL (recipe-share.js、表は 0011_recipe_shares.sql。2026-10-26)
-    "run_worker_first": ["/s/*", "/og/*", "/r/*"],
+    // /bases・/en/bases は消したベースのページ (Y-84、2026-10-31 オーナー「Aで」)。静的な置き場は 410 を返せないので Worker で返す (gone.js)
+    "run_worker_first": ["/s/*", "/og/*", "/r/*", "/bases", "/bases/*", "/en/bases", "/en/bases/*"],
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "404-page"
   }

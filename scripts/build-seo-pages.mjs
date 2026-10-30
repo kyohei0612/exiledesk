@@ -11,10 +11,12 @@
  *   node scripts/build-seo-pages.mjs [出力先 (既定 dist-web)]
  * 2026-10-22 オーナー OK: 自動で作ったページは「有用性の低いコンテンツ」に数えられやすいので、全部 noindex (follow) にしてサイトマップから外す。
  *   ページは残し、ツール・フッターからのリンクも残す (人が使う一覧として)。
+ * 2026-10-31 オーナー「Aで」(AdSense の洗い直し): ベースのページは作らない (MAKE_BASES = false)。前に出した /bases/・/en/bases/ は Worker が 410 を返す
+ *   (server/web/gone.js、system.md Y-84)。今はサイトマップを書くだけ。作る処理は消さずに残す (戻す時はオーナーの OK の後)。
  * pnpm build:web の最後に回す (public には置かない。生成物をリポジトリに入れない)。sitemap.xml も出力先の物を書き直す
  */
 import { execFileSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bundleEntry } from "./_bundle-ts.mjs";
@@ -25,6 +27,9 @@ const SITE = "https://exiledesk.com";
 // AdSense のコード。審査中はこの自動ページには置かない (2026-10-27 模擬審査 docs/org/analytics/notes/2026-10-27-adsense-mock-review.md:
 // ゲームのデータ・借り物の一覧に広告のコードが付いていると「有用性の低いコンテンツ」に見られやすい)。審査が通ったら true に戻す (docs/org/analytics/todo.md)
 const ADS_ON_AUTO_PAGES = false;
+// ベースのページを作るか (2026-10-31 false、Y-84)。false の時は前の作りの残り (出力先の bases/・en/bases/) も消して、置き場に上げない
+const MAKE_BASES = false;
+if (!MAKE_BASES) for (const d of ["bases", "en/bases"]) rmSync(resolve(OUT, d), { recursive: true, force: true });
 const AD_TAG = ADS_ON_AUTO_PAGES ? `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1993030721214430" crossorigin="anonymous"></script>\n` : "";
 const M = await bundleEntry("scripts/_seo-entry.ts");
 const data = M.loadPatchSync();
@@ -86,7 +91,7 @@ const byCls = new Map();
 for (const b of rows) (byCls.get(b.cls) ?? byCls.set(b.cls, []).get(b.cls)).push(b);
 
 const urls = [];
-for (const [code, L] of Object.entries(LANGS)) {
+for (const [code, L] of Object.entries(MAKE_BASES ? LANGS : {})) {
   M.setLang(code);
   const other = code === "ja" ? "en" : "ja";
   const head = (title, desc, path) => `<!doctype html>
@@ -198,4 +203,4 @@ writeFileSync(resolve(OUT, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"
 ${fixed.map((u) => { const d = lastmodOf(u); return `  <url><loc>${SITE}${u}</loc>${d ? `<lastmod>${d}</lastmod>` : ""}</url>`; }).join("\n")}
 </urlset>
 `);
-console.log(`sitemap (${fixed.length} URL、ベースのページ ${urls.length} 枚は noindex で入れない) → ${OUT}`);
+console.log(`sitemap (${fixed.length} URL、${MAKE_BASES ? `ベースのページ ${urls.length} 枚は noindex で入れない` : "ベースのページは作らない (410)"}) → ${OUT}`);

@@ -16,7 +16,7 @@ An opening paragraph goes here: what was tested and what was found, in two or th
 
 ## Heading
 
-Body text. **Bold**, `code` and a link to [the bases](/en/bases/) work.
+Body text. **Bold**, `code` and a link to [crafting basics](/en/craft-basics) work.
 
 | Weight | Chance |
 |---|---:|

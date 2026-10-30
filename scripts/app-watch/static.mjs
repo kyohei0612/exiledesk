@@ -68,10 +68,15 @@ const rule = (id, title) => { const r = { rule: id, title, seen: 0, bad: [] }; r
   const m = conf.match(/"run_worker_first"\s*:\s*(true|\[[^\]]*\])/);
   const globs = m ? (m[1] === "true" ? ["/*"] : JSON.parse(m[1])) : [];
   const toRe = (g) => new RegExp(`^${g.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*")}$`);
-  for (const p of ["/", "/index.html", "/web.html", "/ads.txt", "/assets/index-x.js", "/bases/", "/en/", "/en/bases/", "/guide/", "/robots.txt", "/sitemap.xml", "/icons/x.webp"]) {
+  for (const p of ["/", "/index.html", "/web.html", "/ads.txt", "/assets/index-x.js", "/en/", "/guide/", "/robots.txt", "/sitemap.xml", "/icons/x.webp"]) {
     r.seen++;
     const g = globs.find((x) => toRe(x).test(p));
     if (g) r.bad.push({ where: "server/web/wrangler.jsonc", what: `${p} が run_worker_first の ${g} に当たる` });
+  }
+  // 消したベースのページ (Y-84) は Worker を通って 410 を返す
+  for (const p of ["/bases", "/bases/", "/bases/gold-ring", "/en/bases/", "/en/bases/gold-ring"]) {
+    r.seen++;
+    if (!globs.some((x) => toRe(x).test(p))) r.bad.push({ where: "server/web/wrangler.jsonc", what: `${p} が run_worker_first に無い (410 を返せない、Y-84)` });
   }
 }
 
