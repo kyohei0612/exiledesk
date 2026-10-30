@@ -322,7 +322,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
     </div>
     <!-- スマホの形 (1280 未満、U-53) は縦に積む (完成形のカードが上、表は全部の幅。横に並べると表が 1 文字幅に潰れた、10-23 デザイン部長の気づき・メモ web-phone-layout) -->
     <div v-else data-tree-goal-mods class="flex min-h-0 min-w-0 items-start gap-4 max-md:flex-col max-md:items-stretch">
-      <div class="min-w-0 flex-1"><ModTable overlay :data="s.data.value" :item="t.goalItem.value?.item ?? null">
+      <div class="min-w-0 flex-1"><ModTable overlay :data="s.data.value" :item="t.goalItem.value?.item ?? null" :keep-open="['[data-mod-attach-ways]', '[data-helptip-pop]']">
         <!-- 段の行のボタンは「狙いにする」(オーナー 10-22) と、狙いにした段だけその右に「フラクチャー」(印、10-23)。
              前はフラクチャーが左にあり、狙いでない段で押すと狙いに足して印も付けたので、狙いにするつもりで印が付いた (10-23 オーナー「印を付けていないのに ✦ スタート」) -->
         <!-- 狙いの MOD の行に札 (印ありは ✦ の色)、段の表では狙いの段の左に色の帯 (行の色、10-24 オーナー「フラクチャーにした行は色を変えて」) -->
