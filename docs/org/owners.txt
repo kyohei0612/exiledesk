@@ -182,6 +182,7 @@ src/state/simulator/**               シミュ
 tests/simulator/**                   シミュ
 scripts/_sim-*.ts                    シミュ
 scripts/_tree-*                      シミュ
+scripts/ai-tree/**                   シミュ
 scripts/sim-telemetry.mjs            シミュ
 server/live/src/sim.ts               シミュ
 src/services/simulator/htc/**        アプリ

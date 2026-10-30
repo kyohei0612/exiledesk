@@ -1,0 +1,22 @@
+{
+  "schema": "ai-tree/1",
+  "name": "pariah-ess",
+  "note": "pariah-mask-ev.mjs の ess と同じ打ち方 (S-176 の外の正解)",
+  "base": "Pariah Mask",
+  "itemLevel": 82,
+  "basePrice": 0,
+  "aims": {
+    "life": { "mods": [{ "id": "Helmets_dex_int/IncreasedLife", "tier": 3 }, "Helmets_dex_int/Essence_IncreasedLife"] },
+    "lifeAny": { "mods": ["Helmets_dex_int/IncreasedLife"] },
+    "res": { "mods": ["Helmets_dex_int/FireResistance", "Helmets_dex_int/ColdResistance", "Helmets_dex_int/LightningResistance"], "tier": 2 }
+  },
+  "goal": { "life": 1, "res": 2 },
+  "rules": [
+    { "if": { "rarity": "normal" }, "use": "transmute", "note": "白 → 変成" },
+    { "if": { "all": [{ "rarity": "magic" }, { "aim": "lifeAny", "min": 1 }] }, "restart": true, "note": "変成でライフが付いたら捨てる" },
+    { "if": { "rarity": "magic" }, "use": "essence:greater:Helmets_dex_int/Essence_IncreasedLife", "note": "エッセンス" },
+    { "if": { "all": [{ "aim": "life", "max": 0 }, { "open": "prefix", "min": 1 }] }, "use": "exalt_greater", "omens": ["OmenofSinistralExaltation"], "note": "ライフ" },
+    { "if": { "all": [{ "aim": "res", "max": 1 }, { "open": "suffix", "min": 1 }] }, "use": "exalt_greater", "omens": ["OmenofDextralExaltation"], "note": "耐性" },
+    { "use": "annul", "note": "空きが無い" }
+  ]
+}
