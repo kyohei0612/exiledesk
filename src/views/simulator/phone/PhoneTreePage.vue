@@ -19,7 +19,7 @@ import { applyPick, type OnlyOut } from "../tree/tree-hand-plan";
 import { useTree } from "../tree/use-tree";
 import { clearHand, setAim, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
-import { outStep, phoneRun, sheet, testedKey, usePhoneQuiz, type Question } from "./use-phone-quiz";
+import { answerFor, outStep, phoneRun, sheet, testedKey, usePhoneQuiz, type Question } from "./use-phone-quiz";
 import { routeKeyOf } from "../tree/use-tree-check";
 import { stepOf } from "../tree/tree-fail";
 import PhoneAsk from "./PhoneAsk.vue";
@@ -127,6 +127,8 @@ function backOf(): void {
   if (!p) return;
   q.unLater(id);
   q.focus.value = { kind: "outs", id: p };
+  // その箱の結果の画面で答えの窓を開く (質問が替わると 1 枚目に戻るので、その後で)
+  void nextTick(() => { outStep.value = Math.max(0, q.outsOf(p).indexOf(id)); answerFor.value = id; });
 }
 function pickAim(a: Aim): void { const id = aimFor.value!; t.edit((d) => setAim(d, id, a)); aimFor.value = null; }
 const total = computed(() => q.questions.value.length);

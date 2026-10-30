@@ -5,14 +5,14 @@
   スマホは省略しない (10-26 オーナー「基本スマホは省略したらダメ」): 文は折り返して全文、この結果のアイテムと戻り先の箱のアイテムはいつも開いたまま
 -->
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useTree } from "../tree/use-tree";
 import { fixedValues } from "../tree/tree-fixed-values";
 import type { StageItem } from "../../../services/craft-stage/types";
 import { useTreeLink } from "../tree/use-tree-link";
 import { backTargetsOf } from "../tree/tree-merge";
 import { handLabel, OUT_LOOK } from "../tree/tree-names";
-import { isMiss, mapPick, phoneRun, usePhoneQuiz } from "./use-phone-quiz";
+import { answerFor, isMiss, mapPick, phoneRun, usePhoneQuiz } from "./use-phone-quiz";
 import { retryOf, routeArrow, routeText, runText, stepBackText } from "../tree/tree-fail";
 import { absorbOuts, joinableOf, joinSide, splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
 import { joinableFor, sideGroup } from "../tree/tree-hand-plan";
@@ -86,6 +86,7 @@ const look = computed(() => OUT_LOOK[box.value?.out ?? "junk"]);
 const pickIds = computed(() => [...others.value, ...(canRetry.value ? [parent.value!] : []), ...(startNo.value ? [] : ["start"])]);
 /** 答えの選びの重ね窓を開いている */
 const pickOpen = ref(false);
+watch(answerFor, (id) => { if (id === props.boxId) { pickOpen.value = true; answerFor.value = null; } }, { immediate: true });
 /** 選びの窓で答えを押したら閉じる (まとめる・分けるの一覧を開く押しは閉じない。「ほかの箱へ」は全体図で選ぶので閉じる) */
 function onPickClick(e: MouseEvent): void {
   const b = (e.target as HTMLElement).closest("[data-phone-ans], [data-phone-join-go], [data-phone-split-any], [data-phone-other] button");
@@ -202,6 +203,8 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
       <!-- まだ答えの無い結果は下の赤い帯「この状態で打つカレンシーを選ぶ」だけ (真ん中に同じ枠を重ねない、10-27 昼オーナー)。完成・ほかの箱へにした結果は、ここから手に替えられる -->
       <button v-if="state !== 'open' && state !== 'later'" type="button" data-phone-out-pick-hand class="w-full rounded-xl border border-white/15 bg-white/[0.04] px-3 py-3 text-center text-[14px] text-[#d8ccb4]" @click="emit('pick', boxId)">{{ tr("この状態で打つカレンシーを選ぶ", "Choose the currency to use on this item") }}</button>
     </template>
+    <!-- 手のほかの答え (失敗・戻る・完成)。主ボタンは下の帯のまま、S-93 -->
+    <button v-if="parent && state !== 'hand'" type="button" data-phone-out-open class="min-h-10 px-3 text-[13px] text-white/60 underline decoration-white/20" @click="pickOpen = true">{{ tr("ほかの答え ▾", "Other answers ▾") }}</button>
   </div>
   <!-- 答えの選び (下から出る重ね窓。閉じれば元の場所のまま) -->
   <Teleport to="body">

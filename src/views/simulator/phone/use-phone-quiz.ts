@@ -101,6 +101,8 @@ const fresh = ref<string[]>([]);
 const focus = ref<Question | null>(null);
 /** 全体図 (PhoneMap) で戻り先の箱を選んでいる (② の「ほかの箱へ」。from = 結果の箱、ids = 戻れる箱。10-26 オーナー「どこに戻るか分からない」) */
 export const mapPick = ref<{ from: string; ids: string[] } | null>(null);
+/** この結果の箱の答えの窓を開く (棚の「↩ 既にある箱へ戻す」から。PhoneOutRow が受ける、S-93) */
+export const answerFor = ref<string | null>(null);
 /** 箱の重ね窓 (10-26 オーナーの選んだ案 B: 一覧・全体図・戻り先選びで箱を押すと、移らずに下から窓で中身を全部。pickFrom = 戻り先を選んでいる結果の箱) */
 export const sheet = ref<{ id: string; pickFrom?: string; /** 足りない所から開いた時の文 (窓の頭に出す、10-26 モンキー 7 の 22) */ issue?: string } | null>(null);
 /**
