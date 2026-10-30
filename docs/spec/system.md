@@ -177,7 +177,7 @@
 - **Y-83 検索の入口は人が書いた記事**: 検索に出すページはブログ・FAQ など人が書いて独自の数字のある物 (書き方は docs/org/blog/README.md)。巡回だけの Bot (SemrushBot) は robots.txt で止める。
   - 有効。出どころ: オーナー 10-22 (AdSense 不合格への答え)、10-25 (robots.txt)。確かめ: public/robots.txt、Search Console。
 - **Y-84 ベースのページ (/bases/・/en/bases/) は消して 410 を返す**: build-seo-pages.mjs はベースのページを作らず (MAKE_BASES = false、サイトマップだけ書く)、`/bases`・`/bases/*`・`/en/bases`・`/en/bases/*` は Worker (server/web/gone.js) が 410 Gone と小さい案内 (クラフト台・ブログへ) を返す。ヘッダー・フッター (読み物の HTML・ビルドの台本・クラフト台の WebFooter.vue)・トップ (web.html の noscript)・固定ページの本文から「ベース一覧」の導線を日英いっしょに外す。robots.txt では止めない (Googlebot が 410 を見に来られるように)。Search Console の「削除」で接頭辞 `https://exiledesk.com/bases/`・`https://exiledesk.com/en/bases/` を隠すのはオーナー。`/?base=` (Y-16) はそのまま。410 の分だけ Worker を通るのは Y-101 の例外 (Bot の巡回が残る間だけ枠を食う)。
-  - オーナー OK 済み・本番待ち (「Aで」と導線の見た目「どっちもそれで出して」10-31、e86899700 で当てた。出たら有効に)。出どころ: オーナー 10-31「ベースが消えないんだよな これいみないんじゃないかと思うが」→ 案 A (410 + Search Console の削除)「Aで」(ブラック 20 経由、リサーチ adsense-sc-1031.md)。前の noindex で残す決め (Y-82 の /bases/ の分、10-22) は撤回。確かめ: 出した後に `curl -I https://exiledesk.com/bases/gold-ring` が 410、dist-web に bases/ が無い、sitemap に /bases が無い、scripts/app-watch/static.mjs の Y-101 (/bases/* が run_worker_first にある)。
+  - 有効 (v0.1.644 で本番、10-31。本番で /bases/gold-ring・/en/bases/ が 410 を確かめた)。オーナー OK「Aで」と導線の見た目「どっちもそれで出して」10-31、e86899700。出どころ: オーナー 10-31「ベースが消えないんだよな これいみないんじゃないかと思うが」→ 案 A (410 + Search Console の削除)「Aで」(ブラック 20 経由、リサーチ adsense-sc-1031.md)。前の noindex で残す決め (Y-82 の /bases/ の分、10-22) は撤回。確かめ: 出した後に `curl -I https://exiledesk.com/bases/gold-ring` が 410、dist-web に bases/ が無い、sitemap に /bases が無い、scripts/app-watch/static.mjs の Y-101 (/bases/* が run_worker_first にある)。
 
 ### J. セキュリティ
 
