@@ -62,5 +62,7 @@ export function useGoalShown() {
   });
   const wayTag = (): RowTag => ({ text: tr("途中で消える", "Removed on the way"), tone: "warn" as const, title: `${tr("途中で付けて、その後で消えてよい MOD (品質は残る)。完成の狙い・MOD の枠・完成の判定には数えない", "Added on the way, then may be removed (quality stays). Not counted as a final target, mod slot or for completion")}
 ${WAY_ORDER()}` });
-  return { item, tags, breach, bundled };
+  /** カードの束 (同じ束で同じ側の行を隣同士に並べる、StageItemCard の rowGroup。エッセンス・合金の束 = 1、冒涜の束 = 2) */
+  const groups = computed((): Map<string, number> | null => (bundled.value.size ? new Map([...(bundle.value?.aims ?? []).map((a) => [a.modId, 1] as const), ...(desecrated.value ?? []).map((a) => [a.modId, 2] as const)]) : null));
+  return { item, tags, breach, bundled, groups };
 }

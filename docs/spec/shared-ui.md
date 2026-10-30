@@ -43,7 +43,7 @@
 
 ### B. 部品
 
-- **U-10 アイテムのカード**: アイテムの絵は `for-share/item/StageItemCard.vue` 1 つで出す (エミュ・シミュ・チュートリアル)。画面ごとの違いは props (rowTags・fractureGroup・rowRemove・tierAtLeast・modsOnly・withTitle・tightTier・rowToggles など) で切り替え、写しを作らない。
+- **U-10 アイテムのカード**: アイテムの絵は `for-share/item/StageItemCard.vue` 1 つで出す (エミュ・シミュ・チュートリアル)。画面ごとの違いは props (rowTags・fractureGroup・rowRemove・tierAtLeast・modsOnly・withTitle・tightTier・rowToggles・rowGroup など) で切り替え、写しを作らない。rowGroup (modId → 束の番号) を渡した行は、同じ束・同じ側の一番前の行の位置に寄せて隣同士に並べる (渡さない画面の並びは今のまま。シミュの完成形の束 S-30b、10-31 シミュ部長 50)。
   - 有効。出どころ: オーナー 10-23・10-24〜27 (各 props の説明に日付)。確かめ: 画面 (台本 共有メモ design7/mods-only-check)。
 - **U-11 行の押せる札 (rowToggles)**: MOD の行の札の後ろに押せる札を置く口。押すと `toggle` を返すだけで、意味 (途中で消える / 残る など) は渡す画面が決める。文の続きとして U-42 で縮め・折る。
   - 有効 (スイッチ rowToggle、本番入り)。出どころ: オーナー 10-27 夜。確かめ: 画面 (シミュの完成形)。
