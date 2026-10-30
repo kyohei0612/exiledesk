@@ -1,4 +1,7 @@
 {
+  "0.1.647": [
+    "Simulator: fixed choosing how to add a mod (Normal, Fracture, Desecrate) from \"Add\" in the final item settings not adding the mod"
+  ],
   "0.1.646": [
     "Emulator / Simulator: runes and soul cores made for one specific slot can no longer be socketed into jewellery that counts as gloves, a helmet or boots (Grasping Ring, Corona Amulet, Stalking Belt). Trying it shows why",
     "Simulator: Chaos Orb, Perfect Essences that remove a mod and Desecration on a full side now let you pick \"Mods to keep\", the same as Annulment. Losing a kept mod goes to a \"Target lost\" box (players who also gain a target get a separate one)",

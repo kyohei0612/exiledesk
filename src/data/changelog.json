@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.647",
+  "date": "2026-10-30",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成形の設定で「付ける」から付け方 (ふつう・フラクチャー・冒涜) を選んでも MOD が付かなかったのを直しました",
+    "en": "Simulator: fixed choosing how to add a mod (Normal, Fracture, Desecrate) from \"Add\" in the final item settings not adding the mod"
+   }
+  ]
+ },
+ {
   "v": "0.1.646",
   "date": "2026-10-30",
   "items": [
@@ -995,36 +1007,6 @@
     "area": "",
     "text": "一部の MOD (タリスマンの要求能力値など) の文が英語のまま出ていたのを直しました",
     "en": "Fixed some mod texts (e.g. the Talisman attribute requirement) showing in English"
-   }
-  ]
- },
- {
-  "v": "0.1.606",
-  "date": "2026-10-26",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: どの画面でもアイテムの文を貼ると、ベースと MOD を取り込んで完成の MOD の画面へ。作りかけのツリーがあればツリーへ戻る時に保存を聞くように",
-    "en": "Simulator: Paste an item on any screen to import its base and mods and jump to the final mods; if an unsaved tree would be replaced, you're asked to save it when going back to the tree"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 貼り付けで取り込んだ MOD を、完成形のカードで貼った値のまま出すように (前は段の真ん中の値になっていました)",
-    "en": "Simulator: Pasted mods now keep their pasted values on the final item card (they used to show the middle of the tier range)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 貼り付けで、トレードの合算された行 (単体 + ハイブリッドなど) をベースの MOD の組み合わせで読み分けるように。分け方が何通りもある時は候補から読み方を切り替えられます",
-    "en": "Simulator: When pasting, summed lines from the trade site (e.g. a single mod plus a hybrid) are now split using the base's mod pool; when they can be read several ways, you can switch between the candidate readings"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 新しいツリーのタブを閉じた時に、残ったツリーが消えたように見える不具合を直しました",
-    "en": "Simulator: Fixed the remaining tree looking erased after closing a new tree's tab"
    }
   ]
  }
