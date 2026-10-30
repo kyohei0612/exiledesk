@@ -16,9 +16,9 @@ AdSense 2 回目の不承認 (10-30) の洗い直し = 共有メモ local_e2573d
 | 3 | boots-res-craft | 移動速度 T1 固定の靴に耐性 T1 を 2 つ、費用と打ち方 | math/notes/2026-10-23-boots-res.md | **11-02** | オーナー OK。date 11-02・draft のまま |
 | 4 | abyss-essence-limits | アビスのエッセンスが打てる部位・打てない状態 (E-52) | research/notes/2026-10-22-abyss-essence-limits.md | **11-03** | オーナー OK。date 11-03・draft のまま |
 | 5 | whittling-omen-bait | 削減のお告げはそのままだと 96% 壊れる、エッセンスの餌で左側の抹消より 2 割安い | math/notes/2026-10-22-gold-ring-prefix.md (追記 1〜3) | **11-04** | オーナー OK 10-31。date 11-04・draft のまま |
-| 6 | restart-or-continue | 途中の形から作り直すべきか: 素の消去が一番安い・右側の消去のお告げは損 | math/notes/2026-10-22-gold-ring-midway.md | 11-05 | 書いた・照らし合わせ済み・オーナー待ち |
-| 7 | amulet-four-aims | アミュレットの狙い 4 つは打つ順で 100 倍違う (約 700 神 / 9 万神) | math/notes/2026-10-22-amulet-4aims.md (外の正解なし、エンジンの見張りだけ) | 11-06 | 書いた・照らし合わせ済み・オーナー待ち |
-| 8 | (未定) | 8 本目の種を探す (数字の記録のある物) | — | 11-07 | 未着手 |
+| 6 | restart-or-continue | 途中の形から作り直すべきか: 素の消去が一番安い・右側の消去のお告げは損 | math/notes/2026-10-22-gold-ring-midway.md | **11-05** | オーナー OK 10-31。date 11-05・draft のまま |
+| 7 | amulet-four-aims | アミュレットの狙い 4 つは打つ順で 100 倍違う (約 700 神 / 9 万神) | math/notes/2026-10-22-amulet-4aims.md (外の正解なし、エンジンの見張りだけ) | **11-06** | オーナー OK 10-31。date 11-06・draft のまま |
+| 8 | ring-catalyst-order | 金の指輪でレアリティだけの時はトゥル + 上級の高貴で全耐性を先に (約 1 割安い)・動的計画法の最善をそのまま使わなかった話 | math/notes/2026-10-22-gold-ring-suffix-dp.md | 11-07 | 書いた・照らし合わせ中 |
 | 予備 | (外した種) | 上限を超えた側のカオス (E-25) は liquid-emotions-jewels と重なる・パーフェクトエッセンスの側 (E-51)・骨と冒涜 (E-60)・フラクチャーの数え方 (E-42) は数字の記録が無い。数字が要るなら部下にエンジンで数えさせて math/notes に残してから | engine.md | — | 外した (10-31) |
 
 ## 今の状態 (10-22 夜)
