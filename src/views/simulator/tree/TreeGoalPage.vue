@@ -39,7 +39,7 @@ import { isPhoneWidth } from "../../../utils/use-phone";
 import { useGoalShown } from "./use-goal-shown";
 import HelpTip from "../../../components/ui/HelpTip.vue";
 import type { RowToggle } from "../../../components/for-share/item/stage-item-row-tag";
-import { dropWay, inWay, isCraftAim, toggleWay, wayUndecided, WAY_ORDER } from "./tree-way-mods";
+import { dropWay, inWay, isBreachAim, isCraftAim, toggleWay, wayUndecided, WAY_ORDER } from "./tree-way-mods";
 import { flag } from "../../../web/release-flags";
 import { useEditReset } from "./use-edit-reset";
 import TreeAttachPick from "./TreeAttachPick.vue";
@@ -160,7 +160,8 @@ const crafts = computed(() => {
   const d = s.data.value, doc = t.doc.value;
   if (!d) return [];
   const list = [...t.goals.value.filter((a) => isCraftAim(d, a)).map((a) => ({ a, way: false })), ...(doc.wayMods ?? []).map((a) => ({ a, way: true }))];
-  return list.length >= 2 ? list : [];
+  // 束 (S-30b) の時は切り替えはブリーチと前に「途中で消える」にした物だけ (ほかは束の札「どれか n つ」)
+  return list.length >= 2 ? (ATTACH ? list.filter((c) => c.way || isBreachAim(c.a)) : list) : [];
 });
 /** 「途中で消える」の切り替えをカードの MOD の行の右に置く (デザインの口 rowToggles、10-27 夜オーナー。goalQuality と rowToggle の両方の時だけ、片方ならカードの下の欄) */
 const inRow = computed(() => true);
@@ -168,6 +169,8 @@ const wayToggles = computed((): Map<string, RowToggle> | null => (inRow.value &&
 ${WAY_ORDER()}` }])) : null));
 /** カードの札: 行の右に切り替えがある行は「途中で消える」の札を外す (押された切り替えと同じ言葉が 2 つ並ぶので) */
 const cardTags = computed(() => { const tg = shown.tags.value, tv = wayToggles.value; if (!tg || !tv) return tg; const m = new Map(tg); for (const k of tv.keys()) m.delete(k); return m; });
+/** カードに乗らない狙い (束のクラフト MOD はカードに出すので除く、S-30b) */
+const overLeft = computed(() => { const l = t.goalItem.value?.left ?? [], b = shown.bundle.value; return b ? l.filter((a) => !b.aims.some((x) => x.modId === a.modId)) : l; });
 /** 残るクラフト MOD が上限を超えている間の「決めた」を押せない理由 */
 const undecided = computed(() => (s.data.value ? wayUndecided(s.data.value, t.doc.value, t.goalItem.value?.item ?? null) : null));
 /** 完成の狙いに無い MOD を当たりにしている箱 (狙いを外した後も木に残る。tree-model の orphanHits) */
@@ -364,9 +367,9 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <!-- 自動で嵌めた扱いのルーン (TreeGoalCard と同じ、10-26 オーナー) -->
         <p v-if="t.goalItem.value?.item.augments?.length" data-tree-goal-runes class="px-1 text-[11px] text-[#9fd3ff]/80" :title="tr('完成の狙いに要るルーン (特殊 MOD の分・クラフト MOD 2 つ目のアストリッドの創造性) を自動で嵌めた扱い。ツリーではそのルーンの手・2 つ目のクラフト MOD の手から効く', 'Runes the targets need (for special mods, and Astrid’s Creativity for a 2nd crafted mod) are socketed automatically. In the tree they apply from that rune or crafted-mod step')">◇ {{ tr("ルーン (自動)", "Runes (auto)") }}: {{ t.goalItem.value.item.augments.map((a) => tr(a.ja, a.en)).join(tr("・", ", ")) }}</p>
         <!-- 枠を超えた狙い (10-23 オーナー「欲しい物を全部選ぶので枠を超えてよい」): 止めずにカードの下に並べる -->
-        <div v-if="t.goalItem.value?.left.length" data-tree-goal-over class="flex flex-col gap-0.5 rounded-md bg-white/[0.04] px-2 py-1 text-[12px]">
-          <p class="opacity-70">{{ tr(`カードに乗らない狙い ${t.goalItem.value.left.length} つ (枠の外。どれかが付けば当たり)`, `${t.goalItem.value.left.length} target(s) beyond the slots (a hit if any rolls)`) }}</p>
-          <p v-for="a in t.goalItem.value.left" :key="a.modId" data-tree-goal-over-row class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :class="a.fractured ? 'text-mod-fractured' : 'text-[#c8c8ff]'" :title="a.reason">{{ a.fractured ? "✦ " : "" }}{{ t.startModLabel(a, true) }}</p>
+        <div v-if="overLeft.length" data-tree-goal-over class="flex flex-col gap-0.5 rounded-md bg-white/[0.04] px-2 py-1 text-[12px]">
+          <p class="opacity-70">{{ tr(`カードに乗らない狙い ${overLeft.length} つ (枠の外。どれかが付けば当たり)`, `${overLeft.length} target(s) beyond the slots (a hit if any rolls)`) }}</p>
+          <p v-for="a in overLeft" :key="a.modId" data-tree-goal-over-row class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words" :class="a.fractured ? 'text-mod-fractured' : 'text-[#c8c8ff]'" :title="a.reason">{{ a.fractured ? "✦ " : "" }}{{ t.startModLabel(a, true) }}</p>
         </div>
         <p v-if="t.goalItem.value?.note" data-tree-goal-problem class="rounded-md border border-rose-400/50 bg-[#2a1416] px-2 py-1 text-[12px] text-rose-100">{{ tr(`付けられない狙いがある: ${t.goalItem.value.note}`, `A target can't be added: ${t.goalItem.value.note}`) }}</p>
         <!-- 説明は 1 つの事 = 1 行 (10-24 オーナー「・で区切って行で分ける、1 行は折り返して OK」) -->

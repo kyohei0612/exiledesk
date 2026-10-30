@@ -9,7 +9,8 @@ import { applyCurrency, maxQualityOf, mulberry32, type StageItem, type StageMod 
 import { craftStage as s } from "../../../state/craft-stage";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { useTree } from "./use-tree";
-import { wayRows, WAY_ORDER } from "./tree-way-mods";
+import { bundleTag, craftBundle, wayRows, WAY_ORDER } from "./tree-way-mods";
+import { flag } from "../../../web/release-flags";
 import { tr } from "../../../i18n/lang";
 
 /** ベースの上限をこれ以上超えたらブリーチのエッセンスが要る (+10 まではインフューザー) */
@@ -33,18 +34,28 @@ export function useGoalShown() {
     if (!d) return [];
     return [...wayRows(d, t.doc.value), ...(breach.value ? [breach.value] : [])];
   });
+  /** 上限を溢れたクラフト MOD の束 (S-30b、スイッチ attachWay)。カードに乗らなかった束の MOD は行を足して全部カードに出す */
+  const bundle = computed(() => (flag("attachWay") && s.data.value ? craftBundle(s.data.value, t.doc.value, t.goalItem.value?.item ?? null) : null));
+  const bundleRows = computed((): StageMod[] => {
+    const d = s.data.value, g = t.goalItem.value?.item, b = bundle.value;
+    if (!d || !g || !b) return [];
+    const on = new Set([...g.prefixes, ...g.suffixes].map((m) => m.modId));
+    return wayRows(d, t.doc.value, b.aims.filter((a) => !on.has(a.modId)));
+  });
   const item = computed((): StageItem | null => {
     const g = t.goalItem.value?.item, doc = t.doc.value;
     if (!g) return null;
     const q = doc.goalQualityOn && doc.goalQuality ? { ...g, quality: doc.goalQuality, ...(doc.goalQualityTag ? { qualityTag: doc.goalQualityTag } : {}) } : g;
-    const ws = ways.value;
+    const ws = [...ways.value, ...bundleRows.value];
     return ws.length ? { ...q, prefixes: [...q.prefixes, ...ws.filter((m) => m.side === "prefix")], suffixes: [...q.suffixes, ...ws.filter((m) => m.side === "suffix")] } : q;
   });
   /** 途中で消える行の札 (どれも同じ「途中で消える」) */
   const tags = computed((): Map<string, RowTag> | null => {
-    const ws = ways.value;
-    return ws.length ? new Map(ws.map((m) => [m.modId, { text: tr("途中で消える", "Removed on the way"), tone: "warn" as const, title: `${tr("途中で付けて、その後で消えてよい MOD (品質は残る)。完成の狙い・MOD の枠・完成の判定には数えない", "Added on the way, then may be removed (quality stays). Not counted as a final target, mod slot or for completion")}
-${WAY_ORDER()}` }])) : null;
+    const ws = ways.value, b = bundle.value;
+    if (b) return new Map([...ws.map((m) => [m.modId, wayTag()] as const), ...b.aims.map((a) => [a.modId, bundleTag(b.lim)] as const)]);
+    return ws.length ? new Map(ws.map((m) => [m.modId, wayTag()])) : null;
   });
-  return { item, tags, breach };
+  const wayTag = (): RowTag => ({ text: tr("途中で消える", "Removed on the way"), tone: "warn" as const, title: `${tr("途中で付けて、その後で消えてよい MOD (品質は残る)。完成の狙い・MOD の枠・完成の判定には数えない", "Added on the way, then may be removed (quality stays). Not counted as a final target, mod slot or for completion")}
+${WAY_ORDER()}` });
+  return { item, tags, breach, bundle };
 }

@@ -30,7 +30,8 @@ const FOLD_KEY = "exiledesk.tree.goalFolded";
 const rarity = computed(() => rarityName(t.goalRarity.value));
 const n = computed(() => t.goals.value.length);
 const marks = computed(() => t.goals.value.filter((a) => a.fractured).map((a) => a.modId));
-const left = computed(() => t.goalItem.value?.left ?? []);
+/** カードに乗らない狙い (束のクラフト MOD はカードに出すので除く、S-30b) */
+const left = computed(() => { const l = t.goalItem.value?.left ?? [], b = shown.bundle.value; return b ? l.filter((a) => !b.aims.some((x) => x.modId === a.modId)) : l; });
 /** 段の「以上」は 2 段目より下の狙いがある時だけ (左の P / S の列が太くなる) */
 const atLeast = computed(() => t.goals.value.some((a) => a.tier > 1));
 const folded = ref(((): boolean => { try { return localStorage.getItem(FOLD_KEY) === "1"; } catch { return false; } })());
