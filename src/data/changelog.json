@@ -1,5 +1,59 @@
 [
  {
+  "v": "0.1.646",
+  "date": "2026-10-30",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター・シミュレーター: 手袋 / 兜 / 靴として効く宝飾品 (グラスピングリング・コロナアミュレット・ストーキングベルト) に、部位を 1 つに指定したルーン・ソウルコア (コルの狩りなど) をはめられないようにしました (打つと理由が出ます)",
+    "en": "Emulator / Simulator: runes and soul cores made for one specific slot can no longer be socketed into jewellery that counts as gloves, a helmet or boots (Grasping Ring, Corona Amulet, Stalking Belt). Trying it shows why"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: カオス・MOD を消すパーフェクトエッセンス・満杯の側の骨の手も、消去と同じく「残したい MOD」を選べるように。残したい MOD が消えたら「狙いが消えた」の箱に (消えた上で狙いが付いた人は別の箱に分けます)",
+    "en": "Simulator: Chaos Orb, Perfect Essences that remove a mod and Desecration on a full side now let you pick \"Mods to keep\", the same as Annulment. Losing a kept mod goes to a \"Target lost\" box (players who also gain a target get a separate one)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 狙い無しの手とルーンをはめる手は当たりの箱を作らず、「打った後」の箱だけにしました",
+    "en": "Simulator: untargeted crafts and socketing a rune no longer make Hit boxes, only the \"After the craft\" box"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成形の設定の MOD のボタンを「付ける」1 つにし、エミュと同じプルダウンで付け方 (ふつう・フラクチャー・冒涜) と「外す」を選ぶ形に。エッセンス・合金の MOD は「ふつう」で付きます。その付け方で付かない MOD は灰色で、押すと訳が出ます",
+    "en": "Simulator: the mod buttons in the final item settings are now a single \"Add\" dropdown, like the Emulator, to choose how the mod is added (Normal, Fracture, Desecrate) or remove it. Essence and Alloy mods use Normal. Ways that can't add the mod are greyed out and tell you why when pressed"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成形のエッセンス・合金の MOD が付けられる数 (ふつうは 1 つ、アストリッドの創造性で 2 つ) を超えた時は、カードの各行に「どれか n つ残る」の札を付け、途中で消える / 残るを決めなくても「決めた」を押せるように。冒涜で付く狙いが 2 つ以上の時も同じく「どれか 1 つ」の札 (冒涜専用の行は冒涜の枠) で 1 つにまとめます。カードの並びは ふつうの MOD → エッセンス・合金 → 冒涜 の順で、同じ束は隣同士です",
+    "en": "Simulator: when the final item has more Essence / Alloy mods than can be crafted at once (1, or 2 with Astrid's Creativity), each of them gets an \"Any n stay\" tag on the card, and you can press Done without choosing which ones are removed along the way. Two or more targets added by Desecration are grouped the same way with an \"Any 1\" tag (Desecrated-only mods get the Desecrated frame). On the card, normal mods come first, then Essence / Alloy mods, then Desecrated mods, with each group kept together"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ツリーの兄弟の箱の間をその段の箱だけで決め、上の段の横線が長く伸びないようにしました",
+    "en": "Simulator: the gap between sibling boxes in the tree is now set by that row alone, so branch lines in the rows above no longer stretch out"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 前の版で保存した骨 (冒涜) の手は、当たりの ☑ があれば「発現させる」の手として今の手と同じ名前・箱で開くように",
+    "en": "Simulator: Bone (Desecration) crafts saved in older versions open as \"Reveal\" crafts with the same name and boxes as new ones when they have a Hit ☑"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ツリーの棚からフラックスを外しました (エミュレーターでは使えます)。スマホの箱の窓で失敗の箱が「✓ 完成」と出ていたのを直しました",
+    "en": "Simulator: Flux is no longer on the tree's shelf (it is still in the Emulator). Fixed failed boxes showing \"✓ Done\" in the phone box panel"
+   }
+  ]
+ },
+ {
   "v": "0.1.645",
   "date": "2026-10-30",
   "items": [
@@ -971,24 +1025,6 @@
     "area": "",
     "text": "シミュレーター: 新しいツリーのタブを閉じた時に、残ったツリーが消えたように見える不具合を直しました",
     "en": "Simulator: Fixed the remaining tree looking erased after closing a new tree's tab"
-   }
-  ]
- },
- {
-  "v": "0.1.605",
-  "date": "2026-10-25",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "アイテムの貼り付けで、2 行に分かれたハイブリッドの MOD (スピリット% と最大マナなど) を 1 つの MOD として読むように",
-    "en": "When pasting an item, a hybrid mod split over two lines (e.g. % increased Spirit and maximum Mana) is now read as one mod"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "アイテムの貼り付けで、トレードの「合計」の行を MOD と取り違えないように。エレメンタルインフュージョン +1・品質の最大値 +20% が段に収まらないと出ていたのを直しました",
-    "en": "When pasting an item, the trade site's total lines are no longer mistaken for mods, and +1 Elemental Infusion / +20% maximum Quality no longer show as outside every tier"
    }
   ]
  }
