@@ -1,5 +1,29 @@
 [
  {
+  "v": "0.1.645",
+  "date": "2026-10-30",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ✦ の無い木で狙い無しのフラクチャーを打った時、外れの枝を側 (プレフィックス / サフィックス) だけで分けるように (エッセンスの MOD かどうかでは分けません)",
+    "en": "Simulator: in trees without fracture marks, an untargeted Fracturing Orb now splits misses only by side (prefix / suffix), not by whether the mod came from an essence"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 発現の MOD を選ぶ窓をエミュの MOD 一覧と同じ形にし、骨の手では出る確率もエミュと同じに。その骨で発現に出ない MOD・段と、もう付いている MOD と同じ系統の行は灰色で選べません",
+    "en": "Simulator: the mod picker for Reveal now uses the same layout as the emulator's mod list, with the same odds for Bone crafts. Mods and tiers the Bone can't reveal, and mods in the same group as one already on the item, are greyed out"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 手を足した後や「! 未設定 ▸ 次へ」で寄る時、箱の下の ＋ まで画面に入れるように (下の帯に隠れて押せない時がありました)",
+    "en": "Simulator: after adding a craft or jumping with \"! Unset ▸ Next\", the view now also brings the + under the box into view (it could be hidden under the bottom bar)"
+   }
+  ]
+ },
+ {
   "v": "0.1.644",
   "date": "2026-10-30",
   "items": [
@@ -967,42 +991,5 @@
     "en": "When pasting an item, the trade site's total lines are no longer mistaken for mods, and +1 Elemental Infusion / +20% maximum Quality no longer show as outside every tier"
    }
   ]
- },
- {
-  "v": "0.1.604",
-  "date": "2026-10-25",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: スマホでも使えるようになりました。木の代わりに「何を打つ?」「結果ごとにどうする?」に答えて道を組み、全部決まったら 100 人回せます (PC と同じレシピ・共有 URL で行き来できます)",
-    "en": "Simulator: Now works on phones. Instead of drawing the tree, answer “what do you craft?” and “what next for each result?” to build the route, then run 100 crafters once it’s complete (recipes and share URLs work across PC and phone)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ベース選びで、トレード・poe.ninja・ゲームでコピーしたアイテムの文を貼り付けると、ベースと MOD を完成形の狙いとして取り込めるように",
-    "en": "Simulator: On base selection, paste an item copied from the trade site, poe.ninja or the game to import its base and mods as your final-item targets"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 結果の箱に、その手でその結果になる割合を出すように。狙いの MOD を「最大ライフ (85-119)」のように段の数値の幅で出すように",
-    "en": "Simulator: Result boxes now show the chance of each result for that craft, and target mods show their tier value range (e.g. “+(85-119) to maximum Life”) instead of “#”"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ベースを選んだ直後に 1 つ戻す (Ctrl+Z) を押しても、選ぶ前の金の指輪に戻らないように",
-    "en": "Simulator: Undo (Ctrl+Z) right after choosing a base no longer reverts to the placeholder Gold Ring"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "スマホ: MOD の段の表で、文が細切れに折り返さないようボタンを下の段にまとめました",
-    "en": "Phone: In the mod tier tables, the buttons now sit on a second line so the mod text no longer wraps into fragments"
-   }
-  ],
-  "pop": true
  }
 ]
