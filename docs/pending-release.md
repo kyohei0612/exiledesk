@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| エミュ: 次の手で狙うの選ぶ窓の MOD の表を共通の ModTable に (スイッチ aimTable、U-12c・M-30、デザイン部長。オーナーの OK 待ち) | (この commit) | 「次の手で狙う」の MOD の表を MOD 一覧と同じ形にしました。開いても列が揃い、ティアごとの出やすさも出ます | The Target next move mod table now matches the mod list: columns stay aligned when a row opens, and each tier shows its chance |
 | (並びとコスメティックは 0.1.598 で出た、残りはデイリー) 共通: 上の切り替えタブの並びを エミュレーター / シミュレーター / デイリー / ジェムコラプト / コスメティック に (ジェムコラプトは 10-28 に外した、Y-17)。デイリー・コスメティックの入口をヘッダーから移した (ModeTabs、デザイン部長 5 本目、オーナー 10-25「ここの右端が良いな、目立たんし」)。スマホは 3 列の格子。中身はスイッチ daily・skins の下 (本番ではデイリー・コスメティックは出ない、並びはジェムコラプトの位置だけ同じ) | 2758a5ca・b26c850b・e160608e | (デイリー・コスメティックと一緒に出す時に書く) | (written with Daily / Cosmetics) |
 
 チュートリアルのコースは合格した物から出す: `StageCourses.vue` の `RELEASED` に id を足す (開発版も本番と同じ表示、手元の dev だけ全部)。

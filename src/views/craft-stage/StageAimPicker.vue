@@ -6,6 +6,7 @@
   一覧は「このベースに付く MOD」と同じ modListFor ([[mod-list.ts]])。チェックで狙いに入れる (どの段でも = 一番下の段以上)、
   名前を押すと段の表で「T○ 以上」を選べる。押した段 (seed) は最初からチェック済みで、そのまま「確率を見る」で進める。
   決めるまでは s.aims を触らない (やめるで元のまま)。
+  表は共通の ModTable (for-share、スイッチ aimTable、M-30・U-12。オーナー 10-31「このMODUIって共通だからデザイン部？」「開いたら全てがUIとして破綻してる」)。
 -->
 <script setup lang="ts">
 import { TIER } from "../../state/for-share/tier-word";
@@ -13,16 +14,20 @@ import { tierIdOf } from "../../services/emulator/emu-engine";
 import { aimRangeText } from "./aim-text";
 import { modListFor, type ListRow, type ListTier, type ModGroup, aimLabel, groupLabelOf } from "../../services/craft-stage/engine";
 import { fmtPct } from "../../utils/format-pct";
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { AIM_MAX, craftStage as s, type AimPick } from "../../state/craft-stage";
 import { revealOpened, scrollToTop } from "../../utils/keep-place";
 import { ROUTES_MAX, routesTarget } from "../../state/web-page";
 import { nextTick } from "vue";
 import Icon from "../../components/ui/Icon.vue";
+import ModTable from "../../components/for-share/mod-list/ModTable.vue";
 import ModalShell from "../../components/ui/ModalShell.vue";
 import { tr } from "../../i18n/lang";
 import { flag } from "../../web/release-flags";
 
+/** 表を共通の ModTable で (閉じている間は前の、列の揃わない表) */
+const TABLE = flag("aimTable");
+const table = ref<InstanceType<typeof ModTable> | null>(null);
 const seed = s.aimPicker.value?.seed ?? null;
 /** 選んでいる物 (決めるまで手元だけ) */
 /** スパムシミュレーターの当たり (web-page.ts の routesTarget。どれか 1 つが付いたら止める。2 つ以上は開発版だけ ROUTES_MAX) */
@@ -70,7 +75,7 @@ function toggle(r: ListRow, e?: Event): void {
   if (whyNot(r)) return;
   // 同じ系統をまとめた行 (スペル / ミニオン / 近接 / 投射物のスキルのレベルなど) は、どれを狙うか段の表で選んでもらう
   // (2026-10-16 アミュレットのスペルスキル +3 の確かめ: 前は並びの最後の投射物 +1 が狙いになっていた)
-  if (new Set(r.tiers.map((t) => t.modId ?? r.id)).size > 1) { expanded.value = r.id; if (e?.target instanceof HTMLInputElement) { e.target.checked = false; revealOpened(e.target.closest("[data-tier-row]")); } return; }
+  if (new Set(r.tiers.map((t) => t.modId ?? r.id)).size > 1) { if (TABLE) table.value?.openRow(r.id); else expanded.value = r.id; if (e?.target instanceof HTMLInputElement) { e.target.checked = false; if (!TABLE) revealOpened(e.target.closest("[data-tier-row]")); } return; }
   const t = [...r.tiers].reverse().find((x) => x.ilvl <= s.itemLevel.value) ?? r.tiers[r.tiers.length - 1];
   const p = t ? pickOf(r, t) : null;
   if (p) draft.value = single ? [p] : [...draft.value, p];
@@ -94,6 +99,13 @@ function chipOf(a: AimPick): string {
 const rankOf = (a: AimPick): string => { const n = s.data.value?.mods.get(a.modId)?.tiers.length ?? 0; return `T${n - a.minTierIndex}`; };
 /** 段の表を開いている行 (押した段の行は最初から開く) */
 const expanded = ref<string | null>(seedRow?.id ?? null);
+/** 押した段の行は開いて見える所へ */
+onMounted(() => { if (TABLE && seed) table.value?.jumpTo(seed.modId, null); });
+/** 表の % はどの行も出やすさそのまま (付いている・骨の行も 0 にしない) */
+const shareRaw = (r: ListRow): number => r.share;
+const tierShareRaw = (r: ListRow, t: ListTier): string => (t.weight && r.weight ? fmtPct((r.share * t.weight) / r.weight) : "");
+const rowDim = (r: ListRow): boolean => !pickedOf(r) && !!whyNot(r);
+const tierDim = (_r: ListRow, t: ListTier): boolean => t.ilvl > s.itemLevel.value;
 /** 確率の % (2026-10-10 動きの揃え 5: 書き方は utils/format-pct.ts の 1 つ) */
 const pct = (x: number): string => fmtPct(x, { zero: "" });
 
@@ -113,7 +125,7 @@ function decide(): void {
 
 <template>
   <!-- 窓の動き (Esc・後ろを押す・×・後ろのページを止める) は ModalShell (2026-10-10 これが原点) -->
-  <ModalShell :open="true" rec="aim-dialog" :title="forRoutes ? tr('スパムで狙う MOD', 'Mod to spam for') : tr('次の手で狙う', 'Target next move')" :close-title="tr('やめる', 'Cancel')" full-on-phone body-class="px-3 py-2" @close="close">
+  <ModalShell :open="true" rec="aim-dialog" :title="forRoutes ? tr('スパムで狙う MOD', 'Mod to spam for') : tr('次の手で狙う', 'Target next move')" :close-title="tr('やめる', 'Cancel')" full-on-phone :width="TABLE ? 'w-[1120px] max-w-full' : undefined" body-class="px-3 py-2" @close="close">
     <template #header>
       <span class="text-[11px] text-[var(--exile-color-text-tertiary)]">{{ draft.length }} / {{ MAX }} · {{ forRoutes ? (single ? tr("1 つ選ぶ", "Pick one") : tr("どれか 1 つ付いたら当たり", "Hit when any one rolls")) : tr("全部付いて当たり", "Hit when all roll") }}</span>
     </template>
@@ -122,11 +134,28 @@ function decide(): void {
         <span v-for="a in draft" :key="a.modId" class="inline-flex items-center gap-1 rounded bg-[rgba(136,136,255,0.14)] py-0.5 pl-1.5 text-[12px] text-[var(--color-rarity-magic)]">{{ chipOf(a) }}<button type="button" class="g-plain grid size-7 place-items-center opacity-60 hover:opacity-100" :title="tr('外す', 'Remove')" @click="draft = draft.filter((x) => x !== a)">×</button></span>
       </p>
       <p v-else class="mt-1 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr(`狙う MOD にチェック (名前を押すと${TIER}を選べる)`, "Check the mods to target (click a name to pick a tier)") }}</p>
-      <nav v-if="groups.length > 1" class="mt-2 flex flex-wrap gap-1">
+      <nav v-if="!TABLE && groups.length > 1" class="mt-2 flex flex-wrap gap-1">
         <button v-for="g in groups" :key="g" type="button" class="g-tab !min-h-[30px] !px-3 !text-[12px]" :class="group === g ? 'on' : ''" @click="group = g">{{ groupLabelOf(g, s.item.value) }}</button>
       </nav>
     </template>
-    <div class="grid grid-cols-2 gap-4 max-md:grid-cols-1 max-md:gap-2">
+    <ModTable v-if="TABLE" ref="table" overlay :data="s.data.value" :item="s.item.value" :groups="GROUPS" :share="shareRaw" :tier-share="tierShareRaw" :row-dim="rowDim" :tier-dim="tierDim" :row-on="(r) => !!pickedOf(r)" tier-one-line>
+      <template #row-lead="{ row: r }">
+        <label class="flex w-8 shrink-0 cursor-pointer items-center justify-center self-stretch">
+          <input type="checkbox" :checked="!!pickedOf(r)" :disabled="!pickedOf(r) && !!whyNot(r)" class="size-5 accent-amber-500" :aria-label="r.text" @change="toggle(r, $event)" />
+        </label>
+      </template>
+      <template #row-tag="{ row: r }">
+        <span v-if="pickedOf(r)" class="shrink-0 whitespace-nowrap rounded-sm bg-amber-500/25 px-1 py-px text-[10px] font-bold leading-none text-amber-100">{{ tr(`${rankOf(pickedOf(r)!)} 以上`, `${rankOf(pickedOf(r)!)}+`) }}</span>
+        <span v-else-if="whyNot(r) && !r.on" class="shrink-0 whitespace-nowrap text-[10px] leading-none">{{ whyNot(r) }}</span>
+      </template>
+      <!-- 幅は決めておく (T12・✓ が付いても列が動かない、1 行のまま) -->
+      <template #tier-actions="{ row: r, tier: t }">
+        <td class="w-[92px] py-0.5 pl-2 text-right max-md:w-[76px] max-md:shrink-0">
+          <button type="button" class="tbtn w-[84px] max-md:w-[68px] max-md:!px-0" :class="isPickedTier(r, t) ? 'on' : isCoveredTier(r, t) ? '!border-amber-400/70 !text-amber-100' : ''" :disabled="!pickedOf(r) && !!whyNot(r)" @click="pickTier(r, t)">{{ isCoveredTier(r, t) ? "✓ " : "" }}{{ tr(`${t.rank} 以上`, `${t.rank}+`) }}</button>
+        </td>
+      </template>
+    </ModTable>
+    <div v-else class="grid grid-cols-2 gap-4 max-md:grid-cols-1 max-md:gap-2">
       <div v-for="col in columns" :key="col.side">
         <p class="mb-1 font-bold text-[var(--exile-color-text-secondary)]">{{ col.title }} <span class="font-normal opacity-50">{{ col.items.length }}</span></p>
         <p v-if="!col.items.length" class="text-[11px] opacity-50">{{ tr("無し", "None") }}</p>

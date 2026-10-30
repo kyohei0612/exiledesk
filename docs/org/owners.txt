@@ -140,6 +140,7 @@ src/utils/wait-text.ts               アプリ
 
 # エンジン部 (ジン部長 = エンジンの管理者。画面はエミュ部長・シミュ部長、10-22 深夜)
 src/views/craft-stage/**             エミュ
+src/views/craft-stage/StageAimPicker.vue デザイン
 src/services/craft-stage/**          ジン
 src/services/htc/**                  ジン
 src/services/mods/**                 ジン

@@ -54,6 +54,12 @@ const props = withDefaults(defineProps<{
    * 段の中で選び直す物 (含む)・印の付け外し (フラクチャー)・選んだ物を外す手 (.on をもう一度) は閉じない (2026-10-24 オーナー「動きは全部共通に」)
    */
   closeAfter?: string;
+  /** 出す種類 (既定 = 全部。次の手で狙うの窓は打って付く種類だけ) */
+  groups?: readonly ModGroup[];
+  /** 選んでいる行に印を付ける (次の手で狙うの窓) */
+  rowOn?: (r: ListRow) => boolean;
+  /** 段の行をスマホ・狭い列でも 1 行のまま (差し込みが小さいボタン 1 つの時。文だけ折る) */
+  tierOneLine?: boolean;
 }>(), { overlay: false, shareHead: undefined, tone: "amber", keepOpen: () => ["[data-helptip-pop]"], closeAfter: '[data-mod-pick]:not(.on), [data-rec="aim-decide"], [data-mod-add-menu] [role="menuitem"]:not([aria-disabled="true"])' });
 
 const rows = computed(() => (props.data && props.item ? modListFor(props.data, props.item) : []));
@@ -68,6 +74,7 @@ const pct = (x: number): string => fmtPct(x);
 /** 節の並び (既定)。普通 → ルーン → 冒涜 → 創生の樹など → 異界 → エッセンス (2026-10-11 オーナー)。エッセンスはマジック用とレア用を 1 つの節に */
 const GROUPS: ModGroup[] = ["normal", "rune", "desecrated", "special", "otherworldly", "essence"];
 const inGroup = (r: { group: ModGroup }, g: ModGroup): boolean => r.group === g || (g === "essence" && r.group === "perfect_essence");
+const useGroups = computed(() => (props.groups ? GROUPS.filter((g) => props.groups!.includes(g)) : GROUPS));
 const counts = computed(() => Object.fromEntries(GROUPS.map((g) => [g, rows.value.filter((r) => inGroup(r, g)).length])) as Record<ModGroup, number>);
 const query = ref("");
 /** 開いている段の表 (種類:系統) */
@@ -99,7 +106,7 @@ function toggleRow(key: string, ev: MouseEvent): void {
 /** 種類ごとの節 (中身のある物だけ)。ルーンの特殊 MOD はルーンごとに別の節で、見出しはルーンの名前 (2026-10-04 オーナー) */
 const sections = computed((): ModSection[] => {
   const q = query.value.trim();
-  const parts: Array<{ g: ModGroup; sid: string; label: string; rune: string | null }> = GROUPS.filter((g) => counts.value[g]).flatMap((g): Array<{ g: ModGroup; sid: string; label: string; rune: string | null }> =>
+  const parts: Array<{ g: ModGroup; sid: string; label: string; rune: string | null }> = useGroups.value.filter((g) => counts.value[g]).flatMap((g): Array<{ g: ModGroup; sid: string; label: string; rune: string | null }> =>
     g === "rune"
       ? [...new Set(rows.value.filter((r) => r.group === "rune").map((r) => r.runeJa ?? ""))].map((ja) => ({ g, sid: `rune:${ja}`, label: tr(ja, runeEnOf(ja)), rune: ja }))
       : [{ g, sid: g as string, label: groupLabelOf(g, props.item), rune: null as string | null }],
@@ -192,7 +199,17 @@ function jumpTo(modId: string, rank: string | null): boolean {
   }));
   return true;
 }
-defineExpose({ jumpTo, jump, counts, sections });
+/** その MOD の行の段の表を開く (送らず、見えるまでだけ。検索はそのまま)。見つかれば true */
+function openRow(rowId: string): boolean {
+  for (const sec of sections.value) for (const c of sec.columns) if (c.items.some((r) => r.id === rowId)) {
+    const key = `${sec.sid}:${rowId}`;
+    expanded.value = key;
+    void nextTick(() => revealOpened(listEl.value?.querySelector(`[data-row-key="${CSS.escape(key)}"]`)));
+    return true;
+  }
+  return false;
+}
+defineExpose({ jumpTo, jump, openRow, counts, sections });
 </script>
 
 <template>
@@ -230,9 +247,9 @@ defineExpose({ jumpTo, jump, counts, sections });
             <span class="ml-auto flex gap-1 text-[11px] text-[var(--exile-color-text-tertiary)]"><span class="w-14 whitespace-nowrap" :class="[COL, props.tone === 'sky' ? 'text-sky-200' : '']">{{ props.shareHead ?? tr("出やすさ", "Weight") }}</span><span class="whitespace-nowrap" :class="[COL, tierW]">{{ tr(TIER, "T") }}</span><span class="w-7" :class="COL">Lv</span></span>
           </p>
           <p v-if="!col.items.length" class="py-2 opacity-40">{{ tr("無し", "None") }}</p>
-          <div v-for="r in col.items" :key="r.id" class="mb-1" :data-row-key="`${sec.sid}:${r.id}`" :class="[flashKey === `${sec.sid}:${r.id}` ? 'row-jump' : '']">
+          <div v-for="r in col.items" :key="r.id" class="mb-1" :data-row-key="`${sec.sid}:${r.id}`" :class="[flashKey === `${sec.sid}:${r.id}` ? 'row-jump' : '', flag('aimTable') ? 'scroll-mt-8' : '']">
             <!-- 1 系統 1 行。後ろの棒が % (列の一番大きい物を 100%) -->
-            <div class="flex items-center gap-0">
+            <div class="flex items-center gap-0" :class="props.rowOn?.(r) ? 'rounded-md bg-[rgba(163,52,42,0.30)] ring-1 ring-[var(--exile-color-border-brass)]' : ''">
             <slot name="row-lead" :row="r" />
             <button
               type="button"
@@ -252,6 +269,7 @@ defineExpose({ jumpTo, jump, counts, sections });
                   <span v-for="g in shownTags(r.tags)" :key="g" class="shrink-0 whitespace-nowrap rounded-sm px-1 py-px text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span>
                   <span v-if="essName(r, props.item)" class="shrink-0 whitespace-nowrap rounded-sm border border-sky-400/40 px-1 py-px text-[10px] leading-none text-sky-200">⚗ {{ essName(r, props.item) }}</span>
                   <span v-if="r.on" class="shrink-0 whitespace-nowrap rounded-sm bg-emerald-500/25 px-1 py-px text-[10px] leading-none text-emerald-200">{{ tr("付いている", "On item") }}</span>
+                  <slot name="row-tag" :row="r" />
                 </span>
                 <span class="flex shrink-0 items-center gap-1 tabular-nums">
                   <slot name="row-badge" :row="r" />
@@ -266,7 +284,7 @@ defineExpose({ jumpTo, jump, counts, sections });
               <slot name="row-open" :row="r" />
               <table class="mt-1 w-full text-[11px]">
                 <tbody>
-                  <tr v-for="t in r.tiers" :key="t.rank" class="group border-b border-white/5 max-md:flex max-md:flex-wrap max-md:[&>[data-tier-end]~td]:basis-full" :class="[NARROW ? '@max-lg/tcol:flex @max-lg/tcol:flex-wrap @max-lg/tcol:[&>[data-tier-end]~td]:basis-full' : '', props.tierDim?.(r, t) ? 'opacity-35' : '', isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank) ? 'bg-amber-400/15 outline outline-2 outline-amber-300/80' : '']" :title="props.tierTitle?.(r, t)">
+                  <tr v-for="t in r.tiers" :key="t.rank" class="group border-b border-white/5 max-md:flex" :class="[props.tierOneLine ? 'max-md:items-center' : 'max-md:flex-wrap max-md:[&>[data-tier-end]~td]:basis-full', NARROW && !props.tierOneLine ? '@max-lg/tcol:flex @max-lg/tcol:flex-wrap @max-lg/tcol:[&>[data-tier-end]~td]:basis-full' : '', props.tierDim?.(r, t) ? 'opacity-35' : '', isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank) ? 'bg-amber-400/15 outline outline-2 outline-amber-300/80' : '']" :title="props.tierTitle?.(r, t)">
                     <slot name="tier-lead" :row="r" :tier="t" />
                     <td class="w-8 py-0.5 font-bold text-amber-200 max-md:shrink-0" :class="NARROW ? '@max-lg/tcol:shrink-0' : ''">{{ t.rank }}</td>
                     <td class="py-0.5 text-[#c8c8ff] max-md:min-w-0 max-md:flex-1" :class="NARROW ? '@max-lg/tcol:min-w-0 @max-lg/tcol:flex-1' : ''">{{ t.text }}<span v-for="g in tierTags(r, t)" :key="g" class="ml-1 inline-block whitespace-nowrap rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span><span v-if="isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank)" data-jump-tier class="ml-1.5 rounded-sm bg-amber-400/25 px-1 py-px text-[10px] leading-none text-amber-100">{{ tr("付いている", "On item") }}</span><span v-if="ESS_CHIP && t.essence" data-ess-chip class="ml-1 inline-block whitespace-nowrap rounded-sm border border-sky-400/40 px-1 py-px align-[1px] text-[10px] leading-none text-sky-200">⚗ {{ tr(t.essence.ja, t.essence.en) }}</span><span v-else-if="ESS_TIER && t.essence" class="block text-[10px] leading-tight opacity-60" :class="NARROW ? 'hidden max-md:block @max-2xl/tcol:block' : 'md:hidden'">{{ tr(t.essence.ja, t.essence.en) }}</span></td>
@@ -274,8 +292,8 @@ defineExpose({ jumpTo, jump, counts, sections });
                     <template v-if="ESS_CHIP && t.essence" />
                     <td v-else-if="ESS_TIER && t.essence" class="py-0.5 pl-2 whitespace-nowrap opacity-70 max-md:hidden" :class="NARROW ? '@max-2xl/tcol:hidden' : ''" data-ess-tier>{{ tr(t.essence.ja, t.essence.en) }}</td>
                     <td v-else-if="r.group === 'essence' || r.group === 'perfect_essence'" class="py-0.5 pl-2 opacity-60 max-md:hidden">{{ tierName(r, t.name) }}</td>
-                    <td class="w-14 py-0.5 text-right tabular-nums opacity-70 max-md:shrink-0" :class="NARROW ? '@max-lg/tcol:shrink-0' : ''">Lv {{ t.ilvl }}</td>
-                    <td data-tier-end class="w-16 py-0.5 text-right tabular-nums opacity-70 max-md:shrink-0" :class="[props.tone === 'sky' ? 'text-sky-200' : '', NARROW ? '@max-lg/tcol:shrink-0' : '']" :title="t.weight ? tr(`重み ${t.weight}`, `Weight ${t.weight}`) : undefined">{{ tierShareText(r, t) }}</td>
+                    <td class="w-14 py-0.5 text-right tabular-nums opacity-70 max-md:shrink-0" :class="[NARROW ? '@max-lg/tcol:shrink-0' : '', props.tierOneLine ? 'max-md:w-11' : '']">Lv {{ t.ilvl }}</td>
+                    <td data-tier-end class="w-16 py-0.5 text-right tabular-nums opacity-70 max-md:shrink-0" :class="[props.tone === 'sky' ? 'text-sky-200' : '', NARROW ? '@max-lg/tcol:shrink-0' : '', props.tierOneLine ? 'max-md:w-10' : '']" :title="t.weight ? tr(`重み ${t.weight}`, `Weight ${t.weight}`) : undefined">{{ tierShareText(r, t) }}</td>
                     <!-- スマホは行を折り返し、tier-actions の td (data-tier-end より後ろ) は 2 段目いっぱいに (MOD の文が 1〜3 文字ずつ縦に折れた、シミュ部長 29 10-25) -->
                     <slot name="tier-actions" :row="r" :tier="t" />
                   </tr>
