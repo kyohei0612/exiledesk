@@ -42,6 +42,10 @@ import type { RowToggle } from "../../../components/for-share/item/stage-item-ro
 import { dropWay, inWay, isCraftAim, toggleWay, wayUndecided, WAY_ORDER } from "./tree-way-mods";
 import { flag } from "../../../web/release-flags";
 import { useEditReset } from "./use-edit-reset";
+import TreeAttachPick from "./TreeAttachPick.vue";
+import { wayName } from "./tree-attach";
+/** 段の行のボタンを「付ける」1 つに (S-10b) */
+const ATTACH = flag("attachWay");
 
 const t = useTree();
 /** 完成形のカード (品質・ブリーチの「途中で消える」の行、スイッチ goalQuality) */
@@ -320,7 +324,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
              前はフラクチャーが左にあり、狙いでない段で押すと狙いに足して印も付けたので、狙いにするつもりで印が付いた (10-23 オーナー「印を付けていないのに ✦ スタート」) -->
         <!-- 狙いの MOD の行に札 (印ありは ✦ の色)、段の表では狙いの段の左に色の帯 (行の色、10-24 オーナー「フラクチャーにした行は色を変えて」) -->
         <template #row-badge="{ row: r }">
-          <span v-if="rowGoal(r)" data-mod-goal-badge class="whitespace-nowrap rounded-sm px-1 py-px text-[10px] leading-none" :class="rowGoal(r)!.fractured ? 'bg-mod-fractured/25 text-mod-fractured' : 'bg-amber-400/20 text-amber-100'">{{ rowGoal(r)!.fractured ? "✦ " : "" }}{{ tierRankLabel(rowGoal(r)!.tier) }}</span>
+          <span v-if="rowGoal(r)" data-mod-goal-badge class="whitespace-nowrap rounded-sm px-1 py-px text-[10px] leading-none" :class="rowGoal(r)!.fractured ? 'bg-mod-fractured/25 text-mod-fractured' : 'bg-amber-400/20 text-amber-100'">{{ rowGoal(r)!.fractured ? "✦ " : ATTACH && rowGoal(r)!.via ? `${wayName(rowGoal(r)!.via!)} ` : "" }}{{ tierRankLabel(rowGoal(r)!.tier) }}</span>
         </template>
         <template #row-open="{ row: r }">
           <p v-for="b in rowBlocks(r)" :key="b.why" data-mod-block-why class="mt-1 break-words rounded-md bg-rose-500/10 px-2 py-1 text-[12px] text-rose-100">{{ b.ranks ? `${b.ranks}: ` : "" }}{{ tr(`押せない: ${b.why}。替えるなら完成形のカードの × で外す`, `Can't pick: ${b.why}. To swap, remove one with × on the final item card`) }}</p>
@@ -332,8 +336,10 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
           <td class="w-48 whitespace-nowrap py-0.5 text-right">
             <!-- 選んだ段より上の段は狙いに含まれる印だけ (押すとそこから上に絞る)。ボタンの形にすると狙いが 2 つあるように見えた (10-24 オーナー) -->
             <button v-if="goalAt(tt.modId ?? r.id, tt.tier) === 'in'" type="button" data-mod-included class="px-2 text-[12px] opacity-60 hover:opacity-100" :title="tr(`狙いに含む。押すと ${tt.rank} 以上に絞る`, `Included in the target. Click to narrow to ${tt.rank}+`)" @click.stop="pickGoal.toggle(tt.modId ?? r.id, tt.tier)">{{ tr("含む", "Included") }}</button>
+            <!-- 付け方 4 択の「付ける」1 つ (S-10b、スイッチ attachWay)。途中で消えるクラフト MOD は前のボタンのまま (押すと外れる) -->
+            <TreeAttachPick v-else-if="ATTACH && !inWay(t.doc.value, tt.modId ?? r.id)" :mod-id="tt.modId ?? r.id" :tier="tt.tier" :rank="tt.rank" :group="r.group" :block="blockOf(tt.modId ?? r.id, tt.tier)" :aim="t.goals.value.find((a) => a.modId === (tt.modId ?? r.id))" />
             <button v-else type="button" data-mod-pick class="tbtn" :disabled="!!blockOf(tt.modId ?? r.id, tt.tier)" :class="pickGoal.has(tt.modId ?? r.id, tt.tier) ? 'on' : ''" :title="blockOf(tt.modId ?? r.id, tt.tier) ?? (pickGoal.has(tt.modId ?? r.id, tt.tier) ? tr('もう一度押すと狙いから外す', 'Click again to remove the target') : tr(`${tt.rank} 以上を完成の狙いにする`, `Make ${tt.rank}+ a final target`))" @click.stop="pickGoal.toggle(tt.modId ?? r.id, tt.tier)">{{ pickGoal.has(tt.modId ?? r.id, tt.tier) ? (tt.tier === 1 ? tr("✓ 狙い", "✓ Target") : tr(`✓ 狙い (${tt.rank} 以上)`, `✓ Target (${tt.rank}+)`)) : tr("狙いにする", "Target") }}</button>
-            <button v-if="goalAt(tt.modId ?? r.id, tt.tier) !== 'in'" type="button" data-mod-fracture class="tbtn ml-1" :disabled="!!fracBlockOf(r, tt.modId ?? r.id, tt.tier) && !isFrac(tt.modId ?? r.id, tt.tier)" :class="isFrac(tt.modId ?? r.id, tt.tier) ? 'on !text-mod-fractured' : ''" :title="fracBlockOf(r, tt.modId ?? r.id, tt.tier) ?? (isFrac(tt.modId ?? r.id, tt.tier) ? tr('もう一度押すとフラクチャーの印を外す', 'Click again to remove the fracture mark') : tr(`${tt.rank} 以上をフラクチャーの候補にする (どれか 1 つが固定されたレアからスタート)`, `Make ${tt.rank}+ a fracture candidate (start from a rare with one of them fractured)`))" @click.stop="markFracture(tt.modId ?? r.id, tt.tier)">{{ isFrac(tt.modId ?? r.id, tt.tier) ? tr("✦ 印", "✦ Marked") : tr("フラクチャー", "Fracture") }}</button>
+            <button v-if="goalAt(tt.modId ?? r.id, tt.tier) !== 'in' && !(ATTACH && !inWay(t.doc.value, tt.modId ?? r.id))" type="button" data-mod-fracture class="tbtn ml-1" :disabled="!!fracBlockOf(r, tt.modId ?? r.id, tt.tier) && !isFrac(tt.modId ?? r.id, tt.tier)" :class="isFrac(tt.modId ?? r.id, tt.tier) ? 'on !text-mod-fractured' : ''" :title="fracBlockOf(r, tt.modId ?? r.id, tt.tier) ?? (isFrac(tt.modId ?? r.id, tt.tier) ? tr('もう一度押すとフラクチャーの印を外す', 'Click again to remove the fracture mark') : tr(`${tt.rank} 以上をフラクチャーの候補にする (どれか 1 つが固定されたレアからスタート)`, `Make ${tt.rank}+ a fracture candidate (start from a rare with one of them fractured)`))" @click.stop="markFracture(tt.modId ?? r.id, tt.tier)">{{ isFrac(tt.modId ?? r.id, tt.tier) ? tr("✦ 印", "✦ Marked") : tr("フラクチャー", "Fracture") }}</button>
           </td>
         </template>
       </ModTable></div>
@@ -367,6 +373,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <details data-tree-goal-help-wrap :open="helpOpen" @toggle="helpOpen = ($event.target as HTMLDetailsElement).open">
           <summary class="cursor-pointer text-[12px] opacity-70 md:hidden">{{ tr("狙い・フラクチャーの使い方", "How targets and fracture work") }}</summary>
           <ul data-tree-goal-help class="flex list-disc flex-col gap-0.5 pl-4 text-[12px] opacity-70">
+            <li v-if="ATTACH" data-tree-goal-attach-help>{{ tr("付ける: 付け方 (ふつう・フラクチャー・冒涜・エッセンス) を選ぶ。その付け方で出ない物は灰色で、押すと訳。冒涜・エッセンスは付け方の覚えだけ (何個でも)", "Add: pick how it is added (Normal / Fracture / Desecrate / Essence). Greyed ways can't give that mod; click for why. Desecrate and Essence are only notes (any number)") }}</li>
             <li v-for="(line, k) in HELP" :key="k" :class="line[2] ? 'max-md:hidden' : ''">{{ tr(line[0], line[1]) }}</li>
           </ul>
         </details>
