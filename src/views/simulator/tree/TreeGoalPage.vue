@@ -80,6 +80,8 @@ function go(n: 0 | 1 | 2): void {
 /** 「替える」の確かめが出たら見える所へ送る (一覧を下まで送っていると上の帯が見えず、ベースを押しても進まないように見えた、10-23 オーナー) */
 const askEl = ref<HTMLElement | null>(null);
 watch(asking, (v) => { if (v) void nextTick(() => askEl.value?.scrollIntoView({ block: "nearest" })); });
+/** 帯の文はスマホ幅で 1 行丸ごと使う (ボタンと同じ行だと 2 文字幅に潰れて帯が 512px になる、S-06) */
+const ASK_WRAP = flag("goalAskFix");
 if (flag("goalAskFix")) {
   // 帯が出ている時の Esc 1 回は帯だけ閉じる (U-21 の積み。一覧を押して別のベースへ替えられるよう、外を押しても閉じない、S-06)
   useDismiss(() => !!asking.value, [askEl], () => { asking.value = null; }, { escOnly: true });
@@ -314,7 +316,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       </div>
       <!-- ベースを替えると今の木が消える時だけ、1 回確かめる (上に貼り付けて、一覧を送っていても見える所に) -->
       <div v-if="asking" ref="askEl" data-tree-base-ask class="sticky top-0 z-10 flex flex-wrap items-center gap-3 rounded-lg border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-[13px]">
-        <p class="min-w-0 flex-1">{{ tr(`${jaTypeName(asking)} の白紙から組み直します。今の木 (箱 ${t.lostOnBase.value} 個) が消えます。完成の狙いは ${jaTypeName(asking)} にも付く物だけ残ります (1 つ戻すで戻せます)。`, `Start over from a blank ${asking}. This tree (${t.lostOnBase.value} box(es)) will be removed. Final targets that ${asking} can roll are kept (Undo brings it back).`) }}</p>
+        <p class="min-w-0 flex-1" :class="{ 'max-md:basis-full': ASK_WRAP }">{{ tr(`${jaTypeName(asking)} の白紙から組み直します。今の木 (箱 ${t.lostOnBase.value} 個) が消えます。完成の狙いは ${jaTypeName(asking)} にも付く物だけ残ります (1 つ戻すで戻せます)。`, `Start over from a blank ${asking}. This tree (${t.lostOnBase.value} box(es)) will be removed. Final targets that ${asking} can roll are kept (Undo brings it back).`) }}</p>
         <!-- 保存は名前を聞かずその場で (開いていたレシピなら上書き、tree-save.ts。10-26 オーナー「保存しますかって聞かれたら保存でおｋ」) -->
         <button type="button" data-tree-base-save class="g-btn sm" @click="changeBase(true)">{{ tr("保存して替える", "Save and change") }}</button>
         <button type="button" data-tree-base-ok class="g-btn sm" @click="changeBase(false)">{{ tr("保存せず替える", "Change without saving") }}</button>
