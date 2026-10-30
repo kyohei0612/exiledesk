@@ -39,6 +39,8 @@ export function handAims(doc: TreeDoc, id: string, aims: readonly Aim[]): readon
   const b = doc.boxes[id];
   // 発現で選ぶ手 (骨の「発現させる」・後から打つ発現) は、その手の当たりの箱の札 (☑。完成の狙いに無い置き石も) だけで選ぶ (スイッチ boneLater)
   if (veilPick(b?.hand)) return b!.outs.flatMap((o) => { const c = doc.boxes[o]; return c?.out === "hit" && c.aim ? boxAims(c) : []; });
+  // ✦ の木の確定フラクチャーは ✦ の印だけを固定する (S-42。木の狙い全部を渡すと印の無い狙いまで固定され、✦ の無い側の ✦ の人に行き先が無く止まった、金の指輪 10-31)
+  if (b?.hand && effectOf(b.hand.currency) === "fracture" && b.hand.pick !== "random" && fractureMarks(doc).length) return fractureMarks(doc);
   if (!b?.hand?.repeat) return aims;
   const own = b.outs.flatMap((o) => { const c = doc.boxes[o]; return c?.out === "hit" && c.aim ? boxAims(c) : []; });
   return own.length ? own : aims;
