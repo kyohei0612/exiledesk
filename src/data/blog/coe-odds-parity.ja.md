@@ -1,11 +1,10 @@
 ---
 title: PoE2 クラフトの確率は CoE と合う？｜5 万回ずつ照らした
 description: PoE2 のクラフトの確率を Craft of Exile 自身の計算と 5 万回ずつ照らしました。高貴は 15 通りすべて、カオスは 12 通り中 11 通りが誤差の幅の中。外れた 1 つが偶然だった確かめ方も書きます。
-date: 2026-10-30
+date: 2026-10-31
 tags: Craft of Exile, 確率, 高貴なオーブ, カオスオーブ, 確かめ方
 craft: /?base=Gold%20Ring
 ready: true
-draft: true
 ---
 PoE2 のクラフトの確率を、ExileDesk と **Craft of Exile (CoE) 自身の計算で照らし合わせたら、高貴は 15 通りすべて、カオスは 12 通り中 11 通りで誤差の幅に入りました**。幅を外れた 1 つも、乱数の種を変えて回し直すと CoE の値に戻り、偶然の振れでした。
 

@@ -1,11 +1,10 @@
 ---
 title: Do PoE2 Crafting Odds Match Craft of Exile? 50k Rolls Each
 description: PoE2 crafting odds in ExileDesk vs Craft of Exile's own math, 50k rolls each: all 15 Exalt and 11 of 12 Chaos cases matched. The one miss was luck.
-date: 2026-10-30
+date: 2026-10-31
 tags: Craft of Exile, odds, Exalted Orb, Chaos Orb, testing
 craft: /?base=Gold%20Ring
 ready: true
-draft: true
 ---
 We put ExileDesk's PoE2 crafting odds next to **Craft of Exile's own calculation, and all 15 Exalted Orb cases and 11 of 12 Chaos Orb cases fell inside the margin of error**. The one case that missed came back to Craft of Exile's number once we reran it with different random seeds. It was a lucky streak, not a bug.
 
