@@ -9,7 +9,7 @@ import { applyCurrency, maxQualityOf, mulberry32, type StageItem, type StageMod 
 import { craftStage as s } from "../../../state/craft-stage";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { useTree } from "./use-tree";
-import { bundleTag, craftBundle, wayRows, WAY_ORDER } from "./tree-way-mods";
+import { bundleTag, craftBundle, desecratedBundle, desecratedTag, wayRows, WAY_ORDER } from "./tree-way-mods";
 import { flag } from "../../../web/release-flags";
 import { tr } from "../../../i18n/lang";
 
@@ -36,11 +36,16 @@ export function useGoalShown() {
   });
   /** 上限を溢れたクラフト MOD の束 (S-30b、スイッチ attachWay)。カードに乗らなかった束の MOD は行を足して全部カードに出す */
   const bundle = computed(() => (flag("attachWay") && s.data.value ? craftBundle(s.data.value, t.doc.value, t.goalItem.value?.item ?? null) : null));
+  /** 冒涜の束 (2 つ目から、どれか 1 つ) */
+  const desecrated = computed(() => (flag("attachWay") && s.data.value ? desecratedBundle(s.data.value, t.doc.value) : null));
+  /** 束に入っている狙いの MOD (カードに全部出し、枠の外の一覧からは除く) */
+  const bundled = computed(() => new Set([...(bundle.value?.aims ?? []), ...(desecrated.value ?? [])].map((a) => a.modId)));
   const bundleRows = computed((): StageMod[] => {
-    const d = s.data.value, g = t.goalItem.value?.item, b = bundle.value;
-    if (!d || !g || !b) return [];
+    const d = s.data.value, g = t.goalItem.value?.item;
+    if (!d || !g || !bundled.value.size) return [];
     const on = new Set([...g.prefixes, ...g.suffixes].map((m) => m.modId));
-    return wayRows(d, t.doc.value, b.aims.filter((a) => !on.has(a.modId)));
+    // 冒涜専用 MOD の行はエミュと同じ冒涜の枠で出す (S-82 と同じ見た目)
+    return wayRows(d, t.doc.value, (t.doc.value.memoAims ?? []).filter((a) => bundled.value.has(a.modId) && !on.has(a.modId))).map((m) => (d.mods.get(m.modId)?.source === "desecrated" ? { ...m, desecrated: true } : m));
   });
   const item = computed((): StageItem | null => {
     const g = t.goalItem.value?.item, doc = t.doc.value;
@@ -51,11 +56,11 @@ export function useGoalShown() {
   });
   /** 途中で消える行の札 (どれも同じ「途中で消える」) */
   const tags = computed((): Map<string, RowTag> | null => {
-    const ws = ways.value, b = bundle.value;
-    if (b) return new Map([...ws.map((m) => [m.modId, wayTag()] as const), ...b.aims.map((a) => [a.modId, bundleTag(b.lim)] as const)]);
+    const ws = ways.value, b = bundle.value, ds = desecrated.value;
+    if (b || ds) return new Map([...ws.map((m) => [m.modId, wayTag()] as const), ...(b?.aims ?? []).map((a) => [a.modId, bundleTag(b!.lim)] as const), ...(ds ?? []).map((a) => [a.modId, desecratedTag()] as const)]);
     return ws.length ? new Map(ws.map((m) => [m.modId, wayTag()])) : null;
   });
   const wayTag = (): RowTag => ({ text: tr("途中で消える", "Removed on the way"), tone: "warn" as const, title: `${tr("途中で付けて、その後で消えてよい MOD (品質は残る)。完成の狙い・MOD の枠・完成の判定には数えない", "Added on the way, then may be removed (quality stays). Not counted as a final target, mod slot or for completion")}
 ${WAY_ORDER()}` });
-  return { item, tags, breach, bundle };
+  return { item, tags, breach, bundled };
 }

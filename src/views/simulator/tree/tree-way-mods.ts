@@ -57,6 +57,20 @@ export function craftBundle(data: PatchData, doc: TreeDoc, goal: StageItem | nul
   const aims = (doc.memoAims ?? []).filter((a) => isCraftAim(data, a) && !isBreachAim(a)), lim = craftLimit(goal);
   return aims.length > lim ? { aims, lim } : null;
 }
+/**
+ * 冒涜の束 (S-30b、スイッチ attachWay、10-31 オーナー「A」= エッセンスの束と同じ形)。冒涜の MOD はアイテムに 1 つまでなので、
+ * 冒涜で付く狙い (冒涜専用 MOD と「冒涜」で付けた狙い) が 2 つ以上なら全部を「どれか 1 つ」の束にする。骨の発現の窓・木の判定は替えない (S-32)
+ */
+export function desecratedBundle(data: PatchData, doc: TreeDoc): Aim[] | null {
+  const aims = (doc.memoAims ?? []).filter((a) => a.via === "desecrated" || data.mods.get(a.modId)?.source === "desecrated");
+  return aims.length > 1 ? aims : null;
+}
+/** 冒涜の束の行の札 */
+export const desecratedTag = (): RowTag => ({
+  text: tr("どれか 1 つ", "Any 1"),
+  tone: "info",
+  title: tr("冒涜の MOD はアイテムに 1 つまで。束のどれか 1 つが付く (ツリーの骨の手はベースに付く MOD 全部から選べる)", "Only 1 desecrated mod per item. One of the group is added (Bones in the tree can pick from every mod the base can have)"),
+});
 /** 束の行の札 */
 export const bundleTag = (lim: number): RowTag => ({
   text: tr(`どれか ${lim} つ残る`, `Any ${lim} stay`),
