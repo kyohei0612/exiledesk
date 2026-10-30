@@ -1,10 +1,18 @@
 # AI 自動ツリー (仮名、決まりは設計図 docs/spec/sim-tree.md の S-170〜S-176)
 
-AI が手順を試して数字で比べ、安い・早い・完成率の高い作り方を探す内部の道具。画面は無い。出す物は JSON。打つのはエミュと同じエンジンの入口だけ (`_entry.ts`)。
+AI が手順を試して数字で比べ、安い・早い・完成率の高い作り方を探す内部の道具。出す物は JSON。打つのはエミュと同じエンジンの入口だけ (`_entry.ts`)。結果の木は `http://localhost:1440/scripts/ai-tree/view.html` で見る (記録を 3 秒ごとに読む。`src/` と vite の設定は触らない)。
+
+最適解を探すだけなら問題を書いて `solve`:
+
+```bash
+node scripts/ai-tree/ai-tree.mjs solve scripts/ai-tree/recipes/pariah-goal.json --n 5000
+```
+
+問題 = `base`・`itemLevel`・`basePrice` (必須、0 より大きい)・`aims`・`goal`。`rules` は書かない。答えは `data-cache/ai-tree/solved/<name>.json` に手順で残り、選ぶのに使わなかった種で回した数字が記録に入る。`solve.history` は回ごとの `estimate` (見積もり) と `real` (本物で回した費用) で、離れていたら `--samples` や `--rounds` を増やす。目標は `--objective cost|steps|budget` (`budget` は `--budget 20`、帯の数 `--bands 40`)。結果の `gap` が見積もりと実測のずれ、`solve.dropped` が削った手。考える工程は `http://localhost:1440/scripts/ai-tree/think.html`。主な指定: `--lambda 0.1` (1 手を 0.1 神と数えて早さを足す)・`--rounds 6`・`--samples 12`・`--top 6`・`--trial 800`。問題の `"solve": { "allow": [...], "deny": [...] }` で試す手を足す・外す。試すのはエンジンで打てて値段のある手を全部 (お告げは 3 つまでの組)。
 
 ## リーク無し (S-172)
 
-材料はエミュの画面で見える物だけ。`hands` (棚と相場)・`pool` (MOD 一覧と重み)・`odds` (持った時の %)・`play` (手で打つ)。人の打ち方・動画・見本のレシピ・過去の答えは手順の材料にしない。`docs/org/math/notes/`・`scripts/analysis/*-ev.mjs`・ブログの下書きは答えなので探す時に読まない。手順は回す間に変えない。`run` の返事は集計で、1 人の道は `trace` と頼んだ時だけ。
+材料はエミュの画面で見える物だけ。`hands` (棚と相場)・`pool` (MOD 一覧と重み)・`odds` (持った時の %)・`play` (手で打つ。見る道具で、数字は `run` で出す)。人の打ち方・動画・見本のレシピ・過去の答えは手順の材料にしない。`docs/org/math/notes/`・`scripts/analysis/*-ev.mjs`・ブログの下書きは答えなので探す時に読まない。手順は回す間に変えない。`run` の返事は集計で、1 人の道は `trace` と頼んだ時だけ。
 
 ## 使い方
 
@@ -54,8 +62,8 @@ node scripts/ai-tree/ai-tree.mjs play show p1
 - 単位は全部神。`basePrice` はベース 1 個、`restart` のたびにもう 1 度払う。`prices` は相場より先に見る。値段の無い手は `check` で止まる (0 にしない)。
 - 規則は上から見て最初に当たった 1 つ。`goal` が揃うと完成。規則に当たらない・打てない人は `stuck` として理由ごとに数える。
 - `tier` は T の数字 (T1 が一番上)、その段以上が当たり。`value` は 1 つ目の数値の下限。
-- `use` は `hands` のキー。ルーンは `rune:<英語名>`。発現は `{ "use": "reveal", "choose": ["狙いの順"] }` で、候補 3 つを見て狙いの順に選ぶ。反響のお告げを付けると、候補に狙いが無い時に引き直す。指名の手 (force・spam・qset・qcap・ilvl・iset・sset・pick・remove) は断る (S-173)。
-- `start` は `startFrom` の形 (`rarity`・`mods`・`quality`・`sockets`・`runes`)。`mods` を決めるなら `basePrice` が要る。`{ "save": "名前", "carry": false }` で保存の形から始める (`base` はいらない)。`carry` の既定は true で、保存までの費用を足す。人の番号で保存の形を順に使う。
+- `use` は `hands` のキー。ルーンは `rune:<英語名>`。発現は `{ "use": "reveal", "choose": ["狙いの順"] }` で、候補 3 つを見て狙いの順に選ぶ。反響のお告げを付けると、候補に狙いが無い時に引き直す。打てる手は棚 (`ORBS`) とエッセンス・カタリスト・骨・ルーン・発現だけ。棚に無い手 (ヴァール・可能性・熟練工など、E-28・E-29) と指名の手 (force・spam・qset・qcap・ilvl・iset・sset・pick・remove)・一緒に掛けられないお告げの組は断る (S-173)。
+- `start` は `startFrom` の形 (`rarity`・`mods`・`quality`・`sockets`・`runes`)。`mods` を決めるなら `basePrice` が要る。`{ "save": "名前", "carry": false }` で保存の形から始める (`base` はいらない)。`carry` の既定は true で、保存までの費用を足す (着いた人の分だけ。諦めた人の分は入らない)。`carry:false` は `basePrice` が要る。保存の形から `restart` はできない。人の番号で保存の形を順に使う。
 - `capture` は条件に最初に当たった時の形を `keep` 個まで保存する。
 
 条件は `all`・`any`・`not` で組む。葉は `min` / `max` を付ける。

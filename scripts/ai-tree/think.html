@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>AI 自動ツリーの考え</title>
+<style>
+:root{--bg:#14110d;--box:#221c15;--line:#5c4c36;--text:#e8dcc6;--dim:#a39477;--go:#c9a35b;--ok:#6fbf73}
+body{margin:0;background:var(--bg);color:var(--text);font:13px/1.4 "Yu Gothic UI","Meiryo",sans-serif}
+nav{position:sticky;top:0;z-index:2;display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:8px 16px;background:#1b1610;border-bottom:1px solid var(--line)}
+select{background:var(--box);color:var(--text);border:1px solid var(--line);padding:3px 6px}
+input[type=range]{width:320px}#info{color:var(--dim)}
+main{display:flex;gap:16px;padding:12px 16px;align-items:flex-start}
+#tiers{flex:1;min-width:0}#detail{width:440px;flex:none;position:sticky;top:60px;max-height:calc(100vh - 80px);overflow:auto;background:var(--box);border:1px solid var(--line);border-radius:6px;padding:10px}
+svg{display:block;width:100%;height:90px;background:var(--box);border:1px solid var(--line);border-radius:6px;margin-bottom:12px}
+polyline{fill:none;stroke:var(--go);stroke-width:1.5}
+h3{font-size:13px;margin:12px 0 6px}h3 small{color:var(--dim);font-weight:400}
+.cards{display:flex;flex-wrap:wrap;gap:6px}
+.card{width:186px;box-sizing:border-box;padding:5px 7px;background:var(--box);border:1px solid var(--line);border-radius:5px;cursor:pointer;opacity:.28}
+.card.on{opacity:1}.card.path{border-color:var(--go)}.card.sel{outline:2px solid var(--ok)}
+.card b{display:block;color:var(--go)}.card span{display:block;color:var(--dim);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row{padding:5px 0;border-top:1px solid var(--line)}.row b{color:var(--go)}.row small{display:block;color:var(--dim)}.row:first-of-type b{color:var(--ok)}
+</style>
+</head>
+<body>
+<nav><b>AI 自動ツリーの考え</b><select id="run"></select>
+<label>周 <input id="sweep" type="range" min="1" value="1"></label><span id="info"></span></nav>
+<main><div id="tiers"></div><aside id="detail">形を押すと、比べた手の順位が出ます</aside></main>
+<script type="module">
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+let think = null, runs = [];
+const unit = () => (think.objective === "steps" ? "手" : "神");
+
+function chart() {
+  const xs = think.sweeps.filter((x) => x.start != null);
+  const hi = Math.max(...xs.map((x) => x.start)), last = xs.at(-1).i;
+  const pts = xs.map((x) => `${(x.i / last * 1000).toFixed(1)},${(85 - x.start / (hi || 1) * 80).toFixed(1)}`).join(" ");
+  return `<svg viewBox="0 0 1000 90" preserveAspectRatio="none"><polyline points="${pts}"/></svg>`;
+}
+function draw() {
+  const at = Number($("#sweep").value);
+  const now = think.sweeps.filter((x) => x.i <= at).at(-1) ?? think.sweeps[0];
+  $("#info").textContent = `周 ${now.i} / ${think.sweeps.at(-1).i}・変わった形 ${now.changed}・スタートの値 ${now.start ?? "-"} ${unit()}・本物 ${think.history.at(-1)?.real ?? "-"}`;
+  let html = chart();
+  for (const t of think.tiers) {
+    if (!t.states) continue;
+    const list = think.states.filter((s) => s.rem === t.rem).sort((a, b) => b.onPath - a.onPath || a.v - b.v);
+    const open = list.filter((s) => s.settled <= at).length;
+    html += `<h3>残り ${t.rem} <small>形 ${t.states} (うち答えが通る ${t.onPath})・値 ${t.min?.toFixed(2)}〜${t.max?.toFixed(2)}・表示 ${Math.min(60, list.length)}・決まった ${open} / ${list.length}</small></h3><div class="cards">`;
+    html += list.slice(0, 60).map((s) => `<div class="card ${s.settled <= at ? "on" : ""} ${s.onPath ? "path" : ""}" data-k="${esc(s.key)}"><b>${s.settled <= at ? `${s.v} ${unit()}` : "…"}</b><span>${esc(s.top[0]?.hand ?? "-")}</span><span>${esc(s.title)}</span></div>`).join("");
+    html += "</div>";
+  }
+  $("#tiers").innerHTML = html;
+}
+function detail(key) {
+  const s = think.states.find((x) => x.key === key);
+  if (!s) return;
+  document.querySelectorAll(".card").forEach((c) => c.classList.toggle("sel", c.dataset.k === key));
+  $("#detail").innerHTML = `<b>${esc(s.title)}</b><br>この形から完成まで ${s.v} ${unit()}・比べた手 ${s.tried}<br>` + s.top.map((r, i) =>
+    `<div class="row">${i + 1}. ${esc(r.hand)} <b>${r.v}</b><small>1 回 ${r.m} 神 / 打った後: ${r.to.map(([t, p]) => `${esc(t)} ${(p * 100).toFixed(0)}%`).join(" ・ ")}</small></div>`).join("");
+}
+async function open(id) {
+  const row = runs.find((x) => x.id === id);
+  think = await (await fetch(`/data-cache/ai-tree/think/${encodeURIComponent(row.think)}.json`, { cache: "no-store" })).json();
+  $("#sweep").max = think.sweeps.at(-1).i;
+  $("#sweep").value = think.sweeps.at(-1).i;
+  draw();
+}
+async function load() {
+  const text = await (await fetch("/data-cache/ai-tree/log.jsonl", { cache: "no-store" })).text();
+  runs = text.split("\n").filter((l) => l.startsWith("{")).map((l) => JSON.parse(l)).filter((x) => x.think);
+  $("#run").innerHTML = runs.map((x) => `<option value="${x.id}">${x.id} ${x.recipeName}</option>`).reverse().join("");
+  if (runs.length) await open(runs.at(-1).id);
+  else $("#tiers").textContent = "まだ solve の記録がありません";
+}
+$("#run").onchange = (e) => open(e.target.value);
+$("#sweep").oninput = draw;
+$("#tiers").onclick = (e) => { const c = e.target.closest(".card"); if (c) detail(c.dataset.k); };
+load();
+</script>
+</body>
+</html>

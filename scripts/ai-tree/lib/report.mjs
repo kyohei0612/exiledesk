@@ -32,6 +32,7 @@ export function report(rs, price, rule, ms) {
     costDone: { mean: r3(s.m), ci95: r3(1.96 * s.se), median: r3(s.median), p90: r3(s.p90), p99: r3(q(s.costs, 0.99)) },
     steps: { perItem: r3(rs.reduce((a, x) => a + x.steps, 0) / (D || NaN)), doneMean: r3(mean(steps)), doneMedian: r3(q(steps, 0.5)) },
     restartsPerPerson: r3(mean(rs.map((x) => x.restarts))),
+    ...(rule.limits?.budget ? { withinBudget: r3(s.costs.filter((c) => c <= rule.limits.budget).length / N) } : {}),
     ends, stuck, hands,
     ms,
   };

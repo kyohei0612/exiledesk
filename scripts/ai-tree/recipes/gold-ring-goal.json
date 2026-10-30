@@ -1,0 +1,14 @@
+{
+  "schema": "ai-tree/1",
+  "name": "gold-ring-goal",
+  "note": "solve の問題の見本 2: 指輪のサフィックス 3 つ。カタリストの道が要る部位。basePrice は仮",
+  "base": "Gold Ring",
+  "itemLevel": 82,
+  "basePrice": 1,
+  "aims": {
+    "rarity": { "mods": ["Rings/ItemFoundRarityIncrease"], "tier": 1 },
+    "cast": { "mods": ["Rings/IncreasedCastSpeed"], "tier": 2 },
+    "allres": { "mods": ["Rings/AllResistances"], "tier": 2 }
+  },
+  "goal": { "rarity": 1, "cast": 1, "allres": 1 }
+}

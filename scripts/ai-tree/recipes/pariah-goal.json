@@ -1,0 +1,13 @@
+{
+  "schema": "ai-tree/1",
+  "name": "pariah-goal",
+  "note": "solve の問題の見本: 打ち方は書かず、狙いと完成だけ",
+  "base": "Pariah Mask",
+  "itemLevel": 82,
+  "basePrice": 1,
+  "aims": {
+    "life": { "mods": [{ "id": "Helmets_dex_int/IncreasedLife", "tier": 3 }, { "id": "Helmets_dex_int/Essence_IncreasedLife", "tier": 1 }] },
+    "res": { "mods": ["Helmets_dex_int/FireResistance", "Helmets_dex_int/ColdResistance", "Helmets_dex_int/LightningResistance"], "tier": 2 }
+  },
+  "goal": { "life": 1, "res": 2 }
+}

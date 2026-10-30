@@ -2,8 +2,8 @@
  * runner.mjs — 手順を N 人回す (S-174・S-175)。打つのはエンジンの入口だけ。1 人ごとに種を分けるので、人の番号で同じ道を再現できる。
  * 費用は全部神。始めから作り直すと base をもう 1 個数える
  */
-import { costOf, counter } from "../../analysis/_ev-common.mjs";
-import { aimCount, compileAims, matchesAim, test } from "./recipe.mjs";
+import { costOf } from "../../analysis/_ev-common.mjs";
+import { compileAims, graphKey, matchesAim, stateKey, targetsDone, test } from "./recipe.mjs";
 
 const DEFAULT_LIMITS = { steps: 20000, restarts: 100000, budget: 0 };
 
@@ -17,24 +17,53 @@ export function personSeeds(M, seed, n) {
 export function makeRunner(M, data, r, price, starts) {
   const aims = compileAims(M, data, r.aims);
   const limits = { ...DEFAULT_LIMITS, ...r.limits };
-  const goal = Object.entries(r.goal);
   const table = new Proxy({}, { get: (_, k) => (k === "divine" ? 1 : k === "base" ? r.basePrice ?? 0 : price(k)) });
   const spentOf = (n) => costOf(n, table);
-  const finished = (it) => goal.every(([k, v]) => aimCount(M, aims[k], it) >= v);
+  const finished = (it) => targetsDone(M, aims, r.goal, it);
+  // 形で書いた規則 (solve の答え) は引き表で 1 回で引く
+  const byState = new Map();
+  r.rules.forEach((x, i) => { if (x.if?.state) (byState.get(x.if.state) ?? byState.set(x.if.state, []).get(x.if.state)).push(i); });
+  const budget = limits.budget, unit = r.bands?.unit;
+  const pickState = (key, spent) => {
+    const list = byState.get(key);
+    if (!list) return undefined;
+    if (!unit) return list[0];
+    const b = Math.max(0, Math.floor((budget - spent) / unit));
+    return list.find((i) => b >= r.rules[i].if.band[0] && b <= r.rules[i].if.band[1]);
+  };
+  const plain = r.rules.flatMap((x, i) => (x.if?.state ? [] : [i]));
+  const labelOf = (x) => x.note ?? [x.use, ...(x.omens ?? [])].join(" + ");
   const capture = r.capture ?? [];
 
-  /** rec = { hits, captured } に足す。trace = 配列なら 1 手ずつ残す */
+  /** rec = { hits, captured, graph } に足す。trace = 配列なら 1 手ずつ残す */
   return function runOne(index, seed, rec, trace = null) {
     const rng = M.mulberry32(seed);
     const n = {};
-    const apply = counter(M, data, n, (cur) => (cur.startsWith("reveal:") ? "reveal" : cur));
+    /** 1 手打って数える。当たり所で弾かれた手 (random) は消費されず null、それ以外の打てない手は止まり */
+    const apply = (item, cur, g, omens) => {
+      const res = M.applyCurrency(data, item, cur, g, omens);
+      if (!res.applied) {
+        if (res.random) return null;
+        throw new Error(res.reason);
+      }
+      const key = cur.startsWith("reveal:") ? "reveal" : cur;
+      n[key] = (n[key] ?? 0) + 1;
+      for (const o of res.omensUsed ?? []) n[o] = (n[o] ?? 0) + 1;
+      return res;
+    };
     let tryN = {}; // used の条件はこの作り直しの中の個数
     const from = starts(index, rng);
     Object.assign(n, from.n ?? {});
     let it = from.item, steps = 0, restarts = 0;
     const taken = new Set();
-    const ctx = { get item() { return it; }, get tryN() { return tryN; }, get steps() { return steps; }, get restarts() { return restarts; }, spent: () => spentOf(n) };
-    const end = (how, reason) => ({ done: how === "done", how, reason, n, it, steps, restarts });
+    const ctx = { get item() { return it; }, get tryN() { return tryN; }, get steps() { return steps; }, get restarts() { return restarts; }, spent: () => spentOf(n), key: () => stateKey(M, data, aims, it) };
+    const box = (k) => (rec.graph[k] ??= { n: 0, moves: {}, ends: {} });
+    const here = () => (finished(it) ? "done" : graphKey(M, aims, r.goal, it));
+    const edge = (from, label) => { const m = (from.moves[label] ??= {}), to = here(); m[to] = (m[to] ?? 0) + 1; };
+    const end = (how, reason) => {
+      if (how !== "done") { const b = box(here()); b.ends[how] = (b.ends[how] ?? 0) + 1; }
+      return { done: how === "done", how, reason, n, it, steps, restarts };
+    };
     for (;;) {
       for (const c of capture) if (!taken.has(c.as) && test(M, aims, c.if, ctx)) {
         taken.add(c.as);
@@ -44,16 +73,26 @@ export function makeRunner(M, data, r, price, starts) {
       if (finished(it)) return end("done");
       if (++steps > limits.steps) return end("limit");
       if (limits.budget > 0 && spentOf(n) > limits.budget) return end("budget");
-      const at = r.rules.findIndex((x) => test(M, aims, x.if, ctx));
+      const at = pickState(ctx.key(), unit ? spentOf(n) : 0) ?? plain.find((i) => test(M, aims, r.rules[i].if, ctx)) ?? -1;
       if (at < 0) return end("stuck", "どの規則にも当たらない");
       const rule = r.rules[at];
       rec.hits[at] = (rec.hits[at] ?? 0) + 1;
+      if (rec.visits) {
+        const k = ctx.key(), v = rec.visits.get(k) ?? rec.visits.set(k, { n: 0, items: [] }).get(k);
+        // 通った形の見本: 満杯の後は順に入れ替える (乱数を使わない)
+        if (v.items.length < rec.keep) v.items.push(it);
+        else v.items[v.n % rec.keep] = it;
+        v.n++;
+      }
+      const from = box(here());
+      from.n++;
       if (rule.stop) return end("stop", rule.note);
       if (rule.restart) {
         if (++restarts > limits.restarts) return end("limit");
         it = starts(index, rng).item;
         n.base = (n.base ?? 0) + 1;
         tryN = {};
+        edge(from, labelOf(rule));
         trace?.push({ rule: at, do: "restart" });
         continue;
       }
@@ -62,12 +101,13 @@ export function makeRunner(M, data, r, price, starts) {
         if (rule.use === "reveal") {
           const s = Math.floor(rng() * 2 ** 32);
           const key = revealChoice(M, data, aims, it, rule.choose, s, rule.omens ?? []);
-          it = apply(it, key, M.mulberry32(s), rule.omens ?? []).item;
-        } else it = apply(it, rule.use, rng, rule.omens ?? []).item;
+          it = apply(it, key, M.mulberry32(s), rule.omens ?? [])?.item ?? it;
+        } else it = apply(it, rule.use, rng, rule.omens ?? [])?.item ?? it;
         for (const k of Object.keys(n)) if (n[k] !== was[k]) tryN[k] = (tryN[k] ?? 0) + n[k] - (was[k] ?? 0);
+        edge(from, labelOf(rule));
         trace?.push({ rule: at, use: rule.use, omens: rule.omens ?? [], added: diff(it, before), removed: diff(before, it), rarity: it.rarity });
       } catch (e) {
-        return end("stuck", `${rule.use}: ${e.message.replace(/^.*が打てない: /, "")}`);
+        return end("stuck", `${rule.use}: ${e.message}`);
       }
     }
   };
@@ -79,7 +119,7 @@ const diff = (a, b) => {
 };
 
 /** 候補を見て、狙いの順に一番上を選ぶ (無ければ引き直し、それも無ければ 1 番目)。reveal:N の N は 1 始まり */
-function revealChoice(M, data, aims, it, choose, seed, omens) {
+export function revealChoice(M, data, aims, it, choose, seed, omens) {
   const { first, reroll } = M.revealOffers(data, it, M.mulberry32(seed));
   const find = (list) => {
     for (const name of choose) {

@@ -6,7 +6,7 @@
   "itemLevel": 82,
   "basePrice": 0,
   "aims": {
-    "life": { "mods": [{ "id": "Helmets_dex_int/IncreasedLife", "tier": 3 }, "Helmets_dex_int/Essence_IncreasedLife"] },
+    "life": { "mods": [{ "id": "Helmets_dex_int/IncreasedLife", "tier": 3 }, { "id": "Helmets_dex_int/Essence_IncreasedLife", "tier": 1 }] },
     "lifeAny": { "mods": ["Helmets_dex_int/IncreasedLife"] },
     "res": { "mods": ["Helmets_dex_int/FireResistance", "Helmets_dex_int/ColdResistance", "Helmets_dex_int/LightningResistance"], "tier": 2 }
   },

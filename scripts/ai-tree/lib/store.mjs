@@ -40,6 +40,20 @@ export function writeSave(name, save) {
   fs.writeFileSync(saveFile(name), JSON.stringify({ name, at: new Date().toISOString(), ...save }));
 }
 
+/** solve の答えの手順 */
+export function writeSolved(name, recipe) {
+  fs.mkdirSync(path.join(DIR, "solved"), { recursive: true });
+  const file = path.join(DIR, "solved", `${name}.json`);
+  fs.writeFileSync(file, JSON.stringify(recipe, null, 1));
+  return file;
+}
+
+/** 考える工程の記録 (think.html が読む) */
+export function writeThink(name, think) {
+  fs.mkdirSync(path.join(DIR, "think"), { recursive: true });
+  fs.writeFileSync(path.join(DIR, "think", `${name}.json`), JSON.stringify(think));
+}
+
 export function readSave(name) {
   if (!fs.existsSync(saveFile(name))) throw new Error(`保存に無い: ${name}`);
   return JSON.parse(fs.readFileSync(saveFile(name), "utf8"));
