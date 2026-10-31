@@ -19,7 +19,7 @@ import { nameOfKey } from "../../../state/for-share/craft-stage-shelf"; // 名�
 import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
 import { aimOpts, aimsOf, goalsHeld, handAims, handProblem, heldHitOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
 import { boxOutcomeOf, fromStrip, stripBackOf, stripStop, stripTargetsOf } from "./tree-outcome";
-import { runTreeSteps, stuckDetail } from "./tree-run";
+import { runTreeSteps, stuckDetail, type TreeRunResult } from "./tree-run";
 import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapesOf, splitTo } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { judgeMemo, nextAimed, startAimed } from "./tree-judge";
@@ -52,8 +52,10 @@ export function checkTree(data: PatchData, doc: TreeDoc): CheckIssue[] {
  * ルート精査を 1 人ずつ区切って回し、間に画面を返す (くるくるが回り「精査中 12/30」が出る、10-22 オーナー「ローディング画面を出さないとバグってるのか分からない」)。
  * 中身は checkTree と同じ。木の設定 (tune) は 1 区切りごとに包む
  */
-export async function checkTreeAsync(data: PatchData, doc: TreeDoc, onProgress: (p: CheckProgress) => void): Promise<CheckIssue[]> {
-  const g = checkSteps(data, doc);
+/** 精査の 30 人を穴チェックの走行に使い回す時の値段 (S-71b、スイッチ treeLight)。費用の上限は掛けないので、精査の結果は値段 0 の時と同じ */
+export interface CheckPrice { price: (key: string) => number; startCost: number }
+export async function checkTreeAsync(data: PatchData, doc: TreeDoc, onProgress: (p: CheckProgress) => void, priced?: CheckPrice, onRun?: (r: TreeRunResult) => void): Promise<CheckIssue[]> {
+  const g = checkSteps(data, doc, priced, onRun);
   for (;;) {
     const r = withTreeTune(doc, () => g.next());
     if (r.done) return r.value;
@@ -86,7 +88,7 @@ function capSpam(data: PatchData, doc: TreeDoc): { doc: TreeDoc; capped: Set<str
   }
   return { doc: capped.size || dead.size ? { ...doc, boxes } : doc, capped, dead };
 }
-function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, CheckIssue[]> {
+function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?: (r: TreeRunResult) => void): Generator<CheckProgress, CheckIssue[]> {
   const { doc, capped, dead } = capSpam(data, doc0);
   const out: CheckIssue[] = [];
   for (const id of dead) out.push({ boxId: id, kind: "cantUse", text: tr("この手で付く狙いが無い (当たりの狙いはこのカレンシーでは付かない。当たるまで繰り返すと終わらないので、精査はここで止まる扱い)", "No target this craft can add (this currency can't add the hit's target; repeating would never end, so the check treats this box as a stop)") });
@@ -319,10 +321,12 @@ function* checkSteps(data: PatchData, doc0: TreeDoc): Generator<CheckProgress, C
     // 5) 回して止まる箱 (tree-run を 30 人、値段 0)。10-22 靴を白紙から組んで: 100 人中 64 人が止まる箱を上の辿り方では引かなかった
     // 手の上限は「回す」と同じ (runTree の既定 20000)。前は 300 で、消去・増強・カオスの輪の長い木 (完成に 1000 手を超える人がいる) で
     // 精査は「1 人も完成せず」、回すと完成 9/30 と食い違った (10-29 合格レシピ pass-weapon、S-73)
-    const steps = runTreeSteps(data, doc, { n: RUN_PEOPLE, seed: 1, price: () => 0, untilHit: capped });
+    const steps = runTreeSteps(data, doc, { n: RUN_PEOPLE, seed: 1, price: priced?.price ?? (() => 0), startCost: priced?.startCost, capDiv: priced ? Infinity : undefined, untilHit: capped });
     let st = steps.next();
     while (!st.done) { yield { phase: "run", n: st.value, of: RUN_PEOPLE, partial: ranked(out) }; st = steps.next(); }
     const run = st.value;
+    // 当たるまでの手の写しで回した時は走行と同じ人にならないので渡さない
+    if (!capped.size && !dead.size) onRun?.(run);
     // 完成 0 人で半分以上が打ち止め (手の上限) = 完成に着かない (10-22 13 通り組んだ #10: 100 人とも打ち止めの木で精査が何も言わなかった)。
     // 長いだけの木 (100 人回しでは完成 100%) は完成が 1 人でもいれば出さない
     if (!run.finished && run.capped * 2 >= RUN_PEOPLE) add("start", "noDone", tr(`回すと ${RUN_PEOPLE} 人中 1 人も完成せず、${run.capped} 人が手の上限まで打っても着かない (輪から出られない・狙いが付きにくい道を確かめる)`, `None of ${RUN_PEOPLE} runs finished; ${run.capped} hit the craft limit (check for loops or hard-to-hit paths)`));

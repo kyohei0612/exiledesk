@@ -53,7 +53,8 @@ import TreePanelPage from "./TreePanelPage.vue";
 import BusyTag from "../../../components/ui/BusyTag.vue";
 import { useTreeTune } from "./use-tree-tune";
 import { useTreeReveal } from "./use-tree-reveal";
-import { RUN_N, TEST_N, useTreeRun } from "./use-tree-run";
+import { RUN_N, runPrice, TEST_N, useTreeRun } from "./use-tree-run";
+import { flag } from "../../../web/release-flags";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue";
 import { applyPick, type OnlyOut } from "./tree-hand-plan"; import { swapHandIn } from "./tree-swap-hand";
@@ -267,7 +268,7 @@ function onTarget(b: Box): void {
   if (from && from !== b.id) { simOp("set-back"); t.edit((d) => setBack(d, from, b.id)); }
 }
 // ルート精査 (押した時に始める、use-tree-check.ts)
-const { issues, issuesOpen, shown: issuesShown, issuesFold, checking, progress, passed, onCheck, issueOf } = useTreeCheck(doc, () => !t.needBase.value && !t.goalInline.value);
+const { issues, issuesOpen, shown: issuesShown, issuesFold, checking, progress, passed, onCheck, issueOf, checkRun } = useTreeCheck(doc, () => !t.needBase.value && !t.goalInline.value, () => ({ price: runPrice(t.treePrice), startCost: t.startPrice() }));
 // 穴の表示のオフは今のタブの間だけ (タブを替えると見せる、10-25)
 watch(() => t.active.value, () => { issuesShown.value = true; });
 /** 穴の一覧の窓を開く (箱の !・札の横の ▾。光が消えていれば一緒に点ける) */
@@ -275,6 +276,12 @@ function openIssues(): void { simOp("open-missing"); issuesShown.value = true; i
 /** 待たせている間の小さな札 (題の横。データの読み込み・箱を順に出している間、共通の BusyTag。精査の進みは精査の帯の上) */
 // 100 人回す (結果は木の上に重ねる層だけ、use-tree-run.ts・TreeRunLayer.vue。値段 = 始め方のベースの値段 (結果のまとめで入れる、use-tree の startPrice) + 今の相場)
 const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
+/** 穴チェックのボタン: 精査と 30 人の走行 (treeLight は精査の 30 人を走行に使い回す、S-71b) */
+async function onTest(): Promise<void> {
+  if (!flag("treeLight")) { void onCheck(); void tr100.run({ test: true }); return; }
+  await onCheck();
+  void tr100.run({ test: true, reuse: checkRun() });
+}
 // 流れの帯の 4 (結果) = 100 人回し終えた (止まって止めた時は開かない、帯の「結果のまとめ」と同じ)。帯を押すと 1・2 = 完成形の設定の窓、3 = ツリー、4 = 結果のまとめ
 watch(() => !!tr100.result.value && !tr100.running.value && !tr100.halted.value, (on) => { t.runReady.value = on; if (!on) t.reportOpen.value = false; }, { immediate: true });
 // 流れの帯の 1・2 はページ (?page=sim-base / sim-mods、10-24 夜オーナー「基本はページ全体、MOD も別ページ」)。木の中の札 (TreeGoalNode) は窓のまま
@@ -397,7 +404,7 @@ const phone = usePhone();
         <TreeIssues v-if="issues?.length && issuesShown && issuesOpen" class="absolute left-0 top-full z-40 mt-1" :issues="issues" :busy="checkBusy" :lower="false" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" />
         <TreeRecipeBar v-if="t.needBase.value" @opened="v.openView()" />
         <template v-else>
-          <TreeRunBar v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking, passed, holes: issues?.length ?? 0, shown: issuesShown }" :halted="tr100.halted.value" :drive="tr100.test.value" @test="() => { void onCheck(); void tr100.run({ test: true }); }" @holes="issuesShown = !issuesShown" @holes-on="openIssues" @list="issuesOpen ? (issuesOpen = false) : openIssues()" @run="tr100.run" @go="goIssue" />
+          <TreeRunBar v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking, passed, holes: issues?.length ?? 0, shown: issuesShown }" :halted="tr100.halted.value" :drive="tr100.test.value" @test="onTest" @holes="issuesShown = !issuesShown" @holes-on="openIssues" @list="issuesOpen ? (issuesOpen = false) : openIssues()" @run="tr100.run" @go="goIssue" />
           <TreeRunSum v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" :test="tr100.test.value" :before="tr100.before.value" @go="goIssue" @skip="tr100.skipWalk" />
         </template>
         <!-- ベースが無い空の形でも、ほかの木があればタブを出す (前の木へ戻れない行き止まりだった、10-24 夜オーナー「一方通行が多い」) -->

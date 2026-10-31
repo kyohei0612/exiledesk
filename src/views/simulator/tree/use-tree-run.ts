@@ -5,15 +5,16 @@
  * 回す前にまず 1 人目が木の上を 1 手ずつ進む (今いる箱が光る)。完成したら残りを回し、途中で止まったらそこで止めて寄る
  * (10-22 オーナー「回す前に 1 人通して木が正しいか確かめる」)
  */
-import { computed, ref, shallowRef, toRaw, watch, type Ref } from "vue";
+import { computed, nextTick, ref, shallowRef, toRaw, watch, type Ref } from "vue";
 import { useTree } from "./use-tree";
 import { runTreeSteps, withStartCost, type TreeRunOpts, type TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { withTreeTune } from "../../../services/simulator/tree/tree-tune";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { craftStage as s } from "../../../state/craft-stage";
-import { routeKeyOf } from "./use-tree-check";
+import { routeKeyOf, type CheckRun } from "./use-tree-check";
 import { noteCardRun } from "../recipe-card";
 import { track } from "../../../utils/track";
+import { flag } from "../../../web/release-flags";
 
 /** 回す人数 (帯の「100 人回した時」と同じ)。seed は台本・解析君と同じ 1 */
 export const RUN_N = 100;
@@ -24,6 +25,10 @@ export const RUN_N = 100;
 export const TEST_N = 30;
 /** 途中の結果を出す間隔 (人) と、その間の最低の間 (ms)。速い木でも 3 秒ほどかけて数字が増えていくのが見える (オーナー「ヌルヌルとカウントアップ」) */
 const EVERY = 2;
+/** 1 人の打ち止めの費用 (tree-run の既定と同じ) */
+const CAP_DIV = 2000;
+/** 途中の結果を作り直す間隔 (人)。1 人ごとに全員分を集計すると 100 人回しの 1 割以上を使った (S-71b、スイッチ treeLight) */
+const PROGRESS_EVERY = 5;
 const PACE_MS = 60;
 type Person1 = Parameters<NonNullable<TreeRunOpts["onPerson"]>>[0];
 /** 1 人目の再生の速さ (前の速さの何倍か。10-25 オーナー「今の3倍速がデフォでいいな」)。3 秒とどまったら早送りの決まりは今のまま */
@@ -42,6 +47,13 @@ const FAST_MS = 1200;
 const FAST_AGAIN_MS = 400;
 const FRAME_MS = 30;
 
+/** 回す時の値段 (相場は高貴建て → 神に直す。tree-base-cost と同じ。そのまま渡すと 2000 神の打ち止めに当たって完成 8% になった、10-22 開発版で見た) */
+export function runPrice(priceOf: (key: string) => number): (key: string) => number {
+  const div = priceOf("divine") || 1;
+  // 回す間は相場が変わらないので、同じ物の値段は 1 回だけ引く (1 手ごとに相場の表を引くのが重く、飛ばしても 100 人に 18 秒かかった、10-23 モンキー 7)
+  const memo = new Map<string, number>();
+  return (k) => { let v = memo.get(k); if (v === undefined) { v = priceOf(k) / div; memo.set(k, v); } return v; };
+}
 /** onHalt = 止まった人が出て止めた時 (その箱へ寄る)。onWalk = 1 人目が箱に着いた時 (i = 何箱目、0 で全体を表示して、後は外れた時だけ見える所へ) */
 export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: (key: string) => number, onHalt: (box: string) => void, onWalk: (box: string, i: number) => void) {
   /** 回した結果 (回した時のベースの値段で)。外へは今のベースの値段で足し直した result を渡す (回し直さない、tree-run の withStartCost、10-25 オーナー) */
@@ -71,7 +83,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
   /** 手だけ替える直前に呼ぶ (今の結果が 100 人を回し切った物なら残す) */
   function noteSwap(): void { if (raw.value && !test.value && !halted.value && !running.value) swapBase.value = { r: toRaw(raw.value), key: routeKeyOf(doc.value) }; }
   /** opt.test = 穴チェックの走行 (TEST_N 人、1 人目の歩きは飛ばす、止まった人が出ても止めない) */
-  async function run(opt: { test?: boolean } = {}): Promise<void> {
+  async function run(opt: { test?: boolean; reuse?: CheckRun | null } = {}): Promise<void> {
     const data = s.data.value;
     if (!data || running.value) return;
     // 記録の印 (1 押し 1 回、PC・スマホとも。画面を離れる時にまとめて POST /log、10-25 オーナー「回すボタンに記録足して」)
@@ -79,16 +91,19 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
     const my = ++token;
     running.value = true; shown.value = true; raw.value = null; halted.value = null; test.value = !!opt.test; skip = !!opt.test;
     const d = doc.value;
-    // 相場は高貴建て → 神に直す (tree-base-cost と同じ。そのまま渡すと 2000 神の打ち止めに当たって完成 8% になった、10-22 開発版で見た)
-    const div = priceOf("divine") || 1;
-    // 回す間は相場が変わらないので、同じ物の値段は 1 回だけ引く (1 手ごとに相場の表を引くのが重く、飛ばしても 100 人に 18 秒かかった、10-23 モンキー 7)
-    const memo = new Map<string, number>();
-    const priceIn = (k: string): number => { let v = memo.get(k); if (v === undefined) { v = priceOf(k) / div; memo.set(k, v); } return v; };
+    // 精査で回した同じ 30 人を使い回す (S-71b、スイッチ treeLight)。走行は 1 人 2,000 神で打ち止めなので、誰も届いていない時だけ同じ結果になる
+    const re = opt.reuse;
+    if (re && re.key === routeKeyOf(d) && re.startCost === startCost() && re.run.persons.every((p) => p.cost <= CAP_DIV)) {
+      await nextTick();
+      if (my === token) { raw.value = re.run; running.value = false; }
+      return;
+    }
+    const priceIn = runPrice(priceOf);
     let last: TreeRunResult | null = null;
     const firstOf: { p: Person1 | null } = { p: null };
     // 1 人目が進む間は層の数字を出さない (光る箱だけ)
     let walking = true;
-    const g = runTreeSteps(data, d, { n: opt.test ? TEST_N : RUN_N, seed: 1, price: priceIn, startCost: startCost(), every: 1,
+    const g = runTreeSteps(data, d, { n: opt.test ? TEST_N : RUN_N, seed: 1, price: priceIn, startCost: startCost(), every: flag("treeLight") ? PROGRESS_EVERY : 1,
       onProgress: (r) => { last = r; if (my === token && !walking) raw.value = r; },
       onPerson: (p, i) => { if (!i) firstOf.p = p; } });
     try {

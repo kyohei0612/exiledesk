@@ -208,7 +208,7 @@ export function handProblem(data: PatchData, item: StageItem, h: Hand): string |
 export function sampleOf(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
   // 見本は道だけで決まる (S-74、スイッチ boxShape) ので、木の中身 (位置を除く) が同じなら覚えた見本を返す。
   // 整列・段揃え・引っ張るなど位置だけの変化で全部の箱をエンジンで作り直し、整列が毎回約 1 秒かかった (10-28 夜オーナー「サイトが重い」)
-  const sig = docSig(doc);
+  const sig = heldDoc === doc ? heldSig : docSig(doc);
   if (sig !== memoSig || data !== memoData) { memo.clear(); memoSig = sig; memoData = data; }
   return withTreeTune(doc, () => sampleIn(data, doc, boxId, seed));
 }
@@ -217,11 +217,47 @@ const memo = new Map<string, Sample>();
 let memoSig = "", memoData: PatchData | null = null;
 /** 木の中身の鍵 (位置 x・y と、見本に効かないメモの文を除く) */
 const docSig = (doc: TreeDoc): string => JSON.stringify(doc, (k, v) => (k === "x" || k === "y" || k === "note" ? undefined : v));
+/** fn の間は木が変わらないので鍵を作り直さない (1 回の JSON が 100 人回しの 4 割だった、S-71b、スイッチ treeLight) */
+let heldDoc: TreeDoc | null = null, heldSig = "", holdNo = 0;
+export function holdDocSig<T>(doc: TreeDoc, fn: () => T): T {
+  if (!flag("treeLight") || heldDoc) return fn();
+  heldDoc = doc; heldSig = docSig(doc); holdNo++;
+  try { return fn(); } finally { heldDoc = null; }
+}
+/** 今 holdDocSig の中ならその回の番号、外なら 0 (同じ番号の間は木が変わらない) */
+export const docHeld = (doc: TreeDoc): number => (heldDoc === doc ? holdNo : 0);
 function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
   const k = `${boxId}|${seed}|${altDeep ? 1 : 0}`;
   let r = memo.get(k);
-  if (!r) { r = sampleRaw(data, doc, boxId, seed); memo.set(k, r); }
+  if (r) return r;
+  // 組み直しの間は手を打つたびに木の鍵が変わるので、道の変わらない箱は前の見本を使う (S-71b、スイッチ treeLight)
+  const pk = pathMemo ? pathKeyOfBox(doc, boxId, seed) : null;
+  r = pk ? pathMemo!.get(pk) : undefined;
+  if (!r) { r = sampleRaw(data, doc, boxId, seed); if (pk) pathMemo!.set(pk, r); }
+  memo.set(k, r);
   return r;
+}
+/** 組み直しの間だけの見本の覚え (鍵 = 見本に効く物全部、pathKeyOfBox) */
+let pathMemo: Map<string, Sample> | null = null;
+/** fn (木の組み直し) の間、道の変わらない箱の見本を使い回す */
+export function keepSamples<T>(fn: () => T): T {
+  if (!flag("treeLight") || pathMemo) return fn();
+  pathMemo = new Map();
+  try { return fn(); } finally { pathMemo = null; }
+}
+/**
+ * 見本に効く物の鍵: 木の前提 (箱より外の全部) + 狙いの札 + 始まりからこの箱までの箱と、その各段の兄弟の札。全部消えてよい消去の手がある木は木全体を見るので使わない (null)
+ */
+function pathKeyOfBox(doc: TreeDoc, boxId: string, seed: number): string | null {
+  const boxes = Object.values(doc.boxes);
+  if (boxes.some((b) => b.hand?.keep && !b.hand.keep.length)) return null;
+  const { boxes: _b, seq: _s, ...rest } = doc;
+  const chain: unknown[] = [];
+  for (let b: TreeBox | undefined = doc.boxes[boxId]; b; b = b.parent ? doc.boxes[b.parent] : undefined) {
+    const sibs = (b.parent ? doc.boxes[b.parent]?.outs ?? [] : []).map((o) => { const x = doc.boxes[o]; return x ? [o, x.out, x.aim, x.junkKey, x.mergedOuts] : o; });
+    chain.push([b.id, b.out, b.aim, b.junkKey, b.mergedOuts, b.hand, b.split, sibs]);
+  }
+  return JSON.stringify([seed, altDeep, rest, aimsOf(doc), chain], (k, v) => (k === "x" || k === "y" || k === "note" ? undefined : v));
 }
 function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
   const b = doc.boxes[boxId];

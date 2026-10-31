@@ -9,7 +9,7 @@ import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/en
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { effectOf } from "./tree-hands";
 import { qualityOk } from "./tree-unbounded";
-import { aimOpts, aimsOf, fractureChoices, goalsHeld, handAims, heldHitOf, outcomeOf, playHand, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
+import { aimOpts, aimsOf, fractureChoices, goalsHeld, handAims, heldHitOf, holdDocSig, outcomeOf, playHand, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
 import { boxOutcomeOf, fromStrip, stripBackOf, stripStop, stripStopByContent } from "./tree-outcome";
 import { heldSets, MATCH, matchBox, outBoxOf, RESTART, settle, shapesOf, splitTo, type Shape, type SplitBox } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
@@ -440,10 +440,11 @@ export function* runTreeSteps(data: PatchData, doc: TreeDoc, opts: TreeRunOpts):
   const people: Person[] = [];
   const every = Math.max(1, opts.every ?? 10);
   for (let i = 0; i < opts.n; i++) {
-    const p = runOne(data, doc, aims, shapes, j, rng, o);
+    const p = holdDocSig(doc, () => runOne(data, doc, aims, shapes, j, rng, o));
     people.push(p);
     opts.onPerson?.(p, i);
-    if (opts.onProgress && (i + 1) % every === 0 && i + 1 < opts.n) opts.onProgress(summarize(doc, people, o.startCost));
+    // 止まった人は間引いても必ず知らせる (画面はその時点の止まりの箱で止める)
+    if (opts.onProgress && ((i + 1) % every === 0 || p.end === "stuck") && i + 1 < opts.n) opts.onProgress(summarize(doc, people, o.startCost));
     yield i + 1;
   }
   return summarize(doc, people, o.startCost);

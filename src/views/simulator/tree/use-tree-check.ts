@@ -3,13 +3,18 @@
  */
 import { computed, ref, triggerRef, watch, type Ref } from "vue";
 import { pruneBacks } from "../../../services/simulator/tree/tree-shape";
-import { checkTreeAsync, NOTICE_KINDS, type CheckIssue, type CheckProgress } from "../../../services/simulator/tree/tree-check";
+import { checkTreeAsync, NOTICE_KINDS, type CheckIssue, type CheckPrice, type CheckProgress } from "../../../services/simulator/tree/tree-check";
+import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
+import { flag } from "../../../web/release-flags";
 import { fractureMarks, startOf, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { craftStage as s } from "../../../state/craft-stage";
 import { track } from "../../../utils/track";
 import { pathKeysOf, type RecipePick } from "../../../services/simulator/tree/tree-recipe-v1";
 import { handName } from "./tree-names";
 import { tr } from "../../../i18n/lang";
+
+/** 精査で回した 30 人 (key = その時の道の形) */
+export type CheckRun = { key: string; startCost: number; run: TreeRunResult };
 
 /**
  * 要確認の一覧 (S-107・⑦20 案 A、スイッチ recipeV1): 組み直した木に札の無い決め・前の版の人の ↩・分かれ目・読めなかった所。
@@ -43,7 +48,9 @@ export const routeKeyOf = (d: TreeDoc): string => JSON.stringify([(({ price: _p,
  * 穴 (帯の赤い「穴 n」・一覧・箱の !) は既定で見せ、札を押すと隠す・もう一度で見せる。隠したら組み替えても隠したまま (そのタブの間、タブを替えると見せる)
  * (10-25 オーナー「穴はそもそもずっと赤くて OK よ、デフォで。押したらオフにって UI で変わったら OK」)
  */
-export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean) {
+export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean, priced?: () => CheckPrice) {
+  /** 今の精査で回した 30 人 (穴チェックの走行が使い回す、S-71b) */
+  let lastRun: CheckRun | null = null;
   const issues = ref<CheckIssue[] | null>(null);
   /** 穴の一覧の窓 (人が開いた時だけ: 箱の ! か札の横の ▾。10-25 オーナー「デフォではここ出さないけど穴は UI で光る」) */
   const issuesOpen = ref(false);
@@ -71,7 +78,9 @@ export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean) {
     issues.value = []; // 穴は辿った人から順に足す (10-22 オーナー「読み込みながら徐々に出す」)
     await new Promise((r) => setTimeout(r, 30)); // 「穴チェック中」を先に出す
     try {
-      const now = [...(await checkTreeAsync(d, doc.value, (p) => { progress.value = p; issues.value = p.partial; })), ...orphanIssues(doc.value)];
+      lastRun = null;
+      const price = flag("treeLight") ? priced?.() : undefined;
+      const now = [...(await checkTreeAsync(d, doc.value, (p) => { progress.value = p; issues.value = p.partial; }, price, (run) => { if (price) lastRun = { key, startCost: price.startCost, run }; })), ...orphanIssues(doc.value)];
       issues.value = now;
       // 合格を止めない知らせ (NOTICE_KINDS) は数えない (S-73)
       if (!now.filter((x) => !NOTICE_KINDS.includes(x.kind)).length && key === routeKey.value) passedKey.value = key;
@@ -90,5 +99,5 @@ export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean) {
   const fresh = computed(() => !doc.value.boxes.start?.hand && !doc.value.boxes.start?.split);
   const shownIssues = computed(() => (fresh.value ? [] : issues.value));
   const issueOf = (b: TreeBox): string | null => (!shown.value || fresh.value ? null : issues.value?.filter((x) => x.boxId === b.id).map((x) => x.text).join(" / ") || null);
-  return { issues: shownIssues, issuesOpen, shown, issuesFold, checking, progress, passed, runCheck, onCheck, issueOf };
+  return { issues: shownIssues, issuesOpen, shown, issuesFold, checking, progress, passed, runCheck, onCheck, issueOf, checkRun: (): CheckRun | null => lastRun };
 }

@@ -11,6 +11,7 @@ import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type Recipe
 import { alignEssenceAims, applyPick, kindOf, onlyOf } from "./tree-hand-plan";
 import { flag } from "../../../web/release-flags";
 import { judgeMemo } from "../../../services/simulator/tree/tree-judge";
+import { keepSamples } from "../../../services/simulator/tree/tree-sample";
 import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
 
@@ -19,6 +20,9 @@ const noHitHand = (h: Hand): boolean => flag("freeNoHit") && ((!!h.free && effec
 
 /** exactAt = この札の子だけ札がぴったり合う決めを引き継ぐ (手だけ替える S-57c: 同じ結果の種類・☑・側だけ。古いレシピの読み替え savedKeyOf を通さない) */
 export function rebuildTree(data: PatchData, src: TreeDoc, exactAt?: string): TreeDoc {
+  return keepSamples(() => rebuildIn(data, src, exactAt));
+}
+function rebuildIn(data: PatchData, src: TreeDoc, exactAt?: string): TreeDoc {
   const rec = toRecipeV1(src), d = premiseOf(rec, `exiledesk-tree/${TREE_SCHEMA_N}`);
   migrateStart(d);
   const picks = new Map((rec.picks ?? []).map((p) => [p.at, p]));

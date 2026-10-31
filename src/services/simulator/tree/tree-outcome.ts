@@ -7,7 +7,7 @@ import { fillCatalyst, stepOutcomes } from "../../simulator/sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { effectOf, engineOmens, isCatalyst, isRuneHand } from "./tree-hands";
 import { boxAims, fractureMarks, subtree, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
-import { aimDiff, aimsOf, outcomeOf, sampleOf, SINGLE_SEEDS } from "./tree-sample";
+import { aimDiff, aimsOf, docHeld, outcomeOf, sampleOf, SINGLE_SEEDS } from "./tree-sample";
 import { prepFor } from "./tree-unbounded";
 import { isInfiniteEssence } from "../../craft-stage/apply-essence";
 
@@ -312,16 +312,23 @@ export function stripKeyOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: 
  */
 export function stripStopByContent(data: PatchData, doc: TreeDoc, self: string, it: StageItem, strips = false): string | null {
   let m = contentMemo.get(doc);
-  const sig = docSig(doc);
-  if (!m || m.sig !== sig) contentMemo.set(doc, (m = { sig, j: judgeMemo(data, doc) }));
+  // 回している間 (docHeld) は木が変わらないので鍵も下の箱も作り直さない (1 手ごとの鍵が 100 人回しの半分だった、S-71b)
+  const hold = docHeld(doc);
+  if (!m || !hold || m.hold !== hold) {
+    const sig = docSig(doc);
+    if (!m || m.sig !== sig) contentMemo.set(doc, (m = { sig, hold, j: judgeMemo(data, doc), below: new Map() }));
+    m.hold = hold;
+  }
   if (stopBusy) return null;
   stopBusy = true;
   try {
-    const below = new Set(subtree(doc, self));
-    return m.j.boxesOf(it, strippedOf(doc), (id) => { const b = doc.boxes[id]; return !!b?.hand && !below.has(id) && (strips || !isStrip(b)); })[0] ?? null;
+    let below = m.below.get(self);
+    if (!below) { below = new Set(subtree(doc, self)); m.below.set(self, below); }
+    const under = below;
+    return m.j.boxesOf(it, strippedOf(doc), (id) => { const b = doc.boxes[id]; return !!b?.hand && !under.has(id) && (strips || !isStrip(b)); })[0] ?? null;
   } finally { stopBusy = false; }
 }
-const contentMemo = new WeakMap<TreeDoc, { sig: string; j: ReturnType<typeof judgeMemo> }>();
+const contentMemo = new WeakMap<TreeDoc, { sig: string; hold: number; j: ReturnType<typeof judgeMemo>; below: Map<string, Set<string>> }>();
 /** 覚えの鍵 = 木の箱・手・戻り (stripStops と同じ数の鍵) */
 function docSig(doc: TreeDoc): string {
   let h = doc.seq;
