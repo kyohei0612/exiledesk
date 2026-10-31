@@ -70,7 +70,7 @@ const cards = computed((): Card[] => (state.value?.channels ?? []).map((c) => {
             <span class="grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-full bg-live-thumb-top font-bold text-amber-200" :class="c.live ? 'ring-2 ring-live-red' : ''"><img v-if="c.avatar" :src="c.avatar" alt="" class="h-full w-full object-cover" /><span v-else data-lang-ja-ok>{{ c.name.slice(0, 1) }}</span></span>
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-1 truncate max-md:overflow-visible max-md:whitespace-normal font-bold"><span data-lang-ja-ok class="truncate max-md:overflow-visible max-md:whitespace-normal">{{ c.name }}</span><span class="shrink-0 rounded px-1 text-[9px] text-white" :class="c.platform === 'youtube' ? 'bg-live-youtube' : 'bg-live-twitch'">{{ PF[c.platform] }}</span><span v-if="c.pr" class="shrink-0 rounded border border-white/40 px-1 text-[9px] opacity-70" :title="tr('協賛', 'Sponsored')">PR</span></div>
-              <div v-if="c.title" class="truncate max-md:overflow-visible max-md:whitespace-normal opacity-60">{{ c.title }}</div>
+              <div v-if="c.title" data-lang-ja-ok class="truncate max-md:overflow-visible max-md:whitespace-normal opacity-60">{{ c.title }}</div>
               <div v-if="c.when" class="text-[10px] opacity-40">{{ c.when }}</div>
             </div>
           </div>

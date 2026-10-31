@@ -173,6 +173,30 @@ const usableAll = computed(() => {
   ].filter((x) => x.keys.length);
 });
 const usableCount = computed(() => usableAll.value.reduce((a, x) => a + x.keys.length, 0));
+/**
+ * 節が丸ごと消えた訳 (スイッチ shelfWhy、U-13・S-30c): 棚に載る物が全部打てない時だけ「エッセンス: 理由」を 1 行。理由はエンジンの useReason、多い物を 1 つ。
+ * 詰まり「ブリーチの後の箱でエッセンスの列が丸ごと消え、訳が画面に出ない」
+ */
+const SHELF_WHY = flag("shelfWhy");
+const shelfWhy = computed(() => {
+  if (!SHELF_WHY) return [];
+  void craftStage.omens.value;
+  const why = (k: string): string | null => (craftStage.usableBare ?? craftStage.usable)(k);
+  const line = (label: string, keys: string[]): { label: string; reason: string }[] => {
+    const seen = keys.filter((k) => !craftStage.hidden?.(k));
+    const reasons = seen.map(why);
+    if (!seen.length || reasons.some((r) => !r)) return [];
+    const count = new Map<string, number>();
+    for (const r of reasons) count.set(r!, (count.get(r!) ?? 0) + 1);
+    return [{ label, reason: [...count].sort((a, b) => b[1] - a[1])[0]![0] }];
+  };
+  // レアはパーフェクトだけで見る (パーフェクトの無い種類の「マジックにだけ」を理由にしない)
+  const essKeys = essences.value.flatMap((g) => essByRarity(g.keys));
+  return [
+    ...line(tr("エッセンス", "Essences"), essKeys.some((k) => k.startsWith("essence:perfect:")) && craftStage.item.value?.rarity === "rare" ? essKeys.filter((k) => k.startsWith("essence:perfect:")) : essKeys),
+    ...(hasSockets.value ? line(tr("ルーン", "Runes"), runes.value.flatMap((g) => g.keys)) : []),
+  ];
+});
 /** クラフトに関わらない物の 4 つの節 (ルーン・遺産・ソウルコア・アイドル) */
 const otherSecs = computed(() => {
   const all = otherRunes.value;
@@ -295,6 +319,7 @@ const TABS = computed(() => (!props.full ? [] : [
           </template>
         </div>
       </div>
+      <p v-for="w in shelfWhy" :key="w.label" data-shelf-why class="text-[11px] leading-snug text-[var(--exile-color-text-secondary)]">{{ w.label }}: {{ w.reason }}</p>
       <!-- その他のルーン: まず外側でまとめて畳み、開くと中にルーン・遺産・ソウルコア・アイドルの節 (それぞれも畳む)。2026-10-10 オーナー「2 重構造」 -->
       <div v-if="usableAll.some((x) => x.fold)">
         <p class="mb-0.5 flex items-center gap-2 text-[10px]">
