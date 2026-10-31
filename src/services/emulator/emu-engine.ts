@@ -8,8 +8,8 @@
  */
 
 // 持っている物を打つ前に光らせる物 (変わる候補の MOD と付く空き)
-export type { UsePreview } from "./emu-engine/preview";
-export { previewUse } from "./emu-engine/preview";
+export type { UsePreview } from "../craft-stage/use-preview";
+export { previewUse } from "../craft-stage/use-preview";
 // 重みを推定で埋めた MOD の出どころの一言 (MOD 一覧の重みの札、StageWeightEdit)
 export { weightOverrideNote } from "../htc/weight-overrides";
 // スパムシミュレーター: 100 人の競争・その行の形・シェアの包み (engine-emu/spam-race)、道の打ち手の形と当たりの番号 (核の route-race)

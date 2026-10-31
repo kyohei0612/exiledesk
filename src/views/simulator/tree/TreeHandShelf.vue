@@ -36,7 +36,7 @@ import { stageHelp } from "../../../state/for-share/craft-stage-help";
 import { usePhone } from "../../../utils/use-phone";
 import { simOp } from "../../../web/track";
 import { fixedValues } from "./tree-fixed-values";
-import { previewUse } from "../../../services/emulator/emu-engine";
+import { previewUse } from "../../../services/craft-stage/engine";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { flag } from "../../../web/release-flags";
 import { dropCountOf, swapHand } from "./tree-swap-hand";

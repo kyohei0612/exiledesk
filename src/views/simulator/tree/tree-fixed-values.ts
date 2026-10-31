@@ -15,11 +15,13 @@ export function fixedValues(data: PatchData, doc: TreeDoc, item: StageItem): Sta
   const goals = doc.memoAims ?? [];
   const fix = (m: StageMod): StageMod => {
     const def = data.mods.get(m.modId);
-    if (!def?.tiers[m.tierIndex]) return m;
+    /** その段が MOD にある (段の名前 T が 1 以上) */
+    const has = (i: number): boolean => i >= 0 && tierRankOf(data, m.modId, i) > 0;
+    if (!def || !has(m.tierIndex)) return m;
     // フラクチャーした MOD は木の中で 1 つ (印の段。「T5 以上」なら T5)。前は箱ごとの見本で段が違い、22% と 19% が並んだ (10-27 モンキー 9 の 8)
     const mark = m.fractured ? goals.find((a) => a.fractured && a.modId === m.modId) : undefined;
     const ti = mark ? tierIndexOf(data, mark.modId, mark.tier) : -1;
-    if (mark && ti >= 0 && def.tiers[ti] && ti !== m.tierIndex) {
+    if (mark && has(ti) && ti !== m.tierIndex) {
       const mt = makeStageMod(def, m.side, ti, MID_ROLL);
       const pv = mark.values?.length === mt.values.length ? mark.values : null;
       return pv ? { ...m, tierIndex: ti, values: [...pv], ...retext({ ...m, tierIndex: ti }, pv, data) } : { ...m, tierIndex: ti, values: mt.values, textJa: mt.textJa, textEn: mt.textEn };

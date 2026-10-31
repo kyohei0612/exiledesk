@@ -48,6 +48,7 @@ export { familyBlocked, occupiedKeysOf } from "../mods/mod-rules";
 // MOD の一覧の行 (段に数の tier)
 export type { ListRow, ListTier, ModGroup } from "./mod-list";
 export { modListFor } from "./mod-list";
+export { previewUse } from "./use-preview";
 export { tierDisplayRanges } from "../mods/stat-scale";
 export { inGroup } from "../mods/item-classes";
 export { classLabel } from "../items/base-catalog";

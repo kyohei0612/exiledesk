@@ -69,7 +69,7 @@ export function requestEmuItem(item: StageItem): void {
   const data = s.data.value;
   if (!data) return;
   const mods: ItemTextMod[] = [...item.prefixes, ...item.suffixes].map((m) => {
-    const of = data.mods.get(m.modId)?.tiers.length ?? 0, text = tr(m.textJa, m.textEn);
+    const of = tierRankOf(data, m.modId, 0), text = tr(m.textJa, m.textEn);
     const tier = of && !m.unrevealed ? { index: m.tierIndex, of, label: `T${of - m.tierIndex}`, name: m.affix, fits: true } : null;
     return { text, modId: m.unrevealed ? null : m.modId, source: m.desecrated ? "desecrated" : m.crafted ? "essence" : "normal", side: m.side, sideFrom: "engine", tier, values: [...m.values], shownValues: [...m.values], boosts: [], fractured: !!m.fractured, desecrated: !!m.desecrated, crafted: !!m.crafted, unrevealed: !!m.unrevealed };
   });

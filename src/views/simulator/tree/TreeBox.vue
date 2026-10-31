@@ -15,7 +15,7 @@ import StageItemCard from "../../../components/for-share/item/StageItemCard.vue"
 import { craftStage as s } from "../../../state/craft-stage";
 import { shapeSampleWithNote } from "../../../services/simulator/tree/tree-sample-shape";
 import { fixedValues } from "./tree-fixed-values";
-import { previewUse } from "../../../services/emulator/emu-engine";
+import { previewUse } from "../../../services/craft-stage/engine";
 import { sideAims } from "./tree-side-aims";
 import { treeRowTags } from "./tree-row-tags";
 import { splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
