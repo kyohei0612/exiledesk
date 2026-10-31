@@ -22,6 +22,7 @@ import { isRevealHand, revealedOf, revealHitOf, veilKeep, veilPick } from "./tre
 import { fracFree, fracFreeHit, fracFreeOuts, junkKeyOf, newlyFractured } from "./tree-frac-pick";
 import { sideKeyOf } from "./tree-junk-side";
 import { isWhittleHand, joinKeys, rankKeyOf, rankVariants } from "./tree-whittle";
+import { flag } from "../../../web/release-flags";
 import { aimedAfterAnnul, aimedOfSample, contentOf, judgeMemo, looseKey, sampleAimed, strippedOf } from "./tree-judge";
 import { keptAimedOf, keptAimsOf, withGot } from "./tree-keep";
 
@@ -190,7 +191,8 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
     const all = isWhittleHand(h) ? forms.flatMap((f) => rankVariants(data, f, aims, doc.boxes[boxId]?.junkKey).map((v) => v.item)) : forms;
     for (const it of all) {
       const outs = stepOutcomes(data, prepFor(data, it, h.currency), h.currency, engineOmens(h))?.filter((o) => !o.void);
-      if (!outs?.length) return null;
+      // 打てない見本は飛ばす (外れの種類で打てない人。その人は打てる箱へ移る S-64、スイッチ keepOutside)。全部打てなければ下の list が空で null
+      if (!outs?.length) { if (flag("keepOutside")) continue; return null; }
       // 未発現が新しく付く手だけ (前から未発現を持ったまま打つフラクチャー・カオスなどは普通に分ける。スイッチ boneLater)
       if (outs.some((o) => unrevealedOf(o.item)) && !unrevealedOf(it)) {
         veiled = true;

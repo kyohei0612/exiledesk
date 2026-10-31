@@ -23,7 +23,8 @@ export type CheckRun = { key: string; startCost: number; run: TreeRunResult };
 export function orphanIssues(d: TreeDoc): CheckIssue[] {
   if (!d.orphans?.length) return [];
   const idOf = new Map([...pathKeysOf(d)].map(([id, k]) => [k, id]));
-  return d.orphans.map((o) => {
+  // 札の箱が今の木にある「gone」は手を足し直した古い一覧 (S-107、スイッチ keepOutside)
+  return d.orphans.filter((o) => !flag("keepOutside") || o.why !== "gone" || !idOf.has(o.at)).map((o) => {
     let k = o.at;
     while (k.includes("/") && !idOf.has(k)) k = k.slice(0, k.lastIndexOf("/"));
     const step = o.at.split("/").length - 1, h = (o.raw as RecipePick | null)?.hand;

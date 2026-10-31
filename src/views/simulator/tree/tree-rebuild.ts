@@ -65,7 +65,9 @@ function rebuildIn(data: PatchData, src: TreeDoc, exactAt?: string): TreeDoc {
   mergeIntoDecided(data, d, decided); relinkSameHand(data, d); linkLeftovers(data, d);
   // 決めを打ち直した箱が後の見直しで消えた (同じ手なら戻るで下を畳んだ) 札も要確認
   const gone = [...picks.values()].filter((p) => !used.has(p.at) || !d.boxes[idOf.get(p.at) ?? ""]).map((p): RecipeOrphan => ({ at: p.at, why: "gone", raw: p }));
-  const orphans = [...(rec.orphans ?? []), ...lostBacks, ...gone].filter((o) => o.why !== "gone" || !underAutoBack(d, o.at));
+  // 前の一覧の「gone」で札の箱が今の木にある物は持ち越さない (S-107、スイッチ keepOutside)
+  const now = new Set(pathKeysOf(d).values()), carried = (rec.orphans ?? []).filter((o) => !flag("keepOutside") || o.why !== "gone" || !now.has(o.at));
+  const orphans = [...carried, ...lostBacks, ...gone].filter((o) => o.why !== "gone" || !underAutoBack(d, o.at));
   if (orphans.length) d.orphans = orphans;
   // 前の形の木 (箱を全部持っている) から開いた時だけ、前に無かった札の箱が分かる
   if (!isRecipeV1(src)) {
@@ -112,13 +114,15 @@ function relinkSameHand(data: PatchData, d: TreeDoc): void {
 function savedKeyOf(at: string, tail: string, onPath: ReadonlySet<string>, exact: ReadonlySet<string>): string {
   const bare = (t: string): string => t.replace(/\[[^\]]*\](~\d+)?$/, "");
   const swap = (t: string): string | null => (/^\/junk/.test(t) ? t.replace(/^\/junk/, "/any") : /^\/any/.test(t) ? t.replace(/^\/any/, "/junk") : null);
+  // 狙いの札の無い当たり (打てない見本で 1 通りと読めなかったエッセンス) の決めも、今の「打った後」の箱の決めとして読む (スイッチ keepOutside)
+  const swapHit = (t: string): string | null => (flag("keepOutside") && t === "/any" ? "/hit" : null);
   // 削減の順位の鍵 (`;w:`、S-65b より前の保存には無い) を外した札 = 順位で分かれた箱の全部へ (側の鍵の無い札と同じ読み方)
   // 狙いが付いた の鍵 (`;g:`、S-27d より前の保存には無い) も外して同じ読み方 (付いた / 付かないで分かれた狙いが消えたの箱の全部へ、スイッチ keepAll)
   const unrank = (t: string): string => t.replace(/;w:[^\]]*\]/, "]").replace(/;g:[^\];]*/, "");
   // 乱数のフラクチャーの外れの枝の種類 (`|crafted`、S-41 で側だけにした前の保存) = 同じ側の箱 (`|normal`) の決めとして読む (スイッチ fracSide)
   const recraft = (t: string): string => t.replace(/\|normal\]/, "|crafted]");
   const sw = swap(tail);
-  const tries = [at + tail, at + recraft(tail), at + unrank(tail), at + bare(tail), ...(sw ? [at + sw, at + bare(sw)] : [])];
+  const tries = [at + tail, at + recraft(tail), at + unrank(tail), at + bare(tail), ...(sw ? [at + sw, at + bare(sw)] : []), ...(swapHit(bare(tail)) ? [at + swapHit(bare(tail))!] : [])];
   return tries.find((k, i) => onPath.has(k) && (i < 4 || !exact.has(k))) ?? at + tail;
 }
 
