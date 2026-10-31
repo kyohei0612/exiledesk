@@ -4,7 +4,7 @@
  * 決めは完成形の窓 (use-tree の goalItem) と同じ: 貼り付けで取り込んだ狙い (memoAims の values、同じ段の時) はその値、ほかは段の真ん中
  * (エンジンの makeStageMod に 0.5 を返す乱数)。見本の乱数の値は回す・割合・照らしにはそのまま使い、出す時だけ写して直す (TreeBox・TreeHoverCard)
  */
-import { makeStageMod, tierIndexOf, type PatchData, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { makeStageMod, tierIndexOf, tierRankOf, type PatchData, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { retext } from "../../../services/simulator/sim-engine";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { copyOfSample } from "../../../services/simulator/tree/tree-judge";

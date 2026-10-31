@@ -19,7 +19,7 @@ import { askLeave, openTreePage } from "../../../web/page";
 import { track } from "../../../utils/track";
 import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
-import { maxQualityOf } from "../../../services/craft-stage/engine";
+import { maxQualityOf, tierRankOf } from "../../../services/craft-stage/engine";
 import { flag } from "../../../web/release-flags";
 import { markPristine, quickSave, unsaved } from "./tree-save";
 
