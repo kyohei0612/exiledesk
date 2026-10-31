@@ -1,6 +1,6 @@
 <!--
   PhoneViewPage.vue — シミュのスマホの見るだけの 1 画面 (S-94〜S-94f、幅 768 未満 + スイッチ phoneView。オーナー 11-01「完全にスマホ版は見るだけに特化させた作りに変えよう修正もできない完全に観賞用」)。
-  上の帯 (タブ)・レシピとシェア・10 人回す、その下に開いたままのシート (小さな完成形 + 最大の全体図 PhoneViewMap)。木を変える入口は無い。
+  上の帯 (タブ)・レシピとシェア・10 人回す、その下に開いたままのシート (小さな完成形 + 完成までの道 PhoneViewRoute、「詳細」で全体図 PhoneViewMap、S-94h)。木を変える入口は無い。
   完成形は倍率で縮めるだけで文は切らず、押すと今の大きさ (D6)。10 人の結果はカードに載せない (D2、use-tree-run の view)。木が無い時は PhoneViewEmpty (S-94f)
 -->
 <script setup lang="ts">
@@ -21,6 +21,7 @@ import { flag } from "../../../web/release-flags";
 import { simOp } from "../../../web/track";
 import PhoneViewEmpty from "./PhoneViewEmpty.vue";
 import PhoneViewMap from "./PhoneViewMap.vue";
+import PhoneViewRoute from "./PhoneViewRoute.vue";
 
 const t = useTree();
 const shown = useGoalShown();
@@ -51,6 +52,15 @@ function go(): void { simOp("view-run"); void run.run(); }
 const fmt = (x: number): string => (!Number.isFinite(x) ? "—" : x >= 100 ? x.toFixed(0) : x.toFixed(1));
 const donePct = computed(() => { const r = run.result.value; return r ? Math.round((r.finished / (r.n || 1)) * 100) : 0; });
 const map = ref<InstanceType<typeof PhoneViewMap> | null>(null);
+/** 詳細 = 全体図。既定は完成までの道 (S-94h、オーナー 11-01「詳細ボタン付けたらオンオフで全体さっきのツリー見れるでいいんじゃね」) */
+const detail = ref(false);
+function toggleDetail(): void { detail.value = !detail.value; simOp("view-detail", detail.value ? "on" : "off"); }
+/** 結果のまとめの箱を押した: 全体図でその箱へ寄る (全体図が大きさを測ってから) */
+async function goBox(id: string): Promise<void> {
+  reportOpen.value = false; detail.value = true;
+  await nextTick();
+  requestAnimationFrame(() => requestAnimationFrame(() => map.value?.goTo(id)));
+}
 
 // シートの上枠 = 帯のすぐ下、下は画面の下まで (閉じない、S-94b)。ページは送らない (シートの中の指は全体図が受け取る)
 const topEl = ref<HTMLElement | null>(null);
@@ -102,12 +112,15 @@ const cardW = computed(() => Math.round(goalW.value / cardScale.value));
         <p v-if="run.halted.value" data-phone-view-halt class="rounded-md border border-rose-400/60 px-3 py-2 text-center text-[13px] text-rose-100">{{ tr("途中で止まった人がいる。PC で直す", "Some runs got stuck. Fix it on a PC") }}</p>
       </div>
       <div ref="topEl" />
-      <section data-phone-view-sheet class="fixed inset-x-0 bottom-0 z-30 flex flex-col rounded-t-2xl border-t-2 border-[#b08a3c] bg-sim-panel px-3 pb-2 pt-2 shadow-[0_-10px_30px_rgba(0,0,0,0.8)]" :style="{ top: `${sheetTop}px` }">
-        <div class="mb-1 flex min-h-0 min-w-0 flex-col overflow-y-auto" :class="goalBig ? 'max-h-[60%] shrink-0' : 'shrink-0'">
-          <button type="button" data-phone-view-goal class="flex min-w-0 items-baseline gap-2 text-left text-[13px]" :aria-expanded="goalBig" @click="goalBig = !goalBig">
+      <section data-phone-view-sheet class="fixed inset-x-0 bottom-0 z-30 flex flex-col overscroll-contain rounded-t-2xl border-t-2 border-[#b08a3c] bg-sim-panel px-3 pb-2 pt-2 shadow-[0_-10px_30px_rgba(0,0,0,0.8)]" :class="detail ? '' : 'overflow-y-auto'" :style="{ top: `${sheetTop}px` }">
+        <div class="mb-1 flex min-h-0 min-w-0 flex-col overflow-y-auto" :class="goalBig && detail ? 'max-h-[60%] shrink-0' : 'shrink-0'">
+          <div class="flex min-w-0 items-center gap-2">
+          <button type="button" data-phone-view-goal class="flex min-w-0 flex-1 items-baseline gap-2 text-left text-[13px]" :aria-expanded="goalBig" @click="goalBig = !goalBig">
             <b class="shrink-0 text-[#f2d27a]">{{ tr("完成形", "Final item") }}</b><span class="min-w-0 flex-1 break-words text-sim-body">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}</span>
             <span class="shrink-0 text-[11px] text-sim-dim">{{ goalBig ? tr("押すと縮む ▴", "Tap to shrink ▴") : tr("押すと広がる ▾", "Tap to expand ▾") }}</span>
           </button>
+          <button type="button" data-phone-view-detail class="g-btn sm !min-h-9 shrink-0" :aria-pressed="detail" @click="toggleDetail">{{ detail ? tr("詳細を閉じる", "Hide details") : tr("詳細", "Details") }}</button>
+          </div>
           <!-- 高さは縮めた後の大きさで取る (transform は枠の高さを変えない) -->
           <div ref="goalBox" data-phone-view-card class="min-w-0 overflow-hidden" :style="{ height: cardH ? `${Math.ceil(cardH * cardScale)}px` : undefined }" @click="goalBig = !goalBig">
             <div v-if="t.goalItem.value && t.goals.value.length" ref="cardEl" class="origin-top-left" :style="{ width: `${cardW}px`, transform: `scale(${cardScale})` }">
@@ -115,11 +128,12 @@ const cardW = computed(() => Math.round(goalW.value / cardScale.value));
             </div>
           </div>
         </div>
-        <PhoneViewMap ref="map" :result="run.result.value" />
+        <PhoneViewMap v-if="detail" ref="map" :result="run.result.value" />
+        <PhoneViewRoute v-else :result="run.result.value" />
       </section>
       <!-- 結果のまとめ (PC と同じ部品、スマホは下から出る形)。人数が少ないので振れる事を 1 行 (S-94e) -->
       <div v-if="reportOpen && run.result.value && !run.running.value" data-phone-report class="fixed inset-0 z-50 bg-black/50" @click.self="reportOpen = false">
-        <TreeRunReport :result="run.result.value" :note="tr('人数が少ないので結果は振れます', 'Few runs, so results vary')" @close="reportOpen = false" @go="(id) => { reportOpen = false; map?.goTo(id); }" />
+        <TreeRunReport :result="run.result.value" :note="tr('人数が少ないので結果は振れます', 'Few runs, so results vary')" @close="reportOpen = false" @go="goBox" />
       </div>
     </template>
   </div>

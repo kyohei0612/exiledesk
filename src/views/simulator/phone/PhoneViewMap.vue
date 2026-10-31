@@ -11,7 +11,6 @@ import { depthRows, EST_H } from "../../../services/simulator/tree/tree-row-tops
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { foldOuts, stripFolds, stripHidden, toggleStripFold } from "../../../services/simulator/tree/tree-strip-fold";
 import { shapeSampleOf } from "../../../services/simulator/tree/tree-sample-shape";
-import { qualityLabelOf } from "../../../services/htc/quality";
 import { craftStage as s } from "../../../state/craft-stage";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import TreeBox from "../tree/TreeBox.vue";
@@ -23,6 +22,7 @@ import { useTree } from "../tree/use-tree";
 import { simOp } from "../../../web/track";
 import { tr } from "../../../i18n/lang";
 import { useMapTouch, type MapBounds } from "./use-map-touch";
+import { qualityLines } from "./view-route";
 
 const props = defineProps<{ /** 回した結果 (カードの箱に人数を添える) */ result?: TreeRunResult | null }>();
 const t = useTree();
@@ -139,8 +139,7 @@ const chips = computed(() => {
 /** 箱の上の 1 行: その箱の見本の品質 (PC の箱のカードに無い行) と回した人数 */
 const aboves = computed(() => new Map(cardKey.value.split(" ").filter(Boolean).map((id) => {
   const data = s.data.value, it = data ? shapeSampleOf(data, doc.value, id) : null;
-  const q = !it ? [] : [...(it.quality > 0 ? [`${qualityLabelOf(it.catalystQuality ? null : it.qualityTag)} +${it.quality}%`] : []), ...((it.catalystQuality ?? 0) > 0 ? [`${qualityLabelOf(it.qualityTag)} +${it.catalystQuality}%`] : [])];
-  return [id, [...q, runText(props.result, id)].filter(Boolean).join(" · ")] as const;
+  return [id, [...qualityLines(it), runText(props.result, id)].filter(Boolean).join(" · ")] as const;
 })));
 /** 名前と手の絵 (カードの箱には出さない) */
 const names = computed(() => (m.k.value < NAME_K ? [] : inView.value.filter((b) => !cardIds.value.has(b.id)).map((b) => {
