@@ -1,15 +1,15 @@
 /**
  * apply-spam.ts — スパムシミュの当たった形をクラフト台に置く 1 手 (2026-10-22 オーナー「当たった状態でクラフト台に戻る」「工程にスパムの 1 行、費用も入れる」)。
- * 鍵 spam:{…} に道・等級・費用 (高貴建て)・手数と、置く MOD (Force の形)・レアリティ・当たった形のルーンを入れる。打つと MOD を丸ごと置き換え、
+ * 鍵 spam:{…} に道・等級・費用 (高貴建て)・手数と、置く MOD (Force の形)・レアリティ・当たった形のルーンを入れる。打つと MOD を丸ごと置き換え (台から残った MOD は印ごとそのまま)、
  * 当たった形のルーンを嵌める (足りなければソケットも開ける、M-64。暗黙・品質と、それ以外のルーンは打つ前のアイテムのまま)。
  * 乱数を使わないので、再生 (手順 JSON) でも同じ形に飛ぶ。1 つ戻すでこの行ごと消える
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
 import { addStartMods } from "./run-plan";
 import { mulberry32 } from "../htc/rng";
-import type { Force } from "./stage-core";
+import { allMods, type Force } from "./stage-core";
 import { applyRune, baseSocketsOf, RUNE_PREFIX } from "./stage-runes";
-import type { StageApply, StageItem } from "./types";
+import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 import { tr } from "../../i18n/lang";
 
 export const SPAM = "spam:";
@@ -51,17 +51,34 @@ function wearRunes(data: PatchData, item: StageItem, runes: readonly string[]): 
   return it;
 }
 
+/** 台の MOD のうち、当たった形にそのまま残った物 (エッセンスなどの印ごと持ち越す。Force からは組み直せない) と、新しく組む物に分ける */
+function splitKept(item: StageItem, mods: readonly Force[]): { kept: StageMod[]; rest: Force[] } {
+  const left = allMods(item), kept: StageMod[] = [];
+  const rest = mods.filter((f) => {
+    const i = left.findIndex((m) => m.modId === f.mod && m.tierName === f.tier && m.values.join() === (f.values ?? []).join() && !!m.fractured === !!f.fractured && !!m.desecrated === !!f.desecrated);
+    if (i < 0) return true;
+    kept.push(...left.splice(i, 1));
+    return false;
+  });
+  return { kept, rest };
+}
+
 export function applySpam(data: PatchData, item: StageItem, key: string): StageApply {
   const s = parseSpam(key);
   if (!s) return { applied: false, item, added: [], removed: [], reason: tr("スパムの手の形が違う", "Invalid spam step") };
   const worn = wearRunes(data, item, s.runes ?? []);
   if (typeof worn === "string") return { applied: false, item, added: [], removed: [], reason: worn };
   let built: StageItem;
-  // ルーン込みの枠と置き場で組み直す (特殊 MOD とセールの凱旋の枠はルーンがある時だけ付く)
-  try { built = addStartMods(data, { ...worn, rarity: s.rarity, prefixes: [], suffixes: [] }, s.mods, mulberry32(0)); }
+  // 残った MOD を先に置き、新しい MOD をルーン込みの枠と置き場で組む (特殊 MOD とセールの凱旋の枠はルーンがある時だけ付く)
+  const { kept, rest } = splitKept(item, s.mods);
+  const on = (sd: StageSide): StageMod[] => kept.filter((m) => m.side === sd);
+  try { built = addStartMods(data, { ...worn, rarity: s.rarity, prefixes: on("prefix"), suffixes: on("suffix") }, rest, mulberry32(0)); }
   catch (e) { return { applied: false, item, added: [], removed: [], reason: e instanceof Error ? e.message : String(e) }; }
+  // 並びは当たった形のまま
+  const at = (m: StageMod): number => s.mods.findIndex((f) => f.mod === m.modId);
+  built = { ...built, prefixes: [...built.prefixes].sort((a, b) => at(a) - at(b)), suffixes: [...built.suffixes].sort((a, b) => at(a) - at(b)) };
   // 付いた / 消えたは変わった MOD だけ (フラクチャーなど、そのまま残った物は数えない)
-  const sig = (m: StageItem["prefixes"][number]): string => `${m.modId}#${m.tierIndex}#${m.values.join(",")}#${m.fractured ? 1 : 0}`;
+  const sig = (m: StageMod): string => `${m.modId}#${m.tierIndex}#${m.values.join(",")}#${m.fractured ? 1 : 0}`;
   const before = [...item.prefixes, ...item.suffixes], after = [...built.prefixes, ...built.suffixes];
   const was = new Set(before.map(sig)), now = new Set(after.map(sig));
   return { applied: true, item: { ...worn, rarity: s.rarity, prefixes: built.prefixes, suffixes: built.suffixes }, added: after.filter((m) => !was.has(sig(m))), removed: before.filter((m) => !now.has(sig(m))) };
