@@ -59,6 +59,8 @@ function preChildOf(d: TreeDoc, b: TreeBox): TreeBox | null {
 function chainOf(d: TreeDoc, b: TreeBox): boolean {
   const p = b.parent ? d.boxes[b.parent] : null;
   if (!b.hand || !p?.hand || p.hand.currency !== b.hand.currency) return false;
+  // × で自動の ↩ を外して人が打った手は続きでない (前は保存されず、開き直すと手が落ちて下の決めが要確認になった、金の指輪の木の b24。スイッチ keepOutside)
+  if (flag("keepOutside") && b.noAutoBack) return false;
   // 残したい MOD の消去の「狙いが消えた」に付けた全部消えてよい消去・「外れが消えた」に付けた同じ残したい MOD の消去も組み直しで付く (S-28e、スイッチ judgeOne)
   const sameKeep = (x: Hand, y: Hand): boolean => JSON.stringify(x.keep ?? []) === JSON.stringify(y.keep ?? []) && x.omens.join("+") === y.omens.join("+");
   const keepAuto = flag("judgeOne") && !!p.hand.keep?.length && ((b.out === "lost" && isStripKey(b.junkKey) && kind(b.hand) === "strip") || (b.out === "junkGone" && sameKeep(p.hand, b.hand)));

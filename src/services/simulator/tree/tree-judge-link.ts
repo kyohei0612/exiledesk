@@ -100,6 +100,15 @@ export function joinableByContent(doc: TreeDoc, id: string, j: Judge): string[] 
 const canPlay = (data: PatchData, item: StageItem, h: Hand): boolean => { const r = playHand(data, item, { ...h, repeat: null }, mulberry32(1)); return r.applied || !!r.random; };
 
 /**
+ * 着いた箱の手が打てない人の行き先 (S-64、スイッチ keepOutside): 中身の同じ箱のうち、手が打てる箱か完成 / 失敗の箱 (浅い段・先に作った箱から)。
+ * 外れは種類を見ないので、✦ + ブリーチの人が ✦ + 外れの「ブリーチを打つ箱」に着いて打てず止まった (金の指輪の木の b1、次の手の b2 は中身が同じ)
+ */
+export function playableTwin(data: PatchData, doc: TreeDoc, j: Judge, at: string, item: StageItem, aimed: ReadonlySet<string>): string | null {
+  if (!flag("keepOutside")) return null;
+  return j.boxesOf(item, aimed, (id) => id !== at).find((id) => { const h = doc.boxes[id]?.hand; return !h || canPlay(data, item, h); }) ?? null;
+}
+
+/**
  * 回す時の行き先 (S-64、人と箱): 着いた箱 at の中身がこの人のアイテムと同じならそのまま、違えば中身の同じ箱 (手のある箱・完成 / 失敗の箱、
  * 手が打てる箱を先に、浅い段・先に作った箱から)、無ければ null = その箱で止まる (未設定)。at = null は「どこか中身の同じ箱」(行き先の無い結果)。
  * aimed = この人の ☑ で付いた狙い (tree-judge の startAimed・nextAimed で回した順に)

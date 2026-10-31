@@ -18,7 +18,7 @@ import { fractureMarks, type Aim, type OutKind, type TreeDoc } from "./tree-mode
 import { stepOutcomes } from "../sim-engine";
 import { bodyMemo, bodyOf, heldOn } from "./tree-box-shape";
 import { aimedAfterAnnul, judgeMemo, nextAimed, startAimed, type Judge } from "./tree-judge";
-import { routeOf } from "./tree-judge-link";
+import { playableTwin, routeOf } from "./tree-judge-link";
 import { flag } from "../../../web/release-flags";
 
 export interface TreeRunOpts {
@@ -257,6 +257,9 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     o.onHand?.(at, item);
     const r = playHand(data, item, b.hand, rng, own, use, false, stripStop(data, doc, b));
     if (!r.applied) {
+      // 中身の同じ箱のうち手が打てる箱へ (S-64、スイッチ keepOutside)
+      const twin = j ? playableTwin(data, doc, j, at, item, aimed) : null;
+      if (twin) { visit(at, true); at = twin; continue; }
       // 打てないが、この手の当たりの狙いがもう付いている = 打たずにその当たりの箱へ (tree-sample の heldHitOf)
       // スイッチ judgeOne: 打てない手の当たりの箱へ飛ぶ特別扱いはしない (中身の同じ箱へは着いた時に routeOf が移す、大本 2)
       const held = j ? null : heldHitOf(data, doc, b, item);
