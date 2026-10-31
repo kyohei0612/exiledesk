@@ -22,11 +22,13 @@ import pkg from "../../../package.json";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import type { ModGroup } from "../../services/craft-stage/trade-search";
 
-defineProps<{ phone: boolean }>();
+const props = defineProps<{ phone: boolean }>();
 const s = craftStage;
 const inApp = isTauriRuntime();
 /** 「シミュレーターへ」(持っているアイテムを渡す)。閉じている間は前の白紙の木 */
 const EMU_TO_SIM = flag("emuToSim");
+/** シミュへ持っていく入口はスマホの形では出さない (M-06、スイッチ phoneView、オーナー 11-01「エミュのMOD群をシミュへ持っていくようなボタンはいらない」) */
+const TO_SIM_ON = computed(() => TREE_ON && !(props.phone && flag("phoneView")) && s.mode.value === "hand" && !!s.item.value);
 const { handNoBase, pickSimBase } = useStageBase();
 /** 道具の帯のボタン (ゲームの 3 枚ボタン、src/styles/game-ui.css) */
 const btn = "g-btn sm";
@@ -111,9 +113,9 @@ function armReset(): void {
     <button type="button" data-rec="reset" :class="resetArm.is() ? ARMED_CLASS : btn" :disabled="!s.log.value.length && !s.startMods.value.length" @click="armReset">{{ resetArm.is() ? tr("もう一度押すと白に戻す", "Click again to reset") : tr("白に戻す", "Reset") }}</button>
     <button type="button" data-rec="undo" :class="btn" :disabled="!s.log.value.length && !s.startMods.value.length" :title="tr('R / Ctrl+Z (まだ打っていない時は始めの MOD を 1 つ外す)', 'R / Ctrl+Z (before any use, removes one starting mod)')" @click="s.undo()">{{ tr("1 手戻す", "Undo") }}</button>
     <!-- 今のベースとアイテムレベルで白紙のクラフトの道 (ツリー) へ (開発版だけ、10-22 オーナー「全部のベースで使える」案 1) -->
-    <button v-if="TREE_ON && !EMU_TO_SIM && s.mode.value === 'hand' && s.item.value" type="button" data-tree-from-stage :class="btn" :title="tr('このベースとアイテムレベルで白紙のクラフトの道 (ツリー) を開く (前の木は 1 つ戻すで戻せる)', 'Open a blank craft route tree with this base and item level (undo restores the previous tree)')" @click="void openTreeWith(s.item.value.base, curIlvl ?? 82)">{{ tr("このベースでクラフトの道へ →", "Craft route tree with this base →") }}</button>
+    <button v-if="TO_SIM_ON && !EMU_TO_SIM && s.item.value" type="button" data-tree-from-stage :class="btn" :title="tr('このベースとアイテムレベルで白紙のクラフトの道 (ツリー) を開く (前の木は 1 つ戻すで戻せる)', 'Open a blank craft route tree with this base and item level (undo restores the previous tree)')" @click="void openTreeWith(s.item.value.base, curIlvl ?? 82)">{{ tr("このベースでクラフトの道へ →", "Craft route tree with this base →") }}</button>
     <!-- 持っているアイテムをそのままシミュへ (MOD を全部その段以上の完成の狙いに、フラクチャー済みは ✦ の印のまま。2026-10-26 夜オーナー「忍者コピーに似てる」、印は 10-27、スイッチ emuToSim) -->
-    <button v-if="TREE_ON && EMU_TO_SIM && s.mode.value === 'hand' && s.item.value" type="button" data-sim-from-stage :class="btn" :title="tr(`このアイテム (ベース・アイテムレベル・付いている MOD 全部) をシミュレーターへ。MOD はその${TIER}以上の完成の狙いに入る`, 'Send this item (base, item level and all its mods) to the simulator. Its mods become final targets at that tier or better')" @click="void openSimWithItem(s.item.value)">{{ tr("シミュレーターへ →", "To the simulator →") }}</button>
+    <button v-if="TO_SIM_ON && EMU_TO_SIM && s.item.value" type="button" data-sim-from-stage :class="btn" :title="tr(`このアイテム (ベース・アイテムレベル・付いている MOD 全部) をシミュレーターへ。MOD はその${TIER}以上の完成の狙いに入る`, 'Send this item (base, item level and all its mods) to the simulator. Its mods become final targets at that tier or better')" @click="void openSimWithItem(s.item.value)">{{ tr("シミュレーターへ →", "To the simulator →") }}</button>
     <button v-if="inApp" type="button" :class="btn" class="max-md:hidden" :disabled="!s.log.value.length" :title="tr('打った手を 16:9 の撮影用画面で 1 手ずつ再生 (Space 再生 / ← → 1 手 / Esc 閉じる)', 'Replay each step on a 16:9 recording screen (Space play / ← → step / Esc close)')" @click="s.hold(null); s.video.value = { from: 0, autoplay: false, controls: true }">{{ tr("動画モード", "Video mode") }}</button>
     <span class="ml-auto flex flex-wrap items-center gap-1.5">
       <span v-if="copied" class="text-emerald-300">{{ copied }}</span>
