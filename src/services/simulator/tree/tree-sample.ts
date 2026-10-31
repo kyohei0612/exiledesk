@@ -9,7 +9,7 @@
 import { aimDone, aimHits as hits, applyCurrency, room, sideOfMod, baseSocketsOf, catalystOf, forceKey, freshItem, kindOf, mulberry32, omenBlock, OMEN_FOR, revealOffers, runeIdByName, tierIndexOf, unrevealedOf, useReason, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { catalystFull, catalystTagOf, fillCatalyst, fractureStart } from "../../simulator/sim-engine";
 import { pathKeyOf } from "./tree-recipe-v1";
-import { pathKeyOfBox } from "./tree-sample-key";
+import { docPartOf, pathKeyOfBox } from "./tree-sample-key";
 import { aimHeldOn, isAimMod, junkOf } from "./tree-aim";
 import { flag } from "../../../web/release-flags";
 import { CATALYSING as CATALYSING_OMEN, ECHO, ECHO as ABYSSAL_ECHO_OMEN, effectOf, isBone, isCatalyst } from "./tree-hands";
@@ -224,10 +224,11 @@ let memoSig = "", memoData: PatchData | null = null;
 /** 木の中身の鍵 (位置 x・y と、見本に効かないメモの文を除く) */
 const docSig = (doc: TreeDoc): string => JSON.stringify(doc, (k, v) => (k === "x" || k === "y" || k === "note" ? undefined : v));
 /** fn の間は木が変わらないので鍵を作り直さない (1 回の JSON が 100 人回しの 4 割だった、S-71b、スイッチ treeLight) */
-let heldDoc: TreeDoc | null = null, heldSig = "", holdNo = 0;
-export function holdDocSig<T>(doc: TreeDoc, fn: () => T): T {
+let heldDoc: TreeDoc | null = null, heldSig = "", heldPart: string | null = null, heldLazy = false, holdNo = 0;
+/** lazy = 木全体の鍵は要る時だけ作る (判定と見本作りの短い間。作るだけで箱の数の分だけ掛かる) */
+export function holdDocSig<T>(doc: TreeDoc, fn: () => T, lazy = false): T {
   if (!flag("treeLight") || heldDoc) return fn();
-  heldDoc = doc; heldSig = docSig(doc); holdNo++;
+  heldDoc = doc; heldLazy = lazy; heldSig = lazy ? "" : docSig(doc); heldPart = null; holdNo++;
   try { return fn(); } finally { heldDoc = null; }
 }
 /** 今 holdDocSig の中ならその回の番号、外なら 0 (同じ番号の間は木が変わらない) */
@@ -246,21 +247,28 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
     if (!r) { r = sampleRaw(data, doc, boxId, seed); memo.set(k, r); }
     return r;
   }
-  const held = heldDoc === doc;
-  if (held && memoSig !== heldSig) { memo.clear(); memoSig = heldSig; }
-  let r = held ? memo.get(k) : undefined;
+  const held = heldDoc === doc, fast = held && !heldLazy;
+  if (fast && memoSig !== heldSig) { memo.clear(); memoSig = heldSig; }
+  let r = fast ? memo.get(k) : undefined;
   if (r) return r;
-  const pk = pathKeyOfBox(doc, boxId, seed, altDeep, () => sigNo(held ? heldSig : docSig(doc)));
+  const pk = keyOf(doc, boxId, seed);
   r = pathMemo.get(pk);
   if (!r) {
     // 見本を作る間は木が変わらないので鍵は 1 回だけ (描画の箱ごとの見本で木全体の JSON が 10 秒を超えた、☑ の手)
-    r = holdDocSig(doc, () => sampleRaw(data, doc, boxId, seed));
+    r = holdDocSig(doc, () => sampleRaw(data, doc, boxId, seed), true);
     if (pathMemo.size >= PATH_MEMO_MAX) { pathMemo.clear(); sigNos.clear(); }
     pathMemo.set(pk, r);
   }
-  if (held) memo.set(k, r);
+  if (fast) memo.set(k, r);
   return r;
 }
+function keyOf(doc: TreeDoc, boxId: string, seed: number): string {
+  const held = heldDoc === doc;
+  const part = held ? (heldPart ??= docPartOf(doc)) : docPartOf(doc);
+  return pathKeyOfBox(doc, boxId, seed, altDeep, part, () => sigNo(held ? (heldSig ||= docSig(doc)) : docSig(doc)));
+}
+/** 箱の中身の覚えの鍵 (見本の番号を除いた道の鍵、tree-judge) */
+export const boxKeyOf = (doc: TreeDoc, boxId: string): string => keyOf(doc, boxId, 0);
 function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
   const b = doc.boxes[boxId];
   if (!b) return { item: freshItem(data, doc.base, doc.itemLevel, "rare"), note: null };

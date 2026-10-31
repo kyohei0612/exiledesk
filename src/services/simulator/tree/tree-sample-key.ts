@@ -15,8 +15,7 @@ const skipPos = (k: string, v: unknown): unknown => (k === "x" || k === "y" || k
 const tagOf = (x: TreeBox): unknown[] => [x.id, x.out, x.aim, boxAims(x), x.junkKey, x.mergedOuts];
 
 /** whole = 木全体の鍵の番号 (道に全部消えてよい消去がある箱だけ呼ぶ) */
-export function pathKeyOfBox(doc: TreeDoc, boxId: string, seed: number, alt: boolean, whole: () => number): string {
-  const { boxes: _b, seq: _s, picks: _p, orphans: _o, note: _n, tabNo: _t, tabName: _m, baseChosen: _c, ...rest } = doc;
+export function pathKeyOfBox(doc: TreeDoc, boxId: string, seed: number, alt: boolean, part: string, whole: () => number): string {
   const chain: unknown[] = [];
   let strip = false;
   for (let b: TreeBox | undefined = doc.boxes[boxId]; b; b = b.parent ? doc.boxes[b.parent] : undefined) {
@@ -25,5 +24,10 @@ export function pathKeyOfBox(doc: TreeDoc, boxId: string, seed: number, alt: boo
     const sibs = (p?.outs ?? []).map((o) => { const x = doc.boxes[o]; return x ? tagOf(x) : o; });
     chain.push(b.id === boxId ? [tagOf(b), sibs] : [tagOf(b), b.hand, b.split, sibs]);
   }
-  return JSON.stringify([seed, alt, rest, aimsOf(doc), placedAims(doc), chain, strip ? whole() : 0], skipPos);
+  return part + JSON.stringify([seed, alt, chain, strip ? whole() : 0], skipPos);
+}
+/** 箱によらない部分 (木の前提・木の狙いの札・置き石)。箱の数の分だけ掛かるので、木の変わらない間は 1 回だけ作る (tree-sample の keyOf) */
+export function docPartOf(doc: TreeDoc): string {
+  const { boxes: _b, seq: _s, picks: _p, orphans: _o, note: _n, tabNo: _t, tabName: _m, baseChosen: _c, ...rest } = doc;
+  return JSON.stringify([rest, aimsOf(doc), placedAims(doc)], skipPos);
 }

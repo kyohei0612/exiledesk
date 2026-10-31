@@ -13,7 +13,7 @@ import { catalystTagOf } from "../sim-engine";
 import { isCatalyst } from "./tree-hands";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { bodyOf } from "./tree-box-shape";
-import { aimOpts, holdDocSig, sampleOf, startGoalAims, targetsOf } from "./tree-sample";
+import { aimOpts, boxKeyOf, holdDocSig, sampleOf, startGoalAims, targetsOf } from "./tree-sample";
 import { boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { qualityOk } from "./tree-unbounded";
 import { goneOf, gotOf, keptAimsOf } from "./tree-keep";
@@ -144,6 +144,11 @@ export interface Judge {
   afterQuality(id: string): boolean;
 }
 
+/** 道の鍵 → 箱の中身 (データごと。増えすぎたら捨てて作り直す = 結果は同じ) */
+const CONTENTS = new WeakMap<PatchData, Map<string, Set<string> | null>>();
+const CONTENTS_MAX = 20000;
+const contentsOf = (data: PatchData): Map<string, Set<string> | null> => { let m = CONTENTS.get(data); if (!m) CONTENTS.set(data, (m = new Map())); return m; };
+
 export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
   const memo = new Map<string, ReadonlySet<string> | null>(), looseMemo = new Map<string, ReadonlySet<string> | null>();
   /** 箱の作れる見本 (seed と item) */
@@ -163,6 +168,9 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     let out: Set<string> | null = null;
     // この間は木が変わらないので鍵は 1 回だけ (S-71b、スイッチ treeLight)
     if (doc.boxes[id]) holdDocSig(doc, () => {
+      // 箱の中身は見本と同じ道の鍵で覚え続ける (判定を作り直すたびに全部の箱の見本を引いていた。スイッチ treeLight)
+      const key = flag("treeLight") ? boxKeyOf(doc, id) : null, kept = key ? contentsOf(data).get(key) : undefined;
+      if (kept !== undefined) { out = kept; return; }
       for (let seed = 1, last = 0; seed <= MAX; seed++) {
         if (seed > SAMPLES && ((out?.size ?? 0) < 2 || seed - last > MORE)) break;
         const s = sampleOf(data, doc, id, seed);
@@ -171,7 +179,8 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
         if (!out?.has(k)) last = seed;
         (out ??= new Set()).add(k);
       }
-    });
+      if (key) { const m = contentsOf(data); if (m.size >= CONTENTS_MAX) m.clear(); m.set(key, out); }
+    }, true);
     memo.set(id, out);
     return out;
   };
