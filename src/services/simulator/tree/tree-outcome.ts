@@ -22,7 +22,7 @@ import { isRevealHand, revealedOf, revealHitOf, veilKeep, veilPick } from "./tre
 import { fracFree, fracFreeHit, fracFreeOuts, junkKeyOf, newlyFractured } from "./tree-frac-pick";
 import { sideKeyOf } from "./tree-junk-side";
 import { isWhittleHand, joinKeys, rankKeyOf, rankVariants } from "./tree-whittle";
-import { aimedOfSample, contentOf, judgeMemo, looseKey, sampleAimed, strippedOf } from "./tree-judge";
+import { aimedAfterAnnul, aimedOfSample, contentOf, judgeMemo, looseKey, sampleAimed, strippedOf } from "./tree-judge";
 import { keptAimedOf, keptAimsOf, withGot } from "./tree-keep";
 
 type Outcome = { out: OutKind; hits: Aim[]; junkKey?: string };
@@ -45,29 +45,28 @@ function sided(oc: Outcome, before: StageItem, after: StageItem): Outcome {
 export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageItem, after: StageItem, aims0: readonly Aim[], aimed?: ReadonlySet<string> | null): Outcome {
   const key = b.hand?.currency;
   // 全部消えてよい消去は消した後の中身ごとの箱 (S-28d、スイッチ judgeOne)
-  if (isStrip(b)) return { out: "junkGone", hits: [], junkKey: stripKeyOf(data, doc, after) };
+  if (isStrip(b)) return { out: "junkGone", hits: [], junkKey: stripKeyOf(data, doc, after, aimedAfterAnnul(data, doc, b.hand, aimed, before)) };
   // 消える手の残したい MOD (S-27d、スイッチ keepAll): 打つ前の ☑ の代わりに残したい MOD で数える
   const am = keptAimedOf(doc, b.hand, aimed);
   const aims = am ? keptPlus(doc, b.hand, mineOf(data, before, aims0, am)) : aims0;
   const own = b.outs.flatMap((id) => { const c = doc.boxes[id]; return c?.out === "hit" && c.aim ? boxAims(c) : []; });
   // エッセンス (付く側が決まる)・フラクチャー (S-41 の鍵) は側で分けない
   if (!key || effectOf(key) === "essence" || effectOf(key) === "fracture") return withGot(data, boxOutcomeRaw(data, doc, b, before, after, aims), before, after, own);
-  return withGot(data, lostKeyed(data, doc, b.hand, ranked(b.hand, sided(boxOutcomeRaw(data, doc, b, before, after, aims), before, after), before, after, aims), after), before, after, own);
+  return withGot(data, lostKeyed(data, doc, b.hand, ranked(b.hand, sided(boxOutcomeRaw(data, doc, b, before, after, aims), before, after), before, after, aims), after, aimed, before), before, after, own);
 }
 /** 残したい MOD のうち木の狙いに無い物 (外れの MOD を残したい時) も狙いの並びに足す (消去の keepAims と同じく、残したい MOD だけで消えた / 残ったを見る) */
 const keptPlus = (doc: TreeDoc, h: Hand | null | undefined, aims: Aim[]): Aim[] => { const k = keptAimsOf(doc, h); return k ? [...aims, ...k.filter((a) => !aims.some((x) => x.modId === a.modId))] : aims; };
 /** 残したい MOD の消去か (☑ が 1 つ以上) */
 export const isKeepAnnul = (h: Hand | null | undefined): h is Hand => !!h?.keep?.length && effectOf(h.currency) === "remove";
-/** 残したい MOD の消去の後の ☑ (残したい MOD と ✦ の印。tree-judge の nextAimed と同じ) */
-const keepAimedOf = (doc: TreeDoc, keep: readonly Aim[]): ReadonlySet<string> => new Set([...keepAims(doc, keep), ...fractureMarks(doc)].map((a) => a.modId));
 /**
  * 残したい MOD の消去の「狙いが消えた」も、消した後の中身ごとの箱 (S-28e、スイッチ judgeOne。全部消えてよい消去の S-28d と同じ鍵 `c:…`)。
  * 前は 1 箱で、中身が人ごとに違って混ざり、手も行き先も無く止まった (木 2 本目の b47、予約 K)。
  * 外れが消えたは側の鍵 `s:…` のまま (残したい MOD が残って外れが 1 つ消えるので、側ごとに中身は 1 つ。鍵を替えると保存の札が合わず要確認が増えた)
  */
-function lostKeyed<T extends { out: OutKind; junkKey?: string }>(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, oc: T, after: StageItem): T {
+function lostKeyed<T extends { out: OutKind; junkKey?: string }>(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, oc: T, after: StageItem, aimed?: ReadonlySet<string> | null, before?: StageItem): T {
   if (oc.out !== "lost" || !isKeepAnnul(h)) return oc;
-  return { ...oc, junkKey: joinKeys(stripKeyOf(data, doc, after, keepAimedOf(doc, h.keep!)), oc.junkKey) };
+  // 消した後の ☑ は tree-judge の nextAimed と同じ (残したい MOD・✦ の印・候補の外の印)
+  return { ...oc, junkKey: joinKeys(stripKeyOf(data, doc, after, aimedAfterAnnul(data, doc, h, aimed, before, keepAims(doc, h.keep!).map((a) => a.modId))), oc.junkKey) };
 }
 /**
  * 順位の鍵を付ける箱 = 削減で何が消えたかの枝 (S-65b ①「外れが消えた」「○○が消えた」)。外れ・打った後はカオスでまた狙いが付いた等の 1% 未満の組み合わせばかりで、
@@ -310,7 +309,7 @@ export function stripKeyOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: 
  * strips = ほかの全部消す消去の箱も止まる所に入れる (消した後の結果の行き先、S-28d。同じ中身の消去の直線を 2 本作らない)。
  * 打つ前の見直し (stripStop) では入れない (同じ中身の消去の箱どうしで行き来する)
  */
-export function stripStopByContent(data: PatchData, doc: TreeDoc, self: string, it: StageItem, strips = false): string | null {
+export function stripStopByContent(data: PatchData, doc: TreeDoc, self: string, it: StageItem, strips = false, aimed: ReadonlySet<string> = strippedOf(doc)): string | null {
   let m = contentMemo.get(doc);
   // 回している間 (docHeld) は木が変わらないので鍵も下の箱も作り直さない (1 手ごとの鍵が 100 人回しの半分だった、S-71b)
   const hold = docHeld(doc);
@@ -325,7 +324,7 @@ export function stripStopByContent(data: PatchData, doc: TreeDoc, self: string, 
     let below = m.below.get(self);
     if (!below) { below = new Set(subtree(doc, self)); m.below.set(self, below); }
     const under = below;
-    return m.j.boxesOf(it, strippedOf(doc), (id) => { const b = doc.boxes[id]; return !!b?.hand && !under.has(id) && (strips || !isStrip(b)); })[0] ?? null;
+    return m.j.boxesOf(it, aimed, (id) => { const b = doc.boxes[id]; return !!b?.hand && !under.has(id) && (strips || !isStrip(b)); })[0] ?? null;
   } finally { stopBusy = false; }
 }
 const contentMemo = new WeakMap<TreeDoc, { sig: string; hold: number; j: ReturnType<typeof judgeMemo>; below: Map<string, Set<string>> }>();

@@ -6,7 +6,7 @@
  */
 import type { PatchData } from "../../../services/craft-stage/engine";
 import { clearHand, migrateStart, setBack, TREE_SCHEMA_N, type Hand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { offByParent, sameHandByContent } from "../../../services/simulator/tree/tree-judge-link";
+import { offByParent, sameHandByContent, straightUp } from "../../../services/simulator/tree/tree-judge-link";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
 import { alignEssenceAims, applyPick, kindOf, onlyOf } from "./tree-hand-plan";
 import { flag } from "../../../web/release-flags";
@@ -152,7 +152,7 @@ function linkLeftovers(data: PatchData, d: TreeDoc): void {
     if (!cs?.size) continue;
     // 結果が 1 通りの手 (ルーン・品質を最大までなど) の結果を同じ中身の親へ戻すと、打っても変わらない手の輪になる (linkByContent と同じ守り。
     // ルーンの後の箱が ↩ ルーンの箱になり、同じルーンは通り抜けるので回り続けた、10-29 pass-armor、S-31e)
-    const loop = (t: string): boolean => t === b.parent && (d.boxes[t]?.outs.length ?? 0) <= 1;
+    const loop = (t: string): boolean => straightUp(d, b.id, t);
     const tos = new Set([...cs].map((k) => targets.find((t) => t !== b.id && !loop(t) && !!j.contents(t)?.has(k)) ?? null));
     const to = tos.size === 1 ? [...tos][0] : null;
     if (to) { b.back = to; b.autoBack = true; }

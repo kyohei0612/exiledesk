@@ -17,7 +17,7 @@ import { modText, tr } from "../../../i18n/lang";
 import { fractureMarks, type Aim, type OutKind, type TreeDoc } from "./tree-model";
 import { stepOutcomes } from "../sim-engine";
 import { bodyMemo, bodyOf, heldOn } from "./tree-box-shape";
-import { judgeMemo, nextAimed, startAimed, type Judge } from "./tree-judge";
+import { aimedAfterAnnul, judgeMemo, nextAimed, startAimed, type Judge } from "./tree-judge";
 import { routeOf } from "./tree-judge-link";
 import { flag } from "../../../web/release-flags";
 
@@ -136,7 +136,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
   let item = o.start ? o.start(rng) : startItemOf(data, doc, rng);
   // この人の ☑ で付いた狙い (スイッチ judgeOne、tree-judge。当たりの箱に着いたらその札、消えたら外れる)
   let aimed: ReadonlySet<string> = j ? startAimed(data, doc, item) : new Set();
-  const arrive = (box: string, it: StageItem): void => { if (j) aimed = nextAimed(data, doc, aimed, box, it); };
+  const arrive = (box: string, it: StageItem, was?: StageItem): void => { if (j) aimed = nextAimed(data, doc, aimed, box, it, was); };
   let cost = o.startCost;
   const uses: Record<string, number> = {};
   const visits: Person["visits"] = [];
@@ -252,7 +252,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     const tried = uses[b.hand.currency] ?? 0, own = handAims(doc, at, aims);
     // 全部消えてよい消去の直線で、もう手のある箱と同じ中身 = 打たずにその箱へ (S-28)。前は打たずに次の箱へ通し、次の箱に人の手があるとその手を打った
     // (✦ を狙いのまま数えると「最大ライフ (外れ) + ✦」が b2 と同じ中身になり、木 oWkFcwYX の b7 → b8 で起きた。スイッチ judgeOne)
-    const stopAt = j && stripStop(data, doc, b) ? stripStopByContent(data, doc, at, item) : null;
+    const stopAt = j && stripStop(data, doc, b) ? stripStopByContent(data, doc, at, item, false, aimedAfterAnnul(data, doc, b.hand, aimed, item)) : null;
     if (stopAt) { visit(at, true); at = stopAt; continue; }
     o.onHand?.(at, item);
     const r = playHand(data, item, b.hand, rng, own, use, false, stripStop(data, doc, b));
@@ -275,7 +275,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
       forget();
       restarts += mx;
     }
-    if (sb.next) { item = r.item; arrive(sb.next, item); at = sb.next; continue; }
+    if (sb.next) { item = r.item; arrive(sb.next, item, before); at = sb.next; continue; }
     const oc = boxOutcomeOf(data, doc, b, before, r.item, aims, j ? aimed : null);
     const next = outBoxOf(doc, b, oc, r.item);
     if (!next) {
@@ -292,7 +292,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     // 結果の箱には一度着いてから形の合う箱へ移る (着いた数と線に入れる。前は飛ばして、当たりの箱が「来た人 0」・照らしで当たり 0% になった、10-24 モンキー m-602・指輪 b11)
     if (j) {
       // 結果の箱の中身と違えば中身の同じ箱へ (S-64)。無ければ結果の箱で止まる (未設定)
-      arrive(next, item);
+      arrive(next, item, before);
       const to = routeOf(data, doc, j, next, item, aimed);
       if (!to) { visits.push({ box: next, cost }); return fin({ end: "stuck", cost, at: next, visits, uses, restarts, odd, why: { reason: tr("この結果の箱と中身が違い、中身の同じ箱も無い", "This result box holds a different item, and no box matches it"), item, noBox: true } }); }
       if (to !== next) { visit(next, true); blame = next; }

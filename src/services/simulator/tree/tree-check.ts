@@ -306,7 +306,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
             const m = allMods(got).find((x) => x.modId === ob.aim!.modId);
             if (m) { hits++; if (modBoostsOf({ ...got, quality: Math.max(got.quality, 1), catalystQuality: 1, qualityTag: tag }, m, data).some((k) => k.kind === "quality")) boosted = true; }
           }
-          if (got && J) { const am = nextAimed(data, doc, aimed, o, got), to = routeOf(data, doc, J, o, got, am); if (to) walk(to, got, viaBack, am); }
+          if (got && J) { const am = nextAimed(data, doc, aimed, o, got, item), to = routeOf(data, doc, J, o, got, am); if (to) walk(to, got, viaBack, am); }
           else if (got) walk(settle(data, doc, shapes, o, got, aims), got, viaBack);
           // もう付いているかもしれない狙い (狙いが消えた後の取り直し、heldSets) は、付いていない人だけが着くので数えない
           else if (ob.out === "hit" && ob.aim && !viaBack && (J ? !held(id, ob) : !heldSets(doc, id).some((h) => boxAims(ob).some((a) => h.includes(aimKey(a)))))) never.add(o);

@@ -5,6 +5,7 @@
  */
 import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
 import type { Judge } from "./tree-judge";
+import { effectOf } from "./tree-hands";
 import { playHand } from "./tree-sample";
 import { MATCH_BACK, subtree, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
 import { flag } from "../../../web/release-flags";
@@ -25,6 +26,12 @@ export function offByParent(doc: TreeDoc, id: string, j: Judge): boolean {
   return false;
 }
 
+/** t が id の上で、間の手の結果が全部 1 通りの箱か (自動の ↩ を付けると打っても変わらない手の輪になる、S-50・S-50d。スイッチ keepOutside が閉じていれば親だけ) */
+export function straightUp(doc: TreeDoc, id: string, t: string): boolean {
+  for (let p = doc.boxes[doc.boxes[id]?.parent ?? ""]; p && p.outs.length <= 1; p = doc.boxes[p.parent ?? ""]) { if (p.id === t) return true; if (!flag("keepOutside")) break; }
+  return false;
+}
+
 /**
  * 自動のつなぎ (S-50): 新しくできた結果の箱 (当たりも、手も戻りも無い・人が × で外していない) は、中身が同じ手のある箱 (スタートも) があれば
  * 先に作った箱 (浅い段から) へ自動の ↩。自分と自分の下は除く (当たりは打つ前の箱と中身が違うので再挑戦にはならない)。手の無い当たりの箱どうしは sameHitsByContent
@@ -36,9 +43,11 @@ export function linkByContent(doc: TreeDoc, ids: readonly string[], j: Judge): v
     // 人が付けた戻り・setHand の既定の戻り (外れが消えた → 外れの前の箱、自動の印つき) は pruneByContent が見直す
     if (c.back && c.back !== MATCH_BACK) continue;
     if (offByParent(doc, id, j)) continue;
+    // 自動の ↩ は消去の結果だけ。ほかの手は未設定のまま、カレンシーを選んだ時に S-51 で戻す (S-50d、スイッチ keepOutside)
+    if (flag("keepOutside") && effectOf(doc.boxes[c.parent ?? ""]?.hand?.currency ?? "") !== "remove") continue;
     const below = new Set(subtree(doc, id));
     // 結果が 1 通りの手 (品質を最大まで・エッセンスなど) の結果を、同じ中身の親へ戻すと同じ結果の輪になる (打っても変わらない手を打ち続ける)。手の種類ではなく結果の数で見る
-    const p = c.parent ? doc.boxes[c.parent] : undefined, loop = (t: string): boolean => t === c.parent && (p?.outs.length ?? 0) <= 1;
+    const loop = (t: string): boolean => straightUp(doc, id, t);
     const to = Object.values(doc.boxes).filter((t) => !!t.hand && !below.has(t.id) && !loop(t.id) && j.fitsBox(id, t.id)).map((t) => t.id).sort(shallow(doc))[0];
     if (!to) continue;
     c.back = to;

@@ -4,9 +4,11 @@
  * keep の無い手 (前に保存した手・候補が 1 つ以下で聞かなかった手) は既定 = 持っている狙い (☑ の印) 全部 = 今までの数え。
  * 狙いが消えた人に付ける狙い (☑・エッセンスの MOD) が付いたら、狙いが消えた箱を別にして (鍵 `g:`)「狙いが消えた・狙いが付いた」、付いた狙いは ☑ の印に数える
  */
-import type { PatchData, StageItem } from "../../craft-stage/engine";
+import { omensFor, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { stepOutcomes } from "../sim-engine";
 import { aimHeldOn } from "./tree-aim";
-import { effectOf } from "./tree-hands";
+import { effectOf, engineOmens } from "./tree-hands";
+import { prepFor } from "./tree-unbounded";
 import { fractureMarks, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { joinKeys } from "./tree-whittle";
 import { flag } from "../../../web/release-flags";
@@ -21,6 +23,21 @@ export const keptAimsOf = (doc: TreeDoc, h: Hand | null | undefined): Aim[] | nu
 export function keptAimedOf(doc: TreeDoc, h: Hand | null | undefined, aimed: ReadonlySet<string> | null | undefined): ReadonlySet<string> | null | undefined {
   const k = keptAimsOf(doc, h);
   return k ? new Set([...k, ...fractureMarks(doc)].map((a) => a.modId)) : aimed;
+}
+
+/** goneOf の覚え (1 手ごとに人の数だけ呼ぶ。手と MOD の組が同じなら同じ) */
+const GONE = new WeakMap<PatchData, Map<string, ReadonlySet<string> | null>>();
+/** 手 (お告げ込み) でこのアイテムから消えうる MOD の modId (S-27b の候補・S-27e)。打てなければ null */
+export function goneOf(data: PatchData, item: StageItem, currency: string, omens: readonly string[]): ReadonlySet<string> | null {
+  let m = GONE.get(data);
+  if (!m) GONE.set(data, (m = new Map()));
+  const key = [currency, ...omens, item.rarity, ...[...item.prefixes, ...item.suffixes].map((x) => `${x.modId}.${x.tierIndex}${x.fractured ? "f" : ""}${x.unrevealed ? "u" : ""}`)].join("|");
+  if (m.has(key)) return m.get(key)!;
+  const outs = stepOutcomes(data, prepFor(data, item, currency), currency, engineOmens({ omens: omensFor(currency, [...omens]) }))?.filter((o) => !o.void);
+  const out = outs?.length ? new Set(outs.flatMap((o) => o.removed.map((x) => x.modId))) : null;
+  if (m.size > 20000) m.clear();
+  m.set(key, out);
+  return out;
 }
 
 const GOT = "g:";

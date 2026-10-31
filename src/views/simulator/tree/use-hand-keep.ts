@@ -5,16 +5,20 @@
  */
 import { computed, ref, watch, type Ref } from "vue";
 import { craftStage as s } from "../../../state/craft-stage";
-import type { StageItem, StageMod } from "../../../services/craft-stage/engine";
+import type { PatchData, StageItem, StageMod } from "../../../services/craft-stage/engine";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
-import { sampleAimed } from "../../../services/simulator/tree/tree-judge";
+import { outsideAimed, sampleAimed } from "../../../services/simulator/tree/tree-judge";
+import { fractureMarks } from "../../../services/simulator/tree/tree-model";
 import { aimKey, type Aim, type Hand } from "../../../services/simulator/tree/tree-model";
 import { keepAskOf, keepChoicesOf, keepDefaultOf } from "./tree-hand-plan";
 import { boxTagsOf } from "./tree-row-tags";
+import { aimOpts, targetsOf } from "../../../services/simulator/tree/tree-sample";
+import { isAimMod } from "../../../services/simulator/tree/tree-aim";
 import { useTree } from "./use-tree";
 import { modText, tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 
+const aimOn = (d: PatchData, m: StageMod, g: Aim): boolean => isAimMod(m, targetsOf(d, [g]), aimOpts(d));
 export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<StageItem | null>; held: Ref<string | null>; omens: Ref<string[]>; cardOf: (it: StageItem) => StageItem; warnIfBelow: (back: () => void) => void }) {
   const t = useTree();
   /** 消去 (全部消えてよい = 消去の箱を並べる、全部は残せない) か */
@@ -24,6 +28,14 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   const ask = computed(() => { const d = s.data.value, it = o.item.value, h = o.held.value; return !!d && !!it && !!h && keepAskOf(d, it, h, o.omens.value); });
   /** 消える手の既定 = 持っている狙い (この箱の見本 1 の ☑ の印) */
   const defaults = (): string[] => { const d = s.data.value; return d && !isRemove.value ? keepDefaultOf(choices.value, sampleAimed(d, t.doc.value, o.boxId, 1)).map(aimKey) : []; };
+  /** この手で消えない狙いの MOD (☑ 固定の行、S-27e。スイッチ keepOutside。✦ は出さない。候補を聞く時だけ) */
+  const fixed = computed((): StageMod[] => {
+    const d = s.data.value, it = o.item.value, h = o.held.value;
+    if (!flag("keepOutside") || !d || !it || !h || !ask.value) return [];
+    const am = sampleAimed(d, t.doc.value, o.boxId, 1), stay = new Set(outsideAimed(d, t.doc.value, { currency: h, omens: o.omens.value, catalyst: null, quality: 0 }, am, it));
+    const goals = (t.doc.value.memoAims ?? []).filter((g) => stay.has(g.modId) && !fractureMarks(t.doc.value).some((f) => f.modId === g.modId));
+    return [...it.prefixes, ...it.suffixes].filter((m) => !m.fractured && !choices.value.some((c) => c.mod.modId === m.modId) && goals.some((g) => aimOn(d, m, g)));
+  });
   const checked = ref<string[]>((o.current?.keep ?? []).map(aimKey));
   /** 自分で触ったか (持ち替えると既定に戻る)。前の手で残したい MOD を決めていればそれ */
   let touched = !!o.current?.keep;
@@ -45,6 +57,6 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   /** 消去は全部の候補を残す ☑ はできない (消える MOD が無くなる = 消去が打てない。☑ の無い候補が最後の 1 つなら押せない、S-27b)。消える手はできる (S-27d) */
   const last = (a: Aim): boolean => isRemove.value && !checked.value.includes(aimKey(a)) && aims.value.length >= choices.value.length - 1;
   const lastText = tr("全部の MOD は残せない (消える MOD が無くなる)", "You can't keep every mod (nothing would be removed)");
-  return { isRemove, choices, ask, checked, aims, toggle, none, label, last, lastText };
+  return { isRemove, choices, fixed, ask, checked, aims, toggle, none, label, last, lastText };
 }
 export type HandKeep = ReturnType<typeof useHandKeep>;

@@ -13,6 +13,8 @@ import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isRuneHand, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { bodyMemo, type BodyOf } from "../../../services/simulator/tree/tree-box-shape";
+import { aimedAfterAnnul } from "../../../services/simulator/tree/tree-judge";
+import { goneOf } from "../../../services/simulator/tree/tree-keep";
 import { isKeepAnnul, looseOf, stripKeyOf, stripStopByContent } from "../../../services/simulator/tree/tree-outcome";
 import { isStripKey } from "../../../services/simulator/tree/tree-junk-side";
 import { judgeMemo, sampleAimed, type Judge } from "../../../services/simulator/tree/tree-judge";
@@ -76,9 +78,8 @@ export const FREE_EFFECTS: readonly string[] = ["add", "swap"];
  */
 export function keepChoicesOf(data: PatchData, item: StageItem, currency?: string, omens: readonly string[] = []): Array<{ aim: Aim; mod: StageMod }> {
   const all = [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured);
-  const outs = currency ? stepOutcomes(data, prepFor(data, item, currency), currency, engineOmens({ omens: omensFor(currency, [...omens]) }))?.filter((o) => !o.void) : null;
   // 消去でない手 (S-27d) は打てなければ候補無し (消去は前のまま、打てない時は全部を出す)
-  const gone = outs?.length ? new Set(outs.flatMap((o) => o.removed.map((m) => m.modId))) : currency && effectOf(currency) !== "remove" ? new Set<string>() : null;
+  const gone = (currency ? goneOf(data, item, currency, omens) : null) ?? (currency && effectOf(currency) !== "remove" ? new Set<string>() : null);
   return all.filter((m) => !gone || gone.has(m.modId)).map((m) => ({ aim: { modId: m.modId, tier: tierRankOf(data, m.modId, m.tierIndex) }, mod: m }));
 }
 /**
@@ -306,19 +307,22 @@ function stripChain(d: TreeDoc, id: string, h: Hand): void {
  * (木の b24 → b25 = 誰も来ない止まり、b33 と b37 = 同じ中身の消去が 2 本)。結果はこの箱の見本 4 つにエンジンの stepOutcomes で打った物
  */
 function stripSplit(data: PatchData, d: TreeDoc, id: string, h: Hand, depth: number): void {
-  const firsts = new Map<string, StageItem>();
+  const firsts = new Map<string, StageItem>(), marks = new Map<string, ReadonlySet<string>>();
   for (const seed of [1, 2, 3, 4]) {
     const s = sampleOf(data, d, id, seed);
     // 打つ前にもう手のある箱と同じ中身の人は打たずにその箱へ行く (回す時の stripStop) ので結果に数えない
-    if (s.note === "none" || s.note?.startsWith("cant:") || stripStopByContent(data, d, id, s.item)) continue;
-    for (const o of stepOutcomes(data, prepFor(data, s.item, h.currency), h.currency, engineOmens(h)) ?? []) { const k = o.void ? null : stripKeyOf(data, d, o.item); if (k && !firsts.has(k)) firsts.set(k, o.item); }
+    if (s.note === "none" || s.note?.startsWith("cant:")) continue;
+    // 消した後の ☑ は候補の外の印も残す (S-27e)
+    const am = aimedAfterAnnul(data, d, h, sampleAimed(data, d, id, seed), s.item);
+    if (stripStopByContent(data, d, id, s.item, false, am)) continue;
+    for (const o of stepOutcomes(data, prepFor(data, s.item, h.currency), h.currency, engineOmens(h)) ?? []) { const k = o.void ? null : stripKeyOf(data, d, o.item, am); if (k && !firsts.has(k)) { firsts.set(k, o.item); marks.set(k, am); } }
   }
   if (!firsts.size) return;
   setHand(d, id, h, "strip", [], [...firsts.keys()].map((junkKey) => ({ out: "junkGone" as OutKind, aim: null, junkKey })));
   for (const c of [...(d.boxes[id]?.outs ?? [])]) {
     const box = d.boxes[c], it = box?.junkKey ? firsts.get(box.junkKey) : undefined;
     if (!box || !it) continue;
-    const to = stripStopByContent(data, d, id, it, true);
+    const to = stripStopByContent(data, d, id, it, true, marks.get(box.junkKey!));
     box.back = to; box.done = null;
     if (to) { box.autoBack = true; continue; }
     delete box.autoBack;

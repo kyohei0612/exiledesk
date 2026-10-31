@@ -13,6 +13,7 @@ import { aimedOfSample } from "../../../services/simulator/tree/tree-judge";
 const MISS_OUTS: readonly OutKind[] = ["junk", "lost", "junkGone", "any"];
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
 import { useTree } from "./use-tree";
+import { flag } from "../../../web/release-flags";
 import { aimOpts, aimsOf, targetsOf } from "../../../services/simulator/tree/tree-sample";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { modText, tr } from "../../../i18n/lang";
@@ -32,7 +33,8 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   const chainBox = !!box?.id && stripHand(doc.boxes[doc.boxes[box.id]?.parent ?? ""]?.hand);
   // 箱の表示はその箱の見本と、その箱を作った手 (親の手) だけから (この箱に置いた手 = 子を作る手では変えない。10-28 オーナー OK の対策 2)。
   // 全部消えてよい消去で作られた箱 (直線の途中と終わり) が「外れ MOD」
-  if (chainBox) {
+  // 候補の外の印 (S-27e、スイッチ keepOutside) は箱の見本の ☑ で見る (下の外れの箱の見方)
+  if (chainBox && !(flag("keepOutside") && aimedOfSample(box!.id!, it))) {
     for (const m of [...it.prefixes, ...it.suffixes]) if (!m.fractured && !m.unrevealed) out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`全部消えてよい${nameOfKey("annul", null)}で消えうる MOD: ${modText(m)}`, `May be removed by the clear-all ${nameOfKey("annul", null)}: ${modText(m)}`) });
     return out;
   }

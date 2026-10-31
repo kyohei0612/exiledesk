@@ -16,6 +16,8 @@ import { useTree } from "../tree/use-tree";
 import { handLabel, headOf, outName, outsName } from "../tree/tree-names";
 import { tr } from "../../../i18n/lang";
 import { retryOf as sharedRetryOf } from "../tree/tree-fail";
+import { effectOf } from "../../../services/simulator/tree/tree-hands";
+import { flag } from "../../../web/release-flags";
 
 /** 答えの要る結果の箱か (手も戻りも完成も分かれ目も無い。始まり・品質だけの通り抜けは ① で聞く) */
 export function isOpen(b: TreeBox): boolean {
@@ -240,6 +242,8 @@ export function usePhoneQuiz() {
     if (b.out === "hit") return headOf(b, t.aimShort);
     // 狙いが消えた人に付ける狙いが付いた箱 (S-27d、鍵 g:) も PC と同じ「狙いが消えた」だけ
     const name = outsName(b);
+    // 消去の結果の見出しは結果と側だけ (S-93b、スイッチ keepOutside)
+    if (flag("keepOutside") && effectOf(t.doc.value.boxes[b.parent ?? ""]?.hand?.currency ?? "") === "remove") return name;
     return held.length ? `${name} (${list})` : name;
   }
   /** 道の短い 1 行 (始まり › 手 › 結果 …) */

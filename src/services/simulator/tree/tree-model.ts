@@ -12,6 +12,7 @@ import type { TreeTune } from "./tree-tune";
 import type { RecipeOrphan, RecipePick } from "./tree-recipe-v1";
 import { mayHoldAim } from "./tree-lost";
 import { effectOf } from "./tree-hands";
+import { flag } from "../../../web/release-flags";
 import { makeRoom, pushRight, ROOM, spread } from "./tree-model-layout";
 
 /**
@@ -388,7 +389,8 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
     // 狙いが消えたは戻り先を決めない (人が箱を選ぶ。10-26 オーナー「始めに戻るはなんかややこしい話だから普通にどこに戻るかいつも通り書く」。前は始めに戻る)
     // スイッチ bodyStrict: 外れの前の箱への既定の戻りも自動の ↩ として印を付け、戻り先の 1 か所の判定 (tree-shape の returnFits) で見直す (applyPick の pruneBacks)。
     // 形の合う箱へ (MATCH) は人が選べなくなった (S-52b) ので付けない = 未設定 (10-29 FmNY7Wwv の b24 → b19 は体の違う既定の戻りだった)
-    if (c.out === "junkGone") { c.back = before ?? null; if (before) c.autoBack = true; }
+    // 自動の ↩ は消去の結果だけ (S-50d、スイッチ keepOutside)
+    if (c.out === "junkGone" && (!flag("keepOutside") || effectOf(hand.currency) === "remove")) { c.back = before ?? null; if (before) c.autoBack = true; }
     // 全部消えてよい消去は、消していく途中で木の箱と同じ形になった所で止めてそこへ戻る (回す時に形で決める、tree-outcome の stripBackOf。10-27 オーナー)
     if (kind === "strip") c.back = MATCH_BACK;
   }
