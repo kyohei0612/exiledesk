@@ -106,7 +106,9 @@ try {
     waits = 0;
     if (same > 6) { report.stalls.push({ n: s.n, why: `押しても進まない: ${s.say}` }); if (SHOTS) await c.shot(`${SHOTS}/tut-${PHONE ? "phone" : W}-stall.png`); break; }
     // 札が光る所に重なっていないか
-    if (s.card && s.ring && !(s.card.r < s.ring.x - s.ring.w / 2 || s.card.l > s.ring.x + s.ring.w / 2 || s.card.b < s.ring.y - s.ring.h / 2 || s.card.t > s.ring.y + s.ring.h / 2)) report.cardOver.push(`${s.n} ${s.say}`);
+    const over = (x) => x.card && x.ring && !(x.card.r < x.ring.x - x.ring.w / 2 || x.card.l > x.ring.x + x.ring.w / 2 || x.card.b < x.ring.y - x.ring.h / 2 || x.card.t > x.ring.y + x.ring.h / 2);
+    // 札は動きながら次の置き場へ行くので、重なって見えたら止まってから数え直す
+    if (over(s)) { await sleep(700); if (over(await c.ev(STATE))) report.cardOver.push(`${s.n} ${s.say}`); }
     const hit = await press(tgt.x, tgt.y);
     if (s.ring && /data-tut-card|tut-note/.test(hit)) report.covered.push(`${s.n} ${s.say} → ${hit}`);
     log(`${s.n.padEnd(7)} ${s.say}  ⇒ ${hit}`);
