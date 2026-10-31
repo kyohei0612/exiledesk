@@ -1,7 +1,7 @@
 # ExileDesk — 作業ごとに読む物 (地図)
 
 PoE2 のクラフトのエミュレーター (Web が本番、アプリは当分触らない = G-07)。毎回読み込まれるので地図だけ・60 行まで。
-役目は 1 つずつ (10-29): 決まりの正 = 設計図 `docs/spec/`、守らせる仕組み = フック (設計図 README ⑥ G-30〜39)、メモ = 設計図に無い経緯・オーナーの好み・外の置き場、ここ = 地図。
+役目は 1 つずつ (10-29): 決まりの正 = 設計図 `docs/spec/`、守らせる仕組み = フック (設計図 README ⑥ G-30〜41)、メモ = 設計図に無い経緯・オーナーの好み・外の置き場、ここ = 地図。
 メモ = `~/.claude/projects/C--Users-kyohei-ExileDesk/memory/` の <名前>.md (古い物は `memory-archive-1029/`、一覧は INDEX.md)。
 
 ## いつも
@@ -11,7 +11,7 @@ PoE2 のクラフトのエミュレーター (Web が本番、アプリは当分
 - AI の組織 (ブラック・部長・係) = docs/org/。部長・係は自分の部の docs/org/<部>/README.md を先に読む (記録は notes/、やる事は todo.md)。
 
 ## 決まりの正 = 設計図 `docs/spec/`
-全体 README.md (大本 G-01〜08・進め方 G-20〜25・フック済み G-30〜39)・system.md (Y)・engine.md (E)・emu.md (M)・sim-tree.md (S)・tutorial.md (T)・shared-ui.md (U)・release.md (R)。新しい事は「設計図に書く → オーナーの OK → 作る → 同じ commit で設計図を直す」(G-20)。メモ・docs/org は経緯、食い違ったら設計図が正。
+全体 README.md (大本 G-01〜08・進め方 G-20〜25・フック済み G-30〜41)・system.md (Y)・engine.md (E)・emu.md (M)・sim-tree.md (S)・tutorial.md (T)・shared-ui.md (U)・release.md (R)。新しい事は「設計図に書く → オーナーの OK → 作る → 同じ commit で設計図を直す」(G-20)。メモ・docs/org は経緯、食い違ったら設計図が正。
 
 ## 作業 → 先に読む物
 | 作業 | 読む物 |
