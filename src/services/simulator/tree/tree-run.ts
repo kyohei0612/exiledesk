@@ -19,6 +19,7 @@ import { stepOutcomes } from "../sim-engine";
 import { bodyMemo, bodyOf, heldOn } from "./tree-box-shape";
 import { judgeMemo, nextAimed, startAimed, type Judge } from "./tree-judge";
 import { routeOf } from "./tree-judge-link";
+import { flag } from "../../../web/release-flags";
 
 export interface TreeRunOpts {
   /** 人数 (裏は 100、確かめは 300) */
@@ -123,7 +124,15 @@ function fractureMiss(data: PatchData, doc: TreeDoc, item: StageItem): number {
 }
 
 
-function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: readonly Shape[], j: Judge | null, rng: () => number, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps" | "untilHit">> & Pick<TreeRunOpts, "start" | "onHand" | "onArrive">): Person {
+/** 輪の 1 周の記録 (手の費用か来訪。同じ順に足し直して、1 手ずつ回した時と同じ費用・来訪にする) */
+type LoopOp = { box: string; pass?: true } | { key: string; n: number };
+function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: readonly Shape[], j: Judge | null, rng0: () => number, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps" | "untilHit">> & Pick<TreeRunOpts, "start" | "onHand" | "onArrive">): Person {
+  // 輪の早送り (S-71b、スイッチ treeLight): 乱数を引かない手だけで同じ箱・同じアイテム・同じ狙いへ戻ったら、この先は同じ周回しか起きないので、残りの周は打たずに記録だけ足す
+  const light = flag("treeLight") && !o.onHand && !o.onArrive;
+  let rolls = 0, seenRolls = -1;
+  const rng = light ? (): number => { rolls++; return rng0(); } : rng0;
+  const seen = new Map<string, { at: number; steps: number; cost: number }>();
+  let ops: LoopOp[] = [];
   let item = o.start ? o.start(rng) : startItemOf(data, doc, rng);
   // この人の ☑ で付いた狙い (スイッチ judgeOne、tree-judge。当たりの箱に着いたらその札、消えたら外れる)
   let aimed: ReadonlySet<string> = j ? startAimed(data, doc, item) : new Set();
@@ -131,7 +140,10 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
   let cost = o.startCost;
   const uses: Record<string, number> = {};
   const visits: Person["visits"] = [];
-  const use = (key: string, n = 1): void => { uses[key] = (uses[key] ?? 0) + n; cost += o.price(key) * n; };
+  const use = (key: string, n = 1): void => { uses[key] = (uses[key] ?? 0) + n; cost += o.price(key) * n; if (light) ops.push({ key, n }); };
+  const visit = (box: string, pass?: true): void => { visits.push(pass ? { box, cost, pass } : { box, cost }); if (light) ops.push(pass ? { box, pass } : { box }); };
+  /** 周回の記録を捨てる (乱数を引いた・作り直しのように費用を直に足した) */
+  const forget = (): void => { seen.clear(); ops = []; };
   let at = "start";
   // 止まりの付け先 (S-72、スイッチ bodyStrict): 体 (外れの側・数) の違う人を ↩ で送り出した箱・形の合う箱へ移した箱。止まったらそこに数える
   // (10-29 オーナー「なんか止まり方が戻った先で止まるんだよな。結果を選んでその結果にしたがってるだけなのに」)
@@ -149,7 +161,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
   for (;;) {
     const b = doc.boxes[at];
     if (!b) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd });
-    visits.push({ box: at, cost });
+    visit(at);
     o.onArrive?.(at, item);
     // 完成の狙いが全部そろった人は、どの箱でもその場で完成 (回し方だけ、tree-sample の goalsHeld)。スイッチ judgeOne の下では完成は押した箱だけ (S-05・S-54)
     if (!j && goalsHeld(data, doc, item)) return fin({ end: "done", cost, at, visits, uses, restarts, odd, why: { reason: tr("完成", "Done"), item } });
@@ -188,6 +200,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
         item = o.start ? o.start(rng) : startItemOf(data, doc, rng);
         if (j) aimed = startAimed(data, doc, item);
         cost += o.startCost;
+        forget();
         restarts++;
         at = "start";
         continue;
@@ -200,7 +213,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
       if (!to && j && b.back !== MATCH) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`戻り先の箱と中身が違い、中身の同じ箱も無い`, `The return target holds a different item, and no box matches it`), item, noBox: true } });
       if (!to) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("戻り先の「形の合う箱」が無い", "No box matches the shape to return to"), item, noBox: true } });
       // 戻り先に着いてから形の合う箱へ移った時も、結果の箱と同じく戻り先の来訪を pass で残す (moved に数える)
-      if (b.back !== MATCH && to !== b.back) visits.push({ box: b.back, cost, pass: true });
+      if (b.back !== MATCH && to !== b.back) visit(b.back, true);
       if (!j && misfit(to, item)) blame = at;
       if (j && to !== b.back) blame = at;
       at = to;
@@ -216,6 +229,22 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     // 打ち止めの時のアイテムも残す (台本で輪から抜けない理由を見る。止まりの集計 stuckWhy には入れない)
     if (++steps > o.capSteps || cost > o.capDiv) return fin({ end: "capped", cost, at, visits, uses, restarts, odd, why: { reason: tr("打ち止め", "Capped"), item } });
     hops = 0;
+    if (light) {
+      if (rolls !== seenRolls) { seenRolls = rolls; forget(); }
+      else {
+        const key = `${at}|${[...aimed].sort().join()}|${JSON.stringify(item)}`, was = seen.get(key);
+        if (!was) seen.set(key, { at: ops.length, steps, cost });
+        else {
+          const one = ops.slice(was.at), len = steps - was.steps, dc = cost - was.cost;
+          forget();
+          // 上限に届く手前まで足す。端数の周は下で普通に打つ
+          while (len > 0 && steps + len < o.capSteps && cost + dc <= o.capDiv) {
+            for (const x of one) if ("key" in x) use(x.key, x.n); else visit(x.box, x.pass);
+            steps += len;
+          }
+        }
+      }
+    }
     const before = item;
     // フラクチャーは必ず印の狙いを固定し (playHand の fractureTarget)、固定できる MOD が 2 つ以上なら「2 回外れて 1 回当たり」として、ここまでに使った物と
     // 始めの値段を 2 回分足す (外れた時は素材を作り直す。10-24 オーナー、ツリーに買い直しの道は作らない。10-25 オーナーが戻した)。作り直しの回数にも 2
@@ -224,7 +253,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     // 全部消えてよい消去の直線で、もう手のある箱と同じ中身 = 打たずにその箱へ (S-28)。前は打たずに次の箱へ通し、次の箱に人の手があるとその手を打った
     // (✦ を狙いのまま数えると「最大ライフ (外れ) + ✦」が b2 と同じ中身になり、木 oWkFcwYX の b7 → b8 で起きた。スイッチ judgeOne)
     const stopAt = j && stripStop(data, doc, b) ? stripStopByContent(data, doc, at, item) : null;
-    if (stopAt) { visits.push({ box: at, cost, pass: true }); at = stopAt; continue; }
+    if (stopAt) { visit(at, true); at = stopAt; continue; }
     o.onHand?.(at, item);
     const r = playHand(data, item, b.hand, rng, own, use, false, stripStop(data, doc, b));
     if (!r.applied) {
@@ -243,6 +272,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
       for (const [k, n] of miss) use(k, mx * n);
       use(b.hand.currency, mx);
       cost += mx * o.startCost;
+      forget();
       restarts += mx;
     }
     if (sb.next) { item = r.item; arrive(sb.next, item); at = sb.next; continue; }
@@ -265,12 +295,12 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
       arrive(next, item);
       const to = routeOf(data, doc, j, next, item, aimed);
       if (!to) { visits.push({ box: next, cost }); return fin({ end: "stuck", cost, at: next, visits, uses, restarts, odd, why: { reason: tr("この結果の箱と中身が違い、中身の同じ箱も無い", "This result box holds a different item, and no box matches it"), item, noBox: true } }); }
-      if (to !== next) { visits.push({ box: next, cost, pass: true }); blame = next; }
+      if (to !== next) { visit(next, true); blame = next; }
       at = to;
       continue;
     }
     const to = settle(data, doc, shapes, next, item, aims);
-    if (to !== next) { visits.push({ box: next, cost, pass: true }); if (misfit(to, item)) blame = next; }
+    if (to !== next) { visit(next, true); if (misfit(to, item)) blame = next; }
     at = to;
   }
 }
