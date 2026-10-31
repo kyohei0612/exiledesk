@@ -38,7 +38,7 @@ export const weightNote = (): Partial<Record<string, string>> => ({
  * 2026-10-05 オーナー「エッセンスは水色で普通は青、冒涜は深緑、冒涜の緑はよどんでる感じでふよふよってグラデーション」)
  */
 const TONE: Record<ModGroup, { tab: string; bar: string }> = {
-  normal: { tab: "bg-rarity-magic/25 text-[#c8c8ff] ring-1 ring-rarity-magic/60", bar: "bg-rarity-magic/10" },
+  normal: { tab: "bg-rarity-magic/25 text-stage-mod ring-1 ring-rarity-magic/60", bar: "bg-rarity-magic/10" },
   rune: { tab: "bg-amber-500/20 text-amber-100 ring-1 ring-amber-400/60", bar: "bg-amber-500/[0.08]" },
   essence: { tab: "bg-sky-400/20 text-sky-100 ring-1 ring-sky-300/60", bar: "bg-sky-400/[0.08]" },
   perfect_essence: { tab: "bg-cyan-400/20 text-cyan-100 ring-1 ring-cyan-300/60", bar: "bg-cyan-400/[0.08]" },

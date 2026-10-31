@@ -43,5 +43,5 @@ watchEffect(() => {
 /* 「MOD 一覧」のボタン: CraftStage の .tbtn-top と同じ見た目 (scoped なのでここにも置く) */
 .tbtn-top { display: inline-flex; align-items: center; height: 24px; padding: 0 9px; white-space: nowrap; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 4px; background: rgba(0, 0, 0, 0.35); font-size: 11px; color: rgba(255, 255, 255, 0.82); }
 .tbtn-top .kbd { margin-left: 6px; padding: 0 4px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 3px; font-size: 9.5px; line-height: 14px; opacity: 0.6; }
-.tbtn-top:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(232, 200, 120, 0.55); color: #f3e2b8; }
+.tbtn-top:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(232, 200, 120, 0.55); color: var(--exile-color-btn-hover-text); }
 </style>

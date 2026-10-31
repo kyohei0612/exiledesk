@@ -427,6 +427,6 @@ const TABS = computed(() => (!props.full ? [] : [
 /* エッセンスの段の欄は、そのアイコンのすぐ下に重ねて出す (下の行を押し下げない)。2026-10-10 オーナー「毎回画面がめっちゃ動く」「アイコンの下まで持ってきていい」 */
 .held-anchor { position: absolute; z-index: 30; max-width: min(640px, 100%); }
 .held-pop-in {
-  background: #0d0b10; border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(167, 139, 250, 0.35);
+  background: var(--exile-color-panel-pop); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(167, 139, 250, 0.35);
 }
 </style>

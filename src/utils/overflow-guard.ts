@@ -39,7 +39,7 @@ function check(): void {
   const bad = findOverflow();
   for (const e of bad) {
     e.setAttribute(MARK, "");
-    (e as HTMLElement).style.outline = "2px solid #f00";
+    (e as HTMLElement).style.outline = "2px solid red";
   }
   if (bad.length) console.warn(`[overflow-guard] 画面の幅 ${document.documentElement.clientWidth}px からはみ出し ${bad.length} 件`, bad);
 }

@@ -20,7 +20,7 @@ export async function shrinkImage(file: Blob): Promise<PickedImage | null> {
   c.height = Math.max(1, Math.round(bmp.height * k));
   const g = c.getContext("2d");
   if (!g) return null;
-  g.fillStyle = "#000";
+  g.fillStyle = "black";
   g.fillRect(0, 0, c.width, c.height);
   g.drawImage(bmp, 0, 0, c.width, c.height);
   bmp.close();

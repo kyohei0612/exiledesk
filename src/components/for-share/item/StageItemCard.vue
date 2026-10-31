@@ -98,10 +98,10 @@ function onSocket(e: MouseEvent, n: number): void {
 /** ゲームのレアリティの色 */
 // 本文のまわりはゲームと同じくレアリティの色の細い線 (外の太い飾り枠は無し。名前の枠がそのまま窓の一番上。2026-10-10 オーナー「上いらん」)
 const TONE = {
-  normal: { name: "text-rarity-normal", frame: "border-[#6a6a6a]" },
-  magic: { name: "text-rarity-magic", frame: "border-[#3d3d8a]" },
-  rare: { name: "text-rarity-rare", frame: "border-[#7a6a35]" },
-  unique: { name: "text-rarity-unique", frame: "border-[#8a5a30]" },
+  normal: { name: "text-rarity-normal", frame: "border-stage-frame-normal" },
+  magic: { name: "text-rarity-magic", frame: "border-stage-frame-magic" },
+  rare: { name: "text-rarity-rare", frame: "border-stage-frame-rare" },
+  unique: { name: "text-rarity-unique", frame: "border-stage-frame-unique" },
 } as const;
 const tone = computed(() => TONE[props.item.rarity]);
 /** カーソルが乗っている物 (今できることの帯の出し分け) */
@@ -235,7 +235,7 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
 
 <template>
   <div
-    data-stage-card class="st-card relative w-[480px] max-md:w-full select-none border bg-[#050506] shadow-[0_0_30px_rgba(0,0,0,0.6)] transition"
+    data-stage-card class="st-card relative w-[480px] max-md:w-full select-none border bg-card-bg shadow-[0_0_30px_rgba(0,0,0,0.6)] transition"
     :style="{ ...(minH ? { minHeight: `${minH}px` } : {}), ...(width ? { width: `${width}px` } : {}) }"
     :class="[tone.frame, holding ? 'cursor-pointer ring-2 ring-amber-400/70 hover:ring-amber-300' : '', item.destroyed ? 'stage-destroyed' : '']"
     @click="holding && emit('use')"
@@ -270,24 +270,24 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
       <!-- ソケット (熟練工のオーブ) の絵 -->
       <div v-if="item.sockets" class="flex justify-center gap-1.5 py-0.5">
         <!-- はめたルーン (要望 ⑰-1) はソケットの中に絵 -->
-        <span v-for="i in item.sockets" :key="'s' + i + (item.augments?.[i - 1]?.key ?? '')" :data-stage-socket="i" @mouseenter="hover = item.augments?.[i - 1] ? 'rune' : null" @mouseleave="hover = null" :title="item.augments?.[i - 1] ? tr(`${i} 番目: ${nameOf(item.augments[i - 1]!)}${removable ? ' (右クリックで外す)' : ''}`, `Socket ${i}: ${nameOf(item.augments[i - 1]!)}${removable ? ' (right-click to remove)' : ''}`) : undefined" class="grid place-items-center rounded-full border-2 border-[#9a8a70] bg-[#1c1812] shadow-[inset_0_0_4px_rgba(0,0,0,0.9)]" :class="item.augments?.[i - 1] ? 'stage-socket-glow h-7 w-7' : 'h-4 w-4'" @click="onSocket($event, i)" @contextmenu="onUnsocket($event, i)">
+        <span v-for="i in item.sockets" :key="'s' + i + (item.augments?.[i - 1]?.key ?? '')" :data-stage-socket="i" @mouseenter="hover = item.augments?.[i - 1] ? 'rune' : null" @mouseleave="hover = null" :title="item.augments?.[i - 1] ? tr(`${i} 番目: ${nameOf(item.augments[i - 1]!)}${removable ? ' (右クリックで外す)' : ''}`, `Socket ${i}: ${nameOf(item.augments[i - 1]!)}${removable ? ' (right-click to remove)' : ''}`) : undefined" class="grid place-items-center rounded-full border-2 border-stage-socket-rim bg-bg-elevated shadow-[inset_0_0_4px_rgba(0,0,0,0.9)]" :class="item.augments?.[i - 1] ? 'stage-socket-glow h-7 w-7' : 'h-4 w-4'" @click="onSocket($event, i)" @contextmenu="onUnsocket($event, i)">
           <img v-if="item.augments?.[i - 1] && runeArt(item.augments[i - 1]!.en)" :src="runeArt(item.augments[i - 1]!.en)!" alt="" class="h-6 w-6 object-contain" draggable="false" />
         </span>
       </div>
       <!-- ルーンの効き目 (MOD とは別の行。ゲームと同じくプロパティの下) -->
-      <p v-for="(a, i) in item.augments ?? []" :key="'r' + i + a.key" class="stage-row-in text-[#8fa8ff]" :class="removable && !holding ? 'cursor-pointer hover:line-through' : ''" :title="removable && !holding ? tr(`${nameOf(a)} を外す`, `Remove ${nameOf(a)}`) : undefined" @click="!holding && onUnsocket($event, i + 1)" @contextmenu="onUnsocket($event, i + 1)">{{ BASE_VALUES_ON ? augmentLineOf(item, a).text : modText(scaledAugment(item, a)) }}<span v-if="BASE_VALUES_ON && augmentLineOf(item, a).shown" data-boosted-value class="ml-1 text-[10px] text-[#7ee8ff]" :title="tr('ソケットの効果で盛った効果', 'Boosted by socket effect')">({{ augmentLineOf(item, a).shown }})</span></p>
+      <p v-for="(a, i) in item.augments ?? []" :key="'r' + i + a.key" class="stage-row-in text-stage-rune" :class="removable && !holding ? 'cursor-pointer hover:line-through' : ''" :title="removable && !holding ? tr(`${nameOf(a)} を外す`, `Remove ${nameOf(a)}`) : undefined" @click="!holding && onUnsocket($event, i + 1)" @contextmenu="onUnsocket($event, i + 1)">{{ BASE_VALUES_ON ? augmentLineOf(item, a).text : modText(scaledAugment(item, a)) }}<span v-if="BASE_VALUES_ON && augmentLineOf(item, a).shown" data-boosted-value class="ml-1 text-[10px] text-stage-boost" :title="tr('ソケットの効果で盛った効果', 'Boosted by socket effect')">({{ augmentLineOf(item, a).shown }})</span></p>
       <!-- スキルジェムのサポート枠 (宝飾職人のオーブ) -->
       <div v-if="item.gemSockets" class="flex items-center justify-center gap-1.5 py-0.5 text-[12px] text-white/50">
         {{ tr("サポート枠", "Support Gem Sockets") }}
-        <span v-for="i in item.gemSockets" :key="'g' + i" class="h-3.5 w-3.5 rotate-45 border-2 border-[#7fb0e0] bg-[#101820]" />
+        <span v-for="i in item.gemSockets" :key="'g' + i" class="h-3.5 w-3.5 rotate-45 border-2 border-stage-gem-socket bg-stage-gem-socket-bg" />
       </div>
       <!-- ヴァールのエンチャント (ゲームと同じく固有の上) -->
       <template v-if="item.enchant">
         <div class="st-sep" :class="[`st-sep-${item.rarity}`, compact ? 'my-0.5' : 'my-1.5']" />
-        <p class="text-[#b8daf2]">{{ modText(item.enchant) }}</p>
-        <p v-if="item.enchant2" class="text-[#b8daf2]">{{ modText(item.enchant2) }}</p>
+        <p class="text-stage-enchant">{{ modText(item.enchant) }}</p>
+        <p v-if="item.enchant2" class="text-stage-enchant">{{ modText(item.enchant2) }}</p>
       </template>
-      <p v-if="modsHead" data-card-mods-head class="pt-1 text-[11px] tracking-wide text-[#c9b48a]/80">{{ modsHead }}</p>
+      <p v-if="modsHead" data-card-mods-head class="pt-1 text-[11px] tracking-wide text-stage-mods-head/80">{{ modsHead }}</p>
       <template v-if="implicits.length">
         <div class="st-sep" :class="[`st-sep-${item.rarity}`, compact ? 'my-0.5' : 'my-1.5']" />
         <!-- 暗黙の MOD は左に「暗黙」(MOD の行の P / S と同じ列。2026-10-10 オーナー) -->
@@ -296,8 +296,8 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
           <span class="shrink-0 text-left leading-tight text-white/45" :class="[tightTier ? 'text-[10px]' : 'text-[11px]', t.ranges.length ? (tightTier ? 'min-w-6' : 'min-w-7') : tightTier ? 'w-6' : 'w-7']">{{ tr("暗黙", "Impl.") }}<span v-if="t.ranges.length" class="block whitespace-nowrap text-[10px] tabular-nums text-white/40">[{{ rangeLabel(t.ranges) }}]</span></span>
           <!-- 入らなければ字を縮めて 1 行、10px でも入らなければ語の切れ目で折る (fit-text.ts、10-26 夜オーナー) -->
           <span v-fit-text class="min-w-0 flex-1 text-center text-rarity-magic">
-            <span v-if="BASE_VALUES_ON && t.boosted" :title="tr('素の値 (品質で盛る前)。小さい文は品質で盛った値', 'Base value (before quality). The small text is the boosted value')">{{ t.baseText }}<span data-boosted-value class="ml-1 text-[10px] text-[#7ee8ff]">({{ t.text }})</span></span>
-            <span v-else :class="t.boosted ? 'text-[#7ee8ff]' : ''" :title="t.boosted ? tr('品質で伸びた数値', 'Boosted by quality') : undefined">{{ t.text }}</span>
+            <span v-if="BASE_VALUES_ON && t.boosted" :title="tr('素の値 (品質で盛る前)。小さい文は品質で盛った値', 'Base value (before quality). The small text is the boosted value')">{{ t.baseText }}<span data-boosted-value class="ml-1 text-[10px] text-stage-boost">({{ t.text }})</span></span>
+            <span v-else :class="t.boosted ? 'text-stage-boost' : ''" :title="t.boosted ? tr('品質で伸びた数値', 'Boosted by quality') : undefined">{{ t.text }}</span>
             <span v-for="g in t.tags" :key="g" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[g]!.cls">{{ tagLabel(g) }}</span>
           </span>
           <!-- 暗黙はティアが無いので、値を範囲の中で上下するボタン (MOD の行の ↓ の位置。2026-10-12 オーナー) -->
@@ -313,7 +313,7 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
       <!-- modsOnly も MOD の上にゲームの区切りの絵 (完成形のアイテムと同じ形) -->
       <div v-else class="st-sep my-1" :class="`st-sep-${item.rarity}`" />
       <!-- 未鑑定: MOD を隠す (ゲームと同じく赤い「未鑑定」) -->
-      <p v-if="hidden" class="py-1 font-bold text-[#d20000]">{{ tr("未鑑定", "Unidentified") }}</p>
+      <p v-if="hidden" class="py-1 font-bold text-stage-corrupt">{{ tr("未鑑定", "Unidentified") }}</p>
       <!-- MOD (冒涜の MOD の行はゲームと同じ緑がかった暗い帯と枠。2026-10-07 オーナー「アイテムに出る時ゲーム仕様に、色だけ、冒涜 MOD のみ」。付いた物は光る。キーを手ごとに変えて光らせ直す。TransitionGroup は leave が光の animation 待ちで残るので使わない) -->
       <div v-if="!hidden" class="space-y-1">
         <!-- フラクチャーの印が 2 つ以上: 1 行にまとめ、ホバー (スマホは押す) でどれが重なっているかを小窓に。小窓の行は押すと MOD 一覧へ、右クリックで印を外す (2026-10-23 オーナー) -->
@@ -323,10 +323,10 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
             <span v-fit-text class="min-w-0 flex-1 text-center">{{ tr(`フラクチャー MOD ×${fracRows.length}`, `Fractured mod ×${fracRows.length}`) }}</span>
             <span class="shrink-0" :class="modsOnly ? leftColW : sideColW" />
           </p>
-          <div data-fracture-pop class="absolute left-1/2 top-full z-30 w-max min-w-[260px] max-w-[440px] -translate-x-1/2 space-y-0.5 rounded border border-[#7a6a35] bg-[#0b0a08]/95 px-2 py-1.5 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.7)]" :class="fracOpen ? 'visible' : 'invisible group-hover/fg:visible'">
+          <div data-fracture-pop class="absolute left-1/2 top-full z-30 w-max min-w-[260px] max-w-[440px] -translate-x-1/2 space-y-0.5 rounded border border-stage-frame-rare bg-stage-pop-bg/95 px-2 py-1.5 text-[12px] shadow-[0_6px_20px_rgba(0,0,0,0.7)]" :class="fracOpen ? 'visible' : 'invisible group-hover/fg:visible'">
             <p class="pb-0.5 text-[11px] text-white/45">{{ tr("この中のどれか 1 つが固定される", "One of these gets fractured") }}</p>
             <p v-for="r in fracRows" :key="r.key" data-fracture-member :data-card-mod="r.m.modId" class="group/fm flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-mod-fractured hover:bg-white/[0.06]" :title="canFracture(r.m) ? tr('右クリックでフラクチャーの印を外す', 'Right-click to remove the fracture mark') : undefined" @click.stop="emit('jump', r.m.modId)" @contextmenu="onFracture($event, r.m)">
-              <span class="min-w-7 shrink-0 whitespace-nowrap text-left font-bold tabular-nums" :class="r.side === 'プレフィックス' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ sideTier(r) }}</span>
+              <span class="min-w-7 shrink-0 whitespace-nowrap text-left font-bold tabular-nums" :class="r.side === 'プレフィックス' ? 'text-stage-prefix' : 'text-stage-suffix'">{{ sideTier(r) }}</span>
               <span class="min-w-0 flex-1">{{ r.text }}</span>
               <button v-if="rowX(r.m)" type="button" data-row-remove :class="[ROW_X, 'group-hover/fm:opacity-100']" :title="tr('この MOD を外す', 'Remove this mod')" @click.stop="emit('remove', r.m.modId)">×</button>
             </p>
@@ -347,16 +347,16 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
           <!-- 珍しい段が付いた瞬間の光の柱 (ドロップの光の柱のように、行から上へ伸びて消える) -->
           <span v-if="isRareNew(r.m)" aria-hidden="true" class="stage-rare-beam pointer-events-none absolute bottom-1/2 left-1/2 z-20 w-10" />
           <!-- トレードサイトと同じ: 左端に P1 / S5 (プレ / サフィと段)、真ん中に MOD の文 (長い物は折り返す)、右端に付いた瞬間の確率と × (2026-10-10 オーナーの見本) -->
-          <span class="shrink-0 text-left font-bold tabular-nums" :class="[leftColW, tightTier ? 'text-[10px]' : 'text-[12px]', r.side === 'プレフィックス' ? 'text-[#e0846a]' : 'text-[#6aa8e8]']">{{ sideTier(r) }}</span>
+          <span class="shrink-0 text-left font-bold tabular-nums" :class="[leftColW, tightTier ? 'text-[10px]' : 'text-[12px]', r.side === 'プレフィックス' ? 'text-stage-prefix' : 'text-stage-suffix']">{{ sideTier(r) }}</span>
           <!-- 札は文の続き: 入らなければまず字を縮めて 1 行 (v-fit-text)、10px でも入らない時だけ折れる。modsOnly (箱の中) は縮めずに次の行へ折り、その行の間を詰める (10-26 夜オーナー「折る感じで」) (st-mo-mid。行の余白も詰めて入る幅を広げる。10-26 夜オーナー「フラクチャーと MOD の行間も狭く」「入りそうなら入れていい、臨機応変に」) -->
           <span v-fit-text="!modsOnly" class="min-w-0 flex-1 text-center" :class="modsOnly ? 'st-mo-mid' : ''">
             <!-- 消える候補は文字をオレンジに (フラクチャーのくすんだ金色と被らない色。2026-10-07 オーナー「光るの文字にしようか、フラクチャーの色被らんようにオレンジで」) -->
             <!-- 未発現はゲームと同じく緑の崩れた文字 (中身は分からない。ホバーで「未発現の冒涜 MOD (側)」。2026-10-17 オーナー「アイテムについた冒涜未発現はこの感じ、全体的に緑」) -->
             <!-- 札で名前を替えた行 (外れ MOD など) も、消える候補ならオレンジ (10-27 シミュの手の窓で消去を持った時に外れの行だけ色が付かなかった) -->
-            <span v-if="rowTags?.get(r.m.modId)?.replace" data-row-tag-name :class="isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : ROW_TAG_TEXT[rowTags.get(r.m.modId)!.tone]" :title="rowTags.get(r.m.modId)!.title">{{ rowTags.get(r.m.modId)!.text }}</span>
-            <span v-else-if="r.m.unrevealed" data-unrevealed class="font-sans tracking-wider text-[#a6e05c] [text-shadow:0_0_6px_rgba(140,220,80,0.75)]" :title="r.text">{{ UNREVEALED_GLYPHS }}</span>
-            <span v-else-if="r.shown" :class="isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : ''" :title="tr('素の値 (上乗せを抜いた値)。小さい数字は品質・効果・聖別で盛った値', 'Base value (without boosts). The small number is the boosted value')">{{ r.text }}<span data-boosted-value class="ml-1 text-[10px] tabular-nums text-[#7ee8ff]">({{ r.shown }})</span></span>
-            <span v-else :class="[isDoomed(r.m) ? 'font-bold text-[#ff8a3d]' : r.boosted ? 'text-[#7ee8ff]' : '']" :title="r.boosted ? tr(`品質で伸びた数値 (素は ${modText(r.m)})`, `Boosted by quality (base: ${modText(r.m)})`) : undefined">{{ r.text }}</span>
+            <span v-if="rowTags?.get(r.m.modId)?.replace" data-row-tag-name :class="isDoomed(r.m) ? 'font-bold text-stage-doomed' : ROW_TAG_TEXT[rowTags.get(r.m.modId)!.tone]" :title="rowTags.get(r.m.modId)!.title">{{ rowTags.get(r.m.modId)!.text }}</span>
+            <span v-else-if="r.m.unrevealed" data-unrevealed class="font-sans tracking-wider text-stage-unrevealed [text-shadow:0_0_6px_rgba(140,220,80,0.75)]" :title="r.text">{{ UNREVEALED_GLYPHS }}</span>
+            <span v-else-if="r.shown" :class="isDoomed(r.m) ? 'font-bold text-stage-doomed' : ''" :title="tr('素の値 (上乗せを抜いた値)。小さい数字は品質・効果・聖別で盛った値', 'Base value (without boosts). The small number is the boosted value')">{{ r.text }}<span data-boosted-value class="ml-1 text-[10px] tabular-nums text-stage-boost">({{ r.shown }})</span></span>
+            <span v-else :class="[isDoomed(r.m) ? 'font-bold text-stage-doomed' : r.boosted ? 'text-stage-boost' : '']" :title="r.boosted ? tr(`品質で伸びた数値 (素は ${modText(r.m)})`, `Boosted by quality (base: ${modText(r.m)})`) : undefined">{{ r.text }}</span>
             <span v-if="look(r.m).tag" class="whitespace-nowrap align-middle text-[10px] opacity-80" :class="modsOnly ? 'st-mo-tag ml-1' : 'ml-1.5'">{{ look(r.m).tag }}</span>
             <span v-for="t in r.tags" :key="t" class="ml-1.5 whitespace-nowrap rounded px-1.5 py-px align-middle text-[10px] not-italic" :class="TAG_STYLE[t]!.cls">{{ tagLabel(t) }}</span>
             <!-- 押せる札 (rowToggles): 文の続きなので、入らなければ v-fit-text が文と一緒に字を縮め、下限でも入らなければ行の下へ折る (メモ feedback-shrink-then-wrap) -->
@@ -371,13 +371,13 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
           </span>
           <span v-else class="shrink-0" :class="leftColW" />
           <!-- rowRemove の × は右端に重ねる (列の幅・真ん中の文字の位置を変えない) -->
-          <button v-if="rowX(r.m)" type="button" data-row-remove class="absolute right-1 top-1/2 -translate-y-1/2 bg-[#050506]/80 group-hover/row:opacity-100" :class="ROW_X" :title="tr('この MOD を外す', 'Remove this mod')" @click.stop="emit('remove', r.m.modId)">×</button>
+          <button v-if="rowX(r.m)" type="button" data-row-remove class="absolute right-1 top-1/2 -translate-y-1/2 bg-card-bg/80 group-hover/row:opacity-100" :class="ROW_X" :title="tr('この MOD を外す', 'Remove this mod')" @click.stop="emit('remove', r.m.modId)">×</button>
         </p>
       </div>
       <!-- 付く空き: 持っている物で新しい MOD が付きうる枠を緑で光らせる (両側が空いていれば両方、大いなる高貴なら側ごとに 2 つまで。2026-10-17 オーナー) -->
       <div v-if="!hidden && openRows.length" data-open-slots class="mt-1 space-y-1">
         <p v-for="(o, i) in openRows" :key="'open' + i + o.side" class="flex items-center gap-2 rounded bg-emerald-400/10 px-2 py-0.5 shadow-[0_0_10px_rgba(52,211,153,0.35)]" :title="openTitle">
-          <span class="w-7 shrink-0 text-left text-[12px] font-bold" :class="o.side === 'prefix' ? 'text-[#e0846a]' : 'text-[#6aa8e8]'">{{ o.side === "prefix" ? "P" : "S" }}</span>
+          <span class="w-7 shrink-0 text-left text-[12px] font-bold" :class="o.side === 'prefix' ? 'text-stage-prefix' : 'text-stage-suffix'">{{ o.side === "prefix" ? "P" : "S" }}</span>
           <span class="min-w-0 flex-1 text-center text-[12px] font-bold text-emerald-200">{{ o.side === "prefix" ? tr("＋ プレフィックスの空き (ここに付く)", "+ Open prefix (can roll here)") : tr("＋ サフィックスの空き (ここに付く)", "+ Open suffix (can roll here)") }}</span>
         </p>
       </div>
@@ -389,10 +389,10 @@ useDismiss(() => fracOpen.value, [() => fracEl.value], () => { fracOpen.value = 
       <p v-if="!rows.length && !uLines.length && !hidden && !isFlask(item.cls.category) && !isGem(item.cls.category) && !(compact && item.rarity === 'unique')" class="py-1 text-white/30">{{ item.rarity === "unique" ? (compact ? "" : tr("(このユニークの効果はデータに無い)", "(no data for this unique's effects)")) : tr("MOD なし", "No mods") }}</p>
       <!-- 消えた MOD (直前の手) -->
       <p v-for="(m, i) in removed" :key="'x' + i + m.modId + flashKey" class="stage-mod-gone text-rose-300/80 line-through">{{ modText(m) }}</p>
-      <p v-if="item.corrupted" class="pt-1 font-bold text-[#d20000]">{{ tr("コラプト", "Corrupted") }}</p>
+      <p v-if="item.corrupted" class="pt-1 font-bold text-stage-corrupt">{{ tr("コラプト", "Corrupted") }}</p>
       <p v-if="item.sanctified" class="pt-1 font-bold text-amber-200">{{ tr("聖別", "Sanctified") }}</p>
       <!-- 2026-09-29 に足したカレンシーの印 (apply-extra.ts) -->
-      <p v-if="item.siphoner" class="text-[#d20000]">{{ tr("キル閾値 (ヴァールサイフォナー)", "Kill threshold (Vaal Siphoner)") }}</p>
+      <p v-if="item.siphoner" class="text-stage-corrupt">{{ tr("キル閾値 (ヴァールサイフォナー)", "Kill threshold (Vaal Siphoner)") }}</p>
       <p v-if="item.mirrored" class="pt-1 font-bold text-sky-200">{{ tr("ミラー", "Mirrored") }}</p>
       <p v-if="item.foreseen" class="pt-1 text-violet-200">{{ tr("予見 (次の手の結果が見える)", "Foreseen (next result is shown)") }}</p>
     </div>

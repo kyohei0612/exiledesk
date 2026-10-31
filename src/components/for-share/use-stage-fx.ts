@@ -31,7 +31,7 @@ const RARITY_TEXT_EN = { magic: "Magic!", rare: "Rare!", normal: "", unique: "Un
 /** 属性の英語 (英語の画面。2026-10-10 英語版) */
 const EL_EN: Record<string, string> = { fire: "Fire", cold: "Cold", lightning: "Lightning", chaos: "Chaos" };
 const elName = (el: string): string => tr(EL_JA[el] ?? el, EL_EN[el] ?? el);
-const COLOR = { magic: "var(--color-rarity-magic)", rare: "var(--color-rarity-rare)", normal: "var(--color-rarity-normal)", unique: "#ff9a4a", desecrated: "#f07070", fractured: "var(--color-mod-fractured)", divine: "#ffffff", miss: "#f43f5e", top: "#fbbf24", corrupt: "#ff2a2a" };
+const COLOR = { magic: "var(--color-rarity-magic)", rare: "var(--color-rarity-rare)", normal: "var(--color-rarity-normal)", unique: "var(--exile-color-fx-unique)", desecrated: "var(--exile-color-fx-desecrated)", fractured: "var(--color-mod-fractured)", divine: "var(--exile-color-white)", miss: "var(--exile-color-fx-miss)", top: "var(--exile-color-fx-top)", corrupt: "var(--exile-color-fx-corrupt)" };
 /**
  * アクト中に落ちる物 (要望 ⑧) の結果の文字: 品質 / 鑑定 / サポート枠 / ソケット / シャード。関係なければ null
  */
@@ -61,7 +61,7 @@ function augText(o: object): { kind: "hit" | "up"; color: string; text: string }
 function actText(before: StageItem, after: StageItem): { kind: "hit" | "up"; color: string; text: string } | null {
   if (after.quality > before.quality && !after.qualityTag) return { kind: "hit", color: COLOR.top, text: tr(`品質 +${Math.round((after.quality - before.quality) * 10) / 10}%`, `Quality +${Math.round((after.quality - before.quality) * 10) / 10}%`) };
   if (before.identified === false && after.identified !== false) return { kind: "up", color: COLOR[after.rarity], text: tr("鑑定!", "Identified!") };
-  if ((after.gemSockets ?? 0) > (before.gemSockets ?? 0)) return { kind: "up", color: "#7fb0e0", text: tr(`サポート枠 ${after.gemSockets} つ!`, `${after.gemSockets} Support Gem Sockets!`) };
+  if ((after.gemSockets ?? 0) > (before.gemSockets ?? 0)) return { kind: "up", color: "var(--exile-color-stage-gem-socket)", text: tr(`サポート枠 ${after.gemSockets} つ!`, `${after.gemSockets} Support Gem Sockets!`) };
   const sh = Object.keys(after.shards ?? {}).find((k) => (after.shards?.[k] ?? 0) !== (before.shards?.[k] ?? 0));
   if (sh) {
     const n = after.shards![sh]!;

@@ -29,14 +29,14 @@
   background:
     radial-gradient(ellipse at center, rgba(10, 14, 6, 0.25), rgba(0, 0, 0, 0.7)) border-box,
     url("/ui-art/abyss-panel.webp") center / 140% auto no-repeat border-box,
-    #0a0c08;
+    var(--exile-color-abyss-bg);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6), 0 0 28px rgba(110, 160, 50, 0.14);
 }
 
 /* 冒涜の MOD の行 (アイテムのカード)。発現の窓 (.g-abyss) と同じアビスの絵の真ん中を暗く敷き、縁は緑の淡い光 (細い線は使わない)。2026-10-17 オーナー「ここも冒涜仕様に」 */
 /* 冒涜の MOD の行: トレードと同じく左右に緑の帯・真ん中は黒 (ゲームの HoverModBGAbyss の内側の帯を左右に。2026-10-17 オーナー「枠はトレードで言うとこんな感じ」) */
 .g-abyss-row {
-  background: url("/ui-art/abyss-modrow.webp") center / 100% 100% no-repeat, #050604;
+  background: url("/ui-art/abyss-modrow.webp") center / 100% 100% no-repeat, var(--exile-color-abyss-row-bg);
 }
 
 .g-btn,
@@ -99,7 +99,7 @@
  * antique が日本語を持たずゴシックに落ちて太く見えた)。選んでいる札も太字にしない (金の札の上の太いゴシックがプラスチックっぽく見えた)
  */
 .g-tabbar .g-tab { font-family: var(--exile-font-family-brush); font-weight: 400; letter-spacing: 0.08em; }
-.g-tabbar .g-tab.on { font-weight: 400; font-size: 14px !important; color: #0b0702; text-shadow: 0 1px 0 rgba(255, 236, 190, 0.35); -webkit-text-stroke: 0.35px #0b0702; }
+.g-tabbar .g-tab.on { font-weight: 400; font-size: 14px !important; color: var(--exile-color-tab-on-ink); text-shadow: 0 1px 0 rgba(255, 236, 190, 0.35); -webkit-text-stroke: 0.35px var(--exile-color-tab-on-ink); }
 
 .g-slot {
   background: url("/ui-art/slot.webp") center / 100% 100% no-repeat;
@@ -146,7 +146,7 @@
  * .g-sec-head = 行 (下に区切り)、.g-sec-title = 題 (筆の字)、.g-sec-sub = 題の横の説明
  */
 .g-sec-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-height: 32px; padding: 0 4px 8px; margin-bottom: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); font-size: 12px; }
-.g-sec-title { font-family: var(--exile-font-family-brush); font-weight: 400; font-size: 20px; letter-spacing: 0.12em; line-height: 1.2; color: var(--exile-color-text-title); text-shadow: 0 2px 0 #000; white-space: nowrap; }
+.g-sec-title { font-family: var(--exile-font-family-brush); font-weight: 400; font-size: 20px; letter-spacing: 0.12em; line-height: 1.2; color: var(--exile-color-text-title); text-shadow: 0 2px 0 var(--exile-color-black); white-space: nowrap; }
 .g-sec-sub { font-size: 12px; color: var(--exile-color-text-tertiary); }
 @media (max-width: 767px) { .g-sec-title { font-size: 16px; letter-spacing: 0.06em; } }
 @media (min-width: 768px) and (max-width: 1279px) { :root[data-flag-twoshapes] .g-sec-title { font-size: 16px; letter-spacing: 0.06em; } } /* U-53 */
@@ -355,7 +355,7 @@ button:is([class*="border-white/1"], [class*="border-white/2"], [class*="border-
   border-color: rgba(224, 194, 122, 0.85) !important;
   box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.85), 0 0 8px rgba(224, 194, 122, 0.3);
 }
-input[type="checkbox"], input[type="radio"] { accent-color: #b5813a; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--exile-color-check-accent); }
 
 /* 選ぶカード (大きいボタン。クラフト計算機の始め方・火力チェックの入口など) = 面と同じ枠 */
 :is(button, a):is([class*="rounded-xl"], [class*="rounded-2xl"]):is([class*="border-white/"], [class*="border-[var(--exile-color-border-"]):not(.g-plain) {
@@ -377,7 +377,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: #b5813a; }
   font-family: var(--exile-font-family-display);
   font-weight: 600;
   letter-spacing: 0.06em;
-  background: linear-gradient(180deg, #fff3cf 0%, #f0cf86 38%, #b8873c 62%, #7a5320 100%);
+  background: linear-gradient(180deg, var(--exile-color-brand-1) 0%, var(--exile-color-brand-2) 38%, var(--exile-color-brand-3) 62%, var(--exile-color-brand-4) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;

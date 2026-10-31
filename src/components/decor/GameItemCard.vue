@@ -137,13 +137,13 @@ onBeforeUnmount(onUp);
           <button
             type="button"
             class="g-plain grid h-6 w-6 place-items-center bg-transparent text-[13px] leading-none transition"
-            :class="pinned ? 'text-[#ffd479] drop-shadow-[0_0_4px_rgba(255,212,121,0.6)]' : 'text-[#8a8170] hover:text-[#e6dcc2]'"
+            :class="pinned ? 'text-card-pin-on drop-shadow-[0_0_4px_rgba(255,212,121,0.6)]' : 'text-card-pin-off hover:text-card-pin-hover'"
             :title="pinned ? tr('ピン留めを外す', 'Unpin') : tr('ピン留め (カーソルを外しても消さない)', 'Pin (keeps the card when the cursor leaves)')"
             @click.stop="hoverStack.togglePin(layerKey)"
           >
             <Icon name="pin" class="size-3.5" />
           </button>
-          <button v-if="pinned" type="button" class="g-plain h-6 w-6 bg-transparent text-[14px] leading-none text-[#cfc6ae] hover:text-white" :title="tr('閉じる', 'Close')" @click.stop="hoverStack.close(layerKey)">×</button>
+          <button v-if="pinned" type="button" class="g-plain h-6 w-6 bg-transparent text-[14px] leading-none text-card-close hover:text-white" :title="tr('閉じる', 'Close')" @click.stop="hoverStack.close(layerKey)">×</button>
         </div>
         <div
           class="g-ihead select-none"
@@ -166,7 +166,7 @@ onBeforeUnmount(onUp);
 /* ゲームのアイテム画面に寄せる。フォントは明朝 (ゲームは Fontin) */
 .g-card {
   font-family: "Noto Serif JP", "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", Georgia, serif;
-  background: linear-gradient(180deg, #0d0d10 0%, #050506 100%);
+  background: linear-gradient(180deg, var(--exile-color-card-bg-top) 0%, var(--exile-color-card-bg) 100%);
   border-radius: 3px;
   font-size: 13.5px;
   line-height: 1.45;
@@ -175,31 +175,25 @@ onBeforeUnmount(onUp);
 .g-name { font-weight: 700; font-size: 16px; letter-spacing: 0.04em; }
 .g-sub { font-size: 14px; font-weight: 600; }
 /* ユニーク: 茶の枠と橙の名前 */
-.g-unique { border: 1px solid #7a4a22; box-shadow: inset 0 0 0 1px #000, inset 0 0 0 2px #2a1a0e, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
-.g-unique .g-ihead { background: linear-gradient(180deg, #3d2412 0%, #22140a 55%, #0f0905 100%); border-bottom: 1px solid #8a5a30; box-shadow: inset 0 1px 0 #a8744a, inset 0 -1px 0 #3a2414; }
+.g-unique { border: 1px solid var(--exile-color-card-unique-edge); box-shadow: inset 0 0 0 1px var(--exile-color-black), inset 0 0 0 2px var(--exile-color-card-unique-inner), 0 0 0 1px var(--exile-color-black), 0 6px 24px rgba(0, 0, 0, 0.75); }
 .g-unique .g-name { color: var(--color-rarity-unique); }
 /* カレンシー: 灰金の枠とベージュの名前 */
-.g-currency { border: 1px solid #6a5f48; box-shadow: inset 0 0 0 1px #000, inset 0 0 0 2px #22201a, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
-.g-currency .g-ihead { background: linear-gradient(180deg, #34302a 0%, #1d1b17 55%, #0c0b09 100%); border-bottom: 1px solid #7d7156; box-shadow: inset 0 1px 0 #9c8f70, inset 0 -1px 0 #2e2a22; }
-.g-currency .g-name { color: #aa9e82; }
+.g-currency { border: 1px solid var(--exile-color-card-currency-edge); box-shadow: inset 0 0 0 1px var(--exile-color-black), inset 0 0 0 2px var(--exile-color-card-currency-inner), 0 0 0 1px var(--exile-color-black), 0 6px 24px rgba(0, 0, 0, 0.75); }
+.g-currency .g-name { color: var(--exile-color-card-currency-name); }
 /* レア: 金の枠と黄色の名前 (ItemCard.vue と同じ) / マジック: 青の名前 */
-.g-rare { border: 1px solid #6a5630; box-shadow: inset 0 0 0 1px #000, inset 0 0 0 2px #2a2214, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
-.g-rare .g-ihead { background: linear-gradient(180deg, #3d3116 0%, #221b0c 55%, #0f0c05 100%); border-bottom: 1px solid #8a7040; box-shadow: inset 0 1px 0 #a8895a, inset 0 -1px 0 #3a2f18; }
+.g-rare { border: 1px solid var(--exile-color-card-rare-edge); box-shadow: inset 0 0 0 1px var(--exile-color-black), inset 0 0 0 2px var(--exile-color-card-rare-inner), 0 0 0 1px var(--exile-color-black), 0 6px 24px rgba(0, 0, 0, 0.75); }
 .g-rare .g-name { color: var(--color-rarity-rare); }
-.g-magic { border: 1px solid #3d3d6a; box-shadow: inset 0 0 0 1px #000, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
-.g-magic .g-ihead { background: linear-gradient(180deg, #202038 0%, #121220 100%); border-bottom: 1px solid #4a4a80; }
+.g-magic { border: 1px solid var(--exile-color-card-magic-edge); box-shadow: inset 0 0 0 1px var(--exile-color-black), 0 0 0 1px var(--exile-color-black), 0 6px 24px rgba(0, 0, 0, 0.75); }
 .g-magic .g-name { color: var(--color-rarity-magic); }
 /* ノーマル (白): ベースのカード (2026-10-10) */
-.g-normal { border: 1px solid #4a4a4a; box-shadow: inset 0 0 0 1px #000, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
-.g-normal .g-ihead { background: linear-gradient(180deg, #2a2a2a 0%, #161616 55%, #0b0b0b 100%); border-bottom: 1px solid #5a5a5a; }
+.g-normal { border: 1px solid var(--exile-color-card-normal-edge); box-shadow: inset 0 0 0 1px var(--exile-color-black), 0 0 0 1px var(--exile-color-black), 0 6px 24px rgba(0, 0, 0, 0.75); }
 /* ジェム: 青緑の名前 (ゲームのジェムの色) */
-.g-gem { border: 1px solid #2f5d5a; box-shadow: inset 0 0 0 1px #000, inset 0 0 0 2px #10201f, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
-.g-gem .g-ihead { background: linear-gradient(180deg, #16302e 0%, #0d1c1b 55%, #070d0d 100%); border-bottom: 1px solid #3c6f6a; box-shadow: inset 0 1px 0 #4f8a84, inset 0 -1px 0 #16302e; }
-.g-gem .g-name { color: #1ba29b; }
+.g-gem { border: 1px solid var(--exile-color-card-gem-edge); box-shadow: inset 0 0 0 1px var(--exile-color-black), inset 0 0 0 2px var(--exile-color-card-gem-inner), 0 0 0 1px var(--exile-color-black), 0 6px 24px rgba(0, 0, 0, 0.75); }
+.g-gem .g-name { color: var(--exile-color-card-gem-name); }
 /* キーワードの説明: 灰の枠と白の見出し (ゲームの説明の吹き出しに寄せる) */
-.g-keyword { border: 1px solid #5a5a5a; box-shadow: inset 0 0 0 1px #000, 0 0 0 1px #000, 0 6px 24px rgba(0, 0, 0, 0.75); }
-.g-keyword .g-ihead { background: linear-gradient(180deg, #2b2b2b 0%, #171717 100%); border-bottom: 1px solid #555; }
-.g-keyword .g-name { color: #e8e8e8; font-size: 15px; }
+.g-keyword { border: 1px solid var(--exile-color-card-keyword-edge); box-shadow: inset 0 0 0 1px var(--exile-color-black), 0 0 0 1px var(--exile-color-black), 0 6px 24px rgba(0, 0, 0, 0.75); }
+.g-keyword .g-ihead { background: linear-gradient(180deg, var(--exile-color-card-keyword-head-top) 0%, var(--exile-color-card-keyword-head-bottom) 100%); border-bottom: 1px solid var(--exile-color-card-keyword-line); }
+.g-keyword .g-name { color: var(--exile-color-card-keyword-name); font-size: 15px; }
 /*
  * 名前の枠はゲームの絵 (クライアントの ItemsHeader*。左・中・右を 1 枚にした物、scripts/build-ui-art-from-client.mjs)。
  * 1 行 (名前だけ) は高さ 56 の絵、レア・ユニークの 2 行 (名前 + ベース) は 88 の絵。2026-10-10 オーナー「コモンの色とか名前の枠も POE2 仕様で、全部」
@@ -219,18 +213,18 @@ onBeforeUnmount(onUp);
 .g-rare .g-ihead.two { border-image-source: url("/ui-art/ihead-rare.webp"); }
 .g-unique .g-ihead.two { border-image-source: url("/ui-art/ihead-unique.webp"); }
 /* 名前の色はゲームと同じ (ノーマル白・マジック青・レア黄・ユニーク橙・ジェム青緑・カレンシーベージュ) */
-.g-normal .g-name { color: #c8c8c8; }
+.g-normal .g-name { color: var(--color-rarity-normal); }
 </style>
 
 <style>
 /* 中身で使う色 (スロットの中の入れ子にも効くよう scoped にしない。.g-card の中だけ) */
-.g-card .g-dim { color: #7f7f7f; }
-.g-card .g-white { color: #fff; }
+.g-card .g-dim { color: var(--exile-color-card-dim); }
+.g-card .g-white { color: var(--exile-color-white); }
 .g-card .g-mod { color: var(--color-rarity-magic); }
 .g-card .g-flavour { color: var(--color-rarity-unique); font-style: italic; font-size: 12.5px; }
 .g-card .g-desc { color: var(--color-rarity-normal); }
-.g-card .g-head2 { color: #aa9e82; font-size: 12px; margin-top: 4px; }
-.g-card .g-sep { height: 1px; margin: 6px 0; background: linear-gradient(90deg, transparent, #7a6538 20%, #7a6538 80%, transparent); }
+.g-card .g-head2 { color: var(--exile-color-card-currency-name); font-size: 12px; margin-top: 4px; }
+.g-card .g-sep { height: 1px; margin: 6px 0; background: linear-gradient(90deg, transparent, var(--exile-color-card-sep) 20%, var(--exile-color-card-sep) 80%, transparent); }
 /* 区切り線もゲームの絵 (ItemsSeparator*。2026-10-10) */
 .g-card.g-normal .g-sep, .g-card.g-magic .g-sep, .g-card.g-rare .g-sep, .g-card.g-unique .g-sep, .g-card.g-gem .g-sep, .g-card.g-currency .g-sep { height: 8px; margin: 5px auto; max-width: 364px; background-position: center; background-size: 100% 100%; background-repeat: no-repeat; }
 .g-card.g-normal .g-sep { background-image: url("/ui-art/isep-normal.webp"); }

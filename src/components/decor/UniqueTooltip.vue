@@ -144,7 +144,7 @@ const style = useFitCard(box, () => ({ left: props.x - 8, right: props.x + 24, t
           <p
             v-for="(line, i) in implicitLines"
             :key="'imp-' + i"
-            class="text-[#8FB6E5]"
+            class="text-card-unique-link"
           >
             {{ line }}
           </p>

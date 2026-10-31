@@ -75,7 +75,7 @@ function paras(t: string | undefined): string[] {
           :key="l.g"
           type="button"
           class="px-2 py-0.5 rounded border text-[11px] leading-none"
-          :class="current?.g === l.g ? 'border-[#1ba29b] text-[#5fd3cb] bg-[#10201f]' : 'border-[#333] text-[#8a8a8a] hover:text-[#cfcfcf]'"
+          :class="current?.g === l.g ? 'border-card-gem-name text-card-gem-on bg-card-gem-inner' : 'border-card-tab-line text-card-tab-off hover:text-card-tab-hover'"
           @click.stop="pick = l.g"
         >
           {{ tr("レベル", "Level") }} {{ l.g }}

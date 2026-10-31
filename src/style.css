@@ -80,6 +80,102 @@
     --exile-color-signal-success: #7EC994; /* = up と同色 */
     --exile-color-signal-info:    #9FB8C9;
 
+    /* ---------- 1.6 基本 ---------- */
+    --exile-color-black:                    #000;
+    --exile-color-white:                    #fff;
+
+    /* ---------- 1.7 アイテムのカード (ホバーのカード GameItemCard・GemHoverCard) ---------- */
+    --exile-color-card-bg-top:              #0d0d10;
+    --exile-color-card-bg:                  #050506;
+    --exile-color-card-unique-edge:         #7a4a22;
+    --exile-color-card-unique-inner:        #2a1a0e;
+    --exile-color-card-currency-edge:       #6a5f48;
+    --exile-color-card-currency-inner:      #22201a;
+    --exile-color-card-currency-name:       #aa9e82;
+    --exile-color-card-rare-edge:           #6a5630;
+    --exile-color-card-rare-inner:          #2a2214;
+    --exile-color-card-magic-edge:          #3d3d6a;
+    --exile-color-card-normal-edge:         #4a4a4a;
+    --exile-color-card-gem-edge:            #2f5d5a;
+    --exile-color-card-gem-inner:           #10201f;
+    --exile-color-card-gem-name:            #1ba29b;
+    --exile-color-card-gem-on:              #5fd3cb;
+    --exile-color-card-keyword-edge:        #5a5a5a;
+    --exile-color-card-keyword-head-top:    #2b2b2b;
+    --exile-color-card-keyword-head-bottom: #171717;
+    --exile-color-card-keyword-line:        #555;
+    --exile-color-card-keyword-name:        #e8e8e8;
+    --exile-color-card-dim:                 #7f7f7f;
+    --exile-color-card-sep:                 #7a6538;
+    --exile-color-card-pin-on:              #ffd479;
+    --exile-color-card-pin-off:             #8a8170;
+    --exile-color-card-pin-hover:           #e6dcc2;
+    --exile-color-card-close:               #cfc6ae;
+    --exile-color-card-tab-line:            #333;
+    --exile-color-card-tab-off:             #8a8a8a;
+    --exile-color-card-tab-hover:           #cfcfcf;
+    --exile-color-card-unique-link:         #8fb6e5;
+
+    /* ---------- 1.8 クラフトの台のカード (StageItemCard) ---------- */
+    --exile-color-stage-frame-normal:       #6a6a6a;
+    --exile-color-stage-frame-magic:        #3d3d8a;
+    --exile-color-stage-frame-rare:         #7a6a35;
+    --exile-color-stage-frame-unique:       #8a5a30;
+    --exile-color-stage-socket-rim:         #9a8a70;
+    --exile-color-stage-rune:               #8fa8ff;
+    --exile-color-stage-boost:              #7ee8ff;
+    --exile-color-stage-gem-socket:         #7fb0e0;
+    --exile-color-stage-gem-socket-bg:      #101820;
+    --exile-color-stage-enchant:            #b8daf2;
+    --exile-color-stage-mods-head:          #c9b48a;
+    --exile-color-stage-corrupt:            #d20000;
+    --exile-color-stage-pop-bg:             #0b0a08;
+    --exile-color-stage-prefix:             #e0846a;
+    --exile-color-stage-suffix:             #6aa8e8;
+    --exile-color-stage-doomed:             #ff8a3d;
+    --exile-color-stage-unrevealed:         #a6e05c;
+    --exile-color-stage-mod:                #c8c8ff;
+
+    /* ---------- 1.9 打った時の演出 (use-stage-fx) ---------- */
+    --exile-color-fx-unique:                #ff9a4a;
+    --exile-color-fx-desecrated:            #f07070;
+    --exile-color-fx-miss:                  #f43f5e;
+    --exile-color-fx-top:                   #fbbf24;
+    --exile-color-fx-corrupt:               #ff2a2a;
+
+    /* ---------- 1.10 パネル・窓 ---------- */
+    --exile-color-panel-toc:                #120f0c;
+    --exile-color-panel-side:               #15120d;
+    --exile-color-panel-pop:                #0d0b10;
+    --exile-color-surface-raised:           #16130f;
+    --exile-color-route-pin:                #1a140c;
+    --exile-color-btn-hover-text:           #f3e2b8;
+    --exile-color-btn-on-text:              #ffd7cf;
+    --exile-color-ad-paper:                 #efece6;
+    --exile-color-ad-ink:                   #3a352c;
+    --exile-color-live-thumb-top:           #2a2219;
+    --exile-color-live-thumb-bottom:        #0e0c09;
+    --exile-color-live-red:                 #e5484d;
+    --exile-color-live-youtube:             #c4302b;
+    --exile-color-live-twitch:              #8b5cf6;
+
+    /* ---------- 1.11 ゲームの絵の枠 (game-ui.css) ---------- */
+    --exile-color-abyss-bg:                 #0a0c08;
+    --exile-color-abyss-row-bg:             #050604;
+    --exile-color-tab-on-ink:               #0b0702;
+    --exile-color-check-accent:             #b5813a;
+    --exile-color-brand-1:                  #fff3cf;
+    --exile-color-brand-2:                  #f0cf86;
+    --exile-color-brand-3:                  #b8873c;
+    --exile-color-brand-4:                  #7a5320;
+
+    /* ---------- 1.12 スパムシミュの強運 (spam-lucky.css) ---------- */
+    --exile-color-copper:                   #b87333;
+    --exile-color-copper-dim:               #9c7a62;
+    --exile-color-copper-dark:              #5e2f16;
+    --exile-color-copper-mid:               #c4814a;
+    --exile-color-copper-light:             #f6d2b0;
+
     /* ---------- 2. Typography ---------- */
     /* 日本語は Zen Kaku Gothic New (2026-10-09 オーナー「綺麗すぎる、日本人らしさ」。Google Fonts、読めない時は Yu Gothic UI) */
     --exile-font-family-sans:    'Inter Variable', 'Zen Kaku Gothic New', 'Yu Gothic UI', 'Meiryo', system-ui, sans-serif;
@@ -152,6 +248,46 @@
   --color-mod-fractured:    #c8a86a;
   --color-mod-desecrated:   #e0a0a0;
   --color-mod-crafted:      #b8c8ff;
+  /* ----- カード・パネルの色 (U-46。前に各部品へ直書きしていた値をそのまま) ----- */
+  --color-card-bg:              var(--exile-color-card-bg);
+  --color-card-gem-inner:       var(--exile-color-card-gem-inner);
+  --color-card-gem-name:        var(--exile-color-card-gem-name);
+  --color-card-gem-on:          var(--exile-color-card-gem-on);
+  --color-card-pin-on:          var(--exile-color-card-pin-on);
+  --color-card-pin-off:         var(--exile-color-card-pin-off);
+  --color-card-pin-hover:       var(--exile-color-card-pin-hover);
+  --color-card-close:           var(--exile-color-card-close);
+  --color-card-tab-line:        var(--exile-color-card-tab-line);
+  --color-card-tab-off:         var(--exile-color-card-tab-off);
+  --color-card-tab-hover:       var(--exile-color-card-tab-hover);
+  --color-card-unique-link:     var(--exile-color-card-unique-link);
+  --color-stage-frame-normal:   var(--exile-color-stage-frame-normal);
+  --color-stage-frame-magic:    var(--exile-color-stage-frame-magic);
+  --color-stage-frame-rare:     var(--exile-color-stage-frame-rare);
+  --color-stage-frame-unique:   var(--exile-color-stage-frame-unique);
+  --color-stage-socket-rim:     var(--exile-color-stage-socket-rim);
+  --color-stage-rune:           var(--exile-color-stage-rune);
+  --color-stage-boost:          var(--exile-color-stage-boost);
+  --color-stage-gem-socket:     var(--exile-color-stage-gem-socket);
+  --color-stage-gem-socket-bg:  var(--exile-color-stage-gem-socket-bg);
+  --color-stage-enchant:        var(--exile-color-stage-enchant);
+  --color-stage-mods-head:      var(--exile-color-stage-mods-head);
+  --color-stage-corrupt:        var(--exile-color-stage-corrupt);
+  --color-stage-pop-bg:         var(--exile-color-stage-pop-bg);
+  --color-stage-prefix:         var(--exile-color-stage-prefix);
+  --color-stage-suffix:         var(--exile-color-stage-suffix);
+  --color-stage-doomed:         var(--exile-color-stage-doomed);
+  --color-stage-unrevealed:     var(--exile-color-stage-unrevealed);
+  --color-stage-mod:            var(--exile-color-stage-mod);
+  --color-panel-toc:            var(--exile-color-panel-toc);
+  --color-panel-side:           var(--exile-color-panel-side);
+  --color-ad-paper:             var(--exile-color-ad-paper);
+  --color-ad-ink:               var(--exile-color-ad-ink);
+  --color-live-thumb-top:       var(--exile-color-live-thumb-top);
+  --color-live-thumb-bottom:    var(--exile-color-live-thumb-bottom);
+  --color-live-red:             var(--exile-color-live-red);
+  --color-live-youtube:         var(--exile-color-live-youtube);
+  --color-live-twitch:          var(--exile-color-live-twitch);
   /* ----- シミュの画面の色 (U-46。前に各画面へ直書きしていた値をそのまま) ----- */
   --color-sim-body:         #d8ccb4;
   --color-sim-dim:          #9a8a70;

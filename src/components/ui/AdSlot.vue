@@ -5,6 +5,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { AD_FRAMES, AD_MIN_GAP_S, adShow, adSlots } from "../../utils/ads";
+import { tr } from "../../i18n/lang";
 
 const props = defineProps<{ id: string; w: number; h: number; tick?: number }>();
 const flash = ref(false);
@@ -30,16 +31,16 @@ const wait = computed(() => (st.value ? Math.max(0, AD_MIN_GAP_S - Math.floor((n
   <div
     v-if="AD_FRAMES"
     data-ad-slot
-    class="grid shrink-0 place-items-center rounded bg-[#efece6] text-center text-[11px] leading-snug text-[#3a352c] transition"
+    class="grid shrink-0 place-items-center rounded bg-ad-paper text-center text-[11px] leading-snug text-ad-ink transition"
     :class="flash ? 'ring-4 ring-sky-400' : ''"
     :style="{ width: `${w}px`, height: `${h}px`, maxWidth: '100%' }"
   >
     <div>
-      <b class="block text-[13px]">広告 (開発版だけ)</b>
+      <b class="block text-[13px]">{{ tr("広告 (開発版だけ)", "Ad (dev only)") }}</b>
       <span class="block opacity-70">{{ w }} × {{ h }}</span>
-      <span class="mt-1 block">表示 {{ st?.n ?? 0 }} 回目</span>
-      <span class="block opacity-70">{{ wait ? `あと ${wait} 秒は出し直さない` : "次のページで出し直す" }}</span>
-      <span v-if="st?.skipped" class="block opacity-60">60 秒以内で見送り {{ st.skipped }} 回</span>
+      <span class="mt-1 block">{{ tr(`表示 ${st?.n ?? 0} 回目`, `Shown ${st?.n ?? 0} times`) }}</span>
+      <span class="block opacity-70">{{ wait ? tr(`あと ${wait} 秒は出し直さない`, `No refresh for ${wait} s`) : tr("次のページで出し直す", "Refreshes on the next page") }}</span>
+      <span v-if="st?.skipped" class="block opacity-60">{{ tr(`60 秒以内で見送り ${st.skipped} 回`, `Skipped within 60 s: ${st.skipped}`) }}</span>
     </div>
   </div>
 </template>

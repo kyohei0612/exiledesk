@@ -24,7 +24,7 @@ const latest = computed(() => posts.value.slice(0, 3));
 
 <template>
   <div data-side-reads class="flex flex-col gap-3 text-[12px]">
-    <section v-if="latest.length" data-blog-latest class="rounded-xl border border-white/10 bg-[#15120d] p-2.5">
+    <section v-if="latest.length" data-blog-latest class="rounded-xl border border-white/10 bg-panel-side p-2.5">
       <p class="mb-2 flex items-center text-[11px] font-bold text-amber-200">{{ tr("新しい記事", "Latest posts") }}<a :href="listHref" class="ml-auto font-normal text-[var(--exile-color-text-tertiary)] hover:text-amber-200">{{ tr("すべて見る", "All posts") }}</a></p>
       <ul class="flex flex-col gap-2">
         <li v-for="p in latest" :key="p.slug">

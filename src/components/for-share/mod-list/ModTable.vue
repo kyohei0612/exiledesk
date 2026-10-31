@@ -216,7 +216,7 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
   <div ref="listEl" data-mod-list class="@container text-[12px]">
     <!-- 目次 (押すとその種類までスクロール。スクロールしても上に残る) と検索。スマホは検索を目次の横送りの外 -->
     <input v-model="query" type="search" :placeholder="tr('文面やタグで探す (例: 耐性、ライフ)', 'Search text or tags')" class="mb-2 w-full rounded-lg border border-white/15 bg-black/30 px-2 py-1.5 md:hidden" />
-    <div ref="tocEl" data-mod-toc class="sticky top-0 z-10 -mx-3 mb-4 flex flex-wrap items-center gap-1.5 bg-[#120f0c]/95 px-3 py-1.5 backdrop-blur max-md:static max-md:flex-nowrap max-md:overflow-x-auto">
+    <div ref="tocEl" data-mod-toc class="sticky top-0 z-10 -mx-3 mb-4 flex flex-wrap items-center gap-1.5 bg-panel-toc/95 px-3 py-1.5 backdrop-blur max-md:static max-md:flex-nowrap max-md:overflow-x-auto">
       <button v-if="props.toCraft" type="button" class="tbtn mr-1 max-md:shrink-0" :title="tr('アイテムのカードへ戻る', 'Back to the item')" @click="props.toCraft()">{{ tr("↑ クラフトへ", "↑ Craft") }}</button>
       <!-- 節の切り替えはほかのタブと同じ .g-tab (2026-10-18 オーナーの UI 点検)。細い帯に合うよう低く -->
       <button v-for="sec in sections" :key="sec.sid" type="button" role="tab" :aria-selected="active === sec.sid" class="g-tab !min-h-[28px] !px-4 !text-[13px] max-md:shrink-0" :class="active === sec.sid ? 'on' : ''" @click="jump(sec.sid)">
@@ -240,7 +240,7 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
       <!-- プレ・サフィの左右は一覧の幅で決める (窓が狭い小さいパソコンは縦に積む。2026-10-11 オーナー) -->
       <div v-if="secShown(sec.sid)" class="grid gap-3 @4xl:grid-cols-2">
         <div v-for="col in sec.columns" :key="col.side" class="min-w-0" :class="NARROW ? '@container/tcol' : ''">
-          <p data-mod-col-head class="mb-1 flex items-baseline gap-2 border-b border-white/10 pb-1 pr-2" :class="STICKY_HEAD ? 'sticky z-[5] bg-[#120f0c]/95 pt-0.5' : ''" :style="STICKY_HEAD ? { top: `${tocH}px` } : undefined">
+          <p data-mod-col-head class="mb-1 flex items-baseline gap-2 border-b border-white/10 pb-1 pr-2" :class="STICKY_HEAD ? 'sticky z-[5] bg-panel-toc/95 pt-0.5' : ''" :style="STICKY_HEAD ? { top: `${tocH}px` } : undefined">
             <slot name="col-lead" :col="col" />
             <b class="whitespace-nowrap text-[var(--exile-color-text-primary)]">{{ col.title }}</b>
             <span class="whitespace-nowrap text-[var(--exile-color-text-tertiary)]">{{ col.items.length }} {{ tr("系統", "groups") }}</span>
@@ -265,7 +265,7 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
                 <!-- タグはアイテムの札と同じ色の札。入らなければ次の行へ折り返して全部見せる (2026-10-19 オーナー) -->
                 <span class="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5 leading-tight">
                   <!-- 勢力 (アマナム・クルガル・ウラマン) は文の頭に札で (2026-10-16 オーナー) -->
-                  <span class="mr-0.5 min-w-0 text-[13px] text-[#c8c8ff]"><span v-if="factionOf(r.tags)" class="mr-1 inline-block rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[factionOf(r.tags)!]?.cls">{{ tagLabel(factionOf(r.tags)!) }}</span>{{ r.text }}</span>
+                  <span class="mr-0.5 min-w-0 text-[13px] text-stage-mod"><span v-if="factionOf(r.tags)" class="mr-1 inline-block rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[factionOf(r.tags)!]?.cls">{{ tagLabel(factionOf(r.tags)!) }}</span>{{ r.text }}</span>
                   <span v-for="g in shownTags(r.tags)" :key="g" class="shrink-0 whitespace-nowrap rounded-sm px-1 py-px text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span>
                   <span v-if="essName(r, props.item)" class="shrink-0 whitespace-nowrap rounded-sm border border-sky-400/40 px-1 py-px text-[10px] leading-none text-sky-200">⚗ {{ essName(r, props.item) }}</span>
                   <span v-if="r.on" class="shrink-0 whitespace-nowrap rounded-sm bg-emerald-500/25 px-1 py-px text-[10px] leading-none text-emerald-200">{{ tr("付いている", "On item") }}</span>
@@ -287,7 +287,7 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
                   <tr v-for="t in r.tiers" :key="t.rank" class="group border-b border-white/5 max-md:flex" :class="[props.tierOneLine ? 'max-md:items-center' : 'max-md:flex-wrap max-md:[&>[data-tier-end]~td]:basis-full', NARROW && !props.tierOneLine ? '@max-lg/tcol:flex @max-lg/tcol:flex-wrap @max-lg/tcol:[&>[data-tier-end]~td]:basis-full' : '', props.tierDim?.(r, t) ? 'opacity-35' : '', isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank) ? 'bg-amber-400/15 outline outline-2 outline-amber-300/80' : '']" :title="props.tierTitle?.(r, t)">
                     <slot name="tier-lead" :row="r" :tier="t" />
                     <td class="w-8 py-0.5 font-bold text-amber-200 max-md:shrink-0" :class="NARROW ? '@max-lg/tcol:shrink-0' : ''">{{ t.rank }}</td>
-                    <td class="py-0.5 text-[#c8c8ff] max-md:min-w-0 max-md:flex-1" :class="NARROW ? '@max-lg/tcol:min-w-0 @max-lg/tcol:flex-1' : ''">{{ t.text }}<span v-for="g in tierTags(r, t)" :key="g" class="ml-1 inline-block whitespace-nowrap rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span><span v-if="isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank)" data-jump-tier class="ml-1.5 rounded-sm bg-amber-400/25 px-1 py-px text-[10px] leading-none text-amber-100">{{ tr("付いている", "On item") }}</span><span v-if="ESS_CHIP && t.essence" data-ess-chip class="ml-1 inline-block whitespace-nowrap rounded-sm border border-sky-400/40 px-1 py-px align-[1px] text-[10px] leading-none text-sky-200">⚗ {{ tr(t.essence.ja, t.essence.en) }}</span><span v-else-if="ESS_TIER && t.essence" class="block text-[10px] leading-tight opacity-60" :class="NARROW ? 'hidden max-md:block @max-2xl/tcol:block' : 'md:hidden'">{{ tr(t.essence.ja, t.essence.en) }}</span></td>
+                    <td class="py-0.5 text-stage-mod max-md:min-w-0 max-md:flex-1" :class="NARROW ? '@max-lg/tcol:min-w-0 @max-lg/tcol:flex-1' : ''">{{ t.text }}<span v-for="g in tierTags(r, t)" :key="g" class="ml-1 inline-block whitespace-nowrap rounded-sm px-1 py-px align-[1px] text-[10px] leading-none" :class="TAG_STYLE[g]?.cls">{{ tagLabel(g) }}</span><span v-if="isJumpTier(`${sec.sid}:${r.id}`, t.modId ?? r.id, t.rank)" data-jump-tier class="ml-1.5 rounded-sm bg-amber-400/25 px-1 py-px text-[10px] leading-none text-amber-100">{{ tr("付いている", "On item") }}</span><span v-if="ESS_CHIP && t.essence" data-ess-chip class="ml-1 inline-block whitespace-nowrap rounded-sm border border-sky-400/40 px-1 py-px align-[1px] text-[10px] leading-none text-sky-200">⚗ {{ tr(t.essence.ja, t.essence.en) }}</span><span v-else-if="ESS_TIER && t.essence" class="block text-[10px] leading-tight opacity-60" :class="NARROW ? 'hidden max-md:block @max-2xl/tcol:block' : 'md:hidden'">{{ tr(t.essence.ja, t.essence.en) }}</span></td>
                     <!-- 段の名前 (Zaffre など) は英語しか無いので出さない。エッセンスの節はエッセンスの名前なので出す (2026-10-18 オーナー) -->
                     <template v-if="ESS_CHIP && t.essence" />
                     <td v-else-if="ESS_TIER && t.essence" class="py-0.5 pl-2 whitespace-nowrap opacity-70 max-md:hidden" :class="NARROW ? '@max-2xl/tcol:hidden' : ''" data-ess-tier>{{ tr(t.essence.ja, t.essence.en) }}</td>
@@ -315,9 +315,9 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
   border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 4px; background: rgba(0, 0, 0, 0.35);
   font-size: 11px; color: rgba(255, 255, 255, 0.82); transition: background 0.12s, border-color 0.12s;
 }
-.tbtn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); border-color: rgba(232, 200, 120, 0.55); color: #f3e2b8; }
+.tbtn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); border-color: rgba(232, 200, 120, 0.55); color: var(--exile-color-btn-hover-text); }
 .tbtn:disabled { opacity: 0.35; cursor: not-allowed; }
-.tbtn.on { border-color: rgba(239, 90, 70, 0.75); background: rgba(160, 40, 30, 0.35); color: #ffd7cf; }
+.tbtn.on { border-color: rgba(239, 90, 70, 0.75); background: rgba(160, 40, 30, 0.35); color: var(--exile-color-btn-on-text); }
 @media (max-width: 767px) { .tbtn { height: 34px; padding: 0 12px; font-size: 12px; } }
 @media (min-width: 768px) and (max-width: 1279px) { :root[data-flag-twoshapes] .tbtn { height: 34px; padding: 0 12px; font-size: 12px; } } /* U-53 */
 </style>

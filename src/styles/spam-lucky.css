@@ -1,5 +1,5 @@
 /* spam-lucky.css — かなりの強運 (上位 10% 以内) の演出。カオススパム計算機 (StageChaosSpam.vue) とスパムシミュレーターの運試し (StageRouteLuck.vue) で同じ物 */
-/* かなりの強運 (上位 10% 以内) の演出。銅色 1 色 (#b87333) と、字の中だけ銅の光のグラデーション (2026-10-16 オーナー「やっぱオレンジかな、全体的に暗めの」「銅色の光って大人っぽい」) */
+/* かなりの強運 (上位 10% 以内) の演出。銅色 1 色と、字の中だけ銅の光のグラデーション (2026-10-16 オーナー「やっぱオレンジかな、全体的に暗めの」「銅色の光って大人っぽい」) */
 .spam-lucky {
   position: relative;
   display: flex;
@@ -24,7 +24,7 @@
   font-size: 12px;
   letter-spacing: 0.5em;
   padding-left: 0.5em;
-  color: #b87333;
+  color: var(--exile-color-copper);
   opacity: 0;
   animation: spam-lucky-fade 0.8s ease-out 0.45s forwards;
 }
@@ -39,12 +39,12 @@
   font-family: var(--exile-font-family-antique);
   font-size: 13px;
   letter-spacing: 0.3em;
-  color: #9c7a62;
+  color: var(--exile-color-copper-dim);
 }
 .spam-lucky-num,
 .spam-lucky-pct {
   font-family: var(--exile-font-family-antique);
-  background: linear-gradient(105deg, #5e2f16 0%, #c4814a 35%, #f6d2b0 50%, #c4814a 65%, #5e2f16 100%);
+  background: linear-gradient(105deg, var(--exile-color-copper-dark) 0%, var(--exile-color-copper-mid) 35%, var(--exile-color-copper-light) 50%, var(--exile-color-copper-mid) 65%, var(--exile-color-copper-dark) 100%);
   background-size: 250% 100%;
   background-position: 100% 0;
   -webkit-background-clip: text;
@@ -57,7 +57,7 @@
 .spam-lucky-sub {
   margin: 4px 0 8px;
   font-size: 12px;
-  color: #9c7a62;
+  color: var(--exile-color-copper-dim);
   opacity: 0;
   animation: spam-lucky-fade 0.8s ease-out 0.8s forwards;
 }
