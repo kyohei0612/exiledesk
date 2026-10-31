@@ -40,7 +40,7 @@ onBeforeUnmount(() => window.removeEventListener("resize", onResize));
     <template v-for="(st, i) in steps" :key="`${st.kind}-${st.id}-${i}`">
       <template v-if="st.kind === 'box'">
         <p v-if="above(st.id)" data-map-run class="pb-3 text-center text-[13px] font-bold text-amber-100">{{ above(st.id) }}</p>
-        <TreeBox class="pointer-events-none" :box="doc.boxes[st.id]!" :removable="false" :picking="false" :selected="false" :back-label="backLabelOf(doc, doc.boxes[st.id]!)" view-only />
+        <TreeBox class="pointer-events-none" :box="doc.boxes[st.id]!" :removable="false" :picking="false" :selected="false" :back-label="backLabelOf(doc, doc.boxes[st.id]!)" view-only route-names />
       </template>
       <!-- 手: 線の上に PC と同じ札。戻るだけの枝がある手には印だけ -->
       <div v-else-if="st.kind === 'hand'" data-phone-view-hand class="relative h-[84px]">

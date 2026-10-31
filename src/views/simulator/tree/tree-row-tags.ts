@@ -4,7 +4,7 @@
  * × の印 (前の試し打ちで付けた物) の行は「× 要らない」が先、フラクチャーは付けない。
  * box = その見本の箱。同じ側の「どれか」の当たりの箱 (anyOf) なら、一覧に当たる MOD の行を「A か B」で出す (10-26 オーナー「アイテム枠の中には狙いモッド2種を１MODの中においてどっちかみたいな話でいいんじゃない前みたく」)
  */
-import { type PatchData, type StageItem } from "../../../services/craft-stage/engine";
+import { craftedKindOf, type PatchData, type StageItem } from "../../../services/craft-stage/engine";
 import { isAimMod } from "../../../services/simulator/tree/tree-aim";
 import type { Aim, Hand, OutKind, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { heldSets } from "../../../services/simulator/tree/tree-shape";
@@ -19,7 +19,22 @@ import { aimOpts, aimsOf, targetsOf } from "../../../services/simulator/tree/tre
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { modText, tr } from "../../../i18n/lang";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
+import { inWay, isBreachAim } from "./tree-way-mods";
 
+/**
+ * スマホの道の画面だけの札 (S-94h。オーナー 11-01「これだとエッセンス系は全部名前ありでいいよ ただ狙いMOD以外のエッセンスは赤文字でハズレMODと同じ色でいいな ブリーチとかは必須モッドじゃないけど道で必要だからそのまま出していい気がするけどまぁこの最短ルート設定時は特別って事で」)。
+ * エッセンス・合金で付いた行は「外れ MOD」にまとめず MOD の名前で出す: 完成形の狙い・途中で消える MOD・ブリーチはふつうの色、ほかは外れ MOD と同じ赤。それ以外の札はそのまま
+ */
+export function routeRowTags(d: PatchData, doc: TreeDoc, it: StageItem, tags: Map<string, RowTag>): Map<string, RowTag> {
+  const out = new Map(tags), goalT = targetsOf(d, doc.memoAims ?? []), o = aimOpts(d);
+  for (const m of [...it.prefixes, ...it.suffixes]) {
+    const tag = out.get(m.modId);
+    if (!tag?.replace || tag.tone !== "bad" || m.fractured || !(m.crafted || craftedKindOf(d, m))) continue;
+    if (isAimMod(m, goalT, o) || inWay(doc, m.modId) || isBreachAim({ modId: m.modId, tier: 1 })) out.delete(m.modId);
+    else out.set(m.modId, { ...tag, text: modText(m) });
+  }
+  return out;
+}
 /** 箱 boxId の見本 it の札 (手の窓のカード・消去の残したい MOD の欄で同じ物) */
 export const boxTagsOf = (d: PatchData, doc: TreeDoc, boxId: string, it: StageItem): Map<string, RowTag> => { const b = doc.boxes[boxId]; return treeRowTags(d, doc, b?.unwanted ?? [], it, { anyOf: b?.anyOf, id: boxId, out: b?.out }); };
 /** 全部消えてよい消去の手の箱 (消去の直線の箱。☑ が無い = 消えうる MOD は全部外れ MOD) */
