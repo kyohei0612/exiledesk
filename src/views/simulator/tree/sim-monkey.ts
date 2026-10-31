@@ -32,7 +32,7 @@ import { checkTreeAsync, NOTICE_KINDS } from "../../../services/simulator/tree/t
 import { sampleAimed } from "../../../services/simulator/tree/tree-judge";
 import { boxShape, sameShape } from "../../../services/simulator/tree/tree-box-shape";
 import { judgeOf } from "./tree-hand-plan";
-import { setAim, setBack, setDone, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { clearHand, setAim, setBack, setDone, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { pruneBacks } from "../../../services/simulator/tree/tree-shape";
 import { RUN_N } from "./use-tree-run";
 import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
@@ -177,6 +177,9 @@ export function installSimMonkey(): () => void {
       t.edit((d) => setBack(d, id, to));
       return { ok: (t.doc.value.boxes[id]?.back ?? null) === to };
     },
+    /** 箱の手と下の箱を消す (箱の窓の「手を消す」と同じ clearHand) と 1 つ戻す (Ctrl+Z と同じ) */
+    clearHand(id: string) { t.edit((d) => clearHand(d, id)); return { ok: !t.doc.value.boxes[id]?.hand }; },
+    undo() { t.undo(); return { ok: true }; },
     setDone(id: string, on: boolean | "fail" = true) {
       const v = on === "fail" ? "fail" : on ? "main" : null;
       t.edit((d) => setDone(d, id, v));
