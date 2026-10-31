@@ -22,7 +22,7 @@ Yes. Press R to undo one step at a time, or use "Reset" to start again from the 
 
 ## What is the Spam simulator?
 
-Pick one mod, and it runs augment, chaos and exalt spam at Regular, Greater and Perfect grades, 100 attempts each, to show which route gets there cheapest. Open it with the "Spam simulator" button on the Craft Stage. A luck test also shows where your own run would rank among the 100.
+Pick one mod, and it runs augment, chaos and exalt spam at Regular, Greater and Perfect grades, 30 attempts each, to show which route gets there cheapest. Open it with the "Spam simulator" button on the Craft Stage. A luck test also shows where your own run would rank among the 30.
 
 ## Are the chances official values?
 
