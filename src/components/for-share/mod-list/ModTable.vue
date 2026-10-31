@@ -103,6 +103,8 @@ onBeforeUnmount(() => document.removeEventListener("click", onPicked, true));
 function toggleRow(key: string, ev: MouseEvent): void {
   const row = (ev.currentTarget as HTMLElement).closest("[data-row-key]"); keepPlace(ev.currentTarget as HTMLElement, () => { expanded.value = expanded.value === key ? null : key; }); if (expanded.value === key) revealOpened(row);
 }
+/** 検索中の節の数は絞った後の数、0 件の節は出さない (スイッチ aimTable、モンキー 10-31「31 系統のまま」) */
+const SEARCH_FIT = flag("aimTable");
 /** 種類ごとの節 (中身のある物だけ)。ルーンの特殊 MOD はルーンごとに別の節で、見出しはルーンの名前 (2026-10-04 オーナー) */
 const sections = computed((): ModSection[] => {
   const q = query.value.trim();
@@ -119,8 +121,10 @@ const sections = computed((): ModSection[] => {
       return { side, title: side === "prefix" ? tr("プレフィックス", "Prefix") : tr("サフィックス", "Suffix"), items, top: Math.max(0.0001, ...items.map((r) => r.share)) };
     });
     const socketed = rune != null && all.some((r) => r.socketed);
-    return { g, sid, label, rune, socketed, count: all.length, columns };
+    return { g, sid, label, rune, socketed, count: SEARCH_FIT ? list.length : all.length, columns };
   })
+    // 検索で 0 件の節は出さない
+    .filter((sec) => !SEARCH_FIT || !q || sec.count)
     // 既定は GROUPS の並び。下へ回す節 (sectionLate) は一番下へ
     .map((sec, i) => ({ sec, i, off: props.sectionLate ? props.sectionLate(sec) : sec.rune != null && !sec.socketed }))
     .sort((a, b) => Number(a.off) - Number(b.off) || a.i - b.i)
@@ -227,6 +231,7 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
     </div>
     <slot name="notes" />
 
+    <p v-if="SEARCH_FIT && query.trim() && !sections.length" data-mod-none class="py-4 text-center opacity-50">{{ tr("見つかりません", "No matches") }}</p>
     <section v-for="sec in sections" :key="sec.sid" :ref="(el) => setSection(sec.sid, el)" class="mb-4 scroll-mt-12">
       <h3 class="mb-3 mt-1 flex flex-wrap items-center gap-2 text-[13px] font-bold max-md:min-h-11 max-md:cursor-pointer" @click="phone && toggleSec(sec.sid)">
         <span class="rounded-full px-2.5 py-0.5" :class="toneOf(sec).tab">{{ sec.label }}</span>
