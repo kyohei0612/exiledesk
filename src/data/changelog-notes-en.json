@@ -1,4 +1,26 @@
 {
+  "0.1.652": [
+    "The spam simulator now runs 30 people per route, so it finishes much faster",
+    "Fixed spam simulator hits that could not be sent to the craft stage. Rune mods now come with their rune, and hits that keep an Essence mod work too",
+    "Fixed \"Current item\" in the spam simulator never hitting a rune mod when that rune wasn't socketed (it now starts with the rune socketed)",
+    "The spam simulator now blocks runs when the target's rune can't be socketed, and tells you why when a hit can't be placed on the craft stage",
+    "Fixed base and rune names showing in Japanese on the English spam simulator, and people counts mixing when opening an older 100-person share",
+    "The Target next move mod table now matches the mod list: columns stay aligned when a row opens, and each tier shows its chance",
+    "Emulator: Choosing a Sanctification multiplier now shows the chance of at least that multiplier and previews the values on the item card",
+    "Simulator & Emulator: The shelf now shows a one-line reason when all Essences or Runes are unusable",
+    "Simulator: \"Test run\" is now \"Gap check\". \"Run 100\" stays locked until the gap check passes (hover on PC, a line of text on phones, tells you why)",
+    "Simulator: when changing a craft, \"Swap craft only\" keeps the boxes below and shows the 100-run result next to the one before",
+    "Simulator: mods a craft can't remove now count as mods to keep automatically, and auto-returns are only added to removal results",
+    "Simulator: the PC reveal window can now add as many mods to pick as you like. A mod picked on reveal stays that mod, not a junk mod, while it's on the item, and boxes split on it",
+    "Simulator: Essence crafts now have a \"Use as a block\" checkbox. The added mod isn't counted as junk and works like a mod picked on reveal",
+    "Simulator: only items that can reach the set quality now move to a Catalyst quality box, and runs that land on a box they can't craft from move to a matching box they can",
+    "Simulator: on the final item card, desecrated mods now use the desecrated row at the bottom from the first one",
+    "Simulator: a final item with no mods now stops with \"Choose at least 1 mod\"",
+    "Simulator: return labels now say \"keeps 40% quality\" when the destination box has a different quality. Quality stays with the item",
+    "Simulator final item: Esc now closes only the change-base prompt, and it no longer lingers after moving between steps. The max quality dropdown only lists values you can reach",
+    "Simulator: fixed removed auto-returns reappearing on the box after a one-result craft such as a Catalyst",
+    "Simulator: fixed leftover \"Check\" notices from the previous tree after Clear, which could block runs"
+  ],
   "0.1.651": [
     "Simulator: fixed nothing showing on the result screen on phones when a result box is set to \"Fail\". It now shows \"Then it fails (ends here)\"",
     "Simulator: fixed Fracturing Orbs in trees with fracture marks (✦) also locking targets without a mark, which stopped runs whose fracture landed on the other side. Only mods marked ✦ are locked now"

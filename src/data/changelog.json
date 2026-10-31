@@ -1,5 +1,131 @@
 [
  {
+  "v": "0.1.652",
+  "date": "2026-10-31",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "スパムシミュレーターの計算を 1 通り 30 人にして速くしました",
+    "en": "The spam simulator now runs 30 people per route, so it finishes much faster"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "スパムシミュレーターの当たりをクラフト台へ送れない時があったのを直しました。ルーンの MOD はルーンごと置き、エッセンスの MOD が残った形も送れます",
+    "en": "Fixed spam simulator hits that could not be sent to the craft stage. Rune mods now come with their rune, and hits that keep an Essence mod work too"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "スパムシミュレーターの「今のアイテムから」で、狙いの MOD のルーンが嵌まっていない時に付かなかったのを直しました (ルーンを嵌めた形から打ちます)",
+    "en": "Fixed \"Current item\" in the spam simulator never hitting a rune mod when that rune wasn't socketed (it now starts with the rune socketed)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "スパムシミュレーターで、ルーンを嵌められず狙いが付かない時は計算できないようにし、当たりをクラフト台へ置けない時は理由を出すようにしました",
+    "en": "The spam simulator now blocks runs when the target's rune can't be socketed, and tells you why when a hit can't be placed on the craft stage"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "スパムシミュレーターの英語の画面でベース名・ルーン名が日本語になっていたのと、前の 100 人のシェアを開いた時に人数の表示が 30 人と混ざるのを直しました",
+    "en": "Fixed base and rune names showing in Japanese on the English spam simulator, and people counts mixing when opening an older 100-person share"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "「次の手で狙う」の MOD の表を MOD 一覧と同じ形にしました。開いても列が揃い、ティアごとの出やすさも出ます",
+    "en": "The Target next move mod table now matches the mod list: columns stay aligned when a row opens, and each tier shows its chance"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "エミュレーター: 聖別のお告げで倍率を選ぶと、その倍率以上が出る確率を横に出し、カードの数値を見本に変えるようにしました",
+    "en": "Emulator: Choosing a Sanctification multiplier now shows the chance of at least that multiplier and previews the values on the item card"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター・エミュレーター: エッセンスやルーンが全部打てない時、棚に理由を 1 行出すようにしました",
+    "en": "Simulator & Emulator: The shelf now shows a one-line reason when all Essences or Runes are unusable"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 「テストで回す」の名前を「穴チェック」に。穴チェックに合格するまで「100 人回す」は押せません (PC は乗せると訳、スマホは文で出ます)",
+    "en": "Simulator: \"Test run\" is now \"Gap check\". \"Run 100\" stays locked until the gap check passes (hover on PC, a line of text on phones, tells you why)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 手を替える時に「手だけ替える」を選ぶと、下の箱を残したまま替えられ、100 人の結果を替える前と並べて見られるように",
+    "en": "Simulator: when changing a craft, \"Swap craft only\" keeps the boxes below and shows the 100-run result next to the one before"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: その手で消えない MOD は自動で「残したい MOD」に入るようにし、自動の戻りは消去の結果の箱にだけ付くようにしました",
+    "en": "Simulator: mods a craft can't remove now count as mods to keep automatically, and auto-returns are only added to removal results"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: PC の発現の窓でも発現で選ぶ MOD を何個でも足せるように。発現で選んだ MOD は付いている間、外れにせずその MOD として箱を分けます",
+    "en": "Simulator: the PC reveal window can now add as many mods to pick as you like. A mod picked on reveal stays that mod, not a junk mod, while it's on the item, and boxes split on it"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: エッセンスの手に「ブロックに使う」☑ を足しました。付いた MOD を外れにせず、発現で選んだ MOD と同じように扱います",
+    "en": "Simulator: Essence crafts now have a \"Use as a block\" checkbox. The added mod isn't counted as junk and works like a mod picked on reveal"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: カタリストの品質の箱へは、その品質まで届く人だけ進むように。打てない箱に着いた人は、中身が同じで打てる箱へ移ります",
+    "en": "Simulator: only items that can reach the set quality now move to a Catalyst quality box, and runs that land on a box they can't craft from move to a matching box they can"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成形のカードで、冒涜で付ける MOD を 1 つ目から冒涜の枠・一番下に出すようにしました",
+    "en": "Simulator: on the final item card, desecrated mods now use the desecrated row at the bottom from the first one"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成形に MOD が無い時は「何か 1 つ MOD を決めてください」と知らせて止めるように",
+    "en": "Simulator: a final item with no mods now stops with \"Choose at least 1 mod\""
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 品質の違う箱へ戻る札に「品質 40% のまま」を足しました。戻っても品質は持ったままです",
+    "en": "Simulator: return labels now say \"keeps 40% quality\" when the destination box has a different quality. Quality stays with the item"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーターの完成形の設定: ベースを替える確かめの帯は Esc で帯だけ閉じ、段を移ると消えるように。品質の上限のプルダウンは届く値だけ出すように",
+    "en": "Simulator final item: Esc now closes only the change-base prompt, and it no longer lingers after moving between steps. The max quality dropdown only lists values you can reach"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 外した自動の戻りが、カタリストなどの先の箱に付き直す不具合を直しました",
+    "en": "Simulator: fixed removed auto-returns reappearing on the box after a one-result craft such as a Catalyst"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 白紙に戻しても前の木の「要確認」が残り、回せなくなる不具合を直しました",
+    "en": "Simulator: fixed leftover \"Check\" notices from the previous tree after Clear, which could block runs"
+   }
+  ]
+ },
+ {
   "v": "0.1.651",
   "date": "2026-10-31",
   "items": [
@@ -946,18 +1072,6 @@
     "area": "",
     "text": "シミュレーター: 横の ＋・下の ＋ で箱を足すと、押した側に置いて横の箱をずらし、そのまま整列するように",
     "en": "Simulator: Adding a box with the side or bottom + now places it on the side you pressed, shifts neighboring boxes over, and tidies the tree right away"
-   }
-  ]
- },
- {
-  "v": "0.1.611",
-  "date": "2026-10-26",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "スマホ: 幅の狭い画面 (320 など) でヘッダーの右の「使い方」「要望」が切れていたのを、何も隠さずに収まるよう詰めました",
-    "en": "Phone: On narrow screens (such as 320px wide), the header's Guide and Feedback buttons were cut off on the right; the header is now tightened so everything fits without hiding anything"
    }
   ]
  }
