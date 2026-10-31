@@ -18,5 +18,17 @@ export function usePhone(): Ref<boolean> {
   return phone;
 }
 
+/** シミュの見るだけの幅の上限 (これ未満は組めない、S-94g。エミュの入口も同じ物を見る)。画面の形の境 PHONE_MAX とは別で、形は替えない (U-53) */
+export const VIEW_ONLY_MAX = 768;
+/** 今の窓が見るだけの幅か (窓の大きさが変わったら追う)。部品の中で呼ぶ */
+export function useViewOnlyWidth(): Ref<boolean> {
+  const narrow = (): boolean => typeof window !== "undefined" && window.innerWidth < VIEW_ONLY_MAX;
+  const viewOnly = ref(narrow());
+  const onResize = (): void => { viewOnly.value = narrow(); };
+  onMounted(() => window.addEventListener("resize", onResize));
+  onBeforeUnmount(() => window.removeEventListener("resize", onResize));
+  return viewOnly;
+}
+
 /** 指の端末 (hover の無い画面 = スマホ)。乗せて出すカードを出さない時に */
 export const isTouchOnly = (): boolean => typeof matchMedia === "function" && matchMedia("(hover: none)").matches;
