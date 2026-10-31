@@ -5,7 +5,8 @@
 ## 55 本目 (10-31、宛先はブラック 26 代目 local_81c43944-4243-4b59-9783-b73ec7d42d0b)
 - 済み: モンキー 0652 の S1・S3 を直した (5d14f2eeb)、S2・D1 は誤りでない、フルチェック。全文は共有メモ sim55-fullcheck.md
 - 待ち: S4 の貼った暗黙の値の案 (番号案 S-08b、オーナーの答え)
-- 残り: watch の未調査 4 件 (infinite の題と見本 2・goalQ の完成形の札 1・fg0BCVYy の ↩ 1)・light の ownerAnnul1 (treeLight を出す前に)・place.mjs の P2 (S-142 撤回で古い)・基準と見張りの木の組み直し (10-30 より前の木)
+- watch の 4 件は見張りの古さ: goalQ の札 = S-30b (札はブリーチと途中で消える物だけ)、fg0BCVYy の ↩ = S-50 (手が付いた b8 へ b11 が自動の ↩、rules.mjs の (B) に例外が無い)、infinite の題 2 = 当たりの MOD は合っていて (Essence_Intelligence)、題の短い名「知性」と文「筋力、器用さまたは知性」が違うだけ。題の短い名は小さな不揃いとして残す
+- 残り: light の ownerAnnul1 (treeLight を出す前に)・place.mjs の P2 (S-142 撤回で古い)・基準と見張りの木の組み直し (10-30 より前の木)
 
 ## 54 本目 (10-31、宛先はブラック 25 代目 local_0ac7af37-efdf-444e-8913-b92dd1db208c)
 - 済み: R13・R14・ベースを替える帯の英語・oldBone・スマホの 100 人 (自分の木)・testScene の確かめは誤り 0、結果と案 2 つ (棚の理由 S-30c・品質の戻りの理由 S-50c、オーナーの答え待ち) は共有メモ sim54-checks-and-proposals.md。hex は 07f987697 で 586 → 540。残り 21 件は同じ class 列に色が並ぶ所 (三項の前後を見て直す)
