@@ -5,7 +5,6 @@ date: 2026-11-01
 tags: Chaos Orb, odds, Greater, Perfect, rules
 craft: /?base=Drakeskin%20Boots
 ready: true
-draft: true
 ---
 Yes. In PoE2 **a Chaos Orb can add back the same mod it just removed, in the same use**. It removes one mod first, then rolls a new one on the item as it is after the removal, so the removed mod is back in the pool. On our boots example the exact same tier returned about 1-2.3% of the time per orb, and about 9% counting other tiers of the same mod.
 
