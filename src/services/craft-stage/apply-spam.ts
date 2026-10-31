@@ -5,6 +5,7 @@
  * 乱数を使わないので、再生 (手順 JSON) でも同じ形に飛ぶ。1 つ戻すでこの行ごと消える
  */
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
+import { replaceBlock } from "./augment-rules";
 import { addStartMods } from "./run-plan";
 import { mulberry32 } from "../htc/rng";
 import { allMods, type Force } from "./stage-core";
@@ -42,7 +43,10 @@ function wearRunes(data: PatchData, item: StageItem, runes: readonly string[]): 
   let it: StageItem = { ...item, sockets: Math.max(had, Math.min(baseSocketsOf(item.base, item.cls.category), (item.augments?.length ?? 0) + missing.length)) };
   for (const en of missing) {
     const now = it.augments ?? [];
-    const swap = now.length < (it.sockets ?? 0) ? -1 : now.findIndex((a) => spare.includes(a.en));
+    const full = now.length >= (it.sockets ?? 0);
+    const swap = full ? now.findIndex((a) => spare.includes(a.en) && !replaceBlock(a)) : -1;
+    // 満杯で置き換えられる物が無ければ嵌めない (番号なしで打つと当たった形のルーンを置き換えてしまう)
+    if (full && swap < 0) { const a = now.find((x) => spare.includes(x.en)); return (a && replaceBlock(a)) ?? tr("置き換えられる物が無い", "Nothing can be replaced"); }
     const r = applyRune(it, `${RUNE_PREFIX}${en}${swap >= 0 ? `@${swap + 1}` : ""}`, data);
     if (!r.applied) return r.reason ?? tr("ルーンを嵌められない", "Can't socket the rune");
     if (swap >= 0) spare.splice(spare.indexOf(now[swap]!.en), 1);
