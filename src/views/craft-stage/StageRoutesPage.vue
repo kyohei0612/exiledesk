@@ -19,7 +19,7 @@ import { revealNext } from "../../utils/keep-place";
 import StageRoutesIntro from "./StageRoutesIntro.vue";
 import StageRouteRunes from "./StageRouteRunes.vue";
 import StageRouteLuck from "./StageRouteLuck.vue";
-import { hitItemOf, placeOnStage } from "./route-place";
+import { hitItemOf, placeOnStage, runesFit } from "./route-place";
 import { GRADE_KEY, type Grade } from "../../services/craft-stage/engine";
 import { raceOne, unpackRace, type RaceRow, routeRunesFor, wearAimRunes } from "../../services/emulator/emu-engine";
 import { displayCurrency } from "../../state/display-currency";
@@ -75,7 +75,10 @@ const FROM_ON = true;
 const fromItem = shallowRef<StageItem | null>(null);
 const canFrom = computed(() => FROM_ON && s.item.value?.rarity === "rare" && s.item.value.prefixes.length + s.item.value.suffixes.length > 0);
 /** 実際に打ち始める形: 今のアイテムに狙いのルーンが足りなければ嵌めた形 (M-63)。クラフト台は当たった形を置くまで変わらない */
-const fromStart = computed(() => (fromItem.value && s.data.value ? wearAimRunes(s.data.value, fromItem.value, runeNeed.value) : null));
+const fromWorn = computed(() => (fromItem.value && s.data.value ? wearAimRunes(s.data.value, fromItem.value, runeNeed.value) : null));
+const fromStart = computed(() => fromWorn.value?.item ?? null);
+/** 狙いが全部、嵌められないルーンの MOD = どの道でも付かない (M-63。計算開始を灰色に) */
+const fromBlocked = computed(() => !!fromWorn.value && aims.value.length > 0 && aims.value.every((a) => !!a.m.rune && fromWorn.value!.failed.includes(a.m.rune)));
 /** 今のアイテムに足した / 置き換えで外れたルーンの名前 (足りている時は null) */
 const fromRunes = computed(() => {
   const was = fromItem.value, now = fromStart.value;
@@ -148,7 +151,7 @@ const started = ref(false);
 /** 出ている結果がシェアした人の物 (自分で計算した 1 回目は「1 回目」のまま) */
 const fromShare = ref(false);
 function start(): void {
-  if (busy.value || !t.value) return;
+  if (busy.value || !t.value || fromBlocked.value) return;
   if (started.value) { seed.value = newSeed(); if (!fromShare.value) round.value++; }
   fromShare.value = false;
   started.value = true;
@@ -237,7 +240,7 @@ const canLuck = (r: RaceRow): boolean => !r.off && r.tries.length > 0;
  * 当たった形でクラフト台に戻る (道のカード・一番安い欄から。2026-10-22 オーナー「スパムしてクラフトに戻れるけど、付いた状態で戻れない」)。
  * その道・等級で 1 人を当たるまで打ち、その形を置く。工程の 1 行の費用は 100 人の平均 (route-place.ts)。付かなければ何もしない
  */
-const placeMiss = ref(false);
+const placeMiss = ref<"" | "cap" | "rune">("");
 /** 裏で 1 人回している (読み込み中の札) */
 const placing = ref(false);
 /** 計算の進み: 終わった人数 (全部の道 × 等級を通して。読み込み中の n/m) */
@@ -253,7 +256,8 @@ async function placeHit(r: RaceRow | null): Promise<void> {
   const hit = await hitItemOf(r, tt, ilvl.value, prep.value, fromStart.value);
   placing.value = false;
   track("routes:place", r.route);
-  placeMiss.value = !hit || !placeOnStage(hit.item, r, { cost: r.avgCost, n: hit.n, avg: true });
+  if (hit && !runesFit(hit.item)) { placeMiss.value = "rune"; return; }
+  placeMiss.value = !hit || !placeOnStage(hit.item, r, { cost: r.avgCost, n: hit.n, avg: true }) ? "cap" : "";
 }
 /** 道の中で一番安い、運試しができる等級 */
 const bestIn = (route: RouteKind): RaceRow | null => { const xs = ok.value.filter((r) => r.route === route && canLuck(r)); return xs.length ? xs.reduce((a, b) => (b.avgCost < a.avgCost ? b : a)) : null; };
@@ -330,10 +334,11 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
           </span>
           <p class="mt-2 flex flex-wrap justify-center gap-2"><button type="button" data-routes-pick class="g-btn sm" :disabled="busy" @click="pickMod">{{ tr("MOD を選び直す", "Change mod") }}</button><button v-if="ROUTES_MULTI_ON && aims.length < ROUTES_MAX" type="button" data-routes-add class="g-btn sm" :disabled="busy" :title="tr(`当たりを ${ROUTES_MAX} つまで並べられる (どれか 1 つが付いたら止める)`, `Up to ${ROUTES_MAX} targets (stops when any one rolls)`)" @click="pickMod">{{ tr("＋ 当たりを足す", "+ Add target") }}</button></p>
           <!-- 計算開始 ⇔ 中止 (同じ場所のボタンが変わる) -->
-          <p class="mt-2"><button type="button" data-routes-start class="min-h-11 w-full max-w-[16rem]" :class="busy ? 'g-btn' : 'g-btn-red'" @click="busy ? stop() : start()">{{ busy ? tr(`中止 (${rows.length} / ${ORDER.length})`, `Stop (${rows.length} / ${ORDER.length})`) : started ? tr(`別の ${RUNS} 人でもう一度計算`, `Again with another ${RUNS}`) : tr("計算開始", "Start") }}</button></p>
+          <p class="mt-2"><button type="button" data-routes-start class="min-h-11 w-full max-w-[16rem]" :class="busy ? 'g-btn' : 'g-btn-red'" :disabled="fromBlocked" @click="busy ? stop() : start()">{{ busy ? tr(`中止 (${rows.length} / ${ORDER.length})`, `Stop (${rows.length} / ${ORDER.length})`) : started ? tr(`別の ${RUNS} 人でもう一度計算`, `Again with another ${RUNS}`) : tr("計算開始", "Start") }}</button></p>
           <!-- 読み込み中 (計算の 100 人 × 道・等級 / 裏で 1 人回す)。2026-10-22 オーナー「待ち時間の表示が無いとバグってるのか分からない」 -->
           <p v-if="busy || placing" class="mt-1.5"><BusyTag :text="placing ? tr('当たるまで回し中', 'Rolling until it hits') : tr(`${RUNS} 人ずつ計算中`, `Calculating ${RUNS} people each`)" :n="placing ? undefined : peopleDone" :of="placing ? undefined : ORDER.length * RUNS" /></p>
-          <p v-if="fromRunes" data-routes-from-runes class="mt-3 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ fromRunes.out ? tr(`今のアイテムの ${fromRunes.out} を ${fromRunes.put} に置き換えた形から打つ (ルーンの代は入れない。クラフト台は当たった形を置くまで変わらない)`, `Starts with ${fromRunes.put} in place of ${fromRunes.out} on the current item (rune cost not included; the craft stage only changes when you place a hit)`) : tr(`今のアイテムに ${fromRunes.put} を嵌めた形から打つ (ルーンの代は入れない。クラフト台は当たった形を置くまで変わらない)`, `Starts with ${fromRunes.put} socketed on the current item (rune cost not included; the craft stage only changes when you place a hit)`) }}</p>
+          <p v-if="fromBlocked" data-routes-from-blocked class="mt-3 text-[12px] text-rose-300">{{ fromItem?.corrupted ? tr("コラプトしたアイテムにはルーンを嵌められないので付かない", "Runes can't be socketed on a corrupted item, so this mod can't roll") : tr("嵌まっているルーンを外せないので付かない", "The socketed runes can't be removed, so this mod can't roll") }}</p>
+          <p v-else-if="fromRunes" data-routes-from-runes class="mt-3 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ fromRunes.out ? tr(`今のアイテムの ${fromRunes.out} を ${fromRunes.put} に置き換えた形から打つ (ルーンの代は入れない。クラフト台は当たった形を置くまで変わらない)`, `Starts with ${fromRunes.put} in place of ${fromRunes.out} on the current item (rune cost not included; the craft stage only changes when you place a hit)`) : tr(`今のアイテムに ${fromRunes.put} を嵌めた形から打つ (ルーンの代は入れない。クラフト台は当たった形を置くまで変わらない)`, `Starts with ${fromRunes.put} socketed on the current item (rune cost not included; the craft stage only changes when you place a hit)`) }}</p>
           <p v-else-if="fromItem" class="mt-3 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("ルーンは今のアイテムに嵌めている物のまま", "Runes stay as socketed on the current item") }}</p>
           <StageRouteRunes v-else class="mt-3 flex flex-col items-center" :picked="runeIds" :required="runeNeed" :disabled="busy" @change="setRunes" />
         </div>
@@ -429,7 +434,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
             <button type="button" :data-route-luck-card="r.route" class="g-btn sm" :class="luckRow === bestIn(r.route) ? 'on' : ''" :title="tr(`${tr(r.ja, r.en)}の一番安い等級 (${tr(...GRADE_JA[bestIn(r.route)!.grade])}) で運試し`, `Luck test with ${r.en} at its cheapest grade (${GRADE_JA[bestIn(r.route)!.grade][1]})`)" @click="openLuck(bestIn(r.route))">{{ tr("運試し", "Luck test") }}</button>
             <button v-if="!MONKEY || !(luckRow && luckRow.route === r.route)" type="button" :data-route-place-card="r.route" class="g-btn sm ml-2" :disabled="placing" :title="placeTitle" @click="placeHit(bestIn(r.route))">{{ tr("当たった形でクラフト台に戻る", "Back to the craft stage with a hit") }}</button>
           </p>
-          <p v-if="placeMiss && !busy && bestIn(r.route)" class="mt-1 text-center text-[11px] text-rose-300">{{ tr("上限の手数までに付かなかった。もう一度押して", "Didn't hit within the use cap. Press again") }}</p>
+          <p v-if="placeMiss && !busy && bestIn(r.route)" class="mt-1 text-center text-[11px] text-rose-300">{{ placeMiss === "rune" ? tr("ルーンを嵌められないので置けない", "Can't place it: the rune can't be socketed") : tr("上限の手数までに付かなかった。もう一度押して", "Didn't hit within the use cap. Press again") }}</p>
         </article>
       </div>
 

@@ -37,14 +37,24 @@ function runeKeyOf(id: string): string | null {
 
 /**
  * 今のアイテムからの始めの形: 狙いのルーンが足りなければ嵌めた形を返す (足りていれば item のまま。M-63、オーナー 10-31「bやね、どーせクラフトに戻れるでしょ？スパムではめても」)。
- * 嵌め方は当たった形を置く時と同じ spam: の手 (M-64: ソケットを開け、足りなければ狙いのルーン以外と置き換える)。規格外のソケットの数まで
+ * 嵌め方は当たった形を置く時と同じ spam: の手 (M-64: ソケットを開け、足りなければ狙いのルーン以外と置き換える)。嵌められないルーンは failed に返す
  */
-export function wearAimRunes(data: PatchData, item: StageItem, ids: readonly string[]): StageItem {
-  const runes = ids.slice(0, baseSocketsOf(item.base, item.cls.category)).flatMap((id) => { const k = runeKeyOf(id); return k ? [k.slice(RUNE_PREFIX.length)] : []; });
-  const worn = (item.augments ?? []).map((a) => a.en);
-  if (runes.every((en) => worn.includes(en))) return item;
-  const res = applyCurrency(data, item, spamKey({ route: "", grade: "", cost: 0, n: 0, avg: false, rarity: item.rarity, mods: forcesOf(item), runes }), mulberry32(1), []);
-  return res.applied ? res.item : item;
+export function wearAimRunes(data: PatchData, item: StageItem, ids: readonly string[]): { item: StageItem; failed: string[] } {
+  let out = item;
+  const ok: string[] = [], failed: string[] = [];
+  for (const id of ids) {
+    const key = runeKeyOf(id);
+    const worn = key ? wearRunesOn(data, item, [...ok, key.slice(RUNE_PREFIX.length)]) : null;
+    if (worn) { out = worn; ok.push(key!.slice(RUNE_PREFIX.length)); } else failed.push(id);
+  }
+  return { item: out, failed };
+}
+/** 英語名のルーンを全部嵌めた形 (もう全部あれば item のまま、嵌められなければ null)。当たった形を置く時と同じ spam: の手 */
+export function wearRunesOn(data: PatchData, item: StageItem, runes: readonly string[]): StageItem | null {
+  const spare = (item.augments ?? []).map((a) => a.en);
+  if (runes.every((en) => { const i = spare.indexOf(en); if (i >= 0) spare.splice(i, 1); return i >= 0; })) return item;
+  const res = applyCurrency(data, item, spamKey({ route: "", grade: "", cost: 0, n: 0, avg: false, rarity: item.rarity, mods: forcesOf(item), runes: [...runes] }), mulberry32(1), []);
+  return res.applied ? res.item : null;
 }
 
 /** 始めのアイテムの下ごしらえ: ソケットを規格外まで開けて、選んだルーンを嵌める (route-race.ts の prep) */

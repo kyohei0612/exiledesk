@@ -22,7 +22,7 @@ import { logRecord } from "../../utils/log-record";
 import { isEn, tr } from "../../i18n/lang";
 import StageItemCard from "../../components/for-share/item/StageItemCard.vue";
 import { revealNext } from "../../utils/keep-place";
-import { placeOnStage } from "./route-place";
+import { placeOnStage, runesFit } from "./route-place";
 
 /** options = 同じ道の等級 (着いた物。タブと比べに出す。2026-10-19 オーナー「等級も選べるように、カオススパム計算機の形で」) */
 const props = defineProps<{ row: RaceRow; options: RaceRow[]; /** 当たり (どれか 1 つが付いたら止める) と、その名前 (同じ順) */ targets: readonly RaceTarget[]; aimLabels: readonly string[]; ilvl: number; label: string; routeName: string; /** 嵌めるルーン (始めのアイテムの下ごしらえ) */ prep?: RoutePrep; runes: readonly string[]; /** 始めのアイテム (今のクラフトのアイテムから。route-race.ts の from。シェアは出さない) */ from?: StageItem | null; /** 全部の道の結果 (シェアに入れる) */ rows: RaceRow[] }>();
@@ -54,6 +54,8 @@ const cost = ref(0);
 const last = ref<{ key: string; omens: string[] } | null>(null);
 const spamming = ref(false);
 const result = ref<{ hit: boolean; n: number; cost: number; rank: number | null; reason: string | null } | null>(null);
+/** ルーンを嵌められず置けなかった (M-64) */
+const noPlace = ref(false);
 function fresh(): void {
   stop();
   item.value = null;
@@ -62,6 +64,7 @@ function fresh(): void {
   if (run && !props.from) run.item = { ...run.item, rollSeed: s.seed.value - 1 };
   sync();
   result.value = null;
+  noPlace.value = false;
 }
 /** 直前の描き直しから付いた・消えた MOD (札の緑と取り消し線。エミュレーターの 1 手分と同じ見せ方) */
 const added = ref<StageMod[]>([]);
@@ -176,7 +179,9 @@ const shareText = computed(() => {
  * ここから開始 / 当たった形でクラフト台に戻る (2026-10-19 オーナー「ここから始めるボタンが無い」): この欄のアイテムをクラフト台に置いて、ページを閉じる (route-place.ts)
  */
 function startHere(): void {
-  if (item.value) placeOnStage(item.value, props.row, { cost: cost.value, n: n.value, avg: false });
+  if (!item.value) return;
+  noPlace.value = !runesFit(item.value);
+  if (!noPlace.value) placeOnStage(item.value, props.row, { cost: cost.value, n: n.value, avg: false });
 }
 /** ここから開始の説明 */
 const startTitle = computed(() => tr("このアイテムをクラフト台に置いて続きを打つ (工程に 1 行、費用はこの運試しの分。1 つ戻す・Ctrl+Z で消える)", "Put this item on the craft stage and keep crafting (one step, cost = this luck test; Undo / Ctrl+Z removes it)"));
@@ -241,6 +246,7 @@ function shareX(e: MouseEvent): void {
           <button type="button" class="g-btn sm" :title="startTitle" @click="startHere">{{ tr("ここから開始", "Continue from here") }}</button>
         </span>
       </template>
+      <p v-if="noPlace" data-route-no-place class="mt-1 text-[11px] text-rose-300">{{ tr("ルーンを嵌められないので置けない", "Can't place it: the rune can't be socketed") }}</p>
       <!-- 100 人の結果 (カオススパム計算機と同じ並び) -->
       <p class="mt-4 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr(`${people} 人が同じ始めの状態からスパムしたら`, `If ${people} people spammed from the same start`) }}</p>
       <dl class="mt-1 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-[13px]">
