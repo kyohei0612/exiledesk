@@ -9,7 +9,8 @@ import { computed } from "vue";
 import { tr } from "../../../i18n/lang";
 import { useShelf } from "../../../state/for-share/shelf-context";
 import { catalystOf } from "../../../services/craft-stage/engine";
-import { CATALYSING_PER_PCT, tunedCatalysingMultiplier } from "../../../services/craft-stage/engine";
+import { CATALYSING_PER_PCT, sanctifyChanceAtLeast, tunedCatalysingMultiplier } from "../../../services/craft-stage/engine";
+import { flag } from "../../../web/release-flags";
 import { SANCTIFY_SELECT, SANCTIFY_STEPS, sanctifyLabel } from "./sanctify-steps";
 import { catalysingPerPct, sanctifyK, setCatalysingPerPct, setSanctifyK, TUNING_ON } from "../../../state/for-share/stage-tuning";
 
@@ -28,6 +29,9 @@ function onRate(e: Event): void {
 }
 // 聖別の帯と同じ選び (sanctify-steps.ts)
 const steps = SANCTIFY_STEPS, label = sanctifyLabel, sel = SANCTIFY_SELECT;
+/** 選んだ倍率以上が 1 MOD に出る確率 (スイッチ sanctifyHint、M-55) */
+const HINT = flag("sanctifyHint");
+const chance = computed(() => (sanctifyK.value != null ? `${(sanctifyChanceAtLeast(sanctifyK.value / 100) * 100).toFixed(1)}%` : ""));
 </script>
 
 <template>
@@ -48,6 +52,7 @@ const steps = SANCTIFY_STEPS, label = sanctifyLabel, sel = SANCTIFY_SELECT;
       <select v-if="sanctifyK != null" :class="sel" :value="sanctifyK" @change="setSanctifyK(Number(($event.target as HTMLSelectElement).value))">
         <option v-for="n in steps" :key="n" :value="n">{{ label(n) }}</option>
       </select>
+      <span v-if="HINT && sanctifyK != null" data-sanctify-chance class="tabular-nums text-amber-200/80" :title="tr('1 MOD がこの倍率以上になる確率', 'Chance that one mod gets at least this multiplier')">／ {{ chance }}</span>
     </template>
   </div>
 </template>

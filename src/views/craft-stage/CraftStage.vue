@@ -36,7 +36,8 @@ import { openSharedRecipe } from "../../state/for-share/sim-links";
 import StageAimPicker from "./StageAimPicker.vue";
 import CurrencyShelf from "../../components/for-share/shelf/CurrencyShelf.vue";
 import StageHistory from "./StageHistory.vue";
-import { forceKey, isRune, type StageMod, isSanctifySet, runeNameOf, RUNE_PREFIX, IMPLICIT_SET, isCatalystSet, isQualitySet, QUALITY_CAP } from "../../services/craft-stage/engine";
+import { forceKey, isRune, type StageMod, isSanctifySet, runeNameOf, RUNE_PREFIX, IMPLICIT_SET, isCatalystSet, isQualitySet, QUALITY_CAP, sanctifyPreview } from "../../services/craft-stage/engine";
+import { sanctifyK } from "../../state/for-share/stage-tuning";
 import { previewUse, unsocketKey, sanctifySetKey, catalystSetKey, implicitSetKey, qualityCapKey, qualitySetKey } from "../../services/emulator/emu-engine";
 import { courseActive as inLesson, courseHidesEmulator, courseHidesShelf, endLesson, CourseHost } from "../tutorial/course-entry"; // チュートリアルのコースの間 (2026-10-17)。隠す判定は course-host に 1 か所 (R4 手 2)
 import RevealPanel from "./RevealPanel.vue";
@@ -166,6 +167,12 @@ function setImplicit(line: number, values: number[]): void {
 /** 聖別の数値 (聖別の帯)。続けて変えた分は 1 手にまとめる (品質と同じ) */
 /** 聖別の帯は本番では OK まで出さない (release-flags の sanctifyBar。v0.1.589 から本番は帯の所だけ隠していた) */
 const SANCTIFY_BAR = flag("sanctifyBar");
+/** 聖別の倍率を決めている間のカードの見本 (今の値 × 倍率、スイッチ sanctifyHint、M-55)。打つまでアイテムは変わらない。打てない時は null */
+const sanctifySample = computed(() => {
+  const it = s.item.value, d = s.data.value;
+  if (!flag("sanctifyHint") || !it || !d || s.replay.value || sanctifyK.value == null || !s.omens.value.includes("OmenofSanctification") || s.usable("divine")) return null;
+  return sanctifyPreview(d, it, sanctifyK.value / 100);
+});
 /** カードの MOD を押してもフラクチャー (右クリックと同じ手、M-18。スイッチ clickFracture) */
 const CLICK_FRACTURE = flag("clickFracture");
 function setSanctify(k: number | "max" | "min"): void {
@@ -253,7 +260,7 @@ function pickMode(m: typeof s.mode.value): void {
     <!-- 設定と操作 (StageSettings.vue) -->
     <StageSettings :phone="phone" />
     <!-- スマホ: アイテムのカードが画面の外に出たら上に要約を貼る (2026-10-09 オーナー「下にスクロールしても MOD 付いても見えん」) -->
-    <StageItemMini v-if="phone && !cardOnScreen && s.item.value && (s.mode.value === 'hand' || s.replay.value)" :item="s.item.value" :added="s.last.value?.added ?? []" :removed="s.last.value?.removed ?? []" />
+    <StageItemMini v-if="phone && !cardOnScreen && s.item.value && (s.mode.value === 'hand' || s.replay.value)" :item="sanctifySample ?? s.item.value" :added="s.last.value?.added ?? []" :removed="s.last.value?.removed ?? []" />
     <!-- 読めなかった時は「もう一度」(web/MarketNotice.vue と同じ。2026-10-10 動きの揃え 8) -->
     <p v-if="s.error.value" class="mb-3 flex items-center gap-3 rounded-lg bg-rose-500/10 px-3 py-2 text-rose-300"><span class="min-w-0 flex-1">{{ s.error.value }}</span><button v-if="!s.data.value" type="button" class="g-btn sm shrink-0" @click="retryInit">{{ tr("もう一度", "Retry") }}</button></p>
     <p v-if="!s.ready.value && !s.error.value" class="py-12 text-center"><BusyTag :text="tr('クラフトのデータを読み込み中', 'Loading craft data')" /></p>
@@ -275,7 +282,8 @@ function pickMode(m: typeof s.mode.value): void {
         <div ref="cardEl" class="relative" :class="[fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
         <StageItemCard
           :doomed="doomed" :open="preview?.open"
-          :item="s.item.value!"
+          :item="sanctifySample ?? s.item.value!"
+          :note="sanctifySample ? tr('見本です。打つと数値は振り直されます', 'Preview only. Values reroll when you craft') : undefined"
           :added="s.last.value?.added ?? []"
           :removed="s.last.value?.removed ?? []"
           :holding="!!s.held.value && !s.replay.value"
