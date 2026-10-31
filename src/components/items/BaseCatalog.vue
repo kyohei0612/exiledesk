@@ -341,8 +341,9 @@ function revealPanel(bottomFirst = false): void {
 }
 // 今のベースがある時 (選び直し) は、開いた時にその部位の一覧が全部見えるまで送る。エミュのベースのページもシミュの完成形の設定も同じ (2026-10-23 オーナー
 // 「展開した時の動きをエミュとシミュで一緒に」。前はエミュのページだけが自分で reveal を呼んでいた)。送る先は一番近い送りの箱 (ページ / 窓の本文)
-// 上のタブで来た直後は送らない (cameByTab、スイッチ backPlace)
-onMounted(() => { void nextTick(() => { if (props.selected && family.value && !cameByTab()) reveal(); else placeUnder(family.value); }); });
+// 上のタブで来た直後は送らない (cameByTab、スイッチ backPlace)。ただし PC で一覧が開いている時は選び直しなので送る (U-27、スイッチ baseReopen。オーナー 11-01「展開してるのにスクロールしないから指輪ベースかえるときいやだ」)
+const tabStay = (): boolean => cameByTab() && (phone.value || !flag("baseReopen"));
+onMounted(() => { void nextTick(() => { if (props.selected && family.value && !tabStay()) reveal(); else placeUnder(family.value); }); });
 // データや今のベースが後から届いた時 (?page=base を直に開く・再読み込み。最初は未選択の "" で作られる): 両方そろった最初の時に、
 // 今のベースの種類と部位を決め直し、開いた時と同じに送る (前は何も開かなかった、2026-10-23)
 const known = (): boolean => all.value.length > 0 && !!all.value.find((b) => b.en === props.selected);
@@ -352,7 +353,7 @@ watch(known, (now, was) => {
   if (phone.value || family.value) return;
   cls.value = all.value.find((b) => b.en === props.selected)!.cls;
   family.value = familyOfCls(cls.value);
-  void nextTick(() => { if (family.value && !cameByTab()) reveal(); });
+  void nextTick(() => { if (family.value && !tabStay()) reveal(); });
 });
 /**
  * 「もっと見る」で広げた時: 伸びた一覧の下 (たたむの帯 + 少し) が切れていれば、そこまで送る (一覧の上は画面から出さない)。
