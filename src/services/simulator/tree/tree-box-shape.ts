@@ -15,11 +15,12 @@ import type { TreeDoc } from "./tree-model";
  * 10-28 オーナー「プレ 3 MOD どれがフラクチャーでも同一と扱う、サフィも同様、ただしプレとサフィは明確に別」)、最後にレアリティ。
  * 例 `1.0.0.1|0.0.0.0|✦g1j0.g0j0|rare`。スイッチ boxShape が閉じている間は前の外れの鍵 (`n.c.x|n.c.x`、10-27 夕 goalShape)
  */
-export function bodyOf(data: PatchData, d: TreeDoc, it: StageItem, held?: ReadonlySet<string>): string {
+export function bodyOf(data: PatchData, d: TreeDoc, it: StageItem, held?: ReadonlySet<string>, placed?: ReadonlySet<string>): string {
   const goals = new Set((d.memoAims ?? []).map((a) => a.modId));
   // held = その箱 (その人) が道で持っている狙いの MOD。渡すと、持っていない完成形の MOD は外れに数える (☑ の無い狙いは外れ、S-22・S-82。
   // 数えないと、カオスの外れの見本のうち完成形の MOD を引いた見本だけ体が変わり mixed になって、同じ形の箱へつながらなかった、10-28 夜オーナー「一緒のMODがふくすうあるけど認識されない」)
-  const aim = (id: string): boolean => goals.has(id) && (!held || held.has(id));
+  // placed = 付いている置き石の MOD (完成形に無いが外れに数えない、S-33)
+  const aim = (id: string): boolean => (goals.has(id) && (!held || held.has(id))) || !!placed?.has(id);
   const side = (ms: readonly StageMod[]): string => {
     let n = 0, c = 0, x = 0, u = 0;
     for (const m of ms) { if (m.fractured || aim(m.modId)) continue; if (m.unrevealed) u++; else if (m.desecrated || m.unrevealed) x++; else if (m.crafted || craftedKindOf(data, m)) c++; else n++; }

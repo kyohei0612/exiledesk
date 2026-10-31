@@ -9,6 +9,7 @@ import { isAimMod } from "../../../services/simulator/tree/tree-aim";
 import type { Aim, Hand, OutKind, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { heldSets } from "../../../services/simulator/tree/tree-shape";
 import { aimedOfSample } from "../../../services/simulator/tree/tree-judge";
+import { placedAims } from "../../../services/simulator/tree/tree-veil";
 /** 外れの側の箱 (道で付いた狙いだけを狙いに数える) */
 const MISS_OUTS: readonly OutKind[] = ["junk", "lost", "junkGone", "any"];
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
@@ -53,7 +54,9 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   if (missBox && !am) for (const m of doc.start?.mods ?? []) { const g = (doc.memoAims ?? []).find((x) => x.modId === m.modId); if (g && !held.some((h) => h.modId === m.modId)) held.push({ modId: g.modId, tier: g.tier }); }
   // 当たりの箱の札の MOD は、その箱では狙い (発現で選んだ置き石も。以降の箱では外れ MOD。スイッチ boneLater)
   const ownAim = box?.id && box.out === "hit" ? doc.boxes[box.id]?.aim : null;
-  const aims = targetsOf(d, [...(missBox ? held : [...aimsOf(doc), ...(doc.memoAims ?? [])]), ...(ownAim ? [ownAim] : [])]), bad = targetsOf(d, unwanted.map((u) => ({ modId: u, tier: 99 }))), o = aimOpts(d);
+  // 以降の箱でも見本に付いている置き石は狙い (S-33、スイッチ keepOutside)
+  const placed = box?.id ? placedAims(doc).filter((a) => aimedOfSample(box.id!, it)?.has(a.modId)) : [];
+  const aims = targetsOf(d, [...(missBox ? held : [...aimsOf(doc), ...(doc.memoAims ?? [])]), ...placed, ...(ownAim ? [ownAim] : [])]), bad = targetsOf(d, unwanted.map((u) => ({ modId: u, tier: 99 }))), o = aimOpts(d);
   const goalT = targetsOf(d, doc.memoAims ?? []);
   for (const m of [...it.prefixes, ...it.suffixes]) {
     // 未発現の枠は元の文 (未発現の冒涜 MOD) のまま (スイッチ boneLater)
