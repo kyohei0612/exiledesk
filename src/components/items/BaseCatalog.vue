@@ -25,7 +25,7 @@ import { vFitText } from "../../utils/fit-text";
 const OPEN_FIX = flag("monkey1023");
 
 /** popular: 一番上に「人気のベース」の段を出す (初めての人のベース選び。2026-10-11 オーナー「解析で人気のベースをそのまま選択させる」) */
-const props = defineProps<{ data: PatchData | null; selected?: string | null; extras?: boolean; note?: (en: string) => string; height?: string; popular?: boolean }>();
+const props = defineProps<{ data: PatchData | null; selected?: string | null; extras?: boolean; note?: (en: string) => string; height?: string; popular?: boolean; /** 開いているのは人が選んだベースでない (シミュの白紙の木の既定の金の指輪)。上のタブで来ても送らない */ notChosen?: boolean }>();
 const emit = defineEmits<{ pick: [en: string] }>();
 
 const all = computed(() => (props.data ? baseCatalog(props.data, !!props.extras) : []));
@@ -342,7 +342,7 @@ function revealPanel(bottomFirst = false): void {
 // 今のベースがある時 (選び直し) は、開いた時にその部位の一覧が全部見えるまで送る。エミュのベースのページもシミュの完成形の設定も同じ (2026-10-23 オーナー
 // 「展開した時の動きをエミュとシミュで一緒に」。前はエミュのページだけが自分で reveal を呼んでいた)。送る先は一番近い送りの箱 (ページ / 窓の本文)
 // 上のタブで来た直後は送らない (cameByTab、スイッチ backPlace)。ただし PC で一覧が開いている時は選び直しなので送る (U-27、スイッチ baseReopen。オーナー 11-01「展開してるのにスクロールしないから指輪ベースかえるときいやだ」)
-const tabStay = (): boolean => cameByTab() && (phone.value || !flag("baseReopen"));
+const tabStay = (): boolean => cameByTab() && (phone.value || !flag("baseReopen") || !!props.notChosen);
 onMounted(() => { void nextTick(() => { if (props.selected && family.value && !tabStay()) reveal(); else placeUnder(family.value); }); });
 // データや今のベースが後から届いた時 (?page=base を直に開く・再読み込み。最初は未選択の "" で作られる): 両方そろった最初の時に、
 // 今のベースの種類と部位を決め直し、開いた時と同じに送る (前は何も開かなかった、2026-10-23)

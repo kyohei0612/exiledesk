@@ -25,6 +25,8 @@ withDefaults(defineProps<{
   lead?: string;
   /** 「金の指輪ですぐ試す」を出す */
   quick?: boolean;
+  /** 今のベースは人が選んだ物でない (BaseCatalog の notChosen) */
+  notChosen?: boolean;
 }>(), { popular: false, intro: false, title: undefined, lead: undefined, quick: true });
 /** pick = カタログで選んだベース、quick = 「すぐ試す」(カタログの選択とは分ける。エミュは人が選んだベースだけを選んだ見た目にする、2026-10-23) */
 const emit = defineEmits<{ pick: [en: string]; quick: [] }>();
@@ -43,6 +45,6 @@ const emit = defineEmits<{ pick: [en: string]; quick: [] }>();
       <button v-if="quick" type="button" data-base-quick class="g-btn-red min-h-11 shrink-0 px-2 text-[14px] max-md:w-full" @click="emit('quick')">{{ tr("金の指輪ですぐ試す", "Try now with a Gold Ring") }}</button>
     </div>
     <!-- 未選択の時は前のベース・種類を選んだ状態にしない・人気のベースを上に -->
-    <div class="rounded-lg bg-black/30 p-4 max-md:p-2"><BaseCatalog :data="s.data.value" :selected="selected" :popular="popular" @pick="(en) => emit('pick', en)" /></div>
+    <div class="rounded-lg bg-black/30 p-4 max-md:p-2"><BaseCatalog :data="s.data.value" :selected="selected" :popular="popular" :not-chosen="notChosen" @pick="(en) => emit('pick', en)" /></div>
   </div>
 </template>
