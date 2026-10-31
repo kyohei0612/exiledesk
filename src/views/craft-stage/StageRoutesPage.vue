@@ -21,7 +21,7 @@ import StageRouteRunes from "./StageRouteRunes.vue";
 import StageRouteLuck from "./StageRouteLuck.vue";
 import { hitItemOf, placeOnStage } from "./route-place";
 import { GRADE_KEY, type Grade } from "../../services/craft-stage/engine";
-import { raceOne, unpackRace, type RaceRow, routeRunesFor } from "../../services/emulator/emu-engine";
+import { raceOne, unpackRace, type RaceRow, routeRunesFor, wearAimRunes } from "../../services/emulator/emu-engine";
 import { displayCurrency } from "../../state/display-currency";
 import { tr } from "../../i18n/lang";
 import { track } from "../../utils/track";
@@ -74,6 +74,16 @@ const prep = computed(() => (s.data.value && !fromItem.value ? runePrep(s.data.v
 const FROM_ON = true;
 const fromItem = shallowRef<StageItem | null>(null);
 const canFrom = computed(() => FROM_ON && s.item.value?.rarity === "rare" && s.item.value.prefixes.length + s.item.value.suffixes.length > 0);
+/** 実際に打ち始める形: 今のアイテムに狙いのルーンが足りなければ嵌めた形 (M-63)。クラフト台は当たった形を置くまで変わらない */
+const fromStart = computed(() => (fromItem.value && s.data.value ? wearAimRunes(s.data.value, fromItem.value, runeNeed.value) : null));
+/** 今のアイテムに足した / 置き換えで外れたルーンの名前 (足りている時は null) */
+const fromRunes = computed(() => {
+  const was = fromItem.value, now = fromStart.value;
+  if (!was || !now || was === now) return null;
+  const a = (was.augments ?? []).map((x) => x.en), b = (now.augments ?? []).map((x) => x.en);
+  const names = (xs: string[]): string => xs.map((en) => nameOf(`rune:${en}`)).join(" · ");
+  return { put: names(b.filter((x) => !a.includes(x))), out: names(a.filter((x) => !b.includes(x))) };
+});
 function setFrom(on: boolean): void {
   if (!!fromItem.value === on) return;
   fromItem.value = on ? s.item.value : null;
@@ -88,7 +98,7 @@ const OFF_EN: Record<string, string> = {
   "今のアイテムにもう狙いが付いている": "The current item already has the target",};
 const offText = (x: string): string => tr(x.replace("段かも", `${TIER}かも`), OFF_EN[x] ?? x);
 /** 道のカード (今のアイテムから始める時は、カオスの 1 番目の決まりを差し替える) */
-const FROM_STEP: Step = { k: null, ja: "今のクラフトのアイテムから始める (フラクチャー・品質・ルーンもそのまま。カオスで消えるのはフラクチャー以外。フラクチャーだけなら先に高貴 1 回で 1 つ足す)", en: "Start from the current craft item (fractures, quality and runes kept; Chaos only removes non-fractured mods. If only fractured mods, one Exalted Orb adds a mod first)" };
+const FROM_STEP: Step = { k: null, ja: "今のクラフトのアイテムから始める (フラクチャー・品質・ルーンもそのまま、狙いのルーンが足りなければ嵌める。カオスで消えるのはフラクチャー以外。フラクチャーだけなら先に高貴 1 回で 1 つ足す)", en: "Start from the current craft item (fractures, quality and runes kept, adding the target's rune if missing; Chaos only removes non-fractured mods. If only fractured mods, one Exalted Orb adds a mod first)" };
 const shownRoutes = computed(() => (fromItem.value ? ROUTES.map((r) => (r.route === "chaos" ? { ...r, steps: [FROM_STEP, ...r.steps.slice(1)] } : r)) : ROUTES));
 const ORDER = ROUTES.flatMap((r) => r.grades.map((grade) => ({ route: r.route, grade })));
 
@@ -192,7 +202,7 @@ async function run(): Promise<void> {
   for (const [i, one] of ORDER.entries()) {
     await new Promise((r) => setTimeout(r, 0));
     if (id !== runId) return;
-    const row = await raceOne(d, s.base.value, ilvl.value, tt, priceOf, one.route, one.grade, { runs: RUNS, seed: seed.value, prep: prep.value, from: fromItem.value ?? undefined, stop: () => id !== runId, onPerson: (k) => { peopleDone.value = i * RUNS + k; } });
+    const row = await raceOne(d, s.base.value, ilvl.value, tt, priceOf, one.route, one.grade, { runs: RUNS, seed: seed.value, prep: prep.value, from: fromStart.value ?? undefined, stop: () => id !== runId, onPerson: (k) => { peopleDone.value = i * RUNS + k; } });
     if (!row || id !== runId) return;
     rows.value = [...rows.value, row];
   }
@@ -240,7 +250,7 @@ async function placeHit(r: RaceRow | null): Promise<void> {
   const tt = t.value;
   if (!r || !tt || !canLuck(r) || placing.value) return;
   placing.value = true;
-  const hit = await hitItemOf(r, tt, ilvl.value, prep.value, fromItem.value);
+  const hit = await hitItemOf(r, tt, ilvl.value, prep.value, fromStart.value);
   placing.value = false;
   track("routes:place", r.route);
   placeMiss.value = !hit || !placeOnStage(hit.item, r, { cost: r.avgCost, n: hit.n, avg: true });
@@ -323,7 +333,8 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
           <p class="mt-2"><button type="button" data-routes-start class="min-h-11 w-full max-w-[16rem]" :class="busy ? 'g-btn' : 'g-btn-red'" @click="busy ? stop() : start()">{{ busy ? tr(`中止 (${rows.length} / ${ORDER.length})`, `Stop (${rows.length} / ${ORDER.length})`) : started ? tr(`別の ${RUNS} 人でもう一度計算`, `Again with another ${RUNS}`) : tr("計算開始", "Start") }}</button></p>
           <!-- 読み込み中 (計算の 100 人 × 道・等級 / 裏で 1 人回す)。2026-10-22 オーナー「待ち時間の表示が無いとバグってるのか分からない」 -->
           <p v-if="busy || placing" class="mt-1.5"><BusyTag :text="placing ? tr('当たるまで回し中', 'Rolling until it hits') : tr(`${RUNS} 人ずつ計算中`, `Calculating ${RUNS} people each`)" :n="placing ? undefined : peopleDone" :of="placing ? undefined : ORDER.length * RUNS" /></p>
-          <p v-if="fromItem" class="mt-3 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("ルーンは今のアイテムに嵌めている物のまま", "Runes stay as socketed on the current item") }}</p>
+          <p v-if="fromRunes" data-routes-from-runes class="mt-3 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ fromRunes.out ? tr(`今のアイテムの ${fromRunes.out} を ${fromRunes.put} に置き換えた形から打つ (ルーンの代は入れない。クラフト台は当たった形を置くまで変わらない)`, `Starts with ${fromRunes.put} in place of ${fromRunes.out} on the current item (rune cost not included; the craft stage only changes when you place a hit)`) : tr(`今のアイテムに ${fromRunes.put} を嵌めた形から打つ (ルーンの代は入れない。クラフト台は当たった形を置くまで変わらない)`, `Starts with ${fromRunes.put} socketed on the current item (rune cost not included; the craft stage only changes when you place a hit)`) }}</p>
+          <p v-else-if="fromItem" class="mt-3 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("ルーンは今のアイテムに嵌めている物のまま", "Runes stay as socketed on the current item") }}</p>
           <StageRouteRunes v-else class="mt-3 flex flex-col items-center" :picked="runeIds" :required="runeNeed" :disabled="busy" @change="setRunes" />
         </div>
         <div data-routes-best class="relative flex min-w-0 items-center gap-4 overflow-hidden rounded-md border border-emerald-400/30 bg-gradient-to-r from-emerald-500/[0.12] via-emerald-500/[0.04] to-transparent px-4 py-3 max-md:flex-wrap">
@@ -350,7 +361,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
       </div>
 
       <!-- 運試し (一番安い道で。StageRouteLuck.vue) -->
-      <StageRouteLuck v-if="luckRow && !busy" :row="luckRow" :targets="t" :aim-labels="aims.map((a) => a.label)" :ilvl="ilvl" :label="aims.map((a) => a.label).join(' / ')" :route-name="routeName(luckRow)" :options="ok.filter((x) => x.route === luckRow!.route && x.tries.length)" :rows="ok" :prep="prep" :from="fromItem" :runes="fromItem ? [] : runeIds" @close="luckRow = null" @pick="(x) => (luckRow = x)" />
+      <StageRouteLuck v-if="luckRow && !busy" :row="luckRow" :targets="t" :aim-labels="aims.map((a) => a.label)" :ilvl="ilvl" :label="aims.map((a) => a.label).join(' / ')" :route-name="routeName(luckRow)" :options="ok.filter((x) => x.route === luckRow!.route && x.tries.length)" :rows="ok" :prep="prep" :from="fromStart" :runes="fromItem ? [] : runeIds" @close="luckRow = null" @pick="(x) => (luckRow = x)" />
       <!-- 下: 3 つの道 -->
       <div class="route-rule mt-4 grid gap-3 lg:grid-cols-3">
         <article v-for="r in shownRoutes" :key="r.route" :data-route="r.route" class="flex min-w-0 flex-col rounded-md border bg-white/[0.025] p-3" :class="[best && best.route === r.route ? 'border-emerald-400/35' : 'border-white/10', offRoute(r.route) ? 'opacity-50' : '']">

@@ -21,7 +21,7 @@ export { routeHitIndex } from "../craft-stage/route-race";
 // エミュの画面が読んでいた物 (2026-10-23 エンジンの仕分け、付け替えの対応表 docs/org/emulator/notes/2026-10-23-emu-import-map.md)
 export { unsocketKey } from "../craft-stage/stage-runes";
 export type { PobStat } from "../craft-stage/stage-pob";
-export { routeRunesFor, routeSocketsOf, runePrep } from "./emu-engine/route-runes";
+export { routeRunesFor, routeSocketsOf, runePrep, wearAimRunes } from "./emu-engine/route-runes";
 export { tierIdOf } from "../craft-stage/mod-list";
 export { monsterAccuracy } from "../craft-stage/defence";
 export type { SpamStats } from "./emu-engine/chaos-spam";

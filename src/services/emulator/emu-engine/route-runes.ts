@@ -12,6 +12,7 @@ import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { RUNE_BY_ID } from "../../../vendor/poe2htc/engine/runes";
 import { SERLE_RUNE, socketRunesFor } from "../../htc/sockets";
 import { applyCurrency } from "../../craft-stage/apply-currency";
+import { forcesOf, spamKey } from "../../craft-stage/apply-spam";
 import { baseSocketsOf, isRune, RUNE_PREFIX } from "../../craft-stage/stage-runes";
 import { mulberry32 } from "../../htc/rng";
 import type { StageItem } from "../../craft-stage/types";
@@ -32,6 +33,18 @@ function runeKeyOf(id: string): string | null {
   if (!name) return null;
   for (const en of [name, name.replace(/’/g, "'"), name.replace(/'/g, "’")]) if (isRune(`${RUNE_PREFIX}${en}`)) return `${RUNE_PREFIX}${en}`;
   return null;
+}
+
+/**
+ * 今のアイテムからの始めの形: 狙いのルーンが足りなければ嵌めた形を返す (足りていれば item のまま。M-63、オーナー 10-31「bやね、どーせクラフトに戻れるでしょ？スパムではめても」)。
+ * 嵌め方は当たった形を置く時と同じ spam: の手 (M-64: ソケットを開け、足りなければ狙いのルーン以外と置き換える)。規格外のソケットの数まで
+ */
+export function wearAimRunes(data: PatchData, item: StageItem, ids: readonly string[]): StageItem {
+  const runes = ids.slice(0, baseSocketsOf(item.base, item.cls.category)).flatMap((id) => { const k = runeKeyOf(id); return k ? [k.slice(RUNE_PREFIX.length)] : []; });
+  const worn = (item.augments ?? []).map((a) => a.en);
+  if (runes.every((en) => worn.includes(en))) return item;
+  const res = applyCurrency(data, item, spamKey({ route: "", grade: "", cost: 0, n: 0, avg: false, rarity: item.rarity, mods: forcesOf(item), runes }), mulberry32(1), []);
+  return res.applied ? res.item : item;
 }
 
 /** 始めのアイテムの下ごしらえ: ソケットを規格外まで開けて、選んだルーンを嵌める (route-race.ts の prep) */
