@@ -1,5 +1,23 @@
 [
  {
+  "v": "0.1.651",
+  "date": "2026-10-31",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: スマホで結果の箱を「失敗」にしても結果の画面に何も出なかったのを直しました (「この場合は失敗 (ここで終わり)」と出ます)",
+    "en": "Simulator: fixed nothing showing on the result screen on phones when a result box is set to \"Fail\". It now shows \"Then it fails (ends here)\""
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ✦ の印のある木のフラクチャーで、✦ の無い狙いまで固定して ✦ が別の側に付いた人が止まるのを直しました (✦ の印の MOD だけを固定します)",
+    "en": "Simulator: fixed Fracturing Orbs in trees with fracture marks (✦) also locking targets without a mark, which stopped runs whose fracture landed on the other side. Only mods marked ✦ are locked now"
+   }
+  ]
+ },
+ {
   "v": "0.1.650",
   "date": "2026-10-30",
   "items": [
@@ -940,18 +958,6 @@
     "area": "",
     "text": "スマホ: 幅の狭い画面 (320 など) でヘッダーの右の「使い方」「要望」が切れていたのを、何も隠さずに収まるよう詰めました",
     "en": "Phone: On narrow screens (such as 320px wide), the header's Guide and Feedback buttons were cut off on the right; the header is now tightened so everything fits without hiding anything"
-   }
-  ]
- },
- {
-  "v": "0.1.610",
-  "date": "2026-10-26",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ツリーを開いた時・整列・全体表示で、スタートの箱を枠の横の真ん中・一番上に置くように。左上の完成形の設定の窓と箱がかぶらなくなりました",
-    "en": "Simulator: The start box now sits at the top center of the tree frame when you open a tree, tidy it, or fit it to the view, so it no longer hides under the finished-item panel in the top left"
    }
   ]
  }

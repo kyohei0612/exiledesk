@@ -1,4 +1,8 @@
 {
+  "0.1.651": [
+    "Simulator: fixed nothing showing on the result screen on phones when a result box is set to \"Fail\". It now shows \"Then it fails (ends here)\"",
+    "Simulator: fixed Fracturing Orbs in trees with fracture marks (✦) also locking targets without a mark, which stopped runs whose fracture landed on the other side. Only mods marked ✦ are locked now"
+  ],
   "0.1.650": [
     "Simulator: fixed an Alloy that can't add the target mod making a \"Hit\" box with nothing to pick, which blocked Run 100. It now makes an \"After the craft\" box",
     "Simulator: fixed Omens staying on when switching to another item in the craft window. Going back to the original craft restores its Omens",
