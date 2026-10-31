@@ -79,7 +79,7 @@ const problem = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.v
     <div v-if="!(marks.length && st.from === 'four')" data-tree-start-plus class="flex flex-col gap-1 text-[13px]">
       <p>{{ marks.length ? tr(`＋ 外れを狙いの MOD に差し替える (${st.mods.length} / ${plusMax})`, `+ Replace miss mods with targets (${st.mods.length} / ${plusMax})`) : tr(`＋ 始まりに付いている MOD (${st.mods.length} / ${plusMax})`, `+ Mods already on the start (${st.mods.length} / ${plusMax})`) }}</p>
       <div v-for="(m, i) in st.mods" :key="m.modId" data-tree-start-row class="flex min-w-0 items-center gap-1.5 rounded-md bg-sky-500/15 px-2 py-1">
-        <span class="min-w-0 flex-1 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words text-[#c8c8ff]" :title="t.startModLabel(m)">{{ t.startModLabel(m) }}</span>
+        <span class="min-w-0 flex-1 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words text-sim-crafted" :title="t.startModLabel(m)">{{ t.startModLabel(m) }}</span>
         <button type="button" data-tree-start-remove class="shrink-0 px-1 opacity-60 hover:opacity-100" :title="tr('外す', 'Remove')" @click="remove(i)">×</button>
       </div>
       <div v-if="st.mods.length < plusMax" class="flex flex-wrap gap-1">

@@ -31,7 +31,7 @@ const cardW = (typeof window === "undefined" ? 375 : window.innerWidth) - 48;
 
 <template>
   <div v-if="box" data-phone-peek :data-box-id="id" class="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 px-3" @click.self="emit('close')">
-    <div role="dialog" aria-modal="true" class="flex max-h-[86vh] w-full flex-col rounded-xl border-2 border-[#b08a3c] bg-[#15110c] shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
+    <div role="dialog" aria-modal="true" class="flex max-h-[86vh] w-full flex-col rounded-xl border-2 border-[#b08a3c] bg-sim-panel shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
       <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-1.5 pb-2 pt-2 text-center">
         <p class="break-words text-[15px] font-bold" :style="{ color: `rgb(${look.c})` }">{{ tr(`${stepOf(t.doc.value, id)} 段目`, `Step ${stepOf(t.doc.value, id)}`) }} · {{ q.boxTitle(id) }}</p>
         <StageItemCard v-if="card" class="mx-auto mt-2" :item="card" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />

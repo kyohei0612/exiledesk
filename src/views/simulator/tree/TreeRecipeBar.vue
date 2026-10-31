@@ -27,7 +27,7 @@ const emit = defineEmits<{ opened: [] }>();
 /** flat = 保存・レシピ ▾ を絵 + 短い名前の平たいボタンにする時のボタンの class (スマホの上の帯、PC の操作の列 0b131904 と同じ形。10-26 夜オーナー「上の帯が太い」) */
 const props = defineProps<{ menuOnly?: boolean; flat?: string }>();
 /** PC の右の列 (248px) で 1 行に入る平たい小さなボタン (操作の列 TreeTopTools と同じ形) */
-const SMALL = "g-plain inline-flex h-8 shrink-0 items-center gap-1 whitespace-nowrap rounded-md border border-white/15 bg-white/[0.04] px-1.5 text-[12px] text-[#d8ccb4] hover:bg-white/10 hover:text-white aria-expanded:border-amber-400/60 aria-expanded:text-amber-100";
+const SMALL = "g-plain inline-flex h-8 shrink-0 items-center gap-1 whitespace-nowrap rounded-md border border-white/15 bg-white/[0.04] px-1.5 text-[12px] text-sim-body hover:bg-white/10 hover:text-white aria-expanded:border-amber-400/60 aria-expanded:text-amber-100";
 const btn = computed(() => props.flat ?? SMALL);
 /** 小窓の置き場 (完成形の設定の右端は右寄せ 340px、スマホの上の帯は左寄せ 340px、PC の列は帯の幅いっぱい = 列の中) */
 /**

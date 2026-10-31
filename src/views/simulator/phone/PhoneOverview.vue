@@ -33,14 +33,14 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
 
 <template>
   <div v-if="open" data-phone-overview class="fixed inset-0 z-50 flex flex-col justify-end bg-black/55" @click.self="close">
-    <div class="flex max-h-[92vh] flex-col rounded-t-2xl border-t-2 border-[#b08a3c] bg-[#15110c] shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
+    <div class="flex max-h-[92vh] flex-col rounded-t-2xl border-t-2 border-[#b08a3c] bg-sim-panel shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
       <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3 pt-2">
         <div class="mx-auto mb-2 h-1.5 w-11 rounded-full bg-white/25" />
         <!-- 完成形 (PC の右の列の一番上と同じ、アイテムの枠) -->
         <section v-if="!mapPick" data-phone-goal class="flex min-w-0 flex-col items-center gap-2 text-center">
-          <p class="flex max-w-full items-center justify-center gap-2 text-[14px]"><b class="shrink-0 text-[#f2d27a]">{{ tr("完成形", "Final item") }}</b><span class="min-w-0 break-words text-[#d8ccb4]">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}</span></p>
+          <p class="flex max-w-full items-center justify-center gap-2 text-[14px]"><b class="shrink-0 text-[#f2d27a]">{{ tr("完成形", "Final item") }}</b><span class="min-w-0 break-words text-sim-body">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}</span></p>
           <StageItemCard :row-group="shown.groups.value" v-if="t.goalItem.value && t.goals.value.length" data-phone-goal-card :item="shown.item.value ?? t.goalItem.value.item" :row-tags="shown.tags.value" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :fracture-group="marks" tier-at-least />
-          <p v-else class="text-[12px] text-[#9a8a70]">{{ tr("MOD はまだ (MOD で決める)", "No mods yet (set them with Mods)") }}</p>
+          <p v-else class="text-[12px] text-sim-dim">{{ tr("MOD はまだ (MOD で決める)", "No mods yet (set them with Mods)") }}</p>
           <span class="flex justify-center gap-2">
             <button type="button" data-phone-goal-open="base" :class="PILL" @click="t.goalPage.value = 1">{{ tr("ベース", "Base") }}</button>
             <button type="button" data-phone-goal-open="mods" :class="PILL" @click="t.goalPage.value = 2">MOD</button>

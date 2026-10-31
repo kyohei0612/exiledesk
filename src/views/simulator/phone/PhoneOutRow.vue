@@ -188,7 +188,7 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
     <p class="break-words px-10 text-center text-[14px] font-bold" :style="{ color: `rgb(${look.c})` }">
       {{ sit[0] }}
     </p>
-    <p v-if="sit[1]" data-phone-out-sit class="break-words text-center text-[12px] text-[#d8ccb4]">{{ sit[1] }}</p>
+    <p v-if="sit[1]" data-phone-out-sit class="break-words text-center text-[12px] text-sim-body">{{ sit[1] }}</p>
     <StageItemCard v-if="item" data-phone-out-item class="mx-auto mt-2" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tagsOf(boxId, item)" />
     <!-- 回した結果 (来た人・形の合う別の箱へ移った人・止まった人と理由) -->
     <p v-if="run" data-phone-out-run class="mt-1 break-words text-[12px]" :class="phoneRun?.stuckAt[boxId] ? 'text-rose-200' : 'text-amber-100/80'">{{ run }}</p>
@@ -202,7 +202,7 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
       <!-- 決まった答え (完成・ほかの箱へ) だけ文で。まだなら何も出さない (既定は無い) -->
       <p v-if="state === 'back' || state === 'done' || state === 'fail'" data-phone-out-now class="min-w-0 break-words font-bold" :class="state === 'done' ? 'text-emerald-300' : state === 'fail' ? 'text-rose-300' : 'text-cyan-200'">{{ answerText }}</p>
       <!-- まだ答えの無い結果は下の赤い帯「この状態で打つカレンシーを選ぶ」だけ (真ん中に同じ枠を重ねない、10-27 昼オーナー)。完成・ほかの箱へにした結果は、ここから手に替えられる -->
-      <button v-if="state !== 'open' && state !== 'later'" type="button" data-phone-out-pick-hand class="w-full rounded-xl border border-white/15 bg-white/[0.04] px-3 py-3 text-center text-[14px] text-[#d8ccb4]" @click="emit('pick', boxId)">{{ tr("この状態で打つカレンシーを選ぶ", "Choose the currency to use on this item") }}</button>
+      <button v-if="state !== 'open' && state !== 'later'" type="button" data-phone-out-pick-hand class="w-full rounded-xl border border-white/15 bg-white/[0.04] px-3 py-3 text-center text-[14px] text-sim-body" @click="emit('pick', boxId)">{{ tr("この状態で打つカレンシーを選ぶ", "Choose the currency to use on this item") }}</button>
     </template>
     <!-- 手のほかの答え (失敗・戻る・完成)。主ボタンは下の帯のまま、S-93 -->
     <button v-if="parent && state !== 'hand'" type="button" data-phone-out-open class="min-h-10 px-3 text-[13px] text-white/60 underline decoration-white/20" @click="pickOpen = true">{{ tr("ほかの答え ▾", "Other answers ▾") }}</button>
@@ -210,11 +210,11 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
   <!-- 答えの選び (下から出る重ね窓。閉じれば元の場所のまま) -->
   <Teleport to="body">
     <div v-if="box && pickOpen" data-phone-out-pick :data-box-id="boxId" class="fixed inset-0 z-[55] flex flex-col justify-end bg-black/55" @click.self="pickOpen = false">
-      <div class="flex max-h-[88vh] flex-col rounded-t-2xl border-t-2 border-[#b08a3c] bg-[#15110c] shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
+      <div class="flex max-h-[88vh] flex-col rounded-t-2xl border-t-2 border-[#b08a3c] bg-sim-panel shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
         <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3 pt-2 text-center" @click.capture="onPickClick">
           <div class="mx-auto mb-2 h-1.5 w-11 rounded-full bg-white/25" />
           <p class="break-words text-[15px] font-bold" :style="{ color: `rgb(${look.c})` }">{{ q.boxTitle(boxId) }}</p>
-          <p class="mb-1 break-words text-[12px] text-[#9a8a70]">{{ tr("この結果の次", "After this result") }}</p>
+          <p class="mb-1 break-words text-[12px] text-sim-dim">{{ tr("この結果の次", "After this result") }}</p>
       <!-- 戻り先の箱のアイテム (その箱に着いた時の形。始めに戻るはベースなので出さない) -->
       <div v-if="backItem && backTo" data-phone-out-back-item class="mt-1 rounded-lg border border-cyan-300/30 bg-black/20 p-1.5">
         <p class="mb-1 break-words text-[11px] text-cyan-200/80">{{ tr(`戻り先: ${q.pathText(backTo)}`, `Returns to: ${q.pathText(backTo)}`) }}</p>

@@ -18,7 +18,7 @@ const pct = (r: TreeRunResult): string => `${Math.round((r.finished / (r.n || 1)
 const loopTop = (r: TreeRunResult): string | null => Object.entries(r.loopAt ?? {}).sort((a, z) => z[1] - a[1])[0]?.[0] ?? null;
 const div = (x: number): string => (Number.isFinite(x) ? (x >= 100 ? x.toFixed(0) : x.toFixed(1)) : "—");
 /** 帯の中の小さなボタン (ゲームの絵の枠は 1 つ 58px あり 1 行に入らなかった) */
-const MINI = "shrink-0 whitespace-nowrap rounded-md border border-white/15 bg-white/[0.04] px-2 py-0.5 text-[12px] text-[#d8ccb4] hover:bg-white/10 hover:text-white aria-pressed:border-amber-400/60 aria-pressed:text-amber-100";
+const MINI = "shrink-0 whitespace-nowrap rounded-md border border-white/15 bg-white/[0.04] px-2 py-0.5 text-[12px] text-sim-body hover:bg-white/10 hover:text-white aria-pressed:border-amber-400/60 aria-pressed:text-amber-100";
 </script>
 
 <template>

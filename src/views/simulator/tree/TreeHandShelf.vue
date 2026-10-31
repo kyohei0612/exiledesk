@@ -392,7 +392,7 @@ function ok(): void {
     <div v-if="held" data-tree-hand-use-bar class="sticky -bottom-3 z-10 -mx-3 -mb-3 border-t border-white/10 bg-[#0c0a08]/95 px-3 pb-5 pt-2 md:hidden">
       <p class="mb-1 break-words text-[12px] font-bold text-amber-100">{{ tr(`${handName(held)} を持っている`, `Holding ${handName(held)}`) }}</p>
       <button v-if="heldHelp.length && P27" type="button" data-tree-hand-help-toggle class="mb-1 min-h-9 text-[12px] text-[#c9b48a] underline decoration-white/20" :aria-expanded="helpOpen" @click="helpOpen = !helpOpen">{{ helpOpen ? tr("説明を閉じる ▴", "Hide details ▴") : tr("説明 ▾", "Details ▾") }}</button>
-      <p v-if="heldHelp.length && (!P27 || helpOpen)" data-tree-hand-held-help class="mb-2 break-words text-[12px] leading-snug text-[#d8ccb4]">{{ heldHelp.join(" ") }}</p>
+      <p v-if="heldHelp.length && (!P27 || helpOpen)" data-tree-hand-held-help class="mb-2 break-words text-[12px] leading-snug text-sim-body">{{ heldHelp.join(" ") }}</p>
       <!-- 狙いを選べる手は 2 つ: 狙い無し (今のチェック) のまま決める / 2 段目で狙いを選ぶ。繰り返しの手は 2 段目だけ -->
       <div v-if="showAims" class="flex gap-2">
         <!-- 左は普通の「キャンセル」(持った札を離す)、右は狙いを選ぶ (今の手を直す時は「狙いを再度選ぶ」)。10-27 オーナー「このまま決めるは日本語として変」 -->
@@ -407,11 +407,11 @@ function ok(): void {
     </div>
     <!-- スマホの 2 段目「当たりにする MOD」(画面いっぱい、持った物の手で付きうる狙いだけ)。手の窓 (スマホは画面いっぱい) の中に重ねる:
          body へ出すと手の窓から見て枠の外の押しになり、MOD を押すと窓ごと閉じた (10-27) -->
-      <div v-if="phone && aimStep && held && showAims" data-tree-hand-aim-page class="fixed inset-0 z-[320] flex flex-col bg-[#15110c] text-[14px]">
+      <div v-if="phone && aimStep && held && showAims" data-tree-hand-aim-page class="fixed inset-0 z-[320] flex flex-col bg-sim-panel text-[14px]">
         <div class="min-h-0 flex-1 overflow-y-auto px-3 pb-3 pt-4 text-center">
-          <p class="break-words text-[12px] text-[#9a8a70]">{{ hand ? handLabel(hand) : handName(held) }}</p>
+          <p class="break-words text-[12px] text-sim-dim">{{ hand ? handLabel(hand) : handName(held) }}</p>
           <h2 class="mt-1 text-[17px] font-bold text-[#f0e4c8]">{{ tr("当たりにする MOD", "Mods that count as a hit") }}</h2>
-          <p class="mt-1 break-words text-[12px] text-[#9a8a70]">{{ spam ? tr("当たるまで繰り返す手は、狙う MOD を 1 つ以上選ぶ", "For a repeat-until-hit craft, pick at least one target") : tr("☑ の MOD ごとに当たりの箱を作る。どれか 1 つ付けば当たり", "One hit box per ☑ mod; any one landing is a hit") }}</p>
+          <p class="mt-1 break-words text-[12px] text-sim-dim">{{ spam ? tr("当たるまで繰り返す手は、狙う MOD を 1 つ以上選ぶ", "For a repeat-until-hit craft, pick at least one target") : tr("☑ の MOD ごとに当たりの箱を作る。どれか 1 つ付けば当たり", "One hit box per ☑ mod; any one landing is a hit") }}</p>
           <div data-tree-hand-aims class="mt-3 flex flex-col gap-1.5 text-left">
             <label v-for="a in aimChoices" :key="aimKey(a)" data-tree-hand-aim :data-aim="aimKey(a)" class="flex min-h-11 min-w-0 cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-black/20 px-3">
               <input type="checkbox" class="size-5 shrink-0" :checked="checkedAims.some((x) => aimKey(x) === aimKey(a))" @change="toggleAim(a)" /><span class="min-w-0 break-words">{{ t.aimLabel(a) }}</span>
@@ -431,11 +431,11 @@ function ok(): void {
         </div>
       </div>
     <!-- スマホの消去の 2 ページ目「残したい MOD」(aimStep のページと同じ形。上に ☑ の並び、一番下に全部消えてよい。10-27 昼オーナー) -->
-      <div v-if="P27 && keepStep && held && keepAsk" data-tree-hand-keep-page class="fixed inset-0 z-[320] flex flex-col bg-[#15110c] text-[14px]">
+      <div v-if="P27 && keepStep && held && keepAsk" data-tree-hand-keep-page class="fixed inset-0 z-[320] flex flex-col bg-sim-panel text-[14px]">
         <div class="min-h-0 flex-1 overflow-y-auto px-3 pb-3 pt-4 text-center">
-          <p class="break-words text-[12px] text-[#9a8a70]">{{ hand ? handLabel(hand) : handName(held) }}</p>
+          <p class="break-words text-[12px] text-sim-dim">{{ hand ? handLabel(hand) : handName(held) }}</p>
           <h2 class="mt-1 text-[17px] font-bold text-[#f0e4c8]">{{ tr("残したい MOD", "Mods to keep") }}</h2>
-          <p class="mt-1 break-words text-[12px] text-[#9a8a70]">{{ tr("☑ の MOD が消えたら「狙いが消えた」。☑ の無い MOD は外れ MOD", "A ☑ mod removed = Target lost; unchecked mods are misses") }}</p>
+          <p class="mt-1 break-words text-[12px] text-sim-dim">{{ tr("☑ の MOD が消えたら「狙いが消えた」。☑ の無い MOD は外れ MOD", "A ☑ mod removed = Target lost; unchecked mods are misses") }}</p>
           <div class="mt-3"><TreeKeepList big :k="k" :adds="addLabels" /></div>
           <p v-if="kind" class="mt-2 break-words text-[12px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? (only.length === 1 ? tr(`${outOf(only[0]!.out, only[0]!.aim)}だけ (結果は 1 通り)`, `${outOf(only[0]!.out, only[0]!.aim)} only (one possible result)`) : [...new Set(only.map((o) => outOf(o.out, o.aim)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>
           <p v-if="problem" class="mt-1 break-words text-[12px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</p>

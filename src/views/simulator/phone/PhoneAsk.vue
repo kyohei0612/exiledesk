@@ -52,7 +52,7 @@ function showHand(id: string): void { quiz.focus.value = { kind: "hand", id }; }
 <template>
   <!-- スマホなので中央揃え (見出し・カード・ボタン。10-26 夜オーナー)。見出しは「n 段目 · 〜」(ツリーとして見せる、質問の言い方はしない) -->
   <div v-if="box" data-phone-ask :data-ask="q.kind" :data-box-id="q.id" class="flex min-w-0 flex-col items-center gap-2 text-center">
-    <p v-if="!(q.kind === 'hand' && box.out === 'start' && !box.hand) && !(P27 && q.kind === 'outs')" class="break-words text-[11px] text-[#9a8a70]">{{ quiz.pathText(q.id) }}</p>
+    <p v-if="!(q.kind === 'hand' && box.out === 'start' && !box.hand) && !(P27 && q.kind === 'outs')" class="break-words text-[11px] text-sim-dim">{{ quiz.pathText(q.id) }}</p>
     <template v-if="q.kind === 'hand'">
       <h2 class="break-words text-[17px] font-bold text-[#f0e4c8]">{{ tr(`${step} 段目`, `Step ${step}`) }} · {{ box.out === "start" ? tr("スタート", "Start") : quiz.boxTitle(q.id) }}</h2>
       <!-- 今のアイテム (この箱に着いた時の形)。完成の狙いの丸い札の並びは 10-26 夜にやめた (オーナー「要らない、頭が痛くなる」。完成形は上のアイテムの枠で見る) -->
@@ -67,7 +67,7 @@ function showHand(id: string): void { quiz.focus.value = { kind: "hand", id }; }
       <!-- 結果の画面は見出し (道・段・結果 n / m) を出さず、枠の頭に「カオスオーブで外れた場合」と書く (10-27 昼オーナー、スイッチ phoneResult1027) -->
       <h2 v-if="!P27" class="break-words text-[16px] font-bold text-[#f0e4c8]">{{ tr(`${step} 段目`, `Step ${step}`) }} · {{ box.hand ? tr(`${handLabel(box.hand)} を打った後`, `After ${handLabel(box.hand)}`) : "" }}</h2>
       <!-- 結果は 1 つずつ (k / n)。前の結果へは小さな 1 行で戻れる -->
-      <p v-if="outs.length > 1 && !P27" data-phone-out-count class="flex items-center gap-3 text-[12px] text-[#9a8a70]">
+      <p v-if="outs.length > 1 && !P27" data-phone-out-count class="flex items-center gap-3 text-[12px] text-sim-dim">
         <button v-if="k > 0" type="button" data-phone-out-prev class="min-h-10 underline decoration-white/20" @click="emit('step', k - 1)">‹ {{ tr("前の結果", "Previous result") }}</button>
         <span>{{ tr(`結果 ${k + 1} / ${outs.length}`, `Result ${k + 1} / ${outs.length}`) }}</span>
       </p>

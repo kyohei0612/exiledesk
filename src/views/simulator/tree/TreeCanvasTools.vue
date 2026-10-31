@@ -58,7 +58,7 @@ function go(e: PointerEvent): void {
   gesture(e, { slop: 0, onMove: (p) => at(p.clientX, p.clientY) });
 }
 // 右の列 248px に 1 行で入る幅 (10-26 夜、列を 3 分の 1 細くした)
-const btn = "flex h-8 min-w-7 items-center justify-center rounded-md px-1 text-[#d8ccb4] hover:bg-white/10 hover:text-white";
+const btn = "flex h-8 min-w-7 items-center justify-center rounded-md px-1 text-sim-body hover:bg-white/10 hover:text-white";
 </script>
 
 <template>

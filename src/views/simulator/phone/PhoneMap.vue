@@ -114,7 +114,7 @@ watch(() => q.doc.value, (d) => { const pk = mapPick.value; if (pk && !d.boxes[p
   <div v-show="!shut" data-phone-map :data-mini="mini ? 1 : undefined" class="flex min-w-0 flex-col gap-1">
     <div v-if="!mini && !shut" class="flex min-w-0 items-center gap-2 text-[11px]">
       <span v-if="mapPick" data-phone-map-pick class="min-w-0 flex-1 break-words font-bold text-amber-200">{{ tr("戻り先の箱を押す (明るい箱に戻れる。押すと中身を見てから決める)", "Tap the box to return to (bright boxes; check it before you choose)") }}</span>
-      <span v-else class="min-w-0 flex-1 break-words text-[#9a8a70]">{{ tr("全体図 · 箱を押すと中身", "Overview · tap a box to see it") }}</span>
+      <span v-else class="min-w-0 flex-1 break-words text-sim-dim">{{ tr("全体図 · 箱を押すと中身", "Overview · tap a box to see it") }}</span>
       <button v-if="mapPick" type="button" data-phone-map-cancel class="g-btn sm !min-h-10 shrink-0" @click="mapPick = null">{{ tr("やめる", "Cancel") }}</button>
       <button v-if="anyOpen && !mapPick" type="button" data-phone-map-refold class="g-btn sm !min-h-10 shrink-0" @click="refold">≈ {{ tr("畳む", "Fold") }}</button>
       <button v-if="!mapPick" type="button" data-phone-map-size class="g-btn sm !min-h-10 min-w-11 shrink-0" :aria-pressed="big" :aria-label="tr('全体図の大きさ', 'Overview size')" @click="big = !big">{{ big ? "⤡" : "⤢" }}</button>
@@ -132,7 +132,7 @@ watch(() => q.doc.value, (d) => { const pk = mapPick.value; if (pk && !d.boxes[p
         </template>
       </svg>
     </div>
-    <p v-if="tall && !mapPick && !shut" data-phone-map-legend class="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-[#d8ccb4]">
+    <p v-if="tall && !mapPick && !shut" data-phone-map-legend class="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-sim-body">
       <span v-for="x in legend" :key="x.o" class="inline-flex items-center gap-1"><i class="inline-block h-2.5 w-4 rounded-sm" :style="{ background: `rgba(${x.c},0.6)`, border: `1.5px solid rgb(${x.c})` }" />{{ x.name }}</span>
       <span class="inline-flex items-center gap-1"><i class="inline-block h-2.5 w-4 rounded-sm border-2 border-[rgb(253,230,138)]" />{{ tr("今の質問", "Current") }}</span>
     </p>

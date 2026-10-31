@@ -13,7 +13,7 @@ import { simOp } from "../../../web/track";
 defineProps<{ linesAll: boolean; memoOpen: boolean; full: boolean; note: boolean; armed: boolean }>();
 const emit = defineEmits<{ lines: []; memo: []; full: []; clear: [] }>();
 const t = useTree();
-const BTN = "flex h-8 min-w-8 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md px-1.5 @max-[899px]:min-w-7 @max-[899px]:px-1 text-[12px] text-[#d8ccb4] hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-35 aria-pressed:bg-amber-400/20 aria-pressed:text-amber-100";
+const BTN = "flex h-8 min-w-8 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md px-1.5 @max-[899px]:min-w-7 @max-[899px]:px-1 text-[12px] text-sim-body hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-35 aria-pressed:bg-amber-400/20 aria-pressed:text-amber-100";
 /** 短い名前 (帯が 1300px 以上の時だけ) */
 const LBL = "hidden @min-[1300px]:inline";
 /** 再挑戦の線は乗せた時だけ (S-87c、スイッチ retryHover) */

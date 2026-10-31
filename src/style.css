@@ -152,6 +152,11 @@
   --color-mod-fractured:    #c8a86a;
   --color-mod-desecrated:   #e0a0a0;
   --color-mod-crafted:      #b8c8ff;
+  /* ----- シミュの画面の色 (U-46。前に各画面へ直書きしていた値をそのまま) ----- */
+  --color-sim-body:         #d8ccb4;
+  --color-sim-dim:          #9a8a70;
+  --color-sim-crafted:      #c8c8ff;
+  --color-sim-panel:        #15110c;
 
   /* ----- Fonts ----- */
   --font-sans:    var(--exile-font-family-sans);

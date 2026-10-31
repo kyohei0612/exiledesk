@@ -75,7 +75,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
 
 <template>
   <div v-if="box" data-phone-sheet :data-box-id="id" class="fixed inset-0 z-[60] flex flex-col justify-end bg-black/55" @click.self="sheet = null">
-    <div class="flex max-h-[88vh] flex-col rounded-t-2xl border-t-2 border-[#b08a3c] bg-[#15110c] shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
+    <div class="flex max-h-[88vh] flex-col rounded-t-2xl border-t-2 border-[#b08a3c] bg-sim-panel shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
       <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3 pt-2">
         <div class="mx-auto mb-2 h-1.5 w-11 rounded-full bg-white/25" />
         <!-- 足りない所から開いた時: 何が足りないかと直しに行くボタン (10-26 モンキー 7 の 22「押した先で何も直せず行き止まり」) -->
@@ -86,7 +86,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
         <p class="flex items-start gap-2 text-[15px] font-bold" :style="{ color: `rgb(${look.c})` }">
           <span class="min-w-0 flex-1 break-words">{{ q.boxTitle(id) }}</span>
         </p>
-        <p class="break-words text-[11px] text-[#9a8a70]">{{ q.pathText(id) }}</p>
+        <p class="break-words text-[11px] text-sim-dim">{{ q.pathText(id) }}</p>
         <StageItemCard v-if="item" class="mt-2" :item="cardOf(item)" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="cardW" compact :row-tags="tags" />
         <p v-if="route" data-phone-sheet-route class="mt-2 break-words text-[13px] text-cyan-200">{{ route }}</p>
         <p v-else-if="box.done" class="mt-2 text-[13px]" :class="box.done === 'fail' && flag('sim1031') ? 'text-rose-300' : 'text-emerald-300'">{{ doneWord(box.done) }}</p>
@@ -108,7 +108,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey));
             </li>
           </ul>
         </template>
-        <p class="mt-2 text-[11px] text-[#9a8a70]">{{ tr("木の中の位置", "Where it is in the tree") }}<template v-if="P27"> · <b data-phone-sheet-step class="text-[13px] text-amber-200">{{ tr(`${stepOf(t.doc.value, id)} 段目`, `Step ${stepOf(t.doc.value, id)}`) }}</b> <span class="opacity-80">{{ tr("(箱を押すと中身)", "(tap a box to see it)") }}</span></template></p>
+        <p class="mt-2 text-[11px] text-sim-dim">{{ tr("木の中の位置", "Where it is in the tree") }}<template v-if="P27"> · <b data-phone-sheet-step class="text-[13px] text-amber-200">{{ tr(`${stepOf(t.doc.value, id)} 段目`, `Step ${stepOf(t.doc.value, id)}`) }}</b> <span class="opacity-80">{{ tr("(箱を押すと中身)", "(tap a box to see it)") }}</span></template></p>
         <PhoneMap :mini="id" :peek="P27" @peek="(x) => (peek = x)" />
       </div>
       <div class="flex gap-2 border-t border-white/10 px-3 py-2">

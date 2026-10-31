@@ -241,7 +241,7 @@ function onKey(e: KeyboardEvent): void {
   else if (snap.value) { snap.value = null; remember(); }
 }
 const chipCls = (on: boolean, used: boolean): string =>
-  on ? "border-amber-300 bg-amber-500/25 text-amber-50" : used ? "border-amber-500/45 bg-white/[0.04] text-[#c8c8ff]" : "border-white/20 bg-white/[0.02] text-[#c8c8ff]/80";
+  on ? "border-amber-300 bg-amber-500/25 text-amber-50" : used ? "border-amber-500/45 bg-white/[0.04] text-sim-crafted" : "border-white/20 bg-white/[0.02] text-[#c8c8ff]/80";
 </script>
 
 <template>

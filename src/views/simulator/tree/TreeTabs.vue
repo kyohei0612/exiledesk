@@ -16,7 +16,7 @@ import { saveTreeRecipe } from "../../../state/simulator/tree-recipes";
 const emit = defineEmits<{ switched: [] }>();
 /** compact = 木の枠の上の 1 行の帯の中 (SimTreePage、10-26 夜オーナー「1 行で」): 新しいツリー・コピーを道具の列と同じ平たいボタンにし、名前は帯が広い時だけ */
 defineProps<{ compact?: boolean }>();
-const FLAT = "flex h-8 min-w-8 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md bg-[#15110c]/95 px-1.5 ring-1 ring-white/10 text-[12px] text-[#d8ccb4] hover:bg-white/10 hover:text-white";
+const FLAT = "flex h-8 min-w-8 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md bg-[#15110c]/95 px-1.5 ring-1 ring-white/10 text-[12px] text-sim-body hover:bg-white/10 hover:text-white";
 const t = useTree();
 /** タブを替えた後の段の URL を画面に合わせる (完成形の設定のページから替えて木へ戻った時に sim-base のまま残らない。ベース選びの白紙のタブは sim-base) */
 function syncStep(): void {

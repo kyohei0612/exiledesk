@@ -81,11 +81,11 @@ function setCap(n: number): void { const c = clampQ(n); t.edit((d) => { d.goalQu
   <div data-tree-goal-quality class="flex flex-col gap-1 px-1 text-[12px]" :class="flag('qualityFit') ? 'goal-q-fit' : ''">
     <!-- カタリストの部位: 狙う / 狙わないの 2 択 + 上限と種類のプルダウン (S-31c、スイッチ qualityAsk) -->
     <template v-if="ask">
-      <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[#d8ccb4]">
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sim-body">
         <label class="flex min-h-7 cursor-pointer items-center gap-2 max-md:min-h-11"><input data-tree-goal-quality-yes type="checkbox" :checked="on" @change="choose(($event.target as HTMLInputElement).checked ? 'on' : null)" />{{ tr("品質を狙う", "Aim for quality") }}</label>
         <label class="flex min-h-7 cursor-pointer items-center gap-2 max-md:min-h-11"><input data-tree-goal-quality-no type="checkbox" :checked="no" @change="choose(($event.target as HTMLInputElement).checked ? 'no' : null)" />{{ tr("品質は狙わない", "No quality") }}</label>
       </div>
-      <div v-if="on" data-tree-goal-quality-pick class="flex flex-wrap items-center gap-1.5 text-[#d8ccb4]">
+      <div v-if="on" data-tree-goal-quality-pick class="flex flex-wrap items-center gap-1.5 text-sim-body">
         <select data-tree-goal-quality-cap :class="[sel, 'tabular-nums']" :value="capNow" :title="tr('品質の上限 (選ぶと品質もこの値になる)', 'Max quality (the quality is set to it)')" @change="pickCap(Number(($event.target as HTMLSelectElement).value))">
           <option v-for="c in caps" :key="c" :value="c">{{ tr(`上限 ${c}%`, `Cap ${c}%`) }}</option>
         </select>
@@ -100,7 +100,7 @@ function setCap(n: number): void { const c = clampQ(n); t.edit((d) => { d.goalQu
       <p v-if="warn" data-tree-goal-quality-warn class="break-words rounded border border-rose-400/50 bg-[#2a1416] px-2 py-1 text-rose-100">{{ warn }}</p>
     </template>
     <template v-else>
-    <label class="flex min-h-7 cursor-pointer items-center gap-2 text-[#d8ccb4]">
+    <label class="flex min-h-7 cursor-pointer items-center gap-2 text-sim-body">
       <input data-tree-goal-quality-on type="checkbox" :checked="on" @change="setOn(($event.target as HTMLInputElement).checked)" />{{ tr("品質も狙う", "Also aim for quality") }}
     </label>
     <StageQualityBar v-if="on && item" :item="item" :cap-limit="flag('goalAskFix') ? limit : undefined" @quality="setQuality" @cap="setCap" @catalyst="() => {}" />

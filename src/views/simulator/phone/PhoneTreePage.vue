@@ -90,7 +90,7 @@ const stepAll = computed(() => Math.max(1, ...Object.keys(t.doc.value.boxes).map
 /** ツリーのメモを書いている (PhoneMemo) */
 const memoEdit = ref(false);
 /** 上の帯の平たいボタン (PC の操作の列 TreeTopTools と同じ形: 枠の絵なし・絵 + 短い名前。押す所は 40px、10-26 夜オーナー「上の帯が太い」) */
-const FLAT = "flex h-10 min-w-10 shrink-0 items-center justify-center gap-0.5 whitespace-nowrap rounded-md bg-white/[0.04] px-1.5 text-[12px] text-[#d8ccb4] hover:bg-white/10 hover:text-white aria-pressed:bg-amber-400/20 aria-pressed:text-amber-100";
+const FLAT = "flex h-10 min-w-10 shrink-0 items-center justify-center gap-0.5 whitespace-nowrap rounded-md bg-white/[0.04] px-1.5 text-[12px] text-sim-body hover:bg-white/10 hover:text-white aria-pressed:bg-amber-400/20 aria-pressed:text-amber-100";
 /** 白紙に戻す = PC と同じ (SimTreePage の onClear): スタートと完成形を残して下を消す。作りかけは 3 択、保存済みは 2 回押し */
 const clearArm = useArmed();
 function onClear(): void {
@@ -219,7 +219,7 @@ function goBox(id: string): void {
       <!-- ツリーのメモ (文だけ、書いてあれば全文) -->
       <PhoneMemo v-model:editing="memoEdit" />
       <!-- 進み = 今の段 / 全部の段・未定の道の数と、見た段の行き来 (‹ 1 つ前・先へ ›。ツリーとして見せる、10-26 夜オーナー「質問と思わせない」) -->
-      <div v-if="!P27" data-phone-progress class="-my-1 flex items-center gap-2 text-[12px] text-[#d8ccb4]">
+      <div v-if="!P27" data-phone-progress class="-my-1 flex items-center gap-2 text-[12px] text-sim-body">
         <button type="button" data-phone-walk-back :class="FLAT" :disabled="trailAt <= 0" @click="walk(-1)">‹ {{ tr("1 つ前", "Back") }}</button>
         <span class="min-w-0 flex-1 break-words text-center">
           <b v-if="stepNow" class="text-[14px] text-amber-200">{{ tr(`${stepNow} 段目`, `Step ${stepNow}`) }}</b><span class="opacity-70"> / {{ tr(`全 ${stepAll} 段`, `${stepAll} steps`) }}</span>
@@ -235,10 +235,10 @@ function goBox(id: string): void {
       <template v-else>
         <div data-phone-all-done class="rounded-xl border border-emerald-400/50 bg-[#13190f] px-3 py-4 text-center">
           <p class="text-[15px] font-bold text-emerald-300">{{ tr("全部の道が決まりました", "Every path is decided") }}</p>
-          <p class="mt-1 text-[12px] text-[#9a8a70]">{{ tr("狙いが全部そろう道は自動で完成 (答え直せる)", "Paths with every target are marked done automatically (you can change them)") }}</p>
+          <p class="mt-1 text-[12px] text-sim-dim">{{ tr("狙いが全部そろう道は自動で完成 (答え直せる)", "Paths with every target are marked done automatically (you can change them)") }}</p>
         </div>
         <button v-if="run.result.value && !run.running.value" type="button" data-phone-run-sum class="rounded-xl border border-amber-300/50 bg-[#1a140d] px-3 py-3 text-left" @click="reportOpen = true">
-          <span class="text-[26px] font-bold tabular-nums text-amber-100">{{ fmt(run.result.value.perItem) }}</span><small class="ml-1 text-[13px] text-[#d8ccb4]">{{ tr("神 / 1 個", "div / item") }}</small>
+          <span class="text-[26px] font-bold tabular-nums text-amber-100">{{ fmt(run.result.value.perItem) }}</span><small class="ml-1 text-[13px] text-sim-body">{{ tr("神 / 1 個", "div / item") }}</small>
           <span class="float-right mt-2 text-[13px]" :class="donePct < 100 ? 'text-rose-300' : 'text-emerald-300'">{{ tr(`完成 ${donePct}%`, `${donePct}% done`) }}</span>
           <!-- 手だけ替えた後は替える前と今を並べる (S-57c) -->
           <span v-if="run.before.value" data-phone-run-before class="block text-[12px] tabular-nums text-sky-200">{{ tr(`替える前 1 個 ${fmt(run.before.value.perItem)} 神 · 完成 ${pctOf(run.before.value)}% → 今 1 個 ${fmt(run.result.value.perItem)} 神 · 完成 ${donePct}%`, `Before ${fmt(run.before.value.perItem)} div/item · ${pctOf(run.before.value)}% done → Now ${fmt(run.result.value.perItem)} div/item · ${donePct}% done`) }}</span>
@@ -253,11 +253,11 @@ function goBox(id: string): void {
       <!-- 上にツリーの全体図 (常に出す。今の箱が光る・押すとその箱へ・② の「ほかの箱へ」は図で戻り先を選ぶ。10-26 オーナー) -->
       <div data-phone-bar class="sticky bottom-0 z-10 -mx-2 flex flex-col gap-1.5 border-t border-white/10 bg-[#0c0a08] px-2 py-1.5">
         <!-- 完成形と全体図は重ね窓 (PhoneOverview、10-26 夜オーナー「完成図は表に出さない」)。ここは開く 1 行だけ (全幅) -->
-        <button v-if="MAP" type="button" data-phone-map-unfold class="flex h-8 w-full items-center gap-2 rounded-md border border-white/10 bg-[#080706] px-3 text-left text-[12px] text-[#d8ccb4]" @click="setMapFold(false)">
+        <button v-if="MAP" type="button" data-phone-map-unfold class="flex h-8 w-full items-center gap-2 rounded-md border border-white/10 bg-[#080706] px-3 text-left text-[12px] text-sim-body" @click="setMapFold(false)">
           <span class="min-w-0 flex-1 break-words">{{ tr(`完成形と全体図 (箱 ${Object.keys(t.doc.value.boxes).length})`, `Final item & overview (${Object.keys(t.doc.value.boxes).length} boxes)`) }}</span><span class="shrink-0">{{ tr("開く ▴", "Open ▴") }}</span>
         </button>
         <!-- 段送り (10-27 昼オーナー「上の段送りを下の帯に、上は消す」。↶ 戻す・↷ は外した = 「↶ 戻すは要らない」) -->
-        <div v-if="P27" data-phone-progress class="flex items-center gap-2 text-[12px] text-[#d8ccb4]">
+        <div v-if="P27" data-phone-progress class="flex items-center gap-2 text-[12px] text-sim-body">
           <button type="button" data-phone-walk-back :class="FLAT" :disabled="trailAt <= 0 && !(RES27 && q.current.value?.kind === 'outs' && outStep > 0)" @click="walk(-1)">‹ {{ tr("1 つ前", "Back") }}</button>
           <span class="min-w-0 flex-1 break-words text-center">
             <b v-if="stepNow" class="text-[14px] text-amber-200">{{ tr(`${stepNow} 段目`, `Step ${stepNow}`) }}</b><span class="opacity-70"> / {{ tr(`全 ${stepAll} 段`, `${stepAll} steps`) }}</span>

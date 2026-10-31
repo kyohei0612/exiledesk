@@ -112,7 +112,7 @@ const tierLabel = (tier: number): string => tierRankLabel(tier, props.mode !== "
         <p class="mb-1 text-[12px] font-bold text-[var(--exile-color-text-secondary)]">{{ sec.title }}</p>
         <div v-for="r in sec.rows" :key="r.id" :data-row-key="r.id" class="mb-1 rounded-md bg-white/[0.04]">
           <button type="button" data-tree-mod-row class="flex w-full min-w-0 items-center gap-2 px-2 py-1.5 text-left" :aria-expanded="open === r.id" @click="toggle(r.id, $event)">
-            <span class="min-w-0 flex-1 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words text-[13px] text-[#c8c8ff]" :title="r.text">{{ r.template }}</span>
+            <span class="min-w-0 flex-1 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words text-[13px] text-sim-crafted" :title="r.text">{{ r.template }}</span>
             <span v-if="r.group === 'essence'" class="shrink-0 rounded-sm bg-sky-500/25 px-1 text-[10px] text-sky-100">{{ tr("エッセンス", "Essence") }}</span>
             <span v-else-if="r.group === 'special'" class="shrink-0 rounded-sm bg-teal-500/25 px-1 text-[10px] text-teal-100">{{ tr("創生の樹など", "Genesis Tree etc.") }}</span>
             <span v-else-if="r.group === 'rune'" class="max-w-[40%] shrink-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words rounded-sm bg-violet-500/25 px-1 text-[10px] text-violet-100" :title="r.runeJa">{{ tr(`ルーン ${r.runeJa ?? ""}`, `Rune ${r.runeJa ?? ""}`) }}</span>
