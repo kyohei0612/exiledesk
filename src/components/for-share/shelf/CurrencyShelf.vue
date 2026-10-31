@@ -179,7 +179,7 @@ const usableCount = computed(() => usableAll.value.reduce((a, x) => a + x.keys.l
  */
 const SHELF_WHY = flag("shelfWhy");
 const shelfWhy = computed(() => {
-  if (!SHELF_WHY) return [];
+  if (!SHELF_WHY || craftStage.item.value?.rarity === "normal") return []; // 真っ白は打てないのが当たり前なので出さない (オーナー 10-31)
   void craftStage.omens.value;
   const why = (k: string): string | null => (craftStage.usableBare ?? craftStage.usable)(k);
   const line = (label: string, keys: string[]): { label: string; reason: string }[] => {
