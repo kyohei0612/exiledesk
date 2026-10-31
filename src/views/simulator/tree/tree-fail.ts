@@ -4,7 +4,7 @@
  * 木の作りと回し方は変えない (文はどれも今の setBack・autoBack・settle・stuckWhy を読むだけ)。決めは notes/2026-10-26-failure-behavior.md
  */
 import { MATCH, RESTART } from "../../../services/simulator/tree/tree-shape";
-import { boxAims, GAP_Y, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { boxAims, GAP_Y, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { backTargetsOf } from "./tree-merge";
 import { tr } from "../../../i18n/lang";
@@ -26,6 +26,19 @@ export function stepOf(doc: TreeDoc, id: string): number {
  * from が無い・始まりへ・スイッチが閉じている時は今までどおり「戻る」
  */
 export const isForward = (doc: TreeDoc, from: string | undefined, to: string): boolean => !!from && flag("goWord") && to !== "start" && stepOf(doc, to) >= stepOf(doc, from);
+/**
+ * 戻りの箱の下の行 = いつも行き先の箱の名前 (10-22 オーナー「続きからって選択肢選べんでしょ、そもそも白紙の状態からこうなるはず」)。
+ * 前の版の「形の合う箱へ」(MATCH) も行きうる箱の名前で出す (複数なら「○○ ほか n か所」)。PC の木と見るだけの全体図で同じ文
+ */
+export function backLabelOf(doc: TreeDoc, b: TreeBox): string {
+  if (b.back === RESTART) return tr("作り直し", "Start over");
+  const to = backTargetsOf(doc, b.id);
+  if (!to.length) return b.back === MATCH ? tr("行き先の箱が無い", "No box to go to") : "";
+  // 形の合う箱へで行き先が幾つか = 段を並べる (「1・2 段目へ戻る」、routeText と同じ文。10-27 オーナーの決め (a))
+  if (b.back === MATCH && to.length > 1) return (routeText(doc, b.id) ?? "").replace(/^↩ /, "");
+  const one = `${backText(doc, b.id, to[0]!)}${qualityNote(doc, b.id)}`;
+  return to.length > 1 ? tr(`${one} ほか ${to.length - 1} か所`, `${one} +${to.length - 1} more`) : one;
+}
 /** 行き先の印: 戻る = ↩、進む = → (S-87d) */
 export const routeArrow = (doc: TreeDoc, from: string | undefined, to: readonly string[]): string => (to.length && to.every((x) => isForward(doc, from, x)) ? "→" : "↩");
 /** 「n 段目へ戻る」(英語は GLOSSARY に無いので案 Back to step n、notes/2026-10-26-failure-behavior.md)。from を渡すと前の段でない行き先は「n 段目へ進む」(S-87d) */

@@ -11,7 +11,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import Icon from "../../components/ui/Icon.vue";
 import SimPcOnly from "./SimPcOnly.vue";
-import { usePhone } from "../../utils/use-phone";
+import { usePhone, useViewOnlyWidth } from "../../utils/use-phone";
 import { flag } from "../../web/release-flags";
 import { quickSave, unsaved } from "./tree/tree-save";
 import { currentTreeRecipe, currentTreeRecipeId, duplicateTreeRecipe, exportTreeRecipes, importTreeRecipes, overwriteTreeRecipe, removeTreeRecipe, renameTreeRecipe, restoreTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe, touchedAtTree, treeRecipes, type TreeRecipe } from "../../state/simulator/tree-recipes";
@@ -27,6 +27,9 @@ import { jaTypeName } from "../../services/trade2/localize";
 import { tr } from "../../i18n/lang";
 
 const t = useTree();
+/** シミュの見るだけの幅 (S-94d、スイッチ phoneView): できるのは 開く・URL をコピー・URL を貼って開く・消すだけ */
+const viewWidth = useViewOnlyWidth();
+const view = computed(() => viewWidth.value && flag("phoneView"));
 const baseName = (r: TreeRecipe): string => tr(jaTypeName(r.tree.base), r.tree.base);
 /** 1 枚の要約 (ベースの絵・完成の狙い・印・空の木か。帯の小窓と同じ) */
 const sumOf = (r: TreeRecipe) => recipeSummary(r.tree);
@@ -37,7 +40,7 @@ const countOf = (r: TreeRecipe): { boxes: number; done: number } => {
 };
 /** 今の木に、開いているレシピに無い変更があるか (開いていない時は箱が始まりだけでなければ) */
 /** 作りかけ (保存していない狙いか手がある、tree-save の unsaved) */
-const dirty = computed(() => unsaved(t.doc.value));
+const dirty = computed(() => !view.value && unsaved(t.doc.value));
 
 // 探す・並べ替え (並べ替えは覚える)
 const SORT_KEY = "exiledesk.recipes.sort";
@@ -156,7 +159,7 @@ const SIM_PHONE = flag("simPhone");
 
     <div class="g-panel px-4 py-3 text-[13px] max-md:px-3">
       <!-- 今の木 -->
-      <div data-recipes-now class="mb-3 flex flex-wrap items-center gap-2 rounded-md bg-white/[0.04] px-3 py-2">
+      <div v-if="!view" data-recipes-now class="mb-3 flex flex-wrap items-center gap-2 rounded-md bg-white/[0.04] px-3 py-2">
         <span class="text-[var(--exile-color-text-secondary)]">{{ tr("今の木", "Current tree") }}:</span>
         <b class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words">{{ currentTreeRecipe ? currentTreeRecipe.name : tr("名前なし", "Untitled") }}</b>
         <span v-if="dirty" class="inline-flex items-center gap-1 text-[12px] text-amber-300"><span class="size-1.5 rounded-full bg-amber-400" />{{ tr("未保存の変更あり", "Unsaved changes") }}</span>
@@ -179,8 +182,8 @@ const SIM_PHONE = flag("simPhone");
           <input v-model="url" data-recipes-url type="text" inputmode="url" spellcheck="false" autocomplete="off" class="h-8 min-w-0 flex-1 rounded-lg border border-white/15 bg-black/40 px-2 outline-none placeholder:opacity-45 focus:border-amber-400/60 max-md:h-11" :placeholder="tr('共有 URL を貼る', 'Paste shared URL')" :title="tr('共有されたレシピの URL を貼る (貼ると開く)', 'Paste a shared recipe URL (opens on paste)')" @paste="onPaste" @keydown.enter.prevent="openUrl" />
           <button type="button" class="g-btn sm max-md:min-h-10" :disabled="!url.trim()" @click="openUrl">{{ tr("開く", "Open") }}</button>
         </span>
-        <button type="button" data-recipes-export class="g-btn sm max-md:min-h-10" :disabled="!treeRecipes.length" :title="tr('全部のレシピを 1 つのファイル (JSON) に書き出す (このブラウザの外の控え)', 'Save all recipes to one file (JSON), a backup outside this browser')" @click="exportFile">{{ tr("書き出す", "Export") }}</button>
-        <button type="button" data-recipes-import class="g-btn sm max-md:min-h-10" :title="tr('書き出したファイルからレシピを足す (同じ物は足さない)', 'Add recipes from an exported file (skips ones already here)')" @click="fileIn?.click()">{{ tr("読み込む", "Import") }}</button>
+        <button v-if="!view" type="button" data-recipes-export class="g-btn sm max-md:min-h-10" :disabled="!treeRecipes.length" :title="tr('全部のレシピを 1 つのファイル (JSON) に書き出す (このブラウザの外の控え)', 'Save all recipes to one file (JSON), a backup outside this browser')" @click="exportFile">{{ tr("書き出す", "Export") }}</button>
+        <button v-if="!view" type="button" data-recipes-import class="g-btn sm max-md:min-h-10" :title="tr('書き出したファイルからレシピを足す (同じ物は足さない)', 'Add recipes from an exported file (skips ones already here)')" @click="fileIn?.click()">{{ tr("読み込む", "Import") }}</button>
         <input ref="fileIn" data-recipes-import-file type="file" accept=".json,application/json" class="hidden" @change="importFile" />
       </div>
       <p v-if="urlNote" class="mt-1 text-[12px] text-amber-200">{{ urlNote }}</p>
@@ -202,7 +205,7 @@ const SIM_PHONE = flag("simPhone");
             <input v-if="renaming === r.id" :data-recipe-rename="r.id" :value="r.name" class="h-8 w-full rounded border border-amber-400/60 bg-black/50 px-1.5 text-[14px] font-bold outline-none max-md:h-10" @keydown.enter.prevent="($event.target as HTMLInputElement).blur()" @keydown.esc.stop="renaming = null" @blur="endRename(r, ($event.target as HTMLInputElement).value)" />
             <p v-else class="flex min-w-0 items-center gap-1.5">
               <b class="min-w-0 break-words text-[14px] text-[var(--exile-color-text-primary)]">{{ r.name }}</b>
-              <button type="button" data-recipe-rename-btn class="grid size-7 shrink-0 place-items-center rounded opacity-50 hover:bg-white/10 hover:opacity-100 max-md:size-9" :title="tr('名前を変える', 'Rename')" @click="startRename(r)"><Icon name="pencil" class="size-3.5" /></button>
+              <button v-if="!view" type="button" data-recipe-rename-btn class="grid size-7 shrink-0 place-items-center rounded opacity-50 hover:bg-white/10 hover:opacity-100 max-md:size-9" :title="tr('名前を変える', 'Rename')" @click="startRename(r)"><Icon name="pencil" class="size-3.5" /></button>
               <span v-if="r.id === currentTreeRecipeId" class="shrink-0 rounded-sm bg-amber-500/20 px-1.5 text-[11px] font-bold text-amber-200">{{ tr("開いている", "Open") }}</span>
             </p>
             <p data-recipe-sum class="mt-0.5 min-w-0 break-words text-[12px] text-[var(--exile-color-text-secondary)]">
@@ -214,7 +217,7 @@ const SIM_PHONE = flag("simPhone");
             <div class="mt-2 flex flex-wrap items-center gap-1.5">
               <button type="button" data-recipe-open class="g-btn sm max-md:min-h-10" :title="tr('この木をクラフトの道で開く', 'Open this tree in the crafting path')" @click="open(r)">{{ tr("開く", "Open") }}</button>
               <button v-if="dirty && r.id === currentTreeRecipeId" type="button" data-recipe-overwrite class="max-md:min-h-10" :class="arm.is(`over:${r.id}`) ? ARMED_CLASS : 'g-btn sm'" :title="tr('今の木でこのレシピを書き換える', 'Replace this recipe with the current tree')" @click="overwrite(r)">{{ arm.is(`over:${r.id}`) ? tr("もう一度押すと上書き", "Click again to overwrite") : tr("今の木で上書き", "Overwrite with current") }}</button>
-              <button type="button" data-recipe-duplicate class="g-btn sm inline-flex items-center gap-1 max-md:min-h-10" @click="duplicate(r)"><Icon name="copy" class="size-3.5" />{{ tr("複製", "Duplicate") }}</button>
+              <button v-if="!view" type="button" data-recipe-duplicate class="g-btn sm inline-flex items-center gap-1 max-md:min-h-10" @click="duplicate(r)"><Icon name="copy" class="size-3.5" />{{ tr("複製", "Duplicate") }}</button>
               <button type="button" data-recipe-copy-url class="g-btn sm inline-flex items-center gap-1 max-md:min-h-10" :title="tr('この木の URL をコピー (URL に木が全部入っている)', 'Copy the URL of this tree (the whole tree is in it)')" @click="copyUrl(r)"><Icon name="link" class="size-3.5" />{{ tr("URL をコピー", "Copy URL") }}</button>
               <button type="button" data-recipe-delete class="ml-auto inline-flex items-center gap-1 max-md:min-h-10" :class="arm.is(`del:${r.id}`) ? ARMED_CLASS : 'g-btn sm hover:!text-rose-300'" :title="tr('このレシピを消す (2 回押す。消した後も「元に戻す」で戻せる)', 'Delete this recipe (click twice; Undo appears right after)')" @click="remove(r)"><Icon name="trash" class="size-3.5" />{{ arm.is(`del:${r.id}`) ? tr("もう一度押すと消す", "Click again to delete") : tr("消す", "Delete") }}</button>
             </div>

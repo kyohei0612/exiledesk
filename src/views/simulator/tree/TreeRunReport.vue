@@ -17,7 +17,8 @@ import { tr } from "../../../i18n/lang";
 import { driveHead } from "./hole-check";
 
 /** test = 穴チェックの走行の結果 (10-27 オーナー: 足りない所があっても回し、どの箱で何人止まった・どこでループしたか。費用の欄は出さない) */
-const props = defineProps<{ result: TreeRunResult; test?: boolean }>();
+/** note = 見出しの下の 1 行 (スマホの 10 人、S-94e) */
+const props = defineProps<{ result: TreeRunResult; test?: boolean; note?: string }>();
 const emit = defineEmits<{ close: []; go: [id: string] }>();
 const t = useTree();
 
@@ -50,6 +51,7 @@ const priceIn = computed(() => startOf(t.doc.value).price ?? null);
       <b class="text-[14px] text-amber-200">{{ test ? driveHead(result.n) : tr(`${result.n} 人回した結果`, `Result of ${result.n} runs`) }}</b>
       <button type="button" data-tree-run-report-close class="g-btn sm ml-auto" @click="emit('close')">{{ tr("木に戻る", "Back to tree") }}</button>
     </header>
+    <p v-if="note" data-tree-run-report-note class="border-b border-white/10 px-3 py-1 text-[12px] text-amber-100/80">{{ note }}</p>
     <div class="flex min-h-0 flex-col gap-3 overflow-y-auto px-3 py-3">
       <!-- 穴チェックの走行: 完成・止まり・ループの人数と、止まった箱 (理由)・ループの箱。押すとその箱へ -->
       <div v-if="test" data-tree-test-drive class="flex flex-col gap-2">

@@ -16,8 +16,8 @@ import Icon from "../../../components/ui/Icon.vue";
 import TreeMemoFloat from "./TreeMemoFloat.vue";
 import TreeCanvasTools from "./TreeCanvasTools.vue"; import TreeTopTools from "./TreeTopTools.vue"; import TreeRunSum from "./TreeRunSum.vue"; import TreeUnsetBar from "./TreeUnsetBar.vue";
 import ModeTabs from "../../../components/for-share/ModeTabs.vue";
-import PhoneTreePage from "../phone/PhoneTreePage.vue";
-import { isPhoneWidth, usePhone } from "../../../utils/use-phone";
+import PhoneTreePage from "../phone/PhoneTreePage.vue"; import PhoneViewPage from "../phone/PhoneViewPage.vue";
+import { isPhoneWidth, usePhone, useViewOnlyWidth } from "../../../utils/use-phone";
 import TreeBox from "./TreeBox.vue"; import TreeStripFold from "./TreeStripFold.vue"; import { useStripFold } from "./use-strip-fold";
 import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../tutorial/SimTutorialGuide.vue"; import TreeGoalCard from "./TreeGoalCard.vue"; import { simAct, simOp } from "../../../web/track";
 import { boxHeightOf, useRowSettle } from "./use-row-settle"; import { placeTree } from "../../../services/simulator/tree/tree-place";
@@ -33,19 +33,18 @@ import { craftStage as s } from "../../../state/craft-stage";
 import { addHit, aimKey, BOX_H, BOX_W, clearHand, moveBox, setAim, setBack, setDone, type Aim, type Hand, type HandKind, type TreeBox as Box } from "../../../services/simulator/tree/tree-model";
 import { handUses } from "../../../services/simulator/tree/tree-memo";
 import { outName } from "./tree-names";
-import { MATCH, RESTART } from "../../../services/simulator/tree/tree-shape";
 import { tr } from "../../../i18n/lang";
 import { pageZoom } from "../../../utils/zoom";
 import { LINE, useTreeEdges } from "./use-tree-edges";
 import TreeRecipeBar from "./TreeRecipeBar.vue";
-import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes"; import { quickSave, rememberResume, unsaved } from "./tree-save";
+import { setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes"; import { quickSave, rememberResume, resumeTree, unsaved } from "./tree-save";
 import { askLeave, openTreePage, setLeaveGuard, treeStep } from "../../../web/page";
 import { recipesPage } from "../../../state/web-page";
 import { gesture } from "./use-gesture";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { useArmed } from "../../../utils/use-armed";
 import { noTargetText, useTreeLink } from "./use-tree-link";
-import { backText, qualityNote, retryOf, routeText, stepBackText } from "./tree-fail";
+import { backLabelOf, retryOf, stepBackText } from "./tree-fail";
 import { useTreePlus } from "./use-tree-plus";
 import { useTreeCheck } from "./use-tree-check";
 import TreeIssues from "./TreeIssues.vue";
@@ -66,6 +65,9 @@ import { backTargetsOf } from "./tree-merge";
 import { useTreeMerge } from "./use-tree-merge";
 const t = useTree();
 const doc = t.doc;
+/** 見るだけの幅 (768 未満、S-94g) + スイッチ phoneView = 見るだけの 1 画面 PhoneViewPage。組む動き・ベース選びへの移り・離れる時の確かめは止める */
+const viewWidth = useViewOnlyWidth();
+const viewPhone = computed(() => viewWidth.value && flag("phoneView"));
 // エンジンの設定 (触媒・聖別の倍率・MOD の重み) は開いている間この木の値 (use-tree-tune.ts)
 useTreeTune(doc, t.edit);
 /** 右の欄 (箱を選んだ時だけ) */
@@ -143,19 +145,7 @@ function onClear(): void { const go = (): void => { simOp("clear"); t.reset(); s
 /** 戻り先へ寄る (編集のポップアップの札を押した時) */
 function goBack(b: Box): void { const to = backTargetsOf(doc.value, b.id)[0]; if (to) void v.reveal(to, true); }
 
-/**
- * 戻りの箱の下の行 = いつも行き先の箱の名前 (10-22 オーナー「続きからって選択肢選べんでしょ、そもそも白紙の状態からこうなるはず」)。
- * 前の版の「形の合う箱へ」(MATCH) も行きうる箱の名前で出す (複数なら「○○ ほか n か所」)
- */
-function backLabel(b: Box): string {
-  if (b.back === RESTART) return tr("作り直し", "Start over");
-  const to = backTargetsOf(doc.value, b.id);
-  if (!to.length) return b.back === MATCH ? tr("行き先の箱が無い", "No box to go to") : "";
-  // 形の合う箱へで行き先が幾つか = 段を並べる (「1・2 段目へ戻る」、tree-fail の routeText と同じ文。10-27 オーナーの決め (a))
-  if (b.back === MATCH && to.length > 1) return (routeText(doc.value, b.id) ?? "").replace(/^↩ /, "");
-  const one = `${backText(doc.value, b.id, to[0]!)}${qualityNote(doc.value, b.id)}`;
-  return to.length > 1 ? tr(`${one} ほか ${to.length - 1} か所`, `${one} +${to.length - 1} more`) : one;
-}
+const backLabel = (b: Box): string => backLabelOf(doc.value, b);
 
 // 組み替え
 /**
@@ -268,7 +258,7 @@ function onTarget(b: Box): void {
   if (from && from !== b.id) { simOp("set-back"); t.edit((d) => setBack(d, from, b.id)); }
 }
 // ルート精査 (押した時に始める、use-tree-check.ts)
-const { issues, issuesOpen, shown: issuesShown, issuesFold, checking, progress, passed, onCheck, issueOf, checkRun } = useTreeCheck(doc, () => !t.needBase.value && !t.goalInline.value, () => ({ price: runPrice(t.treePrice), startCost: t.startPrice() }));
+const { issues, issuesOpen, shown: issuesShown, issuesFold, checking, progress, passed, onCheck, issueOf, checkRun } = useTreeCheck(doc, () => !t.needBase.value && !t.goalInline.value && !viewPhone.value, () => ({ price: runPrice(t.treePrice), startCost: t.startPrice() }));
 // 穴の表示のオフは今のタブの間だけ (タブを替えると見せる、10-25)
 watch(() => t.active.value, () => { issuesShown.value = true; });
 /** 穴の一覧の窓を開く (箱の !・札の横の ▾。光が消えていれば一緒に点ける) */
@@ -296,7 +286,7 @@ watch(treeStep, (st, was) => {
  * 離れる時の確かめ (10-24 夜オーナー「誤作動もあるからページを離れる警告もセットで。ツリー作成中の場合、保存せずに終了するか聞く」)。
  * 作りかけ = 保存していない狙いか手がある (tree-save の unsaved、10-26)、聞く時は「保存して進む」(名前は聞かず自動の名前) も。シミュの中 (レシピ・sim-*) へ移る時は聞かない (木はこのブラウザに残る)
  */
-onMounted(() => setLeaveGuard((to) => !(to === "page=recipes" || to.startsWith("page=sim-")) && unsaved(doc.value), { save: () => void quickSave() }));
+onMounted(() => setLeaveGuard((to) => !viewPhone.value && !(to === "page=recipes" || to.startsWith("page=sim-")) && unsaved(doc.value), { save: () => void quickSave() }));
 // シミュの外へ出たら木を白紙に戻す (次に入るとベース選びの空から。レシピのページへ移る時は残す、そこから戻って続ける)。保存したレシピを開いていたら戻った時・読み直した時に開き直す (tree-save の rememberResume)
 onBeforeUnmount(() => { setLeaveGuard(null); window.removeEventListener("pagehide", rememberResume); if (!recipesPage.value) { rememberResume(); t.resetAll(); } }); onMounted(() => window.addEventListener("pagehide", rememberResume));
 const busy = computed((): { text: string; n?: number; of?: number } | null => {
@@ -360,7 +350,7 @@ function onKey(e: KeyboardEvent): void {
   }
 }
 onMounted(() => window.addEventListener("keydown", onKey));
-onMounted(openTreeFirst); // 白紙ならベース選びのページから (tree-open-first.ts)
+onMounted(() => { if (viewPhone.value) resumeTree(); else openTreeFirst(); }); // 白紙ならベース選びのページから (tree-open-first.ts)。見るだけの 1 画面は進まず案内 (S-94f)
 onBeforeUnmount(() => { window.removeEventListener("keydown", onKey); });
 // 完成形の設定をページで出していた間はツリーを隠していたので (大きさ 0)、戻ったら開いた時の見え方 (全体・上寄せ) に合わせ直す
 watch(() => t.goalInline.value, (on) => { if (on) v.keepView(); else setTimeout(() => { measureRow(); void v.backView(); }, 0); });
@@ -384,8 +374,9 @@ const phone = usePhone();
   <section data-tree-page class="min-w-0 flex-1 p-4 max-md:px-2">
     <!-- スマホは質問で進める形 (phone/PhoneTreePage、木は同じ TreeDoc) -->
     <!-- チュートリアルの札と光る枠 (PC もスマホも。札は body へ出す) -->
-    <SimTutorialGuide />
-    <PhoneTreePage v-if="phone" />
+    <SimTutorialGuide v-if="!viewPhone" />
+    <PhoneViewPage v-if="viewPhone" />
+    <PhoneTreePage v-else-if="phone" />
     <template v-else>
     <!-- 題の帯「クラフトの道 (ツリー)」はツリーのページでは出さない (10-26 夜オーナー「いらんわ」)。流れの帯は木の枠の中の一番上 -->
     <!-- エミュレーター / シミュレーター β の切り替え (エミュの画面の帯と同じ共通の部品、10-23 オーナー「帯を 1 つにして両方に」) -->

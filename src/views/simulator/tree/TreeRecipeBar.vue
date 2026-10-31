@@ -25,7 +25,8 @@ const t = useTree();
 const emit = defineEmits<{ opened: [] }>();
 /** menuOnly = 「レシピ ▾」だけ (名前・保存・別名で保存・URL をコピーは出さない)。完成形の設定の段のタブの右端で使う (小窓は右寄せ、10-23 オーナー) */
 /** flat = 保存・レシピ ▾ を絵 + 短い名前の平たいボタンにする時のボタンの class (スマホの上の帯、PC の操作の列 0b131904 と同じ形。10-26 夜オーナー「上の帯が太い」) */
-const props = defineProps<{ menuOnly?: boolean; flat?: string }>();
+/** view = スマホの見るだけの 1 画面 (S-94d): 名前は読むだけ、保存・別名で保存は出さない。開く・シェア・URL を貼る・消すは残す */
+const props = defineProps<{ menuOnly?: boolean; flat?: string; view?: boolean }>();
 /** PC の右の列 (248px) で 1 行に入る平たい小さなボタン (操作の列 TreeTopTools と同じ形) */
 const SMALL = "g-plain inline-flex h-8 shrink-0 items-center gap-1 whitespace-nowrap rounded-md border border-white/15 bg-white/[0.04] px-1.5 text-[12px] text-sim-body hover:bg-white/10 hover:text-white aria-expanded:border-amber-400/60 aria-expanded:text-amber-100";
 const btn = computed(() => props.flat ?? SMALL);
@@ -49,7 +50,7 @@ const bare = computed(() => t.needBase.value || !!props.menuOnly);
 /** 一覧の 1 行の要約 (ベースの絵・狙い・印) */
 const sum = (r: { tree: Parameters<typeof recipeSummary>[0] }) => recipeSummary(r.tree);
 /** 作りかけ (保存していない狙いか手がある、tree-save の unsaved) */
-const dirty = computed(() => unsaved(t.doc.value));
+const dirty = computed(() => !props.view && unsaved(t.doc.value));
 const defaultName = (): string => autoName(t.doc.value);
 
 const note = ref("");
@@ -153,7 +154,7 @@ function onDown(e: PointerEvent): void { if ((pop.value || naming.value || share
 const phone = usePhone();
 function onKey(e: KeyboardEvent): void {
   if (e.key === "Escape" && (pop.value || naming.value || share.value)) { closeAll(); e.stopImmediatePropagation(); return; }
-  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "s" && !bare.value && !phone.value && !t.goalInline.value && !t.goalPage.value) { e.preventDefault(); save(); }
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "s" && !bare.value && !phone.value && !props.view && !t.goalInline.value && !t.goalPage.value) { e.preventDefault(); save(); }
 }
 // 小窓を開いた時に向きと高さを測る (placePop)
 watch([pop, naming, share], ([a, b, c]) => { if (a || b || c) placePop(); });
@@ -165,13 +166,14 @@ onBeforeUnmount(() => { window.removeEventListener("pointerdown", onDown, true);
   <span ref="root" data-tree-recipe-bar class="relative flex min-w-0 flex-wrap items-center gap-1.5">
     <input v-if="renaming && !bare" ref="nameInput" data-tree-recipe-name-input :value="currentTreeRecipe?.name ?? defaultName()" class="h-8 w-56 max-md:order-last max-md:w-full rounded border border-amber-400/60 bg-black/50 px-1.5 text-[13px] font-bold outline-none" @keydown.enter.prevent="($event.target as HTMLInputElement).blur()" @keydown.esc.stop="renaming = false" @blur="endRename(($event.target as HTMLInputElement).value)" />
     <!-- 名前 (保存前は「(未保存)」、押すと保存したレシピは名前を変える・まだなら名前を付けて保存)。… で切らず折り返す -->
+    <b v-else-if="view" data-tree-recipe-name class="flex h-10 min-w-0 flex-1 items-center break-words px-1 text-[13px] text-amber-200">{{ currentTreeRecipe?.name ?? defaultName() }}</b>
     <button v-else-if="!bare" type="button" data-tree-recipe-name class="flex min-w-0 items-center gap-1.5 rounded px-1 text-left text-[13px] hover:bg-white/[0.06]" :class="flat ? 'h-10 max-w-[240px] max-[359px]:max-w-none max-[359px]:basis-full max-[359px]:justify-center' : 'min-h-8'" :title="currentTreeRecipe ? tr('名前を変える', 'Rename') : tr('名前を付けて保存', 'Save with a name')" @click="onName">
       <b class="min-w-0 break-words" :class="currentTreeRecipe ? '' : 'font-normal opacity-70'">{{ currentTreeRecipe?.name ?? tr("(未保存)", "(Unsaved)") }}</b>
       <span v-if="dirty" data-tree-recipe-dirty class="size-2 shrink-0 rounded-full bg-amber-400" :title="tr('保存していない変更がある', 'Unsaved changes')" />
     </button>
     <!-- 保存・レシピ・シェア (スマホは差し込みのメモ・白紙も) を 1 組にして一緒に折り返す (名前が長い・幅が狭い時は名前だけ 1 行目)。PC の列は平たい小さなボタン (SMALL) で 248px に 1 行 -->
     <span class="flex max-w-full shrink-0 flex-wrap items-center justify-center gap-1">
-      <button v-if="!bare" type="button" data-tree-recipe-save :class="btn" :aria-expanded="naming" :title="currentTreeRecipe ? tr('開いているレシピに上書き保存 (Ctrl+S)', 'Save to the open recipe (Ctrl+S)') : tr('名前を付けて保存 (Ctrl+S)', 'Save with a name (Ctrl+S)')" @click="save"><Icon v-if="flat" name="save" class="size-4" />{{ tr("保存", "Save") }}</button>
+      <button v-if="!bare && !view" type="button" data-tree-recipe-save :class="btn" :aria-expanded="naming" :title="currentTreeRecipe ? tr('開いているレシピに上書き保存 (Ctrl+S)', 'Save to the open recipe (Ctrl+S)') : tr('名前を付けて保存 (Ctrl+S)', 'Save with a name (Ctrl+S)')" @click="save"><Icon v-if="flat" name="save" class="size-4" />{{ tr("保存", "Save") }}</button>
       <button type="button" data-tree-recipe-menu :class="menuOnly ? 'g-btn sm inline-flex shrink-0 items-center gap-1' : btn" :aria-expanded="pop" @click="pop = !pop; naming = false; share = false"><Icon v-if="flat" name="book" class="size-4" />{{ tr("レシピ", "Recipes") }} ▾</button>
       <button v-if="!bare" type="button" data-tree-recipe-share :class="btn" :aria-expanded="share" :title="tr('この木を人に見せる (短い URL をコピー・X に出す)', 'Share this tree (copy a short URL or post to X)')" @click="share = !share; pop = false; naming = false"><Icon v-if="flat" name="share" class="size-4" />{{ tr("シェア", "Share") }}</button>
       <slot name="after" />
@@ -227,7 +229,7 @@ onBeforeUnmount(() => { window.removeEventListener("pointerdown", onDown, true);
       </span>
       <p v-if="urlNote" class="text-amber-200">{{ urlNote }}</p>
       <div class="flex flex-wrap gap-1.5 border-t border-white/10 pt-1.5">
-        <button v-if="!bare" type="button" data-tree-recipe-save-as class="g-btn sm" @click="saveAs">{{ tr("別名で保存", "Save as") }}</button>
+        <button v-if="!bare && !view" type="button" data-tree-recipe-save-as class="g-btn sm" @click="saveAs">{{ tr("別名で保存", "Save as") }}</button>
         <button type="button" data-tree-recipe-list class="g-btn sm ml-auto" @click="pop = false; openRecipesPage()">{{ tr("レシピの一覧へ", "All recipes") }}</button>
       </div>
     </div>
