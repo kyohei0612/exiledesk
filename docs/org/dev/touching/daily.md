@@ -4,4 +4,3 @@
 
 | 誰 | ファイル |
 |---|---|
-| デイリー部長 (11-01) | docs/spec/daily.md (新規)・docs/org/daily/** |

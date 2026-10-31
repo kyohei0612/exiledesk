@@ -4,7 +4,7 @@
 
 ## 決まり (10 行まで)
 1. 持ち物は src/views/daily/ と docs/org/daily/。後から server/live のデイリーの所・D1 の表・src/state/daily*.ts も持つ (作る時に owners.txt に足す)。
-2. 今の段は UI/UX のモック: データは手で書いた見本 (daily-mock.ts) だけ、サーバー・シミュ・エンジン・相場は使わない、開発版だけ。オーナーの OK まで次の段に進まない。
+2. 決まりの正は設計図 docs/spec/daily.md (D-xx)。今の段は D-90 = 持ち場の中で動く形 (サーバーは daily-api.ts の localStorage の仮)、開発版だけ。よその部の物は D-91 の一覧にして返す。
 3. よその部の物はブラック経由で頼む (ページの入口・タブ・部品・見た目はデザイン部長、シミュの画面を開く口はシミュ部長、サーバーの共通の所はサーバー管理人)。
 4. 画面は shared-ui.md (U-xx)、広告の枠は Y-20 (別のページ・両脇に縦長の枠)、英語は U-60〜62。
 5. 構想は動かさない (全部は notes/2026-10-23-rules-archive.md): 投稿 → オーナーの精査 → 1 日 1 個、朝 7 時更新・月曜リセット、平均の費用で競い完成率 90% で解決。
@@ -15,5 +15,5 @@
 - 構想: メモ craft-challenge (10-22 の節)、docs/craft-challenge.md (古い 2 コースの記述は 10-22 に 1 本へまとまった、反映はシミュレーター完成後)。
 - 書きかけ: ブランチ wip/craft-challenge (10-16 の古い形、今は使わない・参考だけ)。
 - ページの作り: src/web/page.ts の頭のコメント (?page=○○ と題)、広告の枠 utils/ads.ts の pageTick。
-- モックの作り (10-22): src/views/daily/DailyPage.vue (3 ページの出し分け、dailyPage を読んで openDailyPage で移る、入口・URL・題は web/page.ts = デザイン部長、10-23)・DailyTopicCard (大 / 小のカード)・DailyModList (MOD の行、フラクチャー選びにも)・DailyMine (自分の結果)・DailyStart (フラクチャー選び、枠の外・Esc で選ぶ前に戻す)・daily-mock.ts (見本のデータ、MOD の文は mod-lines-ja-en.json の写し、7 時と月曜 7 時の残り untilRefresh)。
+- 作り (11-01): src/views/daily/DailyPage.vue (出し分け)・DailyHero (お題の顔)・DailyRank (順位)・DailyNick (名前の窓)・DailyPost (投稿)・DailyPlay (挑戦、SimTreePage を中に置く)・daily-api.ts (サーバーの口の形)・daily-aims.ts (読み・お題の木)・daily-samples.ts (見本)・daily-skin.css (皮)。
 - やる事・OK 待ちは todo.md、記録は notes/。
