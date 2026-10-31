@@ -48,6 +48,8 @@ export function splitWhenText(w: SplitWhen): string {
 }
 
 /** 箱の種類の名前 (始まり・当たり・外れ…。一覧・戻り先の札・まとめた札で同じ) */
+/** 箱の数の英語 (1 box / 2 boxes、word = "hit " などの前置き) */
+export const boxesEn = (n: number, word = ""): string => `${n} ${word}box${n === 1 ? "" : "es"}`;
 export const outName = (out: TreeBox["out"]): string => tr(OUT_LOOK[out].ja, OUT_LOOK[out].en);
 /** 手の窓の「結果の箱」の名前 (骨を未発現のまま次へは「未発現の冒涜が付いた」、スイッチ boneLater) */
 export function outNameOf(h: Hand | null | undefined, out: TreeBox["out"], aim?: TreeBox["aim"]): string {

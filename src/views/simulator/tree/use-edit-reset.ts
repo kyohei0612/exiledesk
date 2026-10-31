@@ -40,7 +40,7 @@ export function useEditReset(t: ReturnType<typeof useTree>) {
   function leave(next: () => void): void {
     const d = t.doc.value;
     if (!on || !before || !hasHand(d) || premiseOf(d) === premise) { kept = null; next(); return; }
-    ask.value = { next, boxes: Object.keys(before.boxes).length - 1 };
+    ask.value = { next, boxes: Object.values(before.boxes).filter((b) => b.out !== "start" && b.out !== "pass").length };
   }
   function answer(kind: "save" | "drop" | "cancel"): void {
     const a = ask.value, old = before;

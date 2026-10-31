@@ -14,6 +14,8 @@ import { rebuildTree } from "./tree-rebuild";
 const clone = <T>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
 /** 画面に出る箱か (通り抜け・まとめて描かない箱は「下の n 箱」に数えない。use-tree の lostOnBase と同じ見方) */
 const drawn = (d: TreeDoc, id: string): boolean => { const b = d.boxes[id]; return !!b && b.out !== "pass" && !mergedAway(d, b); };
+/** 札の最後の側の鍵を除いた物 */
+const plain = (k: string): string => k.replace(/\[[^\]/]*\]$/, "");
 /** 手を替えて下が消える数 (「続ける」の時。手を決める時と同じ applyPick を写しに打つ。結果の箱が同じ手なら 0) */
 export function dropCountOf(doc: TreeDoc, id: string, h: Hand, kind: HandKind, aims: Aim[], pre: string | null, only: OnlyOut): number {
   const after = clone(doc);
@@ -46,9 +48,13 @@ export function swapHand(data: PatchData, doc: TreeDoc, id: string, h: Hand, aim
   const had = new Set((rec.orphans ?? []).map((o) => o.at));
   const orphans = (d.orphans ?? []).filter((o) => o.why !== "gone" || !o.at.startsWith(`${at}/`) || had.has(o.at));
   if (orphans.length) d.orphans = orphans; else delete d.orphans;
-  const now = pathKeysOf(d), left = new Set(now.values()), old = new Set(was.values());
+  const now = pathKeysOf(d), old = new Set(was.values());
+  // 替えた箱の札は組み直しで側の鍵が替わる事がある (s/any → s/any[s:2|2]、下の箱は引き継がれる)。下はその箱からの札で比べる
+  const box = [...now].find(([, k]) => k === at) ?? [...now].find(([, k]) => plain(k) === plain(at)) ?? null;
+  const nowAt = box?.[1] ?? at, left = new Set([...now.values()].filter((k) => k.startsWith(`${nowAt}/`)).map((k) => k.slice(nowAt.length)));
   const under = subtree(doc, id).slice(1).filter((x) => drawn(doc, x));
-  return { doc: d, box: [...now].find(([, k]) => k === at)?.[0] ?? null, gone: under.filter((x) => !left.has(was.get(x)!)).length, made: [...now].filter(([x, k]) => !old.has(k) && !!d.boxes[x]).map(([x]) => x) };
+  const made = [...now].filter(([x, k]) => !!d.boxes[x] && k.startsWith(`${nowAt}/`) ? !old.has(at + k.slice(nowAt.length)) : !old.has(k) && k !== nowAt).map(([x]) => x);
+  return { doc: d, box: box?.[0] ?? null, gone: under.filter((x) => !left.has(was.get(x)!.slice(at.length))).length, made };
 }
 
 /** 手だけ替える (t.edit の中で呼ぶ。渡した d の中身を替えた木に差し替える) */

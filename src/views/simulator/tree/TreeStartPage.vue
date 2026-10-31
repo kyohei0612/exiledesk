@@ -3,6 +3,7 @@
   0 完成形の設定のベースから始める: 印から決まる形・＋の MOD・ルーンは TreeStartPick (10-23)、右にその始まりのアイテムのカード。開いている印は use-tree の startPage
 -->
 <script setup lang="ts">
+import { boxesEn } from "./tree-names";
 import { computed, onBeforeUnmount } from "vue";
 import ModalShell from "../../../components/ui/ModalShell.vue";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
@@ -26,7 +27,7 @@ const item = computed(() => (s.data.value ? startItemOf(s.data.value, t.doc.valu
 <template>
   <ModalShell :open="true" rec="tree-start" :title="tr('スタート', 'Start')" :close-title="tr('ツリーへ戻る (Esc / 枠の外を押す)', 'Back to the tree (Esc / click outside)')" width="w-full max-w-[72rem]" full-on-phone body-class="px-3 pb-3" @close="close">
     <div v-if="edits.ask.value" data-tree-edit-reset-ask class="sticky top-0 z-10 mb-2 flex flex-wrap items-center gap-3 rounded-lg border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-[13px]">
-      <p class="min-w-0 flex-1 break-words">{{ tr(`この変更で今の木 (箱 ${edits.ask.value.boxes} 個) は消え、スタートからやり直します。保存しますか?`, `This change clears the current tree (${edits.ask.value.boxes} boxes) and starts over from the start. Save it first?`) }}</p>
+      <p class="min-w-0 flex-1 break-words">{{ tr(`この変更で今の木 (スタートの下の箱 ${edits.ask.value.boxes} 個) は消え、スタートからやり直します。保存しますか?`, `This change clears the current tree (${boxesEn(edits.ask.value.boxes)} below the start) and starts over from the start. Save it first?`) }}</p>
       <button type="button" data-tree-edit-reset-save class="g-btn sm" @click="edits.answer('save')">{{ tr("保存して変える", "Save and change") }}</button>
       <button type="button" data-tree-edit-reset-ok class="g-btn sm" @click="edits.answer('drop')">{{ tr("保存せず変える", "Change without saving") }}</button>
       <button type="button" data-tree-edit-reset-cancel class="g-btn sm" @click="edits.answer('cancel')">{{ tr("やめる (変更を戻す)", "Cancel (undo the change)") }}</button>

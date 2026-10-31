@@ -22,7 +22,7 @@ import { splitAny, splitOuts } from "../../../services/simulator/tree/tree-model
 import { boxAims, BOX_H, BOX_W, fractureMarks, START_JUNK, startOf, startRarity, startsFractured, multiFracWhite, type TreeBox } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
-import { handLabel, headOf, OUT_LOOK, rarityName, splitWhenText, sureFracText } from "./tree-names";
+import { handLabel, headOf, OUT_LOOK, rarityName, splitWhenText, sureFracText, boxesEn } from "./tree-names";
 import { pctText, useTreeOdds } from "./tree-odds";
 import { boxArrow, orphanHits } from "./tree-fail";
 import { joinCandidates, joinLook, joinMode, joinNoWhy, useTreeJoin } from "./use-tree-join";
@@ -58,7 +58,7 @@ const t = useTree();
 const rm = useArmed(2147483647);
 useDismiss(() => rm.is(props.box.id), [], rm.clear, { swallow: false, keep: `[data-box-id="${props.box.id}"] [data-tree-box-remove]` });
 const rmCount = computed(() => { const d = t.doc.value, p = props.box.parent ? d.boxes[props.box.parent] : undefined; return p ? p.outs.reduce((n, o) => n + subtree(d, o).length, 0) : 0; });
-const rmTitle = computed(() => tr(`この箱を作った手 (${(() => { const h = props.box.parent ? t.doc.value.boxes[props.box.parent]?.hand : null; return h ? handLabel(h) : ""; })()}) と、その結果の箱 ${rmCount.value} 個を消す (手を選び直せる)`, `Remove the craft that made this box and its ${rmCount.value} result box(es) (pick the craft again)`));
+const rmTitle = computed(() => tr(`この箱を作った手 (${(() => { const h = props.box.parent ? t.doc.value.boxes[props.box.parent]?.hand : null; return h ? handLabel(h) : ""; })()}) と、その結果の箱 ${rmCount.value} 個を消す (手を選び直せる)`, `Remove the craft that made this box and its ${boxesEn(rmCount.value, "result ")} (pick the craft again)`));
 /** 箱の中の今のアイテムの枠 (乗せた時のカードと同じ部品を縮める。見本は箱の形に合う人、10-26 オーナー「枠は現状のアイテムの枠が表示してあげたら？いまカードで表示してる情報」) */
 /** アイテムの枠の幅 (乗せた時のカードと同じ大きさ。縮めない、10-26 オーナー「枠いっぱいに表示していいのにこれ縮小してるから？拡大も欲しいんだけどそこ」) */
 const CARD_W = BOX_W - 16;
@@ -203,7 +203,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <span class="flex-1" />
       <span class="flex items-center" :style="keep('right center')">
       <button v-if="!quiet" type="button" data-tree-note-mark class="nodrag flex size-6 items-center justify-center rounded hover:bg-white/10" :class="box.note ? 'text-amber-300' : 'text-white/30 hover:text-white/70'" :title="box.note || tr('メモを書く', 'Write a note')" @click.stop="emit('note')"><Icon name="pencil" class="size-3.5" /></button>
-      <button v-if="removable && !quiet" type="button" data-tree-box-remove class="nodrag -mr-1 flex min-h-6 shrink-0 items-center justify-center rounded" :class="rm.is(box.id) ? 'whitespace-nowrap bg-rose-700 px-1.5 text-[11px] font-bold text-white hover:bg-rose-600' : 'size-6 opacity-60 hover:bg-white/10 hover:opacity-100'" :title="rmTitle" @click.stop="rm.arm(box.id) && emit('remove')"><template v-if="rm.is(box.id)">{{ tr(`下の ${rmCount} 箱ごと消す`, `Remove ${rmCount} box(es)`) }}</template><Icon v-else name="x" class="size-3.5" /></button>
+      <button v-if="removable && !quiet" type="button" data-tree-box-remove class="nodrag -mr-1 flex min-h-6 shrink-0 items-center justify-center rounded" :class="rm.is(box.id) ? 'whitespace-nowrap bg-rose-700 px-1.5 text-[11px] font-bold text-white hover:bg-rose-600' : 'size-6 opacity-60 hover:bg-white/10 hover:opacity-100'" :title="rmTitle" @click.stop="rm.arm(box.id) && emit('remove')"><template v-if="rm.is(box.id)">{{ tr(`下の ${rmCount} 箱ごと消す`, `Remove ${boxesEn(rmCount)}`) }}</template><Icon v-else name="x" class="size-3.5" /></button>
       </span>
     </div>
 
@@ -258,7 +258,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       <!-- 右下: ✎ (メモ) と この当たりを消す ✕ (前は枠の中の 1 行目、10-26 夜オーナー「今のバツの所にメモマークあれば」) -->
       <span v-if="box.out !== 'start' && !quiet" class="ml-auto flex items-center" :style="keep('right center')">
         <button type="button" data-tree-note-mark class="nodrag flex size-6 items-center justify-center rounded hover:bg-white/10" :class="box.note ? 'text-amber-300' : 'text-white/30 hover:text-white/70'" :title="box.note || tr('メモを書く', 'Write a note')" @click.stop="emit('note')"><Icon name="pencil" class="size-3.5" /></button>
-        <button v-if="removable" type="button" data-tree-box-remove class="nodrag -mr-1 flex min-h-6 shrink-0 items-center justify-center rounded" :class="rm.is(box.id) ? 'whitespace-nowrap bg-rose-700 px-1.5 text-[11px] font-bold text-white hover:bg-rose-600' : 'size-6 opacity-60 hover:bg-white/10 hover:opacity-100'" :title="rmTitle" @click.stop="rm.arm(box.id) && emit('remove')"><template v-if="rm.is(box.id)">{{ tr(`下の ${rmCount} 箱ごと消す`, `Remove ${rmCount} box(es)`) }}</template><Icon v-else name="x" class="size-3.5" /></button>
+        <button v-if="removable" type="button" data-tree-box-remove class="nodrag -mr-1 flex min-h-6 shrink-0 items-center justify-center rounded" :class="rm.is(box.id) ? 'whitespace-nowrap bg-rose-700 px-1.5 text-[11px] font-bold text-white hover:bg-rose-600' : 'size-6 opacity-60 hover:bg-white/10 hover:opacity-100'" :title="rmTitle" @click.stop="rm.arm(box.id) && emit('remove')"><template v-if="rm.is(box.id)">{{ tr(`下の ${rmCount} 箱ごと消す`, `Remove ${boxesEn(rmCount)}`) }}</template><Icon v-else name="x" class="size-3.5" /></button>
       </span>
     </div>
     <!-- 操作 (分ける・まとめる。箱の一番下、上の帯の「まとめる」と同じ選び方へ入る入口) -->

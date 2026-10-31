@@ -18,7 +18,7 @@ import { omensFor, unrevealedOf } from "../../../services/craft-stage/engine";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { CATALYSING, ECHO, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
-import { handIcon as iconOf, handLabel, handName, outNameOf } from "./tree-names";
+import { handIcon as iconOf, handLabel, handName, outNameOf, boxesEn } from "./tree-names";
 import TreeVeilCheck from "./TreeVeilCheck.vue"; import TreeCatPick from "./TreeCatPick.vue"; import { shelfCardOff, shelfCardOn } from "./use-shelf-card";
 import TreeRevealCard from "./TreeRevealCard.vue";
 import TreeKeepList from "./TreeKeepList.vue";
@@ -370,7 +370,7 @@ function ok(): void {
       <div class="flex flex-wrap items-center gap-1.5">
         <span v-if="problem" data-tree-hand-problem class="text-[11px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</span>
         <span v-else-if="keepBelow" data-tree-hand-swap-note class="text-[11px] text-sky-200/90">{{ tr(`手だけ替える: 下の箱は同じ結果の箱へ引き継ぐ (消えるのは ${swapGone ?? "—"} 箱、1 つ戻すで戻せる)`, `Swap the craft only: boxes below carry over to matching results (${swapGone ?? "—"} removed; Undo restores)`) }}</span>
-        <span v-else-if="gone" data-tree-hand-gone class="text-[11px] text-rose-200/90">{{ tr(`替えると下の ${gone} 箱が消える (1 つ戻すで戻せる)`, `Replacing removes ${gone} box(es) below (Undo restores)`) }}</span>
+        <span v-else-if="gone" data-tree-hand-gone class="text-[11px] text-rose-200/90">{{ tr(`替えると下の ${gone} 箱が消える (1 つ戻すで戻せる)`, `Replacing removes ${boxesEn(gone)} below (Undo restores)`) }}</span>
       </div>
     </div>
       </div>
@@ -450,7 +450,7 @@ function ok(): void {
       <div class="w-full max-w-sm rounded-xl border border-rose-400/60 bg-[#1d0f10] px-4 py-3 text-center">
         <p class="text-[16px] font-bold text-rose-100">{{ flag("swapHand") && !gone ? tr("この手の下の箱は残ります", "The boxes below this craft stay") : tr("この手以降は削除されます", "Everything after this craft will be removed") }}</p>
         <!-- 窓の数は実際に消える数 (S-57)。前の below は下の箱全部 (描かない通り抜けも) で、結果が同じ手でも n と出た (⑦ R1) -->
-        <p data-tree-hand-warn-n :data-n="flag('swapHand') ? gone : below" class="mt-1 break-words text-[13px] text-[#e8d8c8]">{{ flag("swapHand") ? tr(`続けるとこの箱から下の ${gone} 箱が消えます (1 つ戻すで戻せる)`, `Continuing removes ${gone} box(es) below this one (Undo restores them)`) : tr(`この箱から下の ${below} 箱が消えます (1 つ戻すで戻せる)`, `The ${below} box(es) below this one will be removed (Undo restores them)`) }}</p>
+        <p data-tree-hand-warn-n :data-n="flag('swapHand') ? gone : below" class="mt-1 break-words text-[13px] text-[#e8d8c8]">{{ flag("swapHand") ? tr(`続けるとこの箱から下の ${gone} 箱が消えます (1 つ戻すで戻せる)`, `Continuing removes ${boxesEn(gone)} below this one (Undo restores them)`) : tr(`この箱から下の ${below} 箱が消えます (1 つ戻すで戻せる)`, `The ${boxesEn(below)} below this one will be removed (Undo restores them)`) }}</p>
         <p v-if="swapGone !== null" data-tree-hand-warn-swap-n :data-n="swapGone" class="mt-1 break-words text-[13px] text-sky-200">{{ tr(`手だけ替えると下の箱は同じ結果の箱へ引き継ぎ、消えるのは ${swapGone} 箱 (新しい結果の箱は未設定)`, `Swapping only the craft carries the boxes below over to matching results; ${swapGone} removed (new result boxes start unset)`) }}</p>
         <div class="mt-3 flex flex-wrap gap-2">
           <button type="button" data-tree-hand-warn-stop class="g-btn !min-h-11 flex-1" @click="warnStop">{{ tr("やめる", "Cancel") }}</button>

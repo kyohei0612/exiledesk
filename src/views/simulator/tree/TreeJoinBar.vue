@@ -7,7 +7,7 @@ import { computed, onBeforeUnmount, onMounted } from "vue";
 import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
 import { joinCandidates, joinMode, useTreeJoin } from "./use-tree-join";
-import { outsName } from "./tree-names";
+import { outsName, boxesEn } from "./tree-names";
 
 const t = useTree();
 const j = useTreeJoin();
@@ -20,7 +20,7 @@ const step = computed(() => {
   const m = joinMode.value;
   if (!m) return "";
   if (!m.anchor) return tr("まとめ先の箱を押す (押せる箱だけ明るい)", "Click the box to merge into (only boxes that can merge are lit)");
-  return m.pick.length ? tr(`「${name(m.anchor)}」に ${m.pick.length} 箱をまとめる`, `Merge ${m.pick.length} box(es) into "${name(m.anchor)}"`) : tr(`「${name(m.anchor)}」と一緒にする箱を押す`, `Click the boxes to merge into "${name(m.anchor)}"`);
+  return m.pick.length ? tr(`「${name(m.anchor)}」に ${m.pick.length} 箱をまとめる`, `Merge ${boxesEn(m.pick.length)} into "${name(m.anchor)}"`) : tr(`「${name(m.anchor)}」と一緒にする箱を押す`, `Click the boxes to merge into "${name(m.anchor)}"`);
 });
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && joinMode.value) j.cancel(); }
 /** 枠の外 (箱・この帯以外) を押したら取り消す (メモ feedback-click-outside-cancel) */

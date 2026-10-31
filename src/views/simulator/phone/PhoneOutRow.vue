@@ -11,7 +11,7 @@ import { fixedValues } from "../tree/tree-fixed-values";
 import type { StageItem } from "../../../services/craft-stage/types";
 import { useTreeLink } from "../tree/use-tree-link";
 import { backTargetsOf } from "../tree/tree-merge";
-import { handLabel, OUT_LOOK } from "../tree/tree-names";
+import { handLabel, OUT_LOOK, boxesEn } from "../tree/tree-names";
 import { answerFor, isMiss, mapPick, phoneRun, usePhoneQuiz } from "./use-phone-quiz";
 import { retryOf, routeArrow, routeText, runText, stepBackText } from "../tree/tree-fail";
 import { absorbOuts, joinableOf, joinSide, splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
@@ -184,7 +184,7 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
   <!-- 結果の行 = 題 (と割合) とアイテムの中身だけ (10-26 夜オーナー「枠の中には出さない、ここはあくまでアイテムの中身だけ」「『次へ』で基本進行」)。
        今の答えはカードの下の小さな 1 行、変えたい時は「答えを変える ▾」で下から選びの窓 -->
   <div v-if="box" data-phone-out :data-box-id="boxId" class="relative w-full rounded-xl border bg-[#1a140d] px-1.5 py-2 text-center" :style="{ borderColor: `rgba(${look.c},${state === 'open' ? 0.75 : 0.35})` }">
-    <button v-if="parent" type="button" data-phone-out-remove class="absolute right-1 top-1 z-10 flex min-h-10 min-w-10 items-center justify-center rounded-md" :class="rm.is(boxId) ? 'bg-rose-700 px-2 text-[12px] font-bold text-white' : 'text-[18px] text-[#d8ccb4]/70'" :aria-label="tr('この結果を作った手を消す', 'Remove the craft that made this result')" @click="removeHand">{{ rm.is(boxId) ? tr(`下の ${rmCount} 箱ごと消す`, `Remove ${rmCount} box(es)`) : "×" }}</button>
+    <button v-if="parent" type="button" data-phone-out-remove class="absolute right-1 top-1 z-10 flex min-h-10 min-w-10 items-center justify-center rounded-md" :class="rm.is(boxId) ? 'bg-rose-700 px-2 text-[12px] font-bold text-white' : 'text-[18px] text-[#d8ccb4]/70'" :aria-label="tr('この結果を作った手を消す', 'Remove the craft that made this result')" @click="removeHand">{{ rm.is(boxId) ? tr(`下の ${rmCount} 箱ごと消す`, `Remove ${boxesEn(rmCount)}`) : "×" }}</button>
     <p class="break-words px-10 text-center text-[14px] font-bold" :style="{ color: `rgb(${look.c})` }">
       {{ sit[0] }}
     </p>
