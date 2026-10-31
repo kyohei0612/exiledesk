@@ -282,7 +282,6 @@ export function startFrom(data: PatchData, base: string, itemLevel: number, s: S
     if (over) rarity = "rare";
   }
   let item: StageItem = { ...freshItem(data, base, itemLevel), rarity, rollSeed: seed };
-  const rng = mulberry32(seed);
   if (s.sockets != null) {
     const most = baseSocketsOf(item.base, item.cls.category);
     if (s.sockets > most) throw new Error(`始めの状態のソケット ${s.sockets} は上限 (${most}) を超える`);
@@ -293,7 +292,15 @@ export function startFrom(data: PatchData, base: string, itemLevel: number, s: S
     if (!r.applied) throw new Error(`始めの状態のルーン ${en}: ${r.reason ?? "差せない"}`);
     item = r.item;
   }
-  for (const [i, f] of (s.mods ?? []).entries()) {
+  item = addStartMods(data, item, s.mods ?? [], mulberry32(seed));
+  if (s.quality != null) item = { ...item, quality: s.quality };
+  return item;
+}
+
+/** 始めの MOD を順に付ける (始めの状態とスパムの当たった形。その時点で付きうる物だけ、付かなければ投げる) */
+export function addStartMods(data: PatchData, from: StageItem, mods: readonly Force[], rng: () => number): StageItem {
+  let item = from;
+  for (const [i, f] of mods.entries()) {
     const cur = item;
     // 冒涜は冒涜の置き場と普通の置き場から (骨の発現には普通の MOD も出る。2026-10-06 オーナー「普通の MOD も冒涜で付いたように」)
     const k = (sd: StageSide) => (sd === "prefix" ? "prefixes" : "suffixes") as "prefixes" | "suffixes";
@@ -304,7 +311,6 @@ export function startFrom(data: PatchData, base: string, itemLevel: number, s: S
     if (f.fractured && unfracturable(data, r.item, { ...marked, fractured: false })) throw new Error(`始めの状態の MOD ${i + 1} つ目: 冒涜の MOD はフラクチャーできない`);
     item = f.fractured || f.desecrated ? replaced(r.item, r.mod, marked) : r.item;
   }
-  if (s.quality != null) item = { ...item, quality: s.quality };
   return item;
 }
 

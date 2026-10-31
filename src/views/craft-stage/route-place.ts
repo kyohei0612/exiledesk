@@ -12,13 +12,13 @@ import { type RaceRow, type RaceTarget, type RoutePrep, forcesOf, spamKey } from
 
 /**
  * 置いてページを閉じる: 今のクラフト台の工程の後ろに「スパム」の 1 手を打つ (費用 = cost、高貴建て)。MOD を当たった形に置き換え、
- * 暗黙・品質・ソケット・ルーンはクラフト台のまま (apply-spam.ts)。1 つ戻すでこの行ごと消え、再生・手順 JSON でも同じ形に飛ぶ。
+ * 当たった形のルーンも嵌める (足りなければソケットも開ける、M-64)。暗黙・品質と、それ以外のルーンはクラフト台のまま (apply-spam.ts)。1 つ戻すでこの行ごと消え、再生・手順 JSON でも同じ形に飛ぶ。
  * avg = 道のカードから (費用は 100 人の平均) / 運試しから (その 1 人の費用)。打てなければページを閉じない
  */
 export function placeOnStage(it: StageItem, row: Pick<RaceRow, "route" | "grade" | "people">, o: { cost: number; n: number; avg: boolean }): boolean {
   const before = s.log.value[s.log.value.length - 1];
   s.hold(null);
-  s.use(spamKey({ route: row.route, grade: row.grade, cost: o.cost, n: o.n, avg: o.avg, ...(flag("spam30") ? { people: row.people } : {}), rarity: it.rarity, mods: forcesOf(it) }));
+  s.use(spamKey({ route: row.route, grade: row.grade, cost: o.cost, n: o.n, avg: o.avg, ...(flag("spam30") ? { people: row.people } : {}), rarity: it.rarity, mods: forcesOf(it), ...(it.augments?.length ? { runes: it.augments.map((a) => a.en) } : {}) }));
   if (s.log.value[s.log.value.length - 1] === before) return false;
   routesLuck.value = false;
   routesTarget.value = null;
