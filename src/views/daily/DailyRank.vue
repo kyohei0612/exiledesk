@@ -3,6 +3,7 @@
 import { computed } from "vue";
 import { tr } from "../../i18n/lang";
 import { rankOf, type DailyTopic } from "./daily-api";
+import DailyName from "./DailyName.vue";
 
 const props = defineProps<{ topic: DailyTopic }>();
 const rows = computed(() => rankOf(props.topic.id).slice(0, 10));
@@ -15,7 +16,7 @@ const mins = (ms: number): string => tr(`${Math.round(ms / 60_000)} 分`, `${Mat
     <ol v-if="rows.length" class="text-[14px]">
       <li v-for="(r, i) in rows" :key="r.name" class="daily-rank-row" :class="r.me ? 'me' : ''">
         <span class="w-6 tabular-nums opacity-60">{{ i + 1 }}</span>
-        <span class="min-w-0 flex-1 break-words">{{ r.name }}</span>
+        <DailyName class="flex-1" :name="r.name" />
         <span class="w-14 text-right tabular-nums opacity-60">{{ mins(r.ms) }}</span>
         <span class="w-12 text-right tabular-nums opacity-60">{{ r.rate }}%</span>
         <b class="w-20 text-right font-normal tabular-nums text-[var(--exile-color-text-title)]">{{ r.cost }} {{ tr("神", "div") }}</b>

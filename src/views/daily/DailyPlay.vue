@@ -1,7 +1,7 @@
 <!--
   DailyPlay.vue — 挑戦のページ (D-30〜D-36)。お題を開いて 1 時間。順番: フラクチャーを選ぶ → シミュの木 → 100 人回す → 提出。
   木は SimTreePage をそのまま中に置き、上の帯だけここの物 (D-31)。外す部品は daily-skin.css が隠す (D-90。シミュ部長の切り出しまでの形、D-41)。
-  木はこのブラウザに覚え、開き直すと戻る。時間は端末の時計 (サーバーの口ができたら startedAt をサーバーの値に)
+  木はこのブラウザに覚え、開き直すと戻る。時間はこのページを開いている間だけ進む (D-32)
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -14,8 +14,8 @@ import { useTree } from "../simulator/tree/use-tree";
 import { recipeCardOf } from "../simulator/recipe-card";
 import { toRecipeV1 } from "../../services/simulator/tree/tree-recipe-v1";
 import type { TreeDoc } from "../../services/simulator/tree/tree-model";
-import { fillTopicDoc, itemFromText } from "./daily-aims";
-import { boxAims, getTry, leftMs, sampleText, SOLVE_RATE, startTry, submitTry, TIME_LIMIT_MS, updateTry, type DailyAim, type DailyTopic, type DailyTry } from "./daily-api";
+import { fillTopicDoc } from "./daily-aims";
+import { aimsOfTopic, getTry, SOLVE_RATE, startTry, submitTry, TIME_LIMIT_MS, updateTry, type DailyAim, type DailyTopic, type DailyTry } from "./daily-api";
 
 const props = defineProps<{ topic: DailyTopic }>();
 const t = useTree();
@@ -24,27 +24,28 @@ const treeOn = ref(false);
 const sent = ref<{ rate: number; cost: number; solved: boolean } | null>(null);
 const art = computed(() => baseArt(props.topic.base));
 
-const now = ref(Date.now());
-const tick = setInterval(() => (now.value = Date.now()), 1000);
-const left = computed(() => (tryOf.value ? Math.min(TIME_LIMIT_MS, leftMs(tryOf.value, now.value)) : TIME_LIMIT_MS));
+/** 開いている間の時間を足す。寝ていた分は数えない (1 回 2 分まで) */
+const used = ref(tryOf.value?.usedMs ?? 0);
+let lastTick = Date.now();
+const tick = setInterval(() => {
+  const n = Date.now(), dt = Math.min(120_000, n - lastTick);
+  lastTick = n;
+  if (!tryOf.value || over.value) return;
+  used.value += dt;
+  tryOf.value.usedMs = used.value;
+  updateTry(props.topic.id, { usedMs: used.value });
+}, 1000);
+const left = computed(() => (tryOf.value ? TIME_LIMIT_MS - used.value : TIME_LIMIT_MS));
 const over = computed(() => left.value <= 0);
 const clock = computed(() => { const s2 = Math.max(0, Math.ceil(left.value / 1000)); const m = Math.floor(s2 / 60); return `${String(m).padStart(2, "0")}:${String(s2 % 60).padStart(2, "0")}`; });
 /** 残りの割合 (導火線の長さ、D-60b) */
 const fuse = computed(() => Math.max(0, Math.min(1, left.value / TIME_LIMIT_MS)));
 const heat = computed(() => (left.value < 60_000 ? "last" : left.value < 600_000 ? "near" : ""));
 
-function aimsOf(): DailyAim[] | null {
-  const d = s.data.value;
-  if (!d) return null;
-  const own = boxAims(props.topic.id);
-  if (own) return own;
-  const text = sampleText(props.topic.id), r = text ? itemFromText(d, text) : null;
-  return r && typeof r !== "string" ? r.aims : null;
-}
 /** スタートを押してここへ来た時に挑戦が始まる。データが来るまで待つ */
 function begin(): void {
   if (tryOf.value) return;
-  const a = aimsOf();
+  const d = s.data.value, a = d ? aimsOfTopic(d, props.topic.id) : null;
   if (a?.length) tryOf.value = startTry(props.topic.id, a);
 }
 watch(() => s.data.value, begin, { immediate: true });
@@ -104,7 +105,7 @@ const best = computed(() => tryOf.value?.best ?? null);
     <header class="daily-band">
       <div class="daily-band-topic">
         <img v-if="art" :src="art" alt="" />
-        <div class="min-w-0"><p class="name truncate text-[18px] text-[var(--exile-color-text-title)]">{{ tr(topic.baseJa, topic.base) }}</p><button type="button" class="text-[13px] underline opacity-60 hover:opacity-100" data-daily-leave @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ (時間は進む)", "To the list (the clock keeps running)") }}</button></div>
+        <div class="min-w-0"><p class="name truncate text-[18px] text-[var(--exile-color-text-title)]">{{ tr(topic.baseJa, topic.base) }}</p><button type="button" class="text-[13px] underline opacity-60 hover:opacity-100" data-daily-leave @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ (時間は止まる)", "To the list (pauses the clock)") }}</button></div>
       </div>
       <div class="daily-time" data-daily-time><b>{{ clock }}</b></div>
       <div class="daily-band-score">

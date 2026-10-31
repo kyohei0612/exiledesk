@@ -1,89 +1,79 @@
-/* デイリーの皮 (D-60)。--exile-* を上書きするだけで、シミュの部品の形は同じ。hex は style.css だけなので rgb で書く (デザイン部長へ移す、D-91)。
-   目立たせるのは導火線 1 か所 (D-60b)。赤い光は --ember だけ、それも時間にしか使わない */
-[data-daily-skin] {
-  --soot: rgb(5 4 4);
-  --char: rgb(11 9 8);
-  --iron: rgb(18 15 13);
-  --ash-line: rgb(44 37 30);
-  --gold: rgb(205 176 118);
-  --ember: rgb(255 122 56);
-  --ember-core: rgb(255 214 150);
-  --exile-color-bg-canvas: var(--soot);
-  --exile-color-bg-surface: var(--char);
-  --exile-color-bg-elevated: var(--iron);
-  --exile-color-border-subtle: var(--ash-line);
-  --exile-color-text-title: var(--gold);
-  --exile-color-text-primary: rgb(214 201 172);
-  --exile-color-text-secondary: rgb(140 125 100);
-}
-[data-daily-skin="ash"] {
-  --soot: rgb(5 6 5); --char: rgb(10 12 10); --iron: rgb(16 19 15); --ash-line: rgb(42 48 36);
-  --gold: rgb(190 196 164); --ember: rgb(168 214 120); --ember-core: rgb(232 246 200);
-  --exile-color-text-primary: rgb(200 204 182); --exile-color-text-secondary: rgb(122 130 106);
-}
-[data-daily-skin="eclipse"] {
-  --soot: rgb(3 4 9); --char: rgb(8 10 18); --iron: rgb(13 16 28); --ash-line: rgb(36 42 62);
-  --gold: rgb(196 204 222); --ember: rgb(120 164 255); --ember-core: rgb(224 234 255);
-  --exile-color-text-primary: rgb(198 204 220); --exile-color-text-secondary: rgb(110 120 146);
-}
-
-.daily-root { padding: 16px; color: var(--exile-color-text-primary); background: var(--soot); min-height: 100%; }
+/* デイリーの形 (D-60)。色・字はここに書かず、全部 skin/skin.ts の --skin-* を読む。皮を替えるのにこのファイルは触らない。
+   目立たせるのは導火線 1 か所 (D-60b)。光の色 --skin-fire は時間にしか使わない */
+.daily-root { padding: 16px; color: var(--skin-text); background: var(--skin-bg); min-height: 100%; }
 
 /* 顔 */
-.daily-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 520px); gap: 56px; padding: 36px 40px 40px; background: linear-gradient(180deg, var(--char), var(--soot)); }
-.daily-hero-title { margin: 0 0 18px; font-size: 44px; line-height: 1.2; font-weight: 400; color: var(--gold); }
+.daily-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 520px); gap: 56px; padding: 36px 40px 40px; background: linear-gradient(180deg, var(--skin-panel), var(--skin-bg)); }
+.daily-hero-title { margin: 0 0 18px; font-family: var(--skin-font-head); font-size: 44px; line-height: 1.2; font-weight: 400; color: var(--skin-title); }
 .daily-veil { display: flex; align-items: center; gap: 20px; margin-bottom: 24px; }
 .daily-veil-art { width: 112px; height: 112px; object-fit: contain; filter: brightness(0.32) contrast(1.1); }
 .daily-veil-art.open { filter: none; }
-.daily-veil-name { font-size: 26px; color: var(--gold); }
+.daily-veil-name { font-family: var(--skin-font-name); font-size: 26px; color: var(--skin-title); }
 .daily-start { min-height: 46px; min-width: 300px; font-size: 16px; }
 .daily-rank-row { display: flex; align-items: baseline; gap: 10px; padding: 7px 8px; }
-.daily-rank-row:nth-child(odd) { background: rgb(255 255 255 / 0.025); }
-.daily-rank-row.me { outline: 1px solid var(--gold); outline-offset: -1px; }
+.daily-rank-row:nth-child(odd) { background: var(--skin-stripe); }
+.daily-rank-row.me { outline: 1px solid var(--skin-title); outline-offset: -1px; }
+.daily-points { font-weight: 400; color: var(--skin-title); font-variant-numeric: tabular-nums; }
 
-.daily-clock { display: flex; flex-wrap: wrap; gap: 8px 28px; padding: 10px 40px; font-size: 14px; color: var(--exile-color-text-secondary); font-variant-numeric: tabular-nums; }
+/* タグ (D-54): 1 位は札の絵のように、2〜10 位は控えめに */
+.daily-tag { margin-left: 8px; padding: 0 6px; font-size: 11px; line-height: 16px; white-space: nowrap; color: var(--skin-dim); border: 1px solid var(--skin-line); vertical-align: 1px; }
+.daily-tag.top { color: var(--skin-bg); background: var(--skin-title); border-color: var(--skin-title); font-weight: 700; }
+
+.daily-clock { display: flex; flex-wrap: wrap; gap: 8px 28px; padding: 10px 40px; font-size: 14px; color: var(--skin-dim); font-variant-numeric: tabular-nums; }
 .daily-lists { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 520px); gap: 56px; padding: 16px 40px 28px; }
-.daily-list-title { margin-bottom: 10px; font-size: 19px; color: var(--gold); }
+.daily-list-title { margin-bottom: 10px; font-family: var(--skin-font-name); font-size: 19px; color: var(--skin-title); }
 .daily-row { display: flex; width: 100%; align-items: center; gap: 12px; padding: 9px 8px; text-align: left; font-size: 15px; }
 .daily-row > span { min-width: 0; flex: 1; }
-.daily-row small { font-size: 13px; color: var(--exile-color-text-secondary); }
-button.daily-row:hover { background: rgb(255 255 255 / 0.04); color: var(--gold); }
-.daily-skins { display: flex; gap: 14px; padding: 0 40px 16px; font-size: 13px; color: var(--exile-color-text-secondary); }
-.daily-skins .on { color: var(--gold); text-decoration: underline; }
+.daily-row small { font-size: 13px; color: var(--skin-dim); }
+button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title); }
 
 /* 窓の中 */
-.daily-input { padding: 8px 10px; background: var(--soot); border: 1px solid var(--ash-line); color: inherit; font-size: 15px; outline: none; }
-.daily-input:focus { border-color: var(--gold); }
-.daily-pass { padding: 10px; background: var(--soot); font-family: var(--exile-font-family-name, serif); font-size: 22px; letter-spacing: 0.08em; color: var(--gold); }
+.daily-input { padding: 8px 10px; background: var(--skin-bg); border: 1px solid var(--skin-line); color: inherit; font-size: 15px; outline: none; }
+.daily-input:focus { border-color: var(--skin-title); }
+.daily-pass { padding: 10px; background: var(--skin-bg); font-family: var(--skin-font-name); font-size: 22px; letter-spacing: 0.08em; color: var(--skin-title); }
 
 /* 投稿 */
-.daily-post { padding: 36px 40px 40px; background: linear-gradient(180deg, var(--char), var(--soot)); }
+.daily-post { padding: 36px 40px 40px; background: linear-gradient(180deg, var(--skin-panel), var(--skin-bg)); }
 .daily-post-from { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; }
 
 /* 挑戦の帯 */
-.daily-band { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 24px; padding: 10px 16px 14px; margin-bottom: 8px; background: var(--char); }
+.daily-band { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 24px; padding: 10px 16px 14px; margin-bottom: 8px; background: var(--skin-panel); }
 .daily-band-topic { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .daily-band-topic img { width: 48px; height: 48px; object-fit: contain; }
-.daily-time b { display: block; font-family: var(--exile-font-family-brush, serif); font-weight: 400; font-size: 56px; line-height: 1; font-variant-numeric: tabular-nums; color: var(--gold); }
+.daily-time b { display: block; font-family: var(--skin-font-head); font-weight: 400; font-size: 56px; line-height: 1; font-variant-numeric: tabular-nums; color: var(--skin-title); }
 .daily-band-score { display: flex; align-items: center; justify-content: flex-end; gap: 24px; }
 .daily-band-score div { text-align: right; }
-.daily-band-score b { display: block; font-weight: 400; font-size: 24px; line-height: 1.2; color: var(--gold); font-variant-numeric: tabular-nums; }
-.daily-band-score small { font-size: 12px; color: var(--exile-color-text-secondary); }
+.daily-band-score b { display: block; font-weight: 400; font-size: 24px; line-height: 1.2; color: var(--skin-title); font-variant-numeric: tabular-nums; }
+.daily-band-score small { font-size: 12px; color: var(--skin-dim); }
 
-/* 導火線: 帯の下の端から端まで。右の端が燃える */
-.daily-fuse { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--ash-line); }
-.daily-fuse i { position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--fuse) * 100%); background: linear-gradient(90deg, rgb(120 96 60), var(--gold) 70%, var(--ember)); transition: width 1s linear; }
-.daily-fuse i::after { content: ""; position: absolute; right: -5px; top: -4px; width: 11px; height: 11px; border-radius: 50%; background: radial-gradient(circle, var(--ember-core), var(--ember) 45%, transparent 72%); box-shadow: 0 0 18px 5px var(--ember); animation: daily-burn 1.3s ease-in-out infinite alternate; }
+/* 導火線: 帯の下の端から端まで。先の端が燃える */
+.daily-fuse { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--skin-line); }
+.daily-fuse i { position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--fuse) * 100%); background: linear-gradient(90deg, var(--skin-fire-dim), var(--skin-title) 70%, var(--skin-fire)); transition: width 1s linear; }
+.daily-fuse i::after { content: ""; position: absolute; right: -5px; top: -4px; width: 11px; height: 11px; border-radius: 50%; background: radial-gradient(circle, var(--skin-fire-core), var(--skin-fire) 45%, transparent 72%); box-shadow: 0 0 18px 5px var(--skin-glow); animation: daily-burn 1.3s ease-in-out infinite alternate; }
 @keyframes daily-burn { from { opacity: 0.75; transform: scale(0.85); } to { opacity: 1; transform: scale(1.15); } }
 @media (prefers-reduced-motion: reduce) { .daily-fuse i { transition: none; } .daily-fuse i::after { animation: none; } }
-[data-daily-heat] .daily-time b { color: var(--ember); text-shadow: 0 0 22px var(--ember); }
+[data-daily-heat] .daily-time b { color: var(--skin-fire); text-shadow: 0 0 22px var(--skin-glow); }
 [data-daily-heat="last"] .daily-fuse { height: 5px; }
 
-.daily-note { padding: 8px 16px; margin-bottom: 8px; background: var(--char); font-size: 15px; }
+.daily-note { padding: 8px 16px; margin-bottom: 8px; background: var(--skin-panel); font-size: 15px; }
 .daily-frac { max-width: 760px; padding: 40px; }
 .daily-frac-row { display: flex; width: 100%; align-items: baseline; justify-content: space-between; gap: 16px; padding: 10px 12px; text-align: left; font-size: 16px; color: var(--exile-color-text-link); }
-.daily-frac-row:hover { background: rgb(255 255 255 / 0.05); }
-.daily-frac-row small { font-size: 13px; color: var(--exile-color-text-secondary); }
+.daily-frac-row:hover { background: var(--skin-hover); }
+.daily-frac-row small { font-size: 13px; color: var(--skin-dim); }
+
+/* 皮の見比べ */
+.daily-skin-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.daily-skin-card { position: relative; display: block; text-align: left; background: var(--skin-bg); color: var(--skin-text); border: 1px solid var(--skin-line); }
+.daily-skin-head { position: relative; display: flex; align-items: baseline; justify-content: space-between; padding: 8px 10px 6px; background: var(--skin-panel); font-family: var(--skin-font-name); font-size: 15px; color: var(--skin-title); }
+.daily-skin-head b { font-weight: 400; }
+.daily-skin-time { font-family: var(--skin-font-head); font-size: 22px; line-height: 1; }
+.daily-skin-card .daily-fuse { position: relative; display: block; }
+.daily-skin-tree { position: relative; display: block; height: 164px; }
+.daily-skin-box { position: absolute; width: 96px; padding-bottom: 4px; background: var(--skin-raise); border: 1px solid var(--skin-line); font-size: 11px; line-height: 1.5; }
+.daily-skin-box em { display: block; padding: 1px 6px; font-style: normal; color: var(--skin-title); border-bottom: 1px solid var(--skin-line); }
+.daily-skin-box span { display: block; padding: 0 6px; }
+.daily-skin-box .m-fr { color: var(--skin-title); } .daily-skin-box .m-ok { color: var(--skin-text); } .daily-skin-box .m-no { color: var(--skin-dim); }
+.daily-skin-weak { position: absolute; right: 6px; bottom: 4px; color: var(--exile-color-signal-down); }
 
 /* 挑戦の木: シミュの部品のうち要らない物を隠す (D-40。シミュ部長の TreeStage ができたら消す、D-41) */
 [data-daily-play] [data-mode-tabs],
@@ -100,14 +90,15 @@ button.daily-row:hover { background: rgb(255 255 255 / 0.04); color: var(--gold)
 main:has([data-daily-play]) > .sticky { display: none; }
 [data-daily-play] [data-tree-goal-side] { pointer-events: none; }
 [data-daily-play] [data-tree-page] { padding: 0; }
-[data-daily-play] [data-tree-frame] { background: var(--soot); }
-[data-daily-play] .g-panel { background: linear-gradient(180deg, var(--char), var(--soot)) border-box; }
+[data-daily-play] [data-tree-frame] { background: var(--skin-bg); }
+[data-daily-play] .g-panel { background: linear-gradient(180deg, var(--skin-panel), var(--skin-bg)) border-box; }
 
 @media (max-width: 1279px) {
   .daily-root { padding: 8px; }
   .daily-hero, .daily-lists, .daily-post-from { grid-template-columns: minmax(0, 1fr); gap: 24px; padding-left: 16px; padding-right: 16px; }
   .daily-post { padding: 16px; }
   .daily-hero-title { font-size: 28px; }
-  .daily-clock, .daily-skins { padding-left: 16px; padding-right: 16px; }
+  .daily-clock { padding-left: 16px; padding-right: 16px; }
   .daily-start { min-width: 0; width: 100%; }
+  .daily-skin-grid { grid-template-columns: minmax(0, 1fr); }
 }

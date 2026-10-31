@@ -1,21 +1,12 @@
-/**
- * daily-samples.ts — 見本のお題 (D-90)。サーバーができたら消す。名前・数字は手で書いた見本で意味は無い。
- * 文は poe.ninja / トレードのコピーの形。読むのは投稿と同じ parseItemText。
- */
+/** daily-samples.ts — 順位の相手と先週の札の見本 (D-90)。サーバーができたら消す。名前・数字は手で書いた見本で意味は無い */
 import type { DailyRankRow } from "./daily-api";
 
-export type SampleTopic = { id: string; day: string; by: string; base: string; baseJa: string; ilvl: number; modCount: number; tries: number; text: string; rank: DailyRankRow[] };
-
 const MIN = 60_000;
-export const SAMPLE_TOPICS: SampleTopic[] = [
-  {
-    id: "s1", day: "11/01", by: "見本", base: "Gold Ring", baseJa: "金の指輪", ilvl: 82, modCount: 4, tries: 128,
-    text: ["Rarity: Rare", "Doom Band", "Gold Ring", "Item Level: 82", "+100 to maximum Life", "+35% to Fire Resistance", "+35% to Cold Resistance", "+35% to Lightning Resistance"].join("\n"),
-    rank: [
-      { name: "見本の亡命者", cost: 312, rate: 94, ms: 41 * MIN },
-      { name: "chaosman", cost: 338, rate: 91, ms: 58 * MIN },
-      { name: "ヒネコラの弟子", cost: 356, rate: 97, ms: 37 * MIN },
-      { name: "Exile77", cost: 401, rate: 90, ms: 52 * MIN },
-    ],
-  },
-];
+const NAMES = ["見本の亡命者", "chaosman", "ヒネコラの弟子", "Exile77", "沼の住人"];
+/** お題ごとに同じ見本の順位 */
+export function sampleRank(id: string): DailyRankRow[] {
+  const k = [...id].reduce((a, c) => a + c.charCodeAt(0), 0);
+  return NAMES.map((name, i) => ({ name, cost: 180 + ((k * (i + 3)) % 90) + i * 55, rate: 90 + ((k + i * 3) % 9), ms: (24 + ((k + i * 7) % 34)) * MIN }));
+}
+/** 先週の順位の見本 (タグ D-54) */
+export const LAST_WEEK: Record<string, number> = { "見本の亡命者": 1, chaosman: 2, Exile77: 6 };

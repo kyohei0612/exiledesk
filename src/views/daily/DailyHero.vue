@@ -17,7 +17,7 @@ const phone = usePhone();
 const art = computed(() => baseArt(props.topic.base));
 const name = computed(() => tr(props.topic.baseJa, props.topic.base));
 const t = computed(() => getTry(props.topic.id));
-const left = computed(() => (t.value ? leftMs(t.value, props.now) : 0));
+const left = computed(() => (t.value ? leftMs(t.value) : 0));
 const clock = (ms: number): string => { const s = Math.max(0, Math.floor(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 const asking = ref(false);
 const go = (): void => openDailyPage({ view: "start", q: props.topic.id });
@@ -40,7 +40,7 @@ const label = computed(() => (!t.value ? tr("1 時間の挑戦を始める", "St
       <template v-if="phone"><p data-daily-pc-only class="text-[14px] opacity-80">{{ tr("挑戦は幅の広い画面で", "Open on a wider screen to take the challenge") }}</p></template>
       <template v-else>
         <button type="button" class="g-btn-red daily-start" data-daily-start @click="start">{{ label }}</button>
-        <p v-if="!t" class="mt-2 text-[13px] opacity-60">{{ tr("押すとお題の MOD が開き、時間が動き出す。止められない。", "Pressing reveals the target mods and the clock starts. It can't be paused.") }}</p>
+        <p v-if="!t" class="mt-2 text-[13px] opacity-60">{{ tr("押すとお題の MOD が開き、時間が動き出す。ページを閉じると止まる。", "Pressing reveals the target mods and the clock starts. Closing the page pauses it.") }}</p>
         <p v-else-if="t.best" data-daily-solved class="mt-2 text-[14px]">{{ tr(`解決済み: ${t.best.cost} 神 (完成率 ${t.best.rate}%)`, `Solved: ${t.best.cost} div (${t.best.rate}% finished)`) }}</p>
         <p v-else-if="t.last" class="mt-2 text-[14px] opacity-80">{{ tr(`未解決: 完成率 ${t.last.rate}% (${SOLVE_RATE}% で解決)`, `Unsolved: ${t.last.rate}% finished (${SOLVE_RATE}% solves it)`) }}</p>
       </template>

@@ -1,6 +1,6 @@
 <!--
-  DailyNick.vue — ニックネームを決める窓 (D-51・D-52)。決めるまで挑戦できない。決めたら合言葉を 1 度だけ見せ、「コピーした」まで閉じない。
-  ブラウザを替えた人は「合言葉で名前を戻す」から戻す。保存はサーバーの口 (daily-api) の形で。
+  DailyNick.vue — ニックネームを決める窓 (D-51・D-52)。決めるまで挑戦できない。決めたら引き継ぎコードを 1 度だけ見せ、「コピーした」まで閉じない。
+  別の PC では「引き継ぎコードで名前を戻す」から戻す。保存はサーバーの口 (daily-api) の形で。
 -->
 <script setup lang="ts">
 import { computed, ref } from "vue";
@@ -11,7 +11,7 @@ import { createNick, NICK_MAX, restoreNick, type DailyNick, type NickError } fro
 const emit = defineEmits<{ done: [DailyNick]; close: [] }>();
 const mode = ref<"new" | "back">("new");
 const name = ref("");
-const pass = ref("");
+const code = ref("");
 const fail = ref<NickError | null>(null);
 /** 決めた直後 = 合言葉を見せている */
 const made = ref<DailyNick | null>(null);
@@ -22,8 +22,8 @@ const WHY: Record<NickError, () => string> = {
   long: () => tr(`${NICK_MAX} 字まで`, `Up to ${NICK_MAX} characters`),
   url: () => tr("URL は使えない", "URLs aren't allowed"),
   reserved: () => tr("運営に見える名前は使えない", "This name looks official"),
-  taken: () => tr("もう使われている名前。別の名前にするか、自分の名前なら合言葉で戻す", "That name is taken. Pick another, or restore it with your passphrase if it's yours"),
-  wrong: () => tr("名前か合言葉が違う", "Name or passphrase doesn't match"),
+  taken: () => tr("もう使われている名前。別の名前にするか、自分の名前なら引き継ぎコードで戻す", "That name is taken. Pick another, or restore it with your transfer code if it's yours"),
+  wrong: () => tr("名前か引き継ぎコードが違う", "Name or transfer code doesn't match"),
 };
 const why = computed(() => (fail.value ? WHY[fail.value]() : ""));
 
@@ -33,12 +33,12 @@ function decide(): void {
   fail.value = null; made.value = r;
 }
 function back(): void {
-  const r = restoreNick(name.value, pass.value);
+  const r = restoreNick(name.value, code.value);
   if (typeof r === "string") { fail.value = r; return; }
   emit("done", r);
 }
 async function copy(): Promise<void> {
-  try { await navigator.clipboard.writeText(made.value!.pass); } catch { /* 手で写せる */ }
+  try { await navigator.clipboard.writeText(made.value!.code); } catch { /* 手で写せる */ }
   copied.value = true;
 }
 const setMode = (m: "new" | "back"): void => { mode.value = m; fail.value = null; };
@@ -48,21 +48,21 @@ const setMode = (m: "new" | "back"): void => { mode.value = m; fail.value = null
   <ModalShell :open="true" :title="tr('ニックネーム', 'Nickname')" width="w-[440px] max-w-[94vw]" :closable="!made" @close="emit('close')">
     <div data-daily-nick class="flex flex-col gap-3 p-4 text-[14px]">
       <template v-if="made">
-        <p>{{ tr(`「${made.name}」に決まった。別のブラウザで同じ名前を使う時は、この合言葉を入れる。`, `"${made.name}" is yours. Use this passphrase to keep the same name in another browser.`) }}</p>
-        <p class="daily-pass select-all text-center" data-daily-pass>{{ made.pass }}</p>
-        <p class="text-[12px] opacity-70">{{ tr("合言葉はここでしか見られない。なくすと名前を戻せない。", "This is the only time it's shown. Without it the name can't be restored.") }}</p>
+        <p>{{ tr(`「${made.name}」に決まった。別の PC で同じ名前を使う時は、この引き継ぎコードを入れる。`, `"${made.name}" is yours. Enter this transfer code to use the same name on another PC.`) }}</p>
+        <p class="daily-pass select-all text-center" data-daily-pass>{{ made.code }}</p>
+        <p class="text-[12px] opacity-70">{{ tr("コードはここでしか見られない。なくすと名前を戻せない。", "This is the only time it's shown. Without it the name can't be restored.") }}</p>
         <div class="flex justify-end gap-2">
-          <button type="button" class="g-btn sm" data-daily-pass-copy @click="copy">{{ copied ? tr("コピーした", "Copied") : tr("合言葉をコピー", "Copy passphrase") }}</button>
+          <button type="button" class="g-btn sm" data-daily-pass-copy @click="copy">{{ copied ? tr("コピーした", "Copied") : tr("コードをコピー", "Copy code") }}</button>
           <button type="button" class="g-btn-red sm" data-daily-nick-done :disabled="!copied" @click="emit('done', made!)">{{ tr("閉じる", "Close") }}</button>
         </div>
       </template>
       <template v-else>
         <p v-if="mode === 'new'">{{ tr("順位に載る名前を決める。ずっと同じ名前で遊べて、同じ名前の人は出ない。", "Choose the name shown on the rankings. It stays yours and no one else can take it.") }}</p>
         <input v-model="name" data-daily-nick-name type="text" :maxlength="NICK_MAX + 4" spellcheck="false" autocomplete="off" class="daily-input" :placeholder="tr('ニックネーム', 'Nickname')" @input="fail = null" @keydown.enter.prevent="mode === 'new' ? decide() : back()" />
-        <input v-if="mode === 'back'" v-model="pass" data-daily-nick-pass type="text" spellcheck="false" autocomplete="off" class="daily-input" :placeholder="tr('合言葉', 'Passphrase')" @input="fail = null" @keydown.enter.prevent="back" />
+        <input v-if="mode === 'back'" v-model="code" data-daily-nick-pass type="text" spellcheck="false" autocomplete="off" class="daily-input" :placeholder="tr('引き継ぎコード', 'Transfer code')" @input="fail = null" @keydown.enter.prevent="back" />
         <p v-if="why" data-daily-nick-why class="text-[13px] text-[var(--exile-color-signal-down)]">{{ why }}</p>
         <div class="flex items-center justify-between gap-2">
-          <button type="button" class="text-[13px] underline opacity-70 hover:opacity-100" data-daily-nick-mode @click="setMode(mode === 'new' ? 'back' : 'new')">{{ mode === "new" ? tr("合言葉で名前を戻す", "Restore a name") : tr("新しい名前を決める", "Choose a new name") }}</button>
+          <button type="button" class="text-[13px] underline opacity-70 hover:opacity-100" data-daily-nick-mode @click="setMode(mode === 'new' ? 'back' : 'new')">{{ mode === "new" ? tr("引き継ぎコードで名前を戻す", "Restore a name") : tr("新しい名前を決める", "Choose a new name") }}</button>
           <button type="button" class="g-btn-red sm" data-daily-nick-ok @click="mode === 'new' ? decide() : back()">{{ mode === "new" ? tr("この名前にする", "Use this name") : tr("名前を戻す", "Restore name") }}</button>
         </div>
       </template>
