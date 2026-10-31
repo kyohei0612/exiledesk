@@ -118,7 +118,7 @@ export { reqOfItem } from "./stage-bases";
 export { planSpec } from "./spec/run-spec";
 export { aimLabel, groupLabelOf } from "./mod-list";
 export type { DamageKind, Defender, Outcome } from "./defence";
-export { isSanctifySet } from "./apply-vaal";
+export { isSanctifySet, sanctifyChanceAtLeast, sanctifyPreview } from "./apply-vaal";
 export { IMPLICIT_SET, isCatalystSet, isQualitySet, QUALITY_CAP, qualityFieldMax, SANCTIFIED_REASON, ITEM_LEVEL_SET } from "./apply-currency";
 
 // シミュ・チュートリアル・解析が読んでいた物 (2026-10-23 エンジンの仕分け、付け替えの対応表 docs/org/emulator/notes/2026-10-23-sim-import-map.md)

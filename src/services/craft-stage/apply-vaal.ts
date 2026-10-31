@@ -88,11 +88,29 @@ export function applySanctifySet(data: PatchData, item: StageItem, currency: str
   return { applied: true, item: cur, added, removed };
 }
 
+/** 聖別が触る MOD。フラクチャーした MOD は変えない (用語集「フラクチャーした MOD は変えられない」、2026-10-06 オーナーがゲームで確認、POE2Tube 要望 ㉞-7) */
+const sanctifyTargets = (item: StageItem): StageMod[] => allMods(item).filter((m) => m.values.length && !m.unrevealed && !m.fractured);
+
+/** 1 MOD がこの倍率以上になる確率 (倍率は 0.78〜1.22 の 0.01 刻みの一様 45 段、×1.10 = 13/45) */
+export function sanctifyChanceAtLeast(k: number): number {
+  const low = Math.max(SANCTIFY_MIN, Math.ceil(Math.round(k * 1e6) / 1e4));
+  return Math.max(0, SANCTIFY_MAX - low + 1) / (SANCTIFY_MAX - SANCTIFY_MIN + 1);
+}
+
+/** 打つ前の見本: 聖別が触る MOD を「今の値 × k」にして文も作り直す。振り直さない。item は変えず、聖別済みの印も付けない */
+export function sanctifyPreview(data: PatchData, item: StageItem, k: number): StageItem {
+  let cur = item;
+  for (const m of sanctifyTargets(item)) {
+    const values = scaled(m.values, k);
+    cur = replaced(cur, m, { ...m, values, ...retext(m, values, data) });
+  }
+  return cur;
+}
+
 /** 聖別: MOD ごとに 0.78〜1.22 倍して丸める。文は stage-core の retext (雛形の「#」の位置だけ変える。カタリストの品質と同じ道) */
 export function applySanctify(data: PatchData, item: StageItem, rng: () => number): StageApply {
   if (item.rarity !== "rare") return skip(item, tr("聖別はレアのアイテムにだけ", "Sanctification: Rare items only"));
-  // フラクチャーした MOD は変えない (用語集「フラクチャーした MOD は変えられない」、2026-10-06 オーナーがゲームで確認、POE2Tube 要望 ㉞-7)
-  const mods = allMods(item).filter((m) => m.values.length && !m.unrevealed && !m.fractured);
+  const mods = sanctifyTargets(item);
   let cur = item;
   const added: StageMod[] = [];
   const removed: StageMod[] = [];
