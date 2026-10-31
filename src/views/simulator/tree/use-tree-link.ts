@@ -35,6 +35,9 @@ export function useTreeLink(doc: Ref<TreeDoc>, from: Ref<string | null>) {
         continue;
       }
       if (!b.hand) { out.set(b.id, tr("この箱にはまだ打つ手が無い", "This box has no craft yet")); continue; }
+      // 品質の上限が足りない人はカタリストの n % の箱へ行かない (S-60c、スイッチ keepOutside)
+      const cap = j?.capShort(id, b.id);
+      if (cap) { out.set(b.id, tr(`品質の上限が ${cap}% に届かない`, `Max quality can't reach ${cap}%`)); continue; }
       // 形 (付いている狙いの組) が違う箱へは戻せない (10-26 オーナー「その選択肢が出てくるのは前提狙いMODの状態でなんかする時やろ」、tree-shape の shapeFits)
       if (!fits(b.id)) { out.set(b.id, diff ?? tr("形が違う: この箱で付いている狙いの組と、ここから来る人の狙いが違う (同じ狙いの組の箱だけ選べる)", "Different shape: the targets held here differ from the runs coming in (only boxes with the same targets can be picked)")); continue; }
       const why = handProblem(d, item, b.hand);

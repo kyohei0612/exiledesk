@@ -8,7 +8,9 @@
  * 完成形の MOD は外れ = S-22・S-60。全部消えてよい消去の後は全部外れ、残したい MOD の消去の後はその MOD だけ)。カードの「外れ MOD」の札 (tree-row-tags) と同じ見方。
  * 呼ぶ側は自前の比べを持たない。1 回の組み替え・回し・精査の中で judgeMemo を 1 つ作って使う (木を替えたら作り直す)
  */
-import type { PatchData, StageItem } from "../../craft-stage/engine";
+import { catalystOf, maxQualityOf, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { catalystTagOf } from "../sim-engine";
+import { isCatalyst } from "./tree-hands";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { bodyOf } from "./tree-box-shape";
 import { aimOpts, sampleOf, startGoalAims, targetsOf } from "./tree-sample";
@@ -87,6 +89,16 @@ const LIGHT = "OmenofLight";
 /** 完成の箱へは、品質を狙う木なら完成形の品質が足りている人だけ (品質を比べから外したので、足りない人が完成の箱に入らないように) */
 const doneOk = (doc: TreeDoc, id: string, it: StageItem): boolean => doc.boxes[id]?.done !== "main" || qualityOk(doc, it);
 
+/** 箱 id の手がカタリストの n % なら n (最大までの手・ほかの手は 0)。この箱へ行く・比べる時だけ上限を見る (S-60c、スイッチ keepOutside) */
+const catalystTo = (doc: TreeDoc, id: string): number => { const h = doc.boxes[id]?.hand; return flag("keepOutside") && h && isCatalyst(h.currency) ? h.quality ?? 0 : 0; };
+/** このアイテムは箱 id のカタリストの n % に届くか (同じ種類の品質がもう n 以上か、品質の上限が n 以上) */
+function reachesCatalyst(doc: TreeDoc, id: string, it: StageItem): boolean {
+  const n = catalystTo(doc, id), h = doc.boxes[id]?.hand;
+  if (!n || !h) return true;
+  const c = catalystOf(it);
+  return maxQualityOf(it) >= n || (c.pct >= n && c.tag === catalystTagOf(h.currency));
+}
+
 /** 見本の ☑ (見本の item ごと、木を替えて見本が作り直されたら別の物) */
 const AIMED = new WeakMap<StageItem, Map<string, ReadonlySet<string>>>();
 /** 箱 id の seed 番目の見本の ☑ (始まりから見本の打ち方の順に) */
@@ -123,6 +135,8 @@ export interface Judge {
   holdsAim(id: string): boolean;
   /** 箱の見本が全部、完成の狙いを ☑ で持っているか (スマホの自動の完成 S-91) */
   holdsAll(id: string): boolean;
+  /** from の見本が to のカタリストの n % に届かなければ n (届けば 0、S-60c) */
+  capShort(from: string, to: string): number;
   /** 箱の見本にカタリストの品質が入っているか (品質を上げた後、S-31b) */
   afterQuality(id: string): boolean;
 }
@@ -161,20 +175,22 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
   const seq = (id: string): number => (id === "start" ? -1 : Number(/\d+$/.exec(id)?.[0] ?? 0));
   let order: string[] | null = null;
   const targets = (): string[] => (order ??= Object.values(doc.boxes).filter((b) => !!b.hand || !!b.done).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y)));
+  const capShort = (from: string, to: string): number => (catalystTo(doc, to) && samples(from).some((s) => !reachesCatalyst(doc, to, s.item)) ? catalystTo(doc, to) : 0);
   return {
     contents,
+    capShort,
     fitsBox(from, to) {
-      if (from === to || !doc.boxes[from] || !doc.boxes[to]) return false;
+      if (from === to || !doc.boxes[from] || !doc.boxes[to] || capShort(from, to)) return false;
       const a = setFor(to, from), b = setFor(to, to);
       return !!a && !!b && a.size === b.size && [...a].every((k) => b.has(k));
     },
     fitsItem(item, aimed, to) {
       const b = setFor(to, to);
-      return (!b || b.has(keyFor(to, contentOf(data, doc, item, aimed)))) && doneOk(doc, to, item);
+      return (!b || b.has(keyFor(to, contentOf(data, doc, item, aimed)))) && doneOk(doc, to, item) && reachesCatalyst(doc, to, item);
     },
     boxesOf(item, aimed, ok) {
       const k = contentOf(data, doc, item, aimed);
-      return targets().filter((id) => !!setFor(id, id)?.has(keyFor(id, k)) && doneOk(doc, id, item) && (!ok || ok(id)));
+      return targets().filter((id) => !!setFor(id, id)?.has(keyFor(id, k)) && doneOk(doc, id, item) && reachesCatalyst(doc, id, item) && (!ok || ok(id)));
     },
     aimedOf: (id) => samples(id).map((s) => sampleAimed(data, doc, id, s.seed)),
     holdsAim: (id) => samples(id).some((s) => { const am = sampleAimed(data, doc, id, s.seed); return [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && am.has(m.modId)); }),
