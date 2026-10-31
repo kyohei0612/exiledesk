@@ -3,7 +3,7 @@
  */
 import { computed, ref, triggerRef, watch, type Ref } from "vue";
 import { pruneBacks } from "../../../services/simulator/tree/tree-shape";
-import { checkTreeAsync, NOTICE_KINDS, type CheckIssue, type CheckPrice, type CheckProgress } from "../../../services/simulator/tree/tree-check";
+import { checkTreeAsync, NOTICE_KINDS, unsetIssues, type CheckIssue, type CheckPrice, type CheckProgress } from "../../../services/simulator/tree/tree-check";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { flag } from "../../../web/release-flags";
 import { fractureMarks, startOf, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -46,6 +46,8 @@ export const routeKeyOf = (d: TreeDoc): string => JSON.stringify([(({ price: _p,
  * 穴チェック (前の名前はテストラン) = ルート精査 (5 人をエンジンで辿り 30 人を回して、止まる所・打てない手・付かない当たり・完成に着かない道などの穴を探す、tree-check.ts)。
  * 道を組み替えるたびに合格を外して自動で回し直す (10-24 オーナー「何かしら変更加えたら即テストラン」)。穴が 0 なら合格で、合格するまで「100 人回す」は灰色で押せない (S-70。穴チェック自体は足りない所があっても回す)。
  * ! は今の道の穴だけ (直せば次の穴チェックで消える)。一覧を閉じる・箱を押す・動かすでは消さない
+ * スイッチ holeButton (S-70、オーナー 11-01「1ボタンでチェック方式それいがい起動しないみたいな」): 自動では回さず、押した時だけ回す。木が変わると合格も結果も消える。
+ * 押した時の形のままの間は結果を見せ、それ以外の未設定の数えと赤枠は形だけの unsetIssues (見本も人も使わない)
  * 穴 (帯の赤い「穴 n」・一覧・箱の !) は既定で見せ、札を押すと隠す・もう一度で見せる。隠したら組み替えても隠したまま (そのタブの間、タブを替えると見せる)
  * (10-25 オーナー「穴はそもそもずっと赤くて OK よ、デフォで。押したらオフにって UI で変わったら OK」)
  */
@@ -67,15 +69,19 @@ export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean, priced?: () =
   /** 穴を見せる (帯の札のスイッチ、既定はオン) */
   const shown = ref(true);
   let timer = 0, again = false;
+  /** 穴チェックを押した時の道の形 (スイッチ holeButton。今の形と同じ間だけ issues は押した結果) */
+  const checkedKey = ref<string | null>(null);
+  const manual = flag("holeButton");
   // 組み替えたら少し待って (続けて組む間は回さない) 穴チェック。開いた時も 1 回
   // スイッチ bodyStrict: 回す前に、体の同じと分からない古い自動の ↩ を外す (外すと木が変わって、この watch がもう一度走る。S-50)
-  watch([routeKey, () => !!s.data.value && on()], ([, ok]) => { clearTimeout(timer); if (ok && s.data.value && pruneBacks(s.data.value, doc.value)) { triggerRef(doc); return; } if (ok) timer = window.setTimeout(() => void runCheck(), 500); }, { immediate: true });
+  watch([routeKey, () => !!s.data.value && on()], ([, ok]) => { clearTimeout(timer); if (ok && s.data.value && pruneBacks(s.data.value, doc.value)) { triggerRef(doc); return; } if (ok && !manual) timer = window.setTimeout(() => void runCheck(), 500); }, { immediate: true });
   async function runCheck(): Promise<void> {
     const d = s.data.value;
     if (!d) return;
     if (checking.value) { again = true; return; }
     checking.value = true;
     const key = routeKey.value;
+    checkedKey.value = key;
     issues.value = []; // 穴は辿った人から順に足す (10-22 オーナー「読み込みながら徐々に出す」)
     await new Promise((r) => setTimeout(r, 30)); // 「穴チェック中」を先に出す
     try {
@@ -88,7 +94,7 @@ export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean, priced?: () =
     } finally {
       checking.value = false; progress.value = null;
       // 回している間に組み替えた = 今の形でもう 1 回
-      if (again || key !== routeKey.value) { again = false; void runCheck(); }
+      if (!manual && (again || key !== routeKey.value)) { again = false; void runCheck(); }
     }
   }
   /** 穴チェックのボタン (記録の印は 1 押し 1 回、10-25 オーナー「回すボタンに記録足して」) */
@@ -98,7 +104,9 @@ export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean, priced?: () =
    * まずスタートの ＋ で手を足すだけ)。合格ではないので「100 人回す」は今のまま押せない
    */
   const fresh = computed(() => !doc.value.boxes.start?.hand && !doc.value.boxes.start?.split);
-  const shownIssues = computed(() => (fresh.value ? [] : issues.value));
-  const issueOf = (b: TreeBox): string | null => (!shown.value || fresh.value ? null : issues.value?.filter((x) => x.boxId === b.id).map((x) => x.text).join(" / ") || null);
+  /** 今の穴: 押した時の形のままなら押した結果、それ以外は形だけの未設定 (スイッチ holeButton) */
+  const nowIssues = computed(() => (manual && checkedKey.value !== routeKey.value ? [...unsetIssues(doc.value), ...orphanIssues(doc.value)] : issues.value));
+  const shownIssues = computed(() => (fresh.value ? [] : nowIssues.value));
+  const issueOf = (b: TreeBox): string | null => (!shown.value || fresh.value ? null : nowIssues.value?.filter((x) => x.boxId === b.id).map((x) => x.text).join(" / ") || null);
   return { issues: shownIssues, issuesOpen, shown, issuesFold, checking, progress, passed, runCheck, onCheck, issueOf, checkRun: (): CheckRun | null => lastRun };
 }

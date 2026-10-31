@@ -43,6 +43,29 @@ const TRIES = 1200;
 
 /** 精査の進み (walk = 5 人を辿る、run = 30 人回す) */
 export interface CheckProgress { phase: "walk" | "run"; n: number; of: number; /** ここまでに見つかった穴 (辿った人から順に足す、10-22 オーナー「読み込みながら徐々に出す」) */ partial: CheckIssue[] }
+/** 手も戻りも完成も無い箱の文 (holds = 完成の狙いが全部そろっている) */
+const openText = (b: TreeBox, holds: boolean): string => (holds ? tr("完成にしていない (完成の狙いが全部そろっている。「完成」を押す。押すまでここで止まる)", "Not marked finished (all final mods are here; press Finish — runs stop here until then)") : b.out === "start" ? tr("最初の手を決めていない (ここで止まる)", "No first craft yet (stops here)") : tr("行き先を決めていない (ここで止まる)", "No next step yet (stops here)"));
+const noDoneText = (): string => tr("完成の箱が無い (当たりの箱で「完成にする」)", "No done box yet (mark a hit as done)");
+/** 末端の箱 = 手・戻り・完成の無い箱 (スタートは除く)。印はこの当たりの箱へ、無ければほかの末端の箱へ (S-89b・S-77) */
+function noDoneTips(boxes: readonly TreeBox[]): TreeBox[] {
+  const tip = (b: TreeBox): boolean => b.id !== "start" && !b.hand && !b.back && !b.done && !b.split;
+  const ends = boxes.filter((b) => tip(b) && b.out === "hit");
+  return ends.length ? ends : boxes.filter(tip);
+}
+/**
+ * 見本も人も使わず形だけで数える未設定 (スイッチ holeButton、S-70): 穴チェックを押していない間の「! 未設定」の帯と箱の赤枠。
+ * 精査の 1) の形だけで分かる穴と「完成の箱が無い」の印と同じ箱を返す
+ */
+export function unsetIssues(doc: TreeDoc): CheckIssue[] {
+  const boxes = Object.values(doc.boxes), out: CheckIssue[] = [];
+  for (const b of boxes) {
+    if (b.split?.some((r) => !r.to)) out.push({ boxId: b.id, kind: "open", text: tr("分かれ目の行き先を決めていない行がある (その形で来た人はここで止まる)", "A split row has no destination (runs of that shape stop here)") });
+    if (!b.hand && !b.back && !b.done && !b.split) out.push({ boxId: b.id, kind: "open", text: openText(b, false) });
+    if (b.out === "hit" && !b.aim) out.push({ boxId: b.id, kind: "noAim", text: tr("付く MOD を選んでいない", "No mod picked for this hit") });
+  }
+  if (!boxes.some((b) => b.done === "main")) { const tips = noDoneTips(boxes); for (const b of tips) out.push({ boxId: b.id, kind: "noDone", text: noDoneText() }); if (!tips.length) out.push({ boxId: "start", kind: "noDone", text: noDoneText() }); }
+  return ranked(out);
+}
 /** ルート精査 (木の設定 tune で打つ。一気に回す、台本・テスト用) */
 export function checkTree(data: PatchData, doc: TreeDoc): CheckIssue[] {
   const g = checkSteps(data, doc);
@@ -123,7 +146,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
   { const note = startItemOf(data, doc, mulberry32(1)).note; if (note) add("start", "cantUse", tr(`始まりの形が作れない: ${note}`, `Can't make the starting item: ${note}`)); }
   for (const b of boxes) {
     if (b.split?.some((r) => !r.to)) add(b.id, "open", tr("分かれ目の行き先を決めていない行がある (その形で来た人はここで止まる)", "A split row has no destination (runs of that shape stop here)"));
-    if (!b.hand && !b.back && !b.done && !b.split && !dead.has(b.id)) add(b.id, "open", b.out !== "start" && J.holdsAll(b.id) ? tr("完成にしていない (完成の狙いが全部そろっている。「完成」を押す。押すまでここで止まる)", "Not marked finished (all final mods are here; press Finish — runs stop here until then)") : b.out === "start" ? tr("最初の手を決めていない (ここで止まる)", "No first craft yet (stops here)") : tr("行き先を決めていない (ここで止まる)", "No next step yet (stops here)"));
+    if (!b.hand && !b.back && !b.done && !b.split && !dead.has(b.id)) add(b.id, "open", openText(b, b.out !== "start" && J.holdsAll(b.id)));
     if (b.out === "hit" && !b.aim) add(b.id, "noAim", tr("付く MOD を選んでいない", "No mod picked for this hit"));
     // フラクチャーの手は完成の MOD にフラクチャーの印がある木だけ (10-25 オーナー「最初にフラクチャーを決めないとフラクチャーオーブを打てないように」)。前に保存した印の無い木の手は穴に
     if (b.hand && effectOf(b.hand.currency) === "fracture" && b.hand.pick !== "random" && !fractureMarks(doc).length) add(b.id, "cantUse", tr("フラクチャーの印が無い (先に完成の MOD でフラクチャーを決めて)", "No fracture mark (set a fracture on the final mods first)"));
@@ -169,12 +192,10 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
   const done = boxes.filter((b) => b.done === "main");
   // 完成にしていない完成の箱 (unfinished) があれば、回す時はそこで完成する (S-54) ので「完成の箱が無い」で合格を止めない (⑦12 → ブラック案・オーナー「進めてくれ」10-28)
   if (!done.length && (J || !out.some((x) => x.kind === "unfinished"))) {
-    const msg = tr("完成の箱が無い (当たりの箱で「完成にする」)", "No done box yet (mark a hit as done)");
+    const msg = noDoneText();
     // スイッチ unsetMark: 印は原因の末端の箱に (手・戻り・完成の無い当たり → 無ければほかの末端の箱)。スタートには付けない、スタートしか無い時だけスタート
     // (S-89b・S-77、10-28 深夜オーナー「末端の枠のせいだからスタートに出したら行かんでしょそもそも」「スタートの枠しかない時は勿論枠はあると思うが」)
-    const tip = (b: TreeBox): boolean => b.id !== "start" && !b.hand && !b.back && !b.done && !b.split;
-    const ends = boxes.filter((b) => tip(b) && b.out === "hit");
-    const tips = ends.length ? ends : boxes.filter(tip);
+    const tips = noDoneTips(boxes);
     if (tips.length) for (const b of tips) add(b.id, "noDone", msg);
     else add("start", "noDone", msg);
   }
