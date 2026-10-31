@@ -15,7 +15,7 @@ const { openChrome, sleep } = await import("./cdp.mjs");
 
 const args = process.argv.slice(2);
 const opt = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
-const ORIGIN = (args.find((a) => /^https?:\/\//.test(a)) ?? "http://localhost:1474").replace(/\/$/, "");
+const ORIGIN = (args.find((a) => /^https?:\/\//.test(a)) ?? "http://localhost:1440").replace(/\/$/, "");
 const GROW = Number(opt("--grow") ?? 0), GROWS = Number(opt("--grows") ?? (GROW ? 1 : 0)), PEOPLE = Number(opt("--people") ?? 30);
 const only = opt("--only")?.split(",");
 const PLANT = args.includes("--plant");

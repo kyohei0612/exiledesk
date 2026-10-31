@@ -27,7 +27,7 @@ const UPDATE = args.includes("--update");
 const opt = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
 // 既定は dev 1440 (Y-70。10-29 最終チェック長 3: 前の既定 1460 / --dev 1461 のままだと、1440 を --dev 無しで渡すと prod の基準と比べた)
 const ORIGIN = (args.find((a) => /^https?:\/\//.test(a)) ?? "http://localhost:1440").replace(/\/$/, "");
-const MODE = DEV || /:1440\b|:1461\b|dev\./.test(ORIGIN) ? "dev" : "prod";
+const MODE = DEV || /:1440\b|:1461\b|:147\d\b|dev\./.test(ORIGIN) ? "dev" : "prod";
 const ONLY = opt("--only");
 // 回す人数 (10-29 オーナー「おｋそれで」で 100 → 30)。画面のボタンは RUN_N (100) 固定なので、30 は開発版の口 __simMonkey.result で回す (下の runs)
 const PEOPLE = Number(opt("--people") ?? 30);
@@ -183,7 +183,7 @@ function makeWatcher(c) {
     await ev(`document.querySelector("[data-tree-goal-open='mods']")?.click(), 1`);
     if (!(await until(`!!document.querySelector("[data-tree-goal-card]")`, 10000))) { note.push(`${t.key}: 完成形の窓が開かない`); return null; }
     await sleep(800);
-    const g = await ev(`(() => { const q = document.querySelector("[data-tree-goal-quality-on]"); return { on: q ? q.checked : null, card: document.querySelector("[data-tree-goal-card] [data-stage-card]")?.innerText ?? document.querySelector("[data-tree-goal-card]").innerText, toggles: [...document.querySelectorAll("[data-tree-goal-card] [data-row-toggle]")].map((b) => ({ on: b.getAttribute("aria-pressed") === "true", row: b.closest("p")?.innerText.replace(/\\s+/g, " ").trim() ?? "" })) }; })()`);
+    const g = await ev(`(() => { const q = document.querySelector("[data-tree-goal-quality-on], [data-tree-goal-quality-yes]"); return { on: q ? q.checked : null, card: document.querySelector("[data-tree-goal-card] [data-stage-card]")?.innerText ?? document.querySelector("[data-tree-goal-card]").innerText, toggles: [...document.querySelectorAll("[data-tree-goal-card] [data-row-toggle]")].map((b) => ({ on: b.getAttribute("aria-pressed") === "true", row: b.closest("p")?.innerText.replace(/\\s+/g, " ").trim() ?? "" })) }; })()`);
     count(t.key, "完成形の窓");
     if (g.on !== null && g.on !== !!doc.goalQualityOn) bad(t.key, "完成形の窓", "品質の ☑ が木と違う", g.on ? "☑ あり" : "☑ なし", doc.goalQualityOn ? "☑ あり" : "☑ なし");
     if (doc.goalQualityOn && doc.goalQuality && !norm(g.card).includes(`+${doc.goalQuality}%`)) bad(t.key, "完成形の窓", "カードの品質が木の品質と違う", norm(g.card).slice(0, 120), `+${doc.goalQuality}%`);
@@ -193,7 +193,7 @@ function makeWatcher(c) {
     return g.toggles.map((x) => `${x.on ? "消える" : "残る"} ${x.row}`);
   }
 
-  /** (2) テスト走行と 100 人回す (どちらも種 1 で決まる)。数の文と止まった箱を返す */
+  /** (2) 穴チェックと 100 人回す (どちらも種 1 で決まる)。数の文と止まった箱を返す。穴チェックに合格するまで 100 人のボタンは灰色 (S-70) */
   async function runs(t) {
     const out = {};
     if (await until(`!!document.querySelector("[data-tree-test]") && !document.querySelector("[data-tree-test]").disabled`, 30000)) {
@@ -202,7 +202,11 @@ function makeWatcher(c) {
       out.test = norm(await ev(`(document.querySelector("[data-tree-test-ok]") ?? document.querySelector("[data-tree-test-holes]"))?.innerText ?? ""`));
       out.testStuck = await ev(`[...document.querySelectorAll("[data-tree-run-stuck]")].map((b) => b.getAttribute("data-box-id")).sort()`);
       (verdict[t.key] ??= {}).testOk = await ev(`!!document.querySelector("[data-tree-test-ok]")`);
-    } else note.push(`${t.key}: テストで回すが押せない`);
+      // 穴チェックの走行のまとめは開いたまま上に乗るので閉じる
+      await ev(`document.querySelector("[data-tree-run-report-close]")?.click(), 1`);
+      const gate = await ev(`(() => { const b = document.querySelector("[data-tree-run]"); return { off: !!b?.disabled, locked: !!b?.hasAttribute("data-run-locked") }; })()`);
+      if (MODE === "dev" && gate.locked === verdict[t.key].testOk) bad(t.key, "穴チェック", "合格と「100 人回す」の灰色が合わない (S-70)", JSON.stringify(gate), verdict[t.key].testOk ? "合格 = 押せる" : "不合格 = 灰色");
+    } else note.push(`${t.key}: 穴チェックが押せない`);
     // 100 人でない時は開発版の口で種 1 のまま回す (欄は run30 / runStuck30 = 100 人の前の欄とは比べない)。口の無い本番の作りだけボタンの 100 人
     if (PEOPLE !== 100 && (await ev(`!!window.__simMonkey`))) {
       const r = await ev(`window.__simMonkey.result(${PEOPLE}, 1).then((r) => r && { n: r.n, finished: r.finished, failed: r.failed, capped: r.capped, stuckAt: r.stuckAt })`);
@@ -212,6 +216,8 @@ function makeWatcher(c) {
       Object.assign(verdict[t.key] ??= {}, { n: r.n, finished: r.finished, stuck: Object.values(r.stuckAt).reduce((a, b) => a + b, 0) });
       return out;
     }
+    // 合格していない木は押せないのが決まり (S-70)。止まりではないので知らせだけ
+    if (await ev(`!!document.querySelector("[data-run-locked]")`)) { note.push(`${t.key}: 穴チェックに合格していないので 100 人は回さない`); return out; }
     if (await until(`!!document.querySelector("[data-tree-run]") && !document.querySelector("[data-tree-run]").disabled`, 30000)) {
       await ev(`document.querySelector("[data-tree-run]").click()`); await sleep(1500);
       await ev(`document.querySelector("[data-tree-run-skip]")?.click()`);

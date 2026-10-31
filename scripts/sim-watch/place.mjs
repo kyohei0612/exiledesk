@@ -49,7 +49,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const { openChrome, sleep } = await import("./cdp.mjs");
   const args = process.argv.slice(2);
   const opt = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
-  const ORIGIN = (args.find((a) => /^https?:\/\//.test(a)) ?? "http://localhost:1442").replace(/\/$/, "");
+  const ORIGIN = (args.find((a) => /^https?:\/\//.test(a)) ?? "http://localhost:1440").replace(/\/$/, "");
   const grow = Number(opt("--grow") ?? 0), bottom = args.includes("--bottom");
   const extra = (opt("--codes") ? readFileSync(opt("--codes"), "utf8").split(/\r?\n/) : []).map((s) => s.trim().replace(/^.*recipe=/, "")).filter(Boolean).map((code, i) => ({ key: `code${i + 1}`, code }));
   const trees = [...JSON.parse(readFileSync(new URL("./trees.json", import.meta.url), "utf8")).trees, ...extra].filter((t) => !opt("--only") || t.key === opt("--only"));

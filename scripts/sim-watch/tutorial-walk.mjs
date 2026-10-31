@@ -99,7 +99,7 @@ try {
     // 赤い文の時は札のボタン (1 つ戻す・完成形の設定へ) を先に
     const tgt = s.wrong && s.btn ? s.btn : s.ring && !s.ring.out ? s.ring : s.btn;
     if (!tgt) {
-      // 待つ場面 (テスト・100 人を回している間)。長く光る所が無ければ止まり
+      // 待つ場面 (穴チェック・100 人を回している間)。長く光る所が無ければ止まり
       if (++waits > 120) { report.stalls.push({ n: s.n, why: `光る所が無いまま: ${s.say}` }); break; }
       await sleep(500); continue;
     }

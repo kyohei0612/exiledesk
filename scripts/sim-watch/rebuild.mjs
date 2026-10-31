@@ -7,7 +7,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 const { openChrome, sleep } = await import("./cdp.mjs");
 const args = process.argv.slice(2);
 const opt = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
-const ORIGIN = (args.find((a) => /^https?:\/\//.test(a)) ?? "http://localhost:1442").replace(/\/$/, "");
+const ORIGIN = (args.find((a) => /^https?:\/\//.test(a)) ?? "http://localhost:1440").replace(/\/$/, "");
 const SRC = readFileSync(new URL("./rebuild-tree.js", import.meta.url), "utf8");
 const list = JSON.parse(readFileSync(new URL("./trees.json", import.meta.url), "utf8"));
 const trees = [...list.trees, ...(list.owner ?? [])].filter((t) => !opt("--only") || t.key === opt("--only"));
