@@ -51,6 +51,8 @@ export function useGoalShown() {
     const g = t.goalItem.value?.item, doc = t.doc.value;
     if (!g) return null;
     const q = doc.goalQualityOn && doc.goalQuality ? { ...g, quality: doc.goalQuality, ...(doc.goalQualityTag ? { qualityTag: doc.goalQualityTag } : {}) } : g;
+    // ノーマルに MOD は付かないのでカードは常に空 (前は束と途中で消える行だけ出て見え方が割れた、S-10c、スイッチ goalNeedMod)
+    if (flag("goalNeedMod") && t.goalRarity.value === "normal") return q;
     const ws = [...ways.value, ...bundleRows.value];
     const it = ws.length ? { ...q, prefixes: [...q.prefixes, ...ws.filter((m) => m.side === "prefix")], suffixes: [...q.suffixes, ...ws.filter((m) => m.side === "suffix")] } : q;
     // 付け方が冒涜の狙いは 1 つ目から冒涜の行 = エミュと同じ枠・一番下 (S-10b、スイッチ goalDesecRow。見せるだけで木の判定は替えない)

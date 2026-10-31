@@ -238,8 +238,17 @@ const startAsk = ref<null | (() => void)>(null);
 /** 品質の 2 択・カタリストの種類が未定のまま「決めた」を押した (押した後だけ欄の下に理由を出す、S-31c、スイッチ qualityAsk) */
 const qualityTried = ref(false);
 const qualityWarn = computed(() => (qualityTried.value ? qualityUndecided(t.doc.value, t.goalItem.value?.item) : null));
+/** 完成形が MOD 0 個のノーマルのまま進もうとした時の注意 (S-10c、スイッチ goalNeedMod)。狙いがあるならレアリティがノーマルなので訳も出す */
+const needMod = ref<[string, string] | null>(null);
+function askNeedMod(): boolean {
+  const it = t.goalItem.value?.item;
+  if (!flag("goalNeedMod") || !it || it.rarity !== "normal" || it.prefixes.length || it.suffixes.length) return false;
+  needMod.value = t.goals.value.length ? ["ノーマルには MOD が付きません。マジックかレアを選んでから、何か 1 つ MOD を決めてください", "Normal items have no mods. Pick Magic or Rare, then choose at least 1 mod"] : ["何か 1 つ MOD を決めてください", "Choose at least 1 mod"];
+  return true;
+}
 function toTree(after?: () => void): void {
   if (undecided.value) return;
+  if (askNeedMod()) return;
   if (qualityUndecided(t.doc.value, t.goalItem.value?.item)) { qualityTried.value = true; document.querySelector("[data-tree-goal-quality]")?.scrollIntoView({ block: "nearest" }); return; }
   const go = (): void => edits.leave(() => { closeNow(); after?.(); });
   // 狙いが無い時はフラクチャーにする物が無いので聞かずに進む (答えた扱い)
@@ -402,6 +411,12 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <button type="button" class="g-btn sm" @click="go(1)">{{ tr("← ベース", "← Base") }}</button>
       </div>
     </template>
+    <ModalShell v-if="needMod" :open="true" layer="confirm" rec="tree-goal-need-mod" :title="tr('MOD を決めてください', 'Choose a mod')" width="w-full max-w-sm" body-class="px-4 py-3" @close="needMod = null">
+      <div data-tree-goal-need-mod class="flex flex-col gap-3 text-[14px]">
+        <p class="break-words">{{ tr(...needMod) }}</p>
+        <button type="button" data-tree-goal-need-mod-ok class="g-btn-red min-h-11 w-full" @click="needMod = null">{{ tr("OK", "OK") }}</button>
+      </div>
+    </ModalShell>
     <TreeStartAsk v-if="startAsk" @done="() => { const go = startAsk; startAsk = null; go?.(); }" @close="startAsk = null" />
   </ModalShell>
 </template>
