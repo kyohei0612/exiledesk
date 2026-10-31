@@ -10,6 +10,8 @@ import { backTargetsOf } from "./tree-merge";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 import { depthRows } from "../../../services/simulator/tree/tree-row-tops";
+import { sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { craftStage as s } from "../../../state/craft-stage";
 
 /** 箱の段 (始まり = 1 段目、画面の段の並び。戻り方の文は全部「n 段目へ戻る」、10-26 オーナー「始めに戻るはなんかややこしい話だから普通にどこに戻るかいつも通り書く」「1段目へ戻るとかにするか？全て、矢印は違うから段が同じもどり方でも」) */
 export function stepOf(doc: TreeDoc, id: string): number {
@@ -61,6 +63,15 @@ export function routeKind(doc: TreeDoc, id: string): RouteKind {
   return b.autoBack ? "auto" : "other";
 }
 
+/** 行き先の見本と品質が違う箱の添え書き「 · 品質 40% のまま」(S-50c、スイッチ backQuality。品質は箱の比べに入らない S-60b ので、持ったまま行くと文で見せる)。同じなら空 */
+export function qualityNote(doc: TreeDoc, id: string): string {
+  const d = s.data.value;
+  if (!flag("backQuality") || !d) return "";
+  const q = (x: string): number => sampleOf(d, doc, x, 1).item?.quality ?? 0;
+  const mine = q(id);
+  return backTargetsOf(doc, id).some((x) => q(x) !== mine) ? tr(` · 品質 ${mine}% のまま`, ` · keeps ${mine}% quality`) : "";
+}
+
 /**
  * 箱の行き先の文 (戻りがある箱だけ。無ければ null)。名前は渡した name で (PC は箱の札の名前、スマホは道の名前)。
  * name を渡さなければ行き先の名前を省く (PC の箱は下の札に名前がある)。例: 「↩ 3 段目へ戻る」(スマホは「↩ 3 段目へ戻る: 当たり ライフ」)
@@ -71,15 +82,16 @@ export function routeText(doc: TreeDoc, id: string, name?: (id: string) => strin
   const to = backTargetsOf(doc, id);
   if (k === "restart") return tr("↩ ベースから作り直し", "↩ Start over from a new base");
   if (!to.length) return tr("↩ 形の合う箱が無い (回すとここで止まる)", "↩ No box of the same shape (runs stop here)");
+  const note = qualityNote(doc, id);
   // 形の合う箱へ (10-27 (a)) は統合でなく「n 段目へ戻る」(来た道で形が違い、同じ MOD 群とは限らない)
-  if (b.out === "hit" && k !== "match" && to.every((x) => doc.boxes[x]?.out === "hit")) return `→ ${backText(doc, id, to[0]!)}${name ? `: ${to.map(name).join(tr("・", ", "))}` : ""}`;
+  if (b.out === "hit" && k !== "match" && to.every((x) => doc.boxes[x]?.out === "hit")) return `→ ${backText(doc, id, to[0]!)}${note}${name ? `: ${to.map(name).join(tr("・", ", "))}` : ""}`;
   // 戻り方の文は全部「n 段目へ戻る」(同じ手をもう一度・始め・自動・選んだ箱も。どの箱かは矢印で分かる)。スマホは矢印が無いので行き先の名前を添える
   const steps = [...new Set(to.map((x) => stepOf(doc, x)))].sort((a, b) => a - b);
   const names = name ? `: ${to.map(name).join(tr("・", ", "))}` : "";
   const head = isRetry(doc, id) ? tr("再度挑戦 · ", "Retry · ") : "";
   // 行き先が全部前の段でない時は「→ n 段目へ進む」(S-87d、スイッチ goWord)
-  if (routeArrow(doc, id, to) === "→") return tr(`→ ${head}${steps.join("・")} 段目へ進む${names}`, `→ ${head}Go to step ${steps.join(", ")}${names}`);
-  return tr(`↩ ${head}${steps.join("・")} 段目へ戻る${names}`, `↩ ${head}Back to step ${steps.join(", ")}${names}`);
+  if (routeArrow(doc, id, to) === "→") return tr(`→ ${head}${steps.join("・")} 段目へ進む${note}${names}`, `→ ${head}Go to step ${steps.join(", ")}${note}${names}`);
+  return tr(`↩ ${head}${steps.join("・")} 段目へ戻る${note}${names}`, `↩ ${head}Back to step ${steps.join(", ")}${note}${names}`);
 }
 
 /**

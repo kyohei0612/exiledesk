@@ -77,8 +77,8 @@ export async function copyRecipeUrl(r: { name: string; tree: TreeDoc }): Promise
 
 
 /** 開発版だけ: 見本のレシピを保存したレシピに足す (dev-recipes。同じ名前があれば足さない。10-26 モンキー 7 の 23) */
-/** 開発版の見本の名前 (「見本: …」「見本 2: …」) */
-const DEV_NAME = /^見本( \d+)?: /;
+/** 開発版の見本の名前 (「見本: …」「見本 2: …」「Sample: …」)。名前は開いた時の言語で入れ直す (U-83) */
+const DEV_NAME = /^(見本|Sample)( \d+)?: /;
 export async function seedDevRecipes(): Promise<void> {
   if (!DEV_BUILD || SIM_LOCKED) return;
   for (const r of DEV_RECIPES) {
@@ -88,10 +88,11 @@ export async function seedDevRecipes(): Promise<void> {
       if (!t) continue;
       // 同じ名前・同じ中身ならそのまま。違えば前の見本 (「見本:」「見本 2:」… の名前) を全部消して入れ直す。人が別の名前で保存したレシピは触らない
       // (10-26 オーナー「一旦整理して」: 見本 1・2・3 が並んでいた)
-      const same = treeRecipes.value.find((x) => x.name === r.name);
+      const name = tr(...r.name);
+      const same = treeRecipes.value.find((x) => x.name === name);
       if (same && sameTree(same.tree, t)) continue;
       for (const x of treeRecipes.value.filter((y) => DEV_NAME.test(y.name))) removeTreeRecipe(x.id);
-      addTreeRecipe(r.name, t);
+      addTreeRecipe(name, t);
     } catch { /* 読めない見本は足さない */ }
   }
 }
