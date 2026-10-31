@@ -124,6 +124,7 @@ onBeforeUnmount(deactivate);
         ref="panel"
         tabindex="-1"
         role="dialog"
+        data-overlay
         :data-rec="rec || undefined"
         aria-modal="true"
         :aria-label="title || undefined"

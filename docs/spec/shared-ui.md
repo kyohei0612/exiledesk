@@ -60,7 +60,7 @@
 - **U-14 品質の帯は共有**: 品質の帯の核は `for-share/item/StageQualityBar.vue` (エミュの CraftStage、シミュは `views/simulator/tree/TreeGoalQuality.vue` が包む)。2 つ目の画面で要ったので共有へ上げた (U-01)。見た目は変えない。
   - 有効 (上げる決めは 10-28 ブラック任せ)。10-31 に核を for-share へ移した (シミュ部長 54 の頼み)。確かめ: 型・check-engine-entry。
 - **U-15 窓**: 窓はみな `ui/ModalShell.vue` で包む (.g-panel の枠・題の横に ×・Esc・後ろを押すと閉じる・後ろのページは送らない)。重なりの段は窓 z-300、確認 z-310 (layer="confirm")、浮かぶカード 1000 以上。重ね窓の共通の印は `data-overlay` (ModalShell と各重ね窓に付け、ToTop はこの 1 つを見る)。
-  - 有効。`data-overlay` は 10-28 ブラック任せの決めで作りは未着手 (窓はシミュの持ち物が多いので、シミュ部長の手が空いた時に 1 行ずつ頼む。⑦ の 6)。出どころ: オーナー 10-10「エミュレーターに合わせてくれ、全部ここが原点」(原点 StageAimPicker)。確かめ: 画面。
+  - 有効。`data-overlay` は 10-28 ブラック任せの決めで、ModalShell は付けた (11-01)。シミュの窓はまだで、付くまで ToTop の OVERLAY は今の一覧のまま (シミュ部長に 1 行ずつ頼む。⑦ の 6)。出どころ: オーナー 10-10「エミュレーターに合わせてくれ、全部ここが原点」(原点 StageAimPicker)。確かめ: 画面。
 - **U-16 そのほかの共通の部品**: 開け閉めは `ui/Disclosure`、? の説明は `ui/HelpTip`、ベース選びは `items/BaseCatalog`、少しだけ出す知らせは `utils/use-flash` (2.5 秒)、浮かぶカードの置き場は `utils/anchor-place` (どの向きも同じ距離、入らなければ裏返す) と `utils/fit-card` (窓の中に収める)。同じ役の物を画面で新しく作らない。
   - 有効。出どころ: オーナー 10-05・10-10 (各ファイルの頭)。確かめ: コードを読む。
 
