@@ -11,7 +11,7 @@ import { modListFor, tagLabel, type ListRow, type ListTier, type ModGroup, type 
 import { factionOf, groupLabelOf, runeEnOf, shownTags, TAG_STYLE } from "../../../services/craft-stage/mod-list";
 import { fmtPct } from "../../../utils/format-pct";
 import { tr } from "../../../i18n/lang";
-import { keepPlace, revealOpened, scrollToTop } from "../../../utils/keep-place";
+import { keepPlace, revealOpened, scrollSectionTop, scrollToTop } from "../../../utils/keep-place";
 import { useDismiss } from "../../../utils/use-dismiss";
 import Disclosure from "../../ui/Disclosure.vue";
 import { flag } from "../../../web/release-flags";
@@ -136,7 +136,11 @@ const active = ref<string>("normal");
 function jump(g: string): void {
   active.value = g;
   if (phone && secClosed.value.has(g)) toggleSec(g);
-  void nextTick(() => scrollToTop(sectionEls.get(g)));
+  void nextTick(() => {
+    const el = sectionEls.get(g);
+    if (!flag("tocJump")) { scrollToTop(el); return; }
+    if (el && listEl.value) scrollSectionTop(el, listEl.value, tocH.value ? tocEl.value : null);
+  });
 }
 /** スマホ: 種類の節は見出しを押して畳める。全部開いた状態が既定 (2026-10-26 オーナー「基本スマホは省略したらダメ」。前は普通だけ開いていた)、検索中は全部開く */
 const phone = isPhoneWidth();

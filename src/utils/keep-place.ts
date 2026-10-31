@@ -76,6 +76,10 @@ export function glideBy(box: HTMLElement | null, dScreen: number, ms = 260): Pro
  * 途中で止まってから残りを送る 2 段の動きになっていた。2026-10-14 オーナー「いっかいたたむのまえでとまって」)。測る時の送り戻しは同じコマの中なので見えない
  */
 export function glideRect(box: HTMLElement | null, el: Element, dRect: number, ms = 260): Promise<void> {
+  return glideCss(box, dRect / rectRate(box, el, dRect), ms);
+}
+/** 位置の差 (getBoundingClientRect) ÷ スクロール量 をその場で測る (glideRect の説明)。測る時の送り戻しは同じコマの中なので見えない */
+function rectRate(box: HTMLElement | null, el: Element, dRect: number): number {
   const getY = (): number => (box ? box.scrollTop : window.scrollY);
   const setY = (y: number): void => { if (box) box.scrollTop = y; else window.scrollTo(0, y); };
   const y = getY(), t = el.getBoundingClientRect().top;
@@ -84,9 +88,36 @@ export function glideRect(box: HTMLElement | null, el: Element, dRect: number, m
   const moved = getY() - y, shifted = t - el.getBoundingClientRect().top;
   setY(y);
   // 動けなかった時 (端) は今まで通りの換算
-  const k = moved !== 0 && shifted !== 0 ? shifted / moved : pageZoom();
-  return glideCss(box, dRect / k, ms);
+  return moved !== 0 && shifted !== 0 ? shifted / moved : pageZoom();
 }
+/**
+ * 節の頭を、上に留まる帯 (under、留まっていなければ null) のすぐ下へ 1 回で送る (U-32、スイッチ tocJump)。
+ * 帯が留まる先は枠の上の端なので、今の帯の位置でなく高さで数える。下に送る余白が足りない節は list の下に足りない分だけ余白を足す
+ */
+export function scrollSectionTop(el: HTMLElement, list: HTMLElement, under: HTMLElement | null): void {
+  const box0 = scrollBoxOf(el);
+  const y0 = box0 ? box0.scrollTop : window.scrollY;
+  const setY = (b: HTMLElement | null, y: number): void => { if (b) b.scrollTop = y; else window.scrollTo(0, y); };
+  const maxOf = (b: HTMLElement | null): number => (b ? b.scrollHeight - b.clientHeight : document.documentElement.scrollHeight - window.innerHeight);
+  const viewH = box0 ? box0.clientHeight : window.innerHeight;
+  list.style.paddingBottom = "";
+  const max0 = maxOf(box0);
+  // 測る間と送る間は 1 画面分の余白を足す (前の余白を消すと今の位置が端に押されて跳ねる。足してやっと送れる枠もあるので、枠はその後で探す)
+  list.style.paddingBottom = `${viewH}px`;
+  const box = scrollBoxOf(el);
+  setY(box, y0);
+  // 留まる帯は枠の余白の内側に来る (次の手で狙うの窓は py-2)
+  const viewTop = box ? box.getBoundingClientRect().top + (under ? (parseFloat(getComputedStyle(box).paddingTop) || 0) * pageZoom() : 0) : 0;
+  const barH = isPhoneWidth() ? [...document.querySelectorAll("[data-item-mini]")].find((e) => e.getClientRects().length)?.getBoundingClientRect().height ?? 0 : 0;
+  const d = el.getBoundingClientRect().top - (viewTop + barH + (under?.getBoundingClientRect().height ?? 0) + 8);
+  const rate = rectRate(box, el, d);
+  const perPx = (maxOf(box) - max0) / viewH; // 余白 1px で増える送れる量
+  const lack = y0 + d / rate - max0;
+  const run = ++sectionRun;
+  // 送り終わったら足りない分だけに (途中で別のタブを押したら、次の送りに任せる)
+  void glideCss(box, d / rate, 260).then(() => { if (run === sectionRun) list.style.paddingBottom = lack > 1 && perPx > 0 ? `${Math.ceil(lack / perPx)}px` : ""; });
+}
+let sectionRun = 0;
 function glideCss(box: HTMLElement | null, d: number, ms: number): Promise<void> {
   if (Math.abs(d) < 1) return Promise.resolve();
   const getY = (): number => (box ? box.scrollTop : window.scrollY);
