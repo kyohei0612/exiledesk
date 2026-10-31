@@ -15,7 +15,7 @@ const RESTART = "restart";
 const seqOf = (id: string): number => (id === "start" ? -1 : Number(/\d+$/.exec(id)?.[0] ?? 0));
 const depthOf = (doc: TreeDoc, id: string): number => { let n = 0; for (let b = doc.boxes[id]; b?.parent; b = doc.boxes[b.parent]) n++; return n; };
 const shallow = (doc: TreeDoc) => (x: string, y: string): number => depthOf(doc, x) - depthOf(doc, y) || seqOf(x) - seqOf(y);
-const sameHand = (x: Hand | null | undefined, h: Hand): boolean => !!x && x.currency === h.currency && [...x.omens].sort().join() === [...h.omens].sort().join();
+const sameHand = (x: Hand | null | undefined, h: Hand): boolean => !!x && x.currency === h.currency && !x.block === !h.block && [...x.omens].sort().join() === [...h.omens].sort().join();
 
 /**
  * 人が × で ↩ を外した箱の、結果が 1 通りの手の先の箱で中身が同じ物か (S-50、木 xIH1EiqP の b11 → b13)。

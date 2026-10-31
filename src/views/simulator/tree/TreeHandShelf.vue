@@ -251,7 +251,12 @@ const k = useHandKeep({ boxId: props.boxId, current: props.current, item, held, 
 const keepAsk = k.ask;
 /** 上の段の「付ける狙い」= エッセンスの MOD (持ったら自動の ☑、S-27d) */
 const addLabels = computed((): string[] => (flag("keepAll") && keepAsk.value && !!held.value && effectOf(held.value) === "essence" ? hitAims.value.map((a) => t.aimLabel(a)) : []));
-const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, qualityTo: catTo.value, ...(keepAsk.value ? { keep: k.aims.value } : {}) }) : null));
+/** エッセンスの「ブロックに使う」☑ (S-33b、スイッチ keepOutside)。付く MOD が完成形の狙いの手には出さない */
+const blockOn = ref(!!props.current?.block);
+const canBlock = computed(() => { const d = s.data.value, it = item.value, h = held.value; return flag("keepOutside") && !!d && !!it && !!h && effectOf(h) === "essence" && !showAims.value && !hitAimsOf(d, t.doc.value, props.boxId, it, handOf({ held: h, omens: omens.value }), t.goals.value).length; });
+function toggleBlock(e: Event): void { const was = blockOn.value; blockOn.value = (e.target as HTMLInputElement).checked; warnIfBelow(() => { blockOn.value = was; }); }
+watch(held, (h) => { blockOn.value = !!props.current?.block && h === props.current.currency; });
+const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, qualityTo: catTo.value, block: blockOn.value && canBlock.value, ...(keepAsk.value ? { keep: k.aims.value } : {}) }) : null));
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
 const preCat = computed((): string | null => (catalysing.value && !afterQuality.value ? autoCat.value : null));
 const kind = computed((): HandKind | null => (hand.value ? kindOf(hand.value) : null));
@@ -365,6 +370,9 @@ function ok(): void {
           <input type="checkbox" :checked="freeOn" @change="toggleFree($event)" />{{ tr("狙い無し (何が付いても次へ)", "No target (anything counts)") }}
         </label>
       </div>
+      <label v-if="canBlock" data-tree-hand-block class="flex min-h-7 cursor-pointer items-center gap-2 text-[12px] max-md:min-h-11 max-md:text-[14px]" :title="tr('付いた MOD を外れにせず、その MOD として箱に持つ (消えたら同じ中身の箱へ戻れる)', 'Keep the added mod as itself instead of a miss (once removed, the run can rejoin a matching box)')">
+        <input type="checkbox" class="max-md:size-5" :checked="blockOn" @change="toggleBlock" />{{ tr("ブロックに使う (付いた MOD を外れにしない)", "Use as a block (don't count the added mod as a miss)") }}
+      </label>
       <!-- 消去: 残したい MOD (10-27 オーナー)。既定は全部消えてよい = ✦ 以外は「n MOD 外れ MOD」、同じ形の箱になるまで消去の箱を並べる -->
       <TreeKeepList v-if="keepAsk && !P27" :k="k" :adds="addLabels" />
       <p v-if="kind" class="text-[11px] opacity-70">{{ tr("結果の箱", "Result boxes") }}: {{ only ? (only.length === 1 ? tr(`${outOf(only[0]!.out, only[0]!.aim)}だけ (結果は 1 通り)`, `${outOf(only[0]!.out, only[0]!.aim)} only (one possible result)`) : [...new Set(only.map((o) => outOf(o.out, o.aim)))].join(" + ")) : resultText ? tr(resultText[0], resultText[1]) : "" }}</p>

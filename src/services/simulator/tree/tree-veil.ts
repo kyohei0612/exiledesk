@@ -6,7 +6,7 @@
  * スイッチ keepOutside の下は付いている間その MOD として箱の中身に持つ (S-33、placedAims。完成の狙いには入らないので aimsOf では今のまま数えない)
  */
 import { aimHits, tierIndexOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
-import { isBone } from "./tree-hands";
+import { effectOf, isBone } from "./tree-hands";
 import type { Aim, Hand, TreeDoc } from "./tree-model";
 import { flag } from "../../../web/release-flags";
 
@@ -27,11 +27,13 @@ export const oldVeil = (h: Hand, aims: readonly unknown[]): Hand => (flag("oldBo
 export const veilKeep = (h: Pick<Hand, "currency" | "veil"> | null | undefined): boolean => !!h && flag("boneLater") && isBone(h.currency) && veilOf(h) === "keep";
 /** 発現で ☑ の MOD を選ぶ手 (骨の「発現させる」☑・後から打つ発現の手) */
 export const veilPick = (h: Pick<Hand, "currency" | "veil"> | null | undefined): boolean => !!h && flag("boneLater") && (isRevealHand(h.currency) || (isBone(h.currency) && veilOf(h) === "pick"));
-/** 木の発現で選ぶ手の当たりの札のうち、完成形に無い物 = 置き石 (S-33、スイッチ keepOutside。閉じていれば無し = 以降は冒涜の外れ MOD) */
+/** エッセンスの「ブロックに使う」☑ のある手 (S-33b、スイッチ keepOutside) */
+export const blockHand = (h: Pick<Hand, "currency" | "block"> | null | undefined): boolean => !!h?.block && flag("keepOutside") && effectOf(h.currency) === "essence";
+/** 木の発現で選ぶ手・ブロックに使うエッセンスの当たりの札のうち、完成形に無い物 = 置き石 (S-33・S-33b、スイッチ keepOutside。閉じていれば無し = 以降は冒涜の外れ MOD) */
 export function placedAims(doc: TreeDoc): Aim[] {
   if (!flag("keepOutside")) return [];
   const goals = doc.memoAims ?? [];
-  return Object.values(doc.boxes).flatMap((b) => (b.out === "hit" && b.aim && b.parent && veilPick(doc.boxes[b.parent]?.hand) && !goals.some((g) => g.modId === b.aim!.modId) ? [b.aim] : []));
+  return Object.values(doc.boxes).flatMap((b) => (b.out === "hit" && b.aim && b.parent && (veilPick(doc.boxes[b.parent]?.hand) || blockHand(doc.boxes[b.parent]?.hand)) && !goals.some((g) => g.modId === b.aim!.modId) ? [b.aim] : []));
 }
 
 /** 打った前後で、発現して付いた MOD (前に無く、後で未発現でない冒涜の MOD)。発現していなければ null */

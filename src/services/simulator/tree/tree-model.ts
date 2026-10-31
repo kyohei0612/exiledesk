@@ -63,6 +63,8 @@ export interface Hand {
    * pick = 発現させる (発現で出うる MOD から ☑ の物が出て選べたら当たり、ほかは外れ)。無い (前の版の木) = 前のまま同じ手で発現 (完成の狙いの候補を選ぶ)
    */
   veil?: "keep" | "pick";
+  /** エッセンスの「ブロックに使う」☑ (S-33b、スイッチ keepOutside): 付いた MOD を発現で選んだ MOD と同じく箱の中身に持つ。無い = 外れ */
+  block?: true;
 }
 export interface TreeBox {
   id: string;
