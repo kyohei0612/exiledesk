@@ -7,6 +7,7 @@ import { TIER } from "../../state/for-share/tier-word";
 import { itemLevelKey } from "../../services/emulator/emu-engine";
 import { inGroup, ITEM_LEVEL_SET, SANCTIFIED_REASON } from "../../services/craft-stage/engine";
 import { useFlash } from "../../utils/use-flash";
+import { useViewOnlyWidth } from "../../utils/use-phone";
 import { ARMED_CLASS, useArmed } from "../../utils/use-armed";
 import { tr } from "../../i18n/lang";
 import { inLesson } from "../tutorial/course-entry";
@@ -22,13 +23,14 @@ import pkg from "../../../package.json";
 import HelpTip from "../../components/ui/HelpTip.vue";
 import type { ModGroup } from "../../services/craft-stage/trade-search";
 
-const props = defineProps<{ phone: boolean }>();
+defineProps<{ phone: boolean }>();
 const s = craftStage;
 const inApp = isTauriRuntime();
 /** 「シミュレーターへ」(持っているアイテムを渡す)。閉じている間は前の白紙の木 */
 const EMU_TO_SIM = flag("emuToSim");
-/** シミュへ持っていく入口はスマホの形では出さない (M-06、スイッチ phoneView、オーナー 11-01「エミュのMOD群をシミュへ持っていくようなボタンはいらない」) */
-const TO_SIM_ON = computed(() => TREE_ON && !(props.phone && flag("phoneView")) && s.mode.value === "hand" && !!s.item.value);
+/** シミュへ持っていく入口はシミュを見るだけの幅 (768 未満) では出さない (M-06、スイッチ phoneView、オーナー 11-01「エミュのMOD群をシミュへ持っていくようなボタンはいらない」) */
+const viewOnly = useViewOnlyWidth();
+const TO_SIM_ON = computed(() => TREE_ON && !(viewOnly.value && flag("phoneView")) && s.mode.value === "hand" && !!s.item.value);
 const { handNoBase, pickSimBase } = useStageBase();
 /** 道具の帯のボタン (ゲームの 3 枚ボタン、src/styles/game-ui.css) */
 const btn = "g-btn sm";
