@@ -31,7 +31,7 @@ const doc = t.doc;
 const NAME_K = 0.18;
 /** PC の箱に替える倍率 (箱の幅 142px、S-94c) */
 const CARD_K = 0.45;
-/** 箱へ寄る時の倍率 (幅 174px。その箱・手の札・次の箱が 1 画面に入る) */
+/** 箱へ寄る時と「拡大」のボタンの倍率 = MOD が読めるぎりぎり (幅 174px。その箱・手の札・次の箱が 1 画面に入る) */
 const NEAR_K = 0.55;
 /** 寄った箱の上の辺を枠の上からここに置く (下に手の札と次の箱を見せる) */
 const NEAR_TOP = 34;
@@ -81,6 +81,14 @@ function goTo(id: string): void {
   m.glideTo(b.x + BOX_W / 2, yOf(b) + ((wrap.value?.clientHeight ?? 0) / 2 - NEAR_TOP) / z, z);
 }
 defineExpose({ goTo });
+/** ボタンは 2 つだけ: 全体が入る倍率と MOD が読めるぎりぎり。細かい調整は指でつまむ (オーナー 11-01「後拡大縮小ボタンでツリー全体表示と拡大でMODが見えるぎりぎりの大きさに調整で２つでいいよ調整は あとはピンチヒットは指でやるだろうしそこ」) */
+function showAll(): void { simOp("view-zoom", "all"); touched = false; refit(); }
+function showNear(): void {
+  simOp("view-zoom", "near");
+  const z = m.k.value, w = wrap.value?.clientWidth ?? 0, h = wrap.value?.clientHeight ?? 0;
+  touched = true;
+  m.glideTo((w / 2 - m.tx.value) / z, (h / 2 - m.ty.value) / z, NEAR_K);
+}
 function refit(): void { if (!touched && wrap.value?.clientWidth) m.fit(bounds.value); }
 let ro: ResizeObserver | null = null;
 onMounted(() => { if (wrap.value) { ro = new ResizeObserver(refit); ro.observe(wrap.value); } });
@@ -146,7 +154,11 @@ const rgbOf = (b: Box): string => (b.done === "fail" ? "224,112,122" : b.done ? 
 
 <template>
   <div class="flex min-h-0 min-w-0 flex-1 flex-col gap-1">
-    <p class="text-[11px] text-sim-dim">{{ tr("全体図 · つまむと箱の中身 · 押すとその箱へ", "Map · pinch for box details · tap a box to go there") }}</p>
+    <div class="flex min-w-0 items-center gap-1.5">
+      <p class="min-w-0 flex-1 break-words text-[11px] text-sim-dim">{{ tr("つまむと箱の中身 · 押すとその箱へ", "Pinch for details · tap a box to go there") }}</p>
+      <button type="button" data-phone-view-all-map class="g-btn sm !min-h-9 shrink-0" @click="showAll">{{ tr("全体", "All") }}</button>
+      <button type="button" data-phone-view-near class="g-btn sm !min-h-9 shrink-0" @click="showNear">{{ tr("拡大", "Zoom") }}</button>
+    </div>
     <!-- 指はこの枠の中だけ全体図が受け取る (touch-action: none。枠の外はふつうに送れる) -->
     <div ref="wrap" data-phone-view-map class="relative min-h-0 flex-1 touch-none select-none overflow-hidden rounded-lg border border-white/10 bg-[#080706]" v-on="m.handlers" @wheel.prevent>
       <svg class="pointer-events-none absolute inset-0 size-full">
