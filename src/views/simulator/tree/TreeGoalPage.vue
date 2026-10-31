@@ -238,12 +238,12 @@ const startAsk = ref<null | (() => void)>(null);
 /** 品質の 2 択・カタリストの種類が未定のまま「決めた」を押した (押した後だけ欄の下に理由を出す、S-31c、スイッチ qualityAsk) */
 const qualityTried = ref(false);
 const qualityWarn = computed(() => (qualityTried.value ? qualityUndecided(t.doc.value, t.goalItem.value?.item) : null));
-/** 完成形が MOD 0 個のノーマルのまま進もうとした時の注意 (S-10c、スイッチ goalNeedMod)。狙いがあるならレアリティがノーマルなので訳も出す */
+/** 完成形が MOD 0 個のまま進もうとした時の注意 (レアリティは問わない、S-10c、スイッチ goalNeedMod)。ノーマルに狙いを付けた時は訳も出す */
 const needMod = ref<[string, string] | null>(null);
 function askNeedMod(): boolean {
   const it = t.goalItem.value?.item;
-  if (!flag("goalNeedMod") || !it || it.rarity !== "normal" || it.prefixes.length || it.suffixes.length) return false;
-  needMod.value = t.goals.value.length ? ["ノーマルには MOD が付きません。マジックかレアを選んでから、何か 1 つ MOD を決めてください", "Normal items have no mods. Pick Magic or Rare, then choose at least 1 mod"] : ["何か 1 つ MOD を決めてください", "Choose at least 1 mod"];
+  if (!flag("goalNeedMod") || !it || it.prefixes.length || it.suffixes.length) return false;
+  needMod.value = t.goalRarity.value === "normal" && t.goals.value.length ? ["ノーマルには MOD が付きません。マジックかレアを選んでから、何か 1 つ MOD を決めてください", "Normal items have no mods. Pick Magic or Rare, then choose at least 1 mod"] : ["何か 1 つ MOD を決めてください", "Choose at least 1 mod"];
   return true;
 }
 function toTree(after?: () => void): void {
