@@ -232,8 +232,10 @@ const placeMiss = ref(false);
 const placing = ref(false);
 /** 計算の進み: 終わった人数 (全部の道 × 等級を通して。読み込み中の n/m) */
 const peopleDone = ref(0);
-const placePeople = flag("spam30") ? RUNS : 100;
-const placeTitle = computed(() => tr(`この道の一番安い等級で 1 人を当たるまで打ち、その形をクラフト台に置く (工程に 1 行、費用は ${placePeople} 人の平均。1 つ戻す・Ctrl+Z で消える)`, `Spam once with this route's cheapest grade until it hits and put that item on the craft stage (one step, cost = average of ${placePeople}; Undo / Ctrl+Z removes it)`));
+/** 今出ている結果の人数 (前の 100 人のシェアはその人数のまま読む、M-61)。これから計算する文は RUNS のまま */
+const shownRuns = computed(() => rows.value[0]?.people ?? RUNS);
+const placePeople = computed(() => (flag("spam30") ? shownRuns.value : 100));
+const placeTitle = computed(() => tr(`この道の一番安い等級で 1 人を当たるまで打ち、その形をクラフト台に置く (工程に 1 行、費用は ${placePeople.value} 人の平均。1 つ戻す・Ctrl+Z で消える)`, `Spam once with this route's cheapest grade until it hits and put that item on the craft stage (one step, cost = average of ${placePeople.value}; Undo / Ctrl+Z removes it)`));
 async function placeHit(r: RaceRow | null): Promise<void> {
   const tt = t.value;
   if (!r || !tt || !canLuck(r) || placing.value) return;
@@ -309,7 +311,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
               </li>
             </ul>
           </template>
-          <p class="mt-2 text-[12px] text-[var(--exile-color-text-secondary)]">{{ s.item.value?.baseJa ?? s.base.value }} · {{ tr(`アイテムレベル ${ilvl}`, `Item level ${ilvl}`) }}</p>
+          <p class="mt-2 text-[12px] text-[var(--exile-color-text-secondary)]">{{ tr(s.item.value?.baseJa ?? s.base.value, s.item.value?.base ?? s.base.value) }} · {{ tr(`アイテムレベル ${ilvl}`, `Item level ${ilvl}`) }}</p>
           <!-- 始めの状態 (開発版だけ): 決まりの形 / 今のクラフトのアイテム (カオスだけ) -->
           <span v-if="canFrom || fromItem" data-routes-from class="mt-2 flex flex-wrap items-center justify-center gap-1 text-[11px]">
             <span class="text-[var(--exile-color-text-tertiary)]">{{ tr("始めの状態", "Start") }}</span>
@@ -335,7 +337,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
             </div>
             <!-- スマホは横に並べ、収まらなければ折り返す (モンキーテスト 10-23 の 5: 2 つ並ぶと札から切れた) -->
             <span class="flex shrink-0 flex-col items-stretch gap-1.5 max-md:w-full max-md:flex-row max-md:items-center" :class="MONKEY ? 'max-md:flex-wrap max-md:[&>button]:min-w-0 max-md:[&>button]:flex-auto max-md:[&>button]:whitespace-normal' : 'max-md:[&>button]:flex-1'">
-            <button v-if="!busy && !luckOpen && bestLuck" type="button" data-route-luck-open class="g-btn-red" :title="tr(`この道の決まりで、${RUNS} 人と同じ始めの状態から自分でスパムして運を比べる`, `Spam it yourself with this route from the same start and compare your luck with the ${RUNS} people`)" @click="openLuck(bestLuck)">{{ tr("運試し", "Luck test") }}</button>
+            <button v-if="!busy && !luckOpen && bestLuck" type="button" data-route-luck-open class="g-btn-red" :title="tr(`この道の決まりで、${shownRuns} 人と同じ始めの状態から自分でスパムして運を比べる`, `Spam it yourself with this route from the same start and compare your luck with the ${shownRuns} people`)" @click="openLuck(bestLuck)">{{ tr("運試し", "Luck test") }}</button>
             <!-- 運試しの間は出さない (欄の中の同じ名前のボタンが運試しで当たった物を置く。こちらは別の 1 人を回すので違う物が載った。モンキーテスト 10-23 の 3) -->
             <button v-if="!busy && (!MONKEY || !luckOpen) && bestLuck" type="button" data-route-place class="g-btn sm" :disabled="placing" :title="placeTitle" @click="placeHit(bestLuck)">{{ tr("当たった形でクラフト台に戻る", "Back to the craft stage with a hit") }}</button>
             <button v-if="!busy" type="button" data-route-recompute class="g-btn sm" :title="tr(`別の ${RUNS} 人でもう一度全部の道を計算する (乱数を変える)`, `Run all routes again with a different ${RUNS} people (new random seed)`)" @click="recompute">{{ tr("再計算", "Recompute") }}</button>
@@ -424,7 +426,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
         <span class="inline-flex items-center gap-1"><span class="inline-block h-2 w-5 rounded-full bg-amber-400/70" />{{ tr("半分の人が着いた費用", "Half had hit by") }}</span>
         <span class="inline-flex items-center gap-1"><span class="inline-block h-2 w-5 rounded-full bg-amber-400/25" />{{ tr("運が悪い 10 人に 1 人", "Unluckiest 1 in 10") }}</span>
         <span class="inline-flex items-center gap-1"><span class="inline-block h-2.5 w-0.5 bg-white/80" />{{ tr("平均", "Average") }}</span>
-        <span>{{ tr(`· エミュレーターと同じ決まりで決まりの始めの状態から ${RUNS} 人ずつ。値段は今の相場、ベース代と始めの状態を作る費用は入れない`, `· ${RUNS} runs each from the listed start with the Emulator's rules. Current prices; base and start-state costs not included`) }}</span>
+        <span>{{ tr(`· エミュレーターと同じ決まりで決まりの始めの状態から ${shownRuns} 人ずつ。値段は今の相場、ベース代と始めの状態を作る費用は入れない`, `· ${shownRuns} runs each from the listed start with the Emulator's rules. Current prices; base and start-state costs not included`) }}</span>
         <HelpTip :title="tr('比べ方', 'How it compares')" :width="340" class="ml-auto">
           <p>{{ tr("手 = 打った回数 (お告げは数えない)。費用 = 打った物とお告げの値段の合計。ベース代と始めの状態 (MOD 0 / 1 つのレア) を作る費用は入れていない", "Uses = items used (omens not counted). Cost = currency plus omens. The base and the start state (rare with 0 / 1 mod) are left out") }}</p>
           <p class="mt-1 text-[var(--exile-color-text-secondary)]">{{ tr("冒涜スパムは入れていない", "Desecration spam is not included") }}</p>

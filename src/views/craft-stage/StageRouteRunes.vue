@@ -34,7 +34,7 @@ function toggle(id: string): void {
         :title="required.includes(r.id) ? tr('狙いの MOD はこのルーンを嵌めている時だけ付く', 'The target mod only rolls with this rune socketed') : r.pool ? tr('嵌めている間だけ、このルーンの特殊 MOD が普通の抽選に混ざる (確率が変わる)', 'While socketed, this rune’s special mods join the normal rolls (changes the odds)') : tr('サフィックスの枠が 1 つ増える', '+1 suffix slot')"
         @click="toggle(r.id)">
         <span class="g-slot grid size-14 place-items-center" :class="picked.includes(r.id) ? 'on g-sel' : ''"><img v-if="iconOfRune(r.id)" :src="iconOfRune(r.id)" alt="" class="size-10 object-contain" /></span>
-        <span class="text-[11px] leading-tight" :class="picked.includes(r.id) ? 'text-amber-100' : 'text-[var(--exile-color-text-tertiary)]'">{{ r.ja }}</span>
+        <span class="text-[11px] leading-tight" :class="picked.includes(r.id) ? 'text-amber-100' : 'text-[var(--exile-color-text-tertiary)]'">{{ tr(r.ja, RUNE_BY_ID.get(r.id)?.name ?? r.ja) }}</span>
       </button>
     </div>
   </div>
