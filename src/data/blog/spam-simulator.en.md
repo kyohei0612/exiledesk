@@ -1,12 +1,13 @@
 ---
 title: PoE2 Spam Simulator: Augment, Chaos or Exalt Spam?
-description: How the PoE2 spam simulator works: pick one target mod and it runs augment, chaos and exalt spam at Perfect, Greater and Regular grades, 100 runs each, to find the cheapest route. Plus how to read the results and the luck test that shows your rank among the 100.
+description: How the PoE2 spam simulator works: pick one target mod and it runs augment, chaos and exalt spam at Perfect, Greater and Regular grades, 30 runs each, to find the cheapest route. Plus how to read the results and the luck test that shows your rank among the 30.
 date: 2026-10-22
+updated: 2026-11-01
 tags: spam simulator, Orb of Augmentation, Chaos Orb, Exalted Orb, luck
 image: img/spam-simulator-og.en.png
 ready: true
 ---
-The ExileDesk **poe2 spam simulator** takes one target mod and **runs augment, chaos and exalt spam at all three grades (Perfect, Greater and Regular), 100 runs each, to see which gets there cheapest.** The cheapest route gets a "Cheapest" tag, and a luck test lets you spam that route yourself to see where you rank among the 100.
+The ExileDesk **poe2 spam simulator** takes one target mod and **runs augment, chaos and exalt spam at all three grades (Perfect, Greater and Regular), 30 runs each, to see which gets there cheapest.** The cheapest route gets a "Cheapest" tag, and a luck test lets you spam that route yourself to see where you rank among the 30.
 
 :::zundamon normal
 I just want one mod. But should I use augment, chaos or exalt spam?
@@ -21,34 +22,34 @@ That's way too much to compare in my head...
 :::
 
 :::metan happy
-So ExileDesk runs all nine options, 100 times each, on the same engine as the Emulator.
+So ExileDesk runs all nine options, 30 times each, on the same engine as the Emulator.
 :::
 
 :::summary What you'll learn
 - The spam simulator answers one question: which spam, at which grade, reaches this one mod cheapest
 - Read the results by more than the average: the half and 90% marks, and how many times the cheapest route it costs
-- The luck test shows your rank among the 100, and you can share it on X or use "Continue from here"
+- The luck test shows your rank among the 30, and you can share it on X or take the hit back to the craft stage
 :::
 
 :::tip New to this? Words used here
 - **Spam**: using the same currency over and over until the target lands
 - **Grade**: the tier of a currency: Regular, Greater or Perfect
 - **Route**: which spam you use to chase the target: augment, chaos or exalt
-- **Half / 90% marks**: line up the runs that hit by cost; these are the costs by which half, and nine in ten, have finished
-- **Luck test**: spam it yourself and see what top percent your luck lands in among the 100
-- **Continue from here**: a button that takes your current item into the Emulator
+- **Half / 90% marks**: line up the runs that hit by cost; these are the costs by which half, and nine in ten, have finished (the screen calls the 90% mark "Unluckiest 1 in 10")
+- **Luck test**: spam it yourself and see what top percent your luck lands in among the 30
+- **Back to the craft stage with this item**: a button that puts your hit on the craft stage ("Continue from here" does the same for an item that hasn't hit yet)
 :::
 
 ## What Does the Spam Simulator Compare?
 
-You target one mod. That one mod is spammed on three routes at three grades.
+Pick your target mod, and it's spammed on three routes at three grades.
 
 :::zundamon normal
 Only one mod? Can I pick the tier too?
 :::
 
 :::metan normal
-Yes. You can set a tier, such as T1 or better.
+You can line up to three, and any one of them counts as a hit. You can set a tier too, such as T1 or better.
 :::
 
 :::zundamon normal
@@ -102,7 +103,7 @@ When the run finishes, each route and grade shows its numbers. The key is not to
 | Number shown | What it means | Why it matters |
 |---|---|---|
 | Average cost and average uses | The average of the runs that hit | A guide to the cheapest route |
-| Half and 90% marks | Runs that hit, lined up by cost: the cost by which half, and nine in ten, finished (runs that never hit are left out) | Tells you how bad an unlucky session can get |
+| Half and Unluckiest 1 in 10 | Runs that hit, lined up by cost: the cost by which half, and nine in ten, finished (runs that never hit are left out) | Tells you how bad an unlucky session can get |
 | Times the cheapest | The cheapest counted as 1, shown as "× n.n" | Shows the gap between routes at a glance |
 | Currency used per run | The average count of each currency | Tells you what to stock up on, and how much |
 
@@ -152,7 +153,7 @@ If none hits within the use cap, it says that grade may not be able to roll that
 It's a hint that some grades can't reach some tiers.
 :::
 
-## Luck Test: Where Would You Rank Among 100?
+## Luck Test: Where Would You Rank Among 30?
 
 You can spam the cheapest route yourself. Other routes and grades work too.
 
@@ -165,11 +166,11 @@ Hold to spam, and release to stop.
 :::
 
 :::metan normal
-When the target lands, you see where you placed among the 100.
+When the target lands, you see where you placed among the 30.
 :::
 
 :::zundamon normal
-Do I start from the same item as the 100?
+Do I start from the same item as the 30?
 :::
 
 :::metan normal
@@ -178,7 +179,7 @@ Your start is made by the same rule as theirs. The randomness is separate, so on
 
 | Device | Runs per option | How your rank is shown | Special effect |
 |---|---:|---|---|
-| PC | 100 | Top n% among the 100 | Exceptional luck (top 10%) gets a copper-toned effect and a sound |
+| PC | 30 | Top n% among the 30 | Exceptional luck (top 10%) gets a copper-toned effect and a sound |
 | Phone | 10 | "#n of 11" instead of a percentage | Only for 1st place |
 
 :::zundamon normal
@@ -187,6 +188,10 @@ Fewer runs on phones?
 
 :::metan normal
 Each option uses 10 runs to keep it light (v0.1.579). That's why it shows a place, not a percentage.
+:::
+
+:::metan normal
+PCs went from 100 runs to 30 in v0.1.652, so the calculation finishes faster.
 :::
 
 :::zundamon troubled
@@ -198,10 +203,10 @@ They count as slower than you.
 :::
 
 :::tip Keep crafting from the hit
-"Continue from here" takes the item you hit straight to the Emulator. You can finish the other mods on the crafting bench (the luck-test uses aren't added to the steps).
+"Back to the craft stage with this item" puts your hit on the crafting bench. "Continue from here" does the same for an item that hasn't hit yet. Either way it adds one step at that luck test's cost, and Undo removes it. You can finish the other mods on the bench.
 :::
 
-### Share on X and Friends Can Race the Same 100
+### Share on X and Friends Can Race the Same 30
 
 You can share your luck test result on X.
 
@@ -210,12 +215,12 @@ Does whoever opens the link have to wait for the calculation again?
 :::
 
 :::metan happy
-No wait. The link carries the finished results, so they can race the same 100 right away (v0.1.579).
+No wait. The link carries the finished results, so they can race the same 30 right away (v0.1.579). Older shares from the 100-run days still open with their 100.
 :::
 
 :::note fold Not yet verified (3)
 - Costs here are results from the ExileDesk engine and ExileDesk's market prices. They haven't been checked against Craft of Exile or in-game results.
-- The 100 runs use fresh randomness each time. "Recompute" runs a different 100, so the numbers shift a little.
+- The 30 runs use fresh randomness each time. "Recompute" runs a different 30, so the numbers shift a little.
 - When two routes are close, recompute a few times and see whether the order holds.
 :::
 
@@ -247,12 +252,12 @@ Do the old calculator's share links still open?
 Don't worry. They open in the spam simulator.
 :::
 
-The spam simulator compares nine ways to chase one mod, 100 runs each. Put the average next to the 90% mark, and pick the route that suits you.
+The spam simulator compares nine ways to chase one mod, 30 runs each. Put the average next to the 90% mark, and pick the route that suits you.
 
 ## Where the Numbers Come From
 
 :::fold Show sources (3)
-- 100 runs each, nine options, 10 runs on phones, the luck effect (top 10% on PC, 1st place on phones): ExileDesk release notes (changelog-notes-en.json, v0.1.578 and v0.1.579) and our spam simulator notes (engine).
+- 30 runs each, nine options, 10 runs on phones, the luck effect (top 10% on PC, 1st place on phones): ExileDesk release notes (changelog-notes-en.json, v0.1.578, v0.1.579 and v0.1.652) and our spam simulator notes (engine).
 - Average 313, half 216, 1 in 10 at 718 orbs: calculated from 0.32% per use in [Chaos Spam Odds](/en/blog/chaos-spam-odds/) (engine plus calculation).
 - No per-route cost example is given here. Results vary a lot with the target and base, so run your own.
 :::
@@ -265,5 +270,10 @@ On the [crafting bench](/?base=Gold%20Ring), open the spam simulator from the bu
 
 - [PoE2 chaos spam odds: how many orbs at 0.3% per try](/en/blog/chaos-spam-odds/)
 - [PoE2 Crafting Budget: How Many Times the Average?](/en/blog/crafting-cost-variance/)
+
+**Update history**
+
+- 2026-11-01: Changed the runs per option from 100 to 30 to match the current screen (phones stay at 10). Also updated the three-target limit, the button that returns to the craft stage, and the one step it adds.
+- 2026-10-22: Published.
 
 VOICEVOX: Zundamon / Shikoku Metan

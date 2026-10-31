@@ -51,7 +51,7 @@ const POSTS = {
   "coe-desecrate-no-handler": [[A.glove, A.rib, A.ribA], ["冒涜", "CoE では\n計算できない", "No handler、重みも無い"], ["Desecration", "Craft of Exile\ncan't do it", "No handler, no weights"]],
   "custom-mod-weights": [[A.ring, A.dexEx], ["重み", "重みを\n自分で変える", "1000 → 200 で 5.4% が 1.1%"], ["Mod weight", "Edit the\nweights", "1000 → 200: 5.4% to 1.1%"]],
   "crafting-simulator-no-exceptions": [[A.amulet, A.liege], ["作り方", "例外を\n書かない", "説明文で動かすシミュレーター"], ["Design", "No hand-written\nexceptions", "A simulator driven by item text"]],
-  "spam-simulator": [[A.ring, A.chaos, A.divine], ["シミュレーター", "スパム\nシミュレーター", "増強・カオス・高貴を 100 人ずつ"], ["Simulator", "Spam\nsimulator", "Augment, Chaos, Exalt × 100 runs"]],
+  "spam-simulator": [[A.ring, A.chaos, A.divine], ["シミュレーター", "スパム\nシミュレーター", "増強・カオス・高貴を 30 人ずつ"], ["Simulator", "Spam\nsimulator", "Augment, Chaos, Exalt × 30 runs"]],
   "x-share-bug": [[A.ring, A.chaos], ["お詫び", "シェアが\n壊れていた", "1,500 文字の壁"], null],
   "greater-perfect-orb-difference": [[A.grEx, A.ring, A.glove], ["オーブ", "上級と完全の\n違い", "最低モッドレベルの早見表"], ["Orbs", "Greater vs\nPerfect", "Minimum modifier levels"]],
   "desecration-bone-types": [[A.rib, A.ribA, A.collarA], ["冒涜", "骨の\n種類", "噛み切られた・保存された・古代"], ["Desecration", "Bone\ntypes", "Gnawed, Preserved, Ancient"]],
