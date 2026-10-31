@@ -79,10 +79,10 @@ export function useTreeMerge(o: {
         const side = sideRoute(r.from, r.to, [...others, ...chipBoxes], Math.min(...bx.map((b) => b.x)), Math.max(...bx.map((b) => b.x + b.w)));
         if (side) { paths.set(r.id, roundPath(side)); sideIds.add(r.id); continue; }
         const one = (q: BackReq): string | undefined => q.flip ? (() => { const p = routeBacks([mir(q)], bx.map(mirrorPos), sg.map(mirrorSeg), { inside: true, avoid: chipBoxes.map(mirrorPos) }).get(q.id); return p && mirrorPath(p); })() : routeBacks([q], bx, sg, { inside: true, avoid: chipBoxes }).get(q.id);
-        const o2 = other(r), p = one(r) ?? one(o2);
+        const o2 = other(r), p1 = one(r), p = p1 ?? one(o2);
         if (!p) continue;
         paths.set(r.id, p);
-        if (!one(r)) r.end = o2.end;
+        if (!p1) r.end = o2.end;
       }
     }
     // スイッチ backRoute: 道は箱の上 24 の段の間で終わるので、そこから箱の上の縁まで下ろす (空中で止まって見えた、10-28 深夜オーナー「途中で終わってる奴もある」。線の見張り L1)

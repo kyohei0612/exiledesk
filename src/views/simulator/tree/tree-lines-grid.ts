@@ -4,12 +4,35 @@
  * 全部の箱の左端〜右端の中だけで、折れる回数の少ない道を探す (前は木の左右の外の列を回り、木を囲む四角になった、10-28 深夜オーナー「再挑戦の線だこれ」)
  */
 import { BOX_H, BOX_W } from "../../../services/simulator/tree/tree-model";
+import { flag } from "../../../web/release-flags";
 
 interface P { x: number; y: number; w?: number; h?: number }
 /** 線と箱の間 (横・縦) */
 const GAP = 10;
 /** 1 回折れるごとの重み (長さの px に足す。少しの遠回りより折れの少ない道) */
 const BEND = 240;
+
+/** 一番近い状態を取り出す山 (距離が同じなら先に入れた状態から = 配列を全部見る前の形と同じ順。S-71b、スイッチ treeLight) */
+function nearHeap(): { push: (d: number, no: number, k: number) => void; pop: () => [number, number, number] | undefined } {
+  const h: Array<[number, number, number]> = [];
+  const less = (a: [number, number, number], z: [number, number, number]): boolean => a[0] < z[0] || (a[0] === z[0] && a[1] < z[1]);
+  return {
+    push(d, no, k) {
+      const v: [number, number, number] = [d, no, k];
+      let i = h.push(v) - 1;
+      while (i > 0) { const p = (i - 1) >> 1; if (!less(v, h[p]!)) break; h[i] = h[p]!; i = p; }
+      h[i] = v;
+    },
+    pop() {
+      const top = h[0], v = h.pop();
+      if (!h.length || !v) return top;
+      let i = 0;
+      for (;;) { let c = 2 * i + 1; if (c >= h.length) break; if (c + 1 < h.length && less(h[c + 1]!, h[c]!)) c++; if (!less(h[c]!, v)) break; h[i] = h[c]!; i = c; }
+      h[i] = v;
+      return top;
+    },
+  };
+}
 
 /** s (出元の箱の下の真ん中) → e (行き先の箱の上 24) の折れ線 (始めと終わりを含む、終わりへは横から)。boxes = 避ける箱 (出元・行き先も入れて渡す)。道が無ければ null */
 export function gridRoute(s: P, e: P, boxes: readonly P[], x0: number, x1: number): P[] | null {
@@ -26,10 +49,21 @@ export function gridRoute(s: P, e: P, boxes: readonly P[], x0: number, x1: numbe
   const dist = new Map<number, number>(), prev = new Map<number, number>(), done = new Set<number>();
   const open: number[] = [key(si, sj, 2)];
   dist.set(open[0]!, 0);
-  while (open.length) {
-    let bi = 0;
-    for (let k = 1; k < open.length; k++) if (dist.get(open[k]!)! < dist.get(open[bi]!)!) bi = k;
-    const cur = open.splice(bi, 1)[0]!;
+  // 同じ状態を入れ直しても順は最初に入れた時の番号のまま (前の形は配列の前の方の同じ状態が新しい距離で選ばれた)
+  const light = flag("treeLight"), heap = nearHeap(), firstNo = new Map<number, number>([[open[0]!, 0]]);
+  if (light) heap.push(0, 0, open[0]!);
+  while (light || open.length) {
+    let cur: number;
+    if (light) {
+      const t = heap.pop();
+      if (!t) break;
+      if (t[0] !== dist.get(t[2])) continue;
+      cur = t[2];
+    } else {
+      let bi = 0;
+      for (let k = 1; k < open.length; k++) if (dist.get(open[k]!)! < dist.get(open[bi]!)!) bi = k;
+      cur = open.splice(bi, 1)[0]!;
+    }
     if (done.has(cur)) continue;
     done.add(cur);
     const d = cur % 3, ij = (cur - d) / 3, i = Math.floor(ij / Y.length), j = ij % Y.length;
@@ -49,7 +83,11 @@ export function gridRoute(s: P, e: P, boxes: readonly P[], x0: number, x1: numbe
       const nk = key(ni, nj, nd);
       const cost = base + Math.abs(X[ni]! - X[i]!) + Math.abs(Y[nj]! - Y[j]!) + (d !== 2 && d !== nd ? BEND : 0);
       if (done.has(nk) || cost >= (dist.get(nk) ?? Infinity)) continue;
-      dist.set(nk, cost); prev.set(nk, cur); open.push(nk);
+      dist.set(nk, cost); prev.set(nk, cur);
+      if (!light) { open.push(nk); continue; }
+      let no = firstNo.get(nk);
+      if (no === undefined) firstNo.set(nk, (no = firstNo.size));
+      heap.push(cost, no, nk);
     }
   }
   return null;

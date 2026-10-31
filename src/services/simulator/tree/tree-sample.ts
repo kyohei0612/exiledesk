@@ -9,6 +9,7 @@
 import { aimDone, aimHits as hits, applyCurrency, room, sideOfMod, baseSocketsOf, catalystOf, forceKey, freshItem, kindOf, mulberry32, omenBlock, OMEN_FOR, revealOffers, runeIdByName, tierIndexOf, unrevealedOf, useReason, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { catalystFull, catalystTagOf, fillCatalyst, fractureStart } from "../../simulator/sim-engine";
 import { pathKeyOf } from "./tree-recipe-v1";
+import { pathKeyOfBox } from "./tree-sample-key";
 import { aimHeldOn, isAimMod, junkOf } from "./tree-aim";
 import { flag } from "../../../web/release-flags";
 import { CATALYSING as CATALYSING_OMEN, ECHO, ECHO as ABYSSAL_ECHO_OMEN, effectOf, isBone, isCatalyst } from "./tree-hands";
@@ -206,13 +207,18 @@ export function handProblem(data: PatchData, item: StageItem, h: Hand): string |
 
 /** 箱の見本 (seed が同じなら同じ物。木の設定 tune で打つ) */
 export function sampleOf(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
+  // スイッチ treeLight: 見本は道だけで決まるので道の鍵で覚え続ける (S-71b ②)。手を足しても新しい箱の分だけ作る
+  if (flag("treeLight")) {
+    if (data !== memoData) { memo.clear(); pathMemo.clear(); memoSig = ""; memoData = data; }
+    return withTreeTune(doc, () => sampleIn(data, doc, boxId, seed));
+  }
   // 見本は道だけで決まる (S-74、スイッチ boxShape) ので、木の中身 (位置を除く) が同じなら覚えた見本を返す。
   // 整列・段揃え・引っ張るなど位置だけの変化で全部の箱をエンジンで作り直し、整列が毎回約 1 秒かかった (10-28 夜オーナー「サイトが重い」)
   const sig = heldDoc === doc ? heldSig : docSig(doc);
   if (sig !== memoSig || data !== memoData) { memo.clear(); memoSig = sig; memoData = data; }
   return withTreeTune(doc, () => sampleIn(data, doc, boxId, seed));
 }
-/** 覚えた見本 (木の中身の鍵が変わったら全部捨てる) */
+/** 覚えた見本 (木の中身の鍵が変わったら全部捨てる。treeLight は holdDocSig の間の早道だけ) */
 const memo = new Map<string, Sample>();
 let memoSig = "", memoData: PatchData | null = null;
 /** 木の中身の鍵 (位置 x・y と、見本に効かないメモの文を除く) */
@@ -226,38 +232,34 @@ export function holdDocSig<T>(doc: TreeDoc, fn: () => T): T {
 }
 /** 今 holdDocSig の中ならその回の番号、外なら 0 (同じ番号の間は木が変わらない) */
 export const docHeld = (doc: TreeDoc): number => (heldDoc === doc ? holdNo : 0);
+/** 道の鍵で覚えた見本 (鍵 = 見本に効く物全部なので、木が変わっても残してよい。増えすぎたら捨てて作り直す = 結果は同じ) */
+const pathMemo = new Map<string, Sample>();
+const PATH_MEMO_MAX = 20000;
+/** 全部消えてよい消去の道の箱に効く木全体の鍵の番号 (長い文字を見本ごとの鍵に入れるとその JSON だけで 3 秒を超えた。番号は使い回さない) */
+const sigNos = new Map<string, number>();
+let sigSeq = 0;
+const sigNo = (sig: string): number => { let n = sigNos.get(sig); if (!n) sigNos.set(sig, (n = ++sigSeq)); return n; };
 function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
   const k = `${boxId}|${seed}|${altDeep ? 1 : 0}`;
-  let r = memo.get(k);
-  if (r) return r;
-  // 組み直しの間は手を打つたびに木の鍵が変わるので、道の変わらない箱は前の見本を使う (S-71b、スイッチ treeLight)
-  const pk = pathMemo ? pathKeyOfBox(doc, boxId, seed) : null;
-  r = pk ? pathMemo!.get(pk) : undefined;
-  if (!r) { r = sampleRaw(data, doc, boxId, seed); if (pk) pathMemo!.set(pk, r); }
-  memo.set(k, r);
-  return r;
-}
-/** 組み直しの間だけの見本の覚え (鍵 = 見本に効く物全部、pathKeyOfBox) */
-let pathMemo: Map<string, Sample> | null = null;
-/** fn (木の組み直し) の間、道の変わらない箱の見本を使い回す */
-export function keepSamples<T>(fn: () => T): T {
-  if (!flag("treeLight") || pathMemo) return fn();
-  pathMemo = new Map();
-  try { return fn(); } finally { pathMemo = null; }
-}
-/**
- * 見本に効く物の鍵: 木の前提 (箱より外の全部) + 狙いの札 + 始まりからこの箱までの箱と、その各段の兄弟の札。全部消えてよい消去の手がある木は木全体を見るので使わない (null)
- */
-function pathKeyOfBox(doc: TreeDoc, boxId: string, seed: number): string | null {
-  const boxes = Object.values(doc.boxes);
-  if (boxes.some((b) => b.hand?.keep && !b.hand.keep.length)) return null;
-  const { boxes: _b, seq: _s, ...rest } = doc;
-  const chain: unknown[] = [];
-  for (let b: TreeBox | undefined = doc.boxes[boxId]; b; b = b.parent ? doc.boxes[b.parent] : undefined) {
-    const sibs = (b.parent ? doc.boxes[b.parent]?.outs ?? [] : []).map((o) => { const x = doc.boxes[o]; return x ? [o, x.out, x.aim, x.junkKey, x.mergedOuts] : o; });
-    chain.push([b.id, b.out, b.aim, b.junkKey, b.mergedOuts, b.hand, b.split, sibs]);
+  if (!flag("treeLight")) {
+    let r = memo.get(k);
+    if (!r) { r = sampleRaw(data, doc, boxId, seed); memo.set(k, r); }
+    return r;
   }
-  return JSON.stringify([seed, altDeep, rest, aimsOf(doc), chain], (k, v) => (k === "x" || k === "y" || k === "note" ? undefined : v));
+  const held = heldDoc === doc;
+  if (held && memoSig !== heldSig) { memo.clear(); memoSig = heldSig; }
+  let r = held ? memo.get(k) : undefined;
+  if (r) return r;
+  const pk = pathKeyOfBox(doc, boxId, seed, altDeep, () => sigNo(held ? heldSig : docSig(doc)));
+  r = pathMemo.get(pk);
+  if (!r) {
+    // 見本を作る間は木が変わらないので鍵は 1 回だけ (描画の箱ごとの見本で木全体の JSON が 10 秒を超えた、☑ の手)
+    r = holdDocSig(doc, () => sampleRaw(data, doc, boxId, seed));
+    if (pathMemo.size >= PATH_MEMO_MAX) { pathMemo.clear(); sigNos.clear(); }
+    pathMemo.set(pk, r);
+  }
+  if (held) memo.set(k, r);
+  return r;
 }
 function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
   const b = doc.boxes[boxId];

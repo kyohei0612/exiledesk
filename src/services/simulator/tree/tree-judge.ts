@@ -13,7 +13,7 @@ import { catalystTagOf } from "../sim-engine";
 import { isCatalyst } from "./tree-hands";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { bodyOf } from "./tree-box-shape";
-import { aimOpts, sampleOf, startGoalAims, targetsOf } from "./tree-sample";
+import { aimOpts, holdDocSig, sampleOf, startGoalAims, targetsOf } from "./tree-sample";
 import { boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { qualityOk } from "./tree-unbounded";
 import { goneOf, gotOf, keptAimsOf } from "./tree-keep";
@@ -161,7 +161,8 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
   const full = (id: string): ReadonlySet<string> | null => {
     if (memo.has(id)) return memo.get(id)!;
     let out: Set<string> | null = null;
-    if (doc.boxes[id]) {
+    // この間は木が変わらないので鍵は 1 回だけ (S-71b、スイッチ treeLight)
+    if (doc.boxes[id]) holdDocSig(doc, () => {
       for (let seed = 1, last = 0; seed <= MAX; seed++) {
         if (seed > SAMPLES && ((out?.size ?? 0) < 2 || seed - last > MORE)) break;
         const s = sampleOf(data, doc, id, seed);
@@ -170,7 +171,7 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
         if (!out?.has(k)) last = seed;
         (out ??= new Set()).add(k);
       }
-    }
+    });
     memo.set(id, out);
     return out;
   };
