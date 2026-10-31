@@ -6,11 +6,10 @@
   宝飾品は品質の種類 (触媒と同じ。選んだ種類のタグの MOD が伸びる)。スキルジェムには出さない (ワンド・スタッフ・セプターは 10-17 から出す)
 -->
 <script setup lang="ts">
-import { qualityCapOf } from "../../services/emulator/emu-engine";
-import { CATALYSTS, maxQualityOf, isGem, type StageItem, inAny, qualityFieldMax, SANCTIFIED_REASON, hasExtraCatalyst } from "../../services/craft-stage/engine";
+import { CATALYSTS, maxQualityOf, isGem, type StageItem, inAny, qualityCapOf, qualityFieldMax, SANCTIFIED_REASON, hasExtraCatalyst } from "../../../services/craft-stage/engine";
 import { computed, onBeforeUnmount } from "vue";
-import { tr } from "../../i18n/lang";
-import { flag } from "../../web/release-flags";
+import { tr } from "../../../i18n/lang";
+import { flag } from "../../../web/release-flags";
 
 /** capLimit: 上限のプルダウンに出す値の上まで (シミュの完成形 = 届く上限、S-31)。エミュは渡さない (上限を手で広げて試す) */
 const props = defineProps<{ item: StageItem; capLimit?: number }>();

@@ -20,7 +20,7 @@ export type { PobBlock } from "./stage-pob";
 export { freshItem, startFrom, playPlan, splitOmens } from "./run-plan";
 // omensAllowedFor = その手に付けられるお告げ (骨には後の発現の反響も)
 // useReason = その手が今打てない理由 (打てるなら null。乱数で決まる物は打てる扱い。クラフト台とシミュの棚の同じ判定)
-export { applyCurrency, kindOf, omensFor, omensAllowedFor, useReason } from "./apply-currency";
+export { applyCurrency, kindOf, omensFor, omensAllowedFor, qualityCapOf, useReason } from "./apply-currency";
 export { revealOffers, unrevealedOf } from "./apply-desecrate";
 // revealPool = 今の未発現の枠の発現に出うる MOD と段 (シミュの発現の MOD の窓の灰色、S-38)
 export { revealPool } from "./spec/parts-unrevealed";

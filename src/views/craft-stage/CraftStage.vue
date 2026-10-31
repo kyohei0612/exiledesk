@@ -23,7 +23,7 @@ import BusyTag from "../../components/ui/BusyTag.vue";
 import StageSettings from "./StageSettings.vue";
 import { useStageBase } from "./use-stage-base";
 import StageItemCard from "../../components/for-share/item/StageItemCard.vue";
-import StageQualityBar from "./StageQualityBar.vue";
+import StageQualityBar from "../../components/for-share/item/StageQualityBar.vue";
 import StageSanctifyBar from "./StageSanctifyBar.vue";
 import { flag } from "../../web/release-flags";
 import StageItemMini from "./StageItemMini.vue";

@@ -28,7 +28,7 @@
 | 次の手で狙う | 狙う MOD を選び、打ち方ごとの当たる確率を棚の上に出す欄 | `StageAimPicker.vue`・`StageAimPanel.vue` |
 | スパムシミュレーター | 増強・カオス・高貴のスパムを 100 人で比べる別のページ (`?page=routes`) | `StageRoutesPage.vue`・`StageRouteLuck.vue` |
 | 運試し | スパムシミュで自分で押している間スパムする欄 | `StageRouteLuck.vue` |
-| 品質の帯 | カードのすぐ上の品質・上限・カタリストの欄 | `StageQualityBar.vue` |
+| 品質の帯 | カードのすぐ上の品質・上限・カタリストの欄 | `for-share/item/StageQualityBar.vue` (U-14) |
 | 聖別の帯 | 聖別したアイテムの数値を決める欄 | `StageSanctifyBar.vue` |
 | 下の帯 (スマホ) | 持っている間に画面の下に固定で出る「使う / 離す」の帯 | `StagePhoneBar.vue` |
 | 上の要約 (スマホ) | カードが画面の外に出た時に上に貼るアイテムの要約 | `StageItemMini.vue` |

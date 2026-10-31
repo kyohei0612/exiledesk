@@ -7,7 +7,7 @@
 -->
 <script setup lang="ts">
 import { computed } from "vue";
-import StageQualityBar from "../../craft-stage/StageQualityBar.vue";
+import StageQualityBar from "../../../components/for-share/item/StageQualityBar.vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { CATALYSTS, maxQualityOf, qualityFieldMax, type StageItem } from "../../../services/craft-stage/engine";
 import { flag } from "../../../web/release-flags";
