@@ -73,7 +73,8 @@ const prep = computed(() => (s.data.value && !fromItem.value ? runePrep(s.data.v
  */
 const FROM_ON = true;
 const fromItem = shallowRef<StageItem | null>(null);
-const canFrom = computed(() => FROM_ON && s.item.value?.rarity === "rare" && s.item.value.prefixes.length + s.item.value.suffixes.length > 0);
+/** コラプトしたアイテムにはカレンシーが打てないので、今のアイテムからは始められない (M-63、オーナー 10-31「てかコラプトはカレンシーなくね」) */
+const canFrom = computed(() => FROM_ON && s.item.value?.rarity === "rare" && !s.item.value.corrupted && s.item.value.prefixes.length + s.item.value.suffixes.length > 0);
 /** 実際に打ち始める形: 今のアイテムに狙いのルーンが足りなければ嵌めた形 (M-63)。クラフト台は当たった形を置くまで変わらない */
 const fromWorn = computed(() => (fromItem.value && s.data.value ? wearAimRunes(s.data.value, fromItem.value, runeNeed.value) : null));
 const fromStart = computed(() => fromWorn.value?.item ?? null);
@@ -92,6 +93,8 @@ function setFrom(on: boolean): void {
   fromItem.value = on ? s.item.value : null;
   resetRace();
 }
+// 開いている間も台は Ctrl+Z・やり直しで変わる。始められなくなったら決まりの形へ戻す
+watch(canFrom, (on) => { if (!on) setFrom(false); });
 /** 使えない理由の英語 (route-race.ts の文) */
 const OFF_EN: Record<string, string> = {
   "マジックに狙いの側の枠が無いベース": "This base has no slot on the target side while magic",
@@ -337,7 +340,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
           <p class="mt-2"><button type="button" data-routes-start class="min-h-11 w-full max-w-[16rem]" :class="busy ? 'g-btn' : 'g-btn-red'" :disabled="fromBlocked" @click="busy ? stop() : start()">{{ busy ? tr(`中止 (${rows.length} / ${ORDER.length})`, `Stop (${rows.length} / ${ORDER.length})`) : started ? tr(`別の ${RUNS} 人でもう一度計算`, `Again with another ${RUNS}`) : tr("計算開始", "Start") }}</button></p>
           <!-- 読み込み中 (計算の 100 人 × 道・等級 / 裏で 1 人回す)。2026-10-22 オーナー「待ち時間の表示が無いとバグってるのか分からない」 -->
           <p v-if="busy || placing" class="mt-1.5"><BusyTag :text="placing ? tr('当たるまで回し中', 'Rolling until it hits') : tr(`${RUNS} 人ずつ計算中`, `Calculating ${RUNS} people each`)" :n="placing ? undefined : peopleDone" :of="placing ? undefined : ORDER.length * RUNS" /></p>
-          <p v-if="fromBlocked" data-routes-from-blocked class="mt-3 text-[12px] text-rose-300">{{ fromItem?.corrupted ? tr("コラプトしたアイテムにはルーンを嵌められないので付かない", "Runes can't be socketed on a corrupted item, so this mod can't roll") : tr("嵌まっているルーンを外せないので付かない", "The socketed runes can't be removed, so this mod can't roll") }}</p>
+          <p v-if="fromBlocked" data-routes-from-blocked class="mt-3 text-[12px] text-rose-300">{{ tr("嵌まっているルーンを外せないので付かない", "The socketed runes can't be removed, so this mod can't roll") }}</p>
           <p v-else-if="fromRunes" data-routes-from-runes class="mt-3 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ fromRunes.out ? tr(`今のアイテムの ${fromRunes.out} を ${fromRunes.put} に置き換えた形から打つ (ルーンの代は入れない。クラフト台は当たった形を置くまで変わらない)`, `Starts with ${fromRunes.put} in place of ${fromRunes.out} on the current item (rune cost not included; the craft stage only changes when you place a hit)`) : tr(`今のアイテムに ${fromRunes.put} を嵌めた形から打つ (ルーンの代は入れない。クラフト台は当たった形を置くまで変わらない)`, `Starts with ${fromRunes.put} socketed on the current item (rune cost not included; the craft stage only changes when you place a hit)`) }}</p>
           <p v-else-if="fromItem" class="mt-3 text-[11px] text-[var(--exile-color-text-tertiary)]">{{ tr("ルーンは今のアイテムに嵌めている物のまま", "Runes stay as socketed on the current item") }}</p>
           <StageRouteRunes v-else class="mt-3 flex flex-col items-center" :picked="runeIds" :required="runeNeed" :disabled="busy" @change="setRunes" />
