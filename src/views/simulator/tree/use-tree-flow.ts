@@ -198,10 +198,12 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
    * (10-27 モンキー 9 の 6・7: 横の ＋ の後に左右の箱が枠の外、白紙 → 戻すで左右がはみ出したまま)。消えただけの時は動かさない
    */
   let seen = new Set(Object.keys(doc.value.boxes));
+  /** 手を決めている間は下の見直しを通さない (視点は holdBox が決める、S-147e) */
+  let holding = false;
   watch(() => Object.keys(doc.value.boxes).length, async () => {
     const now = Object.keys(doc.value.boxes), fresh = now.filter((id) => !seen.has(id));
     seen = new Set(now);
-    if (!fresh.length) return;
+    if (!fresh.length || holding) return;
     await nextTick(); await nextTick();
     // スイッチ nextInView (S-147c): 箱の高さが測れて並べ直し (use-row-settle) が済むまで待つ (新しい箱の位置と高さが 2 コマ続けて同じ、最長 30 コマ)
     {
@@ -232,6 +234,43 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     if (t0 * z + ny < m) ny = m - t0 * z; else if (b0 * z + ny > h - m) ny = h - m - b0 * z;
     await f.setViewport({ x: nx, y: ny, zoom: z });
   });
+  /**
+   * 手を決めた後も触った箱を画面の同じ場所に (S-147e、スイッチ junkTidy)。edit = 木を組み替えて触った箱の今の id を返す。
+   * 箱が 4 つ以上増えても開いた時の寄りへ戻さない。手を足す時は結果の箱が枠の外なら入る向きだけ最小限動かす (S-147c)。手を変える時は結果の箱の頭が全く見えない時だけ動かす
+   */
+  /** 手の窓を開く時の箱の画面の場所 (窓を開く寄せの前。holdBox はここへ戻す) */
+  let spot: { id: string; sx: number; sy: number } | null = null;
+  const noteSpot = (id: string): void => { const b = doc.value.boxes[id], { x, y, zoom: z } = f.viewport.value; spot = b ? { id, sx: b.x * z + x, sy: b.y * z + y } : null; };
+  async function holdBox(id: string, edit: () => string): Promise<void> {
+    const was = doc.value.boxes[id];
+    if (!flag("junkTidy") || !was) { edit(); return; }
+    const { x: x0, y: y0, zoom: z } = f.viewport.value, sx = spot?.id === id ? spot.sx : was.x * z + x0, sy = spot?.id === id ? spot.sy : was.y * z + y0, changed = !!was.hand;
+    spot = null;
+    holding = true;
+    try {
+      const to = edit();
+      const put = async (): Promise<void> => { const b = doc.value.boxes[to]; if (b) await f.setViewport({ x: sx - b.x * z, y: sy - b.y * z, zoom: z }); };
+      const kidsOf = (): NonNullable<typeof was>[] => (doc.value.boxes[to]?.outs ?? []).flatMap((k) => doc.value.boxes[k] ?? []);
+      await put();
+      await nextTick(); await nextTick();
+      // 箱の高さが測れて並べ直しが済むまで待つ (S-147c と同じ、2 コマ続けて同じ・最長 30 コマ)
+      const sig = (): string => [to, ...kidsOf().map((b) => b.id)].map((k) => { const b = doc.value.boxes[k]; return b ? `${b.x},${b.y},${f.findNode(k)?.dimensions.height ?? 0}` : ""; }).join("|");
+      let last = "", same = 0;
+      for (let i = 0; i < 30 && same < 2; i++) { await new Promise((r) => requestAnimationFrame(r)); const s = sig(); same = s === last ? same + 1 : 0; last = s; }
+      await put();
+      const kids = kidsOf();
+      if (!kids.length) return;
+      const barGap = !document.querySelector("[data-tree-unset-bar]") ? 44 * pageZ.value : 0;
+      const { x, y } = f.viewport.value, w = f.dimensions.value.width, h = f.dimensions.value.height - barGap, m = 8;
+      const l = Math.min(...kids.map((b) => b.x)), r = Math.max(...kids.map((b) => b.x + BOX_W)), t0 = Math.min(...kids.map((b) => b.y)), b0 = Math.max(...kids.map((b) => b.y + (f.findNode(b.id)?.dimensions.height || BOX_H))) + NEXT_H;
+      const head = BOX_H * z / 2;
+      if (changed && l * z + x < w - m && r * z + x > m && t0 * z + y < h - m - head && t0 * z + y > m) return;
+      let nx = x, ny = y;
+      if ((r - l) * z <= w - 2 * m) { if (l * z + nx < m) nx = m - l * z; else if (r * z + nx > w - m) nx = w - m - r * z; }
+      if ((b0 - t0) * z <= h - 2 * m) { if (t0 * z + ny < m) ny = m - t0 * z; else if (b0 * z + ny > h - m) ny = h - m - b0 * z; }
+      if (nx !== x || ny !== y) await f.setViewport({ x: nx, y: ny, zoom: z });
+    } finally { holding = false; }
+  }
   async function toggleFull(): Promise<void> { full.value = !full.value; }
   /** 箱の枠の上の位置 (ページの CSS ピクセル = 実ピクセル ÷ ページの zoom。ポップアップ・ホバーのカードの置き場)。W・H = 枠の大きさ */
   function rectOf(b: { x: number; y: number }, w = BOX_W, h = BOX_H): { left: number; top: number; right: number; bottom: number; W: number; H: number } {
@@ -268,5 +307,5 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     void f.setViewport({ x: vp.x + (w - old) / 2, y: vp.y, zoom: vp.zoom });
   });
 
-  return { flow: f, pageZ, zoom, viewOnly, minZoom, maxZoom, full, bounds, view, setZoom, zoomIn, zoomOut, onWheel, fit, openView, keepView, backView, goHome, resetZoom, toWorld, reveal, toggleFull, centerOn, rectOf, dispose: () => window.removeEventListener("resize", onResize) };
+  return { flow: f, pageZ, zoom, viewOnly, minZoom, maxZoom, full, bounds, view, setZoom, zoomIn, zoomOut, onWheel, fit, openView, keepView, backView, goHome, resetZoom, toWorld, reveal, holdBox, noteSpot, toggleFull, centerOn, rectOf, dispose: () => window.removeEventListener("resize", onResize) };
 }

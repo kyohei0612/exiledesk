@@ -160,8 +160,9 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = nul
   let at = id;
   // 組み替えは tree-hand-plan の applyPick (猿の口 sim-monkey と同じ)
   // 足した直後に重ならないよう整列まで (10-26 夜オーナー「横はそのままずらして、位置の整頓まで」。下の＋も同じ)
-  t.edit((d) => { at = holdLinks(() => applyPick(d, id, h, kind, aims, pre, only)); tidyOf(d); });
+  void v.holdBox(id, () => { t.edit((d) => { at = holdLinks(() => applyPick(d, id, h, kind, aims, pre, only)); tidyOf(d); }); return at; });
   panel.value = null;
+  if (flag("junkTidy")) return; // 視点は holdBox (S-147e)
   // 出来た結果の箱が枠の外なら寄る (真ん中の箱。10-22 白紙から組んで、出来た箱が下に出て自分で動かさないと見えなかった)
   const kids = doc.value.boxes[at]?.outs ?? [];
   if (kids.length) void v.reveal(kids[Math.floor(kids.length / 2)]!);
@@ -171,8 +172,8 @@ function swapHandOf(h: Hand, aims: Aim[], pre: string | null): void {
   const id = panel.value!.id, data = s.data.value; let box: string | null = null;
   if (!data) return;
   simAct("hand", "swap"); picking.value = null; tr100.noteSwap();
-  t.edit((d) => { box = swapHandIn(data, d, id, h, aims, pre).box; tidyOf(d); });
-  panel.value = null; if (box) void v.reveal(box);
+  void v.holdBox(id, () => { t.edit((d) => { box = swapHandIn(data, d, id, h, aims, pre).box; tidyOf(d); }); return box ?? id; });
+  panel.value = null; if (box && !flag("junkTidy")) void v.reveal(box);
 }
 /**
  * Vue Flow の出来事: 空き所を押す = 右の欄を閉じる (よくあるモーダルと同じ。オーナー 10-22。引っ張った時は Vue Flow が画面を動かすだけ)。
@@ -321,7 +322,7 @@ const rowL = computed(() => rowLayout(doc.value, boxHeightOf(measureBox)));
 
 // ＋を引っ張ってつなぐ (use-tree-plus.ts)
 const { plus, onPlus, plusLine } = useTreePlus({ doc, posOf, viewOnly, toWorld: v.toWorld, edit: t.edit, onAddHit, startLink });
-watch(() => panel.value?.id, (id) => { if (id) setTimeout(() => void v.reveal(id), 0); });
+watch(() => panel.value?.id, (id) => { if (id) { v.noteSpot(id); setTimeout(() => void v.reveal(id), 0); } });
 /** Vue Flow に渡す箱 (位置は木の形のまま。動かせるのは組める時だけ = 手・一望・戻り先を選んでいる間は画面だけ動く) */
 const flowNodes = computed(() => [...rv.visible.value.map((b) => ({ id: b.id, type: "box", position: posOf(b), draggable: false, selectable: false, connectable: false }))]);
 // Vue Flow へは setNodes で直接入れる (:nodes で渡すと、Vue Flow が中の並びを書き戻している一瞬の変化を拾わず、
