@@ -1,5 +1,41 @@
 [
  {
+  "v": "0.1.653",
+  "date": "2026-11-01",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: スマホは見るだけの画面にしました。完成形のカードと完成までの道を出し、「詳細」で全体図を指で動かして拡大できます。「10 人回す」も使えます。ツリーを組むのは幅 768 以上で",
+    "en": "Simulator: phones now get a view-only screen with the final item card and the route to it. Tap Details for the full map, which you can drag and pinch to zoom. Run 10 works too. Building trees needs a width of 768 or more"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ツリーの読み込み・穴チェック・100 人回す・手を足す時・箱の移動を軽くし、大きな木で固まるのを減らしました (結果は変わりません)",
+    "en": "Simulator: faster tree loading, gap check, Run 100, adding crafts and box dragging, with fewer freezes on big trees (results unchanged)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 穴チェックは自動で回さず、ボタンを押した時だけ回すようにしました。木を変えると合格は消えるので、もう一度押してください",
+    "en": "Simulator: the gap check no longer runs by itself, only when you press the button. Changing the tree clears the pass, so press it again"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "MOD 一覧の目次のタブを 1 回押せば、その節の見出しまで飛ぶようにしました",
+    "en": "Mod list: one tap on a contents tab now jumps to that section's heading"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "ベースを選んだ後に上のタブでベースのページへ来た時、開いている一覧まで送るようにしました (PC)",
+    "en": "Coming back to the base page from the top tabs after choosing a base now scrolls to the open list (PC)"
+   }
+  ]
+ },
+ {
   "v": "0.1.652",
   "date": "2026-10-31",
   "items": [
@@ -1042,36 +1078,6 @@
     "area": "",
     "text": "シミュレーター: ツリーの箱の中の MOD の表を、完成形のアイテムと同じ形 (区切りの絵・文を真ん中寄せ) に。合金・エッセンスなどの札は入れば MOD の文と同じ行に置きます",
     "en": "Simulator: The mod list inside tree boxes now looks like the finished item (separator art, centered text). Tags such as Alloy or Essence sit on the same line as the mod when they fit"
-   }
-  ]
- },
- {
-  "v": "0.1.612",
-  "date": "2026-10-26",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 木が横に広い時や完成形の設定から戻った時も、スタートの箱が枠の横の真ん中・一番上に来て、左上の完成形の窓の下に入らないように",
-    "en": "Simulator: The start box now stays at the top center of the tree frame even for wide trees or after returning from the finished-item settings, so it no longer slips under the finished-item panel in the top left"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 次に打つ手の窓は、最初から「狙い無し」にチェックした形で開くように (カオスのスパムは今どおり候補に全部チェック)",
-    "en": "Simulator: The next-craft panel now opens with \"No target (anything counts)\" checked by default (Chaos spam still checks every candidate as before)"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 箱の札 (◎ 〜が付いた・外れ など) を枠の上辺の真ん中に置き、未定の ! と重ならないように。箱の中の「<1% ＋ 次の手」の文字は消しました",
-    "en": "Simulator: Box labels (e.g. \"◎ … added\", \"Miss\") now sit at the top center of the frame and no longer overlap the undecided \"!\". The \"<1% + next craft\" text inside boxes was removed"
-   },
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: 横の ＋・下の ＋ で箱を足すと、押した側に置いて横の箱をずらし、そのまま整列するように",
-    "en": "Simulator: Adding a box with the side or bottom + now places it on the side you pressed, shifts neighboring boxes over, and tidies the tree right away"
    }
   ]
  }
