@@ -6,7 +6,7 @@
   オンの時だけ回す時に品質を見る (tree-unbounded の goalsHeld・tree-run の完成の箱。足りない人は止まり)
 -->
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 import StageQualityBar from "../../../components/for-share/item/StageQualityBar.vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { CATALYSTS, maxQualityOf, qualityFieldMax, type StageItem } from "../../../services/craft-stage/engine";
@@ -18,7 +18,10 @@ import { BREACH_OVER } from "./use-goal-shown";
 import { askQuality } from "./tree-goal-quality";
 
 /** warn = 「決めた」を押した時に止めた理由 (TreeGoalPage、S-31c) */
-defineProps<{ warn?: string | null }>();
+const props = defineProps<{ warn?: string | null }>();
+/** 理由が消えても高さは残す (2 択を入れた瞬間に「決めた」が 30px 動き、続けて押すと空振りした、モンキー 11-01、スイッチ junkTidy) */
+const lastWarn = ref<string | null>(null);
+watch(() => props.warn, (w) => { if (w && flag("junkTidy")) lastWarn.value = w; });
 const t = useTree();
 const on = computed(() => !!t.doc.value.goalQualityOn);
 /** 品質の帯に渡す完成形のアイテム (品質・上限・種類は完成形の設定の値) */
@@ -97,7 +100,7 @@ function setCap(n: number): void { const c = clampQ(n); t.edit((d) => { d.goalQu
           <option v-for="c in CATALYSTS" :key="c.tag" :value="c.tag">{{ tr(c.label.ja, c.label.en) }}</option>
         </select>
       </div>
-      <p v-if="warn" data-tree-goal-quality-warn class="break-words rounded border border-rose-400/50 bg-[#2a1416] px-2 py-1 text-rose-100">{{ warn }}</p>
+      <p v-if="warn || lastWarn" :data-tree-goal-quality-warn="warn ? '' : undefined" class="break-words rounded border border-rose-400/50 bg-[#2a1416] px-2 py-1 text-rose-100" :class="warn ? '' : 'invisible'">{{ warn ?? lastWarn }}</p>
     </template>
     <template v-else>
     <label class="flex min-h-7 cursor-pointer items-center gap-2 text-sim-body">
