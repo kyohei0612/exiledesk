@@ -2,7 +2,7 @@
   PhoneViewMap.vue — シミュのスマホの見るだけの全体図 (S-94・S-94c、スイッチ phoneView。オーナー 11-01「この画面に拡大したらPCのあの例のMOD群のこういうの拡大したら表示してあげたらもういうことなさそうだな」)。
   質問の形の PhoneMap は 1 版残すので (usePhoneQuiz の組む動きと戻り先選びが入っている)、見るだけの図はここに分けた。整理の版で PhoneMap が消える。
   縮めた時は色の札、倍率 CARD_K から見えている箱だけ PC の箱 TreeBox と線の途中の手の札 TreeHandChip (押せない層)。小さい箱を押すと窓を開かずその箱へ寄る (S-94c)。指の動きは use-map-touch.ts
-  手の札はオーナー 11-01「PC版特有のこの枠にこの手を打ってから次の枠みたいな表示になってない。あと品質もかかれてないかな」。PC の箱のカードは品質の行が無いので、ここでは箱の上に 1 行添える
+  手の札はオーナー 11-01「PC版特有のこの枠にこの手を打ってから次の枠みたいな表示になってない。あと品質もかかれてないかな」。品質はカードの中の行 (StageItemCard の qualityRow)
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -10,8 +10,6 @@ import { BOX_H, BOX_W, type TreeBox as Box } from "../../../services/simulator/t
 import { depthRows, EST_H } from "../../../services/simulator/tree/tree-row-tops";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { foldOuts, stripFolds, stripHidden, toggleStripFold } from "../../../services/simulator/tree/tree-strip-fold";
-import { shapeSampleOf } from "../../../services/simulator/tree/tree-sample-shape";
-import { craftStage as s } from "../../../state/craft-stage";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import TreeBox from "../tree/TreeBox.vue";
 import TreeHandChip from "../tree/TreeHandChip.vue";
@@ -22,7 +20,6 @@ import { useTree } from "../tree/use-tree";
 import { simOp } from "../../../web/track";
 import { tr } from "../../../i18n/lang";
 import { useMapTouch, type MapBounds } from "./use-map-touch";
-import { qualityLines } from "./view-route";
 
 const props = defineProps<{ /** 回した結果 (カードの箱に人数を添える) */ result?: TreeRunResult | null }>();
 const t = useTree();
@@ -136,11 +133,6 @@ const chips = computed(() => {
     return x + CHIP_ROOM / 2 > x0 && x - CHIP_ROOM / 2 < x0 + w && y + CHIP_DY > y0 && y - CHIP_DY < y0 + h ? [{ id: b.id, hand: b.hand ?? null, split: b.split?.length, x, y }] : [];
   }).slice(0, CHIP_MAX);
 });
-/** 箱の上の 1 行: その箱の見本の品質 (PC の箱のカードに無い行) と回した人数 */
-const aboves = computed(() => new Map(cardKey.value.split(" ").filter(Boolean).map((id) => {
-  const data = s.data.value, it = data ? shapeSampleOf(data, doc.value, id) : null;
-  return [id, [...qualityLines(it), runText(props.result, id)].filter(Boolean).join(" · ")] as const;
-})));
 /** 名前と手の絵 (カードの箱には出さない) */
 const names = computed(() => (m.k.value < NAME_K ? [] : inView.value.filter((b) => !cardIds.value.has(b.id)).map((b) => {
   const s = SHORT[b.out], icon = b.hand ? handIcon(b.hand.currency) || null : null;
@@ -171,8 +163,8 @@ const rgbOf = (b: Box): string => (b.done === "fail" ? "224,112,122" : b.done ? 
       <div v-if="cards.length || chips.length" data-map-cards class="pointer-events-none absolute left-0 top-0 origin-top-left" :style="{ transform: `translate(${m.tx.value}px,${m.ty.value}px) scale(${m.k.value})` }">
         <TreeHandChip v-for="c in chips" :id="c.id" :key="c.id" :hand="c.hand" :split="c.split" :x="c.x" :y="c.y" :inv="1" off :room="CHIP_ROOM" />
         <template v-for="b in cards" :key="b.id">
-          <TreeBox :box="b" :x="b.x" :y="yOf(b)" :removable="false" :picking="false" :selected="false" :back-label="backLabelOf(doc, b)" view-only />
-          <p v-if="aboves.get(b.id)" data-map-run class="absolute text-center text-[13px] font-bold text-amber-100 [text-shadow:0_1px_3px_#000]" :style="{ left: `${b.x}px`, top: `${yOf(b) - 34}px`, width: `${BOX_W}px` }">{{ aboves.get(b.id) }}</p>
+          <TreeBox :box="b" :x="b.x" :y="yOf(b)" :removable="false" :picking="false" :selected="false" :back-label="backLabelOf(doc, b)" view-only quality-row />
+          <p v-if="runText(props.result, b.id)" data-map-run class="absolute text-center text-[13px] font-bold text-amber-100 [text-shadow:0_1px_3px_#000]" :style="{ left: `${b.x}px`, top: `${yOf(b) - 34}px`, width: `${BOX_W}px` }">{{ runText(props.result, b.id) }}</p>
         </template>
       </div>
       <p class="pointer-events-none absolute bottom-1 right-2 rounded bg-black/75 px-1 text-[11px] text-amber-100/60">{{ tr("ツリーを作るのは PC で", "Build trees on a PC") }}</p>

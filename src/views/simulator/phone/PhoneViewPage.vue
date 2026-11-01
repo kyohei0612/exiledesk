@@ -54,10 +54,10 @@ const donePct = computed(() => { const r = run.result.value; return r ? Math.rou
 const map = ref<InstanceType<typeof PhoneViewMap> | null>(null);
 /** 詳細 = 全体図。既定は完成までの道 (S-94h、オーナー 11-01「詳細ボタン付けたらオンオフで全体さっきのツリー見れるでいいんじゃね」) */
 const detail = ref(false);
-function toggleDetail(): void { detail.value = !detail.value; simOp("view-detail", detail.value ? "on" : "off"); }
+function toggleDetail(): void { detail.value = !detail.value; goalBig.value = !detail.value; simOp("view-detail", detail.value ? "on" : "off"); }
 /** 結果のまとめの箱を押した: 全体図でその箱へ寄る (全体図が大きさを測ってから) */
 async function goBox(id: string): Promise<void> {
-  reportOpen.value = false; detail.value = true;
+  reportOpen.value = false; detail.value = true; goalBig.value = false;
   await nextTick();
   requestAnimationFrame(() => requestAnimationFrame(() => map.value?.goTo(id)));
 }
@@ -79,8 +79,9 @@ onBeforeUnmount(() => { document.documentElement.style.overflow = lockWas; windo
 watch([topEl, () => run.result.value?.n, () => passed.value, locked], () => void nextTick(measureTop), { flush: "post" });
 
 // 小さな完成形 = 広い幅で描いて倍率で縮めるだけ (S-92 の例外、D6)。押すと今の大きさ
+// 道の画面は下へ送るので最初から広げ、詳細の全体図の時は小さく (オーナー 11-01「これなら完成MODカードでかくていいよ今小さいから　どうせ下にスクロールするだけだしな」「最初から押すと広がるでおｋだったら」)
 const CARD_SMALL = 0.55;
-const goalBig = ref(false);
+const goalBig = ref(true);
 const goalBox = ref<HTMLElement | null>(null), cardEl = ref<HTMLElement | null>(null);
 const goalW = ref(360), cardH = ref(0);
 let cardRo: ResizeObserver | null = null;
