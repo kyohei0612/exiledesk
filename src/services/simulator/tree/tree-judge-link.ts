@@ -142,6 +142,11 @@ const canPlay = (data: PatchData, item: StageItem, h: Hand): boolean => { const 
  * 着いた箱の手が打てない人の行き先 (S-64、スイッチ keepOutside): 中身の同じ箱のうち、手が打てる箱か完成 / 失敗の箱 (浅い段・先に作った箱から)。
  * 外れは種類を見ないので、✦ + ブリーチの人が ✦ + 外れの「ブリーチを打つ箱」に着いて打てず止まった (金の指輪の木の b1、次の手の b2 は中身が同じ)
  */
+/** 手の打てない人が途中の狙いの箱へ移る時の印: 実際に持っている途中の狙いを印に足す (外れのままだと次の箱で中身が違うと元の箱へ戻され輪になる、S-64、スイッチ junkTidy) */
+export function twinAimed(doc: TreeDoc, j: Judge, to: string, item: StageItem, aimed: ReadonlySet<string>): ReadonlySet<string> {
+  if (!flag("junkTidy") || j.fitsItem(item, aimed, to)) return aimed;
+  return new Set([...aimed, ...midAims(doc).filter((a) => [...item.prefixes, ...item.suffixes].some((m) => m.modId === a.modId)).map((a) => a.modId)]);
+}
 export function playableTwin(data: PatchData, doc: TreeDoc, j: Judge, at: string, item: StageItem, aimed: ReadonlySet<string>): string | null {
   if (!flag("keepOutside")) return null;
   const can = (id: string): boolean => { const h = doc.boxes[id]?.hand; return !h || canPlay(data, item, h); };
