@@ -90,10 +90,12 @@
     return { miss, extra };
   }
   /** 結果の種類の式 (S-22・S-22b・S-23・S-27・S-27d)。見ない手は null */
-  function kindRule(doc, b, person, after) {
+  function kindRule(doc, b, person, after, list) {
     const h = b.hand, e = H.effectOf(h.currency), strip = !!h.keep && !h.keep.length && e === "remove";
     if (strip || h.omens.includes("OmenofLight") || e === "fracture" || e === "quality" || H.isRuneHand(h.currency) || VL.isRevealHand(h.currency)) return null;
-    const keep = h.keep?.length ? h.keep.map((a) => (doc.memoAims ?? []).find((g) => g.modId === a.modId) ?? a) : [...person.aimed].map((id) => goalOf(doc, id)).filter((g) => !g.fractured);
+    const mids = new Set(VL.midAims(doc).map((a) => a.modId)), sure = candOf(person, list).size === 1;
+    // 確定で消える途中の狙いは狙いが消えたにしない (S-33c ②)
+    const keep = h.keep?.length ? h.keep.map((a) => (doc.memoAims ?? []).find((g) => g.modId === a.modId) ?? a) : [...person.aimed].filter((id) => !(sure && mids.has(id))).map((id) => goalOf(doc, id)).filter((g) => !g.fractured);
     const lost = keep.some((g) => held(person.item, g) && !held(after, g));
     if (e === "remove") return lost ? "lost" : "junkGone";
     if (VL.veilKeep(h) || VL.veilPick(h)) return lost ? "lost" : null;
@@ -140,7 +142,7 @@
         const oc = OC.boxOutcomeOf(d, doc, b, p.item, o.item, aims, p.aimed);
         const next = SH.outBoxOf(doc, b, oc, o.item);
         const ex = () => ({ seed: p.seed, before: show(p.item), marks: [...p.aimed].map((x) => x.replace(/^[A-Za-z_]+\//, "")), after: show(o.item), oc: { out: oc.out, junkKey: oc.junkKey, hits: oc.hits?.map((a) => a.modId) }, p: +o.p.toFixed(4) });
-        const want = kindRule(doc, b, p, o.item);
+        const want = kindRule(doc, b, p, o.item, list);
         if (want && (next ? doc.boxes[next].out : oc.out) !== want) add("K", `${want}→${next ? doc.boxes[next].out : oc.out}`, ex());
         if (!next) { add("N", `${oc.out}:${(oc.junkKey ?? "").replace(/g:.*/, "g")}`, ex()); continue; }
         reached.add(next); cnt.set(next, (cnt.get(next) ?? 0) + o.p);

@@ -67,8 +67,8 @@ export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: 
   // 当たりの箱が無い手 (残したい MOD が全部で当たりが起きない手) も、g: の箱を作った時の ☑ で付いた狙いを見る (S-27d、スイッチ junkTidy)
   const got = flag("junkTidy") ? [...own, ...b.outs.flatMap((id) => gotOf(doc.boxes[id]?.junkKey).map((m) => (doc.memoAims ?? []).find((g) => g.modId === m) ?? { modId: m, tier: 99 }))] : own;
   // エッセンス (付く側が決まる)・フラクチャー (S-41 の鍵) は側で分けない。スイッチ junkTidy の下はエッセンスも次の MOD 群で分ける (S-65b)
-  if (!key || (effectOf(key) === "essence" && !flag("junkTidy")) || effectOf(key) === "fracture") return withGot(data, nextKeyed(doc, b, boxOutcomeRaw(data, doc, b, before, after, aims), before, after, am), before, after, got);
-  const oc = withGot(data, nextKeyed(doc, b, lostKeyed(data, doc, b.hand, ranked(b.hand, sided(boxOutcomeRaw(data, doc, b, before, after, aims), before, after, b.hand), before, after, aims), after, aimed, before), before, after, am), before, after, got);
+  if (!key || (effectOf(key) === "essence" && !flag("junkTidy")) || effectOf(key) === "fracture") return withGot(data, nextKeyed(data, doc, b, boxOutcomeRaw(data, doc, b, before, after, aims), before, after, am), before, after, got);
+  const oc = withGot(data, nextKeyed(data, doc, b, lostKeyed(data, doc, b.hand, ranked(b.hand, sided(boxOutcomeRaw(data, doc, b, before, after, aims), before, after, b.hand), before, after, aims), after, aimed, before), before, after, am), before, after, got);
   // 数え上げられない手は当たりの人も形で分ける (S-21、スイッチ junkTidy。組む間は鍵の合う箱が無いので今の 1 箱へ、整理で足す)
   return oc.out === "hit" && b.hand && mainSideOf(data, prepFor(data, before, b.hand.currency), b.hand) ? { ...oc, junkKey: sideKeyOf(before, after) } : oc;
 }
@@ -78,11 +78,13 @@ function noStones(doc: TreeDoc, h: Hand | null | undefined, am: ReadonlySet<stri
   const st = new Set(stoneAims(doc).map((a) => a.modId));
   return st.size ? new Set([...am].filter((id) => !st.has(id))) : am;
 }
+/** この人が狙いを持っているか (段は完成形の段。同じ MOD の低い段に替わった人は消えた人、狙いの中身 S-60 と同じ) */
+const heldBy = (data: PatchData, doc: TreeDoc) => (it: StageItem, id: string): boolean => aimHeldOn(data, it, (doc.memoAims ?? []).find((g) => g.modId === id) ?? { modId: id, tier: 99 }, { sameText: true });
 /** 外れ・打った後・狙いが消えたに次の MOD 群の鍵を足す (S-65b の総則、スイッチ junkTidy)。残したい MOD の消去は中身の鍵 (S-28e)、印の無い乱数のフラクチャーは S-41 の鍵のまま、当たりは ☑ の札 */
-function nextKeyed<T extends { out: OutKind; junkKey?: string }>(doc: TreeDoc, b: Pick<TreeBox, "hand">, oc: T, before: StageItem, after: StageItem, kept: ReadonlySet<string> | null | undefined): T {
+function nextKeyed<T extends { out: OutKind; junkKey?: string }>(data: PatchData, doc: TreeDoc, b: Pick<TreeBox, "hand">, oc: T, before: StageItem, after: StageItem, kept: ReadonlySet<string> | null | undefined): T {
   if (!flag("junkTidy") || (oc.out === "hit" && (oc as { hits?: readonly Aim[] }).hits?.length !== 0) || isKeepAnnul(b.hand) || fracFree(doc, b.hand)) return oc;
   // 発現で選ぶ手は打った後に未発現が残らない (③ 見積もりは発現の前の形、スイッチ junkTidy)
-  const nk = nextKeyOf(before, after, kept, veilPick(b.hand));
+  const nk = nextKeyOf(before, after, kept, heldBy(data, doc), veilPick(b.hand));
   return nk ? { ...oc, junkKey: joinKeys(oc.junkKey, nk) } : oc;
 }
 /** 残したい MOD のうち木の狙いに無い物 (外れの MOD を残したい時) も狙いの並びに足す (消去の keepAims と同じく、残したい MOD だけで消えた / 残ったを見る) */
@@ -240,8 +242,8 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
         if (outs.some((o) => lostOf(o))) veiledLost = true;
         // 狙いを消さない結果があるか (満杯の側で全部が狙いなら、骨は必ず狙いを消す = 当たり・外れ・打った後の箱は起こらない。10-28 冒涜まわりの確かめ)
         if (outs.some((o) => !lostOf(o))) veiledKeep = true;
-        for (const o of outs) { const sk = !lostOf(o) ? sideKeyOf(it, o.item) : undefined; if (sk) veiledSides.add(joinKeys(sk, flag("junkTidy") ? nextKeyOf(it, o.item, keptAimedOf(doc, h, aimedAt(smp.item) ?? sampleAimed(data, doc, boxId, seed)), veilPick(h)) : undefined)!); }
-        if (flag("junkTidy")) for (const o of outs) if (lostOf(o)) { const e = nextKeyed(doc, { hand: h }, sided({ out: "lost", hits: [] }, it, o.item, h), it, o.item, keptAimedOf(doc, h, aimedAt(smp.item) ?? sampleAimed(data, doc, boxId, seed))); if (e.junkKey) veiledLostKeys.add(e.junkKey); }
+        for (const o of outs) { const sk = !lostOf(o) ? sideKeyOf(it, o.item) : undefined; if (sk) veiledSides.add(joinKeys(sk, flag("junkTidy") ? nextKeyOf(it, o.item, keptAimedOf(doc, h, aimedAt(smp.item) ?? sampleAimed(data, doc, boxId, seed)), heldBy(data, doc), veilPick(h)) : undefined)!); }
+        if (flag("junkTidy")) for (const o of outs) if (lostOf(o)) { const e = nextKeyed(data, doc, { hand: h }, sided({ out: "lost", hits: [] }, it, o.item, h), it, o.item, keptAimedOf(doc, h, aimedAt(smp.item) ?? sampleAimed(data, doc, boxId, seed))); if (e.junkKey) veiledLostKeys.add(e.junkKey); }
         continue;
       }
       for (const o of outs) {
@@ -256,7 +258,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
         // スイッチ junkSide: 狙い無しは狙いが消えた以外全部「打った後」を側ごと。☑ の無い狙いが付いたのは外れ (tree-hand-plan の onlyOf と同じ) を側ごと (S-65)
         // エッセンス・フラクチャーは側で分けない (boxOutcomeOf と同じ、S-65。前はフラクチャーの外れの箱にだけ側の鍵が付き、見本が作れず ✦ の無い親の見本のままだった)
         const sk = (k === "essence" && !flag("junkTidy")) || k === "fracture" ? undefined : sideKeyOf(it, o.item);
-        const nk = <T extends { out: OutKind; junkKey?: string }>(e: T): T => nextKeyed(doc, { hand: h }, e, it, o.item, am);
+        const nk = <T extends { out: OutKind; junkKey?: string }>(e: T): T => nextKeyed(data, doc, { hand: h }, e, it, o.item, am);
         if (freeSide) { const e = nk(rk<{ out: OutKind; aim: null; junkKey?: string }>(r.out === "lost" ? { out: "lost" as OutKind, aim: null, ...(sk && lostSided(h) ? { junkKey: sk } : {}) } : { out: "any" as OutKind, aim: null, ...(sk ? { junkKey: sk } : {}) })); found.set(`${e.out}:${e.junkKey ?? ""}`, e); continue; }
         if (sk && extra.length && r.out === "hit" && r.hits[0] && !extra.some((a) => a.modId === r.hits[0]!.modId && a.tier === r.hits[0]!.tier)) { const e = nk(rk<{ out: OutKind; aim: null; junkKey?: string }>({ out: "junk", aim: null, junkKey: sk })); found.set(`junk::${e.junkKey}`, e); continue; }
         // 無限のエッセンスで ☑ していない能力値が付いた = 外れ (infiniteAim)。ほかの狙いの付かない当たりは「打った後」
