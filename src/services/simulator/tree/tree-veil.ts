@@ -37,6 +37,8 @@ export function placedAims(doc: TreeDoc): Aim[] {
   const plain = Object.values(doc.boxes).flatMap((b) => (b.out === "hit" && b.aim && b.parent && (veilPick(doc.boxes[b.parent]?.hand) || blockHand(doc.boxes[b.parent]?.hand)) && !goals.some((g) => g.modId === b.aim!.modId) ? [b.aim] : []));
   return [...plain, ...midAims(doc).filter((a) => !plain.some((x) => x.modId === a.modId))];
 }
+/** 置き石 = 発現で選んだ・ブロックに使う MOD (途中の狙いは除く)。残したい MOD の既定に入らず、消えても「狙いが消えた」にしない (S-33、スイッチ junkTidy) */
+export const stoneAims = (doc: TreeDoc): Aim[] => { const mid = new Set(midAims(doc).map((a) => a.modId)); return placedAims(doc).filter((a) => !mid.has(a.modId)); };
 /** 手で付ける MOD が 1 つに決まるエッセンスの MOD (無限のエッセンスは決まらないので無し) */
 const essenceModOf = (key: string | undefined): string | null => { const m = /^essence:(?:lesser|normal|greater|perfect):(.+)$/.exec(key ?? ""); return m && !isInfiniteEssence(key!) ? m[1]! : null; };
 /**

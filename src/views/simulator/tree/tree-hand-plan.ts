@@ -96,7 +96,7 @@ export function keepAskOf(data: PatchData, item: StageItem, currency: string, om
   return keepChoicesOf(data, item, currency, omens).length > 1;
 }
 /** 消える手 (消去でない) の残したい MOD の既定 = 候補のうち ☑ の印 (持っている狙い) の物 (S-27d) */
-export const keepDefaultOf = (choices: ReadonlyArray<{ aim: Aim }>, aimed: ReadonlySet<string> | null): Aim[] => choices.filter((c) => aimed?.has(c.aim.modId)).map((c) => c.aim);
+export const keepDefaultOf = (choices: ReadonlyArray<{ aim: Aim }>, aimed: ReadonlySet<string> | null, stones: readonly Aim[] = []): Aim[] => choices.filter((c) => aimed?.has(c.aim.modId) && !stones.some((a) => a.modId === c.aim.modId)).map((c) => c.aim);
 /** 棚で選んだ物 → 箱の手 */
 export function handOf(p: HandPick): Hand {
   const used = omensFor(p.held, [...p.omens]);
@@ -328,7 +328,7 @@ export function tidyJunk(d: TreeDoc): void {
   link();
   // ↩ がそろった木で、↩ で着く人の結果の箱を足す (S-21)
   if (addArrivedOuts(data, d).length) link();
-  for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split) b.tidied = true;
+  for (const b of Object.values(d.boxes)) { if (!b.hand && !b.done && !b.split) b.tidied = true; if (b.done === "main") b.doneNow = true; }
 }
 /**
  * ↩ で着く人の結果で箱の無い物を足す (S-21、スイッチ junkTidy)。結果の箱は手を決めた時の見本で作るので、あとから ↩ で入る別の外れの人の結果が抜ける
@@ -346,7 +346,13 @@ export function addArrivedOuts(data: PatchData, d: TreeDoc, rolledOnly = false):
     if (!arrived.length && !main) continue;
     const own = b.outs.flatMap((o) => (d.boxes[o]?.out === "hit" ? boxAims(d.boxes[o]!) : []));
     const fresh = (e: { out: OutKind; junkKey?: string }): boolean => e.out !== "hit" && !b.outs.some((o) => { const c = d.boxes[o]!; return (c.out === e.out || c.mergedOuts?.includes(e.out)) && (c.junkKey ?? main ?? e.junkKey) === e.junkKey; });
-    if (main) for (const e of possibleOutsOf(data, d, b.id, h, null, own, undefined, true) ?? []) if (fresh(e)) made.push(addOut(d, b.id, e.out, e.junkKey));
+    if (main) for (const e of possibleOutsOf(data, d, b.id, h, null, own, undefined, true) ?? []) {
+      // 当たりの人も形で分ける。一番多い形は今の当たりの箱 (S-21)
+      if (e.out === "hit") {
+        const aim = e.aim;
+        if (aim && e.junkKey !== main && !b.outs.some((o) => { const c = d.boxes[o]!; return c.out === "hit" && c.junkKey === e.junkKey && boxAims(c).some((x) => x.modId === aim.modId); })) { const id = addOut(d, b.id, "hit", e.junkKey); d.boxes[id]!.aim = aim; made.push(id); }
+      } else if (fresh(e)) made.push(addOut(d, b.id, e.out, e.junkKey));
+    }
     if (!arrived.length) continue;
     for (const e of possibleOutsOf(data, d, b.id, h, null, own, arrived, !!main) ?? []) {
       if (!fresh(e)) continue;

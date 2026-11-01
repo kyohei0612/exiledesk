@@ -9,7 +9,7 @@ import type { PatchData, StageItem, StageMod } from "../../../services/craft-sta
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { outsideAimed, sampleAimed } from "../../../services/simulator/tree/tree-judge";
 import { fractureMarks } from "../../../services/simulator/tree/tree-model";
-import { midAims } from "../../../services/simulator/tree/tree-veil";
+import { midAims, stoneAims } from "../../../services/simulator/tree/tree-veil";
 import { aimKey, type Aim, type Hand } from "../../../services/simulator/tree/tree-model";
 import { keepAskOf, keepChoicesOf, keepDefaultOf } from "./tree-hand-plan";
 import { boxTagsOf } from "./tree-row-tags";
@@ -28,7 +28,7 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   /** 残したい MOD を聞くか = 消えうる MOD が 2 つ以上 (1 つ以下は確定で消える = ☑ も 2 ページ目も出さず、結果は 1 箱。光のお告げ + 冒涜 1 つなど、S-27b) */
   const ask = computed(() => { const d = s.data.value, it = o.item.value, h = o.held.value; return !!d && !!it && !!h && keepAskOf(d, it, h, o.omens.value); });
   /** 消える手の既定 = 持っている狙い (この箱の見本 1 の ☑ の印) */
-  const defaults = (): string[] => { const d = s.data.value; return d && !isRemove.value ? keepDefaultOf(choices.value, sampleAimed(d, t.doc.value, o.boxId, 1)).map(aimKey) : []; };
+  const defaults = (): string[] => { const d = s.data.value; return d && !isRemove.value ? keepDefaultOf(choices.value, sampleAimed(d, t.doc.value, o.boxId, 1), flag("junkTidy") ? stoneAims(t.doc.value) : []).map(aimKey) : []; };
   /** この手で消えない狙いの MOD (☑ 固定の行、S-27e。スイッチ keepOutside。✦ は出さない。候補を聞く時だけ) */
   const fixed = computed((): StageMod[] => {
     const d = s.data.value, it = o.item.value, h = o.held.value;

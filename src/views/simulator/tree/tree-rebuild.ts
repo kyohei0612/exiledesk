@@ -9,7 +9,7 @@ import { clearHand, migrateStart, setBack, TREE_SCHEMA_N, type Hand, type TreeDo
 import { autoTarget, offByParent, sameHandByContent, straightUp } from "../../../services/simulator/tree/tree-judge-link";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
 import { addArrivedOuts, alignEssenceAims, applyPick, kindOf, linksAreHeld, onlyOf } from "./tree-hand-plan";
-import { tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
+import { staysGray, tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
 import { flag } from "../../../web/release-flags";
 import { judgeMemo, needsDesecrated } from "../../../services/simulator/tree/tree-judge";
 import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
@@ -80,7 +80,7 @@ export function rebuildTree(data: PatchData, src: TreeDoc, exactAt?: string): Tr
     const added = addArrivedOuts(data, d);
     replay(added);
     if (added.length) { relinkSameHand(data, d); linkLeftovers(data, d); }
-    if (tidyOn()) for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split) b.tidied = true; // 開いた木は整理まで済んだ形 (S-196)
+    if (tidyOn()) for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split && !staysGray(b)) b.tidied = true; // 開いた木は整理まで済んだ形。決めの無い外れの箱だけグレーのまま (S-196)
   }
   // 決めを打ち直した箱が後の見直しで消えた (同じ手なら戻るで下を畳んだ) 札も要確認
   // 順位の鍵の札は 1 つの箱へまとまったので、使わなかった札は要確認に出さない (S-65b、スイッチ junkTidy)

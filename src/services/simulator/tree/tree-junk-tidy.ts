@@ -22,5 +22,7 @@ export function tidyStep(d: TreeDoc): TidyStep {
   if (Object.values(d.boxes).some((b) => open(b) && !b.tidied && !b.noAutoBack)) return "tidy";
   return unsetBoxes(d).length ? "unset" : "check";
 }
-/** 完成を押した後は全部グレーにして、次に押す物だけ光らせる (S-198) */
-export const guideOn = (d: TreeDoc): boolean => tidyOn() && Object.values(d.boxes).some((b) => b.done === "main") && tidyStep(d) !== "check";
+/** 開いた木の決めの無い外れの箱は整理を押すまでグレー (S-196)。整理で見た印を付けない箱か */
+export const staysGray = (b: TreeBox): boolean => JUNK.has(b.out) && open(b);
+/** 完成を押した後・整理を押した後は全部グレーにして、次に押す物だけ光らせる (S-198)。開いただけの木は出さない (S-196) */
+export const guideOn = (d: TreeDoc): boolean => tidyOn() && Object.values(d.boxes).some((b) => b.done === "main" && b.doneNow) && tidyStep(d) !== "check";

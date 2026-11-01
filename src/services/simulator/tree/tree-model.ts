@@ -110,6 +110,8 @@ export interface TreeBox {
   noAutoBack?: true;
   /** ハズレ整理で見た箱 (グレーを解く、S-190、スイッチ junkTidy。保存しない) */
   tidied?: true;
+  /** この画面で完成を押した・整理を押した印 (S-198 の案内の元。保存しない) */
+  doneNow?: true;
   /** 道の見本で作れない結果の箱の見本 = ↩ で着く人の形 (S-21、tree-hand-plan の addArrivedOuts。保存しない) */
   via?: StageItem[];
   /** 分かれ目 (打たずに分ける、10-22 オーナー OK): 行を上から見て最初に合った行の箱へ進む。hand・back・done・outs とは一緒に持たない。最後の行は「それ以外」(when が空) */
@@ -485,6 +487,7 @@ export function setDone(d: TreeDoc, id: string, v: TreeBox["done"]): void {
   // 打った後の箱 (ルーンで仕上げる・狙い無しの手の後) も完成にできる (S-31e・S-54、スイッチ runeHand)
   if (v === "fail" ? b.out === "start" : v && b.out !== "hit" && b.out !== "branch" && b.out !== "any") return;
   b.done = v;
+  if (v === "main") b.doneNow = true;
 }
 
 // 箱の配置の小物 (並べ直す・空ける・押す・ずらす・外枠) は tree-model-layout.ts に分けた (1 ファイル 500 行まで、10-28)。呼ぶ所はここから
