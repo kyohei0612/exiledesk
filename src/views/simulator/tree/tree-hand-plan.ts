@@ -423,7 +423,8 @@ function lostSplit(data: PatchData, d: TreeDoc, id: string, h: Hand, depth = 0):
     if (to) { box.back = to; box.autoBack = true; continue; }
     if (box.out === "lost") { if (looseOf(s.item) > 0) stripSplit(data, d, c, strip, 0); continue; }
     // 残したい MOD はこの自動の消去の中では必須、ほかは外れ (S-60 の ☑)。外れが残っていて、この手で打てる時だけ
-    const junk = [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && !aimed.has(m.modId));
+    // ☑ した外れの MOD はこの自動の消去の中では外れに数えない。箱の中身 (S-60) は変えない (S-28e、スイッチ junkTidy)
+    const junk = [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && !aimed.has(m.modId) && !(flag("junkTidy") && h.keep?.some((a) => a.modId === m.modId)));
     const outs = junk && depth < 12 ? possibleOutsOf(data, d, c, h) : null;
     if (!outs?.length) continue;
     setHand(d, c, h, kindOf(h), [], outs, undefined, holdsAimOf(d, c));
