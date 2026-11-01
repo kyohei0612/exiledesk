@@ -18,6 +18,7 @@ import { fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type 
 import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-shape";
 import { boxOutcomeOf, isStrip, stripStop } from "./tree-outcome";
+import { isWhittleHand, rankVariants } from "./tree-whittle";
 import { aimedOfSample, sampleAimed } from "./tree-judge";
 import { autoRuneKeys, passThrough, prepFor } from "./tree-unbounded";
 import { isRevealHand, veilKeep, veilPick } from "./tree-veil";
@@ -328,7 +329,11 @@ function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): 
   // 狙いを無理に付けた見本 (forced) も引き直す: マジックの埋まった側に付けてレアに上がり、増強の当たりの箱のカードがレアの枠になった (10-28 夜オーナー「増強だっつーのにアイテムカードがレアになってんなバグだね」)
   if (!r0.note || altDeep) return r0;
   altDeep = true;
-  try { for (let k = 1; k < HIT_TRIES; k++) { const r = sampleFrom(data, doc, b, p, sampleIn(data, doc, p.id, seed + 7919 * k), seed, boxId, aims); if (!r.note) return r; } } finally { altDeep = false; }
+  try {
+    for (let k = 1; k < HIT_TRIES; k++) { const r = sampleFrom(data, doc, b, p, sampleIn(data, doc, p.id, seed + 7919 * k), seed, boxId, aims); if (!r.note) return r; }
+    // 削減の順位の箱は、箱を作る時と同じく親の見本の外れをその順位の段へ差し替えて打つ (差し替えないと順位の箱の見本が作れない、S-65b)
+    if (flag("junkTidy") && isWhittleHand(p.hand) && b.junkKey?.includes("w:")) for (const v of rankVariants(data, base.item, aims, p.junkKey)) { const r = sampleFrom(data, doc, b, p, { ...base, item: v.item }, seed, boxId, aims); if (!r.note) return r; }
+  } finally { altDeep = false; }
   return r0;
 }
 /** 親の見本 base に親の手を打って、この箱の見本を作る */
