@@ -133,6 +133,8 @@ export interface Judge {
   fitsItem(item: StageItem, aimed: ReadonlySet<string>, to: string): boolean;
   /** 中身が item と同じ箱 (手のある箱・完成 / 失敗の箱。浅い段・先に作った箱から。ok で更に絞る) */
   boxesOf(item: StageItem, aimed: ReadonlySet<string>, ok?: (id: string) => boolean): string[];
+  /** 中身が item と同じ、決め (手・戻り・完成 / 失敗・分かれ目) の無い箱 (浅い段・先に作った箱から。S-64) */
+  openOf(item: StageItem, aimed: ReadonlySet<string>): string[];
   /** 箱の見本ごとの ☑ で付いた狙い (作れない見本は入れない) */
   aimedOf(id: string): ReadonlySet<string>[];
   /** 箱の見本に消せる (✦ でない) ☑ の狙いがあるか (「狙いが消えた」の箱を作るか、setHand) */
@@ -209,6 +211,10 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     boxesOf(item, aimed, ok) {
       const k = contentOf(data, doc, item, aimed);
       return targets().filter((id) => !!setFor(id, id)?.has(keyFor(id, k)) && doneOk(doc, id, item) && reachesCatalyst(doc, id, item) && (!ok || ok(id)));
+    },
+    openOf(item, aimed) {
+      const k = contentOf(data, doc, item, aimed);
+      return Object.values(doc.boxes).filter((b) => b.id !== "start" && !b.hand && !b.back && !b.done && !b.split && !!setFor(b.id, b.id)?.has(keyFor(b.id, k))).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y));
     },
     aimedOf: (id) => samples(id).map((s) => sampleAimed(data, doc, id, s.seed)),
     // 置き石は完成形に無いので数えない (消えても狙いが消えたにしない、S-33)

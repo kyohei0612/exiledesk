@@ -133,5 +133,7 @@ export function routeOf(data: PatchData, doc: TreeDoc, j: Judge, at: string | nu
   const all = j.boxesOf(item, aimed);
   if (unknownOpen && !all.length) return at;
   const playable = all.find((id) => { const h = doc.boxes[id]?.hand; return !h || canPlay(data, item, h); });
+  // 手の打てる箱が無い人は、打てない箱へ流さず中身の同じ未設定の箱で止まる (その箱を決めれば進む、S-64。スイッチ junkTidy)
+  if (!playable && flag("junkTidy")) { const open = unknownOpen ? at : j.openOf(item, aimed)[0]; if (open) return open; }
   return playable ?? all[0] ?? null;
 }
