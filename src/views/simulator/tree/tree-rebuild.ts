@@ -142,7 +142,7 @@ function savedKeyOf(at: string, tail: string, onPath: ReadonlySet<string>, exact
   // 乱数のフラクチャーの外れの枝の種類 (`|crafted`、S-41 で側だけにした前の保存) = 同じ側の箱 (`|normal`) の決めとして読む (スイッチ fracSide)
   const recraft = (t: string): string => t.replace(/\|normal\]/, "|crafted]");
   const sw = swap(tail);
-  const tries = [at + tail, at + recraft(tail), at + unrank(tail), at + bare(tail), ...(sw ? [at + sw, at + bare(sw)] : []), ...(swapHit(bare(tail)) ? [at + swapHit(bare(tail))!] : [])];
+  const tries = [at + tail, at + recraft(tail), at + unrank(tail), at + bare(tail), ...(sw ? [at + sw, at + unrank(sw), at + bare(sw)] : []), ...(swapHit(bare(tail)) ? [at + swapHit(bare(tail))!] : [])];
   const hit = tries.find((k, i) => onPath.has(k) && (i < 4 || !exact.has(k)));
   if (hit || !flag("junkTidy")) return hit ?? at + tail;
   // 順位で分けていた前の保存 (`;w:` 付きの札) は、まとまった箱の決めとして読む。一番浅い順位の札を使う (S-65b、スイッチ junkTidy)
