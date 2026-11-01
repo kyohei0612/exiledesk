@@ -18,7 +18,7 @@ import { aimOpts, boxKeyOf, holdDocSig, sampleOf, startGoalAims, targetsOf } fro
 import { boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { qualityOk } from "./tree-unbounded";
 import { goneOf, gotOf, keptAimsOf } from "./tree-keep";
-import { placedAims } from "./tree-veil";
+import { midAims, midMark, placedAims } from "./tree-veil";
 import { flag } from "../../../web/release-flags";
 
 /** 箱の中身を見る見本の数 (前の boxBody と同じ 4 つ) */
@@ -55,6 +55,9 @@ export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<strin
   // 消去の後も ✦ の印の狙いは残る (消去では消えない。S-28b2: 前は全部消えてよい消去の後に ✦ まで外れに数え、✦ だけの箱がスタートと別の中身になった、木 oWkFcwYX の b8)
   const base = new Set(keep ? [...[...keep, ...fractureMarks(doc)].map((a) => a.modId), ...outsideAimed(data, doc, b.parent ? doc.boxes[b.parent]?.hand : null, prev, before)] : prev);
   if (b.out === "hit" && b.aim) for (const a of [...boxAims(b), ...(b.anyOf ?? [])]) base.add(a.modId);
+  // エッセンスで付けた・付け直した途中の狙いは印を付ける (S-33b、スイッチ junkTidy)
+  const em = before ? midMark(doc, b.parent ? doc.boxes[b.parent]?.hand : null) : null;
+  if (em) base.add(em);
   // 狙いが消えた・狙いが付いた の箱は付いた狙いも ☑ (S-27d、ズレ 9)
   if (b.out === "lost") for (const id of gotOf(b.junkKey)) base.add(id);
   const on = goalsOn(data, doc, item);
@@ -217,8 +220,8 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
       return Object.values(doc.boxes).filter((b) => b.id !== "start" && !b.hand && !b.back && !b.done && !b.split && !!setFor(b.id, b.id)?.has(keyFor(b.id, k))).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y));
     },
     aimedOf: (id) => samples(id).map((s) => sampleAimed(data, doc, id, s.seed)),
-    // 置き石は完成形に無いので数えない (消えても狙いが消えたにしない、S-33)
-    holdsAim: (id) => { const placed = new Set(placedAims(doc).map((a) => a.modId)); return samples(id).some((s) => { const am = sampleAimed(data, doc, id, s.seed); return [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && am.has(m.modId) && !placed.has(m.modId)); }); },
+    // 置き石は完成形に無いので数えない (消えても狙いが消えたにしない、S-33)。途中の狙いは数える (S-33b)
+    holdsAim: (id) => { const mid = new Set(midAims(doc).map((a) => a.modId)), placed = new Set(placedAims(doc).map((a) => a.modId).filter((m) => !mid.has(m))); return samples(id).some((s) => { const am = sampleAimed(data, doc, id, s.seed); return [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && am.has(m.modId) && !placed.has(m.modId)); }); },
     holdsAll(id) { const goals = doc.memoAims ?? [], ss = samples(id); return goals.length > 0 && ss.length > 0 && ss.every((s) => { const am = sampleAimed(data, doc, id, s.seed); return goals.every((g) => am.has(g.modId)); }); },
     afterQuality: (id) => samples(id).slice(0, 1).some((s) => !!s.item.qualityTag && (s.item.catalystQuality ?? s.item.quality ?? 0) > 0),
   };

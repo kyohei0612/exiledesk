@@ -9,6 +9,7 @@ import type { PatchData, StageItem, StageMod } from "../../../services/craft-sta
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
 import { outsideAimed, sampleAimed } from "../../../services/simulator/tree/tree-judge";
 import { fractureMarks } from "../../../services/simulator/tree/tree-model";
+import { midAims } from "../../../services/simulator/tree/tree-veil";
 import { aimKey, type Aim, type Hand } from "../../../services/simulator/tree/tree-model";
 import { keepAskOf, keepChoicesOf, keepDefaultOf } from "./tree-hand-plan";
 import { boxTagsOf } from "./tree-row-tags";
@@ -33,7 +34,7 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
     const d = s.data.value, it = o.item.value, h = o.held.value;
     if (!flag("keepOutside") || !d || !it || !h || !ask.value) return [];
     const am = sampleAimed(d, t.doc.value, o.boxId, 1), stay = new Set(outsideAimed(d, t.doc.value, { currency: h, omens: o.omens.value, catalyst: null, quality: 0 }, am, it));
-    const goals = (t.doc.value.memoAims ?? []).filter((g) => stay.has(g.modId) && !fractureMarks(t.doc.value).some((f) => f.modId === g.modId));
+    const goals = [...(t.doc.value.memoAims ?? []), ...midAims(t.doc.value)].filter((g) => stay.has(g.modId) && !fractureMarks(t.doc.value).some((f) => f.modId === g.modId));
     return [...it.prefixes, ...it.suffixes].filter((m) => !m.fractured && !choices.value.some((c) => c.mod.modId === m.modId) && goals.some((g) => aimOn(d, m, g)));
   });
   const checked = ref<string[]>((o.current?.keep ?? []).map(aimKey));
