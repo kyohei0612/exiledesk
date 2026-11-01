@@ -15,7 +15,8 @@ import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { aimsOf, sampleOf, SINGLE_SEEDS } from "../../../services/simulator/tree/tree-sample";
 import type { PatchData, StageItem } from "../../../services/craft-stage/engine";
 import { docPartOf, itemKeyOf, tagOf } from "../../../services/simulator/tree/tree-sample-key";
-import { aimedOfSample, sampleAimed } from "../../../services/simulator/tree/tree-judge";
+import { aimedOfSample, judgeMemo, sampleAimed } from "../../../services/simulator/tree/tree-judge";
+import { arrivalsOf } from "../../../services/simulator/tree/tree-judge-link";
 import { flag } from "../../../web/release-flags";
 import { shapeSampleOf } from "../../../services/simulator/tree/tree-sample-shape";
 import { engineOmens } from "../../../services/simulator/tree/tree-hands";
@@ -74,6 +75,11 @@ function peopleOf(data: PatchData, doc: TreeDoc, id: string): Man[] {
     if (x.note === "none" || x.note?.startsWith("cant:")) continue;
     const aimed = flag("judgeOne") ? aimedOfSample(id, x.item) : null, key = `${itemKeyOf(x.item)}|${aimed ? [...aimed].sort().join() : ""}`, e = by.get(key);
     if (e) e.w++; else by.set(key, { raw: x.item, aimed, w: 1 });
+  }
+  // ↩ で着く人も 1 人ずつ数える (道の見本に出ないランダムの外れの人。その人の結果の箱に札が出ない、S-21・S-65b)
+  if (seeds !== SINGLE_SEEDS) for (const a of arrivalsOf(data, doc, judgeMemo(data, doc), id)) {
+    const key = `${itemKeyOf(a.item)}|${[...a.aimed].sort().join()}`, e = by.get(key);
+    if (e) e.w++; else by.set(key, { raw: a.item, aimed: a.aimed, w: 1 });
   }
   const men = [...by.values()], n = men.reduce((t, m) => t + m.w, 0);
   return n ? men.map((m) => ({ ...m, w: m.w / n })) : one(shapeSampleOf(data, doc, id));
