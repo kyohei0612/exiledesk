@@ -10,7 +10,8 @@
  */
 import { catalystOf, maxQualityOf, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { catalystTagOf } from "../sim-engine";
-import { isCatalyst } from "./tree-hands";
+import { CATALYSING, isCatalyst } from "./tree-hands";
+import { tidyOn } from "./tree-junk-tidy";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { bodyOf } from "./tree-box-shape";
 import { aimOpts, boxKeyOf, holdDocSig, sampleOf, startGoalAims, targetsOf } from "./tree-sample";
@@ -188,7 +189,11 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
   const seq = (id: string): number => (id === "start" ? -1 : Number(/\d+$/.exec(id)?.[0] ?? 0));
   let order: string[] | null = null;
   const targets = (): string[] => (order ??= Object.values(doc.boxes).filter((b) => !!b.hand || !!b.done).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y)));
-  const capShort = (from: string, to: string): number => (catalystTo(doc, to) && samples(from).some((s) => !reachesCatalyst(doc, to, s.item)) ? catalystTo(doc, to) : 0);
+  const capShort = (from: string, to: string): number => {
+    // 触媒のお告げの手は品質が要るので、品質の無い人の箱とは同じ枠にしない (打てずに止まった、S-60c、スイッチ junkTidy)
+    if (tidyOn() && doc.boxes[to]?.hand?.omens.includes(CATALYSING) && samples(from).some((s) => !(s.item.quality ?? 0))) return 1;
+    return catalystTo(doc, to) && samples(from).some((s) => !reachesCatalyst(doc, to, s.item)) ? catalystTo(doc, to) : 0;
+  };
   return {
     contents,
     capShort,
