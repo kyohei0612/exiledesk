@@ -22,6 +22,11 @@ const loose = (it: StageItem): StageMod[] => [...it.prefixes, ...it.suffixes].fi
 const sameMod = (a: StageMod, b: StageMod): boolean => a.modId === b.modId && a.tierIndex === b.tierIndex && a.side === b.side;
 type AimLike = { modId: string };
 const isAim = (aims: readonly AimLike[], m: StageMod): boolean => aims.some((a) => a.modId === m.modId);
+/**
+ * 差し替え (rankVariants) で見る欲しい MOD = 見本の ☑ の印 (打つ前の aimed、tree-judge の sampleAimed) の付いた狙いだけ (S-65b、スイッチ junkTidy)。
+ * 印の無い完成形の MOD は外れ MOD (S-22・S-60) なので、付いていれば差し替え、付いていなければ付きうる外れの重みに入れる。回す人の順位 (boxOutcomeOf の mineOf) と同じ見方。印が無ければ今のまま
+ */
+export const aimedAims = <T extends AimLike>(aims: readonly T[], aimed: ReadonlySet<string> | null | undefined): readonly T[] => (flag("junkTidy") && aimed ? aims.filter((a) => aimed.has(a.modId)) : aims);
 /** 欲しい MOD の MOD レベル (低い順) */
 const wantedLevels = (it: StageItem, aims: readonly AimLike[]): number[] => loose(it).filter((m) => isAim(aims, m)).map(lv).sort((a, b) => a - b);
 /** 順位 = 欲しい MOD のうち MOD レベルがそれより低い物の数。同じ MOD レベルの物があれば「=」(E-33 どおりどちらも等しく消える) */

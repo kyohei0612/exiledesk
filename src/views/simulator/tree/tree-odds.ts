@@ -9,7 +9,8 @@ import { outcomeOdds, stepOutcomes } from "../../../services/simulator/sim-engin
 import { boxOutcomeOf } from "../../../services/simulator/tree/tree-outcome";
 import { outBoxOf } from "../../../services/simulator/tree/tree-shape";
 import { isSideKey, isStripKey } from "../../../services/simulator/tree/tree-junk-side";
-import { isWhittleHand, rankVariants } from "../../../services/simulator/tree/tree-whittle";
+import { aimedAims, isWhittleHand, rankVariants } from "../../../services/simulator/tree/tree-whittle";
+import { keptAimedOf } from "../../../services/simulator/tree/tree-keep";
 import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { aimsOf, SINGLE_SEEDS } from "../../../services/simulator/tree/tree-sample";
 import { docPartOf, itemKeyOf, tagOf } from "../../../services/simulator/tree/tree-sample-key";
@@ -60,7 +61,7 @@ function sideOdds(doc: TreeDoc, id: string, part: string): Map<string, number> |
   const key = part ? `${part}|${itemKeyOf(raw)}|${aimed ? [...aimed].sort().join() : ""}|${JSON.stringify([b.hand, b.junkKey, b.outs.map((o) => { const k = doc.boxes[o]; return k ? [o, ...tagOf(k)] : o; })])}` : null;
   if (key && sideMemo.has(key)) return sideMemo.get(key)!;
   // 削減の手は外れを MOD レベルの範囲ごとの代わりに差し替えた見本 (割合 = その範囲の重み、tree-whittle)。ほかは見本 1 つ
-  const forms = isWhittleHand(b.hand) ? rankVariants(data, item0, aims, b.junkKey) : [{ p: 1, item: item0 }];
+  const forms = isWhittleHand(b.hand) ? rankVariants(data, item0, aimedAims(aims, keptAimedOf(doc, b.hand, aimed)), b.junkKey) : [{ p: 1, item: item0 }];
   for (const f of forms) {
     const live = (stepOutcomes(data, f.item, b.hand.currency, engineOmens(b.hand)) ?? []).filter((r) => !r.void);
     const total = live.reduce((n, r) => n + r.p, 0);
