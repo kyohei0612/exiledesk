@@ -1,6 +1,6 @@
 /**
  * tree-odds.ts — 結果の箱に起こる割合 (2026-10-25 オーナー「おすすめの2つで進めて」、PC の箱とスマホの ② で同じ)。
- * 割合はシミュで数えず、エンジンの入口 outcomeOdds (engine-sim、ジン部長 695f76c3) に手の箱のアイテム (箱の形に合う見本 shapeSampleOf。形違いの戻りで入った人では出さない)・手 (お告げ込み)・木の狙いを渡すだけ。
+ * 割合はシミュで数えず、エンジンの入口 outcomeOdds (engine-sim、ジン部長 695f76c3) に手の箱のアイテム (箱に着く見本の人ごと peopleOf、スイッチ junkTidy が閉じていれば箱の形に合う見本 shapeSampleOf 1 つ。形違いの戻りで入った人では出さない)・手 (お告げ込み)・木の狙いを渡すだけ。
  * ここでするのは結果の種類 → 木の結果の箱の結び付けだけ: 当たりは同じ狙いの当たりの箱、当たりの箱の無い狙いが付いた分は外れの箱 (tree-hand-plan の onlyOf と同じ)。
  * 割合が出せない手 (繰り返し・狙い無し・エンジンが null・結果の箱が 1 つ) は出さない
  */
@@ -12,7 +12,8 @@ import { isSideKey, isStripKey } from "../../../services/simulator/tree/tree-jun
 import { aimedAims, isWhittleHand, rankVariants } from "../../../services/simulator/tree/tree-whittle";
 import { keptAimedOf } from "../../../services/simulator/tree/tree-keep";
 import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
-import { aimsOf, SINGLE_SEEDS } from "../../../services/simulator/tree/tree-sample";
+import { aimsOf, sampleOf, SINGLE_SEEDS } from "../../../services/simulator/tree/tree-sample";
+import type { PatchData, StageItem } from "../../../services/craft-stage/engine";
 import { docPartOf, itemKeyOf, tagOf } from "../../../services/simulator/tree/tree-sample-key";
 import { aimedOfSample, sampleAimed } from "../../../services/simulator/tree/tree-judge";
 import { flag } from "../../../web/release-flags";
@@ -33,18 +34,45 @@ export function oddsOfHand(doc: TreeDoc, id: string, part = ""): Map<string, num
   if (b.hand.free) return null;
   const hits = kids.filter((k) => k.out === "hit" && k.aim).flatMap((k) => boxAims(k));
   const aims = [...hits, ...aimsOf(doc).filter((a) => !hits.some((h) => h.modId === a.modId && h.tier === a.tier))];
-  const odds = outcomeOdds(data, prepFor(data, shapeSampleOf(data, doc, id), b.hand.currency), b.hand.currency, engineOmens(b.hand), aims, { sameText: true });
-  if (!odds) return null;
   const out = new Map<string, number>();
-  for (const o of odds) {
-    // 「どれか」の当たりの箱 (anyOf) は一覧のどれかの割合を足す (10-26)
-    const hit = o.out === "hit" && o.aim ? kids.find((k) => k.out === "hit" && boxAims(k).some((a) => a.modId === o.aim!.modId && a.tier === o.aim!.tier)) : undefined;
-    // 当たりの箱の無い狙いが付いた = 外れの箱
-    const kind = o.out === "hit" ? "junk" : o.out;
-    const to = hit ?? kids.find((k) => k.out === kind || !!k.mergedOuts?.includes(kind));
-    if (to) out.set(to.id, (out.get(to.id) ?? 0) + o.p);
+  let shot = 0;
+  for (const man of peopleOf(data, doc, id)) {
+    const odds = outcomeOdds(data, prepFor(data, man.raw, b.hand.currency), b.hand.currency, engineOmens(b.hand), aims, { sameText: true });
+    if (!odds) continue;
+    shot += man.w;
+    for (const o of odds) {
+      // 「どれか」の当たりの箱 (anyOf) は一覧のどれかの割合を足す (10-26)
+      const hit = o.out === "hit" && o.aim ? kids.find((k) => k.out === "hit" && boxAims(k).some((a) => a.modId === o.aim!.modId && a.tier === o.aim!.tier)) : undefined;
+      // 当たりの箱の無い狙いが付いた = 外れの箱
+      const kind = o.out === "hit" ? "junk" : o.out;
+      const to = hit ?? kids.find((k) => k.out === kind || !!k.mergedOuts?.includes(kind));
+      if (to) out.set(to.id, (out.get(to.id) ?? 0) + man.w * o.p);
+    }
   }
-  return out.size ? out : null;
+  return out.size ? (flag("junkTidy") ? perShot(out, shot) : out) : null;
+}
+/** 箱に着く人 (w = 割合、和 1) */
+type Man = { raw: StageItem; aimed: ReadonlySet<string> | null; w: number };
+/** 手の結果を打てた人の割合で割り直す (打てない人は打てる箱へ移る S-64 ので、割合に入れない) */
+const perShot = (m: Map<string, number>, shot: number): Map<string, number> => { if (shot > 0) for (const [k, v] of m) m.set(k, v / shot); return m; };
+/**
+ * 割合を数える人 (S-65・S-65b、スイッチ junkTidy): 箱に着く見本 SINGLE_SEEDS 人を同じ中身と ☑ でまとめ、人数の割合を持たせる。
+ * 前は見本 1 つで決まり、ブリーチ持ちとランダムの外れの人が混ざる箱 (オーナーの木の b43) の結果が「打った後 100%」と出た。洗い出し possibleOutsOf と同じ人を見る。
+ * 着いた見本が無ければ、閉じた形は今までどおり形に合う見本 1 つ
+ */
+function peopleOf(data: PatchData, doc: TreeDoc, id: string): Man[] {
+  if (flag("judgeOne")) for (let k = 1; k <= SINGLE_SEEDS; k++) sampleAimed(data, doc, id, k);
+  const one = (raw: StageItem): Man[] => [{ raw, aimed: flag("judgeOne") ? aimedOfSample(id, raw) : null, w: 1 }];
+  if (!flag("junkTidy")) return one(shapeSampleOf(data, doc, id));
+  const by = new Map<string, Man>();
+  for (let k = 1; k <= SINGLE_SEEDS; k++) {
+    const x = sampleOf(data, doc, id, k);
+    if (x.note === "none" || x.note?.startsWith("cant:")) continue;
+    const aimed = flag("judgeOne") ? aimedOfSample(id, x.item) : null, key = `${itemKeyOf(x.item)}|${aimed ? [...aimed].sort().join() : ""}`, e = by.get(key);
+    if (e) e.w++; else by.set(key, { raw: x.item, aimed, w: 1 });
+  }
+  const men = [...by.values()], n = men.reduce((t, m) => t + m.w, 0);
+  return n ? men.map((m) => ({ ...m, w: m.w / n })) : one(shapeSampleOf(data, doc, id));
 }
 /** 側で分けた箱のある手の割合: エンジンの stepOutcomes の枝 (void を除いて割り直す) を、回す時と同じ boxOutcomeOf → outBoxOf で結果の箱へ */
 /** 側で分けた手の割合の覚え (鍵 = 木の前提と狙い・見本・☑・手・結果の箱。木が替わるたびに全部の手でエンジンの枝を数えていた、S-71b、スイッチ treeLight) */
@@ -53,25 +81,29 @@ const SIDE_MAX = 5000;
 function sideOdds(doc: TreeDoc, id: string, part: string): Map<string, number> | null {
   const data = s.data.value, b = doc.boxes[id];
   if (!data || !b?.hand) return null;
-  const raw = shapeSampleOf(data, doc, id), item0 = prepFor(data, raw, b.hand.currency);
   const aims = aimsOf(doc), out = new Map<string, number>();
   // スイッチ judgeOne: 回す・精査と同じく、見本の ☑ で付いた狙いを渡す (渡さないと付いていて ☑ の無い完成形の MOD も狙いに数え、洗い出しの箱とずれた)
-  if (flag("judgeOne")) for (let k = 1; k <= SINGLE_SEEDS; k++) sampleAimed(data, doc, id, k);
-  const aimed = flag("judgeOne") ? aimedOfSample(id, raw) : null;
-  const key = part ? `${part}|${itemKeyOf(raw)}|${aimed ? [...aimed].sort().join() : ""}|${JSON.stringify([b.hand, b.junkKey, b.outs.map((o) => { const k = doc.boxes[o]; return k ? [o, ...tagOf(k)] : o; })])}` : null;
+  const men = peopleOf(data, doc, id);
+  const key = part ? `${part}|${men.map((m) => `${itemKeyOf(m.raw)}|${m.aimed ? [...m.aimed].sort().join() : ""}|${m.w}`).join("&")}|${JSON.stringify([b.hand, b.junkKey, b.outs.map((o) => { const k = doc.boxes[o]; return k ? [o, ...tagOf(k)] : o; })])}` : null;
   if (key && sideMemo.has(key)) return sideMemo.get(key)!;
-  // 削減の手は外れを MOD レベルの範囲ごとの代わりに差し替えた見本 (割合 = その範囲の重み、tree-whittle)。ほかは見本 1 つ
-  const forms = isWhittleHand(b.hand) ? rankVariants(data, item0, aimedAims(aims, keptAimedOf(doc, b.hand, aimed)), b.junkKey) : [{ p: 1, item: item0 }];
-  for (const f of forms) {
-    const live = (stepOutcomes(data, f.item, b.hand.currency, engineOmens(b.hand)) ?? []).filter((r) => !r.void);
-    const total = live.reduce((n, r) => n + r.p, 0);
-    if (!live.length || total <= 0) continue;
-    for (const r of live) {
-      const to = outBoxOf(doc, b, boxOutcomeOf(data, doc, b, f.item, r.item, aims, aimed), r.item);
-      if (to) out.set(to, (out.get(to) ?? 0) + (f.p * r.p) / total);
+  let shot = 0;
+  for (const man of men) {
+    const item0 = prepFor(data, man.raw, b.hand.currency), aimed = man.aimed;
+    // 削減の手は外れを MOD レベルの範囲ごとの代わりに差し替えた見本 (割合 = その範囲の重み、tree-whittle)。ほかは見本のまま
+    const forms = isWhittleHand(b.hand) ? rankVariants(data, item0, aimedAims(aims, keptAimedOf(doc, b.hand, aimed)), b.junkKey) : [{ p: 1, item: item0 }];
+    for (const f of forms) {
+      const live = (stepOutcomes(data, f.item, b.hand.currency, engineOmens(b.hand)) ?? []).filter((r) => !r.void);
+      const total = live.reduce((n, r) => n + r.p, 0);
+      if (!live.length || total <= 0) continue;
+      shot += man.w * f.p;
+      for (const r of live) {
+        const to = outBoxOf(doc, b, boxOutcomeOf(data, doc, b, f.item, r.item, aims, aimed), r.item);
+        if (to) out.set(to, (out.get(to) ?? 0) + (man.w * f.p * r.p) / total);
+      }
     }
   }
-  const res = out.size ? out : null;
+  // 閉じた形は今のまま (打てない差し替えの分は足りないまま)
+  const res = out.size ? (flag("junkTidy") ? perShot(out, shot) : out) : null;
   if (key) { if (sideMemo.size >= SIDE_MAX) sideMemo.clear(); sideMemo.set(key, res); }
   return res;
 }
