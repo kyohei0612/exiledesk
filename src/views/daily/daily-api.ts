@@ -37,6 +37,12 @@ const dayName = (no: number): string => new Date(no * DAY).toISOString().slice(0
 /** 0 = 月 */
 const weekdayOf = (no: number): number => (new Date(no * DAY).getUTCDay() + 6) % 7;
 
+/** 今週の 7 日 (月〜日、7:00 JST 区切り)。一覧の棚の並び */
+export const weekDays = (now: number): { id: string; wd: number; md: string; today: boolean }[] => {
+  const t = dayNoOf(now), m = t - weekdayOf(t);
+  return Array.from({ length: 7 }, (_, i) => ({ id: `g${dayName(m + i)}`, wd: i, md: dayName(m + i).slice(5).replace("-", "/"), today: m + i === t }));
+};
+
 /** 今週の生成のお題 (新しい順。先頭が今日) */
 let week: { key: number; list: GenTopic[] } | null = null;
 function weekTopics(data: PatchData, now: number): GenTopic[] {

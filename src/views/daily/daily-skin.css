@@ -1,28 +1,78 @@
 /* デイリーの形 (D-60)。色・字はここに書かず、全部 skin/skin.ts の --skin-* を読む。皮を替えるのにこのファイルは触らない。
-   目立たせるのは導火線 1 か所 (D-60b)。光の色 --skin-fire は時間にしか使わない */
+   目立たせるのは導火線 1 か所 (D-60b)。光の色 --skin-fire は時間にしか使わない。
+   枠・題・札はゲームの絵 (U-41)、中身は 1 つの .g-panel (U-40)。見た目は一枚の卓 (D-60d)。 */
 .daily-root { padding: 16px; color: var(--skin-text); background: var(--skin-bg); min-height: 100%; }
 
-/* 顔 */
-.daily-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 520px); gap: 56px; padding: 36px 40px 40px; background: linear-gradient(180deg, var(--skin-panel), var(--skin-bg)); }
-.daily-hero-title { margin: 0 0 18px; font-family: var(--skin-font-head); font-size: 44px; line-height: 1.2; font-weight: 400; color: var(--skin-title); }
-.daily-veil { display: flex; align-items: center; gap: 20px; margin-bottom: 24px; }
-.daily-veil-art { width: 112px; height: 112px; object-fit: contain; filter: brightness(0.32) contrast(1.1); }
+/* 面: 挑戦状の 1 ページ目。PC は窓の高さいっぱいの 1 枚 (高さは DailyPage の fitBoard)。a = 左に品、b = 真ん中に品 */
+.daily-board { display: grid; column-gap: 36px; row-gap: 10px; padding: 8px 22px 12px; background: linear-gradient(180deg, var(--skin-panel), var(--skin-bg)) border-box; }
+.daily-board { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.15fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "head head head" "hero rank week" "foot foot foot"; }
+.daily-board.one { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto auto; grid-template-areas: "head head" "hero rank"; }
+.daily-root[data-daily-page] .daily-board { grid-template-columns: minmax(0, 1fr) 330px minmax(0, 1fr); grid-template-areas: "head head head" "rank hero week" "foot foot foot"; }
+.daily-root[data-daily-page] .daily-board.one { grid-template-columns: 330px minmax(0, 1fr); grid-template-areas: "head head" "hero rank"; }
+.daily-bottom { grid-area: foot; display: grid; grid-template-columns: minmax(0, 1fr) 216px; column-gap: 24px; }
+[data-daily-week] { grid-area: week; min-width: 0; }
+[data-daily-rank] { grid-area: rank; }
+
+/* お題の顔。面の格子へ溶ける */
+.daily-hero { display: contents; }
+.daily-hero-main { grid-area: hero; min-width: 0; align-self: center; }
+.daily-title { grid-area: head; display: flex; align-items: center; justify-content: center; min-height: 54px; margin: 0; position: relative; isolation: isolate; font-family: var(--skin-font-head); font-weight: 400; font-size: 24px; letter-spacing: 0.12em; color: var(--skin-title); text-shadow: 0 2px 0 var(--exile-color-black); }
+.daily-title::before { content: ""; position: absolute; inset: 0; z-index: -1; background: url("/ui-art/title-l.webp") left top / auto 100% no-repeat, url("/ui-art/title-r.webp") right top / auto 100% no-repeat, url("/ui-art/title-m.webp") left top / auto 100% repeat-x; filter: var(--skin-art) brightness(0.6); }
+.daily-root[data-daily-page] .daily-title { min-height: 118px; align-items: flex-end; padding-bottom: 18px; font-size: 25px; color: var(--exile-color-tab-on-ink); text-shadow: 0 1px 0 var(--skin-title); }
+.daily-root[data-daily-page] .daily-title::before { background: url("/ui-art/title-c.webp") center / auto 100% no-repeat; filter: var(--skin-art); }
+
+/* 時計と名前: 題の両脇 */
+.daily-clock { grid-area: head; align-self: center; display: flex; justify-content: space-between; gap: 8px 16px; padding: 0 118px; position: relative; font-size: 14px; color: var(--skin-dim); font-variant-numeric: tabular-nums; pointer-events: none; }
+.daily-clock p { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 20px; }
+.daily-clock button { pointer-events: auto; }
+.daily-root[data-daily-page] .daily-clock { padding: 0 6px; }
+.daily-root[data-daily-page] .daily-clock p { flex-direction: column; align-items: flex-start; }
+.daily-root[data-daily-page] .daily-clock p:last-child { align-items: flex-end; }
+
+/* 品: 倉庫の枠をアイテムの額で囲む。始める前は影だけ (D-32b) */
+.daily-veil { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+.daily-veil-frame { flex: none; display: grid; place-items: center; width: 136px; height: 136px; position: relative; isolation: isolate; background: radial-gradient(closest-side, var(--skin-hover), transparent), url("/ui-art/slot.webp") center / 100% 100% no-repeat; }
+.daily-veil-frame::after { content: ""; position: absolute; inset: -6px; border: 14px solid transparent; border-image: url("/ui-art/item-frame.webp") 18 / 18px / 2px stretch; filter: var(--skin-art); pointer-events: none; }
+.daily-veil-art { width: 108px; height: 108px; object-fit: contain; filter: brightness(0.42) contrast(1.15); }
 .daily-veil-art.open { filter: none; }
-.daily-veil-name { font-family: var(--skin-font-name); font-size: 26px; color: var(--skin-title); }
-.daily-start { min-height: 46px; min-width: 300px; font-size: 16px; }
-.daily-rank-row { display: flex; align-items: baseline; gap: 10px; padding: 7px 8px; }
+.daily-plate { display: flex; align-items: center; justify-content: center; min-height: 56px; padding: 0 2px; border-style: solid; border-color: transparent; border-width: 0 44px; border-image: url("/ui-art/ihead-rare.webp") 0 76 fill / 0 44px stretch; }
+.daily-veil-name { font-family: var(--skin-font-name); font-size: 20px; line-height: 1.2; color: var(--skin-title); text-align: center; word-break: keep-all; }
+.daily-meta { margin-top: 5px; font-size: 14px; color: var(--skin-dim); }
+.daily-start { min-height: 46px; width: 100%; font-size: 16px; }
+.daily-sub { margin-top: 7px; font-size: 13px; line-height: 1.5; color: var(--skin-dim); }
+.daily-root[data-daily-page] .daily-veil { flex-direction: column; gap: 12px; margin-bottom: 12px; text-align: center; }
+.daily-root[data-daily-page] .daily-veil-frame { width: 150px; height: 150px; }
+.daily-root[data-daily-page] .daily-veil-art { width: 122px; height: 122px; }
+.daily-root[data-daily-page] .daily-veil > .min-w-0 { width: 100%; }
+
+/* 順位: 自分の行は取引所の選んだ行の絵。線の枠を使わない (U-45) */
+.daily-rank-row { display: flex; align-items: center; gap: 8px; min-height: 32px; padding: 2px 8px; font-size: 14px; }
 .daily-rank-row:nth-child(odd) { background: var(--skin-stripe); }
-.daily-rank-row.me { outline: 1px solid var(--skin-title); outline-offset: -1px; }
+.daily-rank-row.me { border: 0 solid transparent; border-width: 0 14px; padding-inline: 0; border-image: url("/ui-art/side-on.webp") 0 60 fill / 0 14px stretch; }
+.daily-place { width: 20px; flex: none; font-family: var(--skin-font-name); font-variant-numeric: tabular-nums; color: var(--skin-dim); text-align: right; }
+.daily-rank-row:nth-child(-n + 3) .daily-place { color: var(--skin-title); font-size: 16px; }
 .daily-points { font-weight: 400; color: var(--skin-title); font-variant-numeric: tabular-nums; }
+.daily-num { flex: none; text-align: right; font-variant-numeric: tabular-nums; color: var(--skin-dim); }
 
-/* タグ (D-54): 1 位は札の絵のように、2〜10 位は控えめに */
-.daily-tag { margin-left: 8px; padding: 0 6px; font-size: 11px; line-height: 16px; white-space: nowrap; color: var(--skin-dim); border: 1px solid var(--skin-line); vertical-align: 1px; }
-.daily-tag.top { color: var(--skin-bg); background: var(--skin-title); border-color: var(--skin-title); font-weight: 700; }
+/* タグ (D-54): 1 位は金の銘の札、2〜10 位は石の札。絵のまま小さく */
+.daily-tag { display: inline-block; margin-left: 6px; padding: 0 9px; font-size: 12px; font-weight: 700; line-height: 20px; white-space: nowrap; color: var(--skin-text); background: url("/ui-art/tab.webp") center / 100% 100% no-repeat; vertical-align: 1px; }
+.daily-tag.top { padding: 0 3px; min-height: 22px; line-height: 22px; color: var(--skin-title); background: none; border-style: solid; border-color: transparent; border-width: 0 15px; border-image: url("/ui-art/ihead-rare-1.webp") 0 56 fill / 0 15px stretch; }
 
-.daily-clock { display: flex; flex-wrap: wrap; gap: 8px 28px; padding: 10px 40px; font-size: 14px; color: var(--skin-dim); font-variant-numeric: tabular-nums; }
-.daily-lists { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 520px); gap: 56px; padding: 16px 40px 28px; }
-.daily-list-title { margin-bottom: 10px; font-family: var(--skin-font-name); font-size: 19px; color: var(--skin-title); }
-.daily-row { display: flex; width: 100%; align-items: center; gap: 12px; padding: 9px 8px; text-align: left; font-size: 15px; }
+/* 今週の棚: 月〜日の 7 枠。今日は持った枠の絵、解決は印、これからは空き枠 */
+.daily-tiles { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; }
+.daily-tile { display: flex; flex-direction: column; align-items: center; gap: 1px; width: 100%; padding: 2px; text-align: center; font-size: 12px; line-height: 1.3; }
+.daily-tile:hover:not(:disabled) { background: var(--skin-hover); color: var(--skin-title); }
+.daily-tile-art { position: relative; display: grid; place-items: center; width: 58px; height: 58px; }
+.daily-tile-art img { width: 44px; height: 44px; object-fit: contain; }
+.daily-tile-done { position: absolute; right: 5px; bottom: 2px; font-size: 14px; color: var(--skin-title); text-shadow: 0 1px 2px var(--exile-color-black); }
+.daily-tile-name { min-width: 0; }
+.daily-tile small { font-size: 12px; color: var(--skin-dim); white-space: nowrap; }
+[data-daily-slot="future"] .daily-tile { opacity: 0.45; }
+[data-daily-slot="today"] .daily-tile-name { color: var(--skin-title); }
+.daily-post-entry .g-btn { width: 100%; }
+.daily-box { max-height: 76px; margin-top: 4px; overflow-y: auto; }
+
+.daily-row { display: flex; width: 100%; align-items: center; gap: 12px; padding: 4px 8px; text-align: left; font-size: 14px; }
 .daily-row > span { min-width: 0; flex: 1; }
 .daily-row small { font-size: 13px; color: var(--skin-dim); }
 button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title); }
@@ -36,15 +86,30 @@ button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title)
 .daily-post { padding: 36px 40px 40px; background: linear-gradient(180deg, var(--skin-panel), var(--skin-bg)); }
 .daily-post-from { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; }
 
-/* 挑戦の帯 */
-.daily-band { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 24px; padding: 10px 16px 14px; margin-bottom: 8px; background: var(--skin-panel); }
+/* 挑戦の帯。a = 石の帯の真ん中に金の銘板、b = 彫像の見出し 2 枚の間に時計 */
+.daily-band { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 24px; min-height: 86px; padding: 6px 24px 10px; margin-bottom: 26px; }
+.daily-band::before { content: ""; position: absolute; inset: 0; z-index: -1; background: url("/ui-art/title-l.webp") left top / auto 100% no-repeat, url("/ui-art/title-r.webp") right top / auto 100% no-repeat, url("/ui-art/title-m.webp") left top / auto 100% repeat-x; filter: var(--skin-art) brightness(0.55); }
 .daily-band-topic { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.daily-band-topic img { width: 48px; height: 48px; object-fit: contain; }
-.daily-time b { display: block; font-family: var(--skin-font-head); font-weight: 400; font-size: 56px; line-height: 1; font-variant-numeric: tabular-nums; color: var(--skin-title); }
-.daily-band-score { display: flex; align-items: center; justify-content: flex-end; gap: 24px; }
+.daily-band-topic img { flex: none; width: 56px; height: 56px; padding: 6px; object-fit: contain; background: url("/ui-art/slot.webp") center / 100% 100% no-repeat; }
+.daily-band-name { font-family: var(--skin-font-name); font-size: 19px; line-height: 1.25; color: var(--skin-title); overflow-wrap: anywhere; }
+.daily-time { display: grid; place-items: end center; width: 560px; height: 139px; margin: -44px 0 -12px; padding-bottom: 19px; background: url("/ui-art/title-c.webp") center / 100% 100% no-repeat; filter: var(--skin-art); }
+.daily-time b { display: block; font-family: var(--skin-font-head); font-weight: 400; font-size: 38px; line-height: 1; font-variant-numeric: tabular-nums; color: var(--exile-color-tab-on-ink); }
+.daily-band-score { display: flex; align-items: center; justify-content: flex-end; gap: 22px; min-width: 0; }
 .daily-band-score div { text-align: right; }
-.daily-band-score b { display: block; font-weight: 400; font-size: 24px; line-height: 1.2; color: var(--skin-title); font-variant-numeric: tabular-nums; }
-.daily-band-score small { font-size: 12px; color: var(--skin-dim); }
+.daily-band-score b { display: block; font-weight: 400; font-size: 22px; line-height: 1.2; color: var(--skin-title); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.daily-band-score small { font-size: 12px; color: var(--skin-dim); white-space: nowrap; }
+.daily-root[data-daily-page] .daily-band { grid-template-columns: minmax(0, 1fr) 280px minmax(0, 1fr); gap: 0; min-height: 104px; padding: 0 0 8px; margin-bottom: 10px; }
+.daily-root[data-daily-page] .daily-band::before { background: none; }
+.daily-root[data-daily-page] .daily-band-topic,
+.daily-root[data-daily-page] .daily-band-score { position: relative; isolation: isolate; align-self: stretch; padding-bottom: 26px; }
+.daily-root[data-daily-page] .daily-band-topic::before,
+.daily-root[data-daily-page] .daily-band-score::before { content: ""; position: absolute; inset: 0; z-index: -1; border-style: solid; border-color: transparent; filter: var(--skin-art); }
+.daily-root[data-daily-page] .daily-band-topic { padding-left: 116px; padding-right: 90px; }
+.daily-root[data-daily-page] .daily-band-topic::before { border-width: 0 96px 0 112px; border-image: url("/ui-art/head-l.webp") 0 180 0 210 fill / 0 96px 0 112px stretch; }
+.daily-root[data-daily-page] .daily-band-score { padding-right: 116px; padding-left: 80px; }
+.daily-root[data-daily-page] .daily-band-score::before { border-width: 0 112px 0 96px; border-image: url("/ui-art/head-r.webp") 0 210 0 180 fill / 0 112px 0 96px stretch; }
+.daily-root[data-daily-page] .daily-time { width: auto; height: auto; margin: 0; padding: 0; background: none; filter: none; place-items: center; }
+.daily-root[data-daily-page] .daily-time b { font-size: 60px; color: var(--skin-title); text-shadow: 0 3px 0 var(--exile-color-black); }
 
 /* 導火線: 帯の下の端から端まで。先の端が燃える */
 .daily-fuse { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--skin-line); }
@@ -52,11 +117,12 @@ button.daily-row:hover { background: var(--skin-hover); color: var(--skin-title)
 .daily-fuse i::after { content: ""; position: absolute; right: -5px; top: -4px; width: 11px; height: 11px; border-radius: 50%; background: radial-gradient(circle, var(--skin-fire-core), var(--skin-fire) 45%, transparent 72%); box-shadow: 0 0 18px 5px var(--skin-glow); animation: daily-burn 1.3s ease-in-out infinite alternate; }
 @keyframes daily-burn { from { opacity: 0.75; transform: scale(0.85); } to { opacity: 1; transform: scale(1.15); } }
 @media (prefers-reduced-motion: reduce) { .daily-fuse i { transition: none; } .daily-fuse i::after { animation: none; } }
-[data-daily-heat] .daily-time b { color: var(--skin-fire); text-shadow: 0 0 22px var(--skin-glow); }
+.daily-root[data-daily-page] [data-daily-heat] .daily-time b { color: var(--skin-fire); text-shadow: 0 0 22px var(--skin-glow); }
 [data-daily-heat="last"] .daily-fuse { height: 5px; }
 
 .daily-note { padding: 8px 16px; margin-bottom: 8px; background: var(--skin-panel); font-size: 15px; }
 .daily-frac { max-width: 760px; padding: 40px; }
+.daily-frac-title { margin: 0 0 18px; font-family: var(--skin-font-head); font-size: 28px; line-height: 1.2; font-weight: 400; color: var(--skin-title); }
 .daily-frac-row { display: flex; width: 100%; align-items: baseline; justify-content: space-between; gap: 16px; padding: 10px 12px; text-align: left; font-size: 16px; color: var(--exile-color-text-link); }
 .daily-frac-row:hover { background: var(--skin-hover); }
 .daily-frac-row small { font-size: 13px; color: var(--skin-dim); }
@@ -93,12 +159,41 @@ main:has([data-daily-play]) > .sticky { display: none; }
 [data-daily-play] [data-tree-frame] { background: var(--skin-bg); }
 [data-daily-play] .g-panel { background: linear-gradient(180deg, var(--skin-panel), var(--skin-bg)) border-box; }
 
+/* 低い窓でも 1 枚に: 銘板と品を少し小さく */
+@media (min-width: 1280px) and (max-height: 760px) {
+  .daily-root[data-daily-page] .daily-title { min-height: 100px; padding-bottom: 15px; font-size: 22px; }
+  .daily-root[data-daily-page] .daily-veil-frame { width: 128px; height: 128px; }
+  .daily-root[data-daily-page] .daily-veil-art { width: 104px; height: 104px; }
+}
+
 @media (max-width: 1279px) {
   .daily-root { padding: 8px; }
-  .daily-hero, .daily-lists, .daily-post-from { grid-template-columns: minmax(0, 1fr); gap: 24px; padding-left: 16px; padding-right: 16px; }
+  /* スマホは 1 枚に入らないので縦に送る。品 → 順位 → 棚 → 点の順で何も畳まない (U-51) */
+  .daily-board, .daily-root[data-daily-page] .daily-board, .daily-board.one, .daily-root[data-daily-page] .daily-board.one { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: "head" "clock" "hero" "rank" "foot" "week"; padding: 6px 6px 14px; }
+  .daily-board.one, .daily-root[data-daily-page] .daily-board.one { grid-template-areas: "head" "hero" "rank"; }
+  .daily-root[data-daily-page] .daily-title { min-height: 92px; padding-bottom: 14px; font-size: 20px; }
+  .daily-clock, .daily-root[data-daily-page] .daily-clock { grid-area: clock; padding: 0 4px; flex-wrap: wrap; font-size: 13px; }
+  .daily-root[data-daily-page] .daily-clock p, .daily-root[data-daily-page] .daily-clock p:last-child { flex-direction: row; align-items: center; }
+  .daily-bottom { grid-template-columns: minmax(0, 1fr); row-gap: 12px; }
+  .daily-tiles { grid-auto-flow: row; grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 8px; }
+  .daily-tile small { white-space: normal; }
+  .daily-veil-frame, .daily-root[data-daily-page] .daily-veil-frame { width: 100px; height: 100px; }
+  .daily-veil-art, .daily-root[data-daily-page] .daily-veil-art { width: 80px; height: 80px; }
+  .daily-veil > .min-w-0 { flex: 1; }
+  .daily-plate { min-height: 48px; border-width: 0 30px; border-image-width: 0 30px; }
+  .daily-veil-name { font-size: 16px; }
+  .daily-post-from { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .daily-post { padding: 16px; }
-  .daily-hero-title { font-size: 28px; }
-  .daily-clock { padding-left: 16px; padding-right: 16px; }
-  .daily-start { min-width: 0; width: 100%; }
   .daily-skin-grid { grid-template-columns: minmax(0, 1fr); }
+  /* 帯は 2 段: 上に品と時間、下に結果と提出 */
+  .daily-band, .daily-root[data-daily-page] .daily-band { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; min-height: 0; padding: 6px 10px 10px; margin-bottom: 8px; }
+  .daily-root[data-daily-page] .daily-band::before { background: url("/ui-art/title-m.webp") left top / auto 100% repeat-x; }
+  .daily-root[data-daily-page] .daily-band-topic, .daily-root[data-daily-page] .daily-band-score { padding: 0; }
+  .daily-root[data-daily-page] .daily-band-topic::before, .daily-root[data-daily-page] .daily-band-score::before { display: none; }
+  .daily-band-score { grid-column: 1 / -1; justify-content: space-between; gap: 10px; }
+  .daily-band-name { font-size: 15px; }
+  .daily-band-topic img { width: 44px; height: 44px; padding: 5px; }
+  .daily-time { width: 220px; height: 58px; margin: -2px -14px 0 0; padding-bottom: 8px; }
+  .daily-time b { font-size: 17px; }
+  .daily-root[data-daily-page] .daily-time b { font-size: 34px; }
 }

@@ -34,7 +34,9 @@ export function skinVars(k: Skin): Record<string, string> {
     "--skin-title": title, "--skin-text": text, "--skin-dim": dim,
     "--skin-fire": hsl(k.f, 100, 62), "--skin-fire-core": hsl(k.f, 100, 88), "--skin-fire-dim": hsl(k.f, 40, 36),
     "--skin-glow": hsl(k.f, 100, 60, 0.55 * k.g), "--skin-stripe": hsl(k.h, 30, 80, 0.035), "--skin-hover": hsl(k.h, 30, 80, 0.07),
-    "--skin-font-head": "var(--exile-font-family-brush, serif)", "--skin-font-name": "var(--exile-font-family-name, serif)",
+    "--skin-font-head": "var(--exile-font-family-brush, serif)", "--skin-font-name": "var(--exile-font-family-antique, serif)",
+    // ゲームの絵 (枠・帯・札) を皮の色へ寄せる。絵の元の色相は真鍮の 40 くらい
+    "--skin-art": `hue-rotate(${k.a - 40}deg) saturate(${Math.min(1.8, 0.35 + k.s / 25).toFixed(2)}) brightness(${(1.25 - k.d * 0.5).toFixed(2)})`,
     // 部品の方の色も同じ値へ (シミュの部品はこの名前を読む)
     "--exile-color-bg-canvas": bg, "--exile-color-bg-surface": panel, "--exile-color-bg-elevated": raise, "--exile-color-border-subtle": line,
     "--exile-color-text-title": title, "--exile-color-text-primary": text, "--exile-color-text-secondary": dim,

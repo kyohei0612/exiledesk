@@ -15,5 +15,5 @@
 - 構想: メモ craft-challenge (10-22 の節)、docs/craft-challenge.md (古い 2 コースの記述は 10-22 に 1 本へまとまった、反映はシミュレーター完成後)。
 - 書きかけ: ブランチ wip/craft-challenge (10-16 の古い形、今は使わない・参考だけ)。
 - ページの作り: src/web/page.ts の頭のコメント (?page=○○ と題)、広告の枠 utils/ads.ts の pageTick。
-- 作り (11-01): src/views/daily/DailyPage.vue (出し分け)・DailyHero (お題の顔)・DailyRank (順位)・DailyName (名前とタグ)・DailyNick (名前の窓)・DailyPost (投稿)・DailyPlay (挑戦、SimTreePage を中に置く)・DailySkins (皮の見比べ)・daily-api.ts (サーバーの口の形)・daily-gen.ts (毎朝の生成)・daily-types.ts (型の辞書)・daily-aims.ts (読み・お題の木)・daily-samples.ts (順位の見本)・skin/skin.ts (皮、1 行 1 色)・daily-skin.css (形だけ、色を書かない)。
+- 作り (11-01): src/views/daily/DailyPage.vue (出し分け)・DailyHero (お題の顔)・DailyRank (順位)・DailyName (名前とタグ)・DailyNick (名前の窓)・DailyPost (投稿)・DailyPlay (挑戦、SimTreePage を中に置く)・DailySkins (皮の見比べ)・daily-api.ts (サーバーの口の形)・daily-gen.ts (毎朝の生成)・daily-types.ts (型の辞書)・daily-aims.ts (読み・お題の木)・daily-samples.ts (順位の見本)・skin/skin.ts (皮、1 行 1 色)・daily-skin.css (形だけ、色を書かない)・look.css (挑戦の木の周り、D-60d)。
 - やる事・OK 待ちは todo.md、記録は notes/。

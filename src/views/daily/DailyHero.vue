@@ -27,20 +27,20 @@ const label = computed(() => (!t.value ? tr("1 時間の挑戦を始める", "St
 
 <template>
   <section data-daily-hero class="daily-hero">
-    <div class="min-w-0">
-      <h2 class="g-brush daily-hero-title">{{ today ? tr("今日のお題", "Today's challenge") : tr(`${topic.day} のお題`, `Challenge of ${topic.day}`) }}</h2>
+    <h2 class="daily-title">{{ today ? tr("今日のお題", "Today's challenge") : tr(`${topic.day} のお題`, `Challenge of ${topic.day}`) }}</h2>
+    <div class="daily-hero-main">
       <div class="daily-veil">
-        <img v-if="art" :src="art" alt="" class="daily-veil-art" :class="t ? 'open' : ''" />
+        <span class="daily-veil-frame"><img v-if="art" :src="art" alt="" class="daily-veil-art" :class="t ? 'open' : ''" /></span>
         <div class="min-w-0">
-          <p class="name daily-veil-name">{{ name }}</p>
-          <p class="text-[14px] opacity-70">{{ tr(`狙う MOD ${topic.modCount} つ、アイテムレベル ${topic.ilvl}`, `${topic.modCount} target mods, item level ${topic.ilvl}`) }}</p>
-          <p class="text-[14px] opacity-70">{{ tr(`${topic.tries} 人が挑戦`, `${topic.tries} tries`) }}</p>
+          <div class="daily-plate"><p class="daily-veil-name">{{ name }}</p></div>
+          <p class="daily-meta">{{ tr(`狙う MOD ${topic.modCount} つ、アイテムレベル ${topic.ilvl}`, `${topic.modCount} target mods, item level ${topic.ilvl}`) }}</p>
+          <p class="daily-meta">{{ tr(`${topic.tries} 人が挑戦`, `${topic.tries} tries`) }}</p>
         </div>
       </div>
       <template v-if="phone"><p data-daily-pc-only class="text-[14px] opacity-80">{{ tr("挑戦は幅の広い画面で", "Open on a wider screen to take the challenge") }}</p></template>
       <template v-else>
         <button type="button" class="g-btn-red daily-start" data-daily-start @click="start">{{ label }}</button>
-        <p v-if="!t" class="mt-2 text-[13px] opacity-60">{{ tr("押すとお題の MOD が開き、時間が動き出す。ページを閉じると止まる。", "Pressing reveals the target mods and the clock starts. Closing the page pauses it.") }}</p>
+        <p v-if="!t" class="daily-sub">{{ tr("押すとお題の MOD が開き、時間が動き出す。ページを閉じると止まる。", "Pressing reveals the target mods and the clock starts. Closing the page pauses it.") }}</p>
         <p v-else-if="t.best" data-daily-solved class="mt-2 text-[14px]">{{ tr(`解決済み: ${t.best.cost} 神 (完成率 ${t.best.rate}%)`, `Solved: ${t.best.cost} div (${t.best.rate}% finished)`) }}</p>
         <p v-else-if="t.last" class="mt-2 text-[14px] opacity-80">{{ tr(`未解決: 完成率 ${t.last.rate}% (${SOLVE_RATE}% で解決)`, `Unsolved: ${t.last.rate}% finished (${SOLVE_RATE}% solves it)`) }}</p>
       </template>

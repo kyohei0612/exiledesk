@@ -12,14 +12,14 @@ const mins = (ms: number): string => tr(`${Math.round(ms / 60_000)} 分`, `${Mat
 
 <template>
   <div data-daily-rank class="min-w-0">
-    <h3 class="g-brush mb-2 text-[20px] text-[var(--exile-color-text-title)]">{{ tr("一番安く作った人", "Cheapest crafts") }}</h3>
-    <ol v-if="rows.length" class="text-[14px]">
+    <div class="g-sec-head"><h3 class="g-sec-title">{{ tr("一番安く作った人", "Cheapest crafts") }}</h3></div>
+    <ol v-if="rows.length">
       <li v-for="(r, i) in rows" :key="r.name" class="daily-rank-row" :class="r.me ? 'me' : ''">
-        <span class="w-6 tabular-nums opacity-60">{{ i + 1 }}</span>
+        <span class="daily-place">{{ i + 1 }}</span>
         <DailyName class="flex-1" :name="r.name" />
-        <span class="w-14 text-right tabular-nums opacity-60">{{ mins(r.ms) }}</span>
-        <span class="w-12 text-right tabular-nums opacity-60">{{ r.rate }}%</span>
-        <b class="w-20 text-right font-normal tabular-nums text-[var(--exile-color-text-title)]">{{ r.cost }} {{ tr("神", "div") }}</b>
+        <span class="daily-num w-12">{{ mins(r.ms) }}</span>
+        <span class="daily-num w-10">{{ r.rate }}%</span>
+        <b class="daily-num daily-points w-16">{{ r.cost }} {{ tr("神", "div") }}</b>
       </li>
     </ol>
     <p v-else class="text-[14px] opacity-70">{{ tr("まだ誰も解決していない。最初の 1 人になれる。", "No one has solved this yet.") }}</p>

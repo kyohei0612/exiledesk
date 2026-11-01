@@ -105,7 +105,7 @@ const best = computed(() => tryOf.value?.best ?? null);
     <header class="daily-band">
       <div class="daily-band-topic">
         <img v-if="art" :src="art" alt="" />
-        <div class="min-w-0"><p class="name truncate text-[18px] text-[var(--exile-color-text-title)]">{{ tr(topic.baseJa, topic.base) }}</p><button type="button" class="text-[13px] underline opacity-60 hover:opacity-100" data-daily-leave @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ (時間は止まる)", "To the list (pauses the clock)") }}</button></div>
+        <div class="min-w-0"><p class="daily-band-name">{{ tr(topic.baseJa, topic.base) }}</p><button type="button" class="g-btn sm" data-daily-leave :title="tr('時間は止まる', 'Pauses the clock')" @click="openDailyPage({ view: 'list' })">{{ tr("一覧へ", "To the list") }}</button></div>
       </div>
       <div class="daily-time" data-daily-time><b>{{ clock }}</b></div>
       <div class="daily-band-score">
@@ -123,7 +123,7 @@ const best = computed(() => tryOf.value?.best ?? null);
     </p>
 
     <section v-if="picking" data-daily-frac class="daily-frac">
-      <h2 class="g-brush daily-hero-title">{{ tr("どの MOD をフラクチャーして始めるか", "Choose the mod to fracture") }}</h2>
+      <h2 class="daily-frac-title">{{ tr("どの MOD をフラクチャーして始めるか", "Choose the mod to fracture") }}</h2>
       <p class="mb-3 text-[14px] opacity-70">{{ tr("フラクチャー済みのレアから始める。ここまでの費用は数えない。", "You start from a fractured rare. This part costs nothing.") }}</p>
       <ul>
         <li v-for="a in tryOf!.aims" :key="a.modId"><button type="button" class="daily-frac-row" data-daily-frac-pick :data-mod="a.modId" @click="pick(a.modId)">{{ aimText(a) }}<small>{{ tr(`T${a.tier} 以上`, `T${a.tier}+`) }}</small></button></li>
