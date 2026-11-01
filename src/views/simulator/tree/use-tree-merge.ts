@@ -18,6 +18,8 @@ export function useTreeMerge(o: {
   /** 手の札の真ん中と札の最大の幅 w (統合の線が避ける。札を横切っていた、線の見張り L3) */ chips?: () => Array<{ x: number; y: number; w?: number }>;
 }) {
   let before: { paths: Map<string, string>; marks: Map<string, { x: number; y: number } | undefined> } | null = null;
+  /** 線の入力 → 引いた線 (1 手で同じ線を何度も全部引き直し、1 つ戻すでも引いていた、S-71b ⑫、スイッチ treeLight) */
+  const drawn = new Map<string, { lines: ReturnType<typeof mergeReqs>["lines"]; paths: Map<string, string> }>();
   const merged = computed(() => {
     const d = o.doc.value;
     const mv = flag("treeLight") ? o.moving?.() ?? null : null;
@@ -31,6 +33,9 @@ export function useTreeMerge(o: {
     // スイッチ rowNear では札の最大の幅 (chipRoom、TreeHandChip の maxWidth) で見る (全体表示で合流の線が隣の札を横切った、okPcmPyY の b23→b5 と札 b12、線の見張り L3)
     const chipBoxes = (o.chips?.() ?? []).map((c) => { const w = flag("rowNear") && c.w ? c.w : 200; return { x: c.x - w / 2, y: c.y - CHIP_HALF, w, h: CHIP_HALF * 2 }; });
     const treeSegs = o.segs();
+    const inputKey = flag("treeLight") && !mv ? JSON.stringify([reqs, lines, Object.keys(d.boxes).filter((id) => !d.boxes[id]!.merged).map(pos), treeSegs, chipBoxes, o.lanes?.() ?? []]) : null;
+    const memo = inputKey ? drawn.get(inputKey) : undefined;
+    if (memo) { before = { paths: memo.paths, marks: new Map(memo.lines.map((l) => [l.id, l.mark])) }; return memo; }
     // スイッチ retryHover: 統合の線も横の辺の真ん中どうしを最短で (S-144・S-145)。同じ箱へ 2 本以上入る時は辺の真ん中から 8 ずつずらす。通れなければ前の道 (joinPath)
     // 描く箱だけ (まとめて描かない箱 = merged、S-66 案 A は位置が古いまま残るので、木の端・避ける箱に入れると木の外を回った。10-29 kamasan の b15→b2・b16→b3、S-145)
     const ids = Object.keys(d.boxes).filter((id) => !d.boxes[id]!.merged);
@@ -89,6 +94,7 @@ export function useTreeMerge(o: {
     for (const r of reqs) { if (sideIds.has(r.id)) continue; const p = paths.get(r.id); if (p) paths.set(r.id, `${p} L ${r.end.x} ${r.to.y}`); }
     for (const [id, p] of joinPaths) paths.set(id, p);
     before = { paths, marks: new Map(lines.map((l) => [l.id, l.mark])) };
+    if (inputKey) { if (drawn.size >= 8) drawn.delete(drawn.keys().next().value!); drawn.set(inputKey, { lines, paths }); }
     return { lines, paths };
   });
   /** 帯の「線を全部表示」(このブラウザに覚える) */

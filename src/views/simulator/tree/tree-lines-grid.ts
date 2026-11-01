@@ -40,8 +40,13 @@ export function gridRoute(s: P, e: P, boxes: readonly P[], x0: number, x1: numbe
   const xs = new Set<number>([s.x, e.x]), ys = new Set<number>([s.y, s.y + 27, e.y]);
   for (const b of boxes) { xs.add(b.x - GAP - 6); xs.add(right(b) + GAP + 6); ys.add(bottom(b) + 27); ys.add(b.y - 24); }
   const X = [...xs].filter((x) => x >= x0 && x <= x1).sort((a, z) => a - z), Y = [...ys].sort((a, z) => a - z);
-  const vFree = (x: number, a: number, z: number): boolean => boxes.every((b) => x <= b.x - GAP || x >= right(b) + GAP || bottom(b) + GAP <= Math.min(a, z) || b.y - GAP >= Math.max(a, z));
-  const hFree = (y: number, a: number, z: number): boolean => boxes.every((b) => y <= b.y - GAP || y >= bottom(b) + GAP || right(b) + GAP <= Math.min(a, z) || b.x - GAP >= Math.max(a, z));
+  // その列・段にかかる箱だけを見る (同じ列・段を箱の数だけ何度も見ていた、S-71b ⑫、スイッチ treeLight)
+  const inCol = new Map<number, P[]>(), inRow = new Map<number, P[]>();
+  const colOf = (x: number): readonly P[] => { let l = inCol.get(x); if (!l) inCol.set(x, (l = boxes.filter((b) => !(x <= b.x - GAP || x >= right(b) + GAP)))); return l; };
+  const rowOf = (y: number): readonly P[] => { let l = inRow.get(y); if (!l) inRow.set(y, (l = boxes.filter((b) => !(y <= b.y - GAP || y >= bottom(b) + GAP)))); return l; };
+  const lightFree = flag("treeLight");
+  const vFree = (x: number, a: number, z: number): boolean => (lightFree ? colOf(x).every((b) => bottom(b) + GAP <= Math.min(a, z) || b.y - GAP >= Math.max(a, z)) : boxes.every((b) => x <= b.x - GAP || x >= right(b) + GAP || bottom(b) + GAP <= Math.min(a, z) || b.y - GAP >= Math.max(a, z)));
+  const hFree = (y: number, a: number, z: number): boolean => (lightFree ? rowOf(y).every((b) => right(b) + GAP <= Math.min(a, z) || b.x - GAP >= Math.max(a, z)) : boxes.every((b) => y <= b.y - GAP || y >= bottom(b) + GAP || right(b) + GAP <= Math.min(a, z) || b.x - GAP >= Math.max(a, z)));
   const si = X.indexOf(s.x), sj = Y.indexOf(s.y), ei = X.indexOf(e.x), ej = Y.indexOf(e.y);
   if (si < 0 || ei < 0) return null;
   // 状態 = (列, 段, 来た向き 0 横 / 1 縦 / 2 始め)
