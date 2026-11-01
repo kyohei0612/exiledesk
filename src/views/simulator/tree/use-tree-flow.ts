@@ -13,6 +13,7 @@ import { useVueFlow } from "@vue-flow/core";
 import { BOX_H, BOX_W, boundsOf, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { pageZoom } from "../../../utils/zoom";
 import { isPhoneWidth } from "../../../utils/use-phone";
+import { flag } from "../../../web/release-flags";
 
 export const FLOW_ID = "sim-tree";
 /**
@@ -24,7 +25,9 @@ const ZOOM_LEVELS = [0.2, 0.25, 0.33, 0.5, 0.67, 0.75, 1, 1.25, 1.5] as const;
 const ZOOM_MIN = ZOOM_LEVELS[0];
 const ZOOM_MAX = ZOOM_LEVELS[ZOOM_LEVELS.length - 1]!;
 /** 一番近い段 */
-const snapZoom = (z: number): number => ZOOM_LEVELS.reduce((a, l) => (Math.abs(l - z) < Math.abs(a - z) ? l : a), ZOOM_LEVELS[0]);
+const snapTo = (levels: readonly number[], z: number): number => levels.reduce((a, l) => (Math.abs(l - z) < Math.abs(a - z) ? l : a), levels[0]!);
+/** 20% でも入らない木の時だけ足す段 (S-147d、スイッチ zoomWhole) */
+const WHOLE_STEPS = [0.15, 0.1] as const;
 /** ホイールの量をためてから 1 段動かす (マウスの 1 目盛り ≒ 100、タッチパッドは細かく来る) */
 const WHEEL_STEP = 60;
 /** これ未満は箱の中の物を押させず、箱を押すと等倍の編集のポップアップ (ボタンが 24px の 3/4 = 18px を切る。10-22 オーナー「75% 未満の見るだけをやめる」) */
@@ -50,10 +53,28 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   /** 画面の倍率 (前と同じ 100% = 箱が拡大前の CSS ピクセルどおり) */
   const zoom = computed(() => f.viewport.value.zoom / pageZ.value);
   const viewOnly = computed(() => zoom.value < VIEW_ONLY - 1e-6);
-  const minZoom = computed(() => ZOOM_MIN * pageZ.value);
+  const minZoom = computed(() => (levels()[0] ?? ZOOM_MIN) * pageZ.value);
   const maxZoom = computed(() => ZOOM_MAX * pageZ.value);
   const full = ref(false);
   const bounds = computed(() => boundsOf(doc.value));
+
+  /** 木全体が入る倍率 (段に丸めない。枠が無い間は null) */
+  function wholeZoom(): number | null {
+    const b = bounds.value, st = doc.value.boxes.start, w = f.dimensions.value.width, h = f.dimensions.value.height;
+    if (!w || !h) return null;
+    const sx = st ? st.x + BOX_W / 2 : b.x + b.w / 2, half = Math.max(sx - b.x, b.x + b.w - sx);
+    return Math.min((w / 2 - PAD_MIN) / half, (h - topY() - PAD_MIN) / (treeBottom() - b.y)) / pageZ.value;
+  }
+  /**
+   * 今の木で使える段。20% でも全体が入らない PC の木だけ、全体が入る倍率まで下に足す (S-147d、10-26 夜の 10% の点は開いた時の話で、開いた時は 75% のまま)
+   */
+  function levels(): readonly number[] {
+    if (!flag("zoomWhole") || isPhoneWidth()) return ZOOM_LEVELS;
+    const fit = wholeZoom();
+    if (fit == null || fit >= ZOOM_MIN) return ZOOM_LEVELS;
+    return [fit, ...WHOLE_STEPS.filter((l) => l > fit * 1.1), ...ZOOM_LEVELS].sort((a, b) => a - b);
+  }
+  const snapZoom = (z: number): number => snapTo(levels(), z);
 
   /** 倍率を変える (段に吸い付く。at = 軸にする画面の点 (clientX / clientY)、無ければ画面の真ん中) */
   async function setZoom(z: number, at?: { x: number; y: number }): Promise<void> {
@@ -65,8 +86,8 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   }
   /** 今より 1 段上 / 下 (段の間にいる時は近い側の次) */
   const stepZoom = (dir: 1 | -1, at?: { x: number; y: number }): Promise<void> => {
-    const z = zoom.value, next = dir > 0 ? ZOOM_LEVELS.find((l) => l > z + 1e-3) : [...ZOOM_LEVELS].reverse().find((l) => l < z - 1e-3);
-    return setZoom(next ?? (dir > 0 ? ZOOM_MAX : ZOOM_MIN), at);
+    const ls = levels(), z = zoom.value, next = dir > 0 ? ls.find((l) => l > z + 1e-3) : [...ls].reverse().find((l) => l < z - 1e-3);
+    return setZoom(next ?? (dir > 0 ? ZOOM_MAX : ls[0]!), at);
   };
   const zoomIn = (): Promise<void> => stepZoom(1);
   const zoomOut = (): Promise<void> => stepZoom(-1);
@@ -101,7 +122,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     // 木の左の外の段の目印 (TreeBandLayer、画面の上で約 110px × ページの zoom) の分も左を空ける (1280 で目印が枠の外に切れた、10-22)
     // 段の目印を出さない時 (スイッチ noBand、10-28 夜オーナー「これいらんなもう　消してくれわかりづらいし」) は左を空けない
     const fz = Math.min((w / 2 - PAD_MIN) / half, (h - topY() - PAD_MIN) / (treeBottom() - b.y)) / pageZ.value;
-    return [...ZOOM_LEVELS].reverse().find((l) => l <= Math.min(1, fz) + 1e-6) ?? ZOOM_MIN;
+    return [...levels()].reverse().find((l) => l <= Math.min(1, fz) + 1e-6) ?? levels()[0]!;
   }
   /**
    * 始まりの箱を枠の横の真ん中・木の一番上を上の端 (topY) に、段 lv で。
@@ -121,7 +142,8 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   async function startTop(lv: number, fitAll = false): Promise<void> {
     let p = placeOf(lv);
     const h = f.dimensions.value.height;
-    for (let i = ZOOM_LEVELS.indexOf(lv as (typeof ZOOM_LEVELS)[number]); fitAll && i > 0 && ZOOM_LEVELS[i - 1]! >= FIT_MIN && treeBottom() * p.z + p.y > h - PAD_MIN; i--) p = placeOf(ZOOM_LEVELS[i - 1]!);
+    const ls = levels(), low = flag("zoomWhole") && !isPhoneWidth() ? 0 : FIT_MIN;
+    for (let i = ls.indexOf(lv); fitAll && i > 0 && ls[i - 1]! >= low && treeBottom() * p.z + p.y > h - PAD_MIN; i--) p = placeOf(ls[i - 1]!);
     await f.setViewport({ x: p.x, y: p.y, zoom: p.z });
   }
   /** 全体に合わせる (「1」・右下の道具)。下限 25%。whole = スマホでも 50% の下限を使わず木の全体 (回すの 1 人目が歩く時。光る枠を画面の外へ出さない) */
@@ -130,7 +152,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     if (lv == null) return;
     // スマホの形 (U-53) は 50% より小さくしない (20% で箱の字が読めなかった、10-22)
     if (!whole && isPhoneWidth()) await startTop(Math.max(lv, PHONE_MIN));
-    else await startTop(Math.max(lv, FIT_MIN), true);
+    else await startTop(flag("zoomWhole") ? lv : Math.max(lv, FIT_MIN), true);
   }
   /**
    * 開いた時の見え方 (10-25 オーナー「任せる」、23 本目の決め): 木全体が収まる段 (100% まで)。
