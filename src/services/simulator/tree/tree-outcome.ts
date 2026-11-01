@@ -153,7 +153,7 @@ function boxOutcomeRaw(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageI
  * extra = 棚の当たりの候補 (チェックした狙い・欲しい MOD のメモ)。足す・入れ替える手が「外れだけ」になる時も null
  * (10-22 白紙から 13 通り組んだ #1: 木にまだ無い狙いを足す手で当たりの箱が作れず、横の＋も出なかった。外れだけなら当たりの箱を作って MOD を選ばせる)
  */
-export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, pre: string | null = null, extra: readonly Aim[] = []): Array<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null {
+export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, pre: string | null = null, extra: readonly Aim[] = [], arrived?: readonly { item: StageItem; aimed: ReadonlySet<string> }[]): Array<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null {
   // 印の無い木の狙い無しのフラクチャー: 固定されうる MOD ごとの箱 (「〇〇がフラクチャーされた場合」。スイッチ fracPick)
   if (fracFree(doc, h)) { const f = fracFreeOuts(data, doc, Array.from({ length: SINGLE_SEEDS }, (_, i) => sampleOf(data, doc, boxId, i + 1).item)); const l = [...f.aims.map((x) => ({ out: "hit" as OutKind, aim: x })), ...f.junk.map((k) => ({ out: "junk" as OutKind, aim: null, junkKey: k }))]; return l.length ? l : null; }
   // 骨を未発現のまま (狙い無し) は下の未発現の所で「未発現の冒涜が付いた」1 つに (スイッチ boneLater)
@@ -177,7 +177,9 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   let unheld = false;
   // 見本 = この箱に着いた人のアイテム (着いた人が SINGLE_SEEDS より少なければ同じ物が回ってくるので 1 回だけ見る)。
   // 箱の形 (道で付いている狙いの組 = heldSets) に合う人だけ (戻ってくる形の違う人の混ざりで結果の箱を増やさない、10-26 オーナー「その選択肢が出てくるのは前提狙いMODの状態でなんかする時やろ」)。合う人がいなければ全員
-  const smps = Array.from({ length: SINGLE_SEEDS }, (_, i) => sampleOf(data, doc, boxId, i + 1)).filter((x) => x.note !== "none" && !x.note?.startsWith("cant:"));
+  // arrived = 見本の代わりに見る ↩ で着く人の形 (S-21、tree-hand-plan の addArrivedOuts)
+  const smps = arrived ?? Array.from({ length: SINGLE_SEEDS }, (_, i) => sampleOf(data, doc, boxId, i + 1)).filter((x) => x.note !== "none" && !x.note?.startsWith("cant:"));
+  const aimedAt = (it: StageItem): ReadonlySet<string> | null => arrived?.find((a) => a.item === it)?.aimed ?? aimedOfSample(boxId, it);
   // 見本ごとの ☑ (付いていて ☑ の無い完成形の MOD は外れ MOD、消えても狙いが消えたにしない)
   for (let s = 1; s <= SINGLE_SEEDS; s++) sampleAimed(data, doc, boxId, s);
   const seen = new Set<StageItem>();
@@ -189,7 +191,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
     const item = pre ? fillCatalyst(data, smp.item, pre, mulberry32(seed)).item : smp.item;
     const forms = [item];
     // 削減の手は外れを MOD レベルの範囲ごとの代わりに差し替えた形で見る (見本の外れ 1 つの MOD レベルで決めない、S-65b・tree-whittle)
-    const all = isWhittleHand(h) ? forms.flatMap((f) => rankVariants(data, f, aimedAims(aims, keptAimedOf(doc, h, aimedOfSample(boxId, smp.item))), doc.boxes[boxId]?.junkKey).map((v) => v.item)) : forms;
+    const all = isWhittleHand(h) ? forms.flatMap((f) => rankVariants(data, f, aimedAims(aims, keptAimedOf(doc, h, aimedAt(smp.item))), doc.boxes[boxId]?.junkKey).map((v) => v.item)) : forms;
     for (const it of all) {
       const outs = stepOutcomes(data, prepFor(data, it, h.currency), h.currency, engineOmens(h))?.filter((o) => !o.void);
       // 打てない見本は飛ばす (外れの種類で打てない人。その人は打てる箱へ移る S-64、スイッチ keepOutside)。全部打てなければ下の list が空で null
@@ -208,7 +210,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
         continue;
       }
       for (const o of outs) {
-        const am = keptAimedOf(doc, h, aimedOfSample(boxId, smp.item));
+        const am = keptAimedOf(doc, h, aimedAt(smp.item));
         const ra0 = am ? keptPlus(doc, h, aims.filter((a) => am.has(a.modId) || !aimHeldOn(data, it, a, { sameText: true }))) : aims;
         const pick = PICK_EFFECTS.includes(k);
         // 残したい MOD の消去は ☑ の物だけで消えた / 残ったを見る (外れの MOD でも「消えた」の枝を出す、S-28e・S-21。印で絞ると枝が無くて人が止まった、スイッチ junkTidy)

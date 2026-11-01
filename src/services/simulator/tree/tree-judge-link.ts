@@ -4,9 +4,9 @@
  * 比べは全部 Judge に任せる (形の鍵・道の狙いの組・体の比べは持たない)。手ごとの除外 (フラクチャー・カタリストの結果・カオスの外れを親へ) もしない (大本 2)
  */
 import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
-import type { Judge } from "./tree-judge";
+import { nextAimed, sampleAimed, type Judge } from "./tree-judge";
 import { effectOf } from "./tree-hands";
-import { playHand } from "./tree-sample";
+import { aimsOf, playHand, sampleFrom, sampleOf } from "./tree-sample";
 import { MATCH_BACK, subtree, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
 import { flag } from "../../../web/release-flags";
 
@@ -106,6 +106,31 @@ export function joinableByContent(doc: TreeDoc, id: string, j: Judge): string[] 
   const plain = (c: TreeBox | undefined): boolean => !!c && c.out !== "hit" && c.out !== "start" && c.out !== "pass" && c.out !== "branch";
   if (!b || !p || !plain(b)) return [];
   return p.outs.filter((o) => { const c = doc.boxes[o]; return o !== id && plain(c) && !c!.hand && !c!.split && !c!.done && j.fitsBox(id, o); });
+}
+
+/**
+ * ↩ で箱 id に着く人の形 (S-21 の「着いた人」): 箱 id か上の箱へ ↩ する箱の見本を、↩ 先から id まで道の手で打ち直す。外れは種類を見ない (S-60) ので、見本と別の外れの人が入る。
+ * 乱数は見本と同じ種で、回さない
+ */
+export function arrivalsOf(data: PatchData, doc: TreeDoc, j: Judge, id: string): Array<{ item: StageItem; aimed: ReadonlySet<string> }> {
+  const path: string[] = [], aims = aimsOf(doc), out: Array<{ item: StageItem; aimed: ReadonlySet<string> }> = [];
+  for (let b = doc.boxes[id]; b; b = doc.boxes[b.parent ?? ""]) path.unshift(b.id);
+  for (const y of Object.values(doc.boxes)) {
+    const at = y.back ? path.indexOf(y.back) : -1;
+    if (at < 0) continue;
+    for (const seed of [1, 2, 3, 4]) {
+      const s = sampleOf(data, doc, y.id, seed);
+      if (s.note === "none" || s.note?.startsWith("cant:")) continue;
+      let cur = { item: s.item, note: null as string | null }, aimed = sampleAimed(data, doc, y.id, seed), ok = j.fitsItem(s.item, aimed, y.back!);
+      for (let k = at; ok && k < path.length - 1; k++) {
+        const b = doc.boxes[path[k + 1]!]!, r = sampleFrom(data, doc, b, doc.boxes[path[k]!]!, cur, seed, b.id, aims);
+        ok = !r.note;
+        if (ok) { aimed = nextAimed(data, doc, aimed, b.id, r.item, cur.item); cur = { item: r.item, note: null }; }
+      }
+      if (ok) out.push({ item: cur.item, aimed });
+    }
+  }
+  return out;
 }
 
 /** 回す時に手が打てるか (playHand。乱数の当たり所で弾かれる物は打てる扱い) */

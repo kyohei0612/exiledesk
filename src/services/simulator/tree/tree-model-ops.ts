@@ -4,6 +4,16 @@
  */
 import { addHit, BOX_W, boxAims, boxOuts, drop, makeRoom, mk, pushRight, ROOM, spread, subtree, type Aim, type OutKind, type SplitWhen, type TreeDoc } from "./tree-model";
 
+/** 手のある箱に結果の箱を 1 つ足す (未設定の箱、S-21) */
+export function addOut(d: TreeDoc, parentId: string, out: OutKind, junkKey: string | undefined): string {
+  const c = mk(d, out, parentId);
+  if (junkKey) c.junkKey = junkKey;
+  d.boxes[parentId]!.outs.push(c.id);
+  spread(d, parentId);
+  makeRoom(d, parentId);
+  return c.id;
+}
+
 /**
  * 「どれか」の当たりの箱を MOD ごとの箱に分ける (10-26 オーナー「デフォで一緒にして一応MOD分けるボタンもあった方が良いかもな」)。
  * 先頭の MOD は今の箱のまま (続きの手・戻り・完成もそのまま)、残りは横に手の無い当たりの箱を作る。返すのは作った箱。1 つ戻すで戻せる

@@ -12,16 +12,18 @@ import { catalystFull, catalystTagOf, fillCatalyst, stepOutcomes } from "../../.
 import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isRuneHand, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
-import { aimsOf, handProblem, possibleOutsOf, sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { aimsOf, handProblem, possibleOutsOf, sampleFrom, sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { addOut } from "../../../services/simulator/tree/tree-model-ops";
+import { aimedAims, isWhittleHand, rankVariants } from "../../../services/simulator/tree/tree-whittle";
 import { bodyMemo, type BodyOf } from "../../../services/simulator/tree/tree-box-shape";
 import { aimedAfterAnnul } from "../../../services/simulator/tree/tree-judge";
 import { goneOf } from "../../../services/simulator/tree/tree-keep";
 import { isKeepAnnul, looseOf, stripKeyOf, stripStopByContent } from "../../../services/simulator/tree/tree-outcome";
 import { isStripKey } from "../../../services/simulator/tree/tree-junk-side";
 import { judgeMemo, sampleAimed, type Judge } from "../../../services/simulator/tree/tree-judge";
-import { joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
+import { arrivalsOf, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { joinableShapeOf, joinSameHit, sameHitsOf } from "../../../services/simulator/tree/tree-shape";
-import { clearHand, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { boxAims, clearHand, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
 import { revealAimsOf } from "./tree-reveal-aims";
 import { blockHand, isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
@@ -315,12 +317,38 @@ export function tidyJunk(d: TreeDoc): void {
   if (!data) return;
   const depth = (id: string): number => { let n = 0; for (let b = d.boxes[id]; b?.parent; b = d.boxes[b.parent]) n++; return n; };
   const seq = (id: string): number => Number(/\d+$/.exec(id)?.[0] ?? -1);
-  const ids = Object.values(d.boxes).filter((b) => !b.hand && !b.back && !b.done && !b.split).map((b) => b.id).sort((a, z) => depth(a) - depth(z) || seq(a) - seq(z));
-  const j = judgeMemo(data, d);
-  linkByContent(d, ids, j);
-  mergeOpenSame(d, ids, undefined, j);
-  pruneByContent(d, j);
+  const link = (): void => {
+    const ids = Object.values(d.boxes).filter((b) => !b.hand && !b.back && !b.done && !b.split).map((b) => b.id).sort((a, z) => depth(a) - depth(z) || seq(a) - seq(z));
+    const j = judgeMemo(data, d);
+    linkByContent(d, ids, j);
+    mergeOpenSame(d, ids, undefined, j);
+    pruneByContent(d, j);
+  };
+  link();
+  // ↩ がそろった木で、↩ で着く人の結果の箱を足す (S-21)
+  if (addArrivedOuts(data, d).length) link();
   for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split) b.tidied = true;
+}
+/**
+ * ↩ で着く人の結果で箱の無い物を足す (S-21、スイッチ junkTidy)。結果の箱は手を決めた時の見本で作るので、あとから ↩ で入る別の外れの人の結果が抜ける
+ * (オーナーの木の b51 ↩ b35: ランダムな外れの人は b41 の削減で狙いが消える)。足すのは見本と次の MOD 群が違う結果だけ、当たりの箱 (☑ だけ、S-22) は足さない
+ */
+export function addArrivedOuts(data: PatchData, d: TreeDoc): string[] {
+  if (!flag("junkTidy")) return [];
+  const j = judgeMemo(data, d), aims = aimsOf(d), made: string[] = [];
+  for (const b of Object.values(d.boxes)) {
+    const h = b.hand, arrived = h ? arrivalsOf(data, d, j, b.id) : [];
+    if (!h || !arrived.length) continue;
+    const own = b.outs.flatMap((o) => (d.boxes[o]?.out === "hit" ? boxAims(d.boxes[o]!) : []));
+    for (const e of possibleOutsOf(data, d, b.id, h, null, own, arrived) ?? []) {
+      if (e.out === "hit" || b.outs.some((o) => { const c = d.boxes[o]!; return (c.out === e.out || c.mergedOuts?.includes(e.out)) && (c.junkKey ?? e.junkKey) === e.junkKey; })) continue;
+      const id = addOut(d, b.id, e.out, e.junkKey), c = d.boxes[id]!;
+      const forms = arrived.flatMap((a) => (isWhittleHand(h) ? rankVariants(data, a.item, aimedAims(aims, a.aimed), b.junkKey).map((v) => v.item) : [a.item]));
+      c.via = forms.map((item) => sampleFrom(data, d, c, b, { item, note: null }, 1, id, aims)).filter((r) => !r.note).map((r) => r.item).slice(0, 4);
+      made.push(id);
+    }
+  }
+  return made;
 }
 
 /** 全部消えてよい消去は消した後の中身ごとの箱 (S-28d、stripSplit)。前の直線 (stripToShape・stripStops) は R5 で消した */

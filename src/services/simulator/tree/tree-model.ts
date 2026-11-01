@@ -10,6 +10,7 @@
 
 import type { TreeTune } from "./tree-tune";
 import type { RecipeOrphan, RecipePick } from "./tree-recipe-v1";
+import type { StageItem } from "../../craft-stage/engine";
 import { mayHoldAim } from "./tree-lost";
 import { effectOf } from "./tree-hands";
 import { flag } from "../../../web/release-flags";
@@ -109,6 +110,8 @@ export interface TreeBox {
   noAutoBack?: true;
   /** ハズレ整理で見た箱 (グレーを解く、S-190、スイッチ junkTidy。保存しない) */
   tidied?: true;
+  /** 道の見本で作れない結果の箱の見本 = ↩ で着く人の形 (S-21、tree-hand-plan の addArrivedOuts。保存しない) */
+  via?: StageItem[];
   /** 分かれ目 (打たずに分ける、10-22 オーナー OK): 行を上から見て最初に合った行の箱へ進む。hand・back・done・outs とは一緒に持たない。最後の行は「それ以外」(when が空) */
   split?: SplitRule[];
   /** 狙いを持って着く人がいないので「狙いが消えた」の結果の箱を作らなかった (tree-lost.ts。持って着く道ができたら healLost が足す) */
