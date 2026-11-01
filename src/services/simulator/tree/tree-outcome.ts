@@ -25,9 +25,11 @@ import { aimedAfterAnnul, aimedOfSample, contentOf, judgeMemo, looseKey, sampleA
 import { keptAimedOf, keptAimsOf, withGot } from "./tree-keep";
 
 type Outcome = { out: OutKind; hits: Aim[]; junkKey?: string };
+/** 狙いが消えたも側で分ける (S-65・S-71g、スイッチ junkTidy)。残したい MOD の消去は中身の鍵があるので分けない (S-28e) */
+const lostSided = (h: Hand | null | undefined): boolean => flag("junkTidy") && !isKeepAnnul(h);
 /** 外れ・打った後・外れが消えたに側の鍵を付ける (S-65、スイッチ junkSide。閉じていれば今のまま) */
-function sided(oc: Outcome, before: StageItem, after: StageItem): Outcome {
-  if (oc.junkKey || (oc.out !== "junk" && oc.out !== "any" && oc.out !== "junkGone")) return oc;
+function sided(oc: Outcome, before: StageItem, after: StageItem, h?: Hand | null): Outcome {
+  if (oc.junkKey || (oc.out !== "junk" && oc.out !== "any" && oc.out !== "junkGone" && !(oc.out === "lost" && lostSided(h)))) return oc;
   const k = sideKeyOf(before, after);
   return k ? { ...oc, junkKey: k } : oc;
 }
@@ -51,7 +53,7 @@ export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: 
   const own = b.outs.flatMap((id) => { const c = doc.boxes[id]; return c?.out === "hit" && c.aim ? boxAims(c) : []; });
   // エッセンス (付く側が決まる)・フラクチャー (S-41 の鍵) は側で分けない
   if (!key || effectOf(key) === "essence" || effectOf(key) === "fracture") return withGot(data, boxOutcomeRaw(data, doc, b, before, after, aims), before, after, own);
-  return withGot(data, lostKeyed(data, doc, b.hand, ranked(b.hand, sided(boxOutcomeRaw(data, doc, b, before, after, aims), before, after), before, after, aims), after, aimed, before), before, after, own);
+  return withGot(data, lostKeyed(data, doc, b.hand, ranked(b.hand, sided(boxOutcomeRaw(data, doc, b, before, after, aims), before, after, b.hand), before, after, aims), after, aimed, before), before, after, own);
 }
 /** 残したい MOD のうち木の狙いに無い物 (外れの MOD を残したい時) も狙いの並びに足す (消去の keepAims と同じく、残したい MOD だけで消えた / 残ったを見る) */
 const keptPlus = (doc: TreeDoc, h: Hand | null | undefined, aims: Aim[]): Aim[] => { const k = keptAimsOf(doc, h); return k ? [...aims, ...k.filter((a) => !aims.some((x) => x.modId === a.modId))] : aims; };
@@ -215,12 +217,12 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
         // スイッチ junkSide: 狙い無しは狙いが消えた以外全部「打った後」を側ごと。☑ の無い狙いが付いたのは外れ (tree-hand-plan の onlyOf と同じ) を側ごと (S-65)
         // エッセンス・フラクチャーは側で分けない (boxOutcomeOf と同じ、S-65。前はフラクチャーの外れの箱にだけ側の鍵が付き、見本が作れず ✦ の無い親の見本のままだった)
         const sk = k === "essence" || k === "fracture" ? undefined : sideKeyOf(it, o.item);
-        if (freeSide) { const e = rk<{ out: OutKind; aim: null; junkKey?: string }>(r.out === "lost" ? { out: "lost" as OutKind, aim: null } : { out: "any" as OutKind, aim: null, ...(sk ? { junkKey: sk } : {}) }); found.set(`${e.out}:${e.junkKey ?? ""}`, e); continue; }
+        if (freeSide) { const e = rk<{ out: OutKind; aim: null; junkKey?: string }>(r.out === "lost" ? { out: "lost" as OutKind, aim: null, ...(sk && lostSided(h) ? { junkKey: sk } : {}) } : { out: "any" as OutKind, aim: null, ...(sk ? { junkKey: sk } : {}) }); found.set(`${e.out}:${e.junkKey ?? ""}`, e); continue; }
         if (sk && extra.length && r.out === "hit" && r.hits[0] && !extra.some((a) => a.modId === r.hits[0]!.modId && a.tier === r.hits[0]!.tier)) { const e = rk<{ out: OutKind; aim: null; junkKey?: string }>({ out: "junk", aim: null, junkKey: sk }); found.set(`junk::${e.junkKey}`, e); continue; }
         // 無限のエッセンスで ☑ していない能力値が付いた = 外れ (infiniteAim)。ほかの狙いの付かない当たりは「打った後」
         const e = r.out === "hit" && (!r.hits.length || (infiniteAim(h.currency) && !extra.some((a) => a.modId === r.hits[0]!.modId && a.tier === r.hits[0]!.tier))) ? { out: (infiniteAim(h.currency) ? "junk" : "any") as OutKind, aim: null } : { out: r.out, aim: r.hits[0] ?? null };
         // 狙いが消えた人に ☑ (エッセンスなら付く MOD) が付いたら別の箱「狙いが消えた・狙いが付いた」(S-27d、鍵 g:)
-        const ek = withGot(data, lostKeyed(data, doc, h, rk<{ out: OutKind; aim: Aim | null; junkKey?: string }>(sk && (e.out === "junk" || e.out === "any" || e.out === "junkGone") ? { ...e, junkKey: sk } : e), o.item), it, o.item, extra);
+        const ek = withGot(data, lostKeyed(data, doc, h, rk<{ out: OutKind; aim: Aim | null; junkKey?: string }>(sk && (e.out === "junk" || e.out === "any" || e.out === "junkGone" || (e.out === "lost" && lostSided(h))) ? { ...e, junkKey: sk } : e), o.item), it, o.item, extra);
         found.set(`${ek.out}:${ek.aim ? `${ek.aim.modId}/${ek.aim.tier}` : ""}:${"junkKey" in ek ? ek.junkKey : ""}`, ek);
       }
     }

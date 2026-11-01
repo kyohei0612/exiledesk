@@ -363,6 +363,7 @@ function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox, base:
     if (p.hand.repeat && o.out !== "hit") break;
     if (b.out === "pass") return { item: r.item, note: null };
     if (b.out !== "any" && o.out !== b.out && !b.mergedOuts?.includes(o.out)) continue;
+    if (flag("junkTidy") && b.out === "any" && o.out === "lost") continue; // 打った後の箱の見本に狙いが消えた結果を入れない (中身が混ざった、S-71g)
     if (b.junkKey && o.junkKey !== b.junkKey) continue; // 外れの枝の鍵 (狙い無しの乱数のフラクチャー、スイッチ fracPick)
     // エッセンスの当たりの箱は札が付いた MOD の名前 (tree-run の outBoxOf と同じ)。無限のエッセンスで箱が 2 つ以上なら付いた MOD の箱
     if (b.out === "hit" && b.aim && effectOf(p.hand.currency) === "essence" && !essenceBoxFits(doc, p, b, r.item)) continue;
