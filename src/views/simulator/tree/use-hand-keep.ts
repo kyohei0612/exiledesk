@@ -45,7 +45,9 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   const aims = computed((): Aim[] => choices.value.filter((c) => checked.value.includes(aimKey(c.aim))).map((c) => c.aim));
   function toggle(a: Aim): void {
     const k = aimKey(a), was = [...checked.value]; touched = true;
-    checked.value = was.includes(k) ? was.filter((x) => x !== k) : [...was, k];
+    // 消去は全部の候補を残せないので、最後の 1 つを押したら前に ☑ した物から移す (S-27b、スイッチ junkTidy)
+    const full = flag("junkTidy") && isRemove.value && !was.includes(k) && was.length >= choices.value.length - 1;
+    checked.value = was.includes(k) ? was.filter((x) => x !== k) : [...(full ? was.slice(1) : was), k];
     o.warnIfBelow(() => { checked.value = was; });
   }
   function none(e: Event): void { const was = [...checked.value]; touched = true; checked.value = []; (e.target as HTMLInputElement).checked = true; o.warnIfBelow(() => { checked.value = was; }); }
@@ -56,7 +58,7 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   // 外れは「外れ MOD」だけ (中身は教えない、S-82。10-28 夜オーナー「別にここのチェックでも教えなくていいハズレはハズレよ」、スイッチ boxShape)
   const label = (c: { aim: Aim; mod: StageMod }): string => (junk(c) ? (flag("boxShape") ? tr("外れ MOD", "Miss mod") : tr(`外れ MOD (${text(c.mod)})`, `Miss mod (${text(c.mod)})`)) : text(c.mod));
   /** 消去は全部の候補を残す ☑ はできない (消える MOD が無くなる = 消去が打てない。☑ の無い候補が最後の 1 つなら押せない、S-27b)。消える手はできる (S-27d) */
-  const last = (a: Aim): boolean => isRemove.value && !checked.value.includes(aimKey(a)) && aims.value.length >= choices.value.length - 1;
+  const last = (a: Aim): boolean => !flag("junkTidy") && isRemove.value && !checked.value.includes(aimKey(a)) && aims.value.length >= choices.value.length - 1;
   const lastText = tr("全部の MOD は残せない (消える MOD が無くなる)", "You can't keep every mod (nothing would be removed)");
   return { isRemove, choices, fixed, ask, checked, aims, toggle, none, label, last, lastText };
 }
