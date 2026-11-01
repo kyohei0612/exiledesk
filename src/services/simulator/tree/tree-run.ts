@@ -9,11 +9,12 @@ import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/en
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { effectOf } from "./tree-hands";
 import { qualityOk } from "./tree-unbounded";
-import { aimOpts, aimsOf, fractureChoices, goalsHeld, handAims, heldHitOf, holdDocSig, outcomeOf, playHand, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
+import { aimOpts, aimsOf, fractureChoices, goalsHeld, handAims, heldHitOf, holdDocSig, outcomeOf, playHand, sampleOf, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
 import { boxOutcomeOf, fromStrip, stripBackOf, stripStop, stripStopByContent } from "./tree-outcome";
 import { heldSets, MATCH, matchBox, outBoxOf, RESTART, settle, shapesOf, splitTo, type Shape, type SplitBox } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
+import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { fractureMarks, type Aim, type OutKind, type TreeDoc } from "./tree-model";
 import { stepOutcomes } from "../sim-engine";
 import { bodyMemo, bodyOf, heldOn } from "./tree-box-shape";
@@ -301,7 +302,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
       // 結果の箱の中身と違えば中身の同じ箱へ (S-64)。無ければ結果の箱で止まる (未設定)
       arrive(next, item, before);
       const to = routeOf(data, doc, j, next, item, aimed);
-      if (!to) { visits.push({ box: next, cost }); return fin({ end: "stuck", cost, at: next, visits, uses, restarts, odd, why: { reason: tr("この結果の箱と中身が違い、中身の同じ箱も無い", "This result box holds a different item, and no box matches it"), item, noBox: true } }); }
+      if (!to) { visits.push({ box: next, cost }); return fin({ end: "stuck", cost, at: next, visits, uses, restarts, odd, why: { reason: flag("junkTidy") ? otherShapeText(data, doc, at, next, item) : tr("この結果の箱と中身が違い、中身の同じ箱も無い", "This result box holds a different item, and no box matches it"), item, noBox: true } }); }
       if (to !== next) { visit(next, true); blame = next; }
       at = to;
       continue;
@@ -320,6 +321,15 @@ function boxWord(doc: TreeDoc, id: string): string {
   for (let b = doc.boxes[id]; b?.parent; b = doc.boxes[b.parent]) n++;
   const w = BOX_WORD[doc.boxes[id]?.out ?? "start"] ?? ["箱", "box"];
   return tr(`${n + 1} 段目の「${w[0]}」`, `step ${n + 1} "${w[1]}"`);
+}
+/**
+ * 手の結果が結果の箱の見本と違う形で、同じ形の箱も無くて止まった人の文 (S-64、スイッチ junkTidy): 元の手の箱を名指しし、次に押す物まで書く
+ */
+function otherShapeText(data: PatchData, doc: TreeDoc, from: string, to: string, item: StageItem): string {
+  const h = doc.boxes[from]?.hand, name = h ? nameOfKey(h.currency, null) : "";
+  const s = sampleOf(data, doc, to, 1), ja = (it: StageItem): string => `プレ ${it.prefixes.length}・サフィ ${it.suffixes.length}`, en = (it: StageItem): string => `${it.prefixes.length} prefix, ${it.suffixes.length} suffix`;
+  return tr(`${boxWord(doc, from)}の手「${name}」の後に、${boxWord(doc, to)}の見本 (${ja(s.item)}) と形の違う人がいる (${ja(item)})。この形の箱が木に無い。次に押す物: ${boxWord(doc, from)}の手を替えるか、同じ形の箱に手を決める (手を決めると、この人はその箱へ進む)`,
+    `After "${name}" at ${boxWord(doc, from)}, some runs differ from the example at ${boxWord(doc, to)} (${en(s.item)}): this run has ${en(item)}. No box has this shape. Next: change the craft at ${boxWord(doc, from)}, or give a box of the same shape a craft (this run then moves there)`);
 }
 /**
  * 止まった人の形と来た道 (10-29 オーナー「これで何で止まるんか不明」、スイッチ settleStrict): この人の MOD (✦ 付き) と、通った戻り (↩) と、着いてから形の合う箱へ移った箱。
