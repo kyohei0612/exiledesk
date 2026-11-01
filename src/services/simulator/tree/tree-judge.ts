@@ -14,7 +14,7 @@ import { CATALYSING, isCatalyst } from "./tree-hands";
 import { tidyOn } from "./tree-junk-tidy";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { bodyOf } from "./tree-box-shape";
-import { aimOpts, boxKeyOf, holdDocSig, sampleOf, startGoalAims, targetsOf } from "./tree-sample";
+import { aimOpts, boxKeyOf, holdDocSig, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
 import { boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { qualityOk } from "./tree-unbounded";
 import { goneOf, gotOf, keptAimsOf } from "./tree-keep";
@@ -123,6 +123,16 @@ const COPY_OF = new WeakMap<StageItem, StageItem>();
 export const copyOfSample = (copy: StageItem, sample: StageItem): StageItem => { COPY_OF.set(copy, sample); return copy; };
 /** 見本のアイテムの ☑ (sampleAimed で覚えた物。無ければ null)。カードの写しは元の見本で引く (前は引けずに道の当たりの組で数え、エッセンスの狙いが「外れ MOD」と出た、S-82。スイッチ boxShape) */
 export const aimedOfSample = (id: string, item: StageItem): ReadonlySet<string> | null => AIMED.get(COPY_OF.get(item) ?? item)?.get(id) ?? null;
+/**
+ * カードの札が使う ☑。aimedOfSample は誰かが sampleAimed を呼んだ後しか引けない。組む間はつなぎを回さない (S-190) ので手を足した直後は誰も呼ばず、
+ * 札が道の数え (heldSets) へ落ち、狙いが消えた箱の下のカードで残っている狙いが全部「外れ MOD」と出た (S-27e、スイッチ junkTidy)。ここで見本の順に引く
+ */
+export function aimedOfCard(data: PatchData, doc: TreeDoc, id: string, item: StageItem): ReadonlySet<string> | null {
+  const had = aimedOfSample(id, item);
+  if (had || !flag("junkTidy")) return had;
+  for (let seed = 1; seed <= SINGLE_SEEDS; seed++) { sampleAimed(data, doc, id, seed); const am = aimedOfSample(id, item); if (am) return am; }
+  return null;
+}
 
 export interface Judge {
   /** 箱の見本の中身 (見本ごとに違えば 2 つ以上。見本が作れない箱は null = 分からない) */

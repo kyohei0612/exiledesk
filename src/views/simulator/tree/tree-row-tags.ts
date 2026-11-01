@@ -8,7 +8,7 @@ import { craftedKindOf, type PatchData, type StageItem } from "../../../services
 import { isAimMod } from "../../../services/simulator/tree/tree-aim";
 import type { Aim, Hand, OutKind, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { heldSets } from "../../../services/simulator/tree/tree-shape";
-import { aimedOfSample } from "../../../services/simulator/tree/tree-judge";
+import { aimedOfCard } from "../../../services/simulator/tree/tree-judge";
 import { placedAims } from "../../../services/simulator/tree/tree-veil";
 /** 外れの側の箱 (道で付いた狙いだけを狙いに数える) */
 const MISS_OUTS: readonly OutKind[] = ["junk", "lost", "junkGone", "any"];
@@ -50,7 +50,7 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   // 箱の表示はその箱の見本と、その箱を作った手 (親の手) だけから (この箱に置いた手 = 子を作る手では変えない。10-28 オーナー OK の対策 2)。
   // 全部消えてよい消去で作られた箱 (直線の途中と終わり) が「外れ MOD」
   // 候補の外の印 (S-27e、スイッチ keepOutside) は箱の見本の ☑ で見る (下の外れの箱の見方)
-  if (chainBox && !(flag("keepOutside") && aimedOfSample(box!.id!, it))) {
+  if (chainBox && !(flag("keepOutside") && aimedOfCard(d, doc, box!.id!, it))) {
     for (const m of [...it.prefixes, ...it.suffixes]) if (!m.fractured && !m.unrevealed) out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`全部消えてよい${nameOfKey("annul", null)}で消えうる MOD: ${modText(m)}`, `May be removed by the clear-all ${nameOfKey("annul", null)}: ${modText(m)}`) });
     return out;
   }
@@ -62,7 +62,7 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   // ☑ していない完成形の MOD が付いていても「外れ MOD」(10-27 夜オーナー、モンキー 2 回目 7。スイッチ junkByCheck)
   const missBox = !!box?.id && !!box.out && box.out !== "start" && MISS_OUTS.includes(box.out);
   // 箱の中身 (S-60) と同じく、見本の ☑ で付いた狙い (tree-judge の sampleAimed、見本の打ち方の順) だけを狙い。道の当たりの組では数えない (大本 1)
-  const am = missBox ? aimedOfSample(box!.id!, it) : null;
+  const am = missBox ? aimedOfCard(d, doc, box!.id!, it) : null;
   const held = am ? (doc.memoAims ?? []).filter((g) => am.has(g.modId)).map((g) => ({ modId: g.modId, tier: g.tier })) : missBox ? [...new Map(heldSets(doc, box!.id!).flat().map((k) => { const [modId, tier] = k.split("|"); return [modId!, { modId: modId!, tier: Number(tier) }] as const; })).values()] : [];
   // 始まりから付いている完成の狙いも狙い (道の当たりの札には無い。外れが固定された箱で始まりの ES が「外れ MOD」と出た、10-28。スイッチ boxShape)
   // 段は完成の狙いの段 (どの段でも狙いにすると、狙いの段に届かない低い段まで札が付かなかった、10-28 見張り bone3 b4)
@@ -70,7 +70,7 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   // 当たりの箱の札の MOD は、その箱では狙い (発現で選んだ置き石も。以降の箱では外れ MOD。スイッチ boneLater)
   const ownAim = box?.id && box.out === "hit" ? doc.boxes[box.id]?.aim : null;
   // 以降の箱でも見本に付いている置き石は狙い (S-33、スイッチ keepOutside)
-  const placed = box?.id ? placedAims(doc).filter((a) => aimedOfSample(box.id!, it)?.has(a.modId)) : [];
+  const placed = box?.id ? placedAims(doc).filter((a) => aimedOfCard(d, doc, box.id!, it)?.has(a.modId)) : [];
   const aims = targetsOf(d, [...(missBox ? held : [...aimsOf(doc), ...(doc.memoAims ?? [])]), ...placed, ...(ownAim ? [ownAim] : [])]), bad = targetsOf(d, unwanted.map((u) => ({ modId: u, tier: 99 }))), o = aimOpts(d);
   const goalT = targetsOf(d, doc.memoAims ?? []);
   for (const m of [...it.prefixes, ...it.suffixes]) {
