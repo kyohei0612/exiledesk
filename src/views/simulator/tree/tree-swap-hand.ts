@@ -9,7 +9,8 @@ import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { pathKeysOf, toRecipeV1, type RecipePick } from "../../../services/simulator/tree/tree-recipe-v1";
 import { resetStripFolds } from "../../../services/simulator/tree/tree-strip-fold";
 import { flag } from "../../../web/release-flags";
-import { applyPick, kindOf, type OnlyOut } from "./tree-hand-plan";
+import { applyPick, holdLinks, kindOf, type OnlyOut } from "./tree-hand-plan";
+import { tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
 import { rebuildTree } from "./tree-rebuild";
 
 const clone = <T>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
@@ -44,6 +45,17 @@ function recipeWith(doc: TreeDoc, id: string, h: Hand, aims: Aim[], pre: string 
   return { ...rec, picks };
 }
 
+/** 変わらなかった箱の自動の ↩ と整理の印を道の札で引き継ぐ (手を変えても前に整理した所はそのまま、S-192) */
+function carryTidy(doc: TreeDoc, was: ReadonlyMap<string, string>, d: TreeDoc, now: ReadonlyMap<string, string>): void {
+  const idOf = new Map([...now].map(([id, k]) => [k, id]));
+  for (const [id, k] of was) {
+    const o = doc.boxes[id], nid = idOf.get(k), n = nid ? d.boxes[nid] : undefined;
+    if (!o || !n || n.hand || n.back || n.done || n.split) continue;
+    if (o.tidied) n.tidied = true;
+    const to = o.autoBack && o.back ? idOf.get(was.get(o.back) ?? "") : undefined;
+    if (to) { n.back = to; n.autoBack = true; if (o.merged) n.merged = true; }
+  }
+}
 type Swapped = { doc: TreeDoc; box: string | null; gone: number; made: string[] };
 /** 最後の組み直し (棚で持つ・確かめの窓・使うで同じ物を 3 回組み直していた、S-71b ⑪、スイッチ treeLight) */
 let lastSwap: { key: string; r: Swapped } | null = null;
@@ -56,12 +68,13 @@ export function swapHand(data: PatchData, doc: TreeDoc, id: string, h: Hand, aim
 }
 function swapRaw(data: PatchData, doc: TreeDoc, id: string, h: Hand, aims: Aim[], pre: string | null): Swapped {
   const was = pathKeysOf(doc), at = was.get(id)!, rec = recipeWith(doc, id, h, aims, pre);
-  const d = rebuildTree(data, rec, at);
+  const d = holdLinks(() => rebuildTree(data, rec, at));
   // 起きなくなった結果の下の決めは箱ごと消える物 (要確認に残さない)。前からの要確認はそのまま
   const had = new Set((rec.orphans ?? []).map((o) => o.at));
   const orphans = (d.orphans ?? []).filter((o) => o.why !== "gone" || !o.at.startsWith(`${at}/`) || had.has(o.at));
   if (orphans.length) d.orphans = orphans; else delete d.orphans;
   const now = pathKeysOf(d), old = new Set(was.values());
+  if (tidyOn()) carryTidy(doc, was, d, now);
   // 替えた箱の札は組み直しで側の鍵が替わる事がある (s/any → s/any[s:2|2]、下の箱は引き継がれる)。下はその箱からの札で比べる
   const box = [...now].find(([, k]) => k === at) ?? [...now].find(([, k]) => plain(k) === plain(at)) ?? null;
   const nowAt = box?.[1] ?? at, left = new Set([...now.values()].filter((k) => k.startsWith(`${nowAt}/`)).map((k) => k.slice(nowAt.length)));

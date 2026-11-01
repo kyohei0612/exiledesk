@@ -41,7 +41,8 @@ import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { craftStage as s } from "../../../state/craft-stage";
 import { DEV_BUILD } from "../../../web/release-flags";
 import { modText } from "../../../i18n/lang";
-import { afterQualityOf, applyPick, autoCatOf, hitChoicesOf, needAimOf, planPick, preFillOf, shelfKeysOf, type PickOpt } from "./tree-hand-plan";
+import { afterQualityOf, applyPick, autoCatOf, hitChoicesOf, holdLinks, needAimOf, planPick, preFillOf, shelfKeysOf, tidyJunk, type PickOpt } from "./tree-hand-plan";
+import { isGrayBox, tidyStep, unsetBoxes } from "../../../services/simulator/tree/tree-junk-tidy";
 import { useTree } from "./use-tree";
 import { useTreeOdds } from "./tree-odds";
 
@@ -86,7 +87,7 @@ export function installSimMonkey(): () => void {
     },
     addable(): Array<{ id: string; out: string; needAim: boolean; rarity: string | null }> {
       return Object.values(t.doc.value.boxes)
-        .filter((b) => !b.hand && !b.back && !b.done && !b.split)
+        .filter((b) => !b.hand && !b.back && !b.done && !b.split && !isGrayBox(b))
         .map((b) => { const smp = sample(b.id); return { id: b.id, out: b.out, needAim: needAimOf(t.doc.value, b.id, smp?.note), rarity: smp?.item.rarity ?? null }; });
     },
     shelf(id: string): Array<{ key: string; name: string; ok: boolean; reason: string | null }> {
@@ -113,7 +114,7 @@ export function installSimMonkey(): () => void {
       const { hand: h, kind, aims: hitAims, preCat, only, problem } = planPick(d, t.doc.value, id, it, key, omens, opt, t.goals.value);
       if (problem) return { ok: false, problem };
       let at = id;
-      t.edit((x) => { at = applyPick(x, id, h, kind, hitAims, preCat, only); });
+      t.edit((x) => { at = holdLinks(() => applyPick(x, id, h, kind, hitAims, preCat, only)); });
       const boxes = (t.doc.value.boxes[at]?.outs ?? []).map((bid) => {
         const b = t.doc.value.boxes[bid]!, item = sample(bid)?.item;
         return {
@@ -181,6 +182,9 @@ export function installSimMonkey(): () => void {
     /** 箱の手と下の箱を消す (箱の窓の「手を消す」と同じ clearHand) と 1 つ戻す (Ctrl+Z と同じ) */
     clearHand(id: string) { t.edit((d) => clearHand(d, id)); return { ok: !t.doc.value.boxes[id]?.hand }; },
     undo() { t.undo(); return { ok: true }; },
+    /** ハズレ整理 (S-193) と今のボタンの状態 */
+    tidy() { t.edit(tidyJunk); return { step: tidyStep(t.doc.value), unset: unsetBoxes(t.doc.value) }; },
+    tidyState() { return { step: tidyStep(t.doc.value), unset: unsetBoxes(t.doc.value), gray: Object.values(t.doc.value.boxes).filter(isGrayBox).map((b) => b.id) }; },
     setDone(id: string, on: boolean | "fail" = true) {
       const v = on === "fail" ? "fail" : on ? "main" : null;
       t.edit((d) => setDone(d, id, v));

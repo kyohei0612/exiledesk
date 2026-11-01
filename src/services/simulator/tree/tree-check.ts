@@ -20,6 +20,7 @@ import { aimKey, fractureMarks, type Aim, type Hand, type OutKind, type TreeBox,
 import { aimOpts, aimsOf, goalsHeld, handAims, handProblem, heldHitOf, playHand, sampleOf, startItemOf, targetsOf } from "./tree-sample";
 import { boxOutcomeOf, fromStrip, stripBackOf, stripStop, stripTargetsOf } from "./tree-outcome";
 import { runTreeSteps, stuckDetail, type TreeRunResult } from "./tree-run";
+import { isGrayBox } from "./tree-junk-tidy";
 import { heldSets, MATCH, matchItem, matchTargets, outBoxOf, RESTART, settle, shapesOf, splitTo } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { judgeMemo, nextAimed, startAimed } from "./tree-judge";
@@ -60,7 +61,7 @@ export function unsetIssues(doc: TreeDoc): CheckIssue[] {
   const boxes = Object.values(doc.boxes), out: CheckIssue[] = [];
   for (const b of boxes) {
     if (b.split?.some((r) => !r.to)) out.push({ boxId: b.id, kind: "open", text: tr("分かれ目の行き先を決めていない行がある (その形で来た人はここで止まる)", "A split row has no destination (runs of that shape stop here)") });
-    if (!b.hand && !b.back && !b.done && !b.split) out.push({ boxId: b.id, kind: "open", text: openText(b, false) });
+    if (!b.hand && !b.back && !b.done && !b.split && !isGrayBox(b)) out.push({ boxId: b.id, kind: "open", text: openText(b, false) });
     if (b.out === "hit" && !b.aim) out.push({ boxId: b.id, kind: "noAim", text: tr("付く MOD を選んでいない", "No mod picked for this hit") });
   }
   if (!boxes.some((b) => b.done === "main")) { const tips = noDoneTips(boxes); for (const b of tips) out.push({ boxId: b.id, kind: "noDone", text: noDoneText() }); if (!tips.length) out.push({ boxId: "start", kind: "noDone", text: noDoneText() }); }

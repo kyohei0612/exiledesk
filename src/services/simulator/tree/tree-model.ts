@@ -107,6 +107,8 @@ export interface TreeBox {
   merged?: true;
   /** 人が戻りの矢印を × で外した (自動の矢印を付け直さない。10-26 オーナー「処理は当人が決めれるように」、前は別の箱に手を置くたび linkSameShape が付け直した) */
   noAutoBack?: true;
+  /** ハズレ整理で見た箱 (グレーを解く、S-190、スイッチ junkTidy。保存しない) */
+  tidied?: true;
   /** 分かれ目 (打たずに分ける、10-22 オーナー OK): 行を上から見て最初に合った行の箱へ進む。hand・back・done・outs とは一緒に持たない。最後の行は「それ以外」(when が空) */
   split?: SplitRule[];
   /** 狙いを持って着く人がいないので「狙いが消えた」の結果の箱を作らなかった (tree-lost.ts。持って着く道ができたら healLost が足す) */

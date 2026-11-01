@@ -13,8 +13,8 @@ import { simOp } from "../../../web/track";
 import { HOLE_CHECK, holeBusy, holeName, holeShort, holesShowTitle, holeTitle, runLockedWhy } from "./hole-check";
 
 /** test = 穴チェック (use-tree-check: 回している・今の道で合格・見つけた穴の数)。合格するまで「100 人回す」は灰色で押せない (S-70、スイッチ holeCheck)。halted = 止まった人が出て途中で止めた */
-const props = defineProps<{ result: TreeRunResult | null; running: boolean; ready: boolean; test: { busy: boolean; passed: boolean; holes: number; /** 穴を見せている (札が押された状態) */ shown: boolean }; halted?: { box: string; n: number } | null; /** 今の結果が穴チェックの走行 (use-tree-run の test) */ drive?: boolean }>();
-const emit = defineEmits<{ run: []; go: [id: string]; test: []; holes: []; holesOn: []; /** 穴の一覧の窓を開く (札の横の ▾) */ list: [] }>();
+const props = defineProps<{ /** ハズレ整理のボタンの状態 (S-192、スイッチ junkTidy) */ tidy?: { step: string; unset: number; guide: boolean; busy: boolean }; result: TreeRunResult | null; running: boolean; ready: boolean; test: { busy: boolean; passed: boolean; holes: number; /** 穴を見せている (札が押された状態) */ shown: boolean }; halted?: { box: string; n: number } | null; /** 今の結果が穴チェックの走行 (use-tree-run の test) */ drive?: boolean }>();
+const emit = defineEmits<{ run: []; go: [id: string]; test: []; holes: []; holesOn: []; /** 穴の一覧の窓を開く (札の横の ▾) */ list: []; /** ハズレ整理 (S-192) */ tidy: []; /** 完成の後の案内から組む所へ戻る (S-198) */ tidyBack: [] }>();
 /** 穴チェックに合格していないので「100 人回す」を止める (回している間は別の理由) */
 const locked = computed(() => HOLE_CHECK && !props.test.passed);
 /** 回し終えた後の結果のまとめ (TreeRunReport)。回し終えたら開き、止まって止めた時は開かない。TreeRunSum の「結果のまとめ」・流れの帯の 4 でまた開く (開閉は置き場が持つ) */
@@ -27,7 +27,9 @@ watch(() => props.running, (on, was) => {
 
 <template>
   <!-- 穴チェック (木を変えるたびに必ず自動で回る、S-70) → 合格 / 穴 n → 100 人回す。中身はルート精査 (5 人を辿り 30 人を回して穴を探す、費用は出さない) -->
-  <button type="button" data-tree-test class="g-btn sm shrink-0 whitespace-nowrap" :disabled="test.busy || running" :title="holeTitle()" @click="emit('test')">
+  <button v-if="tidy && tidy.step !== 'check'" type="button" data-tree-tidy :data-step="tidy.step" class="g-btn sm shrink-0 whitespace-nowrap" :class="tidy.guide && tidy.step === 'tidy' ? 'ring-2 ring-amber-300 shadow-[0_0_16px_rgba(252,211,77,0.75)]' : ''" :disabled="tidy.busy || running" :title="tr('同じ枠へ自動でつなぎ、残りを未設定として洗い出す', 'Link outcomes to matching boxes and list what is left')" @click="emit('tidy')">{{ tidy.busy ? tr("整理中", "Sorting") : tidy.step === "unset" ? tr(`ハズレ整理 (未設定 ${tidy.unset})`, `Sort misses (${tidy.unset} unset)`) : tr("ハズレ整理", "Sort misses") }}</button>
+  <button v-if="tidy?.guide" type="button" data-tree-tidy-back class="g-btn sm shrink-0 whitespace-nowrap" :title="tr('案内を閉じて手を足せる形に戻す (決めた所はそのまま)', 'Leave the guide and go back to building (your choices stay)')" @click="emit('tidyBack')">{{ tr("組むに戻る", "Back to building") }}</button>
+  <button v-if="!tidy || tidy.step === 'check'" type="button" data-tree-test class="g-btn sm shrink-0 whitespace-nowrap" :disabled="test.busy || running" :title="holeTitle()" @click="emit('test')">
     <template v-if="test.busy">{{ holeBusy() }}</template>
     <template v-else><span class="@max-[899px]:hidden">{{ holeName() }}</span><span class="hidden @max-[899px]:inline">{{ holeShort() }}</span></template>
   </button>

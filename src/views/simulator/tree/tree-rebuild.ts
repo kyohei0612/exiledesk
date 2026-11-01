@@ -8,7 +8,8 @@ import type { PatchData } from "../../../services/craft-stage/engine";
 import { clearHand, migrateStart, setBack, TREE_SCHEMA_N, type Hand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { autoTarget, offByParent, sameHandByContent, straightUp } from "../../../services/simulator/tree/tree-judge-link";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
-import { alignEssenceAims, applyPick, kindOf, onlyOf } from "./tree-hand-plan";
+import { alignEssenceAims, applyPick, kindOf, linksAreHeld, onlyOf } from "./tree-hand-plan";
+import { tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
 import { flag } from "../../../web/release-flags";
 import { judgeMemo, needsDesecrated } from "../../../services/simulator/tree/tree-judge";
 import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
@@ -58,7 +59,8 @@ export function rebuildTree(data: PatchData, src: TreeDoc, exactAt?: string): Tr
     if (!b || b.hand || !to || to === id) { lostBacks.push({ at, why: "back", raw: { back } }); continue; }
     b.back = to; b.done = null; delete b.autoBack; delete b.merged;
   }
-  mergeIntoDecided(data, d, decided); relinkSameHand(data, d); linkLeftovers(data, d);
+  if (linksAreHeld()) relinkSameHand(data, d);
+  else { mergeIntoDecided(data, d, decided); relinkSameHand(data, d); linkLeftovers(data, d); if (tidyOn()) for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split) b.tidied = true; } // 開いた木は整理まで済んだ形 (S-196)
   // 決めを打ち直した箱が後の見直しで消えた (同じ手なら戻るで下を畳んだ) 札も要確認
   const gone = [...picks.values()].filter((p) => !used.has(p.at) || !d.boxes[idOf.get(p.at) ?? ""]).map((p): RecipeOrphan => ({ at: p.at, why: "gone", raw: p }));
   // 前の一覧の「gone」で札の箱が今の木にある物は持ち越さない (S-107、スイッチ keepOutside)

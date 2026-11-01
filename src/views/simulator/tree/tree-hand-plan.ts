@@ -3,6 +3,7 @@
  * 開発の時だけの猿の口 (sim-monkey.ts) が同じ関数を呼ぶ (別の打ち方を作らない、メモ feedback-sim-no-own-logic)。中身はエンジンの入口と木の関数を呼ぶだけ
  */
 import { mergeOpenSame } from "../../../services/simulator/tree/tree-merge-open";
+import { tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
 import { catalystBoosts, craftedKindOf, mulberry32, omensAllowedFor, omensFor, runeOf, sideOfMod, socketCapOf, tierRankOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { craftStage } from "../../../state/craft-stage";
 import { bonesFor, essenceShelf, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
@@ -289,14 +290,37 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
 function relinkByContent(data: PatchData, d: TreeDoc, had: ReadonlySet<string>): void {
   const j = judgeMemo(data, d);
   const loose = Object.values(d.boxes).filter((b) => !had.has(b.id) || (!b.hand && !b.back && !b.done)).map((b) => b.id);
-  linkByContent(d, loose, j);
-  mergeOpenSame(d, loose, undefined, j);
+  if (!linksHeld) {
+    linkByContent(d, loose, j);
+    mergeOpenSame(d, loose, undefined, j);
+  }
   for (const b of Object.values(d.boxes)) {
     if (had.has(b.id) || b.out !== "hit" || b.hand || b.noAutoBack) continue;
     const to = sameHitsByContent(d, b.id, j)[0];
     if (to) joinSameHit(d, to, [b.id], true);
   }
+  if (!linksHeld) pruneByContent(d, j);
+}
+/** 組む間はつなぎを回さず、ハズレ整理で 1 周する (S-190、スイッチ junkTidy) */
+let linksHeld = false;
+export function holdLinks<T>(fn: () => T): T {
+  if (!tidyOn() || linksHeld) return fn();
+  linksHeld = true;
+  try { return fn(); } finally { linksHeld = false; }
+}
+export const linksAreHeld = (): boolean => linksHeld;
+/** ハズレ整理 (S-193): 決めの無い箱を上の段から見て同じ枠へつなぎ、残りを未設定にする。人の決めは触らない */
+export function tidyJunk(d: TreeDoc): void {
+  const data = craftStage.data.value;
+  if (!data) return;
+  const depth = (id: string): number => { let n = 0; for (let b = d.boxes[id]; b?.parent; b = d.boxes[b.parent]) n++; return n; };
+  const seq = (id: string): number => Number(/\d+$/.exec(id)?.[0] ?? -1);
+  const ids = Object.values(d.boxes).filter((b) => !b.hand && !b.back && !b.done && !b.split).map((b) => b.id).sort((a, z) => depth(a) - depth(z) || seq(a) - seq(z));
+  const j = judgeMemo(data, d);
+  linkByContent(d, ids, j);
+  mergeOpenSame(d, ids, undefined, j);
   pruneByContent(d, j);
+  for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split) b.tidied = true;
 }
 
 /** 全部消えてよい消去は消した後の中身ごとの箱 (S-28d、stripSplit)。前の直線 (stripToShape・stripStops) は R5 で消した */
