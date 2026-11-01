@@ -3,6 +3,7 @@
  */
 import { computed, ref, triggerRef, watch, type Ref } from "vue";
 import { pruneBacks } from "../../../services/simulator/tree/tree-shape";
+import { markStill } from "../../../services/simulator/tree/tree-sample";
 import { checkTreeAsync, NOTICE_KINDS, unsetIssues, type CheckIssue, type CheckPrice, type CheckProgress } from "../../../services/simulator/tree/tree-check";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { flag } from "../../../web/release-flags";
@@ -54,6 +55,7 @@ export const routeKeyOf = (d: TreeDoc): string => JSON.stringify([(({ price: _p,
 export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean, priced?: () => CheckPrice) {
   /** 今の精査で回した 30 人 (穴チェックの走行が使い回す、S-71b) */
   let lastRun: CheckRun | null = null;
+  watch(doc, markStill, { flush: "sync", immediate: true }); // 置いた木の鍵は 1 回だけ (S-71e ①)
   const issues = ref<CheckIssue[] | null>(null);
   /** 穴の一覧の窓 (人が開いた時だけ: 箱の ! か札の横の ▾。10-25 オーナー「デフォではここ出さないけど穴は UI で光る」) */
   const issuesOpen = ref(false);

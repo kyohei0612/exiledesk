@@ -13,7 +13,7 @@ import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { mainSideOf } from "../../../services/simulator/tree/tree-uncountable";
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isRuneHand, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
-import { aimsOf, handProblem, possibleOutsOf, sampleFrom, sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { aimsOf, handProblem, holdDocSig, possibleOutsOf, sampleFrom, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { addOut } from "../../../services/simulator/tree/tree-model-ops";
 import { aimedAims, isWhittleHand, rankVariants } from "../../../services/simulator/tree/tree-whittle";
 import { bodyMemo, type BodyOf } from "../../../services/simulator/tree/tree-box-shape";
@@ -219,7 +219,7 @@ export function pickedHits(choices: readonly Aim[], checked: readonly string[], 
 }
 /** 起こりうる結果の一覧 (この箱の見本 8 つにエンジンで打った行き先を全部たどる。触媒の手は前のカタリストを入れた後で。フラクチャーも同じ) */
 export function onlyOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, preCat: string | null, hitAims: Aim[]): OnlyOut {
-  const l = possibleOutsOf(data, doc, boxId, h, preCat, hitAims);
+  const l = holdDocSig(doc, () => possibleOutsOf(data, doc, boxId, h, preCat, hitAims), true); // 数える間は木が変わらないので鍵は 1 回だけ (S-71e ①)
   if (!l || !hitAims.length) return l;
   // チェックした狙いでない当たり (木のほかの狙いが付いた) は外れとして数える (当たりの箱はチェックした札だけ)
   const out = l.map((e) => (e.out === "hit" && e.aim && !hitAims.some((a) => a.modId === e.aim!.modId && a.tier === e.aim!.tier) ? { out: "junk" as OutKind, aim: null } : e));

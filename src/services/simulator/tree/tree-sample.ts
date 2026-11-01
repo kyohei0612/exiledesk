@@ -269,10 +269,16 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
   if (fast) memo.set(k, r);
   return r;
 }
+/**
+ * 画面に置いた木は中を変えない (use-tree の edit は毎回新しい木に差し替える) ので、鍵の材料は木ごとに 1 回だけ作る。描画の箱ごとの見本で道の JSON を作り直していた (S-71e ①、スイッチ junkTidy)。
+ * 中を書き換えて知らせる時 (triggerRef) はもう一度呼ぶ = 作り直す
+ */
+const stillKeys = new WeakMap<TreeDoc, { part: string | null; sig: string; links: Map<string, PathLink> }>();
+export const markStill = (doc: TreeDoc): void => { if (flag("junkTidy")) stillKeys.set(doc, { part: null, sig: "", links: new Map() }); };
 function keyOf(doc: TreeDoc, boxId: string, seed: number): string {
-  const held = heldDoc === doc;
-  const part = held ? (heldPart ??= docPartOf(doc)) : docPartOf(doc);
-  return pathKeyOfBox(doc, boxId, seed, altDeep, part, () => sigNo(held ? (heldSig ||= docSig(doc)) : docSig(doc)), held ? heldLinks : undefined);
+  const held = heldDoc === doc, st = held ? undefined : stillKeys.get(doc);
+  const part = held ? (heldPart ??= docPartOf(doc)) : st ? (st.part ??= docPartOf(doc)) : docPartOf(doc);
+  return pathKeyOfBox(doc, boxId, seed, altDeep, part, () => sigNo(held ? (heldSig ||= docSig(doc)) : st ? (st.sig ||= docSig(doc)) : docSig(doc)), held ? heldLinks : st?.links);
 }
 /** 作れなかった見本の鍵: 木全体の鍵の代わりに親の見本そのもの (全部消えてよい消去の手の箱では使わない。止まる所が木全体を見る) */
 function failKeyOf(doc: TreeDoc, boxId: string, seed: number, base: StageItem, aimed: ReadonlySet<string> | undefined): string {

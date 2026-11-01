@@ -40,7 +40,9 @@ export function placedAims(doc: TreeDoc): Aim[] {
 /** 置き石 = 発現で選んだ・ブロックに使う MOD (途中の狙いは除く)。残したい MOD の既定に入らず、消えても「狙いが消えた」にしない (S-33、スイッチ junkTidy) */
 export const stoneAims = (doc: TreeDoc): Aim[] => { const mid = new Set(midAims(doc).map((a) => a.modId)); return placedAims(doc).filter((a) => !mid.has(a.modId)); };
 /** 手で付ける MOD が 1 つに決まるエッセンスの MOD (無限のエッセンスは決まらないので無し) */
-const essenceModOf = (key: string | undefined): string | null => { const m = /^essence:(?:lesser|normal|greater|perfect):(.+)$/.exec(key ?? ""); return m && !isInfiniteEssence(key!) ? m[1]! : null; };
+const ESSENCE_MOD = new Map<string, string | null>();
+const essenceModOf = (key: string | undefined): string | null => { const had = ESSENCE_MOD.get(key ?? ""); if (had !== undefined) return had; const r = essenceModRaw(key); ESSENCE_MOD.set(key ?? "", r); return r; };
+const essenceModRaw = (key: string | undefined): string | null => { const m = /^essence:(?:lesser|normal|greater|perfect):(.+)$/.exec(key ?? ""); return m && !isInfiniteEssence(key!) ? m[1]! : null; };
 /**
  * 途中の狙い (S-33b、スイッチ junkTidy): 木の手で打つエッセンスの MOD のうち完成形に無い物。付けた時・付け直した時に印が付き、道の上では狙いと同じ (S-27e・S-60)。
  * 完成の数えには入らない。11-01 オーナー「またループで付けた際は当然必要MODとしてつけてるから狙いMODとしてのあつかいでいいんじゃないか他の狙いMODもそういう立ち位置でしょ」
