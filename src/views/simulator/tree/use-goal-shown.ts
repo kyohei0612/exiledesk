@@ -11,6 +11,7 @@ import type { RowTag } from "../../../components/for-share/item/stage-item-row-t
 import { useTree } from "./use-tree";
 import { bundleTag, craftBundle, desecratedBundle, desecratedTag, isCraftAim, isDesecratedAim, wayRows, WAY_ORDER } from "./tree-way-mods";
 import { flag } from "../../../web/release-flags";
+import { midAims } from "../../../services/simulator/tree/tree-veil";
 import { tr } from "../../../i18n/lang";
 
 /** ベースの上限をこれ以上超えたらブリーチのエッセンスが要る (+10 まではインフューザー) */
@@ -32,7 +33,10 @@ export function useGoalShown() {
   const ways = computed((): StageMod[] => {
     const d = s.data.value;
     if (!d) return [];
-    return [...wayRows(d, t.doc.value), ...(breach.value ? [breach.value] : [])];
+    const doc = t.doc.value, way = wayRows(d, doc), brq = breach.value;
+    // 木の手で打つエッセンスの MOD も完成形のカードに「途中で消える」で出す (S-30d。見せるだけ、スイッチ junkTidy)
+    const hand = wayRows(d, doc, midAims(doc).filter((a) => !way.some((m) => m.modId === a.modId) && brq?.modId !== a.modId).map((a) => ({ ...a, tier: 1 })));
+    return [...way, ...hand, ...(brq ? [brq] : [])];
   });
   /** 上限を溢れたクラフト MOD の束 (S-30b、スイッチ attachWay)。カードに乗らなかった束の MOD は行を足して全部カードに出す */
   const bundle = computed(() => (flag("attachWay") && s.data.value ? craftBundle(s.data.value, t.doc.value, t.goalItem.value?.item ?? null) : null));
