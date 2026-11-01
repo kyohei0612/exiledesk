@@ -118,7 +118,7 @@ const cardW = computed(() => Math.round(goalW.value / cardScale.value));
           <div class="flex min-w-0 items-center gap-2">
           <button type="button" data-phone-view-goal class="flex min-w-0 flex-1 items-baseline gap-2 text-left text-[13px]" :aria-expanded="goalBig" @click="goalBig = !goalBig">
             <b class="shrink-0 text-[#f2d27a]">{{ tr("完成形", "Final item") }}</b><span class="min-w-0 flex-1 break-words text-sim-body">{{ tr(jaTypeName(t.doc.value.base), t.doc.value.base) }}</span>
-            <span class="shrink-0 text-[11px] text-sim-dim">{{ goalBig ? tr("押すと縮む ▴", "Tap to shrink ▴") : tr("押すと広がる ▾", "Tap to expand ▾") }}</span>
+            <span class="shrink-0 text-[11px] text-sim-dim">{{ goalBig ? tr(flag("junkTidy") ? "縮める ▴" : "押すと縮む ▴", "Tap to shrink ▴") : tr(flag("junkTidy") ? "広げる ▾" : "押すと広がる ▾", "Tap to expand ▾") }}</span>
           </button>
           <button type="button" data-phone-view-detail class="g-btn sm !min-h-9 shrink-0" :aria-pressed="detail" @click="toggleDetail">{{ detail ? tr("詳細を閉じる", "Hide details") : tr("詳細", "Details") }}</button>
           </div>

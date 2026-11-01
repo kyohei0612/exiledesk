@@ -14,6 +14,8 @@ export function useJunkTidy(doc: Ref<TreeDoc>, edit: (f: (d: TreeDoc) => void) =
   const paused = ref(false);
   const guide = computed(() => guideOn(doc.value) && !paused.value);
   const busy = ref(false), nth = ref(0);
+  /** スタートだけの木は整理する物が無い (押せなくする、S-192) */
+  const empty = computed(() => Object.keys(doc.value.boxes).length <= 1);
   /** 次に押す箱 (未設定の箱) か */
   const targets = computed(() => new Set(guide.value && step.value === "unset" ? unset.value : []));
   function press(): void {
@@ -23,5 +25,5 @@ export function useJunkTidy(doc: Ref<TreeDoc>, edit: (f: (d: TreeDoc) => void) =
     // 「整理中」を先に描く
     setTimeout(() => { edit(tidyJunk); busy.value = false; nth.value = 0; const l = unset.value; if (l.length) go(l[0]!); }, 30);
   }
-  return { step, unset, guide, busy, press, back: () => { paused.value = true; }, grayOf: (b: TreeBox) => isGrayBox(b), dimOf: (b: TreeBox) => guide.value && !targets.value.has(b.id), targetOf: (b: TreeBox) => targets.value.has(b.id) };
+  return { step, unset, guide, busy, empty, press, back: () => { paused.value = true; }, grayOf: (b: TreeBox) => isGrayBox(b), dimOf: (b: TreeBox) => guide.value && !targets.value.has(b.id), targetOf: (b: TreeBox) => targets.value.has(b.id) };
 }
