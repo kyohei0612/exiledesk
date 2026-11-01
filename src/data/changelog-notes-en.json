@@ -1,4 +1,11 @@
 {
+  "0.1.653": [
+    "Simulator: phones now get a view-only screen with the final item card and the route to it. Tap Details for the full map, which you can drag and pinch to zoom. Run 10 works too. Building trees needs a width of 768 or more",
+    "Simulator: faster tree loading, gap check, Run 100, adding crafts and box dragging, with fewer freezes on big trees (results unchanged)",
+    "Simulator: the gap check no longer runs by itself, only when you press the button. Changing the tree clears the pass, so press it again",
+    "Mod list: one tap on a contents tab now jumps to that section's heading",
+    "Coming back to the base page from the top tabs after choosing a base now scrolls to the open list (PC)"
+  ],
   "0.1.652": [
     "The spam simulator now runs 30 people per route, so it finishes much faster",
     "Fixed spam simulator hits that could not be sent to the craft stage. Rune mods now come with their rune, and hits that keep an Essence mod work too",
