@@ -4,10 +4,11 @@
  * 作りは保存の形の組み直し (S-104・S-105) そのまま: 今の木を打ち方 (picks) にして、その箱の手だけ替えて rebuildTree。起きなくなった結果の下の決めは要確認に残さない
  */
 import type { PatchData } from "../../../services/craft-stage/engine";
-import { migrateStart, subtree, type Aim, type Hand, type HandKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
+import { boxAims, migrateStart, subtree, type Aim, type Hand, type HandKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { pathKeysOf, toRecipeV1, type RecipePick } from "../../../services/simulator/tree/tree-recipe-v1";
 import { resetStripFolds } from "../../../services/simulator/tree/tree-strip-fold";
+import { flag } from "../../../web/release-flags";
 import { applyPick, kindOf, type OnlyOut } from "./tree-hand-plan";
 import { rebuildTree } from "./tree-rebuild";
 
@@ -18,6 +19,9 @@ const drawn = (d: TreeDoc, id: string): boolean => { const b = d.boxes[id]; retu
 const plain = (k: string): string => k.replace(/\[[^\]/]*\]$/, "");
 /** 手を替えて下が消える数 (「続ける」の時。手を決める時と同じ applyPick を写しに打つ。結果の箱が同じ手なら 0) */
 export function dropCountOf(doc: TreeDoc, id: string, h: Hand, kind: HandKind, aims: Aim[], pre: string | null, only: OnlyOut): number {
+  // 今の手のままなら下は消えない (窓を開いただけで写しに打っていた、S-71b ⑪、スイッチ treeLight)
+  const b = doc.boxes[id], had = (b?.outs ?? []).flatMap((o) => (doc.boxes[o]?.out === "hit" ? boxAims(doc.boxes[o]!) : []));
+  if (flag("treeLight") && !pre && b?.hand && JSON.stringify(b.hand) === JSON.stringify(h) && JSON.stringify(had) === JSON.stringify(aims)) return 0;
   const after = clone(doc);
   applyPick(after, id, h, kind, aims, pre, only);
   return subtree(doc, id).slice(1).filter((x) => drawn(doc, x) && !after.boxes[x]).length;
@@ -40,8 +44,17 @@ function recipeWith(doc: TreeDoc, id: string, h: Hand, aims: Aim[], pre: string 
   return { ...rec, picks };
 }
 
+type Swapped = { doc: TreeDoc; box: string | null; gone: number; made: string[] };
+/** 最後の組み直し (棚で持つ・確かめの窓・使うで同じ物を 3 回組み直していた、S-71b ⑪、スイッチ treeLight) */
+let lastSwap: { key: string; r: Swapped } | null = null;
 /** 手だけ替えた木。box = 替えた箱の新しい id、gone = 下ごと消えた箱の数 (画面に出る箱)、made = 新しくできた箱 (未設定) */
-export function swapHand(data: PatchData, doc: TreeDoc, id: string, h: Hand, aims: Aim[], pre: string | null): { doc: TreeDoc; box: string | null; gone: number; made: string[] } {
+export function swapHand(data: PatchData, doc: TreeDoc, id: string, h: Hand, aims: Aim[], pre: string | null): Swapped {
+  if (!flag("treeLight")) return swapRaw(data, doc, id, h, aims, pre);
+  const key = JSON.stringify([id, h, aims, pre, doc]);
+  if (lastSwap?.key !== key) lastSwap = { key, r: swapRaw(data, doc, id, h, aims, pre) };
+  return lastSwap.r;
+}
+function swapRaw(data: PatchData, doc: TreeDoc, id: string, h: Hand, aims: Aim[], pre: string | null): Swapped {
   const was = pathKeysOf(doc), at = was.get(id)!, rec = recipeWith(doc, id, h, aims, pre);
   const d = rebuildTree(data, rec, at);
   // 起きなくなった結果の下の決めは箱ごと消える物 (要確認に残さない)。前からの要確認はそのまま
