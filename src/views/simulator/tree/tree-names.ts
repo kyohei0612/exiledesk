@@ -90,7 +90,7 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   // 狙いが消えた人に付ける狙いが付いた箱 (S-27d、鍵 g:) も題は「狙いが消えた」だけ (付けた瞬間の事なので。10-31 オーナー「狙いが消えただけでいいんじゃない？日本語的に」)。付いた狙いはカードの狙いの行で分かる
   // 手で付けたエッセンスの MOD が消えた箱は「<MOD> が消えた」(S-33c。題だけ、鍵と保存は替えない)
   const gone = s.data.value && "id" in b ? midGoneOf(s.data.value, useTree().doc.value, b.id as string) : null;
-  const base = gone ? tr(`${modShort(modText(gone))} が消えた`, `${modShort(modText(gone))} removed`) : b.out === "any" && b.parent && veilKeep(useTree().doc.value.boxes[b.parent]?.hand) ? tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added") : outsName(b);
+  const base = gone ? tr(`${modShort(modText(gone))}が消えた`, `${modShort(modText(gone))} removed`) : b.out === "any" && b.parent && veilKeep(useTree().doc.value.boxes[b.parent]?.hand) ? tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added") : outsName(b);
   // 側で分けた箱 (S-65、スイッチ junkSide): 同じ種類の箱が側で 2 つ以上の時だけ、どの側かを付ける
   // 削減の手で外れの順位で分けた箱 (S-65b、スイッチ whittleRank): 順位の鍵があればいつも付ける
   const rk = k && b.parent ? rankLabel(k) : null;
