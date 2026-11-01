@@ -6,6 +6,7 @@
 
 | 物 | コミット | 更新内容 (日本語) | 更新内容 (英語) |
 |---|---|---|---|
+| シミュ: 同じ中身の箱へはいつも自動で戻す (スイッチ autoSame、S-50e。モンキー前、オーナーの OK 待ち) | S-50e の commit | シミュレーター: 同じ中身の箱へ自動で戻るようにしました (× で外せます) | Simulator: outcomes now link back to a box with the same contents automatically (remove with ×) |
 | シミュ: 大きな木も全体が見える所まで縮小 (スイッチ zoomWhole、S-147d。オーナーの OK 待ち) | f686d8b3a | シミュレーター: 大きなツリーも全体が見える所まで縮小できるようにしました | Simulator: large trees can now zoom out far enough to see the whole tree |
 | (並びとコスメティックは 0.1.598 で出た、残りはデイリー) 共通: 上の切り替えタブの並びを エミュレーター / シミュレーター / デイリー / ジェムコラプト / コスメティック に (ジェムコラプトは 10-28 に外した、Y-17)。デイリー・コスメティックの入口をヘッダーから移した (ModeTabs、デザイン部長 5 本目、オーナー 10-25「ここの右端が良いな、目立たんし」)。スマホは 3 列の格子。中身はスイッチ daily・skins の下 (本番ではデイリー・コスメティックは出ない、並びはジェムコラプトの位置だけ同じ) | 2758a5ca・b26c850b・e160608e | (デイリー・コスメティックと一緒に出す時に書く) | (written with Daily / Cosmetics) |
 

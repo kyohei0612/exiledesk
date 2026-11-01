@@ -6,11 +6,11 @@
  */
 import type { PatchData } from "../../../services/craft-stage/engine";
 import { clearHand, migrateStart, setBack, TREE_SCHEMA_N, type Hand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
-import { offByParent, sameHandByContent, straightUp } from "../../../services/simulator/tree/tree-judge-link";
+import { autoTarget, offByParent, sameHandByContent, straightUp } from "../../../services/simulator/tree/tree-judge-link";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
 import { alignEssenceAims, applyPick, kindOf, onlyOf } from "./tree-hand-plan";
 import { flag } from "../../../web/release-flags";
-import { judgeMemo } from "../../../services/simulator/tree/tree-judge";
+import { judgeMemo, needsDesecrated } from "../../../services/simulator/tree/tree-judge";
 import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
 
@@ -148,12 +148,15 @@ function linkLeftovers(data: PatchData, d: TreeDoc): void {
   const targets = Object.values(d.boxes).filter((b) => b.hand || b.done).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y));
   for (const b of Object.values(d.boxes)) {
     if (b.out === "start" || b.hand || b.back || b.done || b.split || b.noAutoBack || offByParent(d, b.id, j)) continue;
+    // 基準は自動の ↩ と同じ「箱どうし」が先 (S-50e、スイッチ autoSame。前は下の見方で光のお告げの箱を選び、見直しで外れて未定のまま残った、オーナーの木の b26)
+    const same = flag("autoSame") ? autoTarget(d, b.id, j) : null;
+    if (same) { b.back = same; b.autoBack = true; continue; }
     const cs = j.contents(b.id);
     if (!cs?.size) continue;
     // 結果が 1 通りの手 (ルーン・品質を最大までなど) の結果を同じ中身の親へ戻すと、打っても変わらない手の輪になる (linkByContent と同じ守り。
     // ルーンの後の箱が ↩ ルーンの箱になり、同じルーンは通り抜けるので回り続けた、10-29 pass-armor、S-31e)
     const loop = (t: string): boolean => straightUp(d, b.id, t);
-    const tos = new Set([...cs].map((k) => targets.find((t) => t !== b.id && !loop(t) && !!j.contents(t)?.has(k)) ?? null));
+    const tos = new Set([...cs].map((k) => targets.find((t) => t !== b.id && !loop(t) && !!j.contents(t)?.has(k) && (!flag("autoSame") || !needsDesecrated(d, t))) ?? null));
     const to = tos.size === 1 ? [...tos][0] : null;
     if (to) { b.back = to; b.autoBack = true; }
   }
