@@ -23,6 +23,8 @@ import { aimedAims, isWhittleHand, joinKeys, rankKeyOf, rankVariants } from "./t
 import { flag } from "../../../web/release-flags";
 import { aimedAfterAnnul, aimedOfSample, contentOf, judgeMemo, looseKey, sampleAimed, strippedOf } from "./tree-judge";
 import { keptAimedOf, keptAimsOf, withGot } from "./tree-keep";
+import { itemKeyOf } from "./tree-sample-key";
+import { rolledOutcomes } from "./tree-uncountable";
 
 type Outcome = { out: OutKind; hits: Aim[]; junkKey?: string };
 /** 狙いが消えたも側で分ける (S-65・S-71g、スイッチ junkTidy)。残したい MOD の消去は中身の鍵があるので分けない (S-28e) */
@@ -153,7 +155,7 @@ function boxOutcomeRaw(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageI
  * extra = 棚の当たりの候補 (チェックした狙い・欲しい MOD のメモ)。足す・入れ替える手が「外れだけ」になる時も null
  * (10-22 白紙から 13 通り組んだ #1: 木にまだ無い狙いを足す手で当たりの箱が作れず、横の＋も出なかった。外れだけなら当たりの箱を作って MOD を選ばせる)
  */
-export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, pre: string | null = null, extra: readonly Aim[] = [], arrived?: readonly { item: StageItem; aimed: ReadonlySet<string> }[]): Array<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null {
+export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, pre: string | null = null, extra: readonly Aim[] = [], arrived?: readonly { item: StageItem; aimed: ReadonlySet<string> }[], roll = false): Array<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null {
   // 印の無い木の狙い無しのフラクチャー: 固定されうる MOD ごとの箱 (「〇〇がフラクチャーされた場合」。スイッチ fracPick)
   if (fracFree(doc, h)) { const f = fracFreeOuts(data, doc, Array.from({ length: SINGLE_SEEDS }, (_, i) => sampleOf(data, doc, boxId, i + 1).item)); const l = [...f.aims.map((x) => ({ out: "hit" as OutKind, aim: x })), ...f.junk.map((k) => ({ out: "junk" as OutKind, aim: null, junkKey: k }))]; return l.length ? l : null; }
   // 骨を未発現のまま (狙い無し) は下の未発現の所で「未発現の冒涜が付いた」1 つに (スイッチ boneLater)
@@ -182,18 +184,19 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   const aimedAt = (it: StageItem): ReadonlySet<string> | null => arrived?.find((a) => a.item === it)?.aimed ?? aimedOfSample(boxId, it);
   // 見本ごとの ☑ (付いていて ☑ の無い完成形の MOD は外れ MOD、消えても狙いが消えたにしない)
   for (let s = 1; s <= SINGLE_SEEDS; s++) sampleAimed(data, doc, boxId, s);
-  const seen = new Set<StageItem>();
+  const seen = new Set<StageItem | string>();
   for (const [i, smp] of smps.entries()) {
-    const seed = i + 1;
-    if (seen.has(smp.item)) continue;
-    seen.add(smp.item);
+    const seed = i + 1, mark = roll ? itemKeyOf(smp.item) : smp.item; // 打って集める時は同じ中身の見本を 2 回打たない (S-21)
+    if (seen.has(mark)) continue;
+    seen.add(mark);
     if (aims.some((a) => !aimHeldOn(data, smp.item, a, { sameText: true }))) unheld = true;
     const item = pre ? fillCatalyst(data, smp.item, pre, mulberry32(seed)).item : smp.item;
     const forms = [item];
     // 削減の手は外れを MOD レベルの範囲ごとの代わりに差し替えた形で見る (見本の外れ 1 つの MOD レベルで決めない、S-65b・tree-whittle)
     const all = isWhittleHand(h) ? forms.flatMap((f) => rankVariants(data, f, aimedAims(aims, keptAimedOf(doc, h, aimedAt(smp.item))), doc.boxes[boxId]?.junkKey).map((v) => v.item)) : forms;
     for (const it of all) {
-      const outs = stepOutcomes(data, prepFor(data, it, h.currency), h.currency, engineOmens(h))?.filter((o) => !o.void);
+      // roll = 数え上げられない手 (S-21) はエンジンの入口を打って集めた結果で見る
+      const prepped = prepFor(data, it, h.currency), outs = (stepOutcomes(data, prepped, h.currency, engineOmens(h)) ?? (roll ? rolledOutcomes(data, prepped, h.currency, engineOmens(h)) : null))?.filter((o) => !o.void);
       // 打てない見本は飛ばす (外れの種類で打てない人。その人は打てる箱へ移る S-64、スイッチ keepOutside)。全部打てなければ下の list が空で null
       if (!outs?.length) { if (flag("keepOutside")) continue; return null; }
       // 未発現が新しく付く手だけ (前から未発現を持ったまま打つフラクチャー・カオスなどは普通に分ける。スイッチ boneLater)
@@ -217,7 +220,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
         const ra = flag("junkTidy") && isKeepAnnul(h) ? aims : pick ? pickedAims(data, it, ra0, extra) : ra0;
         const r = lostFirst(pick, data, it, o.item, ra, outcomeOf(data, it, o.item, ra, h.currency));
         const rk = <T extends { out: OutKind; junkKey?: string }>(e: T): T => ranked(h, e, it, o.item, ra);
-        if (r.hits.length > 1) return null;
+        if (r.hits.length > 1) { if (roll) continue; return null; } // 足すのは外れ・打った後の形だけ (当たりの箱は ☑ だけ、S-22)
         // スイッチ junkSide: 狙い無しは狙いが消えた以外全部「打った後」を側ごと。☑ の無い狙いが付いたのは外れ (tree-hand-plan の onlyOf と同じ) を側ごと (S-65)
         // エッセンス・フラクチャーは側で分けない (boxOutcomeOf と同じ、S-65。前はフラクチャーの外れの箱にだけ側の鍵が付き、見本が作れず ✦ の無い親の見本のままだった)
         const sk = k === "essence" || k === "fracture" ? undefined : sideKeyOf(it, o.item);

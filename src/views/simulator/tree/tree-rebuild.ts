@@ -64,16 +64,22 @@ export function rebuildTree(data: PatchData, src: TreeDoc, exactAt?: string): Tr
     b.back = to; b.done = null; delete b.autoBack; delete b.merged;
   } };
   flushBacks();
-  if (linksAreHeld()) relinkSameHand(data, d);
-  else {
-    mergeIntoDecided(data, d, decided); relinkSameHand(data, d); linkLeftovers(data, d);
-    // ↩ で着く人の結果の箱を足す (S-21)。足した箱に保存の決めがあれば打ち直す
-    const added = addArrivedOuts(data, d);
+  /** 足した箱に保存の決めがあれば打ち直す。足した箱の親が札を持たない時は exact を使わない */
+  const replay = (added: readonly string[]): void => {
     for (const id of added) {
       const par = d.boxes[id]!.parent!, [key, at] = placed.get(par) ?? ["", ""], kids = childKeysOf(d, par, key), ck = kids.find(([c]) => c === id)?.[1];
       if (ck && placed.has(par)) q.push([id, ck, savedKeyOf(at, ck.slice(key.length), onPath, new Set(kids.map(([, k]) => at + k.slice(key.length))))]);
     }
-    if (added.length) { drain(); flushBacks(); relinkSameHand(data, d); linkLeftovers(data, d); }
+    if (added.length) { drain(); flushBacks(); }
+  };
+  // 組む間 (手だけ替える) も、数え上げられない手の足した箱は決めごと残す (S-21)
+  if (linksAreHeld()) { replay(addArrivedOuts(data, d, true)); relinkSameHand(data, d); }
+  else {
+    mergeIntoDecided(data, d, decided); relinkSameHand(data, d); linkLeftovers(data, d);
+    // ↩ で着く人の結果の箱を足す (S-21)。足した箱に保存の決めがあれば打ち直す
+    const added = addArrivedOuts(data, d);
+    replay(added);
+    if (added.length) { relinkSameHand(data, d); linkLeftovers(data, d); }
     if (tidyOn()) for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split) b.tidied = true; // 開いた木は整理まで済んだ形 (S-196)
   }
   // 決めを打ち直した箱が後の見直しで消えた (同じ手なら戻るで下を畳んだ) 札も要確認

@@ -10,6 +10,7 @@ import { bonesFor, essenceShelf, ORBS, runesFor } from "../../../state/for-share
 import { treeHidden } from "../use-sim-shelf";
 import { catalystFull, catalystTagOf, fillCatalyst, stepOutcomes } from "../../../services/simulator/sim-engine";
 import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
+import { mainSideOf } from "../../../services/simulator/tree/tree-uncountable";
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isRuneHand, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { aimsOf, handProblem, possibleOutsOf, sampleFrom, sampleOf } from "../../../services/simulator/tree/tree-sample";
@@ -333,15 +334,22 @@ export function tidyJunk(d: TreeDoc): void {
  * ↩ で着く人の結果で箱の無い物を足す (S-21、スイッチ junkTidy)。結果の箱は手を決めた時の見本で作るので、あとから ↩ で入る別の外れの人の結果が抜ける
  * (オーナーの木の b51 ↩ b35: ランダムな外れの人は b41 の削減で狙いが消える)。足すのは見本と次の MOD 群が違う結果だけ、当たりの箱 (☑ だけ、S-22) は足さない
  */
-export function addArrivedOuts(data: PatchData, d: TreeDoc): string[] {
+export function addArrivedOuts(data: PatchData, d: TreeDoc, rolledOnly = false): string[] {
   if (!flag("junkTidy")) return [];
   const j = judgeMemo(data, d), aims = aimsOf(d), made: string[] = [];
   for (const b of Object.values(d.boxes)) {
-    const h = b.hand, arrived = h ? arrivalsOf(data, d, j, b.id) : [];
-    if (!h || !arrived.length) continue;
+    const h = b.hand;
+    if (!h) continue;
+    // 数え上げられない手 (S-21): 組む間の 1 箱 (側の鍵の無い箱) が一番多い形を持ち、ほかの形の箱をここで足す。見本は親から 1 手で作れるので via は要らない
+    const s = sampleOf(data, d, b.id, 1), main = s.note === "none" || s.note?.startsWith("cant:") ? undefined : mainSideOf(data, prepFor(data, s.item, h.currency), h);
+    const arrived = rolledOnly ? [] : arrivalsOf(data, d, j, b.id);
+    if (!arrived.length && !main) continue;
     const own = b.outs.flatMap((o) => (d.boxes[o]?.out === "hit" ? boxAims(d.boxes[o]!) : []));
-    for (const e of possibleOutsOf(data, d, b.id, h, null, own, arrived) ?? []) {
-      if (e.out === "hit" || b.outs.some((o) => { const c = d.boxes[o]!; return (c.out === e.out || c.mergedOuts?.includes(e.out)) && (c.junkKey ?? e.junkKey) === e.junkKey; })) continue;
+    const fresh = (e: { out: OutKind; junkKey?: string }): boolean => e.out !== "hit" && !b.outs.some((o) => { const c = d.boxes[o]!; return (c.out === e.out || c.mergedOuts?.includes(e.out)) && (c.junkKey ?? main ?? e.junkKey) === e.junkKey; });
+    if (main) for (const e of possibleOutsOf(data, d, b.id, h, null, own, undefined, true) ?? []) if (fresh(e)) made.push(addOut(d, b.id, e.out, e.junkKey));
+    if (!arrived.length) continue;
+    for (const e of possibleOutsOf(data, d, b.id, h, null, own, arrived, !!main) ?? []) {
+      if (!fresh(e)) continue;
       const id = addOut(d, b.id, e.out, e.junkKey), c = d.boxes[id]!;
       const forms = arrived.flatMap((a) => (isWhittleHand(h) ? rankVariants(data, a.item, aimedAims(aims, a.aimed), b.junkKey).map((v) => v.item) : [a.item]));
       c.via = forms.map((item) => sampleFrom(data, d, c, b, { item, note: null }, 1, id, aims)).filter((r) => !r.note).map((r) => r.item).slice(0, 4);

@@ -14,6 +14,8 @@ import { isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tr
 import { junkKeyLabel } from "../../../services/simulator/tree/tree-frac-pick";
 import { isSideKey, isStripKey, sideKeyLabel, stripKeyLabel } from "../../../services/simulator/tree/tree-junk-side";
 import { rankLabel } from "../../../services/simulator/tree/tree-whittle";
+import { sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { mainSideOf } from "../../../services/simulator/tree/tree-uncountable";
 import { FRACTURE_POOL } from "../../../services/simulator/sim-odds";
 import { tr } from "../../../i18n/lang";
 
@@ -94,6 +96,14 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
   // 全部消えてよい消去の結果は中身ごとの箱 (S-28d): 2 つ以上並ぶ時だけ残った外れの数を付ける
   // 残したい MOD の消去の「狙いが消えた」(S-28e) も同じ鍵: 同じ種類の箱が 2 つ以上並ぶ時だけ
   if (isStripKey(k) && b.parent && (useTree().doc.value.boxes[b.parent]?.outs ?? []).filter((o) => useTree().doc.value.boxes[o]?.out === b.out).length > 1) { const [ja, en] = stripKeyLabel(k); return tr(`${base} (${ja})`, `${base} (${en})`); }
+  // 数え上げられない手の側の鍵の無い箱 (S-21): ほかの形の箱が足されたら、この箱の形も題に出す
+  if (!k && b.parent && (b.out === "any" || b.out === "junk")) {
+    const doc = useTree().doc.value, data = s.data.value, p = doc.boxes[b.parent];
+    if (data && p?.hand && p.outs.some((o) => doc.boxes[o]?.out === b.out && isSideKey(doc.boxes[o]?.junkKey))) {
+      const main = mainSideOf(data, sampleOf(data, doc, p.id, 1).item, p.hand);
+      if (main) { const [ja, en] = sideKeyLabel(main); return tr(`${base} (${ja})`, `${base} (${en})`); }
+    }
+  }
   if (isSideKey(k) && b.parent) {
     const doc = useTree().doc.value, many = (doc.boxes[b.parent]?.outs ?? []).filter((o) => doc.boxes[o]?.out === b.out && isSideKey(doc.boxes[o]?.junkKey)).length > 1;
     if (many) { const [ja, en] = sideKeyLabel(k); return rk ? tr(`${base} (${ja}・${rk[0]})`, `${base} (${en}, ${rk[1]})`) : tr(`${base} (${ja})`, `${base} (${en})`); }

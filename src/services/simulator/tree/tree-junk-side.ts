@@ -20,6 +20,8 @@ export function sideKeyLabel(key: string): [string, string] {
   // 削減の順位の鍵 (`;w:`、S-65b) は rankLabel で
   const [p = 0, s = 0] = (key.split(";")[0] ?? "").slice(2).split("|").map(Number);
   const ja = (x: "p" | "s"): string => (x === "p" ? "プレフィックス" : "サフィックス"), en = (x: "p" | "s"): string => (x === "p" ? "prefix" : "suffix");
+  // 3 つ以上足す手 (数え上げられない手、S-21) は同じ題が並ぶので数も出す
+  if (p >= 0 && s >= 0 && p + s >= 3) return [[...(p ? [`プレフィックス ${p}`] : []), ...(s ? [`サフィックス ${s}`] : [])].join("・"), [...(p ? [`${p} prefix`] : []), ...(s ? [`${s} suffix`] : [])].join(", ")];
   const from = [...(p < 0 ? ["p" as const] : []), ...(s < 0 ? ["s" as const] : [])], to = [...(p > 0 ? ["p" as const] : []), ...(s > 0 ? ["s" as const] : [])];
   if (from.length && to.length) return [`${from.map(ja).join("・")} → ${to.map(ja).join("・")}`, `${from.map(en).join(", ")} → ${to.map(en).join(", ")}`];
   const one = to.length ? to : from;
