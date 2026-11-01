@@ -16,8 +16,6 @@ import { isInfiniteEssence } from "../../craft-stage/apply-essence";
  * 筋力・器用さが付いた = 外れ MOD の 2 枝」、スイッチ goalShape)。ほかのエッセンスは付く MOD が決まっているので今のまま
  */
 export const infiniteAim = (key: string | undefined): boolean => !!key && isInfiniteEssence(key);
-import { heldSets } from "./tree-shape";
-import { likeOf } from "./tree-box-shape";
 import { isRevealHand, revealedOf, revealHitOf, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, fracFreeHit, fracFreeOuts, junkKeyOf, newlyFractured } from "./tree-frac-pick";
 import { sideKeyOf } from "./tree-junk-side";
@@ -253,45 +251,7 @@ export function singleOutOf(data: PatchData, doc: TreeDoc, boxId: string, h: Han
 /** ✦ 以外の MOD の数 (全部消えてよい消去では全部外れ MOD) */
 export const looseOf = (it: StageItem): number => [...it.prefixes, ...it.suffixes].filter((m) => !m.fractured).length;
 export const isStrip = (b: TreeBox | undefined): boolean => !!b?.hand?.keep && !b.hand.keep.length && effectOf(b.hand.currency) === "remove";
-const stopMemo = new WeakMap<TreeDoc, { sig: string; at: Map<string, Map<number, string>> }>();
 let stopBusy = false;
-/**
- * 全部消えてよい消去の止まる所 = 外れの数 → 戻る箱 (10-27 オーナー「消去で全部消したら…消去 1 つ損する」: 消していく途中で木の箱と同じ形になったら止めて
- * そこへ戻す)。狙いを持たない手のある箱 (heldSets に空の組がある。始め = 外れ 0、狙い無しの高貴の打った後 = 外れ 1 など) の見本の外れの数。
- * 同じ数は先の箱 (木の並びで上)。self = 消去の手の箱 (自分と下は入れない)
- */
-/** rarity = 止まる所をそのレアリティの箱だけに (MOD 0 まで消えたレアを白の始まりへ戻さない。ゲームでは MOD 0 のレアに変成は打てない、10-28 オーナー、スイッチ stripRarity) */
-export function stripStops(data: PatchData, doc: TreeDoc, self: string, like?: StageItem): Map<number, string> {
-  // 比べる形: 箱の体のレアリティと ✦ の側 (tree-box-shape の likeOf。✦ の違う箱へ戻った、10-28 モンキー 3、スイッチ boxShape・stripRarity)。外れの数は下の looseOf で段ごと
-  const likeKey = (it: StageItem): string => likeOf(data, doc, it);
-  const rarity = like ? likeKey(like) : undefined;
-  // 覚えの鍵 = 木の箱・手・戻り (組み替えたら引き直す。回す 1 手ごとに呼ぶので文字は作らず数で)
-  let h = doc.seq;
-  for (const b of Object.values(doc.boxes)) { const k = `${b.id}${b.hand?.currency ?? ""}${b.hand?.omens.join() ?? ""}${b.back ?? ""}`; for (let i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) | 0; }
-  const sig = String(h);
-  let m = stopMemo.get(doc);
-  if (!m || m.sig !== sig) stopMemo.set(doc, (m = { sig, at: new Map() }));
-  const memoKey = rarity !== undefined ? `${self}|${rarity}` : self;
-  const had = m.at.get(memoKey);
-  if (had) return had;
-  // 見本を引く間にまた呼ばれた (見本の道に全部消す消去がある) 時は止まる所無し = 消せなくなるまで
-  if (stopBusy) return new Map();
-  stopBusy = true;
-  const out = new Map<number, string>();
-  try {
-    const below = new Set(subtree(doc, self));
-    for (const b of Object.values(doc.boxes)) {
-      if (!b.hand || below.has(b.id) || isStrip(b) || !heldSets(doc, b.id).some((h) => !h.length)) continue;
-      const s = sampleOf(data, doc, b.id, 1);
-      if (s.note === "none" || s.note?.startsWith("cant:")) continue;
-      if (rarity !== undefined && likeKey(s.item) !== rarity) continue;
-      const n = looseOf(s.item);
-      if (!out.has(n)) out.set(n, b.id);
-    }
-  } finally { stopBusy = false; }
-  m.at.set(memoKey, out);
-  return out;
-}
 /**
  * 全部消えてよい消去の結果の箱の鍵 (S-28d): 消した後の中身 (S-60、✦ の印だけ狙い) の側ごとの外れ `c:<プレ>|<サフィ>~<中身の印>`。
  * 側の外れは tree-box-shape の bodyOf の 普通.エッセンス.冒涜.未発現 (題に使う)。印は中身の全部 (✦・レアリティ) の数で、道の札に / を入れない
