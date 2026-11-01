@@ -9,7 +9,7 @@
 import { aimDone, aimHits as hits, applyCurrency, room, sideOfMod, baseSocketsOf, catalystOf, forceKey, freshItem, kindOf, mulberry32, omenBlock, OMEN_FOR, revealOffers, runeIdByName, tierIndexOf, unrevealedOf, useReason, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { catalystFull, catalystTagOf, fillCatalyst, fractureStart } from "../../simulator/sim-engine";
 import { pathKeyOf } from "./tree-recipe-v1";
-import { docPartOf, pathKeyOfBox } from "./tree-sample-key";
+import { docPartOf, itemKeyOf, pathKeyOfBox, type PathLink } from "./tree-sample-key";
 import { aimHeldOn, isAimMod, junkOf } from "./tree-aim";
 import { flag } from "../../../web/release-flags";
 import { CATALYSING as CATALYSING_OMEN, ECHO, ECHO as ABYSSAL_ECHO_OMEN, effectOf, isBone, isCatalyst } from "./tree-hands";
@@ -17,7 +17,7 @@ import { tr } from "../../../i18n/lang";
 import { fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
 import { withTreeTune } from "./tree-tune";
 import { splitTo } from "./tree-shape";
-import { boxOutcomeOf, stripStop } from "./tree-outcome";
+import { boxOutcomeOf, isStrip, stripStop } from "./tree-outcome";
 import { aimedOfSample, sampleAimed } from "./tree-judge";
 import { autoRuneKeys, passThrough, prepFor } from "./tree-unbounded";
 import { isRevealHand, veilKeep, veilPick } from "./tree-veil";
@@ -26,6 +26,8 @@ export { fractureChoices, fractureTarget } from "./tree-frac-pick"; // フラク
 export { goalsHeld, heldHitOf } from "./tree-unbounded";
 
 const TRIES = 3000;
+/** スイッチ treeLight の打ち直しの上限 (見本の木 9 本で成功は全部 1000 回以内、S-71b) */
+const TRIES_LIGHT = 1000;
 export interface Sample { item: StageItem; note: string | null }
 
 /** 木の狙い (段 T) → エンジンの入口の狙いの形 (段の位置)。当たりの判定はエンジンの入口 (aimHeldOn・isAimMod・junkOf) に sameText で聞く (決まり 8) */
@@ -209,7 +211,7 @@ export function handProblem(data: PatchData, item: StageItem, h: Hand): string |
 export function sampleOf(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
   // スイッチ treeLight: 見本は道だけで決まるので道の鍵で覚え続ける (S-71b ②)。手を足しても新しい箱の分だけ作る
   if (flag("treeLight")) {
-    if (data !== memoData) { memo.clear(); pathMemo.clear(); memoSig = ""; memoData = data; }
+    if (data !== memoData) { memo.clear(); pathMemo.clear(); failMemo.clear(); memoSig = ""; memoData = data; }
     return withTreeTune(doc, () => sampleIn(data, doc, boxId, seed));
   }
   // 見本は道だけで決まる (S-74、スイッチ boxShape) ので、木の中身 (位置を除く) が同じなら覚えた見本を返す。
@@ -224,17 +226,20 @@ let memoSig = "", memoData: PatchData | null = null;
 /** 木の中身の鍵 (位置 x・y と、見本に効かないメモの文を除く) */
 const docSig = (doc: TreeDoc): string => JSON.stringify(doc, (k, v) => (k === "x" || k === "y" || k === "note" ? undefined : v));
 /** fn の間は木が変わらないので鍵を作り直さない (1 回の JSON が 100 人回しの 4 割だった、S-71b、スイッチ treeLight) */
+const heldLinks = new Map<string, PathLink>();
 let heldDoc: TreeDoc | null = null, heldSig = "", heldPart: string | null = null, heldLazy = false, holdNo = 0;
 /** lazy = 木全体の鍵は要る時だけ作る (判定と見本作りの短い間。作るだけで箱の数の分だけ掛かる) */
 export function holdDocSig<T>(doc: TreeDoc, fn: () => T, lazy = false): T {
   if (!flag("treeLight") || heldDoc) return fn();
-  heldDoc = doc; heldLazy = lazy; heldSig = lazy ? "" : docSig(doc); heldPart = null; holdNo++;
+  heldDoc = doc; heldLazy = lazy; heldSig = lazy ? "" : docSig(doc); heldPart = null; heldLinks.clear(); holdNo++;
   try { return fn(); } finally { heldDoc = null; }
 }
 /** 今 holdDocSig の中ならその回の番号、外なら 0 (同じ番号の間は木が変わらない) */
 export const docHeld = (doc: TreeDoc): number => (heldDoc === doc ? holdNo : 0);
 /** 道の鍵で覚えた見本 (鍵 = 見本に効く物全部なので、木が変わっても残してよい。増えすぎたら捨てて作り直す = 結果は同じ) */
 const pathMemo = new Map<string, Sample>();
+/** 打っても作れなかった見本 (鍵 = 道・親の見本・☑ → 印)。起きない結果の箱を手のたびに打ち直していた (100 箱で 1 手 24 万回、S-71b) */
+const failMemo = new Map<string, string>();
 const PATH_MEMO_MAX = 20000;
 /** 全部消えてよい消去の道の箱に効く木全体の鍵の番号 (長い文字を見本ごとの鍵に入れるとその JSON だけで 3 秒を超えた。番号は使い回さない) */
 const sigNos = new Map<string, number>();
@@ -256,7 +261,7 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
   if (!r) {
     // 見本を作る間は木が変わらないので鍵は 1 回だけ (描画の箱ごとの見本で木全体の JSON が 10 秒を超えた、☑ の手)
     r = holdDocSig(doc, () => sampleRaw(data, doc, boxId, seed), true);
-    if (pathMemo.size >= PATH_MEMO_MAX) { pathMemo.clear(); sigNos.clear(); }
+    if (pathMemo.size >= PATH_MEMO_MAX) { pathMemo.clear(); failMemo.clear(); sigNos.clear(); }
     pathMemo.set(pk, r);
   }
   if (fast) memo.set(k, r);
@@ -265,7 +270,12 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
 function keyOf(doc: TreeDoc, boxId: string, seed: number): string {
   const held = heldDoc === doc;
   const part = held ? (heldPart ??= docPartOf(doc)) : docPartOf(doc);
-  return pathKeyOfBox(doc, boxId, seed, altDeep, part, () => sigNo(held ? (heldSig ||= docSig(doc)) : docSig(doc)));
+  return pathKeyOfBox(doc, boxId, seed, altDeep, part, () => sigNo(held ? (heldSig ||= docSig(doc)) : docSig(doc)), held ? heldLinks : undefined);
+}
+/** 作れなかった見本の鍵: 木全体の鍵の代わりに親の見本そのもの (全部消えてよい消去の手の箱では使わない。止まる所が木全体を見る) */
+function failKeyOf(doc: TreeDoc, boxId: string, seed: number, base: StageItem, aimed: ReadonlySet<string> | undefined): string {
+  const held = heldDoc === doc, part = held ? (heldPart ??= docPartOf(doc)) : docPartOf(doc);
+  return `${pathKeyOfBox(doc, boxId, seed, altDeep, part, () => 0, held ? heldLinks : undefined)}|${itemKeyOf(base)}|${aimed ? [...aimed].sort().join() : ""}`;
 }
 /** 箱の中身の覚えの鍵 (見本の番号を除いた道の鍵、tree-judge) */
 export const boxKeyOf = (doc: TreeDoc, boxId: string): string => keyOf(doc, boxId, 0);
@@ -331,12 +341,19 @@ function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox, base:
   // 箱の形 (道の狙いの組) に合う結果だけ、無ければ合わなかった最初の結果 (途中で狙いが消えた結果が当たりの見本になった、10-28 見張り。boxShape)
   // スイッチ judgeOne: 道の狙いの組 (heldSets) では絞らない。見本 = 親の見本にエンジンで打った結果 (大本 1)
   let loose: Sample | null = null;
-  for (let i = 0; i < TRIES; i++) {
+  const light = flag("treeLight");
+  // ☑ は打ち直しの間変わらないので 1 回だけ引く (打ち直しのたびに引いて鍵を作っていた)
+  let held: ReadonlySet<string> | undefined;
+  const aimedNow = (): ReadonlySet<string> | undefined => (held ??= flag("keepAll") && flag("judgeOne") ? aimedOfSample(p.id, base.item) ?? sampleAimed(data, doc, p.id, seed) : undefined);
+  const fk = light && !isStrip(p) ? failKeyOf(doc, boxId, seed, base.item, aimedNow()) : null;
+  const failed = fk ? failMemo.get(fk) : undefined;
+  if (failed !== undefined) return { item: base.item, note: failed };
+  for (let i = 0, tries = light ? TRIES_LIGHT : TRIES; i < tries; i++) {
     const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims), undefined, b.out === "junk" || b.out === "lost", stripStop(data, doc, p));
     if (!r.applied) { last = r; break; }
     last = r;
     // スイッチ keepAll: 結果の分け方は回す・精査と同じく親の見本の ☑ で (S-60。前は ☑ を渡さず木の狙い全部で数え、☑ の無い狙いが消えた人が「狙いが消えた」の見本になった = 見張り J5)
-    const o = boxOutcomeOf(data, doc, p, base.item, r.item, aims, flag("keepAll") && flag("judgeOne") ? aimedOfSample(p.id, base.item) ?? sampleAimed(data, doc, p.id, seed) : undefined);
+    const o = boxOutcomeOf(data, doc, p, base.item, r.item, aims, aimedNow());
     // 当たるまでの手が上限まで打っても当たらない = 付かない狙いだけ。引き直しても同じなのでやめる (1 回 5000 回 × 3000 で画面が固まった、10-22)
     if (p.hand.repeat && o.out !== "hit") break;
     if (b.out === "pass") return { item: r.item, note: null };
@@ -348,11 +365,12 @@ function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox, base:
     return { item: r.item, note: null };
   }
   if (loose) return loose;
-  if (last && !last.applied) return { item: base.item, note: `cant:${last.reason ?? ""}` };
+  const remember = (note: string): Sample => { if (fk) failMemo.set(fk, note); return { item: base.item, note }; };
+  if (last && !last.applied) return remember(`cant:${last.reason ?? ""}`);
   // boxShape: 狙いを手で付ける (forceKey) のはやめる。手で付けるのはエミュの「付ける」の親切 (マジックの埋まった側ならレアにして付ける) で、エンジンの手の結果ではない
   // (増強の当たりの箱の見本がレアになった、10-28 夜オーナー「これはエンジンを参照した動きになってないのと同義では」)。作れない印を返し、親の見本を引き直す (S-74)
-  if (b.out === "hit" && b.aim) return { item: base.item, note: "cant:unreachable" };
-  return { item: base.item, note: "none" };
+  if (b.out === "hit" && b.aim) return remember("cant:unreachable");
+  return remember("none");
 }
 
 // ここから下は木の打ち方の組み合わせ (2026-10-23 エンジンの for-sim から戻した。中身はエンジンの核の関数を呼ぶだけ)

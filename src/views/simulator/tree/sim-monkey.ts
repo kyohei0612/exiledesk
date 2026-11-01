@@ -43,6 +43,7 @@ import { DEV_BUILD } from "../../../web/release-flags";
 import { modText } from "../../../i18n/lang";
 import { afterQualityOf, applyPick, autoCatOf, hitChoicesOf, needAimOf, planPick, preFillOf, shelfKeysOf, type PickOpt } from "./tree-hand-plan";
 import { useTree } from "./use-tree";
+import { useTreeOdds } from "./tree-odds";
 
 type Opt = PickOpt;
 /** 部位の日本語 → ベースの一覧の部位 (cls) の頭 (英語の部位名ならそのまま頭で合わせる) */
@@ -209,6 +210,8 @@ export function installSimMonkey(): () => void {
     prune(): string[] | null { const d = s.data.value; if (!d) return null; const x = JSON.parse(JSON.stringify(t.doc.value)) as TreeDoc; pruneBacks(d, x); return Object.keys(x.boxes).filter((id) => !!t.doc.value.boxes[id]?.back && !x.boxes[id]!.back); },
     /** 全部の箱の見本 seeds 個 (item・note) と ☑ (スイッチ treeLight のオン / オフで見本が同じかの見張り = scripts/sim-watch/light-edit.mjs) */
     samples(seeds = 8) { const d = s.data.value; if (!d) return null; return Object.fromEntries(Object.keys(t.doc.value.boxes).sort().map((id) => [id, Array.from({ length: seeds }, (_, i) => { const x = sampleOf(d, t.doc.value, id, i + 1); return { item: x.item, note: x.note, aimed: [...sampleAimed(d, t.doc.value, id, i + 1)].sort() }; })])); },
+    /** 木全部の結果の箱の割合 (箱の札と同じ useTreeOdds) */
+    odds() { return Object.fromEntries(useTreeOdds().value); },
     /** 今の木。startRarity = スタートの本当のレアリティ (start.rarity は保存の形の値で、印も＋の MOD も無い時の白とずれる事がある) */
     dump(): unknown { return { ...JSON.parse(JSON.stringify(t.doc.value)), startRarity: sample("start")?.item.rarity ?? null }; },
   };

@@ -12,6 +12,7 @@ import { isSideKey, isStripKey } from "../../../services/simulator/tree/tree-jun
 import { isWhittleHand, rankVariants } from "../../../services/simulator/tree/tree-whittle";
 import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { aimsOf, SINGLE_SEEDS } from "../../../services/simulator/tree/tree-sample";
+import { docPartOf, itemKeyOf, tagOf } from "../../../services/simulator/tree/tree-sample-key";
 import { aimedOfSample, sampleAimed } from "../../../services/simulator/tree/tree-judge";
 import { flag } from "../../../web/release-flags";
 import { shapeSampleOf } from "../../../services/simulator/tree/tree-sample-shape";
@@ -21,13 +22,13 @@ import { craftStage as s } from "../../../state/craft-stage";
 import { useTree } from "./use-tree";
 
 /** 手のある箱 1 つ分: 結果の箱の id → 割合 (0〜1)。出せなければ null */
-export function oddsOfHand(doc: TreeDoc, id: string): Map<string, number> | null {
+export function oddsOfHand(doc: TreeDoc, id: string, part = ""): Map<string, number> | null {
   const data = s.data.value, b = doc.boxes[id];
   if (!data || !b?.hand || b.hand.repeat || b.outs.length < 2) return null;
   const kids = b.outs.map((o) => doc.boxes[o]!).filter(Boolean);
   // 側で分けた箱 (S-65、スイッチ junkSide。狙い無しの打った後も) は、エンジンの枝ごとに回す時と同じ分け方で箱へ
   // 削減の手 (S-65b、スイッチ whittleRank) も同じ形で、外れの MOD レベルの範囲ごとの見本の重みを掛ける
-  if (kids.some((k) => isSideKey(k.junkKey) || isStripKey(k.junkKey)) || isWhittleHand(b.hand)) return sideOdds(doc, id);
+  if (kids.some((k) => isSideKey(k.junkKey) || isStripKey(k.junkKey)) || isWhittleHand(b.hand)) return sideOdds(doc, id, part);
   if (b.hand.free) return null;
   const hits = kids.filter((k) => k.out === "hit" && k.aim).flatMap((k) => boxAims(k));
   const aims = [...hits, ...aimsOf(doc).filter((a) => !hits.some((h) => h.modId === a.modId && h.tier === a.tier))];
@@ -45,7 +46,10 @@ export function oddsOfHand(doc: TreeDoc, id: string): Map<string, number> | null
   return out.size ? out : null;
 }
 /** 側で分けた箱のある手の割合: エンジンの stepOutcomes の枝 (void を除いて割り直す) を、回す時と同じ boxOutcomeOf → outBoxOf で結果の箱へ */
-function sideOdds(doc: TreeDoc, id: string): Map<string, number> | null {
+/** 側で分けた手の割合の覚え (鍵 = 木の前提と狙い・見本・☑・手・結果の箱。木が替わるたびに全部の手でエンジンの枝を数えていた、S-71b、スイッチ treeLight) */
+const sideMemo = new Map<string, Map<string, number> | null>();
+const SIDE_MAX = 5000;
+function sideOdds(doc: TreeDoc, id: string, part: string): Map<string, number> | null {
   const data = s.data.value, b = doc.boxes[id];
   if (!data || !b?.hand) return null;
   const raw = shapeSampleOf(data, doc, id), item0 = prepFor(data, raw, b.hand.currency);
@@ -53,6 +57,8 @@ function sideOdds(doc: TreeDoc, id: string): Map<string, number> | null {
   // スイッチ judgeOne: 回す・精査と同じく、見本の ☑ で付いた狙いを渡す (渡さないと付いていて ☑ の無い完成形の MOD も狙いに数え、洗い出しの箱とずれた)
   if (flag("judgeOne")) for (let k = 1; k <= SINGLE_SEEDS; k++) sampleAimed(data, doc, id, k);
   const aimed = flag("judgeOne") ? aimedOfSample(id, raw) : null;
+  const key = part ? `${part}|${itemKeyOf(raw)}|${aimed ? [...aimed].sort().join() : ""}|${JSON.stringify([b.hand, b.junkKey, b.outs.map((o) => { const k = doc.boxes[o]; return k ? tagOf(k) : o; })])}` : null;
+  if (key && sideMemo.has(key)) return sideMemo.get(key)!;
   // 削減の手は外れを MOD レベルの範囲ごとの代わりに差し替えた見本 (割合 = その範囲の重み、tree-whittle)。ほかは見本 1 つ
   const forms = isWhittleHand(b.hand) ? rankVariants(data, item0, aims, b.junkKey) : [{ p: 1, item: item0 }];
   for (const f of forms) {
@@ -64,15 +70,17 @@ function sideOdds(doc: TreeDoc, id: string): Map<string, number> | null {
       if (to) out.set(to, (out.get(to) ?? 0) + (f.p * r.p) / total);
     }
   }
-  return out.size ? out : null;
+  const res = out.size ? out : null;
+  if (key) { if (sideMemo.size >= SIDE_MAX) sideMemo.clear(); sideMemo.set(key, res); }
+  return res;
 }
 /** 木全体: 結果の箱の id → 割合 (手の箱ごとに oddsOfHand。木が替わった時だけ数え直す) */
 function treeOddsOf(doc: Ref<TreeDoc>) {
   return computed((): Map<string, number> => {
-    const all = new Map<string, number>();
+    const all = new Map<string, number>(), part = flag("treeLight") ? docPartOf(doc.value) : "";
     for (const b of Object.values(doc.value.boxes)) {
       if (!b.hand) continue;
-      try { for (const [k, v] of oddsOfHand(doc.value, b.id) ?? []) all.set(k, v); } catch { /* 割合が出せない手は出さない */ }
+      try { for (const [k, v] of oddsOfHand(doc.value, b.id, part) ?? []) all.set(k, v); } catch { /* 割合が出せない手は出さない */ }
     }
     return all;
   });

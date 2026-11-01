@@ -7,7 +7,7 @@ import { fillCatalyst, stepOutcomes } from "../../simulator/sim-engine";
 import { aimHeldOn } from "./tree-aim";
 import { effectOf, engineOmens, isCatalyst, isRuneHand } from "./tree-hands";
 import { boxAims, fractureMarks, subtree, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
-import { aimDiff, aimsOf, docHeld, outcomeOf, sampleOf, SINGLE_SEEDS } from "./tree-sample";
+import { aimDiff, aimsOf, docHeld, holdDocSig, outcomeOf, sampleOf, SINGLE_SEEDS } from "./tree-sample";
 import { prepFor } from "./tree-unbounded";
 import { isInfiniteEssence } from "../../craft-stage/apply-essence";
 
@@ -326,7 +326,7 @@ export function stripStopByContent(data: PatchData, doc: TreeDoc, self: string, 
     let below = m.below.get(self);
     if (!below) { below = new Set(subtree(doc, self)); m.below.set(self, below); }
     const under = below;
-    return m.j.boxesOf(it, aimed, (id) => { const b = doc.boxes[id]; return !!b?.hand && !under.has(id) && (strips || !isStrip(b)); })[0] ?? null;
+    return holdDocSig(doc, () => m.j.boxesOf(it, aimed, (id) => { const b = doc.boxes[id]; return !!b?.hand && !under.has(id) && (strips || !isStrip(b)); })[0] ?? null, true);
   } finally { stopBusy = false; }
 }
 const contentMemo = new WeakMap<TreeDoc, { sig: string; hold: number; j: ReturnType<typeof judgeMemo>; below: Map<string, Set<string>> }>();
