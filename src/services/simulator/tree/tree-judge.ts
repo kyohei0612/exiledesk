@@ -8,9 +8,9 @@
  * 完成形の MOD は外れ = S-22・S-60。全部消えてよい消去の後は全部外れ、残したい MOD の消去の後はその MOD だけ)。カードの「外れ MOD」の札 (tree-row-tags) と同じ見方。
  * 呼ぶ側は自前の比べを持たない。1 回の組み替え・回し・精査の中で judgeMemo を 1 つ作って使う (木を替えたら作り直す)
  */
-import { catalystOf, maxQualityOf, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { catalystOf, maxQualityOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { catalystTagOf } from "../sim-engine";
-import { CATALYSING, isCatalyst } from "./tree-hands";
+import { CATALYSING, effectOf, isCatalyst } from "./tree-hands";
 import { tidyOn } from "./tree-junk-tidy";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { bodyOf } from "./tree-box-shape";
@@ -119,6 +119,15 @@ export function sampleAimed(data: PatchData, doc: TreeDoc, id: string, seed: num
   if (!m) AIMED.set(s.item, (m = new Map()));
   m.set(id, out);
   return out;
+}
+/** 箱 id を作った手で消えた途中の狙いの MOD (見本 1 の前後から、箱の題「<MOD> が消えた」S-33c。当たり・狙いが消えた・全部消えてよい消去の箱は無し) */
+export function midGoneOf(data: PatchData, doc: TreeDoc, id: string): StageMod | null {
+  const b = doc.boxes[id], p = b?.parent ? doc.boxes[b.parent] : null, h = p?.hand, mids = midAims(doc);
+  if (!b || !p || !h || !mids.length || b.out === "hit" || b.out === "lost" || (effectOf(h.currency) === "remove" && !!h.keep && !h.keep.length)) return null;
+  const was = sampleOf(data, doc, p.id, 1), now = sampleOf(data, doc, id, 1);
+  if ([was.note, now.note].some((n) => n === "none" || n?.startsWith("cant:"))) return null;
+  const am = sampleAimed(data, doc, p.id, 1), left = [...now.item.prefixes, ...now.item.suffixes];
+  return [...was.item.prefixes, ...was.item.suffixes].find((m) => am.has(m.modId) && mids.some((a) => a.modId === m.modId) && !left.some((x) => x.modId === m.modId)) ?? null;
 }
 /** 見本を出す時の写し (値を揃えたカード、tree-fixed-values) → 元の見本 */
 const COPY_OF = new WeakMap<StageItem, StageItem>();
