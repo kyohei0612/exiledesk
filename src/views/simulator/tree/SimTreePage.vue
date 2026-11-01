@@ -322,7 +322,9 @@ const rowL = computed(() => rowLayout(doc.value, boxHeightOf(measureBox)));
 
 // ＋を引っ張ってつなぐ (use-tree-plus.ts)
 const { plus, onPlus, plusLine } = useTreePlus({ doc, posOf, viewOnly, toWorld: v.toWorld, edit: t.edit, onAddHit, startLink });
-watch(() => panel.value?.id, (id) => { if (id) { v.noteSpot(id); setTimeout(() => void v.reveal(id), 0); } });
+watch(() => panel.value?.id, (id) => { if (id) { v.noteSpot(id); setTimeout(() => void v.revealSpot(id), 0); } });
+// 手の窓を選ばずに閉じたら開く前の視点へ (S-147e)。手を決めた時は holdBox が先に場所を使い切る、戻り先を選びに行く時は戻さない
+watch(panel, (p, was) => { if (!p && was?.kind === "hand" && !picking.value) void v.backSpot(); });
 /** Vue Flow に渡す箱 (位置は木の形のまま。動かせるのは組める時だけ = 手・一望・戻り先を選んでいる間は画面だけ動く) */
 const flowNodes = computed(() => [...rv.visible.value.map((b) => ({ id: b.id, type: "box", position: posOf(b), draggable: false, selectable: false, connectable: false }))]);
 // Vue Flow へは setNodes で直接入れる (:nodes で渡すと、Vue Flow が中の並びを書き戻している一瞬の変化を拾わず、

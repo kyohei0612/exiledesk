@@ -241,6 +241,17 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   /** 手の窓を開く時の箱の画面の場所 (窓を開く寄せの前。holdBox はここへ戻す) */
   let spot: { id: string; sx: number; sy: number } | null = null;
   const noteSpot = (id: string): void => { const b = doc.value.boxes[id], { x, y, zoom: z } = f.viewport.value; spot = b ? { id, sx: b.x * z + x, sy: b.y * z + y } : null; };
+  /** 窓を開く寄せの後の視点 (閉じる時に人が動かしていないかを見る) */
+  let opened: { x: number; y: number; zoom: number } | null = null;
+  /** 手の窓を開いた時の寄せ (外れていた箱を見える所へ)。閉じた時に backSpot が戻す */
+  async function revealSpot(id: string): Promise<void> { await reveal(id); opened = { ...f.viewport.value }; }
+  /** 手の窓を選ばずに閉じた: 窓を開く寄せの分だけ視点を戻す (S-147e、スイッチ junkTidy)。手を決めた時は holdBox が spot を使う。開いている間に人が動かした視点はそのまま */
+  async function backSpot(): Promise<void> {
+    const p = spot, was = opened, b = p ? doc.value.boxes[p.id] : null, { x, y, zoom: z } = f.viewport.value;
+    spot = null; opened = null;
+    if (!flag("junkTidy") || !p || !b || !was || was.x !== x || was.y !== y || was.zoom !== z) return;
+    await f.setViewport({ x: p.sx - b.x * z, y: p.sy - b.y * z, zoom: z });
+  }
   async function holdBox(id: string, edit: () => string): Promise<void> {
     const was = doc.value.boxes[id];
     if (!flag("junkTidy") || !was) { edit(); return; }
@@ -307,5 +318,5 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     void f.setViewport({ x: vp.x + (w - old) / 2, y: vp.y, zoom: vp.zoom });
   });
 
-  return { flow: f, pageZ, zoom, viewOnly, minZoom, maxZoom, full, bounds, view, setZoom, zoomIn, zoomOut, onWheel, fit, openView, keepView, backView, goHome, resetZoom, toWorld, reveal, holdBox, noteSpot, toggleFull, centerOn, rectOf, dispose: () => window.removeEventListener("resize", onResize) };
+  return { flow: f, pageZ, zoom, viewOnly, minZoom, maxZoom, full, bounds, view, setZoom, zoomIn, zoomOut, onWheel, fit, openView, keepView, backView, goHome, resetZoom, toWorld, reveal, holdBox, noteSpot, revealSpot, backSpot, toggleFull, centerOn, rectOf, dispose: () => window.removeEventListener("resize", onResize) };
 }
