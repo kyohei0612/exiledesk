@@ -23,6 +23,7 @@ import { aimedOfSample, sampleAimed } from "./tree-judge";
 import { autoRuneKeys, passThrough, prepFor } from "./tree-unbounded";
 import { isRevealHand, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, fractureTarget, junkKeyOf } from "./tree-frac-pick";
+import { mainSideOf } from "./tree-uncountable";
 export { fractureChoices, fractureTarget } from "./tree-frac-pick"; // フラクチャーの小物は tree-frac-pick へ (1 ファイル 500 行まで、10-28)
 export { goalsHeld, heldHitOf } from "./tree-unbounded";
 
@@ -352,6 +353,8 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
   // ☑ は打ち直しの間変わらないので 1 回だけ引く (打ち直しのたびに引いて鍵を作っていた)
   let held: ReadonlySet<string> | undefined;
   const aimedNow = (): ReadonlySet<string> | undefined => (held ??= flag("keepAll") && flag("judgeOne") ? aimedOfSample(p.id, base.item) ?? sampleAimed(data, doc, p.id, seed) : undefined);
+  // 数え上げられない手の側の鍵の無い箱は一番多い形だけ (ほかの形は整理で足す箱へ行く、S-21・S-74)
+  const main = !b.junkKey && (b.out === "any" || b.out === "junk") ? mainSideOf(data, base.item, p.hand) : undefined;
   const fk = light && !isStrip(p) ? failKeyOf(doc, boxId, seed, base.item, aimedNow()) : null;
   const failed = fk ? failMemo.get(fk) : undefined;
   if (failed !== undefined) return { item: base.item, note: failed };
@@ -367,6 +370,7 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
     if (b.out !== "any" && o.out !== b.out && !b.mergedOuts?.includes(o.out)) continue;
     if (flag("junkTidy") && b.out === "any" && o.out === "lost") continue; // 打った後の箱の見本に狙いが消えた結果を入れない (中身が混ざった、S-71g)
     if (b.junkKey && o.junkKey !== b.junkKey) continue; // 外れの枝の鍵 (狙い無しの乱数のフラクチャー、スイッチ fracPick)
+    if (main && o.junkKey !== main) continue;
     // エッセンスの当たりの箱は札が付いた MOD の名前 (tree-run の outBoxOf と同じ)。無限のエッセンスで箱が 2 つ以上なら付いた MOD の箱
     if (b.out === "hit" && b.aim && effectOf(p.hand.currency) === "essence" && !essenceBoxFits(doc, p, b, r.item)) continue;
     if (b.out === "hit" && b.aim && effectOf(p.hand.currency) !== "essence" && !boxAims(b).some((x) => o.hits.some((a) => a.modId === x.modId && a.tier === x.tier))) continue;

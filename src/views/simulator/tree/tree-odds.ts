@@ -12,6 +12,7 @@ import { isSideKey, isStripKey } from "../../../services/simulator/tree/tree-jun
 import { aimedAims, isWhittleHand, rankVariants } from "../../../services/simulator/tree/tree-whittle";
 import { keptAimedOf } from "../../../services/simulator/tree/tree-keep";
 import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
+import { rolledOutcomes } from "../../../services/simulator/tree/tree-uncountable";
 import { aimsOf, sampleOf, SINGLE_SEEDS } from "../../../services/simulator/tree/tree-sample";
 import type { PatchData, StageItem } from "../../../services/craft-stage/engine";
 import { docPartOf, itemKeyOf, tagOf } from "../../../services/simulator/tree/tree-sample-key";
@@ -102,7 +103,8 @@ function sideOdds(doc: TreeDoc, id: string, part: string): Map<string, number> |
     // 削減の手は外れを MOD レベルの範囲ごとの代わりに差し替えた見本 (割合 = その範囲の重み、tree-whittle)。ほかは見本のまま
     const forms = isWhittleHand(b.hand) && !flag("junkTidy") ? rankVariants(data, item0, aimedAims(aims, keptAimedOf(doc, b.hand, aimed)), b.junkKey) : [{ p: 1, item: item0 }];
     for (const f of forms) {
-      const live = (stepOutcomes(data, f.item, b.hand.currency, engineOmens(b.hand)) ?? []).filter((r) => !r.void);
+      // 数え上げられない手は打って集めた結果の割合 (S-21)
+      const live = (stepOutcomes(data, f.item, b.hand.currency, engineOmens(b.hand)) ?? rolledOutcomes(data, f.item, b.hand.currency, engineOmens(b.hand)) ?? []).filter((r) => !r.void);
       const total = live.reduce((n, r) => n + r.p, 0);
       if (!live.length || total <= 0) continue;
       shot += man.w * f.p;
