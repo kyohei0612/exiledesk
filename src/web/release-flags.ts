@@ -200,8 +200,10 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "fracSide", "revealGrey", "nextInView",
   // 消える手も残したい MOD・狙い無しとルーンは当たりの箱を出さない・「付ける」1 つの付け方・兄弟の間はその段だけ・前の版の骨の手・フラックス外し (オーナー 10-31「確認前はリリース準備で俺がおｋなら即だせるように」→ 1440 の確認で OK)。閉じたままは daily・simTutorial
   "keepAll", "freeNoHit", "attachWay", "rowNear", "oldBone", "sim1031",
-  // 0.1.652 (オーナー 10-31「まとめてというかもう出して」、ポップの答えで keepOutside も開ける)。閉じたままは daily・simTutorial・treeLight (0.1.652 の後の版)
+  // 0.1.652 (オーナー 10-31「まとめてというかもう出して」、ポップの答えで keepOutside も開ける)。閉じたままは daily・simTutorial
   "goalAskFix", "goalDesecRow", "swapHand", "holeCheck", "spam30", "aimTable", "shelfWhy", "backQuality", "goalNeedMod", "sanctifyHint", "keepOutside",
+  // 0.1.653 (オーナー 11-01「スマホ版先にリリースしちゃって良さそうだね」、ポップの答え「はい」)。ツリーを軽く・穴チェックはボタンだけ・目次のタブ・ベースのページの送りも一緒に。閉じたままは daily・simTutorial
+  "phoneView", "treeLight", "holeButton", "tocJump", "baseReopen",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */
