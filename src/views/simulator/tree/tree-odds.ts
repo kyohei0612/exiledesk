@@ -57,7 +57,7 @@ function sideOdds(doc: TreeDoc, id: string, part: string): Map<string, number> |
   // スイッチ judgeOne: 回す・精査と同じく、見本の ☑ で付いた狙いを渡す (渡さないと付いていて ☑ の無い完成形の MOD も狙いに数え、洗い出しの箱とずれた)
   if (flag("judgeOne")) for (let k = 1; k <= SINGLE_SEEDS; k++) sampleAimed(data, doc, id, k);
   const aimed = flag("judgeOne") ? aimedOfSample(id, raw) : null;
-  const key = part ? `${part}|${itemKeyOf(raw)}|${aimed ? [...aimed].sort().join() : ""}|${JSON.stringify([b.hand, b.junkKey, b.outs.map((o) => { const k = doc.boxes[o]; return k ? tagOf(k) : o; })])}` : null;
+  const key = part ? `${part}|${itemKeyOf(raw)}|${aimed ? [...aimed].sort().join() : ""}|${JSON.stringify([b.hand, b.junkKey, b.outs.map((o) => { const k = doc.boxes[o]; return k ? [o, ...tagOf(k)] : o; })])}` : null;
   if (key && sideMemo.has(key)) return sideMemo.get(key)!;
   // 削減の手は外れを MOD レベルの範囲ごとの代わりに差し替えた見本 (割合 = その範囲の重み、tree-whittle)。ほかは見本 1 つ
   const forms = isWhittleHand(b.hand) ? rankVariants(data, item0, aims, b.junkKey) : [{ p: 1, item: item0 }];
