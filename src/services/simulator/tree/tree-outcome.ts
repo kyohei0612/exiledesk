@@ -16,17 +16,26 @@ import { isInfiniteEssence } from "../../craft-stage/apply-essence";
  * 筋力・器用さが付いた = 外れ MOD の 2 枝」、スイッチ goalShape)。ほかのエッセンスは付く MOD が決まっているので今のまま
  */
 export const infiniteAim = (key: string | undefined): boolean => !!key && isInfiniteEssence(key);
-import { isRevealHand, revealedOf, revealHitOf, veilKeep, veilPick } from "./tree-veil";
+import { isRevealHand, midAims, revealedOf, revealHitOf, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, fracFreeHit, fracFreeOuts, junkKeyOf, newlyFractured } from "./tree-frac-pick";
 import { sideKeyOf } from "./tree-junk-side";
 import { aimedAims, isWhittleHand, joinKeys, rankKeyOf, rankVariants } from "./tree-whittle";
 import { flag } from "../../../web/release-flags";
 import { aimedAfterAnnul, aimedOfSample, contentOf, judgeMemo, looseKey, sampleAimed, strippedOf } from "./tree-judge";
-import { keptAimedOf, keptAimsOf, withGot } from "./tree-keep";
+import { goneOf, keptAimedOf, keptAimsOf, withGot } from "./tree-keep";
 import { itemKeyOf } from "./tree-sample-key";
 import { rolledOutcomes } from "./tree-uncountable";
 
 type Outcome = { out: OutKind; hits: Aim[]; junkKey?: string };
+/** 途中の狙いのうち、この人が印を持ち、この手で「狙いが消えた」に数える物。確定で消える時 (候補 1 つ、S-27b) は消えてよい扱いで数えない (S-33b、スイッチ junkTidy) */
+function midOf(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, before: StageItem, aimed: ReadonlySet<string> | null | undefined): Aim[] {
+  const mid = midAims(doc).filter((a) => aimed?.has(a.modId));
+  if (!mid.length || !h) return mid;
+  const g = goneOf(data, before, h.currency, h.omens);
+  return g?.size === 1 ? mid.filter((a) => !g.has(a.modId)) : mid;
+}
+/** aims に途中の狙いを足す (同じ MOD は足さない) */
+const withMid = (aims: readonly Aim[], mid: readonly Aim[]): Aim[] => [...aims, ...mid.filter((a) => !aims.some((x) => x.modId === a.modId))];
 /** 狙いが消えたも側で分ける (S-65・S-71g、スイッチ junkTidy)。残したい MOD の消去は中身の鍵があるので分けない (S-28e) */
 const lostSided = (h: Hand | null | undefined): boolean => flag("junkTidy") && !isKeepAnnul(h);
 /** 外れ・打った後・外れが消えたに側の鍵を付ける (S-65、スイッチ junkSide。閉じていれば今のまま) */
@@ -51,7 +60,7 @@ export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: 
   if (isStrip(b)) return { out: "junkGone", hits: [], junkKey: stripKeyOf(data, doc, after, aimedAfterAnnul(data, doc, b.hand, aimed, before)) };
   // 消える手の残したい MOD (S-27d、スイッチ keepAll): 打つ前の ☑ の代わりに残したい MOD で数える
   const am = keptAimedOf(doc, b.hand, aimed);
-  const aims = am ? keptPlus(doc, b.hand, mineOf(data, before, aims0, am)) : aims0;
+  const aims = am ? keptPlus(doc, b.hand, mineOf(data, before, withMid(aims0, midOf(data, doc, b.hand, before, am)), am)) : aims0;
   const own = b.outs.flatMap((id) => { const c = doc.boxes[id]; return c?.out === "hit" && c.aim ? boxAims(c) : []; });
   // エッセンス (付く側が決まる)・フラクチャー (S-41 の鍵) は側で分けない
   if (!key || effectOf(key) === "essence" || effectOf(key) === "fracture") return withGot(data, boxOutcomeRaw(data, doc, b, before, after, aims), before, after, own);
@@ -214,7 +223,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
       }
       for (const o of outs) {
         const am = keptAimedOf(doc, h, aimedAt(smp.item));
-        const ra0 = am ? keptPlus(doc, h, aims.filter((a) => am.has(a.modId) || !aimHeldOn(data, it, a, { sameText: true }))) : aims;
+        const ra0 = am ? keptPlus(doc, h, withMid(aims, midOf(data, doc, h, it, am)).filter((a) => am.has(a.modId) || !aimHeldOn(data, it, a, { sameText: true }))) : aims;
         const pick = PICK_EFFECTS.includes(k);
         // 残したい MOD の消去は ☑ の物だけで消えた / 残ったを見る (外れの MOD でも「消えた」の枝を出す、S-28e・S-21。印で絞ると枝が無くて人が止まった、スイッチ junkTidy)
         const ra = flag("junkTidy") && isKeepAnnul(h) ? aims : pick ? pickedAims(data, it, ra0, extra) : ra0;

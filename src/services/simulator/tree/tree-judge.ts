@@ -8,9 +8,9 @@
  * 完成形の MOD は外れ = S-22・S-60。全部消えてよい消去の後は全部外れ、残したい MOD の消去の後はその MOD だけ)。カードの「外れ MOD」の札 (tree-row-tags) と同じ見方。
  * 呼ぶ側は自前の比べを持たない。1 回の組み替え・回し・精査の中で judgeMemo を 1 つ作って使う (木を替えたら作り直す)
  */
-import { catalystOf, maxQualityOf, type PatchData, type StageItem } from "../../craft-stage/engine";
+import { catalystOf, maxQualityOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { catalystTagOf } from "../sim-engine";
-import { CATALYSING, isCatalyst } from "./tree-hands";
+import { CATALYSING, effectOf, isCatalyst } from "./tree-hands";
 import { tidyOn } from "./tree-junk-tidy";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { bodyOf } from "./tree-box-shape";
@@ -18,7 +18,7 @@ import { aimOpts, boxKeyOf, holdDocSig, sampleOf, SINGLE_SEEDS, startGoalAims, t
 import { boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { qualityOk } from "./tree-unbounded";
 import { goneOf, gotOf, keptAimsOf } from "./tree-keep";
-import { placedAims } from "./tree-veil";
+import { midAims, midMark, placedAims } from "./tree-veil";
 import { flag } from "../../../web/release-flags";
 
 /** 箱の中身を見る見本の数 (前の boxBody と同じ 4 つ) */
@@ -55,6 +55,9 @@ export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<strin
   // 消去の後も ✦ の印の狙いは残る (消去では消えない。S-28b2: 前は全部消えてよい消去の後に ✦ まで外れに数え、✦ だけの箱がスタートと別の中身になった、木 oWkFcwYX の b8)
   const base = new Set(keep ? [...[...keep, ...fractureMarks(doc)].map((a) => a.modId), ...outsideAimed(data, doc, b.parent ? doc.boxes[b.parent]?.hand : null, prev, before)] : prev);
   if (b.out === "hit" && b.aim) for (const a of [...boxAims(b), ...(b.anyOf ?? [])]) base.add(a.modId);
+  // エッセンスで付けた・付け直した途中の狙いは印を付ける (S-33b、スイッチ junkTidy)
+  const em = before ? midMark(doc, b.parent ? doc.boxes[b.parent]?.hand : null) : null;
+  if (em) base.add(em);
   // 狙いが消えた・狙いが付いた の箱は付いた狙いも ☑ (S-27d、ズレ 9)
   if (b.out === "lost") for (const id of gotOf(b.junkKey)) base.add(id);
   const on = goalsOn(data, doc, item);
@@ -116,6 +119,15 @@ export function sampleAimed(data: PatchData, doc: TreeDoc, id: string, seed: num
   if (!m) AIMED.set(s.item, (m = new Map()));
   m.set(id, out);
   return out;
+}
+/** 箱 id を作った手で消えた途中の狙いの MOD (見本 1 の前後から、箱の題「<MOD> が消えた」S-33c。当たり・狙いが消えた・全部消えてよい消去の箱は無し) */
+export function midGoneOf(data: PatchData, doc: TreeDoc, id: string): StageMod | null {
+  const b = doc.boxes[id], p = b?.parent ? doc.boxes[b.parent] : null, h = p?.hand, mids = midAims(doc);
+  if (!b || !p || !h || !mids.length || b.out === "hit" || b.out === "lost" || (effectOf(h.currency) === "remove" && !!h.keep && !h.keep.length)) return null;
+  const was = sampleOf(data, doc, p.id, 1), now = sampleOf(data, doc, id, 1);
+  if ([was.note, now.note].some((n) => n === "none" || n?.startsWith("cant:"))) return null;
+  const am = sampleAimed(data, doc, p.id, 1), left = [...now.item.prefixes, ...now.item.suffixes];
+  return [...was.item.prefixes, ...was.item.suffixes].find((m) => am.has(m.modId) && mids.some((a) => a.modId === m.modId) && !left.some((x) => x.modId === m.modId)) ?? null;
 }
 /** 見本を出す時の写し (値を揃えたカード、tree-fixed-values) → 元の見本 */
 const COPY_OF = new WeakMap<StageItem, StageItem>();
@@ -227,8 +239,8 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
       return Object.values(doc.boxes).filter((b) => b.id !== "start" && !b.hand && !b.back && !b.done && !b.split && !!setFor(b.id, b.id)?.has(keyFor(b.id, k))).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y));
     },
     aimedOf: (id) => samples(id).map((s) => sampleAimed(data, doc, id, s.seed)),
-    // 置き石は完成形に無いので数えない (消えても狙いが消えたにしない、S-33)
-    holdsAim: (id) => { const placed = new Set(placedAims(doc).map((a) => a.modId)); return samples(id).some((s) => { const am = sampleAimed(data, doc, id, s.seed); return [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && am.has(m.modId) && !placed.has(m.modId)); }); },
+    // 置き石は完成形に無いので数えない (消えても狙いが消えたにしない、S-33)。途中の狙いは数える (S-33b)
+    holdsAim: (id) => { const mid = new Set(midAims(doc).map((a) => a.modId)), placed = new Set(placedAims(doc).map((a) => a.modId).filter((m) => !mid.has(m))); return samples(id).some((s) => { const am = sampleAimed(data, doc, id, s.seed); return [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && am.has(m.modId) && !placed.has(m.modId)); }); },
     holdsAll(id) { const goals = doc.memoAims ?? [], ss = samples(id); return goals.length > 0 && ss.length > 0 && ss.every((s) => { const am = sampleAimed(data, doc, id, s.seed); return goals.every((g) => am.has(g.modId)); }); },
     afterQuality: (id) => samples(id).slice(0, 1).some((s) => !!s.item.qualityTag && (s.item.catalystQuality ?? s.item.quality ?? 0) > 0),
   };
