@@ -4,13 +4,27 @@
  * どの手も側で分け (変成もプレ / サフィに分かれる)、分けた後に形がまったく同じ箱は自動でまとめる (tree-merge-open、10-28 夜オーナー「あくまでも結果が同じなら統合」)
  * 鍵は `s:<プレの増減>|<サフィの増減>`。印の無い木の乱数のフラクチャーの鍵 (tree-frac-pick の junkKeyOf、`prefix|normal`) とは別の形
  */
-import type { StageItem } from "../../craft-stage/engine";
+import type { StageItem, StageMod } from "../../craft-stage/engine";
 import { flag } from "../../../web/release-flags";
 
 /** 打つ前 → 後の側の鍵 (スイッチ junkSide が閉じていれば undefined = 今までどおり 1 箱) */
 export function sideKeyOf(before: StageItem, after: StageItem): string | undefined {
   if (!flag("junkSide")) return undefined;
   return `s:${after.prefixes.length - before.prefixes.length}|${after.suffixes.length - before.suffixes.length}`;
+}
+/**
+ * 1 手の後の次の MOD 群の鍵 (S-65b の総則、スイッチ junkTidy): 側の増減だけでは同じに見える差を足す。打った後の形が＝なら同じ鍵 = 1 枝 (オーナー 11-01「ようは＝ってはなしだからね」)。
+ * `x:` 消えた狙い (kept = 印、S-27d の残したい MOD) / `u:` 冒涜の未発現の増減 / `f:` 増えた ✦ の側と狙いか外れか
+ */
+export function nextKeyOf(before: StageItem, after: StageItem, kept: ReadonlySet<string> | null | undefined): string | undefined {
+  const all = (it: StageItem): StageMod[] => [...it.prefixes, ...it.suffixes];
+  const has = (it: StageItem, id: string): boolean => all(it).some((m) => m.modId === id);
+  const gone = [...(kept ?? [])].filter((id) => has(before, id) && !has(after, id)).sort();
+  const veil = (l: StageMod[]): number => l.filter((m) => m.unrevealed).length;
+  const up = veil(after.prefixes) - veil(before.prefixes), us = veil(after.suffixes) - veil(before.suffixes);
+  const star = all(after).find((m) => m.fractured && !all(before).some((x) => x.fractured && x.modId === m.modId));
+  const parts = [...(gone.length ? [`x:${gone.join(",")}`] : []), ...(up || us ? [`u:${up}|${us}`] : []), ...(star ? [`f:${star.side === "prefix" ? "p" : "s"}${kept?.has(star.modId) ? "a" : "j"}`] : [])];
+  return parts.join(";") || undefined;
 }
 /** 側の鍵か (フラクチャーの鍵と見分ける) */
 export const isSideKey = (k: string | undefined): k is string => !!k && k.startsWith("s:");

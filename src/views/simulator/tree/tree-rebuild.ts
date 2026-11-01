@@ -138,7 +138,7 @@ function savedKeyOf(at: string, tail: string, onPath: ReadonlySet<string>, exact
   const swapHit = (t: string): string | null => (flag("keepOutside") && t === "/any" ? "/hit" : null);
   // 削減の順位の鍵 (`;w:`、S-65b より前の保存には無い) を外した札 = 順位で分かれた箱の全部へ (側の鍵の無い札と同じ読み方)
   // 狙いが付いた の鍵 (`;g:`、S-27d より前の保存には無い) も外して同じ読み方 (付いた / 付かないで分かれた狙いが消えたの箱の全部へ、スイッチ keepAll)
-  const unrank = (t: string): string => t.replace(/;w:[^\]]*\]/, "]").replace(/;g:[^\];]*/, "");
+  const unrank = (t: string): string => t.replace(/;w:[^\]]*\]/, "]").replace(/;[gxuf]:[^\];]*/g, "");
   // 乱数のフラクチャーの外れの枝の種類 (`|crafted`、S-41 で側だけにした前の保存) = 同じ側の箱 (`|normal`) の決めとして読む (スイッチ fracSide)
   const recraft = (t: string): string => t.replace(/\|normal\]/, "|crafted]");
   const sw = swap(tail);

@@ -8,6 +8,7 @@ import { nextAimed, sampleAimed, type Judge } from "./tree-judge";
 import { effectOf } from "./tree-hands";
 import { aimsOf, playHand, sampleFrom, sampleOf } from "./tree-sample";
 import { MATCH_BACK, subtree, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
+import { midAims } from "./tree-veil";
 import { flag } from "../../../web/release-flags";
 
 const RESTART = "restart";
@@ -142,7 +143,10 @@ const canPlay = (data: PatchData, item: StageItem, h: Hand): boolean => { const 
  */
 export function playableTwin(data: PatchData, doc: TreeDoc, j: Judge, at: string, item: StageItem, aimed: ReadonlySet<string>): string | null {
   if (!flag("keepOutside")) return null;
-  return j.boxesOf(item, aimed, (id) => id !== at).find((id) => { const h = doc.boxes[id]?.hand; return !h || canPlay(data, item, h); }) ?? null;
+  const can = (id: string): boolean => { const h = doc.boxes[id]?.hand; return !h || canPlay(data, item, h); };
+  // 全部消えてよい消去で途中の狙いが外れに落ちた人 (✦ + ブリーチ) も打てる箱へ。実際に持っている MOD が＝の人だけで、ランダムの外れの人は移らない。印は外れのまま (S-64、スイッチ junkTidy)
+  const held = flag("junkTidy") ? midAims(doc).filter((a) => !aimed.has(a.modId) && [...item.prefixes, ...item.suffixes].some((m) => m.modId === a.modId)).map((a) => a.modId) : [];
+  return j.boxesOf(item, aimed, (id) => id !== at).find(can) ?? (held.length ? j.boxesOf(item, new Set([...aimed, ...held]), (id) => id !== at).find(can) : undefined) ?? null;
 }
 
 /**
