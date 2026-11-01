@@ -76,7 +76,8 @@ function lostKeyed<T extends { out: OutKind; junkKey?: string }>(data: PatchData
 const RANKED: ReadonlySet<OutKind> = new Set(["junkGone", "lost"]);
 /** 削減の手の外れが消えた・狙いが消えたに、残った外れの順位の鍵を足す (S-65b、スイッチ whittleRank。閉じていれば今のまま) */
 function ranked<T extends { out: OutKind; junkKey?: string }>(h: Hand | null | undefined, oc: T, before: StageItem, after: StageItem, aims: readonly Aim[]): T {
-  if (!isWhittleHand(h) || !RANKED.has(oc.out)) return oc;
+  // 枝は 1 手の後の次の MOD 群で分ける。順位は次の次の手の情報なので鍵にしない (S-65b、スイッチ junkTidy)
+  if (flag("junkTidy") || !isWhittleHand(h) || !RANKED.has(oc.out)) return oc;
   const wk = rankKeyOf(before, after, aims);
   return wk ? { ...oc, junkKey: joinKeys(oc.junkKey, wk) } : oc;
 }

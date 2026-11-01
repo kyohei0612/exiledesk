@@ -62,7 +62,8 @@ export function rebuildTree(data: PatchData, src: TreeDoc, exactAt?: string): Tr
   if (linksAreHeld()) relinkSameHand(data, d);
   else { mergeIntoDecided(data, d, decided); relinkSameHand(data, d); linkLeftovers(data, d); if (tidyOn()) for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split) b.tidied = true; } // 開いた木は整理まで済んだ形 (S-196)
   // 決めを打ち直した箱が後の見直しで消えた (同じ手なら戻るで下を畳んだ) 札も要確認
-  const gone = [...picks.values()].filter((p) => !used.has(p.at) || !d.boxes[idOf.get(p.at) ?? ""]).map((p): RecipeOrphan => ({ at: p.at, why: "gone", raw: p }));
+  // 順位の鍵の札は 1 つの箱へまとまったので、使わなかった札は要確認に出さない (S-65b、スイッチ junkTidy)
+  const gone = [...picks.values()].filter((p) => (!used.has(p.at) || !d.boxes[idOf.get(p.at) ?? ""]) && !(flag("junkTidy") && p.at.includes(";w:"))).map((p): RecipeOrphan => ({ at: p.at, why: "gone", raw: p }));
   // 前の一覧の「gone」で札の箱が今の木にある物は持ち越さない (S-107、スイッチ keepOutside)
   const now = new Set(pathKeysOf(d).values()), carried = (rec.orphans ?? []).filter((o) => !flag("keepOutside") || o.why !== "gone" || !now.has(o.at));
   const orphans = [...carried, ...lostBacks, ...gone].filter((o) => o.why !== "gone" || !underAutoBack(d, o.at));
@@ -121,7 +122,11 @@ function savedKeyOf(at: string, tail: string, onPath: ReadonlySet<string>, exact
   const recraft = (t: string): string => t.replace(/\|normal\]/, "|crafted]");
   const sw = swap(tail);
   const tries = [at + tail, at + recraft(tail), at + unrank(tail), at + bare(tail), ...(sw ? [at + sw, at + bare(sw)] : []), ...(swapHit(bare(tail)) ? [at + swapHit(bare(tail))!] : [])];
-  return tries.find((k, i) => onPath.has(k) && (i < 4 || !exact.has(k))) ?? at + tail;
+  const hit = tries.find((k, i) => onPath.has(k) && (i < 4 || !exact.has(k)));
+  if (hit || !flag("junkTidy")) return hit ?? at + tail;
+  // 順位で分けていた前の保存 (`;w:` 付きの札) は、まとまった箱の決めとして読む。一番浅い順位の札を使う (S-65b、スイッチ junkTidy)
+  const heads = [at + tail.replace(/\](~\d+)?$/, ";w:"), `${at + bare(tail)}[w:`]; // 側の鍵の無い前の保存 (`[w:1]`) は側で分かれた箱の全部へ
+  return [...onPath].filter((k) => heads.some((h) => k.startsWith(h))).sort()[0] ?? at + tail;
 }
 
 /**

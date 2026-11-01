@@ -51,6 +51,8 @@ export function oddsOfHand(doc: TreeDoc, id: string, part = ""): Map<string, num
   }
   return out.size ? (flag("junkTidy") ? perShot(out, shot) : out) : null;
 }
+/** 削減の手の割合で見る人の数 */
+const WHITTLE_MEN = 32;
 /** 箱に着く人 (w = 割合、和 1) */
 type Man = { raw: StageItem; aimed: ReadonlySet<string> | null; w: number };
 /** 手の結果を打てた人の割合で割り直す (打てない人は打てる箱へ移る S-64 ので、割合に入れない) */
@@ -61,11 +63,13 @@ const perShot = (m: Map<string, number>, shot: number): Map<string, number> => {
  * 着いた見本が無ければ、閉じた形は今までどおり形に合う見本 1 つ
  */
 function peopleOf(data: PatchData, doc: TreeDoc, id: string): Man[] {
-  if (flag("judgeOne")) for (let k = 1; k <= SINGLE_SEEDS; k++) sampleAimed(data, doc, id, k);
+  // 削減の手は箱に着いた人の本物の外れの MOD レベルで決まるので人数を多く見る (S-65b)
+  const seeds = flag("junkTidy") && isWhittleHand(doc.boxes[id]?.hand) ? WHITTLE_MEN : SINGLE_SEEDS;
+  if (flag("judgeOne")) for (let k = 1; k <= seeds; k++) sampleAimed(data, doc, id, k);
   const one = (raw: StageItem): Man[] => [{ raw, aimed: flag("judgeOne") ? aimedOfSample(id, raw) : null, w: 1 }];
   if (!flag("junkTidy")) return one(shapeSampleOf(data, doc, id));
   const by = new Map<string, Man>();
-  for (let k = 1; k <= SINGLE_SEEDS; k++) {
+  for (let k = 1; k <= seeds; k++) {
     const x = sampleOf(data, doc, id, k);
     if (x.note === "none" || x.note?.startsWith("cant:")) continue;
     const aimed = flag("judgeOne") ? aimedOfSample(id, x.item) : null, key = `${itemKeyOf(x.item)}|${aimed ? [...aimed].sort().join() : ""}`, e = by.get(key);
@@ -90,7 +94,7 @@ function sideOdds(doc: TreeDoc, id: string, part: string): Map<string, number> |
   for (const man of men) {
     const item0 = prepFor(data, man.raw, b.hand.currency), aimed = man.aimed;
     // 削減の手は外れを MOD レベルの範囲ごとの代わりに差し替えた見本 (割合 = その範囲の重み、tree-whittle)。ほかは見本のまま
-    const forms = isWhittleHand(b.hand) ? rankVariants(data, item0, aimedAims(aims, keptAimedOf(doc, b.hand, aimed)), b.junkKey) : [{ p: 1, item: item0 }];
+    const forms = isWhittleHand(b.hand) && !flag("junkTidy") ? rankVariants(data, item0, aimedAims(aims, keptAimedOf(doc, b.hand, aimed)), b.junkKey) : [{ p: 1, item: item0 }];
     for (const f of forms) {
       const live = (stepOutcomes(data, f.item, b.hand.currency, engineOmens(b.hand)) ?? []).filter((r) => !r.void);
       const total = live.reduce((n, r) => n + r.p, 0);
