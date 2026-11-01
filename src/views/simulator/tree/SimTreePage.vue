@@ -267,6 +267,8 @@ function openIssues(): void { simOp("open-missing"); issuesShown.value = true; i
 /** 待たせている間の小さな札 (題の横。データの読み込み・箱を順に出している間、共通の BusyTag。精査の進みは精査の帯の上) */
 // 100 人回す (結果は木の上に重ねる層だけ、use-tree-run.ts・TreeRunLayer.vue。値段 = 始め方のベースの値段 (結果のまとめで入れる、use-tree の startPrice) + 今の相場)
 const jt = useJunkTidy(doc, t.edit, (id) => void goIssue(id));
+/** 上の赤い札の数 = 下の「未設定 n つ」と同じ ! の箱の数 (1 箱に 2 行ある時に上下で違った、S-89b、スイッチ junkTidy) */
+const holeN = computed(() => (flag("junkTidy") ? new Set((issues.value ?? []).filter((x) => doc.value.boxes[x.boxId]).map((x) => x.boxId)).size : issues.value?.length ?? 0));
 const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
 /** 穴チェックのボタン: 精査と 30 人の走行 (treeLight は精査の 30 人を走行に使い回す、S-71b) */
 async function onTest(): Promise<void> {
@@ -399,7 +401,7 @@ const phone = usePhone();
         <TreeIssues v-if="issues?.length && issuesShown && issuesOpen" class="absolute left-0 top-full z-40 mt-1" :issues="issues" :busy="checkBusy" :lower="false" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" />
         <TreeRecipeBar v-if="t.needBase.value" @opened="v.openView()" />
         <template v-else>
-          <TreeRunBar v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking, passed, holes: issues?.length ?? 0, shown: issuesShown }" :tidy="{ step: jt.step.value, unset: jt.unset.value.length, guide: jt.guide.value, busy: jt.busy.value }" @tidy="jt.press" @tidy-back="jt.back" :halted="tr100.halted.value" :drive="tr100.test.value" @test="onTest" @holes="issuesShown = !issuesShown" @holes-on="openIssues" @list="issuesOpen ? (issuesOpen = false) : openIssues()" @run="tr100.run" @go="goIssue" />
+          <TreeRunBar v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking, passed, holes: holeN, shown: issuesShown }" :tidy="{ step: jt.step.value, unset: jt.unset.value.length, guide: jt.guide.value, busy: jt.busy.value, empty: jt.empty.value }" @tidy="jt.press" @tidy-back="jt.back" :halted="tr100.halted.value" :drive="tr100.test.value" @test="onTest" @holes="issuesShown = !issuesShown" @holes-on="openIssues" @list="issuesOpen ? (issuesOpen = false) : openIssues()" @run="tr100.run" @go="goIssue" />
           <TreeRunSum v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" :test="tr100.test.value" :before="tr100.before.value" @go="goIssue" @skip="tr100.skipWalk" />
         </template>
         <!-- ベースが無い空の形でも、ほかの木があればタブを出す (前の木へ戻れない行き止まりだった、10-24 夜オーナー「一方通行が多い」) -->
