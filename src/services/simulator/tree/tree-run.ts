@@ -19,7 +19,7 @@ import { fractureMarks, type Aim, type OutKind, type TreeDoc } from "./tree-mode
 import { stepOutcomes } from "../sim-engine";
 import { bodyMemo, bodyOf, heldOn } from "./tree-box-shape";
 import { aimedAfterAnnul, judgeMemo, nextAimed, startAimed, type Judge } from "./tree-judge";
-import { playableTwin, routeOf, twinAimed } from "./tree-judge-link";
+import { playableTwin, routeOf, twinAimed, canPlay } from "./tree-judge-link";
 import { flag } from "../../../web/release-flags";
 
 export interface TreeRunOpts {
@@ -258,7 +258,8 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     // 全部消えてよい消去の直線で、もう手のある箱と同じ中身 = 打たずにその箱へ (S-28)。前は打たずに次の箱へ通し、次の箱に人の手があるとその手を打った
     // (✦ を狙いのまま数えると「最大ライフ (外れ) + ✦」が b2 と同じ中身になり、木 oWkFcwYX の b7 → b8 で起きた。スイッチ judgeOne)
     const stopAt = j && stripStop(data, doc, b) ? stripStopByContent(data, doc, at, item, false, aimedAfterAnnul(data, doc, b.hand, aimed, item)) : null;
-    if (stopAt) { visit(at, true); at = stopAt; continue; }
+    // 飛び先の手がこの人に打てない時は飛ばずにここで打つ (飛ぶと playableTwin がここへ戻し、費用 0 の往復が手の上限まで続いた、11-02 S-28c)
+    if (stopAt && canPlay(data, item, doc.boxes[stopAt]!.hand!)) { visit(at, true); at = stopAt; continue; }
     o.onHand?.(at, item);
     const r = playHand(data, item, b.hand, rng, own, use, false, stripStop(data, doc, b));
     if (!r.applied) {

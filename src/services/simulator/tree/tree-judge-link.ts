@@ -136,7 +136,7 @@ export function arrivalsOf(data: PatchData, doc: TreeDoc, j: Judge, id: string):
 }
 
 /** 回す時に手が打てるか (playHand。乱数の当たり所で弾かれる物は打てる扱い) */
-const canPlay = (data: PatchData, item: StageItem, h: Hand): boolean => { const r = playHand(data, item, { ...h, repeat: null }, mulberry32(1)); return r.applied || !!r.random; };
+export const canPlay = (data: PatchData, item: StageItem, h: Hand): boolean => { const r = playHand(data, item, { ...h, repeat: null }, mulberry32(1)); return r.applied || !!r.random; };
 
 /**
  * 着いた箱の手が打てない人の行き先 (S-64、スイッチ keepOutside): 中身の同じ箱のうち、手が打てる箱か完成 / 失敗の箱 (浅い段・先に作った箱から)。
