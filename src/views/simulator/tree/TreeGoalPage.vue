@@ -46,6 +46,7 @@ import { useEditReset } from "./use-edit-reset";
 import { useDismiss } from "../../../utils/use-dismiss";
 import TreeAttachPick from "./TreeAttachPick.vue";
 import { wayName } from "./tree-attach";
+import { simOp } from "../../../web/track";
 /** 段の行のボタンを「付ける」1 つに (S-10b) */
 const ATTACH = flag("attachWay");
 
@@ -183,6 +184,7 @@ const cardTags = computed(() => { const tg = shown.tags.value, tv = wayToggles.v
 const overLeft = computed(() => { const l = t.goalItem.value?.left ?? [], b = shown.bundled.value; return b.size ? l.filter((a) => !b.has(a.modId)) : l; });
 /** 残るクラフト MOD が上限を超えている間の「決めた」を押せない理由 */
 const undecided = computed(() => (s.data.value ? wayUndecided(s.data.value, t.doc.value, t.goalItem.value?.item ?? null) : null));
+watch(() => !!undecided.value, (v) => { if (v) simOp("goal-undecided"); });
 /** 完成の狙いに無い MOD を当たりにしている箱 (狙いを外した後も木に残る。tree-model の orphanHits) */
 const orphans = computed(() => orphanHits(t.doc.value));
 const orphanNames = computed(() => [...new Set(orphans.value.map((id) => t.aimShort(t.doc.value.boxes[id]!.aim!)))].join(tr("・", ", ")));
@@ -233,7 +235,7 @@ const marks = computed(() => t.goals.value.filter((a) => a.fractured).map((a) =>
 /** スマホの形で「フラクチャーから」の時は、カードの MOD を押すとフラクチャー (✦、1 つだけ。右クリックが無いので。10-26 夜オーナー) */
 const tapFrac = useTapFracture();
 /** 印を付け外す (始め方はツリーへ行く時の窓 TreeStartAsk でまとめて決める、10-26 夜オーナー「そこで決める形に統一」。前は印を付けた時に 2 択を聞いた) */
-function markFracture(modId: string, tier: number): void { t.toggleFracture(modId, tier); }
+function markFracture(modId: string, tier: number): void { simOp("mark-fracture"); t.toggleFracture(modId, tier); }
 /** ツリーへ (「決めた」・流れの帯の 3 / 4): 完成の狙いがあれば「フラクチャーから / 白ベースから」の窓を出してから (どの入口から来ても同じ) */
 const startAsk = ref<null | (() => void)>(null);
 /** 品質の 2 択・カタリストの種類が未定のまま「決めた」を押した (押した後だけ欄の下に理由を出す、S-31c、スイッチ qualityAsk) */
@@ -244,13 +246,15 @@ const needMod = ref<[string, string] | null>(null);
 function askNeedMod(): boolean {
   const it = t.goalItem.value?.item;
   if (!flag("goalNeedMod") || !it || it.prefixes.length || it.suffixes.length) return false;
+  simOp("goal-need-mod", t.goalRarity.value);
   needMod.value = t.goalRarity.value === "normal" && t.goals.value.length ? ["ノーマルには MOD が付きません。マジックかレアを選んでから、何か 1 つ MOD を決めてください", "Normal items have no mods. Pick Magic or Rare, then choose at least 1 mod"] : ["何か 1 つ MOD を決めてください", "Choose at least 1 mod"];
   return true;
 }
 function toTree(after?: () => void): void {
   if (undecided.value) return;
   if (askNeedMod()) return;
-  if (qualityUndecided(t.doc.value, t.goalItem.value?.item)) { qualityTried.value = true; document.querySelector("[data-tree-goal-quality]")?.scrollIntoView({ block: "nearest" }); return; }
+  if (qualityUndecided(t.doc.value, t.goalItem.value?.item)) { simOp("goal-need-quality"); qualityTried.value = true; document.querySelector("[data-tree-goal-quality]")?.scrollIntoView({ block: "nearest" }); return; }
+  simOp("goal-done", t.goals.value.length);
   const go = (): void => edits.leave(() => { closeNow(); after?.(); });
   // 狙いが無い時はフラクチャーにする物が無いので聞かずに進む (答えた扱い)
   if (t.goals.value.length) startAsk.value = go; else { t.edit((d) => { d.fracAsked = true; }); go(); }
@@ -418,6 +422,6 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <button type="button" data-tree-goal-need-mod-ok class="g-btn-red min-h-11 w-full" @click="needMod = null">{{ tr("OK", "OK") }}</button>
       </div>
     </ModalShell>
-    <TreeStartAsk v-if="startAsk" @done="() => { const go = startAsk; startAsk = null; go?.(); }" @close="startAsk = null" />
+    <TreeStartAsk v-if="startAsk" @done="() => { const go = startAsk; startAsk = null; go?.(); }" @close="simOp('cancel', 'start-ask'); startAsk = null" />
   </ModalShell>
 </template>

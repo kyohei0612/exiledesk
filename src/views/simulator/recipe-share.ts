@@ -115,7 +115,9 @@ export async function openSharedRecipe(): Promise<void> {
   // 開いた後は URL から外す (読み直すたびに足されないように)
   try { history.replaceState(null, "", location.pathname + location.search); } catch { /* 外せなくても開く */ }
   // タップ 1 回で木まで: スマホは「完成形と全体図」の窓を開いて着く (PC は木のページがそのまま木。S-103、スイッチ recipeJump)
-  if (await openRecipeCode(m[1]!)) setMapFold(false);
+  const ok = await openRecipeCode(m[1]!);
+  logRecord("tree_recipe_open", { ok });
+  if (ok) setMapFold(false);
 }
 
 /** 貼った物からレシピの中身を取り出す (URL の全体でも、#recipe= の後ろだけでも。開発版・本番どちらの URL でも中身は同じ) */

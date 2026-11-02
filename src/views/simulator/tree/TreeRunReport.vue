@@ -15,6 +15,7 @@ import { useTree } from "./use-tree";
 import { handLabel, handName, outName, startName } from "./tree-names";
 import { tr } from "../../../i18n/lang";
 import { driveHead } from "./hole-check";
+import { simOp } from "../../../web/track";
 
 /** test = 穴チェックの走行の結果 (10-27 オーナー: 足りない所があっても回し、どの箱で何人止まった・どこでループしたか。費用の欄は出さない) */
 /** note = 見出しの下の 1 行 (スマホの 10 人、S-94e) */
@@ -41,6 +42,7 @@ const loops = computed(() => Object.entries(props.result.loopAt ?? {}).sort((a, 
 const whyOf = (id: string): string => props.result.stuckWhy[id]?.reason ?? "";
 /** 取引所で探す (開くだけ、値段は手で入れる。ノーマル = 白、フラクチャー済み = ✦ の MOD がフラクチャー、ほかは ✦ が無いので探せない) */
 const ts = useTreeSearch();
+simOp("report-open");
 const searchKind = computed((): TreeSearchKind | null => (startsFractured(t.doc.value) ? "fractured" : startRarity(t.doc.value) === "normal" ? "white" : null));
 const priceIn = computed(() => startOf(t.doc.value).price ?? null);
 </script>
