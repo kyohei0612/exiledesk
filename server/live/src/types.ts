@@ -73,6 +73,10 @@ export interface Env {
   STATS_SINCE?: string;
   /** 操作の印を集計する Analytics Engine の dataset 名 (無ければ exiledesk_events)。再現の確かめ (sim.ts) で別の置き場を数える時だけ */
   EVENTS_DATASET?: string;
+  /** "on" の時だけ共通アカウントの口 (/account/*) を開ける (account.ts、A-51。本番の wrangler.jsonc には書かない) */
+  ACCOUNT?: string;
+  /** 引き継ぎコード・端末の札の HMAC の鍵 (secret、A-12。無ければ手元の仮の鍵) */
+  ACCOUNT_PEPPER?: string;
   /** "1" の時だけ再現の確かめの入口 (/__sim/…) を開ける (wrangler.sim.jsonc。本番には無い) */
   SIM?: string;
   /** Discord を読むだけの Bot のトークン (secret。オーナーが `wrangler secret put DISCORD_BOT_TOKEN` で入れる、discord.ts) */

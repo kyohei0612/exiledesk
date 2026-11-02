@@ -32,6 +32,7 @@ import { pullDiscord } from "./discord";
 import { flushAiReview } from "./ai-review";
 import { MARKET_KEY, refreshMarket } from "./market";
 import { compare, exportSessions } from "./sim";
+import { handleAccount } from "./account";
 import type { ChannelDef, Env, Fetch, LiveState } from "./types";
 
 const STATE_KEY = "state";
@@ -132,6 +133,9 @@ const keyOk = (env: Env, req: Request): boolean => {
 
 async function handle(req: Request, env: Env, ctx: ExecutionContext, url: URL): Promise<Response> {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
+  // 共通アカウント (account.ts、vars ACCOUNT = on の時だけ。本番は 404)
+  const acc = await handleAccount(req, env, url, json, keyOk);
+  if (acc) return acc;
   // AI の評価と見解の全文を #日報 へ (ai-review.ts)。D1 に置いた物を流すだけで中身は受け取らない
   if (url.pathname === "/ai-review/flush" && req.method === "POST") return json(await flushAiReview(env));
   // 窓なしの Chrome (部長たちの確かめ) の分析の記録は置かない (10-24 オーナー「2 で」。記録に UA が無く後から見分けられないため、受ける時に外す)
