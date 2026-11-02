@@ -34,7 +34,7 @@ const baseName = (r: TreeRecipe): string => tr(jaTypeName(r.tree.base), r.tree.b
 /** 1 枚の要約 (ベースの絵・完成の狙い・印・空の木か。帯の小窓と同じ) */
 const sumOf = (r: TreeRecipe) => recipeSummary(r.tree);
 const countOf = (r: TreeRecipe): { boxes: number; done: number } => {
-  // 保存の形 v1 (打ち方だけ、スイッチ recipeV1) は箱を持たないので、決めた箱の数を数える
+  // 保存の形 v1 (打ち方だけ) は箱を持たないので、決めた箱の数を数える
   const bs = r.tree.picks ? r.tree.picks : Object.values(r.tree.boxes);
   return { boxes: bs.length, done: bs.filter((b) => b.done).length };
 };

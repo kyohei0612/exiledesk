@@ -20,7 +20,6 @@ import { track } from "../../../utils/track";
 import { tr } from "../../../i18n/lang";
 import { useTree } from "./use-tree";
 import { maxQualityOf, tierRankOf } from "../../../services/craft-stage/engine";
-import { flag } from "../../../web/release-flags";
 import { markPristine, quickSave, unsaved } from "./tree-save";
 
 /** 最後に取り込んだ結果 (sim-mods の上に出す。閉じるか次の取り込みまで) */
@@ -81,7 +80,7 @@ export function requestEmuItem(item: StageItem): void {
 
 /** 読めたアイテム (ベース・アイテムレベル・読み方) を木に入れて ② 完成の MOD のページへ (貼り付けとエミュの共通) */
 /** emu = エミュから来た時の暗黙の振り (TreeDoc.goalImplicit)。貼り付けは無し */
-/** quality = 貼った文・エミュのアイテムの品質と種類。完成形の品質の欄に入れておき、「品質も狙う」☑ をオンにした時にその値で出す (☑ は既定オフのまま。10-27 夜オーナー、スイッチ goalQuality) */
+/** quality = 貼った文・エミュのアイテムの品質と種類。完成形の品質の欄に入れておき、「品質も狙う」☑ をオンにした時にその値で出す (☑ は既定オフのまま。10-27 夜オーナー) */
 function takeReadings(base: { en: string; ja: string }, itemLevel: number | null | undefined, readings: ItemTextReading[], emu: TreeDoc["goalImplicit"] | null = null, quality: { value: number; tag: string | null } | null = null): void {
   const t = useTree();
   t.setBase(base.en, itemLevel ?? t.doc.value.itemLevel);
@@ -99,17 +98,15 @@ function takeReadings(base: { en: string; ja: string }, itemLevel: number | null
   t.needBase.value = false;
   // 新しく取り込んだ完成形は、フラクチャーの設定をまだ答えていない扱い (スイッチ fracFirst)
   t.edit((d) => { if (emu) d.goalImplicit = emu; else delete d.goalImplicit; delete d.fracAsked; });
-  if (flag("goalQuality")) {
-    const g = t.goalItem.value?.item;
-    t.edit((d) => {
-      delete d.goalQualityOn; delete d.goalQualityNo; delete d.goalQuality; delete d.goalQualityTag; delete d.goalQualityCap;
-      if (!quality || quality.value <= 0) return;
-      d.goalQuality = quality.value;
-      if (quality.tag) d.goalQualityTag = quality.tag;
-      // ベースの上限を超える品質は、品質の帯の上限もその値まで上げておく
-      if (g && quality.value > maxQualityOf(g)) d.goalQualityCap = quality.value;
-    });
-  }
+  const g = t.goalItem.value?.item;
+  t.edit((d) => {
+    delete d.goalQualityOn; delete d.goalQualityNo; delete d.goalQuality; delete d.goalQualityTag; delete d.goalQualityCap;
+    if (!quality || quality.value <= 0) return;
+    d.goalQuality = quality.value;
+    if (quality.tag) d.goalQualityTag = quality.tag;
+    // ベースの上限を超える品質は、品質の帯の上限もその値まで上げておく
+    if (g && quality.value > maxQualityOf(g)) d.goalQualityCap = quality.value;
+  });
   openTreePage("mods");
   t.goalPage.value = 2;
   // エミュから入れたままの木は、戻る時に保存を聞かない (10-26 夜オーナー)

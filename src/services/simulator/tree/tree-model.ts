@@ -119,7 +119,7 @@ export interface TreeBox {
   noLost?: true;
   /** 要確認 (tree-migrate の読み替えで読めなかった所: out = 結果の種類・aim = 狙い・hand = 打つ手・link = 矢印の先)。checkRaw = 読めなかった元の値 (捨てない) */
   check?: Array<"out" | "aim" | "hand" | "link">; checkRaw?: Record<string, unknown>;
-  /** S-51 の同じ手の戻り: 人が選んだ手 (保存の v1 はこれを打ち方として持つ)・fresh = 組み直しで増えた箱 (開いた時だけ、S-107。スイッチ recipeV1) */ handBack?: Hand; fresh?: true;
+  /** S-51 の同じ手の戻り: 人が選んだ手 (保存の v1 はこれを打ち方として持つ)・fresh = 組み直しで増えた箱 (開いた時だけ、S-107) */ handBack?: Hand; fresh?: true;
 }
 /** 分かれ目の条件の範囲 [下, 上] (上は 99 で「以上」) */
 export type SplitRange = [number, number];
@@ -193,7 +193,7 @@ export interface TreeDoc {
   fracAsked?: true;
   /** ハズレ整理を 1 度押した (S-192。保存しない) */
   tidyRan?: true;
-  /** 完成形の「途中で消える」クラフト MOD (完成の狙いに数えない。tree-way-mods.ts、10-27 夜オーナー、スイッチ goalQuality) */
+  /** 完成形の「途中で消える」クラフト MOD (完成の狙いに数えない。tree-way-mods.ts、10-27 夜オーナー) */
   wayMods?: Aim[];
   /**
    * エミュの「シミュレーターへ」で来た時の暗黙の値の振り (エミュのアイテムの rollSeed・implicitRoll・implicitFixed)。完成形のアイテムの暗黙をエミュと同じ値で出す

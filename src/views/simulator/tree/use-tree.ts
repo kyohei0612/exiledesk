@@ -233,7 +233,7 @@ function setTreeNote(text: string): void {
 /** 別の木を開いた回数 (開いた木の箱を上から順に出し直す、use-tree-reveal.ts) */
 const opened = ref(0);
 const putTree = (t: TreeDoc): void => { needBase.value = false; opened.value++; edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, JSON.parse(JSON.stringify(t))); migrateStart(d); }, true); };
-/** 別の木を開く (レシピ・共有の URL から。1 つ戻すで前の木へ戻せる)。スイッチ recipeV1 の下は打ち方から組み直す (S-105、データがまだ無ければ前提だけ開き、来たら組み直す)。stepped = 少しずつ描いて開く (S-196) */
+/** 別の木を開く (レシピ・共有の URL から。1 つ戻すで前の木へ戻せる) の下は打ち方から組み直す (S-105、データがまだ無ければ前提だけ開き、来たら組み直す)。stepped = 少しずつ描いて開く (S-196) */
 function open(tree: TreeDoc, stepped = false): void {
   if (stepped && s.data.value && tidyOn()) { void openStepped(s.data.value, tree, doc, () => { needBase.value = false; opened.value++; }, putTree); return; }
   const f = openForm(tree, s.data.value);

@@ -18,7 +18,7 @@ import { tr } from "../../../i18n/lang";
 export type CheckRun = { key: string; startCost: number; run: TreeRunResult };
 
 /**
- * 要確認の一覧 (S-107・⑦20 案 A、スイッチ recipeV1): 組み直した木に札の無い決め・前の版の人の ↩・分かれ目・読めなかった所。
+ * 要確認の一覧 (S-107・⑦20 案 A): 組み直した木に札の無い決め・前の版の人の ↩・分かれ目・読めなかった所。
  * 印は札の残っている一番近い上の箱に付ける (人が一覧で見て、その箱で決め直す)。合格を止める
  */
 export function orphanIssues(d: TreeDoc): CheckIssue[] {

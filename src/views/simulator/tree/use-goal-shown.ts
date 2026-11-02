@@ -1,5 +1,5 @@
 /**
- * use-goal-shown.ts — 完成形のカードに出すアイテム (TreeGoalPage・TreeGoalCard・スマホの PhoneOverview で共通。スイッチ goalQuality)。
+ * use-goal-shown.ts — 完成形のカードに出すアイテム (TreeGoalPage・TreeGoalCard・スマホの PhoneOverview で共通)。
  * 「品質も狙う」☑ がオンの時は品質の値・種類をカードに乗せる。品質がベースの上限を 11% 以上超える時 (上限 20 → 31% 以上。+10 まではヴァールのインフューザーで届く)、
  * ブリーチのエッセンスの MOD の行を足して「途中で消える」の札を付ける (10-27 夜オーナー「途中で消えるって書いとけばいいんじゃね、完成品に」)。
  * 足した行は見せるだけ: 完成の狙い・MOD の枠 (use-tree の goalItem の left)・完成の判定には数えない (品質の値で見るのは tree-unbounded の qualityOk のまま)

@@ -76,6 +76,7 @@
 - 確かめ: 見張り = 型 0・build:web 通過だけ。見張りの fullcheck・画面は未。push はしていない (出しが済むまで止める、ブラック 36)。
 - commit 2 (rowNear・rowPack・mergeOpen) 済み: 前の置き方 strip は使い手 0 で消す。place.mjs・lines.mjs の比べは未。
 - commit 3 (keepOutside・keepAll・attachWay・judgeOne・freeNoHit・junkSide・whittleRank・fracMulti・fracOne) 済み: 旧の側は全部「消す」。一緒に消えた物 = wayUndecided (いつも null)・TreeStartAsk の ✦ 複数と 1 つ選びの節 (fracOne が開いて通らない)・shapeSampleWithNote の形の比べ (shapeFit の関数は残す)。start-cost の fracMulti の引数はエンジン側なので true を渡すだけで残す。確かめ: 型 0・build:web 通過 (vue-tsc は template の重なった属性を見ないので、build で 1 つ見つけて直した)。judge.mjs・見本の木の 100 人の比べは未。
+- commit 4 (recipeV1・oldBone・goalQuality) 済み: 旧の側は全部「消す」(保存はいつも v1、前の骨の手は「発現させない」に読み替え、貼り付けはいつも品質を取り込む)。読む側 (migrateTreeDoc・oldVeil) は新の側なので残る。確かめ: 型 0・build:web 通過。古い保存・共有 URL を画面で開く確かめは未。v1-dry.mjs の archive 行きは scripts/sim-watch が「共通」(ジン部長) の持ち場なので未 (ブラック 36 へ回す。RELEASED に入ったスイッチには --off が効かないので、今も --off は空振り = docs/org/dev/sim-watch.md 44)。
 
 ## 消す段取り (合図 1 つで始める)
 オーナーの確認が終わってから (1440 が空いてから)。シミュ部長 1 人で、worktree で。commit ごとに `pnpm -s exec vue-tsc --noEmit -p tsconfig.json` (型 0)。

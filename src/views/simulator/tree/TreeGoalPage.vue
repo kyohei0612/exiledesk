@@ -51,7 +51,7 @@ import { simOp } from "../../../web/track";
 
 
 const t = useTree();
-/** 完成形のカード (品質・ブリーチの「途中で消える」の行、スイッチ goalQuality) */
+/** 完成形のカード (品質・ブリーチの「途中で消える」の行) */
 const shown = useGoalShown();
 const step = computed(() => t.goalPage.value);
 const asking = ref<string | null>(null);
@@ -160,7 +160,7 @@ function apply(en: string): void {
 }
 /** 貼り付けで取り込んだ (ベースと狙いは tree-paste が入れた) = 完成の MOD のページへ */
 function onPasted(): void { asking.value = null; dropped.value = []; unpicked.value = false; t.needBase.value = false; go(2); }
-/** 途中で消えるクラフト MOD (tree-way-mods) も一覧では狙いと同じに光り、押すと外れる (スイッチ goalQuality) */
+/** 途中で消えるクラフト MOD (tree-way-mods) も一覧では狙いと同じに光り、押すと外れる  */
 const pickGoal = {
   has: (modId: string, tier: number): boolean => t.hasGoal(modId, tier) || ((t.doc.value.wayMods ?? []).some((a) => a.modId === modId && a.tier === tier)),
   toggle: (modId: string, tier: number): void => { if (inWay(t.doc.value, modId)) t.edit((d) => dropWay(d, modId)); else t.toggleGoal(modId, tier); },
@@ -194,7 +194,7 @@ let blockMemo = new Map<string, string | null>(), blockFor = "";
 function blockOf(modId: string, tier: number): string | null {
   const d = s.data.value, doc = t.doc.value;
   if (!d) return null;
-  // クラフト MOD は 2 つ目以降も足せる (残すか途中で消えるかはカードの下で決める、スイッチ goalQuality)。ほかのクラフト MOD を除いた組で聞く
+  // クラフト MOD は 2 つ目以降も足せる (残すか途中で消えるかはカードの下で決める)。ほかのクラフト MOD を除いた組で聞く
   const craft = isCraftAim(d, { modId });
   const lv = doc.ilvlFit ? FIT_ILVL : doc.itemLevel, aims = t.goals.value.filter((a) => a.modId !== modId && !(craft && isCraftAim(d, a))).map((a) => ({ modId: a.modId, tier: a.tier }));
   const key = `${doc.base}|${lv}|${craft ? 1 : 0}|${JSON.stringify(aims)}`;
@@ -370,9 +370,9 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       <div data-tree-goal-card class="sticky top-3 flex shrink-0 flex-col gap-2 max-md:static max-md:order-first md:w-[480px]">
         <p v-if="tapFrac.on.value" data-tree-goal-tap-frac class="break-words rounded border border-[#a3342a]/60 bg-[rgba(163,52,42,0.25)] px-2 py-1.5 text-[13px] text-mod-fractured">{{ tapFrac.note.value }}</p>
         <StageItemCard :row-group="shown.groups.value" v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="cardTags" :row-toggles="wayToggles" @toggle="(id: string) => t.edit((d) => toggleWay(d, id))" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable :click-fracture="flag('clickFracture')" row-remove tier-at-least :mods-head="tr('完成形の MOD', 'Target mods')" @fracture="onCardFracture" @remove="onCardRemove" @jump="(id) => tapFrac.on.value && tapFrac.tap(id, [...(t.goalItem.value?.item.prefixes ?? []), ...(t.goalItem.value?.item.suffixes ?? [])].find((x) => x.modId === id))" />
-        <!-- 完成形の品質 (20% を超えるとブリーチのエッセンスの MOD が要る、10-27 夕オーナー、スイッチ goalQuality) -->
+        <!-- 完成形の品質 (20% を超えるとブリーチのエッセンスの MOD が要る、10-27 夕オーナー) -->
         <TreeGoalQuality v-if="t.goalItem.value" :warn="qualityWarn" />
-        <!-- クラフト MOD が 2 つ以上: どれを途中で消すか (完成の狙い・枠・完成の判定に数えない)。残るのはクラフト MOD の上限まで (10-27 夜オーナー、スイッチ goalQuality) -->
+        <!-- クラフト MOD が 2 つ以上: どれを途中で消すか (完成の狙い・枠・完成の判定に数えない)。残るのはクラフト MOD の上限まで (10-27 夜オーナー) -->
         <div v-if="crafts.length" data-tree-goal-ways class="flex flex-col gap-1 px-1 text-[12px]">
           <span v-if="!inRow" class="opacity-80">{{ tr("クラフト MOD (途中で消える物は完成の狙いに数えない)", "Crafted mods (ones removed on the way don't count as final targets)") }}</span>
           <!-- 行の右に置いた時: 打つ順の文はカードの札に乗せると出る。スマホは乗せられないので ? を 1 つ -->

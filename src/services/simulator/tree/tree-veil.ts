@@ -9,21 +9,20 @@ import { aimHits, tierIndexOf, type PatchData, type StageItem, type StageMod } f
 import { isInfiniteEssence } from "../../craft-stage/apply-essence";
 import { effectOf, isBone } from "./tree-hands";
 import type { Aim, Hand, TreeDoc } from "./tree-model";
-import { flag } from "../../../web/release-flags";
 
 /** 後から打つ発現の手のキー (エンジンの発現は reveal:N。どれを選ぶかは tree-sample の revealBy が ☑ で決める) */
 export const REVEAL_KEY = "reveal";
 /** 後から打つ発現の手か */
 export const isRevealHand = (key: string | undefined): boolean => key === REVEAL_KEY;
 /**
- * 骨の手の発現の読み方 (S-59、スイッチ oldBone)。前の版の骨の手 (veil の無い物 = 打ったら発現まで進む) は、☑ (当たりの札) が無ければ「未発現のまま」(keep。
+ * 骨の手の発現の読み方 (S-59)。前の版の骨の手 (veil の無い物 = 打ったら発現まで進む) は、☑ (当たりの札) が無ければ「未発現のまま」(keep。
  * 10-31 朝オーナー決め 4「A 今は違うけど古いやつどーするって話なら」)。☑ のある前の手は開いた時の組み直し (tree-rebuild の oldVeil) が「発現させる」(pick) を付ける
  * (10-30 オーナー「59は修正で」)。閉じている間は veil のまま (無ければ前の分け方)
  */
-const veilOf = (h: Pick<Hand, "currency" | "veil">): Hand["veil"] => h.veil ?? (flag("oldBone") && isBone(h.currency) ? "keep" : undefined);
-/** 前の版の骨の手 (veil 無し) に、保存の ☑ (aims) の有無で読み方を付ける (S-59、スイッチ oldBone。組み直しの tree-rebuild が呼ぶ) */
+const veilOf = (h: Pick<Hand, "currency" | "veil">): Hand["veil"] => h.veil ?? (isBone(h.currency) ? "keep" : undefined);
+/** 前の版の骨の手 (veil 無し) に、保存の ☑ (aims) の有無で読み方を付ける (S-59。組み直しの tree-rebuild が呼ぶ) */
 /** ☑ の無い (狙い無し free の印・当たりの札の無い) 前の骨は未発現のまま */
-export const oldVeil = (h: Hand, aims: readonly unknown[]): Hand => (flag("oldBone") && isBone(h.currency) && !h.veil ? { ...h, veil: aims.length && !h.free ? "pick" : "keep" } : h);
+export const oldVeil = (h: Hand, aims: readonly unknown[]): Hand => (isBone(h.currency) && !h.veil ? { ...h, veil: aims.length && !h.free ? "pick" : "keep" } : h);
 /** 骨の手を未発現のまま次へ (結果は「未発現の冒涜が付いた」1 つ) */
 export const veilKeep = (h: Pick<Hand, "currency" | "veil"> | null | undefined): boolean => !!h && isBone(h.currency) && veilOf(h) === "keep";
 /** 発現で ☑ の MOD を選ぶ手 (骨の「発現させる」☑・後から打つ発現の手) */

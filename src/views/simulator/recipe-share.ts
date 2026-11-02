@@ -29,7 +29,7 @@ type PackedTree = { v: 2; n: string; t: TreeDoc };
 
 /** ツリーのレシピの URL (#recipe= の頭は同じ。開くと読む側が v で見分ける) */
 export async function treeShareUrl(r: { name: string; tree: TreeDoc }): Promise<string> {
-  // スイッチ recipeV1 の下は打ち方だけ (v1、S-104)。開く側は v1 も前の木も migrateTreeDoc で読む
+  // 打ち方だけ (v1、S-104)。開く側は v1 も前の木も migrateTreeDoc で読む
   const code = await packJson({ v: 2, n: r.name, t: toRecipeV1(r.tree) } satisfies PackedTree);
   const base = isTauriRuntime() ? "https://exiledesk.com/" : `${location.origin}${location.pathname}`;
   return `${base}${RECIPE_SHARE_PREFIX}${code}`;
