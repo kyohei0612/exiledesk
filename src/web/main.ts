@@ -13,7 +13,8 @@ import { markFlags } from "./release-flags";
 // 入っているスイッチを <html> に印 (CSS だけの直しの出し分け。描く前に)
 markFlags();
 import { loadBoot } from "./boot";
-import { pageTitle, startPages } from "./page";
+import { page, pageTitle, startPages } from "./page";
+import { startDevLog } from "./dev-log";
 import type { CurrencyItem, League } from "../api/poe2scout";
 
 // この端末は記録しない (?nolog=1 / 0 で切り替え、no-log.ts)。印を読んでから記録を始める
@@ -25,6 +26,8 @@ if (!import.meta.env.DEV) startStaleReload();
 // 操作の印 (段階・滞在・エラー) を始めてから画面を出す (cookie なし)
 startTracking();
 startStageSession();
+// 開発版だけ: 触った物を 1 行ずつ手元のファイルへ (dev-log.ts、U-33)。画面の押下より先に聞く
+if (import.meta.env.DEV) startDevLog(() => page.value);
 // 相場はサーバーが 1 時間おきに取った物を /boot.json で受け取る (ブラウザから poe2scout を引かない。boot.ts)
 setMarketLoader(async () => {
   const b = await loadBoot();

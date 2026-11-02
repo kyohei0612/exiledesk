@@ -23,6 +23,7 @@ import { aimedOfSample, sampleAimed } from "./tree-judge";
 import { autoRuneKeys, passThrough, prepFor } from "./tree-unbounded";
 import { isRevealHand, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, fractureTarget, junkKeyOf } from "./tree-frac-pick";
+import { mainSideOf } from "./tree-uncountable";
 export { fractureChoices, fractureTarget } from "./tree-frac-pick"; // フラクチャーの小物は tree-frac-pick へ (1 ファイル 500 行まで、10-28)
 export { goalsHeld, heldHitOf } from "./tree-unbounded";
 
@@ -225,7 +226,7 @@ export function sampleOf(data: PatchData, doc: TreeDoc, boxId: string, seed: num
 const memo = new Map<string, Sample>();
 let memoSig = "", memoData: PatchData | null = null;
 /** 木の中身の鍵 (位置 x・y と、見本に効かないメモの文を除く) */
-const docSig = (doc: TreeDoc): string => JSON.stringify(doc, (k, v) => (k === "x" || k === "y" || k === "note" || k === "tidied" ? undefined : v));
+const docSig = (doc: TreeDoc): string => JSON.stringify(doc, (k, v) => (k === "x" || k === "y" || k === "note" || k === "doneNow" || k === "tidied" || k === "tidyRan" ? undefined : v));
 /** fn の間は木が変わらないので鍵を作り直さない (1 回の JSON が 100 人回しの 4 割だった、S-71b、スイッチ treeLight) */
 const heldLinks = new Map<string, PathLink>();
 let heldDoc: TreeDoc | null = null, heldSig = "", heldPart: string | null = null, heldLazy = false, holdNo = 0;
@@ -268,10 +269,16 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
   if (fast) memo.set(k, r);
   return r;
 }
+/**
+ * 画面に置いた木は中を変えない (use-tree の edit は毎回新しい木に差し替える) ので、鍵の材料は木ごとに 1 回だけ作る。描画の箱ごとの見本で道の JSON を作り直していた (S-71e ①、スイッチ junkTidy)。
+ * 中を書き換えて知らせる時 (triggerRef) はもう一度呼ぶ = 作り直す
+ */
+const stillKeys = new WeakMap<TreeDoc, { part: string | null; sig: string; links: Map<string, PathLink> }>();
+export const markStill = (doc: TreeDoc): void => { if (flag("junkTidy")) stillKeys.set(doc, { part: null, sig: "", links: new Map() }); };
 function keyOf(doc: TreeDoc, boxId: string, seed: number): string {
-  const held = heldDoc === doc;
-  const part = held ? (heldPart ??= docPartOf(doc)) : docPartOf(doc);
-  return pathKeyOfBox(doc, boxId, seed, altDeep, part, () => sigNo(held ? (heldSig ||= docSig(doc)) : docSig(doc)), held ? heldLinks : undefined);
+  const held = heldDoc === doc, st = held ? undefined : stillKeys.get(doc);
+  const part = held ? (heldPart ??= docPartOf(doc)) : st ? (st.part ??= docPartOf(doc)) : docPartOf(doc);
+  return pathKeyOfBox(doc, boxId, seed, altDeep, part, () => sigNo(held ? (heldSig ||= docSig(doc)) : st ? (st.sig ||= docSig(doc)) : docSig(doc)), held ? heldLinks : st?.links);
 }
 /** 作れなかった見本の鍵: 木全体の鍵の代わりに親の見本そのもの (全部消えてよい消去の手の箱では使わない。止まる所が木全体を見る) */
 function failKeyOf(doc: TreeDoc, boxId: string, seed: number, base: StageItem, aimed: ReadonlySet<string> | undefined): string {
@@ -334,15 +341,13 @@ function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): 
   try {
     for (let k = 1; k < HIT_TRIES; k++) { const r = sampleFrom(data, doc, b, p, sampleIn(data, doc, p.id, seed + 7919 * k), seed, boxId, aims); if (!r.note) return r; }
     // 削減の順位の箱は、箱を作る時と同じく親の見本の外れをその順位の段へ差し替えて打つ (差し替えないと順位の箱の見本が作れない、S-65b)
-    if (flag("junkTidy") && isWhittleHand(p.hand) && b.junkKey?.includes("w:")) for (const v of rankVariants(data, base.item, aims, p.junkKey)) { const r = sampleFrom(data, doc, b, p, { ...base, item: v.item }, seed, boxId, aims); if (!r.note) return r; }
+    if (flag("junkTidy") && isWhittleHand(p.hand)) for (const v of rankVariants(data, base.item, aims, p.junkKey)) { const r = sampleFrom(data, doc, b, p, { ...base, item: v.item }, seed, boxId, aims); if (!r.note) return r; }
   } finally { altDeep = false; }
   return r0;
 }
 /** 親の見本 base に親の手を打って、この箱の見本を作る */
 export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox, base: Sample, seed: number, boxId: string, aims: Aim[]): Sample {
   if (!p.hand) return base;
-  // 全部消えてよい消去の直線で止まる形 (もう手のある箱と同じ中身) はこの箱に来ない (回す時はその箱へ行く、S-28。tree-run と同じ。スイッチ judgeOne)
-  if (stripStop(data, doc, p)?.(base.item)) return { item: base.item, note: "cant:stripStop" };
   const rng = mulberry32(seed ^ 0x5eed ^ [...pathKeyOf(doc, boxId)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7)); // 種は見本の番号と道の札 (S-74 A、スイッチ recipeV1。箱の id だと組み直しで振り直されるだけで見本が変わった、bone3 の止まり 0 → 26)
   let last: StageApply | null = null;
   // 箱の形 (道の狙いの組) に合う結果だけ、無ければ合わなかった最初の結果 (途中で狙いが消えた結果が当たりの見本になった、10-28 見張り。boxShape)
@@ -352,11 +357,16 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
   // ☑ は打ち直しの間変わらないので 1 回だけ引く (打ち直しのたびに引いて鍵を作っていた)
   let held: ReadonlySet<string> | undefined;
   const aimedNow = (): ReadonlySet<string> | undefined => (held ??= flag("keepAll") && flag("judgeOne") ? aimedOfSample(p.id, base.item) ?? sampleAimed(data, doc, p.id, seed) : undefined);
+  // 全部消えてよい消去の直線で止まる形 (もう手のある箱と同じ中身) はこの箱に来ない (回す時はその箱へ行く、S-28。tree-run と同じ印で見る、S-33c。スイッチ judgeOne)
+  const stop = stripStop(data, doc, p, aimedNow());
+  if (stop?.(base.item)) return { item: base.item, note: "cant:stripStop" };
+  // 数え上げられない手の側の鍵の無い箱は一番多い形だけ (ほかの形は整理で足す箱へ行く、S-21・S-74)
+  const main = !b.junkKey && (b.out === "any" || b.out === "junk" || b.out === "hit") ? mainSideOf(data, base.item, p.hand) : undefined;
   const fk = light && !isStrip(p) ? failKeyOf(doc, boxId, seed, base.item, aimedNow()) : null;
   const failed = fk ? failMemo.get(fk) : undefined;
   if (failed !== undefined) return { item: base.item, note: failed };
   for (let i = 0, tries = light ? TRIES_LIGHT : TRIES; i < tries; i++) {
-    const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims), undefined, b.out === "junk" || b.out === "lost", stripStop(data, doc, p));
+    const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims), undefined, b.out === "junk" || b.out === "lost", stop);
     if (!r.applied) { last = r; break; }
     last = r;
     // スイッチ keepAll: 結果の分け方は回す・精査と同じく親の見本の ☑ で (S-60。前は ☑ を渡さず木の狙い全部で数え、☑ の無い狙いが消えた人が「狙いが消えた」の見本になった = 見張り J5)
@@ -367,6 +377,7 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
     if (b.out !== "any" && o.out !== b.out && !b.mergedOuts?.includes(o.out)) continue;
     if (flag("junkTidy") && b.out === "any" && o.out === "lost") continue; // 打った後の箱の見本に狙いが消えた結果を入れない (中身が混ざった、S-71g)
     if (b.junkKey && o.junkKey !== b.junkKey) continue; // 外れの枝の鍵 (狙い無しの乱数のフラクチャー、スイッチ fracPick)
+    if (main && o.junkKey !== main) continue;
     // エッセンスの当たりの箱は札が付いた MOD の名前 (tree-run の outBoxOf と同じ)。無限のエッセンスで箱が 2 つ以上なら付いた MOD の箱
     if (b.out === "hit" && b.aim && effectOf(p.hand.currency) === "essence" && !essenceBoxFits(doc, p, b, r.item)) continue;
     if (b.out === "hit" && b.aim && effectOf(p.hand.currency) !== "essence" && !boxAims(b).some((x) => o.hits.some((a) => a.modId === x.modId && a.tier === x.tier))) continue;

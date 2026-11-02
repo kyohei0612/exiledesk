@@ -45,6 +45,9 @@ import { afterQualityOf, applyPick, autoCatOf, hitChoicesOf, holdLinks, needAimO
 import { isGrayBox, tidyStep, unsetBoxes } from "../../../services/simulator/tree/tree-junk-tidy";
 import { useTree } from "./use-tree";
 import { useTreeOdds } from "./tree-odds";
+import { boxTagsOf, chosenMod, treeRowTags } from "./tree-row-tags";
+import { fixedValues } from "./tree-fixed-values";
+import { shapeSampleWithNote } from "../../../services/simulator/tree/tree-sample-shape";
 
 type Opt = PickOpt;
 /** 部位の日本語 → ベースの一覧の部位 (cls) の頭 (英語の部位名ならそのまま頭で合わせる) */
@@ -184,6 +187,8 @@ export function installSimMonkey(): () => void {
     undo() { t.undo(); return { ok: true }; },
     /** ハズレ整理 (S-193) と今のボタンの状態 */
     tidy() { t.edit(tidyJunk); return { step: tidyStep(t.doc.value), unset: unsetBoxes(t.doc.value) }; },
+    /** 木を開き終えたか (開いている間は木を変えない、S-196) */
+    ready() { return !t.loading.value; },
     tidyState() { return { step: tidyStep(t.doc.value), unset: unsetBoxes(t.doc.value), gray: Object.values(t.doc.value.boxes).filter(isGrayBox).map((b) => b.id) }; },
     setDone(id: string, on: boolean | "fail" = true) {
       const v = on === "fail" ? "fail" : on ? "main" : null;
@@ -216,6 +221,26 @@ export function installSimMonkey(): () => void {
     samples(seeds = 8) { const d = s.data.value; if (!d) return null; return Object.fromEntries(Object.keys(t.doc.value.boxes).sort().map((id) => [id, Array.from({ length: seeds }, (_, i) => { const x = sampleOf(d, t.doc.value, id, i + 1); return { item: x.item, note: x.note, aimed: [...sampleAimed(d, t.doc.value, id, i + 1)].sort() }; })])); },
     /** 木全部の結果の箱の割合 (箱の札と同じ useTreeOdds) */
     odds() { return Object.fromEntries(useTreeOdds().value); },
+    /** 上限に届いた人の最後の道とアイテム (沼った訳を見る台本用、S-72) */
+    tails(n = RUN_N, seed = 1, k = 3) {
+      const d = s.data.value;
+      if (!d) return null;
+      const div = t.treePrice("divine") || 1, out: unknown[] = [];
+      runTree(d, t.doc.value, { n, seed, price: (x) => t.treePrice(x) / div, startCost: t.startPrice(), onPerson: (p) => { if (p.end === "capped" && out.length < k) out.push({ cost: Math.round(p.cost), n: p.visits.length, last: p.visits.slice(-30).map((v) => `${v.box}:${Math.round(v.cost)}`), mods: p.why ? [...p.why.item.prefixes, ...p.why.item.suffixes].map((x) => x.modId) : null }); } });
+      return out;
+    },
+    /** 全部の箱の「箱のカード」と「手の窓のカード」の札の比べと、選んで付けた MOD が外れ MOD と出る行 (S-82 の台本用) */
+    cards() {
+      const d = s.data.value;
+      if (!d) return null;
+      const doc = t.doc.value, key = (g: Map<string, { text: string }>, it: StageItem): string => [...it.prefixes, ...it.suffixes].map((m) => `${m.modId}:${g.get(m.modId)?.text ?? ""}`).join("|");
+      return Object.values(doc.boxes).map((b) => {
+        const it = fixedValues(d, doc, shapeSampleWithNote(d, doc, b.id).item), a = treeRowTags(d, doc, b.unwanted ?? [], it, b), w = boxTagsOf(d, doc, b.id, it);
+        return { id: b.id, out: b.out, same: key(a, it) === key(w, it), hidden: [...it.prefixes, ...it.suffixes].filter((m) => chosenMod(d, m) && a.get(m.modId)?.replace).map((m) => `${m.desecrated ? "冒涜" : "エッセンス"}:${m.modId}`) };
+      });
+    },
+    /** 箱の手を消す (手の窓の「この手を消す」と同じ。下の箱も消える) */
+    clear(id: string) { t.edit((x) => clearHand(x, id)); return !t.doc.value.boxes[id]?.hand; },
     /** 今の木。startRarity = スタートの本当のレアリティ (start.rarity は保存の形の値で、印も＋の MOD も無い時の白とずれる事がある) */
     dump(): unknown { return { ...JSON.parse(JSON.stringify(t.doc.value)), startRarity: sample("start")?.item.rarity ?? null }; },
   };

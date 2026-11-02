@@ -43,8 +43,8 @@ const OPEN_MIN = VIEW_ONLY;
 const FIT_MIN = 0.25;
 /** 全体に合わせる時の余白の下限 */
 const PAD_MIN = 12;
-/** 箱の下の外の＋ (TreeBox の data-tree-next、-bottom-[34px]・28px) の分 */
-const NEXT_H = 40;
+/** 箱の下の外の＋ (TreeBox の data-tree-next、真ん中が箱の 68px 下・28px) の分 */
+const NEXT_H = 88;
 
 export function useTreeFlow(doc: Ref<TreeDoc>) {
   const f = useVueFlow(FLOW_ID);
@@ -190,8 +190,10 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     const { x, y, zoom: z } = f.viewport.value, w = f.dimensions.value.width, h = f.dimensions.value.height, m = 24;
     // スイッチ nextInView (S-147c): 箱の本当の高さ + 下の ＋ まで (帯「! 未設定」の下に ＋ を隠さない)
     const sx = b.x * z + x, sy = b.y * z + y, sw = BOX_W * z, sh = ((f.findNode(id)?.dimensions.height || BOX_H) + NEXT_H) * z;
-    const out = sx < m || sy < m || sx + sw > w - m || sy + sh > h - m;
-    if (center || out) await f.setCenter(b.x + BOX_W / 2, b.y + BOX_H / 2, { zoom: z });
+    // 帯「! 未設定」は枠の下に重なるので、その分だけ見える高さが狭い。箱の真ん中でなく箱と ＋ の全体を見える所の真ん中へ (背の高い箱の ＋ が帯の裏へ落ちた、11-02 オーナーのレシピの b29)
+    const bar = document.querySelector<HTMLElement>("[data-tree-unset-bar]")?.offsetHeight ?? 0;
+    const out = sx < m || sy < m || sx + sw > w - m || sy + sh > h - bar - m;
+    if (center || out) await f.setCenter(b.x + BOX_W / 2, sh > h - bar - m * 2 ? b.y + (h / 2 - m) / z : b.y + sh / (2 * z) + bar / (2 * z), { zoom: z });
   }
   /**
    * 箱の数が変わった時 (横の ＋・手を足す・戻す・やり直し) に、新しく出た箱とそれと同じ段の箱のどれかが枠の外なら、開いた時の寄りに合わせ直す
@@ -241,6 +243,17 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   /** 手の窓を開く時の箱の画面の場所 (窓を開く寄せの前。holdBox はここへ戻す) */
   let spot: { id: string; sx: number; sy: number } | null = null;
   const noteSpot = (id: string): void => { const b = doc.value.boxes[id], { x, y, zoom: z } = f.viewport.value; spot = b ? { id, sx: b.x * z + x, sy: b.y * z + y } : null; };
+  /** 窓を開く寄せの後の視点 (閉じる時に人が動かしていないかを見る) */
+  let opened: { x: number; y: number; zoom: number } | null = null;
+  /** 手の窓を開いた時の寄せ (外れていた箱を見える所へ)。閉じた時に backSpot が戻す */
+  async function revealSpot(id: string): Promise<void> { await reveal(id); opened = { ...f.viewport.value }; }
+  /** 手の窓を選ばずに閉じた: 窓を開く寄せの分だけ視点を戻す (S-147e、スイッチ junkTidy)。手を決めた時は holdBox が spot を使う。開いている間に人が動かした視点はそのまま */
+  async function backSpot(): Promise<void> {
+    const p = spot, was = opened, b = p ? doc.value.boxes[p.id] : null, { x, y, zoom: z } = f.viewport.value;
+    spot = null; opened = null;
+    if (!flag("junkTidy") || !p || !b || !was || was.x !== x || was.y !== y || was.zoom !== z) return;
+    await f.setViewport({ x: p.sx - b.x * z, y: p.sy - b.y * z, zoom: z });
+  }
   async function holdBox(id: string, edit: () => string): Promise<void> {
     const was = doc.value.boxes[id];
     if (!flag("junkTidy") || !was) { edit(); return; }
@@ -307,5 +320,5 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     void f.setViewport({ x: vp.x + (w - old) / 2, y: vp.y, zoom: vp.zoom });
   });
 
-  return { flow: f, pageZ, zoom, viewOnly, minZoom, maxZoom, full, bounds, view, setZoom, zoomIn, zoomOut, onWheel, fit, openView, keepView, backView, goHome, resetZoom, toWorld, reveal, holdBox, noteSpot, toggleFull, centerOn, rectOf, dispose: () => window.removeEventListener("resize", onResize) };
+  return { flow: f, pageZ, zoom, viewOnly, minZoom, maxZoom, full, bounds, view, setZoom, zoomIn, zoomOut, onWheel, fit, openView, keepView, backView, goHome, resetZoom, toWorld, reveal, holdBox, noteSpot, revealSpot, backSpot, toggleFull, centerOn, rectOf, dispose: () => window.removeEventListener("resize", onResize) };
 }

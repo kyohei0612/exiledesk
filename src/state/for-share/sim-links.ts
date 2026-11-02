@@ -2,6 +2,7 @@
  * sim-links.ts — クラフト台 (エミュの画面) からシミュ (クラフトの道 = ツリー) へ行く入口 (共通の差し込み口、2026-10-23 オーナー「コードが混ざらないように」)。
  * エミュの画面はここだけを読み、シミュの中 (views/simulator) は読まない。シミュの物はここで後から読む (最初の読み込みに入れない)
  */
+import { ref } from "vue";
 import { openTreePage } from "../../web/page";
 import { flag } from "../../web/release-flags";
 import type { StageItem } from "../../services/craft-stage/types";
@@ -21,6 +22,13 @@ export async function openSimWithItem(item: StageItem): Promise<void> {
   requestEmuItem(item);
 }
 
+/** レシピが読めない時の文 (レシピの URL を貼る欄と URL で開いた時で同じ言葉、S-103c) */
+export const RECIPE_UNREADABLE: [string, string] = ["このレシピは読めませんでした", "Couldn't read this recipe"];
+/**
+ * URL の #recipe= が読めなかった (1 字欠けた・壊れた)。黙ってベース選びに着かず、全体の帯で一言出す (WebApp.vue、× で閉じる。S-103c、
+ * 11-02 オーナー「修正、まぁこれはレシピURLだからよっぽどやと思うがな短いし」)
+ */
+export const recipeOpenFailed = ref(false);
 /** 共有のレシピの URL (#recipe=、views/simulator/recipe-share.ts) から来た時に、そのレシピを開く */
 export function openSharedRecipe(): void {
   if (!flag("sim")) return;

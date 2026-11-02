@@ -46,5 +46,8 @@ dist-web-dev
 .dev-web-key
 shots/
 
+# オーナーが dev で触った操作の記録 (Y-64、scripts/vite-dev-log.mjs)
+.dev-logs/
+
 # ホワイトの記録 (git に入れない、docs/org/white/README.md の決まり 1)
 docs/org/white/notes/

@@ -10,9 +10,10 @@ import { bonesFor, essenceShelf, ORBS, runesFor } from "../../../state/for-share
 import { treeHidden } from "../use-sim-shelf";
 import { catalystFull, catalystTagOf, fillCatalyst, stepOutcomes } from "../../../services/simulator/sim-engine";
 import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
+import { mainSideOf } from "../../../services/simulator/tree/tree-uncountable";
 import { aimHeldOn, reachableAims } from "../../../services/simulator/tree/tree-aim";
 import { canSpam, CATALYSING, ECHO, effectOf, engineOmens, isBone, isCatalyst, isRuneHand, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
-import { aimsOf, handProblem, possibleOutsOf, sampleFrom, sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { aimsOf, handProblem, holdDocSig, possibleOutsOf, sampleFrom, sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { addOut } from "../../../services/simulator/tree/tree-model-ops";
 import { aimedAims, isWhittleHand, rankVariants } from "../../../services/simulator/tree/tree-whittle";
 import { bodyMemo, type BodyOf } from "../../../services/simulator/tree/tree-box-shape";
@@ -23,6 +24,7 @@ import { isStripKey } from "../../../services/simulator/tree/tree-junk-side";
 import { judgeMemo, sampleAimed, type Judge } from "../../../services/simulator/tree/tree-judge";
 import { arrivalsOf, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { joinableShapeOf, joinSameHit, sameHitsOf } from "../../../services/simulator/tree/tree-shape";
+import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { boxAims, clearHand, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
 import { revealAimsOf } from "./tree-reveal-aims";
@@ -95,7 +97,7 @@ export function keepAskOf(data: PatchData, item: StageItem, currency: string, om
   return keepChoicesOf(data, item, currency, omens).length > 1;
 }
 /** 消える手 (消去でない) の残したい MOD の既定 = 候補のうち ☑ の印 (持っている狙い) の物 (S-27d) */
-export const keepDefaultOf = (choices: ReadonlyArray<{ aim: Aim }>, aimed: ReadonlySet<string> | null): Aim[] => choices.filter((c) => aimed?.has(c.aim.modId)).map((c) => c.aim);
+export const keepDefaultOf = (choices: ReadonlyArray<{ aim: Aim }>, aimed: ReadonlySet<string> | null, stones: readonly Aim[] = []): Aim[] => choices.filter((c) => aimed?.has(c.aim.modId) && !stones.some((a) => a.modId === c.aim.modId)).map((c) => c.aim);
 /** 棚で選んだ物 → 箱の手 */
 export function handOf(p: HandPick): Hand {
   const used = omensFor(p.held, [...p.omens]);
@@ -218,7 +220,7 @@ export function pickedHits(choices: readonly Aim[], checked: readonly string[], 
 }
 /** 起こりうる結果の一覧 (この箱の見本 8 つにエンジンで打った行き先を全部たどる。触媒の手は前のカタリストを入れた後で。フラクチャーも同じ) */
 export function onlyOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, preCat: string | null, hitAims: Aim[]): OnlyOut {
-  const l = possibleOutsOf(data, doc, boxId, h, preCat, hitAims);
+  const l = holdDocSig(doc, () => possibleOutsOf(data, doc, boxId, h, preCat, hitAims), true); // 数える間は木が変わらないので鍵は 1 回だけ (S-71e ①)
   if (!l || !hitAims.length) return l;
   // チェックした狙いでない当たり (木のほかの狙いが付いた) は外れとして数える (当たりの箱はチェックした札だけ)
   const out = l.map((e) => (e.out === "hit" && e.aim && !hitAims.some((a) => a.modId === e.aim!.modId && a.tier === e.aim!.tier) ? { out: "junk" as OutKind, aim: null } : e));
@@ -310,7 +312,6 @@ export function holdLinks<T>(fn: () => T): T {
   linksHeld = true;
   try { return fn(); } finally { linksHeld = false; }
 }
-export const linksAreHeld = (): boolean => linksHeld;
 /** ハズレ整理 (S-193): 決めの無い箱を上の段から見て同じ枠へつなぎ、残りを未設定にする。人の決めは触らない */
 export function tidyJunk(d: TreeDoc): void {
   const data = craftStage.data.value;
@@ -327,21 +328,63 @@ export function tidyJunk(d: TreeDoc): void {
   link();
   // ↩ がそろった木で、↩ で着く人の結果の箱を足す (S-21)
   if (addArrivedOuts(data, d).length) link();
-  for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split) b.tidied = true;
+  dropUnplayable(data, d);
+  for (const b of Object.values(d.boxes)) { if (!b.hand && !b.done && !b.split) b.tidied = true; if (b.done === "main") b.doneNow = true; }
+  d.tidyRan = true;
+}
+/** 見本に ↩ 先の手を打てない人がいる自動の ↩ は外して未設定にする (止まる所を ↩ 元の箱へ、S-193) */
+function dropUnplayable(data: PatchData, d: TreeDoc): void {
+  for (const b of Object.values(d.boxes)) {
+    const to = b.back && b.autoBack ? d.boxes[b.back]?.hand : null;
+    if (!to) continue;
+    for (let seed = 1; seed <= 8; seed++) {
+      const s = sampleOf(data, d, b.id, seed);
+      if (s.note === "none" || s.note?.startsWith("cant:") || !handProblem(data, s.item, to)) continue;
+      setBack(d, b.id, null); b.noAutoBack = true;
+      break;
+    }
+  }
+}
+/** 画面に出る下の箱 (通り抜け・まとめて描かない箱は数えない) */
+export const drawnBelow = (d: TreeDoc, id: string): string[] => subtree(d, id).slice(1).filter((x) => { const b = d.boxes[x]; return !!b && b.out !== "pass" && !mergedAway(d, b); });
+/** 同じ手で ☑ を替えて下が消える数 (手を決める時と同じ applyPick を写しに打つ) */
+export function dropCountOf(doc: TreeDoc, id: string, h: Hand, kind: HandKind, aims: Aim[], pre: string | null, only: OnlyOut): number {
+  const after = JSON.parse(JSON.stringify(doc)) as TreeDoc;
+  applyPick(after, id, h, kind, aims, pre, only);
+  return drawnBelow(doc, id).filter((x) => !after.boxes[x]).length;
 }
 /**
  * ↩ で着く人の結果で箱の無い物を足す (S-21、スイッチ junkTidy)。結果の箱は手を決めた時の見本で作るので、あとから ↩ で入る別の外れの人の結果が抜ける
  * (オーナーの木の b51 ↩ b35: ランダムな外れの人は b41 の削減で狙いが消える)。足すのは見本と次の MOD 群が違う結果だけ、当たりの箱 (☑ だけ、S-22) は足さない
  */
 export function addArrivedOuts(data: PatchData, d: TreeDoc): string[] {
+  const g = arrivedSteps(data, d);
+  for (;;) { const r = g.next(); if (r.done) return r.value; }
+}
+/** addArrivedOuts を箱ごとに区切る (開く時に間で画面を返す、S-196) */
+export function* arrivedSteps(data: PatchData, d: TreeDoc): Generator<void, string[]> {
   if (!flag("junkTidy")) return [];
   const j = judgeMemo(data, d), aims = aimsOf(d), made: string[] = [];
   for (const b of Object.values(d.boxes)) {
-    const h = b.hand, arrived = h ? arrivalsOf(data, d, j, b.id) : [];
-    if (!h || !arrived.length) continue;
+    const h = b.hand;
+    if (!h) continue;
+    yield;
+    // 数え上げられない手 (S-21): 組む間の 1 箱 (側の鍵の無い箱) が一番多い形を持ち、ほかの形の箱をここで足す。見本は親から 1 手で作れるので via は要らない
+    const s = sampleOf(data, d, b.id, 1), main = s.note === "none" || s.note?.startsWith("cant:") ? undefined : mainSideOf(data, prepFor(data, s.item, h.currency), h);
+    const arrived = arrivalsOf(data, d, j, b.id);
+    if (!arrived.length && !main) continue;
     const own = b.outs.flatMap((o) => (d.boxes[o]?.out === "hit" ? boxAims(d.boxes[o]!) : []));
-    for (const e of possibleOutsOf(data, d, b.id, h, null, own, arrived) ?? []) {
-      if (e.out === "hit" || b.outs.some((o) => { const c = d.boxes[o]!; return (c.out === e.out || c.mergedOuts?.includes(e.out)) && (c.junkKey ?? e.junkKey) === e.junkKey; })) continue;
+    const fresh = (e: { out: OutKind; junkKey?: string }): boolean => e.out !== "hit" && !b.outs.some((o) => { const c = d.boxes[o]!; return (c.out === e.out || c.mergedOuts?.includes(e.out)) && (c.junkKey ?? main ?? e.junkKey) === e.junkKey; });
+    if (main) for (const e of possibleOutsOf(data, d, b.id, h, null, own, undefined, true) ?? []) {
+      // 当たりの人も形で分ける。一番多い形は今の当たりの箱 (S-21)
+      if (e.out === "hit") {
+        const aim = e.aim;
+        if (aim && e.junkKey !== main && !b.outs.some((o) => { const c = d.boxes[o]!; return c.out === "hit" && c.junkKey === e.junkKey && boxAims(c).some((x) => x.modId === aim.modId); })) { const id = addOut(d, b.id, "hit", e.junkKey); d.boxes[id]!.aim = aim; made.push(id); }
+      } else if (fresh(e)) made.push(addOut(d, b.id, e.out, e.junkKey));
+    }
+    if (!arrived.length) continue;
+    for (const e of possibleOutsOf(data, d, b.id, h, null, own, arrived, !!main) ?? []) {
+      if (!fresh(e)) continue;
       const id = addOut(d, b.id, e.out, e.junkKey), c = d.boxes[id]!;
       const forms = arrived.flatMap((a) => (isWhittleHand(h) ? rankVariants(data, a.item, aimedAims(aims, a.aimed), b.junkKey).map((v) => v.item) : [a.item]));
       c.via = forms.map((item) => sampleFrom(data, d, c, b, { item, note: null }, 1, id, aims)).filter((r) => !r.note).map((r) => r.item).slice(0, 4);
@@ -409,7 +452,8 @@ function lostSplit(data: PatchData, d: TreeDoc, id: string, h: Hand, depth = 0):
     if (to) { box.back = to; box.autoBack = true; continue; }
     if (box.out === "lost") { if (looseOf(s.item) > 0) stripSplit(data, d, c, strip, 0); continue; }
     // 残したい MOD はこの自動の消去の中では必須、ほかは外れ (S-60 の ☑)。外れが残っていて、この手で打てる時だけ
-    const junk = [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && !aimed.has(m.modId));
+    // ☑ した外れの MOD はこの自動の消去の中では外れに数えない。箱の中身 (S-60) は変えない (S-28e、スイッチ junkTidy)
+    const junk = [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && !aimed.has(m.modId) && !(flag("junkTidy") && h.keep?.some((a) => a.modId === m.modId)));
     const outs = junk && depth < 12 ? possibleOutsOf(data, d, c, h) : null;
     if (!outs?.length) continue;
     setHand(d, c, h, kindOf(h), [], outs, undefined, holdsAimOf(d, c));

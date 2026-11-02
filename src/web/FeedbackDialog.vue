@@ -12,6 +12,7 @@ import { diagNow, track, trailNow } from "./track";
 import { feedbackSummaryJa } from "./feedback-summary";
 import { marketStore } from "../state/market-store";
 import { allMods } from "../services/craft-stage/stage-core";
+import { tierRankOf } from "../services/craft-stage/tier-rank";
 import pkg from "../../package.json";
 import { tr } from "../i18n/lang";
 import ModalShell from "../components/ui/ModalShell.vue";
@@ -73,7 +74,8 @@ function contextNow(): unknown {
     mode: s.mode.value,
     base: s.base.value,
     itemLevel: s.itemLevel.value,
-    item: it ? { rarity: it.rarity, sockets: it.sockets ?? 0, mods: allMods(it).map((m) => `${m.modId}${m.tierIndex != null ? ` T${m.tierIndex}` : ""}${m.fractured ? " (固定)" : ""}${m.desecrated ? " (冒涜)" : ""}`) } : null,
+    // T は段の名前 (T1 = 一番上)。tierIndex (0 = 一番下) のまま書くと逆になる (要望 ff4eb935、11-02)
+    item: it ? { rarity: it.rarity, sockets: it.sockets ?? 0, mods: allMods(it).map((m) => `${m.modId}${m.tierIndex != null && s.data.value ? ` T${tierRankOf(s.data.value, m.modId, m.tierIndex)}` : ""}${m.fractured ? " (固定)" : ""}${m.desecrated ? " (冒涜)" : ""}`) } : null,
     viewport: `${window.innerWidth}x${window.innerHeight}`,
     lang: navigator.language,
     market: { league: marketStore.league.value?.Value ?? null, fetchedAt: marketStore.fetchedAt.value, error: marketStore.error.value },

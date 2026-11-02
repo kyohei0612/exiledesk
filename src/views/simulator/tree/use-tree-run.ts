@@ -5,8 +5,8 @@
  * 回す前にまず 1 人目が木の上を 1 手ずつ進む (今いる箱が光る)。完成したら残りを回し、途中で止まったらそこで止めて寄る
  * (10-22 オーナー「回す前に 1 人通して木が正しいか確かめる」)
  */
-import { computed, nextTick, ref, shallowRef, toRaw, watch, type Ref } from "vue";
-import { useTree } from "./use-tree";
+import { devLog } from "../../../web/dev-log";
+import { computed, nextTick, ref, watch, type Ref } from "vue";
 import { runTreeSteps, withStartCost, type TreeRunOpts, type TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { withTreeTune } from "../../../services/simulator/tree/tree-tune";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -77,16 +77,9 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
   let skip = false;
   let token = 0;
   // 組み替えたら結果を消す (回している途中なら止める)
-  watch(() => routeKeyOf(doc.value), (k) => { token++; raw.value = null; running.value = false; halted.value = null; walk.value = null; test.value = false; if (swapBase.value?.key === k || !doc.value.boxes.start?.hand) swapBase.value = null; });
-  /**
-   * 手だけ替える前の 100 人の結果 (S-57c、比べは 1 つ前だけ。保存しない)。手を続けて替えたら最後に回した結果。
-   * 1 つ戻すで替える前の木へ戻った・別の木を開いた・白紙に戻した時は捨てる
-   */
-  const swapBase = shallowRef<{ r: TreeRunResult; key: string } | null>(null);
-  const before = computed(() => (swapBase.value ? withStartCost(swapBase.value.r, startCost()) : null));
-  watch(useTree().opened, () => { swapBase.value = null; });
-  /** 手だけ替える直前に呼ぶ (今の結果が 100 人を回し切った物なら残す) */
-  function noteSwap(): void { if (raw.value && !test.value && !halted.value && !running.value) swapBase.value = { r: toRaw(raw.value), key: routeKeyOf(doc.value) }; }
+  watch(() => routeKeyOf(doc.value), () => { token++; raw.value = null; running.value = false; halted.value = null; walk.value = null; test.value = false; });
+  /** 開発版の記録 (S-197)。test = 最終チェックの 30 人 */
+  const logRun = (): void => { const r = result.value; if (r) devLog("tree-run", { test: test.value, n: r.n, finished: r.finished, failed: r.failed, swamped: r.capped, stuck: r.stuck, perItem: Math.round(r.perItem), loopAt: r.loopAt, stuckAt: r.stuckAt, failAt: r.failAt, boxes: Object.keys(doc.value.boxes).length }); };
   /** opt.test = 穴チェックの走行 (TEST_N 人、1 人目の歩きは飛ばす、止まった人が出ても止めない) */
   async function run(opt: { test?: boolean; reuse?: CheckRun | null } = {}): Promise<void> {
     const data = s.data.value;
@@ -100,7 +93,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
     const re = opt.reuse;
     if (re && re.key === routeKeyOf(d) && re.startCost === startCost() && re.run.persons.every((p) => p.cost <= CAP_DIV)) {
       await nextTick();
-      if (my === token) { raw.value = re.run; running.value = false; }
+      if (my === token) { raw.value = re.run; running.value = false; logRun(); }
       return;
     }
     const priceIn = runPrice(priceOf);
@@ -176,9 +169,9 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
         await new Promise((res) => setTimeout(res, wait));
         if (!(r.value % EVERY)) t0 = performance.now();
       }
-    } finally { if (my === token) { running.value = false; walk.value = null; } }
+    } finally { if (my === token) { running.value = false; walk.value = null; logRun(); } }
   }
   /** 止まり・打ち止めの箱 (多い順) */
   const stuckBoxes = computed(() => Object.entries(result.value?.stuckAt ?? {}).sort((a, z) => z[1] - a[1]));
-  return { result, running, shown, halted, walk, test, run, skipWalk: (): void => { skip = true; }, stuckBoxes, before, noteSwap };
+  return { result, running, shown, halted, walk, test, run, skipWalk: (): void => { skip = true; }, stuckBoxes };
 }
