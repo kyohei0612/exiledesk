@@ -24,7 +24,7 @@ import TreeRevealCard from "./TreeRevealCard.vue";
 import TreeKeepList from "./TreeKeepList.vue";
 import { useHandKeep } from "./use-hand-keep";
 import { RESULT, RESULT_CAT, RESULT_NO_LOST } from "./tree-hand-result";
-import { boxTagsOf, missText } from "./tree-row-tags";
+import { boxTagsOf, chosenMod } from "./tree-row-tags";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { aimKey, fractureMarks, sameHand, setHand, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
@@ -70,9 +70,9 @@ function removeTags(it: StageItem, tags: Map<string, RowTag>): Map<string, RowTa
   const keep = new Set(k.aims.value.map((a) => a.modId)), cand = new Set(k.choices.value.map((c) => c.mod.modId)), out = new Map(tags);
   for (const m of [...it.prefixes, ...it.suffixes]) {
     if (m.fractured || !cand.has(m.modId)) continue;
-    // 残したい外れも札のまま (字は S-82 の missText)
+    // 残したい外れも札のまま。選んで付けた MOD は箱のカードのまま (S-82)
     if (keep.has(m.modId)) { if (tags.get(m.modId)?.tone !== "bad") out.delete(m.modId); else out.set(m.modId, tags.get(m.modId)!); }
-    else out.set(m.modId, { text: s.data.value ? missText(s.data.value, m) : tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`消えてよい MOD (☑ で残したい MOD にできる): ${modText(m)}`, `May be removed (☑ to keep it): ${modText(m)}`) });
+    else if (!s.data.value || !chosenMod(s.data.value, m)) out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`消えてよい MOD (☑ で残したい MOD にできる): ${modText(m)}`, `May be removed (☑ to keep it): ${modText(m)}`) });
   }
   return out;
 }
