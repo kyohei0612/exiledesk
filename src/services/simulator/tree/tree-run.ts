@@ -208,7 +208,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
       }
       // 全部消えてよい消去の直線は、止まる所 (同じレアリティ・同じ外れの数の箱) が無ければ形の合う箱を探さない = 行き先未定 (スイッチ stripRarity)
       const to = j
-        ? (b.back === MATCH ? stripBackOf(data, doc, at, item) ?? (fromStrip(doc, at) ? null : routeOf(data, doc, j, null, item, aimed)) : routeOf(data, doc, j, b.back, item, aimed))
+        ? (b.back === MATCH ? stripBackOf(data, doc, at, item, aimed) ?? (fromStrip(doc, at) ? null : routeOf(data, doc, j, null, item, aimed)) : routeOf(data, doc, j, b.back, item, aimed))
         : b.back === MATCH ? stripBackOf(data, doc, at, item) ?? (fromStrip(doc, at) ? null : matchBox(data, shapes, item, aims, doc)) : settle(data, doc, shapes, b.back, item, aims);
       // 戻り先と中身が違い、中身の同じ箱も無い (S-64、人と箱): この箱で止まる (未設定)
       if (!to && j && b.back !== MATCH) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`戻り先の箱と中身が違い、中身の同じ箱も無い`, `The return target holds a different item, and no box matches it`), item, noBox: true } });
@@ -261,7 +261,8 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     // 飛び先の手がこの人に打てない時は飛ばずにここで打つ (飛ぶと playableTwin がここへ戻し、費用 0 の往復が手の上限まで続いた、11-02 S-28c)
     if (stopAt && canPlay(data, item, doc.boxes[stopAt]!.hand!)) { visit(at, true); at = stopAt; continue; }
     o.onHand?.(at, item);
-    const r = playHand(data, item, b.hand, rng, own, use, false, stripStop(data, doc, b));
+    // 止まる所は上の stopAt で決めたので、ここでは打つ (中で別の印で止まりを見直すと打たずに通り、費用 0 の往復になった、S-33c)
+    const r = playHand(data, item, b.hand, rng, own, use, false, j ? undefined : stripStop(data, doc, b));
     if (!r.applied) {
       // 中身の同じ箱のうち手が打てる箱へ (S-64、スイッチ keepOutside)
       const twin = j ? playableTwin(data, doc, j, at, item, aimed) : null;

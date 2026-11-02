@@ -347,14 +347,18 @@ function docSig(doc: TreeDoc): string {
   return String(h);
 }
 /** 全部消えてよい消去の手なら、止める形か (playHand の stop)。違う手は undefined */
-export function stripStop(data: PatchData, doc: TreeDoc, b: TreeBox): ((it: StageItem) => boolean) | undefined {
+/**
+ * aimed = 打つ前のこの人 (見本) の印。渡すと消した後の印 (aimedAfterAnnul、途中の狙いも) で止まりを見る = 回す所の stopAt と同じ見方
+ * (前は ✦ の印だけで見て、途中の狙いを外れに数えた中では止まり・外では止まらないと割れ、打たずに通る往復が手の上限まで続いた、S-33c)
+ */
+export function stripStop(data: PatchData, doc: TreeDoc, b: TreeBox, aimed?: ReadonlySet<string> | null): ((it: StageItem) => boolean) | undefined {
   if (!isStrip(b)) return undefined;
-  return (it) => !!stripStopByContent(data, doc, b.id, it);
+  return (it) => !!stripStopByContent(data, doc, b.id, it, false, aimed ? aimedAfterAnnul(data, doc, b.hand, aimed, it) : undefined);
 }
 /** 全部消えてよい消去の結果の箱から戻る箱 (止まった形の箱。無ければ null = 形の合う箱が無い) */
-export function stripBackOf(data: PatchData, doc: TreeDoc, id: string, item: StageItem): string | null {
+export function stripBackOf(data: PatchData, doc: TreeDoc, id: string, item: StageItem, aimed?: ReadonlySet<string> | null): string | null {
   const p = doc.boxes[id]?.parent;
-  return p && isStrip(doc.boxes[p]) ? stripStopByContent(data, doc, p, item, true) : null;
+  return p && isStrip(doc.boxes[p]) ? stripStopByContent(data, doc, p, item, true, aimed ?? undefined) : null;
 }
 /** 全部消えてよい消去の結果の箱か (回す時、止まる所が無ければ形の合う箱を探さず行き先未定。スイッチ stripRarity) */
 export const fromStrip = (doc: TreeDoc, id: string): boolean => { const p = doc.boxes[id]?.parent; return !!p && isStrip(doc.boxes[p]); };

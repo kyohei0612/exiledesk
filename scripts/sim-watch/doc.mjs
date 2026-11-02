@@ -67,20 +67,42 @@ export const stripMiddles = (doc) => Object.values(doc.boxes).filter((b) => isSt
  * 外れの箱の見本で「外れ MOD」でない行は、この中の狙いのはず (junkByCheck: ☑ していない完成形の MOD も外れ MOD)
  */
 export function pathAims(doc, id) {
-  const seen = new Set(), todo = [id];
   // 始まりから付いている完成の狙いも狙い (外れの箱の札で「外れ MOD」と出さない、a1abbf41)
   const goals = new Set((doc.memoAims ?? []).map((a) => a.modId));
   const aims = new Set((doc.start?.mods ?? []).map((m) => m.modId).filter((m) => goals.has(m)));
+  for (const x of pathBoxes(doc, id)) {
+    if (x === id) continue;
+    const b = doc.boxes[x];
+    if (b.aim?.modId) aims.add(b.aim.modId);
+    for (const a of b.anyOf ?? []) aims.add(a.modId);
+  }
+  // 途中の狙い (S-33c) も付いている間は名前の行
+  for (const m of pathMids(doc, id)) aims.add(m);
+  return aims;
+}
+/** その箱へ来られる道の箱 (親と、その箱・上の箱へ戻ってくる箱をたどる) */
+function pathBoxes(doc, id) {
+  const seen = new Set(), todo = [id];
   while (todo.length) {
     const x = todo.pop();
     if (!x || seen.has(x) || !doc.boxes[x]) continue;
     seen.add(x);
-    const b = doc.boxes[x];
-    if (x !== id && b.aim?.modId) aims.add(b.aim.modId);
-    for (const a of b.anyOf ?? []) if (x !== id) aims.add(a.modId);
-    todo.push(b.parent, ...Object.values(doc.boxes).filter((y) => y.back === x).map((y) => y.id));
+    todo.push(doc.boxes[x].parent, ...Object.values(doc.boxes).filter((y) => y.back === x).map((y) => y.id));
   }
-  return aims;
+  return seen;
+}
+/**
+ * その箱へ来られる道で手で打つエッセンスの MOD のうち完成形に無い物 = 途中の狙い (S-33c、tree-veil の midAims と同じ。無限のエッセンスはキーの表が TS にあり見分けない = 許す数が甘くなるだけ)。
+ * ☑ を外した手・全部消えてよい消去の後も付いている間は狙いなので、外れ MOD でない行に数えてよい (11-02 オーナー「狙いの完成に含めるって話」)
+ */
+export function pathMids(doc, id) {
+  const goals = new Set((doc.memoAims ?? []).map((a) => a.modId)), out = new Set();
+  for (const x of pathBoxes(doc, id)) {
+    if (x === id) continue;
+    const m = /^essence:(?:lesser|normal|greater|perfect):(.+)$/.exec(doc.boxes[x].hand?.currency ?? "");
+    if (m && !goals.has(m[1])) out.add(m[1]);
+  }
+  return out;
 }
 
 /** 外れの箱 (外れ・狙いが消えた) で、親の手と同じ手を選べば戻るはずの箱 (見張りの (6) で手を足す所) */

@@ -12,6 +12,7 @@ import { fractureMarks } from "../../../services/simulator/tree/tree-model";
 import { midAims, stoneAims } from "../../../services/simulator/tree/tree-veil";
 import { aimKey, type Aim, type Hand } from "../../../services/simulator/tree/tree-model";
 import { keepAskOf, keepChoicesOf, keepDefaultOf } from "./tree-hand-plan";
+import { boxTagsOf, chosenMod } from "./tree-row-tags";
 import { aimOpts, targetsOf } from "../../../services/simulator/tree/tree-sample";
 import { isAimMod } from "../../../services/simulator/tree/tree-aim";
 import { useTree } from "./use-tree";
@@ -28,8 +29,17 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   const ask = computed(() => { const d = s.data.value, it = o.item.value, h = o.held.value; return !!d && !!it && !!h && keepAskOf(d, it, h, o.omens.value); });
   /** カードの見本の ☑ の印 (箱のカードと同じ見本、S-82) */
   const aimedNow = (d: PatchData, it: StageItem | null): ReadonlySet<string> => (it && aimedOfCard(d, t.doc.value, o.boxId, it)) || sampleAimed(d, t.doc.value, o.boxId, 1);
-  /** 消える手の既定 = 持っている狙い (カードの見本の ☑ の印) */
-  const defaults = (): string[] => { const d = s.data.value; return d && !isRemove.value ? keepDefaultOf(choices.value, aimedNow(d, o.item.value), flag("junkTidy") ? stoneAims(t.doc.value) : []).map(aimKey) : []; };
+  /**
+   * 消える手の既定 = 持っている狙い (カードの見本の ☑ の印)。消去の既定は全部消えてよいだが、持っている途中の狙いは残す側 (S-33c。全部の候補になる時は全部消えてよいのまま、S-27b。
+   * 11-02 オーナー「狙いの完成に含めるって話途中で消えるけどやないとハズレMODあつかいやろ」、スイッチ junkTidy)
+   */
+  const defaults = (): string[] => {
+    const d = s.data.value;
+    if (!d) return [];
+    if (!isRemove.value) return keepDefaultOf(choices.value, aimedNow(d, o.item.value), flag("junkTidy") ? stoneAims(t.doc.value) : []).map(aimKey);
+    const am = aimedNow(d, o.item.value), mid = choices.value.filter((c) => am.has(c.aim.modId) && midAims(t.doc.value).some((a) => a.modId === c.aim.modId));
+    return mid.length && mid.length < choices.value.length ? mid.map((c) => aimKey(c.aim)) : [];
+  };
   /** この手で消えない狙いの MOD (☑ 固定の行、S-27e。スイッチ keepOutside。✦ は出さない。候補を聞く時だけ) */
   const fixed = computed((): StageMod[] => {
     const d = s.data.value, it = o.item.value, h = o.held.value;
@@ -53,8 +63,17 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   }
   function none(e: Event): void { touched = true; checked.value = []; (e.target as HTMLInputElement).checked = true; }
   const text = (m: StageMod): string => { const it = o.item.value ? o.cardOf(o.item.value) : null; return modText((it ? [...it.prefixes, ...it.suffixes].find((x) => x.modId === m.modId) : null) ?? m); }; // 値はカードと同じ (cardOf、10-28 モンキー見た目 1: 欄 94% / カード 96%)
-  // ☑ の一覧は外れでも全部 MOD の名前 (S-83。11-02 オーナー「名前で指定できない」「やまかんになる」)
-  const label = (c: { aim: Aim; mod: StageMod }): string => text(c.mod);
+  /**
+   * 乱数で付いた外れは「外れ MOD」(カードの札と同じ boxTagsOf で外れの行)。狙い・途中の狙い・選んで付けた MOD (エッセンス・発現済みの冒涜) は名前 (S-83。
+   * 11-02 オーナー「狙ってないMODはカードでもハズレMODやろ…なんで乱数で出たハズレMODも消去持った時に出るんや」)
+   */
+  const junk = (c: { mod: StageMod }): boolean => {
+    const d = s.data.value, it = o.item.value;
+    if (!d || !it || chosenMod(d, c.mod)) return false;
+    const tag = boxTagsOf(d, t.doc.value, o.boxId, o.cardOf(it)).get(c.mod.modId);
+    return !!tag?.replace && tag.tone === "bad";
+  };
+  const label = (c: { aim: Aim; mod: StageMod }): string => (junk(c) ? tr("外れ MOD", "Miss mod") : text(c.mod));
   /** 消去は全部の候補を残す ☑ はできない (消える MOD が無くなる = 消去が打てない。☑ の無い候補が最後の 1 つなら押せない、S-27b)。消える手はできる (S-27d) */
   const last = (a: Aim): boolean => !flag("junkTidy") && isRemove.value && !checked.value.includes(aimKey(a)) && aims.value.length >= choices.value.length - 1;
   const lastText = tr("全部の MOD は残せない (消える MOD が無くなる)", "You can't keep every mod (nothing would be removed)");

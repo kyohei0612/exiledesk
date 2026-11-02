@@ -271,7 +271,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
         if (b.back && !viaBack) {
           // 形の合う箱へ = 回す時と同じく今のアイテムの形で行き先を決める (tree-run の matchItem)。作り直し = 始めのアイテムで始まりへ
           const to = J
-            ? (b.back === MATCH ? stripBackOf(data, doc, id, item) ?? (fromStrip(doc, id) ? null : routeOf(data, doc, J, null, item, aimed)) : b.back === RESTART ? "start" : routeOf(data, doc, J, b.back, item, aimed))
+            ? (b.back === MATCH ? stripBackOf(data, doc, id, item, aimed) ?? (fromStrip(doc, id) ? null : routeOf(data, doc, J, null, item, aimed)) : b.back === RESTART ? "start" : routeOf(data, doc, J, b.back, item, aimed))
             : b.back === MATCH ? stripBackOf(data, doc, id, item) ?? matchItem(data, doc, item, aims) : b.back === RESTART ? "start" : settle(data, doc, shapes, b.back, item, aims);
           if (!to) { add(id, "noMatch", tr("この形の箱が無い (回すとここで止まる)", "No box has this shape (runs stop here)")); return; }
           walk(to, b.back === RESTART ? start : item, true, b.back === RESTART && J ? startAimed(data, doc, start) : aimed);
@@ -280,7 +280,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
         if (!b.hand) return;
         // 打てない手 (効かない・消せる物が無いお告げも。tree-sample の handProblem、オーナー 10-22「進行不能」)
         const why = handProblem(data, item, b.hand);
-        const first = playHand(data, item, b.hand, rng, handAims(doc, b.id, aims), undefined, false, stripStop(data, doc, b));
+        const first = playHand(data, item, b.hand, rng, handAims(doc, b.id, aims), undefined, false, stripStop(data, doc, b, J ? aimed : null));
         // お告げが効かないだけ (回すと打って進む) は止まりと分ける (10-22 13 通り組んだ #12: 「手が打てない」と出たのに 100 人とも進んだ)
         if (why && first.applied) { const c = waste.get(id) ?? { who: new Set<number>(), reason: why }; c.who.add(person); waste.set(id, c); }
         else if (!first.applied && !J && heldHitOf(data, doc, b, item)) { const hb = heldHitOf(data, doc, b, item)!; walk(hb, item, viaBack, J ? nextAimed(data, doc, aimed, hb, item) : aimed); return; }
@@ -317,7 +317,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
           // (10-25 不在のアミュ B: カオスの当たるまで →「狙いが消えた」と完璧なエッセンス → 当たり・消えたを 1 箱 1,200 回ずつ打ち、開くたび画面が 17 秒固まった)
           const impossible = b.hand.repeat ? ob.out !== "hit" && ob.out !== "any" && ob.out !== "pass" : !!canBe && !canBe.some(fits);
           for (let i = 0; i < (impossible ? 0 : TRIES) && !got; i++) {
-            const r = i === 0 ? first : playHand(data, item, b.hand, rng, handAims(doc, b.id, aims), undefined, false, stripStop(data, doc, b));
+            const r = i === 0 ? first : playHand(data, item, b.hand, rng, handAims(doc, b.id, aims), undefined, false, stripStop(data, doc, b, J ? aimed : null));
             if (!r.applied) break;
             const res = boxOutcomeOf(data, doc, b, item, r.item, aims, J ? aimed : null);
             // 当たるまでの手が上限まで打っても当たらない = 付かない狙いだけ。打ち直しても同じなのでやめる (1 回 5000 回 × 1200 で固まった、10-22)
