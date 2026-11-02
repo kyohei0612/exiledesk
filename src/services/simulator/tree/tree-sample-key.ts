@@ -1,5 +1,5 @@
 /**
- * tree-sample-key.ts — 箱の見本を覚える鍵 (S-71b ②、スイッチ treeLight。tree-sample.ts から分けた)。
+ * tree-sample-key.ts — 箱の見本を覚える鍵 (S-71b ②。tree-sample.ts から分けた)。
  * 見本は道だけで決まる (S-74) ので、鍵 = 見本に効く物全部: 木の前提 (箱より外)・木の狙いの札 (aimsOf)・置き石 (placedAims)・始まりからこの箱までの箱と、その各段の兄弟の札。
  * この箱自身の手・分かれ目は下の箱の見本にしか効かないので入れない (手を足しても自分の見本を作り直さない)。
  * 道に全部消えてよい消去の手がある箱だけ、止まる所 (stripStop) が木全体を見るので木全体の中身も入れる
@@ -10,13 +10,12 @@ import { boxAims, type TreeBox, type TreeDoc } from "./tree-model";
 import { isStrip } from "./tree-outcome";
 import { aimsOf } from "./tree-sample";
 import { placedAims } from "./tree-veil";
-import { flag } from "../../../web/release-flags";
 
 /** 位置と、見本に効かないメモの文を除く */
 const skipPos = (k: string, v: unknown): unknown => (k === "x" || k === "y" || k === "note" ? undefined : v);
 /** 兄弟の札 (手の当たりの札 handAims・結果の分け方 own・見本の種 pathKeyOf がここを見る) */
-// 箱の番号は見本に効かない (種は道の札 pathKeyOf)。手を変えると番号が振り直されて覚えが全部外れていたので入れない (S-71b ⑬、スイッチ treeLight)
-export const tagOf = (x: TreeBox): unknown[] => (flag("treeLight") ? [x.out, x.aim, boxAims(x), x.junkKey, x.mergedOuts] : [x.id, x.out, x.aim, boxAims(x), x.junkKey, x.mergedOuts]);
+// 箱の番号は見本に効かない (種は道の札 pathKeyOf)。手を変えると番号が振り直されて覚えが全部外れていたので入れない (S-71b ⑬)
+export const tagOf = (x: TreeBox): unknown[] => [x.out, x.aim, boxAims(x), x.junkKey, x.mergedOuts];
 /** 箱の段の文字: self = 箱自身の札と兄弟、chain = 手・分かれ目まで入れて始まりまで続けた物、strip = ここまでの道に全部消えてよい消去がある */
 export interface PathLink { self: string; chain: string; strip: boolean }
 const NO_LINK: PathLink = { self: "", chain: "", strip: false };

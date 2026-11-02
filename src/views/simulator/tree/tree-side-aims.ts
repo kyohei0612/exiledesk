@@ -8,7 +8,6 @@ import { aimHeldOn } from "../../../services/simulator/tree/tree-aim";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { aimKey, boxAims, type Aim, type Hand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { hitAimsOf, kindOf } from "./tree-hand-plan";
-import { flag } from "../../../web/release-flags";
 
 /** 付く狙いを見る手 (消す・品質などは見ない、TreeModPick の reach と同じ) */
 const REACH_KINDS = ["add", "swap", "spam", "essence", "fracture"];
@@ -18,11 +17,10 @@ export function takenBeside(doc: TreeDoc, boxId: string, except: string | null):
   const p = doc.boxes[doc.boxes[boxId]?.parent ?? ""];
   return new Set((p?.outs ?? []).filter((o) => o !== except).flatMap((o) => { const c = doc.boxes[o]; return c?.out === "hit" ? boxAims(c) : []; }).map(aimKey));
 }
-/** 親の手で付きうる狙い (見本と手と狙いが同じ間は引き直さない。箱を描くたびに全部の当たりの箱で引いていた、S-71b ⑭、スイッチ treeLight) */
+/** 親の手で付きうる狙い (見本と手と狙いが同じ間は引き直さない。箱を描くたびに全部の当たりの箱で引いていた、S-71b ⑭) */
 const REACH = new WeakMap<StageItem, Map<string, Set<string>>>();
 function reachOf(data: PatchData, doc: TreeDoc, id: string, it: StageItem, h: Hand, goals: readonly Aim[]): Set<string> {
   const make = (): Set<string> => new Set(hitAimsOf(data, doc, id, it, h, [...goals]).map((a) => a.modId));
-  if (!flag("treeLight")) return make();
   const key = JSON.stringify([id, h, goals, doc.boxes[id]?.outs]);
   let m = REACH.get(it);
   if (!m) REACH.set(it, (m = new Map()));

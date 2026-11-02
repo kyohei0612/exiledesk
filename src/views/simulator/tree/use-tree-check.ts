@@ -6,7 +6,6 @@ import { pruneBacks } from "../../../services/simulator/tree/tree-shape";
 import { markStill } from "../../../services/simulator/tree/tree-sample";
 import { checkTreeAsync, NOTICE_KINDS, unsetIssues, type CheckIssue, type CheckPrice, type CheckProgress } from "../../../services/simulator/tree/tree-check";
 import type { TreeRunResult } from "../../../services/simulator/tree/tree-run";
-import { flag } from "../../../web/release-flags";
 import { fractureMarks, startOf, type TreeBox, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { craftStage as s } from "../../../state/craft-stage";
 import { track } from "../../../utils/track";
@@ -85,7 +84,7 @@ export function useTreeCheck(doc: Ref<TreeDoc>, on: () => boolean, priced?: () =
     await new Promise((r) => setTimeout(r, 30)); // 「穴チェック中」を先に出す
     try {
       lastRun = null;
-      const price = flag("treeLight") ? priced?.() : undefined;
+      const price = priced?.();
       const now = [...(await checkTreeAsync(d, doc.value, (p) => { progress.value = p; issues.value = p.partial; }, price, (run) => { if (price) lastRun = { key, startCost: price.startCost, run }; })), ...orphanIssues(doc.value)];
       issues.value = now;
       // 合格を止めない知らせ (NOTICE_KINDS) は数えない (S-73)

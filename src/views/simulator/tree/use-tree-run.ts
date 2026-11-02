@@ -14,7 +14,6 @@ import { craftStage as s } from "../../../state/craft-stage";
 import { routeKeyOf, type CheckRun } from "./use-tree-check";
 import { noteCardRun } from "../recipe-card";
 import { track } from "../../../utils/track";
-import { flag } from "../../../web/release-flags";
 
 /** 回す人数 (帯の「100 人回した時」と同じ)。seed は台本・解析君と同じ 1 */
 export const RUN_N = 100;
@@ -29,7 +28,7 @@ export const VIEW_N = 10;
 const EVERY = 2;
 /** 1 人の打ち止めの費用 (tree-run の既定と同じ) */
 const CAP_DIV = 2000;
-/** 途中の結果を作り直す間隔 (人)。1 人ごとに全員分を集計すると 100 人回しの 1 割以上を使った (S-71b、スイッチ treeLight) */
+/** 途中の結果を作り直す間隔 (人)。1 人ごとに全員分を集計すると 100 人回しの 1 割以上を使った (S-71b) */
 const PROGRESS_EVERY = 5;
 const PACE_MS = 60;
 type Person1 = Parameters<NonNullable<TreeRunOpts["onPerson"]>>[0];
@@ -89,7 +88,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
     const my = ++token;
     running.value = true; shown.value = true; raw.value = null; halted.value = null; test.value = !!opt.test; skip = !!opt.test || view;
     const d = doc.value;
-    // 精査で回した同じ 30 人を使い回す (S-71b、スイッチ treeLight)。走行は 1 人 2,000 神で打ち止めなので、誰も届いていない時だけ同じ結果になる
+    // 精査で回した同じ 30 人を使い回す (S-71b)。走行は 1 人 2,000 神で打ち止めなので、誰も届いていない時だけ同じ結果になる
     const re = opt.reuse;
     if (re && re.key === routeKeyOf(d) && re.startCost === startCost() && re.run.persons.every((p) => p.cost <= CAP_DIV)) {
       await nextTick();
@@ -101,7 +100,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
     const firstOf: { p: Person1 | null } = { p: null };
     // 1 人目が進む間は層の数字を出さない (光る箱だけ)
     let walking = true;
-    const g = runTreeSteps(data, d, { n: opt.test ? TEST_N : view ? VIEW_N : RUN_N, seed: 1, price: priceIn, startCost: startCost(), every: flag("treeLight") ? PROGRESS_EVERY : 1,
+    const g = runTreeSteps(data, d, { n: opt.test ? TEST_N : view ? VIEW_N : RUN_N, seed: 1, price: priceIn, startCost: startCost(), every: PROGRESS_EVERY,
       onProgress: (r) => { last = r; if (my === token && !walking) raw.value = r; },
       onPerson: (p, i) => { if (!i) firstOf.p = p; } });
     try {

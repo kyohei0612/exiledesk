@@ -16,7 +16,6 @@ import { aimsOf, sampleOf, SINGLE_SEEDS } from "../../../services/simulator/tree
 import type { PatchData, StageItem } from "../../../services/craft-stage/engine";
 import { docPartOf, itemKeyOf, tagOf } from "../../../services/simulator/tree/tree-sample-key";
 import { aimedOfSample, sampleAimed } from "../../../services/simulator/tree/tree-judge";
-import { flag } from "../../../web/release-flags";
 import { shapeSampleOf } from "../../../services/simulator/tree/tree-sample-shape";
 import { engineOmens } from "../../../services/simulator/tree/tree-hands";
 import { boxAims, type TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -75,7 +74,7 @@ function peopleOf(data: PatchData, doc: TreeDoc, id: string): Man[] {
   return n ? men.map((m) => ({ ...m, w: m.w / n })) : one(shapeSampleOf(data, doc, id));
 }
 /** 側で分けた箱のある手の割合: エンジンの stepOutcomes の枝 (void を除いて割り直す) を、回す時と同じ boxOutcomeOf → outBoxOf で結果の箱へ */
-/** 側で分けた手の割合の覚え (鍵 = 木の前提と狙い・見本・☑・手・結果の箱。木が替わるたびに全部の手でエンジンの枝を数えていた、S-71b、スイッチ treeLight) */
+/** 側で分けた手の割合の覚え (鍵 = 木の前提と狙い・見本・☑・手・結果の箱。木が替わるたびに全部の手でエンジンの枝を数えていた、S-71b) */
 const sideMemo = new Map<string, Map<string, number> | null>();
 const SIDE_MAX = 5000;
 function sideOdds(doc: TreeDoc, id: string, part: string): Map<string, number> | null {
@@ -110,7 +109,7 @@ function sideOdds(doc: TreeDoc, id: string, part: string): Map<string, number> |
 /** 木全体: 結果の箱の id → 割合 (手の箱ごとに oddsOfHand。木が替わった時だけ数え直す) */
 function treeOddsOf(doc: Ref<TreeDoc>) {
   return computed((): Map<string, number> => {
-    const all = new Map<string, number>(), part = flag("treeLight") ? docPartOf(doc.value) : "";
+    const all = new Map<string, number>(), part = docPartOf(doc.value);
     for (const b of Object.values(doc.value.boxes)) {
       if (!b.hand) continue;
       // 削減の手の結果の箱は % を出さない (S-65b)。オーナー 11-01「削減だけ消す」

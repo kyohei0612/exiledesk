@@ -20,7 +20,6 @@ import { stepOutcomes } from "../sim-engine";
 import { bodyMemo, bodyOf, heldOn } from "./tree-box-shape";
 import { aimedAfterAnnul, judgeMemo, nextAimed, startAimed, type Judge } from "./tree-judge";
 import { playableTwin, routeOf, twinAimed, canPlay } from "./tree-judge-link";
-import { flag } from "../../../web/release-flags";
 
 export interface TreeRunOpts {
   /** 人数 (裏は 100、確かめは 300) */
@@ -126,8 +125,8 @@ function fractureMiss(data: PatchData, doc: TreeDoc, item: StageItem): number {
 /** 輪の 1 周の記録 (手の費用か来訪。同じ順に足し直して、1 手ずつ回した時と同じ費用・来訪にする) */
 type LoopOp = { box: string; pass?: true } | { key: string; n: number };
 function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: readonly Shape[], j: Judge | null, rng0: () => number, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps" | "untilHit">> & Pick<TreeRunOpts, "start" | "onHand">): Person {
-  // 輪の早送り (S-71b、スイッチ treeLight): 乱数を引かない手だけで同じ箱・同じアイテム・同じ狙いへ戻ったら、この先は同じ周回しか起きないので、残りの周は打たずに記録だけ足す
-  const light = flag("treeLight") && !o.onHand;
+  // 輪の早送り (S-71b): 乱数を引かない手だけで同じ箱・同じアイテム・同じ狙いへ戻ったら、この先は同じ周回しか起きないので、残りの周は打たずに記録だけ足す
+  const light = !o.onHand;
   let rolls = 0, seenRolls = -1;
   const rng = light ? (): number => { rolls++; return rng0(); } : rng0;
   const seen = new Map<string, { at: number; steps: number; cost: number }>();

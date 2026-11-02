@@ -18,7 +18,6 @@ import { boxAims, fractureMarks, keepCut, type Aim, type Hand, type TreeDoc } fr
 import { qualityOk } from "./tree-unbounded";
 import { goneOf, gotOf, keptAimsOf } from "./tree-keep";
 import { midAims, midMark, placedAims } from "./tree-veil";
-import { flag } from "../../../web/release-flags";
 
 /** 箱の中身を見る見本の数 (前の boxBody と同じ 4 つ) */
 const SAMPLES = 4;
@@ -195,10 +194,10 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
   const full = (id: string): ReadonlySet<string> | null => {
     if (memo.has(id)) return memo.get(id)!;
     let out: Set<string> | null = null;
-    // この間は木が変わらないので鍵は 1 回だけ (S-71b、スイッチ treeLight)
+    // この間は木が変わらないので鍵は 1 回だけ (S-71b)
     if (doc.boxes[id]) holdDocSig(doc, () => {
-      // 箱の中身は見本と同じ道の鍵で覚え続ける (判定を作り直すたびに全部の箱の見本を引いていた。スイッチ treeLight)
-      const key = flag("treeLight") ? boxKeyOf(doc, id) : null, kept = key ? contentsOf(data).get(key) : undefined;
+      // 箱の中身は見本と同じ道の鍵で覚え続ける (判定を作り直すたびに全部の箱の見本を引いていた)
+      const key = boxKeyOf(doc, id), kept = key ? contentsOf(data).get(key) : undefined;
       if (kept !== undefined) { out = kept; return; }
       for (let seed = 1, last = 0; seed <= MAX; seed++) {
         if (seed > SAMPLES && ((out?.size ?? 0) < 2 || seed - last > MORE)) break;

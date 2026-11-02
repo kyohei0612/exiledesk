@@ -76,7 +76,7 @@ export function checkTree(data: PatchData, doc: TreeDoc): CheckIssue[] {
  * ルート精査を 1 人ずつ区切って回し、間に画面を返す (くるくるが回り「精査中 12/30」が出る、10-22 オーナー「ローディング画面を出さないとバグってるのか分からない」)。
  * 中身は checkTree と同じ。木の設定 (tune) は 1 区切りごとに包む
  */
-/** 精査の 30 人を穴チェックの走行に使い回す時の値段 (S-71b、スイッチ treeLight)。費用の上限は掛けないので、精査の結果は値段 0 の時と同じ */
+/** 精査の 30 人を穴チェックの走行に使い回す時の値段 (S-71b)。費用の上限は掛けないので、精査の結果は値段 0 の時と同じ */
 export interface CheckPrice { price: (key: string) => number; startCost: number }
 export async function checkTreeAsync(data: PatchData, doc: TreeDoc, onProgress: (p: CheckProgress) => void, priced?: CheckPrice, onRun?: (r: TreeRunResult) => void): Promise<CheckIssue[]> {
   const g = checkSteps(data, doc, priced, onRun);

@@ -7,22 +7,21 @@ import { BOX_H, BOX_W, type TreeBox, type TreeDoc } from "../../../services/simu
 import { CHIP_HALF, mirrorPath, mirrorPos, mirrorSeg, roundPath, routeBacks, type BackReq, type Seg } from "./tree-lines";
 import { sideRoute } from "./tree-lines-grid";
 import { joinPath, mergeReqs } from "./tree-merge";
-import { flag } from "../../../web/release-flags";
 
 export function useTreeMerge(o: {
   doc: Ref<TreeDoc>; posOf: (b: TreeBox) => { x: number; y: number }; segs: () => Seg[];
   /** 箱の今の高さ (アイテムの枠で BOX_H より高い。測れなければ BOX_H。線がほかの箱を横切っていた、10-27 オーナーの絵) */ heightOf?: (id: string) => number;
   /** カードを出さない・消す時 (引っ張っている・画面が動いた・欄を開いた) */ busy: () => boolean; reset: () => unknown;
   /** 統合の線の横の区間を通す高さ (段の間、tree-row-tops の laneYs) */ lanes?: () => number[];
-  /** 引っ張っている箱 (その間はその箱に触れる線だけ引き直す、離したら全部。S-71b、スイッチ treeLight) */ moving?: () => string | null;
+  /** 引っ張っている箱 (その間はその箱に触れる線だけ引き直す、離したら全部。S-71b) */ moving?: () => string | null;
   /** 手の札の真ん中と札の最大の幅 w (統合の線が避ける。札を横切っていた、線の見張り L3) */ chips?: () => Array<{ x: number; y: number; w?: number }>;
 }) {
   let before: { paths: Map<string, string>; marks: Map<string, { x: number; y: number } | undefined> } | null = null;
-  /** 線の入力 → 引いた線 (1 手で同じ線を何度も全部引き直し、1 つ戻すでも引いていた、S-71b ⑫、スイッチ treeLight) */
+  /** 線の入力 → 引いた線 (1 手で同じ線を何度も全部引き直し、1 つ戻すでも引いていた、S-71b ⑫) */
   const drawn = new Map<string, { lines: ReturnType<typeof mergeReqs>["lines"]; paths: Map<string, string> }>();
   const merged = computed(() => {
     const d = o.doc.value;
-    const mv = flag("treeLight") ? o.moving?.() ?? null : null;
+    const mv = o.moving?.() ?? null;
     /** 引っ張っている間、この線は前の道のまま (引っ張っている箱に触れない・前の道がある) */
     const keepOf = (id: string, from: string, to: string): string | undefined => (mv && from !== mv && to !== mv ? before?.paths.get(id) : undefined);
     const pos = (id: string) => ({ ...o.posOf(d.boxes[id]!), w: BOX_W, h: o.heightOf?.(id) || BOX_H });
@@ -33,7 +32,7 @@ export function useTreeMerge(o: {
     // 札の最大の幅 (chipRoom、TreeHandChip の maxWidth) で見る (全体表示で合流の線が隣の札を横切った、okPcmPyY の b23→b5 と札 b12、線の見張り L3)
     const chipBoxes = (o.chips?.() ?? []).map((c) => { const w = c.w ? c.w : 200; return { x: c.x - w / 2, y: c.y - CHIP_HALF, w, h: CHIP_HALF * 2 }; });
     const treeSegs = o.segs();
-    const inputKey = flag("treeLight") && !mv ? JSON.stringify([reqs, lines, Object.keys(d.boxes).filter((id) => !d.boxes[id]!.merged).map(pos), treeSegs, chipBoxes, o.lanes?.() ?? []]) : null;
+    const inputKey = !mv ? JSON.stringify([reqs, lines, Object.keys(d.boxes).filter((id) => !d.boxes[id]!.merged).map(pos), treeSegs, chipBoxes, o.lanes?.() ?? []]) : null;
     const memo = inputKey ? drawn.get(inputKey) : undefined;
     if (memo) { before = { paths: memo.paths, marks: new Map(memo.lines.map((l) => [l.id, l.mark])) }; return memo; }
     // 統合の線も横の辺の真ん中どうしを最短で (S-144・S-145)。同じ箱へ 2 本以上入る時は辺の真ん中から 8 ずつずらす。通れなければ前の道 (joinPath)

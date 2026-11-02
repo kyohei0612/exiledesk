@@ -11,7 +11,6 @@ import { catalystFull, catalystTagOf, fillCatalyst, fractureStart } from "../../
 import { pathKeyOf } from "./tree-recipe-v1";
 import { docPartOf, itemKeyOf, pathKeyOfBox, type PathLink } from "./tree-sample-key";
 import { aimHeldOn, isAimMod, junkOf } from "./tree-aim";
-import { flag } from "../../../web/release-flags";
 import { CATALYSING as CATALYSING_OMEN, ECHO, ECHO as ABYSSAL_ECHO_OMEN, effectOf, isBone, isCatalyst } from "./tree-hands";
 import { tr } from "../../../i18n/lang";
 import { fractureMarks, START_JUNK, startOf, startRarity, startsFractured, type Aim, type Hand, type OutKind, type TreeBox, type TreeDoc, boxAims } from "./tree-model";
@@ -27,8 +26,7 @@ import { mainSideOf } from "./tree-uncountable";
 export { fractureChoices, fractureTarget } from "./tree-frac-pick"; // フラクチャーの小物は tree-frac-pick へ (1 ファイル 500 行まで、10-28)
 export { goalsHeld, heldHitOf } from "./tree-unbounded";
 
-const TRIES = 3000;
-/** スイッチ treeLight の打ち直しの上限 (見本の木 9 本で成功は全部 1000 回以内、S-71b) */
+/** 打ち直しの上限 (見本の木 9 本で成功は全部 1000 回以内、S-71b) */
 const TRIES_LIGHT = 1000;
 export interface Sample { item: StageItem; note: string | null }
 
@@ -216,15 +214,8 @@ export function handProblem(data: PatchData, item: StageItem, h: Hand): string |
 
 /** 箱の見本 (seed が同じなら同じ物。木の設定 tune で打つ) */
 export function sampleOf(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
-  // スイッチ treeLight: 見本は道だけで決まるので道の鍵で覚え続ける (S-71b ②)。手を足しても新しい箱の分だけ作る
-  if (flag("treeLight")) {
-    if (data !== memoData) { memo.clear(); pathMemo.clear(); failMemo.clear(); memoSig = ""; memoData = data; }
-    return withTreeTune(doc, () => sampleIn(data, doc, boxId, seed));
-  }
-  // 見本は道だけで決まる (S-74、スイッチ boxShape) ので、木の中身 (位置を除く) が同じなら覚えた見本を返す。
-  // 整列・段揃え・引っ張るなど位置だけの変化で全部の箱をエンジンで作り直し、整列が毎回約 1 秒かかった (10-28 夜オーナー「サイトが重い」)
-  const sig = heldDoc === doc ? heldSig : docSig(doc);
-  if (sig !== memoSig || data !== memoData) { memo.clear(); memoSig = sig; memoData = data; }
+  // 見本は道だけで決まるので道の鍵で覚え続ける (S-71b ②)。手を足しても新しい箱の分だけ作る
+  if (data !== memoData) { memo.clear(); pathMemo.clear(); failMemo.clear(); memoSig = ""; memoData = data; }
   return withTreeTune(doc, () => sampleIn(data, doc, boxId, seed));
 }
 /** 覚えた見本 (木の中身の鍵が変わったら全部捨てる。treeLight は holdDocSig の間の早道だけ) */
@@ -232,12 +223,12 @@ const memo = new Map<string, Sample>();
 let memoSig = "", memoData: PatchData | null = null;
 /** 木の中身の鍵 (位置 x・y と、見本に効かないメモの文を除く) */
 const docSig = (doc: TreeDoc): string => JSON.stringify(doc, (k, v) => (k === "x" || k === "y" || k === "note" || k === "doneNow" || k === "tidied" || k === "tidyRan" ? undefined : v));
-/** fn の間は木が変わらないので鍵を作り直さない (1 回の JSON が 100 人回しの 4 割だった、S-71b、スイッチ treeLight) */
+/** fn の間は木が変わらないので鍵を作り直さない (1 回の JSON が 100 人回しの 4 割だった、S-71b) */
 const heldLinks = new Map<string, PathLink>();
 let heldDoc: TreeDoc | null = null, heldSig = "", heldPart: string | null = null, heldLazy = false, holdNo = 0;
 /** lazy = 木全体の鍵は要る時だけ作る (判定と見本作りの短い間。作るだけで箱の数の分だけ掛かる) */
 export function holdDocSig<T>(doc: TreeDoc, fn: () => T, lazy = false): T {
-  if (!flag("treeLight") || heldDoc) return fn();
+  if (heldDoc) return fn();
   heldDoc = doc; heldLazy = lazy; heldSig = lazy ? "" : docSig(doc); heldPart = null; heldLinks.clear(); holdNo++;
   try { return fn(); } finally { heldDoc = null; }
 }
@@ -254,11 +245,6 @@ let sigSeq = 0;
 const sigNo = (sig: string): number => { let n = sigNos.get(sig); if (!n) sigNos.set(sig, (n = ++sigSeq)); return n; };
 function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): Sample {
   const k = `${boxId}|${seed}|${altDeep ? 1 : 0}`;
-  if (!flag("treeLight")) {
-    let r = memo.get(k);
-    if (!r) { r = sampleRaw(data, doc, boxId, seed); memo.set(k, r); }
-    return r;
-  }
   const held = heldDoc === doc, fast = held && !heldLazy;
   if (fast && memoSig !== heldSig) { memo.clear(); memoSig = heldSig; }
   let r = fast ? memo.get(k) : undefined;
@@ -358,7 +344,6 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
   // 箱の形 (道の狙いの組) に合う結果だけ、無ければ合わなかった最初の結果 (途中で狙いが消えた結果が当たりの見本になった、10-28 見張り。boxShape)
   // 道の狙いの組 (heldSets) では絞らない。見本 = 親の見本にエンジンで打った結果 (大本 1)
   let loose: Sample | null = null;
-  const light = flag("treeLight");
   // ☑ は打ち直しの間変わらないので 1 回だけ引く (打ち直しのたびに引いて鍵を作っていた)
   let held: ReadonlySet<string> | undefined;
   const aimedNow = (): ReadonlySet<string> | undefined => (held ??= aimedOfSample(p.id, base.item) ?? sampleAimed(data, doc, p.id, seed));
@@ -367,10 +352,10 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
   if (stop?.(base.item)) return { item: base.item, note: "cant:stripStop" };
   // 数え上げられない手の側の鍵の無い箱は一番多い形だけ (ほかの形は整理で足す箱へ行く、S-21・S-74)
   const main = !b.junkKey && (b.out === "any" || b.out === "junk" || b.out === "hit") ? mainSideOf(data, base.item, p.hand) : undefined;
-  const fk = light && !isStrip(p) ? failKeyOf(doc, boxId, seed, base.item, aimedNow()) : null;
+  const fk = !isStrip(p) ? failKeyOf(doc, boxId, seed, base.item, aimedNow()) : null;
   const failed = fk ? failMemo.get(fk) : undefined;
   if (failed !== undefined) return { item: base.item, note: failed };
-  for (let i = 0, tries = light ? TRIES_LIGHT : TRIES; i < tries; i++) {
+  for (let i = 0, tries = TRIES_LIGHT; i < tries; i++) {
     const r = playHand(data, base.item, p.hand, rng, handAims(doc, p.id, aims), undefined, b.out === "junk" || b.out === "lost", stop);
     if (!r.applied) { last = r; break; }
     last = r;

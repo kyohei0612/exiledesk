@@ -263,10 +263,9 @@ function showGone(n: number): void { goneN.value = n; clearTimeout(goneTimer); g
 /** 上の赤い札の数 = 下の「未設定 n つ」と同じ ! の箱の数 (1 箱に 2 行ある時に上下で違った、S-89b) */
 const holeN = computed(() => new Set((jt.shownIssues.value ?? []).filter((x) => doc.value.boxes[x.boxId]).map((x) => x.boxId)).size);
 const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
-/** 穴チェックのボタン: 精査と 30 人の走行 (treeLight は精査の 30 人を走行に使い回す、S-71b) */
+/** 穴チェックのボタン: 精査と 30 人の走行 (精査の 30 人を走行に使い回す、S-71b) */
 async function onTest(): Promise<void> {
   if (jt.on.value && await jt.sort()) return; // 整理で未設定が出たらそこで止める (S-190)
-  if (!flag("treeLight")) { void onCheck(); void tr100.run({ test: true }); return; }
   await onCheck();
   void tr100.run({ test: true, reuse: checkRun() });
 }

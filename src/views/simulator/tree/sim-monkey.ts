@@ -217,7 +217,7 @@ export function installSimMonkey(): () => void {
     sameShape(from: string, to: string) { const d = s.data.value, j = judgeOf(t.doc.value); if (j) return to === "match" || to === "restart" ? true : j.fitsBox(from, to); return d ? sameShape(d, t.doc.value, from, to) : null; },
     /** 自動の ↩ の見直し (tree-shape の pruneBacks、judgeOne の下では箱どうしの判定) を写しに掛けて、外れる戻りの箱を返す (木は変えない) */
     prune(): string[] | null { const d = s.data.value; if (!d) return null; const x = JSON.parse(JSON.stringify(t.doc.value)) as TreeDoc; pruneBacks(d, x); return Object.keys(x.boxes).filter((id) => !!t.doc.value.boxes[id]?.back && !x.boxes[id]!.back); },
-    /** 全部の箱の見本 seeds 個 (item・note) と ☑ (スイッチ treeLight のオン / オフで見本が同じかの見張り = scripts/sim-watch/light-edit.mjs) */
+    /** 全部の箱の見本 seeds 個 (item・note) と ☑ ( のオン / オフで見本が同じかの見張り = scripts/sim-watch/light-edit.mjs) */
     samples(seeds = 8) { const d = s.data.value; if (!d) return null; return Object.fromEntries(Object.keys(t.doc.value.boxes).sort().map((id) => [id, Array.from({ length: seeds }, (_, i) => { const x = sampleOf(d, t.doc.value, id, i + 1); return { item: x.item, note: x.note, aimed: [...sampleAimed(d, t.doc.value, id, i + 1)].sort() }; })])); },
     /** 木全部の結果の箱の割合 (箱の札と同じ useTreeOdds) */
     odds() { return Object.fromEntries(useTreeOdds().value); },
