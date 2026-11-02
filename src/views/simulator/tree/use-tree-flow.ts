@@ -43,8 +43,8 @@ const OPEN_MIN = VIEW_ONLY;
 const FIT_MIN = 0.25;
 /** 全体に合わせる時の余白の下限 */
 const PAD_MIN = 12;
-/** 箱の下の外の＋ (TreeBox の data-tree-next、-bottom-[34px]・28px) の分 */
-const NEXT_H = 40;
+/** 箱の下の外の＋ (TreeBox の data-tree-next、真ん中が箱の 68px 下・28px) の分 */
+const NEXT_H = 88;
 
 export function useTreeFlow(doc: Ref<TreeDoc>) {
   const f = useVueFlow(FLOW_ID);

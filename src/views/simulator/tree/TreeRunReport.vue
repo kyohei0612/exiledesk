@@ -36,7 +36,7 @@ const rest = computed(() => uses.value.slice(SHOW).reduce((a, u) => a + u.div, 0
 /** 一番お金を使った箱 (1 人あたり、上位 3) */
 const spend = computed(() => Object.entries(props.result.boxes).filter(([, b]) => b.spend > 0.005).sort((a, z) => z[1].spend - a[1].spend).slice(0, 3));
 const stuck = computed(() => Object.entries(props.result.stuckAt).sort((a, z) => z[1] - a[1]));
-/** ループ (打ち止めの人が一番回っていた箱、多い順) */
+/** 沼った場所 (上限に届いた人が一番回っていた箱、多い順。青枠の箱と同じ) */
 const loops = computed(() => Object.entries(props.result.loopAt ?? {}).sort((a, z) => z[1] - a[1]));
 /** 止まった理由 (最初の 1 人、tree-run の stuckWhy) */
 const whyOf = (id: string): string => props.result.stuckWhy[id]?.reason ?? "";
@@ -70,7 +70,7 @@ const priceIn = computed(() => startOf(t.doc.value).price ?? null);
           <button v-for="[id, n] in stuck" :key="id" type="button" data-tree-test-drive-stuck class="block w-full break-words py-0.5 text-left text-[12px] text-rose-100 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} で ${n} 人`, `${n} at ${boxName(id)}`) }}<span v-if="whyOf(id)" class="block text-[11px] text-rose-200/70">{{ whyOf(id) }}</span></button>
         </div>
         <div v-if="loops.length" class="rounded-md border border-amber-400/40 bg-amber-900/20 px-2 py-1.5">
-          <h4 class="mb-1 text-[12px] text-amber-200">{{ tr("ループした箱 (手の上限まで回っても抜けない)", "Where runs looped (never got out)") }}</h4>
+          <h4 class="mb-1 text-[12px] text-amber-200">{{ tr("沼った場所 (青枠の箱)", "Swamps (blue boxes)") }}</h4>
           <button v-for="[id, n] in loops" :key="id" type="button" data-tree-test-drive-loop class="block w-full break-words py-0.5 text-left text-[12px] text-amber-100 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} の辺りで ${n} 人`, `${n} around ${boxName(id)}`) }}</button>
         </div>
       </div>
@@ -97,10 +97,11 @@ const priceIn = computed(() => startOf(t.doc.value).price ?? null);
           <div class="rounded-md bg-white/[0.04] py-1"><div class="text-[11px] text-[#a99d86]">{{ tr("高い 10%", "Priciest 10%") }}</div>{{ div(result.p90) }}</div>
         </div>
       </div>
-      <!-- 止まり・打ち止め -->
+      <!-- 止まり・沼った場所 -->
       <div v-if="result.stuck || result.capped" data-tree-run-report-stuck class="rounded-md border border-rose-400/40 bg-rose-900/20 px-2 py-1.5">
-        <div class="text-rose-200">{{ tr(`止まり ${result.stuck} 人 · 打ち止め ${result.capped} 人`, `${result.stuck} stuck · ${result.capped} capped`) }}</div>
+        <div class="text-rose-200">{{ tr(`止まり ${result.stuck} 人 · 沼った場所 ${result.capped} 人`, `${result.stuck} stuck · ${result.capped} swamped`) }}</div>
         <button v-for="[id, n] in stuck" :key="id" type="button" class="block w-full truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words text-left text-[12px] text-rose-100 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} で ${n} 人`, `${n} at ${boxName(id)}`) }}</button>
+        <button v-for="[id, n] in loops" :key="id" type="button" data-tree-run-report-swamp class="block w-full truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words text-left text-[12px] text-sky-200 underline-offset-2 hover:underline" @click="emit('go', id)">{{ tr(`${boxName(id)} で沼った ${n} 人`, `${n} swamped at ${boxName(id)}`) }}</button>
       </div>
       </template>
       <!-- 一番お金を使った箱 -->

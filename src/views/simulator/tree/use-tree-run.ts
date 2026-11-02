@@ -5,6 +5,7 @@
  * 回す前にまず 1 人目が木の上を 1 手ずつ進む (今いる箱が光る)。完成したら残りを回し、途中で止まったらそこで止めて寄る
  * (10-22 オーナー「回す前に 1 人通して木が正しいか確かめる」)
  */
+import { devLog } from "../../../web/dev-log";
 import { computed, nextTick, ref, watch, type Ref } from "vue";
 import { runTreeSteps, withStartCost, type TreeRunOpts, type TreeRunResult } from "../../../services/simulator/tree/tree-run";
 import { withTreeTune } from "../../../services/simulator/tree/tree-tune";
@@ -166,7 +167,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
         await new Promise((res) => setTimeout(res, wait));
         if (!(r.value % EVERY)) t0 = performance.now();
       }
-    } finally { if (my === token) { running.value = false; walk.value = null; } }
+    } finally { if (my === token) { running.value = false; walk.value = null; const r = result.value; if (r) devLog("tree-run", { n: r.n, finished: r.finished, swamped: r.capped, stuck: r.stuck, perItem: Math.round(r.perItem), loopAt: r.loopAt, stuckAt: r.stuckAt, boxes: Object.keys(doc.value.boxes).length }); } }
   }
   /** 止まり・打ち止めの箱 (多い順) */
   const stuckBoxes = computed(() => Object.entries(result.value?.stuckAt ?? {}).sort((a, z) => z[1] - a[1]));

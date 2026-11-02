@@ -13,7 +13,7 @@ import { carryAims, placeMods, retext } from "../../../services/simulator/sim-en
 import type { StageItem } from "../../../services/craft-stage/engine";
 import { fractureMarks, migrateStart, newTree, startOf, startRarity, type Aim, type StartFrom, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { openForm } from "./tree-rebuild";
-import { openStepped, treeLoading as loading } from "./use-tree-open"; import { tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
+import { logTreeEdit } from "./tree-dev-log"; import { openStepped, treeLoading as loading } from "./use-tree-open"; import { tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
 import { currentTreeRecipeId, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { tr } from "../../../i18n/lang";
 import { simOp } from "../../../web/track";
@@ -200,7 +200,7 @@ function edit(fn: (d: TreeDoc) => void): void {
   if (undoStack.length > UNDO_MAX) undoStack.shift();
   canUndo.value = true;
   redoStack.length = 0;
-  canRedo.value = false;
+  canRedo.value = false; if (import.meta.env.DEV) logTreeEdit(JSON.parse(before) as TreeDoc, d);
   doc.value = d;
   save(d);
 }

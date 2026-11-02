@@ -1,6 +1,6 @@
 <!--
   TreeBox.vue — ツリーの箱 1 つ (2026-10-22 表面だけ)。始まり (フラクチャー) / 当たり / 外れ / 外れが消えた / 狙いが消えた。
-  当たりは押すと MOD を選ぶ、横の＋で当たりを足す、下の＋で次の手。外れ・消えたの箱は消せない。見出しの鉛筆でメモ (10-22 試し打ちの欄を消したのでここから)。数字 (通った人数・ここまでの費用) は計算を繋ぐまで出さない
+  当たりは押すと MOD を選ぶ、下の＋で次の手。外れ・消えたの箱は消せない。見出しの鉛筆でメモ (10-22 試し打ちの欄を消したのでここから)。数字 (通った人数・ここまでの費用) は計算を繋ぐまで出さない
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
@@ -16,8 +16,9 @@ import { craftStage as s } from "../../../state/craft-stage";
 import { shapeSampleWithNote } from "../../../services/simulator/tree/tree-sample-shape";
 import { fixedValues } from "./tree-fixed-values";
 import { previewUse } from "../../../services/craft-stage/engine";
-import { sideAims } from "./tree-side-aims";
 import { routeRowTags, treeRowTags } from "./tree-row-tags";
+import { LINE_Y } from "../../../services/simulator/tree/tree-row-tops";
+import { CHIP_HALF } from "./tree-lines";
 import { splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
 import { boxAims, BOX_H, BOX_W, fractureMarks, START_JUNK, startOf, startRarity, startsFractured, multiFracWhite, type TreeBox } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
@@ -28,7 +29,7 @@ import { boxArrow, orphanHits } from "./tree-fail";
 import { joinCandidates, joinLook, joinMode, joinNoWhy, useTreeJoin } from "./use-tree-join";
 import { sameHitsFor } from "./tree-hand-plan";
 
-const props = defineProps<{ box: TreeBox; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** ハズレ整理の前のグレー (S-191・S-198) */ gray?: boolean; /** 次に押す箱 (S-198) */ guide?: boolean; /** 片付いたハズレ (S-198) */ settled?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
+const props = defineProps<{ box: TreeBox; /** 引いて見るだけの時の ＋ の倍率 (1 / 木の倍率。無ければ見るだけの間は ＋ を出さない、S-147c) */ plusFar?: number; /** 沼った場所の青枠の倍率 (1 / 木の倍率、0 = 枠無し、S-72) */ swamp?: number; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** ハズレ整理の前のグレー (S-191・S-198) */ gray?: boolean; /** 次に押す箱 (S-198) */ guide?: boolean; /** 片付いたハズレ (S-198) */ settled?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
   /** 縮めた時の倍率の逆数 (押せる物だけこれで大きさを戻し、画面の上で 24px 以上を保つ。オーナー 10-22「縮めても押せる物は小さくならない」) */ inv?: number;
   /** 戻り先を選んでいる間のつなげない理由 (灰色にする。use-tree-link.ts) */ linkNo?: string | null;
   /** スマホの道の画面: エッセンスの行は MOD の名前で出す (S-94h、tree-row-tags の routeRowTags) */ routeNames?: boolean;
@@ -126,8 +127,6 @@ const doneText = computed(() => (props.box.done === "fail" ? tr("失敗 (ここ�
 // 戻りのある箱からも伸ばせる (手を付けると戻りは外れる = setHand。前は × で戻りを外さないと＋が出なかった、10-26 失敗時の挙動の洗い出しの 2)
 // 戻り先 (↩ 戻る・再度挑戦) か「→ 同じ MOD 群のため統合」が付いた箱は次の手を付けない = 下と横の ＋ を出さない。× で外すと戻る (10-26 夜オーナー「共存はしないだろここ」)
 const free = computed(() => !props.box.hand && !props.box.split && !props.box.back);
-/** 横の ＋ は足せる別の当たりがある時だけ (tree-side-aims。10-26 夜オーナー: もう付いている MOD しか無い箱が足された) */
-const canSide = computed(() => { const d = s.data.value; if (!d || props.box.back) return false; const r = sideAims(d, t.doc.value, t.goals.value, props.box.id); return r === null || r.length > 0; });
 /** 上の帯の「まとめる」で箱を選んでいる間の見え方 (use-tree-join.ts。箱ごとの「まとめる」は 10-26 に外した = 引いた時に箱の外へ溢れた、オーナー「拡大バグ」) */
 const jl = computed(() => joinLook(t.doc.value, props.box.id));
 const join = useTreeJoin();
@@ -143,6 +142,12 @@ function down(e: PointerEvent): void {
   emit("drag", e);
 }
 const k = computed(() => Math.max(1, props.inv ?? 1));
+/** 箱の下の端 → ＋ の真ん中 = 手の札の真ん中と同じ (use-tree-edges の rowJy) */
+const plusK = computed(() => props.plusFar ?? k.value);
+const PLUS_Y = LINE_Y + CHIP_HALF;
+/** 倍率を上げても ＋ が枠に掛からない所まで下げる (半径 14 + 間 6) */
+const plusY = computed(() => Math.max(PLUS_Y, 20 * plusK.value));
+const plusOn = computed(() => free.value && (!quiet.value || !!props.plusFar));
 /** スタートの形は印で決まる (10-23 オーナー): フラクチャーの印 (✦ の候補)・＋の MOD・1 行目の文 */
 // フラクチャー前から (start.from four) は印があっても白から始まるので、スタートの箱には印も＋の MOD も出さない (10-24 夜オーナー)
 const marks = computed(() => (startsFractured(t.doc.value) ? fractureMarks(t.doc.value) : []));
@@ -178,9 +183,9 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
   <!-- 押せる物は全部 24px 以上 (2026-10-22 押しにくい所の洗い出し、notes/2026-10-22-tree-ui-click-audit.md) -->
   <!-- 押すは Vue Flow の箱の node-click、引っ張るは use-gesture.ts (Vue Flow の引っ張りは遊びの 5px 分が動きから抜けた)。
        引っ張りは pointerdown の既定の動きを止めるので Vue Flow の画面の送りは始まらない。nopan は付けない (付けると箱の上のホイールで拡大縮小されなかった)、中のボタンは nodrag -->
-  <div ref="rootEl" data-tree-box :data-box-id="box.id" :data-sample-note="sampled?.note || undefined" class="select-none rounded-xl border-[1.5px] bg-gradient-to-b from-[#1d1812] to-[#110e0a] px-2 py-1 text-[12px] transition-shadow"
+  <div ref="rootEl" data-tree-box :data-box-id="box.id" :data-tree-swamp="swamp ? '' : undefined" :data-sample-note="sampled?.note || undefined" class="select-none rounded-xl border-[1.5px] bg-gradient-to-b from-[#1d1812] to-[#110e0a] px-2 py-1 text-[12px] transition-shadow"
     :class="[x === undefined ? 'relative' : 'absolute', 'flex flex-col', picking || viewOnly ? 'cursor-pointer' : 'cursor-grab', picking ? (linkNo ? 'cursor-not-allowed opacity-35 grayscale' : 'ring-2 ring-cyan-400/70 hover:ring-cyan-300') : '', gray ? 'opacity-45 grayscale' : '', guide ? 'ring-2 ring-amber-300 !border-amber-200 !shadow-[0_0_24px_rgba(252,211,77,0.8)]' : '', settled ? 'ring-1 ring-amber-200/35' : '', glow ? 'ring-2 ring-amber-200/70' : '', issue && !jl ? '!border-rose-500 !shadow-[0_0_16px_rgba(244,63,94,0.55)]' : '', jl === 'no' ? 'opacity-25 grayscale' : jl ? '!border-amber-200 !shadow-[0_0_24px_rgba(252,211,77,0.8)]' : '']"
-    :style="{ ...(x === undefined ? {} : { left: `${x}px`, top: `${y}px` }), width: `${BOX_W}px`, minHeight: `${Math.max(BOX_H, fitH)}px`, ...neon }" :title="picking && linkNo ? linkNo : undefined" @pointerdown="down" @pointerenter="emit('hover', true)" @pointerleave="emit('hover', false)">
+    :style="{ ...(x === undefined ? {} : { left: `${x}px`, top: `${y}px` }), width: `${BOX_W}px`, minHeight: `${Math.max(BOX_H, fitH)}px`, ...neon, ...(swamp ? { outline: `${3 * swamp}px solid #38bdf8` } : {}) }" :title="picking && linkNo ? linkNo : undefined" @pointerdown="down" @pointerenter="emit('hover', true)" @pointerleave="emit('hover', false)">
     <!-- 縮めている時 (k > 1) は押せる物の行を倍率分高くし、まだ「—」だけの数字の行は隠す (箱が小さくても押せる物どうしが重ならない) -->
     <!-- 題は枠の上の線に乗る札 (よくある枠の形。枠の中は割合・中身・戻り方だけ。10-26 オーナー「枠の上のところに●がついた みたいな形でよくある枠の形にしたら枠中ごちゃんなくていいよな」) -->
     <!-- 札は枠の上辺の横の真ん中 (10-26 夜オーナー「この ◎ が付いたとか外れとかは真ん中が良いな、枠の」。左上だと未定の ! と重なった)。この結果に着く割合 (tree-odds.ts) は乗せた時の説明だけ -->
@@ -275,15 +280,13 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     </div>
 
     <!-- 動きをまとめる窓 (画面の真ん中の重ね窓。木の中に置くと寄り・位置で完成形の札や枠に隠れた): 同じ側の手の無い横の当たりを選んで、この箱にまとめる (10-26 オーナー「選択した枠にまとめる」) -->
-    <!-- 横の＋ = 当たりを足す (どれか 1 つが叶う) -->
-    <button v-if="box.out === 'hit' && !quiet && canSide" type="button" data-tree-add-hit :style="k > 1 ? { ...keep('center'), top: 'calc(50% + 4px)' } : {}" class="nodrag absolute -right-4 top-1/2 flex size-7 -translate-y-1/2 touch-none items-center justify-center rounded-full border-2 border-amber-400/70 bg-[#1d1812] text-amber-200 hover:bg-amber-500/30"
-      :title="tr('当たりを横に足す (どれか 1 つが叶えば当たり)。長押しで引っ張り箱の上で離すとその箱へつなぐ', 'Add another hit beside (any one counts). Hold and drag onto a box to link')" @pointerdown.stop="emit('plus', 'side', $event)" @click.stop><Icon name="plus" class="size-4" /></button>
     <!-- 「まとめる」で選んでいる間: 箱の上の押す面 (まとめられる箱は金に光り、ほかは灰色。まとめ先・選んだ = ✓ の札。10-26 オーナー「まとめれる枠光って他グレーアウトで見やすく」、use-tree-join.ts) -->
     <div v-if="jl" data-tree-join-hit :data-join="jl" :title="jl === 'no' ? joinNoWhy(t.doc.value, box.id) : undefined" class="nodrag absolute -inset-px z-20 flex items-start justify-end rounded-xl p-1" :class="jl === 'no' ? 'cursor-not-allowed' : jl === 'can' ? 'cursor-pointer hover:bg-amber-300/15' : 'cursor-pointer bg-amber-300/15 ring-[3px] ring-amber-100'" @pointerdown.stop @click.stop="join.toggle(box.id)">
       <span v-if="jl === 'anchor' || jl === 'picked'" class="rounded-full bg-amber-300 px-1.5 text-[11px] font-bold text-black" :style="keep('right top')">{{ jl === "anchor" ? tr("まとめ先", "Into") : "✓" }}</span>
     </div>
-    <!-- 下の＋ = 次に打つ手 (箱の下の外。完成・戻るのボタンと重ならない) -->
-    <button v-if="free && !quiet" type="button" data-tree-next :style="keep('center')" class="nodrag absolute -bottom-[34px] left-1/2 flex size-7 -translate-x-1/2 touch-none items-center justify-center rounded-full border-2 border-amber-400/70 bg-[#1d1812] text-amber-200 hover:bg-amber-500/30"
+    <!-- 下の＋ = 次に打つ手。手を付けた時に札が出る位置 (線を伸ばした先、S-147c) に置く。枠から離すので引いた木でも箱に隠れない (11-02 オーナー「その位置にプラス置いてあげたら？」) -->
+    <span v-if="plusOn" data-tree-next-stem class="pointer-events-none absolute left-1/2 top-full w-0.5 -translate-x-1/2 bg-amber-400/40" :style="{ height: `${plusY}px` }" />
+    <button v-if="plusOn" type="button" data-tree-next :style="{ scale: String(plusK), top: `calc(100% + ${plusY}px)` }" class="nodrag absolute left-1/2 flex size-7 -translate-x-1/2 -translate-y-1/2 touch-none items-center justify-center rounded-full border-2 border-amber-400/70 bg-[#1d1812] text-amber-200 hover:bg-amber-500/30"
       :title="tr('次に打つ手を足す。長押しで引っ張り箱の上で離すとその箱へ戻る', 'Add the next craft. Hold and drag onto a box to return there')" @pointerdown.stop="emit('plus', 'next', $event)" @click.stop><Icon name="plus" class="size-4" /></button>
   </div>
 </template>

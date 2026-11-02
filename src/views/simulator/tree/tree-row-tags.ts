@@ -4,7 +4,7 @@
  * × の印 (前の試し打ちで付けた物) の行は「× 要らない」が先、フラクチャーは付けない。
  * box = その見本の箱。同じ側の「どれか」の当たりの箱 (anyOf) なら、一覧に当たる MOD の行を「A か B」で出す (10-26 オーナー「アイテム枠の中には狙いモッド2種を１MODの中においてどっちかみたいな話でいいんじゃない前みたく」)
  */
-import { craftedKindOf, type PatchData, type StageItem } from "../../../services/craft-stage/engine";
+import { craftedKindOf, type PatchData, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { isAimMod } from "../../../services/simulator/tree/tree-aim";
 import type { Aim, Hand, OutKind, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { heldSets } from "../../../services/simulator/tree/tree-shape";
@@ -35,8 +35,13 @@ export function routeRowTags(d: PatchData, doc: TreeDoc, it: StageItem, tags: Ma
   }
   return out;
 }
-/** 箱 boxId の見本 it の札 (手の窓のカード・消去の残したい MOD の欄で同じ物) */
-export const boxTagsOf = (d: PatchData, doc: TreeDoc, boxId: string, it: StageItem): Map<string, RowTag> => { const b = doc.boxes[boxId]; return treeRowTags(d, doc, b?.unwanted ?? [], it, { anyOf: b?.anyOf, id: boxId, out: b?.out }); };
+/**
+ * 外れの行の字 (S-82): 選んで付けた MOD (エッセンス・合金・発現済みの冒涜) はずっと MOD の名前で赤字、運で付いた MOD は「外れ MOD」
+ * (11-02 オーナー「発現って選ぶから一応狙いたいMODではあるんよな」「消去のくだりも同じよね」)。判定 (箱の中身) は替えない
+ */
+export const missText = (d: PatchData, m: StageMod): string => (!m.unrevealed && (m.desecrated || m.crafted || craftedKindOf(d, m)) ? modText(m) : tr("外れ MOD", "Miss"));
+/** 箱 boxId の見本 it の札 (箱のカードと同じ呼び方。手の窓のカードで同じ物) */
+export const boxTagsOf = (d: PatchData, doc: TreeDoc, boxId: string, it: StageItem): Map<string, RowTag> => { const b = doc.boxes[boxId]; return treeRowTags(d, doc, b?.unwanted ?? [], it, b); };
 /** 全部消えてよい消去の手の箱 (消去の直線の箱。☑ が無い = 消えうる MOD は全部外れ MOD) */
 const stripHand = (h: Hand | null | undefined): boolean => !!h && effectOf(h.currency) === "remove" && !!h.keep && !h.keep.length;
 export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly string[], it: StageItem, box?: { id?: string; out?: OutKind | "start"; anyOf?: Aim[]; hand?: Hand | null } | null): Map<string, RowTag> {
@@ -51,7 +56,7 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   // 全部消えてよい消去で作られた箱 (直線の途中と終わり) が「外れ MOD」
   // 候補の外の印 (S-27e、スイッチ keepOutside) は箱の見本の ☑ で見る (下の外れの箱の見方)
   if (chainBox && !(flag("keepOutside") && aimedOfCard(d, doc, box!.id!, it))) {
-    for (const m of [...it.prefixes, ...it.suffixes]) if (!m.fractured && !m.unrevealed) out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`全部消えてよい${nameOfKey("annul", null)}で消えうる MOD: ${modText(m)}`, `May be removed by the clear-all ${nameOfKey("annul", null)}: ${modText(m)}`) });
+    for (const m of [...it.prefixes, ...it.suffixes]) if (!m.fractured && !m.unrevealed) out.set(m.modId, { text: missText(d, m), tone: "bad", replace: true, title: tr(`全部消えてよい${nameOfKey("annul", null)}で消えうる MOD: ${modText(m)}`, `May be removed by the clear-all ${nameOfKey("annul", null)}: ${modText(m)}`) });
     return out;
   }
   const any = box?.anyOf && box.anyOf.length > 1 ? box.anyOf : null;
@@ -77,11 +82,11 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
     // 未発現の枠は元の文 (未発現の冒涜 MOD) のまま (スイッチ boneLater)
     // 固定された外れ (✦ の外れ) も「外れ MOD」だけ (値を出さない、S-82 仮。見本ごとに違う MOD が箱の名前に見えた、10-28 モンキー 7。スイッチ boxShape)
     // 比べるのは完成の狙い全部 (✦ で始まった狙いは道の当たりに無いので、道の狙いで見るとスペル +3 ✦ まで外れになった、10-28 見張り)
-    if (m.fractured && !isAimMod(m, goalT, o)) { out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`固定された外れ MOD: ${modText(m)}`, `Fixed (fractured) miss mod: ${modText(m)}`) }); continue; }
+    if (m.fractured && !isAimMod(m, goalT, o)) { out.set(m.modId, { text: missText(d, m), tone: "bad", replace: true, title: tr(`固定された外れ MOD: ${modText(m)}`, `Fixed (fractured) miss mod: ${modText(m)}`) }); continue; }
     if (m.fractured || m.unrevealed) continue;
     if (any && isAimMod(m, anyT, o)) out.set(m.modId, { text: anyText, tone: "info", replace: true, title: tr(`どれか 1 つが付けば当たり (この見本は ${modText(m)})`, `Any one of these is a hit (this sample has ${modText(m)})`) });
     else if (isAimMod(m, bad, o)) out.set(m.modId, { text: tr("× 要らない", "× Unwanted"), tone: "bad" });
-    else if (!isAimMod(m, aims, o)) out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`このツリーの狙いに当たらない MOD: ${modText(m)}`, `Not one of this tree's target mods: ${modText(m)}`) });
+    else if (!isAimMod(m, aims, o)) out.set(m.modId, { text: missText(d, m), tone: "bad", replace: true, title: tr(`このツリーの狙いに当たらない MOD: ${modText(m)}`, `Not one of this tree's target mods: ${modText(m)}`) });
   }
   return out;
 }

@@ -16,7 +16,7 @@ import HeldCursor from "../../../components/for-share/shelf/HeldCursor.vue";
 import { ESSENCE_KEYS, omensAllowedFor, useReason, type StageItem } from "../../../services/craft-stage/engine";
 import { omensFor, unrevealedOf } from "../../../services/craft-stage/engine";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
-import { sampleOf } from "../../../services/simulator/tree/tree-sample";
+import { shapeSampleWithNote } from "../../../services/simulator/tree/tree-sample-shape";
 import { CATALYSING, ECHO, isBone, isCatalyst, TREE_CATALYSTS } from "../../../services/simulator/tree/tree-hands";
 import { handIcon as iconOf, handLabel, handName, outNameOf, boxesEn } from "./tree-names";
 import TreeVeilCheck from "./TreeVeilCheck.vue"; import TreeCatPick from "./TreeCatPick.vue"; import { shelfCardOff, shelfCardOn } from "./use-shelf-card";
@@ -24,7 +24,7 @@ import TreeRevealCard from "./TreeRevealCard.vue";
 import TreeKeepList from "./TreeKeepList.vue";
 import { useHandKeep } from "./use-hand-keep";
 import { RESULT, RESULT_CAT, RESULT_NO_LOST } from "./tree-hand-result";
-import { boxTagsOf } from "./tree-row-tags";
+import { boxTagsOf, missText } from "./tree-row-tags";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { aimKey, fractureMarks, sameHand, setHand, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
@@ -47,7 +47,8 @@ const props = defineProps<{ boxId: string; current: Hand | null }>();
 const emit = defineEmits<{ pick: [hand: Hand, kind: HandKind, aims: Aim[], preCatalyst: string | null, only: OnlyOut]; clear: []; close: []; aim: [] }>();
 const t = useTree();
 
-const sample = computed(() => (s.data.value ? sampleOf(s.data.value, t.doc.value, props.boxId, 1) : null));
+/** 見本は箱のカードと同じ物 (S-82、11-02 オーナー「仕組みとしてはツリーで出してるカードとイコールでおｋ」) */
+const sample = computed(() => (s.data.value ? shapeSampleWithNote(s.data.value, t.doc.value, props.boxId) : null));
 const item = computed(() => sample.value?.item ?? null);
 /** 出すカードの MOD の値は木の中で揃える (箱・完成形のカードと同じ、tree-fixed-values。10-26 夜 カードが +49・手の窓が +48 で食い違った)。打つ・判定は見本の値のまま */
 /**
@@ -58,7 +59,7 @@ const item = computed(() => sample.value?.item ?? null);
 const preview = computed(() => { const d = s.data.value, it = preCat.value ? shelfItem.value : item.value ?? shelfItem.value, h = held.value; return d && it && h && !problem.value ? previewUse(d, it, h, omens.value, { essence: true }) : null; });
 const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.value, t.doc.value, it) : it);
 /** 狙いに当たらない MOD の行は「外れ MOD」(乗せた時のカードと同じ、10-25 オーナー「プラスで MOD 選んだ時ハズレ MOD の表示が溶けてる」) */
-const rowTags = (it: StageItem | null) => (s.data.value && it ? removeTags(it, boxTagsOf(s.data.value, t.doc.value, props.boxId, it)) : null);
+const rowTags = (it: StageItem | null) => { if (!s.data.value || !it) return null; const c = cardOf(it); return removeTags(c, boxTagsOf(s.data.value, t.doc.value, props.boxId, c)); };
 /**
  * 消去を持った時は、フラクチャー以外で ☑ の無い MOD を全部「外れ MOD」と出し、☑ の MOD はふだんの表示 (狙い) に戻す。☑ を変えるとすぐ変わる
  * (10-27 夜オーナー「全部消えてよいなら持った瞬間に外れ MOD 表示、残したい MOD に ☑ で狙い表示」。スイッチ heldTags)
@@ -69,9 +70,9 @@ function removeTags(it: StageItem, tags: Map<string, RowTag>): Map<string, RowTa
   const keep = new Set(k.aims.value.map((a) => a.modId)), cand = new Set(k.choices.value.map((c) => c.mod.modId)), out = new Map(tags);
   for (const m of [...it.prefixes, ...it.suffixes]) {
     if (m.fractured || !cand.has(m.modId)) continue;
-    // 残したい外れも「外れ MOD」のまま (名前・値を出さない、S-82。10-28 夜オーナー「消去でハズレ選んだらアイテム枠のハズレみえなくていいし…ハズレはハズレよ」、スイッチ boxShape)
+    // 残したい外れも札のまま (字は S-82 の missText)
     if (keep.has(m.modId)) { if (tags.get(m.modId)?.tone !== "bad") out.delete(m.modId); else out.set(m.modId, tags.get(m.modId)!); }
-    else out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`消えてよい MOD (☑ で残したい MOD にできる): ${modText(m)}`, `May be removed (☑ to keep it): ${modText(m)}`) });
+    else out.set(m.modId, { text: s.data.value ? missText(s.data.value, m) : tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`消えてよい MOD (☑ で残したい MOD にできる): ${modText(m)}`, `May be removed (☑ to keep it): ${modText(m)}`) });
   }
   return out;
 }
@@ -311,7 +312,7 @@ function ok(): void {
     <!-- この箱の時点のアイテム (見本)。持ってカードを押す = この手にする (エミュと同じ操作) -->
     <!-- カードの下はエミュと同じく空ける (持っている間はカードのすぐ下に「押すと使う · 右クリック / Esc で手放す」が重ねて出る) -->
     <div class="flex min-w-0 flex-col gap-8 md:w-[480px]">
-      <div data-tree-hand-card :class="held && problem ? 'cursor-not-allowed opacity-60' : ''" :title="problem ?? undefined"><StageItemCard v-if="shelfItem" :item="cardOf(preCat ? shelfItem : item ?? shelfItem)" :row-tags="rowTags(preCat ? shelfItem : item ?? shelfItem)" :added="[]" :removed="[]" :holding="!!held && !problem" :flash-key="0" :doomed="preview?.change ?? []" :open="preview?.open ?? null" @use="ok" /></div>
+      <div data-tree-hand-card :class="held && problem ? 'cursor-not-allowed opacity-60' : ''" :title="problem ?? undefined"><StageItemCard v-if="shelfItem" :item="cardOf(preCat ? shelfItem : item ?? shelfItem)" :row-tags="rowTags(item ?? shelfItem)" :added="[]" :removed="[]" :holding="!!held && !problem" :flash-key="0" :doomed="preview?.change ?? []" :open="preview?.open ?? null" @use="ok" /></div>
       <div class="flex min-w-0 flex-col gap-1.5">
         <p class="text-[12px] opacity-70">{{ tr("棚から持って、カードを押すとこの箱の次の手になる", "Hold a currency from the shelf and click the item to make it this box's next craft") }}</p>
         <!-- 打たずに分ける (分かれ目) のボタンは 10-25 に外した (オーナー「分かれ道マジでややこしいからボタンいらない」)。分かれ目は見本の木にある物だけ、窓 TreeSplitPick で行を直せる -->
