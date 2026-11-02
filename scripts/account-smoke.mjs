@@ -2,7 +2,7 @@
 // node scripts/account-smoke.mjs  → 結果を 1 行ずつ、最後に wrangler を子まで止める (D1 は server/live/.wrangler の手元の写し、A-xx の見張り)
 import { spawn, execFileSync } from "node:child_process";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const W = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "server", "live");
 const BIN = path.join(W, "node_modules", ".bin", process.platform === "win32" ? "wrangler.CMD" : "wrangler");
@@ -31,6 +31,17 @@ async function ready(dev) {
 const post = async (p, body, headers = {}) => { const r = await fetch(B + p, { method: "POST", headers: { "content-type": "application/json", "user-agent": headers.ua ?? "Mozilla/5.0 (iPhone) Safari/605", ...headers }, body: JSON.stringify(body) }); return { s: r.status, j: await r.json().catch(() => null) }; };
 let pass = 0, fail = 0;
 const check = (name, ok, got) => { ok ? pass++ : fail++; console.log(`${ok ? "OK " : "NG "} ${name}${ok ? "" : ` → ${JSON.stringify(got)}`}`); };
+
+// 0) 端末の側の重ね方 (A-41、src/account/account-merge.ts を node がそのまま読む)
+{
+  const { changes, merge } = await import(pathToFileURL(path.join(W, "..", "..", "src", "account", "account-merge.ts")).href);
+  const up = changes("recipe", [{ id: "a", updatedAt: 5, body: "A" }, { id: "b", updatedAt: 3, body: "B" }], { a: 5, c: 2 }, 99);
+  check("端末: 変わった物と消した印だけ上げる", JSON.stringify(up.map((x) => [x.id, !!x.deleted])) === '[["b",false],["c",true]]', up);
+  const m = merge([{ id: "a", updatedAt: 5, body: "mine" }, { id: "b", updatedAt: 9, body: "mine" }, { id: "d", updatedAt: 1, body: "old" }],
+    [{ kind: "recipe", id: "a", updatedAt: 7, body: "theirs" }, { kind: "recipe", id: "b", updatedAt: 8, body: "theirs" }, { kind: "recipe", id: "d", updatedAt: 2, deleted: true }, { kind: "recipe", id: "e", updatedAt: 1, body: "new" }]);
+  const got = Object.fromEntries(m.next.map((x) => [x.id, x.body]));
+  check("端末: 新しい方が勝ち・消した印で消え・負けた物は控えへ", JSON.stringify(got) === '{"a":"theirs","b":"mine","e":"new"}' && m.lost.map((x) => x.id).join() === "a,d", { got, lost: m.lost });
+}
 
 // 1) スイッチなし → 404
 let dev = runDev([]);
@@ -79,6 +90,17 @@ try {
   const ri = await post("/account/reissue", { id: a.j.id }, { "x-exiledesk-key": "smoke-key-1234" });
   const back = await post("/account/link", { code: ri.j?.code });
   check("オーナーが出したコードで戻る (A-72)", ri.s === 200 && back.s === 200 && back.j.id === a.j.id, { ri, back });
+  // 復元の台本 (A-72): 名前とレシピ名で候補を出し、--pick で新しいコードを出して戻れる。台本は REFRESH_KEY と同じ鍵で手元の口を叩く
+  const r2 = await post("/account/new", { name: `復元${Date.now() % 10000}` });
+  await post("/account/sync", { t: r2.j.token, since: 0, put: [{ kind: "recipe", id: "rr", updatedAt: 1, name: "安い道", body: "{}" }] });
+  const month = new Date().toISOString().slice(0, 7);
+  const run = (extra) => { try { return execFileSync("node", [path.join(W, "..", "..", "scripts", "account-restore.mjs"), "--name", r2.j.name, "--recipe", "安い道", "--month", month, ...extra], { encoding: "utf8", env: { ...process.env, EXILEDESK_LIVE_BASE: B, EXILEDESK_LIVE_KEY: "smoke-key-1234" } }); } catch (e) { return String(e.stdout ?? "") + String(e.stderr ?? ""); } };
+  const list = run([]);
+  check("復元の台本: 3 つ合う候補が出る", new RegExp(`合う +${r2.j.id}.*✓.*✓.*✓`).test(list), list);
+  const issued = run(["--pick", r2.j.id]);
+  const newCode = /新しいコード: (\S+)/.exec(issued)?.[1];
+  const back2 = newCode ? await post("/account/link", { code: newCode }) : { s: 0 };
+  check("復元の台本: --pick で出したコードで戻る", back2.s === 200 && back2.j.id === r2.j.id, { issued, back2 });
   // 推し当て (A-11): 前のコードで 1 回外したので、残り 4 回外して 6 回目が 429 (ほかの IP は無い手元なので 127.0.0.1 で数える)
   const tries = [];
   for (let i = 0; i < 5; i++) tries.push((await post("/account/link", { code: "2222-2222-2222" })).s);

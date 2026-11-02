@@ -3,10 +3,10 @@
  * 運ぶ物ごとに運び手 (Carrier) を 1 つ持つ。今はツリーのレシピだけ (A-40)。足す時は ⑥ の手順
  * 決まり: 1 件ずつ新しい方が勝つ・消した物は印で運ぶ・負けた物は捨てずに控えへ (A-41)
  */
-import { myAccount, syncRaw, type SyncItem } from "./account-client";
+import { myAccount, syncRaw } from "./account-client";
+import { changes, merge, type LocalItem } from "./account-merge";
+export type { LocalItem };
 
-/** 端末の 1 件 (中身は文字のまま運ぶ) */
-export interface LocalItem { id: string; updatedAt: number; name?: string; body: string }
 export interface Carrier {
   kind: string;
   read(): LocalItem[];
@@ -22,29 +22,6 @@ function readSnap(kind: string): Record<string, number> {
 }
 function writeSnap(kind: string, s: Record<string, number>): void {
   try { localStorage.setItem(snapKey(kind), JSON.stringify(s)); } catch { /* 次の同期で全部上げ直すだけ */ }
-}
-
-/** 上げる物: 前回から変わった物と、この端末で消した物の印 */
-export function changes(kind: string, local: readonly LocalItem[], snap: Readonly<Record<string, number>>, now: number): SyncItem[] {
-  const ids = new Set(local.map((l) => l.id));
-  return [
-    ...local.filter((l) => snap[l.id] !== l.updatedAt).map((l) => ({ kind, id: l.id, updatedAt: l.updatedAt, name: l.name, body: l.body })),
-    ...Object.keys(snap).filter((id) => !ids.has(id)).map((id) => ({ kind, id, updatedAt: now, deleted: true })),
-  ];
-}
-
-/** 下ろした物を端末の物に重ねる。同じ id は新しい方 (同じ時刻なら端末のまま) */
-export function merge(local: readonly LocalItem[], remote: readonly SyncItem[]): { next: LocalItem[]; lost: LocalItem[] } {
-  const by = new Map(local.map((l) => [l.id, l]));
-  const lost: LocalItem[] = [];
-  for (const r of remote) {
-    const mine = by.get(r.id);
-    if (mine && mine.updatedAt >= r.updatedAt) continue;
-    if (mine) lost.push(mine);
-    if (r.deleted) by.delete(r.id);
-    else by.set(r.id, { id: r.id, updatedAt: r.updatedAt, name: r.name, body: r.body ?? "" });
-  }
-  return { next: [...by.values()], lost };
 }
 
 export type SyncReport = { ok: true; up: number; down: number } | { ok: false; error: string };

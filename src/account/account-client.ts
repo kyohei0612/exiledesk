@@ -4,6 +4,8 @@
  * 呼ぶのは押した時だけ (A-42・Y-100)。開いた時・打つ・回す間は呼ばない
  */
 import { WEB_API_BASE } from "../web/config";
+import type { SyncItem } from "./account-merge";
+export type { SyncItem };
 
 const KEY = "exiledesk.account.v1";
 /** この端末の札と、最後に下ろした時刻 (同期の since) */
@@ -66,7 +68,6 @@ export async function unlinkAccount(base?: string): Promise<AccountResult<{ ok: 
   return r;
 }
 
-export interface SyncItem { kind: string; id: string; updatedAt: number; deleted?: boolean; name?: string; body?: string }
 /** 上げると下ろすを 1 回で (A-42)。since は前回の rev */
 export async function syncRaw(put: SyncItem[], base?: string): Promise<AccountResult<{ rev: number; items: SyncItem[] }>> {
   const a = myAccount();

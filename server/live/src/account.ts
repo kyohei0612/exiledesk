@@ -148,6 +148,15 @@ async function sync(db: D1Database, id: string, b: Record<string, unknown>, now:
   return json({ rev: now - 1000, items: (rows.results ?? []).map((r) => ({ kind: r.kind, id: r.item_id, updatedAt: r.updated, ...(r.deleted ? { deleted: true } : { name: r.name ?? undefined, body: r.body ?? "" }) })) });
 }
 
+/** 消した印を 30 日で、外れの数を 1 日で掃除する (A-41・A-11)。毎朝の cron から呼ぶ (つなぐのはサーバー管理人、A-80)。消した行の数を返す */
+export async function pruneAccounts(db: D1Database, now = Date.now()): Promise<number> {
+  const r = await db.batch([
+    db.prepare("DELETE FROM account_items WHERE deleted = 1 AND rev < ?").bind(now - 30 * 86400e3),
+    db.prepare("DELETE FROM account_tries WHERE hour < ?").bind(Math.floor(now / 3600e3) - 24),
+  ]);
+  return r.reduce((s, x) => s + (x.meta?.changes ?? 0), 0);
+}
+
 /** /account/* を受ける。ほかの道なら null (index.ts が続きを見る) */
 export async function handleAccount(req: Request, env: Env, url: URL, json: Json, keyOk: (env: Env, req: Request) => boolean, now = Date.now()): Promise<Response | null> {
   if (!url.pathname.startsWith("/account/")) return null;

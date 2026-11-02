@@ -10,5 +10,7 @@
 ## 地図
 - サーバー: server/live/src/account.ts (/account/*)・migrations/0014_accounts.sql。
 - 端末: src/account/account-client.ts (札と口)・account-sync.ts (localStorage と同期の間、運び手 = Carrier)。画面からはまだ呼ばない。
-- 見張り: `node scripts/account-smoke.mjs` (手元の wrangler dev で口を 18 項目、最後に子まで止める)。
-- UI 案: notes/2026-11-03-settings-ab.html (`#A` / `#B`、設定の窓の PC)。絵は共有メモ account-ui/。
+- 見張り: `node scripts/account-smoke.mjs` (手元の wrangler dev で端末の重ね方と口を 22 項目、最後に子まで止める)。
+- UI 案: notes/2026-11-03-account-ui-ab.html (`#1A`〜`#5B`、5 か所 × A/B。スマホは窓の幅を 390 に)。絵と一覧は共有メモ account-ui/index.html。
+- 復元: `node scripts/account-restore.mjs --fb <要望の id> [--pick <id>]` (既定は手元、本番は --remote、A-72)。
+- 画面用の口: src/account/use-account.ts (5 か所の操作・コピーするまで閉じない・保存の後の 5 秒まとめ)。重ね方は account-merge.ts (見張りが node で読む)。
