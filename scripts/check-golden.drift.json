@@ -1,0 +1,20 @@
+{
+ "orbs": [
+  "86d75636d043486edb4ca18d432ee101fd2b69b2df7b4f2d3f235b6a3feb24d0"
+ ],
+ "bones": [
+  "badc32ac0a133b0898fb9c9484378654d3a00a2c382acc507d217d3e942c2c7a"
+ ],
+ "reveal": [
+  "4aeb662237d3b28d576b8e90c6875f55a3879bbf074cfc1860b7b2b8a7821575"
+ ],
+ "annul": [
+  "e586d81a366aeb4933075f41d2d769d97fc1afb467e09e50c14ee217730bfb7e"
+ ],
+ "essence": [
+  "36836a625554ebab70cb48d06404c44bee77169a8787e2634664c2a37f1dfa1c"
+ ],
+ "other": [
+  "945a30b18d137ffddecc1a12112f455fc7a46b2e45cbbc4d6c2470b372bdc33b"
+ ]
+}
