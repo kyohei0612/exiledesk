@@ -68,7 +68,7 @@ function openNow(r: TreeRecipe): void {
   simOp("open-recipe");
   track("tree-recipe:open");
   setCurrentTreeRecipe(r.id);
-  t.open(r.tree);
+  t.open(r.tree, true);
   openTreePage();
 }
 function overwrite(r: TreeRecipe): void {

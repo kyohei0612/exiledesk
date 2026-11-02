@@ -102,7 +102,7 @@ const sf = useStripFold(doc, t.opened, t.active, () => issues.value?.map((x) => 
 const shown = computed(() => boxes.value.filter((b) => b.out !== "pass" && !mergedAway(doc.value, b) && !sf.hidden.value.has(b.id)));
 const passes = computed(() => boxes.value.filter((b) => b.out === "pass"));
 /** 開いた時は箱を上の段から順に出す (データが来てから。use-tree-reveal.ts) */
-const rv = useTreeReveal(shown, () => !!s.data.value, t.opened);
+const rv = useTreeReveal(shown, () => !!s.data.value, t.opened); watch(t.loading, (on) => { if (!on) void v.openView(); });
 /** 出ている箱どうしの線と札だけ描く (通り抜けは箱が無いので数えない) */
 const shownEdges = computed(() => edges.value.filter((e) => [e.id, ...e.to.map((o) => o.id)].every((id) => doc.value.boxes[id]?.out === "pass" || rv.isShown(id))));
 
@@ -252,7 +252,7 @@ function onTarget(b: Box): void {
   if (from && from !== b.id) { simOp("set-back"); t.edit((d) => setBack(d, from, b.id)); }
 }
 // ルート精査 (押した時に始める、use-tree-check.ts)
-const { issues, issuesOpen, shown: issuesShown, issuesFold, checking, progress, passed, onCheck, issueOf, checkRun } = useTreeCheck(doc, () => !t.needBase.value && !t.goalInline.value && !viewPhone.value, () => ({ price: runPrice(t.treePrice), startCost: t.startPrice() }));
+const { issues, issuesOpen, shown: issuesShown, issuesFold, checking, progress, passed, onCheck, issueOf, checkRun } = useTreeCheck(doc, () => !t.needBase.value && !t.goalInline.value && !viewPhone.value && !t.loading.value, () => ({ price: runPrice(t.treePrice), startCost: t.startPrice() }));
 // 穴の表示のオフは今のタブの間だけ (タブを替えると見せる、10-25)
 watch(() => t.active.value, () => { issuesShown.value = true; });
 /** 穴の一覧の窓を開く (箱の !・札の横の ▾。光が消えていれば一緒に点ける) */
@@ -291,7 +291,7 @@ onMounted(() => setLeaveGuard((to) => !viewPhone.value && !(to === "page=recipes
 // シミュの外へ出たら木を白紙に戻す (次に入るとベース選びの空から。レシピのページへ移る時は残す、そこから戻って続ける)。保存したレシピを開いていたら戻った時・読み直した時に開き直す (tree-save の rememberResume)
 onBeforeUnmount(() => { setLeaveGuard(null); window.removeEventListener("pagehide", rememberResume); if (!recipesPage.value) { rememberResume(); t.resetAll(); } }); onMounted(() => window.addEventListener("pagehide", rememberResume));
 const busy = computed((): { text: string; n?: number; of?: number } | null => {
-  if (!s.data.value) return { text: tr("読み込み中", "Loading") };
+  if (!s.data.value || t.loading.value) return { text: tr("読み込み中", "Loading") };
   if (tr100.running.value) return { text: tr("回している", "Running"), n: tr100.result.value?.n ?? 0, of: tr100.test.value ? TEST_N : RUN_N };
   const r = rv.run.value;
   return r ? { text: tr("読み込み中", "Loading"), n: r.n, of: r.of } : t.baseCostBusy.value ? { text: tr("始まりの値段を計算中", "Pricing the start") } : null;
@@ -386,7 +386,7 @@ const phone = usePhone();
     <ModeTabs class="mb-3" />
     <TreeOverlays /><TreeHandPage v-if="panel?.kind === 'hand' && panelBox" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" @aim="panel = { kind: 'aim', id: panel!.id }" />
     <TreePanelPage v-else-if="panel && panelBox" :key="`${panel.kind}-${panel.id}`" :kind="panel.kind === 'split' || panel.kind === 'note' ? panel.kind : 'aim'" :box-id="panel.id" :current="panel.add ? null : panelBox.aim" :adding="!!panel.add" @pick="pickAim" @close="simOp('cancel', panel?.add ? 'side-plus' : panel?.kind === 'aim' ? 'aim-pick' : panel?.kind ?? ''); panel = null" />
-    <div v-show="!t.goalInline.value" class="g-panel flex flex-col gap-2 px-3 py-2 max-md:px-0.5" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
+    <div v-show="!t.goalInline.value" :inert="t.loading.value || undefined" :data-tree-loading="t.loading.value ? '' : undefined" class="g-panel flex flex-col gap-2 px-3 py-2 max-md:px-0.5" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
       <!-- 流れの 4 段の帯 (今どこにいるか、10-24 オーナー): 上のタブの下、木の枠の中の一番上に小さく (10-26 夜オーナー「普通出すのはタブの下」「ここは枠内でしょ」)。右上の「← 戻る」は置かない -->
       <div class="flex min-w-0 flex-wrap items-center gap-2 [&_[data-tree-flow-step]]:!min-h-[26px] [&_[data-tree-flow-step]]:!text-[12px]">
         <TreeFlowSteps :current="t.reportOpen.value ? 4 : 3" :no-base="t.needBase.value" @go="onFlow" /><BusyTag v-if="busy" :text="busy.text" :n="busy.n" :of="busy.of" />

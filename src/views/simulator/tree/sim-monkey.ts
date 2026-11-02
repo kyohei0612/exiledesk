@@ -184,6 +184,8 @@ export function installSimMonkey(): () => void {
     undo() { t.undo(); return { ok: true }; },
     /** ハズレ整理 (S-193) と今のボタンの状態 */
     tidy() { t.edit(tidyJunk); return { step: tidyStep(t.doc.value), unset: unsetBoxes(t.doc.value) }; },
+    /** 木を開き終えたか (開いている間は木を変えない、S-196) */
+    ready() { return !t.loading.value; },
     tidyState() { return { step: tidyStep(t.doc.value), unset: unsetBoxes(t.doc.value), gray: Object.values(t.doc.value.boxes).filter(isGrayBox).map((b) => b.id) }; },
     setDone(id: string, on: boolean | "fail" = true) {
       const v = on === "fail" ? "fail" : on ? "main" : null;

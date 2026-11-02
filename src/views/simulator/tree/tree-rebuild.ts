@@ -8,7 +8,7 @@ import type { PatchData } from "../../../services/craft-stage/engine";
 import { clearHand, migrateStart, setBack, TREE_SCHEMA_N, type Hand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { autoTarget, offByParent, sameHandByContent, straightUp } from "../../../services/simulator/tree/tree-judge-link";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
-import { addArrivedOuts, alignEssenceAims, applyPick, kindOf, onlyOf } from "./tree-hand-plan";
+import { alignEssenceAims, applyPick, arrivedSteps, kindOf, onlyOf } from "./tree-hand-plan";
 import { staysGray, tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
 import { flag } from "../../../web/release-flags";
 import { judgeMemo, needsDesecrated } from "../../../services/simulator/tree/tree-judge";
@@ -19,18 +19,43 @@ import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hand
 const noHitHand = (h: Hand): boolean => flag("freeNoHit") && ((!!h.free && effectOf(h.currency) !== "fracture") || isRuneHand(h.currency) || veilKeep(h));
 
 export function rebuildTree(data: PatchData, src: TreeDoc): TreeDoc {
+  const g = rebuildSteps(data, src);
+  for (;;) { const r = g.next(); if (r.done) return r.value; }
+}
+/**
+ * 開く時に段に分けて組み直す (S-196)。budget ms ごとに途中の木を描いて画面を返す。live が偽になったら捨てて null。
+ * 完成の道を先に打ち、↩ で着く人の箱探しは省く (保存の決めが余った時だけ走らせる。省いた分は最終チェックの整理で足す)
+ */
+export async function rebuildInSteps(data: PatchData, src: TreeDoc, paint: (d: TreeDoc) => void, live: () => boolean, budget = 150): Promise<TreeDoc | null> {
+  const g = rebuildSteps(data, src, true);
+  for (let last = performance.now(); ;) {
+    const r = g.next();
+    if (r.done) return r.value;
+    if (performance.now() - last < budget) continue;
+    if (r.value) paint(r.value);
+    await new Promise((ok) => { const t = setTimeout(ok, 100); requestAnimationFrame(() => setTimeout(() => { clearTimeout(t); ok(0); }, 0)); }); // 隠れたタブでも止まらない
+    if (!live()) return null;
+    last = performance.now();
+  }
+}
+/** stepped = 開く時の順 (rebuildInSteps)。途中で返す木は決めの打ち終わった所まで */
+function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generator<TreeDoc | void, TreeDoc> {
   const rec = toRecipeV1(src), d = premiseOf(rec, `exiledesk-tree/${TREE_SCHEMA_N}`);
   migrateStart(d);
   const picks = new Map((rec.picks ?? []).map((p) => [p.at, p]));
   // 保存の札とその上の札の全部 (子の札を探す時に、決めのある道か見る)
   const onPath = new Set([...picks.keys()].flatMap((k) => k.split("/").map((_, i, a) => a.slice(0, i + 1).join("/"))));
+  // 完成の箱とその上の札 (先に打つ)
+  const goal = new Set(stepped ? (rec.picks ?? []).filter((p) => p.done === "main").flatMap((p) => p.at.split("/").map((_, i, a) => a.slice(0, i + 1).join("/"))) : []);
   const used = new Set<string>(), decided: string[] = [], idOf = new Map<string, string>(), backs: Array<[string, string, string]> = [];
   // [箱, 今の札, 保存の札]。側の鍵の無い保存の札 (S-65 より前の木) は、側に分かれた箱の全部に同じ決めを付ける (S-106・S-65「両方の側を受ける」)
   const q: Array<[string, string, string]> = [["start", "s", "s"]];
   /** 箱 → [今の札, 保存の札] (足した箱の札を親から作る、S-21) */
   const placed = new Map<string, [string, string]>();
-  const drain = (): void => { while (q.length) {
-    const [id, key, at] = q.shift()!;
+  function* drain(): Generator<TreeDoc> { while (q.length) {
+    yield d;
+    const i = goal.size ? q.findIndex((x) => goal.has(x[2])) : -1;
+    const [id, key, at] = q.splice(Math.max(i, 0), 1)[0]!;
     if (!d.boxes[id]) continue;
     placed.set(id, [key, at]);
     const p = picks.get(at);
@@ -53,8 +78,8 @@ export function rebuildTree(data: PatchData, src: TreeDoc): TreeDoc {
     }
     const kids = childKeysOf(d, id, key), exact = new Set(kids.map(([, ck]) => at + ck.slice(key.length)));
     for (const [cid, ck] of kids) q.push([cid, ck, savedKeyOf(at, ck.slice(key.length), onPath, exact)]);
-  } };
-  drain();
+  } }
+  yield* drain();
   // 前の版で人が選んだ ↩ は付け直す (S-52b の「読めてそのまま回る」)。行き先の札が今の木に無ければ要確認
   const lostBacks: RecipeOrphan[] = [];
   const flushBacks = (): void => { for (const [id, back, at] of backs.splice(0)) {
@@ -64,17 +89,18 @@ export function rebuildTree(data: PatchData, src: TreeDoc): TreeDoc {
   } };
   flushBacks();
   /** 足した箱に保存の決めがあれば打ち直す。足した箱の親が札を持たない時は exact を使わない */
-  const replay = (added: readonly string[]): void => {
+  function* replay(added: readonly string[]): Generator<TreeDoc> {
     for (const id of added) {
       const par = d.boxes[id]!.parent!, [key, at] = placed.get(par) ?? ["", ""], kids = childKeysOf(d, par, key), ck = kids.find(([c]) => c === id)?.[1];
       if (ck && placed.has(par)) q.push([id, ck, savedKeyOf(at, ck.slice(key.length), onPath, new Set(kids.map(([, k]) => at + k.slice(key.length))))]);
     }
-    if (added.length) { drain(); flushBacks(); }
-  };
+    if (added.length) { yield* drain(); flushBacks(); }
+  }
   mergeIntoDecided(data, d, decided); relinkSameHand(data, d); linkLeftovers(data, d);
   // ↩ で着く人の結果の箱を足す (S-21)。足した箱に保存の決めがあれば打ち直す
-  const added = addArrivedOuts(data, d);
-  replay(added);
+  const left = !stepped || [...picks.keys()].some((k) => !used.has(k));
+  const added = left ? yield* arrivedSteps(data, d) : [];
+  yield* replay(added);
   if (added.length) { relinkSameHand(data, d); linkLeftovers(data, d); }
   if (tidyOn()) for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split && !staysGray(b)) b.tidied = true; // 開いた木は整理まで済んだ形。決めの無い外れの箱だけグレーのまま (S-196)
   // 決めを打ち直した箱が後の見直しで消えた (同じ手なら戻るで下を畳んだ) 札も要確認

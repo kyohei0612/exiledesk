@@ -358,11 +358,17 @@ export function dropCountOf(doc: TreeDoc, id: string, h: Hand, kind: HandKind, a
  * (オーナーの木の b51 ↩ b35: ランダムな外れの人は b41 の削減で狙いが消える)。足すのは見本と次の MOD 群が違う結果だけ、当たりの箱 (☑ だけ、S-22) は足さない
  */
 export function addArrivedOuts(data: PatchData, d: TreeDoc): string[] {
+  const g = arrivedSteps(data, d);
+  for (;;) { const r = g.next(); if (r.done) return r.value; }
+}
+/** addArrivedOuts を箱ごとに区切る (開く時に間で画面を返す、S-196) */
+export function* arrivedSteps(data: PatchData, d: TreeDoc): Generator<void, string[]> {
   if (!flag("junkTidy")) return [];
   const j = judgeMemo(data, d), aims = aimsOf(d), made: string[] = [];
   for (const b of Object.values(d.boxes)) {
     const h = b.hand;
     if (!h) continue;
+    yield;
     // 数え上げられない手 (S-21): 組む間の 1 箱 (側の鍵の無い箱) が一番多い形を持ち、ほかの形の箱をここで足す。見本は親から 1 手で作れるので via は要らない
     const s = sampleOf(data, d, b.id, 1), main = s.note === "none" || s.note?.startsWith("cant:") ? undefined : mainSideOf(data, prepFor(data, s.item, h.currency), h);
     const arrived = arrivalsOf(data, d, j, b.id);

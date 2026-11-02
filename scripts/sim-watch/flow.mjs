@@ -34,6 +34,7 @@ const fresh = async (w, h, m, q = "lang=ja", hash = "") => {
   await c.go("about:blank"); await c.size(w, h, m);
   await c.go(`${O}?page=sim-tree&${q}${hash}`);
   await c.until(`!!window.__simMonkey?.dump`, 60000); await sleep(1200);
+  await c.until(`__simMonkey.ready()`, 60000);
 };
 const openGoal = `(async () => { const m = await import("/src/views/simulator/tree/use-tree.ts"); m.useTree().goalPage.value = true; })()`;
 const goalState = `({ win: document.querySelector("[data-tree-goal-need-mod]")?.innerText ?? null, ask: !!document.querySelector("[data-tree-start-ask]") })`;

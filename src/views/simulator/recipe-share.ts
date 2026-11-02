@@ -143,7 +143,7 @@ async function openRecipeCode(code: string): Promise<boolean> {
       sharedNewer.value = newerHands(t);
       const tr2 = addTreeRecipe(String((p as PackedTree).n ?? ""), t);
       setCurrentTreeRecipe(tr2.id);
-      useTree().open(tr2.tree);
+      useTree().open(tr2.tree, true);
       openTreePage();
       logRecord("tree_recipe_shared", { boxes: Object.keys(t.boxes).length });
       return true;
