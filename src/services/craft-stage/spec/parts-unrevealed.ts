@@ -69,7 +69,7 @@ interface UnrevealedPlan {
   /** 側ごとの選ばれ方 (fixed ならその側だけ)。w = 0 はその側に付けられる MOD が無い */
   weights: Array<{ s: StageSide; w: number }>;
 }
-export function unrevealedPlan(data: PatchData, item: StageItem, a: AddUnrevealed, mods: Mods): UnrevealedPlan {
+export function unrevealedPlan(data: PatchData, item: StageItem, a: AddUnrevealed, mods: Mods): UnrevealedPlan { // E-61 (E-11f の例外) 骨の側・E-11g ネクロマンシー
   const mark = allMods(item).find((m) => m.abyssMark && !m.fractured);
   const floor = Math.max(a.floor, mark ? markFloorOf(item.itemLevel) : 0);
   const fixed: StageSide | null = mark ? mark.side : mods.side;

@@ -52,7 +52,7 @@ const GRADES = { // E-63・E-11d 骨を打てる品 (噛み切られた 64 以�
 type Grade = keyof typeof GRADES;
 
 /** 発現の候補の置き場: 普通の MOD と冒涜専用の MOD (変質した鎖骨は異界の MOD も) */
-const BONE_POOLS: ModPool[] = ["normal", "desecrated"]; // E-53 エッセンスの MOD は発現の置き場に無い
+const BONE_POOLS: ModPool[] = ["normal", "desecrated"]; // E-10a・E-53 エッセンスの MOD は発現の置き場に無い
 
 const BONE_SOURCE: Source = {
   client: "currency-hover (BaseItemTypes の説明文)、用語集 Abyssalify・BetterCurrencyMinimumLevel、AbyssBenchTicketTypes.MaximumItemLevel",
@@ -158,13 +158,13 @@ const PUTREFY: Action[] = [
 
 export const OMEN_SPECS: readonly OmenSpec[] = [
   {
-    key: "OmenofSinistralNecromancy", hover: "omenofsinistralnecromancy", appliesTo: "desecrate",
+    key: "OmenofSinistralNecromancy", hover: "omenofsinistralnecromancy", appliesTo: "desecrate", // E-11g
     text: { en: ["While this item is active in your inventory your next", "[Abyssalify|Desecration] attempt will add only prefix modifiers"], ja: ["インベントリ内でアクティブな時", "次に行う", "[Abyssalify|冒涜]化の試行は、プレフィックスモッドだけを追加する"] },
     effect: { side: "prefix" },
     source: { client: "currency-hover の説明文", poe2wiki: "満杯ならその側を 1 つ消して付く (2026-10-14)" },
   },
   {
-    key: "OmenofDextralNecromancy", hover: "omenofdextralnecromancy", appliesTo: "desecrate",
+    key: "OmenofDextralNecromancy", hover: "omenofdextralnecromancy", appliesTo: "desecrate", // E-11g
     text: { en: ["While this item is active in your inventory your next", "[Abyssalify|Desecration] attempt will add only suffix modifiers"], ja: ["インベントリ内でアクティブな時", "次に行う", "[Abyssalify|冒涜]化の試行は、サフィックスモッドだけを追加する"] },
     effect: { side: "suffix" },
     source: { client: "currency-hover の説明文", poe2wiki: "満杯ならその側を 1 つ消して付く (2026-10-14)" },
@@ -195,13 +195,13 @@ export const OMEN_SPECS: readonly OmenSpec[] = [
     source: { client: "currency-hover の説明文", owner: "骨で付いた普通の MOD も消す (2026-10-10)", coe: "冒涜で付いた物 (未発現・発現済み) だけ (package_poe2.js getRemovableModifiers の OmenOnAnnulRemoveAbyssMod、2026-10-16)" },
   },
   {
-    key: "OmenofSinistralAnnulment", hover: "omenofsinistralannulment", appliesTo: "annul",
+    key: "OmenofSinistralAnnulment", hover: "omenofsinistralannulment", appliesTo: "annul", // E-11g
     text: { en: ["While this item is active in your inventory your next", "Orb of Annulment will remove only prefix modifiers"], ja: ["インベントリ内でアクティブ状態の時", "次に使用する消去のオーブはプレフィックスモッドをのみを取り除く。"] },
     effect: { side: "prefix" },
     source: { client: "currency-hover の説明文" },
   },
   {
-    key: "OmenofDextralAnnulment", hover: "omenofdextralannulment", appliesTo: "annul",
+    key: "OmenofDextralAnnulment", hover: "omenofdextralannulment", appliesTo: "annul", // E-11g
     text: { en: ["While this item is active in your inventory your next", "Orb of Annulment will remove only suffix modifiers"], ja: ["インベントリ内でアクティブ状態の時", "次に使用する消去のオーブはサフィックスモッドをのみを取り除く。"] },
     effect: { side: "suffix" },
     source: { client: "currency-hover の説明文" },

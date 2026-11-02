@@ -86,7 +86,7 @@ export const CATALYST_SPECS: readonly CurrencySpec[] = CATALYSTS.flatMap((c) => 
 export const CATALYST_SPEC_BY_KEY: ReadonlyMap<string, CurrencySpec> = new Map(CATALYST_SPECS.map((s) => [s.stageKey, s]));
 
 /** アーティフィサー。セプターは説明文に無い (今の関数は武器・防具の全部に使える = docs/archive/2026-10-16-adr-004-orbs-diff.md) */
-export const ARTIFICER_SPEC: CurrencySpec = {
+export const ARTIFICER_SPEC: CurrencySpec = { // E-76
   key: "artificersorb",
   stageKey: "artificer",
   kind: "artificer",
@@ -104,7 +104,7 @@ export const ARTIFICER_SPEC: CurrencySpec = {
  * ルーン・ソウルコア・アイドル (はめる手)。部位・はめられる数・置き換え・コラプトや聖別の後でもはめられるかは、
  * 説明文から作った augment-rules.json と SoulCores の表で決まる (stage-runes.ts の applyRune)。用語集 Augment の文が根拠
  */
-export const RUNE_SPEC: CurrencySpec = {
+export const RUNE_SPEC: CurrencySpec = { // E-77
   key: "keyword:Augment",
   stageKey: "rune:",
   kind: "rune",

@@ -79,5 +79,6 @@ export function pickInfinite(data: PatchData, item: StageItem, key: string, rng:
 export const ABYSS_FAMILY = "EssenceAbyss";
 /** 持てるクラフト MOD の数 (アストリッドの創造性で +1) */
 /** クラフト MOD の上限: 1 + アストリッドの創造性 (ソケットの効果 100% 以上で +2。stage-core の runeEffectPct・engine の boostedPlus) */
-export const craftedLimitOf = (item: StageItem): number => 1 + (item.augments ?? []).filter((a) => a.en === "Astrid's Creativity").reduce((n) => n + boostedPlus(1, runeEffectPct(item)), 0);
+export const craftedLimitOf = (item: StageItem): number => // E-11h クラフト MOD は 1 つ (アストリッドの創造性で +1)
+  1 + (item.augments ?? []).filter((a) => a.en === "Astrid's Creativity").reduce((n) => n + boostedPlus(1, runeEffectPct(item)), 0);
 

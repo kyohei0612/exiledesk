@@ -150,7 +150,7 @@ function boneOdds(data: PatchData, item: StageItem, plan: SpecPlan, a: AddUnreve
   if (plan.block) return plan.offTarget ? null : { byMod, total: 1, bone: true };
   // 側は打つ処理と同じ unrevealedPlan: アビサルロードの紋章は必ず置き換える (印は消える物として数えない)、お告げの側、空きがあればその中から、
   // 両側が埋まっていれば固定していない MOD を全部から等しく 1 つ消して、その側に付く
-  const sp = unrevealedPlan(data, item, a, plan.mods);
+  const sp = unrevealedPlan(data, item, a, plan.mods); // E-61 骨の側 (E-11f の例外)
   const runs: Array<{ p: number; it: StageItem; side?: StageSide }> = [];
   const removal = (side: StageSide, p: number): void => {
     const rem = allMods(item).filter((m) => !m.fractured && m.side === side);

@@ -54,7 +54,7 @@ export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string 
       return item.itemLevel > l.level && !noIlvl(item) ? tr(`アイテムレベル ${l.level} 以下にだけ使える`, `Item Level ${l.level} or lower only`) : null;
     case "hasUnrevealed":
       return allMods(item).some((m) => m.unrevealed) ? null : tr("未発現の冒涜 MOD が無い", "No Unrevealed Desecrated mod");
-    case "openSlot": {
+    case "openSlot": { // E-11e・E-11g (お告げの側だけを見る)
       const side = mods?.side;
       if ((side ? [side] : SIDES).some((s) => room(item, s))) return null;
       if (side) return tr("お告げの側に空きが無い", "No open slot on the Omen's side");
@@ -70,7 +70,7 @@ export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string 
       return allMods(item).some((m) => m.desecrated && !m.unrevealed) ? tr("発現済みの冒涜 MOD があると使えない (未発現なら使える)", "Can't be used while a revealed Desecrated mod is present (unrevealed is fine)") : null;
     case "noAbyssMark":
       return allMods(item).some((m) => m.abyssMark) ? tr("アビサルロードの紋章がもう付いている", "Already has a Mark of the Abyssal Lord") : null;
-    case "craftedSlot": {
+    case "craftedSlot": { // E-11h
       const limit = craftedLimitOf(item);
       if (allMods(item).filter((m) => m.crafted).length < limit) return null;
       return limit > 1 ? tr(`クラフト MOD はアストリッドの創造性込みで ${limit} つまで`, `Max ${limit} crafted mods (with Astrid's Creativity)`) : tr("エッセンスの MOD はアイテムに 1 つまで (アストリッドの創造性で増える)", "Only 1 Essence mod per item (more with Astrid's Creativity)");

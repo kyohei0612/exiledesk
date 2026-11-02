@@ -95,7 +95,7 @@ function remove(ctx: PartCtx, item: StageItem, a: Remove): StageApply {
   }
   const nothing: StageApply = { applied: true, item, added: [], removed: [] };
   if (a.ifAny && !allMods(item).length) return nothing;
-  const side = ctx.mods.removeSide ?? ctx.mods.side;
+  const side = ctx.mods.removeSide ?? ctx.mods.side; // E-11g 左右のお告げで消す側を決める
   // 未発現の冒涜 MOD があればそれを消す (深淵のエッセンスは未発現に入れ替わる、2026-10-16 オーナーがゲームで確認)
   if (a.unrevealedFirst && !ctx.removeForce) {
     const us = allMods(item).filter((m) => m.unrevealed && !m.fractured && (!side || m.side === side));
@@ -147,7 +147,7 @@ function add(ctx: PartCtx, item: StageItem, a: Add): StageApply {
   const ok = (it: StageItem): StageApply => ({ applied: true, item: it, added: [], removed: [] });
   if (a.emptyOk && !SIDES.some((s) => room(item, s))) return ok(item);
   const n = ctx.mods.addCount ?? a.n;
-  const sides = ctx.mods.side ? [ctx.mods.side] : SIDES;
+  const sides = ctx.mods.side ? [ctx.mods.side] : SIDES; // E-11f・E-11g
   const { tag, pct } = catalystOf(item);
   const boost = ctx.mods.catalysing && tag ? { test: (m: { id: string; tags?: readonly string[] }) => catalystBoosts(item, { modId: m.id, tags: m.tags }, tag, ctx.data), mult: tunedCatalysingMultiplier(pct) } : undefined;
   const pick = ctx.pick?.slice(ctx.pickUsed ?? 0) ?? [];
@@ -185,7 +185,7 @@ function add(ctx: PartCtx, item: StageItem, a: Add): StageApply {
  */
 function reroll(ctx: PartCtx, item: StageItem): StageApply {
   const implicit = hasImplicitRange((htcBaseInfo()[item.base]?.implicits ?? []).map((l) => l.en));
-  if (ctx.mods.implicitOnly) {
+  if (ctx.mods.implicitOnly) { // E-39
     if (!implicit) return skip(item, tr("振り直せる暗黙 MOD が無い", "No implicit mod to reroll"));
     return { applied: true, item: { ...item, implicitRoll: (item.implicitRoll ?? 0) + 1, implicitFixed: undefined }, added: [], removed: [], note: tr("祝福のお告げ: 暗黙 MOD だけを振り直した", "Omen of the Blessed: rerolled implicit values only") };
   }

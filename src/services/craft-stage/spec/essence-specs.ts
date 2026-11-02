@@ -34,7 +34,7 @@ const ESSENCE_SOURCE: Source = { // E-11b の例外 (エッセンス・合金は
 };
 
 /** レッサー / 普通 / グレーター */
-export const ESSENCE_SPEC: CurrencySpec = {
+export const ESSENCE_SPEC: CurrencySpec = { // E-55
   key: "essence:upgrade",
   stageKey: "essence:",
   kind: "essence",
@@ -133,7 +133,7 @@ function withNotable(m: StageMod, rng: () => number): StageMod {
 }
 const DELIRIUM_NOTABLES: ReadonlyArray<{ en: string; ja: string }> = deliriumNotables.list;
 
-const crystal = (key: string, hover: string, side: "prefix" | "suffix", word: Words): OmenSpec => ({
+const crystal = (key: string, hover: string, side: "prefix" | "suffix", word: Words): OmenSpec => ({ // E-11g
   key, hover, appliesTo: "essence_perfect",
   text: {
     en: ["While this item is active in your inventory your next", `Perfect or Corrupted Essence will remove only ${word.en} modifiers`],

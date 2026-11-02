@@ -40,7 +40,7 @@ export const stageRuneIds = (item: StageItem): string[] =>
  * ルーン込みのベース (POE2Tube 要望 ㉙ 2026-10-04): 計算機と同じ withRunes で、セールの凱旋はサフィックスの枠 +1、
  * 特殊 MOD のルーン (コルの狩りなど) はそのタグの MOD を普通の置き場 (高貴・カオス・エッセンス・骨の抽選と「付く MOD」) に混ぜる
  */
-export function effectiveCls(item: StageItem): ItemBase {
+export function effectiveCls(item: StageItem): ItemBase { // E-10a ルーンの特殊 MOD は差していれば一般 MOD の置き場に入る
   const ids = stageRuneIds(item);
   return ids.length ? withRunes(item.cls, ids, runeEffectPct(item)) : item.cls;
 }

@@ -53,7 +53,7 @@ export function pickWeighted<T extends { w: number }>(xs: readonly T[], rng: () 
 }
 
 /** MOD を 1 つ引いて付ける (sides は足してよい側。既定は枠のある側全部。付けられなければ null) */
-export function addOne(data: PatchData, item: StageItem, floor: number, rng: () => number, o: PoolOpts & { sides?: readonly StageSide[] } = {}): { item: StageItem; mod: StageMod; chance: number } | null {
+export function addOne(data: PatchData, item: StageItem, floor: number, rng: () => number, o: PoolOpts & { sides?: readonly StageSide[] } = {}): { item: StageItem; mod: StageMod; chance: number } | null { // E-11f 空きのある側の候補をまとめて重みで 1 つ
   const sides = (o.sides ?? SIDES).filter((s) => room(item, s));
   const cs = candidates(data, item, sides, floor, o);
   const c = pickWeighted(cs, rng);
@@ -129,7 +129,7 @@ export function removeForced(item: StageItem, key: string): { item: StageItem; m
 
 /** 固定済み (フラクチャー) 以外から等しく 1 つ消す。sides で側を絞れる (お告げ) */
 export function removeOne(item: StageItem, rng: () => number, sides: readonly StageSide[] = SIDES): { item: StageItem; mod: StageMod } | null {
-  const rem = allMods(item).filter((m) => !m.fractured && sides.includes(m.side));
+  const rem = allMods(item).filter((m) => !m.fractured && sides.includes(m.side)); // E-22a 固定は消えない
   if (!rem.length) return null;
   const mod = rem[Math.floor(rng() * rem.length)]!;
   return { item: without(item, mod), mod };
