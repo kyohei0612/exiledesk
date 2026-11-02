@@ -2,7 +2,7 @@
  * 開発版の操作の記録 (2026-11-02 オーナー「1手ずつ分析できるような奴で」「シミュだけやないよ触ったボタン全てな」、U-33)。
  * dev サーバーで触った物を全部 1 行ずつ POST /__dev-log へ送り、サーバーが手元の .dev-logs/ に残す。本番のサーバーには送らない (Y-64)。
  * 中身は全部 import.meta.env.DEV の下 = 本番の作りでは devLog は空になり、この台本の残りは消える。
- * 本文は JSON を 1 行ずつ改行で並べた物 (2 秒ごとにまとめて送る)。1 行 = { t, n, sid, page, kind, data }、窓なし・自動の Chrome は auto: 1
+ * 本文は JSON の配列 (2 秒ごとにまとめて送る、受け口 scripts/vite-dev-log.mjs が要素ごとに 1 行)。1 行 = { t, n, sid, page, kind, data }、自動の Chrome は auto: 1 (窓なしは受け口が置かない)
  *   kind: open (開いた) / page (ページが替わった) / click / right / press (押したが click にならない = 無効のボタン・ドラッグ) / key / change / 各画面が devLog で足す物
  */
 import { watch } from "vue";
@@ -22,7 +22,7 @@ let pageNow: () => string = () => "";
 function flush(leaving = false): void {
   if (timer) { clearTimeout(timer); timer = null; }
   if (!buf.length) return;
-  const body = buf.join("\n");
+  const body = `[${buf.join(",")}]`;
   buf = [];
   if (leaving && navigator.sendBeacon("/__dev-log", body)) return;
   void fetch("/__dev-log", { method: "POST", body, keepalive: body.length < 60_000 }).catch(() => { /* 記録の失敗は画面に関係ない */ });
