@@ -12,11 +12,11 @@ import { isSideKey, isStripKey } from "../../../services/simulator/tree/tree-jun
 import { aimedAims, isWhittleHand, rankVariants } from "../../../services/simulator/tree/tree-whittle";
 import { keptAimedOf } from "../../../services/simulator/tree/tree-keep";
 import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
+import { rolledOutcomes } from "../../../services/simulator/tree/tree-uncountable";
 import { aimsOf, sampleOf, SINGLE_SEEDS } from "../../../services/simulator/tree/tree-sample";
 import type { PatchData, StageItem } from "../../../services/craft-stage/engine";
 import { docPartOf, itemKeyOf, tagOf } from "../../../services/simulator/tree/tree-sample-key";
-import { aimedOfSample, judgeMemo, sampleAimed } from "../../../services/simulator/tree/tree-judge";
-import { arrivalsOf } from "../../../services/simulator/tree/tree-judge-link";
+import { aimedOfSample, sampleAimed } from "../../../services/simulator/tree/tree-judge";
 import { flag } from "../../../web/release-flags";
 import { shapeSampleOf } from "../../../services/simulator/tree/tree-sample-shape";
 import { engineOmens } from "../../../services/simulator/tree/tree-hands";
@@ -52,8 +52,6 @@ export function oddsOfHand(doc: TreeDoc, id: string, part = ""): Map<string, num
   }
   return out.size ? (flag("junkTidy") ? perShot(out, shot) : out) : null;
 }
-/** 削減の手の割合で見る人の数 */
-const WHITTLE_MEN = 32;
 /** 箱に着く人 (w = 割合、和 1) */
 type Man = { raw: StageItem; aimed: ReadonlySet<string> | null; w: number };
 /** 手の結果を打てた人の割合で割り直す (打てない人は打てる箱へ移る S-64 ので、割合に入れない) */
@@ -64,8 +62,7 @@ const perShot = (m: Map<string, number>, shot: number): Map<string, number> => {
  * 着いた見本が無ければ、閉じた形は今までどおり形に合う見本 1 つ
  */
 function peopleOf(data: PatchData, doc: TreeDoc, id: string): Man[] {
-  // 削減の手は箱に着いた人の本物の外れの MOD レベルで決まるので人数を多く見る (S-65b)
-  const seeds = flag("junkTidy") && isWhittleHand(doc.boxes[id]?.hand) ? WHITTLE_MEN : SINGLE_SEEDS;
+  const seeds = SINGLE_SEEDS;
   if (flag("judgeOne")) for (let k = 1; k <= seeds; k++) sampleAimed(data, doc, id, k);
   const one = (raw: StageItem): Man[] => [{ raw, aimed: flag("judgeOne") ? aimedOfSample(id, raw) : null, w: 1 }];
   if (!flag("junkTidy")) return one(shapeSampleOf(data, doc, id));
@@ -75,11 +72,6 @@ function peopleOf(data: PatchData, doc: TreeDoc, id: string): Man[] {
     if (x.note === "none" || x.note?.startsWith("cant:")) continue;
     const aimed = flag("judgeOne") ? aimedOfSample(id, x.item) : null, key = `${itemKeyOf(x.item)}|${aimed ? [...aimed].sort().join() : ""}`, e = by.get(key);
     if (e) e.w++; else by.set(key, { raw: x.item, aimed, w: 1 });
-  }
-  // ↩ で着く人も 1 人ずつ数える (道の見本に出ないランダムの外れの人。その人の結果の箱に札が出ない、S-21・S-65b)
-  if (seeds !== SINGLE_SEEDS) for (const a of arrivalsOf(data, doc, judgeMemo(data, doc), id)) {
-    const key = `${itemKeyOf(a.item)}|${[...a.aimed].sort().join()}`, e = by.get(key);
-    if (e) e.w++; else by.set(key, { raw: a.item, aimed: a.aimed, w: 1 });
   }
   const men = [...by.values()], n = men.reduce((t, m) => t + m.w, 0);
   return n ? men.map((m) => ({ ...m, w: m.w / n })) : one(shapeSampleOf(data, doc, id));
@@ -102,7 +94,8 @@ function sideOdds(doc: TreeDoc, id: string, part: string): Map<string, number> |
     // 削減の手は外れを MOD レベルの範囲ごとの代わりに差し替えた見本 (割合 = その範囲の重み、tree-whittle)。ほかは見本のまま
     const forms = isWhittleHand(b.hand) && !flag("junkTidy") ? rankVariants(data, item0, aimedAims(aims, keptAimedOf(doc, b.hand, aimed)), b.junkKey) : [{ p: 1, item: item0 }];
     for (const f of forms) {
-      const live = (stepOutcomes(data, f.item, b.hand.currency, engineOmens(b.hand)) ?? []).filter((r) => !r.void);
+      // 数え上げられない手は打って集めた結果の割合 (S-21)
+      const live = (stepOutcomes(data, f.item, b.hand.currency, engineOmens(b.hand)) ?? rolledOutcomes(data, f.item, b.hand.currency, engineOmens(b.hand)) ?? []).filter((r) => !r.void);
       const total = live.reduce((n, r) => n + r.p, 0);
       if (!live.length || total <= 0) continue;
       shot += man.w * f.p;
@@ -123,6 +116,8 @@ function treeOddsOf(doc: Ref<TreeDoc>) {
     const all = new Map<string, number>(), part = flag("treeLight") ? docPartOf(doc.value) : "";
     for (const b of Object.values(doc.value.boxes)) {
       if (!b.hand) continue;
+      // 削減の手の結果の箱は % を出さない (S-65b、スイッチ junkTidy)。オーナー 11-01「削減だけ消す」
+      if (flag("junkTidy") && isWhittleHand(b.hand)) continue;
       try { for (const [k, v] of oddsOfHand(doc.value, b.id, part) ?? []) all.set(k, v); } catch { /* 割合が出せない手は出さない */ }
     }
     return all;

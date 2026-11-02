@@ -13,9 +13,11 @@ import { applyStartChoice, markedGoal } from "./tree-start-choice";
 import { useTree } from "./use-tree";
 import { sureFracText } from "./tree-names";
 import { flag } from "../../../web/release-flags";
+import { simOp } from "../../../web/track";
 
 const emit = defineEmits<{ done: []; close: [] }>();
 const t = useTree();
+simOp("start-ask");
 const goals = computed(() => t.goals.value);
 /** パターン 2・3: 印のある狙い (MOD 選びを飛ばす) */
 const marked = markedGoal(t.goals.value);
@@ -50,6 +52,7 @@ const picks = ref<string[]>(goals.value.some((a) => a.fractured) ? goals.value.f
 const pickedGoal = computed(() => (ONE ? (onePicks.value.length === 1 ? goals.value.find((a) => aimKey(a) === onePicks.value[0]) ?? null : null) : MULTI ? (picks.value.length ? goals.value[0] ?? null : null) : goals.value.find((a) => aimKey(a) === pick.value) ?? null));
 function decide(): void {
   const k = ONE ? (onePicks.value.length > 1 ? onePicks.value : onePicks.value[0] ?? null) : MULTI ? picks.value : pick.value, f = multiWhite.value ? "four" : from.value;
+  simOp("start-go", k == null || !k.length ? "white" : Array.isArray(k) && k.length > 1 ? "multi" : f);
   t.edit((d) => { applyStartChoice(d, k, f); d.fracAsked = true; });
   emit("done");
 }

@@ -13,6 +13,7 @@ import { swallowNextClick } from "../../../utils/swallow-click";
 import Icon from "../../../components/ui/Icon.vue";
 import { ATTACH_WAYS, attachIn, detachIn, wayBlock, wayName, wayOfAim, type AttachWay } from "./tree-attach";
 import { useTree } from "./use-tree";
+import { simOp } from "../../../web/track";
 
 const props = defineProps<{ modId: string; tier: number; rank: string; /** 一覧の行の群れ (normal・desecrated・essence など) */ group?: string; /** 狙いの組に足せない訳 (どの付け方でも同じ。tree-goal-cap) */ block: string | null; /** この MOD の今の狙い (段は別でもよい) */ aim?: Aim }>();
 const t = useTree();
@@ -23,11 +24,12 @@ const blockOf = (w: AttachWay): string | null => (here.value ? null : props.bloc
 const why = ref<string | null>(null);
 function choose(w: AttachWay): void {
   const b = blockOf(w);
-  if (b) { why.value = b; return; }
+  if (b) { simOp("goal-blocked", b); why.value = b; return; }
+  simOp("pick-goal-mod", w);
   t.edit((d) => attachIn(d, props.modId, props.tier, w));
   close();
 }
-function detach(): void { t.edit((d) => detachIn(d, props.modId)); close(); }
+function detach(): void { simOp("remove-goal-mod"); t.edit((d) => detachIn(d, props.modId)); close(); }
 const label = computed(() => {
   const w = here.value;
   if (!w) return tr("付ける", "Add");
@@ -64,6 +66,7 @@ function outside(e: PointerEvent): void {
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape") { e.preventDefault(); close(); } }
 function toggle(): void {
   if (open.value) { close(); return; }
+  simOp("attach-open");
   place();
   open.value = true;
   void nextTick(() => {

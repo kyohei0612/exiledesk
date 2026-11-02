@@ -8,6 +8,7 @@ import { nextAimed, sampleAimed, type Judge } from "./tree-judge";
 import { effectOf } from "./tree-hands";
 import { aimsOf, playHand, sampleFrom, sampleOf } from "./tree-sample";
 import { MATCH_BACK, subtree, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
+import { midAims } from "./tree-veil";
 import { flag } from "../../../web/release-flags";
 
 const RESTART = "restart";
@@ -15,7 +16,8 @@ const RESTART = "restart";
 const seqOf = (id: string): number => (id === "start" ? -1 : Number(/\d+$/.exec(id)?.[0] ?? 0));
 const depthOf = (doc: TreeDoc, id: string): number => { let n = 0; for (let b = doc.boxes[id]; b?.parent; b = doc.boxes[b.parent]) n++; return n; };
 const shallow = (doc: TreeDoc) => (x: string, y: string): number => depthOf(doc, x) - depthOf(doc, y) || seqOf(x) - seqOf(y);
-const sameHand = (x: Hand | null | undefined, h: Hand): boolean => !!x && x.currency === h.currency && !x.block === !h.block && [...x.omens].sort().join() === [...h.omens].sort().join();
+const keepSig = (h: Hand): string => (flag("junkTidy") && h.keep ? `k:${h.keep.map((a) => a.modId).sort().join()}` : "");
+const sameHand = (x: Hand | null | undefined, h: Hand): boolean => !!x && x.currency === h.currency && !x.block === !h.block && [...x.omens].sort().join() === [...h.omens].sort().join() && keepSig(x) === keepSig(h);
 
 /**
  * 人が × で ↩ を外した箱の、結果が 1 通りの手の先の箱で中身が同じ物か (S-50、木 xIH1EiqP の b11 → b13)。
@@ -134,15 +136,23 @@ export function arrivalsOf(data: PatchData, doc: TreeDoc, j: Judge, id: string):
 }
 
 /** 回す時に手が打てるか (playHand。乱数の当たり所で弾かれる物は打てる扱い) */
-const canPlay = (data: PatchData, item: StageItem, h: Hand): boolean => { const r = playHand(data, item, { ...h, repeat: null }, mulberry32(1)); return r.applied || !!r.random; };
+export const canPlay = (data: PatchData, item: StageItem, h: Hand): boolean => { const r = playHand(data, item, { ...h, repeat: null }, mulberry32(1)); return r.applied || !!r.random; };
 
 /**
  * 着いた箱の手が打てない人の行き先 (S-64、スイッチ keepOutside): 中身の同じ箱のうち、手が打てる箱か完成 / 失敗の箱 (浅い段・先に作った箱から)。
  * 外れは種類を見ないので、✦ + ブリーチの人が ✦ + 外れの「ブリーチを打つ箱」に着いて打てず止まった (金の指輪の木の b1、次の手の b2 は中身が同じ)
  */
+/** 手の打てない人が途中の狙いの箱へ移る時の印: 実際に持っている途中の狙いを印に足す (外れのままだと次の箱で中身が違うと元の箱へ戻され輪になる、S-64、スイッチ junkTidy) */
+export function twinAimed(doc: TreeDoc, j: Judge, to: string, item: StageItem, aimed: ReadonlySet<string>): ReadonlySet<string> {
+  if (!flag("junkTidy") || j.fitsItem(item, aimed, to)) return aimed;
+  return new Set([...aimed, ...midAims(doc).filter((a) => [...item.prefixes, ...item.suffixes].some((m) => m.modId === a.modId)).map((a) => a.modId)]);
+}
 export function playableTwin(data: PatchData, doc: TreeDoc, j: Judge, at: string, item: StageItem, aimed: ReadonlySet<string>): string | null {
   if (!flag("keepOutside")) return null;
-  return j.boxesOf(item, aimed, (id) => id !== at).find((id) => { const h = doc.boxes[id]?.hand; return !h || canPlay(data, item, h); }) ?? null;
+  const can = (id: string): boolean => { const h = doc.boxes[id]?.hand; return !h || canPlay(data, item, h); };
+  // 全部消えてよい消去で途中の狙いが外れに落ちた人 (✦ + ブリーチ) も打てる箱へ。実際に持っている MOD が＝の人だけで、ランダムの外れの人は移らない。印は外れのまま (S-64、スイッチ junkTidy)
+  const held = flag("junkTidy") ? midAims(doc).filter((a) => !aimed.has(a.modId) && [...item.prefixes, ...item.suffixes].some((m) => m.modId === a.modId)).map((a) => a.modId) : [];
+  return j.boxesOf(item, aimed, (id) => id !== at).find(can) ?? (held.length ? j.boxesOf(item, new Set([...aimed, ...held]), (id) => id !== at).find(can) : undefined) ?? null;
 }
 
 /**

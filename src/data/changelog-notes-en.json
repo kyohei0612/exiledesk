@@ -1,4 +1,16 @@
 {
+  "0.1.655": [
+    "Emulator: you can no longer use an essence when the item already has a mod of the same family (its row in the mod list is greyed out too). An item holds only one mod per family (except when a flux changes the element)"
+  ],
+  "0.1.654": [
+    "Simulator: new miss-cleanup flow. While building, miss boxes stay grey and unlinked; the Tidy misses button links them into the same slot and lists the unset boxes. Once finished, everything goes grey and the next thing to press lights up",
+    "Simulator: outcomes now link back to a box with the same contents automatically, from any craft (remove with ×)",
+    "Simulator: large trees can now zoom out far enough to see the whole tree",
+    "Simulator: you can no longer swap only the craft. Changing a craft removes the boxes below it, so it only changes when you press Yes in the confirm window (also when the results would be the same)",
+    "Simulator: the shelf's \"↩ Back to an existing box\" is gone; go back from the box's \"↩ Choose where to go back\" instead",
+    "Simulator: essence mods that disappear partway to the final item now show by name as aims, not as miss mods. Older recipes may show boxes with nowhere to go as unset (red \"!\")",
+    "Simulator: opening a broken recipe URL now says \"This recipe couldn't be read\" instead of silently going back to base selection"
+  ],
   "0.1.653": [
     "Simulator: phones now get a view-only screen with the final item card and the route to it. Tap Details for the full map, which you can drag and pinch to zoom. Run 10 works too. Building trees needs a width of 768 or more",
     "Simulator: faster tree loading, gap check, Run 100, adding crafts and box dragging, with fewer freezes on big trees (results unchanged)",

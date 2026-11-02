@@ -13,6 +13,7 @@ import { carryAims, placeMods, retext } from "../../../services/simulator/sim-en
 import type { StageItem } from "../../../services/craft-stage/engine";
 import { fractureMarks, migrateStart, newTree, startOf, startRarity, type Aim, type StartFrom, type StartMod, type TreeDoc, type TreeRarity } from "../../../services/simulator/tree/tree-model";
 import { openForm } from "./tree-rebuild";
+import { logTreeEdit, logTreeOpen } from "./tree-dev-log"; import { openStepped, treeLoading as loading } from "./use-tree-open"; import { tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
 import { currentTreeRecipeId, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
 import { tr } from "../../../i18n/lang";
 import { simOp } from "../../../web/track";
@@ -188,7 +189,8 @@ const redoStack: string[] = [];
 const canRedo = shallowRef(false);
 
 /** 組み替えを 1 回 (写しを書き換えて差し替える。前の形は 1 つ戻す用に控える) */
-function edit(fn: (d: TreeDoc) => void): void {
+function edit(fn: (d: TreeDoc) => void, open = false): void {
+  if (loading.value) return; // 開いている間は木を変えない (S-196)
   const before = JSON.stringify(doc.value);
   const d = JSON.parse(before) as TreeDoc;
   fn(d);
@@ -198,12 +200,13 @@ function edit(fn: (d: TreeDoc) => void): void {
   if (undoStack.length > UNDO_MAX) undoStack.shift();
   canUndo.value = true;
   redoStack.length = 0;
-  canRedo.value = false;
+  canRedo.value = false; if (import.meta.env.DEV) { if (open) logTreeOpen(d); else logTreeEdit(JSON.parse(before) as TreeDoc, d); }
   doc.value = d;
   save(d);
 }
 /** 控えの形へ移る (今の形は反対側の控えへ)。ツリーのメモの文は動かさない (メモ欄の中の Ctrl+Z が受け持つ。ツリーの Ctrl+Z で書いた文がまとめて消えた、10-22) */
 function step(from: string[], to: string[]): void {
+  if (loading.value) return;
   const prev = from.pop();
   if (prev) {
     to.push(JSON.stringify(doc.value));
@@ -229,17 +232,14 @@ function setTreeNote(text: string): void {
 }
 /** 別の木を開いた回数 (開いた木の箱を上から順に出し直す、use-tree-reveal.ts) */
 const opened = ref(0);
-/** 別の木を開く (レシピ・共有の URL から。1 つ戻すで前の木へ戻せる)。スイッチ recipeV1 の下は打ち方から組み直す (S-105、データがまだ無ければ前提だけ開き、来たら組み直す) */
-function open(tree: TreeDoc): void {
+const putTree = (t: TreeDoc): void => { needBase.value = false; opened.value++; edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, JSON.parse(JSON.stringify(t))); migrateStart(d); }, true); };
+/** 別の木を開く (レシピ・共有の URL から。1 つ戻すで前の木へ戻せる)。スイッチ recipeV1 の下は打ち方から組み直す (S-105、データがまだ無ければ前提だけ開き、来たら組み直す)。stepped = 少しずつ描いて開く (S-196) */
+function open(tree: TreeDoc, stepped = false): void {
+  if (stepped && s.data.value && tidyOn()) { void openStepped(s.data.value, tree, doc, () => { needBase.value = false; opened.value++; }, putTree); return; }
   const f = openForm(tree, s.data.value);
-  if (f.wait) { const stop = watch(() => s.data.value, (x) => { if (x) { stop(); open(tree); } }); }
-  needBase.value = false; opened.value++; edit((d) => { for (const k of Object.keys(d)) delete (d as unknown as Record<string, unknown>)[k]; Object.assign(d, JSON.parse(JSON.stringify(f.doc))); migrateStart(d); });
+  if (f.wait) { const stop = watch(() => s.data.value, (x) => { if (x) { stop(); open(tree, stepped); } }); }
+  putTree(f.doc);
 }
-/**
- * 白紙に戻す (今のベースとアイテムレベルのまま。1 つ戻すで戻せる)。前の木の鍵は先に全部消す (setBase と同じ)。
- * 前は上書きだけで、白紙に無い鍵 (乱数の MOD の数 startRandom・完成形のレアリティ goal・完成の狙い memoAims など) が残り、
- * 見本の木から戻すとスタートに乱数の外れの MOD が付いたままだった (10-23 オーナー「スタートは何も設定していないはず」)
- */
 /**
  * 白紙に戻す = 木を最初からやり直す: スタートの箱 (ベース・Lv・スタートの MOD) と完成形の設定は残し、スタートから下の箱・手だけを消す
  * (10-26 夜オーナー「スタート以外を消す意味。だけど MOD ごと消してるから直してくれ」。前は newTree で全部作り直し、狙いとスタートの MOD まで消えた)
@@ -251,7 +251,7 @@ function reset(): void {
     delete st.split;
     d.boxes = { start: st };
     // 前の木の打ち方・要確認の一覧は持ち越さない (残すと今の木に無い段の要確認で「100 人回す」が押せないまま、S-107・S-70)
-    delete d.picks; delete d.orphans;
+    delete d.picks; delete d.orphans; delete d.tidyRan;
   });
 }
 /**
@@ -496,5 +496,5 @@ export const allowCost = allow;
  */
 if (import.meta.hot) import.meta.hot.dispose(() => location.reload());
 export function useTree() {
-  return { tabDocs, active, switchTab, addTab, closeTab, resetAll, tabLabel, renameTab, copyTab, leaveNewTab, ilvlNote, startPrice, setStartPrice, startChoice, setStartFrom, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, boxAimLabel, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
+  return { loading, tabDocs, active, switchTab, addTab, closeTab, resetAll, tabLabel, renameTab, copyTab, leaveNewTab, ilvlNote, startPrice, setStartPrice, startChoice, setStartFrom, goalPage, needBase, goalInline, startPage, runReady, reportOpen, goals, hasGoal, toggleGoal, toggleFracture, goalItem, goalRarity, setRarity, fitIlvl, setFit, doc, edit, chooseBase, undo, canUndo, redo, canRedo, reset, setBase, lostOnBase, open, opened, setTreeNote, rows, aimLabel, aimShort, boxAimLabel, startModLabel, baseCost, baseCostBusy, treePrice, takeAskBase, startTreeWith };
 }

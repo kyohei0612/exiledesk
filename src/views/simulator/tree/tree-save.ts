@@ -61,7 +61,7 @@ export function resumeTree(): boolean {
     const r = takeResume();
     if (!r) return false;
     setCurrentTreeRecipe(r.id);
-    t.open(r.tree);
+    t.open(r.tree, true);
   }
   try { const u = new URL(location.href); u.searchParams.set("page", "sim-tree"); history.replaceState(history.state, "", u.pathname + u.search + u.hash); } catch { /* 置き換えられなくても開く */ }
   openTreePage("tree");

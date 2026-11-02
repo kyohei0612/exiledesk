@@ -30,7 +30,7 @@ export function useTreePlus(o: {
     p.target = id && id !== p.id && !(p.kind === "next" && plusLink.value.get(id)) ? id : null;
   }
   function onPlus(b: Box, kind: "side" | "next", e: PointerEvent): void {
-    if (o.viewOnly.value) return;
+    if (o.viewOnly.value) { if (kind === "next") o.startLink(b); return; } // 引いて見るだけの時も下の＋は押せる (S-147c)。引っ張ってつなぐのは寄ってから
     gesture(e, {
       holdMs: HOLD_MS,
       onStart: (q) => { plus.value = { id: b.id, kind, cx: q.clientX, cy: q.clientY, target: null }; plusAt(q.clientX, q.clientY); },

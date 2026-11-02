@@ -207,6 +207,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "goalAskFix", "goalDesecRow", "swapHand", "holeCheck", "spam30", "aimTable", "shelfWhy", "backQuality", "goalNeedMod", "sanctifyHint", "keepOutside",
   // 0.1.653 (オーナー 11-01「スマホ版先にリリースしちゃって良さそうだね」、ポップの答え「はい」)。ツリーを軽く・穴チェックはボタンだけ・目次のタブ・ベースのページの送りも一緒に。閉じたままは daily・simTutorial
   "phoneView", "treeLight", "holeButton", "tocJump", "baseReopen",
+  // 0.1.654 シミュのハズレ整理の流れ・同じ中身の箱へ自動で戻す・大きな木の全体表示 (オーナー 11-02「7まで進め」「おっけー、完了後旧仕様全て削除で」、ブラック 33 の頼み)。閉じたままは daily・simTutorial
+  "junkTidy", "autoSame", "zoomWhole",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */

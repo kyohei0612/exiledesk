@@ -20,6 +20,7 @@ import { openTreePage } from "../../web/page";
 import { setMapFold } from "./phone/map-fold";
 import { tr } from "../../i18n/lang";
 import { simAct } from "../../web/track";
+import { RECIPE_UNREADABLE, recipeOpenFailed } from "../../state/for-share/sim-links";
 
 /** URL の # の頭 */
 const RECIPE_SHARE_PREFIX = "#recipe=";
@@ -110,12 +111,16 @@ export const closeNewer = (): void => { sharedNewer.value = []; };
 
 /** 今の URL の # にレシピがあれば、保存したレシピに足して (同じ中身があればそれを使う)、そのレシピでシミュレーターを始める */
 export async function openSharedRecipe(): Promise<void> {
+  if (!location.hash.startsWith("#recipe=")) return;
   const m = /^#recipe=([A-Za-z0-9_-]+)$/.exec(location.hash);
-  if (!m) return;
   // 開いた後は URL から外す (読み直すたびに足されないように)
   try { history.replaceState(null, "", location.pathname + location.search); } catch { /* 外せなくても開く */ }
   // タップ 1 回で木まで: スマホは「完成形と全体図」の窓を開いて着く (PC は木のページがそのまま木。S-103、スイッチ recipeJump)
-  if (await openRecipeCode(m[1]!)) setMapFold(false);
+  const ok = !!m && (await openRecipeCode(m[1]!));
+  logRecord("tree_recipe_open", { ok });
+  if (ok) setMapFold(false);
+  // 読めない URL (1 字欠けた・使えない字が混ざった) は黙らず一言 (S-103c)。シミュを止めている時は読まないだけなので出さない
+  recipeOpenFailed.value = !ok && !SIM_LOCKED;
 }
 
 /** 貼った物からレシピの中身を取り出す (URL の全体でも、#recipe= の後ろだけでも。開発版・本番どちらの URL でも中身は同じ) */
@@ -141,7 +146,7 @@ async function openRecipeCode(code: string): Promise<boolean> {
       sharedNewer.value = newerHands(t);
       const tr2 = addTreeRecipe(String((p as PackedTree).n ?? ""), t);
       setCurrentTreeRecipe(tr2.id);
-      useTree().open(tr2.tree);
+      useTree().open(tr2.tree, true);
       openTreePage();
       logRecord("tree_recipe_shared", { boxes: Object.keys(t.boxes).length });
       return true;
@@ -162,7 +167,7 @@ export function useRecipeUrl(o: { notUrl?: [string, string]; unreadable?: [strin
     const code = recipeCodeOf(url.value);
     if (!code) { urlNote.value = url.value.trim() ? tr(...(o.notUrl ?? ["レシピの URL ではありません (#recipe= の付いた URL を貼る)", "Not a recipe URL (paste one with #recipe=)"])) : ""; return; }
     const ok = await openRecipeCode(code);
-    urlNote.value = ok ? "" : tr(...(o.unreadable ?? ["このレシピは読めませんでした", "Couldn't read this recipe"]));
+    urlNote.value = ok ? "" : tr(...(o.unreadable ?? RECIPE_UNREADABLE));
     if (ok) { url.value = ""; o.onOpened?.(); }
   }
   function onPaste(): void { void nextTick(() => { if (recipeCodeOf(url.value)) void openUrl(); }); }

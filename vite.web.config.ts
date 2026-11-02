@@ -10,12 +10,14 @@ import vue from "@vitejs/plugin-vue";
 import tailwindcss from "@tailwindcss/vite";
 // dev だけ: シミュのチュートリアルの文を src/data/sim-tutorial.json に書く口 (POST /__sim-tutorial、2026-10-26 夜オーナー「開発版で文字を俺が打つ」)
 import { simTutorialSave } from "./scripts/vite-sim-tutorial.mjs";
+// dev だけ: オーナーが触った操作を .dev-logs/ に足す口 (POST /__dev-log、Y-64)
+import { devLogSave } from "./scripts/vite-dev-log.mjs";
 
 /** 出す場所。手元の本番環境・開発版 (scripts/preview-prod.mjs) は WEB_OUT で server/web/.wrangler/preview-dist(-dev) に出す */
 const OUT = process.env.WEB_OUT || "dist-web";
 
 export default defineConfig({
-  plugins: [vue(), tailwindcss(), simTutorialSave(), {
+  plugins: [vue(), tailwindcss(), simTutorialSave(), devLogSave(), {
     // ANALYZE=1 の時だけ: 最初に読む塊 (web-*.js) の中身を大きい順に出す (2026-10-19 スマホの読み込みを縮める時に作った)
     name: "exiledesk-web-analyze",
     apply: "build" as const,
@@ -92,7 +94,7 @@ export default defineConfig({
     port: 1440,
     strictPort: true,
     // 起動しても普段の Chrome にタブを開かない (2026-10-18 オーナー「タブで開いたり同時に 2 個立ち上がるのやめーや」。開くのは http://localhost:1440/web.html)
-    watch: { ignored: ["**/src-tauri/**", "**/data-cache/**", "**/scripts/**", "**/video/**"] },
+    watch: { ignored: ["**/src-tauri/**", "**/data-cache/**", "**/scripts/**", "**/video/**", "**/.dev-logs/**"] },
     proxy: {
       "/api/poe2scout": { target: "https://api.poe2scout.com", changeOrigin: true, rewrite: (path) => path.replace(/^\/api\/poe2scout/, "") },
     },

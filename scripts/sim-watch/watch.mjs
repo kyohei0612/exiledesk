@@ -16,7 +16,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { openTabs } from "../app-watch/lib.mjs";
-import { MISS_OUTS, expectBack, isStrip, missBoxes, pathAims, sameHand, setDepthSteps, stepOf, stepsInText, stripMiddles } from "./doc.mjs";
+import { MISS_OUTS, expectBack, isStrip, missBoxes, pathAims, pathMids, sameHand, setDepthSteps, stepOf, stepsInText, stripMiddles } from "./doc.mjs";
 import { DISPLAY, makeRules } from "./rules.mjs";
 import { makeLineRules } from "./lines.mjs";
 
@@ -137,7 +137,9 @@ function makeWatcher(c) {
       const ok = tags.filter((x) => x !== MISS && x !== "未発現").length;
       if (isStrip(b)) {
         count(t.key, "消去の箱のカード");
-        if (ok) bad(t.key, `PC ${id} のカード`, "全部消えてよい消去の箱なのに外れ MOD でない行がある", sig[id], `全部 ${MISS}`);
+        // 途中の狙い (S-33c) は全部消えてよい消去の後も付いている間は名前の行
+        const mid = pathMids(doc, id).size;
+        if (ok > mid) bad(t.key, `PC ${id} のカード`, "全部消えてよい消去の箱なのに外れ MOD でない行がある", sig[id], mid ? `外れ MOD でない行は途中の狙いの ${mid} まで` : `全部 ${MISS}`);
       } else if (b.out && MISS_OUTS.includes(b.out)) {
         count(t.key, "外れの箱のカード");
         const n = pathAims(doc, id).size;
@@ -173,10 +175,13 @@ function makeWatcher(c) {
     await sleep(1200);
     const held = await ev(`(() => { const b = document.querySelector('[data-tree-shelf] [data-key="annul"]'); b?.click(); return !!b; })()`);
     await sleep(800);
-    const tags = held && await ev(`[...document.querySelectorAll("[data-tree-hand-card] p.group\\\\/row")].filter((p) => !p.classList.contains("text-mod-fractured")).map((p) => p.querySelector("[data-row-tag-name]")?.innerText.trim() ?? "")`);
+    // 選んで付けた MOD (エッセンス・合金 = text-mod-crafted、発現済みの冒涜 = g-abyss-row) の行は箱のカードのまま (S-82・R-34) なので「選」と書いて数えない
+    const tags = held && await ev(`[...document.querySelectorAll("[data-tree-hand-card] p.group\\\\/row")].filter((p) => !p.classList.contains("text-mod-fractured")).map((p) => p.querySelector("[data-row-tag-name]")?.innerText.trim() ?? (p.classList.contains("text-mod-crafted") || p.classList.contains("g-abyss-row") ? "選" : ""))`);
     if (!tags?.length) { note.push(`${t.key}: ${box.id} で消去を持ったカードが読めない (棚 ${!!held})`); return; }
     count(t.key, "消去を持った時のカード");
-    if (tags.some((x) => x !== MISS)) bad(t.key, `PC ${box.id} で消去を持つ`, "全部消えてよい消去を持ったのに外れ MOD でない行がある", tags.map((x) => x || "-").join("|"), `全部 ${MISS}`);
+    // 途中の狙い (S-33c) は消去を持った時も名前の行 (☑ の既定でも残す側)。途中の狙いはエッセンスの行なので「選」に入る = 数は上限の余裕
+    const mid = pathMids(doc, box.id).size;
+    if (tags.filter((x) => x !== MISS && x !== "選").length > mid) bad(t.key, `PC ${box.id} で消去を持つ`, "全部消えてよい消去を持ったのに外れ MOD でない行がある", tags.map((x) => x || "-").join("|"), mid ? `外れ MOD でない行は途中の狙いの ${mid} まで` : `全部 ${MISS}`);
   }
   /** (9) 完成形の窓: 品質の ☑・品質の %・「途中で消える」の札 (押された数 = 木の途中で消える MOD の数)。札の並びを返す */
   async function checkGoal(t, doc) {
