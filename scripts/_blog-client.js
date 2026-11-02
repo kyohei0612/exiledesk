@@ -45,7 +45,10 @@
     var last = 0;
     try { last = Number(localStorage.getItem(LAST) || 0) || 0; } catch (e) { /* 無くてよい */ }
     try { if (Date.now() - last < HOUR && JSON.stringify(pend).length < 200000) { localStorage.setItem(PEND, JSON.stringify(pend)); return; } } catch (e) { /* 置けなければ送る */ }
-    var rs = pend.recs.slice(-200);
+    // 本文を 500,000 字まで (受け口の 512 KB に収める。log-sender.ts と同じ)
+    var keep = pend.recs.length, left = 500000 - pend.ev.join(",").length;
+    for (; keep > 0; keep--) { left -= JSON.stringify(pend.recs[keep - 1]).length + 1; if (left < 0) break; }
+    var rs = pend.recs.slice(keep);
     var body = '{"app":"web","n":' + rs.length + ',"v":"' + ver + '","uid":"' + uid + '","sid":"' + sid + '","dev":"' + devc + '","recs":' + JSON.stringify(rs) + (pend.ev.length ? ',"__ev":[' + pend.ev.join(",") + "]" : "") + "}";
     try { localStorage.removeItem(PEND); localStorage.setItem(LAST, String(Date.now())); } catch (e) { /* 無くてよい */ }
     try { if (!(navigator.sendBeacon && navigator.sendBeacon(api + "/log", new Blob([body], { type: "text/plain;charset=UTF-8" })))) fetch(api + "/log", { method: "POST", body: body, keepalive: true, credentials: "omit" }); } catch (e) { /* 落としてよい */ }
