@@ -68,7 +68,7 @@ export function outNameOf(h: Hand | null | undefined, out: TreeBox["out"], aim?:
 export const outsName = (b: { out: TreeBox["out"]; mergedOuts?: Array<TreeBox["out"]> }): string => [b.out, ...(b.mergedOuts ?? [])].map(outName).join(tr("・", " / "));
 
 /** MOD の文から数字・括弧・「が増加する」を除いた短い名前 (枠の札で「キャストスピードが(25-28)%増加するが付いた」と長くなった。全文は乗せた時の文で) */
-export const modShort = (text: string): string => text.replace(/\([^)]*\)/g, "").replace(/[+-]?\d+(\.\d+)?%?/g, "").replace(/%/g, "").replace(/が(増加|減少)する$/, "").replace(/\s+/g, " ").trim() || text;
+export const modShort = (text: string): string => text.replace(/\([^)]*\)/g, "").replace(/[+-]?\d+(\.\d+)?(%|個)?/g, "").replace(/%/g, "").replace(/が(増加|減少)する$/, "").replace(/\s+/g, " ").trim() || text;
 /**
  * 箱の題 (枠の上の線に乗る札、スマホの行の題)。当たりは「スピリットが付いた」(どれかの箱は「スピリットかライフが付いた」)、ほかは結果の名前 (外れ・狙いが消えた・打った後…)。
  * 「当たり」とは書かない (狙い無しの手の下でも付いた MOD が分かるように、狙いのある手も同じ言い方に揃えた。10-26 オーナー「枠の上のところに●がついた みたいな形でよくある枠の形にしたら枠中ごちゃんなくていいよな」)
