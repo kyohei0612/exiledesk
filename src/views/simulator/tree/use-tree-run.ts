@@ -78,6 +78,8 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
   let token = 0;
   // 組み替えたら結果を消す (回している途中なら止める)
   watch(() => routeKeyOf(doc.value), () => { token++; raw.value = null; running.value = false; halted.value = null; walk.value = null; test.value = false; });
+  /** 開発版の記録 (S-197)。test = 最終チェックの 30 人 */
+  const logRun = (): void => { const r = result.value; if (r) devLog("tree-run", { test: test.value, n: r.n, finished: r.finished, failed: r.failed, swamped: r.capped, stuck: r.stuck, perItem: Math.round(r.perItem), loopAt: r.loopAt, stuckAt: r.stuckAt, failAt: r.failAt, boxes: Object.keys(doc.value.boxes).length }); };
   /** opt.test = 穴チェックの走行 (TEST_N 人、1 人目の歩きは飛ばす、止まった人が出ても止めない) */
   async function run(opt: { test?: boolean; reuse?: CheckRun | null } = {}): Promise<void> {
     const data = s.data.value;
@@ -91,7 +93,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
     const re = opt.reuse;
     if (re && re.key === routeKeyOf(d) && re.startCost === startCost() && re.run.persons.every((p) => p.cost <= CAP_DIV)) {
       await nextTick();
-      if (my === token) { raw.value = re.run; running.value = false; }
+      if (my === token) { raw.value = re.run; running.value = false; logRun(); }
       return;
     }
     const priceIn = runPrice(priceOf);
@@ -167,7 +169,7 @@ export function useTreeRun(doc: Ref<TreeDoc>, startCost: () => number, priceOf: 
         await new Promise((res) => setTimeout(res, wait));
         if (!(r.value % EVERY)) t0 = performance.now();
       }
-    } finally { if (my === token) { running.value = false; walk.value = null; const r = result.value; if (r) devLog("tree-run", { n: r.n, finished: r.finished, swamped: r.capped, stuck: r.stuck, perItem: Math.round(r.perItem), loopAt: r.loopAt, stuckAt: r.stuckAt, boxes: Object.keys(doc.value.boxes).length }); } }
+    } finally { if (my === token) { running.value = false; walk.value = null; logRun(); } }
   }
   /** 止まり・打ち止めの箱 (多い順) */
   const stuckBoxes = computed(() => Object.entries(result.value?.stuckAt ?? {}).sort((a, z) => z[1] - a[1]));

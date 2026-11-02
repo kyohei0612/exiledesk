@@ -7,6 +7,9 @@ import type { Hand, TreeDoc } from "../../../services/simulator/tree/tree-model"
 
 const handOf = (h: Hand): Record<string, unknown> => ({ currency: h.currency, omens: h.omens, ...(h.keep ? { keep: h.keep.map((a) => a.modId) } : {}), ...(h.free ? { free: true } : {}) });
 
+/** 木を開いた (読み込みの 1 行。打った手と混ざらない) */
+export const logTreeOpen = (doc: TreeDoc): void => devLog("tree-open", { boxes: Object.keys(doc.boxes).length });
+
 /** before → after で変わった箱を 1 行ずつ残す */
 export function logTreeEdit(before: TreeDoc, after: TreeDoc): void {
   const boxes = Object.keys(after.boxes).length;
