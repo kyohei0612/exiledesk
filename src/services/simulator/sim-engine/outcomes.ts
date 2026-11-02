@@ -20,6 +20,8 @@ import { runPart, type PartCtx } from "../../craft-stage/spec/parts";
 import { unrevealedMod, unrevealedPlan } from "../../craft-stage/spec/parts-unrevealed";
 import { prepareEssence } from "../../craft-stage/spec/essence-specs";
 import type { Action } from "../../craft-stage/spec/types";
+import { emotionNameOf } from "../../craft-stage/apply-emotion";
+import { jewelEmotionsOf } from "../../htc/patch";
 
 /**
  * 行き先 1 つ。p = この行き先になる割合 (全部の和が 1)。item = 打った後のアイテム。
@@ -39,7 +41,7 @@ export const STEP_OUTCOMES_MAX = 50_000;
 /** 枝が上限を超えた (中だけで使い、外へは投げない) */
 const TOO_MANY = Symbol("tooMany");
 const capped = <T>(xs: T[]): T[] => { if (xs.length > STEP_OUTCOMES_MAX) throw TOO_MANY; return xs; };
-const SUPPORTED = (a: Action): boolean => "remove" in a || "add" in a || "fracture" in a || "addUnrevealed" in a || "setRarity" in a || "addEssence" in a || "corrupt" in a;
+const SUPPORTED = (a: Action): boolean => "remove" in a || "add" in a || "fracture" in a || "addUnrevealed" in a || "setRarity" in a || "addEssence" in a || "corrupt" in a || "addEmotion" in a;
 const ok = (item: StageItem, added: StageMod[] = [], removed: StageMod[] = []): Step => [{ p: 1, item, added, removed }];
 const equally = (item: StageItem, xs: readonly StageMod[]): Step => xs.map((m) => ({ p: 1 / xs.length, item: without(item, m), added: [], removed: [m] }));
 
@@ -144,6 +146,21 @@ function unrevealedStep(ctx: PartCtx, item: StageItem, a: AddUnrevealed): Step {
   return out;
 }
 
+/**
+ * parts.ts の addEmotion と同じ選び方: 液化した感情の作った MOD の版のうち、付ける側に空きのある物から等しく 1 つ (獰猛・軽蔑はプレの版とサフィの版)。
+ * 空きのある版が無ければ当たり所で不成立 (打つ処理の skipRandom)。2026-11-03 シミュ部長 68 (前は行き先で表せない手で null = 木の結果が 1 箱だった)
+ */
+function emotionStep(ctx: PartCtx, item: StageItem, key: string): Step {
+  const fits = jewelEmotionsOf(item.cls.id).filter((e) => e.item === emotionNameOf(key) && room(item, e.side as StageSide));
+  if (!fits.length) return [{ p: 1, void: true }];
+  return fits.flatMap((e) => {
+    const mod = ctx.data.mods.get(e.modId);
+    if (!mod) return [];
+    const added: StageMod = { ...makeStageMod(mod, e.side as StageSide, 0, MID), crafted: true };
+    return [{ p: 1 / fits.length, item: withMod(item, added), added: [added], removed: [] }];
+  });
+}
+
 /** 乱数を使わない部品は打つ処理の部品そのまま */
 function runOnce(ctx: PartCtx, item: StageItem, a: Action): Step {
   const r = runPart(ctx, item, a);
@@ -224,6 +241,7 @@ function walk(data: PatchData, item: StageItem, key: string, omens: readonly str
           : "add" in a ? addStep(ctx, s.item, a.add, last, o.merge ? (b) => o.merge!({ ...b, added: [...s.added, ...b.added], removed: [...s.removed, ...b.removed] }) : undefined)
           : "fracture" in a ? fractureStep(data, s.item)
           : "addUnrevealed" in a ? unrevealedStep(ctx, s.item, a.addUnrevealed)
+          : "addEmotion" in a ? emotionStep(ctx, s.item, key)
           : runOnce(ctx, s.item, a);
         // 弾かれた枝は打つ前のまま (打つ処理は途中で弾かれたら手ごと不成立)。決まって弾かれる部品なら、その枝は不成立として数える
         if (r === "skip") { voids.push(s.p); continue; }

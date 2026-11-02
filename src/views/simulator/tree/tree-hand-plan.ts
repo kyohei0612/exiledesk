@@ -4,7 +4,7 @@
  */
 import { mergeOpenSame } from "../../../services/simulator/tree/tree-merge-open";
 import { tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
-import { catalystBoosts, craftedKindOf, mulberry32, omensAllowedFor, omensFor, runeOf, sideOfMod, socketCapOf, tierRankOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
+import { catalystBoosts, craftedKindOf, isEmotion, mulberry32, omensAllowedFor, omensFor, runeOf, sideOfMod, socketCapOf, tierRankOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { craftStage } from "../../../state/craft-stage";
 import { bonesFor, essenceShelf, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
 import { treeHidden } from "../use-sim-shelf";
@@ -159,6 +159,12 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
     if (blockHand(h)) return out;
     const goals = [...(doc.memoAims ?? []), ...aimsOf(doc)];
     return out.filter((a) => goals.some((g) => g.modId === a.modId));
+  }
+  // 液化した感情 = 付く MOD は感情ごとに決まっている (版は空きのある側から等しく、E-73)。エッセンスと同じくエンジンの結果で新しく付いた完成の狙いを札に
+  // (11-03 シミュ部長 68: 確率の表 reachableAims は感情の MOD を知らず、軽蔑・獰猛の ☑ が空で当たりの箱が作れなかった)
+  if (isEmotion(h.currency)) {
+    const goals = [...(doc.memoAims ?? []), ...aimsOf(doc)];
+    return essenceAimsOf(data, item, h).filter((a) => goals.some((g) => g.modId === a.modId));
   }
   // フラクチャー: 当たりの札 = この箱で付いている印の狙い (完成の MOD のフラクチャーの印、10-25)。どれが ✦ になるかはエンジンのまま
   if (kind === "fracture") {
