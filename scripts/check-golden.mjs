@@ -38,6 +38,12 @@ const tests = report?.testResults?.flatMap((f) => f.assertionResults ?? []) ?? [
 // 全部飛ばし・0 件は通さない (11-03 の二分探索が vitest の起きないまま回り続けた)
 if (!tests.length || tests.every((t) => t.status !== "passed" && t.status !== "failed")) { console.log("回らなかった: golden の群が 1 つも走っていない (vitest が起きない・全部飛ばし)"); process.exit(1); }
 
+// 一部の群だけ飛んだ・足りない時も落とす (群の名前は控えのキー)
+const saved = (() => { try { return Object.keys(JSON.parse(readFileSync(join(root, "tests/golden/currency-golden.json"), "utf8"))); } catch { return []; } })();
+const ran = new Set(tests.filter((t) => t.status === "passed" || t.status === "failed").map((t) => t.title));
+const missing = saved.filter((g) => !ran.has(g));
+if (missing.length) { console.log(`回らなかった群あり: ${missing.join("・")} (控えは ${saved.length} 群、走ったのは ${ran.size} 群)`); process.exit(1); }
+
 const bad = [];
 for (const t of tests) {
   if (t.status === "passed") continue;
