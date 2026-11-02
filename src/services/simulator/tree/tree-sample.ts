@@ -120,6 +120,8 @@ export const SINGLE_SEEDS = 8;
 /** 繰り返し (カオススパム) の上限が無い時の見張り */
 export const SPAM_CAP = 5000;
 
+/** 当たり所で不成立の打ち直しの上限 (S-64b。8 割弾かれる手でも 200 回続けて弾かれるのは 0.8^200 ≒ 0) */
+const VOID_RETRIES = 200;
 /**
  * 箱の手を 1 回打つ (触媒の時はカタリストで品質を上げてから。台本の while と同じ)。
  * 繰り返しの手 (repeat) は、当たりの札 (aims) のどれかが新しく付くまで (か上限まで) 打ち続けた結果を 1 回分として返す。
@@ -165,7 +167,10 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
   // 骨を未発現のまま次へ (veil keep) は発現しない。未発現を持ったまま打つほかの手 (フラクチャー・カオスなど) も発現しない = 未発現のまま (スイッチ boneLater。
   // 前は手の後に未発現があれば必ず発現まで打っていた = 骨の手の後だけだった)
   const keepVeil = veilKeep(h) || (!isBone(h.currency) && !isRevealHand(h.currency));
-  const r = applyHand(data, item, h.currency, rng, { qualityTo: h.quality || undefined, omens: h.omens, catalyst: h.catalyst, fractureOf: fractureTarget(data, item, h, aims, rng), reveal: keepVeil ? false : (m) => isAimMod(m, ts, aimOpts(data)) !== miss });
+  const once = (): ReturnType<typeof applyHand> => applyHand(data, item, h.currency, rng, { qualityTo: h.quality || undefined, omens: h.omens, catalyst: h.catalyst, fractureOf: fractureTarget(data, item, h, aims, rng), reveal: keepVeil ? false : (m) => isAimMod(m, ts, aimOpts(data)) !== miss });
+  // 当たり所で不成立 (E-25: 上限を超えた側に当たった。オーブは減らない) は同じ手を打ち直す (S-64b、11-03 シミュ部長 68)
+  let r = once();
+  for (let i = 0; i < VOID_RETRIES && !r.applied && r.random; i++) r = once();
   if (use) {
     if (r.applied) for (const k of autoRuneKeys(before, item)) use(k);
     if (r.catalystCount) use(isCatalyst(h.currency) ? h.currency : h.catalyst!, r.catalystCount);
