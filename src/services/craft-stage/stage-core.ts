@@ -162,7 +162,17 @@ export function takenFamilies(data: PatchData, item: StageItem, except?: StageMo
     return md ? occupiedKeysOf(md) : [m.family];
   }));
 }
-/** 付いているエッセンス (クラフト) の MOD の生の系統 (エッセンスを打てるかの判定用。普通の MOD とは同じ系統でも一緒に付く) */
+/**
+ * 付いている MOD 全部の生の系統 (エッセンスを打てるかの判定用。未発現の枠は系統が決まっていないので数えない)。
+ * 同じ系統の普通の MOD が付いていればエッセンスは打てない (E-54、2026-11-02 オーナー「打てない」、公式トレードに並ぶ実物 0 件)
+ */
+export function takenRawFamilies(data: PatchData, item: StageItem): Set<string> {
+  return new Set(allMods(item).filter((m) => !m.unrevealed).flatMap((m) => {
+    const md = data.mods.get(m.modId);
+    return md ? rawFamiliesOf(md) : [m.family];
+  }));
+}
+/** 付いているエッセンス (クラフト) の MOD の生の系統 (手で付ける画面の、エッセンスの MOD どうしの入れ替え用) */
 export function takenCraftedFamilies(data: PatchData, item: StageItem): Set<string> {
   return new Set(allMods(item).filter((m) => m.crafted).flatMap((m) => {
     const md = data.mods.get(m.modId);

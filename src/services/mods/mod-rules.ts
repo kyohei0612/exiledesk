@@ -44,9 +44,11 @@ export function sharesRawFamily(a: Mod, b: Mod): boolean {
 }
 
 /**
- * エッセンスを打てないか: 付いている **エッセンス (クラフト) の** MOD に同じ系統がある。普通の MOD とは同じ系統でも一緒に付く
- * (2026-10-10 オーナー確認。poe.ninja の実物に作った MOD と同じ系統の普通の MOD が並んでいる。計算機の familiesOf の crafted: と同じ)。
- * 呼ぶ側は takenRaw にクラフトの MOD の系統だけを渡す (takenCraftedFamilies)
+ * エッセンスを打てないか: 付いている MOD (普通・エッセンス・冒涜・固定のどれでも) に同じ系統がある (E-54)。
+ * 2026-11-02 オーナー「打てない」(要望 ff4eb935: スタッフの雷スペル +# の後にパーフェクトエッセンスの全スペル +5 が付いた)。
+ * 公式トレードでエッセンスの全スペル +5 のスタッフは 1 万件以上、そのうち属性スペル +# と並ぶ物は 0 件。
+ * 10-10 の「普通の MOD とは同じ系統でも一緒に付く」はこれで上書き (並んでいたのは系統の違う合金だった見込み)。
+ * 呼ぶ側は takenRaw に付いている MOD の生の系統を渡す (takenRawFamilies)
  */
 export function essenceClash(essence: Mod, takenRaw: ReadonlySet<string>): boolean {
   return rawFamiliesOf(essence).some((f) => takenRaw.has(f));

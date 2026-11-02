@@ -13,7 +13,7 @@ import { essenceLevelOf } from "../../../vendor/poe2htc/optimizer/cost";
 import { essenceClash, hasRawFamily } from "../../mods/mod-rules";
 import { ESSENCE_KEYS } from "../../htc/essence-key-table";
 import { ABYSS_FAMILY, essenceTarget, isInfiniteEssence, normalTierOf, pickInfinite } from "../apply-essence";
-import { makeStageMod, takenCraftedFamilies } from "../stage-core";
+import { makeStageMod, takenRawFamilies } from "../stage-core";
 import type { StageItem, StageMod, StageSide } from "../types";
 import type { CurrencySpec, OmenSpec, Source, Words } from "./types";
 import { tr } from "../../../i18n/lang";
@@ -41,7 +41,7 @@ export const ESSENCE_SPEC: CurrencySpec = {
   text: UPGRADE_TEXT,
   target: { rarity: ["magic"], rarityReason: { ja: "マジックのアイテムにだけ使える (レアにはパーフェクト)", en: "Magic items only (use a Perfect Essence on Rares)" } },
   actions: [{ setRarity: "rare" }, { addEssence: { side: "ofMod" } }],
-  limits: [{ kind: "craftedSlot" }],
+  limits: [{ kind: "craftedSlot" }, { kind: "essenceFamilyFree" }],
   source: ESSENCE_SOURCE,
 };
 /** パーフェクト・ブリーチ・ヒステリーなど (深淵を除く) */
@@ -53,7 +53,7 @@ export const PERFECT_ESSENCE_SPEC: CurrencySpec = {
   target: { rarity: ["rare"] },
   // MOD が 0 のレアは消さずに付ける。付ける側が埋まっていればその側から消す
   actions: [{ remove: { n: 1, pick: "equal", ifAny: true, sideWhenFull: true } }, { addEssence: { side: "ofMod" } }],
-  limits: [{ kind: "craftedSlot" }],
+  limits: [{ kind: "craftedSlot" }, { kind: "essenceFamilyFree" }],
   source: { ...ESSENCE_SOURCE, coe: "付ける側が埋まっている時はその側から消す (package.js の poe2_perfect_essence)" },
 };
 /** 深淵のエッセンス: 消した側にアビサルロードの紋章。消せる物が無ければお告げの側か空いている側 (2026-10-03 SaVeQ 0.5.5 / poe2fun) */
@@ -118,7 +118,7 @@ export function prepareEssence(data: PatchData, item: StageItem, key: string, rn
   if (!tier) return null;
   const base: StageMod = { ...makeStageMod(t.mod, t.side, i, rng), ...normalTierOf(data, item, t.mod, tier), crafted: true };
   const mod = withNotable(base, rng);
-  return { mod, side: t.side, clash: (it) => essenceClash(t.mod, takenCraftedFamilies(data, it)) };
+  return { mod, side: t.side, clash: (it) => essenceClash(t.mod, takenRawFamilies(data, it)) };
 }
 
 /**

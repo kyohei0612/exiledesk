@@ -10,7 +10,7 @@
  */
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { BREACH_FAMILY } from "../htc/omens";
-import { runeEffectPct, SIDES, takenCraftedFamilies } from "./stage-core";
+import { runeEffectPct, SIDES, takenRawFamilies } from "./stage-core";
 import { boostedPlus } from "../../vendor/poe2htc/engine/runes";
 import { essenceClash, hasRawFamily, sharesRawFamily } from "../mods/mod-rules";
 import { ESSENCE_KEYS } from "../htc/essence-key-table";
@@ -59,7 +59,7 @@ export function normalTierOf(data: PatchData, item: StageItem, mod: Mod, tier: M
 export function infiniteChoices(data: PatchData, item: StageItem, key: string): Array<{ mod: Mod; side: StageSide }> {
   const level = /^essence:([a-z]+):/.exec(key)?.[1];
   const en = ESSENCE_KEYS[key]?.en;
-  const taken = takenCraftedFamilies(data, item);
+  const taken = takenRawFamilies(data, item);
   return essenceMods(data, item).filter((x) => ESSENCE_KEYS[`essence:${level}:${x.mod.id}`]?.en === en && !essenceClash(x.mod, taken));
 }
 /**

@@ -138,7 +138,7 @@ export function planSpec(data: PatchData, item: StageItem, key: string, omens: r
   const t = targetBlock(spec.target, item);
   if (t) return block("target", t);
   for (const l of spec.limits) {
-    const why = limitBlock(l, item, mods, catalystTag);
+    const why = limitBlock(l, item, mods, catalystTag, { data, key });
     if (why) return block("limit", why);
   }
   for (const o of used) {
