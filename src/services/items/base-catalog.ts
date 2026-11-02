@@ -123,7 +123,7 @@ export interface CatalogRow { en: string; ja: string; cls: string; lvl: number; 
 const shelfCls = (row: string): string => (flag("triAttr") ? row.replace(/_ring_str_dex_int$/, "_str_dex_int") : row);
 
 /** 全ベース (extras: フラスコ・スキルジェムも) */
-export function baseCatalog(d: PatchData, extras: boolean): CatalogRow[] {
+export function baseCatalog(d: PatchData, extras: boolean): CatalogRow[] { // E-98
   const out: CatalogRow[] = Object.entries(htcBaseInfo()).flatMap(([en, i]): CatalogRow[] => {
     const row = RUNE_MADE.test(en) || REMOVED.has(en) ? null : classOfBase(d, en);
     return row ? [{ en, ja: i.ja, cls: shelfCls(row.id), lvl: i.lvl, implicit: (i.implicits ?? []).map((x) => tr(x.ja, x.en || x.ja)).join(" / "), stats: baseStatLine(en) }] : [];

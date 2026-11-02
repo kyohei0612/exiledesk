@@ -21,7 +21,7 @@ import { applyAbyssSuffix } from "./poe2db-abyss-fix";
 import { flag } from "../../web/release-flags";
 import { applyPoe2dbValueFixes } from "./poe2db-value-fixes";
 import { applyPoe2dbImplicitFixes, implicitStatOrder } from "./poe2db-implicit-fixes";
-import runeWeights from "./rune-weights.json";
+import runeWeights from "./rune-weights.json"; // E-03 公開値の無い重みは CoE (ルーンの特殊 MOD)
 import modStats from "./mod-stats.json";
 import implicitStats from "./implicit-stats.json";
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
@@ -84,7 +84,7 @@ export function htcModSides(): Record<string, "P" | "S" | "?"> {
  * `tag` は 4 系統 (`genesis_tree_caster` / `genesis_tree_minion` / `breach_desecration` /
  * `tower_augment_breach`)。通常プールでも出る物は入っていません。
  */
-export function htcDropOnly(): Record<string, DropOnlyInfo> {
+export function htcDropOnly(): Record<string, DropOnlyInfo> { // E-13 創生の樹など落ちる物だけの MOD
   return dropOnly;
 }
 
@@ -103,7 +103,7 @@ export function htcFamilyTexts(): Record<string, Record<string, string[]>> {
  * MOD 表とベース表を読んで索引を作る (1 回だけ。2 回目からは同じ物を返す)。
  * 取り込んだ版は patch 0.5.0 + クライアント由来の追加分。
  */
-export function loadHtcPatch(): Promise<PatchData> {
+export function loadHtcPatch(): Promise<PatchData> { // E-01・E-02・E-10・E-16 poe2db 由来の置き場を 1 か所で読む
   if (!cached) {
     cached = (async () => {
       const [mods, bases, extraRaw, jewelRaw] = await Promise.all([

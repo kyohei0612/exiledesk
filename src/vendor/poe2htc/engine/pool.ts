@@ -14,7 +14,7 @@ export function resolveMod(data: PatchData, id: string): Mod {
  *
  * Mirrors ExaltAndRegalProbability.NormalCompute's weight accumulation.
  */
-export function modTierWeight(mod: Mod, floor: number, cap: number, minIndex = 0): number {
+export function modTierWeight(mod: Mod, floor: number, cap: number, minIndex = 0): number { // E-11・E-11b 段の重み (アイテムレベル以下の段だけ)
   let w = 0;
   for (const t of modTierWeights(mod, floor, cap)) if (t.index >= minIndex) w += t.w;
   return w;
@@ -104,12 +104,12 @@ export const CRAFTED_SOURCES: ReadonlySet<Mod['source']> = new Set(['essence', '
  * those out as not craftable now. Craft of Exile refuses an Essence whose modgroups are on the item, before the
  * Perfect Essence removal ("Similar modifier already present!", CoE beta 11-02).
  */
-export function familiesOf(mod: Mod): readonly string[] {
+export function familiesOf(mod: Mod): readonly string[] { // E-11a 同じ系統は 1 品に 1 つ (判定はここ 1 か所)
   return mod.families && mod.families.length > 0 ? mod.families : mod.family ? [mod.family] : [];
 }
 
 /** The groups a mod occupies once it sits on the item — the same as `familiesOf` (one rule, no crafted exception). */
-export function occupiedFamiliesOf(mod: Mod): readonly string[] {
+export function occupiedFamiliesOf(mod: Mod): readonly string[] { // E-11a・E-17
   return familiesOf(mod);
 }
 

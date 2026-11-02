@@ -24,7 +24,7 @@ export function occupiedKeysOf(mod: Mod): string[] {
 }
 
 /** その MOD が、もう付いている系統 (付いている MOD の occupiedKeysOf を集めた物) とぶつかるか (エンジンの excluded) */
-export function familyBlocked(mod: Mod, taken: ReadonlySet<string>): boolean {
+export function familyBlocked(mod: Mod, taken: ReadonlySet<string>): boolean { // E-11・E-11a
   return excluded(mod, taken);
 }
 

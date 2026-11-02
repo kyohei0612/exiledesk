@@ -41,12 +41,12 @@ export function targetBlock(t: Target, item: StageItem): string | null {
 }
 
 /** ジュエルはアイテムレベルを見ない (2026-10-12 オーナー、apply-currency.ts の noIlvl と同じ) */
-const noIlvl = (item: StageItem): boolean => inGroup(item.cls.category, "jewel");
+const noIlvl = (item: StageItem): boolean => inGroup(item.cls.category, "jewel"); // E-11b の例外 (ジュエルはアイテムレベルを見ない)
 
 /** mods = その手に掛かるお告げの効き目 (空きの判定はお告げの側で見る)。tag = 触媒の品質の種類。ess = エッセンスの手の鍵 (essenceFamilyFree) */
-export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string | null, ess?: { data: PatchData; key: string }): string | null {
+export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string | null, ess?: { data: PatchData; key: string }): string | null { // E-21 打てるかは乱数に関係ない条件だけ
   switch (l.kind) {
-    case "oneDesecratedMod":
+    case "oneDesecratedMod": // E-60
       return allMods(item).some((m) => m.desecrated) ? tr("冒涜の MOD はアイテムに 1 つまで", "Only 1 Desecrated mod per item") : null;
     case "itemLevelAtLeast":
       return item.itemLevel < l.level && !noIlvl(item) ? tr(`アイテムレベルが ${l.level} 未満には使えない`, `Requires Item Level ${l.level}+`) : null;
@@ -106,7 +106,7 @@ export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string 
  * 壊れた・処分した・ミラー・未鑑定・聖別・コラプト (用語集 Corrupted「ほとんどのクラフトはコラプトに使えない」)・今のゲームに無いお告げ。
  * フラスコ・スキルジェムはこのステージが MOD を扱わない (ゲームの決まりではない)
  */
-export function stateBlock(spec: CurrencySpec, item: StageItem, omens: readonly string[]): string | null {
+export function stateBlock(spec: CurrencySpec, item: StageItem, omens: readonly string[]): string | null { // E-18 フラスコ・E-26 聖別済み (状態の決まり)
   if (item.destroyed) return tr("壊れたアイテムには何も使えない", "Item is destroyed");
   if (item.disposed) return tr(`${DISPOSE_JA[item.disposed]}したアイテムには何も使えない`, `Item was ${item.disposed === "disenchant" ? "disenchanted" : "salvaged"}`);
   if (item.mirrored && !ANY_STATE.includes(spec.stageKey)) return tr("ミラーしたアイテムには使えない", "Can't modify a Mirrored item");

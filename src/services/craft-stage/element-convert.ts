@@ -93,7 +93,7 @@ function viaTable(data: PatchData, m: StageMod, md: Mod, element: string, eats: 
  * 食う属性 (eats) の MOD を element の物に変える。res = 耐性の行だけ (フラックス) / それ以外の行だけ (アルダーのルーン)。
  * 変えた先で同じ系統の MOD が付いていても止めない (E-73a、E-11a の唯一の例外。オーナー 10-10「被るのはあり」・11-02「フラックスで無理やりはあり」)
  */
-export function convertByTable(data: PatchData, item: StageItem, element: string, eats: readonly string[], res: boolean, by?: "flux"): { item: StageItem; mods: Array<{ from: StageMod; to: StageMod }> } {
+export function convertByTable(data: PatchData, item: StageItem, element: string, eats: readonly string[], res: boolean, by?: "flux"): { item: StageItem; mods: Array<{ from: StageMod; to: StageMod }> } { // E-73・E-73a
   let out = item;
   const mods: Array<{ from: StageMod; to: StageMod }> = [];
   for (const m of allMods(item)) {

@@ -218,7 +218,7 @@ export function runeKeyForId(id: string): string | null {
   return `${RUNE_PREFIX}${en}`;
 }
 
-export function applyRune(item: StageItem, key: string, data?: PatchData): StageApply {
+export function applyRune(item: StageItem, key: string, data?: PatchData): StageApply { // E-75
   const p = parseRuneKey(key)!;
   if (p.en === "Masterwork Rune") return applyMasterwork(item, p.socket);
   const rune = runeOf(key)!;

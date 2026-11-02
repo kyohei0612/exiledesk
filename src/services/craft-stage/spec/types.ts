@@ -70,7 +70,7 @@ export type Limit =
   | { kind: "noRevealedDesecrated" }
   /** クラフト MOD の空き (用語集 Crafted「An item can only have one Crafted Modifier」。アストリッドの創造性で増える) */
   | { kind: "craftedSlot" }
-  /** エッセンスの MOD と同じ系統の MOD が付いていない (普通の MOD でも打てない、E-54。2026-11-02 オーナー「打てない」) */
+  /** エッセンスの MOD と同じ系統の MOD が付いていない (普通の MOD でも打てない、E-11a。2026-11-02 オーナー「打てない」) */
   | { kind: "essenceFamilyFree" }
   /** 品質が上限より下 (用語集 Quality「up to a default maximum of 20%」= max。catalyst = ベースの最大品質、種類が変わる時は 0 から) */
   | { kind: "qualityBelow"; max: number | "catalyst" }
@@ -144,7 +144,7 @@ export type Action =
   | { sanctify: true };
 
 /** カレンシー 1 つ (骨は種類ごとに 1 つ: 保存された顎骨・古代の肋骨 …) */
-export interface CurrencySpec {
+export interface CurrencySpec { // E-20 説明文の分解・E-04 出どころ (source)
   /** クライアントの名前の小文字 (currency-hover-*.json の鍵。説明文の突き合わせに使う) */
   key: string;
   /** 手順の鍵 (price-keys.json)。骨は装備の部位で種類が決まるので、同じ鍵に何個も並ぶ */

@@ -27,7 +27,7 @@ const PERFECT_TEXT = {
   en: ["Removes a random modifier and augments a [ItemRarity|Rare] item with a new guaranteed modifier"],
   ja: ["[ItemRarity|レア]アイテムからランダムなモッドを1個取り除き、新しい保証されたモッドを1個追加する。"],
 };
-const ESSENCE_SOURCE: Source = {
+const ESSENCE_SOURCE: Source = { // E-11b の例外 (エッセンス・合金はアイテムレベルを見ない)
   client: "currency-hover の説明文、EssenceMods (エンジンのエッセンスの置き場)、用語集 Crafted (クラフト MOD は 1 つ)",
   owner: "アイテムレベルの制限は無い (poe2wiki Essence、要望 ㉞-4)・クラフト MOD どうしの系統はぶつかる (2026-10-11)",
   coe: "付けられる候補が複数 (無限のエッセンス) なら等しく 1 つ (package_poe2.js poe2_essence、2026-10-16)",
@@ -45,7 +45,7 @@ export const ESSENCE_SPEC: CurrencySpec = {
   source: ESSENCE_SOURCE,
 };
 /** パーフェクト・ブリーチ・ヒステリーなど (深淵を除く) */
-export const PERFECT_ESSENCE_SPEC: CurrencySpec = {
+export const PERFECT_ESSENCE_SPEC: CurrencySpec = { // E-51
   key: "essence:perfect",
   stageKey: "essence:perfect:",
   kind: "essence_perfect",
@@ -57,7 +57,7 @@ export const PERFECT_ESSENCE_SPEC: CurrencySpec = {
   source: { ...ESSENCE_SOURCE, coe: "付ける側が埋まっている時はその側から消す (package.js の poe2_perfect_essence)" },
 };
 /** 深淵のエッセンス: 消した側にアビサルロードの紋章。消せる物が無ければお告げの側か空いている側 (2026-10-03 SaVeQ 0.5.5 / poe2fun) */
-export const ABYSS_ESSENCE_SPEC: CurrencySpec = {
+export const ABYSS_ESSENCE_SPEC: CurrencySpec = { // E-52
   key: "essenceoftheabyss",
   stageKey: "essence:perfect:",
   kind: "essence_perfect",
@@ -75,7 +75,7 @@ export const ABYSS_ESSENCE_SPEC: CurrencySpec = {
  */
 export const ALLOY_SPEC: CurrencySpec = {
   ...PERFECT_ESSENCE_SPEC,
-  key: "alloy",
+  key: "alloy", // E-51 合金はパーフェクトエッセンスと同じ手
   kind: "essence_perfect",
   text: { en: PERFECT_TEXT.en, ja: ["ランダムなモッドを1個取り除き、[Rarity|レア]アイテムに確定で新しいモッドを追加する"] },
 };

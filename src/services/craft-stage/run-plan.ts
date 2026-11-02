@@ -126,7 +126,7 @@ export interface PlayedStep {
 
 export const splitOmens = (omen: string | null | undefined): string[] => (omen ? omen.split("+").filter(Boolean) : []);
 /** 手の日本語名 (発現は「発現 (2 番目)」) */
-export function stepJa(currency: string, item: StageItem): string {
+export function stepJa(currency: string, item: StageItem): string { // E-90
   const sp = parseSpam(currency);
   if (sp) return spamName(sp, false);
   const fc = parseForce(currency);

@@ -56,7 +56,7 @@ export function normalTierOf(data: PatchData, item: StageItem, mod: Mod, tier: M
 }
 
 /** 無限のエッセンスで付きうる MOD (付いていない系統のうち、同じ強さで同じ名前のエッセンスの物)。pickInfinite はここから等しく 1 つ (engine-sim の行き先の一覧も同じ一覧で枝を分ける) */
-export function infiniteChoices(data: PatchData, item: StageItem, key: string): Array<{ mod: Mod; side: StageSide }> {
+export function infiniteChoices(data: PatchData, item: StageItem, key: string): Array<{ mod: Mod; side: StageSide }> { // E-50
   const level = /^essence:([a-z]+):/.exec(key)?.[1];
   const en = ESSENCE_KEYS[key]?.en;
   const taken = takenFamilies(data, item);
