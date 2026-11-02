@@ -595,7 +595,7 @@ export type DesecrationBone = 'jawbone' | 'rib' | 'collarbone' | 'cranium';
  * 2026-10-13 総点検: 前は部位の名前の表で、表に無いタリスマンが防具 (肋骨) に落ちて勢力のお告げが弾かれた (要望 2d38f482)。
  * 種別はクライアントの表から (services/mods/item-classes.ts)。新しい武器が入っても書き足さなくてよい
  */
-export function desecrationBoneFor(category: string): DesecrationBone {
+export function desecrationBoneFor(category: string): DesecrationBone { // E-64
   const k = kindOf(category);
   if (k === 'weapon' || k === 'quiver') return 'jawbone';
   if (k === 'jewellery') return 'collarbone';
@@ -635,8 +635,8 @@ export function bossOmenAllowed(category: string): boolean {
  * caller counts with THIS, and phrases its own rejection message.
  */
 export function isEssenceMod(mod: Mod): boolean {
-  // Through `CRAFTED_SOURCES` (pool.ts), which `familiesOf` reads too: the cap that counts these mods
-  // and the exclusion group that separates them have to agree on which sources are crafted.
+  // Through `CRAFTED_SOURCES` (pool.ts), the one list of crafted sources (the cap counts these mods;
+  // families no longer treat them apart, `familiesOf`).
   return CRAFTED_SOURCES.has(mod.source);
 }
 
@@ -667,7 +667,7 @@ export const DESECRATION_OFFER_COUNT = 3;
  * offers — every desecrated mod in the data is ilvl 65, so the carved pool is untouched. Confirmed as a
  * bone the player actually uses, 2026-09-10.
  */
-export const ANCIENT_BONE_FLOOR = 40;
+export const ANCIENT_BONE_FLOOR = 40; // E-11d・E-63
 
 /**
  * P(the mod you want is somewhere in the offer), from the probability that ONE draw produces it.

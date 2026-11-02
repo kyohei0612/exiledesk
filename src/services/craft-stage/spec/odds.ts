@@ -48,7 +48,7 @@ function removeBranches(item: StageItem, a: Remove, mods: Mods): StageItem[] | n
  * 持っているカレンシーで次に付く MOD の候補と重み。MOD を足さない手 (骨・エッセンス・神 …)・移していない手・対象で打てない手は null、
  * それ以外で打てない時 (コラプト・空きが無い・アイテムレベルが下限未満・お告げの前提) は候補 0 (表は全部 0%)
  */
-export function addOddsBySpec(data: PatchData, item: StageItem, key: string, omens: readonly string[], plan: SpecPlan | null = planSpec(data, item, key, omens)): AddOdds | null {
+export function addOddsBySpec(data: PatchData, item: StageItem, key: string, omens: readonly string[], plan: SpecPlan | null = planSpec(data, item, key, omens)): AddOdds | null { // E-80 確率は打つ処理と同じ部品から
   if (!plan) return null;
   const last = plan.actions[plan.actions.length - 1];
   if (!last || !("add" in last)) return null;

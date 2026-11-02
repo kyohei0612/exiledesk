@@ -123,7 +123,7 @@ export function catalystsFor(mod: Mod): Catalyst[] {
  * 10-16 に Craft of Exile の Math.round に合わせていたが、それだと 17% で +4 になってゲームと合わない)。小数を持つ MOD はそのまま。
  * 1e-9 は 3 × 1.34 = 4.0200…01 のような誤差で境目を落とさないため
  */
-export function displayedValue(raw: number, qualityPct: number): number {
+export function displayedValue(raw: number, qualityPct: number): number { // E-72 品質で伸びた整数は切り捨て
   const v = (raw * (100 + qualityPct)) / 100;
   return Number.isInteger(raw) ? Math.floor(v + 1e-9) : v;
 }
@@ -134,7 +134,7 @@ export function displayedValue(raw: number, qualityPct: number): number {
  * **丸めた後なので完全には戻りません。**整数の表示は、切り捨てて同じ表示になる一番小さい整数を返します
  * (品質 20% の 12 → 10、品質 34% の +4 → 3)。当てはまる整数が無ければ割った値 (「素はこれ以上」の下限)
  */
-export function rawValue(displayed: number, qualityPct: number): number {
+export function rawValue(displayed: number, qualityPct: number): number { // E-96 素の値への割り戻し
   if (!(qualityPct > 0)) return displayed;
   // 整数の表示は、切り捨てて同じ表示になる一番小さい整数が素 (2026-10-03: 宝飾品のスキルレベル +3 は品質 34% で +4 と出る。
   // 4 / 1.34 = 2.985 のままだと T1 (3) に届かず T2 と判定していた。SaVeQ「品質 34% で +4」)

@@ -17,13 +17,12 @@ describe("系統", () => {
     expect(multi).toBeTruthy();
     for (const f of multi.families!) expect(familyBlocked(multi, new Set([f]))).toBe(true);
   });
-  it("エッセンスの MOD は普通の MOD と同じ系統でも並ぶ (抽選)。エッセンス同士はぶつかる", () => {
-    const ess = all.find((m) => CRAFTED_SOURCES.has(m.source) && m.family)!;
-    const normal = all.find((m) => m.source === "normal" && m.family === ess.family);
-    if (normal) {
-      expect(familyBlocked(ess, new Set(familyKeysOf(normal)))).toBe(false);
-      expect(familyBlocked(normal, new Set(familyKeysOf(ess)))).toBe(false);
-    }
+  it("エッセンスの MOD も普通の MOD と同じ系統ならぶつかる (E-11a、付け方の例外なし)。エッセンス同士もぶつかる", () => {
+    const ess = all.find((m) => CRAFTED_SOURCES.has(m.source) && m.family && all.some((n) => n.source === "normal" && n.family === m.family))!;
+    const normal = all.find((m) => m.source === "normal" && m.family === ess.family)!;
+    expect(normal).toBeTruthy();
+    expect(familyBlocked(ess, new Set(familyKeysOf(normal)))).toBe(true);
+    expect(familyBlocked(normal, new Set(familyKeysOf(ess)))).toBe(true);
     expect(familyBlocked(ess, new Set(familyKeysOf(ess)))).toBe(true);
   });
   it("エッセンスを打つ時は生の系統で見る (同じ系統が付いていれば打てない)", () => {

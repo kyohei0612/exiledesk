@@ -31,15 +31,17 @@ let st = SEED >>> 0;
 const rnd = () => { st = (st + 0x6d2b79f5) >>> 0; let t = st; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 
 const GO = /決めた|次へ|完成|テスト|穴チェック|100 ?人|シェア|共有|付ける|ふつう|フラクチャー|冒涜|カオス|高貴|消去|エッセンス|骨|ルーン|合金|品質|始め|スタート|残したい|ベース|もう一度|回す/;
-const NAV = /エミュ|チュートリアル|更新|要望|ガイド|プライバシー|利用規約|English|X で|ポスト|ツイート|Discord|YouTube|広告/;
+const NAV = /エミュ|チュートリアル|更新|要望|ガイド|プライバシー|利用規約|English/;
+/** 外へ出る物・シェアで止まる物は押さない (オーナー 11-02「モンキーシェアで止まるやつとか外部にいくやつは触らなくていいかもな」) */
+const EXTERNAL = /X で|ポスト|ツイート|Discord|YouTube|広告/;
 const HEAD = /^(エミュレーター|デイリー|使い方|要望|アプリ版|本日の訪問者)/;
 const CARD = "(手の窓のカード)";
 let shelfUses = 0;
 
-/** 押せる物 1 つの重み。0 だけが候補から外れる (言語の切り替え = 確率の語が日本語なので) */
+/** 押せる物 1 つの重み。0 だけが候補から外れる (言語の切り替え = 確率の語が日本語なので、外へ出る物 = EXTERNAL) */
 const weight = (c, url, body) => {
   const t = c.t;
-  if (/^(EN|日本語)$/.test(t)) return 0;
+  if (/^(EN|日本語)$/.test(t) || EXTERNAL.test(t)) return 0;
   if (NAV.test(t) || HEAD.test(t) || c.y < 90) return 0.1;
   if (/レシピを消す|^消す$/.test(t)) return 0.2;
   if (/レシピ ▾/.test(t)) return 0.3;
@@ -78,7 +80,7 @@ const pick = (cs, url, body) => {
   const ws = cs.map((c) => weight(c, url, body));
   let r = rnd() * ws.reduce((a, b) => a + b, 0);
   for (let i = 0; i < cs.length; i++) { r -= ws[i]; if (ws[i] > 0 && r <= 0) return cs[i]; }
-  return cs[cs.length - 1];
+  return cs.filter((_, i) => ws[i] > 0).at(-1) ?? cs[cs.length - 1]; // 端数で抜けた時も重み 0 は押さない
 };
 
 /** ページの中: 今見えていて一番上にある押せる物の一覧 */

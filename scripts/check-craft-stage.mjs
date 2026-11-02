@@ -15,8 +15,8 @@
  */
 import { readFileSync } from "node:fs";
 import { bundleEntry } from "./_bundle-ts.mjs";
-/** 系統の鍵 (src/services/mods/mod-rules.ts と同じ: エッセンス等の MOD は普通の MOD と同じ系統でも並ぶ) */
-const famKey = (m) => (m.crafted ? `crafted:${m.family}` : m.family);
+/** 系統の鍵 (E-11a: 同じ系統は 1 品に 1 つ、エッセンス等の付け方でも分けない) */
+const famKey = (m) => m.family;
 
 const M = await bundleEntry("scripts/_htc-bridge-entry.ts");
 const data = M.loadPatchSync();

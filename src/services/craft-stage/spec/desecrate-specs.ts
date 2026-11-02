@@ -14,7 +14,7 @@ import type { Action, CurrencySpec, Limit, ModPool, OmenSpec, Source, Target } f
  * アビサルロードの紋章から打つ骨の段の下限 = アイテムレベル × 0.4 の切り捨て (用語集 MarkofAbyssalLord は「a higher tier」だけ。
  * Craft of Exile の poe2_desecrate と同じ式、2026-10-16 オーナー「進めて」で CoE に。前は 33 固定 (poe2fun の 1 件、仮))
  */
-export const markFloorOf = (itemLevel: number): number => Math.floor(itemLevel * 0.4);
+export const markFloorOf = (itemLevel: number): number => Math.floor(itemLevel * 0.4); // E-65・E-11d (N はアイテムレベル × 0.4)
 
 /** 骨の部位ごとの説明文と対象 (種類 = 噛み切られた / 保存された / 古代の は同じ文) */
 const BONE_PARTS = {
@@ -42,7 +42,7 @@ const BONE_PARTS = {
 type BonePart = keyof typeof BONE_PARTS;
 
 /** 骨の種類 → 手順の鍵・段の下限・制約 */
-const GRADES = {
+const GRADES = { // E-63・E-11d 骨を打てる品 (噛み切られた 64 以下・古代は下限 40)
   // 噛み切られた骨: アイテムレベル 64 以下だけ。冒涜専用の MOD もアイテムレベルの決まりのまま (2026-10-10 オーナー)
   gnawed: { stageKey: "desecrate_gnawed", floor: 0, exclusiveAnyLevel: false, limits: [{ kind: "itemLevelAtMost", level: GNAWED_MAX_ILVL }, { kind: "oneDesecratedMod" }] as Limit[] },
   preserved: { stageKey: "desecrate", floor: 0, exclusiveAnyLevel: true, limits: [{ kind: "oneDesecratedMod" }] as Limit[] },
@@ -52,7 +52,7 @@ const GRADES = {
 type Grade = keyof typeof GRADES;
 
 /** 発現の候補の置き場: 普通の MOD と冒涜専用の MOD (変質した鎖骨は異界の MOD も) */
-const BONE_POOLS: ModPool[] = ["normal", "desecrated"];
+const BONE_POOLS: ModPool[] = ["normal", "desecrated"]; // E-10a・E-53 エッセンスの MOD は発現の置き場に無い
 
 const BONE_SOURCE: Source = {
   client: "currency-hover (BaseItemTypes の説明文)、用語集 Abyssalify・BetterCurrencyMinimumLevel、AbyssBenchTicketTypes.MaximumItemLevel",
@@ -82,7 +82,7 @@ export const BONE_SPECS: readonly CurrencySpec[] = [
   bone("gnawed", "collarbone"), bone("preserved", "collarbone"), bone("ancient", "collarbone"),
   bone("preserved", "cranium"),
   {
-    key: "alteredcollarbone",
+    key: "alteredcollarbone", // E-64 変質した鎖骨は装飾品だけ
     stageKey: "desecrate_altered",
     kind: "desecrate",
     text: {
@@ -101,7 +101,7 @@ export const BONE_SPECS: readonly CurrencySpec[] = [
  * 腐食のお告げでコラプトした品の未発現も発現できる
  */
 export const REVEAL_SPEC: CurrencySpec = {
-  key: "keyword:Abyssalify",
+  key: "keyword:Abyssalify", // E-62・E-69 発現
   stageKey: "reveal",
   kind: "reveal",
   text: {
@@ -119,7 +119,7 @@ export const REVEAL_SPEC: CurrencySpec = {
  * 消去のオーブ (光のお告げが掛かるのでここに置く。オーブ類の 3 段目で他と一緒に見直す)。
  * 説明文はレアリティを書いていない。ノーマルは消す物が無いので、今の作りの「マジックかレアだけ」の一言を残す (オーナー確認待ち)
  */
-export const ANNUL_SPEC: CurrencySpec = {
+export const ANNUL_SPEC: CurrencySpec = { // E-36
   key: "orbofannulment",
   stageKey: "annul",
   kind: "annul",
@@ -133,7 +133,7 @@ export const ANNUL_SPEC: CurrencySpec = {
 export const CURRENCY_SPECS: readonly CurrencySpec[] = [...BONE_SPECS, REVEAL_SPEC, ANNUL_SPEC];
 
 /** 勢力のお告げの対象。説明文は「Weapon or Jewellery」、矢筒は Craft of Exile のデータで使える (2026-10-14 総点検 C → B。ゲームで未確認) */
-const FACTION_TARGET: Target = {
+const FACTION_TARGET: Target = { // E-66
   groups: ["weapon", "jewellery", "quiver"],
   groupsReason: { ja: "勢力のお告げは武器・宝飾品・矢筒だけ", en: "Faction Omens: weapons, jewellery and quivers only" },
 };
@@ -158,13 +158,13 @@ const PUTREFY: Action[] = [
 
 export const OMEN_SPECS: readonly OmenSpec[] = [
   {
-    key: "OmenofSinistralNecromancy", hover: "omenofsinistralnecromancy", appliesTo: "desecrate",
+    key: "OmenofSinistralNecromancy", hover: "omenofsinistralnecromancy", appliesTo: "desecrate", // E-11g
     text: { en: ["While this item is active in your inventory your next", "[Abyssalify|Desecration] attempt will add only prefix modifiers"], ja: ["インベントリ内でアクティブな時", "次に行う", "[Abyssalify|冒涜]化の試行は、プレフィックスモッドだけを追加する"] },
     effect: { side: "prefix" },
     source: { client: "currency-hover の説明文", poe2wiki: "満杯ならその側を 1 つ消して付く (2026-10-14)" },
   },
   {
-    key: "OmenofDextralNecromancy", hover: "omenofdextralnecromancy", appliesTo: "desecrate",
+    key: "OmenofDextralNecromancy", hover: "omenofdextralnecromancy", appliesTo: "desecrate", // E-11g
     text: { en: ["While this item is active in your inventory your next", "[Abyssalify|Desecration] attempt will add only suffix modifiers"], ja: ["インベントリ内でアクティブな時", "次に行う", "[Abyssalify|冒涜]化の試行は、サフィックスモッドだけを追加する"] },
     effect: { side: "suffix" },
     source: { client: "currency-hover の説明文", poe2wiki: "満杯ならその側を 1 つ消して付く (2026-10-14)" },
@@ -173,7 +173,7 @@ export const OMEN_SPECS: readonly OmenSpec[] = [
   faction("OmenoftheLiege", "omenoftheliege", "amanamu_mod", { en: "Amanamu", ja: "アマナム" }),
   faction("OmenoftheBlackblooded", "omenoftheblackblooded", "kurgal_mod", { en: "Kurgal", ja: "クルガル" }),
   {
-    key: "OmenofPutrefaction", hover: "omenofputrefaction", appliesTo: "desecrate",
+    key: "OmenofPutrefaction", hover: "omenofputrefaction", appliesTo: "desecrate", // E-69
     text: {
       en: ["While this item is active in your inventory your next", "[Abyssalify|Desecration] attempt will replace all modifiers on the item", "creating an item with up to 6 Unrevealed modifiers and [Corrupted|Corrupting] the item"],
       ja: ["インベントリ内でアクティブな時", "次に行う", "[Abyssalify|冒涜]化の試行は、アイテムの全てのモッドを置き換え", "未発現の冒涜モッドを最大6個持ったアイテムを生成し、そのアイテムを[Corrupted|コラプト状態]にする"],
@@ -183,25 +183,25 @@ export const OMEN_SPECS: readonly OmenSpec[] = [
     source: { client: "currency-hover の説明文", poe2wiki: "発現は普通の MOD だけ・段の下限は掛からない", owner: "単体で効く (2026-10-05)" },
   },
   {
-    key: "OmenofAbyssalEchoes", hover: "omenofabyssalechoes", appliesTo: "reveal",
+    key: "OmenofAbyssalEchoes", hover: "omenofabyssalechoes", appliesTo: "reveal", // E-69
     text: { en: ["While this item is active in your inventory the next time you", "reveal [Abyssalify|Desecrated] modifiers you can reroll the options once"], ja: ["インベントリ内でアクティブ状態の時", "次回行う[Abyssalify|冒涜]モッドの発現はオプションをもう一度リロールできるようになる"] },
     effect: { rerolls: 1 },
     source: { client: "currency-hover の説明文", coe: "候補をもう 1 組引く (package_poe2.js reveal の params.reroll、2026-10-16)" },
   },
   {
-    key: "OmenofLight", hover: "omenoflight", appliesTo: "annul",
+    key: "OmenofLight", hover: "omenoflight", appliesTo: "annul", // E-68
     text: { en: ["While this item is active in your inventory your next", "Orb of Annulment will remove only [Abyssalify|Desecrated] modifiers"], ja: ["インベントリ内でアクティブな時", "次に使用する消去のオーブは[Abyssalify|冒涜]モッドのみを取り除く"] },
     effect: { pick: "desecrated" },
     source: { client: "currency-hover の説明文", owner: "骨で付いた普通の MOD も消す (2026-10-10)", coe: "冒涜で付いた物 (未発現・発現済み) だけ (package_poe2.js getRemovableModifiers の OmenOnAnnulRemoveAbyssMod、2026-10-16)" },
   },
   {
-    key: "OmenofSinistralAnnulment", hover: "omenofsinistralannulment", appliesTo: "annul",
+    key: "OmenofSinistralAnnulment", hover: "omenofsinistralannulment", appliesTo: "annul", // E-11g
     text: { en: ["While this item is active in your inventory your next", "Orb of Annulment will remove only prefix modifiers"], ja: ["インベントリ内でアクティブ状態の時", "次に使用する消去のオーブはプレフィックスモッドをのみを取り除く。"] },
     effect: { side: "prefix" },
     source: { client: "currency-hover の説明文" },
   },
   {
-    key: "OmenofDextralAnnulment", hover: "omenofdextralannulment", appliesTo: "annul",
+    key: "OmenofDextralAnnulment", hover: "omenofdextralannulment", appliesTo: "annul", // E-11g
     text: { en: ["While this item is active in your inventory your next", "Orb of Annulment will remove only suffix modifiers"], ja: ["インベントリ内でアクティブ状態の時", "次に使用する消去のオーブはサフィックスモッドをのみを取り除く。"] },
     effect: { side: "suffix" },
     source: { client: "currency-hover の説明文" },

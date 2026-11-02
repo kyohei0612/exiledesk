@@ -28,7 +28,7 @@ const PAGES = (table as unknown as { pages: Record<string, CorruptionRow[]> }).p
 const pageOf = (cls: string): string => cls.replace(/^(Wands|Staves|Crossbows)_.*$/, "$1").replace(/^OneHand_/, "One_Hand_").replace(/^TwoHand_/, "Two_Hand_");
 
 /** そのクラスでコラプトで付く行 (poe2db にページが無いクラスは空) */
-export function corruptionRowsFor(cls: string): readonly CorruptionRow[] {
+export function corruptionRowsFor(cls: string): readonly CorruptionRow[] { // E-19 コラプトの MOD は 1 か所
   return PAGES[pageOf(cls)] ?? [];
 }
 

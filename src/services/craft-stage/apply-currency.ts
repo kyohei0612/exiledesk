@@ -162,7 +162,7 @@ function toUniqueBase(data: PatchData, r: StageApply): StageApply {
 }
 
 /** 聖別済みのアイテムに打とうとした時の理由 (エンジンの入口と説明文の判定 spec/judge.ts で同じ文) */
-export const SANCTIFIED_REASON = (): string => tr("聖別済みのアイテムには手を加えられない", "Can't modify a Sanctified item");
+export const SANCTIFIED_REASON = (): string => tr("聖別済みのアイテムには手を加えられない", "Can't modify a Sanctified item"); // E-26 聖別済みの品には何も打てない
 
 export function applyCurrency(data: PatchData, item: StageItem, currency: string, rng: () => number, omens: readonly string[] = [], hint: ApplyHint = {}): StageApply {
   // シャード: 手順では 1 個拾う (アイテムは変わらない)。アイテムに使おうとした時は打てない
@@ -242,5 +242,5 @@ function applyInner(data: PatchData, item: StageItem, currency: string, rng: () 
   // フラスコ・スキルジェム (MOD の置き場が無い) には、上の物と熟練工以外は打てない
   if (isFlask(item.cls.category) || isGem(item.cls.category)) return skip(item, isGem(item.cls.category) ? tr("スキルジェムには使えない", "Can't be used on Skill Gems") : tr("フラスコには使えない (このステージでは MOD を扱わない)", "Can't be used on Flasks (flask mods aren't supported)"));
   // オーブ・骨・発現・消去・エッセンス・品質・触媒・アーティフィサー・ルーン・感情・フラックス・聖別は説明文の分解 (spec/) で打つ (ADR-004、2026-10-16〜17 に今の関数から外した)
-  return skip(item, tr(`このアイテムはまだ使えない (${currency})`, `Not supported yet (${currency})`));
+  return skip(item, tr(`このアイテムはまだ使えない (${currency})`, `Not supported yet (${currency})`)); // E-28・E-29 棚に無い手・ヴァールは古い手順の再生だけ
 }

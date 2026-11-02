@@ -61,7 +61,7 @@ function baseIndex(data: PatchData): Map<string, ItemBase> {
 }
 
 /** ベース名 (「Ancestral Tiara」) からアイテムクラスを引く。知らないベースは null */
-export function classOfBase(data: PatchData, baseType: string): ItemBase | null {
+export function classOfBase(data: PatchData, baseType: string): ItemBase | null { // E-10 ベース名 → 置き場の行
   return baseIndex(data).get(baseType) ?? null;
 }
 

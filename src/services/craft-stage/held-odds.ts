@@ -36,7 +36,7 @@ const BOSS_OF_TAG: ReadonlyMap<string, DesecrationBossOmen> = new Map(Object.ent
 /** 発現でアビスの反響の引き直しが使える回数 (発現の手に掛かるお告げの効き目から) */
 const rerollsOf = (omens: readonly string[]): number => modsOf(omensOf(REVEAL_SPEC, omens)).rerolls;
 
-export function heldOdds(data: PatchData, item: StageItem, key: string, omens: readonly string[]): HeldOdds | null {
+export function heldOdds(data: PatchData, item: StageItem, key: string, omens: readonly string[]): HeldOdds | null { // E-80
   const plan = planSpec(data, item, key, omens);
   if (!plan) return null;
   const bone = plan.actions.find((a) => "addUnrevealed" in a);
@@ -150,7 +150,7 @@ function boneOdds(data: PatchData, item: StageItem, plan: SpecPlan, a: AddUnreve
   if (plan.block) return plan.offTarget ? null : { byMod, total: 1, bone: true };
   // 側は打つ処理と同じ unrevealedPlan: アビサルロードの紋章は必ず置き換える (印は消える物として数えない)、お告げの側、空きがあればその中から、
   // 両側が埋まっていれば固定していない MOD を全部から等しく 1 つ消して、その側に付く
-  const sp = unrevealedPlan(data, item, a, plan.mods);
+  const sp = unrevealedPlan(data, item, a, plan.mods); // E-61 骨の側 (E-11f の例外)
   const runs: Array<{ p: number; it: StageItem; side?: StageSide }> = [];
   const removal = (side: StageSide, p: number): void => {
     const rem = allMods(item).filter((m) => !m.fractured && m.side === side);

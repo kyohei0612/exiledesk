@@ -11,46 +11,44 @@ import type { Mod } from "../../vendor/poe2htc/engine/types";
 import { excluded, familiesOf, modTierWeight, occupiedFamiliesOf } from "../../vendor/poe2htc/engine/pool";
 
 /**
- * MOD の系統の鍵 (同じ鍵は 1 つのアイテムに 1 つまで)。エンジンの familiesOf そのまま:
- * 2 つの系統にまたがる MOD は両方、エッセンス等の MOD は crafted:… (普通の MOD と同じ系統でも並ぶ。
- * poe.ninja の実物で確認済み = エンジンのコメント)。抽選の元から外す判定は全部これで
+ * 同じ系統の MOD は 1 品に 1 つ (E-11、基本動作。付け方に例外なし。2026-11-02 オーナー「ファミリーで被るはないな」)。
+ * 判定はエンジンの familiesOf / excluded の 1 か所だけで、ここはそれを呼ぶ口。エッセンス・冒涜の発現・普通の MOD で見方を変えない
+ * (前はエッセンスの MOD だけ crafted:… に名前を分け、別の見方 essenceClash・rawFamiliesOf も持っていた)。
  */
 export function familyKeysOf(mod: Mod): string[] {
   return [...familiesOf(mod)];
 }
-/** 付いている MOD が塞ぐ系統 (エッセンスの MOD は同じ系統の普通の MOD も後から付けさせない。エンジンの occupiedFamiliesOf、2026-10-11) */
+/** 付いている MOD が塞ぐ系統 (= familyKeysOf。付け方で変わらない) */
 export function occupiedKeysOf(mod: Mod): string[] {
   return [...occupiedFamiliesOf(mod)];
 }
 
-/** その MOD が、もう付いている系統 (familyKeysOf を集めた物) とぶつかるか (エンジンの excluded) */
-export function familyBlocked(mod: Mod, taken: ReadonlySet<string>): boolean {
+/** その MOD が、もう付いている系統 (付いている MOD の occupiedKeysOf を集めた物) とぶつかるか (エンジンの excluded) */
+export function familyBlocked(mod: Mod, taken: ReadonlySet<string>): boolean { // E-11・E-11a
   return excluded(mod, taken);
 }
 
-/** 生の系統 (crafted:… に分けない)。エッセンスを打つ時の「同じ系統が付いていると打てない」判定だけに使う */
-export function rawFamiliesOf(mod: Mod): string[] {
-  return mod.families?.length ? [...mod.families] : mod.family ? [mod.family] : [];
+/** その系統を持つか (深淵のエッセンスの印 = ABYSS_FAMILY など、特定の系統の MOD を見分ける時。ぶつかるかの判定ではない) */
+export function hasFamily(mod: Mod, family: string): boolean {
+  return familiesOf(mod).includes(family);
 }
-
-/** その系統を持つか (生の系統で。深淵のエッセンスの印 = apply-essence の ABYSS_FAMILY など、特定の系統の MOD を見分ける時) */
-export function hasRawFamily(mod: Mod, family: string): boolean {
-  return rawFamiliesOf(mod).includes(family);
-}
-/** 2 つの MOD が生の系統を 1 つでも同じくするか (エッセンスの MOD と同じ系統の普通の MOD を探す時。crafted: に分けない) */
-export function sharesRawFamily(a: Mod, b: Mod): boolean {
-  const fb = rawFamiliesOf(b);
-  return rawFamiliesOf(a).some((f) => fb.includes(f));
+/** 2 つの MOD が系統を 1 つでも同じくするか (エッセンスの段を同じ系統の一般 MOD の段で数える時など。ぶつかるかは familyBlocked) */
+export function sharesFamily(a: Mod, b: Mod): boolean {
+  return familyBlocked(a, new Set(familiesOf(b)));
 }
 
 /**
- * エッセンスを打てないか: 付いている **エッセンス (クラフト) の** MOD に同じ系統がある。普通の MOD とは同じ系統でも一緒に付く
- * (2026-10-10 オーナー確認。poe.ninja の実物に作った MOD と同じ系統の普通の MOD が並んでいる。計算機の familiesOf の crafted: と同じ)。
- * 呼ぶ側は takenRaw にクラフトの MOD の系統だけを渡す (takenCraftedFamilies)
+ * 前の名前 (11-02 に 1 本へまとめる前)。中身は上の関数そのまま。シミュ (sim-route-helpers・carry-aims)・state/for-share・tests が
+ * 呼んでいるので、それぞれの持ち主が上の名前へ移したら消す (一覧は共有メモ jin-family-check-inventory-1102.md)
+ * @deprecated familyKeysOf を使う
  */
-export function essenceClash(essence: Mod, takenRaw: ReadonlySet<string>): boolean {
-  return rawFamiliesOf(essence).some((f) => takenRaw.has(f));
-}
+export const rawFamiliesOf = familyKeysOf;
+/** @deprecated hasFamily を使う */
+export const hasRawFamily = hasFamily;
+/** @deprecated sharesFamily を使う */
+export const sharesRawFamily = sharesFamily;
+/** @deprecated familyBlocked を使う (エッセンスも同じ判定) */
+export const essenceClash = familyBlocked;
 
 /**
  * 段の重みの合計。minIdx の段より上で、MOD レベルが floor 以上・cap (アイテムレベル) 以下の段だけ。

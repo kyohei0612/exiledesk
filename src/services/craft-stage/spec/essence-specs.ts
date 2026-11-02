@@ -10,10 +10,10 @@
  */
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { essenceLevelOf } from "../../../vendor/poe2htc/optimizer/cost";
-import { essenceClash, hasRawFamily } from "../../mods/mod-rules";
+import { familyBlocked, hasFamily } from "../../mods/mod-rules";
 import { ESSENCE_KEYS } from "../../htc/essence-key-table";
 import { ABYSS_FAMILY, essenceTarget, isInfiniteEssence, normalTierOf, pickInfinite } from "../apply-essence";
-import { makeStageMod, takenCraftedFamilies } from "../stage-core";
+import { makeStageMod, takenFamilies } from "../stage-core";
 import type { StageItem, StageMod, StageSide } from "../types";
 import type { CurrencySpec, OmenSpec, Source, Words } from "./types";
 import { tr } from "../../../i18n/lang";
@@ -27,25 +27,25 @@ const PERFECT_TEXT = {
   en: ["Removes a random modifier and augments a [ItemRarity|Rare] item with a new guaranteed modifier"],
   ja: ["[ItemRarity|レア]アイテムからランダムなモッドを1個取り除き、新しい保証されたモッドを1個追加する。"],
 };
-const ESSENCE_SOURCE: Source = {
+const ESSENCE_SOURCE: Source = { // E-11b の例外 (エッセンス・合金はアイテムレベルを見ない)
   client: "currency-hover の説明文、EssenceMods (エンジンのエッセンスの置き場)、用語集 Crafted (クラフト MOD は 1 つ)",
   owner: "アイテムレベルの制限は無い (poe2wiki Essence、要望 ㉞-4)・クラフト MOD どうしの系統はぶつかる (2026-10-11)",
   coe: "付けられる候補が複数 (無限のエッセンス) なら等しく 1 つ (package_poe2.js poe2_essence、2026-10-16)",
 };
 
 /** レッサー / 普通 / グレーター */
-export const ESSENCE_SPEC: CurrencySpec = {
+export const ESSENCE_SPEC: CurrencySpec = { // E-55
   key: "essence:upgrade",
   stageKey: "essence:",
   kind: "essence",
   text: UPGRADE_TEXT,
   target: { rarity: ["magic"], rarityReason: { ja: "マジックのアイテムにだけ使える (レアにはパーフェクト)", en: "Magic items only (use a Perfect Essence on Rares)" } },
   actions: [{ setRarity: "rare" }, { addEssence: { side: "ofMod" } }],
-  limits: [{ kind: "craftedSlot" }],
+  limits: [{ kind: "craftedSlot" }, { kind: "essenceFamilyFree" }],
   source: ESSENCE_SOURCE,
 };
 /** パーフェクト・ブリーチ・ヒステリーなど (深淵を除く) */
-export const PERFECT_ESSENCE_SPEC: CurrencySpec = {
+export const PERFECT_ESSENCE_SPEC: CurrencySpec = { // E-51
   key: "essence:perfect",
   stageKey: "essence:perfect:",
   kind: "essence_perfect",
@@ -53,11 +53,11 @@ export const PERFECT_ESSENCE_SPEC: CurrencySpec = {
   target: { rarity: ["rare"] },
   // MOD が 0 のレアは消さずに付ける。付ける側が埋まっていればその側から消す
   actions: [{ remove: { n: 1, pick: "equal", ifAny: true, sideWhenFull: true } }, { addEssence: { side: "ofMod" } }],
-  limits: [{ kind: "craftedSlot" }],
+  limits: [{ kind: "craftedSlot" }, { kind: "essenceFamilyFree" }],
   source: { ...ESSENCE_SOURCE, coe: "付ける側が埋まっている時はその側から消す (package.js の poe2_perfect_essence)" },
 };
 /** 深淵のエッセンス: 消した側にアビサルロードの紋章。消せる物が無ければお告げの側か空いている側 (2026-10-03 SaVeQ 0.5.5 / poe2fun) */
-export const ABYSS_ESSENCE_SPEC: CurrencySpec = {
+export const ABYSS_ESSENCE_SPEC: CurrencySpec = { // E-52
   key: "essenceoftheabyss",
   stageKey: "essence:perfect:",
   kind: "essence_perfect",
@@ -75,7 +75,7 @@ export const ABYSS_ESSENCE_SPEC: CurrencySpec = {
  */
 export const ALLOY_SPEC: CurrencySpec = {
   ...PERFECT_ESSENCE_SPEC,
-  key: "alloy",
+  key: "alloy", // E-51 合金はパーフェクトエッセンスと同じ手
   kind: "essence_perfect",
   text: { en: PERFECT_TEXT.en, ja: ["ランダムなモッドを1個取り除き、[Rarity|レア]アイテムに確定で新しいモッドを追加する"] },
 };
@@ -100,7 +100,7 @@ export function resolveEssence(data: PatchData, item: StageItem, key: string): E
   const t = essenceTarget(data, item, key);
   if (!t) return { spec, reason: tr("このベースには使えないエッセンス", "This Essence can't be used on this base") };
   if (tierIndexOf(t.level, t.mod) < 0) return { spec, reason: tr("このエッセンスのティアが無い", "No tier for this Essence") };
-  return { spec: hasRawFamily(t.mod, ABYSS_FAMILY) ? ABYSS_ESSENCE_SPEC : spec };
+  return { spec: hasFamily(t.mod, ABYSS_FAMILY) ? ABYSS_ESSENCE_SPEC : spec };
 }
 /** 段: 普通のエッセンスは段の名前 (Lesser / Greater / 無印) で選ぶ。パーフェクトは 1 段 */
 const tierIndexOf = (level: string, mod: { tiers: ReadonlyArray<{ name?: unknown }> }): number =>
@@ -118,7 +118,7 @@ export function prepareEssence(data: PatchData, item: StageItem, key: string, rn
   if (!tier) return null;
   const base: StageMod = { ...makeStageMod(t.mod, t.side, i, rng), ...normalTierOf(data, item, t.mod, tier), crafted: true };
   const mod = withNotable(base, rng);
-  return { mod, side: t.side, clash: (it) => essenceClash(t.mod, takenCraftedFamilies(data, it)) };
+  return { mod, side: t.side, clash: (it) => familyBlocked(t.mod, takenFamilies(data, it)) };
 }
 
 /**
@@ -133,7 +133,7 @@ function withNotable(m: StageMod, rng: () => number): StageMod {
 }
 const DELIRIUM_NOTABLES: ReadonlyArray<{ en: string; ja: string }> = deliriumNotables.list;
 
-const crystal = (key: string, hover: string, side: "prefix" | "suffix", word: Words): OmenSpec => ({
+const crystal = (key: string, hover: string, side: "prefix" | "suffix", word: Words): OmenSpec => ({ // E-11g
   key, hover, appliesTo: "essence_perfect",
   text: {
     en: ["While this item is active in your inventory your next", `Perfect or Corrupted Essence will remove only ${word.en} modifiers`],

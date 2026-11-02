@@ -26,7 +26,7 @@ const ESSENCE_KEYS: Readonly<Record<string, GameName>> = ESSENCE_TABLE;
  * (武器 = 顎の骨 / 防具 = 肋骨 / 装飾品 = 鎖骨)、クラスが分かる時だけ骨の名前に解決する。
  * 上流の `pricesForBase` が値段に対してやっているのと同じ対応。
  */
-export function jaOfPriceKey(key: string, cls?: ItemBase): string | null {
+export function jaOfPriceKey(key: string, cls?: ItemBase): string | null { // E-90・E-93 名前はデータの表から
   // ブリーチのエッセンスは essence-keys に無く、カレンシーの表にだけある (要望 ㉝ の 8: 手順の名前が "essence:breach" のままだった)
   if (key.startsWith("essence:")) return ESSENCE_KEYS[key]?.ja ?? KEYS.currency[key]?.ja ?? null;
   const boneMatch = /^desecrate(?:_(ancient|altered|gnawed))?$/.exec(key);

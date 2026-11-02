@@ -12,7 +12,7 @@ import type { CurrencySpec, Limit, OmenSpec, Source } from "./types";
 export type Strength = "base" | "greater" | "perfect";
 const STRENGTHS: readonly Strength[] = ["base", "greater", "perfect"];
 /** カオスの段の下限 (poe2db の Minimum Modifier Level、2026-10-14 確認。エンジンの CURRENCY_FLOOR には無い) */
-export const CHAOS_FLOOR: Record<Strength, number> = { base: 0, greater: 35, perfect: 50 };
+export const CHAOS_FLOOR: Record<Strength, number> = { base: 0, greater: 35, perfect: 50 }; // E-11d
 /** 段の下限 (kind = transmute・augment・regal・exalt・chaos、s = 強さ)。入口 engine.ts から外に出す (解析君の auto-model、2026-10-20) */
 export const orbFloor = (kind: string, s: Strength): number =>
   kind === "chaos" ? CHAOS_FLOOR[s] : (CURRENCY_FLOOR as Record<string, Record<Strength, number>>)[kind]?.[s] ?? 0;
@@ -22,7 +22,7 @@ const stageKeyOf = (kind: string, s: Strength): string => (s === "base" ? kind :
 /** クライアントの鍵: orboftransmutation / greaterorboftransmutation / perfectorboftransmutation */
 const hoverOf = (name: string, s: Strength): string => (s === "base" ? name : `${s}${name}`);
 /** 段の下限があれば「アイテムレベルが下限未満には使えない」(用語集 BetterCurrencyMinimumLevel) */
-const floorLimits = (floor: number): Limit[] => (floor > 0 ? [{ kind: "itemLevelAtLeast", level: floor }] : []);
+const floorLimits = (floor: number): Limit[] => (floor > 0 ? [{ kind: "itemLevelAtLeast", level: floor }] : []); // E-11d アイテムレベルが N 未満の品には打てない
 
 const ORB_SOURCE: Source = {
   client: "currency-hover の説明文、用語集 BetterCurrencyMinimumLevel・ItemRarity",
@@ -41,7 +41,7 @@ interface OrbDef {
 
 const ORBS: readonly OrbDef[] = [
   {
-    kind: "transmute", name: "orboftransmutation", strengths: STRENGTHS,
+    kind: "transmute", name: "orboftransmutation", strengths: STRENGTHS, // E-11e 枠 0 のベースは MOD の無いマジック
     text: { en: ["Upgrades a [ItemRarity|Normal] item to a [ItemRarity|Magic] item with 1 modifier"], ja: ["[ItemRarity|ノーマル]アイテムをモッドを1個持つ[ItemRarity|マジック]アイテムにアップグレードする。"] },
     // マジックの枠が 0 のベース (不在のアミュレット = プレ -1 / サフィ -1) は MOD 無しのマジックになる (ゲームで確認、要望 19c7d2de)
     build: (floor) => ({
@@ -52,7 +52,7 @@ const ORBS: readonly OrbDef[] = [
     }),
   },
   {
-    kind: "augment", name: "orbofaugmentation", strengths: STRENGTHS,
+    kind: "augment", name: "orbofaugmentation", strengths: STRENGTHS, // E-37・E-11f
     text: { en: ["Augments a [ItemRarity|Magic] item with a new random modifier"], ja: ["[ItemRarity|マジック]アイテムを1個の新しいランダムなモッドで強化する。"] },
     build: (floor) => ({
       target: { rarity: ["magic"] },
@@ -61,7 +61,7 @@ const ORBS: readonly OrbDef[] = [
     }),
   },
   {
-    kind: "regal", name: "regalorb", strengths: STRENGTHS,
+    kind: "regal", name: "regalorb", strengths: STRENGTHS, // E-37・E-11f
     text: { en: ["Upgrades a [ItemRarity|Magic] item to a [ItemRarity|Rare] item, adding 1 modifier"], ja: ["[ItemRarity|マジック]アイテムを[ItemRarity|レア]アイテムにアップグレードし、モッドを1個追加する。"] },
     build: (floor) => ({
       target: { rarity: ["magic"] },
@@ -70,7 +70,7 @@ const ORBS: readonly OrbDef[] = [
     }),
   },
   {
-    kind: "alchemy", name: "orbofalchemy", strengths: ["base"],
+    kind: "alchemy", name: "orbofalchemy", strengths: ["base"], // E-38
     text: { en: ["Upgrades a [ItemRarity|Normal] or [ItemRarity|Magic] item to a [ItemRarity|Rare] item with 4 random modifiers"], ja: ["[ItemRarity|ノーマル]アイテムまたは[ItemRarity|マジック]アイテムをモッドを4個持つ[ItemRarity|レア]アイテムにアップグレードする。"] },
     // 「with 4 random modifiers」: マジックに使った時は付いている MOD は残らない (0.3.1「the original modifiers are not retained」、POE2Tube 要望 ㉞-1)
     build: (floor) => ({
@@ -81,7 +81,7 @@ const ORBS: readonly OrbDef[] = [
     }),
   },
   {
-    kind: "exalt", name: "exaltedorb", strengths: STRENGTHS,
+    kind: "exalt", name: "exaltedorb", strengths: STRENGTHS, // E-37・E-11f
     text: { en: ["Augments a [ItemRarity|Rare] item with a new random modifier"], ja: ["[ItemRarity|レア]アイテムを1個の新しいランダムなモッドで強化する。"] },
     build: (floor) => ({
       target: { rarity: ["rare"] },
@@ -90,7 +90,7 @@ const ORBS: readonly OrbDef[] = [
     }),
   },
   {
-    kind: "chaos", name: "chaosorb", strengths: STRENGTHS,
+    kind: "chaos", name: "chaosorb", strengths: STRENGTHS, // E-30 カオス = 消す + 付ける
     text: { en: ["Removes a random modifier and augments a [ItemRarity|Rare] item with a new random modifier"], ja: ["[ItemRarity|レア]アイテムからランダムなモッドを1個取り除き、ランダムな新しいモッドを1個追加する。"] },
     // 消す + 付ける (ADR-004 の決めたこと 2)。付けるのは消した後に空いている側から重みで、どこにも付かなくても消した分は残る
     build: (floor) => ({
@@ -101,7 +101,7 @@ const ORBS: readonly OrbDef[] = [
     }),
   },
   {
-    kind: "divine", name: "divineorb", strengths: ["base"],
+    kind: "divine", name: "divineorb", strengths: ["base"], // E-34
     text: { en: ["Randomises the numeric values of modifiers on an item"], ja: ["アイテム上の明示モッドが持つ数値をランダムに変化させる。"] },
     build: () => ({
       target: {},
@@ -111,7 +111,7 @@ const ORBS: readonly OrbDef[] = [
     }),
   },
   {
-    kind: "fracture", name: "fracturingorb", strengths: ["base"],
+    kind: "fracture", name: "fracturingorb", strengths: ["base"], // E-40・E-42
     text: { en: ["[Fracture|Fracture] a random modifier on a rare item with at least 4 modifiers, locking it in place."], ja: ["4個以上のモッドを持つレアアイテム上のランダムなモッド1個を[Fracture|フラクチャー]し固定する。"] },
     build: () => ({
       target: { rarity: ["rare"] },
@@ -146,11 +146,11 @@ const CLIENT: Source = { client: "currency-hover の説明文" };
 
 /** オーブに掛かるお告げ (今のゲームにある物。戴冠・錬金・大いなる消去は相場に無い = REMOVED_OMENS で打てない) */
 export const ORB_OMEN_SPECS: readonly OmenSpec[] = [
-  { key: "OmenofSinistralExaltation", hover: "omenofsinistralexaltation", appliesTo: "exalt", text: omenText("Exalted Orb will add only prefix modifiers", "次に使用する高貴なオーブはプレフィックスモッドをのみを追加する。"), effect: { side: "prefix" }, source: CLIENT },
-  { key: "OmenofDextralExaltation", hover: "omenofdextralexaltation", appliesTo: "exalt", text: omenText("Exalted Orb will add only suffix modifiers", "次に使用する高貴なオーブはサフィックスモッドをのみを追加する。"), effect: { side: "suffix" }, source: CLIENT },
-  { key: "OmenofGreaterExaltation", hover: "omenofgreaterexaltation", appliesTo: "exalt", text: omenText("Exalted Orb will add two random modifiers", "次に使用する高貴なオーブはモッドを2個追加する。"), effect: { addCount: 2 }, source: { client: "currency-hover の説明文", owner: "空きが 1 つなら 1 つ", coe: "付かなくなったら止まる (package_poe2.js rollAffixes、2026-10-16)" } },
+  { key: "OmenofSinistralExaltation", hover: "omenofsinistralexaltation", appliesTo: "exalt", text: omenText("Exalted Orb will add only prefix modifiers", "次に使用する高貴なオーブはプレフィックスモッドをのみを追加する。"), effect: { side: "prefix" }, source: CLIENT }, // E-11g
+  { key: "OmenofDextralExaltation", hover: "omenofdextralexaltation", appliesTo: "exalt", text: omenText("Exalted Orb will add only suffix modifiers", "次に使用する高貴なオーブはサフィックスモッドをのみを追加する。"), effect: { side: "suffix" }, source: CLIENT }, // E-11g
+  { key: "OmenofGreaterExaltation", hover: "omenofgreaterexaltation", appliesTo: "exalt", text: omenText("Exalted Orb will add two random modifiers", "次に使用する高貴なオーブはモッドを2個追加する。"), effect: { addCount: 2 }, source: { client: "currency-hover の説明文", owner: "空きが 1 つなら 1 つ", coe: "付かなくなったら止まる (package_poe2.js rollAffixes、2026-10-16)" } }, // E-31
   {
-    key: "OmenofCatalysingExaltation", hover: "omenofcatalysingexaltation", appliesTo: "exalt",
+    key: "OmenofCatalysingExaltation", hover: "omenofcatalysingexaltation", appliesTo: "exalt", // E-32
     text: {
       en: ["While this item is active in your inventory your next", "Exalted Orb will consume all [Catalyst] [Quality] to increase", "the chance of the corresponding type of Modifier"],
       ja: ["インベントリ内でアクティブ状態の時", "次回使用する高貴なオーブは[Catalyst|カタリスト]の[Quality|品質]を全て消費し", "対応するモッドを追加する確率を上げる"],
@@ -159,17 +159,17 @@ export const ORB_OMEN_SPECS: readonly OmenSpec[] = [
     limits: [{ kind: "hasCatalystQuality" }],
     source: { client: "currency-hover の説明文", community: "重く引く倍率は catalysing-multiplier.ts (品質から)" },
   },
-  { key: "OmenofWhittling", hover: "omenofwhittling", appliesTo: "chaos", text: omenText("Chaos Orb will remove the lowest level modifier", "次に使用する混沌のオーブは最もレベルの低いモッドを取り除く。"), effect: { pickLowest: true }, source: { client: "currency-hover の説明文", poe2wiki: "未発現の枠は MOD レベル 1 (0.3.1、要望 ㉞-6)", coe: "同じ MOD レベルが並んだら等しく (package_poe2.js poe2_chaos の OmenOnChaosLowestLevelMod、2026-10-16)" } },
-  { key: "OmenofSinistralErasure", hover: "omenofsinistralerasure", appliesTo: "chaos", text: omenText("Chaos Orb will remove only prefix modifiers", "次に使用する混沌のオーブはプレフィックスモッドをのみを取り除く。"), effect: { removeSide: "prefix" }, source: CLIENT },
-  { key: "OmenofDextralErasure", hover: "omenofdextralerasure", appliesTo: "chaos", text: omenText("Chaos Orb will remove only suffix modifiers", "次に使用する混沌のオーブはサフィックスモッドをのみを取り除く。"), effect: { removeSide: "suffix" }, source: CLIENT },
+  { key: "OmenofWhittling", hover: "omenofwhittling", appliesTo: "chaos", text: omenText("Chaos Orb will remove the lowest level modifier", "次に使用する混沌のオーブは最もレベルの低いモッドを取り除く。"), effect: { pickLowest: true }, source: { client: "currency-hover の説明文", poe2wiki: "未発現の枠は MOD レベル 1 (0.3.1、要望 ㉞-6)", coe: "同じ MOD レベルが並んだら等しく (package_poe2.js poe2_chaos の OmenOnChaosLowestLevelMod、2026-10-16)" } }, // E-33
+  { key: "OmenofSinistralErasure", hover: "omenofsinistralerasure", appliesTo: "chaos", text: omenText("Chaos Orb will remove only prefix modifiers", "次に使用する混沌のオーブはプレフィックスモッドをのみを取り除く。"), effect: { removeSide: "prefix" }, source: CLIENT }, // E-11g
+  { key: "OmenofDextralErasure", hover: "omenofdextralerasure", appliesTo: "chaos", text: omenText("Chaos Orb will remove only suffix modifiers", "次に使用する混沌のオーブはサフィックスモッドをのみを取り除く。"), effect: { removeSide: "suffix" }, source: CLIENT }, // E-11g
   {
-    key: "OmenoftheBlessed", hover: "omenoftheblessed", appliesTo: "divine",
+    key: "OmenoftheBlessed", hover: "omenoftheblessed", appliesTo: "divine", // E-39
     text: { en: ["While this item is active in your inventory your next", "Divine Orb will only reroll Implicit Modifiers"], ja: ["インベントリ内でアクティブ状態の時", "次回使用する神のオーブは暗黙モッドだけをリロールする"] },
     effect: { implicitOnly: true }, source: CLIENT,
   },
   {
     // 聖別 (2026-10-17 ADR-004 の残りで移した。前は「ヴァールの仲間で移さない」だった)。神のオーブの動作をまるごと聖別に置き換える
-    key: "OmenofSanctification", hover: "omenofsanctification", appliesTo: "divine",
+    key: "OmenofSanctification", hover: "omenofsanctification", appliesTo: "divine", // E-35
     text: { en: ["While this item is active in your inventory your next", "Divine Orb used on a [ItemRarity|Rare] item will [Sanctified|Sanctify] it"], ja: ["インベントリ内でアクティブ状態の時", "次回[ItemRarity|レア]アイテムに使用する神のオーブはそのアイテムを[Sanctified|聖別]する"] },
     effect: { replace: [{ sanctify: true }] }, source: { client: "currency-hover の説明文", community: "数値は 0.78〜1.22 倍 (apply-vaal.ts)" },
   },

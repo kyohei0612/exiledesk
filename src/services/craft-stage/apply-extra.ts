@@ -44,7 +44,7 @@ const INFUSER: Record<string, { groups: ItemGroup[]; ja: string; en: string }> =
   vaal_infuser_caster: { groups: ["caster"], ja: "ワンド・スタッフ・セプター", en: "Wands, Staves and Sceptres" },
 };
 /** 上限を超えた時にコラプトする確率。公式の値は無く、コミュニティの報告の約 25% (2026-10-12 オーナー「25% と言われてる、説明でコミュニティの確率参照で」) */
-export const INFUSER_CORRUPT_P = 0.25;
+export const INFUSER_CORRUPT_P = 0.25; // E-74
 /** アーキテクトオーブで壊れる確率。説明文・poe2wiki の「50%」(有力、要望 ㉞-3) */
 export const ARCHITECT_DESTROY_P = 0.5;
 

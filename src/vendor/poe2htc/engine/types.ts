@@ -171,11 +171,11 @@ export interface PlacedMod {
  * A throwaway as a plan step names it: the placeholder id its mod carries on the item (what the
  * removing step's `remove` points at), and the side it lands on.
  *
- * It LIVES EXACTLY ONE STEP — `stepProbability` scores every other step 0 on an item holding one —
- * and that is what keeps a route's odds exact rather than approximate. The one step that sees it is
- * a Perfect Essence, whose removal odds count mods (`perfectEssenceProbability`) and whose add is
- * crafted, so no rolled family can block it (`familiesOf`). Which mod landed therefore never changes
- * a number, and after that step it is gone.
+ * It LIVES EXACTLY ONE STEP — `stepProbability` scores every other step 0 on an item holding one.
+ * The one step that sees it is a Perfect Essence, whose removal odds count mods
+ * (`perfectEssenceProbability`). Which mod landed never changes a number, and after that step it is gone.
+ * One approximation remains since the one family rule (2026-11-02, `familiesOf`): if the throwaway happens
+ * to share the essence's family the game refuses the essence; that small chance is not counted.
  */
 export interface Throwaway {
   readonly id: string;
@@ -209,7 +209,7 @@ export type StrengthCurrency = 'transmute' | 'augment' | 'regal' | 'exalt';
  *     level of 55" (the user, 2026-09-10). One shared table used to give them the Exalt's ladder, which
  *     let them land tiers they cannot.
  */
-export const CURRENCY_FLOOR: Record<StrengthCurrency, Record<CurrencyTier, number>> = {
+export const CURRENCY_FLOOR: Record<StrengthCurrency, Record<CurrencyTier, number>> = { // E-11d 段の下限 N (poe2db の Minimum Modifier Level)
   // Greater Transmutation / Augmentation: 44 since 0.5.0 ("minimum Modifier Level of 44 (previously 55)", POE2Tube ㉞-2, 2026-10-06)
   transmute: { base: 0, greater: 44, perfect: 70 },
   augment: { base: 0, greater: 44, perfect: 70 },

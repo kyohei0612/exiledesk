@@ -74,7 +74,7 @@ export interface PartCtx {
 /** 指名が通らなかった時 (理由つきで打てない、pickError。今の関数と同じ文) */
 const pickFail = (item: StageItem, why: string): StageApply => ({ ...skip(item, tr(`指名できない: ${why}`, `Can't force: ${why}`)), pickError: true });
 
-type Remove = Extract<Action, { remove: unknown }>["remove"];
+type Remove = Extract<Action, { remove: unknown }>["remove"]; // E-22 説明文に無い選び方は等しく (pick: equal)
 /**
  * 固定以外から消す。冒涜だけ (光のお告げ) は側を見ない (左右の消去は光と一緒には使えない、run-spec.ts の omensOf。2026-10-17 オーナー)。
  * 側: お告げ (抹消・結晶化・左右の消去) → それ。付ける側が埋まっている完全エッセンスは、その側から (sideWhenFull)。
@@ -95,7 +95,7 @@ function remove(ctx: PartCtx, item: StageItem, a: Remove): StageApply {
   }
   const nothing: StageApply = { applied: true, item, added: [], removed: [] };
   if (a.ifAny && !allMods(item).length) return nothing;
-  const side = ctx.mods.removeSide ?? ctx.mods.side;
+  const side = ctx.mods.removeSide ?? ctx.mods.side; // E-11g 左右のお告げで消す側を決める
   // 未発現の冒涜 MOD があればそれを消す (深淵のエッセンスは未発現に入れ替わる、2026-10-16 オーナーがゲームで確認)
   if (a.unrevealedFirst && !ctx.removeForce) {
     const us = allMods(item).filter((m) => m.unrevealed && !m.fractured && (!side || m.side === side));
@@ -126,7 +126,7 @@ function remove(ctx: PartCtx, item: StageItem, a: Remove): StageApply {
     } else r = removeOne(cur, ctx.rng, sides);
     if (!r) break;
     // 上限を超えている側 (侮蔑を外した後のサフィ 3 つ) に当たると付け直せずに弾かれる (2026-10-14 オーナーがゲームで確認、プレに空きがあっても同じ)
-    if (a.overLimitVoids && overLimit(cur, r.mod.side)) return skipRandom(item, tr("上限を超えている側に当たったので追加できない (もう一度)", "Hit the side that is over its limit, so nothing can be added (try again)"));
+    if (a.overLimitVoids && overLimit(cur, r.mod.side)) return skipRandom(item, tr("上限を超えている側に当たったので追加できない (もう一度)", "Hit the side that is over its limit, so nothing can be added (try again)")); // E-25 上限を超えた側に当たったら手ごと不成立
     cur = r.item;
     removed.push(r.mod);
   }
@@ -147,7 +147,7 @@ function add(ctx: PartCtx, item: StageItem, a: Add): StageApply {
   const ok = (it: StageItem): StageApply => ({ applied: true, item: it, added: [], removed: [] });
   if (a.emptyOk && !SIDES.some((s) => room(item, s))) return ok(item);
   const n = ctx.mods.addCount ?? a.n;
-  const sides = ctx.mods.side ? [ctx.mods.side] : SIDES;
+  const sides = ctx.mods.side ? [ctx.mods.side] : SIDES; // E-11f・E-11g
   const { tag, pct } = catalystOf(item);
   const boost = ctx.mods.catalysing && tag ? { test: (m: { id: string; tags?: readonly string[] }) => catalystBoosts(item, { modId: m.id, tags: m.tags }, tag, ctx.data), mult: tunedCatalysingMultiplier(pct) } : undefined;
   const pick = ctx.pick?.slice(ctx.pickUsed ?? 0) ?? [];
@@ -185,7 +185,7 @@ function add(ctx: PartCtx, item: StageItem, a: Add): StageApply {
  */
 function reroll(ctx: PartCtx, item: StageItem): StageApply {
   const implicit = hasImplicitRange((htcBaseInfo()[item.base]?.implicits ?? []).map((l) => l.en));
-  if (ctx.mods.implicitOnly) {
+  if (ctx.mods.implicitOnly) { // E-39
     if (!implicit) return skip(item, tr("振り直せる暗黙 MOD が無い", "No implicit mod to reroll"));
     return { applied: true, item: { ...item, implicitRoll: (item.implicitRoll ?? 0) + 1, implicitFixed: undefined }, added: [], removed: [], note: tr("祝福のお告げ: 暗黙 MOD だけを振り直した", "Omen of the Blessed: rerolled implicit values only") };
   }

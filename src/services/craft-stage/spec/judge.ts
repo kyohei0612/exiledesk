@@ -4,8 +4,10 @@
  * 一言は今の関数 (apply-desecrate.ts など) と同じ文にしている (手順の再生の突き合わせで同じ結果になるように)
  */
 import { inAny, inGroup } from "../../mods/item-classes";
-import { allMods, catalystOf, hasExtraCatalyst, limitOf, maxQualityOf, room, SIDES } from "../stage-core";
-import { craftedLimitOf } from "../apply-essence";
+import { allMods, catalystOf, hasExtraCatalyst, limitOf, maxQualityOf, room, SIDES, takenFamilies } from "../stage-core";
+import { craftedLimitOf, essenceTarget, infiniteChoices, isInfiniteEssence } from "../apply-essence";
+import { familyBlocked } from "../../mods/mod-rules";
+import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { socketCapOf } from "../stage-runes";
 import { canFracture } from "../../mods/item-classes";
 import type { Mods } from "./parts";
@@ -39,12 +41,12 @@ export function targetBlock(t: Target, item: StageItem): string | null {
 }
 
 /** ジュエルはアイテムレベルを見ない (2026-10-12 オーナー、apply-currency.ts の noIlvl と同じ) */
-const noIlvl = (item: StageItem): boolean => inGroup(item.cls.category, "jewel");
+const noIlvl = (item: StageItem): boolean => inGroup(item.cls.category, "jewel"); // E-11b の例外 (ジュエルはアイテムレベルを見ない)
 
-/** mods = その手に掛かるお告げの効き目 (空きの判定はお告げの側で見る)。tag = 触媒の品質の種類 */
-export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string | null): string | null {
+/** mods = その手に掛かるお告げの効き目 (空きの判定はお告げの側で見る)。tag = 触媒の品質の種類。ess = エッセンスの手の鍵 (essenceFamilyFree) */
+export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string | null, ess?: { data: PatchData; key: string }): string | null { // E-21 打てるかは乱数に関係ない条件だけ
   switch (l.kind) {
-    case "oneDesecratedMod":
+    case "oneDesecratedMod": // E-60
       return allMods(item).some((m) => m.desecrated) ? tr("冒涜の MOD はアイテムに 1 つまで", "Only 1 Desecrated mod per item") : null;
     case "itemLevelAtLeast":
       return item.itemLevel < l.level && !noIlvl(item) ? tr(`アイテムレベルが ${l.level} 未満には使えない`, `Requires Item Level ${l.level}+`) : null;
@@ -52,7 +54,7 @@ export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string 
       return item.itemLevel > l.level && !noIlvl(item) ? tr(`アイテムレベル ${l.level} 以下にだけ使える`, `Item Level ${l.level} or lower only`) : null;
     case "hasUnrevealed":
       return allMods(item).some((m) => m.unrevealed) ? null : tr("未発現の冒涜 MOD が無い", "No Unrevealed Desecrated mod");
-    case "openSlot": {
+    case "openSlot": { // E-11e・E-11g (お告げの側だけを見る)
       const side = mods?.side;
       if ((side ? [side] : SIDES).some((s) => room(item, s))) return null;
       if (side) return tr("お告げの側に空きが無い", "No open slot on the Omen's side");
@@ -68,10 +70,16 @@ export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string 
       return allMods(item).some((m) => m.desecrated && !m.unrevealed) ? tr("発現済みの冒涜 MOD があると使えない (未発現なら使える)", "Can't be used while a revealed Desecrated mod is present (unrevealed is fine)") : null;
     case "noAbyssMark":
       return allMods(item).some((m) => m.abyssMark) ? tr("アビサルロードの紋章がもう付いている", "Already has a Mark of the Abyssal Lord") : null;
-    case "craftedSlot": {
+    case "craftedSlot": { // E-11h
       const limit = craftedLimitOf(item);
       if (allMods(item).filter((m) => m.crafted).length < limit) return null;
       return limit > 1 ? tr(`クラフト MOD はアストリッドの創造性込みで ${limit} つまで`, `Max ${limit} crafted mods (with Astrid's Creativity)`) : tr("エッセンスの MOD はアイテムに 1 つまで (アストリッドの創造性で増える)", "Only 1 Essence mod per item (more with Astrid's Creativity)");
+    }
+    case "essenceFamilyFree": {
+      if (!ess) return null;
+      // 無限のエッセンスは付いていない能力値から選ぶので、選べる物が残っていれば打てる (E-50)
+      const free = isInfiniteEssence(ess.key) ? infiniteChoices(ess.data, item, ess.key).length > 0 : (() => { const t = essenceTarget(ess.data, item, ess.key); return !t || !familyBlocked(t.mod, takenFamilies(ess.data, item)); })();
+      return free ? null : tr("同じ系統の MOD が付いている", "A mod of the same group is already on the item");
     }
     case "qualityBelow": {
       const max = l.max === "catalyst" ? maxQualityOf(item) : l.max;
@@ -98,7 +106,7 @@ export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string 
  * 壊れた・処分した・ミラー・未鑑定・聖別・コラプト (用語集 Corrupted「ほとんどのクラフトはコラプトに使えない」)・今のゲームに無いお告げ。
  * フラスコ・スキルジェムはこのステージが MOD を扱わない (ゲームの決まりではない)
  */
-export function stateBlock(spec: CurrencySpec, item: StageItem, omens: readonly string[]): string | null {
+export function stateBlock(spec: CurrencySpec, item: StageItem, omens: readonly string[]): string | null { // E-18 フラスコ・E-26 聖別済み (状態の決まり)
   if (item.destroyed) return tr("壊れたアイテムには何も使えない", "Item is destroyed");
   if (item.disposed) return tr(`${DISPOSE_JA[item.disposed]}したアイテムには何も使えない`, `Item was ${item.disposed === "disenchant" ? "disenchanted" : "salvaged"}`);
   if (item.mirrored && !ANY_STATE.includes(spec.stageKey)) return tr("ミラーしたアイテムには使えない", "Can't modify a Mirrored item");

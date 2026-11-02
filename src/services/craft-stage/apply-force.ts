@@ -20,9 +20,9 @@
  */
 import { applyRune, runeKeyForId } from "./stage-runes";
 import type { PatchData } from "../../vendor/poe2htc/engine/types";
-import { essenceClash, familyBlocked, occupiedKeysOf } from "../mods/mod-rules";
+import { familyBlocked, occupiedKeysOf } from "../mods/mod-rules";
 import { craftedLimitOf, normalTierOf } from "./apply-essence";
-import { allMods, makeStageMod, room, skip, stageRuneIds, takenFamilies, takenCraftedFamilies, unfracturable, withMod } from "./stage-core";
+import { allMods, makeStageMod, room, skip, stageRuneIds, takenFamilies, unfracturable, withMod } from "./stage-core";
 import type { StageApply, StageItem, StageMod, StageSide } from "./types";
 import { tr } from "../../i18n/lang";
 
@@ -104,9 +104,7 @@ export function applyForce(data: PatchData, item: StageItem, key: string, rng: (
   const asDesecrated = p.flag === "d";
   const asCrafted = p.flag === "e" || (p.flag === "f" && (mod.source === "essence" || mod.source === "perfect_essence"));
   if (asCrafted) {
-    // エッセンスの MOD どうしで系統が重なる物、上限 (1 つ、アストリッドの創造性で 2 つ) を超える分は入れ替える (固定した物は外さない)
-    for (const m of allMods(it).filter((x) => x.crafted && !x.fractured)) { const md = data.mods.get(m.modId); if (md && essenceClash(mod, new Set([md.family, ...(md.families ?? [])]))) drop(m); }
-    if (essenceClash(mod, takenCraftedFamilies(data, it))) return skip(item, tr("エッセンスの MOD どうしで系統が重なる (固定されている)", "A fractured Essence mod shares the same group"));
+    // 上限 (1 つ、アストリッドの創造性で 2 つ) を超える分は入れ替える (固定した物は外さない)。同じ系統の物は上の共通の処理で外してある
     const limit = craftedLimitOf(it);
     const crafted = allMods(it).filter((m) => m.crafted);
     if (crafted.length >= limit) {

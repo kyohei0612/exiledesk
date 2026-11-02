@@ -108,7 +108,7 @@ export function sanctifyPreview(data: PatchData, item: StageItem, k: number): St
 }
 
 /** 聖別: MOD ごとに 0.78〜1.22 倍して丸める。文は stage-core の retext (雛形の「#」の位置だけ変える。カタリストの品質と同じ道) */
-export function applySanctify(data: PatchData, item: StageItem, rng: () => number): StageApply {
+export function applySanctify(data: PatchData, item: StageItem, rng: () => number): StageApply { // E-35 聖別の倍率と値の順
   if (item.rarity !== "rare") return skip(item, tr("聖別はレアのアイテムにだけ", "Sanctification: Rare items only"));
   const mods = sanctifyTargets(item);
   let cur = item;
