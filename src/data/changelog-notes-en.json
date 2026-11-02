@@ -1,4 +1,7 @@
 {
+  "0.1.656": [
+    "Simulator: the \"Save first?\" prompt after changing the start in the final-item settings could appear off screen; it now scrolls into view"
+  ],
   "0.1.655": [
     "Emulator: you can no longer use an essence when the item already has a mod of the same family (its row in the mod list is greyed out too). An item holds only one mod per family (except when a flux changes the element)"
   ],
