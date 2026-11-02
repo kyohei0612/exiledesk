@@ -5,7 +5,7 @@ import { catalysingMultiplier, catalystCountFor, catalystPriceKey } from "../../
 import { catalystsFor } from "../../htc/quality";
 import { type Side } from "./step-odds";
 import { OMEN, BREACH_FAMILY, FACTION_OMEN, FACTION_TAG, ABYSS_MARK_FLOOR } from "../../htc/omens";
-import { essenceClash, familyBlocked, occupiedKeysOf, rawFamiliesOf } from "../../mods/mod-rules";
+import { familyBlocked, occupiedKeysOf } from "../../mods/mod-rules";
 import type { RollOutcome, SimAction, SimCtx, SimNode, SimSlot, SimState } from "./sim-route-types";
 
 // 上級・完全の段の下限 (poe2db の各カレンシーの Minimum Modifier Level、2026-10-14 確認): 変成・増強 44 / 70、王者・高貴・カオス 35 / 50。
@@ -36,9 +36,9 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
   // マジックはプレ 1・サフィ 1 まで
   const room = (s: SimState, side: Side): boolean => count(s, side) < (s.magic ? 1 : ctx.limits[side]);
   /** 付いている系統 (狙いの MOD も外れも。系統が分からない物は数えない) */
-  const keysOf = (x: SimSlot, raw = false): string[] => {
+  const keysOf = (x: SimSlot): string[] => {
     const m = x.modId ? mod(x.modId) : undefined;
-    return m ? (raw ? rawFamiliesOf(m) : occupiedKeysOf(m)) : x.family ? [x.family] : [];
+    return m ? occupiedKeysOf(m) : x.family ? [x.family] : [];
   };
   const families = (s: SimState): Set<string> => new Set(s.slots.flatMap((x) => keysOf(x)));
   /** ブリーチの MOD のレベル (削減のお告げで比べる。データの段のレベル、無ければ 1) */
@@ -166,12 +166,9 @@ function makeHelpers(ctx: SimCtx, nodes: readonly SimNode[]) {
         const side = mod(a.modId)?.type as Side;
         const rs = removeSideOf(s, a);
         if (rs !== side && !room(s, side)) return "エッセンスの側に枠が無い";
-        // 同じ系統の MOD が付いていれば付かない (ゲームは打てない)。ただしそれが消える側で唯一外せる物なら、先に消えるので付く
-        // (枠 2 つの側の上書きの輪: 冒涜の外れがエッセンスと同じ系統のことがある)
+        // 同じ系統の MOD が付いていれば付かない (E-11a。消える側の物でも、消す前に弾く。例外なし)
         const em = mod(a.modId);
-        const clash = em ? s.slots.map((x, i) => (essenceClash(em, new Set(keysOf(x, true))) ? i : -2)).filter((i) => i >= 0) : [];
-        const rem = removable(s, rs);
-        if (clash.length && !(clash.length === 1 && rem.length === 1 && rem[0] === clash[0])) return "同じ系統の MOD が付いている";
+        if (em && familyBlocked(em, families(s))) return "同じ系統の MOD が付いている";
         return removable(s, rs).length || room(s, rs) ? null : "食わせる物も枠も無い";
       }
       case "magicEssence": return s.slots.length || s.breach ? "白のベースにだけ (変成 → エッセンス)" : null;

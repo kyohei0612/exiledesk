@@ -8,14 +8,14 @@
 import type { Mod, PatchData } from "../../../vendor/poe2htc/engine/types";
 import { modListFor } from "../../craft-stage/mod-list";
 import { freshItem } from "../../craft-stage/run-plan";
-import { sharesRawFamily } from "../../mods/mod-rules";
+import { sharesFamily } from "../../mods/mod-rules";
 
 /** 読み替えた先 (to は元の印 = fractured などをそのまま持つ) と、新しいベースに無くて外した物 */
 export interface CarriedAims<A extends { modId: string; tier: number }> { kept: Array<{ from: A; to: A }>; dropped: A[] }
 
-/** 同じ MOD とみなすか: 文 (英語の文面、無ければ日本語)・生の系統・側・種類・ルーンが同じ */
+/** 同じ MOD とみなすか: 文 (英語の文面、無ければ日本語)・系統・側・種類・ルーンが同じ */
 const sameMod = (a: Mod, b: Mod): boolean =>
-  a.type === b.type && a.source === b.source && a.rune === b.rune && (a.text ?? a.textJa) === (b.text ?? b.textJa) && (a.text ?? a.textJa) != null && sharesRawFamily(a, b);
+  a.type === b.type && a.source === b.source && a.rune === b.rune && (a.text ?? a.textJa) === (b.text ?? b.textJa) && (a.text ?? a.textJa) != null && sharesFamily(a, b);
 
 export function carryAims<A extends { modId: string; tier: number }>(data: PatchData, toBase: string, itemLevel: number, aims: readonly A[]): CarriedAims<A> {
   // 段の表は modListFor の行と同じ数え方 (T1 が一番上、同じ系統をまとめた行は段ごとに modId)
