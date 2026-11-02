@@ -252,6 +252,7 @@ watch(() => s.log.value.length, (n, old) => {
 export const canRetry = computed(() => !!topic.value);
 export function retryStep(): void {
   s.hold(null);
+  if (topic.value) logRecord("tutorial", { c: topic.value.id, e: "retry", i: topicAt.value }); // どの手でやり直したか (Y-65)
   // もう一度: 今の手の始めに戻す (ループの手も 1 周目・用意し直したアイテムに戻す。2026-10-18 オーナー「もう一度ボタンはホントに最初から」)
   loopRound.value = 1;
   const top = snaps[snaps.length - 1];

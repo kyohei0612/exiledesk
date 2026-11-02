@@ -23,6 +23,9 @@ watch([topic, topicAt], () => { topicUsed.value = false; topicSub.value = 0; }, 
 /** 次の手へ (最後の手なら完了) */
 export function topicNext(): void { if (topic.value && topicUsed.value) topicAt.value++; }
 
+// どの手まで進んだか (e: step、i = 手の番号。手の中身は入れない、Y-65。2026-11-02「始めて終わらない」のどの手で止まったかが分からなかった)
+watch(topicAt, (i) => { if (topic.value && i > 0) logRecord("tutorial", { c: topic.value.id, e: "step", i }); });
+
 export function startTopic(c: TopicCourse, onStart?: () => void): void {
   onStart?.();
   s.play.value = "lesson"; // チュートリアルの置き場で遊ぶ (エミュレーターの中身はそのまま。白に戻すより先に切り替える)
