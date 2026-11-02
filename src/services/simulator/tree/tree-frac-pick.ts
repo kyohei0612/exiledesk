@@ -58,7 +58,7 @@ export function fracFreeHit(data: PatchData, m: StageMod | null, own: readonly A
 export function fractureTarget(data: PatchData, item: StageItem, h: Hand, aims: readonly Aim[], rng?: () => number): string | null {
   if (effectOf(h.currency) !== "fracture" || h.pick === "random") return null;
   const mods = [...item.prefixes, ...item.suffixes].filter((m) => !m.fractured);
-  // ✦ が複数なら、付いている ✦ のどれかを等しく (どの ✦ が固定されても当たり。前は付いている最初の ✦ だけ、スイッチ fracMulti、S-42)
+  // ✦ が複数なら、付いている ✦ のどれかを等しく (どの ✦ が固定されても当たり。前は付いている最初の ✦ だけ、S-42)
   if (rng) { const c = aims.flatMap((a) => mods.filter((x) => isAimMod(x, targetsOf(data, [a]), aimOpts(data))).slice(0, 1)); const u = [...new Map(c.map((m) => [m.modId, m])).values()]; return u.length ? u[Math.floor(rng() * u.length)]!.modId : null; }
   for (const a of aims) { const m = mods.find((x) => isAimMod(x, targetsOf(data, [a]), aimOpts(data))); if (m) return m.modId; }
   return null;

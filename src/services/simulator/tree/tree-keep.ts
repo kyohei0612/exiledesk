@@ -1,5 +1,5 @@
 /**
- * tree-keep.ts — 消える手の「残したい MOD」(S-27d、スイッチ keepAll。10-31 朝オーナー決め 7「よーは挙動はMODが消えてしまうような奴は全員そうよな」)。
+ * tree-keep.ts — 消える手の「残したい MOD」(S-27d。10-31 朝オーナー決め 7「よーは挙動はMODが消えてしまうような奴は全員そうよな」)。
  * 消去 (Hand.keep、S-27) と同じ見方を、カオス・パーフェクトエッセンス・満杯の側の骨にも: 残したい MOD が消えた = 狙いが消えた、☑ の無い MOD は消えても外れ。
  * keep の無い手 (前に保存した手・候補が 1 つ以下で聞かなかった手) は既定 = 持っている狙い (☑ の印) 全部 = 今までの数え。
  * 狙いが消えた人に付ける狙い (☑・エッセンスの MOD) が付いたら、狙いが消えた箱を別にして (鍵 `g:`)「狙いが消えた・狙いが付いた」、付いた狙いは ☑ の印に数える
@@ -11,10 +11,9 @@ import { effectOf, engineOmens } from "./tree-hands";
 import { prepFor } from "./tree-unbounded";
 import { fractureMarks, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { joinKeys } from "./tree-whittle";
-import { flag } from "../../../web/release-flags";
 
 /** 消去でない手で残したい MOD を決めた物か (消去の keep は今までどおり tree-outcome の isKeepAnnul) */
-export const isKeepHand = (h: Hand | null | undefined): h is Hand & { keep: Aim[] } => flag("keepAll") && !!h?.keep && effectOf(h.currency) !== "remove";
+export const isKeepHand = (h: Hand | null | undefined): h is Hand & { keep: Aim[] } => !!h?.keep && effectOf(h.currency) !== "remove";
 /** 残したい MOD の段は完成形の段 (消去の S-27c と同じ) */
 const goalTier = (doc: TreeDoc, keep: readonly Aim[]): Aim[] => keep.map((a) => (doc.memoAims ?? []).find((g) => g.modId === a.modId) ?? a);
 /** 消える手の残したい MOD (段は完成形の段)。残したい MOD を決めていない手は null (既定 = 持っている狙い) */
@@ -43,7 +42,6 @@ export function goneOf(data: PatchData, item: StageItem, currency: string, omens
 const GOT = "g:";
 /** 狙いが消えた人に付いた狙い (own = この手の当たりの札。打つ前に無く、打った後にある物) の鍵 `g:modId,…`。付いていなければ undefined */
 export function gotKeyOf(data: PatchData, before: StageItem, after: StageItem, own: readonly Aim[]): string | undefined {
-  if (!flag("keepAll")) return undefined;
   const got = own.filter((a) => !aimHeldOn(data, before, a, { sameText: true }) && aimHeldOn(data, after, a, { sameText: true })).map((a) => a.modId);
   return got.length ? `${GOT}${[...new Set(got)].sort().join(",")}` : undefined;
 }

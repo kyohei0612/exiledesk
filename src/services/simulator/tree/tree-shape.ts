@@ -412,7 +412,7 @@ export function outBoxOf(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim
   return outBoxOfRaw(doc, b, oc, after);
 }
 function outBoxOfRaw(doc: TreeDoc, b: TreeBox, oc: { out: OutKind; hits: Aim[]; junkKey?: string }, after?: StageItem): string | undefined {
-  // 外れの枝が側と種類で分かれている時は鍵の合う箱 (狙い無しの乱数のフラクチャー、スイッチ fracPick。外れ・打った後・外れが消えたの側 = S-65、スイッチ junkSide)。
+  // 外れの枝が側と種類で分かれている時は鍵の合う箱 (狙い無しの乱数のフラクチャー、スイッチ fracPick。外れ・打った後・外れが消えたの側 = S-65)。
   // 鍵の合う箱が無ければ (前の版の 1 箱の外れ、見本で出なかった側) 今までどおり種類の合う箱
   // 狙いが消えたの箱も側の鍵を持つので (S-71g)、外れの人を同じ鍵の狙いが消えたの箱へ入れない
   if (oc.junkKey) { const k = b.outs.find((id) => doc.boxes[id]?.junkKey === oc.junkKey && (oc.out !== "lost" || doc.boxes[id]?.out === "lost") && (oc.out === "lost" || doc.boxes[id]?.out !== "lost") && (oc.out !== "hit" || !oc.hits.length || (doc.boxes[id]?.out === "hit" && boxAims(doc.boxes[id]!).some((x) => oc.hits.some((a) => a.modId === x.modId && a.tier === x.tier))))); if (k) return k; }

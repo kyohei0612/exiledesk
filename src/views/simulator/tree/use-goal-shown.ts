@@ -38,10 +38,10 @@ export function useGoalShown() {
     const hand = wayRows(d, doc, midAims(doc).filter((a) => !way.some((m) => m.modId === a.modId) && brq?.modId !== a.modId).map((a) => ({ ...a, tier: 1 })));
     return [...way, ...hand, ...(brq ? [brq] : [])];
   });
-  /** 上限を溢れたクラフト MOD の束 (S-30b、スイッチ attachWay)。カードに乗らなかった束の MOD は行を足して全部カードに出す */
-  const bundle = computed(() => (flag("attachWay") && s.data.value ? craftBundle(s.data.value, t.doc.value, t.goalItem.value?.item ?? null) : null));
+  /** 上限を溢れたクラフト MOD の束 (S-30b)。カードに乗らなかった束の MOD は行を足して全部カードに出す */
+  const bundle = computed(() => (s.data.value ? craftBundle(s.data.value, t.doc.value, t.goalItem.value?.item ?? null) : null));
   /** 冒涜の束 (2 つ目から、どれか 1 つ) */
-  const desecrated = computed(() => (flag("attachWay") && s.data.value ? desecratedBundle(s.data.value, t.doc.value) : null));
+  const desecrated = computed(() => (s.data.value ? desecratedBundle(s.data.value, t.doc.value) : null));
   /** 束に入っている狙いの MOD (カードに全部出し、枠の外の一覧からは除く) */
   const bundled = computed(() => new Set([...(bundle.value?.aims ?? []), ...(desecrated.value ?? [])].map((a) => a.modId)));
   const bundleRows = computed((): StageMod[] => {
@@ -82,12 +82,12 @@ export function useGoalShown() {
   const wayTag = (): RowTag => ({ text: tr("途中で消える", "Removed on the way"), tone: "warn" as const, title: `${tr("途中で付けて、その後で消えてよい MOD (品質は残る)。完成の狙い・MOD の枠・完成の判定には数えない", "Added on the way, then may be removed (quality stays). Not counted as a final target, mod slot or for completion")}
 ${WAY_ORDER()}` });
   /**
-   * カードの並びの束 (StageItemCard の rowGroup、スイッチ attachWay): エッセンス・合金の MOD (束でなくても全部、途中で消える物も) = 1 で、ふつうの MOD の下・冒涜の上に
+   * カードの並びの束 (StageItemCard の rowGroup): エッセンス・合金の MOD (束でなくても全部、途中で消える物も) = 1 で、ふつうの MOD の下・冒涜の上に
    * (10-31 オーナー「エッセンスは下にした方が見た目いいね、冒涜はプレサフィ関係なく一番↓につくけど、その上にエッセンス」)。冒涜の束 = 2 (冒涜は元から一番下)
    */
   const groups = computed((): Map<string, number> | null => {
     const d = s.data.value, it = item.value;
-    if (!flag("attachWay") || !d || !it) return null;
+    if (!d || !it) return null;
     const m = new Map<string, number>();
     for (const x of [...it.prefixes, ...it.suffixes]) if (isCraftAim(d, x)) m.set(x.modId, 1);
     for (const a of desecrated.value ?? []) m.set(a.modId, 2);

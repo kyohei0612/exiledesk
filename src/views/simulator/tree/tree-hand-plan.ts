@@ -31,14 +31,13 @@ import { revealAimsOf } from "./tree-reveal-aims";
 import { blockHand, isRevealHand, veilKeep, veilPick } from "../../../services/simulator/tree/tree-veil";
 import { fracFree } from "../../../services/simulator/tree/tree-frac-pick";
 import { tr } from "../../../i18n/lang";
-import { flag } from "../../../web/release-flags";
 
 /** 起こりうる結果の一覧 (tree-sample の possibleOutsOf)。null = 手の種類ごとの箱 */
 export type OnlyOut = ReadonlyArray<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null;
 /** 棚で選んだ物 (持った物・掛けたお告げ・当たるまで・狙い無し・骨の反響・フラクチャーで ✦ にする狙い) */
 export interface HandPick { held: string; omens: readonly string[]; spam?: boolean; spamMax?: number | null; free?: boolean; echo?: boolean; /** 消去の残したい MOD ([] = 全部消えてよい、tree-model の Hand.keep) */ keep?: readonly Aim[];
   /** 骨の手の発現 (keep = 未発現のまま次へ、pick = 発現させる。tree-model の Hand.veil) */ veil?: "keep" | "pick";
-  /** エッセンスの「ブロックに使う」☑ (S-33b、スイッチ keepOutside) */ block?: boolean;
+  /** エッセンスの「ブロックに使う」☑ (S-33b) */ block?: boolean;
   /** カタリストの手の「何 % まで」(S-31b、スイッチ catHand。0 = 前の「最大まで」の通り抜け) */ qualityTo?: number }
 
 /**
@@ -47,7 +46,7 @@ export interface HandPick { held: string; omens: readonly string[]; spam?: boole
  */
 export const needAimOf = (doc: TreeDoc, boxId: string, note: string | null | undefined): boolean => doc.boxes[boxId]?.out === "hit" && !doc.boxes[boxId]?.aim && note === "none";
 /**
- * この箱が品質を上げた後か (前にカタリストを自動で足さない)。スイッチ judgeOne の下では品質は箱の中身 (S-60) なので、見本のカタリストの品質で見る
+ * この箱が品質を上げた後か (前にカタリストを自動で足さない) の下では品質は箱の中身 (S-60) なので、見本のカタリストの品質で見る
  * (「n % まで」の結果の箱も、S-31b)。閉じている間は品質だけ上げる手の後の通り抜けの箱だけ
  */
 export function afterQualityOf(doc: TreeDoc, boxId: string): boolean {
@@ -89,11 +88,11 @@ export function keepChoicesOf(data: PatchData, item: StageItem, currency?: strin
   return all.filter((m) => !gone || gone.has(m.modId)).map((m) => ({ aim: { modId: m.modId, tier: tierRankOf(data, m.modId, m.tierIndex) }, mod: m }));
 }
 /**
- * 残したい MOD を聞く手か = 消えうる MOD が 2 つ以上 (S-27b)。消去と、スイッチ keepAll では消去でない消える手 (カオス・パーフェクトエッセンス・満杯の側の骨、S-27d) も。
+ * 残したい MOD を聞く手か = 消えうる MOD が 2 つ以上 (S-27b)。消去と では消去でない消える手 (カオス・パーフェクトエッセンス・満杯の側の骨、S-27d) も。
  * 消せる MOD の無い手 (高貴・ふつうのエッセンス・空きのある側の骨) は候補 0 なので聞かない
  */
 export function keepAskOf(data: PatchData, item: StageItem, currency: string, omens: readonly string[]): boolean {
-  if (effectOf(currency) !== "remove" && !(flag("keepAll") && !isRuneHand(currency) && !isCatalyst(currency) && effectOf(currency) !== "fracture")) return false;
+  if (effectOf(currency) !== "remove" && !(!isRuneHand(currency) && !isCatalyst(currency) && effectOf(currency) !== "fracture")) return false;
   return keepChoicesOf(data, item, currency, omens).length > 1;
 }
 /** 消える手 (消去でない) の残したい MOD の既定 = 候補のうち ☑ の印 (持っている狙い) の物 (S-27d) */
@@ -111,10 +110,10 @@ export function handOf(p: HandPick): Hand {
     repeat: p.spam && canSpam(p.held) ? { until: "hit", max: p.spamMax && p.spamMax > 0 ? Math.round(p.spamMax) : null } : null,
     // 乱数のフラクチャーの狙い無し (固定されうる MOD ごとの箱。印の無い木だけ、applyPick が pick を付ける。スイッチ fracPick)
     ...(p.free && !p.spam && (FREE_EFFECTS.includes(effectOf(p.held)) || effectOf(p.held) === "fracture") ? { free: true } : {}),
-    // 消える手 (カオス・パーフェクトエッセンス・骨) の残したい MOD も (S-27d、スイッチ keepAll。消せる MOD が無い手には呼ぶ側が渡さない)
-    ...(p.keep && (effectOf(p.held) === "remove" || flag("keepAll")) ? { keep: p.keep.map((a) => ({ modId: a.modId, tier: a.tier })) } : {}),
+    // 消える手 (カオス・パーフェクトエッセンス・骨) の残したい MOD も (S-27d。消せる MOD が無い手には呼ぶ側が渡さない)
+    ...(p.keep ? { keep: p.keep.map((a) => ({ modId: a.modId, tier: a.tier })) } : {}),
     ...(p.veil && isBone(p.held) ? { veil: p.veil } : {}),
-    ...(p.block && flag("keepOutside") && effectOf(p.held) === "essence" ? { block: true as const } : {}),
+    ...(p.block && effectOf(p.held) === "essence" ? { block: true as const } : {}),
   };
 }
 export const kindOf = (h: Hand): HandKind => kindOfHand(h, effectOf(h.currency));
@@ -177,10 +176,9 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
     }
     return fractureMarks(doc).filter((a) => aimHeldOn(data, item, a, { sameText: true }));
   }
-  // スイッチ freeNoHit: 狙い無しの手・ルーンの手は当たりの箱を出さない (S-23・S-31e、10-31 朝オーナー「狙い無しってことはただ付けて終わりって話だから当たりMODの設定が無い以上でないようにしたいな枝には」)。
-  // 閉じている間は前の形 = 狙い無しも付きうる狙いを出す: 結果は「打った後」+ 付いた狙いの当たりの箱 (10-26 オーナー「当たってたら次の回に消去でそれ決めるんやから」)
-  if (flag("freeNoHit") && (kind === "free" || isRuneHand(h.currency))) return [];
-  if (kind !== "spam" && kind !== "add" && kind !== "swap" && kind !== "free") return [];
+  // 狙い無しの手・ルーンの手は当たりの箱を出さない (S-23・S-31e、10-31 朝オーナー「狙い無しってことはただ付けて終わりって話だから当たりMODの設定が無い以上でないようにしたいな枝には」)。
+  if (kind === "free" || isRuneHand(h.currency)) return [];
+  if (kind !== "spam" && kind !== "add" && kind !== "swap") return [];
   // 候補 = 木で使っている当たりの狙い + 完成形の狙い (memoAims)。前は木に狙いが 1 つでもあると木の分だけで、完成形の残りの狙いが出ず
   // 「どれでも」が空 = 手にならなかった (10-25 モンキー 3 本目 301 の b4: 木の狙いは付いている火耐性貫通だけ、知性・ライフリーチが候補に無い)
   const pool = [...aimsOf(doc), ...(goals.length ? goals : doc.memoAims ?? [])].filter((a, i, l) => l.findIndex((x) => x.modId === a.modId) === i);
@@ -209,7 +207,7 @@ export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: St
 export function hitChoicesOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, p: Pick<HandPick, "held" | "omens" | "echo" | "veil">, goals: readonly Aim[]): Aim[] {
   // 印の無い木の乱数のフラクチャーも ☑ で狙いを選べる (候補 = 見本に付いている完成の狙い。スイッチ fracPick)
   if (effectOf(p.held) === "fracture" && !fractureMarks(doc).length) return hitAimsOf(data, doc, boxId, item, { ...handOf({ held: p.held, omens: p.omens }), pick: "random" }, goals);
-  if (!FREE_EFFECTS.includes(effectOf(p.held)) || (flag("freeNoHit") && isRuneHand(p.held))) return [];
+  if (!FREE_EFFECTS.includes(effectOf(p.held)) || isRuneHand(p.held)) return [];
   return hitAimsOf(data, doc, boxId, item, handOf({ held: p.held, omens: p.omens, echo: p.echo, veil: p.veil }), goals);
 }
 /**
@@ -251,12 +249,12 @@ export function hitLoose(d: TreeDoc): BodyOf | undefined {
   const data = craftStage.data.value;
   return data ? bodyMemo(data, d) : undefined;
 }
-/** 判定 (tree-judge、スイッチ judgeOne の時だけ。閉じていれば null) */
+/** 判定 (tree-judge の時だけ。閉じていれば null) */
 export function judgeOf(d: TreeDoc): Judge | null {
   const data = craftStage.data.value;
   return data ? judgeMemo(data, d) : null;
 }
-/** この箱の見本に消せる ☑ の狙い (✦ でない) があるか (スイッチ judgeOne の時だけ、setHand の「狙いが消えた」を作るか。閉じていれば undefined = 前の道の数え) */
+/** この箱の見本に消せる ☑ の狙い (✦ でない) があるか ( の時だけ、setHand の「狙いが消えた」を作るか。閉じていれば undefined = 前の道の数え) */
 export function holdsAimOf(d: TreeDoc, id: string): boolean | undefined {
   const j = judgeOf(d);
   return j && d.boxes[id] ? j.holdsAim(id) : undefined;
@@ -294,7 +292,7 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
 }
 
 /**
- * スイッチ judgeOne の組み替えのつなぎ (S-50・S-50b・S-66): 新しい箱と手も戻りも完成も無い箱を、中身の同じ手のある箱へ自動の ↩ (linkByContent)、
+ * 組み替えのつなぎ (S-50・S-50b・S-66): 新しい箱と手も戻りも完成も無い箱を、中身の同じ手のある箱へ自動の ↩ (linkByContent)、
  * まだ手の無い同じ中身の箱をまとめ (mergeOpenSame)、新しい当たりの箱は中身の同じ当たりの箱へ統合し、最後に自動の ↩ を全部「箱どうし」で見直す
  */
 function relinkByContent(data: PatchData, d: TreeDoc, had: ReadonlySet<string>): void {
@@ -405,7 +403,7 @@ function stripChain(d: TreeDoc, id: string, h: Hand): void {
   if (data && d.boxes[id]) stripSplit(data, d, id, h, 0);
 }
 /**
- * スイッチ judgeOne: 全部消えてよい消去の結果は、消した後の中身ごとに箱を分ける (S-28d、10-29 深夜オーナー「消去でも同じ枠なのにな まだ駄目だわ」)。
+ * 全部消えてよい消去の結果は、消した後の中身ごとに箱を分ける (S-28d、10-29 深夜オーナー「消去でも同じ枠なのにな まだ駄目だわ」)。
  * 結果の箱ごとに、中身の同じ手のある箱 (ほかの全部消す消去の箱も) があれば ↩ その箱、無ければその箱でまた消去 (消せる物が無ければ行き先未定)。
  * 前は 1 本の直線で、消去 1 回の後の中身が人ごとに違うと箱が混ざり (どれが消えたかで プレ / サフィ)、全員が合う箱に着いた所でも消去を 1 箱足した
  * (木の b24 → b25 = 誰も来ない止まり、b33 と b37 = 同じ中身の消去が 2 本)。結果はこの箱の見本 4 つにエンジンの stepOutcomes で打った物
@@ -434,7 +432,7 @@ function stripSplit(data: PatchData, d: TreeDoc, id: string, h: Hand, depth: num
   }
 }
 /**
- * スイッチ judgeOne: 残したい MOD の消去の結果は全部自動 (S-28e。狙いが消えたは tree-outcome の lostKeyed で消した後の中身ごとの箱、外れが消えたは側ごとの箱)。
+ * 残したい MOD の消去の結果は全部自動 (S-28e。狙いが消えたは tree-outcome の lostKeyed で消した後の中身ごとの箱、外れが消えたは側ごとの箱)。
  * 箱ごとに中身の同じ手のある箱 (ほかの消去の箱も、自分の下は除く。打つ前の箱が合えばそこを先に = オーナーが組んだ道) があれば ↩ その箱、無ければ
  * 狙いが消えた = その箱で全部消えてよい消去 (スパム、S-28d)、外れが消えた = 外れが残っていれば同じ残したい MOD の消去をもう一度。
  * 前は狙いが消えたが手も行き先も無い 1 箱で「失敗」になり (10-29 深夜オーナー「古い仕組みだからかな。消去でもスパムにいかないね」、木 2 本目の b47)、

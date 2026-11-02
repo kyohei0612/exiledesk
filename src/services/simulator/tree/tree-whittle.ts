@@ -1,5 +1,5 @@
 /**
- * tree-whittle.ts — 削減のお告げを含む手の枝を外れ MOD の MOD レベルで分ける (S-65b、スイッチ whittleRank)。
+ * tree-whittle.ts — 削減のお告げを含む手の枝を外れ MOD の MOD レベルで分ける (S-65b)。
  * 見本のアイテムの外れ MOD は 1 つの MOD レベルしか持たないので、そのまま打つと外れの MOD レベルの違いで枝が分かれない (前の作り)。
  * ランダムに付いた外れ MOD を、データ (その部位・アイテムレベル・側で付きうる MOD と重み) の MOD レベルの範囲ごとの代わりに差し替えて打ち直す (①):
  * 範囲 = 消せる欲しい MOD (フラクチャー以外の狙い) の MOD レベルのどれより低い / 同じ / 間 / どれより高い。割合はその範囲の重みの和 ÷ 付きうる外れ全部の重み。
@@ -9,12 +9,11 @@
  */
 import { candidates, makeStageMod, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { without } from "../../craft-stage/stage-core";
-import { flag } from "../../../web/release-flags";
 import { engineOmens } from "./tree-hands";
 
 const WHITTLE = "OmenofWhittling";
-/** 削減のお告げを含む手か (スイッチ whittleRank が閉じていれば false = 今のまま見本の MOD レベルで決まる) */
-export const isWhittleHand = (h: { omens: readonly string[] } | null | undefined): boolean => !!h && flag("whittleRank") && engineOmens(h).includes(WHITTLE);
+/** 削減のお告げを含む手か ( が閉じていれば false = 今のまま見本の MOD レベルで決まる) */
+export const isWhittleHand = (h: { omens: readonly string[] } | null | undefined): boolean => !!h && engineOmens(h).includes(WHITTLE);
 
 /** MOD レベル (未発現は 1、apply-currency の whittleTargets と同じ) */
 const lv = (m: StageMod): number => (m.unrevealed ? 1 : m.modLevel);

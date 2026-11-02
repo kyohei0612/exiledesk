@@ -22,8 +22,8 @@ export function goalBlockLoose(data: PatchData, base: string, itemLevel: number,
   const alone = goalBlock(data, base, itemLevel, [], add);
   if (alone) return alone;
   for (const a of aims) {
-    // 冒涜の MOD は何個でも候補にできる (S-10b、スイッチ attachWay、10-31 オーナー「冒涜もいくつか候補…上限とかなくていいんじゃない」)。同じ系統だけは断る
-    if (flag("attachWay") && isDesecrated(data, a) && isDesecrated(data, add)) { if (familiesOf(data, a).some((f) => familiesOf(data, add).includes(f))) return SAME_FAMILY(); continue; }
+    // 冒涜の MOD は何個でも候補にできる (S-10b、10-31 オーナー「冒涜もいくつか候補…上限とかなくていいんじゃない」)。同じ系統だけは断る
+    if (isDesecrated(data, a) && isDesecrated(data, add)) { if (familiesOf(data, a).some((f) => familiesOf(data, add).includes(f))) return SAME_FAMILY(); continue; }
     const w = goalBlock(data, base, itemLevel, [a], add); if (w) return w;
   }
   return null;

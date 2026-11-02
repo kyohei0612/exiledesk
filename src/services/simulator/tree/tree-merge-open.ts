@@ -11,7 +11,7 @@ import { heldSets } from "./tree-shape";
 import type { Judge } from "./tree-judge";
 
 const OPEN_OUTS: ReadonlySet<OutKind | "start"> = new Set(["junk", "any", "junkGone"]);
-/** スイッチ judgeOne: 狙いが消えたの箱もまとめる (S-66) */
+/** 狙いが消えたの箱もまとめる (S-66) */
 const OPEN_JUDGE: ReadonlySet<OutKind | "start"> = new Set(["junk", "any", "junkGone", "lost"]);
 /** 作った順 (箱の id は b<番号>) */
 const seqOf = (id: string): number => Number(/\d+$/.exec(id)?.[0] ?? 0);
@@ -21,7 +21,7 @@ const depthOf = (doc: TreeDoc, id: string): number => { let n = 0; for (let b = 
 const rankPart = (k: string | undefined): string => k?.split(";").find((s) => s.startsWith("w:")) ?? "";
 const setKey = (doc: TreeDoc, id: string): string => heldSets(doc, id).map((h) => [...h].sort().join(",")).sort().join("|");
 
-/** j = 判定 (tree-judge、スイッチ judgeOne)。渡すと比べは「箱どうし」の fitsBox だけ */
+/** j = 判定 (tree-judge)。渡すと比べは「箱どうし」の fitsBox だけ */
 export function mergeOpenSame(doc: TreeDoc, ids: readonly string[], body: BodyOf | undefined, j?: Judge | null): void {
   if (!body && !j) return;
   const outs = j ? OPEN_JUDGE : OPEN_OUTS;

@@ -212,7 +212,7 @@ export function installSimMonkey(): () => void {
         // 照らしの台本が同じ打ち止めで辿れるよう、使った手の神建ての値段と打ち止め (runTree の既定、画面と同じ)
         prices: Object.fromEntries(memo), capDiv: 2000, capSteps: 20000 };
     },
-    // スイッチ judgeOne: 箱の中身 (見本の中身の鍵、見本ごとに違えば mixed) と「箱どうし」の判定 (S-50b。見張りが同じ物差しで見る)
+    // 箱の中身 (見本の中身の鍵、見本ごとに違えば mixed) と「箱どうし」の判定 (S-50b。見張りが同じ物差しで見る)
     shapeOf(id: string) { const d = s.data.value, j = judgeOf(t.doc.value); if (j) { const c = [...(j.contents(id) ?? [])].sort(); return t.doc.value.boxes[id] ? { held: c, body: c.length > 1 ? `mixed:${id}` : c[0] ?? null } : null; } return d ? boxShape(d, t.doc.value, id) : null; },
     sameShape(from: string, to: string) { const d = s.data.value, j = judgeOf(t.doc.value); if (j) return to === "match" || to === "restart" ? true : j.fitsBox(from, to); return d ? sameShape(d, t.doc.value, from, to) : null; },
     /** 自動の ↩ の見直し (tree-shape の pruneBacks、judgeOne の下では箱どうしの判定) を写しに掛けて、外れる戻りの箱を返す (木は変えない) */

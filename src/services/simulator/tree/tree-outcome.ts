@@ -20,7 +20,6 @@ import { isRevealHand, midAims, revealedOf, revealHitOf, stoneAims, veilKeep, ve
 import { fracFree, fracFreeHit, fracFreeOuts, junkKeyOf, newlyFractured } from "./tree-frac-pick";
 import { nextKeyOf, sideKeyOf } from "./tree-junk-side";
 import { aimedAims, isWhittleHand, joinKeys, rankVariants } from "./tree-whittle";
-import { flag } from "../../../web/release-flags";
 import { aimedAfterAnnul, aimedOfSample, contentOf, judgeMemo, looseKey, sampleAimed, strippedOf } from "./tree-judge";
 import { goneOf, gotOf, keptAimedOf, keptAimsOf, withGot } from "./tree-keep";
 import { itemKeyOf } from "./tree-sample-key";
@@ -38,7 +37,7 @@ function midOf(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, before
 const withMid = (aims: readonly Aim[], mid: readonly Aim[]): Aim[] => [...aims, ...mid.filter((a) => !aims.some((x) => x.modId === a.modId))];
 /** 狙いが消えたも側で分ける (S-65・S-71g)。残したい MOD の消去は中身の鍵があるので分けない (S-28e) */
 const lostSided = (h: Hand | null | undefined): boolean => !isKeepAnnul(h);
-/** 外れ・打った後・外れが消えたに側の鍵を付ける (S-65、スイッチ junkSide。閉じていれば今のまま) */
+/** 外れ・打った後・外れが消えたに側の鍵を付ける (S-65。閉じていれば今のまま) */
 function sided(oc: Outcome, before: StageItem, after: StageItem, h?: Hand | null): Outcome {
   // 狙いの付かないエッセンスの結果 (当たりで札が空) は洗い出しでは打った後の箱
   const bare = oc.out === "hit" && !oc.hits.length;
@@ -53,14 +52,14 @@ function sided(oc: Outcome, before: StageItem, after: StageItem, h?: Hand | null
  * 前は木全部の狙いで数え、☑ の無いキャストスピードが付いた・消えた人に行き先が無く止まった (r/ibMlQuAV の 2 段目のカオスで 30 人中 28 人)。aims は木の狙い (エッセンス・フラクチャーはそのまま)
  */
 /**
- * aimed = 打つ前のアイテムの ☑ で付いた狙い (スイッチ judgeOne、tree-judge)。渡すと、付いていて ☑ の無い完成形の MOD は外れ MOD として数える
+ * aimed = 打つ前のアイテムの ☑ で付いた狙い (tree-judge)。渡すと、付いていて ☑ の無い完成形の MOD は外れ MOD として数える
  * (消えても外れが消えた・外れ。どれが狙いかは打つ前の中身、S-29・S-60。エッセンスも同じ = 大本 2)
  */
 export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageItem, after: StageItem, aims0: readonly Aim[], aimed?: ReadonlySet<string> | null): Outcome {
   const key = b.hand?.currency;
-  // 全部消えてよい消去は消した後の中身ごとの箱 (S-28d、スイッチ judgeOne)
+  // 全部消えてよい消去は消した後の中身ごとの箱 (S-28d)
   if (isStrip(b)) return { out: "junkGone", hits: [], junkKey: stripKeyOf(data, doc, after, aimedAfterAnnul(data, doc, b.hand, aimed, before)) };
-  // 消える手の残したい MOD (S-27d、スイッチ keepAll): 打つ前の ☑ の代わりに残したい MOD で数える
+  // 消える手の残したい MOD (S-27d): 打つ前の ☑ の代わりに残したい MOD で数える
   const am = noStones(doc, b.hand, keptAimedOf(doc, b.hand, aimed));
   const aims = am ? keptPlus(doc, b.hand, mineOf(data, before, withMid(aims0, midOf(data, doc, b.hand, before, am)), am)) : aims0;
   const own = b.outs.flatMap((id) => { const c = doc.boxes[id]; return c?.out === "hit" && c.aim ? boxAims(c) : []; });
@@ -92,7 +91,7 @@ const keptPlus = (doc: TreeDoc, h: Hand | null | undefined, aims: Aim[]): Aim[] 
 /** 残したい MOD の消去か (☑ が 1 つ以上) */
 export const isKeepAnnul = (h: Hand | null | undefined): h is Hand => !!h?.keep?.length && effectOf(h.currency) === "remove";
 /**
- * 残したい MOD の消去の「狙いが消えた」も、消した後の中身ごとの箱 (S-28e、スイッチ judgeOne。全部消えてよい消去の S-28d と同じ鍵 `c:…`)。
+ * 残したい MOD の消去の「狙いが消えた」も、消した後の中身ごとの箱 (S-28e。全部消えてよい消去の S-28d と同じ鍵 `c:…`)。
  * 前は 1 箱で、中身が人ごとに違って混ざり、手も行き先も無く止まった (木 2 本目の b47、予約 K)。
  * 外れが消えたは側の鍵 `s:…` のまま (残したい MOD が残って外れが 1 つ消えるので、側ごとに中身は 1 つ。鍵を替えると保存の札が合わず要確認が増えた)
  */
@@ -104,7 +103,7 @@ function lostKeyed<T extends { out: OutKind; junkKey?: string }>(data: PatchData
 /** ☑ を選ぶ手 (付け足す・入れ替える = 高貴・カオスなど。tree-hand-plan の FREE_EFFECTS と同じ) */
 const PICK_EFFECTS: readonly string[] = ["add", "swap"];
 /**
- * ☑ を選ぶ手の狙い = 打つ前に付いている狙いと、この手の ☑ (picked) だけ (S-22b、スイッチ judgeOne)。☑ の無い完成形の MOD が付いても外れ MOD。
+ * ☑ を選ぶ手の狙い = 打つ前に付いている狙いと、この手の ☑ (picked) だけ (S-22b)。☑ の無い完成形の MOD が付いても外れ MOD。
  * 前は木の狙い全部で数え、付いた知性 (☑ 無し) が「当たり」を取ってから外れに落ちて、同時に消えた最大ライフの「狙いが消えた」が抜けた (木 oWkFcwYX の b14 のカオス)
  */
 const pickedAims = (data: PatchData, before: StageItem, aims: readonly Aim[], picked: readonly Aim[]): Aim[] =>
@@ -114,7 +113,7 @@ function lostFirst<T extends { out: OutKind; hits: Aim[] }>(on: boolean, data: P
   return on && oc.out === "hit" && aimDiff(data, before, after, aims, { sameText: true }).lost.length ? { out: "lost", hits: [] } : oc;
 }
 /**
- * 消去の残したい MOD (☑) の段は完成形の段で見る (S-27c、スイッチ judgeOne)。保存の ☑ は見本の段 (最大ライフ T4) で、完成形 (T5) の人の最大ライフが消えても
+ * 消去の残したい MOD (☑) の段は完成形の段で見る (S-27c)。保存の ☑ は見本の段 (最大ライフ T4) で、完成形 (T5) の人の最大ライフが消えても
  * 「外れが消えた」になった (木 oWkFcwYX の b9)。完成形に無い MOD はそのまま
  */
 const keepAims = (doc: TreeDoc, keep: readonly Aim[]): Aim[] => keep.map((a) => (doc.memoAims ?? []).find((g) => g.modId === a.modId) ?? a);
@@ -178,7 +177,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   // 印の無い木の狙い無しのフラクチャー: 固定されうる MOD ごとの箱 (「〇〇がフラクチャーされた場合」。スイッチ fracPick)
   if (fracFree(doc, h)) { const f = fracFreeOuts(data, doc, Array.from({ length: SINGLE_SEEDS }, (_, i) => sampleOf(data, doc, boxId, i + 1).item)); const l = [...f.aims.map((x) => ({ out: "hit" as OutKind, aim: x })), ...f.junk.map((k) => ({ out: "junk" as OutKind, aim: null, junkKey: k }))]; return l.length ? l : null; }
   // 骨を未発現のまま (狙い無し) は下の未発現の所で「未発現の冒涜が付いた」1 つに 
-  // 狙い無しは「打った後」1 つ (手の種類の箱)。スイッチ junkSide の間は付いた側ごとの「打った後」(S-65)
+  // 狙い無しは「打った後」1 つ (手の種類の箱) の間は付いた側ごとの「打った後」(S-65)
   const freeSide = !!h.free && !veilKeep(h);
   if (h.repeat || (h.free && !veilKeep(h) && !freeSide) || isCatalyst(h.currency) || (h.keep && !h.keep.length && effectOf(h.currency) === "remove")) return null;
   // ルーンの手は確定の手: はめた後のアイテムの「打った後」1 箱 (カタリストと同じ、S-31e。前は当たり (付く MOD 無し) と外れに分かれて輪になった)
@@ -194,7 +193,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   let veiled = false, veiledLost = false, veiledKeep = false;
   /** 未発現が付く手で狙いが消える結果の鍵 (次の MOD 群、S-65b) */
   const veiledLostKeys = new Set<string>();
-  /** 未発現が付く手で、狙いを消さない結果の側の鍵 (S-65、スイッチ junkSide) */
+  /** 未発現が付く手で、狙いを消さない結果の側の鍵 (S-65) */
   const veiledSides = new Set<string>();
   /** 見本の中に、まだ付いていない狙いがあるか (外れだけの手でも当たりの箱を作って MOD を選ばせる時の見分け) */
   let unheld = false;
@@ -218,14 +217,14 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
     for (const it of all) {
       // roll = 数え上げられない手 (S-21) はエンジンの入口を打って集めた結果で見る
       const prepped = prepFor(data, it, h.currency), outs = (stepOutcomes(data, prepped, h.currency, engineOmens(h)) ?? (roll ? rolledOutcomes(data, prepped, h.currency, engineOmens(h)) : null))?.filter((o) => !o.void);
-      // 打てない見本は飛ばす (外れの種類で打てない人。その人は打てる箱へ移る S-64、スイッチ keepOutside)。全部打てなければ下の list が空で null
-      if (!outs?.length) { if (flag("keepOutside")) continue; return null; }
+      // 打てない見本は飛ばす (外れの種類で打てない人。その人は打てる箱へ移る S-64)。全部打てなければ下の list が空で null
+      if (!outs?.length) continue;
       // 未発現が新しく付く手だけ (前から未発現を持ったまま打つフラクチャー・カオスなどは普通に分ける)
       if (outs.some((o) => unrevealedOf(o.item)) && !unrevealedOf(it)) {
         veiled = true;
         // 消えて「狙いが消えた」になるのは道で持っている狙い・持って着きうる狙いだけ (☑ の無い手で付いた完成形の MOD は外れ MOD = boxOutcomeOf と同じ。
         // 狙い無しの錬金術の打った後に付いたキャストを骨が消すと「狙いが消えた」が出た、10-28 モンキー 6)
-        // 残したい MOD を決めた骨は、その MOD が消えた時だけ狙いが消えた (S-27d、スイッチ keepAll)
+        // 残したい MOD を決めた骨は、その MOD が消えた時だけ狙いが消えた (S-27d)
         const lostOf = (o: { item: StageItem }): number => aimDiff(data, it, o.item, keptAimsOf(doc, h) ?? aims, { sameText: true }).lost.length;
         if (outs.some((o) => lostOf(o))) veiledLost = true;
         // 狙いを消さない結果があるか (満杯の側で全部が狙いなら、骨は必ず狙いを消す = 当たり・外れ・打った後の箱は起こらない。10-28 冒涜まわりの確かめ)
@@ -242,7 +241,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
         const ra = isKeepAnnul(h) ? aims : pick ? pickedAims(data, it, ra0, extra) : ra0;
         const r = lostFirst(pick, data, it, o.item, ra, outcomeOf(data, it, o.item, ra, h.currency));
         if (r.hits.length > 1) { if (roll) continue; return null; } // 足すのは外れ・打った後の形だけ (当たりの箱は ☑ だけ、S-22)
-        // スイッチ junkSide: 狙い無しは狙いが消えた以外全部「打った後」を側ごと。☑ の無い狙いが付いたのは外れ (tree-hand-plan の onlyOf と同じ) を側ごと (S-65)
+        // 狙い無しは狙いが消えた以外全部「打った後」を側ごと。☑ の無い狙いが付いたのは外れ (tree-hand-plan の onlyOf と同じ) を側ごと (S-65)
         // フラクチャーは側で分けない (エッセンスは分ける。boxOutcomeOf と同じ、S-65・S-65b。前はフラクチャーの外れの箱にだけ側の鍵が付き、見本が作れず ✦ の無い親の見本のままだった)
         const sk = k === "fracture" ? undefined : sideKeyOf(it, o.item);
         const nk = <T extends { out: OutKind; junkKey?: string }>(e: T): T => nextKeyed(data, doc, { hand: h }, e, it, o.item, am);
@@ -261,13 +260,13 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   // 骨を未発現のまま: 未発現の冒涜が付いた (打った後) 1 つ + 狙いが消えうる時は狙いが消えた
   const veiledLostOuts = (): Array<{ out: OutKind; aim: Aim | null; junkKey?: string }> => (veiledLostKeys.size ? [...veiledLostKeys].sort().map((junkKey) => ({ out: "lost" as OutKind, aim: null, junkKey })) : [{ out: "lost", aim: null }]);
   if (veiled && !veiledKeep) return veiledLostOuts();
-  // 側の鍵があれば側ごと (S-65、スイッチ junkSide)
+  // 側の鍵があれば側ごと (S-65)
   const vs = (out: OutKind): Array<{ out: OutKind; aim: Aim | null; junkKey?: string }> => (veiledSides.size ? [...veiledSides].sort().map((junkKey) => ({ out, aim: null, junkKey })) : [{ out, aim: null }]);
   if (veiled && veilKeep(h)) return [...vs("any"), ...(veiledLost ? veiledLostOuts() : [])];
   // もう持っている狙いがもう一度付く道は数えない (S-24。起きない当たりの箱が出た)
   const unheldAim = (a: Aim): boolean => smps.some((s) => !aimHeldOn(data, s.item, a, { sameText: true }));
   if (veiled) return [...extra.filter(unheldAim).map((a) => ({ out: "hit" as OutKind, aim: a })), ...vs("junk"), ...(veiledLost ? veiledLostOuts() : [])];
-  // ✦ の木の確定フラクチャーは必ず ✦ のどれかを固定する (外れた分は費用に足す、S-43)。外れの箱は誰も着かないので作らない (スイッチ fracMulti)
+  // ✦ の木の確定フラクチャーは必ず ✦ のどれかを固定する (外れた分は費用に足す、S-43)。外れの箱は誰も着かないので作らない 
   // ✦ の無い MOD (完成の狙いでも) が固定される結果も起こらない (回す時は必ず ✦ を固定する、tree-sample の fractureTarget)
   const marks = new Set(fractureMarks(doc).map((a) => a.modId));
   const sure = k === "fracture" && h.pick !== "random" && marks.size > 0 && [...found.values()].some((e) => e.out === "hit" && !!e.aim && marks.has(e.aim.modId));
@@ -301,7 +300,7 @@ export function stripKeyOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: 
   return `c:${p}|${s}~${(h >>> 0).toString(36)}`;
 }
 /**
- * スイッチ judgeOne: 全部消えてよい消去の止まる所 = 消した後のアイテムと中身 (S-60) が同じ手のある箱 (人と箱の判定、S-28・S-50b)。
+ * 全部消えてよい消去の止まる所 = 消した後のアイテムと中身 (S-60) が同じ手のある箱 (人と箱の判定、S-28・S-50b)。
  * self = 消去の手の箱 (自分と下は入れない)。浅い段・先に作った箱から。無ければ null (消せなくなるまで消す・行き先未定)。
  * strips = ほかの全部消す消去の箱も止まる所に入れる (消した後の結果の行き先、S-28d。同じ中身の消去の直線を 2 本作らない)。
  * 打つ前の見直し (stripStop) では入れない (同じ中身の消去の箱どうしで行き来する)

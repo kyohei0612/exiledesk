@@ -48,7 +48,7 @@ interface StartCalcIn {
   four: number | null;
   price: (key: string) => number;
   name: (key: string) => string;
-  /** ✦ が複数 (候補は全部 ✦)。4 MOD を買う道はその MOD を全部持つベースを買う = 当たりは候補の数で変わる (スイッチ fracMulti) */
+  /** ✦ が複数 (候補は全部 ✦)。4 MOD を買う道はその MOD を全部持つベースを買う = 当たりは候補の数で変わる  */
   fracMulti?: boolean;
 }
 

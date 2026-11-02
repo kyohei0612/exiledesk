@@ -54,7 +54,7 @@ export function chaosAfterFix(data: PatchData, blank: StageItem, key: string, fi
  */
 /** 「3 MOD + 壁」で固定されうる MOD の数 (フラクチャーは MOD 4 つから、壁 1 つは固定されない)。S-43・S-44 の文 (sureFracText・tree-base-cost の札) も費用もこの数 */
 export const FRACTURE_POOL = 3;
-/** all = 候補を全部置く (✦ が複数の木の「4 MOD を買ってフラクチャー」= ✦ の MOD を全部持つベースを買う。FRACTURE_POOL まで、残りがほかの MOD。10-28 オーナー、スイッチ fracMulti) */
+/** all = 候補を全部置く (✦ が複数の木の「4 MOD を買ってフラクチャー」= ✦ の MOD を全部持つベースを買う。FRACTURE_POOL まで、残りがほかの MOD。10-28 オーナー) */
 export function fractureOdds(data: PatchData, blank: StageItem, targets: readonly OddsTarget[], others = FRACTURE_POOL - 1, all0 = false): number {
   const t = targets[0];
   if (!t) return 0;

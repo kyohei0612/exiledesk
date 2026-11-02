@@ -3,7 +3,7 @@
  * ゲームどおり未発現のまま次の手を打てる (veil keep)。発現させる時 (骨の手の「発現させる」☑ = veil pick、後から打つ発現の手 REVEAL_KEY) は、
  * 発現で出うる MOD から ☑ の物が出て選べたら当たり、出なければ外れ。発現の 3 つの出方・アビスの反響はエンジンの revealOffers / reveal:N のまま (tree-sample の revealBy)。
  * ☑ の MOD が完成の狙いに無い物 (置き石。例: 全耐性の前に冷気耐性で系統を埋める) は、その手の時だけ当たりで、以降は冒涜の外れ MOD (aimsOf で数えない)。
- * スイッチ keepOutside の下は付いている間その MOD として箱の中身に持つ (S-33、placedAims。完成の狙いには入らないので aimsOf では今のまま数えない)
+ * 付いている間その MOD として箱の中身に持つ (S-33、placedAims。完成の狙いには入らないので aimsOf では今のまま数えない)
  */
 import { aimHits, tierIndexOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { isInfiniteEssence } from "../../craft-stage/apply-essence";
@@ -28,11 +28,10 @@ export const oldVeil = (h: Hand, aims: readonly unknown[]): Hand => (flag("oldBo
 export const veilKeep = (h: Pick<Hand, "currency" | "veil"> | null | undefined): boolean => !!h && isBone(h.currency) && veilOf(h) === "keep";
 /** 発現で ☑ の MOD を選ぶ手 (骨の「発現させる」☑・後から打つ発現の手) */
 export const veilPick = (h: Pick<Hand, "currency" | "veil"> | null | undefined): boolean => !!h && (isRevealHand(h.currency) || (isBone(h.currency) && veilOf(h) === "pick"));
-/** エッセンスの「ブロックに使う」☑ のある手 (S-33b、スイッチ keepOutside) */
-export const blockHand = (h: Pick<Hand, "currency" | "block"> | null | undefined): boolean => !!h?.block && flag("keepOutside") && effectOf(h.currency) === "essence";
-/** 木の発現で選ぶ手・ブロックに使うエッセンスの当たりの札のうち、完成形に無い物 = 置き石 (S-33・S-33b、スイッチ keepOutside。閉じていれば無し = 以降は冒涜の外れ MOD) */
+/** エッセンスの「ブロックに使う」☑ のある手 (S-33b) */
+export const blockHand = (h: Pick<Hand, "currency" | "block"> | null | undefined): boolean => !!h?.block && effectOf(h.currency) === "essence";
+/** 木の発現で選ぶ手・ブロックに使うエッセンスの当たりの札のうち、完成形に無い物 = 置き石 (S-33・S-33b) */
 export function placedAims(doc: TreeDoc): Aim[] {
-  if (!flag("keepOutside")) return [];
   const goals = doc.memoAims ?? [];
   const plain = Object.values(doc.boxes).flatMap((b) => (b.out === "hit" && b.aim && b.parent && (veilPick(doc.boxes[b.parent]?.hand) || blockHand(doc.boxes[b.parent]?.hand)) && !goals.some((g) => g.modId === b.aim!.modId) ? [b.aim] : []));
   return [...plain, ...midAims(doc).filter((a) => !plain.some((x) => x.modId === a.modId))];

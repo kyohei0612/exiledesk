@@ -119,7 +119,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
   const add = (boxId: string, kind: CheckKind, text: string): void => { if (!out.some((x) => x.boxId === boxId && x.kind === kind)) out.push({ boxId, kind, text }); };
   const boxes = Object.values(doc.boxes);
   const aims = aimsOf(doc);
-  /** 判定 (スイッチ judgeOne。戻り先の比べ・辿りの行き先はこれだけ、S-50b・S-73) */
+  /** 判定 (戻り先の比べ・辿りの行き先はこれだけ、S-50b・S-73) */
   const J = judgeMemo(data, doc);
   /** 戻りの矢印の行き先 (形の合う箱へ = 行きうる全部、作り直し = 始まり) */
   const backTo = (id: string): string[] => {
@@ -134,7 +134,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
 
   // 0) 形の違う箱への戻り (10-26 オーナー「その選択肢が出てくるのは前提狙いMODの状態でなんかする時やろ」): 付いている狙いの組が違う人が行き先の箱に入り、
   // その箱の結果 (狙いが消えた など) が箱の形と合わなくなる。直すのは戻りの箱 (戻り先を同じ形の箱に)
-  // スイッチ judgeOne: 戻り先と中身 (S-60) が違う戻りを「箱どうし」で 1 つに (つなぐ時と同じ規則、S-73)。全部消えてよい消去の直線の止まりも同じ
+  // 戻り先と中身 (S-60) が違う戻りを「箱どうし」で 1 つに (つなぐ時と同じ規則、S-73)。全部消えてよい消去の直線の止まりも同じ
   if (J) for (const b of boxes) {
     if (!b.back || b.back === MATCH || b.back === RESTART || !doc.boxes[b.back] || J.fitsBox(b.id, b.back)) continue;
     // 見本が作れない箱 (誰も着かない) は分からない扱い
@@ -240,7 +240,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
     /** お告げが効かない (無駄になる) 人がいる箱 */
     const waste = new Map<string, { who: Set<number>; reason: string }>();
     const shapes = shapesOf(doc, data);
-    /** スイッチ judgeOne: この箱の見本のどれかにもう当たりの狙いが付いている (付いていない人だけが着くので数えない) */
+    /** この箱の見本のどれかにもう当たりの狙いが付いている (付いていない人だけが着くので数えない) */
     const held = (id: string, ob: TreeBox): boolean => (J?.aimedOf(id) ?? []).some((am) => boxAims(ob).some((a) => am.has(a.modId)));
     const cantIssues = (): CheckIssue[] => [...cant].map(([id, c]) => ({ boxId: id, kind: "cantUse" as const, text: tr(`この箱に着いた状態では手が打てない (${PEOPLE} 人中 ${c.who.size} 人): ${c.reason}`, `The craft can't be used here (${c.who.size} of ${PEOPLE}): ${c.reason}`) }));
     const oddIssues = (): CheckIssue[] => [...odd].map(([id, c]) => ({ boxId: id, kind: "unexpected" as const, text: tr(`この手で「${[...c.outs].join("・")}」になる人がいるのに、行く箱が無い (${PEOPLE} 人中 ${c.who.size} 人、回すと同じ状態の箱があればそこへ、無ければ止まる)。直し方: この手を選び直して結果の箱に足す (PC は当たりの箱の横の ＋ でも足せる)`, `Some runs (${c.who.size} of ${PEOPLE}) end up as "${[...c.outs].join(", ")}" from this craft, but there is no box for it (runs go to a box in the same state, or stop). Fix: pick the craft again so that result gets a box (on PC, the + beside a hit box also adds one)`) }));
@@ -248,13 +248,13 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
       const rng = mulberry32(7919 * person);
       const start = sampleOf(data, doc, "start", person).item;
       const seen = new Set<string>();
-      /** aimed = この人の ☑ で付いた狙い (スイッチ judgeOne、回す時と同じ) */
+      /** aimed = この人の ☑ で付いた狙い (回す時と同じ) */
       const walk = (id: string, item: StageItem, viaBack: boolean, aimed: ReadonlySet<string> = new Set()): void => {
         const b = doc.boxes[id];
         if (!b || seen.has(id + (viaBack ? "<" : ""))) return;
         seen.add(id + (viaBack ? "<" : ""));
         // 完成の狙いが全部そろった人はここで完成 (回す時と同じ、tree-sample の goalsHeld)
-        // スイッチ judgeOne: 完成は押した箱だけ (S-05・S-54)
+        // 完成は押した箱だけ (S-05・S-54)
         if (!J && goalsHeld(data, doc, item)) return;
         // × (要らない) の印の MOD が残ったまま完成 (印はこの箱と上の箱で付けた物、段は問わない)
         if (b.done === "main") { const n = aims.filter((a) => aimHeldOn(data, item, a, { sameText: true })).length; heldAtDone.set(id, Math.min(heldAtDone.get(id) ?? n, n)); }
@@ -304,7 +304,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
         // カタリストは手の札 (前の版) か、前の「カタリストの手」の箱 (品質だけ上げた後の通り抜けの親、今の画面。10-22 13 通り組んだ #6 で見ていなかった)
         const preCat = b.out === "pass" && b.parent ? doc.boxes[b.parent]?.hand : null;
         const cat = b.hand.catalyst ?? (preCat && isCatalyst(preCat.currency) ? preCat.currency : null);
-        // スイッチ judgeOne: 触媒の品質の種類はこの人のアイテムの品質の種類 (どの手で上げたかは見ない、S-31b)
+        // 触媒の品質の種類はこの人のアイテムの品質の種類 (どの手で上げたかは見ない、S-31b)
         const tag = J ? (b.hand.omens.includes(CATALYSING) && item.qualityTag && (item.catalystQuality ?? item.quality ?? 0) > 0 ? item.qualityTag : null) : cat && b.hand.omens.includes(CATALYSING) ? catalystTagOf(cat) : null;
         let boosted = false, hits = 0;
         for (const o of b.outs) {
@@ -375,7 +375,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
   // 3 の続き) 完成の形の食い違い (揃った狙いの数)
   // 一番多く揃う完成の数より少ない形で着く人がいる完成の箱に ! (前は 1 つ目の完成の箱と比べ、どちらが組み違いか分からなかった)
   if (mains.length > 1) {
-    // スイッチ judgeOne: 着いた人の実物の数だけで比べる (道の札の数で補わない = S-137。着かなかった完成の箱は比べない)
+    // 着いた人の実物の数だけで比べる (道の札の数で補わない = S-137。着かなかった完成の箱は比べない)
     const nOf = (id: string): number => heldAtDone.get(id) ?? (J ? NaN : nOfPath(id));
     const most = Math.max(...mains.map((b) => nOf(b.id)).filter((n) => !Number.isNaN(n)));
     for (const b of mains) if (!Number.isNaN(nOf(b.id)) && nOf(b.id) < most) add(b.id, "doneShape", tr(`狙いが ${nOf(b.id)} つしか揃っていない形で着く人がいる (ほかの完成は ${most} つ)`, `Some runs arrive here with only ${nOf(b.id)} target(s) (other done boxes have ${most})`));

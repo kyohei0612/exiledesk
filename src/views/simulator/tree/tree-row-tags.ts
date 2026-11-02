@@ -14,7 +14,6 @@ import { placedAims } from "../../../services/simulator/tree/tree-veil";
 const MISS_OUTS: readonly OutKind[] = ["junk", "lost", "junkGone", "any"];
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
 import { useTree } from "./use-tree";
-import { flag } from "../../../web/release-flags";
 import { aimOpts, aimsOf, targetsOf } from "../../../services/simulator/tree/tree-sample";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
 import { modText, tr } from "../../../i18n/lang";
@@ -51,8 +50,8 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   const chainBox = !!box?.id && stripHand(doc.boxes[doc.boxes[box.id]?.parent ?? ""]?.hand);
   // 箱の表示はその箱の見本と、その箱を作った手 (親の手) だけから (この箱に置いた手 = 子を作る手では変えない。10-28 オーナー OK の対策 2)。
   // 全部消えてよい消去で作られた箱 (直線の途中と終わり) が「外れ MOD」
-  // 候補の外の印 (S-27e、スイッチ keepOutside) は箱の見本の ☑ で見る (下の外れの箱の見方)
-  if (chainBox && !(flag("keepOutside") && aimedOfCard(d, doc, box!.id!, it))) {
+  // 候補の外の印 (S-27e) は箱の見本の ☑ で見る (下の外れの箱の見方)
+  if (chainBox && !aimedOfCard(d, doc, box!.id!, it)) {
     for (const m of [...it.prefixes, ...it.suffixes]) if (!m.fractured && !m.unrevealed) out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`全部消えてよい${nameOfKey("annul", null)}で消えうる MOD: ${modText(m)}`, `May be removed by the clear-all ${nameOfKey("annul", null)}: ${modText(m)}`) });
     return out;
   }
@@ -71,7 +70,7 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   if (missBox && !am) for (const m of doc.start?.mods ?? []) { const g = (doc.memoAims ?? []).find((x) => x.modId === m.modId); if (g && !held.some((h) => h.modId === m.modId)) held.push({ modId: g.modId, tier: g.tier }); }
   // 当たりの箱の札の MOD は、その箱では狙い (発現で選んだ置き石も。以降の箱では外れ MOD)
   const ownAim = box?.id && box.out === "hit" ? doc.boxes[box.id]?.aim : null;
-  // 以降の箱でも見本に付いている置き石は狙い (S-33、スイッチ keepOutside)
+  // 以降の箱でも見本に付いている置き石は狙い (S-33)
   const placed = box?.id ? placedAims(doc).filter((a) => aimedOfCard(d, doc, box.id!, it)?.has(a.modId)) : [];
   const aims = targetsOf(d, [...(missBox ? held : [...aimsOf(doc), ...(doc.memoAims ?? [])]), ...placed, ...(ownAim ? [ownAim] : [])]), bad = targetsOf(d, unwanted.map((u) => ({ modId: u, tier: 99 }))), o = aimOpts(d);
   const goalT = targetsOf(d, doc.memoAims ?? []);

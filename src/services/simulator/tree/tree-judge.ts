@@ -1,5 +1,5 @@
 /**
- * tree-judge.ts — 箱の判定は 2 つだけ (S-50b、スイッチ judgeOne。10-29 オーナーの大本「箱の判定は箱に描いている中身で決める」「手ごとの特別扱いはしない」)。
+ * tree-judge.ts — 箱の判定は 2 つだけ (S-50b。10-29 オーナーの大本「箱の判定は箱に描いている中身で決める」「手ごとの特別扱いはしない」)。
  * 中身 (S-60) = 狙いの組 (付いている完成形の狙い、段は完成形以上、☑ で付いた物) + 体 (tree-box-shape の bodyOf: 側ごとの外れの数と種類・✦ の側・レアリティ) + 品質 (値と触媒の種類)。
  * 箱の中身はその箱の見本 (S-74、箱に描いているカード) の実物から。道から足していく数え (heldSets・pathHelds・aimsMayHold・形の鍵) は使わない。
  *   箱どうし fitsBox(from, to) = from の人が to へ行けるか (自動のつなぎ・同じ手なら戻る・まとめ・自動の ↩ の見直し・精査の戻り先・当たりの統合)
@@ -28,7 +28,7 @@ const SAMPLES = 4;
  */
 const MORE = 8, MAX = 32;
 
-/** 箱の中身の狙いの組に入る札 = 完成形の狙い + 発現で選んだ置き石 (S-33、スイッチ keepOutside) */
+/** 箱の中身の狙いの組に入る札 = 完成形の狙い + 発現で選んだ置き石 (S-33) */
 const contentAims = (doc: TreeDoc): Aim[] => [...(doc.memoAims ?? []), ...placedAims(doc)];
 /** アイテムに付いている完成形の狙い (段は完成形以上) と置き石の MOD */
 const goalsOn = (data: PatchData, doc: TreeDoc, it: StageItem): Set<string> => new Set(contentAims(doc).filter((a) => aimHeldOn(data, it, a, { sameText: true })).map((a) => a.modId));
@@ -37,9 +37,9 @@ export function startAimed(data: PatchData, doc: TreeDoc, it: StageItem): Readon
   const on = goalsOn(data, doc, it);
   return new Set([...startGoalAims(doc), ...fractureMarks(doc)].map((a) => a.modId).filter((id) => on.has(id)));
 }
-/** 打つ前の印のうち、この手で消えない MOD の物 (S-27e、候補の外は自動で残したい MOD。スイッチ keepOutside。お告げの有無では分けない) */
+/** 打つ前の印のうち、この手で消えない MOD の物 (S-27e、候補の外は自動で残したい MOD。お告げの有無では分けない) */
 export function outsideAimed(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, prev: ReadonlySet<string> | null | undefined, before: StageItem | null | undefined): string[] {
-  if (!flag("keepOutside") || !h || !prev || !before) return [];
+  if (!h || !prev || !before) return [];
   const gone = goneOf(data, before, h.currency, h.omens);
   if (!gone) return [];
   const mods = [...before.prefixes, ...before.suffixes].filter((m) => gone.has(m.modId)), o = aimOpts(data);
@@ -54,7 +54,7 @@ const midKept = (doc: TreeDoc, prev: ReadonlySet<string> | null | undefined): st
 export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<string>, boxId: string, item: StageItem, before?: StageItem | null): ReadonlySet<string> {
   const b = doc.boxes[boxId];
   if (!b) return prev;
-  // 消える手 (カオス・パーフェクトエッセンス・骨) の残したい MOD も消去と同じ (S-27d、スイッチ keepAll)
+  // 消える手 (カオス・パーフェクトエッセンス・骨) の残したい MOD も消去と同じ (S-27d)
   const keep = keepCut(doc, b) ?? keptAimsOf(doc, b.parent ? doc.boxes[b.parent]?.hand : null);
   // 消去の後も ✦ の印の狙いは残る (消去では消えない。S-28b2: 前は全部消えてよい消去の後に ✦ まで外れに数え、✦ だけの箱がスタートと別の中身になった、木 oWkFcwYX の b8)
   const base = new Set(keep ? [...[...keep, ...fractureMarks(doc)].map((a) => a.modId), ...outsideAimed(data, doc, b.parent ? doc.boxes[b.parent]?.hand : null, prev, before), ...midKept(doc, prev)] : prev);
@@ -100,8 +100,8 @@ const LIGHT = "OmenofLight";
 /** 完成の箱へは、品質を狙う木なら完成形の品質が足りている人だけ (品質を比べから外したので、足りない人が完成の箱に入らないように) */
 const doneOk = (doc: TreeDoc, id: string, it: StageItem): boolean => doc.boxes[id]?.done !== "main" || qualityOk(doc, it);
 
-/** 箱 id の手がカタリストの n % なら n (最大までの手・ほかの手は 0)。この箱へ行く・比べる時だけ上限を見る (S-60c、スイッチ keepOutside) */
-const catalystTo = (doc: TreeDoc, id: string): number => { const h = doc.boxes[id]?.hand; return flag("keepOutside") && h && isCatalyst(h.currency) ? h.quality ?? 0 : 0; };
+/** 箱 id の手がカタリストの n % なら n (最大までの手・ほかの手は 0)。この箱へ行く・比べる時だけ上限を見る (S-60c) */
+const catalystTo = (doc: TreeDoc, id: string): number => { const h = doc.boxes[id]?.hand; return h && isCatalyst(h.currency) ? h.quality ?? 0 : 0; };
 /** このアイテムは箱 id のカタリストの n % に届くか (同じ種類の品質がもう n 以上か、品質の上限が n 以上) */
 function reachesCatalyst(doc: TreeDoc, id: string, it: StageItem): boolean {
   const n = catalystTo(doc, id), h = doc.boxes[id]?.hand;

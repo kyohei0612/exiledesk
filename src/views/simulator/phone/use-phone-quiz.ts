@@ -17,7 +17,6 @@ import { handLabel, headOf, outName, outsName } from "../tree/tree-names";
 import { tr } from "../../../i18n/lang";
 import { retryOf as sharedRetryOf } from "../tree/tree-fail";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
-import { flag } from "../../../web/release-flags";
 
 /** 答えの要る結果の箱か (手も戻りも完成も分かれ目も無い。始まり・品質だけの通り抜けは ① で聞く) */
 export function isOpen(b: TreeBox): boolean {
@@ -43,7 +42,7 @@ export function walkOrder(d: TreeDoc): string[] {
 export function completes(d: TreeDoc, id: string): boolean {
   const goals = (d.memoAims ?? []).filter((g) => !g.fractured);
   if (!goals.length) return false;
-  // スイッチ judgeOne: 箱の見本の中身 (☑ で付いた狙い) で見る。見本が全部、完成の狙いを持っている時だけ (道の組では数えない、大本 1)
+  // 箱の見本の中身 (☑ で付いた狙い) で見る。見本が全部、完成の狙いを持っている時だけ (道の組では数えない、大本 1)
   const j = judgeOf(d);
   if (j) return j.holdsAll(id);
   const sets = heldSets(d, id);
@@ -242,8 +241,8 @@ export function usePhoneQuiz() {
     if (b.out === "hit") return headOf(b, t.aimShort);
     // 狙いが消えた人に付ける狙いが付いた箱 (S-27d、鍵 g:) も PC と同じ「狙いが消えた」だけ
     const name = outsName(b);
-    // 消去の結果の見出しは結果と側だけ (S-93b、スイッチ keepOutside)
-    if (flag("keepOutside") && effectOf(t.doc.value.boxes[b.parent ?? ""]?.hand?.currency ?? "") === "remove") return name;
+    // 消去の結果の見出しは結果と側だけ (S-93b)
+    if (effectOf(t.doc.value.boxes[b.parent ?? ""]?.hand?.currency ?? "") === "remove") return name;
     return held.length ? `${name} (${list})` : name;
   }
   /** 道の短い 1 行 (始まり › 手 › 結果 …) */

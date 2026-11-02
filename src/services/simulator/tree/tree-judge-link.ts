@@ -1,5 +1,5 @@
 /**
- * tree-judge-link.ts — 木を組む時・回す時に、判定の 2 つ (tree-judge の箱どうし fitsBox・人と箱 routeOf) を呼ぶ所 (S-50b、スイッチ judgeOne)。
+ * tree-judge-link.ts — 木を組む時・回す時に、判定の 2 つ (tree-judge の箱どうし fitsBox・人と箱 routeOf) を呼ぶ所 (S-50b)。
  * 前の tree-shape の linkSameShape・sameHandReturn・sameHitsOf・linkShapeHit・pruneBacks・joinableShapeOf・settle / matchBox と同じ役で、
  * 比べは全部 Judge に任せる (形の鍵・道の狙いの組・体の比べは持たない)。手ごとの除外 (フラクチャー・カタリストの結果・カオスの外れを親へ) もしない (大本 2)
  */
@@ -27,9 +27,9 @@ export function offByParent(doc: TreeDoc, id: string, j: Judge): boolean {
   return false;
 }
 
-/** t が id の上で、間の手の結果が全部 1 通りの箱か (自動の ↩ を付けると打っても変わらない手の輪になる、S-50・S-50d。スイッチ keepOutside が閉じていれば親だけ) */
+/** t が id の上で、間の手の結果が全部 1 通りの箱か (自動の ↩ を付けると打っても変わらない手の輪になる、S-50・S-50d が閉じていれば親だけ) */
 export function straightUp(doc: TreeDoc, id: string, t: string): boolean {
-  for (let p = doc.boxes[doc.boxes[id]?.parent ?? ""]; p && p.outs.length <= 1; p = doc.boxes[p.parent ?? ""]) { if (p.id === t) return true; if (!flag("keepOutside")) break; }
+  for (let p = doc.boxes[doc.boxes[id]?.parent ?? ""]; p && p.outs.length <= 1; p = doc.boxes[p.parent ?? ""]) { if (p.id === t) return true; }
   return false;
 }
 
@@ -132,7 +132,7 @@ export function arrivalsOf(data: PatchData, doc: TreeDoc, j: Judge, id: string):
 export const canPlay = (data: PatchData, item: StageItem, h: Hand): boolean => { const r = playHand(data, item, { ...h, repeat: null }, mulberry32(1)); return r.applied || !!r.random; };
 
 /**
- * 着いた箱の手が打てない人の行き先 (S-64、スイッチ keepOutside): 中身の同じ箱のうち、手が打てる箱か完成 / 失敗の箱 (浅い段・先に作った箱から)。
+ * 着いた箱の手が打てない人の行き先 (S-64): 中身の同じ箱のうち、手が打てる箱か完成 / 失敗の箱 (浅い段・先に作った箱から)。
  * 外れは種類を見ないので、✦ + ブリーチの人が ✦ + 外れの「ブリーチを打つ箱」に着いて打てず止まった (金の指輪の木の b1、次の手の b2 は中身が同じ)
  */
 /** 手の打てない人が途中の狙いの箱へ移る時の印: 実際に持っている途中の狙いを印に足す (外れのままだと次の箱で中身が違うと元の箱へ戻され輪になる、S-64) */
@@ -141,7 +141,6 @@ export function twinAimed(doc: TreeDoc, j: Judge, to: string, item: StageItem, a
   return new Set([...aimed, ...midAims(doc).filter((a) => [...item.prefixes, ...item.suffixes].some((m) => m.modId === a.modId)).map((a) => a.modId)]);
 }
 export function playableTwin(data: PatchData, doc: TreeDoc, j: Judge, at: string, item: StageItem, aimed: ReadonlySet<string>): string | null {
-  if (!flag("keepOutside")) return null;
   const can = (id: string): boolean => { const h = doc.boxes[id]?.hand; return !h || canPlay(data, item, h); };
   // 全部消えてよい消去で途中の狙いが外れに落ちた人 (✦ + ブリーチ) も打てる箱へ。実際に持っている MOD が＝の人だけで、ランダムの外れの人は移らない。印は外れのまま (S-64)
   const held = midAims(doc).filter((a) => !aimed.has(a.modId) && [...item.prefixes, ...item.suffixes].some((m) => m.modId === a.modId)).map((a) => a.modId);
