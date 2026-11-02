@@ -41,7 +41,7 @@ interface OrbDef {
 
 const ORBS: readonly OrbDef[] = [
   {
-    kind: "transmute", name: "orboftransmutation", strengths: STRENGTHS,
+    kind: "transmute", name: "orboftransmutation", strengths: STRENGTHS, // E-11e 枠 0 のベースは MOD の無いマジック
     text: { en: ["Upgrades a [ItemRarity|Normal] item to a [ItemRarity|Magic] item with 1 modifier"], ja: ["[ItemRarity|ノーマル]アイテムをモッドを1個持つ[ItemRarity|マジック]アイテムにアップグレードする。"] },
     // マジックの枠が 0 のベース (不在のアミュレット = プレ -1 / サフィ -1) は MOD 無しのマジックになる (ゲームで確認、要望 19c7d2de)
     build: (floor) => ({

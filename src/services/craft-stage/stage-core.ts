@@ -104,7 +104,7 @@ function baseAllowedDelta(item: StageItem, side: StageSide): number {
  * 側の枠 (マジックは 1 / 1)。ベースの暗黙の増減はマジックにも効く
  * (2026-10-13 要望 19c7d2de: 不在のアミュレットに変成を打つとゲームでは MOD 無しのマジック。前はマジックを 1 / 1 で決め打ちして MOD が付いた)
  */
-export function limitOf(item: StageItem, side: StageSide): number { // E-24 枠の上限
+export function limitOf(item: StageItem, side: StageSide): number { // E-11e・E-24 枠の上限
   if (item.rarity === "magic") return Math.max(0, MAGIC_LIMIT + baseAllowedDelta(item, side));
   if (item.rarity === "normal") return 0;
   const lim = effectiveCls(item).limits ?? DEFAULT_LIMITS;
