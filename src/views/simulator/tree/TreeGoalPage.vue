@@ -272,7 +272,7 @@ const HELP: Array<[string, string, boolean?]> = [
   [`狙いにする: その${TIER}以上が付けば当たり (狙いは MOD 1 つ、上の${TIER}は「含む」)`, "Target: a hit if that tier or better rolls (one target per mod; higher tiers are included)"],
   ["後の箱の当たりは、この狙いから選ぶ", "Later hit boxes pick from these targets"],
   ["フラクチャー (✦) = 固定してよい MOD の印。いくつでも付けられ、フラクチャーでどれか 1 つが固定されれば当たり。始め方 (フラクチャー済みから / 白から確定フラクチャー) は「決めた」の後の窓で選ぶ", "Fracture (✦) = marks mods that may be fixed. Mark any number; a fracture is a hit if any one of them is fixed. How to start (already fractured / sure fracture from white) is chosen after Done"],
-  // カードの MOD を押してもフラクチャー (エミュと同じ、10-28 オーナー「スマホと共有でクリックでもフラクチャーできるようにPCも変えてくれ」、スイッチ clickFracture)
+  // カードの MOD を押してもフラクチャー (エミュと同じ、10-28 オーナー「スマホと共有でクリックでもフラクチャーできるようにPCも変えてくれ」)
   ["カードの行を押しても印を付け外し (右クリックでも)", "Click a row on the card to toggle the mark too (right-click works too)"],
   ["印が無ければ「決めた」の後の窓で、フラクチャーにする MOD を選ぶか白ベース (フラクチャー無し) から", "No mark: after Done, pick the mod to fracture or start from a white base (no fracture)"],
 ];
@@ -369,7 +369,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       <!-- カードはエミュと同じ既定の幅 (480、スマホは全幅。10-24 オーナー「アイテム絵はシミュと同じ」) -->
       <div data-tree-goal-card class="sticky top-3 flex shrink-0 flex-col gap-2 max-md:static max-md:order-first md:w-[480px]">
         <p v-if="tapFrac.on.value" data-tree-goal-tap-frac class="break-words rounded border border-[#a3342a]/60 bg-[rgba(163,52,42,0.25)] px-2 py-1.5 text-[13px] text-mod-fractured">{{ tapFrac.note.value }}</p>
-        <StageItemCard :row-group="shown.groups.value" v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="cardTags" :row-toggles="wayToggles" @toggle="(id: string) => t.edit((d) => toggleWay(d, id))" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable :click-fracture="flag('clickFracture')" row-remove tier-at-least :mods-head="tr('完成形の MOD', 'Target mods')" @fracture="onCardFracture" @remove="onCardRemove" @jump="(id) => tapFrac.on.value && tapFrac.tap(id, [...(t.goalItem.value?.item.prefixes ?? []), ...(t.goalItem.value?.item.suffixes ?? [])].find((x) => x.modId === id))" />
+        <StageItemCard :row-group="shown.groups.value" v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="cardTags" :row-toggles="wayToggles" @toggle="(id: string) => t.edit((d) => toggleWay(d, id))" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable click-fracture row-remove tier-at-least :mods-head="tr('完成形の MOD', 'Target mods')" @fracture="onCardFracture" @remove="onCardRemove" @jump="(id) => tapFrac.on.value && tapFrac.tap(id, [...(t.goalItem.value?.item.prefixes ?? []), ...(t.goalItem.value?.item.suffixes ?? [])].find((x) => x.modId === id))" />
         <!-- 完成形の品質 (20% を超えるとブリーチのエッセンスの MOD が要る、10-27 夕オーナー) -->
         <TreeGoalQuality v-if="t.goalItem.value" :warn="qualityWarn" />
         <!-- クラフト MOD が 2 つ以上: どれを途中で消すか (完成の狙い・枠・完成の判定に数えない)。残るのはクラフト MOD の上限まで (10-27 夜オーナー) -->

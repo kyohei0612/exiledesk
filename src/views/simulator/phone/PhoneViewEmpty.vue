@@ -1,5 +1,5 @@
 <!--
-  PhoneViewEmpty.vue — シミュのスマホで木を開いていない時の案内 (S-94f、スイッチ phoneView): ベース選びへ進まず、作るのは PC でと言ってレシピの一覧を出す。
+  PhoneViewEmpty.vue — シミュのスマホで木を開いていない時の案内 (S-94f): ベース選びへ進まず、作るのは PC でと言ってレシピの一覧を出す。
   ?page=sim-base・?page=sim-mods へ直に来ても同じ (SimTreePage が分ける)
 -->
 <script setup lang="ts">

@@ -7,7 +7,6 @@ import { hoverStack } from "../../../state/hover-stack";
 import { isTouchOnly } from "../../../utils/use-phone";
 import { afterPointerMoves } from "../../../utils/pointer-moved";
 import { toCss } from "../../../utils/zoom";
-import { flag } from "../../../web/release-flags";
 import { useReason, type StageItem } from "../../../services/craft-stage/engine";
 import { craftStage as s } from "../../../state/craft-stage";
 
@@ -24,6 +23,6 @@ export function shelfCardOn(e: MouseEvent, k: string, item: StageItem | null): v
     hoverStack.openRootDelayed({ kind: "shelf", k, reason, omen: false, item }, toCss(r.right), toCss(r.top), { left: toCss(r.left), right: toCss(r.right), top: toCss(r.top), bottom: toCss(r.bottom) });
   };
   stopWait();
-  if (flag("firstVisit1024")) stopWait = afterPointerMoves(e, open); else open();
+  stopWait = afterPointerMoves(e, open);
 }
 export function shelfCardOff(): void { stopWait(); hoverStack.leave(); }

@@ -53,7 +53,6 @@ import BusyTag from "../../../components/ui/BusyTag.vue";
 import { useTreeTune } from "./use-tree-tune";
 import { useTreeReveal } from "./use-tree-reveal";
 import { RUN_N, runPrice, TEST_N, useTreeRun } from "./use-tree-run";
-import { flag } from "../../../web/release-flags";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue";
 import { applyPick, drawnBelow, holdLinks, type OnlyOut } from "./tree-hand-plan"; import { useJunkTidy } from "./use-junk-tidy";
@@ -65,9 +64,9 @@ import { backTargetsOf } from "./tree-merge";
 import { useTreeMerge } from "./use-tree-merge";
 const t = useTree();
 const doc = t.doc;
-/** 見るだけの幅 (768 未満、S-94g) + スイッチ phoneView = 見るだけの 1 画面 PhoneViewPage。組む動き・ベース選びへの移り・離れる時の確かめは止める */
+/** 見るだけの幅 (768 未満、S-94g) = 見るだけの 1 画面 PhoneViewPage。組む動き・ベース選びへの移り・離れる時の確かめは止める */
 const viewWidth = useViewOnlyWidth();
-const viewPhone = computed(() => viewWidth.value && flag("phoneView"));
+const viewPhone = computed(() => viewWidth.value);
 // エンジンの設定 (触媒・聖別の倍率・MOD の重み) は開いている間この木の値 (use-tree-tune.ts)
 useTreeTune(doc, t.edit);
 /** 右の欄 (箱を選んだ時だけ) */

@@ -78,6 +78,8 @@
 - commit 3 (keepOutside・keepAll・attachWay・judgeOne・freeNoHit・junkSide・whittleRank・fracMulti・fracOne) 済み: 旧の側は全部「消す」。一緒に消えた物 = wayUndecided (いつも null)・TreeStartAsk の ✦ 複数と 1 つ選びの節 (fracOne が開いて通らない)・shapeSampleWithNote の形の比べ (shapeFit の関数は残す)。start-cost の fracMulti の引数はエンジン側なので true を渡すだけで残す。確かめ: 型 0・build:web 通過 (vue-tsc は template の重なった属性を見ないので、build で 1 つ見つけて直した)。judge.mjs・見本の木の 100 人の比べは未。
 - commit 4 (recipeV1・oldBone・goalQuality) 済み: 旧の側は全部「消す」(保存はいつも v1、前の骨の手は「発現させない」に読み替え、貼り付けはいつも品質を取り込む)。読む側 (migrateTreeDoc・oldVeil) は新の側なので残る。確かめ: 型 0・build:web 通過。古い保存・共有 URL を画面で開く確かめは未。v1-dry.mjs の archive 行きは scripts/sim-watch が「共通」(ジン部長) の持ち場なので未 (ブラック 36 へ回す。RELEASED に入ったスイッチには --off が効かないので、今も --off は空振り = docs/org/dev/sim-watch.md 44)。
 - commit 5 (treeLight) 済み: 旧の側は全部「消す」(毎回の数え直し・id 入りの鍵・線の通り道の総当たり・穴チェックと走行の別回し)。打ち直しの上限は TRIES_LIGHT だけ。確かめ: 型 0・build:web 通過。100 人の時間の比べは未。light.mjs・light-edit.mjs の archive 行きは v1-dry と同じく「共通」の持ち場なので未 (ブラック 36 へ)。
+- commit 6 (phoneView・simPhone・clickFracture・firstVisit1024 のシミュの中の分) 済み: シミュの中の分かれは全部「消す」。SimPcOnly.vue は使い手 0 で消した。外の分かれ (StageSettings・ModeTabs・CraftStage・ShelfButton・BaseCardGrid・BaseCatalog、emu.md・shared-ui.md の書き方) は各部の物なので触らず、名前も FLAGS・RELEASED に残る。確かめ: 型 0・build:web 通過。
+- 6 回の後に残る事: FLAGS・RELEASED から外に使い手の無い 44 種の名前を抜く (デザイン部、共有メモ sim69-flags-commit1.patch は 28 種分。残り 16 種は 6 回目の後に同じ台本で作る)・light.mjs・light-edit.mjs・v1-dry.mjs の archive 行き (共通)・見張りの台本 (judge・place・lines・fullcheck) と画面の確かめ。
 
 ## 消す段取り (合図 1 つで始める)
 オーナーの確認が終わってから (1440 が空いてから)。シミュ部長 1 人で、worktree で。commit ごとに `pnpm -s exec vue-tsc --noEmit -p tsconfig.json` (型 0)。

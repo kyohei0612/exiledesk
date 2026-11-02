@@ -1,5 +1,5 @@
 <!--
-  PhoneViewRoute.vue — シミュのスマホの既定の画面 = 完成までの道を縦に並べる (S-94h、スイッチ phoneView)。「箱 → 手 → 箱」を上から下へ、枝が分かれる手は札のプルダウン PhoneViewBranch で 1 本を選ぶ。
+  PhoneViewRoute.vue — シミュのスマホの既定の画面 = 完成までの道を縦に並べる (S-94h)。「箱 → 手 → 箱」を上から下へ、枝が分かれる手は札のプルダウン PhoneViewBranch で 1 本を選ぶ。
   箱と手の札は PC の実物の部品 (押せない)。どの箱を出すかは view-route.ts。戻るだけの枝は「詳細」の全体図 (PhoneViewMap)
 -->
 <script setup lang="ts">
