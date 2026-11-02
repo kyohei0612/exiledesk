@@ -15,6 +15,10 @@ const UID_KEY = "exiledesk.web.uid";
  */
 const MAX_RECS = 200;
 const MAX_CHARS = 200_000;
+/**
+ * 1 便の本文の上限 (文字数)。受け口 server/live の MAX_BODY 512 KB に頭の分の余りを残す。2026-11-02 まで件数で最後の 200 件だけ送っていて、1 時間のうちに 200 件を超えた人の古い記録が落ちていた
+ */
+const MAX_BODY_CHARS = 500_000;
 const MIN_GAP_MS = 3_600_000;
 const PENDING_KEY = "exiledesk.log.pending";
 const LAST_KEY = "exiledesk.log.lastSent";
@@ -54,7 +58,10 @@ export function startLogSender(app: "web" | "app"): void {
     const size = JSON.stringify(pend).length;
     // 1 時間たっていない・溜めすぎていない・端末に置ける → 溜めるだけ
     if (Date.now() - lastSent() < MIN_GAP_MS && size < MAX_CHARS && savePending(pend)) return;
-    const recs = pend.recs.slice(-MAX_RECS);
+    const evLen = pend.ev.join(",").length;
+    let keep = pend.recs.length;
+    for (let left = MAX_BODY_CHARS - evLen; keep > 0; keep--) { left -= JSON.stringify(pend.recs[keep - 1]).length + 1; if (left < 0) break; }
+    const recs = pend.recs.slice(keep);
     // app と n を先頭に (サーバーは頭の 200 文字だけ見る)
     const body = `{"app":"${app}","n":${recs.length},"v":"${pkg.version}","uid":"${uid}","sid":"${sid}","dev":"${dev}","recs":${JSON.stringify(recs)}${pend.ev.length ? `,"__ev":[${pend.ev.join(",")}]` : ""}}`;
     try { localStorage.removeItem(PENDING_KEY); localStorage.setItem(LAST_KEY, String(Date.now())); } catch { /* 無くてよい */ }
