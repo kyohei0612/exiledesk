@@ -14,7 +14,7 @@ import type { Action, CurrencySpec, Limit, ModPool, OmenSpec, Source, Target } f
  * アビサルロードの紋章から打つ骨の段の下限 = アイテムレベル × 0.4 の切り捨て (用語集 MarkofAbyssalLord は「a higher tier」だけ。
  * Craft of Exile の poe2_desecrate と同じ式、2026-10-16 オーナー「進めて」で CoE に。前は 33 固定 (poe2fun の 1 件、仮))
  */
-export const markFloorOf = (itemLevel: number): number => Math.floor(itemLevel * 0.4); // E-65
+export const markFloorOf = (itemLevel: number): number => Math.floor(itemLevel * 0.4); // E-65・E-11d (N はアイテムレベル × 0.4)
 
 /** 骨の部位ごとの説明文と対象 (種類 = 噛み切られた / 保存された / 古代の は同じ文) */
 const BONE_PARTS = {
@@ -42,7 +42,7 @@ const BONE_PARTS = {
 type BonePart = keyof typeof BONE_PARTS;
 
 /** 骨の種類 → 手順の鍵・段の下限・制約 */
-const GRADES = { // E-63 骨を打てる品 (噛み切られた 64 以下・古代 40 以上)
+const GRADES = { // E-63・E-11d 骨を打てる品 (噛み切られた 64 以下・古代は下限 40)
   // 噛み切られた骨: アイテムレベル 64 以下だけ。冒涜専用の MOD もアイテムレベルの決まりのまま (2026-10-10 オーナー)
   gnawed: { stageKey: "desecrate_gnawed", floor: 0, exclusiveAnyLevel: false, limits: [{ kind: "itemLevelAtMost", level: GNAWED_MAX_ILVL }, { kind: "oneDesecratedMod" }] as Limit[] },
   preserved: { stageKey: "desecrate", floor: 0, exclusiveAnyLevel: true, limits: [{ kind: "oneDesecratedMod" }] as Limit[] },

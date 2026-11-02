@@ -667,7 +667,7 @@ export const DESECRATION_OFFER_COUNT = 3;
  * offers — every desecrated mod in the data is ilvl 65, so the carved pool is untouched. Confirmed as a
  * bone the player actually uses, 2026-09-10.
  */
-export const ANCIENT_BONE_FLOOR = 40;
+export const ANCIENT_BONE_FLOOR = 40; // E-11d・E-63
 
 /**
  * P(the mod you want is somewhere in the offer), from the probability that ONE draw produces it.

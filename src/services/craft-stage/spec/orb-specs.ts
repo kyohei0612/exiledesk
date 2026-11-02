@@ -12,7 +12,7 @@ import type { CurrencySpec, Limit, OmenSpec, Source } from "./types";
 export type Strength = "base" | "greater" | "perfect";
 const STRENGTHS: readonly Strength[] = ["base", "greater", "perfect"];
 /** カオスの段の下限 (poe2db の Minimum Modifier Level、2026-10-14 確認。エンジンの CURRENCY_FLOOR には無い) */
-export const CHAOS_FLOOR: Record<Strength, number> = { base: 0, greater: 35, perfect: 50 };
+export const CHAOS_FLOOR: Record<Strength, number> = { base: 0, greater: 35, perfect: 50 }; // E-11d
 /** 段の下限 (kind = transmute・augment・regal・exalt・chaos、s = 強さ)。入口 engine.ts から外に出す (解析君の auto-model、2026-10-20) */
 export const orbFloor = (kind: string, s: Strength): number =>
   kind === "chaos" ? CHAOS_FLOOR[s] : (CURRENCY_FLOOR as Record<string, Record<Strength, number>>)[kind]?.[s] ?? 0;
@@ -22,7 +22,7 @@ const stageKeyOf = (kind: string, s: Strength): string => (s === "base" ? kind :
 /** クライアントの鍵: orboftransmutation / greaterorboftransmutation / perfectorboftransmutation */
 const hoverOf = (name: string, s: Strength): string => (s === "base" ? name : `${s}${name}`);
 /** 段の下限があれば「アイテムレベルが下限未満には使えない」(用語集 BetterCurrencyMinimumLevel) */
-const floorLimits = (floor: number): Limit[] => (floor > 0 ? [{ kind: "itemLevelAtLeast", level: floor }] : []);
+const floorLimits = (floor: number): Limit[] => (floor > 0 ? [{ kind: "itemLevelAtLeast", level: floor }] : []); // E-11d アイテムレベルが N 未満の品には打てない
 
 const ORB_SOURCE: Source = {
   client: "currency-hover の説明文、用語集 BetterCurrencyMinimumLevel・ItemRarity",

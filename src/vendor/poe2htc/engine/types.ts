@@ -209,7 +209,7 @@ export type StrengthCurrency = 'transmute' | 'augment' | 'regal' | 'exalt';
  *     level of 55" (the user, 2026-09-10). One shared table used to give them the Exalt's ladder, which
  *     let them land tiers they cannot.
  */
-export const CURRENCY_FLOOR: Record<StrengthCurrency, Record<CurrencyTier, number>> = {
+export const CURRENCY_FLOOR: Record<StrengthCurrency, Record<CurrencyTier, number>> = { // E-11d 段の下限 N (poe2db の Minimum Modifier Level)
   // Greater Transmutation / Augmentation: 44 since 0.5.0 ("minimum Modifier Level of 44 (previously 55)", POE2Tube ㉞-2, 2026-10-06)
   transmute: { base: 0, greater: 44, perfect: 70 },
   augment: { base: 0, greater: 44, perfect: 70 },
