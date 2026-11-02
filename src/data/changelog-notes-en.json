@@ -1,4 +1,7 @@
 {
+  "0.1.655": [
+    "Emulator: you can no longer use an essence when the item already has a mod of the same family (its row in the mod list is greyed out too). An item holds only one mod per family (except when a flux changes the element)"
+  ],
   "0.1.654": [
     "Simulator: new miss-cleanup flow. While building, miss boxes stay grey and unlinked; the Tidy misses button links them into the same slot and lists the unset boxes. Once finished, everything goes grey and the next thing to press lights up",
     "Simulator: outcomes now link back to a box with the same contents automatically, from any craft (remove with ×)",
