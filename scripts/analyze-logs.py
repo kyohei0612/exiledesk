@@ -222,6 +222,36 @@ if tut:
     # 終えたの記録は "topic:<id>"、始めたは "<id>" (craft-lesson.ts と craft-topic.ts で付け方が違う)。頭を外して合わせる
     cl = collections.Counter(str(t["d"].get("c")).removeprefix("topic:") for t in tut if t["d"].get("e") == "clear")
     print("\n== チュートリアル (始めた / 終えた):", ", ".join(f"{c} {st[c]}/{cl.get(c, 0)}" for c, _ in st.most_common(12)))
+    # 手まで進んだ (e: step) の一番奥と、やり直した手 (e: retry)。2026-11-02 から
+    deep = {}
+    for t in tut:
+        if t["d"].get("e") == "step": k = (t["sid"], t["d"].get("c")); deep[k] = max(deep.get(k, 0), t["d"].get("i", 0))
+    if deep: print("止まった手 (コース:一番奥の手):", top(collections.Counter(f"{c}:{i}" for (_, c), i in deep.items()), 12))
+    retry = collections.Counter(f"{t['d'].get('c')}:{t['d'].get('i')}" for t in tut if t["d"].get("e") == "retry")
+    if retry: print("やり直した手:", top(retry, 12))
+
+# ---- D1 に写した印・見ていた秒・ブログの深さ (2026-11-02 から) ----
+if recs["ui"]:
+    print("\n== 印 (D1):", top(collections.Counter(r["d"].get("n") for r in recs["ui"]), 20))
+    print("外へのリンク:", top(collections.Counter(r["d"].get("x") for r in recs["ui"] if r["d"].get("n") == "link"), 12))
+    print("画面のエラー:", top(collections.Counter(str(r["d"].get("x"))[:60] for r in recs["ui"] if r["d"].get("n") == "error"), 8))
+if recs["stay"]:
+    sec = collections.defaultdict(int)
+    for r in recs["stay"]: sec[r["sid"]] = max(sec[r["sid"]], r["d"].get("s", 0))
+    load = [r["d"]["load"] for r in recs["stay"] if r["d"].get("load")]
+    emu = collections.Counter()
+    for r in recs["stay"]: emu.update(r["d"].get("ops") or {})
+    print(f"見ていた秒 (訪問の中央): {med(list(sec.values()))} 秒 ({len(sec)} 訪問) / 開くまで (中央): {med(load)} ms / エミュの戻し: {dict(emu)}")
+if recs["visit"] and any("lang" in r["d"] for r in recs["visit"]):
+    print("言語 (訪問):", top(collections.Counter(r["d"].get("lang") for r in recs["visit"] if "lang" in r["d"]), 4))
+if recs["tree_recipe_open"]:
+    print("共有のレシピを開いた:", top(collections.Counter(r["d"].get("ok") for r in recs["tree_recipe_open"]), 2))
+if recs["blog_read"]:
+    best = {}
+    for r in recs["blog_read"]: k = (r["sid"], r["d"].get("slug")); best[k] = max(best.get(k, 0), r["d"].get("p", 0))
+    by = collections.defaultdict(list)
+    for (_, slug), p in best.items(): by[slug].append(p)
+    print("ブログの読んだ深さ (中央 % / 人):", ", ".join(f"{slug} {med(v)}% / {len(v)}" for slug, v in sorted(by.items(), key=lambda kv: -len(kv[1]))[:10]))
 print(f"\nPWA の記録 {len(recs['pwa'])} / ジェムコラプト {len(recs['gem_corrupt'])} / シミュレーション (開発版だけ) {len(recs['sim_run'])}")
 
 if AS_JSON:

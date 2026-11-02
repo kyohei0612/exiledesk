@@ -1,6 +1,6 @@
 /*
  * blog.js — ブログの記事・一覧のページの小さな JS (2026-10-22、scripts/build-blog-pages.mjs が /blog/blog.js に写す)。本文は JS 無しで読める。
- * 1. 数える: 開いた時に visit と screen (to = "blog:<slug>:<言語>" / 一覧は "blog:index:<言語>") を、シェアのボタンで blog_share (slug・言語・どこへ) を溜め、
+ * 1. 数える: 開いた時に visit と screen (to = "blog:<slug>:<言語>" / 一覧は "blog:index:<言語>") を、シェアのボタンで blog_share (slug・言語・どこへ) を、記事を離れる時に blog_read (slug・言語・読んだ深さ p %・開いてからの秒 s、2026-11-02) を溜め、
  *    画面を離れる時に POST /log (server/live、D1)。形と「1 時間に 1 回・それまでは端末に溜める」は Web 版の送り手 (src/services/telemetry/log-sender.ts) と同じ
  *    (同じ localStorage の印 = 同じ人・同じ溜め置き)。記録しない端末 (exiledesk.noLog) と開発版 (data-dev) は送らない (window.__blogLog に溜めるだけ)。
  * 2. コピーのボタン (リンク・Discord 向けの題 + URL) を出して動かす (JS が無いと出ない。X・Reddit はただのリンク)。
@@ -30,7 +30,14 @@
   // 画面名は記事ごと・言語ごとに数えられる形 (2026-10-22 オーナー「ブログも PV 計算できるように」): blog:<slug>:<言語> / 一覧は blog:index:<言語>
   put("screen", { to: (slug ? "blog:" + slug : "blog:index") + ":" + lang, lang: lang, s: 0 });
 
+  // 記事のどこまで読んだか (一番下までの何 %)。増えた時だけ、離れる時に 1 件
+  var deep = 0, deepSent = 0;
+  addEventListener("scroll", function () {
+    var h = document.documentElement.scrollHeight - innerHeight;
+    if (h > 0) deep = Math.max(deep, Math.min(100, Math.round(scrollY / h * 100)));
+  }, { passive: true });
   function flush() {
+    if (slug && deep > deepSent) { deepSent = deep; put("blog_read", { slug: slug, lang: lang, p: deep, s: Math.round((Date.now() - t0) / 1000) }); }
     if (!recs.length || noLog()) return;
     var pend = { recs: [], ev: [] };
     try { var v = JSON.parse(localStorage.getItem(PEND) || "null"); if (v && v.recs && v.ev) pend = v; } catch (e) { /* 無くてよい */ }
