@@ -60,7 +60,9 @@ const props = withDefaults(defineProps<{
   rowOn?: (r: ListRow) => boolean;
   /** 段の行をスマホ・狭い列でも 1 行のまま (差し込みが小さいボタン 1 つの時。文だけ折る) */
   tierOneLine?: boolean;
-}>(), { overlay: false, shareHead: undefined, tone: "amber", keepOpen: () => ["[data-helptip-pop]"], closeAfter: '[data-mod-pick]:not(.on), [data-rec="aim-decide"], [data-mod-add-menu] [role="menuitem"]:not([aria-disabled="true"])' });
+  /** 留まる目次の帯を上端から空ける px (既定 0。シミュの完成形の設定は 12 = ページの留まる物の top-3 と同じ、2026-11-03 ブラック 36) */
+  stickTop?: number;
+}>(), { overlay: false, stickTop: 0, shareHead: undefined, tone: "amber", keepOpen: () => ["[data-helptip-pop]"], closeAfter: '[data-mod-pick]:not(.on), [data-rec="aim-decide"], [data-mod-add-menu] [role="menuitem"]:not([aria-disabled="true"])' });
 
 const rows = computed(() => (props.data && props.item ? modListFor(props.data, props.item) : []));
 /** 今は付かない行 (同じ系統が付いている・差していないルーン・骨を使わないと付かない冒涜と異界) は 0% (2026-10-09 オーナー) */
@@ -224,7 +226,7 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
   <div ref="listEl" data-mod-list class="@container text-[12px]">
     <!-- 目次 (押すとその種類までスクロール。スクロールしても上に残る) と検索。スマホは検索を目次の横送りの外 -->
     <input v-model="query" type="search" :placeholder="tr('文面やタグで探す (例: 耐性、ライフ)', 'Search text or tags')" class="mb-2 w-full rounded-lg border border-white/15 bg-black/30 px-2 py-1.5 md:hidden" />
-    <div ref="tocEl" data-mod-toc class="sticky top-0 z-10 -mx-3 mb-4 flex flex-wrap items-center gap-1.5 bg-panel-toc/95 px-3 py-1.5 backdrop-blur max-md:static max-md:flex-nowrap max-md:overflow-x-auto">
+    <div ref="tocEl" data-mod-toc :style="stickTop ? { top: `${stickTop}px` } : undefined" class="sticky top-0 z-10 -mx-3 mb-4 flex flex-wrap items-center gap-1.5 bg-panel-toc/95 px-3 py-1.5 backdrop-blur max-md:static max-md:flex-nowrap max-md:overflow-x-auto">
       <button v-if="props.toCraft" type="button" class="tbtn mr-1 max-md:shrink-0" :title="tr('アイテムのカードへ戻る', 'Back to the item')" @click="props.toCraft()">{{ tr("↑ クラフトへ", "↑ Craft") }}</button>
       <!-- 節の切り替えはほかのタブと同じ .g-tab (2026-10-18 オーナーの UI 点検)。細い帯に合うよう低く -->
       <button v-for="sec in sections" :key="sec.sid" type="button" role="tab" :aria-selected="active === sec.sid" class="g-tab !min-h-[28px] !px-4 !text-[13px] max-md:shrink-0" :class="active === sec.sid ? 'on' : ''" @click="jump(sec.sid)">
@@ -249,7 +251,7 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
       <!-- プレ・サフィの左右は一覧の幅で決める (窓が狭い小さいパソコンは縦に積む。2026-10-11 オーナー) -->
       <div v-if="secShown(sec.sid)" class="grid gap-3 @4xl:grid-cols-2">
         <div v-for="col in sec.columns" :key="col.side" class="min-w-0" :class="NARROW ? '@container/tcol' : ''">
-          <p data-mod-col-head class="mb-1 flex items-baseline gap-2 border-b border-white/10 pb-1 pr-2" :class="STICKY_HEAD ? 'sticky z-[5] bg-panel-toc/95 pt-0.5' : ''" :style="STICKY_HEAD ? { top: `${tocH}px` } : undefined">
+          <p data-mod-col-head class="mb-1 flex items-baseline gap-2 border-b border-white/10 pb-1 pr-2" :class="STICKY_HEAD ? 'sticky z-[5] bg-panel-toc/95 pt-0.5' : ''" :style="STICKY_HEAD ? { top: `${tocH + (tocH ? stickTop : 0)}px` } : undefined">
             <slot name="col-lead" :col="col" />
             <b class="whitespace-nowrap text-[var(--exile-color-text-primary)]">{{ col.title }}</b>
             <span class="whitespace-nowrap text-[var(--exile-color-text-tertiary)]">{{ col.items.length }} {{ tr("系統", "groups") }}</span>
