@@ -183,8 +183,8 @@ const wayToggles = computed((): Map<string, RowToggle> | null => (inRow.value &&
 ${WAY_ORDER()}` }])) : null));
 /** カードの札: 行の右に切り替えがある行は「途中で消える」の札を外す (押された切り替えと同じ言葉が 2 つ並ぶので) */
 const cardTags = computed(() => { const tg = shown.tags.value, tv = wayToggles.value; if (!tg || !tv) return tg; const m = new Map(tg); for (const k of tv.keys()) m.delete(k); return m; });
-/** カードに乗らない狙い (束のクラフト MOD はカードに出すので除く、S-30b) */
-const overLeft = computed(() => { const l = t.goalItem.value?.left ?? [], b = shown.bundled.value; return b.size ? l.filter((a) => !b.has(a.modId)) : l; });
+/** カードに乗らない狙い (束のクラフト MOD はカードに出すので除く、S-30b。スイッチ goalAllIn では全部カードの中 = S-04c) */
+const overLeft = computed(() => { if (flag("goalAllIn")) return []; const l = t.goalItem.value?.left ?? [], b = shown.bundled.value; return b.size ? l.filter((a) => !b.has(a.modId)) : l; });
 /** 残るクラフト MOD が上限を超えている間の「決めた」を押せない理由 */
 const undecided = computed(() => (s.data.value ? wayUndecided(s.data.value, t.doc.value, t.goalItem.value?.item ?? null) : null));
 watch(() => !!undecided.value, (v) => { if (v) simOp("goal-undecided"); });

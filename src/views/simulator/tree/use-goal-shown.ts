@@ -51,13 +51,20 @@ export function useGoalShown() {
     // 冒涜専用 MOD の行はエミュと同じ冒涜の枠で出す (S-82 と同じ見た目)
     return wayRows(d, t.doc.value, (t.doc.value.memoAims ?? []).filter((a) => bundled.value.has(a.modId) && !on.has(a.modId))).map((m) => (d.mods.get(m.modId)?.source === "desecrated" ? { ...m, desecrated: true } : m));
   });
+  /** 枠に乗らない狙いもカードの中に、ほかと同じふつうの行で (S-04c、スイッチ goalAllIn。カードの行 = ツリーで選べる狙い)。束の物は bundleRows で出すので除く。木の判定は替えない */
+  const overRows = computed((): StageMod[] => {
+    const d = s.data.value, l = t.goalItem.value?.left ?? [];
+    if (!flag("goalAllIn") || !d || !l.length) return [];
+    const over = l.filter((a) => !bundled.value.has(a.modId)), frac = new Set(over.filter((a) => a.fractured).map((a) => a.modId));
+    return wayRows(d, t.doc.value, over).map((m) => (frac.has(m.modId) ? { ...m, fractured: true } : m));
+  });
   const item = computed((): StageItem | null => {
     const g = t.goalItem.value?.item, doc = t.doc.value;
     if (!g) return null;
     const q = doc.goalQualityOn && doc.goalQuality ? { ...g, quality: doc.goalQuality, ...(doc.goalQualityTag ? { qualityTag: doc.goalQualityTag } : {}) } : g;
     // ノーマルに MOD は付かないのでカードは常に空 (前は束と途中で消える行だけ出て見え方が割れた、S-10c、スイッチ goalNeedMod)
     if (flag("goalNeedMod") && t.goalRarity.value === "normal") return q;
-    const ws = [...ways.value, ...bundleRows.value];
+    const ws = [...overRows.value, ...ways.value, ...bundleRows.value];
     const it = ws.length ? { ...q, prefixes: [...q.prefixes, ...ws.filter((m) => m.side === "prefix")], suffixes: [...q.suffixes, ...ws.filter((m) => m.side === "suffix")] } : q;
     // 付け方が冒涜の狙いは 1 つ目から冒涜の行 = エミュと同じ枠・一番下 (S-10b、スイッチ goalDesecRow。見せるだけで木の判定は替えない)
     const d = s.data.value;

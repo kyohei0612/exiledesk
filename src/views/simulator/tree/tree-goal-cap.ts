@@ -4,7 +4,7 @@
  * (同じ系統・冒涜 1 つ・クラフト MOD の上限は 2 つの組でも出る。アイテムレベル・ベースに無いは組無しで出る)
  */
 import { goalBlock } from "../../../services/simulator/sim-engine";
-import type { PatchData } from "../../../services/craft-stage/engine";
+import { craftedKindOf, type PatchData } from "../../../services/craft-stage/engine";
 import { tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 
@@ -14,7 +14,11 @@ type TierMod = { modId: string; tier: number };
 
 /** 候補 aims に add を足せない理由 (足せれば null)。same = add と同じ MOD がもう候補にある (段の替えは数に入れない) */
 export function goalBlockLoose(data: PatchData, base: string, itemLevel: number, aims: readonly TierMod[], add: TierMod, same: boolean): string | null {
-  if (!same && aims.length >= GOAL_MAX) return tr(`完成形の候補は ${GOAL_MAX} まで`, `Up to ${GOAL_MAX} final targets`);
+  if (flag("goalAllIn")) {
+    // 上限は付け方ごとに 10 (S-04c、スイッチ goalAllIn)
+    const k = kindOf(data, add);
+    if (!same && aims.filter((a) => kindOf(data, a) === k).length >= GOAL_MAX) return KIND_FULL[k]();
+  } else if (!same && aims.length >= GOAL_MAX) return tr(`完成形の候補は ${GOAL_MAX} まで`, `Up to ${GOAL_MAX} final targets`);
   const alone = goalBlock(data, base, itemLevel, [], add);
   if (alone) return alone;
   for (const a of aims) {
@@ -25,5 +29,13 @@ export function goalBlockLoose(data: PatchData, base: string, itemLevel: number,
   return null;
 }
 const isDesecrated = (data: PatchData, m: TierMod): boolean => data.mods.get(m.modId)?.source === "desecrated";
+/** 付け方の分け (MOD の出どころで見る: エッセンス・合金 = クラフト MOD、冒涜専用 MOD = 冒涜、ほか = ふつう) */
+type Kind = "normal" | "craft" | "desecrated";
+const kindOf = (data: PatchData, m: TierMod): Kind => (craftedKindOf(data, m) ? "craft" : isDesecrated(data, m) ? "desecrated" : "normal");
+const KIND_FULL: Record<Kind, () => string> = {
+  normal: () => tr(`ふつうの MOD の候補は ${GOAL_MAX} まで`, `Up to ${GOAL_MAX} regular mod targets`),
+  craft: () => tr(`エッセンス・合金の MOD の候補は ${GOAL_MAX} まで`, `Up to ${GOAL_MAX} Essence / Alloy mod targets`),
+  desecrated: () => tr(`冒涜の MOD の候補は ${GOAL_MAX} まで`, `Up to ${GOAL_MAX} desecrated mod targets`),
+};
 const familiesOf = (data: PatchData, m: TierMod): string[] => { const d = data.mods.get(m.modId); return d ? (d.families?.length ? [...d.families] : [d.family]) : []; };
 const SAME_FAMILY = (): string => tr("同じ系統の MOD がもう狙いにある", "A mod of the same family is already a target");
