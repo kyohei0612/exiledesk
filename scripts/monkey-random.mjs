@@ -7,7 +7,7 @@
  *   node scripts/monkey-random.mjs http://localhost:1440/web.html 16600844 20 390
  *
  * 上限 (R-18、オーナー 11-02「上限決めろって」): 手数の既定は 20 (出す前の確かめは 20 のまま、引数で上書きは試しの時だけ)。
- * 1 匹 5 分 (--limit 300) で打ち切り、「止まった (どの手・どの画面・何を押していたか)」を表と画面に出して終わる (終わりの値 2)。
+ * 1 匹 3 分 (--limit 180、オーナー 11-02「3分にしてくれ」) で打ち切り、「止まった (どの手・どの画面・何を押していたか)」を表と画面に出して終わる (終わりの値 2)。
  * --retry は打ち切りの時だけ、種 + 1 で 1 回だけ回し直す (回し直しはもう回し直さない)。
  * 手数 = 画面の文字が変わった押しの数 (変わらない押しは「空振り」で数えない)。--until-100 は手数の後も 100 人が走るまで続ける (手数 + 50 まで)。
  * 道は決め打ちしない: 押せる物の全部が候補で、先へ進む物の確率だけを画面ごとに上げる。exiledesk.com への GET 以外の送信と広告・計測は切る (本番へ書かない・表示数を汚さない)。
@@ -24,7 +24,7 @@ const flag = (n) => { const i = argv.indexOf(n); if (i < 0) return false; argv.s
 const opt = (n, d) => { const i = argv.indexOf(n); if (i < 0) return d; const v = argv[i + 1]; argv.splice(i, 2); return v; };
 const rawArgs = [...argv];
 const UNTIL100 = flag("--until-100"), SHOTS = flag("--shots"), RETRY = flag("--retry");
-const OUT = opt("--out", join(tmpdir(), "exiledesk-monkey")), PORT = Number(opt("--port", 9478)), LIMIT = Number(opt("--limit", 300));
+const OUT = opt("--out", join(tmpdir(), "exiledesk-monkey")), PORT = Number(opt("--port", 9478)), LIMIT = Number(opt("--limit", 180));
 // 手数は省ける (<URL> <種> <幅> なら 20)
 const [URL_, seedArg, handsArg, widthArg] = argv.length === 3 ? [argv[0], argv[1], "20", argv[2]] : argv;
 if (!URL_ || !seedArg || !handsArg || !widthArg) { console.error("node scripts/monkey-random.mjs <URL> <種> [手数] <幅> [--until-100] [--shots] [--out <置き場>] [--port <番号>] [--limit <秒>] [--retry]"); process.exit(1); }
