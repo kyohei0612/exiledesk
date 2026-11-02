@@ -4,7 +4,6 @@
  "E src/components/for-share/mod-list/stage-mod-list-look.ts": 2,
  "E src/components/for-share/mod-list/use-held-shares.ts": 3,
  "E src/services/simulator/quiz-build.ts": 3,
- "E src/services/simulator/recipe-sim.ts": 4,
  "E src/services/simulator/sim-greater.ts": 1,
  "E src/services/simulator/tree/tree-aim.ts": 1,
  "E src/services/simulator/tree/tree-whittle.ts": 1,
@@ -30,5 +29,6 @@
  "E src/views/simulator/tree/use-tree.ts": 3,
  "E src/views/tutorial/StageTopicGuide.vue": 2,
  "E src/views/tutorial/VideoCompare.vue": 1,
- "E src/views/tutorial/VideoTiers.vue": 9
+ "E src/views/tutorial/VideoTiers.vue": 9,
+ "E src/web/dev-log.ts": 1
 }
