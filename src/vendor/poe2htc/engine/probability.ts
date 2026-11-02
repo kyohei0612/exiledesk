@@ -635,8 +635,8 @@ export function bossOmenAllowed(category: string): boolean {
  * caller counts with THIS, and phrases its own rejection message.
  */
 export function isEssenceMod(mod: Mod): boolean {
-  // Through `CRAFTED_SOURCES` (pool.ts), which `familiesOf` reads too: the cap that counts these mods
-  // and the exclusion group that separates them have to agree on which sources are crafted.
+  // Through `CRAFTED_SOURCES` (pool.ts), the one list of crafted sources (the cap counts these mods;
+  // families no longer treat them apart, `familiesOf`).
   return CRAFTED_SOURCES.has(mod.source);
 }
 

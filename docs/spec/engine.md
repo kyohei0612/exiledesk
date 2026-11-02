@@ -47,12 +47,13 @@
 
 - **E-10 MOD の置き場・重み・段・文はエンジンの行 1 か所から取る。** 読み込みは `services/htc/patch.ts` の `loadHtcPatch()` (同梱 + `extra-bases.json` + `weight-overrides.ts` + `poe2db-pool-fixes.json`)、ベース名 → 行は `bridge.ts` の `classOfBase`、MOD を並べるのは `craft-stage/mod-list.ts` の `modListFor`。自前の表を作らない。 — 有効 / オーナー 09-29・10-05 / 見張り: `check-engine-entry` E (画面の中の .tiers・生の JSON)
 - **E-11 系統・重み・出やすさは `services/mods/mod-rules.ts`。** `m.family` を直接比べない。段の重みは `vendor/poe2htc/engine/pool.ts` の `modTierWeights` 1 本で、自分で足さない。 — 有効 / ARCHITECTURE / 見張り: `check-engine-entry` E
+- **E-11a (基本動作) 同じ系統 (ModFamily) の MOD は 1 品に 1 つ。付け方 (高貴・カオス・増強・王者・エッセンス・パーフェクトエッセンス・合金・骨の発現・お告げ・手で付ける) に例外なし。** 系統は poe2db の ModFamilyList (データの `family` / `families`、2 つの系統を持つ MOD は両方)。同じ系統が付いていれば、普通の MOD を足す手は候補から外し、エッセンスは打てない (パーフェクトが 1 つ消す前に弾く)。判定はエンジンの `familiesOf` / `excluded` (pool.ts) の 1 か所だけで、付け方ごとの別の見方を持たない (`mod-rules.ts` の `familyBlocked`、エミュは `takenFamilies` + `familyBlocked`)。2026-11-02 まであった「エッセンスの MOD は `crafted:` の別の系統」はやめた。取引所に並ぶ同じ系統 (エッセンスと冒涜の耐性など) は、今の作り方では作れない物とみなす。耐性のフラックスで変えた先が付いている MOD と被る時の動きは ⑦ 14 (未決)。 — 有効 / オーナー 11-02「ファミリーで被るはないな」「打てない」(要望 ff4eb935) / 外の正解: poe2db (スタッフの雷スペル +# と全スペル +5 のエッセンスはどちらも IncreaseSocketedGemLevel)、CoE package.js (エッセンス・パーフェクト・合金は modgroups が付いている MOD と同じなら消す前に「The item already has a mod of this type」)、CoE beta の画面 (11-02「Similar modifier already present!」)、公式トレード (エッセンスの全スペル +5 のスタッフ 1 万件以上・属性スペル +# と並ぶ物 0 件)
 - **E-12 部位のまとまりは `services/mods/item-classes.ts` から引く** (`inGroup`・`inAny`・`kindOf`・`categoriesIn`・`canFracture`)。部位の名前を手で並べない。カレンシーの使い先は説明文の言葉 (武器・マーシャル武器・ワンド / スタッフ / セプター・防具・宝飾品・指輪かアミュレット・矢筒・ジュエル)。表は poe2db と食い違ったら poe2db に合わせる。 — 有効 / 10-13 総点検 (`docs/archive/2026-10-13-item-class-audit.md`)・10-17 / 見張り: `tests/item-classes.test.ts`
 - **E-13 暗黙が足すタグも置き場に入る。** 例: グラスピングメイルは鎧 (Body Armours、筋力・器用さ・知性の混合 = タグ `str_dex_int_armour`、要求 41 / 41 / 41、レベル 65) だが暗黙の adds_tags = ring で指輪の MOD が付き、カタリストも使える (専用の行 `Body_Armours_ring_str_dex_int`)。暗黙が一緒に足す `genesis_tree_caster`・`genesis_tree_minion` は創生の樹 (落ちる物だけ、`htcDropOnly`) の MOD 用で、クラフトの置き場には足さない。「この部位に◯◯は付かない」と言う前に暗黙を見る。ベースの選び画面の札は E-98。 — 有効 (10-28 オーナーの決め、エンジンの変更なし) / 要望 a286ced8・poe2db (10-28 に読み直し)「Can roll Ring Modifiers」「Catalysts can be applied to this item」 / 外の正解: CoE beta の Grasping Mail の表、`tests/grasping-mail.test.ts`
 - **E-14 MOD の値に固定値は無い。** +1 も stat の値で、品質・ソケットの効果・お告げなどで動く前提で持つ (`stage-runes.json` の effects.stats など)。丸めが分からない時はデータか実測で。 — 有効 / オーナー 10-10「固定値のものなんてのは存在しない」 / 外の正解: 実物 (セールの凱旋 +2)
 - **E-15 暗黙にもタグがあり、カタリストの品質で伸びる。** タグ・品質・上の数値を触る時は暗黙 (`implicitRows`・`htc/implicit-stats.json`) も見る。 — 有効 / オーナー 10-12 / 確かめ: 暗黙の値の表示
 - **E-16 MOD のタグと冒涜の陣営は poe2db に合わせる** (`htc/poe2db-tag-fixes.json`)。poe2db を取り直したら照合を回す。 — 有効 / 10-18 v0.1.572、`docs/reviews/2026-10-18-tag-audit.md` / 外の正解: `audit-poe2db-tags.mjs` が 0
-- **E-17 エッセンスで付けた系統は、後から骨・高貴・カオスで同じ系統を付けさせない。** 逆の順番 (同じ系統の MOD の後のエッセンス) は E-54 で打てない。どちらの順でも同じ系統の普通の MOD とエッセンスの MOD は並ばない。 (`occupiedKeysOf`) — 有効 / メモ poe2-craft-rules-confirmed、11-02 オーナー「打てない」 / 見張り: golden
+- **E-17 → E-11a (基本動作) を見る。** エッセンスで付けた系統に、後から骨・高貴・カオスで同じ系統は付かない。エッセンスだけの決まりではない。 — 有効 (11-02 に E-11a へまとめた) / メモ poe2-craft-rules-confirmed / 見張り: golden
 - **E-18 フラスコ・チャームはエンジンに足さない。** (貼り付けでは「未対応」) — 有効 / オーナー 10-20
 - **E-19 コラプトで付く・変わる MOD と値の幅はエンジンが 1 か所に持つ** (`services/mods/corruption.ts` + `corruption-mods.json` ← `scripts/build-corruption-mods.mjs`、poe2db から)。 — 有効 / オーナー 10-20
 
@@ -87,11 +88,11 @@
 
 ### エッセンス
 
-- **E-50 無限のエッセンスは筋力・器用さ・知性のうち付いていない系統から等しく 1 つ。** 普通の MOD で付いている能力値も「付いている」に数える (E-54、11-02)。全部付いていれば打てない。 (`infiniteChoices`) — 有効 / オーナー、CoE poe2_essence
+- **E-50 無限のエッセンスは筋力・器用さ・知性のうち付いていない系統から等しく 1 つ。** 「付いている」は E-11a どおり、どの付け方で付いた物も数える。全部付いていれば打てない。 (`infiniteChoices`) — 有効 / オーナー、CoE poe2_essence
 - **E-51 パーフェクトエッセンスは、付ける側が埋まっていれば必ずその側から 1 つ消してから付く。** (`remove` の `side` = エッセンスの MOD の側、埋まっている時だけ) — 有効 / オーナーがゲームで確認 10-14 / 見張り: golden
 - **E-52 深淵のエッセンスは、未発現の冒涜があれば打てて印がそれと入れ替わる。発現済みの冒涜があると打てない。固定した印は置き換えない。** (`noRevealedDesecrated`・`unrevealedFirst`) — 有効 / オーナーがゲームで確認 10-16 夜 (v0.1.532)・10-17 / 見張り: golden
 - **E-53 エッセンスの MOD は冒涜 (発現) では付かない。** — 有効 / オーナー 10-18
-- **E-54 付いている MOD (普通・エッセンス・冒涜・固定のどれでも) と同じ系統のエッセンスは打てない。** 例: スタッフに雷スペルのレベル +# が付いていれば、パーフェクトエッセンス (全スペルのレベル +5、同じ系統 `IncreaseSocketedGemLevel`) は打てない。打つ前に止める (`essenceFamilyFree`、棚で打てない理由「同じ系統の MOD が付いている」)。合金も同じ手 (パーフェクトエッセンス) なので同じ。10-10 の「同じ系統の一般 MOD と一緒に付く」は撤回 (並んでいた実物は系統の違う合金だった見込み)。 — 有効 / 11-02 オーナー「打てない」(要望 ff4eb935) / 外の正解: poe2db の Staves で両方 ModFamilyList IncreaseSocketedGemLevel、公式トレード (Forbidden Rites) でエッセンスの全スペル +5 のスタッフは 1 万件以上・そのうち雷 / 火 / 冷気 / 混沌 / 物理のスペル +# と並ぶ物は 0 件 (対照: 詠唱速度と並ぶ物 1 万件以上)
+- **E-54 (廃止) エッセンスの MOD は同じ系統の一般 MOD と一緒に付く。** — 廃止 (11-02、E-11a の基本動作に。エッセンスにも例外なし。打つ前の判定 `essenceFamilyFree` は E-11a の判定を呼ぶだけ)。番号はほかから指されるので残す
 
 ### 骨・冒涜・発現
 
@@ -170,6 +171,7 @@
 | # | 何 | 今のコード | 待っている物 |
 |---|---|---|---|
 | 13 | `tests/currency-spec-golden.test.ts` が 6 つとも控えと違う。控えは 10-21 から取り直しておらず、その後エンジンに 85 commit (10-28 の英語の reduced の直しの前から赤) | ― | どの commit で変わったかを洗ってから取り直す (ジン) |
+| 14 | 耐性のフラックス (とアルダーのルーン) で変えた先が、付いている MOD と同じ系統になる時 (E-11a)。10-10 の「被るのはあり」は 11-02 の「ファミリーで被るはないな」で上書き | `element-convert.ts` の `convertByTable` は系統を見ずに差し替える (被ったまま並ぶ) | 動きの決め (打てない / その MOD だけ変わらない / ほか)、オーナー (34 から案を出し中) |
 
 前の ⑦ 1〜12 は 10-28 に片付いた (行き先: 1 → E-42・2 → E-71・3 → E-13・4 → E-01・5 → E-24・8 → E-92・9 → E-91・12 → E-98、10・11 はコメントとチェックリストの注を直して済み)。番号はほかから指されるので付け替えない。
 本文の番号に無い 10-28 の決め (どちらもコードは今のまま): ⑦6 貼り付けの段 0 はエッセンス → 冒涜専用の順の候補に並べる (トレードの画面の見本が来たら照らす)。⑦7 パペットマスター +6 はデータが poe2db と同じ (合金 +(4—5)) で直さず、貼り付けでは読めない行のまま (推し量らない)。

@@ -96,30 +96,21 @@ export type WeightBoost = (mod: Mod) => number;
  */
 export const CRAFTED_SOURCES: ReadonlySet<Mod['source']> = new Set(['essence', 'perfect_essence']);
 
+/**
+ * One family rule for every way a mod lands (ExileDesk 2026-11-02, owner: "ファミリーで被るはないな"):
+ * a family is on an item at most once — rolled, Essence / Perfect Essence / Alloy, desecrated reveal alike.
+ * There is no crafted namespace any more. Until 11-02 crafted mods excluded only each other (`crafted:<family>`),
+ * after poe.ninja items with a crafted and a desecrated resistance of one family (2026-09-15); the owner ruled
+ * those out as not craftable now. Craft of Exile refuses an Essence whose modgroups are on the item, before the
+ * Perfect Essence removal ("Similar modifier already present!", CoE beta 11-02).
+ */
 export function familiesOf(mod: Mod): readonly string[] {
-  const own = mod.families && mod.families.length > 0 ? mod.families : mod.family ? [mod.family] : [];
-  // A CRAFTED modifier — Essence, Perfect Essence or Alloy — excludes only other crafted modifiers.
-  // Real items carry a rolled and a crafted modifier of one family side by side: Steelmage's jacket
-  // holds +28% Lightning Resistance rolled beside +34% crafted, his sandals two Fire Resistances, and
-  // xthefarmerx's ring another pair (poe.ninja, 2026-09-15; none of the three corrupted).
-  //
-  // Namespacing the GROUP is what makes that legal everywhere at once, because every exclusion in the
-  // engine is decided through this function: pool denominators, the lattice's blocked bits, both
-  // pickers. Two crafted mods of one family still collide — untraced, so it stays refused.
-  return CRAFTED_SOURCES.has(mod.source) ? own.map((f) => `crafted:${f}`) : own;
+  return mod.families && mod.families.length > 0 ? mod.families : mod.family ? [mod.family] : [];
 }
 
-/**
- * The groups a mod OCCUPIES once it sits on the item. A crafted mod occupies its own namespaced groups AND
- * the plain ones: nothing rolled of that family can join it afterwards (ExileDesk 2026-10-11, owner: "the
- * same mod, of course it can't roll" — a bone reveal offered Critical Hit Chance beside an essence's). The
- * other order stays legal (a crafted mod onto a rolled one of its family — the poe.ninja items above).
- */
+/** The groups a mod occupies once it sits on the item — the same as `familiesOf` (one rule, no crafted exception). */
 export function occupiedFamiliesOf(mod: Mod): readonly string[] {
-  const own = familiesOf(mod);
-  if (!CRAFTED_SOURCES.has(mod.source)) return own;
-  const plain = mod.families && mod.families.length > 0 ? mod.families : mod.family ? [mod.family] : [];
-  return [...own, ...plain];
+  return familiesOf(mod);
 }
 
 /**
@@ -136,8 +127,9 @@ export function excluded(mod: Mod, occupied: ReadonlySet<string>): boolean {
 export function itemFamilies(data: PatchData, item: ItemState): Set<string> {
   const fams = new Set<string>();
   for (const p of [...item.prefixes, ...item.suffixes]) {
-    // A throwaway names no mod, so it has no family to contribute — and none is needed: the only step
-    // that ever sees one adds a CRAFTED mod, whose groups no rolled family can share (see `Throwaway`).
+    // A throwaway names no mod, so it has no family to contribute. The only step that sees one is a Perfect
+    // Essence / Alloy; the small chance the throwaway shares its family (which refuses it in the game since
+    // 2026-11-02's one family rule) is not counted — see `Throwaway`.
     if (p.throwaway) continue;
     for (const f of occupiedFamiliesOf(resolveMod(data, p.modId))) fams.add(f);
   }

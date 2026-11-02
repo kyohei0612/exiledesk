@@ -10,7 +10,7 @@ import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types
 import { runeIdByName, withRunes } from "../../vendor/poe2htc/engine/runes";
 import RUNES_JSON from "./stage-runes.json";
 const RUNE_STATS = (RUNES_JSON as { runes: unknown }).runes;
-import { occupiedKeysOf, rawFamiliesOf } from "../mods/mod-rules";
+import { occupiedKeysOf } from "../mods/mod-rules";
 import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
 import { jaOfModAlways } from "../htc/mod-text";
 import { filledStatsOf, htcBaseLimits, implicitStatsOf } from "../htc/patch";
@@ -155,28 +155,14 @@ export const replaced = (item: StageItem, mod: StageMod, next: StageMod): StageI
 export const skip = (item: StageItem, reason: string): StageApply => ({ applied: false, reason, item, added: [], removed: [] });
 /** 当たり所で弾かれた (打つ前には分からない)。棚の判定では打てる扱い ([[feedback-game-rules-as-written]]) */
 export const skipRandom = (item: StageItem, reason: string): StageApply => ({ ...skip(item, reason), random: true });
-/** 付いている MOD の系統 (except は除く。発現の時の未発現の枠など) */
+/**
+ * 付いている MOD の系統 (except は除く。発現の時の未発現の枠など)。どの付け方で足す時もこれと familyBlocked で見る
+ * (E-11 の基本動作、付け方に例外なし。2026-11-02 オーナー「ファミリーで被るはないな」)。未発現の枠は系統 "unrevealed" で何ともぶつからない
+ */
 export function takenFamilies(data: PatchData, item: StageItem, except?: StageMod): Set<string> {
   return new Set(allMods(item).filter((m) => m !== except).flatMap((m) => {
     const md = data.mods.get(m.modId);
     return md ? occupiedKeysOf(md) : [m.family];
-  }));
-}
-/**
- * 付いている MOD 全部の生の系統 (エッセンスを打てるかの判定用。未発現の枠は系統が決まっていないので数えない)。
- * 同じ系統の普通の MOD が付いていればエッセンスは打てない (E-54、2026-11-02 オーナー「打てない」、公式トレードに並ぶ実物 0 件)
- */
-export function takenRawFamilies(data: PatchData, item: StageItem): Set<string> {
-  return new Set(allMods(item).filter((m) => !m.unrevealed).flatMap((m) => {
-    const md = data.mods.get(m.modId);
-    return md ? rawFamiliesOf(md) : [m.family];
-  }));
-}
-/** 付いているエッセンス (クラフト) の MOD の生の系統 (手で付ける画面の、エッセンスの MOD どうしの入れ替え用) */
-export function takenCraftedFamilies(data: PatchData, item: StageItem): Set<string> {
-  return new Set(allMods(item).filter((m) => m.crafted).flatMap((m) => {
-    const md = data.mods.get(m.modId);
-    return md ? rawFamiliesOf(md) : [m.family];
   }));
 }
 

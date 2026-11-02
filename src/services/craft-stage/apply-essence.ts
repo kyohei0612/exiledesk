@@ -10,9 +10,9 @@
  */
 import type { Mod, PatchData } from "../../vendor/poe2htc/engine/types";
 import { BREACH_FAMILY } from "../htc/omens";
-import { runeEffectPct, SIDES, takenRawFamilies } from "./stage-core";
+import { runeEffectPct, SIDES, takenFamilies } from "./stage-core";
 import { boostedPlus } from "../../vendor/poe2htc/engine/runes";
-import { essenceClash, hasRawFamily, sharesRawFamily } from "../mods/mod-rules";
+import { familyBlocked, hasFamily, sharesFamily } from "../mods/mod-rules";
 import { ESSENCE_KEYS } from "../htc/essence-key-table";
 import type { StageItem, StageSide } from "./types";
 
@@ -28,7 +28,7 @@ function essenceMods(data: PatchData, item: StageItem): Array<{ mod: Mod; side: 
 export function essenceTarget(data: PatchData, item: StageItem, key: string): { level: string; mod: Mod; side: StageSide } | null {
   const list = essenceMods(data, item);
   if (key === "essence:breach") {
-    const hit = list.find((x) => hasRawFamily(x.mod, BREACH_FAMILY));
+    const hit = list.find((x) => hasFamily(x.mod, BREACH_FAMILY));
     return hit ? { level: "perfect", ...hit } : null;
   }
   const m = /^essence:(lesser|normal|greater|perfect):(.+)$/.exec(key);
@@ -48,7 +48,7 @@ export function normalTierOf(data: PatchData, item: StageItem, mod: Mod, tier: M
   const r0 = tier.ranges[0];
   for (const id of mod.type === "prefix" ? pool.prefixes : pool.suffixes) {
     const m = data.mods.get(id);
-    if (!m || m.source !== "normal" || !sharesRawFamily(m, mod)) continue;
+    if (!m || m.source !== "normal" || !sharesFamily(m, mod)) continue;
     const i = m.tiers.findIndex((t) => t.ilvl === tier.ilvl && String(t.ranges[0]) === String(r0));
     if (i >= 0) return { tierName: `T${m.tiers.length - i}`, affix: String(m.tiers[i]!.name ?? "") };
   }
@@ -59,8 +59,8 @@ export function normalTierOf(data: PatchData, item: StageItem, mod: Mod, tier: M
 export function infiniteChoices(data: PatchData, item: StageItem, key: string): Array<{ mod: Mod; side: StageSide }> {
   const level = /^essence:([a-z]+):/.exec(key)?.[1];
   const en = ESSENCE_KEYS[key]?.en;
-  const taken = takenRawFamilies(data, item);
-  return essenceMods(data, item).filter((x) => ESSENCE_KEYS[`essence:${level}:${x.mod.id}`]?.en === en && !essenceClash(x.mod, taken));
+  const taken = takenFamilies(data, item);
+  return essenceMods(data, item).filter((x) => ESSENCE_KEYS[`essence:${level}:${x.mod.id}`]?.en === en && !familyBlocked(x.mod, taken));
 }
 /**
  * 無限のエッセンス: 筋力・器用さ・知性のどれかが付く (poe2db はどの部位にも 3 つ並べている。2026-10-09)。

@@ -4,9 +4,9 @@
  * 一言は今の関数 (apply-desecrate.ts など) と同じ文にしている (手順の再生の突き合わせで同じ結果になるように)
  */
 import { inAny, inGroup } from "../../mods/item-classes";
-import { allMods, catalystOf, hasExtraCatalyst, limitOf, maxQualityOf, room, SIDES, takenRawFamilies } from "../stage-core";
+import { allMods, catalystOf, hasExtraCatalyst, limitOf, maxQualityOf, room, SIDES, takenFamilies } from "../stage-core";
 import { craftedLimitOf, essenceTarget, infiniteChoices, isInfiniteEssence } from "../apply-essence";
-import { essenceClash } from "../../mods/mod-rules";
+import { familyBlocked } from "../../mods/mod-rules";
 import type { PatchData } from "../../../vendor/poe2htc/engine/types";
 import { socketCapOf } from "../stage-runes";
 import { canFracture } from "../../mods/item-classes";
@@ -78,7 +78,7 @@ export function limitBlock(l: Limit, item: StageItem, mods?: Mods, tag?: string 
     case "essenceFamilyFree": {
       if (!ess) return null;
       // 無限のエッセンスは付いていない能力値から選ぶので、選べる物が残っていれば打てる (E-50)
-      const free = isInfiniteEssence(ess.key) ? infiniteChoices(ess.data, item, ess.key).length > 0 : (() => { const t = essenceTarget(ess.data, item, ess.key); return !t || !essenceClash(t.mod, takenRawFamilies(ess.data, item)); })();
+      const free = isInfiniteEssence(ess.key) ? infiniteChoices(ess.data, item, ess.key).length > 0 : (() => { const t = essenceTarget(ess.data, item, ess.key); return !t || !familyBlocked(t.mod, takenFamilies(ess.data, item)); })();
       return free ? null : tr("同じ系統の MOD が付いている", "A mod of the same group is already on the item");
     }
     case "qualityBelow": {

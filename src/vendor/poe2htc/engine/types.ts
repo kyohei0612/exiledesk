@@ -171,11 +171,11 @@ export interface PlacedMod {
  * A throwaway as a plan step names it: the placeholder id its mod carries on the item (what the
  * removing step's `remove` points at), and the side it lands on.
  *
- * It LIVES EXACTLY ONE STEP — `stepProbability` scores every other step 0 on an item holding one —
- * and that is what keeps a route's odds exact rather than approximate. The one step that sees it is
- * a Perfect Essence, whose removal odds count mods (`perfectEssenceProbability`) and whose add is
- * crafted, so no rolled family can block it (`familiesOf`). Which mod landed therefore never changes
- * a number, and after that step it is gone.
+ * It LIVES EXACTLY ONE STEP — `stepProbability` scores every other step 0 on an item holding one.
+ * The one step that sees it is a Perfect Essence, whose removal odds count mods
+ * (`perfectEssenceProbability`). Which mod landed never changes a number, and after that step it is gone.
+ * One approximation remains since the one family rule (2026-11-02, `familiesOf`): if the throwaway happens
+ * to share the essence's family the game refuses the essence; that small chance is not counted.
  */
 export interface Throwaway {
   readonly id: string;
