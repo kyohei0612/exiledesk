@@ -204,6 +204,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "goalAskFix", "goalDesecRow", "holeCheck", "spam30", "aimTable", "shelfWhy", "backQuality", "goalNeedMod", "sanctifyHint", "keepOutside",
   // 0.1.653 (オーナー 11-01「スマホ版先にリリースしちゃって良さそうだね」、ポップの答え「はい」)。ツリーを軽く・穴チェックはボタンだけ・目次のタブ・ベースのページの送りも一緒に。閉じたままは daily・simTutorial
   "phoneView", "treeLight", "holeButton", "tocJump", "baseReopen",
+  // 0.1.657 (オーナー 11-03 1440 で手順 1〜4 を確かめて「おｋ」、ブラック 36 の頼み)。閉じたままは daily・simTutorial
+  "goalAllIn",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */

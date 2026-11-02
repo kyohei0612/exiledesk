@@ -1,4 +1,10 @@
 {
+  "0.1.657": [
+    "Simulator: the final-item card now lists every target mod (targets beyond the slot limit are normal rows inside the card; up to 10 candidates per crafting method)",
+    "Simulator: targeting a mod that adds slots (such as Liquid Emotions) now counts the extra slots on the final-item card. Liquid Emotion steps show a hit label and are retried when the hit can't apply",
+    "Simulator: in the final-item settings, the sticky bars and the mod table's index and headers now sit a little below the top edge, so text scrolling underneath no longer shows through",
+    "Emulator: the jewel mod list now has a Delirium section for mods added by Liquid Emotions"
+  ],
   "0.1.656": [
     "Simulator: the \"Save first?\" prompt after changing the start in the final-item settings could appear off screen; it now scrolls into view"
   ],
