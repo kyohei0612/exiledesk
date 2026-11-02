@@ -15,14 +15,14 @@ const open = (b: TreeBox): boolean => !b.hand && !b.back && !b.done && !b.split;
 export const isGrayBox = (b: TreeBox): boolean => tidyOn() && JUNK.has(b.out) && open(b) && !b.tidied && !b.noAutoBack;
 /** 整理の後に残った、人が決める箱 (S-192 ③)。上の段から */
 export const unsetBoxes = (d: TreeDoc): string[] => Object.values(d.boxes).filter((b) => open(b) && !isGrayBox(b)).sort((a, z) => a.y - z.y || a.x - z.x).map((b) => b.id);
-/** ボタンの状態 (S-192): tidy = 「ハズレ整理」、unset = 「ハズレ整理 (未設定 n)」、check = 今の穴チェック */
+/** ボタンの状態 (S-192): tidy = 「ハズレ整理」、unset = 未設定 n つ (押す物が無い)、check = 最終チェック */
 export type TidyStep = "tidy" | "unset" | "check";
 export function tidyStep(d: TreeDoc): TidyStep {
-  // まだ整理で見ていない決めの無い箱があれば整理から (手を足した後の「打った後」の箱も、S-192)
-  if (Object.values(d.boxes).some((b) => open(b) && !b.tidied && !b.noAutoBack)) return "tidy";
+  // 整理は 1 度押した後は最終チェックの時だけ。手を足しても ① へ戻らない (S-192)
+  if (!d.tidyRan && Object.values(d.boxes).some((b) => open(b) && !b.tidied && !b.noAutoBack)) return "tidy";
   return unsetBoxes(d).length ? "unset" : "check";
 }
 /** 開いた木の決めの無い外れの箱は整理を押すまでグレー (S-196)。整理で見た印を付けない箱か */
 export const staysGray = (b: TreeBox): boolean => JUNK.has(b.out) && open(b);
-/** 完成を押した後・整理を押した後は全部グレーにして、次に押す物だけ光らせる (S-198)。開いただけの木は出さない (S-196) */
-export const guideOn = (d: TreeDoc): boolean => tidyOn() && Object.values(d.boxes).some((b) => b.done === "main" && b.doneNow) && tidyStep(d) !== "check";
+/** 完成を押した後・整理を押した後は全部グレーにして、次に押す物だけ光らせる。合格まで保つ (S-198)。開いただけの木は出さない (S-196) */
+export const guideOn = (d: TreeDoc): boolean => tidyOn() && Object.values(d.boxes).some((b) => b.done === "main" && b.doneNow);

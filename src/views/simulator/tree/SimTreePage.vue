@@ -56,7 +56,7 @@ import { RUN_N, runPrice, TEST_N, useTreeRun } from "./use-tree-run";
 import { flag } from "../../../web/release-flags";
 import TreeRunBar from "./TreeRunBar.vue";
 import TreeFlowSteps from "./TreeFlowSteps.vue";
-import { applyPick, holdLinks, type OnlyOut } from "./tree-hand-plan"; import { useJunkTidy } from "./use-junk-tidy"; import { swapHandIn } from "./tree-swap-hand";
+import { applyPick, drawnBelow, holdLinks, type OnlyOut } from "./tree-hand-plan"; import { useJunkTidy } from "./use-junk-tidy";
 import { installSimMonkey } from "./sim-monkey";
 import TreeRunLayer from "./TreeRunLayer.vue";
 import TreeHandChip from "./TreeHandChip.vue"; import TreeTabs from "./TreeTabs.vue";
@@ -160,20 +160,13 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = nul
   let at = id;
   // 組み替えは tree-hand-plan の applyPick (猿の口 sim-monkey と同じ)
   // 足した直後に重ならないよう整列まで (10-26 夜オーナー「横はそのままずらして、位置の整頓まで」。下の＋も同じ)
-  void v.holdBox(id, () => { t.edit((d) => { at = holdLinks(() => applyPick(d, id, h, kind, aims, pre, only)); tidyOf(d); }); return at; });
+  const below = drawnBelow(doc.value, id);
+  void v.holdBox(id, () => { t.edit((d) => { at = holdLinks(() => applyPick(d, id, h, kind, aims, pre, only)); tidyOf(d); }); showGone(below.filter((x) => !doc.value.boxes[x]).length); return at; });
   panel.value = null;
   if (flag("junkTidy")) return; // 視点は holdBox (S-147e)
   // 出来た結果の箱が枠の外なら寄る (真ん中の箱。10-22 白紙から組んで、出来た箱が下に出て自分で動かさないと見えなかった)
   const kids = doc.value.boxes[at]?.outs ?? [];
   if (kids.length) void v.reveal(kids[Math.floor(kids.length / 2)]!);
-}
-/** 手だけ替える (S-57c、スイッチ swapHand): 下の箱を同じ結果へ引き継いで組み直し、替える前の 100 人の結果を残す。1 つ戻すで戻せる */
-function swapHandOf(h: Hand, aims: Aim[], pre: string | null): void {
-  const id = panel.value!.id, data = s.data.value; let box: string | null = null;
-  if (!data) return;
-  simAct("hand", "swap"); picking.value = null; tr100.noteSwap();
-  void v.holdBox(id, () => { t.edit((d) => { box = swapHandIn(data, d, id, h, aims, pre).box; tidyOf(d); }); return box ?? id; });
-  panel.value = null; if (box && !flag("junkTidy")) void v.reveal(box);
 }
 /**
  * Vue Flow の出来事: 空き所を押す = 右の欄を閉じる (よくあるモーダルと同じ。オーナー 10-22。引っ張った時は Vue Flow が画面を動かすだけ)。
@@ -266,12 +259,16 @@ watch(() => t.active.value, () => { issuesShown.value = true; });
 function openIssues(): void { simOp("open-missing"); issuesShown.value = true; issuesOpen.value = true; issuesFold.value = false; }
 /** 待たせている間の小さな札 (題の横。データの読み込み・箱を順に出している間、共通の BusyTag。精査の進みは精査の帯の上) */
 // 100 人回す (結果は木の上に重ねる層だけ、use-tree-run.ts・TreeRunLayer.vue。値段 = 始め方のベースの値段 (結果のまとめで入れる、use-tree の startPrice) + 今の相場)
-const jt = useJunkTidy(doc, t.edit, (id) => void goIssue(id));
+const jt = useJunkTidy(doc, t.edit, (id) => void goIssue(id), issues, passed);
+/** 手を替えて消えた箱の数の知らせ (S-57) */
+const goneN = ref(0); let goneTimer = 0;
+function showGone(n: number): void { goneN.value = n; clearTimeout(goneTimer); goneTimer = window.setTimeout(() => { goneN.value = 0; }, 5000); }
 /** 上の赤い札の数 = 下の「未設定 n つ」と同じ ! の箱の数 (1 箱に 2 行ある時に上下で違った、S-89b、スイッチ junkTidy) */
-const holeN = computed(() => (flag("junkTidy") ? new Set((issues.value ?? []).filter((x) => doc.value.boxes[x.boxId]).map((x) => x.boxId)).size : issues.value?.length ?? 0));
+const holeN = computed(() => (flag("junkTidy") ? new Set((jt.shownIssues.value ?? []).filter((x) => doc.value.boxes[x.boxId]).map((x) => x.boxId)).size : issues.value?.length ?? 0));
 const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
 /** 穴チェックのボタン: 精査と 30 人の走行 (treeLight は精査の 30 人を走行に使い回す、S-71b) */
 async function onTest(): Promise<void> {
+  if (jt.on.value && await jt.sort()) return; // 整理で未設定が出たらそこで止める (S-190)
   if (!flag("treeLight")) { void onCheck(); void tr100.run({ test: true }); return; }
   await onCheck();
   void tr100.run({ test: true, reuse: checkRun() });
@@ -387,7 +384,7 @@ const phone = usePhone();
     <!-- 題の帯「クラフトの道 (ツリー)」はツリーのページでは出さない (10-26 夜オーナー「いらんわ」)。流れの帯は木の枠の中の一番上 -->
     <!-- エミュレーター / シミュレーター β の切り替え (エミュの画面の帯と同じ共通の部品、10-23 オーナー「帯を 1 つにして両方に」) -->
     <ModeTabs class="mb-3" />
-    <TreeOverlays /><TreeHandPage v-if="panel?.kind === 'hand' && panelBox" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @swap="swapHandOf" @clear="clearHandOf" @close="closeHand" @back="picking = panel!.id; panel = null" @aim="panel = { kind: 'aim', id: panel!.id }" />
+    <TreeOverlays /><TreeHandPage v-if="panel?.kind === 'hand' && panelBox" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" @aim="panel = { kind: 'aim', id: panel!.id }" />
     <TreePanelPage v-else-if="panel && panelBox" :key="`${panel.kind}-${panel.id}`" :kind="panel.kind === 'split' || panel.kind === 'note' ? panel.kind : 'aim'" :box-id="panel.id" :current="panel.add ? null : panelBox.aim" :adding="!!panel.add" @pick="pickAim" @close="simOp('cancel', panel?.add ? 'side-plus' : panel?.kind === 'aim' ? 'aim-pick' : panel?.kind ?? ''); panel = null" />
     <div v-show="!t.goalInline.value" class="g-panel flex flex-col gap-2 px-3 py-2 max-md:px-0.5" :class="full ? '!fixed inset-0 z-[60] !m-0 rounded-none' : ''">
       <!-- 流れの 4 段の帯 (今どこにいるか、10-24 オーナー): 上のタブの下、木の枠の中の一番上に小さく (10-26 夜オーナー「普通出すのはタブの下」「ここは枠内でしょ」)。右上の「← 戻る」は置かない -->
@@ -401,8 +398,8 @@ const phone = usePhone();
         <TreeIssues v-if="issues?.length && issuesShown && issuesOpen" class="absolute left-0 top-full z-40 mt-1" :issues="issues" :busy="checkBusy" :lower="false" :box-name="boxName" @go="goIssue" @close="issuesOpen = false" />
         <TreeRecipeBar v-if="t.needBase.value" @opened="v.openView()" />
         <template v-else>
-          <TreeRunBar v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking, passed, holes: holeN, shown: issuesShown }" :tidy="{ step: jt.step.value, unset: jt.unset.value.length, guide: jt.guide.value, busy: jt.busy.value, empty: jt.empty.value }" @tidy="jt.press" @tidy-back="jt.back" :halted="tr100.halted.value" :drive="tr100.test.value" @test="onTest" @holes="issuesShown = !issuesShown" @holes-on="openIssues" @list="issuesOpen ? (issuesOpen = false) : openIssues()" @run="tr100.run" @go="goIssue" />
-          <TreeRunSum v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" :test="tr100.test.value" :before="tr100.before.value" @go="goIssue" @skip="tr100.skipWalk" />
+          <TreeRunBar v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :ready="!!s.data.value && !checking" :test="{ busy: checking || jt.busy.value, passed, holes: holeN, shown: issuesShown }" :tidy="{ on: jt.on.value, step: jt.step.value, unset: jt.unset.value.length, guide: jt.guide.value, busy: jt.busy.value, empty: jt.empty.value, finalLit: jt.finalLit.value }" @tidy="jt.press" @tidy-back="jt.back" :halted="tr100.halted.value" :drive="tr100.test.value" @test="onTest" @holes="issuesShown = !issuesShown" @holes-on="openIssues" @list="issuesOpen ? (issuesOpen = false) : openIssues()" @run="tr100.run" @go="goIssue" />
+          <TreeRunSum v-model:shown="tr100.shown.value" v-model:report="t.reportOpen.value" :result="tr100.result.value" :running="tr100.running.value" :stuck="tr100.stuckBoxes.value" :halted="tr100.halted.value" :walk="tr100.walk.value" :test="tr100.test.value" @go="goIssue" @skip="tr100.skipWalk" />
         </template>
         <!-- ベースが無い空の形でも、ほかの木があればタブを出す (前の木へ戻れない行き止まりだった、10-24 夜オーナー「一方通行が多い」) -->
         <TreeTabs v-if="!t.needBase.value || t.tabDocs.value.length > 1" compact class="min-w-0 flex-1" @switched="v.openView()" />
@@ -416,7 +413,7 @@ const phone = usePhone();
         <!-- ベースが無い時の空の形 (白紙の木でベースを選ばずに閉じた時): 木は出さず真ん中に「ベースを選ぶ」1 つ (10-23 オーナー、use-tree の needBase) -->
         <div v-if="t.needBase.value" data-tree-need-base class="absolute inset-0 z-30 flex items-center justify-center bg-[#0c0a08]">
           <button type="button" data-tree-pick-base class="g-btn" @click="t.goalPage.value = 1">{{ tr("ベースを選ぶ", "Choose a base") }}</button>
-        </div><TreeUnsetBar v-if="!t.needBase.value && issuesShown" :issues="issues" :doc="doc" @go="goIssue" />
+        </div><TreeUnsetBar v-if="!t.needBase.value && issuesShown" :issues="jt.shownIssues.value" :doc="doc" @go="goIssue" /><p v-if="goneN" data-tree-gone-note class="pointer-events-none absolute bottom-12 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded bg-black/70 px-2 py-0.5 text-[12px] text-[#e8d8c8]">{{ tr(`${goneN} 箱消えた (1 つ戻すで戻せる)`, `${goneN} removed (Undo restores)`) }}</p>
         <!-- 0 完成形の設定の札 (木の箱にせず、木を送っても見える左上。10-23 オーナー)。スイッチ goalCard で完成形のアイテム枠 (10-25 オーナー)。木は札 1 本分 (44px) 下から描く (畳んだ札が下の箱を隠した、10-26 ブラック 12 代目) -->
         <!-- ページの zoom を枠だけ打ち消す (中は実質 1 倍。Vue Flow の座標とマウスが揃う、use-tree-flow.ts)。格子は Vue Flow の送りと倍率に合わせる。ホイールは決まった段へ 1 段ずつ (use-tree-flow の onWheel) -->
         <div data-tree-canvas data-overflow-ok class="absolute inset-0" :class="hand ? 'cursor-grab' : ''" :style="{ zoom: 1 / pageZ, ...grid, ...(issuesShown && issues?.length ? { bottom: `${44 * pageZ}px` } : {}) }" @wheel="v.onWheel">
@@ -428,7 +425,7 @@ const phone = usePhone();
             <template #node-box="{ id }">
               <TreeStripFold v-if="sf.folds.value.has(id)" :head="id" v-bind="sf.countsOf(id)" />
               <TreeBox v-else-if="doc.boxes[id]" :box="doc.boxes[id]!" :removable="!!doc.boxes[id]?.parent" :picking="!!picking && picking !== id"
-                :selected="panel?.id === id || picking === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand || jt.grayOf(doc.boxes[id]!)" :gray="jt.grayOf(doc.boxes[id]!) || jt.dimOf(doc.boxes[id]!)" :guide="jt.targetOf(doc.boxes[id]!)" :glow="glowOf(doc.boxes[id]!) || plus?.target === id" :issue="issueOf(doc.boxes[id]!)" :inv="inv" :link-no="picking ? link.get(id) ?? null : null"
+                :selected="panel?.id === id || picking === id || plus?.target === id" :back-label="backLabel(doc.boxes[id]!)" :view-only="viewOnly || hand || jt.grayOf(doc.boxes[id]!) || jt.dimOf(doc.boxes[id]!)" :gray="jt.grayOf(doc.boxes[id]!) || jt.dimOf(doc.boxes[id]!)" :guide="jt.targetOf(doc.boxes[id]!)" :settled="jt.settledOf(doc.boxes[id]!)" :glow="glowOf(doc.boxes[id]!) || plus?.target === id" :issue="issueOf(doc.boxes[id]!)" :inv="inv" :link-no="picking ? link.get(id) ?? null : null"
                 @drag="startDrag(doc.boxes[id]!, $event)" @aim="onAim(doc.boxes[id]!)" @plus="(k, e) => onPlus(doc.boxes[id]!, k, e)" @remove="removeHandOf(id)"
                 @back="picking = id" @clear-back="t.edit((d) => setBack(d, id, null))" @done="onDone(doc.boxes[id]!)" @fail="onFail(doc.boxes[id]!)"
                 @note="panel = { kind: 'note', id }" @base="t.goalPage.value = 1" @issue="openIssues" @back-go="goBack(doc.boxes[id]!)" @checked="t.edit((d) => { delete d.boxes[id]!.check; })" @hover="(on) => (hoverBox = on ? id : hoverBox === id ? null : hoverBox)" />

@@ -24,6 +24,10 @@ export const holeTitle = (): string => say(
   ["穴チェック: 5 人をエンジンで辿り 30 人を回して、止まる所・打てない手・付かない当たり・完成に着かない道を探す (費用は出さない)。木を変えるたびに必ず自動で回る。足りない所があっても回す", "Gap check: walk 5 runs and play 30 runs with the engine to find dead ends, unusable crafts, unreachable hits and paths that never finish (no costs). Runs by itself after every change, even with parts missing"],
   ["テストで回す: 5 人をエンジンで辿り 30 人を回して、止まる所・打てない手・付かない当たり・完成に着かない道を探す (費用は出さない)。木を変えるたびに自動でも回る", "Test run: walk 5 runs and play 30 runs with the engine to find dead ends, unusable crafts, unreachable hits and paths that never finish (no costs). Also runs by itself after each change"],
 );
+/** PC の最終チェック (S-70、スイッチ junkTidy。スマホは穴チェックのまま) */
+export const finalName = (): string => tr("最終チェック", "Final check");
+export const finalTitle = (): string => tr("最終チェック: ハズレを整理してから、5 人を辿り 30 人を回して止まる所を探す。止まりが 0 で 100 人回せる", "Final check: sort the misses, then walk 5 runs and run 30 to find where runs stop. Zero stops unlocks the 100-run");
+export const finalLockedWhy = (): string => tr("最終チェックに合格すると回せる", "Pass the final check to run");
 /** 足りない所の札に乗せた時 */
 export const holesShowTitle = (): string => say(
   ["足りない所を見る (箱の ! と一覧を出す、直すと次の穴チェックで消える)", "Show what is missing (box marks and list; they clear on the next gap check once fixed)"],

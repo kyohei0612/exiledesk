@@ -251,7 +251,7 @@ function reset(): void {
     delete st.split;
     d.boxes = { start: st };
     // 前の木の打ち方・要確認の一覧は持ち越さない (残すと今の木に無い段の要確認で「100 人回す」が押せないまま、S-107・S-70)
-    delete d.picks; delete d.orphans;
+    delete d.picks; delete d.orphans; delete d.tidyRan;
   });
 }
 /**

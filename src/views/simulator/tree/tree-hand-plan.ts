@@ -24,6 +24,7 @@ import { isStripKey } from "../../../services/simulator/tree/tree-junk-side";
 import { judgeMemo, sampleAimed, type Judge } from "../../../services/simulator/tree/tree-judge";
 import { arrivalsOf, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { joinableShapeOf, joinSameHit, sameHitsOf } from "../../../services/simulator/tree/tree-shape";
+import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { boxAims, clearHand, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { joinSameShape } from "./tree-merge";
 import { revealAimsOf } from "./tree-reveal-aims";
@@ -311,7 +312,6 @@ export function holdLinks<T>(fn: () => T): T {
   linksHeld = true;
   try { return fn(); } finally { linksHeld = false; }
 }
-export const linksAreHeld = (): boolean => linksHeld;
 /** ハズレ整理 (S-193): 決めの無い箱を上の段から見て同じ枠へつなぎ、残りを未設定にする。人の決めは触らない */
 export function tidyJunk(d: TreeDoc): void {
   const data = craftStage.data.value;
@@ -328,13 +328,36 @@ export function tidyJunk(d: TreeDoc): void {
   link();
   // ↩ がそろった木で、↩ で着く人の結果の箱を足す (S-21)
   if (addArrivedOuts(data, d).length) link();
+  dropUnplayable(data, d);
   for (const b of Object.values(d.boxes)) { if (!b.hand && !b.done && !b.split) b.tidied = true; if (b.done === "main") b.doneNow = true; }
+  d.tidyRan = true;
+}
+/** 見本に ↩ 先の手を打てない人がいる自動の ↩ は外して未設定にする (止まる所を ↩ 元の箱へ、S-193) */
+function dropUnplayable(data: PatchData, d: TreeDoc): void {
+  for (const b of Object.values(d.boxes)) {
+    const to = b.back && b.autoBack ? d.boxes[b.back]?.hand : null;
+    if (!to) continue;
+    for (let seed = 1; seed <= 8; seed++) {
+      const s = sampleOf(data, d, b.id, seed);
+      if (s.note === "none" || s.note?.startsWith("cant:") || !handProblem(data, s.item, to)) continue;
+      setBack(d, b.id, null); b.noAutoBack = true;
+      break;
+    }
+  }
+}
+/** 画面に出る下の箱 (通り抜け・まとめて描かない箱は数えない) */
+export const drawnBelow = (d: TreeDoc, id: string): string[] => subtree(d, id).slice(1).filter((x) => { const b = d.boxes[x]; return !!b && b.out !== "pass" && !mergedAway(d, b); });
+/** 同じ手で ☑ を替えて下が消える数 (手を決める時と同じ applyPick を写しに打つ) */
+export function dropCountOf(doc: TreeDoc, id: string, h: Hand, kind: HandKind, aims: Aim[], pre: string | null, only: OnlyOut): number {
+  const after = JSON.parse(JSON.stringify(doc)) as TreeDoc;
+  applyPick(after, id, h, kind, aims, pre, only);
+  return drawnBelow(doc, id).filter((x) => !after.boxes[x]).length;
 }
 /**
  * ↩ で着く人の結果で箱の無い物を足す (S-21、スイッチ junkTidy)。結果の箱は手を決めた時の見本で作るので、あとから ↩ で入る別の外れの人の結果が抜ける
  * (オーナーの木の b51 ↩ b35: ランダムな外れの人は b41 の削減で狙いが消える)。足すのは見本と次の MOD 群が違う結果だけ、当たりの箱 (☑ だけ、S-22) は足さない
  */
-export function addArrivedOuts(data: PatchData, d: TreeDoc, rolledOnly = false): string[] {
+export function addArrivedOuts(data: PatchData, d: TreeDoc): string[] {
   if (!flag("junkTidy")) return [];
   const j = judgeMemo(data, d), aims = aimsOf(d), made: string[] = [];
   for (const b of Object.values(d.boxes)) {
@@ -342,7 +365,7 @@ export function addArrivedOuts(data: PatchData, d: TreeDoc, rolledOnly = false):
     if (!h) continue;
     // 数え上げられない手 (S-21): 組む間の 1 箱 (側の鍵の無い箱) が一番多い形を持ち、ほかの形の箱をここで足す。見本は親から 1 手で作れるので via は要らない
     const s = sampleOf(data, d, b.id, 1), main = s.note === "none" || s.note?.startsWith("cant:") ? undefined : mainSideOf(data, prepFor(data, s.item, h.currency), h);
-    const arrived = rolledOnly ? [] : arrivalsOf(data, d, j, b.id);
+    const arrived = arrivalsOf(data, d, j, b.id);
     if (!arrived.length && !main) continue;
     const own = b.outs.flatMap((o) => (d.boxes[o]?.out === "hit" ? boxAims(d.boxes[o]!) : []));
     const fresh = (e: { out: OutKind; junkKey?: string }): boolean => e.out !== "hit" && !b.outs.some((o) => { const c = d.boxes[o]!; return (c.out === e.out || c.mergedOuts?.includes(e.out)) && (c.junkKey ?? main ?? e.junkKey) === e.junkKey; });

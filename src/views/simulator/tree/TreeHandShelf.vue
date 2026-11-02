@@ -26,11 +26,11 @@ import { useHandKeep } from "./use-hand-keep";
 import { RESULT, RESULT_CAT, RESULT_NO_LOST } from "./tree-hand-result";
 import { boxTagsOf } from "./tree-row-tags";
 import type { RowTag } from "../../../components/for-share/item/stage-item-row-tag";
-import { aimKey, fractureMarks, setHand, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
+import { aimKey, fractureMarks, sameHand, setHand, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { useTree } from "./use-tree";
 import { useSimShelf } from "../use-sim-shelf";
 import { infiniteAim } from "../../../services/simulator/tree/tree-outcome";
-import { afterQualityOf, autoCatOf, FREE_EFFECTS, handOf, hitAimsOf, holdsAimOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan";
+import { afterQualityOf, autoCatOf, dropCountOf, drawnBelow, FREE_EFFECTS, handOf, hitAimsOf, holdsAimOf, hitChoicesOf, kindOf, needAimOf, onlyOf, preFillOf, problemOf, type OnlyOut } from "./tree-hand-plan";
 import { modText, tr } from "../../../i18n/lang";
 import { stageHelp } from "../../../state/for-share/craft-stage-help";
 import { usePhone } from "../../../utils/use-phone";
@@ -39,15 +39,12 @@ import { fixedValues } from "./tree-fixed-values";
 import { previewUse } from "../../../services/craft-stage/engine";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { flag } from "../../../web/release-flags";
-import { dropCountOf, swapHand } from "./tree-swap-hand";
 import { useHandLater } from "./use-hand-later";
 
 const props = defineProps<{ boxId: string; current: Hand | null }>();
 /** pick の preCatalyst = 前に足す品質だけ上げる手のカタリスト (触媒のお告げで、まだ品質を上げる手の後でない時) */
 /** only = 結果が 1 通りの手の結果 (tree-sample の singleOutOf、光のお告げ + 消去など) */
-/** back = 打たずに既にある箱へ戻す (重ね窓を閉じて箱を押して選ぶ) */
-/** swap = 手だけ替える (下の箱を同じ結果へ引き継ぐ、S-57c・スイッチ swapHand) */
-const emit = defineEmits<{ pick: [hand: Hand, kind: HandKind, aims: Aim[], preCatalyst: string | null, only: OnlyOut]; swap: [hand: Hand, aims: Aim[], preCatalyst: string | null]; clear: []; close: []; back: []; aim: [] }>();
+const emit = defineEmits<{ pick: [hand: Hand, kind: HandKind, aims: Aim[], preCatalyst: string | null, only: OnlyOut]; clear: []; close: []; aim: [] }>();
 const t = useTree();
 
 const sample = computed(() => (s.data.value ? sampleOf(s.data.value, t.doc.value, props.boxId, 1) : null));
@@ -233,9 +230,6 @@ function warnIfBelow(back: () => void): void {
 }
 function warnStop(): void { warnOpen.value = false; const b = warnBack; warnBack = null; reverting = true; b?.(); void nextTick(() => { reverting = false; }); }
 function warnGo(): void { warnOpen.value = false; warnAck = true; warnBack = null; }
-/** 手だけ替える (S-57c): この窓の間は聞かず、カードを押すと下の箱を残して手を替える */
-const keepBelow = ref(false);
-function warnKeep(): void { warnGo(); keepBelow.value = true; simOp("swap-hand"); }
 let reverting = false;
 watch(held, (k, old) => {
   const om = [...omens.value];
@@ -245,8 +239,8 @@ watch(held, (k, old) => {
   const was = old ?? props.current.currency, wasOmens = old ? om : [...props.current.omens];
   warnIfBelow(() => { held.value = was; omens.value = wasOmens; });
 });
-// お告げだけ替えるのも手を替える事 (同じカレンシーのお告げ違いを比べる、S-57c)
-watch(omens, (now, was) => { if (flag("swapHand") && !reverting && !warnOpen.value && held.value === props.current?.currency && now.join() !== was.join()) warnIfBelow(() => { omens.value = was; }); });
+// お告げだけ替えるのも手を替える事 (S-57)
+watch(omens, (now, was) => { if (!reverting && !warnOpen.value && held.value === props.current?.currency && now.join() !== was.join()) warnIfBelow(() => { omens.value = was; }); });
 /** 残したい MOD (消去 S-27 と、スイッチ keepAll の消える手 S-27d。use-hand-keep) */
 const k = useHandKeep({ boxId: props.boxId, current: props.current, item, held, omens, cardOf, warnIfBelow });
 const keepAsk = k.ask;
@@ -298,24 +292,13 @@ const shownOnly = computed(() => {
 const goneNow = computed((): number => {
   const h = hand.value, k = kind.value;
   if (!props.current || !h || !k) return 0;
-  // 手を決める時と同じ組み替えで数え、窓の数と実際に消える数を合わせる (S-57)。下の手の箱が同じ結果なら 0
-  if (flag("swapHand")) return dropCountOf(toRaw(t.doc.value), props.boxId, h, k, hitAims.value, preCat.value, onlyNow.value);
-  const d = structuredClone(toRaw(t.doc.value));
-  const before = Object.keys(d.boxes).length;
-  setHand(d, props.boxId, h, k, hitAims.value, onlyNow.value, undefined, holdsAimOf(d, props.boxId));
-  const kept = new Set(Object.keys(d.boxes));
-  return before - Object.keys(t.doc.value.boxes).filter((id) => kept.has(id)).length;
+  // 別の手は下を全部消す。同じ手で ☑ を替える時だけ手を決める時と同じ組み替えで数える (S-57)
+  const d = toRaw(t.doc.value);
+  return sameHand(props.current, h) ? dropCountOf(d, props.boxId, h, k, hitAims.value, preCat.value, onlyNow.value) : drawnBelow(d, props.boxId).length;
 });
 /** この箱の見本に打てない手は確定させない (tree-hand-plan の problemOf) */
 const problem = computed((): string | null => (hand.value && item.value && s.data.value ? problemOf(s.data.value, item.value, hand.value, hitAims.value, preCat.value, preFill.value) : null));
-/** 手だけ替えた時に下ごと消える箱の数 (起きなくなった結果の箱、S-57c)。窓か手だけ替えるの間だけ組み直して数える */
-const swapGoneNow = computed((): number | null => {
-  const d = s.data.value, h = hand.value;
-  return flag("swapHand") && (warnOpen.value || keepBelow.value) && d && h && !problem.value ? swapHand(d, toRaw(t.doc.value), props.boxId, h, hitAims.value, preCat.value).gone : null;
-});
 const gone = later(handKey, goneNow);
-const swapLater = later(() => JSON.stringify([handKey(), warnOpen.value || keepBelow.value]), swapGoneNow, () => keepBelow.value);
-const swapGone = computed(() => swapLater.value ?? null);
 /**
  * スマホは手を 2 段の質問で選ぶ (10-26 夜オーナー OK): 1 段目 = 棚でカレンシー・お告げを持つ (狙いのチェックの欄は出さない)、
  * 2 段目 = 「どれが付いたら当たり?」(付きうる狙い aimChoices だけ、既定は狙い無し)。狙い無しのままなら 1 段目の帯の「狙い無しで決める」ですぐ決める。
@@ -336,8 +319,7 @@ function ok(): void {
   const h = hand.value, k = kind.value;
   simOp("hand-decide");
   if (!h || !k || problem.value) return;
-  if (keepBelow.value) emit("swap", h, hitAims.value, preCat.value);
-  else emit("pick", h, k, hitAims.value, preCat.value, onlyNow.value);
+  emit("pick", h, k, hitAims.value, preCat.value, onlyNow.value);
 }
 </script>
 
@@ -356,7 +338,6 @@ function ok(): void {
         <p class="text-[12px] opacity-70">{{ tr("棚から持って、カードを押すとこの箱の次の手になる", "Hold a currency from the shelf and click the item to make it this box's next craft") }}</p>
         <!-- 打たずに分ける (分かれ目) のボタンは 10-25 に外した (オーナー「分かれ道マジでややこしいからボタンいらない」)。分かれ目は見本の木にある物だけ、窓 TreeSplitPick で行を直せる -->
         <p v-if="delirHidden" data-tree-hand-delirium-off class="text-[12px] text-rose-200/90">{{ handName(DELIRIUM) }}: {{ tr("シミュでは使えない (付くノータブルがランダム)", "not usable in the simulator (the notable is random)") }}</p>
-        <button v-if="t.doc.value.boxes[boxId]?.out !== 'start'" type="button" data-tree-hand-back class="g-btn sm self-start" :title="tr('打たずに既にある箱へ戻す (窓を閉じて、戻り先の箱を押す)', 'Return to an existing box instead (closes this window; click the box)')" @click="emit('back')">↩ {{ tr("既にある箱へ戻す", "Return to a box") }}</button>
         <button v-if="current" type="button" class="g-btn sm self-start" @click="emit('clear')">{{ tr("この手を消す (下も消える)", "Remove this craft (and below)") }}</button>
 
     <!-- 持っている物と、残した入力 (触媒のカタリストの品質・カオススパム) -->
@@ -395,7 +376,6 @@ function ok(): void {
       <!-- 替える時は、消える箱の数を先に小さく (オーナー 10-22。1 つ戻す / Ctrl+Z で戻せる)。持ち直しは棚で別の物を押すだけ。決めるのはカードを押す -->
       <div class="flex flex-wrap items-center gap-1.5">
         <span v-if="problem" data-tree-hand-problem class="text-[11px] text-rose-200/90">{{ tr(`この箱では打てない: ${problem}`, `Can't be used on this box: ${problem}`) }}</span>
-        <span v-else-if="keepBelow" data-tree-hand-swap-note class="text-[11px] text-sky-200/90">{{ tr(`手だけ替える: 下の箱は同じ結果の箱へ引き継ぐ (消えるのは ${swapGone ?? "—"} 箱、1 つ戻すで戻せる)`, `Swap the craft only: boxes below carry over to matching results (${swapGone ?? "—"} removed; Undo restores)`) }}</span>
         <span v-else-if="gone" data-tree-hand-gone class="text-[11px] text-rose-200/90">{{ tr(`替えると下の ${gone} 箱が消える (1 つ戻すで戻せる)`, `Replacing removes ${boxesEn(gone)} below (Undo restores)`) }}</span>
       </div>
     </div>
@@ -474,13 +454,11 @@ function ok(): void {
     <!-- 「この手以降は削除されます」(スマホ、別の札を持った・狙いを変えた瞬間) -->
     <div v-if="warnOpen" data-tree-hand-warn class="fixed inset-0 z-[330] flex items-center justify-center bg-black/60 px-4" @click.self="flag('junkTidy') || warnStop()">
       <div class="w-full max-w-sm rounded-xl border border-rose-400/60 bg-[#1d0f10] px-4 py-3 text-center">
-        <p class="text-[16px] font-bold text-rose-100">{{ gone === undefined ? "…" : flag("swapHand") && !gone ? tr("この手の下の箱は残ります", "The boxes below this craft stay") : tr("この手以降は削除されます", "Everything after this craft will be removed") }}</p>
+        <p class="text-[16px] font-bold text-rose-100">{{ gone === undefined ? "…" : !gone ? tr("この手の下の箱は残ります", "The boxes below this craft stay") : tr("この手以降は削除されます", "Everything after this craft will be removed") }}</p>
         <!-- 窓の数は実際に消える数 (S-57)。前の below は下の箱全部 (描かない通り抜けも) で、結果が同じ手でも n と出た (⑦ R1) -->
-        <p data-tree-hand-warn-n :data-n="flag('swapHand') ? gone : below" class="mt-1 break-words text-[13px] text-[#e8d8c8]">{{ gone === undefined ? "…" : flag("swapHand") ? tr(`続けるとこの箱から下の ${gone} 箱が消えます (1 つ戻すで戻せる)`, `Continuing removes ${boxesEn(gone)} below this one (Undo restores them)`) : tr(`この箱から下の ${below} 箱が消えます (1 つ戻すで戻せる)`, `The ${boxesEn(below)} below this one will be removed (Undo restores them)`) }}</p>
-        <p v-if="swapGone !== null" data-tree-hand-warn-swap-n :data-n="swapGone" class="mt-1 break-words text-[13px] text-sky-200">{{ tr(`手だけ替えると下の箱は同じ結果の箱へ引き継ぎ、消えるのは ${swapGone} 箱 (新しい結果の箱は未設定)`, `Swapping only the craft carries the boxes below over to matching results; ${swapGone} removed (new result boxes start unset)`) }}</p>
+        <p data-tree-hand-warn-n :data-n="gone" class="mt-1 break-words text-[13px] text-[#e8d8c8]">{{ gone === undefined ? "…" : tr(`続けるとこの箱から下の ${gone} 箱が消えます (1 つ戻すで戻せる)`, `Continuing removes ${boxesEn(gone)} below this one (Undo restores them)`) }}</p>
         <div class="mt-3 flex flex-wrap gap-2">
           <button type="button" data-tree-hand-warn-stop class="g-btn !min-h-11 flex-1" @click="warnStop">{{ tr("やめる", "Cancel") }}</button>
-          <button v-if="flag('swapHand')" type="button" data-tree-hand-warn-swap class="g-btn !min-h-11 flex-1 whitespace-nowrap" :disabled="swapGone === null" :title="tr('下の箱を残して手だけ替え、回した結果を替える前と比べる', 'Keep the boxes below, swap only this craft, and compare the run with before')" @click="warnKeep">{{ tr("手だけ替える", "Swap craft only") }}</button>
           <button type="button" data-tree-hand-warn-go class="g-btn-red !min-h-11 flex-1" @click="warnGo">{{ tr("続ける", "Continue") }}</button>
         </div>
       </div>

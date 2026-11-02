@@ -3,7 +3,7 @@
  *   A S-10c: 完成形の MOD 0 個はレアリティを問わず「決めた」で窓が出て止まる。狙いがあれば進む (PC・スマホ)
  *   B S-107: 見本から白紙にすると要確認が消え、手を足して合格すれば「100 人回す」が押せる
  *   C S-70: 穴チェックに合格するまで「100 人回す」は灰色 (data-run-locked)、合格で押せる
- *   D S-57c: 手だけ替える → 回すと結果の帯に 替える前 → 今
+ *   D S-57: 手を変える窓はやめる・続けるの 2 つ、打つと木の下に消えた数
  *   E S-10c: MOD 0 個の保存の木が開けて回る
  * 合わない所があれば終わりの値 1。--port で Chrome の口
  *   node scripts/sim-watch/flow.mjs [origin] [--port 9481]
@@ -61,7 +61,7 @@ try {
   const blank = await c.ev(`(() => { const d = __simMonkey.dump(); return { boxes: Object.keys(d.boxes).length, orphans: d.orphans?.length ?? 0 }; })()`);
   check("B 白紙で要確認が消える", blank.boxes === 1 && !blank.orphans, JSON.stringify(blank));
   await c.ev(`(() => { const a = __simMonkey.add("start", "exalt", [], { hitAims: [] }); a.boxes.forEach((b) => __simMonkey.setDone(b.id, true)); })()`);
-  check("B 白紙の後に合格できる", await c.until(passed, 30000), "合格しない");
+  await click("[data-tree-test]"); check("B 白紙の後に合格できる", await c.until(passed, 40000), "合格しない");
   const after = await c.ev(runState);
   check("B 白紙の後に 100 人が押せる", !after.off, JSON.stringify(after));
 
@@ -71,7 +71,7 @@ try {
   const open = await c.ev(runState);
   check("C 決めていない箱がある間は灰色", open.off && open.locked, JSON.stringify(open));
   await c.ev(`(() => { const M = __simMonkey, d = M.dump().boxes; for (const b of Object.values(d)) if (b.id !== "start" && !b.hand && !b.done && !b.back) M.setDone(b.id, b.out === "hit" ? true : "fail"); })()`);
-  check("C 自動の穴チェックで合格", await c.until(passed, 30000), "合格しない");
+  await click("[data-tree-test]"); check("C 押すと合格", await c.until(passed, 40000), "合格しない");
   const ok = await c.ev(runState);
   check("C 合格で押せる", !ok.off && !ok.locked, JSON.stringify(ok));
 
@@ -81,18 +81,17 @@ try {
   await click("[data-tree-run-report-close]"); await sleep(400);
   await click("[data-tree-hand]"); await sleep(1200);
   await click(`[data-tree-shelf] [data-shelf][data-key="alchemy"]`); await sleep(1000);
-  const warn = await c.ev(`!!document.querySelector("[data-tree-hand-warn-swap]")`);
-  check("D 手を替える窓に手だけ替える", warn, "ボタンが無い");
-  await click("[data-tree-hand-warn-swap]"); await sleep(700);
+  const warn = await c.ev(`!!document.querySelector("[data-tree-hand-warn-go]") && !document.querySelector("[data-tree-hand-warn-swap]")`);
+  check("D 手を替える窓はやめる・続けるの 2 つ (S-57)", warn, "ボタンが違う");
+  await click("[data-tree-hand-warn-go]"); await sleep(700);
   await click("[data-tree-hand-card]"); await sleep(2000);
+  check("D 打つと消えた数の知らせ", await c.ev(`/箱消えた/.test(document.querySelector("[data-tree-gone-note]")?.innerText ?? "")`), "知らせが出ない");
   await c.ev(`(() => { const M = __simMonkey, d = M.dump().boxes; for (const b of Object.values(d)) if (b.id !== "start" && !b.hand && !b.done && !b.back) M.setDone(b.id, b.out === "hit" ? true : "fail"); })()`);
-  await c.until(passed, 30000);
+  await click("[data-tree-test]"); await c.until(passed, 40000);
   await click("[data-tree-run]"); await sleep(600);
   await c.ev(`document.querySelector("[data-tree-run-skip]")?.click()`);
   await c.until(`!!document.querySelector("[data-tree-run-report]")`, 60000); await sleep(400);
   await click("[data-tree-run-report-close]"); await sleep(400);
-  const txt = await c.ev(`document.body.innerText`);
-  check("D 回すと 替える前 → 今", /替える前[^\n]*→ 今/.test(txt), "帯に出ない");
 
   await fresh(1660, 900, false);
   const code = await c.ev(`(async () => { const M = __simMonkey; M.setBase("指輪", "", 82); const a = M.add("start", "transmute", [], { hitAims: [] }); M.setDone(a.boxes[0].id, "fail"); await new Promise((r) => setTimeout(r, 500)); const m = await import("/src/views/simulator/recipe-share.ts"); return /#recipe=(.+)$/.exec(await m.treeShareUrl({ name: "zero", tree: JSON.parse(JSON.stringify(M.dump())) }))[1]; })()`);

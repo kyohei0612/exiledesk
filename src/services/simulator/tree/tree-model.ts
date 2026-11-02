@@ -192,6 +192,8 @@ export interface TreeDoc {
   goalQualityTag?: string;
   /** フラクチャーの設定 (「決めた」の後の窓 TreeStartAsk でフラクチャーにする MOD / 白ベースからのどれか) を答えた。済むまで完成形の窓は × で閉じない (10-27 夜オーナー、スイッチ fracFirst) */
   fracAsked?: true;
+  /** ハズレ整理を 1 度押した (S-192。保存しない) */
+  tidyRan?: true;
   /** 完成形の「途中で消える」クラフト MOD (完成の狙いに数えない。tree-way-mods.ts、10-27 夜オーナー、スイッチ goalQuality) */
   wayMods?: Aim[];
   /**
@@ -338,6 +340,8 @@ export const kindOfHand = (h: Hand, base: HandKind): HandKind => (h.repeat ? "sp
 /** 同じ当たりの箱にまとめる手 (付く MOD を選べない手。エッセンスは付く MOD ごと・フラクチャーは印ごとの箱のまま) */
 const GROUPED: readonly HandKind[] = ["add", "swap", "spam"];
 /** groupOf = 狙いの側 (渡すと同じ側の狙いは 1 つの当たりの箱、anyOf)。既定は渡さない = 狙いごと (10-26 オーナー「デフォではまとめないほうね」) */
+/** 同じ手か (カレンシーとお告げ。違えば結果が同じでも下を消す、S-57) */
+export const sameHand = (a: Hand, b: Hand): boolean => a.currency === b.currency && a.omens.join() === b.omens.join();
 export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims: readonly Aim[] = [], only: ReadonlyArray<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null = null, groupOf?: (a: Aim) => string, holds?: boolean): void {
   // holds = この箱の見本に消せる ☑ の狙いがあるか (スイッチ judgeOne、tree-hand-plan の holdsAimOf)。渡すと道の数え (mayHoldAim) の代わり (大本 1)
   const hold = (): boolean => holds ?? mayHoldAim(d, id);
@@ -363,7 +367,7 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   const keySig = (l: ReadonlyArray<{ out: string; junkKey?: string }>): string => l.filter((o) => o.junkKey).map((o) => `${o.out}:${o.junkKey}`).sort().join();
   // 鍵の組が今の箱と違えば作り直す (前の版の 1 箱の外れに同じ手を選び直すと側ごとに分かれる)
   const sameKeys = !only || keySig(only) === keySig(b.outs.map((o) => d.boxes[o]!));
-  const same = b.hand && sameKeys && want.every((k) => now.includes(k)) && now.every((k) => k !== "start" && (want.includes(k) || (kind === "free" && k === "hit")));
+  const same = b.hand && sameHand(b.hand, hand) && sameKeys && want.every((k) => now.includes(k)) && now.every((k) => k !== "start" && (want.includes(k) || (kind === "free" && k === "hit")));
   b.hand = { ...hand, omens: [...hand.omens], repeat: hand.repeat ? { ...hand.repeat } : null, ...(hand.keep ? { keep: hand.keep.map((a) => ({ ...a })) } : {}) };
   b.back = null;
   delete b.split;

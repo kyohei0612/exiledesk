@@ -8,7 +8,7 @@ import type { PatchData } from "../../../services/craft-stage/engine";
 import { clearHand, migrateStart, setBack, TREE_SCHEMA_N, type Hand, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { autoTarget, offByParent, sameHandByContent, straightUp } from "../../../services/simulator/tree/tree-judge-link";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
-import { addArrivedOuts, alignEssenceAims, applyPick, kindOf, linksAreHeld, onlyOf } from "./tree-hand-plan";
+import { addArrivedOuts, alignEssenceAims, applyPick, kindOf, onlyOf } from "./tree-hand-plan";
 import { staysGray, tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
 import { flag } from "../../../web/release-flags";
 import { judgeMemo, needsDesecrated } from "../../../services/simulator/tree/tree-judge";
@@ -18,8 +18,7 @@ import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hand
 /** 当たりの箱を作らない手 (狙い無し・ルーン・骨を未発現のまま、S-23・S-31e・S-32。スイッチ freeNoHit)。乱数のフラクチャーの狙い無しは固定されうる狙いごとの箱 (S-41) なので除く */
 const noHitHand = (h: Hand): boolean => flag("freeNoHit") && ((!!h.free && effectOf(h.currency) !== "fracture") || isRuneHand(h.currency) || veilKeep(h));
 
-/** exactAt = この札の子だけ札がぴったり合う決めを引き継ぐ (手だけ替える S-57c: 同じ結果の種類・☑・側だけ。古いレシピの読み替え savedKeyOf を通さない) */
-export function rebuildTree(data: PatchData, src: TreeDoc, exactAt?: string): TreeDoc {
+export function rebuildTree(data: PatchData, src: TreeDoc): TreeDoc {
   const rec = toRecipeV1(src), d = premiseOf(rec, `exiledesk-tree/${TREE_SCHEMA_N}`);
   migrateStart(d);
   const picks = new Map((rec.picks ?? []).map((p) => [p.at, p]));
@@ -53,7 +52,7 @@ export function rebuildTree(data: PatchData, src: TreeDoc, exactAt?: string): Tr
       }
     }
     const kids = childKeysOf(d, id, key), exact = new Set(kids.map(([, ck]) => at + ck.slice(key.length)));
-    for (const [cid, ck] of kids) q.push([cid, ck, at === exactAt ? at + ck.slice(key.length) : savedKeyOf(at, ck.slice(key.length), onPath, exact)]);
+    for (const [cid, ck] of kids) q.push([cid, ck, savedKeyOf(at, ck.slice(key.length), onPath, exact)]);
   } };
   drain();
   // 前の版で人が選んだ ↩ は付け直す (S-52b の「読めてそのまま回る」)。行き先の札が今の木に無ければ要確認
@@ -72,16 +71,12 @@ export function rebuildTree(data: PatchData, src: TreeDoc, exactAt?: string): Tr
     }
     if (added.length) { drain(); flushBacks(); }
   };
-  // 組む間 (手だけ替える) も、数え上げられない手の足した箱は決めごと残す (S-21)
-  if (linksAreHeld()) { replay(addArrivedOuts(data, d, true)); relinkSameHand(data, d); }
-  else {
-    mergeIntoDecided(data, d, decided); relinkSameHand(data, d); linkLeftovers(data, d);
-    // ↩ で着く人の結果の箱を足す (S-21)。足した箱に保存の決めがあれば打ち直す
-    const added = addArrivedOuts(data, d);
-    replay(added);
-    if (added.length) { relinkSameHand(data, d); linkLeftovers(data, d); }
-    if (tidyOn()) for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split && !staysGray(b)) b.tidied = true; // 開いた木は整理まで済んだ形。決めの無い外れの箱だけグレーのまま (S-196)
-  }
+  mergeIntoDecided(data, d, decided); relinkSameHand(data, d); linkLeftovers(data, d);
+  // ↩ で着く人の結果の箱を足す (S-21)。足した箱に保存の決めがあれば打ち直す
+  const added = addArrivedOuts(data, d);
+  replay(added);
+  if (added.length) { relinkSameHand(data, d); linkLeftovers(data, d); }
+  if (tidyOn()) for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split && !staysGray(b)) b.tidied = true; // 開いた木は整理まで済んだ形。決めの無い外れの箱だけグレーのまま (S-196)
   // 決めを打ち直した箱が後の見直しで消えた (同じ手なら戻るで下を畳んだ) 札も要確認
   // 順位の鍵の札は 1 つの箱へまとまったので、使わなかった札は要確認に出さない (S-65b、スイッチ junkTidy)
   const gone = [...picks.values()].filter((p) => (!used.has(p.at) || !d.boxes[idOf.get(p.at) ?? ""]) && !(flag("junkTidy") && p.at.includes(";w:"))).map((p): RecipeOrphan => ({ at: p.at, why: "gone", raw: p }));

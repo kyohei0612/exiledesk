@@ -226,7 +226,7 @@ export function sampleOf(data: PatchData, doc: TreeDoc, boxId: string, seed: num
 const memo = new Map<string, Sample>();
 let memoSig = "", memoData: PatchData | null = null;
 /** 木の中身の鍵 (位置 x・y と、見本に効かないメモの文を除く) */
-const docSig = (doc: TreeDoc): string => JSON.stringify(doc, (k, v) => (k === "x" || k === "y" || k === "note" || k === "doneNow" || k === "tidied" ? undefined : v));
+const docSig = (doc: TreeDoc): string => JSON.stringify(doc, (k, v) => (k === "x" || k === "y" || k === "note" || k === "doneNow" || k === "tidied" || k === "tidyRan" ? undefined : v));
 /** fn の間は木が変わらないので鍵を作り直さない (1 回の JSON が 100 人回しの 4 割だった、S-71b、スイッチ treeLight) */
 const heldLinks = new Map<string, PathLink>();
 let heldDoc: TreeDoc | null = null, heldSig = "", heldPart: string | null = null, heldLazy = false, holdNo = 0;
