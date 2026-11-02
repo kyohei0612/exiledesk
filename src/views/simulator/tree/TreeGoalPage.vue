@@ -108,6 +108,9 @@ function closeNow(): void {
 /** 今ある木の前提を変えたら木はスタートだけに (出る時に保存を聞く。S-67、スイッチ resetOnEdit) */
 const edits = useEditReset(t);
 watch(() => t.goalPage.value, (v, o) => { if (v && !o) edits.remember(); else if (!v) edits.forgetIfClosed(); }, { immediate: true });
+/** 問いはページの上の帯に出るので、下へ送ったまま「これで始める」を押すと画面の上の外に出て見えなかった (最終チェック長 11-02) */
+const resetAskEl = ref<HTMLElement | null>(null);
+watch(() => !!edits.ask.value, (on) => { if (on) void nextTick(() => resetAskEl.value?.scrollIntoView({ block: "nearest" })); });
 // URL から先にページが開き、白紙の判定 (SimTreePage の onMounted の needBase) が後から立つ時も「まだ選んでいない」にする (初めての sim-base で戻り先の無い「← ツリーに戻る」が出ていた)
 watch(() => t.needBase.value, (v) => { if (v) unpicked.value = true; });
 /** 手の入った木 (始まりの箱に手がある) */
@@ -305,7 +308,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <button type="button" data-tree-ilvl-note-close class="shrink-0 rounded px-1 opacity-60 hover:bg-white/10 hover:opacity-100" :aria-label="tr('閉じる', 'Close')" @click="t.ilvlNote.value = null">×</button>
       </p>
       <!-- 今ある木の前提を変えた: 木はスタートだけに戻る (S-67、スイッチ resetOnEdit) -->
-      <div v-if="edits.ask.value" data-tree-edit-reset-ask class="sticky top-0 z-10 mx-3 mb-2 flex flex-wrap items-center gap-3 rounded-lg border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-[13px]">
+      <div v-if="edits.ask.value" ref="resetAskEl" data-tree-edit-reset-ask class="sticky top-0 z-10 mx-3 mb-2 flex flex-wrap items-center gap-3 rounded-lg border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-[13px]">
         <p class="min-w-0 flex-1 break-words">{{ tr(`この変更で今の木 (スタートの下の箱 ${edits.ask.value.boxes} 個) は消え、スタートからやり直します。保存しますか?`, `This change clears the current tree (${boxesEn(edits.ask.value.boxes)} below the start) and starts over from the start. Save it first?`) }}</p>
         <button type="button" data-tree-edit-reset-save class="g-btn sm" @click="edits.answer('save')">{{ tr("保存して変える", "Save and change") }}</button>
         <button type="button" data-tree-edit-reset-ok class="g-btn sm" @click="edits.answer('drop')">{{ tr("保存せず変える", "Change without saving") }}</button>

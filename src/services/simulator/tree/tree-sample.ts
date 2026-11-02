@@ -270,11 +270,11 @@ function sampleIn(data: PatchData, doc: TreeDoc, boxId: string, seed: number): S
   return r;
 }
 /**
- * 画面に置いた木は中を変えない (use-tree の edit は毎回新しい木に差し替える) ので、鍵の材料は木ごとに 1 回だけ作る。描画の箱ごとの見本で道の JSON を作り直していた (S-71e ①、スイッチ junkTidy)。
+ * 画面に置いた木は中を変えない (use-tree の edit は毎回新しい木に差し替える) ので、鍵の材料は木ごとに 1 回だけ作る。描画の箱ごとの見本で道の JSON を作り直していた (S-71e ①)。
  * 中を書き換えて知らせる時 (triggerRef) はもう一度呼ぶ = 作り直す
  */
 const stillKeys = new WeakMap<TreeDoc, { part: string | null; sig: string; links: Map<string, PathLink> }>();
-export const markStill = (doc: TreeDoc): void => { if (flag("junkTidy")) stillKeys.set(doc, { part: null, sig: "", links: new Map() }); };
+export const markStill = (doc: TreeDoc): void => { stillKeys.set(doc, { part: null, sig: "", links: new Map() }); };
 function keyOf(doc: TreeDoc, boxId: string, seed: number): string {
   const held = heldDoc === doc, st = held ? undefined : stillKeys.get(doc);
   const part = held ? (heldPart ??= docPartOf(doc)) : st ? (st.part ??= docPartOf(doc)) : docPartOf(doc);
@@ -341,7 +341,7 @@ function sampleRaw(data: PatchData, doc: TreeDoc, boxId: string, seed: number): 
   try {
     for (let k = 1; k < HIT_TRIES; k++) { const r = sampleFrom(data, doc, b, p, sampleIn(data, doc, p.id, seed + 7919 * k), seed, boxId, aims); if (!r.note) return r; }
     // 削減の順位の箱は、箱を作る時と同じく親の見本の外れをその順位の段へ差し替えて打つ (差し替えないと順位の箱の見本が作れない、S-65b)
-    if (flag("junkTidy") && isWhittleHand(p.hand)) for (const v of rankVariants(data, base.item, aims, p.junkKey)) { const r = sampleFrom(data, doc, b, p, { ...base, item: v.item }, seed, boxId, aims); if (!r.note) return r; }
+    if (isWhittleHand(p.hand)) for (const v of rankVariants(data, base.item, aims, p.junkKey)) { const r = sampleFrom(data, doc, b, p, { ...base, item: v.item }, seed, boxId, aims); if (!r.note) return r; }
   } finally { altDeep = false; }
   return r0;
 }
@@ -375,7 +375,7 @@ export function sampleFrom(data: PatchData, doc: TreeDoc, b: TreeBox, p: TreeBox
     if (p.hand.repeat && o.out !== "hit") break;
     if (b.out === "pass") return { item: r.item, note: null };
     if (b.out !== "any" && o.out !== b.out && !b.mergedOuts?.includes(o.out)) continue;
-    if (flag("junkTidy") && b.out === "any" && o.out === "lost") continue; // 打った後の箱の見本に狙いが消えた結果を入れない (中身が混ざった、S-71g)
+    if (b.out === "any" && o.out === "lost") continue; // 打った後の箱の見本に狙いが消えた結果を入れない (中身が混ざった、S-71g)
     if (b.junkKey && o.junkKey !== b.junkKey) continue; // 外れの枝の鍵 (狙い無しの乱数のフラクチャー、スイッチ fracPick)
     if (main && o.junkKey !== main) continue;
     // エッセンスの当たりの箱は札が付いた MOD の名前 (tree-run の outBoxOf と同じ)。無限のエッセンスで箱が 2 つ以上なら付いた MOD の箱

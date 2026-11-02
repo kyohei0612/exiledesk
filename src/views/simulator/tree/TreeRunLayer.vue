@@ -19,8 +19,6 @@ const SETTLE = flag("settleStrict");
 
 /** 止まりの札をカードに被せない (スイッチ stopPill) */
 const STOP_PILL = flag("stopPill");
-/** 回数・移った人の札を箱の外へ (スイッチ junkTidy) */
-const OUT_TAGS = flag("junkTidy");
 
 interface Edge { id: string; stem: string; to: { id: string; d: string }[] }
 const props = defineProps<{
@@ -104,14 +102,14 @@ const div = (x: number): string => (x >= 100 ? x.toFixed(0) : x.toFixed(1));
   <template v-for="m in marks" :key="m.b.id">
     <!-- 誰も来ない箱は暗く -->
     <div v-if="!m.reach" data-tree-run-veil class="pointer-events-none absolute z-[8] rounded-xl bg-black/55" :style="{ left: `${m.x}px`, top: `${m.y}px`, width: `${BOX_W}px`, height: `${BOX_H}px` }" />
-    <span v-if="m.reach" data-tree-run-reach :data-box-id="m.b.id" class="pointer-events-auto absolute z-20 translate-x-[-100%] whitespace-nowrap rounded-full border border-amber-300/50 bg-[#1d160c]/95 px-2 text-[11px] tabular-nums text-amber-100 shadow-[0_2px_8px_rgba(0,0,0,0.6)]" :class="OUT_TAGS ? '-translate-y-full' : '-translate-y-1/2'"
-      :style="{ left: `${m.x + BOX_W - 6}px`, top: `${OUT_TAGS ? m.y - 2 : m.y}px` }"
+    <span v-if="m.reach" data-tree-run-reach :data-box-id="m.b.id" class="pointer-events-auto absolute z-20 translate-x-[-100%] whitespace-nowrap rounded-full border border-amber-300/50 bg-[#1d160c]/95 px-2 text-[11px] tabular-nums text-amber-100 shadow-[0_2px_8px_rgba(0,0,0,0.6)] -translate-y-full"
+      :style="{ left: `${m.x + BOX_W - 6}px`, top: `${m.y - 2}px` }"
       :title="tr(`来た人 ${m.reach} 人 · 着くまで平均 ${div(m.costIn)} 神 · ここから完成まで平均 ${div(m.remain)} 神`, `${m.reach} runs reached · avg ${div(m.costIn)} div to get here · avg ${div(m.remain)} div from here to done`)">{{ tr(`${m.reach} 人`, `${m.reach} runs`) }}</span>
-    <!-- 札は箱の題・中の字に被せない (スイッチ junkTidy、モンキー 11-01): 回数は箱の上の外、箱の下の札は本当の高さ m.h の下 -->
-    <span v-if="m.inN" data-tree-run-in class="pointer-events-none absolute z-20 whitespace-nowrap rounded-full bg-black/70 px-1.5 text-[11px] tabular-nums text-amber-200/90" :class="OUT_TAGS ? '-translate-y-full' : '-translate-y-1/2'"
-      :style="{ left: `${m.x + 6}px`, top: `${OUT_TAGS ? m.y - 2 : m.y}px` }">{{ tr(`${m.inN} 回`, `${m.inN}×`) }}</span>
+    <!-- 札は箱の題・中の字に被せない (モンキー 11-01): 回数は箱の上の外、箱の下の札は本当の高さ m.h の下 -->
+    <span v-if="m.inN" data-tree-run-in class="pointer-events-none absolute z-20 whitespace-nowrap rounded-full bg-black/70 px-1.5 text-[11px] tabular-nums text-amber-200/90 -translate-y-full"
+      :style="{ left: `${m.x + 6}px`, top: `${m.y - 2}px` }">{{ tr(`${m.inN} 回`, `${m.inN}×`) }}</span>
     <span v-if="m.outBack" data-tree-run-back class="pointer-events-none absolute z-20 -translate-x-1/2 whitespace-nowrap rounded-full bg-black/70 px-1.5 text-[11px] tabular-nums text-cyan-200/90"
-      :style="{ left: `${m.x + BOX_W / 2}px`, top: `${m.y + (OUT_TAGS ? m.h : BOX_H) + 4}px` }">↩ {{ tr(`${m.outBack} 回`, `${m.outBack}×`) }}</span>
+      :style="{ left: `${m.x + BOX_W / 2}px`, top: `${m.y + m.h + 4}px` }">↩ {{ tr(`${m.outBack} 回`, `${m.outBack}×`) }}</span>
     <!-- 止まった人: 理由を箱の上に文で重ねる (前は赤い札の title だけ、10-26 失敗時の挙動の案 2)。押すとその箱へ寄る -->
     <!-- 止まりの札はカードに被せない (10-27 夜オーナー「カードに被ったまま消えない」= バグ。スイッチ stopPill): 箱のすぐ下に「止まり n 人」だけを常に出し、理由は乗せた時・押した時だけ広げる -->
     <button v-if="m.stuck && STOP_PILL" type="button" data-tree-run-stuck data-tree-run-stuck-pill :data-box-id="m.b.id" class="nodrag nopan group pointer-events-auto absolute z-20 whitespace-nowrap rounded-full border border-rose-400/70 bg-[#2a0d12]/95 px-2 text-left text-[11px] font-bold tabular-nums text-rose-50 shadow-[0_2px_8px_rgba(0,0,0,0.6)] hover:z-30 focus:z-30"
@@ -125,6 +123,6 @@ const div = (x: number): string => (x >= 100 ? x.toFixed(0) : x.toFixed(1));
     </button>
     <!-- 着いてから形の合う別の箱へ移った人 (tree-run の settle。矢印の先と実際に進む箱が違う時) -->
     <span v-if="m.moved" data-tree-run-moved class="pointer-events-auto absolute z-20 -translate-y-1/2 whitespace-nowrap rounded-full border border-cyan-300/50 bg-[#0d1a1c]/95 px-2 text-[11px] tabular-nums text-cyan-100"
-      :style="{ left: `${m.x + 6}px`, top: `${OUT_TAGS ? m.y + m.h + 13 + (m.stuck ? 22 : 0) : m.y + BOX_H}px` }" :title="tr('着いた後、狙いの組と外れの有無が合う別の箱へ移った人の数 (矢印の先と違う箱へ進んだ)', 'Runs that arrived here and then moved on to another box with the same targets and misses (not the arrow’s box)')">{{ tr(`↪ ${m.moved} 人は別の箱へ`, `↪ ${m.moved} moved on`) }}</span>
+      :style="{ left: `${m.x + 6}px`, top: `${m.y + m.h + 13 + (m.stuck ? 22 : 0)}px` }" :title="tr('着いた後、狙いの組と外れの有無が合う別の箱へ移った人の数 (矢印の先と違う箱へ進んだ)', 'Runs that arrived here and then moved on to another box with the same targets and misses (not the arrow’s box)')">{{ tr(`↪ ${m.moved} 人は別の箱へ`, `↪ ${m.moved} moved on`) }}</span>
   </template>
 </template>

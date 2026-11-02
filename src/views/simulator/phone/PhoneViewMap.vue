@@ -163,7 +163,7 @@ const rgbOf = (b: Box): string => (b.done === "fail" ? "224,112,122" : b.done ? 
       <div v-if="cards.length || chips.length" data-map-cards class="pointer-events-none absolute left-0 top-0 origin-top-left" :style="{ transform: `translate(${m.tx.value}px,${m.ty.value}px) scale(${m.k.value})` }">
         <TreeHandChip v-for="c in chips" :id="c.id" :key="c.id" :hand="c.hand" :split="c.split" :x="c.x" :y="c.y" :inv="1" off :room="CHIP_ROOM" />
         <template v-for="b in cards" :key="b.id">
-          <TreeBox :box="b" :x="b.x" :y="yOf(b)" :removable="false" :picking="false" :selected="false" :back-label="backLabelOf(doc, b)" view-only quality-row />
+          <TreeBox :box="b" :x="b.x" :y="yOf(b)" :removable="false" :picking="false" :selected="false" :back-label="backLabelOf(doc, b)" view-only />
           <p v-if="runText(props.result, b.id)" data-map-run class="absolute text-center text-[13px] font-bold text-amber-100 [text-shadow:0_1px_3px_#000]" :style="{ left: `${b.x}px`, top: `${yOf(b) - 34}px`, width: `${BOX_W}px` }">{{ runText(props.result, b.id) }}</p>
         </template>
       </div>

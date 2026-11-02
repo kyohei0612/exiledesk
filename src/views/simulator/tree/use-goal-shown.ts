@@ -34,7 +34,7 @@ export function useGoalShown() {
     const d = s.data.value;
     if (!d) return [];
     const doc = t.doc.value, way = wayRows(d, doc), brq = breach.value;
-    // 木の手で打つエッセンスの MOD も完成形のカードに「途中で消える」で出す (S-30d。見せるだけ、スイッチ junkTidy)
+    // 木の手で打つエッセンスの MOD も完成形のカードに「途中で消える」で出す (S-30d。見せるだけ)
     const hand = wayRows(d, doc, midAims(doc).filter((a) => !way.some((m) => m.modId === a.modId) && brq?.modId !== a.modId).map((a) => ({ ...a, tier: 1 })));
     return [...way, ...hand, ...(brq ? [brq] : [])];
   });

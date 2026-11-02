@@ -1,5 +1,5 @@
 /**
- * tree-uncountable.ts — 結果を数え上げられない手 (S-21、スイッチ junkTidy): エンジンの枝が上限を超える手 (stepOutcomesOrTooMany が "tooMany"、今の棚では錬金術だけ) の結果の形。
+ * tree-uncountable.ts — 結果を数え上げられない手 (S-21): エンジンの枝が上限を超える手 (stepOutcomesOrTooMany が "tooMany"、今の棚では錬金術だけ) の結果の形。
  * 手の名前では分けない (大本 2)。枝の代わりにエンジンの入口 applyCurrency を決まった種で決まった回数打って集める (ここで結果は作らない)
  */
 import { applyCurrency, mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
@@ -9,7 +9,6 @@ import { engineOmens } from "./tree-hands";
 import { sideKeyOf } from "./tree-junk-side";
 import type { Hand } from "./tree-model";
 import { itemKeyOf } from "./tree-sample-key";
-import { flag } from "../../../web/release-flags";
 
 /** 打つ回数 (1.5% の形でも 500 回のどこかで 99.9% 出る) と種 */
 const ROLLS = 500, SEED = 0x5eed;
@@ -27,7 +26,7 @@ function tooMany(data: PatchData, item: StageItem, key: string, omens: readonly 
 }
 /** 数え上げられない手の結果 (打った回数ぶん、p の和は 1)。数え上げられる手・打てない手は null */
 export function rolledOutcomes(data: PatchData, item: StageItem, key: string, omens: readonly string[]): StepOutcome[] | null {
-  if (!flag("junkTidy") || !tooMany(data, item, key, omens)) return null;
+  if (!tooMany(data, item, key, omens)) return null;
   const m = memoOf(ROLLED, data), k = `${key}|${omens.join()}|${itemKeyOf(item)}`;
   if (m.has(k)) return m.get(k)!;
   const rng = mulberry32(SEED), out: StepOutcome[] = [];

@@ -19,9 +19,9 @@ import { askQuality } from "./tree-goal-quality";
 
 /** warn = 「決めた」を押した時に止めた理由 (TreeGoalPage、S-31c) */
 const props = defineProps<{ warn?: string | null }>();
-/** 理由が消えても高さは残す (2 択を入れた瞬間に「決めた」が 30px 動き、続けて押すと空振りした、モンキー 11-01、スイッチ junkTidy) */
+/** 理由が消えても高さは残す (2 択を入れた瞬間に「決めた」が 30px 動き、続けて押すと空振りした、モンキー 11-01) */
 const lastWarn = ref<string | null>(null);
-watch(() => props.warn, (w) => { if (w && flag("junkTidy")) lastWarn.value = w; });
+watch(() => props.warn, (w) => { if (w) lastWarn.value = w; });
 const t = useTree();
 const on = computed(() => !!t.doc.value.goalQualityOn);
 /** 品質の帯に渡す完成形のアイテム (品質・上限・種類は完成形の設定の値) */

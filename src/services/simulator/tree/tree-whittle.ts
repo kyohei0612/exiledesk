@@ -23,10 +23,10 @@ const sameMod = (a: StageMod, b: StageMod): boolean => a.modId === b.modId && a.
 type AimLike = { modId: string };
 const isAim = (aims: readonly AimLike[], m: StageMod): boolean => aims.some((a) => a.modId === m.modId);
 /**
- * 差し替え (rankVariants) で見る欲しい MOD = 見本の ☑ の印 (打つ前の aimed、tree-judge の sampleAimed) の付いた狙いだけ (S-65b、スイッチ junkTidy)。
+ * 差し替え (rankVariants) で見る欲しい MOD = 見本の ☑ の印 (打つ前の aimed、tree-judge の sampleAimed) の付いた狙いだけ (S-65b)。
  * 印の無い完成形の MOD は外れ MOD (S-22・S-60) なので、付いていれば差し替え、付いていなければ付きうる外れの重みに入れる。回す人の順位 (boxOutcomeOf の mineOf) と同じ見方。印が無ければ今のまま
  */
-export const aimedAims = <T extends AimLike>(aims: readonly T[], aimed: ReadonlySet<string> | null | undefined): readonly T[] => (flag("junkTidy") && aimed ? aims.filter((a) => aimed.has(a.modId)) : aims);
+export const aimedAims = <T extends AimLike>(aims: readonly T[], aimed: ReadonlySet<string> | null | undefined): readonly T[] => (aimed ? aims.filter((a) => aimed.has(a.modId)) : aims);
 /** 欲しい MOD の MOD レベル (低い順) */
 const wantedLevels = (it: StageItem, aims: readonly AimLike[]): number[] => loose(it).filter((m) => isAim(aims, m)).map(lv).sort((a, b) => a - b);
 /** 順位 = 欲しい MOD のうち MOD レベルがそれより低い物の数。同じ MOD レベルの物があれば「=」(E-33 どおりどちらも等しく消える) */
@@ -37,16 +37,6 @@ export function rankCode(wanted: readonly number[], x: number): string {
 /** 鍵の外れの順位の部分 (無ければ空) */
 const codesOf = (key: string | undefined): string[] => key?.split(";").find((s) => s.startsWith("w:"))?.slice(2).split(",").filter(Boolean) ?? [];
 
-/**
- * 打つ前からあって残った外れのうち MOD レベルの一番低い物の順位の鍵 (`w:1`)。欲しい MOD が無い・残った外れが無ければ undefined。
- * 次の削減で消えるのは一番低い MOD なので、効くのは一番低い外れだけ (外れ全部の順位を並べると、外れの数の違う人の組み合わせが箱に無く、種類の合う箱へ寄せられた。dev 1445 の FmNY7Wwv b16)
- */
-export function rankKeyOf(before: StageItem, after: StageItem, aims: readonly AimLike[]): string | undefined {
-  const w = wantedLevels(after, aims);
-  if (!w.length) return undefined;
-  const kept = loose(after).filter((m) => !isAim(aims, m) && loose(before).some((x) => sameMod(x, m)));
-  return kept.length ? `w:${rankCode(w, Math.min(...kept.map(lv)))}` : undefined;
-}
 /** 側の鍵と順位の鍵を 1 つに (どちらも無ければ undefined) */
 export const joinKeys = (side: string | undefined, rank: string | undefined): string | undefined => [side, rank].filter(Boolean).join(";") || undefined;
 

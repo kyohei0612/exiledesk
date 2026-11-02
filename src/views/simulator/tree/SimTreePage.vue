@@ -163,10 +163,7 @@ function pickHand(h: Hand, kind: HandKind, aims: Aim[], pre: string | null = nul
   const below = drawnBelow(doc.value, id);
   void v.holdBox(id, () => { t.edit((d) => { at = holdLinks(() => applyPick(d, id, h, kind, aims, pre, only)); tidyOf(d); }); showGone(below.filter((x) => !doc.value.boxes[x]).length); return at; });
   panel.value = null;
-  if (flag("junkTidy")) return; // 視点は holdBox (S-147e)
-  // 出来た結果の箱が枠の外なら寄る (真ん中の箱。10-22 白紙から組んで、出来た箱が下に出て自分で動かさないと見えなかった)
-  const kids = doc.value.boxes[at]?.outs ?? [];
-  if (kids.length) void v.reveal(kids[Math.floor(kids.length / 2)]!);
+  // 視点は holdBox (S-147e)
 }
 /**
  * Vue Flow の出来事: 空き所を押す = 右の欄を閉じる (よくあるモーダルと同じ。オーナー 10-22。引っ張った時は Vue Flow が画面を動かすだけ)。
@@ -263,8 +260,8 @@ const jt = useJunkTidy(doc, t.edit, (id) => void goIssue(id), issues, passed);
 /** 手を替えて消えた箱の数の知らせ (S-57) */
 const goneN = ref(0); let goneTimer = 0;
 function showGone(n: number): void { goneN.value = n; clearTimeout(goneTimer); goneTimer = window.setTimeout(() => { goneN.value = 0; }, 5000); }
-/** 上の赤い札の数 = 下の「未設定 n つ」と同じ ! の箱の数 (1 箱に 2 行ある時に上下で違った、S-89b、スイッチ junkTidy) */
-const holeN = computed(() => (flag("junkTidy") ? new Set((jt.shownIssues.value ?? []).filter((x) => doc.value.boxes[x.boxId]).map((x) => x.boxId)).size : issues.value?.length ?? 0));
+/** 上の赤い札の数 = 下の「未設定 n つ」と同じ ! の箱の数 (1 箱に 2 行ある時に上下で違った、S-89b) */
+const holeN = computed(() => new Set((jt.shownIssues.value ?? []).filter((x) => doc.value.boxes[x.boxId]).map((x) => x.boxId)).size);
 const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
 /** 穴チェックのボタン: 精査と 30 人の走行 (treeLight は精査の 30 人を走行に使い回す、S-71b) */
 async function onTest(): Promise<void> {

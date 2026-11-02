@@ -1,15 +1,14 @@
 /**
- * tree-junk-tidy.ts — ハズレ整理の流れの状態 (S-190〜S-198、スイッチ junkTidy)。外れの箱は整理を押すまでグレーで、つなぎも回さない。
+ * tree-junk-tidy.ts — ハズレ整理の流れの状態 (S-190〜S-198)。外れの箱は整理を押すまでグレーで、つなぎも回さない。
  * 状態は木から決める (箱の tidied の印 = 整理で見た箱)。保存しない: 開いた時は組み直しが整理まで済ませる (S-196)
  */
-import { flag } from "../../../web/release-flags";
 import { VIEW_ONLY_MAX } from "../../../utils/use-phone";
 import type { OutKind, TreeBox, TreeDoc } from "./tree-model";
 
 /** 狙いを持って打って狙い通りにいかなかった結果だけ (狙い無しの結果・消去で外れが消えた箱は狙い通りなのでグレーにしない、S-191) */
 const JUNK: ReadonlySet<OutKind | "start"> = new Set(["junk", "lost"]);
 /** 見るだけの幅の外 = ツリーを組める幅だけ (S-197・S-94g) */
-export const tidyOn = (): boolean => flag("junkTidy") && !(typeof window !== "undefined" && window.innerWidth < VIEW_ONLY_MAX);
+export const tidyOn = (): boolean => !(typeof window !== "undefined" && window.innerWidth < VIEW_ONLY_MAX);
 const open = (b: TreeBox): boolean => !b.hand && !b.back && !b.done && !b.split;
 /** 組む間は触れない外れの箱 (S-191)。人が × で外した箱は決めた箱 */
 export const isGrayBox = (b: TreeBox): boolean => tidyOn() && JUNK.has(b.out) && open(b) && !b.tidied && !b.noAutoBack;

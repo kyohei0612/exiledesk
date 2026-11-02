@@ -104,8 +104,8 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
   if (added.length) { relinkSameHand(data, d); linkLeftovers(data, d); }
   if (tidyOn()) for (const b of Object.values(d.boxes)) if (!b.hand && !b.done && !b.split && !staysGray(b)) b.tidied = true; // 開いた木は整理まで済んだ形。決めの無い外れの箱だけグレーのまま (S-196)
   // 決めを打ち直した箱が後の見直しで消えた (同じ手なら戻るで下を畳んだ) 札も要確認
-  // 順位の鍵の札は 1 つの箱へまとまったので、使わなかった札は要確認に出さない (S-65b、スイッチ junkTidy)
-  const gone = [...picks.values()].filter((p) => (!used.has(p.at) || !d.boxes[idOf.get(p.at) ?? ""]) && !(flag("junkTidy") && p.at.includes(";w:"))).map((p): RecipeOrphan => ({ at: p.at, why: "gone", raw: p }));
+  // 順位の鍵の札は 1 つの箱へまとまったので、使わなかった札は要確認に出さない (S-65b)
+  const gone = [...picks.values()].filter((p) => (!used.has(p.at) || !d.boxes[idOf.get(p.at) ?? ""]) && !p.at.includes(";w:")).map((p): RecipeOrphan => ({ at: p.at, why: "gone", raw: p }));
   // 前の一覧の「gone」で札の箱が今の木にある物は持ち越さない (S-107、スイッチ keepOutside)
   const now = new Set(pathKeysOf(d).values()), carried = (rec.orphans ?? []).filter((o) => !flag("keepOutside") || o.why !== "gone" || !now.has(o.at));
   const orphans = [...carried, ...lostBacks, ...gone].filter((o) => o.why !== "gone" || !underAutoBack(d, o.at));
@@ -165,8 +165,8 @@ function savedKeyOf(at: string, tail: string, onPath: ReadonlySet<string>, exact
   const sw = swap(tail);
   const tries = [at + tail, at + recraft(tail), at + unrank(tail), at + bare(tail), ...(sw ? [at + sw, at + unrank(sw), at + bare(sw)] : []), ...(swapHit(bare(tail)) ? [at + swapHit(bare(tail))!] : [])];
   const hit = tries.find((k, i) => onPath.has(k) && (i < 4 || !exact.has(k)));
-  if (hit || !flag("junkTidy")) return hit ?? at + tail;
-  // 順位で分けていた前の保存 (`;w:` 付きの札) は、まとまった箱の決めとして読む。一番浅い順位の札を使う (S-65b、スイッチ junkTidy)
+  if (hit) return hit;
+  // 順位で分けていた前の保存 (`;w:` 付きの札) は、まとまった箱の決めとして読む。一番浅い順位の札を使う (S-65b)
   const heads = [at + tail.replace(/\](~\d+)?$/, ";w:"), `${at + bare(tail)}[w:`]; // 側の鍵の無い前の保存 (`[w:1]`) は側で分かれた箱の全部へ
   return [...onPath].filter((k) => heads.some((h) => k.startsWith(h))).sort()[0] ?? at + tail;
 }
@@ -197,15 +197,15 @@ function linkLeftovers(data: PatchData, d: TreeDoc): void {
   const targets = Object.values(d.boxes).filter((b) => b.hand || b.done).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y));
   for (const b of Object.values(d.boxes)) {
     if (b.out === "start" || b.hand || b.back || b.done || b.split || b.noAutoBack || offByParent(d, b.id, j)) continue;
-    // 基準は自動の ↩ と同じ「箱どうし」が先 (S-50e、スイッチ autoSame。前は下の見方で光のお告げの箱を選び、見直しで外れて未定のまま残った、オーナーの木の b26)
-    const same = flag("autoSame") ? autoTarget(d, b.id, j) : null;
+    // 基準は自動の ↩ と同じ「箱どうし」が先 (S-50e。前は下の見方で光のお告げの箱を選び、見直しで外れて未定のまま残った、オーナーの木の b26)
+    const same = autoTarget(d, b.id, j);
     if (same) { b.back = same; b.autoBack = true; continue; }
     const cs = j.contents(b.id);
     if (!cs?.size) continue;
     // 結果が 1 通りの手 (ルーン・品質を最大までなど) の結果を同じ中身の親へ戻すと、打っても変わらない手の輪になる (linkByContent と同じ守り。
     // ルーンの後の箱が ↩ ルーンの箱になり、同じルーンは通り抜けるので回り続けた、10-29 pass-armor、S-31e)
     const loop = (t: string): boolean => straightUp(d, b.id, t);
-    const tos = new Set([...cs].map((k) => targets.find((t) => t !== b.id && !loop(t) && !!j.contents(t)?.has(k) && (!flag("autoSame") || !needsDesecrated(d, t))) ?? null));
+    const tos = new Set([...cs].map((k) => targets.find((t) => t !== b.id && !loop(t) && !!j.contents(t)?.has(k) && !needsDesecrated(d, t)) ?? null));
     const to = tos.size === 1 ? [...tos][0] : null;
     if (to) { b.back = to; b.autoBack = true; }
   }

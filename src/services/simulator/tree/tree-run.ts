@@ -221,8 +221,8 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
       continue;
     }
     if (!b.hand && j) {
-      // 決めていない箱で止まった人の原因はその箱 (決めれば進む。前に移った箱を原因にしない、S-72。スイッチ junkTidy)
-      if (flag("junkTidy")) blame = null;
+      // 決めていない箱で止まった人の原因はその箱 (決めれば進む。前に移った箱を原因にしない、S-72)
+      blame = null;
       return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("次の手・戻り先が無い", "No next craft or return"), item, noBox: true } });
     }
     if (!b.hand) {
@@ -304,7 +304,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
       // 結果の箱の中身と違えば中身の同じ箱へ (S-64)。無ければ結果の箱で止まる (未設定)
       arrive(next, item, before);
       const to = routeOf(data, doc, j, next, item, aimed);
-      if (!to) { visits.push({ box: next, cost }); return fin({ end: "stuck", cost, at: next, visits, uses, restarts, odd, why: { reason: flag("junkTidy") ? otherShapeText(data, doc, at, next, item) : tr("この結果の箱と中身が違い、中身の同じ箱も無い", "This result box holds a different item, and no box matches it"), item, noBox: true } }); }
+      if (!to) { visits.push({ box: next, cost }); return fin({ end: "stuck", cost, at: next, visits, uses, restarts, odd, why: { reason: otherShapeText(data, doc, at, next, item), item, noBox: true } }); }
       if (to !== next) { visit(next, true); blame = next; }
       at = to;
       continue;
@@ -325,7 +325,7 @@ function boxWord(doc: TreeDoc, id: string): string {
   return tr(`${n + 1} 段目の「${w[0]}」`, `step ${n + 1} "${w[1]}"`);
 }
 /**
- * 手の結果が結果の箱の見本と違う形で、同じ形の箱も無くて止まった人の文 (S-64、スイッチ junkTidy): 元の手の箱を名指しし、次に押す物まで書く
+ * 手の結果が結果の箱の見本と違う形で、同じ形の箱も無くて止まった人の文 (S-64): 元の手の箱を名指しし、次に押す物まで書く
  */
 function otherShapeText(data: PatchData, doc: TreeDoc, from: string, to: string, item: StageItem): string {
   const h = doc.boxes[from]?.hand, name = h ? nameOfKey(h.currency, null) : "";

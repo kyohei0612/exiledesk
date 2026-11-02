@@ -305,7 +305,7 @@ function relinkByContent(data: PatchData, d: TreeDoc, had: ReadonlySet<string>):
   }
   if (!linksHeld) pruneByContent(d, j);
 }
-/** 組む間はつなぎを回さず、ハズレ整理で 1 周する (S-190、スイッチ junkTidy) */
+/** 組む間はつなぎを回さず、ハズレ整理で 1 周する (S-190) */
 let linksHeld = false;
 export function holdLinks<T>(fn: () => T): T {
   if (!tidyOn() || linksHeld) return fn();
@@ -354,7 +354,7 @@ export function dropCountOf(doc: TreeDoc, id: string, h: Hand, kind: HandKind, a
   return drawnBelow(doc, id).filter((x) => !after.boxes[x]).length;
 }
 /**
- * ↩ で着く人の結果で箱の無い物を足す (S-21、スイッチ junkTidy)。結果の箱は手を決めた時の見本で作るので、あとから ↩ で入る別の外れの人の結果が抜ける
+ * ↩ で着く人の結果で箱の無い物を足す (S-21)。結果の箱は手を決めた時の見本で作るので、あとから ↩ で入る別の外れの人の結果が抜ける
  * (オーナーの木の b51 ↩ b35: ランダムな外れの人は b41 の削減で狙いが消える)。足すのは見本と次の MOD 群が違う結果だけ、当たりの箱 (☑ だけ、S-22) は足さない
  */
 export function addArrivedOuts(data: PatchData, d: TreeDoc): string[] {
@@ -363,7 +363,6 @@ export function addArrivedOuts(data: PatchData, d: TreeDoc): string[] {
 }
 /** addArrivedOuts を箱ごとに区切る (開く時に間で画面を返す、S-196) */
 export function* arrivedSteps(data: PatchData, d: TreeDoc): Generator<void, string[]> {
-  if (!flag("junkTidy")) return [];
   const j = judgeMemo(data, d), aims = aimsOf(d), made: string[] = [];
   for (const b of Object.values(d.boxes)) {
     const h = b.hand;
@@ -452,8 +451,8 @@ function lostSplit(data: PatchData, d: TreeDoc, id: string, h: Hand, depth = 0):
     if (to) { box.back = to; box.autoBack = true; continue; }
     if (box.out === "lost") { if (looseOf(s.item) > 0) stripSplit(data, d, c, strip, 0); continue; }
     // 残したい MOD はこの自動の消去の中では必須、ほかは外れ (S-60 の ☑)。外れが残っていて、この手で打てる時だけ
-    // ☑ した外れの MOD はこの自動の消去の中では外れに数えない。箱の中身 (S-60) は変えない (S-28e、スイッチ junkTidy)
-    const junk = [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && !aimed.has(m.modId) && !(flag("junkTidy") && h.keep?.some((a) => a.modId === m.modId)));
+    // ☑ した外れの MOD はこの自動の消去の中では外れに数えない。箱の中身 (S-60) は変えない (S-28e)
+    const junk = [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && !aimed.has(m.modId) && !(h.keep?.some((a) => a.modId === m.modId)));
     const outs = junk && depth < 12 ? possibleOutsOf(data, d, c, h) : null;
     if (!outs?.length) continue;
     setHand(d, c, h, kindOf(h), [], outs, undefined, holdsAimOf(d, c));

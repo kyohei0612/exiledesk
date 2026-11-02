@@ -32,8 +32,7 @@ import { sameHitsFor } from "./tree-hand-plan";
 const props = defineProps<{ box: TreeBox; /** 引いて見るだけの時の ＋ の倍率 (1 / 木の倍率。無ければ見るだけの間は ＋ を出さない、S-147c) */ plusFar?: number; /** 沼った場所の青枠の倍率 (1 / 木の倍率、0 = 枠無し、S-72) */ swamp?: number; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** ハズレ整理の前のグレー (S-191・S-198) */ gray?: boolean; /** 次に押す箱 (S-198) */ guide?: boolean; /** 片付いたハズレ (S-198) */ settled?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
   /** 縮めた時の倍率の逆数 (押せる物だけこれで大きさを戻し、画面の上で 24px 以上を保つ。オーナー 10-22「縮めても押せる物は小さくならない」) */ inv?: number;
   /** 戻り先を選んでいる間のつなげない理由 (灰色にする。use-tree-link.ts) */ linkNo?: string | null;
-  /** スマホの道の画面: エッセンスの行は MOD の名前で出す (S-94h、tree-row-tags の routeRowTags) */ routeNames?: boolean;
-  /** スマホのカード: 名前の下に品質の行を出す (S-94h) */ qualityRow?: boolean }>();
+  /** スマホの道の画面: エッセンスの行は MOD の名前で出す (S-94h、tree-row-tags の routeRowTags) */ routeNames?: boolean }>();
 const emit = defineEmits<{
   /** 箱を引っ張り始めた (押した所から。判定はページの use-gesture.ts) */
   drag: [e: PointerEvent]; aim: [];
@@ -230,7 +229,7 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
     <!-- 今のアイテムの枠 (乗せた時のカードと同じ StageItemCard の MOD の行だけを箱の幅いっぱいに (縮めない)。10-26 オーナー「アイテム枠は個人的に好きやからそのままがいいなさっきの」「枠内はアイテムの形とその下に次どうするかくらいか？まとめるとかも別にアイテム枠の下とかに出したらええんちゃう」) -->
     <!-- 箱の流れの中に置き、MOD が多ければ箱が伸びる (切らない) -->
     <div v-if="cardItem" data-tree-box-card :class="[box.out === 'start' ? 'mt-0.5' : 'mt-3', box.out === 'start' && !quiet ? 'nodrag cursor-pointer rounded-md hover:brightness-110' : 'pointer-events-none']" :title="box.out === 'start' ? startTitle : undefined" @click.stop="box.out === 'start' && !quiet && emit('aim')">
-      <div :style="{ width: `${CARD_W}px` }"><StageItemCard :item="cardItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact mods-only with-title :quality-row="qualityRow || flag('junkTidy')" :row-tags="cardTags" :doomed="cardDoomed" /></div>
+      <div :style="{ width: `${CARD_W}px` }"><StageItemCard :item="cardItem" :added="[]" :removed="[]" :holding="false" :flash-key="0" :width="CARD_W" compact mods-only with-title quality-row :row-tags="cardTags" :doomed="cardDoomed" /></div>
     </div>
     <!-- スタートのカードの下: 始め方・ベースの値段の 1 行と ＋MOD (スイッチ startCard。カードを押すと始まりの形の窓、ベースは名前の帯の下の文字から) -->
     <div v-if="box.out === 'start'" data-tree-start-under class="mt-1 flex min-w-0 items-center gap-1" :style="{ minHeight: `${24 * k}px` }">

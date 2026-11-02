@@ -13,7 +13,7 @@ import { simOp } from "../../../web/track";
 import { finalLockedWhy, finalName, finalTitle, HOLE_CHECK, holeBusy, holeName, holeShort, holesShowTitle, holeTitle, runLockedWhy } from "./hole-check";
 
 /** test = 穴チェック (use-tree-check: 回している・今の道で合格・見つけた穴の数)。合格するまで「100 人回す」は灰色で押せない (S-70、スイッチ holeCheck)。halted = 止まった人が出て途中で止めた */
-const props = defineProps<{ /** ハズレ整理のボタンの状態 (S-192、スイッチ junkTidy) */ tidy?: { on: boolean; step: string; unset: number; guide: boolean; busy: boolean; empty?: boolean; finalLit: boolean }; result: TreeRunResult | null; running: boolean; ready: boolean; test: { busy: boolean; passed: boolean; holes: number; /** 穴を見せている (札が押された状態) */ shown: boolean }; halted?: { box: string; n: number } | null; /** 今の結果が穴チェックの走行 (use-tree-run の test) */ drive?: boolean }>();
+const props = defineProps<{ /** ハズレ整理のボタンの状態 (S-192) */ tidy?: { on: boolean; step: string; unset: number; guide: boolean; busy: boolean; empty?: boolean; finalLit: boolean }; result: TreeRunResult | null; running: boolean; ready: boolean; test: { busy: boolean; passed: boolean; holes: number; /** 穴を見せている (札が押された状態) */ shown: boolean }; halted?: { box: string; n: number } | null; /** 今の結果が穴チェックの走行 (use-tree-run の test) */ drive?: boolean }>();
 const emit = defineEmits<{ run: []; go: [id: string]; test: []; holes: []; holesOn: []; /** 穴の一覧の窓を開く (札の横の ▾) */ list: []; /** ハズレ整理 (S-192) */ tidy: []; /** 完成の後の案内から組む所へ戻る (S-198) */ tidyBack: [] }>();
 /** 穴チェックに合格していないので「100 人回す」を止める (回している間は別の理由) */
 const locked = computed(() => HOLE_CHECK && !props.test.passed);

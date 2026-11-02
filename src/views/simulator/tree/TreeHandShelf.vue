@@ -253,14 +253,14 @@ const hitAims = computed((): Aim[] => {
 });
 /** 結果が 1 通りの手か (tree-hand-plan の onlyOf) */
 const onlyNow = computed(() => (hand.value && s.data.value ? onlyOf(s.data.value, t.doc.value, props.boxId, hand.value, preCat.value, hitAims.value) : null));
-/** 窓の文の結果の箱: 同じ手のままなら今ある箱 (足した箱も、S-21)、替える時は見本の数え (スイッチ junkTidy) */
+/** 窓の文の結果の箱: 同じ手のままなら今ある箱 (足した箱も、S-21)、替える時は見本の数え */
 const { later } = useHandLater();
 /** 描画の中で木を組み直さない: 札を先に動かし、数えは絵の後 (S-71e ①)。キーは手と木 */
 const handKey = (): string => JSON.stringify([hand.value, hitAims.value, preCat.value, Object.keys(t.doc.value.boxes).length, t.doc.value.seq]);
 const only = later(handKey, onlyNow);
 const shownOnly = computed(() => {
   const b = t.doc.value.boxes[props.boxId], h = hand.value;
-  if (!flag("junkTidy") || !only.value || !b?.hand || !h || b.hand.currency !== h.currency || b.hand.omens.join() !== h.omens.join()) return only.value;
+  if (!only.value || !b?.hand || !h || b.hand.currency !== h.currency || b.hand.omens.join() !== h.omens.join()) return only.value;
   const l = b.outs.map((o) => t.doc.value.boxes[o]).filter((c): c is NonNullable<typeof c> => !!c);
   return l.length > only.value.length ? l.map((c) => ({ out: c.out, aim: c.aim ?? null })) : only.value;
 });
@@ -431,7 +431,7 @@ function ok(): void {
         </div>
       </div>
     <!-- 「この手以降は削除されます」(スマホ、別の札を持った・狙いを変えた瞬間) -->
-    <div v-if="warnOpen" data-tree-hand-warn class="fixed inset-0 z-[330] flex items-center justify-center bg-black/60 px-4" @click.self="flag('junkTidy') || (warnOpen = false)">
+    <div v-if="warnOpen" data-tree-hand-warn class="fixed inset-0 z-[330] flex items-center justify-center bg-black/60 px-4">
       <div class="w-full max-w-sm rounded-xl border border-rose-400/60 bg-[#1d0f10] px-4 py-3 text-center">
         <p class="text-[16px] font-bold text-rose-100">{{ tr("この手以降は削除されます", "Everything after this craft will be removed") }}</p>
         <!-- 窓の数は実際に消える数 (S-57)。前の below は下の箱全部 (描かない通り抜けも) で、結果が同じ手でも n と出た (⑦ R1) -->

@@ -5,7 +5,6 @@
  */
 import { mulberry32, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { nextAimed, sampleAimed, type Judge } from "./tree-judge";
-import { effectOf } from "./tree-hands";
 import { aimsOf, playHand, sampleFrom, sampleOf } from "./tree-sample";
 import { MATCH_BACK, subtree, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
 import { midAims } from "./tree-veil";
@@ -16,7 +15,7 @@ const RESTART = "restart";
 const seqOf = (id: string): number => (id === "start" ? -1 : Number(/\d+$/.exec(id)?.[0] ?? 0));
 const depthOf = (doc: TreeDoc, id: string): number => { let n = 0; for (let b = doc.boxes[id]; b?.parent; b = doc.boxes[b.parent]) n++; return n; };
 const shallow = (doc: TreeDoc) => (x: string, y: string): number => depthOf(doc, x) - depthOf(doc, y) || seqOf(x) - seqOf(y);
-const keepSig = (h: Hand): string => (flag("junkTidy") && h.keep ? `k:${h.keep.map((a) => a.modId).sort().join()}` : "");
+const keepSig = (h: Hand): string => (h.keep ?`k:${h.keep.map((a) => a.modId).sort().join()}` : "");
 const sameHand = (x: Hand | null | undefined, h: Hand): boolean => !!x && x.currency === h.currency && !x.block === !h.block && [...x.omens].sort().join() === [...h.omens].sort().join() && keepSig(x) === keepSig(h);
 
 /**
@@ -35,7 +34,7 @@ export function straightUp(doc: TreeDoc, id: string, t: string): boolean {
 }
 
 /**
- * 自動の ↩ の行き先 (S-50e、スイッチ autoSame): 中身が同じ手のある箱のうち、親 → 親と同じ手の箱 → 浅い段・先に作った箱の順。
+ * 自動の ↩ の行き先 (S-50e):中身が同じ手のある箱のうち、親 → 親と同じ手の箱 → 浅い段・先に作った箱の順。
  * 自分と下、結果が 1 通りの手だけで上へ続く箱 (打っても変わらない輪) は入れない
  */
 export function autoTarget(doc: TreeDoc, id: string, j: Judge): string | null {
@@ -56,13 +55,7 @@ export function linkByContent(doc: TreeDoc, ids: readonly string[], j: Judge): v
     // 人が付けた戻り・setHand の既定の戻り (外れが消えた → 外れの前の箱、自動の印つき) は pruneByContent が見直す
     if (c.back && c.back !== MATCH_BACK) continue;
     if (offByParent(doc, id, j)) continue;
-    // 自動の ↩ は消去の結果だけ。ほかの手は未設定のまま、カレンシーを選んだ時に S-51 で戻す (S-50d、スイッチ keepOutside)
-    const auto = flag("autoSame");
-    if (!auto && flag("keepOutside") && effectOf(doc.boxes[c.parent ?? ""]?.hand?.currency ?? "") !== "remove") continue;
-    const below = new Set(subtree(doc, id));
-    // 結果が 1 通りの手 (品質を最大まで・エッセンスなど) の結果を、同じ中身の親へ戻すと同じ結果の輪になる (打っても変わらない手を打ち続ける)。手の種類ではなく結果の数で見る
-    const loop = (t: string): boolean => straightUp(doc, id, t);
-    const to = auto ? autoTarget(doc, id, j) : Object.values(doc.boxes).filter((t) => !!t.hand && !below.has(t.id) && !loop(t.id) && j.fitsBox(id, t.id)).map((t) => t.id).sort(shallow(doc))[0];
+    const to = autoTarget(doc, id, j);
     if (!to) continue;
     c.back = to;
     c.autoBack = true;
@@ -142,16 +135,16 @@ export const canPlay = (data: PatchData, item: StageItem, h: Hand): boolean => {
  * 着いた箱の手が打てない人の行き先 (S-64、スイッチ keepOutside): 中身の同じ箱のうち、手が打てる箱か完成 / 失敗の箱 (浅い段・先に作った箱から)。
  * 外れは種類を見ないので、✦ + ブリーチの人が ✦ + 外れの「ブリーチを打つ箱」に着いて打てず止まった (金の指輪の木の b1、次の手の b2 は中身が同じ)
  */
-/** 手の打てない人が途中の狙いの箱へ移る時の印: 実際に持っている途中の狙いを印に足す (外れのままだと次の箱で中身が違うと元の箱へ戻され輪になる、S-64、スイッチ junkTidy) */
+/** 手の打てない人が途中の狙いの箱へ移る時の印: 実際に持っている途中の狙いを印に足す (外れのままだと次の箱で中身が違うと元の箱へ戻され輪になる、S-64) */
 export function twinAimed(doc: TreeDoc, j: Judge, to: string, item: StageItem, aimed: ReadonlySet<string>): ReadonlySet<string> {
-  if (!flag("junkTidy") || j.fitsItem(item, aimed, to)) return aimed;
+  if (j.fitsItem(item, aimed, to)) return aimed;
   return new Set([...aimed, ...midAims(doc).filter((a) => [...item.prefixes, ...item.suffixes].some((m) => m.modId === a.modId)).map((a) => a.modId)]);
 }
 export function playableTwin(data: PatchData, doc: TreeDoc, j: Judge, at: string, item: StageItem, aimed: ReadonlySet<string>): string | null {
   if (!flag("keepOutside")) return null;
   const can = (id: string): boolean => { const h = doc.boxes[id]?.hand; return !h || canPlay(data, item, h); };
-  // 全部消えてよい消去で途中の狙いが外れに落ちた人 (✦ + ブリーチ) も打てる箱へ。実際に持っている MOD が＝の人だけで、ランダムの外れの人は移らない。印は外れのまま (S-64、スイッチ junkTidy)
-  const held = flag("junkTidy") ? midAims(doc).filter((a) => !aimed.has(a.modId) && [...item.prefixes, ...item.suffixes].some((m) => m.modId === a.modId)).map((a) => a.modId) : [];
+  // 全部消えてよい消去で途中の狙いが外れに落ちた人 (✦ + ブリーチ) も打てる箱へ。実際に持っている MOD が＝の人だけで、ランダムの外れの人は移らない。印は外れのまま (S-64)
+  const held = midAims(doc).filter((a) => !aimed.has(a.modId) && [...item.prefixes, ...item.suffixes].some((m) => m.modId === a.modId)).map((a) => a.modId);
   return j.boxesOf(item, aimed, (id) => id !== at).find(can) ?? (held.length ? j.boxesOf(item, new Set([...aimed, ...held]), (id) => id !== at).find(can) : undefined) ?? null;
 }
 
@@ -168,7 +161,7 @@ export function routeOf(data: PatchData, doc: TreeDoc, j: Judge, at: string | nu
   const all = j.boxesOf(item, aimed);
   if (unknownOpen && !all.length) return at;
   const playable = all.find((id) => { const h = doc.boxes[id]?.hand; return !h || canPlay(data, item, h); });
-  // 手の打てる箱が無い人は、打てない箱へ流さず中身の同じ未設定の箱で止まる (その箱を決めれば進む、S-64。スイッチ junkTidy)
-  if (!playable && flag("junkTidy")) { const open = unknownOpen ? at : j.openOf(item, aimed)[0]; if (open) return open; }
+  // 手の打てる箱が無い人は、打てない箱へ流さず中身の同じ未設定の箱で止まる (その箱を決めれば進む、S-64)
+  if (!playable) { const open = unknownOpen ? at : j.openOf(item, aimed)[0]; if (open) return open; }
   return playable ?? all[0] ?? null;
 }

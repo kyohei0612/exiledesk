@@ -19,7 +19,7 @@ export const infiniteAim = (key: string | undefined): boolean => !!key && isInfi
 import { isRevealHand, midAims, revealedOf, revealHitOf, stoneAims, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, fracFreeHit, fracFreeOuts, junkKeyOf, newlyFractured } from "./tree-frac-pick";
 import { nextKeyOf, sideKeyOf } from "./tree-junk-side";
-import { aimedAims, isWhittleHand, joinKeys, rankKeyOf, rankVariants } from "./tree-whittle";
+import { aimedAims, isWhittleHand, joinKeys, rankVariants } from "./tree-whittle";
 import { flag } from "../../../web/release-flags";
 import { aimedAfterAnnul, aimedOfSample, contentOf, judgeMemo, looseKey, sampleAimed, strippedOf } from "./tree-judge";
 import { goneOf, gotOf, keptAimedOf, keptAimsOf, withGot } from "./tree-keep";
@@ -27,7 +27,7 @@ import { itemKeyOf } from "./tree-sample-key";
 import { mainSideOf, rolledOutcomes } from "./tree-uncountable";
 
 type Outcome = { out: OutKind; hits: Aim[]; junkKey?: string };
-/** 途中の狙いのうち、この人が印を持ち、この手で「狙いが消えた」に数える物。確定で消える時 (候補 1 つ、S-27b) は消えてよい扱いで数えない (S-33b、スイッチ junkTidy) */
+/** 途中の狙いのうち、この人が印を持ち、この手で「狙いが消えた」に数える物。確定で消える時 (候補 1 つ、S-27b) は消えてよい扱いで数えない (S-33b) */
 function midOf(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, before: StageItem, aimed: ReadonlySet<string> | null | undefined): Aim[] {
   const mid = midAims(doc).filter((a) => aimed?.has(a.modId));
   if (!mid.length || !h) return mid;
@@ -36,12 +36,12 @@ function midOf(data: PatchData, doc: TreeDoc, h: Hand | null | undefined, before
 }
 /** aims に途中の狙いを足す (同じ MOD は足さない) */
 const withMid = (aims: readonly Aim[], mid: readonly Aim[]): Aim[] => [...aims, ...mid.filter((a) => !aims.some((x) => x.modId === a.modId))];
-/** 狙いが消えたも側で分ける (S-65・S-71g、スイッチ junkTidy)。残したい MOD の消去は中身の鍵があるので分けない (S-28e) */
-const lostSided = (h: Hand | null | undefined): boolean => flag("junkTidy") && !isKeepAnnul(h);
+/** 狙いが消えたも側で分ける (S-65・S-71g)。残したい MOD の消去は中身の鍵があるので分けない (S-28e) */
+const lostSided = (h: Hand | null | undefined): boolean => !isKeepAnnul(h);
 /** 外れ・打った後・外れが消えたに側の鍵を付ける (S-65、スイッチ junkSide。閉じていれば今のまま) */
 function sided(oc: Outcome, before: StageItem, after: StageItem, h?: Hand | null): Outcome {
-  // 狙いの付かないエッセンスの結果 (当たりで札が空) は洗い出しでは打った後の箱 (スイッチ junkTidy)
-  const bare = flag("junkTidy") && oc.out === "hit" && !oc.hits.length;
+  // 狙いの付かないエッセンスの結果 (当たりで札が空) は洗い出しでは打った後の箱
+  const bare = oc.out === "hit" && !oc.hits.length;
   if (oc.junkKey || (!bare && oc.out !== "junk" && oc.out !== "any" && oc.out !== "junkGone" && !(oc.out === "lost" && lostSided(h)))) return oc;
   const k = sideKeyOf(before, after);
   return k ? { ...oc, junkKey: k } : oc;
@@ -64,26 +64,26 @@ export function boxOutcomeOf(data: PatchData, doc: TreeDoc, b: TreeBox, before: 
   const am = noStones(doc, b.hand, keptAimedOf(doc, b.hand, aimed));
   const aims = am ? keptPlus(doc, b.hand, mineOf(data, before, withMid(aims0, midOf(data, doc, b.hand, before, am)), am)) : aims0;
   const own = b.outs.flatMap((id) => { const c = doc.boxes[id]; return c?.out === "hit" && c.aim ? boxAims(c) : []; });
-  // 当たりの箱が無い手 (残したい MOD が全部で当たりが起きない手) も、g: の箱を作った時の ☑ で付いた狙いを見る (S-27d、スイッチ junkTidy)
-  const got = flag("junkTidy") ? [...own, ...b.outs.flatMap((id) => gotOf(doc.boxes[id]?.junkKey).map((m) => (doc.memoAims ?? []).find((g) => g.modId === m) ?? { modId: m, tier: 99 }))] : own;
-  // エッセンス (付く側が決まる)・フラクチャー (S-41 の鍵) は側で分けない。スイッチ junkTidy の下はエッセンスも次の MOD 群で分ける (S-65b)
-  if (!key || (effectOf(key) === "essence" && !flag("junkTidy")) || effectOf(key) === "fracture") return withGot(data, nextKeyed(data, doc, b, boxOutcomeRaw(data, doc, b, before, after, aims), before, after, am), before, after, got);
-  const oc = withGot(data, nextKeyed(data, doc, b, lostKeyed(data, doc, b.hand, ranked(b.hand, sided(boxOutcomeRaw(data, doc, b, before, after, aims), before, after, b.hand), before, after, aims), after, aimed, before), before, after, am), before, after, got);
-  // 数え上げられない手は当たりの人も形で分ける (S-21、スイッチ junkTidy。組む間は鍵の合う箱が無いので今の 1 箱へ、整理で足す)
+  // 当たりの箱が無い手 (残したい MOD が全部で当たりが起きない手) も、g: の箱を作った時の ☑ で付いた狙いを見る (S-27d)
+  const got = [...own, ...b.outs.flatMap((id) => gotOf(doc.boxes[id]?.junkKey).map((m) => (doc.memoAims ?? []).find((g) => g.modId === m) ?? { modId: m, tier: 99 }))];
+  // フラクチャー (S-41 の鍵) は側で分けない。エッセンスは側と次の MOD 群で分ける (S-65b)
+  if (!key || effectOf(key) === "fracture") return withGot(data, nextKeyed(data, doc, b, boxOutcomeRaw(data, doc, b, before, after, aims), before, after, am), before, after, got);
+  const oc = withGot(data, nextKeyed(data, doc, b, lostKeyed(data, doc, b.hand, sided(boxOutcomeRaw(data, doc, b, before, after, aims), before, after, b.hand), after, aimed, before), before, after, am), before, after, got);
+  // 数え上げられない手は当たりの人も形で分ける (S-21。組む間は鍵の合う箱が無いので今の 1 箱へ、整理で足す)
   return oc.out === "hit" && b.hand && mainSideOf(data, prepFor(data, before, b.hand.currency), b.hand) ? { ...oc, junkKey: sideKeyOf(before, after) } : oc;
 }
-/** 残したい MOD を決めていない手は置き石を狙いに数えない (S-33、スイッチ junkTidy)。残したければ人が ☑ */
+/** 残したい MOD を決めていない手は置き石を狙いに数えない (S-33)。残したければ人が ☑ */
 function noStones(doc: TreeDoc, h: Hand | null | undefined, am: ReadonlySet<string> | null | undefined): ReadonlySet<string> | null | undefined {
-  if (!flag("junkTidy") || !am || h?.keep) return am;
+  if (!am || h?.keep) return am;
   const st = new Set(stoneAims(doc).map((a) => a.modId));
   return st.size ? new Set([...am].filter((id) => !st.has(id))) : am;
 }
 /** この人が狙いを持っているか (段は完成形の段。同じ MOD の低い段に替わった人は消えた人、狙いの中身 S-60 と同じ) */
 const heldBy = (data: PatchData, doc: TreeDoc) => (it: StageItem, id: string): boolean => aimHeldOn(data, it, (doc.memoAims ?? []).find((g) => g.modId === id) ?? { modId: id, tier: 99 }, { sameText: true });
-/** 外れ・打った後・狙いが消えたに次の MOD 群の鍵を足す (S-65b の総則、スイッチ junkTidy)。残したい MOD の消去は中身の鍵 (S-28e)、印の無い乱数のフラクチャーは S-41 の鍵のまま、当たりは ☑ の札 */
+/** 外れ・打った後・狙いが消えたに次の MOD 群の鍵を足す (S-65b の総則)。残したい MOD の消去は中身の鍵 (S-28e)、印の無い乱数のフラクチャーは S-41 の鍵のまま、当たりは ☑ の札 */
 function nextKeyed<T extends { out: OutKind; junkKey?: string }>(data: PatchData, doc: TreeDoc, b: Pick<TreeBox, "hand">, oc: T, before: StageItem, after: StageItem, kept: ReadonlySet<string> | null | undefined): T {
-  if (!flag("junkTidy") || (oc.out === "hit" && (oc as { hits?: readonly Aim[] }).hits?.length !== 0) || isKeepAnnul(b.hand) || fracFree(doc, b.hand)) return oc;
-  // 発現で選ぶ手は打った後に未発現が残らない (③ 見積もりは発現の前の形、スイッチ junkTidy)
+  if ((oc.out === "hit" && (oc as { hits?: readonly Aim[] }).hits?.length !== 0) || isKeepAnnul(b.hand) || fracFree(doc, b.hand)) return oc;
+  // 発現で選ぶ手は打った後に未発現が残らない (③ 見積もりは発現の前の形)
   const nk = nextKeyOf(before, after, kept, heldBy(data, doc), veilPick(b.hand));
   return nk ? { ...oc, junkKey: joinKeys(oc.junkKey, nk) } : oc;
 }
@@ -100,18 +100,6 @@ function lostKeyed<T extends { out: OutKind; junkKey?: string }>(data: PatchData
   if (oc.out !== "lost" || !isKeepAnnul(h)) return oc;
   // 消した後の ☑ は tree-judge の nextAimed と同じ (残したい MOD・✦ の印・候補の外の印)
   return { ...oc, junkKey: joinKeys(stripKeyOf(data, doc, after, aimedAfterAnnul(data, doc, h, aimed, before, keepAims(doc, h.keep!).map((a) => a.modId))), oc.junkKey) };
-}
-/**
- * 順位の鍵を付ける箱 = 削減で何が消えたかの枝 (S-65b ①「外れが消えた」「○○が消えた」)。外れ・打った後はカオスでまた狙いが付いた等の 1% 未満の組み合わせばかりで、
- * 付けると 1 手で箱が 13 を超えた (dev 1445、FmNY7Wwv の b16 に削減 + カオス)。そちらは順位を持たず、次の削減はまた付きうる外れ全部から数える
- */
-const RANKED: ReadonlySet<OutKind> = new Set(["junkGone", "lost"]);
-/** 削減の手の外れが消えた・狙いが消えたに、残った外れの順位の鍵を足す (S-65b、スイッチ whittleRank。閉じていれば今のまま) */
-function ranked<T extends { out: OutKind; junkKey?: string }>(h: Hand | null | undefined, oc: T, before: StageItem, after: StageItem, aims: readonly Aim[]): T {
-  // 枝は 1 手の後の次の MOD 群で分ける。順位は次の次の手の情報なので鍵にしない (S-65b、スイッチ junkTidy)
-  if (flag("junkTidy") || !isWhittleHand(h) || !RANKED.has(oc.out)) return oc;
-  const wk = rankKeyOf(before, after, aims);
-  return wk ? { ...oc, junkKey: joinKeys(oc.junkKey, wk) } : oc;
 }
 /** ☑ を選ぶ手 (付け足す・入れ替える = 高貴・カオスなど。tree-hand-plan の FREE_EFFECTS と同じ) */
 const PICK_EFFECTS: readonly string[] = ["add", "swap"];
@@ -154,8 +142,8 @@ function boxOutcomeRaw(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageI
   if (veilKeep(b.hand)) { const oc = outcomeOf(data, before, after, aims, key); return oc.out === "lost" ? oc : { out: "any", hits: [] }; }
   // 発現で選ぶ手: 発現した MOD が ☑ の札 (この手の当たりの箱) に当たれば当たり、ほかは外れ (狙いが消えたは前のまま)
   if (veilPick(b.hand)) {
-    // 持っていた狙いが消えたら ☑ が付いても狙いが消えた (S-22b、スイッチ junkTidy)
-    const oc = lostFirst(flag("junkTidy"), data, before, after, aims, outcomeOf(data, before, after, aims, key));
+    // 持っていた狙いが消えたら ☑ が付いても狙いが消えた (S-22b)
+    const oc = lostFirst(true, data, before, after, aims, outcomeOf(data, before, after, aims, key));
     if (oc.out === "lost") return oc;
     const own = b.outs.flatMap((id) => { const c = doc.boxes[id]; return c?.out === "hit" && c.aim ? boxAims(c) : []; });
     const hit = revealHitOf(data, revealedOf(before, after), own);
@@ -204,7 +192,7 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   // 見本の中身だけで見る (持って着きうる狙いを足した形は作らない、狙いが消えうるのは見本に付いている狙い。大本 1)
   /** 未発現が付く手 (冒涜の骨): 当たり / 外れは発現で選ぶ候補で分かれるので見ない。消える側 (狙いが消えた) だけ発現の前の形で見る */
   let veiled = false, veiledLost = false, veiledKeep = false;
-  /** 未発現が付く手で狙いが消える結果の鍵 (次の MOD 群、S-65b、スイッチ junkTidy) */
+  /** 未発現が付く手で狙いが消える結果の鍵 (次の MOD 群、S-65b) */
   const veiledLostKeys = new Set<string>();
   /** 未発現が付く手で、狙いを消さない結果の側の鍵 (S-65、スイッチ junkSide) */
   const veiledSides = new Set<string>();
@@ -242,29 +230,28 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
         if (outs.some((o) => lostOf(o))) veiledLost = true;
         // 狙いを消さない結果があるか (満杯の側で全部が狙いなら、骨は必ず狙いを消す = 当たり・外れ・打った後の箱は起こらない。10-28 冒涜まわりの確かめ)
         if (outs.some((o) => !lostOf(o))) veiledKeep = true;
-        for (const o of outs) { const sk = !lostOf(o) ? sideKeyOf(it, o.item) : undefined; if (sk) veiledSides.add(joinKeys(sk, flag("junkTidy") ? nextKeyOf(it, o.item, keptAimedOf(doc, h, aimedAt(smp.item) ?? sampleAimed(data, doc, boxId, seed)), heldBy(data, doc), veilPick(h)) : undefined)!); }
-        if (flag("junkTidy")) for (const o of outs) if (lostOf(o)) { const e = nextKeyed(data, doc, { hand: h }, sided({ out: "lost", hits: [] }, it, o.item, h), it, o.item, keptAimedOf(doc, h, aimedAt(smp.item) ?? sampleAimed(data, doc, boxId, seed))); if (e.junkKey) veiledLostKeys.add(e.junkKey); }
+        for (const o of outs) { const sk = !lostOf(o) ? sideKeyOf(it, o.item) : undefined; if (sk) veiledSides.add(joinKeys(sk, nextKeyOf(it, o.item, keptAimedOf(doc, h, aimedAt(smp.item) ?? sampleAimed(data, doc, boxId, seed)), heldBy(data, doc), veilPick(h)))!); }
+        for (const o of outs) if (lostOf(o)) { const e = nextKeyed(data, doc, { hand: h }, sided({ out: "lost", hits: [] }, it, o.item, h), it, o.item, keptAimedOf(doc, h, aimedAt(smp.item) ?? sampleAimed(data, doc, boxId, seed))); if (e.junkKey) veiledLostKeys.add(e.junkKey); }
         continue;
       }
       for (const o of outs) {
-        const am = noStones(doc, h, keptAimedOf(doc, h, aimedAt(smp.item) ?? (flag("junkTidy") ? sampleAimed(data, doc, boxId, seed) : null)));
+        const am = noStones(doc, h, keptAimedOf(doc, h, aimedAt(smp.item) ?? sampleAimed(data, doc, boxId, seed)));
         const ra0 = am ? keptPlus(doc, h, withMid(aims, midOf(data, doc, h, it, am)).filter((a) => am.has(a.modId) || !aimHeldOn(data, it, a, { sameText: true }))) : aims;
         const pick = PICK_EFFECTS.includes(k);
-        // 残したい MOD の消去は ☑ の物だけで消えた / 残ったを見る (外れの MOD でも「消えた」の枝を出す、S-28e・S-21。印で絞ると枝が無くて人が止まった、スイッチ junkTidy)
-        const ra = flag("junkTidy") && isKeepAnnul(h) ? aims : pick ? pickedAims(data, it, ra0, extra) : ra0;
+        // 残したい MOD の消去は ☑ の物だけで消えた / 残ったを見る (外れの MOD でも「消えた」の枝を出す、S-28e・S-21。印で絞ると枝が無くて人が止まった)
+        const ra = isKeepAnnul(h) ? aims : pick ? pickedAims(data, it, ra0, extra) : ra0;
         const r = lostFirst(pick, data, it, o.item, ra, outcomeOf(data, it, o.item, ra, h.currency));
-        const rk = <T extends { out: OutKind; junkKey?: string }>(e: T): T => ranked(h, e, it, o.item, ra);
         if (r.hits.length > 1) { if (roll) continue; return null; } // 足すのは外れ・打った後の形だけ (当たりの箱は ☑ だけ、S-22)
         // スイッチ junkSide: 狙い無しは狙いが消えた以外全部「打った後」を側ごと。☑ の無い狙いが付いたのは外れ (tree-hand-plan の onlyOf と同じ) を側ごと (S-65)
-        // エッセンス・フラクチャーは側で分けない (boxOutcomeOf と同じ、S-65。前はフラクチャーの外れの箱にだけ側の鍵が付き、見本が作れず ✦ の無い親の見本のままだった)
-        const sk = (k === "essence" && !flag("junkTidy")) || k === "fracture" ? undefined : sideKeyOf(it, o.item);
+        // フラクチャーは側で分けない (エッセンスは分ける。boxOutcomeOf と同じ、S-65・S-65b。前はフラクチャーの外れの箱にだけ側の鍵が付き、見本が作れず ✦ の無い親の見本のままだった)
+        const sk = k === "fracture" ? undefined : sideKeyOf(it, o.item);
         const nk = <T extends { out: OutKind; junkKey?: string }>(e: T): T => nextKeyed(data, doc, { hand: h }, e, it, o.item, am);
-        if (freeSide) { const e = nk(rk<{ out: OutKind; aim: null; junkKey?: string }>(r.out === "lost" ? { out: "lost" as OutKind, aim: null, ...(sk && lostSided(h) ? { junkKey: sk } : {}) } : { out: "any" as OutKind, aim: null, ...(sk ? { junkKey: sk } : {}) })); found.set(`${e.out}:${e.junkKey ?? ""}`, e); continue; }
-        if (sk && extra.length && r.out === "hit" && r.hits[0] && !extra.some((a) => a.modId === r.hits[0]!.modId && a.tier === r.hits[0]!.tier)) { const e = nk(rk<{ out: OutKind; aim: null; junkKey?: string }>({ out: "junk", aim: null, junkKey: sk })); found.set(`junk::${e.junkKey}`, e); continue; }
+        if (freeSide) { const e = nk<{ out: OutKind; aim: null; junkKey?: string }>(r.out === "lost" ? { out: "lost" as OutKind, aim: null, ...(sk && lostSided(h) ? { junkKey: sk } : {}) } : { out: "any" as OutKind, aim: null, ...(sk ? { junkKey: sk } : {}) }); found.set(`${e.out}:${e.junkKey ?? ""}`, e); continue; }
+        if (sk && extra.length && r.out === "hit" && r.hits[0] && !extra.some((a) => a.modId === r.hits[0]!.modId && a.tier === r.hits[0]!.tier)) { const e = nk<{ out: OutKind; aim: null; junkKey?: string }>({ out: "junk", aim: null, junkKey: sk }); found.set(`junk::${e.junkKey}`, e); continue; }
         // 無限のエッセンスで ☑ していない能力値が付いた = 外れ (infiniteAim)。ほかの狙いの付かない当たりは「打った後」
         const e = r.out === "hit" && (!r.hits.length || (infiniteAim(h.currency) && !extra.some((a) => a.modId === r.hits[0]!.modId && a.tier === r.hits[0]!.tier))) ? { out: (infiniteAim(h.currency) ? "junk" : "any") as OutKind, aim: null } : { out: r.out, aim: r.hits[0] ?? null };
         // 狙いが消えた人に ☑ (エッセンスなら付く MOD) が付いたら別の箱「狙いが消えた・狙いが付いた」(S-27d、鍵 g:)
-        const ek = withGot(data, nk(lostKeyed(data, doc, h, rk<{ out: OutKind; aim: Aim | null; junkKey?: string }>(sk && (e.out === "junk" || e.out === "any" || e.out === "junkGone" || (e.out === "lost" && lostSided(h))) ? { ...e, junkKey: sk } : e), o.item, flag("junkTidy") ? am : undefined, flag("junkTidy") ? it : undefined)), it, o.item, extra); // 箱の鍵も回す人と同じ印で (渡さないと鍵が合わず見本が作れなかった、スイッチ junkTidy)
+        const ek = withGot(data, nk(lostKeyed<{ out: OutKind; aim: Aim | null; junkKey?: string }>(data, doc, h, sk && (e.out === "junk" || e.out === "any" || e.out === "junkGone" || (e.out === "lost" && lostSided(h))) ? { ...e, junkKey: sk } : e, o.item, am, it)), it, o.item, extra); // 箱の鍵も回す人と同じ印で (渡さないと鍵が合わず見本が作れなかった)
         const ek2 = roll && ek.out === "hit" && sk ? { ...ek, junkKey: sk } : ek;
         found.set(`${ek2.out}:${ek2.aim ? `${ek2.aim.modId}/${ek2.aim.tier}` : ""}:${"junkKey" in ek2 ? ek2.junkKey : ""}`, ek2);
       }
@@ -277,8 +264,8 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
   // 側の鍵があれば側ごと (S-65、スイッチ junkSide)
   const vs = (out: OutKind): Array<{ out: OutKind; aim: Aim | null; junkKey?: string }> => (veiledSides.size ? [...veiledSides].sort().map((junkKey) => ({ out, aim: null, junkKey })) : [{ out, aim: null }]);
   if (veiled && veilKeep(h)) return [...vs("any"), ...(veiledLost ? veiledLostOuts() : [])];
-  // もう持っている狙いがもう一度付く道は数えない (S-24、スイッチ junkTidy。起きない当たりの箱が出た)
-  const unheldAim = (a: Aim): boolean => !flag("junkTidy") || smps.some((s) => !aimHeldOn(data, s.item, a, { sameText: true }));
+  // もう持っている狙いがもう一度付く道は数えない (S-24。起きない当たりの箱が出た)
+  const unheldAim = (a: Aim): boolean => smps.some((s) => !aimHeldOn(data, s.item, a, { sameText: true }));
   if (veiled) return [...extra.filter(unheldAim).map((a) => ({ out: "hit" as OutKind, aim: a })), ...vs("junk"), ...(veiledLost ? veiledLostOuts() : [])];
   // ✦ の木の確定フラクチャーは必ず ✦ のどれかを固定する (外れた分は費用に足す、S-43)。外れの箱は誰も着かないので作らない (スイッチ fracMulti)
   // ✦ の無い MOD (完成の狙いでも) が固定される結果も起こらない (回す時は必ず ✦ を固定する、tree-sample の fractureTarget)

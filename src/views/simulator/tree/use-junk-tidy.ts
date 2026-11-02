@@ -1,5 +1,5 @@
 /**
- * use-junk-tidy.ts — ハズレ整理のボタンと案内 (S-192・S-198、スイッチ junkTidy)。整理はつなぎの 1 周 (tree-hand-plan の tidyJunk)、状態は tree-junk-tidy
+ * use-junk-tidy.ts — ハズレ整理のボタンと案内 (S-192・S-198)。整理はつなぎの 1 周 (tree-hand-plan の tidyJunk)、状態は tree-junk-tidy
  * 整理はハズレ整理と最終チェックの時だけ。光る箱 = 帯の数 = 未設定の箱、未設定 0 の後は最終チェックで止まる人を送り出す箱
  */
 import { computed, ref, watch, type Ref } from "vue";

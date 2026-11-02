@@ -13,7 +13,6 @@ import { useVueFlow } from "@vue-flow/core";
 import { BOX_H, BOX_W, boundsOf, type TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { pageZoom } from "../../../utils/zoom";
 import { isPhoneWidth } from "../../../utils/use-phone";
-import { flag } from "../../../web/release-flags";
 
 export const FLOW_ID = "sim-tree";
 /**
@@ -26,7 +25,7 @@ const ZOOM_MIN = ZOOM_LEVELS[0];
 const ZOOM_MAX = ZOOM_LEVELS[ZOOM_LEVELS.length - 1]!;
 /** 一番近い段 */
 const snapTo = (levels: readonly number[], z: number): number => levels.reduce((a, l) => (Math.abs(l - z) < Math.abs(a - z) ? l : a), levels[0]!);
-/** 20% でも入らない木の時だけ足す段 (S-147d、スイッチ zoomWhole) */
+/** 20% でも入らない木の時だけ足す段 (S-147d) */
 const WHOLE_STEPS = [0.15, 0.1] as const;
 /** ホイールの量をためてから 1 段動かす (マウスの 1 目盛り ≒ 100、タッチパッドは細かく来る) */
 const WHEEL_STEP = 60;
@@ -69,7 +68,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
    * 今の木で使える段。20% でも全体が入らない PC の木だけ、全体が入る倍率まで下に足す (S-147d、10-26 夜の 10% の点は開いた時の話で、開いた時は 75% のまま)
    */
   function levels(): readonly number[] {
-    if (!flag("zoomWhole") || isPhoneWidth()) return ZOOM_LEVELS;
+    if (isPhoneWidth()) return ZOOM_LEVELS;
     const fit = wholeZoom();
     if (fit == null || fit >= ZOOM_MIN) return ZOOM_LEVELS;
     return [fit, ...WHOLE_STEPS.filter((l) => l > fit * 1.1), ...ZOOM_LEVELS].sort((a, b) => a - b);
@@ -136,23 +135,23 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     return { x, y, z };
   }
   /**
-   * fitAll = 下の段が枠の外に出るなら、収まるまで倍率を 1 段ずつ下げる (全体表示だけ、FIT_MIN まで)。
+   * fitAll = 下の段が枠の外に出るなら、収まるまで倍率を 1 段ずつ下げる (全体表示だけ。PC は木の全体が入る倍率まで S-147d、スマホは FIT_MIN まで)。
    * 開いた時・整列の後は下げるだけで縮めない (10-26 夜ブラック 13: 縮めて 10% になった)
    */
   async function startTop(lv: number, fitAll = false): Promise<void> {
     let p = placeOf(lv);
     const h = f.dimensions.value.height;
-    const ls = levels(), low = flag("zoomWhole") && !isPhoneWidth() ? 0 : FIT_MIN;
+    const ls = levels(), low = isPhoneWidth() ? FIT_MIN : 0;
     for (let i = ls.indexOf(lv); fitAll && i > 0 && ls[i - 1]! >= low && treeBottom() * p.z + p.y > h - PAD_MIN; i--) p = placeOf(ls[i - 1]!);
     await f.setViewport({ x: p.x, y: p.y, zoom: p.z });
   }
-  /** 全体に合わせる (「1」・右下の道具)。下限 25%。whole = スマホでも 50% の下限を使わず木の全体 (回すの 1 人目が歩く時。光る枠を画面の外へ出さない) */
+  /** 全体に合わせる (「1」・右下の道具)。PC は木の全体が入る倍率まで (S-147d)。whole = スマホでも 50% の下限を使わず木の全体 (回すの 1 人目が歩く時。光る枠を画面の外へ出さない) */
   async function fit(whole = false): Promise<void> {
     const lv = fitLevel();
     if (lv == null) return;
     // スマホの形 (U-53) は 50% より小さくしない (20% で箱の字が読めなかった、10-22)
     if (!whole && isPhoneWidth()) await startTop(Math.max(lv, PHONE_MIN));
-    else await startTop(flag("zoomWhole") ? lv : Math.max(lv, FIT_MIN), true);
+    else await startTop(lv, true);
   }
   /**
    * 開いた時の見え方 (10-25 オーナー「任せる」、23 本目の決め): 木全体が収まる段 (100% まで)。
@@ -237,7 +236,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     await f.setViewport({ x: nx, y: ny, zoom: z });
   });
   /**
-   * 手を決めた後も触った箱を画面の同じ場所に (S-147e、スイッチ junkTidy)。edit = 木を組み替えて触った箱の今の id を返す。
+   * 手を決めた後も触った箱を画面の同じ場所に (S-147e)。edit = 木を組み替えて触った箱の今の id を返す。
    * 箱が 4 つ以上増えても開いた時の寄りへ戻さない。手を足す時は結果の箱が枠の外なら入る向きだけ最小限動かす (S-147c)。手を変える時は結果の箱の頭が全く見えない時だけ動かす
    */
   /** 手の窓を開く時の箱の画面の場所 (窓を開く寄せの前。holdBox はここへ戻す) */
@@ -247,16 +246,16 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
   let opened: { x: number; y: number; zoom: number } | null = null;
   /** 手の窓を開いた時の寄せ (外れていた箱を見える所へ)。閉じた時に backSpot が戻す */
   async function revealSpot(id: string): Promise<void> { await reveal(id); opened = { ...f.viewport.value }; }
-  /** 手の窓を選ばずに閉じた: 窓を開く寄せの分だけ視点を戻す (S-147e、スイッチ junkTidy)。手を決めた時は holdBox が spot を使う。開いている間に人が動かした視点はそのまま */
+  /** 手の窓を選ばずに閉じた: 窓を開く寄せの分だけ視点を戻す (S-147e)。手を決めた時は holdBox が spot を使う。開いている間に人が動かした視点はそのまま */
   async function backSpot(): Promise<void> {
     const p = spot, was = opened, b = p ? doc.value.boxes[p.id] : null, { x, y, zoom: z } = f.viewport.value;
     spot = null; opened = null;
-    if (!flag("junkTidy") || !p || !b || !was || was.x !== x || was.y !== y || was.zoom !== z) return;
+    if (!p || !b || !was || was.x !== x || was.y !== y || was.zoom !== z) return;
     await f.setViewport({ x: p.sx - b.x * z, y: p.sy - b.y * z, zoom: z });
   }
   async function holdBox(id: string, edit: () => string): Promise<void> {
     const was = doc.value.boxes[id];
-    if (!flag("junkTidy") || !was) { edit(); return; }
+    if (!was) { edit(); return; }
     const { x: x0, y: y0, zoom: z } = f.viewport.value, sx = spot?.id === id ? spot.sx : was.x * z + x0, sy = spot?.id === id ? spot.sy : was.y * z + y0, changed = !!was.hand;
     spot = null;
     holding = true;

@@ -1,6 +1,6 @@
 /**
  * tree-odds.ts — 結果の箱に起こる割合 (2026-10-25 オーナー「おすすめの2つで進めて」、PC の箱とスマホの ② で同じ)。
- * 割合はシミュで数えず、エンジンの入口 outcomeOdds (engine-sim、ジン部長 695f76c3) に手の箱のアイテム (箱に着く見本の人ごと peopleOf、スイッチ junkTidy が閉じていれば箱の形に合う見本 shapeSampleOf 1 つ。形違いの戻りで入った人では出さない)・手 (お告げ込み)・木の狙いを渡すだけ。
+ * 割合はシミュで数えず、エンジンの入口 outcomeOdds (engine-sim、ジン部長 695f76c3) に手の箱のアイテム (箱に着く見本の人ごと peopleOf)・手 (お告げ込み)・木の狙いを渡すだけ。
  * ここでするのは結果の種類 → 木の結果の箱の結び付けだけ: 当たりは同じ狙いの当たりの箱、当たりの箱の無い狙いが付いた分は外れの箱 (tree-hand-plan の onlyOf と同じ)。
  * 割合が出せない手 (繰り返し・狙い無し・エンジンが null・結果の箱が 1 つ) は出さない
  */
@@ -9,8 +9,7 @@ import { outcomeOdds, stepOutcomes } from "../../../services/simulator/sim-engin
 import { boxOutcomeOf } from "../../../services/simulator/tree/tree-outcome";
 import { outBoxOf } from "../../../services/simulator/tree/tree-shape";
 import { isSideKey, isStripKey } from "../../../services/simulator/tree/tree-junk-side";
-import { aimedAims, isWhittleHand, rankVariants } from "../../../services/simulator/tree/tree-whittle";
-import { keptAimedOf } from "../../../services/simulator/tree/tree-keep";
+import { isWhittleHand } from "../../../services/simulator/tree/tree-whittle";
 import { prepFor } from "../../../services/simulator/tree/tree-unbounded";
 import { rolledOutcomes } from "../../../services/simulator/tree/tree-uncountable";
 import { aimsOf, sampleOf, SINGLE_SEEDS } from "../../../services/simulator/tree/tree-sample";
@@ -50,22 +49,21 @@ export function oddsOfHand(doc: TreeDoc, id: string, part = ""): Map<string, num
       if (to) out.set(to.id, (out.get(to.id) ?? 0) + man.w * o.p);
     }
   }
-  return out.size ? (flag("junkTidy") ? perShot(out, shot) : out) : null;
+  return out.size ? perShot(out, shot) : null;
 }
 /** 箱に着く人 (w = 割合、和 1) */
 type Man = { raw: StageItem; aimed: ReadonlySet<string> | null; w: number };
 /** 手の結果を打てた人の割合で割り直す (打てない人は打てる箱へ移る S-64 ので、割合に入れない) */
 const perShot = (m: Map<string, number>, shot: number): Map<string, number> => { if (shot > 0) for (const [k, v] of m) m.set(k, v / shot); return m; };
 /**
- * 割合を数える人 (S-65・S-65b、スイッチ junkTidy): 箱に着く見本 SINGLE_SEEDS 人を同じ中身と ☑ でまとめ、人数の割合を持たせる。
+ * 割合を数える人 (S-65・S-65b): 箱に着く見本 SINGLE_SEEDS 人を同じ中身と ☑ でまとめ、人数の割合を持たせる。
  * 前は見本 1 つで決まり、ブリーチ持ちとランダムの外れの人が混ざる箱 (オーナーの木の b43) の結果が「打った後 100%」と出た。洗い出し possibleOutsOf と同じ人を見る。
- * 着いた見本が無ければ、閉じた形は今までどおり形に合う見本 1 つ
+ * 着いた見本が無ければ形に合う見本 1 つ
  */
 function peopleOf(data: PatchData, doc: TreeDoc, id: string): Man[] {
   const seeds = SINGLE_SEEDS;
   if (flag("judgeOne")) for (let k = 1; k <= seeds; k++) sampleAimed(data, doc, id, k);
   const one = (raw: StageItem): Man[] => [{ raw, aimed: flag("judgeOne") ? aimedOfSample(id, raw) : null, w: 1 }];
-  if (!flag("junkTidy")) return one(shapeSampleOf(data, doc, id));
   const by = new Map<string, Man>();
   for (let k = 1; k <= seeds; k++) {
     const x = sampleOf(data, doc, id, k);
@@ -91,8 +89,8 @@ function sideOdds(doc: TreeDoc, id: string, part: string): Map<string, number> |
   let shot = 0;
   for (const man of men) {
     const item0 = prepFor(data, man.raw, b.hand.currency), aimed = man.aimed;
-    // 削減の手は外れを MOD レベルの範囲ごとの代わりに差し替えた見本 (割合 = その範囲の重み、tree-whittle)。ほかは見本のまま
-    const forms = isWhittleHand(b.hand) && !flag("junkTidy") ? rankVariants(data, item0, aimedAims(aims, keptAimedOf(doc, b.hand, aimed)), b.junkKey) : [{ p: 1, item: item0 }];
+    // 削減の手も見本のまま (結果の箱は % を出さない、treeOddsOf)
+    const forms = [{ p: 1, item: item0 }];
     for (const f of forms) {
       // 数え上げられない手は打って集めた結果の割合 (S-21)
       const live = (stepOutcomes(data, f.item, b.hand.currency, engineOmens(b.hand)) ?? rolledOutcomes(data, f.item, b.hand.currency, engineOmens(b.hand)) ?? []).filter((r) => !r.void);
@@ -105,8 +103,7 @@ function sideOdds(doc: TreeDoc, id: string, part: string): Map<string, number> |
       }
     }
   }
-  // 閉じた形は今のまま (打てない差し替えの分は足りないまま)
-  const res = out.size ? (flag("junkTidy") ? perShot(out, shot) : out) : null;
+  const res = out.size ? perShot(out, shot) : null;
   if (key) { if (sideMemo.size >= SIDE_MAX) sideMemo.clear(); sideMemo.set(key, res); }
   return res;
 }
@@ -116,8 +113,8 @@ function treeOddsOf(doc: Ref<TreeDoc>) {
     const all = new Map<string, number>(), part = flag("treeLight") ? docPartOf(doc.value) : "";
     for (const b of Object.values(doc.value.boxes)) {
       if (!b.hand) continue;
-      // 削減の手の結果の箱は % を出さない (S-65b、スイッチ junkTidy)。オーナー 11-01「削減だけ消す」
-      if (flag("junkTidy") && isWhittleHand(b.hand)) continue;
+      // 削減の手の結果の箱は % を出さない (S-65b)。オーナー 11-01「削減だけ消す」
+      if (isWhittleHand(b.hand)) continue;
       try { for (const [k, v] of oddsOfHand(doc.value, b.id, part) ?? []) all.set(k, v); } catch { /* 割合が出せない手は出さない */ }
     }
     return all;

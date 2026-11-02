@@ -47,7 +47,7 @@ export function outsideAimed(data: PatchData, doc: TreeDoc, h: Hand | null | und
 }
 /**
  * 打つ前の印のうち途中の狙い (S-33c)。残したい MOD の ☑ を外した手・全部消えてよい消去の後も外れに落とさず、付いている間ずっと狙い (消えたら印も外れる)。
- * 11-02 オーナー「狙いの完成に含めるって話途中で消えるけどやないとハズレMODあつかいやろ」(スイッチ junkTidy)
+ * 11-02 オーナー「狙いの完成に含めるって話途中で消えるけどやないとハズレMODあつかいやろ」
  */
 const midKept = (doc: TreeDoc, prev: ReadonlySet<string> | null | undefined): string[] => (prev ? midAims(doc).map((a) => a.modId).filter((id) => prev.has(id)) : []);
 /** 箱 boxId に着いた時の ☑ (prev = 着く前、item = 着いた時のアイテム、before = 打つ前のアイテム。打たずに着いた時は無し) */
@@ -59,7 +59,7 @@ export function nextAimed(data: PatchData, doc: TreeDoc, prev: ReadonlySet<strin
   // 消去の後も ✦ の印の狙いは残る (消去では消えない。S-28b2: 前は全部消えてよい消去の後に ✦ まで外れに数え、✦ だけの箱がスタートと別の中身になった、木 oWkFcwYX の b8)
   const base = new Set(keep ? [...[...keep, ...fractureMarks(doc)].map((a) => a.modId), ...outsideAimed(data, doc, b.parent ? doc.boxes[b.parent]?.hand : null, prev, before), ...midKept(doc, prev)] : prev);
   if (b.out === "hit" && b.aim) for (const a of [...boxAims(b), ...(b.anyOf ?? [])]) base.add(a.modId);
-  // エッセンスで付けた・付け直した途中の狙いは印を付ける (S-33b、スイッチ junkTidy)
+  // エッセンスで付けた・付け直した途中の狙いは印を付ける (S-33b)
   const em = before ? midMark(doc, b.parent ? doc.boxes[b.parent]?.hand : null) : null;
   if (em) base.add(em);
   // 狙いが消えた・狙いが付いた の箱は付いた狙いも ☑ (S-27d、ズレ 9)
@@ -141,11 +141,11 @@ export const copyOfSample = (copy: StageItem, sample: StageItem): StageItem => {
 export const aimedOfSample = (id: string, item: StageItem): ReadonlySet<string> | null => AIMED.get(COPY_OF.get(item) ?? item)?.get(id) ?? null;
 /**
  * カードの札が使う ☑。aimedOfSample は誰かが sampleAimed を呼んだ後しか引けない。組む間はつなぎを回さない (S-190) ので手を足した直後は誰も呼ばず、
- * 札が道の数え (heldSets) へ落ち、狙いが消えた箱の下のカードで残っている狙いが全部「外れ MOD」と出た (S-27e、スイッチ junkTidy)。ここで見本の順に引く
+ * 札が道の数え (heldSets) へ落ち、狙いが消えた箱の下のカードで残っている狙いが全部「外れ MOD」と出た (S-27e)。ここで見本の順に引く
  */
 export function aimedOfCard(data: PatchData, doc: TreeDoc, id: string, item: StageItem): ReadonlySet<string> | null {
   const had = aimedOfSample(id, item);
-  if (had || !flag("junkTidy")) return had;
+  if (had) return had;
   for (let seed = 1; seed <= SINGLE_SEEDS; seed++) { sampleAimed(data, doc, id, seed); const am = aimedOfSample(id, item); if (am) return am; }
   return null;
 }
@@ -218,8 +218,8 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
   let order: string[] | null = null;
   const targets = (): string[] => (order ??= Object.values(doc.boxes).filter((b) => !!b.hand || !!b.done).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y)));
   const capShort = (from: string, to: string): number => {
-    // 触媒のお告げの手は品質が要るので、品質の無い人の箱とは同じ枠にしない (打てずに止まった、S-60c、スイッチ junkTidy)
-    if (flag("junkTidy") && doc.boxes[to]?.hand?.omens.includes(CATALYSING) && samples(from).some((s) => !(s.item.quality ?? 0))) return 1;
+    // 触媒のお告げの手は品質が要るので、品質の無い人の箱とは同じ枠にしない (打てずに止まった、S-60c)
+    if (doc.boxes[to]?.hand?.omens.includes(CATALYSING) && samples(from).some((s) => !(s.item.quality ?? 0))) return 1;
     return catalystTo(doc, to) && samples(from).some((s) => !reachesCatalyst(doc, to, s.item)) ? catalystTo(doc, to) : 0;
   };
   return {

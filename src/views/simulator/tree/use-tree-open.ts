@@ -1,5 +1,5 @@
 /**
- * use-tree-open.ts — 木を少しずつ描いて開く (S-196、スイッチ junkTidy)。組み直しは tree-rebuild の rebuildInSteps
+ * use-tree-open.ts — 木を少しずつ描いて開く (S-196)。組み直しは tree-rebuild の rebuildInSteps
  * 途中の木は画面に出すだけで、保存も 1 つ戻すの履歴も通さない。読み終わりに 1 回だけ置く。別の木を開いたら今の読み込みは捨てる
  */
 import { ref, type ShallowRef } from "vue";

@@ -31,12 +31,12 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   const aimedNow = (d: PatchData, it: StageItem | null): ReadonlySet<string> => (it && aimedOfCard(d, t.doc.value, o.boxId, it)) || sampleAimed(d, t.doc.value, o.boxId, 1);
   /**
    * 消える手の既定 = 持っている狙い (カードの見本の ☑ の印)。消去の既定は全部消えてよいだが、持っている途中の狙いは残す側 (S-33c。全部の候補になる時は全部消えてよいのまま、S-27b。
-   * 11-02 オーナー「狙いの完成に含めるって話途中で消えるけどやないとハズレMODあつかいやろ」、スイッチ junkTidy)
+   * 11-02 オーナー「狙いの完成に含めるって話途中で消えるけどやないとハズレMODあつかいやろ」)
    */
   const defaults = (): string[] => {
     const d = s.data.value;
     if (!d) return [];
-    if (!isRemove.value) return keepDefaultOf(choices.value, aimedNow(d, o.item.value), flag("junkTidy") ? stoneAims(t.doc.value) : []).map(aimKey);
+    if (!isRemove.value) return keepDefaultOf(choices.value, aimedNow(d, o.item.value), stoneAims(t.doc.value)).map(aimKey);
     const am = aimedNow(d, o.item.value), mid = choices.value.filter((c) => am.has(c.aim.modId) && midAims(t.doc.value).some((a) => a.modId === c.aim.modId));
     return mid.length && mid.length < choices.value.length ? mid.map((c) => aimKey(c.aim)) : [];
   };
@@ -56,10 +56,9 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
   const aims = computed((): Aim[] => choices.value.filter((c) => checked.value.includes(aimKey(c.aim))).map((c) => c.aim));
   function toggle(a: Aim): void {
     const k = aimKey(a), was = [...checked.value]; touched = true;
-    // 消去は全部の候補を残せないので、最後の 1 つを押したら前に ☑ した物から移す (S-27b、スイッチ junkTidy)
-    const full = flag("junkTidy") && isRemove.value && !was.includes(k) && was.length >= choices.value.length - 1;
+    // 消去は全部の候補を残せないので、最後の 1 つを押したら前に ☑ した物から移す (S-27b)
+    const full = isRemove.value && !was.includes(k) && was.length >= choices.value.length - 1;
     checked.value = was.includes(k) ? was.filter((x) => x !== k) : [...(full ? was.slice(1) : was), k];
-   
   }
   function none(e: Event): void { touched = true; checked.value = []; (e.target as HTMLInputElement).checked = true; }
   const text = (m: StageMod): string => { const it = o.item.value ? o.cardOf(o.item.value) : null; return modText((it ? [...it.prefixes, ...it.suffixes].find((x) => x.modId === m.modId) : null) ?? m); }; // 値はカードと同じ (cardOf、10-28 モンキー見た目 1: 欄 94% / カード 96%)
@@ -74,9 +73,6 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
     return !!tag?.replace && tag.tone === "bad";
   };
   const label = (c: { aim: Aim; mod: StageMod }): string => (junk(c) ? tr("外れ MOD", "Miss mod") : text(c.mod));
-  /** 消去は全部の候補を残す ☑ はできない (消える MOD が無くなる = 消去が打てない。☑ の無い候補が最後の 1 つなら押せない、S-27b)。消える手はできる (S-27d) */
-  const last = (a: Aim): boolean => !flag("junkTidy") && isRemove.value && !checked.value.includes(aimKey(a)) && aims.value.length >= choices.value.length - 1;
-  const lastText = tr("全部の MOD は残せない (消える MOD が無くなる)", "You can't keep every mod (nothing would be removed)");
-  return { isRemove, choices, fixed, ask, checked, aims, toggle, none, label, last, lastText };
+  return { isRemove, choices, fixed, ask, checked, aims, toggle, none, label };
 }
 export type HandKeep = ReturnType<typeof useHandKeep>;

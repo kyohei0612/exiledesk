@@ -13,7 +13,7 @@ export function sideKeyOf(before: StageItem, after: StageItem): string | undefin
   return `s:${after.prefixes.length - before.prefixes.length}|${after.suffixes.length - before.suffixes.length}`;
 }
 /**
- * 1 手の後の次の MOD 群の鍵 (S-65b の総則、スイッチ junkTidy): 側の増減だけでは同じに見える差を足す。打った後の形が＝なら同じ鍵 = 1 枝 (オーナー 11-01「ようは＝ってはなしだからね」)。
+ * 1 手の後の次の MOD 群の鍵 (S-65b の総則): 側の増減だけでは同じに見える差を足す。打った後の形が＝なら同じ鍵 = 1 枝 (オーナー 11-01「ようは＝ってはなしだからね」)。
  * `x:` 消えた狙い (kept = 印、S-27d の残したい MOD) / `u:` 冒涜の未発現の増減 / `f:` 増えた ✦ の側と狙いか外れか
  */
 export function nextKeyOf(before: StageItem, after: StageItem, kept: ReadonlySet<string> | null | undefined, held: (it: StageItem, id: string) => boolean, noVeil = false): string | undefined {
