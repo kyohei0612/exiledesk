@@ -12,7 +12,8 @@ import { diagNow, track, trailNow } from "./track";
 import { feedbackSummaryJa } from "./feedback-summary";
 import { marketStore } from "../state/market-store";
 import { allMods } from "../services/craft-stage/stage-core";
-import { tierRankOf } from "../services/craft-stage/tier-rank";
+import { craftedKindOf, tierRankOf } from "../services/craft-stage/tier-rank";
+import type { StageMod } from "../services/craft-stage/types";
 import pkg from "../../package.json";
 import { tr } from "../i18n/lang";
 import ModalShell from "../components/ui/ModalShell.vue";
@@ -59,6 +60,13 @@ watch(() => props.open, (v) => { if (v) { state.value = "idle"; errorText.value 
  * 版・URL・手で打つ / シミュレーション・ベース・直前の流れ・手で打った手順 (同じ seed で再生できる plan)・今のアイテム・
  * 直近の JS エラーと console・相場の状態。名前やログインの情報は入らない
  */
+const KIND_JA = { essence: "エッセンス", alloy: "合金" } as const;
+function modLine(m: StageMod): string {
+  const data = craftStage.data.value;
+  const kind = data ? craftedKindOf(data, m) : null;
+  const tier = m.tierIndex == null || !data ? "" : kind ? " T0" : ` T${tierRankOf(data, m.modId, m.tierIndex)}`;
+  return `${m.modId}${tier}${kind ? ` (${KIND_JA[kind]})` : ""}${m.fractured ? " (固定)" : ""}${m.desecrated ? " (冒涜)" : ""}`;
+}
 function contextNow(): unknown {
   const s = craftStage;
   const it = s.item.value;
@@ -74,8 +82,9 @@ function contextNow(): unknown {
     mode: s.mode.value,
     base: s.base.value,
     itemLevel: s.itemLevel.value,
-    // T は段の名前 (T1 = 一番上)。tierIndex (0 = 一番下) のまま書くと逆になる (要望 ff4eb935、11-02)
-    item: it ? { rarity: it.rarity, sockets: it.sockets ?? 0, mods: allMods(it).map((m) => `${m.modId}${m.tierIndex != null && s.data.value ? ` T${tierRankOf(s.data.value, m.modId, m.tierIndex)}` : ""}${m.fractured ? " (固定)" : ""}${m.desecrated ? " (冒涜)" : ""}`) } : null,
+    // T は段の名前 (T1 = 一番上)。tierIndex (0 = 一番下) のまま書くと逆になる (要望 ff4eb935、11-02)。
+    // エッセンス・合金で付いた MOD はアイテムのカードと同じ T0 と「(エッセンス)」「(合金)」(エンジンの craftedKindOf)
+    item: it ? { rarity: it.rarity, sockets: it.sockets ?? 0, mods: allMods(it).map((m) => modLine(m)) } : null,
     viewport: `${window.innerWidth}x${window.innerHeight}`,
     lang: navigator.language,
     market: { league: marketStore.league.value?.Value ?? null, fetchedAt: marketStore.fetchedAt.value, error: marketStore.error.value },
