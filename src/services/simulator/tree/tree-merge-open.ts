@@ -1,11 +1,10 @@
 /**
- * tree-merge-open.ts — まだ手の無い同じ形の結果の箱をまとめる (S-66、10-28 夜オーナー「同じ奴は自動でまとめる」「最初程とんでもないことになるよ」、スイッチ mergeOpen)。
+ * tree-merge-open.ts — まだ手の無い同じ形の結果の箱をまとめる (S-66、10-28 夜オーナー「同じ奴は自動でまとめる」「最初程とんでもないことになるよ」)。
  * 自動のつなぎ (tree-shape の linkSameShape) は手のある箱へだけ・「打った後」はつながないので、狙い無しの変成 → 増強 → 王者を別々の枝に打つと、
  * 同じ形 (プレ 1 + サフィ 1 外れ など) の箱が枝の数だけ並び、全部に「!」と「↩ 戻り先を選ぶ」が出た (junkSide で側ごとに分けてから倍々に)。
  * ここでは外れ・打った後・外れが消えた の箱を、先に作った同じ形 (狙いの組 + 体 = 外れの側・種類・数、✦ の側、レアリティ) の箱へ自動の ↩ でつなぐ。
  * 相手の箱は手が無くてもよい (後から人が相手に手を足せば、こちらの人もそこから進む)。人が × で外した箱 (noAutoBack) はつながない
  */
-import { flag } from "../../../web/release-flags";
 import { sameBody, type BodyOf } from "./tree-box-shape";
 import { subtree, type OutKind, type TreeBox, type TreeDoc } from "./tree-model";
 import { heldSets } from "./tree-shape";
@@ -24,7 +23,7 @@ const setKey = (doc: TreeDoc, id: string): string => heldSets(doc, id).map((h) =
 
 /** j = 判定 (tree-judge、スイッチ judgeOne)。渡すと比べは「箱どうし」の fitsBox だけ */
 export function mergeOpenSame(doc: TreeDoc, ids: readonly string[], body: BodyOf | undefined, j?: Judge | null): void {
-  if (!flag("mergeOpen") || (!body && !j)) return;
+  if (!body && !j) return;
   const outs = j ? OPEN_JUDGE : OPEN_OUTS;
   const open = (id: string): boolean => {
     const b = doc.boxes[id];
@@ -55,7 +54,7 @@ export function mergeOpenSame(doc: TreeDoc, ids: readonly string[], body: BodyOf
  * まとめた箱 = 描かない箱 (案 A、10-28 夜オーナー「N1の案Aだな」): 親の線はまとめ先の箱へ直に入り、まとめ先の題の横に「n 本から合流」。
  * 戻り先を手で替える・× で外す (autoBack が消える)・手を足すと、また普通の箱として描く
  */
-export const mergedAway = (d: TreeDoc, b: TreeBox): boolean => flag("mergeOpen") && !!b.merged && !!b.autoBack && !b.hand && !!b.back && !!d.boxes[b.back] && depthOf(d, b.id) === depthOf(d, b.back); // 違う段へまとめた古い箱は普通の箱 (↩) で描く
+export const mergedAway = (d: TreeDoc, b: TreeBox): boolean => !!b.merged && !!b.autoBack && !b.hand && !!b.back && !!d.boxes[b.back] && depthOf(d, b.id) === depthOf(d, b.back); // 違う段へまとめた古い箱は普通の箱 (↩) で描く
 /** その箱へまとめた (描かない) 箱の数 */
 export const mergedInto = (d: TreeDoc, id: string): number => Object.values(d.boxes).filter((b) => b.back === id && mergedAway(d, b)).length;
 

@@ -30,8 +30,8 @@ export function useTreeMerge(o: {
     // 統合の線 (当たり → 同じ状態の当たり) は向き合う辺どうしを、ほかの箱を避けて結ぶ (tree-merge の joinPath)
     const joinPaths = new Map<string, string>();
     // 手の札は幅が名前で変わるので広めに見る (札の幅の多くは 200 より狭い)。札は画面の大きさで一定 (倍率が低いと木の座標で広い) なので、
-    // スイッチ rowNear では札の最大の幅 (chipRoom、TreeHandChip の maxWidth) で見る (全体表示で合流の線が隣の札を横切った、okPcmPyY の b23→b5 と札 b12、線の見張り L3)
-    const chipBoxes = (o.chips?.() ?? []).map((c) => { const w = flag("rowNear") && c.w ? c.w : 200; return { x: c.x - w / 2, y: c.y - CHIP_HALF, w, h: CHIP_HALF * 2 }; });
+    // 札の最大の幅 (chipRoom、TreeHandChip の maxWidth) で見る (全体表示で合流の線が隣の札を横切った、okPcmPyY の b23→b5 と札 b12、線の見張り L3)
+    const chipBoxes = (o.chips?.() ?? []).map((c) => { const w = c.w ? c.w : 200; return { x: c.x - w / 2, y: c.y - CHIP_HALF, w, h: CHIP_HALF * 2 }; });
     const treeSegs = o.segs();
     const inputKey = flag("treeLight") && !mv ? JSON.stringify([reqs, lines, Object.keys(d.boxes).filter((id) => !d.boxes[id]!.merged).map(pos), treeSegs, chipBoxes, o.lanes?.() ?? []]) : null;
     const memo = inputKey ? drawn.get(inputKey) : undefined;

@@ -24,29 +24,8 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
   const kidsOf = (id: string): string[] => drawnKids(d, d.boxes[id]!).map((o, i) => ({ o, i })).sort((a, z) => OUT_ORDER[d.boxes[a.o]!.out] - OUT_ORDER[d.boxes[z.o]!.out] || a.i - z.i).map((x) => x.o);
   /** 子の箱の x (親の箱の x からの差) */
   const rel = new Map<string, number>();
-  /** 部分木の帯 [左, 右] (その箱の x からの差) */
-  const strip = (id: string, seen: Set<string>): [number, number] => {
-    seen.add(id);
-    const ks = kidsOf(id).filter((k) => !seen.has(k));
-    // 手の札が箱より広い時は札の幅も帯に入れる (札の名前を切らない幅)
-    const w = ks.length ? chipW?.(id) ?? 0 : 0;
-    const own: [number, number] = [Math.min(0, BOX_W / 2 - w / 2), Math.max(BOX_W, BOX_W / 2 + w / 2)];
-    if (!ks.length) return own;
-    const ss = ks.map((k) => strip(k, seen));
-    const offs: number[] = [];
-    let cur = 0;
-    ks.forEach((k, i) => {
-      if (i) cur += kidsOf(ks[i - 1]!).length || kidsOf(k).length ? GAP_DEEP : GAP_LEAF;
-      offs.push(cur - ss[i]![0]);
-      cur += ss[i]![1] - ss[i]![0];
-    });
-    const n = ks.length, h = Math.floor(n / 2);
-    const px = n % 2 ? offs[h]! : (offs[h - 1]! + offs[h]!) / 2;
-    ks.forEach((k, i) => rel.set(k, offs[i]! - px));
-    return [Math.min(own[0], -px), Math.max(own[1], cur - px)];
-  };
   /**
-   * スイッチ rowPack (S-142b): 帯を段ごとの左右の端 (箱の x からの差、[k] = k 段下) で取り、兄弟の部分木を同じ段どうしでぶつからない一番左へ寄せる。
+   * (S-142b) 帯を段ごとの左右の端 (箱の x からの差、[k] = k 段下) で取り、兄弟の部分木を同じ段どうしでぶつからない一番左へ寄せる。
    * 上の段が空いている所へほかの枝が入る。縦の線・枝分かれの横線は自分の部分木の段の範囲の中なので、ほかの枝の箱は乗らない
    */
   const rows = (id: string, seen: Set<string>): Array<[number, number]> => {
@@ -76,7 +55,7 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
     return [[Math.min(own[0], offs[0]! - px), Math.max(own[1], offs[n - 1]! + BOX_W - px)], ...acc.map(([l, r]): [number, number] => [l - px, r - px])];
   };
   const L = rowLayout(d, heightOf);
-  const xs = flag("rowNear") ? near(d, L, kidsOf, chipW) : null;
+  const xs = near(d, L, kidsOf, chipW);
   if (xs) {
     for (const [id, x] of xs) {
       const b = d.boxes[id]!, r = L.rows.get(id);
@@ -86,8 +65,7 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
     centerMerged(d);
     return Object.values(d.boxes).some((b) => before.get(b.id) !== `${b.x},${b.y}`);
   }
-  if (flag("rowPack")) rows("start", new Set());
-  else strip("start", new Set());
+  rows("start", new Set());
   const put = (id: string, x: number): void => {
     const b = d.boxes[id]!, r = L.rows.get(id);
     b.x = Math.round(x);
@@ -103,7 +81,7 @@ export function placeTree(d: TreeDoc, heightOf: (id: string) => number, chipW?: 
 const CROSS_X = 12;
 
 /**
- * スイッチ rowNear (S-142c): 上の段から 1 段ずつ置く。兄弟の間はその段の箱だけで決め (下の段は見ない)、ほかの親の子の組とぶつかる時はその段の組だけを押し分ける
+ * (S-142c) 上の段から 1 段ずつ置く。兄弟の間はその段の箱だけで決め (下の段は見ない)、ほかの親の子の組とぶつかる時はその段の組だけを押し分ける
  * (組の順は変えず、ぶつかった組を 1 つにして親の真下からのずれの平均を 0 に)。上の段は広げないので、親の真下から外れる組が出る。
  * 枝分かれの横線がほかの親の縦の線を横切る時だけ、その 2 つの親の間 (その段) を広げてやり直す。決まらなければ null (前の置き方)
  */
