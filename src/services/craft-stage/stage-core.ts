@@ -10,7 +10,7 @@ import type { ItemBase, Mod, PatchData } from "../../vendor/poe2htc/engine/types
 import { runeIdByName, withRunes } from "../../vendor/poe2htc/engine/runes";
 import RUNES_JSON from "./stage-runes.json";
 const RUNE_STATS = (RUNES_JSON as { runes: unknown }).runes;
-import { occupiedKeysOf, rawFamiliesOf } from "../mods/mod-rules";
+import { occupiedKeysOf } from "../mods/mod-rules";
 import { DEFAULT_LIMITS } from "../../vendor/poe2htc/engine/item";
 import { jaOfModAlways } from "../htc/mod-text";
 import { filledStatsOf, htcBaseLimits, implicitStatsOf } from "../htc/patch";
@@ -104,7 +104,7 @@ function baseAllowedDelta(item: StageItem, side: StageSide): number {
  * 側の枠 (マジックは 1 / 1)。ベースの暗黙の増減はマジックにも効く
  * (2026-10-13 要望 19c7d2de: 不在のアミュレットに変成を打つとゲームでは MOD 無しのマジック。前はマジックを 1 / 1 で決め打ちして MOD が付いた)
  */
-export function limitOf(item: StageItem, side: StageSide): number {
+export function limitOf(item: StageItem, side: StageSide): number { // E-11e・E-24 枠の上限
   if (item.rarity === "magic") return Math.max(0, MAGIC_LIMIT + baseAllowedDelta(item, side));
   if (item.rarity === "normal") return 0;
   const lim = effectiveCls(item).limits ?? DEFAULT_LIMITS;
@@ -128,7 +128,7 @@ export const allMods = (item: StageItem): StageMod[] => [...item.prefixes, ...it
  * 2026-10-10 オーナーがゲームで実測: 4 MOD 中 1 つが発現した冒涜 MOD のレアに 24 回打って 1 回も選ばれない (1/4 なら 24 連続で外れる見込みは 0.1%)。
  * 要望・取引所 (冒涜専用の文面のフラクチャー品が無い) とも合う。CoE は発現済みも選ぶので違う
  */
-export function unfracturable(_data: PatchData | null | undefined, _item: StageItem, m: StageMod): boolean {
+export function unfracturable(_data: PatchData | null | undefined, _item: StageItem, m: StageMod): boolean { // E-41
   return !!(m.unrevealed || m.desecrated);
 }
 
@@ -152,21 +152,17 @@ export const withMod = (item: StageItem, mod: StageMod): StageItem =>
 export const replaced = (item: StageItem, mod: StageMod, next: StageMod): StageItem =>
   ({ ...item, prefixes: item.prefixes.map((m) => (m === mod ? next : m)), suffixes: item.suffixes.map((m) => (m === mod ? next : m)) });
 
-export const skip = (item: StageItem, reason: string): StageApply => ({ applied: false, reason, item, added: [], removed: [] });
+export const skip = (item: StageItem, reason: string): StageApply => ({ applied: false, reason, item, added: [], removed: [] }); // E-23・E-97 不成立はカレンシーが減らず理由を日英で
 /** 当たり所で弾かれた (打つ前には分からない)。棚の判定では打てる扱い ([[feedback-game-rules-as-written]]) */
 export const skipRandom = (item: StageItem, reason: string): StageApply => ({ ...skip(item, reason), random: true });
-/** 付いている MOD の系統 (except は除く。発現の時の未発現の枠など) */
+/**
+ * 付いている MOD の系統 (except は除く。発現の時の未発現の枠など)。どの付け方で足す時もこれと familyBlocked で見る
+ * (E-11 の基本動作、付け方に例外なし。2026-11-02 オーナー「ファミリーで被るはないな」)。未発現の枠は系統 "unrevealed" で何ともぶつからない
+ */
 export function takenFamilies(data: PatchData, item: StageItem, except?: StageMod): Set<string> {
   return new Set(allMods(item).filter((m) => m !== except).flatMap((m) => {
     const md = data.mods.get(m.modId);
     return md ? occupiedKeysOf(md) : [m.family];
-  }));
-}
-/** 付いているエッセンス (クラフト) の MOD の生の系統 (エッセンスを打てるかの判定用。普通の MOD とは同じ系統でも一緒に付く) */
-export function takenCraftedFamilies(data: PatchData, item: StageItem): Set<string> {
-  return new Set(allMods(item).filter((m) => m.crafted).flatMap((m) => {
-    const md = data.mods.get(m.modId);
-    return md ? rawFamiliesOf(md) : [m.family];
   }));
 }
 
@@ -176,7 +172,7 @@ const decimalsOf = (n: number): number => { const t = String(n); return t.includ
  * 前は小数なら一律 0.01 刻みで、冒涜の回避ロールの距離 (生の値 1〜2 = 0.1 / 0.2 m) に「+0.13 メートル」のような出ない値が出ていた
  * (2026-10-06 POE2Tube 要望 ㉝ の 10)。stats を持つ段はデータの整数のまま転がすのでここは通らない
  */
-function rollValue(min: number, max: number, rng: () => number): number {
+function rollValue(min: number, max: number, rng: () => number): number { // E-14 値は stat の値で持つ (固定値は無い)
   const lo = Math.min(min, max), hi = Math.max(min, max);
   if (Number.isInteger(lo) && Number.isInteger(hi)) return lo + Math.floor(rng() * (hi - lo + 1));
   const p = 10 ** Math.max(decimalsOf(lo), decimalsOf(hi));
@@ -313,7 +309,7 @@ export function retext(m: StageMod, values: readonly number[], data?: PatchData)
 }
 
 /** MOD の段を 1 つ確定させて表示に要る物を埋める */
-export function makeStageMod(mod: Mod, side: StageSide, tierIndex: number, rng: () => number): StageMod {
+export function makeStageMod(mod: Mod, side: StageSide, tierIndex: number, rng: () => number): StageMod { // E-92 MOD の文はエンジンが作る
   const tier = mod.tiers[tierIndex]!;
   return withValues({
     modId: mod.id,

@@ -30,7 +30,7 @@ export type ModGroup = "normal" | "rune" | "essence" | "perfect_essence" | "dese
  */
 const GROUP_JA: Record<ModGroup, string> = {
   // 英語の画面に切り替えた時も変わるように getter (2026-10-10 英語版)
-  // 一般 / 冒涜専用 (2026-10-21 オーナー「普通の奴は一般 MOD で統一、冒涜 MOD は冒涜専用」。② の札と同じ言い方)
+  // 一般 / 冒涜専用 (2026-10-21 オーナー「普通の奴は一般 MOD で統一、冒涜 MOD は冒涜専用」。② の札と同じ言い方) // E-95
   get normal() { return tr("一般", "Regular"); },
   get rune() { return tr("ルーンの特殊 MOD (重みは Craft of Exile の実測)", "Rune special mods (weights measured by Craft of Exile)"); },
   get essence() { return tr(ESSENCE_KIND.essence.label, "Essence"); },
@@ -121,7 +121,7 @@ export function tierIdOf(data: PatchData | null | undefined, r: ListRow, t: List
   return { modId, idx: data?.mods.get(modId)?.tiers.findIndex((x) => x.name === t.name && x.ilvl === t.ilvl) ?? -1 };
 }
 
-export function modListFor(data: PatchData, item: StageItem): ListRow[] {
+export function modListFor(data: PatchData, item: StageItem): ListRow[] { // E-10 MOD を並べる口
   // 普通の置き場は差した特殊 MOD のルーンの MOD 込み (要望 ㉙)。出やすさは普通と一緒に引くので一緒に割る
   const eff = effectiveCls(item);
   const pools = eff.pools as typeof item.cls.pools & { otherworldly?: { prefixes: readonly string[]; suffixes: readonly string[] } };

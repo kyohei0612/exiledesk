@@ -46,7 +46,7 @@ const reqOf = (base: string): BaseReq | null => REQS[base] ?? null;
  * エッセンスでも普通の MOD でも同じ (PoB Classes/Item.lua の 0.8、公式フォーラム 3849633 の 8 → 36 = 46 × 0.8。POE2Tube の答え 2026-10-06、要望 ㉟-2)。
  * 未発現の冒涜 MOD は MOD レベル 1。ルーンは 0.8 を掛けない (SoulCores.RequiredLevel)
  */
-export function reqOfItem(item: StageItem): BaseReq | null {
+export function reqOfItem(item: StageItem): BaseReq | null { // E-11c 品の要求レベル
   const r = reqOf(item.base);
   const mods = [...item.prefixes, ...item.suffixes].map((m) => Math.floor((m.unrevealed ? 1 : m.modLevel) * 0.8));
   const runes = (item.augments ?? []).map((a) => RUNES[a.en]?.level ?? 0);

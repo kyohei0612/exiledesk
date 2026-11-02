@@ -63,7 +63,7 @@ const CATALYST_SOURCE: Source = {
 };
 const squash = (s: string): string => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 /** 触媒 (指輪・アミュレット) と精製された触媒 (ジュエル)。手順の鍵は catalyst_<タグ> / jcatalyst_<タグ> */
-export const CATALYST_SPECS: readonly CurrencySpec[] = CATALYSTS.flatMap((c) => {
+export const CATALYST_SPECS: readonly CurrencySpec[] = CATALYSTS.flatMap((c) => { // E-71
   const w = CATALYST_WORDS[c.tag];
   if (!w) return [];
   const one = (refined: boolean): CurrencySpec => ({
@@ -126,7 +126,7 @@ export const RUNE_SPEC: CurrencySpec = {
  * 消すのは固定以外から等しく (上限を超えた側に当たると不成立)、付けるのはジュエルごとの表 (jewel-bases.json の emotions)。
  * 古代の版は時を失ったジュエル用 (どの感情が使えるかは resolveSpec が部位の表で見る)
  */
-export const EMOTION_SPEC: CurrencySpec = {
+export const EMOTION_SPEC: CurrencySpec = { // E-73
   key: "liquidenvy",
   stageKey: "emotion:",
   kind: "emotion",
@@ -147,7 +147,7 @@ const FLUX_TEXT: Record<string, { hover: string; en: string; ja: string }> = {
   flux_lightning: { hover: "cracklingflux", en: "Transforms all [Fire] and [Cold] Resistance modifiers on an item to equivalent [Lightning] Resistance modifiers", ja: "アイテム上の全ての[Fire|火]および[Cold|冷気]耐性モッドを同等な[Lightning|雷]耐性モッドに変換する" },
   flux_chaos: { hover: "voidflux", en: "Transforms all [Fire], [Cold] and [Lightning] Resistance modifiers on an item to equivalent [Chaos] resistance modifiers", ja: "アイテム上の全ての[Fire|火]、[Cold|冷気]および[Lightning|雷]耐性モッドを同等な[Chaos|混沌]耐性モッドに変換する" },
 };
-export const FLUX_SPECS: readonly CurrencySpec[] = Object.entries(FLUX_TEXT).map(([stageKey, t]) => ({
+export const FLUX_SPECS: readonly CurrencySpec[] = Object.entries(FLUX_TEXT).map(([stageKey, t]) => ({ // E-73・E-73a
   key: t.hover, stageKey, kind: "flux",
   text: { en: [t.en], ja: [t.ja] },
   target: {},

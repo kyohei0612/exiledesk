@@ -3,7 +3,7 @@
  *
  * シミュレーター ([[sim-route.ts]]) と作り方のツリーで共通に使う。
  */
-export function mulberry32(seed: number): () => number {
+export function mulberry32(seed: number): () => number { // E-82 乱数はこれ 1 つ
   let a = seed;
   return () => {
     a |= 0; a = (a + 0x6d2b79f5) | 0;

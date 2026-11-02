@@ -30,7 +30,7 @@ const exclusiveTest = (item: StageItem, side: StageSide) => {
   const other = new Set(item.cls.pools.otherworldly?.[side === "prefix" ? "prefixes" : "suffixes"] ?? []);
   return (mod: { id: string; source?: string }): boolean => mod.source === "desecrated" || other.has(mod.id);
 };
-interface PoolArgs { pools: readonly ModPool[]; floor: number; exclusiveAnyLevel: boolean; tag: string | null; except?: StageMod }
+interface PoolArgs { pools: readonly ModPool[]; floor: number; exclusiveAnyLevel: boolean; tag: string | null; except?: StageMod } // E-11b の例外 (冒涜専用はアイテムレベルを見ない = exclusiveAnyLevel、噛み切られた骨は見る)
 /** 発現の候補の置き場。tag (勢力の保証) があれば、そのタグの MOD だけを MOD ごとに等しく (2026-10-10 オーナー「等しい確率」) */
 function pool(data: PatchData, item: StageItem, side: StageSide, a: PoolArgs): Candidate[] {
   const c = candidates(data, item, [side], a.floor, { pools: () => poolIds(item, a.pools, side), except: a.except, ...(a.exclusiveAnyLevel ? { anyLevel: exclusiveTest(item, side) } : {}) });
@@ -83,7 +83,7 @@ export function unrevealedPlan(data: PatchData, item: StageItem, a: AddUnreveale
   return { mark, floor, fixed, weights: sides.map((s) => ({ s, w: weightOf(s) > 0 ? share(s) : 0 })) };
 }
 /** 未発現の冒涜 MOD を 1 つ足す (側は unrevealedPlan)。選んだ側が満杯なら、その側の固定以外を等しく 1 つ消してから付ける */
-export function addUnrevealed(ctx: PartCtx, item: StageItem, a: AddUnrevealed): StageApply {
+export function addUnrevealed(ctx: PartCtx, item: StageItem, a: AddUnrevealed): StageApply { // E-61 骨の側
   if (a.fill) return fillUnrevealed(ctx, item, a);
   const { data, rng, mods } = ctx;
   const { mark, floor, fixed, weights } = unrevealedPlan(data, item, a, mods);
@@ -164,7 +164,7 @@ export function revealPool(data: PatchData, item: StageItem): Array<{ modId: str
   for (const c of all) for (const t of c.tiers) if (t.w > 0) (out.get(c.mod.id) ?? out.set(c.mod.id, new Set()).get(c.mod.id)!).add(t.index);
   return [...out].map(([modId, s]) => ({ modId, tiers: [...s].sort((a, b) => a - b) }));
 }
-export function drawOffers(data: PatchData, item: StageItem, hidden: StageMod, rng: () => number, offers: number, sets: number): { sets: StageMod[][]; chances: Map<StageMod, number> } {
+export function drawOffers(data: PatchData, item: StageItem, hidden: StageMod, rng: () => number, offers: number, sets: number): { sets: StageMod[][]; chances: Map<StageMod, number> } { // E-62 発現の候補
   const u = hidden.unrevealed!;
   const P = revealPools(data, item, hidden);
   // 候補に出た瞬間の確率 = その段の重み ÷ 引いた置き場の全部の重み

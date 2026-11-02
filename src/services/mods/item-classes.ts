@@ -33,7 +33,7 @@ export const handsOf = (category: string): number | null => rowOf(category)?.han
 export type ItemGroup =
   | "weapon" | "martial" | "caster" | "wandStaff" | "armour" | "jewellery" | "ringAmulet" | "quiver" | "jewel" | "flask" | "charm" | "gem"
   | "bodyArmour" | "shieldLike" | "shield" | "equipment";
-export function inGroup(category: string, g: ItemGroup): boolean {
+export function inGroup(category: string, g: ItemGroup): boolean { // E-12 部位のまとまり
   const r = rowOf(category);
   if (!r) return false;
   const c = clientClassOf(category)!;

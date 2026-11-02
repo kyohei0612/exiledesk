@@ -36,7 +36,7 @@ const BOSS_OF_TAG: ReadonlyMap<string, DesecrationBossOmen> = new Map(Object.ent
 /** 発現でアビスの反響の引き直しが使える回数 (発現の手に掛かるお告げの効き目から) */
 const rerollsOf = (omens: readonly string[]): number => modsOf(omensOf(REVEAL_SPEC, omens)).rerolls;
 
-export function heldOdds(data: PatchData, item: StageItem, key: string, omens: readonly string[]): HeldOdds | null {
+export function heldOdds(data: PatchData, item: StageItem, key: string, omens: readonly string[]): HeldOdds | null { // E-80
   const plan = planSpec(data, item, key, omens);
   if (!plan) return null;
   const bone = plan.actions.find((a) => "addUnrevealed" in a);

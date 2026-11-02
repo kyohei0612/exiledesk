@@ -74,7 +74,7 @@ export interface PartCtx {
 /** 指名が通らなかった時 (理由つきで打てない、pickError。今の関数と同じ文) */
 const pickFail = (item: StageItem, why: string): StageApply => ({ ...skip(item, tr(`指名できない: ${why}`, `Can't force: ${why}`)), pickError: true });
 
-type Remove = Extract<Action, { remove: unknown }>["remove"];
+type Remove = Extract<Action, { remove: unknown }>["remove"]; // E-22 説明文に無い選び方は等しく (pick: equal)
 /**
  * 固定以外から消す。冒涜だけ (光のお告げ) は側を見ない (左右の消去は光と一緒には使えない、run-spec.ts の omensOf。2026-10-17 オーナー)。
  * 側: お告げ (抹消・結晶化・左右の消去) → それ。付ける側が埋まっている完全エッセンスは、その側から (sideWhenFull)。
@@ -126,7 +126,7 @@ function remove(ctx: PartCtx, item: StageItem, a: Remove): StageApply {
     } else r = removeOne(cur, ctx.rng, sides);
     if (!r) break;
     // 上限を超えている側 (侮蔑を外した後のサフィ 3 つ) に当たると付け直せずに弾かれる (2026-10-14 オーナーがゲームで確認、プレに空きがあっても同じ)
-    if (a.overLimitVoids && overLimit(cur, r.mod.side)) return skipRandom(item, tr("上限を超えている側に当たったので追加できない (もう一度)", "Hit the side that is over its limit, so nothing can be added (try again)"));
+    if (a.overLimitVoids && overLimit(cur, r.mod.side)) return skipRandom(item, tr("上限を超えている側に当たったので追加できない (もう一度)", "Hit the side that is over its limit, so nothing can be added (try again)")); // E-25 上限を超えた側に当たったら手ごと不成立
     cur = r.item;
     removed.push(r.mod);
   }
