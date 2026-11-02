@@ -22,6 +22,7 @@ import { changelogNew, changelogOpen, initChangelog } from "../state/changelog";
 import { checkReplies, imageAskFor } from "../state/feedback-replies";
 import { REC } from "../utils/rec-mode";
 import { forgetResult } from "../utils/no-log";
+import { RECIPE_UNREADABLE, recipeOpenFailed } from "../state/for-share/sim-links";
 import MarketNotice from "./MarketNotice.vue";
 import pkg from "../../package.json";
 import { tr } from "../i18n/lang";
@@ -191,6 +192,11 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       <InstallButton v-if="!phone" pc :phone="false" class="max-lg:hidden" />
     </header>
     <MarketNotice />
+    <!-- レシピの URL が読めなかった時の一言 (黙ってベース選びに着かない、S-103c) -->
+    <p v-if="recipeOpenFailed" data-recipe-open-failed class="flex items-center gap-2 bg-amber-900/40 px-4 py-1.5 text-[12px] text-amber-200">
+      {{ tr(...RECIPE_UNREADABLE) }}
+      <button type="button" class="g-plain ml-auto opacity-60 hover:opacity-100" :aria-label="tr('閉じる', 'Close')" @click="recipeOpenFailed = false">×</button>
+    </p>
     <!-- ?nolog=1 で開いた時の結果 (2026-10-10) -->
     <p v-if="forgetResult" class="flex items-center gap-2 px-4 py-1.5 text-[12px]" :class="forgetResult.ok ? 'bg-emerald-900/40 text-emerald-200' : 'bg-amber-900/40 text-amber-200'">
       {{ forgetResult.text }}
