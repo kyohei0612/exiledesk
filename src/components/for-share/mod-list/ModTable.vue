@@ -60,7 +60,7 @@ const props = withDefaults(defineProps<{
   rowOn?: (r: ListRow) => boolean;
   /** 段の行をスマホ・狭い列でも 1 行のまま (差し込みが小さいボタン 1 つの時。文だけ折る) */
   tierOneLine?: boolean;
-  /** 留まる目次の帯を上端から空ける px (既定 0。シミュの完成形の設定は 12 = ページの留まる物の top-3 と同じ、2026-11-03 ブラック 36) */
+  /** 留まる目次の帯を上端から空ける px (既定 0。シミュの完成形の設定は 12 = ページの留まる物の top-3 と同じ、2026-11-03 ブラック 36)。空きは帯の色の影で埋める (下の行が透けた、11-03 オーナー) */
   stickTop?: number;
 }>(), { overlay: false, stickTop: 0, shareHead: undefined, tone: "amber", keepOpen: () => ["[data-helptip-pop]"], closeAfter: '[data-mod-pick]:not(.on), [data-rec="aim-decide"], [data-mod-add-menu] [role="menuitem"]:not([aria-disabled="true"])' });
 
@@ -226,7 +226,7 @@ defineExpose({ jumpTo, jump, openRow, counts, sections });
   <div ref="listEl" data-mod-list class="@container text-[12px]">
     <!-- 目次 (押すとその種類までスクロール。スクロールしても上に残る) と検索。スマホは検索を目次の横送りの外 -->
     <input v-model="query" type="search" :placeholder="tr('文面やタグで探す (例: 耐性、ライフ)', 'Search text or tags')" class="mb-2 w-full rounded-lg border border-white/15 bg-black/30 px-2 py-1.5 md:hidden" />
-    <div ref="tocEl" data-mod-toc :style="stickTop ? { top: `${stickTop}px` } : undefined" class="sticky top-0 z-10 -mx-3 mb-4 flex flex-wrap items-center gap-1.5 bg-panel-toc/95 px-3 py-1.5 backdrop-blur max-md:static max-md:flex-nowrap max-md:overflow-x-auto">
+    <div ref="tocEl" data-mod-toc :style="stickTop ? { top: `${stickTop}px`, boxShadow: `0 -${stickTop}px 0 0 var(--exile-color-panel-toc)` } : undefined" class="sticky top-0 z-10 -mx-3 mb-4 flex flex-wrap items-center gap-1.5 bg-panel-toc/95 px-3 py-1.5 backdrop-blur max-md:static max-md:flex-nowrap max-md:overflow-x-auto">
       <button v-if="props.toCraft" type="button" class="tbtn mr-1 max-md:shrink-0" :title="tr('アイテムのカードへ戻る', 'Back to the item')" @click="props.toCraft()">{{ tr("↑ クラフトへ", "↑ Craft") }}</button>
       <!-- 節の切り替えはほかのタブと同じ .g-tab (2026-10-18 オーナーの UI 点検)。細い帯に合うよう低く -->
       <button v-for="sec in sections" :key="sec.sid" type="button" role="tab" :aria-selected="active === sec.sid" class="g-tab !min-h-[28px] !px-4 !text-[13px] max-md:shrink-0" :class="active === sec.sid ? 'on' : ''" @click="jump(sec.sid)">
