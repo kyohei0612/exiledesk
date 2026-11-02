@@ -20,6 +20,7 @@ import { TAG_STYLE } from "../mods/tag-ja";
 import { familyBlocked, fillShares, tierWeight } from "../mods/mod-rules";
 import { tierDisplayRanges } from "../mods/stat-scale";
 import { tr } from "../../i18n/lang";
+import { jewelEmotionsOf } from "../htc/patch";
 import { jaTypeName } from "../../i18n/item-names-ja";
 
 /** エッセンスはパーフェクト (合金も) とそれ以外を分ける (使い道が違う、[[essence-kind.ts]]) */
@@ -170,6 +171,15 @@ export function modListFor(data: PatchData, item: StageItem): ListRow[] { // E-1
       const rows = modsOf([...pools.normal[k], ...pool[k]]).map((m) => rowOf(m, side, "normal"));
       out.push(...fillShares(rows).filter((r) => own.has(r.id)).map((r) => ({ ...r, share: 0, group: "rune" as const, runeJa: runeJaOf(id), socketed: false })));
     }
+  }
+  // ジュエルの液化した感情の MOD (デリリウム、抽選の置き場には無い)。付けるのは感情だけなので重み 0 で出す (11-03 シミュの完成の MOD に選べるように)
+  const has = new Set(out.flatMap((r) => [r.id, ...r.tiers.map((t) => t.modId ?? r.id)]));
+  for (const e of jewelEmotionsOf(item.cls.id)) {
+    const m = data.mods.get(e.modId);
+    if (!m || has.has(m.id)) continue;
+    has.add(m.id);
+    const r = rowOf(m, e.side as StageSide, "essence");
+    out.push({ ...r, weight: 0, share: 0, tiers: r.tiers.map((t) => ({ ...t, weight: 0 })) });
   }
   return mergeFamilies(out);
 }
