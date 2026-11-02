@@ -178,10 +178,10 @@ describe("バグ: 追加分 (乱数の打ち回し・データの点検で見つ
   });
 });
 
-// 2026-10-10 オーナーが決めた: エッセンスは同じ系統の普通の MOD と一緒に付く (2026-10-11: 普通の後にエッセンスだけ。エッセンスの後に普通は付かない) / フラクチャーは未発現の冒涜以外なんでも固定できる / フラックスで系統が被るのはあり
+// E-11a (11-02): 同じ系統の MOD は 1 品に 1 つ、エッセンスにも例外なし (要望 ff4eb935、オーナー「ファミリーで被るはないな」「打てない」。10-10・10-11 の「普通の後のエッセンスは付く」はやめた) / フラクチャーは未発現の冒涜以外なんでも固定できる / フラックスで系統が被るのはあり (E-73a)
 describe("決まり (オーナー確認済み)", () => {
-  it("エッセンスと普通の MOD の同じ系統: 普通の後のエッセンスは付く、エッセンスの後の普通の MOD は付かない (2026-10-11 オーナー「同じやつやろ、つくわけないやん」)", () => {
-    // 先に普通の火耐性 → エッセンス (火耐性) は付く (poe.ninja の実物)
+  it("エッセンスと普通の MOD の同じ系統 (E-11a): 普通の後のエッセンスも、エッセンスの後の普通の MOD も付かない", () => {
+    // 先に普通の火耐性 → エッセンス (火耐性) は打てない
     const magic = force(freshItem(data, "Gold Ring", 82), "Rings/FireResistance");
     const e1 = applyCurrency(data, magic, "essence:greater:Rings/Essence_FireResistance", mulberry32(1), []);
     // 先にエッセンスの火耐性 → 高貴の指名でも普通の火耐性は付かない
@@ -189,15 +189,17 @@ describe("決まり (オーナー確認済み)", () => {
     ring = A(ring, "essence:greater:Rings/Essence_FireResistance", 3);
     const e2 = applyCurrency(data, ring, "exalt", mulberry32(4), [], { pick: [{ mod: "Rings/FireResistance" }] });
     const fams = allMods(e2.item).filter((m) => m.family === "FireResistance").length;
-    expect({ essenceAfterNormal: e1.applied, normalAfterEssence: e2.applied && fams > 0 }).toEqual({ essenceAfterNormal: true, normalAfterEssence: false });
+    expect({ essenceAfterNormal: e1.applied, normalAfterEssence: e2.applied && fams > 0 }).toEqual({ essenceAfterNormal: false, normalAfterEssence: false });
   });
 
-  it("普通の火耐性が付いた指輪にも、エッセンスの火耐性は付く (一覧も付けられる扱い)", () => {
+  it("普通の火耐性が付いた指輪には、エッセンスの火耐性は付かない (一覧も付けられない扱い、E-11a)", () => {
     const magic = force(freshItem(data, "Gold Ring", 82), "Rings/FireResistance");
     const row = modListFor(data, magic).find((r) => r.id === "Rings/Essence_FireResistance");
     const r = applyCurrency(data, magic, "essence:greater:Rings/Essence_FireResistance", mulberry32(1), []);
-    expect(r.applied, r.reason).toBe(true);
-    expect(!!row?.blocked, "一覧で付かない扱いになっている").toBe(false);
+    expect(r.applied, "同じ系統が付いているのに打てた").toBe(false);
+    expect(allMods(r.item).filter((m) => m.family === "FireResistance").length).toBe(1);
+    expect(row, "一覧に行が無い").toBeTruthy();
+    expect(!!row?.blocked, "一覧で付けられる扱いになっている").toBe(true);
   });
 
   it("フラクチャーのオーブはエッセンス (クラフト) の MOD も固定するが、手で付ける「固定」は「冒涜・エッセンスの MOD は固定できない」と断る", () => {
