@@ -160,7 +160,7 @@ const boneVeil = computed(() => !!held.value && isBone(held.value));
 /** スマホの発現の手の ☑ は選んだ物だけ。選ぶのはエミュと同じ MOD の一覧 (S-38b、スイッチ keepOutside) */
 const pagedAims = computed(() => (flag("keepOutside") && ((boneVeil.value && veilOn.value) || held.value === "reveal") ? aimChoices.value.filter((a) => checked.value.includes(aimKey(a))) : aimChoices.value));
 const veil = computed(() => (boneVeil.value ? (veilOn.value ? "pick" as const : "keep" as const) : undefined));
-function setVeil(v: boolean): void { const was = veilOn.value, had = [...checked.value], om = [...omens.value]; veilOn.value = v; checked.value = []; if (!v) omens.value = om.filter((o) => o !== ECHO); warnIfBelow(() => { veilOn.value = was; checked.value = had; omens.value = om; }); } // 反響は外す時だけ外す (付けるのは任意の ☑)
+function setVeil(v: boolean): void { const om = [...omens.value]; veilOn.value = v; checked.value = []; if (!v) omens.value = om.filter((o) => o !== ECHO); } // 反響は外す時だけ外す (付けるのは任意の ☑)
 const extraAims = ref<Aim[]>(!props.current ? [] : (t.doc.value.boxes[props.boxId]?.outs ?? []).flatMap((o) => { const x = t.doc.value.boxes[o]; return x?.out === "hit" && x.aim && !(t.doc.value.memoAims ?? []).some((g) => g.modId === x.aim!.modId) ? [x.aim] : []; })); // 発現で選ぶ置き石 (TreeVeilCheck の「ほかの MOD を選ぶ」)
 const revealable = computed(() => !!item.value && !!unrevealedOf(item.value)); // 未発現の冒涜が付いた箱は棚に「発現」の札 (TreeRevealCard)
 const outOf = (o: Parameters<typeof outNameOf>[1], a?: Aim | null): string => outNameOf(hand.value, o, a);
@@ -203,53 +203,28 @@ const showAims = computed(() => canFree.value || (isInfinite.value && aimChoices
 /** 狙い無し = MOD を 1 つもチェックしていない。当たるまで繰り返す時は狙い無しも「どれでも」も無い (MOD を 1 つ以上チェックするまで確定しない、10-25 オーナー) */
 const freeOn = computed(() => showAims.value && !spam.value && !checkedAims.value.length && !(boneVeil.value && veilOn.value)); // 発現させると狙い無しは同時にオンにしない (10-28 オーナー)
 /** 狙い無しを押す = MOD を全部外す (もう狙い無しの時に押しても外れない。値が同じだと Vue が描き直さず、チェックだけ外れて見えた) */
-function toggleFree(e: Event): void { const was = [...checked.value], vWas = veilOn.value, om = [...omens.value]; touched = true; checked.value = []; if (boneVeil.value && vWas) { veilOn.value = false; omens.value = om.filter((o) => o !== ECHO); } (e.target as HTMLInputElement).checked = true; warnIfBelow(() => { checked.value = was; veilOn.value = vWas; omens.value = om; }); } // 骨: 狙い無し = 未発現のまま次へ
+function toggleFree(e: Event): void { const vWas = veilOn.value, om = [...omens.value]; touched = true; checked.value = []; if (boneVeil.value && vWas) { veilOn.value = false; omens.value = om.filter((o) => o !== ECHO); } (e.target as HTMLInputElement).checked = true; } // 骨: 狙い無し = 未発現のまま次へ
 function toggleAim(a: Aim): void {
-  const k = aimKey(a), cur = checkedAims.value.map(aimKey), was = [...checked.value]; touched = true;
+  const k = aimKey(a), cur = checkedAims.value.map(aimKey); touched = true;
   checked.value = cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k];
   const vWas = veilOn.value, om = [...omens.value]; if (boneVeil.value && !vWas && !cur.includes(k)) { veilOn.value = true; } else if (boneVeil.value && vWas && !checked.value.length) { veilOn.value = false; omens.value = om.filter((o) => o !== ECHO); } // 骨で ☑ = 発現させる、最後の ☑ を外したら未発現のまま (10-28 オーナー)
-  warnIfBelow(() => { checked.value = was; veilOn.value = vWas; omens.value = om; });
+ 
 }
-/** この箱から下の箱の数 (今の手の結果から先。手を替える・狙いを変えると消える) */
-const below = computed((): number => {
-  const d = t.doc.value, seen = new Set<string>(), q = [...(d.boxes[props.boxId]?.outs ?? [])];
-  while (q.length) { const id = q.shift()!; if (seen.has(id) || !d.boxes[id]) continue; seen.add(id); q.push(...d.boxes[id]!.outs); }
-  return seen.size;
-});
-/**
- * スマホと PC: 今の手の下に箱がある時、別の札を持った瞬間・狙いを変えた瞬間に「この手以降は削除されます」の警告 (10-27 オーナー)。
- * 「やめる」で元の札・狙いに戻す、「続ける」でこの窓の間は聞かない。PC も同じ (10-27 シミュ 32 本目)
- */
+/** 確かめの窓 (S-57): 持つ・☑ を替えるでは何も出さず、下の箱が消える手をカードに打った瞬間に出す。続けるとそのまま打つ */
 const warnOpen = ref(false);
-let warnAck = false;
-let warnBack: (() => void) | null = null;
-function warnIfBelow(back: () => void): void {
-  // PC も同じ (10-27 ブラック経由のオーナーの頼み「スマホに揃える」。前はスマホだけで、PC は「替えると下の n 箱が消える」の小さな文だけ)
-  if (!props.current || warnAck || !below.value) return;
-  warnBack = back; warnOpen.value = true;
-}
-function warnStop(): void { warnOpen.value = false; const b = warnBack; warnBack = null; reverting = true; b?.(); void nextTick(() => { reverting = false; }); }
-function warnGo(): void { warnOpen.value = false; warnAck = true; warnBack = null; }
-let reverting = false;
 watch(held, (k, old) => {
-  const om = [...omens.value];
   // 持ち替えたら前の物のお告げは外す (エミュの M-13。元の手に持ち直したら元のお告げ)
-  if (!reverting && k && old) omens.value = k === props.current?.currency ? [...props.current.omens] : [];
-  if (reverting || !k || !props.current || k === props.current.currency) return;
-  const was = old ?? props.current.currency, wasOmens = old ? om : [...props.current.omens];
-  warnIfBelow(() => { held.value = was; omens.value = wasOmens; });
+  if (k && old) omens.value = k === props.current?.currency ? [...props.current.omens] : [];
 });
-// お告げだけ替えるのも手を替える事 (S-57)
-watch(omens, (now, was) => { if (!reverting && !warnOpen.value && held.value === props.current?.currency && now.join() !== was.join()) warnIfBelow(() => { omens.value = was; }); });
 /** 残したい MOD (消去 S-27 と、スイッチ keepAll の消える手 S-27d。use-hand-keep) */
-const k = useHandKeep({ boxId: props.boxId, current: props.current, item, held, omens, cardOf, warnIfBelow });
+const k = useHandKeep({ boxId: props.boxId, current: props.current, item, held, omens, cardOf });
 const keepAsk = k.ask;
 /** 上の段の「付ける狙い」= エッセンスの MOD (持ったら自動の ☑、S-27d) */
 const addLabels = computed((): string[] => (flag("keepAll") && keepAsk.value && !!held.value && effectOf(held.value) === "essence" ? hitAims.value.map((a) => t.aimLabel(a)) : []));
 /** エッセンスの「ブロックに使う」☑ (S-33b、スイッチ keepOutside)。付く MOD が完成形の狙いの手には出さない */
 const blockOn = ref(!!props.current?.block);
 const canBlock = computed(() => { const d = s.data.value, it = item.value, h = held.value; return flag("keepOutside") && !!d && !!it && !!h && effectOf(h) === "essence" && !showAims.value && !hitAimsOf(d, t.doc.value, props.boxId, it, handOf({ held: h, omens: omens.value }), t.goals.value).length; });
-function toggleBlock(e: Event): void { const was = blockOn.value; blockOn.value = (e.target as HTMLInputElement).checked; warnIfBelow(() => { blockOn.value = was; }); }
+function toggleBlock(e: Event): void { blockOn.value = (e.target as HTMLInputElement).checked; }
 watch(held, (h) => { blockOn.value = !!props.current?.block && h === props.current.currency; });
 const hand = computed((): Hand | null => (held.value ? handOf({ held: held.value, omens: omens.value, spam: spam.value, spamMax: spamMax.value, free: freeOn.value && !spam.value, echo: echo.value, veil: veil.value, qualityTo: catTo.value, block: blockOn.value && canBlock.value, ...(keepAsk.value ? { keep: k.aims.value } : {}) }) : null));
 /** 前に足すカタリスト (触媒のお告げを使い、まだ品質を上げる手の後でない時) */
@@ -315,11 +290,14 @@ const P27 = computed(() => phone.value);
 const helpOpen = ref(false);
 const keepStep = ref(false);
 watch(held, () => { aimStep.value = false; keepStep.value = false; helpOpen.value = false; });
-function ok(): void {
+function use(): void {
   const h = hand.value, k = kind.value;
+  if (h && k) emit("pick", h, k, hitAims.value, preCat.value, onlyNow.value);
+}
+function ok(): void {
   simOp("hand-decide");
-  if (!h || !k || problem.value) return;
-  emit("pick", h, k, hitAims.value, preCat.value, onlyNow.value);
+  if (!hand.value || !kind.value || problem.value) return;
+  if (goneNow.value) warnOpen.value = true; else use();
 }
 </script>
 
@@ -452,14 +430,14 @@ function ok(): void {
         </div>
       </div>
     <!-- 「この手以降は削除されます」(スマホ、別の札を持った・狙いを変えた瞬間) -->
-    <div v-if="warnOpen" data-tree-hand-warn class="fixed inset-0 z-[330] flex items-center justify-center bg-black/60 px-4" @click.self="flag('junkTidy') || warnStop()">
+    <div v-if="warnOpen" data-tree-hand-warn class="fixed inset-0 z-[330] flex items-center justify-center bg-black/60 px-4" @click.self="flag('junkTidy') || (warnOpen = false)">
       <div class="w-full max-w-sm rounded-xl border border-rose-400/60 bg-[#1d0f10] px-4 py-3 text-center">
-        <p class="text-[16px] font-bold text-rose-100">{{ gone === undefined ? "…" : !gone ? tr("この手の下の箱は残ります", "The boxes below this craft stay") : tr("この手以降は削除されます", "Everything after this craft will be removed") }}</p>
+        <p class="text-[16px] font-bold text-rose-100">{{ tr("この手以降は削除されます", "Everything after this craft will be removed") }}</p>
         <!-- 窓の数は実際に消える数 (S-57)。前の below は下の箱全部 (描かない通り抜けも) で、結果が同じ手でも n と出た (⑦ R1) -->
-        <p data-tree-hand-warn-n :data-n="gone" class="mt-1 break-words text-[13px] text-[#e8d8c8]">{{ gone === undefined ? "…" : tr(`続けるとこの箱から下の ${gone} 箱が消えます (1 つ戻すで戻せる)`, `Continuing removes ${boxesEn(gone)} below this one (Undo restores them)`) }}</p>
+        <p data-tree-hand-warn-n :data-n="goneNow" class="mt-1 break-words text-[13px] text-[#e8d8c8]">{{ tr(`続けるとこの箱から下の ${goneNow} 箱が消えます (1 つ戻すで戻せる)`, `Continuing removes ${boxesEn(goneNow)} below this one (Undo restores them)`) }}</p>
         <div class="mt-3 flex flex-wrap gap-2">
-          <button type="button" data-tree-hand-warn-stop class="g-btn !min-h-11 flex-1" @click="warnStop">{{ tr("やめる", "Cancel") }}</button>
-          <button type="button" data-tree-hand-warn-go class="g-btn-red !min-h-11 flex-1" @click="warnGo">{{ tr("続ける", "Continue") }}</button>
+          <button type="button" data-tree-hand-warn-stop class="g-btn !min-h-11 flex-1" @click="warnOpen = false">{{ tr("やめる", "Cancel") }}</button>
+          <button type="button" data-tree-hand-warn-go class="g-btn-red !min-h-11 flex-1" @click="warnOpen = false; use()">{{ tr("続ける", "Continue") }}</button>
         </div>
       </div>
     </div>

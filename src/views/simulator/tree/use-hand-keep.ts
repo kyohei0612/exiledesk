@@ -20,7 +20,7 @@ import { modText, tr } from "../../../i18n/lang";
 import { flag } from "../../../web/release-flags";
 
 const aimOn = (d: PatchData, m: StageMod, g: Aim): boolean => isAimMod(m, targetsOf(d, [g]), aimOpts(d));
-export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<StageItem | null>; held: Ref<string | null>; omens: Ref<string[]>; cardOf: (it: StageItem) => StageItem; warnIfBelow: (back: () => void) => void }) {
+export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<StageItem | null>; held: Ref<string | null>; omens: Ref<string[]>; cardOf: (it: StageItem) => StageItem }) {
   const t = useTree();
   /** 消去 (全部消えてよい = 消去の箱を並べる、全部は残せない) か */
   const isRemove = computed(() => !!o.held.value && effectOf(o.held.value) === "remove");
@@ -48,9 +48,9 @@ export function useHandKeep(o: { boxId: string; current: Hand | null; item: Ref<
     // 消去は全部の候補を残せないので、最後の 1 つを押したら前に ☑ した物から移す (S-27b、スイッチ junkTidy)
     const full = flag("junkTidy") && isRemove.value && !was.includes(k) && was.length >= choices.value.length - 1;
     checked.value = was.includes(k) ? was.filter((x) => x !== k) : [...(full ? was.slice(1) : was), k];
-    o.warnIfBelow(() => { checked.value = was; });
+   
   }
-  function none(e: Event): void { const was = [...checked.value]; touched = true; checked.value = []; (e.target as HTMLInputElement).checked = true; o.warnIfBelow(() => { checked.value = was; }); }
+  function none(e: Event): void { touched = true; checked.value = []; (e.target as HTMLInputElement).checked = true; }
   /** 行の名前は外れの MOD を「外れ MOD (名前)」とカードと揃える (10-27 夕モンキー 9)。決め方もカードの札と同じ (完成の狙いの範囲の値でも道で付いていなければ外れ、10-28 モンキー 7、スイッチ boxShape) */
   const isGoalMod = (a: Aim): boolean => (t.doc.value.memoAims ?? []).some((g) => g.modId === a.modId);
   const junk = (c: { aim: Aim; mod: StageMod }): boolean => (flag("boxShape") && s.data.value && o.item.value ? boxTagsOf(s.data.value, t.doc.value, o.boxId, o.item.value).get(c.mod.modId)?.tone === "bad" : !isGoalMod(c.aim));
