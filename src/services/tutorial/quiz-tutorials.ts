@@ -369,7 +369,7 @@ function amulet(): QuizTutorial {
 }
 
 /**
- * ジュエル: 5 MOD のエメラルド (2026-10-16 オーナー「一応ジュエルね、5 MOD の」)。日本語のジュエル動画 (1svgFNDsOXM、quiz-samples.ts の jewelJp) の流れ:
+ * ジュエル: 5 MOD のエメラルド (2026-10-16 オーナー「一応ジュエルね、5 MOD の」)。日本語のジュエル動画 (1svgFNDsOXM) の流れ:
  * クリ率をフラクチャー → クリダメ → 軽蔑 (サフィの枠 +1) → 右手のネクロマンシーで冒涜 (反響) → 左の消去で軽蔑を外す (サフィ 3 つは残る) →
  * 高貴でプレ → カオスでアタックダメージ (上限を超えたサフィに当たると弾かれる) → 獰猛
  */
@@ -380,7 +380,7 @@ function jewel(): QuizTutorial {
   return {
     id: "jewel", level: 3, part: ["ジュエル", "Jewel"],
     learn: ["軽蔑でサフィックスの枠を増やす・冒涜で 3 つ目・軽蔑を外してもサフィックス 3 つは残る (5 MOD)・獰猛", "Contempt for an extra suffix, desecrate the 3rd, remove Contempt and keep 3 suffixes (5 mods), Ferocity"],
-    source: "日本語のジュエル動画 1svgFNDsOXM (quiz-samples.ts の jewelJp)",
+    source: "日本語のジュエル動画 1svgFNDsOXM",
     seed: 5,
     assumed: [
       ["冒涜のサフィックスは攻撃速度・移動速度など動画で狙っていた物のどれか", "The desecrated suffix is any of the ones the video aims for (Attack Speed, Movement Speed and so on)"],

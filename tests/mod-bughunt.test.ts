@@ -14,7 +14,6 @@ import type { StageItem } from "../src/services/craft-stage/types";
 import type { CraftStagePlan } from "../src/services/craft-stage/contract";
 import { ESSENCE_KEYS } from "../src/services/htc/essence-key-table";
 import { essenceLevelOf } from "../src/vendor/poe2htc/optimizer/cost";
-import { runRecipeOnce, type RecipeSpec } from "../src/services/simulator/recipe-sim";
 
 const data = loadPatch();
 const A = (it: StageItem, key: string, seed: number, omens: string[] = [], hint: Parameters<typeof applyCurrency>[5] = {}): StageItem => {
@@ -160,15 +159,6 @@ describe("バグ: 追加分 (乱数の打ち回し・データの点検で見つ
     const r = applyCurrency(data, ring, "flux_fire", mulberry32(1), []);
     const after = allMods(r.item).find((m) => m.fractured);
     expect(after?.modId, "固定済みの冷気耐性が火耐性に変わった").toBe("Rings/ColdResistance");
-  });
-
-  it("シミュレーター: アイテムレベルが上級・完全の下限 (44 / 70) 未満でも上級・完全を選んで、1 手目で止まる", () => {
-    const m = data.mods.get("Rings/IncreasedLife")!;
-    const ilvl = 60;
-    const top = m.tiers.map((t, i) => [t.ilvl, i] as const).filter(([l]) => l <= ilvl).pop()!;
-    const spec: RecipeSpec = { data, base: "Gold Ring", itemLevel: ilvl, runs: 1, price: () => 1, seed: 1, targets: [{ modId: m.id, minTierIndex: top[1], method: "exalt" }] };
-    const r = runRecipeOnce(spec, 5000);
-    expect(r.reason ?? "完成", `止まった理由: ${r.reason}`).not.toMatch(/アイテムレベルが \d+ 未満/);
   });
 
   // 2026-10-12 オーナーの方針「書いてある通りに、こっちで決めない」: 置き換えは止めない。付いているクラフト MOD はそのまま (上限を超えた状態) で、次のエッセンスが付かないだけ

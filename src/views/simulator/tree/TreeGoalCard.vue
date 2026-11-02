@@ -1,5 +1,5 @@
 <!--
-  TreeGoalCard.vue — ツリーの枠の左上の「0 完成形の設定」を完成形のアイテム枠で出す形 (TreeGoalNode の次の形、スイッチ goalCard。OK までは本番は TreeGoalNode)。
+  TreeGoalCard.vue — ツリーの枠の左上の「0 完成形の設定」を完成形のアイテム枠で出す形 (前の札 TreeGoalNode の次の形、スイッチ goalCard。TreeGoalNode は 11-02 に消した)。
   10-25 オーナー「ここ完成の時のアイテム枠の表示がいいな そしたら見ながら作れる」: 中身は完成形のアイテム枠 (箱に乗せた時と同じ StageItemCard、
   use-tree の goalItem)。「ベースの所にベースボタン、その下に MOD ボタン」: ベースは名前の帯の右、MOD は MOD の上の区切り線の右に重ねる (枠の外にボタンの列は作らない)。
   見出しの行で畳める (畳んだかは見る人の手元だけ)

@@ -51,8 +51,6 @@ export interface TreeRunOpts {
   onPerson?: (p: { end: End; at: string; cost: number; visits: readonly { box: string; cost: number; pass?: true }[]; why?: { reason: string; item: StageItem } }, i: number) => void;
   /** 手を打つ直前の箱とアイテム (照らしの台本が、箱に着いた実物ごとにエンジンの確率を出して比べる。シミュ 25 本目 10-25) */
   onHand?: (box: string, item: StageItem) => void;
-  /** 箱に着いた時のアイテム (形の合う箱へ移るだけの来訪は除く)。箱の見本 = 回して実際に着いた人のアイテム (tree-arrived、シミュ 26 本目 10-25) */
-  onArrive?: (box: string, item: StageItem) => void;
 }
 interface BoxStat {
   /** 1 回でもここに来た人数 */
@@ -127,9 +125,9 @@ function fractureMiss(data: PatchData, doc: TreeDoc, item: StageItem): number {
 
 /** 輪の 1 周の記録 (手の費用か来訪。同じ順に足し直して、1 手ずつ回した時と同じ費用・来訪にする) */
 type LoopOp = { box: string; pass?: true } | { key: string; n: number };
-function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: readonly Shape[], j: Judge | null, rng0: () => number, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps" | "untilHit">> & Pick<TreeRunOpts, "start" | "onHand" | "onArrive">): Person {
+function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: readonly Shape[], j: Judge | null, rng0: () => number, o: Required<Pick<TreeRunOpts, "price" | "startCost" | "capDiv" | "capSteps" | "untilHit">> & Pick<TreeRunOpts, "start" | "onHand">): Person {
   // 輪の早送り (S-71b、スイッチ treeLight): 乱数を引かない手だけで同じ箱・同じアイテム・同じ狙いへ戻ったら、この先は同じ周回しか起きないので、残りの周は打たずに記録だけ足す
-  const light = flag("treeLight") && !o.onHand && !o.onArrive;
+  const light = flag("treeLight") && !o.onHand;
   let rolls = 0, seenRolls = -1;
   const rng = light ? (): number => { rolls++; return rng0(); } : rng0;
   const seen = new Map<string, { at: number; steps: number; cost: number }>();
@@ -163,7 +161,6 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     const b = doc.boxes[at];
     if (!b) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd });
     visit(at);
-    o.onArrive?.(at, item);
     // 完成の狙いが全部そろった人は、どの箱でもその場で完成 (回し方だけ、tree-sample の goalsHeld)。スイッチ judgeOne の下では完成は押した箱だけ (S-05・S-54)
     if (!j && goalsHeld(data, doc, item)) return fin({ end: "done", cost, at, visits, uses, restarts, odd, why: { reason: tr("完成", "Done"), item } });
     // 完成の印は "main" だけ (前の版の妥協 "compromise" は未完成 = 印の無い箱として先へ読む)。
@@ -451,7 +448,7 @@ export function runTree(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): TreeR
  */
 export function* runTreeSteps(data: PatchData, doc: TreeDoc, opts: TreeRunOpts): Generator<number, TreeRunResult> {
   const untilHit = opts.untilHit ?? new Set(Object.values(doc.boxes).filter((b) => b.hand?.repeat && b.hand.repeat.max == null).map((b) => b.id));
-  const o = { price: opts.price, startCost: opts.startCost ?? 0, capDiv: opts.capDiv ?? 2000, capSteps: opts.capSteps ?? 20000, start: opts.start, untilHit, onHand: opts.onHand, onArrive: opts.onArrive };
+  const o = { price: opts.price, startCost: opts.startCost ?? 0, capDiv: opts.capDiv ?? 2000, capSteps: opts.capSteps ?? 20000, start: opts.start, untilHit, onHand: opts.onHand };
   const aims = opts.aims ?? aimsOf(doc);
   const shapes = shapesOf(doc, data);
   const j = judgeMemo(data, doc);

@@ -65,7 +65,7 @@ const dropped = ref<string[]>([]);
 const unpicked = ref(t.needBase.value);
 /**
  * ページで出す (?page=sim-base / sim-mods、web/page の treeStep。10-24 夜オーナー「基本はページ全体にベース表示、MOD も別ページ。
- * オーバーレイはツリーのなかにあるベース選択の所」)。ツリーの中の札 (TreeGoalNode など) から開いた時は今まで通り窓。
+ * オーバーレイはツリーのなかにあるベース選択の所」)。ツリーの中の札 (TreeGoalCard など) から開いた時は今まで通り窓。
  * 開いている間はツリーを隠す (SimTreePage が use-tree の goalInline を見る)
  */
 const blankOpen = t.needBase.value;

@@ -2,7 +2,7 @@
  * tree-fixed-values.ts — 箱に出すアイテムの MOD の値を木の中で揃える (10-26 夜オーナー「基本 MOD の値は、コピーした (貼り付けた) 時はその値、
  * MOD を手で選んだ時は段 (ティア) の真ん中で固定しよう。ツリー内で同じ MOD じゃないと混乱する」)。
  * 決めは完成形の窓 (use-tree の goalItem) と同じ: 貼り付けで取り込んだ狙い (memoAims の values、同じ段の時) はその値、ほかは段の真ん中
- * (エンジンの makeStageMod に 0.5 を返す乱数)。見本の乱数の値は回す・割合・照らしにはそのまま使い、出す時だけ写して直す (TreeBox・TreeHoverCard)
+ * (エンジンの makeStageMod に 0.5 を返す乱数)。見本の乱数の値は回す・割合・照らしにはそのまま使い、出す時だけ写して直す (TreeBox)
  */
 import { makeStageMod, tierIndexOf, tierRankOf, type PatchData, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { retext } from "../../../services/simulator/sim-engine";

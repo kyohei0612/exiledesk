@@ -6,7 +6,7 @@
  *   - 中級までは 1 発で付く狙い方を、上級は外れた時の消去の道も (元のレシピの「この時はこれ」がそのまま道になる)
  *   - 難しさ順に並べるが、どれからでも始められる
  *
- * 1 コース = 動画 (か見本) 1 本のクイズのレシピ (quiz-tutorials.ts / quiz-samples.ts)。始めは動画と同じ状態 (買ったベース) を置く。
+ * 1 コース = 動画 (か見本) 1 本のクイズのレシピ (quiz-tutorials.ts。見本の quiz-samples.ts は 11-02 に消した)。始めは動画と同じ状態 (買ったベース) を置く。
  * 付ける順番 = 完成の形の札の並び。今やる手 = 今のアイテムの状況に当たるレシピの手 (ruleFor)。
  * レシピはどれも 200 人で完成 100% を確かめてある (tests/tutorial/craft-courses.test.ts)
  */
@@ -34,7 +34,7 @@ const fromCourse = (id: string, level: CraftCourse["level"], part: JaEn, video: 
 
 /**
  * 入門〜中級は必ず付く手だけ (course-recipes.ts)。上級 (外れの道あり。フラクチャー・触媒・液化した感情など) は
- * 2026-10-17 オーナー「入門・中級をやってから上級に取り掛かる」で後から (元のレシピは quiz-tutorials.ts / quiz-samples.ts に残してある)
+ * 2026-10-17 オーナー「入門・中級をやってから上級に取り掛かる」で後から (元のレシピは quiz-tutorials.ts に残してある)
  */
 export const CRAFT_COURSES: CraftCourse[] = [
   fromCourse("wand", 1, ["武器", "Weapon"], { id: "qdyfBnzqBLo", title: ["SaVeQ のワンド", "SaVeQ's wand"] },

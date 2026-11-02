@@ -118,7 +118,7 @@ export function useTreeFlow(doc: Ref<TreeDoc>) {
     if (!w || !h) return null;
     const sx = st ? st.x + BOX_W / 2 : b.x + b.w / 2;
     const half = Math.max(sx - b.x, b.x + b.w - sx);
-    // 木の左の外の段の目印 (TreeBandLayer、画面の上で約 110px × ページの zoom) の分も左を空ける (1280 で目印が枠の外に切れた、10-22)
+    // 木の左の外の段の目印 (TreeBandLayer、画面の上で約 110px × ページの zoom。部品は 11-02 に消した) の分も左を空ける (1280 で目印が枠の外に切れた、10-22)
     // 段の目印を出さない時 (スイッチ noBand、10-28 夜オーナー「これいらんなもう　消してくれわかりづらいし」) は左を空けない
     const fz = Math.min((w / 2 - PAD_MIN) / half, (h - topY() - PAD_MIN) / (treeBottom() - b.y)) / pageZ.value;
     return [...levels()].reverse().find((l) => l <= Math.min(1, fz) + 1e-6) ?? levels()[0]!;

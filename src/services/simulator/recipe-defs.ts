@@ -1,6 +1,6 @@
 /**
  * recipe-defs.ts — 決めた順番で作るシミュレーションの型と小さな決まり (recipe-sim.ts から分けた。2026-10-16、500 行の決まり)。
- * 呼ぶ側は今まで通り recipe-sim.ts から読める
+ * 回す側の recipe-sim.ts・recipe-pattern-run.ts は 11-02 に消した (どこからも使っていなかった)。membersOf は keep-compare.ts・quiz-build.ts が読む
  */
 import { type PatchData, type StageItem, type StageMod, type StageSide, ESSENCE_KEYS } from "../craft-stage/engine";
 import type { MissRule, PatternKind } from "./pattern";
