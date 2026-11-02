@@ -13,14 +13,13 @@ import { useTreeLink } from "../tree/use-tree-link";
 import { backTargetsOf } from "../tree/tree-merge";
 import { handLabel, OUT_LOOK, boxesEn } from "../tree/tree-names";
 import { answerFor, isMiss, mapPick, phoneRun, usePhoneQuiz } from "./use-phone-quiz";
-import { retryOf, routeArrow, routeText, runText, stepBackText } from "../tree/tree-fail";
+import { retryOf, routeText, runText, stepBackText } from "../tree/tree-fail";
 import { absorbOuts, joinableOf, joinSide, splitAny, splitOuts } from "../../../services/simulator/tree/tree-model-ops";
 import { joinableFor, sideGroup } from "../tree/tree-hand-plan";
 import StageItemCard from "../../../components/for-share/item/StageItemCard.vue";
 import { craftStage as s } from "../../../state/craft-stage";
 import { sampleOf } from "../../../services/simulator/tree/tree-sample";
 import { treeRowTags } from "../tree/tree-row-tags";
-import { flag } from "../../../web/release-flags";
 import { veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { hasGot } from "../../../services/simulator/tree/tree-keep";
 import { effectOf } from "../../../services/simulator/tree/tree-hands";
@@ -62,17 +61,12 @@ function mergeSide(): void {
 }
 /** 始めに戻れない理由 (use-tree-link、始めの手がこのアイテムに打てない) */
 const startNo = computed(() => link.value.get("start") ?? null);
-/** 失敗 (ここで終わり) の答え (スイッチ failEnd) */
-const FAIL = flag("failEnd");
 const canDone = computed(() => box.value?.out === "hit" || box.value?.out === "branch");
 /** ほかの戻り先 (打つ前の箱・始まり・自分を除いた、戻れる箱) */
 const others = computed(() => [...link.value].filter(([id, why]) => why === null && id !== parent.value && id !== "start" && !!t.doc.value.boxes[id]?.hand).map(([id]) => id));
-/** 全体図で戻り先を選ぶ (スイッチ phoneMap、10-26 オーナー「文字だけでどこに戻るか分からない」。戻れる箱 = ほか + 打つ前の箱 + 始まり)。閉じていれば前の道の文の一覧 */
-const MAP = flag("phoneMap");
-const listOpen = ref(false);
-const pickOther = computed(() => (MAP ? mapPick.value?.from === props.boxId : listOpen.value));
+/** 全体図で戻り先を選ぶ (10-26 オーナー「文字だけでどこに戻るか分からない」。戻れる箱 = ほか + 打つ前の箱 + 始まり) */
+const pickOther = computed(() => mapPick.value?.from === props.boxId);
 function startPick(): void {
-  if (!MAP) { listOpen.value = !listOpen.value; return; }
   mapPick.value = pickOther.value ? null : { from: props.boxId, ids: pickIds.value };
 }
 /** 決めていない外れの既定 (「次へ」で ↩ 再度挑戦 = 打つ前の箱へ。use-phone-quiz の decide と同じ判定)。"retry" / "start" / null */
@@ -123,7 +117,7 @@ const sit = computed((): [string, string] => {
     // 狙い無しの乱数のフラクチャーは MOD ごとの箱「〇〇がフラクチャーされた場合」(外れとは言わない、スイッチ fracPick)
     if (o === "junk" && ph.pick === "random" && ph.free) return [tr("外れ MOD がフラクチャーされた場合", "If a miss mod is fractured"), tr("どの MOD が固定されるかは等しく乱数", "Which mod gets fractured is equally random")];
     if (o === "hit" && ph.pick === "random" && ph.free) return [q.boxTitle(props.boxId), tr("どの MOD が固定されるかは等しく乱数", "Which mod gets fractured is equally random")];
-    // 骨を未発現のまま次へ (スイッチ boneLater)
+    // 骨を未発現のまま次へ 
     if (o === "any" && veilKeep(ph)) return [tr(`${n}を打った後`, `After ${n}`), tr("未発現の冒涜が付いた (発現は次の手で)", "An unrevealed desecrated mod was added (reveal it with a later craft)")];
     if (o === "junk" && (ph.pick === "random" || effectOf(ph.currency) === "fracture")) return [tr(`${n}で外れた場合`, `If ${n} misses`), tr("狙いでない MOD が固定された (外れ MOD が固定された)", "A non-target mod was fractured (a miss mod fractured)")];
     if (o === "junk") return [tr(`${n}で外れた場合`, `If ${n} misses`), tr("狙いの MOD は付かず、外れ MOD が付いた", "No target mod; a miss mod was added")];
@@ -161,11 +155,11 @@ const cardOf = (it: StageItem): StageItem => (s.data.value ? fixedValues(s.data.
 /** カードの幅 = 行の中いっぱい (ページの余白 16 + 行の枠 2 + 行の左右の余白 12)。上限は付けない (10-26 夜オーナー「枠は最大限」) */
 const cardW = (typeof window === "undefined" ? 375 : window.innerWidth) - 30;
 /**
- * 10-27 昼の直し (スイッチ phoneResult1027): 結果の画面は外れも当たりも同じ形 = アイテムの枠の下で「この状態で打つカレンシー」を持たせる (棚、10-27 オーナー「次に打つは次の手と読める」)。
+ * 10-27 昼の直し : 結果の画面は外れも当たりも同じ形 = アイテムの枠の下で「この状態で打つカレンシー」を持たせる (棚、10-27 オーナー「次に打つは次の手と読める」)。
  * 既定の答えは無く、何か選ぶまで「次へ」で進めない (オーナー「脳死で次へとかさせちゃう」)。外れで打つ前と同じ手を持つと自動で ↩ 再度挑戦 (PhoneTreePage の pickHand)。
  * 「答えを変える」「打つ手を替える」と選択肢の窓は外した。枠の右上の × = PC の箱の × と同じ (この結果を作った手を消す。1 回目で赤く「下の n 箱ごと消す」、もう一度で消す)
  */
-/** 「下の n 箱ごと消す」は 8 秒待つ (3 秒では押す前に × に戻った、10-27 夕モンキー 5。スイッチ goalShape) */
+/** 「下の n 箱ごと消す」は 8 秒待つ (3 秒では押す前に × に戻った、10-27 夕モンキー 5) */
 // 時間では戻さず、× の外を押すか Esc で戻す (10-27 夜モンキー 2 回目 3、PC の箱の × と同じ。スイッチ armKeep)
 const rm = useArmed(2147483647);
 useDismiss(() => rm.is(props.boxId), [], rm.clear, { swallow: false, keep: "[data-phone-out-remove]" });
@@ -228,10 +222,10 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
         <button v-if="(box.anyOf?.length ?? 0) > 1 || (box.mergedOuts?.length ?? 0) > 0" type="button" data-phone-split-any :class="chipClass(false)" @click="t.edit((d) => (box!.anyOf?.length ? splitAny(d, boxId) : splitOuts(d, boxId)))">{{ box.anyOf?.length ? tr("MOD ごとに分ける", "Split by mod") : tr("分ける", "Split") }}</button>
         <button v-else-if="joinable.length" type="button" data-phone-join-side :class="chipClass(joinOpen)" @click="openJoin">{{ tr("動きをまとめる", "Merge the path") }}</button>
         <button v-if="canDone" type="button" data-phone-ans="done" :class="chipClass(state === 'done')" @click="q.setFinished(boxId)">{{ tr("完成", "Done") }}</button>
-        <!-- 失敗 (ここで終わり): 外れ MOD が固定された枝など (10-28 オーナー、スイッチ failEnd) -->
-        <button v-if="FAIL && !canDone" type="button" data-phone-ans="fail" :class="chipClass(state === 'fail')" @click="q.setFailed(boxId)">{{ tr("失敗 (ここで終わり)", "Fail (ends here)") }}</button>
+        <!-- 失敗 (ここで終わり): 外れ MOD が固定された枝など (10-28 オーナー) -->
+        <button v-if="!canDone" type="button" data-phone-ans="fail" :class="chipClass(state === 'fail')" @click="q.setFailed(boxId)">{{ tr("失敗 (ここで終わり)", "Fail (ends here)") }}</button>
         <!-- 戻り先は全体図で選ぶ (戻れる箱だけ光る。打つ前の箱・始まりも含む。10-26 夜オーナー「n 段目へ戻るの選び方は全体図で」) -->
-        <button v-if="pickIds.length" type="button" data-phone-ans="other" :class="chipClass(backKind === 'other' || pickOther)" @click="startPick">{{ MAP ? tr("戻り先を全体図で選ぶ", "Pick where to return on the map") : tr("ほかの箱へ ▾", "Other box ▾") }}</button>
+        <button v-if="pickIds.length" type="button" data-phone-ans="other" :class="chipClass(backKind === 'other' || pickOther)" @click="startPick">{{ tr("戻り先を全体図で選ぶ", "Pick where to return on the map") }}</button>
       </div>
       <!-- 動きをまとめる: 同じ側の横の当たりを選んでこの箱にまとめる (10-26 オーナー「選択した枠にまとめる」) -->
       <div v-if="joinOpen" data-phone-join-pick class="mt-2 flex flex-col gap-1 rounded-lg border border-amber-300/40 bg-black/20 p-2 text-[13px]">
@@ -241,9 +235,6 @@ const chipClass = (on: boolean): string => `${CHIP} ${on ? "border-amber-300 bg-
       </div>
       <!-- 始めに戻れない理由 (始めの手がこのアイテムに打てない。10-26 モンキー 7 の 1) -->
       <p v-if="startNo" data-phone-start-no class="mt-1 break-words text-[11px] text-rose-200/90">{{ startNo }}</p>
-      <div v-if="!MAP && listOpen" data-phone-other class="mt-2 flex flex-col gap-1">
-        <button v-for="id in others" :key="id" type="button" class="min-h-10 break-words rounded-lg border border-white/10 bg-black/20 px-2 py-1.5 text-left text-[13px]" :class="backTo === id ? 'border-cyan-300/70 text-cyan-100' : 'text-[#d8ccb4]'" @click="listOpen = false; q.setReturn(boxId, id)">{{ routeArrow(t.doc.value, boxId, [id]) }} {{ q.pathText(id) }}</button>
-      </div>
         </div>
         <div class="flex border-t border-white/10 px-3 py-2">
           <button type="button" data-phone-out-pick-close class="g-btn !min-h-11 flex-1" @click="pickOpen = false">{{ tr("閉じる", "Close") }}</button>

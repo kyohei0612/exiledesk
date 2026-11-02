@@ -37,7 +37,7 @@ import { flag } from "../../../web/release-flags";
 export type OnlyOut = ReadonlyArray<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null;
 /** 棚で選んだ物 (持った物・掛けたお告げ・当たるまで・狙い無し・骨の反響・フラクチャーで ✦ にする狙い) */
 export interface HandPick { held: string; omens: readonly string[]; spam?: boolean; spamMax?: number | null; free?: boolean; echo?: boolean; /** 消去の残したい MOD ([] = 全部消えてよい、tree-model の Hand.keep) */ keep?: readonly Aim[];
-  /** 骨の手の発現 (keep = 未発現のまま次へ、pick = 発現させる。tree-model の Hand.veil、スイッチ boneLater) */ veil?: "keep" | "pick";
+  /** 骨の手の発現 (keep = 未発現のまま次へ、pick = 発現させる。tree-model の Hand.veil) */ veil?: "keep" | "pick";
   /** エッセンスの「ブロックに使う」☑ (S-33b、スイッチ keepOutside) */ block?: boolean;
   /** カタリストの手の「何 % まで」(S-31b、スイッチ catHand。0 = 前の「最大まで」の通り抜け) */ qualityTo?: number }
 
@@ -103,7 +103,7 @@ export function handOf(p: HandPick): Hand {
   const used = omensFor(p.held, [...p.omens]);
   return {
     // 反響はお告げの並びで掛けた物 (used に入る) か、echo の指定。2 つ入れない (10-26 夜、並びの札と別の印が重なった)
-    // 後から打つ発現の手も反響を既定で (骨と同じ。スイッチ boneLater)
+    // 後から打つ発現の手も反響を既定で (骨と同じ)
     // 未発現のまま次へ (veil keep) は発現しないので反響を既定で付けない
     // boneLater の木は反響を任意 (手の窓の ☑ か棚のお告げで付けた時だけ、10-28 オーナー「そこまで必須って感じで出したくない」)
     currency: p.held, omens: ((isBone(p.held) && p.veil !== "keep") || isRevealHand(p.held)) && p.echo === true && !used.includes(ECHO) ? [...used, ECHO] : used,
@@ -143,7 +143,7 @@ export function alignEssenceAims(data: PatchData, doc: TreeDoc, aims: readonly A
   return aims.map((a) => (craftedKindOf(data, a) ? tree.find((x) => x.modId === a.modId) ?? a : a));
 }
 export function hitAimsOf(data: PatchData, doc: TreeDoc, boxId: string, item: StageItem, h: Hand, goals: readonly Aim[]): Aim[] {
-  // 骨を未発現のまま = 当たりは無し (結果は未発現の冒涜が付いた 1 つ)。発現で選ぶ手 = 発現で出うる MOD 全部 (置き石も。スイッチ boneLater)
+  // 骨を未発現のまま = 当たりは無し (結果は未発現の冒涜が付いた 1 つ)。発現で選ぶ手 = 発現で出うる MOD 全部 (置き石も)
   if (veilKeep(h) || fracFree(doc, h)) return [];
   // 窓の ☑ は完成の狙いだけ (高貴の窓と同じ。置き石は TreeVeilCheck の「ほかの MOD を選ぶ」、10-28 オーナー)
   if (veilPick(h)) return revealAimsOf(data, doc, boxId, item, h).filter((a) => (doc.memoAims ?? []).some((g) => g.modId === a.modId));
@@ -273,7 +273,7 @@ export function sideGroup(): ((a: Aim) => string) | undefined {
 export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims: Aim[], pre: string | null, only: OnlyOut): string {
   // ✦ の印の無い木のフラクチャーは乱数で固定する手 (スイッチ fracRandom)
   const h: Hand = effectOf(h0.currency) === "fracture" && !fractureMarks(d).length ? { ...h0, pick: "random" } : h0;
-  // 外れで、打つ前の箱・同じ形の箱と同じ手 = 新しい段を作らずその箱へ戻る (シミュのルール、PC・スマホ共通。tree-shape の sameHandReturn、スイッチ goalShape)。
+  // 外れで、打つ前の箱・同じ形の箱と同じ手 = 新しい段を作らずその箱へ戻る (シミュのルール、PC・スマホ共通。tree-shape の sameHandReturn)。
   // 外れに手がもう付いていれば下を消してから (前に同じ手で段を足して伸びた木)。戻ったかは呼ぶ側が箱の back で見る
   // 触媒 (pre) 付きの手も同じ判定 (PC・スマホで 1 つ、10-27 夕ブラックの決め B4。前は PC が pre のある時は見ず、スマホは pre を見ずに戻っていた)
   const data = craftStage.data.value;

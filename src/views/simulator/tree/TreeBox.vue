@@ -5,7 +5,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { rowFitOf, setNatural } from "./use-row-fit";
-import { flag } from "../../../web/release-flags";
 import { useArmed } from "../../../utils/use-armed";
 import { useDismiss } from "../../../utils/use-dismiss";
 import { subtree } from "../../../services/simulator/tree/tree-model";
@@ -26,8 +25,7 @@ import { useTree } from "./use-tree";
 import { handLabel, headOf, OUT_LOOK, rarityName, splitWhenText, sureFracText, boxesEn } from "./tree-names";
 import { pctText, useTreeOdds } from "./tree-odds";
 import { boxArrow, orphanHits } from "./tree-fail";
-import { joinCandidates, joinLook, joinMode, joinNoWhy, useTreeJoin } from "./use-tree-join";
-import { sameHitsFor } from "./tree-hand-plan";
+import { joinLook, joinNoWhy, useTreeJoin } from "./use-tree-join";
 
 const props = defineProps<{ box: TreeBox; /** 引いて見るだけの時の ＋ の倍率 (1 / 木の倍率。無ければ見るだけの間は ＋ を出さない、S-147c) */ plusFar?: number; /** 沼った場所の青枠の倍率 (1 / 木の倍率、0 = 枠無し、S-72) */ swamp?: number; /** 自分で置く時の位置 (Vue Flow の箱の中では無し = Vue Flow が置く) */ x?: number; y?: number; removable: boolean; picking: boolean; selected: boolean; backLabel: string; /** 縮めて見ている時: 押せる物を出さず、押すとそこへ寄る */ viewOnly?: boolean; /** ハズレ整理の前のグレー (S-191・S-198) */ gray?: boolean; /** 次に押す箱 (S-198) */ guide?: boolean; /** 片付いたハズレ (S-198) */ settled?: boolean; /** 上の札の一覧で選んだ札を使っている */ glow?: boolean; /** ルート精査で見つかった穴 (文) */ issue?: string | null;
   /** 縮めた時の倍率の逆数 (押せる物だけこれで大きさを戻し、画面の上で 24px 以上を保つ。オーナー 10-22「縮めても押せる物は小さくならない」) */ inv?: number;
@@ -55,7 +53,7 @@ const t = useTree();
  * 3 秒のうちにもう一度で消す (1 つ戻すで戻せる)。どの箱にも (スタートは除く)。前の「この当たりを消す」(当たりの箱 1 つだけ) はこれにまとめた
  * (10-27 オーナー「途中で狙いの MOD を変えたい時の挙動が分かりづらい。枠の × ボタンを押して消せるように。消したら作ったカレンシーごと消える感じ」)
  */
-/** 「下の n 箱ごと消す」は 8 秒待つ (3 秒では押す前に × に戻った、10-27 夕モンキー 5。スイッチ goalShape) */
+/** 「下の n 箱ごと消す」は 8 秒待つ (3 秒では押す前に × に戻った、10-27 夕モンキー 5) */
 // 時間では戻さず、枠 (この箱の ×) の外を押すか Esc で戻す (8 秒でもモンキーの台本の間に戻った、10-27 夜モンキー 2 回目 3。スイッチ armKeep)
 const rm = useArmed(2147483647);
 useDismiss(() => rm.is(props.box.id), [], rm.clear, { swallow: false, keep: `[data-box-id="${props.box.id}"] [data-tree-box-remove]` });
@@ -75,10 +73,7 @@ onBeforeUnmount(() => ro?.disconnect());
 /** 決める事が残っている箱 (足りない所に何か出ている箱) は全部、右上の角の丸い赤の「!」の 1 つの印 + 赤枠。題の横の「! 未定」は出さない (S-89b、スイッチ unsetMark、10-28 深夜オーナー「この未定ってマーク共通にして全体」) */
 const unset = computed(() => !!props.issue);
 // 別の道の同じ状態の当たり (sameHitsOf) は、完成・次の手がある箱どうしでもまとめられる (10-26 夜オーナー「中身がある箱どうしは自動でせずまとめる」)
-/** 人が選ぶ「まとめる」「↩ 戻り先を選ぶ」は出さない (S-52b、スイッチ pickOff。10-28 深夜オーナー「だってなかったら自分でカレンシー足してるじゃんね今　まとめるは消していいわな」)。「分ける」は前の「どれか」の箱にだけ */
-const PICK_OFF = flag("pickOff");
-const canJoin = computed(() => !PICK_OFF && (!props.box.hand && !props.box.done ? joinCandidates(t.doc.value, props.box.id).length > 0 : sameHitsFor(t.doc.value, props.box.id).length > 0));
-const startJoin = (): void => { joinMode.value = { anchor: props.box.id, pick: [] }; };
+/* 人が選ぶ「まとめる」「↩ 戻り先を選ぶ」は出さない (S-52b。10-28 深夜オーナー「だってなかったら自分でカレンシー足してるじゃんね今　まとめるは消していいわな」)。「分ける」は前の「どれか」の箱にだけ */
 /** MOD の値は木の中で揃える (貼った値か段の真ん中、tree-fixed-values。10-26 夜オーナー「ツリー内で同じ MOD じゃないと混乱する」) */
 /** スタートの箱も結果の箱と同じアイテムカード (レアリティの色・名前・MOD の行、✦ はフラクチャーの印。10-28 夜オーナー「スタートもアイテムカードで表示させてくれツリー」、スイッチ startCard) */
 const sampled = computed(() => (s.data.value ? shapeSampleWithNote(s.data.value, t.doc.value, props.box.id) : null));
@@ -115,7 +110,7 @@ const legendTitle = computed(() => [
   odds.value != null ? tr(`この手でこの結果になる割合 ${pctText(odds.value)} (1 手分)`, `Chance from the craft: ${pctText(odds.value)} (one use)`) : "",
 ].filter(Boolean).join("\n"));
 /** 縁の色 (完成は明るい金) と光り方。選んだ・光らせた時は強く */
-/** 失敗 (ここで終わり) の答え (スイッチ failEnd) */
+/** 失敗 (ここで終わり) の答え  */
 const rgb = computed(() => (props.box.done === "fail" ? "224,112,122" : props.box.done ? "242,210,122" : kind.value.c));
 const neon = computed(() => {
   const strong = props.glow || props.selected || !!props.box.done;
@@ -260,9 +255,8 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
         <!-- 戻り先がまだ無い箱: 押すと戻り先を選ぶ (再度挑戦・n 段目へ戻る・始めに戻るなどは選ぶ帯で)。短い「↩ 戻る」・縮めた時の「↩」だけはやめた (10-27 オーナー「本番でまだ『戻る』になっている」、決まった言い方は選んだ後の札の「↩ n 段目へ戻る」) -->
         <button v-if="!box.done && box.out !== 'hit'" type="button" data-tree-back-pick class="nodrag min-h-6 shrink-0 rounded border border-cyan-400/40 px-1.5 text-left text-cyan-200 hover:border-cyan-300" :title="tr('戻り先を選ぶ (再度挑戦・既にある箱・始めに戻る)', 'Choose where to return (retry, an existing box, or the start)')" @click.stop="emit('back')">{{ tr("↩ 戻り先を選ぶ", "↩ Choose return") }}</button>
         <!-- 当たりの箱の次どうするか = まとめる (横にまとめられる箱がある時だけ。無ければ＋だけ、10-26 オーナー「そこに表示させるとしたらまとめるボタンかな、まぁ原則プレフィックスとサフィではまとめれないけどこれはルール化してもええよな」) -->
-        <button v-if="box.out === 'hit' && canJoin" type="button" data-tree-box-join class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-300/40 px-1.5 text-amber-100 hover:border-amber-200" :title="tr('この箱にまとめる (同じ側の横の当たりを選ぶ。プレとサフィはまとめない)', 'Merge into this box (pick same-side hits beside it; prefixes and suffixes are never merged)')" @click.stop="startJoin">{{ tr("まとめる", "Merge") }}</button>
         <button v-if="box.out === 'hit' || box.out === 'branch' || box.out === 'any'" type="button" class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-400/40 px-1.5 text-amber-200 hover:border-amber-300" @click.stop="emit('done')" :title="doneText">{{ (k > 1 || (box.anyOf?.length ?? 0) > 1) && !box.done ? tr("完成", "Done") : doneText }}</button>
-        <!-- 失敗 (ここで終わり): 外れ MOD が固定された枝など、続けない結果の箱 (10-28 オーナー、スイッチ failEnd) -->
+        <!-- 失敗 (ここで終わり): 外れ MOD が固定された枝など、続けない結果の箱 (10-28 オーナー) -->
         <button v-if="box.done !== 'main' && box.out !== 'hit' && box.out !== 'branch'" type="button" data-tree-box-fail class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-rose-400/40 px-1.5 text-rose-200 hover:border-rose-300" :title="tr('ここで終わり (回す時はここに着いた人を失敗と数える)', 'End here (runs that arrive here count as failed)')" @click.stop="emit('fail')">{{ box.done === "fail" ? tr("失敗を外す", "Undo fail") : tr("失敗", "Fail") }}</button>
         <!-- 外れ・狙いが消えたの行き先に一番使う手 (オーナー 10-22): 当たりのどれかが付くまでカオス -->
       </template>
@@ -273,9 +267,8 @@ const keep = (origin: string): Record<string, string> => (k.value > 1 ? { scale:
       </span>
     </div>
     <!-- 操作 (分ける・まとめる。箱の一番下、上の帯の「まとめる」と同じ選び方へ入る入口) -->
-    <div v-if="!quiet && ((canJoin && box.out !== 'hit') || (box.anyOf?.length ?? 0) > 1 || (box.mergedOuts?.length ?? 0) > 0)" class="mt-1 flex items-center justify-end gap-1 text-[12px]">
+    <div v-if="!quiet && ((box.anyOf?.length ?? 0) > 1 || (box.mergedOuts?.length ?? 0) > 0)" class="mt-1 flex items-center justify-end gap-1 text-[12px]">
       <button v-if="((box.anyOf?.length ?? 0) > 1 || (box.mergedOuts?.length ?? 0) > 0)" type="button" data-tree-split-any class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-300/40 px-1.5 text-amber-100 hover:border-amber-200" :title="tr('MOD ごとに当たりの箱を分ける (先頭の MOD はこの箱のまま、続きの手もそのまま。1 つ戻すで戻せる)', 'Split into one hit box per mod (the first mod keeps this box and its next steps; Undo restores)')" @click.stop="t.edit((d) => (box.anyOf?.length ? splitAny(d, box.id) : splitOuts(d, box.id)))"><Icon v-if="k > 1" name="layers" class="size-3.5" /><template v-else>{{ tr("分ける", "Split") }}</template></button>
-      <button v-if="canJoin && box.out !== 'hit' && !((box.anyOf?.length ?? 0) > 1 || (box.mergedOuts?.length ?? 0) > 0)" type="button" data-tree-box-join class="nodrag h-6 shrink-0 whitespace-nowrap rounded border border-amber-300/40 px-1.5 text-amber-100 hover:border-amber-200" :title="tr('この箱にまとめる (同じ形の横の箱を選ぶ)', 'Merge into this box (pick same-shape boxes beside it)')" @click.stop="startJoin"><Icon v-if="k > 1" name="layers" class="size-3.5" /><template v-else>{{ tr("まとめる", "Merge") }}</template></button>
     </div>
 
     <!-- 動きをまとめる窓 (画面の真ん中の重ね窓。木の中に置くと寄り・位置で完成形の札や枠に隠れた): 同じ側の手の無い横の当たりを選んで、この箱にまとめる (10-26 オーナー「選択した枠にまとめる」) -->

@@ -54,7 +54,7 @@ function noDoneTips(boxes: readonly TreeBox[]): TreeBox[] {
   return ends.length ? ends : boxes.filter(tip);
 }
 /**
- * 見本も人も使わず形だけで数える未設定 (スイッチ holeButton、S-70): 穴チェックを押していない間の「! 未設定」の帯と箱の赤枠。
+ * 見本も人も使わず形だけで数える未設定 (S-70): 穴チェックを押していない間の「! 未設定」の帯と箱の赤枠。
  * 精査の 1) の形だけで分かる穴と「完成の箱が無い」の印と同じ箱を返す
  */
 export function unsetIssues(doc: TreeDoc): CheckIssue[] {
@@ -180,7 +180,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
   }
 
   // 1b) 形の合う箱へ: 行きうる形の箱がツリーに無い (tree-run の matchTargets、回す時と同じ判定)
-  // 前の版の「形の合う箱へ」(match) は、人が戻り先を選ぶのを無くした今 (S-52b) は決めていない箱 = 未設定の印 (スイッチ settleStrict、10-29 オーナー「直して」)。
+  // 前の版の「形の合う箱へ」(match) は、人が戻り先を選ぶのを無くした今 (S-52b) は決めていない箱 = 未設定の印 (10-29 オーナー「直して」)。
   // 全部消えてよい消去の直線の止まり (fromStrip) が自動で付けた物は除く
   for (const b of boxes) if (b.back === MATCH && !b.autoBack && !fromStrip(doc, b.id)) add(b.id, "open", tr("前の版の「形の合う箱へ」の戻り (今は選べない)。次の手・完成・失敗を決める", "Old \"go to the matching box\" return (no longer selectable). Pick a next craft, Finish, or Fail"));
   if (!J) for (const b of boxes) if (b.back === MATCH) {
@@ -189,7 +189,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
   }
 
   // 2) 完成に着かない道・抜けられない輪 (矢印を逆に辿って、完成の箱へ行ける箱を集める)
-  // 失敗 (ここで終わり) の箱も道の終わり (完成の箱が無いかは完成だけで見る、スイッチ failEnd)
+  // 失敗 (ここで終わり) の箱も道の終わり (完成の箱が無いかは完成だけで見る)
   const done = boxes.filter((b) => b.done === "main");
   // 完成にしていない完成の箱 (unfinished) があれば、回す時はそこで完成する (S-54) ので「完成の箱が無い」で合格を止めない (⑦12 → ブラック案・オーナー「進めてくれ」10-28)
   if (!done.length && (J || !out.some((x) => x.kind === "unfinished"))) {
@@ -292,7 +292,7 @@ function* checkSteps(data: PatchData, doc0: TreeDoc, priced?: CheckPrice, onRun?
         let canBe: { out: OutKind; hits: Aim[] }[] | null = null;
         if (!b.hand.repeat && effectOf(b.hand.currency) !== "fracture") {
           const all = stepOutcomes(data, prepFor(data, item, b.hand.currency), b.hand.currency, engineOmens(b.hand)) ?? []; // 規格外の形で (tree-unbounded)
-          // 未発現が新しく付く結果だけ見ない (前から未発現を持ったまま打つ手は見る。スイッチ boneLater)
+          // 未発現が新しく付く結果だけ見ない (前から未発現を持ったまま打つ手は見る)
           const veiled = (o: { item: StageItem }): boolean => !!unrevealedOf(o.item) && !unrevealedOf(item);
           const shown = all.filter((o) => !o.void && !veiled(o)).map((o) => boxOutcomeOf(data, doc, b, item, o.item, aims, J ? aimed : null));
           const miss = shown.filter((oc) => !outBoxOf(doc, b, oc));
@@ -389,7 +389,7 @@ function stuckText(data: PatchData, aims: readonly Aim[], n: number, w: { reason
   // 行き先の箱が無くて止まった (10-22 13 通り組んだ #11: 「手・戻り先が無い」だけでどの結果の箱が無いか分からなかった)
   if (w?.noBox) return `${head}: ${w.reason}`;
   if (!w) return tr(`${head} (手・戻り先が無い、または分かれ目のどの行にも合わない)`, `${head} (no craft or return, or no split row matches)`);
-  // 手の無い箱 (完成の箱など) は「この手が打てない」ではない。回した時の理由をそのまま (完成の箱で品質が足りない など。10-27 夕、スイッチ goalShape)
+  // 手の無い箱 (完成の箱など) は「この手が打てない」ではない。回した時の理由をそのまま (完成の箱で品質が足りない など。10-27 夕)
   if (!hand) return `${head}: ${w.reason}`;
   const full = SIDES.filter((side) => !room(w.item, side));
   if (!full.length) return `${head}: ${w.reason}`;

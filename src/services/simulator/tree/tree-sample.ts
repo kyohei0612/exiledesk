@@ -42,7 +42,7 @@ export const aimOpts = (data: PatchData): AimHitOpts => ({ data, sameText: true 
  */
 export function handAims(doc: TreeDoc, id: string, aims: readonly Aim[]): readonly Aim[] {
   const b = doc.boxes[id];
-  // 発現で選ぶ手 (骨の「発現させる」・後から打つ発現) は、その手の当たりの箱の札 (☑。完成の狙いに無い置き石も) だけで選ぶ (スイッチ boneLater)
+  // 発現で選ぶ手 (骨の「発現させる」・後から打つ発現) は、その手の当たりの箱の札 (☑。完成の狙いに無い置き石も) だけで選ぶ 
   if (veilPick(b?.hand)) return b!.outs.flatMap((o) => { const c = doc.boxes[o]; return c?.out === "hit" && c.aim ? boxAims(c) : []; });
   // ✦ の木の確定フラクチャーは ✦ の印だけを固定する (S-42。木の狙い全部を渡すと印の無い狙いまで固定され、✦ の無い側の ✦ の人に行き先が無く止まった、金の指輪 10-31)
   if (b?.hand && effectOf(b.hand.currency) === "fracture" && b.hand.pick !== "random" && fractureMarks(doc).length) return fractureMarks(doc);
@@ -61,7 +61,7 @@ export function aimsOf(doc: TreeDoc): Aim[] {
   const byGoals = goals.some((g) => !g.fractured);
   const label = (b: TreeBox): boolean => {
     const h = b.parent ? doc.boxes[b.parent]?.hand : null;
-    // 発現で選んだ置き石 (完成の狙いに無い MOD) は、その手の時だけ当たり。以降の手では冒涜の外れ MOD (10-27 夜オーナー、スイッチ boneLater)
+    // 発現で選んだ置き石 (完成の狙いに無い MOD) は、その手の時だけ当たり。以降の手では冒涜の外れ MOD (10-27 夜オーナー)
     if ((veilPick(h) || fracFree(doc, h)) && !goals.some((g) => g.modId === b.aim!.modId)) return true;
     return byGoals && !!h && effectOf(h.currency) === "essence" && !goals.some((g) => g.modId === b.aim!.modId);
   };
@@ -164,7 +164,7 @@ export function playHand(data: PatchData, item: StageItem, h: Hand, rng: () => n
   // フラクチャーで ✦ にする MOD・骨の後はそのまま発現 (反響は骨に掛けず発現で使う)。
   // 発現は当たりの札に合う候補、無ければ 1 つ目 (2026-10-22 オーナー「冒涜は冒涜で付与かな」)。miss = 外れの箱の見本 (狙いでない候補を選ぶ。黒き血は狙いが必ず候補に入り、見本が外れの箱に着かなかった、10-22)
   const ts = targetsOf(data, aims);
-  // 骨を未発現のまま次へ (veil keep) は発現しない。未発現を持ったまま打つほかの手 (フラクチャー・カオスなど) も発現しない = 未発現のまま (スイッチ boneLater。
+  // 骨を未発現のまま次へ (veil keep) は発現しない。未発現を持ったまま打つほかの手 (フラクチャー・カオスなど) も発現しない = 未発現のまま (
   // 前は手の後に未発現があれば必ず発現まで打っていた = 骨の手の後だけだった)
   const keepVeil = veilKeep(h) || (!isBone(h.currency) && !isRevealHand(h.currency));
   const once = (): ReturnType<typeof applyHand> => applyHand(data, item, h.currency, rng, { qualityTo: h.quality || undefined, omens: h.omens, catalyst: h.catalyst, fractureOf: fractureTarget(data, item, h, aims, rng), reveal: keepVeil ? false : (m) => isAimMod(m, ts, aimOpts(data)) !== miss });
@@ -466,7 +466,7 @@ interface UseSpec {
  */
 function canUse(data: PatchData, item: StageItem, key: string, spec: UseSpec = {}): string | null {
   const now = handOmens(key, spec.omens ?? []).now;
-  // 後から打つ発現の手: 未発現の MOD があれば打てる (スイッチ boneLater)
+  // 後から打つ発現の手: 未発現の MOD があれば打てる 
   if (isRevealHand(key)) return unrevealedOf(item) ? null : tr("未発現の MOD が無い", "No unrevealed mod");
   const cat = spec.catalyst && now.includes(CATALYSING_OMEN) ? spec.catalyst : null;
   const filled = cat ? fillCatalyst(data, item, cat, mulberry32(1)).item : item;
@@ -528,7 +528,7 @@ function applyHand(data: PatchData, item: StageItem, key: string, rng: () => num
     return { ...r, applied: r.applied || r.count > 0 || catalystFull(item, key) || (!!spec.qualityTo && catalystOf(item).pct >= spec.qualityTo), catalystCount: r.count, handOmensUsed: [], echoUsed: false };
   }
   const { now, reveal } = handOmens(key, spec.omens ?? []);
-  // 後から打つ発現の手 (スイッチ boneLater): 候補 3 つから ☑ の物 (無ければ 1 つ目)。反響はこの手のお告げ
+  // 後から打つ発現の手 : 候補 3 つから ☑ の物 (無ければ 1 つ目)。反響はこの手のお告げ
   if (isRevealHand(key)) {
     if (!unrevealedOf(item)) return { applied: false, item, added: [], removed: [], reason: tr("未発現の MOD が無い", "No unrevealed mod"), catalystCount: 0, handOmensUsed: [], echoUsed: false };
     const echo = now.includes(ABYSSAL_ECHO_OMEN);

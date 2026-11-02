@@ -75,11 +75,11 @@ export interface TreeRunResult {
   /** 組んでいない芽・打てない手で止まった人 */
   stuck: number;
   stuckAt: Record<string, number>;
-  /** 失敗 (ここで終わり) の箱で止めた人の数と箱ごとの数 (スイッチ failEnd) */
+  /** 失敗 (ここで終わり) の箱で止めた人の数と箱ごとの数  */
   failed: number;
   failAt: Record<string, number>;
   /** 手が打てずに止まった箱の、最初の 1 人の理由・着いた形・通った戻りの箱 (古い順、重ねない)。精査がどの外れ・どの戻りが元かを出す (10-22) */
-  stuckWhy: Record<string, { reason: string; item: StageItem; backs: string[]; /** 着いてから形の合う箱へ移った時の、着いた箱 (古い順、スイッチ settleStrict) */ moved?: string[]; noBox?: boolean; /** 当たるまでを この回数打っても当たらずに止まった (untilHit) */ spam?: number }>;
+  stuckWhy: Record<string, { reason: string; item: StageItem; backs: string[]; /** 着いてから形の合う箱へ移った時の、着いた箱 (古い順) */ moved?: string[]; noBox?: boolean; /** 当たるまでを この回数打っても当たらずに止まった (untilHit) */ spam?: number }>;
   /** 打ち止めの人が最後の方で一番多く通った箱 (輪から出られない所。穴チェックの走行の「どこでループしたか」、10-27 オーナー) */
   loopAt: Record<string, number>;
   /** 手の結果に合う結果の箱が無かった人数 (箱ごと。結果が 1 通りとして箱を 1 つにした手で別の結果が出た等。形の合う箱があればそこへ進み、無ければ止まり) */
@@ -166,7 +166,7 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     // 完成の印は "main" だけ (前の版の妥協 "compromise" は未完成 = 印の無い箱として先へ読む)。
     // 着いた時に狙いの数を見る: 道の当たりの数より少なければ完成にせず、形の合う箱へ (無ければ止まり)
     // (10-22 白紙から 13 通り組んだ #4: 入れ替えのカオスで途中の狙いが消え、完成 100% と出たのに 96 人は狙い 1 つだった)
-    // 失敗 (ここで終わり) の箱: そこで止める。止まり (行き先未定) とは別に数える (スイッチ failEnd)
+    // 失敗 (ここで終わり) の箱: そこで止める。止まり (行き先未定) とは別に数える 
     if (b.done === "fail") return fin({ end: "failed", cost, at, visits, uses, restarts, odd });
     if (b.done === "main" && j) {
       // 完成の箱に着いた人はそのまま完成 (狙いの数え直しはしない、S-05。品質も狙う ☑ の時だけ品質を見る)
@@ -331,7 +331,7 @@ function otherShapeText(data: PatchData, doc: TreeDoc, from: string, to: string,
     `After "${name}" at ${boxWord(doc, from)}, some runs differ from the example at ${boxWord(doc, to)} (${en(s.item)}): this run has ${en(item)}. No box has this shape. Next: change the craft at ${boxWord(doc, from)}, or give a box of the same shape a craft (this run then moves there)`);
 }
 /**
- * 止まった人の形と来た道 (10-29 オーナー「これで何で止まるんか不明」、スイッチ settleStrict): この人の MOD (✦ 付き) と、通った戻り (↩) と、着いてから形の合う箱へ移った箱。
+ * 止まった人の形と来た道 (10-29 オーナー「これで何で止まるんか不明」): この人の MOD (✦ 付き) と、通った戻り (↩) と、着いてから形の合う箱へ移った箱。
  * 精査の一覧と止まりの札の乗せた時の文が使う
  */
 export function stuckDetail(doc: TreeDoc, w: { item: StageItem; backs: readonly string[]; moved?: readonly string[] }): string {

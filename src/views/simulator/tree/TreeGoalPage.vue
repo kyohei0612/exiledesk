@@ -82,14 +82,10 @@ function go(n: 0 | 1 | 2): void {
 /** 「替える」の確かめが出たら見える所へ送る (一覧を下まで送っていると上の帯が見えず、ベースを押しても進まないように見えた、10-23 オーナー) */
 const askEl = ref<HTMLElement | null>(null);
 watch(asking, (v) => { if (v) void nextTick(() => askEl.value?.scrollIntoView({ block: "nearest" })); });
-/** 帯の文はスマホ幅で 1 行丸ごと使う (ボタンと同じ行だと 2 文字幅に潰れて帯が 512px になる、S-06) */
-const ASK_WRAP = flag("goalAskFix");
-if (flag("goalAskFix")) {
-  // 帯が出ている時の Esc 1 回は帯だけ閉じる (U-21 の積み。一覧を押して別のベースへ替えられるよう、外を押しても閉じない、S-06)
-  useDismiss(() => !!asking.value, [askEl], () => { asking.value = null; }, { escOnly: true });
-  // 帯は今の段の今の木の確かめ。段やタブが替わったら外す (今のベースを押して 2 へ進んで戻ると古い帯が残った、S-06)
-  watch([step, t.active], () => { asking.value = null; });
-}
+// 帯が出ている時の Esc 1 回は帯だけ閉じる (U-21 の積み。一覧を押して別のベースへ替えられるよう、外を押しても閉じない、S-06)
+useDismiss(() => !!asking.value, [askEl], () => { asking.value = null; }, { escOnly: true });
+// 帯は今の段の今の木の確かめ。段やタブが替わったら外す (今のベースを押して 2 へ進んで戻ると古い帯が残った、S-06)
+watch([step, t.active], () => { asking.value = null; });
 /** 段のタブの右端のレシピから別の木を開いた = 窓を閉じてその木へ */
 function onRecipe(): void { asking.value = null; dropped.value = []; go(0); }
 /** 貼り付けで取り込んだ (どの画面から貼っても。ベースと狙いを入れて ② へ移すのは tree-paste) = この窓の「まだ選んでいない」と確かめを外す */
@@ -105,7 +101,7 @@ function closeNow(): void {
   t.needBase.value = unpicked.value;
   go(0);
 }
-/** 今ある木の前提を変えたら木はスタートだけに (出る時に保存を聞く。S-67、スイッチ resetOnEdit) */
+/** 今ある木の前提を変えたら木はスタートだけに (出る時に保存を聞く。S-67) */
 const edits = useEditReset(t);
 watch(() => t.goalPage.value, (v, o) => { if (v && !o) edits.remember(); else if (!v) edits.forgetIfClosed(); }, { immediate: true });
 /** 問いはページの上の帯に出るので、下へ送ったまま「これで始める」を押すと画面の上の外に出て見えなかった (最終チェック長 11-02) */
@@ -241,14 +237,14 @@ const tapFrac = useTapFracture();
 function markFracture(modId: string, tier: number): void { simOp("mark-fracture"); t.toggleFracture(modId, tier); }
 /** ツリーへ (「決めた」・流れの帯の 3 / 4): 完成の狙いがあれば「フラクチャーから / 白ベースから」の窓を出してから (どの入口から来ても同じ) */
 const startAsk = ref<null | (() => void)>(null);
-/** 品質の 2 択・カタリストの種類が未定のまま「決めた」を押した (押した後だけ欄の下に理由を出す、S-31c、スイッチ qualityAsk) */
+/** 品質の 2 択・カタリストの種類が未定のまま「決めた」を押した (押した後だけ欄の下に理由を出す、S-31c) */
 const qualityTried = ref(false);
 const qualityWarn = computed(() => (qualityTried.value ? qualityUndecided(t.doc.value, t.goalItem.value?.item) : null));
-/** 完成形が MOD 0 個のまま進もうとした時の注意 (レアリティは問わない、S-10c、スイッチ goalNeedMod)。ノーマルに狙いを付けた時は訳も出す */
+/** 完成形が MOD 0 個のまま進もうとした時の注意 (レアリティは問わない、S-10c)。ノーマルに狙いを付けた時は訳も出す */
 const needMod = ref<[string, string] | null>(null);
 function askNeedMod(): boolean {
   const it = t.goalItem.value?.item;
-  if (!flag("goalNeedMod") || !it || it.prefixes.length || it.suffixes.length) return false;
+  if (!it || it.prefixes.length || it.suffixes.length) return false;
   simOp("goal-need-mod", t.goalRarity.value);
   needMod.value = t.goalRarity.value === "normal" && t.goals.value.length ? ["ノーマルには MOD が付きません。マジックかレアを選んでから、何か 1 つ MOD を決めてください", "Normal items have no mods. Pick Magic or Rare, then choose at least 1 mod"] : ["何か 1 つ MOD を決めてください", "Choose at least 1 mod"];
   return true;
@@ -307,7 +303,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <span class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words">{{ tr(`アイテムレベルを ${t.ilvlNote.value.to} に合わせました (適正)`, `Item level set to ${t.ilvlNote.value.to} (fit)`) }}</span>
         <button type="button" data-tree-ilvl-note-close class="shrink-0 rounded px-1 opacity-60 hover:bg-white/10 hover:opacity-100" :aria-label="tr('閉じる', 'Close')" @click="t.ilvlNote.value = null">×</button>
       </p>
-      <!-- 今ある木の前提を変えた: 木はスタートだけに戻る (S-67、スイッチ resetOnEdit) -->
+      <!-- 今ある木の前提を変えた: 木はスタートだけに戻る (S-67) -->
       <div v-if="edits.ask.value" ref="resetAskEl" data-tree-edit-reset-ask class="sticky top-3 before:pointer-events-none before:absolute before:inset-x-0 before:-top-3 before:h-3 before:bg-panel-toc before:content-[''] z-10 mx-3 mb-2 flex flex-wrap items-center gap-3 rounded-lg border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-[13px]">
         <p class="min-w-0 flex-1 break-words">{{ tr(`この変更で今の木 (スタートの下の箱 ${edits.ask.value.boxes} 個) は消え、スタートからやり直します。保存しますか?`, `This change clears the current tree (${boxesEn(edits.ask.value.boxes)} below the start) and starts over from the start. Save it first?`) }}</p>
         <button type="button" data-tree-edit-reset-save class="g-btn sm" @click="edits.answer('save')">{{ tr("保存して変える", "Save and change") }}</button>
@@ -333,7 +329,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       </div>
       <!-- ベースを替えると今の木が消える時だけ、1 回確かめる (上に貼り付けて、一覧を送っていても見える所に) -->
       <div v-if="asking" ref="askEl" data-tree-base-ask class="sticky top-3 before:pointer-events-none before:absolute before:inset-x-0 before:-top-3 before:h-3 before:bg-panel-toc before:content-[''] z-10 flex flex-wrap items-center gap-3 rounded-lg border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-[13px]">
-        <p class="min-w-0 flex-1" :class="{ 'max-md:basis-full': ASK_WRAP }">{{ tr(`${jaTypeName(asking)} の白紙から組み直します。今の木 (スタートの下の箱 ${t.lostOnBase.value} 個) が消えます。完成の狙いは ${jaTypeName(asking)} にも付く物だけ残ります (1 つ戻すで戻せます)。`, `Start over from a blank ${asking}. This tree (${boxesEn(t.lostOnBase.value)} below the start) will be removed. Final targets that ${asking} can roll are kept (Undo brings it back).`) }}</p>
+        <p class="min-w-0 flex-1 max-md:basis-full">{{ tr(`${jaTypeName(asking)} の白紙から組み直します。今の木 (スタートの下の箱 ${t.lostOnBase.value} 個) が消えます。完成の狙いは ${jaTypeName(asking)} にも付く物だけ残ります (1 つ戻すで戻せます)。`, `Start over from a blank ${asking}. This tree (${boxesEn(t.lostOnBase.value)} below the start) will be removed. Final targets that ${asking} can roll are kept (Undo brings it back).`) }}</p>
         <!-- 保存は名前を聞かずその場で (開いていたレシピなら上書き、tree-save.ts。10-26 オーナー「保存しますかって聞かれたら保存でおｋ」) -->
         <button type="button" data-tree-base-save class="g-btn sm" @click="changeBase(true)">{{ tr("保存して替える", "Save and change") }}</button>
         <button type="button" data-tree-base-ok class="g-btn sm" @click="changeBase(false)">{{ tr("保存せず替える", "Change without saving") }}</button>
@@ -376,7 +372,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       <!-- カードはエミュと同じ既定の幅 (480、スマホは全幅。10-24 オーナー「アイテム絵はシミュと同じ」) -->
       <div data-tree-goal-card class="sticky top-3 flex shrink-0 flex-col gap-2 max-md:static max-md:order-first md:w-[480px]">
         <p v-if="tapFrac.on.value" data-tree-goal-tap-frac class="break-words rounded border border-[#a3342a]/60 bg-[rgba(163,52,42,0.25)] px-2 py-1.5 text-[13px] text-mod-fractured">{{ tapFrac.note.value }}</p>
-        <StageItemCard :row-group="shown.groups.value" v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="cardTags" :row-toggles="wayToggles" @toggle="(id: string) => t.edit((d) => toggleWay(d, id))" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable :click-fracture="flag('clickFracture')" row-remove tier-at-least :mods-head="flag('qualityAsk') ? tr('完成形の MOD', 'Target mods') : undefined" @fracture="onCardFracture" @remove="onCardRemove" @jump="(id) => tapFrac.on.value && tapFrac.tap(id, [...(t.goalItem.value?.item.prefixes ?? []), ...(t.goalItem.value?.item.suffixes ?? [])].find((x) => x.modId === id))" />
+        <StageItemCard :row-group="shown.groups.value" v-if="t.goalItem.value" :item="shown.item.value ?? t.goalItem.value.item" :row-tags="cardTags" :row-toggles="wayToggles" @toggle="(id: string) => t.edit((d) => toggleWay(d, id))" :added="[]" :removed="[]" :holding="false" :flash-key="0" :fracture-group="marks" fracturable :click-fracture="flag('clickFracture')" row-remove tier-at-least :mods-head="tr('完成形の MOD', 'Target mods')" @fracture="onCardFracture" @remove="onCardRemove" @jump="(id) => tapFrac.on.value && tapFrac.tap(id, [...(t.goalItem.value?.item.prefixes ?? []), ...(t.goalItem.value?.item.suffixes ?? [])].find((x) => x.modId === id))" />
         <!-- 完成形の品質 (20% を超えるとブリーチのエッセンスの MOD が要る、10-27 夕オーナー、スイッチ goalQuality) -->
         <TreeGoalQuality v-if="t.goalItem.value" :warn="qualityWarn" />
         <!-- クラフト MOD が 2 つ以上: どれを途中で消すか (完成の狙い・枠・完成の判定に数えない)。残るのはクラフト MOD の上限まで (10-27 夜オーナー、スイッチ goalQuality) -->

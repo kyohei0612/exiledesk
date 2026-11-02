@@ -54,7 +54,7 @@ export function splitWhenText(w: SplitWhen): string {
 /** 箱の数の英語 (1 box / 2 boxes、word = "hit " などの前置き) */
 export const boxesEn = (n: number, word = ""): string => `${n} ${word}box${n === 1 ? "" : "es"}`;
 export const outName = (out: TreeBox["out"]): string => tr(OUT_LOOK[out].ja, OUT_LOOK[out].en);
-/** 手の窓の「結果の箱」の名前 (骨を未発現のまま次へは「未発現の冒涜が付いた」、スイッチ boneLater) */
+/** 手の窓の「結果の箱」の名前 (骨を未発現のまま次へは「未発現の冒涜が付いた」) */
 export function outNameOf(h: Hand | null | undefined, out: TreeBox["out"], aim?: TreeBox["aim"]): string {
   if (out === "any" && veilKeep(h)) return tr("未発現の冒涜が付いた", "Unrevealed desecrated mod added");
   // 印の無い木の狙い無しのフラクチャー (スイッチ fracPick)
@@ -87,7 +87,7 @@ export function headOf(b: Pick<TreeBox, "out" | "aim" | "anyOf" | "mergedOuts"> 
     return tr("外れ MOD がフラクチャーされた場合", "If a miss mod is fractured");
   }
   if (fixed && b.out === "junk") return tr("外れ MOD が固定された", "A miss mod fractured");
-  // 骨を未発現のまま次へ (スイッチ boneLater)
+  // 骨を未発現のまま次へ 
   const k = (b as { junkKey?: string }).junkKey;
   // 狙いが消えた人に付ける狙いが付いた箱 (S-27d、鍵 g:) も題は「狙いが消えた」だけ (付けた瞬間の事なので。10-31 オーナー「狙いが消えただけでいいんじゃない？日本語的に」)。付いた狙いはカードの狙いの行で分かる
   // 手で付けたエッセンスの MOD が消えた箱は「<MOD> が消えた」(S-33c。題だけ、鍵と保存は替えない)
@@ -134,7 +134,7 @@ export function handLabel(h: Hand): string {
   // 消去の残したい MOD (10-27 オーナー): 全部消えてよい = 1 回ずつ箱を並べる、☑ があれば残す数
   const keep = h.keep ? (h.keep.length ? tr(` (${h.keep.length} MOD 残す)`, ` (keep ${h.keep.length})`) : tr(" (どれが消えてもよい)", " (any mod may go)")) : "";
   const label = cat + [handName(h.currency), ...h.omens.map(handName)].join(" + ") + keep + (h.free ? tr(" (狙い無し)", " (no target)") : "") + (veilKeep(h) ? tr(" (未発現のまま)", " (left unrevealed)") : veilPick(h) && !isRevealHand(h.currency) ? tr(" (発現させる)", " (reveal now)") : "") + (isCatalyst(h.currency) ? tr(" (品質を最大まで)", " (to max quality)") : "");
-  // 「スパム」の呼び名は出さない = 設定したカレンシーの名前のまま (10-27 昼オーナー「普通に設定したどおり出せばおｋ」、スイッチ noSpam。中は今まで通り当たるまで)
+  // 「スパム」の呼び名は出さない = 設定したカレンシーの名前のまま (10-27 昼オーナー「普通に設定したどおり出せばおｋ」。中は今まで通り当たるまで)
   return label;
 }
 /** レアリティの名前 (0 の箱・スタートの箱・レアリティの札) */

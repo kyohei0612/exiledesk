@@ -125,7 +125,7 @@ const shelfItem = computed(() => preFill.value?.item ?? item.value);
 /** スマホの下の帯に出す持った札の説明 (PC は札に乗せると出るカードと同じ文、** の太字の印は外す。省略しない。10-26 夜オーナー「スマホも PC と同じ動きに」) */
 const heldHelp = computed(() => (held.value ? stageHelp(held.value, s.data.value, shelfItem.value).map((l) => l.replace(/\*\*/g, "")) : []));
 /**
- * 錯乱のエッセンス (付くノータブルがランダム) はシミュでは選べない (10-27 昼オーナー。エミュには残す)。灰色で理由を短く、スイッチ noSpam と同じ扱い。
+ * 錯乱のエッセンス (付くノータブルがランダム) はシミュでは選べない (10-27 昼オーナー。エミュには残す)。灰色で理由を短く と同じ扱い。
  * 前の木に入っている錯乱の手は開けば今まで通り (持ち直さなければ替わらない)
  */
 /** 錯乱のエッセンスの鍵 (名前はデータから handName で引く) */
@@ -151,11 +151,11 @@ const catalysing = computed(() => used.value.includes(CATALYSING));
  * 付く MOD を選べない手だけ (足す・カオス。10-25 オーナー「全カレンシーで上記の表示して、カオスとか対応してない」、エッセンス・合金は出さない)
  */
 /**
- * 無限のエッセンス (筋力・器用さ・知性のどれかがランダム) = 付きうる能力値のうち完成の狙いにある物を ☑ で当たりにする (10-27 オーナー、スイッチ goalShape。
+ * 無限のエッセンス (筋力・器用さ・知性のどれかがランダム) = 付きうる能力値のうち完成の狙いにある物を ☑ で当たりにする (10-27 オーナー。
  * ☑ の無い能力値は外れ MOD)。完成の狙いに 1 つも無ければ欄を出さず、結果は外れだけ (オーナー「狙い MOD に無いなら全部等しく外れ。ここは外れ MOD をただ付ける作業」)
  */
 const isInfinite = computed(() => !!held.value && infiniteAim(held.value));
-/** 骨の手の「発現させる」☑ (既定は無し = 未発現のまま次へ。スイッチ boneLater、TreeVeilCheck)。発現させる時は発現で出うる MOD 全部が狙いの候補 */
+/** 骨の手の「発現させる」☑ (既定は無し = 未発現のまま次へ、TreeVeilCheck)。発現させる時は発現で出うる MOD 全部が狙いの候補 */
 const veilOn = ref(!!props.current && isBone(props.current.currency) && props.current.veil !== "keep"); // 前の版の骨の手 (veil 無し) は同じ手で発現 = ☑ あり
 const boneVeil = computed(() => !!held.value && isBone(held.value));
 /** スマホの発現の手の ☑ は選んだ物だけ。選ぶのはエミュと同じ MOD の一覧 (S-38b、スイッチ keepOutside) */
@@ -283,11 +283,11 @@ const gone = later(handKey, goneNow);
 const phone = usePhone();
 const aimStep = ref(false);
 /**
- * スマホの 10-27 昼の直し (スイッチ phone1027): 持った物の説明は既定で閉じる (開くのは任意)。
+ * スマホの 10-27 昼の直し : 持った物の説明は既定で閉じる (開くのは任意)。
  * 消去は高貴・カオスと同じく、まず持って「使う ›」→ 次のページで残したい MOD (上に ☑ の並び、一番下に全部消えてよい、既定オン。「n MOD 外れ MOD」は出さない)
  */
 const P27 = computed(() => phone.value);
-/** カオススパムオーブの札と呼び名を出さない (スイッチ noSpam、10-27 昼オーナー「特殊過ぎて逆に困る」)。前に保存した当たるまでの手は開けば今まで通り (spam のまま決められる) */
+/** カオススパムオーブの札と呼び名を出さない (10-27 昼オーナー「特殊過ぎて逆に困る」)。前に保存した当たるまでの手は開けば今まで通り (spam のまま決められる) */
 const helpOpen = ref(false);
 const keepStep = ref(false);
 watch(held, () => { aimStep.value = false; keepStep.value = false; helpOpen.value = false; });

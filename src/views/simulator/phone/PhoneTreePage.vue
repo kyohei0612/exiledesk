@@ -20,14 +20,13 @@ import { useTree } from "../tree/use-tree";
 import { clearHand, setAim, type Aim, type Hand, type HandKind } from "../../../services/simulator/tree/tree-model";
 import { tr } from "../../../i18n/lang";
 import { outStep, phoneCheck, phoneRun, sheet, testedKey, usePhoneQuiz, type Question } from "./use-phone-quiz";
-import { HOLE_CHECK, runLockedWhy } from "../tree/hole-check";
+import { runLockedWhy } from "../tree/hole-check";
 import { routeKeyOf } from "../tree/use-tree-check";
 import { stepOf } from "../tree/tree-fail";
 import PhoneAsk from "./PhoneAsk.vue";
 import PhoneOverview from "./PhoneOverview.vue";
 import PhoneBoxSheet from "./PhoneBoxSheet.vue";
 import PhoneIssues from "./PhoneIssues.vue";
-import { flag } from "../../../web/release-flags";
 import { simAct, simOp } from "../../../web/track";
 import PhoneMemo from "./PhoneMemo.vue";
 import { setMapFold } from "./map-fold";
@@ -37,12 +36,7 @@ import { askLeave } from "../../../web/page";
 import { useArmed } from "../../../utils/use-armed";
 
 const t = useTree();
-/** 下の全体図と箱の重ね窓 (スイッチ phoneMap、10-26 オーナーの選んだ案 B。OK 待ちの間は本番は前の形) */
-const MAP = flag("phoneMap");
-/** 10-27 昼の直し 6 件 (スイッチ phone1027): 段送りは下の帯へ (上は消す)・↶ 戻すを外す */
-const P27 = flag("phone1027");
-/** 当たりはその場で次の手 (同じ予約の 3、結果の画面の作りが決まるまで保留。スイッチ phoneResult1027) */
-const RES27 = flag("phoneResult1027");
+// 下の全体図と箱の重ね窓 (10-26 オーナーの選んだ案 B)・段送りは下の帯へ・↶ 戻すを外す (10-27 昼)・当たりはその場で次の手 (10-27 昼)
 const q = usePhoneQuiz();
 /** 棚を開いている箱 / 当たりの MOD を選んでいる箱 */
 const handFor = ref<string | null>(null);
@@ -65,8 +59,8 @@ watch(() => qKey(q.current.value), () => {
 }, { immediate: true });
 function setOutStep(n: number): void { outStep.value = n; }
 function walk(by: number): void {
-  // 結果の画面の見出し (‹ 前の結果) を外したので、‹ 1 つ前は同じ手の前の結果から戻す (スイッチ phoneResult1027)
-  if (RES27 && by < 0 && q.current.value?.kind === "outs" && outStep.value > 0) { outStep.value--; window.scrollTo(0, 0); return; }
+  // 結果の画面の見出し (‹ 前の結果) を外したので、‹ 1 つ前は同じ手の前の結果から戻す 
+  if (by < 0 && q.current.value?.kind === "outs" && outStep.value > 0) { outStep.value--; window.scrollTo(0, 0); return; }
   const to = trailAt.value + by, x = trail.value[to];
   if (!x || !t.doc.value.boxes[x.id]) return;
   trailAt.value = to; walking = true;
@@ -75,14 +69,14 @@ function walk(by: number): void {
 /** 今の段と全部の段 (PC の画面の段 stepOf と同じ数え方) */
 /**
  * 結果の画面は今出している結果の箱の段 (PC の木の行と同じ数え方。外れは 2 段目・当たりは 3 段目のように、統合の文「(n 段目)」・「n 段目へ戻る」と揃う。
- * 10-27 夕オーナー OK、スイッチ phoneResult1027。前は画面の先頭の結果 = 外れの側の段で、同じ画面の当たりへ戻る文と 1 段ずれた)
+ * 10-27 夕オーナー OK。前は画面の先頭の結果 = 外れの側の段で、同じ画面の当たりへ戻る文と 1 段ずれた)
  */
 const stepNow = computed(() => {
   const c = q.current.value;
   if (!c) return null;
   const ids = c.kind === "outs" ? q.outsOf(c.id) : [c.id];
   if (!ids.length) return null;
-  const k = RES27 && c.kind === "outs" ? Math.min(outStep.value, ids.length - 1) : 0;
+  const k = c.kind === "outs" ? Math.min(outStep.value, ids.length - 1) : 0;
   return stepOf(t.doc.value, ids[k]!);
 });
 const stepAll = computed(() => Math.max(1, ...Object.keys(t.doc.value.boxes).map((id) => stepOf(t.doc.value, id))));
@@ -144,14 +138,14 @@ const pctOf = (r: { finished: number; n: number }): number => Math.round((r.fini
 const donePct = computed(() => pctOf(run.result.value ?? { finished: 0, n: 1 }));
 const fmt = (x: number): string => (!Number.isFinite(x) ? "—" : x >= 100 ? x.toFixed(0) : x.toFixed(1));
 /** 穴チェックに合格していないので「100 人回す」を止める (S-70) */
-const runLocked = computed(() => HOLE_CHECK && (phoneCheck.value.busy || !phoneCheck.value.passed));
+const runLocked = computed(() => (phoneCheck.value.busy || !phoneCheck.value.passed));
 /** 止めている訳 (スマホは乗せられないので下の帯の上に文で出す) */
 const runWhy = computed(() => (main.value?.kind === "run" && runLocked.value && !run.running.value ? runLockedWhy(phoneCheck.value.busy, phoneCheck.value.holes) : null));
 /** 下の帯の主な操作 (今の質問ごと。一覧を出している間は無し) */
 const main = computed((): { kind: string; text: string; off?: boolean; go: () => void } | null => {
   const c = q.current.value, b = c ? t.doc.value.boxes[c.id] : null;
   // 一番最初 (始まりの箱) は「始める」(10-26 夜オーナー「スマホの最初の質問『打つ手を選ぶ』は嫌、一番最初は始めるでいい」)。押すと同じく棚
-  if (c && b && c.kind === "hand" && !b.hand) return { kind: "hand", text: b.out === "start" ? tr("始める", "Start") : RES27 ? tr("この状態で打つカレンシーを選ぶ", "Choose the currency to use on this item") : tr("打つ手を選ぶ", "Choose a craft"), go: () => { handFor.value = c.id; } };
+  if (c && b && c.kind === "hand" && !b.hand) return { kind: "hand", text: b.out === "start" ? tr("始める", "Start") : tr("この状態で打つカレンシーを選ぶ", "Choose the currency to use on this item"), go: () => { handFor.value = c.id; } };
   // 手のある箱 (ここで打った手を見ている所) も下は「次へ」= その手の結果へ (10-27 オーナー「画面の下はいつもどおりの次へのまま、UI の統一感」)
   if (c && b && c.kind === "hand" && b.hand) return { kind: "next", text: tr("次へ", "Next"), go: () => { q.focus.value = { kind: "outs", id: c.id }; window.scrollTo(0, 0); } };
   if (c && c.kind === "outs") {
@@ -159,7 +153,7 @@ const main = computed((): { kind: string; text: string; off?: boolean; go: () =>
     const outs = q.outsOf(c.id), k = Math.min(outStep.value, Math.max(0, outs.length - 1));
     // 既定の答えは無い: 外れも当たりも、この状態で打つカレンシーを選ぶ (か × で消す) まで「次へ」で進めない (10-27 昼オーナー「脳死で次へとかさせちゃう」)
     const o = outs[k];
-    if (RES27 && o && q.awaits(o)) return { kind: "hand", text: tr("この状態で打つカレンシーを選ぶ", "Choose the currency to use on this item"), go: () => { handFor.value = o; } };
+    if (o && q.awaits(o)) return { kind: "hand", text: tr("この状態で打つカレンシーを選ぶ", "Choose the currency to use on this item"), go: () => { handFor.value = o; } };
     if (k < outs.length - 1) return { kind: "decide", text: tr(`次へ (${k + 1} / ${outs.length})`, `Next (${k + 1} / ${outs.length})`), go: () => { q.decideOne(outs[k]!); outStep.value = k + 1; window.scrollTo(0, 0); } };
     return { kind: "decide", text: outs.length > 1 ? tr(`次へ (${outs.length} / ${outs.length})`, `Next (${outs.length} / ${outs.length})`) : tr("次へ", "Next"), go: () => q.decide(c.id) };
   }
@@ -193,15 +187,6 @@ function goBox(id: string): void {
       </div>
       <!-- ツリーのメモ (文だけ、書いてあれば全文) -->
       <PhoneMemo v-model:editing="memoEdit" />
-      <!-- 進み = 今の段 / 全部の段・未定の道の数と、見た段の行き来 (‹ 1 つ前・先へ ›。ツリーとして見せる、10-26 夜オーナー「質問と思わせない」) -->
-      <div v-if="!P27" data-phone-progress class="-my-1 flex items-center gap-2 text-[12px] text-sim-body">
-        <button type="button" data-phone-walk-back :class="FLAT" :disabled="trailAt <= 0" @click="walk(-1)">‹ {{ tr("1 つ前", "Back") }}</button>
-        <span class="min-w-0 flex-1 break-words text-center">
-          <b v-if="stepNow" class="text-[14px] text-amber-200">{{ tr(`${stepNow} 段目`, `Step ${stepNow}`) }}</b><span class="opacity-70"> / {{ tr(`全 ${stepAll} 段`, `${stepAll} steps`) }}</span>
-          <span v-if="total && testedKey === routeKeyOf(t.doc.value)" class="opacity-70"> · {{ tr(`未定 ${total}`, `${total} open`) }}</span>
-        </span>
-        <button type="button" data-phone-walk-fwd :class="FLAT" :disabled="trailAt >= trail.length - 1" @click="walk(1)">{{ tr("先へ", "Forward") }} ›</button>
-      </div>
       <!-- 「残りの道を全部決めると、下の帯で 100 人回せる」の説明はスマホでは出さない (10-26 夜オーナー「上の帯が太い」。前はモンキー 7 の 7 で足した) -->
       <!-- 足りない所 (PC と同じ精査、自動で回る。10-26 案 2) -->
       <PhoneIssues />
@@ -226,12 +211,12 @@ function goBox(id: string): void {
       <!-- 上にツリーの全体図 (常に出す。今の箱が光る・押すとその箱へ・② の「ほかの箱へ」は図で戻り先を選ぶ。10-26 オーナー) -->
       <div data-phone-bar class="sticky bottom-0 z-10 -mx-2 flex flex-col gap-1.5 border-t border-white/10 bg-[#0c0a08] px-2 py-1.5">
         <!-- 完成形と全体図は重ね窓 (PhoneOverview、10-26 夜オーナー「完成図は表に出さない」)。ここは開く 1 行だけ (全幅) -->
-        <button v-if="MAP" type="button" data-phone-map-unfold class="flex h-8 w-full items-center gap-2 rounded-md border border-white/10 bg-[#080706] px-3 text-left text-[12px] text-sim-body" @click="setMapFold(false)">
+        <button type="button" data-phone-map-unfold class="flex h-8 w-full items-center gap-2 rounded-md border border-white/10 bg-[#080706] px-3 text-left text-[12px] text-sim-body" @click="setMapFold(false)">
           <span class="min-w-0 flex-1 break-words">{{ tr(`完成形と全体図 (箱 ${Object.keys(t.doc.value.boxes).length})`, `Final item & overview (${Object.keys(t.doc.value.boxes).length} boxes)`) }}</span><span class="shrink-0">{{ tr("開く ▴", "Open ▴") }}</span>
         </button>
         <!-- 段送り (10-27 昼オーナー「上の段送りを下の帯に、上は消す」。↶ 戻す・↷ は外した = 「↶ 戻すは要らない」) -->
-        <div v-if="P27" data-phone-progress class="flex items-center gap-2 text-[12px] text-sim-body">
-          <button type="button" data-phone-walk-back :class="FLAT" :disabled="trailAt <= 0 && !(RES27 && q.current.value?.kind === 'outs' && outStep > 0)" @click="walk(-1)">‹ {{ tr("1 つ前", "Back") }}</button>
+        <div data-phone-progress class="flex items-center gap-2 text-[12px] text-sim-body">
+          <button type="button" data-phone-walk-back :class="FLAT" :disabled="trailAt <= 0 && !(q.current.value?.kind === 'outs' && outStep > 0)" @click="walk(-1)">‹ {{ tr("1 つ前", "Back") }}</button>
           <span class="min-w-0 flex-1 break-words text-center">
             <b v-if="stepNow" class="text-[14px] text-amber-200">{{ tr(`${stepNow} 段目`, `Step ${stepNow}`) }}</b><span class="opacity-70"> / {{ tr(`全 ${stepAll} 段`, `${stepAll} steps`) }}</span>
             <span v-if="total && testedKey === routeKeyOf(t.doc.value)" class="opacity-70"> · {{ tr(`未定 ${total}`, `${total} open`) }}</span>
@@ -239,14 +224,8 @@ function goBox(id: string): void {
           <button type="button" data-phone-walk-fwd :class="FLAT" :disabled="trailAt >= trail.length - 1" @click="walk(1)">{{ tr("先へ", "Forward") }} ›</button>
         </div>
         <p v-if="runWhy" data-phone-run-why data-run-locked class="break-words text-center text-[12px] text-amber-100/90">{{ runWhy }}</p>
-        <div v-if="P27" class="flex">
+        <div class="flex">
           <button v-if="main" type="button" data-phone-main :data-main="main.kind" class="g-btn-red !min-h-11 min-w-0 flex-1 whitespace-normal break-words px-2 text-[15px] leading-tight" :disabled="main.off" @click="main.go">{{ main.text }}</button>
-        </div>
-        <div v-else class="flex gap-2">
-        <button type="button" data-phone-undo class="g-btn !min-h-11 shrink-0 px-3" :disabled="!t.canUndo.value" :title="tr('1 つ戻す', 'Undo')" @click="t.undo">↶<span class="ml-1 text-[12px]">{{ tr("戻す", "Undo") }}</span></button>
-        <button v-if="main" type="button" data-phone-main :data-main="main.kind" class="g-btn-red !min-h-11 min-w-0 flex-1 whitespace-normal break-words px-2 text-[15px] leading-tight" :disabled="main.off" @click="main.go">{{ main.text }}</button>
-        <span v-else class="flex-1" />
-        <button type="button" data-phone-redo class="g-btn !min-h-11 shrink-0 px-3" :disabled="!t.canRedo.value" :aria-label="tr('やり直し', 'Redo')" @click="t.redo">↷</button>
         </div>
       </div>
     </div>
@@ -257,8 +236,8 @@ function goBox(id: string): void {
     </div>
     <!-- 箱の重ね窓 (全体図・一覧・戻り先選びで押した箱。移らずに中身を全部、10-26 案 B) -->
     <!-- 完成形と全体図 (下の帯の 1 行で開く・戻り先を選ぶ間はいつも) -->
-    <PhoneOverview v-if="MAP" />
-    <PhoneBoxSheet v-if="MAP && sheet" />
+    <PhoneOverview />
+    <PhoneBoxSheet v-if="sheet" />
     <TreePanelPage v-if="aimFor && t.doc.value.boxes[aimFor]" :key="`a-${aimFor}`" kind="aim" :box-id="aimFor" :current="t.doc.value.boxes[aimFor]!.aim" @pick="pickAim" @close="aimFor = null" />
   </div>
 </template>

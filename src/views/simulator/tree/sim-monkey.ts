@@ -17,7 +17,7 @@
  *   __simMonkey.setGoal([{ modId, tier, fractured? }])  完成の MOD を決め直す (tier = 表の段の番号、その段以上が当たり。fractured = フラクチャーの印) → { ok, goals, left, unknown }
  *   __simMonkey.setAim(id, modId, tier)                当たりの箱の MOD を選ぶ (完成の MOD があればその中から、画面の MOD を選ぶ窓と同じ)
  *   __simMonkey.setBack(id, to)                        戻り先 (箱の id、"start" = 始めに戻る、null で外す。画面と同じく作り直し・形の合う箱は無し)
- *   __simMonkey.setDone(id, on = true)               完成の印 (当たり・分かれ目の行の、次の手も戻りも無い箱だけ)。on = "fail" で失敗 (ここで終わり、結果の箱ならどれでも。スイッチ failEnd)
+ *   __simMonkey.setDone(id, on = true)               完成の印 (当たり・分かれ目の行の、次の手も戻りも無い箱だけ)。on = "fail" で失敗 (ここで終わり、結果の箱ならどれでも)
  *   await __simMonkey.check()                          テストラン (ルート精査) → { passed, done: [完成の箱], issues: [{ boxId, kind, text }] }
  *   await __simMonkey.result(n = 100, seed = 1)        画面の「100 人回す」と同じ値段 (相場、神建て) と始めの値段で回す → { finished, perItem, median, … }
  * 見張りの「つながった箱どうしは同じ形」(10-28 最終チェック長の頼み。中身は自動のつなぎと同じ tree-box-shape):

@@ -23,7 +23,7 @@ import TreeOverlays from "./TreeOverlays.vue"; import SimTutorialGuide from "../
 import { boxHeightOf, useRowSettle } from "./use-row-settle"; import { placeTree } from "../../../services/simulator/tree/tree-place";
 import { laneYs, rowLayout } from "../../../services/simulator/tree/tree-row-tops";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
-/** 右の列の完成形の窓を 1.2 倍 (列も 298px、スイッチ goalBig) */
+/** 右の列の完成形の窓を 1.2 倍 (列も 298px) */
 import TreeHandPage from "./TreeHandPage.vue";
 import { useTree } from "./use-tree";
 import { FLOW_ID, useTreeFlow } from "./use-tree-flow";
@@ -236,7 +236,7 @@ function onAddHit(b: Box, at?: { x: number; y: number }, link?: string): void {
   t.edit((d) => { const made = addHit(d, b.parent!, b.id); if (made) { tidyOf(d); setBack(d, made, link); } });
 }
 function onDone(b: Box): void { t.edit((d) => setDone(d, b.id, b.done ? null : "main")); }
-/** 失敗 (ここで終わり) の印を付ける・外す (スイッチ failEnd) */
+/** 失敗 (ここで終わり) の印を付ける・外す  */
 function onFail(b: Box): void { t.edit((d) => setDone(d, b.id, b.done === "fail" ? null : "fail")); }
 /** 戻り先を選んでいる時の札のボタン: ↩ 始めに戻る (10-22 オーナー「選択肢として初めに戻るでいいのでは」。ほかは箱を押して選ぶ、「続きから」は 10-22 に消した) */
 function pickBack(to: string): void { const from = picking.value; if (!from) return; simOp("set-back"); picking.value = null; if (panel.value?.id === from) panel.value = null; t.edit((d) => setBack(d, from, to)); }
@@ -307,12 +307,12 @@ const chipNatural = (id: string): number | undefined => {
   const name = el.querySelector<HTMLElement>(".truncate");
   return (el.offsetWidth + (name ? name.scrollWidth - name.clientWidth : 0)) * Math.max(1, inv.value);
 };
-// 行の高さは箱の本当の高さで詰める (描く前は見込み、描いた後に use-row-settle が直す。スイッチ lineShort)
+// 行の高さは箱の本当の高さで詰める (描く前は見込み、描いた後に use-row-settle が直す)
 const measureBox = (id: string): number | undefined => v.flow.findNode(id)?.dimensions.height || undefined;
 const tidyOf = (d: typeof doc.value): void => void placeTree(d, boxHeightOf(measureBox), chipNatural);
 useRowSettle(doc, measureBox, chipNatural);
 /** 段の決め (札・枝分かれ・統合の線の高さを段で揃える、S-68) */
-/** 乗せた箱につながる木の線 (parent = その箱の手から子へ、child = 親の手からその箱へ。スイッチ hoverLines、S-85b) */
+/** 乗せた箱につながる木の線 (parent = その箱の手から子へ、child = 親の手からその箱へ、S-85b) */
 const edgeHot = (e: { id: string; to: Array<{ id: string }> }): "parent" | "child" | null => (!hoverBox.value ? null : e.id === hoverBox.value ? "parent" : e.to.some((o) => o.id === hoverBox.value) ? "child" : null);
 const rowL = computed(() => rowLayout(doc.value, boxHeightOf(measureBox)));
 

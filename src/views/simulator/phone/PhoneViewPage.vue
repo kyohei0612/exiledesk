@@ -17,7 +17,6 @@ import { useTreeRun, VIEW_N } from "../tree/use-tree-run";
 import { craftStage as s } from "../../../state/craft-stage";
 import { jaTypeName } from "../../../i18n/item-names-ja";
 import { tr } from "../../../i18n/lang";
-import { flag } from "../../../web/release-flags";
 import { simOp } from "../../../web/track";
 import PhoneViewEmpty from "./PhoneViewEmpty.vue";
 import PhoneViewMap from "./PhoneViewMap.vue";
@@ -32,11 +31,11 @@ const noTree = computed(() => { const d = t.doc.value; return t.needBase.value |
 /** 穴チェック: 結果は読むだけ (S-94e、一覧も直す入口も出さない) */
 const check = useTreeCheck(t.doc, () => !noTree.value);
 /**
- * スイッチ holeButton の下は自動で回らないので開いた時にここで回す (58 の holeButton に合わせる繋ぎ目)。
+ * 穴チェックは自動で回らない (S-70) ので開いた時にここで回す。
  * 回している間に木が読み替わった時 (pruneBacks) は、終わってからもう 1 回
  */
 let ranKey = "";
-if (flag("holeButton")) watch([() => routeKeyOf(t.doc.value), () => !!s.data.value && !noTree.value, check.checking], ([key, ok, busy]) => { if (!ok || busy || ranKey === key) return; ranKey = key; void check.runCheck(); }, { immediate: true });
+watch([() => routeKeyOf(t.doc.value), () => !!s.data.value && !noTree.value, check.checking], ([key, ok, busy]) => { if (!ok || busy || ranKey === key) return; ranKey = key; void check.runCheck(); }, { immediate: true });
 const routeKey = computed(() => routeKeyOf(t.doc.value));
 /** 穴チェックが終わった木の形 (終わるまで「回せない」と言わない) */
 const doneKey = ref("");

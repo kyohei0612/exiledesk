@@ -1,8 +1,8 @@
 <!--
-  PhoneIssues.vue — スマホ版の「足りない所」(PC と同じルート精査 = use-tree-check。スイッチ holeButton の下は押した時だけ回る)。
+  PhoneIssues.vue — スマホ版の「足りない所」(PC と同じルート精査 = use-tree-check の下は押した時だけ回る)。
   10-26 オーナーの選んだ失敗時の挙動の案 2「スマホにも精査」(前はスマホに無く、打てない・外れを持ったまま戻る・分かれ目の行が無い などが見えなかった)。
   ページの中は 1 行「足りない所 n ▾」だけ (10-26 夜オーナー OK、一覧が質問より上で 547px を取り、開いても質問が画面の外だった)。押すと下から重ね窓で全部 (文は省略しない、決まり 10)。
-  窓の行を押すと、その箱の重ね窓 (案 B、スイッチ phoneMap) か、閉じていればその箱の質問へ
+  窓の行を押すと、その箱の重ね窓 (案 B) か、閉じていればその箱の質問へ
 -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from "vue";
@@ -10,7 +10,6 @@ import { useTree } from "../tree/use-tree";
 import { routeKeyOf, useTreeCheck } from "../tree/use-tree-check";
 import { phoneCheck, sheet, testedKey, usePhoneQuiz } from "./use-phone-quiz";
 import { holeAgain, holeBusy, holeName } from "../tree/hole-check";
-import { flag } from "../../../web/release-flags";
 import { tr } from "../../../i18n/lang";
 
 const t = useTree();
@@ -24,7 +23,6 @@ const { checking, progress } = check;
 const issues = computed(() => (check.issues.value ?? []).filter((x) => !(x.kind === "open" && !t.doc.value.boxes[x.boxId]?.split) && !(x.kind === "noDone" && x.boxId === "start" && q.questions.value.length > 0)));
 /** 隠している「完成の箱が無い」がある (未定の質問が残っている間)。緑の「止まる所なし」だけだと完成の箱が無いのに合格に見えた (10-27 夜モンキー 2 回目 8、スイッチ phoneTestDone) */
 const noDoneYet = computed(() => (check.issues.value ?? []).some((x) => x.kind === "noDone"));
-const MAP = flag("phoneMap");
 // 下の帯の「100 人回す」が読む (合格まで止める、S-70)
 watchEffect(() => { phoneCheck.value = { busy: checking.value, passed: check.passed.value, holes: issues.value.length }; });
 /** 穴チェックを押した後 (木の形がその時のまま) だけ結果を出す */
@@ -34,9 +32,7 @@ function test(): void { testedKey.value = routeKeyOf(t.doc.value); void check.ru
 const listOpen = ref(false);
 function open(id: string): void {
   listOpen.value = false;
-  if (MAP) { sheet.value = { id, issue: issues.value.filter((x) => x.boxId === id).map((x) => x.text).join(" / ") }; return; }
-  const b = t.doc.value.boxes[id];
-  q.focus.value = b?.hand ? { kind: "outs", id } : b?.parent ? { kind: "outs", id: b.parent } : { kind: "hand", id };
+  sheet.value = { id, issue: issues.value.filter((x) => x.boxId === id).map((x) => x.text).join(" / ") };
 }
 const onKey = (e: KeyboardEvent): void => { if (e.key === "Escape") listOpen.value = false; };
 onMounted(() => window.addEventListener("keydown", onKey));

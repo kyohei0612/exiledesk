@@ -18,15 +18,13 @@ import { usePhoneQuiz, type Question } from "./use-phone-quiz";
 import { stepOf } from "../tree/tree-fail";
 import PhoneOutRow from "./PhoneOutRow.vue";
 import { tr } from "../../../i18n/lang";
-import { flag } from "../../../web/release-flags";
 
 /** step = 今出している結果の番号 (PhoneTreePage の outStep。下の帯の「次へ」と同じ値を見る) */
 const props = defineProps<{ q: Question; step: number }>();
 const emit = defineEmits<{ hand: [id: string]; step: [n: number] }>();
 const t = useTree();
 const quiz = usePhoneQuiz();
-/** 「打つ手を替える」を外す (10-27 昼オーナー「意味が分からない」。手は「○○を選択」の枠で替え、消すのは結果の枠の右上の ×。スイッチ phoneResult1027) */
-const P27 = flag("phoneResult1027");
+// 「打つ手を替える」は外した (10-27 昼オーナー「意味が分からない」。手は「○○を選択」の枠で替え、消すのは結果の枠の右上の ×)
 const box = computed(() => t.doc.value.boxes[props.q.id]);
 const item = computed(() => (s.data.value && box.value ? sampleOf(s.data.value, t.doc.value, props.q.id, 1).item : null));
 const tags = computed(() => (s.data.value && item.value ? treeRowTags(s.data.value, t.doc.value, box.value?.unwanted ?? [], item.value, box.value) : null));
@@ -52,7 +50,7 @@ function showHand(id: string): void { quiz.focus.value = { kind: "hand", id }; }
 <template>
   <!-- スマホなので中央揃え (見出し・カード・ボタン。10-26 夜オーナー)。見出しは「n 段目 · 〜」(ツリーとして見せる、質問の言い方はしない) -->
   <div v-if="box" data-phone-ask :data-ask="q.kind" :data-box-id="q.id" class="flex min-w-0 flex-col items-center gap-2 text-center">
-    <p v-if="!(q.kind === 'hand' && box.out === 'start' && !box.hand) && !(P27 && q.kind === 'outs')" class="break-words text-[11px] text-sim-dim">{{ quiz.pathText(q.id) }}</p>
+    <p v-if="!(q.kind === 'hand' && box.out === 'start' && !box.hand) && q.kind !== 'outs'"class="break-words text-[11px] text-sim-dim">{{ quiz.pathText(q.id) }}</p>
     <template v-if="q.kind === 'hand'">
       <h2 class="break-words text-[17px] font-bold text-[#f0e4c8]">{{ tr(`${step} 段目`, `Step ${step}`) }} · {{ box.out === "start" ? tr("スタート", "Start") : quiz.boxTitle(q.id) }}</h2>
       <!-- 今のアイテム (この箱に着いた時の形)。完成の狙いの丸い札の並びは 10-26 夜にやめた (オーナー「要らない、頭が痛くなる」。完成形は上のアイテムの枠で見る) -->
@@ -60,19 +58,11 @@ function showHand(id: string): void { quiz.focus.value = { kind: "hand", id }; }
       <template v-if="box.hand">
         <!-- ここで打った手 (10-27 オーナー「カオスオーブを選択とだけ出し、押したらカレンシーの選択画面へ」)。結果へは下の帯の「次へ」 -->
         <button type="button" data-phone-hand-now class="w-full rounded-xl border border-amber-300/60 bg-[#2a2014] px-3 py-3 text-center text-[14px] text-amber-50" @click="emit('hand', q.id)">{{ tr(`${handLabel(box.hand)}${/\)$/.test(handLabel(box.hand)) ? " " : ""}を選択`, `Selected: ${handLabel(box.hand)}`) }}</button>
-        <button v-if="!P27" type="button" data-phone-hand-change class="g-btn !min-h-11 px-4" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
       </template>
     </template>
     <template v-else>
-      <!-- 結果の画面は見出し (道・段・結果 n / m) を出さず、枠の頭に「カオスオーブで外れた場合」と書く (10-27 昼オーナー、スイッチ phoneResult1027) -->
-      <h2 v-if="!P27" class="break-words text-[16px] font-bold text-[#f0e4c8]">{{ tr(`${step} 段目`, `Step ${step}`) }} · {{ box.hand ? tr(`${handLabel(box.hand)} を打った後`, `After ${handLabel(box.hand)}`) : "" }}</h2>
-      <!-- 結果は 1 つずつ (k / n)。前の結果へは小さな 1 行で戻れる -->
-      <p v-if="outs.length > 1 && !P27" data-phone-out-count class="flex items-center gap-3 text-[12px] text-sim-dim">
-        <button v-if="k > 0" type="button" data-phone-out-prev class="min-h-10 underline decoration-white/20" @click="emit('step', k - 1)">‹ {{ tr("前の結果", "Previous result") }}</button>
-        <span>{{ tr(`結果 ${k + 1} / ${outs.length}`, `Result ${k + 1} / ${outs.length}`) }}</span>
-      </p>
+      <!-- 結果の画面は見出し (道・段・結果 n / m) を出さず、枠の頭に「カオスオーブで外れた場合」と書く (10-27 昼オーナー)。結果は 1 つずつ、前後は下の帯 -->
       <PhoneOutRow v-if="outs[k]" :key="outs[k]" :box-id="outs[k]!" @hand="showHand" @pick="(id) => emit('hand', id)" />
-      <button v-if="!P27" type="button" data-phone-hand-change class="g-btn !min-h-11 px-4" @click="emit('hand', q.id)">{{ tr("打つ手を替える", "Change the craft") }}</button>
     </template>
   </div>
 </template>

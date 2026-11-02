@@ -13,7 +13,7 @@ import { isInfiniteEssence } from "../../craft-stage/apply-essence";
 
 /**
  * 無限のエッセンス (筋力・器用さ・知性のどれかがランダム) は ☑ した能力値だけ当たり、ほかが付いたら外れ MOD (10-27 オーナー「知性を選んだら知性が付いた = 当たり、
- * 筋力・器用さが付いた = 外れ MOD の 2 枝」、スイッチ goalShape)。ほかのエッセンスは付く MOD が決まっているので今のまま
+ * 筋力・器用さが付いた = 外れ MOD の 2 枝」)。ほかのエッセンスは付く MOD が決まっているので今のまま
  */
 export const infiniteAim = (key: string | undefined): boolean => !!key && isInfiniteEssence(key);
 import { isRevealHand, midAims, revealedOf, revealHitOf, stoneAims, veilKeep, veilPick } from "./tree-veil";
@@ -138,7 +138,7 @@ function boxOutcomeRaw(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageI
     const hit = fracFreeHit(data, m, own);
     return hit ? { out: "hit", hits: [hit] } : { out: "junk", hits: [], ...(m ? { junkKey: junkKeyOf(data, m) } : {}) };
   }
-  // 骨を未発現のまま (スイッチ boneLater): 未発現の冒涜が付いた (打った後) 1 つ。満杯の側で狙いが消えた時だけ狙いが消えた
+  // 骨を未発現のまま : 未発現の冒涜が付いた (打った後) 1 つ。満杯の側で狙いが消えた時だけ狙いが消えた
   if (veilKeep(b.hand)) { const oc = outcomeOf(data, before, after, aims, key); return oc.out === "lost" ? oc : { out: "any", hits: [] }; }
   // 発現で選ぶ手: 発現した MOD が ☑ の札 (この手の当たりの箱) に当たれば当たり、ほかは外れ (狙いが消えたは前のまま)
   if (veilPick(b.hand)) {
@@ -177,13 +177,13 @@ function boxOutcomeRaw(data: PatchData, doc: TreeDoc, b: TreeBox, before: StageI
 export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: Hand, pre: string | null = null, extra: readonly Aim[] = [], arrived?: readonly { item: StageItem; aimed: ReadonlySet<string> }[], roll = false): Array<{ out: OutKind; aim: Aim | null; junkKey?: string }> | null {
   // 印の無い木の狙い無しのフラクチャー: 固定されうる MOD ごとの箱 (「〇〇がフラクチャーされた場合」。スイッチ fracPick)
   if (fracFree(doc, h)) { const f = fracFreeOuts(data, doc, Array.from({ length: SINGLE_SEEDS }, (_, i) => sampleOf(data, doc, boxId, i + 1).item)); const l = [...f.aims.map((x) => ({ out: "hit" as OutKind, aim: x })), ...f.junk.map((k) => ({ out: "junk" as OutKind, aim: null, junkKey: k }))]; return l.length ? l : null; }
-  // 骨を未発現のまま (狙い無し) は下の未発現の所で「未発現の冒涜が付いた」1 つに (スイッチ boneLater)
+  // 骨を未発現のまま (狙い無し) は下の未発現の所で「未発現の冒涜が付いた」1 つに 
   // 狙い無しは「打った後」1 つ (手の種類の箱)。スイッチ junkSide の間は付いた側ごとの「打った後」(S-65)
   const freeSide = !!h.free && !veilKeep(h);
   if (h.repeat || (h.free && !veilKeep(h) && !freeSide) || isCatalyst(h.currency) || (h.keep && !h.keep.length && effectOf(h.currency) === "remove")) return null;
   // ルーンの手は確定の手: はめた後のアイテムの「打った後」1 箱 (カタリストと同じ、S-31e。前は当たり (付く MOD 無し) と外れに分かれて輪になった)
   if (isRuneHand(h.currency)) return [{ out: "any", aim: null }];
-  // 後から打つ発現の手: ☑ の札ごとの当たり + 外れ (発現は MOD を消さない。スイッチ boneLater)
+  // 後から打つ発現の手: ☑ の札ごとの当たり + 外れ (発現は MOD を消さない)
   if (isRevealHand(h.currency)) return [...extra.map((a) => ({ out: "hit" as OutKind, aim: a })), { out: "junk", aim: null }];
   // 消去の残したい MOD があれば、その MOD だけを狙いとして見る (ほかは外れ MOD、boxOutcomeOf と同じ)
   const aims = h.keep?.length && effectOf(h.currency) === "remove" ? keepAims(doc, h.keep) : [...aimsOf(doc), ...extra.filter((a) => !aimsOf(doc).some((x) => x.modId === a.modId && x.tier === a.tier))];
@@ -220,11 +220,11 @@ export function possibleOutsOf(data: PatchData, doc: TreeDoc, boxId: string, h: 
       const prepped = prepFor(data, it, h.currency), outs = (stepOutcomes(data, prepped, h.currency, engineOmens(h)) ?? (roll ? rolledOutcomes(data, prepped, h.currency, engineOmens(h)) : null))?.filter((o) => !o.void);
       // 打てない見本は飛ばす (外れの種類で打てない人。その人は打てる箱へ移る S-64、スイッチ keepOutside)。全部打てなければ下の list が空で null
       if (!outs?.length) { if (flag("keepOutside")) continue; return null; }
-      // 未発現が新しく付く手だけ (前から未発現を持ったまま打つフラクチャー・カオスなどは普通に分ける。スイッチ boneLater)
+      // 未発現が新しく付く手だけ (前から未発現を持ったまま打つフラクチャー・カオスなどは普通に分ける)
       if (outs.some((o) => unrevealedOf(o.item)) && !unrevealedOf(it)) {
         veiled = true;
         // 消えて「狙いが消えた」になるのは道で持っている狙い・持って着きうる狙いだけ (☑ の無い手で付いた完成形の MOD は外れ MOD = boxOutcomeOf と同じ。
-        // 狙い無しの錬金術の打った後に付いたキャストを骨が消すと「狙いが消えた」が出た、10-28 モンキー 6。スイッチ boneLater)
+        // 狙い無しの錬金術の打った後に付いたキャストを骨が消すと「狙いが消えた」が出た、10-28 モンキー 6)
         // 残したい MOD を決めた骨は、その MOD が消えた時だけ狙いが消えた (S-27d、スイッチ keepAll)
         const lostOf = (o: { item: StageItem }): number => aimDiff(data, it, o.item, keptAimsOf(doc, h) ?? aims, { sameText: true }).lost.length;
         if (outs.some((o) => lostOf(o))) veiledLost = true;

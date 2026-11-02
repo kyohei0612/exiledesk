@@ -13,7 +13,6 @@
  */
 import type { Aim, TreeBox, TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { newTree } from "../../../services/simulator/tree/tree-model";
-import { HOLE_CHECK } from "../tree/hole-check";
 
 export const TUT_BASE = "Absent Amulet";
 export const TUT_ILVL = 75;
@@ -83,6 +82,6 @@ export const DRAFT_WHY: Record<string, Why> = {
   "cast-annul": (n) => [`サフィの外れだけ消したいので${n.item(DEX_ANNUL)}を掛ける。消えるのは必ず外れなので結果は 1 箱、4 段目へ自動で戻る`, `Only the suffix miss should go, so apply ${n.item(DEX_ANNUL)}. It always removes the miss, so there is one box that goes back to step 4 by itself`],
   "spirit-free": (n) => [`スタートで${n.mod(SPIRIT)}が付いた人は、残りのプレを狙い無しで埋める (☑ 無し = 結果は「打った後」1 箱)`, `Runs that got ${n.mod(SPIRIT)} at the start fill the last prefix with no target (no ☑ = one "after" box)`],
   "free-ward": (n) => [`${n.item(WARD_KEY)}で外れを消して${n.mod(WARD)}を付ける。当たりは 4 段目と同じ中身なので統合、${n.mod(SPIRIT)}が消えた人 (狙いが消えた) は 4 段目の外れへ自動で進む。これで「!」が 0`, `${n.item(WARD_KEY)} replaces the miss with ${n.mod(WARD)}. The hit has the same mods as step 4 so it merges, and runs that lose ${n.mod(SPIRIT)} (target lost) go on to the step-4 miss by themselves. Now there are no "!" left`],
-  test: () => (HOLE_CHECK ? ["足りない所が 0 になると、穴チェックで ✓ 合格が出る。合格するまで「100 人回す」は押せない", "With nothing missing, the gap check shows ✓ Passed. \"Run 100\" stays locked until then"] : ["足りない所が 0 になると、テストで ✓ 合格が出る", "With nothing missing, the test run shows ✓ Passed"]),
+  test: () => ["足りない所が 0 になると、穴チェックで ✓ 合格が出る。合格するまで「100 人回す」は押せない", "With nothing missing, the gap check shows ✓ Passed. \"Run 100\" stays locked until then"],
   run: () => ["100 人回すと、結果のまとめで完成の割合と費用が見られる。値段を入れ直すと費用も変わる", "Run it 100 times; the summary shows the finish rate and the cost. Change the prices to update the cost"],
 };

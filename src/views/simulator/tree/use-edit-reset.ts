@@ -1,6 +1,6 @@
 /**
  * use-edit-reset.ts — 今ある木の前提 (ベース・アイテムレベル・完成の狙い・✦・始め方・途中で消える MOD・完成形) を完成形の設定で変えたら、木はスタートだけに戻す
- * (S-67、10-28 夜オーナー「今あるツリーを編集っていみでMOD一覧に戻ってなにかしら変更加えるんだったらリセットが普通でしょ」「保存を促した方が良いね」、スイッチ resetOnEdit)。
+ * (S-67、10-28 夜オーナー「今あるツリーを編集っていみでMOD一覧に戻ってなにかしら変更加えるんだったらリセットが普通でしょ」「保存を促した方が良いね」)。
  * 前は始め方をフラクチャー済みから白に変えても前の木 (高貴なオーブ (完全) の手) が残り、ノーマルに高貴を打つ木になった。
  * 完成形の設定を開いた時の木を覚え、出る時 (決めた・← ツリーに戻る・× / Esc) に前提が変わっていて手のある木なら「保存して変える / 保存せず変える / やめる」を聞く。
  * やめる = 開いた時の木へ戻して設定の画面に残る。手の無い木は聞かずに出る
@@ -8,7 +8,6 @@
 import { nextTick, ref } from "vue";
 import type { TreeDoc } from "../../../services/simulator/tree/tree-model";
 import { currentTreeRecipe, overwriteTreeRecipe, saveTreeRecipe, setCurrentTreeRecipe } from "../../../state/simulator/tree-recipes";
-import { flag } from "../../../web/release-flags";
 import { autoName } from "./tree-save";
 import type { useTree } from "./use-tree";
 
@@ -24,7 +23,6 @@ const premiseOf = (d: TreeDoc): string => JSON.stringify([d.base, d.itemLevel, !
 let kept: { before: TreeDoc | null; premise: string } | null = null;
 
 export function useEditReset(t: ReturnType<typeof useTree>) {
-  const on = flag("resetOnEdit");
   let before: TreeDoc | null = null, premise = "";
   /** 確かめを出している間の続き (出た後にする事) と、消える箱の数 */
   const ask = ref<null | { next: () => void; boxes: number }>(null);
@@ -39,7 +37,7 @@ export function useEditReset(t: ReturnType<typeof useTree>) {
   /** 出る前に: 前提が変わっていて手のある木なら聞く (聞いた時は false) */
   function leave(next: () => void): void {
     const d = t.doc.value;
-    if (!on || !before || !hasHand(d) || premiseOf(d) === premise) { kept = null; next(); return; }
+    if (!before || !hasHand(d) || premiseOf(d) === premise) { kept = null; next(); return; }
     ask.value = { next, boxes: Object.values(before.boxes).filter((b) => b.out !== "start" && b.out !== "pass").length };
   }
   function answer(kind: "save" | "drop" | "cancel"): void {

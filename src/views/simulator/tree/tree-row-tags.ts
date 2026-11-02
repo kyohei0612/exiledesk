@@ -47,7 +47,7 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   if (up && up.hand && isRuneHand(up.hand.currency)) return treeRowTags(d, doc, unwanted, it, { id: up.id, out: up.out, anyOf: up.anyOf, hand: up.hand });
   const out = new Map<string, RowTag>();
   // 消去の直線の箱 (全部消えてよい消去の手の箱) は、フラクチャー以外の MOD を全部「外れ MOD」で出す (手の窓で消去を持った時と同じ考え。10-27 夜オーナー、スイッチ heldTags)
-  // 直線の途中の箱だけ (消去を打ち始める元の箱は普段の札。子に消去の手を足すと親の ES・未発現まで「外れ MOD」に変わった、10-28 モンキー 1。未発現の枠も替えない。スイッチ boneLater)
+  // 直線の途中の箱だけ (消去を打ち始める元の箱は普段の札。子に消去の手を足すと親の ES・未発現まで「外れ MOD」に変わった、10-28 モンキー 1。未発現の枠も替えない)
   const chainBox = !!box?.id && stripHand(doc.boxes[doc.boxes[box.id]?.parent ?? ""]?.hand);
   // 箱の表示はその箱の見本と、その箱を作った手 (親の手) だけから (この箱に置いた手 = 子を作る手では変えない。10-28 オーナー OK の対策 2)。
   // 全部消えてよい消去で作られた箱 (直線の途中と終わり) が「外れ MOD」
@@ -59,7 +59,7 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   const any = box?.anyOf && box.anyOf.length > 1 ? box.anyOf : null;
   const anyT = any ? targetsOf(d, any) : [];
   const anyText = any ? any.map(useTree().aimShort).join(tr(" か ", " or ")) : "";
-  // 完成の狙い (完成形の MOD) も狙いに数える (スイッチ goalShape、10-27 夕モンキー 1: エッセンスで付いた完成形の MOD が「外れ MOD」と出た)
+  // 完成の狙い (完成形の MOD) も狙いに数える (10-27 夕モンキー 1: エッセンスで付いた完成形の MOD が「外れ MOD」と出た)
   // 外れの箱 (外れ・狙いが消えた・外れが消えた・打った後) は、その箱まで来た道で付いている狙いだけを狙いに数える。☑ の無い MOD はそのカレンシーでは外れ扱いなので、
   // ☑ していない完成形の MOD が付いていても「外れ MOD」(10-27 夜オーナー、モンキー 2 回目 7。スイッチ junkByCheck)
   const missBox = !!box?.id && !!box.out && box.out !== "start" && MISS_OUTS.includes(box.out);
@@ -69,14 +69,14 @@ export function treeRowTags(d: PatchData, doc: TreeDoc, unwanted: readonly strin
   // 始まりから付いている完成の狙いも狙い (道の当たりの札には無い。外れが固定された箱で始まりの ES が「外れ MOD」と出た、10-28。スイッチ boxShape)
   // 段は完成の狙いの段 (どの段でも狙いにすると、狙いの段に届かない低い段まで札が付かなかった、10-28 見張り bone3 b4)
   if (missBox && !am) for (const m of doc.start?.mods ?? []) { const g = (doc.memoAims ?? []).find((x) => x.modId === m.modId); if (g && !held.some((h) => h.modId === m.modId)) held.push({ modId: g.modId, tier: g.tier }); }
-  // 当たりの箱の札の MOD は、その箱では狙い (発現で選んだ置き石も。以降の箱では外れ MOD。スイッチ boneLater)
+  // 当たりの箱の札の MOD は、その箱では狙い (発現で選んだ置き石も。以降の箱では外れ MOD)
   const ownAim = box?.id && box.out === "hit" ? doc.boxes[box.id]?.aim : null;
   // 以降の箱でも見本に付いている置き石は狙い (S-33、スイッチ keepOutside)
   const placed = box?.id ? placedAims(doc).filter((a) => aimedOfCard(d, doc, box.id!, it)?.has(a.modId)) : [];
   const aims = targetsOf(d, [...(missBox ? held : [...aimsOf(doc), ...(doc.memoAims ?? [])]), ...placed, ...(ownAim ? [ownAim] : [])]), bad = targetsOf(d, unwanted.map((u) => ({ modId: u, tier: 99 }))), o = aimOpts(d);
   const goalT = targetsOf(d, doc.memoAims ?? []);
   for (const m of [...it.prefixes, ...it.suffixes]) {
-    // 未発現の枠は元の文 (未発現の冒涜 MOD) のまま (スイッチ boneLater)
+    // 未発現の枠は元の文 (未発現の冒涜 MOD) のまま 
     // 固定された外れ (✦ の外れ) も「外れ MOD」だけ (値を出さない、S-82 仮。見本ごとに違う MOD が箱の名前に見えた、10-28 モンキー 7。スイッチ boxShape)
     // 比べるのは完成の狙い全部 (✦ で始まった狙いは道の当たりに無いので、道の狙いで見るとスペル +3 ✦ まで外れになった、10-28 見張り)
     if (m.fractured && !isAimMod(m, goalT, o)) { out.set(m.modId, { text: tr("外れ MOD", "Miss"), tone: "bad", replace: true, title: tr(`固定された外れ MOD: ${modText(m)}`, `Fixed (fractured) miss mod: ${modText(m)}`) }); continue; }

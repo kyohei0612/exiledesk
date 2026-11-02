@@ -13,7 +13,6 @@ import { headOf, modShort } from "../tree/tree-names";
 import { useTree } from "../tree/use-tree";
 import { openTreePage, treeStep } from "../../../web/page";
 import { simOp } from "../../../web/track";
-import { HOLE_CHECK } from "../tree/hole-check";
 import { DRAFT_WHY, SPELL, isTutorialDoc, rolesOf, tutorialDoc, type Role, type TutNames } from "./tut-route";
 import { tutData, type TutStepDef } from "./tut-data";
 import { aimSel, aimsChecked, checked, handOpen, holding, inView, keepSel, omenOn, omensOnNow, shelfSel, shown } from "./tut-dom";
@@ -156,9 +155,9 @@ export function startScene(c: TutCtx, k: (s: string) => string): TutNow {
 }
 export function testScene(c: TutCtx, k: (s: string) => string, btn: string): TutNow {
   // 木を変えるたびに穴チェックが自動で回る。回っている間はボタンが押せない (押しても数えない) ので待つ
-  if (document.querySelector<HTMLButtonElement>(btn)?.disabled) return { key: k("busy"), target: null, draft: HOLE_CHECK ? say("穴チェックが回っている。終わるまで待つ", "The gap check is going. Wait for it to finish") : say("テストが回っている。終わるまで待つ", "The test run is going. Wait for it to finish") };
-  if (!c.testPressed) return { key: k("main"), target: btn, draft: HOLE_CHECK ? say("「穴チェック」を押す (止まる所・打てない手を探す)", "Click \"Gap check\" (finds dead ends and unusable crafts)") : say("「テストで回す」を押す (止まる所・打てない手を探す)", "Click the test run (finds dead ends and unusable crafts)") };
-  return { key: k("wait"), target: null, draft: HOLE_CHECK ? say("穴チェックが終わるのを待つ (✓ 合格が出たら次へ)", "Wait for the gap check (✓ Passed)") : say("テストが終わるのを待つ (✓ 合格が出たら次へ)", "Wait for the test run (✓ Passed)") };
+  if (document.querySelector<HTMLButtonElement>(btn)?.disabled) return { key: k("busy"), target: null, draft: say("穴チェックが回っている。終わるまで待つ", "The gap check is going. Wait for it to finish") };
+  if (!c.testPressed) return { key: k("main"), target: btn, draft: say("「穴チェック」を押す (止まる所・打てない手を探す)", "Click \"Gap check\" (finds dead ends and unusable crafts)") };
+  return { key: k("wait"), target: null, draft: say("穴チェックが終わるのを待つ (✓ 合格が出たら次へ)", "Wait for the gap check (✓ Passed)") };
 }
 export function runScene(c: TutCtx, k: (s: string) => string, btn: string): TutNow {
   // 穴チェックに通っていない間も押せない (S-70)。回している時の文にしない

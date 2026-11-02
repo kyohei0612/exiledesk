@@ -64,7 +64,7 @@ export function markDone(d: TreeDoc, later: ReadonlySet<string>, scope: Readonly
 }
 
 /**
- * 結果の画面で、まだ打つカレンシーを選んでいない扱いか (スイッチ phoneResult1027)。決めていない・次の手を決めるにした箱に加え、
+ * 結果の画面で、まだ打つカレンシーを選んでいない扱いか 。決めていない・次の手を決めるにした箱に加え、
  * このページで手を選んで新しくできた外れの側の箱 (fresh) は、自動でつないだ戻りがあっても、棚から手を選ぶ (picked) までは答えも「次へ」も出さない
  * (10-27 昼オーナー「外れた場合なんだから一旦ここ自動で何も表示させずに打つカレンシー決めさす」「決めてないのに次へいかせる UI もおかしい」)。
  * 開いた木 (保存した木・レシピ) で戻り・手がもう付いている外れは選んだ状態のまま (選び直さなくても次へで進める、10-27 昼オーナー)。
@@ -168,7 +168,7 @@ export function usePhoneQuiz() {
     pick(id);
     answer((d) => { setBack(d, id, null); setDone(d, id, "main"); }, [id]);
   }
-  /** 失敗 (ここで終わり)。もう一度押すと外す (スイッチ failEnd) */
+  /** 失敗 (ここで終わり)。もう一度押すと外す  */
   function setFailed(id: string): void {
     later.value = later.value.filter((x) => x !== id);
     pick(id);
