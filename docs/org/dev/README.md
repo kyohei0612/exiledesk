@@ -15,6 +15,7 @@
 8. 報告はブラックへ SendMessage 2〜5 行 (変えた物・commit・確かめた物・残り)、中身は todo.md・notes/。ターンの終わりに「終わった / 待つ理由」を 1 行。
 9. 仕事の終わりに README の地図を直す。決まりは 1 個 120 字・全部 1200 字まで、消す時はブラックに聞く。会話が重くなったら限界の前に引き継いでブラックに「入れ替えて」。
 10. 本番の確かめは R-09・R-10 (docs/spec/release.md)。他の部の保存止めはビルドの間だけ。
+11. AI の目の届かない回し物 (自動の台本・テスト・二分探索・裏のプロセス・ビルド・猿) は 1 分ごとに出力を見て、空回り (進まない・全部飛ばし・同じ所の繰り返し) はすぐ止める (G-26)。部長に頼む文にも入れる。
 
 ## 地図
 - 持ち主の表: docs/org/owners.txt (下の行ほど強い) と scripts/owner-of.mjs (`--status`・`--check <部> <パス…>`)。地図と食い違ったら owners.txt が正。境目・土台・英語のデータ (部の名前「共通」) はジン部長、両方の画面で一緒の部品 for-share・共通の部品 src/components・言語の切り替え lang.ts・用語集 (部の名前「デザイン」) はデザイン部長 (10-23)、サーバー (server/) はサーバー管理人 (10-21 に開発部長から移した)。エンジンの見張り scripts/check-engine-entry.mjs (CI、控え check-engine-entry.baseline.json より増えたら落ちる。減ったら `--head --write`。見る物 B〜E は emulator/README.md の地図。核の見分けに owners.txt の「ジン」を使うので、共通の物は「共通」のまま)。
@@ -26,5 +27,5 @@
 - 動画 (video/、旧 POE2Tube) との受け渡し (動画編集長と): 録画モード src/utils/rec-mode.ts (`?rec=1`・seed・`__rec`)、撮影 URL・`data-rec` の目印、JSON の形 (正は video/contracts/、ExileDesk 側 contract.ts・scripts/craft-stage-run.mjs)。変える時は両方を同じ commit で、メモ poe2tube-handoff。video/ は CI (tests.yml の paths-ignore)・vite の watch・tailwind (@source not) から外してある。
 - 英語: 言語の切り替え src/i18n/lang.ts (`tr`・`modText`・`nameOf`)・GLOSSARY.md はデザイン部長、ゲームのデータ *-client.json などはジン部長。
 - サーバー (サーバー管理人): server/web (og-card.js・dev-gate.js・move-gate.js・wrangler*.jsonc)、server/live (README.md・src/index.ts・market.ts・logs.ts・feedback.ts・monitor.ts・migrations/)。
-- 決まりの番号: 裏方 R-07・ポップアップ R-12・要望の返事 R-20 / UI は shared-ui.md (U-xx) / 英語 Y-80〜83・U-60〜62 / 広告 Y-20〜25 / 合格 G-22・R-19 / 外の API Y-52。経緯のメモ (feedback-replies・web-english・feedback-verify-by-code・feedback-test-strategy) は記録。フックで止める物は設計図 README ⑥ (G-30〜39)。
+- 決まりの番号: 裏方 R-07・ポップアップ R-12・要望の返事 R-20 / UI は shared-ui.md (U-xx) / 英語 Y-80〜83・U-60〜62 / 広告 Y-20〜25 / 合格 G-22・R-19 / 外の API Y-52。経緯のメモ (feedback-replies・web-english・feedback-verify-by-code・feedback-test-strategy) は記録。フックで止める物は設計図 README ⑥ (G-30〜42)。
 - docs: ARCHITECTURE.md・roadmap-2026-10.md・decisions/。決着済み: 設計図 docs/spec/・GLOSSARY.md。
