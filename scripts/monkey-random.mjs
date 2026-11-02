@@ -2,26 +2,34 @@
  * monkey-random.mjs — 乱数の猿 (R-18)。シミュレーターを押した状態から、押せる物を種つき乱数で選んで本物の入力で触り、手順と結果の表・JS エラーを書き出す。合否は付けない。
  * 窓なし Chrome を 1 つ立てて、終わったら閉じる (sim-watch/cdp.mjs)。幅 768 未満はスマホ扱い (タッチ)。
  *
- *   node scripts/monkey-random.mjs <URL> <種> <手数> <幅> [--until-100] [--shots] [--out <置き場>] [--port <番号>]
- *   node scripts/monkey-random.mjs http://localhost:1440/web.html 20261031 20 1660
+ *   node scripts/monkey-random.mjs <URL> <種> [手数] <幅> [--until-100] [--shots] [--out <置き場>] [--port <番号>] [--limit <秒>] [--retry]
+ *   node scripts/monkey-random.mjs http://localhost:1440/web.html 20261031 1660
  *   node scripts/monkey-random.mjs http://localhost:1440/web.html 16600844 20 390
  *
+ * 上限 (R-18、オーナー 11-02「上限決めろって」): 手数の既定は 20 (出す前の確かめは 20 のまま、引数で上書きは試しの時だけ)。
+ * 1 匹 5 分 (--limit 300) で打ち切り、「止まった (どの手・どの画面・何を押していたか)」を表と画面に出して終わる (終わりの値 2)。
+ * --retry は打ち切りの時だけ、種 + 1 で 1 回だけ回し直す (回し直しはもう回し直さない)。
  * 手数 = 画面の文字が変わった押しの数 (変わらない押しは「空振り」で数えない)。--until-100 は手数の後も 100 人が走るまで続ける (手数 + 50 まで)。
  * 道は決め打ちしない: 押せる物の全部が候補で、先へ進む物の確率だけを画面ごとに上げる。exiledesk.com への GET 以外の送信と広告・計測は切る (本番へ書かない・表示数を汚さない)。
  */
+import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { openChrome, sleep } from "./sim-watch/cdp.mjs";
 
 const argv = process.argv.slice(2);
 const flag = (n) => { const i = argv.indexOf(n); if (i < 0) return false; argv.splice(i, 1); return true; };
 const opt = (n, d) => { const i = argv.indexOf(n); if (i < 0) return d; const v = argv[i + 1]; argv.splice(i, 2); return v; };
-const UNTIL100 = flag("--until-100"), SHOTS = flag("--shots");
-const OUT = opt("--out", join(tmpdir(), "exiledesk-monkey")), PORT = Number(opt("--port", 9478));
-const [URL_, seedArg, handsArg, widthArg] = argv;
-if (!URL_ || !seedArg || !handsArg || !widthArg) { console.error("node scripts/monkey-random.mjs <URL> <種> <手数> <幅> [--until-100] [--shots] [--out <置き場>] [--port <番号>]"); process.exit(1); }
+const rawArgs = [...argv];
+const UNTIL100 = flag("--until-100"), SHOTS = flag("--shots"), RETRY = flag("--retry");
+const OUT = opt("--out", join(tmpdir(), "exiledesk-monkey")), PORT = Number(opt("--port", 9478)), LIMIT = Number(opt("--limit", 300));
+// 手数は省ける (<URL> <種> <幅> なら 20)
+const [URL_, seedArg, handsArg, widthArg] = argv.length === 3 ? [argv[0], argv[1], "20", argv[2]] : argv;
+if (!URL_ || !seedArg || !handsArg || !widthArg) { console.error("node scripts/monkey-random.mjs <URL> <種> [手数] <幅> [--until-100] [--shots] [--out <置き場>] [--port <番号>] [--limit <秒>] [--retry]"); process.exit(1); }
 const SEED = Number(seedArg), HANDS = Number(handsArg), W = Number(widthArg), H = W < 768 ? 844 : 860, MOBILE = W < 768;
+if (HANDS !== 20) console.log(`手数 ${HANDS} (既定は 20。出す前の確かめは 20 で回す)`);
 const MAX_HANDS = UNTIL100 ? HANDS + 50 : HANDS, MAX_PRESS = MAX_HANDS * 3;
 mkdirSync(OUT, { recursive: true });
 const base = `monkey-${SEED}-${W}`;
@@ -109,10 +117,35 @@ const CANDIDATES = `(() => {
 })()`;
 
 const started = Date.now();
-const c = await openChrome(PORT);
 const rows = [], errs = [], blocked = [];
-let hand = 0;
-try {
+let hand = 0, c = null, reached100 = false;
+/** 今の手 (打ち切りの時に「どこで止まったか」を出す) */
+const cur = { hand: 0, act: "Chrome を立てる", page: "" };
+const cell = (s) => String(s).replace(/\|/g, "／").replace(/\s+/g, " ").slice(0, 90);
+const gone = (l) => (l.length ? `${l.slice(0, 3).map(cell).join(" / ")}${l.length > 3 ? ` …他 ${l.length - 3}` : ""}` : "");
+const report = (stopped) => {
+  const secs = Math.round((Date.now() - started) / 1000);
+  const cErr = c?.errors ?? [];
+  const jsErr = errs.filter((e) => e.kind === "error").length + cErr.length, warn = errs.filter((e) => e.kind === "warning").length;
+  const stop = stopped ? `手 ${cur.hand} / 画面 ${cur.page || "(不明)"} / 押していた物 ${cell(cur.act)}` : "";
+  const md = [
+    `# 乱数の猿 種 ${SEED} 幅 ${W}${MOBILE ? " (スマホ)" : ""}`, "",
+    `- 宛先 ${URL_} / 手数 ${HANDS} / 変化のあった手 ${hand - 1} / 押した数 ${rows.length} / 実時間 ${secs} 秒`,
+    `- 100 人 ${reached100 ? "走った" : "届かず"} / JS のエラー ${jsErr} / warn ${warn} / 切った送信 ${blocked.length}`,
+    ...(stopped ? [`- **止まった (${LIMIT} 秒で打ち切り)**: ${stop}`] : []), "",
+    "| 手 | 押した物 | 画面 | 増えた文字 | 減った文字 |", "|---|---|---|---|---|",
+    ...rows.map((r) => `| ${r.n} | ${cell(r.act)} | ${r.page}${r.over > 0 ? ` はみ出し ${r.over}px` : ""} | ${gone(r.added)} | ${gone(r.removed)} |`),
+    ...(stopped ? [`| (止まった) | ${cell(cur.act)} | ${cur.page} | | |`] : []),
+    "", "## JS のエラー・warn", "",
+    ...(cErr.length || errs.length ? [...cErr.map((e) => `- pageerror ${e}`), ...errs.map((e) => `- 手 ${e.hand} ${e.kind} ${e.text}`)] : ["なし"]), "",
+  ].join("\n");
+  const file = join(OUT, `${base}.md`);
+  writeFileSync(file, md);
+  console.log(`種 ${SEED} 幅 ${W}: ${secs} 秒 / 手 ${hand - 1} / 押した数 ${rows.length} / 100 人 ${reached100 ? "走った" : "届かず"} / JS のエラー ${jsErr} / warn ${warn}${stopped ? `\n止まった (${LIMIT} 秒で打ち切り): ${stop}` : ""}\n→ ${file}`);
+};
+
+const run = async () => {
+  c = await openChrome(PORT);
   c.on("Runtime.consoleAPICalled", (p) => { if (["error", "warning"].includes(p.type)) errs.push({ hand, kind: p.type, text: p.args.map((a) => a.value ?? a.description ?? "").join(" ").slice(0, 300) }); });
   c.on("Fetch.requestPaused", (p) => {
     if (p.request.method !== "GET") { blocked.push(`${p.request.method} ${p.request.url}`); c.send("Fetch.failRequest", { requestId: p.requestId, errorReason: "BlockedByClient" }); }
@@ -161,19 +194,23 @@ try {
     await c.send("Input.dispatchKeyEvent", { type: "keyUp", key: k, code, windowsVirtualKeyCode: vk });
   };
 
+  cur.act = "最初の画面を開く";
   await c.go(URL_);
   await c.until("document.body && document.body.innerText.includes('シミュレーター')", 30000);
   await calm();
+  cur.act = "シミュレーター";
   const start = (await c.ev(CANDIDATES)).find((x) => /シミュレーター/.test(x.t));
   if (!start) throw new Error("シミュレーターのボタンが見つからない");
   await press(start.x, start.y);
   await calm();
 
-  let presses = 0, reached100 = false;
+  let presses = 0;
   const ran100 = (b) => /100 人: \d+ 個 [\d.]+/.test(b);
   for (hand = 1; hand <= MAX_HANDS && presses < MAX_PRESS; presses++) {
     if (hand > HANDS && (!UNTIL100 || reached100)) break;
+    cur.hand = hand; cur.act = "押せる物を探す";
     const beforeText = await textOf(), before = lines(beforeText), url = await urlOf();
+    cur.page = (url.match(/page=([\w-]+)/) ?? [])[1] ?? "";
     const cs = (await c.ev(CANDIDATES)) ?? [];
     const roll = rnd();
     let act;
@@ -184,11 +221,12 @@ try {
     else if (!cs.length) act = "押せる物なし";
     else {
       const p = pick(cs, url, before.join("|"));
-      act = `${p.t || p.tag}`;
+      act = `${p.t || p.tag}`; cur.act = act;
       if (p.shelf) shelfUses++;
       await press(p.x, p.y);
       if (["text", "number", "search", "textarea"].includes(p.type)) { const v = String(Math.floor(rnd() * 100)); await c.send("Input.insertText", { text: v }); act += ` に ${v} を入力`; }
     }
+    cur.act = act;
     let afterText = await calm();
     // 変化が見えない時は、空振りと決める前に遅れて出るのを待つ (初めて開く画面は反応が遅い)
     for (const t0 = Date.now(); afterText === beforeText && Date.now() - t0 < 1500;) { await sleep(150); afterText = await textOf(); }
@@ -202,23 +240,26 @@ try {
     if (SHOTS) await c.shot(join(OUT, `${base}-${String(presses).padStart(3, "0")}.png`));
     if (changed) hand++;
   }
+};
 
-  const cell = (s) => String(s).replace(/\|/g, "／").replace(/\s+/g, " ").slice(0, 90);
-  const gone = (l) => (l.length ? `${l.slice(0, 3).map(cell).join(" / ")}${l.length > 3 ? ` …他 ${l.length - 3}` : ""}` : "");
-  const secs = Math.round((Date.now() - started) / 1000);
-  const jsErr = errs.filter((e) => e.kind === "error").length + c.errors.length, warn = errs.filter((e) => e.kind === "warning").length;
-  const md = [
-    `# 乱数の猿 種 ${SEED} 幅 ${W}${MOBILE ? " (スマホ)" : ""}`, "",
-    `- 宛先 ${URL_} / 手数 ${HANDS} / 変化のあった手 ${hand - 1} / 押した数 ${rows.length} / 実時間 ${secs} 秒`,
-    `- 100 人 ${reached100 ? "走った" : "届かず"} / JS のエラー ${jsErr} / warn ${warn} / 切った送信 ${blocked.length}`, "",
-    "| 手 | 押した物 | 画面 | 増えた文字 | 減った文字 |", "|---|---|---|---|---|",
-    ...rows.map((r) => `| ${r.n} | ${cell(r.act)} | ${r.page}${r.over > 0 ? ` はみ出し ${r.over}px` : ""} | ${gone(r.added)} | ${gone(r.removed)} |`),
-    "", "## JS のエラー・warn", "",
-    ...(c.errors.length || errs.length ? [...c.errors.map((e) => `- pageerror ${e}`), ...errs.map((e) => `- 手 ${e.hand} ${e.kind} ${e.text}`)] : ["なし"]), "",
-  ].join("\n");
-  const file = join(OUT, `${base}.md`);
-  writeFileSync(file, md);
-  console.log(`種 ${SEED} 幅 ${W}: ${secs} 秒 / 手 ${hand - 1} / 押した数 ${rows.length} / 100 人 ${reached100 ? "走った" : "届かず"} / JS のエラー ${jsErr} / warn ${warn}\n→ ${file}`);
+/** 1 匹 LIMIT 秒で打ち切る (押しの途中で詰まっても抜けるよう、本体と競わせる) */
+let timer;
+const deadline = new Promise((r) => { timer = setTimeout(() => r("timeout"), LIMIT * 1000); });
+let stopped = false;
+try {
+  stopped = (await Promise.race([run(), deadline])) === "timeout";
+  report(stopped);
+} catch (e) {
+  report(false);
+  throw e;
 } finally {
-  c.close();
+  clearTimeout(timer);
+  c?.close();
 }
+if (stopped && RETRY) {
+  const next = rawArgs.filter((a) => a !== "--retry");
+  next[next.indexOf(seedArg)] = String(SEED + 1);
+  console.log(`種を ${SEED + 1} に替えて 1 回だけ回し直す`);
+  process.exit(spawnSync(process.execPath, [fileURLToPath(import.meta.url), ...next], { stdio: "inherit" }).status ?? 1);
+}
+process.exit(stopped ? 2 : 0);
