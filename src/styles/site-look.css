@@ -94,3 +94,17 @@
   :root[data-flag-sitelook] [data-stage-table] { padding: 2px 0 8px; border-width: 12px; }
   :root[data-flag-sitelook] [data-stage-table] .g-panel:not([role="dialog"], [role="dialog"] .g-panel) { border-width: 14px 2px 6px; }
 }
+
+/*
+ * U-49b サイトの色の皮: 皮を選んでいる時 (<html data-site-skin>、state/site-skin.ts) だけ、面と卓の地を皮の色で塗る。
+ * 地の色は style.css と game-ui.css で決め打ちの暗い茶なので、変数だけでは字の色しか替わらない。デイリーの .daily-board と同じ塗り方。既定は何もしない
+ */
+:root[data-flag-sitelook][data-site-skin] .g-panel,
+:root[data-flag-sitelook][data-site-skin] [data-stage-table] {
+  background: linear-gradient(180deg, var(--skin-panel), var(--skin-bg)) border-box;
+}
+:root[data-flag-sitelook][data-site-skin] [data-stage-table] .g-panel:not([role="dialog"], [role="dialog"] .g-panel) { background: none; }
+:root[data-flag-sitelook][data-site-skin] [data-stage-table] :is([data-rec-part="history"], section[data-mod-list]).g-panel {
+  background: url("/ui-art/divider.webp") center top / 100% 14px no-repeat border-box;
+}
+:root[data-flag-sitelook][data-site-skin] header[data-rec-part="header"] { background: var(--skin-bg); }

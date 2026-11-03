@@ -36,6 +36,7 @@ import { pageTick, sideAdW } from "../utils/ads";
 import { BLOG_ON, dailyPage, feedbackPage, recipesPage, routesOpen, TREE_ON, treePage } from "../state/web-page";
 import { prefetchWhenIdle } from "./prefetch";
 import { flag } from "./release-flags";
+import { initSiteSkin } from "../state/site-skin";
 const SideReads = defineAsyncComponent(() => import("./SideReads.vue")); // 右の列の読み物 (関係する記事・新しい記事・使い方、/blog/index.json)
 const SkinsPage = defineAsyncComponent(() => import("../views/skins/SkinsPage.vue")); // コスメティック = PoE2 で使える PoE1 のスキンの一覧 (2026-10-25、開発版だけ。中身はスキン部長)
 const StageRoutesPage = defineAsyncComponent(() => import("../views/craft-stage/StageRoutesPage.vue"));
@@ -92,6 +93,8 @@ function onActive(): void {
   if (!REC) void checkReplies().then((got) => { if (got && !changelogOpen.value) { changelogNew.value = []; changelogOpen.value = "new"; } });
 }
 const onVisible = (): void => { if (document.visibilityState === "visible") onActive(); };
+// サイト全体の色の皮 (U-49b、スイッチ siteLook。既定は何もしない)
+initSiteSkin();
 onMounted(() => {
   for (const ev of ["pointerdown", "keydown", "wheel"] as const) window.addEventListener(ev, onActive, { passive: true, capture: true });
   document.addEventListener("visibilitychange", onVisible);
