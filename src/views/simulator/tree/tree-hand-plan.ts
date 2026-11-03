@@ -22,7 +22,7 @@ import { aimedAfterAnnul } from "../../../services/simulator/tree/tree-judge";
 import { goneOf } from "../../../services/simulator/tree/tree-keep";
 import { stripKeyOf, stripStopByContent } from "../../../services/simulator/tree/tree-outcome";
 import { judgeMemo, sampleAimed, type Judge } from "../../../services/simulator/tree/tree-judge";
-import { arrivalsOf, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
+import { arrivalsOf, depthOf, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { joinableShapeOf, joinSameHit, sameHitsOf } from "../../../services/simulator/tree/tree-shape";
 import { mergedAway } from "../../../services/simulator/tree/tree-merge-open";
 import { boxAims, clearHand, fractureMarks, kindOfHand, setBack, setHand, subtree, type Aim, type Hand, type HandKind, type OutKind, type TreeDoc } from "../../../services/simulator/tree/tree-model";
@@ -276,7 +276,11 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   const data = craftStage.data.value;
   // 比べは判定の「箱どうし」だけ (S-50b)。同じ手の戻り (S-51) も自動の ↩ (中身で決めた物なので、手を決めるたびに pruneByContent が見直す)。選んだ手は handBack に残す (保存の v1 はこれを打ち方として持ち、開いた時にまた同じ手で戻る、S-105)
   const j0 = data ? judgeMemo(data, d) : null;
-  const to = j0 ? sameHandByContent(d, id, h, j0) : null;
+  const found = j0 ? sameHandByContent(d, id, h, j0) : null;
+  // 同じ枠・同じ手の箱が 2 つになる時は浅い方が幹 (S-51c、オーナー 11-04「浅い方でおk」): 相手が自分より深い段なら、自分に手を置き、相手の下を消して相手を ↩ 自分にする
+  const trunk = found && depthOf(d, found) > depthOf(d, id) ? found : null;
+  const to = trunk ? null : found;
+  if (trunk) { clearHand(d, trunk); setBack(d, trunk, id); d.boxes[trunk]!.autoBack = true; d.boxes[trunk]!.handBack = { ...h }; }
   if (to) { if (d.boxes[id]?.hand) clearHand(d, id); setBack(d, id, to); d.boxes[id]!.autoBack = true; d.boxes[id]!.handBack = { ...h }; afterHandSet(data, d, id, to, h, null, pre); return id; }
   const had = new Set(Object.keys(d.boxes));
   let at = id;
