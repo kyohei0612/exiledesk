@@ -285,7 +285,7 @@ function pickMode(m: typeof s.mode.value): void {
         </div>
         <!-- 聖別の数値を決める帯 (聖別したアイテムだけ、品質の帯の下。2026-10-20) -->
         <div v-if="SANCTIFY_BAR && !courseHidesEmulator && s.item.value?.sanctified && !s.replay.value" class="-mb-6 w-full max-w-[480px]"><StageSanctifyBar data-rec-part="sanctify" :item="s.item.value" @set="setSanctify" /></div>
-        <div ref="cardEl" class="relative" :class="[fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
+        <div ref="cardEl" data-stage-well class="relative" :class="[fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
         <StageItemCard
           :doomed="doomed" :open="preview?.open"
           :item="sanctifySample ?? s.item.value!"

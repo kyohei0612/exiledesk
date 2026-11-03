@@ -108,3 +108,83 @@
   background: url("/ui-art/divider.webp") center top / 100% 14px no-repeat border-box;
 }
 :root[data-flag-sitelook][data-site-skin] header[data-rec-part="header"] { background: var(--skin-bg); }
+
+/* 4 道具の帯 = ベースの行 (クラフト台の section[data-craft-top]): 枠の中の行をやめ、石の帯 1 本に載せる (U-49 の 4 = B、オーナー 11-03「全部Ｂで統一」) */
+:root[data-flag-sitelook] section[data-craft-top] {
+  position: relative;
+  isolation: isolate;
+  border-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  background: none !important;
+  padding: 16px 44px !important;
+}
+:root[data-flag-sitelook] section[data-craft-top]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    url("/ui-art/title-l.webp") left top / auto 100% no-repeat,
+    url("/ui-art/title-r.webp") right top / auto 100% no-repeat,
+    url("/ui-art/title-m.webp") left top / auto 100% repeat-x;
+  filter: brightness(0.6);
+  pointer-events: none;
+}
+@media (max-width: 1279px) {
+  :root[data-flag-sitelook] section[data-craft-top] { padding: 14px 22px !important; }
+}
+
+/* 5 作業の地 = カードの台 ([data-stage-well]): カードの下に石のくぼみ (内側の影)。余白は負の外の余白で打ち消し、並びを動かさない (U-49 の 5 = B) */
+:root[data-flag-sitelook] [data-stage-well] {
+  padding: 10px;
+  margin: -10px;
+  background: rgba(0, 0, 0, 0.42);
+  box-shadow: inset 0 3px 14px rgba(0, 0, 0, 0.95), inset 0 0 70px rgba(0, 0, 0, 0.55);
+}
+
+/* 6 枠の中の箱 = 入口の説明の箱 ([data-base-intro]): 丸い細線と丸みを外し、地の濃さだけ (U-49 の 6 = B、U-40・U-45) */
+:root[data-flag-sitelook] [data-base-intro] {
+  border: 0;
+  border-radius: 0;
+  background: rgba(0, 0, 0, 0.38);
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.8);
+}
+
+/* 7 小見出し = ベースの種類 ([data-base-group-head]): 見出しの字 (Yuji Syuku)・題の金・字間 (U-49 の 7 = B) */
+:root[data-flag-sitelook] [data-base-group-head] {
+  opacity: 1;
+  margin: 6px 0 8px;
+  font-family: var(--exile-font-family-brush, serif);
+  font-size: 17px;
+  letter-spacing: 0.12em;
+  color: var(--exile-color-text-title);
+}
+@media (max-width: 1279px) {
+  :root[data-flag-sitelook] [data-base-group-head] { font-size: 15px; }
+}
+
+/* 2 一番上の帯 = サイトのヘッダー: 石の帯の暗い地を敷き、下の細線を外す (U-49 の 2 = B。光る所は増やさないので暗く) */
+:root[data-flag-sitelook] header[data-rec-part="header"] {
+  position: relative;
+  isolation: isolate;
+  border-bottom-color: transparent;
+}
+:root[data-flag-sitelook] header[data-rec-part="header"]::before {
+  content: "";
+  position: absolute;
+  inset: -4px 0 -6px;
+  z-index: -1;
+  background:
+    url("/ui-art/title-l.webp") left top / auto 100% no-repeat,
+    url("/ui-art/title-r.webp") right top / auto 100% no-repeat,
+    url("/ui-art/title-m.webp") left top / auto 100% repeat-x;
+  filter: brightness(0.5);
+  pointer-events: none;
+}
+/* スマホ (1280 未満): ベースの行は数段に折れて背が高くなり、帯の両端の丸い飾りがボタンの後ろで大きく出るので真ん中の絵だけ・少し暗く。
+   カードの台はカードが窓の幅いっぱいなので、くぼみの張り出しを 6px に (外枠に触れない) */
+@media (max-width: 1279px) {
+  :root[data-flag-sitelook] section[data-craft-top]::before { background: url("/ui-art/title-m.webp") left top / auto 100% repeat-x; filter: brightness(0.45); }
+  :root[data-flag-sitelook] [data-stage-well] { padding: 6px; margin: -6px; }
+}
