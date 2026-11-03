@@ -173,7 +173,8 @@ window.visualViewport?.addEventListener("resize", fitZoom);
       </button>
       <span v-if="phone" class="ml-auto shrink-0 max-[374px]:[&_button]:!px-1.5" data-rec-part="header-lang"><LangSwitch /></span>
       <!-- 1024 px 未満は飾りの札 (画面名・アプリ版) を出さない (768 px で帯が詰まって「日本語」が縦に折れた。2026-10-13) -->
-      <span class="whitespace-nowrap rounded border border-white/15 px-1.5 py-0.5 opacity-70 max-lg:hidden" :class="phone ? 'hidden' : ''">{{ tr("クラフトステージ", "Craft Stage") }}</span>
+      <!-- siteLook の入では出さない (U-49、オーナー 11-03「あとここクラフトステージはずしておｋいらんからな」) -->
+      <span v-if="!flag('siteLook')" class="whitespace-nowrap rounded border border-white/15 px-1.5 py-0.5 opacity-70 max-lg:hidden" :class="phone ? 'hidden' : ''">{{ tr("クラフトステージ", "Craft Stage") }}</span>
       <!-- 本日の訪問者 (9:00 から、1 時間ごとに数え直す。2026-10-11 オーナー)。数えられていない時は出さない -->
       <!-- 録画モードは訪問者を隠すので、右寄せの押さえだけ置く -->
       <span v-if="REC && !phone" class="ml-auto" />

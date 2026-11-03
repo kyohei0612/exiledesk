@@ -34,6 +34,8 @@ const intro = computed(() => baseUnpicked.value && (!CHOSEN_ON || !chosenBase.va
 let before = 0;
 // ベースを選んで戻った時は一番上 (題・タブ・アイテムの行) から。選ばずに戻る (Esc・戻る) は前の位置 (スイッチ backPlace、U-27。オーナー 10-28「エミュは相変わらずMODから開始になるけどベース選んだらそこは？」)
 const PICK_TOP = flag("backPlace");
+// スイッチ siteLook: 戻るは題の帯の横ではなく、1 段下の切り替えタブの行の右端 (U-49、オーナー 11-03「このボタン一番右に設定して1段下へ　2行がもったいない」)
+const SITE_LOOK = flag("siteLook");
 let picked = false;
 function onKey(e: KeyboardEvent): void { if (e.key === "Escape" && !baseUnpicked.value) back(); }
 onMounted(() => {
@@ -53,13 +55,21 @@ onBeforeUnmount(() => {
     <div class="min-w-0 flex-1">
       <div class="mb-3 flex flex-wrap items-center gap-3">
         <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]"><span class="g-plate">{{ tr("ベースを選ぶ", "Choose a base") }}</span></h1>
-        <span v-if="!baseUnpicked" class="flex items-center gap-2">
+        <span v-if="!baseUnpicked && !SITE_LOOK" class="flex items-center gap-2">
           <button type="button" data-base-page-back class="g-btn sm max-md:min-h-10" @click="back">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
           <span class="text-[12px] opacity-60 max-md:hidden">{{ tr("Esc でも戻る", "Esc also goes back") }}</span>
         </span>
       </div>
       <!-- 何から始めるか。帯は共通の部品 (ModeTabs、2026-10-23 オーナー「帯を 1 つにして両方に」)。シミュレーターを押したらこのページを閉じてツリーへ -->
-      <ModeTabs class="mb-3" @pick="(m) => m === 'sim' && back()" />
+      <div v-if="SITE_LOOK" class="mb-3 flex items-center gap-2">
+        <ModeTabs class="min-w-0 max-md:flex-1" @pick="(m) => m === 'sim' && back()" />
+        <span v-if="!baseUnpicked" class="ml-auto flex shrink-0 items-center gap-2">
+          <span class="text-[12px] opacity-60 max-md:hidden">{{ tr("Esc でも戻る", "Esc also goes back") }}</span>
+          <!-- スマホは「←」だけ (字を入れるとタブ 3 つの字が切れた。390 でタブ 1 つ 85px) -->
+          <button type="button" data-base-page-back class="g-btn sm max-md:min-h-10 max-md:!min-w-10 max-md:!px-1 max-md:![border-width:0_12px] max-md:![border-image-width:0_12px]" :aria-label="tr('クラフトへ戻る', 'Back to craft')" @click="back"><span class="max-md:hidden">{{ tr("← クラフトへ戻る", "← Back to craft") }}</span><span class="md:hidden" aria-hidden="true">←</span></button>
+        </span>
+      </div>
+      <ModeTabs v-else class="mb-3" @pick="(m) => m === 'sim' && back()" />
       <!-- 初めての人への帯 + ベース選びの枠は共通の部品 (BasePickBody、シミュの初手のベース選びと同じ作り。2026-10-23)。帯は人がまだベースを選んだ事の無い時のエミュレーターだけ -->
       <BasePickBody :selected="shown" :popular="baseUnpicked" :intro="intro" @pick="pick" @quick="pick('Gold Ring')" />
     </div>
