@@ -291,7 +291,8 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
         <!-- ツリーへ戻る (10-24 夜オーナー「一方通行が多い、ツリーに戻るボタンとか普通にあってもいい。保存云々は聞かなくておｋ」)。新しいツリーのベース選びなら、そのタブをやめて前の木へ -->
         <button v-if="asPage && canBack" type="button" data-tree-goal-back class="g-btn sm shrink-0" @click="backToTree">{{ tr("← ツリーに戻る", "← Back to tree") }}</button>
         <TreeFlowSteps :current="step === 2 ? 2 : 1" :no-base="unpicked" @go="onFlow" />
-        <span class="ml-auto shrink-0"><TreeRecipeBar menu-only @opened="onRecipe" /></span>
+        <!-- 上の道具の並び: チュートリアル (ベース選びの段だけ、PC だけ) とレシピ (11-03 オーナー「チュートリアルボタン１つでよさそう」) -->
+        <span class="ml-auto flex shrink-0 items-center gap-2"><SimTutorialEntry v-if="step === 1" /><TreeRecipeBar menu-only @opened="onRecipe" /></span>
       </div>
       <!-- 木が 2 つ以上ある時はタブもここに (新しいツリーのベース選びの間も前の木へ戻れる、10-24 モンキー初めての人の回 8) -->
       <TreeTabs v-if="t.tabDocs.value.length > 1" class="px-3 pb-2" />
@@ -316,13 +317,13 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       <p v-if="step === 2 && dropped.length" data-tree-goal-dropped class="min-w-0 truncate max-md:overflow-visible max-md:whitespace-normal max-md:break-words px-3 pb-2 text-[12px] text-rose-200/80" :title="dropped.join('\n')">{{ tr(`このベースに付かない狙いを外した: ${dropped.join("・")}`, `Removed targets this base can't roll: ${dropped.join(", ")}`) }}</p>
     </template>
     <div v-if="step === 1" data-tree-goal-base class="flex min-w-0 flex-col gap-3">
-      <TreeBasePick />
-      <!-- チュートリアルの入口 (初回も 2 回目以降もいつも出す、スマホは出さない。10-26 夜オーナー) -->
-      <!-- PC はチュートリアルの入口と貼り付けを横に並べる (縦に積むとアミュレットの段が 1660×860 で画面の下の外だった、10-26 モンキー 7 の 20) -->
-      <div class="flex min-w-0 gap-3 max-md:flex-col [&>*]:min-w-0 [&>*]:flex-1">
-        <SimTutorialEntry />
-        <!-- アイテムを貼り付けて取り込む (一覧の上、目立つ口。10-25 オーナー「ベース一覧の所に分かりやすく出したい」)。取り込めたら完成の MOD へ -->
-        <TreePasteBox @done="onPasted" />
+      <!-- 初めての時だけ、何ができるかの 1 行 (前は共通の BasePickBody の枠の箱。枠を重ねず字だけに、11-03 オーナー「ここのUIがあまりにも終わってる」) -->
+      <p v-if="unpicked" data-tree-goal-lead class="text-[13px] leading-snug text-[var(--exile-color-text-secondary)]">{{ tr("完成させたいアイテムのベースを選び、狙いの MOD を決めると、スタートから完成までの道をツリーで組めます。100 人回して完成の割合と費用を出します", "Choose the base of the item you want and your target mods, then lay out the route from the start to the finished item as a tree. Run it 100 times for the finish rate and the cost") }}</p>
+      <!-- 道具の 1 行: 左にレアリティ・アイテムレベル、右に貼り付けて取り込む (一覧の上の口、10-25 オーナー「ベース一覧の所に分かりやすく出したい」)。取り込めたら完成の MOD へ。
+           チュートリアルは段の札の右のボタン 1 つ (11-03 オーナー、前は金の帯と貼り付けの帯が横に並んでいた) -->
+      <div class="flex min-w-0 flex-wrap items-center gap-x-8 gap-y-2 border-b border-white/10 pb-3">
+        <TreeBasePick />
+        <TreePasteBox class="min-w-[420px] flex-1 max-md:min-w-0 max-md:basis-full" @done="onPasted" />
       </div>
       <!-- ベースを替えると今の木が消える時だけ、1 回確かめる (上に貼り付けて、一覧を送っていても見える所に) -->
       <div v-if="asking" ref="askEl" data-tree-base-ask class="sticky top-3 before:pointer-events-none before:absolute before:inset-x-0 before:-top-3 before:h-3 before:bg-panel-toc before:content-[''] z-10 flex flex-wrap items-center gap-3 rounded-lg border border-rose-400/60 bg-[#2a1416] px-3 py-2 text-[13px]">
@@ -334,9 +335,7 @@ watch(step, (n) => { if (n === 2 && asPage.value) void nextTick(() => window.scr
       </div>
       <!-- エミュのベースのページと同じ作り (共通の BasePickBody: 帯 + ベースの一覧、未選択の時は人気のベースを上に)。帯はシミュの説明で「すぐ試す」は無し (10-23 オーナー) -->
       <!-- key: 白紙の判定が後から立つと (上の watch)、一覧は金の指輪の部位を開いた形で作られた後で、指輪の 1 回目の押しが畳むだけになっていた (猿 8 匹中 8 匹、10-25)。未選択に変わったら作り直して部位を閉じる -->
-      <BasePickBody :key="unpicked ? 'unpicked' : 'picked'" :not-chosen="!t.doc.value.baseChosen" :selected="unpicked ? '' : t.doc.value.base" :popular="unpicked" :intro="unpicked" :quick="false"
-        :title="tr('完成させたいアイテムから、打ち方の道を組んで費用を見積もれます', 'Plan a craft route to the item you want and estimate the cost')"
-        :lead="tr('ベースを選び、狙いの MOD を決めると、スタートから完成までの道をツリーで組めます。100 人回して完成の割合と費用を出します', 'Choose a base and your target mods, then lay out the route from the start to the finished item as a tree. Run it 100 times for the finish rate and the cost')"
+      <BasePickBody :key="unpicked ? 'unpicked' : 'picked'" :not-chosen="!t.doc.value.baseChosen" :selected="unpicked ? '' : t.doc.value.base" :popular="unpicked" :intro="false" :quick="false"
         @pick="pick" />
     </div>
     <!-- スマホの形 (1280 未満、U-53) は縦に積む (完成形のカードが上、表は全部の幅。横に並べると表が 1 文字幅に潰れた、10-23 デザイン部長の気づき・メモ web-phone-layout) -->
