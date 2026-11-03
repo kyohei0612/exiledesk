@@ -24,7 +24,8 @@ const list = computed(() => heldOmensOf(shelf.held.value).filter((o) => !shelf.h
 // 掛かっているお告げが、持った物を打てなくする・意味が無い物になったら外す (ボタンは灰色で掛けられない。2026-10-22 オーナー「進行不能」、判定はエンジンの omenBlock)
 watchEffect(() => {
   if (!flag("omenRow")) return; // 本番はスイッチ omenRow が入るまで外さない (前の形)
-  for (const o of list.value) if (shelf.omens.value.includes(o) && omenBlock(shelf.data.value, shelf.item.value, shelf.held.value, shelf.omens.value, o)) shelf.toggleOmen(o);
+  const block = (o: string) => (shelf.omenBlock ? shelf.omenBlock(shelf.held.value, shelf.omens.value, o) : omenBlock(shelf.data.value, shelf.item.value, shelf.held.value, shelf.omens.value, o));
+  for (const o of list.value) if (shelf.omens.value.includes(o) && block(o)) shelf.toggleOmen(o);
 });
 </script>
 

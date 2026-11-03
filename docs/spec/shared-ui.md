@@ -57,6 +57,7 @@
     - 有効 (スイッチ essChip、v0.1.640 で本番入り)。出どころ: オーナー 10-29「エッセンスの名前もティアにこいつつけたら別に折り返しが不要ならそのまま入れてくれ…入らなかったら全然今の形でおｋだけど枠は必要だねどのみち」。確かめ: 画面 (375・1660、共有メモ local_94cd3b6a…/essence-chip-*.png)。
 - **U-13 棚**: クラフトに使える物の棚は `for-share/shelf/CurrencyShelf.vue` 1 つ (エミュの CraftStage・シミュの TreeHandShelf・TreeMemoFloat)。操作は Craft of Exile と同じく「押して持つ → アイテムを押して使う」、お告げは「掛ける」、打てない物は灰色。1 つの見た目は ShelfButton。「使用可能」で節の全部が打てず丸ごと消えた時は、その訳を 1 行「エッセンス: 理由」で出す (エッセンス・ルーン。ノーマルのアイテムでは出さない。理由はエンジンの useReason、シミュ・エミュ・スマホとも同じ。スイッチ shelfWhy、v0.1.652 で本番、シミュ側の番号 S-30c)。
   - 有効。出どころ: オーナー 09-27〜28 (ADR 001)。確かめ: 画面。
+  - お告げの灰色 (掛けると進めない・意味が無い) の判定は、provideShelf に `omenBlock(held, omens, omen)` があればそれ、無ければエンジンの omenBlock (ShelfButton・HeldOmens の外し)。渡した画面では omenNote の一言を出さない。シミュの木は自分の判定 (treeOmenBlock) を渡す、エミュは渡さない (今のまま)。11-03 シミュ部長 72 の頼み。
 - **U-14 品質の帯は共有**: 品質の帯の核は `for-share/item/StageQualityBar.vue` (エミュの CraftStage、シミュは `views/simulator/tree/TreeGoalQuality.vue` が包む)。2 つ目の画面で要ったので共有へ上げた (U-01)。見た目は変えない。
   - 有効 (上げる決めは 10-28 ブラック任せ)。10-31 に核を for-share へ移した (シミュ部長 54 の頼み)。確かめ: 型・check-engine-entry。
 - **U-15 窓**: 窓はみな `ui/ModalShell.vue` で包む (.g-panel の枠・題の横に ×・Esc・後ろを押すと閉じる・後ろのページは送らない)。重なりの段は窓 z-300、確認 z-310 (layer="confirm")、浮かぶカード 1000 以上。重ね窓の共通の印は `data-overlay` (ModalShell と各重ね窓に付け、ToTop はこの 1 つを見る)。

@@ -70,8 +70,11 @@ const omenTag = computed(() => {
 });
 /** 今のアイテムでは意味が無い / 掛けると打てない (2026-10-10 オーナー「空きに勝手に入るから意味ないこと教えてあげた方がいい」) */
 /** 掛けると持った物が打てなくなる・掛けても意味が無い (エンジンの omenBlock)。灰色で押せない、理由は omenWarn の所に (2026-10-22 オーナー「進行不能」) */
-const omenNo = computed(() => (props.omen && flag("omenRow") ? omenBlock(shelf.data.value, shelf.item.value, shelf.held.value, shelf.omens.value, props.k) : null));
-const omenWarn = computed(() => (props.omen ? omenNo.value ?? omenNote(props.k, shelf.item.value, shelf.data.value) : null));
+const omenNo = computed(() => {
+  if (!props.omen || !flag("omenRow")) return null;
+  return shelf.omenBlock ? shelf.omenBlock(shelf.held.value, shelf.omens.value, props.k) : omenBlock(shelf.data.value, shelf.item.value, shelf.held.value, shelf.omens.value, props.k);
+});
+const omenWarn = computed(() => (props.omen ? omenNo.value ?? (shelf.omenBlock ? null : omenNote(props.k, shelf.item.value, shelf.data.value)) : null));
 const on = computed(() => (props.omen ? shelf.omens.value.includes(props.k) : shelf.held.value === props.k));
 
 /**
