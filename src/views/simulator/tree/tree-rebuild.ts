@@ -9,7 +9,7 @@ import { clearHand, migrateStart, setBack, TREE_SCHEMA_N, type Hand, type TreeDo
 import { autoTarget, offByParent, sameHandByContent, straightUp } from "../../../services/simulator/tree/tree-judge-link";
 import { childKeysOf, isRecipeV1, pathKeysOf, premiseOf, toRecipeV1, type RecipeOrphan } from "../../../services/simulator/tree/tree-recipe-v1";
 import { alignEssenceAims, applyPick, arrivedSteps, kindOf, onlyOf } from "./tree-hand-plan";
-import { staysGray, tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
+import { junkPath, staysGray, tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
 import { judgeMemo, needsCrafted, needsDesecrated } from "../../../services/simulator/tree/tree-judge";
 import { oldVeil, veilKeep } from "../../../services/simulator/tree/tree-veil";
 import { effectOf, isRuneHand } from "../../../services/simulator/tree/tree-hands";
@@ -198,7 +198,7 @@ function linkLeftovers(data: PatchData, d: TreeDoc): void {
   const seq = (id: string): number => (id === "start" ? -1 : Number(/\d+$/.exec(id)?.[0] ?? 0));
   const targets = Object.values(d.boxes).filter((b) => b.hand || b.done).map((b) => b.id).sort((x, y) => depth(x) - depth(y) || seq(x) - seq(y));
   for (const b of Object.values(d.boxes)) {
-    if (b.out === "start" || b.hand || b.back || b.done || b.split || b.noAutoBack || offByParent(d, b.id, j)) continue;
+    if (b.out === "start" || b.hand || b.back || b.done || b.split || b.noAutoBack || junkPath(b) || offByParent(d, b.id, j)) continue;
     // 基準は自動の ↩ と同じ「箱どうし」が先 (S-50e。前は下の見方で光のお告げの箱を選び、見直しで外れて未定のまま残った、オーナーの木の b26)
     const same = autoTarget(d, b.id, j);
     if (same) { b.back = same; b.autoBack = true; continue; }

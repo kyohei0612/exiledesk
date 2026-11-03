@@ -7,6 +7,8 @@ import type { OutKind, TreeBox, TreeDoc } from "./tree-model";
 
 /** 狙いを持って打って狙い通りにいかなかった結果だけ (狙い無しの結果・消去で外れが消えた箱は狙い通りなのでグレーにしない、S-191) */
 const JUNK: ReadonlySet<OutKind | "start"> = new Set(["junk", "lost"]);
+/** 外れの道の箱 = 自動の ↩ を付けない箱 (人が手を決める・同じ枠探しでだけつながる、S-190b) */
+export const junkPath = (b: TreeBox): boolean => JUNK.has(b.out);
 /** 見るだけの幅の外 = ツリーを組める幅だけ (S-197・S-94g) */
 export const tidyOn = (): boolean => !(typeof window !== "undefined" && window.innerWidth < VIEW_ONLY_MAX);
 const open = (b: TreeBox): boolean => !b.hand && !b.back && !b.done && !b.split;

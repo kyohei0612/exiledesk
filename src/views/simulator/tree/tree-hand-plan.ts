@@ -4,6 +4,7 @@
  */
 import { mergeOpenSame } from "../../../services/simulator/tree/tree-merge-open";
 import { tidyOn } from "../../../services/simulator/tree/tree-junk-tidy";
+import { afterHandSet } from "../../../services/simulator/tree/tree-same-frame";
 import { catalystBoosts, craftedKindOf, isEmotion, mulberry32, omensAllowedFor, omensFor, runeOf, sideOfMod, socketCapOf, tierRankOf, type PatchData, type StageApply, type StageItem, type StageMod } from "../../../services/craft-stage/engine";
 import { craftStage } from "../../../state/craft-stage";
 import { bonesFor, essenceShelf, ORBS, runesFor } from "../../../state/for-share/craft-stage-shelf";
@@ -271,15 +272,13 @@ export function sideGroup(): ((a: Aim) => string) | undefined {
 export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims: Aim[], pre: string | null, only: OnlyOut): string {
   // ✦ の印の無い木のフラクチャーは乱数で固定する手 (スイッチ fracRandom)
   const h: Hand = effectOf(h0.currency) === "fracture" && !fractureMarks(d).length ? { ...h0, pick: "random" } : h0;
-  // 外れで、打つ前の箱・同じ形の箱と同じ手 = 新しい段を作らずその箱へ戻る (シミュのルール、PC・スマホ共通。tree-shape の sameHandReturn)。
-  // 外れに手がもう付いていれば下を消してから (前に同じ手で段を足して伸びた木)。戻ったかは呼ぶ側が箱の back で見る
+  // 外れで、打つ前の箱・同じ形の箱と同じ手 = 新しい段を作らずその箱へ戻る (シミュのルール、PC・スマホ共通。tree-shape の sameHandReturn)。外れに手がもう付いていれば下を消してから (前に同じ手で段を足して伸びた木)。戻ったかは呼ぶ側が箱の back で見る
   // 触媒 (pre) 付きの手も同じ判定 (PC・スマホで 1 つ、10-27 夕ブラックの決め B4。前は PC が pre のある時は見ず、スマホは pre を見ずに戻っていた)
   const data = craftStage.data.value;
-  // 比べは判定の「箱どうし」だけ (S-50b)。同じ手の戻り (S-51) も自動の ↩ (中身で決めた物なので、手を決めるたびに pruneByContent が見直す)。
-  // 選んだ手は handBack に残す (保存の v1 はこれを打ち方として持ち、開いた時にまた同じ手で戻る、S-105)
+  // 比べは判定の「箱どうし」だけ (S-50b)。同じ手の戻り (S-51) も自動の ↩ (中身で決めた物なので、手を決めるたびに pruneByContent が見直す)。選んだ手は handBack に残す (保存の v1 はこれを打ち方として持ち、開いた時にまた同じ手で戻る、S-105)
   const j0 = data ? judgeMemo(data, d) : null;
   const to = j0 ? sameHandByContent(d, id, h, j0) : null;
-  if (to) { if (d.boxes[id]?.hand) clearHand(d, id); setBack(d, id, to); d.boxes[id]!.autoBack = true; d.boxes[id]!.handBack = { ...h }; return id; }
+  if (to) { if (d.boxes[id]?.hand) clearHand(d, id); setBack(d, id, to); d.boxes[id]!.autoBack = true; d.boxes[id]!.handBack = { ...h }; afterHandSet(data, d, id, to, h, null, pre); return id; }
   const had = new Set(Object.keys(d.boxes));
   let at = id;
   if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
@@ -288,6 +287,7 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   else if (data && isKeepAnnul(h)) lostSplit(data, d, at, h);
   joinSameShape(d, id);
   if (data) relinkByContent(data, d, had);
+  afterHandSet(data, d, id, id, h, had, pre); // 新しい枝は未設定・同じ枠探し (S-190b)
   return at;
 }
 
