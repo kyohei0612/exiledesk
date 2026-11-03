@@ -7,7 +7,6 @@
  */
 import type { StageItem } from "../../craft-stage/engine";
 import { boxAims, type TreeBox, type TreeDoc } from "./tree-model";
-import { isStrip } from "./tree-outcome";
 import { aimsOf } from "./tree-sample";
 import { placedAims } from "./tree-veil";
 
@@ -26,7 +25,7 @@ function linkOf(doc: TreeDoc, id: string | null | undefined, links?: Map<string,
   if (had) return had;
   const p: TreeBox | undefined = b.parent ? doc.boxes[b.parent] : undefined, up = linkOf(doc, b.parent, links);
   const sibs = (p?.outs ?? []).map((o) => { const x = doc.boxes[o]; return x ? tagOf(x) : o; });
-  const r = { self: JSON.stringify([tagOf(b), sibs], skipPos), chain: JSON.stringify([tagOf(b), b.hand, b.split, sibs], skipPos) + up.chain, strip: up.strip || isStrip(p) };
+  const r = { self: JSON.stringify([tagOf(b), sibs], skipPos), chain: JSON.stringify([tagOf(b), b.hand, b.split, sibs], skipPos) + up.chain, strip: false };
   links?.set(b.id, r);
   return r;
 }

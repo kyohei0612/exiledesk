@@ -7,13 +7,13 @@
 import { omensFor, type PatchData, type StageItem } from "../../craft-stage/engine";
 import { stepOutcomes } from "../sim-engine";
 import { aimHeldOn } from "./tree-aim";
-import { effectOf, engineOmens } from "./tree-hands";
+import { engineOmens } from "./tree-hands";
 import { prepFor } from "./tree-unbounded";
 import { fractureMarks, type Aim, type Hand, type TreeDoc } from "./tree-model";
 import { joinKeys } from "./tree-whittle";
 
-/** 消去でない手で残したい MOD を決めた物か (消去の keep は今までどおり tree-outcome の isKeepAnnul) */
-export const isKeepHand = (h: Hand | null | undefined): h is Hand & { keep: Aim[] } => !!h?.keep && effectOf(h.currency) !== "remove";
+/** 残したい MOD を決めた手か。消去も同じ (11-04、[] = 全部消えてよい = 残したい MOD 無し。前は消去だけ tree-outcome の isKeepAnnul で別に数えた) */
+export const isKeepHand = (h: Hand | null | undefined): h is Hand & { keep: Aim[] } => !!h?.keep;
 /** 残したい MOD の段は完成形の段 (消去の S-27c と同じ) */
 const goalTier = (doc: TreeDoc, keep: readonly Aim[]): Aim[] => keep.map((a) => (doc.memoAims ?? []).find((g) => g.modId === a.modId) ?? a);
 /** 消える手の残したい MOD (段は完成形の段)。残したい MOD を決めていない手は null (既定 = 持っている狙い) */

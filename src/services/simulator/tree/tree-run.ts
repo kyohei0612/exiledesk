@@ -10,7 +10,7 @@ import { aimHeldOn, isAimMod } from "./tree-aim";
 import { effectOf } from "./tree-hands";
 import { qualityOk } from "./tree-unbounded";
 import { aimOpts, aimsOf, fractureChoices, goalsHeld, handAims, heldHitOf, holdDocSig, outcomeOf, playHand, sampleOf, SPAM_CAP, startItemOf as startOf, targetsOf } from "./tree-sample";
-import { boxOutcomeOf, fromStrip, stripBackOf, stripStop, stripStopByContent } from "./tree-outcome";
+import { boxOutcomeOf } from "./tree-outcome";
 import { heldSets, MATCH, matchBox, outBoxOf, RESTART, settle, shapesOf, splitTo, type Shape, type SplitBox } from "./tree-shape";
 import { withTreeTune } from "./tree-tune";
 import { modText, tr } from "../../../i18n/lang";
@@ -18,8 +18,8 @@ import { nameOfKey } from "../../../state/for-share/craft-stage-shelf";
 import { fractureMarks, type Aim, type OutKind, type TreeDoc } from "./tree-model";
 import { stepOutcomes } from "../sim-engine";
 import { bodyMemo, bodyOf, heldOn } from "./tree-box-shape";
-import { aimedAfterAnnul, judgeMemo, nextAimed, startAimed, type Judge } from "./tree-judge";
-import { playableTwin, routeOf, twinAimed, canPlay } from "./tree-judge-link";
+import { judgeMemo, nextAimed, startAimed, type Judge } from "./tree-judge";
+import { playableTwin, routeOf, twinAimed } from "./tree-judge-link";
 
 export interface TreeRunOpts {
   /** 人数 (裏は 100、確かめは 300) */
@@ -204,8 +204,8 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
       }
       // 全部消えてよい消去の直線は、止まる所 (同じレアリティ・同じ外れの数の箱) が無ければ形の合う箱を探さない = 行き先未定 (スイッチ stripRarity)
       const to = j
-        ? (b.back === MATCH ? stripBackOf(data, doc, at, item, aimed) ?? (fromStrip(doc, at) ? null : routeOf(data, doc, j, null, item, aimed)) : routeOf(data, doc, j, b.back, item, aimed))
-        : b.back === MATCH ? stripBackOf(data, doc, at, item) ?? (fromStrip(doc, at) ? null : matchBox(data, shapes, item, aims, doc)) : settle(data, doc, shapes, b.back, item, aims);
+        ? (b.back === MATCH ? routeOf(data, doc, j, null, item, aimed) : routeOf(data, doc, j, b.back, item, aimed))
+        : b.back === MATCH ? matchBox(data, shapes, item, aims, doc) : settle(data, doc, shapes, b.back, item, aims);
       // 戻り先と中身が違い、中身の同じ箱も無い (S-64、人と箱): この箱で止まる (未設定)
       if (!to && j && b.back !== MATCH) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr(`戻り先の箱と中身が違い、中身の同じ箱も無い`, `The return target holds a different item, and no box matches it`), item, noBox: true } });
       if (!to) return fin({ end: "stuck", cost, at, visits, uses, restarts, odd, why: { reason: tr("戻り先の「形の合う箱」が無い", "No box matches the shape to return to"), item, noBox: true } });
@@ -251,14 +251,8 @@ function runOne(data: PatchData, doc: TreeDoc, aims: readonly Aim[], shapes: rea
     // 始めの値段を 2 回分足す (外れた時は素材を作り直す。10-24 オーナー、ツリーに買い直しの道は作らない。10-25 オーナーが戻した)。作り直しの回数にも 2
     const miss = effectOf(b.hand.currency) === "fracture" && b.hand.pick !== "random" && fractureChoices(data, item) >= FRACTURE_PICK ? Object.entries(uses) : null;
     const tried = uses[b.hand.currency] ?? 0, own = handAims(doc, at, aims);
-    // 全部消えてよい消去の直線で、もう手のある箱と同じ中身 = 打たずにその箱へ (S-28)。前は打たずに次の箱へ通し、次の箱に人の手があるとその手を打った
-    // (✦ を狙いのまま数えると「最大ライフ (外れ) + ✦」が b2 と同じ中身になり、木 oWkFcwYX の b7 → b8 で起きた)
-    const stopAt = j && stripStop(data, doc, b) ? stripStopByContent(data, doc, at, item, false, aimedAfterAnnul(data, doc, b.hand, aimed, item)) : null;
-    // 飛び先の手がこの人に打てない時は飛ばずにここで打つ (飛ぶと playableTwin がここへ戻し、費用 0 の往復が手の上限まで続いた、11-02 S-28c)
-    if (stopAt && canPlay(data, item, doc.boxes[stopAt]!.hand!)) { visit(at, true); at = stopAt; continue; }
     o.onHand?.(at, item);
-    // 止まる所は上の stopAt で決めたので、ここでは打つ (中で別の印で止まりを見直すと打たずに通り、費用 0 の往復になった、S-33c)
-    const r = playHand(data, item, b.hand, rng, own, use, false, j ? undefined : stripStop(data, doc, b));
+    const r = playHand(data, item, b.hand, rng, own, use);
     if (!r.applied) {
       // 中身の同じ箱のうち手が打てる箱へ (S-64)
       const twin = j ? playableTwin(data, doc, j, at, item, aimed) : null;
