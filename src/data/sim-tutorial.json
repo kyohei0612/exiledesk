@@ -21,57 +21,6 @@
       "aim": "Amulets/BaseSpirit"
     },
     {
-      "id": "miss-ward",
-      "kind": "hand",
-      "box": "x1",
-      "key": "essence:perfect:Amulets/PerfectEssence_RunicWardPercent",
-      "omens": []
-    },
-    {
-      "id": "ward-exalt",
-      "kind": "hand",
-      "box": "r",
-      "key": "exalt",
-      "omens": [
-        "OmenofSinistralExaltation"
-      ],
-      "aim": "Amulets/BaseSpirit"
-    },
-    {
-      "id": "miss-annul",
-      "kind": "hand",
-      "box": "rj",
-      "key": "annul",
-      "omens": [],
-      "keep": "Amulets/PerfectEssence_RunicWardPercent"
-    },
-    {
-      "id": "spirit-exalt",
-      "kind": "hand",
-      "box": "rs",
-      "key": "exalt",
-      "omens": [],
-      "aim": "Amulets/IncreasedCastSpeed"
-    },
-    {
-      "id": "done",
-      "kind": "done",
-      "box": "d"
-    },
-    {
-      "id": "unset",
-      "kind": "unset"
-    },
-    {
-      "id": "cast-annul",
-      "kind": "hand",
-      "box": "dj",
-      "key": "annul",
-      "omens": [
-        "OmenofDextralAnnulment"
-      ]
-    },
-    {
       "id": "spirit-free",
       "kind": "hand",
       "box": "s1",
@@ -87,6 +36,44 @@
       "box": "s1a",
       "key": "essence:perfect:Amulets/PerfectEssence_RunicWardPercent",
       "omens": []
+    },
+    {
+      "id": "ward-cast",
+      "kind": "hand",
+      "box": "w",
+      "key": "exalt",
+      "omens": [],
+      "aim": "Amulets/IncreasedCastSpeed"
+    },
+    {
+      "id": "done",
+      "kind": "done",
+      "box": "d"
+    },
+    {
+      "id": "tidy",
+      "kind": "tidy"
+    },
+    {
+      "id": "miss-annul",
+      "kind": "hand",
+      "box": "x1",
+      "key": "annul",
+      "omens": []
+    },
+    {
+      "id": "lost-fail",
+      "kind": "fail",
+      "box": "wl"
+    },
+    {
+      "id": "cast-annul",
+      "kind": "hand",
+      "box": "dj",
+      "key": "annul",
+      "omens": [
+        "OmenofDextralAnnulment"
+      ]
     },
     {
       "id": "test",

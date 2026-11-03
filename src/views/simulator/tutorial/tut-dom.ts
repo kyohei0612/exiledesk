@@ -22,6 +22,19 @@ export function inView(el: HTMLElement | null): boolean {
   const x = r.left + r.width / 2, y = r.top + r.height / 2;
   return x > 0 && y > 0 && x < window.innerWidth && y < window.innerHeight;
 }
+/**
+ * 要素の真ん中が木の枠の見える所 (下の帯「! 未設定 ▸ 次へ」の上まで) にあるか。木の枠が無ければ画面で見る (inView)。
+ * 箱の真ん中は見えていても ＋ や箱のボタンが枠の下の外で押せない事があった (11-03 tutorial-walk の 11/13)
+ */
+export function inFrame(el: HTMLElement | null): boolean {
+  const f = document.querySelector<HTMLElement>("[data-tree-frame]")?.getBoundingClientRect();
+  if (!f) return inView(el);
+  const r = el?.getBoundingClientRect();
+  if (!r || r.width <= 0 || !inView(el)) return false;
+  const bar = document.querySelector<HTMLElement>("[data-tree-unset-bar]")?.parentElement?.getBoundingClientRect().height ?? 0;
+  const x = r.left + r.width / 2, y = r.top + r.height / 2;
+  return x > f.left && x < f.right && y > f.top && y < f.bottom - bar;
+}
 /** チェックの欄 (label の中の input) が ☑ か */
 export const checked = (sel: string): boolean => !!document.querySelector<HTMLInputElement>(`${sel} input:checked`);
 /** 狙う MOD の欄 (☑ の MOD ごと) の目印 */

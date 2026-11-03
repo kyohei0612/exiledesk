@@ -108,7 +108,7 @@ watch(() => (tutOn.value ? tut.pos.value : -1), (i) => { if (i >= 0) simOp("tuto
 const off = computed(() => !tut.onRoute.value);
 const step = computed(() => tut.step.value);
 const text = computed(() => tut.text.value);
-const boxId = computed(() => { const st = step.value; return st && (st.kind === "hand" || st.kind === "done") ? tut.roles.value[st.box] : undefined; });
+const boxId = computed(() => { const st = step.value; return st && (st.kind === "hand" || st.kind === "done" || st.kind === "fail") ? tut.roles.value[st.box] : undefined; });
 /** 最初から: 進み (始め方を決めた・手を足した) がある時は確かめる (前は確かめなしで木の進みが消えた、モンキー 7 の 2) */
 function restart(): void { if (tutHasProgress() && !window.confirm(tr("今の木の進みを消して、最初からやり直しますか? (1 つ戻すで戻せます)", "Clear the current progress and start over? (Undo brings it back)"))) return; startTutorial(); }
 function quit(): void { if (tutDirty.value && !window.confirm("保存していない文がある。やめても画面の中には残る (保存はまだ)")) return; stopTutorial(); }

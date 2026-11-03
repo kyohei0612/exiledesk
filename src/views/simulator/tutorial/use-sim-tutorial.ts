@@ -13,9 +13,10 @@ import { headOf, modShort } from "../tree/tree-names";
 import { useTree } from "../tree/use-tree";
 import { openTreePage, treeStep } from "../../../web/page";
 import { simOp } from "../../../web/track";
+import { tidyStep } from "../../../services/simulator/tree/tree-junk-tidy";
 import { DRAFT_WHY, SPELL, isTutorialDoc, rolesOf, tutorialDoc, type Role, type TutNames } from "./tut-route";
 import { tutData, type TutStepDef } from "./tut-data";
-import { aimSel, aimsChecked, checked, handOpen, holding, inView, keepSel, omenOn, omensOnNow, shelfSel, shown } from "./tut-dom";
+import { aimSel, aimsChecked, checked, handOpen, holding, inFrame, keepSel, omenOn, omensOnNow, shelfSel, shown } from "./tut-dom";
 import { overviewOpen, phoneIndex, phoneNow } from "./use-sim-tutorial-phone";
 
 /** 案内中か */
@@ -59,6 +60,9 @@ export function stepDone(d: TreeDoc, r: Roles, st: TutStepDef): boolean {
   if (st.kind === "hand") return !!r[st.box] && handMatches(d, r[st.box]!, st);
   // スマホは完成が自動 (S-91) なので札の「次へ」で済み (P10)、帯の代わりは全体図を開いて閉じる (P11)
   if (st.kind === "done") return tutPhone.value ? notesDone.value.includes(st.id) : !!r[st.box] && d.boxes[r[st.box]!]?.done === "main";
+  if (st.kind === "fail") return !!r[st.box] && d.boxes[r[st.box]!]?.done === "fail";
+  // ハズレ整理を押した = 整理の段を過ぎた (S-192。押した後は手を足しても整理の段へ戻らない)
+  if (st.kind === "tidy") return tidyStep(d) !== "tidy";
   if (st.kind === "unset" && tutPhone.value) return mapSeen.value && !overviewOpen();
   // 帯の「次へ」を押した (または押した先の dj にもう手がある = 前に押した)
   if (st.kind === "unset") return barUsed.value || !!(r.dj && d.boxes[r.dj]?.hand);
@@ -127,13 +131,21 @@ function pcNow(c: TutCtx): TutNow {
     const b = d.boxes[id]!;
     if (b.hand && !handOpen()) return { key: k("wrong"), target: `[data-box-id="{box}"]`, wrong: true, act: "undo", draft: WRONG(c.boxName(st.box), c.boxName(st.box, true)) };
     if (!handOpen()) {
-      // 箱が画面の外 (帯の「次へ」で寄っていない) なら帯を指す
-      if (!inView(shown(`[data-box-id="${CSS.escape(id)}"]`)) && shown("[data-tree-unset-bar]")) return { key: k("bar"), target: "[data-tree-unset-bar]", draft: say(`帯の「次へ」で「${c.boxName(st.box)}」の箱へ寄る`, `Use the bar's "Next" to go to the "${c.boxName(st.box, true)}" box`) };
+      // 箱の ＋ が木の枠の見える所の外 (帯の「次へ」で寄っていない) なら帯を指す
+      if (!inFrame(shown(`[data-box-id="${CSS.escape(id)}"] [data-tree-next]`)) && shown("[data-tree-unset-bar]")) return { key: k("bar"), target: "[data-tree-unset-bar]", draft: say(`帯の「次へ」で「${c.boxName(st.box)}」の箱へ寄る`, `Use the bar's "Next" to go to the "${c.boxName(st.box, true)}" box`) };
       return { key: k("plus"), target: `[data-box-id="{box}"] [data-tree-next]`, draft: say(`「${c.boxName(st.box)}」の箱の下の ＋ を押す`, `Click + under the "${c.boxName(st.box, true)}" box`) };
     }
     return inHand(st, k, names, () => inChecks(st, k, names) ?? { key: k("use"), target: "[data-tree-hand-card]", draft: say("左のアイテムのカードを押して、この手にする", "Click the item card on the left to make it this craft") });
   }
   if (st.kind === "done") return { key: k("main"), target: r[st.box] ? `done:${r[st.box]}` : null, draft: say(`「${c.boxName(st.box)}」の箱の「完成」を押す`, `Click "Done" on the "${c.boxName(st.box, true)}" box`) };
+  if (st.kind === "tidy") return { key: k("main"), target: "[data-tree-tidy]", draft: say("上の帯の「ハズレ整理」を押す", "Click \"Sort misses\" in the bar at the top") };
+  if (st.kind === "fail") {
+    const id = r[st.box];
+    if (!id) return { key: k("missing"), target: null, act: "undo", draft: MISSING };
+    if (d.boxes[id]!.hand) return { key: k("wrong"), target: `[data-box-id="{box}"]`, wrong: true, act: "undo", draft: WRONG(c.boxName(st.box), c.boxName(st.box, true)) };
+    if (!inFrame(shown(`[data-box-id="${CSS.escape(id)}"] [data-tree-box-fail]`)) && shown("[data-tree-unset-bar]")) return { key: k("bar"), target: "[data-tree-unset-bar]", draft: say(`帯の「次へ」で「${c.boxName(st.box)}」の箱へ寄る`, `Use the bar's "Next" to go to the "${c.boxName(st.box, true)}" box`) };
+    return { key: k("main"), target: `[data-box-id="{box}"] [data-tree-box-fail]`, draft: say(`「${c.boxName(st.box)}」の箱の「失敗」を押す`, `Click "Fail" on the "${c.boxName(st.box, true)}" box`) };
+  }
   if (st.kind === "unset") return { key: k("main"), target: "[data-tree-unset-bar]", draft: say("上の帯「! 未設定 ▸ 次へ」を押す", "Click the \"! Not set ▸ Next\" bar at the top") };
   if (st.kind === "test") return testScene(c, k, "[data-tree-test]");
   if (st.kind === "run") return runScene(c, k, "[data-tree-run]");
@@ -155,9 +167,11 @@ export function startScene(c: TutCtx, k: (s: string) => string): TutNow {
 }
 export function testScene(c: TutCtx, k: (s: string) => string, btn: string): TutNow {
   // 木を変えるたびに穴チェックが自動で回る。回っている間はボタンが押せない (押しても数えない) ので待つ
-  if (document.querySelector<HTMLButtonElement>(btn)?.disabled) return { key: k("busy"), target: null, draft: say("穴チェックが回っている。終わるまで待つ", "The gap check is going. Wait for it to finish") };
-  if (!c.testPressed) return { key: k("main"), target: btn, draft: say("「穴チェック」を押す (止まる所・打てない手を探す)", "Click \"Gap check\" (finds dead ends and unusable crafts)") };
-  return { key: k("wait"), target: null, draft: say("穴チェックが終わるのを待つ (✓ 合格が出たら次へ)", "Wait for the gap check (✓ Passed)") };
+  // PC はハズレ整理の流れの「最終チェック」(S-70)、スマホは「穴チェック」
+  const [ja, en] = btn === "[data-tree-test]" ? ["最終チェック", "Final check"] : ["穴チェック", "Gap check"];
+  if (document.querySelector<HTMLButtonElement>(btn)?.disabled) return { key: k("busy"), target: null, draft: say(`${ja}が回っている。終わるまで待つ`, `The ${en.toLowerCase()} is going. Wait for it to finish`) };
+  if (!c.testPressed) return { key: k("main"), target: btn, draft: say(`「${ja}」を押す (止まる所・打てない手を探す)`, `Click "${en}" (finds dead ends and unusable crafts)`) };
+  return { key: k("wait"), target: null, draft: say(`${ja}が終わるのを待つ (✓ 合格が出たら次へ)`, `Wait for the ${en.toLowerCase()} (✓ Passed)`) };
 }
 export function runScene(c: TutCtx, k: (s: string) => string, btn: string): TutNow {
   // 穴チェックに通っていない間も押せない (S-70)。回している時の文にしない
@@ -206,7 +220,7 @@ export function useSimTutorial() {
     const n = now.value, st = step.value;
     if (!n) return null;
     const sel = tutData.value.targets[n.key] ?? n.target;
-    const box = st && (st.kind === "hand" || st.kind === "done") ? roles.value[st.box] : undefined;
+    const box = st && (st.kind === "hand" || st.kind === "done" || st.kind === "fail") ? roles.value[st.box] : undefined;
     return sel && sel.includes("{box}") ? (box ? sel.split("{box}").join(box) : null) : sel;
   });
   /** 札の文 (日 / 英)。打った文が無ければ下書き = 場面の一言 + 手順のなぜ */
