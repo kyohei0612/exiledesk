@@ -20,8 +20,7 @@ import { aimedAims, isWhittleHand, rankVariants } from "../../../services/simula
 import { bodyMemo, type BodyOf } from "../../../services/simulator/tree/tree-box-shape";
 import { aimedAfterAnnul } from "../../../services/simulator/tree/tree-judge";
 import { goneOf } from "../../../services/simulator/tree/tree-keep";
-import { isKeepAnnul, looseOf, stripKeyOf, stripStopByContent } from "../../../services/simulator/tree/tree-outcome";
-import { isStripKey } from "../../../services/simulator/tree/tree-junk-side";
+import { stripKeyOf, stripStopByContent } from "../../../services/simulator/tree/tree-outcome";
 import { judgeMemo, sampleAimed, type Judge } from "../../../services/simulator/tree/tree-judge";
 import { arrivalsOf, joinableByContent, linkByContent, pruneByContent, sameHandByContent, sameHitsByContent } from "../../../services/simulator/tree/tree-judge-link";
 import { joinableShapeOf, joinSameHit, sameHitsOf } from "../../../services/simulator/tree/tree-shape";
@@ -283,8 +282,7 @@ export function applyPick(d: TreeDoc, id: string, h0: Hand, kind: HandKind, aims
   let at = id;
   if (pre) { setHand(d, id, { currency: pre, omens: [], catalyst: null, quality: 0 }, "quality"); at = d.boxes[id]!.outs[0]!; }
   setHand(d, at, h, kind, aims, only, undefined, holdsAimOf(d, at));
-  if (kind === "strip") stripChain(d, at, h);
-  else if (data && isKeepAnnul(h)) lostSplit(data, d, at, h);
+  if (kind === "strip") stripChain(d, at, h); // 消去の結果は未設定 (↩ も続きの消去も自動で付けない、S-190b)
   joinSameShape(d, id);
   if (data) relinkByContent(data, d, had);
   afterHandSet(data, d, id, id, h, had, pre); // 新しい枝は未設定・同じ枠探し (S-190b)
@@ -400,16 +398,16 @@ export function* arrivedSteps(data: PatchData, d: TreeDoc): Generator<void, stri
 /** 全部消えてよい消去は消した後の中身ごとの箱 (S-28d、stripSplit)。前の直線 (stripToShape・stripStops) は R5 で消した */
 function stripChain(d: TreeDoc, id: string, h: Hand): void {
   const data = craftStage.data.value;
-  if (data && d.boxes[id]) stripSplit(data, d, id, h, 0);
+  if (data && d.boxes[id]) stripSplit(data, d, id, h);
 }
 /**
  * 全部消えてよい消去の結果は、消した後の中身ごとに箱を分ける (S-28d、10-29 深夜オーナー「消去でも同じ枠なのにな まだ駄目だわ」)。
- * 結果の箱ごとに、中身の同じ手のある箱 (ほかの全部消す消去の箱も) があれば ↩ その箱、無ければその箱でまた消去 (消せる物が無ければ行き先未定)。
+ * 結果の箱は未設定 (11-04 S-190b。前は中身の同じ手のある箱へ自動の ↩、無ければその箱でまた消去を自動で足した)。
  * 前は 1 本の直線で、消去 1 回の後の中身が人ごとに違うと箱が混ざり (どれが消えたかで プレ / サフィ)、全員が合う箱に着いた所でも消去を 1 箱足した
  * (木の b24 → b25 = 誰も来ない止まり、b33 と b37 = 同じ中身の消去が 2 本)。結果はこの箱の見本 4 つにエンジンの stepOutcomes で打った物
  */
-function stripSplit(data: PatchData, d: TreeDoc, id: string, h: Hand, depth: number): void {
-  const firsts = new Map<string, StageItem>(), marks = new Map<string, ReadonlySet<string>>();
+function stripSplit(data: PatchData, d: TreeDoc, id: string, h: Hand): void {
+  const firsts = new Map<string, StageItem>();
   for (const seed of [1, 2, 3, 4]) {
     const s = sampleOf(data, d, id, seed);
     // 打つ前にもう手のある箱と同じ中身の人は打たずにその箱へ行く (回す時の stripStop) ので結果に数えない
@@ -417,51 +415,10 @@ function stripSplit(data: PatchData, d: TreeDoc, id: string, h: Hand, depth: num
     // 消した後の ☑ は候補の外の印も残す (S-27e)
     const am = aimedAfterAnnul(data, d, h, sampleAimed(data, d, id, seed), s.item);
     if (stripStopByContent(data, d, id, s.item, false, am)) continue;
-    for (const o of stepOutcomes(data, prepFor(data, s.item, h.currency), h.currency, engineOmens(h)) ?? []) { const k = o.void ? null : stripKeyOf(data, d, o.item, am); if (k && !firsts.has(k)) { firsts.set(k, o.item); marks.set(k, am); } }
+    for (const o of stepOutcomes(data, prepFor(data, s.item, h.currency), h.currency, engineOmens(h)) ?? []) { const k = o.void ? null : stripKeyOf(data, d, o.item, am); if (k && !firsts.has(k)) firsts.set(k, o.item); }
   }
   if (!firsts.size) return;
   setHand(d, id, h, "strip", [], [...firsts.keys()].map((junkKey) => ({ out: "junkGone" as OutKind, aim: null, junkKey })));
-  for (const c of [...(d.boxes[id]?.outs ?? [])]) {
-    const box = d.boxes[c], it = box?.junkKey ? firsts.get(box.junkKey) : undefined;
-    if (!box || !it) continue;
-    const to = stripStopByContent(data, d, id, it, true, marks.get(box.junkKey!));
-    box.back = to; box.done = null;
-    if (to) { box.autoBack = true; continue; }
-    delete box.autoBack;
-    if (looseOf(it) > 0 && depth < 12) stripSplit(data, d, c, h, depth + 1);
-  }
-}
-/**
- * 残したい MOD の消去の結果は全部自動 (S-28e。狙いが消えたは tree-outcome の lostKeyed で消した後の中身ごとの箱、外れが消えたは側ごとの箱)。
- * 箱ごとに中身の同じ手のある箱 (ほかの消去の箱も、自分の下は除く。打つ前の箱が合えばそこを先に = オーナーが組んだ道) があれば ↩ その箱、無ければ
- * 狙いが消えた = その箱で全部消えてよい消去 (スパム、S-28d)、外れが消えた = 外れが残っていれば同じ残したい MOD の消去をもう一度。
- * 前は狙いが消えたが手も行き先も無い 1 箱で「失敗」になり (10-29 深夜オーナー「古い仕組みだからかな。消去でもスパムにいかないね」、木 2 本目の b47)、
- * 外れが消えたはオーナーが手で同じ消去を打っていた (b30・b44。オーナー「必須ＭＯＤ以外のルートは全部自動で決められるでしょ」)
- */
-function lostSplit(data: PatchData, d: TreeDoc, id: string, h: Hand, depth = 0): void {
-  const strip: Hand = { ...h, keep: [] };
-  for (const c of [...(d.boxes[id]?.outs ?? [])]) {
-    const box = d.boxes[c];
-    // 外れが消えたには setHand が打つ前の箱への自動の ↩ を入れる (tree-model)。中身で決め直す (人が選んだ ↩ はそのまま)
-    if (!box || box.hand || (box.back && !box.autoBack) || box.done || !(box.out === "junkGone" || (box.out === "lost" && isStripKey(box.junkKey)))) continue;
-    const prev = box.back;
-    box.back = null; delete box.autoBack;
-    const s = sampleOf(data, d, c, 1);
-    if (s.note === "none" || s.note?.startsWith("cant:")) continue;
-    const below = new Set(subtree(d, c)), aimed = sampleAimed(data, d, c, 1);
-    // 木が伸びるので箱ごとに判定を作り直す (前の箱で足した消去の箱も ↩ の行き先に入れる)
-    const tos = judgeMemo(data, d).boxesOf(s.item, aimed, (t) => !!d.boxes[t]?.hand && !below.has(t));
-    const to = prev && tos.includes(prev) ? prev : tos[0];
-    if (to) { box.back = to; box.autoBack = true; continue; }
-    if (box.out === "lost") { if (looseOf(s.item) > 0) stripSplit(data, d, c, strip, 0); continue; }
-    // 残したい MOD はこの自動の消去の中では必須、ほかは外れ (S-60 の ☑)。外れが残っていて、この手で打てる時だけ
-    // ☑ した外れの MOD はこの自動の消去の中では外れに数えない。箱の中身 (S-60) は変えない (S-28e)
-    const junk = [...s.item.prefixes, ...s.item.suffixes].some((m) => !m.fractured && !aimed.has(m.modId) && !(h.keep?.some((a) => a.modId === m.modId)));
-    const outs = junk && depth < 12 ? possibleOutsOf(data, d, c, h) : null;
-    if (!outs?.length) continue;
-    setHand(d, c, h, kindOf(h), [], outs, undefined, holdsAimOf(d, c));
-    lostSplit(data, d, c, h, depth + 1);
-  }
 }
 /** 棚に並ぶ物 (CurrencyShelf と同じ: オーブ・骨・エッセンス、ソケットがあればクラフトのルーン。隠すのはツリーの棚と同じ treeHidden。猿の口) */
 export function shelfKeysOf(data: PatchData, it: StageItem): string[] {

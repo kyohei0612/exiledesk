@@ -387,27 +387,9 @@ export function setHand(d: TreeDoc, id: string, hand: Hand, kind: HandKind, aims
   for (const a of all) { const g = groupOf && GROUPED.includes(kind) ? groups.find((x) => groupOf(x[0]!) === groupOf(a)) : undefined; if (g) g.push(a); else groups.push([a]); }
   for (const g of groups) g.sort((x, y) => order(x) - order(y));
   b.outs = want.flatMap((k) => (k === "hit" && groups.length ? groups.map((g) => { const h = mk(d, "hit", id); h.aim = { ...g[0]! }; if (g.length > 1) h.anyOf = g.map((a) => ({ ...a })); return h.id; }) : k !== "hit" && keysOf(k).length ? keysOf(k).map((jk) => { const j = mk(d, k, id); j.junkKey = jk; return j.id; }) : [mk(d, k, id).id]));
-  // 消えた箱は初めからつないでおく (オーナー 10-22「狙いが消えた…などは自動でつないでおく」。× で外せる)。行き先は人が選ぶのと同じ具体的な箱
-  // (10-22 オーナー「続きからって選択肢選べんでしょ」): 狙いが消えた = 始めに戻る (10-22「選択肢として初めに戻るでいいのでは」)、
-  // 外れが消えた = 外れの前の箱 (外れの箱の親。外れだけ消えたので、その箱と同じ形)。外れの箱の下でない時は形の合う箱へ。
-  // 親が品質だけ上げた後の通り抜けなら、その上の箱 (カタリストを入れ直す所) まで上がる (通り抜けへ戻ると品質が空のまま触媒の手を打つ)
+  // 消去の結果 (外れが消えた) も外れの道なので自動の ↩ を付けない (S-190b、11-04 オーナー「はい、未設定にして」)。
+  // 前は外れが消えた → 外れの前の箱 (S-50d の残り)・全部消えてよい消去 → 回す時に形の合う箱 (MATCH_BACK、S-28d)
   if (kind === "free") addHits(d, b, aims, order);
-  let before = b.out === "junk" ? b.parent : null;
-  while (before && d.boxes[before]?.out === "pass") before = d.boxes[before]!.parent;
-  // 道に当たりが 1 つも無い時の形の合う箱は始まり (白) しか無く、マジックで MOD 0 の人まで白のスタートへ戻されて先の手を足せなかった
-  // (10-25 指輪の猿 1: 変成 → 消去 + 右の消去のお告げ、6 本中 6 本)。その時は戻りを付けず、＋ で先を足せる箱のまま
-  let held = false;
-  for (let x: string | null = id; x && !held; x = d.boxes[x]?.parent ?? null) held = d.boxes[x]?.out === "hit" && !!d.boxes[x]?.aim;
-  for (const o of b.outs) {
-    const c = d.boxes[o]!;
-    // 狙いが消えたは戻り先を決めない (人が箱を選ぶ。10-26 オーナー「始めに戻るはなんかややこしい話だから普通にどこに戻るかいつも通り書く」。前は始めに戻る)
-    // スイッチ bodyStrict: 外れの前の箱への既定の戻りも自動の ↩ として印を付け、戻り先の 1 か所の判定 (tree-shape の returnFits) で見直す (applyPick の pruneBacks)。
-    // 形の合う箱へ (MATCH) は人が選べなくなった (S-52b) ので付けない = 未設定 (10-29 FmNY7Wwv の b24 → b19 は体の違う既定の戻りだった)
-    // 自動の ↩ は消去の結果だけ (S-50d)
-    if (c.out === "junkGone" && effectOf(hand.currency) === "remove") { c.back = before ?? null; if (before) c.autoBack = true; }
-    // 全部消えてよい消去は、消していく途中で木の箱と同じ形になった所で止めてそこへ戻る (回す時に形で決める、tree-outcome の stripBackOf。10-27 オーナー)
-    if (kind === "strip") c.back = MATCH_BACK;
-  }
   spread(d, id);
   makeRoom(d, id);
   healLost(d);

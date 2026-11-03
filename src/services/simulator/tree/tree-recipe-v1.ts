@@ -6,7 +6,6 @@
  */
 import { boxAims, kindOfHand, type Aim, type Hand, type TreeBox, type TreeDoc } from "./tree-model";
 import { CATALYSING, effectOf } from "./tree-hands";
-import { isStripKey } from "./tree-junk-side";
 
 export const RECIPE_V1 = "exiledesk-recipe/1";
 /** 箱 1 つの人の決め。at = 道の札、hand = 打つ手 (☑ は aims、触媒の前のカタリストは pre)、ほかは箱の印 */
@@ -54,17 +53,6 @@ function preChildOf(d: TreeDoc, b: TreeBox): TreeBox | null {
   const c = b.outs.length === 1 ? d.boxes[b.outs[0]!] : null;
   return b.hand && kind(b.hand) === "quality" && !b.hand.quality && c?.out === "pass" && c.hand?.omens.includes(CATALYSING) ? c : null;
 }
-/** 全部消えてよい消去の直線の続きの箱 (手は組み直しで付くので決めではない、S-109 の 10) */
-function chainOf(d: TreeDoc, b: TreeBox): boolean {
-  const p = b.parent ? d.boxes[b.parent] : null;
-  if (!b.hand || !p?.hand || p.hand.currency !== b.hand.currency) return false;
-  // × で自動の ↩ を外して人が打った手は続きでない (前は保存されず、開き直すと手が落ちて下の決めが要確認になった、金の指輪の木の b24)
-  if (b.noAutoBack) return false;
-  // 残したい MOD の消去の「狙いが消えた」に付けた全部消えてよい消去・「外れが消えた」に付けた同じ残したい MOD の消去も組み直しで付く (S-28e)
-  const sameKeep = (x: Hand, y: Hand): boolean => JSON.stringify(x.keep ?? []) === JSON.stringify(y.keep ?? []) && x.omens.join("+") === y.omens.join("+");
-  const keepAuto = !!p.hand.keep?.length && ((b.out === "lost" && isStripKey(b.junkKey) && kind(b.hand) === "strip") || (b.out === "junkGone" && sameKeep(p.hand, b.hand)));
-  return (kind(p.hand) === "strip" && b.out === "junkGone") || keepAuto;
-}
 /** 保存しない欄 (箱・番号・形の印・画面だけの物) */
 const NOT_KEPT = new Set(["schema", "boxes", "seq", "picks", "orphans", "startRarity", "droppedOld"]);
 
@@ -79,7 +67,8 @@ export function toRecipeV1(d: TreeDoc): TreeDoc {
     const b = d.boxes[id]!, p: RecipePick = { at };
     const viaPre = b.out === "pass" && !!b.parent && preChildOf(d, d.boxes[b.parent]!) === b;
     const h = b.hand ?? b.handBack ?? null;
-    if (h && !viaPre && !chainOf(d, b)) {
+    // 消去の続きの手も人の決め (11-04 S-190b。前は組み直しで自動で付くので保存しなかった = S-109 の 10)
+    if (h && !viaPre) {
       const pass = b.hand ? preChildOf(d, b) : null;
       if (pass) { p.hand = clone(pass.hand!); p.pre = b.hand!.currency; p.aims = hitAimsOf(d, pass); } else { p.hand = clone(h); p.aims = b.hand ? hitAimsOf(d, b) : []; }
     }
