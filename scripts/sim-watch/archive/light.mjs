@@ -1,17 +1,17 @@
 /**
  * light.mjs — スイッチ treeLight (S-71b) のオン / オフで結果が同じかの見張り (10-31)。見本の木を両方で開き、精査の結果・n 人の結果・開いた後の木の中身の JSON を比べ、時間も出す。
  * treeLight が RELEASED に入ると ?off= が効かなくなるので、この見張りは本番に出すまでの物
- *   node scripts/sim-watch/light.mjs [origin] [--only key,key] [--n 30] [--port 9482]
+ *   node scripts/sim-watch/archive/light.mjs [origin] [--only key,key] [--n 30] [--port 9482]
  */
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { openChrome, sleep } from "./cdp.mjs";
+import { openChrome, sleep } from "../cdp.mjs";
 
 const args = process.argv.slice(2);
 const opt = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
 const ORIGIN = (args.find((a) => /^https?:\/\//.test(a)) ?? "http://localhost:1440").replace(/\/$/, "");
 const N = Number(opt("--n") ?? 30), only = opt("--only")?.split(",");
-const t = JSON.parse(readFileSync(new URL("./trees.json", import.meta.url), "utf8"));
+const t = JSON.parse(readFileSync(new URL("../trees.json", import.meta.url), "utf8"));
 const list = [...t.trees, ...t.rules, ...t.pass, ...t.owner].filter((x) => !only || only.includes(x.key));
 const c = await openChrome(Number(opt("--port") ?? 9482));
 const probe = `(async () => { const M = __simMonkey, t0 = performance.now(); const k = await M.check(); const t1 = performance.now(); const r = M.run(${N}, 1); const t2 = performance.now(); return JSON.stringify({ check: k, run: r, ms: [Math.round(t1 - t0), Math.round(t2 - t1)], doc: M.dump() }); })()`;

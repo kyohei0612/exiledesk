@@ -375,7 +375,8 @@ try {
   const now = {};
   // 前から順に、空いたタブが次の木を取る
   const queue = [...TREES];
-  await Promise.all(tabs.map(async (c) => { const w = makeWatcher(c); for (let t = queue.shift(); t; t = queue.shift()) await w.runTree(t, now); }));
+  // 1 本の木でページの式が落ちても全体は止めない (合わない所に数えて次の木へ。11-03 木のデータが空の dev で始めの木で全部止まった)
+  await Promise.all(tabs.map(async (c) => { const w = makeWatcher(c); for (let t = queue.shift(); t; t = queue.shift()) { try { await w.runTree(t, now); } catch (e) { bad(t.key, "回す", "ページの式が落ちた (この木はここまで)", String(e?.message ?? e), ""); } } }));
   // 並べて回すと終わる順がばらけるので、結果・合わない所は木の順に揃える
   const order = new Map(TREES.map((t, i) => [t.key, i]));
   found.sort((x, y) => (order.get(x.tree) ?? 1e9) - (order.get(y.tree) ?? 1e9));

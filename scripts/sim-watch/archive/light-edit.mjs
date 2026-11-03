@@ -2,17 +2,17 @@
  * light-edit.mjs — S-71b ② (見本を道の鍵で覚え続ける、スイッチ treeLight) の見張り (11-01)。light.mjs は開いた時だけなので、こちらは手を足し続けた時を見る。
  * 見本の木を ?off=treeLight と開いた形で開き、同じ順で手を足す・戻りを外す・完成の狙いを替えるたびに、木の中身と全部の箱の見本 (__simMonkey.samples) を比べる。最後に 100 人も比べる。
  * オンの側は前の手からの覚えを持ったまま読むので、覚えの鍵の抜けがあれば違いが出る。手の選び方は決まった順 (乱数なし)
- *   node scripts/sim-watch/light-edit.mjs [origin] [--only key,key] [--steps 8] [--n 100] [--port 9483]
+ *   node scripts/sim-watch/archive/light-edit.mjs [origin] [--only key,key] [--steps 8] [--n 100] [--port 9483]
  */
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { openChrome, sleep } from "./cdp.mjs";
+import { openChrome, sleep } from "../cdp.mjs";
 
 const args = process.argv.slice(2);
 const opt = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
 const ORIGIN = (args.find((a) => /^https?:\/\//.test(a)) ?? "http://localhost:1440").replace(/\/$/, "");
 const STEPS = Number(opt("--steps") ?? 8), N = Number(opt("--n") ?? 100), only = opt("--only")?.split(",");
-const t = JSON.parse(readFileSync(new URL("./trees.json", import.meta.url), "utf8"));
+const t = JSON.parse(readFileSync(new URL("../trees.json", import.meta.url), "utf8"));
 const list = [...t.trees, ...t.rules, ...t.pass, ...t.owner].filter((x) => !only || only.includes(x.key));
 const extra = args.filter((a) => a.endsWith(".txt")).map((f) => ({ key: f.split(/[\\/]/).pop().replace(".txt", ""), code: readFileSync(f, "utf8").match(/#recipe=([A-Za-z0-9_-]+)/)[1] }));
 const sig = (x) => createHash("sha1").update(x).digest("hex").slice(0, 10);
