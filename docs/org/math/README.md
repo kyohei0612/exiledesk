@@ -21,5 +21,5 @@
 - 状態で手を決めて n 人回す台本 (boots-res-ev・es-gloves-ev・gold-ring-suffix-ev・mana-ring-ev) の共通の部品: scripts/analysis/_ev-common.mjs (値段の表 /boot.json 2026-10-20・costOf・打って数える counter・集計 summarize・headLine)。新しい見本の台本もこれを使う。 金の指輪のサフィックス 3 つの形ごとの最善 (動的計画法 + 1 か所ずつの OVR 確かめ) は gold-ring-suffix-dp.mjs、途中の形の次の手は gold-ring-midway-ev.mjs。 金の指輪のプレフィックス側 (左側の抹消 vs 削減) は gold-ring-prefix-ev.mjs (今の相場 2026-10-21T17:00Z、notes/2026-10-22-gold-ring-prefix.md)。
 - CoE の写し: data-cache/coe-beta-package_poe2.js。
 - テスト tests/: held-odds-parity・aim-odds・chaos-spam・engine-emulator-parity・desecrate-reveal-rates・mod-weights・catalysing-greater。
-- メモ: optimal-craft-dp (「落とし穴」= 段の下限・乱数・評価の仕方)・handoff-2026-10-22・held-odds-parity・aim-next-move・chaos-spam-and-sfx・craft-weight-sources・mod-engine-single-source・sim-cost-model。
+- メモ: optimal-craft-dp (「落とし穴」= 段の下限・乱数・評価の仕方)・handoff-2026-10-22 (memory-archive-1029/)・held-odds-parity・aim-next-move・chaos-spam-and-sfx・craft-weight-sources・mod-engine-single-source・sim-cost-model。
 - 決着済み: docs/spec/engine.md (E-xx、確率は E-80〜82)。元の記録は docs/reviews/2026-10-17-rule-checklist.md・2026-10-16-coe-rule-check.md、メモ poe2-craft-rules-confirmed。
