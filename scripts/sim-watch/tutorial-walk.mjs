@@ -17,6 +17,7 @@ const PHONE = args.includes("--phone");
 const W = Number(opt("--w") ?? (PHONE ? 390 : 1440)), H = Number(opt("--h") ?? (PHONE ? 844 : 900));
 const SHOTS = opt("--shots");
 const STRAY = args.includes("--stray");
+const ALL_SHOTS = args.includes("--all-shots");
 /** --stray-kind 0|1|2 = 外れる手の種類を 1 つに決める (0 Esc・1 ☑ を入れずに決める・2 違う物を持つ) */
 const STRAY_KIND = opt("--stray-kind");
 const c = await openChrome(Number(opt("--port") ?? 9482));
@@ -111,6 +112,9 @@ try {
     if (over(s)) { await sleep(700); if (over(await c.ev(STATE))) report.cardOver.push(`${s.n} ${s.say}`); }
     // 品質の場面 (11-03 オーナーの絵で札が字を隠した所) も撮る
     if (SHOTS && same === 0 && /品質は狙わない/.test(s.say)) { await sleep(700); await c.shot(`${SHOTS}/tut-${PHONE ? "phone" : W}-quality.png`); }
+    // --all-shots = 場面ごとに画面全体を撮る (押す前。幕の穴と札を目で見る、11-03 オーナー「UIでスナップチェックして」)
+    if (SHOTS && ALL_SHOTS && same === 0) { await sleep(700); await c.shot(`${SHOTS}/tut-${W}-${String(report.scenes + 1).padStart(2, "0")}-${s.n.split("/")[0].trim()}.png`); }
+    if (args.includes("--debug-results") && /^13 /.test(s.n)) report.debug = await c.ev(`(() => [...document.querySelectorAll("[data-tree-run-report], [data-tree-test-ok]")].map((e) => { const r = e.getBoundingClientRect(); return { tag: e.tagName, r: [r.left, r.top, r.width, r.height].map(Math.round), front: document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2).slice(0, 4).map((x) => x.tagName + (x.closest("[data-tut-mask]") ? "(幕)" : "")), d: document.querySelector("[data-tut-mask] path")?.getAttribute("d")?.length }; }))()`);
     report.scenes++;
     const hit = await press(tgt.x, tgt.y);
     // 札・灰色の幕 (T-30) が光る所を覆っていないか

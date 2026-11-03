@@ -43,21 +43,28 @@ function covered(el: HTMLElement): boolean {
   const front = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2).find((e) => !e.closest(TUT_LAYERS));
   return !!front && !el.contains(front) && !front.contains(el);
 }
-/** 札の置き場: 光る所の右 → 左 → 下 → 上の順に、画面に収まって重ならない所。どれも無理なら四隅で重ならない所 (無ければ重なりの一番小さい隅)。光る所が無ければ左下 (T-35) */
-function place(r: Rect | null): void {
+/**
+ * 札の置き場 (T-35): 光る所の右 → 左 → 下 → 上 (それぞれ真ん中・端に揃える)、次に四隅の中から、画面に収まって光る枠に重ならない所。
+ * そのうち明るくした所 (道の箱・結果) との重なりが一番小さい所 (同じなら前の順)。どこも光る枠に重なるなら重なりの一番小さい隅。光る所が無ければ左下
+ * (前は光る枠だけを避け、明るくした箱の中身に被った、11-03 オーナー「被ったりしてる所あるし」)
+ */
+function place(r: Rect | null, lit: Rect[] = []): void {
   const z = zoomOf(), W = window.innerWidth / z, H = window.innerHeight / z, cw = cardEl.value?.offsetWidth ?? 340, ch = cardEl.value?.offsetHeight ?? 160, g = 14, m = 8;
   if (narrow.value) { placePhone(r, W, H, ch, m); return; }
   if (!r) { pos.value = null; return; }
   const clampY = (y: number): number => Math.min(Math.max(m, y), H - ch - m), clampX = (x: number): number => Math.min(Math.max(m, x), W - cw - m);
-  const tries = [
-    { left: r.x + r.w + g, top: clampY(r.y + r.h / 2 - ch / 2), ok: r.x + r.w + g + cw <= W - m },
-    { left: r.x - g - cw, top: clampY(r.y + r.h / 2 - ch / 2), ok: r.x - g - cw >= m },
-    { left: clampX(r.x + r.w / 2 - cw / 2), top: r.y + r.h + g, ok: r.y + r.h + g + ch <= H - m },
-    { left: clampX(r.x + r.w / 2 - cw / 2), top: r.y - g - ch, ok: r.y - g - ch >= m },
+  const ys = [r.y + r.h / 2 - ch / 2, r.y, r.y + r.h - ch].map(clampY), xs = [r.x + r.w / 2 - cw / 2, r.x, r.x + r.w - cw].map(clampX);
+  const sides = [
+    ...ys.map((top) => ({ left: r.x + r.w + g, top, ok: r.x + r.w + g + cw <= W - m })),
+    ...ys.map((top) => ({ left: r.x - g - cw, top, ok: r.x - g - cw >= m })),
+    ...xs.map((left) => ({ left, top: r.y + r.h + g, ok: r.y + r.h + g + ch <= H - m })),
+    ...xs.map((left) => ({ left, top: r.y - g - ch, ok: r.y - g - ch >= m })),
   ];
-  const lap = (t: { left: number; top: number }): number => Math.max(0, Math.min(t.left + cw, r.x + r.w) - Math.max(t.left, r.x)) * Math.max(0, Math.min(t.top + ch, r.y + r.h) - Math.max(t.top, r.y));
+  const lap = (t: { left: number; top: number }, q: Rect): number => Math.max(0, Math.min(t.left + cw, q.x + q.w) - Math.max(t.left, q.x)) * Math.max(0, Math.min(t.top + ch, q.y + q.h) - Math.max(t.top, q.y));
   const corners = [{ left: m, top: H - ch - m }, { left: W - cw - m, top: H - ch - m }, { left: W - cw - m, top: m }, { left: m, top: m }];
-  const t = tries.find((x) => x.ok && !lap(x)) ?? corners.reduce((a, b) => (lap(b) < lap(a) ? b : a));
+  const free = [...sides.filter((x) => x.ok), ...corners].filter((x) => !lap(x, r));
+  const cover = (t: { left: number; top: number }): number => lit.reduce((s, q) => s + lap(t, q), 0);
+  const t = free.length ? free.reduce((a, b) => (cover(b) < cover(a) ? b : a)) : corners.reduce((a, b) => (lap(b, r) < lap(a, r) ? b : a));
   pos.value = { left: Math.round(t.left), top: Math.round(t.top) };
 }
 /** スマホで札の床にする、画面の下の決めるボタン */
@@ -116,10 +123,14 @@ function frame(): void {
   }
   const r = el?.getBoundingClientRect(), z = zoomOf();
   ring.value = r && r.width > 0 ? { x: r.left / z - 4, y: r.top / z - 4, w: r.width / z + 8, h: r.height / z + 8 } : null;
-  // 光る所が動かなければ札も動かない (打っている間も)。書く所を開いて背が伸びた時は画面に収まる所へ
-  place(ring.value);
   const W = window.innerWidth / z, H = window.innerHeight / z;
-  mask.value = tutOn.value && !off.value ? { d: maskPath(W, H, holes(el, z)), w: W, h: H } : null;
+  // 光らせる所が決まっているのに見つからない (目印が描かれていない・別の木を見ている) 時は幕を掛けない。押す所まで灰色になって進めなくなった
+  // (11-03 オーナー「案内する所さえグレアウトしてるしなんなん」。1440 の dev が HMR の後に木の状態を 2 つ持ち、完成形のカードに目印が無かった)
+  const lost = !!tut.target.value && !el;
+  const hs = tutOn.value && !off.value && !lost ? holes(el, z) : null;
+  mask.value = hs ? { d: maskPath(W, H, hs), w: W, h: H } : null;
+  // 光る所が動かなければ札も動かない (打っている間も)。書く所を開いて背が伸びた時は画面に収まる所へ。明るくした所 (穴の 2 つ目から) もなるべく避ける
+  place(ring.value, hs?.slice(el ? 1 : 0) ?? []);
   raf = requestAnimationFrame(frame);
 }
 onMounted(() => {
