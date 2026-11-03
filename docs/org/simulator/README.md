@@ -3,12 +3,12 @@
 シミュレーター = クラフトの道 (ツリー。ベース選び ?page=sim-base → 完成の MOD ?page=sim-mods → ツリー ?page=sim-tree、レシピ ?page=recipes)・費用・チュートリアル/コースの持ち主。10-25 v0.1.601 で本番公開 (スマホはスイッチ simPhone)、作る・確かめるは手元 1440。旧 ①〜⑥ の工程ページと自動モードの画面は 10-22 に消した。
 
 ## 決まり (正は設計図 docs/spec/sim-tree.md の S-xx、チュートリアルは docs/spec/tutorial.md の T-xx。ここは番号を指すだけ)
-- 新しい事は 設計図に書く → オーナーの OK → 作る → 同じ commit で設計図を直す (G-20)。足したらフルチェック (G-21・S-112)。
+- 新しい事は 設計図に書く → オーナーの OK → 作る → 同じ commit で設計図を直す (G-20)。出す前は最終チェック長の猿の結果報告 (G-21・R-18)、フルチェックはオーナーの指示の時だけ (sim-tree.md ⑤)。
 - よく指す番号: 打つ手は自由・☑ だけ当たり (G-03・S-20・S-22)、起こりうる結果を全部箱で (S-21)、同じ形 (S-60〜S-64)、表示はその箱の見本と作った手から (S-81)、名前はエンジン参照 (G-05・S-84)、シミュに自我はいらない (S-110)、スマホ (S-90〜S-93)、レシピは消さない (S-100)、ツリーの体験は妥協しない (S-88)。
 - 触るファイルは dev/README.md と dev/touching/simulator.md。
 
 ## 今 (10-28 夜、シミュ部長 34)
-- 開発版だけのスイッチは全部オーナー OK 済み (10-28 夜、スナップ ok-snaps/sim-*.png に「OK。変性とか増強とかのあの例の枝くらいかな実戦で試すの。、他OKでいいよ」)、本番待ち: goalTen・fracOne・tierWord (シミュの文)・recipeJump・failEnd・fracMulti・boneLater・fracPick・stopPill・stripRarity・boxShape・recipeCard。junkSide だけは 1461 でオーナーが変成・増強の外れの枝を触って確かめてから。出すのは「出して」と最終チェック長の見張りの後 (表は docs/pending-release.md)。
+- 開発版だけのスイッチは全部オーナー OK 済み (10-28 夜、スナップ ok-snaps/sim-*.png に「OK。変性とか増強とかのあの例の枝くらいかな実戦で試すの。、他OKでいいよ」)、(10-28 の時の本番待ち goalTen〜recipeCard・junkSide は v0.1.643 までに出た。今のスイッチは src/web/release-flags.ts の RELEASED を見る)出すのは「出して」と最終チェック長の見張りの後 (表は docs/pending-release.md)。
 - 10-28 に足した作り: 外れの側の鍵 services/simulator/tree/tree-junk-side.ts (S-65)・候補 10 の断り views/simulator/tree/tree-goal-cap.ts (S-04)・レシピのカード絵の値 views/simulator/recipe-card.ts (S-102、POST /r/new の { code, card })・共有 URL からスマホは全体図を開く (recipe-share.ts の openSharedRecipe、S-103)・止まりの札は箱の本当の下端の下 (TreeRunLayer の heightOf)。
 - 前と後のスナップ: 開発版だけ URL に `?off=<スイッチ名>` でそのスイッチを閉じて開ける (release-flags.ts、本番の作りでは空)。
 

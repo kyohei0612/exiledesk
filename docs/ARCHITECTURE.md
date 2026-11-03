@@ -11,7 +11,7 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
           ├ 打つ入口 (apply-currency.ts) … spec で打てない物 (指名・鑑定など) だけ今の関数
           └ エンジン (src/vendor/poe2htc + src/services/htc) … MOD の置き場・重み・段の正
 サーバー (Cloudflare Workers)
-  ├ server/web  … 画面の配信・シェアのカード (/s/<code>、og-card.js)・ベースの読み物のページ
+  ├ server/web  … 画面の配信・シェアのカード (/s/<code>、og-card.js)・レシピのシェア /r/ (Y-30。ベースの読み物のページ /bases/ は 10-31 に消して 410 = Y-84)
   └ server/live … チャンネル・相場 (/boot.json)・記録 (/log → D1)・要望 (/feedback)・日報
 ```
 
@@ -40,7 +40,7 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 
 エンジンの核 (ジン部長): `craft-stage/` の `types.ts`・`run-plan.ts`・`contract.ts`、乱数 `htc/rng.ts`。画面 (エミュ・シミュ・チュートリアル)・解析君は入口から取る (核は `engine.ts`、画面の要望の物は出した側だけが `engine-sim.ts` / `engine-emu.ts` から。分け方は org/emulator/notes/2026-10-22-entry-split-plan.md)。`services/simulator/htc/` はアプリ専用・凍結で Web から import しない。craft-stage/ に残した共通の境目: `share.ts`・`trade-search.ts`。htc/ の `buy-or-craft.ts`・`prices.ts`・`paste*.ts` もアプリ・各部がまたがって使うので htc/ に残した。scripts/ は今のまま 1 つのフォルダー。
 
-コードを持たない部 (docs/org/): モンキー隊長 (開発版を何も知らない人として触り notes/ に書くだけ)・リサーチ長。
+コードを持たない部 (docs/org/): リサーチ長。出す前の猿は最終チェック長 (R-18、モンキー隊長は 10-31 にアーカイブ)。
 
 ## 何を正とするか (同じ事を 2 か所でやらない)
 
@@ -76,8 +76,8 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 
 ## 配布
 
-- **Web**: `node scripts/bump-version.mjs patch` → `cd src-tauri && cargo check -q` → コミット → push → `pnpm deploy:web` (= `pnpm build:web` + `server/web` の deploy)。タグは打たない。
-  `pnpm build:web` の最後に `scripts/build-seo-pages.mjs` がベースの読み物のページ (日本語 `/bases/`・英語 `/en/bases/`) と sitemap.xml を作る。
+- **Web**: 版上げと出し方は設計図 release.md の R-06・R-08 (`pnpm deploy:web` = `pnpm build:web` + `server/web` の deploy)。タグは打たない。
+  `pnpm build:web` の最後に `scripts/build-seo-pages.mjs` が sitemap.xml を作る (ベースの読み物のページ `/bases/` は Y-84 で消して 410)。
 - **開発版**: 手元だけ。`pnpm preview:prod -- --dev` → http://dev.exiledesk.localhost:1461/ (本番と同じ Worker、チュートリアル・シミュレーターが開く、記録は送らない)。Cloudflare に開発版は置かない (Y-70、web-dev は 10-24 に消した)。オーナーの確かめは 1440 (R-13)、1461 は出す前の見張り用 (R-15)。
 - **サーバー**: `cd server/live && pnpm run deploy` (手順は `server/live/README.md`)。D1 は `exiledesk-logs`、KV は増やさない。
 

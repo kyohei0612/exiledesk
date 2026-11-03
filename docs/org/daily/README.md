@@ -1,6 +1,6 @@
 # デイリー部長 (デイリークラフトチャレンジ)
 
-毎日のお題をシミュレーターで組んで平均の費用で競う、デイリークラフトチャレンジの係 (オーナー 10-22)。別ページ (タブを 1 つ増やす)。構想はメモ craft-challenge の「10-22」の節が正。docs/org/dev/README.md の決まりが先。
+毎日のお題をシミュレーターで組んで平均の費用で競う、デイリークラフトチャレンジの係 (オーナー 10-22)。別ページ (タブを 1 つ増やす)。決まりの正は設計図 docs/spec/daily.md (D-xx、構想の元はメモ craft-challenge の「10-22」の節)。docs/org/dev/README.md の決まりが先。
 
 ## 決まり (10 行まで)
 1. 持ち物は src/views/daily/ と docs/org/daily/。後から server/live のデイリーの所・D1 の表・src/state/daily*.ts も持つ (作る時に owners.txt に足す)。

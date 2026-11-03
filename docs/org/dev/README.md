@@ -1,7 +1,7 @@
 # 最終チェック長
 
 最終チェック長 (オーナー 10-21)。常駐しない。本番に上げる時の最後だけ、オーナーの OK の後にブラックが立てる。仕事 = 上げる物の最後の確かめ (型チェック・ビルド・本番に出す物と OK 待ちの出し分け)・デバッグ・版上げ・更新内容の日英・本番の deploy:web と push。終わったら 1〜2 行をブラックへ、引き継ぎは dev/todo.md・notes/。
-本番の出し方の正は設計図 docs/spec/release.md (R-xx)。main をそのまま出す R-01・スイッチ R-02・合図 R-03・版上げ R-06・裏方 R-07・main への入れ方 R-08・出す前の照らしと見張り R-09・出した後 R-10・日英 R-11・ポップアップ R-12・オーナーの確かめ (「確認して」の時だけ 1440) R-13・止めた後の片付け R-14・見張り R-15〜17 と不変条件 R-30〜34 (回し方の手引きは sim-watch.md)・フルチェック R-18・合格 R-19 (G-22)・要望の返事 R-20。記録 notes/2026-10-24-main-release.md。
+本番の出し方の正は設計図 docs/spec/release.md (R-xx)。main をそのまま出す R-01・スイッチ R-02・合図 R-03・版上げ R-06・裏方 R-07・main への入れ方 R-08・出す前の流れ R-09・出した後 R-10・日英 R-11・ポップアップ R-12・オーナーの確かめ (「確認して」の時だけ 1440) R-13・止めた後の片付け R-14・見張り R-15〜17 と不変条件 R-30〜34 (回し方の手引きは sim-watch.md)・出す前の猿 R-18・合格 R-19 (G-22)・要望の返事 R-20。記録 notes/2026-10-24-main-release.md。
 下の決まりは全部の部の決まり (CLAUDE.md・メモ MEMORY.md の「必ず守る」が先)。
 
 ## 決まり (全部の部。元の文・経緯は notes/2026-10-26-rules-archive.md)
@@ -27,5 +27,5 @@
 - 動画 (video/、旧 POE2Tube) との受け渡し (動画編集長と): 録画モード src/utils/rec-mode.ts (`?rec=1`・seed・`__rec`)、撮影 URL・`data-rec` の目印、JSON の形 (正は video/contracts/、ExileDesk 側 contract.ts・scripts/craft-stage-run.mjs)。変える時は両方を同じ commit で、メモ poe2tube-handoff。video/ は CI (tests.yml の paths-ignore)・vite の watch・tailwind (@source not) から外してある。
 - 英語: 言語の切り替え src/i18n/lang.ts (`tr`・`modText`・`nameOf`)・GLOSSARY.md はデザイン部長、ゲームのデータ *-client.json などはジン部長。
 - サーバー (サーバー管理人): server/web (og-card.js・move-gate.js・wrangler*.jsonc)、server/live (README.md・src/index.ts・market.ts・logs.ts・feedback.ts・monitor.ts・migrations/)。
-- 決まりの番号: 裏方 R-07・ポップアップ R-12・要望の返事 R-20 / UI は shared-ui.md (U-xx) / 英語 Y-80〜83・U-60〜62 / 広告 Y-20〜25 / 合格 G-22・R-19 / 外の API Y-52。経緯のメモ (feedback-replies・web-english・feedback-verify-by-code・feedback-test-strategy) は記録。フックで止める物は設計図 README ⑥ (G-30〜42)。
+- 決まりの番号: 裏方 R-07・ポップアップ R-12・要望の返事 R-20 / UI は shared-ui.md (U-xx) / 英語 Y-80〜83・U-60〜62 / 広告 Y-20〜25 / 合格 G-22・R-19 / 外の API Y-52。経緯のメモ (feedback-replies・web-english・feedback-verify-by-code・feedback-test-strategy) は記録。フックで止める物は設計図 README ⑥ (G-30〜43)。
 - docs: ARCHITECTURE.md・roadmap-2026-10.md・decisions/。決着済み: 設計図 docs/spec/・GLOSSARY.md。
