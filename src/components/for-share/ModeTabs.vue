@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { tr } from "../../i18n/lang";
-import { DAILY_ON, PAGES_ON, TREE_ON, treePage } from "../../state/web-page";
+import { DAILY_ON, dailyPage, PAGES_ON, TREE_ON, treePage } from "../../state/web-page";
 import { closeTreePage, openDailyPage, openSkinsPage, openTreePage, page, SKINS_ON, topOfPage } from "../../web/page";
 import { flag } from "../../web/release-flags";
 
@@ -25,6 +25,8 @@ const emit = defineEmits<{ pick: [Mode] }>();
 /** 本番 (スイッチ modeTabs が切れている間) はベースのページに帯を出さない (前は帯ごと隠していた) */
 const shown = computed(() => flag("modeTabs") || page.value !== "page=base");
 const on = computed((): Mode | null => (props.active !== undefined ? props.active : treePage.value ? "sim" : "hand"));
+/** デイリーのページではデイリーのタブを選んだ見た目に (スイッチ siteLook。大きい題の帯を出さないので、今どこかはタブで示す。U-49) */
+const dailyOn = computed(() => flag("siteLook") && !!dailyPage.value);
 /** 押したら一番上から (スイッチ backPlace、U-27: タブは初めて開いたのと同じ。戻るは前の位置) */
 function pick(m: Mode): void {
   if (m === "sim") {
@@ -52,7 +54,7 @@ const TAB = "g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex
     <button v-if="TREE_ON" type="button" role="tab" data-mode-tab="sim" :aria-selected="on === 'sim'" :class="[TAB, on === 'sim' ? 'on' : '']" @click="pick('sim')">
       {{ tr("シミュレーター", "Simulator") }}<span class="text-[10px] font-normal opacity-70" :title="tr('作り込み中の機能', 'Still in development')">β</span>
     </button>
-    <button v-if="EXTRA && DAILY_ON" type="button" role="tab" data-mode-tab="daily" :aria-selected="false" :class="TAB_S" @click="openDailyPage(); topOfPage()">{{ tr("デイリー", "Daily") }}</button>
+    <button v-if="EXTRA && DAILY_ON" type="button" role="tab" data-mode-tab="daily" :aria-selected="dailyOn" :class="[TAB_S, dailyOn ? 'on' : '']" @click="openDailyPage(); topOfPage()">{{ tr("デイリー", "Daily") }}</button>
     <slot />
     <button v-if="EXTRA && SKINS_TAB" type="button" role="tab" data-mode-tab="skins" :aria-selected="false" :class="TAB_S" @click="openSkinsPage(); topOfPage()">{{ tr("コスメティック", "Cosmetics") }}</button>
   </div>
