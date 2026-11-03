@@ -20,7 +20,7 @@
 ## SEO の静的なページ (10-25 ブラックの頼み)
 - [x] scripts/build-cosmetics-pages.mjs (dd49e2b7): /cosmetics/・/en/cosmetics/ + 子ページ (10-25 夜にまとめの 10 個へ: 日英 10 ずつ、計 22 枚)。手元で配って撮った (台本 skins1/cosmetics-check.mjs、PC・スマホ・英語、中のリンク切れ 0・横はみ出し無し)
 - [x] 開発版の作り (preview-prod.mjs --dev) に 1 行 (ジン 9 97205662)
-- [x] noindex のまま。オーナー 10-25 の決め「1」: AdSense が通るまで noindex・サイトマップにも入れない、通ったら /bases/ と一緒に --index (決着)
+- [x] noindex のまま。オーナー 10-25 の決め「1」: AdSense が通るまで noindex・サイトマップにも入れない、通ったら --index (決着。/bases/ は 10-31 に消した = Y-84)
 - [x] /cosmetics/ は run_worker_first に当たらず静的な置き場から返る (サーバー管理人 2 本目 10-25、本番の後にゾーンの集計を 1 回見てもらう)
 - [ ] 本番に出す時: build:web に足す (--index ならサイトマップにも)
 

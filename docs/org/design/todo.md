@@ -1,7 +1,7 @@
 # デザイン部長 のやる事
 
 ## 10 本目の今 (10-28、ブラック 15 の下)
-- 本番待ち (スナップでオーナー OK 済み 10-28、絵は共有メモ local_c6a769ac…/ok-snaps/design-*.png。出すのは最終チェック長): armAll (2 回押しは外・Esc で戻す)・emuRedo (エミュのやり直し)・noCut (… で切らない)・backPlace (戻るで前の位置・タブは一番上)・phoneHelp (エミュのスマホの説明は閉じる)・tierWord (段 → ティア、MOD 表の列は 1 行で入る幅 4702d255c)。commit 047c82462・be79a05e5・2914a46f1・410d84e1f・8c1dd25e2・4702d255c。ジェムコラプトを Web から外した 87ea44cb0。
+- **済み (v0.1.637 で本番、fc7f1578b。11-03 の md 整理で確かめ)** 本番待ちだった (スナップでオーナー OK 済み 10-28、絵は共有メモ local_c6a769ac…/ok-snaps/design-*.png。出すのは最終チェック長): armAll (2 回押しは外・Esc で戻す)・emuRedo (エミュのやり直し)・noCut (… で切らない)・backPlace (戻るで前の位置・タブは一番上)・phoneHelp (エミュのスマホの説明は閉じる)・tierWord (段 → ティア、MOD 表の列は 1 行で入る幅 4702d255c)。commit 047c82462・be79a05e5・2914a46f1・410d84e1f・8c1dd25e2・4702d255c。ジェムコラプトを Web から外した 87ea44cb0。
 - 残り: shared-ui.md ⑦ の 2 (ホットキーの見せ方、案 A+B をオーナーが選ぶ)・3 (品質の帯を共有へ、シミュ部長と分担)・6 (重ね窓の印 data-overlay、下の宿題)。タブで状態も最初からはエミュ部長・シミュ部長の state。
 - 確かめの台本: 共有メモ local_a9a41698…/design10/ (u7-check・phone-help-check・tier-word-check・gem-off-check・ok-snaps・tier-fix.mjs、窓なし Chrome 9340〜9345)。
 
