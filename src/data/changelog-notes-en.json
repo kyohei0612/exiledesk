@@ -1,4 +1,7 @@
 {
+  "0.1.659": [
+    "Simulator: opening a recipe or share URL saved in an older version now drops decisions the current tree no longer has (the Start node no longer stays \"not set\"). The recipe bar shows how many were removed"
+  ],
   "0.1.658": [
     "New site look: page titles sit on a gold plate in the middle of a stone band, the craft table is one framed board, and sound, display currency and color now sit at the right end of the tab row",
     "You can now pick the site color (Default = the current colors, Daily, or one of 12 monthly colors from Mutsuki to Shiwasu). Your choice is remembered on this device",

@@ -1,5 +1,17 @@
 [
  {
+  "v": "0.1.659",
+  "date": "2026-11-03",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 前の版で保存したレシピ・共有 URL を開いた時、今の木に無い決めを外して開くようにしました (スタートに「未設定」が残らなくなりました)。外した数はレシピの帯に 1 行で出ます",
+    "en": "Simulator: opening a recipe or share URL saved in an older version now drops decisions the current tree no longer has (the Start node no longer stays \"not set\"). The recipe bar shows how many were removed"
+   }
+  ]
+ },
+ {
   "v": "0.1.658",
   "date": "2026-11-03",
   "items": [
@@ -1126,18 +1138,6 @@
     "area": "",
     "text": "最初の画面がフォントの読み込みを待たずに出るように",
     "en": "The first screen now shows without waiting for the web fonts to load"
-   }
-  ]
- },
- {
-  "v": "0.1.618",
-  "date": "2026-10-26",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "シミュレーター: ツリーの枠を広く。完成形の設定の窓は木の上に浮かせず右の列の一番上へ、その下にミニマップと倍率の道具を並べました。足りない所の一覧は上の帯の「足りない所 n ▾」を押した時だけ開く窓に (枠の外を押す・Esc で閉じる)。木の上の案内の帯は出さないようにしました",
-    "en": "Simulator: More room for the tree. The finished-item settings panel no longer floats over the tree and now sits at the top of the right column, with the minimap and zoom tools below it. The list of what is missing opens only when you press \"n missing ▾\" in the top bar (click outside or press Esc to close), and the hint strip above the tree is no longer shown"
    }
   ]
  }
