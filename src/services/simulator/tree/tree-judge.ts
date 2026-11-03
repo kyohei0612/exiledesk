@@ -79,8 +79,10 @@ export function contentOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: R
   const keys = new Set<string>(), mods = new Set<string>(), placed = new Set<string>();
   for (const m of [...it.prefixes, ...it.suffixes]) { const g = goals.find((a) => isAimMod(m, targetsOf(data, [a]), opts)); if (g) { keys.add(g.modId); mods.add(m.modId); if (!memo.includes(g)) placed.add(m.modId); } }
   const body = bodyOf(data, doc, it, mods, placed);
-  return `${[...keys].sort().join(",")}#${junkOne(body)}`;
+  return `${[...keys].sort().join(",")}${frameOf(it)}#${junkOne(body)}`;
 }
+/** 枠に入れる品質 (値・カタリストの種類)・はまったルーン・ソケットの数。全部同じ時だけ同じ枠、1 つでも違えば別 (S-60b、オーナー 11-04「品質も枠に入れて全部同じ時だけで」「少しでも違えば別」) */
+const frameOf = (it: StageItem): string => `~q${it.quality ?? 0}.${it.catalystQuality ?? ""}.${it.qualityTag ?? ""}~r${[...it.prefixes, ...it.suffixes].flatMap((m) => (m.rune ? [m.rune] : [])).sort().join("+")}.${it.enchant?.id ?? ""}.${it.enchant2?.id ?? ""}~s${it.sockets ?? 0}`;
 /**
  * 外れは種類を見ない (S-60、10-29 深夜オーナー「そもそもハズレMODはどんな形であれハズレMODだからな」): 側ごとの 普通.エッセンス.冒涜の発現済み.未発現 を
  * 外れ.未発現 の 2 つに (「未発現のみ別枠として全然おｋ」)。冒涜の発現済みの数は最後の `#d<プレ>.<サフィ>` に残し、光のお告げの手のある箱と比べる時だけ見る (looseKey で落とす)

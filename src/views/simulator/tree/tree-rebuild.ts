@@ -168,6 +168,10 @@ function savedKeyOf(at: string, tail: string, onPath: ReadonlySet<string>, exact
   const tries = [at + tail, at + recraft(tail), at + unrank(tail), at + bare(tail), ...(sw ? [at + sw, at + unrank(sw), at + bare(sw)] : []), ...(swapHit(bare(tail)) ? [at + swapHit(bare(tail))!] : [])];
   const hit = tries.find((k, i) => onPath.has(k) && (i < 4 || !exact.has(k)));
   if (hit) return hit;
+  // 消去の結果の中身の鍵 (`c:<プレ>|<サフィ>~<中身の印>`) は、枠の比べが変わると印だけ変わる (11-04 に品質を枠へ入れた、S-60b)。側の数の同じ札の決めとして読む
+  const gone = /^(.*\[c:[^~\]]*)~[0-9a-z]+(\](?:~\d+)?)$/.exec(tail);
+  const loose = gone ? [...onPath].find((k) => k.startsWith(at + gone[1] + "~") && k.endsWith(gone[2]!) && !exact.has(k)) : undefined;
+  if (loose) return loose;
   // 順位で分けていた前の保存 (`;w:` 付きの札) は、まとまった箱の決めとして読む。一番浅い順位の札を使う (S-65b)
   const heads = [at + tail.replace(/\](~\d+)?$/, ";w:"), `${at + bare(tail)}[w:`]; // 側の鍵の無い前の保存 (`[w:1]`) は側で分かれた箱の全部へ
   return [...onPath].filter((k) => heads.some((h) => k.startsWith(h))).sort()[0] ?? at + tail;
