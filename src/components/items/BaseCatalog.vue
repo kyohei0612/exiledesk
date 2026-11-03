@@ -407,7 +407,7 @@ function backToFamilies(): void { family.value = null; cls.value = null; }
         <template v-for="r in families" :key="r.ja">
           <!-- 行いっぱいの段 (FULL_ROW): 宝飾品・その他は PC では最後の行に (防具・オフハンドの行に詰めない)。baseTiles では片手・両手も 1 段ずつ -->
           <div :ref="setGroupEl(r.ja)" :class="!phone && FULL_ROW.has(r.ja) ? 'basis-full' : ''">
-            <p class="mb-0.5 text-[11px] opacity-50 md:text-[12px]">{{ tr(r.ja, r.en) }}</p>
+            <p data-base-group-head class="mb-0.5 text-[11px] opacity-50 md:text-[12px]">{{ tr(r.ja, r.en) }}</p>
             <!-- 部位のタイル: ゲームの絵 + 名前 (スマホ 3 列。2026-10-09 オーナー「各種武器はアイコン出してもいいね、装備もほかの」) -->
             <div :class="phone ? 'grid grid-cols-3 gap-x-1 gap-y-0.5' : 'flex flex-wrap gap-1'">
               <button v-for="f in r.fams" :key="f.name" type="button" :data-rec="`family:${f.variants[0]?.cls.replace(/_(str_dex_int|str_dex|str_int|dex_int|str|dex|int|fire|cold|lightning|chaos|physical)$/, '') ?? f.name}`" class="g-plain flex flex-col items-center gap-0.5 px-1 pb-1.5 pt-1 text-center active:scale-95" :class="phone ? '' : [TILES ? 'tile-w rounded' : 'w-[112px] rounded', family?.name === f.name ? 'bg-[rgba(163,52,42,0.35)] ring-1 ring-[var(--exile-color-border-brass)]' : 'hover:bg-white/5']" :aria-expanded="!phone ? family?.name === f.name : undefined" @click="pickFamily(f)">

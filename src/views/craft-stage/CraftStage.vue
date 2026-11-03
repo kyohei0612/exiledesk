@@ -46,6 +46,7 @@ import { useStageFx } from "../../components/for-share/use-stage-fx";
 import StageModList from "./StageModList.vue";
 // 部ごとの差し込み口 (2026-10-20 R4): シミュレーターと使い方・コースの中身は各部の部品が持つ
 import CurrencyPicker from "../../components/vaal-scales/CurrencyPicker.vue";
+import SiteSkinPicker from "../../components/for-share/SiteSkinPicker.vue";
 import { craftStage, iconOf, nameOf } from "../../state/craft-stage";
 import { displayCurrency } from "../../state/display-currency";
 import HeldOmens from "../../components/for-share/shelf/HeldOmens.vue";
@@ -167,6 +168,8 @@ function setImplicit(line: number, values: number[]): void {
 /** 聖別の数値 (聖別の帯)。続けて変えた分は 1 手にまとめる (品質と同じ) */
 /** 聖別の帯は本番では OK まで出さない (release-flags の sanctifyBar。v0.1.589 から本番は帯の所だけ隠していた) */
 const SANCTIFY_BAR = flag("sanctifyBar");
+/** サイト全体の見た目 (U-48・U-49、題の帯を全幅にして音・表示通貨は帯の下) */
+const SITE_LOOK = flag("siteLook");
 /** 聖別の倍率を決めている間のカードの見本 (今の値 × 倍率、スイッチ sanctifyHint、M-55)。打つまでアイテムは変わらない。打てない時は null */
 const sanctifySample = computed(() => {
   const it = s.item.value, d = s.data.value;
@@ -216,18 +219,22 @@ function pickMode(m: typeof s.mode.value): void {
     <!-- スマホ: 持っている物の帯 (画面の下に固定)。アイテムに使う / 離す (StagePhoneBar.vue) -->
     <StagePhoneBar v-if="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) && !s.replay.value" @scroll-to-reveal="scrollToReveal" />
     <div v-show="!subPage"><!-- ベース選びのページの間は中身を隠す (消さないので戻ると元のまま) -->
+    <!-- スイッチ siteLook: 題の帯は枠の端まで全幅、音・表示通貨は帯の下の行の右 (U-49 の 1、オーナー 11-03「枠までつめちゃっておｋ」「枠の下にはいちしとけばいい」) -->
+    <h1 v-if="SITE_LOOK" class="g-tabbar g-brush flex items-center text-[22px] max-md:text-[15px] text-[var(--exile-color-text-title)]"><span class="g-plate">{{ guidePage ? tr("使い方・コツ", "Guide & Tips") : tr("クラフトステージ", "Craft Stage") }}</span></h1>
     <div class="mb-3 flex items-start justify-between gap-4">
       <div class="min-w-0 flex-1" data-rec-part="title">
         <!-- 画面名は他の画面と同じ窓の題の帯 (TabBar の .g-tabbar) -->
-        <h1 class="g-tabbar g-brush flex items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ guidePage ? tr("使い方・コツ", "Guide & Tips") : tr("クラフトステージ", "Craft Stage") }}</h1>
+        <h1 v-if="!SITE_LOOK" class="g-tabbar g-brush flex items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]"><span class="g-plate">{{ guidePage ? tr("使い方・コツ", "Guide & Tips") : tr("クラフトステージ", "Craft Stage") }}</span></h1>
         <CourseHost v-if="(s.mode.value === 'tutorial' || inLesson) && !s.replay.value && !TUTORIAL_LOCKED" part="header" :guide-page="guidePage" />
         <p v-else class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("カレンシー・骨・エッセンスを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。お告げは持っている物の下に出るので、押して掛けます。確率はクラフト計算機と同じ規則です。", "Click a currency, Abyssal Bone or essence to hold it, then click the item to use it once (keep clicking while holding). Omens for it appear below the held item; click to apply. Chances follow the craft calculator's rules.") }}</p>
       </div>
       <!-- シミュレーションの時はシミュレーションだけの表示通貨 (タブの行の右端) を使う。スマホは縦に積む (横に並べると題が 2 行に折れる) -->
-      <div class="flex shrink-0 items-center gap-2 max-md:flex-col-reverse max-md:items-end">
+      <div class="flex shrink-0 items-center gap-2" :class="SITE_LOOK ? 'ml-auto min-w-0 max-w-full flex-wrap justify-end max-md:shrink' : 'max-md:flex-col-reverse max-md:items-end'">
         <!-- 使った時の音のオン / オフ (2026-10-16 ゲームと同じ音。端末に覚える) -->
         <button v-show="s.mode.value === 'hand' && !s.replay.value" type="button" data-sfx-toggle class="g-btn sm shrink-0 !px-1 max-md:min-h-10" :aria-pressed="!sfxOff" :aria-label="sfxOff ? tr('使った時の音を出す', 'Turn use sounds on') : tr('使った時の音を消す', 'Turn use sounds off')" :title="sfxOff ? tr('使った時の音を出す', 'Turn use sounds on') : tr('使った時の音を消す', 'Turn use sounds off')" @click="setSfxOff(!sfxOff)"><Icon :name="sfxOff ? 'volume-x' : 'volume'" class="size-4" :class="sfxOff ? 'opacity-50' : ''" /></button>
         <CurrencyPicker v-show="s.mode.value === 'hand' || !!s.replay.value" data-rec-part="display-currency" />
+        <!-- サイト全体の色の皮 (既定 / 日替わり / 固定、U-49b) -->
+        <SiteSkinPicker v-if="SITE_LOOK" />
       </div>
     </div>
 
@@ -246,7 +253,8 @@ function pickMode(m: typeof s.mode.value): void {
       <div v-if="!flag('sim')" class="ml-auto flex items-center gap-1.5 text-[12px] max-md:w-full max-md:flex-wrap" aria-hidden="true" />
     </div>
 
-    <div>
+    <!-- data-stage-table: スイッチ siteLook の時はここが外枠 1 枚の卓 (中の枠は外して仕切りの絵、U-49 の 3。styles/site-look.css) -->
+    <div data-stage-table>
     <!-- 再生モード -->
     <div v-if="s.replay.value" class="mb-3 flex items-center gap-3 rounded-xl border border-sky-400/40 bg-sky-500/10 px-3 py-2 text-[12px]">
       <b class="text-sky-200">{{ tr("再生中", "Replaying") }}</b>
@@ -277,7 +285,7 @@ function pickMode(m: typeof s.mode.value): void {
         </div>
         <!-- 聖別の数値を決める帯 (聖別したアイテムだけ、品質の帯の下。2026-10-20) -->
         <div v-if="SANCTIFY_BAR && !courseHidesEmulator && s.item.value?.sanctified && !s.replay.value" class="-mb-6 w-full max-w-[480px]"><StageSanctifyBar data-rec-part="sanctify" :item="s.item.value" @set="setSanctify" /></div>
-        <div ref="cardEl" class="relative" :class="[fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
+        <div ref="cardEl" data-stage-well class="relative" :class="[fxCls]" :style="fx ? { '--fx': fx.color } : undefined">
         <StageItemCard
           :doomed="doomed" :open="preview?.open"
           :item="sanctifySample ?? s.item.value!"

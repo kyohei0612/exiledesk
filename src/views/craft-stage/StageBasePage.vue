@@ -52,7 +52,7 @@ onBeforeUnmount(() => {
   <section data-base-page class="flex items-start gap-4">
     <div class="min-w-0 flex-1">
       <div class="mb-3 flex flex-wrap items-center gap-3">
-        <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]">{{ tr("ベースを選ぶ", "Choose a base") }}</h1>
+        <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]"><span class="g-plate">{{ tr("ベースを選ぶ", "Choose a base") }}</span></h1>
         <span v-if="!baseUnpicked" class="flex items-center gap-2">
           <button type="button" data-base-page-back class="g-btn sm max-md:min-h-10" @click="back">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
           <span class="text-[12px] opacity-60 max-md:hidden">{{ tr("Esc でも戻る", "Esc also goes back") }}</span>
