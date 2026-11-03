@@ -4,7 +4,7 @@
   オーナー「動きが統一されてない所」「エミュレーターに合わせてくれ、全部ここが原点」。
   原点は「次の手で狙う」の窓 (StageAimPicker.vue) の動き: .g-panel の枠・題の横に × (Icon)・Esc で閉じる・後ろを押すと閉じる・後ろのページは送らない。
   窓はみなこれで包む。重なった時は一番上の窓だけが Esc を受ける (下の窓まで閉じていた)。
-  重なりの段: 窓 z-[300]、確認 (ConfirmDialog / WatchReplaceDialog) は窓の上に出す z-[310] (layer="confirm")。ホバーのカードは 1000 以上。
+  重なりの段: 窓 z-[300]、確認 (ConfirmDialog / WatchReplaceDialog) は窓の上に出す z-[310] (layer="confirm")。ホバーのカード・HelpTip の説明は 1400 以上 (チュートリアルの幕 1100 の上、U-17 の 4)。
   使い方: <ModalShell :open="x" :title="tr(...)" width="w-full max-w-[26rem]" @close="x = false"> 中身 <template #footer>ボタン</template></ModalShell>
   スロット: 既定 = 中身、#title = 題を差し替え、#header = 題の横 (× の手前)、#subheader = 題の下の行、#footer = 下の帯 (いつも見える所)
 -->
