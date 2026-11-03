@@ -379,6 +379,8 @@ const phone = usePhone();
     <PhoneTreePage v-else-if="phone" />
     <template v-else>
     <!-- 題の帯「クラフトの道 (ツリー)」はツリーのページでは出さない (10-26 夜オーナー「いらんわ」)。流れの帯は木の枠の中の一番上 -->
+    <!-- ベース選びの段だけ、エミュのベース選び (StageBasePage) と同じ「ベースを選ぶ」の銘板の帯 (スイッチ siteLook、U-49。11-03 オーナー「ヘッダー表示してあげていいよシミュも」) -->
+    <h1 v-if="flag('siteLook') && t.goalInline.value && t.goalPage.value === 1" data-sim-base-band class="g-tabbar g-brush mb-3 flex min-w-0 items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]"><span class="g-plate">{{ tr("ベースを選ぶ", "Choose a base") }}</span></h1>
     <!-- エミュレーター / シミュレーター β の切り替え (エミュの画面の帯と同じ共通の部品、10-23 オーナー「帯を 1 つにして両方に」) -->
     <div class="mb-3 flex flex-wrap items-center gap-2"><ModeTabs /><SiteSkinPicker v-if="flag('siteLook')" class="ml-auto" /></div><!-- 色はタブの行の右端 (スイッチ siteLook、U-49) -->
     <TreeOverlays /><TreeHandPage v-if="panel?.kind === 'hand' && panelBox" :key="`h-${panel.id}`" :box-id="panel.id" :current="panelBox.hand" @pick="pickHand" @clear="clearHandOf" @close="closeHand" @aim="panel = { kind: 'aim', id: panel!.id }" />
