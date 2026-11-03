@@ -1,0 +1,68 @@
+/*
+ * サイト全体の見た目 (shared-ui.md U-48・U-49、スイッチ siteLook = <html data-flag-sitelook>)。
+ * 1 ページの題: 石の帯 (.g-tabbar) の真ん中にデイリーの金の銘板 (title-c)、字は銘板の窓の中 (h1 の中の .g-plate)。オーナー 11-03「1 は B」。
+ *   銘板の絵 660×164 の窓は横 215〜445・縦 92〜142。border-image で窓だけを字の幅に伸ばし、左右の羽と上の飾りは伸ばさない。
+ *   上の飾りは帯の上へはみ出す (PC 48px・スマホ 29px) ので、上の余白と合わせてその分だけ空ける。
+ * 統一: 題の帯は全部の画面で枠の端まで全幅、横の「← 戻る」・音・表示通貨は帯の下の行へ
+ *   (オーナー 11-03「枠までつめちゃっておｋ」「枠の下にはいちしとけばいい。これ統一して」。前はスマホだけ、game-ui.css の下の方)。
+ */
+:root[data-flag-sitelook] h1.g-tabbar.g-brush {
+  flex: 1 1 100%;
+  width: 100%;
+  order: -10000; /* 「← 戻る」が order-first (-9999) でも題が先 */
+  justify-content: center;
+  min-height: 64px !important;
+  margin-top: 34px; /* 上の飾り 48px − 上の余白 (p-4 の 16px) ぶん。飾りの頭がヘッダーの下の線に付く */
+  padding: 0 12px !important;
+  letter-spacing: 0;
+  text-shadow: none;
+}
+:root[data-flag-sitelook] :has(> h1.g-tabbar.g-brush),
+:root[data-flag-sitelook] :has(> * > h1.g-tabbar.g-brush) { flex-wrap: wrap; }
+:root[data-flag-sitelook] :has(> * > h1.g-tabbar.g-brush) > :has(> h1.g-tabbar.g-brush) { flex: 1 1 100%; }
+
+/* 銘板。高さ 112px (絵の 0.683 倍): 上 63 + 窓 34 + 下 15、左右の羽 147。margin-top で窓の真ん中を帯の真ん中に合わせ、外の箱は帯と同じ 64px */
+:root[data-flag-sitelook] h1.g-tabbar.g-brush > .g-plate {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: content-box;
+  min-width: 157px; /* 窓の素の幅 (230 × 0.683)。短い題でも銘板を縮めない */
+  max-width: calc(100% - 294px);
+  height: 34px;
+  margin: -48px 0 0;
+  padding: 0 6px;
+  border-style: solid;
+  border-width: 63px 147px 15px;
+  border-image: url("/ui-art/title-c.webp") 92 215 22 215 fill / 63px 147px 15px stretch;
+  color: var(--exile-color-tab-on-ink);
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-shadow: 0 1px 0 rgba(255, 236, 190, 0.35);
+  white-space: nowrap;
+}
+
+/* スマホの形 (1280 未満、U-53): 帯 44px・銘板 72px (0.439 倍、羽は横だけ 0.7 に詰めて窓を広く)。390 の窓は 220px まで
+   (一番長い題「PoE2 で使える PoE1 のスキン」が 15px で 210px ほど。380 未満は字を 13px に) */
+@media (max-width: 1279px) {
+  :root[data-flag-sitelook] h1.g-tabbar.g-brush { min-height: 44px !important; margin-top: 16px; padding: 0 8px !important; }
+  :root[data-flag-sitelook] h1.g-tabbar.g-brush > .g-plate {
+    min-width: 100px;
+    max-width: calc(100% - 132px);
+    height: 22px;
+    margin-top: -29px;
+    padding: 0 3px;
+    border-width: 40px 66px 10px;
+    border-image-width: 40px 66px 10px;
+    font-size: 15px;
+    letter-spacing: 0.03em;
+  }
+  /* 長い題 (.g-plate-long = スキンの「PoE2 で使える PoE1 のスキン」) は字を小さく。390 で窓に 35px ほど余る */
+  :root[data-flag-sitelook] h1.g-tabbar.g-brush > .g-plate-long { font-size: 13px; letter-spacing: 0.01em; }
+}
+/* 380 未満 (360・320): 羽をもう少し詰め、字も小さく。320 でも長い題が窓に入る */
+@media (max-width: 379px) {
+  :root[data-flag-sitelook] h1.g-tabbar.g-brush > .g-plate { max-width: calc(100% - 112px); border-width: 40px 56px 10px; border-image-width: 40px 56px 10px; font-size: 13px; letter-spacing: 0.02em; }
+  :root[data-flag-sitelook] h1.g-tabbar.g-brush > .g-plate-long { font-size: 11.5px; letter-spacing: 0; }
+}

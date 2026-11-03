@@ -297,7 +297,7 @@ onBeforeUnmount(() => { runId++; window.removeEventListener("keydown", onKey); c
 <template>
   <section data-routes-page class="min-w-0 flex-1 p-4">
     <div class="mb-3 flex flex-wrap items-center gap-3">
-      <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center px-8 text-[22px] max-md:!min-h-[40px] tracking-[0.18em] max-md:tracking-[0.04em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]" :class="MONKEY ? 'max-md:px-3 max-md:text-[14px] max-md:whitespace-nowrap' : 'max-md:px-6 max-md:text-[15px]'">{{ tr("スパムシミュレーター", "Spam simulator") }}</h1>
+      <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center px-8 text-[22px] max-md:!min-h-[40px] tracking-[0.18em] max-md:tracking-[0.04em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]" :class="MONKEY ? 'max-md:px-3 max-md:text-[14px] max-md:whitespace-nowrap' : 'max-md:px-6 max-md:text-[15px]'"><span class="g-plate">{{ tr("スパムシミュレーター", "Spam simulator") }}</span></h1>
       <span class="flex items-center gap-2">
         <button type="button" data-routes-back class="g-btn sm max-md:min-h-10" @click="back">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
         <span class="text-[12px] opacity-60 max-md:hidden">{{ tr("Esc でも戻る", "Esc also goes back") }}</span>

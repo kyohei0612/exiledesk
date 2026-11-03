@@ -231,7 +231,7 @@ window.visualViewport?.addEventListener("resize", fitZoom);
         <!-- DailyPage.vue がまだ無い間の入れ物 -->
         <section v-else data-daily-page class="min-w-0 flex-1 p-4">
           <div class="mb-3 flex flex-wrap items-center gap-3">
-            <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[15px] tracking-[0.18em] max-md:tracking-[0.04em] text-[var(--exile-color-text-title)]">{{ tr("デイリー", "Daily") }}</h1>
+            <h1 class="g-tabbar g-brush flex min-w-0 flex-1 items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[15px] tracking-[0.18em] max-md:tracking-[0.04em] text-[var(--exile-color-text-title)]"><span class="g-plate">{{ tr("デイリー", "Daily") }}</span></h1>
             <button type="button" data-daily-back class="g-btn sm max-md:min-h-10" @click="closeDailyPage">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
           </div>
           <div class="g-panel px-4 py-10 text-center text-[var(--exile-color-text-secondary)]">{{ tr("準備中", "Coming soon") }}</div>
