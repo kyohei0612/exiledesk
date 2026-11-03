@@ -33,7 +33,7 @@ Web の画面 (src/web/WebApp.vue → src/views/craft-stage/CraftStage.vue)
 |---|---|---|---|---|
 | データ・エンジン (ジン部長 = データベース、出どころは poe2db が正・トレードは確かめ。画面と部品は持たない) | — | `services/craft-stage/` (spec/・入口 `engine.ts` 核 / `engine-sim.ts` / `engine-emu.ts`)・`services/htc/`・`services/mods/`・`services/items/`・`vendor/poe2htc/` | — | `tests/` の直下 |
 | エミュの画面 (エミュ部長) | `views/craft-stage/` | エンジンの入口から取る | `state/emulator/` | — |
-| シミュの画面 (シミュ部長) | `views/simulator/` | `services/simulator/` (`htc/` はアプリ専用・凍結) | `state/simulator/` | `tests/simulator/` |
+| シミュの画面 (シミュ部長) | `views/simulator/` | `services/simulator/` (`htc/` はアプリ専用・凍結) | `state/simulator/` | `tests/tutorial/` |
 | チュートリアル (シミュ部長) | `views/tutorial/` (Video*・コース) | `services/tutorial/` | `state/tutorial/` | `tests/tutorial/` |
 | 画面の土台 (デザイン部長): 両方で一緒の部品・決まった挙動・見た目 | `components/` (`for-share/` = 棚・カード・MOD 表の土台)・`web/`・`composables/`・`utils/`・`web.html`・`style.css`・`styles/`・`i18n/lang.ts`・GLOSSARY.md | — | `state/for-share/` | — |
 | 共通 (データの境目、ジン部長) | — | `i18n/` のゲームのデータ・`services/money.ts`・`services/telemetry/` ほか | `state/` の直下 (`craft-stage.ts`・`web-page.ts`・`display-currency.ts` ほか) | — |

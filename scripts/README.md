@@ -88,5 +88,5 @@ node scripts/check-mod-values.mjs               # pnpm check:mods。不一致を
 
 ## 関連ドキュメント
 
-- 調査: `.company/research/topics/poe2-mod-data-sources.md`
-- 型定義: `src/data/mods.ts`
+- 調査: `.company/research/topics/poe2-mod-data-sources.md` (今は無い、git の履歴から)
+- 型定義: `src/services/mods/engine-mods.ts` (前の `src/data/mods.ts` は無い)
