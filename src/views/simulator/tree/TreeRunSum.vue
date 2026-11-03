@@ -30,7 +30,8 @@ const MINI = "shrink-0 whitespace-nowrap rounded-md border border-white/15 bg-wh
       <template v-else-if="result && halted">{{ tr(`${halted.n} 人目で止まったので止めた (止まった箱を直して回し直す)`, `Stopped at run ${halted.n}: a run got stuck (fix the box and run again)`) }}</template>
       <template v-else-if="result && test">{{ driveSum(result.n, result.finished) }}</template>
       <template v-else-if="result">{{ tr(`${result.n} 人: 1 個 ${div(result.perItem)} 神 · 完成 ${pct(result)}%`, `${result.n} runs: ${div(result.perItem)} div/item · ${pct(result)}% done`) }}</template>
-      <template v-else>{{ tr(`${RUN_N} 人: 1 個 — 神 · 完成 —%`, `${RUN_N} runs: — div/item · —% done`) }}</template>
+      <!-- 回す前は「—」を並べず言葉で (壊れて見えた、11-03 オーナー「A でおｋ」、S-70b) -->
+      <template v-else>{{ tr(`${RUN_N} 人: まだ回していない`, `${RUN_N} runs: not run yet`) }}</template>
     </span>
     <!-- 同じ所に 3 秒とどまって早送りしている間だけ見える (場所は取ったまま、帯が揺れないように) -->
     <span v-if="walk" :data-tree-run-fast="walk.fast ? '' : undefined" class="shrink-0 rounded bg-amber-400/20 px-1.5 text-[11px] font-bold text-amber-200" :class="walk.fast ? '' : 'invisible'" :title="tr('同じ所に 3 秒とどまったので、抜けるまで早送り', 'Stayed in one place for 3 s, fast-forwarding until it moves on')">{{ tr("▶▶ 早送り", "▶▶ Fast") }}</span>
