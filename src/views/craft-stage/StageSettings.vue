@@ -28,9 +28,9 @@ const s = craftStage;
 const inApp = isTauriRuntime();
 /** 「シミュレーターへ」(持っているアイテムを渡す)。閉じている間は前の白紙の木 */
 const EMU_TO_SIM = flag("emuToSim");
-/** シミュへ持っていく入口はシミュを見るだけの幅 (768 未満) では出さない (M-06、スイッチ phoneView、オーナー 11-01「エミュのMOD群をシミュへ持っていくようなボタンはいらない」) */
+/** シミュへ持っていく入口はシミュを見るだけの幅 (768 未満) では出さない (M-06、オーナー 11-01「エミュのMOD群をシミュへ持っていくようなボタンはいらない」) */
 const viewOnly = useViewOnlyWidth();
-const TO_SIM_ON = computed(() => TREE_ON && !(viewOnly.value && flag("phoneView")) && s.mode.value === "hand" && !!s.item.value);
+const TO_SIM_ON = computed(() => TREE_ON && !viewOnly.value && s.mode.value === "hand" && !!s.item.value);
 const { handNoBase, pickSimBase } = useStageBase();
 /** 道具の帯のボタン (ゲームの 3 枚ボタン、src/styles/game-ui.css) */
 const btn = "g-btn sm";
