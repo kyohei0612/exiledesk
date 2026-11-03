@@ -163,3 +163,67 @@
 @media (max-width: 1279px) {
   :root[data-flag-sitelook] [data-stage-well] { padding: 6px; margin: -6px; }
 }
+
+/*
+ * U-49b 絵も皮の色に (デイリーの皮と同じ強さ。オーナー 11-03「デイリーくらい変えておk」「色の感じ要はすべてって話」「てか文字の色はかえなくていいや」)。
+ * 皮を選んでいる時 (<html data-site-skin>) だけ、枠・帯・銘板・仕切りの絵を ::before へ移して --skin-art を掛ける。字は絵の外なので染まらない (U-48 の 7、デイリーの look.css と同じ作り)
+ */
+/* 枠 (frame.webp): 卓の外の面・外枠 1 枚の卓・ベースの行 (卓の中の他の面は 3 で枠を外してある) */
+:root[data-flag-sitelook][data-site-skin] :is(.g-panel:not([data-stage-table] .g-panel), [data-stage-table] .g-panel[data-craft-top], [data-stage-table]) { border-image: none; }
+:root[data-flag-sitelook][data-site-skin] :is(.g-panel:not([data-stage-table] .g-panel), [data-stage-table] .g-panel[data-craft-top], [data-stage-table])::before {
+  content: "";
+  position: absolute;
+  inset: -18px;
+  border: 18px solid transparent;
+  border-image: url("/ui-art/frame.webp") 76 / 34px / 8px round;
+  filter: var(--skin-art);
+  pointer-events: none;
+}
+/* 帯 (title-l / m / r): ページの題の帯と画面の上の札の帯 */
+:root[data-flag-sitelook][data-site-skin] .g-tabbar { position: relative; isolation: isolate; background: none; }
+:root[data-flag-sitelook][data-site-skin] .g-tabbar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    url("/ui-art/title-l.webp") left top / auto 100% no-repeat,
+    url("/ui-art/title-r.webp") right top / auto 100% no-repeat,
+    url("/ui-art/title-m.webp") left top / auto 100% repeat-x;
+  filter: var(--skin-art);
+  pointer-events: none;
+}
+:root[data-flag-sitelook][data-site-skin] header[data-rec-part="header"]::before { filter: var(--skin-art) brightness(0.5); }
+/* 銘板 (title-c): 字は銘板の窓の中のまま、絵だけを ::before に。外へ広げる幅は銘板の縁 (上・羽・下) と同じ */
+:root[data-flag-sitelook][data-site-skin] h1.g-tabbar.g-brush > .g-plate { position: relative; isolation: isolate; border-image: none; border-color: transparent; }
+:root[data-flag-sitelook][data-site-skin] h1.g-tabbar.g-brush > .g-plate::before {
+  content: "";
+  position: absolute;
+  inset: -63px -147px -15px;
+  z-index: -1;
+  border-style: solid;
+  border-color: transparent;
+  border-width: 63px 147px 15px;
+  border-image: url("/ui-art/title-c.webp") 92 215 22 215 fill / 63px 147px 15px stretch;
+  filter: var(--skin-art);
+  pointer-events: none;
+}
+/* 仕切り (divider): 工程と下の MOD 一覧の上の縁 */
+:root[data-flag-sitelook][data-site-skin] [data-stage-table] :is([data-rec-part="history"], section[data-mod-list]).g-panel { background: none; }
+:root[data-flag-sitelook][data-site-skin] [data-stage-table] :is([data-rec-part="history"], section[data-mod-list]).g-panel::before {
+  content: "";
+  position: absolute;
+  inset: -18px -18px auto;
+  height: 14px;
+  background: url("/ui-art/divider.webp") center top / 100% 14px no-repeat;
+  filter: var(--skin-art);
+  pointer-events: none;
+}
+@media (max-width: 1279px) {
+  :root[data-flag-sitelook][data-site-skin] [data-stage-table]::before { inset: -12px; border-width: 12px; }
+  :root[data-flag-sitelook][data-site-skin] h1.g-tabbar.g-brush > .g-plate::before { inset: -40px -66px -10px; border-width: 40px 66px 10px; border-image-width: 40px 66px 10px; }
+  :root[data-flag-sitelook][data-site-skin] [data-stage-table] :is([data-rec-part="history"], section[data-mod-list]).g-panel::before { inset: -14px -2px auto; }
+}
+@media (max-width: 379px) {
+  :root[data-flag-sitelook][data-site-skin] h1.g-tabbar.g-brush > .g-plate::before { inset: -40px -56px -10px; border-width: 40px 56px 10px; border-image-width: 40px 56px 10px; }
+}

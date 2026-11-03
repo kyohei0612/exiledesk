@@ -1,7 +1,7 @@
 /**
  * site-skin.ts — サイト全体の色の皮 (shared-ui.md U-49b、スイッチ siteLook)。
  * 既定 = 今のサイトの色 (何も書かない) / 日替わり = 12 か月の色を日ごとに順に / 固定 = 12 か月の色の 1 つ。
- * 札の書き方と色の出し方はデイリーの skin.ts (D-60) と同じ。選んだ札の skinVars を <html> の style に書くだけで、部品は --exile-color-* を読む。
+ * 札の書き方と色の出し方はデイリーの skin.ts (D-60) と同じ。選んだ札の skinVars (字の色を除く) を <html> の style に書くだけで、部品は --exile-color-* を読み、絵は --skin-art で染まる (styles/site-look.css)。
  * 覚える所は端末の localStorage だけ (読み書きできない端末・今は無い札は既定)。URL の ?skin= はそれより先に効き、覚えない
  */
 import { ref, watch } from "vue";
@@ -74,6 +74,8 @@ export function siteSkinOptions(now = Date.now()): { value: SiteSkinChoice; labe
   ];
 }
 
+/** 字の色は今のサイトの色のまま (題・見出し・本文・薄い字。オーナー 11-03「てか文字の色はかえなくていいや」)。12 色とも薄い字と一番明るい地の差 5.37 以上 */
+const KEEP_TEXT = /^--(exile-color-text-|skin-(title|text|dim)$)/;
 let written: string[] = [];
 function apply(): void {
   const root = document.documentElement;
@@ -81,7 +83,11 @@ function apply(): void {
   written = [];
   const k = skinOfChoice(siteSkin.value);
   if (!k) { root.removeAttribute("data-site-skin"); return; }
-  for (const [n, v] of Object.entries(skinVars(k))) { root.style.setProperty(n, v); written.push(n); }
+  for (const [n, v] of Object.entries(skinVars(k))) {
+    if (KEEP_TEXT.test(n)) continue;
+    root.style.setProperty(n, v);
+    written.push(n);
+  }
   root.setAttribute("data-site-skin", k.id);
 }
 
