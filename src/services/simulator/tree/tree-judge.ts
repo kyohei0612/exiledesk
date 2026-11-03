@@ -8,9 +8,9 @@
  * 完成形の MOD は外れ = S-22・S-60。全部消えてよい消去の後は全部外れ、残したい MOD の消去の後はその MOD だけ)。カードの「外れ MOD」の札 (tree-row-tags) と同じ見方。
  * 呼ぶ側は自前の比べを持たない。1 回の組み替え・回し・精査の中で judgeMemo を 1 つ作って使う (木を替えたら作り直す)
  */
-import { catalystOf, maxQualityOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { catalystOf, kindOf, maxQualityOf, type PatchData, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { catalystTagOf } from "../sim-engine";
-import { CATALYSING, effectOf, isCatalyst } from "./tree-hands";
+import { CATALYSING, effectOf, isBone, isCatalyst } from "./tree-hands";
 import { aimHeldOn, isAimMod } from "./tree-aim";
 import { bodyOf } from "./tree-box-shape";
 import { aimOpts, boxKeyOf, holdDocSig, sampleOf, SINGLE_SEEDS, startGoalAims, targetsOf } from "./tree-sample";
@@ -87,14 +87,21 @@ export function contentOf(data: PatchData, doc: TreeDoc, it: StageItem, aimed: R
  */
 function junkOne(body: string): string {
   const [p = "", s = "", ...rest] = body.split("|");
-  const side = (v: string): [string, number] => { const [n = 0, c = 0, x = 0, u = 0] = v.split(".").map(Number); return [`${n + c + x}.${u}`, x]; };
-  const [pp, px] = side(p), [ss, sx] = side(s);
-  return `${[pp, ss, ...rest].join("|")}#d${px}.${sx}`;
+  const side = (v: string): [string, number, number] => { const [n = 0, c = 0, x = 0, u = 0] = v.split(".").map(Number); return [`${n + c + x}.${u}`, x, c]; };
+  const [pp, px, pc] = side(p), [ss, sx, sc] = side(s);
+  return `${[pp, ss, ...rest].join("|")}#d${px}.${sx}#c${pc}.${sc}`;
 }
-/** 中身の鍵から冒涜の発現済みの数を落とした物 (ふだんの比べ。光のお告げの手のある箱と比べる時だけ落とさない = needsDesecrated) */
-export const looseKey = (k: string): string => k.replace(/#d\d+\.\d+$/, "");
-/** 光のお告げ (冒涜の MOD しか消さない) を含む手の箱か。その箱へ行く人は冒涜の発現済みの外れの数も合わせる (10-29 深夜オーナー「いいかな　それでなおるなら万々歳」) */
-export const needsDesecrated = (doc: TreeDoc, id: string): boolean => !!doc.boxes[id]?.hand?.omens.includes(LIGHT);
+/** 中身の鍵から冒涜の発現済みの数とクラフト MOD の数を落とした物 (ふだんの比べ。光のお告げ・骨・エッセンスの手のある箱と比べる時だけ keyAt で残す) */
+export const looseKey = (k: string): string => k.replace(/#d\d+\.\d+#c\d+\.\d+$/, "");
+/** d = 冒涜の発現済みの数を残す、c = クラフト MOD (エッセンス) の数を残す */
+const keyAt = (k: string, d: boolean, c: boolean): string => k.replace(/#d(\d+\.\d+)#c(\d+\.\d+)$/, (_, xd: string, xc: string) => `${d ? `#d${xd}` : ""}${c ? `#c${xc}` : ""}`);
+/**
+ * 冒涜の発現済みの外れの数も合わせる箱か: 光のお告げ (冒涜の MOD しか消さない) を含む手 (10-29 深夜オーナー「いいかな　それでなおるなら万々歳」) と、
+ * 骨の手 (冒涜の MOD は 1 つまで E-60。発現済みの外れを持つ人は打てない、S-60d)
+ */
+export const needsDesecrated = (doc: TreeDoc, id: string): boolean => { const h = doc.boxes[id]?.hand; return !!h && (h.omens.includes(LIGHT) || isBone(h.currency)); };
+/** クラフト MOD を付ける手 (エッセンス・液化した感情) の箱か (クラフト MOD は 1 品 1 つ E-11h。クラフト MOD の外れを持つ人は打てないので、その数も合わせる、S-60d) */
+export const needsCrafted = (doc: TreeDoc, id: string): boolean => { const h = doc.boxes[id]?.hand; return !!h && (effectOf(h.currency) === "essence" || kindOf(h.currency) === "emotion"); };
 const LIGHT = "OmenofLight";
 /** 完成の箱へは、品質を狙う木なら完成形の品質が足りている人だけ (品質を比べから外したので、足りない人が完成の箱に入らないように) */
 const doneOk = (doc: TreeDoc, id: string, it: StageItem): boolean => doc.boxes[id]?.done !== "main" || qualityOk(doc, it);
@@ -189,8 +196,13 @@ export function judgeMemo(data: PatchData, doc: TreeDoc): Judge {
     return out;
   };
   /** to と比べる中身 (to が光のお告げの手のある箱なら冒涜の発現済みの数も) */
-  const keyFor = (to: string, k: string): string => (needsDesecrated(doc, to) ? k : looseKey(k));
-  const setFor = (to: string, id: string): ReadonlySet<string> | null => (needsDesecrated(doc, to) ? full(id) : contents(id));
+  const keyFor = (to: string, k: string): string => keyAt(k, needsDesecrated(doc, to), needsCrafted(doc, to));
+  const setFor = (to: string, id: string): ReadonlySet<string> | null => {
+    const d = needsDesecrated(doc, to), c = needsCrafted(doc, to);
+    if (!d && !c) return contents(id);
+    const f = full(id);
+    return f ? new Set([...f].map((k) => keyAt(k, d, c))) : null;
+  };
   const full = (id: string): ReadonlySet<string> | null => {
     if (memo.has(id)) return memo.get(id)!;
     let out: Set<string> | null = null;
