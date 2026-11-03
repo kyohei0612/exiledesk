@@ -219,38 +219,44 @@ function pickMode(m: typeof s.mode.value): void {
     <!-- スマホ: 持っている物の帯 (画面の下に固定)。アイテムに使う / 離す (StagePhoneBar.vue) -->
     <StagePhoneBar v-if="phone && s.mode.value === 'hand' && (s.held.value || s.offers.value) && !s.replay.value" @scroll-to-reveal="scrollToReveal" />
     <div v-show="!subPage"><!-- ベース選びのページの間は中身を隠す (消さないので戻ると元のまま) -->
-    <!-- スイッチ siteLook: 題の帯は枠の端まで全幅、音・表示通貨は帯の下の行の右 (U-49 の 1、オーナー 11-03「枠までつめちゃっておｋ」「枠の下にはいちしとけばいい」) -->
-    <h1 v-if="SITE_LOOK" class="g-tabbar g-brush flex items-center text-[22px] max-md:text-[15px] text-[var(--exile-color-text-title)]"><span class="g-plate">{{ guidePage ? tr("使い方・コツ", "Guide & Tips") : tr("クラフトステージ", "Craft Stage") }}</span></h1>
-    <div class="mb-3 flex items-start justify-between gap-4">
+    <!-- スイッチ siteLook: 大きい題の帯はクラフト台では出さず、使い方・コツのページだけ (U-49、オーナー 11-03「ベース選ぶところだけ」「ずっとおっても邪魔」)。
+         音・表示通貨・色は下の切り替えタブの行の右端 -->
+    <h1 v-if="SITE_LOOK && guidePage" class="g-tabbar g-brush flex items-center text-[22px] max-md:text-[15px] text-[var(--exile-color-text-title)]"><span class="g-plate">{{ tr("使い方・コツ", "Guide & Tips") }}</span></h1>
+    <div v-if="!SITE_LOOK || ((s.mode.value === 'tutorial' || inLesson) && !s.replay.value && !TUTORIAL_LOCKED)" class="mb-3 flex items-start justify-between gap-4">
       <div class="min-w-0 flex-1" data-rec-part="title">
         <!-- 画面名は他の画面と同じ窓の題の帯 (TabBar の .g-tabbar) -->
         <h1 v-if="!SITE_LOOK" class="g-tabbar g-brush flex items-center px-8 text-[22px] max-md:!min-h-[40px] max-md:px-6 max-md:text-[17px] tracking-[0.18em] text-[var(--exile-color-text-title)] [text-shadow:0_2px_2px_#000,0_0_16px_rgba(255,200,110,0.3)]"><span class="g-plate">{{ guidePage ? tr("使い方・コツ", "Guide & Tips") : tr("クラフトステージ", "Craft Stage") }}</span></h1>
         <CourseHost v-if="(s.mode.value === 'tutorial' || inLesson) && !s.replay.value && !TUTORIAL_LOCKED" part="header" :guide-page="guidePage" />
-        <p v-else class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("カレンシー・骨・エッセンスを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。お告げは持っている物の下に出るので、押して掛けます。確率はクラフト計算機と同じ規則です。", "Click a currency, Abyssal Bone or essence to hold it, then click the item to use it once (keep clicking while holding). Omens for it appear below the held item; click to apply. Chances follow the craft calculator's rules.") }}</p>
+        <p v-else-if="!SITE_LOOK" class="mt-1 text-xs text-[var(--exile-color-text-secondary)] max-md:hidden">{{ tr("カレンシー・骨・エッセンスを押して持ち、アイテムを押すと 1 回使います (持ったまま連打できます)。お告げは持っている物の下に出るので、押して掛けます。確率はクラフト計算機と同じ規則です。", "Click a currency, Abyssal Bone or essence to hold it, then click the item to use it once (keep clicking while holding). Omens for it appear below the held item; click to apply. Chances follow the craft calculator's rules.") }}</p>
       </div>
       <!-- シミュレーションの時はシミュレーションだけの表示通貨 (タブの行の右端) を使う。スマホは縦に積む (横に並べると題が 2 行に折れる) -->
-      <div class="flex shrink-0 items-center gap-2" :class="SITE_LOOK ? 'ml-auto min-w-0 max-w-full flex-wrap justify-end max-md:shrink' : 'max-md:flex-col-reverse max-md:items-end'">
+      <div v-if="!SITE_LOOK" class="flex shrink-0 items-center gap-2 max-md:flex-col-reverse max-md:items-end">
         <!-- 使った時の音のオン / オフ (2026-10-16 ゲームと同じ音。端末に覚える) -->
         <button v-show="s.mode.value === 'hand' && !s.replay.value" type="button" data-sfx-toggle class="g-btn sm shrink-0 !px-1 max-md:min-h-10" :aria-pressed="!sfxOff" :aria-label="sfxOff ? tr('使った時の音を出す', 'Turn use sounds on') : tr('使った時の音を消す', 'Turn use sounds off')" :title="sfxOff ? tr('使った時の音を出す', 'Turn use sounds on') : tr('使った時の音を消す', 'Turn use sounds off')" @click="setSfxOff(!sfxOff)"><Icon :name="sfxOff ? 'volume-x' : 'volume'" class="size-4" :class="sfxOff ? 'opacity-50' : ''" /></button>
         <CurrencyPicker v-show="s.mode.value === 'hand' || !!s.replay.value" data-rec-part="display-currency" />
-        <!-- サイト全体の色の皮 (既定 / 日替わり / 固定、U-49b) -->
-        <SiteSkinPicker v-if="SITE_LOOK" />
       </div>
     </div>
 
     <!-- 手で打つ / シミュレーション (2026-10-05、実験。オーナー「ステージにもう 1 個タブ作ってやってみるか」) -->
-    <!-- 再生中も消さずに隠す -->
-    <div v-show="!s.replay.value" data-rec-part="tabs" class="mb-4 flex flex-wrap items-center gap-1.5">
+    <!-- 再生中も消さずに隠す (スイッチ siteLook の時は右端の表示通貨を残すので、行は出したままタブだけ隠す) -->
+    <div v-show="!s.replay.value || SITE_LOOK" data-rec-part="tabs" class="mb-4 flex flex-wrap items-center gap-1.5">
       <!-- スマホは 2 つで横幅を分ける (170px ずつだと 375px の画面からはみ出した。2026-10-13) -->
       <!-- Web の使い方・コツ・コースのページはタブではなく、ほかのページと同じ「← クラフトへ戻る」(2026-10-18 オーナー) -->
       <button v-if="!inApp && (guidePage || inLesson)" type="button" data-guide-back class="g-btn sm max-md:min-h-10" @click="s.hold(null); endLesson(); s.mode.value = 'hand'">{{ tr("← クラフトへ戻る", "← Back to craft") }}</button>
       <!-- エミュレーター / シミュレーターの帯は共通の部品 (ModeTabs、2026-10-23 オーナー「帯を 1 つにして両方に」)。ここだけのタブは slot に -->
-      <ModeTabs v-else :active="s.mode.value === 'hand' && !inLesson ? 'hand' : null" @pick="(m) => m === 'hand' && pickMode('hand')">
+      <ModeTabs v-else v-show="!s.replay.value" :active="s.mode.value === 'hand' && !inLesson ? 'hand' : null" @pick="(m) => m === 'hand' && pickMode('hand')">
         <!-- Web はタブに出さず、ヘッダーの「使い方・コツ」のページへ (2026-10-18 オーナー「1 回きりでしょこんなもん使うの、使い方にしまう」) -->
         <button v-if="!TUTORIAL_LOCKED && inApp" type="button" role="tab" :aria-selected="s.mode.value === 'tutorial' || inLesson" class="g-tab min-w-[170px] gap-1.5 !inline-flex max-md:min-w-0 max-md:flex-1 max-md:!px-1 max-md:!text-[12px]" :class="s.mode.value === 'tutorial' || inLesson ? 'on' : ''" @click="s.hold(null); endLesson(); s.mode.value = 'tutorial'">{{ tr("チュートリアル", "Tutorial") }}</button><!-- β は外した (入門〜中級の 6 コースを公開。2026-10-18 オーナーの UI 点検) -->
       </ModeTabs>
       <!-- 本番の作りだけ: 前の旧シミュの「1 つ戻す」の置き場 (#sim-tools、中身は空) の箱を戻す。スマホで全幅の 2 行目になり、行の間 6px が下の中身の位置を決めていた (本番と照らした差、シミュ部長 18 本目 10-24) -->
       <div v-if="!flag('sim')" class="ml-auto flex items-center gap-1.5 text-[12px] max-md:w-full max-md:flex-wrap" aria-hidden="true" />
+      <!-- スイッチ siteLook: 音・表示通貨・色はタブの行の右端に右寄せ (U-49、オーナー 11-03「上に詰めていいよ」) -->
+      <div v-if="SITE_LOOK" data-stage-top-tools class="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2 max-md:shrink">
+        <button v-show="s.mode.value === 'hand' && !s.replay.value" type="button" data-sfx-toggle class="g-btn sm shrink-0 !px-1 max-md:min-h-10" :aria-pressed="!sfxOff" :aria-label="sfxOff ? tr('使った時の音を出す', 'Turn use sounds on') : tr('使った時の音を消す', 'Turn use sounds off')" :title="sfxOff ? tr('使った時の音を出す', 'Turn use sounds on') : tr('使った時の音を消す', 'Turn use sounds off')" @click="setSfxOff(!sfxOff)"><Icon :name="sfxOff ? 'volume-x' : 'volume'" class="size-4" :class="sfxOff ? 'opacity-50' : ''" /></button>
+        <CurrencyPicker v-show="s.mode.value === 'hand' || !!s.replay.value" data-rec-part="display-currency" />
+        <!-- サイト全体の色の皮 (既定 / 日替わり / 12 か月、U-49b) -->
+        <SiteSkinPicker />
+      </div>
     </div>
 
     <!-- data-stage-table: スイッチ siteLook の時はここが外枠 1 枚の卓 (中の枠は外して仕切りの絵、U-49 の 3。styles/site-look.css) -->
