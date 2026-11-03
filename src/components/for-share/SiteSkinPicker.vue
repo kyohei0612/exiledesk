@@ -1,6 +1,6 @@
 <!--
   SiteSkinPicker.vue — サイト全体の色の皮のプルダウン (shared-ui.md U-49b、スイッチ siteLook)。見た目は表示通貨 (CurrencyPicker) と同じ。
-  既定 / 日替わり / 固定の皮。選んだ答えは端末に覚え、すべてのページに効く (state/site-skin.ts)
+  既定 / 日替わり / 12 か月の色 (睦月〜師走)。選んだ答えは端末に覚え、すべてのページに効く (state/site-skin.ts)
 -->
 <script setup lang="ts">
 import { computed } from "vue";

@@ -1,31 +1,51 @@
 /**
  * site-skin.ts — サイト全体の色の皮 (shared-ui.md U-49b、スイッチ siteLook)。
- * 既定 = 今のサイトの色 (何も書かない) / 日替わり = デイリーと同じその日の皮 / 固定 = 皮の 1 つ。
- * 色の札はデイリーの skin.ts の 1 か所 (D-60)。選んだ皮の skinVars を <html> の style に書くだけで、部品は --exile-color-* を読む。
- * 覚える所は端末の localStorage だけ (読み書きできない端末は既定)
+ * 既定 = 今のサイトの色 (何も書かない) / 日替わり = 12 か月の色を日ごとに順に / 固定 = 12 か月の色の 1 つ。
+ * 札の書き方と色の出し方はデイリーの skin.ts (D-60) と同じ。選んだ札の skinVars を <html> の style に書くだけで、部品は --exile-color-* を読む。
+ * 覚える所は端末の localStorage だけ (読み書きできない端末・今は無い札は既定)
  */
 import { ref, watch } from "vue";
-import { skinById, skinOfDay, skinVars, usableSkins, type Skin } from "../views/daily/skin/skin";
+import { skinVars, type Skin } from "../views/daily/skin/skin";
 import { flag } from "../web/release-flags";
 import { tr } from "../i18n/lang";
 
 export const SITE_SKIN_KEY = "exiledesk.site.skin";
-/** "default" | "daily" | 皮の id */
+/** "default" | "daily" | 札の id */
 export type SiteSkinChoice = string;
+
+/** 12 か月の色 (U-49b の表。オーナー 11-03「12色で…12月から1月まで表して」「霜月とか」)。g = 0.7、f = a。12 色とも文字の濃さの見張り 4.5 以上 */
+const month = (id: string, ja: string, en: string, h: number, s: number, d: number, a: number): Skin => ({ id, ja, en, h, s, d, g: 0.7, a, f: a });
+export const MONTH_SKINS: readonly Skin[] = [
+  month("mutsuki", "睦月", "Mutsuki (Jan)", 356, 30, 0.9, 44),
+  month("kisaragi", "如月", "Kisaragi (Feb)", 214, 12, 0.9, 335),
+  month("yayoi", "弥生", "Yayoi (Mar)", 340, 26, 0.9, 345),
+  month("uzuki", "卯月", "Uzuki (Apr)", 95, 22, 0.9, 75),
+  month("satsuki", "皐月", "Satsuki (May)", 268, 28, 0.9, 280),
+  month("minazuki", "水無月", "Minazuki (Jun)", 222, 34, 0.9, 232),
+  month("fumizuki", "文月", "Fumizuki (Jul)", 238, 40, 0.93, 50),
+  month("hazuki", "葉月", "Hazuki (Aug)", 186, 40, 0.9, 176),
+  month("nagatsuki", "長月", "Nagatsuki (Sep)", 40, 20, 0.88, 48),
+  month("kannazuki", "神無月", "Kannazuki (Oct)", 16, 38, 0.9, 24),
+  month("shimotsuki", "霜月", "Shimotsuki (Nov)", 198, 20, 0.88, 192),
+  month("shiwasu", "師走", "Shiwasu (Dec)", 0, 10, 0.93, 2),
+];
+const monthById = (id: string): Skin | null => MONTH_SKINS.find((k) => k.id === id) ?? null;
 
 /** 7:00 JST 区切りの日の番号 (views/daily/daily-api.ts の dayNoOf と同じ式。あちらはお題の部品まで読むので、入口からは読まない) */
 const JST = 9 * 3600_000, H7 = 7 * 3600_000, DAY = 24 * 3600_000;
 const dayNoOf = (now: number): number => Math.floor((now + JST - H7) / DAY);
+/** 日替わりの今日の札 (12 か月の色を日の番号で順に) */
+const skinOfToday = (now: number): Skin => MONTH_SKINS[((dayNoOf(now) % 12) + 12) % 12]!;
 
 function read(): SiteSkinChoice {
   try { return localStorage.getItem(SITE_SKIN_KEY) ?? "default"; } catch { return "default"; }
 }
 export const siteSkin = ref<SiteSkinChoice>(read());
 
-/** 選んだ物 → 皮 (既定は null = 何も書かない) */
+/** 選んだ物 → 札 (既定・今は無い札は null = 何も書かない) */
 export function skinOfChoice(c: SiteSkinChoice, now = Date.now()): Skin | null {
-  if (c === "daily") return skinOfDay(dayNoOf(now));
-  return c === "default" ? null : skinById(c);
+  if (c === "daily") return skinOfToday(now);
+  return c === "default" ? null : monthById(c);
 }
 
 export function setSiteSkin(c: SiteSkinChoice): void {
@@ -33,13 +53,13 @@ export function setSiteSkin(c: SiteSkinChoice): void {
   try { if (c === "default") localStorage.removeItem(SITE_SKIN_KEY); else localStorage.setItem(SITE_SKIN_KEY, c); } catch { /* 覚えられなくてもその場は替わる */ }
 }
 
-/** プルダウンの並び: 既定・日替わり (今日の皮の名前つき)・固定 (文字の濃さの見張りを通る皮だけ、D-60a) */
+/** プルダウンの並び: 既定・日替わり (今日の札の名前つき)・12 か月 (睦月から師走) */
 export function siteSkinOptions(now = Date.now()): { value: SiteSkinChoice; label: string }[] {
-  const today = skinOfDay(dayNoOf(now));
+  const today = skinOfToday(now);
   return [
     { value: "default", label: tr("既定", "Default") },
     { value: "daily", label: tr(`日替わり (今日: ${today.ja})`, `Daily (today: ${today.en})`) },
-    ...usableSkins().map((k) => ({ value: k.id, label: tr(k.ja, k.en) })),
+    ...MONTH_SKINS.map((k) => ({ value: k.id, label: tr(k.ja, k.en) })),
   ];
 }
 
