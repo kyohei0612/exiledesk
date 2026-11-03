@@ -2,7 +2,7 @@
  * site-skin.ts — サイト全体の色の皮 (shared-ui.md U-49b、スイッチ siteLook)。
  * 既定 = 今のサイトの色 (何も書かない) / 日替わり = 12 か月の色を日ごとに順に / 固定 = 12 か月の色の 1 つ。
  * 札の書き方と色の出し方はデイリーの skin.ts (D-60) と同じ。選んだ札の skinVars を <html> の style に書くだけで、部品は --exile-color-* を読む。
- * 覚える所は端末の localStorage だけ (読み書きできない端末・今は無い札は既定)
+ * 覚える所は端末の localStorage だけ (読み書きできない端末・今は無い札は既定)。URL の ?skin= はそれより先に効き、覚えない
  */
 import { ref, watch } from "vue";
 import { skinVars, type Skin } from "../views/daily/skin/skin";
@@ -37,7 +37,18 @@ const dayNoOf = (now: number): number => Math.floor((now + JST - H7) / DAY);
 /** 日替わりの今日の札 (12 か月の色を日の番号で順に) */
 const skinOfToday = (now: number): Skin => MONTH_SKINS[((dayNoOf(now) % 12) + 12) % 12]!;
 
+/** URL の ?skin=1〜12 (月の番号) か ?skin=<札の id>・default・daily。見るだけで端末には覚えない (U-49b、オーナー 11-03「ちゃんとＵＲＬでくれ」) */
+function fromUrl(): SiteSkinChoice | null {
+  let v: string | null = null;
+  try { v = new URLSearchParams(location.search).get("skin"); } catch { return null; }
+  if (!v) return null;
+  const n = Number(v);
+  if (Number.isInteger(n) && n >= 1 && n <= 12) return MONTH_SKINS[n - 1]!.id;
+  return v === "default" || v === "daily" || monthById(v) ? v : null;
+}
 function read(): SiteSkinChoice {
+  const u = fromUrl();
+  if (u) return u;
   try { return localStorage.getItem(SITE_SKIN_KEY) ?? "default"; } catch { return "default"; }
 }
 export const siteSkin = ref<SiteSkinChoice>(read());
