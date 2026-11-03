@@ -48,7 +48,7 @@ const STATE = `(() => {
     ring: box(ring), btn: box(btn), card: cr ? { l: Math.round(cr.left), t: Math.round(cr.top), r: Math.round(cr.right), b: Math.round(cr.bottom) } : null };
 })()`;
 
-const report = { size: `${W}x${H}${PHONE ? " phone" : ""}`, steps: {}, stalls: [], covered: [], cardOver: [], scenes: 0, strays: [], wrongs: [], errors: [] };
+const report = { size: `${W}x${H}${PHONE ? " phone" : ""}`, steps: {}, stalls: [], covered: [], cardOver: [], cardOut: [], scenes: 0, strays: [], wrongs: [], errors: [] };
 const strayed = new Set();
 /** 外れる手 (段ごとに 1 回)。した事を返す。できる物が無ければ null (次の場面でまた試す) */
 async function stray(n, say) {
@@ -110,6 +110,8 @@ try {
     const over = (x) => x.card && x.ring && !(x.card.r < x.ring.x - x.ring.w / 2 || x.card.l > x.ring.x + x.ring.w / 2 || x.card.b < x.ring.y - x.ring.h / 2 || x.card.t > x.ring.y + x.ring.h / 2);
     // 札は動きながら次の置き場へ行くので、重なって見えたら止まってから数え直す
     if (over(s)) { await sleep(700); if (over(await c.ev(STATE))) report.cardOver.push(`${s.n} ${s.say}`); }
+    // 札が画面 (スクロールバーを除く) から切れていないか
+    if (s.card && (s.card.l < 0 || s.card.t < 0 || s.card.r > W - 12 || s.card.b > H - 12)) report.cardOut.push(`${s.n} ${s.say} ${JSON.stringify(s.card)}`);
     // 品質の場面 (11-03 オーナーの絵で札が字を隠した所) も撮る
     if (SHOTS && same === 0 && /品質は狙わない/.test(s.say)) { await sleep(700); await c.shot(`${SHOTS}/tut-${PHONE ? "phone" : W}-quality.png`); }
     // --all-shots = 場面ごとに画面全体を撮る (押す前。幕の穴と札を目で見る、11-03 オーナー「UIでスナップチェックして」)

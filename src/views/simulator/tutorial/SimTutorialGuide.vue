@@ -49,7 +49,8 @@ function covered(el: HTMLElement): boolean {
  * (前は光る枠だけを避け、明るくした箱の中身に被った、11-03 オーナー「被ったりしてる所あるし」)
  */
 function place(r: Rect | null, lit: Rect[] = []): void {
-  const z = zoomOf(), W = window.innerWidth / z, H = window.innerHeight / z, cw = cardEl.value?.offsetWidth ?? 340, ch = cardEl.value?.offsetHeight ?? 160, g = 14, m = 8;
+  // 右と下はスクロールバーの分を引く (札が窓の右端で切れた、11-03 オーナーの絵)
+  const z = zoomOf(), W = (window.innerWidth - SCROLLBAR) / z, H = (window.innerHeight - SCROLLBAR) / z, cw = cardEl.value?.offsetWidth ?? 340, ch = cardEl.value?.offsetHeight ?? 160, g = 14, m = 8;
   if (narrow.value) { placePhone(r, W, H, ch, m); return; }
   if (!r) { pos.value = null; return; }
   const clampY = (y: number): number => Math.min(Math.max(m, y), H - ch - m), clampX = (x: number): number => Math.min(Math.max(m, x), W - cw - m);
@@ -65,8 +66,11 @@ function place(r: Rect | null, lit: Rect[] = []): void {
   const free = [...sides.filter((x) => x.ok), ...corners].filter((x) => !lap(x, r));
   const cover = (t: { left: number; top: number }): number => lit.reduce((s, q) => s + lap(t, q), 0);
   const t = free.length ? free.reduce((a, b) => (cover(b) < cover(a) ? b : a)) : corners.reduce((a, b) => (lap(b, r) < lap(a, r) ? b : a));
-  pos.value = { left: Math.round(t.left), top: Math.round(t.top) };
+  // どの置き方でも最後に画面の中へ収める
+  pos.value = { left: Math.round(Math.min(Math.max(m, t.left), W - cw - m)), top: Math.round(Math.min(Math.max(m, t.top), H - ch - m)) };
 }
+/** スクロールバーの太さの見込み (Windows の Chrome で 17px) */
+const SCROLLBAR = 18;
 /** スマホで札の床にする、画面の下の決めるボタン */
 const BOTTOM_BTNS = "[data-tree-hand-aim-go], [data-tree-hand-aim-back], [data-tree-hand-keep-go], [data-tree-hand-keep-back], [data-tree-hand-aim-step], [data-tree-hand-keep-step], [data-tree-hand-use], [data-tree-hand-cancel], [data-tree-goal-done], [data-tree-start-ask-go]";
 /**
@@ -90,6 +94,15 @@ function placePhone(r: { y: number; h: number } | null, W: number, H: number, ch
 const zoomOf = (): number => Number.parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
 /** 幕から抜く結果 (最終チェックの ✓・100 人のまとめ) */
 const LIT_RESULTS = "[data-tree-test-ok], [data-tree-run-report]";
+/**
+ * 札の文が指す物 (T-30): 開いている窓・ページの中で、もう選んだ物 (☑ の入った行・選んだ丸・持った物・掛けたお告げ) と手の窓のアイテムのカード。
+ * 押す所と同じ幕なしで見せる (11-03 オーナー「これで決めるものがグレーアウトじゃね…みたいなのが無限にある」)
+ */
+const CHOSEN = [
+  "[data-tree-start-ask-mod]:has(input:checked)", "[data-tree-start-ask-from-k]:has(input:checked)",
+  "[data-tree-hand-aim]:has(input:checked)", "[data-tree-hand-free]:has(input:checked)", "[data-tree-hand-keep-mod]:has(input:checked)",
+  "[data-tree-goal-quality-no]:has(input:checked)", "[data-tree-shelf] [data-shelf]:has(.g-slot.on)", "[data-held-omens] [data-key]:has(.stage-omen-on)", "[data-tree-hand-card]",
+].join(", ");
 /** 完成形 (木のページの左上の札・完成形のページのカード)。全部の段で薄い幕にする (T-30 の光り方) */
 const GOAL = "[data-tree-goal], [data-tree-goal-card]";
 /**
@@ -111,6 +124,11 @@ function holes(el: HTMLElement | null, z: number): { clear: Rect[]; soft: Rect[]
       const c = r ? clipRect(r, f) : null;
       if (c) out.push(c);
     }
+  }
+  for (const e of document.querySelectorAll<HTMLElement>(CHOSEN)) {
+    // 棚の持ちはお告げの欄の中を数えない (お告げは「掛けた」だけ)
+    if (e.matches("[data-shelf]") && e.closest("[data-held-omens]")) continue;
+    const r = e.getClientRects().length && !covered(e) ? litRect(e, z, 4) : null; if (r) clear.push(r);
   }
   for (const e of document.querySelectorAll<HTMLElement>(LIT_RESULTS)) { const r = e.getClientRects().length && !covered(e) ? litRect(e, z, 4) : null; if (r) clear.push(r); }
   return { clear, soft: out };
