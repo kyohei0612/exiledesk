@@ -1,4 +1,11 @@
 {
+  "0.1.660": [
+    "Simulator: boxes on the miss path no longer link back automatically; they all start as \"not set\". When you choose a move for a box, matching miss boxes with the same shape are linked back (↩) to it",
+    "Simulator: if the Final Check stops on new \"not set\" boxes, setting them all lets it continue without pressing it again",
+    "Simulator: boxes marked Done or Failed no longer show the ＋ button (unmark Done to get it back)",
+    "Simulator: omens like Dextral Necromancy no longer get greyed out on tree boxes",
+    "Simulator: tuned the size of ＋ when zoomed out and the fast-forward in the first run replay"
+  ],
   "0.1.659": [
     "Simulator: opening a recipe or share URL saved in an older version now drops decisions the current tree no longer has (the Start node no longer stays \"not set\"). The recipe bar shows how many were removed"
   ],

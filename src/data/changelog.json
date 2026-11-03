@@ -1,5 +1,41 @@
 [
  {
+  "v": "0.1.660",
+  "date": "2026-11-04",
+  "items": [
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: ハズレの道の箱は自動でつながず全部「未設定」にしました。箱に手を決めた時だけ、未設定のハズレの箱から同じ形の箱を探して ↩ でつなぎます",
+    "en": "Simulator: boxes on the miss path no longer link back automatically; they all start as \"not set\". When you choose a move for a box, matching miss boxes with the same shape are linked back (↩) to it"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 最終チェックの途中で未設定が出た時、それを全部決めれば押し直さずにそのまま続きます",
+    "en": "Simulator: if the Final Check stops on new \"not set\" boxes, setting them all lets it continue without pressing it again"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 完成・失敗にした箱には ＋ を出さないようにしました (完成を外せばまた出ます)",
+    "en": "Simulator: boxes marked Done or Failed no longer show the ＋ button (unmark Done to get it back)"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 右手の死霊術などのお告げが、ツリーの箱で灰色になって選べないことがあったのを直しました",
+    "en": "Simulator: omens like Dextral Necromancy no longer get greyed out on tree boxes"
+   },
+   {
+    "kind": "",
+    "area": "",
+    "text": "シミュレーター: 引いて見た時の ＋ の大きさ、1 人目の再生の早送りを整えました",
+    "en": "Simulator: tuned the size of ＋ when zoomed out and the fast-forward in the first run replay"
+   }
+  ]
+ },
+ {
   "v": "0.1.659",
   "date": "2026-11-03",
   "items": [
@@ -1126,18 +1162,6 @@
     "area": "",
     "text": "シミュレーター: ツリーのページの上まわりを作り直し。題の帯を外し、流れの段の帯は枠の中の一番上に、操作の帯は 1 行に (狭い画面では字を短く・絵だけに)。名前・保存・レシピは右の列の完成形の下へ、ミニマップは最初は閉じた形に。「白紙に戻す」の後もスタートの箱を横の真ん中の一番上に置きます",
     "en": "Simulator: The top of the tree page was reworked. The title strip is gone, the step strip sits at the top inside the frame, and the toolbar fits on one line (shorter labels or icons only on narrow screens). Name, Save and Recipes moved under the finished-item panel in the right column, and the minimap starts closed. After \"Clear\", the start box is placed at the top center like when the tree opens"
-   }
-  ]
- },
- {
-  "v": "0.1.619",
-  "date": "2026-10-26",
-  "items": [
-   {
-    "kind": "",
-    "area": "",
-    "text": "最初の画面がフォントの読み込みを待たずに出るように",
-    "en": "The first screen now shows without waiting for the web fonts to load"
    }
   ]
  }
