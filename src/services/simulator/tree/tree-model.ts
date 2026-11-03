@@ -193,6 +193,8 @@ export interface TreeDoc {
   fracAsked?: true;
   /** ハズレ整理を 1 度押した (S-192。保存しない) */
   tidyRan?: true;
+  /** 開いた時に外した前の版の決めの数 (今の木に札の箱が無い物、S-107b。帯に 1 行出すだけ、保存しない) */
+  droppedOld?: number;
   /** 完成形の「途中で消える」クラフト MOD (完成の狙いに数えない。tree-way-mods.ts、10-27 夜オーナー) */
   wayMods?: Aim[];
   /**

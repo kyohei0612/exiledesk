@@ -66,7 +66,7 @@ function chainOf(d: TreeDoc, b: TreeBox): boolean {
   return (kind(p.hand) === "strip" && b.out === "junkGone") || keepAuto;
 }
 /** 保存しない欄 (箱・番号・形の印・画面だけの物) */
-const NOT_KEPT = new Set(["schema", "boxes", "seq", "picks", "orphans", "startRarity"]);
+const NOT_KEPT = new Set(["schema", "boxes", "seq", "picks", "orphans", "startRarity", "droppedOld"]);
 
 /** 木 (どの版でも) → 保存の形 v1。v1 ならそのまま (欄を揃えるだけ) */
 export function toRecipeV1(d: TreeDoc): TreeDoc {

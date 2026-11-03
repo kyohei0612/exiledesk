@@ -108,7 +108,10 @@ function* rebuildSteps(data: PatchData, src: TreeDoc, stepped = false): Generato
   // 前の一覧の「gone」で札の箱が今の木にある物は持ち越さない (S-107)
   const now = new Set(pathKeysOf(d).values()), carried = (rec.orphans ?? []).filter((o) => o.why !== "gone" || !now.has(o.at));
   const orphans = [...carried, ...lostBacks, ...gone].filter((o) => o.why !== "gone" || !underAutoBack(d, o.at));
-  if (orphans.length) d.orphans = orphans;
+  // 札の箱の無い前の版の決め (gone) は木に入れずに外し、数だけ帯に出す。次の保存にも持ち越さない (S-107b。前は要確認に残し、置き場の無い物がスタートの「!」になった)
+  const kept = orphans.filter((o) => o.why !== "gone"), dropped = orphans.length - kept.length;
+  if (kept.length) d.orphans = kept;
+  if (dropped) d.droppedOld = dropped;
   // 前の形の木 (箱を全部持っている) から開いた時だけ、前に無かった札の箱が分かる
   if (!isRecipeV1(src)) {
     const before = new Set(pathKeysOf(src).values());
