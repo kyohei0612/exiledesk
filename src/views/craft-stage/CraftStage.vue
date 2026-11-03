@@ -250,7 +250,8 @@ function pickMode(m: typeof s.mode.value): void {
       <div v-if="!flag('sim')" class="ml-auto flex items-center gap-1.5 text-[12px] max-md:w-full max-md:flex-wrap" aria-hidden="true" />
     </div>
 
-    <div>
+    <!-- data-stage-table: スイッチ siteLook の時はここが外枠 1 枚の卓 (中の枠は外して仕切りの絵、U-49 の 3。styles/site-look.css) -->
+    <div data-stage-table>
     <!-- 再生モード -->
     <div v-if="s.replay.value" class="mb-3 flex items-center gap-3 rounded-xl border border-sky-400/40 bg-sky-500/10 px-3 py-2 text-[12px]">
       <b class="text-sky-200">{{ tr("再生中", "Replaying") }}</b>

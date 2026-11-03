@@ -66,3 +66,31 @@
   :root[data-flag-sitelook] h1.g-tabbar.g-brush > .g-plate { max-width: calc(100% - 112px); border-width: 40px 56px 10px; border-image-width: 40px 56px 10px; font-size: 13px; letter-spacing: 0.02em; }
   :root[data-flag-sitelook] h1.g-tabbar.g-brush > .g-plate-long { font-size: 11.5px; letter-spacing: 0; }
 }
+
+/*
+ * 3 外の枠 = 1 枚の卓 (クラフト台、U-49 の 3 = B。オーナー 11-03「3 は Bで」)。
+ * 道具の帯・カード・工程・棚・下の MOD 一覧を包む [data-stage-table] に外枠 (frame.webp) を 1 枚。中の .g-panel は絵の枠と地を外し、
+ * 透明な縁は残す (中の並びを動かさない)。工程と下の MOD 一覧は、その縁に仕切りの絵 (divider) を敷く。重ね窓 (role=dialog) は外す
+ */
+:root[data-flag-sitelook] [data-stage-table] {
+  position: relative;
+  padding: 6px 10px 12px;
+  border: 18px solid transparent;
+  border-image: url("/ui-art/frame.webp") 76 / 34px / 8px round;
+  background: linear-gradient(180deg, rgba(22, 18, 14, 0.94), rgba(9, 8, 7, 0.96)) border-box;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+}
+:root[data-flag-sitelook] [data-stage-table] .g-panel:not([role="dialog"], [role="dialog"] .g-panel) {
+  border-image: none;
+  border-color: transparent;
+  background: none;
+  box-shadow: none;
+}
+:root[data-flag-sitelook] [data-stage-table] :is([data-rec-part="history"], section[data-mod-list]).g-panel {
+  background: url("/ui-art/divider.webp") center top / 100% 14px no-repeat border-box;
+}
+/* スマホ: 外枠の縁を細くし、中の透明な縁も詰める (390 で中身の幅を前と同じくらいに) */
+@media (max-width: 1279px) {
+  :root[data-flag-sitelook] [data-stage-table] { padding: 2px 0 8px; border-width: 12px; }
+  :root[data-flag-sitelook] [data-stage-table] .g-panel:not([role="dialog"], [role="dialog"] .g-panel) { border-width: 14px 2px 6px; }
+}
