@@ -137,7 +137,9 @@ function down(e: PointerEvent): void {
 }
 const k = computed(() => Math.max(1, props.inv ?? 1));
 /** 箱の下の端 → ＋ の真ん中 = 手の札の真ん中と同じ (use-tree-edges の rowJy) */
-const plusK = computed(() => props.plusFar ?? k.value);
+/** 引いて見る時の ＋ の倍率の上限 (S-147c)。上限が無いと 0.2 倍で 5〜6.5 倍になり、＋ が段の間 (GAP_Y) に浮いて次の段に掛かった */
+const PLUS_FAR_MAX = 3;
+const plusK = computed(() => (props.plusFar != null ? Math.min(PLUS_FAR_MAX, props.plusFar) : k.value));
 const PLUS_Y = LINE_Y + CHIP_HALF;
 /** 倍率を上げても ＋ が枠に掛からない所まで下げる (半径 14 + 間 6) */
 const plusY = computed(() => Math.max(PLUS_Y, 20 * plusK.value));

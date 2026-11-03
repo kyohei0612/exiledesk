@@ -42,7 +42,8 @@ const walkMs = (len: number): number => Math.round(Math.max(40, Math.min(450, 20
  * 早送りは輪の長さによらず FAST_MS ほどで抜け、抜けたら元の速さ。一度早送りした輪にまた入ったら 3 秒待たずにすぐ早送り (10-25 オーナー)
  */
 const STAY_MS = 3000;
-const LOOP_BOXES = 6;
+// 6 では輪の箱 7 つ (オーナーのアミュの道) が入らず 4.7 分這った (11-03)。平均 2 回以上通るの決めはそのまま
+const LOOP_BOXES = 10;
 const FAST_MS = 1200;
 /** 一度早送りした輪にまた入った時の早送りの長さ (見たことのある輪なので短く) */
 const FAST_AGAIN_MS = 400;

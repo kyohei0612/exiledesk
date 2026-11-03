@@ -266,7 +266,8 @@ const holeN = computed(() => new Set((jt.shownIssues.value ?? []).filter((x) => 
 const tr100 = useTreeRun(doc, t.startPrice, t.treePrice, (id) => goIssue(id), (id, i) => void (i ? v.reveal(id) : v.fit(true)));
 /** 穴チェックのボタン: 精査と 30 人の走行 (精査の 30 人を走行に使い回す、S-71b) */
 async function onTest(): Promise<void> {
-  if (jt.on.value && await jt.sort()) return; // 整理で未設定が出たらそこで止める (S-190)
+  // 整理で未設定が出たらそこで止め、全部決まったら押し直さずに続ける (S-190・S-190c)
+  if (jt.on.value && await jt.sort(() => void onTest())) return;
   await onCheck();
   void tr100.run({ test: true, reuse: checkRun() });
 }

@@ -27,13 +27,17 @@ export function useJunkTidy(doc: Ref<TreeDoc>, edit: (f: (d: TreeDoc) => void) =
   const shownIssues = computed(() => (guide.value ? (issues.value ?? []).filter((x) => targets.value.has(x.boxId)) : issues.value));
   /** 完成を押し直したら案内へ戻る */
   watch(() => Object.values(doc.value.boxes).filter((b) => b.doneNow).length, (n, was) => { if (n > was) paused.value = false; });
-  /** 整理を走らせる。未設定が残れば最初の箱へ寄って true (最終チェックはそこで止める) */
-  async function sort(): Promise<boolean> {
-    paused.value = false; busy.value = true;
+  /** 最終チェックが未設定で止めた時の続き。未設定が全部決まったら押し直さずに走らせる (S-190c)。「組むに戻る」・合格で捨てる */
+  let resume: (() => void) | null = null;
+  watch(step, (st) => { if (st === "check" && resume && !busy.value) { const f = resume; resume = null; f(); } });
+  watch(guide, (g) => { if (!g) resume = null; });
+  /** 整理を走らせる。未設定が残れば最初の箱へ寄って true (最終チェックはそこで止め、then があれば決まった時に続ける) */
+  async function sort(then?: () => void): Promise<boolean> {
+    paused.value = false; busy.value = true; resume = null;
     await new Promise((r) => setTimeout(r, 30)); // 「整理中」を先に描く
     edit(tidyJunk); busy.value = false;
     const l = unset.value;
-    if (l.length) go(l[0]!);
+    if (l.length) { go(l[0]!); resume = then ?? null; }
     return l.length > 0;
   }
   const settledOf = (b: TreeBox): boolean => guide.value && !!b.back && !!b.autoBack && !targets.value.has(b.id);
