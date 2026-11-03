@@ -35,7 +35,7 @@ const props = withDefaults(
     /** 重なり順 (上の段ほど前) */
     z?: number;
   }>(),
-  { sub: null, tone: "unique", width: 380, pinned: false, z: 1000 },
+  { sub: null, tone: "unique", width: 380, pinned: false, z: 1400 },
 );
 provide("hoverLayerKey", props.layerKey);
 

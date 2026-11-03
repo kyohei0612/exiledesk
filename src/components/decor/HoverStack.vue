@@ -1,6 +1,6 @@
 <!--
   HoverStack.vue — ホバーの重なりを描く (App.vue に 1 つ) (2026-09-26)
-  段の決まりは [[hover-stack.ts]]。上の段ほど前に出す。
+  段の決まりは [[hover-stack.ts]]。上の段ほど前に出す。z は 1400 から (チュートリアルの幕 1100・光る枠 1200・札 1300 の上、shared-ui.md U-17 の 4)。
 -->
 <script setup lang="ts">
 import { defineAsyncComponent } from "vue";
@@ -17,12 +17,12 @@ import StageCurrencyCard from "../../views/craft-stage/StageCurrencyCard.vue";
 
 <template>
   <template v-for="(l, i) in hoverStack.layers.value" :key="l.key">
-    <UniqueHoverCard v-if="l.payload.kind === 'unique'" :row="l.payload.row" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1000 + i" />
-    <CurrencyHoverCard v-else-if="l.payload.kind === 'currency'" :item="l.payload.item" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1000 + i" />
-    <GemHoverCard v-else-if="l.payload.kind === 'gem'" :en="l.payload.en" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1000 + i" />
-    <BuildItemHoverCard v-else-if="l.payload.kind === 'build'" :item="l.payload.item" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1000 + i" />
-    <BaseItemHoverCard v-else-if="l.payload.kind === 'base'" :en="l.payload.en" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1000 + i" />
-    <StageCurrencyCard v-else-if="l.payload.kind === 'shelf'" :k="l.payload.k" :reason="l.payload.reason" :omen="l.payload.omen" :item="l.payload.item" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1000 + i" />
-    <KeywordHoverCard v-else :id="l.payload.id" :label="l.payload.label" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1000 + i" />
+    <UniqueHoverCard v-if="l.payload.kind === 'unique'" :row="l.payload.row" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1400 + i" />
+    <CurrencyHoverCard v-else-if="l.payload.kind === 'currency'" :item="l.payload.item" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1400 + i" />
+    <GemHoverCard v-else-if="l.payload.kind === 'gem'" :en="l.payload.en" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1400 + i" />
+    <BuildItemHoverCard v-else-if="l.payload.kind === 'build'" :item="l.payload.item" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1400 + i" />
+    <BaseItemHoverCard v-else-if="l.payload.kind === 'base'" :en="l.payload.en" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1400 + i" />
+    <StageCurrencyCard v-else-if="l.payload.kind === 'shelf'" :k="l.payload.k" :reason="l.payload.reason" :omen="l.payload.omen" :item="l.payload.item" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1400 + i" />
+    <KeywordHoverCard v-else :id="l.payload.id" :label="l.payload.label" :x="l.x" :y="l.y" :layer-key="l.key" :pinned="l.pinned" :z="1400 + i" />
   </template>
 </template>

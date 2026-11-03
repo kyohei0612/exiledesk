@@ -74,7 +74,7 @@ const style = computed(() => ({ left: `${pos.value.left}px`, top: `${pos.value.t
       @mouseleave="!touchOnly && open && !pinned && hide()"
     ><Icon name="help" class="size-full" /></button>
     <Teleport to="body">
-      <div v-if="open" data-helptip-pop role="tooltip" class="helptip-pop fixed z-[80] rounded-md border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)] p-3 text-left text-[13px] leading-relaxed text-[var(--exile-color-text-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.55)]" :style="style">
+      <div v-if="open" data-helptip-pop role="tooltip" class="helptip-pop fixed z-[1400] rounded-md border border-[var(--exile-color-border-brass)] bg-[var(--exile-color-bg-elevated)] p-3 text-left text-[13px] leading-relaxed text-[var(--exile-color-text-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.55)]" :style="style">
         <p v-if="title" class="mb-1 text-[12px] font-bold text-[var(--exile-color-accent-focus)]">{{ title }}</p>
         <slot>{{ text }}</slot>
       </div>
