@@ -120,7 +120,8 @@ const doneText = computed(() => (props.box.done === "fail" ? tr("失敗 (ここ�
 /** 下の＋を出す (完成の箱からも伸ばせる。手を付けると完成の印は外れ、同じ形の完成の箱もそこへ戻る、tree-merge の joinSameShape) */
 // 戻りのある箱からも伸ばせる (手を付けると戻りは外れる = setHand。前は × で戻りを外さないと＋が出なかった、10-26 失敗時の挙動の洗い出しの 2)
 // 戻り先 (↩ 戻る・再度挑戦) か「→ 同じ MOD 群のため統合」が付いた箱は次の手を付けない = 下と横の ＋ を出さない。× で外すと戻る (10-26 夜オーナー「共存はしないだろここ」)
-const free = computed(() => !props.box.hand && !props.box.split && !props.box.back);
+/** ＋ を出す箱 = 手・分かれ目・↩・完成 / 失敗の無い箱 (S-54b・S-89b。完成を外せばまた出る。10-22 の「完成の箱からも伸ばせる」の残りを 11-04 に外した) */
+const free = computed(() => !props.box.hand && !props.box.split && !props.box.back && !props.box.done);
 /** 上の帯の「まとめる」で箱を選んでいる間の見え方 (use-tree-join.ts。箱ごとの「まとめる」は 10-26 に外した = 引いた時に箱の外へ溢れた、オーナー「拡大バグ」) */
 const jl = computed(() => joinLook(t.doc.value, props.box.id));
 const join = useTreeJoin();
