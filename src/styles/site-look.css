@@ -80,7 +80,7 @@
   background: linear-gradient(180deg, rgba(22, 18, 14, 0.94), rgba(9, 8, 7, 0.96)) border-box;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
 }
-:root[data-flag-sitelook] [data-stage-table] .g-panel:not([role="dialog"], [role="dialog"] .g-panel) {
+:root[data-flag-sitelook] [data-stage-table] .g-panel:not([role="dialog"], [role="dialog"] .g-panel, [data-craft-top]) {
   border-image: none;
   border-color: transparent;
   background: none;
@@ -92,7 +92,7 @@
 /* スマホ: 外枠の縁を細くし、中の透明な縁も詰める (390 で中身の幅を前と同じくらいに) */
 @media (max-width: 1279px) {
   :root[data-flag-sitelook] [data-stage-table] { padding: 2px 0 8px; border-width: 12px; }
-  :root[data-flag-sitelook] [data-stage-table] .g-panel:not([role="dialog"], [role="dialog"] .g-panel) { border-width: 14px 2px 6px; }
+  :root[data-flag-sitelook] [data-stage-table] .g-panel:not([role="dialog"], [role="dialog"] .g-panel, [data-craft-top]) { border-width: 14px 2px 6px; }
 }
 
 /*
@@ -103,37 +103,14 @@
 :root[data-flag-sitelook][data-site-skin] [data-stage-table] {
   background: linear-gradient(180deg, var(--skin-panel), var(--skin-bg)) border-box;
 }
-:root[data-flag-sitelook][data-site-skin] [data-stage-table] .g-panel:not([role="dialog"], [role="dialog"] .g-panel) { background: none; }
+:root[data-flag-sitelook][data-site-skin] [data-stage-table] .g-panel:not([role="dialog"], [role="dialog"] .g-panel, [data-craft-top]) { background: none; }
 :root[data-flag-sitelook][data-site-skin] [data-stage-table] :is([data-rec-part="history"], section[data-mod-list]).g-panel {
   background: url("/ui-art/divider.webp") center top / 100% 14px no-repeat border-box;
 }
 :root[data-flag-sitelook][data-site-skin] header[data-rec-part="header"] { background: var(--skin-bg); }
 
-/* 4 道具の帯 = ベースの行 (クラフト台の section[data-craft-top]): 枠の中の行をやめ、石の帯 1 本に載せる (U-49 の 4 = B、オーナー 11-03「全部Ｂで統一」) */
-:root[data-flag-sitelook] section[data-craft-top] {
-  position: relative;
-  isolation: isolate;
-  border-image: none !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
-  background: none !important;
-  padding: 16px 44px !important;
-}
-:root[data-flag-sitelook] section[data-craft-top]::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background:
-    url("/ui-art/title-l.webp") left top / auto 100% no-repeat,
-    url("/ui-art/title-r.webp") right top / auto 100% no-repeat,
-    url("/ui-art/title-m.webp") left top / auto 100% repeat-x;
-  filter: brightness(0.6);
-  pointer-events: none;
-}
-@media (max-width: 1279px) {
-  :root[data-flag-sitelook] section[data-craft-top] { padding: 14px 22px !important; }
-}
+/* 4 道具の帯 = ベースの行 (クラフト台の section[data-craft-top]) は今の本番の形 (A) のまま: 自分の枠を持つ .g-panel。
+   上の 3 の「中の枠を外す」から外してある (オーナー 11-03「ここだけまえので今のほんばんの」) */
 
 /* 5 作業の地 = カードの台 ([data-stage-well]): カードの下に石のくぼみ (内側の影)。余白は負の外の余白で打ち消し、並びを動かさない (U-49 の 5 = B) */
 :root[data-flag-sitelook] [data-stage-well] {
@@ -182,9 +159,7 @@
   filter: brightness(0.5);
   pointer-events: none;
 }
-/* スマホ (1280 未満): ベースの行は数段に折れて背が高くなり、帯の両端の丸い飾りがボタンの後ろで大きく出るので真ん中の絵だけ・少し暗く。
-   カードの台はカードが窓の幅いっぱいなので、くぼみの張り出しを 6px に (外枠に触れない) */
+/* スマホ (1280 未満): カードの台はカードが窓の幅いっぱいなので、くぼみの張り出しを 6px に (外枠に触れない) */
 @media (max-width: 1279px) {
-  :root[data-flag-sitelook] section[data-craft-top]::before { background: url("/ui-art/title-m.webp") left top / auto 100% repeat-x; filter: brightness(0.45); }
   :root[data-flag-sitelook] [data-stage-well] { padding: 6px; margin: -6px; }
 }
