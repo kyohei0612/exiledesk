@@ -10,6 +10,7 @@ import { provideShelf, simHidden } from "../../state/for-share/shelf-context";
 import { useReason, type StageItem } from "../../services/craft-stage/engine";
 import { CRAFT_RUNE_KEYS, RUNE_GROUPS } from "../../state/for-share/craft-stage-shelf";
 import { prepFor } from "../../services/simulator/tree/tree-unbounded";
+import { treeOmenBlock } from "../../services/simulator/tree/tree-omen";
 import { tr } from "../../i18n/lang";
 
 /**
@@ -66,6 +67,8 @@ export function useSimShelf(item: Ref<StageItem | null>, held: Ref<string | null
     usableBare: (k) => usableWith(k, []),
     toggleOmen,
     hidden: treeHidden,
+    // 木の箱は何人もの集まりなので、側を決めるお告げの「今は意味なし」では灰色にしない (sim-tree.md S-20b)
+    omenBlock: (h, om, o) => treeOmenBlock(s.data.value, item.value, h, om, o),
   });
   return { held, omens, toggleOmen, release, onHold, onShelfDown };
 }
