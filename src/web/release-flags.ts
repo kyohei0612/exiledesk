@@ -159,6 +159,8 @@ const RELEASED: ReadonlySet<Flag> = new Set<Flag>([
   "phoneView", "tocJump", "baseReopen",
   // 0.1.657 (オーナー 11-03 1440 で手順 1〜4 を確かめて「おｋ」、ブラック 36 の頼み)。閉じたままは daily・simTutorial
   "goalAllIn",
+  // 0.1.658 サイト全体の見た目と 12 か月の色 (U-48・U-49・U-49b、オーナー 11-03 1440 で見て OK「いろいいじゃん合格」、ブラック 38 の頼み)。閉じたままは daily・simTutorial
+  "siteLook",
 ]);
 
 /** 開発版・手元の dev サーバー (OK 待ちの物も全部入る) */

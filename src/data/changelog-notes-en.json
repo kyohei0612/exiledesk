@@ -1,4 +1,10 @@
 {
+  "0.1.658": [
+    "New site look: page titles sit on a gold plate in the middle of a stone band, the craft table is one framed board, and sound, display currency and color now sit at the right end of the tab row",
+    "You can now pick the site color (Default = the current colors, Daily, or one of 12 monthly colors from Mutsuki to Shiwasu). Your choice is remembered on this device",
+    "Simulator: tidied the top of base selection and added the same \"Choose a base\" band as the Emulator",
+    "Simulator: before you run 100 trials, the result line now reads \"100 runs: not run yet\""
+  ],
   "0.1.657": [
     "Simulator: the final-item card now lists every target mod (targets beyond the slot limit are normal rows inside the card; up to 10 candidates per crafting method)",
     "Simulator: targeting a mod that adds slots (such as Liquid Emotions) now counts the extra slots on the final-item card. Liquid Emotion steps show a hit label and are retried when the hit can't apply",
