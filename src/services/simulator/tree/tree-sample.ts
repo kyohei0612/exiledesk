@@ -6,7 +6,7 @@
  * その下の箱 = 道 (始まり → 親の手の並び) だけで決める (S-74。前の「回して着いた人」tree-arrived は 10-30 R5 で外し、11-02 にファイルも消した)。親の見本に親の手を打ち、結果がその箱 (当たり X / 外れ / 外れが消えた / 狙いが消えた) になるまで引き直す (TRIES 回まで)。
  * 引けなかった当たりは、親の見本に指名で付けて作る (note に書く)。分け方は設計 11 の表 (付いた > 消えた > 外れが減った > 外れ)
  */
-import { aimDone, aimHits as hits, applyCurrency, room, sideOfMod, baseSocketsOf, catalystOf, forceKey, freshItem, kindOf, mulberry32, omenBlock, OMEN_FOR, revealOffers, runeIdByName, tierIndexOf, unrevealedOf, useReason, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
+import { aimDone, aimHits as hits, applyCurrency, room, sideOfMod, baseSocketsOf, catalystOf, forceKey, freshItem, kindOf, mulberry32, OMEN_FOR, revealOffers, runeIdByName, tierIndexOf, unrevealedOf, useReason, type AimHitOpts, type AimTarget, type PatchData, type StageApply, type StageItem, type StageMod } from "../../craft-stage/engine";
 import { catalystFull, catalystTagOf, fillCatalyst, fractureStart } from "../../simulator/sim-engine";
 import { pathKeyOf } from "./tree-recipe-v1";
 import { docPartOf, itemKeyOf, pathKeyOfBox, type PathLink } from "./tree-sample-key";
@@ -23,6 +23,7 @@ import { autoRuneKeys, passThrough, prepFor } from "./tree-unbounded";
 import { isRevealHand, veilKeep, veilPick } from "./tree-veil";
 import { fracFree, fractureTarget, junkKeyOf } from "./tree-frac-pick";
 import { mainSideOf } from "./tree-uncountable";
+import { treeOmenBlock } from "./tree-omen";
 export { fractureChoices, fractureTarget } from "./tree-frac-pick"; // フラクチャーの小物は tree-frac-pick へ (1 ファイル 500 行まで、10-28)
 export { goalsHeld, heldHitOf } from "./tree-unbounded";
 
@@ -455,7 +456,7 @@ function canUse(data: PatchData, item: StageItem, key: string, spec: UseSpec = {
   if (isRevealHand(key)) return unrevealedOf(item) ? null : tr("未発現の MOD が無い", "No unrevealed mod");
   const cat = spec.catalyst && now.includes(CATALYSING_OMEN) ? spec.catalyst : null;
   const filled = cat ? fillCatalyst(data, item, cat, mulberry32(1)).item : item;
-  for (const o of now) { const why = omenBlock(data, filled, key, now, o); if (why) return why; }
+  for (const o of now) { const why = treeOmenBlock(data, filled, key, now, o); if (why) return why; } // 「今は意味なし」では止めない (S-20b)
   const rng = mulberry32(1);
   if (kindOf(key) === "catalyst") {
     const r = fillCatalyst(data, item, key, rng);
