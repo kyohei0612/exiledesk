@@ -14,8 +14,8 @@
 
 ## OK 待ち (エミュの画面の物。行は docs/pending-release.md、出し方もそこ)
 本番の作りでは src/web/release-flags.ts のスイッチで隠し、OK が出たら RELEASED に名前を 1 行 (revert・v-show で抜く旧手順はやめた、10-24)。
-- tierWord: 画面の「段」→「ティア」(M-49)。**OK 済み 10-28 (スナップ)、本番待ち** = オーナーの「出して」で RELEASED に足す。
-- スイッチ無しで次の deploy:web に乗る物 (OK 済み 10-28 スナップ): 狙い 0 個の灰色 (M-60)・工程の共有を消した (M-65、見た目は同じ)。
+- **済み (v0.1.637 で本番、fc7f1578b。11-03 の md 整理で確かめ)** tierWord: 画面の「段」→「ティア」(M-49)。**OK 済み 10-28 (スナップ)、本番待ち** = オーナーの「出して」で RELEASED に足す。
+- **済み (v0.1.637 で本番、fc7f1578b。11-03 の md 整理で確かめ)** スイッチ無しで次の deploy:web に乗る物 (OK 済み 10-28 スナップ): 狙い 0 個の灰色 (M-60)・工程の共有を消した (M-65、見た目は同じ)。
 - 外した: gemCorrupt (ジェムコラプトのタブはコードから外した、M-08 撤回 10-28)。
 - 済み (本番に出た): baseChosen・monkeyEmu1023・sanctifyBar (v0.1.598)、emuFresh (v0.1.599)。他の部のスイッチでエミュの画面に出る物 (omenRow・dismiss・tierClose・modeTabs・monkey1023・fitZoom・baseValues・weights) も v0.1.598 で出た。
 

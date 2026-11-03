@@ -2,9 +2,9 @@
 
 ## 10-28 (6 本目、報告はブラック 15 代目 local_a9a41698)
 - system.md ⑦ をオーナーの答えどおりに (672890ee8): /tree/ (tree-share.ts・TREE_SHARE) を消した・D1 は 3 GB を超えたら古い日の記録から消す毎朝 9:00 の cron (server/live/src/logs-prune.ts、Y-66。手元の SQLite で 4 つの場合を回しただけ、本番で消えた事はまだ無い)・日報の材料に D1 の大きさ (pull-server-notes の d1、10-28 は 79 MB)・Workers は無料のまま (Y-76)・開発版の要望は本番へ (Y-71 の例外)。ジェムコラプトを Web から外すのはエミュ部長 75151d72b・デザイン部長 87ea44cb0 が済ませた (Y-17)、開発版の印の式はデザイン部長 410d84e1f (⑦5)。
-- レシピのシェアのカード絵 (Y-35、server/web/recipe-card.js・recipe-share.js、画面はシミュ部長 96416a8c・f2b926175): オーナー OK 済み (「カードOK」「ツリーの形出るの神やね」)、出すのは「出して」の後。出す順は docs/pending-release.md の行と共有メモ side-session-notes/local_c6a769ac…/recipe-card-api.md: ① server/live で `wrangler d1 migrations apply exiledesk-logs --remote` (0012 tree_shares を落とす・0013 recipe_shares に列 card) → ② recipe-share.js の `RECIPE_CARD` を true にして deploy:web → ③ スイッチ recipeCard を RELEASED に。
+- **済み (v0.1.639 で本番、dc5d097ae)** レシピのシェアのカード絵 (Y-35、server/web/recipe-card.js・recipe-share.js、画面はシミュ部長 96416a8c・f2b926175): オーナー OK 済み (「カードOK」「ツリーの形出るの神やね」)、出すのは「出して」の後。出す順は docs/pending-release.md の行と共有メモ side-session-notes/local_c6a769ac…/recipe-card-api.md: ① server/live で `wrangler d1 migrations apply exiledesk-logs --remote` (0012 tree_shares を落とす・0013 recipe_shares に列 card) → ② recipe-share.js の `RECIPE_CARD` を true にして deploy:web → ③ スイッチ recipeCard を RELEASED に。
 - 気になる: 10-28 夕に wrangler から本番の D1 を読もうとして `code: 7403` (アカウントに権限が無い) で断られた。① と毎朝の pull-logs.mjs・pull-server-notes.mjs も同じ login を使うので、出す前と翌朝の日報で確かめる (オーナーの `wrangler login`)。
-- 残り: ⑦7 見張りの無い不変条件 (最終チェック長と後で相談)。要望 91832821 の返事の書き直し・サファイア 170 回空振りの疑い (ジン部長待ち) は下のまま。
+- 残り: (⑦7 見張りの無い不変条件は 10-29 に片付いた = system.md ⑦7)。要望 91832821 の返事の書き直し・サファイア 170 回空振りの疑い (ジン部長待ち) は下のまま。
 
 ## 4 → 5 の引き継ぎ (10-26 夜、オーナー「立て直し」で入れ替え。4 本目は着任だけで作業なし)
 - 報告の宛先はブラック 13 代目 (local_526b63a7)。予定のタスク 2 つの通知も 13 代目に付け直し済み。
@@ -27,7 +27,7 @@
 ## 前の報告 (10-24 の手元の開発版・10-22 の要望と /craft-basics) は git の履歴 (10-29 の md の整理で消した): 2026-10-23-todo-archive.md に移した (10-25 ホワイト)
 
 ## やる事
-- **AdSense の審査が通ったら戻す** (10-27 ブラック 13 の OK で外した、模擬審査 notes/2026-10-27-adsense-mock-review.md): scripts/build-seo-pages.mjs (ベース 1,576 枚 + 一覧) と scripts/build-cosmetics-pages.mjs (コスメ 20 枚) の `ADS_ON_AUTO_PAGES = false` を true に → 別の出力先で作って adsbygoogle が入るのを見る → commit → ブラックへ hash (出すのは最終チェック長)。記事・FAQ・固定ページ・トップのコードはそのまま。
+- **AdSense の審査が通ったら戻す** (10-27 ブラック 13 の OK で外した、模擬審査 notes/2026-10-27-adsense-mock-review.md): scripts/build-seo-pages.mjs (ベースのページは 10-31 に消して 410 = Y-84、残りは一覧と sitemap) と scripts/build-cosmetics-pages.mjs (コスメ 20 枚) の `ADS_ON_AUTO_PAGES = false` を true に → 別の出力先で作って adsbygoogle が入るのを見る → commit → ブラックへ hash (出すのは最終チェック長)。記事・FAQ・固定ページ・トップのコードはそのまま。
 - (済み 10-27 v0.1.626) 静的なページのフッター 375 (12 ページ、リンク 44〜46px・はみ出し 0)・/web.html の 301・lastmod 73 件・セキュリティのヘッダー・/r/ を本番で見た。89dec922 (自動ページの広告のコード外し) は次の deploy:web の後に本番で adsbygoogle が 0 か見る
 - デザイン 9 がシミュの記録を track.ts に足す (10-26 夜に OK を出した): screen の to に "tree"・"sim-base"・"sim-mods"、新しい kind "sim_act" {a: hand|save|copy, s}、1 訪問で a ごとに 1 回。出たら scripts/analyze-logs.py の数え方に足す (届いた hash はデザイン 9 から)。
 - 10-27 の朝: 上の「10-27 の朝に見る」の 4 つ。結果はブラックへ 1〜3 行。
