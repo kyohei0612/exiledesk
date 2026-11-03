@@ -85,7 +85,7 @@ function setCap(n: number): void { const c = clampQ(n); t.edit((d) => { d.goalQu
     <template v-if="ask">
       <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sim-body">
         <label class="flex min-h-7 cursor-pointer items-center gap-2 max-md:min-h-11"><input data-tree-goal-quality-yes type="checkbox" :checked="on" @change="choose(($event.target as HTMLInputElement).checked ? 'on' : null)" />{{ tr("品質を狙う", "Aim for quality") }}</label>
-        <label class="flex min-h-7 cursor-pointer items-center gap-2 max-md:min-h-11"><input data-tree-goal-quality-no type="checkbox" :checked="no" @change="choose(($event.target as HTMLInputElement).checked ? 'no' : null)" />{{ tr("品質は狙わない", "No quality") }}</label>
+        <label data-tree-goal-quality-no class="flex min-h-7 cursor-pointer items-center gap-2 max-md:min-h-11"><input type="checkbox" :checked="no" @change="choose(($event.target as HTMLInputElement).checked ? 'no' : null)" />{{ tr("品質は狙わない", "No quality") }}</label>
       </div>
       <div v-if="on" data-tree-goal-quality-pick class="flex flex-wrap items-center gap-1.5 text-sim-body">
         <select data-tree-goal-quality-cap :class="[sel, 'tabular-nums']" :value="capNow" :title="tr('品質の上限 (選ぶと品質もこの値になる)', 'Max quality (the quality is set to it)')" @change="pickCap(Number(($event.target as HTMLSelectElement).value))">

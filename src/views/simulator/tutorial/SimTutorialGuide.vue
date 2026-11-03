@@ -1,6 +1,7 @@
 <!--
   SimTutorialGuide.vue — シミュのチュートリアルの案内 (2026-10-26 夜オーナー「メモ帳みたいな感じでくっつけて、一緒に進行していく」)。
-  押す所を光る枠で囲み (周りは暗くしない・押しは止めない)、そのそばにメモ帳のような小さな札 (文 + n / m・最初から・やめる)。手順が進むと札も一緒に動く。
+  押す所を光る枠で囲み、そのそばにメモ帳のような小さな札 (文 + n / m・最初から・やめる)。手順が進むと札も一緒に動く。札は光る枠に被らない所へ (T-35)。
+  光る所・道の箱・結果のほかは灰色の幕で覆い、押せなくする (T-30・Q7 A、11-03 オーナー「ほかグレーアウトして欲しいな完全に」。重なりの段は U-17 の 4)。
   文と光らせる所は src/data/sim-tutorial.json (tut-data)。手元の dev だけ札の中で書ける (SimTutorialEditor)。進みは use-sim-tutorial が木の中身と窓から毎回求める。
   スマホの形 (1280 未満、U-53) は札を画面の下に固定 (下の帯の上。光る所に重なる時だけ上へ、tutorial.md T-26)、光る枠は同じ。記録は simOp (tutorial-start / step / done、デザイン部長 9 本目の頼み)
 -->
@@ -12,10 +13,13 @@ import { markRan, noteClick, openGoalPage, startTutorial, stopTutorial, tutHasPr
 import { TUT_EDITABLE, tutDirty } from "./tut-data";
 import SimTutorialEditor from "./SimTutorialEditor.vue";
 import { isPhoneWidth } from "../../../utils/use-phone";
-import { inView } from "./tut-dom";
+import { handOpen, inView } from "./tut-dom";
+import { clipRect, litRect, maskPath, type Rect } from "./tut-mask";
 
 const tut = useSimTutorial();
-const ring = ref<{ x: number; y: number; w: number; h: number } | null>(null);
+const ring = ref<Rect | null>(null);
+/** 灰色の幕の形 (SVG の d) と大きさ */
+const mask = ref<{ d: string; w: number; h: number } | null>(null);
 const narrow = ref(false);
 /** 書く所を開いている (dev だけ) */
 const editing = ref(false);
@@ -31,14 +35,16 @@ function targetEl(sel: string | null): HTMLElement | null {
 const cardEl = ref<HTMLElement | null>(null);
 const pos = ref<{ left: number; top: number } | null>(null);
 let raf = 0, timer = 0, sentKey = "", sentAt = 0;
-/** 要素の真ん中で、札と枠を除いた一番上の物がその要素の外 (帯などに覆われている) */
+/** チュートリアルが描く層 (覆いの数えから外す) */
+const TUT_LAYERS = "[data-tut-card], [data-tut-ring], [data-tut-mask]";
+/** 要素の真ん中で、札と枠と幕を除いた一番上の物がその要素の外 (帯などに覆われている) */
 function covered(el: HTMLElement): boolean {
   const r = el.getBoundingClientRect();
-  const front = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2).find((e) => !e.closest("[data-tut-card], [data-tut-ring]"));
+  const front = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2).find((e) => !e.closest(TUT_LAYERS));
   return !!front && !el.contains(front) && !front.contains(el);
 }
-/** 札の置き場: 光る所の右 → 左 → 下 → 上の順に、画面に収まって重ならない所。光る所が無ければ左下 */
-function place(r: { x: number; y: number; w: number; h: number } | null): void {
+/** 札の置き場: 光る所の右 → 左 → 下 → 上の順に、画面に収まって重ならない所。どれも無理なら四隅で重ならない所 (無ければ重なりの一番小さい隅)。光る所が無ければ左下 (T-35) */
+function place(r: Rect | null): void {
   const z = zoomOf(), W = window.innerWidth / z, H = window.innerHeight / z, cw = cardEl.value?.offsetWidth ?? 340, ch = cardEl.value?.offsetHeight ?? 160, g = 14, m = 8;
   if (narrow.value) { placePhone(r, W, H, ch, m); return; }
   if (!r) { pos.value = null; return; }
@@ -49,7 +55,9 @@ function place(r: { x: number; y: number; w: number; h: number } | null): void {
     { left: clampX(r.x + r.w / 2 - cw / 2), top: r.y + r.h + g, ok: r.y + r.h + g + ch <= H - m },
     { left: clampX(r.x + r.w / 2 - cw / 2), top: r.y - g - ch, ok: r.y - g - ch >= m },
   ];
-  const t = tries.find((x) => x.ok) ?? { left: m, top: H - ch - m };
+  const lap = (t: { left: number; top: number }): number => Math.max(0, Math.min(t.left + cw, r.x + r.w) - Math.max(t.left, r.x)) * Math.max(0, Math.min(t.top + ch, r.y + r.h) - Math.max(t.top, r.y));
+  const corners = [{ left: m, top: H - ch - m }, { left: W - cw - m, top: H - ch - m }, { left: W - cw - m, top: m }, { left: m, top: m }];
+  const t = tries.find((x) => x.ok && !lap(x)) ?? corners.reduce((a, b) => (lap(b) < lap(a) ? b : a));
   pos.value = { left: Math.round(t.left), top: Math.round(t.top) };
 }
 /** スマホで札の床にする、画面の下の決めるボタン */
@@ -61,7 +69,7 @@ const BOTTOM_BTNS = "[data-tree-hand-aim-go], [data-tree-hand-aim-back], [data-t
 function placePhone(r: { y: number; h: number } | null, W: number, H: number, ch: number, m: number): void {
   const z = zoomOf(), barEl = document.querySelector<HTMLElement>("[data-phone-bar]"), bar = barEl?.getBoundingClientRect();
   // 帯が前に見えている (真ん中の点で札を除いた一番上の要素が帯の中) 時だけ床にする。手の窓 (画面いっぱい) の後ろの帯は数えない
-  const front = bar && bar.height > 0 ? document.elementsFromPoint(bar.left + bar.width / 2, bar.top + 4).find((e) => !e.closest("[data-tut-card], [data-tut-ring]")) : null;
+  const front = bar && bar.height > 0 ? document.elementsFromPoint(bar.left + bar.width / 2, bar.top + 4).find((e) => !e.closest(TUT_LAYERS)) : null;
   const barOn = !!front && !!barEl?.contains(front);
   // 画面の下の方にある決めるボタン (手の窓の「決める」「使う」・完成形の「決めた」など) の上も床にする (札がそれを覆った)
   const lows = [...document.querySelectorAll<HTMLElement>(BOTTOM_BTNS)].map((e) => e.getBoundingClientRect()).filter((b) => b.height > 0 && b.top / z > H * 0.55 && b.top / z < H).map((b) => b.top / z);
@@ -73,6 +81,30 @@ function placePhone(r: { y: number; h: number } | null, W: number, H: number, ch
 }
 /** 画面の幅で html に掛かる zoom (1440 幅で 0.87 など)。getBoundingClientRect は zoom の後の値なので、fixed の left / top に入れる時は割る */
 const zoomOf = (): number => Number.parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
+/** 幕から抜く結果 (最終チェックの ✓・100 人のまとめ) */
+const LIT_RESULTS = "[data-tree-test-ok], [data-tree-run-report]";
+/**
+ * 幕の穴: 光る所 (枠と同じ四角) + 道の箱 (今の手順までの手順の箱。窓が開いている時は窓の下なので出さない、木の枠の中で切る) + 結果。
+ * 前に見えていない物 (窓などの下) は抜かない (抜くと上の窓が明るく見える)
+ */
+function holes(el: HTMLElement | null, z: number): Rect[] {
+  const out: Rect[] = [];
+  const t = el ? litRect(el, z, 4) : null;
+  if (t) out.push(t);
+  const fr = document.querySelector("[data-tree-frame]");
+  const f = fr ? litRect(fr, z) : null;
+  if (f && !handOpen()) {
+    const ids = new Set(tut.steps.value.slice(0, tut.index.value + 1).flatMap((st) => (st.kind === "hand" || st.kind === "done" || st.kind === "fail") && tut.roles.value[st.box] ? [tut.roles.value[st.box]!] : []));
+    for (const id of ids) {
+      const b = document.querySelector<HTMLElement>(`[data-box-id="${CSS.escape(id)}"]`);
+      const r = b && !covered(b) ? litRect(b, z, 4) : null;
+      const c = r ? clipRect(r, f) : null;
+      if (c) out.push(c);
+    }
+  }
+  for (const e of document.querySelectorAll<HTMLElement>(LIT_RESULTS)) { const r = e.getClientRects().length && !covered(e) ? litRect(e, z, 4) : null; if (r) out.push(r); }
+  return out;
+}
 function frame(): void {
   const el = tutOn.value ? targetEl(tut.target.value) : null;
   // 光る所が画面の外 (棚・窓の中を送らないと見えない) なら、場面が変わった時に 1 回だけ見える所へ送る (木の枠は送りでなく寄せなので動かない)
@@ -86,6 +118,8 @@ function frame(): void {
   ring.value = r && r.width > 0 ? { x: r.left / z - 4, y: r.top / z - 4, w: r.width / z + 8, h: r.height / z + 8 } : null;
   // 光る所が動かなければ札も動かない (打っている間も)。書く所を開いて背が伸びた時は画面に収まる所へ
   place(ring.value);
+  const W = window.innerWidth / z, H = window.innerHeight / z;
+  mask.value = tutOn.value && !off.value ? { d: maskPath(W, H, holes(el, z)), w: W, h: H } : null;
   raf = requestAnimationFrame(frame);
 }
 onMounted(() => {
@@ -117,10 +151,14 @@ function quit(): void { if (tutDirty.value && !window.confirm("保存してい�
 <template>
   <!-- body へ出す (木のページの中は transform のある親があり、fixed の枠が親の分ずれた) -->
   <Teleport to="body"><template v-if="tutOn">
+    <!-- 灰色の幕 (z 1100、U-17 の 4)。塗った所だけが押し・ホバー・ホイールを受け止め、穴の所は下へ届く。押しても窓の「枠の外」に数えない (data-dismiss-keep)、Esc の窓には数えない (data-overlay を付けない、U-17 の 8) -->
+    <svg v-if="mask" data-tut-mask data-dismiss-keep aria-hidden="true" class="pointer-events-none fixed left-0 top-0 z-[1100]" :width="mask.w" :height="mask.h" :viewBox="`0 0 ${mask.w} ${mask.h}`" shape-rendering="crispEdges">
+      <path :d="mask.d" class="tut-mask pointer-events-auto" @pointerdown.stop.prevent @mousedown.stop.prevent @click.stop.prevent @dblclick.stop.prevent @contextmenu.prevent @wheel.prevent @touchstart.stop.prevent />
+    </svg>
     <div v-if="ring && !off" data-tut-ring aria-hidden="true" class="tut-ring pointer-events-none fixed z-[1200] rounded-lg" :style="{ left: `${ring.x}px`, top: `${ring.y}px`, width: `${ring.w}px`, height: `${ring.h}px` }" />
     <!-- メモ帳の札 (光る所のそばへ動く。無ければ左下) -->
     <!-- data-dismiss-keep = 札を押しても開いている窓の「枠の外」に数えない (札の「やめる」で手の窓が閉じ、押しが飲まれた、モンキー 7 の 5) -->
-    <section ref="cardEl" data-tut-card data-dismiss-keep class="tut-note fixed z-[1201] flex flex-col gap-1.5 rounded-lg border border-amber-200/50 px-3 py-2 text-[13px] text-[#2b2217] shadow-[0_8px_24px_rgba(0,0,0,0.6)]"
+    <section ref="cardEl" data-tut-card data-dismiss-keep class="tut-note fixed z-[1300] flex flex-col gap-1.5 rounded-lg border border-amber-200/50 px-3 py-2 text-[13px] text-[#2b2217] shadow-[0_8px_24px_rgba(0,0,0,0.6)]"
       :class="[narrow ? 'w-[calc(100vw-16px)]' : 'w-[340px]', pos ? '' : 'bottom-4 left-4']" :style="pos ? { left: `${pos.left}px`, top: `${pos.top}px` } : {}" @pointerdown.stop @mousedown.stop @click.stop>
       <header class="flex items-center gap-1.5">
         <b class="text-[12px] text-[#7a4b12]">{{ tr("チュートリアル", "Tutorial") }}</b>
@@ -147,7 +185,9 @@ function quit(): void { if (tutDirty.value && !window.confirm("保存してい�
 </template>
 
 <style scoped>
-/* 押す所の光る枠 (周りは暗くしない。ゆっくり明るさだけ揺らす) */
+/* 灰色の幕 (黒 0.6、彩度は残す。U-17 の 7) */
+.tut-mask { fill: rgba(0, 0, 0, 0.6); }
+/* 押す所の光る枠 (ゆっくり明るさだけ揺らす) */
 .tut-ring { box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.95), 0 0 18px 4px rgba(251, 191, 36, 0.55); animation: tut-pulse 1.4s ease-in-out infinite; }
 @keyframes tut-pulse { 50% { box-shadow: 0 0 0 3px rgba(253, 230, 138, 1), 0 0 26px 8px rgba(251, 191, 36, 0.75); } }
 /* メモ帳の札: 紙の色 + 罫線、動く時はすっと移る */

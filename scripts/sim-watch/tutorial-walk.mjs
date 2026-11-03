@@ -24,7 +24,7 @@ const log = (s) => console.log(s);
 
 /** 真ん中を押す (PC はマウス、スマホはタッチ)。押す前に真ん中の要素を返す */
 async function press(x, y) {
-  const hit = await c.ev(`(() => { const e = document.elementFromPoint(${x}, ${y}); if (!e) return "(無し)"; const a = [...e.attributes].filter((x) => x.name.startsWith("data-") && !x.name.startsWith("data-v-")).map((x) => x.name).slice(0, 2).join(" "); return e.tagName.toLowerCase() + (a ? " " + a : ""); })()`);
+  const hit = await c.ev(`(() => { const e = document.elementFromPoint(${x}, ${y}); if (!e) return "(無し)"; const a = [...e.attributes].filter((x) => x.name.startsWith("data-") && !x.name.startsWith("data-v-")).map((x) => x.name).slice(0, 2).join(" "); return e.tagName.toLowerCase() + (a ? " " + a : "") + (e.closest("[data-tut-mask]") ? " (幕)" : ""); })()`);
   if (PHONE) {
     await c.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
     await c.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
@@ -47,7 +47,7 @@ const STATE = `(() => {
     ring: box(ring), btn: box(btn), card: cr ? { l: Math.round(cr.left), t: Math.round(cr.top), r: Math.round(cr.right), b: Math.round(cr.bottom) } : null };
 })()`;
 
-const report = { size: `${W}x${H}${PHONE ? " phone" : ""}`, steps: {}, stalls: [], covered: [], cardOver: [], strays: [], wrongs: [], errors: [] };
+const report = { size: `${W}x${H}${PHONE ? " phone" : ""}`, steps: {}, stalls: [], covered: [], cardOver: [], scenes: 0, strays: [], wrongs: [], errors: [] };
 const strayed = new Set();
 /** 外れる手 (段ごとに 1 回)。した事を返す。できる物が無ければ null (次の場面でまた試す) */
 async function stray(n, say) {
@@ -109,8 +109,12 @@ try {
     const over = (x) => x.card && x.ring && !(x.card.r < x.ring.x - x.ring.w / 2 || x.card.l > x.ring.x + x.ring.w / 2 || x.card.b < x.ring.y - x.ring.h / 2 || x.card.t > x.ring.y + x.ring.h / 2);
     // 札は動きながら次の置き場へ行くので、重なって見えたら止まってから数え直す
     if (over(s)) { await sleep(700); if (over(await c.ev(STATE))) report.cardOver.push(`${s.n} ${s.say}`); }
+    // 品質の場面 (11-03 オーナーの絵で札が字を隠した所) も撮る
+    if (SHOTS && same === 0 && /品質は狙わない/.test(s.say)) { await sleep(700); await c.shot(`${SHOTS}/tut-${PHONE ? "phone" : W}-quality.png`); }
+    report.scenes++;
     const hit = await press(tgt.x, tgt.y);
-    if (s.ring && /data-tut-card|tut-note/.test(hit)) report.covered.push(`${s.n} ${s.say} → ${hit}`);
+    // 札・灰色の幕 (T-30) が光る所を覆っていないか
+    if (s.ring && /data-tut-card|tut-note|\(幕\)/.test(hit)) report.covered.push(`${s.n} ${s.say} → ${hit}`);
     log(`${s.n.padEnd(7)} ${s.say}  ⇒ ${hit}`);
     if (SHOTS && /^(6|12|14) \//.test(s.n) && shotN < 3 && same === 0) { await sleep(400); await c.shot(`${SHOTS}/tut-${PHONE ? "phone" : W}-${s.n.split("/")[0].trim()}.png`); shotN++; }
     await sleep(700);

@@ -233,7 +233,7 @@ export function useSimTutorial() {
   });
   /** 文だけの手順・スマホの自動の完成 (P10) の「次へ」 */
   function nextNote(): void { const st = step.value; if (st && (st.kind === "note" || st.kind === "done") && !notesDone.value.includes(st.id)) notesDone.value = [...notesDone.value, st.id]; }
-  return { names, roles, onRoute, index, pos, step, now, target, text, nextNote, total: computed(() => steps.value.length) };
+  return { names, steps, roles, onRoute, index, pos, step, now, target, text, nextNote, total: computed(() => steps.value.length) };
 }
 
 /** 始める: チュートリアルの木 (完成形の 4 つだけ入った木) を開いて完成形の設定へ (今の木は 1 つ戻すで戻せる) */
